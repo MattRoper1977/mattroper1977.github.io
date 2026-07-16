@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MEDEVAC FRONTIER — Asset Studio · madebymatt.uk</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABmJLR0QA/wD/AP+gvaeTAAADtklEQVR4nO2bW0gUURjH/zOzq3uZ8rLuer+kli+FXRShxBJJskIxqcgMRYpIEszMyIgM6iXoQvTSm4RhqOVbD4IQ1UNQaPaWvSmW7abrZdX1Mjs9LOKOu153zhxi5g/7cuZ83/z2z3f2zPl2l9mdvVOEisXSBqAtzQDaALSlGUAbgLZ0ew5k0GagKq0Cfg3aJQOjDqffJIs1QkEk+bSR96L6CtAMoA1AW5oBtAFoS/UG6IIJftP6Tj6SIFRWcXzLsaqvAM0A2gC0pRlA+gai2w2Py7XpOI/LBdHtJsLkq6B2gbW0MDQIx/PHcPf3Q/QI0FltMOfmIfxMOXSWqIAxi6MOjLe3YfrTByw67GBYDobMTFiv1kOfmESEk0gFCM4xDNfVYLavF6JHAAAsOuyY6OrEYOU5iAM/YImwSF7izwEMVpZjoqsTiw7vCVX0CJjt68VwXQ0E5xgJVDIGjLe3QZiaDHhNnJ+Dq6fbb9zV0w1xfi5gjDA1ifH2Ntk5QcqA2b6vsuecIZATxJbAxITsOT2TgSsqWBExgNHJ/9nKcJzsOUFqF9AnpWDhzwgAIKaiCrHnqyTXWYPBLyax9jriL9VIxn6/asFIa4s3Z3IKCVQyBoRmZGDmy2cAAGcyQx9lXTeG43lwPC8dM5mXc+4i070msgT4Q4dlz2nOlT8nSBkQkpaOkNQ0WfOFpqbLls9XxJ4Ew0vKYH/yEMLMNBZG/0qusQYDOLO03IVpFzwrHn2FmWlvruJTpDDJGcAXFsHZ8RojrcsfZEuylZ5GSlOzZGzo2SPY37b75dHHJ4A/eowUJrnDEMNxiKyo2sDMtRV5oZrItrokoqdBPr8Apv3ZW4437t0HPr9AVqaVInscZhhEXWsAazRuPtRggK3uJsAwRNCWRLwfoI+ORWT15U3HWS5egS4ujgiTr8gtLh+FFZfC/f0bXB/fAwDsXR2wd3WsOt98MBdhJ0uUQFOoJcYwsDbcQkjyjnWn6hOSYLvRBLDKoCnWE2SNRsQ03we74nFXOseEmOYHYM2rz5GdS7E7AdDHJyK66W7AbY3R6RB95x5CkpKVRFK+K2zKykF0UzMY1ud4y7KwNd6GKStHaRw6bXFzbh6s9Y3eLY5hYK2tB3+E7H6/mhTZBQJpW2ERBKf3JyzbTxTTwqBnAACEny2neXtA+2YoyAro7vZvb/9vUn0FqN6AoJbAi5dP5SOhJNVXgGYAbQDa0gygDUBbmgG0AWhL9QYw2j9HVS7NANoAtKUZQBuAtv4BujLXJG1llPUAAAAASUVORK5CYII=">
+<style>
+  :root{ --mint:#b9e6cd; --line:#8fc9a8; --panel:rgba(10,22,16,.85); --ember:#f2a24a; }
+  body{ background:#10131c; color:#e8e2d4; font-family:ui-monospace,Menlo,Consolas,monospace; padding:18px; margin:0 }
+  h1{ font-size:20px; letter-spacing:.12em; color:var(--mint); margin:0 0 4px }
+  .sub{ color:#8b93a8; font-size:12px; letter-spacing:.08em; margin-bottom:20px }
+  .card{ background:var(--panel); border:1.5px solid var(--line); border-radius:10px; padding:14px; margin-bottom:18px }
+  h2{ font-size:14px; letter-spacing:.14em; color:var(--mint); margin:0 0 3px }
+  p{ margin:0 0 10px; color:#aab0a8; font-size:12px; line-height:1.5 }
+  canvas{ max-width:100%; border:1px solid #3a4a40; border-radius:6px; display:block;
+    background:repeating-conic-gradient(#20242e 0 25%, #171a22 0 50%) 0 0/16px 16px }
+  a.dl{ display:inline-block; margin-top:10px; padding:9px 16px; border:1.5px solid var(--line); border-radius:7px;
+    color:var(--mint); text-decoration:none; font-size:12px; letter-spacing:.1em }
+  a.dl:active{ background:rgba(52,110,80,.6); color:#fff }
+</style>
+</head>
+<body>
+<h1>MEDEVAC FRONTIER — ASSET STUDIO</h1>
+<div class="sub">Seamless parallax tiles + promo banner, rendered from the game's own palette and art-derived skylines · madebymatt.uk</div>
+
+<div class="card"><h2>1 · bg_sky.png — the anchor (2048×1024, opaque)</h2>
+  <p>Twilight gradient, ember glow, stars, far silhouette range sampled from the canyon painting. Tiles seamlessly.</p>
+  <canvas id="c_sky" width="2048" height="1024"></canvas><a class="dl" id="d_sky" download="bg_sky.png">DOWNLOAD PNG</a></div>
+
+<div class="card"><h2>2 · bg_mid.png — the threat (2048×640, transparent)</h2>
+  <p>Canyon-rim ridge from the painting's skyline, ember rim light, fully transparent sky. Seamless left↔right.</p>
+  <canvas id="c_mid" width="2048" height="640"></canvas><a class="dl" id="d_mid" download="bg_mid.png">DOWNLOAD PNG</a></div>
+
+<div class="card"><h2>3 · bg_front.png — the speed (2048×420, transparent)</h2>
+  <p>Motion-streaked scrub, rocks, and dead trees. Ghost-offset blur (no ctx.filter, so it works on every browser). Seamless.</p>
+  <canvas id="c_front" width="2048" height="420"></canvas><a class="dl" id="d_front" download="bg_front.png">DOWNLOAD PNG</a></div>
+
+<div class="card"><h2>5 · payload sprites — 64×64, transparent, pixel-crisp</h2>
+  <p>Stretcher, loaded casualty, supply crate (heart-cross branded), and the site favicon. Icon-scale assets — the game draws its own scene versions.</p>
+  <div style="display:flex;gap:14px;flex-wrap:wrap">
+    <div><canvas id="c_str" width="64" height="64" style="width:96px;height:96px;image-rendering:pixelated"></canvas><br><a class="dl" id="d_str" download="spr_stretcher.png">PNG</a></div>
+    <div><canvas id="c_cas" width="64" height="64" style="width:96px;height:96px;image-rendering:pixelated"></canvas><br><a class="dl" id="d_cas" download="spr_casualty.png">PNG</a></div>
+    <div><canvas id="c_cr8" width="64" height="64" style="width:96px;height:96px;image-rendering:pixelated"></canvas><br><a class="dl" id="d_cr8" download="spr_crate.png">PNG</a></div>
+    <div><canvas id="c_ico" width="64" height="64" style="width:96px;height:96px;image-rendering:pixelated"></canvas><br><a class="dl" id="d_ico" download="favicon_64.png">PNG</a></div>
+  </div></div>
+
+<div class="card"><h2>4 · promo_banner.png — OG / social share (1200×630)</h2>
+  <p>Full composite: sky stack, corridor strip with DZ band, plane silhouette, title. Drop straight into the repo README and og:image tag.</p>
+  <canvas id="c_banner" width="1200" height="630"></canvas><a class="dl" id="d_banner" download="medevac_frontier_banner.png">DOWNLOAD PNG</a></div>
+
+<script>
+"use strict";
+const SKY_FAR = [0.34,0.4,0.47,0.55,0.65,0.75,0.82,0.9,0.97,0.92,0.98,0.89,0.98,0.89,0.98,0.92,0.97,0.96,0.95,0.94,0.87,0.86,0.81,0.31,0.1,0.1,0.1,0.29,0.26,0.27,0.27,0.28,0.28,0.33,0.49,0.5,0.5,0.5,0.51,0.31,0.32,0.32,0.32,0.33,0.33,0.55,0.55,0.55,0.54,0.54,0.54,0.54,0.51,0.49,0.48,0.46,0.46,0.46,0.47,0.49,0.53,0.54,0.56,0.56,0.4,0.4,0.65,0.66,0.67,0.67,0.67,0.66,0.66,0.66,0.67,0.66,0.64,0.21,0.23,0.23,0.25,0.28,0.3,0.32,0.34,0.35,0.35,0.34,0.34,0.32,0.32,0.34,0.37,0.41,0.44,0.57];
+const SKY_MID = [0.97,0.82,0.73,0.63,0.57,0.5,0.43,0.36,0.3,0.3,0.34,0.34,0.34,0.34,0.35,0.35,0.35,0.35,0.36,0.36,0.36,0.35,0.35,0.36,0.37,0.39,0.4,0.42,0.43,0.44,0.45,0.46,0.46,0.46,0.46,0.45,0.45,0.47,0.49,0.51,0.59,0.59,0.6,0.61,0.62,0.63,0.64,0.65,0.66,0.67,0.69,0.71,0.73,0.73,0.73,0.73,0.81,0.82,0.83,0.85,0.86,0.88,0.89,0.91,0.92,0.94,0.95,0.97,0.94,0.97,0.92,0.98,0.89,0.98,0.89,0.98,0.92,0.89,0.85,0.74,0.7,0.7,0.97,0.91,0.98,0.88,0.98,0.9,0.97,0.93,0.94,0.91,0.88,0.88,0.89,0.89];
+const PAL = { skyTop:'#161d3d', skyMid:'#3d2f57', skyLow:'#8a4a33', far:'#241c34', midR:'#33203a',
+  rim:'rgba(201,122,62,0.38)', scrub:'#241812', strip:'#6d5740' };
+const hash = n => { const s = Math.sin(n*127.1)*43758.5453; return s - Math.floor(s); };
+
+function ridgePath(g, sk, w, h, yBase, amp){
+  const n = sk.length;
+  g.beginPath(); g.moveTo(0, yBase + 2);
+  for(let i = 0; i <= n; i++) g.lineTo(i/n*w, yBase - sk[i % n]*amp);
+  g.lineTo(w, yBase + 2); g.closePath();
+}
+function ridgeStroke(g, sk, w, yBase, amp){        // rim light on the ridge line ONLY (separate path)
+  const n = sk.length;
+  g.beginPath();
+  for(let i = 0; i <= n; i++){ const X = i/n*w, Y = yBase - sk[i % n]*amp;
+    if(i) g.lineTo(X, Y); else g.moveTo(X, Y); }
+  g.stroke();
+}
+
+function drawSky(c){
+  const g = c.getContext('2d'), w = c.width, h = c.height;
+  const gr = g.createLinearGradient(0, 0, 0, h);
+  gr.addColorStop(0, PAL.skyTop); gr.addColorStop(0.52, PAL.skyMid); gr.addColorStop(1, PAL.skyLow);
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  const gl = g.createRadialGradient(w*0.42, h*0.98, 10, w*0.42, h*0.98, w*0.4);
+  gl.addColorStop(0, 'rgba(246,178,90,.4)'); gl.addColorStop(1, 'rgba(246,178,90,0)');
+  g.fillStyle = gl; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#fff';
+  for(let i = 0; i < 130; i++){ g.globalAlpha = 0.15 + hash(i)*0.6;
+    g.fillRect(hash(i*3.1)*w, hash(i*7.7)*h*0.6, 2.4, 2.4); }
+  g.globalAlpha = 1;
+  g.fillStyle = PAL.far; ridgePath(g, SKY_FAR, w, h, h, h*0.22); g.fill();
+  g.strokeStyle = PAL.rim; g.lineWidth = 2.4; ridgeStroke(g, SKY_FAR, w, h, h*0.22);
+}
+function drawMid(c){
+  const g = c.getContext('2d'), w = c.width, h = c.height;
+  g.clearRect(0, 0, w, h);
+  g.fillStyle = PAL.midR; ridgePath(g, SKY_MID, w, h, h, h*0.9); g.fill();
+  g.strokeStyle = PAL.rim; g.lineWidth = 3; ridgeStroke(g, SKY_MID, w, h, h*0.9);
+}
+function sweeperShape(g, kind, x, y, s){
+  g.fillStyle = PAL.scrub; g.strokeStyle = PAL.scrub;
+  if(kind === 0){
+    g.beginPath(); g.arc(x, y, 16*s, Math.PI, 0); g.arc(x-14*s, y, 10*s, Math.PI, 0); g.arc(x+14*s, y, 10*s, Math.PI, 0); g.fill();
+    g.lineWidth = 2*s; g.beginPath();
+    for(let b = -2; b <= 2; b++){ g.moveTo(x+b*5*s, y-10*s); g.lineTo(x+b*9*s, y-26*s); } g.stroke();
+  } else if(kind === 1){
+    g.beginPath(); g.moveTo(x-20*s, y); g.lineTo(x-8*s, y-18*s); g.lineTo(x+8*s, y-22*s); g.lineTo(x+20*s, y); g.closePath(); g.fill();
+  } else {
+    g.lineWidth = 3.4*s; g.beginPath();
+    g.moveTo(x, y); g.lineTo(x+2*s, y-30*s);
+    g.moveTo(x+1*s, y-16*s); g.lineTo(x+12*s, y-26*s);
+    g.moveTo(x+1.4*s, y-22*s); g.lineTo(x-9*s, y-32*s); g.stroke();
+  }
+}
+function drawFront(c){
+  const g = c.getContext('2d'), w = c.width, h = c.height;
+  g.clearRect(0, 0, w, h);
+  for(let i = 0; i < 34; i++){
+    const x = hash(i*1.7)*w, y = h*0.55 + hash(i*3.3)*h*0.42;
+    const s = (0.8 + hash(i*5.9)*1.6) * (h/420), kind = Math.floor(hash(i*9.1)*3);
+    for(const dx of [-w, 0, w]){                                   // wraparound = seamless tile
+      for(let k = 0; k < 3; k++){                                  // ghost-offset speed blur
+        g.globalAlpha = [0.6, 0.3, 0.15][k];
+        sweeperShape(g, kind, x + dx - k*9*s, y, s);
+      }
+    }
+  }
+  g.globalAlpha = 1;
+}
+function drawBanner(c){
+  const g = c.getContext('2d'), w = c.width, h = c.height;
+  const gr = g.createLinearGradient(0, 0, 0, h*0.62);
+  gr.addColorStop(0, PAL.skyTop); gr.addColorStop(0.55, PAL.skyMid); gr.addColorStop(1, PAL.skyLow);
+  g.fillStyle = gr; g.fillRect(0, 0, w, h*0.62);
+  const gl = g.createRadialGradient(w*0.5, h*0.60, 10, w*0.5, h*0.60, w*0.42);
+  gl.addColorStop(0, 'rgba(246,178,90,.45)'); gl.addColorStop(1, 'rgba(246,178,90,0)');
+  g.fillStyle = gl; g.fillRect(0, 0, w, h*0.62);
+  g.fillStyle = '#fff';
+  for(let i = 0; i < 60; i++){ g.globalAlpha = 0.15 + hash(i)*0.5;
+    g.fillRect(hash(i*3.1)*w, hash(i*7.7)*h*0.3, 1.8, 1.8); }
+  g.globalAlpha = 1;
+  g.fillStyle = PAL.far;  ridgePath(g, SKY_FAR, w, h, h*0.60, h*0.16); g.fill();
+  g.fillStyle = PAL.midR; ridgePath(g, SKY_MID, w, h, h*0.62, h*0.13); g.fill();
+  // Valley floor + converging strip with DZ band
+  const fg = g.createLinearGradient(0, h*0.60, 0, h);
+  fg.addColorStop(0, '#4a3a2c'); fg.addColorStop(1, '#1c140c');
+  g.fillStyle = fg; g.fillRect(0, h*0.60, w, h*0.40);
+  g.fillStyle = PAL.strip;
+  g.beginPath(); g.moveTo(w*0.46, h*0.62); g.lineTo(w*0.54, h*0.62); g.lineTo(w*0.72, h); g.lineTo(w*0.28, h); g.closePath(); g.fill();
+  for(const [t0, t1, col] of [[0.55, 0.63, '#e0793a'], [0.63, 0.71, '#eceeec']]){
+    g.fillStyle = col; g.globalAlpha = 0.75;
+    const y0 = h*(0.62 + 0.38*t0), y1 = h*(0.62 + 0.38*t1);
+    const half = t => w*(0.04 + 0.18*t);
+    g.beginPath(); g.moveTo(w*0.5 - half(t0), y0); g.lineTo(w*0.5 + half(t0), y0);
+    g.lineTo(w*0.5 + half(t1), y1); g.lineTo(w*0.5 - half(t1), y1); g.closePath(); g.fill();
+  }
+  g.globalAlpha = 1;
+  // Canyon flanks framing the shot
+  for(const side of [-1, 1]){
+    g.fillStyle = '#1f150e';
+    g.beginPath();
+    const x0 = side < 0 ? 0 : w;
+    g.moveTo(x0, h); g.lineTo(x0, h*0.18);
+    for(let k = 0; k <= 5; k++){
+      const fx = side < 0 ? (k/5)*w*0.22 : w - (k/5)*w*0.22;
+      g.lineTo(fx, h*(0.18 + 0.09*hash(k*7 + side*3)) + k*h*0.06);
+    }
+    g.lineTo(side < 0 ? w*0.22 : w*0.78, h); g.closePath(); g.fill();
+  }
+  // Plane silhouette climbing out
+  g.save(); g.translate(w*0.70, h*0.30); g.rotate(-0.16); g.scale(1.15, 1.15);
+  g.fillStyle = '#10131c';
+  g.beginPath(); g.moveTo(-70, 0); g.quadraticCurveTo(-74, -8, -58, -11);
+  g.lineTo(56, -9); g.quadraticCurveTo(72, -22, 78, -22); g.lineTo(80, -6);
+  g.quadraticCurveTo(60, 8, 30, 9); g.lineTo(-52, 9); g.quadraticCurveTo(-68, 7, -70, 0);
+  g.closePath(); g.fill();
+  g.fillRect(-38, -26, 86, 5);                      // wing
+  g.beginPath(); g.moveTo(62, -20); g.lineTo(69, -42); g.lineTo(78, -42); g.lineTo(75, -20); g.closePath(); g.fill();
+  g.restore();
+  // Title — stencil, manual letterspacing
+  const title = 'MEDEVAC FRONTIER';
+  g.font = '900 92px Impact, "Arial Narrow", sans-serif';
+  g.textBaseline = 'alphabetic';
+  let tw = 0; for(const ch of title) tw += g.measureText(ch).width + 10;
+  let tx = (w - tw)/2;
+  g.fillStyle = '#f3ead8';
+  g.shadowColor = 'rgba(0,0,0,.85)'; g.shadowBlur = 14; g.shadowOffsetY = 4;
+  for(const ch of title){ g.fillText(ch, tx, h*0.30); tx += g.measureText(ch).width + 10; }
+  g.shadowBlur = 0; g.shadowOffsetY = 0;
+  g.font = '700 24px ui-monospace, Menlo, monospace';
+  g.fillStyle = '#f2a24a'; g.textAlign = 'center';
+  g.fillText('LAND · EXTRACT · GET AIRBORNE', w/2, h*0.30 + 44);
+  g.font = '700 21px ui-monospace, Menlo, monospace';
+  g.fillStyle = '#b9e6cd';
+  g.fillText('play free at madebymatt.uk', w/2, h*0.93);
+  g.textAlign = 'start';
+}
+
+function drawStretcher(c){
+  const g = c.getContext('2d'); g.clearRect(0,0,64,64);
+  g.fillStyle = '#4a4a4a'; g.fillRect(8, 18, 48, 4); g.fillRect(8, 42, 48, 4);
+  g.fillStyle = '#6a6448'; g.fillRect(14, 20, 36, 24);
+  g.fillStyle = 'rgba(0,0,0,0.2)'; g.fillRect(14, 40, 36, 4);
+}
+function drawCasualty(c){
+  drawStretcher(c);
+  const g = c.getContext('2d');
+  g.fillStyle = '#d9b08c'; g.beginPath(); g.arc(20, 32, 6, 0, Math.PI*2); g.fill();
+  g.fillStyle = '#e8402f'; g.fillRect(26, 22, 22, 20);      // thermal blanket
+  g.fillStyle = '#c53020'; g.fillRect(26, 38, 22, 4);
+  g.fillStyle = '#222'; g.fillRect(30, 18, 2, 28); g.fillRect(42, 18, 2, 28);
+}
+function heartCross(g, cx, cy, k){
+  g.fillStyle = '#c9342a';
+  g.beginPath(); g.moveTo(cx, cy - 7*k);
+  g.bezierCurveTo(cx + 8*k, cy - 17*k, cx + 20*k, cy - 8*k, cx, cy + 12*k);
+  g.bezierCurveTo(cx - 20*k, cy - 8*k, cx - 8*k, cy - 17*k, cx, cy - 7*k);
+  g.fill();
+  g.fillStyle = '#fff';
+  g.fillRect(cx - 2.4*k, cy - 10*k, 4.8*k, 15*k);
+  g.fillRect(cx - 7.5*k, cy - 4.9*k, 15*k, 4.8*k);
+}
+function drawCrateSpr(c){
+  const g = c.getContext('2d'); g.clearRect(0,0,64,64);
+  g.fillStyle = '#3f4a36'; g.fillRect(12, 16, 40, 32);
+  g.fillStyle = '#2c3525';
+  g.fillRect(16, 16, 4, 32); g.fillRect(44, 16, 4, 32);
+  g.fillRect(12, 20, 40, 4); g.fillRect(12, 40, 40, 4);
+  g.fillStyle = '#eceeec'; g.fillRect(24, 24, 16, 16);
+  heartCross(g, 32, 32, 0.55);
+}
+function drawFavicon(c){
+  const g = c.getContext('2d');
+  g.fillStyle = '#3f4a36'; g.fillRect(0, 0, 64, 64);
+  g.fillStyle = '#2c3525';
+  g.fillRect(0, 0, 64, 6); g.fillRect(0, 58, 64, 6);
+  g.fillRect(4, 0, 5, 64); g.fillRect(55, 0, 5, 64);
+  g.fillStyle = '#59684c'; g.fillRect(0, 6, 64, 2);
+  g.fillStyle = '#eceeec'; g.fillRect(15, 15, 34, 34);
+  g.fillStyle = 'rgba(60,64,60,.4)'; g.fillRect(15, 46, 34, 3);
+  heartCross(g, 32, 32, 0.9);
+}
+function initStudio(){
+  const jobs = [['c_sky', 'd_sky', drawSky], ['c_mid', 'd_mid', drawMid],
+                ['c_front', 'd_front', drawFront], ['c_banner', 'd_banner', drawBanner],
+                ['c_str', 'd_str', drawStretcher], ['c_cas', 'd_cas', drawCasualty],
+                ['c_cr8', 'd_cr8', drawCrateSpr], ['c_ico', 'd_ico', drawFavicon]];
+  for(const [cid, did, fn] of jobs){
+    const c = document.getElementById(cid);
+    fn(c);
+    try{ document.getElementById(did).href = c.toDataURL('image/png'); }catch(e){}
+  }
+}
+if(typeof document !== 'undefined' && document.getElementById) initStudio();
+</script>
+</body>
+</html>
