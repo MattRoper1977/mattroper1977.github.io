@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Made by Matt — lessons, apps &amp; games</title>
+<meta name="description" content="Lessons, apps and games — built one file at a time in Teesside.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='9' fill='%230D1B2E'/%3E%3Ccircle cx='20' cy='16' r='7' fill='%23FFD76A'/%3E%3Cellipse cx='20' cy='27' rx='11' ry='4' fill='%23F6F9FD'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --day-sky:#8FBFE8; --day-sky-hi:#BAD9F2;
+  --cloud:#F6F9FD;
+  --night:#0D1B2E; --night-hi:#16304F;
+  --gold:#FFD76A;
+  --ink:#16233B;
+  --radius:26px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:'Space Grotesk',system-ui,sans-serif;
+  color:var(--ink);
+  background:linear-gradient(180deg,var(--day-sky-hi) 0%,var(--day-sky) 100%);
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  overflow-x:hidden;
+}
+
+/* ---------- ambient sky ---------- */
+.sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.cloud{
+  position:absolute;background:var(--cloud);border-radius:999px;
+  opacity:.85;filter:blur(1px);
+  animation:drift linear infinite;
+}
+.cloud::before,.cloud::after{
+  content:"";position:absolute;background:inherit;border-radius:999px;
+}
+.cloud::before{width:55%;height:130%;top:-60%;left:18%}
+.cloud::after{width:40%;height:100%;top:-40%;right:14%}
+.c1{width:220px;height:56px;top:12%;left:-260px;animation-duration:95s}
+.c2{width:150px;height:40px;top:30%;left:-180px;animation-duration:120s;animation-delay:-40s}
+.c3{width:280px;height:66px;top:64%;left:-320px;animation-duration:140s;animation-delay:-80s;opacity:.7}
+.c4{width:110px;height:30px;top:80%;left:-140px;animation-duration:105s;animation-delay:-20s;opacity:.6}
+@keyframes drift{to{transform:translateX(calc(100vw + 400px))}}
+
+/* ---------- header ---------- */
+header{position:relative;z-index:2;text-align:center;padding:clamp(2.2rem,6vh,4rem) 1.2rem 1rem}
+.wordmark{
+  font-family:'Fraunces',serif;font-weight:650;
+  font-size:clamp(2.6rem,7vw,4.6rem);
+  letter-spacing:-.015em;line-height:1.05;
+}
+.wordmark .by{font-weight:500;font-style:italic}
+.strap{margin-top:.7rem;font-size:clamp(.95rem,2.2vw,1.1rem);color:#2c3e5c}
+.strap b{font-weight:600}
+
+/* ---------- the two doors ---------- */
+main{
+  position:relative;z-index:2;flex:1;
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:clamp(.9rem,2.4vw,1.6rem);
+  width:min(1240px,94vw);margin:clamp(1.2rem,4vh,2.6rem) auto;
+  align-items:stretch;
+}
+.door{
+  position:relative;display:flex;flex-direction:column;justify-content:flex-end;
+  min-height:clamp(340px,52vh,460px);
+  border-radius:var(--radius);
+  padding:2rem 1.8rem 1.8rem;
+  text-decoration:none;color:inherit;
+  border:3px solid rgba(255,255,255,.65);
+  box-shadow:0 18px 50px rgba(13,27,46,.22);
+  overflow:hidden;
+  transition:transform .35s cubic-bezier(.2,.8,.3,1),box-shadow .35s;
+  outline-offset:4px;
+}
+.door:hover,.door:focus-visible{transform:translateY(-8px);box-shadow:0 28px 64px rgba(13,27,46,.3)}
+.door:focus-visible{outline:3px solid var(--gold)}
+
+/* day door */
+.door.day{background:linear-gradient(180deg,#A9D0F0 0%,#7FB2E0 70%,#6FA6D8 100%)}
+.door.day .scene{position:absolute;inset:0;pointer-events:none}
+.mini-cloud{position:absolute;background:var(--cloud);border-radius:999px;animation:bob 6s ease-in-out infinite}
+.mini-cloud::before{content:"";position:absolute;background:inherit;border-radius:999px;width:60%;height:140%;top:-70%;left:20%}
+.m1{width:120px;height:34px;top:16%;left:10%}
+.m2{width:80px;height:24px;top:34%;right:12%;animation-delay:-3s}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.sun{
+  position:absolute;top:11%;right:20%;width:58px;height:58px;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,#FFF3C4,var(--gold));
+  box-shadow:0 0 44px 12px rgba(255,215,106,.55);
+}
+
+/* dusk door */
+.door.dusk{
+  background:linear-gradient(180deg,#F9C784 0%,#F2955F 45%,#B65D7E 78%,#5C3A6E 100%);
+  color:#2b1230;
+}
+.door.dusk .strapline{color:#47203f}
+.setting-sun{
+  position:absolute;top:34%;left:50%;transform:translateX(-50%);
+  width:70px;height:70px;border-radius:50%;
+  background:radial-gradient(circle at 45% 40%,#FFF0C0,#FFB25E);
+  box-shadow:0 0 48px 14px rgba(255,178,94,.55);
+}
+.horizon{
+  position:absolute;left:0;right:0;top:calc(34% + 35px);height:44%;
+  background:linear-gradient(180deg,rgba(92,58,110,.0),rgba(43,18,48,.35));
+}
+.first-star{position:absolute;top:12%;right:22%;width:4px;height:4px;border-radius:50%;
+  background:#fff;animation:twinkle 3.4s ease-in-out infinite}
+.door.dusk .go{background:#FFEDD3;color:#3a1c10}
+
+/* night door */
+.door.night{
+  background:linear-gradient(180deg,#132743 0%,var(--night) 70%,#0A1524 100%);
+  color:#EAF1FA;
+}
+.door.night .strapline{color:#B9CCE4}
+.stars{position:absolute;inset:0;pointer-events:none}
+.star{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;animation:twinkle 3.4s ease-in-out infinite}
+.star.g{background:var(--gold);width:4px;height:4px}
+@keyframes twinkle{0%,100%{opacity:.25}50%{opacity:1}}
+.moon{
+  position:absolute;top:12%;right:18%;width:52px;height:52px;border-radius:50%;
+  background:radial-gradient(circle at 62% 40%,#FFFDF4,#F1E7C8);
+  box-shadow:0 0 36px 8px rgba(255,247,214,.35);
+}
+.moon::after{ /* crescent bite */
+  content:"";position:absolute;top:-6px;left:-10px;width:44px;height:44px;border-radius:50%;
+  background:#12233C;
+}
+
+/* shared door content */
+.door .label{
+  font-size:.78rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  opacity:.85;margin-bottom:.4rem;
+}
+.door h2{
+  font-family:'Fraunces',serif;font-weight:650;
+  font-size:clamp(1.7rem,3.4vw,2.3rem);line-height:1.08;margin-bottom:.55rem;
+}
+.door .strapline{font-size:.98rem;line-height:1.45;max-width:34ch;color:#22355a}
+.door .go{
+  margin-top:1.15rem;display:inline-flex;align-items:center;gap:.45rem;
+  font-weight:600;font-size:.95rem;
+  background:rgba(255,255,255,.92);color:var(--ink);
+  padding:.62rem 1.05rem;border-radius:999px;width:max-content;
+  box-shadow:0 4px 14px rgba(13,27,46,.18);
+  transition:gap .25s;
+}
+.door:hover .go,.door:focus-visible .go{gap:.75rem}
+.door.night .go{background:var(--gold);color:#231a00}
+
+
+/* ---------- framed image (The Human Condition) ---------- */
+.frame{
+  position:absolute;top:9%;left:50%;transform:translateX(-50%) rotate(-1.5deg);
+  width:min(72%,240px);aspect-ratio:4/3;
+  background:#fff;padding:8px 8px 22px;
+  border:2px solid #2b2b2b;border-radius:3px;
+  box-shadow:0 12px 28px rgba(13,27,46,.35);
+}
+.frame img{width:100%;height:100%;object-fit:cover;display:block}
+.door.has-image{justify-content:flex-end}
+.door.has-image .scene .sun,.door.has-image .scene .setting-sun,
+.door.has-image .moon,.door.has-image .horizon{display:none}
+
+/* ---------- footer ---------- */
+footer{
+  position:relative;z-index:2;text-align:center;
+  padding:0 1.2rem clamp(1.6rem,4vh,2.4rem);
+  font-size:.88rem;color:#274066;
+}
+footer a{color:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+footer a:focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:4px}
+.hat{display:inline-block;transition:transform .4s}
+footer:hover .hat{transform:translateY(-6px) rotate(-8deg)}
+
+/* ---------- mobile ---------- */
+@media (max-width:980px){
+  main{grid-template-columns:1fr;width:min(520px,92vw)}
+  .door{min-height:270px}
+}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion:reduce){
+  .cloud,.mini-cloud,.star{animation:none}
+  .door,.door .go,.hat{transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="sky" aria-hidden="true">
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+  <div class="cloud c3"></div>
+  <div class="cloud c4"></div>
+</div>
+
+<header>
+  <h1 class="wordmark">Made <span class="by">by</span> Matt</h1>
+  <p class="strap">Lessons, apps and games — <b>built one file at a time</b> in Teesside.</p>
+</header>
+
+<main id="doors"></main>
+
+<footer>
+  <span class="hat" aria-hidden="true">🎩</span>
+  Single-file HTML · no tracking · hand-built ·
+  <a href="https://github.com/mattroper1977">GitHub</a>
+</footer>
+
+
+<script>
+/* Doors render from site.json when hosted; these defaults are the fallback
+   so the page still works opened as a local file. Edit site.json, not this. */
+const DEFAULT_SITE = {
+  strap: "Lessons, apps and games — <b>built one file at a time</b> in Teesside.",
+  doors: [
+    { theme:"day", label:"For the classroom", title:"Lesson Hub",
+      strap:"Interactive lessons, revision suites and print packs across science, art and more.",
+      cta:"Open the Lesson Hub", href:"https://mattroper1977.github.io/Lessons/", image:"" },
+    { theme:"dusk", label:"For after the work's done", title:"Games Arcade",
+      strap:"Single-file games — earn your minutes, then play.",
+      cta:"Open the Arcade", href:"https://mattroper1977.github.io/Lessons/#arcade", image:"" },
+    { theme:"night", label:"The evening workshop", title:"Matt's Apps",
+      strap:"Studio tools, utilities and experiments — where everything gets built.",
+      cta:"Open Matt's Apps", href:"https://mattroper1977.github.io/Matt-s-Apps-/", image:"" }
+  ]
+};
+
+const SCENES = {
+  day:  '<div class="scene" aria-hidden="true"><div class="sun"></div><div class="mini-cloud m1"></div><div class="mini-cloud m2"></div></div>',
+  dusk: '<div class="scene" aria-hidden="true"><div class="setting-sun"></div><div class="horizon"></div><span class="first-star"></span></div>',
+  night:'<div class="stars" aria-hidden="true">' +
+        [[14,12,0],[22,38,-1],[9,62,-2],[30,80,-.5],[44,22,-2.6],[52,66,-1.7],[38,48,-3],[60,10,-.8]]
+        .map((s,i)=>`<span class="star${i%3===1?' g':''}" style="top:${s[0]}%;left:${s[1]}%;animation-delay:${s[2]}s"></span>`).join('') +
+        '</div><div class="moon" aria-hidden="true"></div>'
+};
+
+function esc(t){const d=document.createElement('div');d.textContent=t??'';return d.innerHTML;}
+
+function renderDoors(site){
+  const main=document.getElementById('doors');
+  main.innerHTML='';
+  if(site.strap){document.querySelector('.strap').innerHTML=site.strap;}
+  (site.doors||[]).forEach(d=>{
+    const a=document.createElement('a');
+    a.className='door '+esc(d.theme||'day')+(d.image?' has-image':'');
+    a.href=d.href||'#';
+    a.innerHTML =
+      (SCENES[d.theme]||'') +
+      (d.image?`<div class="frame" aria-hidden="true"><img src="${esc(d.image)}" alt="" loading="lazy"></div>`:'') +
+      `<span class="label">${esc(d.label)}</span>` +
+      `<h2>${esc(d.title)}</h2>` +
+      `<p class="strapline">${esc(d.strap)}</p>` +
+      `<span class="go">${esc(d.cta||('Open '+d.title))} <span aria-hidden="true">→</span></span>`;
+    main.appendChild(a);
+  });
+}
+
+fetch('site.json',{cache:'no-store'})
+  .then(r=>{if(!r.ok)throw 0;return r.json();})
+  .then(renderDoors)
+  .catch(()=>renderDoors(DEFAULT_SITE));
+</script>
+</body>
+</html>
