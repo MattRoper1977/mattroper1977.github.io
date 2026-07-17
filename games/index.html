@@ -1,15 +1,76 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Games & simulations — Made by Matt</title><meta name="description" content="Every playable Made by Matt experience in one place — games and simulations built for real classrooms."><meta name="theme-color" content="#161D3D"><meta property="og:title" content="Games & simulations — Made by Matt"><meta property="og:description" content="Press play and go — every game and simulation in one place."><meta property="og:url" content="https://madebymatt.uk/games/"><link rel="icon" href="../favicon.svg"><link rel="apple-touch-icon" href="../apple-touch-icon.png"><link rel="stylesheet" href="../styles.css"></head><body><a class="skip" href="#main">Skip to content</a><header class="header"><div class="bar"><a class="brand" href="../index.html"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav" id="nav" aria-label="Main navigation"><a href="./" aria-current="page">Games</a><a href="../Lessons/">Lessons</a><a href="../Matt-s-Apps-/">Apps</a><a href="../index.html#tools">Tools</a><a href="../index.html#resources">Resources</a><a href="../index.html#about">About</a></nav></div></header><main id="main"><section class="hero"><div class="hero-grid"><div><p class="eyebrow">The games shelf</p><h1>Press play <span>and go.</span></h1><p class="lead">Every playable Made by Matt experience in one place — games and simulations built for real classrooms, keyboard-friendly and offline-happy.</p></div></div></section><section id="games-list"><div class="wrap"><div class="section-head"><div><p class="eyebrow">madebymatt.uk/games</p><h2>Games &amp; simulations.</h2></div><p>New experiences join this shelf through 2026–27. Anything marked available launches straight from its card.</p></div><p class="count" id="count" aria-live="polite">Loading games…</p><div class="cards" id="cards"></div></div></section></main><footer class="footer"><div class="bar"><div class="brand"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></div><span class="muted">Interactive lessons, simulations and games · madebymatt.uk</span></div></footer><script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Games & simulations — Made by Matt</title><meta name="description" content="Every playable Made by Matt experience in one place — the full arcade plus classroom simulations."><meta name="theme-color" content="#161D3D"><meta property="og:title" content="Games & simulations — Made by Matt"><meta property="og:description" content="Press play and go — the whole games shelf in one place."><meta property="og:url" content="https://madebymatt.uk/games/"><link rel="icon" href="../favicon.svg"><link rel="apple-touch-icon" href="../apple-touch-icon.png"><link rel="stylesheet" href="../styles.css"><style>
+/* shelf-only additions, house tokens throughout */
+.gfilters{display:flex;gap:.55rem;flex-wrap:wrap;align-items:center;margin:1rem 0 1.2rem}
+.gfilters input{flex:1 1 240px;padding:.85rem;border:1px solid #161d3d30;border-radius:12px;background:#fff;font:inherit}
+.tagbtn{border:1px solid #161d3d2b;background:#fff;color:#161D3D;border-radius:99px;padding:.5rem .85rem;font-weight:750;font-size:.78rem;cursor:pointer}
+.tagbtn[aria-pressed="true"]{background:#161D3D;color:#E8E2D4;border-color:#161D3D}
+.surprise{border:none;background:#F2A24A;color:#161D3D;border-radius:99px;padding:.55rem 1rem;font-weight:850;font-size:.8rem;cursor:pointer}
+.gicon{font-size:1.9rem;line-height:1}
+.card .gicon{display:block;margin-bottom:.35rem}
+.card a.play{display:inline-flex;border-radius:99px;padding:.5rem .9rem;background:#F2A24A;color:#161D3D;text-decoration:none;font-weight:850;font-size:.8rem}
+.herochips .chip{border-color:#F2A24A88;color:#F2A24A;background:#F2A24A14}
+</style></head><body><a class="skip" href="#main">Skip to content</a><header class="header"><div class="bar"><a class="brand" href="../index.html"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav" id="nav" aria-label="Main navigation"><a href="./" aria-current="page">Games</a><a href="../Lessons/">Lessons</a><a href="../Matt-s-Apps-/">Apps</a><a href="../index.html#tools">Tools</a><a href="../index.html#resources">Resources</a><a href="../index.html#about">About</a></nav></div></header><main id="main"><section class="hero"><div class="hero-grid"><div><p class="eyebrow">The games shelf</p><h1>Press play <span>and go.</span></h1><p class="lead">The full arcade and every classroom simulation, all in one place — keyboard-friendly, offline-happy, built one game at a time.</p></div><div id="hero-game"></div></div></section><section id="games-list"><div class="wrap"><div class="section-head"><div><p class="eyebrow">madebymatt.uk/games</p><h2>Pick your game.</h2></div><p id="count" aria-live="polite">Loading the shelf…</p></div><div class="gfilters" role="search"><input id="q" type="search" placeholder="Search the shelf…" aria-label="Search games"><span id="tags"></span><button class="surprise" id="surprise" type="button">🎲 Surprise me</button></div><div class="cards" id="cards"></div></div></section></main><footer class="footer"><div class="bar"><div class="brand"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></div><span class="muted">Interactive lessons, simulations and games · madebymatt.uk</span></div></footer><script>
 const $=s=>document.querySelector(s);
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const isGame=r=>["Game","Simulation"].includes(r.type)||(r.tags||[]).some(t=>/game/i.test(t));
-function card(r){
-  const link=r.path?`<a href="../${r.path}">Play now →</a>`:'<span class="muted">Coming soon</span>';
-  return `<article class="card" style="--accent:${r.accent}"><div class="kind">${esc(r.type)} · ${esc(r.subject)}</div><h3>${esc(r.title)}</h3><p>${esc(r.description)}</p><div class="chips"><span class="chip">${esc(r.age)}</span><span class="chip">${esc(r.duration)}</span></div><div class="foot"><span class="badge">${esc(r.status)}</span>${link}</div></article>`;
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* keep visitors on madebymatt.uk: same account, same domain */
+const local=u=>String(u||"").replace(/^https?:\/\/mattroper1977\.github\.io/i,"");
+const state={all:[],tag:"",q:""};
+
+function gameCard(g){
+  const href=local(g.href);
+  const link=href?`<a class="play" href="${esc(href)}">Play now →</a>`:'<span class="muted">Coming soon</span>';
+  return `<article class="card" style="--accent:${esc(g.hue||"#F2A24A")}"><span class="gicon" aria-hidden="true">${esc(g.icon||"🎮")}</span><div class="kind">${esc(g.tag)}</div><h3>${esc(g.title)}</h3><p>${esc(g.desc)}</p><div class="foot"><span class="badge">${esc(g.source)}</span>${link}</div></article>`;
 }
-fetch('../data/resources.json').then(r=>r.json()).then(a=>{
-  const g=a.filter(isGame);
-  $('#cards').innerHTML=g.map(card).join('')||'<p>The shelf is being stocked — check back soon.</p>';
-  $('#count').textContent=`${g.length} game${g.length===1?'':'s'} on the shelf`;
-}).catch(()=>{$('#count').textContent='Could not load the games list — try a refresh.'});
-$('#menu').addEventListener('click',()=>{const n=$('#nav'),o=n.classList.toggle('open');$('#menu').setAttribute('aria-expanded',o)});
+function render(){
+  const q=state.q.toLowerCase();
+  const a=state.all.filter(g=>(!state.tag||g.tag===state.tag)&&(!q||(g.title+" "+g.desc+" "+g.tag).toLowerCase().includes(q)));
+  $("#cards").innerHTML=a.map(gameCard).join("")||"<p>No games match — try clearing the filters.</p>";
+  $("#count").textContent=`Showing ${a.length} of ${state.all.length} games & simulations`;
+}
+function renderTags(){
+  const tags=[...new Set(state.all.map(g=>g.tag))].sort();
+  $("#tags").innerHTML=[`<button class="tagbtn" aria-pressed="${state.tag===""}" data-tag="">All</button>`]
+    .concat(tags.map(t=>`<button class="tagbtn" aria-pressed="${state.tag===t}" data-tag="${esc(t)}">${esc(t)}</button>`)).join(" ");
+  document.querySelectorAll(".tagbtn").forEach(b=>b.addEventListener("click",()=>{state.tag=b.dataset.tag;renderTags();render()}));
+}
+function renderHero(h){
+  if(!h)return;
+  $("#hero-game").innerHTML=`<div style="background:#0e1530;border:1px solid #b9e6cd33;border-radius:22px;padding:1.6rem;max-width:430px;margin:auto">
+    <p class="eyebrow">Now showing</p>
+    <div style="font-size:3rem" aria-hidden="true">${esc(h.icon||"🎮")}</div>
+    <h2 style="margin:.2rem 0 .4rem">${esc(h.title)}</h2>
+    <div class="chips herochips"><span class="chip">${esc(h.tag)}</span><span class="chip">Newest</span></div>
+    <p style="color:#e8e2d4ca">${esc(h.desc)}</p>
+    <div class="actions"><a class="btn primary" href="${esc(local(h.href))}">Play now →</a></div></div>`;
+}
+async function load(){
+  let all=[],hero=null;
+  try{
+    const arc=await fetch("/Games/games.json").then(r=>r.json());
+    for(const g of arc.games||[]){
+      all.push({...g,source:"Arcade"});
+      if(g.hero)hero=g;
+    }
+  }catch(e){/* arcade offline — sims still load */}
+  try{
+    const cat=await fetch("../data/resources.json").then(r=>r.json());
+    for(const r of cat){
+      if((r.type==="Game"||r.type==="Simulation")&&r.path)
+        all.push({icon:"🚁",title:r.title,desc:r.description,href:"../"+r.path,tag:r.type,hue:r.accent,source:"Simulation"});
+    }
+  }catch(e){}
+  state.all=all;
+  renderHero(hero);
+  renderTags();render();
+  if(!all.length)$("#count").textContent="Could not load the shelf — try a refresh.";
+}
+$("#q").addEventListener("input",e=>{state.q=e.target.value;render()});
+$("#surprise").addEventListener("click",()=>{
+  const withLinks=state.all.filter(g=>g.href);
+  if(!withLinks.length)return;
+  const pick=withLinks[Math.floor(Math.random()*withLinks.length)];
+  location.href=local(pick.href);
+});
+$("#menu").addEventListener("click",()=>{const n=$("#nav"),o=n.classList.toggle("open");$("#menu").setAttribute("aria-expanded",o)});
+load();
 </script></body></html>
