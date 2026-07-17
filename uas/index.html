@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UAS Register — the AQA Unit Award Scheme tool · Matt's Apps</title>
+<meta name="description" content="Register, evidence and claim AQA Unit Award Scheme units in one place. Import an outcome sheet, tap to stamp outcomes, snap work examples, download the whole evidence pack as one PDF.">
+<style>
+:root{
+  --aqa:#3f2a56;--aqa-mid:#5c4380;--lilac:#e9e5f2;--lilac-line:#cfc6e0;
+  --paper:#faf9fc;--ink:#241b33;--stamp:#1c7a4c;--stamp-bg:#e3f3ea;--gold:#b8860b;
+  --serif:"Iowan Old Style",Georgia,"Times New Roman",serif;
+  --sans:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);line-height:1.5}
+a{color:var(--aqa-mid)}
+.wrap{max-width:900px;margin:0 auto;padding:0 18px}
+
+/* hero */
+header{background:var(--aqa);color:#fff;padding:48px 0 56px;position:relative;overflow:hidden}
+.badge{display:inline-block;background:#fff;color:var(--aqa);font-weight:800;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;border-radius:999px;padding:6px 16px;margin-bottom:16px}
+.badge span{color:var(--gold)}
+h1{font-family:var(--serif);font-size:clamp(2rem,6vw,3.2rem);line-height:1.08;max-width:640px}
+.tag{font-size:1.05rem;opacity:.88;max-width:560px;margin:14px 0 26px}
+.cta{display:inline-block;background:#fff;color:var(--aqa);font-weight:800;font-size:1.05rem;text-decoration:none;border-radius:12px;padding:14px 28px;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.cta:hover{transform:translateY(-1px)}
+.cta small{display:block;font-weight:400;font-size:.72rem;opacity:.7}
+/* the stamp — signature element */
+.stamp{position:absolute;right:-10px;top:38px;border:4px solid var(--stamp);color:var(--stamp);background:var(--stamp-bg);
+  font-family:var(--sans);font-weight:800;letter-spacing:.06em;border-radius:10px;padding:10px 18px;font-size:1rem;
+  transform:rotate(-8deg);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.stamp b{display:block;font-size:1.25rem}
+@media (max-width:760px){.stamp{position:static;display:inline-block;margin-top:22px;transform:rotate(-3deg)}}
+@media (prefers-reduced-motion:no-preference){
+  .stamp{animation:stampin .4s .25s ease-out backwards}
+  @keyframes stampin{from{transform:rotate(-8deg) scale(1.6);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}
+  @media (max-width:760px){@keyframes stampin{from{transform:rotate(-3deg) scale(1.6);opacity:0}to{transform:rotate(-3deg) scale(1);opacity:1}}}
+}
+
+/* flow strip */
+.flow{background:var(--lilac);border-bottom:1px solid var(--lilac-line);padding:20px 0}
+.flow .wrap{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-weight:600;font-size:.92rem;color:var(--aqa)}
+.flow .step{background:#fff;border:1px solid var(--lilac-line);border-radius:999px;padding:7px 15px}
+.flow .arr{color:var(--aqa-mid)}
+
+/* features */
+section{padding:40px 0}
+h2{font-family:var(--serif);color:var(--aqa);font-size:1.5rem;margin-bottom:18px}
+.feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:#fff;border:1px solid var(--lilac-line);border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(36,27,51,.10)}
+.card h3{font-family:var(--serif);color:var(--aqa);font-size:1.05rem;margin-bottom:6px}
+.card p{font-size:.9rem;color:#4a4060}
+.card .ref{display:inline-block;background:var(--lilac);color:var(--aqa);font-weight:700;font-size:.78rem;border-radius:5px;padding:2px 8px;margin-top:8px}
+
+/* honest bit + footer */
+.note{background:#fff;border:1px solid var(--lilac-line);border-left:5px solid var(--gold);border-radius:10px;padding:16px 18px;font-size:.92rem}
+footer{background:var(--aqa);color:#fff;padding:26px 0;margin-top:40px;font-size:.85rem}
+footer a{color:#fff}
+.foot-cta{text-align:center;padding:10px 0 40px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="badge">★ <span>Super Teacher Tool</span> · New for 2026–27</div>
+    <h1>UAS Register</h1>
+    <p class="tag">Register, evidence and claim AQA Unit Award Scheme units in one place — built by a teacher who was sick of doing it in four.</p>
+    <a class="cta" href="app.html">Open UAS Register<small>free · runs in your browser · nothing uploaded anywhere</small></a>
+    <div class="stamp" aria-hidden="true">READY FOR<b>SEPTEMBER ✓</b></div>
+  </div>
+</header>
+
+<div class="flow" aria-label="How it works">
+  <div class="wrap">
+    <span class="step">1 · Import the outcome sheet</span><span class="arr">→</span>
+    <span class="step">2 · Enrol your class</span><span class="arr">→</span>
+    <span class="step">3 · Tap to stamp outcomes</span><span class="arr">→</span>
+    <span class="step">4 · Snap work examples</span><span class="arr">→</span>
+    <span class="step">5 · Download the pack, email it</span>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h2>What it does</h2>
+    <div class="feat">
+      <div class="card"><h3>Reads the unit for you</h3><p>Paste the AQA sheet, upload the PDF, or point a camera at a photocopy — it finds the unit code, title, level and every outcome, and lets you check before saving.</p></div>
+      <div class="card"><h3>Tap-to-stamp register</h3><p>Pick an outcome, tap a pupil, and today's date is inked against their name. Attendance mode too. The coverage grid shows every gap before you claim.</p></div>
+      <div class="card"><h3>Work examples with real references</h3><p>Snap a photo of the work and it files itself with an AQA-style reference, per outcome, automatically.</p><span class="ref">121766/O3/A</span></div>
+      <div class="card"><h3>The official summary sheet, filled in</h3><p>The genuine AQA landscape summary sheet — centre, unit, learner numbers, dates — completed from your register. It even warns you, by name, if anyone's missing an outcome.</p></div>
+      <div class="card"><h3>One PDF, ready to email</h3><p>Cover page, summary sheet and every work example in a single download, named and ready to attach for your co-ordinator.</p></div>
+      <div class="card"><h3>Yours, privately</h3><p>Everything stays in your browser on your machine — no accounts, no cloud, no pupil data leaving the room. One-click backup keeps it safe.</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="note"><b>Worth knowing:</b> your register lives in this browser on this computer. Export a backup from Settings after big marking sessions — especially before laptops get reimaged over the holidays. The scan reader (OCR) and the PDF download each fetch their engine from the internet the first time they're used; everything else works fully offline.</div>
+  </div>
+</section>
+
+<div class="foot-cta">
+  <a class="cta" style="background:var(--aqa);color:#fff" href="app.html">Start your first unit →</a>
+</div>
+
+<footer>
+  <div class="wrap">Part of <a href="/">Matt's Apps</a> · made by a teacher, for teachers · AQA Unit Award Scheme is a programme of AQA Education; this independent tool just does the paperwork.</div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UAS Register · Matt's Apps</title>
+<style>
+:root{
+  --aqa:#3f2a56;        /* deep AQA purple */
+  --aqa-mid:#5c4380;
+  --lilac:#e9e5f2;      /* sheet header lilac */
+  --lilac-line:#cfc6e0;
+  --paper:#faf9fc;
+  --ink:#241b33;
+  --stamp:#1c7a4c;      /* achieved green */
+  --stamp-bg:#e3f3ea;
+  --amber:#a8641a;      /* attendance amber */
+  --amber-bg:#faeeda;
+  --danger:#a12626;
+  --danger-bg:#f8e5e5;
+  --radius:10px;
+  --shadow:0 1px 3px rgba(36,27,51,.12);
+  --serif:"Iowan Old Style", Georgia, "Times New Roman", serif;
+  --sans:-apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:15px;line-height:1.45}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--ink)}
+h1,h2,h3{font-family:var(--serif);color:var(--aqa);font-weight:700}
+
+/* ===== App chrome ===== */
+header.app{background:var(--aqa);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header.app .brand{font-family:var(--serif);font-size:1.25rem;font-weight:700;letter-spacing:.02em}
+header.app .brand small{display:block;font-family:var(--sans);font-weight:400;font-size:.68rem;opacity:.75;letter-spacing:.08em;text-transform:uppercase}
+nav.tabs{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+nav.tabs button{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;padding:7px 14px;border-radius:999px;font-size:.85rem}
+nav.tabs button[aria-current="true"]{background:#fff;color:var(--aqa);border-color:#fff;font-weight:600}
+nav.tabs button:focus-visible{outline:2px solid #ffd76e;outline-offset:2px}
+main{max-width:1100px;margin:0 auto;padding:20px 16px 80px}
+.view{display:none}
+.view.active{display:block}
+.panel{background:#fff;border:1px solid var(--lilac-line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:16px}
+.panel h2{font-size:1.15rem;margin-bottom:10px}
+.panel h3{font-size:.98rem;margin:14px 0 6px}
+.hint{font-size:.82rem;color:#6b5f80}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.field{display:flex;flex-direction:column;gap:3px}
+.field label{font-size:.75rem;font-weight:600;color:var(--aqa-mid);text-transform:uppercase;letter-spacing:.05em}
+.field input,.field select{border:1px solid var(--lilac-line);border-radius:7px;padding:8px 10px;background:#fff;min-width:0}
+.field input:focus-visible,.field select:focus-visible,textarea:focus-visible{outline:2px solid var(--aqa-mid);outline-offset:1px}
+.btn{background:var(--aqa);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-weight:600;font-size:.9rem}
+.btn:hover{background:var(--aqa-mid)}
+.btn.ghost{background:#fff;color:var(--aqa);border:1px solid var(--aqa-mid)}
+.btn.small{padding:5px 10px;font-size:.8rem;border-radius:6px}
+.btn.danger{background:var(--danger)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:focus-visible{outline:2px solid var(--aqa-mid);outline-offset:2px}
+.tag{display:inline-block;background:var(--lilac);color:var(--aqa);border-radius:5px;padding:1px 8px;font-size:.75rem;font-weight:600}
+.notice{border-radius:8px;padding:10px 12px;font-size:.86rem;margin:10px 0}
+.notice.warn{background:var(--amber-bg);color:var(--amber);border:1px solid #ecd3ac}
+.notice.ok{background:var(--stamp-bg);color:var(--stamp);border:1px solid #bfe3cf}
+.notice.err{background:var(--danger-bg);color:var(--danger);border:1px solid #e8c4c4}
+table.list{width:100%;border-collapse:collapse;font-size:.9rem}
+table.list th{background:var(--lilac);color:var(--aqa);text-align:left;padding:7px 9px;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em}
+table.list td{padding:7px 9px;border-bottom:1px solid var(--lilac)}
+table.list tr:last-child td{border-bottom:none}
+.empty{padding:26px;text-align:center;color:#8a7fa0;font-size:.9rem}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:.85rem;opacity:0;pointer-events:none;transition:opacity .25s;z-index:60}
+.toast.show{opacity:.95}
+
+/* ===== Modal ===== */
+.modal-back{position:fixed;inset:0;background:rgba(36,27,51,.55);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 12px;z-index:50}
+.modal-back.open{display:flex}
+.modal{background:#fff;border-radius:12px;max-width:760px;width:100%;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.modal h2{margin-bottom:8px}
+.modal .close{float:right;background:none;border:none;font-size:1.3rem;color:var(--aqa-mid)}
+.subtabs{display:flex;gap:6px;margin:10px 0;flex-wrap:wrap}
+.subtabs button{border:1px solid var(--lilac-line);background:#fff;color:var(--aqa);border-radius:999px;padding:6px 13px;font-size:.83rem}
+.subtabs button[aria-current="true"]{background:var(--aqa);color:#fff;border-color:var(--aqa);font-weight:600}
+textarea.paste{width:100%;min-height:180px;border:1px solid var(--lilac-line);border-radius:8px;padding:10px;font-family:ui-monospace,Consolas,monospace;font-size:.82rem}
+.drop{border:2px dashed var(--lilac-line);border-radius:10px;padding:26px;text-align:center;color:#6b5f80;font-size:.88rem;margin:8px 0}
+.drop.drag{border-color:var(--aqa-mid);background:var(--lilac)}
+.progressbar{height:8px;background:var(--lilac);border-radius:99px;overflow:hidden;margin:8px 0}
+.progressbar div{height:100%;background:var(--aqa-mid);width:0%;transition:width .2s}
+
+/* ===== Register ===== */
+.mode-toggle{display:flex;border:1px solid var(--aqa-mid);border-radius:999px;overflow:hidden;width:max-content}
+.mode-toggle button{border:none;background:#fff;color:var(--aqa);padding:8px 18px;font-weight:600;font-size:.88rem}
+.mode-toggle button[aria-current="true"].m-out{background:var(--stamp);color:#fff}
+.mode-toggle button[aria-current="true"].m-att{background:var(--amber);color:#fff}
+.outcome-chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.outcome-chips .sec{width:100%;font-size:.72rem;font-weight:700;color:var(--aqa-mid);text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+.outcome-chips button{border:1px solid var(--lilac-line);background:#fff;border-radius:8px;padding:6px 11px;font-size:.85rem;color:var(--ink);max-width:100%;text-align:left}
+.outcome-chips button[aria-current="true"]{background:var(--aqa);border-color:var(--aqa);color:#fff;font-weight:600}
+.outcome-chips button .n{font-weight:700;margin-right:5px}
+.pupil-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-top:12px}
+.pcard{position:relative;border:1.5px solid var(--lilac-line);border-radius:10px;background:#fff;padding:12px 10px 10px;text-align:left;min-height:64px;transition:border-color .15s, background .15s}
+.pcard .pname{font-weight:600;font-size:.95rem}
+.pcard .pstamp{display:none;margin-top:6px;font-size:.74rem;font-weight:700;letter-spacing:.03em;border-radius:5px;padding:2px 7px;width:max-content}
+.pcard.on{border-color:var(--stamp);background:var(--stamp-bg)}
+.pcard.on .pstamp{display:inline-block;background:#fff;border:1.5px solid var(--stamp);color:var(--stamp);transform:rotate(-2deg)}
+.pcard.att.on{border-color:var(--amber);background:var(--amber-bg)}
+.pcard.att.on .pstamp{border-color:var(--amber);color:var(--amber)}
+@media (prefers-reduced-motion: no-preference){
+  .pcard.on .pstamp{animation:stampin .18s ease-out}
+  @keyframes stampin{from{transform:rotate(-2deg) scale(1.35);opacity:.3}to{transform:rotate(-2deg) scale(1);opacity:1}}
+}
+.covgrid-wrap{overflow-x:auto}
+table.covgrid{border-collapse:collapse;font-size:.78rem;margin-top:8px}
+table.covgrid th,table.covgrid td{border:1px solid var(--lilac-line);padding:4px 7px;text-align:center}
+table.covgrid th{background:var(--lilac);color:var(--aqa)}
+table.covgrid td.hit{background:var(--stamp-bg);color:var(--stamp);font-weight:600;cursor:pointer}
+table.covgrid td.miss{cursor:pointer;color:#c8c0d6}
+table.covgrid td.pn{text-align:left;font-weight:600;background:#fff;white-space:nowrap}
+
+/* ===== Summary sheet (screen preview + print) ===== */
+.sheet-scroll{overflow-x:auto;background:#efeaf6;padding:14px;border-radius:8px}
+.ssheet{background:#fff;width:1050px;padding:26px 30px;font-family:var(--serif);color:#111;box-shadow:var(--shadow)}
+.ssheet .sstop{display:flex;justify-content:space-between;align-items:baseline;border-bottom:3px solid var(--aqa);padding-bottom:6px;margin-bottom:10px}
+.ssheet h1{font-size:1.25rem;color:var(--aqa)}
+.ssheet .sssheetno{font-size:.85rem}
+.ssheet .ssmeta{display:flex;justify-content:space-between;gap:20px;font-size:.9rem;margin:6px 0}
+.ssheet .lbl{font-weight:700}
+.ssheet .ccbox{display:inline-block;width:20px;height:22px;border:1px solid #333;text-align:center;line-height:22px;font-size:.85rem;margin-left:2px;vertical-align:middle}
+.ssheet .ssnote{font-size:.75rem;font-style:italic;margin:6px 0}
+table.ssg{border-collapse:collapse;width:100%;font-size:.78rem;font-family:var(--sans)}
+table.ssg th,table.ssg td{border:1px solid #444;padding:3px 5px;text-align:center}
+table.ssg th{background:var(--lilac);font-size:.72rem}
+table.ssg td.sur,table.ssg td.fore{text-align:left;font-size:.82rem}
+table.ssg .vert{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;font-size:.68rem}
+.ssheet .ssconfirm{font-size:.8rem;margin:12px 0 8px}
+.ssheet .sssign{display:flex;justify-content:space-between;gap:30px;font-size:.85rem;margin:10px 0}
+.ssheet .sssign .ln{display:inline-block;border-bottom:1px solid #333;min-width:220px;padding:0 6px;font-family:'Segoe Script','Comic Sans MS',cursive}
+.ssheet .sssign .lnd{display:inline-block;border-bottom:1px solid #333;min-width:110px;padding:0 6px}
+.ssheet .ssfoot{text-align:center;font-size:.72rem;letter-spacing:.25em;margin-top:14px;color:#555}
+@media print{
+  body *{visibility:hidden}
+  #print-zone,#print-zone *{visibility:visible}
+  #print-zone{position:absolute;left:0;top:0;width:100%}
+  .ssheet{width:100%;box-shadow:none;padding:0}
+  .sheet-scroll{background:#fff;padding:0}
+  @page{size:A4 landscape;margin:10mm}
+}
+@media (max-width:640px){
+  main{padding:12px 8px 80px}
+  header.app{padding:8px 10px}
+}
+/* ===== Evidence (work examples) ===== */
+.evstrip{margin-top:14px;border-top:1px dashed var(--lilac-line);padding-top:10px}
+.evstrip h3{margin-top:0}
+.evrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.evthumb{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1.5px solid var(--lilac-line);cursor:pointer;background:var(--lilac)}
+.evthumb:hover{border-color:var(--aqa-mid)}
+.evadd{width:64px;height:64px;border-radius:8px;border:2px dashed var(--aqa-mid);background:#fff;color:var(--aqa-mid);font-size:1.5rem;line-height:1}
+.evref{font-size:.7rem;font-weight:700;color:var(--aqa-mid);text-align:center;margin-top:2px}
+.evcell{display:flex;flex-direction:column;align-items:center}
+.evpreview{max-width:100%;max-height:260px;border-radius:8px;display:block;margin:8px auto}
+.pchips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.pchips button{border:1.5px solid var(--lilac-line);background:#fff;border-radius:999px;padding:5px 12px;font-size:.85rem}
+.pchips button.on{background:var(--stamp-bg);border-color:var(--stamp);color:var(--stamp);font-weight:600}
+.evmeta{font-size:.85rem;margin:6px 0}
+/* pack pages */
+.packpg{background:#fff;font-family:var(--sans);color:#111;padding:20px 24px;page-break-after:always;break-after:page;max-width:760px;margin:0 auto 14px;box-shadow:var(--shadow)}
+.packpg.coverpg{padding:0;position:relative;overflow:hidden}
+.coverbg{width:100%;display:block}
+.covercard{position:absolute;left:9%;right:9%;top:55%;background:rgba(255,255,255,.94);border:2px solid var(--aqa);border-radius:12px;padding:16px 20px}
+.cc-title{font-family:var(--serif);font-size:1.5rem;font-weight:700;color:var(--aqa)}
+.cc-sub{font-size:.95rem;color:var(--aqa-mid);margin:2px 0 10px}
+.cc-line{font-size:.88rem;margin:3px 0}
+.packpg .pkhead{border-bottom:3px solid var(--aqa);padding-bottom:6px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.packpg .pkhead h1{font-size:1.05rem}
+.packpg .pkref{font-family:var(--serif);font-size:1.3rem;font-weight:700;color:var(--aqa)}
+.packpg img{max-width:100%;max-height:150mm;display:block;margin:10px auto;border:1px solid #ccc}
+.packpg .pkout{font-size:.9rem;margin:8px 0}
+.packpg .pkmeta{font-size:.82rem;color:#444}
+@media print{
+  .packpg{box-shadow:none;max-width:none;margin:0}
+}
+</style>
+</head>
+<body>
+
+<header class="app">
+  <div class="brand">UAS Register<small>AQA Unit Award Scheme · Matt's Apps</small></div>
+  <nav class="tabs" aria-label="Sections">
+    <button data-view="pupils" aria-current="true">Pupils</button>
+    <button data-view="units">Units</button>
+    <button data-view="register">Register</button>
+    <button data-view="summary">Summary sheet</button>
+    <button data-view="help">Guide</button>
+    <button data-view="settings">Settings</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ============ PUPILS ============ -->
+<section id="view-pupils" class="view active">
+  <div class="panel">
+    <h2>Add a pupil</h2>
+    <div class="row">
+      <div class="field"><label for="p-fore">Forename</label><input id="p-fore" autocomplete="off"></div>
+      <div class="field"><label for="p-sur">Surname</label><input id="p-sur" autocomplete="off"></div>
+      <div class="field"><label for="p-ln">Learner no (4 digits, optional)</label><input id="p-ln" inputmode="numeric" maxlength="4" style="width:110px"></div>
+      <button class="btn" id="p-add">Add pupil</button>
+    </div>
+    <p class="hint" style="margin-top:6px">Learner numbers appear on the AQA summary sheet. Add them here once and every sheet fills itself in.</p>
+  </div>
+  <div class="panel">
+    <h2>Pupils</h2>
+    <div id="pupil-list"></div>
+  </div>
+</section>
+
+<!-- ============ UNITS ============ -->
+<section id="view-units" class="view">
+  <div class="panel">
+    <h2>Units</h2>
+    <button class="btn" id="u-import">Import an outcome sheet</button>
+    <div id="unit-list" style="margin-top:12px"></div>
+  </div>
+  <div class="panel" id="unit-detail" hidden></div>
+</section>
+
+<!-- ============ REGISTER ============ -->
+<section id="view-register" class="view">
+  <div class="panel">
+    <h2>Register</h2>
+    <div class="row">
+      <div class="field"><label for="r-unit">Unit</label><select id="r-unit"></select></div>
+      <div class="field"><label for="r-date">Date</label><input type="date" id="r-date"></div>
+      <div class="mode-toggle" role="group" aria-label="Register mode">
+        <button class="m-out" id="mode-out" aria-current="true">Outcomes</button>
+        <button class="m-att" id="mode-att" aria-current="false">Attendance</button>
+      </div>
+    </div>
+    <div id="reg-body" style="margin-top:8px"></div>
+  </div>
+  <div class="panel" id="cov-panel" hidden>
+    <h2>Coverage grid</h2>
+    <p class="hint">Tap any cell to stamp or clear it with the date above. Green cells show the stamped date.</p>
+    <div class="covgrid-wrap" id="cov-wrap"></div>
+  </div>
+  <div class="panel" id="sess-panel" hidden>
+    <h2>Saved sessions</h2>
+    <div id="sess-list"></div>
+  </div>
+</section>
+
+<!-- ============ SUMMARY ============ -->
+<section id="view-summary" class="view">
+  <div class="panel">
+    <h2>AQA summary sheet</h2>
+    <div class="row">
+      <div class="field"><label for="s-unit">Unit</label><select id="s-unit"></select></div>
+      <button class="btn ghost" id="s-build">Build sheet</button>
+      <button class="btn ghost" id="s-pack">Build evidence pack</button>
+      <button class="btn" id="s-pdf">Download PDF (for email)</button>
+      <button class="btn ghost" id="s-print" disabled>Print</button>
+    </div>
+    <div id="s-warn"></div>
+  </div>
+  <div class="panel" id="s-preview-panel" hidden>
+    <h2>Preview</h2>
+    <div class="sheet-scroll"><div id="print-zone"></div></div>
+  </div>
+</section>
+
+<!-- ============ GUIDE ============ -->
+<section id="view-help" class="view">
+  <div class="panel">
+    <h2>How to use UAS Register</h2>
+    <p class="hint" style="margin-bottom:10px">The whole flow, start to finish. Steps 1–2 are one-offs; 3–4 happen once per unit; 5–6 are your day-to-day; 7 is what you send off.</p>
+
+    <h3>1 · Set up your centre (once)</h3>
+    <p>Go to <b>Settings</b> and fill in your centre name, centre number and your name as unit teacher. These flow onto every summary sheet, cover page and PDF automatically, so you never type them again.</p>
+
+    <h3>2 · Add your pupils (once)</h3>
+    <p>On the <b>Pupils</b> tab, add each pupil's forename, surname and — if you know it — their 4-digit AQA learner number. The learner number fills the "Number" column on the official summary sheet. You can add it later by pressing <b>Edit</b> next to a pupil.</p>
+
+    <h3>3 · Import a unit</h3>
+    <p>On <b>Units</b>, press <b>Import an outcome sheet</b>. Four routes, most reliable first:</p>
+    <p><b>Paste text</b> — open the AQA unit document in Word, select all, copy, paste. Works offline, reads everything.<br>
+    <b>PDF upload</b> — for PDFs saved straight from Word (real text inside).<br>
+    <b>Scan / photo (OCR)</b> — for photocopies and photos. Slower, needs internet the first time, and only works when the app is opened from the website (not inside a Claude preview).<br>
+    <b>Type it in</b> — blank unit, you type the outcomes yourself.</p>
+    <p>Every route lands on the <b>Check what was read</b> screen. Skim it — fix any misread words, add or remove outcomes — then <b>Save unit</b>.</p>
+
+    <h3>4 · Enrol pupils on the unit</h3>
+    <p>The unit page opens after saving. Tap the name of every pupil doing this unit — cards turn green with an ENROLLED stamp. Only enrolled pupils appear on the register and the summary sheet. Then press <b>Open the register for this unit →</b>.</p>
+
+    <h3>5 · Mark the register (every lesson)</h3>
+    <p>The <b>Register</b> tab has two modes on the toggle:</p>
+    <p><b>Outcomes</b> — pick an outcome chip, then tap each pupil who achieved it today. Tapping stamps the date shown in the date box; tap again to remove it. To backdate, change the date first, then tap. The <b>coverage grid</b> underneath shows every pupil against every outcome — tap any cell there too. Gaps are visible at a glance before you claim.</p>
+    <p><b>Attendance</b> — flip the toggle, tap everyone who's in. It saves as you tap, one session per date, listed below for checking or deleting.</p>
+
+    <h3>6 · Add work examples (as you go)</h3>
+    <p>Press the dashed <b>＋</b> under the pupil names (or next to any outcome on the unit page). Take or choose a photo, add a caption if you like, and untick any pupils it doesn't belong to — everyone starts ticked, which suits group work. Each example gets its own AQA-style reference automatically: <b>121766/O3/A</b>, then /B, /C per outcome. Tap a thumbnail any time to view or delete it.</p>
+
+    <h3>7 · Claim the unit</h3>
+    <p>On <b>Summary sheet</b>, choose the unit, then:</p>
+    <p><b>Build sheet</b> — the official AQA summary sheet, filled from your register. If anyone is missing a date it warns you by name first. Print is A4 landscape.<br>
+    <b>Build evidence pack</b> — cover page plus one page per work example, A4 portrait.<br>
+    <b>Download PDF (for email)</b> — the whole lot in one file: cover, summary sheet and every work example, named ready to attach to an email. This is the one to send.</p>
+
+    <h3>Look after your data</h3>
+    <p>Everything lives in this browser on this computer — nothing is uploaded anywhere. That means a reimaged laptop or a cleared browser takes your register with it. So: <b>Settings → Export backup</b> after any big marking session. The backup includes the photos, and restores on any computer with <b>Import backup</b>.</p>
+
+    <h3>If something won't import</h3>
+    <p>A PDF that "has no text" is a scan — use the OCR tab, or better, paste from the original Word file. If OCR misreads a word, just correct it on the review screen; nothing saves until you press Save unit. And if the reader ever gets a sheet properly wrong, send Matt's Apps a copy of the sheet so the parser can learn it.</p>
+  </div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section id="view-settings" class="view">
+  <div class="panel">
+    <h2>Centre details</h2>
+    <div class="row">
+      <div class="field"><label for="set-centre">Centre name</label><input id="set-centre" placeholder="Progress Schools"></div>
+      <div class="field"><label for="set-cno">Centre number</label><input id="set-cno" maxlength="6" style="width:110px"></div>
+      <div class="field"><label for="set-teacher">Unit teacher (signature)</label><input id="set-teacher" placeholder="Matt Roper"></div>
+      <button class="btn" id="set-save">Save</button>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Backup</h2>
+    <p class="hint">Everything lives in this browser only. Export a backup after big marking sessions, and before anyone reimages the laptop.</p>
+    <div class="row" style="margin-top:8px">
+      <button class="btn ghost" id="bk-export">Export backup (.json)</button>
+      <button class="btn ghost" id="bk-import">Import backup</button>
+      <input type="file" id="bk-file" accept=".json,application/json" hidden>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Danger zone</h2>
+    <button class="btn danger" id="wipe">Delete all data</button>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ IMPORT MODAL ============ -->
+<div class="modal-back" id="imp-back">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="imp-title">
+    <button class="close" id="imp-close" aria-label="Close">&times;</button>
+    <h2 id="imp-title">Import an outcome sheet</h2>
+    <div class="subtabs" role="tablist">
+      <button data-imp="paste" aria-current="true">Paste text</button>
+      <button data-imp="pdf" aria-current="false">PDF upload</button>
+      <button data-imp="ocr" aria-current="false">Scan / photo (OCR)</button>
+      <button data-imp="manual" aria-current="false">Type it in</button>
+    </div>
+
+    <div class="imp-pane" id="imp-paste">
+      <p class="hint">Open the AQA unit document in Word, select all, copy, paste here. The parser finds the unit number, title, level and every numbered outcome.</p>
+      <textarea class="paste" id="paste-box" placeholder="Paste the whole unit sheet here…"></textarea>
+      <div style="margin-top:8px"><button class="btn" id="paste-go">Read it</button></div>
+    </div>
+
+    <div class="imp-pane" id="imp-pdf" hidden>
+      <p class="hint">Works with PDFs that contain real text (made straight from Word). Scans and photos should go through the OCR tab instead. Needs internet the first time, to fetch the PDF reader. If the console mentions a "fake worker", ignore it — the reader just runs a little slower.</p>
+      <div class="drop" id="pdf-drop">Drop a PDF here, or <button class="btn small ghost" id="pdf-pick">choose a file</button></div>
+      <input type="file" id="pdf-file" accept=".pdf,application/pdf" hidden>
+      <div id="pdf-status"></div>
+    </div>
+
+    <div class="imp-pane" id="imp-ocr" hidden>
+      <p class="hint">For scanned PDFs and photos of the sheet. The reader runs in your browser — nothing is uploaded anywhere — but it needs internet the first time to fetch the OCR engine, and takes a minute per page. Check the review screen carefully afterwards. <b>Heads up:</b> this tab does not work in the Claude preview window (the sandbox blocks it) — open the app from your own site to use OCR.</p>
+      <div class="drop" id="ocr-drop">Drop a scanned PDF or photos here, or <button class="btn small ghost" id="ocr-pick">choose files</button></div>
+      <input type="file" id="ocr-file" accept=".pdf,image/*" multiple hidden>
+      <div class="progressbar" id="ocr-prog" hidden><div></div></div>
+      <div id="ocr-status"></div>
+    </div>
+
+    <div class="imp-pane" id="imp-manual" hidden>
+      <p class="hint">No sheet to hand? Start a blank unit and type the outcomes on the review screen.</p>
+      <button class="btn" id="manual-go">Start a blank unit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ REVIEW MODAL ============ -->
+<div class="modal-back" id="rev-back">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rev-title">
+    <button class="close" id="rev-close" aria-label="Close">&times;</button>
+    <h2 id="rev-title">Check what was read</h2>
+    <p class="hint">Fix anything the reader got wrong before saving — especially after OCR.</p>
+    <div class="row" style="margin:10px 0">
+      <div class="field"><label for="rev-code">Unit code</label><input id="rev-code" style="width:110px"></div>
+      <div class="field" style="flex:1;min-width:220px"><label for="rev-titlein">Unit title</label><input id="rev-titlein"></div>
+      <div class="field"><label for="rev-level">Level</label><input id="rev-level" style="width:150px"></div>
+    </div>
+    <h3>Outcomes</h3>
+    <div id="rev-outs"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn small ghost" id="rev-add">Add outcome</button>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn" id="rev-save">Save unit</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<input type="file" id="ev-file" accept="image/*" hidden>
+
+<!-- ============ ADD WORK EXAMPLE MODAL ============ -->
+<div class="modal-back" id="evadd-back">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="evadd-title" style="max-width:520px">
+    <button class="close" id="evadd-close" aria-label="Close">&times;</button>
+    <h2 id="evadd-title">Add a work example</h2>
+    <img class="evpreview" id="evadd-img" alt="Preview of the work example">
+    <div class="evmeta" id="evadd-ctx"></div>
+    <div class="field"><label for="evadd-cap">Caption (optional)</label><input id="evadd-cap" placeholder="e.g. Ava's finished dish"></div>
+    <h3>Whose work is this?</h3>
+    <div class="pchips" id="evadd-chips"></div>
+    <button class="btn" id="evadd-save">Save work example</button>
+  </div>
+</div>
+
+<!-- ============ VIEW WORK EXAMPLE MODAL ============ -->
+<div class="modal-back" id="evview-back">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="evview-ref" style="max-width:560px">
+    <button class="close" id="evview-close" aria-label="Close">&times;</button>
+    <h2 id="evview-ref"></h2>
+    <img class="evpreview" id="evview-img" alt="Work example">
+    <div class="evmeta" id="evview-meta"></div>
+    <button class="btn danger" id="evview-del">Delete this example</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* Official AQA cover page (embedded, ~49KB) */
+const COVER_B64="data:image/jpeg;base64,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yOm/4T/xR/0E/wDyXi/+Jo/4T/xR/wBBP/yXi/8Aia5mijkj2D6hhP8An1H/AMBX+R03/Cf+KP8AoJ/+S8X/AMTR/wAJ/wCKP+gn/wCS8X/xNczRRyR7B9Qwn/PqP/gK/wAjpv8AhP8AxR/0E/8AyXi/+Jo/4T/xR/0E/wDyXi/+JrmaKOSPYPqGE/59R/8AAV/kdN/wn/ij/oJ/+S8X/wATR/wn/ij/AKCf/kvF/wDE1zNFHJHsH1DCf8+o/wDgK/yOm/4T/wAUf9BP/wAl4v8A4mj/AIT/AMUf9BP/AMl4v/ia5mijkj2D6hhP+fUf/AV/kdN/wn/ij/oJ/wDkvF/8TR/wn/ij/oJ/+S8X/wATXM0UckewfUMJ/wA+o/8AgK/yPZ9M1vUZ9NtJpbjdJJCjMdijJKgntRWdov8AyB7D/r2j/wDQRRXK0rnyVSjTU2lFb9jymiiiuw+3CiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAPVtF/wCQPYf9e0f/AKCKKNF/5A9h/wBe0f8A6CKK5HufGVfjl6nlNFFFdZ9mFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAeraL/wAgew/69o//AEEUUaL/AMgew/69o/8A0EUVyPc+Mq/HL1PKaKKK6z7MKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA9W0X/kD2H/XtH/6CKKNF/wCQPYf9e0f/AKCKK5HufGVfjl6nlNFFFdZ9mFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAeraL/yB7D/r2j/9BFFGi/8AIHsP+vaP/wBBFFcj3PjKvxy9Tymiiius+zCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAPVtF/5A9h/17R/+giijRf+QPYf9e0f/oIorke58ZV+OXqeU0UUV1n2YUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQB6tov/IHsP8Ar2j/APQRRRov/IHsP+vaP/0EUVyPc+Mq/HL1PKaKKK6z7MKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA9W0X/kD2H/AF7R/wDoIoo0X/kD2H/XtH/6CKK5HufGVfjl6nlNFFFdZ9mFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAeraL/AMgew/69o/8A0EUUaL/yB7D/AK9o/wD0EUVyPc+Mq/HL1PKaKKK6z7MKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA9W0X/AJA9h/17R/8AoIoo0X/kD2H/AF7R/wDoIorke58ZV+OXqeU0UUV1n2YUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQB6tov/ACB7D/r2j/8AQRRRov8AyB7H/r2j/wDQRRXI9z4yr8cvU8pooorrPswooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD1HR5saRYjy5Di3j5C/wCyKKl0X/kD2H/XtH/6CKK5HufG1WueXqeU0UUV1n2QUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQB6tov/IHsP+vaP/0EUUaL/wAgew/69o//AEEUVyPc+Mq/HL1PKaKKK6z7MKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA9W0X/kD2H/XtH/6CKKNF/5A9h/17R/+giiuR7nxlX45ep5TRRRXWfZhRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFAHq2i/8gew/wCvaP8A9BFFGi/8gew/69o//QRRXI9z4yr8cvU8pooorrPswooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD1bRf+QPYf8AXtH/AOgiijRf+QPYf9e0f/oIorke58ZV+OXqeU0UUV1n2YUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQB6tov8AyB7D/r2j/wDQRRRov/IHsP8Ar2j/APQRRXI9z4yr8cvU8pooorrPswooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD1bRf8AkD2H/XtH/wCgiijRf+QPYf8AXtH/AOgiiuR7nxlX45ep5TRRRXWfZhRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFAHq2i/8AIHsP+vaP/wBBFFGi/wDIHsP+vaP/ANBFFcj3PjKvxy9Tymiiius+zCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAPVtF/5A9h/17R/+giijRf8AkD2H/XtH/wCgiiuR7nxlX45ep5TRRRXWfZhRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFAHq2i/8gew/69o//QRRRov/ACB7D/r2j/8AQRRXI9z4yr8cvU8pooorrPswooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD1bRf+QPYf9e0f/oIoo0X/kD2H/XtH/6CKK5HufGVfjl6nlNFFFdZ9mFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAeraL/yB7D/AK9o/wD0EUUaL/yB7D/r2j/9BFFcj3PjKvxy9Tymiiius+zCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAPVtF/5A9h/wBe0f8A6CKKNF/5A9h/17R/+giiuR7nxlX45ep5TRRRXWfZhRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFAHq2i/wDIHsP+vaP/ANBFFGi/8gew/wCvaP8A9BFFcj3PjKvxy9Tymiiius+zCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAPVtF/wCQPYf9e0f/AKCKKNF/5A9h/wBe0f8A6CKK5HufGVfjl6nlNFFFdZ9mFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAeraL/wAgew/69o//AEEUUaL/AMgew/69o/8A0EUVyPc+Mq/HL1PKaKKK6z7MKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA9W0X/kD2H/XtH/6CKKNF/wCQPYf9e0f/AKCKK5HufGVfjl6nlNFFFdZ9mFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAeraL/yB7D/r2j/9BFFGi/8AIHsP+vaP/wBBFFcj3PjKvxy9Tymiiius+zCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAPVtF/5A9h/17R/+giijRf+QPYf9e0f/oIorke58ZV+OXqeU0UUV1n2YUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQB6tov/IHsP8Ar2j/APQRRRov/IHsP+vaP/0EUVyPc+Mq/HL1PKaKKK6z7MKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA9W0X/kD2H/AF7R/wDoIoo0X/kD2H/XtH/6CKK5HufGVfjl6nlNFFFdZ9mFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAeraL/AMgew/69o/8A0EUUaL/yB7D/AK9o/wD0EUVyPc+Mq/HL1PKaKKK6z7MKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA9W0X/AJA9h/17R/8AoIoo0X/kD2H/AF7R/wDoIorke58ZV+OXqeU0UUV1n2YUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQB6tov/ACB7D/r2j/8AQRRRov8AyB7D/r2j/wDQRRXI9z4yr8cvU8pooorrPswooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD1bRf+QPYf9e0f/oIoo0X/AJA9h/17R/8AoIorke58ZV+OXqeU0UUV1n2YUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQB6tov/IHsP+vaP/0EUUaL/wAgew/69o//AEEUVyPc+Mq/HL1PKaKKK6z7MKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA9W0X/kD2H/XtH/6CKKNF/5A9h/17R/+giiuR7nxlX45ep5TRRRXWfZhRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFAHq2i/8gew/wCvaP8A9BFFGi/8gew/69o//QRRXI9z4yr8cvU8pooorrPswooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD1bRf+QPYf8AXtH/AOgiijRf+QPYf9e0f/oIorke58ZV+OXqeU0UUV1n2YUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQB6tov8AyB7D/r2j/wDQRRRov/IHsP8Ar2j/APQRRXI9z4yr8cvU8pooorrPswooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD1bRf8AkD2H/XtH/wCgiijRf+QPYf8AXtH/AOgiiuR7nxlX45ep5TRRRXWfZhRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFAHq2i/8AIHsP+vaP/wBBFFGi/wDIHsP+vaP/ANBFFcj3PjKvxy9Tymiiius+zCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAPVtF/5A9h/17R/+giijRf8AkD2H/XtH/wCgiiuR7nxlX45ep5TRRRXWfZhRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFAHq2i/8gew/69o//QRRRov/ACB7D/r2j/8AQRRXI9z4yr8cvU8pooorrPswooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD1bRf+QPYf9e0f/oIoo0X/kD2H/XtH/6CKK5HufGVfjl6nlNFFFdZ9mFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAeraL/yB7D/AK9o/wD0EUUaL/yB7D/r2j/9BFFcj3PjKvxy9Tymiiius+zCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAPVtF/5A9h/wBe0f8A6CKKNF/5A9h/17R/+giiuR7nxlX45ep5TRRRXWfZhRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUVq6H4d1XXWP8AZ1qzxqcNKx2op9Mnv7da6dPhZrBUFryxU9xuc4/8dqXOK3ZyVsfhqMuWpNJnB0V3v/Cq9W/5/rH83/8AiaP+FV6t/wA/1j+b/wDxNT7WHcx/tbBf8/EcFRXe/wDCq9W/5/rH83/+Jpsnwt1lVJS7sXPpucf+y0e1h3D+1sF/z8RwlFbWteFtZ0Qb76zYQ/8APaP50/Ejp+OKoabp82p3ItrVovPb7iO4TefQE8Z/GrUk1c7I16U4e0jJOPcqUVZv9PvNNuDBfW0kEo/hdcZ+nrVamaRkpK6d0FFFFAwooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAPVtF/5A9h/17R/+giijRf8AkD2H/XtH/wCgiiuR7nxlX45ep5TRRRXWfZhRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABWv4V0KXxDq8djG/lptLyyYztQdfx5A/Gsiu/+Dqj+275u4tcf+PCoqNxi2jjzCtKhhZ1IbpHqGmafbaXYxWdlEI4IhhQP5n1NWqKK88/OJScm5Sd2wooooEFFFFACEAgggEHgg15x448A+Y0up6CqoyruktVGNxHUpjv7f/qr0iiqjNxd0dWExlXC1Oem/wDJnDeB9btPFWkHSdYhWe5t4xvE3zeaucBh3yOMn1571zfi74eTaZDPf6VL51pGC7wv9+NfY/xAfgfrVfU2PhX4kNPFxCZxIVHAMcn3h+GTj6CvZCAQQRkHqDW0pOm047M9jEYieArRrYd+5UV7dPNHzPRXbfEbwkmiTDUbHAsriTaYv+eTkE4HscH6VxNdMZKSuj6rDYmniaSq09mFFFaFnoeq30Ans9Oup4SSA8cRYHHvVNpbm05xgrydjPorX/4RfXv+gPff9+G/wqOfw9rVvGZJtJvUReSxgbA/SlzLuZrEUXopr70ZlFFFM2CiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA9W0X/kD2H/XtH/6CKKNF/5A9h/17R/+giiuR7nxlX45ep5TRRRXWfZhRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABXoHwc/5DN9/17D/0IV5/XoHwc/5DN9/17D/0IVnV+BnnZv8A7lU9P1PWaKKK4D88CiivLviR4t1O01htL06drWOFVLvGcM7EA9ewAI6e9XCDm7I68Fg6mMq+zh6nqNFfP3/C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YVaxVuh62GpOmneKj6Nv80goooqjpCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA9W0X/kD2H/XtH/6CKKNF/wCQPYf9e0f/AKCKK5HufGVfjl6nlNFFFdZ9mFaXhzVf7D1q21LyPP8AILfu9+3dlSvXB9fSs2ihq6sRUhGpBwls9DqG8Q6AJmni8KReeWLZmvXkXPuuMGs7UPEWo6hq8Gpzugmt2UwIi4SPacgAemayKKlRSMYYSjB3td7atv8ANs6u48T6TJfHVYtBC6mzeYXe4LRCT++Fxye/1qpceKJn8XnxFb26xSbgwhZ9wxsCEZwOoz+dc/RQoIUcFQj0vpbVt6Ppq9jbvtZsftNvd6NpZ026il80yC5aQE+gBHAzVy517QdQma71Dw+xvHO6UwXZSORu5xg4z7VzFFHIhvCUnbfTrd3++9zXsNVsrXXf7Qk0iCa15xZM2UAIwOWBzjr0rKchnZgNoJJAHam0U7G0acYu67JfcFFFFMsKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACrdlqV5Y291BazbIrtPLmXaDvX05HHXtVSijcmUYyVpK5JbzSW1xFPC22WJw6NjOCDkHmr0Wu6lFrDavHc4v2JJl8tepGDxjHT2rNoosmKVOEviSelvl29Dpv+E/8T/9BP8A8l4v/iayU1rUUbUGW4wdQz9q+Rf3mSSe3HJPTFZ9FJRitkZwwtCF+WCV/JE1ndTWV1FdWshjmiYOjjsRWlZeJ9Ysb26vbS7EdxdHMziFPnPXptwOvaseihpPcudGnU+OKfqjpJfHfiWaJ4pNSyjqVYfZ4uQev8Nc3RRQopbIVKhSpX9nFK/ZWCiiimahRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAeraL/yB7D/AK9o/wD0EUUaL/yB7D/r2j/9BFFcj3PjKvxy9Tymiiius+zCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiig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H/PT/wAdH+FH2y4/56f+Oj/CgP8AWPDdma9FZH2y4/56f+Oj/Cj7Zcf89P8Ax0f4UB/rHhuzNeisj7Zcf89P/HR/hR9suP8Anp/46P8ACgP9Y8N2Z7bov/IHsf8Ar2j/APQRRVXQpXOh6cS3JtYu3+yKK43ueBPHU5SbseK0UUV1nkBRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFAHs+gf8gLTv+vWL/wBBFFGgf8gLTv8Ar1i/9BFFcj3KPGKKKK6yQooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD2fQP+QFp3/XrF/6CKKNA/5AWnf9esX/AKCKK5HuUeMUUUV1khRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFAHs+gf8AIC07/r1i/wDQRRRRXI9yj//Z";
+
+/* =====================================================================
+   UAS Register v1 — Matt's Apps
+   Single-file, offline-first. IndexedDB: uas_register.
+   Phase 2 hooks: marks records can carry evidenceRefs[] later.
+   ===================================================================== */
+
+/* ---------- tiny helpers ---------- */
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const todayISO=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const fmtDMY=iso=>{if(!iso)return"";const[y,m,d]=iso.split("-");return d+"/"+m+"/"+y.slice(2)};
+let toastT=null;
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2200)}
+
+/* ---------- IndexedDB ---------- */
+const DB_NAME="uas_register",DB_VER=2;
+let db=null;
+function openDB(){return new Promise((res,rej)=>{
+  const rq=indexedDB.open(DB_NAME,DB_VER);
+  rq.onupgradeneeded=e=>{
+    const d=e.target.result;
+    if(!d.objectStoreNames.contains("pupils"))d.createObjectStore("pupils",{keyPath:"id"});
+    if(!d.objectStoreNames.contains("units"))d.createObjectStore("units",{keyPath:"id"});
+    if(!d.objectStoreNames.contains("marks"))d.createObjectStore("marks",{keyPath:"key"});
+    if(!d.objectStoreNames.contains("sessions"))d.createObjectStore("sessions",{keyPath:"id"});
+    if(!d.objectStoreNames.contains("kv"))d.createObjectStore("kv",{keyPath:"k"});
+    if(!d.objectStoreNames.contains("evidence"))d.createObjectStore("evidence",{keyPath:"id"});
+  };
+  rq.onsuccess=e=>{db=e.target.result;res(db)};
+  rq.onerror=()=>rej(rq.error);
+})}
+function tx(store,mode,fn){return new Promise((res,rej)=>{
+  const t=db.transaction(store,mode),s=t.objectStore(store);
+  let out;try{out=fn(s)}catch(err){rej(err);return}
+  t.oncomplete=()=>res(out&&"result"in out?out.result:undefined);
+  t.onerror=()=>rej(t.error);
+})}
+const dbPut=(st,val)=>tx(st,"readwrite",s=>s.put(val));
+const dbDel=(st,key)=>tx(st,"readwrite",s=>s.delete(key));
+function dbAll(st){return new Promise((res,rej)=>{
+  const t=db.transaction(st,"readonly"),rq=t.objectStore(st).getAll();
+  rq.onsuccess=()=>res(rq.result||[]);rq.onerror=()=>rej(rq.error);
+})}
+function dbGet(st,key){return new Promise((res,rej)=>{
+  const t=db.transaction(st,"readonly"),rq=t.objectStore(st).get(key);
+  rq.onsuccess=()=>res(rq.result);rq.onerror=()=>rej(rq.error);
+})}
+function dbClear(st){return tx(st,"readwrite",s=>s.clear())}
+
+/* ---------- state cache ---------- */
+const S={pupils:[],units:[],marks:[],sessions:[],evidence:[],settings:{centre:"Progress Schools",centreNo:"",teacher:""},
+  regUnit:"",regMode:"out",regOutcome:1,selUnit:""};
+
+async function loadAll(){
+  S.pupils=(await dbAll("pupils")).sort((a,b)=>(a.surname+a.forename).localeCompare(b.surname+b.forename));
+  S.units=(await dbAll("units")).sort((a,b)=>b.created-a.created);
+  S.marks=await dbAll("marks");
+  S.sessions=(await dbAll("sessions")).sort((a,b)=>b.date.localeCompare(a.date));
+  S.evidence=await dbAll("evidence");
+  const st=await dbGet("kv","settings");if(st)S.settings=Object.assign(S.settings,st.v);
+}
+
+/* ---------- nav ---------- */
+$$("nav.tabs button").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
+function showView(v){
+  $$("nav.tabs button").forEach(b=>b.setAttribute("aria-current",String(b.dataset.view===v)));
+  $$(".view").forEach(x=>x.classList.remove("active"));
+  $("#view-"+v).classList.add("active");
+  if(v==="pupils")renderPupils();
+  if(v==="units")renderUnits();
+  if(v==="register")renderRegister();
+  if(v==="summary")renderSummarySelect();
+  if(v==="settings")renderSettings();
+}
+
+/* =====================================================================
+   PUPILS
+   ===================================================================== */
+function renderPupils(){
+  const el=$("#pupil-list");
+  const act=S.pupils.filter(p=>!p.archived),arc=S.pupils.filter(p=>p.archived);
+  if(!S.pupils.length){el.innerHTML='<div class="empty">No pupils yet. Add your class above — you only do this once.<br><br><button class="btn ghost" id="pl-guide">New here? Read the guide →</button></div>';
+    const g=$("#pl-guide");if(g)g.addEventListener("click",()=>showView("help"));return}
+  let h='<table class="list"><tr><th>Surname</th><th>Forename</th><th>Learner no</th><th></th></tr>';
+  for(const p of act){
+    h+=`<tr><td>${esc(p.surname)}</td><td>${esc(p.forename)}</td><td>${esc(p.learnerNo||"")}</td>
+    <td style="text-align:right"><button class="btn small ghost" data-edit="${p.id}">Edit</button>
+    <button class="btn small ghost" data-arch="${p.id}">Archive</button></td></tr>`;
+  }
+  h+="</table>";
+  if(arc.length){
+    h+=`<h3>Archived</h3><table class="list">`;
+    for(const p of arc)h+=`<tr><td>${esc(p.surname)}, ${esc(p.forename)}</td><td style="text-align:right"><button class="btn small ghost" data-unarch="${p.id}">Restore</button></td></tr>`;
+    h+="</table>";
+  }
+  el.innerHTML=h;
+  el.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editPupil(b.dataset.edit)));
+  el.querySelectorAll("[data-arch]").forEach(b=>b.addEventListener("click",async()=>{const p=S.pupils.find(x=>x.id===b.dataset.arch);p.archived=true;await dbPut("pupils",p);renderPupils();toast("Archived")}));
+  el.querySelectorAll("[data-unarch]").forEach(b=>b.addEventListener("click",async()=>{const p=S.pupils.find(x=>x.id===b.dataset.unarch);p.archived=false;await dbPut("pupils",p);renderPupils();toast("Restored")}));
+}
+$("#p-add").addEventListener("click",async()=>{
+  const f=$("#p-fore").value.trim(),s=$("#p-sur").value.trim(),ln=$("#p-ln").value.trim();
+  if(!f&&!s){toast("Give the pupil a name first");return}
+  const p={id:uid(),forename:f,surname:s,learnerNo:ln,archived:false,created:Date.now()};
+  await dbPut("pupils",p);S.pupils.push(p);
+  S.pupils.sort((a,b)=>(a.surname+a.forename).localeCompare(b.surname+b.forename));
+  $("#p-fore").value="";$("#p-sur").value="";$("#p-ln").value="";$("#p-fore").focus();
+  renderPupils();toast("Pupil added");
+});
+function editPupil(id){
+  const p=S.pupils.find(x=>x.id===id);if(!p)return;
+  const f=prompt("Forename:",p.forename);if(f===null)return;
+  const s=prompt("Surname:",p.surname);if(s===null)return;
+  const ln=prompt("Learner number (4 digits, blank if unknown):",p.learnerNo||"");if(ln===null)return;
+  p.forename=f.trim();p.surname=s.trim();p.learnerNo=ln.trim();
+  dbPut("pupils",p).then(()=>{renderPupils();toast("Saved")});
+}
+
+/* =====================================================================
+   UNITS — list, detail, enrolment
+   ===================================================================== */
+function unitProgress(u){
+  const enrolled=(u.enrolled||[]).length,outs=(u.outcomes||[]).length;
+  if(!enrolled||!outs)return 0;
+  let hit=0;
+  for(const m of S.marks)if(m.unitId===u.id&&(u.enrolled||[]).includes(m.pupilId))hit++;
+  return Math.round(100*hit/(enrolled*outs));
+}
+function renderUnits(){
+  const el=$("#unit-list");
+  if(!S.units.length){el.innerHTML='<div class="empty">No units yet. Import your first outcome sheet.</div>';$("#unit-detail").hidden=true;return}
+  let h='<table class="list"><tr><th>Code</th><th>Unit</th><th>Level</th><th>Outcomes</th><th>Enrolled</th><th>Progress</th><th></th></tr>';
+  for(const u of S.units){
+    h+=`<tr><td><span class="tag">${esc(u.code||"—")}</span></td><td>${esc(u.title)}</td><td>${esc(u.level||"")}</td>
+    <td>${(u.outcomes||[]).length}</td><td>${(u.enrolled||[]).length}</td><td>${unitProgress(u)}%</td>
+    <td style="text-align:right"><button class="btn small ghost" data-open="${u.id}">Open</button></td></tr>`;
+  }
+  h+="</table>";
+  el.innerHTML=h;
+  el.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",()=>openUnit(b.dataset.open)));
+}
+function openUnit(id){
+  const u=S.units.find(x=>x.id===id);if(!u)return;
+  S.selUnit=id;
+  const d=$("#unit-detail");d.hidden=false;
+  const act=S.pupils.filter(p=>!p.archived);
+  let h=`<h2>${esc(u.title)} <span class="tag">${esc(u.code||"")}</span> <span class="tag">${esc(u.level||"")}</span></h2>
+  <div class="row" style="margin:8px 0">
+    <button class="btn" id="ud-reg">Open the register for this unit →</button>
+    <button class="btn small ghost" id="ud-edit">Edit unit</button>
+    <button class="btn small danger" id="ud-del">Delete unit</button>
+  </div>
+  <h3>Enrolled pupils</h3><p class="hint">Tick everyone doing this unit. They appear on the register and the summary sheet.</p>
+  <div class="pupil-grid" style="margin-top:8px">`;
+  for(const p of act){
+    const on=(u.enrolled||[]).includes(p.id);
+    h+=`<button class="pcard ${on?"on":""}" data-enrol="${p.id}"><span class="pname">${esc(p.forename)} ${esc(p.surname)}</span><span class="pstamp">ENROLLED</span></button>`;
+  }
+  h+=`</div><h3>Outcomes &amp; work examples</h3><table class="list">`;
+  for(const o of u.outcomes||[]){
+    const evs=evFor(u.id,o.n);
+    h+=`<tr><td style="width:36px;vertical-align:top"><b>${o.n}</b></td><td>${esc(o.text)}
+      <div class="evrow" style="margin-top:6px">${evThumbsHTML(evs)}
+      <button class="evadd" data-evaddn="${o.n}" title="Add a work example for outcome ${o.n}" aria-label="Add a work example for outcome ${o.n}" style="width:44px;height:44px;font-size:1.2rem">+</button></div>
+    </td></tr>`;
+  }
+  h+="</table>";
+  d.innerHTML=h;
+  $("#ud-reg").addEventListener("click",()=>{S.regUnit=u.id;showView("register")});
+  d.querySelectorAll("[data-evaddn]").forEach(b=>b.addEventListener("click",()=>pickEvidence(u,parseInt(b.dataset.evaddn,10))));
+  wireEvThumbs(d);
+  d.querySelectorAll("[data-enrol]").forEach(b=>b.addEventListener("click",async()=>{
+    u.enrolled=u.enrolled||[];
+    const pid=b.dataset.enrol,i=u.enrolled.indexOf(pid);
+    if(i>=0)u.enrolled.splice(i,1);else u.enrolled.push(pid);
+    await dbPut("units",u);openUnit(id);
+  }));
+  $("#ud-edit").addEventListener("click",()=>{openReview(u)});
+  $("#ud-del").addEventListener("click",async()=>{
+    if(!confirm("Delete this unit and all its register marks? This cannot be undone."))return;
+    await dbDel("units",u.id);
+    for(const m of S.marks.filter(m=>m.unitId===u.id))await dbDel("marks",m.key);
+    for(const ss of S.sessions.filter(s=>s.unitId===u.id))await dbDel("sessions",ss.id);
+    await loadAll();$("#unit-detail").hidden=true;renderUnits();toast("Unit deleted");
+  });
+}
+
+/* =====================================================================
+   IMPORT — modal plumbing
+   ===================================================================== */
+$("#u-import").addEventListener("click",()=>{$("#imp-back").classList.add("open")});
+$("#imp-close").addEventListener("click",()=>$("#imp-back").classList.remove("open"));
+$$(".subtabs button").forEach(b=>b.addEventListener("click",()=>{
+  $$(".subtabs button").forEach(x=>x.setAttribute("aria-current",String(x===b)));
+  $$(".imp-pane").forEach(p=>p.hidden=true);
+  $("#imp-"+b.dataset.imp).hidden=false;
+}));
+
+/* ---------- outcome sheet parser ---------- */
+const EVIDENCE_RX=/summary sheet\s*and\s*\/?\s*or\s*student\s*completed\s*work/i;
+/* fragments appear when a table column or line-wrap splits the phrase.
+   Unambiguous phrases stripped anywhere; ambiguous ones only at text end. */
+const EVFRAG_RXS=[
+  /summary sheet\s*and\s*\/?\s*or\s*student\s*completed\s*work/gi,
+  /summary sheet\s*and\s*\/?\s*or(\s*student)?/gi,
+  /and\s*\/?\s*or\s*student\s*completed\s*work/gi,
+  /student\s*completed\s*work/gi,
+  /(?:^|\s)completed\s*work\s*$/i,
+  /(?:^|\s)summary\s*sheet\s*$/i
+];
+const stripEvidence=t=>{let s=t;for(const rx of EVFRAG_RXS)s=s.replace(rx," ");return s};
+const NOISE_RX=/^(evidence needed|in successfully completing this unit.*|approved\s+\d.*|unit award scheme|aqa|strictly confidential|page \d+.*)$/i;
+const SECTION_RX=/(demonstrated the ability to|shown knowledge of|experienced|acquired an understanding of)/i;
+
+function parseOutcomeSheet(raw){
+  const lines=raw.replace(/\r/g,"").split("\n").map(l=>{
+    /* tab-separated segments = table columns; drop evidence-ish segments */
+    const segs=l.split("\t").map(s=>s.trim()).filter(s=>s.length);
+    const kept=segs.filter(s=>{
+      const cleaned=stripEvidence(s).trim();
+      return cleaned.length>0&&cleaned.length>s.trim().length*0.3;
+    });
+    return kept.join(" ").trim();
+  }).filter(l=>l.length);
+  let code="",title="",level="";let levelIdx=-1;
+  // unit code: standalone 5-6 digit number — try the top first, then anywhere
+  for(let i=0;i<lines.length;i++){
+    if(/^\d{1,2}\s*[.)]\s/.test(lines[i]))continue;   // never inside an outcome
+    const m=lines[i].match(/(?:^|\s)(\d{5,6})(?:\s|$)/);
+    if(m){code=m[1];break}
+  }
+  // level (remember where it was — the title sits directly above it on AQA sheets)
+  for(let i=0;i<lines.length;i++){
+    const m=lines[i].match(/level\s*:?\s*(entry\s*(level\s*)?(one|two|three|1|2|3)|level\s*(one|two|three|1|2|3)|(one|two|three)|pre[- ]?entry)/i);
+    if(m){level=m[0].replace(/^level\s*:\s*/i,"").trim();level=level.charAt(0).toUpperCase()+level.slice(1);levelIdx=i;break}
+  }
+  const isTitleish=l=>{
+    if(/^\d{5,6}$/.test(l))return false;
+    if(/^level\s*:/i.test(l))return false;
+    if(NOISE_RX.test(l)||SECTION_RX.test(l)||/^\d{1,2}\s*[.)]\s/.test(l))return false;
+    return l.replace(/\b\d{5,6}\b/,"").trim().length>=3;
+  };
+  // title: prefer the line directly above "Level:", else first title-ish line near the top
+  if(levelIdx>0){
+    for(let i=levelIdx-1;i>=Math.max(0,levelIdx-3);i--){
+      if(isTitleish(lines[i])){title=lines[i].replace(/\b\d{5,6}\b/,"").trim();break}
+    }
+  }
+  if(!title){
+    for(let i=0;i<Math.min(lines.length,14);i++){
+      if(isTitleish(lines[i])){title=lines[i].replace(/\b\d{5,6}\b/,"").trim();break}
+    }
+  }
+  // outcomes: walk lines, track sections, gather "N. text" with continuations
+  const outcomes=[];let section="";let cur=null;
+  const flush=()=>{if(cur){cur.text=stripEvidence(cur.text).replace(/\s+/g," ").trim().replace(/[.,;]$/,"");if(cur.text)outcomes.push(cur);cur=null}};
+  for(const l of lines){
+    const secM=l.match(SECTION_RX);
+    if(secM){flush();section=secM[1].toLowerCase();continue}
+    if(NOISE_RX.test(l)){flush();continue}
+    const m=l.match(/^(\d{1,2})\s*[.)]\s*(.+)$/);
+    if(m){flush();cur={n:parseInt(m[1],10),text:m[2],section};continue}
+    if(cur){
+      if(EVIDENCE_RX.test(l)){cur.text=stripEvidence(cur.text);flush();continue}
+      cur.text+=" "+l;
+    }
+  }
+  flush();
+  outcomes.sort((a,b)=>a.n-b.n);
+  // de-dupe outcome numbers (OCR can double-read)
+  const seen=new Set(),clean=[];
+  for(const o of outcomes){if(!seen.has(o.n)){seen.add(o.n);clean.push(o)}}
+  return{code,title,level,outcomes:clean};
+}
+
+/* ---------- review screen ---------- */
+let revDraft=null,revExisting=null;
+function openReview(existingUnit,parsed){
+  revExisting=existingUnit||null;
+  revDraft=existingUnit?{code:existingUnit.code,title:existingUnit.title,level:existingUnit.level,
+    outcomes:(existingUnit.outcomes||[]).map(o=>({...o}))}
+    :(parsed||{code:"",title:"",level:"",outcomes:[]});
+  $("#rev-code").value=revDraft.code||"";
+  $("#rev-titlein").value=revDraft.title||"";
+  $("#rev-level").value=revDraft.level||"";
+  renderRevOuts();
+  $("#imp-back").classList.remove("open");
+  $("#rev-back").classList.add("open");
+}
+function renderRevOuts(){
+  const el=$("#rev-outs");
+  if(!revDraft.outcomes.length){el.innerHTML='<div class="empty">No outcomes yet — add them below.</div>';return}
+  let h='<table class="list">';
+  revDraft.outcomes.forEach((o,i)=>{
+    h+=`<tr><td style="width:52px"><input value="${o.n}" data-rn="${i}" inputmode="numeric" style="width:42px;border:1px solid var(--lilac-line);border-radius:5px;padding:3px 5px"></td>
+    <td><input value="${esc(o.text)}" data-rt="${i}" style="width:100%;border:1px solid var(--lilac-line);border-radius:5px;padding:3px 6px"></td>
+    <td style="width:36px"><button class="btn small ghost" data-rx="${i}" aria-label="Remove outcome ${o.n}">✕</button></td></tr>`;
+  });
+  h+="</table>";
+  el.innerHTML=h;
+  el.querySelectorAll("[data-rn]").forEach(inp=>inp.addEventListener("change",()=>{revDraft.outcomes[+inp.dataset.rn].n=parseInt(inp.value,10)||0}));
+  el.querySelectorAll("[data-rt]").forEach(inp=>inp.addEventListener("change",()=>{revDraft.outcomes[+inp.dataset.rt].text=inp.value}));
+  el.querySelectorAll("[data-rx]").forEach(b=>b.addEventListener("click",()=>{revDraft.outcomes.splice(+b.dataset.rx,1);renderRevOuts()}));
+}
+$("#rev-add").addEventListener("click",()=>{
+  const next=revDraft.outcomes.length?Math.max(...revDraft.outcomes.map(o=>o.n))+1:1;
+  revDraft.outcomes.push({n:next,text:"",section:""});renderRevOuts();
+  const inputs=$("#rev-outs").querySelectorAll("[data-rt]");if(inputs.length)inputs[inputs.length-1].focus();
+});
+$("#rev-close").addEventListener("click",()=>$("#rev-back").classList.remove("open"));
+$("#rev-save").addEventListener("click",async()=>{
+  revDraft.code=$("#rev-code").value.trim();
+  revDraft.title=$("#rev-titlein").value.trim();
+  revDraft.level=$("#rev-level").value.trim();
+  revDraft.outcomes=revDraft.outcomes.filter(o=>o.text.trim()).sort((a,b)=>a.n-b.n);
+  if(!revDraft.title){toast("The unit needs a title");return}
+  if(!revDraft.outcomes.length){toast("Add at least one outcome");return}
+  if(revExisting){
+    Object.assign(revExisting,{code:revDraft.code,title:revDraft.title,level:revDraft.level,outcomes:revDraft.outcomes});
+    await dbPut("units",revExisting);
+  }else{
+    const u={id:uid(),code:revDraft.code,title:revDraft.title,level:revDraft.level,outcomes:revDraft.outcomes,enrolled:[],created:Date.now()};
+    await dbPut("units",u);S.units.unshift(u);S.selUnit=u.id;
+  }
+  await loadAll();
+  $("#rev-back").classList.remove("open");
+  renderUnits();if(S.selUnit)openUnit(revExisting?revExisting.id:S.selUnit);
+  toast("Unit saved");
+});
+
+/* ---------- paste route ---------- */
+$("#paste-go").addEventListener("click",()=>{
+  const raw=$("#paste-box").value;
+  if(!raw.trim()){toast("Paste the sheet text first");return}
+  const parsed=parseOutcomeSheet(raw);
+  openReview(null,parsed);
+});
+$("#manual-go").addEventListener("click",()=>openReview(null,{code:"",title:"",level:"",outcomes:[]}));
+
+/* ---------- lazy library loader ---------- */
+function loadScript(src){return new Promise((res,rej)=>{
+  if(document.querySelector(`script[src="${src}"]`)){res();return}
+  const s=document.createElement("script");s.src=src;
+  s.onload=()=>res();s.onerror=()=>rej(new Error("Could not fetch "+src+" — check the internet connection and try again."));
+  document.head.appendChild(s);
+})}
+async function ensurePdfJs(){
+  if(window.pdfjsLib)return;
+  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+}
+async function ensureTesseract(){
+  if(window.Tesseract)return;
+  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js");
+}
+
+/* ---------- PDF text route ---------- */
+$("#pdf-pick").addEventListener("click",()=>$("#pdf-file").click());
+$("#pdf-file").addEventListener("change",e=>{if(e.target.files[0])handlePdfText(e.target.files[0]);e.target.value=""});
+wireDrop("#pdf-drop",files=>{if(files[0])handlePdfText(files[0])});
+/* pure: pdf.js text items → text with \t column separators (testable) */
+function itemsToText(rawItems){
+  const items=rawItems.filter(it=>it.str&&it.str.trim().length)
+    .map(it=>({str:it.str,x:it.transform[4],y:it.transform[5],w:it.width||it.str.length*4,band:Math.round(it.transform[5]/4)}))
+    .sort((a,b)=>(b.band-a.band)||(a.x-b.x));
+  let lastBand=null,lastEndX=null,line="";
+  const lines=[];
+  for(const it of items){
+    if(lastBand!==null&&it.band!==lastBand){lines.push(line);line="";lastEndX=null}
+    if(line&&lastEndX!==null&&it.x-lastEndX>25)line+="\t";      /* column boundary */
+    else if(line&&!line.endsWith("\t")&&!/^[.,;:)\]]/.test(it.str.trim())&&!line.endsWith(" "))line+=" ";
+    line+=it.str;
+    lastEndX=it.x+it.w;
+    lastBand=it.band;
+  }
+  if(line)lines.push(line);
+  return lines.join("\n");
+}
+async function handlePdfText(file){
+  const st=$("#pdf-status");
+  st.innerHTML='<div class="notice ok">Reading the PDF…</div>';
+  try{
+    await ensurePdfJs();
+    const buf=await file.arrayBuffer();
+    const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+    let text="";
+    for(let p=1;p<=pdf.numPages;p++){
+      const page=await pdf.getPage(p);
+      const tc=await page.getTextContent();
+      text+=itemsToText(tc.items)+"\n";
+    }
+    if(text.replace(/\s/g,"").length<40){
+      st.innerHTML='<div class="notice warn"><b>This PDF is a scan</b> — it has pictures of text, not real text (Print-to-PDF sheets are usually like this). Switch to the <b>Scan / photo (OCR)</b> tab, or open the original Word document and use <b>Paste text</b> — that route is the most accurate.</div>';
+      return;
+    }
+    st.innerHTML="";
+    openReview(null,parseOutcomeSheet(text));
+  }catch(err){
+    st.innerHTML='<div class="notice err">'+esc(err.message||String(err))+'</div>';
+  }
+}
+
+/* ---------- OCR route ---------- */
+$("#ocr-pick").addEventListener("click",()=>$("#ocr-file").click());
+$("#ocr-file").addEventListener("change",e=>{if(e.target.files.length)handleOcr(Array.from(e.target.files));e.target.value=""});
+wireDrop("#ocr-drop",files=>{if(files.length)handleOcr(files)});
+async function handleOcr(files){
+  const st=$("#ocr-status"),prog=$("#ocr-prog"),bar=prog.querySelector("div");
+  prog.hidden=false;bar.style.width="2%";
+  st.innerHTML='<div class="notice ok">Warming up the OCR engine — first run fetches it from the internet…</div>';
+  try{
+    await ensureTesseract();
+    // Build a list of canvases: PDF pages rendered, or images loaded
+    const canvases=[];
+    for(const f of files){
+      if(f.type==="application/pdf"||/\.pdf$/i.test(f.name)){
+        await ensurePdfJs();
+        const pdf=await window.pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+        for(let p=1;p<=pdf.numPages;p++){
+          const page=await pdf.getPage(p);
+          const vp=page.getViewport({scale:2});
+          const c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;
+          await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise;
+          canvases.push(c);
+        }
+      }else{
+        const c=await imageToCanvas(f);canvases.push(c);
+      }
+    }
+    let text="";
+    let worker;
+    try{
+      worker=await window.Tesseract.createWorker("eng",1,{
+        workerPath:"https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/worker.min.js",
+        corePath:"https://cdnjs.cloudflare.com/ajax/libs/tesseract.js-core/5.1.0/tesseract-core-simd.wasm.js"
+      });
+    }catch(werr){
+      throw new Error("The OCR engine could not start here. If this is the Claude preview window, the sandbox blocks it — the OCR tab works once the app is opened from your site (madebymatt.uk / GitHub Pages). Otherwise check the internet connection. The Paste text tab always works offline.");
+    }
+    for(let i=0;i<canvases.length;i++){
+      st.innerHTML=`<div class="notice ok">Reading page ${i+1} of ${canvases.length}… this takes a minute per page.</div>`;
+      const r=await worker.recognize(canvases[i]);
+      text+=r.data.text+"\n";
+      bar.style.width=Math.round(100*(i+1)/canvases.length)+"%";
+    }
+    await worker.terminate();
+    prog.hidden=true;st.innerHTML="";
+    openReview(null,parseOutcomeSheet(text));
+  }catch(err){
+    prog.hidden=true;
+    st.innerHTML='<div class="notice err">'+esc(err.message||String(err))+'</div>';
+  }
+}
+function imageToCanvas(file){return new Promise((res,rej)=>{
+  const img=new Image();
+  img.onload=()=>{const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;
+    c.getContext("2d").drawImage(img,0,0);URL.revokeObjectURL(img.src);res(c)};
+  img.onerror=()=>rej(new Error("Could not read that image file."));
+  img.src=URL.createObjectURL(file);
+})}
+function wireDrop(sel,cb){
+  const el=$(sel);
+  ["dragenter","dragover"].forEach(ev=>el.addEventListener(ev,e=>{e.preventDefault();el.classList.add("drag")}));
+  ["dragleave","drop"].forEach(ev=>el.addEventListener(ev,e=>{e.preventDefault();el.classList.remove("drag")}));
+  el.addEventListener("drop",e=>cb(Array.from(e.dataTransfer.files)));
+}
+
+/* =====================================================================
+   WORK EXAMPLES (evidence)
+   ===================================================================== */
+const evURLs=new Map(); /* id → objectURL, made once per session */
+function evURL(ev){
+  if(!evURLs.has(ev.id))evURLs.set(ev.id,URL.createObjectURL(ev.blob));
+  return evURLs.get(ev.id);
+}
+function evFor(unitId,n){return S.evidence.filter(e=>e.unitId===unitId&&e.n===n).sort((a,b)=>a.ref.localeCompare(b.ref))}
+function nextEvRef(u,n){
+  const count=evFor(u.id,n).length;
+  const letter=String.fromCharCode(65+count); /* A, B, C… */
+  return (u.code||"UNIT")+"/O"+n+"/"+letter;
+}
+async function shrinkImage(file){
+  /* downscale big photos so the database stays light; fall back to the original */
+  try{
+    const bmp=await createImageBitmap(file);
+    const MAX=1600,scale=Math.min(1,MAX/Math.max(bmp.width,bmp.height));
+    if(scale===1&&file.size<900000)return file;
+    const c=document.createElement("canvas");
+    c.width=Math.round(bmp.width*scale);c.height=Math.round(bmp.height*scale);
+    c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+    const blob=await new Promise(r=>c.toBlob(r,"image/jpeg",0.85));
+    return blob||file;
+  }catch(_){return file}
+}
+async function addEvidenceRecord(u,n,blob,pupilIds,caption){
+  const ev={id:uid(),unitId:u.id,n,pupilIds:pupilIds.slice(),blob,caption:caption||"",date:todayISO(),ref:nextEvRef(u,n)};
+  await dbPut("evidence",ev);S.evidence.push(ev);
+  return ev;
+}
+let evPending=null; /* {u, n, blob, sel:Set} while the add-modal is open */
+function openEvAdd(u,n,blob){
+  const roster=S.pupils.filter(p=>(u.enrolled||[]).includes(p.id)&&!p.archived);
+  evPending={u,n,blob,sel:new Set(roster.map(p=>p.id))}; /* everyone ticked by default */
+  $("#evadd-img").src=URL.createObjectURL(blob);
+  const o=(u.outcomes||[]).find(x=>x.n===n);
+  $("#evadd-ctx").innerHTML=`<b>${esc(nextEvRef(u,n))}</b> — outcome ${n}: ${esc(o?o.text:"")}`;
+  $("#evadd-cap").value="";
+  const chips=$("#evadd-chips");
+  chips.innerHTML=roster.map(p=>`<button class="on" data-evp="${p.id}">${esc(p.forename)}</button>`).join("");
+  chips.querySelectorAll("[data-evp]").forEach(b=>b.addEventListener("click",()=>{
+    const id=b.dataset.evp;
+    if(evPending.sel.has(id)){evPending.sel.delete(id);b.classList.remove("on")}
+    else{evPending.sel.add(id);b.classList.add("on")}
+  }));
+  $("#evadd-back").classList.add("open");
+}
+$("#evadd-close").addEventListener("click",()=>{$("#evadd-back").classList.remove("open");evPending=null});
+$("#evadd-save").addEventListener("click",async()=>{
+  if(!evPending)return;
+  if(!evPending.sel.size){toast("Tick at least one pupil");return}
+  const ev=await addEvidenceRecord(evPending.u,evPending.n,evPending.blob,[...evPending.sel],$("#evadd-cap").value.trim());
+  $("#evadd-back").classList.remove("open");evPending=null;
+  toast("Saved as "+ev.ref);
+  renderRegister();
+  if(!$("#unit-detail").hidden&&S.selUnit===ev.unitId)openUnit(ev.unitId);
+});
+let evFileCtx=null; /* {u,n} the picker was opened for */
+$("#ev-file").addEventListener("change",async e=>{
+  const f=e.target.files[0];e.target.value="";
+  if(!f||!evFileCtx)return;
+  const blob=await shrinkImage(f);
+  openEvAdd(evFileCtx.u,evFileCtx.n,blob);
+});
+function pickEvidence(u,n){evFileCtx={u,n};$("#ev-file").click()}
+function openEvView(id){
+  const ev=S.evidence.find(x=>x.id===id);if(!ev)return;
+  $("#evview-ref").textContent=ev.ref;
+  $("#evview-img").src=evURL(ev);
+  const u=S.units.find(x=>x.id===ev.unitId);
+  const o=u&&(u.outcomes||[]).find(x=>x.n===ev.n);
+  const names=ev.pupilIds.map(pid=>{const p=S.pupils.find(x=>x.id===pid);return p?p.forename+" "+p.surname:"?"}).join(", ");
+  $("#evview-meta").innerHTML=`<b>Outcome ${ev.n}:</b> ${esc(o?o.text:"")}<br><b>Pupils:</b> ${esc(names)}<br><b>Added:</b> ${fmtDMY(ev.date)}${ev.caption?"<br><b>Caption:</b> "+esc(ev.caption):""}`;
+  $("#evview-del").dataset.ev=id;
+  $("#evview-back").classList.add("open");
+}
+$("#evview-close").addEventListener("click",()=>$("#evview-back").classList.remove("open"));
+$("#evview-del").addEventListener("click",async e=>{
+  const id=e.target.dataset.ev;
+  if(!confirm("Delete this work example? Its reference letter will be reused by the next photo."))return;
+  await dbDel("evidence",id);
+  S.evidence=S.evidence.filter(x=>x.id!==id);
+  if(evURLs.has(id)){URL.revokeObjectURL(evURLs.get(id));evURLs.delete(id)}
+  $("#evview-back").classList.remove("open");
+  renderRegister();
+  if(!$("#unit-detail").hidden)openUnit(S.selUnit);
+  toast("Deleted");
+});
+function evThumbsHTML(list){
+  return list.map(ev=>`<div class="evcell"><img class="evthumb" src="${evURL(ev)}" alt="Work example ${esc(ev.ref)}" data-evview="${ev.id}"><div class="evref">${esc(ev.ref.split("/").slice(1).join("/"))}</div></div>`).join("");
+}
+function wireEvThumbs(root){
+  root.querySelectorAll("[data-evview]").forEach(t=>t.addEventListener("click",()=>openEvView(t.dataset.evview)));
+}
+
+/* =====================================================================
+   REGISTER — outcomes mode + attendance mode
+   ===================================================================== */
+$("#r-date").value=todayISO();
+$("#mode-out").addEventListener("click",()=>{S.regMode="out";renderRegister()});
+$("#mode-att").addEventListener("click",()=>{S.regMode="att";renderRegister()});
+$("#r-unit").addEventListener("change",e=>{S.regUnit=e.target.value;S.regOutcome=1;renderRegister()});
+
+function fillUnitSelect(sel,chosen){
+  const el=$(sel);
+  el.innerHTML=S.units.length
+    ?S.units.map(u=>`<option value="${u.id}" ${u.id===chosen?"selected":""}>${esc(u.code?u.code+" · ":"")}${esc(u.title)}</option>`).join("")
+    :'<option value="">— no units yet —</option>';
+}
+function markKey(unitId,pupilId,n){return"u"+unitId+"_p"+pupilId+"_o"+n}
+function getMark(unitId,pupilId,n){return S.marks.find(m=>m.key===markKey(unitId,pupilId,n))}
+
+function renderRegister(){
+  fillUnitSelect("#r-unit",S.regUnit||(S.units[0]&&S.units[0].id));
+  S.regUnit=$("#r-unit").value;
+  $("#mode-out").setAttribute("aria-current",String(S.regMode==="out"));
+  $("#mode-att").setAttribute("aria-current",String(S.regMode==="att"));
+  const body=$("#reg-body");
+  const u=S.units.find(x=>x.id===S.regUnit);
+  if(!u){body.innerHTML='<div class="empty">No unit loaded yet.<br><br><button class="btn" id="re-go-units">Import an outcome sheet →</button></div>';
+    const b=$("#re-go-units");if(b)b.addEventListener("click",()=>showView("units"));
+    $("#cov-panel").hidden=true;$("#sess-panel").hidden=true;return}
+  const roster=S.pupils.filter(p=>(u.enrolled||[]).includes(p.id)&&!p.archived);
+  if(!roster.length){body.innerHTML='<div class="empty">No pupils are enrolled on this unit yet.<br><br><button class="btn" id="re-go-enrol">Enrol pupils on this unit →</button></div>';
+    const b=$("#re-go-enrol");if(b)b.addEventListener("click",()=>{showView("units");openUnit(u.id)});
+    $("#cov-panel").hidden=true;$("#sess-panel").hidden=true;return}
+
+  if(S.regMode==="out"){
+    $("#sess-panel").hidden=true;$("#cov-panel").hidden=false;
+    if(!u.outcomes.some(o=>o.n===S.regOutcome))S.regOutcome=u.outcomes[0]?u.outcomes[0].n:1;
+    let h='<div class="outcome-chips" role="group" aria-label="Choose outcome">';
+    let lastSec=null;
+    for(const o of u.outcomes){
+      if(o.section!==lastSec&&o.section){h+=`<span class="sec">${esc(o.section)}</span>`;lastSec=o.section}
+      const short=o.text.length>46?o.text.slice(0,44)+"…":o.text;
+      h+=`<button data-oc="${o.n}" aria-current="${String(o.n===S.regOutcome)}" title="${esc(o.text)}"><span class="n">${o.n}</span>${esc(short)}</button>`;
+    }
+    h+='</div><p class="hint">Tap a pupil to stamp this outcome with the date above. Tap again to clear it.</p><div class="pupil-grid">';
+    for(const p of roster){
+      const m=getMark(u.id,p.id,S.regOutcome);
+      h+=`<button class="pcard ${m?"on":""}" data-pp="${p.id}"><span class="pname">${esc(p.forename)} ${esc(p.surname)}</span><span class="pstamp">✓ ${m?fmtDMY(m.date):""}</span></button>`;
+    }
+    h+="</div>";
+    const evs=evFor(u.id,S.regOutcome);
+    h+=`<div class="evstrip"><h3>Work examples for outcome ${S.regOutcome} <span class="tag">${evs.length}</span></h3>
+      <div class="evrow">${evThumbsHTML(evs)}
+      <button class="evadd" id="ev-add-btn" title="Add a work example" aria-label="Add a work example for outcome ${S.regOutcome}">+</button></div>
+      <p class="hint">Snap or choose a photo of the work — it saves with its own AQA reference and goes into the printable evidence pack.</p></div>`;
+    body.innerHTML=h;
+    body.querySelectorAll("[data-oc]").forEach(b=>b.addEventListener("click",()=>{S.regOutcome=parseInt(b.dataset.oc,10);renderRegister()}));
+    body.querySelectorAll("[data-pp]").forEach(b=>b.addEventListener("click",()=>toggleMark(u,b.dataset.pp,S.regOutcome)));
+    const evb=$("#ev-add-btn");if(evb)evb.addEventListener("click",()=>pickEvidence(u,S.regOutcome));
+    wireEvThumbs(body);
+    renderCoverage(u,roster);
+  }else{
+    $("#cov-panel").hidden=true;$("#sess-panel").hidden=false;
+    const date=$("#r-date").value||todayISO();
+    const sess=S.sessions.find(s=>s.unitId===u.id&&s.date===date);
+    const present=sess?sess.present:[];
+    let h='<p class="hint">Tap everyone who was in for the date above. It saves as you tap.</p><div class="pupil-grid">';
+    for(const p of roster){
+      const on=present.includes(p.id);
+      h+=`<button class="pcard att ${on?"on":""}" data-ap="${p.id}"><span class="pname">${esc(p.forename)} ${esc(p.surname)}</span><span class="pstamp">IN · ${fmtDMY(date)}</span></button>`;
+    }
+    h+="</div>";
+    body.innerHTML=h;
+    body.querySelectorAll("[data-ap]").forEach(b=>b.addEventListener("click",()=>toggleAttendance(u,b.dataset.ap)));
+    renderSessions(u,roster);
+  }
+}
+async function toggleMark(u,pupilId,n){
+  const date=$("#r-date").value||todayISO();
+  const key=markKey(u.id,pupilId,n);
+  const existing=S.marks.find(m=>m.key===key);
+  if(existing){
+    await dbDel("marks",key);
+    S.marks=S.marks.filter(m=>m.key!==key);
+  }else{
+    const m={key,unitId:u.id,pupilId,n,date};/* Phase 2: evidenceRefs:[] */
+    await dbPut("marks",m);S.marks.push(m);
+  }
+  renderRegister();
+}
+async function toggleAttendance(u,pupilId){
+  const date=$("#r-date").value||todayISO();
+  let sess=S.sessions.find(s=>s.unitId===u.id&&s.date===date);
+  if(!sess){sess={id:uid(),unitId:u.id,date,present:[]};S.sessions.unshift(sess)}
+  const i=sess.present.indexOf(pupilId);
+  if(i>=0)sess.present.splice(i,1);else sess.present.push(pupilId);
+  await dbPut("sessions",sess);
+  renderRegister();
+}
+$("#r-date").addEventListener("change",()=>renderRegister());
+function renderCoverage(u,roster){
+  const wrap=$("#cov-wrap");
+  let h='<table class="covgrid"><tr><th style="text-align:left">Pupil</th>';
+  for(const o of u.outcomes)h+=`<th title="${esc(o.text)}">${o.n}</th>`;
+  h+="<th>Done</th></tr>";
+  for(const p of roster){
+    let done=0;
+    h+=`<tr><td class="pn">${esc(p.forename)} ${esc(p.surname)}</td>`;
+    for(const o of u.outcomes){
+      const m=getMark(u.id,p.id,o.n);
+      if(m)done++;
+      h+=`<td class="${m?"hit":"miss"}" data-cp="${p.id}" data-cn="${o.n}" title="${esc(p.forename)} · outcome ${o.n}">${m?fmtDMY(m.date):"·"}</td>`;
+    }
+    h+=`<td><b>${done}/${u.outcomes.length}</b></td></tr>`;
+  }
+  h+="</table>";
+  wrap.innerHTML=h;
+  wrap.querySelectorAll("[data-cp]").forEach(td=>td.addEventListener("click",()=>toggleMark(u,td.dataset.cp,parseInt(td.dataset.cn,10))));
+}
+function renderSessions(u,roster){
+  const el=$("#sess-list");
+  const list=S.sessions.filter(s=>s.unitId===u.id);
+  if(!list.length){el.innerHTML='<div class="empty">No sessions saved yet for this unit.</div>';return}
+  let h='<table class="list"><tr><th>Date</th><th>Present</th><th></th></tr>';
+  for(const s of list){
+    const names=s.present.map(id=>{const p=S.pupils.find(x=>x.id===id);return p?p.forename:"?"}).join(", ");
+    h+=`<tr><td>${fmtDMY(s.date)}</td><td>${esc(names)||"—"}</td>
+    <td style="text-align:right"><button class="btn small ghost" data-sdel="${s.id}">Delete</button></td></tr>`;
+  }
+  h+="</table>";
+  el.innerHTML=h;
+  el.querySelectorAll("[data-sdel]").forEach(b=>b.addEventListener("click",async()=>{
+    if(!confirm("Delete this session?"))return;
+    await dbDel("sessions",b.dataset.sdel);S.sessions=S.sessions.filter(x=>x.id!==b.dataset.sdel);renderRegister();
+  }));
+}
+
+/* =====================================================================
+   SUMMARY SHEET
+   ===================================================================== */
+function renderSummarySelect(){fillUnitSelect("#s-unit",S.selUnit||S.regUnit||(S.units[0]&&S.units[0].id))}
+$("#s-build").addEventListener("click",()=>buildSummary());
+$("#s-pack").addEventListener("click",()=>buildPack());
+$("#s-pdf").addEventListener("click",()=>downloadPackPDF());
+$("#s-print").addEventListener("click",()=>window.print());
+async function ensureJsPdf(){
+  if(window.jspdf&&window.jspdf.jsPDF)return;
+  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+}
+function imgDims(dataURL){return new Promise((res,rej)=>{
+  const im=new Image();
+  im.onload=()=>res({w:im.naturalWidth,h:im.naturalHeight});
+  im.onerror=()=>rej(new Error("Could not read a work-example image."));
+  im.src=dataURL;
+})}
+async function downloadPackPDF(){
+  const u=S.units.find(x=>x.id===$("#s-unit").value);
+  const warnEl=$("#s-warn");
+  if(!u){warnEl.innerHTML='<div class="notice warn">Choose a unit first.</div>';return}
+  const roster=S.pupils.filter(p=>(u.enrolled||[]).includes(p.id)&&!p.archived);
+  warnEl.innerHTML='<div class="notice ok">Building the PDF…</div>';
+  try{
+    await ensureJsPdf();
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:"mm",format:"a4",orientation:"portrait"});
+    /* ---- page 1: cover ---- */
+    doc.addImage(COVER_B64,"JPEG",0,0,210,297);
+    const cardY=165,cardH=92;
+    doc.setFillColor(255,255,255);doc.setDrawColor(63,42,86);doc.setLineWidth(0.8);
+    doc.roundedRect(20,cardY,170,cardH,3,3,"FD");
+    doc.setTextColor(63,42,86);doc.setFont("times","bold");doc.setFontSize(20);
+    doc.text(doc.splitTextToSize(u.title||"",160),27,cardY+13);
+    doc.setFont("helvetica","normal");doc.setFontSize(11);doc.setTextColor(92,67,128);
+    doc.text(`Unit ${u.code||""} · ${u.level||""}`,27,cardY+24);
+    doc.setTextColor(20,20,20);doc.setFontSize(10);
+    let cy=cardY+34;
+    const line=(label,val)=>{doc.setFont("helvetica","bold");doc.text(label,27,cy);doc.setFont("helvetica","normal");
+      const wrapped=doc.splitTextToSize(val||"—",130);doc.text(wrapped,60,cy);cy+=wrapped.length*5+2};
+    line("Centre:",(S.settings.centre||"Progress Schools")+(S.settings.centreNo?" ("+S.settings.centreNo+")":""));
+    line("Unit teacher:",S.settings.teacher||"");
+    line("Pupils:",roster.map(p=>p.forename+" "+p.surname).join(", "));
+    line("Date:",fmtDMY(todayISO()));
+    /* ---- page 2: summary sheet (landscape) ---- */
+    doc.addPage("a4","landscape");
+    drawSummaryPDF(doc,u,roster);
+    /* ---- evidence pages ---- */
+    const evs=S.evidence.filter(e=>e.unitId===u.id).sort((a,b)=>a.n-b.n||a.ref.localeCompare(b.ref));
+    for(const ev of evs){
+      doc.addPage("a4","portrait");
+      doc.setDrawColor(63,42,86);doc.setLineWidth(1);doc.line(15,22,195,22);
+      doc.setTextColor(63,42,86);doc.setFont("helvetica","bold");doc.setFontSize(12);
+      doc.text(`${u.title} · ${u.code||""} · ${u.level||""}`,15,18,{maxWidth:130});
+      doc.setFont("times","bold");doc.setFontSize(16);
+      doc.text(ev.ref,195,18,{align:"right"});
+      doc.setTextColor(20,20,20);doc.setFont("helvetica","normal");doc.setFontSize(10);
+      const o=(u.outcomes||[]).find(x=>x.n===ev.n);
+      const outLines=doc.splitTextToSize(`Outcome ${ev.n}: ${o?o.text:""}`,180);
+      doc.text(outLines,15,30);
+      let iy=30+outLines.length*5+4;
+      const durl=await blobToDataURL(ev.blob);
+      const dim=await imgDims(durl);
+      const maxW=180,maxH=Math.min(190,270-iy-24);
+      const sc=Math.min(maxW/dim.w,maxH/dim.h);
+      const iw=dim.w*sc,ih=dim.h*sc;
+      const fmt=/png/i.test(durl.slice(0,30))?"PNG":"JPEG";
+      doc.addImage(durl,fmt,(210-iw)/2,iy,iw,ih);
+      iy+=ih+6;
+      const names=ev.pupilIds.map(pid=>{const p=S.pupils.find(x=>x.id===pid);return p?p.forename+" "+p.surname:"?"}).join(", ");
+      doc.setFontSize(9);doc.setTextColor(60,60,60);
+      if(ev.caption){doc.text(doc.splitTextToSize("Caption: "+ev.caption,180),15,iy);iy+=6}
+      doc.text(doc.splitTextToSize(`Pupils: ${names}    ·    Date: ${fmtDMY(ev.date)}    ·    Centre: ${S.settings.centre||"Progress Schools"}`,180),15,iy);
+    }
+    const fname=`UAS_${u.code||"unit"}_evidence_pack_${todayISO()}.pdf`;
+    doc.save(fname);
+    warnEl.innerHTML=`<div class="notice ok">Saved <b>${esc(fname)}</b> — cover, summary sheet and ${evs.length} work example${evs.length===1?"":"s"}, ready to attach to an email.</div>`;
+  }catch(err){
+    warnEl.innerHTML='<div class="notice err">'+esc(err.message||String(err))+' (The PDF builder needs internet the first time, to fetch its library.)</div>';
+  }
+}
+function drawSummaryPDF(doc,u,roster){
+  /* A4 landscape: 297 × 210 mm — official AQA summary layout */
+  const set=S.settings;
+  doc.setTextColor(63,42,86);doc.setFont("times","bold");doc.setFontSize(15);
+  doc.text("AQA Unit Award Scheme: Summary Sheet",15,16);
+  doc.setDrawColor(63,42,86);doc.setLineWidth(0.8);doc.line(15,19,282,19);
+  doc.setTextColor(0,0,0);doc.setFont("helvetica","normal");doc.setFontSize(10);
+  doc.setFont("helvetica","bold");doc.text("Name of Centre",15,27);doc.setFont("helvetica","normal");
+  doc.text(set.centre||"Progress Schools",48,27);
+  doc.setFont("helvetica","bold");doc.text("Centre No",200,27);doc.setFont("helvetica","normal");
+  const cno=(set.centreNo||"").slice(0,6);
+  for(let i=0;i<6;i++){doc.rect(222+i*8,22,8,7);if(cno[i])doc.text(cno[i],226+i*8,27,{align:"center"})}
+  doc.setFont("helvetica","bold");doc.text("Unit Title",15,35);doc.setFont("helvetica","normal");
+  doc.text((u.title||"").toUpperCase(),40,35);
+  doc.setFont("helvetica","bold");doc.text("Unit Code",200,35);doc.setFont("helvetica","normal");
+  doc.text(u.code||"",222,35);
+  doc.setFont("helvetica","italic");doc.setFontSize(8);
+  doc.text("*Dates must be used to record the achievement of each outcome in the columns below",15,41);
+  /* grid */
+  const COLS=Math.max(u.outcomes.length,14);
+  const x0=15,gw=267,numW=20,nameW=52,docW=14;
+  const ow=(gw-numW-nameW-docW)/COLS;
+  const y0=45,hh1=7,hh2=7,rh=9;
+  const nRows=Math.max(roster.length,8);
+  doc.setLineWidth(0.3);doc.setDrawColor(60,60,60);
+  /* header band 1 */
+  doc.setFillColor(233,229,242);
+  doc.rect(x0,y0,numW+nameW,hh1,"FD");
+  doc.rect(x0+numW+nameW,y0,ow*COLS,hh1,"FD");
+  doc.rect(x0+numW+nameW+ow*COLS,y0,docW,hh1+hh2,"FD");
+  doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(63,42,86);
+  doc.text("Student Details",x0+(numW+nameW)/2,y0+4.7,{align:"center"});
+  doc.text("Outcomes *",x0+numW+nameW+ow*COLS/2,y0+4.7,{align:"center"});
+  /* header band 2 */
+  doc.setFillColor(233,229,242);
+  doc.rect(x0,y0+hh1,numW,hh2,"FD");doc.rect(x0+numW,y0+hh1,nameW,hh2,"FD");
+  doc.text("Number",x0+numW/2,y0+hh1+4.7,{align:"center"});
+  doc.text("Name",x0+numW+nameW/2,y0+hh1+4.7,{align:"center"});
+  for(let i=0;i<COLS;i++){
+    doc.rect(x0+numW+nameW+i*ow,y0+hh1,ow,hh2,"FD");
+    const o=u.outcomes[i];
+    if(o)doc.text(String(o.n),x0+numW+nameW+i*ow+ow/2,y0+hh1+4.7,{align:"center"});
+  }
+  /* vertical Date of Completion */
+  doc.saveGraphicsState&&doc.saveGraphicsState();
+  doc.text("Date of",x0+numW+nameW+ow*COLS+docW/2,y0+5,{align:"center",maxWidth:docW});
+  doc.setFontSize(7);doc.text("Completion",x0+numW+nameW+ow*COLS+docW/2,y0+10.5,{align:"center",maxWidth:docW});
+  doc.restoreGraphicsState&&doc.restoreGraphicsState();
+  /* pupil rows */
+  doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(0,0,0);
+  for(let r=0;r<nRows;r++){
+    const ry=y0+hh1+hh2+r*rh;
+    doc.rect(x0,ry,numW,rh);doc.rect(x0+numW,ry,nameW,rh);
+    for(let i=0;i<COLS;i++)doc.rect(x0+numW+nameW+i*ow,ry,ow,rh);
+    doc.rect(x0+numW+nameW+ow*COLS,ry,docW,rh);
+    const p=roster[r];
+    if(p){
+      doc.text(p.learnerNo||"",x0+numW/2,ry+5.6,{align:"center"});
+      doc.text((p.surname+", "+p.forename).slice(0,30),x0+numW+2,ry+5.6);
+      let latest="";
+      for(let i=0;i<COLS;i++){
+        const o=u.outcomes[i];if(!o)continue;
+        const m=getMark(u.id,p.id,o.n);
+        if(m){if(m.date>latest)latest=m.date;
+          doc.setFontSize(6.6);
+          doc.text(fmtDMY(m.date),x0+numW+nameW+i*ow+ow/2,ry+5.4,{align:"center"});
+          doc.setFontSize(8);}
+      }
+      if(latest){doc.setFontSize(6.6);doc.text(fmtDMY(latest),x0+numW+nameW+ow*COLS+docW/2,ry+5.4,{align:"center"});doc.setFontSize(8)}
+    }
+  }
+  /* footer */
+  const fy=y0+hh1+hh2+nRows*rh+10;
+  doc.setFontSize(10);
+  doc.text("Signed",15,fy);doc.setFont("times","bolditalic");doc.text(set.teacher||"",32,fy);doc.setFont("helvetica","normal");
+  doc.line(30,fy+1,110,fy+1);doc.text("(Unit teacher)",113,fy);
+  doc.text("Sheet No",200,fy);doc.line(220,fy+1,232,fy+1);doc.text("1",225,fy,{align:"center"});
+  doc.text("of",235,fy);doc.line(241,fy+1,253,fy+1);doc.text("1",246,fy,{align:"center"});
+  doc.text("Signed",15,fy+10);doc.line(30,fy+11,110,fy+11);doc.text("(Co-ordinator)",113,fy+10);
+  doc.text("Date",200,fy+10);doc.line(211,fy+11,253,fy+11);
+  doc.setFontSize(6.6);doc.setTextColor(90,90,90);
+  doc.text("AQA Education (AQA) is a registered charity (number 1073334) and a company limited by guarantee registered in England and Wales (number 3644723). Our registered address is AQA, Devas Street, Manchester M15 6EX.",15,200,{maxWidth:267});
+}
+function setPrintOrientation(o){
+  let st=document.getElementById("print-orient");
+  if(!st){st=document.createElement("style");st.id="print-orient";document.head.appendChild(st)}
+  st.textContent="@media print{@page{size:A4 "+o+";margin:10mm}}";
+}
+function buildPack(){
+  const u=S.units.find(x=>x.id===$("#s-unit").value);
+  const warnEl=$("#s-warn");
+  if(!u){warnEl.innerHTML='<div class="notice warn">Choose a unit first.</div>';return}
+  const evs=S.evidence.filter(e=>e.unitId===u.id).sort((a,b)=>a.n-b.n||a.ref.localeCompare(b.ref));
+  const roster=S.pupils.filter(p=>(u.enrolled||[]).includes(p.id)&&!p.archived);
+  warnEl.innerHTML=`<div class="notice ok">Cover + ${evs.length} work example${evs.length===1?"":"s"}. Printing runs portrait — the summary sheet prints separately in landscape, or use <b>Download PDF</b> to get everything in one file.</div>`;
+  let h=packCoverHTML(u,roster);
+  for(const ev of evs){
+    const o=(u.outcomes||[]).find(x=>x.n===ev.n);
+    const names=ev.pupilIds.map(pid=>{const p=S.pupils.find(x=>x.id===pid);return p?p.forename+" "+p.surname:"?"}).join(", ");
+    h+=`<div class="packpg">
+      <div class="pkhead"><h1>${esc(u.title)} <span style="font-weight:400">· ${esc(u.code||"")} · ${esc(u.level||"")}</span></h1><div class="pkref">${esc(ev.ref)}</div></div>
+      <div class="pkout"><b>Outcome ${ev.n}:</b> ${esc(o?o.text:"")}</div>
+      <img src="${evURL(ev)}" alt="Work example ${esc(ev.ref)}">
+      ${ev.caption?`<div class="pkmeta"><b>Caption:</b> ${esc(ev.caption)}</div>`:""}
+      <div class="pkmeta"><b>Pupils:</b> ${esc(names)} &nbsp;·&nbsp; <b>Date:</b> ${fmtDMY(ev.date)} &nbsp;·&nbsp; <b>Centre:</b> ${esc(S.settings.centre||"Progress Schools")}</div>
+    </div>`;
+  }
+  setPrintOrientation("portrait");
+  $("#print-zone").innerHTML=h;
+  $("#s-preview-panel").hidden=false;
+  $("#s-print").disabled=false;
+}
+function packCoverHTML(u,roster){
+  const names=roster.map(p=>p.forename+" "+p.surname).join(" · ");
+  return `<div class="packpg coverpg">
+    <img class="coverbg" src="${COVER_B64}" alt="AQA Unit Award Scheme cover">
+    <div class="covercard">
+      <div class="cc-title">${esc(u.title)}</div>
+      <div class="cc-sub">Unit ${esc(u.code||"")} · ${esc(u.level||"")}</div>
+      <div class="cc-line"><b>Centre:</b> ${esc(S.settings.centre||"Progress Schools")}${S.settings.centreNo?" ("+esc(S.settings.centreNo)+")":""}</div>
+      <div class="cc-line"><b>Unit teacher:</b> ${esc(S.settings.teacher||"")}</div>
+      <div class="cc-line"><b>Pupils:</b> ${esc(names||"—")}</div>
+      <div class="cc-line"><b>Date:</b> ${fmtDMY(todayISO())}</div>
+    </div>
+  </div>`;
+}
+function buildSummary(){
+  const u=S.units.find(x=>x.id===$("#s-unit").value);
+  const warnEl=$("#s-warn");
+  if(!u){warnEl.innerHTML='<div class="notice warn">Choose a unit first.</div>';return}
+  const roster=S.pupils.filter(p=>(u.enrolled||[]).includes(p.id)&&!p.archived);
+  if(!roster.length){warnEl.innerHTML='<div class="notice warn">No pupils enrolled on this unit yet.</div>';return}
+  // beaver check: gaps
+  const gaps=[];
+  for(const p of roster){
+    const missing=u.outcomes.filter(o=>!getMark(u.id,p.id,o.n)).map(o=>o.n);
+    if(missing.length)gaps.push(`${p.forename} ${p.surname}: outcome${missing.length>1?"s":""} ${missing.join(", ")}`);
+  }
+  warnEl.innerHTML=gaps.length
+    ?`<div class="notice warn"><b>Not ready to claim yet — missing dates:</b><br>${gaps.map(esc).join("<br>")}</div>`
+    :'<div class="notice ok">Every enrolled pupil has a date for every outcome. Ready to print.</div>';
+
+  const set=S.settings;
+  const cno=(set.centreNo||"").padEnd(6," ").slice(0,6);
+  const cnboxes=cno.split("").map(ch=>`<span class="ccbox">${esc(ch.trim())}</span>`).join("");
+  const COLS=Math.max(u.outcomes.length,14); /* official sheet has 14 outcome columns */
+  let numHdr="";
+  for(let i=0;i<COLS;i++){
+    const o=u.outcomes[i];
+    numHdr+=o?`<th title="${esc(o.text)}">${o.n}</th>`:"<th></th>";
+  }
+  const MIN_ROWS=8;
+  let rows="";
+  for(const p of roster){
+    let latest="";
+    let cells="";
+    for(let i=0;i<COLS;i++){
+      const o=u.outcomes[i];
+      if(!o){cells+="<td></td>";continue}
+      const m=getMark(u.id,p.id,o.n);
+      if(m&&m.date>latest)latest=m.date;
+      cells+=`<td>${m?fmtDMY(m.date):""}</td>`;
+    }
+    rows+=`<tr><td>${esc(p.learnerNo||"")}</td><td class="sur">${esc(p.surname)}, ${esc(p.forename)}</td>${cells}<td>${fmtDMY(latest)}</td></tr>`;
+  }
+  for(let i=roster.length;i<MIN_ROWS;i++){
+    rows+=`<tr><td>&nbsp;</td><td class="sur"></td>${Array(COLS).fill("<td></td>").join("")}<td></td></tr>`;
+  }
+  const html=`<div class="ssheet">
+    <div class="sstop"><h1>AQA Unit Award Scheme: Summary Sheet</h1></div>
+    <div class="ssmeta"><div><span class="lbl">Name of Centre</span> &nbsp;${esc(set.centre||"Progress Schools")}</div><div><span class="lbl">Centre No</span> ${cnboxes}</div></div>
+    <div class="ssmeta"><div><span class="lbl">Unit Title</span> &nbsp;${esc((u.title||"").toUpperCase())}</div><div><span class="lbl">Unit Code</span> &nbsp;${esc(u.code||"")}</div></div>
+    <div class="ssnote">*Dates must be used to record the achievement of each outcome in the columns below</div>
+    <table class="ssg">
+      <tr><th colspan="2">Student Details</th><th colspan="${COLS}">Outcomes *</th><th rowspan="2"><span class="vert">Date of Completion</span></th></tr>
+      <tr><th>Number</th><th>Name</th>${numHdr}</tr>
+      ${rows}
+    </table>
+    <div class="sssign" style="margin-top:14px"><div>Signed <span class="ln">${esc(set.teacher||"")}</span> (Unit teacher)</div><div style="flex:0 0 200px">Sheet No <span class="lnd" style="min-width:34px">1</span> of <span class="lnd" style="min-width:34px">1</span></div></div>
+    <div class="sssign"><div>Signed <span class="ln"></span> (Co-ordinator)</div><div style="flex:0 0 200px">Date <span class="lnd"></span></div></div>
+    <div class="ssfoot" style="letter-spacing:0;text-align:left;font-size:.66rem">AQA Education (AQA) is a registered charity (number 1073334) and a company limited by guarantee registered in England and Wales (number 3644723). Our registered address is AQA, Devas Street, Manchester M15 6EX.</div>
+  </div>`;
+  setPrintOrientation("landscape");
+  $("#print-zone").innerHTML=html;
+  $("#s-preview-panel").hidden=false;
+  $("#s-print").disabled=false;
+}
+
+/* =====================================================================
+   SETTINGS + BACKUP
+   ===================================================================== */
+function renderSettings(){
+  $("#set-centre").value=S.settings.centre||"";
+  $("#set-cno").value=S.settings.centreNo||"";
+  $("#set-teacher").value=S.settings.teacher||"";
+}
+$("#set-save").addEventListener("click",async()=>{
+  S.settings.centre=$("#set-centre").value.trim();
+  S.settings.centreNo=$("#set-cno").value.trim();
+  S.settings.teacher=$("#set-teacher").value.trim();
+  await dbPut("kv",{k:"settings",v:S.settings});
+  toast("Settings saved");
+});
+function blobToDataURL(blob){return new Promise((res,rej)=>{
+  const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(new Error("Could not read image"));r.readAsDataURL(blob);
+})}
+function dataURLToBlob(durl){
+  const[head,b64]=durl.split(",");
+  const mime=(head.match(/data:(.*?);/)||[])[1]||"image/jpeg";
+  const bin=atob(b64);const arr=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+  return new Blob([arr],{type:mime});
+}
+$("#bk-export").addEventListener("click",async()=>{
+  toast("Preparing backup…");
+  const evOut=[];
+  for(const ev of S.evidence){
+    const{blob,...rest}=ev;
+    evOut.push({...rest,dataURL:await blobToDataURL(blob)});
+  }
+  const payload={app:"uas_register",version:2,exported:new Date().toISOString(),
+    pupils:S.pupils,units:S.units,marks:S.marks,sessions:S.sessions,evidence:evOut,settings:S.settings};
+  const blob=new Blob([JSON.stringify(payload)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="uas-register-backup-"+todayISO()+".json";
+  a.click();URL.revokeObjectURL(a.href);
+  toast("Backup downloaded");
+});
+$("#bk-import").addEventListener("click",()=>$("#bk-file").click());
+$("#bk-file").addEventListener("change",async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  try{
+    const data=JSON.parse(await f.text());
+    if(data.app!=="uas_register")throw new Error("That file is not a UAS Register backup.");
+    if(!confirm("Importing replaces everything currently in the app with the backup. Continue?"))return;
+    for(const st of["pupils","units","marks","sessions","evidence"])await dbClear(st);
+    for(const p of data.pupils||[])await dbPut("pupils",p);
+    for(const u of data.units||[])await dbPut("units",u);
+    for(const m of data.marks||[])await dbPut("marks",m);
+    for(const s of data.sessions||[])await dbPut("sessions",s);
+    for(const ev of data.evidence||[]){
+      const{dataURL,...rest}=ev;
+      await dbPut("evidence",{...rest,blob:dataURLToBlob(dataURL)});
+    }
+    if(data.settings)await dbPut("kv",{k:"settings",v:data.settings});
+    evURLs.forEach(u=>URL.revokeObjectURL(u));evURLs.clear();
+    await loadAll();showView("pupils");toast("Backup restored");
+  }catch(err){alert("Import failed: "+(err.message||err))}
+});
+$("#wipe").addEventListener("click",async()=>{
+  if(!confirm("Delete every pupil, unit, mark, session and work example? Export a backup first if in doubt."))return;
+  if(!confirm("Really sure? This cannot be undone."))return;
+  for(const st of["pupils","units","marks","sessions","evidence","kv"])await dbClear(st);
+  evURLs.forEach(u=>URL.revokeObjectURL(u));evURLs.clear();
+  await loadAll();showView("pupils");toast("All data deleted");
+});
+
+/* ---------- init ---------- */
+window.S=S;window.COVER_B64=COVER_B64; /* debug/test handles */
+async function init(){
+  await openDB();
+  await loadAll();
+  renderPupils();
+}
+init();
+</script>
+</body>
+</html>
