@@ -1,33 +1,24 @@
-UAS REGISTER — DEPLOY PACK (2026-27)
+MADEBYMATT.UK — HOMEPAGE UPDATE PACK
 ====================================
+WHAT'S INSIDE (all go to the mattroper1977.github.io repo)
+  index.html            REPLACES your homepage (this time on purpose!)
+                        - "Games" + "Teacher tools" in the menu
+                        - hero button: Play the games -> /games/
+                        - Browse-by-collection tiles under the hero
+                        - UAS Register featured section (Super Teacher
+                          Tool, native house style, stamp emblem)
+  games/index.html      NEW page -> madebymatt.uk/games
+                        (fixes the current 404; lists every game and
+                        simulation from your catalogue automatically)
+  data/resources.json   REPLACES your catalogue data — same 5 entries
+                        PLUS UAS Register as an Available teacher tool.
 
-WHAT'S INSIDE
-  uas/index.html          the launch page  ->  madebymatt.uk/uas/
-  uas/app.html            the app itself   ->  madebymatt.uk/uas/app.html
-  hub-highlight-card.html paste-in card for your hub front page
+HOW TO UPLOAD
+  Drag index.html, the games folder and the data folder into
+  GitHub's "Upload files" together, commit:
+  "Homepage: games shelf, collections, feature UAS Register"
 
-WHERE IT GOES
-  The repo that serves madebymatt.uk — the one whose
-  Settings > Pages shows "Your site is live at madebymatt.uk"
-  (it contains a CNAME file). That is your Lessons repo.
-
-HOW TO UPLOAD (the safe way)
-  1. On GitHub, open that repo > Add file > Upload files.
-  2. Drag the whole "uas" FOLDER (not the files inside it) into
-     the upload box, so GitHub keeps the folder.
-     NEVER drop index.html loose into the repo root — it will
-     replace your hub homepage (remember the Year Plan incident).
-  3. Commit: "Add UAS Register — super teacher tool for 2026-27".
-  4. Wait ~2 minutes, then visit madebymatt.uk/uas/
-
-HIGHLIGHT IT ON THE HUB
-  Edit your hub's index.html on GitHub (pencil icon), paste the
-  contents of hub-highlight-card.html near the top of <body>,
-  commit. The card links to /uas/ automatically.
-
-AFTER IT'S LIVE
-  - Test the Scan/OCR import tab on the live site (it only works
-    when hosted, not in previews).
-  - Run one real unit through and export a backup from Settings.
-
-Matt's Apps · UAS Register v3.1 · 69/69 tests passing
+AFTER
+  - madebymatt.uk            new homepage with UAS feature
+  - madebymatt.uk/games/     the games shelf (Medevac on it)
+  - catalogue cards now include UAS Register with a working link
