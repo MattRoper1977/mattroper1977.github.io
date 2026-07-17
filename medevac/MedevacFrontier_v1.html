@@ -342,6 +342,8 @@ const TEX_SRC = {
    Layer 3: foreground speed scrub, drawn in updateSweepers(). */
 const SKY_FAR = [0.34,0.4,0.47,0.55,0.65,0.75,0.82,0.9,0.97,0.92,0.98,0.89,0.98,0.89,0.98,0.92,0.97,0.96,0.95,0.94,0.87,0.86,0.81,0.31,0.1,0.1,0.1,0.29,0.26,0.27,0.27,0.28,0.28,0.33,0.49,0.5,0.5,0.5,0.51,0.31,0.32,0.32,0.32,0.33,0.33,0.55,0.55,0.55,0.54,0.54,0.54,0.54,0.51,0.49,0.48,0.46,0.46,0.46,0.47,0.49,0.53,0.54,0.56,0.56,0.4,0.4,0.65,0.66,0.67,0.67,0.67,0.66,0.66,0.66,0.67,0.66,0.64,0.21,0.23,0.23,0.25,0.28,0.3,0.32,0.34,0.35,0.35,0.34,0.34,0.32,0.32,0.34,0.37,0.41,0.44,0.57];
 const SKY_MID = [0.97,0.82,0.73,0.63,0.57,0.5,0.43,0.36,0.3,0.3,0.34,0.34,0.34,0.34,0.35,0.35,0.35,0.35,0.36,0.36,0.36,0.35,0.35,0.36,0.37,0.39,0.4,0.42,0.43,0.44,0.45,0.46,0.46,0.46,0.46,0.45,0.45,0.47,0.49,0.51,0.59,0.59,0.6,0.61,0.62,0.63,0.64,0.65,0.66,0.67,0.69,0.71,0.73,0.73,0.73,0.73,0.81,0.82,0.83,0.85,0.86,0.88,0.89,0.91,0.92,0.94,0.95,0.97,0.94,0.97,0.92,0.98,0.89,0.98,0.89,0.98,0.92,0.89,0.85,0.74,0.7,0.7,0.97,0.91,0.98,0.88,0.98,0.9,0.97,0.93,0.94,0.91,0.88,0.88,0.89,0.89];
+const PERF = { auto:false, avg:16, warm:0 };
+function perfLite(){ return PERF.auto || (typeof procQualityHigh === 'function' && !procQualityHigh()); }
 let skyC = null, farC = null, midC = null, skyKey = '';
 let sweepers = [];
 const TEX = {};
@@ -623,7 +625,7 @@ function paintSky(darkness, parX){ // 0 approach dusk .. 1 extract night; parX d
 }
 /* Layer 3 — foreground speed scrub: blur-streaked silhouettes whip across the bottom edge */
 function updateSweepers(dt, gsKts, altFt){
-  if(!reducedMotion && sweepers.length < 6 && altFt < 70 && gsKts > 20){
+  if(!reducedMotion && sweepers.length < (perfLite() ? 3 : 6) && altFt < 70 && gsKts > 20){
     if(Math.random() < dt * gsKts * 0.022 * (1 - altFt/70)){
       const side = Math.random() < 0.5 ? -1 : 1;
       const sp = (60 + gsKts*3.4) * (H/700);
@@ -668,7 +670,7 @@ function paintGroundBase(){
   ctx.fillStyle = g; ctx.fillRect(0, horizonY, W, H-horizonY);
   // Arid crack texture — pattern scrolls with camZ for a ground-flow speed cue
   if(patFill('arid', 0.15, 1.0, 0, -camZ*3)){ ctx.fillRect(0, horizonY, W, H-horizonY); ctx.globalAlpha = 1; }
-  if(patFill('arid', 0.16, 1.8, 0, -camZ*6)){ ctx.fillRect(0, horizonY + (H-horizonY)*0.55, W, (H-horizonY)*0.45); ctx.globalAlpha = 1; }
+  if(!perfLite() && patFill('arid', 0.16, 1.8, 0, -camZ*6)){ ctx.fillRect(0, horizonY + (H-horizonY)*0.55, W, (H-horizonY)*0.45); ctx.globalAlpha = 1; }
   // Dusk relight so the texture sits in the palette
   const tint = ctx.createLinearGradient(0,horizonY,0,H);
   tint.addColorStop(0,'rgba(138,74,51,.10)'); tint.addColorStop(1,'rgba(20,12,6,.30)');
@@ -893,7 +895,7 @@ function paintPlaneTop(px, py, scale, bank, propT){
 /* ---- VFX engine (per the MEDEVAC FRONTIER particle atlas) ----
    S1 prop-wash dust vortex · S2 friction sparks & debris · S3 engine exhaust/heat · S4 triage flares */
 let sparkCd = 0;
-function pPush(p){ if(particles.length > 240) particles.shift(); particles.push(p); }
+function pPush(p){ const cap = perfLite() ? 120 : 240; if(particles.length > cap) particles.shift(); particles.push(p); }
 function paintParticles(dt){
   for(let i = particles.length-1; i >= 0; i--){
     const p = particles[i];
@@ -979,7 +981,7 @@ function paintGroundScene(mode){
   ctx.fillStyle = g; ctx.fillRect(0, horizonY, W, H-horizonY);
   // Textured valley floor: dirt mid-ground, cracked arid earth in the foreground
   if(patFill('dirt', 0.25, 1.1)){ ctx.fillRect(0, horizonY, W, H-horizonY); ctx.globalAlpha = 1; }
-  if(patFill('arid', 0.30, 1.5)){ ctx.fillRect(0, H*0.72, W, H*0.28); ctx.globalAlpha = 1; }
+  if(!perfLite() && patFill('arid', 0.30, 1.5)){ ctx.fillRect(0, H*0.72, W, H*0.28); ctx.globalAlpha = 1; }
   const gtint = ctx.createLinearGradient(0,horizonY,0,H);
   gtint.addColorStop(0, mode==='extract' ? 'rgba(10,8,16,.28)' : 'rgba(120,64,40,.10)');
   gtint.addColorStop(1,'rgba(12,8,4,.38)');
@@ -1928,8 +1930,16 @@ function frame(ts){
   rafId = requestAnimationFrame(frame);
   if(!lastT) lastT = ts;
   let dt = (ts - lastT)/1000; lastT = ts;
+  // Auto performance governor: watch true frame cost, step down once if the machine is struggling
+  PERF.avg = PERF.avg*0.93 + Math.min(dt*1000, 80)*0.07;
   if(dt > 0.05) dt = 0.05;
   elapsed += dt;
+  PERF.warm += dt;
+  if(!PERF.auto && PERF.warm > 5 && PERF.avg > 26){
+    PERF.auto = true;
+    resize();                                   // drops to DPR 1, rebuilds caches
+    showCap('PERFORMANCE MODE ENGAGED — SMOOTH FLIGHT FIRST.', 2.4, 'good');
+  }
 
   if(state==='splash'){
     splashTimer -= dt;
@@ -2046,7 +2056,7 @@ function bindInputs(){
 
 /* ---------------- Resize ---------------- */
 function resize(){
-  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  DPR = perfLite() ? 1 : Math.min(window.devicePixelRatio || 1, 1.75);
   W = window.innerWidth; H = window.innerHeight;
   cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR);
   cv.style.width = W+'px'; cv.style.height = H+'px';
@@ -2150,17 +2160,31 @@ paintStrip=function(){
 };
 function cinPostFX(){
   if(!CIN.enabled)return;
-  ctx.save();
-  // Cool atmospheric veil at distance, preserving warm horizon.
-  const haze=ctx.createLinearGradient(0,horizonY*.47,0,H);
-  haze.addColorStop(0,'rgba(61,77,111,.10)');haze.addColorStop(.38,'rgba(124,103,108,.025)');haze.addColorStop(1,'rgba(8,10,16,.08)');
-  ctx.fillStyle=haze;ctx.fillRect(0,0,W,H);
-  // Cinematic vignette directs attention towards the flight corridor.
-  const v=ctx.createRadialGradient(W*.5,H*.47,Math.min(W,H)*.18,W*.5,H*.48,Math.max(W,H)*.73);
-  v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(.68,'rgba(0,0,0,.035)');v.addColorStop(1,'rgba(0,0,0,.34)');
-  ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
-  if(CIN.quality>1.15){if(!CIN.grainPat)cinBuildGrain();ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=.16;ctx.fillStyle=CIN.grainPat;ctx.fillRect(0,0,W,H);}
-  ctx.restore();
+  // Veil + vignette are static per canvas size — bake once, blit per frame.
+  const key = W + 'x' + H;
+  if(CIN.fxKey !== key || !CIN.fxC){
+    CIN.fxKey = key; CIN.fxC = null;
+    if(document.createElement){
+      const c = document.createElement('canvas');
+      c.width = Math.max(2, Math.round(W)); c.height = Math.max(2, Math.round(H));
+      const g = c.getContext('2d');
+      if(g && g.createLinearGradient){
+        const haze = g.createLinearGradient(0, horizonY*.47, 0, H);
+        haze.addColorStop(0,'rgba(61,77,111,.10)'); haze.addColorStop(.38,'rgba(124,103,108,.025)'); haze.addColorStop(1,'rgba(8,10,16,.08)');
+        g.fillStyle = haze; g.fillRect(0, 0, W, H);
+        const v = g.createRadialGradient(W*.5, H*.47, Math.min(W,H)*.18, W*.5, H*.48, Math.max(W,H)*.73);
+        v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(.68,'rgba(0,0,0,.035)'); v.addColorStop(1,'rgba(0,0,0,.34)');
+        g.fillStyle = v; g.fillRect(0, 0, W, H);
+        CIN.fxC = c;
+      }
+    }
+  }
+  if(CIN.fxC) ctx.drawImage(CIN.fxC, 0, 0);
+  // Grain: normal-composite at low alpha (soft-light was the frame killer), high-DPI + full detail only.
+  if(CIN.quality > 1.15 && !perfLite()){
+    if(!CIN.grainPat) cinBuildGrain();
+    ctx.save(); ctx.globalAlpha = .06; ctx.fillStyle = CIN.grainPat; ctx.fillRect(0, 0, W, H); ctx.restore();
+  }
 }
 const _cinRender=render;
 render=function(dt){_cinRender(dt);cinPostFX();};
@@ -2206,7 +2230,7 @@ function procFloodlight(x,y,s,t){ctx.save();ctx.globalCompositeOperation='screen
 function procRockLayer(){
   // Deterministic rocks in world space, drawn inside the corridor pass (under plane, FX and grain).
   if(!CIN.enabled)return;procMakeMaterials();
-  const count=procQualityHigh()?28:12;
+  const count=(procQualityHigh()&&!PERF.auto)?28:12;
   for(let i=0;i<count;i++){const z=-380+i*61;const side=i%2?1:-1;const x=side*(22+(i*19%72));const p=proj(x,0,z);if(!p||p.d>900||p.d<12||p.y<horizonY)continue;const s=Math.max(1.5,Math.min(15,(2+(i%5))*p.s));procRock(p.x,p.y,s,side<0);}
 }
 function procWorldDetails(){
