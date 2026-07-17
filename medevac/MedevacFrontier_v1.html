@@ -355,7 +355,7 @@ const VERSION = '2.0';
 const SAVE_KEY = 'mbm_medevac_v2';
 const KT2MS = 0.5144, FT2M = 0.3048;
 const STALL_KTS = 55;
-const APPROACH = { startZ:1400, startAlt:300, startSpd:68, stripLen:320, stripHalfW:13, tdzEnd:150 };
+const APPROACH = { startZ:950, startAlt:220, startSpd:68, stripLen:320, stripHalfW:13, tdzEnd:150 };
 const EXTRACT  = { timeLimit:134, casualties:3, goodLoad:5.0, badLoad:9.0, headsDownAfter:2 };
 const TAKEOFF  = { stripRoll:300, gateDist:900, rimFt:160, vr:62 };
 const CAM = { back:48, up:15 };
@@ -443,6 +443,7 @@ const P = {               // plane / mission state
   crates:0, crBusy:0, vrEff:62, wgt:1, exLimit:134, thermals:[], thermalWarned:false,
   airframe:100, susp:0, suspV:0, rotT:0, transT:0, landGrade:'', halfCalled:false,
   flex:0, touchZ:0, skids:[], hopVs:0, bounced:false, stopZ:-200, carryF:1,
+  xwDir:0, xwV:0, xwWarned:false, profChecked:false,
   exNeed:0, exReact:0, exReactGood:false,
   toDist:0, toStrip:0, toAirborne:false, toAltFt:0, toSpd:0, toPitch:0, toGateAlt:0,
   climbT:0, score:{land:0, ext:0, tko:0, stressPen:0, total:0}
@@ -1453,11 +1454,16 @@ function startApproach(){
   P.stress = 8; P.maxStress = 8; particles.length = 0; sweepers.length = 0; shake = 0;
   P.airframe = 100; P.susp = 0; P.suspV = 0; P.rotT = 0; P.transT = 0; P.landGrade = ''; P.halfCalled = false;
   P.flex = 0; P.touchZ = 0; P.skids = []; P.hopVs = 0; P.bounced = false; P.stopZ = -200; P.carryF = 1;
+  P.xwDir = Math.random() < 0.5 ? -1 : 1;
+  P.xwV = 4.2 + opsTempo()*0.9 + (currentMission === 'night' ? 1.2 : 0);
+  P.xwWarned = false; P.profChecked = false;
+  if(TRAIN.active){ P.z = 1250; P.altFt = 280; }      // guided flight keeps room for the lessons
   // Thermal updrafts — invisible columns off the canyon floor; count rises with ops tempo
   P.thermals = []; P.thermalWarned = false;
   const nTh = 1 + Math.min(opsTempo(), 3);
+  const thSpan = (TRAIN.active ? 1250 : APPROACH.startZ) - 320;
   for(let i = 0; i < nTh; i++){
-    const tz = 260 + (i + rnd(0.15, 0.85)) * (1050 / nTh);
+    const tz = 240 + (i + rnd(0.15, 0.85)) * (thSpan / nTh);
     P.thermals.push({ z: tz, x: rnd(-1, 1) * Math.max(6, hwAt(tz) - 24),
       r: 17, zr: 72, str: 270 + opsTempo()*40 + rnd(0, 90) });
   }
@@ -1509,8 +1515,27 @@ function updateApproach(dt){
   P.gustTimer -= dt;
   if(P.gustTimer <= 0){ P.gustVel += rnd(-3.4, 3.4)*(1 + opsTempo()*0.12)*(currentMission==='night' ? 1.35 : 1); P.gustTimer = rnd(2.4, 4.6); }
   P.gustVel = lerp(P.gustVel, Math.sin(elapsed*0.6)*1.2, clamp(dt*0.5, 0, 1));
-  P.x += (P.latVel + P.gustVel) * dt;
-  P.bank = lerp(P.bank, (P.latVel + P.gustVel) * 0.035, clamp(dt*4, 0, 1));
+  // Crosswind band through the pinch — called in advance, must be crabbed against
+  let xv = 0;
+  if(P.z < 780 && P.z > 460){
+    const band = 1 - Math.abs((P.z - 620)/160);
+    xv = P.xwDir * P.xwV * clamp(band*1.4, 0, 1);
+    P.stress += 2.2*clamp(band,0,1)*dt;
+  }
+  if(!P.xwWarned && P.z < 860){
+    P.xwWarned = true;
+    showCap('GUSTS THROUGH THE PINCH — CRAB ' + (P.xwDir > 0 ? 'LEFT' : 'RIGHT') + '.', 2.2, 'warn', 'alfayed');
+  }
+  P.x += (P.latVel + P.gustVel + xv) * dt;
+  P.bank = lerp(P.bank, (P.latVel + P.gustVel + xv) * 0.035, clamp(dt*4, 0, 1));
+  // Mid-approach profile check — a graded gate, not dead air
+  if(!P.profChecked && P.z < 520){
+    P.profChecked = true;
+    const okA = P.altFt > 95 && P.altFt < 185, okS = P.spdKts > 57 && P.spdKts < 77;
+    if(okA && okS) showCap('ON PROFILE. HOLD WHAT YOU HAVE.', 1.8, 'good', 'alfayed');
+    else if(P.altFt >= 185 || P.spdKts >= 77) showCap('HIGH AND FAST — GET IT DOWN, GET IT SLOW.', 2, 'warn', 'alfayed');
+    else showCap('LOW AND SLOW — POWER OF THE NOSE, HOLD ALTITUDE.', 2, 'bad', 'alfayed');
+  }
   // Stress: sink near ground, wall proximity, stall
   const hw = hwAt(P.z), margin = hw - Math.abs(P.x) - 9;
   if(margin < 12) P.stress += (12 - margin) * 2.6 * dt;
@@ -1519,7 +1544,7 @@ function updateApproach(dt){
   P.stress = clamp(P.stress - 3.5*dt, 0, 100);
   P.maxStress = Math.max(P.maxStress, P.stress);
   Snd.setEngine(clamp(0.3 + (P.spdKts-45)/90, 0.2, 0.8));
-  Snd.setWind(clamp(P.spdKts/150, 0, 0.45) + (margin < 12 ? 0.14 : 0));
+  Snd.setWind((clamp(P.spdKts/150, 0, 0.45) + (margin < 12 ? 0.14 : 0)) * (P.altFt < 45 ? 0.5 : 1));
   // Wall strike
   if(Math.abs(P.x) + 8 > hw && P.altFt < 160){
     return failMission('WALL STRIKE — AIRFRAME LOST', 'approach');
@@ -1955,6 +1980,8 @@ function render(dt){
   else if(state==='approach' || state==='rollout' || (state==='fail' && failPhase==='approach')){
     // Camera chases the plane down the canyon
     camZ = P.z + CAM.back; camX = P.x * 0.55; camAltM = P.altFt*FT2M + CAM.up;
+    const FOVa = FOV;
+    if(state === 'approach' && P.altFt < 50) FOV = FOVa * (1 + 0.06*(1 - P.altFt/50));   // flare focus
     paintSky(0.3, camX*2.2 + elapsed*2); paintGroundBase(); paintScrub(); paintStrip(); paintWalls();
     if(state==='approach') paintTrajectory();
     if(state==='approach'){   // Thermal columns: rising dust so a sharp eye can brace
@@ -1999,6 +2026,7 @@ function render(dt){
     }
     paintParticles(dt);
     updateSweepers(dt, state==='rollout' ? P.rollSpd : P.spdKts, state==='rollout' ? 0 : P.altFt);
+    FOV = FOVa;
   }
   else if(state==='takeoff' || state==='climbout' || (state==='fail' && failPhase==='takeoff')){
     // Takeoff runs up-canyon (wz increases 0→900). Render in mirrored space: zRender = -wz,
