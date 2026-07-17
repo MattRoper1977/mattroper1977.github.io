@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MEDEVAC FRONTIER — madebymatt.uk</title>
-<meta name="description" content="STOL medevac flight game: land in a twilight canyon, extract the casualties, and get airborne before the zone is overrun. Free to play, works offline.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>MEDEVAC FRONTIER v2 — madebymatt.uk</title>
+<meta name="description" content="MEDEVAC FRONTIER v2: train with Unit 734, fly Twilight and Night Canyon medevac missions, and build a persistent service record. Free, offline-ready browser flight game.">
 <meta name="theme-color" content="#161d3d">
 <meta property="og:title" content="MEDEVAC FRONTIER">
-<meta property="og:description" content="Land. Extract. Get airborne. A free canyon medevac flight game from Matt's Apps.">
+<meta property="og:description" content="Train. Land. Extract. Escape. Two canyon missions, guided first flight and a persistent service record.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://madebymatt.uk/medevac/medevac_frontier_banner.png">
 <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABmJLR0QA/wD/AP+gvaeTAAADtklEQVR4nO2bW0gUURjH/zOzq3uZ8rLuer+kli+FXRShxBJJskIxqcgMRYpIEszMyIgM6iXoQvTSm4RhqOVbD4IQ1UNQaPaWvSmW7abrZdX1Mjs9LOKOu153zhxi5g/7cuZ83/z2z3f2zPl2l9mdvVOEisXSBqAtzQDaALSlGUAbgLZ0ew5k0GagKq0Cfg3aJQOjDqffJIs1QkEk+bSR96L6CtAMoA1AW5oBtAFoS/UG6IIJftP6Tj6SIFRWcXzLsaqvAM0A2gC0pRlA+gai2w2Py7XpOI/LBdHtJsLkq6B2gbW0MDQIx/PHcPf3Q/QI0FltMOfmIfxMOXSWqIAxi6MOjLe3YfrTByw67GBYDobMTFiv1kOfmESEk0gFCM4xDNfVYLavF6JHAAAsOuyY6OrEYOU5iAM/YImwSF7izwEMVpZjoqsTiw7vCVX0CJjt68VwXQ0E5xgJVDIGjLe3QZiaDHhNnJ+Dq6fbb9zV0w1xfi5gjDA1ifH2Ntk5QcqA2b6vsuecIZATxJbAxITsOT2TgSsqWBExgNHJ/9nKcJzsOUFqF9AnpWDhzwgAIKaiCrHnqyTXWYPBLyax9jriL9VIxn6/asFIa4s3Z3IKCVQyBoRmZGDmy2cAAGcyQx9lXTeG43lwPC8dM5mXc+4i070msgT4Q4dlz2nOlT8nSBkQkpaOkNQ0WfOFpqbLls9XxJ4Ew0vKYH/yEMLMNBZG/0qusQYDOLO03IVpFzwrHn2FmWlvruJTpDDJGcAXFsHZ8RojrcsfZEuylZ5GSlOzZGzo2SPY37b75dHHJ4A/eowUJrnDEMNxiKyo2sDMtRV5oZrItrokoqdBPr8Apv3ZW4437t0HPr9AVqaVInscZhhEXWsAazRuPtRggK3uJsAwRNCWRLwfoI+ORWT15U3HWS5egS4ujgiTr8gtLh+FFZfC/f0bXB/fAwDsXR2wd3WsOt98MBdhJ0uUQFOoJcYwsDbcQkjyjnWn6hOSYLvRBLDKoCnWE2SNRsQ03we74nFXOseEmOYHYM2rz5GdS7E7AdDHJyK66W7AbY3R6RB95x5CkpKVRFK+K2zKykF0UzMY1ud4y7KwNd6GKStHaRw6bXFzbh6s9Y3eLY5hYK2tB3+E7H6/mhTZBQJpW2ERBKf3JyzbTxTTwqBnAACEny2neXtA+2YoyAro7vZvb/9vUn0FqN6AoJbAi5dP5SOhJNVXgGYAbQDa0gygDUBbmgG0AWhL9QYw2j9HVS7NANoAtKUZQBuAtv4BujLXJG1llPUAAAAASUVORK5CYII=">
@@ -169,6 +169,32 @@ body.detail-high .panel{box-shadow:0 5px 22px rgba(0,0,0,.66),inset 0 1px rgba(2
 #btnQuality{border-color:#6f8879;color:#b8d5c5}
 body.detail-performance #btnQuality{color:#92a89c;border-color:#4d6156}
 
+
+/* ---------- v2 product layer: missions, training, record, mobile/a11y ---------- */
+:root{--safe-t:env(safe-area-inset-top,0px);--safe-r:env(safe-area-inset-right,0px);--safe-b:env(safe-area-inset-bottom,0px);--safe-l:env(safe-area-inset-left,0px)}
+#panelFlight,#panelZone{top:calc(14px + var(--safe-t));left:calc(14px + var(--safe-l))}
+#panelStress{top:calc(14px + var(--safe-t));right:calc(14px + var(--safe-r))}
+#panelTimer{top:calc(14px + var(--safe-t))}
+#tcL{left:calc(16px + var(--safe-l));bottom:calc(18px + var(--safe-b))}
+#tcR{right:calc(16px + var(--safe-r));bottom:calc(18px + var(--safe-b))}
+#exUI{padding-bottom:calc(20px + var(--safe-b))}
+#menuFooter{right:calc(12px + var(--safe-r));bottom:calc(8px + var(--safe-b))}
+.missionStrip{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;width:min(520px,94vw);margin-top:2.2vh}
+.missionBtn{padding:10px 6px;font-size:10px;letter-spacing:.08em;min-height:58px;position:relative}
+.missionBtn small{display:block;margin-top:5px;color:var(--mintdim);font-size:8px;letter-spacing:.08em}
+.missionBtn.selected{border-color:var(--amber);color:#fff;box-shadow:0 0 16px rgba(255,207,94,.17)}
+.missionBtn.locked{opacity:.58}
+#btnRecord{margin-top:8px;padding:10px;font-size:11px;width:min(340px,84vw)}
+#recordRows{margin:8px 0 5px;border-top:1px solid #3a4a40}
+.recordRow{display:grid;grid-template-columns:1.5fr 1fr .55fr .75fr;gap:6px;padding:8px 3px;border-bottom:1px dashed #3a4a40;font:10px ui-monospace,monospace;color:#d9d3c4}
+.recordRow b{color:var(--mint)} .recordEmpty{padding:22px 6px;color:var(--mintdim);text-align:center;font:12px ui-monospace,monospace}
+#callsign{width:100%;margin:4px 0 8px;padding:11px;background:#07110d;color:#fff;border:1px solid #557565;border-radius:7px;font:700 13px ui-monospace,monospace;text-transform:uppercase}
+#trainingBadge{position:absolute;z-index:8;top:calc(126px + var(--safe-t));left:50%;transform:translateX(-50%);padding:6px 10px;border:1px solid var(--amber);border-radius:5px;background:rgba(23,18,7,.85);color:var(--amber);font:700 10px ui-monospace,monospace;letter-spacing:.18em;pointer-events:none}
+#exZone:before,#exZone:after{content:"";position:absolute;top:2px;bottom:2px;width:7px;border-top:3px solid #fff;border-bottom:3px solid #fff}
+#exZone:before{left:2px;border-left:3px solid #fff} #exZone:after{right:2px;border-right:3px solid #fff}
+body.night-mission canvas{filter:saturate(.88) brightness(.76) contrast(1.12)}
+body.night-mission .panel{background:rgba(4,12,20,.9);border-color:#7fa7bd}
+@media(max-height:700px){#menuUI{padding-top:3vh}.menuBtns{gap:7px;margin-top:2vh}.missionStrip{margin-top:1vh}.mbtn{padding:10px}.missionBtn{min-height:48px}}
 </style>
 </head>
 <body>
@@ -179,6 +205,7 @@ body.detail-performance #btnQuality{color:#92a89c;border-color:#4d6156}
 <div id="panelZone" class="panel hidden">ZONE STATUS:<br>CONFLICT IMMINENT</div>
 <div id="panelStress" class="panel hidden"><div class="lbl">STRESS LEVEL</div><div class="barTrack"><div id="stressFill"></div></div></div>
 <div id="panelTimer" class="panel hidden"><div id="timerTxt">02:14 REMAINING</div><div id="loadLbl">LOADING STATUS: <span id="loadTxt">0/3 CASUALTIES</span></div><div class="barTrack"><div id="loadFill"></div></div></div>
+<div id="trainingBadge" class="hidden">TRAINING FLIGHT · NO-FAIL ASSIST ACTIVE</div>
 <div id="critWarn" class="critical-warning"></div>
 <div id="caption"><img id="capChip" alt=""><span id="capBody"><span id="capName"></span><span id="capText"></span></span></div>
 
@@ -214,16 +241,22 @@ body.detail-performance #btnQuality{color:#92a89c;border-color:#4d6156}
 <div id="menuUI" class="overlay hidden">
   <h1 id="title"><small>MATT'S APPS FLIGHT OPS</small>MEDEVAC FRONTIER</h1>
   <div class="menuBtns">
-    <button id="btnStart" class="mbtn primary">START MISSION (TWILIGHT CANYON)</button>
+    <div class="missionStrip" role="group" aria-label="Select mission">
+      <button id="missionTraining" class="mbtn missionBtn">TRAINING<small>GUIDED · TEMPO 0</small></button>
+      <button id="missionTwilight" class="mbtn missionBtn selected">TWILIGHT<small>STANDARD OP</small></button>
+      <button id="missionNight" class="mbtn missionBtn">NIGHT CANYON<small>LAMPS · ROUGH WIND</small></button>
+    </div>
+    <button id="btnStart" class="mbtn primary">DEPLOY — TWILIGHT CANYON</button>
     <button id="btnHow" class="mbtn">HOW TO FLY</button>
     <button id="btnCrew" class="mbtn">CREW</button>
+    <button id="btnRecord" class="mbtn">SERVICE RECORD</button>
     <button id="btnSound" class="mbtn">SOUND: ON</button>
     <button id="btnVisual" class="mbtn">VISUALS: CINEMATIC</button>
     <button id="btnQuality" class="mbtn">DETAIL: HIGH</button>
   </div>
   <div id="objective"><b>MISSION OBJECTIVE:</b><br>Land, extract casualties, and take off before the canyon is overrun.
     <div id="tempoLine"></div></div>
-  <div id="menuFooter" style="cursor:pointer">v1.6 • <span>madebymatt.uk</span></div>
+  <div id="menuFooter" style="cursor:pointer">v2.0 • <span>madebymatt.uk</span></div>
 </div>
 
 <!-- How to fly -->
@@ -258,6 +291,16 @@ body.detail-performance #btnQuality{color:#92a89c;border-color:#4d6156}
   </div>
 </div>
 
+<!-- Service record -->
+<div id="recordOv" class="overlay sheet hidden">
+  <div class="sheetCard">
+    <h2>UNIT 734 — SERVICE RECORD</h2>
+    <label for="callsign" style="font:10px ui-monospace,monospace;color:var(--mintdim);letter-spacing:.16em">PILOT CALLSIGN</label>
+    <input id="callsign" maxlength="12" autocomplete="off" placeholder="ROOK" aria-label="Pilot callsign">
+    <div id="recordRows"></div>
+    <button id="btnRecordClose" class="mbtn primary">CLOSE RECORD</button>
+  </div>
+</div>
 <!-- Fail -->
 <div id="failOv" class="overlay sheet hidden">
   <div class="sheetCard">
@@ -308,8 +351,8 @@ body.detail-performance #btnQuality{color:#92a89c;border-color:#4d6156}
    ===================================================================== */
 
 /* ---------------- Data consts ---------------- */
-const VERSION = '1.6';
-const SAVE_KEY = 'mbm_medevac_v1';
+const VERSION = '2.0';
+const SAVE_KEY = 'mbm_medevac_v2';
 const KT2MS = 0.5144, FT2M = 0.3048;
 const STALL_KTS = 55;
 const APPROACH = { startZ:1400, startAlt:300, startSpd:68, stripLen:320, stripHalfW:13, tdzEnd:150 };
@@ -381,7 +424,9 @@ let cv, ctx, W = 0, H = 0, DPR = 1, horizonY = 0, FOV = 0;
 let state = 'boot';
 let lastT = 0, elapsed = 0, rafId = 0;
 let reducedMotion = false;
-let save = { best:0, bestMedal:'', sound:true };
+let save = { best:0, bestMedal:'', sound:true, callsign:'ROOK', records:[], trainingDone:false };
+let currentMission = 'twilight';
+const TRAIN = { active:false, step:0, elapsed:0, lastPrompt:0 };
 const keys = { left:false, right:false, up:false, down:false };
 let segs = [];            // canyon segments
 let scrub = [];           // ground scatter
@@ -424,8 +469,19 @@ function hide(e){ e.classList.add('hidden'); }
 
 /* ---------------- Persistence ---------------- */
 const TEMPO_NAMES = ['ROUTINE','ELEVATED','SERIOUS','CRITICAL','MAXIMUM'];
-function opsTempo(){ return Math.min(save.streak || 0, 4); }
-function loadSave(){ try{ const raw = localStorage.getItem(SAVE_KEY); if(raw){ const d = JSON.parse(raw); if(d && typeof d==='object') save = Object.assign(save, d); } }catch(e){} }
+function opsTempo(){ if(currentMission === 'training') return 0; return Math.min(save.streak || 0, 4); }
+function loadSave(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw){ const d = JSON.parse(raw); if(d && typeof d==='object') save = Object.assign(save, d); }
+    else {
+      const old = localStorage.getItem('mbm_medevac_v1');           // carry v1 progress forward
+      if(old){ const d = JSON.parse(old);
+        if(d && typeof d==='object'){ save.best = d.best||0; save.bestMedal = d.bestMedal||''; 
+          save.sound = d.sound!==false; save.streak = d.streak||0; writeSave(); } }
+    }
+  }catch(e){}
+}
 function writeSave(){ try{ save.v = 2; localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} }
 
 /* ---------------- Audio ---------------- */
@@ -596,6 +652,7 @@ function blitRange(c, off, yBottom){
   ctx.drawImage(c, -off, y); ctx.drawImage(c, c.width - off, y);
 }
 function paintSky(darkness, parX){ // 0 approach dusk .. 1 extract night; parX drives the anchor layers
+  if(currentMission === 'night' && state !== 'menu' && state !== 'howto' && state !== 'splash') darkness = Math.max(darkness, 0.94);
   buildSkyLayers(darkness);
   if(skyC){ ctx.drawImage(skyC, 0, 0); }
   else {
@@ -695,7 +752,8 @@ function paintStrip(){
     ctx.fillStyle = PAL.strip; ctx.beginPath();
     ctx.moveTo(c[0].x,c[0].y); ctx.lineTo(c[1].x,c[1].y); ctx.lineTo(c[2].x,c[2].y); ctx.lineTo(c[3].x,c[3].y);
     ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = 'rgba(203,176,137,.5)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.strokeStyle = 'rgba(58,46,34,.30)'; ctx.lineWidth = 6; ctx.stroke();   // feathered boundary
+    ctx.strokeStyle = 'rgba(203,176,137,.4)'; ctx.lineWidth = 1; ctx.stroke();
     // Graded-dirt surface texture, flowing with travel
     if(texReady('dirt')){
       ctx.save(); ctx.beginPath();
@@ -1034,9 +1092,50 @@ function paintGroundScene(mode){
   const sagPx = mode==='extract' ? (P.exLoaded*0.9 + P.crates*1.4)*su : 0;
   paintPlaneSide(W*0.46, H*0.63 + sagPx, su, mode);
   if(mode==='extract') paintMedkit(W*0.46 + 168*su, H*0.63 + 40*su, 58*su);
+  // Cohesion: ground pools under the floodlights tint whatever stands in them
+  for(const plx of lampXs){
+    drawContactShadow(plx, H*0.585 + H*0.09 + 12, W*0.03, 2, 0.25);   // tripod feet
+    drawLocalLight(plx, H*0.66, W*0.085, 0.20);
+  }
   // Extraction: medic team + ramp handled by caller (needs anim state)
 }
 
+/* ---- Cohesion systems: one shadow, one light, one wear pass for everything ---- */
+function drawContactShadow(x, y, w, soft, op){
+  ctx.fillStyle = 'rgba(0,0,0,' + (op*0.5) + ')';
+  ctx.beginPath(); ctx.ellipse(x, y, w/2, Math.max(1.5, w/(8 - soft*2)), 0, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,' + op + ')';
+  ctx.beginPath(); ctx.ellipse(x, y, w*0.28, Math.max(1, w/15), 0, 0, 7); ctx.fill();
+}
+function drawLocalLight(x, y, r, intensity){
+  const g = ctx.createRadialGradient(x, y, 2, x, y, r);
+  g.addColorStop(0, 'rgba(255,222,166,' + intensity + ')');
+  g.addColorStop(1, 'rgba(255,222,166,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+  if(!perfLite()){                              // contact tint: warm the objects sitting in the pool
+    const g2 = ctx.createRadialGradient(x, y, 1, x, y, r*0.45);
+    g2.addColorStop(0, 'rgba(255,206,140,' + intensity*0.7 + ')');
+    g2.addColorStop(1, 'rgba(255,206,140,0)');
+    ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(x, y, r*0.45, 0, 7); ctx.fill();
+  }
+}
+function drawMaterialWear(x, y, w, h, seed, strength){
+  if(perfLite()) return;
+  const n = Math.round(3 + strength*4);
+  ctx.save();
+  for(let i = 0; i < n; i++){
+    const sx = x + hash(seed + i*1.7)*w, sy = y + hash(seed + i*3.1)*h*0.4;
+    const len = h*(0.25 + hash(seed + i*5.3)*0.5);
+    ctx.strokeStyle = 'rgba(22,17,12,' + (0.08 + 0.1*hash(seed + i*7.9)) + ')';
+    ctx.lineWidth = 1 + hash(seed + i)*1.4;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + (hash(seed - i) - 0.5)*4, sy + len); ctx.stroke();
+  }
+  ctx.restore();
+}
+function gradeOver(x, y, w, h, a){    // knock photographic textures toward the palette
+  ctx.fillStyle = 'rgba(91,103,80,' + a + ')';
+  ctx.fillRect(x, y, w, h);
+}
 function paintShed(x, y, w, h, mode){
   ctx.save();
   if(patFill('metal', 1, 0.55, x, y)){ ctx.fillRect(x, y, w, h); ctx.globalAlpha = 1; }
@@ -1054,7 +1153,9 @@ function paintShed(x, y, w, h, mode){
   ctx.font = '700 ' + Math.max(8, Math.round(h*0.12)) + 'px ui-monospace,Menlo,monospace';
   ctx.fillText('UNIT 734', x + w*0.33, y + h*0.46);
   ctx.textAlign = 'start';
+  drawMaterialWear(x + w*0.04, y + h*0.12, w*0.92, h*0.85, 41, 1);
   ctx.restore();
+  drawContactShadow(x + w*0.5, y + h + 3, w*1.02, 1, 0.30);
 }
 function paintTarp(x, y, w, h){
   ctx.strokeStyle = '#1c1a14'; ctx.lineWidth = 3;
@@ -1071,25 +1172,41 @@ function paintTarp(x, y, w, h){
   sh.addColorStop(0,'rgba(255,220,170,.12)'); sh.addColorStop(1,'rgba(0,0,0,.45)');
   ctx.fillStyle = sh; ctx.fillRect(x, y, w, h);
   ctx.restore();
+  drawContactShadow(x + w*0.52, y + h + 2, w*0.8, 2, 0.22);
 }
 function paintCrateStack(x, y, w){
   const t = TEX.crate;
   const ratio = (t && t.ready) ? t.img.height / t.img.width : 0.53;
-  ctx.fillStyle = 'rgba(0,0,0,.35)';
-  ctx.beginPath(); ctx.ellipse(x + w*0.9, y + 3, w*1.15, Math.max(3, w*0.09), 0, 0, 7); ctx.fill();
-  const one = (dx, dy, dw)=>{
+  drawContactShadow(x + w*0.9, y + 3, w*2.2, 2, 0.30);
+  const seed = Math.round(x*0.37);
+  const one = (dx, dy, dw, rot)=>{
     const dh = dw*ratio;
-    if(t && t.ready){ ctx.drawImage(t.img, dx, dy - dh, dw, dh); }
-    else { ctx.fillStyle = '#5b6750'; ctx.fillRect(dx, dy - dh, dw, dh);
+    ctx.save();
+    if(rot){ ctx.translate(dx + dw/2, dy - dh/2); ctx.rotate(rot); ctx.translate(-(dx + dw/2), -(dy - dh/2)); }
+    if(t && t.ready){
+      ctx.drawImage(t.img, dx, dy - dh, dw, dh);
+      gradeOver(dx, dy - dh, dw, dh, 0.16);          // soften the photographic pop
+    } else { ctx.fillStyle = '#5b6750'; ctx.fillRect(dx, dy - dh, dw, dh);
       ctx.strokeStyle = '#39422f'; ctx.lineWidth = 1.5; ctx.strokeRect(dx, dy - dh, dw, dh); }
+    ctx.restore();
+    return dh;
   };
   const h = w*ratio;
-  one(x, y, w); one(x + w*0.05, y - h - 1, w*0.94); one(x + w*1.08, y, w*0.82);
+  one(x, y, w, 0);
+  one(x + w*0.05, y - h - 1, w*0.94, (hash(seed) - 0.5)*0.07);   // settled, not machine-stacked
+  one(x + w*1.08, y, w*0.82, (hash(seed + 3) - 0.5)*0.05);
+  if(!perfLite() && texReady('fabric')){                          // one strapped with canvas webbing
+    ctx.save(); ctx.beginPath(); ctx.rect(x + w*0.30, y - h, w*0.14, h); ctx.clip();
+    if(patFill('fabric', 0.85, 0.25, x, y)) ctx.fillRect(x + w*0.30, y - h, w*0.14, h);
+    ctx.restore(); ctx.globalAlpha = 1;
+  }
+  drawMaterialWear(x, y - h, w, h, seed, 0.7);
 }
 function paintPlaneSide(cx0, cy0, u, mode){
   ctx.save(); ctx.translate(cx0, cy0); ctx.scale(u, u);
-  // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.ellipse(0, 46, 190, 12, 0, 0, 7); ctx.fill();
+  // Grounding: unified contact shadow + wheel cores
+  drawContactShadow(0, 46, 372, 1, 0.34);
+  drawContactShadow(-96, 47, 40, 3, 0.4); drawContactShadow(44, 47, 40, 3, 0.4); drawContactShadow(-160, 43, 28, 3, 0.35);
   // Wing behind fuselage (far side hint)
   ctx.fillStyle = '#8b9298'; ctx.fillRect(-70, -46, 190, 9);
   ctx.fillRect(24, -46, 8, 26); // far strut
@@ -1120,6 +1237,9 @@ function paintPlaneSide(cx0, cy0, u, mode){
   ctx.fillStyle = 'rgba(58,64,58,.85)';
   ctx.font = '700 11px ui-monospace,Menlo,monospace';
   ctx.fillText('UNIT 734', 96, 2);
+  // Exhaust staining sweeps aft along the belly — she works for a living
+  ctx.fillStyle = 'rgba(30,26,20,.30)';
+  ctx.fillRect(-30, 13, 96, 4); ctx.fillRect(-24, 17, 76, 2.4);
   ctx.restore();
   // Fin
   ctx.fillStyle = '#99a296';
@@ -1181,10 +1301,8 @@ function paintPlaneSide(cx0, cy0, u, mode){
       ctx.fillStyle = '#5b6750'; ctx.fillRect(80 - ci*1.5, 10 - ci*4.6, 7, 4);
       ctx.fillStyle = '#77855f'; ctx.fillRect(80 - ci*1.5, 10 - ci*4.6, 7, 1.2);
     }
-    // Ramp work-light: warm pool over the tread
-    const rg = ctx.createRadialGradient(104, 30, 4, 104, 30, 68);
-    rg.addColorStop(0, 'rgba(255,224,168,.5)'); rg.addColorStop(1, 'rgba(255,224,168,0)');
-    ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(104, 30, 68, 0, 7); ctx.fill();
+    // Ramp work-light — routed through the shared light system
+    drawLocalLight(104, 30, 68, 0.5);
     // Cargo ramp — anti-slip diamond tread (LOAD CAP: 3 LITTER MAX)
     ctx.save(); ctx.beginPath();
     ctx.moveTo(60, 18); ctx.lineTo(88, 18); ctx.lineTo(150, 46); ctx.lineTo(118, 46); ctx.closePath(); ctx.clip();
@@ -1202,11 +1320,11 @@ function paintPlaneSide(cx0, cy0, u, mode){
 
 function paintMedkit(x, y, w){
   const t = TEX.medkit;
-  ctx.fillStyle = 'rgba(0,0,0,.35)';
-  ctx.beginPath(); ctx.ellipse(x + w*0.5, y + 2, w*0.62, Math.max(2, w*0.08), 0, 0, 7); ctx.fill();
+  drawContactShadow(x + w*0.5, y + 2, w*1.15, 2, 0.30);
   if(t && t.ready){
     const h = w * t.img.height / t.img.width;
     ctx.drawImage(t.img, x, y - h, w, h);
+    gradeOver(x, y - h, w, h, 0.14);
   } else {
     ctx.fillStyle = '#4a5344'; ctx.fillRect(x, y - w*0.45, w, w*0.45);
     ctx.fillStyle = '#c9342a'; ctx.fillRect(x + w*0.4, y - w*0.33, w*0.2, w*0.2);
@@ -1275,6 +1393,9 @@ function coach(dt){
 
 /* ---------------- Phase logic ---------------- */
 function startApproach(){
+  TRAIN.active = currentMission === 'training'; TRAIN.step = 0; TRAIN.elapsed = 0; TRAIN.lastPrompt = 0;
+  document.body.classList.toggle('night-mission', currentMission === 'night');
+  el.trainingBadge.classList.toggle('hidden', !TRAIN.active);
   buildCanyon();                      // regenerate at current ops tempo
   P.z = APPROACH.startZ; P.x = 0; P.altFt = APPROACH.startAlt; P.spdKts = APPROACH.startSpd;
   P.vsFpm = -380; P.pitch = 0; P.bank = 0; P.latVel = 0; P.gustVel = 0; P.gustTimer = 2.5;
@@ -1290,11 +1411,22 @@ function startApproach(){
       r: 17, zr: 72, str: 270 + opsTempo()*40 + rnd(0, 90) });
   }
   setState('approach');
-  showCap('FINAL APPROACH — TWILIGHT CANYON', 2.4, 'good', 'alfayed');
+  showCap(TRAIN.active ? 'TRAINING FLIGHT. I HAVE YOU — FOLLOW MY CALLS.' : ('FINAL APPROACH — ' + (currentMission === 'night' ? 'NIGHT CANYON' : 'TWILIGHT CANYON')), 2.8, 'good', 'alfayed');
   Snd.startEngine(); Snd.setEngine(0.45);
 }
 
+function updateTraining(dt){
+  if(!TRAIN.active) return;
+  TRAIN.elapsed += dt;
+  if(TRAIN.step===0 && TRAIN.elapsed>3.2){ showCap('HOLD ▲ TO RAISE THE NOSE AND SLOW THE DESCENT.',3,'good','alfayed'); TRAIN.step=1; }
+  else if(TRAIN.step===1 && (keys.up || P.pitch>3)){ showCap('GOOD. RELEASE ▲ — KEEP THE SPEED ABOVE 55 KTS.',2.6,'good','alfayed'); TRAIN.step=2; }
+  else if(TRAIN.step===2 && P.z<900){ showCap('USE ◀ ▶ IN SHORT TAPS. KEEP THE AIRCRAFT BETWEEN THE WALLS.',3,'good','alfayed'); TRAIN.step=3; }
+  else if(TRAIN.step===3 && P.z<420){ showCap('ALIGN WITH THE STRIP. HOLD ▲ TO REDUCE THE SINK RATE.',3,'warn','alfayed'); TRAIN.step=4; }
+  else if(TRAIN.step===4 && P.altFt<70){ showCap('EASE IT DOWN — WINGS LEVEL, 50 TO 75 KNOTS.',2.7,'warn','alfayed'); TRAIN.step=5; }
+}
+
 function updateApproach(dt){
+  updateTraining(dt);
   // Pitch control
   const pTarget = keys.up ? 9 : keys.down ? -8 : 0;
   P.pitch = lerp(P.pitch, pTarget, clamp(dt*3.2, 0, 1));
@@ -1324,7 +1456,7 @@ function updateApproach(dt){
   const latTarget = keys.left ? -9 : keys.right ? 9 : 0;
   P.latVel = lerp(P.latVel, latTarget, clamp(dt*2.4, 0, 1));
   P.gustTimer -= dt;
-  if(P.gustTimer <= 0){ P.gustVel += rnd(-3.4, 3.4)*(1 + opsTempo()*0.12); P.gustTimer = rnd(2.4, 4.6); }
+  if(P.gustTimer <= 0){ P.gustVel += rnd(-3.4, 3.4)*(1 + opsTempo()*0.12)*(currentMission==='night' ? 1.35 : 1); P.gustTimer = rnd(2.4, 4.6); }
   P.gustVel = lerp(P.gustVel, Math.sin(elapsed*0.6)*1.2, clamp(dt*0.5, 0, 1));
   P.x += (P.latVel + P.gustVel) * dt;
   P.bank = lerp(P.bank, (P.latVel + P.gustVel) * 0.035, clamp(dt*4, 0, 1));
@@ -1412,7 +1544,7 @@ function updateRollout(dt){
 }
 
 function startExtract(){
-  P.exLimit = clamp(EXTRACT.timeLimit - opsTempo()*8, 100, EXTRACT.timeLimit);
+  P.exLimit = TRAIN.active ? 180 : clamp(EXTRACT.timeLimit - opsTempo()*8, 100, EXTRACT.timeLimit);
   P.exTime = P.exLimit; P.exLoaded = 0; P.exBusy = 0; P.exBusyTotal = 0;
   P.crates = 0; P.crBusy = 0; P.exNeed = 0; P.exReact = 0;
   P.exMarker = 0; P.exDir = 1; P.exHeadsDown = 0; P.exDone = false;
@@ -1423,7 +1555,7 @@ function startExtract(){
   else if(P.carryF < 1.06) showCap('GOOD PARKING — SHORT CARRY.', 1.8, 'good', 'rostova');
   rollGreenZone();
   setState('extract');
-  showCap('EXTRACTION WINDOW OPEN — MOVE.', 2.4, 'warn', 'rostova');
+  showCap(TRAIN.active ? 'WATCH THE MARKER. TAP GUIDE TEAM INSIDE THE BRACKETED ZONE.' : 'EXTRACTION WINDOW OPEN — MOVE.', 3.1, TRAIN.active ? 'good' : 'warn', 'rostova');
   Snd.setEngine(0.15); Snd.setWind(0.06);
 }
 function rollGreenZone(){
@@ -1530,7 +1662,7 @@ function startTakeoff(){
   P.x = 0; P.latVel = 0; P.gustVel = 0; P.gustTimer = 3; P.bank = 0;
   // Reuse corridor: takeoff runs back up the canyon. Map to z-space: start z=-300 rolling toward +gate.
   setState('takeoff');
-  showCap('FULL POWER — GO.', 2, 'warn', 'jace');
+  showCap(TRAIN.active ? 'FULL POWER. WAIT FOR V-R, THEN HOLD ▲ TO ROTATE.' : 'FULL POWER — GO.', 3, TRAIN.active ? 'good' : 'warn', 'jace');
   Snd.setEngine(0.95);
 }
 function updateTakeoff(dt){
@@ -1575,7 +1707,7 @@ function updateTakeoff(dt){
     // Lateral in the corridor
     const latTarget = keys.left ? -8 : keys.right ? 8 : 0;
     P.latVel = lerp(P.latVel, latTarget, clamp(dt*2.4,0,1));
-    P.gustTimer -= dt; if(P.gustTimer <= 0){ P.gustVel += rnd(-3,3)*(1 + opsTempo()*0.12); P.gustTimer = rnd(2.5,4.5); }
+    P.gustTimer -= dt; if(P.gustTimer <= 0){ P.gustVel += rnd(-3,3)*(1 + opsTempo()*0.12)*(currentMission==='night' ? 1.35 : 1); P.gustTimer = rnd(2.5,4.5); }
     P.gustVel = lerp(P.gustVel, 0, clamp(dt*0.5,0,1));
     P.x += (P.latVel + P.gustVel)*dt;
     P.bank = lerp(P.bank, (P.latVel+P.gustVel)*0.035, clamp(dt*4,0,1));
@@ -1619,6 +1751,18 @@ function updateClimbout(dt){
 /* ---------------- Fail / debrief ---------------- */
 let failPhase = 'approach';
 function failMission(reason, phase){
+  if(TRAIN.active){
+    setState('transition');                     // halt the failed phase immediately — no restart storm
+    Snd.stopEngine();
+    showCap('NO-FAIL ASSIST — RESETTING THIS PHASE. TRY THAT INPUT AGAIN.', 2.8, 'warn', 'alfayed');
+    fadeTo(()=>{
+      Snd.startEngine();
+      if(phase === 'approach') startApproach();
+      else if(phase === 'extract') startExtract();
+      else startTakeoff();
+    });
+    return;
+  }
   failPhase = phase;
   setState('fail');
   el.failReason.textContent = reason;
@@ -1664,12 +1808,17 @@ function showDebrief(){
   if(airPen > 10){ vWho = 'jace'; vText = 'The airframe is <b>' + airWord.toLowerCase() + '</b>. Gentler on the gear, easier off the walls.'; }
   else if(P.landGrade === 'HARD' || P.landGrade === 'BOUNCED'){ vWho = 'alfayed'; vText = 'That arrival was <b>' + P.landGrade.toLowerCase() + '</b>. Bleed the sink rate earlier and hold the flare.'; }
   else if(ext < 150){ vWho = 'rostova'; vText = 'The window nearly closed on us. <b>Sharper timing on the lifts.</b>'; }
-  el.dbVerdict.innerHTML = (CREW[vWho] ? CREW[vWho].name + ' — ' : '') + vText;
+  el.dbVerdict.innerHTML = (CREW[vWho] ? CREW[vWho].name + ' — ' : '') + '<b>' + (save.callsign || 'ROOK') + '</b>, ' + vText.charAt(0).toLowerCase() + vText.slice(1);
   el.dbStress.textContent = '-' + pen; el.dbScore.textContent = total;
   el.dbMedal.textContent = medal[2]; el.dbMedal.className = medal[1];
-  save.streak = (save.streak || 0) + 1;
+  if(!TRAIN.active) save.streak = (save.streak || 0) + 1;
   const bestLine = total > save.best ? 'NEW PERSONAL BEST — ' + total : 'BEST: ' + (save.best || '—');
   if(total > save.best){ save.best = total; save.bestMedal = medal[1]; }
+  const missionName = currentMission === 'training' ? 'TRAINING' : currentMission === 'night' ? 'NIGHT' : 'TWILIGHT';
+  save.records = Array.isArray(save.records) ? save.records : [];
+  save.records.unshift({date:new Date().toISOString(), mission:missionName, score:total, medal:medal[1], grade:P.landGrade || gradeFor(P.touchVs), tempo:opsTempo()});
+  save.records = save.records.slice(0,10);
+  if(TRAIN.active) save.trainingDone = true;
   writeSave();
   el.dbBest.textContent = bestLine + ' • OPS TEMPO RISES: ' + TEMPO_NAMES[opsTempo()];
   setState('debrief');
@@ -1679,6 +1828,7 @@ function showDebrief(){
 /* ---------------- State plumbing ---------------- */
 function setState(s){
   state = s;
+  if(s==='menu' || s==='debrief' || s==='fail') el.trainingBadge && el.trainingBadge.classList.add('hidden');
   setCrit('');
   const flight = (s==='approach' || s==='rollout' || s==='takeoff' || s==='climbout');
   el.panelFlight.classList.toggle('hidden', !flight);
@@ -1701,7 +1851,8 @@ function refreshTempoLine(){
     (t > 0 ? ' — canyon tighter, window shorter, wind rougher · tap to reset' : '');
 }
 function goMenu(){
-  hide(el.failOv); hide(el.debrief); hide(el.howto); hide(el.crewOv);
+  if(document.body && document.body.classList) document.body.classList.remove('night-mission');
+  hide(el.failOv); hide(el.debrief); hide(el.howto); hide(el.crewOv); hide(el.recordOv);
   Snd.stopEngine();
   setState('menu');
   refreshTempoLine();
@@ -2013,6 +2164,22 @@ function bindInputs(){
   });
 
   el.splash.addEventListener('pointerdown', ()=>{ splashTimer = 0; Snd.ensure(); Snd.resume(); });
+  const selectMission = (m)=>{
+    currentMission=m;
+    ['training','twilight','night'].forEach(n=>el['mission'+n.charAt(0).toUpperCase()+n.slice(1)].classList.toggle('selected',n===m));
+    el.btnStart.textContent = m==='training' ? 'BEGIN GUIDED FIRST FLIGHT' : 'DEPLOY — ' + (m==='night' ? 'NIGHT CANYON' : 'TWILIGHT CANYON');
+  };
+  el.missionTraining.addEventListener('click',()=>selectMission('training'));
+  el.missionTwilight.addEventListener('click',()=>selectMission('twilight'));
+  el.missionNight.addEventListener('click',()=>selectMission('night'));
+  if(!save.trainingDone) selectMission('training');
+  const renderRecord=()=>{
+    el.callsign.value=save.callsign||'ROOK';
+    const rows=Array.isArray(save.records)?save.records:[];
+    el.recordRows.innerHTML=rows.length?rows.map(r=>'<div class="recordRow"><span><b>'+r.mission+'</b><br>'+new Date(r.date).toLocaleDateString()+'</span><span>'+r.grade+'</span><span>'+String(r.medal||'').toUpperCase()+'</span><span>'+r.score+'<br>T'+r.tempo+'</span></div>').join(''):'<div class="recordEmpty">NO SORTIES LOGGED YET.<br>YOUR NEXT DEBRIEF STARTS THE RECORD.</div>';
+  };
+  el.btnRecord.addEventListener('click',()=>{renderRecord();show(el.recordOv)});
+  el.btnRecordClose.addEventListener('click',()=>{save.callsign=(el.callsign.value.trim().toUpperCase().replace(/[^A-Z0-9 -]/g,'').slice(0,12)||'ROOK');writeSave();hide(el.recordOv)});
   el.btnStart.addEventListener('click', ()=>{ Snd.ensure(); Snd.resume(); fadeTo(()=> startApproach()); });
   el.btnHow.addEventListener('click', ()=> show(el.howto));
   el.btnCrew.addEventListener('click', ()=> show(el.crewOv));
@@ -2071,7 +2238,7 @@ function init(){
   cv = $('cv'); ctx = cv.getContext('2d');
   ['panelFlight','panelZone','panelStress','panelTimer','stressFill','timerTxt','loadTxt','loadFill',
    'caption','tcL','tcR','exUI','exBarWrap','exBar','exZone','exMarker','btnGuide','btnLaunch','flash',
-   'splash','menuUI','btnStart','btnHow','btnSound','howto','btnHowClose',
+   'splash','menuUI','btnStart','btnHow','btnSound','howto','btnHowClose','missionTraining','missionTwilight','missionNight','btnRecord','recordOv','recordRows','callsign','btnRecordClose','trainingBadge',
    'failOv','failReason','btnRetry','btnFailMenu',
    'debrief','dbMedal','dbLand','dbExt','dbTko','dbStress','dbScore','dbBest','btnAgain','btnMenu2',
    'hudAlt','hudSpd','fade','capChip','capName','capText','crewOv','btnCrew','btnCrewClose',
@@ -2170,8 +2337,12 @@ function cinPostFX(){
       const g = c.getContext('2d');
       if(g && g.createLinearGradient){
         const haze = g.createLinearGradient(0, horizonY*.47, 0, H);
-        haze.addColorStop(0,'rgba(61,77,111,.10)'); haze.addColorStop(.38,'rgba(124,103,108,.025)'); haze.addColorStop(1,'rgba(8,10,16,.08)');
+        haze.addColorStop(0,'rgba(61,77,111,.13)'); haze.addColorStop(.38,'rgba(124,103,108,.025)'); haze.addColorStop(1,'rgba(8,10,16,.08)');
         g.fillStyle = haze; g.fillRect(0, 0, W, H);
+        // Warm counter-lift hugging the horizon — the cool grade never goes cold
+        const lift = g.createLinearGradient(0, horizonY*0.8, 0, horizonY*1.25);
+        lift.addColorStop(0,'rgba(242,162,74,0)'); lift.addColorStop(.5,'rgba(242,162,74,.045)'); lift.addColorStop(1,'rgba(242,162,74,0)');
+        g.fillStyle = lift; g.fillRect(0, 0, W, H);
         const v = g.createRadialGradient(W*.5, H*.47, Math.min(W,H)*.18, W*.5, H*.48, Math.max(W,H)*.73);
         v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(.68,'rgba(0,0,0,.035)'); v.addColorStop(1,'rgba(0,0,0,.34)');
         g.fillStyle = v; g.fillRect(0, 0, W, H);
