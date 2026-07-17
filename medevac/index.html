@@ -606,6 +606,30 @@ function proj(wx, wyM, wz){
 }
 
 /* ---------------- Painters ---------------- */
+const GLOWC = {};
+function glowSprite(rc, gc, bc){
+  const k = rc + ',' + gc + ',' + bc;
+  if(GLOWC[k] !== undefined) return GLOWC[k];
+  if(!document.createElement){ GLOWC[k] = null; return null; }
+  const c = document.createElement('canvas'); c.width = c.height = 96;
+  const x = c.getContext('2d');
+  if(x && x.createRadialGradient){
+    const gr = x.createRadialGradient(48, 48, 2, 48, 48, 48);
+    gr.addColorStop(0, 'rgba(' + k + ',1)');
+    gr.addColorStop(0.55, 'rgba(' + k + ',0.35)');
+    gr.addColorStop(1, 'rgba(' + k + ',0)');
+    x.fillStyle = gr; x.fillRect(0, 0, 96, 96);
+  }
+  GLOWC[k] = c; return c;
+}
+function blitGlow(x, y, r, rc, gc, bc, alpha, squash){
+  const s = glowSprite(rc, gc, bc);
+  if(!s || r <= 0) return;
+  ctx.globalAlpha = clamp(alpha, 0, 1);
+  const h = r*2*(squash || 1);
+  ctx.drawImage(s, x - r, y - h/2, r*2, h);
+  ctx.globalAlpha = 1;
+}
 function renderRange(c, skyline, col, rim){
   const w = c.width, h = c.height, n = skyline.length;
   const g2 = c.getContext('2d'); if(!g2) return;
@@ -622,7 +646,7 @@ function renderRange(c, skyline, col, rim){
   }
 }
 function buildSkyLayers(dark){
-  const key = W + 'x' + H + '@' + dark.toFixed(2);
+  const key = W + 'x' + H + '@' + dark.toFixed(2) + (perfLite() ? 'L' : 'H');
   if(key === skyKey && skyC) return;
   if(!document.createElement){ skyC = farC = midC = null; return; }   // stub env: fall back
   skyKey = key;
@@ -639,6 +663,12 @@ function buildSkyLayers(dark){
     const gl = g2.createRadialGradient(W*0.42, horizonY, 10, W*0.42, horizonY, W*0.45);
     gl.addColorStop(0, 'rgba(246,178,90,' + (0.5 - dark*0.3) + ')'); gl.addColorStop(1, 'rgba(246,178,90,0)');
     g2.fillStyle = gl; g2.fillRect(0, 0, W, horizonY*1.15);
+    if(perfLite()){                              // bake stars static — skip the per-frame twinkle loop
+      g2.fillStyle = '#fff';
+      for(const s of stars){ g2.globalAlpha = clamp(s.a*(0.35 + dark*0.65)*0.8, 0, 1);
+        g2.fillRect(s.x*W, s.y*H, 1.4, 1.4); }
+      g2.globalAlpha = 1;
+    }
   }
   // Layer 1b/1c: silhouette ranges from the painting's skylines (tileable strips)
   farC = mk(W, H*0.16);
@@ -662,14 +692,16 @@ function paintSky(darkness, parX){ // 0 approach dusk .. 1 extract night; parX d
     g.addColorStop(1, darkness>0.5 ? '#5c3526' : PAL.skyLow);
     ctx.fillStyle = g; ctx.fillRect(0,0,W,horizonY*1.12);
   }
-  // Stars stay dynamic (cheap) so they still twinkle over the cached sky
-  ctx.fillStyle = '#fff';
-  for(const s of stars){
-    const a = s.a * (0.35 + darkness*0.65) * (0.6 + 0.4*Math.sin(elapsed*s.tw));
-    ctx.globalAlpha = clamp(a,0,1);
-    ctx.fillRect(s.x*W, s.y*H, 1.4, 1.4);
+  // Twinkle is a full-detail luxury; perf-lite uses the stars baked into the sky cache
+  if(!perfLite()){
+    ctx.fillStyle = '#fff';
+    for(const s of stars){
+      const a = s.a * (0.35 + darkness*0.65) * (0.6 + 0.4*Math.sin(elapsed*s.tw));
+      ctx.globalAlpha = clamp(a,0,1);
+      ctx.fillRect(s.x*W, s.y*H, 1.4, 1.4);
+    }
+    ctx.globalAlpha = 1;
   }
-  ctx.globalAlpha = 1;
   const p = parX || 0;
   if(farC) blitRange(farC, p*0.06, horizonY + 1);
   if(midC) blitRange(midC, p*0.14, horizonY + 1);
@@ -787,10 +819,7 @@ function paintStrip(){
     const lp = proj(P.x, 0, P.z - 60 - P.altFt*0.4);
     if(lp){
       const r = clamp(lp.s*22, 12, 120);
-      const g2 = ctx.createRadialGradient(lp.x, lp.y, 0, lp.x, lp.y, r);
-      g2.addColorStop(0, 'rgba(255,236,190,' + clamp(0.28*(1 - P.altFt/160), 0.04, 0.28) + ')');
-      g2.addColorStop(1, 'rgba(255,236,190,0)');
-      ctx.fillStyle = g2; ctx.beginPath(); ctx.ellipse(lp.x, lp.y, r, r*0.45, 0, 0, 7); ctx.fill();
+      blitGlow(lp.x, lp.y, r, 255, 236, 190, clamp(0.28*(1 - P.altFt/160), 0.04, 0.28) * 1.2, 0.45);
     }
   }
   // Touchdown target: high-vis DZ checkerboard band across the strip
@@ -815,9 +844,7 @@ function paintStrip(){
     for(const side of [-1,1]){
       const p = proj(side*(hw2+2), 0.8, z); if(!p) continue;
       const r = clamp(p.s*4, 2, 26);
-      const gl = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*3);
-      gl.addColorStop(0,'rgba(255,217,160,.55)'); gl.addColorStop(1,'rgba(255,217,160,0)');
-      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(p.x,p.y,r*3,0,7); ctx.fill();
+      blitGlow(p.x, p.y, r*3, 255, 217, 160, 0.55);
       ctx.fillStyle = PAL.lamp; ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(1,r*0.4),0,7); ctx.fill();
     }
   }
@@ -1021,12 +1048,12 @@ function emitExhaust(sx, sy, throttle, hot){
     c: hot ? 'rgba(52,50,48,0.9)' : 'rgba(150,150,148,0.8)' });
 }
 /* S4 — soft pulsing triage flare; freq is caller-driven (tied to mission timer) */
+const FLARE_RGB = {};
 function paintFlare(x, y, r, colTpl, freq){
+  let rgb = FLARE_RGB[colTpl];
+  if(!rgb){ const m = colTpl.match(/(\d+),(\d+),(\d+)/); rgb = FLARE_RGB[colTpl] = m ? [ +m[1], +m[2], +m[3] ] : [255,255,255]; }
   const a = clamp(0.30 + 0.26*Math.sin(elapsed*freq*6.283), 0, 0.85);
-  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-  g.addColorStop(0, colTpl.replace('A', String(a + 0.2)));
-  g.addColorStop(1, colTpl.replace('A', '0'));
-  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+  blitGlow(x, y, r, rgb[0], rgb[1], rgb[2], a + 0.2);
 }
 
 /* ---------------- Ground scene (menu + extraction) ---------------- */
@@ -1108,16 +1135,8 @@ function drawContactShadow(x, y, w, soft, op){
   ctx.beginPath(); ctx.ellipse(x, y, w*0.28, Math.max(1, w/15), 0, 0, 7); ctx.fill();
 }
 function drawLocalLight(x, y, r, intensity){
-  const g = ctx.createRadialGradient(x, y, 2, x, y, r);
-  g.addColorStop(0, 'rgba(255,222,166,' + intensity + ')');
-  g.addColorStop(1, 'rgba(255,222,166,0)');
-  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
-  if(!perfLite()){                              // contact tint: warm the objects sitting in the pool
-    const g2 = ctx.createRadialGradient(x, y, 1, x, y, r*0.45);
-    g2.addColorStop(0, 'rgba(255,206,140,' + intensity*0.7 + ')');
-    g2.addColorStop(1, 'rgba(255,206,140,0)');
-    ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(x, y, r*0.45, 0, 7); ctx.fill();
-  }
+  blitGlow(x, y, r, 255, 222, 166, intensity * 1.05);
+  if(!perfLite()) blitGlow(x, y, r*0.45, 255, 206, 140, intensity * 0.75);   // contact tint
 }
 function drawMaterialWear(x, y, w, h, seed, strength){
   if(perfLite()) return;
@@ -1394,7 +1413,7 @@ function coach(dt){
 /* ---------------- Phase logic ---------------- */
 function startApproach(){
   TRAIN.active = currentMission === 'training'; TRAIN.step = 0; TRAIN.elapsed = 0; TRAIN.lastPrompt = 0;
-  document.body.classList.toggle('night-mission', currentMission === 'night');
+  document.body.classList.toggle('night-mission', currentMission === 'night' && !perfLite());
   el.trainingBadge.classList.toggle('hidden', !TRAIN.active);
   buildCanyon();                      // regenerate at current ops tempo
   P.z = APPROACH.startZ; P.x = 0; P.altFt = APPROACH.startAlt; P.spdKts = APPROACH.startSpd;
@@ -1968,9 +1987,7 @@ function render(dt){
           const r = clamp(b.s*4, 2, 14);
           ctx.fillStyle = blink ? 'rgba(255,70,50,.95)' : 'rgba(255,70,50,.3)';
           ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, 7); ctx.fill();
-          if(blink){ const g = ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,r*4);
-            g.addColorStop(0,'rgba(255,70,50,.4)'); g.addColorStop(1,'rgba(255,70,50,0)');
-            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x,b.y,r*4,0,7); ctx.fill(); }
+          if(blink) blitGlow(b.x, b.y, r*4, 255, 70, 50, 0.4);
         }
       }
     }
