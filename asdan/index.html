@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASDAN Register — PEQ & Short Course tracker · Matt's Apps</title>
+<meta name="description" content="Track ASDAN PEQ units and Short Courses in one place: challenge evidence, banked hours, credits in multiples of ten, and the closing documents that gate every certificate.">
+<style>
+:root{--asdan:#0e4f4a;--asdan-mid:#1d7a6f;--mint:#dff0ec;--mint-line:#bcd9d2;--paper:#f8fbfa;--ink:#15302c;--stamp:#1c7a4c;--stamp-bg:#e3f3ea;--gold:#b8860b;
+--serif:"Iowan Old Style",Georgia,"Times New Roman",serif;--sans:-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);line-height:1.5}
+a{color:var(--asdan-mid)}
+.wrap{max-width:900px;margin:0 auto;padding:0 18px}
+header{background:var(--asdan);color:#fff;padding:48px 0 56px;position:relative;overflow:hidden}
+.badge{display:inline-block;background:#fff;color:var(--asdan);font-weight:800;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;border-radius:999px;padding:6px 16px;margin-bottom:16px}
+.badge span{color:var(--gold)}
+h1{font-family:var(--serif);font-size:clamp(2rem,6vw,3.2rem);line-height:1.08;max-width:640px}
+.tag{font-size:1.05rem;opacity:.88;max-width:560px;margin:14px 0 26px}
+.cta{display:inline-block;background:#fff;color:var(--asdan);font-weight:800;font-size:1.05rem;text-decoration:none;border-radius:12px;padding:14px 28px;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.cta small{display:block;font-weight:400;font-size:.72rem;opacity:.7}
+.stamp{position:absolute;right:-10px;top:38px;border:4px solid var(--stamp);color:var(--stamp);background:var(--stamp-bg);font-weight:800;letter-spacing:.06em;border-radius:10px;padding:10px 18px;font-size:1rem;transform:rotate(-8deg);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.stamp b{display:block;font-size:1.25rem}
+@media (max-width:760px){.stamp{position:static;display:inline-block;margin-top:22px;transform:rotate(-3deg)}}
+@media (prefers-reduced-motion:no-preference){.stamp{animation:stampin .4s .25s ease-out backwards}@keyframes stampin{from{transform:rotate(-8deg) scale(1.6);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}}
+.flow{background:var(--mint);border-bottom:1px solid var(--mint-line);padding:20px 0}
+.flow .wrap{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-weight:600;font-size:.92rem;color:var(--asdan)}
+.flow .step{background:#fff;border:1px solid var(--mint-line);border-radius:999px;padding:7px 15px}
+.flow .arr{color:var(--asdan-mid)}
+section{padding:40px 0}
+h2{font-family:var(--serif);color:var(--asdan);font-size:1.5rem;margin-bottom:18px}
+.feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:#fff;border:1px solid var(--mint-line);border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(21,48,44,.10)}
+.card h3{font-family:var(--serif);color:var(--asdan);font-size:1.05rem;margin-bottom:6px}
+.card p{font-size:.9rem;color:#3f5b54}
+.card .ref{display:inline-block;background:var(--mint);color:var(--asdan);font-weight:700;font-size:.78rem;border-radius:5px;padding:2px 8px;margin-top:8px}
+.note{background:#fff;border:1px solid var(--mint-line);border-left:5px solid var(--gold);border-radius:10px;padding:16px 18px;font-size:.92rem}
+footer{background:var(--asdan);color:#fff;padding:26px 0;margin-top:40px;font-size:.85rem}
+footer a{color:#fff}
+.foot-cta{text-align:center;padding:10px 0 40px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="badge">★ <span>Super Teacher Tool</span> · New for 2026–27</div>
+    <h1>ASDAN Register</h1>
+    <p class="tag">PEQ units and Short Courses in one tracker — challenges, banked hours, credits and the closing paperwork that actually gates the certificate.</p>
+    <a class="cta" href="app.html">Open ASDAN Register<small>free · runs in your browser · nothing uploaded anywhere</small></a>
+    <div class="stamp" aria-hidden="true">CLAIM<b>READY ✓</b></div>
+  </div>
+</header>
+<div class="flow" aria-label="How it works">
+  <div class="wrap">
+    <span class="step">1 · Build the programme</span><span class="arr">→</span>
+    <span class="step">2 · Enrol your class</span><span class="arr">→</span>
+    <span class="step">3 · Tick W · P · R as folders fill</span><span class="arr">→</span>
+    <span class="step">4 · Watch credits bank</span><span class="arr">→</span>
+    <span class="step">5 · Green card = claim it</span>
+  </div>
+</div>
+<section>
+  <div class="wrap">
+    <h2>What it does</h2>
+    <div class="feat">
+      <div class="card"><h3>Two ASDAN shapes, one app</h3><p>PEQ units track knowledge criteria, logged GLH hours and delivery milestones. Short Courses track modules, Section A/B challenges and hour-based credits.</p></div>
+      <div class="card"><h3>The W·P·R trio</h3><p>Every challenge needs Work evidence, a Planning sheet and a Review sheet before ASDAN counts it. Three taps per challenge — and hours only bank when all three are there.</p></div>
+      <div class="card"><h3>Honest credit maths</h3><p>Credits are hours ÷ 10, whole credits only — exactly how ASDAN claims them. The app tells you how far the next credit is.</p></div>
+      <div class="card"><h3>The readiness board</h3><p>Per pupil, green-amber-red: green means claim today; amber means credits banked but the summary of achievement or personal statement is still missing — named, so nothing slips.</p></div>
+      <div class="card"><h3>Work examples with references</h3><p>Snap a photo and it files itself against the challenge or criterion.</p><span class="ref">FW/M2C3/A</span></div>
+      <div class="card"><h3>Moderation paperwork, printed</h3><p>Per pupil: the portfolio audit grid, the hours tally sheet and a signed tutor record — front-of-folder ready.</p></div>
+    </div>
+  </div>
+</section>
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="note"><b>Worth knowing:</b> your register lives in this browser on this computer. Export a backup from Settings after big marking sessions. Running the AQA UAS Register too? Import your pupils from its backup in one click — no retyping.</div>
+  </div>
+</section>
+<div class="foot-cta">
+  <a class="cta" style="background:var(--asdan);color:#fff" href="app.html">Start your first programme →</a>
+</div>
+<footer>
+  <div class="wrap">Part of <a href="/">Matt's Apps</a> · made by a teacher, for teachers · sister tool to <a href="/uas/">UAS Register</a> for AQA. ASDAN is a registered charity and awarding organisation; this independent tool just does the paperwork.</div>
+</footer>
+</body>
+</html>

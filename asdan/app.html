@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASDAN Register · Matt's Apps</title>
+<style>
+:root{
+  --asdan:#0e4f4a;        /* deep teal */
+  --asdan-mid:#1d7a6f;
+  --mint:#dff0ec;
+  --mint-line:#bcd9d2;
+  --paper:#f8fbfa;
+  --ink:#15302c;
+  --stamp:#1c7a4c; --stamp-bg:#e3f3ea;
+  --amber:#a8641a; --amber-bg:#faeeda;
+  --danger:#a12626; --danger-bg:#f8e5e5;
+  --gold:#b8860b;
+  --radius:10px;
+  --shadow:0 1px 3px rgba(21,48,44,.12);
+  --serif:"Iowan Old Style", Georgia, "Times New Roman", serif;
+  --sans:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:15px;line-height:1.45}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--ink)}
+h1,h2,h3{font-family:var(--serif);color:var(--asdan);font-weight:700}
+header.app{background:var(--asdan);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header.app .brand{font-family:var(--serif);font-size:1.25rem;font-weight:700}
+header.app .brand small{display:block;font-family:var(--sans);font-weight:400;font-size:.68rem;opacity:.75;letter-spacing:.08em;text-transform:uppercase}
+nav.tabs{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+nav.tabs button{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;padding:7px 13px;border-radius:999px;font-size:.84rem}
+nav.tabs button[aria-current="true"]{background:#fff;color:var(--asdan);border-color:#fff;font-weight:600}
+main{max-width:1150px;margin:0 auto;padding:20px 16px 80px}
+.view{display:none}.view.active{display:block}
+.panel{background:#fff;border:1px solid var(--mint-line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:16px}
+.panel h2{font-size:1.15rem;margin-bottom:10px}
+.panel h3{font-size:.98rem;margin:14px 0 6px}
+.hint{font-size:.82rem;color:#4f6b64}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.field{display:flex;flex-direction:column;gap:3px}
+.field label{font-size:.75rem;font-weight:600;color:var(--asdan-mid);text-transform:uppercase;letter-spacing:.05em}
+.field input,.field select{border:1px solid var(--mint-line);border-radius:7px;padding:8px 10px;background:#fff;min-width:0}
+.btn{background:var(--asdan);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-weight:600;font-size:.9rem}
+.btn:hover{background:var(--asdan-mid)}
+.btn.ghost{background:#fff;color:var(--asdan);border:1px solid var(--asdan-mid)}
+.btn.small{padding:5px 10px;font-size:.8rem;border-radius:6px}
+.btn.danger{background:var(--danger)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.tag{display:inline-block;background:var(--mint);color:var(--asdan);border-radius:5px;padding:1px 8px;font-size:.75rem;font-weight:600}
+.tag.peq{background:#e7e2f4;color:#4b3a78}
+.notice{border-radius:8px;padding:10px 12px;font-size:.86rem;margin:10px 0}
+.notice.warn{background:var(--amber-bg);color:var(--amber);border:1px solid #ecd3ac}
+.notice.ok{background:var(--stamp-bg);color:var(--stamp);border:1px solid #bfe3cf}
+.notice.err{background:var(--danger-bg);color:var(--danger);border:1px solid #e8c4c4}
+table.list{width:100%;border-collapse:collapse;font-size:.9rem}
+table.list th{background:var(--mint);color:var(--asdan);text-align:left;padding:7px 9px;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em}
+table.list td{padding:7px 9px;border-bottom:1px solid var(--mint)}
+table.list tr:last-child td{border-bottom:none}
+.empty{padding:26px;text-align:center;color:#6d8781;font-size:.9rem}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:.85rem;opacity:0;pointer-events:none;transition:opacity .25s;z-index:60}
+.toast.show{opacity:.95}
+.modal-back{position:fixed;inset:0;background:rgba(21,48,44,.55);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 12px;z-index:50}
+.modal-back.open{display:flex}
+.modal{background:#fff;border-radius:12px;max-width:780px;width:100%;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.modal .close{float:right;background:none;border:none;font-size:1.3rem;color:var(--asdan-mid)}
+.pupil-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-top:12px}
+.pcard{position:relative;border:1.5px solid var(--mint-line);border-radius:10px;background:#fff;padding:12px 10px 10px;text-align:left;min-height:64px}
+.pcard .pname{font-weight:600;font-size:.95rem}
+.pcard .pstamp{display:none;margin-top:6px;font-size:.74rem;font-weight:700;border-radius:5px;padding:2px 7px;width:max-content}
+.pcard.on{border-color:var(--stamp);background:var(--stamp-bg)}
+.pcard.on .pstamp{display:inline-block;background:#fff;border:1.5px solid var(--stamp);color:var(--stamp);transform:rotate(-2deg)}
+@media (prefers-reduced-motion: no-preference){
+  .pcard.on .pstamp{animation:stampin .18s ease-out}
+  @keyframes stampin{from{transform:rotate(-2deg) scale(1.35);opacity:.3}to{transform:rotate(-2deg) scale(1);opacity:1}}
+}
+.outcome-chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.outcome-chips button{border:1px solid var(--mint-line);background:#fff;border-radius:8px;padding:6px 11px;font-size:.85rem;max-width:100%;text-align:left}
+.outcome-chips button[aria-current="true"]{background:var(--asdan);border-color:var(--asdan);color:#fff;font-weight:600}
+.outcome-chips button .n{font-weight:700;margin-right:5px}
+/* trio toggles */
+.trio{display:inline-flex;gap:4px}
+.trio button{width:34px;height:30px;border:1.5px solid var(--mint-line);background:#fff;border-radius:6px;font-size:.72rem;font-weight:800;color:#9db8b1}
+.trio button.on{background:var(--stamp-bg);border-color:var(--stamp);color:var(--stamp)}
+.chrow{border-bottom:1px solid var(--mint)}
+.chrow td{padding:6px 8px;font-size:.86rem}
+.chdone{color:var(--stamp);font-weight:800}
+/* hours */
+.minbtns{display:inline-flex;gap:4px}
+.minbtns button{border:1px solid var(--mint-line);background:#fff;border-radius:6px;padding:4px 9px;font-size:.78rem;font-weight:700}
+.minbtns button.on{background:var(--asdan);color:#fff;border-color:var(--asdan)}
+/* readiness */
+.ready-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.rcard{border-radius:12px;padding:14px;border:2px solid;background:#fff}
+.rcard.g{border-color:var(--stamp);background:var(--stamp-bg)}
+.rcard.a{border-color:#d9a75a;background:var(--amber-bg)}
+.rcard.r{border-color:#d98a8a;background:var(--danger-bg)}
+.rcard h3{margin:0 0 4px;font-size:1.02rem}
+.rcard .big{font-family:var(--serif);font-size:1.35rem;font-weight:700}
+.rcard ul{list-style:none;margin-top:6px}
+.rcard li{font-size:.8rem;margin:2px 0}
+.rcard li.done::before{content:"✓ ";color:var(--stamp);font-weight:800}
+.rcard li.todo::before{content:"✗ ";color:var(--danger);font-weight:800}
+.evrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.evthumb{width:56px;height:56px;object-fit:cover;border-radius:8px;border:1.5px solid var(--mint-line);cursor:pointer;background:var(--mint)}
+.evadd{width:44px;height:44px;border-radius:8px;border:2px dashed var(--asdan-mid);background:#fff;color:var(--asdan-mid);font-size:1.2rem}
+.evref{font-size:.68rem;font-weight:700;color:var(--asdan-mid);text-align:center;margin-top:2px}
+.evcell{display:flex;flex-direction:column;align-items:center}
+.pchips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.pchips button{border:1.5px solid var(--mint-line);background:#fff;border-radius:999px;padding:5px 12px;font-size:.85rem}
+.pchips button.on{background:var(--stamp-bg);border-color:var(--stamp);color:var(--stamp);font-weight:600}
+.evpreview{max-width:100%;max-height:260px;border-radius:8px;display:block;margin:8px auto}
+.docchips{display:flex;gap:6px;flex-wrap:wrap}
+.docchips button{border:1.5px solid var(--mint-line);background:#fff;border-radius:8px;padding:6px 11px;font-size:.8rem;font-weight:600}
+.docchips button.on{background:var(--stamp-bg);border-color:var(--stamp);color:var(--stamp)}
+/* print */
+.printpg{background:#fff;font-family:var(--sans);color:#111;padding:20px 24px;page-break-after:always;break-after:page;max-width:780px;margin:0 auto 14px;box-shadow:var(--shadow)}
+.printpg .phead{border-bottom:3px solid var(--asdan);padding-bottom:6px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.printpg h1{font-size:1.1rem}
+.printpg table{width:100%;border-collapse:collapse;font-size:.8rem}
+.printpg th,.printpg td{border:1px solid #555;padding:4px 6px;text-align:left}
+.printpg th{background:var(--mint)}
+.printpg .sig{margin-top:16px;font-size:.88rem}
+.printpg .sig .ln{display:inline-block;border-bottom:1px solid #333;min-width:200px;padding:0 6px}
+@media print{
+  body *{visibility:hidden}
+  #print-zone,#print-zone *{visibility:visible}
+  #print-zone{position:absolute;left:0;top:0;width:100%}
+  .printpg{box-shadow:none;max-width:none;margin:0}
+  @page{size:A4 portrait;margin:11mm}
+}
+@media (max-width:640px){main{padding:12px 8px 80px}}
+</style>
+</head>
+<body>
+<header class="app">
+  <div class="brand">ASDAN Register<small>PEQ &amp; Short Courses · Matt's Apps</small></div>
+  <nav class="tabs" aria-label="Sections">
+    <button data-view="pupils" aria-current="true">Pupils</button>
+    <button data-view="progs">Programmes</button>
+    <button data-view="track">Track</button>
+    <button data-view="ready">Readiness</button>
+    <button data-view="print">Print &amp; PDF</button>
+    <button data-view="guide">Guide</button>
+    <button data-view="settings">Settings</button>
+  </nav>
+</header>
+<main>
+
+<!-- ===== PUPILS ===== -->
+<section id="view-pupils" class="view active">
+  <div class="panel">
+    <h2>Add a pupil</h2>
+    <div class="row">
+      <div class="field"><label for="p-fore">Forename</label><input id="p-fore" autocomplete="off"></div>
+      <div class="field"><label for="p-sur">Surname</label><input id="p-sur" autocomplete="off"></div>
+      <button class="btn" id="p-add">Add pupil</button>
+      <button class="btn ghost" id="p-import">Import pupils from a UAS Register backup</button>
+      <input type="file" id="p-import-file" accept=".json,application/json" hidden>
+    </div>
+    <p class="hint" style="margin-top:6px">Running the AQA app too? Export a backup there and import it here — pupils only, nothing else touched.</p>
+  </div>
+  <div class="panel"><h2>Pupils</h2><div id="pupil-list"></div></div>
+</section>
+
+<!-- ===== PROGRAMMES ===== -->
+<section id="view-progs" class="view">
+  <div class="panel">
+    <h2>Programmes</h2>
+    <div class="row">
+      <button class="btn" id="new-peq">＋ New PEQ unit</button>
+      <button class="btn" id="new-short">＋ New Short Course</button>
+    </div>
+    <div id="prog-list" style="margin-top:12px"></div>
+  </div>
+  <div class="panel" id="prog-detail" hidden></div>
+</section>
+
+<!-- ===== TRACK ===== -->
+<section id="view-track" class="view">
+  <div class="panel">
+    <h2>Track</h2>
+    <div class="row">
+      <div class="field"><label for="t-prog">Programme</label><select id="t-prog"></select></div>
+      <div class="field"><label for="t-date">Date</label><input type="date" id="t-date"></div>
+    </div>
+    <div id="track-body" style="margin-top:10px"></div>
+  </div>
+</section>
+
+<!-- ===== READINESS ===== -->
+<section id="view-ready" class="view">
+  <div class="panel">
+    <h2>Certificate readiness</h2>
+    <div class="row"><div class="field"><label for="r-prog">Programme</label><select id="r-prog"></select></div>
+    <button class="btn ghost" id="r-refresh">Refresh</button></div>
+    <p class="hint" style="margin-top:6px">Green = claim it today. Amber = credits banked but paperwork outstanding. Red = not enough completed hours yet.</p>
+    <div class="ready-grid" id="ready-grid" style="margin-top:12px"></div>
+  </div>
+</section>
+
+<!-- ===== PRINT ===== -->
+<section id="view-print" class="view">
+  <div class="panel">
+    <h2>Print &amp; PDF</h2>
+    <div class="row">
+      <div class="field"><label for="pr-prog">Programme</label><select id="pr-prog"></select></div>
+      <div class="field"><label for="pr-pupil">Pupil</label><select id="pr-pupil"></select></div>
+      <button class="btn ghost" id="pr-audit">Portfolio audit</button>
+      <button class="btn ghost" id="pr-hours">Hours tally</button>
+      <button class="btn ghost" id="pr-tutor">Tutor record</button>
+      <button class="btn" id="pr-print" disabled>Print / save PDF</button>
+    </div>
+    <div id="pr-warn"></div>
+  </div>
+  <div class="panel" id="pr-preview-panel" hidden>
+    <h2>Preview</h2>
+    <div style="overflow-x:auto;background:#e8f2ef;padding:12px;border-radius:8px"><div id="print-zone"></div></div>
+  </div>
+</section>
+
+<!-- ===== GUIDE ===== -->
+<section id="view-guide" class="view">
+  <div class="panel">
+    <h2>How to use ASDAN Register</h2>
+    <p class="hint" style="margin-bottom:10px">One app, two ASDAN shapes. PEQ units track criteria, logged hours and milestones. Short Courses track challenges, banked hours and the closing documents that gate every certificate.</p>
+    <h3>1 · Pupils (once)</h3>
+    <p>Add your class, or press <b>Import pupils from a UAS Register backup</b> to bring them over from the AQA app in one click.</p>
+    <h3>2 · Create a programme</h3>
+    <p><b>PEQ unit</b> — enter the unit code (e.g. WellbLeE3), title, level, credits and GLH, then type the knowledge criteria (E3.1, E3.2…). <b>Short Course</b> — enter the course, target credits, then build modules and their challenges; give each challenge its section (A/B) and hours. Enrol pupils by tapping names on the programme page.</p>
+    <h3>3 · Track as you go</h3>
+    <p><b>PEQ:</b> tap a criterion chip, tap pupils to date-stamp it — and log session hours with the minute buttons (tap a pupil, then 30/45/60). The tally counts toward the unit's GLH.
+    <b>Short Course:</b> pick a pupil, then tick the <b>W · P · R</b> trio (Work evidence, Planning sheet, Review sheet) for each challenge. A challenge only banks its hours when all three are ticked — that's what ASDAN counts.</p>
+    <h3>4 · Watch the Readiness board</h3>
+    <p>Per pupil: credits banked (hours ÷ 10, whole credits only), what's missing, and the closing documents — <b>summary of achievement, personal statement, tutor record, sign-off</b>. Tick them off on the programme page as they're done. When a card turns green, claim that certificate before anything else happens.</p>
+    <h3>5 · Print the paperwork</h3>
+    <p>Per pupil: the <b>portfolio audit</b> (challenge × W/P/R grid for the front of the folder), the <b>hours tally sheet</b>, and a signed <b>tutor record</b>. Print or save as PDF for moderation.</p>
+    <h3>Look after your data</h3>
+    <p>Everything lives in this browser. <b>Settings → Export backup</b> after marking sessions. Work-example photos are included in backups.</p>
+  </div>
+</section>
+
+<!-- ===== SETTINGS ===== -->
+<section id="view-settings" class="view">
+  <div class="panel">
+    <h2>Centre details</h2>
+    <div class="row">
+      <div class="field"><label for="set-centre">Centre name</label><input id="set-centre" placeholder="Progress Schools"></div>
+      <div class="field"><label for="set-cno">ASDAN centre number</label><input id="set-cno" style="width:130px"></div>
+      <div class="field"><label for="set-teacher">Tutor (signature)</label><input id="set-teacher" placeholder="Matt Roper"></div>
+      <button class="btn" id="set-save">Save</button>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Backup</h2>
+    <div class="row">
+      <button class="btn ghost" id="bk-export">Export backup (.json)</button>
+      <button class="btn ghost" id="bk-import">Import backup</button>
+      <input type="file" id="bk-file" accept=".json,application/json" hidden>
+    </div>
+  </div>
+  <div class="panel"><h2>Danger zone</h2><button class="btn danger" id="wipe">Delete all data</button></div>
+</section>
+
+</main>
+
+<input type="file" id="ev-file" accept="image/*" hidden>
+
+<!-- add-evidence modal -->
+<div class="modal-back" id="evadd-back">
+  <div class="modal" style="max-width:520px">
+    <button class="close" id="evadd-close" aria-label="Close">&times;</button>
+    <h2>Add a work example</h2>
+    <img class="evpreview" id="evadd-img" alt="Preview">
+    <div class="hint" id="evadd-ctx" style="margin:6px 0"></div>
+    <div class="field"><label for="evadd-cap">Caption (optional)</label><input id="evadd-cap"></div>
+    <h3>Whose work is this?</h3>
+    <div class="pchips" id="evadd-chips"></div>
+    <button class="btn" id="evadd-save">Save work example</button>
+  </div>
+</div>
+<!-- view-evidence modal -->
+<div class="modal-back" id="evview-back">
+  <div class="modal" style="max-width:560px">
+    <button class="close" id="evview-close" aria-label="Close">&times;</button>
+    <h2 id="evview-ref"></h2>
+    <img class="evpreview" id="evview-img" alt="Work example">
+    <div class="hint" id="evview-meta" style="margin:8px 0"></div>
+    <button class="btn danger" id="evview-del">Delete this example</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   ASDAN Register v1 — Matt's Apps
+   Two engines: PEQ units (criteria + logged hours + milestones)
+   and Short Courses (modules→challenges + W/P/R trio + banked hours
+   + closing documents). IndexedDB: asdan_register.
+   ===================================================================== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const todayISO=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const fmtDMY=iso=>{if(!iso)return"";const[y,m,d]=iso.split("-");return d+"/"+m+"/"+y.slice(2)};
+let toastT=null;
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2200)}
+
+/* ---------- IndexedDB ---------- */
+const DB_NAME="asdan_register",DB_VER=1;
+let db=null;
+function openDB(){return new Promise((res,rej)=>{
+  const rq=indexedDB.open(DB_NAME,DB_VER);
+  rq.onupgradeneeded=e=>{
+    const d=e.target.result;
+    for(const st of["pupils","progs","trio","stamps","hours","docs","evidence","kv"]){
+      if(!d.objectStoreNames.contains(st))d.createObjectStore(st,{keyPath:st==="trio"||st==="stamps"||st==="docs"?"key":st==="kv"?"k":"id"});
+    }
+  };
+  rq.onsuccess=e=>{db=e.target.result;res(db)};
+  rq.onerror=()=>rej(rq.error);
+})}
+function tx(store,mode,fn){return new Promise((res,rej)=>{
+  const t=db.transaction(store,mode),s=t.objectStore(store);
+  let out;try{out=fn(s)}catch(err){rej(err);return}
+  t.oncomplete=()=>res(out&&"result"in out?out.result:undefined);
+  t.onerror=()=>rej(t.error);
+})}
+const dbPut=(st,v)=>tx(st,"readwrite",s=>s.put(v));
+const dbDel=(st,k)=>tx(st,"readwrite",s=>s.delete(k));
+const dbClear=st=>tx(st,"readwrite",s=>s.clear());
+function dbAll(st){return new Promise((res,rej)=>{const rq=db.transaction(st,"readonly").objectStore(st).getAll();rq.onsuccess=()=>res(rq.result||[]);rq.onerror=()=>rej(rq.error)})}
+function dbGet(st,k){return new Promise((res,rej)=>{const rq=db.transaction(st,"readonly").objectStore(st).get(k);rq.onsuccess=()=>res(rq.result);rq.onerror=()=>rej(rq.error)})}
+
+/* ---------- state ---------- */
+const S={pupils:[],progs:[],trio:[],stamps:[],hours:[],docs:[],evidence:[],
+  settings:{centre:"Progress Schools",centreNo:"",teacher:""},
+  trackProg:"",trackPupil:"",trackOutcome:"",selProg:""};
+window.S=S; /* debug/test handle */
+
+async function loadAll(){
+  S.pupils=(await dbAll("pupils")).sort((a,b)=>(a.surname+a.forename).localeCompare(b.surname+b.forename));
+  S.progs=(await dbAll("progs")).sort((a,b)=>b.created-a.created);
+  S.trio=await dbAll("trio");
+  S.stamps=await dbAll("stamps");
+  S.hours=(await dbAll("hours")).sort((a,b)=>b.date.localeCompare(a.date));
+  S.docs=await dbAll("docs");
+  S.evidence=await dbAll("evidence");
+  const st=await dbGet("kv","settings");if(st)S.settings=Object.assign(S.settings,st.v);
+}
+
+/* ---------- nav ---------- */
+document.querySelectorAll("nav.tabs button").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
+function showView(v){
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-current",String(b.dataset.view===v)));
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+  $("#view-"+v).classList.add("active");
+  if(v==="pupils")renderPupils();
+  if(v==="progs")renderProgs();
+  if(v==="track")renderTrack();
+  if(v==="ready")renderReady();
+  if(v==="print")renderPrintSelect();
+  if(v==="settings")renderSettings();
+}
+
+/* =====================================================================
+   PUPILS (+ UAS import)
+   ===================================================================== */
+function renderPupils(){
+  const el=$("#pupil-list");
+  const act=S.pupils.filter(p=>!p.archived),arc=S.pupils.filter(p=>p.archived);
+  if(!S.pupils.length){el.innerHTML='<div class="empty">No pupils yet — add them above, or import from a UAS Register backup.</div>';return}
+  let h='<table class="list"><tr><th>Surname</th><th>Forename</th><th></th></tr>';
+  for(const p of act)h+=`<tr><td>${esc(p.surname)}</td><td>${esc(p.forename)}</td><td style="text-align:right"><button class="btn small ghost" data-arch="${p.id}">Archive</button></td></tr>`;
+  h+="</table>";
+  if(arc.length){h+='<h3>Archived</h3><table class="list">';for(const p of arc)h+=`<tr><td>${esc(p.surname)}, ${esc(p.forename)}</td><td style="text-align:right"><button class="btn small ghost" data-unarch="${p.id}">Restore</button></td></tr>`;h+="</table>"}
+  el.innerHTML=h;
+  el.querySelectorAll("[data-arch]").forEach(b=>b.addEventListener("click",async()=>{const p=S.pupils.find(x=>x.id===b.dataset.arch);p.archived=true;await dbPut("pupils",p);renderPupils()}));
+  el.querySelectorAll("[data-unarch]").forEach(b=>b.addEventListener("click",async()=>{const p=S.pupils.find(x=>x.id===b.dataset.unarch);p.archived=false;await dbPut("pupils",p);renderPupils()}));
+}
+$("#p-add").addEventListener("click",async()=>{
+  const f=$("#p-fore").value.trim(),s=$("#p-sur").value.trim();
+  if(!f&&!s){toast("Give the pupil a name first");return}
+  const p={id:uid(),forename:f,surname:s,archived:false,created:Date.now()};
+  await dbPut("pupils",p);S.pupils.push(p);
+  S.pupils.sort((a,b)=>(a.surname+a.forename).localeCompare(b.surname+b.forename));
+  $("#p-fore").value="";$("#p-sur").value="";$("#p-fore").focus();renderPupils();toast("Pupil added");
+});
+$("#p-import").addEventListener("click",()=>$("#p-import-file").click());
+$("#p-import-file").addEventListener("change",async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  try{
+    const data=JSON.parse(await f.text());
+    if(data.app!=="uas_register"||!Array.isArray(data.pupils))throw new Error("That doesn't look like a UAS Register backup.");
+    let added=0;
+    for(const up of data.pupils){
+      if(up.archived)continue;
+      const dupe=S.pupils.some(p=>p.forename===up.forename&&p.surname===up.surname);
+      if(dupe)continue;
+      const p={id:uid(),forename:up.forename||"",surname:up.surname||"",archived:false,created:Date.now()};
+      await dbPut("pupils",p);S.pupils.push(p);added++;
+    }
+    S.pupils.sort((a,b)=>(a.surname+a.forename).localeCompare(b.surname+b.forename));
+    renderPupils();toast(added?`Imported ${added} pupil${added===1?"":"s"} from the AQA app`:"No new pupils to import — they're all here already");
+  }catch(err){alert("Import failed: "+(err.message||err))}
+});
+
+/* =====================================================================
+   PROGRAMMES — create / detail / enrol / structure / docs
+   ===================================================================== */
+async function createProg(kind){
+  const p=kind==="peq"
+    ?{id:uid(),kind,code:"",title:"New PEQ unit",level:"",credits:3,glh:30,outcomes:[],enrolled:[],created:Date.now()}
+    :{id:uid(),kind,code:"",title:"New Short Course",targetCredits:6,modules:[],enrolled:[],created:Date.now()};
+  await dbPut("progs",p);S.progs.unshift(p);S.selProg=p.id;
+  renderProgs();openProg(p.id);
+}
+$("#new-peq").addEventListener("click",()=>createProg("peq"));
+$("#new-short").addEventListener("click",()=>createProg("short"));
+
+function progChallenges(p){/* flat list with module context */
+  const out=[];
+  for(const m of p.modules||[])for(const c of m.challenges||[])out.push({...c,moduleTitle:m.title,moduleId:m.id});
+  return out;
+}
+function renderProgs(){
+  const el=$("#prog-list");
+  if(!S.progs.length){el.innerHTML='<div class="empty">No programmes yet. Create a PEQ unit or a Short Course above.</div>';$("#prog-detail").hidden=true;return}
+  let h='<table class="list"><tr><th>Type</th><th>Programme</th><th>Structure</th><th>Enrolled</th><th></th></tr>';
+  for(const p of S.progs){
+    const struct=p.kind==="peq"?`${(p.outcomes||[]).length} criteria · ${p.credits} cr / ${p.glh} GLH`:`${(p.modules||[]).length} modules · ${progChallenges(p).length} challenges`;
+    h+=`<tr><td><span class="tag ${p.kind==="peq"?"peq":""}">${p.kind==="peq"?"PEQ":"Short Course"}</span></td>
+    <td>${esc(p.code?p.code+" · ":"")}${esc(p.title)}</td><td>${struct}</td><td>${(p.enrolled||[]).length}</td>
+    <td style="text-align:right"><button class="btn small ghost" data-open="${p.id}">Open</button></td></tr>`;
+  }
+  h+="</table>";el.innerHTML=h;
+  el.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",()=>openProg(b.dataset.open)));
+}
+const PEQ_MILESTONES=[["baseline","Baseline done"],["planCreated","Plan created"],["planLive","Plan live"],["reviewed","Review done"],["signedOff","Signed off"]];
+const CLOSING_DOCS=[["summary","Summary of achievement"],["personal","Personal statement"],["tutorRecord","Tutor record"],["signoff","Tutor sign-off"]];
+function docKey(progId,pupilId){return"d"+progId+"_"+pupilId}
+function getDocs(progId,pupilId){return S.docs.find(d=>d.key===docKey(progId,pupilId))||{key:docKey(progId,pupilId),progId,pupilId,flags:{}}}
+async function toggleDoc(progId,pupilId,flag){
+  const d=getDocs(progId,pupilId);
+  d.flags[flag]=!d.flags[flag];
+  await dbPut("docs",d);
+  if(!S.docs.some(x=>x.key===d.key))S.docs.push(d);
+}
+function openProg(id){
+  const p=S.progs.find(x=>x.id===id);if(!p)return;
+  S.selProg=id;
+  const d=$("#prog-detail");d.hidden=false;
+  const act=S.pupils.filter(x=>!x.archived);
+  let h=`<h2><input id="pg-title" value="${esc(p.title)}" style="font:inherit;color:inherit;border:1px dashed var(--mint-line);border-radius:6px;padding:2px 6px;min-width:280px">
+    <span class="tag ${p.kind==="peq"?"peq":""}">${p.kind==="peq"?"PEQ":"Short Course"}</span></h2>
+  <div class="row" style="margin:8px 0">
+    <div class="field"><label>Code</label><input id="pg-code" value="${esc(p.code||"")}" style="width:130px"></div>`;
+  if(p.kind==="peq"){
+    h+=`<div class="field"><label>Level</label><input id="pg-level" value="${esc(p.level||"")}" style="width:110px"></div>
+    <div class="field"><label>Credits</label><input id="pg-credits" type="number" value="${p.credits}" style="width:80px"></div>
+    <div class="field"><label>GLH</label><input id="pg-glh" type="number" value="${p.glh}" style="width:80px"></div>`;
+  }else{
+    h+=`<div class="field"><label>Target credits</label><input id="pg-target" type="number" value="${p.targetCredits||6}" style="width:90px"></div>`;
+  }
+  h+=`<button class="btn small" id="pg-save">Save details</button>
+    <button class="btn small ghost" id="pg-track">Open in Track →</button>
+    <button class="btn small danger" id="pg-del">Delete</button></div>
+  <h3>Enrolled pupils</h3><div class="pupil-grid">`;
+  for(const pu of act){
+    const on=(p.enrolled||[]).includes(pu.id);
+    h+=`<button class="pcard ${on?"on":""}" data-enrol="${pu.id}"><span class="pname">${esc(pu.forename)} ${esc(pu.surname)}</span><span class="pstamp">ENROLLED</span></button>`;
+  }
+  h+="</div>";
+  if(p.kind==="peq"){
+    h+=`<h3>Knowledge criteria</h3><div id="pg-outs"></div>
+    <div class="row" style="margin-top:6px"><input id="pg-newout-n" placeholder="E3.5" style="width:80px;border:1px solid var(--mint-line);border-radius:7px;padding:8px">
+    <input id="pg-newout-t" placeholder="Criterion text…" style="flex:1;min-width:200px;border:1px solid var(--mint-line);border-radius:7px;padding:8px">
+    <button class="btn small" id="pg-addout">Add criterion</button></div>`;
+  }else{
+    h+=`<h3>Modules &amp; challenges</h3><div id="pg-mods"></div>
+    <div class="row" style="margin-top:6px"><input id="pg-newmod" placeholder="Module title…" style="flex:1;min-width:200px;border:1px solid var(--mint-line);border-radius:7px;padding:8px">
+    <button class="btn small" id="pg-addmod">Add module</button></div>`;
+  }
+  h+=`<h3>Closing documents &amp; milestones (per pupil)</h3>
+  <p class="hint">${p.kind==="peq"?"The five milestones from the delivery plan.":"The four documents ASDAN requires before ANY certificate can be claimed — tick them off the moment they're done."}</p>
+  <div id="pg-docs"></div>`;
+  d.innerHTML=h;
+  d.querySelectorAll("[data-enrol]").forEach(b=>b.addEventListener("click",async()=>{
+    p.enrolled=p.enrolled||[];const i=p.enrolled.indexOf(b.dataset.enrol);
+    if(i>=0)p.enrolled.splice(i,1);else p.enrolled.push(b.dataset.enrol);
+    await dbPut("progs",p);openProg(id);
+  }));
+  $("#pg-save").addEventListener("click",async()=>{
+    p.title=$("#pg-title").value.trim()||p.title;
+    p.code=$("#pg-code").value.trim();
+    if(p.kind==="peq"){p.level=$("#pg-level").value.trim();p.credits=+$("#pg-credits").value||p.credits;p.glh=+$("#pg-glh").value||p.glh}
+    else{p.targetCredits=+$("#pg-target").value||p.targetCredits}
+    await dbPut("progs",p);renderProgs();openProg(id);toast("Saved");
+  });
+  $("#pg-track").addEventListener("click",()=>{S.trackProg=p.id;showView("track")});
+  $("#pg-del").addEventListener("click",async()=>{
+    if(!confirm("Delete this programme and all its tracking? This cannot be undone."))return;
+    await dbDel("progs",p.id);
+    for(const t of S.trio.filter(t=>t.progId===p.id))await dbDel("trio",t.key);
+    for(const s of S.stamps.filter(s=>s.progId===p.id))await dbDel("stamps",s.key);
+    for(const hh of S.hours.filter(h=>h.progId===p.id))await dbDel("hours",hh.id);
+    for(const dd of S.docs.filter(d=>d.progId===p.id))await dbDel("docs",dd.key);
+    for(const ev of S.evidence.filter(e=>e.progId===p.id))await dbDel("evidence",ev.id);
+    await loadAll();$("#prog-detail").hidden=true;renderProgs();toast("Deleted");
+  });
+  if(p.kind==="peq")renderPeqOuts(p);else renderMods(p);
+  renderProgDocs(p);
+}
+function renderPeqOuts(p){
+  const el=$("#pg-outs");
+  if(!(p.outcomes||[]).length){el.innerHTML='<div class="empty">No criteria yet — add them below (e.g. E3.1).</div>'}
+  else{
+    let h='<table class="list">';
+    p.outcomes.forEach((o,i)=>{h+=`<tr><td style="width:70px"><b>${esc(o.n)}</b></td><td>${esc(o.text)}</td><td style="width:40px"><button class="btn small ghost" data-oX="${i}">✕</button></td></tr>`});
+    h+="</table>";el.innerHTML=h;
+    el.querySelectorAll("[data-oX]").forEach(b=>b.addEventListener("click",async()=>{p.outcomes.splice(+b.dataset.oX,1);await dbPut("progs",p);openProg(p.id)}));
+  }
+  $("#pg-addout").addEventListener("click",async()=>{
+    const n=$("#pg-newout-n").value.trim(),t=$("#pg-newout-t").value.trim();
+    if(!n||!t){toast("Give the criterion a number and text");return}
+    p.outcomes=p.outcomes||[];p.outcomes.push({n,text:t});
+    await dbPut("progs",p);openProg(p.id);
+  });
+}
+function renderMods(p){
+  const el=$("#pg-mods");
+  if(!(p.modules||[]).length){el.innerHTML='<div class="empty">No modules yet — add the first one below.</div>'}
+  else{
+    let h="";
+    p.modules.forEach((m,mi)=>{
+      h+=`<div class="panel" style="margin:8px 0;padding:12px"><h3 style="margin-top:0">Module ${mi+1}: ${esc(m.title)}
+        <button class="btn small ghost" data-mX="${mi}" style="float:right">✕ module</button></h3><table class="list">`;
+      (m.challenges||[]).forEach((c,ci)=>{
+        h+=`<tr><td style="width:40px"><span class="tag">${esc(c.section)}</span></td><td>${esc(c.title)}</td><td style="width:70px">${c.hours}h</td>
+        <td style="width:40px"><button class="btn small ghost" data-cX="${mi}_${ci}">✕</button></td></tr>`;
+      });
+      h+=`</table><div class="row" style="margin-top:6px">
+        <select data-newc-sec="${mi}" style="border:1px solid var(--mint-line);border-radius:7px;padding:8px"><option>A</option><option>B</option><option>Other</option></select>
+        <input data-newc-t="${mi}" placeholder="Challenge title…" style="flex:1;min-width:160px;border:1px solid var(--mint-line);border-radius:7px;padding:8px">
+        <input data-newc-h="${mi}" type="number" value="2.5" step="0.5" style="width:80px;border:1px solid var(--mint-line);border-radius:7px;padding:8px" title="Hours">
+        <button class="btn small" data-addc="${mi}">Add challenge</button></div></div>`;
+    });
+    el.innerHTML=h;
+    el.querySelectorAll("[data-mX]").forEach(b=>b.addEventListener("click",async()=>{if(!confirm("Delete this module and its challenges?"))return;p.modules.splice(+b.dataset.mX,1);await dbPut("progs",p);openProg(p.id)}));
+    el.querySelectorAll("[data-cX]").forEach(b=>b.addEventListener("click",async()=>{const[mi,ci]=b.dataset.cX.split("_").map(Number);p.modules[mi].challenges.splice(ci,1);await dbPut("progs",p);openProg(p.id)}));
+    el.querySelectorAll("[data-addc]").forEach(b=>b.addEventListener("click",async()=>{
+      const mi=+b.dataset.addc;
+      const t=el.querySelector(`[data-newc-t="${mi}"]`).value.trim();
+      const sec=el.querySelector(`[data-newc-sec="${mi}"]`).value;
+      const hrs=parseFloat(el.querySelector(`[data-newc-h="${mi}"]`).value)||2.5;
+      if(!t){toast("Give the challenge a title");return}
+      p.modules[mi].challenges=p.modules[mi].challenges||[];
+      p.modules[mi].challenges.push({id:uid(),section:sec,title:t,hours:hrs});
+      await dbPut("progs",p);openProg(p.id);
+    }));
+  }
+  $("#pg-addmod").addEventListener("click",async()=>{
+    const t=$("#pg-newmod").value.trim();
+    if(!t){toast("Give the module a title");return}
+    p.modules=p.modules||[];p.modules.push({id:uid(),title:t,challenges:[]});
+    await dbPut("progs",p);openProg(p.id);
+  });
+}
+function renderProgDocs(p){
+  const el=$("#pg-docs");
+  const roster=S.pupils.filter(x=>(p.enrolled||[]).includes(x.id)&&!x.archived);
+  if(!roster.length){el.innerHTML='<div class="empty">Enrol pupils first.</div>';return}
+  const items=p.kind==="peq"?PEQ_MILESTONES:CLOSING_DOCS;
+  let h="";
+  for(const pu of roster){
+    const dd=getDocs(p.id,pu.id);
+    h+=`<div style="margin:8px 0"><b>${esc(pu.forename)} ${esc(pu.surname)}</b><div class="docchips" style="margin-top:4px">`;
+    for(const[flag,label]of items){
+      h+=`<button class="${dd.flags[flag]?"on":""}" data-doc="${pu.id}_${flag}">${dd.flags[flag]?"✓ ":""}${esc(label)}</button>`;
+    }
+    h+="</div></div>";
+  }
+  el.innerHTML=h;
+  el.querySelectorAll("[data-doc]").forEach(b=>b.addEventListener("click",async()=>{
+    const[pid,flag]=b.dataset.doc.split("_");
+    await toggleDoc(p.id,pid,flag);renderProgDocs(p);
+  }));
+}
+
+/* =====================================================================
+   TRACK — PEQ stamps + hours; Short Course trio
+   ===================================================================== */
+$("#t-date").value=todayISO();
+$("#t-prog").addEventListener("change",e=>{S.trackProg=e.target.value;S.trackOutcome="";S.trackPupil="";renderTrack()});
+$("#t-date").addEventListener("change",()=>renderTrack());
+function fillProgSelect(sel,chosen){
+  const el=$(sel);
+  el.innerHTML=S.progs.length
+    ?S.progs.map(p=>`<option value="${p.id}" ${p.id===chosen?"selected":""}>${p.kind==="peq"?"[PEQ] ":"[SC] "}${esc(p.code?p.code+" · ":"")}${esc(p.title)}</option>`).join("")
+    :'<option value="">— none yet —</option>';
+}
+const stampKey=(progId,pupilId,n)=>"s"+progId+"_"+pupilId+"_"+n;
+const getStamp=(progId,pupilId,n)=>S.stamps.find(s=>s.key===stampKey(progId,pupilId,n));
+const trioKey=(progId,pupilId,chId)=>"t"+progId+"_"+pupilId+"_"+chId;
+const getTrio=(progId,pupilId,chId)=>S.trio.find(t=>t.key===trioKey(progId,pupilId,chId));
+function trioComplete(t){return!!(t&&t.flags.work&&t.flags.plan&&t.flags.review)}
+
+/* hours + credits */
+function loggedHours(progId,pupilId){
+  let mins=0;
+  for(const h of S.hours)if(h.progId===progId&&h.minutes&&h.minutes[pupilId])mins+=h.minutes[pupilId];
+  return mins/60;
+}
+function bankedHours(p,pupilId){/* short course: completed-challenge hours */
+  let hrs=0;
+  for(const c of progChallenges(p))if(trioComplete(getTrio(p.id,pupilId,c.id)))hrs+=c.hours||0;
+  return hrs;
+}
+function creditsFromHours(h){return Math.floor(h/10)}
+
+function renderTrack(){
+  fillProgSelect("#t-prog",S.trackProg||(S.progs[0]&&S.progs[0].id));
+  S.trackProg=$("#t-prog").value;
+  const body=$("#track-body");
+  const p=S.progs.find(x=>x.id===S.trackProg);
+  if(!p){body.innerHTML='<div class="empty">Create a programme first.</div>';return}
+  const roster=S.pupils.filter(x=>(p.enrolled||[]).includes(x.id)&&!x.archived);
+  if(!roster.length){body.innerHTML='<div class="empty">No pupils enrolled — open the programme and tap your class.</div>';return}
+  if(p.kind==="peq")renderTrackPeq(p,roster,body);else renderTrackShort(p,roster,body);
+}
+
+/* ---- PEQ track: criteria stamps + hours logger ---- */
+function renderTrackPeq(p,roster,body){
+  if(!S.trackOutcome&&(p.outcomes||[]).length)S.trackOutcome=p.outcomes[0].n;
+  let h='<h3>Knowledge criteria — tap to stamp</h3><div class="outcome-chips">';
+  for(const o of p.outcomes||[]){
+    const short=o.text.length>42?o.text.slice(0,40)+"…":o.text;
+    h+=`<button data-oc="${esc(o.n)}" aria-current="${String(o.n===S.trackOutcome)}" title="${esc(o.text)}"><span class="n">${esc(o.n)}</span>${esc(short)}</button>`;
+  }
+  h+='</div><div class="pupil-grid">';
+  for(const pu of roster){
+    const st=getStamp(p.id,pu.id,S.trackOutcome);
+    h+=`<button class="pcard ${st?"on":""}" data-pp="${pu.id}"><span class="pname">${esc(pu.forename)} ${esc(pu.surname)}</span><span class="pstamp">✓ ${st?fmtDMY(st.date):""}</span></button>`;
+  }
+  h+=`</div>${evStripHTML(p,"O"+S.trackOutcome,S.trackOutcome)}`;
+  h+=`<h3 style="margin-top:18px">Hours logger — session on ${fmtDMY($("#t-date").value||todayISO())}</h3>
+  <p class="hint">Tap minutes against each pupil for this date. Tally counts toward ${p.glh} GLH.</p><table class="list">`;
+  const sess=S.hours.find(x=>x.progId===p.id&&x.date===($("#t-date").value||todayISO()));
+  for(const pu of roster){
+    const cur=sess&&sess.minutes?sess.minutes[pu.id]||0:0;
+    const tot=loggedHours(p.id,pu.id);
+    h+=`<tr><td><b>${esc(pu.forename)} ${esc(pu.surname)}</b></td><td><span class="minbtns">`;
+    for(const m of[30,45,60,90]){h+=`<button data-min="${pu.id}_${m}" class="${cur===m?"on":""}">${m}m</button>`}
+    h+=`</span></td><td>${tot.toFixed(1)}h / ${p.glh} GLH</td></tr>`;
+  }
+  h+="</table>";
+  body.innerHTML=h;
+  body.querySelectorAll("[data-oc]").forEach(b=>b.addEventListener("click",()=>{S.trackOutcome=b.dataset.oc;renderTrack()}));
+  body.querySelectorAll("[data-pp]").forEach(b=>b.addEventListener("click",()=>togglePeqStamp(p,b.dataset.pp)));
+  body.querySelectorAll("[data-min]").forEach(b=>b.addEventListener("click",()=>logMinutes(p,b.dataset.min)));
+  wireEvStrip(body,p,"O"+S.trackOutcome,S.trackOutcome);
+}
+async function togglePeqStamp(p,pupilId){
+  const n=S.trackOutcome,key=stampKey(p.id,pupilId,n);
+  const ex=S.stamps.find(s=>s.key===key);
+  if(ex){await dbDel("stamps",key);S.stamps=S.stamps.filter(s=>s.key!==key)}
+  else{const s={key,progId:p.id,pupilId,n,date:$("#t-date").value||todayISO()};await dbPut("stamps",s);S.stamps.push(s)}
+  renderTrack();
+}
+async function logMinutes(p,tok){
+  const[pid,mStr]=tok.split("_");const m=+mStr;
+  const date=$("#t-date").value||todayISO();
+  let sess=S.hours.find(x=>x.progId===p.id&&x.date===date);
+  if(!sess){sess={id:uid(),progId:p.id,date,minutes:{}};S.hours.unshift(sess)}
+  sess.minutes[pid]=sess.minutes[pid]===m?0:m; /* tap same value again to clear */
+  await dbPut("hours",sess);
+  renderTrack();
+}
+
+/* ---- Short Course track: pupil focus + trio ---- */
+function renderTrackShort(p,roster,body){
+  if(!S.trackPupil||!roster.some(x=>x.id===S.trackPupil))S.trackPupil=roster[0].id;
+  let h='<h3>Whose folder are you marking?</h3><div class="pchips">';
+  for(const pu of roster)h+=`<button class="${pu.id===S.trackPupil?"on":""}" data-tp="${pu.id}">${esc(pu.forename)}</button>`;
+  h+='</div>';
+  const pupil=roster.find(x=>x.id===S.trackPupil);
+  const banked=bankedHours(p,pupil.id),credits=creditsFromHours(banked);
+  h+=`<div class="notice ok" style="margin:8px 0"><b>${esc(pupil.forename)}:</b> ${banked.toFixed(1)} hours banked → <b>${credits} credit${credits===1?"":"s"}</b> claimable${banked%10?` (${(10-banked%10).toFixed(1)}h to the next credit)`:""}. Challenges only bank when W, P and R are all ticked.</div>`;
+  h+='<table class="list"><tr><th>Sec</th><th>Challenge</th><th>Hours</th><th>W · P · R</th><th></th></tr>';
+  for(const m of p.modules||[]){
+    h+=`<tr><td colspan="5" style="background:var(--mint);font-weight:700;color:var(--asdan)">${esc(m.title)}</td></tr>`;
+    for(const c of m.challenges||[]){
+      const t=getTrio(p.id,pupil.id,c.id)||{flags:{}};
+      const done=trioComplete(t);
+      h+=`<tr class="chrow"><td><span class="tag">${esc(c.section)}</span></td><td>${esc(c.title)} ${done?'<span class="chdone">✓ banked</span>':""}</td><td>${c.hours}h</td>
+      <td><span class="trio">
+        <button class="${t.flags.work?"on":""}" data-tr="${c.id}_work" title="Work evidence">W</button>
+        <button class="${t.flags.plan?"on":""}" data-tr="${c.id}_plan" title="Planning sheet">P</button>
+        <button class="${t.flags.review?"on":""}" data-tr="${c.id}_review" title="Review sheet">R</button>
+      </span></td>
+      <td>${evMini(p,c.id)}</td></tr>`;
+    }
+  }
+  h+="</table>";
+  body.innerHTML=h;
+  body.querySelectorAll("[data-tp]").forEach(b=>b.addEventListener("click",()=>{S.trackPupil=b.dataset.tp;renderTrack()}));
+  body.querySelectorAll("[data-tr]").forEach(b=>b.addEventListener("click",()=>toggleTrio(p,pupil.id,b.dataset.tr)));
+  body.querySelectorAll("[data-evc]").forEach(b=>b.addEventListener("click",()=>pickEvidence(p,b.dataset.evc,chLabel(p,b.dataset.evc))));
+  body.querySelectorAll("[data-evview]").forEach(t=>t.addEventListener("click",()=>openEvView(t.dataset.evview)));
+}
+function chLabel(p,chId){
+  let mi=0;
+  for(const m of p.modules||[]){mi++;let ci=0;for(const c of m.challenges||[]){ci++;if(c.id===chId)return"M"+mi+"C"+ci}}
+  return"C?";
+}
+async function toggleTrio(p,pupilId,tok){
+  const[chId,flag]=tok.split("_");
+  const key=trioKey(p.id,pupilId,chId);
+  let t=S.trio.find(x=>x.key===key);
+  if(!t){t={key,progId:p.id,pupilId,chId,flags:{},date:todayISO()};S.trio.push(t)}
+  t.flags[flag]=!t.flags[flag];
+  t.date=$("#t-date").value||todayISO();
+  await dbPut("trio",t);
+  renderTrack();
+}
+
+/* =====================================================================
+   EVIDENCE — refs like CODE/M1C2/A or CODE/E3.2/A
+   ===================================================================== */
+const evURLs=new Map();
+function evURL(ev){if(!evURLs.has(ev.id))evURLs.set(ev.id,URL.createObjectURL(ev.blob));return evURLs.get(ev.id)}
+function evFor(progId,target){return S.evidence.filter(e=>e.progId===progId&&e.target===target).sort((a,b)=>a.ref.localeCompare(b.ref))}
+function nextEvRef(p,target,label){
+  const count=evFor(p.id,target).length;
+  return(p.code||"ASDAN")+"/"+label+"/"+String.fromCharCode(65+count);
+}
+async function shrinkImage(file){
+  try{
+    const bmp=await createImageBitmap(file);
+    const MAX=1600,scale=Math.min(1,MAX/Math.max(bmp.width,bmp.height));
+    if(scale===1&&file.size<900000)return file;
+    const c=document.createElement("canvas");
+    c.width=Math.round(bmp.width*scale);c.height=Math.round(bmp.height*scale);
+    c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+    const blob=await new Promise(r=>c.toBlob(r,"image/jpeg",0.85));
+    return blob||file;
+  }catch(_){return file}
+}
+async function addEvidenceRecord(p,target,label,blob,pupilIds,caption){
+  const ev={id:uid(),progId:p.id,target,label,pupilIds:pupilIds.slice(),blob,caption:caption||"",date:todayISO(),ref:nextEvRef(p,target,label)};
+  await dbPut("evidence",ev);S.evidence.push(ev);
+  return ev;
+}
+let evPending=null,evFileCtx=null;
+function pickEvidence(p,target,label){evFileCtx={p,target,label};$("#ev-file").click()}
+$("#ev-file").addEventListener("change",async e=>{
+  const f=e.target.files[0];e.target.value="";
+  if(!f||!evFileCtx)return;
+  const blob=await shrinkImage(f);
+  openEvAdd(evFileCtx.p,evFileCtx.target,evFileCtx.label,blob);
+});
+function openEvAdd(p,target,label,blob){
+  const roster=S.pupils.filter(x=>(p.enrolled||[]).includes(x.id)&&!x.archived);
+  evPending={p,target,label,blob,sel:new Set(roster.map(x=>x.id))};
+  $("#evadd-img").src=URL.createObjectURL(blob);
+  $("#evadd-ctx").innerHTML=`<b>${esc(nextEvRef(p,target,label))}</b>`;
+  $("#evadd-cap").value="";
+  const chips=$("#evadd-chips");
+  chips.innerHTML=roster.map(x=>`<button class="on" data-evp="${x.id}">${esc(x.forename)}</button>`).join("");
+  chips.querySelectorAll("[data-evp]").forEach(b=>b.addEventListener("click",()=>{
+    const id=b.dataset.evp;
+    if(evPending.sel.has(id)){evPending.sel.delete(id);b.classList.remove("on")}else{evPending.sel.add(id);b.classList.add("on")}
+  }));
+  $("#evadd-back").classList.add("open");
+}
+$("#evadd-close").addEventListener("click",()=>{$("#evadd-back").classList.remove("open");evPending=null});
+$("#evadd-save").addEventListener("click",async()=>{
+  if(!evPending)return;
+  if(!evPending.sel.size){toast("Tick at least one pupil");return}
+  const ev=await addEvidenceRecord(evPending.p,evPending.target,evPending.label,evPending.blob,[...evPending.sel],$("#evadd-cap").value.trim());
+  $("#evadd-back").classList.remove("open");evPending=null;
+  toast("Saved as "+ev.ref);renderTrack();
+});
+function openEvView(id){
+  const ev=S.evidence.find(x=>x.id===id);if(!ev)return;
+  $("#evview-ref").textContent=ev.ref;
+  $("#evview-img").src=evURL(ev);
+  const names=ev.pupilIds.map(pid=>{const pu=S.pupils.find(x=>x.id===pid);return pu?pu.forename+" "+pu.surname:"?"}).join(", ");
+  $("#evview-meta").innerHTML=`<b>Pupils:</b> ${esc(names)}<br><b>Added:</b> ${fmtDMY(ev.date)}${ev.caption?"<br><b>Caption:</b> "+esc(ev.caption):""}`;
+  $("#evview-del").dataset.ev=id;
+  $("#evview-back").classList.add("open");
+}
+$("#evview-close").addEventListener("click",()=>$("#evview-back").classList.remove("open"));
+$("#evview-del").addEventListener("click",async e=>{
+  const id=e.target.dataset.ev;
+  if(!confirm("Delete this work example?"))return;
+  await dbDel("evidence",id);S.evidence=S.evidence.filter(x=>x.id!==id);
+  if(evURLs.has(id)){URL.revokeObjectURL(evURLs.get(id));evURLs.delete(id)}
+  $("#evview-back").classList.remove("open");renderTrack();toast("Deleted");
+});
+function evStripHTML(p,target,label){
+  const evs=evFor(p.id,target);
+  let h=`<div style="margin-top:10px"><b style="font-size:.85rem;color:var(--asdan-mid)">Work examples · ${esc(String(label))}</b><div class="evrow" style="margin-top:5px">`;
+  for(const ev of evs)h+=`<div class="evcell"><img class="evthumb" src="${evURL(ev)}" alt="${esc(ev.ref)}" data-evview="${ev.id}"><div class="evref">${esc(ev.ref.split("/").slice(1).join("/"))}</div></div>`;
+  h+=`<button class="evadd" data-evstrip="1" aria-label="Add a work example">+</button></div></div>`;
+  return h;
+}
+function wireEvStrip(root,p,target,label){
+  const b=root.querySelector("[data-evstrip]");
+  if(b)b.addEventListener("click",()=>pickEvidence(p,target,label));
+  root.querySelectorAll("[data-evview]").forEach(t=>t.addEventListener("click",()=>openEvView(t.dataset.evview)));
+}
+function evMini(p,chId){
+  const evs=evFor(p.id,chId);
+  return`${evs.map(ev=>`<img class="evthumb" style="width:30px;height:30px" src="${evURL(ev)}" alt="${esc(ev.ref)}" data-evview="${ev.id}" title="${esc(ev.ref)}">`).join("")}<button class="evadd" style="width:30px;height:30px;font-size:.9rem" data-evc="${chId}" aria-label="Add work example">+</button>`;
+}
+
+/* =====================================================================
+   READINESS
+   ===================================================================== */
+$("#r-prog").addEventListener("change",()=>renderReady());
+$("#r-refresh").addEventListener("click",()=>renderReady());
+function readiness(p,pupilId){
+  const dd=getDocs(p.id,pupilId).flags;
+  if(p.kind==="peq"){
+    const outs=(p.outcomes||[]);
+    const stamped=outs.filter(o=>getStamp(p.id,pupilId,o.n)).length;
+    const hrs=loggedHours(p.id,pupilId);
+    const miles=PEQ_MILESTONES.filter(([f])=>dd[f]).length;
+    const items=[
+      [`Criteria stamped (${stamped}/${outs.length})`,outs.length>0&&stamped===outs.length],
+      [`Hours logged (${hrs.toFixed(1)}/${p.glh} GLH)`,hrs>=p.glh],
+      ...PEQ_MILESTONES.map(([f,l])=>[l,!!dd[f]])
+    ];
+    const doneAll=items.every(([,ok])=>ok);
+    const started=stamped>0||hrs>0||miles>0;
+    return{state:doneAll?"g":started?"a":"r",headline:doneAll?`Ready to claim · ${p.credits} credits`:`${hrs.toFixed(1)}h · ${stamped}/${outs.length} criteria`,items};
+  }else{
+    const banked=bankedHours(p,pupilId),credits=creditsFromHours(banked);
+    const docsDone=CLOSING_DOCS.every(([f])=>dd[f]);
+    const items=[
+      [`Hours banked (${banked.toFixed(1)}h → ${credits} credit${credits===1?"":"s"})`,credits>=1],
+      ...CLOSING_DOCS.map(([f,l])=>[l,!!dd[f]])
+    ];
+    const state=credits>=1&&docsDone?"g":credits>=1?"a":"r";
+    const headline=state==="g"?`CLAIM NOW · ${credits} credit${credits===1?"":"s"}`
+      :state==="a"?`${credits} credit${credits===1?"":"s"} banked — paperwork missing`
+      :`${banked.toFixed(1)}h banked — under 10h`;
+    return{state,headline,items};
+  }
+}
+function renderReady(){
+  fillProgSelect("#r-prog",$("#r-prog").value||S.trackProg||(S.progs[0]&&S.progs[0].id));
+  const p=S.progs.find(x=>x.id===$("#r-prog").value);
+  const grid=$("#ready-grid");
+  if(!p){grid.innerHTML='<div class="empty">Create a programme first.</div>';return}
+  const roster=S.pupils.filter(x=>(p.enrolled||[]).includes(x.id)&&!x.archived);
+  if(!roster.length){grid.innerHTML='<div class="empty">No pupils enrolled on this programme.</div>';return}
+  let h="";
+  for(const pu of roster){
+    const r=readiness(p,pu.id);
+    h+=`<div class="rcard ${r.state}"><h3>${esc(pu.forename)} ${esc(pu.surname)}</h3><div class="big">${esc(r.headline)}</div><ul>`;
+    for(const[label,ok]of r.items)h+=`<li class="${ok?"done":"todo"}">${esc(label)}</li>`;
+    h+="</ul></div>";
+  }
+  grid.innerHTML=h;
+}
+
+/* =====================================================================
+   PRINT — portfolio audit, hours tally, tutor record
+   ===================================================================== */
+function renderPrintSelect(){
+  fillProgSelect("#pr-prog",$("#pr-prog").value||S.trackProg||(S.progs[0]&&S.progs[0].id));
+  fillPrPupils();
+}
+$("#pr-prog").addEventListener("change",()=>fillPrPupils());
+function fillPrPupils(){
+  const p=S.progs.find(x=>x.id===$("#pr-prog").value);
+  const el=$("#pr-pupil");
+  if(!p){el.innerHTML='<option value="">—</option>';return}
+  const roster=S.pupils.filter(x=>(p.enrolled||[]).includes(x.id)&&!x.archived);
+  el.innerHTML=roster.map(x=>`<option value="${x.id}">${esc(x.forename)} ${esc(x.surname)}</option>`).join("")||'<option value="">— none enrolled —</option>';
+}
+$("#pr-print").addEventListener("click",()=>window.print());
+function printHeader(p,pu){
+  return`<div class="phead"><h1>${esc(p.title)}${p.code?" · "+esc(p.code):""}${p.kind==="peq"?" · "+esc(p.level||""):""}</h1><div><b>${esc(pu.forename)} ${esc(pu.surname)}</b></div></div>
+  <div style="font-size:.8rem;color:#444;margin-bottom:8px">Centre: ${esc(S.settings.centre||"Progress Schools")}${S.settings.centreNo?" ("+esc(S.settings.centreNo)+")":""} · Tutor: ${esc(S.settings.teacher||"")} · Printed ${fmtDMY(todayISO())}</div>`;
+}
+function showPrint(html){$("#print-zone").innerHTML=html;$("#pr-preview-panel").hidden=false;$("#pr-print").disabled=false}
+$("#pr-audit").addEventListener("click",()=>{
+  const p=S.progs.find(x=>x.id===$("#pr-prog").value);
+  const pu=S.pupils.find(x=>x.id===$("#pr-pupil").value);
+  if(!p||!pu){$("#pr-warn").innerHTML='<div class="notice warn">Choose a programme and a pupil.</div>';return}
+  $("#pr-warn").innerHTML="";
+  let h=`<div class="printpg">${printHeader(p,pu)}`;
+  if(p.kind==="short"){
+    h+=`<h1 style="font-size:1rem;margin:6px 0">Portfolio audit — Work / Planning / Review</h1><table><tr><th>Module / challenge</th><th>Sec</th><th>Hrs</th><th>Work</th><th>Plan</th><th>Review</th><th>Banked</th></tr>`;
+    for(const m of p.modules||[]){
+      h+=`<tr><td colspan="7" style="background:var(--mint);font-weight:700">${esc(m.title)}</td></tr>`;
+      for(const c of m.challenges||[]){
+        const t=getTrio(p.id,pu.id,c.id)||{flags:{}};
+        const done=trioComplete(t);
+        const tick=v=>v?"✓":"—";
+        h+=`<tr><td>${esc(c.title)}</td><td>${esc(c.section)}</td><td>${c.hours}</td><td>${tick(t.flags.work)}</td><td>${tick(t.flags.plan)}</td><td>${tick(t.flags.review)}</td><td>${done?"✓ "+c.hours+"h":"—"}</td></tr>`;
+      }
+    }
+    const banked=bankedHours(p,pu.id);
+    h+=`</table><p style="margin-top:8px;font-size:.9rem"><b>Total banked: ${banked.toFixed(1)} hours → ${creditsFromHours(banked)} credit(s)</b> (credits claimed in multiples of 10 hours)</p>`;
+  }else{
+    h+=`<h1 style="font-size:1rem;margin:6px 0">Criteria coverage</h1><table><tr><th>Criterion</th><th>Detail</th><th>Date achieved</th></tr>`;
+    for(const o of p.outcomes||[]){
+      const st=getStamp(p.id,pu.id,o.n);
+      h+=`<tr><td><b>${esc(o.n)}</b></td><td>${esc(o.text)}</td><td>${st?fmtDMY(st.date):"—"}</td></tr>`;
+    }
+    h+=`</table>`;
+  }
+  const dd=getDocs(p.id,pu.id).flags;
+  const items=p.kind==="peq"?PEQ_MILESTONES:CLOSING_DOCS;
+  h+=`<h1 style="font-size:1rem;margin:10px 0 6px">${p.kind==="peq"?"Milestones":"Closing documents"}</h1><table><tr>${items.map(([,l])=>`<th>${esc(l)}</th>`).join("")}</tr><tr>${items.map(([f])=>`<td style="text-align:center">${dd[f]?"✓":"—"}</td>`).join("")}</tr></table>`;
+  h+=`<div class="sig">Tutor <span class="ln">${esc(S.settings.teacher||"")}</span> Date <span class="ln" style="min-width:110px">${fmtDMY(todayISO())}</span></div></div>`;
+  showPrint(h);
+});
+$("#pr-hours").addEventListener("click",()=>{
+  const p=S.progs.find(x=>x.id===$("#pr-prog").value);
+  const pu=S.pupils.find(x=>x.id===$("#pr-pupil").value);
+  if(!p||!pu){$("#pr-warn").innerHTML='<div class="notice warn">Choose a programme and a pupil.</div>';return}
+  $("#pr-warn").innerHTML="";
+  let h=`<div class="printpg">${printHeader(p,pu)}<h1 style="font-size:1rem;margin:6px 0">Hours tally sheet</h1><table><tr><th>Date</th><th>Detail</th><th>Hours</th></tr>`;
+  let tot=0;
+  if(p.kind==="peq"){
+    const sessions=S.hours.filter(x=>x.progId===p.id&&x.minutes&&x.minutes[pu.id]).sort((a,b)=>a.date.localeCompare(b.date));
+    for(const s of sessions){const hrs=s.minutes[pu.id]/60;tot+=hrs;h+=`<tr><td>${fmtDMY(s.date)}</td><td>Guided session</td><td>${hrs.toFixed(2)}</td></tr>`}
+    h+=`</table><p style="margin-top:8px;font-size:.9rem"><b>Total: ${tot.toFixed(1)} hours of ${p.glh} GLH</b> · Unit credits: ${p.credits}</p>`;
+  }else{
+    for(const c of progChallenges(p)){
+      const t=getTrio(p.id,pu.id,c.id);
+      if(trioComplete(t)){tot+=c.hours;h+=`<tr><td>${fmtDMY(t.date)}</td><td>${esc(c.moduleTitle)}: ${esc(c.title)}</td><td>${c.hours.toFixed(1)}</td></tr>`}
+    }
+    h+=`</table><p style="margin-top:8px;font-size:.9rem"><b>Total completed challenge hours: ${tot.toFixed(1)} → ${creditsFromHours(tot)} credit(s)</b> (claimed in multiples of 10)</p>`;
+  }
+  h+=`<div class="sig">Tutor <span class="ln">${esc(S.settings.teacher||"")}</span> Date <span class="ln" style="min-width:110px">${fmtDMY(todayISO())}</span></div></div>`;
+  showPrint(h);
+});
+$("#pr-tutor").addEventListener("click",()=>{
+  const p=S.progs.find(x=>x.id===$("#pr-prog").value);
+  const pu=S.pupils.find(x=>x.id===$("#pr-pupil").value);
+  if(!p||!pu){$("#pr-warn").innerHTML='<div class="notice warn">Choose a programme and a pupil.</div>';return}
+  $("#pr-warn").innerHTML="";
+  const dd=getDocs(p.id,pu.id).flags;
+  let body="";
+  if(p.kind==="short"){
+    const banked=bankedHours(p,pu.id);
+    const doneCh=progChallenges(p).filter(c=>trioComplete(getTrio(p.id,pu.id,c.id)));
+    const missing=CLOSING_DOCS.filter(([f])=>!dd[f]).map(([,l])=>l);
+    body=`<p>I confirm that ${esc(pu.forename)} ${esc(pu.surname)} has completed ${doneCh.length} challenge(s) on ${esc(p.title)}, representing ${banked.toFixed(1)} hours of completed challenge work (${creditsFromHours(banked)} credit(s), claimed in multiples of 10 hours). Each completed challenge has work evidence, a planning record and a review record present in the portfolio.</p>
+    <p>${missing.length?`Outstanding at the time of this record: ${esc(missing.join(", "))}.`:"All closing documents (summary of achievement, personal statement, tutor record, sign-off) are complete."}</p>`;
+  }else{
+    const outs=(p.outcomes||[]);
+    const stamped=outs.filter(o=>getStamp(p.id,pu.id,o.n));
+    const hrs=loggedHours(p.id,pu.id);
+    body=`<p>I confirm that ${esc(pu.forename)} ${esc(pu.surname)} has achieved ${stamped.length} of ${outs.length} knowledge criteria on ${esc(p.title)} (${esc(p.code||"")}, ${esc(p.level||"")}), with ${hrs.toFixed(1)} hours of guided learning logged toward ${p.glh} GLH.</p>
+    <p>Milestones: ${PEQ_MILESTONES.map(([f,l])=>l+" — "+(dd[f]?"complete":"outstanding")).join("; ")}.</p>`;
+  }
+  const h=`<div class="printpg">${printHeader(p,pu)}<h1 style="font-size:1rem;margin:6px 0">Tutor record</h1>${body}
+  <div class="sig">Signed (tutor) <span class="ln">${esc(S.settings.teacher||"")}</span> Date <span class="ln" style="min-width:110px">${fmtDMY(todayISO())}</span></div></div>`;
+  showPrint(h);
+});
+
+/* =====================================================================
+   SETTINGS + BACKUP
+   ===================================================================== */
+function renderSettings(){
+  $("#set-centre").value=S.settings.centre||"";
+  $("#set-cno").value=S.settings.centreNo||"";
+  $("#set-teacher").value=S.settings.teacher||"";
+}
+$("#set-save").addEventListener("click",async()=>{
+  S.settings.centre=$("#set-centre").value.trim();
+  S.settings.centreNo=$("#set-cno").value.trim();
+  S.settings.teacher=$("#set-teacher").value.trim();
+  await dbPut("kv",{k:"settings",v:S.settings});toast("Settings saved");
+});
+function blobToDataURL(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(new Error("read failed"));r.readAsDataURL(blob)})}
+function dataURLToBlob(durl){
+  const[head,b64]=durl.split(",");
+  const mime=(head.match(/data:(.*?);/)||[])[1]||"image/jpeg";
+  const bin=atob(b64);const arr=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+  return new Blob([arr],{type:mime});
+}
+$("#bk-export").addEventListener("click",async()=>{
+  toast("Preparing backup…");
+  const evOut=[];
+  for(const ev of S.evidence){const{blob,...rest}=ev;evOut.push({...rest,dataURL:await blobToDataURL(blob)})}
+  const payload={app:"asdan_register",version:1,exported:new Date().toISOString(),
+    pupils:S.pupils,progs:S.progs,trio:S.trio,stamps:S.stamps,hours:S.hours,docs:S.docs,evidence:evOut,settings:S.settings};
+  const blob=new Blob([JSON.stringify(payload)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download="asdan-register-backup-"+todayISO()+".json";
+  a.click();URL.revokeObjectURL(a.href);toast("Backup downloaded");
+});
+$("#bk-import").addEventListener("click",()=>$("#bk-file").click());
+$("#bk-file").addEventListener("change",async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  try{
+    const data=JSON.parse(await f.text());
+    if(data.app!=="asdan_register")throw new Error("That file is not an ASDAN Register backup.");
+    if(!confirm("Importing replaces everything currently in the app. Continue?"))return;
+    for(const st of["pupils","progs","trio","stamps","hours","docs","evidence"])await dbClear(st);
+    for(const x of data.pupils||[])await dbPut("pupils",x);
+    for(const x of data.progs||[])await dbPut("progs",x);
+    for(const x of data.trio||[])await dbPut("trio",x);
+    for(const x of data.stamps||[])await dbPut("stamps",x);
+    for(const x of data.hours||[])await dbPut("hours",x);
+    for(const x of data.docs||[])await dbPut("docs",x);
+    for(const ev of data.evidence||[]){const{dataURL,...rest}=ev;await dbPut("evidence",{...rest,blob:dataURLToBlob(dataURL)})}
+    if(data.settings)await dbPut("kv",{k:"settings",v:data.settings});
+    evURLs.forEach(u=>URL.revokeObjectURL(u));evURLs.clear();
+    await loadAll();showView("pupils");toast("Backup restored");
+  }catch(err){alert("Import failed: "+(err.message||err))}
+});
+$("#wipe").addEventListener("click",async()=>{
+  if(!confirm("Delete every pupil, programme and record? Export a backup first if in doubt."))return;
+  if(!confirm("Really sure? This cannot be undone."))return;
+  for(const st of["pupils","progs","trio","stamps","hours","docs","evidence","kv"])await dbClear(st);
+  evURLs.forEach(u=>URL.revokeObjectURL(u));evURLs.clear();
+  await loadAll();showView("pupils");toast("All data deleted");
+});
+
+/* ---------- init ---------- */
+async function init(){await openDB();await loadAll();renderPupils()}
+init();
+</script>
+</body>
+</html>
