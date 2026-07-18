@@ -171,7 +171,9 @@ table.list tr:last-child td{border-bottom:none}
     <div class="row">
       <button class="btn" id="new-peq">＋ New PEQ unit</button>
       <button class="btn" id="new-short">＋ New Short Course</button>
+      <button class="btn ghost" id="load-starter">⚡ Load starter template</button>
     </div>
+    <p class="hint" style="margin-top:8px">New to the app? The starter template drafts an example PEQ unit and Short Course to explore and edit. Always check criterion wording and credit values against your own ASDAN documents before claiming.</p>
     <div id="prog-list" style="margin-top:12px"></div>
   </div>
   <div class="panel" id="prog-detail" hidden></div>
@@ -1030,6 +1032,45 @@ $("#wipe").addEventListener("click",async()=>{
   await loadAll();showView("pupils");toast("All data deleted");
 });
 
+
+/* ===== Starter template: one PEQ unit + one Short Course, fully editable ===== */
+const STARTER_PEQ={kind:"peq",code:"ComSk",title:"Communication Skills (ComSk1/ComSk2)",
+ level:"Level 1/Level 2",credits:3,glh:30,
+ outcomes:[
+  {n:"C1",text:"Explain the meaning of communication and its ways, types and purposes"},
+  {n:"C2",text:"Identify the components of effective communication"},
+  {n:"C3",text:"Describe difficulties in communication and the impact of poor communication"},
+  {n:"C4",text:"Demonstrate active listening"},
+  {n:"C5",text:"Give and use feedback, including peer feedback, to improve communication"},
+  {n:"C6",text:"Create a communication plan: purpose, audience, type, outline, resources, audience questions"},
+  {n:"C7",text:"Deliver the planned communication activity"},
+  {n:"C8",text:"Review the communication activity and identify improvements"}
+ ]};
+const STARTER_SHORT={kind:"short",code:"IL",title:"Independent Living",targetCredits:2,
+ modules:[
+  {title:"Looking after myself & my home",challenges:[
+    {section:"A",title:"Create and follow a daily self-care routine",hours:1.5},
+    {section:"A",title:"Keep my living space clean, safe and healthy",hours:1.5},
+    {section:"A",title:"Organise personal responsibilities and important documents",hours:1.5},
+    {section:"A",title:"Plan a healthy meal and create a shopping list",hours:1.5},
+    {section:"B",title:"Portfolio: reflect and collect evidence of independent living skills",hours:1.5}
+  ]},
+  {title:"Money, budgeting & managing a home",challenges:[
+    {section:"A",title:"Create a simple monthly budget: income, expenses, priorities",hours:1.5}
+  ]}
+ ]};
+async function loadStarterTemplate(){
+  if(S.progs.some(p=>p.code==="ComSk"||p.code==="IL")){toast("Starter programmes already loaded");return}
+  if(!confirm("Load the starter template? Creates an example PEQ unit (Communication Skills) and a Short Course (Independent Living) — every field editable, no pupils added."))return;
+  const peq={id:uid(),...STARTER_PEQ,outcomes:STARTER_PEQ.outcomes.map(o=>({...o})),enrolled:[],created:Date.now()};
+  const sc={id:uid(),...STARTER_SHORT,modules:STARTER_SHORT.modules.map(m=>({id:uid(),title:m.title,challenges:m.challenges.map(c=>({id:uid(),...c}))})),enrolled:[],created:Date.now()+1};
+  await dbPut("progs",peq);await dbPut("progs",sc);
+  S.progs.unshift(sc);S.progs.unshift(peq);
+  renderProgs();
+  toast("Starter template loaded — enrol pupils, then check credit values against your ASDAN documents");
+}
+document.querySelector("#load-starter").addEventListener("click",loadStarterTemplate);
+window.loadStarterTemplate=loadStarterTemplate;
 /* ---------- init ---------- */
 async function init(){await openDB();await loadAll();renderPupils()}
 init();
