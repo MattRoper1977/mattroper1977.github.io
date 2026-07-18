@@ -11,6 +11,7 @@ function normLessons(list){return list.map(r=>({
   path:r.file?(/^https?:/.test(r.file)?r.file:'/Lessons/'+encodeURI(r.file)):null,
   tags:Array.isArray(r.keywords)?r.keywords:[],
   status:r.new?'New':'Published',
+  featured:!!(r.new||r.featured),
   age:r.age||null,duration:r.duration||null,
   accent:accentFor(r.subject||'General')}))}
 function normSite(list){return list.map(r=>({
@@ -21,6 +22,7 @@ function normSite(list){return list.map(r=>({
   path:r.path||null,
   tags:Array.isArray(r.tags)?r.tags:[],
   status:r.status||'Published',
+  featured:r.featured!==false,
   age:r.age||null,duration:r.duration||null,
   accent:r.accent||accentFor(r.subject||'General')}))}
 function card(r){
@@ -29,11 +31,15 @@ function card(r){
   return `<article class="card" style="--accent:${esc(r.accent)}"><div class="kind">${esc(r.type)} · ${esc(r.subject)}</div><h3>${esc(r.title)}</h3><p>${esc(r.description)}</p>${chips?`<div class="chips">${chips}</div>`:''}<div class="foot"><span class="badge">${esc(r.status)}</span>${link}</div></article>`}
 function render(){
   let q=$('#search').value.toLowerCase(),s=$('#subject').value,t=$('#type').value;
-  let a=state.all.filter(r=>
+  const browsing=!q&&!s&&!t;   // untouched controls = curated shop window
+  let pool=browsing?state.all.filter(r=>r.featured):state.all;
+  let a=pool.filter(r=>
     (!q||[r.title,r.description,r.subject,r.type,...(r.tags||[])].join(' ').toLowerCase().includes(q))
     &&(!s||r.subject===s)&&(!t||r.type===t));
   $('#cards').innerHTML=a.map(card).join('')||'<p>No matching resources.</p>';
-  $('#count').textContent=`Showing ${a.length} of ${state.all.length} resources`}
+  $('#count').textContent=browsing
+    ?`Showing ${a.length} highlighted resources — search or filter to explore all ${state.all.length}`
+    :`Showing ${a.length} of ${state.all.length} resources`}
 function fillSelect(id,vals){const el=$('#'+id),keep=el.querySelector('option');el.innerHTML='';el.appendChild(keep);
   [...new Set(vals)].sort().forEach(v=>{const o=document.createElement('option');o.textContent=v;el.appendChild(o)})}
 const grab=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.json()}).catch(()=>[]);
