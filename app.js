@@ -31,7 +31,7 @@ function card(r){
   return `<article class="card" style="--accent:${esc(r.accent)}"><div class="kind">${esc(r.type)} · ${esc(r.subject)}</div><h3>${esc(r.title)}</h3><p>${esc(r.description)}</p>${chips?`<div class="chips">${chips}</div>`:''}<div class="foot"><span class="badge">${esc(r.status)}</span>${link}</div></article>`}
 function render(){
   let q=$('#search').value.toLowerCase(),s=$('#subject').value,t=$('#type').value;
-  const browsing=!q&&!s&&!t;   // untouched controls = curated shop window
+  const showAll=document.body.dataset.catalogue==='all';const browsing=!showAll&&!q&&!s&&!t;   // untouched controls = curated shop window (homepage only)
   let pool=browsing?state.all.filter(r=>r.featured):state.all;
   let a=pool.filter(r=>
     (!q||[r.title,r.description,r.subject,r.type,...(r.tags||[])].join(' ').toLowerCase().includes(q))
@@ -42,12 +42,14 @@ function render(){
     :`Showing ${a.length} of ${state.all.length} resources`}
 function fillSelect(id,vals){const el=$('#'+id),keep=el.querySelector('option');el.innerHTML='';el.appendChild(keep);
   [...new Set(vals)].sort().forEach(v=>{const o=document.createElement('option');o.textContent=v;el.appendChild(o)})}
+if($('#cards')){
 const grab=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.json()}).catch(()=>[]);
-Promise.all([grab('/Lessons/resources.json'),grab('data/resources.json')]).then(([les,site])=>{
+Promise.all([grab('/Lessons/resources.json'),grab('/data/resources.json')]).then(([les,site])=>{
   state.all=[...normLessons(Array.isArray(les)?les:[]),...normSite(Array.isArray(site)?site:[])];
   if(!state.all.length){$('#count').textContent="Couldn't load the catalogue — please refresh.";return}
   fillSelect('subject',state.all.map(r=>r.subject));
   fillSelect('type',state.all.map(r=>r.type));
   render()});
 ['search','subject','type'].forEach(id=>$('#'+id).addEventListener(id==='search'?'input':'change',render));
+}
 $('#menu').addEventListener('click',()=>{let n=$('#nav'),o=n.classList.toggle('open');$('#menu').setAttribute('aria-expanded',o)});
