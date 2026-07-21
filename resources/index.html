@@ -121,6 +121,10 @@ const grab=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.json()}).catch(()=>[])
 Promise.all([grab('/Lessons/resources.json'),grab('/data/resources.json')]).then(([les,site])=>{
 ALL=[...normLessons(Array.isArray(les)?les:[]),...normSite(Array.isArray(site)?site:[])];
 if(!ALL.length){$("#rxCount").textContent="Couldn't load the catalogue — please refresh.";return}
+const P=new URLSearchParams(location.search),pq=P.get('q'),ps=P.get('subject'),pt=P.get('type');
+if(pq)$("#rxSearch").value=pq;
+if(ps&&ALL.some(r=>r.subject===ps))SUB=ps;
+if(pt&&ALL.some(r=>r.type===pt))TYPE=pt;
 chips();render()});
 $("#rxSubs").addEventListener("click",e=>{const b=e.target.closest("[data-sub]");if(!b)return;SUB=(b.dataset.sub===SUB)?"":b.dataset.sub;chips();render()});
 $("#rxTypes").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(!b)return;TYPE=(b.dataset.type===TYPE)?"":b.dataset.type;chips();render()});
