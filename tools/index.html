@@ -1,148 +1,168 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Teacher Tools — Made by Matt</title><meta name="description" content="Practical teacher tools that shrink the paperwork — UAS Register, ASDAN Register, Evidence Binder and the full specialist staff toolkit. Free, offline-friendly, nothing uploaded."><meta name="theme-color" content="#0F1530"><meta property="og:title" content="Teacher Tools — Made by Matt"><meta property="og:description" content="Practical tools that shrink the paperwork."><meta property="og:url" content="https://madebymatt.uk/tools/"><link rel="icon" href="../favicon.svg"><link rel="apple-touch-icon" href="../apple-touch-icon.png"><link rel="stylesheet" href="../styles.css">
-<style id="txStyles">
-:root{--tx-deep:#0F1530;--tx-navy:#161D3D;--tx-navy2:#1C2447;--tx-mint:#B9E6CD;--tx-mintd:#2F6B4D;--tx-amber:#F2A24A;--tx-ambd:#C97F2E;--tx-cream:#F6F1E4;--tx-card:#FFFDF6;--tx-ink:#1B2140;--tx-mut:#4A5170;--tx-off:#E8E2D4}
-.tx-dark{background:
- radial-gradient(ellipse 120% 60% at 50% -10%,#232C55cc,transparent 70%),
- repeating-linear-gradient(0deg,transparent 0 47px,#B9E6CD08 47px 48px),
- repeating-linear-gradient(90deg,transparent 0 47px,#B9E6CD08 47px 48px),
- url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='220' viewBox='0 0 260 220'%3E%3Cg fill='none' stroke='%23E8E2D4' stroke-opacity='.05' stroke-width='2'%3E%3Cpath d='M30 30h52l16 16v58H30z'/%3E%3Cpath d='M82 30v16h16'/%3E%3Cpath d='M42 62h44M42 74h44M42 86h30'/%3E%3Cpath d='M160 120h52l16 16v58h-68z'/%3E%3Cpath d='M212 120v16h16'/%3E%3Cpath d='M172 152h44M172 164h44M172 176h30'/%3E%3C/g%3E%3C/svg%3E"),
- var(--tx-deep);color:var(--tx-off)}
-.tx-hero{text-align:center;padding:3.4rem 1rem 2.6rem;position:relative}
-.tx-app{width:118px;height:118px;margin:0 auto;display:block;filter:drop-shadow(0 0 26px #B9E6CD40) drop-shadow(0 10px 24px #00000080)}
-.tx-eyebrow{color:var(--tx-amber);letter-spacing:.3em;text-transform:uppercase;font-size:.72rem;font-weight:700;margin:1.5rem 0 .4rem}
-.tx-hero h1{font-size:clamp(2.3rem,8vw,3.6rem);font-weight:800;letter-spacing:.01em;color:var(--tx-off);margin:0 0 .7rem;text-shadow:0 2px 22px #00000066}
-.tx-hero h1 span{color:var(--tx-mint)}
-.tx-lead{color:#C9D1E2;max-width:40rem;margin:0 auto;font-size:.98rem;line-height:1.6}
-.tx-actions{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;margin-top:1.6rem}
-.tx-btn{display:inline-block;font-weight:700;font-size:.92rem;padding:.72rem 1.4rem;border-radius:999px;text-decoration:none}
-.tx-btn.p{background:var(--tx-amber);color:var(--tx-navy);box-shadow:0 2px 0 var(--tx-ambd),0 0 24px #F2A24A33}
-.tx-btn.p:hover{filter:brightness(1.06)}
-.tx-btn.s{color:var(--tx-off);border:1.5px solid #B9E6CD66}
-.tx-btn.s:hover{border-color:var(--tx-mint);color:var(--tx-mint)}
-/* featured product cards */
-.tx-feats{max-width:880px;margin:0 auto;padding:1rem 1rem 3rem;display:flex;flex-direction:column;gap:1.4rem}
-.tx-prod{border-radius:22px;padding:1.5rem 1.4rem;display:grid;grid-template-columns:minmax(180px,240px) 1fr;gap:1.4rem;align-items:center;box-shadow:0 14px 44px #00000059,inset 0 1px 0 #ffffff66}
-@media (max-width:700px){.tx-prod{grid-template-columns:1fr;justify-items:center;text-align:left}.tx-prod svg{max-width:250px}}
-.tx-prod.uas{background:linear-gradient(160deg,#FBF7EC,#F1EADA);color:var(--tx-ink);border:1px solid #B9E6CD88}
-.tx-prod.asd{background:linear-gradient(160deg,#FBEDD6,#F5DDB8);color:var(--tx-ink);border:1px solid #F2A24A88}
-.tx-prod svg{width:100%;height:auto}
-.tx-prod .eb{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;font-weight:800;color:#7A6428;margin:0 0 .25rem}
-.tx-prod h2{margin:0 0 .5rem;font-size:1.6rem;letter-spacing:.02em;color:var(--tx-ink)}
-.tx-chips{display:flex;gap:.4rem;flex-wrap:wrap;margin:0 0 .7rem}
-.tx-chip{font-size:.7rem;font-weight:700;border:1.5px solid #1B214033;border-radius:999px;padding:.24rem .7rem;background:#FFFFFFB3;color:var(--tx-ink)}
-.tx-prod p.d{color:#3A4160;font-size:.9rem;line-height:1.55;margin:0 0 1rem}
-.tx-prod .tx-btn.p{box-shadow:0 2px 0 var(--tx-ambd)}
-.tx-prod .tx-btn.s{color:var(--tx-ink);border-color:#1B214055}
-.tx-prod .tx-btn.s:hover{border-color:var(--tx-ink);color:var(--tx-ink)}
-
-.tx-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin:0 0 1.6rem;text-align:center}
-.tx-trio svg{width:52px;height:52px}
-.tx-trio b{display:block;font-size:.92rem;letter-spacing:.12em;margin-top:.3rem}
-.tx-trio .k1 b{color:#B96A14}.tx-trio .k2 b{color:#2F6B4D}.tx-trio .k3 b{color:#8F7311}
-.tx-trio p{color:var(--tx-mut);font-size:.8rem;line-height:1.45;margin-top:.2rem}
-.tx-cat{display:flex;align-items:baseline;gap:.6rem;margin:1.8rem 0 .7rem;flex-wrap:wrap}
-.tx-cat h3{font-size:1.02rem;letter-spacing:.06em;color:var(--tx-navy);text-transform:uppercase}
-.tx-cat .n{color:var(--tx-mut);font-size:.82rem}
-.tx-cat .spec{font-size:.62rem;font-weight:800;letter-spacing:.1em;background:var(--tx-amber);color:#fff;border-radius:99px;padding:.18rem .55rem;text-transform:uppercase}
-@media(max-width:640px){.tx-trio{gap:.4rem}}
-/* light drawer */
-.tx-light{background:var(--tx-cream);color:var(--tx-ink);padding:2.6rem 0 2.4rem;border-top:1px solid #B9E6CD33}
-.tx-wrap{max-width:1000px;margin:auto;padding:0 1rem}
-.tx-light .tx-eyebrow{color:#B96A14;margin-top:0}
-.tx-light h2{font-size:clamp(1.6rem,5.6vw,2.2rem);margin:.1rem 0 .5rem;color:var(--tx-ink)}
-.tx-sub{color:var(--tx-mut);font-size:.95rem;line-height:1.55;max-width:36rem;margin:0 0 1.4rem}
-.tx-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
-.tx-tool{background:var(--tx-card);border:1.5px solid #1B214022;border-radius:18px;padding:1.2rem 1.1rem;text-decoration:none;color:inherit;display:flex;flex-direction:column;align-items:center;text-align:center;gap:.55rem;box-shadow:0 2px 10px #1B214012;transition:transform .15s,box-shadow .15s}
-.tx-tool:hover{transform:translateY(-3px);box-shadow:0 8px 22px #1B21401f}
-.tx-tool svg{width:86px;height:86px;filter:drop-shadow(0 4px 10px #1B21401f)}
-.tx-tool b{font-size:1rem}
-.tx-tool.t1 b{color:#B9642E}.tx-tool.t2 b{color:var(--tx-mintd)}.tx-tool.t3 b{color:#8A6A1C}.tx-tool.t4 b{color:#33608F}
-.tx-tool p{color:var(--tx-mut);font-size:.83rem;line-height:1.5;margin:0}
-/* promise band */
-.tx-promise{margin-top:2.4rem;background:#EFE8D6;border:1px solid #1B21401a;border-radius:18px;padding:1.2rem 1.2rem}
-.tx-promise h3{margin:0 0 .8rem;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:#B96A14}
-.tx-pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.9rem}
-.tx-pgrid b{display:block;color:var(--tx-ink);margin-bottom:.2rem}
-.tx-pgrid p{color:var(--tx-mut);font-size:.82rem;line-height:1.5;margin:0}
-a.tx-btn:focus-visible,.tx-tool:focus-visible{outline:3px solid var(--tx-amber);outline-offset:2px}
-@media (prefers-reduced-motion:reduce){.tx-tool{transition:none}}
-</style></head><body><a class="skip" href="#main">Skip to content</a><header class="header"><div class="bar"><a class="brand" href="../index.html"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav" id="nav" aria-label="Main navigation"><a href="../games/">Games</a><a href="../Lessons/">Lessons</a><a href="../Matt-s-Apps-/">Apps</a><a href="./" aria-current="page">Tools</a><a href="../resources/">Resources</a><a href="../index.html#about">About</a></nav></div></header>
-<main id="main" class="tx-dark">
-<section class="tx-hero">
-<svg class="tx-app" viewBox="0 0 120 120" role="img" aria-label="Made by Matt app mark"><defs><linearGradient id="txsq" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#232C55"/><stop offset="1" stop-color="#141B38"/></linearGradient></defs><rect x="4" y="4" width="112" height="112" rx="28" fill="url(#txsq)" stroke="#B9E6CD55" stroke-width="2"/><circle cx="60" cy="60" r="34" fill="none" stroke="#B9E6CD" stroke-width="3"/><path d="M45 74 L45 50 L60 65 L75 50 L75 74" fill="none" stroke="#E8E2D4" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M60 30 L61.4 35.6 L67 37 L61.4 38.4 L60 44 L58.6 38.4 L53 37 L58.6 35.6 Z" fill="#F2A24A"/></svg>
-<p class="tx-eyebrow">Teacher tools · Free · Nothing uploaded</p>
-<h1>Shrink the <span>paperwork.</span></h1>
-<p class="tx-lead">Specialist classroom aids, administrative utilities and planning resources — built by a teacher who has to fill the forms in too. Everything runs in your browser and your data stays on your device.</p>
-<div class="tx-actions"><a class="tx-btn p" href="#uas">Start with UAS Register</a><a class="tx-btn s" href="#drawer">Browse all eight tools</a></div>
-</section>
-
-<section class="tx-feats">
-<article class="tx-prod uas" id="uas">
-<svg viewBox="0 0 240 210" role="img" aria-label="Stamped AQA outcome sheet — Unit claimed, September 2026"><defs><filter id="txsh1"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#1B2140" flood-opacity=".3"/></filter></defs>
-<g filter="url(#txsh1)"><rect x="52" y="26" width="128" height="160" rx="8" fill="#FFFFFF" transform="rotate(5 116 106)"/><rect x="40" y="20" width="132" height="166" rx="8" fill="#FFFDF6" stroke="#1B214022"/><path d="M148 20 h24 l-0 24 z" fill="#EDE6D4"/><g stroke="#B8BDD1" stroke-width="5" stroke-linecap="round"><path d="M56 52h84M56 68h96M56 84h72M56 100h90M56 116h60"/></g><g stroke="#B9E6CD" stroke-width="5" stroke-linecap="round"><path d="M56 140h44M56 156h58"/></g></g>
-<g filter="url(#txsh1)" transform="rotate(-9 120 128)"><rect x="34" y="96" width="172" height="66" rx="10" fill="#1C2447" stroke="#B9E6CD" stroke-width="4"/><text x="120" y="123" text-anchor="middle" font-family="Poppins,Segoe UI,sans-serif" font-weight="800" font-size="19" fill="#B9E6CD" letter-spacing="1.5">UNIT CLAIMED</text><text x="120" y="149" text-anchor="middle" font-family="Poppins,Segoe UI,sans-serif" font-weight="800" font-size="21" fill="#F2A24A">✓ SEPT 2026</text></g></svg>
-<div><p class="eb">★ Super teacher tool · New for 2026–27</p><h2>UAS REGISTER</h2>
-<div class="tx-chips"><span class="tx-chip">Teacher tool</span><span class="tx-chip">AQA Unit Award Scheme</span><span class="tx-chip">Free</span><span class="tx-chip">Nothing uploaded</span></div>
-<p class="d">AQA UAS without the paperwork. Import the outcome sheet and it reads the unit for you; tap pupils to date-stamp outcomes; snap photos of work and they file themselves with real AQA references; then download the cover, official summary sheet and every work example as one email-ready PDF.</p>
-<div class="tx-actions" style="justify-content:flex-start;margin-top:0"><a class="tx-btn p" href="../uas/app.html">Open UAS Register</a><a class="tx-btn s" href="../uas/">About &amp; guide</a></div></div>
-</article>
-
-<article class="tx-prod asd" id="asdan">
-<svg viewBox="0 0 240 210" role="img" aria-label="Stamped evidence record — Signed off, evidence filed"><defs><filter id="txsh2"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#1B2140" flood-opacity=".3"/></filter></defs>
-<g filter="url(#txsh2)"><rect x="52" y="26" width="128" height="160" rx="8" fill="#FFF8EC" transform="rotate(-5 116 106)"/><rect x="40" y="20" width="132" height="166" rx="8" fill="#FFFDF6" stroke="#1B214022"/><path d="M148 20 h24 l0 24 z" fill="#F5DDB8"/><g stroke="#C9BCA4" stroke-width="5" stroke-linecap="round"><path d="M56 52h84M56 68h96M56 84h72M56 100h90M56 116h60"/></g><g stroke="#F2A24A" stroke-width="5" stroke-linecap="round"><path d="M56 140h44M56 156h58"/></g></g>
-<g filter="url(#txsh2)" transform="rotate(7 120 128)"><rect x="34" y="96" width="172" height="66" rx="10" fill="#1C2447" stroke="#F2A24A" stroke-width="4"/><text x="120" y="123" text-anchor="middle" font-family="Poppins,Segoe UI,sans-serif" font-weight="800" font-size="20" fill="#F2A24A" letter-spacing="1.5">SIGNED OFF</text><text x="120" y="149" text-anchor="middle" font-family="Poppins,Segoe UI,sans-serif" font-weight="800" font-size="17" fill="#B9E6CD">✓ EVIDENCE FILED</text></g></svg>
-<div><p class="eb">Teacher tool · PEQ &amp; Short Courses</p><h2>ASDAN REGISTER</h2>
-<div class="tx-chips"><span class="tx-chip">Teacher tool</span><span class="tx-chip">ASDAN PEQ &amp; Short Courses</span><span class="tx-chip">Free</span><span class="tx-chip">Nothing uploaded</span></div>
-<p class="d">PEQ &amp; Short Courses tracking without the spreadsheet wrangling — capture evidence, record sign-off as you go, and export clean records when you need them.</p>
-<div class="tx-actions" style="justify-content:flex-start;margin-top:0"><a class="tx-btn p" href="../asdan/app.html">Open ASDAN Register</a><a class="tx-btn s" href="../asdan/">About &amp; guide</a></div></div>
-</article>
-</section>
-</main>
-
-<section class="tx-light" id="drawer">
-<div class="tx-wrap">
-<p class="tx-eyebrow">The wider toolkit</p>
-<h2>Everything else in the drawer.</h2>
-<p class="tx-sub">Every teacher tool on one shelf — eight single offline files, organised the way the job is.</p>
-
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Tools Hub — Made by Matt</title>
+<meta name="description" content="Offline-first teacher tools — the UAS and ASDAN Registers plus classroom utilities. Free, nothing uploaded, built in a real classroom.">
+<meta name="theme-color" content="#161D3D"><link rel="icon" href="../favicon.svg"><link rel="apple-touch-icon" href="../apple-touch-icon.png"><link rel="stylesheet" href="../styles.css">
+<style>
+:root{--navy:#161D3D;--lt:#232C55;--mint:#B9E6CD;--mintd:#2F6B4D;--amber:#F2A24A;--ambd:#C97F2E;--cream:#F6F1E4;--dk:#EDE5D2;--card:#FFFDF6;--ink:#1B2140;--mut:#4A5170;--max:1000px}
+.tx-wrap{max-width:var(--max);margin:auto;padding:0 1rem}
+.tx-hero{background:linear-gradient(180deg,var(--cream),var(--dk));border-bottom:1.5px solid #E0D6C0;padding:1.9rem 0 1.4rem}
+.tx-hero .eyebrow{font-size:.7rem;font-weight:800;letter-spacing:.22em;color:var(--ambd)}
+.tx-hero .toprow{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;flex-wrap:wrap}
+.tx-hero h1{font-size:clamp(1.4rem,4.6vw,2rem);color:var(--navy);line-height:1.25;margin:.3rem 0 .2rem;max-width:34rem}
+.tx-hero h1 b{color:var(--ambd)}
+.tx-pill{font-size:.72rem;font-weight:800;background:var(--card);border:1.5px solid #C9C0AB;border-radius:999px;padding:.4rem .9rem;color:var(--ink);white-space:nowrap}
+.tx-trio{display:flex;gap:1.8rem;flex-wrap:wrap;justify-content:flex-start;margin:1.2rem 0 .2rem}
+.tx-trio>div{display:flex;flex-direction:column;align-items:center;gap:.2rem;max-width:170px;text-align:center}
+.tx-trio svg{width:44px;height:44px}
+.tx-trio b{font-size:.78rem;letter-spacing:.12em;color:var(--navy)}
+.tx-trio p{font-size:.7rem;color:var(--mut);line-height:1.4;margin:0}
+.tx-flag{background:var(--cream);padding:1.4rem 0 .4rem}
+.tx-duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:1rem}
+.fcard{background:linear-gradient(160deg,#FDF6E4,#FBEDD8);border:2px solid #E0B87A;border-radius:18px;padding:1.1rem 1.1rem 1.15rem;display:flex;flex-direction:column;gap:.55rem}
+.fcard .art{align-self:center;width:min(210px,70%)}
+.fcard .art svg{width:100%;height:auto}
+.fcard .kind{font-size:.64rem;font-weight:800;letter-spacing:.16em;color:var(--ambd)}
+.fcard h2{font-size:1.15rem;color:var(--navy);letter-spacing:.02em}
+.fcard p{font-size:.82rem;color:var(--mut);line-height:1.55;flex:1}
+.facts{display:flex;gap:.55rem;flex-wrap:wrap}
+a.fbtn{font-size:.72rem;font-weight:800;letter-spacing:.06em;text-decoration:none;border-radius:999px;padding:.55rem 1.05rem}
+a.fbtn.p{background:var(--navy);color:#FFF6E8}
+a.fbtn.p:hover{background:var(--lt)}
+a.fbtn.s{border:1.5px solid var(--navy);color:var(--navy)}
+a.fbtn.s:hover{background:var(--card)}
+.tx-tools{background:var(--cream);padding:.9rem 0 1.6rem}
+.tbar{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin:.4rem 0 .3rem}
+.tsearch{flex:1;min-width:220px;display:flex;background:var(--card);border:2px solid var(--navy);border-radius:999px;overflow:hidden}
+.tsearch input{flex:1;border:0;background:transparent;font:inherit;font-size:.9rem;padding:.6rem 1.1rem;color:var(--ink)}
+.tsearch input:focus{outline:none}
+.tsearch svg{width:20px;height:20px;margin:auto .9rem auto 0}
+.tchips{display:flex;gap:.45rem;flex-wrap:wrap}
+.tchip{font:inherit;font-size:.72rem;font-weight:800;letter-spacing:.06em;color:var(--ink);background:var(--card);border:1.5px solid #C9C0AB;border-radius:999px;padding:.42rem .95rem;cursor:pointer}
+.tchip[aria-pressed="true"]{background:var(--navy);color:var(--mint);border-color:var(--navy)}
+.tcount{font-size:.76rem;color:var(--mut);margin:.3rem 0 .6rem}
+.tsec{margin:1rem 0 .4rem;font-size:.86rem;letter-spacing:.1em;color:var(--navy);text-transform:uppercase;font-weight:800}
+.tsec small{color:var(--mut);font-weight:700}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.7rem}
+.tcard{background:var(--card);border:1.5px solid #E0D6C0;border-radius:14px;padding:.8rem .85rem;display:flex;flex-direction:column;gap:.35rem}
+.tcard .ci{font-size:1.6rem}
+.tcard h3{font-size:.9rem;color:var(--navy);line-height:1.25;margin:0}
+.tcard p{font-size:.74rem;color:var(--mut);line-height:1.45;margin:0;flex:1}
+a.go{align-self:flex-start;font-size:.66rem;font-weight:800;letter-spacing:.07em;text-decoration:none;color:#FFF6E8;background:var(--navy);border-radius:999px;padding:.42rem .85rem;margin-top:.25rem}
+a.go:hover{background:var(--lt)}
+.bridge{grid-column:1/-1;background:linear-gradient(150deg,#FDF6E4,#FBEDD8);border:2px solid var(--amber);border-radius:14px;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.45rem}
+.bridge .stamp{align-self:flex-start;font-size:.6rem;font-weight:800;letter-spacing:.1em;background:#E4F0E8;color:#2F6B4D;border:1.5px solid #2F6B4D;border-radius:999px;padding:.22rem .65rem}
+.bridge h3{font-size:.95rem;color:var(--navy);margin:0}
+.bridge p{font-size:.78rem;color:var(--mut);line-height:1.5;margin:0}
+.bridge .acts{display:flex;gap:.5rem;flex-wrap:wrap}
+.bridge .acts a{font-size:.68rem;font-weight:800;letter-spacing:.06em;text-decoration:none;border:1.5px solid var(--navy);color:var(--navy);background:var(--card);border-radius:999px;padding:.4rem .9rem}
+.bridge .acts a:hover{background:var(--navy);color:#FFF6E8}
+.commit{background:var(--dk);border-top:1.5px solid #E0D6C0;padding:1.6rem 0}
+.commit blockquote{max-width:640px;margin:auto;font-size:.95rem;line-height:1.65;color:var(--ink);border-left:4px solid var(--amber);padding-left:1rem}
+.commit blockquote b{color:var(--ambd)}
+.commit .sig{display:block;margin-top:.5rem;font-size:.78rem;font-weight:800;letter-spacing:.08em;color:var(--mut)}
+a.fbtn:focus-visible,a.go:focus-visible,.tchip:focus-visible,.bridge .acts a:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.hidden{display:none!important}
+</style></head><body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="header"><div class="bar"><a class="brand" href="../index.html"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav" id="nav" aria-label="Main navigation"><a href="../games/">Games</a><a href="../Lessons/">Lessons</a><a href="../Matt-s-Apps-/">Apps</a><a href="./" aria-current="page">Tools</a><a href="../resources/">Resources</a><a href="../index.html#about">About</a></nav></div></header>
+<main id="main">
+<section class="tx-hero"><div class="tx-wrap">
+<p class="eyebrow">THE TOOLS HUB</p>
+<div class="toprow"><h1>Your offline-first, professional toolkit — streamlined utilities and specialised registers to <b>shrink the paperwork.</b></h1><span class="tx-pill" id="txTotal">9 tools · all free</span></div>
 <div class="tx-trio" aria-label="How every tool behaves">
 <div class="k1"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="18" y="28" width="28" height="24" rx="6" fill="none" stroke="#B96A14" stroke-width="4"/><path d="M23 28 v-6 a9 9 0 0 1 18 0 v6" fill="none" stroke="#B96A14" stroke-width="4"/><circle cx="32" cy="40" r="3.4" fill="#B96A14"/></svg><b>SECURE</b><p>Nothing uploaded. Data stays on your device.</p></div>
 <div class="k2"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 28 q18-14 36 0 M21 36 q11-9 22 0 M27.5 44 q4.5-4 9 0" fill="none" stroke="#2F6B4D" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="50" r="3" fill="#2F6B4D"/><path d="M16 16 L48 52" stroke="#C25B4E" stroke-width="4.4" stroke-linecap="round"/></svg><b>OFFLINE</b><p>Single-file. Runs without internet.</p></div>
 <div class="k3"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 46 L38 22 l6 6 L20 52 l-8 2 z" fill="none" stroke="#8F7311" stroke-width="4" stroke-linejoin="round"/><path d="M34 26 l6 6" stroke="#8F7311" stroke-width="3"/><path d="M46 14 l6 6" stroke="#8F7311" stroke-width="4" stroke-linecap="round"/></svg><b>TEACHER-BUILT</b><p>Classroom ready. Purpose-built for speed.</p></div>
 </div>
+</div></section>
 
-<div class="tx-cat"><h3>PEQ &amp; Accreditation</h3><span class="spec">Specialist</span><span class="n">the paperwork-killers · UAS Register is featured above</span></div>
-<div class="tx-grid">
-<a class="tx-tool t1" href="../asdan/app.html"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="24" y="16" width="48" height="62" rx="5" fill="#FFFDF6" stroke="#1B214033"/><path d="M32 30h32M32 38h32M32 46h22" stroke="#B8BDD1" stroke-width="3.4" stroke-linecap="round"/><g transform="rotate(-8 48 62)"><rect x="26" y="52" width="44" height="20" rx="4" fill="#161D3D"/><text x="48" y="61.5" text-anchor="middle" font-family="Poppins,sans-serif" font-size="7" font-weight="700" fill="#F2A24A">SIGNED OFF</text><text x="48" y="69" text-anchor="middle" font-family="Poppins,sans-serif" font-size="5.4" font-weight="600" fill="#E8E2D4">✓ EVIDENCE FILED</text></g></svg><b>ASDAN Register</b><p>PEQ &amp; Short Courses without the spreadsheet wrangling — capture evidence, record sign-offs as you go, export clean records when you need them.</p></a>
-<a class="tx-tool t1" href="../Matt-s-Apps-/Evidence_Binder.html"><svg viewBox="0 0 96 96" aria-hidden="true"><path d="M14 32 q0-6 6-6 h18 l6 8 h32 q6 0 6 6 v30 q0 6 -6 6 H20 q-6 0 -6-6 Z" fill="#F0B48B"/><rect x="26" y="20" width="34" height="26" rx="3" fill="#FFFDF6" stroke="#1B214022"/><path d="M31 27h22M31 33h24M31 39h16" stroke="#B8BDD1" stroke-width="3" stroke-linecap="round"/><path d="M14 40 h76 v26 q0 6 -6 6 H20 q-6 0 -6-6 Z" fill="#E89A66"/><circle cx="76" cy="34" r="9" fill="#B9E6CD"/><path d="M72 34 l3 3 5-6" fill="none" stroke="#1B2140" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Evidence Binder</b><p>Capture, tag and organise pupil evidence on any device — ASDAN PEQ and AQA UAS flavours with separate databases.</p></a>
+<section class="tx-flag"><div class="tx-wrap"><div class="tx-duo">
+<article class="fcard"><div class="art"><svg viewBox="0 0 240 210" role="img" aria-label="Stamped AQA outcome sheet — Unit claimed, September 2026"><defs><filter id="txsh1"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#1B2140" flood-opacity=".3"/></filter></defs>
+<g filter="url(#txsh1)"><rect x="52" y="26" width="128" height="160" rx="8" fill="#FFFFFF" transform="rotate(5 116 106)"/><rect x="40" y="20" width="132" height="166" rx="8" fill="#FFFDF6" stroke="#1B214022"/><path d="M148 20 h24 l-0 24 z" fill="#EDE6D4"/><g stroke="#B8BDD1" stroke-width="5" stroke-linecap="round"><path d="M56 52h84M56 68h96M56 84h72M56 100h90M56 116h60"/></g><g stroke="#B9E6CD" stroke-width="5" stroke-linecap="round"><path d="M56 140h44M56 156h58"/></g></g>
+<g filter="url(#txsh1)" transform="rotate(-9 120 128)"><rect x="34" y="96" width="172" height="66" rx="10" fill="#1C2447" stroke="#B9E6CD" stroke-width="4"/><text x="120" y="123" text-anchor="middle" font-family="Poppins,Segoe UI,sans-serif" font-weight="800" font-size="19" fill="#B9E6CD" letter-spacing="1.5">UNIT CLAIMED</text><text x="120" y="149" text-anchor="middle" font-family="Poppins,Segoe UI,sans-serif" font-weight="800" font-size="21" fill="#F2A24A">✓ SEPT 2026</text></g></svg></div>
+<span class="kind">TEACHER TOOL · AQA UNIT AWARD SCHEME</span><h2>UAS REGISTER</h2>
+<p>AQA UAS without the paperwork. Import the outcome sheet and it reads the unit for you; tap pupils to date-stamp outcomes; snap photos of work and they file themselves with real AQA references; then download the cover, official summary sheet and every work example as one email-ready PDF.</p>
+<div class="facts"><a class="fbtn p" href="../uas/app.html">OPEN UAS REGISTER →</a><a class="fbtn s" href="../uas/">About &amp; guide</a></div></article>
+<article class="fcard"><div class="art"><svg viewBox="0 0 240 210" role="img" aria-label="Stamped evidence record — Signed off, evidence filed"><defs><filter id="txsh2"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#1B2140" flood-opacity=".3"/></filter></defs>
+<g filter="url(#txsh2)"><rect x="52" y="26" width="128" height="160" rx="8" fill="#FFF8EC" transform="rotate(-5 116 106)"/><rect x="40" y="20" width="132" height="166" rx="8" fill="#FFFDF6" stroke="#1B214022"/><path d="M148 20 h24 l0 24 z" fill="#F5DDB8"/><g stroke="#C9BCA4" stroke-width="5" stroke-linecap="round"><path d="M56 52h84M56 68h96M56 84h72M56 100h90M56 116h60"/></g><g stroke="#F2A24A" stroke-width="5" stroke-linecap="round"><path d="M56 140h44M56 156h58"/></g></g>
+<g filter="url(#txsh2)" transform="rotate(7 120 128)"><rect x="34" y="96" width="172" height="66" rx="10" fill="#1C2447" stroke="#F2A24A" stroke-width="4"/><text x="120" y="123" text-anchor="middle" font-family="Poppins,Segoe UI,sans-serif" font-weight="800" font-size="20" fill="#F2A24A" letter-spacing="1.5">SIGNED OFF</text><text x="120" y="149" text-anchor="middle" font-family="Poppins,Segoe UI,sans-serif" font-weight="800" font-size="17" fill="#B9E6CD">✓ EVIDENCE FILED</text></g></svg></div>
+<span class="kind">TEACHER TOOL · ASDAN PEQ &amp; SHORT COURSES</span><h2>ASDAN REGISTER</h2>
+<p>PEQ &amp; Short Courses tracking without the spreadsheet wrangling — capture evidence, record sign-off as you go, and export clean records when you need them.</p>
+<div class="facts"><a class="fbtn p" href="../asdan/app.html">OPEN ASDAN REGISTER →</a><a class="fbtn s" href="../asdan/">About &amp; guide</a></div></article>
+</div></div></section>
+
+<section class="tx-tools" id="drawer"><div class="tx-wrap">
+<div class="tbar">
+<label class="tsearch" aria-label="Search the tools"><input type="search" id="tq" placeholder="blueprint, checklist, timer…"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="#C97F2E" stroke-width="2.4"/><path d="M15.5 15.5 21 21" stroke="#C97F2E" stroke-width="2.6" stroke-linecap="round"/></svg></label>
+<div class="tchips" role="group" aria-label="Filter tools">
+<button class="tchip" data-cat="" aria-pressed="true">ALL TOOLS</button>
+<button class="tchip" data-cat="acc" aria-pressed="false">ACCREDITATION</button>
+<button class="tchip" data-cat="util" aria-pressed="false">UTILITIES</button>
+<button class="tchip" data-cat="browse" aria-pressed="false">BROWSE</button>
+</div></div>
+<p class="tcount" id="tcount"></p>
+
+<h2 class="tsec" data-sec="acc">PEQ &amp; ACCREDITATION <small id="cAcc"></small></h2>
+<div class="tgrid" data-sec="acc">
+<article class="tcard" data-cat="acc" data-s="uas register aqa unit award scheme outcomes photos pdf">
+<span class="ci" aria-hidden="true">🏷️</span><h3>UAS Register</h3><p>Date-stamp outcomes, file photo evidence, export the official summary as one PDF.</p><a class="go" href="../uas/app.html">OPEN REGISTER →</a></article>
+<article class="tcard" data-cat="acc" data-s="asdan register peq short courses sign off evidence records">
+<span class="ci" aria-hidden="true">📗</span><h3>ASDAN Register</h3><p>PEQ &amp; Short Courses — capture evidence and record sign-off as you go.</p><a class="go" href="../asdan/app.html">OPEN REGISTER →</a></article>
+<article class="tcard" data-cat="acc" data-s="evidence binder capture, tag and organise pupil evidence on any device — asdan and uas with separate databases."><span class="ci" aria-hidden="true">🗂️</span><h3>Evidence Binder</h3><p>Capture, tag and organise pupil evidence on any device — ASDAN and UAS with separate databases.</p><a class="go" href="../Matt-s-Apps-/Evidence_Binder.html">OPEN BINDER →</a></article>
+<div class="bridge"><span class="stamp">THE PROGRAMMES THE REGISTERS TRACK ✓</span>
+<h3>ASDAN Studio — the lesson programmes</h3>
+<p>Full Autumn 1 ASDAN provision, built lesson by lesson: six-week BUILD and GROW studio strands with evidence routines that feed these registers directly.</p>
+<div class="acts"><a href="../Lessons/BUILD_ASDAN/BUILD_ASDAN_Hub.html">BUILD ASDAN Studio →</a><a href="../Lessons/GROW_ASDAN/GROW_ASDAN_Hub.html">GROW ASDAN Studio →</a></div></div>
 </div>
 
-<div class="tx-cat"><h3>Classroom Utilities</h3><span class="n">the everyday drawer · 5 tools</span></div>
-<div class="tx-grid">
-<a class="tx-tool t2" href="../Matt-s-Apps-/Classroom_Toolkit.html"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="16" y="38" width="64" height="38" rx="8" fill="#A7D9BC"/><rect x="16" y="38" width="64" height="12" rx="6" fill="#7FC49D"/><path d="M38 38 v-8 q0-5 5-5 h10 q5 0 5 5 v8" fill="none" stroke="#2F6B4D" stroke-width="5" stroke-linecap="round"/><rect x="42" y="48" width="12" height="10" rx="2" fill="#2F6B4D"/><circle cx="66" cy="64" r="7" fill="#FFFDF6"/><path d="M66 60 v4 l3 2" fill="none" stroke="#2F6B4D" stroke-width="2.4" stroke-linecap="round"/></svg><b>Classroom Toolkit</b><p>Timers, pickers, groups and noise meter — ready for the whiteboard.</p></a>
-<a class="tx-tool t2" href="../Matt-s-Apps-/Exit_Ticket.html"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="18" y="26" width="46" height="30" rx="5" fill="#F6D9A0"/><path d="M18 36 h46" stroke="#C9A15C" stroke-width="3"/><circle cx="30" cy="31" r="2.6" fill="#B08A45"/><path d="M26 44h20M26 50h14" stroke="#B08A45" stroke-width="3" stroke-linecap="round"/><rect x="52" y="44" width="28" height="34" rx="5" fill="#FFFDF6" stroke="#1B214033"/><path d="M58 54l4 4 8-9" fill="none" stroke="#2F6B4D" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M58 68h16" stroke="#B8BDD1" stroke-width="3" stroke-linecap="round"/></svg><b>Exit Ticket &amp; Quick Marks</b><p>Instant end-of-lesson understanding checks, marked as they land.</p></a>
-<a class="tx-tool t2" href="../Matt-s-Apps-/Rubric_Studio.html"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="16" y="20" width="52" height="56" rx="5" fill="#FFFDF6" stroke="#1B214033"/><path d="M16 34h52M16 48h52M16 62h52M33 20v56M50 20v56" stroke="#DCD4C0" stroke-width="2.4"/><rect x="17" y="35" width="15" height="12" fill="#B9E6CD"/><rect x="34" y="49" width="15" height="12" fill="#B9E6CD"/><rect x="51" y="63" width="16" height="12" fill="#F6D9A0"/><path d="M64 30 l16 16 -5 5 -16 -16 z" fill="#E08A2E"/><path d="M75 41 l5 5 3-8 z" fill="#8A5A2B"/></svg><b>Rubric &amp; Feedback Studio</b><p>Mark to a rubric and auto-write the feedback sentence.</p></a>
-<a class="tx-tool t2" href="../Matt-s-Apps-/Seating_Studio.html"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="14" y="18" width="68" height="60" rx="6" fill="#EAF3EC" stroke="#1B214022"/><rect x="22" y="26" width="18" height="12" rx="3" fill="#7FC49D"/><rect x="56" y="26" width="18" height="12" rx="3" fill="#7FC49D"/><rect x="22" y="46" width="18" height="12" rx="3" fill="#A7D9BC"/><rect x="56" y="46" width="18" height="12" rx="3" fill="#A7D9BC"/><rect x="39" y="62" width="18" height="10" rx="3" fill="#2F6B4D"/><circle cx="31" cy="32" r="3.4" fill="#2F6B4D"/><circle cx="65" cy="52" r="3.4" fill="#2F6B4D"/></svg><b>Seating Plan Studio</b><p>Drag pupils onto a room plan — print it, save it, swap it.</p></a>
-<a class="tx-tool t2" href="../Matt-s-Apps-/Whiteboard.html"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="14" y="20" width="68" height="46" rx="5" fill="#FFFDF6" stroke="#1B214033"/><path d="M24 44 q10-14 20-4 t22-6" fill="none" stroke="#5FA8CC" stroke-width="4" stroke-linecap="round"/><path d="M26 54h24" stroke="#E08A2E" stroke-width="4" stroke-linecap="round"/><path d="M40 66 l8 12 8-12" fill="#C9A15C"/><rect x="60" y="58" width="16" height="6" rx="3" fill="#161D3D"/></svg><b>Whiteboard</b><p>Draw and write straight onto your browser — no login, no lag.</p></a>
-</div>
+<h2 class="tsec" data-sec="util">CLASSROOM UTILITIES <small id="cUtil"></small></h2>
+<div class="tgrid" data-sec="util"><article class="tcard" data-cat="util" data-s="classroom toolkit name picker, timer, groups and noise meter — ready on the whiteboard."><span class="ci" aria-hidden="true">🧰</span><h3>Classroom Toolkit</h3><p>Name picker, timer, groups and noise meter — ready on the whiteboard.</p><a class="go" href="../Matt-s-Apps-/Classroom_Toolkit.html">LAUNCH TOOLKIT →</a></article><article class="tcard" data-cat="util" data-s="exit ticket & quick marks an instant end-of-lesson understanding check."><span class="ci" aria-hidden="true">✅</span><h3>Exit Ticket & Quick Marks</h3><p>An instant end-of-lesson understanding check.</p><a class="go" href="../Matt-s-Apps-/Exit_Ticket.html">RUN A CHECK →</a></article><article class="tcard" data-cat="util" data-s="rubric & feedback studio mark to a rubric and auto-write the feedback."><span class="ci" aria-hidden="true">📋</span><h3>Rubric & Feedback Studio</h3><p>Mark to a rubric and auto-write the feedback.</p><a class="go" href="../Matt-s-Apps-/Rubric_Studio.html">OPEN STUDIO →</a></article><article class="tcard" data-cat="util" data-s="seating plan studio drag pupils onto a room plan."><span class="ci" aria-hidden="true">🪑</span><h3>Seating Plan Studio</h3><p>Drag pupils onto a room plan.</p><a class="go" href="../Matt-s-Apps-/Seating_Studio.html">PLAN THE ROOM →</a></article><article class="tcard" data-cat="util" data-s="whiteboard draw and write straight onto the browser."><span class="ci" aria-hidden="true">🖊️</span><h3>Whiteboard</h3><p>Draw and write straight onto the browser.</p><a class="go" href="../Matt-s-Apps-/Whiteboard.html">OPEN BOARD →</a></article></div>
 
-<div class="tx-cat"><h3>Resource Search</h3><span class="n">when you need a lesson, not a tool</span></div>
-<div class="tx-grid">
-<a class="tx-tool t4" href="../resources/"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="20" y="18" width="40" height="52" rx="4" fill="#FFFDF6" stroke="#1B214033"/><path d="M27 30h26M27 38h26M27 46h18" stroke="#B8BDD1" stroke-width="3.4" stroke-linecap="round"/><circle cx="62" cy="58" r="14" fill="none" stroke="#5FA8CC" stroke-width="5"/><path d="M72 68 L82 78" stroke="#5FA8CC" stroke-width="6" stroke-linecap="round"/></svg><b>Looking for lessons?</b><p>The resource catalogue covers every lesson, simulation and activity — search by topic or subject.</p></a>
-<a class="tx-tool t3" href="../Matt-s-Apps-/"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="18" y="22" width="26" height="26" rx="6" fill="#F0B48B"/><rect x="52" y="22" width="26" height="26" rx="6" fill="#A7D9BC"/><rect x="18" y="52" width="26" height="26" rx="6" fill="#8FCBE8"/><rect x="52" y="52" width="26" height="26" rx="6" fill="#D9C7F2"/><path d="M60 60 h10 M65 55 v10" stroke="#6d5cf5" stroke-width="4" stroke-linecap="round"/></svg><b>The Creator Hub</b><p>The pupil-facing studios live next door — 28 creative, learning and calm-corner apps.</p></a>
+<h2 class="tsec" data-sec="browse">FIND &amp; BROWSE <small id="cBrowse"></small></h2>
+<div class="tgrid" data-sec="browse"><article class="tcard" data-cat="browse" data-s="resource search search every lesson, game and tool in the full catalogue."><span class="ci" aria-hidden="true">🔎</span><h3>Resource Search</h3><p>Search every lesson, game and tool in the full catalogue.</p><a class="go" href="../resources/">SEARCH THE CATALOGUE →</a></article>
+<article class="tcard" data-cat="browse" data-s="studio suite creator hub all studios apps">
+<span class="ci" aria-hidden="true">🎨</span><h3>The Creator Hub</h3><p>All 28 studios — design, educate and build tools for pupils and staff.</p><a class="go" href="../Matt-s-Apps-/">BROWSE THE STUDIOS →</a></article>
 </div>
-<div class="tx-promise" id="promise">
-<h3>The promise — how every tool behaves</h3>
-<div class="tx-pgrid">
-<div><b>Free</b><p>No accounts, no trials, no locked features. Use them, share them with colleagues.</p></div>
-<div><b>Nothing uploaded</b><p>Pupil data stays in your browser on your device. Nothing is sent anywhere.</p></div>
-<div><b>Offline-friendly</b><p>Built as single files that keep working when the school wifi doesn't.</p></div>
-<div><b>Teacher-built</b><p>Made in a real classroom, shaped by the actual paperwork it replaces.</p></div>
-</div>
-</div>
-</div>
-</section>
+</div></section>
+
+<section class="commit"><div class="tx-wrap">
+<blockquote>"All my tools are <b>free</b> to use. Absolutely <b>nothing is uploaded</b> — your data stays on your device. Everything is <b>offline-friendly</b> and <b>teacher-built</b>, tried and tested in front of real classes."
+<span class="sig">— MATT · MADE BY MATT</span></blockquote>
+</div></section>
+</main>
 <footer class="footer"><div class="bar"><div class="brand"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></div><span class="muted">Interactive lessons, simulations and games · madebymatt.uk</span></div><div class="mbm-kofi" style="max-width:640px;margin:18px auto 6px;background:#161D3D;border:1px solid rgba(185,230,205,.35);border-radius:10px;padding:16px 18px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;justify-content:space-between"><p style="font-size:.85rem;color:#C9D1E2;line-height:1.45;max-width:380px;margin:0;text-align:left;text-transform:none;letter-spacing:normal"><strong style="color:#E8E2D4">Everything here is free to use.</strong> If a tool has saved you an evening, a coffee helps cover hosting, domains and development time.</p><a href="https://ko-fi.com/madebymattuk" style="display:inline-flex;align-items:center;gap:8px;background:#F2A24A;color:#161D3D;font-weight:700;font-size:.9rem;padding:10px 18px;border-radius:8px;text-decoration:none;box-shadow:0 2px 0 #C97F2E">☕ Support Made by Matt</a></div>
 <p class="mbm-contact" style="text-align:center;font-size:.85rem;opacity:.85;margin:16px auto 10px;max-width:90%">Questions, ideas or bug reports — <a href="mailto:contactmadebymatt@gmail.com" style="color:inherit;font-weight:600">contactmadebymatt@gmail.com</a></p></footer>
 <script>(function(){var m=document.getElementById("menu"),n=document.getElementById("nav");if(m&&n)m.addEventListener("click",function(){var open=n.classList.toggle("open");m.setAttribute("aria-expanded",open?"true":"false")})})();</script>
+<script>
+(function(){
+"use strict";
+var cards=[].slice.call(document.querySelectorAll(".tcard"));
+var CAT="",Q="";
+function apply(){
+var n=0;
+cards.forEach(function(c){
+var ok=(!CAT||c.getAttribute("data-cat")===CAT)&&(!Q||(c.getAttribute("data-s")+" ").indexOf(Q)>=0);
+c.classList.toggle("hidden",!ok);if(ok)n++;});
+document.querySelectorAll(".tsec, .tgrid").forEach(function(el){
+var sec=el.getAttribute("data-sec");
+var any=cards.some(function(c){return !c.classList.contains("hidden")&&c.parentElement.getAttribute("data-sec")===sec});
+el.classList.toggle("hidden",!any);});
+document.querySelectorAll(".bridge").forEach(function(b){b.classList.toggle("hidden",!!Q||( !!CAT&&CAT!=="acc"))});
+document.getElementById("tcount").textContent="Showing "+n+" of "+cards.length+" tools";
+}
+function counts(){
+var f=function(cat){return cards.filter(function(c){return c.getAttribute("data-cat")===cat}).length};
+document.getElementById("cAcc").textContent="· "+f("acc");
+document.getElementById("cUtil").textContent="· "+f("util");
+document.getElementById("cBrowse").textContent="· "+f("browse");
+document.getElementById("txTotal").textContent=cards.length+" tools · all free";
+}
+document.getElementById("tq").addEventListener("input",function(){Q=this.value.toLowerCase().trim();apply()});
+document.querySelectorAll(".tchip").forEach(function(b){b.addEventListener("click",function(){
+CAT=b.getAttribute("data-cat");
+document.querySelectorAll(".tchip").forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false")});
+apply();})});
+counts();apply();
+})();
+</script>
 </body></html>
