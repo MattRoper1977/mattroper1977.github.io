@@ -7,6 +7,15 @@
   try {
 
   var NS = "mbmhud";
+  var PATH = location.pathname;
+  var IS_GAME = /\/Games\//.test(PATH);
+  var IS_APP = /\/Matt-s-Apps-\/.+\.html/.test(PATH);
+  var IS_REG = /^\/(uas|asdan)\/app\.html$/.test(PATH);
+  var IS_LESSON = /\/Lessons\//.test(PATH) && !IS_GAME;
+  var BACK = IS_GAME ? { h: "/games/", l: "\u2190 Arcade" }
+    : IS_APP ? { h: "/Matt-s-Apps-/", l: "\u2190 Studios" }
+    : IS_REG ? { h: "/tools/", l: "\u2190 Tools" }
+    : IS_LESSON ? { h: "/Lessons/", l: "\u2190 Lessons" } : null;
   var LS_NAMES = "mbm_hud_names", LS_USED = "mbm_hud_used";
   function lsGet(k, fb) { try { var v = localStorage.getItem(k); return v === null ? fb : v; } catch (e) { return fb; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -15,6 +24,8 @@
   var css = ""
   + "#" + NS + "-pill{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:2147483000;background:rgba(22,29,61,.72);color:#B9E6CD;border:1.5px solid rgba(185,230,205,.45);border-radius:999px;padding:6px 16px;font:700 12px/1 Poppins,'Segoe UI',system-ui,sans-serif;letter-spacing:.08em;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:.75}"
   + "#" + NS + "-pill:hover,#" + NS + "-pill:focus-visible{opacity:1;outline:none;border-color:#B9E6CD}"
+  + "#" + NS + "-back{position:fixed;left:10px;bottom:10px;z-index:2147483000;background:rgba(22,29,61,.72);color:#B9E6CD;border:1.5px solid rgba(185,230,205,.45);border-radius:999px;padding:6px 13px;font:700 12px/1 Poppins,'Segoe UI',system-ui,sans-serif;letter-spacing:.06em;text-decoration:none;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:.72}"
+  + "#" + NS + "-back:hover,#" + NS + "-back:focus-visible{opacity:1;outline:none;border-color:#B9E6CD}"
   + "#" + NS + "-dock{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:2147483001;width:min(680px,calc(100vw - 20px));background:rgba(246,241,228,.92);border:2px solid #161D3D;border-radius:18px;box-shadow:0 14px 40px rgba(15,21,48,.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:12px 14px;display:none;font-family:Poppins,'Segoe UI',system-ui,sans-serif;color:#1B2140}"
   + "#" + NS + "-dock.open{display:block}"
   + "." + NS + "-row{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}"
@@ -48,7 +59,7 @@
   + "#" + NS + "-calmexit:hover{opacity:1;border-color:#B9E6CD}"
   + "@keyframes " + NS + "-breathe{0%,100%{transform:scale(.72)}45%,55%{transform:scale(1)}}"
   + "@media (prefers-reduced-motion:reduce){#" + NS + "-ring{animation:none;transform:scale(.86)}#" + NS + "-timerbox.done{animation:none}}"
-  + "@media print{#" + NS + "-pill,#" + NS + "-dock,#" + NS + "-timerbox,#" + NS + "-calm{display:none!important}}";
+  + "@media print{#" + NS + "-back,#" + NS + "-pill,#" + NS + "-dock,#" + NS + "-timerbox,#" + NS + "-calm{display:none!important}}";
   var st = document.createElement("style"); st.id = NS + "-style"; st.textContent = css;
   (document.head || document.documentElement).appendChild(st);
 
@@ -88,7 +99,14 @@
   calm.innerHTML = '<div id="' + NS + '-ring"></div><div id="' + NS + '-calmtext">Breathe in\u2026</div>'
     + '<button id="' + NS + '-calmexit" type="button">Return to the lesson</button>';
 
+  var backEl = null;
+  if (BACK) {
+    backEl = el("a", { id: NS + "-back", href: BACK.h, "aria-label": "Back to the hub" });
+    backEl.textContent = BACK.l;
+  }
   function mount() {
+    if (backEl) document.body.appendChild(backEl);
+    if (!IS_LESSON) return;
     document.body.appendChild(pill); document.body.appendChild(dock);
     document.body.appendChild(timerbox); document.body.appendChild(calm);
   }
