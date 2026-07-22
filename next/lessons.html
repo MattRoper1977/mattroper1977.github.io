@@ -1,6 +1,6 @@
 <!doctype html><html lang="en-GB"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lessons · The Campus preview · Made by Matt</title>
+<title>Lessons — The Knowledge · Campus preview · Made by Matt</title>
 <meta name="robots" content="noindex"><link rel="icon" href="/favicon.svg">
 <style>
 :root{--obsidian:#0E1230;--navy:#161D3D;--slate:#37476B;--ink:#1E2438;--cream:#F7F3E9;--paper:#FFFDF7;--line:#DDD5C2;--brass:#F2A24A;--brass-deep:#C97F2E;--mint:#B9E6CD;--mint-deep:#2F6B4D;--max:1120px;--r:18px;--shadow:0 6px 18px rgba(22,29,61,.10)}
@@ -49,27 +49,105 @@ footer{background:var(--navy);color:#B9C2E8;text-align:center;padding:1.3rem 1re
 footer a{color:#EDEAF7}
 .note{border:2px dashed var(--brass-deep);background:#FFF7EA;color:#7A5220;border-radius:12px;padding:.6rem .9rem;font-size:.8rem;font-weight:700;display:inline-block}
 @media(prefers-reduced-motion:reduce){.cta:hover{transform:none}}
-</style></head><body>
-<div class="ribbon">🔭 DESIGN PREVIEW — concepts only. <a href="https://madebymatt.uk/">Live site unchanged →</a></div>
-<header class="hd"><div class="bar">
-<img src="/assets/brand/micro_mark.svg" alt="Made by Matt">
-<span><strong>MADE BY MATT</strong><small>LEARN · BUILD · EXPLORE</small></span>
-<nav class="cnav"><a href="index.html">Home</a><a href="games.html">Games</a><a href="lessons.html" class="on">Lessons</a><a href="tools.html">Tools</a></nav>
-</div></header>
 
-<div class="hero"><p class="eyebrow">The Lesson Hub · concept</p>
-<h1>The knowledge, shelved beautifully.</h1>
-<p class="sub">360+ resources behind one search — subjects fold away until you need them, this year's suites sit on top, and every count on the page is computed live from the real catalogue.</p>
-<a class="cta pri" href="https://madebymatt.uk/Lessons/">Open the real hub</a></div>
-<section><div class="wrap">
-<p class="eyebrow2">The accordion shelf — campus skin</p>
-<h2>Open what you teach, fold the rest</h2>
-<details class="acc" open><summary>Art · Teesside Studio Suite <span class="pill b">34</span><span class="pill">this year</span><span class="chev">▾</span></summary>
-<div class="grid"><div class="card"><h3>BUILD · Explore Art — start here</h3><p>The tier\u2019s landing page: scheme of work and the printable pack.</p><div class="pillrow"><span class="pill b">Explore</span><span class="pill">Slideshow</span><span class="pill">Print pack</span></div><a class="go" href="https://madebymatt.uk/Lessons/">Open in the live hub →</a></div><div class="card"><h3>GROW · W1 — Surface Skills Lab</h3><p>Mark-making circuits building control before expression.</p><div class="pillrow"><span class="pill b">Bronze</span><span class="pill">Slideshow</span><span class="pill">Print pack</span></div><a class="go" href="https://madebymatt.uk/Lessons/">Open in the live hub →</a></div><div class="card"><h3>LAUNCH · W1 — The Local Canvas</h3><p>Independent brief: Teesside as subject, artist as investigator.</p><div class="pillrow"><span class="pill b">Silver</span><span class="pill">Slideshow</span><span class="pill">Print pack</span></div><a class="go" href="https://madebymatt.uk/Lessons/">Open in the live hub →</a></div></div></details>
-<details class="acc"><summary>Primary Science · Years 4–6 <span class="pill b">46</span><span class="pill">White Rose sequenced</span><span class="chev">▾</span></summary><div class="grid"><div class="card"><p>Six blocks across Y4, Y5 and Y6 — folded until needed.</p></div></div></details>
-<details class="acc"><summary>BUILD · Vocational &amp; PfA <span class="pill">six weekly slots</span><span class="chev">▾</span></summary><div class="grid"><div class="card"><p>Careers, D&amp;T, Living Independently, FoodWise, Community, Duke.</p></div></div></details>
-<details class="acc"><summary>GROW · Vocational &amp; PfA <span class="pill">three strands</span><span class="chev">▾</span></summary><div class="grid"><div class="card"><p>Personal Effectiveness, Community Project, Enterprise.</p></div></div></details>
-<details class="acc"><summary>Humanities &amp; Tutor Time <span class="pill">the rest of the shelf</span><span class="chev">▾</span></summary><div class="grid"><div class="card"><p>Folded, searchable, never in the way.</p></div></div></details>
-</div></section><footer>The Campus · design previews · the mark stays exactly as it is.<br>
-Part of <a href="index.html">the concept suite</a> · <a href="https://madebymatt.uk/">madebymatt.uk</a> · <a href="mailto:contactmadebymatt@gmail.com">contactmadebymatt@gmail.com</a></footer>
+.inav{display:flex;justify-content:center;gap:1.3rem;flex-wrap:wrap;padding:.75rem 0;border-top:1px solid rgba(255,255,255,.12)}
+.inav a{color:#D9DEF2;text-decoration:none;font-weight:700;font-size:.9rem;border-bottom:2px solid transparent;padding:.1rem 0}
+.inav a.on,.inav a:hover{color:#fff;border-bottom-color:var(--brass)}
+.colhead{text-align:center;padding:2.4rem 1rem 1.4rem}
+.colhead .eyebrow3{letter-spacing:.28em;font-size:.72rem;font-weight:800;color:var(--brass)}
+.colhead h1{margin:.3rem 0 0;font-size:clamp(1.8rem,5vw,2.6rem);color:#F2EFE6;letter-spacing:.04em}
+.badges{display:flex;justify-content:center;gap:0;margin:1.6rem auto 0;max-width:640px}
+.bdg{flex:1;text-align:center;padding:0 .9rem;border-left:1px solid rgba(255,255,255,.18)}
+.bdg:first-child{border-left:none}
+.bdg .ic{width:52px;height:52px;border-radius:50%;margin:0 auto .45rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem;background:rgba(255,255,255,.08);border:2px solid var(--mint);box-shadow:inset 0 2px 6px rgba(0,0,0,.35),0 3px 10px rgba(0,0,0,.3)}
+.bdg.gold .ic{border-color:var(--brass)}
+.bdg b{display:block;color:#F2EFE6;letter-spacing:.14em;font-size:.86rem}
+.bdg small{color:#B9C2E8;font-size:.72rem}
+.pickcard{background:var(--paper);border:2.5px solid #7E6BA6;border-radius:22px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:1.2rem}
+.pick-in{display:flex;gap:1.1rem;padding:1.2rem 1.2rem 1rem;align-items:center;flex-wrap:wrap}
+.emblem{width:96px;height:96px;border-radius:22px;background:radial-gradient(circle at 30% 25%,#243059,#161D3D);display:flex;align-items:center;justify-content:center;font-size:3rem;box-shadow:inset 0 3px 8px rgba(0,0,0,.5),0 5px 14px rgba(22,29,61,.3);flex:0 0 auto}
+.pick-tx{flex:1;min-width:220px}
+.pick-tx .rib{display:inline-block;background:var(--navy);color:#F2EFE6;border-radius:999px;padding:.22rem .75rem;font-size:.68rem;font-weight:800;letter-spacing:.14em}
+.pick-tx h3{margin:.35rem 0 .25rem;font-size:1.45rem;color:var(--navy)}
+.pick-tx p{margin:0;color:#4A5170;font-size:.92rem}
+.pick-ft{background:#F1EADA;border-top:1.5px solid var(--line);text-align:center;padding:.75rem}
+.pick-ft a{display:inline-block;background:var(--navy);color:#F2EFE6;border:2px solid var(--brass);border-radius:999px;padding:.55rem 1.4rem;font-weight:800;font-size:.8rem;letter-spacing:.1em;text-decoration:none;box-shadow:0 0 14px rgba(242,162,74,.35)}
+.minis{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.9rem}
+.mini{background:var(--paper);border:2px solid var(--ink);border-radius:16px;padding:.85rem .95rem;box-shadow:var(--shadow)}
+.mini .em{font-size:1.6rem}
+.mini h4{margin:.2rem 0;font-size:.95rem;color:var(--navy)}
+.mini p{margin:0;font-size:.79rem;color:#4A5170}
+
+.metric{background:var(--paper);border:2.5px solid #7E6BA6;border-radius:18px;box-shadow:var(--shadow);display:flex;align-items:stretch;gap:0;overflow:hidden;max-width:640px;margin:0 auto}
+.metric .big{background:#F1EADA;border-right:2px solid var(--line);padding:1rem 1.2rem;text-align:center;display:flex;flex-direction:column;justify-content:center}
+.metric .big b{font-size:1.5rem;color:var(--navy);line-height:1.1}
+.metric .big small{font-weight:800;color:var(--brass-deep);letter-spacing:.06em}
+.metric .tx{padding:1rem 1.2rem;font-size:.92rem;color:#4A5170;display:flex;flex-direction:column;justify-content:center}
+.cols{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin:1.3rem 0 0}
+.colchip{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.35);color:#F2EFE6;border-radius:12px;padding:.55rem 1rem;font-weight:800;font-size:.85rem}
+.colchip.on{background:var(--cream);color:var(--navy);border-color:var(--cream)}
+.colchip small{display:block;font-weight:700;font-size:.68rem;opacity:.8}
+.findrow{display:flex;gap:.7rem;flex-wrap:wrap;max-width:640px;margin:1.2rem auto 0;text-align:left}
+.findrow>div{flex:1;min-width:200px}
+.findrow label{display:block;color:#D9C89A;font-weight:800;letter-spacing:.14em;font-size:.7rem;margin-bottom:.3rem}
+.findrow .fake{background:var(--cream);border-radius:999px;padding:.6rem 1rem;color:#6b7280;font-size:.9rem;border:2px solid transparent}
+.flag{background:#FBF6E9;border:2.5px solid var(--brass-deep);border-radius:20px;box-shadow:var(--shadow);padding:1.15rem 1.2rem}
+.flag .bmap{display:inline-block;background:var(--mint);border:1.5px solid var(--mint-deep);color:#143324;border-radius:999px;padding:.24rem .8rem;font-weight:800;font-size:.72rem}
+.flag h3{margin:.5rem 0 .3rem;font-size:1.35rem;color:var(--navy)}
+.flag p{margin:0 0 .7rem;font-size:.9rem;color:#4A5170}
+.tierrow{display:flex;gap:.45rem;flex-wrap:wrap}
+.tierrow a{border:2px solid var(--navy);border-radius:999px;padding:.4rem .9rem;font-weight:800;font-size:.78rem;text-decoration:none;color:var(--navy);background:var(--paper)}
+.tierrow a.pp{border-color:var(--brass-deep);color:var(--brass-deep)}
+</style></head><body>
+<div class="ribbon">🔭 DESIGN PREVIEW · concept suite: <a href="index.html">Home</a> · <a href="games.html">Games</a> · <a href="tools.html">Tools</a> · <a href="https://madebymatt.uk/">live site unchanged →</a></div>
+<header class="hd"><nav class="inav" aria-label="Main">
+<a href="index.html">Home</a><a href="games.html">Games</a><a class="on" href="lessons.html">Lessons</a><a href="https://madebymatt.uk/Matt-s-Apps-/">Apps</a><a href="tools.html">Tools</a><a href="https://madebymatt.uk/resources/">Resources</a>
+</nav></header>
+
+<div class="hero" style="padding-top:1rem;padding-bottom:2.4rem">
+<div class="colhead">
+<p class="eyebrow3">A MADE BY MATT COLLECTION</p>
+<h1>THE LESSON HUB</h1>
+</div>
+<div class="wrap">
+<div class="metric">
+<div class="big"><b>217<span style="font-size:.9rem;color:#8a8261"> of </span>360</b><small>2026–27</small></div>
+<div class="tx"><span><b>360 resources</b> across the whole shelf — 253 of them full lessons.</span>
+<span>This year's collection carries <b>217</b>; the 2025–26 library keeps the other <b>143</b>, never deleted.</span></div>
+</div>
+<div class="cols">
+<span class="colchip on">2026–27 <small>217 resources · current</small></span>
+<span class="colchip">2025–26 · The Library <small>143 resources · kept</small></span>
+<span class="colchip">Everything <small>all 360 at once</small></span>
+</div>
+<div class="findrow">
+<div><label>SEARCH</label><div class="fake">Try: photosynthesis, forces, enterprise…</div></div>
+<div style="flex:0 1 200px"><label>SUBJECT</label><div class="fake">All subjects ▾</div></div>
+</div>
+</div>
+</div>
+
+<section style="padding-top:2rem"><div class="wrap" style="max-width:760px">
+<p class="eyebrow2">This year's flagship</p>
+<div class="flag">
+<span class="bmap">FULL-TERM PROGRAMME · THREE TIERS · COMPLETE PRINT PACKS</span>
+<h3>Art · Teesside Studio Suite</h3>
+<p>The full-term art programme: 34 studio lessons across BUILD (Explore), GROW (Bronze) and LAUNCH (Silver) — every lesson a whiteboard slideshow with three tiers and a complete print pack off the title slide.</p>
+<div class="tierrow">
+<a href="https://madebymatt.uk/Lessons/">Browse the whole suite</a>
+<a href="https://madebymatt.uk/Lessons/">BUILD · Explore</a>
+<a href="https://madebymatt.uk/Lessons/">GROW · Bronze</a>
+<a href="https://madebymatt.uk/Lessons/">LAUNCH · Silver</a>
+<a class="pp" href="https://madebymatt.uk/Lessons/">🖨️ Print packs</a>
+</div>
+</div>
+
+<p class="eyebrow2" style="margin-top:1.6rem">The rest of the shelf — folded until needed</p>
+<details class="acc"><summary>Primary Science · Years 4–6 <span class="pill b">46</span><span class="pill">White Rose sequenced</span><span class="chev">▾</span></summary><div class="grid"><div class="card"><p>Six blocks across Y4, Y5 and Y6 — celebration moments and reading support built into every lesson.</p></div></div></details>
+<details class="acc"><summary>BUILD · Vocational &amp; PfA <span class="pill">six weekly slots</span><span class="chev">▾</span></summary><div class="grid"><div class="card"><p>Careers, D&amp;T Upcycling, Living Independently, FoodWise, Community Project, Duke &amp; Enterprise.</p></div></div></details>
+<details class="acc"><summary>GROW · Vocational &amp; PfA <span class="pill">three strands</span><span class="chev">▾</span></summary><div class="grid"><div class="card"><p>Personal Effectiveness, Community Project, Enterprise — two real projects, one shared unit.</p></div></div></details>
+<details class="acc"><summary>Humanities &amp; Tutor Time <span class="pill">searchable, never in the way</span><span class="chev">▾</span></summary><div class="grid"><div class="card"><p>Folded here; one search flattens the whole shelf instantly.</p></div></div></details>
+<p style="text-align:center;margin-top:1.4rem"><a class="cta pri" href="https://madebymatt.uk/Lessons/">Open the real Lesson Hub</a></p>
+</div></section>
+<footer>The Campus · design previews · <a href="index.html">back to the Index</a> · <a href="https://madebymatt.uk/">madebymatt.uk</a> · everything free — no pricing, ever</footer>
 </body></html>
