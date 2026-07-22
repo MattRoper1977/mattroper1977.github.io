@@ -72,21 +72,57 @@ h2{margin:.1rem 0 .5rem;font-size:clamp(1.35rem,3.4vw,1.8rem);color:var(--navy)}
 .fact p{margin:.25rem 0 0;font-size:.85rem;color:#4A5170}
 footer{background:var(--navy);color:#B9C2E8;text-align:center;padding:1.4rem 1rem;font-size:.82rem}
 footer a{color:#EDEAF7}
+
+/* ===== Institutional Entry ===== */
+.hd.civic{padding:1.2rem 1rem .0rem;text-align:center;border-bottom:1px solid rgba(242,162,74,.4)}
+.mast .crest{width:64px;height:64px;filter:drop-shadow(0 4px 14px rgba(0,0,0,.35))}
+.wordmark{margin:.5rem 0 0;color:#F2EFE6;font-weight:800;letter-spacing:.26em;font-size:1.05rem}
+.motto{margin:.15rem 0 .9rem;color:#B9C2E8;font-weight:700;letter-spacing:.3em;font-size:.62rem}
+.inav{display:flex;justify-content:center;gap:1.4rem;flex-wrap:wrap;padding:.6rem 0 .8rem;border-top:1px solid rgba(255,255,255,.12)}
+.inav a{color:#D9DEF2;text-decoration:none;font-weight:700;font-size:.9rem;padding:.15rem 0;border-bottom:2px solid transparent}
+.inav a.on,.inav a:hover{color:#fff;border-bottom-color:var(--brass)}
+.inav a:focus-visible{outline:3px solid var(--brass);outline-offset:3px}
+.hero-crest{width:132px;height:132px;filter:drop-shadow(0 0 34px rgba(185,230,205,.35))}
+.idx{position:absolute;inset:0;pointer-events:none}
+.idx .doc{position:absolute;width:34px;height:42px;opacity:.35}
+.idx .doc rect,.idx .doc line{fill:none;stroke:#8FA0D8;stroke-width:2;stroke-linecap:round}
+.cta.sec{box-shadow:0 0 0 0 rgba(185,230,205,0);}
+.obs .cta.sec{box-shadow:0 0 22px rgba(185,230,205,.45)}
+@media(max-width:560px){.inav{gap:.9rem}.inav a{font-size:.82rem}}
 </style></head><body>
-<div class="ribbon">🔭 DESIGN PREVIEW — the next evolution, safely parked at /next/. <a href="https://madebymatt.uk/">The live site is unchanged →</a></div>
-<header class="hd"><div class="bar">
-<img src="/assets/brand/micro_mark.svg" alt="Made by Matt">
-<span><strong>MADE BY MATT</strong><small>LEARN · BUILD · EXPLORE</small></span>
-<nav class="cnav" style="margin-left:auto;display:flex;gap:.35rem;flex-wrap:wrap">
-<a style="font-size:.74rem;font-weight:800;text-decoration:none;background:var(--brass);color:#3A2409;border-radius:999px;padding:.32rem .75rem" href="index.html">Home</a>
-<a style="font-size:.74rem;font-weight:800;text-decoration:none;border:1.5px solid rgba(255,255,255,.3);border-radius:999px;padding:.32rem .75rem" href="games.html">Games</a>
-<a style="font-size:.74rem;font-weight:800;text-decoration:none;border:1.5px solid rgba(255,255,255,.3);border-radius:999px;padding:.32rem .75rem" href="lessons.html">Lessons</a>
-<a style="font-size:.74rem;font-weight:800;text-decoration:none;border:1.5px solid rgba(255,255,255,.3);border-radius:999px;padding:.32rem .75rem" href="tools.html">Tools</a></nav>
-</div></header>
+<div class="ribbon">🔭 DESIGN PREVIEW · concept suite: <a href="games.html">Games</a> · <a href="lessons.html">Lessons</a> · <a href="tools.html">Tools</a> · <a href="https://madebymatt.uk/">live site unchanged →</a></div>
+<header class="hd civic">
+<div class="mast">
+<svg class="crest" viewBox="0 0 100 100" role="img" aria-label="Made by Matt crest">
+<rect width="100" height="100" rx="22" fill="#161D3D"/>
+<circle cx="50" cy="50" r="40" fill="none" stroke="#B9E6CD" stroke-width="3.4"/>
+<g transform="translate(0 2)">
+<path d="M28 71 L28 37 L50 59 L72 37 L72 71" fill="none" stroke="#E8E2D4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M50 22.5 L51.48 28.52 L57.5 30 L51.48 31.48 L50 37.5 L48.52 31.48 L42.5 30 L48.52 28.52 Z" fill="#F2A24A"/>
+</g></svg>
+<p class="wordmark">MADE BY MATT</p>
+<p class="motto">LEARN · BUILD · EXPLORE</p>
+</div>
+<nav class="inav" aria-label="Main">
+<a class="on" href="index.html">Home</a><a href="https://madebymatt.uk/games/">Games</a><a href="https://madebymatt.uk/Lessons/">Lessons</a><a href="https://madebymatt.uk/Matt-s-Apps-/">Apps</a><a href="https://madebymatt.uk/tools/">Tools</a><a href="https://madebymatt.uk/resources/">Resources</a>
+</nav>
+</header>
 
 <div class="obs">
 <div class="stars" aria-hidden="true"><i style="left:8%;top:18%"></i><i style="left:16%;top:64%;animation-delay:.7s"></i><i style="left:28%;top:34%;animation-delay:1.4s"></i><i style="left:72%;top:22%;animation-delay:.4s"></i><i style="left:84%;top:58%;animation-delay:1.1s"></i><i style="left:64%;top:74%;animation-delay:1.9s"></i><i style="left:44%;top:12%;animation-delay:2.3s"></i></div>
-<img class="mark" src="/assets/brand/micro_mark.svg" alt="">
+<div class="idx" aria-hidden="true">
+<svg class="doc" style="left:9%;top:16%" viewBox="0 0 34 42"><rect x="1" y="1" width="32" height="40" rx="6"/><line x1="8" y1="12" x2="26" y2="12"/><line x1="8" y1="20" x2="26" y2="20"/><line x1="8" y1="28" x2="20" y2="28"/></svg>
+<svg class="doc" style="right:9%;top:14%" viewBox="0 0 34 42"><rect x="1" y="1" width="32" height="40" rx="6"/><line x1="8" y1="12" x2="26" y2="12"/><line x1="8" y1="20" x2="26" y2="20"/><line x1="8" y1="28" x2="20" y2="28"/></svg>
+<svg class="doc" style="left:13%;bottom:34%" viewBox="0 0 34 42"><rect x="1" y="1" width="32" height="40" rx="6"/><line x1="8" y1="12" x2="26" y2="12"/><line x1="8" y1="20" x2="26" y2="20"/><line x1="8" y1="28" x2="20" y2="28"/></svg>
+<svg class="doc" style="right:13%;bottom:32%" viewBox="0 0 34 42"><rect x="1" y="1" width="32" height="40" rx="6"/><line x1="8" y1="12" x2="26" y2="12"/><line x1="8" y1="20" x2="26" y2="20"/><line x1="8" y1="28" x2="20" y2="28"/></svg>
+</div>
+<svg class="crest hero-crest" viewBox="0 0 100 100" role="img" aria-label="Made by Matt">
+<rect width="100" height="100" rx="22" fill="#1B2348"/>
+<circle cx="50" cy="50" r="40" fill="none" stroke="#B9E6CD" stroke-width="3.4"/>
+<g transform="translate(0 2)">
+<path d="M28 71 L28 37 L50 59 L72 37 L72 71" fill="none" stroke="#E8E2D4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M50 22.5 L51.48 28.52 L57.5 30 L51.48 31.48 L50 37.5 L48.52 31.48 L42.5 30 L48.52 28.52 Z" fill="#F2A24A"/>
+</g></svg>
 <h1>Learning that feels<br>worth exploring.</h1>
 <p class="sub">Classroom-ready experiences that turn participation into progress — built in a real SEMH classroom, shared free with every school that wants them.</p>
 <a class="cta pri" href="https://madebymatt.uk/tools/">Explore the teacher tools</a>
