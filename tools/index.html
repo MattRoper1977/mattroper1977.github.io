@@ -34,6 +34,17 @@
 .tx-prod .tx-btn.p{box-shadow:0 2px 0 var(--tx-ambd)}
 .tx-prod .tx-btn.s{color:var(--tx-ink);border-color:#1B214055}
 .tx-prod .tx-btn.s:hover{border-color:var(--tx-ink);color:var(--tx-ink)}
+
+.tx-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin:0 0 1.6rem;text-align:center}
+.tx-trio svg{width:52px;height:52px}
+.tx-trio b{display:block;font-size:.92rem;letter-spacing:.12em;margin-top:.3rem}
+.tx-trio .k1 b{color:#B96A14}.tx-trio .k2 b{color:#2F6B4D}.tx-trio .k3 b{color:#8F7311}
+.tx-trio p{color:var(--tx-mut);font-size:.8rem;line-height:1.45;margin-top:.2rem}
+.tx-cat{display:flex;align-items:baseline;gap:.6rem;margin:1.8rem 0 .7rem;flex-wrap:wrap}
+.tx-cat h3{font-size:1.02rem;letter-spacing:.06em;color:var(--tx-navy);text-transform:uppercase}
+.tx-cat .n{color:var(--tx-mut);font-size:.82rem}
+.tx-cat .spec{font-size:.62rem;font-weight:800;letter-spacing:.1em;background:var(--tx-amber);color:#fff;border-radius:99px;padding:.18rem .55rem;text-transform:uppercase}
+@media(max-width:640px){.tx-trio{gap:.4rem}}
 /* light drawer */
 .tx-light{background:var(--tx-cream);color:var(--tx-ink);padding:2.6rem 0 2.4rem;border-top:1px solid #B9E6CD33}
 .tx-wrap{max-width:1000px;margin:auto;padding:0 1rem}
@@ -92,20 +103,33 @@ a.tx-btn:focus-visible,.tx-tool:focus-visible{outline:3px solid var(--tx-amber);
 <div class="tx-wrap">
 <p class="tx-eyebrow">The wider toolkit</p>
 <h2>Everything else in the drawer.</h2>
-<p class="tx-sub">The specialist staff section of Studio Suite — eight tools and counting, each one a single offline file.</p>
+<p class="tx-sub">Every teacher tool on one shelf — eight single offline files, organised the way the job is.</p>
+
+<div class="tx-trio" aria-label="How every tool behaves">
+<div class="k1"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="18" y="28" width="28" height="24" rx="6" fill="none" stroke="#B96A14" stroke-width="4"/><path d="M23 28 v-6 a9 9 0 0 1 18 0 v6" fill="none" stroke="#B96A14" stroke-width="4"/><circle cx="32" cy="40" r="3.4" fill="#B96A14"/></svg><b>SECURE</b><p>Nothing uploaded. Data stays on your device.</p></div>
+<div class="k2"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 28 q18-14 36 0 M21 36 q11-9 22 0 M27.5 44 q4.5-4 9 0" fill="none" stroke="#2F6B4D" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="50" r="3" fill="#2F6B4D"/><path d="M16 16 L48 52" stroke="#C25B4E" stroke-width="4.4" stroke-linecap="round"/></svg><b>OFFLINE</b><p>Single-file. Runs without internet.</p></div>
+<div class="k3"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 46 L38 22 l6 6 L20 52 l-8 2 z" fill="none" stroke="#8F7311" stroke-width="4" stroke-linejoin="round"/><path d="M34 26 l6 6" stroke="#8F7311" stroke-width="3"/><path d="M46 14 l6 6" stroke="#8F7311" stroke-width="4" stroke-linecap="round"/></svg><b>TEACHER-BUILT</b><p>Classroom ready. Purpose-built for speed.</p></div>
+</div>
+
+<div class="tx-cat"><h3>PEQ &amp; Accreditation</h3><span class="spec">Specialist</span><span class="n">the paperwork-killers · UAS Register is featured above</span></div>
 <div class="tx-grid">
-<a class="tx-tool t1" href="../Matt-s-Apps-/Evidence_Binder.html">
-<svg viewBox="0 0 96 96" aria-hidden="true"><path d="M14 32 q0-6 6-6 h18 l6 8 h32 q6 0 6 6 v30 q0 6 -6 6 H20 q-6 0 -6-6 Z" fill="#F0B48B"/><rect x="26" y="20" width="34" height="26" rx="3" fill="#FFFDF6" stroke="#1B214022"/><path d="M31 27h22M31 33h24M31 39h16" stroke="#B8BDD1" stroke-width="3" stroke-linecap="round"/><path d="M14 40 h76 v26 q0 6 -6 6 H20 q-6 0 -6-6 Z" fill="#E89A66"/><circle cx="76" cy="34" r="9" fill="#B9E6CD"/><path d="M72 34 l3 3 5-6" fill="none" stroke="#1B2140" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-<b>Evidence Binder</b><p>Capture, tag and organise pupil evidence on any device — ASDAN PEQ and AQA UAS flavours with separate databases.</p></a>
-<a class="tx-tool t2" href="../Matt-s-Apps-/Classroom_Toolkit.html">
-<svg viewBox="0 0 96 96" aria-hidden="true"><rect x="16" y="38" width="64" height="38" rx="8" fill="#A7D9BC"/><rect x="16" y="38" width="64" height="12" rx="6" fill="#7FC49D"/><path d="M38 38 v-8 q0-5 5-5 h10 q5 0 5 5 v8" fill="none" stroke="#2F6B4D" stroke-width="5" stroke-linecap="round"/><rect x="42" y="48" width="12" height="10" rx="2" fill="#2F6B4D"/><circle cx="66" cy="64" r="7" fill="#FFFDF6"/><path d="M66 60 v4 l3 2" fill="none" stroke="#2F6B4D" stroke-width="2.4" stroke-linecap="round"/></svg>
-<b>Classroom Toolkit</b><p>Timers, pickers and boards, ready for the whiteboard.</p></a>
-<a class="tx-tool t3" href="../Matt-s-Apps-/#cat-0">
-<svg viewBox="0 0 96 96" aria-hidden="true"><rect x="14" y="46" width="56" height="8" rx="3" fill="#C9A15C"/><rect x="18" y="54" width="6" height="24" fill="#B08A45"/><rect x="58" y="54" width="6" height="24" fill="#B08A45"/><rect x="24" y="56" width="22" height="16" rx="2" fill="#D9B677"/><circle cx="76" cy="34" r="9" fill="#8FCBE8"/><path d="M70 34 q6-7 12 0 q-6 7 -12 0" fill="#5FA8CC"/><rect x="72" y="43" width="8" height="3" fill="#B08A45"/><rect x="30" y="30" width="20" height="14" rx="2" fill="#FFFDF6" stroke="#1B214033"/><path d="M34 36h12M34 40h9" stroke="#B8BDD1" stroke-width="2.4" stroke-linecap="round"/><path d="M74 54 q8 4 4 14 l-6 8 h-4 l2-8 q-4-8 4-14" fill="#8A6A1C" opacity=".85"/></svg>
-<b>All teacher tools</b><p>Seating plans, rubrics, exit tickets and the rest — the full specialist section in Studio Suite.</p></a>
-<a class="tx-tool t4" href="../resources/">
-<svg viewBox="0 0 96 96" aria-hidden="true"><path d="M16 28 l20-8 22 8 22-8 v48 l-22 8 -22-8 -20 8 Z" fill="#DCE9F5"/><path d="M36 20 v48 M58 28 v48" stroke="#9FB6CC" stroke-width="2.4"/><path d="M24 44 q10 6 18 -2 q10-8 20 0" fill="none" stroke="#8FB4D9" stroke-width="2.6" stroke-linecap="round"/><circle cx="60" cy="42" r="13" fill="none" stroke="#33608F" stroke-width="5"/><path d="M69 51 l10 10" stroke="#33608F" stroke-width="6" stroke-linecap="round"/><path d="M46 60 q-6-8 0-13 q6 5 0 13" fill="#F2A24A"/><circle cx="46" cy="50" r="2.6" fill="#1B2140"/></svg>
-<b>Looking for lessons?</b><p>The resource catalogue covers every lesson, simulation and activity — search by topic or subject.</p></a>
+<a class="tx-tool t1" href="../asdan/app.html"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="24" y="16" width="48" height="62" rx="5" fill="#FFFDF6" stroke="#1B214033"/><path d="M32 30h32M32 38h32M32 46h22" stroke="#B8BDD1" stroke-width="3.4" stroke-linecap="round"/><g transform="rotate(-8 48 62)"><rect x="26" y="52" width="44" height="20" rx="4" fill="#161D3D"/><text x="48" y="61.5" text-anchor="middle" font-family="Poppins,sans-serif" font-size="7" font-weight="700" fill="#F2A24A">SIGNED OFF</text><text x="48" y="69" text-anchor="middle" font-family="Poppins,sans-serif" font-size="5.4" font-weight="600" fill="#E8E2D4">✓ EVIDENCE FILED</text></g></svg><b>ASDAN Register</b><p>PEQ &amp; Short Courses without the spreadsheet wrangling — capture evidence, record sign-offs as you go, export clean records when you need them.</p></a>
+<a class="tx-tool t1" href="../Matt-s-Apps-/Evidence_Binder.html"><svg viewBox="0 0 96 96" aria-hidden="true"><path d="M14 32 q0-6 6-6 h18 l6 8 h32 q6 0 6 6 v30 q0 6 -6 6 H20 q-6 0 -6-6 Z" fill="#F0B48B"/><rect x="26" y="20" width="34" height="26" rx="3" fill="#FFFDF6" stroke="#1B214022"/><path d="M31 27h22M31 33h24M31 39h16" stroke="#B8BDD1" stroke-width="3" stroke-linecap="round"/><path d="M14 40 h76 v26 q0 6 -6 6 H20 q-6 0 -6-6 Z" fill="#E89A66"/><circle cx="76" cy="34" r="9" fill="#B9E6CD"/><path d="M72 34 l3 3 5-6" fill="none" stroke="#1B2140" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Evidence Binder</b><p>Capture, tag and organise pupil evidence on any device — ASDAN PEQ and AQA UAS flavours with separate databases.</p></a>
+</div>
+
+<div class="tx-cat"><h3>Classroom Utilities</h3><span class="n">the everyday drawer · 5 tools</span></div>
+<div class="tx-grid">
+<a class="tx-tool t2" href="../Matt-s-Apps-/Classroom_Toolkit.html"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="16" y="38" width="64" height="38" rx="8" fill="#A7D9BC"/><rect x="16" y="38" width="64" height="12" rx="6" fill="#7FC49D"/><path d="M38 38 v-8 q0-5 5-5 h10 q5 0 5 5 v8" fill="none" stroke="#2F6B4D" stroke-width="5" stroke-linecap="round"/><rect x="42" y="48" width="12" height="10" rx="2" fill="#2F6B4D"/><circle cx="66" cy="64" r="7" fill="#FFFDF6"/><path d="M66 60 v4 l3 2" fill="none" stroke="#2F6B4D" stroke-width="2.4" stroke-linecap="round"/></svg><b>Classroom Toolkit</b><p>Timers, pickers, groups and noise meter — ready for the whiteboard.</p></a>
+<a class="tx-tool t2" href="../Matt-s-Apps-/Exit_Ticket.html"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="18" y="26" width="46" height="30" rx="5" fill="#F6D9A0"/><path d="M18 36 h46" stroke="#C9A15C" stroke-width="3"/><circle cx="30" cy="31" r="2.6" fill="#B08A45"/><path d="M26 44h20M26 50h14" stroke="#B08A45" stroke-width="3" stroke-linecap="round"/><rect x="52" y="44" width="28" height="34" rx="5" fill="#FFFDF6" stroke="#1B214033"/><path d="M58 54l4 4 8-9" fill="none" stroke="#2F6B4D" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M58 68h16" stroke="#B8BDD1" stroke-width="3" stroke-linecap="round"/></svg><b>Exit Ticket &amp; Quick Marks</b><p>Instant end-of-lesson understanding checks, marked as they land.</p></a>
+<a class="tx-tool t2" href="../Matt-s-Apps-/Rubric_Studio.html"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="16" y="20" width="52" height="56" rx="5" fill="#FFFDF6" stroke="#1B214033"/><path d="M16 34h52M16 48h52M16 62h52M33 20v56M50 20v56" stroke="#DCD4C0" stroke-width="2.4"/><rect x="17" y="35" width="15" height="12" fill="#B9E6CD"/><rect x="34" y="49" width="15" height="12" fill="#B9E6CD"/><rect x="51" y="63" width="16" height="12" fill="#F6D9A0"/><path d="M64 30 l16 16 -5 5 -16 -16 z" fill="#E08A2E"/><path d="M75 41 l5 5 3-8 z" fill="#8A5A2B"/></svg><b>Rubric &amp; Feedback Studio</b><p>Mark to a rubric and auto-write the feedback sentence.</p></a>
+<a class="tx-tool t2" href="../Matt-s-Apps-/Seating_Studio.html"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="14" y="18" width="68" height="60" rx="6" fill="#EAF3EC" stroke="#1B214022"/><rect x="22" y="26" width="18" height="12" rx="3" fill="#7FC49D"/><rect x="56" y="26" width="18" height="12" rx="3" fill="#7FC49D"/><rect x="22" y="46" width="18" height="12" rx="3" fill="#A7D9BC"/><rect x="56" y="46" width="18" height="12" rx="3" fill="#A7D9BC"/><rect x="39" y="62" width="18" height="10" rx="3" fill="#2F6B4D"/><circle cx="31" cy="32" r="3.4" fill="#2F6B4D"/><circle cx="65" cy="52" r="3.4" fill="#2F6B4D"/></svg><b>Seating Plan Studio</b><p>Drag pupils onto a room plan — print it, save it, swap it.</p></a>
+<a class="tx-tool t2" href="../Matt-s-Apps-/Whiteboard.html"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="14" y="20" width="68" height="46" rx="5" fill="#FFFDF6" stroke="#1B214033"/><path d="M24 44 q10-14 20-4 t22-6" fill="none" stroke="#5FA8CC" stroke-width="4" stroke-linecap="round"/><path d="M26 54h24" stroke="#E08A2E" stroke-width="4" stroke-linecap="round"/><path d="M40 66 l8 12 8-12" fill="#C9A15C"/><rect x="60" y="58" width="16" height="6" rx="3" fill="#161D3D"/></svg><b>Whiteboard</b><p>Draw and write straight onto your browser — no login, no lag.</p></a>
+</div>
+
+<div class="tx-cat"><h3>Resource Search</h3><span class="n">when you need a lesson, not a tool</span></div>
+<div class="tx-grid">
+<a class="tx-tool t4" href="../resources/"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="20" y="18" width="40" height="52" rx="4" fill="#FFFDF6" stroke="#1B214033"/><path d="M27 30h26M27 38h26M27 46h18" stroke="#B8BDD1" stroke-width="3.4" stroke-linecap="round"/><circle cx="62" cy="58" r="14" fill="none" stroke="#5FA8CC" stroke-width="5"/><path d="M72 68 L82 78" stroke="#5FA8CC" stroke-width="6" stroke-linecap="round"/></svg><b>Looking for lessons?</b><p>The resource catalogue covers every lesson, simulation and activity — search by topic or subject.</p></a>
+<a class="tx-tool t3" href="../Matt-s-Apps-/"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="18" y="22" width="26" height="26" rx="6" fill="#F0B48B"/><rect x="52" y="22" width="26" height="26" rx="6" fill="#A7D9BC"/><rect x="18" y="52" width="26" height="26" rx="6" fill="#8FCBE8"/><rect x="52" y="52" width="26" height="26" rx="6" fill="#D9C7F2"/><path d="M60 60 h10 M65 55 v10" stroke="#6d5cf5" stroke-width="4" stroke-linecap="round"/></svg><b>The Creator Hub</b><p>The pupil-facing studios live next door — 28 creative, learning and calm-corner apps.</p></a>
 </div>
 <div class="tx-promise" id="promise">
 <h3>The promise — how every tool behaves</h3>
