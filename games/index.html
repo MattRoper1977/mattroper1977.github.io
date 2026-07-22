@@ -1,97 +1,109 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>The Arcade — Made by Matt</title>
-<meta name="description" content="Free single-file browser games built in a real classroom — no installs, no accounts, no ads.">
+<title>Matt's Curated Favs — The Arcade — Made by Matt</title>
+<meta name="description" content="A personally curated shelf of free single-file browser games built in a real classroom — no installs, no accounts, no ads.">
 <meta name="theme-color" content="#161D3D">
 <link rel="icon" href="https://madebymatt.uk/favicon.svg">
 <style>
 :root{--navy:#161D3D;--navy-lt:#232C55;--mint:#B9E6CD;--mint-deep:#2F6B4D;--amber:#E08A2E;--amber-lt:#F2A24A;
---cream:#F6F1E4;--cream-dk:#EDE5D2;--card:#FFFDF6;--ink:#1B2140;--mut:#4A5170;--gold:#8F7311;
+--cream:#F6F1E4;--cream-dk:#EDE5D2;--card:#FFFDF6;--ink:#1B2140;--mut:#4A5170;--gold:#8F7311;--violet:#7C5CC9;
 --font:Poppins,"Segoe UI",system-ui,sans-serif;--max:1180px}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{background:var(--cream);color:var(--ink);font-family:var(--font);min-height:100vh}
-::selection{background:var(--amber-lt);color:var(--navy)}
-.skip{position:absolute;left:-999px;top:8px;background:var(--amber-lt);color:var(--navy);
-padding:.5rem 1rem;border-radius:8px;font-weight:700;z-index:99}
-.skip:focus{left:8px}
-a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{
-outline:3px solid var(--amber);outline-offset:2px;border-radius:6px}
-.header{position:sticky;top:0;background:#161D3Df2;backdrop-filter:blur(8px);
-border-bottom:1px solid #B9E6CD2e;z-index:20}
-.bar{max-width:var(--max);margin:auto;display:flex;align-items:center;gap:1rem;
-justify-content:space-between;padding:.6rem 1rem;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:.7rem;text-decoration:none;color:#E8E2D4}
-.brand strong{letter-spacing:.05em}
-.brand small{display:block;color:var(--mint);font-size:.62rem;letter-spacing:.22em;text-transform:uppercase}
-.mono{width:44px;height:44px;flex:none}
-.xnav{display:flex;gap:.2rem;flex-wrap:wrap;justify-content:flex-end}
-.xnav a{color:#E8E2D4;text-decoration:none;font-size:.82rem;letter-spacing:.04em;
-padding:.35rem .6rem;border-radius:8px;border:1px solid transparent}
-.xnav a:hover{color:var(--amber-lt)}
-.xnav a[aria-current]{border-color:#B9E6CD55;color:var(--mint);font-weight:700}
-@media (max-width:560px){.xnav a{font-size:.74rem;padding:.3rem .5rem}}
-.hero{background:var(--cream);text-align:center}
-.hero-in{max-width:var(--max);margin:auto;padding:2.6rem 1rem 1.4rem}
-.eyebrow{color:var(--amber);letter-spacing:.32em;text-transform:uppercase;font-size:.72rem;font-weight:700}
-h1{font-size:clamp(2.1rem,7vw,3.4rem);letter-spacing:.02em;color:var(--navy);font-weight:800;margin:.4rem 0 .5rem}
-h1 span{color:var(--mint-deep)}
-.lead{color:var(--mut);max-width:44rem;margin:0 auto;font-size:.98rem;line-height:1.55}
-.hero .count{display:inline-block;margin-top:1rem;background:var(--card);
-border:1.5px solid var(--navy);border-radius:99px;padding:.4rem 1rem;font-size:.8rem;
-letter-spacing:.08em;color:var(--navy);font-weight:700}
-/* promise strip */
-.journey{max-width:var(--max);margin:auto;padding:1.4rem 1rem .9rem;border-bottom:1px solid #161D3D1a}
-.j-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;text-align:center}
-.j-tier{border-radius:16px;padding:.9rem .5rem .8rem}
-.j-tier svg{width:clamp(44px,9vw,64px);height:clamp(44px,9vw,64px)}
-.j-name{display:block;font-weight:800;letter-spacing:.08em;font-size:clamp(.95rem,3.4vw,1.25rem);margin-top:.35rem}
-.j-tier.play .j-name{color:#B96A14}.j-tier.focus .j-name{color:var(--mint-deep)}.j-tier.free .j-name{color:var(--gold)}
-.j-bold{display:block;color:var(--ink);font-weight:700;font-size:clamp(.72rem,2.6vw,.9rem);margin-top:.3rem}
-.j-more{display:block;color:var(--mut);font-size:clamp(.7rem,2.5vw,.85rem);line-height:1.45;margin-top:.25rem}
-/* player's pick */
-.feature{max-width:var(--max);margin:1.2rem auto 0;padding:0 1rem}
-.feature .panel{background:var(--card);border:2px solid var(--amber);border-radius:18px;
-padding:1.3rem 1.4rem;display:flex;gap:1.1rem;align-items:flex-start;flex-wrap:wrap;box-shadow:0 2px 10px #161D3D14}
-.feature .icon{font-size:3.4rem;line-height:1}
-.feature .eyebrow{font-size:.68rem}
-.feature h2{text-transform:uppercase;letter-spacing:.03em;color:var(--navy)}
-.feature p{color:var(--mut);max-width:38rem;margin:.3rem 0 .7rem;font-size:.9rem;line-height:1.55}
-.btn{display:inline-block;background:var(--amber-lt);color:var(--navy);font-weight:700;
-padding:.55rem 1.2rem;border-radius:10px;text-decoration:none;box-shadow:0 2px 0 #C97F2E}
-.btn:hover{filter:brightness(1.05)}
+body{font-family:var(--font);background:var(--cream);color:var(--ink);line-height:1.5}
+.skip{position:absolute;left:-9999px;top:0;background:var(--amber-lt);color:var(--navy);padding:.6rem 1rem;z-index:99;font-weight:800}
+.skip:focus{left:8px;top:8px}
+a{color:inherit}
+/* header + footer (family chassis) */
+.header{background:var(--navy);color:#E8E2D4;position:sticky;top:0;z-index:40}
+.header .bar{max-width:var(--max);margin:auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.65rem 1rem;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:.6rem;text-decoration:none}
+.mono{width:38px;height:38px}
+.brand strong{display:block;font-size:.85rem;letter-spacing:.12em}
+.brand small{display:block;font-size:.6rem;letter-spacing:.22em;color:#AEB6CE}
+.xnav{display:flex;gap:.25rem;flex-wrap:wrap}
+.xnav a{font-size:.78rem;font-weight:700;text-decoration:none;color:#C9D1E2;padding:.35rem .75rem;border-radius:999px}
+.xnav a:hover{background:#232C55;color:#fff}
+.xnav a[aria-current="page"]{background:var(--mint);color:var(--navy)}
+/* hero */
+.hero{background:linear-gradient(180deg,var(--cream) 0%,var(--cream-dk) 100%);border-bottom:1.5px solid #E0D6C0;padding:2rem 1rem 1.6rem}
+.hero-in{max-width:var(--max);margin:auto;text-align:left}
+.eyebrow{font-size:.7rem;font-weight:800;letter-spacing:.22em;color:var(--mut);text-transform:uppercase}
+.hero h1{font-size:clamp(1.55rem,5.4vw,2.5rem);letter-spacing:.01em;color:var(--navy);margin:.3rem 0 .35rem;text-transform:uppercase}
+.hero h1 span{color:var(--amber)}
+.hero .lead{max-width:36rem;color:var(--mut);font-size:.95rem}
+.promise{display:flex;gap:1.6rem;flex-wrap:wrap;margin:1.1rem 0 .2rem}
+.pv{display:flex;flex-direction:column;align-items:center;gap:.15rem;min-width:86px}
+.pv svg{width:34px;height:34px}
+.pv b{font-size:.82rem;letter-spacing:.14em;color:var(--navy)}
+.pv small{font-size:.66rem;color:var(--mut);text-align:center}
+.explore{display:inline-block;margin-top:1rem;font-weight:800;font-size:.82rem;letter-spacing:.06em;color:var(--navy);background:var(--card);border:2px solid var(--navy);border-radius:999px;padding:.6rem 1.4rem;text-decoration:none}
+.explore:hover{background:var(--navy);color:#FFF6E8}
+/* sections */
+.wrap{max-width:var(--max);margin:auto;padding:0 1rem}
+.sec{padding:1.6rem 0 1rem}
+.sec h2{font-size:1.05rem;letter-spacing:.08em;text-transform:uppercase;color:var(--navy)}
+.sec h2 small{font-weight:700;color:var(--mut);letter-spacing:.02em;text-transform:none;font-size:.8rem}
+.sub{color:var(--mut);font-size:.82rem;margin:.2rem 0 .9rem}
+/* top picks scroller */
+.rail{display:flex;gap:.8rem;overflow-x:auto;padding:.3rem .1rem 1rem;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.rail::-webkit-scrollbar{height:8px}
+.rail::-webkit-scrollbar-thumb{background:#D9CDB2;border-radius:99px}
+.pick{scroll-snap-align:start;flex:0 0 236px;background:var(--card);border:1.5px solid #E0D6C0;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;text-decoration:none;transition:transform .16s ease,box-shadow .16s ease}
+.pick.lead{flex-basis:270px;border:2px solid var(--violet)}
+.pick:hover{transform:translateY(-3px);box-shadow:0 10px 22px #1B214022}
+.pick:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.pick .art{height:96px;display:flex;align-items:center;justify-content:center;font-size:2.6rem}
+.pick .bd{padding:.7rem .8rem .8rem;display:flex;flex-direction:column;gap:.4rem;flex:1}
+.badge{align-self:flex-start;font-size:.6rem;font-weight:800;letter-spacing:.12em;background:var(--navy);color:var(--mint);border-radius:999px;padding:.22rem .6rem}
+.pick h3{font-size:.95rem;color:var(--navy);line-height:1.2}
+.tagc{align-self:flex-start;font-size:.64rem;font-weight:700;color:var(--mint-deep);background:#E4F0E8;border-radius:999px;padding:.18rem .55rem}
+.take{margin-top:auto;background:#FBF3DE;border:1.5px solid #ECD9A8;border-radius:10px;padding:.5rem .6rem;font-size:.72rem;line-height:1.45;color:#5A4A1E}
+.take b{color:var(--gold);letter-spacing:.04em}
 /* toolbar */
-.toolbar{max-width:var(--max);margin:auto;padding:1.1rem 1rem .4rem;display:flex;gap:.7rem;flex-wrap:wrap}
-.toolbar label{display:flex;flex-direction:column;gap:.3rem;font-size:.72rem;
-letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-weight:700;flex:1;min-width:150px}
-.toolbar input,.toolbar select{background:var(--card);border:1.5px solid #161D3D55;border-radius:99px;
-color:var(--ink);font:inherit;font-size:.92rem;padding:.55rem 1rem;width:100%}
-.toolbar input::placeholder{color:#4A517099}
-.toolbar select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23161D3D' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
-background-repeat:no-repeat;background-position:right 1rem center;padding-right:2.2rem}
-.status{max-width:var(--max);margin:auto;padding:.3rem 1rem;color:var(--mut);font-size:.85rem}
-.grid{max-width:var(--max);margin:auto;padding:.8rem 1rem 1.2rem;display:grid;
-grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.9rem}
-.card{background:var(--card);border:2px solid #161D3D22;border-top:5px solid var(--accent,#F2A24A);
-border-radius:16px;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.45rem;box-shadow:0 1px 4px #161D3D0d}
-.card .icon{font-size:2rem;line-height:1}
-.card .kind{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:var(--mut)}
-.card h3{font-size:1rem;line-height:1.3}
-.card h3 a{color:var(--navy);text-decoration:none}
-.card h3 a:hover{text-decoration:underline}
-.card p{color:var(--mut);font-size:.85rem;line-height:1.5;flex:1}
-.sig{max-width:var(--max);margin:2rem auto 0;padding:0 1rem}
-.sig>div{background:var(--cream-dk);border:1px solid #161D3D1f;border-radius:14px;padding:1rem 1.2rem;
-display:flex;gap:.8rem;align-items:flex-start;color:var(--mut);font-size:.9rem;line-height:1.55}
-.sig b{color:var(--ink)}
-.sig a{color:var(--mint-deep);font-weight:600}
-.sig .wave{font-size:1.4rem;line-height:1}
-.footer{background:var(--navy);color:#E8E2D4;margin-top:2.2rem;padding:1.4rem 0 1rem}
-.footer .bar{justify-content:flex-start}
-.footer p{font-weight:600}
-.footer small{color:#E8E2D4b3}
-.footer a{color:inherit}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+.bar2{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin:.2rem 0 .8rem}
+.search{flex:1;min-width:220px;display:flex;background:var(--card);border:2px solid var(--navy);border-radius:999px;overflow:hidden}
+.search input{flex:1;border:0;background:transparent;font:inherit;font-size:.9rem;padding:.6rem 1.1rem;color:var(--ink)}
+.search input:focus{outline:none}
+.search svg{width:20px;height:20px;margin:auto .9rem auto 0}
+select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid #C9C0AB;border-radius:999px;padding:.55rem .9rem}
+.chips{display:flex;gap:.45rem;flex-wrap:nowrap;overflow-x:auto;padding-bottom:.4rem}
+.chip{font-size:.72rem;font-weight:800;letter-spacing:.06em;color:var(--ink);background:var(--card);border:1.5px solid #C9C0AB;border-radius:999px;padding:.42rem .95rem;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--navy);color:var(--mint);border-color:var(--navy)}
+.countline{font-size:.78rem;color:var(--mut);margin:.4rem 0 0}
+/* themed grids */
+.tgrids{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem}
+.tg h3{font-size:.78rem;letter-spacing:.1em;color:var(--mut);margin-bottom:.55rem}
+.tg h3 b{color:var(--navy)}
+.tg .cards{display:grid;gap:.6rem}
+/* cards (grid + classroom) */
+.gcard{display:flex;gap:.7rem;background:var(--card);border:1.5px solid #E0D6C0;border-left-width:6px;border-radius:12px;padding:.6rem .7rem;text-decoration:none;align-items:center;transition:transform .14s ease}
+.gcard:hover{transform:translateY(-2px)}
+.gcard:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.gcard .ic{flex:0 0 44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.45rem}
+.gcard .tx{min-width:0}
+.gcard h4{font-size:.86rem;color:var(--navy);line-height:1.2;display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+.mini{font-size:.55rem;font-weight:800;letter-spacing:.1em;background:var(--navy);color:var(--mint);border-radius:999px;padding:.14rem .45rem}
+.gcard p{font-size:.7rem;color:var(--mut);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gcard .qt{font-size:.68rem;color:#5A4A1E;background:#FBF3DE;border-radius:8px;padding:.25rem .5rem;margin-top:.25rem;display:inline-block}
+/* classroom favourites rail */
+.class .gcard{flex:0 0 250px}
+/* all grid */
+#allGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.7rem}
+.empty{color:var(--mut);font-size:.85rem;padding:.8rem 0}
+/* from matt + footer */
+.frommatt{background:var(--cream-dk);border-top:1.5px solid #E0D6C0;padding:1.4rem 1rem;margin-top:1.6rem}
+.frommatt .wrap{max-width:760px;font-size:.85rem;color:var(--mut)}
+.frommatt b{color:var(--navy)}
+.footer{background:var(--navy);color:#C9D1E2;padding:1.8rem 1rem 1.4rem;text-align:center}
+.footer .bar{display:flex;flex-direction:column;align-items:center;gap:.5rem}
+.footer .mono{width:44px;height:44px}
+.footer .line1{font-weight:700;color:#E8E2D4;font-size:.9rem}
+.footer .line2{font-size:.75rem}
+.kofi{display:inline-flex;align-items:center;gap:8px;background:var(--amber-lt);color:var(--navy);font-weight:700;font-size:.85rem;padding:9px 16px;border-radius:8px;text-decoration:none;box-shadow:0 2px 0 #C97F2E;margin:.9rem 0 .3rem}
+.footer .contact{font-size:.78rem;opacity:.85}
+.footer .contact a{color:inherit;font-weight:600}
+@media (prefers-reduced-motion:reduce){.pick,.gcard{transition:none}.pick:hover,.gcard:hover{transform:none}html{scroll-behavior:auto}}
 </style></head><body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="header"><div class="bar">
@@ -100,67 +112,166 @@ display:flex;gap:.8rem;align-items:flex-start;color:var(--mut);font-size:.9rem;l
 <nav class="xnav" aria-label="Made by Matt collections"><a href="https://madebymatt.uk/">Home</a><a href="https://madebymatt.uk/games/" aria-current="page">Games</a><a href="https://madebymatt.uk/Lessons/">Lessons</a><a href="https://madebymatt.uk/Matt-s-Apps-/">Apps</a><a href="https://madebymatt.uk/tools/">Tools</a><a href="https://madebymatt.uk/resources/">Resources</a></nav>
 </div></header>
 <main id="main">
+
 <section class="hero"><div class="hero-in">
 <p class="eyebrow">A Made by Matt collection</p>
-<h1>THE <span>ARCADE</span></h1>
-<p class="lead">Bite-sized challenges, infinite fun — built one game at a time. No installs, no accounts, straight from the browser.</p>
-<span class="count" id="count" aria-live="polite">Loading…</span>
+<h1>MATT'S <span>CURATED FAVS</span> HUB</h1>
+<p class="lead">A personally selected showcase of the challenges that are truly infinite fun — skill, strategy and pure enjoyment, direct to you. Every game plays free in the browser: no installs, no accounts, no ads.</p>
+<div class="promise">
+<div class="pv"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7.5" width="19" height="10" rx="5" fill="none" stroke="#E08A2E" stroke-width="1.9"/><path d="M8 10.2v4.6M5.7 12.5h4.6" stroke="#E08A2E" stroke-width="1.8" stroke-linecap="round"/><circle cx="15.6" cy="11" r="1.15" fill="#E08A2E"/><circle cx="18.2" cy="13.6" r="1.15" fill="#E08A2E"/></svg><b>PLAY</b><small>Picked for feel</small></div>
+<div class="pv"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6" fill="none" stroke="#2F6B4D" stroke-width="1.9"/><circle cx="12" cy="12" r="4.6" fill="none" stroke="#2F6B4D" stroke-width="1.8"/><circle cx="12" cy="12" r="1.5" fill="#2F6B4D"/></svg><b>FOCUS</b><small>Chosen for strategy</small></div>
+<div class="pv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3 5 13.5h5L10.5 21 19 10.5h-5L13 3Z" fill="none" stroke="#8F7311" stroke-width="1.9" stroke-linejoin="round"/></svg><b>FREE</b><small>Always — no ads</small></div>
+</div>
+<a class="explore" href="#picks" id="exploreBtn">EXPLORE MATT'S PICKS</a>
 </div></section>
 
-<section class="journey" aria-label="What every game promises">
-<div class="j-grid">
-<div class="j-tier play">
-<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="20" width="52" height="26" rx="13" fill="#232C55"/><path d="M20 27 v12 M14 33 h12" stroke="#B9E6CD" stroke-width="4" stroke-linecap="round"/><circle cx="42" cy="30" r="3.4" fill="#F2A24A"/><circle cx="49" cy="36" r="3.4" fill="#E05A4E"/></svg>
-<span class="j-name">PLAY</span>
-<span class="j-bold">Pick up and play.</span>
-<span class="j-more">Every game is a single file that runs on any screen — phone, tablet or whiteboard — even offline.</span>
-</div>
-<div class="j-tier focus">
-<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="22" fill="none" stroke="#4C9A6F" stroke-width="5"/><circle cx="32" cy="32" r="12" fill="none" stroke="#232C55" stroke-width="5"/><circle cx="32" cy="32" r="4.5" fill="#F2A24A"/></svg>
-<span class="j-name">FOCUS</span>
-<span class="j-bold">Attention is the game.</span>
-<span class="j-more">Designed in a real classroom to turn focus and decision-making into the core experience.</span>
-</div>
-<div class="j-tier free">
-<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6 L37.2 26.8 L58 32 L37.2 37.2 L32 58 L26.8 37.2 L6 32 L26.8 26.8 Z" fill="#F2A24A"/><path d="M32 20 L34.4 29.6 L44 32 L34.4 34.4 L32 44 L29.6 34.4 L20 32 L29.6 29.6 Z" fill="#FFE1B8"/></svg>
-<span class="j-name">FREE</span>
-<span class="j-bold">Free, forever.</span>
-<span class="j-more">Made for my pupils first, shared with everyone. No ads, no paywalls — just games.</span>
-</div>
-</div>
-</section>
+<section class="sec" id="picks"><div class="wrap">
+<h2>Matt's personal top picks</h2>
+<p class="sub">The five I'd put in front of anyone first — and one line each on why.</p>
+<div class="rail" id="topRail" aria-label="Matt's top picks"></div>
+</div></section>
 
-<div class="feature" id="feature"></div>
-<div class="toolbar">
-<label>Search<input id="search" type="search" placeholder="Try: runner, puzzle, class…" autocomplete="off"></label>
-<label>Style<select id="tag"><option value="">All styles</option></select></label>
-</div><p class="status" id="status"></p><div class="grid" id="cards"></div>
+<section class="sec"><div class="wrap">
+<div class="bar2">
+<label class="search" aria-label="Search all games"><input type="search" id="q" placeholder="Search the shelf — snake, physics, cards…"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="#C97F2E" stroke-width="2.4"/><path d="M15.5 15.5 21 21" stroke="#C97F2E" stroke-width="2.6" stroke-linecap="round"/></svg></label>
+<select id="sort" aria-label="Sort games"><option value="curated">Curated first</option><option value="az">A to Z</option><option value="tag">By tag</option></select>
+</div>
+<div class="chips" id="chips" role="group" aria-label="Filter by tag"></div>
+<p class="countline" id="countline">Loading the shelf…</p>
+</div></section>
+
+<section class="sec"><div class="wrap">
+<h2>Themed favourites <small>· curated grids</small></h2>
+<div class="tgrids" id="tgrids"></div>
+</div></section>
+
+<section class="sec class"><div class="wrap">
+<h2>Classroom favourites</h2>
+<p class="sub">Built for my own classes and road-tested in front of them — the whole-class games my pupils actually ask for.</p>
+<div class="rail" id="classRail" aria-label="Classroom favourites"></div>
+</div></section>
+
+<section class="sec"><div class="wrap">
+<h2>The whole shelf</h2>
+<p class="sub" id="shelfSub">Every game, A to Z — search and filters above work on this grid.</p>
+<div id="allGrid"></div>
+<p class="empty" id="empty" hidden>No games match that — clear the search or tap the chip off to see the shelf again.</p>
+</div></section>
+
 </main>
-<aside class="sig"><div><span class="wave" aria-hidden="true">👋</span><p><b>From Matt</b> — I teach science and art in an alternative provision in the North East, and every file on this shelf started life in front of a real class. It’s all free and it stays that way. Spotted a bug or got an idea? <a href="mailto:contactmadebymatt@gmail.com">Tell me</a> — I read everything.</p></div></aside>
-<footer class="footer"><div class="bar"><svg class="mono" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47" fill="none" stroke="#B9E6CD" stroke-width="3.4"/><g transform="translate(0 2)"><path d="M28 71 L28 37 L50 59 L72 37 L72 71" fill="none" stroke="#E8E2D4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M50 22.5 L51.48 28.52 L57.5 30 L51.48 31.48 L50 37.5 L48.52 31.48 L42.5 30 L48.52 28.52 Z" fill="#F2A24A"/></g></svg>
-<div><p>Made by Matt · Learn • Build • Explore</p>
-<small>Single-file · offline-first · hand-built in Teesside</small></div>
-</div><p class="mbm-kofi" style="text-align:center;margin:14px auto 4px"><a href="https://ko-fi.com/madebymattuk" style="display:inline-flex;align-items:center;gap:8px;background:#F2A24A;color:#161D3D;font-weight:700;font-size:.9rem;padding:10px 18px;border-radius:8px;text-decoration:none;box-shadow:0 2px 0 #C97F2E">☕ Buy me a coffee</a></p>
-<p class="mbm-contact" style="text-align:center;font-size:.85rem;opacity:.85;margin:16px auto 10px;max-width:90%">Questions, ideas or bug reports — <a href="mailto:contactmadebymatt@gmail.com" style="color:inherit;font-weight:600">contactmadebymatt@gmail.com</a></p>
-</footer>
-<script>const $=s=>document.querySelector(s);
-const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-function fillSelect(id,vals){const el=$("#"+id);[...new Set(vals)].sort().forEach(v=>{
-const o=document.createElement("option");o.textContent=v;el.appendChild(o)})}
-let ALL=[];
-function card(g){return `<article class="card" style="--accent:${esc(g.hue||"#F2A24A")}">
-<div class="icon" aria-hidden="true">${esc(g.icon||"🎮")}</div>
-<div class="kind">${esc(g.tag||"Game")}</div>
-<h3><a href="${esc(g.href)}">${esc(g.title)}</a></h3><p>${esc(g.desc)}</p></article>`}
-function render(){const q=$("#search").value.toLowerCase(),t=$("#tag").value;
-const a=ALL.filter(g=>(!q||[g.title,g.desc,g.tag].join(" ").toLowerCase().includes(q))&&(!t||g.tag===t));
-$("#cards").innerHTML=a.map(card).join("")||'<p class="status">No matches.</p>';
-$("#count").textContent=`${a.length} of ${ALL.length} games`}
-fetch("/Games/games.json").then(r=>r.json()).then(d=>{ALL=d.games;
-const h=ALL.find(g=>g.hero);
-if(h)$("#feature").innerHTML=`<div class="panel"><span class="icon" aria-hidden="true">${esc(h.icon)}</span>
-<div><p class="eyebrow">Player's pick</p><h2>${esc(h.title)}</h2><p>${esc(h.desc)}</p>
-<a class="btn" href="${esc(h.href)}">Play now</a></div></div>`;
-fillSelect("tag",ALL.map(g=>g.tag).filter(Boolean));render()})
-.catch(()=>{$("#count").textContent="Couldn't load games.json"});
-["search","tag"].forEach(id=>$("#"+id).addEventListener(id==="search"?"input":"change",render));</script></body></html>
+<section class="frommatt"><div class="wrap"><p><b>👋 From Matt</b> — I teach science and art in an alternative provision in the North East, and every file on this shelf started life in front of a real class. If a game gives you a good lesson or a good evening, <a href="mailto:contactmadebymatt@gmail.com">tell me</a> — and if it misbehaves, tell me faster.</p></div></section>
+<footer class="footer"><div class="bar">
+<svg class="mono" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47" fill="none" stroke="#B9E6CD" stroke-width="3.4"/><g transform="translate(0 2)"><path d="M28 71 L28 37 L50 59 L72 37 L72 71" fill="none" stroke="#E8E2D4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M50 22.5 L51.48 28.52 L57.5 30 L51.48 31.48 L50 37.5 L48.52 31.48 L42.5 30 L48.52 28.52 Z" fill="#F2A24A"/></g></svg>
+<div class="line1">Made by Matt · Learn · Build · Explore</div>
+<div class="line2">Single-file · offline-first · hand-built in Teesside</div>
+<a class="kofi" href="https://ko-fi.com/madebymattuk">☕ Buy me a coffee</a>
+<div class="contact">Questions, ideas or bug reports — <a href="mailto:contactmadebymatt@gmail.com">contactmadebymatt@gmail.com</a></div>
+</div></footer>
+
+<script>
+(function(){
+"use strict";
+/* Curation — Matt's lever: edit takes/themes/order here. Titles must match games.json. */
+var TAKES={
+"Glitch Clash":"Deeper than it looks. Build the trio, read the clash — pure masterclass.",
+"Hold the Mark":"Our brand as a game. The Focus meter is the whole philosophy.",
+"Orbital":"Gravity you can feel. One more orbit, every time.",
+"Slipstream - GP":"Flow state on wheels.",
+"Grid Chase":"Thirty seconds becomes thirty minutes.",
+"Marble":"Meticulous balancing — deceptively calm.",
+"Trail Runner":"The perfect reset between lessons.",
+"Trekkers Trail Runner — Tees Coast":"Our coast, our miles — the Tees on tap.",
+"Neon Garden":"Ambience and pace. The calm one.",
+"Neon Siege":"Place early, think earlier."
+};
+var TOP=["Glitch Clash","Hold the Mark","Orbital","Slipstream - GP","Grid Chase"];
+var THEMES=[
+ ["PHYSICS & GRAVITY","FAVS",["Orbital","Marble"]],
+ ["REFLEX & SPEED","FAVS",["Trail Runner","Trekkers Trail Runner — Tees Coast","Grid Chase"]],
+ ["CALM & STRATEGY","PICKS",["Neon Garden","Neon Siege"]]
+];
+var CURATED=Object.keys(TAKES);
+var state={q:"",tag:null,sort:"curated",games:[]};
+var $=function(id){return document.getElementById(id)};
+function tint(hue){return hue+"26"}
+function pickCard(g,lead){
+ var a=document.createElement("a");a.className="pick"+(lead?" lead":"");a.href=g.href;
+ a.innerHTML='<div class="art" style="background:'+tint(g.hue)+'">'+(g.icon||"🎮")+'</div>'+
+ '<div class="bd"><span class="badge">MATT\u2019S PICK</span><h3></h3><span class="tagc"></span>'+
+ '<div class="take"><b>Matt\u2019s take:</b> <span></span></div></div>';
+ a.querySelector("h3").textContent=g.title;
+ a.querySelector(".tagc").textContent=g.tag||"";
+ a.querySelector(".take span").textContent="\u201C"+(TAKES[g.title]||"")+"\u201D";
+ return a;
+}
+function gCard(g,withTake){
+ var a=document.createElement("a");a.className="gcard";a.href=g.href;a.style.borderLeftColor=g.hue||"#C9C0AB";
+ var badge=CURATED.indexOf(g.title)>=0?'<span class="mini">MATT\u2019S PICK</span>':"";
+ a.innerHTML='<div class="ic" style="background:'+tint(g.hue||"#C9C0AB")+'">'+(g.icon||"🎮")+'</div>'+
+ '<div class="tx"><h4><span></span>'+badge+'</h4><p></p>'+(withTake&&TAKES[g.title]?'<span class="qt"></span>':"")+'</div>';
+ a.querySelector("h4 span").textContent=g.title;
+ a.querySelector("p").textContent=(g.desc||"").replace(/^NEW\s*·\s*/,"");
+ var q=a.querySelector(".qt");if(q)q.textContent="\u201C"+TAKES[g.title]+"\u201D";
+ return a;
+}
+function render(){
+ var gs=state.games;
+ /* top picks */
+ var rail=$("topRail");rail.textContent="";
+ TOP.forEach(function(t,i){var g=gs.find(function(x){return x.title===t});if(g)rail.appendChild(pickCard(g,i===0))});
+ /* themed grids */
+ var tg=$("tgrids");tg.textContent="";
+ THEMES.forEach(function(th,i){
+  var d=document.createElement("div");d.className="tg";
+  d.innerHTML="<h3>GRID "+(i+1)+": <b></b> "+th[1]+'</h3><div class="cards"></div>';
+  d.querySelector("b").textContent=th[0];
+  var c=d.querySelector(".cards");
+  th[2].forEach(function(t){var g=gs.find(function(x){return x.title===t});if(g)c.appendChild(gCard(g,true))});
+  tg.appendChild(d);
+ });
+ /* classroom favourites = the real class games */
+ var cr=$("classRail");cr.textContent="";
+ gs.filter(function(g){return (g.tag||"")==="Class game"}).forEach(function(g){cr.appendChild(gCard(g,false))});
+ /* chips */
+ var tags=[];gs.forEach(function(g){if(g.tag&&tags.indexOf(g.tag)<0)tags.push(g.tag)});tags.sort();
+ var ch=$("chips");ch.textContent="";
+ tags.forEach(function(t){
+  var b=document.createElement("button");b.className="chip";b.type="button";b.textContent=t.toUpperCase();
+  b.setAttribute("aria-pressed",state.tag===t?"true":"false");
+  b.addEventListener("click",function(){state.tag=(state.tag===t?null:t);render()});
+  ch.appendChild(b);
+ });
+ drawGrid();
+ $("exploreBtn").textContent="EXPLORE MATT\u2019S PICKS ("+CURATED.length+" of "+gs.length+" curated)";
+}
+function drawGrid(){
+ var gs=state.games.slice();
+ var q=state.q.trim().toLowerCase();
+ if(q)gs=gs.filter(function(g){return (g.title+" "+(g.tag||"")+" "+(g.desc||"")).toLowerCase().indexOf(q)>=0});
+ if(state.tag)gs=gs.filter(function(g){return g.tag===state.tag});
+ if(state.sort==="az")gs.sort(function(a,b){return a.title.localeCompare(b.title)});
+ else if(state.sort==="tag")gs.sort(function(a,b){return (a.tag||"").localeCompare(b.tag||"")||a.title.localeCompare(b.title)});
+ else gs.sort(function(a,b){
+  var ca=CURATED.indexOf(a.title)>=0?0:1,cb=CURATED.indexOf(b.title)>=0?0:1;
+  return ca-cb||a.title.localeCompare(b.title);
+ });
+ var grid=$("allGrid");grid.textContent="";
+ gs.forEach(function(g){grid.appendChild(gCard(g,false))});
+ $("empty").hidden=gs.length>0;
+ var n=state.games.length;
+ $("countline").textContent=gs.length===n?
+  (CURATED.length+" curated favourites of "+n+" games — every one free, single-file and offline-friendly."):
+  ("Showing "+gs.length+" of "+n+" games.");
+}
+$("q").addEventListener("input",function(){state.q=this.value;drawGrid()});
+$("sort").addEventListener("change",function(){state.sort=this.value;drawGrid()});
+fetch("/Games/games.json").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){
+ state.games=(d&&d.games)||[];render();
+}).catch(function(){
+ $("countline").textContent="The shelf could not load — refresh to try again, or head to the ";
+ var a=document.createElement("a");a.href="https://madebymatt.uk/resources/?type=Game";a.textContent="catalogue";
+ $("countline").appendChild(a);$("countline").appendChild(document.createTextNode("."));
+});
+})();
+</script>
+</body></html>
