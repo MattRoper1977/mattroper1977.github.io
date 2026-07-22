@@ -16,6 +16,31 @@
 .rx-search input::placeholder{color:#8A93B0}
 /* chip rows */
 .rx-chipzone{background:var(--rx-cream);padding:.9rem 0 .2rem}
+.rx-chipzone{position:sticky;top:0;z-index:30;background:var(--cream,#F6F1E4);box-shadow:0 6px 16px #1B214014;padding-top:.55rem}
+.rx-chipzone .rx-search{background:#0F1530;border:2px solid #3A4470;border-radius:999px;display:flex;align-items:center;gap:.5rem;padding:.1rem .4rem .1rem .9rem;margin:0 1rem .55rem;max-width:680px}
+@media (min-width:720px){.rx-chipzone .rx-search{margin:0 auto .55rem}}
+.rx-chipzone .rx-search input{flex:1;border:0;background:transparent;color:#E8E2D4;font:inherit;font-size:.92rem;padding:.6rem .4rem;min-width:0}
+.rx-chipzone .rx-search input:focus{outline:none}
+.rx-chipzone .rx-search svg{width:20px;height:20px;flex:none}
+.rx-countrow{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin:.7rem 0 .2rem}
+.rx-sortl{font-size:.78rem;font-weight:700;color:#4A5170}
+#rxSort{font:inherit;font-size:.78rem;font-weight:700;color:#1B2140;background:#FFFDF6;border:1.5px solid #C9C0AB;border-radius:999px;padding:.4rem .8rem;margin-left:.3rem}
+.rx-fmt{display:flex;gap:.4rem;align-items:center}
+.rx-fmt svg{width:19px;height:19px;color:#4A5170}
+.rx-actrow{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-top:.3rem}
+a.rx-go{font-size:.66rem;font-weight:800;letter-spacing:.07em;text-decoration:none;color:#FFF6E8;background:#161D3D;border-radius:999px;padding:.42rem .85rem;white-space:nowrap}
+a.rx-go:hover{background:#232C55}
+a.rx-go:focus-visible{outline:3px solid #F2A24A;outline-offset:2px}
+.rx-callout{background:linear-gradient(150deg,#FDF6E4,#FBEDD8);border:2px solid #F2A24A;border-radius:16px;padding:1rem 1.1rem;margin:.2rem 0 .9rem;display:flex;flex-direction:column;gap:.45rem}
+.rx-callout .stamp{align-self:flex-start;font-size:.6rem;font-weight:800;letter-spacing:.1em;background:#E4F0E8;color:#2F6B4D;border:1.5px solid #2F6B4D;border-radius:999px;padding:.22rem .65rem}
+.rx-callout h3{font-size:1rem;color:#161D3D;margin:0}
+.rx-callout p{font-size:.8rem;color:#4A5170;line-height:1.5;margin:0}
+.rx-callout .acts{display:flex;gap:.5rem;flex-wrap:wrap}
+.rx-callout .acts a,.rx-callout .acts button{font:inherit;font-size:.68rem;font-weight:800;letter-spacing:.06em;text-decoration:none;border:1.5px solid #161D3D;color:#161D3D;background:#FFFDF6;border-radius:999px;padding:.4rem .9rem;cursor:pointer}
+.rx-callout .acts a:hover,.rx-callout .acts button:hover{background:#161D3D;color:#FFF6E8}
+.rx-frommatt{background:#EDE5D2;border-top:1.5px solid #E0D6C0;padding:1.3rem 1rem;margin-top:1.4rem}
+.rx-frommatt .in{max-width:760px;margin:auto;font-size:.85rem;color:#4A5170;line-height:1.55}
+.rx-frommatt b{color:#161D3D}
 .rx-chiprow{display:flex;gap:.5rem;overflow-x:auto;padding:.25rem 1rem;max-width:var(--max,1180px);margin:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
 .rx-chip{flex:none;font:inherit;font-size:.85rem;font-weight:700;border-radius:999px;padding:.45rem 1rem;cursor:pointer;white-space:nowrap;border:1.5px solid transparent}
 .rx-chiprow.subs .rx-chip{background:#A7D9BC;color:var(--rx-ink)}
@@ -41,7 +66,7 @@
 .rx-view:hover{border-color:var(--rx-ink)}
 .rx-none{max-width:var(--max,1180px);margin:auto;padding:1rem;color:var(--rx-mut)}
 .rx-chip:focus-visible,.rx-view:focus-visible{outline:3px solid var(--rx-amber);outline-offset:2px}
-@media (min-width:860px){.rx-chiprow{flex-wrap:wrap;overflow:visible}}
+@media (min-width:860px){.rx-chiprow{flex-wrap:nowrap}}
 </style></head><body><a class="skip" href="#main">Skip to content</a><header class="header"><div class="bar"><a class="brand" href="../index.html"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav" id="nav" aria-label="Main navigation"><a href="../games/">Games</a><a href="../Lessons/">Lessons</a><a href="../Matt-s-Apps-/">Apps</a><a href="../tools/">Tools</a><a href="./" aria-current="page">Resources</a><a href="../index.html#about">About</a></nav></div></header>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <symbol id="rxi-beaker" viewBox="0 0 24 24"><path d="M9 3h6M10 3v5l-5 9a2.5 2.5 0 0 0 2.2 3.7h9.6A2.5 2.5 0 0 0 19 17l-5-9V3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 14.5h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17.4" r="1.1" fill="currentColor"/></symbol>
@@ -67,18 +92,18 @@
 <p class="eyebrow">Resource catalogue</p>
 <h1>Find the right <span>experience.</span></h1>
 <p class="lead">Every interactive lesson, simulation, activity and teacher tool in one searchable catalogue.</p>
-<div class="rx-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="#F2A24A" stroke-width="2.4"/><path d="M15.5 15.5 21 21" stroke="#F2A24A" stroke-width="2.6" stroke-linecap="round"/></svg><input id="rxSearch" type="search" placeholder="Search Physics, trekkers, simulations…" aria-label="Search the catalogue" autocomplete="off"></div>
 </div></section>
-<div class="rx-chipzone">
+<div class="rx-chipzone" id="rxSticky">
+<div class="rx-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="#F2A24A" stroke-width="2.4"/><path d="M15.5 15.5 21 21" stroke="#F2A24A" stroke-width="2.6" stroke-linecap="round"/></svg><input id="rxSearch" type="search" placeholder="Search Physics, trekkers, simulations…" aria-label="Search the catalogue" autocomplete="off"></div>
 <div class="rx-chiprow subs" id="rxSubs" aria-label="Filter by subject"></div>
 <div class="rx-chiprow types" id="rxTypes" aria-label="Filter by type"></div>
-<p class="rx-count" id="rxCount" aria-live="polite">Loading resources…</p>
 </div>
-<div class="rx-body"><div id="rxOut"></div>
+<div class="rx-body"><div class="rx-countrow"><p class="rx-count" id="rxCount" aria-live="polite">Loading resources…</p><label class="rx-sortl">Sort <select id="rxSort"><option value="feat">Featured first</option><option value="az">A to Z</option><option value="new">Newest</option></select></label></div><div id="rxOut"></div>
 
 <section class="standard" id="collections" style="background:transparent"><div class="wrap" style="padding-top:1.6rem"><div class="section-head"><div><p class="eyebrow">Prefer to browse?</p><h2 style="font-size:clamp(1.6rem,4.5vw,2.6rem)">Jump to a collection.</h2></div></div><div class="standards"><a class="standard-card" href="../games/" style="text-decoration:none;color:inherit;display:block"><b>🎮 Games &amp; simulations</b><p>Every playable experience in one place — press play and go.</p></a><a class="standard-card" href="../Lessons/" style="text-decoration:none;color:inherit;display:block"><b>📚 Lesson Hub</b><p>Interactive lesson packs and print-ready resources, organised by subject.</p></a><a class="standard-card" href="../Matt-s-Apps-/" style="text-decoration:none;color:inherit;display:block"><b>🎨 Studio Suite</b><p>The offline creative workshop — 28 single-file studios.</p></a><a class="standard-card" href="../tools/" style="text-decoration:none;color:inherit;display:block"><b>🛠️ Teacher tools</b><p>UAS Register, ASDAN Register and the full specialist staff toolkit.</p></a></div></div></section>
 </div>
 </main>
+<section class="rx-frommatt"><div class="in"><b>👋 From Matt</b> — I teach science and art in an alternative provision in the North East, and everything in this catalogue started life in front of a real class. If something saves you an evening, <a href="mailto:contactmadebymatt@gmail.com">tell me</a> — and if it misbehaves, tell me faster.</div></section>
 <footer class="footer"><div class="bar"><div class="brand"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></div><span class="muted">Interactive lessons, simulations and games · madebymatt.uk</span></div><div class="mbm-kofi" style="max-width:640px;margin:18px auto 6px;background:#161D3D;border:1px solid rgba(185,230,205,.35);border-radius:10px;padding:16px 18px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;justify-content:space-between"><p style="font-size:.85rem;color:#C9D1E2;line-height:1.45;max-width:380px;margin:0;text-align:left;text-transform:none;letter-spacing:normal"><strong style="color:#E8E2D4">Everything here is free to use.</strong> If a lesson or tool has saved you an evening, a coffee helps cover hosting, domains and development time.</p><a href="https://ko-fi.com/madebymattuk" style="display:inline-flex;align-items:center;gap:8px;background:#F2A24A;color:#161D3D;font-weight:700;font-size:.9rem;padding:10px 18px;border-radius:8px;text-decoration:none;box-shadow:0 2px 0 #C97F2E">☕ Support Made by Matt</a></div>
 <p class="mbm-contact" style="text-align:center;font-size:.85rem;opacity:.85;margin:16px auto 10px;max-width:90%">Questions, ideas or bug reports — <a href="mailto:contactmadebymatt@gmail.com" style="color:inherit;font-weight:600">contactmadebymatt@gmail.com</a></p>
 </footer>
@@ -91,12 +116,33 @@ function accentFor(s){let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))>
 const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
 const ICONS=[[/chem/i,'beaker'],[/physic|intervention/i,'atom'],[/biolog/i,'leaf'],[/primary/i,'rocket'],[/humanit/i,'scroll'],[/art/i,'palette'],[/game/i,'pad'],[/trekker/i,'boot'],[/river/i,'wave'],[/pshe|asdan/i,'heart'],[/assembly/i,'mega'],[/vocational|pfa/i,'hammer'],[/tutor|kcsie/i,'shield'],[/cpd|planning/i,'clip'],[/local/i,'pin']];
 function iconFor(s){for(const[re,k]of ICONS)if(re.test(s))return k;return /interven/i.test(s)?'target':'star'}
-let ALL=[],SUB="",TYPE="";
-function normLessons(l){return l.filter(r=>r.subject!=="Live Lessons").map(r=>({title:r.title||'Untitled',description:r.desc||'',subject:r.subject||'General',type:cap(r.type||'Resource'),path:r.file?(/^https?:/.test(r.file)?r.file:'/Lessons/'+encodeURI(r.file)):null,tags:Array.isArray(r.keywords)?r.keywords:[],status:r.new?'New':'Published',popular:!!r.featured,accent:accentFor(r.subject||'General')}))}
-function normSite(l){return l.filter(r=>r.subject!=="Live Lessons").map(r=>({title:r.title||'Untitled',description:r.description||'',subject:r.subject||'General',type:r.type||'Resource',path:r.path||null,tags:Array.isArray(r.tags)?r.tags:[],status:r.status||'Published',popular:r.featured!==false,accent:r.accent||accentFor(r.subject||'General')}))}
+let ALL=[],SUB="",TYPE="",BROWSING=true,SORT="feat";
+function normLessons(l){return l.filter(r=>r.subject!=="Live Lessons").map(r=>({title:r.title||'Untitled',description:r.desc||'',subject:r.subject||'General',type:cap(r.type||'Resource'),path:r.file?(/^https?:/.test(r.file)?r.file:'/Lessons/'+encodeURI(r.file)):null,tags:Array.isArray(r.keywords)?r.keywords:[],status:r.new?'New':'Published',popular:!!r.featured,year:r.year||'',added:r.added||'',accent:accentFor(r.subject||'General')}))}
+function normSite(l){return l.filter(r=>r.subject!=="Live Lessons").map(r=>({title:r.title||'Untitled',description:r.description||'',subject:r.subject||'General',type:r.type||'Resource',path:r.path||null,tags:Array.isArray(r.tags)?r.tags:[],status:r.status||'Published',popular:r.featured!==false,year:'',added:'',accent:r.accent||accentFor(r.subject||'General')}))}
+const SUITE="Art · Teesside Studio Suite";
+const PRINTPACK=new Set([SUITE,"Humanities","BUILD Vocational & PfA","GROW Vocational & PfA"]);
+const FIC={screen:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 16v3M8.5 21h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+print:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V4h10v4M7 16h10v5H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><rect x="4" y="8" width="16" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>',
+tiers:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16h5v4H5zM9.5 10h5v10h-5zM14 4h5v16h-5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>',
+pad:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7.5" width="19" height="10" rx="5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10.2v4.6M5.7 12.5h4.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="15.6" cy="11" r="1.1" fill="currentColor"/><circle cx="18.2" cy="13.6" r="1.1" fill="currentColor"/></svg>',
+tab:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="18" r="1.1" fill="currentColor"/></svg>'};
+function isPack(r){return r.year==="2026-27"&&(r.type==="Lesson"||r.type==="Revision")&&PRINTPACK.has(r.subject)}
+function fmtIcons(r){const o=[];
+if(r.type==="Lesson"||r.type==="Revision")o.push([FIC.screen,"whiteboard slideshow"]);
+if(isPack(r)){o.push([FIC.print,"print pack inside the lesson"]);o.push([FIC.tiers,"three tiers"])}
+if(r.type==="Game")o.push([FIC.pad,"game"]);
+if(r.type==="Teacher"||r.type==="Pupil")o.push([FIC.tab,"interactive"]);
+return o.length?`<div class="rx-fmt">${o.map(x=>`<span title="${x[1]}" aria-label="${x[1]}" role="img">${x[0]}</span>`).join("")}</div>`:""}
+function actLabel(r){return {Lesson:"LAUNCH SLIDES →",Revision:"LAUNCH SLIDES →",Game:"PLAY →",Hub:"OPEN HUB →",Teacher:"OPEN TOOL →",Pupil:"OPEN APP →",Support:"OPEN PACK →"}[r.type]||"OPEN →"}
 function card(r){
-const link=r.path?`<a class="rx-view" href="${esc(r.path)}">View resource →</a>`:'<span class="rx-badge">Coming soon</span>';
-return `<article class="rx-cardx" style="--accent:${esc(r.accent)}"><svg class="rx-ico" aria-hidden="true"><use href="#rxi-${iconFor(r.subject)}"/></svg><div class="rx-kind">${esc(r.type)} · ${esc(r.subject)}</div><h3>${esc(r.title)}</h3><p>${esc(r.description)}</p><div class="rx-foot"><span class="rx-badge${r.status==='New'?' new':''}">${esc(r.status)}</span>${link}</div></article>`}
+const kind=BROWSING?"":`<div class="rx-kind">${esc(r.type)} · ${esc(r.subject)}</div>`;
+const badge=r.status==="New"?'<span class="rx-badge new">New</span>':(BROWSING?"":`<span class="rx-badge">${esc(r.status)}</span>`);
+const act=r.path?`<a class="rx-go" href="${esc(r.path)}">${actLabel(r)}</a>`:'<span class="rx-badge">Coming soon</span>';
+return `<article class="rx-cardx" style="--accent:${esc(r.accent)}"><svg class="rx-ico" aria-hidden="true"><use href="#rxi-${iconFor(r.subject)}"/></svg>${kind}<h3>${esc(r.title)}</h3><p>${esc(r.description)}</p><div class="rx-foot">${badge}</div><div class="rx-actrow">${fmtIcons(r)}${act}</div></article>`}
+function suiteCallout(n){return `<div class="rx-callout"><span class="stamp">ARTS AWARD MAPPED ✓ · AQA UAS ALIGNED</span>
+<h3>Teesside Art Studio Suite</h3>
+<p>The full-term art programme: ${n} studio lessons across BUILD (Explore), GROW (Bronze) and LAUNCH (Silver) — every one a whiteboard slideshow with three tiers and a print pack off the title slide.</p>
+<div class="acts"><button type="button" id="rxSuiteBtn">Browse the suite</button><a href="/Lessons/">Open the Lesson Hub →</a></div></div>`}
 function chips(){
 const sc={},tc={};ALL.forEach(r=>{sc[r.subject]=(sc[r.subject]||0)+1;tc[r.type]=(tc[r.type]||0)+1});
 const mk=(label,val,on,key)=>`<button class="rx-chip" data-${key}="${esc(val)}" aria-pressed="${on?'true':'false'}">${esc(label)}</button>`;
@@ -107,15 +153,18 @@ function render(){
 const q=$("#rxSearch").value.toLowerCase();
 const a=ALL.filter(r=>(!q||[r.title,r.description,r.subject,r.type,...(r.tags||[])].join(' ').toLowerCase().includes(q))&&(!SUB||r.subject===SUB)&&(!TYPE||r.type===TYPE));
 $("#rxCount").textContent=`Showing ${a.length} of ${ALL.length} resources`;
-const browsing=!q&&!SUB&&!TYPE;
+const browsing=!q&&!SUB&&!TYPE;BROWSING=browsing;
+if(SORT==="az")a.sort((x,y)=>x.title.localeCompare(y.title));
+else if(SORT==="new")a.sort((x,y)=>String(y.added).localeCompare(String(x.added)));
+else a.sort((x,y)=>(y.popular-x.popular)||((y.status==="New")-(x.status==="New"))||x.title.localeCompare(y.title));
 if(!a.length){$("#rxOut").innerHTML='<p class="rx-none">No matching resources — try fewer words.</p>';return}
 if(browsing){
 const pop=a.filter(r=>r.popular).slice(0,4);
 const bySub={};a.forEach(r=>{(bySub[r.subject]=bySub[r.subject]||[]).push(r)});
 $("#rxOut").innerHTML=(pop.length?`<section class="rx-sec"><h2>Popular resources</h2></section><div class="rx-grid">${pop.map(card).join('')}</div>`:'')+
-Object.keys(bySub).sort().map(s=>`<section class="rx-sec"><h2>${esc(s)} · ${bySub[s].length}</h2></section><div class="rx-grid">${bySub[s].map(card).join('')}</div>`).join('');
+Object.keys(bySub).sort().map(s=>`<section class="rx-sec"><h2>${esc(s)} · ${bySub[s].length}</h2></section>${s===SUITE?suiteCallout(bySub[s].length):""}<div class="rx-grid">${bySub[s].map(card).join('')}</div>`).join('');
 }else{
-$("#rxOut").innerHTML=`<section class="rx-sec"><h2>Results</h2></section><div class="rx-grid">${a.map(card).join('')}</div>`;
+$("#rxOut").innerHTML=(SUB===SUITE&&!q&&!TYPE?suiteCallout(a.length):"")+`<section class="rx-sec"><h2>Results</h2></section><div class="rx-grid">${a.map(card).join('')}</div>`;
 }}
 const grab=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.json()}).catch(()=>[]);
 Promise.all([grab('/Lessons/resources.json'),grab('/data/resources.json')]).then(([les,site])=>{
@@ -129,6 +178,10 @@ chips();render()});
 $("#rxSubs").addEventListener("click",e=>{const b=e.target.closest("[data-sub]");if(!b)return;SUB=(b.dataset.sub===SUB)?"":b.dataset.sub;chips();render()});
 $("#rxTypes").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(!b)return;TYPE=(b.dataset.type===TYPE)?"":b.dataset.type;chips();render()});
 $("#rxSearch").addEventListener("input",render);
+$("#rxSort").addEventListener("change",function(){SORT=this.value;render()});
+document.addEventListener("click",e=>{if(e.target&&e.target.id==="rxSuiteBtn"){SUB=SUITE;TYPE="";$("#rxSearch").value="";chips();render()}});
+function stickTop(){const h=document.querySelector(".header");const el=document.getElementById("rxSticky");if(h&&el)el.style.top=(h.offsetHeight-1)+"px"}
+stickTop();window.addEventListener("resize",stickTop);
 })();
 </script>
 <script src="../app.js"></script></body></html>
