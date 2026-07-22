@@ -16,6 +16,7 @@
   --amber:#a8641a; --amber-bg:#faeeda;
   --danger:#a12626; --danger-bg:#f8e5e5;
   --gold:#b8860b;
+  --today:#0e4f4a;
   --radius:10px;
   --shadow:0 1px 3px rgba(21,48,44,.12);
   --serif:"Iowan Old Style", Georgia, "Times New Roman", serif;
@@ -131,13 +132,42 @@ table.list tr:last-child td{border-bottom:none}
   @page{size:A4 portrait;margin:11mm}
 }
 @media (max-width:640px){main{padding:12px 8px 80px}}
+
+/* ===== v2.5 ===== */
+.td-term{background:var(--mint);border:1.5px solid var(--mint-line);border-radius:var(--radius);padding:8px 12px;font-weight:700;color:var(--ink);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.td-term small{font-weight:600;color:#3f5a55}
+.td-slot{margin-top:12px}
+.td-slot h3{margin:0 0 6px;font-size:.95rem;color:var(--asdan)}
+.td-slot h3 small{color:#4a6a64;font-weight:600}
+.td-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.td-pupil{position:relative;border:2px solid var(--mint-line);background:#fff;border-radius:12px;padding:12px 10px 10px;text-align:center;cursor:pointer;font-weight:700;color:var(--ink);user-select:none;min-height:58px}
+.td-pupil .st{display:block;font-size:.68rem;font-weight:800;letter-spacing:.08em;margin-top:4px;color:#6b7f7a}
+.td-pupil[data-m="P"]{background:var(--stamp-bg);border-color:var(--stamp)}
+.td-pupil[data-m="P"] .st{color:var(--stamp)}
+.td-pupil[data-m="L"]{background:var(--amber-bg);border-color:var(--amber)}
+.td-pupil[data-m="L"] .st{color:var(--amber)}
+.td-pupil[data-m="A"]{background:#f1f1f1;border-color:#9aa5a2;opacity:.75}
+.td-rag{position:absolute;top:6px;right:6px;width:16px;height:16px;border-radius:50%;border:1.5px solid #9aa5a2;background:#fff;cursor:pointer}
+.td-rag[data-r="G"]{background:var(--stamp);border-color:var(--stamp)}
+.td-rag[data-r="A"]{background:var(--amber);border-color:var(--amber)}
+.td-rag[data-r="R"]{background:var(--danger);border-color:var(--danger)}
+.td-note{width:100%;box-sizing:border-box;margin-top:8px;border:1.5px solid var(--mint-line);border-radius:8px;padding:7px 9px;font:inherit;font-size:.85rem}
+.td-nudge{border-left:4px solid var(--amber);background:var(--amber-bg);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:.85rem}
+.td-nudge.good{border-left-color:var(--stamp);background:var(--stamp-bg)}
+.td-empty{color:#557069;font-size:.9rem}
+.v25-list{margin-top:8px;display:grid;gap:6px}
+.v25-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:#fff;border:1.5px solid var(--mint-line);border-radius:8px;padding:6px 8px;font-size:.85rem}
+.v25-row b{color:var(--asdan)}
+.v25-del{margin-left:auto;background:none;border:0;color:var(--danger);font-weight:800;cursor:pointer}
+.v25-days label{margin-right:6px;font-size:.8rem;font-weight:600}
 </style>
 </head>
 <body>
 <header class="app">
   <div class="brand">ASDAN Register<small>PEQ &amp; Short Courses · Made by Matt</small></div>
   <nav class="tabs" aria-label="Sections">
-    <button data-view="pupils" aria-current="true">Pupils</button>
+    <button data-view="today" aria-current="true">Today</button>
+    <button data-view="pupils">Pupils</button>
     <button data-view="progs">Programmes</button>
     <button data-view="track">Track</button>
     <button data-view="ready">Readiness</button>
@@ -149,7 +179,20 @@ table.list tr:last-child td{border-bottom:none}
 <main>
 
 <!-- ===== PUPILS ===== -->
-<section id="view-pupils" class="view active">
+<section id="view-today" class="view active">
+  <div class="panel">
+    <h2 style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center">Today
+      <label style="font-size:.78rem;font-weight:600;display:flex;gap:6px;align-items:center"><input type="checkbox" id="td-privacy"> Projector privacy (initials)</label></h2>
+    <div class="td-term" id="td-term"></div>
+    <div id="td-slots"></div>
+    <p class="hint" style="margin-top:10px">Tap a pupil: Present → Late → Absent → clear. Present banks the slot's minutes straight into the hours engine; Late banks half. The corner dot cycles an engagement RAG. Nothing here to double-enter later.</p>
+  </div>
+  <div class="panel">
+    <h2>Needs attention</h2>
+    <div id="td-nudges"></div>
+  </div>
+</section>
+<section id="view-pupils" class="view">
   <div class="panel">
     <h2>Add a pupil</h2>
     <div class="row">
@@ -253,6 +296,37 @@ table.list tr:last-child td{border-bottom:none}
       <div class="field"><label for="set-teacher">Tutor (signature)</label><input id="set-teacher" placeholder="Matt Roper"></div>
       <button class="btn" id="set-save">Save</button>
     </div>
+  </div>
+  <div class="panel">
+    <h2>Paperwork branding</h2>
+    <div class="row">
+      <label style="display:flex;gap:6px;align-items:center;font-size:.85rem;font-weight:600"><input type="checkbox" id="set-school-on"> Show school header on printed paperwork</label>
+      <div class="field"><label for="set-school-name">School name</label><input id="set-school-name" placeholder="Progress Schools Tees Valley" style="min-width:240px"></div>
+      <button class="btn" id="v25-save-brand">Save</button>
+    </div>
+    <p class="hint">When on, every claimed or printed document carries the school's name above the centre line — ready for the Progress file.</p>
+  </div>
+  <div class="panel">
+    <h2>Terms</h2>
+    <div class="row">
+      <div class="field"><label for="term-name">Term name</label><input id="term-name" placeholder="Autumn 1 2026"></div>
+      <div class="field"><label for="term-start">Starts</label><input id="term-start" type="date"></div>
+      <div class="field"><label for="term-end">Ends</label><input id="term-end" type="date"></div>
+      <button class="btn" id="term-add">Add term</button>
+    </div>
+    <div class="v25-list" id="term-list"></div>
+    <p class="hint">Courses run on across terms — credits always count the whole course. Terms organise the register and the tally.</p>
+  </div>
+  <div class="panel">
+    <h2>Lesson slots</h2>
+    <div class="row">
+      <div class="field"><label for="slot-name">Slot name</label><input id="slot-name" placeholder="Slot 2 · Careers"></div>
+      <div class="field"><label for="slot-prog">Programme</label><select id="slot-prog"></select></div>
+      <div class="field"><label for="slot-mins">Minutes</label><input id="slot-mins" type="number" value="50" min="5" max="240" style="width:80px"></div>
+      <div class="field v25-days"><label style="display:block">Days</label><span id="slot-days"><label><input type="checkbox" value="1">Mo</label><label><input type="checkbox" value="2">Tu</label><label><input type="checkbox" value="3">We</label><label><input type="checkbox" value="4">Th</label><label><input type="checkbox" value="5">Fr</label></span></div>
+      <button class="btn" id="slot-add">Add slot</button>
+    </div>
+    <div class="v25-list" id="slot-list"></div>
   </div>
   <div class="panel">
     <h2>Backup</h2>
@@ -360,12 +434,13 @@ function showView(v){
   document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-current",String(b.dataset.view===v)));
   document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
   $("#view-"+v).classList.add("active");
+  if(v==="today")renderToday();
   if(v==="pupils")renderPupils();
   if(v==="progs")renderProgs();
   if(v==="track")renderTrack();
   if(v==="ready")renderReady();
   if(v==="print")renderPrintSelect();
-  if(v==="settings")renderSettings();
+  if(v==="settings")renderSettings();if(v==="settings")renderV25Settings();
 }
 
 /* =====================================================================
@@ -888,7 +963,8 @@ function fillPrPupils(){
 }
 $("#pr-print").addEventListener("click",()=>window.print());
 function printHeader(p,pu){
-  return`<div class="phead"><h1>${esc(p.title)}${p.code?" · "+esc(p.code):""}${p.kind==="peq"?" · "+esc(p.level||""):""}</h1><div><b>${esc(pu.forename)} ${esc(pu.surname)}</b></div></div>
+  const band=(V25.school&&V25.school.on)?`<div style="border-bottom:3px solid #0e4f4a;margin-bottom:8px;padding-bottom:4px"><div style="font-size:1.05rem;font-weight:800;letter-spacing:.06em;color:#0e4f4a">${esc(V25.school.name||"Progress Schools Tees Valley")}</div></div>`:"";
+  return band+`<div class="phead"><h1>${esc(p.title)}${p.code?" · "+esc(p.code):""}${p.kind==="peq"?" · "+esc(p.level||""):""}</h1><div><b>${esc(pu.forename)} ${esc(pu.surname)}</b></div></div>
   <div style="font-size:.8rem;color:#444;margin-bottom:8px">Centre: ${esc(S.settings.centre||"Progress Schools")}${S.settings.centreNo?" ("+esc(S.settings.centreNo)+")":""} · Tutor: ${esc(S.settings.teacher||"")} · Printed ${fmtDMY(todayISO())}</div>`;
 }
 function showPrint(html){$("#print-zone").innerHTML=html;$("#pr-preview-panel").hidden=false;$("#pr-print").disabled=false}
@@ -930,7 +1006,12 @@ $("#pr-hours").addEventListener("click",()=>{
   const pu=S.pupils.find(x=>x.id===$("#pr-pupil").value);
   if(!p||!pu){$("#pr-warn").innerHTML='<div class="notice warn">Choose a programme and a pupil.</div>';return}
   $("#pr-warn").innerHTML="";
-  let h=`<div class="printpg">${printHeader(p,pu)}<h1 style="font-size:1rem;margin:6px 0">Hours tally sheet</h1><table><tr><th>Date</th><th>Detail</th><th>Hours</th></tr>`;
+  let termNote="";
+  if(V25.terms.length){
+    const parts=V25.terms.map(t=>{let m=0;for(const sess of S.hours)if(sess.progId===p.id&&sess.minutes&&sess.minutes[pu.id]&&t.start&&t.end&&sess.date>=t.start&&sess.date<=t.end)m+=sess.minutes[pu.id];return m?`${esc(t.name)}: ${(m/60).toFixed(1)}h`:null}).filter(Boolean);
+    if(parts.length)termNote=`<div style="font-size:.8rem;color:#444;margin:2px 0 6px">By term — ${parts.join(" · ")} · <b>credits always count the whole course</b>.</div>`;
+  }
+  let h=`<div class="printpg">${printHeader(p,pu)}<h1 style="font-size:1rem;margin:6px 0">Hours tally sheet</h1>${termNote}<table><tr><th>Date</th><th>Detail</th><th>Hours</th></tr>`;
   let tot=0;
   if(p.kind==="peq"){
     const sessions=S.hours.filter(x=>x.progId===p.id&&x.minutes&&x.minutes[pu.id]).sort((a,b)=>a.date.localeCompare(b.date));
@@ -998,7 +1079,8 @@ $("#bk-export").addEventListener("click",async()=>{
   const evOut=[];
   for(const ev of S.evidence){const{blob,...rest}=ev;evOut.push({...rest,dataURL:await blobToDataURL(blob)})}
   const payload={app:"asdan_register",version:1,exported:new Date().toISOString(),
-    pupils:S.pupils,progs:S.progs,trio:S.trio,stamps:S.stamps,hours:S.hours,docs:S.docs,evidence:evOut,settings:S.settings};
+    pupils:S.pupils,progs:S.progs,trio:S.trio,stamps:S.stamps,hours:S.hours,docs:S.docs,evidence:evOut,settings:S.settings,
+    v25:V25,registers:(await dbAll("kv")).filter(x=>x.k&&String(x.k).startsWith("reg_"))};
   const blob=new Blob([JSON.stringify(payload)],{type:"application/json"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);a.download="asdan-register-backup-"+todayISO()+".json";
@@ -1011,13 +1093,15 @@ $("#bk-file").addEventListener("change",async e=>{
     const data=JSON.parse(await f.text());
     if(data.app!=="asdan_register")throw new Error("That file is not an ASDAN Register backup.");
     if(!confirm("Importing replaces everything currently in the app. Continue?"))return;
-    for(const st of["pupils","progs","trio","stamps","hours","docs","evidence"])await dbClear(st);
+    for(const st of["pupils","progs","trio","stamps","hours","docs","evidence","kv"])await dbClear(st);
     for(const x of data.pupils||[])await dbPut("pupils",x);
     for(const x of data.progs||[])await dbPut("progs",x);
     for(const x of data.trio||[])await dbPut("trio",x);
     for(const x of data.stamps||[])await dbPut("stamps",x);
     for(const x of data.hours||[])await dbPut("hours",x);
     for(const x of data.docs||[])await dbPut("docs",x);
+    if(data.v25)await dbPut("kv",{k:"v25",v:data.v25});
+    for(const r of data.registers||[])await dbPut("kv",r);
     for(const ev of data.evidence||[]){const{dataURL,...rest}=ev;await dbPut("evidence",{...rest,blob:dataURLToBlob(dataURL)})}
     if(data.settings)await dbPut("kv",{k:"settings",v:data.settings});
     evURLs.forEach(u=>URL.revokeObjectURL(u));evURLs.clear();
@@ -1072,8 +1156,123 @@ async function loadStarterTemplate(){
 document.querySelector("#load-starter").addEventListener("click",loadStarterTemplate);
 window.loadStarterTemplate=loadStarterTemplate;
 /* ---------- init ---------- */
-async function init(){await openDB();await loadAll();renderPupils()}
+async function init(){await openDB();await loadAll();await v25Load();renderPupils();renderToday()}
 init();
+
+/* ===== v2.5 · Today / Lesson Mode / Terms / Branding ===== */
+let V25={school:{on:true,name:"Progress Schools Tees Valley"},terms:[],slots:[],privacy:false};
+let REG={};
+const wdName=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+async function v25Load(){
+  try{const v=await dbGet("kv","v25");if(v&&v.v)V25=Object.assign(V25,v.v);}catch(e){}
+  try{const r=await dbGet("kv","reg_"+todayISO());REG=(r&&r.v)||{};}catch(e){REG={}}
+}
+async function v25Save(){await dbPut("kv",{k:"v25",v:V25})}
+async function regSave(){await dbPut("kv",{k:"reg_"+todayISO(),v:REG})}
+function curTerm(){const t=todayISO();return V25.terms.find(x=>x.start&&x.end&&x.start<=t&&t<=x.end)}
+function pupilLabel(pu){return V25.privacy?esc(pu.forename)+" "+esc((pu.surname||" ").charAt(0))+".":esc(pu.forename)+" "+esc(pu.surname)}
+function slotReg(id){if(!REG[id])REG[id]={marks:{},rag:{},note:""};return REG[id]}
+async function applyMark(slot,pid,mark){
+  const p=S.progs.find(x=>x.id===slot.progId);if(!p)return;
+  const date=todayISO();
+  let sess=S.hours.find(x=>x.progId===p.id&&x.date===date);
+  if(!sess){sess={id:uid(),progId:p.id,date,minutes:{}};S.hours.unshift(sess)}
+  if(mark==="P")sess.minutes[pid]=slot.mins;
+  else if(mark==="L")sess.minutes[pid]=Math.round(slot.mins/2);
+  else delete sess.minutes[pid];
+  await dbPut("hours",sess);
+}
+function renderToday(){
+  if(!document.getElementById("td-term"))return;
+  const term=curTerm();
+  $("#td-term").innerHTML=term
+    ?`<span>${esc(term.name)}</span><small>${esc(term.start)} → ${esc(term.end)} · ${esc(wdName[new Date().getDay()])} ${esc(todayISO())}</small>`
+    :`<span>No term covers today</span><small>Add your terms in Settings — the register works either way.</small>`;
+  $("#td-privacy").checked=!!V25.privacy;
+  const wd=new Date().getDay();
+  const slots=V25.slots.filter(sl=>Array.isArray(sl.days)&&sl.days.includes(wd));
+  const host=$("#td-slots");
+  if(!slots.length){host.innerHTML='<p class="td-empty">No lesson slots for today. Define your timetable in Settings → Lesson slots, and this page becomes your live register.</p>';renderNudges();return}
+  host.innerHTML=slots.map(sl=>{
+    const p=S.progs.find(x=>x.id===sl.progId);
+    const pupils=p?S.pupils.filter(pu=>(p.enrolled||[]).includes(pu.id)&&!pu.archived):[];
+    const r=slotReg(sl.id);
+    const tiles=pupils.length?pupils.map(pu=>{
+      const m=r.marks[pu.id]||"";
+      const st=m==="P"?"PRESENT · "+sl.mins+"m":m==="L"?"LATE · "+Math.round(sl.mins/2)+"m":m==="A"?"ABSENT":"tap to mark";
+      return `<div class="td-pupil" data-slot="${sl.id}" data-pid="${pu.id}" data-m="${m}" role="button" tabindex="0" aria-label="${pupilLabel(pu)}: ${st}">${pupilLabel(pu)}<span class="st">${st}</span><span class="td-rag" data-r="${r.rag[pu.id]||""}" title="Engagement RAG"></span></div>`;
+    }).join(""):'<p class="td-empty">No pupils enrolled on this programme yet — enrol them in Programmes.</p>';
+    return `<div class="td-slot"><h3>${esc(sl.name)} <small>· ${p?esc(p.title):"?"} · ${sl.mins} min</small></h3><div class="td-grid">${tiles}</div><input class="td-note" data-note="${sl.id}" placeholder="Session note (optional — lands in the record)" value="${esc(r.note||"")}"></div>`;
+  }).join("");
+  renderNudges();
+}
+function renderNudges(){
+  if(!document.getElementById("td-nudges"))return;
+  const out=[];const t=todayISO();
+  if(!curTerm())out.push('No term set for today — add terms in Settings so the tally can group by term.');
+  for(const p of S.progs){
+    for(const pid of (p.enrolled||[])){
+      const pu=S.pupils.find(x=>x.id===pid);if(!pu||pu.archived)continue;
+      const h=loggedHours(p.id,pid);
+      if(h>0&&h%10>=8)out.push(`<b>${pupilLabel(pu)}</b> is ${(10-(h%10)).toFixed(1)}h from the next credit on <b>${esc(p.title)}</b> — one good session.`);
+      const evs=S.evidence.filter(e=>e.progId===p.id&&(e.pupilIds||[]).includes(pid));
+      if(evs.length){
+        const last=evs.map(e=>e.date||"").sort().pop();
+        const days=Math.floor((new Date(t)-new Date(last))/86400000);
+        if(days>=14)out.push(`No new evidence for <b>${pupilLabel(pu)}</b> on <b>${esc(p.title)}</b> in ${days} days — capture something this week.`);
+      }else if(h>=2){out.push(`<b>${pupilLabel(pu)}</b> has ${h.toFixed(1)}h on <b>${esc(p.title)}</b> but no evidence yet — the folder is hungry.`);}
+    }
+  }
+  $("#td-nudges").innerHTML=out.length?out.map(x=>`<div class="td-nudge">${x}</div>`).join(""):
+    '<div class="td-nudge good">Nothing outstanding — the paperwork is keeping up with the teaching. ✓</div>';
+}
+document.addEventListener("click",async e=>{
+  const rag=e.target.closest&&e.target.closest(".td-rag");
+  if(rag){e.stopPropagation();
+    const tile=rag.closest(".td-pupil");const r=slotReg(tile.dataset.slot);
+    const seq=["","G","A","R"];const cur=r.rag[tile.dataset.pid]||"";
+    r.rag[tile.dataset.pid]=seq[(seq.indexOf(cur)+1)%seq.length];
+    await regSave();renderToday();return;}
+  const tile=e.target.closest&&e.target.closest(".td-pupil");
+  if(tile){
+    const r=slotReg(tile.dataset.slot);
+    const seq=["","P","L","A"];const cur=r.marks[tile.dataset.pid]||"";
+    const next=seq[(seq.indexOf(cur)+1)%seq.length];
+    if(next)r.marks[tile.dataset.pid]=next;else delete r.marks[tile.dataset.pid];
+    const slot=V25.slots.find(x=>x.id===tile.dataset.slot);
+    if(slot)await applyMark(slot,tile.dataset.pid,next);
+    await regSave();renderToday();}
+});
+document.addEventListener("change",async e=>{
+  if(e.target&&e.target.id==="td-privacy"){V25.privacy=e.target.checked;await v25Save();renderToday();}
+});
+document.addEventListener("input",async e=>{
+  if(e.target&&e.target.dataset&&e.target.dataset.note){slotReg(e.target.dataset.note).note=e.target.value;await regSave();}
+});
+function renderV25Settings(){
+  if(!document.getElementById("term-list"))return;
+  $("#set-school-on").checked=!!(V25.school&&V25.school.on);
+  $("#set-school-name").value=(V25.school&&V25.school.name)||"";
+  $("#term-list").innerHTML=V25.terms.map(t=>`<div class="v25-row"><b>${esc(t.name)}</b> ${esc(t.start||"?")} → ${esc(t.end||"?")}<button class="v25-del" data-delterm="${t.id}" aria-label="Delete term">✕</button></div>`).join("")||'<p class="hint">No terms yet.</p>';
+  const sel=$("#slot-prog");sel.innerHTML=S.progs.map(p=>`<option value="${p.id}">${esc(p.title)}</option>`).join("");
+  $("#slot-list").innerHTML=V25.slots.map(sl=>{const p=S.progs.find(x=>x.id===sl.progId);
+    return `<div class="v25-row"><b>${esc(sl.name)}</b> ${p?esc(p.title):"?"} · ${sl.mins}m · ${(sl.days||[]).map(d=>wdName[d].slice(0,2)).join(" ")}<button class="v25-del" data-delslot="${sl.id}" aria-label="Delete slot">✕</button></div>`;}).join("")||'<p class="hint">No slots yet — add your timetable and TODAY comes alive.</p>';
+}
+document.addEventListener("click",async e=>{
+  if(!e.target)return;
+  if(e.target.id==="v25-save-brand"){V25.school={on:$("#set-school-on").checked,name:$("#set-school-name").value.trim()||"Progress Schools Tees Valley"};await v25Save();e.target.textContent="Saved ✓";setTimeout(()=>e.target.textContent="Save",1200);}
+  if(e.target.id==="term-add"){const nm=$("#term-name").value.trim();if(!nm)return;
+    V25.terms.push({id:uid(),name:nm,start:$("#term-start").value,end:$("#term-end").value});
+    V25.terms.sort((a,b)=>(a.start||"").localeCompare(b.start||""));
+    $("#term-name").value="";await v25Save();renderV25Settings();}
+  if(e.target.id==="slot-add"){const nm=$("#slot-name").value.trim();if(!nm)return;
+    const days=[...document.querySelectorAll("#slot-days input:checked")].map(x=>+x.value);
+    V25.slots.push({id:uid(),name:nm,progId:$("#slot-prog").value,mins:Math.max(5,+$("#slot-mins").value||50),days});
+    $("#slot-name").value="";await v25Save();renderV25Settings();}
+  if(e.target.dataset&&e.target.dataset.delterm){V25.terms=V25.terms.filter(t=>t.id!==e.target.dataset.delterm);await v25Save();renderV25Settings();}
+  if(e.target.dataset&&e.target.dataset.delslot){V25.slots=V25.slots.filter(t=>t.id!==e.target.dataset.delslot);await v25Save();renderV25Settings();}
+});
+
 </script>
 <script defer src="/hud.js"></script></body>
 </html>
