@@ -26,6 +26,7 @@
   + "#" + NS + "-pill:hover,#" + NS + "-pill:focus-visible{opacity:1;outline:none;border-color:#B9E6CD}"
   + "#" + NS + "-back{position:fixed;left:10px;bottom:10px;z-index:2147483000;background:rgba(22,29,61,.72);color:#B9E6CD;border:1.5px solid rgba(185,230,205,.45);border-radius:999px;padding:6px 13px;font:700 12px/1 Poppins,'Segoe UI',system-ui,sans-serif;letter-spacing:.06em;text-decoration:none;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:.72}"
   + "#" + NS + "-back:hover,#" + NS + "-back:focus-visible{opacity:1;outline:none;border-color:#B9E6CD}"
+  + "#" + NS + "-back.game{left:calc(8px + env(safe-area-inset-left,0px));top:calc(8px + env(safe-area-inset-top,0px));bottom:auto;width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:16px;opacity:.55}"
   + "#" + NS + "-dock{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:2147483001;width:min(680px,calc(100vw - 20px));background:rgba(246,241,228,.92);border:2px solid #161D3D;border-radius:18px;box-shadow:0 14px 40px rgba(15,21,48,.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:12px 14px;display:none;font-family:Poppins,'Segoe UI',system-ui,sans-serif;color:#1B2140}"
   + "#" + NS + "-dock.open{display:block}"
   + "." + NS + "-row{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}"
@@ -101,8 +102,9 @@
 
   var backEl = null;
   if (BACK) {
-    backEl = el("a", { id: NS + "-back", href: BACK.h, "aria-label": "Back to the hub" });
-    backEl.textContent = BACK.l;
+    backEl = el("a", { id: NS + "-back", href: BACK.h, "aria-label": "Back: " + BACK.l.replace("\u2190 ", "") });
+    if (IS_GAME) { backEl.className = "game"; backEl.textContent = "\u2190"; backEl.title = BACK.l.replace("\u2190 ", "Back to the "); }
+    else backEl.textContent = BACK.l;
   }
   function mount() {
     if (backEl) document.body.appendChild(backEl);
