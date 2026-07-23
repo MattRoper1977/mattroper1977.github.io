@@ -82,7 +82,7 @@
     + '<button class="' + NS + '-btn" type="button" data-min="5">5 min</button>'
     + '<button class="' + NS + '-btn" type="button" data-min="10">10 min</button></div>'
     + '<span class="' + NS + '-note">Overlays the top corner \u2014 no sound, just a gentle pulse at zero.</span></div>'
-    + '<div class="' + NS + '-mod"><b>NAME PICKER</b><div id="' + NS + '-name">\u2014</div><div class="' + NS + '-btns">'
+    + '<div class="' + NS + '-mod"><b>NAME PICKER</b><div id="' + NS + '-name" aria-live="polite" aria-atomic="true">\u2014</div><div class="' + NS + '-btns">'
     + '<button class="' + NS + '-btn amber" type="button" id="' + NS + '-pick">Pick a name</button>'
     + '<button class="' + NS + '-btn" type="button" id="' + NS + '-edit">Edit list</button></div>'
     + '<textarea id="' + NS + '-names" style="display:none" placeholder="One name per line \u2014 saved on this device only" aria-label="Class name list"></textarea></div>'
@@ -122,11 +122,13 @@
     var open = dock.classList.toggle("open");
     pill.setAttribute("aria-expanded", open ? "true" : "false");
     pill.style.display = open ? "none" : "";
+    dock.setAttribute("aria-hidden", open ? "false" : "true");
+    if (open) { dockOpener = document.activeElement; try { $("close").focus(); } catch (x) {} }
   });
   dock.addEventListener("click", function (e) {
     if (e.target && e.target.id === NS + "-close") {
       dock.classList.remove("open"); pill.style.display = ""; pill.setAttribute("aria-expanded", "false"); pill.focus();
-    }
+     try { (dockOpener && dockOpener.focus ? dockOpener : pill).focus(); } catch (x) {} dockOpener = null;}
   });
 
   /* ---------- timer ---------- */
@@ -207,6 +209,11 @@
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       $("micnote").textContent = "No microphone available on this device/browser."; return;
     }
+    var AC = window.AudioContext || window.webkitAudioContext;
+    try {
+      if (!audioCtx || audioCtx.state === "closed") audioCtx = new AC();
+      if (audioCtx.state === "suspended" && audioCtx.resume) audioCtx.resume();
+    } catch (x) { $("micnote").textContent = "Audio is not available in this browser."; return; }
     var myReq = ++micReq;
     navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
       if (myReq !== micReq) {
@@ -215,8 +222,7 @@
       }
       micStream = stream;
       micOn = true; e.target.textContent = "Stop meter";
-      var AC = window.AudioContext || window.webkitAudioContext;
-      audioCtx = new AC();
+      /* audioCtx was created synchronously in the gesture above */
       var src = audioCtx.createMediaStreamSource(stream);
       var an = audioCtx.createAnalyser(); an.fftSize = 64;
       src.connect(an);
@@ -250,7 +256,7 @@
     lastFocus = document.activeElement;
     try { calm.setAttribute("aria-modal", "true"); var ex = $("calmexit"); if (ex && ex.focus) ex.focus(); } catch (x) {}
   });
-  var lastFocus = null;
+  var lastFocus = null, dockOpener = null;
   function closeCalm() {
     if (!calm.classList.contains("on")) return false;
     calm.classList.remove("on");
@@ -265,11 +271,12 @@
   document.addEventListener("keydown", function (ev) {
     if (ev.key !== "Escape") return;
     if (closeCalm()) { ev.stopPropagation(); return; }
+    /* the dock is a panel, not a full-screen modal: close it but let the
+       lesson handle Escape too, so its own dialogs still close */
     if (dock.classList.contains("open")) {
       dock.classList.remove("open");
       pill.style.display = ""; pill.setAttribute("aria-expanded", "false");
       try { pill.focus(); } catch (x) {}
-      ev.stopPropagation();
     }
   }, true);
 
