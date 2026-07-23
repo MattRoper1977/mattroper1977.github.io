@@ -182,20 +182,37 @@
   });
 
   /* ---------- noise meter ---------- */
-  var micOn = false, audioCtx = null, rafId = null;
+  var micOn = false, audioCtx = null, rafId = null, micStream = null, micReq = 0;
   (function bars() { var m = $("meter"); if (!m) { setTimeout(bars, 50); return; } for (var i = 0; i < 16; i++) m.appendChild(document.createElement("i")); })();
+  function releaseMic() {
+    try { if (micStream && micStream.getTracks) micStream.getTracks().forEach(function (t) { try { t.stop(); } catch (x) {} }); } catch (x) {}
+    micStream = null;
+  }
+  try { window.addEventListener("pagehide", function () {
+    micOn = false; micReq++; if (rafId) cancelAnimationFrame(rafId);
+    if (audioCtx && audioCtx.close) { try { audioCtx.close(); } catch (x) {} }
+    releaseMic();
+  }); } catch (x) {}
   dock.addEventListener("click", function (e) {
     if (!e.target || e.target.id !== NS + "-mic") return;
     if (micOn) {
       micOn = false; e.target.textContent = "Start meter";
       if (rafId) cancelAnimationFrame(rafId);
       if (audioCtx && audioCtx.close) audioCtx.close(); audioCtx = null;
+      micReq++;
+      releaseMic();
       return;
     }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       $("micnote").textContent = "No microphone available on this device/browser."; return;
     }
+    var myReq = ++micReq;
     navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      if (myReq !== micReq) {
+        try { stream.getTracks().forEach(function (t) { try { t.stop(); } catch (x) {} }); } catch (x) {}
+        return;
+      }
+      micStream = stream;
       micOn = true; e.target.textContent = "Stop meter";
       var AC = window.AudioContext || window.webkitAudioContext;
       audioCtx = new AC();
