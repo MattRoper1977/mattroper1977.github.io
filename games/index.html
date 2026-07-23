@@ -66,9 +66,9 @@ a{color:inherit}
 .search input{flex:1;border:0;background:transparent;font:inherit;font-size:.9rem;padding:.6rem 1.1rem;color:var(--ink)}
 .search input:focus{outline:none}
 .search svg{width:20px;height:20px;margin:auto .9rem auto 0}
-select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid #C9C0AB;border-radius:999px;padding:.55rem .9rem}
+select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);background:var(--card);border:1.5px solid #C9C0AB;border-radius:999px;padding:.55rem .9rem;min-height:44px;touch-action:manipulation}
 .chips{display:flex;gap:.45rem;flex-wrap:nowrap;overflow-x:auto;padding-bottom:.4rem}
-.chip{font-size:.72rem;font-weight:800;letter-spacing:.06em;color:var(--ink);background:var(--card);border:1.5px solid #C9C0AB;border-radius:999px;padding:.42rem .95rem;cursor:pointer;white-space:nowrap}
+.chip{font-size:.72rem;font-weight:800;letter-spacing:.06em;color:var(--ink);background:var(--card);border:1.5px solid #C9C0AB;border-radius:999px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;touch-action:manipulation;padding:.42rem .95rem;cursor:pointer;white-space:nowrap}
 .chip[aria-pressed="true"]{background:var(--navy);color:var(--mint);border-color:var(--navy)}
 .countline{font-size:.78rem;color:var(--mut);margin:.4rem 0 0}
 /* themed grids */
@@ -137,7 +137,7 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 <select id="sort" aria-label="Sort games"><option value="curated">Curated first</option><option value="az">A to Z</option><option value="tag">By tag</option></select>
 </div>
 <div class="chips" id="chips" role="group" aria-label="Filter by tag"></div>
-<p class="countline" id="countline">Loading the shelf…</p>
+<p class="countline" id="countline" aria-live="polite" aria-atomic="true">Loading the shelf…</p>
 </div></section>
 
 <section class="sec"><div class="wrap">
