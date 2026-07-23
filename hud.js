@@ -45,7 +45,8 @@
   + "#" + NS + "-meter i{flex:1;background:#2F8F6B;border-radius:2px 2px 0 0;min-height:2px;transition:height .12s ease}"
   + "#" + NS + "-meter.loud i{background:#C25B4E}"
   + "." + NS + "-note{font-size:10px;color:#4A5170;line-height:1.35}"
-  + "#" + NS + "-close{position:absolute;top:8px;right:10px;background:none;border:0;font:800 13px Poppins,sans-serif;color:#4A5170;cursor:pointer;padding:4px}"
+  + "#" + NS + "-dock button:focus-visible,#" + NS + "-pill:focus-visible,#" + NS + "-back:focus-visible,#" + NS + "-close:focus-visible{outline:3px solid #F2A24A;outline-offset:2px}" + 
+  "#" + NS + "-close{position:absolute;top:4px;right:6px;background:none;border:0;font:800 13px Poppins,sans-serif;color:#4A5170;cursor:pointer;padding:4px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;touch-action:manipulation}"
   + "#" + NS + "-timerbox{position:fixed;top:14px;right:14px;z-index:2147483002;background:rgba(22,29,61,.94);color:#FFF6E8;border:2px solid #F2A24A;border-radius:16px;padding:10px 18px;text-align:center;display:none;font-family:Poppins,'Segoe UI',sans-serif}"
   + "#" + NS + "-timerbox.on{display:block}"
   + "#" + NS + "-timerbox.done{border-color:#B9E6CD;animation:" + NS + "-pulse 2s ease-in-out infinite}"
@@ -246,12 +247,31 @@
     calm.classList.add("on"); dock.classList.remove("open");
     calmPhase = 0; $("calmtext").textContent = PHASES[0];
     calmTimer = setInterval(calmLoop, 4000);
+    lastFocus = document.activeElement;
+    try { calm.setAttribute("aria-modal", "true"); var ex = $("calmexit"); if (ex && ex.focus) ex.focus(); } catch (x) {}
   });
-  calm.addEventListener("click", function () {
+  var lastFocus = null;
+  function closeCalm() {
+    if (!calm.classList.contains("on")) return false;
     calm.classList.remove("on");
     if (calmTimer) clearInterval(calmTimer);
     pill.style.display = ""; pill.setAttribute("aria-expanded", "false");
-  });
+    try { if (lastFocus && lastFocus.focus) lastFocus.focus(); } catch (x) {}
+    lastFocus = null;
+    return true;
+  }
+  calm.addEventListener("click", function () { closeCalm(); });
+  /* Escape closes whatever HUD layer is open, innermost first */
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key !== "Escape") return;
+    if (closeCalm()) { ev.stopPropagation(); return; }
+    if (dock.classList.contains("open")) {
+      dock.classList.remove("open");
+      pill.style.display = ""; pill.setAttribute("aria-expanded", "false");
+      try { pill.focus(); } catch (x) {}
+      ev.stopPropagation();
+    }
+  }, true);
 
   } catch (e) { /* the HUD must never break a lesson */ }
 })();
