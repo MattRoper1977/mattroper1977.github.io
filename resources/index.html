@@ -120,6 +120,13 @@ let ALL=[],SUB="",TYPE="",BROWSING=true,SORT="feat";
 function normLessons(l){return l.filter(r=>r.subject!=="Live Lessons").map(r=>({title:r.title||'Untitled',description:r.desc||'',subject:r.subject||'General',type:cap(r.type||'Resource'),path:r.file?(/^https?:/.test(r.file)?r.file:'/Lessons/'+encodeURI(r.file)):null,tags:Array.isArray(r.keywords)?r.keywords:[],status:r.new?'New':'Published',popular:!!r.featured,year:r.year||'',added:r.added||'',accent:accentFor(r.subject||'General')}))}
 function normSite(l){return l.filter(r=>r.subject!=="Live Lessons").map(r=>({title:r.title||'Untitled',description:r.description||'',subject:r.subject||'General',type:r.type||'Resource',path:r.path||null,tags:Array.isArray(r.tags)?r.tags:[],status:r.status||'Published',popular:r.featured!==false,year:'',added:'',accent:r.accent||accentFor(r.subject||'General')}))}
 const SUITE="Art · Teesside Studio Suite";
+/* Teesside/latest first, legacy last — mirrors the Lesson Hub's browse order */
+const SUBJ_PRIORITY=[SUITE,"Humanities","BUILD Vocational & PfA","GROW Vocational & PfA","Primary Science","Tutor Time · BV · BF · KCSIE"];
+const SUBJ_LEGACY=new Set(["Art"]);
+function subjOrder(keys){
+  const rank=s=>{const i=SUBJ_PRIORITY.indexOf(s);if(i>-1)return i;return SUBJ_LEGACY.has(s)?9999:1000;};
+  return keys.slice().sort((x,y)=>(rank(x)-rank(y))||x.localeCompare(y));
+}
 const PRINTPACK=new Set([SUITE,"Humanities","BUILD Vocational & PfA","GROW Vocational & PfA"]);
 const FIC={screen:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 16v3M8.5 21h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
 print:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V4h10v4M7 16h10v5H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><rect x="4" y="8" width="16" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>',
@@ -146,7 +153,7 @@ function suiteCallout(n){return `<div class="rx-callout"><span class="stamp">ART
 function chips(){
 const sc={},tc={};ALL.forEach(r=>{sc[r.subject]=(sc[r.subject]||0)+1;tc[r.type]=(tc[r.type]||0)+1});
 const mk=(label,val,on,key)=>`<button class="rx-chip" data-${key}="${esc(val)}" aria-pressed="${on?'true':'false'}">${esc(label)}</button>`;
-$("#rxSubs").innerHTML=mk(`All subjects (${ALL.length})`,"",!SUB,"sub")+Object.keys(sc).sort().map(s=>mk(`${s} (${sc[s]})`,s,SUB===s,"sub")).join("");
+$("#rxSubs").innerHTML=mk(`All subjects (${ALL.length})`,"",!SUB,"sub")+subjOrder(Object.keys(sc)).map(s=>mk(`${s} (${sc[s]})`,s,SUB===s,"sub")).join("");
 $("#rxTypes").innerHTML=mk("All types","",!TYPE,"type")+Object.keys(tc).sort().map(t=>mk(`${t} (${tc[t]})`,t,TYPE===t,"type")).join("");
 }
 function render(){
@@ -162,7 +169,7 @@ if(browsing){
 const pop=a.filter(r=>r.popular).slice(0,4);
 const bySub={};a.forEach(r=>{(bySub[r.subject]=bySub[r.subject]||[]).push(r)});
 $("#rxOut").innerHTML=(pop.length?`<section class="rx-sec"><h2>Popular resources</h2></section><div class="rx-grid">${pop.map(card).join('')}</div>`:'')+
-Object.keys(bySub).sort().map(s=>`<section class="rx-sec"><h2>${esc(s)} · ${bySub[s].length}</h2></section>${s===SUITE?suiteCallout(bySub[s].length):""}<div class="rx-grid">${bySub[s].map(card).join('')}</div>`).join('');
+subjOrder(Object.keys(bySub)).map(s=>`<section class="rx-sec"><h2>${esc(s)} · ${bySub[s].length}</h2></section>${s===SUITE?suiteCallout(bySub[s].length):""}<div class="rx-grid">${bySub[s].map(card).join('')}</div>`).join('');
 }else{
 $("#rxOut").innerHTML=(SUB===SUITE&&!q&&!TYPE?suiteCallout(a.length):"")+`<section class="rx-sec"><h2>Results</h2></section><div class="rx-grid">${a.map(card).join('')}</div>`;
 }}
