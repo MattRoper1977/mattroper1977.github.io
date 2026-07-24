@@ -1,0 +1,128 @@
+/* Made by Matt — framework & QA document chassis
+   Serves the Lessons-root framework/impact/QA pages that reference ../assets/style.css
+   Brand: navy #161D3D · mint #B9E6CD · cream #F7F3E9 · amber #F2A24A */
+
+:root{
+  --ink:#161D3D; --ink-soft:#3A4468; --mint:#B9E6CD; --cream:#F7F3E9;
+  --sand:#E8E2D4; --amber:#F2A24A; --good:#2F6B4D; --warn:#985710;
+  --line:#D6CEBE; --paper:#FFFFFF;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0; padding:28px 18px 64px;
+  background:var(--cream);
+  color:var(--ink);
+  font:16px/1.6 Poppins,"Segoe UI",system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+
+main,.page{
+  max-width:940px; margin:0 auto; padding:30px 32px 40px;
+  background:var(--paper); border:1px solid var(--line); border-radius:14px;
+  box-shadow:0 2px 14px rgba(22,29,61,.07);
+}
+
+h1{font-size:1.72rem; line-height:1.2; margin:.1em 0 .5em; letter-spacing:-.01em}
+h2{font-size:1.3rem; margin:1.6em 0 .5em}
+h3{font-size:1.1rem; margin:1.4em 0 .4em}
+h4{font-size:.98rem; margin:1.2em 0 .35em; color:var(--ink-soft)}
+p{margin:.6em 0}
+b,strong{font-weight:700}
+
+.eyebrow{
+  display:inline-block; font-size:.72rem; font-weight:700;
+  letter-spacing:.18em; text-transform:uppercase; color:var(--warn); margin:0 0 .3em;
+}
+.lead{font-size:1.06rem; color:var(--ink-soft); margin:.2em 0 1.1em}
+.sub{font-size:.9rem; color:var(--ink-soft)}
+.big{font-size:1.25rem; font-weight:700}
+.em{font-style:italic; color:var(--ink-soft)}
+
+/* callouts */
+.call,.pbox,.vignette,.qa,.loop{
+  margin:1.1em 0; padding:14px 16px;
+  border:1px solid var(--line); border-left:5px solid var(--ink);
+  border-radius:10px; background:var(--cream);
+}
+.call{border-left-color:var(--amber)}
+.qa{border-left-color:var(--ink-soft); background:#F4F6FB}
+.loop{border-left-color:var(--mint); background:#F2FAF5}
+.vignette{border-left-color:var(--sand); font-style:italic}
+.good{color:var(--good); font-weight:600}
+.warn{color:var(--warn); font-weight:600}
+.fire{color:#A32F2F; font-weight:600}
+
+/* stages, steps, chips */
+.stage{
+  margin:1.3em 0; padding:16px 18px;
+  border:1px solid var(--line); border-radius:12px; background:var(--paper);
+}
+.stage>h3,.stage>h4{margin-top:0}
+.stepnum{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:30px; height:30px; margin-right:8px; padding:0 8px;
+  border-radius:999px; background:var(--ink); color:var(--cream);
+  font-size:.85rem; font-weight:700;
+}
+.pathchip,.link{
+  display:inline-block; margin:3px 6px 3px 0; padding:6px 12px;
+  border:1px solid var(--line); border-radius:999px;
+  background:var(--sand); font-size:.82rem; font-weight:600; text-decoration:none; color:var(--ink);
+}
+.link:hover,.link:focus-visible{background:var(--mint)}
+.arrow{color:var(--amber); font-weight:700; padding:0 6px}
+.wline{display:block; padding:5px 0; border-bottom:1px dashed var(--line)}
+.wline:last-child{border-bottom:0}
+.symrow,.iconrow,.cols{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:.6em 0}
+.cols>*{flex:1 1 220px; min-width:0}
+.chain{display:flex; flex-wrap:wrap; gap:6px; align-items:center}
+
+/* code / reference */
+.code,code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:.86em; background:#F1EFE8; border:1px solid var(--line);
+  border-radius:5px; padding:1px 6px; overflow-wrap:anywhere;
+}
+
+/* tables */
+table{width:100%; border-collapse:collapse; margin:1.1em 0; font-size:.93rem}
+th,td{border:1px solid var(--line); padding:9px 11px; text-align:left; vertical-align:top}
+th{background:var(--ink); color:var(--cream); font-weight:600}
+tr:nth-child(even) td{background:#FAF8F3}
+.r{text-align:right}
+.ns{white-space:nowrap}
+
+/* pupil-facing sheets */
+.pupilpage,.passport{
+  margin:1.2em 0; padding:18px; border:2px solid var(--ink);
+  border-radius:12px; background:var(--paper);
+}
+.phead{font-weight:700; font-size:1.05rem; margin-bottom:.5em}
+.agree{margin-top:1em; padding-top:.8em; border-top:1px dashed var(--line); font-size:.9rem}
+.walk{padding-left:1.1em; border-left:3px solid var(--mint)}
+
+.foot{
+  max-width:940px; margin:22px auto 0; padding:0 6px;
+  font-size:.82rem; color:var(--ink-soft); text-align:center;
+}
+a{color:#1F3A93}
+a:focus-visible,button:focus-visible{outline:3px solid var(--amber); outline-offset:2px}
+
+@media (max-width:640px){
+  body{padding:14px 10px 42px}
+  main,.page{padding:20px 16px 26px; border-radius:10px}
+  h1{font-size:1.4rem}
+  table{font-size:.86rem}
+  th,td{padding:7px 8px}
+}
+
+@media print{
+  body{background:#fff; padding:0; font-size:12pt}
+  main,.page{box-shadow:none; border:0; max-width:none; padding:0}
+  .no-print{display:none !important}
+  .stage,.call,.pbox,.pupilpage,.passport{break-inside:avoid}
+  th{background:#E8E2D4 !important; color:#161D3D !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+  a{color:#000; text-decoration:none}
+}

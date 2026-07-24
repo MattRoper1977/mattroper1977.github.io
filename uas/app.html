@@ -1534,5 +1534,45 @@ async function init(){
 }
 init();
 </script>
-<script defer src="/hud.js"></script></body>
+<script defer src="/hud.js"></script><script>
+/* Made by Matt — storage/save safety net (audit 2026-07-24).
+   The register awaits IndexedDB in many places without a local try/catch; an
+   unhandled rejection would otherwise fail silently and the teacher would see
+   a tap that did nothing. This is one net, not 69 wrappers. */
+(function(){
+  if (window.__mbmSaveNet) return; window.__mbmSaveNet = 1;
+  function show(msg){
+    try{
+      var b = document.getElementById('mbm-savenet');
+      if(!b){
+        b = document.createElement('div');
+        b.id = 'mbm-savenet'; b.setAttribute('role','alert');
+        b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:2147483600;background:#7A1E1E;color:#fff;font:600 14px/1.45 Poppins,system-ui,sans-serif;padding:14px 56px 14px 16px;box-shadow:0 -2px 14px rgba(0,0,0,.28)';
+        var t = document.createElement('span');
+        var x = document.createElement('button');
+        x.type='button'; x.textContent='\u00D7'; x.setAttribute('aria-label','Dismiss message');
+        x.style.cssText='position:absolute;right:6px;top:50%;transform:translateY(-50%);min-width:44px;min-height:44px;background:none;border:0;color:#fff;font-size:24px;line-height:1;cursor:pointer';
+        x.addEventListener('click', function(){ b.remove(); });
+        b.appendChild(t); b.appendChild(x);
+        (document.body || document.documentElement).appendChild(b);
+      }
+      b.firstChild.textContent = msg;
+    }catch(e){}
+  }
+  function isQuota(r){
+    try{
+      var n = (r && (r.name || (r.constructor && r.constructor.name))) || '';
+      return /quota/i.test(n) || /quota|storage full|exceeded/i.test(String((r && r.message) || ''));
+    }catch(e){ return false; }
+  }
+  window.addEventListener('unhandledrejection', function(ev){
+    var r = ev && ev.reason;
+    show(isQuota(r)
+      ? 'Storage is full \u2014 this device cannot save any more evidence. Export a backup now, then free up space before adding more photos.'
+      : 'That did not save. Your last action may not have been recorded \u2014 try again, and export a backup if it keeps happening.');
+  });
+})();
+</script>
+
+</body>
 </html>
