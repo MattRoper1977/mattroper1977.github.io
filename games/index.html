@@ -194,8 +194,10 @@ var CURATED=Object.keys(TAKES);
 var state={q:"",tag:null,sort:"curated",games:[]};
 var $=function(id){return document.getElementById(id)};
 function tint(hue){return hue+"26"}
+function localHref(h){/* keep every game on the madebymatt.uk origin so the HUD's saved names and reading theme carry across */
+ return String(h||"").replace(/^https?:\/\/[^\/]*(?:mattroper1977\.github\.io|madebymatt\.uk)/i,"");}
 function pickCard(g,lead){
- var a=document.createElement("a");a.className="pick"+(lead?" lead":"");a.href=g.href;
+ var a=document.createElement("a");a.className="pick"+(lead?" lead":"");a.href=localHref(g.href);
  a.innerHTML='<div class="art" style="background:'+tint(g.hue)+'">'+(g.icon||"🎮")+'</div>'+
  '<div class="bd"><span class="badge">MATT\u2019S PICK</span><h3></h3><span class="tagc"></span>'+
  '<div class="take"><b>Matt\u2019s take:</b> <span></span></div></div>';
@@ -205,7 +207,7 @@ function pickCard(g,lead){
  return a;
 }
 function gCard(g,withTake){
- var a=document.createElement("a");a.className="gcard";a.href=g.href;a.style.borderLeftColor=g.hue||"#C9C0AB";
+ var a=document.createElement("a");a.className="gcard";a.href=localHref(g.href);a.style.borderLeftColor=g.hue||"#C9C0AB";
  var badge=CURATED.indexOf(g.title)>=0?'<span class="mini">MATT\u2019S PICK</span>':"";
  a.innerHTML='<div class="ic" style="background:'+tint(g.hue||"#C9C0AB")+'">'+(g.icon||"🎮")+'</div>'+
  '<div class="tx"><h4><span></span>'+badge+'</h4><p></p>'+(withTake&&TAKES[g.title]?'<span class="qt"></span>':"")+'</div>';
