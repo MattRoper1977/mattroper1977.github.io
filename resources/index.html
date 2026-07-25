@@ -64,7 +64,7 @@ a.rx-go:focus-visible{outline:3px solid #F2A24A;outline-offset:2px}
 .rx-badge.new{background:var(--rx-mint);color:#12331F}
 .rx-view{display:inline-block;border:1.5px solid #1B214055;border-radius:12px;padding:.45rem .9rem;font-size:.83rem;font-weight:800;color:var(--rx-ink);text-decoration:none;background:#F3EDDD}
 .rx-view:hover{border-color:var(--rx-ink)}
-.rx-none{max-width:var(--max,1180px);margin:auto;padding:1rem;color:var(--rx-mut)}
+.rx-none{max-width:var(--max,1180px);margin:auto;padding:1rem;color:var(--rx-mut)}.rx-clear{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:.5rem 1rem;margin-left:.4rem;border:2px solid #161D3D;border-radius:8px;background:#161D3D;color:#E8E2D4;font:inherit;font-weight:700;cursor:pointer;touch-action:manipulation}.rx-clear:hover{background:#0F142B}
 .rx-chip:focus-visible,.rx-view:focus-visible{outline:3px solid var(--rx-amber);outline-offset:2px}
 @media (min-width:860px){.rx-chiprow{flex-wrap:nowrap}}
 </style></head><body><a class="skip" href="#main">Skip to content</a><header class="header"><div class="bar"><a class="brand" href="../index.html"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav" id="nav" aria-label="Main navigation"><a href="../games/">Games</a><a href="../Lessons/">Lessons</a><a href="../Matt-s-Apps-/">Apps</a><a href="../tools/">Tools</a><a href="./" aria-current="page">Resources</a><a href="../index.html#about">About</a></nav></div></header>
@@ -164,7 +164,7 @@ const browsing=!q&&!SUB&&!TYPE;BROWSING=browsing;
 if(SORT==="az")a.sort((x,y)=>x.title.localeCompare(y.title));
 else if(SORT==="new")a.sort((x,y)=>String(y.added).localeCompare(String(x.added)));
 else a.sort((x,y)=>(y.popular-x.popular)||((y.status==="New")-(x.status==="New"))||x.title.localeCompare(y.title));
-if(!a.length){$("#rxOut").innerHTML='<p class="rx-none">No matching resources — try fewer words.</p>';return}
+if(!a.length){const act=!!(q||SUB||TYPE);$("#rxOut").innerHTML='<p class="rx-none">No matching resources — try fewer words.'+(act?' <button type="button" id="rxClear" class="rx-clear">Clear filters</button>':'')+'</p>';return}
 if(browsing){
 const pop=a.filter(r=>r.popular).slice(0,4);
 const bySub={};a.forEach(r=>{(bySub[r.subject]=bySub[r.subject]||[]).push(r)});
@@ -182,6 +182,7 @@ if(pq)$("#rxSearch").value=pq;
 if(ps&&ALL.some(r=>r.subject===ps))SUB=ps;
 if(pt&&ALL.some(r=>r.type===pt))TYPE=pt;
 chips();render()});
+$("#rxOut").addEventListener("click",e=>{if(!e.target||e.target.id!=="rxClear")return;$("#rxSearch").value="";SUB="";TYPE="";chips();render();try{$("#rxSearch").focus()}catch(x){}});
 $("#rxSubs").addEventListener("click",e=>{const b=e.target.closest("[data-sub]");if(!b)return;SUB=(b.dataset.sub===SUB)?"":b.dataset.sub;chips();render()});
 $("#rxTypes").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(!b)return;TYPE=(b.dataset.type===TYPE)?"":b.dataset.type;chips();render()});
 $("#rxSearch").addEventListener("input",render);

@@ -228,13 +228,27 @@
       src.connect(an);
       var data = new Uint8Array(an.frequencyBinCount);
       var bars = $("meter").children;
+      /* reduced-motion: the bars are driven by inline heights, so CSS animation:none
+         cannot reach them. When the pupil/teacher has asked for reduced motion we keep
+         the meter VISUAL (it is a regulation aid, not decoration) but drop it to ~4
+         updates a second and snap heights to 5 steps, so it reads as a level rather
+         than a shimmer. rAF is retained either way so the existing
+         cancelAnimationFrame teardown and mic-release path are untouched. */
+      var rmq = null;
+      try { rmq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null; } catch (x) {}
+      function calmMotion() { try { return !!(rmq && rmq.matches); } catch (x) { return false; } }
+      var lastPaint = 0;
       (function loop() {
         if (!micOn) { for (var i = 0; i < bars.length; i++) bars[i].style.height = "2px"; return; }
+        var easy = calmMotion(), now = (Date.now ? Date.now() : +new Date());
+        if (easy && (now - lastPaint) < 250) { rafId = requestAnimationFrame(loop); return; }
+        lastPaint = now;
         an.getByteFrequencyData(data);
         var avg = 0;
         for (var i = 0; i < bars.length; i++) {
           var v = data[i] / 255; avg += v;
-          bars[i].style.height = Math.max(2, Math.round(v * 34)) + "px";
+          var h = easy ? (Math.round(v * 5) / 5) * 34 : v * 34;
+          bars[i].style.height = Math.max(2, Math.round(h)) + "px";
         }
         $("meter").classList.toggle("loud", (avg / bars.length) > 0.55);
         rafId = requestAnimationFrame(loop);
