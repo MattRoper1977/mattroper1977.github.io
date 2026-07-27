@@ -26,13 +26,16 @@ function boot(){
   var st=document.createElement('style');
   st.id='mbmSwStyles';
   st.textContent='.mbm-sw-wrap{display:flex;align-items:center;gap:.1rem;flex-wrap:wrap}'
-  +'.mbm-swl{display:none;width:100%;margin:.5rem 0 .1rem;color:inherit;opacity:.72;font-size:.7rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase}'
+  +'.mbm-swl{display:none;width:100%;margin:.5rem 0 .1rem;font-size:.7rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase}'
+  +'.mbm-sw-wrap.on-dark .mbm-swl{color:#C9D1E2}'
+  +'.mbm-sw-wrap.on-light .mbm-swl{color:#47506B}'
   +'.mbm-sw{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;background:transparent;border:0;border-radius:50%;cursor:pointer}'
   +'.mbm-sw i{display:block;width:18px;height:18px;border-radius:50%;border:1.5px solid #FFFFFF66;box-shadow:0 0 0 1.5px #16204055;transition:transform .15s ease}'
   +'.mbm-sw:hover i{transform:scale(1.2);border-color:#FFF}'
   +'.mbm-sw[aria-pressed="true"] i{border-color:#FFF;box-shadow:0 0 0 3px #F2A24A,0 0 0 4.5px #16204055}'
   +'.mbm-sw:focus-visible{outline:3px solid #F2A24A;outline-offset:2px}'
-  +'@media(max-width:680px){.mbm-swl{display:block}.mbm-sw-wrap{width:100%;gap:.35rem;margin-top:.5rem;padding-top:.2rem;border-top:1px solid currentColor;border-image:none}}'
+  +'@media(max-width:680px){.mbm-swl{display:block}.mbm-sw-wrap{width:100%;gap:.35rem;margin-top:.5rem;padding-top:.2rem;border-top:1px solid transparent}'
+  +'.mbm-sw-wrap.on-dark{border-top-color:#B9E6CD2C}.mbm-sw-wrap.on-light{border-top-color:#16204022}}'
   +'@media(prefers-reduced-motion:reduce){.mbm-sw i{transition:none}.mbm-sw:hover i{transform:none}}'
   +'@media print{.mbm-sw-wrap{display:none!important}}';
   document.head.appendChild(st);
@@ -45,12 +48,36 @@ function boot(){
         ||document.querySelector('header');
   if(!mount)return;
 
+  // A link inside the same bar is legible against that bar by definition, so
+  // borrow its colour rather than guessing the background. Falls back to a
+  // luminance walk, then to on-dark (every mount but primary's is navy).
+  function linkColour(el){
+    var a=el.querySelector('a');
+    if(!a)return '';
+    var c='';try{c=getComputedStyle(a).color||''}catch(e){}
+    return /rgba?\(/.test(c)&&!/rgba\([^)]*,\s*0\s*\)/.test(c)?c:'';
+  }
+  function groundIsDark(el){
+    var n=el;
+    while(n&&n.nodeType===1){
+      var bg='';
+      try{bg=getComputedStyle(n).backgroundColor||''}catch(e){}
+      var m=bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+      if(m&&(m[4]===undefined||parseFloat(m[4])>0.2)){
+        return (0.2126*+m[1]+0.7152*+m[2]+0.0722*+m[3])/255 < 0.5;
+      }
+      n=n.parentNode;
+    }
+    return true;
+  }
   var wrap=document.createElement('div');
-  wrap.className='mbm-sw-wrap';
+  wrap.className='mbm-sw-wrap '+(groundIsDark(mount)?'on-dark':'on-light');
   wrap.setAttribute('role','group');
   wrap.setAttribute('aria-label','Reading background');
   var lab=document.createElement('span');
   lab.className='mbm-swl'; lab.textContent='Reading background';
+  var lc=linkColour(mount);
+  if(lc){lab.style.color=lc;lab.style.opacity='.8';}
   wrap.appendChild(lab);
 
   var btns=[];

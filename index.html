@@ -50,8 +50,13 @@ body[data-theme="dark"] a.dx-prod:focus-visible{outline-color:var(--dx-amber)}
 .dx-bar button{border:0;background:transparent;padding:0 1.15rem;cursor:pointer}
 .dx-bar button svg{width:22px;height:22px;display:block}
 .dx-bar:focus-within{border-color:var(--dx-ambd)}
-.dx-chips{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin-top:1rem}
-.dx-chip{display:inline-flex;align-items:center;font-size:.78rem;font-weight:700;color:var(--dx-ink);background:var(--dx-card);border:1.5px solid var(--dx-line);border-radius:999px;padding:.5rem 1.05rem;min-height:44px;text-decoration:none}
+.dx-chipwrap{position:relative;margin-top:1rem}
+.dx-chips{display:flex;gap:.5rem;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x proximity;justify-content:flex-start;padding:.15rem .2rem .3rem;scrollbar-width:none;-ms-overflow-style:none}
+.dx-chips::-webkit-scrollbar{display:none}
+.dx-chipwrap::after{content:"";position:absolute;top:0;bottom:0;right:0;width:44px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--dx-cream));opacity:1;transition:opacity .2s ease}
+.dx-chipwrap.at-end::after{opacity:0}
+@media (prefers-reduced-motion:reduce){.dx-chipwrap::after{transition:none}}
+.dx-chip{flex:0 0 auto;scroll-snap-align:start;white-space:nowrap;display:inline-flex;align-items:center;font-size:.78rem;font-weight:700;color:var(--dx-ink);background:var(--dx-card);border:1.5px solid var(--dx-line);border-radius:999px;padding:.5rem 1.05rem;min-height:44px;text-decoration:none}
 .dx-chip:hover{border-color:var(--dx-ambd)}
 .dx-chip.on{background:var(--dx-navy);color:#FFF6E8;border-color:var(--dx-navy)}
 .dx-chip.on:hover{border-color:var(--dx-navy);filter:brightness(1.12)}
@@ -61,6 +66,9 @@ body[data-theme="dark"] a.dx-prod:focus-visible{outline-color:var(--dx-amber)}
 .dx-stack{display:flex;flex-direction:column;gap:.55rem;margin-top:1rem;max-width:640px;margin-left:auto;margin-right:auto}
 a.dx-drop{display:flex;align-items:center;gap:.7rem;min-height:52px;background:var(--dx-card);border:1.5px solid var(--dx-line);border-radius:14px;padding:.55rem .9rem;text-decoration:none;box-shadow:0 3px 10px #161D3D0d;transition:transform .18s ease,border-color .18s ease}
 a.dx-drop:hover{transform:translateY(-2px);border-color:var(--dx-ambd)}
+.dx-drop .pill.t-build{background:#985710;color:#FFF6E8}
+.dx-drop .pill.t-grow{background:#2F6B4D;color:#FFF6E8}
+.dx-drop .pill.t-launch{background:#81680F;color:#FFF6E8}
 .dx-drop .pill{flex:0 0 auto;font-size:.62rem;font-weight:800;letter-spacing:.12em;background:var(--dx-amber);color:var(--dx-navy);border-radius:999px;padding:.18rem .55rem}
 .dx-drop b{flex:1;font-size:.8rem;line-height:1.3;color:var(--dx-ink)}
 .dx-drop small{flex:0 0 auto;font-size:.68rem;color:var(--dx-mut);text-align:right}
@@ -78,6 +86,7 @@ a.dx-prod:focus-visible{outline:3px solid var(--dx-navy);outline-offset:2px}
 .dx-prod p{margin:0;font-size:.75rem;line-height:1.45;color:var(--dx-mut);text-align:center;max-width:34ch}
 .dx-acts{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.2rem}
 .dx-main,.dx-sub{display:inline-flex;align-items:center;font-size:.8rem;font-weight:800;text-decoration:none;border-radius:999px;padding:.55rem 1.15rem;min-height:44px}
+.dx-n{display:inline-block;margin:0 .3rem 0 .15rem;font-variant-numeric:tabular-nums}
 .dx-main{background:var(--dx-navy);color:#FFF6E8;border:1.5px solid var(--dx-navy)}
 .dx-main:hover{background:#232C55;border-color:#232C55}
 .dx-sub{background:transparent;color:var(--dx-ink);border:1.5px solid var(--dx-ink)}
@@ -141,7 +150,7 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <input type="search" name="q" placeholder="Physics, trekkers, simulation…" aria-label="Search the resource catalogue">
 <button type="submit" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="#C97F2E" stroke-width="2.4"/><path d="M15.5 15.5 21 21" stroke="#C97F2E" stroke-width="2.6" stroke-linecap="round"/></svg></button>
 </form>
-<div class="dx-chips">
+<div class="dx-chipwrap"><div class="dx-chips" id="dxChips">
 <a class="dx-chip on" href="resources/">All subjects</a>
 <a class="dx-chip" href="resources/?subject=Primary%20Science">Primary Science</a>
 <a class="dx-chip" href="resources/?subject=Humanities">Humanities</a>
@@ -151,7 +160,7 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <a class="dx-chip" href="resources/?q=physics">Physics</a>
 <a class="dx-chip" href="resources/?q=trekkers">Trekkers</a>
 <a class="dx-chip" href="resources/?q=simulation">Simulation</a>
-</div>
+</div></div>
 <p class="dx-count" id="dxCount">The full catalogue, one search away.</p>
 </div></section>
 
@@ -183,7 +192,7 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <svg viewBox="0 0 120 96" role="img" aria-label="Glitch Clash — card battle beam clash"><rect x="8" y="8" width="104" height="80" rx="10" fill="#1B1533"/><rect x="18" y="22" width="34" height="50" rx="6" fill="#232C55" stroke="#A78BFA" stroke-width="2.6" transform="rotate(-7 35 47)"/><circle cx="35" cy="40" r="8" fill="none" stroke="#B9E6CD" stroke-width="2.8" transform="rotate(-7 35 47)"/><rect x="68" y="22" width="34" height="50" rx="6" fill="#232C55" stroke="#F2A24A" stroke-width="2.6" transform="rotate(7 85 47)"/><path d="M85 34 l2.6 5.2 5.6.8-4 3.9 1 5.6-5.2-2.7-5.2 2.7 1-5.6-4-3.9 5.6-.8Z" fill="#F2A24A" transform="rotate(7 85 47)"/><path d="M50 47 H70" stroke="#A78BFA" stroke-width="6" stroke-linecap="round"/><circle cx="60" cy="47" r="6.4" fill="#E8E2D4"/><path d="M60 12 v6M60 78 v6" stroke="#A78BFA" stroke-width="2.4" stroke-linecap="round"/></svg>
 <b>Glitch Clash</b><p>NEW Act II — collectible card battler, now fifteen stages deep with animated story moments.</p></a>
 </div>
-<div class="dx-acts"><a class="dx-main" href="games/">Browse the Arcade →</a><a class="dx-sub" href="resources/?type=Game">All games</a></div></article>
+<div class="dx-acts"><a class="dx-main" href="games/">Browse the Arcade<span class="dx-n" id="nGames"></span> →</a><a class="dx-sub" href="resources/?type=Game">All games</a></div></article>
 
 <article class="dx-zone"><h2 class="dx-eyebrow">Lesson Hub</h2>
 <div class="dx-duo">
@@ -194,7 +203,7 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <svg viewBox="0 0 120 96" role="img" aria-label="Studio Suite — easel with brand artwork"><path d="M60 14 60 78 M60 70 34 88 M60 70 86 88" stroke="#7A5A38" stroke-width="4" stroke-linecap="round"/><rect x="30" y="18" width="60" height="44" rx="5" fill="#FFFDF6" stroke="#161D3D" stroke-width="2.6"/><path d="M40 52 50 36 58 46 66 32 78 52" fill="none" stroke="#4C9A6F" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="46" cy="28" r="4.4" fill="#F2A24A"/></svg>
 <b>Studio Suite</b><p>28 creator studios — design, educate and build tools for the whiteboard.</p></a>
 </div>
-<div class="dx-acts"><a class="dx-main" href="Lessons/">Lesson packs →</a><a class="dx-sub" href="resources/">Full catalogue</a></div></article>
+<div class="dx-acts"><a class="dx-main" href="Lessons/">Lesson packs<span class="dx-n" id="nLessons"></span> →</a><a class="dx-sub" href="resources/">Full catalogue</a></div></article>
 
 </div></div></section>
 
@@ -232,23 +241,37 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <script>
 (function(){
 var g=function(u){return fetch(u).then(function(r){if(!r.ok)throw 0;return r.json()}).catch(function(){return[]})};
-Promise.all([g('/Lessons/resources.json'),g('/data/resources.json')]).then(function(a){
+Promise.all([g('/Lessons/resources.json'),g('/data/resources.json'),g('/Games/games.json')]).then(function(a){
 var les=Array.isArray(a[0])?a[0].filter(function(r){return r.subject!=="Live Lessons"}):[];
 var site=Array.isArray(a[1])?a[1]:[];
 var n=les.length+site.length,el=document.getElementById('dxCount');
 if(el&&n)el.textContent=n+' resources and counting — every lesson, game and tool.';
 var nw=document.getElementById('dxNew'),sec=document.getElementById('latest');
 if(nw&&les.length){
-var recent=les.filter(function(r){return r.added}).sort(function(x,y){return String(y.added).localeCompare(String(x.added))}).slice(0,4);
+var tierOf=function(r){var f=r.url||r.file||'',i,T=['BUILD','GROW','LAUNCH'];
+for(i=0;i<3;i++){var t=T[i];
+if(new RegExp('(^|/)'+t.charAt(0)+t.slice(1).toLowerCase()+'/').test(f)||new RegExp('(^|/)'+t+'[_/]').test(f))return t;}
+var hay=((r.family||'')+' '+(r.title||'')).toUpperCase();
+for(i=0;i<3;i++){if(new RegExp('\\b'+T[i]+'\\b').test(hay))return T[i];}
+return '';};
+var pool=les.filter(function(r){return r.added}).sort(function(x,y){return String(y.added).localeCompare(String(x.added))});
+var seen={},recent=[];
+pool.forEach(function(r){var fam=r.family||r.subject||'';
+if(recent.length<4&&!seen[fam]){seen[fam]=1;recent.push(r);}});
 recent.forEach(function(r){
 var a2=document.createElement('a');a2.className='dx-drop';
 a2.href='Lessons/'+encodeURI(r.url||r.file||'');
-var s=document.createElement('span');s.className='pill';s.textContent='NEW';a2.appendChild(s);
+var tr=tierOf(r);
+var s=document.createElement('span');s.className='pill'+(tr?' t-'+tr.toLowerCase():'');s.textContent=tr||'NEW';a2.appendChild(s);
 var b=document.createElement('b');b.textContent=r.title||'';a2.appendChild(b);
 if(r.subject){var sm=document.createElement('small');sm.textContent=r.subject;a2.appendChild(sm);}
 nw.appendChild(a2);});
 if(recent.length&&sec)sec.hidden=false;
-}});
+}
+var gl=Array.isArray(a[2])?a[2]:(a[2]&&Array.isArray(a[2].games)?a[2].games:[]);
+var ng=document.getElementById('nGames');if(ng&&gl.length)ng.textContent=' '+gl.length;
+var nl=document.getElementById('nLessons');if(nl&&les.length)nl.textContent=' '+les.length;
+});
 })();
 (function(){
 var names={cream:'Warm',pink:'Pink',blue:'Blue',light:'Light',dark:'Dark'};
@@ -264,5 +287,13 @@ if(save){try{localStorage.setItem('mbm_reading_theme',t)}catch(e){}}}
 for(var j=0;j<sws.length;j++){sws[j].addEventListener('click',function(){apply(this.getAttribute('data-t'),true)})}
 apply(cur,false);
 })();
+</script>
+<script>
+(function(){var w=document.querySelector('.dx-chipwrap'),c=document.getElementById('dxChips');
+if(!w||!c)return;
+function upd(){var end=c.scrollLeft+c.clientWidth>=c.scrollWidth-2||c.scrollWidth<=c.clientWidth+1;
+w.classList.toggle('at-end',end);}
+c.addEventListener('scroll',upd,{passive:true});
+window.addEventListener('resize',upd);upd();})();
 </script>
 <script src="app.js"></script></body></html>
