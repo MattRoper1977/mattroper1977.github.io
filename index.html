@@ -1,30 +1,31 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Made by Matt — Learn • Build • Explore</title><meta name="description" content="Classroom-ready teacher tools, games and interactive lessons — free, accessible and built in a real classroom. Made by Matt."><meta name="theme-color" content="#161D3D"><meta property="og:title" content="Made by Matt — Learn • Build • Explore"><meta property="og:description" content="Learning that feels worth exploring — teacher tools, games and lesson packs."><meta property="og:url" content="https://madebymatt.uk/"><link rel="icon" href="favicon.svg"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="stylesheet" href="styles.css">
 <style id="dxStyles">
-:root{--dx-navy:#161D3D;--dx-deep:#0F1530;--dx-mint:#B9E6CD;--dx-mintd:#2F6B4D;--dx-amber:#F2A24A;--dx-ambd:#C97F2E;--dx-cream:#F6F1E4;--dx-card:#FFFDF6;--dx-ink:#1B2140;--dx-mut:#4A5170;--dx-violet:#A78BFA;--dx-lite:#FBF6EA;--dx-line:#E3DAC5;--dx-title:#161D3D;--dx-eyeb:#8A5620;--dx-r2:16px}
-body[data-theme="pink"]{--dx-cream:#F9E8EC;--dx-lite:#FDF2F4;--dx-card:#FFF9FA;--dx-line:#EBD5DB}
-body[data-theme="blue"]{--dx-cream:#E7EEF7;--dx-lite:#F1F6FC;--dx-card:#F8FBFF;--dx-line:#D3DEEC}
-body[data-theme="light"]{--dx-cream:#F7F7F4;--dx-lite:#FAFAF8;--dx-card:#FFFFFF;--dx-line:#E4E4E0}
-body[data-theme="dark"]{--dx-cream:#121834;--dx-lite:#161D3D;--dx-card:#1B234A;--dx-ink:#E8E2D4;--dx-mut:#A9B2CC;--dx-line:#2E3860;--dx-title:#E8E2D4;--dx-eyeb:#F2A24A}
+:root{--dx-navy:#161D3D;--dx-deep:#0F1530;--dx-mint:#B9E6CD;--dx-mintd:#2F6B4D;--dx-amber:#F2A24A;--dx-ambd:#C97F2E;--dx-cream:#F6F1E4;--dx-card:#FFFDF6;--dx-ink:#1B2140;--dx-mut:#4A5170;--dx-violet:#A78BFA;--dx-lite:#FBF6EA;--dx-line:#E3DAC5;--dx-title:#161D3D;--dx-eyeb:#8A5620;--dx-r2:16px;--dx-h1:#232C55;--dx-h2:#161D3D}
+body[data-theme="pink"]{--dx-cream:#F9E8EC;--dx-lite:#FDF2F4;--dx-card:#FFF9FA;--dx-line:#EBD5DB;--dx-h1:#8E2E55;--dx-h2:#5E1B39}
+body[data-theme="blue"]{--dx-cream:#E7EEF7;--dx-lite:#F1F6FC;--dx-card:#F8FBFF;--dx-line:#D3DEEC;--dx-h1:#1F4E79;--dx-h2:#10304F}
+body[data-theme="light"]{--dx-cream:#F7F7F4;--dx-lite:#FAFAF8;--dx-card:#FFFFFF;--dx-line:#E4E4E0;--dx-h1:#3C4668;--dx-h2:#262E48}
+body[data-theme="dark"]{--dx-cream:#121834;--dx-lite:#161D3D;--dx-card:#1B234A;--dx-ink:#E8E2D4;--dx-mut:#A9B2CC;--dx-line:#2E3860;--dx-title:#E8E2D4;--dx-eyeb:#F2A24A;--dx-h1:#1B2450;--dx-h2:#090D1E}
 body[data-theme="dark"] .dx-main{background:var(--dx-amber);color:var(--dx-navy);border-color:var(--dx-amber)}
 body[data-theme="dark"] .dx-main:hover{background:var(--dx-amber);filter:brightness(1.07)}
 body[data-theme="dark"] .dx-chip.on{background:var(--dx-amber);color:var(--dx-navy);border-color:var(--dx-amber)}
 body[data-theme="dark"] .dx-tile svg{color:var(--dx-amber)}
 body[data-theme="dark"] a.dx-prod:focus-visible{outline-color:var(--dx-amber)}
-/* ---------- header utility: theme control ---------- */
-.dx-read{font:inherit;font-size:.78rem;font-weight:700;color:#E8E2D4;background:transparent;border:1.5px solid #B9E6CD66;border-radius:999px;padding:.5rem .95rem;min-height:44px;cursor:pointer;white-space:nowrap}
-.dx-read:hover{border-color:var(--dx-amber);color:#FFF6E8}
-.hdr-utils{position:relative;display:flex;align-items:center;gap:.6rem;margin-left:auto}
-.dx-themepanel{position:absolute;right:0;top:calc(100% + .55rem);z-index:95;background:#0F1530;border:1.5px solid #3A4470;border-radius:14px;padding:.45rem;display:grid;gap:.3rem;min-width:150px;box-shadow:0 14px 30px #00000059}
-.dx-themepanel button{display:flex;align-items:center;gap:.6rem;font:inherit;font-size:.8rem;font-weight:700;color:#E8E2D4;background:transparent;border:1.5px solid transparent;border-radius:10px;padding:.5rem .7rem;min-height:44px;cursor:pointer;text-align:left}
-.dx-themepanel button:hover{border-color:var(--dx-amber)}
-.dx-themepanel button[aria-pressed="true"]{border-color:var(--dx-amber);background:#1B234A}
-.dx-themepanel .dot{width:16px;height:16px;border-radius:50%;border:1.5px solid #3A4470;flex:0 0 auto}
-.dot[data-d="cream"]{background:#F6F1E4}.dot[data-d="pink"]{background:#F9E8EC}.dot[data-d="blue"]{background:#E7EEF7}.dot[data-d="light"]{background:#FFFFFF}.dot[data-d="dark"]{background:#161D3D;border-color:#B9E6CD88}
-.header .bar{flex-wrap:nowrap}
-.header .brand{min-width:0}
-@media (max-width:560px){.dx-read .rlbl{display:none}.dx-read{padding:.5rem .8rem}}
+/* ---------- header utility: reading swatches (inside nav) ---------- */
+.dx-swatches{display:flex;align-items:center;gap:.1rem;flex-wrap:wrap}
+.swlabel{display:none;width:100%;margin:.5rem 0 .1rem;color:#C9D1E2;font-size:.7rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.dx-sw{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;background:transparent;border:0;border-radius:50%;cursor:pointer}
+.dx-sw i{display:block;width:18px;height:18px;border-radius:50%;border:1.5px solid #FFFFFF55;transition:transform .15s ease}
+.dx-sw:hover i{transform:scale(1.2);border-color:#FFF}
+.dx-sw[aria-pressed="true"] i{border-color:#FFF;box-shadow:0 0 0 3px var(--dx-amber)}
+.dx-sw[data-t="cream"] i{background:#F6F1E4}
+.dx-sw[data-t="pink"] i{background:#F4C9D4}
+.dx-sw[data-t="blue"] i{background:#BFD6EE}
+.dx-sw[data-t="light"] i{background:#FFFFFF}
+.dx-sw[data-t="dark"] i{background:#161D3D;border-color:#B9E6CD99}
+.header .bar{flex-wrap:wrap}
+@media (max-width:680px){.swlabel{display:block}.dx-swatches{width:100%;gap:.35rem;margin-top:.5rem;padding-top:.2rem;border-top:1px solid #B9E6CD2C}}
 /* ---------- hero ---------- */
-.dx-hero{position:relative;background:radial-gradient(ellipse 120% 70% at 50% -20%,#232C55,var(--dx-navy) 70%);color:#E8E2D4;text-align:center;padding:3rem 1rem 2.8rem;overflow:hidden}
+.dx-hero{position:relative;background:radial-gradient(ellipse 120% 70% at 50% -20%,var(--dx-h1),var(--dx-h2) 70%);transition:background .35s ease;color:#E8E2D4;text-align:center;padding:3rem 1rem 2.8rem;overflow:hidden}
 .dx-hero .pat{position:absolute;inset:0;opacity:.09;pointer-events:none}
 .dx-hero>*:not(.pat){position:relative}
 .dx-hero img.mark{width:min(150px,34vw);filter:drop-shadow(0 14px 30px #00000073)}
@@ -104,11 +105,11 @@ a.dx-prod:focus-visible{outline:3px solid var(--dx-navy);outline-offset:2px}
 .dx-about{max-width:560px;margin:1.8rem auto 0;text-align:center;font-size:.9rem;line-height:1.6;color:#C9D1E2}
 .dx-about h3{color:#E8E2D4;font-size:1rem;margin:0 0 .4rem}
 .dx-about b{color:var(--dx-mint);letter-spacing:.06em}
-a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:focus-visible,a.dx-drop:focus-visible,.dx-send:focus-visible,.dx-read:focus-visible{outline:3px solid var(--dx-amber);outline-offset:2px}
-@media (prefers-reduced-motion:reduce){a.dx-prod,a.dx-drop{transition:none}a.dx-prod:hover,a.dx-drop:hover{transform:none}}
+a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:focus-visible,a.dx-drop:focus-visible,.dx-send:focus-visible,.dx-sw:focus-visible{outline:3px solid var(--dx-amber);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){a.dx-prod,a.dx-drop,.dx-sw i,.dx-hero{transition:none}a.dx-prod:hover,a.dx-drop:hover,.dx-sw:hover i{transform:none}}
 @media (max-width:420px){.dx-duo{grid-template-columns:1fr 1fr;gap:.55rem}.dx-prod p{display:none}}
 @media print{.dx-drops{display:none!important}}
-</style></head><body><a class="skip" href="#main">Skip to content</a><header class="header"><div class="bar"><a class="brand" href="index.html"><img src="assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><div class="hdr-utils"><button class="dx-read" id="dxRead" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="dxThemePanel">🎨 <span class="rlbl">Theme: </span><span id="dxReadLbl">Warm</span></button><div class="dx-themepanel" id="dxThemePanel" role="group" aria-label="Reading theme" hidden><button type="button" data-t="cream" aria-pressed="true"><span class="dot" data-d="cream"></span>Warm</button><button type="button" data-t="pink" aria-pressed="false"><span class="dot" data-d="pink"></span>Pink</button><button type="button" data-t="blue" aria-pressed="false"><span class="dot" data-d="blue"></span>Blue</button><button type="button" data-t="light" aria-pressed="false"><span class="dot" data-d="light"></span>Light</button><button type="button" data-t="dark" aria-pressed="false"><span class="dot" data-d="dark"></span>Dark</button></div></div><button class="menu" id="menu" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav" id="nav" aria-label="Main navigation"><a href="games/">Games</a><a href="Lessons/">Lessons</a><a href="Matt-s-Apps-/">Apps</a><a href="tools/">Tools</a><a href="resources/">Resources</a><a href="#about">About</a></nav></div></header>
+</style></head><body><a class="skip" href="#main">Skip to content</a><header class="header"><div class="bar"><a class="brand" href="index.html"><img src="assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav" id="nav" aria-label="Main navigation"><a href="games/">Games</a><a href="Lessons/">Lessons</a><a href="Matt-s-Apps-/">Apps</a><a href="tools/">Tools</a><a href="resources/">Resources</a><a href="#about">About</a><div class="dx-swatches" role="group" aria-label="Reading background"><span class="swlabel">Reading background</span><button class="dx-sw" type="button" data-t="cream" aria-pressed="true" title="Warm" aria-label="Warm reading background"><i></i></button><button class="dx-sw" type="button" data-t="pink" aria-pressed="false" title="Pink" aria-label="Pink reading background"><i></i></button><button class="dx-sw" type="button" data-t="blue" aria-pressed="false" title="Blue" aria-label="Blue reading background"><i></i></button><button class="dx-sw" type="button" data-t="light" aria-pressed="false" title="Light" aria-label="Light reading background"><i></i></button><button class="dx-sw" type="button" data-t="dark" aria-pressed="false" title="Dark" aria-label="Dark reading background"><i></i></button></div></nav></div></header>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <symbol id="dxi-free" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M9.2 15.5c.6.8 1.6 1.3 2.8 1.3 1.7 0 2.9-.9 2.9-2.2 0-2.9-5.4-1.5-5.4-4.3 0-1.2 1.1-2.1 2.6-2.1 1.1 0 2 .4 2.6 1.1M12 6.6v1.6M12 16.8v1.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
 <symbol id="dxi-shield" viewBox="0 0 24 24"><path d="M12 3.2 5 5.8v5.4c0 4.5 3 7.7 7 9.6 4-1.9 7-5.1 7-9.6V5.8L12 3.2Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
@@ -251,24 +252,16 @@ if(recent.length&&sec)sec.hidden=false;
 })();
 (function(){
 var names={cream:'Warm',pink:'Pink',blue:'Blue',light:'Light',dark:'Dark'};
-var btn=document.getElementById('dxRead'),lbl=document.getElementById('dxReadLbl'),panel=document.getElementById('dxThemePanel');
-if(!btn||!panel)return;
+var sws=document.querySelectorAll('.dx-sw');
+if(!sws.length)return;
 var cur='cream';
 try{cur=localStorage.getItem('mbm_reading_theme')||'cream'}catch(e){}
 if(!names[cur])cur='cream';
 function apply(t,save){cur=t;
 if(t==='cream'){document.body.removeAttribute('data-theme')}else{document.body.setAttribute('data-theme',t)}
-if(lbl)lbl.textContent=names[t];
-var bs=panel.querySelectorAll('button[data-t]');
-for(var i=0;i<bs.length;i++){bs[i].setAttribute('aria-pressed',bs[i].getAttribute('data-t')===t?'true':'false')}
+for(var i=0;i<sws.length;i++){sws[i].setAttribute('aria-pressed',sws[i].getAttribute('data-t')===t?'true':'false')}
 if(save){try{localStorage.setItem('mbm_reading_theme',t)}catch(e){}}}
-function show(open){panel.hidden=!open;btn.setAttribute('aria-expanded',open?'true':'false')}
-btn.addEventListener('click',function(e){e.stopPropagation();show(panel.hidden)});
-panel.addEventListener('click',function(e){
-var el=e.target;while(el&&el!==panel&&!(el.getAttribute&&el.getAttribute('data-t')))el=el.parentNode;
-if(el&&el!==panel){apply(el.getAttribute('data-t'),true);show(false);btn.focus()}});
-document.addEventListener('click',function(e){if(!panel.hidden&&!panel.contains(e.target)&&e.target!==btn)show(false)});
-document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!panel.hidden){show(false);btn.focus()}});
+for(var j=0;j<sws.length;j++){sws[j].addEventListener('click',function(){apply(this.getAttribute('data-t'),true)})}
 apply(cur,false);
 })();
 </script>
