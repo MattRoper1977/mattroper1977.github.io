@@ -62,7 +62,23 @@ a.go:hover{background:var(--lt)}
 .commit .sig{display:block;margin-top:.5rem;font-size:.78rem;font-weight:800;letter-spacing:.08em;color:var(--mut)}
 a.fbtn:focus-visible,a.go:focus-visible,.tchip:focus-visible,.bridge .acts a:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 .hidden{display:none!important}
-</style></head><body>
+</style><style id="mbmTheme">
+/* Made by Matt — reading themes (shared key mbm_reading_theme) */
+[data-theme="pink"]{--cream:#F9E8EC;--dk:#F3DCE2;--card:#FFF9FA;--ink:#1B2140;--mut:#4A5170}
+[data-theme="blue"]{--cream:#E7EEF7;--dk:#DCE7F3;--card:#F8FBFF;--ink:#1B2140;--mut:#4A5170}
+[data-theme="light"]{--cream:#F7F7F4;--dk:#EFEFEC;--card:#FFFFFF;--ink:#1B2140;--mut:#4A5170}
+[data-theme="dark"]{--cream:#121834;--dk:#0E1430;--card:#1B234A;--ink:#E8E2D4;--mut:#A9B2CC}
+[data-theme="pink"] body{background:#F9E8EC}
+[data-theme="blue"] body{background:#E7EEF7}
+[data-theme="light"] body{background:#F7F7F4}
+[data-theme="dark"] body{background:#121834}
+[data-theme="dark"] .tx-hero,[data-theme="dark"] .tcard,[data-theme="dark"] .commit{border-color:#2E3860}
+[data-theme="dark"] .fcard,[data-theme="dark"] .bridge{background:linear-gradient(150deg,#1F2A52,#182142);border-color:#C97F2E}
+[data-theme="dark"] .bridge .stamp{background:#1E3A2C;color:#B9E6CD;border-color:#2F6B4D}
+[data-theme="dark"] a.fbtn.p,[data-theme="dark"] a.go,[data-theme="dark"] .bridge .acts a:hover{background:#F2A24A;color:#161D3D}
+</style>
+<script>try{var t=localStorage.getItem('mbm_reading_theme');if(t&&t!=='cream')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+</head><body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="header"><div class="bar"><a class="brand" href="../index.html"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav" id="nav" aria-label="Main navigation"><a href="../games/">Games</a><a href="../Lessons/">Lessons</a><a href="../Matt-s-Apps-/">Apps</a><a href="./" aria-current="page">Tools</a><a href="../resources/">Resources</a><a href="../index.html#about">About</a></nav></div></header>
 <main id="main">
@@ -181,4 +197,5 @@ apply();})});
 counts();apply();
 })();
 </script>
+<script defer src="/theme.js"></script>
 </body></html>
