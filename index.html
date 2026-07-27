@@ -63,6 +63,19 @@ body[data-theme="dark"] a.dx-prod:focus-visible{outline-color:var(--dx-amber)}
 .dx-count{text-align:center;color:var(--dx-mut);font-size:.82rem;margin:1rem 0 0}
 /* ---------- latest drops rail ---------- */
 .dx-drops{background:var(--dx-cream);padding:.6rem 0 2.4rem}
+.dx-upd{background:var(--dx-lite);padding:.4rem 0 2.6rem}
+.dx-updbox{max-width:760px;margin:1rem auto 0;background:var(--dx-card);border:1.5px solid var(--dx-line);
+  border-radius:var(--dx-r2);padding:1.15rem 1.25rem;box-shadow:0 2px 10px rgba(22,29,61,.06)}
+.dx-updbox h3{margin:0 0 .2rem;font-size:1.06rem;color:var(--dx-title);letter-spacing:-.01em}
+.dx-updbox .dx-when{font-size:.76rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--dx-eyeb);margin:0 0 .7rem}
+.dx-updlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.5rem}
+.dx-updlist li{display:flex;gap:.6rem;align-items:flex-start;font-size:.93rem;line-height:1.5;color:var(--dx-mut)}
+.dx-updlist b{color:var(--dx-ink)}
+.dx-updlist .dx-dot{flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:var(--dx-mint);
+  border:1.5px solid var(--dx-mintd);margin-top:.42rem}
+.dx-updacts{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem}
+@media (prefers-reduced-motion:reduce){.dx-updbox{transition:none}}
+
 .dx-stack{display:flex;flex-direction:column;gap:.55rem;margin-top:1rem;max-width:640px;margin-left:auto;margin-right:auto}
 a.dx-drop{display:flex;align-items:center;gap:.7rem;min-height:52px;background:var(--dx-card);border:1.5px solid var(--dx-line);border-radius:14px;padding:.55rem .9rem;text-decoration:none;box-shadow:0 3px 10px #161D3D0d;transition:transform .18s ease,border-color .18s ease}
 a.dx-drop:hover{transform:translateY(-2px);border-color:var(--dx-ambd)}
@@ -169,6 +182,25 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <div class="dx-stack" id="dxNew" aria-label="Recently added resources"></div>
 </div></section>
 
+<section class="dx-upd" id="improved"><div class="dx-wrap">
+<h2 class="dx-eyebrow">Recently improved</h2>
+<div class="dx-updbox">
+<p class="dx-when">July 2026 &middot; Tutor Time</p>
+<h3>All ten Tutor Time decks rebuilt on one engine</h3>
+<ul class="dx-updlist">
+<li><span class="dx-dot"></span><span><b>An illustration on every deck.</b> Ten hand-drawn scenes that argue the idea rather than decorate it &mdash; scales that don't bend, five routes on one hand, a mend drawn stronger than the break.</span></li>
+<li><span class="dx-dot"></span><span><b>Phone-feed and news-band scenes</b> on Deepfakes, Vapes and Pressure Points &mdash; a group chat going from a joke to a threat in ten minutes, with the timestamps showing.</span></li>
+<li><span class="dx-dot"></span><span><b>Calm Mode on every deck.</b> One tap stills every animation and silences the chime. Everything also respects the reduced-motion setting on the device.</span></li>
+<li><span class="dx-dot"></span><span><b>An anonymous box that stays private.</b> What a pupil types never appears on the screen and is never saved to the device &mdash; it reaches staff on a printed sheet with a safeguarding sign-off, and nowhere else.</span></li>
+<li><span class="dx-dot"></span><span><b>Class lists clear themselves.</b> Saved on the device as before, but wiped automatically after a fortnight, with a clear-now button in the cold-call panel.</span></li>
+<li><span class="dx-dot"></span><span><b>Progress seals and a printable evidence sheet</b> on every deck, so a session leaves a record without anyone writing one up.</span></li>
+</ul>
+<div class="dx-updacts">
+<a class="dx-chip dx-main" href="Lessons/?q=tutor%20time">Open the Tutor Time decks &rarr;</a>
+<a class="dx-chip" href="Lessons/">Full lesson hub</a>
+</div>
+</div>
+</div></section>
 <section class="dx-dir" id="collections"><div class="dx-wrap">
 <div class="dx-cards">
 
