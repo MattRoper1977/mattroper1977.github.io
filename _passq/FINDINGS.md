@@ -15,7 +15,8 @@ sweep takes a fresh letter.**
 - Q2  8d6b8e9  taxonomy canonicalise (Teacher) — 1 file — rollback 6116d0e
 - Q3  e91ac61  Medevac unify (launcher + redirect stub) — 2 files — rollback 8d6b8e9
 - Q4  74c5288  delete MedevacFrontier_v1.html — 1 file — rollback e91ac61
-- Q5  <pending> sitemap regenerate (site section only) — 1 file — rollback 74c5288
+- Q5  48353e7  sitemap regenerate (site section only) — 1 file — rollback 74c5288
+- Q6  <pending> #dxChips drift guard (script only; index.html untouched) — rollback 48353e7
 
 ## VERIFICATION HARNESSES (two independent signals per class; every zero replayed vs a planted-positive)
 - Syntax: `node --check`, 17 inline blocks + 5 standalone JS. Planted-positive proven (bad.js → exit 1).
@@ -194,14 +195,66 @@ via the `mbm:redirect-stub` marker. Existing order + changefreq/priority preserv
 - Verify: XML valid (396 locs); drift guard exit 0; planted-positive (remove /medevac/) still exits 1.
 
 ### FULL-DOMAIN DRIFT — REPORTED ONLY (policy is the Lessons-pass letter's; cross-repo section NOT changed)
-Checked all 389 cross-repo locs against the pinned clones (Lessons @32ca685e, Games @43bf1f8a,
-Matt-s-Apps- @27d4e0ac):
-- **70 DEAD locs** — in the sitemap, no backing file in the clone (many are stale URL-encoded names, e.g.
-  `…Lesson4a_Gas_Tests_H2_O2_CO2%20%281%29.html`, `…L2c_Ohms_Law_PhET_Take2%20%281%29.html`).
-- **118 live Lessons .html files MISSING** from the sitemap.
-The hand-maintained sitemap has drifted badly on the Lessons section — a whole-of-domain regenerate
-(all repos' disks, one derivation) is the real fix, and belongs to the Lessons pass. Sample lists captured
-in the audit run. Do NOT hand-patch these on this branch.
+**CORRECTED in Q6 — the "70 dead" below was MY FALSE POSITIVE.** Checking all 389 cross-repo locs against
+the pinned clones by comparing URL-ENCODED locs to decoded filesystem paths reported 70 dead + 118 missing.
+Once the locs are URL-decoded (`urllib.parse.unquote`), every one resolves to a real file — verified by
+ground-truth `ls` on samples like `…CO2 (1).html`. Real figures (decoded, mapped to serving tree):
+- DEAD locs: **Lessons 0 · Games 0 · Matt-s-Apps- 0** (no integrity drift).
+- Reverse coverage (html in tree, not individually sitemapped): Lessons 48 · Games 1 · Matt-s-Apps- 30 —
+  largely the section-root convention for siblings; expanding it is Lessons-pass POLICY, not drift.
+This over-report never reached the deployment (the cross-repo section was correctly left byte-untouched);
+only the ledger claim was wrong, now retracted. Full mapped lists: _passq/CARRYFORWARD_drift.txt.
+Root-cause lesson carried into U: decode before diffing a sitemap against a tree.
+
+---
+
+## Q6 — #dxChips DRIFT GUARD (FIXED — script only; index.html deliberately UNTOUCHED)
+
+Principle: **derive the artefact when it's mechanical; derive the guard when it's curated.** Which two or
+three doors sit at the front of the house is an editorial choice, so the chip VALUES stay hand-picked and
+the DRIFT DETECTION is derived. `_passq/chips_check.py` (check-only, same pattern as the sitemap guard):
+parses the hardcoded #dxChips values from index.html and resolves each through the EXACT merged-catalogue
+render() chain (incl. the ALL.some() guard), red on any chip that returns empty OR silently no-ops (guard
+not engaging = the silent-exclusion class this whole pass has been about).
+- Real run (Lessons @32ca685e + site data): all 9 chips green — Primary Science 52, Humanities 32, Art 52,
+  Games(type=Game) 30, Teacher tools(type=Teacher) 42, Physics(q) 19, Trekkers(q) 8, Simulation(q) 2.
+- PLANTED-POSITIVE: scratch Lessons with type `game`→`arcade` → the Games chip goes RED ("guard did NOT
+  engage → silently shows all 391"), exit 1. A guard that cannot fail is an unasked question; this one fails.
+
+**STANDING OBLIGATION (write it where it will be re-read): any type rename in EITHER catalogue — this
+repo's data/resources.json OR Lessons' resources.json — re-runs this guard before it ships.** The cross-repo
+form of the four-surface agreement rule; how the silent-exclusion class stays dead after we stop looking.
+
+---
+
+## CLOSE-OUT — HANDOVER
+
+### CLOSE STATE
+Site-repo Pass Q complete. Six defect classes committed (Q1, Q1b, Q2, Q3, Q4, Q5, Q6 + one report commit),
+one rollback SHA per commit. Nothing merged; branch claude/pass-q-audit-c5tg3s is Matt's to review/merge.
+Tip SHA: derive with `git log -1 --format=%h` on the branch (this file does not assert its own delivery state).
+
+### DEPLOY-VISIBLE CHANGE SET (everything a classroom could see)
+- data/resources.json — 3 `type` values "Teacher tool" → "Teacher" (Q2)
+- sitemap.xml — /medevac/ added (Q1) + lastmod correction (Q1b) + site-section regenerated from disk (Q5)
+- resources/medevac-frontier/index.html — launcher "Launch experience" → /medevac/ (Q3)
+- experiences/medevac-frontier/index.html — 317KB old build → redirect stub to /medevac/ (Q3)
+- medevac/MedevacFrontier_v1.html — DELETED (Q4)
+(Audit-only, Jekyll-ignored, not served: _passq/*.)
+
+### POST-MERGE HUMAN CHECKLIST (Matt, after Pages rebuilds — these need a real browser)
+(a) resources page → click the **Teacher** type chip → **UAS Register, ASDAN Register and Evidence Binder
+    all appear** in the results (they were excluded before Q2).
+(b) On a machine that holds Medevac **v1 progress** (localStorage `mbm_medevac_v1`), open Medevac by the
+    **old catalogue route** (resources → Medevac Frontier → Launch experience) → the redirect lands on
+    /medevac/ AND the **best score survives** (v1→v2 migration; proven in jsdom, confirm live).
+(c) **/medevac/ plays** (the v2 build loads and runs).
+
+### CARRY-FORWARD PACK for the Lessons letter → _passq/CARRYFORWARD_U.md
+Taxonomy-union table · the decoded cross-repo coverage set mapped to serving tree (0 dead; reverse-coverage
+48/1/30, policy) in _passq/CARRYFORWARD_drift.txt · the chip-guard standing obligation · the dormant app.js
+catalogue renderer (a second copy of the render truth — prove-zero-refs then delete-or-derive under U, not
+touched now). Letter **U** is reserved for the Lessons estate; do NOT start it from this session.
 
 ---
 
