@@ -13,8 +13,8 @@ sweep takes a fresh letter.**
 - Q1b 6116d0e  sitemap lastmod correction — 1 file — rollback 7c45479
 - report c73f91f  findings + plan — 2 files — rollback 7c45479
 - Q2  8d6b8e9  taxonomy canonicalise (Teacher) — 1 file — rollback 6116d0e
-- Q3  <pending> Medevac unify (launcher + redirect stub) — 2 files — rollback 8d6b8e9
-- Q4  <pending> delete MedevacFrontier_v1.html — rollback Q3
+- Q3  e91ac61  Medevac unify (launcher + redirect stub) — 2 files — rollback 8d6b8e9
+- Q4  <pending> delete MedevacFrontier_v1.html — 1 file — rollback e91ac61
 - Q5  <pending> sitemap regenerate (site section only) — rollback Q4
 
 ## VERIFICATION HARNESSES (two independent signals per class; every zero replayed vs a planted-positive)
@@ -143,6 +143,36 @@ Two signals: live migration write (positive+negative) + static structural verifi
 
 - sitemap: experiences/medevac-frontier/ is NOT in sitemap.xml (0 hits) — nothing to change here; Q5 owns
   sitemap policy regardless.
+
+---
+
+## Q4 — DELETED stale duplicate medevac/MedevacFrontier_v1.html (FIXED, committed; reviewer GO)
+
+A 343KB second copy of medevac/index.html (2-line diff: MISSING the contact <footer>), unreferenced, with
+its filename ("v1") contradicting its own <title> ("v2") — the co-present-contradiction defect class as a
+standing exhibit. Deleted (git history is the undo).
+
+### ZERO-REFERENCE PROOF — five scopes, each replayed against a KNOWN-PRESENT control (pinned by SHA, not etag)
+```
+corpus                              MedevacFrontier_v1   control (known-present)   any 'medevac'
+site (mattroper1977.github.io)              0            index.html = 14                 —
+Lessons        @ 32ca685e                   0            index.html = 16                 0
+Games          @ 43bf1f8a (2 files)         0            html       =  2                 0
+Matt-s-Apps-   @ 27d4e0ac (34 files)        0            html       = 32                 0
+sitemap.xml                                 0                  —                         —
+```
+Each control is >0, proving the search is capable of returning non-zero IN THAT corpus. Repos cloned
+read-only via add_repo (codeload/api are proxy-gated; raw single-file reads and add_repo are not a scope
+breach for reads). Q2's cross-repo taxonomy signal re-pinned by SHA 32ca685e and reproduced exactly
+(384 entries, Teacher 39, Game 30 — was etag b228fbe8 on raw main).
+
+### DISTRIBUTION ZIPS / START_HERE HUBS — cleared by reviewer confirmation (recorded verbatim, 2026-07-28)
+> "Both packs were built exclusively from Lessons-repo trees (the Art suite and Primary Science autumn),
+>  and their generated indexes link only files inside each zip — no site-repo file was ever packed."
+(So no dist-zip or START_HERE hub can reference a medevac/ site-repo file. Next audit closes this by reading.)
+
+Two independent signals: (1) five-scope boundary-safe search = 0 with per-corpus replayed controls;
+(2) the reviewer's provenance confirmation on the zips. medevac/index.html (the real v2 build) untouched.
 
 ---
 
