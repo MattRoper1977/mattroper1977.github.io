@@ -12,8 +12,8 @@ sweep takes a fresh letter.**
 - Q1  7c45479  sitemap coverage (/medevac/) — 1 file — rollback a80ae1a
 - Q1b 6116d0e  sitemap lastmod correction — 1 file — rollback 7c45479
 - report c73f91f  findings + plan — 2 files — rollback 7c45479
-- Q2  <pending> taxonomy canonicalise (Teacher) — 1 file — rollback 6116d0e
-- Q3  <pending> Medevac unify (launcher + redirect stub) — rollback Q2
+- Q2  8d6b8e9  taxonomy canonicalise (Teacher) — 1 file — rollback 6116d0e
+- Q3  <pending> Medevac unify (launcher + redirect stub) — 2 files — rollback 8d6b8e9
 - Q4  <pending> delete MedevacFrontier_v1.html — rollback Q3
 - Q5  <pending> sitemap regenerate (site section only) — rollback Q4
 
@@ -110,6 +110,39 @@ positioning). No hardcoded type enum was introduced or kept in the fixed path.
      hatch present AND functional (click resets to 391).                                               PASS
 - Runtime errors during the whole exercise: 0 (harness proven to catch throws in earlier passes).
 Two signals: in-repo render()-chain assertion + the cross-repo pinned catalogue counts agree (42/30).
+
+---
+
+## Q3 — MEDEVAC UNIFIED ON /medevac/ (FIXED, committed; reviewer GO)
+
+Two pupil-facing entry points to the same game served different builds; the catalogue path served the
+older engine WITHOUT perfLite (worse on weak school devices). Unified on the v2 build /medevac/.
+
+- FIX 1 · resources/medevac-frontier/index.html launcher: "Launch experience" anchor
+  href `../../experiences/medevac-frontier/index.html` → `/medevac/` (the canonical URL; no query string
+  is passed by this static launcher, so none to preserve).
+- FIX 2 · experiences/medevac-frontier/index.html: the 317KB old build REPLACED by a redirect stub (NEVER
+  a deletion — the URL still resolves 200, so every inbound bookmark/print-pack/zip link still lands).
+  House style, single-file, offline-first, no CDN:
+  · JS: `location.replace('/medevac/'+location.search+location.hash)` (query+hash preserved) with
+    `location.href` catch fallback;
+  · no-JS: `<meta http-equiv="refresh" content="0; url=/medevac/">` + `<link rel=canonical>`;
+  · JS-stripped-by-school-filter: a VISIBLE, tappable "Medevac Frontier has moved →" link to /medevac/;
+  · machine-readable marker `<!-- mbm:redirect-stub target="/medevac/" ... -->` for Q5's drift script.
+
+### ACCEPTANCE TEST — a pupil's saved run survives the unify (proven LIVE, not just cited)
+Booted the real medevac/index.html in jsdom (canvas 2D context stubbed, rAF no-op, AudioContext left
+undefined so the game's `if(!AC) return` guard fires):
+- POSITIVE: seeded mbm_medevac_v1 = {best:1234,bestMedal:gold,sound:true,streak:5} → after boot,
+  mbm_medevac_v2 = {best:1234,bestMedal:"gold",sound:true,callsign:"ROOK",records:[],trainingDone:false,
+  streak:5,v:2}. The v1→v2 migration (medevac/index.html:478-482) fired and carried progress forward.  PASS
+- PLANTED-NEGATIVE: no v1 key → clean default v2 start, no write until a run, ZERO runtime errors.        PASS
+- STUB: node --check clean; redirect expression evaluated → "/medevac/?class=7B#top" (query+hash kept);
+  meta-refresh + canonical + visible link all present; marker present.                                    PASS
+Two signals: live migration write (positive+negative) + static structural verification of the stub.
+
+- sitemap: experiences/medevac-frontier/ is NOT in sitemap.xml (0 hits) — nothing to change here; Q5 owns
+  sitemap policy regardless.
 
 ---
 
