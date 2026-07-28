@@ -10,8 +10,12 @@ sweep takes a fresh letter.**
 
 ## COMMIT CHAIN
 - Q1  7c45479  sitemap coverage (/medevac/) — 1 file — rollback a80ae1a
-- Q1b <pending> sitemap lastmod correction — 1 file — rollback 7c45479   (fixes reviewer correction #2)
-- report commit (this file + PLAN.md) — own commit
+- Q1b 6116d0e  sitemap lastmod correction — 1 file — rollback 7c45479
+- report c73f91f  findings + plan — 2 files — rollback 7c45479
+- Q2  <pending> taxonomy canonicalise (Teacher) — 1 file — rollback 6116d0e
+- Q3  <pending> Medevac unify (launcher + redirect stub) — rollback Q2
+- Q4  <pending> delete MedevacFrontier_v1.html — rollback Q3
+- Q5  <pending> sitemap regenerate (site section only) — rollback Q4
 
 ## VERIFICATION HARNESSES (two independent signals per class; every zero replayed vs a planted-positive)
 - Syntax: `node --check`, 17 inline blocks + 5 standalone JS. Planted-positive proven (bad.js → exit 1).
@@ -43,7 +47,73 @@ sweep takes a fresh letter.**
 
 ---
 
-## TIER 2 — MEASURED / DESIGNED, NEEDS MATT (not committed; nothing deleted or redirected this pass)
+## Q2 — TAXONOMY CANONICALISED (FIXED, committed to branch)
+
+**Reframe (reviewer round 3):** the taxonomy mismatch is the quieter, WORSE sibling of the Lessons-hub
+chip-count bug. That one announced itself ("No matches"); this one returns 39 and 30 real results that
+LOOK complete while silently excluding this repo's own flagships. An empty state gets reported by the first
+user who hits it; a silently-incomplete state gets reported by nobody. Same rule violated (a control must
+be computed through the chain it applies), but undetectable from outside — which is why it survived until
+the two catalogues were cross-referenced.
+
+### TAXONOMY-UNION TABLE (both catalogues, after the code's own norm; captured BEFORE editing)
+```
+TYPE                  Lessons  Site  MERGED     after rename
+Activity                    0     1       1        1
+Game                       30     0      30       30   (Simulation stays separate — deliberate)
+Interactive lesson          0     2       2        2
+Lesson                    263     0     263      263
+Pupil                      12     0      12       12
+Revision                    2     0       2        2
+Simulation                  0     1       1        1
+Support                    38     0      38       38
+Teacher                    39     0      39       42   <- +3, the split facet collapsed
+Teacher tool                0     3       3        0   <- removed
+```
+No stowaway synonyms elsewhere. Every merged type is non-empty → derived chip row is honest by construction.
+
+### FIX 1 (data) — "Teacher tool" → "Teacher" in data/resources.json (co-present contradiction: one concept
+spelled twice). Lessons is the catalogue of record (39 on "Teacher"), so the site's 3 entries (uas-register,
+asdan-register, evidence-binder) rename INTO it. Surgical replace of `"type": "Teacher tool"` ×3; the
+lowercase `"teacher tool"` TAGS (×2) were left untouched. JSON still valid, formatting byte-preserved.
+
+### CONSUMERS OF THE `type` FIELD IN THIS REPO (enumerated before editing)
+- LIVE: resources/index.html inline rx- code only. The rename ALIGNS the site entries into hooks that
+  already key on "Teacher":
+  · actLabel (line 171): site tools now get "OPEN TOOL →" (were falling through to default "OPEN →").
+  · fmtIcons (line 169): site tools now get the interactive tab icon (had none).
+  · card "kind" line (line 173, shown only when a filter/search is active): visible text
+    "Teacher tool · Cross-curricular" → **"Teacher · Cross-curricular"** — the ONLY visible-text change.
+    (Homepage tiles are hardcoded SVGs, not data-driven — no homepage text changes.)
+- DORMANT: app.js is a second catalogue renderer that runs only `if($('#cards'))`; neither page that loads
+  it (homepage, resources) has #cards (homepage=0; resources uses #rxOut). So its type-consuming code never
+  executes → rename has no effect there. [Tier-3 dead-code note: app.js catalogue block is unmounted.]
+
+### FIX 2 (control) — derivation, NOT a hardcoded chip list
+resources/index.html ALREADY derives the type chip row + counts from the merged catalogue (chips(), lines
+181-185) and applies them through the exact render() filter chain. FIX 1 makes that derivation honest: one
+`Teacher (42)` chip instead of a split `Teacher (39)` + `Teacher tool (3)`. Simulation stays its own chip
+(Medevac remains discoverable via the homepage `?q=simulation` quick-search — the deliberate sim/game
+positioning). No hardcoded type enum was introduced or kept in the fixed path.
+- Homepage #dxChips is a CURATED quick-filter nav (mixes subject/type/q), not a type-enum mirror. Post-rename
+  its `?type=Teacher` link resolves to 42 (now incl. site tools) and `?type=Game` to 30. Residual, flagged:
+  its two hardcoded type-VALUES ("Teacher","Game") mirror Lessons enum strings and would drift silently if
+  Lessons renamed those types; deriving the curated row would sacrifice the curation → left as a noted
+  design call for Matt, not changed here.
+
+### INVARIANTS ASSERTED IN JSDOM (real render() chain, fetch stubbed to the two live catalogues)
+- A: exactly one "Teacher" chip, count 42; NO "Teacher tool" chip.                                     PASS
+- B: every derived type chip (Activity1/Game30/Interactive2/Lesson263/Pupil12/Revision2/Sim1/Support38/
+     Teacher42) is non-empty.                                                                          PASS
+- C: for every chip, chip-count == rendered .rx-cardx count == #rxCount text (counts match the chain).  PASS
+- D: stacked-filter zero state (TYPE=Teacher + impossible query) → "Showing 0 of 391", clear-filters
+     hatch present AND functional (click resets to 391).                                               PASS
+- Runtime errors during the whole exercise: 0 (harness proven to catch throws in earlier passes).
+Two signals: in-repo render()-chain assertion + the cross-repo pinned catalogue counts agree (42/30).
+
+---
+
+## SUPERSEDED — original T2-CHIP writeup (kept for the trail; resolved by Q2 above)
 
 ### T2-CHIP · homepage catalogue type-chips exclude this repo's own flagships (reviewer #3 — CLOSED on 2 signals)
 - Signal 1 (in-repo): resources/index.html DOES read `type` off the query string (line 208 `pt=P.get('type')`,
