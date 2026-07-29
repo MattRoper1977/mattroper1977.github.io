@@ -1,0 +1,142 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Live stats — Made by Matt</title>
+<meta name="description" content="Live visitor and usage stats for madebymatt.uk — visits, countries reached and the most-opened resources.">
+<meta name="theme-color" content="#161D3D">
+<link rel="icon" href="../favicon.svg"><link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../assets/mbm-features.css">
+<style>
+:root{--dx-navy:#161D3D;--dx-deep:#0F1530;--dx-mint:#B9E6CD;--dx-mintd:#2F6B4D;--dx-amber:#F2A24A;--dx-ambd:#C97F2E;--dx-cream:#F6F1E4;--dx-card:#FFFDF6;--dx-ink:#1B2140;--dx-mut:#4A5170;--dx-lite:#FBF6EA;--dx-line:#E3DAC5;--dx-title:#161D3D;--dx-eyeb:#8A5620;--dx-r2:16px;--dx-h1:#232C55;--dx-h2:#161D3D}
+body[data-theme="dark"]{--dx-cream:#121834;--dx-lite:#161D3D;--dx-card:#1B234A;--dx-ink:#E8E2D4;--dx-mut:#A9B2CC;--dx-line:#2E3860;--dx-title:#E8E2D4;--dx-eyeb:#F2A24A}
+body{background:var(--dx-cream)}
+.sx-wrap{max-width:960px;margin:auto;padding:0 1rem}
+.sx-hero{background:radial-gradient(ellipse 120% 70% at 50% -20%,var(--dx-h1),var(--dx-h2) 70%);color:#E8E2D4;text-align:center;padding:2.6rem 1rem 2.2rem}
+.sx-hero h1{font-size:clamp(1.7rem,5.5vw,2.6rem);margin:.4rem auto .5rem;letter-spacing:-.02em}
+.sx-hero p{color:#C9D1E2;max-width:36rem;margin:0 auto;line-height:1.55}
+.sx-eyebrow{color:var(--dx-amber);font-size:.74rem;font-weight:800;letter-spacing:.24em;text-transform:uppercase}
+.sx-sec{padding:2.2rem 0}
+.sx-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.8rem}
+@media(max-width:560px){.sx-metrics{grid-template-columns:1fr}}
+.sx-metric{background:var(--dx-card);border:1.5px solid var(--dx-line);border-radius:var(--dx-r2);padding:1.3rem 1rem;text-align:center;box-shadow:0 3px 10px rgba(22,29,61,.06)}
+.sx-metric .big{display:block;font-size:clamp(1.9rem,6vw,2.6rem);font-weight:850;line-height:1;color:var(--dx-title);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.sx-metric .lab{display:block;margin-top:.45rem;font-size:.72rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--dx-eyeb)}
+.sx-card{background:var(--dx-card);border:1.5px solid var(--dx-line);border-radius:var(--dx-r2);padding:1.3rem 1.35rem;box-shadow:0 3px 12px rgba(22,29,61,.07);margin-bottom:1.4rem}
+.sx-card h2{margin:0 0 1rem;font-size:.78rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--dx-eyeb)}
+.sx-empty{color:var(--dx-mut);font-size:.9rem;text-align:center;margin:.4rem 0}
+.sx-gc{display:flex;flex-wrap:wrap;align-items:center;gap:1rem;justify-content:space-between}
+.sx-gc p{margin:0;color:var(--dx-mut);font-size:.9rem;line-height:1.55;max-width:34rem}
+.sx-gc b{color:var(--dx-ink)}
+.sx-gc a{display:inline-flex;align-items:center;gap:.4rem;font-weight:800;font-size:.9rem;color:var(--dx-navy);background:var(--dx-amber);border-radius:999px;padding:.65rem 1.2rem;text-decoration:none;box-shadow:0 2px 0 var(--dx-ambd)}
+.sx-note{max-width:720px;margin:1rem auto 0;text-align:center;font-size:.78rem;color:var(--dx-mut);line-height:1.6}
+.sx-refresh{display:inline-flex;align-items:center;gap:.4rem;font:inherit;font-weight:800;font-size:.8rem;color:var(--dx-ink);background:transparent;border:1.5px solid var(--dx-line);border-radius:999px;padding:.5rem 1.05rem;cursor:pointer}
+.sx-refresh:hover{border-color:var(--dx-ambd);color:var(--dx-ambd)}
+</style>
+</head><body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="header"><div class="bar">
+<a class="brand" href="../index.html"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a>
+<button class="menu" id="menu" aria-expanded="false" aria-controls="nav">Menu</button>
+<nav class="nav" id="nav" aria-label="Main navigation">
+<a href="../games/">Games</a><a href="../Lessons/">Lessons</a><a href="../Matt-s-Apps-/">Apps</a><a href="../tools/">Tools</a><a href="../resources/">Resources</a><a href="./" aria-current="page">Stats</a><a href="../members/">Members</a>
+</nav></div></header>
+
+<main id="main">
+<section class="sx-hero">
+<p class="sx-eyebrow">Live · around the world 🌍</p>
+<h1>Made by Matt, by the numbers.</h1>
+<p>A live look at how the site is used — visits, the countries people come from, and the resources getting the most love. Anonymous, aggregate counts only.</p>
+</section>
+
+<section class="sx-sec"><div class="sx-wrap">
+<div class="sx-metrics">
+<div class="sx-metric"><span class="big" id="sxVisits">—</span><span class="lab">Visits worldwide</span></div>
+<div class="sx-metric"><span class="big" id="sxCountries">—</span><span class="lab">Countries reached</span></div>
+<div class="sx-metric"><span class="big" id="sxResources">—</span><span class="lab">Total opens & plays</span></div>
+</div>
+
+<div class="sx-card">
+<h2>Where visitors come from</h2>
+<div class="mbm-board" id="sxBoard"><p class="sx-empty">Loading the world map…</p></div>
+</div>
+
+<div class="sx-card" id="sxResCard">
+<h2>Most-opened resources</h2>
+<div class="mbm-board" id="sxResBoard"><p class="sx-empty">Loading resource stats…</p></div>
+</div>
+
+<div class="sx-card">
+<h2>Full analytics dashboard</h2>
+<div class="sx-gc" id="sxGc"></div>
+</div>
+
+<div style="text-align:center"><button class="sx-refresh" id="sxRefresh" type="button">↻ Refresh numbers</button></div>
+<p class="sx-note">Visit totals and country tallies are anonymous aggregates from a lightweight counter service, mirrored on your device so this page still works if the service is briefly unavailable. No IP addresses or personal data are stored by this site.</p>
+</div></section>
+</main>
+
+<footer class="footer"><div class="bar"><div class="brand"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></div><span class="muted">Interactive lessons, simulations and games · madebymatt.uk</span></div></footer>
+
+<script>
+(function(){try{var t=localStorage.getItem('mbm_reading_theme');if(t&&t!=='cream')document.body.setAttribute('data-theme',t);}catch(e){}})();
+document.getElementById('menu').addEventListener('click',function(){var n=document.getElementById('nav'),o=n.classList.toggle('open');this.setAttribute('aria-expanded',o);});
+</script>
+<script src="../assets/mbm-features.js"></script>
+<script>
+(function(){
+  function load(){
+    window.MBM.ready.then(function(cfg){
+      var M=window.MBM;
+      // headline visits
+      M.read('visits_total').then(function(n){ document.getElementById('sxVisits').textContent = (n==null?'—':M.fmt(n)); });
+
+      // world board + countries reached (read-only, no increment)
+      M.collectBoard(null).then(function(rows){
+        M.renderBoard(document.getElementById('sxBoard'), rows, null, 30);
+        document.getElementById('sxCountries').textContent = rows.length ? String(rows.length) : '—';
+      });
+
+      // most-opened resources from the catalogue in site.json
+      var cat = (cfg.downloads && cfg.downloads.catalog) || [];
+      var resCard = document.getElementById('sxResCard');
+      if(!cat.length){ resCard.hidden = true; document.getElementById('sxResources').textContent='—'; }
+      else {
+        Promise.all(cat.map(function(item){
+          return M.read('dl_'+item.key).then(function(n){ return {title:item.title||item.key, n:n||0}; }).catch(function(){ return {title:item.title||item.key, n:0}; });
+        })).then(function(rows){
+          var total = rows.reduce(function(s,r){return s+r.n;},0);
+          document.getElementById('sxResources').textContent = M.fmt(total);
+          rows = rows.filter(function(r){return r.n>0;}).sort(function(a,b){return b.n-a.n;});
+          var el=document.getElementById('sxResBoard'); el.innerHTML='';
+          if(!rows.length){ el.innerHTML='<p class="sx-empty">No opens recorded yet — they’ll appear here as people use the tools.</p>'; return; }
+          var max=rows[0].n||1;
+          rows.forEach(function(r){
+            var row=document.createElement('div'); row.className='mbm-row';
+            row.innerHTML='<span class="mbm-fl">📄</span><span class="mbm-cn">'+M.esc(r.title)+'</span>'+
+              '<span class="mbm-track"><span class="mbm-fill" style="width:'+Math.max(6,Math.round((r.n/max)*100))+'%"></span></span>'+
+              '<span class="mbm-num">'+M.fmt(r.n)+'</span>';
+            el.appendChild(row);
+          });
+        });
+      }
+
+      // GoatCounter link (if configured)
+      var code=((cfg.analytics&&cfg.analytics.goatcounter)||'').trim();
+      var gc=document.getElementById('sxGc');
+      if(code){
+        var base=/^https?:\/\//.test(code)?code.replace(/\/count\/?$/,''):('https://'+code+'.goatcounter.com');
+        gc.innerHTML='<p><b>GoatCounter is live.</b> Page-view analytics — top pages, referrers, browsers and trends over time — are on your private GoatCounter dashboard.</p><a href="'+M.esc(base)+'" target="_blank" rel="noopener">Open GoatCounter →</a>';
+      } else {
+        gc.innerHTML='<p><b>Want richer analytics?</b> Add a free <a href="https://www.goatcounter.com/" target="_blank" rel="noopener" style="color:var(--dx-ambd);font-weight:700">GoatCounter</a> code to <code>site.json</code> to get top pages, referrers and trends over time. The live counts above keep working either way. See FEATURES.md.</p>';
+      }
+    });
+  }
+  load();
+  document.getElementById('sxRefresh').addEventListener('click',function(){
+    try{ Object.keys(localStorage).forEach(function(k){ if(k.indexOf('mbm_c_')===0) localStorage.removeItem(k); }); }catch(e){}
+    document.getElementById('sxBoard').innerHTML='<p class="sx-empty">Refreshing…</p>';
+    document.getElementById('sxResBoard').innerHTML='<p class="sx-empty">Refreshing…</p>';
+    load();
+  });
+})();
+</script>
+</body></html>
