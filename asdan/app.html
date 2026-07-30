@@ -211,7 +211,19 @@ table.list tr:last-child td{border-bottom:none}
 <section id="view-progs" class="view">
   <div class="panel">
     <h2>Programmes</h2>
-    <div class="row">
+    <div class="row" style="align-items:end">
+      <div class="field"><label for="pw-select">Pathway quick-start</label>
+        <select id="pw-select">
+          <option value="">— choose a pathway —</option>
+          <option value="build">BUILD ASDAN</option>
+          <option value="grow">GROW ASDAN</option>
+          <option value="launch">LAUNCH ASDAN</option>
+        </select></div>
+      <button class="btn ghost" id="pw-seed">Set up this pathway's strands &amp; slots</button>
+    </div>
+    <p class="hint" id="pw-info" style="margin:6px 0">New for 2026–27: pick BUILD, GROW or LAUNCH to seed its strands as Short Courses and a lesson slot for each — real strand names and lesson minutes from the schemes of work. No pupils, credit values or unit codes are added.</p>
+    <div id="pw-active"></div>
+    <div class="row" style="margin-top:6px">
       <button class="btn" id="new-peq">＋ New PEQ unit</button>
       <button class="btn" id="new-short">＋ New Short Course</button>
       <button class="btn ghost" id="load-starter">⚡ Load starter template</button>
@@ -241,6 +253,7 @@ table.list tr:last-child td{border-bottom:none}
     <div class="row"><div class="field"><label for="r-prog">Programme</label><select id="r-prog"></select></div>
     <button class="btn ghost" id="r-refresh">Refresh</button></div>
     <p class="hint" style="margin-top:6px">Green = claim it today. Amber = credits banked but paperwork outstanding. Red = not enough completed hours yet.</p>
+    <div id="r-ceiling"></div>
     <div class="ready-grid" id="ready-grid" style="margin-top:12px"></div>
   </div>
 </section>
@@ -270,10 +283,12 @@ table.list tr:last-child td{border-bottom:none}
   <div class="panel">
     <h2>How to use ASDAN Register</h2>
     <p class="hint" style="margin-bottom:10px">One app, two ASDAN shapes. PEQ units track criteria, logged hours and milestones. Short Courses track challenges, banked hours and the closing documents that gate every certificate.</p>
+    <h3>0 · Pick a pathway (optional)</h3>
+    <p>On the <b>Programmes</b> page, <b>Pathway quick-start</b> seeds BUILD, GROW or LAUNCH — the strand names and lesson minutes come straight from the schemes of work (79 lessons across the three: BUILD 31, GROW 18, LAUNCH 30). Each pathway names what a learner is working toward — an <b>Award</b> (BUILD), an <b>Extended Award</b> (GROW) or a <b>Level 1 Certificate</b> (LAUNCH). That target, and any unit or level, is <b>provisional</b>: it is the centre coordinator's decision, and nothing is promised to a learner until the ASDAN registration is confirmed.</p>
     <h3>1 · Pupils (once)</h3>
     <p>Add your class, or press <b>Import pupils from a UAS Register backup</b> to bring them over from the AQA app in one click.</p>
     <h3>2 · Create a programme</h3>
-    <p><b>PEQ unit</b> — enter the unit code (e.g. WellbLeE3), title, level, credits and GLH, then type the knowledge criteria (E3.1, E3.2…). <b>Short Course</b> — enter the course, target credits, then build modules and their challenges; give each challenge its section (A/B) and hours. Enrol pupils by tapping names on the programme page.</p>
+    <p><b>PEQ unit</b> — enter the unit code (e.g. ComSk1), title, level, credits and GLH from your own ASDAN documents, then type the knowledge criteria in the unit's own numbering. <b>Short Course</b> — enter the course, target credits, then build modules and their challenges; give each challenge its section (A/B) and hours. Enrol pupils by tapping names on the programme page.</p>
     <h3>3 · Track as you go</h3>
     <p><b>PEQ:</b> tap a criterion chip, tap pupils to date-stamp it — and log session hours with the minute buttons (tap a pupil, then 30/45/60). The tally counts toward the unit's GLH.
     <b>Short Course:</b> pick a pupil, then tick the <b>W · P · R</b> trio (Work evidence, Planning sheet, Review sheet) for each challenge. A challenge only banks its hours when all three are ticked — that's what ASDAN counts.</p>
@@ -504,6 +519,7 @@ function progChallenges(p){/* flat list with module context */
   return out;
 }
 function renderProgs(){
+  const active=$("#pw-active");if(active)active.innerHTML=ceilingBannerHTML(curPathway());
   const el=$("#prog-list");
   if(!S.progs.length){el.innerHTML='<div class="empty">No programmes yet. Create a PEQ unit or a Short Course above.</div>';$("#prog-detail").hidden=true;return}
   let h='<table class="list"><tr><th>Type</th><th>Programme</th><th>Structure</th><th>Enrolled</th><th></th></tr>';
@@ -553,7 +569,7 @@ function openProg(id){
   h+="</div>";
   if(p.kind==="peq"){
     h+=`<h3>Knowledge criteria</h3><div id="pg-outs"></div>
-    <div class="row" style="margin-top:6px"><input id="pg-newout-n" placeholder="E3.5" style="width:80px;border:1px solid var(--mint-line);border-radius:7px;padding:8px">
+    <div class="row" style="margin-top:6px"><input id="pg-newout-n" placeholder="Ref" style="width:80px;border:1px solid var(--mint-line);border-radius:7px;padding:8px">
     <input id="pg-newout-t" placeholder="Criterion text…" style="flex:1;min-width:200px;border:1px solid var(--mint-line);border-radius:7px;padding:8px">
     <button class="btn small" id="pg-addout">Add criterion</button></div>`;
   }else{
@@ -593,7 +609,7 @@ function openProg(id){
 }
 function renderPeqOuts(p){
   const el=$("#pg-outs");
-  if(!(p.outcomes||[]).length){el.innerHTML='<div class="empty">No criteria yet — add them below (e.g. E3.1).</div>'}
+  if(!(p.outcomes||[]).length){el.innerHTML='<div class="empty">No criteria yet — add them below, using the unit\'s own numbering.</div>'}
   else{
     let h='<table class="list">';
     p.outcomes.forEach((o,i)=>{h+=`<tr><td style="width:70px"><b>${esc(o.n)}</b></td><td>${esc(o.text)}</td><td style="width:40px"><button class="btn small ghost" data-oX="${i}">✕</button></td></tr>`});
@@ -805,7 +821,7 @@ async function toggleTrio(p,pupilId,tok){
 }
 
 /* =====================================================================
-   EVIDENCE — refs like CODE/M1C2/A or CODE/E3.2/A
+   EVIDENCE — refs like CODE/M1C2/A or CODE/<criterion>/A
    ===================================================================== */
 const evURLs=new Map();
 function evURL(ev){if(!evURLs.has(ev.id))evURLs.set(ev.id,URL.createObjectURL(ev.blob));return evURLs.get(ev.id)}
@@ -931,6 +947,7 @@ function readiness(p,pupilId){
 }
 function renderReady(){
   fillProgSelect("#r-prog",$("#r-prog").value||S.trackProg||(S.progs[0]&&S.progs[0].id));
+  const rc=$("#r-ceiling");if(rc)rc.innerHTML=ceilingBannerHTML(curPathway());
   const p=S.progs.find(x=>x.id===$("#r-prog").value);
   const grid=$("#ready-grid");
   if(!p){grid.innerHTML='<div class="empty">Create a programme first.</div>';return}
@@ -964,7 +981,9 @@ function fillPrPupils(){
 $("#pr-print").addEventListener("click",()=>window.print());
 function printHeader(p,pu){
   const band=(V25.school&&V25.school.on)?`<div style="border-bottom:3px solid #0e4f4a;margin-bottom:8px;padding-bottom:4px"><div style="font-size:1.05rem;font-weight:800;letter-spacing:.06em;color:#0e4f4a">${esc(V25.school.name||"Progress Schools Tees Valley")}</div></div>`:"";
-  return band+`<div class="phead"><h1>${esc(p.title)}${p.code?" · "+esc(p.code):""}${p.kind==="peq"?" · "+esc(p.level||""):""}</h1><div><b>${esc(pu.forename)} ${esc(pu.surname)}</b></div></div>
+  const pw=curPathway();
+  const ceil=pw?`<div style="font-size:.72rem;color:#555;margin-bottom:6px;font-style:italic">Working toward ${esc(pw.ceiling)} — provisional: unit and level attribution is the centre coordinator's decision, and nothing is promised to a learner until the ASDAN registration is confirmed.</div>`:"";
+  return band+ceil+`<div class="phead"><h1>${esc(p.title)}${p.code?" · "+esc(p.code):""}${p.kind==="peq"?" · "+esc(p.level||""):""}</h1><div><b>${esc(pu.forename)} ${esc(pu.surname)}</b></div></div>
   <div style="font-size:.8rem;color:#444;margin-bottom:8px">Centre: ${esc(S.settings.centre||"Progress Schools")}${S.settings.centreNo?" ("+esc(S.settings.centreNo)+")":""} · Tutor: ${esc(S.settings.teacher||"")} · Printed ${fmtDMY(todayISO())}</div>`;
 }
 function showPrint(html){$("#print-zone").innerHTML=html;$("#pr-preview-panel").hidden=false;$("#pr-print").disabled=false}
@@ -1078,7 +1097,7 @@ $("#bk-export").addEventListener("click",async()=>{
   toast("Preparing backup…");
   const evOut=[];
   for(const ev of S.evidence){const{blob,...rest}=ev;evOut.push({...rest,dataURL:await blobToDataURL(blob)})}
-  const payload={app:"asdan_register",version:1,exported:new Date().toISOString(),
+  const payload={app:"asdan_register",version:1,toolVersion:"2.6",exported:new Date().toISOString(),
     pupils:S.pupils,progs:S.progs,trio:S.trio,stamps:S.stamps,hours:S.hours,docs:S.docs,evidence:evOut,settings:S.settings,
     v25:V25,registers:(await dbAll("kv")).filter(x=>x.k&&String(x.k).startsWith("reg_"))};
   const blob=new Blob([JSON.stringify(payload)],{type:"application/json"});
@@ -1105,7 +1124,7 @@ $("#bk-file").addEventListener("change",async e=>{
     for(const ev of data.evidence||[]){const{dataURL,...rest}=ev;await dbPut("evidence",{...rest,blob:dataURLToBlob(dataURL)})}
     if(data.settings)await dbPut("kv",{k:"settings",v:data.settings});
     evURLs.forEach(u=>URL.revokeObjectURL(u));evURLs.clear();
-    await loadAll();showView("pupils");toast("Backup restored");
+    await loadAll();await v25Load();showView("pupils");toast("Backup restored");
   }catch(err){alert("Import failed: "+(err.message||err))}
 });
 $("#wipe").addEventListener("click",async()=>{
@@ -1118,8 +1137,8 @@ $("#wipe").addEventListener("click",async()=>{
 
 
 /* ===== Starter template: one PEQ unit + one Short Course, fully editable ===== */
-const STARTER_PEQ={kind:"peq",code:"ComSk",title:"Communication Skills (ComSk1/ComSk2)",
- level:"Level 1/Level 2",credits:3,glh:30,
+const STARTER_PEQ={kind:"peq",code:"ComSk1",title:"Communication Skills (ComSk1)",
+ level:"Level 1",credits:3,glh:30,
  outcomes:[
   {n:"C1",text:"Explain the meaning of communication and its ways, types and purposes"},
   {n:"C2",text:"Identify the components of effective communication"},
@@ -1144,7 +1163,7 @@ const STARTER_SHORT={kind:"short",code:"IL",title:"Independent Living",targetCre
   ]}
  ]};
 async function loadStarterTemplate(){
-  if(S.progs.some(p=>p.code==="ComSk"||p.code==="IL")){toast("Starter programmes already loaded");return}
+  if(S.progs.some(p=>p.code==="ComSk1"||p.code==="IL")){toast("Starter programmes already loaded");return}
   if(!confirm("Load the starter template? Creates an example PEQ unit (Communication Skills) and a Short Course (Independent Living) — every field editable, no pupils added."))return;
   const peq={id:uid(),...STARTER_PEQ,outcomes:STARTER_PEQ.outcomes.map(o=>({...o})),enrolled:[],created:Date.now()};
   const sc={id:uid(),...STARTER_SHORT,modules:STARTER_SHORT.modules.map(m=>({id:uid(),title:m.title,challenges:m.challenges.map(c=>({id:uid(),...c}))})),enrolled:[],created:Date.now()+1};
@@ -1155,15 +1174,75 @@ async function loadStarterTemplate(){
 }
 document.querySelector("#load-starter").addEventListener("click",loadStarterTemplate);
 window.loadStarterTemplate=loadStarterTemplate;
+
+/* =====================================================================
+   v2.6 · Three-pathway awareness (BUILD · GROW · LAUNCH)
+   Strand names and lesson minutes are DERIVED from the real schemes of
+   work (all three share the v5 studio-deck chassis: ~53 min of timed
+   activity per lesson). No unit codes, criterion codes, credit values or
+   GLH are asserted here — those stay the coordinator's decision. Purely
+   additive: nothing existing is migrated or overwritten.
+   ===================================================================== */
+const PROVISIONAL_LINE="Unit and level attribution is provisional and remains the centre coordinator's decision. Nothing is promised to a learner until the ASDAN registration is confirmed. This is a worked example from a real SEMH classroom, not an ASDAN-endorsed mapping.";
+const PATHWAY_MINS=53; /* v5 studio deck: I-Do → We-Do → Independent (15:00) phase timers sum to 53 min, identical across all 79 lessons */
+const PATHWAYS={
+  build:{key:"build",name:"BUILD ASDAN",lessons:31,ceiling:"Award",
+    ceilingNote:"Foundational pathway — banks ASDAN Short Courses, AQA UAS and Capable Kids challenges; no PEQ registration.",
+    strands:["Careers","Vocational · Community Upcycling","Living Independently","FoodWise","Community Project","Duke & Social Enterprise"]},
+  grow:{key:"grow",name:"GROW ASDAN",lessons:18,ceiling:"Extended Award",
+    ceilingNote:"PEQ Level 1 with an Entry 3 floor. Autumn 1 completes Communication skills (ComSk1).",
+    strands:["Personal Effectiveness (PEQ Level 1)","Community Project","Community & Enterprise"]},
+  launch:{key:"launch",name:"LAUNCH ASDAN",lessons:30,ceiling:"Level 1 Certificate",
+    ceilingNote:"Full-year scheme of work homes all six Level 1 PEQ units, so the year's ceiling is an L1 Certificate. Autumn 1 completes Communication skills (ComSk1).",
+    strands:["Personal Effectiveness (PEQ Level 1)","Careers & Experiencing Work","Living Independently","Vocational Skills (Hospitality & Gardening)","Community Project & Enterprise"]}
+};
+window.PATHWAYS=PATHWAYS;window.PROVISIONAL_LINE=PROVISIONAL_LINE; /* test/debug handles */
+function curPathway(){return (V25&&V25.pathway&&PATHWAYS[V25.pathway])||null}
+function ceilingBannerHTML(pw){
+  if(!pw)return"";
+  return `<div class="notice warn" style="margin:10px 0"><b>${esc(pw.name)} — working toward: ${esc(pw.ceiling)}.</b> ${esc(pw.ceilingNote)}<br><span style="display:inline-block;margin-top:4px">${esc(PROVISIONAL_LINE)}</span></div>`;
+}
+function renderPathwayPreview(){
+  const sel=$("#pw-select");if(!sel)return;
+  const el=$("#pw-info");if(!el)return;
+  const pw=PATHWAYS[sel.value];
+  if(!pw){el.innerHTML="New for 2026–27: pick BUILD, GROW or LAUNCH to seed its strands as Short Courses and a lesson slot for each — real strand names and lesson minutes from the schemes of work. No pupils, credit values or unit codes are added.";return}
+  el.innerHTML=`<b>${esc(pw.name)}</b> · ${pw.strands.length} strands · ${PATHWAY_MINS} min each: ${pw.strands.map(s=>esc(s)).join(" · ")}.<br><b>Working toward: ${esc(pw.ceiling)}.</b> ${esc(pw.ceilingNote)}<br><i>${esc(PROVISIONAL_LINE)}</i>`;
+}
+async function seedPathway(key){
+  const pw=PATHWAYS[key];
+  if(!pw){toast("Choose BUILD, GROW or LAUNCH first");return}
+  if(S.progs.some(p=>p.pathway===key)){
+    V25.pathway=key;await v25Save();renderProgs();toast(pw.name+" strands are already set up");return;
+  }
+  if(!confirm(`Set up ${pw.name}? Creates ${pw.strands.length} Short Course programmes (one per strand) and a ${PATHWAY_MINS}-minute lesson slot for each, spread across Mon–Fri. Your existing programmes and slots are untouched. No pupils, credit values or unit codes are added — check everything against your ASDAN documents.`))return;
+  let i=0;
+  for(const name of pw.strands){
+    const prog={id:uid(),kind:"short",code:"",title:name,targetCredits:6,modules:[],enrolled:[],pathway:key,strand:name,created:Date.now()+i};
+    await dbPut("progs",prog);S.progs.unshift(prog);
+    V25.slots.push({id:uid(),name,progId:prog.id,mins:PATHWAY_MINS,days:[(i%5)+1]});
+    i++;
+  }
+  V25.pathway=key;
+  await v25Save();
+  renderProgs();
+  if(document.getElementById("term-list"))renderV25Settings();
+  toast(pw.name+" set up — enrol pupils, then set your real days in Settings");
+}
+window.seedPathway=seedPathway;
+$("#pw-seed").addEventListener("click",()=>seedPathway($("#pw-select").value));
+$("#pw-select").addEventListener("change",renderPathwayPreview);
+
 /* ---------- init ---------- */
 async function init(){await openDB();await loadAll();await v25Load();renderPupils();renderToday()}
 init();
 
 /* ===== v2.5 · Today / Lesson Mode / Terms / Branding ===== */
-let V25={school:{on:true,name:"Progress Schools Tees Valley"},terms:[],slots:[],privacy:false};
+let V25={school:{on:true,name:"Progress Schools Tees Valley"},terms:[],slots:[],privacy:false,pathway:""};
 let REG={};
 const wdName=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 async function v25Load(){
+  V25={school:{on:true,name:"Progress Schools Tees Valley"},terms:[],slots:[],privacy:false,pathway:""};
   try{const v=await dbGet("kv","v25");if(v&&v.v)V25=Object.assign(V25,v.v);}catch(e){}
   try{const r=await dbGet("kv","reg_"+todayISO());REG=(r&&r.v)||{};}catch(e){REG={}}
 }
