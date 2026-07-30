@@ -149,13 +149,13 @@ function normLessons(l){return l.filter(r=>r.subject!=="Live Lessons").map(r=>({
 function normSite(l){return l.filter(r=>r.subject!=="Live Lessons").map(r=>({title:r.title||'Untitled',description:r.description||'',subject:r.subject||'General',type:r.type||'Resource',path:r.path||null,tags:Array.isArray(r.tags)?r.tags:[],status:r.status||'Published',popular:r.featured!==false,year:'',added:'',accent:r.accent||accentFor(r.subject||'General')}))}
 const SUITE="Art · Teesside Studio Suite";
 /* Teesside/latest first, legacy last — mirrors the Lesson Hub's browse order */
-const SUBJ_PRIORITY=[SUITE,"Humanities","BUILD Vocational & PfA","GROW Vocational & PfA","Primary Science","Tutor Time · BV · BF · KCSIE"];
+const SUBJ_PRIORITY=[SUITE,"Humanities","BUILD Vocational & PfA","GROW Vocational & PfA","LAUNCH Vocational & PfA","Primary Science","Tutor Time · BV · BF · KCSIE"];
 const SUBJ_LEGACY=new Set(["Art"]);
 function subjOrder(keys){
   const rank=s=>{const i=SUBJ_PRIORITY.indexOf(s);if(i>-1)return i;return SUBJ_LEGACY.has(s)?9999:1000;};
   return keys.slice().sort((x,y)=>(rank(x)-rank(y))||x.localeCompare(y));
 }
-const PRINTPACK=new Set([SUITE,"Humanities","BUILD Vocational & PfA","GROW Vocational & PfA"]);
+const PRINTPACK=new Set([SUITE,"Humanities","BUILD Vocational & PfA","GROW Vocational & PfA","LAUNCH Vocational & PfA"]);
 const FIC={screen:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 16v3M8.5 21h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
 print:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V4h10v4M7 16h10v5H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><rect x="4" y="8" width="16" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>',
 tiers:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16h5v4H5zM9.5 10h5v10h-5zM14 4h5v16h-5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>',
