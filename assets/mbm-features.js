@@ -114,20 +114,47 @@
   }
 
   /* ========================================================================
-     GEOLOCATION (client-side, best effort, cached 12h)
+     LOCATION (client-side, NO NETWORK)
+     ------------------------------------------------------------------------
+     The visitor's country is inferred from their device's own time zone via
+     Intl.DateTimeFormat — nothing is looked up, no IP is read, and nothing
+     about the visitor's location is sent anywhere to derive it. Deliberately
+     coarse (country-level, approximate) — it's a friendly flourish, not
+     tracking. Unmapped time zones simply yield no country.
      ===================================================================== */
+  var TZ_CC = {
+    "Europe/London": "GB", "Europe/Dublin": "IE", "Europe/Berlin": "DE", "Europe/Paris": "FR",
+    "Europe/Madrid": "ES", "Europe/Amsterdam": "NL", "Europe/Rome": "IT", "Europe/Stockholm": "SE",
+    "Europe/Warsaw": "PL", "Europe/Lisbon": "PT", "Europe/Brussels": "BE", "Europe/Zurich": "CH",
+    "Europe/Vienna": "AT", "Europe/Oslo": "NO", "Europe/Copenhagen": "DK", "Europe/Helsinki": "FI",
+    "Europe/Athens": "GR", "Europe/Bucharest": "RO", "Europe/Prague": "CZ", "Europe/Budapest": "HU",
+    "Europe/Moscow": "RU", "Europe/Istanbul": "TR", "Europe/Kiev": "UA", "Europe/Kyiv": "UA",
+    "America/New_York": "US", "America/Detroit": "US", "America/Chicago": "US", "America/Denver": "US",
+    "America/Phoenix": "US", "America/Los_Angeles": "US", "America/Anchorage": "US", "Pacific/Honolulu": "US",
+    "America/Toronto": "CA", "America/Vancouver": "CA", "America/Edmonton": "CA", "America/Winnipeg": "CA",
+    "America/Halifax": "CA", "America/Sao_Paulo": "BR", "America/Mexico_City": "MX", "America/Bogota": "CO",
+    "America/Lima": "PE", "America/Argentina/Buenos_Aires": "AR", "America/Santiago": "CL",
+    "Asia/Kolkata": "IN", "Asia/Calcutta": "IN", "Asia/Karachi": "PK", "Asia/Dubai": "AE",
+    "Asia/Singapore": "SG", "Asia/Manila": "PH", "Asia/Kuala_Lumpur": "MY", "Asia/Tokyo": "JP",
+    "Asia/Shanghai": "CN", "Asia/Hong_Kong": "HK", "Asia/Seoul": "KR", "Asia/Bangkok": "TH",
+    "Asia/Jakarta": "ID", "Asia/Dhaka": "BD", "Asia/Colombo": "LK", "Asia/Riyadh": "SA",
+    "Asia/Jerusalem": "IL", "Asia/Tehran": "IR",
+    "Australia/Sydney": "AU", "Australia/Melbourne": "AU", "Australia/Brisbane": "AU",
+    "Australia/Perth": "AU", "Australia/Adelaide": "AU", "Pacific/Auckland": "NZ",
+    "Africa/Johannesburg": "ZA", "Africa/Lagos": "NG", "Africa/Nairobi": "KE", "Africa/Cairo": "EG",
+    "Africa/Accra": "GH", "Africa/Casablanca": "MA"
+  };
+  function tzCountry() {
+    try {
+      var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      return { tz: tz || "", cc: (tz && TZ_CC[tz]) || "" };
+    } catch (e) { return { tz: "", cc: "" }; }
+  }
   function locate() {
     if (!CFG.stats.geo) return Promise.resolve(null);
-    var cached = ls.get("mbm_geo", null);
-    if (cached && cached.cc && cached._t && (nowIsh() - cached._t) < 43200000) return Promise.resolve(cached);
-    return timedJSON("https://ipwho.is/", 6000)
-      .then(function (j) { if (!j || j.success === false || !j.country_code) throw 0; return { cc: j.country_code, country: j.country, city: j.city, region: j.region }; })
-      .catch(function () {
-        return timedJSON("https://ipapi.co/json/", 6000)
-          .then(function (j) { if (!j || !j.country_code) throw 0; return { cc: j.country_code, country: j.country_name, city: j.city, region: j.region }; })
-          .catch(function () { return null; });
-      })
-      .then(function (g) { if (g) { g._t = nowIsh(); ls.set("mbm_geo", g); } return g; });
+    var r = tzCountry();
+    if (!r.cc) return Promise.resolve(null);
+    return Promise.resolve({ cc: r.cc, country: countryName(r.cc), tz: r.tz, approx: true });
   }
 
   /* ========================================================================
@@ -159,8 +186,7 @@
 
     locate().then(function (g) {
       if (g && elHere) {
-        var where = [g.city, g.country].filter(Boolean).join(", ") || g.country || g.cc;
-        elHere.innerHTML = "You\u2019re visiting from <b>" + esc(where) + "</b> " + flag(g.cc);
+        elHere.innerHTML = "Looks like you\u2019re in <b>" + esc(g.country || g.cc) + "</b> " + flag(g.cc);
       } else if (elHere) {
         elHere.textContent = "Welcome \u2014 wherever you\u2019re reading this from.";
       }
@@ -277,7 +303,7 @@
         register: function (name, email, pass) {
           email = norm(email);
           if (!name || !email || !pass) return Promise.reject("Please fill in every field.");
-          if (pass.length < 6) return Promise.reject("Please choose a password of at least 6 characters.");
+          if (pass.length < 8) return Promise.reject("Please choose a password of at least 8 characters.");
           var users = all();
           if (users[email]) return Promise.reject("There\u2019s already an account on this device for that email \u2014 try logging in.");
           var salt = rndSalt();
@@ -316,7 +342,7 @@
     var Cloud = {
       register: function (name, email, pass) {
         if (!name || !email || !pass) return Promise.reject("Please fill in every field.");
-        if (pass.length < 6) return Promise.reject("Please choose a password of at least 6 characters.");
+        if (pass.length < 8) return Promise.reject("Please choose a password of at least 8 characters.");
         return sb.auth.signUp({ email: String(email).trim(), password: pass, options: { data: { name: String(name).trim(), tier: "member" } } })
           .then(function (r) {
             if (r.error) throw r.error.message || "Sign-up failed.";
@@ -385,7 +411,22 @@
     var msg = qs("#mbmAuthMsg", modal), title = qs("#mbmAuthTitle", modal);
     var submit = qs("#mbmAuthSubmit", modal), toggle = qs("#mbmAuthToggle", modal);
     var forgot = qs("#mbmAuthForgot", modal);
+    var passInput = qs("#mbmAuthPass", modal), strengthBox = qs("#mbmStrength", modal);
     var mode = "login";
+
+    function setReq(id, ok) { var el = qs("#" + id, modal); if (!el) return; el.setAttribute("data-ok", ok ? "1" : "0"); var t = qs(".tick", el); if (t) t.textContent = ok ? "✓" : "·"; }
+    function updateStrength() {
+      if (!strengthBox) return;
+      var v = passInput ? passInput.value : "";
+      if (mode === "login" || !v) { strengthBox.hidden = true; return; }
+      strengthBox.hidden = false;
+      var len = v.length >= 8, mix = /[a-z]/.test(v) && /[A-Z]/.test(v), num = /[0-9\W]/.test(v);
+      setReq("mbmReqLen", len); setReq("mbmReqCase", mix); setReq("mbmReqNum", num);
+      var score = (len ? 1 : 0) + (mix ? 1 : 0) + (num ? 1 : 0);
+      var bar = qs("#mbmStrBar", modal), txt = qs("#mbmStrText", modal);
+      if (bar) bar.className = "mbm-strbar-fill lvl-" + score;
+      if (txt) txt.textContent = score <= 1 ? "Weak" : (score === 2 ? "Okay" : "Strong");
+    }
 
     function setMode(m) {
       mode = m;
@@ -396,6 +437,7 @@
       toggle.innerHTML = (m === "login") ? "New here? <b>Create an account</b>" : "Already have an account? <b>Log in</b>";
       if (forgot) forgot.hidden = (m !== "login") || (MBMAuth.provider !== "supabase");
       msg.textContent = ""; msg.className = "mbm-auth-msg";
+      updateStrength();
     }
     function open() { if (MBMAuth.user) return; setMode("login"); modal.hidden = false; doc.body.style.overflow = "hidden"; setTimeout(function () { try { qs("#mbmAuthEmail", modal).focus(); } catch (e) {} }, 30); }
     function close() { modal.hidden = true; doc.body.style.overflow = ""; }
@@ -404,6 +446,7 @@
     modal.addEventListener("click", function (e) { if (e.target === modal || (e.target.hasAttribute && e.target.hasAttribute("data-close"))) close(); });
     doc.addEventListener("keydown", function (e) { if (e.key === "Escape" && !modal.hidden) close(); });
     toggle.addEventListener("click", function () { setMode(mode === "login" ? "register" : "login"); });
+    if (passInput) passInput.addEventListener("input", updateStrength);
 
     if (forgot) forgot.addEventListener("click", function () {
       var email = qs("#mbmAuthEmail", modal).value;
@@ -423,7 +466,7 @@
           msg.textContent = "Almost there \u2014 check your email to confirm your account.";
           msg.className = "mbm-auth-msg ok"; form.reset(); return;
         }
-        msg.textContent = (mode === "login") ? "Logged in \u2014 good to see you." : "You\u2019re in! Bonus features are on the way.";
+        msg.textContent = (mode === "login") ? "Logged in \u2014 good to see you." : "You\u2019re in \u2014 your account is saved on this device.";
         msg.className = "mbm-auth-msg ok"; form.reset(); setTimeout(close, 1100);
       }).catch(function (err) {
         msg.textContent = String(err || "Something went wrong \u2014 please try again.");

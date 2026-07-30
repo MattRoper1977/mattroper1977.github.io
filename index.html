@@ -259,7 +259,7 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 
 <section class="mbm-stats" id="mbmStats"><div class="dx-wrap">
 <h2 class="dx-eyebrow">Live · around the world 🌍</h2>
-<p class="mbm-here" id="mbmHere">Finding out where you're reading this from…</p>
+<p class="mbm-here" id="mbmHere">Hello — glad you're here.</p>
 <div class="mbm-metrics">
 <div class="mbm-metric"><span class="mbm-big" id="mbmVisits">—</span><span class="mbm-lab">Visits worldwide</span></div>
 <div class="mbm-metric"><span class="mbm-big" id="mbmCountries">—</span><span class="mbm-lab">Countries reached</span></div>
@@ -269,14 +269,14 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <div class="mbm-board" id="mbmBoard"><p class="mbm-board-empty">Counting the first visitors…</p></div>
 </div>
 <p class="mbm-memberbadge" id="mbmMemberBadge" hidden>★ You're signed in — thank you. Member bonuses are on the way.</p>
-<p class="mbm-note">Anonymous, aggregate visit counts only. Your rough location is looked up in your browser to colour this list — your IP address and personal details are never stored by this site.</p>
+<p class="mbm-note">These tallies come from a lightweight public visit counter (counterapi.dev): each visit adds an anonymous +1, plus your country. Your country is worked out on your own device from its time zone — your location is never looked up and your IP address is never sent or stored.</p>
 </div></section>
 
 <section class="dx-std" id="standard"><div class="dx-wrap">
 <h2><b>THE PROMISE</b> | how every tool behaves</h2>
 <div class="dx-tiles">
 <div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-free"/></svg><b>Free</b><p>Everything here is free to use — no trials, no locked features. An account is optional, never required.</p></div>
-<div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-shield"/></svg><b>Nothing uploaded</b><p>Registers and records save on your device only. Nothing is sent to a server.</p></div>
+<div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-shield"/></svg><b>Nothing uploaded</b><p>Lessons, registers and records stay on your device — nothing about your class ever leaves it. The only things that touch the internet are the anonymous visit counter and, if you use it, the contact form.</p></div>
 <div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-off"/></svg><b>Offline-friendly</b><p>Core experiences remain useful where connectivity is unreliable.</p></div>
 <div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-board"/></svg><b>Teacher-built</b><p>Designed in a real classroom — accessible, calm-mode aware and ready for the whiteboard.</p></div>
 </div></div></section>
@@ -303,7 +303,7 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <footer class="footer"><div class="bar"><div class="brand"><img src="assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></div><span class="muted">Interactive lessons, simulations and games · madebymatt.uk</span></div><div class="mbm-kofi" style="max-width:640px;margin:18px auto 6px;background:#161D3D;border:1px solid rgba(185,230,205,.35);border-radius:10px;padding:16px 18px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;justify-content:space-between"><p style="font-size:.85rem;color:#C9D1E2;line-height:1.45;max-width:380px;margin:0;text-align:left;text-transform:none;letter-spacing:normal"><strong style="color:#E8E2D4">Everything here is free to use.</strong> If a lesson or tool has saved you an evening, a coffee helps cover hosting, domains and development time.</p><a href="https://ko-fi.com/madebymattuk" style="display:inline-flex;align-items:center;gap:8px;background:#F2A24A;color:#161D3D;font-weight:700;font-size:.9rem;padding:10px 18px;border-radius:8px;text-decoration:none;box-shadow:0 2px 0 #C97F2E">☕ Support Made by Matt</a></div>
 <div class="mbm-give">
 <h3>Donate, and I'll build something just for you 🎁</h3>
-<p class="mbm-give-lead">Everything here stays free — always. But if you'd like to go a step further, a donation lets me make a <b>bespoke set of resources, lessons and tools designed around your exact needs</b>. Tell me your class, your subject or the problem you're wrestling with, and I'll craft something for it. Each one is handmade, so the size of the set grows with the donation — simply because they take real time (and a little money) to design and build well.</p>
+<p class="mbm-give-lead">Everything here stays free — always. But a donation lets me build a <b>bespoke set of resources, lessons and tools around your exact needs</b>: tell me your class, subject or the problem you're wrestling with, and I'll craft something for it. Each is handmade — so the bigger the donation, the bigger the set, since they take real time (and a little money) to build well.</p>
 <div class="mbm-tiers">
 <div class="mbm-tier"><span class="mbm-tier-amt">☕ From 50p</span><span class="mbm-tier-name">A thank-you</span><span class="mbm-tier-desc">My genuine thanks, plus one small custom resource made for something you're working on.</span></div>
 <div class="mbm-tier"><span class="mbm-tier-amt">🎒 From £20</span><span class="mbm-tier-name">A supporter set</span><span class="mbm-tier-desc">A small, handpicked bundle of lessons, tools or activities shaped to your class's needs.</span></div>
@@ -375,19 +375,28 @@ window.addEventListener('resize',upd);upd();})();
 <div class="mbm-modal-scrim" data-close></div>
 <div class="mbm-card">
 <button class="mbm-close" type="button" data-close aria-label="Close">&times;</button>
-<span class="mbm-soon">Bonus features coming soon</span>
+<span class="mbm-soon">Optional · stays on this device</span>
 <h3 id="mbmAuthTitle">Welcome back</h3>
-<p class="mbm-sub">Create a free account to be first in line for member-only bonuses — extra lessons, tools and resources landing soon for account holders.</p>
+<p class="mbm-sub">A free account just saves your name in this browser, on this device. There are no member-only features yet — this is here so you're set up if any arrive.</p>
 <form id="mbmAuthForm" novalidate>
 <label class="mbm-field" id="mbmAuthNameField" hidden><span>Your name</span><input type="text" id="mbmAuthName" autocomplete="name"></label>
 <label class="mbm-field"><span>Email</span><input type="email" id="mbmAuthEmail" autocomplete="email" required></label>
 <label class="mbm-field"><span>Password</span><input type="password" id="mbmAuthPass" autocomplete="current-password" required></label>
+<div class="mbm-strength" id="mbmStrength" aria-live="polite" hidden>
+<span class="mbm-strbar"><span class="mbm-strbar-fill" id="mbmStrBar"></span></span>
+<p class="mbm-str-label">Password strength: <b id="mbmStrText">—</b></p>
+<ul class="mbm-str-reqs">
+<li id="mbmReqLen" data-ok="0"><span class="tick">·</span> At least 8 characters</li>
+<li id="mbmReqCase" data-ok="0"><span class="tick">·</span> Upper &amp; lower case</li>
+<li id="mbmReqNum" data-ok="0"><span class="tick">·</span> A number or symbol</li>
+</ul>
+</div>
 <button class="mbm-authsubmit" id="mbmAuthSubmit" type="submit">Log in</button>
 <button class="mbm-authforgot" id="mbmAuthForgot" type="button" hidden>Forgot your password?</button>
 <p class="mbm-auth-msg" id="mbmAuthMsg" role="status" aria-live="polite"></p>
 </form>
 <button class="mbm-authtoggle" id="mbmAuthToggle" type="button">New here? <b>Create an account</b></button>
-<p class="mbm-privacy">🔒 Your password is always hashed and handled securely. With cloud accounts your sign-in follows you between devices; otherwise your account stays private on this device. Either way, <a href="members/">member bonuses</a> are on the way.</p>
+<p class="mbm-privacy">🔒 Your account is saved only in this browser, on this device — it never leaves it and never reaches a server. Your password is hashed (SHA-256) on your device before it's stored.</p>
 </div>
 </div>
 <script src="app.js"></script>

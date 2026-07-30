@@ -118,6 +118,22 @@ body[data-theme="dark"] .mbm-authsubmit{background:var(--dx-amber,#F2A24A);color
 .mbm-auth-msg{min-height:1.2rem;margin:.7rem 0 0;font-size:.84rem;text-align:center;color:var(--dx-mut,#4A5170)}
 .mbm-auth-msg.ok{color:var(--dx-mintd,#2F6B4D);font-weight:700}
 .mbm-auth-msg.err{color:#B4472E;font-weight:700}
+/* ---- password strength meter (static; never animates) -------------------- */
+.mbm-strength{margin:.1rem 0 .7rem}
+.mbm-strength[hidden]{display:none}
+.mbm-strbar{display:block;height:6px;border-radius:999px;background:var(--dx-line,#E3DAC5);overflow:hidden;margin-bottom:.45rem}
+.mbm-strbar-fill{display:block;height:100%;width:0;border-radius:999px}
+.mbm-strbar-fill.lvl-1{width:33%;background:#B4472E}
+.mbm-strbar-fill.lvl-2{width:66%;background:var(--dx-ambd,#C97F2E)}
+.mbm-strbar-fill.lvl-3{width:100%;background:var(--dx-mintd,#2F6B4D)}
+.mbm-str-label{margin:0 0 .4rem;font-size:.76rem;color:var(--dx-mut,#4A5170)}
+.mbm-str-label b{color:var(--dx-ink,#1B2140)}
+.mbm-str-reqs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.22rem}
+.mbm-str-reqs li{font-size:.74rem;color:var(--dx-mut,#4A5170)}
+.mbm-str-reqs li[data-ok="1"]{color:var(--dx-mintd,#2F6B4D)}
+.mbm-str-reqs .tick{display:inline-block;width:1.1em;font-weight:900;text-align:center}
+body[data-theme="dark"] .mbm-str-reqs li[data-ok="1"]{color:var(--dx-mint,#B9E6CD)}
+body[data-theme="dark"] .mbm-strbar-fill.lvl-3{background:var(--dx-mint,#B9E6CD)}
 .mbm-authforgot{
   display:block;width:100%;margin:.6rem 0 0;background:transparent;border:0;cursor:pointer;
   font:inherit;font-size:.8rem;color:var(--dx-ambd,#C97F2E);text-align:center;text-decoration:underline;

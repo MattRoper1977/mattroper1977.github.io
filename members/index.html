@@ -55,15 +55,15 @@ body{background:var(--dx-cream)}
 <section class="mb-hero">
 <p class="mb-eyebrow">Members' area</p>
 <h1>The good stuff, made just for you.</h1>
-<p>Everything on the site stays free. This is the little extra for the people who sign up — member-only bonus lessons, tools and resources, landing here first.</p>
+<p>Everything on the site stays free. This page is set aside for account holders — if any member-only extras get made, this is where they'll appear first.</p>
 </section>
 
 <section class="mb-sec"><div class="mb-wrap">
 
 <div class="mb-gate" id="memberGate">
 <div class="mb-panel">
-<h2>Sign in to unlock member bonuses</h2>
-<p>Create a free account (or log in) to open the members' area. It takes a moment, and it's how you'll get first access to the bonus material as it lands.</p>
+<h2>Sign in to your account</h2>
+<p>Create a free account (or log in) to open this page. It's saved on your device only. There are no member-only features yet — this is where they'd appear if any are built.</p>
 <ul class="mb-perks">
 <li><span class="tick">✓</span><span><b>Member-only bonus packs</b> — extra lessons, tools and printables, added over time.</span></li>
 <li><span class="tick">✓</span><span><b>First look</b> at new releases before they hit the main site.</span></li>
@@ -107,17 +107,26 @@ body{background:var(--dx-cream)}
 <button class="mbm-close" type="button" data-close aria-label="Close">&times;</button>
 <span class="mbm-soon">Members' area</span>
 <h3 id="mbmAuthTitle">Welcome back</h3>
-<p class="mbm-sub">Log in or create a free account to open the members' area and get first access to bonus lessons, tools and resources.</p>
+<p class="mbm-sub">A free account is saved in this browser, on this device. There are no member-only features yet — this just opens the page.</p>
 <form id="mbmAuthForm" novalidate>
 <label class="mbm-field" id="mbmAuthNameField" hidden><span>Your name</span><input type="text" id="mbmAuthName" autocomplete="name"></label>
 <label class="mbm-field"><span>Email</span><input type="email" id="mbmAuthEmail" autocomplete="email" required></label>
 <label class="mbm-field"><span>Password</span><input type="password" id="mbmAuthPass" autocomplete="current-password" required></label>
+<div class="mbm-strength" id="mbmStrength" aria-live="polite" hidden>
+<span class="mbm-strbar"><span class="mbm-strbar-fill" id="mbmStrBar"></span></span>
+<p class="mbm-str-label">Password strength: <b id="mbmStrText">—</b></p>
+<ul class="mbm-str-reqs">
+<li id="mbmReqLen" data-ok="0"><span class="tick">·</span> At least 8 characters</li>
+<li id="mbmReqCase" data-ok="0"><span class="tick">·</span> Upper &amp; lower case</li>
+<li id="mbmReqNum" data-ok="0"><span class="tick">·</span> A number or symbol</li>
+</ul>
+</div>
 <button class="mbm-authsubmit" id="mbmAuthSubmit" type="submit">Log in</button>
 <button class="mbm-authforgot" id="mbmAuthForgot" type="button" hidden>Forgot your password?</button>
 <p class="mbm-auth-msg" id="mbmAuthMsg" role="status" aria-live="polite"></p>
 </form>
 <button class="mbm-authtoggle" id="mbmAuthToggle" type="button">New here? <b>Create an account</b></button>
-<p class="mbm-privacy">🔒 Your password is always hashed and handled securely. With cloud accounts your sign-in follows you between devices; otherwise your account stays private on this device.</p>
+<p class="mbm-privacy">🔒 Your account is saved only in this browser, on this device — it never leaves it and never reaches a server. Your password is hashed (SHA-256) on your device before it's stored.</p>
 </div>
 </div>
 
@@ -148,8 +157,8 @@ document.getElementById('menu').addEventListener('click',function(){var n=docume
   });
   window.MBMAuth.ready.then(function(){
     note.textContent = (window.MBMAuth.provider==='supabase')
-      ? 'Cloud accounts are active — your membership follows you on any device.'
-      : 'Running in device mode. Add Supabase keys in site.json to switch on real cross-device accounts (see FEATURES.md).';
+      ? 'Your account is stored securely in the cloud and works on any device you sign in on.'
+      : 'Your account is saved on this device only — it doesn’t follow you to other devices.';
   });
 })();
 </script>
