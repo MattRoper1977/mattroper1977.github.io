@@ -188,8 +188,11 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-
 #loading .sp{width:34px;height:34px;border:3px solid #26355C;border-top-color:var(--amber);
   border-radius:99px;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.backlink{position:absolute;bottom:calc(6px + var(--safe-b));right:calc(10px + var(--safe-r));
-  font-size:10px;color:#5B6890;z-index:31;text-decoration:none}
+/* A frozen arc reads as a broken spinner, so the ring goes uniform instead.
+   "Rolling the pitch…" beside it is what actually carries the meaning. */
+@media (prefers-reduced-motion:reduce){
+  #loading .sp{animation:none;border-color:var(--amber)}
+}
 .credit{text-align:center;font-size:10.5px;color:#5A688F;margin-top:16px;line-height:1.7}
 .credit a{color:#7E8DB8}
 @media (min-width:760px){
