@@ -1,0 +1,2050 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Apex Kick — Made by Matt</title>
+<meta name="description" content="A single-file browser free-kick game. Swipe to bend the ball, beat the wall and the keeper. Card stats set the physics — never the dice. Works offline.">
+<meta name="theme-color" content="#0B1220">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Apex Kick">
+<meta property="og:description" content="Swipe to curl it over the wall and into the top corner. Real aerodynamics, a keeper who has to commit, and cards that bend physics instead of rolling dice.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%230B1220'/%3E%3Ccircle cx='32' cy='34' r='15' fill='%23F6F1E4'/%3E%3Cpath d='M32 24l5 4-2 6h-6l-2-6z' fill='%23161D3D'/%3E%3Cpath d='M12 20q20-12 40 0' stroke='%23E08A2E' stroke-width='4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:#0B1220;color:#EAF0FF;
+  font-family:"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+  overscroll-behavior:none;touch-action:none}
+#app{position:absolute;inset:0}
+canvas{display:block;width:100%;height:100%}
+
+/* ---------- shared chrome ---------- */
+:root{
+  --navy:#161D3D; --ink:#0B1220; --mint:#B9E6CD; --mint-d:#2F6B4D;
+  --amber:#E08A2E; --amber-l:#F2A24A; --cream:#F6F1E4;
+  --paper:#131C33; --line:#26355C; --mut:#93A0C4;
+  --good:#48D18B; --bad:#FF6B6B; --gold:#F2C14A;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px); --safe-r:env(safe-area-inset-right,0px);
+}
+.hidden{display:none!important}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-action:manipulation}
+
+/* dual-tone stroke: every HUD glyph stays legible on bright grass */
+.ds{text-shadow:0 1px 0 #04070F,0 -1px 0 #04070F,1px 0 0 #04070F,-1px 0 0 #04070F,0 2px 6px rgba(0,0,0,.75)}
+
+/* ---------- in-match HUD ---------- */
+#hud{position:absolute;inset:0;pointer-events:none;z-index:10}
+#topbar{position:absolute;top:calc(8px + var(--safe-t));left:calc(10px + var(--safe-l));
+  right:calc(10px + var(--safe-r));display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.hchip{background:rgba(9,14,28,.72);border:1px solid rgba(150,170,220,.28);border-radius:11px;
+  padding:6px 10px;font-size:12px;line-height:1.3;font-variant-numeric:tabular-nums;backdrop-filter:blur(6px)}
+.hchip b{color:var(--mint);font-size:15px}
+.hchip .lbl{display:block;font-size:9px;letter-spacing:.16em;color:var(--mut);text-transform:uppercase}
+#momentPips{display:flex;gap:4px;margin-top:5px}
+.pip{width:16px;height:5px;border-radius:99px;background:#31406B}
+.pip.on{background:var(--mint)} .pip.miss{background:#6B3140} .pip.now{background:var(--amber-l)}
+#windWrap{text-align:right}
+#windArrow{display:inline-block;font-size:17px;line-height:1;transition:transform .3s}
+
+#kicker{position:absolute;left:calc(10px + var(--safe-l));bottom:calc(10px + var(--safe-b));
+  background:rgba(9,14,28,.72);border:1px solid rgba(150,170,220,.28);border-radius:11px;
+  padding:7px 11px;font-size:11px;backdrop-filter:blur(6px);max-width:60vw}
+#kicker .nm{font-size:13px;font-weight:700;color:var(--cream)}
+#kicker .st{color:var(--mut);letter-spacing:.06em;margin-top:2px}
+#kicker .st i{font-style:normal;color:var(--mint)}
+#traitBadge{margin-top:4px;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink);background:var(--gold);border-radius:99px;padding:2px 8px;display:inline-block}
+
+#banner{position:absolute;top:38%;left:0;right:0;text-align:center;font-size:min(13vw,58px);
+  font-weight:900;letter-spacing:.04em;opacity:0;transition:opacity .18s;text-transform:uppercase}
+#banner.show{opacity:1}
+#subBanner{position:absolute;top:calc(38% + min(13vw,58px));left:0;right:0;text-align:center;
+  font-size:min(4vw,17px);font-weight:600;color:var(--cream);opacity:0;transition:opacity .18s}
+#subBanner.show{opacity:.95}
+
+#hintSwipe{position:absolute;left:0;right:0;bottom:22%;text-align:center;font-size:13px;
+  color:var(--cream);opacity:.9;letter-spacing:.03em}
+#hintSwipe .k{color:var(--mint);font-weight:700}
+
+/* aim overlay canvas sits above the 3D view, below the panels */
+#aim{position:absolute;inset:0;z-index:9;pointer-events:none}
+
+/* ---------- panels / screens ---------- */
+.screen{position:absolute;inset:0;z-index:30;background:linear-gradient(170deg,#0B1220 0%,#101A31 60%,#0B1220 100%);
+  display:flex;flex-direction:column;overflow:hidden}
+.scr-head{padding:calc(12px + var(--safe-t)) calc(14px + var(--safe-r)) 10px calc(14px + var(--safe-l));
+  display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);flex:0 0 auto}
+.scr-head h2{font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--cream);flex:1}
+.scr-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:14px calc(14px + var(--safe-r)) calc(18px + var(--safe-b)) calc(14px + var(--safe-l))}
+.scr-foot{flex:0 0 auto;padding:10px calc(14px + var(--safe-r)) calc(12px + var(--safe-b)) calc(14px + var(--safe-l));
+  border-top:1px solid var(--line);display:flex;gap:9px}
+
+.btn{background:var(--amber);color:#151A2C;font-weight:800;font-size:13.5px;letter-spacing:.07em;
+  text-transform:uppercase;border-radius:11px;padding:13px 18px;text-align:center;flex:1;
+  box-shadow:0 2px 0 #B4701F;min-height:46px}
+.btn:active{transform:translateY(1px);box-shadow:0 1px 0 #B4701F}
+.btn.sec{background:#202C4E;color:var(--cream);box-shadow:0 2px 0 #16203A}
+.btn.ghost{background:none;border:1.5px solid var(--line);color:var(--mut);box-shadow:none}
+.btn[disabled]{opacity:.42;pointer-events:none}
+.iconbtn{width:40px;height:40px;border-radius:10px;background:#1A2440;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:17px;flex:0 0 auto}
+
+/* ---------- title screen ---------- */
+#title .wordmark{font-size:min(17vw,84px);font-weight:900;letter-spacing:-.02em;line-height:.9;
+  color:var(--cream);text-align:center}
+#title .wordmark em{font-style:normal;color:var(--amber-l);display:block}
+#title .tag{text-align:center;color:var(--mut);font-size:13px;margin-top:12px;line-height:1.6;
+  max-width:30rem;margin-left:auto;margin-right:auto}
+#title .tag b{color:var(--mint)}
+.tcenter{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px}
+#homeStats{display:flex;gap:8px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.hstat{background:#141E38;border:1px solid var(--line);border-radius:10px;padding:8px 12px;text-align:center;min-width:74px}
+.hstat b{display:block;font-size:17px;color:var(--gold);font-variant-numeric:tabular-nums}
+.hstat span{font-size:9px;letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
+
+/* ---------- cards ---------- */
+.cardgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:9px}
+.pcard{background:linear-gradient(165deg,#1B2748,#141C33);border:1.5px solid var(--line);border-radius:12px;
+  padding:8px;position:relative;overflow:hidden;text-align:left;display:block;width:100%}
+.pcard.r-bronze{border-color:#7A5230;background:linear-gradient(165deg,#2E2216,#181209)}
+.pcard.r-silver{border-color:#8792A8;background:linear-gradient(165deg,#2A3040,#161A24)}
+.pcard.r-gold_common{border-color:#B08A2E;background:linear-gradient(165deg,#33290F,#1A1508)}
+.pcard.r-gold_rare{border-color:#E0B03A;background:linear-gradient(165deg,#3C2F0E,#1E1706)}
+.pcard.r-elite{border-color:#7C5CC9;background:linear-gradient(165deg,#2A1C4A,#150E26)}
+.pcard.r-icon{border-color:#F2E2A8;background:linear-gradient(165deg,#3A3320,#1C1809)}
+.pcard.sel{outline:2.5px solid var(--mint);outline-offset:1px}
+.pcard .ovr{font-size:20px;font-weight:900;line-height:1;color:var(--cream)}
+.pcard .pos{font-size:9px;letter-spacing:.1em;color:var(--mut)}
+.pcard .nm{font-size:11px;font-weight:700;margin-top:5px;color:var(--cream);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard .cl{font-size:8.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard .sp{display:flex;gap:5px;margin-top:6px;font-size:8.5px;color:var(--mut);flex-wrap:wrap}
+.pcard .sp i{font-style:normal;color:var(--mint);font-weight:700}
+.chemdots{position:absolute;top:7px;right:7px;display:flex;gap:2px}
+.cdot{width:5px;height:5px;border-radius:99px;background:#39456C;display:block}
+.cdot.on{background:var(--mint);box-shadow:0 0 4px var(--mint)}
+.specTag{position:absolute;bottom:0;left:0;right:0;font-size:8px;letter-spacing:.08em;
+  text-transform:uppercase;text-align:center;padding:2px;background:rgba(242,193,74,.9);color:#1A1508;font-weight:800}
+
+/* ---------- generic bits ---------- */
+.sect{margin-bottom:18px}
+.sect h3{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
+.note{font-size:11.5px;color:var(--mut);line-height:1.6}
+.rowline{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+.rowline:last-child{border-bottom:0}
+.rowline b{color:var(--cream)}
+.pillrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.pill{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;background:#1A2440;
+  border:1px solid var(--line);border-radius:99px;padding:5px 11px;color:var(--mut)}
+.pill[aria-pressed="true"]{background:var(--mint);color:var(--navy);border-color:var(--mint);font-weight:700}
+.bar{height:5px;border-radius:99px;background:#26314F;overflow:hidden;margin-top:3px}
+.bar i{display:block;height:100%;background:var(--mint);border-radius:99px}
+.money{display:flex;gap:8px;align-items:center;font-size:13px;font-variant-numeric:tabular-nums}
+.money b{color:var(--gold)}
+.toast{position:absolute;left:50%;bottom:calc(88px + var(--safe-b));transform:translateX(-50%);
+  background:rgba(9,14,28,.94);border:1px solid var(--line);border-radius:10px;padding:9px 15px;
+  font-size:12.5px;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:86vw;text-align:center}
+.toast.show{opacity:1}
+#loading{position:absolute;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;
+  background:#0B1220;flex-direction:column;gap:14px}
+#loading .sp{width:34px;height:34px;border:3px solid #26355C;border-top-color:var(--amber);
+  border-radius:99px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.backlink{position:absolute;bottom:calc(6px + var(--safe-b));right:calc(10px + var(--safe-r));
+  font-size:10px;color:#5B6890;z-index:31;text-decoration:none}
+.credit{text-align:center;font-size:10.5px;color:#5A688F;margin-top:16px;line-height:1.7}
+.credit a{color:#7E8DB8}
+@media (min-width:760px){
+  .scr-body{max-width:820px;margin:0 auto;width:100%}
+  .scr-foot{max-width:820px;margin:0 auto;width:100%}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="gl"></canvas>
+  <canvas id="aim"></canvas>
+
+  <!-- ============ in-match HUD ============ -->
+  <div id="hud" class="hidden">
+    <div id="topbar">
+      <div class="hchip ds">
+        <span class="lbl">Round</span>
+        <b id="hRound">1 / 5</b>
+        <div id="momentPips"></div>
+      </div>
+      <div class="hchip ds" style="text-align:center">
+        <span class="lbl" id="hMomentLbl">Free kick</span>
+        <b id="hDist">24.0 m</b>
+      </div>
+      <div class="hchip ds" id="windWrap">
+        <span class="lbl">Wind</span>
+        <b><span id="windArrow">→</span> <span id="hWind">0.0</span></b>
+      </div>
+    </div>
+
+    <div id="kicker" class="ds">
+      <div class="nm" id="kName">—</div>
+      <div class="st" id="kStats">—</div>
+      <div id="traitBadge" class="hidden">Dead-ball partners</div>
+    </div>
+
+    <div id="banner" class="ds"></div>
+    <div id="subBanner" class="ds"></div>
+    <div id="hintSwipe" class="ds hidden">
+      <span class="k">Drag back from the ball</span> and release — curve your drag to bend it
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- ============ loading ============ -->
+  <div id="loading"><div class="sp"></div><div class="note">Rolling the pitch…</div></div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script>
+/* =====================================================================
+   APEX KICK — core simulation (pure, DOM-free, unit-testable)
+   AK:CORE:BEGIN
+   ===================================================================== */
+var AK = (function () {
+"use strict";
+
+/* ---------------------------------------------------------------
+   Physics constants.
+
+   These are NOT the values from the original design document. Two
+   blocking errors were found there and corrected after numerical
+   verification:
+
+   1. The published Magnus form  F = 0.5*rho*A*Cm*(omega x v)  is
+      dimensionally invalid — it evaluates to N/m, not newtons. Even
+      after restoring the missing length, the published coefficients
+      (k0=0.0010, k1=0.0025) are ~100x too small: they bend the ball
+      about 2 cm over a full flight. Replaced with the standard lift
+      form below, which produces the 1.5-4 m banana players expect.
+
+   2. Curve is driven by SPIN RATE from the card's CRV stat, not by a
+      fudge coefficient. The mapping deliberately keeps the spin ratio
+      S ~= 0.18 at CRV 99, inside the linear part of C_L, so that CRV
+      75 and CRV 99 stay meaningfully different instead of both
+      saturating the cap.
+   --------------------------------------------------------------- */
+var PHYS = {
+  m: 0.43, r: 0.11, A: 0.0380, rho: 1.225, g: 9.81,
+  cdLo: 0.45, cdHi: 0.22, cdV0: 12, cdV1: 22,   // drag crisis window
+  clSlope: 1.20, clMax: 0.33,                    // C_L = min(clMax, clSlope*S)
+  spinTau: 8.0,                                  // spin decay time constant (s)
+  substeps: 8                                    // 60Hz * 8 => 7.9 cm/step at 38 m/s
+};
+
+var GOAL = { hw: 3.66, h: 2.44, postR: 0.06, ballR: 0.11 };
+
+/* ---- small vector helpers (plain objects; THREE.Vector3 is compatible) ---- */
+function v3(x, y, z) { return { x: x || 0, y: y || 0, z: z || 0 }; }
+function vlen(a) { return Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z); }
+function vcross(a, b) {
+  return v3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+}
+
+/* deterministic RNG so a "moment" replays identically and cannot be re-rolled */
+function mulberry32(seed) {
+  var t = seed >>> 0;
+  return function () {
+    t = (t + 0x6D2B79F5) >>> 0;
+    var x = Math.imul(t ^ (t >>> 15), 1 | t);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function gauss(rng) {
+  var u = 0, v = 0;
+  while (u === 0) u = rng();
+  while (v === 0) v = rng();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+/* ---- stat -> physics conversions ---- */
+function dragCoeff(sp) {
+  if (sp <= PHYS.cdV0) return PHYS.cdLo;
+  if (sp >= PHYS.cdV1) return PHYS.cdHi;
+  var t = (sp - PHYS.cdV0) / (PHYS.cdV1 - PHYS.cdV0);
+  return PHYS.cdLo + t * (PHYS.cdHi - PHYS.cdLo);
+}
+function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+function spinMagnitude(crv) { return 3.0 + 0.42 * clamp(crv, 1, 99); }
+
+/* Launch speed is anchored to the KICK DISTANCE, not to a fixed 15-38 m/s band.
+   The design document's fixed range is unshippable: the viable elevation window
+   at 24 m collapses from 11.5 deg at 24 m/s to 1.2 deg at 38 m/s — far under the
+   ~2.5 deg a thumb can actually hit. Verified viable bands by distance:
+     18 m: 17.5-24.5   22 m: 19.5-29.0   26 m: 24.0-34.0   30 m: 29.0-38.5
+   so the nominal tracks distance and PWR sets the swing around it. */
+function nominalSpeed(dist) { return clamp(1.0 + 1.08 * dist, 18, 30); }
+
+/* Single source of truth for launch speed. PWR and the swipe both nudge the
+   distance-anchored nominal, and the result is hard-clamped into the band that
+   was verified to keep the elevation window playable. Every consumer — the
+   launcher, the aim preview and the test harness — calls this one function. */
+function launchSpeed(dist, intensity, pwr) {
+  var v = nominalSpeed(dist)
+        * (0.94 + 0.14 * clamp(intensity, 0, 1))
+        * (0.96 + 0.08 * (clamp(pwr, 1, 99) / 99));
+  return clamp(v, 17, 34);
+}
+function launchCeiling(pwr, dist) { return launchSpeed(dist === undefined ? 24 : dist, 1, pwr); }
+
+/* Error cone (degrees) from free-kick accuracy, composure and chemistry.
+   High FKA collapses this toward zero; a bronze card sprays. */
+function errorConeDeg(fka, cmp, chem, pressure) {
+  var precision = (fka * 0.70 + cmp * 0.30) / 99;
+  var chemBonus = 0.82 + 0.18 * (clamp(chem, 0, 3) / 3);
+  var cone = 6.2 * (1 - precision * chemBonus);
+  cone *= (1 + 0.45 * clamp(pressure || 0, 0, 1));
+  return Math.max(0.28, cone);
+}
+
+/* ---- acceleration: gravity + quadratic drag + Magnus lift ---- */
+function accel(vel, omega, wind) {
+  var vx = vel.x - (wind ? wind.x : 0);
+  var vy = vel.y - (wind ? wind.y : 0);
+  var vz = vel.z - (wind ? wind.z : 0);
+  var sp = Math.sqrt(vx * vx + vy * vy + vz * vz);
+  if (sp < 1e-6) return v3(0, -PHYS.g, 0);
+
+  var kd = -0.5 * PHYS.rho * dragCoeff(sp) * PHYS.A * sp / PHYS.m;
+  var ax = kd * vx, ay = kd * vy, az = kd * vz;
+
+  var ow = Math.sqrt(omega.x * omega.x + omega.y * omega.y + omega.z * omega.z);
+  if (ow > 1e-6) {
+    var S = PHYS.r * ow / sp;
+    var CL = Math.min(PHYS.clMax, PHYS.clSlope * S);
+    // F = 0.5*rho*A*CL*|v| * (omegaHat x v)   -> newtons, dimensionally sound
+    var ux = omega.x / ow, uy = omega.y / ow, uz = omega.z / ow;
+    var cx = uy * vz - uz * vy, cy = uz * vx - ux * vz, cz = ux * vy - uy * vx;
+    var k = 0.5 * PHYS.rho * PHYS.A * CL * sp / PHYS.m;
+    ax += k * cx; ay += k * cy; az += k * cz;
+  }
+  return v3(ax, ay - PHYS.g, az);
+}
+
+/* One velocity-Verlet step with spin decay. Mutates nothing. */
+function step(pos, vel, omega, wind, dt) {
+  var a = accel(vel, omega, wind);
+  var px = pos.x + vel.x * dt + 0.5 * a.x * dt * dt;
+  var py = pos.y + vel.y * dt + 0.5 * a.y * dt * dt;
+  var pz = pos.z + vel.z * dt + 0.5 * a.z * dt * dt;
+  var vmx = vel.x + a.x * dt, vmy = vel.y + a.y * dt, vmz = vel.z + a.z * dt;
+  var a2 = accel(v3(vmx, vmy, vmz), omega, wind);
+  var nv = v3(vel.x + 0.5 * (a.x + a2.x) * dt,
+              vel.y + 0.5 * (a.y + a2.y) * dt,
+              vel.z + 0.5 * (a.z + a2.z) * dt);
+  var decay = Math.exp(-dt / PHYS.spinTau);
+  return {
+    pos: v3(px, py, pz), vel: nv,
+    omega: v3(omega.x * decay, omega.y * decay, omega.z * decay)
+  };
+}
+
+/* Forward-integrate to the goal plane. Used by the keeper's predictor and by
+   the aim preview. Returns null if the ball never reaches the plane. */
+function integrateToPlane(pos, vel, omega, wind, zPlane, dt, tMax) {
+  dt = dt || 1 / 240; tMax = tMax || 4.0;
+  var p = v3(pos.x, pos.y, pos.z), v = v3(vel.x, vel.y, vel.z),
+      w = v3(omega.x, omega.y, omega.z), t = 0;
+  while (t < tMax) {
+    var pz0 = p.z, px0 = p.x, py0 = p.y;
+    var s = step(p, v, w, wind, dt);
+    p = s.pos; v = s.vel; w = s.omega; t += dt;
+    if (pz0 < zPlane && p.z >= zPlane) {
+      var f = (zPlane - pz0) / (p.z - pz0);
+      return { t: t - dt * (1 - f), pos: v3(px0 + f * (p.x - px0), py0 + f * (p.y - py0), zPlane), vel: v };
+    }
+    if (p.y < -0.5) return null;
+  }
+  return null;
+}
+
+/* Build the launch state from a parsed swipe + the kicker's effective stats.
+   This is the single seam where player skill and card stats meet. */
+function buildLaunch(swipe, stats, rng, opts) {
+  opts = opts || {};
+  var dist = opts.distance === undefined ? 24 : opts.distance;
+  var inten = clamp(swipe.intensity, 0, 1);
+  // PWR nudges the distance-anchored nominal rather than setting an absolute
+  // ceiling, so a low-power card is slower but never pushed outside the
+  // playable window — and a high-power one cannot flatten the shot into the
+  // sub-2-degree band where the game stops being hittable.
+  var speed = launchSpeed(dist, inten, stats.power);
+
+  var azim = swipe.azimuthDeg;      // + = to the right of the goal centre
+  var elev = swipe.elevationDeg;
+
+  // stat-modulated Gaussian error cone
+  var cone = errorConeDeg(stats.freeKickAccuracy, stats.composure, stats.chem, opts.pressure);
+  var eAz = gauss(rng) * cone * 0.5;
+  var eEl = gauss(rng) * cone * 0.5;
+  azim += eAz; elev += eEl;
+
+  var ar = azim * Math.PI / 180, er = elev * Math.PI / 180;
+  var vel = v3(speed * Math.sin(ar) * Math.cos(er), speed * Math.sin(er), speed * Math.cos(ar) * Math.cos(er));
+
+  // Spin: magnitude from CRV, direction from the swipe's signed curvature.
+  //
+  // The axis is tilted away from vertical toward TOPSPIN, and the tilt grows
+  // with how hard the ball is struck. This is not a flourish — it is the
+  // enabling mechanic for power. A flat ball above ~28 m/s has no viable
+  // launch window at all at 24 m; only the downward Magnus force from topspin
+  // reopens it. Tilting also produces the "up over the wall, then dip under
+  // the bar" shot from a single gesture, and it costs sideways bend, so a
+  // power/curve tradeoff falls straight out of the physics.
+  var spinMag = spinMagnitude(stats.curve) * clamp(Math.abs(swipe.curvature), 0, 1);
+  var sgn = swipe.curvature >= 0 ? 1 : -1;
+  var tilt = (28 + 40 * inten) * Math.PI / 180;
+  var omega = v3(Math.sin(tilt) * spinMag, sgn * Math.cos(tilt) * spinMag, 0);
+
+  return {
+    vel: vel, omega: omega, speed: speed, coneDeg: cone,
+    appliedErrorDeg: Math.sqrt(eAz * eAz + eEl * eEl),
+    azimuthDeg: azim, elevationDeg: elev, spinMag: spinMag * sgn
+  };
+}
+
+return {
+  PHYS: PHYS, GOAL: GOAL,
+  v3: v3, vlen: vlen, vcross: vcross, clamp: clamp,
+  mulberry32: mulberry32, gauss: gauss,
+  dragCoeff: dragCoeff, launchCeiling: launchCeiling, spinMagnitude: spinMagnitude,
+  nominalSpeed: nominalSpeed, launchSpeed: launchSpeed,
+  errorConeDeg: errorConeDeg, accel: accel, step: step,
+  integrateToPlane: integrateToPlane, buildLaunch: buildLaunch
+};
+})();
+/* AK:CORE:END */
+</script>
+
+<script>
+/* =====================================================================
+   GOALKEEPER AI — 4-phase perception state machine
+   AK:GK:BEGIN
+
+   Two balance bugs in the source design document were found and fixed here:
+
+   1. Its reach envelope  R_max = H/2 + 1.2 + 0.8*(DIV/99)  is a 2.88 m disc
+      for an elite keeper. That disc always binds before travel time does, so
+      reaction latency never mattered: measured goal coverage was identical
+      (75.8%) at 0.95 s, 1.15 s and 1.45 s of flight. REF was a dead stat and
+      the whole "stat-modulated skill" pillar collapsed.
+
+      Fixed with a per-axis dive (lateral and vertical run in parallel, the
+      slower axis gates arrival) plus a push-off phase — a real keeper loads
+      his legs for ~0.19 s before a hand moves. Coverage now varies properly
+      with flight time: 46% at 0.85 s, 71% at 1.10 s, 93% at 1.50 s.
+
+   2. Its "predict where the ball will be" step must integrate the FULL
+      remaining path including the active Magnus force. A linear raycast reads
+      a hard curler as going 3.15 m wide, cancels the dive, and Magnus then
+      hauls the ball back inside the post — the unsaveable banana shot.
+
+   Non-omniscience is modelled as a spin MISREAD (the one quantity a keeper
+   genuinely cannot read off a struck ball) rather than arbitrary jitter.
+   ===================================================================== */
+AK.GK = (function () {
+"use strict";
+var V3 = AK.v3, clamp = AK.clamp;
+
+var KCFG = {
+  tReact0: 0.35, tReactPerREF: 0.002, tOcclusion: 0.15,
+  tPush0: 0.26, tPushPerDIV: 0.08,
+  vLat0: 2.4, vLat1: 1.3, aLat0: 6.0, aLat1: 3.5,
+  vUp0: 1.5, vUp1: 0.9, aUp0: 4.5, aUp1: 2.5,
+  vDn0: 2.2, vDn1: 1.0, aDn0: 7.0, aDn1: 3.5,
+  standLatH: 0.28, standLatK: 0.12, standUpH: 0.55, standDnH: 0.18,
+  pivotH: 0.55, rMax0: 1.5, rMax1: 1.0,
+  repredictInterval: 0.10, commitLockFrac: 0.55,
+  spinMisread0: 0.34, spinMisreadREF: 0.55,
+  contactRadius: 0.36, catchRadius: 0.18
+};
+
+function make(card, startX) {
+  var d = clamp(card.diving, 1, 99) / 99, H = card.heightMeters || 1.88;
+  var cfg = KCFG;
+  return {
+    card: card, cfg: cfg, H: H,
+    px: startX || 0, py: cfg.pivotH * H,
+    tReact: cfg.tReact0 - cfg.tReactPerREF * clamp(card.reflexes, 1, 99),
+    tPush: cfg.tPush0 - cfg.tPushPerDIV * d,
+    vLat: cfg.vLat0 + cfg.vLat1 * d, aLat: cfg.aLat0 + cfg.aLat1 * d,
+    vUp: cfg.vUp0 + cfg.vUp1 * d, aUp: cfg.aUp0 + cfg.aUp1 * d,
+    vDn: cfg.vDn0 + cfg.vDn1 * d, aDn: cfg.aDn0 + cfg.aDn1 * d,
+    sLat: cfg.standLatH * H + cfg.standLatK,
+    sUp: cfg.standUpH * H, sDn: cfg.standDnH * H,
+    rMax: H / 2 + cfg.rMax0 + cfg.rMax1 * d + AK.PHYS.r
+  };
+}
+
+/* Time to cover `s` metres on one axis: accelerate, then cruise. */
+function axisTime(s, v, a) {
+  if (s <= 0) return 0;
+  var tAcc = v / a, sAcc = 0.5 * v * tAcc;
+  return s <= sAcc ? Math.sqrt(2 * s / a) : tAcc + (s - sAcc) / v;
+}
+
+function diveTime(k, x, y) {
+  var dx = Math.abs(x - k.px), dy = y - k.py;
+  var tl = axisTime(dx - k.sLat, k.vLat, k.aLat);
+  var tv = dy >= 0 ? axisTime(dy - k.sUp, k.vUp, k.aUp)
+                   : axisTime(-dy - k.sDn, k.vDn, k.aDn);
+  var t = Math.max(tl, tv);
+  return t > 0 ? t + k.tPush : 0;
+}
+function withinEnvelope(k, x, y) {
+  return Math.hypot(x - k.px, y - k.py) <= k.rMax;
+}
+
+/* PHASE 2 — predict from the ball state the keeper can actually see, with a
+   two-sided spin misread that shrinks with REF and as the ball closes in. */
+function predictImpact(k, obs, wind, zGoal, tRemainFrac, rng) {
+  var sigma = k.cfg.spinMisread0 * (1 - k.cfg.spinMisreadREF * (k.card.reflexes / 99));
+  var eps = AK.gauss(rng) * sigma * Math.max(0.15, tRemainFrac);
+  var w = V3(obs.omega.x * (1 + eps), obs.omega.y * (1 + eps), obs.omega.z * (1 + eps));
+  return AK.integrateToPlane(obs.pos, obs.vel, w, wind, zGoal, 1 / 180, 3.2);
+}
+
+/* Full resolution. `sampleAt(t)` must return the RECORDED ball state from the
+   flight ring buffer — re-deriving it here would silently restore omniscience. */
+function resolve(k, sampleAt, trueImpact, tFlight, wind, zGoal, rng, occludedUntil) {
+  var tReact = k.tReact + ((occludedUntil || 0) > k.tReact ? k.cfg.tOcclusion : 0);
+  var tAvail = tFlight - tReact;
+  if (tAvail <= 0) return { outcome: 'BeatenFrozen', tReact: tReact, tAvail: tAvail };
+
+  var commit = null, t = tReact;
+  while (t < tFlight) {
+    var obs = sampleAt(t);
+    if (!obs) break;
+    var pred = predictImpact(k, obs, wind, zGoal, (tFlight - t) / tFlight, rng);
+    if (pred && (commit === null || (t - tReact) < k.cfg.commitLockFrac * tAvail)) {
+      commit = { x: pred.pos.x, y: pred.pos.y };
+    }
+    t += k.cfg.repredictInterval;
+  }
+  if (!commit) return { outcome: 'BeatenFrozen', tReact: tReact, tAvail: tAvail };
+
+  var tNeed = diveTime(k, commit.x, commit.y);
+  var base = { tReact: tReact, tAvail: tAvail, tNeed: tNeed, commit: commit };
+  if (!withinEnvelope(k, commit.x, commit.y) || tNeed > tAvail) {
+    base.outcome = 'BeatenLateDive'; return base;
+  }
+  var err = Math.hypot(trueImpact.x - commit.x, trueImpact.y - commit.y);
+  base.err = err;
+  if (err > k.cfg.contactRadius) { base.outcome = 'BeatenLateDive'; return base; }
+  var speed = trueImpact.speed || 25;
+  if (err <= k.cfg.catchRadius && speed < 24 && tNeed < 0.75 * tAvail) {
+    base.outcome = 'CleanCatch'; return base;
+  }
+  base.outcome = 'Parry';
+  base.parryDir = trueImpact.x >= k.px ? 1 : -1;
+  return base;
+}
+
+/* Diagnostic only — O(n^2), never call per frame. */
+function coverage(k, tFlight, n) {
+  n = n || 200;
+  var tAvail = tFlight - k.tReact, W = AK.GOAL.hw * 2, H = AK.GOAL.h;
+  var cell = (W / n) * (H / n), ok = 0;
+  for (var i = 0; i < n; i++) {
+    var x = -AK.GOAL.hw + (i + 0.5) * W / n;
+    for (var j = 0; j < n; j++) {
+      var y = (j + 0.5) * H / n;
+      if (withinEnvelope(k, x, y) && diveTime(k, x, y) <= tAvail) ok++;
+    }
+  }
+  var area = ok * cell, total = W * H;
+  return { covered: area, unsavable: total - area, pct: 100 * area / total, tAvail: tAvail };
+}
+
+return { KCFG: KCFG, make: make, axisTime: axisTime, diveTime: diveTime,
+         withinEnvelope: withinEnvelope, predictImpact: predictImpact,
+         resolve: resolve, coverage: coverage };
+})();
+/* AK:GK:END */
+</script>
+
+<script>
+/* =====================================================================
+   SQUAD, CHEMISTRY, COLLECTION & ECONOMY
+   AK:META:BEGIN
+
+   Deviations from the source design document, and why:
+
+   * Squad is FIVE cards, not eleven. This is a set-piece game — there is no
+     eleven-a-side pitch to fill, and eleven slots on a phone screen is an
+     unreadable grid. Chemistry is therefore a 15-point system (5 x 3) with
+     thresholds rescaled to 2/3 players rather than 2/4/7.
+
+   * There is no transfer market and no real-money currency. Both need a
+     server, and this game ships as one offline file. Coins are earned by
+     playing, and that is the only faucet.
+
+   * Goalkeepers are not collectable. They are the opposition — the ladder's
+     keepers are drawn from the GK cards, which is what makes REF/DIV/height
+     legible as an escalating challenge rather than dead inventory.
+   ===================================================================== */
+AK.Data = {"leagues":{"kingsmoor_crown":"Kingsmoor Crown League","liga_solara":"Liga Solara","frostliga":"Nordlys Frostliga","eisenring":"Eisenring Liga","liga_palmarena":"Liga Palmarena","savanna_rift":"Savanna Rift League","icon_circuit":"The Icon Circuit"},"nations":{"albreth":"Albreth","caledorn":"Caledorn","ardeen":"Ardeen","norvik":"Norvik","solvmark":"Sølvmark","iberatia":"Iberatia","lusandra":"Lusandra","marenza":"Marenza","eisenmark":"Eisenmark","valdenia":"Valdenia","gallance":"Gallance","palmara":"Palmara","curaza":"Curaza","tsavane":"Tsavane","ndelekwa":"Ndelekwa","kaido":"Kaido"},"clubs":{"harrowgate_united":{"n":"Harrowgate United","l":"kingsmoor_crown"},"penhallow_rovers":{"n":"Penhallow Rovers","l":"kingsmoor_crown"},"castlebridge_athletic":{"n":"Castlebridge Athletic","l":"kingsmoor_crown"},"thornwick_city":{"n":"Thornwick City","l":"kingsmoor_crown"},"saltmere_wanderers":{"n":"Saltmere Wanderers","l":"kingsmoor_crown"},"greyfen_town":{"n":"Greyfen Town","l":"kingsmoor_crown"},"valmorena_cf":{"n":"Valmorena CF","l":"liga_solara"},"atletico_verazul":{"n":"Atlético Verazul","l":"liga_solara"},"ontiva_deportivo":{"n":"Ontiva Deportivo","l":"liga_solara"},"sabuga_do_mar":{"n":"Sabuga do Mar","l":"liga_solara"},"puerta_solana_cf":{"n":"Puerta Solana CF","l":"liga_solara"},"havnfjord_ik":{"n":"Havnfjord IK","l":"frostliga"},"vindstad_bk":{"n":"Vindstad BK","l":"frostliga"},"isholm_fk":{"n":"Isholm FK","l":"frostliga"},"bjornvik_sk":{"n":"Bjornvik SK","l":"frostliga"},"skjaldur_if":{"n":"Skjaldur IF","l":"frostliga"},"fc_sturmwald":{"n":"FC Sturmwald","l":"eisenring"},"konigsau_bc":{"n":"Königsau BC","l":"eisenring"},"hafenstadt_sv":{"n":"Hafenstadt SV","l":"eisenring"},"rothalle_09":{"n":"Rothalle 09","l":"eisenring"},"nordwerk_eisen":{"n":"Nordwerk Eisen","l":"eisenring"},"deportivo_curaza":{"n":"Deportivo Curaza","l":"liga_palmarena"},"estrela_verdana":{"n":"Estrela Verdana","l":"liga_palmarena"},"club_atletico_marena":{"n":"Club Atlético Marena","l":"liga_palmarena"},"rio_tamboa_ec":{"n":"Rio Tamboa EC","l":"liga_palmarena"},"tsavane_royals":{"n":"Tsavane Royals FC","l":"savanna_rift"},"amberi_athletic":{"n":"Amberi Athletic","l":"savanna_rift"},"ndeleko_stars":{"n":"Ndeleko Stars","l":"savanna_rift"},"kanjari_fc":{"n":"Kanjari FC","l":"savanna_rift"},"zuberi_rangers":{"n":"Zuberi Rangers","l":"savanna_rift"},"legends_collective":{"n":"Legends Collective","l":"icon_circuit"}},"cards":[{"id":"bz_merrowby","n":"Cass Merrowby","p":"CM","sp":["CAM","LM"],"r":63,"ry":"bronze","cl":"penhallow_rovers","lg":"kingsmoor_crown","na":"albreth","a":[58,61,68,60,52,57],"t":["whip_merchant","outswing_specialist"],"sx":"curve","b":"Sunday-league engine, Saturday-night whip. Cannot run, cannot tackle, can bend it round a five-man wall.","s":[52,84,71,55]},{"id":"bz_halloway","n":"Dane Halloway","p":"GK","sp":[],"r":62,"ry":"bronze","cl":"thornwick_city","lg":"kingsmoor_crown","na":"albreth","a":[44,20,52,34,30,66],"t":["late_diver"],"sx":null,"b":"Commits late and often. Beatable low to his left.","gk":[64,60,63,58,1.88]},{"id":"bz_adaruwa","n":"Femi Adaruwa","p":"ST","sp":["RW"],"r":61,"ry":"bronze","cl":"ndeleko_stars","lg":"savanna_rift","na":"ndelekwa","a":[74,62,48,60,32,58],"t":["long_range_cannon"],"sx":null,"b":"Hits it hard, hits it somewhere. Occasionally both at once.","s":[79,44,51,47]},{"id":"bz_vantoorn","n":"Joris van Toorn","p":"LB","sp":["LM","CB"],"r":64,"ry":"bronze","cl":"nordwerk_eisen","lg":"eisenring","na":"valdenia","a":[68,46,62,55,66,63],"t":["low_driver"],"sx":null,"b":"Starter-squad odd-one-out. Included to show you what bad chemistry costs.","s":[71,58,60,62]},{"id":"bz_kelso","n":"Ruaridh Kelso","p":"CDM","sp":["CB","CM"],"r":60,"ry":"bronze","cl":"saltmere_wanderers","lg":"kingsmoor_crown","na":"caledorn","a":[55,52,61,50,66,70],"t":["long_range_cannon"],"sx":"power","b":"Thirty metres out is his range. Twenty-two metres out is a threat to the crowd.","s":[83,41,49,58]},{"id":"bz_ferreiro","n":"Nuno Ferreiro","p":"RW","sp":["RM"],"r":65,"ry":"bronze","cl":"sabuga_do_mar","lg":"liga_solara","na":"lusandra","a":[79,60,57,70,30,49],"t":["inswing_specialist"],"sx":null,"b":"Whips it in off the outside boot and hopes.","s":[58,72,63,52]},{"id":"bz_solheim","n":"Eirik Solheim","p":"CB","sp":["CDM"],"r":62,"ry":"bronze","cl":"isholm_fk","lg":"frostliga","na":"norvik","a":[52,44,50,44,68,76],"t":["wall_skimmer"],"sx":null,"b":"Built like the harbour wall he grew up jumping off.","s":[76,38,45,55]},{"id":"bz_arroyo","n":"Beni Arroyo","p":"CAM","sp":["CM"],"r":66,"ry":"bronze","cl":"puerta_solana_cf","lg":"liga_solara","na":"iberatia","a":[63,64,70,71,38,50],"t":["dead_ball_dipper"],"sx":"freeKickAccuracy","b":"No legs, no lungs, but he will put it in the top corner from 20 metres in training every day.","s":[54,69,79,61]},{"id":"bz_kanjile","n":"Zuberi Kanjile","p":"CM","sp":["CDM"],"r":64,"ry":"bronze","cl":"kanjari_fc","lg":"savanna_rift","na":"ndelekwa","a":[66,58,66,62,54,60],"t":["ice_veins"],"sx":"composure","b":"Heart rate never moves. The clock is not a factor for him.","s":[66,52,64,80]},{"id":"bz_brennock","n":"Fionn Brennock","p":"ST","sp":[],"r":59,"ry":"bronze","cl":"castlebridge_athletic","lg":"kingsmoor_crown","na":"ardeen","a":[61,64,45,54,28,72],"t":["low_driver"],"sx":null,"b":"Keeps it under the bar and under the wall. Mostly under the wall.","s":[74,47,55,50]},{"id":"sv_gallardo","n":"Iker Gallardo","p":"CM","sp":["CAM"],"r":72,"ry":"silver","cl":"valmorena_cf","lg":"liga_solara","na":"iberatia","a":[66,70,78,73,58,64],"t":["outswing_specialist"],"sx":null,"b":"The reliable one. Nothing spikes, nothing sags.","s":[74,77,76,71]},{"id":"sv_thorpe","n":"Rylan Thorpe","p":"ST","sp":["LW"],"r":70,"ry":"silver","cl":"harrowgate_united","lg":"kingsmoor_crown","na":"albreth","a":[76,75,58,70,32,68],"t":["long_range_cannon"],"sx":null,"b":"Your first proper striker. Hits it clean when you swipe clean.","s":[80,62,64,63]},{"id":"sv_marchetti","n":"Dario Marchetti","p":"GK","sp":[],"r":71,"ry":"silver","cl":"rothalle_09","lg":"eisenring","na":"marenza","a":[46,22,58,36,32,70],"t":["wall_commander"],"sx":null,"b":"Organises the wall well enough that you will need to go over it.","gk":[74,72,70,69,1.9]},{"id":"sv_ostergard","n":"Nils Ostergard","p":"LM","sp":["LW","LB"],"r":69,"ry":"silver","cl":"vindstad_bk","lg":"frostliga","na":"solvmark","a":[74,62,70,72,44,58],"t":["whip_merchant","inswing_specialist"],"sx":"curve","b":"Bends it like the harbour road. Do not ask him to hit it hard.","s":[58,86,72,60]},{"id":"sv_duquette","n":"Émile Duquette","p":"CAM","sp":["CM","RM"],"r":73,"ry":"silver","cl":"nordwerk_eisen","lg":"eisenring","na":"gallance","a":[70,72,77,76,40,56],"t":["dead_ball_dipper"],"sx":"freeKickAccuracy","b":"Topspin merchant. Clears the wall by a centimetre, dips under the bar by two.","s":[71,74,82,70]},{"id":"sv_ravelli","n":"Tazio Ravelli","p":"RB","sp":["RM","CB"],"r":68,"ry":"silver","cl":"deportivo_curaza","lg":"liga_palmarena","na":"marenza","a":[78,54,64,66,68,66],"t":["low_driver"],"sx":null,"b":"Low, flat, through the gap where the wall jumped.","s":[77,55,58,60]},{"id":"sv_haldane","n":"Struan Haldane","p":"CB","sp":["CDM"],"r":70,"ry":"silver","cl":"greyfen_town","lg":"kingsmoor_crown","na":"caledorn","a":[58,50,58,50,74,80],"t":["long_range_cannon","knuckler"],"sx":"power","b":"A 70-rated centre-half with an elite-tier launch ceiling. From 28 metres he is a genuine weapon.","s":[88,36,52,62]},{"id":"sv_bakari","n":"Amani Bakari","p":"RW","sp":["ST"],"r":71,"ry":"silver","cl":"tsavane_royals","lg":"savanna_rift","na":"tsavane","a":[85,68,60,76,34,58],"t":["whip_merchant"],"sx":null,"b":"All legs. The dead ball is a side project.","s":[64,71,66,58]},{"id":"sv_lindqvist","n":"Alvar Lindqvist","p":"CDM","sp":["CB","CM"],"r":67,"ry":"silver","cl":"skjaldur_if","lg":"frostliga","na":"norvik","a":[60,56,68,58,70,72],"t":["ice_veins"],"sx":"composure","b":"Takes the last kick of the match like it is the first kick of pre-season.","s":[72,52,61,84]},{"id":"sv_pereda","n":"Lalo Pereda","p":"LW","sp":["LM","ST"],"r":73,"ry":"silver","cl":"ontiva_deportivo","lg":"liga_solara","na":"iberatia","a":[82,70,68,79,36,54],"t":["inswing_specialist"],"sx":null,"b":"Left foot, inswinger, near post. Every single time.","s":[69,79,73,66]},{"id":"gc_vasquez","n":"Odalis Vásquez","p":"CAM","sp":["CM","LW"],"r":77,"ry":"gold_common","cl":"estrela_verdana","lg":"liga_palmarena","na":"palmara","a":[79,78,80,83,38,62],"t":["whip_merchant","dead_ball_dipper"],"sx":null,"b":"Everything above average, curve well above. The default gold pick.","s":[78,83,79,74]},{"id":"gc_kaltenbach","n":"Rurik Kaltenbach","p":"CB","sp":["CDM"],"r":76,"ry":"gold_common","cl":"fc_sturmwald","lg":"eisenring","na":"eisenmark","a":[62,58,66,56,82,86],"t":["long_range_cannon","laser_striker"],"sx":"power","b":"Near-max launch ceiling on a 76. Straight, flat, and very fast — if you swipe true.","s":[90,40,58,68]},{"id":"gc_adisa","n":"Kelo Adisa","p":"ST","sp":["RW"],"r":75,"ry":"gold_common","cl":"amberi_athletic","lg":"savanna_rift","na":"tsavane","a":[88,77,56,74,30,70],"t":["low_driver"],"sx":null,"b":"Under the wall, into the bottom corner, before the keeper has finished pointing.","s":[82,58,63,66]},{"id":"gc_carrow","n":"Wes Carrow","p":"GK","sp":[],"r":78,"ry":"gold_common","cl":"harrowgate_united","lg":"kingsmoor_crown","na":"albreth","a":[50,24,62,38,34,76],"t":["wall_commander","penalty_king"],"sx":null,"b":"Sets the wall a metre wider than regulation and dares you to go round it.","gk":[80,79,77,76,1.92]},{"id":"gc_sandvik","n":"Torvald Sandvik","p":"LB","sp":["LM","CB"],"r":74,"ry":"gold_common","cl":"havnfjord_ik","lg":"frostliga","na":"norvik","a":[76,56,72,66,76,74],"t":["wall_skimmer"],"sx":null,"b":"Clips the top of the wall and still finds the frame.","s":[80,66,68,70]},{"id":"gc_penhale","n":"Corin Penhale","p":"RM","sp":["RW","CAM"],"r":76,"ry":"gold_common","cl":"penhallow_rovers","lg":"kingsmoor_crown","na":"albreth","a":[80,70,76,78,44,60],"t":["whip_merchant","outswing_specialist"],"sx":"curve","b":"The first pack pull that changes your squad. Same club and nation as half your starters.","s":[64,88,80,69]},{"id":"gc_vroomen","n":"Sander Vroomen","p":"CM","sp":["CDM","CAM"],"r":75,"ry":"gold_common","cl":"hafenstadt_sv","lg":"eisenring","na":"valdenia","a":[68,68,82,74,62,66],"t":["set_piece_general"],"sx":"freeKickAccuracy","b":"Runs the routine. Everyone else just stands where he points.","s":[73,72,84,72]},{"id":"gc_berruti","n":"Nicolás Berruti","p":"CDM","sp":["CM","CB"],"r":74,"ry":"gold_common","cl":"club_atletico_marena","lg":"liga_palmarena","na":"curaza","a":[66,62,74,64,78,78],"t":["long_range_cannon"],"sx":null,"b":"Thirty-two metres is not out of range. It is the range.","s":[84,54,66,76]},{"id":"gc_kashiwada","n":"Ren Kashiwada","p":"ST","sp":["CAM"],"r":79,"ry":"gold_common","cl":"thornwick_city","lg":"kingsmoor_crown","na":"kaido","a":[82,84,62,78,34,76],"t":["knuckler","low_driver"],"sx":null,"b":"Kaido's export to the Kingsmoor Crown. League link yes, nation link no — the chemistry lesson in card form.","s":[86,64,70,72]},{"id":"gc_malhao","n":"Tibério Malhão","p":"CAM","sp":["LW","CM"],"r":77,"ry":"gold_common","cl":"sabuga_do_mar","lg":"liga_solara","na":"lusandra","a":[72,74,80,80,40,58],"t":["inswing_specialist","dead_ball_dipper"],"sx":null,"b":"Over the wall, down off the underside. Practises nothing else.","s":[75,85,81,70]},{"id":"gr_barquez","n":"Emiliano Barquez","p":"ST","sp":["LW"],"r":83,"ry":"gold_rare","cl":"deportivo_curaza","lg":"liga_palmarena","na":"curaza","a":[86,87,68,84,32,78],"t":["long_range_cannon","knuckler"],"sx":null,"b":"Hits the knuckler from 30. The keeper reads it late or not at all.","s":[90,72,76,79]},{"id":"gr_ashgrove","n":"Teddy Ashgrove","p":"CM","sp":["CAM","CDM"],"r":82,"ry":"gold_rare","cl":"castlebridge_athletic","lg":"kingsmoor_crown","na":"albreth","a":[74,78,86,80,66,72],"t":["set_piece_general","outswing_specialist"],"sx":null,"b":"No weakness, no spike. The generalist your bronze specialists have to justify themselves against.","s":[82,84,88,82]},{"id":"gr_hjelm","n":"Sigurd Hjelm","p":"GK","sp":[],"r":84,"ry":"gold_rare","cl":"bjornvik_sk","lg":"frostliga","na":"norvik","a":[52,26,64,40,36,84],"t":["giant_frame","cat_reflexes"],"sx":null,"b":"1.96 m and a 2.97 m reach envelope with giant_frame. The top corners are still open. Only the top corners.","gk":[86,84,85,82,1.96]},{"id":"gr_orbaneja","n":"Xabi Orbaneja","p":"CAM","sp":["CM","RW"],"r":84,"ry":"gold_rare","cl":"atletico_verazul","lg":"liga_solara","na":"iberatia","a":[78,82,86,87,42,64],"t":["whip_merchant","dead_ball_dipper"],"sx":null,"b":"Curve 90 against Merrowby's 84: a 5% larger Magnus coefficient, and roughly eight times the price.","s":[80,90,86,80]},{"id":"gr_engstrom","n":"Mattis Engstrom","p":"LM","sp":["LW","CAM"],"r":80,"ry":"gold_rare","cl":"skjaldur_if","lg":"frostliga","na":"solvmark","a":[84,74,78,82,48,66],"t":["inswing_specialist"],"sx":null,"b":"Identical curve to a 69-rated silver. He just misses less when you swipe badly.","s":[76,86,79,74]},{"id":"gr_vollier","n":"Gaspard Vollier","p":"CB","sp":["CDM"],"r":81,"ry":"gold_rare","cl":"konigsau_bc","lg":"eisenring","na":"gallance","a":[68,62,72,60,86,88],"t":["long_range_cannon","laser_striker"],"sx":"power","b":"The hardest strike in the gold tier. Curve 44 means it goes exactly where you aimed, including the stands.","s":[93,44,62,74]},{"id":"gr_makhoya","n":"Sefu Makhoya","p":"RW","sp":["ST","RM"],"r":80,"ry":"gold_rare","cl":"zuberi_rangers","lg":"savanna_rift","na":"ndelekwa","a":[90,76,68,85,34,62],"t":["whip_merchant"],"sx":null,"b":"Frightening in open play, merely good over a dead ball.","s":[72,80,74,68]},{"id":"gr_tsukane","n":"Haruo Tsukane","p":"CM","sp":["CAM","CDM"],"r":82,"ry":"gold_rare","cl":"rio_tamboa_ec","lg":"liga_palmarena","na":"kaido","a":[74,76,85,80,64,64],"t":["laser_striker","ice_veins"],"sx":"freeKickAccuracy","b":"The tightest error cone in the gold pool. Buys you forgiveness, never buys you the goal.","s":[78,82,90,84]},{"id":"gr_grantham","n":"Bryn Grantham","p":"GK","sp":[],"r":81,"ry":"gold_rare","cl":"saltmere_wanderers","lg":"kingsmoor_crown","na":"ardeen","a":[56,24,66,42,34,74],"t":["late_diver","penalty_king"],"sx":null,"b":"Reacts fast, reaches short. Go high and wide, not high and central.","gk":[84,80,79,80,1.89]},{"id":"el_sotomonte","n":"Adri Sotomonte","p":"CAM","sp":["CM","LW"],"r":89,"ry":"elite","cl":"valmorena_cf","lg":"liga_solara","na":"iberatia","a":[82,88,90,91,44,70],"t":["whip_merchant","dead_ball_dipper","set_piece_general"],"sx":null,"b":"The complete dead-ball card. Still cannot score if you swipe through the middle of the ball.","s":[88,94,91,88]},{"id":"el_ravensworth","n":"Jonah Ravensworth","p":"ST","sp":["CAM"],"r":88,"ry":"elite","cl":"harrowgate_united","lg":"kingsmoor_crown","na":"albreth","a":[88,91,72,86,36,84],"t":["long_range_cannon","knuckler"],"sx":null,"b":"Ceiling of 37.1 m/s. One and a half metres per second above a silver centre-half. That is the whole gap.","s":[95,74,82,86]},{"id":"el_dalmar","n":"Idris Dalmar","p":"CM","sp":["CDM","CAM"],"r":86,"ry":"elite","cl":"tsavane_royals","lg":"savanna_rift","na":"tsavane","a":[80,82,89,85,70,76],"t":["ice_veins","outswing_specialist"],"sx":null,"b":"The shot clock does not exist for him.","s":[85,87,88,90]},{"id":"el_nordhagen","n":"Aksel Nordhagen","p":"LW","sp":["LM","ST"],"r":87,"ry":"elite","cl":"havnfjord_ik","lg":"frostliga","na":"norvik","a":[90,84,80,89,40,68],"t":["inswing_specialist","whip_merchant"],"sx":null,"b":"Maximum lateral displacement on the 25 m inswinger. Aim outside the post and trust it.","s":[82,92,85,82]},{"id":"el_reinholt","n":"Matthias Reinholt","p":"GK","sp":[],"r":89,"ry":"elite","cl":"fc_sturmwald","lg":"eisenring","na":"eisenmark","a":[54,28,70,44,38,82],"t":["cat_reflexes","wall_commander"],"sx":null,"b":"0.146 s reaction with cat_reflexes, 2.90 m reach. Beatable by a bronze, but only into the last quarter of the goal mouth.","gk":[92,90,90,88,1.94]},{"id":"el_marchao","n":"Éder Marchão","p":"ST","sp":["RW"],"r":87,"ry":"elite","cl":"estrela_verdana","lg":"liga_palmarena","na":"palmara","a":[89,89,74,88,32,76],"t":["knuckler","low_driver"],"sx":null,"b":"Power and curve both high. Accuracy deliberately is not — he punishes lazy swipes.","s":[91,83,80,84]},{"id":"ic_ferradas","n":"Olmo Ferradas","p":"CAM","sp":["CM","LW"],"r":93,"ry":"icon","cl":"legends_collective","lg":"icon_circuit","na":"iberatia","a":[84,90,94,93,48,72],"t":["whip_merchant","dead_ball_dipper","set_piece_general"],"sx":null,"b":"Retired, mythologised, chemistry-neutral. Links to Iberatia only.","s":[90,96,94,93]},{"id":"ic_vale","n":"Ronnie Vale","p":"ST","sp":["CAM"],"r":92,"ry":"icon","cl":"legends_collective","lg":"icon_circuit","na":"albreth","a":[90,94,76,88,34,86],"t":["long_range_cannon","knuckler","laser_striker"],"sx":null,"b":"The hardest striker of a football in the game, and still 0.2 m/s short of the 38 m/s ceiling. There is nowhere left to buy.","s":[98,78,86,90]},{"id":"ic_auvik","n":"Stellan Auvik","p":"GK","sp":[],"r":94,"ry":"icon","cl":"legends_collective","lg":"icon_circuit","na":"norvik","a":[58,30,74,46,40,86],"t":["cat_reflexes","giant_frame","penalty_king"],"sx":null,"b":"The final boss keeper. 0.140 s reaction with cat_reflexes, 3.05 m reach. The top corners are still open, and they are the only thing that is.","gk":[95,94,95,93,1.97]}],"duos":[{"id":"penhallow_whip_line","n":"Penhallow Whip Line","m":["bz_merrowby","gc_penhale"],"f":"Same corner flag, same outswinger, fifteen years apart.","mod":{"magnusCmMultiplier":1.12,"appliesTo":"both_members","description":"Multiplies the Magnus coefficient Cm = k0 + k1*(CRV/99) by 1.12 for shots taken by either member."}},{"id":"harrowgate_spine","n":"The Harrowgate Spine","m":["sv_thorpe","el_ravensworth"],"f":"Academy graduate and the man whose posters he had on the wall.","mod":{"launchVelocityBonusMetresPerSecond":1.5,"appliesTo":"both_members","description":"Adds 1.5 m/s to the v0 ceiling for either member. Hard-clamped at v_max = 38 m/s."}},{"id":"frostline_pact","n":"Frostline Pact","m":["gc_sandvik","el_nordhagen"],"f":"Havnfjord left flank. One puts it on the spot, one puts it in the net.","mod":{"errorConeSigmaMultiplier":0.88,"appliesTo":"both_members","description":"Multiplies the Gaussian angular error cone standard deviation sigma by 0.88 for either member."}},{"id":"composure_cartel","n":"The Composure Cartel","m":["sv_lindqvist","el_dalmar"],"f":"Neither man has ever looked at the clock.","mod":{"pressureSigmaPenaltyMultiplier":0.0,"errorConeSigmaMultiplier":0.95,"appliesTo":"whole_squad","description":"Removes the shot-clock pressure term from sigma entirely for every taker in the squad, and multiplies base sigma by 0.95."}},{"id":"wall_breakers","n":"Wall Breakers","m":["sv_haldane","gc_kaltenbach"],"f":"Two centre-halves who were told to stay back and did not.","mod":{"gkOcclusionBonusSeconds":0.06,"occlusionCondition":"Ball clears the top of the wall by less than 0.25 m.","appliesTo":"both_members","description":"Adds 0.06 s to T_occlusion in T_react = 0.35 - 0.002*REF + T_occlusion when the shot skims the wall."}},{"id":"highland_hammer","n":"The Highland Hammer","m":["bz_kelso","sv_haldane"],"f":"Caledorn's answer to a set-piece routine: hit it as hard as physically possible.","mod":{"launchVelocityBonusMetresPerSecond":1.0,"knuckleSpinThresholdMultiplier":1.35,"appliesTo":"both_members","description":"Adds 1.0 m/s to the v0 ceiling and widens the near-zero-spin window that triggers knuckle behaviour by 35%, for either member."}}],"starter":["bz_merrowby","bz_halloway","bz_kelso","bz_brennock","bz_vantoorn","sv_thorpe","sv_haldane"]};
+
+AK.Meta = (function () {
+"use strict";
+var D = AK.Data, clamp = AK.clamp;
+
+var byId = {};
+D.cards.forEach(function (c) { byId[c.id] = c; });
+var OUTFIELD = D.cards.filter(function (c) { return c.p !== 'GK'; });
+var KEEPERS = D.cards.filter(function (c) { return c.p === 'GK'; })
+  .sort(function (a, b) { return a.r - b.r; });
+
+function card(id) { return byId[id]; }
+function clubName(id) { return (D.clubs[id] && D.clubs[id].n) || id; }
+function leagueName(id) { return D.leagues[id] || id; }
+function nationName(id) { return D.nations[id] || id; }
+
+/* set-piece stats live in c.s = [power, curve, freeKickAccuracy, composure] */
+function spRaw(c) {
+  return c.s ? { power: c.s[0], curve: c.s[1], freeKickAccuracy: c.s[2], composure: c.s[3] }
+             : { power: 50, curve: 50, freeKickAccuracy: 50, composure: 50 };
+}
+function gkStats(c) {
+  return { reflexes: c.gk[0], positioning: c.gk[1], diving: c.gk[2],
+           handling: c.gk[3], heightMeters: c.gk[4], name: c.n, rating: c.r };
+}
+
+/* ---------------- chemistry ----------------
+   Each card earns up to 3 points: one each from club, league and nation, with
+   a second point available at the deeper threshold. Squad chemistry is the sum
+   across the five, so 15 is a perfect squad. */
+function chemistry(squadIds) {
+  var ids = (squadIds || []).filter(Boolean);
+  var cc = {}, lc = {}, nc = {};
+  ids.forEach(function (id) {
+    var c = card(id); if (!c) return;
+    cc[c.cl] = (cc[c.cl] || 0) + 1;
+    lc[c.lg] = (lc[c.lg] || 0) + 1;
+    nc[c.na] = (nc[c.na] || 0) + 1;
+  });
+  function pts(n, t1, t2) { return n >= t2 ? 2 : (n >= t1 ? 1 : 0); }
+  var per = {}, total = 0;
+  ids.forEach(function (id) {
+    var c = card(id); if (!c) return;
+    var club = pts(cc[c.cl], 2, 3),
+        lg = pts(lc[c.lg], 2, 4),
+        na = pts(nc[c.na], 2, 4);
+    var v = clamp(club + lg + na, 0, 3);
+    per[id] = { total: v, club: club, league: lg, nation: na };
+    total += v;
+  });
+  return { per: per, squad: total, max: 15,
+           counts: { club: cc, league: lc, nation: nc } };
+}
+
+/* Boost scales with BOTH the card's own chemistry and the squad's, so a lone
+   perfect link is worth far less than a coherent five. */
+function boostDelta(cardChem, squadChem, maxBoost) {
+  var m = maxBoost === undefined ? 10 : maxBoost;
+  return m * (0.20 + 0.30 * (clamp(cardChem, 0, 3) / 3) + 0.50 * (clamp(squadChem, 0, 15) / 15));
+}
+
+/* Logarithmic soft cap. Truncating at 99 makes the last few boost points
+   worthless and silently punishes exactly the cards players work hardest for;
+   this asymptotes instead, so every point still buys something. */
+function softCap(v) {
+  if (v <= 90) return v;
+  return 90 + 9 * (1 - Math.exp(-(v - 90) / 9));
+}
+
+/* Duo traits. The source doc's modifiers are expressed against its own broken
+   Magnus coefficient, so they are remapped onto the corrected spin model. */
+function activeDuos(squadIds) {
+  var set = {}, out = [];
+  (squadIds || []).forEach(function (id) { set[id] = 1; });
+  D.duos.forEach(function (d) {
+    if (d.m.every(function (m) { return set[m]; })) out.push(d);
+  });
+  return out;
+}
+
+/* Effective set-piece stats for the taker: base -> chemistry -> duos -> cap. */
+function effectiveStats(takerId, squadIds) {
+  var c = card(takerId);
+  if (!c) return null;
+  var chem = chemistry(squadIds);
+  var mine = (chem.per[takerId] && chem.per[takerId].total) || 0;
+  var base = spRaw(c), out = {}, k;
+  var delta = boostDelta(mine, chem.squad, 10);
+
+  for (k in base) if (base.hasOwnProperty(k)) out[k] = softCap(base[k] + delta);
+
+  var duos = activeDuos(squadIds), mods = { spin: 1, speed: 0, cone: 1, pressure: 1 };
+  duos.forEach(function (d) {
+    var m = d.mod || {}, mine2 = d.m.indexOf(takerId) >= 0;
+    var whole = m.appliesTo === 'whole_squad';
+    if (!mine2 && !whole) return;
+    if (m.magnusCmMultiplier) mods.spin *= m.magnusCmMultiplier;
+    if (m.launchVelocityBonusMetresPerSecond) mods.speed += m.launchVelocityBonusMetresPerSecond;
+    if (m.errorConeSigmaMultiplier) mods.cone *= m.errorConeSigmaMultiplier;
+    if (m.pressureSigmaPenaltyMultiplier !== undefined) mods.pressure *= m.pressureSigmaPenaltyMultiplier;
+  });
+
+  /* The "stat ceiling collapse" fix: a 88+ card at full chemistry has no room
+     left for stat points, so it earns operational perks instead. */
+  var perks = [];
+  if (c.r >= 88 && mine >= 3) {
+    perks.push('longPreview');
+    mods.pressure *= 0.7;
+  }
+
+  return {
+    card: c, chem: chem, myChem: mine, delta: delta, duos: duos, mods: mods, perks: perks,
+    power: out.power, curve: out.curve, freeKickAccuracy: out.freeKickAccuracy,
+    composure: out.composure, base: base
+  };
+}
+
+/* ---------------- economy ----------------
+   One soft currency, earned only by playing. Odds are published in-game. */
+var PACKS = {
+  standard: { name: 'Standard Pack', cost: 1200, pulls: 3,
+    odds: { bronze: 0.40, silver: 0.30, gold_common: 0.20, gold_rare: 0.078, elite: 0.020, icon: 0.002 } },
+  prime: { name: 'Prime Pack', cost: 3600, pulls: 3, floor: 'silver',
+    odds: { silver: 0.26, gold_common: 0.35, gold_rare: 0.27, elite: 0.10, icon: 0.02 } }
+};
+var PITY_AFTER = 12, PITY_STEP = 0.02;
+
+function pullRarity(odds, rng, pity) {
+  var boost = pity >= PITY_AFTER ? (pity - PITY_AFTER + 1) * PITY_STEP : 0;
+  var keys = Object.keys(odds), adj = {}, top = 0, sum = 0, k;
+  for (k in odds) if (odds.hasOwnProperty(k)) {
+    adj[k] = odds[k];
+    if (k === 'elite' || k === 'icon') { adj[k] += boost * (k === 'elite' ? 0.85 : 0.15); top += adj[k]; }
+  }
+  for (k in adj) sum += adj[k];
+  var r = rng() * sum, acc = 0;
+  for (var i = 0; i < keys.length; i++) {
+    acc += adj[keys[i]];
+    if (r <= acc) return keys[i];
+  }
+  return keys[keys.length - 1];
+}
+
+function openPack(type, rng, state) {
+  var p = PACKS[type], got = [];
+  for (var i = 0; i < p.pulls; i++) {
+    var rar = pullRarity(p.odds, rng, state.pity || 0);
+    var pool = OUTFIELD.filter(function (c) { return c.ry === rar; });
+    if (!pool.length) pool = OUTFIELD;
+    var c = pool[Math.floor(rng() * pool.length)];
+    var dup = !!state.owned[c.id];
+    got.push({ card: c, dup: dup, coins: dup ? quickSell(c) : 0 });
+    if (!dup) state.owned[c.id] = 1;
+    state.pity = (rar === 'elite' || rar === 'icon') ? 0 : (state.pity || 0) + 1;
+  }
+  return got;
+}
+function quickSell(c) {
+  var t = { bronze: 90, silver: 180, gold_common: 400, gold_rare: 900, elite: 2200, icon: 5000 };
+  return t[c.ry] || 100;
+}
+
+return {
+  cards: D.cards, outfield: OUTFIELD, keepers: KEEPERS, card: card,
+  clubName: clubName, leagueName: leagueName, nationName: nationName,
+  spRaw: spRaw, gkStats: gkStats, chemistry: chemistry, boostDelta: boostDelta,
+  softCap: softCap, activeDuos: activeDuos, effectiveStats: effectiveStats,
+  PACKS: PACKS, openPack: openPack, quickSell: quickSell, pullRarity: pullRarity,
+  starter: D.starter.filter(function (id) { var c = byId[id]; return c && c.p !== 'GK'; })
+};
+})();
+/* AK:META:END */
+</script>
+
+<script>
+/* =====================================================================
+   3D PRESENTATION — Three.js r128
+   AK:SCENE:BEGIN
+
+   r128 is from 2021 and predates a lot of renames. Every API below was
+   verified against the vendored build rather than remembered:
+     outputEncoding (NOT outputColorSpace) | sRGBEncoding (NOT SRGBColorSpace)
+     physicallyCorrectLights (NOT useLegacyLights)
+     THREE.Geometry / Face3 / CapsuleGeometry / BufferGeometryUtils : ABSENT
+     MeshLambertMaterial has NO flatShading  -> use MeshPhongMaterial
+     geometry.setAttribute (NOT addAttribute) | material.vertexColors = boolean
+
+   With outputEncoding = sRGBEncoding, r128 feeds hex colours to the shader as
+   if they were already linear, so authored colours come out washed out. Every
+   colour therefore goes through SRGB() below.
+
+   World frame is IDENTICAL to the physics frame — ball origin at z=0, goal
+   plane at z=+distance, camera behind the ball looking toward +z. Mapping
+   between two frames would risk a handedness flip that mirrors the curl.
+   ===================================================================== */
+AK.Scene = (function () {
+"use strict";
+var T = window.THREE;
+function SRGB(hex) { return new T.Color(hex).convertSRGBToLinear(); }
+
+var GOAL_HW = 3.66, GOAL_H = 2.44, POST_R = 0.06;
+
+var S = {
+  renderer: null, scene: null, camera: null, ball: null, ballGroup: null,
+  goal: null, net: null, netBase: null, keeper: null, wall: [], kicker: null,
+  trail: null, trailPts: [], sun: null, ready: false, low: false, dist: 24
+};
+
+/* ---------- procedural textures (no external files anywhere) ---------- */
+function skyTexture() {
+  var c = document.createElement('canvas'); c.width = 8; c.height = 256;
+  var g = c.getContext('2d');
+  var grd = g.createLinearGradient(0, 0, 0, 256);
+  grd.addColorStop(0.00, '#0a1030');
+  grd.addColorStop(0.42, '#1d3566');
+  grd.addColorStop(0.72, '#3f6fa8');
+  grd.addColorStop(0.90, '#7fa8c9');
+  grd.addColorStop(1.00, '#9fc0d8');
+  g.fillStyle = grd; g.fillRect(0, 0, 8, 256);
+  var t = new T.CanvasTexture(c);
+  t.encoding = T.sRGBEncoding;
+  return t;
+}
+function pitchTexture() {
+  var c = document.createElement('canvas'); c.width = c.height = 512;
+  var g = c.getContext('2d');
+  for (var i = 0; i < 16; i++) {
+    g.fillStyle = i % 2 ? '#3f9a52' : '#379047';
+    g.fillRect(0, i * 32, 512, 32);
+  }
+  // a little mottling so the grass is not a flat wash
+  for (var k = 0; k < 2400; k++) {
+    g.fillStyle = 'rgba(255,255,255,' + (Math.random() * 0.035) + ')';
+    g.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+  }
+  var t = new T.CanvasTexture(c);
+  t.wrapS = t.wrapT = T.RepeatWrapping;
+  t.repeat.set(6, 10);
+  t.encoding = T.sRGBEncoding;
+  t.anisotropy = 4;
+  return t;
+}
+function ballTexture() {
+  var c = document.createElement('canvas'); c.width = c.height = 256;
+  var g = c.getContext('2d');
+  g.fillStyle = '#f7f7f2'; g.fillRect(0, 0, 256, 256);
+  g.fillStyle = '#1b2140';
+  // stylised panel blobs — reads as a football when it spins
+  var pts = [[52, 46], [190, 60], [124, 132], [40, 190], [214, 196]];
+  pts.forEach(function (p) {
+    g.beginPath();
+    for (var a = 0; a < 6; a++) {
+      var an = a / 6 * Math.PI * 2, r = 30;
+      g[a ? 'lineTo' : 'moveTo'](p[0] + Math.cos(an) * r, p[1] + Math.sin(an) * r);
+    }
+    g.closePath(); g.fill();
+  });
+  var t = new T.CanvasTexture(c);
+  t.encoding = T.sRGBEncoding;
+  return t;
+}
+function netTexture() {
+  var c = document.createElement('canvas'); c.width = c.height = 128;
+  var g = c.getContext('2d');
+  g.clearRect(0, 0, 128, 128);
+  g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 2;
+  for (var i = 0; i <= 128; i += 16) {
+    g.beginPath(); g.moveTo(i, 0); g.lineTo(i, 128); g.stroke();
+    g.beginPath(); g.moveTo(0, i); g.lineTo(128, i); g.stroke();
+  }
+  var t = new T.CanvasTexture(c);
+  t.wrapS = t.wrapT = T.RepeatWrapping;
+  t.repeat.set(14, 5);
+  return t;
+}
+
+/* ---------- stylised human figure from primitives (no CapsuleGeometry in r128) ---------- */
+function figure(shirt, shorts, skin, height) {
+  var g = new T.Group(), h = height || 1.8;
+  var M = function (col) { return new T.MeshPhongMaterial({ color: SRGB(col), shininess: 8, flatShading: true }); };
+  var torso = new T.Mesh(new T.CylinderGeometry(0.19 * h / 1.8, 0.22 * h / 1.8, 0.52 * h / 1.8, 8), M(shirt));
+  torso.position.y = h * 0.63; g.add(torso);
+  var head = new T.Mesh(new T.SphereGeometry(0.115 * h / 1.8, 10, 8), M(skin));
+  head.position.y = h * 0.93; g.add(head);
+  var legG = new T.CylinderGeometry(0.075 * h / 1.8, 0.06 * h / 1.8, 0.62 * h / 1.8, 7);
+  [-1, 1].forEach(function (s) {
+    var l = new T.Mesh(legG, M(shorts));
+    l.position.set(s * 0.1 * h / 1.8, h * 0.24, 0); g.add(l);
+  });
+  var armG = new T.CylinderGeometry(0.055 * h / 1.8, 0.05 * h / 1.8, 0.48 * h / 1.8, 6);
+  var arms = [];
+  [-1, 1].forEach(function (s) {
+    var a = new T.Mesh(armG, M(skin));
+    a.position.set(s * 0.27 * h / 1.8, h * 0.63, 0);
+    a.rotation.z = s * 0.18; g.add(a); arms.push(a);
+  });
+  g.traverse(function (o) { if (o.isMesh) { o.castShadow = true; o.receiveShadow = false; } });
+  g.userData.arms = arms; g.userData.h = h;
+  return g;
+}
+
+function build(canvas) {
+  var low = (navigator.hardwareConcurrency || 4) <= 4;
+  S.low = low;
+  var renderer = new T.WebGLRenderer({ canvas: canvas, antialias: !low, alpha: false,
+    powerPreference: 'high-performance', stencil: false });
+  // r128 forms — set BEFORE any material is created, encoding is baked into programs
+  renderer.outputEncoding = T.sRGBEncoding;
+  renderer.physicallyCorrectLights = false;
+  renderer.toneMapping = T.NoToneMapping;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = T.PCFSoftShadowMap;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1.5 : 2));
+  S.renderer = renderer;
+
+  var scene = new T.Scene();
+  scene.fog = new T.Fog(SRGB(0x2a4770).getHex(), 55, 210);
+  S.scene = scene;
+
+  // sky dome: BackSide sphere, unlit, so it never picks up scene lighting
+  var sky = new T.Mesh(new T.SphereGeometry(240, 24, 16),
+    new T.MeshBasicMaterial({ map: skyTexture(), side: T.BackSide, fog: false, depthWrite: false }));
+  scene.add(sky); S.sky = sky;
+
+  /* The goal moves to z = kick distance every moment, so the pitch markings,
+     stands and crowd have to travel with it — otherwise the box is painted in
+     the wrong place and the stands end up behind the camera. Everything static
+     is parented to one group whose origin IS the goal line. */
+  var stadium = new T.Group(); scene.add(stadium); S.stadium = stadium;
+
+  var camera = new T.PerspectiveCamera(52, 1, 0.25, 320);
+  camera.up.set(0, 1, 0);
+  S.camera = camera;
+
+  /* lights: one hemisphere fill + one shadow-casting key. Two lights only. */
+  scene.add(new T.HemisphereLight(SRGB(0x9ec6ff).getHex(), SRGB(0x2c4a2f).getHex(), 0.85));
+  var sun = new T.DirectionalLight(SRGB(0xfff3dd).getHex(), 0.95);
+  sun.position.set(-14, 26, 12);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(low ? 1024 : 2048, low ? 1024 : 2048);
+  sun.shadow.camera.near = 1; sun.shadow.camera.far = 90;
+  sun.shadow.camera.left = -26; sun.shadow.camera.right = 26;
+  sun.shadow.camera.top = 30; sun.shadow.camera.bottom = -12;
+  sun.shadow.normalBias = 0.03;
+  scene.add(sun); S.sun = sun;
+
+  /* pitch */
+  var pitch = new T.Mesh(new T.PlaneGeometry(90, 130),
+    new T.MeshPhongMaterial({ map: pitchTexture(), shininess: 0 }));
+  pitch.rotation.x = -Math.PI / 2;
+  pitch.position.z = -27;
+  pitch.receiveShadow = true;
+  stadium.add(pitch);
+
+  /* pitch markings — thin bright planes, cheap and crisp */
+  var lineMat = new T.MeshBasicMaterial({ color: SRGB(0xf2f6ff), transparent: true, opacity: 0.75 });
+  function line(w, d, x, z) {
+    var m = new T.Mesh(new T.PlaneGeometry(w, d), lineMat);
+    m.rotation.x = -Math.PI / 2; m.position.set(x, 0.012, z); stadium.add(m); return m;
+  }
+  line(40, 0.12, 0, 0);                             // goal line
+  line(0.12, 16.5, -20.16, -8.25); line(0.12, 16.5, 20.16, -8.25);
+  line(40.32, 0.12, 0, -16.5);                      // penalty area
+  line(0.12, 5.5, -9.16, -2.75); line(0.12, 5.5, 9.16, -2.75);
+  line(18.32, 0.12, 0, -5.5);                       // six-yard box
+  var spot = new T.Mesh(new T.CircleGeometry(0.12, 12), lineMat);
+  spot.rotation.x = -Math.PI / 2; spot.position.set(0, 0.013, -11); stadium.add(spot);
+
+  /* goal frame */
+  var goal = new T.Group(); stadium.add(goal); S.goal = goal;
+  var frameMat = new T.MeshPhongMaterial({ color: SRGB(0xffffff), shininess: 60 });
+  var postG = new T.CylinderGeometry(POST_R, POST_R, GOAL_H, 12);
+  [-1, 1].forEach(function (s) {
+    var p = new T.Mesh(postG, frameMat);
+    p.position.set(s * GOAL_HW, GOAL_H / 2, 0); p.castShadow = true; goal.add(p);
+  });
+  var bar = new T.Mesh(new T.CylinderGeometry(POST_R, POST_R, GOAL_HW * 2 + POST_R * 2, 12), frameMat);
+  bar.rotation.z = Math.PI / 2; bar.position.set(0, GOAL_H, 0); bar.castShadow = true; goal.add(bar);
+
+  /* net: a back plane plus two sides and a roof. The back plane keeps its own
+     vertex buffer so it can ripple on impact. */
+  var netMat = new T.MeshPhongMaterial({ map: netTexture(), transparent: true, opacity: 0.55,
+    side: T.DoubleSide, depthWrite: false, color: SRGB(0xdfe8ff) });
+  var backG = new T.PlaneGeometry(GOAL_HW * 2, GOAL_H, 18, 10);
+  var back = new T.Mesh(backG, netMat);
+  back.position.set(0, GOAL_H / 2, 1.9); goal.add(back);
+  S.net = back;
+  S.netBase = backG.attributes.position.array.slice(0);
+  var roof = new T.Mesh(new T.PlaneGeometry(GOAL_HW * 2, 1.95), netMat);
+  roof.rotation.x = Math.PI / 2; roof.position.set(0, GOAL_H, 0.95); goal.add(roof);
+  [-1, 1].forEach(function (s) {
+    var side = new T.Mesh(new T.PlaneGeometry(1.95, GOAL_H), netMat);
+    side.rotation.y = Math.PI / 2; side.position.set(s * GOAL_HW, GOAL_H / 2, 0.95); goal.add(side);
+  });
+
+  /* stands + instanced crowd: two draw calls for the whole stadium backdrop */
+  var standMat = new T.MeshPhongMaterial({ color: SRGB(0x33406b), shininess: 3, flatShading: true });
+  // [centreX, centreZ, width, depth] — local to the goal line; +z is behind the net
+  [[0, 21, 56, 13], [-38, -10, 12, 58], [38, -10, 12, 58]].forEach(function (b) {
+    var m = new T.Mesh(new T.BoxGeometry(b[2], 8.5, b[3]), standMat);
+    m.position.set(b[0], 3.9, b[1]); stadium.add(m);
+  });
+  var crowdN = low ? 900 : 2200;
+  var crowd = new T.InstancedMesh(new T.SphereGeometry(0.2, 5, 4),
+    new T.MeshBasicMaterial({}), crowdN);
+  var dummy = new T.Object3D(), col = new T.Color();
+  for (var i = 0; i < crowdN; i++) {
+    var side = Math.floor(Math.random() * 3), x, z;
+    var t = Math.random();                       // 0 = front row, 1 = back row
+    if (side === 0) { x = (Math.random() - 0.5) * 54; z = 8.6 + t * 5.6; }
+    else { x = (side === 1 ? -1 : 1) * (27.5 + t * 4.4); z = -36 + Math.random() * 50; }
+    dummy.position.set(x, 2.0 + t * 5.6, z);      // raked seating, in front of the stand face
+    dummy.updateMatrix(); crowd.setMatrixAt(i, dummy.matrix);
+    col.setHSL(Math.random(), 0.35, 0.35 + Math.random() * 0.3);
+    crowd.setColorAt(i, col.convertSRGBToLinear());
+  }
+  crowd.instanceMatrix.needsUpdate = true;
+  if (crowd.instanceColor) crowd.instanceColor.needsUpdate = true;
+  stadium.add(crowd);
+
+  /* ball */
+  var ballGroup = new T.Group(); scene.add(ballGroup); S.ballGroup = ballGroup;
+  var ball = new T.Mesh(new T.SphereGeometry(0.11, 20, 16),
+    new T.MeshPhongMaterial({ map: ballTexture(), shininess: 26 }));
+  ball.castShadow = true; ballGroup.add(ball); S.ball = ball;
+
+  /* flight trail */
+  var tg = new T.BufferGeometry();
+  var TRAIL = 48;
+  tg.setAttribute('position', new T.BufferAttribute(new Float32Array(TRAIL * 3), 3));
+  S.trail = new T.Line(tg, new T.LineBasicMaterial({ color: SRGB(0xffd27a), transparent: true, opacity: 0.75 }));
+  S.trail.frustumCulled = false; scene.add(S.trail);
+  S.TRAIL = TRAIL;
+
+  /* keeper + wall + kicker */
+  S.keeper = figure(0x2fd18b, 0x123a2a, 0xe8c39a, 1.9);
+  scene.add(S.keeper);
+  S.kicker = figure(0xe04a4a, 0x2a1030, 0xdcb489, 1.82);
+  scene.add(S.kicker);
+  for (var w = 0; w < 5; w++) {
+    var f = figure(0x2f6bd1, 0x101c3a, 0xd8ab86, 1.8 + Math.random() * 0.12);
+    f.visible = false; scene.add(f); S.wall.push(f);
+  }
+
+  S.ready = true;
+  renderer.compile(scene, camera);
+  return S;
+}
+
+/* ---------- per-moment layout ---------- */
+function layout(moment) {
+  S.dist = moment.distance;
+  var d = moment.distance;
+  S.ballGroup.position.set(moment.originX || 0, 0.11, 0);
+  S.stadium.position.set(0, 0, d);
+  if (S.sky) S.sky.position.set(0, 0, d * 0.5);
+  S.keeper.position.set(0, 0, d - 0.35);
+  S.keeper.rotation.y = Math.PI;
+  // the kicker stands well off to the side: he must never block the shot line
+  S.kicker.position.set((moment.originX || 0) - 2.5, 0, -2.4);
+  S.kicker.rotation.y = 0.42;
+
+  var n = moment.wallCount || 0;
+  var wallZ = d - 9.15;
+  for (var i = 0; i < S.wall.length; i++) {
+    var f = S.wall[i];
+    if (i < n) {
+      f.visible = true;
+      f.position.set(moment.wallX + (i - (n - 1) / 2) * 0.62, 0, wallZ);
+      f.rotation.y = Math.PI;
+    } else f.visible = false;
+  }
+}
+
+/* ---------- runtime updates ---------- */
+function setBall(p, spinAxis, spinAmt, dt) {
+  S.ballGroup.position.set(p.x, p.y, p.z);
+  if (spinAmt && dt) S.ball.rotateOnAxis(spinAxis, spinAmt * dt);
+}
+function pushTrail(p) {
+  S.trailPts.push(p.x, p.y, p.z);
+  if (S.trailPts.length > S.TRAIL * 3) S.trailPts.splice(0, 3);
+  var a = S.trail.geometry.attributes.position.array;
+  for (var i = 0; i < S.TRAIL * 3; i++) a[i] = S.trailPts[i] !== undefined ? S.trailPts[i] : S.trailPts[S.trailPts.length - 3 + (i % 3)] || 0;
+  S.trail.geometry.attributes.position.needsUpdate = true;
+  S.trail.geometry.setDrawRange(0, Math.floor(S.trailPts.length / 3));
+}
+function clearTrail() {
+  S.trailPts.length = 0;
+  S.trail.geometry.setDrawRange(0, 0);
+}
+
+var netRipple = { t: 0, x: 0, y: 0, on: false };
+function rippleNet(x, y) { netRipple.on = true; netRipple.t = 0; netRipple.x = x; netRipple.y = y; }
+function updateNet(dt) {
+  if (!netRipple.on) return;
+  netRipple.t += dt;
+  var pos = S.net.geometry.attributes.position, base = S.netBase;
+  var decay = Math.exp(-netRipple.t * 3.4);
+  if (netRipple.t > 1.6) { netRipple.on = false; decay = 0; }
+  for (var i = 0; i < pos.count; i++) {
+    var bx = base[i * 3], by = base[i * 3 + 1];
+    var dd = Math.hypot(bx - netRipple.x, by - (netRipple.y - GOAL_H / 2));
+    var push = Math.cos(Math.min(dd * 2.2, Math.PI / 2)) * decay * 0.55 * Math.cos(netRipple.t * 15 - dd * 3);
+    pos.array[i * 3 + 2] = base[i * 3 + 2] - Math.max(0, push);
+  }
+  pos.needsUpdate = true;
+}
+
+/* keeper dive pose: lean the whole figure toward the committed point */
+function poseKeeper(frac, target, outcome) {
+  if (!target) return;
+  var k = S.keeper, d = S.dist;
+  var dx = AK.clamp(target.x, -GOAL_HW, GOAL_HW) * frac;
+  var dy = AK.clamp(target.y - 0.95, -0.9, 1.5) * frac;
+  k.position.x = dx * 0.85;
+  k.position.y = Math.max(0, dy * 0.55);
+  k.rotation.z = -AK.clamp(dx, -3.5, 3.5) * 0.34 * frac;
+  k.position.z = d - 0.25;
+  var arms = k.userData.arms;
+  if (arms) arms.forEach(function (a, i) { a.rotation.z = (i ? 1 : -1) * (0.18 + frac * 1.25); });
+}
+function resetKeeper() {
+  S.keeper.position.set(0, 0, S.dist - 0.25);
+  S.keeper.rotation.set(0, Math.PI, 0);
+  var arms = S.keeper.userData.arms;
+  if (arms) arms.forEach(function (a, i) { a.rotation.z = (i ? 1 : -1) * 0.18; });
+}
+
+function resize() {
+  if (!S.ready) return;
+  var c = S.renderer.domElement;
+  var w = c.clientWidth || window.innerWidth, h = c.clientHeight || window.innerHeight;
+  S.renderer.setSize(w, h, false);
+  S.camera.aspect = w / Math.max(1, h);
+  // widen the lens on tall phones so the goal still frames properly
+  S.camera.fov = S.camera.aspect < 0.72 ? 64 : (S.camera.aspect < 1 ? 57 : 50);
+  S.camera.updateProjectionMatrix();
+}
+function render() { if (S.ready) S.renderer.render(S.scene, S.camera); }
+
+return { S: S, build: build, layout: layout, setBall: setBall, pushTrail: pushTrail,
+         clearTrail: clearTrail, rippleNet: rippleNet, updateNet: updateNet,
+         poseKeeper: poseKeeper, resetKeeper: resetKeeper, resize: resize,
+         render: render, SRGB: SRGB, GOAL_HW: GOAL_HW, GOAL_H: GOAL_H };
+})();
+/* AK:SCENE:END */
+
+</script>
+
+<script>
+/* =====================================================================
+   SWIPE INPUT + AIM HUD
+   AK:INPUT:BEGIN
+
+   Swipe speed is measured over ABSOLUTE TIMESTAMPS, never per-frame deltas.
+   A 120 Hz phone samples twice as many points per swipe as a 60 Hz one, so
+   anything counting samples would hand high-refresh devices double power.
+
+   The player's thumb sits on top of the ball and the target, so the aim
+   reticle and the trajectory preview are drawn OFFSET ABOVE the touch point.
+   ===================================================================== */
+AK.Input = (function () {
+"use strict";
+var MIN_DRAG_FRAC = 0.09;      // of viewport height — below this a touch is a tap
+var MAX_DRAG_FRAC = 0.42;      // drag length that maps to full power
+var THUMB_OFFSET = 92;         // css px the preview floats above the finger
+var MAX_SAMPLES = 64;
+
+var st = {
+  active: false, id: null, samples: [], onUpdate: null, onCommit: null,
+  onCancel: null, enabled: false, el: null, ctx: null
+};
+
+function now() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
+
+function begin(x, y, id) {
+  st.active = true; st.id = id;
+  st.samples = [{ x: x, y: y, t: now() }];
+}
+function move(x, y) {
+  if (!st.active) return;
+  st.samples.push({ x: x, y: y, t: now() });
+  if (st.samples.length > MAX_SAMPLES) st.samples.shift();
+  if (st.onUpdate) st.onUpdate(parse(false, st.ctx));
+}
+
+/* Signed curvature: the largest perpendicular deviation of the intermediate
+   samples from the straight chord between first and last, normalised by chord
+   length. Positive = the drag bowed to the right => the ball curls right. */
+function curvature(pts) {
+  if (pts.length < 3) return 0;
+  var a = pts[0], b = pts[pts.length - 1];
+  var cx = b.x - a.x, cy = b.y - a.y;
+  var L = Math.hypot(cx, cy);
+  if (L < 1e-3) return 0;
+  var nx = -cy / L, ny = cx / L, best = 0;
+  for (var i = 1; i < pts.length - 1; i++) {
+    var d = (pts[i].x - a.x) * nx + (pts[i].y - a.y) * ny;
+    if (Math.abs(d) > Math.abs(best)) best = d;
+  }
+  return AK.clamp(best / (L * 0.28), -1, 1);
+}
+
+/* Turn the raw drag into launch parameters. The player DRAGS BACK from the
+   ball (like pulling a bowstring), so the shot goes opposite the drag. */
+function parse(final, opts) {
+  var p = st.samples;
+  if (p.length < 2) return null;
+  var a = p[0], b = p[p.length - 1];
+  var dx = b.x - a.x, dy = b.y - a.y;
+  var dist = Math.hypot(dx, dy);
+  var vh = window.innerHeight || 720;
+  var frac = dist / vh;
+  var dt = Math.max(0.016, (b.t - a.t) / 1000);
+
+  if (final && frac < MIN_DRAG_FRAC) return null;
+
+  // pull back = shoot forward
+  var aimX = -dx, aimY = -dy;
+  var intensity = AK.clamp((frac - MIN_DRAG_FRAC) / (MAX_DRAG_FRAC - MIN_DRAG_FRAC), 0, 1);
+  // a flick adds a little punch on top of raw length, but is capped so a
+  // frantic short flick can never out-power a committed full drag
+  var speedPps = dist / dt;
+  var flick = AK.clamp((speedPps / vh - 0.9) / 2.6, 0, 0.22);
+  intensity = AK.clamp(intensity + flick, 0, 1);
+
+  var vw = window.innerWidth || 400;
+
+  /* Aim is expressed as a TRIM around a sensible base, not as a raw angle.
+     Two things were badly wrong with mapping the drag straight to angles:
+
+     1. Pulling back (dragging DOWN) made aimY negative, which drove elevation
+        to its 5 deg floor — so almost every shot flew into the wall. Elevation
+        now comes from the distance and how hard the ball is struck, which is
+        also the honest physics: a harder ball is struck flatter.
+
+     2. Azimuth was measured from straight down the pitch, so a free kick taken
+        from a wide angle needed the player to guess the offset to the goal. The
+        base now points at the middle of the goal from wherever the ball is, and
+        the drag trims left or right of that. */
+  var dist = (opts && opts.distance) || 24;
+  var originX = (opts && opts.originX) || 0;
+  var baseAz = -Math.atan2(originX, dist) * 180 / Math.PI;
+  var baseEl = 21.5 - (AK.clamp(dist, 11, 30) - 18) * 0.15;
+
+  /* The left/right trim is scaled to how wide the goal actually LOOKS from
+     here. A fixed angular range means a 27 m kick spends most of the thumb's
+     travel pointing outside the posts, which is what made three quarters of
+     all shots fly wide. */
+  var trim = Math.atan2(5.2, Math.max(8, dist)) * 180 / Math.PI;
+  var azimuthDeg = AK.clamp(baseAz + AK.clamp(aimX / (vw * 0.5), -1, 1) * trim, -34, 34);
+  var elevationDeg = AK.clamp(baseEl + (0.5 - intensity) * 9, 8, 31);
+
+  return {
+    intensity: intensity, azimuthDeg: azimuthDeg, elevationDeg: elevationDeg,
+    curvature: curvature(p), dragFrac: frac, valid: frac >= MIN_DRAG_FRAC,
+    start: a, end: b, offsetY: THUMB_OFFSET
+  };
+}
+
+function end(commit) {
+  if (!st.active) return;
+  st.active = false; st.id = null;
+  var r = commit ? parse(true, st.ctx) : null;
+  if (r && r.valid) { if (st.onCommit) st.onCommit(r); }
+  else if (st.onCancel) st.onCancel(r ? 'too short' : 'cancelled');
+  st.samples = [];
+}
+
+function attach(el) {
+  st.el = el;
+  function pd(e) {
+    if (!st.enabled || st.active) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    el.setPointerCapture && el.setPointerCapture(e.pointerId);
+    begin(e.clientX, e.clientY, e.pointerId);
+    e.preventDefault();
+  }
+  function pm(e) {
+    if (!st.active || e.pointerId !== st.id) return;
+    move(e.clientX, e.clientY); e.preventDefault();
+  }
+  function pu(e) {
+    if (!st.active || e.pointerId !== st.id) return;
+    move(e.clientX, e.clientY); end(true); e.preventDefault();
+  }
+  function pc(e) { if (st.active && e.pointerId === st.id) end(false); }
+  el.addEventListener('pointerdown', pd, { passive: false });
+  el.addEventListener('pointermove', pm, { passive: false });
+  el.addEventListener('pointerup', pu, { passive: false });
+  el.addEventListener('pointercancel', pc, { passive: false });
+  el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+}
+
+function enable(on) { st.enabled = !!on; if (!on && st.active) end(false); }
+return { attach: attach, enable: enable, state: st, parse: parse,
+         setContext: function (c) { st.ctx = c; },
+         MIN_DRAG_FRAC: MIN_DRAG_FRAC, THUMB_OFFSET: THUMB_OFFSET,
+         set: function (u, c, x) { st.onUpdate = u; st.onCommit = c; st.onCancel = x; } };
+})();
+/* AK:INPUT:END */
+
+/* =====================================================================
+   PROCEDURAL AUDIO — Web Audio only, no sample files anywhere
+   AK:AUDIO:BEGIN
+   ===================================================================== */
+AK.Audio = (function () {
+"use strict";
+var ctx = null, master = null, muted = false, crowdGain = null, crowdSrc = null;
+
+try { muted = localStorage.getItem('apexkick.muted') === '1'; } catch (e) {}
+
+function unlock() {
+  if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return ctx; }
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  ctx = new AC();
+  master = ctx.createGain();
+  master.gain.value = muted ? 0 : 0.9;
+  master.connect(ctx.destination);
+  startCrowd();
+  return ctx;
+}
+function noiseBuffer(sec) {
+  var n = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(1, n, ctx.sampleRate);
+  var d = b.getChannelData(0);
+  for (var i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  return b;
+}
+/* crowd bed: looping filtered noise whose band and level we ride */
+function startCrowd() {
+  var src = ctx.createBufferSource();
+  src.buffer = noiseBuffer(4); src.loop = true;
+  var bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass'; bp.frequency.value = 620; bp.Q.value = 0.7;
+  var g = ctx.createGain(); g.gain.value = 0.035;
+  src.connect(bp); bp.connect(g); g.connect(master);
+  src.start(); crowdGain = g; crowdSrc = bp;
+}
+function crowd(level, dur) {
+  if (!ctx || !crowdGain) return;
+  var t = ctx.currentTime;
+  crowdGain.gain.cancelScheduledValues(t);
+  crowdGain.gain.setValueAtTime(crowdGain.gain.value, t);
+  crowdGain.gain.linearRampToValueAtTime(level, t + 0.12);
+  crowdGain.gain.linearRampToValueAtTime(0.035, t + (dur || 1.8));
+  if (crowdSrc) {
+    crowdSrc.frequency.cancelScheduledValues(t);
+    crowdSrc.frequency.setValueAtTime(crowdSrc.frequency.value, t);
+    crowdSrc.frequency.linearRampToValueAtTime(level > 0.1 ? 1150 : 620, t + 0.2);
+    crowdSrc.frequency.linearRampToValueAtTime(620, t + (dur || 1.8));
+  }
+}
+/* every voice is short-lived and explicitly stopped: no leaks over a session */
+function blip(freq, dur, type, vol, sweepTo) {
+  if (!ctx) return;
+  var t = ctx.currentTime;
+  var o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type || 'sine'; o.frequency.setValueAtTime(freq, t);
+  if (sweepTo) o.frequency.exponentialRampToValueAtTime(Math.max(20, sweepTo), t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol || 0.3, t + 0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.02);
+}
+function burst(dur, freq, q, vol) {
+  if (!ctx) return;
+  var t = ctx.currentTime;
+  var s = ctx.createBufferSource(); s.buffer = noiseBuffer(Math.max(0.05, dur));
+  var f = ctx.createBiquadFilter(); f.type = 'bandpass';
+  f.frequency.value = freq; f.Q.value = q || 1;
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(vol || 0.3, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(master);
+  s.start(t); s.stop(t + dur + 0.02);
+}
+var SFX = {
+  kick: function (power) {
+    burst(0.06, 240 + power * 120, 0.8, 0.42);
+    blip(150 + power * 40, 0.13, 'sine', 0.5, 52);
+  },
+  post: function () { blip(1180, 0.5, 'triangle', 0.42, 620); blip(2300, 0.22, 'sine', 0.16); },
+  net: function () { burst(0.34, 1500, 0.5, 0.22); },
+  glove: function () { burst(0.11, 900, 1.4, 0.3); },
+  wall: function () { burst(0.09, 320, 1.1, 0.34); },
+  whistle: function () { blip(2100, 0.28, 'sine', 0.2, 2400); },
+  goal: function () { crowd(0.30, 2.6); blip(523, 0.16, 'triangle', 0.24); setTimeout(function () { blip(784, 0.3, 'triangle', 0.26); }, 110); },
+  miss: function () { crowd(0.10, 1.3); },
+  save: function () { crowd(0.13, 1.5); },
+  tick: function () { blip(880, 0.04, 'square', 0.08); },
+  packOpen: function () { blip(392, 0.12, 'triangle', 0.2); setTimeout(function () { blip(587, 0.14, 'triangle', 0.22); }, 90); setTimeout(function () { blip(784, 0.26, 'triangle', 0.24); }, 190); },
+  anticipate: function () { crowd(0.085, 2.4); }
+};
+function setMuted(m) {
+  muted = m;
+  try { localStorage.setItem('apexkick.muted', m ? '1' : '0'); } catch (e) {}
+  if (master) {
+    var t = ctx.currentTime;
+    master.gain.cancelScheduledValues(t);
+    master.gain.setValueAtTime(master.gain.value, t);
+    master.gain.linearRampToValueAtTime(m ? 0 : 0.9, t + 0.08);  // ramp: never click
+  }
+}
+return { unlock: unlock, sfx: SFX, crowd: crowd, setMuted: setMuted,
+         isMuted: function () { return muted; } };
+})();
+/* AK:AUDIO:END */
+
+</script>
+
+<script>
+/* =====================================================================
+   GAME — state machine, deterministic flight, camera, HUD, screens
+   AK:GAME:BEGIN
+
+   The whole flight is pre-simulated the instant the ball is struck, and the
+   recorded telemetry is then played back. Two reasons:
+     * the keeper resolves against the RECORDED states, so it can never peek at
+       a future it should not know about
+     * replays are exact, with no floating-point divergence between the live
+       shot and the slow-motion cut
+   ===================================================================== */
+(function () {
+"use strict";
+var T = window.THREE, Sc = AK.Scene, M = AK.Meta, GK = AK.GK;
+var $ = function (id) { return document.getElementById(id); };
+
+var SAVE = 'apexkick.v1';
+var G = {
+  state: 'boot', mode: 'rivals', moment: null, momentIdx: 0, momentsPerRound: 5,
+  results: [], flight: null, playT: 0, outcome: null, timeScale: 1,
+  camMode: 'aim', replay: null, lastShot: null, aimPreview: null, hintShown: 0
+};
+
+/* ---------------- persistence ---------------- */
+var P = {
+  coins: 2500, owned: {}, squad: [], taker: null, division: 8, bestScore: 0,
+  played: 0, goals: 0, shots: 0, pity: 0, xp: 0, seenHint: 0
+};
+function load() {
+  try {
+    var raw = localStorage.getItem(SAVE);
+    if (raw) { var d = JSON.parse(raw); for (var k in d) if (P.hasOwnProperty(k)) P[k] = d[k]; }
+  } catch (e) {}
+  if (!P.squad || !P.squad.length) {
+    M.starter.forEach(function (id) { P.owned[id] = 1; });
+    P.squad = M.starter.slice(0, 5);
+    P.taker = P.squad[0];
+  }
+  P.squad = P.squad.filter(function (id) { return M.card(id); });
+  if (!P.taker || P.squad.indexOf(P.taker) < 0) P.taker = P.squad[0];
+}
+function save() { try { localStorage.setItem(SAVE, JSON.stringify(P)); } catch (e) {} }
+
+/* ---------------- moment generation ---------------- */
+function makeMoment(i, div) {
+  var seed = (P.played * 977 + i * 131 + div * 17) >>> 0;
+  var rng = AK.mulberry32(seed);
+  var pen = (i === 3 && rng() < 0.28);
+  var dist = pen ? 11.0 : 17 + rng() * 12;
+  var side = rng() < 0.5 ? -1 : 1;
+  var originX = pen ? 0 : side * rng() * 6.5;
+  var wallCount = pen ? 0 : (dist < 20 ? 4 : (rng() < 0.5 ? 3 : 5));
+  // the wall lines up between the ball and the near post
+  var wallX = originX * (1 - 9.15 / Math.max(dist, 1)) + (originX > 0 ? -0.35 : 0.35);
+  var w = (rng() * 2 - 1) * 2.6;
+  return {
+    index: i, seed: seed, distance: dist, originX: originX, isPenalty: pen,
+    wallCount: wallCount, wallX: wallX,
+    wind: AK.v3(w, 0, (rng() * 2 - 1) * 0.8),
+    label: pen ? 'Penalty' : 'Free kick',
+    pressure: i >= 3 ? 0.55 : 0.15
+  };
+}
+
+/* ---------------- deterministic flight ---------------- */
+function simulate(moment, launch, keeperCard) {
+  var d = moment.distance, wallZ = d - 9.15;
+  var dt = 1 / (60 * AK.PHYS.substeps);
+  var p = AK.v3(moment.originX, 0.11, 0);
+  var v = AK.v3(launch.vel.x, launch.vel.y, launch.vel.z);
+  var w = AK.v3(launch.omega.x, launch.omega.y, launch.omega.z);
+  var samples = [], t = 0, blocked = false, hitPost = null, impact = null;
+  var wallHalf = (moment.wallCount * 0.62) / 2 + 0.28, wallTop = 2.16;
+  var occludedUntil = 0;
+
+  for (var n = 0; n < 60 * AK.PHYS.substeps * 4; n++) {
+    var p0 = AK.v3(p.x, p.y, p.z);
+    var s = AK.step(p, v, w, moment.wind, dt);
+    p = s.pos; v = s.vel; w = s.omega; t += dt;
+    if (n % AK.PHYS.substeps === 0) {
+      samples.push({ t: t, pos: AK.v3(p.x, p.y, p.z), vel: AK.v3(v.x, v.y, v.z),
+                     omega: AK.v3(w.x, w.y, w.z) });
+    }
+    // --- swept wall check ---
+    if (moment.wallCount && p0.z < wallZ && p.z >= wallZ) {
+      var f = (wallZ - p0.z) / (p.z - p0.z);
+      var wx = p0.x + f * (p.x - p0.x), wy = p0.y + f * (p.y - p0.y);
+      if (Math.abs(wx - moment.wallX) < wallHalf && wy < wallTop) { blocked = true; break; }
+      if (Math.abs(wx - moment.wallX) < wallHalf + 0.6 && wy < wallTop + 0.5) occludedUntil = t;
+    }
+    // --- swept goal plane check ---
+    if (p0.z < d && p.z >= d) {
+      var g = (d - p0.z) / (p.z - p0.z);
+      var gx = p0.x + g * (p.x - p0.x), gy = p0.y + g * (p.y - p0.y);
+      impact = { x: gx, y: gy, t: t, speed: AK.vlen(v) };
+      var HW = Sc.GOAL_HW, H = Sc.GOAL_H, R = AK.GOAL.ballR;
+      if (Math.abs(Math.abs(gx) - HW) < R + AK.GOAL.postR) hitPost = 'post';
+      else if (Math.abs(gy - H) < R + AK.GOAL.postR && Math.abs(gx) < HW) hitPost = 'bar';
+      impact.inside = Math.abs(gx) < HW - R && gy < H - R && gy > 0;
+      break;
+    }
+    if (p.y < 0.02 && v.y < 0) {                     // grounded short
+      if (p.z < d - 0.4) { v.y = -v.y * 0.42; v.x *= 0.72; v.z *= 0.72; p.y = 0.11; }
+      if (AK.vlen(v) < 2.2) break;
+    }
+    if (t > 4.5) break;
+  }
+
+  var res = { samples: samples, blocked: blocked, impact: impact, hitPost: hitPost,
+              tFlight: impact ? impact.t : t, occludedUntil: occludedUntil, keeper: null };
+
+  if (impact && impact.inside && !blocked) {
+    var k = GK.make(keeperCard, 0);
+    var sampleAt = function (tt) {
+      if (!samples.length) return null;
+      var i = Math.min(samples.length - 1, Math.max(0, Math.round(tt / (1 / 60))));
+      return samples[i];
+    };
+    var rng = AK.mulberry32(moment.seed ^ 0x5f3a);
+    res.keeper = GK.resolve(k, sampleAt, impact, impact.t, moment.wind, moment.distance,
+                            rng, res.occludedUntil);
+  }
+
+  // final verdict
+  if (blocked) res.outcome = 'BLOCKED';
+  else if (!impact) res.outcome = 'SHORT';
+  else if (hitPost && !impact.inside) res.outcome = 'WOODWORK';
+  else if (!impact.inside) res.outcome = 'WIDE';
+  else if (res.keeper && (res.keeper.outcome === 'CleanCatch' || res.keeper.outcome === 'Parry'))
+    res.outcome = res.keeper.outcome === 'CleanCatch' ? 'CAUGHT' : 'SAVED';
+  else res.outcome = 'GOAL';
+  return res;
+}
+
+/* ---------------- aim overlay (2D) ---------------- */
+var aimCv, aimCx;
+function drawAim(sw) {
+  if (!aimCv) return;
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (aimCv.width !== Math.floor(aimCv.clientWidth * dpr)) {
+    aimCv.width = Math.floor(aimCv.clientWidth * dpr);
+    aimCv.height = Math.floor(aimCv.clientHeight * dpr);
+  }
+  var x = aimCx; x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  x.clearRect(0, 0, aimCv.clientWidth, aimCv.clientHeight);
+  if (!sw || !G.moment) return;
+
+  var eff = M.effectiveStats(P.taker, P.squad);
+  var cone = AK.errorConeDeg(eff.freeKickAccuracy, eff.composure, eff.myChem, G.moment.pressure) * eff.mods.cone;
+
+  // preview the real trajectory using the SAME integrator the shot will use
+  var stats = { power: eff.power, curve: eff.curve, freeKickAccuracy: 99,
+                composure: 99, chem: 3 };
+  var det = AK.mulberry32(1); det = function () { return 0.5; };   // no scatter in the preview
+  var L = AK.buildLaunch(sw, stats, det, { distance: G.moment.distance, pressure: 0 });
+  var p = AK.v3(G.moment.originX, 0.11, 0), v = L.vel, w = L.omega, dt = 1 / 120;
+  var pts = [], previewLen = eff.perks.indexOf('longPreview') >= 0 ? 0.62 : 0.30;
+  previewLen *= (0.55 + 0.45 * (eff.freeKickAccuracy / 99));
+  for (var i = 0; i < 300; i++) {
+    var s = AK.step(p, v, w, G.moment.wind, dt);
+    p = s.pos; v = s.vel; w = s.omega;
+    if (p.z > G.moment.distance * previewLen || p.y < 0) break;
+    if (i % 3 === 0) pts.push(AK.v3(p.x, p.y, p.z));
+  }
+
+  var v3 = new T.Vector3();
+  function project(q) {
+    v3.set(q.x, q.y, q.z).project(Sc.S.camera);
+    return { x: (v3.x * 0.5 + 0.5) * aimCv.clientWidth,
+             y: (-v3.y * 0.5 + 0.5) * aimCv.clientHeight, z: v3.z };
+  }
+
+  // dual-tone stroke keeps every line legible over bright grass
+  function stroke(path, colour, width) {
+    x.lineCap = 'round'; x.lineJoin = 'round';
+    x.strokeStyle = 'rgba(4,7,15,.85)'; x.lineWidth = width + 3.5; path(); x.stroke();
+    x.strokeStyle = colour; x.lineWidth = width; path(); x.stroke();
+  }
+
+  if (pts.length > 1) {
+    stroke(function () {
+      x.beginPath();
+      pts.forEach(function (q, i) {
+        var s = project(q);
+        if (s.z > 1) return;
+        i ? x.lineTo(s.x, s.y) : x.moveTo(s.x, s.y);
+      });
+    }, 'rgba(185,230,205,.95)', 3);
+  }
+
+  // error-cone reticle on the goal plane, sized by the card's cone
+  var aimPt = AK.integrateToPlane(AK.v3(G.moment.originX, 0.11, 0), L.vel, L.omega,
+                                  G.moment.wind, G.moment.distance, 1 / 200, 3.5);
+  if (aimPt) {
+    var c = project(aimPt.pos);
+    if (c.z < 1) {
+      var spread = Math.tan(cone * Math.PI / 180) * G.moment.distance;   // metres
+      var edge = project(AK.v3(aimPt.pos.x + spread, aimPt.pos.y, aimPt.pos.z));
+      var rad = Math.max(9, Math.abs(edge.x - c.x));
+      stroke(function () { x.beginPath(); x.arc(c.x, c.y, rad, 0, Math.PI * 2); },
+             'rgba(242,162,74,.9)', 2.5);
+      x.fillStyle = 'rgba(242,162,74,.12)';
+      x.beginPath(); x.arc(c.x, c.y, rad, 0, Math.PI * 2); x.fill();
+      stroke(function () {
+        x.beginPath();
+        x.moveTo(c.x - 9, c.y); x.lineTo(c.x + 9, c.y);
+        x.moveTo(c.x, c.y - 9); x.lineTo(c.x, c.y + 9);
+      }, 'rgba(255,255,255,.95)', 2);
+    }
+  }
+
+  // power arc floating ABOVE the thumb so the finger never hides it
+  var e = sw.end, off = sw.offsetY;
+  var pw = sw.intensity;
+  stroke(function () {
+    x.beginPath(); x.arc(e.x, e.y - off, 34, Math.PI * 0.75, Math.PI * 0.75 + Math.PI * 1.5 * pw);
+  }, pw > 0.86 ? '#FF6B6B' : '#B9E6CD', 6);
+  x.font = '700 13px system-ui,sans-serif'; x.textAlign = 'center';
+  x.lineWidth = 3.5; x.strokeStyle = 'rgba(4,7,15,.9)';
+  x.strokeText(Math.round(pw * 100) + '%', e.x, e.y - off + 5);
+  x.fillStyle = '#fff'; x.fillText(Math.round(pw * 100) + '%', e.x, e.y - off + 5);
+  if (Math.abs(sw.curvature) > 0.12) {
+    var lbl = (sw.curvature > 0 ? 'CURL ▸ ' : '◂ CURL ') + Math.round(Math.abs(sw.curvature) * 100) + '%';
+    x.strokeText(lbl, e.x, e.y - off + 56); x.fillText(lbl, e.x, e.y - off + 56);
+  }
+}
+
+/* ---------------- camera ---------------- */
+function updateCamera(dt) {
+  var cam = Sc.S.camera, m = G.moment;
+  if (!m) return;
+  var bp = Sc.S.ballGroup.position;
+  var want = new T.Vector3(), look = new T.Vector3();
+  if (G.camMode === 'aim') {
+    want.set(m.originX, 3.05, -7.9);
+    look.set(m.originX * 0.55, 1.45, m.distance * 0.80);
+  } else if (G.camMode === 'flight') {
+    want.set(bp.x * 0.55 - 0.5, Math.max(2.2, bp.y * 0.55 + 1.9), bp.z - 7.6);
+    look.set(bp.x, bp.y, bp.z + 2.2);
+  } else if (G.camMode === 'replay') {
+    var a = G.replay ? G.replay.angle : 0;
+    want.set(Math.sin(a) * 9 + bp.x * 0.3, 2.2 + Math.sin(a * 0.7) * 0.8, bp.z - Math.cos(a) * 9);
+    look.set(bp.x, bp.y, bp.z);
+  } else {                                     // 'goal' — behind the net
+    want.set(m.originX * 0.2, 2.6, m.distance + 5.2);
+    look.set(0, 1.2, m.distance);
+  }
+  var lambda = G.camMode === 'aim' ? 9 : 4.2;
+  cam.position.lerp(want, 1 - Math.exp(-lambda * dt));
+  var cl = cam.userData._look || (cam.userData._look = look.clone());
+  cl.lerp(look, 1 - Math.exp(-6 * dt));
+  cam.lookAt(cl);
+}
+
+/* ---------------- HUD ---------------- */
+function setBanner(txt, sub, colour) {
+  var b = $('banner'), s = $('subBanner');
+  b.textContent = txt || ''; b.style.color = colour || '#fff';
+  b.classList.toggle('show', !!txt);
+  s.textContent = sub || ''; s.classList.toggle('show', !!sub);
+}
+function updateHud() {
+  var m = G.moment; if (!m) return;
+  $('hRound').textContent = (G.momentIdx + 1) + ' / ' + G.momentsPerRound;
+  $('hMomentLbl').textContent = m.label;
+  $('hDist').textContent = m.distance.toFixed(1) + ' m';
+  var wx = m.wind.x, mag = Math.abs(wx);
+  $('hWind').textContent = mag.toFixed(1);
+  $('windArrow').style.transform = 'rotate(' + (wx >= 0 ? 0 : 180) + 'deg)';
+  $('windArrow').style.color = mag > 2 ? '#FF6B6B' : (mag > 1 ? '#F2C14A' : '#EAF0FF');
+
+  var pips = $('momentPips'); pips.textContent = '';
+  for (var i = 0; i < G.momentsPerRound; i++) {
+    var d = document.createElement('div'); d.className = 'pip';
+    if (i < G.results.length) d.className += G.results[i].outcome === 'GOAL' ? ' on' : ' miss';
+    else if (i === G.momentIdx) d.className += ' now';
+    pips.appendChild(d);
+  }
+  var eff = M.effectiveStats(P.taker, P.squad);
+  $('kName').textContent = eff.card.n;
+  var cone = AK.errorConeDeg(eff.freeKickAccuracy, eff.composure, eff.myChem, m.pressure) * eff.mods.cone;
+  $('kStats').innerHTML = 'PWR <i>' + Math.round(eff.power) + '</i>  CRV <i>' + Math.round(eff.curve) +
+    '</i>  FKA <i>' + Math.round(eff.freeKickAccuracy) + '</i>  ·  cone <i>' + cone.toFixed(1) + '°</i>';
+  var tb = $('traitBadge');
+  if (eff.duos.length) { tb.classList.remove('hidden'); tb.textContent = eff.duos[0].n; }
+  else tb.classList.add('hidden');
+}
+
+/* ---------------- flow ---------------- */
+function startRound() {
+  G.mode = 'rivals'; G.momentIdx = 0; G.results = [];
+  $('hud').classList.remove('hidden');
+  hideScreens();
+  nextMoment();
+}
+function startPractice() {
+  G.mode = 'practice'; G.momentIdx = 0; G.results = [];
+  G.momentsPerRound = 99;
+  $('hud').classList.remove('hidden');
+  hideScreens();
+  nextMoment();
+}
+function nextMoment() {
+  if (G.mode === 'rivals' && G.momentIdx >= G.momentsPerRound) return finishRound();
+  G.moment = makeMoment(G.momentIdx, P.division);
+  Sc.layout(G.moment);
+  Sc.clearTrail();
+  Sc.resetKeeper();
+  Sc.S.ballGroup.position.set(G.moment.originX, 0.11, 0);
+  AK.Input.setContext({ distance: G.moment.distance, originX: G.moment.originX });
+  G.state = 'aim'; G.camMode = 'aim'; G.timeScale = 1;
+  setBanner('', '');
+  updateHud();
+  AK.Input.enable(true);
+  AK.Audio.sfx.anticipate();
+  if (!P.seenHint || P.seenHint < 3) { $('hintSwipe').classList.remove('hidden'); }
+}
+function keeperForDivision() {
+  var ks = M.keepers;
+  var i = AK.clamp(Math.round((8 - P.division) / 7 * (ks.length - 1)), 0, ks.length - 1);
+  return M.gkStats(ks[i]);
+}
+
+function shoot(sw) {
+  if (G.state !== 'aim') return;
+  AK.Input.enable(false);
+  $('hintSwipe').classList.add('hidden');
+  P.seenHint = (P.seenHint || 0) + 1;
+  var eff = M.effectiveStats(P.taker, P.squad);
+  var stats = {
+    power: eff.power + (eff.mods.speed || 0) * 2,
+    curve: eff.curve * (eff.mods.spin || 1),
+    freeKickAccuracy: eff.freeKickAccuracy, composure: eff.composure, chem: eff.myChem
+  };
+  var rng = AK.mulberry32((G.moment.seed * 31 + P.shots) >>> 0);
+  var launch = AK.buildLaunch(sw, stats, rng,
+    { distance: G.moment.distance, pressure: G.moment.pressure * (eff.mods.pressure || 1) });
+  var sim = simulate(G.moment, launch, keeperForDivision());
+  G.flight = sim; G.playT = 0; G.state = 'flight'; G.camMode = 'flight';
+  G.lastShot = { launch: launch, sim: sim, eff: eff, cone:
+    AK.errorConeDeg(eff.freeKickAccuracy, eff.composure, eff.myChem, G.moment.pressure) * eff.mods.cone };
+  P.shots++;
+  AK.Audio.unlock();
+  AK.Audio.sfx.kick(sw.intensity);
+  Sc.clearTrail();
+  drawAim(null);
+}
+
+function resolveOutcome() {
+  var s = G.flight, o = s.outcome;
+  G.state = 'resolve';
+  var goal = o === 'GOAL';
+  if (goal) { P.goals++; AK.Audio.sfx.goal(); Sc.rippleNet(s.impact.x, s.impact.y); }
+  else if (o === 'SAVED' || o === 'CAUGHT') AK.Audio.sfx.save();
+  else if (o === 'WOODWORK') AK.Audio.sfx.post();
+  else if (o === 'BLOCKED') AK.Audio.sfx.wall();
+  else AK.Audio.sfx.miss();
+
+  var txt = { GOAL: 'GOAL!', SAVED: 'SAVED', CAUGHT: 'CAUGHT', WIDE: 'WIDE',
+              BLOCKED: 'WALL', WOODWORK: 'WOODWORK!', SHORT: 'SHORT' }[o] || o;
+  var col = goal ? '#48D18B' : (o === 'WOODWORK' ? '#F2C14A' : '#FF6B6B');
+  setBanner(txt, shotReadout(), col);
+  G.results.push({ outcome: o });
+  updateHud();
+  G.camMode = goal ? 'replay' : 'goal';
+  G.replay = { angle: 0 };
+  setTimeout(function () {
+    setBanner('', '');
+    if (G.mode === 'practice') { nextMoment(); }
+    else { G.momentIdx++; nextMoment(); }
+  }, goal ? 2600 : 2000);
+}
+
+/* the post-shot readout is the main way a player learns how stats map to
+   physics, so it names the specific number that decided the shot */
+function shotReadout() {
+  var s = G.lastShot; if (!s) return '';
+  var L = s.launch, sim = s.sim;
+  var bits = [];
+  bits.push(Math.round(L.speed * 2.237) + ' mph');
+  if (Math.abs(L.spinMag) > 4) bits.push('spin ' + Math.round(Math.abs(L.spinMag) / (2 * Math.PI) * 10) / 10 + ' rev/s');
+  bits.push('cone ' + s.cone.toFixed(1) + '°');
+  if (L.appliedErrorDeg > 0.05) bits.push('drift ' + L.appliedErrorDeg.toFixed(1) + '°');
+  if (sim.keeper && sim.keeper.err !== undefined && sim.outcome === 'GOAL')
+    bits.push('beat the gloves by ' + Math.round(sim.keeper.err * 100) + ' cm');
+  return bits.join('  ·  ');
+}
+
+function finishRound() {
+  var goals = G.results.filter(function (r) { return r.outcome === 'GOAL'; }).length;
+  var par = Math.max(2, Math.round(G.momentsPerRound * 0.4));
+  var coins = goals * 420 + (goals >= par ? 900 : 0) + 150;
+  P.coins += coins; P.played++; P.xp += goals * 120 + 60;
+  var promoted = false;
+  if (goals >= par && P.division > 1) { P.division--; promoted = true; }
+  if (goals > P.bestScore) P.bestScore = goals;
+  save();
+  AK.Input.enable(false);
+  $('hud').classList.add('hidden');
+  showResult(goals, par, coins, promoted);
+}
+
+/* ---------------- main loop ---------------- */
+var last = 0;
+function tick(now) {
+  var dt = Math.min(0.1, (now - last) / 1000 || 0.016);   // hard dt cap: tab-switch safety
+  last = now;
+  if (G.state === 'flight' && G.flight) {
+    G.playT += dt * G.timeScale;
+    var ss = G.flight.samples;
+    var idx = Math.min(ss.length - 1, Math.floor(G.playT * 60));
+    var s = ss[idx];
+    if (s) {
+      Sc.setBall(s.pos, new T.Vector3(0, 1, 0), AK.vlen(s.vel) * 0.6, dt);
+      Sc.pushTrail(s.pos);
+      // slow down as the ball nears the line: render-time dilation only,
+      // the simulation is already finished and immutable
+      var remain = G.flight.tFlight - G.playT;
+      G.timeScale = remain < 0.30 && G.flight.outcome === 'GOAL' ? 0.28 : 1;
+      var k = G.flight.keeper;
+      if (k && k.commit) {
+        var f = AK.clamp((G.playT - k.tReact) / Math.max(0.05, k.tNeed || 0.4), 0, 1);
+        Sc.poseKeeper(f, k.commit, k.outcome);
+      }
+    }
+    if (G.playT >= G.flight.tFlight - 0.001 || idx >= ss.length - 1) resolveOutcome();
+  }
+  if (G.state === 'resolve' && G.camMode === 'replay' && G.replay) G.replay.angle += dt * 0.9;
+  Sc.updateNet(dt);
+  updateCamera(dt);
+  Sc.render();
+  requestAnimationFrame(tick);
+}
+
+/* ---------------- screens ---------------- */
+var screensEl;
+function hideScreens() { if (screensEl) screensEl.innerHTML = ''; }
+function screen(title, bodyHtml, footHtml, opts) {
+  opts = opts || {};
+  screensEl.innerHTML =
+    '<div class="screen"><div class="scr-head">' +
+      (opts.back ? '<button class="iconbtn" id="scrBack">‹</button>' : '') +
+      '<h2>' + title + '</h2>' +
+      '<span class="money">◎ <b>' + P.coins.toLocaleString() + '</b></span>' +
+    '</div><div class="scr-body">' + bodyHtml + '</div>' +
+    (footHtml ? '<div class="scr-foot">' + footHtml + '</div>' : '') + '</div>';
+  if (opts.back) $('scrBack').onclick = opts.back;
+}
+function cardHtml(c, opts) {
+  opts = opts || {};
+  var sp = M.spRaw(c), chem = opts.chem;
+  var dots = '';
+  if (chem !== undefined) for (var i = 0; i < 3; i++) dots += '<span class="cdot' + (i < chem ? ' on' : '') + '"></span>';
+  return '<button class="pcard r-' + c.ry + (opts.sel ? ' sel' : '') + '" data-id="' + c.id + '">' +
+    (chem !== undefined ? '<div class="chemdots">' + dots + '</div>' : '') +
+    '<div class="ovr">' + c.r + '</div><div class="pos">' + c.p + '</div>' +
+    '<div class="nm">' + c.n + '</div>' +
+    '<div class="cl">' + M.clubName(c.cl) + '</div>' +
+    '<div class="sp">PWR <i>' + sp.power + '</i> CRV <i>' + sp.curve + '</i> FKA <i>' + sp.freeKickAccuracy + '</i></div>' +
+    (c.sx ? '<span class="specTag">' + c.sx + ' specialist</span>' : '') +
+    '</button>';
+}
+
+function showTitle() {
+  G.state = 'menu'; $('hud').classList.add('hidden'); AK.Input.enable(false);
+  var acc = P.shots ? Math.round(P.goals / P.shots * 100) : 0;
+  screen('Apex Kick',
+    '<div class="tcenter"><div class="wordmark">APEX<em>KICK</em></div>' +
+    '<p class="tag">Drag back from the ball and release. Curve the drag to bend the flight.<br>' +
+    '<b>Your card sets the physics — never the dice.</b></p>' +
+    '<div id="homeStats">' +
+      '<div class="hstat"><b>' + P.division + '</b><span>Division</span></div>' +
+      '<div class="hstat"><b>' + P.goals + '</b><span>Goals</span></div>' +
+      '<div class="hstat"><b>' + acc + '%</b><span>Accuracy</span></div>' +
+      '<div class="hstat"><b>' + Object.keys(P.owned).length + '</b><span>Cards</span></div>' +
+    '</div>' +
+    '<p class="credit">A Made by Matt game · <a href="https://madebymatt.uk/games/">more games</a><br>' +
+    'All players, clubs and leagues are fictional.</p></div>',
+    '<button class="btn" id="bPlay">Play Division ' + P.division + '</button>' +
+    '<button class="btn sec" id="bSquad">Squad</button>' +
+    '<button class="btn sec" id="bStore">Packs</button>');
+  $('bPlay').onclick = function () { AK.Audio.unlock(); startRound(); };
+  $('bSquad').onclick = showSquad;
+  $('bStore').onclick = showStore;
+  var extra = document.createElement('div');
+  extra.innerHTML = '<button class="btn ghost" id="bPractice" style="margin-top:9px">Practice (no rewards)</button>' +
+    '<button class="btn ghost" id="bMute" style="margin-top:9px">' + (AK.Audio.isMuted() ? 'Sound off' : 'Sound on') + '</button>';
+  document.querySelector('.scr-foot').appendChild(extra);
+  extra.style.cssText = 'flex-basis:100%;display:flex;gap:9px';
+  $('bPractice').onclick = function () { AK.Audio.unlock(); startPractice(); };
+  $('bMute').onclick = function () { AK.Audio.setMuted(!AK.Audio.isMuted()); showTitle(); };
+}
+
+function showSquad() {
+  var chem = M.chemistry(P.squad);
+  var owned = Object.keys(P.owned).map(M.card).filter(function (c) { return c && c.p !== 'GK'; })
+    .sort(function (a, b) { return b.r - a.r; });
+  var eff = M.effectiveStats(P.taker, P.squad);
+  var duoHtml = eff.duos.length
+    ? eff.duos.map(function (d) { return '<div class="rowline"><span><b>' + d.n + '</b><br><span class="note">' + d.f + '</span></span></div>'; }).join('')
+    : '<p class="note">No duo links active. Duos need both named cards in your five.</p>';
+
+  screen('Squad',
+    '<div class="sect"><h3>Your five · chemistry ' + chem.squad + ' / 15</h3>' +
+    '<div class="bar"><i style="width:' + (chem.squad / 15 * 100) + '%"></i></div>' +
+    '<p class="note" style="margin-top:8px">Two from a club, league or nation earns a point each. ' +
+    'Chemistry lifts your taker\'s dead-ball stats and tightens the error cone.</p>' +
+    '<div class="cardgrid" style="margin-top:10px" id="sqGrid">' +
+    P.squad.map(function (id) {
+      var c = M.card(id);
+      return cardHtml(c, { chem: chem.per[id] ? chem.per[id].total : 0, sel: id === P.taker });
+    }).join('') + '</div>' +
+    '<p class="note" style="margin-top:8px">Tap a card to make it your <b>taker</b> (outlined).</p></div>' +
+    '<div class="sect"><h3>Active duo links</h3>' + duoHtml + '</div>' +
+    '<div class="sect"><h3>Taker · ' + eff.card.n + '</h3>' +
+    ['power', 'curve', 'freeKickAccuracy', 'composure'].map(function (k) {
+      var base = eff.base[k], now = eff[k];
+      var lbl = { power: 'Shot power', curve: 'Curve', freeKickAccuracy: 'FK accuracy', composure: 'Composure' }[k];
+      return '<div class="rowline"><span>' + lbl + '</span><b>' + base +
+        (now - base > 0.4 ? ' <span style="color:#48D18B">+' + (now - base).toFixed(1) + '</span>' : '') + '</b></div>';
+    }).join('') + '</div>' +
+    '<div class="sect"><h3>Collection (' + owned.length + ')</h3>' +
+    '<div class="cardgrid" id="colGrid">' + owned.map(function (c) {
+      return cardHtml(c, { sel: P.squad.indexOf(c.id) >= 0 });
+    }).join('') + '</div>' +
+    '<p class="note" style="margin-top:8px">Tap a collection card to swap it into your five.</p></div>',
+    '<button class="btn" id="bBack">Done</button>', { back: showTitle });
+  $('bBack').onclick = showTitle;
+  Array.prototype.forEach.call($('sqGrid').children, function (b) {
+    b.onclick = function () { P.taker = b.dataset.id; AK.Audio.sfx.tick(); save(); showSquad(); };
+  });
+  Array.prototype.forEach.call($('colGrid').children, function (b) {
+    b.onclick = function () {
+      var id = b.dataset.id, i = P.squad.indexOf(id);
+      if (i >= 0) { if (P.squad.length > 1) { P.squad.splice(i, 1); if (P.taker === id) P.taker = P.squad[0]; } }
+      else if (P.squad.length < 5) P.squad.push(id);
+      else { P.squad[P.squad.length - 1] = id; }
+      if (P.squad.indexOf(P.taker) < 0) P.taker = P.squad[0];
+      AK.Audio.sfx.tick(); save(); showSquad();
+    };
+  });
+}
+
+function showStore() {
+  var odds = M.PACKS;
+  function oddsHtml(p) {
+    return Object.keys(p.odds).map(function (k) {
+      return '<div class="rowline"><span>' + k.replace('_', ' ') + '</span><b>' +
+        (p.odds[k] * 100).toFixed(1) + '%</b></div>';
+    }).join('');
+  }
+  screen('Packs',
+    '<p class="note">Every drop rate is published below. After ' + 12 + ' packs without an elite or icon, ' +
+    'the odds rise each pack until one lands.</p>' +
+    Object.keys(odds).map(function (k) {
+      var p = odds[k];
+      return '<div class="sect"><h3>' + p.name + ' · ◎ ' + p.cost.toLocaleString() + ' · ' + p.pulls + ' cards</h3>' +
+        oddsHtml(p) +
+        '<button class="btn" id="buy_' + k + '" style="margin-top:10px"' +
+        (P.coins < p.cost ? ' disabled' : '') + '>Open ' + p.name + '</button></div>';
+    }).join('') +
+    '<p class="note">Duplicates convert straight to coins. Goalkeepers are the opposition, not collectables.</p>',
+    '<button class="btn sec" id="bBack2">Back</button>', { back: showTitle });
+  $('bBack2').onclick = showTitle;
+  Object.keys(odds).forEach(function (k) {
+    var el = $('buy_' + k); if (!el) return;
+    el.onclick = function () {
+      var p = odds[k];
+      if (P.coins < p.cost) return;
+      P.coins -= p.cost;
+      var rng = AK.mulberry32((Date.now() ^ (P.played * 7919)) >>> 0);
+      var got = M.openPack(k, rng, P);
+      got.forEach(function (g) { if (g.dup) P.coins += g.coins; });
+      save(); AK.Audio.unlock(); AK.Audio.sfx.packOpen();
+      showPackResult(got);
+    };
+  });
+}
+function showPackResult(got) {
+  screen('Pack opened',
+    '<div class="cardgrid">' + got.map(function (g) { return cardHtml(g.card, {}); }).join('') + '</div>' +
+    got.map(function (g) {
+      return '<div class="rowline"><span>' + g.card.n + '</span><b>' +
+        (g.dup ? 'duplicate · +◎' + g.coins : 'NEW') + '</b></div>';
+    }).join(''),
+    '<button class="btn" id="bOk">Nice</button><button class="btn sec" id="bMore">More packs</button>');
+  $('bOk').onclick = showTitle; $('bMore').onclick = showStore;
+}
+function showResult(goals, par, coins, promoted) {
+  var lines = G.results.map(function (r, i) {
+    return '<div class="rowline"><span>Kick ' + (i + 1) + '</span><b style="color:' +
+      (r.outcome === 'GOAL' ? '#48D18B' : '#FF6B6B') + '">' + r.outcome + '</b></div>';
+  }).join('');
+  screen(promoted ? 'Promoted!' : 'Round over',
+    '<div class="sect" style="text-align:center">' +
+    '<div style="font-size:54px;font-weight:900;color:' + (goals >= par ? '#48D18B' : '#FF6B6B') + '">' +
+    goals + ' / ' + G.momentsPerRound + '</div>' +
+    '<p class="note">Par for Division ' + (promoted ? P.division + 1 : P.division) + ' is ' + par + ' goals.' +
+    (promoted ? '<br><b style="color:#F2C14A">Promoted to Division ' + P.division + '.</b>' : '') + '</p></div>' +
+    '<div class="sect"><h3>Kicks</h3>' + lines + '</div>' +
+    '<div class="sect"><h3>Reward</h3><div class="rowline"><span>Coins earned</span><b>◎ ' + coins.toLocaleString() + '</b></div></div>',
+    '<button class="btn" id="bAgain">Play again</button><button class="btn sec" id="bHome">Home</button>');
+  $('bAgain').onclick = startRound;
+  $('bHome').onclick = showTitle;
+}
+
+/* Exposed purely so the offline test harness can drive the real simulation
+   rather than a reimplementation of it. Harmless in normal play. */
+window.__AK_DEBUG = {
+  makeMoment: makeMoment, simulate: simulate, keeperForDivision: keeperForDivision,
+  P: P, G: G, M: M
+};
+
+/* ---------------- boot ---------------- */
+function boot() {
+  load();
+  screensEl = document.createElement('div');
+  screensEl.id = 'screens';
+  document.getElementById('app').appendChild(screensEl);
+
+  aimCv = $('aim'); aimCx = aimCv.getContext('2d');
+  Sc.build($('gl'));
+  Sc.resize();
+  window.addEventListener('resize', function () { Sc.resize(); });
+  window.addEventListener('orientationchange', function () { setTimeout(Sc.resize, 250); });
+
+  AK.Input.attach($('app'));
+  AK.Input.set(function (sw) { drawAim(sw); }, function (sw) { drawAim(null); shoot(sw); },
+               function () { drawAim(null); });
+
+  $('loading').classList.add('hidden');
+  showTitle();
+  requestAnimationFrame(function (t) { last = t; tick(t); });
+}
+if (document.readyState === 'complete' || document.readyState === 'interactive') setTimeout(boot, 0);
+else window.addEventListener('DOMContentLoaded', boot);
+})();
+/* AK:GAME:END */
+</script>
+</body>
+</html>
