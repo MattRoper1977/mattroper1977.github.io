@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Made by Matt — Learn • Build • Explore</title><meta name="description" content="Classroom-ready teacher tools, games and interactive lessons — free, accessible and built in a real classroom. Made by Matt."><meta name="theme-color" content="#161D3D"><meta property="og:title" content="Made by Matt — Learn • Build • Explore"><meta property="og:description" content="Learning that feels worth exploring — teacher tools, games and lesson packs."><meta property="og:url" content="https://madebymatt.uk/"><link rel="icon" href="favicon.svg"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="stylesheet" href="styles.css">
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Made by Matt — Learn • Build • Explore</title><meta name="description" content="Classroom-ready teacher tools, games and interactive lessons — free, accessible and built in a real classroom. Made by Matt."><meta name="theme-color" content="#161D3D"><meta property="og:title" content="Made by Matt — Learn • Build • Explore"><meta property="og:description" content="Learning that feels worth exploring — teacher tools, games and lesson packs."><meta property="og:url" content="https://madebymatt.uk/"><meta property="og:type" content="website"><meta property="og:site_name" content="Made by Matt"><meta property="og:image" content="https://madebymatt.uk/assets/og-cover.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://madebymatt.uk/assets/og-cover.png"><link rel="canonical" href="https://madebymatt.uk/"><link rel="icon" href="favicon.svg"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="assets/mbm-features.css">
 <style id="dxStyles">
 :root{--dx-navy:#161D3D;--dx-deep:#0F1530;--dx-mint:#B9E6CD;--dx-mintd:#2F6B4D;--dx-amber:#F2A24A;--dx-ambd:#C97F2E;--dx-cream:#F6F1E4;--dx-card:#FFFDF6;--dx-ink:#1B2140;--dx-mut:#4A5170;--dx-violet:#A78BFA;--dx-lite:#FBF6EA;--dx-line:#E3DAC5;--dx-title:#161D3D;--dx-eyeb:#8A5620;--dx-r2:16px;--dx-h1:#232C55;--dx-h2:#161D3D}
@@ -132,6 +132,35 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 @media (prefers-reduced-motion:reduce){a.dx-prod,a.dx-drop,.dx-sw i,.dx-hero{transition:none}a.dx-prod:hover,a.dx-drop:hover,.dx-sw:hover i{transform:none}}
 @media (max-width:420px){.dx-duo{grid-template-columns:1fr 1fr;gap:.55rem}.dx-prod p{display:none}}
 @media print{.dx-drops{display:none!important}}
+/* ---------- see it in action: video band ---------- */
+.dx-video{background:var(--dx-cream);padding:2.4rem 0 3rem}
+.dx-video .dx-eyebrow{margin-bottom:1.4rem}
+.dx-vidgrid{display:grid;grid-template-columns:1fr;gap:1.4rem}
+@media (min-width:720px){.dx-vidgrid{grid-template-columns:1fr 1fr}}
+.dx-vid{margin:0;display:flex;flex-direction:column;gap:.7rem}
+.dx-vidbtn{position:relative;display:block;width:100%;padding:0;border:1.5px solid var(--dx-line);background:var(--dx-navy);border-radius:var(--dx-r2);overflow:hidden;cursor:pointer;aspect-ratio:16/9}
+.dx-vidbtn img{display:block;width:100%;height:100%;object-fit:cover}
+.dx-vidbtn::after{content:"";position:absolute;left:50%;top:50%;width:64px;height:64px;transform:translate(-50%,-50%);border-radius:50%;background:var(--dx-amber) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 7.5v9l7.5-4.5z' fill='%23161D3D'/%3E%3C/svg%3E") center/60% no-repeat;box-shadow:0 6px 18px rgba(22,29,61,.4)}
+.dx-vidbtn:hover{border-color:var(--dx-mint)}
+.dx-vidbtn:hover::after{filter:brightness(1.06)}
+.dx-vidbtn:focus-visible{outline:3px solid var(--dx-mint);outline-offset:3px}
+.dx-vid iframe{display:block;width:100%;height:100%;aspect-ratio:16/9;border:0;border-radius:var(--dx-r2);background:var(--dx-navy)}
+.dx-vid figcaption{font-size:.86rem;line-height:1.5;color:var(--dx-mut)}
+.dx-vid figcaption b{color:var(--dx-ink)}
+.dx-vidnote{margin:1.5rem auto 0;max-width:44rem;text-align:center;font-size:.82rem;line-height:1.6;color:var(--dx-mut)}
+.dx-vidnote a{color:var(--dx-ambd);font-weight:700;text-decoration:none;white-space:nowrap}
+.dx-vidnote a:hover{text-decoration:underline}
+/* recently improved: folded tail */
+.dx-more{margin-top:.6rem}
+.dx-more>summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;color:var(--dx-ambd);font-size:.86rem;font-weight:700;padding:.2rem 0}
+.dx-more>summary::-webkit-details-marker{display:none}
+.dx-more>summary::before{content:"+";font-weight:800}
+.dx-more[open]>summary::before{content:"\2212"}
+.dx-more>summary:hover{text-decoration:underline}
+.dx-more>summary:focus-visible{outline:3px solid var(--dx-amber);outline-offset:2px;border-radius:4px}
+.dx-more .dx-updlist{margin-top:.5rem}
+/* quiet the visit counter until it's earned */
+#mbmStats.mbm-quiet .mbm-metrics,#mbmStats.mbm-quiet .mbm-boardwrap{display:none}
 </style></head><body><a class="skip" href="#main">Skip to content</a><header class="header"><div class="bar"><a class="brand" href="index.html"><img src="assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav" id="nav" aria-label="Main navigation"><a href="games/">Games</a><a href="Lessons/">Lessons</a><a href="Matt-s-Apps-/">Apps</a><a href="tools/">Tools</a><a href="resources/">Resources</a><a href="stats/">Stats</a><a href="members/">Members</a><a href="#about">About</a><button class="mbm-navbtn" id="mbmAccountBtn" type="button">Log in</button><div class="dx-swatches" role="group" aria-label="Reading background"><span class="swlabel">Reading background</span><button class="dx-sw" type="button" data-t="cream" aria-pressed="true" title="Warm" aria-label="Warm reading background"><i></i></button><button class="dx-sw" type="button" data-t="pink" aria-pressed="false" title="Pink" aria-label="Pink reading background"><i></i></button><button class="dx-sw" type="button" data-t="blue" aria-pressed="false" title="Blue" aria-label="Blue reading background"><i></i></button><button class="dx-sw" type="button" data-t="light" aria-pressed="false" title="Light" aria-label="Light reading background"><i></i></button><button class="dx-sw" type="button" data-t="dark" aria-pressed="false" title="Dark" aria-label="Dark reading background"><i></i></button></div></nav></div></header>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <symbol id="dxi-free" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M9.2 15.5c.6.8 1.6 1.3 2.8 1.3 1.7 0 2.9-.9 2.9-2.2 0-2.9-5.4-1.5-5.4-4.3 0-1.2 1.1-2.1 2.6-2.1 1.1 0 2 .4 2.6 1.1M12 6.6v1.6M12 16.8v1.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
@@ -171,15 +200,15 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <a class="dx-chip" href="resources/?subject=Art%20%C2%B7%20Teesside%20Studio%20Suite">Art</a>
 <a class="dx-chip" href="resources/?type=Game">Games</a>
 <a class="dx-chip" href="resources/?type=Teacher">Teacher tools</a>
-<a class="dx-chip" href="resources/?q=physics">Physics</a>
+<a class="dx-chip" href="resources/?subject=Science%20%C2%B7%20Teesside">Science · Teesside</a>
 <a class="dx-chip" href="resources/?q=trekkers">Trekkers</a>
-<a class="dx-chip" href="resources/?q=simulation">Simulation</a>
+<a class="dx-chip" href="resources/?q=vocational">Vocational &amp; PfA</a>
 </div></div>
 <p class="dx-count" id="dxCount">The full catalogue, one search away.</p>
 </div></section>
 
 <section class="dx-upd" id="newrelease"><div class="dx-wrap">
-<h2 class="dx-eyebrow">New release</h2>
+<h2 class="dx-eyebrow">New releases</h2>
 <div class="dx-updbox" style="border-left:4px solid #A78BFA">
 <p class="dx-when">July 2026 &middot; Games Arcade</p>
 <h3>Off-Brand &mdash; a whodunnit in the brand workshop</h3>
@@ -193,6 +222,19 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <a class="dx-chip" href="games/">Browse the Arcade</a>
 </div>
 </div>
+<div class="dx-updbox" style="border-left:4px solid #2F6B4D">
+<p class="dx-when">July 2026 &middot; Science &middot; Teesside</p>
+<h3>New science for 2026&ndash;27 &mdash; all three pathways</h3>
+<ul class="dx-updlist">
+<li><span class="dx-dot"></span><span><b>25 new lessons landed across BUILD, GROW and LAUNCH.</b> One drop, every pathway covered.</span></li>
+<li><span class="dx-dot"></span><span><b>Built for the post-baseline weeks of the new year</b>, when classes are settled and ready to get into the science.</span></li>
+<li><span class="dx-dot"></span><span><b>Single-file and offline-first</b> like everything else here &mdash; nothing to install, and nothing uploaded.</span></li>
+</ul>
+<div class="dx-updacts">
+<a class="dx-chip dx-main" href="resources/?subject=Science%20%C2%B7%20Teesside">Browse the science &rarr;</a>
+<a class="dx-chip" href="Lessons/">Lesson hub</a>
+</div>
+</div>
 </div></section>
 
 <section class="dx-drops" id="latest" hidden><div class="dx-wrap">
@@ -200,25 +242,6 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <div class="dx-stack" id="dxNew" aria-label="Recently added resources"></div>
 </div></section>
 
-<section class="dx-upd" id="improved"><div class="dx-wrap">
-<h2 class="dx-eyebrow">Recently improved</h2>
-<div class="dx-updbox">
-<p class="dx-when">July 2026 &middot; Tutor Time</p>
-<h3>All ten Tutor Time decks rebuilt on one engine</h3>
-<ul class="dx-updlist">
-<li><span class="dx-dot"></span><span><b>An illustration on every deck.</b> Ten hand-drawn scenes that argue the idea rather than decorate it &mdash; scales that don't bend, five routes on one hand, a mend drawn stronger than the break.</span></li>
-<li><span class="dx-dot"></span><span><b>Phone-feed and news-band scenes</b> on Deepfakes, Vapes and Pressure Points &mdash; a group chat going from a joke to a threat in ten minutes, with the timestamps showing.</span></li>
-<li><span class="dx-dot"></span><span><b>Calm Mode on every deck.</b> One tap stills every animation and silences the chime. Everything also respects the reduced-motion setting on the device.</span></li>
-<li><span class="dx-dot"></span><span><b>An anonymous box that stays private.</b> What a pupil types never appears on the screen and is never saved to the device &mdash; it reaches staff on a printed sheet with a safeguarding sign-off, and nowhere else.</span></li>
-<li><span class="dx-dot"></span><span><b>Class lists clear themselves.</b> Saved on the device as before, but wiped automatically after a fortnight, with a clear-now button in the cold-call panel.</span></li>
-<li><span class="dx-dot"></span><span><b>Progress seals and a printable evidence sheet</b> on every deck, so a session leaves a record without anyone writing one up.</span></li>
-</ul>
-<div class="dx-updacts">
-<a class="dx-chip dx-main" href="Lessons/?q=tutor%20time">Open the Tutor Time decks &rarr;</a>
-<a class="dx-chip" href="Lessons/">Full lesson hub</a>
-</div>
-</div>
-</div></section>
 <section class="dx-dir" id="collections"><div class="dx-wrap">
 <div class="dx-cards">
 
@@ -256,7 +279,48 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <div class="dx-acts"><a class="dx-main" href="Lessons/">Lesson packs<span class="dx-n" id="nLessons"></span> →</a><a class="dx-sub" href="resources/">Full catalogue</a></div></article>
 
 </div></div></section>
-
+<section class="dx-video" id="seeit"><div class="dx-wrap">
+<h2 class="dx-eyebrow">See it in action</h2>
+<div class="dx-vidgrid">
+  <figure class="dx-vid">
+    <button class="dx-vidbtn" type="button" data-yt="aGy0z4mZEXg"
+      aria-label="Play video: the free ASDAN-style register and PfA toolkit, 27 seconds">
+      <img src="assets/video/poster-asdan.jpg" alt="" width="1280" height="720" loading="lazy">
+    </button>
+    <figcaption><b>The registers &amp; the PfA toolkit</b> — the ASDAN-style register, the evidence tracker and 79 lessons in 27 seconds.</figcaption>
+  </figure>
+  <figure class="dx-vid">
+    <button class="dx-vidbtn" type="button" data-yt="vhuk-K_wWas"
+      aria-label="Play video: a full year of art that runs itself">
+      <img src="assets/video/poster-art.jpg" alt="" width="1280" height="720" loading="lazy">
+    </button>
+    <figcaption><b>A full year of art — and it runs itself.</b> Explore, Bronze and Silver, with a print pack behind every lesson.</figcaption>
+  </figure>
+</div>
+<p class="dx-vidnote">Videos play here via YouTube's privacy-enhanced player, and nothing loads from YouTube until you press play. <a href="https://www.youtube.com/@matthewroper9166" rel="noopener">More on the channel &rarr;</a></p>
+</div></section>
+<section class="dx-upd" id="improved"><div class="dx-wrap">
+<h2 class="dx-eyebrow">Recently improved</h2>
+<div class="dx-updbox">
+<p class="dx-when">July 2026 &middot; Tutor Time</p>
+<h3>All ten Tutor Time decks rebuilt on one engine</h3>
+<ul class="dx-updlist">
+<li><span class="dx-dot"></span><span><b>An illustration on every deck.</b> Ten hand-drawn scenes that argue the idea rather than decorate it &mdash; scales that don't bend, five routes on one hand, a mend drawn stronger than the break.</span></li>
+<li><span class="dx-dot"></span><span><b>Phone-feed and news-band scenes</b> on Deepfakes, Vapes and Pressure Points &mdash; a group chat going from a joke to a threat in ten minutes, with the timestamps showing.</span></li>
+<li><span class="dx-dot"></span><span><b>Calm Mode on every deck.</b> One tap stills every animation and silences the chime. Everything also respects the reduced-motion setting on the device.</span></li>
+</ul>
+<details class="dx-more"><summary>Three more improvements</summary>
+<ul class="dx-updlist">
+<li><span class="dx-dot"></span><span><b>An anonymous box that stays private.</b> What a pupil types never appears on the screen and is never saved to the device &mdash; it reaches staff on a printed sheet with a safeguarding sign-off, and nowhere else.</span></li>
+<li><span class="dx-dot"></span><span><b>Class lists clear themselves.</b> Saved on the device as before, but wiped automatically after a fortnight, with a clear-now button in the cold-call panel.</span></li>
+<li><span class="dx-dot"></span><span><b>Progress seals and a printable evidence sheet</b> on every deck, so a session leaves a record without anyone writing one up.</span></li>
+</ul></details>
+<div class="dx-updacts">
+<a class="dx-chip dx-main" href="Lessons/?q=tutor%20time">Open the Tutor Time decks &rarr;</a>
+<a class="dx-chip" href="Lessons/">Full lesson hub</a>
+</div>
+</div>
+</div></section>
 <section class="mbm-stats" id="mbmStats"><div class="dx-wrap">
 <h2 class="dx-eyebrow">Live · around the world 🌍</h2>
 <p class="mbm-here" id="mbmHere">Hello — glad you're here.</p>
@@ -361,6 +425,28 @@ for(var i=0;i<sws.length;i++){sws[i].setAttribute('aria-pressed',sws[i].getAttri
 if(save){try{localStorage.setItem('mbm_reading_theme',t)}catch(e){}}}
 for(var j=0;j<sws.length;j++){sws[j].addEventListener('click',function(){apply(this.getAttribute('data-t'),true)})}
 apply(cur,false);
+})();
+(function(){
+var btns=document.querySelectorAll('.dx-vidbtn');
+if(!btns.length)return;
+Array.prototype.forEach.call(btns,function(btn){
+btn.addEventListener('click',function(){
+var id=btn.getAttribute('data-yt');if(!id)return;
+try{
+var fig=btn.parentNode;
+var ifr=document.createElement('iframe');
+ifr.src='https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0';
+ifr.title='Made by Matt video';
+ifr.setAttribute('allow','autoplay; encrypted-media; picture-in-picture; fullscreen');
+ifr.setAttribute('allowfullscreen','');
+ifr.setAttribute('loading','lazy');
+ifr.width='1280';ifr.height='720';
+fig.replaceChild(ifr,btn);
+}catch(e){
+try{window.open('https://youtu.be/'+id,'_blank','noopener');}catch(_){}
+}
+});
+});
 })();
 </script>
 <script>

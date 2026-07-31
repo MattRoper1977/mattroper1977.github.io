@@ -182,6 +182,7 @@
 
     (oncePerVisit ? bump("visits_total") : read("visits_total")).then(function (n) {
       if (elVisits && n != null) elVisits.textContent = fmt(n);
+      if (n != null && n < 100) mount.classList.add("mbm-quiet"); /* social-proof floor */
     });
 
     locate().then(function (g) {
