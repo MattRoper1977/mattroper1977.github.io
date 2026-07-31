@@ -24,7 +24,8 @@ body[data-theme="dark"] a.dx-prod:focus-visible{outline-color:var(--dx-amber)}
 .dx-sw[data-t="light"] i{background:#FFFFFF}
 .dx-sw[data-t="dark"] i{background:#161D3D;border-color:#B9E6CD99}
 .header .bar{flex-wrap:wrap}
-@media (max-width:680px){.swlabel{display:block}.dx-swatches{width:100%;gap:.35rem;margin-top:.5rem;padding-top:.2rem;border-top:1px solid #B9E6CD2C}}
+/* matches the nav collapse breakpoint in styles.css, so the drawer looks the same at every collapsed width */
+@media (max-width:800px){.swlabel{display:block}.dx-swatches{width:100%;gap:.35rem;margin-top:.5rem;padding-top:.2rem;border-top:1px solid #B9E6CD2C}}
 /* ---------- hero ---------- */
 .dx-hero{position:relative;background:radial-gradient(ellipse 120% 70% at 50% -20%,var(--dx-h1),var(--dx-h2) 70%);transition:background .35s ease;color:#E8E2D4;text-align:center;padding:3rem 1rem 2.8rem;overflow:hidden}
 .dx-hero .pat{position:absolute;inset:0;opacity:.09;pointer-events:none}
