@@ -92,6 +92,8 @@ a.dx-drop:hover{transform:translateY(-2px);border-color:var(--dx-ambd)}
 .dx-cards{display:flex;flex-direction:column;gap:3rem}
 .dx-zone{display:flex;flex-direction:column;gap:1rem}
 .dx-duo{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.dx-duo.dx-trio>.dx-prod:nth-child(3){grid-column:1/-1}
+@media (min-width:720px){.dx-duo.dx-trio{grid-template-columns:repeat(3,1fr)}.dx-duo.dx-trio>.dx-prod:nth-child(3){grid-column:auto}}
 a.dx-prod{background:var(--dx-card);border:1.5px solid var(--dx-line);border-radius:var(--dx-r2);padding:1.1rem 1rem 1rem;text-decoration:none;color:var(--dx-ink);display:flex;flex-direction:column;align-items:center;gap:.5rem;box-shadow:0 3px 12px #161D3D0f;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
 a.dx-prod:hover{transform:translateY(-3px);box-shadow:0 10px 22px #161D3D1a;border-color:var(--dx-ambd)}
 a.dx-prod:focus-visible{outline:3px solid var(--dx-navy);outline-offset:2px}
@@ -257,13 +259,16 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <div class="dx-acts"><a class="dx-main" href="tools/">All tools →</a><a class="dx-sub" href="tools/#drawer">The drawer</a></div></article>
 
 <article class="dx-zone"><h2 class="dx-eyebrow">Games &amp; Sims</h2>
-<div class="dx-duo">
+<div class="dx-duo dx-trio">
 <a class="dx-prod" href="Lessons/Games/Hold_the_Mark.html" data-mbm-count="hold-the-mark">
 <svg viewBox="0 0 120 96" role="img" aria-label="Hold the Mark — brand shapes defending the M mark"><rect x="8" y="8" width="104" height="80" rx="10" fill="#232C55"/><path d="M14 66 C34 58 50 70 66 62 82 54 98 66 106 60" fill="none" stroke="#3A4470" stroke-width="2"/><path d="M50 56 L54 40 L60 52 L66 40 L70 56" fill="none" stroke="#E8E2D4" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="60" cy="47" r="19" fill="none" stroke="#B9E6CD" stroke-width="2.4"/><circle cx="28" cy="30" r="7" fill="none" stroke="#B9E6CD" stroke-width="3.4"/><path d="M88 24 l3.4 6.8 7.4 1-5.4 5.2 1.3 7.4-6.7-3.5-6.7 3.5 1.3-7.4-5.4-5.2 7.4-1Z" fill="#F2A24A"/><rect x="22" y="68" width="14" height="14" rx="3" fill="none" stroke="#F2A24A" stroke-width="3.2"/><path d="M92 64 v16 M86 80 h12" stroke="#B9E6CD" stroke-width="3.4" stroke-linecap="round"/></svg>
 <b>Hold the Mark</b><p>Brand-shape tower defence — place, plan and hold the line with the Focus Meter.</p><span class="mbm-hits-badge">🎮 <span class="mbm-hits" data-mbm-count-for="hold-the-mark"></span> <span class="mbm-hits-lab">plays</span></span></a>
 <a class="dx-prod" href="Lessons/Games/Glitch_Clash.html" data-mbm-count="glitch-clash">
 <svg viewBox="0 0 120 96" role="img" aria-label="Glitch Clash — card battle beam clash"><rect x="8" y="8" width="104" height="80" rx="10" fill="#1B1533"/><rect x="18" y="22" width="34" height="50" rx="6" fill="#232C55" stroke="#A78BFA" stroke-width="2.6" transform="rotate(-7 35 47)"/><circle cx="35" cy="40" r="8" fill="none" stroke="#B9E6CD" stroke-width="2.8" transform="rotate(-7 35 47)"/><rect x="68" y="22" width="34" height="50" rx="6" fill="#232C55" stroke="#F2A24A" stroke-width="2.6" transform="rotate(7 85 47)"/><path d="M85 34 l2.6 5.2 5.6.8-4 3.9 1 5.6-5.2-2.7-5.2 2.7 1-5.6-4-3.9 5.6-.8Z" fill="#F2A24A" transform="rotate(7 85 47)"/><path d="M50 47 H70" stroke="#A78BFA" stroke-width="6" stroke-linecap="round"/><circle cx="60" cy="47" r="6.4" fill="#E8E2D4"/><path d="M60 12 v6M60 78 v6" stroke="#A78BFA" stroke-width="2.4" stroke-linecap="round"/></svg>
 <b>Glitch Clash</b><p>NEW Act II — collectible card battler, now fifteen stages deep with animated story moments.</p><span class="mbm-hits-badge">🎮 <span class="mbm-hits" data-mbm-count-for="glitch-clash"></span> <span class="mbm-hits-lab">plays</span></span></a>
+<a class="dx-prod" href="apexkick/" data-mbm-count="apex-kick">
+<svg viewBox="0 0 120 96" role="img" aria-label="Apex Kick — a free kick curling around the wall into the top corner"><rect x="8" y="8" width="104" height="80" rx="10" fill="#12203C"/><path d="M8 66h104" stroke="#2F6B4D" stroke-width="2" opacity=".7"/><rect x="34" y="30" width="52" height="30" rx="2" fill="none" stroke="#E8E2D4" stroke-width="3"/><path d="M40 34h40M40 40h40M40 46h40M40 52h40M46 32v28M54 32v28M62 32v28M70 32v28M78 32v28" stroke="#8FA3C8" stroke-width=".9" opacity=".55"/><g fill="#2F6BD1"><rect x="44" y="46" width="6" height="16" rx="2"/><rect x="52" y="46" width="6" height="16" rx="2"/><rect x="60" y="46" width="6" height="16" rx="2"/></g><g fill="#D8AB86"><circle cx="47" cy="43" r="2.6"/><circle cx="55" cy="43" r="2.6"/><circle cx="63" cy="43" r="2.6"/></g><path d="M26 78 C40 76 66 70 78 46" fill="none" stroke="#F2A24A" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="5 4"/><circle cx="26" cy="78" r="4.6" fill="#F6F1E4" stroke="#161D3D" stroke-width="1.4"/><circle cx="79" cy="42" r="3.4" fill="#B9E6CD"/></svg>
+<b>Apex Kick</b><p>Curl a free kick round the wall — card stats set the physics, never the dice.</p><span class="mbm-hits-badge">🎮 <span class="mbm-hits" data-mbm-count-for="apex-kick"></span> <span class="mbm-hits-lab">plays</span></span></a>
 </div>
 <div class="dx-acts"><a class="dx-main" href="games/">Browse the Arcade<span class="dx-n" id="nGames"></span> →</a><a class="dx-sub" href="resources/?type=Game">All games</a></div></article>
 

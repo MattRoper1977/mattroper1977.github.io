@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apex Kick — Made by Matt</title>
-<meta name="description" content="A single-file browser free-kick game. Swipe to bend the ball, beat the wall and the keeper. Card stats set the physics — never the dice. Works offline.">
+<meta name="description" content="A single-file browser free-kick game. Drag the marker onto the goal, then flick to strike — bow your drag to bend it past the wall and the keeper. Card stats set the physics, never the dice. Works offline.">
 <meta name="theme-color" content="#0B1220">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Apex Kick">
-<meta property="og:description" content="Swipe to curl it over the wall and into the top corner. Real aerodynamics, a keeper who has to commit, and cards that bend physics instead of rolling dice.">
+<meta property="og:description" content="A single-file browser free-kick game. Drag the marker onto the goal, then flick to strike — bow your drag to bend it past the wall and the keeper. Card stats set the physics, never the dice. Works offline.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%230B1220'/%3E%3Ccircle cx='32' cy='34' r='15' fill='%23F6F1E4'/%3E%3Cpath d='M32 24l5 4-2 6h-6l-2-6z' fill='%23161D3D'/%3E%3Cpath d='M12 20q20-12 40 0' stroke='%23E08A2E' stroke-width='4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
@@ -28,6 +28,9 @@ canvas{display:block;width:100%;height:100%}
   --safe-l:env(safe-area-inset-left,0px); --safe-r:env(safe-area-inset-right,0px);
 }
 .hidden{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.rating{color:var(--gold);font-weight:800}
+.unlucky{color:var(--amber-l);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.82em}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-action:manipulation}
 
 /* dual-tone stroke: every HUD glyph stays legible on bright grass */
@@ -191,14 +194,18 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-
       <div id="traitBadge" class="hidden">Dead-ball partners</div>
     </div>
 
-    <div id="banner" class="ds"></div>
-    <div id="subBanner" class="ds"></div>
+    <div id="banner" class="ds" aria-hidden="true"></div>
+    <div id="subBanner" class="ds" aria-hidden="true"></div>
     <div id="hintSwipe" class="ds hidden">
       <span class="k">Drag the marker</span> onto the goal, then flick to strike — bow your drag to bend it
     </div>
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <!-- The kick outcome is built in script, so it is announced here rather than
+       being left to a visual banner a screen reader would never see change. -->
+  <div id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <!-- ============ loading ============ -->
   <div id="loading"><div class="sp"></div><div class="note">Rolling the pitch…</div></div>
@@ -450,8 +457,85 @@ function buildLaunch(swipe, stats, rng, opts) {
   };
 }
 
+/* ---------------------------------------------------------------
+   KICK RATING 0-100.
+
+   The simulation already knows how good a kick was and then throws it
+   away: whether it beat the gloves by a fingertip or by a metre, whether
+   it threaded the wall or sailed a yard over it, whether a miss was an
+   inch wide or in row Z. Every one of those numbers exists at resolve
+   time. This turns them into one score.
+
+   Pure function of already-computed values — no physics, no globals, no
+   randomness — so it can be unit-tested directly.
+
+   Bands are deliberately disjoint: goals score 50-100, misses 0-48. A
+   goal therefore always outrates a miss, however pretty the miss was —
+   a scrambled goal off the gloves still edges out hitting the post.
+   --------------------------------------------------------------- */
+var UNLUCKY_MISS_MIN = 40;      // a miss at or above this deserved better
+
+/* A marker only — it never alters the score, so the 50-100 / 0-48 bands stay
+   disjoint and a goal still always outrates a miss. */
+function isUnluckyMiss(outcome, rating) {
+  return outcome !== 'GOAL' && typeof rating === 'number' &&
+         isFinite(rating) && rating >= UNLUCKY_MISS_MIN;
+}
+
+function kickRating(k) {
+  k = k || {};
+  var num = function (v, d) { return (typeof v === 'number' && isFinite(v)) ? v : d; };
+  var out = String(k.outcome || '');
+  var x = num(k.impactX, 0), y = num(k.impactY, 0);
+  var hw = GOAL.hw - GOAL.ballR, gh = GOAL.h - GOAL.ballR;
+
+  if (out === 'GOAL') {
+    // placement: how far into the corners. Tight against a post scores,
+    // and the top corner scores a little harder than the bottom one.
+    var lat = clamp(Math.abs(x) / hw, 0, 1);
+    var high = clamp(y / gh, 0, 1);
+    var low = clamp(1 - y / gh, 0, 1) * 0.55;
+    var vert = Math.max(high, low);
+    var placement = 24 * (0.62 * lat + 0.38 * vert);
+
+    // margin: metres the ball beat the keeper's gloves by. An undefined
+    // margin means the keeper never got near it, which is full marks.
+    var err = num(k.keeperErr, 99);
+    var margin = 18 * clamp(err / 0.90, 0, 1);
+
+    // route: threading the wall by centimetres is worth more than
+    // clearing it by a yard. Penalties have no wall and cannot score it.
+    var route = 0;
+    if (k.hasWall) route = 8 * (1 - clamp(num(k.wallClearance, 1.2) / 1.20, 0, 1));
+
+    return clamp(Math.round(50 + placement + margin + route), 50, 100);
+  }
+
+  // ---- misses: everything below the worst goal ----
+  var s;
+  if (out === 'WOODWORK') {
+    s = 48;                                   // the closest a miss can be
+  } else if (out === 'SAVED') {
+    // a parry the keeper had to stretch for rates above a comfortable one
+    s = 30 + 18 * clamp(num(k.keeperErr, 0) / 0.36, 0, 1);
+  } else if (out === 'CAUGHT') {
+    s = 12 + 12 * clamp(num(k.keeperErr, 0) / 0.18, 0, 1);
+  } else if (out === 'BLOCKED') {
+    s = 8;
+  } else if (out === 'SHORT') {
+    s = 3;
+  } else {                                    // WIDE — score by how close
+    var dx = Math.abs(x) - hw, dy = y - gh;
+    var d = Math.max(0, Math.max(dx, dy));    // metres outside the frame
+    if (y < 0) d = Math.max(d, -y);
+    s = Math.max(2, 48 * Math.pow(1 - clamp(d / 1.40, 0, 1), 1.6));
+  }
+  return clamp(Math.round(s), 0, 48);
+}
+
 return {
-  PHYS: PHYS, GOAL: GOAL,
+  PHYS: PHYS, GOAL: GOAL, kickRating: kickRating,
+  isUnluckyMiss: isUnluckyMiss, UNLUCKY_MISS_MIN: UNLUCKY_MISS_MIN,
   v3: v3, vlen: vlen, vcross: vcross, clamp: clamp,
   mulberry32: mulberry32, gauss: gauss,
   dragCoeff: dragCoeff, launchCeiling: launchCeiling, spinMagnitude: spinMagnitude,
@@ -1529,7 +1613,7 @@ function simulate(moment, launch, keeperCard) {
   var p = AK.v3(moment.originX, 0.11, 0);
   var v = AK.v3(launch.vel.x, launch.vel.y, launch.vel.z);
   var w = AK.v3(launch.omega.x, launch.omega.y, launch.omega.z);
-  var samples = [], t = 0, blocked = false, hitPost = null, impact = null;
+  var samples = [], t = 0, blocked = false, hitPost = null, impact = null, wallClearance = null;
   var wallHalf = (moment.wallCount * 0.62) / 2 + 0.28, wallTop = 2.16;
   var occludedUntil = 0;
 
@@ -1546,6 +1630,8 @@ function simulate(moment, launch, keeperCard) {
       var f = (wallZ - p0.z) / (p.z - p0.z);
       var wx = p0.x + f * (p.x - p0.x), wy = p0.y + f * (p.y - p0.y);
       if (Math.abs(wx - moment.wallX) < wallHalf && wy < wallTop) { blocked = true; break; }
+      // how narrowly it escaped: round the end, or over the top
+      wallClearance = Math.max(Math.abs(wx - moment.wallX) - wallHalf, wy - wallTop);
       if (Math.abs(wx - moment.wallX) < wallHalf + 0.6 && wy < wallTop + 0.5) occludedUntil = t;
     }
     // --- swept goal plane check ---
@@ -1567,7 +1653,8 @@ function simulate(moment, launch, keeperCard) {
   }
 
   var res = { samples: samples, blocked: blocked, impact: impact, hitPost: hitPost,
-              tFlight: impact ? impact.t : t, occludedUntil: occludedUntil, keeper: null };
+              tFlight: impact ? impact.t : t, occludedUntil: occludedUntil, keeper: null,
+              wallClearance: wallClearance, hasWall: !!moment.wallCount };
 
   if (impact && impact.inside && !blocked) {
     var k = GK.make(keeperCard, 0);
@@ -1767,8 +1854,17 @@ function setBanner(txt, sub, colour) {
   var b = $('banner'), s = $('subBanner');
   b.textContent = txt || ''; b.style.color = colour || '#fff';
   b.classList.toggle('show', !!txt);
-  s.textContent = sub || ''; s.classList.toggle('show', !!sub);
+  s.innerHTML = sub || ''; s.classList.toggle('show', !!sub);
 }
+/* Single announcement point. The visual banner is aria-hidden, so this is the
+   only thing a screen reader hears — it cannot be read twice. */
+function announce(msg) {
+  var el = $('live');
+  if (!el) return;
+  el.textContent = '';                       // force a re-announce of same text
+  setTimeout(function () { el.textContent = msg; }, 30);
+}
+
 function updateHud() {
   var m = G.moment; if (!m) return;
   $('hRound').textContent = (G.momentIdx + 1) + ' / ' + G.momentsPerRound;
@@ -1865,11 +1961,27 @@ function resolveOutcome() {
   else if (o === 'BLOCKED') AK.Audio.sfx.wall();
   else AK.Audio.sfx.miss();
 
+  var rating = AK.kickRating({
+    outcome: o,
+    impactX: s.impact ? s.impact.x : 0,
+    impactY: s.impact ? s.impact.y : 0,
+    keeperErr: s.keeper ? s.keeper.err : undefined,
+    wallClearance: s.wallClearance,
+    hasWall: s.hasWall
+  });
+  var unlucky = AK.isUnluckyMiss(o, rating);
   var txt = { GOAL: 'GOAL!', SAVED: 'SAVED', CAUGHT: 'CAUGHT', WIDE: 'WIDE',
               BLOCKED: 'WALL', WOODWORK: 'WOODWORK!', SHORT: 'SHORT' }[o] || o;
   var col = goal ? '#48D18B' : (o === 'WOODWORK' ? '#F2C14A' : '#FF6B6B');
-  setBanner(txt, shotReadout(), col);
-  G.results.push({ outcome: o });
+  var readout = shotReadout();
+  setBanner(txt, '<span class="rating">' + rating + ' / 100</span>' +
+    (unlucky ? ' <span class="unlucky">unlucky</span>' : '') + '  ·  ' + readout, col);
+  // spoken form: strip display punctuation and the interpunct separators so a
+  // screen reader does not read "woodwork exclamation full stop"
+  announce(txt.replace(/[!?.]+$/, '') + '. ' + rating + ' out of 100' +
+           (unlucky ? ', unlucky' : '') + '. ' +
+           readout.replace(/\s*·\s*/g, ', ').replace(/\s+/g, ' ').trim() + '.');
+  G.results.push({ outcome: o, rating: rating, unlucky: unlucky });
   updateHud();
   G.camMode = goal ? 'replay' : 'goal';
   G.replay = { angle: 0 };
@@ -1904,6 +2016,9 @@ function shotReadout() {
 
 function finishRound() {
   var goals = G.results.filter(function (r) { return r.outcome === 'GOAL'; }).length;
+  var avg = G.results.length
+    ? Math.round(G.results.reduce(function (a, r) { return a + (r.rating || 0); }, 0) / G.results.length)
+    : 0;
   var par = Math.max(2, Math.round(G.momentsPerRound * 0.4));
   var coins = goals * 420 + (goals >= par ? 900 : 0) + 150;
   P.coins += coins; P.played++; P.xp += goals * 120 + 60;
@@ -1913,7 +2028,7 @@ function finishRound() {
   save();
   AK.Input.enable(false);
   $('hud').classList.add('hidden');
-  showResult(goals, par, coins, promoted);
+  showResult(goals, par, coins, promoted, avg);
 }
 
 /* ---------------- main loop ---------------- */
@@ -2102,15 +2217,19 @@ function showPackResult(got) {
     '<button class="btn" id="bOk">Nice</button><button class="btn sec" id="bMore">More packs</button>');
   $('bOk').onclick = showTitle; $('bMore').onclick = showStore;
 }
-function showResult(goals, par, coins, promoted) {
+function showResult(goals, par, coins, promoted, avg) {
   var lines = G.results.map(function (r, i) {
     return '<div class="rowline"><span>Kick ' + (i + 1) + '</span><b style="color:' +
-      (r.outcome === 'GOAL' ? '#48D18B' : '#FF6B6B') + '">' + r.outcome + '</b></div>';
+      (r.outcome === 'GOAL' ? '#48D18B' : '#FF6B6B') + '">' + r.outcome +
+      ' <span class="rating">' + (r.rating || 0) + '</span>' +
+      (r.unlucky ? ' <span class="unlucky">unlucky</span>' : '') + '</b></div>';
   }).join('');
   screen(promoted ? 'Promoted!' : 'Round over',
     '<div class="sect" style="text-align:center">' +
     '<div style="font-size:54px;font-weight:900;color:' + (goals >= par ? '#48D18B' : '#FF6B6B') + '">' +
     goals + ' / ' + G.momentsPerRound + '</div>' +
+    '<div style="font-size:15px;color:var(--gold);font-weight:800;margin-top:4px">' +
+    'Average kick rating ' + (avg || 0) + ' / 100</div>' +
     '<p class="note">Par for Division ' + (promoted ? P.division + 1 : P.division) + ' is ' + par + ' goals.' +
     (promoted ? '<br><b style="color:#F2C14A">Promoted to Division ' + P.division + '.</b>' : '') + '</p></div>' +
     '<div class="sect"><h3>Kicks</h3>' + lines + '</div>' +
