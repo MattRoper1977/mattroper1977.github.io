@@ -1,0 +1,26 @@
+name: verify-axiomshift
+
+on:
+  push:
+    paths:
+      - 'games/Axiom_Shift.html'
+      - 'tools/verify_axiomshift.js'
+      - 'tools/verify_axiomshift.sh'
+      - '.github/workflows/verify-axiomshift.yml'
+  pull_request:
+    paths:
+      - 'games/Axiom_Shift.html'
+      - 'tools/verify_axiomshift.js'
+      - 'tools/verify_axiomshift.sh'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify Axiom Shift (solvability, determinism, §5 contract, render smoke)
+        run: bash tools/verify_axiomshift.sh games/Axiom_Shift.html
