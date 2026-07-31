@@ -24,7 +24,8 @@ body[data-theme="dark"] a.dx-prod:focus-visible{outline-color:var(--dx-amber)}
 .dx-sw[data-t="light"] i{background:#FFFFFF}
 .dx-sw[data-t="dark"] i{background:#161D3D;border-color:#B9E6CD99}
 .header .bar{flex-wrap:wrap}
-@media (max-width:680px){.swlabel{display:block}.dx-swatches{width:100%;gap:.35rem;margin-top:.5rem;padding-top:.2rem;border-top:1px solid #B9E6CD2C}}
+/* matches the nav collapse breakpoint in styles.css, so the drawer looks the same at every collapsed width */
+@media (max-width:800px){.swlabel{display:block}.dx-swatches{width:100%;gap:.35rem;margin-top:.5rem;padding-top:.2rem;border-top:1px solid #B9E6CD2C}}
 /* ---------- hero ---------- */
 .dx-hero{position:relative;background:radial-gradient(ellipse 120% 70% at 50% -20%,var(--dx-h1),var(--dx-h2) 70%);transition:background .35s ease;color:#E8E2D4;text-align:center;padding:3rem 1rem 2.8rem;overflow:hidden}
 .dx-hero .pat{position:absolute;inset:0;opacity:.09;pointer-events:none}
@@ -211,6 +212,20 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 
 <section class="dx-upd" id="newrelease"><div class="dx-wrap">
 <h2 class="dx-eyebrow">New releases</h2>
+<div class="dx-updbox" style="border-left:4px solid #2F8F6B">
+<p class="dx-when">July 2026 &middot; Games Arcade</p>
+<h3>Apex Kick &mdash; bend it round the wall</h3>
+<ul class="dx-updlist">
+<li><span class="dx-dot"></span><span><b>Your card sets the physics &mdash; never the dice.</b> Stats move the launch band and the error cone. A perfectly struck bronze card still beats an elite keeper.</span></li>
+<li><span class="dx-dot"></span><span><b>One gesture, three channels.</b> Where you drop the marker is your aim, how hard you flick is your power, and how much you bow the drag is your curve.</span></li>
+<li><span class="dx-dot"></span><span><b>Real aerodynamics, not an animation.</b> Gravity, speed-dependent drag and a proper Magnus force, solved the instant you strike &mdash; so the replay is the shot, exactly.</span></li>
+<li><span class="dx-dot"></span><span><b>A keeper who has to commit.</b> He reads the whole remaining flight but misjudges spin, so a heavy curler genuinely wrong-foots him.</span></li>
+</ul>
+<div class="dx-updacts">
+<a class="dx-chip dx-main" href="apexkick/">Play Apex Kick &rarr;</a>
+<a class="dx-chip" href="games/">Browse the Arcade</a>
+</div>
+</div>
 <div class="dx-updbox" style="border-left:4px solid #87CEEB">
 <p class="dx-when">July 2026 &middot; Games Arcade</p>
 <h3>Voxel Frontier &mdash; mine, build, explore</h3>
