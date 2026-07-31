@@ -94,18 +94,51 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-
 .iconbtn{width:40px;height:40px;border-radius:10px;background:#1A2440;border:1px solid var(--line);
   display:flex;align-items:center;justify-content:center;font-size:17px;flex:0 0 auto}
 
-/* ---------- title screen ---------- */
-#title .wordmark{font-size:min(17vw,84px);font-weight:900;letter-spacing:-.02em;line-height:.9;
-  color:var(--cream);text-align:center}
-#title .wordmark em{font-style:normal;color:var(--amber-l);display:block}
-#title .tag{text-align:center;color:var(--mut);font-size:13px;margin-top:12px;line-height:1.6;
-  max-width:30rem;margin-left:auto;margin-right:auto}
-#title .tag b{color:var(--mint)}
-.tcenter{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px}
+/* ---------- title screen ----------
+   Everything here is scoped under .scr-title, the variant class screen() adds
+   for the title only. The other four callers share .screen/.scr-head/.scr-body/
+   .scr-foot, so an unscoped rule would silently restyle Squad, Packs, Pack
+   opened and Round over as well. */
+.scr-title .scr-head{justify-content:flex-end}   /* the sr-only h2 leaves the flow */
+.scr-title .scr-body{display:flex;flex-direction:column}   /* so .tcenter can actually centre */
+.tcenter{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px 0}
+
+/* The hero stands in a goalmouth: two posts and a bar, no goal line, and a
+   net faint enough to stay behind the type. It is the frame being aimed at,
+   so it holds the wordmark rather than decorating it. */
+.scr-title .goalmouth{position:relative;max-width:27rem;width:100%;margin:0 auto;
+  padding:24px 16px 28px;border:2px solid rgba(246,241,228,.30);border-bottom:0;border-radius:4px 4px 0 0}
+.scr-title .goalmouth::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(45deg,transparent 0 13px,rgba(246,241,228,.09) 13px 14px),
+             repeating-linear-gradient(-45deg,transparent 0 13px,rgba(246,241,228,.09) 13px 14px);
+  -webkit-mask-image:linear-gradient(180deg,#000,rgba(0,0,0,.12));
+          mask-image:linear-gradient(180deg,#000,rgba(0,0,0,.12))}
+.scr-title .wordmark{position:relative;font-size:min(15vw,72px);font-weight:900;letter-spacing:-.03em;
+  line-height:.86;color:var(--cream);text-align:center}
+.scr-title .wordmark em{font-style:normal;color:var(--amber-l);display:block}
+
+/* the game's actual claim, promoted out of small print */
+.scr-title .thesis{position:relative;text-align:center;margin-top:20px;color:var(--cream);
+  font-size:clamp(15px,4.6vw,21px);font-weight:700;line-height:1.34;
+  max-width:22rem;margin-left:auto;margin-right:auto}
+.scr-title .thesis b{display:block;color:var(--amber-l);font-weight:700}
+.scr-title .howto{text-align:center;color:var(--mut);font-size:12.5px;line-height:1.6;
+  margin:18px auto 0;max-width:26rem}
+
+/* one footer, built in one pass: primary, then a pair, then a quieter pair */
+.scr-title .scr-foot{display:block}
+.tfoot{display:flex;flex-direction:column;gap:9px}
+.tfoot .trow{display:flex;gap:9px}
+.tfoot .trow.quiet .btn{text-transform:none;letter-spacing:.01em;font-size:12.5px;font-weight:600}
+.scr-title .btn:focus-visible,.scr-title a:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
 #homeStats{display:flex;gap:8px;justify-content:center;margin-top:20px;flex-wrap:wrap}
 .hstat{background:#141E38;border:1px solid var(--line);border-radius:10px;padding:8px 12px;text-align:center;min-width:74px}
 .hstat b{display:block;font-size:17px;color:var(--gold);font-variant-numeric:tabular-nums}
 .hstat span{font-size:9px;letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
+/* four stats stay on one line down to 320px rather than orphaning the fourth */
+.scr-title #homeStats{flex-wrap:nowrap;gap:6px}
+.scr-title .hstat{flex:1 1 0;min-width:0;padding:8px 5px}
+.scr-title .hstat span{font-size:8px;letter-spacing:.06em}
 
 /* ---------- cards ---------- */
 .cardgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:9px}
@@ -166,6 +199,49 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-
 </style>
 </head>
 <body>
+<!-- mbm-splash splash-titles-2026-07-31 START -->
+<style>
+#mbmSplash{position:fixed;inset:0;z-index:9999;background:#161D3D;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  font-family:"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+  opacity:1;transition:opacity .3s linear}
+#mbmSplash.mbm-out{opacity:0}
+#mbmSplash .mbm-word{color:#F6F1E4;font-size:clamp(21px,6.4vw,38px);font-weight:800;
+  letter-spacing:.005em;line-height:1;text-align:center;padding:0 20px}
+#mbmSplash .mbm-rule{width:min(58vw,300px);height:3px;background:#E08A2E;border-radius:2px;
+  transform:scaleX(0);transform-origin:left center;animation:mbm-sweep .5s ease-out .1s forwards}
+@keyframes mbm-sweep{to{transform:scaleX(1)}}
+/* Straight cut, same total duration: the rule is simply already drawn. */
+@media (prefers-reduced-motion:reduce){
+  #mbmSplash{transition:none}
+  #mbmSplash .mbm-rule{animation:none;transform:scaleX(1)}
+}
+</style>
+<div id="mbmSplash" aria-hidden="true">
+  <div class="mbm-word">Made by Matt</div>
+  <div class="mbm-rule"></div>
+</div>
+<noscript><style>#mbmSplash{display:none}</style></noscript>
+<script>
+/* The dismiss timer is unconditional on purpose. It is not gated on Three.js,
+   WebGL, world generation or any game-ready signal, so a game that fails to
+   boot still ends up with the splash gone rather than sealed behind it. */
+(function () {
+  var el = document.getElementById('mbmSplash');
+  if (!el) return;
+  var evts = ['pointerdown', 'click', 'keydown'], done = false;
+  function dismiss() {
+    if (done) return;
+    done = true;
+    for (var i = 0; i < evts.length; i++) document.removeEventListener(evts[i], dismiss, true);
+    el.className = 'mbm-out';
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 320);
+  }
+  for (var i = 0; i < evts.length; i++) document.addEventListener(evts[i], dismiss, true);
+  setTimeout(dismiss, 1200);
+})();
+</script>
+<!-- mbm-splash splash-titles-2026-07-31 END -->
 <div id="app">
   <canvas id="gl"></canvas>
   <canvas id="aim"></canvas>
@@ -2068,10 +2144,12 @@ var screensEl;
 function hideScreens() { if (screensEl) screensEl.innerHTML = ''; }
 function screen(title, bodyHtml, footHtml, opts) {
   opts = opts || {};
+  // opts.variant scopes a redesign to one screen. Callers that pass nothing get
+  // exactly the markup they always got.
   screensEl.innerHTML =
-    '<div class="screen"><div class="scr-head">' +
+    '<div class="screen' + (opts.variant ? ' scr-' + opts.variant : '') + '"><div class="scr-head">' +
       (opts.back ? '<button class="iconbtn" id="scrBack">‹</button>' : '') +
-      '<h2>' + title + '</h2>' +
+      '<h2' + (opts.variant === 'title' ? ' class="sr-only"' : '') + '>' + title + '</h2>' +
       '<span class="money">◎ <b>' + P.coins.toLocaleString() + '</b></span>' +
     '</div><div class="scr-body">' + bodyHtml + '</div>' +
     (footHtml ? '<div class="scr-foot">' + footHtml + '</div>' : '') + '</div>';
@@ -2096,9 +2174,11 @@ function showTitle() {
   G.state = 'menu'; $('hud').classList.add('hidden'); AK.Input.enable(false);
   var acc = P.shots ? Math.round(P.goals / P.shots * 100) : 0;
   screen('Apex Kick',
-    '<div class="tcenter"><div class="wordmark">APEX<em>KICK</em></div>' +
-    '<p class="tag">Drag the marker onto the goal, then flick to strike. Bow your drag to bend the flight.<br>' +
-    '<b>Your card sets the physics — never the dice.</b></p>' +
+    '<div class="tcenter"><div class="goalmouth">' +
+    '<div class="wordmark">APEX<em>KICK</em></div>' +
+    '<p class="thesis">Your card sets the physics<b>— never the dice</b></p></div>' +
+    '<p class="howto">Drag the marker onto the goal, then flick to strike. ' +
+    'Bow your drag to bend the flight.</p>' +
     '<div id="homeStats">' +
       '<div class="hstat"><b>' + P.division + '</b><span>Division</span></div>' +
       '<div class="hstat"><b>' + P.goals + '</b><span>Goals</span></div>' +
@@ -2107,17 +2187,20 @@ function showTitle() {
     '</div>' +
     '<p class="credit">A Made by Matt game · <a href="https://madebymatt.uk/games/">more games</a><br>' +
     'All players, clubs and leagues are fictional.</p></div>',
-    '<button class="btn" id="bPlay">Play Division ' + P.division + '</button>' +
-    '<button class="btn sec" id="bSquad">Squad</button>' +
-    '<button class="btn sec" id="bStore">Packs</button>');
+    '<div class="tfoot">' +
+      '<button class="btn" id="bPlay">Play Division ' + P.division + '</button>' +
+      '<div class="trow">' +
+        '<button class="btn sec" id="bSquad">Squad</button>' +
+        '<button class="btn sec" id="bStore">Packs</button>' +
+      '</div>' +
+      '<div class="trow quiet">' +
+        '<button class="btn ghost" id="bPractice">Practice · no rewards</button>' +
+        '<button class="btn ghost" id="bMute">' + (AK.Audio.isMuted() ? 'Sound off' : 'Sound on') + '</button>' +
+      '</div>' +
+    '</div>', { variant: 'title' });
   $('bPlay').onclick = function () { AK.Audio.unlock(); startRound(); };
   $('bSquad').onclick = showSquad;
   $('bStore').onclick = showStore;
-  var extra = document.createElement('div');
-  extra.innerHTML = '<button class="btn ghost" id="bPractice" style="margin-top:9px">Practice (no rewards)</button>' +
-    '<button class="btn ghost" id="bMute" style="margin-top:9px">' + (AK.Audio.isMuted() ? 'Sound off' : 'Sound on') + '</button>';
-  document.querySelector('.scr-foot').appendChild(extra);
-  extra.style.cssText = 'flex-basis:100%;display:flex;gap:9px';
   $('bPractice').onclick = function () { AK.Audio.unlock(); startPractice(); };
   $('bMute').onclick = function () { AK.Audio.setMuted(!AK.Audio.isMuted()); showTitle(); };
 }
