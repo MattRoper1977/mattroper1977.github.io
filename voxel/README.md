@@ -5,11 +5,15 @@
 **Play:** https://madebymatt.uk/voxel/
 
 - Endless procedurally generated block world — hills, caves, water, sand beaches and snow peaks
+- Textured blocks, baked ambient occlusion and a live day/night lighting cycle
 - First-person controls: WASD / arrows to move, mouse to look, Space to jump, Shift to sprint
+- Swim in water, and press `F` for creative fly mode
 - Break blocks (left click) and place them (right click) with a 9-slot hotbar (keys `1`–`9` / scroll)
-- Live day/night lighting cycle
+- Break particles and synthesised sound effects (`M` to mute)
+- Your world saves itself to the browser and reloads where you left off
+- Share a world with `Copy world link` — the seed travels in the URL
 - Works offline — Three.js r128 is vendored in `vendor/`, no CDN and no installs
-- Touch controls on mobile (drag to look, on-screen pad + mine/place/jump buttons)
+- Touch controls on mobile (drag to look, on-screen pad + mine/place/jump/fly buttons)
 
 ## How it works
 
@@ -23,5 +27,9 @@
   with gravity, jumping and step-safe collision against the voxel grid.
 - **Editing** — a DDA voxel raycast finds the targeted block and face normal for breaking and
   placing; edits persist across chunk unload/reload.
+- **Textures** — every block texture is painted at runtime onto a single `<canvas>` atlas, so the
+  game stays one file with no image assets. Vertex colours carry the ambient occlusion.
+- **Saving** — each seed gets its own `localStorage` slot, so opening someone else's world link
+  never overwrites your own build. Autosaves every 10 seconds and on pause.
 
 A Matt's Apps game · madebymatt.uk
