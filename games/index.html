@@ -46,6 +46,13 @@ a{color:inherit}
 .sec h2 small{font-weight:700;color:var(--mut);letter-spacing:.02em;text-transform:none;font-size:.8rem}
 .sub{color:var(--mut);font-size:.82rem;margin:.2rem 0 .9rem}
 /* top picks scroller */
+.gx-watchgrid{display:flex;flex-direction:column;gap:1.2rem;align-items:center}
+@media(min-width:700px){.gx-watchgrid{flex-direction:row;justify-content:center;align-items:flex-start}}
+.gx-watch figure{margin:0;display:flex;flex-direction:column;gap:.5rem;max-width:300px;width:100%}
+.gx-watch video{display:block;width:100%;height:auto;aspect-ratio:480/930;background:var(--navy);border:1.5px solid var(--navy);border-radius:18px;object-fit:cover}
+.gx-watch figcaption{font-size:.82rem;line-height:1.45;color:#4A5170;text-align:center}
+.gx-watch figcaption b{color:var(--navy)}
+.gx-watchnote{max-width:40rem;margin:1.3rem auto 0;text-align:center;font-size:.8rem;line-height:1.55;color:#4A5170}
 .rail{display:flex;gap:.8rem;overflow-x:auto;padding:.3rem .1rem 1rem;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
 .rail::-webkit-scrollbar{height:8px}
 .rail::-webkit-scrollbar-thumb{background:#D9CDB2;border-radius:99px}
@@ -147,6 +154,17 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 <h2>Matt's personal top picks</h2>
 <p class="sub">The six I'd put in front of anyone first — and one line each on why.</p>
 <div class="rail" id="topRail" aria-label="Matt's top picks"></div>
+</div></section>
+
+<section class="sec gx-watch"><div class="wrap">
+<h2>Watch them played</h2>
+<div class="gx-watchgrid">
+<figure><video controls preload="none" playsinline muted poster="../assets/video/poster-offbrand.jpg" src="../assets/video/clip-offbrand.mp4" width="480" height="930"></video>
+<figcaption><b>Off-Brand</b> — the opening watch: six shapes clock in, one is lying.</figcaption></figure>
+<figure><video controls preload="none" playsinline muted poster="../assets/video/poster-glitchclash.jpg" src="../assets/video/clip-glitchclash.mp4" width="480" height="930"></video>
+<figcaption><b>Glitch Clash</b> — building the trio for Full Harmony.</figcaption></figure>
+</div>
+<p class="gx-watchnote">Real gameplay, captured on a phone and hosted right here — nothing loads until you press play, and nothing plays sound.</p>
 </div></section>
 
 <section class="sec"><div class="wrap">
