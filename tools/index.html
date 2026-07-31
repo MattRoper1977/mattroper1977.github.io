@@ -40,6 +40,15 @@ a.fbtn.s:hover{background:var(--card)}
 .tchip{font:inherit;font-size:.72rem;font-weight:800;letter-spacing:.06em;color:var(--ink);background:var(--card);border:1.5px solid #C9C0AB;border-radius:999px;padding:.42rem .95rem;cursor:pointer}
 .tchip[aria-pressed="true"]{background:var(--navy);color:var(--mint);border-color:var(--navy)}
 .tcount{font-size:.76rem;color:var(--mut);margin:.3rem 0 .6rem}
+.tx-watch{max-width:520px;margin:1.4rem auto;padding:0 1rem;display:flex;flex-direction:column;gap:.6rem}
+.tx-vidbtn{position:relative;display:block;width:100%;padding:0;border:1.5px solid var(--navy);background:var(--navy);border-radius:16px;overflow:hidden;cursor:pointer;aspect-ratio:16/9}
+.tx-vidbtn img{display:block;width:100%;height:100%;object-fit:cover}
+.tx-vidbtn::after{content:"";position:absolute;left:50%;top:50%;width:60px;height:60px;transform:translate(-50%,-50%);border-radius:50%;background:var(--amber-lt) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 7.5v9l7.5-4.5z' fill='%23161D3D'/%3E%3C/svg%3E") center/58% no-repeat;box-shadow:0 6px 18px rgba(22,29,61,.4)}
+.tx-vidbtn:hover{border-color:var(--mint)}
+.tx-vidbtn:focus-visible{outline:3px solid #B9E6CD;outline-offset:3px}
+.tx-watch iframe{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:16px;background:var(--navy)}
+.tx-watchcap{font-size:.82rem;line-height:1.5;color:var(--mut);text-align:center;margin:0}
+.tx-watchcap b{color:var(--ink)}
 .tsec{margin:1rem 0 .4rem;font-size:.86rem;letter-spacing:.1em;color:var(--navy);text-transform:uppercase;font-weight:800}
 .tsec small{color:var(--mut);font-weight:700}
 .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.7rem}
@@ -84,7 +93,7 @@ a.fbtn:focus-visible,a.go:focus-visible,.tchip:focus-visible,.bridge .acts a:foc
 <main id="main">
 <section class="tx-hero"><div class="tx-wrap">
 <p class="eyebrow">THE TOOLS HUB</p>
-<div class="toprow"><h1>Your offline-first, professional toolkit — streamlined utilities and specialised registers to <b>shrink the paperwork.</b></h1><span class="tx-pill" id="txTotal">9 tools · all free</span></div>
+<div class="toprow"><h1>Your offline-first, professional toolkit — streamlined utilities and specialised registers to <b>shrink the paperwork.</b></h1><span class="tx-pill" id="txTotal">Every tool free</span></div>
 <div class="tx-trio" aria-label="How every tool behaves">
 <div class="k1"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="18" y="28" width="28" height="24" rx="6" fill="none" stroke="#B96A14" stroke-width="4"/><path d="M23 28 v-6 a9 9 0 0 1 18 0 v6" fill="none" stroke="#B96A14" stroke-width="4"/><circle cx="32" cy="40" r="3.4" fill="#B96A14"/></svg><b>SECURE</b><p>Nothing uploaded. Data stays on your device.</p></div>
 <div class="k2"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 28 q18-14 36 0 M21 36 q11-9 22 0 M27.5 44 q4.5-4 9 0" fill="none" stroke="#2F6B4D" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="50" r="3" fill="#2F6B4D"/><path d="M16 16 L48 52" stroke="#C25B4E" stroke-width="4.4" stroke-linecap="round"/></svg><b>OFFLINE</b><p>Single-file. Runs without internet.</p></div>
@@ -107,10 +116,17 @@ a.fbtn:focus-visible,a.go:focus-visible,.tchip:focus-visible,.bridge .acts a:foc
 <div class="facts"><a class="fbtn p" href="../asdan/app.html">OPEN ASDAN REGISTER →</a><a class="fbtn s" href="../asdan/">About &amp; guide</a></div></article>
 </div></div></section>
 
+<section class="tx-watch">
+  <button class="tx-vidbtn" type="button" data-yt="aGy0z4mZEXg"
+    aria-label="Play video: the registers and the PfA toolkit, 27 seconds">
+    <img src="/assets/video/poster-asdan.jpg" alt="" width="1280" height="720" loading="lazy">
+  </button>
+  <p class="tx-watchcap"><b>▶ Watch — 27 seconds.</b> The register, the evidence tracker and the 79 lessons behind them.</p>
+</section>
 <style>.hudcard{background:#232C55;border:1.5px solid #3A4470;border-radius:14px;padding:.8rem .85rem;display:flex;flex-direction:column;gap:.35rem}.hudcard .ci{font-size:1.6rem}.hudcard h3{font-size:.9rem;line-height:1.25;margin:0}.hudcard p{font-size:.74rem;line-height:1.45;margin:0}</style>
 <section class="tx-flag" id="hud"><div class="tx-wrap">
 <div class="fcard" style="border-color:#161D3D;background:linear-gradient(160deg,#1B2447,#161D3D);color:#E8E2D4">
-<span class="kind" style="color:#F2A24A">NEW · BUILT INTO EVERY 2026–27 LESSON</span>
+<span class="kind" style="color:#F2A24A">NEW · BUILT INTO 221 LESSONS</span>
 <h2 style="color:#FFF6E8">⚡ THE LIVE-TEACH HUD</h2>
 <p style="color:#C9D1E2;flex:none">Open any current lesson and tap the <b style="color:#B9E6CD">⚡ TEACH</b> pill at the bottom of the screen. A floating dock brings the classroom essentials to you — no tab-switching, no losing the room.</p>
 <div class="tgrid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
@@ -195,6 +211,19 @@ CAT=b.getAttribute("data-cat");
 document.querySelectorAll(".tchip").forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false")});
 apply();})});
 counts();apply();
+})();
+(function(){
+var btn=document.querySelector(".tx-vidbtn");if(!btn)return;
+btn.addEventListener("click",function(){
+var id=btn.getAttribute("data-yt");if(!id)return;
+try{var ifr=document.createElement("iframe");
+ifr.src="https://www.youtube-nocookie.com/embed/"+id+"?autoplay=1&rel=0";
+ifr.title="Made by Matt video";
+ifr.setAttribute("allow","autoplay; encrypted-media; picture-in-picture; fullscreen");
+ifr.setAttribute("allowfullscreen","");ifr.setAttribute("loading","lazy");
+ifr.width="1280";ifr.height="720";btn.parentNode.replaceChild(ifr,btn);
+}catch(e){try{window.open("https://youtu.be/"+id,"_blank","noopener");}catch(_){}}
+});
 })();
 </script>
 <script defer src="/theme.js"></script>
