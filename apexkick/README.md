@@ -5,13 +5,28 @@ stats set the *physics* — not a dice roll.
 
 **Play:** https://madebymatt.uk/apexkick/
 
-- Drag back from the ball and release. Curve the drag and the ball bends in flight.
+- Drag the marker onto the goal, then flick to strike. Bow the drag and the ball bends in flight.
 - Real aerodynamics: gravity, speed-dependent drag, and a proper Magnus lift force
 - A goalkeeper who has to **commit** to a dive and can be wrong-footed by late swerve
 - 48 collectable cards, five-a-side squad chemistry, duo links, packs with published odds
 - An eight-division ladder — each division puts a better keeper in the net
 - Works offline. No installs, no accounts, no network requests, no ads.
 - Touch and mouse. Portrait or landscape.
+
+## Controls
+
+Three channels, one gesture, deliberately orthogonal:
+
+| Channel | From | What it decides |
+|---|---|---|
+| **Aim** | where the floating marker sits | which part of the goal you are attacking |
+| **Power** | the speed of your final flick | wall clearance vs. the keeper's reaction time |
+| **Curve** | how much you bow the drag | going *around* the wall, and wrong-footing the keeper |
+
+You never choose launch angles. One degree of elevation moves the ball 29–50 cm at the
+goal and the whole on-target band is 4.4–7.7° wide — narrower than a thumb repeats. So the
+gesture picks a *point* and the game solves the angles by inverse ballistics. Curve therefore
+does not relocate your shot; it changes the path the ball takes to get there.
 
 ## The design pillar
 

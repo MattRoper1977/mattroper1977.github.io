@@ -194,7 +194,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-
     <div id="banner" class="ds"></div>
     <div id="subBanner" class="ds"></div>
     <div id="hintSwipe" class="ds hidden">
-      <span class="k">Drag back from the ball</span> and release — curve your drag to bend it
+      <span class="k">Drag the marker</span> onto the goal, then flick to strike — bow your drag to bend it
     </div>
   </div>
 
@@ -368,6 +368,43 @@ function integrateToPlane(pos, vel, omega, wind, zPlane, dt, tMax) {
   return null;
 }
 
+/* Solve the launch angles that make the ball pass through an aimed point.
+
+   The player does NOT choose angles directly. Measured on this very integrator,
+   one degree of launch elevation moves the ball 29-50 cm at the goal, and the
+   whole on-target band is only 4.4-7.7 degrees wide — narrower than a thumb's
+   angular repeatability. Mapping gesture angle onto launch angle at anything
+   near 1:1 is therefore unshippable.
+
+   Instead the gesture picks a POINT and inverse ballistics finds the angles.
+   That also makes the three input channels genuinely orthogonal: the aim point
+   says where, power decides wall clearance versus keeper reaction time, and
+   curve exists to bend around the wall and wrong-foot the keeper's prediction
+   rather than to relocate the shot.
+
+   Quasi-Newton with a fixed analytic Jacobian: one integration per iteration,
+   warm-seeded from the previous frame. Converges to a few centimetres in 3-4
+   iterations. */
+function solveAim(aim, speed, omega, wind, origin, dist, seed) {
+  var az = seed && seed.azimuthDeg !== undefined
+    ? seed.azimuthDeg : -Math.atan2(origin.x, dist) * 180 / Math.PI;
+  var el = seed && seed.elevationDeg !== undefined ? seed.elevationDeg : 20;
+  var mPerDeg = Math.max(4, dist) * Math.PI / 180;   // small-angle metres per degree
+  var hit = null;
+  for (var i = 0; i < 5; i++) {
+    var ar = az * Math.PI / 180, er = el * Math.PI / 180;
+    var vel = v3(speed * Math.sin(ar) * Math.cos(er), speed * Math.sin(er),
+                 speed * Math.cos(ar) * Math.cos(er));
+    hit = integrateToPlane(origin, vel, omega, wind, dist, 1 / 140, 3.2);
+    if (!hit) { el = clamp(el + 3.5, 6, 34); continue; }
+    var dx = aim.x - hit.pos.x, dy = aim.y - hit.pos.y;
+    if (Math.abs(dx) < 0.05 && Math.abs(dy) < 0.05) break;
+    el = clamp(el + clamp(dy / (mPerDeg * 0.80), -7, 7), 6, 34);
+    az = clamp(az + clamp(dx / (mPerDeg * 0.95), -9, 9), -40, 40);
+  }
+  return { azimuthDeg: az, elevationDeg: el, hit: hit };
+}
+
 /* Build the launch state from a parsed swipe + the kicker's effective stats.
    This is the single seam where player skill and card stats meet. */
 function buildLaunch(swipe, stats, rng, opts) {
@@ -420,7 +457,7 @@ return {
   dragCoeff: dragCoeff, launchCeiling: launchCeiling, spinMagnitude: spinMagnitude,
   nominalSpeed: nominalSpeed, launchSpeed: launchSpeed,
   errorConeDeg: errorConeDeg, accel: accel, step: step,
-  integrateToPlane: integrateToPlane, buildLaunch: buildLaunch
+  integrateToPlane: integrateToPlane, buildLaunch: buildLaunch, solveAim: solveAim
 };
 })();
 /* AK:CORE:END */
@@ -1057,7 +1094,7 @@ function layout(moment) {
   S.kicker.rotation.y = 0.42;
 
   var n = moment.wallCount || 0;
-  var wallZ = d - 9.15;
+  var wallZ = Math.min(9.15, d - 4.0);
   for (var i = 0; i < S.wall.length; i++) {
     var f = S.wall[i];
     if (i < n) {
@@ -1212,18 +1249,28 @@ function parse(final, opts) {
 
   if (final && frac < MIN_DRAG_FRAC) return null;
 
-  // pull back = shoot forward
-  var aimX = -dx, aimY = -dy;
-  var intensity = AK.clamp((frac - MIN_DRAG_FRAC) / (MAX_DRAG_FRAC - MIN_DRAG_FRAC), 0, 1);
-  // a flick adds a little punch on top of raw length, but is capped so a
-  // frantic short flick can never out-power a committed full drag
-  var speedPps = dist / dt;
-  var flick = AK.clamp((speedPps / vh - 0.9) / 2.6, 0, 0.22);
-  intensity = AK.clamp(intensity + flick, 0, 1);
+  var aimX = -dx, aimY = -dy;                     // legacy fallback only
+
+  /* Aim and power must not fight each other. Stroke length positions the aim
+     reticle, so power cannot also come from length — and it cannot come from
+     whole-stroke speed either, or aiming carefully would mean shooting weakly.
+
+     Power therefore comes from the FLICK: the speed over the last ~130 ms
+     before release. Line the marker up at your leisure, then flick to strike
+     hard, or release softly for a floater. Speed is measured from absolute
+     timestamps, so a 120 Hz and a 60 Hz phone give the same power for the
+     same physical gesture. */
+  var flickMs = 130, j = p.length - 1, endT = b.t;
+  while (j > 0 && endT - p[j].t < flickMs) j--;
+  var fd = Math.hypot(b.x - p[j].x, b.y - p[j].y);
+  var fdt = Math.max(0.033, (endT - p[j].t) / 1000);
+  var flickVh = (fd / fdt) / vh;                  // viewport heights per second
+  var intensity = AK.clamp(0.42 + (flickVh - 0.30) / 2.6, 0.08, 1);
 
   var vw = window.innerWidth || 400;
 
-  /* Aim is expressed as a TRIM around a sensible base, not as a raw angle.
+  /* LEGACY angle trim, kept only as the fallback when no camera is available
+     to unproject the aim reticle. The live game uses inverse ballistics.
      Two things were badly wrong with mapping the drag straight to angles:
 
      1. Pulling back (dragging DOWN) made aimY negative, which drove elevation
@@ -1251,7 +1298,9 @@ function parse(final, opts) {
   return {
     intensity: intensity, azimuthDeg: azimuthDeg, elevationDeg: elevationDeg,
     curvature: curvature(p), dragFrac: frac, valid: frac >= MIN_DRAG_FRAC,
-    start: a, end: b, offsetY: THUMB_OFFSET
+    start: a, end: b, offsetY: THUMB_OFFSET,
+    // the reticle floats above the finger; THIS is the aim variable
+    reticle: { x: b.x, y: b.y - THUMB_OFFSET }
   };
 }
 
@@ -1473,7 +1522,9 @@ function makeMoment(i, div) {
 
 /* ---------------- deterministic flight ---------------- */
 function simulate(moment, launch, keeperCard) {
-  var d = moment.distance, wallZ = d - 9.15;
+  // 9.15 m (10 yards) from the BALL, which is where the laws put it — and where
+  // makeMoment already computes the wall's lateral position from.
+  var d = moment.distance, wallZ = Math.min(9.15, d - 4.0);
   var dt = 1 / (60 * AK.PHYS.substeps);
   var p = AK.v3(moment.originX, 0.11, 0);
   var v = AK.v3(launch.vel.x, launch.vel.y, launch.vel.z);
@@ -1541,8 +1592,54 @@ function simulate(moment, launch, keeperCard) {
   return res;
 }
 
-/* ---------------- aim overlay (2D) ---------------- */
-var aimCv, aimCx;
+/* ---------------- aiming ---------------- */
+var aimCv, aimCx, _aimSeed = null;
+
+/* The stats the shot will ACTUALLY use, including duo modifiers. The preview,
+   the aim solver and the launch all read this one function, so what the player
+   is shown can never drift from what is fired. */
+function shotStats(eff) {
+  return {
+    power: eff.power + (eff.mods.speed || 0) * 2,
+    curve: eff.curve * (eff.mods.spin || 1),
+    freeKickAccuracy: eff.freeKickAccuracy, composure: eff.composure, chem: eff.myChem
+  };
+}
+
+/* Unproject the floating reticle onto the goal plane, then solve the launch
+   angles that put the ball there. */
+function aimFromSwipe(sw, eff) {
+  var m = G.moment;
+  if (!m || !sw || !sw.reticle) return null;
+  var w = aimCv.clientWidth || 1, h = aimCv.clientHeight || 1;
+
+  /* Aim maps the marker's screen position DIRECTLY into goal-space rather than
+     unprojecting it through the camera. Literal unprojection is unaimable: at
+     21 m the whole 2.44 m goal height covers about thirty screen pixels, so a
+     thumb could not place a shot inside it at all. Mapping straight into goal
+     coordinates keeps aim sensitivity constant no matter how far out the kick
+     is, and the reticle is then drawn at the projected target so what the
+     player sees still sits on the goal. Screen-right is world -x because the
+     camera looks down +z. */
+  var nx = AK.clamp((sw.reticle.x - w * 0.5) / (w * 0.42), -1.35, 1.35);
+  var ny = AK.clamp((sw.reticle.y - h * 0.46) / (h * 0.26), -1.35, 1.35);
+  var target = {
+    x: AK.clamp(-nx * 4.4, -5.0, 5.0),
+    y: AK.clamp(1.45 - ny * 1.45, 0.18, 3.2)
+  };
+  var st = shotStats(eff);
+  var speed = AK.launchSpeed(m.distance, sw.intensity, st.power);
+  var spinMag = AK.spinMagnitude(st.curve) * AK.clamp(Math.abs(sw.curvature), 0, 1);
+  var sgn = sw.curvature >= 0 ? 1 : -1;
+  var tilt = (28 + 40 * AK.clamp(sw.intensity, 0, 1)) * Math.PI / 180;
+  var omega = AK.v3(Math.sin(tilt) * spinMag, sgn * Math.cos(tilt) * spinMag, 0);
+  var sol = AK.solveAim(target, speed, omega, m.wind,
+                        AK.v3(m.originX, 0.11, 0), m.distance, _aimSeed);
+  _aimSeed = { azimuthDeg: sol.azimuthDeg, elevationDeg: sol.elevationDeg };
+  sw.azimuthDeg = sol.azimuthDeg;
+  sw.elevationDeg = sol.elevationDeg;
+  return { target: target, sol: sol, stats: st };
+}
 function drawAim(sw) {
   if (!aimCv) return;
   var dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -1557,10 +1654,13 @@ function drawAim(sw) {
   var eff = M.effectiveStats(P.taker, P.squad);
   var cone = AK.errorConeDeg(eff.freeKickAccuracy, eff.composure, eff.myChem, G.moment.pressure) * eff.mods.cone;
 
-  // preview the real trajectory using the SAME integrator the shot will use
-  var stats = { power: eff.power, curve: eff.curve, freeKickAccuracy: 99,
-                composure: 99, chem: 3 };
-  var det = AK.mulberry32(1); det = function () { return 0.5; };   // no scatter in the preview
+  var aimed = aimFromSwipe(sw, eff);
+  if (!aimed) return;
+  // preview the real trajectory using the SAME integrator the shot will use,
+  // with the error cone suppressed so the line shows intent, not luck
+  var stats = { power: aimed.stats.power, curve: aimed.stats.curve,
+                freeKickAccuracy: 99, composure: 99, chem: 3 };
+  var det = function () { return 0.5; };
   var L = AK.buildLaunch(sw, stats, det, { distance: G.moment.distance, pressure: 0 });
   var p = AK.v3(G.moment.originX, 0.11, 0), v = L.vel, w = L.omega, dt = 1 / 120;
   var pts = [], previewLen = eff.perks.indexOf('longPreview') >= 0 ? 0.62 : 0.30;
@@ -1598,8 +1698,9 @@ function drawAim(sw) {
   }
 
   // error-cone reticle on the goal plane, sized by the card's cone
-  var aimPt = AK.integrateToPlane(AK.v3(G.moment.originX, 0.11, 0), L.vel, L.omega,
-                                  G.moment.wind, G.moment.distance, 1 / 200, 3.5);
+  var aimPt = aimed.sol.hit ? { pos: aimed.sol.hit.pos }
+    : AK.integrateToPlane(AK.v3(G.moment.originX, 0.11, 0), L.vel, L.omega,
+                          G.moment.wind, G.moment.distance, 1 / 200, 3.5);
   if (aimPt) {
     var c = project(aimPt.pos);
     if (c.z < 1) {
@@ -1717,6 +1818,7 @@ function nextMoment() {
   Sc.resetKeeper();
   Sc.S.ballGroup.position.set(G.moment.originX, 0.11, 0);
   AK.Input.setContext({ distance: G.moment.distance, originX: G.moment.originX });
+  _aimSeed = null;
   G.state = 'aim'; G.camMode = 'aim'; G.timeScale = 1;
   setBanner('', '');
   updateHud();
@@ -1736,11 +1838,9 @@ function shoot(sw) {
   $('hintSwipe').classList.add('hidden');
   P.seenHint = (P.seenHint || 0) + 1;
   var eff = M.effectiveStats(P.taker, P.squad);
-  var stats = {
-    power: eff.power + (eff.mods.speed || 0) * 2,
-    curve: eff.curve * (eff.mods.spin || 1),
-    freeKickAccuracy: eff.freeKickAccuracy, composure: eff.composure, chem: eff.myChem
-  };
+  var aimed = aimFromSwipe(sw, eff);
+  if (!aimed) { AK.Input.enable(true); return; }
+  var stats = aimed.stats;
   var rng = AK.mulberry32((G.moment.seed * 31 + P.shots) >>> 0);
   var launch = AK.buildLaunch(sw, stats, rng,
     { distance: G.moment.distance, pressure: G.moment.pressure * (eff.mods.pressure || 1) });
@@ -1773,11 +1873,18 @@ function resolveOutcome() {
   updateHud();
   G.camMode = goal ? 'replay' : 'goal';
   G.replay = { angle: 0 };
-  setTimeout(function () {
+  var advanced = false;
+  var go = function () {
+    if (advanced) return;
+    advanced = true;
+    document.removeEventListener('pointerdown', go);
     setBanner('', '');
-    if (G.mode === 'practice') { nextMoment(); }
+    if (G.mode === 'practice') nextMoment();
     else { G.momentIdx++; nextMoment(); }
-  }, goal ? 2600 : 2000);
+  };
+  // any tap skips the celebration; otherwise it advances on its own
+  setTimeout(function () { document.addEventListener('pointerdown', go); }, 320);
+  setTimeout(go, goal ? 2600 : 2000);
 }
 
 /* the post-shot readout is the main way a player learns how stats map to
@@ -1875,7 +1982,7 @@ function showTitle() {
   var acc = P.shots ? Math.round(P.goals / P.shots * 100) : 0;
   screen('Apex Kick',
     '<div class="tcenter"><div class="wordmark">APEX<em>KICK</em></div>' +
-    '<p class="tag">Drag back from the ball and release. Curve the drag to bend the flight.<br>' +
+    '<p class="tag">Drag the marker onto the goal, then flick to strike. Bow your drag to bend the flight.<br>' +
     '<b>Your card sets the physics — never the dice.</b></p>' +
     '<div id="homeStats">' +
       '<div class="hstat"><b>' + P.division + '</b><span>Division</span></div>' +
