@@ -1,0 +1,1012 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#161D3D">
+<meta name="color-scheme" content="dark light">
+<title>Axiom Shift — Made by Matt</title>
+<meta name="description" content="A one-button rhythm runner where the beat is something you see, not hear. Four forms, six Propositions, and the Axiom Rule for the purists. Offline, no accounts, no sound.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23161D3D'/%3E%3Cpath d='M8 22 L13 10 L16 18 L19 10 L24 22' fill='none' stroke='%23B9E6CD' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --navy:#161D3D;--navy-lt:#232C55;--mint:#B9E6CD;--mint-deep:#2F6B4D;
+  --amber:#E08A2E;--amber-lt:#F2A24A;--cream:#F6F1E4;--cream-dk:#EDE5D2;
+  --card:#FFFDF6;--ink:#1B2140;--mut:#4A5170;--gold:#8F7311;--violet:#7C5CC9;
+  --font:Poppins,"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--font);background:var(--navy);color:var(--cream);
+  overflow:hidden;-webkit-user-select:none;user-select:none;
+  touch-action:manipulation;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+a{color:var(--mint)}
+.wrap{position:fixed;inset:0;display:flex;flex-direction:column}
+/* ---- overlays / screens ---- */
+.screen{
+  position:absolute;inset:0;display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:1rem;padding:1.4rem;
+  text-align:center;overflow-y:auto;
+}
+.screen.show{display:flex}
+.panel{
+  width:min(560px,94vw);background:var(--navy-lt);border:1.5px solid #33406e;
+  border-radius:18px;padding:1.4rem 1.3rem;display:flex;flex-direction:column;gap:.9rem;
+}
+h1,h2,h3{letter-spacing:.02em;line-height:1.15}
+.eyebrow{font-size:.66rem;font-weight:800;letter-spacing:.24em;color:var(--mint);text-transform:uppercase}
+.lead{color:#C9D1E2;font-size:.92rem;max-width:40ch;margin:0 auto}
+.crest{display:flex;align-items:center;gap:.6rem;justify-content:center}
+.crest svg{width:44px;height:44px}
+.crest b{font-size:.8rem;letter-spacing:.14em}
+.crest small{display:block;font-size:.58rem;letter-spacing:.22em;color:#AEB6CE}
+/* buttons */
+.btn{
+  font-family:inherit;font-weight:800;font-size:.9rem;letter-spacing:.03em;
+  border:2px solid var(--mint);background:transparent;color:var(--mint);
+  border-radius:999px;padding:.7rem 1.3rem;cursor:pointer;transition:transform .12s ease,background .12s ease;
+}
+.btn:hover{background:#1c294d}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--mint);color:var(--navy);border-color:var(--mint)}
+.btn.primary:hover{background:#a6dbbd}
+.btn.amber{border-color:var(--amber-lt);color:var(--amber-lt)}
+.btn.ghost{border-color:#3a4772;color:#C9D1E2}
+.btn:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.row{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center}
+.col{display:flex;flex-direction:column;gap:.55rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem}
+.card{
+  background:#1c294d;border:1.5px solid #33406e;border-radius:14px;padding:.85rem;
+  text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:.3rem;
+}
+.card:hover{border-color:var(--mint)}
+.card:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.card h3{font-size:.9rem;color:var(--cream)}
+.card p{font-size:.72rem;color:#AEB6CE}
+.card .stars{font-size:.72rem;color:var(--gold);letter-spacing:.1em}
+.card .cleared{font-size:.62rem;font-weight:800;letter-spacing:.12em;color:var(--mint);text-transform:uppercase}
+/* settings rows */
+.opt{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.5rem 0;border-bottom:1px solid #2c3760}
+.opt:last-child{border-bottom:0}
+.opt .k{font-size:.82rem;text-align:left}
+.opt .k small{display:block;color:#9aa3c2;font-size:.68rem;font-weight:400;margin-top:.15rem}
+.seg{display:flex;border:1.5px solid #3a4772;border-radius:999px;overflow:hidden}
+.seg button{font-family:inherit;font-weight:700;font-size:.72rem;padding:.4rem .7rem;background:transparent;color:#C9D1E2;border:0;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--mint);color:var(--navy)}
+.toggle{width:52px;height:30px;border-radius:999px;border:1.5px solid #3a4772;background:#1c294d;position:relative;cursor:pointer}
+.toggle span{position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#7a86ad;transition:left .14s ease,background .14s ease}
+.toggle[aria-pressed="true"]{background:var(--mint-deep);border-color:var(--mint)}
+.toggle[aria-pressed="true"] span{left:24px;background:var(--mint)}
+.toggle:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+/* game HUD */
+#game{display:none}
+#game.show{display:block}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;background:var(--navy)}
+.hud{position:absolute;top:0;left:0;right:0;padding:.6rem .8rem;display:flex;align-items:center;gap:.7rem;pointer-events:none}
+.hud .bar{flex:1;height:10px;border-radius:999px;background:#2a3560;overflow:hidden;border:1px solid #3a4772}
+.hud .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--amber-lt));width:0}
+.hud .lbl{font-size:.7rem;font-weight:800;letter-spacing:.1em;color:var(--mint);white-space:nowrap}
+.hud .form{font-size:.7rem;font-weight:800;letter-spacing:.08em;color:var(--cream);background:#1c294d;border:1px solid #3a4772;border-radius:999px;padding:.2rem .55rem}
+.hud .pausebtn{pointer-events:auto;font-family:inherit;font-weight:800;font-size:.8rem;color:var(--cream);background:#1c294d;border:1px solid #3a4772;border-radius:10px;padding:.28rem .55rem;cursor:pointer}
+.beatdot{position:absolute;top:.55rem;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;border:2px solid var(--mint);pointer-events:none;opacity:.35}
+.beatdot.on{opacity:1;background:var(--mint)}
+.tele{position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);font-size:.74rem;font-weight:800;letter-spacing:.06em;color:var(--violet);background:#1c294d;border:1px solid var(--violet);border-radius:999px;padding:.3rem .8rem;pointer-events:none;opacity:0;transition:opacity .2s}
+.tele.show{opacity:1}
+.sr{position:absolute;left:-9999px}
+.hint{font-size:.72rem;color:#9aa3c2}
+kbd{background:#1c294d;border:1px solid #3a4772;border-radius:5px;padding:.05rem .35rem;font-size:.72rem;font-family:inherit}
+/* ---- animations (named so reduced-motion can target them) ---- */
+@keyframes splashIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes menuRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.splash-anim{animation:splashIn .5s ease both}
+.menu-anim{animation:menuRise .32s ease both}
+/* Reduced motion: silence splash and menu entrance animations by name.
+   Gameplay motion is the content and is intentionally NOT suppressed. */
+@media (prefers-reduced-motion: reduce){
+  .splash-anim{animation:none}
+  .menu-anim{animation:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+
+  <!-- SPLASH -->
+  <div class="screen show" id="splash">
+    <div class="panel splash-anim">
+      <div class="crest">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="11" fill="#161D3D"/><path d="M11 34 L20 14 L24 27 L28 14 L37 34" fill="none" stroke="#B9E6CD" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/></svg>
+        <div><b>MADE BY MATT</b><small>THE ARCADE</small></div>
+      </div>
+      <div class="eyebrow">A one-button rhythm runner</div>
+      <h1>Axiom <span style="color:var(--amber-lt)">Shift</span></h1>
+      <p class="lead">The world runs on rigid law. Then the law <em>shifts</em>. Read the visible pulse, ride four forms, and draw your line through six Propositions. No sound — the rhythm is something you watch.</p>
+      <div class="row"><button class="btn primary" id="splashStart">Enter</button></div>
+      <p class="hint">One button. <kbd>Space</kbd> / tap. That's the whole game.</p>
+    </div>
+  </div>
+
+  <!-- MAIN MENU -->
+  <div class="screen" id="menu">
+    <div class="panel menu-anim">
+      <div class="crest"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="11" fill="#161D3D"/><path d="M11 34 L20 14 L24 27 L28 14 L37 34" fill="none" stroke="#B9E6CD" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/></svg><div><b>AXIOM SHIFT</b><small>MADE BY MATT</small></div></div>
+      <div class="col">
+        <button class="btn primary" id="mPlay">Play the Propositions</button>
+        <button class="btn" id="mDaily">Daily Shift</button>
+        <button class="btn" id="mGuide">Field Guide</button>
+        <button class="btn ghost" id="mSettings">Settings</button>
+        <button class="btn ghost" id="mHow">How to play</button>
+      </div>
+      <p class="hint" id="tierNote">Tier: Standard · Calm Pulse: off</p>
+    </div>
+  </div>
+
+  <!-- LEVEL SELECT -->
+  <div class="screen" id="levels">
+    <div class="panel">
+      <h2>Propositions</h2>
+      <p class="lead">Six constructions. Clear one cleanly and the line you drew resolves into its figure.</p>
+      <div class="grid" id="levelGrid"></div>
+      <div class="row"><button class="btn ghost" data-back>Back</button></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="screen" id="settings">
+    <div class="panel">
+      <h2>Settings</h2>
+      <div class="opt">
+        <div class="k">Difficulty tier<small>Tempo &amp; forgiveness only. Never changes what counts as a clear.</small></div>
+        <div class="seg" id="tierSeg" role="group" aria-label="Difficulty tier">
+          <button data-tier="gentle">Gentle</button><button data-tier="standard">Standard</button><button data-tier="sharp">Sharp</button>
+        </div>
+      </div>
+      <div class="opt" id="axiomOptRow">
+        <div class="k">The Axiom Rule<small>Sharp only. One touch, back to the start. The hard way — honest.</small></div>
+        <button class="toggle" id="axiomToggle" role="switch" aria-checked="false" aria-label="The Axiom Rule"><span></span></button>
+      </div>
+      <div class="opt">
+        <div class="k">Calm Pulse<small>Moves the beat to a small corner indicator and stops the background pulse.</small></div>
+        <button class="toggle" id="calmToggle" role="switch" aria-checked="false" aria-label="Calm Pulse"><span></span></button>
+      </div>
+      <p class="hint">Contact never removes progress — you smudge and rewind to the last checkpoint. Your furthest point is always kept.</p>
+      <div class="row"><button class="btn ghost" data-back>Back</button></div>
+    </div>
+  </div>
+
+  <!-- FIELD GUIDE -->
+  <div class="screen" id="guide">
+    <div class="panel">
+      <h2>Field Guide</h2>
+      <p class="lead">Entries stay hidden until you meet them in play.</p>
+      <div class="grid" id="guideGrid"></div>
+      <div class="row"><button class="btn ghost" data-back>Back</button></div>
+    </div>
+  </div>
+
+  <!-- HOW TO PLAY -->
+  <div class="screen" id="howto">
+    <div class="panel">
+      <h2>How to play</h2>
+      <div class="col" style="text-align:left;font-size:.86rem;color:#C9D1E2;gap:.55rem">
+        <p><b style="color:var(--mint)">One input.</b> Tap the screen or press <kbd>Space</kbd> / <kbd>↑</kbd>. What it does depends on your form.</p>
+        <p><b style="color:var(--mint)">Bastion</b> (hex) — tap to jump. <b style="color:var(--mint)">Ring</b> (circle) — tap to invert gravity. <b style="color:var(--mint)">Star</b> — hold to rise, release to fall. <b style="color:var(--mint)">M</b> — tap to flap.</p>
+        <p><b style="color:var(--violet)">Shift Gates</b> change your form mid-run. They are announced early with a shape and a word — never colour alone.</p>
+        <p><b style="color:var(--amber-lt)">The pulse is the beat.</b> Every hazard lands on it. Watch the ring from the Mark and pre-empt.</p>
+        <p><b style="color:var(--mint)">You do not lose.</b> Touch a hazard and you smudge — a rewind to the last checkpoint. Your furthest progress stays.</p>
+      </div>
+      <div class="row"><button class="btn ghost" data-back>Back</button></div>
+    </div>
+  </div>
+
+  <!-- PAUSE -->
+  <div class="screen" id="pause">
+    <div class="panel">
+      <h2>Paused</h2>
+      <div class="col">
+        <button class="btn primary" id="pResume">Resume</button>
+        <button class="btn" id="pPractice">Set a practice checkpoint here</button>
+        <button class="btn" id="pClearPractice" style="display:none">Clear practice checkpoint</button>
+        <button class="btn ghost" id="pRestart">Restart the Proposition</button>
+        <div class="opt" id="pAxiomRow" style="display:none">
+          <div class="k">The Axiom Rule<small>Switch off any time — no penalty.</small></div>
+          <button class="toggle" id="pAxiomToggle" role="switch" aria-checked="false" aria-label="The Axiom Rule"><span></span></button>
+        </div>
+        <button class="btn ghost" id="pQuit">Leave to menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLEAR -->
+  <div class="screen" id="clear">
+    <div class="panel">
+      <div class="eyebrow" id="clearKicker">Proposition complete</div>
+      <h2 id="clearTitle">The Grid</h2>
+      <div id="clearFigure" style="display:flex;justify-content:center;margin:.3rem 0"></div>
+      <div class="col" style="gap:.4rem">
+        <div class="opt"><div class="k">Furthest progress</div><div id="clearProg">100%</div></div>
+        <div class="opt"><div class="k">Sections cleared</div><div id="clearSecs">0</div></div>
+        <div class="opt"><div class="k">Stars</div><div id="clearStars" style="color:var(--gold)">—</div></div>
+      </div>
+      <div class="row"><button class="btn primary" id="clearNext">Next</button><button class="btn ghost" id="clearMenu">Menu</button></div>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="game">
+    <canvas id="cv" aria-label="Axiom Shift play area"></canvas>
+    <div class="hud">
+      <button class="pausebtn" id="hudPause" aria-label="Pause">II</button>
+      <div class="bar"><i id="hudBar"></i></div>
+      <div class="lbl" id="hudProg">0%</div>
+      <div class="form" id="hudForm">Bastion</div>
+    </div>
+    <div class="beatdot" id="beatDot" aria-hidden="true"></div>
+    <div class="tele" id="tele">Shift Gate ahead</div>
+  </div>
+
+  <div class="sr" id="live" aria-live="polite"></div>
+</div>
+
+<script>
+/* ===== AXIOM SHIFT — SIM CORE (BEGIN) =====
+   Pure, deterministic, DOM-free simulation.  Runs identically in the browser
+   and in Node.  Integration happens in BEAT-SPACE with a fixed sub-step, so a
+   given canonical input tape produces a bit-identical trajectory at ANY tempo.
+   Tempo (BPM) is a pure real-time display dial and never touches integration. */
+(function (root) {
+  'use strict';
+
+  var SAVE_VERSION = 1;
+  var SAVE_KEY = 'mbm_axiomshift';
+
+  // ---- deterministic PRNG (gameplay stream) -------------------------------
+  function mulberry32(a) {
+    a = a >>> 0;
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function hashStr(s) {
+    var h = 2166136261 >>> 0;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+
+  // ---- world constants (beat-space) ---------------------------------------
+  var SUB = 240;            // integration sub-steps per beat (fixed, tempo-free)
+  var DBEAT = 1 / SUB;
+  var CEIL = 3.0;           // vertical ceiling in world units (floor = 0)
+  var CLEAR = 0.55;         // must be at/above this to pass a ground hazard
+  var G_BASTION = 5.4;      // gravity (units / beat^2)
+  var J_BASTION = 3.30;     // jump impulse (units / beat)
+  var G_M = 3.6;
+  var J_M = 2.30;           // flap impulse (single flap peaks ~0.73, clears CLEAR)
+  var VMAX_M = 1.9;         // flap terminal-ish cap
+  var G_RING = 6.2;         // ring surface pull
+  var THRUST_STAR = 7.0;    // star rise accel while holding
+  var G_STAR = 5.0;         // star fall accel while released
+
+  // Tempo ceiling drives the photosensitivity budget. One bounded pulse ring
+  // per beat is the ONLY periodic element; sharpBpm/60 is its rate in Hz.
+  var TEMPOS = { gentle: 108, standard: 132, sharp: 156 };
+  function maxFlashHz() { return TEMPOS.sharp / 60; } // 2.6 Hz < 3 Hz cap
+
+  // ---- forms ---------------------------------------------------------------
+  // Each form: how a tap/hold maps to motion, and how it integrates one dbeat.
+  var FORMS = {
+    bastion: {
+      label: 'Bastion', glyph: 'hex', input: 'tap',
+      tap: function (s) { if (s.grounded) { s.vy = J_BASTION; s.grounded = false; } },
+      step: function (s) {
+        s.vy -= G_BASTION * DBEAT; s.y += s.vy * DBEAT;
+        if (s.y <= 0 && s.vy <= 0) { s.y = 0; s.vy = 0; s.grounded = true; }
+      }
+    },
+    ring: {
+      label: 'Ring', glyph: 'circle', input: 'tap',
+      tap: function (s) { s.gravDir = -s.gravDir; s.grounded = false; },
+      step: function (s) {
+        s.vy += (-s.gravDir) * G_RING * DBEAT; s.y += s.vy * DBEAT;
+        if (s.y <= 0) { s.y = 0; if (s.vy < 0) s.vy = 0; s.grounded = (s.gravDir > 0); }
+        else if (s.y >= CEIL) { s.y = CEIL; if (s.vy > 0) s.vy = 0; s.grounded = (s.gravDir < 0); }
+      }
+    },
+    star: {
+      label: 'Star', glyph: 'star', input: 'hold',
+      down: function (s) { s.holding = true; },
+      up: function (s) { s.holding = false; },
+      step: function (s) {
+        if (s.holding) s.vy += THRUST_STAR * DBEAT; else s.vy -= G_STAR * DBEAT;
+        s.y += s.vy * DBEAT;
+        if (s.y <= 0) { s.y = 0; if (s.vy < 0) s.vy = 0; }
+        else if (s.y >= CEIL) { s.y = CEIL; if (s.vy > 0) s.vy = 0; }
+        s.grounded = (s.y <= 0.0001);
+      }
+    },
+    mform: {
+      label: 'M', glyph: 'm', input: 'tap',
+      tap: function (s) { s.vy = J_M; s.grounded = false; },
+      step: function (s) {
+        s.vy -= G_M * DBEAT; if (s.vy < -VMAX_M) s.vy = -VMAX_M;
+        s.y += s.vy * DBEAT;
+        if (s.y <= 0 && s.vy <= 0) { s.y = 0; s.vy = 0; s.grounded = true; }
+      }
+    }
+  };
+
+  // ---- level authoring: pattern builders ----------------------------------
+  // A pattern returns { len, ev:[...], tape:[...] } in beat-relative units.
+  // Every pattern BEGINS and ENDS grounded-at-rest, so any junction is safe
+  // and any beat between patterns is a valid checkpoint.
+  function pRest(len) { return { len: len || 2, ev: [], tape: [] }; }
+
+  function pJump(gap) {                 // bastion single hazard at +0.6
+    gap = gap || 0;
+    return { len: 2, ev: [{ b: 0.6 + gap * 0, t: 'spike' }],
+             tape: [{ b: 0, a: 'tap' }] };
+  }
+  function pTriple() {                  // three metered jumps
+    return { len: 6,
+      ev: [{ b: 0.6, t: 'spike' }, { b: 2.6, t: 'spike' }, { b: 4.6, t: 'spike' }],
+      tape: [{ b: 0, a: 'tap' }, { b: 2, a: 'tap' }, { b: 4, a: 'tap' }] };
+  }
+  function pGap(len) {                  // wide pit; hold airborne with 2 hops
+    return { len: 4,
+      ev: [{ b: 0.6, t: 'spike' }, { b: 2.6, t: 'spike' }],
+      tape: [{ b: 0, a: 'tap' }, { b: 2, a: 'tap' }] };
+  }
+  function pRingCross() {               // ring: flip up over a floor spike, flip back
+    return { len: 6,
+      ev: [{ b: 1.4, t: 'spike' }, { b: 3.4, t: 'ceil' }],
+      tape: [{ b: 0.2, a: 'tap' }, { b: 2.2, a: 'tap' }] };
+  }
+  function pStarWeave() {               // star: rise to clear low ceiling gap, fall
+    return { len: 6,
+      ev: [{ b: 1.5, t: 'spike' }, { b: 3.2, t: 'ceil' }],
+      tape: [{ b: 0.2, a: 'down' }, { b: 1.3, a: 'up' },
+             { b: 2.7, a: 'down' }, { b: 2.75, a: 'up' }] };
+  }
+  function pFlapHops() {                // M: three floaty flaps over spikes
+    return { len: 6,
+      ev: [{ b: 0.7, t: 'spike' }, { b: 2.1, t: 'spike' }, { b: 3.5, t: 'spike' }],
+      tape: [{ b: 0.2, a: 'tap' }, { b: 1.6, a: 'tap' }, { b: 3.0, a: 'tap' }] };
+  }
+
+  // Assemble a level from a script of segments. A segment is either a pattern
+  // object or a gate marker {gate:'ring'}.  Returns a full level.
+  function assemble(id, name, script, tempoKey, opts) {
+    opts = opts || {};
+    var ev = [], tape = [], gates = [], checkpoints = [], drops = [];
+    var cur = 0, form = opts.startForm || 'bastion';
+    var cpEvery = opts.cpEvery || 1; // 1 = checkpoint before every segment
+    var segN = 0;
+    // lead-in rest so the runner settles
+    cur = 2;
+    for (var i = 0; i < script.length; i++) {
+      var seg = script[i];
+      if (seg.gate) { gates.push({ b: cur, form: seg.gate }); ev.push({ b: cur, t: 'gate', form: seg.gate }); form = seg.gate; cur += 2; continue; }
+      // checkpoint just BEFORE the segment, on a grounded-rest beat, so the
+      // segment's first input (which can sit on the segment start beat) is
+      // replayed rather than dropped when rewinding here.
+      if ((segN % cpEvery) === 0) checkpoints.push(Math.max(0, cur - 0.5));
+      segN++;
+      for (var k = 0; k < seg.ev.length; k++) { var e = seg.ev[k]; ev.push({ b: cur + e.b, t: e.t, len: e.len }); }
+      for (var m = 0; m < seg.tape.length; m++) { var tp = seg.tape[m]; tape.push({ b: cur + tp.b, a: tp.a }); }
+      if (seg.drop) drops.push({ b: cur + seg.drop.b, y: seg.drop.y });
+      cur += seg.len;
+    }
+    cur += 2; // tail rest
+    ev.sort(function (a, b) { return a.b - b.b; });
+    tape.sort(function (a, b) { return a.b - b.b; });
+    // three cosmetic ink drops if not authored
+    if (!drops.length) { drops = [{ b: cur * 0.25, y: 0.9 }, { b: cur * 0.5, y: 1.2 }, { b: cur * 0.75, y: 0.9 }]; }
+    return { id: id, name: name, endBeat: cur, tempoKey: tempoKey || 'standard',
+             startForm: opts.startForm || 'bastion', ev: ev, tape: tape,
+             gates: gates, checkpoints: checkpoints, drops: drops };
+  }
+
+  // ---- the six Propositions ------------------------------------------------
+  var LEVELS = [
+    assemble('p1', 'Proposition I — The Grid',
+      [pJump(), pJump(), pTriple(), pRest(2), pTriple()], 'standard'),
+    assemble('p2', 'Proposition II — The Palette',
+      [pTriple(), pGap(), pTriple(), pRest(2), pGap(), pJump()], 'standard'),
+    assemble('p3', 'Proposition III — The Wordmark',
+      [pJump(), { gate: 'ring' }, pRingCross(), pRingCross(), { gate: 'bastion' }, pTriple()], 'standard'),
+    assemble('p4', 'Proposition IV — The Ratio',
+      [pTriple(), { gate: 'star' }, pStarWeave(), pStarWeave(), { gate: 'bastion' }, pGap()], 'standard'),
+    assemble('p5', 'Proposition V — The Voice',
+      [pJump(), { gate: 'mform' }, pFlapHops(), pFlapHops(), { gate: 'bastion' }, pTriple()], 'standard'),
+    assemble('p6', 'Proposition VI — The Mark',
+      [pTriple(), { gate: 'ring' }, pRingCross(), { gate: 'star' }, pStarWeave(),
+       { gate: 'mform' }, pFlapHops(), { gate: 'bastion' }, pTriple()], 'sharp', { glitch: true })
+  ];
+
+  // ---- Daily Shift: date-seeded assembly from authored chunks --------------
+  // Chunks are Bastion-only, each grounded-at-rest at both ends, so every
+  // seeded ordering is solvable by construction. We prove it in the harness.
+  var DAILY_CHUNKS = [pJump(), pTriple(), pGap(), pRest(2), pJump(), pTriple(), pGap()];
+  function dailyLevel(dateStr) {
+    var rng = mulberry32(hashStr('axiomshift:' + dateStr));
+    var pool = DAILY_CHUNKS.slice();
+    var script = [];
+    var n = 6;
+    for (var i = 0; i < n; i++) { var idx = Math.floor(rng() * pool.length); script.push(pool[idx]); }
+    return assemble('daily', 'Daily Shift — ' + dateStr, script, 'standard');
+  }
+
+  // ---- simulation ----------------------------------------------------------
+  function formAt(level, beat) {
+    var f = level.startForm;
+    for (var i = 0; i < level.gates.length; i++) { if (level.gates[i].b <= beat + 1e-9) f = level.gates[i].form; }
+    return f;
+  }
+  function createSim(level, opts) {
+    opts = opts || {};
+    var seed = (opts.seed == null ? 12345 : opts.seed) >>> 0;
+    return {
+      level: level, songBeat: 0, form: level.startForm,
+      y: 0, vy: 0, grounded: true, holding: false, gravDir: 1,
+      smudges: 0, cleared: false, steps: 0,
+      cpBeat: 0, drops: {}, trace: 2166136261 >>> 0,
+      axiomRule: !!opts.axiomRule, seed: seed,
+      simRng: mulberry32(seed),
+      fxRng: mulberry32((seed ^ 0x9e3779b9) >>> 0)   // INDEPENDENT visual stream
+    };
+  }
+  function inband(t, y, ev) {
+    if (t === 'spike') return y >= CLEAR - 1e-9;
+    if (t === 'ceil') return y <= (CEIL - CLEAR) + 1e-9;
+    return true;
+  }
+  function restoreTo(s, beat) {
+    s.songBeat = beat; s.y = 0; s.vy = 0; s.grounded = true;
+    s.holding = false; s.gravDir = 1; s.form = formAt(s.level, beat);
+  }
+  function lastCheckpoint(level, beat) {
+    var cp = 0;
+    for (var i = 0; i < level.checkpoints.length; i++) { if (level.checkpoints[i] <= beat + 1e-9) cp = level.checkpoints[i]; }
+    return cp;
+  }
+  function foldTrace(h, v) { h ^= (v | 0); h = Math.imul(h, 16777619); return h >>> 0; }
+
+  // Advance the sim to an absolute target beat, applying the tape as it goes.
+  // Returns nothing; mutates state. maxSteps guards against non-clearing tapes.
+  function runToBeat(s, tape, targetBeat, maxSteps) {
+    var lvl = s.level, evs = lvl.ev;
+    while (!s.cleared && s.songBeat < targetBeat) {
+      if (maxSteps && s.steps > maxSteps) break;
+      var prev = s.songBeat;
+      s.songBeat += DBEAT; s.steps++;
+      var f = FORMS[s.form];
+      // apply tape events crossed in (prev, songBeat]
+      for (var ti = 0; ti < tape.length; ti++) {
+        var tp = tape[ti];
+        if (tp.b > prev + 1e-12 && tp.b <= s.songBeat + 1e-12) {
+          if (tp.a === 'tap' && f.tap) f.tap(s);
+          else if (tp.a === 'down' && f.down) f.down(s);
+          else if (tp.a === 'up' && f.up) f.up(s);
+        }
+      }
+      f.step(s);
+      // hazards crossed in (prev, songBeat]
+      for (var ei = 0; ei < evs.length; ei++) {
+        var e = evs[ei];
+        if (e.b > prev + 1e-12 && e.b <= s.songBeat + 1e-12) {
+          if (e.t === 'gate') { s.form = e.form; s.grounded = true; s.vy = 0; s.gravDir = 1; if (s.form !== 'star') s.y = 0; }
+          else if (e.t === 'spike' || e.t === 'ceil') {
+            if (!inband(e.t, s.y, e)) {
+              s.smudges++;
+              if (s.axiomRule) restoreTo(s, 0);
+              else restoreTo(s, lastCheckpoint(lvl, s.songBeat));
+            }
+          }
+        }
+      }
+      // ink drops
+      for (var di = 0; di < lvl.drops.length; di++) {
+        var d = lvl.drops[di];
+        if (d.b > prev + 1e-12 && d.b <= s.songBeat + 1e-12) { if (Math.abs(s.y - d.y) < 0.55) s.drops[di] = 1; }
+      }
+      s.trace = foldTrace(s.trace, Math.round(s.y * 4096));
+      s.trace = foldTrace(s.trace, Math.round(s.vy * 4096) & 0xffff);
+      if (s.songBeat >= lvl.endBeat) s.cleared = true;
+    }
+  }
+
+  // Full canonical-tape run. Returns a measured result object.
+  function runTape(level, opts) {
+    opts = opts || {};
+    var s = createSim(level, opts);
+    var tape = opts.tape || level.tape;
+    var maxBeat = level.endBeat + 4;
+    var guard = SUB * (level.endBeat + 8) * 60; // generous
+    runToBeat(s, tape, maxBeat, guard);
+    return {
+      cleared: s.cleared, smudges: s.smudges, steps: s.steps,
+      endBeat: s.songBeat, trace: s.trace >>> 0,
+      dropsCollected: Object.keys(s.drops).length
+    };
+  }
+
+  // Start from a checkpoint's rest-state and clear the remainder from the tape.
+  function runFromCheckpoint(level, cpBeat, opts) {
+    opts = opts || {};
+    var s = createSim(level, opts);
+    restoreTo(s, cpBeat);
+    var tape = (opts.tape || level.tape).filter(function (t) { return t.b > cpBeat + 1e-9; });
+    var guard = SUB * (level.endBeat + 8) * 60;
+    runToBeat(s, tape, level.endBeat + 4, guard);
+    return { cleared: s.cleared, smudges: s.smudges, fromBeat: cpBeat, endBeat: s.songBeat };
+  }
+
+  // ---- Field Guide predicates (unlock only on genuine encounter) -----------
+  var FIELD = [
+    { key: 'form_bastion', label: 'Bastion', kind: 'form' },
+    { key: 'form_ring', label: 'Ring', kind: 'form' },
+    { key: 'form_star', label: 'Star', kind: 'form' },
+    { key: 'form_m', label: 'M', kind: 'form' },
+    { key: 'haz_spike', label: 'Rule Spike', kind: 'hazard' },
+    { key: 'haz_ceil', label: 'Inverted Rule', kind: 'hazard' },
+    { key: 'gate_shift', label: 'Shift Gate', kind: 'gate' },
+    { key: 'glitch_live', label: 'The Glitch', kind: 'glitch' }
+  ];
+
+  var api = {
+    SAVE_VERSION: SAVE_VERSION, SAVE_KEY: SAVE_KEY,
+    SUB: SUB, DBEAT: DBEAT, CEIL: CEIL, CLEAR: CLEAR, TEMPOS: TEMPOS,
+    FORMS: FORMS, LEVELS: LEVELS, FIELD: FIELD,
+    mulberry32: mulberry32, hashStr: hashStr, maxFlashHz: maxFlashHz,
+    formAt: formAt, createSim: createSim, runToBeat: runToBeat,
+    runTape: runTape, runFromCheckpoint: runFromCheckpoint,
+    dailyLevel: dailyLevel, assemble: assemble,
+    // migration stub — versioned from first commit
+    migrateSave: function (raw) {
+      if (!raw || typeof raw !== 'object') return null;
+      var v = raw.v || 0;
+      // future migrations chain here: if (v < 2) { ...; v = 2; }
+      if (v === SAVE_VERSION) return raw;
+      return null; // unknown/older with no path yet -> fresh
+    }
+  };
+
+  root.AXIOM = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
+/* ===== AXIOM SHIFT — SIM CORE (END) ===== */
+
+/* ===== SHELL + RENDER (browser only) ===== */
+if (typeof document !== 'undefined') {
+(function () {
+  'use strict';
+  var A = window.AXIOM;
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ---- save (single versioned localStorage key) --------------------------
+  var FRESH = { v: A.SAVE_VERSION, tier: 'standard', axiom: false, calm: false,
+                seen: {}, best: {}, stars: {} };
+  function loadSave() {
+    var s = null;
+    try {
+      var raw = localStorage.getItem(A.SAVE_KEY);
+      if (raw) s = A.migrateSave(JSON.parse(raw));
+    } catch (e) { s = null; }
+    if (!s) s = JSON.parse(JSON.stringify(FRESH));
+    for (var k in FRESH) if (!(k in s)) s[k] = JSON.parse(JSON.stringify(FRESH[k]));
+    return s;
+  }
+  function persist() { try { localStorage.setItem(A.SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+  var save = loadSave();
+
+  // ---- screen routing -----------------------------------------------------
+  var SCREENS = ['splash', 'menu', 'levels', 'settings', 'guide', 'howto', 'pause', 'clear'];
+  function show(id) {
+    for (var i = 0; i < SCREENS.length; i++) $(SCREENS[i]).classList.toggle('show', SCREENS[i] === id);
+    $('game').classList.toggle('show', id === 'game');
+    if (id === 'game') $('game').style.display = 'block'; else $('game').style.display = 'none';
+  }
+  function announce(msg) { $('live').textContent = msg; }
+
+  // ---- palette ------------------------------------------------------------
+  var COL = { navy:'#161D3D', navyLt:'#232C55', mint:'#B9E6CD', mintDeep:'#2F6B4D',
+             amber:'#E08A2E', amberLt:'#F2A24A', cream:'#F6F1E4', gold:'#8F7311', violet:'#7C5CC9' };
+
+  // ---- canvas / render loop ----------------------------------------------
+  var cv = $('cv'), ctx = cv.getContext('2d'), DPR = 1, W = 0, H = 0;
+  function resize() {
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+
+  var play = null; // active controller
+
+  function newPlay(level, opts) {
+    opts = opts || {};
+    var tier = opts.tier || save.tier;
+    var axiom = (tier === 'sharp') && !!save.axiom;
+    var st = A.createSim(level, { axiomRule: axiom });
+    if (opts.fromBeat) { // practice
+      st.songBeat = opts.fromBeat; st.form = A.formAt(level, opts.fromBeat);
+    }
+    return {
+      level: level, tier: tier, bps: A.TEMPOS[tier] / 60, st: st,
+      running: true, last: 0, hw: st.songBeat, trail: [], blot: 0,
+      wantTap: false, wantTapAt: 0, leftGroundAt: 0, wasGrounded: true,
+      practiceAt: (opts.fromBeat != null ? opts.fromBeat : null),
+      beatFlash: 0, secsClearedMax: 0, gateWarned: -1
+    };
+  }
+
+  // tighten forgiveness on Sharp, keep it on every tier
+  function bufMs(tier) { return tier === 'sharp' ? 55 : 80; }
+  function coyMs(tier) { return tier === 'sharp' ? 45 : 60; }
+
+  function liveInputDown() {
+    if (!play || !play.running) return;
+    var form = play.st.form;
+    if (form === 'star') { A.FORMS.star.down(play.st); return; }
+    play.wantTap = true; play.wantTapAt = perfNow();
+  }
+  function liveInputUp() {
+    if (!play || !play.running) return;
+    if (play.st.form === 'star') A.FORMS.star.up(play.st);
+  }
+  function perfNow() { return (window.performance && performance.now) ? performance.now() : 0; }
+
+  function consumeTap(now) {
+    if (!play.wantTap) return;
+    var st = play.st, form = st.form;
+    if (now - play.wantTapAt > bufMs(play.tier)) { play.wantTap = false; return; }
+    if (form === 'bastion') {
+      var coyoteOk = st.grounded || (now - play.leftGroundAt <= coyMs(play.tier));
+      if (coyoteOk) { A.FORMS.bastion.tap(st); play.wantTap = false; }
+    } else if (form === 'ring') { A.FORMS.ring.tap(st); play.wantTap = false; }
+    else if (form === 'mform') { A.FORMS.mform.tap(st); play.wantTap = false; }
+    else { play.wantTap = false; }
+  }
+
+  function markSeen(k) { if (!save.seen[k]) { save.seen[k] = 1; persist(); } }
+  function encounterScan(st) {
+    var fm = st.form;
+    if (fm === 'bastion') markSeen('form_bastion');
+    else if (fm === 'ring') markSeen('form_ring');
+    else if (fm === 'star') markSeen('form_star');
+    else if (fm === 'mform') markSeen('form_m');
+    var lvl = play.level;
+    for (var i = 0; i < lvl.ev.length; i++) {
+      var e = lvl.ev[i]; if (e.b > play.hw + 1e-9) continue;
+      if (e.t === 'spike') markSeen('haz_spike');
+      else if (e.t === 'ceil') markSeen('haz_ceil');
+      else if (e.t === 'gate') markSeen('gate_shift');
+    }
+    if (lvl.id === 'p6' && play.hw > 8) markSeen('glitch_live');
+  }
+
+  function update(now) {
+    if (!play.last) play.last = now;
+    var dtSec = Math.min(0.05, (now - play.last) / 1000);
+    play.last = now;
+    var st = play.st;
+    var beforeSmudge = st.smudges, beforeBeat = st.songBeat;
+
+    consumeTap(now);
+    var target = st.songBeat + play.bps * dtSec;
+    var guard = A.SUB * (play.level.endBeat + 8) * 60;
+    A.runToBeat(st, [], target, guard); // live: no scripted tape
+
+    // ground-edge tracking for coyote time
+    if (play.wasGrounded && !st.grounded) play.leftGroundAt = now;
+    play.wasGrounded = st.grounded;
+
+    if (st.smudges > beforeSmudge) { play.blot = 1; announce('Smudge — rewound to the last checkpoint. Furthest progress kept.'); }
+    if (st.songBeat > play.hw) play.hw = st.songBeat;
+
+    // trail sample (screen space) — cosmetic, uses fxRng only
+    var rx = W * 0.28;
+    play.trail.push({ x: rx, y: worldToScreenY(st.y), b: st.songBeat });
+    while (play.trail.length > 220) play.trail.shift();
+
+    // sections cleared = checkpoints passed
+    var secs = 0; for (var i = 0; i < play.level.checkpoints.length; i++) if (play.hw >= play.level.checkpoints[i]) secs++;
+    play.secsClearedMax = Math.max(play.secsClearedMax, secs);
+
+    // gate telegraph (>=1.5 beats ahead) and glitch tell (p6, 3 beats)
+    var warn = null, warnBeat = 1e9;
+    for (var g = 0; g < play.level.gates.length; g++) {
+      var gb = play.level.gates[g].b, lead = play.level.gates[g].b - st.songBeat;
+      if (lead > 0 && lead <= (play.level.id === 'p6' ? 3 : 1.6) && gb < warnBeat) {
+        warn = play.level.gates[g]; warnBeat = gb;
+      }
+    }
+    var tele = $('tele');
+    if (warn) {
+      var name = A.FORMS[warn.form].label;
+      tele.textContent = (play.level.id === 'p6' ? 'Glitch rewrite — ' : 'Shift Gate — ') + name + ' ▸ ' + Math.max(1, Math.ceil(warnBeat - st.songBeat)) + ' beats';
+      tele.classList.add('show');
+    } else tele.classList.remove('show');
+
+    encounterScan(st);
+
+    if (st.cleared && play.running) { play.running = false; onClear(); }
+  }
+
+  function worldToScreenY(wy) {
+    var floorY = H * 0.82, ceilY = H * 0.14;
+    return floorY - (wy / A.CEIL) * (floorY - ceilY);
+  }
+
+  function drawGlyph(g, x, y, r, color) {
+    ctx.save(); ctx.translate(x, y); ctx.fillStyle = color; ctx.strokeStyle = color; ctx.lineWidth = 2.4; ctx.lineJoin = 'round';
+    if (g === 'hex') { ctx.beginPath(); for (var i = 0; i < 6; i++) { var a = Math.PI / 6 + i * Math.PI / 3; var px = Math.cos(a) * r, py = Math.sin(a) * r; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); } ctx.closePath(); ctx.fill(); }
+    else if (g === 'circle') { ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill(); }
+    else if (g === 'star') { ctx.beginPath(); for (var j = 0; j < 10; j++) { var rr = j % 2 ? r * 0.45 : r; var an = -Math.PI / 2 + j * Math.PI / 5; var sx = Math.cos(an) * rr, sy = Math.sin(an) * rr; if (j) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); } ctx.closePath(); ctx.fill(); }
+    else if (g === 'm') { ctx.lineWidth = r * 0.5; ctx.beginPath(); ctx.moveTo(-r, r * 0.7); ctx.lineTo(-r * 0.4, -r * 0.7); ctx.lineTo(0, r * 0.2); ctx.lineTo(r * 0.4, -r * 0.7); ctx.lineTo(r, r * 0.7); ctx.stroke(); }
+    ctx.restore();
+  }
+
+  function render(now) {
+    ctx.clearRect(0, 0, W, H);
+    // background construction grid (Euclidean neon over navy)
+    ctx.fillStyle = COL.navy; ctx.fillRect(0, 0, W, H);
+    var beatPhase = play ? (play.st.songBeat - Math.floor(play.st.songBeat)) : 0;
+    // grid
+    ctx.strokeStyle = 'rgba(122,134,173,0.12)'; ctx.lineWidth = 1;
+    var scroll = play ? (play.st.songBeat * 120) % 60 : 0;
+    for (var gx = -60; gx < W + 60; gx += 60) { ctx.beginPath(); ctx.moveTo(gx - scroll, 0); ctx.lineTo(gx - scroll, H); ctx.stroke(); }
+    for (var gy = 0; gy < H; gy += 60) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
+
+    // background pulse ring from the Mark (bounded; suppressed under Calm Pulse)
+    if (play && !save.calm) {
+      var pr = 30 + beatPhase * Math.min(W, H) * 0.55;
+      var pa = 0.18 * (1 - beatPhase);
+      ctx.strokeStyle = 'rgba(185,230,205,' + pa.toFixed(3) + ')'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(W * 0.5, H * 0.42, pr, 0, 7); ctx.stroke();
+    }
+
+    // baseline (ground rule) — throbs in scale on the beat, bounded
+    var floorY = H * 0.82;
+    var throb = save.calm ? 0 : (1 - beatPhase) * 3;
+    ctx.strokeStyle = COL.mint; ctx.lineWidth = 2 + throb;
+    ctx.beginPath(); ctx.moveTo(0, floorY); ctx.lineTo(W, floorY); ctx.stroke();
+
+    if (play) {
+      var st = play.st, rx = W * 0.28, PXPB = 118;
+      // ink trail behind the runner
+      if (play.trail.length > 1) {
+        ctx.strokeStyle = COL.amberLt; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.beginPath();
+        for (var t = 0; t < play.trail.length; t++) {
+          var p = play.trail[t]; var px = rx - (st.songBeat - p.b) * PXPB;
+          if (t) ctx.lineTo(px, p.y); else ctx.moveTo(px, p.y);
+        }
+        ctx.stroke();
+      }
+      // hazards & gates & drops ahead
+      for (var i = 0; i < play.level.ev.length; i++) {
+        var e = play.level.ev[i]; var ex = rx + (e.b - st.songBeat) * PXPB;
+        if (ex < -60 || ex > W + 60) continue;
+        if (e.t === 'spike') { // triangle up on the floor + tick
+          ctx.fillStyle = COL.amber; ctx.beginPath(); ctx.moveTo(ex - 12, floorY); ctx.lineTo(ex, floorY - 34); ctx.lineTo(ex + 12, floorY); ctx.closePath(); ctx.fill();
+        } else if (e.t === 'ceil') {
+          var cy = worldToScreenY(A.CEIL);
+          ctx.fillStyle = COL.violet; ctx.beginPath(); ctx.moveTo(ex - 12, cy); ctx.lineTo(ex, cy + 34); ctx.lineTo(ex + 12, cy); ctx.closePath(); ctx.fill();
+        } else if (e.t === 'gate') {
+          ctx.strokeStyle = COL.violet; ctx.lineWidth = 3; ctx.setLineDash([7, 6]);
+          ctx.strokeRect(ex - 8, worldToScreenY(A.CEIL), 16, floorY - worldToScreenY(A.CEIL)); ctx.setLineDash([]);
+          ctx.fillStyle = COL.violet; ctx.font = '700 11px ' + 'Poppins,sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText('SHIFT', ex, worldToScreenY(A.CEIL) - 8);
+        }
+      }
+      for (var d = 0; d < play.level.drops.length; d++) {
+        var dr = play.level.drops[d]; if (st.drops[d]) continue;
+        var dx = rx + (dr.b - st.songBeat) * PXPB; if (dx < -20 || dx > W + 20) continue;
+        ctx.fillStyle = COL.gold; ctx.beginPath(); ctx.arc(dx, worldToScreenY(dr.y), 6, 0, 7); ctx.fill();
+      }
+      // ceiling rule line for ring/star context
+      ctx.strokeStyle = 'rgba(124,92,201,0.35)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(0, worldToScreenY(A.CEIL)); ctx.lineTo(W, worldToScreenY(A.CEIL)); ctx.stroke();
+
+      // runner
+      var ry = worldToScreenY(st.y);
+      if (play.blot > 0) { ctx.fillStyle = 'rgba(124,92,201,' + (0.5 * play.blot).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(rx, ry, 30 + (1 - play.blot) * 30, 0, 7); ctx.fill(); play.blot = Math.max(0, play.blot - 0.06); }
+      drawGlyph(A.FORMS[st.form].glyph, rx, ry, 15, COL.mint);
+
+      // HUD
+      var prog = Math.max(0, Math.min(1, play.hw / play.level.endBeat));
+      $('hudBar').style.width = (prog * 100).toFixed(1) + '%';
+      $('hudProg').textContent = Math.round(prog * 100) + '%';
+      $('hudForm').textContent = A.FORMS[st.form].label;
+      // calm-pulse corner indicator (small bounded dot)
+      var dot = $('beatDot'); dot.classList.toggle('on', beatPhase < 0.12);
+    }
+  }
+
+  var raf = 0;
+  function loop(now) {
+    raf = requestAnimationFrame(loop);
+    if (play && play.running) { update(now); }
+    if ($('game').classList.contains('show')) render(now);
+  }
+
+  // ---- clear / figure resolve --------------------------------------------
+  function figureSVG(id) {
+    // a small "completed construction" per proposition; finale = the Mark
+    var body = {
+      p1: "<rect x='6' y='6' width='60' height='60' fill='none' stroke='%23B9E6CD' stroke-width='2'/><path d='M6 26H66M6 46H66M26 6V66M46 6V66' stroke='%232F6B4D' stroke-width='1'/>",
+      p2: "<circle cx='24' cy='36' r='16' fill='none' stroke='%23E08A2E' stroke-width='3'/><circle cx='48' cy='36' r='16' fill='none' stroke='%237C5CC9' stroke-width='3'/>",
+      p3: "<path d='M10 54 L22 18 L30 42 L38 18 L50 54' fill='none' stroke='%23B9E6CD' stroke-width='3' stroke-linejoin='round'/>",
+      p4: "<rect x='8' y='20' width='56' height='34' fill='none' stroke='%23B9E6CD' stroke-width='2'/><rect x='8' y='20' width='34' height='34' fill='none' stroke='%238F7311' stroke-width='2'/>",
+      p5: "<path d='M12 36 Q24 8 36 36 T60 36' fill='none' stroke='%23B9E6CD' stroke-width='3'/>",
+      p6: "<rect x='4' y='4' width='64' height='64' rx='12' fill='%23161D3D'/><path d='M14 52 L26 18 L34 42 L42 18 L54 52' fill='none' stroke='%23B9E6CD' stroke-width='4' stroke-linejoin='round' stroke-linecap='round'/>"
+    }[id] || "";
+    return "<svg width='84' height='84' viewBox='0 0 72 72' xmlns='http://www.w3.org/2000/svg'>" + body + "</svg>";
+  }
+
+  function onClear() {
+    var lvl = play.level, prog = 100;
+    var secs = play.level.checkpoints.length;
+    var clean = play.st.smudges === 0;
+    var stars = 1 + (clean ? 1 : 0) + (Object.keys(play.st.drops).length >= 3 ? 1 : 0);
+    if (lvl.id !== 'daily') {
+      save.best[lvl.id] = 100;
+      save.stars[lvl.id] = Math.max(save.stars[lvl.id] || 0, stars);
+      persist();
+    }
+    $('clearKicker').textContent = play.practiceAt != null ? 'Practice section complete' : 'Proposition complete';
+    $('clearTitle').textContent = lvl.name.replace(/^Proposition [IV]+ — /, '');
+    $('clearFigure').innerHTML = "<img alt='completed figure' src=\"data:image/svg+xml," + encodeURIComponent(figureSVG(lvl.id).replace(/%23/g, '#')) + "\">";
+    $('clearProg').textContent = prog + '%';
+    $('clearSecs').textContent = secs + ' / ' + secs;
+    $('clearStars').textContent = '★'.repeat(stars) + '☆'.repeat(3 - stars) + (clean ? '  · clean' : '');
+    announce(lvl.name + ' complete. ' + secs + ' sections cleared.');
+    show('clear');
+  }
+
+  // ---- level select / guide rendering ------------------------------------
+  function buildLevels() {
+    var grid = $('levelGrid'); grid.innerHTML = '';
+    for (var i = 0; i < A.LEVELS.length; i++) {
+      (function (lvl) {
+        var c = document.createElement('button'); c.className = 'card'; c.type = 'button';
+        var stars = save.stars[lvl.id] || 0;
+        var done = save.best[lvl.id] ? "<span class='cleared'>Cleared</span>" : "";
+        c.innerHTML = "<h3>" + lvl.name + "</h3><p>" + lvlBlurb(lvl.id) + "</p><div class='stars'>" + ('★'.repeat(stars) + '☆'.repeat(3 - stars)) + "</div>" + done;
+        c.addEventListener('click', function () { startLevel(lvl); });
+        grid.appendChild(c);
+      })(A.LEVELS[i]);
+    }
+  }
+  function lvlBlurb(id) {
+    return { p1:'Bastion. Learn the pulse.', p2:'Metered jumps and pits.', p3:'The Ring inverts gravity.',
+             p4:'The Star flies free.', p5:'The M glides.', p6:'All four forms. The Glitch goes live.' }[id] || '';
+  }
+  function buildGuide() {
+    var grid = $('guideGrid'); grid.innerHTML = '';
+    var desc = {
+      form_bastion:'Grounded and honest. Tap to jump.', form_ring:'Rolls a surface. Tap flips gravity.',
+      form_star:'Hold to rise, release to fall.', form_m:'Floaty flaps, a low ceiling each.',
+      haz_spike:'A rule spike. Be airborne to pass.', haz_ceil:'An inverted rule on the ceiling. Stay low.',
+      gate_shift:'Rewrites your form. Announced early, by shape and word.',
+      glitch_live:'In Proposition VI it rewrites the track ahead — telegraphed three beats out.'
+    };
+    for (var i = 0; i < A.FIELD.length; i++) {
+      var f = A.FIELD[i]; var seen = !!save.seen[f.key];
+      var c = document.createElement('div'); c.className = 'card';
+      c.innerHTML = "<h3>" + (seen ? f.label : '???') + "</h3><p>" + (seen ? desc[f.key] : 'Not yet encountered.') + "</p>";
+      grid.appendChild(c);
+    }
+  }
+
+  function startLevel(lvl) {
+    resize();
+    play = newPlay(lvl, {});
+    show('game');
+    announce(lvl.name + '. Tier ' + save.tier + '. Tap or press space.');
+  }
+
+  // ---- settings wiring ----------------------------------------------------
+  function refreshTierUI() {
+    var seg = $('tierSeg').querySelectorAll('button');
+    seg.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-tier') === save.tier ? 'true' : 'false'); });
+    $('axiomOptRow').style.opacity = save.tier === 'sharp' ? '1' : '.5';
+    $('axiomToggle').setAttribute('aria-checked', (save.tier === 'sharp' && save.axiom) ? 'true' : 'false');
+    $('calmToggle').setAttribute('aria-checked', save.calm ? 'true' : 'false');
+    $('tierNote').textContent = 'Tier: ' + save.tier.charAt(0).toUpperCase() + save.tier.slice(1) + ' · Calm Pulse: ' + (save.calm ? 'on' : 'off');
+    document.body.classList.toggle('calm', save.calm);
+  }
+  function bindSettings() {
+    $('tierSeg').querySelectorAll('button').forEach(function (b) {
+      b.addEventListener('click', function () { save.tier = b.getAttribute('data-tier'); if (save.tier !== 'sharp') save.axiom = false; persist(); refreshTierUI(); });
+    });
+    $('calmToggle').addEventListener('click', function () { save.calm = !save.calm; persist(); refreshTierUI(); });
+    $('axiomToggle').addEventListener('click', function () {
+      if (save.tier !== 'sharp') { announce('The Axiom Rule lives inside the Sharp tier.'); return; }
+      if (!save.axiom) {
+        // two-tap confirm, worded as a choice not a dare
+        if (!$('axiomToggle').dataset.arm) {
+          $('axiomToggle').dataset.arm = '1';
+          announce('The Axiom Rule: one touch, back to the start. That’s the hard way. Tap again to turn it on.');
+          setTimeout(function () { delete $('axiomToggle').dataset.arm; }, 4000);
+          return;
+        }
+        delete $('axiomToggle').dataset.arm; save.axiom = true;
+      } else { save.axiom = false; }
+      persist(); refreshTierUI();
+    });
+  }
+
+  // ---- pause wiring -------------------------------------------------------
+  function openPause() {
+    if (!play) return; play.running = false;
+    $('pAxiomRow').style.display = (play.tier === 'sharp') ? 'flex' : 'none';
+    $('pAxiomToggle').setAttribute('aria-checked', save.axiom ? 'true' : 'false');
+    $('pClearPractice').style.display = play.practiceAt != null ? 'block' : 'none';
+    show('pause');
+  }
+  function resumePlay() { if (play) { play.running = true; play.last = 0; show('game'); } }
+
+  // ---- input --------------------------------------------------------------
+  cv.addEventListener('pointerdown', function (e) { e.preventDefault(); liveInputDown(); }, { passive: false });
+  cv.addEventListener('pointerup', function (e) { e.preventDefault(); liveInputUp(); }, { passive: false });
+  window.addEventListener('keydown', function (e) {
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === ' ' || e.key === 'ArrowUp') {
+      if ($('game').classList.contains('show')) { e.preventDefault(); liveInputDown(); }
+    } else if (e.key === 'Escape' && $('game').classList.contains('show')) { openPause(); }
+  });
+  window.addEventListener('keyup', function (e) {
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === ' ' || e.key === 'ArrowUp') { if ($('game').classList.contains('show')) liveInputUp(); }
+  });
+
+  // ---- menu buttons -------------------------------------------------------
+  $('splashStart').addEventListener('click', function () { show('menu'); refreshTierUI(); });
+  $('mPlay').addEventListener('click', function () { buildLevels(); show('levels'); });
+  $('mDaily').addEventListener('click', function () {
+    var d = new Date(); var ds = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    startLevel(A.dailyLevel(ds));
+  });
+  $('mGuide').addEventListener('click', function () { buildGuide(); show('guide'); });
+  $('mSettings').addEventListener('click', function () { refreshTierUI(); show('settings'); });
+  $('mHow').addEventListener('click', function () { show('howto'); });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-back]'), function (b) { b.addEventListener('click', function () { show('menu'); refreshTierUI(); }); });
+
+  $('hudPause').addEventListener('click', openPause);
+  $('pResume').addEventListener('click', resumePlay);
+  $('pRestart').addEventListener('click', function () { startLevel(play.level); });
+  $('pQuit').addEventListener('click', function () { play = null; show('menu'); refreshTierUI(); });
+  $('pPractice').addEventListener('click', function () {
+    if (!play) return; play.practiceAt = A.lastCheckpoint(play.level, play.st.songBeat);
+    announce('Practice checkpoint set. Restart returns you here.'); resumePlay();
+  });
+  $('pClearPractice').addEventListener('click', function () { if (play) { play.practiceAt = null; announce('Practice checkpoint cleared.'); resumePlay(); } });
+  $('pAxiomToggle').addEventListener('click', function () {
+    save.axiom = !save.axiom; persist();
+    $('pAxiomToggle').setAttribute('aria-checked', save.axiom ? 'true' : 'false');
+    if (play) play.st.axiomRule = (play.tier === 'sharp') && save.axiom;
+    announce('The Axiom Rule ' + (save.axiom ? 'on' : 'off') + '.');
+  });
+  $('clearNext').addEventListener('click', function () {
+    var idx = -1; for (var i = 0; i < A.LEVELS.length; i++) if (play && A.LEVELS[i].id === play.level.id) idx = i;
+    if (idx >= 0 && idx + 1 < A.LEVELS.length) startLevel(A.LEVELS[idx + 1]);
+    else { buildLevels(); show('levels'); }
+  });
+  $('clearMenu').addEventListener('click', function () { play = null; show('menu'); refreshTierUI(); });
+
+  // ---- boot ---------------------------------------------------------------
+  bindSettings(); refreshTierUI(); resize();
+  raf = requestAnimationFrame(loop);
+})();
+}
+</script>
+</body>
+</html>
