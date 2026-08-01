@@ -71,7 +71,20 @@
     a.setAttribute("href", door.href);
     if (door.countKey) a.setAttribute("data-mbm-count", door.countKey);
 
-    if (door.art) {
+    // A door can carry either a photographic image or a template of SVG art.
+    // image wins when both are present, so artwork can be swapped in config
+    // without deleting the SVG fallback.
+    if (door.image) {
+      var im = doc.createElement("img");
+      im.className = "dx-art";
+      im.setAttribute("src", door.image);
+      im.setAttribute("alt", door.imageAlt || "");
+      im.setAttribute("loading", "lazy");
+      im.setAttribute("decoding", "async");
+      if (door.imageW) im.setAttribute("width", door.imageW);
+      if (door.imageH) im.setAttribute("height", door.imageH);
+      a.appendChild(im);
+    } else if (door.art) {
       var tpl = doc.getElementById("art-" + door.art);
       if (tpl && tpl.content) a.appendChild(tpl.content.cloneNode(true));
       else bad('door "' + door.title + '" references missing art template "art-' + door.art + '"', door);

@@ -3,7 +3,7 @@
 <title>Matt's Curated Favs — The Arcade — Made by Matt</title>
 <meta name="description" content="A personally curated shelf of free single-file browser games built in a real classroom — no installs, no accounts, no ads.">
 <meta name="theme-color" content="#161D3D">
-<meta property="og:type" content="website"><meta property="og:site_name" content="Made by Matt"><meta property="og:image" content="https://madebymatt.uk/assets/og-cover.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://madebymatt.uk/assets/og-cover.png"><link rel="icon" href="https://madebymatt.uk/favicon.svg">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Made by Matt"><meta property="og:image" content="https://madebymatt.uk/images/apexkick-hub.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://madebymatt.uk/images/apexkick-hub.jpg"><link rel="icon" href="https://madebymatt.uk/favicon.svg">
 <style>
 :root{--navy:#161D3D;--navy-lt:#232C55;--mint:#B9E6CD;--mint-deep:#2F6B4D;--amber:#E08A2E;--amber-lt:#F2A24A;
 --cream:#F6F1E4;--cream-dk:#EDE5D2;--card:#FFFDF6;--ink:#1B2140;--mut:#4A5170;--gold:#8F7311;--violet:#7C5CC9;
@@ -47,7 +47,7 @@ a{color:inherit}
 .sub{color:var(--mut);font-size:.82rem;margin:.2rem 0 .9rem}
 /* top picks scroller */
 .gx-watchgrid{display:flex;flex-direction:column;gap:1.2rem;align-items:center}
-@media(min-width:700px){.gx-watchgrid{flex-direction:row;justify-content:center;align-items:flex-start}}
+@media(min-width:700px){.gx-watchgrid{flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:flex-start;max-width:645px;margin:0 auto}}
 .gx-watch figure{margin:0;display:flex;flex-direction:column;gap:.5rem;max-width:300px;width:100%}
 .gx-watch video{display:block;width:100%;height:auto;aspect-ratio:480/930;background:var(--navy);border:1.5px solid var(--navy);border-radius:18px;object-fit:cover}
 .gx-watch figcaption{font-size:.82rem;line-height:1.45;color:#4A5170;text-align:center}
@@ -152,19 +152,23 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 
 <section class="sec" id="picks"><div class="wrap">
 <h2>Matt's personal top picks</h2>
-<p class="sub">The six I'd put in front of anyone first — and one line each on why.</p>
+<p class="sub">The eight I'd put in front of anyone first — and one line each on why.</p>
 <div class="rail" id="topRail" aria-label="Matt's top picks"></div>
 </div></section>
 
 <section class="sec gx-watch"><div class="wrap">
 <h2>Watch them played</h2>
 <div class="gx-watchgrid">
+<figure><video controls preload="none" playsinline muted poster="../assets/video/poster-apexkick.jpg" src="../assets/video/clip-apexkick.mp4" width="480" height="930"></video>
+<figcaption><b>Apex Kick</b> — two free kicks bent round the wall, with the readout that names the number behind each one.</figcaption></figure>
+<figure><video controls preload="none" playsinline muted poster="../assets/video/poster-voxelfrontier.jpg" src="../assets/video/clip-voxelfrontier.mp4" width="480" height="930"></video>
+<figcaption><b>Voxel Frontier</b> — walking a seeded coastline, then digging into it and building it back.</figcaption></figure>
 <figure><video controls preload="none" playsinline muted poster="../assets/video/poster-offbrand.jpg" src="../assets/video/clip-offbrand.mp4" width="480" height="930"></video>
 <figcaption><b>Off-Brand</b> — the opening watch: six shapes clock in, one is lying.</figcaption></figure>
 <figure><video controls preload="none" playsinline muted poster="../assets/video/poster-glitchclash.jpg" src="../assets/video/clip-glitchclash.mp4" width="480" height="930"></video>
 <figcaption><b>Glitch Clash</b> — building the trio for Full Harmony.</figcaption></figure>
 </div>
-<p class="gx-watchnote">Real gameplay, captured on a phone and hosted right here — nothing loads until you press play, and nothing plays sound.</p>
+<p class="gx-watchnote">Real gameplay — no scripted demo reel — captured on a phone or straight from the browser and hosted right here. Nothing loads until you press play, and nothing plays sound.</p>
 </div></section>
 
 <section class="sec"><div class="wrap">
@@ -209,6 +213,8 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 "use strict";
 /* Curation — Matt's lever: edit takes/themes/order here. Titles must match games.json. */
 var TAKES={
+"Apex Kick":"The physics are the game. Bend one round the wall and you\u2019ll see it.",
+"Voxel Frontier":"An endless world from a seed. Ten minutes becomes an evening.",
 "Off-Brand":"Six shapes, one impostor, zero eliminations. Clara-approved.",
 "Glitch Clash":"Deeper than it looks. Build the trio, read the clash — pure masterclass.",
 "Hold the Mark":"Our brand as a game. The Focus meter is the whole philosophy.",
@@ -221,7 +227,7 @@ var TAKES={
 "Neon Garden":"Ambience and pace. The calm one.",
 "Neon Siege":"Place early, think earlier."
 };
-var TOP=["Off-Brand","Glitch Clash","Hold the Mark","Orbital","Slipstream - GP","Grid Chase"];
+var TOP=["Apex Kick","Voxel Frontier","Off-Brand","Glitch Clash","Hold the Mark","Orbital","Slipstream - GP","Grid Chase"];
 var THEMES=[
  ["PHYSICS & GRAVITY","FAVS",["Orbital","Marble"]],
  ["REFLEX & SPEED","FAVS",["Trail Runner","Trekkers Trail Runner — Tees Coast","Grid Chase"]],
