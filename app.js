@@ -43,7 +43,11 @@ function render(){
 function fillSelect(id,vals){const el=$('#'+id),keep=el.querySelector('option');el.innerHTML='';el.appendChild(keep);
   [...new Set(vals)].sort().forEach(v=>{const o=document.createElement('option');o.textContent=v;el.appendChild(o)})}
 if($('#cards')){
-const grab=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.json()}).catch(()=>[]);
+/* Data files carry their own content hash (tools/stamp-data.py); the two
+   cross-repo catalogues cannot be hashed from here and get forced revalidation
+   instead of a version this repo would be making up. */
+const grab=u=>{const s=window.MBM_STAMP?window.MBM_STAMP(u):{url:u,opts:{cache:"no-cache"}};
+  return fetch(s.url,s.opts).then(r=>{if(!r.ok)throw 0;return r.json()}).catch(()=>[])};
 Promise.all([grab('/Lessons/resources.json'),grab('/data/resources.json')]).then(([les,site])=>{
   state.all=[...normLessons(Array.isArray(les)?les:[]),...normSite(Array.isArray(site)?site:[])];
   if(!state.all.length){$('#count').textContent="Couldn't load the catalogue — please refresh.";return}

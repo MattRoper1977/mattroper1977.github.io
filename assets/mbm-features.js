@@ -47,6 +47,17 @@
       .catch(function (e) { if (t) clearTimeout(t); throw e; });
   }
 
+  /* Data files go through the stamp; the counter API deliberately does not.
+     This function fetched site.json with the browser's default cache policy
+     while mbm-doors.js fetched the same url with cache:"no-cache" — so the two
+     renderers could, and did, draw different versions of the same file on the
+     same page load. See tools/stamp-data.py. */
+  function stampedJSON(url, ms) {
+    var s = window.MBM_STAMP ? window.MBM_STAMP(url) : { url: url, opts: { cache: "no-cache" } };
+    return timedJSON(s.url, ms, s.opts);
+  }
+
+
   function flag(cc) {
     if (!cc || cc.length !== 2) return "🏳️";
     try { var A = 0x1F1E6; return String.fromCodePoint(A + cc.charCodeAt(0) - 65, A + cc.charCodeAt(1) - 65); }
@@ -76,7 +87,7 @@
   }
 
   function loadConfig() {
-    return timedJSON(siteRoot() + "site.json", 5000).then(function (j) {
+    return stampedJSON(siteRoot() + "site.json", 5000).then(function (j) {
       var f = (j && j.features) || {};
       if (f.stats) for (var k in f.stats) CFG.stats[k] = f.stats[k];
       if (f.downloads) { CFG.downloads.enabled = f.downloads.enabled !== false; if (f.downloads.catalog) CFG.downloads.catalog = f.downloads.catalog; }

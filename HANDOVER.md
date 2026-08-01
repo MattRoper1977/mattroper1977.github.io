@@ -6,6 +6,80 @@ Most recent session first.
 
 ---
 
+# 1 August 2026 — homepage close
+
+## The rule this session produced
+
+> **Every "zero bad" assertion must be reported alongside its population count.
+> A coverage gate that can be satisfied by removing the population is a false
+> zero.**
+
+House rule from here. It belongs beside the instrument rules in
+`LundyLoop/tools/INSTRUMENTS.md`, which is where the estate's "false zero" —
+a check that closes a question it never examined — is defined and catalogued.
+
+It was earned rather than theorised. The gate for this session's card work was
+*"zero empty cards, proven by count"*. That gate goes green if you delete the
+rail. It nearly did: PR #13 fixed the visible bug by removing the duplicate
+renderer, which made "no rail card is bare" true by making the rail not exist —
+while `buildCard()` still had a silent path that rendered a card with no
+artwork at all. Two adversarial fixtures found it in one run.
+
+Every count in this session's work is now written **`N cards, 0 bare`**, never
+`0 bare`. The page publishes its own population too, on `<html>`:
+
+    data-doors=9  data-doors-art=9  data-doors-gen=0
+
+`data-doors` alone would go green with an empty `doors[]`. Read with
+`data-doors-art` it cannot.
+
+Earlier instances of the same family, for the record: the studio count that was
+stated as 28 and then 29 against a true 30 nobody owned (98b0a59), and the
+`initDoors()` rail that rendered nine cards while reading a field only one of
+them had.
+
+## What shipped
+
+| What | Where |
+|---|---|
+| PR #13 merged — duplicate doors rail removed, art on all 31 Arcade cards, posters to WebP | `3f0ffac` |
+| Generated card art: no door can render bare, whatever fields it carries | `assets/mbm-doors.js` |
+| Content-hash cache-busting on every data file this repo owns | `tools/stamp-data.py` |
+
+## Why Matt's phone showed a homepage that is not in the tree
+
+The screenshots showed the **old four-door `site.json`** — "Games Arcade" and
+"Explore Apps" rendering bare, the Medevac banner side-cropped. None of those
+cards exist on `main`; it has carried nine differently-named doors since
+`836f428`. Nothing had regressed: both of those doors have had `image: ""` in
+**every one of the sixteen revisions of `site.json` since the file was created**.
+
+The mechanism was in the source the whole time. Two scripts fetched the same
+url with different cache policies:
+
+    assets/mbm-doors.js    fetch(url, { cache: "no-cache" })   revalidates
+    assets/mbm-features.js fetch(url, o)  — no cache option    may be stale
+
+So on one page load, one renderer could draw the current nine doors into the
+zone strips while the other drew a cached four-door copy underneath them. That
+is exactly the screenshot. Nothing on the page could notice or correct it.
+
+`tools/stamp-data.py` closes it: data files this repo owns are fetched at
+`file.json?v=<content hash>`, so a stale copy cannot be addressed rather than
+merely being revalidated. The two cross-repo catalogues —
+`/Lessons/resources.json` and `/Games/games.json` — are **not** stamped,
+because this repo cannot hash a file it does not have, and a version number
+copied by hand from another repo is the studio count all over again. Those get
+forced revalidation instead. Run `python3 tools/stamp-data.py --check` before
+shipping; it fails when a data file has changed and the pages still carry the
+old hash.
+
+**To see the fix on a phone that is still showing the old page:** hard-refresh,
+or clear site data for `madebymatt.uk`. Afterwards the homepage shows **nine
+door cards, none bare**.
+
+---
+
 # 1 August 2026 — Glitch Clash
 
 | What | Where | SHA |
