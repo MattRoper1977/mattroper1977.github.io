@@ -1,11 +1,103 @@
-# Handover — 31 July 2026
+# Handover
 
 For whoever picks this up next, including Matt after a fortnight away.
 Everything below shipped to `main` and is live. Nothing is half-finished.
+Most recent session first.
 
 ---
 
-## What shipped today
+# 1 August 2026 — Glitch Clash
+
+| What | Where | SHA |
+|---|---|---|
+| Game feel, Endless, Weekly Gauntlet, run modifiers, Time Attack, themes, colourblind palette, menu music, **and the particle-layer fix** | Lessons, PR #6 | `857ab49` (merge) |
+
+Pages build for `857ab49` **completed / success**. +1121 / −17, one file.
+
+## The bug worth knowing about
+
+**Glitch Clash's particle layer had never run.** `FX.init()` was called at the
+top of the UI closure, roughly 1150 lines above the `const FX` that defines
+it — inside its temporal dead zone. It threw a `ReferenceError` on every load
+and the surrounding `try{}catch(_){}` swallowed it. `init()` is the only thing
+that sizes `#fxcanvas` and takes its 2D context, so `cx` stayed null and every
+`spawn()` returned at its first line.
+
+Measured before the change: `#fxcanvas` was **300×150 with no style width** —
+the browser default for a canvas nothing has touched — and four strikes painted
+**0 pixels**. After: 412×892, 465 pixels. Strike, heal, charge, clash and
+corrupt particles now draw for the first time since they were written.
+
+**This is the third instance of the same trap in these files**, and the reason
+`Lessons/CLAUDE.md` now opens with it. The other two: a settings block
+referencing `GCX` above its definition, which aborted the whole UI closure; and
+`closeSheets()` probing a flag defined below it, which is why that flag is a
+`var` — `typeof` does *not* protect against the TDZ.
+
+Rule going forward: **init a module immediately after it, and do not wrap the
+call in a bare catch.** A visible error beats a silently dead feature.
+
+## The other honest catch
+
+A CSS layering bug the new ambient backdrop exposed: a negative-`z-index`
+pseudo-element paints above `html`'s background but *below* `body`'s, so an
+opaque body hid it entirely. The page fill moved to `<html>`. Because
+`body.hc` sets its variables on `<body>`, `applySettings()` now flags **both**
+elements — without that, High Contrast would leave the page fill unchanged
+behind a black UI.
+
+## Testing — the gap in the 31 July notes is now closed
+
+31 July said "there is no committed browser test suite — the scripts lived in
+a scratch directory and are gone with the session." For Glitch Clash that is
+no longer true:
+
+```sh
+tools/glitchclash/run.sh                     # Lessons repo
+tools/glitchclash/run.sh path/to/copy.html
+```
+
+Ten headless-Chromium suites against the shipped file, non-zero exit on
+failure. `CHROMIUM_PATH` overrides the browser; the runner finds a global
+Playwright itself.
+
+Two lessons baked into them, both from assertions that passed wrongly:
+
+- A canvas at 300×150 is the *default*. `width > 0` passes on a canvas that
+  was never initialised — check it matches the viewport.
+- `musicPlaying()` returning true only proves an interval is ticking. The
+  suite checks live oscillator count and pad gain instead.
+
+A third: `gc-endless` originally hammered strike and *hoped* to win, and
+failed about one run in three. It now forces the win and tests the run
+machinery, which is what it was actually for. **A flaky gate is worse than no
+gate** — it trains you to ignore it.
+
+## Colour was measured, not chosen
+
+The colourblind palette went through a Viénot–Brettel dichromat simulation,
+scored on worst pairwise CIELAB distance across normal, deuteranopic,
+protanopic and tritanopic vision. Shipped palette: worst **ΔE 15.9** — teal
+and blue collapse into each other under tritanopia. Chosen: **ΔE 40.8**, every
+swatch ≥4.5:1 on the panel fill.
+
+If anyone changes those four Keeper hues, redo the measurement. Do not eyeball
+it. The script approach is written up in `Lessons/CLAUDE.md`.
+
+## Not checked
+
+Same gap as 31 July, same reason: **the live `madebymatt.uk` origin**. This
+container gets a 403 from the network policy on every outbound host, and a 403
+is not evidence a page is down. Verified instead from the merge SHA, the green
+Pages build, and ten suites run against the merged `main` working tree.
+**Someone should open Glitch Clash in a real browser once** — that is still
+the one gap.
+
+---
+
+# 31 July 2026
+
+## What shipped that day
 
 | What | Where | SHA |
 |---|---|---|
