@@ -74,12 +74,10 @@
     // works from /, /members/, /stats/ etc.
     return (location.pathname.indexOf("/") === 0) ? "/" : "";
   }
-  var DOORS = null;   // site.json doors[], captured from the same fetch as features
 
   function loadConfig() {
     return timedJSON(siteRoot() + "site.json", 5000).then(function (j) {
       var f = (j && j.features) || {};
-      DOORS = (j && Object.prototype.toString.call(j.doors) === "[object Array]") ? j.doors : null;
       if (f.stats) for (var k in f.stats) CFG.stats[k] = f.stats[k];
       if (f.downloads) { CFG.downloads.enabled = f.downloads.enabled !== false; if (f.downloads.catalog) CFG.downloads.catalog = f.downloads.catalog; }
       if (f.accounts) for (var a in f.accounts) CFG.accounts[a] = f.accounts[a];
@@ -491,74 +489,25 @@
   };
 
   /* ========================================================================
-     DOORS — render site.json doors[] after #newrelease.
-     Built entirely in JS: with scripts off nothing is inserted, so there is no
-     empty framed region and the hardcoded dx-prod grid remains the baseline.
+     DOORS — removed 2026-08-01. site.json doors[] is rendered by
+     assets/mbm-doors.js, into the [data-zone] strips.
      ===================================================================== */
-  function localHref(h) {
-    // House standard since the 2026-07-25 origin fix: keep everything on this
-    // origin so origin-scoped HUD storage (mbm_hud_names, mbm_reading_theme)
-    // carries across. External URLs are left alone.
-    var s = String(h == null ? "" : h)
-      .replace(/^https?:\/\/[^\/]*(?:mattroper1977\.github\.io|madebymatt\.uk)/i, "");
-    return s || "/";
-  }
-  function assetHref(p) {
-    var s = String(p == null ? "" : p);
-    if (!s) return "";
-    if (/^(https?:)?\/\//i.test(s) || s.charAt(0) === "/") return s;
-    return siteRoot() + s;
-  }
-  function initDoors() {
-    if (!DOORS || !DOORS.length) return;
-    var anchor = doc.getElementById("newrelease");
-    if (!anchor || !anchor.parentNode) return;
+  /* initDoors() lived here. Removed 2026-08-01.
 
-    // Idempotent: reuse the existing section rather than inserting a second one.
-    var sec = doc.getElementById("mbmDoors");
-    if (!sec) {
-      sec = ce("section", "dx-doors");
-      sec.id = "mbmDoors";
-      sec.setAttribute("aria-labelledby", "mbmDoorsH");
-      anchor.parentNode.insertBefore(sec, anchor.nextSibling);
-    }
-    sec.textContent = "";
+     It was superseded by assets/mbm-doors.js, which renders the same
+     site.json doors[] into the [data-zone] strips — but it was never deleted,
+     so both ran and the homepage drew all nine doors twice. The copy here read
+     only door.image and ignored door.art entirely, so eight of the nine
+     rendered as bare text while the identical cards a few hundred pixels above
+     rendered their SVG correctly. Studio Suite looked fine only because it is
+     the one door that also carries an image.
 
-    var wrap = ce("div", "dx-wrap");
-    var h = ce("h2", "dx-eyebrow");
-    h.id = "mbmDoorsH";
-    h.textContent = "Where to go next";
-    wrap.appendChild(h);
-
-    var grid = ce("div", "dx-doorgrid"), n = 0;
-    for (var i = 0; i < DOORS.length; i++) {
-      var d = DOORS[i] || {};
-      if (!d.title || !d.href) continue;
-      var a = ce("a", "dx-door");
-      a.href = localHref(d.href);
-      var th = String(d.theme || "").toLowerCase();
-      a.setAttribute("data-door", (th === "day" || th === "dusk" || th === "night") ? th : "dusk");
-      var img = d.image ? assetHref(d.image) : "";
-      a.innerHTML =
-        '<span class="dx-doorbar" aria-hidden="true"></span>' +
-        (img ? '<figure><img src="' + esc(img) + '" alt="" loading="lazy" decoding="async"></figure>' : "") +
-        '<span class="dx-doorbd">' +
-          (d.label ? '<span class="dx-doorlabel">' + esc(d.label) + "</span>" : "") +
-          "<h3>" + esc(d.title) + "</h3>" +
-          (d.strap ? "<p>" + esc(d.strap) + "</p>" : "") +
-          (d.cta ? '<span class="dx-doorcta">' + esc(d.cta) + " \u2192</span>" : "") +
-        "</span>";
-      grid.appendChild(a); n++;
-    }
-    if (!n) { if (sec.parentNode) sec.parentNode.removeChild(sec); return; }
-    wrap.appendChild(grid);
-    sec.appendChild(wrap);
-  }
+     If a second doors rail is ever wanted, extend mbm-doors.js — do not
+     reintroduce a parallel renderer that has to be kept in step by hand. */
 
   function boot() {
     loadConfig().then(function (cfg) {
       initAnalytics();
-      try { initDoors(); } catch (e) { /* doors are decorative: never break features */ }
       initStats();
       initDownloads();
       initAccountUI();
