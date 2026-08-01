@@ -185,3 +185,42 @@ body[data-theme="dark"] .mbm-strbar-fill.lvl-3{background:var(--dx-mint,#B9E6CD)
 @media (max-width:560px){.mbm-tiers{grid-template-columns:1fr}}
 
 @media print{.mbm-stats,.mbm-give,.mbm-modal,.mbm-navbtn{display:none!important}}
+
+/* ==========================================================================
+   DOORS — renders site.json doors[] as a wayfinding rail (see initDoors()).
+   Everything is namespaced under .dx-door*. Surfaces and text use the estate
+   custom properties so the reading themes (pink/blue/light/dark) keep driving
+   them; only the accent hue is the door's own art direction.
+   ========================================================================== */
+.dx-doors{padding:1.5rem 0 .3rem;background:var(--dx-cream)}  /* matches #collections/#seeit so the reading themes drive it; body bg is unthemed */
+.dx-doorgrid{display:grid;gap:1rem;grid-template-columns:1fr;margin-top:.9rem;align-items:start}
+@media(min-width:640px){.dx-doorgrid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1000px){.dx-doorgrid{grid-template-columns:repeat(3,1fr)}}
+
+.dx-door{display:flex;flex-direction:column;background:var(--dx-card);border:1.5px solid var(--dx-line);
+  border-radius:var(--dx-r2,16px);overflow:hidden;text-decoration:none;color:inherit;
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+.dx-door:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(22,29,61,.14);border-color:var(--dx-doorac)}
+.dx-door:focus-visible{outline:3px solid var(--dx-doorac);outline-offset:2px}
+/* every card carries the accent strip, so cards with no image still read as deliberate */
+.dx-doorbar{height:5px;flex:none;background:var(--dx-doorac)}
+.dx-door figure{margin:0;flex:none;aspect-ratio:16/9;overflow:hidden;background:var(--dx-lite);
+  border-bottom:1.5px solid var(--dx-line)}
+.dx-door figure img{width:100%;height:100%;object-fit:cover;display:block}
+.dx-doorbd{padding:.95rem 1.05rem 1.15rem;display:flex;flex-direction:column;gap:.35rem;flex:1}
+.dx-doorlabel{font-size:.66rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--dx-eyeb)}
+.dx-door h3{font-size:1.05rem;line-height:1.25;color:var(--dx-title);margin:0}
+.dx-door p{font-size:.86rem;line-height:1.5;color:var(--dx-mut);margin:0}
+.dx-doorcta{margin-top:.55rem;align-self:flex-start;font-size:.72rem;font-weight:800;letter-spacing:.05em;
+  color:var(--dx-navy);background:var(--dx-doorac);border-radius:999px;padding:.45rem 1rem}
+
+/* three art directions — accent only, so contrast holds in every reading theme */
+.dx-door{--dx-doorac:var(--dx-amber)}
+.dx-door[data-door="day"]{--dx-doorac:var(--dx-mint)}
+.dx-door[data-door="dusk"]{--dx-doorac:var(--dx-amber)}
+.dx-door[data-door="night"]{--dx-doorac:var(--dx-violet)}
+
+@media(prefers-reduced-motion:reduce){
+  .dx-door{transition:none}
+  .dx-door:hover{transform:none}
+}
