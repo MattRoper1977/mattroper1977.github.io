@@ -97,8 +97,16 @@ a.dx-drop:hover{transform:translateY(-2px);border-color:var(--dx-ambd)}
 a.dx-prod{background:var(--dx-card);border:1.5px solid var(--dx-line);border-radius:var(--dx-r2);padding:1.1rem 1rem 1rem;text-decoration:none;color:var(--dx-ink);display:flex;flex-direction:column;align-items:center;gap:.5rem;box-shadow:0 3px 12px #161D3D0f;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
 a.dx-prod:hover{transform:translateY(-3px);box-shadow:0 10px 22px #161D3D1a;border-color:var(--dx-ambd)}
 a.dx-prod:focus-visible{outline:3px solid var(--dx-navy);outline-offset:2px}
-.dx-prod svg{width:100%;max-width:150px;height:auto}
-.dx-prod .dx-art{width:100%;max-width:210px;height:auto;border-radius:10px;display:block}
+/* Card art sits on a shared HEIGHT, not a shared aspect-ratio. The SVG art is
+   5:4 and the photographic art is 16:9; forcing one ratio on both means either
+   letterboxing the SVGs or cropping ~30% off the width of a photo — and the
+   Evening Workshop photo carries a wordmark that a crop that deep would eat.
+   Matching height evens the row, which is the actual goal, and nothing is
+   cropped or squashed. object-fit:contain is belt-and-braces for any future
+   art whose intrinsic ratio is wider still. */
+.dx-prod svg,.dx-prod .dx-art{height:120px;width:auto;max-width:100%;display:block}
+.dx-prod .dx-art{border-radius:10px;object-fit:contain;object-position:center}
+@media (max-width:420px){.dx-prod svg,.dx-prod .dx-art{height:96px}}
 .dx-prod b{font-size:.92rem;color:var(--dx-navy);text-align:center;line-height:1.2}
 .dx-prod p{margin:0;font-size:.75rem;line-height:1.45;color:var(--dx-mut);text-align:center;max-width:34ch}
 .dx-acts{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.2rem}
