@@ -24,8 +24,7 @@ body[data-theme="dark"] a.dx-prod:focus-visible{outline-color:var(--dx-amber)}
 .dx-sw[data-t="light"] i{background:#FFFFFF}
 .dx-sw[data-t="dark"] i{background:#161D3D;border-color:#B9E6CD99}
 .header .bar{flex-wrap:wrap}
-/* matches the nav collapse breakpoint in styles.css, so the drawer looks the same at every collapsed width */
-@media (max-width:800px){.swlabel{display:block}.dx-swatches{width:100%;gap:.35rem;margin-top:.5rem;padding-top:.2rem;border-top:1px solid #B9E6CD2C}}
+@media (max-width:680px){.swlabel{display:block}.dx-swatches{width:100%;gap:.35rem;margin-top:.5rem;padding-top:.2rem;border-top:1px solid #B9E6CD2C}}
 /* ---------- hero ---------- */
 .dx-hero{position:relative;background:radial-gradient(ellipse 120% 70% at 50% -20%,var(--dx-h1),var(--dx-h2) 70%);transition:background .35s ease;color:#E8E2D4;text-align:center;padding:3rem 1rem 2.8rem;overflow:hidden}
 .dx-hero .pat{position:absolute;inset:0;opacity:.09;pointer-events:none}
@@ -213,31 +212,16 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 
 <section class="dx-upd" id="newrelease"><div class="dx-wrap">
 <h2 class="dx-eyebrow">New releases</h2>
-<div class="dx-updbox" style="border-left:4px solid #2F8F6B">
+<div class="dx-updbox" style="border-left:4px solid #A78BFA">
 <p class="dx-when">July 2026 &middot; Games Arcade</p>
-<h3>Apex Kick &mdash; bend it round the wall</h3>
+<h3>Off-Brand &mdash; a whodunnit in the brand workshop</h3>
 <ul class="dx-updlist">
-<li><span class="dx-dot"></span><span><b>Your card sets the physics &mdash; never the dice.</b> Stats move the launch band and the error cone. A perfectly struck bronze card still beats an elite keeper.</span></li>
-<li><span class="dx-dot"></span><span><b>One gesture, three channels.</b> Where you drop the marker is your aim, how hard you flick is your power, and how much you bow the drag is your curve.</span></li>
-<li><span class="dx-dot"></span><span><b>Real aerodynamics, not an animation.</b> Gravity, speed-dependent drag and a proper Magnus force, solved the instant you strike &mdash; so the replay is the shot, exactly.</span></li>
-<li><span class="dx-dot"></span><span><b>A keeper who has to commit.</b> He reads the whole remaining flight but misjudges spin, so a heavy curler genuinely wrong-foots him.</span></li>
+<li><span class="dx-dot"></span><span><b>One of the shapes is a Glitch in disguise.</b> Six brand shapes work the workshop; you read the room through movement trails, a scene log and Roll Call statements to work out who doesn't fit.</span></li>
+<li><span class="dx-dot"></span><span><b>Nobody is ever voted out.</b> No one is removed and everything is reversible &mdash; a calm, offline, reduced-motion-aware take on social deduction, with no sound and nothing uploaded.</span></li>
+<li><span class="dx-dot"></span><span><b>Designed for my sweet, adorable niece Clara.</b> Made with love, and free to play like everything else here.</span></li>
 </ul>
 <div class="dx-updacts">
-<a class="dx-chip dx-main" href="apexkick/">Play Apex Kick &rarr;</a>
-<a class="dx-chip" href="games/">Browse the Arcade</a>
-</div>
-</div>
-<div class="dx-updbox" style="border-left:4px solid #87CEEB">
-<p class="dx-when">July 2026 &middot; Games Arcade</p>
-<h3>Voxel Frontier &mdash; mine, build, explore</h3>
-<ul class="dx-updlist">
-<li><span class="dx-dot"></span><span><b>An endless world, generated as you walk.</b> Hills, caves, trees, beaches and snow peaks &mdash; every one built from a seed rather than stored on a map.</span></li>
-<li><span class="dx-dot"></span><span><b>Every block texture is painted at runtime.</b> There is not one image file in the game, so it still loads in one go and plays offline.</span></li>
-<li><span class="dx-dot"></span><span><b>Your world saves itself.</b> Each seed keeps its own world, and <b>Copy world link</b> hands someone else the exact same one.</span></li>
-<li><span class="dx-dot"></span><span><b>Swim, mine and build on a phone.</b> Full touch controls, and fly mode on <b>F</b> when you would rather look at what you have made.</span></li>
-</ul>
-<div class="dx-updacts">
-<a class="dx-chip dx-main" href="voxel/">Play Voxel Frontier &rarr;</a>
+<a class="dx-chip dx-main" href="Lessons/Games/Off_Brand.html">Play Off-Brand &rarr;</a>
 <a class="dx-chip" href="games/">Browse the Arcade</a>
 </div>
 </div>
@@ -261,42 +245,33 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <div class="dx-stack" id="dxNew" aria-label="Recently added resources"></div>
 </div></section>
 
+
+<!-- Card artwork. Kept as markup and referenced by doors[].art, so the
+     config stays readable and the SVG stays exactly as authored. -->
+<template id="art-uas-register"><svg viewBox="0 0 120 96" role="img" aria-label="UAS Register — stamped Unit claimed, September 2026"><rect x="14" y="6" width="76" height="84" rx="6" fill="#FFFDF6" stroke="#161D3D" stroke-width="2.5" transform="rotate(-4 52 48)"/><g transform="rotate(-4 52 48)"><path d="M24 24h56M24 34h56M24 44h40M24 54h48" stroke="#8B93B0" stroke-width="2.4" stroke-linecap="round"/></g><g transform="rotate(7 82 62)"><rect x="52" y="48" width="62" height="30" rx="6" fill="#B9E6CD" stroke="#2F6B4D" stroke-width="2.5"/><text x="83" y="61" text-anchor="middle" font-family="Poppins,sans-serif" font-size="8.4" font-weight="800" fill="#161D3D">UNIT CLAIMED ✓</text><text x="83" y="72" text-anchor="middle" font-family="Poppins,sans-serif" font-size="7" font-weight="700" fill="#2F6B4D">SEPT 2026</text></g></svg></template>
+<template id="art-asdan-register"><svg viewBox="0 0 120 96" role="img" aria-label="ASDAN Register — stamped Signed off, evidence filed"><rect x="14" y="6" width="76" height="84" rx="6" fill="#FFFDF6" stroke="#161D3D" stroke-width="2.5" transform="rotate(3 52 48)"/><g transform="rotate(3 52 48)"><path d="M24 24h56M24 34h56M24 44h40M24 54h48" stroke="#8B93B0" stroke-width="2.4" stroke-linecap="round"/></g><g transform="rotate(-6 62 64)"><rect x="32" y="50" width="62" height="30" rx="6" fill="#F2A24A" stroke="#C97F2E" stroke-width="2.5"/><text x="63" y="63" text-anchor="middle" font-family="Poppins,sans-serif" font-size="8.4" font-weight="800" fill="#161D3D">SIGNED OFF ✓</text><text x="63" y="74" text-anchor="middle" font-family="Poppins,sans-serif" font-size="7" font-weight="700" fill="#7A4A12">EVIDENCE FILED</text></g></svg></template>
+<template id="art-hold-the-mark"><svg viewBox="0 0 120 96" role="img" aria-label="Hold the Mark — brand shapes defending the M mark"><rect x="8" y="8" width="104" height="80" rx="10" fill="#232C55"/><path d="M14 66 C34 58 50 70 66 62 82 54 98 66 106 60" fill="none" stroke="#3A4470" stroke-width="2"/><path d="M50 56 L54 40 L60 52 L66 40 L70 56" fill="none" stroke="#E8E2D4" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="60" cy="47" r="19" fill="none" stroke="#B9E6CD" stroke-width="2.4"/><circle cx="28" cy="30" r="7" fill="none" stroke="#B9E6CD" stroke-width="3.4"/><path d="M88 24 l3.4 6.8 7.4 1-5.4 5.2 1.3 7.4-6.7-3.5-6.7 3.5 1.3-7.4-5.4-5.2 7.4-1Z" fill="#F2A24A"/><rect x="22" y="68" width="14" height="14" rx="3" fill="none" stroke="#F2A24A" stroke-width="3.2"/><path d="M92 64 v16 M86 80 h12" stroke="#B9E6CD" stroke-width="3.4" stroke-linecap="round"/></svg></template>
+<template id="art-glitch-clash"><svg viewBox="0 0 120 96" role="img" aria-label="Glitch Clash — card battle beam clash"><rect x="8" y="8" width="104" height="80" rx="10" fill="#1B1533"/><rect x="18" y="22" width="34" height="50" rx="6" fill="#232C55" stroke="#A78BFA" stroke-width="2.6" transform="rotate(-7 35 47)"/><circle cx="35" cy="40" r="8" fill="none" stroke="#B9E6CD" stroke-width="2.8" transform="rotate(-7 35 47)"/><rect x="68" y="22" width="34" height="50" rx="6" fill="#232C55" stroke="#F2A24A" stroke-width="2.6" transform="rotate(7 85 47)"/><path d="M85 34 l2.6 5.2 5.6.8-4 3.9 1 5.6-5.2-2.7-5.2 2.7 1-5.6-4-3.9 5.6-.8Z" fill="#F2A24A" transform="rotate(7 85 47)"/><path d="M50 47 H70" stroke="#A78BFA" stroke-width="6" stroke-linecap="round"/><circle cx="60" cy="47" r="6.4" fill="#E8E2D4"/><path d="M60 12 v6M60 78 v6" stroke="#A78BFA" stroke-width="2.4" stroke-linecap="round"/></svg></template>
+<template id="art-apex-kick"><svg viewBox="0 0 120 96" role="img" aria-label="Apex Kick — a free kick curling around the wall into the top corner"><rect x="8" y="8" width="104" height="80" rx="10" fill="#12203C"/><path d="M8 66h104" stroke="#2F6B4D" stroke-width="2" opacity=".7"/><rect x="34" y="30" width="52" height="30" rx="2" fill="none" stroke="#E8E2D4" stroke-width="3"/><path d="M40 34h40M40 40h40M40 46h40M40 52h40M46 32v28M54 32v28M62 32v28M70 32v28M78 32v28" stroke="#8FA3C8" stroke-width=".9" opacity=".55"/><g fill="#2F6BD1"><rect x="44" y="46" width="6" height="16" rx="2"/><rect x="52" y="46" width="6" height="16" rx="2"/><rect x="60" y="46" width="6" height="16" rx="2"/></g><g fill="#D8AB86"><circle cx="47" cy="43" r="2.6"/><circle cx="55" cy="43" r="2.6"/><circle cx="63" cy="43" r="2.6"/></g><path d="M26 78 C40 76 66 70 78 46" fill="none" stroke="#F2A24A" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="5 4"/><circle cx="26" cy="78" r="4.6" fill="#F6F1E4" stroke="#161D3D" stroke-width="1.4"/><circle cx="79" cy="42" r="3.4" fill="#B9E6CD"/></svg></template>
+<template id="art-y4-6-science"><svg viewBox="0 0 120 96" role="img" aria-label="Years 4 to 6 science — calendar and flask"><rect x="20" y="14" width="62" height="68" rx="8" fill="#FFFDF6" stroke="#161D3D" stroke-width="2.6"/><rect x="20" y="14" width="62" height="18" rx="8" fill="#161D3D"/><text x="51" y="27" text-anchor="middle" font-family="Poppins,sans-serif" font-size="10" font-weight="800" fill="#FFF6E8">Y4–6</text><path d="M32 44h10M46 44h10M60 44h10M32 56h10M46 56h10M60 56h10M32 68h10M46 68h10" stroke="#8B93B0" stroke-width="3.2" stroke-linecap="round"/><path d="M92 40 v12 l9 16a5 5 0 0 1-4.4 7.6H84.4A5 5 0 0 1 80 68l9-16V40" fill="#B9E6CD" stroke="#2F6B4D" stroke-width="2.4"/><path d="M86 40h12" stroke="#2F6B4D" stroke-width="2.4" stroke-linecap="round"/></svg></template>
+<template id="art-studio-suite"><svg viewBox="0 0 120 96" role="img" aria-label="Studio Suite — easel with brand artwork"><path d="M60 14 60 78 M60 70 34 88 M60 70 86 88" stroke="#7A5A38" stroke-width="4" stroke-linecap="round"/><rect x="30" y="18" width="60" height="44" rx="5" fill="#FFFDF6" stroke="#161D3D" stroke-width="2.6"/><path d="M40 52 50 36 58 46 66 32 78 52" fill="none" stroke="#4C9A6F" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="46" cy="28" r="4.4" fill="#F2A24A"/></svg></template>
+<template id="art-voxel-frontier"><svg viewBox="0 0 120 96" role="img" aria-label="Voxel Frontier — a block world with a pick"><rect x="8" y="8" width="104" height="80" rx="10" fill="#1A2A1E"/><g stroke="#0F1A12" stroke-width="1.2"><rect x="20" y="52" width="18" height="18" fill="#6BAF57"/><rect x="38" y="52" width="18" height="18" fill="#7CC066"/><rect x="56" y="44" width="18" height="18" fill="#7CC066"/><rect x="74" y="52" width="18" height="18" fill="#6BAF57"/><rect x="20" y="70" width="18" height="14" fill="#8A6A48"/><rect x="38" y="70" width="18" height="14" fill="#7A5C3E"/><rect x="56" y="62" width="18" height="22" fill="#8A6A48"/><rect x="74" y="70" width="18" height="14" fill="#7A5C3E"/></g><circle cx="92" cy="26" r="8" fill="#F2E2A8"/><path d="M34 40 L52 22" stroke="#C9A227" stroke-width="4" stroke-linecap="round"/><path d="M44 18 q10 2 14 10" fill="none" stroke="#E8E2D4" stroke-width="4" stroke-linecap="round"/></svg></template>
+<template id="art-medevac-frontier"><svg viewBox="0 0 120 96" role="img" aria-label="Medevac Frontier — a helicopter over a twilight canyon"><rect x="8" y="8" width="104" height="80" rx="10" fill="#221636"/><path d="M8 70 L30 54 L46 66 L64 46 L84 62 L112 44 L112 88 L8 88Z" fill="#3A2650"/><path d="M8 78 L34 66 L58 76 L82 62 L112 74 L112 88 L8 88Z" fill="#1B1029"/><circle cx="90" cy="26" r="7" fill="#F2A24A" opacity=".85"/><g><rect x="40" y="30" width="30" height="13" rx="6" fill="#B9E6CD"/><path d="M70 36 L86 33 L86 39 Z" fill="#B9E6CD"/><path d="M30 27 h48" stroke="#E8E2D4" stroke-width="3" stroke-linecap="round"/><path d="M46 43 v6 M64 43 v6 M40 49 h30" stroke="#E8E2D4" stroke-width="2.6" stroke-linecap="round"/><path d="M52 33 h6 M55 30 v6" stroke="#E04A4A" stroke-width="2.4" stroke-linecap="round"/></g></svg></template>
 <section class="dx-dir" id="collections"><div class="dx-wrap">
 <div class="dx-cards">
 
 <article class="dx-zone"><h2 class="dx-eyebrow">Teacher Tools</h2>
-<div class="dx-duo">
-<a class="dx-prod" href="uas/" data-mbm-count="uas-register">
-<svg viewBox="0 0 120 96" role="img" aria-label="UAS Register — stamped Unit claimed, September 2026"><rect x="14" y="6" width="76" height="84" rx="6" fill="#FFFDF6" stroke="#161D3D" stroke-width="2.5" transform="rotate(-4 52 48)"/><g transform="rotate(-4 52 48)"><path d="M24 24h56M24 34h56M24 44h40M24 54h48" stroke="#8B93B0" stroke-width="2.4" stroke-linecap="round"/></g><g transform="rotate(7 82 62)"><rect x="52" y="48" width="62" height="30" rx="6" fill="#B9E6CD" stroke="#2F6B4D" stroke-width="2.5"/><text x="83" y="61" text-anchor="middle" font-family="Poppins,sans-serif" font-size="8.4" font-weight="800" fill="#161D3D">UNIT CLAIMED ✓</text><text x="83" y="72" text-anchor="middle" font-family="Poppins,sans-serif" font-size="7" font-weight="700" fill="#2F6B4D">SEPT 2026</text></g></svg>
-<b>UAS Register</b><p>Claim, track and file AQA unit awards without the spreadsheet — records stay on your device.</p><span class="mbm-hits-badge">👀 <span class="mbm-hits" data-mbm-count-for="uas-register"></span> <span class="mbm-hits-lab">opened</span></span></a>
-<a class="dx-prod" href="asdan/" data-mbm-count="asdan-register">
-<svg viewBox="0 0 120 96" role="img" aria-label="ASDAN Register — stamped Signed off, evidence filed"><rect x="14" y="6" width="76" height="84" rx="6" fill="#FFFDF6" stroke="#161D3D" stroke-width="2.5" transform="rotate(3 52 48)"/><g transform="rotate(3 52 48)"><path d="M24 24h56M24 34h56M24 44h40M24 54h48" stroke="#8B93B0" stroke-width="2.4" stroke-linecap="round"/></g><g transform="rotate(-6 62 64)"><rect x="32" y="50" width="62" height="30" rx="6" fill="#F2A24A" stroke="#C97F2E" stroke-width="2.5"/><text x="63" y="63" text-anchor="middle" font-family="Poppins,sans-serif" font-size="8.4" font-weight="800" fill="#161D3D">SIGNED OFF ✓</text><text x="63" y="74" text-anchor="middle" font-family="Poppins,sans-serif" font-size="7" font-weight="700" fill="#7A4A12">EVIDENCE FILED</text></g></svg>
-<b>ASDAN Register</b><p>PEQ &amp; short-course tracking with sign-off stamps and evidence filing — nothing uploaded.</p><span class="mbm-hits-badge">👀 <span class="mbm-hits" data-mbm-count-for="asdan-register"></span> <span class="mbm-hits-lab">opened</span></span></a>
+<div class="dx-duo" data-zone="tools">
 </div>
 <div class="dx-acts"><a class="dx-main" href="tools/">All tools →</a><a class="dx-sub" href="tools/#drawer">The drawer</a></div></article>
 
 <article class="dx-zone"><h2 class="dx-eyebrow">Games &amp; Sims</h2>
-<div class="dx-duo dx-trio">
-<a class="dx-prod" href="Lessons/Games/Hold_the_Mark.html" data-mbm-count="hold-the-mark">
-<svg viewBox="0 0 120 96" role="img" aria-label="Hold the Mark — brand shapes defending the M mark"><rect x="8" y="8" width="104" height="80" rx="10" fill="#232C55"/><path d="M14 66 C34 58 50 70 66 62 82 54 98 66 106 60" fill="none" stroke="#3A4470" stroke-width="2"/><path d="M50 56 L54 40 L60 52 L66 40 L70 56" fill="none" stroke="#E8E2D4" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="60" cy="47" r="19" fill="none" stroke="#B9E6CD" stroke-width="2.4"/><circle cx="28" cy="30" r="7" fill="none" stroke="#B9E6CD" stroke-width="3.4"/><path d="M88 24 l3.4 6.8 7.4 1-5.4 5.2 1.3 7.4-6.7-3.5-6.7 3.5 1.3-7.4-5.4-5.2 7.4-1Z" fill="#F2A24A"/><rect x="22" y="68" width="14" height="14" rx="3" fill="none" stroke="#F2A24A" stroke-width="3.2"/><path d="M92 64 v16 M86 80 h12" stroke="#B9E6CD" stroke-width="3.4" stroke-linecap="round"/></svg>
-<b>Hold the Mark</b><p>Brand-shape tower defence — place, plan and hold the line with the Focus Meter.</p><span class="mbm-hits-badge">🎮 <span class="mbm-hits" data-mbm-count-for="hold-the-mark"></span> <span class="mbm-hits-lab">plays</span></span></a>
-<a class="dx-prod" href="Lessons/Games/Glitch_Clash.html" data-mbm-count="glitch-clash">
-<svg viewBox="0 0 120 96" role="img" aria-label="Glitch Clash — card battle beam clash"><rect x="8" y="8" width="104" height="80" rx="10" fill="#1B1533"/><rect x="18" y="22" width="34" height="50" rx="6" fill="#232C55" stroke="#A78BFA" stroke-width="2.6" transform="rotate(-7 35 47)"/><circle cx="35" cy="40" r="8" fill="none" stroke="#B9E6CD" stroke-width="2.8" transform="rotate(-7 35 47)"/><rect x="68" y="22" width="34" height="50" rx="6" fill="#232C55" stroke="#F2A24A" stroke-width="2.6" transform="rotate(7 85 47)"/><path d="M85 34 l2.6 5.2 5.6.8-4 3.9 1 5.6-5.2-2.7-5.2 2.7 1-5.6-4-3.9 5.6-.8Z" fill="#F2A24A" transform="rotate(7 85 47)"/><path d="M50 47 H70" stroke="#A78BFA" stroke-width="6" stroke-linecap="round"/><circle cx="60" cy="47" r="6.4" fill="#E8E2D4"/><path d="M60 12 v6M60 78 v6" stroke="#A78BFA" stroke-width="2.4" stroke-linecap="round"/></svg>
-<b>Glitch Clash</b><p>NEW Act II — collectible card battler, now fifteen stages deep with animated story moments.</p><span class="mbm-hits-badge">🎮 <span class="mbm-hits" data-mbm-count-for="glitch-clash"></span> <span class="mbm-hits-lab">plays</span></span></a>
-<a class="dx-prod" href="apexkick/" data-mbm-count="apex-kick">
-<svg viewBox="0 0 120 96" role="img" aria-label="Apex Kick — a free kick curling around the wall into the top corner"><rect x="8" y="8" width="104" height="80" rx="10" fill="#12203C"/><path d="M8 66h104" stroke="#2F6B4D" stroke-width="2" opacity=".7"/><rect x="34" y="30" width="52" height="30" rx="2" fill="none" stroke="#E8E2D4" stroke-width="3"/><path d="M40 34h40M40 40h40M40 46h40M40 52h40M46 32v28M54 32v28M62 32v28M70 32v28M78 32v28" stroke="#8FA3C8" stroke-width=".9" opacity=".55"/><g fill="#2F6BD1"><rect x="44" y="46" width="6" height="16" rx="2"/><rect x="52" y="46" width="6" height="16" rx="2"/><rect x="60" y="46" width="6" height="16" rx="2"/></g><g fill="#D8AB86"><circle cx="47" cy="43" r="2.6"/><circle cx="55" cy="43" r="2.6"/><circle cx="63" cy="43" r="2.6"/></g><path d="M26 78 C40 76 66 70 78 46" fill="none" stroke="#F2A24A" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="5 4"/><circle cx="26" cy="78" r="4.6" fill="#F6F1E4" stroke="#161D3D" stroke-width="1.4"/><circle cx="79" cy="42" r="3.4" fill="#B9E6CD"/></svg>
-<b>Apex Kick</b><p>Curl a free kick round the wall — card stats set the physics, never the dice.</p><span class="mbm-hits-badge">🎮 <span class="mbm-hits" data-mbm-count-for="apex-kick"></span> <span class="mbm-hits-lab">plays</span></span></a>
+<div class="dx-duo dx-trio" data-zone="games">
 </div>
 <div class="dx-acts"><a class="dx-main" href="games/">Browse the Arcade<span class="dx-n" id="nGames"></span> →</a><a class="dx-sub" href="resources/?type=Game">All games</a></div></article>
 
 <article class="dx-zone"><h2 class="dx-eyebrow">Lesson Hub</h2>
-<div class="dx-duo">
-<a class="dx-prod" href="resources/?subject=Primary%20Science" data-mbm-count="y4-6-science">
-<svg viewBox="0 0 120 96" role="img" aria-label="Years 4 to 6 science — calendar and flask"><rect x="20" y="14" width="62" height="68" rx="8" fill="#FFFDF6" stroke="#161D3D" stroke-width="2.6"/><rect x="20" y="14" width="62" height="18" rx="8" fill="#161D3D"/><text x="51" y="27" text-anchor="middle" font-family="Poppins,sans-serif" font-size="10" font-weight="800" fill="#FFF6E8">Y4–6</text><path d="M32 44h10M46 44h10M60 44h10M32 56h10M46 56h10M60 56h10M32 68h10M46 68h10" stroke="#8B93B0" stroke-width="3.2" stroke-linecap="round"/><path d="M92 40 v12 l9 16a5 5 0 0 1-4.4 7.6H84.4A5 5 0 0 1 80 68l9-16V40" fill="#B9E6CD" stroke="#2F6B4D" stroke-width="2.4"/><path d="M86 40h12" stroke="#2F6B4D" stroke-width="2.4" stroke-linecap="round"/></svg>
-<b>Y4–6 Science</b><p>Interactive primary science, planned to the year and ready for 2026–27.</p><span class="mbm-hits-badge">👀 <span class="mbm-hits" data-mbm-count-for="y4-6-science"></span> <span class="mbm-hits-lab">opened</span></span></a>
-<a class="dx-prod" href="Matt-s-Apps-/" data-mbm-count="studio-suite">
-<img class="dx-art" src="images/evening-workshop.jpg" width="1200" height="670" loading="lazy" decoding="async" alt="The Evening Workshop — Util-i-Tools, Tinker-Lab and Build-Hub on a workbench">
-<b>Studio Suite</b><p>Creator studios — design, educate and build tools for the whiteboard.</p><span class="mbm-hits-badge">👀 <span class="mbm-hits" data-mbm-count-for="studio-suite"></span> <span class="mbm-hits-lab">opened</span></span></a>
+<div class="dx-duo" data-zone="lessons">
 </div>
 <div class="dx-acts"><a class="dx-main" href="Lessons/">Lesson packs<span class="dx-n" id="nLessons"></span> →</a><a class="dx-sub" href="resources/">Full catalogue</a></div></article>
 
@@ -354,15 +329,15 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <p class="mbm-board-title">Where visitors come from</p>
 <div class="mbm-board" id="mbmBoard"><p class="mbm-board-empty">Counting the first visitors…</p></div>
 </div>
-<p class="mbm-memberbadge" id="mbmMemberBadge" hidden>★ You're signed in — thank you. If member features arrive, they'll appear here first.</p>
-<p class="mbm-note">These tallies come from a public visit counter run by counterapi.dev: each visit adds a +1 that carries no identifier from this site, plus your country. Your country is worked out on your own device from its time zone, so nothing here looks up your location. The +1 itself reaches counterapi.dev the way any web request does, from your IP address &mdash; what they keep is governed by their privacy policy, not by this site.</p>
+<p class="mbm-memberbadge" id="mbmMemberBadge" hidden>★ You're signed in — thank you. Member bonuses are on the way.</p>
+<p class="mbm-note">These tallies come from a lightweight public visit counter (counterapi.dev): each visit adds an anonymous +1, plus your country. Your country is worked out on your own device from its time zone — your location is never looked up and your IP address is never sent or stored.</p>
 </div></section>
 
 <section class="dx-std" id="standard"><div class="dx-wrap">
 <h2><b>THE PROMISE</b> | how every tool behaves</h2>
 <div class="dx-tiles">
 <div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-free"/></svg><b>Free</b><p>Everything here is free to use — no trials, no locked features. An account is optional, never required.</p></div>
-<div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-shield"/></svg><b>Nothing uploaded</b><p>Lessons, registers and records stay on your device — nothing about your class is ever sent anywhere. Two things do leave your browser: this page adds a +1 to a visit counter run by counterapi.dev, and the contact form is delivered by formsubmit.co if you choose to use it. Both are third parties with their own privacy policies.</p></div>
+<div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-shield"/></svg><b>Nothing uploaded</b><p>Lessons, registers and records stay on your device — nothing about your class ever leaves it. The only things that touch the internet are the anonymous visit counter and, if you use it, the contact form.</p></div>
 <div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-off"/></svg><b>Offline-friendly</b><p>Core experiences remain useful where connectivity is unreliable.</p></div>
 <div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-board"/></svg><b>Teacher-built</b><p>Designed in a real classroom — accessible, calm-mode aware and ready for the whiteboard.</p></div>
 </div></div></section>
@@ -508,4 +483,5 @@ window.addEventListener('resize',upd);upd();})();
 </div>
 </div>
 <script src="app.js"></script>
-<script src="assets/mbm-features.js"></script></body></html>
+<script src="assets/mbm-features.js"></script><script defer src="/assets/mbm-doors.js"></script>
+</body></html>
