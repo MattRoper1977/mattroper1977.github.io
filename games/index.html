@@ -88,6 +88,14 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 .gcard:hover{transform:translateY(-2px)}
 .gcard:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 .gcard .ic{flex:0 0 44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.45rem}
+/* Card art. The card is a horizontal strip, so the art takes a fixed slot on
+   the left at the same 16:9 the frames were captured at. object-fit:cover
+   crops rather than squashes; object-position keeps the left of frame, where
+   these games put their subject. */
+.gcard .ga{flex:0 0 96px;width:96px;aspect-ratio:16/9;height:auto;border-radius:9px;
+  object-fit:cover;object-position:38% 50%;background:#161D3D;display:block}
+@media (min-width:560px){.gcard .ga{flex-basis:124px;width:124px}}
+.class .gcard .ga{flex:0 0 88px;width:88px}
 .gcard .tx{min-width:0}
 .gcard h4{font-size:.86rem;color:var(--navy);line-height:1.2;display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
 .mini{font-size:.55rem;font-weight:800;letter-spacing:.1em;background:var(--navy);color:var(--mint);border-radius:999px;padding:.14rem .45rem}
@@ -159,13 +167,13 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 <section class="sec gx-watch"><div class="wrap">
 <h2>Watch them played</h2>
 <div class="gx-watchgrid">
-<figure><video controls preload="none" playsinline muted poster="../assets/video/poster-apexkick.jpg" src="../assets/video/clip-apexkick.mp4" width="480" height="930"></video>
+<figure><video controls preload="none" playsinline muted poster="../assets/video/poster-apexkick.webp" src="../assets/video/clip-apexkick.mp4" width="480" height="930"></video>
 <figcaption><b>Apex Kick</b> — two free kicks bent round the wall, with the readout that names the number behind each one.</figcaption></figure>
-<figure><video controls preload="none" playsinline muted poster="../assets/video/poster-voxelfrontier.jpg" src="../assets/video/clip-voxelfrontier.mp4" width="480" height="930"></video>
+<figure><video controls preload="none" playsinline muted poster="../assets/video/poster-voxelfrontier.webp" src="../assets/video/clip-voxelfrontier.mp4" width="480" height="930"></video>
 <figcaption><b>Voxel Frontier</b> — walking a seeded coastline, then digging into it and building it back.</figcaption></figure>
-<figure><video controls preload="none" playsinline muted poster="../assets/video/poster-offbrand.jpg" src="../assets/video/clip-offbrand.mp4" width="480" height="930"></video>
+<figure><video controls preload="none" playsinline muted poster="../assets/video/poster-offbrand.webp" src="../assets/video/clip-offbrand.mp4" width="480" height="930"></video>
 <figcaption><b>Off-Brand</b> — the opening watch: six shapes clock in, one is lying.</figcaption></figure>
-<figure><video controls preload="none" playsinline muted poster="../assets/video/poster-glitchclash.jpg" src="../assets/video/clip-glitchclash.mp4" width="480" height="930"></video>
+<figure><video controls preload="none" playsinline muted poster="../assets/video/poster-glitchclash.webp" src="../assets/video/clip-glitchclash.mp4" width="480" height="930"></video>
 <figcaption><b>Glitch Clash</b> — building the trio for Full Harmony.</figcaption></figure>
 </div>
 <p class="gx-watchnote">Real gameplay — no scripted demo reel — captured on a phone or straight from the browser and hosted right here. Nothing loads until you press play, and nothing plays sound.</p>
@@ -249,12 +257,24 @@ function pickCard(g,lead){
  a.querySelector(".take span").textContent="\u201C"+(TAKES[g.title]||"")+"\u201D";
  return a;
 }
+function esc(t){return String(t==null?"":t).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});}
 function gCard(g,withTake){
  var a=document.createElement("a");a.className="gcard";a.href=localHref(g.href);a.style.borderLeftColor=g.hue||"#C9C0AB";
  var badge=CURATED.indexOf(g.title)>=0?'<span class="mini">MATT\u2019S PICK</span>':"";
- a.innerHTML='<div class="ic" style="background:'+tint(g.hue||"#C9C0AB")+'">'+(g.icon||"🎮")+'</div>'+
+ /* Card art. Every entry in games.json carries an `art` path — a real captured
+    frame where the game could be driven to one, a generated card where it could
+    not — so this never renders an empty slot. The emoji stays as the fallback
+    for a manifest that predates the field, and as the thing screen readers get
+    nothing from either way: the alt text below carries the meaning. */
+ var art = g.art ? '<img class="ga" src="'+esc(g.art)+'" width="640" height="360" loading="lazy" decoding="async" alt="">'
+                 : '<div class="ic" style="background:'+tint(g.hue||"#C9C0AB")+'">'+(g.icon||"🎮")+'</div>';
+ a.innerHTML = art +
  '<div class="tx"><h4><span></span>'+badge+'</h4><p></p>'+(withTake&&TAKES[g.title]?'<span class="qt"></span>':"")+'</div>';
  a.querySelector("h4 span").textContent=g.title;
+ var im=a.querySelector("img.ga");
+ if(im) im.alt = g.art && /\.svg$/.test(g.art)
+   ? g.title+" \u2014 title card"
+   : g.title+" \u2014 a moment from play";
  a.querySelector("p").textContent=(g.desc||"").replace(/^NEW\s*·\s*/,"");
  var q=a.querySelector(".qt");if(q)q.textContent="\u201C"+TAKES[g.title]+"\u201D";
  return a;
