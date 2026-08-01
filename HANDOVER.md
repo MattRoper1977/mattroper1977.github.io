@@ -78,6 +78,35 @@ old hash.
 or clear site data for `madebymatt.uk`. Afterwards the homepage shows **nine
 door cards, none bare**.
 
+## Two things found while checking, both left for Matt
+
+**The Evening Workshop photo has two independent faults and one fix answers
+both.** It carries garbled text baked into the artwork — the left device's
+screen reads "Task Checkfiet", "Geot ciecklist", "Ciocu IV 6 / 11:35 AM", and
+there are five further garbled zones. And because it is 1200×670 against the
+other eight doors' 5:4 SVG, it letterboxes below ~546px of viewport: it paints
+58.97px against their 96px at 320px wide, 85.15px against 120px at 421px. It
+matches only at 546px and above.
+
+No crop removes the garbled panels without destroying the composition — the
+worst offender is the left device's screen, and cutting it costs 29% of the
+width including one of the three subjects. **Do not regenerate it**: an image
+model is what produced the garbled text in the first place.
+
+The option that answers both faults at once is the one already half-built:
+`<template id="art-studio-suite">` exists in `index.html` and is currently dead
+code, because `image` wins over `art` in `buildCard()`. Deleting the door's
+`image` field would drop straight onto it — 0.8 KB of SVG instead of 134 KB of
+JPEG, no garbled text, and an even row at every width. The cost is real and is
+Matt's to weigh: the site would then carry no photographic card art at all.
+
+**Instrument note, because it is the session's own rule turned on itself.** The
+harness that checked the row was even measured `getBoundingClientRect()` on the
+`<img>`. That returns the *box*, which is 96 or 120 for every card at every
+width, so the check reported an even row while the photo was visibly 39%
+shorter. A check that measures the container rather than the content is a false
+zero. Painted height is `naturalWidth`/`naturalHeight` scaled into the box.
+
 ---
 
 # 1 August 2026 — Glitch Clash

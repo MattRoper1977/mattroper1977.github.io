@@ -103,7 +103,30 @@ a.dx-prod:focus-visible{outline:3px solid var(--dx-navy);outline-offset:2px}
    Evening Workshop photo carries a wordmark that a crop that deep would eat.
    Matching height evens the row, which is the actual goal, and nothing is
    cropped or squashed. object-fit:contain is belt-and-braces for any future
-   art whose intrinsic ratio is wider still. */
+   art whose intrinsic ratio is wider still.
+
+   Measured limit, which the first version of this comment did not state. The
+   shared height only holds at or above ~546px of viewport. Below that the card
+   is narrower than the 215px a 1200x670 photo needs at 120px tall, max-width
+   clamps it, and contain letterboxes rather than squashing:
+
+     viewport   photo paints   sibling SVG paints
+       320px       58.97px          96px      39% shorter
+       390px       78.51px          96px      18% shorter
+       421px       85.15px         120px      29% shorter
+       500px      107.20px         120px      11% shorter
+      >=546px      120px           120px      match
+
+   Only the Evening Workshop card is affected — it is the one door carrying a
+   photo rather than 5:4 SVG art. Left as measured rather than fixed: the fixes
+   are object-fit:cover, which crops the wordmark this rule exists to protect,
+   or replacing the photo with SVG, which is Matt's call and is tracked in
+   HANDOVER.md alongside the garbled text baked into the same image.
+
+   Note for whoever checks this: getBoundingClientRect on the <img> reports the
+   BOX, which is 96 or 120 for every card at every width. It will tell you the
+   row is even. The painted content is what differs. Measure naturalWidth /
+   naturalHeight scaled into the box. */
 .dx-prod svg,.dx-prod .dx-art{height:120px;width:auto;max-width:100%;display:block}
 .dx-prod .dx-art{border-radius:10px;object-fit:contain;object-position:center}
 @media (max-width:420px){.dx-prod svg,.dx-prod .dx-art{height:96px}}
