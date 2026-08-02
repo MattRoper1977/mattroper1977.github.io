@@ -158,6 +158,11 @@ a.dx-prod:focus-visible{outline:3px solid var(--dx-navy);outline-offset:2px}
 .dx-fcard span{display:block;color:var(--dx-mut);font-size:.84rem;line-height:1.5}
 .dx-fcard:hover{border-color:var(--dx-ambd)}
 .dx-fcard:focus-visible{outline:3px solid var(--dx-amber);outline-offset:2px}
+.dx-cresult{max-width:520px;margin:.9rem auto 0;padding:.75rem .9rem;border-radius:12px;font-size:.86rem;line-height:1.55;text-align:left}
+.dx-cresult[hidden]{display:none}
+.dx-cresult.err{background:#3A1C18;border:1.5px solid #B4472E;color:#F3D9D3}
+.dx-cresult.err a{color:#F2A24A;font-weight:800;overflow-wrap:anywhere}
+.dx-cresult.wait{background:#0F1530;border:1.5px solid #3A4470;color:#C9D1E2}
 .dx-cdirect{max-width:520px;margin:0 auto 1.1rem;padding:.7rem .85rem;border:1.5px solid #3A4470;border-radius:12px;background:#0F1530;font-size:.85rem;line-height:1.55;color:#C9D1E2;text-align:left}
 .dx-cdirect a{color:#B9E6CD;font-weight:700;overflow-wrap:anywhere}
 .dx-cnote{max-width:520px;margin:0 auto .7rem;font-size:.84rem;line-height:1.6;color:#C9D1E2;text-align:left}
@@ -416,6 +421,7 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <label class="dx-field">Your message<textarea name="message" rows="5" required></textarea></label>
 <button class="dx-send" type="submit">Send message</button>
 </form>
+<p class="dx-cresult" id="dxSendResult" role="status" aria-live="polite" hidden></p>
 <div class="dx-about" id="about">
 <h3>About the studio</h3>
 <p><strong style="color:#E8E2D4">Made by a teacher, for real classrooms.</strong> Made by Matt combines interactive tools, games, and simulations to drive inclusive education, turning focus and decision-making into the core experience.</p>
@@ -521,6 +527,85 @@ window.addEventListener('resize',upd);upd();})();
      field on the estate, guarding a members page with nothing behind it.
      assets/mbm-features.js initAccountUI() already tolerates its absence
      (it returns early when #mbmAccountBtn / #mbmAuth are missing). -->
+<script>
+/* ---------------------------------------------------------------------------
+   Contact form: a real failure state instead of an unconditional success.
+
+   The endpoint is bare-email FormSubmit, which needs a one-time activation
+   click before it delivers anything. Until then every message is discarded and
+   the visitor is redirected to /thanks/ regardless. This reads the /ajax/
+   response instead, so the page can say "that did not go through" when it did
+   not.
+
+   PROGRESSIVE ENHANCEMENT, deliberately. The form's own action stays the plain
+   endpoint, so with JS off — or if any of this throws — the browser does the
+   ordinary POST exactly as before. Switching the action attribute itself to
+   /ajax/ would show a visitor without JS a screenful of raw JSON.
+
+   HONEST LIMIT: formsubmit.co is unreachable from the build container, so this
+   path could not be exercised against the real endpoint. Every failure mode
+   below therefore falls back to "we cannot confirm — here is the direct
+   address", which is the safe direction, and any throw re-submits natively so
+   the worst case is today's behaviour rather than a lost message.
+   --------------------------------------------------------------------------- */
+(function () {
+  var form = document.querySelector('form[action*="formsubmit.co"]');
+  if (!form || !window.fetch || !window.FormData) return;   /* native POST */
+  var out = document.getElementById('dxSendResult');
+  var btn = form.querySelector('button[type=submit]');
+  var MAILTO = 'mailto:contactmadebymatt@gmail.com';
+  var sending = false;
+
+  function show(cls, html) {
+    if (!out) return;
+    out.className = 'dx-cresult ' + cls;
+    out.innerHTML = html;
+    out.hidden = false;
+  }
+  function cannotConfirm(why) {
+    show('err',
+      '<b>That may not have gone through.</b> ' + why +
+      ' Nothing was lost on your side \u2014 the text is still in the boxes above. ' +
+      'The reliable route is <a href="' + MAILTO + '">contactmadebymatt@gmail.com</a>, ' +
+      'which reaches me with nothing in between.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Send message'; }
+    sending = false;
+  }
+
+  form.addEventListener('submit', function (e) {
+    if (sending) { e.preventDefault(); return; }
+    var url, body;
+    try {
+      url = form.getAttribute('action').replace('formsubmit.co/', 'formsubmit.co/ajax/');
+      body = new FormData(form);
+    } catch (err) { return; }        /* let the browser submit normally */
+
+    e.preventDefault();
+    sending = true;
+    if (btn) { btn.disabled = true; btn.textContent = 'Sending\u2026'; }
+    show('wait', 'Sending\u2026');
+
+    var done = false;
+    var timer = setTimeout(function () {
+      if (done) return; done = true;
+      cannotConfirm('The relay did not answer in time.');
+    }, 15000);
+
+    fetch(url, { method: 'POST', body: body, headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.json().catch(function () { return null; }); })
+      .then(function (j) {
+        if (done) return; done = true; clearTimeout(timer);
+        var ok = j && String(j.success) === 'true';
+        if (ok) { window.location.href = '/thanks/'; return; }
+        cannotConfirm('The relay answered, but not with a success.');
+      })
+      .catch(function () {
+        if (done) return; done = true; clearTimeout(timer);
+        cannotConfirm('The relay could not be reached from your browser.');
+      });
+  });
+})();
+</script>
 <script src="app.js"></script>
 <script src="assets/mbm-features.js"></script><script defer src="/assets/mbm-doors.js"></script>
 </body></html>
