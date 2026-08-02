@@ -446,9 +446,18 @@ Adding a fifth stat means building and migrating storage first.
 **8. Head metadata — CLOSED 2 Aug.** Was: og:image on 7 of 25 pages,
 twitter:card on 4, `rel=canonical` on 1, og:url on 2. Now, counting only the
 16 real indexable pages (excluding `next/`, the `noindex` members page, the
-404 and the paste-in fragment): og:image on 15, twitter:card on 15, canonical
-on 15. The one gap left is `resources/medevac-frontier/index.html`, a
+404 and the paste-in fragment): **og:image 15, twitter:card 15, canonical 15**.
+The one gap left in each is `resources/medevac-frontier/index.html`, a
 three-line stub that is not a page.
+
+*Worth recording how that number was arrived at.* The first pass through this
+work claimed 15/15/15 and shipped it. Re-deriving the figure afterwards — the
+whole point of the "check the claims" job — returned **13** for twitter:card
+and canonical: `medevac/MedevacFrontier_v1.html` and `medevac/studio.html` had
+been left out of the second batch and nobody had counted again. The claim was
+written from what the change was *meant* to do rather than from the tree. Both
+pages were then fixed and the count re-derived, which is where 15 comes from.
+An audit that only ever confirms is not an audit.
 
 **9. Sitemap — CLOSED 2 Aug.** Listed 6 of this repo's own paths against 25
 HTML files. Seven live pages that were absent are now in it: `/apexkick/`,
