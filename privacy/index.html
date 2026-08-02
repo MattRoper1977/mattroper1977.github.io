@@ -56,6 +56,7 @@ code{background:var(--dx-lite);border:1px solid var(--dx-line);border-radius:5px
 
 <div class="pv-lead">
 <p><b>There is an optional account, and it never leaves your device.</b> You can make a free account to keep your game progress separate from anyone else using the same computer, and to switch on a few extras. Your email and a <b>hashed</b> version of your password are written to this browser’s own storage and are <b>never sent anywhere</b> — not to me, not to anyone. There is no server to send them to. Clearing your browser data deletes the account completely, and nothing of it survives elsewhere. <a href="/members/">What the account does, in full</a>.</p>
+<p><b>Syncing between devices is built, and is currently switched off.</b> While it is off, nothing about your games leaves this device and no extra service is involved. If it is ever switched on it is opt-in per person, and this is exactly what happens: your <i>game saves only</i> &mdash; never the UAS register, never your account &mdash; are <b>encrypted inside your browser</b> and stored on a Supabase database in London. The key is made from a code that stays on your device and is never sent, so the stored copy is unreadable to Supabase and to me. There is no name, no email and no account id in it. You can delete it, and untouched copies are erased after twelve months. <b>Lose the code and the copy is gone permanently</b> &mdash; that is the price of nobody else holding the key.</p>
 <p><b>The teacher list is the one place you can hand over an email address.</b> It is separate from the account, adults only, and has its own tick box that nothing else can set for you. If you use it, your address is posted to the same third-party relay as the contact form. Making an account does not put you on it.</p>
 <p><b>There are no cookies.</b> Every page was loaded and checked: <b>0 of 27 pages set a cookie.</b></p>
 <p><b>There is no analytics.</b> No Google Analytics, no tag manager, no tracking pixel, no session recorder. Loading all 27 pages produced requests to exactly <b>one</b> address that isn't this site, and it is the visit counter described below.</p>
@@ -69,17 +70,19 @@ code{background:var(--dx-lite);border:1px solid var(--dx-line);border-radius:5px
 <p>counterapi.dev is not run by me. I can describe the request that leaves your browser, and I have; I can't make promises about what a service I don't control does with it. If that trade isn't one you want to make, blocking <code>api.counterapi.dev</code> costs you nothing — the counters simply show the last number your own browser saw.</p>
 </div>
 
-<h2>Two things that happen only if you choose them</h2>
+<h2>Things that happen only if you choose them</h2>
 <div class="pv-scroll">
 <table class="pv-tbl">
 <thead><tr><th>If you…</th><th>then this leaves your browser</th><th>going to</th></tr></thead>
 <tbody>
 <tr><td><b>Send the contact form</b></td><td>The name, email address and message you typed</td><td><b>formsubmit.co</b>, a third-party relay this site does not run</td></tr>
 <tr><td><b>Press play on a video</b></td><td>A request for the video, as with any embedded player</td><td><b>youtube-nocookie.com</b>, YouTube's reduced-tracking player</td></tr>
+<tr><td><b>Join the teacher list</b></td><td>The email address you type, and the tick confirming you are an adult</td><td><b>formsubmit.co</b>, the same relay as the contact form</td></tr>
+<tr><td><b>Sync your games</b><br><span style="font-size:.85em">currently <b>switched off</b></span></td><td>Your game saves, <b>encrypted in your browser first</b>. No name, no email, no account id &mdash; and never the UAS register</td><td><b>Supabase</b> (London), which stores a blob it cannot read</td></tr>
 </tbody>
 </table>
 </div>
-<p>Until you do one of those two things, neither address is contacted. That was checked rather than assumed: on the home page, <b>0 of 90 requests</b> went to any YouTube address before the play button was pressed, and exactly one went there after.</p>
+<p>Until you do one of those things, none of those addresses is contacted &mdash; and sync is switched off entirely, so its row is what <i>would</i> happen rather than what does. That was checked rather than assumed: on the home page, <b>0 of 90 requests</b> went to any YouTube address before the play button was pressed, and exactly one went there after.</p>
 
 <h3>About the contact form</h3>
 <p>It is the only place on this site that collects anything you type. It sits on one page, it has three fields — name, email, message — and nothing else reads them: there is no script attached to that form or to any of its fields. When you press send, your browser posts them straight to formsubmit.co and you land on a <a href="../thanks/">thank-you page</a> here.</p>
