@@ -225,3 +225,78 @@ Residue check across the three surfaces after the edits:
 I can prove the page no longer lies. I cannot prove a message arrives, and no
 amount of work inside this container will change that — the one test that
 settles it is Matt pressing Send on his phone and looking in the right mailbox.
+
+---
+
+# Addendum — Job 1.3, the AJAX safety net
+
+**This section describes the final commit on the branch. If that commit is
+dropped, this section goes with it.**
+
+## What it does
+
+The bare endpoint returns the visitor to `/thanks/` whether or not anything was
+delivered. The `/ajax/` endpoint returns JSON instead, so the page can tell the
+difference and say so.
+
+**Progressive enhancement, deliberately.** The form's `action` attribute is
+**unchanged** — still the plain endpoint. A submit handler intercepts only when
+`fetch` and `FormData` exist, and any throw before the fetch lets the browser
+submit normally.
+
+*Switching the `action` itself to `/ajax/` was rejected: a visitor with JS
+disabled would get a screenful of raw JSON instead of a thank-you page.* The
+brief's phrasing allowed that reading; it is the wrong one.
+
+## The honest costs, not sold
+
+**1. It changes a measured property, and here it is side by side:**
+
+| | before | after |
+|---|---|---|
+| listeners on the form element | **0** | **1** (`submit`) |
+| listeners on its 7 fields | **0** | **0** — unchanged |
+
+**2. It cannot be tested against the real endpoint.** `formsubmit.co` is
+unreachable from the container. The three branches were exercised against a
+**stubbed** response — that is the only way this path can be tested here, and it
+is not the same as testing it:
+
+```
+SUCCESS  {"success":"true"}    -> POST to /ajax/…, redirected to /thanks/
+FAILURE  {"success":"false"}   -> no redirect, error panel, direct address offered,
+                                  typed text kept, button re-enabled
+UNREACHABLE  network abort     -> same fallback
+RESULT: PASS — 7/7
+```
+
+**What I have not proven: that FormSubmit's `/ajax/` endpoint permits a
+cross-origin request from `madebymatt.uk` at all.** If it does not, the fetch
+fails and the handler shows *"the relay could not be reached from your browser"*
+with the direct address — which is the safe direction, but it would mean the
+form never completes through this path. **That is the single biggest reason this
+commit is droppable**, and it is the first thing to check after Matt's test.
+
+**3. Failure is fail-safe by construction.** Every unknown resolves to *"that
+may not have gone through — here is the direct address"*, the typed text stays
+in the boxes, and the button re-enables. A 15-second timeout covers a hanging
+request. The worst case is today's behaviour, not a lost message.
+
+**4. Origins: load-time versus submit-time are different questions.** This adds
+**no load-time origin**. The privacy note's enumeration is a *load-time* census
+and is unchanged:
+
+```
+external origins ON LOAD:    1  (api.counterapi.dev)  — before and after
+external origins ON SUBMIT:  1  (formsubmit.co)       — already there; the path
+                                 changes from /… to /ajax/…, the origin does not
+```
+
+## Gates
+
+| gate | result |
+|---|---|
+| AJAX branches | **7/7** against a stubbed response |
+| floor | 15 page-viewport checks, 0 console errors, 0 4xx |
+| cards | signature `bcd83ac080e1b63b` — unmoved |
+| page errors during submit | 0 in all three branches |
