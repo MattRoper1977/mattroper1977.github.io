@@ -252,9 +252,29 @@ change** — two branches moved into the safe list and one moved out.
 Every line below was checked with `git rev-list --count origin/main..<branch>`,
 not with a branch name.
 
-*Counted before this pass pushed its own branch.* `claude/cors-probe-formsubmit`
-makes 27, and it joins the safe list the moment its pull request merges — it is
-not listed as safe now, because right now it is not.
+**Two branches merged after this list was derived and are also safe now:**
+`claude/cors-probe-formsubmit` (PR #27) and `claude/uas-lang-pack-best-int`
+(PR #28). That makes **21 safe**, not 19.
+
+### Rather than trusting any snapshot, re-derive it in one command
+
+Every list here has gone stale within hours, this one twice in a single evening.
+So stop reading the list and run this instead — it prints exactly what is safe,
+against whatever `main` happens to be:
+
+```sh
+git fetch origin --prune
+for b in $(git branch -r --format='%(refname:short)' | grep -v HEAD | grep -v '^origin/main$'); do
+  [ "$(git rev-list --count origin/main..$b)" = 0 ] && echo "SAFE   ${b#origin/}"
+done
+```
+
+**Two exceptions the command cannot know**, both already explained below:
+`claude/build-science-animations-cfr4qo` will *not* be listed (it is 2 commits
+ahead) yet is safe on content grounds; and `backup/build-anim-autumn1-v1` is in
+the **Lessons** repo, so this command never sees it and must not be deleted.
+
+The snapshot below is kept as the worked example.
 
 **19 safe to delete** — each confirmed `ahead-of-main = 0`:
 
