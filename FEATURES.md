@@ -35,7 +35,11 @@ On the homepage and on the **Stats** page: total visits, countries reached, a
 country leaderboard with flags, and the visitor's own approximate location.
 
 - Shared tallies live in a free, keyless counter service (counterapi.dev).
-- Location is looked up client-side (ipwho.is → ipapi.co backup).
+- ~~Location is looked up client-side (ipwho.is → ipapi.co backup).~~ **Not true
+  since at least 2026-08-02.** Neither host appears anywhere in any shipped
+  JavaScript — `git grep ipwho.is` and `git grep ipapi.co` both return zero
+  files. No geolocation lookup happens. Left struck through rather than
+  deleted so the correction is visible to anyone who read the old claim.
 - **Privacy:** only anonymous country tallies leave the browser; IP addresses
   are never stored by the site. Falls back to on-device numbers if offline.
 
