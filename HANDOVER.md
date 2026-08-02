@@ -410,7 +410,9 @@ scratch directory and are gone with the session.
 > third parties". That was wrong, and the way it was wrong is the estate's own
 > signature failure: the census population was **pages carrying the card**, not
 > **every page**, and it observed **page load only**, never an interaction. Two
-> more third parties were sitting outside both boundaries. The count is four.
+> more third parties were sitting outside both boundaries. The count was four.
+> **It is three as of 2 August 2026** — `cdnjs.cloudflare.com` was removed by
+> vendoring the four libraries into `uas/vendor/`, verified with the network cut.
 > A census is only as honest as the population it declares.
 
 Measured across **every** `.html` in the repo, at load and again on
@@ -421,7 +423,6 @@ interaction:
 | `api.counterapi.dev` | `/` and `/stats` | **on load, unprompted** | 2 of 26 pages; the only external origin in 223 requests |
 | `formsubmit.co` | `/` contact form | only when you press Send | 1 form, on 1 page |
 | `www.youtube-nocookie.com` | `/` video facades | only when you press play | 0 of 90 requests before the click, 1 after |
-| `cdnjs.cloudflare.com` | `/uas/app.html` | only on PDF import, OCR or PDF export | 4 lazy `loadScript` URLs, none fired on load |
 
 A fifth, `cdn.jsdelivr.net`, is referenced by a dynamic `import()` in
 `mbm-features.js` that only runs when the Supabase auth provider is active. No
@@ -429,6 +430,13 @@ keys are configured and the accounts surface is gone, so it is unreachable —
 recorded because unreachable is not the same as absent.
 
 The remaining 22 pages contact nothing external at all, on load or otherwise.
+
+`/uas/app.html` used to be a fourth entry here. Its four libraries — pdf.js, its
+worker, tesseract.js and jsPDF — plus the 10.9 MB English language pack that
+`tesseract.js` was quietly pulling from `tessdata.projectnaptha.com`, are now
+vendored under `uas/vendor/` with a SHA-256 manifest. Proven by running the PDF,
+OCR and export paths with **every** non-local request aborted: all three pass,
+0 external requests attempted.
 
 The copy describes the request and stops there. It deliberately makes **no
 promise about what any of those four do with what they receive** — that is

@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Data and privacy — Made by Matt</title>
-<meta name="description" content="Exactly what Made by Matt sends, stores and does not collect. No accounts, no cookies, no analytics — and an honest list of the four things that do reach the internet.">
+<meta name="description" content="Exactly what Made by Matt sends, stores and does not collect. No accounts, no cookies, no analytics — and an honest list of the three things that do reach the internet.">
 <meta name="theme-color" content="#161D3D">
 <meta property="og:title" content="Data and privacy — Made by Matt">
 <meta property="og:description" content="Exactly what this site sends, stores and does not collect. Measured, not promised.">
@@ -68,18 +68,17 @@ code{background:var(--dx-lite);border:1px solid var(--dx-line);border-radius:5px
 <p>counterapi.dev is not run by me. I can describe the request that leaves your browser, and I have; I can't make promises about what a service I don't control does with it. If that trade isn't one you want to make, blocking <code>api.counterapi.dev</code> costs you nothing — the counters simply show the last number your own browser saw.</p>
 </div>
 
-<h2>Three things that happen only if you choose them</h2>
+<h2>Two things that happen only if you choose them</h2>
 <div class="pv-scroll">
 <table class="pv-tbl">
 <thead><tr><th>If you…</th><th>then this leaves your browser</th><th>going to</th></tr></thead>
 <tbody>
 <tr><td><b>Send the contact form</b></td><td>The name, email address and message you typed</td><td><b>formsubmit.co</b>, a form relay, which forwards it to my inbox</td></tr>
 <tr><td><b>Press play on a video</b></td><td>A request for the video, as with any embedded player</td><td><b>youtube-nocookie.com</b>, YouTube's reduced-tracking player</td></tr>
-<tr><td><b>Import a PDF, run OCR, or export a PDF in the UAS Register</b></td><td>A request for the software libraries that do the work — <i>not</i> your file, which never leaves the browser</td><td><b>cdnjs.cloudflare.com</b>, a public library host</td></tr>
 </tbody>
 </table>
 </div>
-<p>Until you do one of those three things, none of those addresses is contacted. That was checked rather than assumed: on the home page, <b>0 of 90 requests</b> went to any YouTube address before the play button was pressed, and exactly one went there after.</p>
+<p>Until you do one of those two things, neither address is contacted. That was checked rather than assumed: on the home page, <b>0 of 90 requests</b> went to any YouTube address before the play button was pressed, and exactly one went there after.</p>
 
 <h3>About the contact form</h3>
 <p>It is the only place on this site that collects anything you type. It sits on one page, it has three fields — name, email, message — and nothing else reads them: there is no script attached to that form or to any of its fields. When you press send, your browser posts them straight to formsubmit.co and you land on a <a href="../thanks/">thank-you page</a> here.</p>
@@ -87,7 +86,7 @@ code{background:var(--dx-lite);border:1px solid var(--dx-line);border-radius:5px
 
 <h3>About the UAS Register and the ASDAN tools</h3>
 <p>These are the ones that matter most, because they hold real pupil information. <b>Pupil names, marks, units and evidence are stored in your browser on your device and are never sent anywhere.</b> There is no upload, no sync and no server holding a copy — which is also why backing up matters, and why the tool nags you about it.</p>
-<p>The libraries those tools fetch from cdnjs when you use the PDF or OCR features are program code coming <i>in</i>. Your document is read on your own machine. Nothing about a pupil goes out.</p>
+<p>These tools used to fetch their PDF and OCR libraries from a third-party code host the moment you used those features. Since <b>2 August 2026</b> those libraries are part of this site, so the PDF reader, the OCR engine and its English language pack all load from <code>madebymatt.uk</code> and nothing else. <b>The OCR now works with no internet connection at all</b>, which is what a tool for classrooms should have done from the start.</p>
 
 <h2>What stays on your device</h2>
 <p>Visiting the site leaves cached counter numbers in your browser's local storage — 37 of them, all of the form <code>mbm_c_…</code>, which are just the last totals your browser saw so the numbers don't flash blank on the next visit. If you change the reading background, that choice is stored too.</p>
@@ -108,8 +107,7 @@ code{background:var(--dx-lite);border:1px solid var(--dx-line);border-radius:5px
 <h2>What I can't tell you</h2>
 <div class="pv-note">
 <p>Three honest gaps, stated rather than papered over.</p>
-<p><b>What the third parties do.</b> counterapi.dev, formsubmit.co, YouTube and Cloudflare each receive a request from your browser. I've described every one. What they keep is theirs, and any page claiming otherwise about a service it doesn't run is guessing.</p>
-<p><b>The OCR language pack.</b> When the UAS Register's OCR runs, the OCR library downloads a language file from a location set by the library itself rather than by this site. I could not read that default from where this was checked, so I'm not going to state it as fact.</p>
+<p><b>What the third parties do.</b> counterapi.dev, formsubmit.co and YouTube each receive a request from your browser. I've described every one. What they keep is theirs, and any page claiming otherwise about a service it doesn't run is guessing.</p>
 <p><b>What FormSubmit shows you mid-send.</b> Depending on their own settings, a spam check may appear on their page between pressing send and arriving back here. That page is theirs.</p>
 </div>
 
