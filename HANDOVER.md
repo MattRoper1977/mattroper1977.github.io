@@ -80,6 +80,12 @@ door cards, none bare**.
 
 ## 2 August — the account offer, built and dormant
 
+> **Removed later the same day.** Everything this section describes as built —
+> the two account cards, the homepage band, the `/uas/` and `/voxel/` banners —
+> was taken out when Matt chose option (c). See *"Superseded later the same
+> day"* further down. The section is kept because the **finding** in it is
+> permanent and worth re-reading: static hosting cannot gate a file.
+
 Matt asked whether the UAS tool and Voxel Frontier could go behind an account.
 **They cannot, and the reason is structural rather than a matter of effort.**
 GitHub Pages is static: `/voxel/index.html` and `/uas/app.html` return HTTP 200
@@ -142,6 +148,24 @@ Nothing was deleted. `MBMAuth`, both backends and the modal all still work, and
 flipping the boolean back restores the whole flow — proven by doing it, not
 asserted: with `enabled:true` and no other change, the header button, the
 modal, the members gate and the members hero copy all come back.
+
+> **Superseded later the same day — read this before trusting the paragraph
+> above.** Matt then chose option (c): remove the surface rather than leave it
+> switched off. The Log in button, the auth modal and its password field, the
+> members gate and signed-in area, the member badge, the homepage account band,
+> the two `zone:"account"` doors and the two `/uas/` and `/voxel/` sync-offer
+> banners are all **gone from the markup**. `MBMAuth` and `initAccountUI()` in
+> `assets/mbm-features.js` are **untouched and still fail-closed**, and
+> `features.accounts.enabled` is still `false`.
+>
+> **The reversal is no longer a boolean.** Flipping `enabled:true` now changes
+> nothing visible, because the markup it used to reveal is not there. Restoring
+> accounts means reverting the removal commit and then flipping the flag. That
+> is a real cost and it is stated rather than buried: the trade was made
+> deliberately, because an offer nobody can accept is not a feature.
+>
+> 42 accounts-related CSS selectors went with it, after being proven dead
+> across 26 pages here **and** 1,007 files in the `Lessons` and `Games` repos.
 
 **One trap worth carrying forward.** The first version of the off-switch set
 `btn.hidden = true`, and the Log in button stayed on screen — `.mbm-navbtn`
@@ -381,26 +405,41 @@ scratch directory and are gone with the session.
 
 ## Third parties (as of this commit)
 
-A request census of every page carrying a "nothing uploaded" promise found
-exactly two third parties, and the homepage card named neither:
+> **Corrected 2 August 2026.** This section previously said "a request census
+> of every page carrying a *nothing uploaded* promise found **exactly two**
+> third parties". That was wrong, and the way it was wrong is the estate's own
+> signature failure: the census population was **pages carrying the card**, not
+> **every page**, and it observed **page load only**, never an interaction. Two
+> more third parties were sitting outside both boundaries. The count is four.
+> A census is only as honest as the population it declares.
 
-| Host | Where | When |
-|---|---|---|
-| `api.counterapi.dev` | `/` and `/stats` | on load, ~33 requests |
-| `formsubmit.co` | `/` contact form | on submit only |
+Measured across **every** `.html` in the repo, at load and again on
+interaction:
 
-`/members`, `/tools`, `/next`, `/games` and `/resources` make **no**
-third-party requests on load.
+| Host | Where | When | Population evidence |
+|---|---|---|---|
+| `api.counterapi.dev` | `/` and `/stats` | **on load, unprompted** | 2 of 26 pages; the only external origin in 223 requests |
+| `formsubmit.co` | `/` contact form | only when you press Send | 1 form, on 1 page |
+| `www.youtube-nocookie.com` | `/` video facades | only when you press play | 0 of 90 requests before the click, 1 after |
+| `cdnjs.cloudflare.com` | `/uas/app.html` | only on PDF import, OCR or PDF export | 4 lazy `loadScript` URLs, none fired on load |
 
-The homepage copy now describes the request and stops there. It deliberately
-makes **no promise about what counterapi.dev or formsubmit.co do with it** —
-that is their infrastructure, under their privacy policies. The previous copy
-claimed "your IP address is never sent or stored", which is not true and
-cannot be made true: an HTTP request reaches the other end from your IP by
-definition.
+A fifth, `cdn.jsdelivr.net`, is referenced by a dynamic `import()` in
+`mbm-features.js` that only runs when the Supabase auth provider is active. No
+keys are configured and the accounts surface is gone, so it is unreachable —
+recorded because unreachable is not the same as absent.
 
-If you add any third party to a page carrying that card, the card has to
-change in the same commit.
+The remaining 22 pages contact nothing external at all, on load or otherwise.
+
+The copy describes the request and stops there. It deliberately makes **no
+promise about what any of those four do with what they receive** — that is
+their infrastructure, under their policies. The old copy claimed "your IP
+address is never sent or stored", which is not true and cannot be made true:
+an HTTP request reaches the other end from your IP by definition.
+
+Full plain-English version for visitors: **`/privacy/`**. If you add any third
+party to any page, `/privacy/` and the homepage promise tile both have to
+change in the same commit — and the number above has to be re-derived, not
+incremented.
 
 ---
 

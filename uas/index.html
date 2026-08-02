@@ -70,29 +70,10 @@ footer a{color:#fff}
 </style>
 </head>
 <body>
-<!-- Account offer. Fail-closed: stays hidden unless a cloud-sync round-trip has
-     actually been verified (window.MBM_CAPS["cloud-sync"]). Nothing sets that
-     yet — the sync module is not built — so this does not render today, which
-     is intended. Advertising sync before sync works is the thing this guards
-     against. See FEATURES.md and assets/mbm-features.js MBM_CAPS.
-     Inline display:none as well as [hidden]: these pages do not load
-     styles.css, so they have no [hidden]{display:none!important} to rely on. -->
-<div id="mbmSyncOffer" hidden style="display:none">
-<style>
-#mbmSyncOffer{margin:0;padding:.85rem 1rem;background:#161D3D;color:#E8E2D4;
-  font-family:Poppins,"Segoe UI",system-ui,sans-serif;font-size:.85rem;line-height:1.5;
-  border-bottom:2px solid #F2A24A}
-#mbmSyncOffer .in{max-width:1180px;margin:auto;display:flex;gap:.9rem;align-items:center;flex-wrap:wrap;justify-content:space-between}
-#mbmSyncOffer b{color:#B9E6CD}
-#mbmSyncOffer a{display:inline-flex;align-items:center;min-height:44px;padding:.5rem 1.1rem;
-  background:#F2A24A;color:#161D3D;font-weight:800;border-radius:999px;text-decoration:none;box-shadow:0 2px 0 #C97F2E}
-</style>
-<div class="in"><span><b>Your setup can follow you.</b> A free account carries your unit setup and preferences to any device you sign in on. Pupil records, marks and evidence stay on this device and are never uploaded.</span><a href="/members/">Create a free account</a></div>
-</div>
-<script>
-(function(){var c=window.MBM_CAPS||{},el=document.getElementById("mbmSyncOffer");
-if(el&&c["cloud-sync"]){el.hidden=false;el.style.display="block";}})();
-</script>
+<!-- The "create a free account" sync offer was removed 2026-08-02. It
+     advertised cloud sync that was never built, behind a capability flag
+     (MBM_CAPS["cloud-sync"]) that nothing ever set, so no visitor could
+     accept it. Removed with the rest of the accounts surface. -->
 
 <header>
   <div class="wrap">
