@@ -4,7 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>UAS Register · Made by Matt</title>
+<meta name="description" content="Claim, track and file AQA Unit Award Scheme units in one place. Runs in your browser, works offline, and every record stays on your device.">
+<link rel="canonical" href="https://madebymatt.uk/uas/app.html">
+<meta property="og:title" content="UAS Register — Made by Matt">
+<meta property="og:description" content="Claim, track and file AQA Unit Award Scheme units in one place. Offline, and nothing leaves your device.">
+<meta property="og:url" content="https://madebymatt.uk/uas/app.html">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Made by Matt">
+<meta property="og:image" content="https://madebymatt.uk/assets/og-cover.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://madebymatt.uk/assets/og-cover.png">
+<meta name="theme-color" content="#161D3D">
 <style>
+.mbm-vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+#mbm-bknag{margin:0 0 12px;padding:.75rem .9rem;border:1.5px solid #C97F2E;border-radius:12px;background:#FDF6E4;color:#5A4A1E;font-size:.86rem;line-height:1.5;display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;justify-content:space-between}
+#mbm-bknag b{color:#8A5620}
+#mbm-bknag .acts{display:flex;gap:.5rem;flex-wrap:wrap}
+#mbm-bknag button{font:inherit;font-weight:800;font-size:.8rem;min-height:44px;padding:.4rem 1rem;border-radius:999px;border:1.5px solid #161D3D;background:#FFFDF6;color:#161D3D;cursor:pointer}
+#mbm-bknag button.go{background:#F2A24A;border-color:#F2A24A;box-shadow:0 2px 0 #C97F2E}
 :root{
   --aqa:#3f2a56;        /* deep AQA purple */
   --aqa-mid:#5c4380;
@@ -199,6 +216,7 @@ table.ssg .vert{writing-mode:vertical-rl;transform:rotate(180deg);white-space:no
 </header>
 
 <main>
+<h1 class="mbm-vh">UAS Register</h1>
 
 <!-- ============ PUPILS ============ -->
 <section id="view-pupils" class="view active">
@@ -1494,6 +1512,7 @@ $("#bk-export").addEventListener("click",async()=>{
   a.href=URL.createObjectURL(blob);
   a.download="uas-register-backup-"+todayISO()+".json";
   a.click();URL.revokeObjectURL(a.href);
+  await markBackedUp();
   toast("Backup downloaded");
 });
 $("#bk-import").addEventListener("click",()=>$("#bk-file").click());
@@ -1527,10 +1546,64 @@ $("#wipe").addEventListener("click",async()=>{
 
 /* ---------- init ---------- */
 window.S=S; /* debug/test handle */
+
+/* ---------- backup reminder (added 2026-08-02) ----------
+   This register is deliberately device-only: nothing is uploaded, which is the
+   whole point of it and is what the page promises. The cost of that promise is
+   that a reimaged laptop or a cleared browser takes the register with it, and
+   the guide already says so in prose at the top of Settings.
+
+   Prose is not a reminder. Export backup already existed and was already good;
+   what was missing was anything that noticed you had not used it. So this
+   counts what would actually be lost and says so, once there is something to
+   lose, and only after a fortnight.
+
+   It reads pupil/mark counts and one timestamp. It sends nothing anywhere. */
+const BK_KEY="lastBackup", BK_DAYS=14;
+async function markBackedUp(){
+  try{ await dbPut("kv",{k:BK_KEY,v:new Date().toISOString()}); }catch(e){}
+  const n=document.getElementById("mbm-bknag"); if(n) n.remove();
+}
+async function backupNag(){
+  try{
+    const pupils=S.pupils.filter(p=>!p.archived).length;
+    if(!pupils) return;                       // nothing to lose yet
+    const rec=await dbGet("kv",BK_KEY);
+    const last=rec&&rec.v?new Date(rec.v):null;
+    const days=last?Math.floor((Date.now()-last.getTime())/86400000):null;
+    if(days!==null&&days<BK_DAYS) return;
+    if(sessionStorage.getItem("mbm-bknag-hidden")==="1") return;
+
+    const marks=S.marks.length, units=S.units.length;
+    const what=pupils+" pupil"+(pupils===1?"":"s")+", "+units+" unit"+(units===1?"":"s")+
+               " and "+marks+" mark"+(marks===1?"":"s");
+    const when=last? "Last backup was "+days+" day"+(days===1?"":"s")+" ago."
+                   : "You have never taken a backup.";
+    const el=document.createElement("div");
+    el.id="mbm-bknag";
+    el.setAttribute("role","status");
+    el.innerHTML='<span><b>'+what+' live only on this device.</b> '+when+
+      ' If this browser is cleared or the laptop is reimaged, they go with it.</span>'+
+      '<span class="acts"><button type="button" class="go" id="mbm-bknag-go">Export backup</button>'+
+      '<button type="button" id="mbm-bknag-x">Not now</button></span>';
+    const main=document.querySelector("main");
+    if(!main) return;
+    main.insertBefore(el, main.firstChild);
+    document.getElementById("mbm-bknag-go").addEventListener("click",()=>{
+      const b=document.getElementById("bk-export"); if(b) b.click();
+    });
+    document.getElementById("mbm-bknag-x").addEventListener("click",()=>{
+      try{ sessionStorage.setItem("mbm-bknag-hidden","1"); }catch(e){}
+      el.remove();
+    });
+  }catch(e){ /* a reminder must never take the register down with it */ }
+}
+
 async function init(){
   await openDB();
   await loadAll();
   renderPupils();
+  backupNag();
 }
 init();
 </script>

@@ -1,6 +1,8 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Matt's Curated Favs — The Arcade — Made by Matt</title>
+<link rel="canonical" href="https://madebymatt.uk/games/">
+<meta property="og:url" content="https://madebymatt.uk/games/">
 <meta name="description" content="A personally curated shelf of free single-file browser games built in a real classroom — no installs, no accounts, no ads.">
 <meta name="theme-color" content="#161D3D">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Made by Matt"><meta property="og:image" content="https://madebymatt.uk/images/apexkick-hub.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://madebymatt.uk/images/apexkick-hub.jpg"><link rel="icon" href="https://madebymatt.uk/favicon.svg">
@@ -50,6 +52,12 @@ a{color:inherit}
 @media(min-width:700px){.gx-watchgrid{flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:flex-start;max-width:645px;margin:0 auto}}
 .gx-watch figure{margin:0;display:flex;flex-direction:column;gap:.5rem;max-width:300px;width:100%}
 .gx-watch video{display:block;width:100%;height:auto;aspect-ratio:480/930;background:var(--navy);border:1.5px solid var(--navy);border-radius:18px;object-fit:cover}
+/* Landscape variant. The four portrait clips are phone captures at 480x930 and
+   are cover-cropped into that ratio; a 16:9 browser capture dropped into the
+   same slot would lose a third of its width, which is the mistake the Medevac
+   banner already made once. Wide entries get their own ratio and contain. */
+.gx-watch figure.wide{max-width:640px;width:100%}
+.gx-watch figure.wide video{aspect-ratio:16/9;object-fit:contain;background:#161D3D}
 .gx-watch figcaption{font-size:.82rem;line-height:1.45;color:#4A5170;text-align:center}
 .gx-watch figcaption b{color:var(--navy)}
 .gx-watchnote{max-width:40rem;margin:1.3rem auto 0;text-align:center;font-size:.8rem;line-height:1.55;color:#4A5170}
@@ -178,6 +186,8 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 <figcaption><b>Off-Brand</b> — the opening watch: six shapes clock in, one is lying.</figcaption></figure>
 <figure><video controls preload="none" playsinline muted poster="../assets/video/poster-glitchclash.webp" src="../assets/video/clip-glitchclash.mp4" width="480" height="930"></video>
 <figcaption><b>Glitch Clash</b> — building the trio for Full Harmony.</figcaption></figure>
+<figure class="wide"><video controls preload="none" playsinline muted loop poster="../assets/video/poster-voxelfrontier-play.webp" src="../assets/video/clip-voxelfrontier-play.webm" width="854" height="480"></video>
+<figcaption><b>Voxel Frontier, from the browser</b> — thirteen seconds of the real thing: lifting clear of a seeded ridge, gliding over the treeline, then landing and putting blocks back. Captured straight from a browser at 854×480, no edit beyond a trim.</figcaption></figure>
 </div>
 <p class="gx-watchnote">Real gameplay — no scripted demo reel — captured on a phone or straight from the browser and hosted right here. Nothing loads until you press play, and nothing plays sound.</p>
 </div></section>

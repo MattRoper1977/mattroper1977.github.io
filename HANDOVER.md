@@ -406,20 +406,24 @@ change in the same commit.
 
 ## Open items
 
-**1. Members / accounts — needs Matt's decision, do not guess.**
-`/members` collects name, email and password while the member bonuses behind
-it are still unbuilt. Three honest options: build one real bonus, switch the
-page to register-interest, or hide it until it is real. It must not be
-guessed at. The privacy claim on that page is currently *true* — the census
-confirms `/members` makes no third-party request, and the password is hashed
-on-device — so nothing is actively misleading, but the offer is.
-**This is the top item on return.**
+**Reconciled 2 August 2026.** Items 1 and 2 below were still marked open, and
+item 1 was still marked "the top item on return", after both had been closed —
+1 on 2 August and 2 across 1–2 August. A list that says a finished thing is
+outstanding is worse than no list: it sends the next person to redo work. The
+closed ones are struck through rather than deleted so the trail survives.
 
-**2. Studio count not verifiable here.** `next/apps.html` said "28 studios"
-and now says 29, matching `resources/index.html` and `tools/index.html`. It
-was **not** verified against `apps.json`, which does not exist in the site,
-Lessons or Games repos — it presumably lives in `Matt-s-Apps-`. Worth
-confirming the real total once.
+~~**1. Members / accounts — needs Matt's decision, do not guess.**~~
+**CLOSED 2 Aug.** Matt asked for the decision to be made rather than deferred.
+Accounts are switched off (`features.accounts.enabled: false`); nothing
+collects a name, email or password. The offer is now sync rather than gating,
+built and dormant. Reasoning in `FEATURES.md` §3.
+
+~~**2. Studio count not verifiable here.**~~
+**CLOSED 2 Aug.** The estate no longer states a Creator Hub studio count
+anywhere. `98b0a59` removed three; a fourth survived at
+`resources/index.html:139` ("29 single-file studios") and was removed on
+2 August. The figure had been wrong four times. Nothing here now asserts a
+number this repo cannot derive from data it renders.
 
 **3. `/next/` is a concept-preview directory**, `Disallow`ed in `robots.txt`
 and absent from the sitemap. It carries claims ("no tracking") that are not
@@ -437,6 +441,34 @@ churn is worse than the inconsistency.
 **7. Apex Kick's stat row stays at four.** There is no Kick Rating field on
 `P`; the per-round average is computed in `finishRound()` and never persisted.
 Adding a fifth stat means building and migrating storage first.
+
+
+**8. Head metadata — CLOSED 2 Aug.** Was: og:image on 7 of 25 pages,
+twitter:card on 4, `rel=canonical` on 1, og:url on 2. Now, counting only the
+16 real indexable pages (excluding `next/`, the `noindex` members page, the
+404 and the paste-in fragment): og:image on 15, twitter:card on 15, canonical
+on 15. The one gap left is `resources/medevac-frontier/index.html`, a
+three-line stub that is not a page.
+
+**9. Sitemap — CLOSED 2 Aug.** Listed 6 of this repo's own paths against 25
+HTML files. Seven live pages that were absent are now in it: `/apexkick/`,
+`/voxel/`, `/medevac/`, `/experiences/medevac-frontier/`, `/stats/`,
+`/uas/app.html`, `/asdan/app.html`. 438 `<loc>` total.
+
+**10. FEATURES.md geolocation claim — CLOSED 2 Aug.** It said location was
+looked up via ipwho.is with an ipapi.co backup. Neither host appears in any
+shipped JavaScript; `git grep` returns zero files for both. Struck through in
+place rather than deleted.
+
+**11. Dead members CSS — CLOSED 2 Aug.** `.mb-perks` and `.mb-grid`, five
+rules in `members/index.html`, had no producer anywhere in the tree. Removed,
+559 bytes.
+
+**STILL OPEN and genuinely so:** items 3, 4, 5, 6 and 7 above, plus the cloud
+sync module (needs Supabase keys — `FEATURES.md` §3), an mp4 twin for
+`clip-voxelfrontier-play.webm` (this container can only encode VP8), and
+Enforce HTTPS on the three project repos, which is a GitHub UI setting with no
+file representation and cannot be done from here.
 
 ---
 
