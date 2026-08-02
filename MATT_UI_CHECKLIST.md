@@ -94,7 +94,31 @@ that is worth knowing too — tell Claude and the honeypot stays the only defenc
 
 ---
 
-## 4. The Facebook URL — if you want it on the site
+## 4. ⭐ Upload the launch film — and add the music at upload
+
+The video is built and waiting in the session artefacts directory as
+**`madebymatt-launch.mp4`** — 1920×1080, 76 seconds, 9.8 MB. The thumbnail is
+committed at `assets/video/thumb-launch-1280x720.png`.
+
+**Everything you need is in
+[`reports/film/2026-08-02-launch-film-publish-kit.md`](reports/film/2026-08-02-launch-film-publish-kit.md)**
+— title, full description with chapters and transcript, pinned comment, and the
+step-by-step.
+
+**The one step that is easy to miss:** the file has **no audio track at all**.
+That is deliberate — a music licence cannot be verified from a build container,
+so nothing was baked in. After uploading, go to **YouTube Studio → Editor →
+Audio** and pick a track from YouTube's own **Audio Library**, the same route
+you used for the Apex Kick reel. Keep it low; there is no narration to compete
+with and the audience includes SEMH pupils.
+
+Once it is live, send Claude the eleven-character video ID and it goes on the
+home page as a click-to-load facade in about two minutes — the poster is already
+committed.
+
+---
+
+## 5. The Facebook URL — if you want it on the site
 
 The homepage and members page now carry a **Follow the work** card with the
 three channels whose URLs actually exist in the repository: **YouTube**
@@ -106,7 +130,7 @@ you end up linking a stranger's page from your own site.
 
 ---
 
-## 5. Optional / whenever
+## 6. Optional / whenever
 
 ### Cloudflare Pages app (30 seconds)
 github.com → your **account** Settings (not a repo's) → **Applications →
@@ -124,9 +148,10 @@ This list covers `mattroper1977.github.io` only. The `Lessons`, `Games` and
 do not assume they are clean.
 
 <!-- BRANCH-LIST:BEGIN -->
-**Re-derived 2 August 2026 against `main` at `69c0457`**, after PR #19 merged —
-the previous list was measured against an older `main` and a list like this is
-stale the moment `main` moves.
+**Re-derived 2 August 2026 against `main` at `ecf8b8c`**, after PR #20 merged.
+This list is stale the moment `main` moves, so it is re-derived every pass
+rather than carried; the SHAs below have not changed across three derivations,
+which is a result, not a reason to stop checking.
 
 **23 remote branches. 18 fully contained in `main`, 4 not, plus `main` itself.**
 Of the 18, one is the branch still being pushed to, so **17 are safe to delete**
