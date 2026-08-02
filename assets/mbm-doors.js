@@ -33,6 +33,7 @@
 
   var TAG = "[mbm-doors]";
   var problems = [];   // faults that cost a door its card
+  var deferred = [];   // doors held back because a capability they need is absent
   var generated = 0;   // cards that fell through to generated art
   function bad(msg, door) {
     problems.push(msg);
@@ -205,6 +206,28 @@
     if (missing.length) {
       bad(label + " is missing or has empty: " + missing.join(", "), door); return null;
     }
+
+    /* A door may declare a capability it depends on. If the capability is not
+       actually present, the door does not render — it is DEFERRED, not skipped
+       and not a fault.
+
+       This exists because the alternative is worse than a missing card. The
+       account doors advertise cloud sync; rendering them while sync is not
+       live would promise a visitor something the site cannot do, which is the
+       same class of mistake as a password that guards nothing. Binding the
+       advert to the capability means the offer cannot appear before it is
+       true — there is no state where the card is up and the feature is not.
+
+       Capabilities are deliberately checked at runtime rather than trusted
+       from config: "the keys are pasted in" is not the same claim as "a sync
+       round-trip succeeded". See MBM_CAPS in assets/mbm-features.js. */
+    if (typeof door.requires === "string" && door.requires) {
+      var caps = window.MBM_CAPS || {};
+      if (!caps[door.requires]) {
+        deferred.push(door.title + " (needs " + door.requires + ")");
+        return null;
+      }
+    }
     if (!zones[door.zone]) {
       bad(label + ' declares unknown zone "' + door.zone + '" (known zones: ' +
           Object.keys(zones).join(", ") + ")", door);
@@ -319,6 +342,17 @@
     root.setAttribute("data-doors", String(placed));
     root.setAttribute("data-doors-art", String(withArt));
     root.setAttribute("data-doors-gen", String(generated));
+    root.setAttribute("data-doors-deferred", String(deferred.length));
+    if (deferred.length) note(deferred.length + " door(s) deferred: " + deferred.join("; "));
+
+    /* A band whose every door was deferred has nothing in it. Leaving the
+       heading and the strapline up over an empty strip would advertise the
+       thing anyway, which is exactly what deferring was for. */
+    var bands = document.querySelectorAll("[data-band-for]");
+    for (var n = 0; n < bands.length; n++) {
+      var z = zones[bands[n].getAttribute("data-band-for")];
+      bands[n].hidden = !(z && z.querySelector("a.dx-prod"));
+    }
     if (withArt !== placed) {
       bad("bare cards: " + (placed - withArt) + " of " + placed + " rendered doors have no artwork");
     }

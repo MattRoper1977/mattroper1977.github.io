@@ -78,6 +78,45 @@ old hash.
 or clear site data for `madebymatt.uk`. Afterwards the homepage shows **nine
 door cards, none bare**.
 
+## 2 August — the account offer, built and dormant
+
+Matt asked whether the UAS tool and Voxel Frontier could go behind an account.
+**They cannot, and the reason is structural rather than a matter of effort.**
+GitHub Pages is static: `/voxel/index.html` and `/uas/app.html` return HTTP 200
+and their whole contents to a plain `curl`, with no JavaScript run. A login
+check in JS happens after the browser already has the file. Measured, not
+assumed.
+
+So the offer became **sync instead of gating**: nothing is taken away, and an
+account does the one thing the site otherwise cannot — stop your work being
+stranded on one machine. Two cards on the homepage, banners on `/uas/` and
+`/voxel/`.
+
+**Pupil data is deliberately excluded, and the card says so.** `uas_register`
+holds `pupils`, `marks`, `sessions` and `evidence` alongside `units` and `kv`.
+Only the last two sync. The rest is named children, their marks and evidence
+photographs; uploading it would contradict what both registers promise in their
+own copy and would be a data-protection decision, not a technical one.
+
+**None of it renders yet, on purpose.** Everything is bound to
+`MBM_CAPS["cloud-sync"]`, which is set only by a verified write-then-read-back
+round-trip — not by keys being present in config. Nothing sets it, because the
+sync module needs a live Supabase project to build and verify against. Both
+states are tested: capability absent → band hidden, 0 account cards,
+`deferred=2`; capability present → band visible, 2 cards with art,
+`deferred=0`.
+
+**The fifth gate-defeat, and this time the class is closed.** The band rendered
+its heading over an empty strip despite carrying `hidden`, because
+`.dx-zone{display:flex}` outranks the UA sheet's bare `[hidden]`. Same trap as
+the Log in button earlier the same day, and `mbm-features.css` already carried
+**four** one-off `[hidden]` patches written for the same reason, one per
+sighting. `styles.css` now opens with `[hidden]{display:none!important}`.
+Checked first that no rule anywhere deliberately displays a `[hidden]` element
+— every one of them sets `display:none`.
+
+---
+
 ## 2 August — both of the above are now closed
 
 **The Evening Workshop photo is gone.** `art-studio-suite` was rewritten from a

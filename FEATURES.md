@@ -91,6 +91,87 @@ The flag takes down the entry points (`initAccountUI` hides the header button
 and the members gate, and sets `data-accounts="off"` on `<html>`), so this is a
 one-line reversal, not a rebuild.
 
+### What an account will be for — built, dormant, waiting on one thing
+
+The offer is built and sitting in the repo. It is **sync, not gating**, and the
+reason is worth stating because the obvious idea does not work here.
+
+**You cannot put a file behind a login on this site.** GitHub Pages is static —
+there is no server to check who anyone is. `/voxel/index.html` and
+`/uas/app.html` answer a plain `curl` with HTTP 200 and the whole file, no
+JavaScript involved, and `/uas/` is in `sitemap.xml` with `robots.txt` saying
+`Allow: /`. Any "members only" check written in JavaScript runs *after* the
+browser already has the page. It is a curtain in front of an open door whose
+address is published.
+
+So nothing is gated. The account does something the site genuinely cannot do
+without one: it stops your work being stranded on one machine.
+
+| surface | offer |
+|---|---|
+| homepage `account` band | two cards, hidden until sync works |
+| `/voxel/` banner | your worlds open on any device you sign in on |
+| `/uas/` banner | your **unit setup** follows you |
+
+**Pupil data deliberately does not sync.** `uas_register` (IndexedDB, v2) has
+stores `pupils`, `units`, `marks`, `sessions`, `kv`, `evidence`. Only `units`
+and `kv` — your unit definitions and preferences — are in scope. `pupils`,
+`marks`, `sessions` and `evidence` stay on the device and are never uploaded.
+
+That is not caution for its own sake. Those stores hold named children, their
+marks, and evidence photographs. Uploading them would move identifiable pupil
+data to a third-party service, contradict what both register tools currently
+promise in their own copy ("records stay on your device", "nothing uploaded"),
+and turn a technical choice into a data-protection one needing a processor
+agreement and, in a school, a DPIA. The cards say the limit out loud rather
+than quietly observing it — "Your setup, not your pupils".
+
+Voxel Frontier is plain `localStorage` (`voxelfrontier.world.v2.*`,
+`.save.v1`, `.lastseed.v1`, `.prefs.v1`) with no personal data in it, so worlds
+sync whole.
+
+#### Why none of it is visible yet
+
+Every surface is bound to a **capability**, not to configuration:
+
+```
+window.MBM_CAPS["cloud-sync"]
+```
+
+A door in `site.json` can declare `"requires": "cloud-sync"`, and
+`mbm-doors.js` defers it until that capability is present — publishing
+`data-doors-deferred` so the count stays honest. The band hides itself when
+every door in it deferred. The two tool-page banners check the same flag and
+ship `hidden` with an inline `display:none`, because those pages do not load
+`styles.css`.
+
+**Nothing sets `cloud-sync` yet**, so nothing renders. That is the design, not
+an outage. The register that flag lives in draws a distinction that is easy to
+lose:
+
+1. `site.json` has Supabase keys — *configuration*
+2. the Supabase client authenticated — *connection*
+3. a write-then-read-back round-trip succeeded — *capability*
+
+Only (3) justifies telling a teacher their work is being kept safe. A backup
+that silently fails is worse than no backup, because they stop making their
+own copies.
+
+#### What is left to build
+
+The sync module itself, which must:
+
+- write and read back a test record before ever setting `cloud-sync`
+- sync `units` + `kv` from `uas_register`, and the four `voxelfrontier.*`
+  localStorage keys — nothing else
+- resolve conflicts by last-write-wins per key, with the losing copy kept
+- report failure visibly rather than falling silent
+
+It is not written because it needs a live Supabase project to build and verify
+against, and shipping untested network code that claims to protect a teacher's
+records would be exactly the failure mode above. **Paste keys in (below) and it
+becomes buildable and testable.**
+
 ### Turning accounts back on
 
 Set `"enabled": true`. That restores exactly what was there before —
