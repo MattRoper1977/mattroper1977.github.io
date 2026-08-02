@@ -19,22 +19,26 @@ they came from is the same one that produced the rest of the image, so treat
 the whole asset as safe at thumbnail scale and unsafe at any size where text
 resolves.
 
-That distinction is not theoretical. `evening-workshop.jpg` below has exactly
-the same problem and it was only ever noticed because the image got rendered
-large: at 1200×670 its device screen reads "Task Checkfiet", "Geot ciecklist",
-"Ciocu IV 6 / 11:35 AM", and there are five further garbled zones. At the
-150×120 the card actually gives it, none of that is legible.
+That distinction is not theoretical, and there is a worked example. This
+directory used to hold `evening-workshop.jpg`, 1200×670, 134 KB, which was the
+Studio Suite card. Its baked-in gibberish was only ever noticed because the
+image got rendered large — at full size its device screen reads "Task
+Checkfiet", "Geot ciecklist", "Ciocu IV 6 / 11:35 AM", and there were five
+further garbled zones. At the 150×120 the card gave it, none of that was
+legible, and nobody had looked.
+
+**It was deleted on 2 August 2026** and replaced by the `art-studio-suite` SVG
+template in `index.html`. That fixed two things at once: the gibberish, and the
+fact that a 1200×670 photo could not sit in a 5:4 row without letterboxing
+below ~546px of viewport. Git still has the file if it is ever wanted.
 
 If you need a large Lesson Hub image, commission one or author an SVG. Do not
-reach for this file, and do not regenerate it with an image model — an image
-model is what put the gibberish there.
+reach for `lesson-hub-card.webp`, and do not regenerate it with an image model
+— an image model is what put the gibberish there in the first place.
 
-## evening-workshop.jpg
-
-1200×670, 134 KB. The Studio Suite card. Same thumbnail-only constraint, same
-reason. It is also the one door art that is not 5:4, so it letterboxes below
-~546px of viewport — see the measured table in the card-art comment in
-`index.html`, and the open decision in `HANDOVER.md`.
+Every other door on the homepage is now a `<template id="art-*">` SVG at
+`viewBox="0 0 120 96"`. `lesson-hub-card.webp` is the only photographic card
+art left, and it is cut to that same 5:4 so the row is even at every width.
 
 ## The rest
 

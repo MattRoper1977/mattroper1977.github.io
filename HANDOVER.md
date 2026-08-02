@@ -78,7 +78,42 @@ old hash.
 or clear site data for `madebymatt.uk`. Afterwards the homepage shows **nine
 door cards, none bare**.
 
-## Two things found while checking, both left for Matt
+## 2 August — both of the above are now closed
+
+**The Evening Workshop photo is gone.** `art-studio-suite` was rewritten from a
+generic easel into the photo's actual subject — three lit studios on an evening
+workbench — and the door dropped its `image` field onto it. That closed both
+faults at once: no more baked-in gibberish, and no more letterbox, because the
+SVG is 5:4 like every other card. `images/evening-workshop.jpg` was deleted;
+nothing referenced it afterwards and git still has it.
+
+Measured after: all four lessons cards paint at an **identical 1.25 in an
+identical box** at 390, 768 and 1280 — the row is finally even, at every width,
+with nothing cropped. Homepage image weight fell **211.6 KB → 77.6 KB**.
+
+**Accounts are switched off.** `features.accounts.enabled` is `false`. The
+reasoning is in `FEATURES.md`; the short version is that the account gated
+nothing — the members page said so in three places, and the one thing it
+offered said in its own copy that signing in did not unlock it — while asking
+for a password that never left the device and, by the local backend's own
+error message, could never be reset. That combination has no upside and one
+real downside: it invites password reuse.
+
+Nothing was deleted. `MBMAuth`, both backends and the modal all still work, and
+flipping the boolean back restores the whole flow — proven by doing it, not
+asserted: with `enabled:true` and no other change, the header button, the
+modal, the members gate and the members hero copy all come back.
+
+**One trap worth carrying forward.** The first version of the off-switch set
+`btn.hidden = true`, and the Log in button stayed on screen — `.mbm-navbtn`
+sets `display:inline-flex`, which outranks the UA sheet's `[hidden]{display:none}`.
+That is the fourth gate on this estate defeated by a more specific rule. It was
+caught only because the check counted *visible* buttons rather than trusting
+the attribute it had just set. The switch now removes the nodes.
+
+---
+
+## Two things found while checking, both now closed — original notes below
 
 **The Evening Workshop photo has two independent faults and one fix answers
 both.** It carries garbled text baked into the artwork — the left device's

@@ -404,9 +404,31 @@
 
   /* ---- account modal wiring (present on any page that includes it) -------- */
   function initAccountUI() {
-    if (!CFG.accounts.enabled) return;
     var btn = qs("#mbmAccountBtn");
     var modal = qs("#mbmAuth");
+
+    /* Accounts off (site.json features.accounts.enabled=false, the state since
+       2026-08-02). Returning early was not enough: the "Log in" button and the
+       members gate are in the markup, so they still rendered and simply did
+       nothing when clicked. The flag now takes the entry points down with it,
+       which is what makes flipping it back on a one-line change rather than a
+       markup restoration. Everything below is untouched and still works. */
+    if (!CFG.accounts.enabled) {
+      /* REMOVE, do not hide. The first version of this set btn.hidden = true
+         and the button stayed on screen: mbm-features.css:8 sets
+         `.mbm-navbtn{display:inline-flex}`, which outranks the UA sheet's
+         `[hidden]{display:none}`. That is the fourth time on this estate a gate
+         has been defeated by a more specific rule, and it was caught only
+         because the check counted VISIBLE buttons rather than trusting the
+         attribute it had just set.
+         Removing the modal as well takes the password field out of the DOM
+         entirely, so password managers have nothing to offer to fill either. */
+      if (btn && btn.parentNode) btn.parentNode.removeChild(btn);
+      if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
+      doc.documentElement.setAttribute("data-accounts", "off");
+      return;
+    }
+    doc.documentElement.setAttribute("data-accounts", "on");
 
     function firstName(u) { return (u && u.name ? u.name.split(" ")[0] : ""); }
 

@@ -58,15 +58,49 @@ Add the same `{ "key": "my-worksheet", "title": "My worksheet" }` to
 
 ---
 
-## 3. Accounts + members' area
+## 3. Accounts + members' area — SWITCHED OFF (2 August 2026)
 
-- **Log in** button in the header; a **Members** page (`/members/`) with
-  member-only bonus content, gated behind sign-in.
-- **Today (no setup):** accounts are stored on the visitor's own device, with
-  passwords hashed — nothing uploaded. Great for a preview.
-- **Cloud mode (real, cross-device):** add Supabase keys and the same accounts
-  work on any device, with password reset, email confirmation and a members
-  table you control.
+`site.json` → `features.accounts.enabled` is **`false`**. There is no Log in
+button, no sign-in modal and no account. `/members/` is an honest page saying
+so.
+
+**Why, since this section used to claim the opposite.** It said the members
+page had "member-only bonus content, gated behind sign-in". It never did. The
+members page itself said "there are no member-only features yet" in three
+separate places, and the one thing it offered — commissioned resources — said
+in its own copy that signing in does not unlock it. So the account gated
+nothing.
+
+What it did do was ask for a password. That password was salted, SHA-256'd and
+written to `localStorage`; it never left the device, and by the local backend's
+own admission it could never be reset:
+
+```js
+resetPassword: function () { return Promise.reject("Password reset needs cloud accounts — set those up to enable it."); }
+```
+
+A password that guards nothing, cannot be recovered, and protects a record
+already readable by anyone holding the device is not a feature. Its only real
+effect is to invite a visitor to reuse a password they use elsewhere. The
+Supabase path was never switched on — the key slots have been empty since
+`b70dc24` — so this was the only mode that ever ran.
+
+**Nothing was deleted.** `MBMAuth`, the local backend, the Supabase backend,
+`supabase-schema.sql` and the modal markup are all still here and still work.
+The flag takes down the entry points (`initAccountUI` hides the header button
+and the members gate, and sets `data-accounts="off"` on `<html>`), so this is a
+one-line reversal, not a rebuild.
+
+### Turning accounts back on
+
+Set `"enabled": true`. That restores exactly what was there before —
+device-only accounts with a password that still cannot be reset. **If you want
+accounts, do the cloud setup below at the same time**, because cloud mode is
+the version where the password buys something: real reset, email confirmation,
+and the same account on every device.
+
+And before either: decide what sign-in is *for*. If the answer is still "no
+member-only features yet", leave it off.
 
 ### Switching on real cloud accounts (Supabase — free tier)
 
