@@ -189,6 +189,61 @@ reCAPTCHA, no hCaptcha**.
 
 ---
 
+## 3b. Cross-device sync — three steps, then it switches itself on
+
+**It is built, tested and shipped, and it is currently OFF** because it needs a
+database only you can create. Nothing appears on the site until all three of
+these are done and the site has proved to itself that it works.
+
+**1. Make the Supabase project.** <https://supabase.com>, free tier.
+**Region: London (eu-west-2).** That one cannot be changed later without
+starting the project again, so get it right first time.
+
+**2. Run the SQL.** Dashboard → SQL Editor → paste the whole of
+`supabase-sync-schema.sql` from this repo → Run.
+
+**3. Paste two values into `site.json`**, under `features.sync`:
+
+```json
+"sync": { "url": "https://YOURPROJECT.supabase.co", "anonKey": "eyJ..." }
+```
+
+Both are in Dashboard → Settings → API. Use the **anon / public** key — it is
+designed to be public and it is safe in the repo.
+**⚠ Never put the `service_role` key anywhere near this repo.** It bypasses
+every security rule in that SQL file.
+
+### What happens then, and why you cannot get a half-working version
+
+On the next page load, `/members/` performs a **real write, a real read back and
+a byte comparison** before it shows anything. If that fails for any reason the
+panel says so and stays switched off. **A config value never turns it on** —
+only a proven round-trip does.
+
+That was tested against four states, including the nastiest one: a backend that
+happily accepts writes and returns nothing on read. **It stays off for that
+too.** A sync that swallows a child's work silently is worse than no sync,
+because people stop making their own copies.
+
+### The one thing to tell people, because there is no way round it
+
+**The sync code is the only key, and nobody can reset it — including you.** That
+is deliberate: it is exactly why your database holds nothing readable and why
+your data-protection duties here are as small as they are. The page says it
+three times, in bold, before it will hand anyone a code.
+
+### What your database will actually contain
+
+A row id, an unreadable blob, a timestamp and a byte count. **No name, no email,
+no account id, and nothing you could tie to a person.** You could publish the
+whole table and lose nothing — which is the point.
+
+**You are still a data controller** and the privacy page still describes it;
+that part cannot be designed away, and I have not pretended otherwise. What
+*has* been designed away is everything that makes it burdensome.
+
+---
+
 ## 4. ⭐ Upload the launch film — and add the music at upload
 
 The video is built and waiting in the session artefacts directory as

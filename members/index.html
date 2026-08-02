@@ -31,6 +31,25 @@ body{background:var(--dx-cream)}
 .mb-fcard:focus-visible{outline:3px solid var(--dx-amber);outline-offset:2px}
 .mb-note{max-width:720px;margin:1.4rem auto 0;text-align:center;font-size:.8rem;color:var(--dx-mut);line-height:1.6}
 .mb-note a{color:var(--dx-eyeb);font-weight:700}
+.sy-off{background:var(--dx-lite);border:1.5px dashed var(--dx-line);border-radius:12px;padding:.9rem 1rem;color:var(--dx-mut);font-size:.92rem;line-height:1.6}
+.sy-off b{color:var(--dx-title)}
+.sy-why{display:block;margin-top:.35rem;font-size:.85rem;opacity:.85}
+.sy-on h3{margin:.1rem 0 .5rem;color:var(--dx-title);font-size:1.1rem}
+.sy-on p{color:var(--dx-mut);line-height:1.6;margin:.4rem 0}
+.sy-warn{background:#FFF6E6;border-left:4px solid var(--dx-amber);padding:.7rem .9rem;border-radius:8px;color:#5A3E12!important}
+body[data-theme="dark"] .sy-warn{background:#3A2E14;color:#F2DFA4!important}
+.sy-acts{display:flex;flex-wrap:wrap;gap:.6rem;margin:.9rem 0 .2rem}
+.sy-btn{font:inherit;font-weight:800;font-size:.92rem;color:var(--dx-navy);background:var(--dx-amber);border:0;border-radius:999px;padding:.7rem 1.3rem;min-height:46px;cursor:pointer;box-shadow:0 2px 0 var(--dx-ambd)}
+.sy-btn.sec{background:transparent;color:var(--dx-title);border:1.5px solid var(--dx-line);box-shadow:none}
+.sy-btn:focus-visible{outline:3px solid var(--dx-eyeb);outline-offset:2px}
+.sy-out{margin-top:.8rem}
+.sy-out.err{color:#8A2020}
+body[data-theme="dark"] .sy-out.err{color:#F0B9B9}
+.sy-code{font:700 1.05rem/1.5 ui-monospace,"Cascadia Mono",Consolas,monospace;background:var(--dx-lite);border:1.5px solid var(--dx-line);border-radius:10px;padding:.8rem .9rem;word-break:break-word;color:var(--dx-title)!important;user-select:all}
+.sy-meta{font-size:.82rem;opacity:.8}
+.sy-lab{display:block;font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dx-eyeb);margin-bottom:.3rem}
+.sy-in{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1.5px solid var(--dx-line);background:var(--dx-card);color:var(--dx-ink);font:inherit}
+.sy-in:focus-visible{outline:3px solid var(--dx-amber);outline-offset:2px}
 </style>
 </head><body>
 <a class="skip" href="#main">Skip to content</a>
@@ -59,7 +78,7 @@ body{background:var(--dx-cream)}
 <div class="mb-panel" style="margin-top:1.4rem">
 <h2>What it is not, said plainly</h2>
 <p><b>It is not a lock, and the bonus content is not hidden from anyone.</b> This site is a set of static files. Every page and every game is served in full to anybody who asks for the URL &mdash; there is no server here that could check who you are before handing a file over. So the extras are <b>switched on</b> for account holders rather than <b>kept from</b> everybody else. Anyone determined to reach them can. That is a true description of what is happening, and it is better than a padlock icon that does nothing.</p>
-<p><b>It does not sync between devices.</b> An account that never leaves your device has nowhere to sync to. Make one on a school computer and one at home and they are two separate accounts with two separate save files. Nothing on this page will tell you otherwise until that is genuinely built.</p>
+<p><b>Syncing between devices is a separate, optional thing</b> &mdash; see the panel below. The account itself still never leaves this device. If syncing is switched on and you choose to use it, your <i>game saves</i> (not your account) are encrypted here and copied to a server that cannot read them. If it is not switched on, the panel below says so plainly.</p>
 <p><b>There is no password reset.</b> Nobody, including me, can see or recover your password &mdash; only a hashed form of it exists, in your own browser. If you forget it, make another account. Because of that: <b>please do not reuse a password you use anywhere else.</b> It guards nothing here, so a real password would only be at risk for no benefit.</p>
 </div>
 
@@ -68,6 +87,11 @@ body{background:var(--dx-cream)}
 <p><b>Nowhere.</b> Your name, email and a salted SHA-256 hash of your password are written to this browser's own storage and never transmitted. There is no account database, no server, and no third party involved in signing in. Clearing your browser data deletes the account entirely and leaves nothing behind anywhere else.</p>
 <p>That also means I have no way of knowing who has an account, or how many exist. If you want to hear about new resources, that is a <b>separate, adults-only list</b> with its own tick box on the <a href="../index.html#contact">home page</a> &mdash; making an account does not put you on it, and joining it does not make you an account.</p>
 <p>The full picture is on the <a href="../privacy/">data and privacy page</a>.</p>
+</div>
+
+<div class="mb-panel" style="margin-top:1.4rem" id="mbmSyncPanel">
+<h2>Between devices</h2>
+<div id="mbmSync"><div class="sy-off">Checking&hellip;</div></div>
 </div>
 
 <h2 class="mb-note" style="font-size:1.05rem;color:var(--dx-title);font-weight:800;margin-top:2.2rem">Follow the work instead</h2>
@@ -95,4 +119,7 @@ body{background:var(--dx-cream)}
 (function(){try{var t=localStorage.getItem('mbm_reading_theme');if(t&&t!=='cream')document.body.setAttribute('data-theme',t);}catch(e){}})();
 document.getElementById('menu').addEventListener('click',function(){var n=document.getElementById('nav'),o=n.classList.toggle('open');this.setAttribute('aria-expanded',o);});
 </script>
+<script src="../assets/mbm-profile.js"></script>
+<script src="../assets/mbm-sync.js"></script>
+<script src="../assets/mbm-sync-ui.js"></script>
 </body></html>
