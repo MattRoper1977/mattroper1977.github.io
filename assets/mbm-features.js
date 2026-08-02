@@ -36,6 +36,33 @@
   var fmt = function (n) { try { return Number(n).toLocaleString(); } catch (e) { return String(n); } };
   function nowIsh() { try { return Date.now(); } catch (e) { return +new Date(); } }
 
+  /* ------------------------------------------------------------------------
+     MBM_CAPS — capabilities that are TRUE, not capabilities that are configured.
+
+     A door in site.json can declare `"requires": "<cap>"`, and mbm-doors.js
+     will hold that card back until the named capability is present here. The
+     account cards use it so that an advert for cloud sync cannot appear on a
+     site where cloud sync does not work.
+
+     The distinction this register exists to hold is between three different
+     claims, which are easy to conflate and are not the same thing:
+
+       1. site.json has Supabase keys in it        — configuration
+       2. the Supabase client authenticated        — connection
+       3. a write-then-read-back round-trip worked — capability
+
+     Only (3) justifies telling a teacher their work is being kept safe. A
+     backup that silently fails is worse than no backup, because they stop
+     making their own copies. So nothing here is set from config.
+
+     NOT YET SET BY ANYTHING. The sync module that would set "cloud-sync" is
+     not written — it needs a live Supabase project to build and verify
+     against, which this repo does not have. Until then every door that
+     requires it stays deferred and the account band stays hidden, which is the
+     correct and intended behaviour rather than an outage. See FEATURES.md.
+     --------------------------------------------------------------------- */
+  window.MBM_CAPS = window.MBM_CAPS || {};
+
   function timedJSON(url, ms, opts) {
     var ctrl = ("AbortController" in window) ? new AbortController() : null;
     var t = ctrl ? setTimeout(function () { ctrl.abort(); }, ms || 6000) : null;
