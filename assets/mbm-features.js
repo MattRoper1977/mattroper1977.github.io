@@ -436,10 +436,23 @@
 
     /* Accounts off (site.json features.accounts.enabled=false, the state since
        2026-08-02). Returning early was not enough: the "Log in" button and the
-       members gate are in the markup, so they still rendered and simply did
-       nothing when clicked. The flag now takes the entry points down with it,
-       which is what makes flipping it back on a one-line change rather than a
-       markup restoration. Everything below is untouched and still works. */
+       members gate were in the markup, so they still rendered and simply did
+       nothing when clicked. The flag takes the entry points down with it.
+
+       CORRECTION, 2 August 2026. This comment used to end "which is what makes
+       flipping it back on a one-line change rather than a markup restoration."
+       That was true when it was written and stopped being true hours later:
+       ecf8b8c (PR #20) deleted the auth markup from index.html outright.
+       Measured rather than re-assumed - site.json intercepted in-flight with
+       accounts.enabled forced to true:
+
+         enabled=false -> data-accounts=off, 0 login buttons, 0 modals, 0 password inputs
+         enabled=true  -> data-accounts=on,  0 login buttons, 0 modals, 0 password inputs
+
+       So the flag alone restores NOTHING visible. Restoring accounts means
+       reverting the markup deletion AND flipping the flag. The block below is
+       still live and still correct for the day the markup comes back; it is
+       just no longer the whole story. */
     if (!CFG.accounts.enabled) {
       /* REMOVE, do not hide. The first version of this set btn.hidden = true
          and the button stayed on screen: mbm-features.css:8 sets

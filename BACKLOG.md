@@ -91,7 +91,28 @@ blank.
 
 ---
 
-## 5. Featured curation
+## 5. Five public pages missing from `sitemap.xml`
+
+Found while making `/members/` reachable. `sitemap.xml` carries **440 `<loc>`
+entries**; of the **19** public (non-`next/`, non-`noindex`) HTML pages in the
+repo, these are absent:
+
+```
+404.html                                deliberate — never sitemap a 404
+hub-highlight-card.html                 a partial, not a page
+medevac/MedevacFrontier_v1.html         looks superseded
+medevac/studio.html                     looks superseded
+resources/medevac-frontier/index.html   probably SHOULD be listed
+```
+
+`/privacy/` and `/members/` were added in the same pass that found this. The
+first four look correctly excluded; **`resources/medevac-frontier/` is a real
+teacher-facing page and is the one worth a decision.** Left alone rather than
+swept in, because widening a pass's claim is how a diff stops being checkable.
+
+---
+
+## 6. Featured curation
 
 There is no way to say "these six things first" — the homepage strips are
 ordered by `site.json` array position, which conflates *order* with *priority*.

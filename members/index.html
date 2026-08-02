@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>There is no account — Made by Matt</title>
-<meta name="description" content="There is no account to create on Made by Matt. Everything is free and open — no sign-in, no email address, nothing gated.">
-<meta name="theme-color" content="#161D3D"><meta name="robots" content="noindex">
+<title>There is no login — where the members’ area went · Made by Matt</title>
+<meta name="description" content="Made by Matt has no login. There used to be one; here is exactly what it offered, why it was removed on 2 August 2026, and what bringing it back would take.">
+<meta name="theme-color" content="#161D3D"><link rel="canonical" href="https://madebymatt.uk/members/">
 <link rel="icon" href="../favicon.svg"><link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="stylesheet" href="../styles.css">
 <style>
@@ -55,6 +55,20 @@ body{background:var(--dx-cream)}
 <p>There used to be a login here. It asked for a password, stored a hash of it in this browser, and then unlocked a page that said there were no member-only features yet — because there weren't, and there still aren't. A password that guards nothing, never leaves your device and cannot be reset is worse than no password: it invites you to reuse a real one somewhere it can do no good.</p>
 <p>On 2 August it was switched off. Later the same day the sign-in button, the password box and the whole members flow were taken out of the pages altogether, so there is no longer any part of this site that asks you for a password. If you ever made an account here, it only ever existed inside your own browser and nothing was ever sent anywhere. Clearing your browser data removes the last trace of it.</p>
 <p>Nothing you could reach before is out of reach now. There was never anything behind the login.</p>
+</div>
+
+<div class="mb-panel" style="margin-top:1.4rem">
+<h2>What the login actually offered</h2>
+<p>Worth writing down plainly, because "there was a members' area" sounds like something was lost. This is the list, taken from the page's own words before it was removed — it said the same thing in three separate places:</p>
+<p style="border-left:3px solid var(--dx-amber);padding-left:.9rem;font-style:italic">"There are no member-only features yet — this is where they'd appear if any are built."</p>
+<p>So: <b>the account unlocked one page, and that page's own text said it unlocked nothing.</b> The one thing that <i>did</i> exist for supporters — commissioned resources — carried a line saying signing in did not unlock it and that it was open to anyone who donates. It still is, and it still needs no account.</p>
+<p>The machinery behind it was real enough — create an account, log in, log out, a password-strength meter, a signed-in name in the header, and a password reset that only worked with a cloud backend that was never configured. It was a working lock on a door with nothing behind it.</p>
+</div>
+
+<div class="mb-panel" style="margin-top:1.4rem">
+<h2>If you want it back</h2>
+<p>It is not a switch. There is a setting called <code>features.accounts.enabled</code>, and turning it on by itself changes <b>nothing you can see</b> — that was tested rather than assumed, by forcing the setting on and counting what appeared: <b>no login button, no sign-in box, no password field.</b> The sign-in markup was deleted from the pages, so bringing accounts back means restoring that markup as well as flipping the setting.</p>
+<p>Nothing is lost and nothing needs rebuilding from scratch — it is all in the project's history. And a decision worth making again rather than by default: an account that stores a password on your device, cannot reset it, and unlocks nothing is worse than no account, because it tempts you to reuse a real password. If member-only material ever exists, the login should come back <i>with</i> it, not before it.</p>
 </div>
 
 <h2 class="mb-note" style="font-size:1.05rem;color:var(--dx-title);font-weight:800;margin-top:2.2rem">Follow the work instead</h2>
