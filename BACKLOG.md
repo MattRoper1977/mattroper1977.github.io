@@ -32,14 +32,28 @@ explicit file path the app already had is the correct one, and the test found
 that rather than a reading of the docs.
 
 **Cost, stated because it cuts against an argument made in the same repo:**
-`uas/vendor/` is **16.8 MB**, against a 7.3 MB working tree. The launch film was
+`uas/vendor/` was **16.8 MB**, against a 7.3 MB working tree. The launch film was
 deliberately *not* committed on the grounds that a Pages repo serves every file
 it holds. The difference is that the film is an output that lives on YouTube and
 can be rebuilt from `tools/film/`, while these are inputs the tool needs at run
 time — and without them the OCR cannot work offline at all, which was the whole
-promise. If the size ever bites, `@tesseract.js-data/eng` ships a 2.95 MB
-`4.0.0_best_int` model: an 8 MB saving, usually equal or better accuracy, a
-little slower. That is a product decision, not a security one.
+promise.
+
+**That cost was then cut, on Matt's call, 2 August 2026.** The language pack was
+swapped for the `4.0.0_best_int` model: **10,923,060 → 2,952,873 bytes**, so
+`uas/vendor/` is **9,650,123 bytes, down from 17,620,310 — a 7,970,187-byte
+saving, 45.2% of the directory.** (Decimal MB: 17.62 → 9.65. The **16.8 MB**
+written above is MiB — a unit slip this repo made and is now correcting.)
+
+Measured before and after on clean and degraded renders: **44/44
+words both ways, identical confidence, character-identical transcripts, and no
+time difference outside the run-to-run spread.** Controlled by measuring the
+bytes actually served (10,923,060 vs 2,952,873 in fresh profiles) because
+identical output usually means the swap did not take.
+
+The earlier note here said `best_int` was *"a little slower"*. **That was an
+assumption written without measuring it and the measurement does not support
+it.** See `uas/vendor/MANIFEST.md` for the full table and the revert.
 
 ## 2. `/resources/medevac-frontier/` overflows 1 px at 900 px wide
 

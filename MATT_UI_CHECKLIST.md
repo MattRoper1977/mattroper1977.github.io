@@ -356,3 +356,35 @@ to have a lawful basis for.
 one-line flag flip. The markup is gone, so bringing accounts back means
 reverting that commit and *then* flipping `features.accounts.enabled`. If that
 trade is wrong, say so and it comes straight back.
+
+---
+
+**The OCR language pack is the smaller one now — your call, carried out and
+measured.** `uas/vendor/` drops from **17,620,310 to 9,650,123 bytes** (17.62 →
+9.65 MB, a **7.97 MB saving, 45.2% of the directory**).
+
+**Nothing about how the tool reads a sheet changed, and that is measured, not
+hoped.** Both packs were run against the same rendered outcome sheet — once
+clean, once degraded with skew, speckle, washed-out ink and blur, the way a
+phone photo comes out:
+
+| render | old pack | new pack |
+|---|---|---|
+| clean | 44/44 words, conf 95.0 | **44/44 words, conf 95.0** |
+| hard | 44/44 words, conf 94.0 | **44/44 words, conf 94.0** |
+
+The transcripts are character-identical, including the same stray `:` both packs
+insert on the hard render. Identical output usually means a swap did not take,
+so the bytes actually delivered to the browser were checked: **10,923,060 with
+the old pack, 2,952,873 with the new**, in fresh profiles. Different files, same
+reading.
+
+**Two things worth knowing.** First, `tesseract.js` caches the pack in your
+browser, so on a device that has already used the tool the old 10.92 MB file
+stays until you clear site data — you lose nothing, but the space is not
+reclaimed there. Second, I had previously written that the smaller pack was *"a
+little slower"*; **I had not measured it and the measurement does not support
+it.** That claim is withdrawn.
+
+**Reverting is one file copy**, no code change — the recipe is at the bottom of
+`uas/vendor/MANIFEST.md`.
