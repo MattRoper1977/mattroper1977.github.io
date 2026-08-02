@@ -7,7 +7,7 @@ container — not assumed:
 | item | what was tried | result |
 |---|---|---|
 | Enforce HTTPS ×3 | `GET api.github.com/repos/…/pages`, all four repos | **403** — *"Access to this GitHub API path is not permitted through this proxy."* |
-| Contact-form test | searched the connected Gmail; tried to POST the form | wrong mailbox (see §2) · `formsubmit.co` **403 on CONNECT** |
+| Contact-form test | searched the connected Gmail; tried to POST the form | wrong mailbox · `formsubmit.co` **403 on CONNECT** — **now ✅ answered by Matt, see §2** |
 | FormSubmit domain lock | — | dashboard login, no API |
 | Upload the film | reachability check | `youtube.com` **unreachable from the container** |
 
@@ -61,96 +61,116 @@ blind. **The checkbox is the only ground truth.**
 
 ---
 
-## 2. ⭐ FIRST TEST — the plain form. Do this one before anything else.
+## 2. ✅ ANSWERED — the plain form. Nothing left to do here.
 
-**Mailbox: `contactmadebymatt@gmail.com` — NOT `londonmatt1977@gmail.com`.**
+**Observed by Matt on 2 August 2026: case B, then the form works.**
 
-That distinction already caught this session once. The Gmail account connected
-to Claude is `londonmatt1977@gmail.com`; it was searched and returned **0
-threads matching `formsubmit` and 0 to, from or delivered-to
-`contactmadebymatt@gmail.com`**, with no forwarding between them. **That zero
-came from the wrong population and told us nothing about the form.**
+The activation mail was in the mailbox and had **never been clicked**. Matt
+clicked it on 2 August 2026, submitted a test message, and it arrived.
 
-**Search 1** — paste exactly:
+That settles the question this section existed to ask, and it settles it in the
+worst of the four directions: **everything submitted before 2 August 2026 was
+discarded by the relay and showed the sender a success page anyway.**
 
-```
-in:anywhere from:formsubmit.co
-```
+### How long that lasted — measured from git history, not estimated
 
-`in:anywhere` matters: it covers Spam and Trash, where activation mail usually
-lands.
+| | |
+|---|---|
+| site and custom domain live | **16 July 2026** (`CNAME` created 20:02) |
+| endpoint first on a page a visitor could load | **18 July 2026**, commit `0b660b2`, pushed straight to `main` |
+| activation clicked | **2 August 2026** |
+| **window** | **first live 2026-07-18, window 15 days** (14 days 23 h elapsed) |
 
-**Search 2, only if Search 1 is empty** — paste each:
+Checked rather than assumed, walking all **137** first-parent commits on `main`
+and testing `index.html` for the endpoint at each one:
 
-```
-in:anywhere formsubmit
-in:anywhere subject:(activate OR confirm)
-```
+- The form was **absent from `main` for 35 minutes** on 18 July (`0ba31f4`
+  13:08 → `5c394fd` 13:44) and present continuously otherwise. That is the only
+  gap in the 15 days.
+- The endpoint string **never changed** — same address from `0b660b2` to today.
+- The site was already deployed 2 days *before* the endpoint landed, so there is
+  no lag between "committed" and "reachable" to subtract.
 
-### What you find, what it means, what to do
+**How many messages that is, nobody knows and nobody will.** There is no
+analytics on this site by design, the relay holds nothing for an unactivated
+address, and a guessed number here would be exactly the fault this whole pass
+was about. It is recorded as a window, not a count.
 
-| Found | Means | Do |
+> **⚠ If an anti-spam / "are you human" screen ever appears** between pressing
+> Send and landing on the thank-you page, that is FormSubmit's own interstitial
+> — `_captcha` is unset so the vendor default applies. Not a failure.
+
+---
+
+## 2b. ⭐ THE ONE THING LEFT — open a page and press one button
+
+**<https://madebymatt.uk/cors-test.html>** — press **Run the probe**, then read
+out or screenshot the block it prints. Thirty seconds.
+
+**Why it exists.** PR #25 (`claude/contact-form-ajax-safety-net`) makes a failed
+send *say so* instead of showing a success page regardless. It can only work if
+the browser is allowed to **read** FormSubmit's reply. `formsubmit.co` returns
+403 on CONNECT from the build container, and a blocked request proves nothing
+about the far end, so that question cannot be answered from my side — only from
+a real browser on the real domain.
+
+**What to expect:**
+
+- It sends **one real message**, subject `CORS TEST — ignore`. Delete it.
+- The page is unlinked, `noindex,nofollow`, and absent from `sitemap.xml`.
+- It does **not** touch the live contact form.
+- It prints one of three verdicts, and each one has its action written on it:
+
+| Verdict | Means | What happens next |
 |---|---|---|
-| **A** — activation mail, already confirmed | The form is live | Count the forwarded submissions. Zero is then a real fact about traffic, not a fault |
-| **B** — activation mail, never clicked | Every message submitted before now went nowhere | Click it. **Nothing can be recovered** — the relay does not hold mail for an unactivated address. Then do C's test |
-| **C** — nothing at all | **The absence is informative.** Activation mail is only sent on the *first* submission, so no activation mail most likely means **nobody ever submitted** — nothing was lost — unless it was deleted | Submit once from your phone, wait a few minutes, re-run Search 1 |
-| **D** — activation mail for a *different* address or endpoint than the page carries | The live form points somewhere else | Bring the real endpoint back to the session |
+| **PERMITTED** | the reply is readable | PR #25 merges — the site stops claiming a send succeeded when it didn't |
+| **REFUSED** | request sent, reply unreadable | PR #25 closes, and the reason is written down permanently so nobody rebuilds it in six months |
+| **INCONCLUSIVE** | nothing left the browser at all | ad blocker, filter or offline. **Not** a refusal. Try again on another network |
 
-### Then submit one test message
-
-<https://madebymatt.uk/#contact> from your phone, then report what arrives.
-
-**⚠ One thing to expect, so you don't misread it.** The form does not set
-`_captcha` either way, so FormSubmit's own default applies — and I could not
-check what that default is. **If an anti-spam / "are you human" screen appears
-between pressing Send and landing on the thank-you page, that is FormSubmit's
-interstitial, not a failure.** Complete it and carry on. Only treat it as a
-failure if no mail arrives at all.
+**Then `/cors-test.html` gets deleted.** It is temporary by construction and
+comes out in the same round of changes as the decision it informs.
 
 ---
 
-## 2b. SECOND TEST — only after §2 has an answer
-
-**Do not do this until the plain form has been tested.** If both changes are
-live and a submission fails, the result is uninterpretable: it could be the
-browser being refused by the relay, or the endpoint rejecting an unactivated
-address. One test, two unknowns, no conclusion.
-
-**PR #25** (`claude/contact-form-ajax-safety-net`) is open and **held** for
-exactly that reason. Once §2 says the form is live:
-
-1. Merge #25.
-2. Submit the form once more, with the browser's devtools **Network** tab open.
-3. Look at the `POST` to `formsubmit.co/ajax/…`.
-   - **JSON response** → it works; a failed send will now say so instead of
-     showing a false success.
-   - **Blocked / no readable response** → the browser was refused. The page
-     falls back to *"the relay could not be reached — here is the direct
-     address"*, which is safe, but the form never completes that way.
-     **Revert it: `7c20279`.** One revert, nothing else depends on it.
-
----
-
-## 3. FormSubmit — questions I could not answer from here
+## 3. FormSubmit — what is now known, and what is still a question
 
 `formsubmit.co` is unreachable from the container (403 on CONNECT), so
-**everything about how the vendor behaves is unverifiable from my side.** These
-are questions, not instructions, and each is only worth asking if §2 shows the
-form is live:
+**everything about how the vendor behaves is unverifiable from my side.**
+Nothing below was tested by me. Two rows have moved out of the questions list
+because Matt looked:
+
+### Known — observed by Matt on 2 August 2026
+
+| question | answer | how it was established |
+|---|---|---|
+| Does the endpoint deliver? | **Yes, since 2 August 2026** | observed by Matt on 2 August 2026 — test message sent and received |
+| Had it ever delivered before that? | **No** | observed by Matt on 2 August 2026 — the activation mail was present and unclicked; he clicked it that day |
+| Does a bare-email endpoint send activation mail at all? | **Yes** | implied by the above; the mail existed to be found |
+
+That is the whole of what is *known*. It is written down with its provenance
+because in three weeks "the form works" will be a memory, and a memory is not
+evidence. **Everything below is still a question.**
+
+### Still questions
 
 - **Is there a dashboard at all** for a bare-email endpoint, or only for an
   alias?
 - **Is there a domain-lock / allowed-domains setting?** If yes, set it to
   `madebymatt.uk`. The endpoint currently accepts a POST from anywhere, which
   is a **spam-volume and `_cc`/`_replyto` abuse** exposure — *not* a secrecy
-  one. Your address is deliberately public in 32 `mailto:` links across 21
-  files; hiding it was never the point and an alias would not be a privacy fix.
+  one. Your address is deliberately public in **32 `mailto:` links across 21
+  files** — re-derived 2 August 2026 across all four repos (site 14/23,
+  Lessons 5/6, Games 1/1, Matt-s-Apps- 1/2), with the `html` control matching
+  73 / 668 / 3 / 32 files so none of those counts came from a dead search.
+  Hiding it was never the point and an alias would not be a privacy fix.
 - **What is the `_captcha` default?** See the warning in §2 — this decides
   whether a stranger meets an interstitial, and it is your only free friction
   against spam. Turning it off is a trade to make knowingly.
 - **Does the `/ajax/` endpoint share the same activation state as the plain
-  endpoint, or is it activated separately?** If separate, §2b carries a *second*
-  unknown and the ordering argument applies all over again.
+  endpoint, or is it activated separately?** §2b answers this for free: if the
+  `CORS TEST — ignore` message lands in the inbox, `/ajax/` is delivering on the
+  same activation. If the probe says PERMITTED but no mail ever arrives, they
+  are activated separately and PR #25 stays held.
 - **Where is the relay, legally?** DNS resolves only to Cloudflare front-end
   addresses, which says nothing about the company or its servers. The site
   therefore says *"a third-party relay I do not run"* and names no country.
@@ -223,15 +243,20 @@ This list covers `mattroper1977.github.io` only. The `Lessons`, `Games` and
 do not assume they are clean.
 
 <!-- BRANCH-LIST:BEGIN -->
-**Re-derived 2 August 2026 against `main` at `2d7d084`**, after PR #21 merged.
-This list is stale the moment `main` moves, so it is re-derived every pass
-rather than carried; the SHAs below have not changed across three derivations,
-which is a result, not a reason to stop checking.
+**Re-derived 2 August 2026 against `main` at `d103557`**, after PRs #24 and #26
+merged. This list is stale the moment `main` moves, so it is re-derived every
+pass rather than carried. **This is the fourth derivation and the first one to
+change** — two branches moved into the safe list and one moved out.
 
-**23 remote branches. 18 fully contained in `main`, 4 not, plus `main` itself.**
-Of the 18, one is the branch still being pushed to, so **17 are safe to delete**
-— verified with `git branch -r --merged origin/main`, each confirmed
-`ahead-of-main=0`:
+**26 remote branches: `main`, 19 fully contained in it, 6 not.**
+Every line below was checked with `git rev-list --count origin/main..<branch>`,
+not with a branch name.
+
+*Counted before this pass pushed its own branch.* `claude/cors-probe-formsubmit`
+makes 27, and it joins the safe list the moment its pull request merges — it is
+not listed as safe now, because right now it is not.
+
+**19 safe to delete** — each confirmed `ahead-of-main = 0`:
 
 ```
 apexkick-hub-art                               12b0060226
@@ -241,7 +266,9 @@ claude/apex-kick-game-build-a14dl4             3b6617cf5d
 claude/asdan-toolkit-three-pathway-0sjx7z      24ae86f662
 claude/brand-tagline-mobile-3dwdkl             04a40b462b
 claude/card-art-doors-arcade                   31fc5c3947
+claude/contact-form-honest-failure             c974fca342   ← new, PR #24 merged
 claude/doors-renderer                          a6facdb4c9
+claude/formsubmit-close-checklist              47a35f09ea   ← new, PR #26 merged
 claude/front-page-upgrade-jwv8sd               7fbda5cc73
 claude/madebymatt-feature-enhancements-a4gys1  b70dc24afa
 claude/members-honesty                         00a72c5cbd
@@ -253,23 +280,40 @@ doors-engine                                   836f428084
 handover-1-aug                                 2af074b177
 ```
 
-**Excluded — `claude/build-science-animations-cfr4qo`.** It is contained in
-`main`, but it is the branch this session is pushing to. Deleting it would take
-the open work with it.
+**Moved OUT of the safe list — `claude/build-science-animations-cfr4qo`, now 2
+commits ahead of `main`.** Previous derivations called it contained; it is not
+any more, because two commits were pushed to it during the FormSubmit work.
 
-**Excluded — these 4 carry commits that are NOT in `main`.** Deleting them loses
-that work:
+**Those 2 commits carry nothing unique, and that was proved rather than
+assumed.** `git patch-id --stable` on all four:
 
 ```
-claude/axiom-shift-build-yff3x4    1d779ce82f   2 commits ahead
-claude/pass-q-audit-c5tg3s         6845f444de   8 commits ahead
-claude/pass-u-audit-hapesp         010fbeb0c4   1 commit  ahead
-pass-u-audit                       10c39188b3   3 commits ahead
+3fc109c  e1aa29b8b45e  ==  c974fca  e1aa29b8b45e   (merged to main as PR #24)
+5bb3877  967d9c26be4e  ==  7c20279  967d9c26be4e   (held open as PR #25)
 ```
 
-**Excluded — `backup/build-anim-autumn1-v1` is not in this repo at all.**
-It is a branch of **`MattRoper1977/Lessons`**, it is *not* one of the 23 above,
-and it must survive until the tag in §5 below exists. See the next item.
+Identical patch-ids both times, so the content exists twice over. The branch is
+**safe to delete on content grounds** — just not by `git branch --merged`, which
+compares commits and not changes. Delete it last, after PR #25 is settled.
+
+**Excluded — these 5 carry commits that are NOT in `main` and NOT duplicated
+elsewhere.** Deleting them loses that work:
+
+```
+claude/contact-form-ajax-safety-net  7c20279011   1 commit  ahead — this is PR #25. Keep until §2b decides it
+claude/pass-u-audit-hapesp           010fbeb0c4   1 commit  ahead
+claude/axiom-shift-build-yff3x4      1d779ce82f   2 commits ahead
+pass-u-audit                         10c39188b3   3 commits ahead
+claude/pass-q-audit-c5tg3s           6845f444de   8 commits ahead
+```
+
+**Excluded — `backup/build-anim-autumn1-v1`, and the reason has not expired.**
+It is a branch of **`MattRoper1977/Lessons`**, not of this repo, so it is not
+one of the 26 above and no amount of tidying here will touch it. Re-checked
+against the Lessons remote today: **0 tags exist**, and the branch is still at
+`297af43f2d135c29d3b322482aa4571e6526b798`. It is the only ref holding that
+commit reachable. **It must survive until the tag in the next item exists** —
+delete it before that and the commit is unreachable. See below.
 <!-- BRANCH-LIST:END -->
 
 ### The `build-anim-autumn1-v1` tag — **Lessons repo**, home machine only

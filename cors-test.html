@@ -1,0 +1,173 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CORS probe · temporary · Made by Matt</title><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#161D3D"><link rel="icon" href="/favicon.svg">
+<!--
+  TEMPORARY DIAGNOSTIC PAGE — DELETE AFTER ONE USE.
+
+  It exists to answer exactly one question that cannot be answered from inside
+  the build container: does formsubmit.co's /ajax/ endpoint return a response
+  a browser on madebymatt.uk is allowed to READ?
+
+  The container cannot answer it. formsubmit.co returns 403 on CONNECT through
+  the proxy, and a blocked request proves nothing about the far end (R23). So
+  the probe has to run in a real browser, on the real origin, once.
+
+  It is unlinked from every page, carries noindex,nofollow, and is absent from
+  sitemap.xml. It does not touch the live contact form in any way.
+
+  It DOES send one real message, clearly labelled "CORS TEST — ignore", to the
+  same address as the contact form. That is deliberate and is stated on the
+  page itself.
+-->
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#161D3D;color:#E8E2D4;font:16px/1.6 "Segoe UI",system-ui,sans-serif;padding:2rem 1rem}
+.w{max-width:760px;margin:auto}
+h1{font-size:clamp(1.4rem,4.5vw,2rem);margin:.2rem 0 .4rem;line-height:1.15}
+.eyebrow{color:#F2A24A;font-size:.7rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;margin:0}
+p{color:#C9D1E2;margin:0 0 .85rem}
+.card{background:#0F1530;border:1.5px solid #3A4470;border-radius:14px;padding:1rem 1.1rem;margin:1.2rem 0}
+.card b{color:#E8E2D4;display:block;margin-bottom:.4rem}
+button{font:inherit;font-weight:800;background:#F2A24A;color:#161D3D;border:0;border-radius:999px;padding:.8rem 1.5rem;min-height:48px;cursor:pointer;box-shadow:0 2px 0 #C97F2E}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible{outline:3px solid #B9E6CD;outline-offset:2px}
+pre{background:#0B1026;border:1.5px solid #3A4470;border-radius:12px;padding:.9rem;overflow-x:auto;font:13px/1.55 ui-monospace,"Cascadia Mono",Consolas,monospace;color:#C9D1E2;white-space:pre-wrap;word-break:break-word;margin:.9rem 0 0}
+.verdict{font-weight:800;font-size:1.05rem;padding:.85rem 1rem;border-radius:12px;margin:1rem 0 0;display:none}
+.verdict.yes{background:#173A2A;border:1.5px solid #2F6B4D;color:#B9E6CD}
+.verdict.no{background:#3A1A1A;border:1.5px solid #6B2F2F;color:#F0B9B9}
+.verdict.dunno{background:#3A3418;border:1.5px solid #6B5F2F;color:#F2DFA4}
+.warn{border-color:#6B5F2F;background:#221D0B}
+code{color:#B9E6CD}
+</style>
+</head>
+<body><div class="w">
+<p class="eyebrow">Temporary diagnostic · delete after use</p>
+<h1>Can this browser read FormSubmit's reply?</h1>
+<p>This page is not linked from anywhere on the site and search engines are told to skip it. It exists to answer one question, once, and then it gets deleted.</p>
+
+<div class="card warn">
+<b>Before you press it, two things</b>
+<p style="margin-bottom:.5rem">1. This sends <b style="color:#E8E2D4">one real message</b> to the contact address, with the subject <code>CORS TEST — ignore</code>. If it lands in your inbox, delete it. Its arrival is not what is being tested, but it is useful to know either way.</p>
+<p style="margin:0">2. Press it <b style="color:#E8E2D4">once</b>. Then read out the block at the bottom, or screenshot it.</p>
+</div>
+
+<p><button id="go">Run the probe</button></p>
+
+<div class="verdict" id="verdict"></div>
+<pre id="out">Not run yet.</pre>
+
+<div class="card">
+<b>What the answer decides</b>
+<p style="margin-bottom:.5rem"><b style="color:#B9E6CD">PERMITTED</b> — the browser can read the relay's reply, so the site can tell a failed send from a successful one and stop showing a success page either way. The held pull request gets merged.</p>
+<p style="margin:0"><b style="color:#F0B9B9">REFUSED</b> — the reply is unreadable from this origin. The held pull request gets closed, and the reason gets written down permanently so nobody spends an evening rebuilding it in six months.</p>
+</div>
+</div>
+
+<script>
+/* Two probes, because one is not enough to tell the two failures apart.
+ *
+ *   A  mode:"cors"     — the real thing. Success means the response is readable.
+ *   B  mode:"no-cors"  — succeeds (opaquely) if the request left the browser at
+ *                        all, whatever the response headers said.
+ *
+ * A fails + B succeeds  -> the request reached the server and the RESPONSE was
+ *                          refused. That is a CORS refusal, specifically.
+ * A fails + B fails     -> nothing left the browser. Adblocker, offline, DNS,
+ *                          a school filter. Says nothing about CORS. Retest.
+ *
+ * Both use FormData and only safelisted headers, so neither triggers a
+ * preflight — exactly the shape the held pull request would send.
+ */
+(function () {
+  var ENDPOINT = 'https://formsubmit.co/ajax/contactmadebymatt@gmail.com';
+  var out = document.getElementById('out');
+  var verdict = document.getElementById('verdict');
+  var btn = document.getElementById('go');
+  var lines = [];
+  function say(s) { lines.push(s); out.textContent = lines.join('\n'); }
+
+  function payload() {
+    var fd = new FormData();
+    fd.append('_subject', 'CORS TEST — ignore');
+    fd.append('name', 'CORS TEST — ignore');
+    fd.append('email', 'contactmadebymatt@gmail.com');
+    fd.append('message', 'CORS TEST — ignore. Automated one-off probe from /cors-test.html to find out whether the AJAX endpoint returns a readable response. No reply needed.');
+    fd.append('_honey', '');
+    return fd;
+  }
+
+  btn.addEventListener('click', function () {
+    btn.disabled = true;
+    btn.textContent = 'Running…';
+    lines = [];
+    say('FORMSUBMIT /ajax/ CORS PROBE');
+    say('page origin : ' + location.origin);
+    say('endpoint    : ' + ENDPOINT);
+    say('navigator.onLine : ' + navigator.onLine);
+    say('');
+
+    var A = { ok: false, detail: '' }, B = { ok: false, detail: '' };
+    var t0 = performance.now();
+
+    fetch(ENDPOINT, { method: 'POST', body: payload(), headers: { 'Accept': 'application/json' } })
+      .then(function (r) {
+        A.ok = true;
+        A.detail = 'HTTP ' + r.status + ' ' + r.statusText + ' · type=' + r.type;
+        return r.text().then(function (t) { A.body = t.slice(0, 400); },
+                             function (e) { A.body = '(body unreadable: ' + e + ')'; });
+      })
+      .catch(function (e) {
+        A.ok = false;
+        A.detail = e && e.name ? (e.name + ': ' + e.message) : String(e);
+      })
+      .then(function () {
+        say('PROBE A  mode=cors  (the real test)');
+        say('  outcome : ' + (A.ok ? 'RESPONSE READABLE' : 'THREW'));
+        say('  detail  : ' + A.detail);
+        if (A.ok) say('  body    : ' + A.body);
+        say('  elapsed : ' + Math.round(performance.now() - t0) + ' ms');
+        say('');
+        /* Probe B only runs if A failed. If A succeeded the question is already
+           answered, and a second POST would send a second message for nothing. */
+        if (A.ok) { B.detail = 'not run — probe A already answered the question'; return; }
+        var t1 = performance.now();
+        return fetch(ENDPOINT, { method: 'POST', mode: 'no-cors', body: payload() })
+          .then(function (r) { B.ok = true; B.detail = 'resolved · type=' + r.type + ' · status=' + r.status; })
+          .catch(function (e) { B.ok = false; B.detail = e && e.name ? (e.name + ': ' + e.message) : String(e); })
+          .then(function () { B.ms = Math.round(performance.now() - t1); });
+      })
+      .then(function () {
+        if (!A.ok) {
+          say('PROBE B  mode=no-cors  (did the request leave the browser at all?)');
+          say('  outcome : ' + (B.ok ? 'REQUEST SENT (response opaque, as expected)' : 'THREW'));
+          say('  detail  : ' + B.detail);
+          if (B.ms != null) say('  elapsed : ' + B.ms + ' ms');
+          say('');
+        }
+
+        var v, cls, note;
+        if (A.ok) {
+          v = 'PERMITTED — the reply is readable from this origin.';
+          cls = 'yes';
+          note = 'ACTION: merge the held pull request.';
+        } else if (B.ok) {
+          v = 'REFUSED — the request was sent, but the reply cannot be read from this origin.';
+          cls = 'no';
+          note = 'ACTION: close the held pull request and record this as the reason.';
+        } else {
+          v = 'INCONCLUSIVE — nothing left the browser, so CORS was never reached.';
+          cls = 'dunno';
+          note = 'ACTION: none. Try again on a different network, with any content blocker off. Do not treat this as a refusal.';
+        }
+        say('VERDICT: ' + v);
+        say(note);
+        say('');
+        say('Read this block out, or screenshot it.');
+        verdict.textContent = v;
+        verdict.className = 'verdict ' + cls;
+        verdict.style.display = 'block';
+        btn.textContent = 'Done — read the block below';
+      });
+  });
+})();
+</script>
+</body>
+</html>
