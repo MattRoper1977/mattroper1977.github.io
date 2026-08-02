@@ -186,7 +186,15 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 <figcaption><b>Off-Brand</b> — the opening watch: six shapes clock in, one is lying.</figcaption></figure>
 <figure><video controls preload="none" playsinline muted poster="../assets/video/poster-glitchclash.webp" src="../assets/video/clip-glitchclash.mp4" width="480" height="930"></video>
 <figcaption><b>Glitch Clash</b> — building the trio for Full Harmony.</figcaption></figure>
-<figure class="wide"><video controls preload="none" playsinline muted loop poster="../assets/video/poster-voxelfrontier-play.webp" src="../assets/video/clip-voxelfrontier-play.webm" width="854" height="480"></video>
+<!-- Two encodes of one capture, offered as a source list. MP4 is listed FIRST
+     deliberately: h264 is decoded in hardware on the phones and iPads this is
+     mostly watched on, and at matched quality it came out SMALLER here — 387 KB
+     against the WebM's 472 KB. The browser fetches only the first source it can
+     play, so the WebM costs nothing on the page; it is insurance against a
+     browser without an h264 decoder, not an optimisation, and in practice it
+     will rarely be fetched. width/height match the encode (854x480), which is
+     the check that caught a 930-vs-1042 mismatch elsewhere on this estate. -->
+<figure class="wide"><video controls preload="none" playsinline muted loop poster="../assets/video/poster-voxelfrontier-play.webp" width="854" height="480"><source src="../assets/video/clip-voxelfrontier-play.mp4" type="video/mp4"><source src="../assets/video/clip-voxelfrontier-play.webm" type="video/webm"></video>
 <figcaption><b>Voxel Frontier, from the browser</b> — thirteen seconds of the real thing: lifting clear of a seeded ridge, gliding over the treeline, then landing and putting blocks back. Captured straight from a browser at 854×480, no edit beyond a trim.</figcaption></figure>
 </div>
 <p class="gx-watchnote">Real gameplay — no scripted demo reel — captured on a phone or straight from the browser and hosted right here. Nothing loads until you press play, and nothing plays sound.</p>
