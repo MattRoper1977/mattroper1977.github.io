@@ -136,6 +136,10 @@ Measured after: all four lessons cards paint at an **identical 1.25 in an
 identical box** at 390, 768 and 1280 — the row is finally even, at every width,
 with nothing cropped. Homepage image weight fell **211.6 KB → 77.6 KB**.
 
+**Accounts were switched off, then restored the same day in a different shape
+— free, no gating, bonus content instead. See `FEATURES.md` §3 for what shipped;
+the reasoning below is why the old shape was wrong and still binds the new one.**
+
 **Accounts are switched off.** `features.accounts.enabled` is `false`. The
 reasoning is in `FEATURES.md`; the short version is that the account gated
 nothing — the members page said so in three places, and the one thing it
@@ -471,9 +475,12 @@ closed ones are struck through rather than deleted so the trail survives.
 
 ~~**1. Members / accounts — needs Matt's decision, do not guess.**~~
 **CLOSED 2 Aug.** Matt asked for the decision to be made rather than deferred.
-Accounts are switched off (`features.accounts.enabled: false`); nothing
-collects a name, email or password. The offer is now sync rather than gating,
-built and dormant. Reasoning in `FEATURES.md` §3.
+**Reopened and closed again the same day.** Matt asked for the login back, free,
+with Voxel Frontier and Apex Kick bonus content behind it. Gating is impossible
+on static hosting (both games return HTTP 200 in full to a plain fetch), so what
+shipped is: free device-local account, per-account save slots, and bonus content
+**enabled** for account holders rather than hidden from anyone. Plus a separate
+adults-only teacher list with its own opt-in. `FEATURES.md` §3.
 
 ~~**2. Studio count not verifiable here.**~~
 **CLOSED 2 Aug.** The estate no longer states a Creator Hub studio count

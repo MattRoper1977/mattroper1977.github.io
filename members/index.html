@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>There is no login — where the members’ area went · Made by Matt</title>
-<meta name="description" content="Made by Matt has no login. There used to be one; here is exactly what it offered, why it was removed on 2 August 2026, and what bringing it back would take.">
+<title>Your account · Made by Matt</title>
+<meta name="description" content="A free Made by Matt account. It stays on your device, keeps your game progress separate from anyone else using the same computer, and switches on bonus content in Apex Kick and Voxel Frontier.">
 <meta name="theme-color" content="#161D3D"><link rel="canonical" href="https://madebymatt.uk/members/">
 <link rel="icon" href="../favicon.svg"><link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="stylesheet" href="../styles.css">
@@ -43,32 +43,31 @@ body{background:var(--dx-cream)}
 
 <main id="main">
 <section class="mb-hero">
-<p class="mb-eyebrow">Members' area</p>
-<h1>There is nothing to sign in to</h1>
-<p>Everything on this site is free and open, with no account, no sign-in and no email address. That is not a limitation — it is the whole design.</p>
+<p class="mb-eyebrow">Your account</p>
+<h1>A free account, and it never leaves this device</h1>
+<p>No cost, no email sent anywhere, no server behind it. It does two useful things and it does not pretend to do more.</p>
 </section>
 
 <section class="mb-sec"><div class="mb-wrap">
 
 <div class="mb-panel">
-<h2>Accounts were switched off, then removed, on 2 August 2026</h2>
-<p>There used to be a login here. It asked for a password, stored a hash of it in this browser, and then unlocked a page that said there were no member-only features yet — because there weren't, and there still aren't. A password that guards nothing, never leaves your device and cannot be reset is worse than no password: it invites you to reuse a real one somewhere it can do no good.</p>
-<p>On 2 August it was switched off. Later the same day the sign-in button, the password box and the whole members flow were taken out of the pages altogether, so there is no longer any part of this site that asks you for a password. If you ever made an account here, it only ever existed inside your own browser and nothing was ever sent anywhere. Clearing your browser data removes the last trace of it.</p>
-<p>Nothing you could reach before is out of reach now. There was never anything behind the login.</p>
+<h2>What it actually does</h2>
+<p><b>1. It keeps your progress separate from everyone else's.</b> On a shared classroom laptop, two people playing Voxel Frontier used to build over each other's world, and two people playing Apex Kick shared one squad and one goal tally. Signed in, each account gets its own saves. Signed out, everything works exactly as it did &mdash; your existing save is untouched and still there.</p>
+<p><b>2. It switches on bonus content.</b> In <b>Apex Kick</b>, the Members' Floodlights ground &mdash; night sky, full floodlights, no goal requirement. In <b>Voxel Frontier</b>, two extra blocks in the hotbar: <b>Snow</b> and <b>Water</b>.</p>
 </div>
 
 <div class="mb-panel" style="margin-top:1.4rem">
-<h2>What the login actually offered</h2>
-<p>Worth writing down plainly, because "there was a members' area" sounds like something was lost. This is the list, taken from the page's own words before it was removed — it said the same thing in three separate places:</p>
-<p style="border-left:3px solid var(--dx-amber);padding-left:.9rem;font-style:italic">"There are no member-only features yet — this is where they'd appear if any are built."</p>
-<p>So: <b>the account unlocked one page, and that page's own text said it unlocked nothing.</b> The one thing that <i>did</i> exist for supporters — commissioned resources — carried a line saying signing in did not unlock it and that it was open to anyone who donates. It still is, and it still needs no account.</p>
-<p>The machinery behind it was real enough — create an account, log in, log out, a password-strength meter, a signed-in name in the header, and a password reset that only worked with a cloud backend that was never configured. It was a working lock on a door with nothing behind it.</p>
+<h2>What it is not, said plainly</h2>
+<p><b>It is not a lock, and the bonus content is not hidden from anyone.</b> This site is a set of static files. Every page and every game is served in full to anybody who asks for the URL &mdash; there is no server here that could check who you are before handing a file over. So the extras are <b>switched on</b> for account holders rather than <b>kept from</b> everybody else. Anyone determined to reach them can. That is a true description of what is happening, and it is better than a padlock icon that does nothing.</p>
+<p><b>It does not sync between devices.</b> An account that never leaves your device has nowhere to sync to. Make one on a school computer and one at home and they are two separate accounts with two separate save files. Nothing on this page will tell you otherwise until that is genuinely built.</p>
+<p><b>There is no password reset.</b> Nobody, including me, can see or recover your password &mdash; only a hashed form of it exists, in your own browser. If you forget it, make another account. Because of that: <b>please do not reuse a password you use anywhere else.</b> It guards nothing here, so a real password would only be at risk for no benefit.</p>
 </div>
 
 <div class="mb-panel" style="margin-top:1.4rem">
-<h2>If you want it back</h2>
-<p>It is not a switch. There is a setting called <code>features.accounts.enabled</code>, and turning it on by itself changes <b>nothing you can see</b> — that was tested rather than assumed, by forcing the setting on and counting what appeared: <b>no login button, no sign-in box, no password field.</b> The sign-in markup was deleted from the pages, so bringing accounts back means restoring that markup as well as flipping the setting.</p>
-<p>Nothing is lost and nothing needs rebuilding from scratch — it is all in the project's history. And a decision worth making again rather than by default: an account that stores a password on your device, cannot reset it, and unlocks nothing is worse than no account, because it tempts you to reuse a real password. If member-only material ever exists, the login should come back <i>with</i> it, not before it.</p>
+<h2>Where your details go</h2>
+<p><b>Nowhere.</b> Your name, email and a salted SHA-256 hash of your password are written to this browser's own storage and never transmitted. There is no account database, no server, and no third party involved in signing in. Clearing your browser data deletes the account entirely and leaves nothing behind anywhere else.</p>
+<p>That also means I have no way of knowing who has an account, or how many exist. If you want to hear about new resources, that is a <b>separate, adults-only list</b> with its own tick box on the <a href="../index.html#contact">home page</a> &mdash; making an account does not put you on it, and joining it does not make you an account.</p>
+<p>The full picture is on the <a href="../privacy/">data and privacy page</a>.</p>
 </div>
 
 <h2 class="mb-note" style="font-size:1.05rem;color:var(--dx-title);font-weight:800;margin-top:2.2rem">Follow the work instead</h2>

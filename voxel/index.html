@@ -251,6 +251,7 @@
 </div>
 
 <!-- Three.js r128 vendored locally so the game works offline, no CDN required -->
+<script src="../assets/mbm-profile.js"></script>
 <script src="vendor/three.min.js"></script>
 <script>
 "use strict";
@@ -298,8 +299,14 @@ if(typeof THREE==='undefined' || !webglAvailable()){
 // One save slot PER SEED. A single shared slot meant opening a friend's
 // "?seed=" link silently overwrote whatever you had built.
 const SAVE_BASE='voxelfrontier.save.v1';        // legacy single-slot save (migrated below)
-const SAVE_PREFIX='voxelfrontier.world.v2.';
-const LAST_KEY='voxelfrontier.lastseed.v1';
+/* Per-account save slots. MBMProfile.slot() returns the key UNCHANGED when
+   nobody is signed in, so an existing world is never orphaned by this change —
+   that was the first requirement, not an afterthought. Signed in, each account
+   gets its own worlds, which is what stops two pupils on one laptop building
+   over each other. */
+const _slot = k => (window.MBMProfile ? window.MBMProfile.slot(k) : k);
+const SAVE_PREFIX=_slot('voxelfrontier.world.v2')+'.';
+const LAST_KEY=_slot('voxelfrontier.lastseed.v1');
 const PREF_KEY='voxelfrontier.prefs.v1';
 
 function readJSON(key){ try{ return JSON.parse(localStorage.getItem(key)||'null'); }catch(e){ return null; } }
@@ -1007,9 +1014,19 @@ function placeBlock(){
 }
 
 /* ---------- 11. Hotbar --------------------------------------------------- */
-const HOTBAR=[GRASS,DIRT,STONE,WOOD,LEAVES,SAND,PLANKS,BRICK,GLASS];
+/* Bonus blocks for account holders. SNOW and WATER were already complete —
+   colour, atlas tile, and a footstep sound — and simply absent from the hotbar.
+   So this adds two usable blocks and no new rendering code at all.
+
+   NOT A LOCK, and the members page says so in as many words: this file is
+   served in full to everyone, signed in or not. The blocks are ENABLED for
+   account holders, not hidden from anybody. */
+const BONUS_BLOCKS=[SNOW,WATER];
+const HOTBAR=[GRASS,DIRT,STONE,WOOD,LEAVES,SAND,PLANKS,BRICK,GLASS]
+  .concat((window.MBMProfile && window.MBMProfile.bonus()) ? BONUS_BLOCKS : []);
 const NAMES={[GRASS]:'Grass',[DIRT]:'Dirt',[STONE]:'Stone',[WOOD]:'Wood',[LEAVES]:'Leaves',
-             [SAND]:'Sand',[PLANKS]:'Planks',[BRICK]:'Brick',[GLASS]:'Glass'};
+             [SAND]:'Sand',[PLANKS]:'Planks',[BRICK]:'Brick',[GLASS]:'Glass',
+             [SNOW]:'Snow',[WATER]:'Water'};
 let selected=0;
 const hotbarEl=document.getElementById('hotbar');
 HOTBAR.forEach((t,i)=>{
