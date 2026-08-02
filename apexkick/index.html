@@ -340,6 +340,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-
   <div id="loading"><div class="sp"></div><div class="note">Rolling the pitch…</div></div>
 </div>
 
+<script src="../assets/mbm-profile.js"></script>
 <script src="vendor/three.min.js"></script>
 <script>
 /* =====================================================================
@@ -1740,6 +1741,7 @@ function streakLabel(streak) {
 }
 
 /* ---------------- stadiums ---------------- */
+function MEMBER(){ return !!(window.MBMProfile && window.MBMProfile.bonus()); }
 var STADIUMS = [
   { id: 'training', name: 'Training Ground', sky: 'day',   weather: 'clear', need: 0,
     blurb: 'Where it starts. Clear sky, no excuses.' },
@@ -1750,12 +1752,22 @@ var STADIUMS = [
   { id: 'nightcup', name: 'Cup Night',       sky: 'night', weather: 'clear', need: 120,
     blurb: 'Black sky, white floodlights, everyone watching.' },
   { id: 'tempest',  name: 'Tempest',         sky: 'storm', weather: 'storm', need: 220,
-    blurb: 'Sideways rain and a gale. The wind indicator is not decoration here.' }
+    blurb: 'Sideways rain and a gale. The wind indicator is not decoration here.' },
+  /* Bonus ground for account holders. need:0 on purpose — this is what the free
+     account gives you, not a second grind on top of the first.
+
+     NOT A LOCK. This file is served in full to everyone; `member` enables the
+     ground for signed-in players, it does not hide it from anyone else. The
+     members page says exactly that rather than implying a padlock. */
+  { id: 'members', name: "Members' Floodlights", sky: 'night', weather: 'clear', need: 0,
+    member: true,
+    blurb: 'Empty stands, full floodlights, nobody watching but you. Free with an account.' }
 ];
 function stadiumsFor(goals) {
   return STADIUMS.map(function (s) {
     return { id: s.id, name: s.name, sky: s.sky, weather: s.weather, need: s.need,
-             blurb: s.blurb, unlocked: goals >= s.need };
+             blurb: s.blurb, member: !!s.member,
+             unlocked: (goals >= s.need) && (!s.member || MEMBER()) };
   });
 }
 function stadiumById(id) {
@@ -1825,7 +1837,7 @@ function dailyDoneToday(p, d) { return (p.dailyKey || 0) === dayKey(d); }
 return {
   TITLES: TITLES, titleFor: titleFor, nextTitle: nextTitle,
   STREAK_CAP: STREAK_CAP, streakMultiplier: streakMultiplier, streakLabel: streakLabel,
-  STADIUMS: STADIUMS, stadiumsFor: stadiumsFor, stadiumById: stadiumById,
+  STADIUMS: STADIUMS, stadiumsFor: stadiumsFor, stadiumById: stadiumById, isMember: MEMBER,
   ACHIEVEMENTS: ACHIEVEMENTS, newlyEarned: newlyEarned, achievementById: achievementById,
   dayKey: dayKey, dailySeed: dailySeed, dailyDoneToday: dailyDoneToday
 };
@@ -2142,7 +2154,11 @@ return { unlock: unlock, sfx: SFX, crowd: crowd, setMuted: setMuted,
 var T = window.THREE, Sc = AK.Scene, M = AK.Meta, GK = AK.GK;
 var $ = function (id) { return document.getElementById(id); };
 
-var SAVE = 'apexkick.v1';
+/* Per-account save slot. MBMProfile.slot() returns the key UNCHANGED when
+   nobody is signed in, so an existing squad and goal tally survive this change
+   untouched. Signed in, each account keeps its own progress — which is the
+   point on a shared classroom machine. */
+var SAVE = (window.MBMProfile ? window.MBMProfile.slot('apexkick.v1') : 'apexkick.v1');
 var G = {
   state: 'boot', mode: 'rivals', moment: null, momentIdx: 0, momentsPerRound: 5,
   results: [], flight: null, playT: 0, outcome: null, timeScale: 1,
@@ -2476,7 +2492,7 @@ function popRating(rating, goal) {
 /* Apply the selected stadium's sky and weather. */
 function applyStadium() {
   var st = AK.Prog.stadiumById(P.stadium || 'training');
-  var unlocked = P.goals >= st.need;
+  var unlocked = (P.goals >= st.need) && (!st.member || AK.Prog.isMember());
   if (!unlocked) { st = AK.Prog.stadiumById('training'); P.stadium = 'training'; }
   AK.FX.applySky(st.sky);
   AK.FX.applyWeather(st.weather);
@@ -2867,7 +2883,7 @@ function showStadiums() {
       return '<button class="stadcard' + (P.stadium === st.id ? ' on' : '') +
         (st.unlocked ? '' : ' locked') + '" data-id="' + st.id + '">' +
         '<span class="need">' + (st.unlocked ? (P.stadium === st.id ? 'SELECTED' : 'READY') :
-          st.need + ' goals') + '</span>' +
+          (st.member ? 'FREE ACCOUNT' : st.need + ' goals')) + '</span>' +
         '<b>' + st.name + '</b><br><span class="note">' + st.blurb + '</span></button>';
     }).join('') + '</div>',
     '<button class="btn" id="bBackS">Done</button>', { back: showTitle });
@@ -2875,7 +2891,8 @@ function showStadiums() {
   Array.prototype.forEach.call(document.querySelectorAll('.stadcard'), function (b) {
     b.onclick = function () {
       var st = AK.Prog.stadiumById(b.dataset.id);
-      if (P.goals < st.need) { toast('Locked — ' + st.need + ' goals needed'); return; }
+      if (st.member && !AK.Prog.isMember()) { toast('Free account needed \u2014 sign in on madebymatt.uk'); return; }
+      if (P.goals < st.need) { toast('Locked \u2014 ' + st.need + ' goals needed'); return; }
       P.stadium = st.id; save(); AK.Audio.sfx.tick(); showStadiums();
     };
   });

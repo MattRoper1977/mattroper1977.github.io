@@ -131,7 +131,13 @@ Low urgency; noted so it is not rediscovered.
   one-button CORS probe at `/cors-test.html` that decides PR #25, and the
   dashboard domain-lock. **No public page claims the form works** — that is
   Matt's evidence, not a stranger's.
-- **The accounts surface** — removed. Module kept, fail-closed.
+- **The accounts surface** — removed, then **restored the same day** in the
+  shape Matt asked for: free account, per-account save slots, bonus content in
+  Apex Kick and Voxel Frontier **enabled** for account holders rather than hidden
+  (gating is impossible on static hosting — both games return HTTP 200 in full to
+  a plain fetch, measured). Plus a separate adults-only teacher list with its own
+  required opt-in tick, reusing the existing FormSubmit endpoint so no new third
+  party. `FEATURES.md` §3.
 - **`/privacy/`** — written, every sentence traced to a measurement.
 - **`stamp-data.py`'s hand-maintained page list** — now derived, with an
   empty-population guard tested in both directions.

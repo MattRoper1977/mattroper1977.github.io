@@ -62,21 +62,53 @@ Add the same `{ "key": "my-worksheet", "title": "My worksheet" }` to
 
 ---
 
-## 3. Accounts + members' area — REMOVED (2 August 2026)
+## 3. Accounts + members' area — RESTORED (2 August 2026, same day)
 
-`site.json` → `features.accounts.enabled` is **`false`**, *and* the whole
-visitor-facing surface has been taken out of the markup: the Log in button, the
-sign-in modal and its password field, the members gate and signed-in area, the
-member badge, the homepage account band, the two `zone:"account"` doors and the
-`/uas/` and `/voxel/` sync-offer banners. `/members/` is an honest page saying
-there is nothing to sign in to.
+`site.json` → `features.accounts.enabled` is **`true`**, and the Log in button
+and sign-in modal are back in `index.html`. `/members/` is the account page.
 
-**The reversal is no longer one line.** The paragraphs below were written when
-this was a switched-off flag, and they say a boolean restores everything. That
-is no longer true: flipping `enabled:true` now reveals markup that does not
-exist. Restoring accounts means reverting the removal commit *and then*
-flipping the flag. The module itself — `MBMAuth`, both backends,
-`supabase-schema.sql`, `initAccountUI()` — is untouched and still fail-closed.
+**It was removed earlier the same day and then asked for back**, with a
+different shape: free, no gating, bonus content instead. The history is worth
+keeping because the reasoning still binds what the account may claim.
+
+### What the account does, and the sentence that constrains it
+
+| | |
+|---|---|
+| **Per-account save slots** | Signed in, Apex Kick and Voxel Frontier write to `<key>~<tag>`. Signed out, the key is **unchanged**, so no existing save is orphaned. |
+| **Bonus content** | Apex Kick: the *Members' Floodlights* ground (`member:true`, `need:0`). Voxel Frontier: `SNOW` and `WATER` in the hotbar — both were already fully implemented and simply absent from `HOTBAR`. |
+| **Cross-device sync** | **No.** A device-local account has nowhere to sync to. Nothing may claim it until a verified backend exists. |
+| **Password reset** | **No.** Cloud-only, and there is no cloud. The page says so and tells people not to reuse a password. |
+
+**THE CONSTRAINT, because it is the whole reason this shape was chosen:
+gating is impossible here and nothing may imply otherwise.** Measured, not
+assumed — a plain fetch with no JavaScript:
+
+```
+/voxel/index.html      HTTP 200    60,782 bytes   <canvas>:1  <script>:3
+/apexkick/index.html   HTTP 200   160,805 bytes   <canvas>:2  <script>:10
+```
+
+That is each game in full, before any login code can run. So bonus content is
+**enabled for account holders, not hidden from anyone**, and `/members/` says
+exactly that. A padlock icon here would be the unconditional-success-page defect
+wearing a different hat.
+
+### `assets/mbm-profile.js`
+
+The games are self-contained and make **zero** external requests. Loading
+`mbm-features.js` into them would drag `api.counterapi.dev` into a game page, so
+they load a ~2 KB shim instead that only reads the `mbm_session` / `mbm_users`
+keys `MBMAuth` already writes, and makes no network requests at all.
+`MBMProfile.slot(key)` returns the key **unchanged** when signed out.
+
+### The teacher list is not the account
+
+A separate, adults-only opt-in on the home page with its **own required tick
+box**. Creating an account does not join it; joining it does not create an
+account. It posts to the same FormSubmit endpoint the contact form already uses,
+so it adds **no new third party**. It is the only place on the site where an
+email address is sent anywhere.
 
 **Why, since this section used to claim the opposite.** It said the members
 page had "member-only bonus content, gated behind sign-in". It never did. The
