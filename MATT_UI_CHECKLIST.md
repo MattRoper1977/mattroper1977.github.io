@@ -61,68 +61,78 @@ blind. **The checkbox is the only ground truth.**
 
 ---
 
-## 2. ⭐ Send yourself a message through the contact form
+## 2. ⭐ The thirty seconds that settles the contact form
 
-**This is the highest-value item on the list.** It settles a question nothing in
-the repository can answer, and it takes ninety seconds.
+**Mailbox: `contactmadebymatt@gmail.com` — NOT `londonmatt1977@gmail.com`.**
 
-### ⚡ A thirty-second version that may settle it without sending anything
+That distinction is the trap that already caught this session. The Gmail account
+connected to Claude is `londonmatt1977@gmail.com`; it was searched and returned
+**0 threads matching `formsubmit` and 0 to, from or delivered-to
+`contactmadebymatt@gmail.com`**, and the two mailboxes have no forwarding
+between them. **That zero came from the wrong population and told us nothing
+about the form.** Search the right mailbox.
 
-Open **`contactmadebymatt@gmail.com`** and search for `formsubmit`.
+**Search 1** — paste exactly:
 
-- **An activation email, never clicked** → that is your answer. Every message
-  ever sent through the form was discarded. Click the link, then send one test.
-- **An activation email, already clicked / notification emails present** → the
-  form works. Nothing to do.
-- **Nothing at all** → the form has almost certainly never delivered. Send the
-  test below and watch for the activation mail to arrive.
+```
+in:anywhere from:formsubmit.co
+```
 
-**This was checked as far as it could be.** The Gmail account connected to this
-session is `londonmatt1977@gmail.com`, and it was searched: **0 threads matching
-`formsubmit`, and 0 to, from or delivered-to `contactmadebymatt@gmail.com`** —
-so the two mailboxes are separate and nothing is forwarding between them. That
-zero is therefore **not evidence about the form**; it is evidence that the form's
-mail does not come here. The instrument itself was verified working first
-(201 threads returned on a control query), because a search tool that is simply
-blind returns the same zero as a clean one.
+`in:anywhere` matters: it covers Spam and Trash, which is where activation mail
+usually lands.
 
-### The full test
+**Search 2, only if Search 1 is empty** — paste each:
 
-**Do this:** open <https://madebymatt.uk/#contact> on your phone, fill in the
-three boxes, press Send. You should land on a new thank-you page. Then check
-`contactmadebymatt@gmail.com`.
+```
+in:anywhere formsubmit
+in:anywhere subject:(activate OR confirm)
+```
 
-**If nothing arrives within a few minutes, the form has never worked** — and
-that is genuinely possible.
+### What you find, what it means, what to do
 
-Here is why. The form posts to `https://formsubmit.co/contactmadebymatt@gmail.com`
-— the raw-email form of the endpoint. That shape requires a **one-time
-activation click**: the very first time anyone submits, FormSubmit emails you a
-confirmation link, and **until somebody clicks it, every message is discarded.**
-The visitor sees a success page either way. Nothing in the repository records
-whether that click ever happened, and nothing I can run will tell you. It is
-unknown by construction.
+| Found | Means | Do |
+|---|---|---|
+| **A** — activation mail, already confirmed | The form is live | Count the forwarded submissions. Zero is then a real fact about traffic, not a fault |
+| **B** — activation mail, never clicked | Every message submitted before now went nowhere | Click it. **Nothing can be recovered** — the relay does not hold mail for an unactivated address. Then do C's test |
+| **C** — nothing at all | **The absence is informative.** Activation mail is only sent on the *first* submission, so no activation mail most likely means **nobody ever submitted** — nothing was lost — unless it was deleted | Submit the form once from your phone, wait a few minutes, re-run Search 1 |
+| **D** — activation mail for a *different* address or endpoint than the page carries | The live form points somewhere else | Bring the real endpoint back to the session |
 
-- **A message arrives** → the form works. Nothing more to do.
-- **Nothing arrives** → look for an old FormSubmit activation email (check spam,
-  search `formsubmit`). Click the link, then send a second test.
-- **Either way, tell Claude the result.** If it never worked, every message sent
-  through it since it went up was lost silently, and the fix is a one-line
-  change to a tokenised endpoint.
+### Then, in every case
+
+**Send one test message from your phone** — <https://madebymatt.uk/#contact> —
+and report what arrives. That single test is the only evidence that closes this
+question. Nothing in a container can substitute for it.
 
 ---
 
-## 3. FormSubmit dashboard — lock it to your domain
+## 3. FormSubmit — questions I could not answer from here
 
-While you are in there: FormSubmit's endpoint accepts a POST **from anywhere**,
-not only from your site. Anyone who reads your page source can post to it,
-including with their own hidden fields. The form now carries a honeypot, which
-stops the lazy bots, but the real control is server-side and it is not something
-I can set from the code.
+`formsubmit.co` is not reachable from the container (403 on CONNECT), so
+**everything about how the vendor behaves is unverifiable from my side.** These
+are questions, not instructions, and each is only worth doing if §2 shows the
+form is live:
 
-If FormSubmit offers a **domain lock / allowed-domains** setting, switch it on
-and set it to `madebymatt.uk`. If there is no such setting on the free tier,
-that is worth knowing too — tell Claude and the honeypot stays the only defence.
+- **Is there a dashboard at all** for a bare-email endpoint, or only for an
+  alias? I could not check.
+- **Is there a domain-lock / allowed-domains setting?** If yes, set it to
+  `madebymatt.uk`. The endpoint currently accepts a POST from anywhere, which
+  is a **spam-volume and `_cc`/`_replyto` abuse** exposure — *not* a secrecy
+  one. Your address is deliberately public in 31 `mailto:` links; hiding it was
+  never the point and an alias would not be a privacy fix.
+- **Is there a captcha setting, and what is its default?** The form does not
+  set `_captcha` either way, so the vendor's default applies and I cannot read
+  it. If their interstitial is on, that is your only free friction against
+  spam, and turning it off is a trade you should make knowingly.
+- **If you are ever given an alias token** (`formsubmit.co/el/…`), send it to
+  the session and it gets swapped in with a count proving every occurrence
+  moved. **Never guess or construct one** — a wrong token silently discards
+  mail exactly like an unactivated address does.
+
+What the form already has, verified in the page: `_honey` honeypot (present,
+`aria-hidden="true"`) and `_subject` (`madebymatt.uk contact`) so the mail is
+filterable. No captcha of any kind was added — **no reCAPTCHA, no hCaptcha** —
+because adding Google's captcha to fix a privacy problem is a self-inflicted
+wound.
 
 ---
 
