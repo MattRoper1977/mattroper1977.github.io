@@ -322,9 +322,9 @@ job.
   (`clip-apexkick.mp4`, already portrait, silent and vetted) is noted in the kit.
 - **`/resources/medevac-frontier/` still overflows 1 px.** Reproduces on
   pristine `69c0457`; filed in `BACKLOG.md` with its reproduction line.
-- **The OCR language-pack host is still unread.** cdnjs is blocked from this
-  container. It is the first item on the backlog and the reason vendoring beats
-  SRI.
+- ~~**The OCR language-pack host is still unread.**~~ **CLOSED the same day.**
+  It was `tessdata.projectnaptha.com`, and the pack is **10.9 MB** — bigger than
+  all four libraries together. Both are now vendored; see the addendum below.
 - **R22–R24 are on a branch in the Lessons repo, not merged.**
   `claude/instruments-r22-r24` at `f9af742`. The brief said to write them; it did
   not ask for a PR there.
@@ -344,7 +344,10 @@ title earns a click. I can prove it is 76 seconds, silent, calm, accurate to the
 files it describes and free of any child's name. Whether it persuades a teacher
 to open the site is a judgement, and it is Matt's.
 
-## If I had another hour
+## If I had another hour — and then I did
+
+*The section below was written as the next thing to do. Matt asked for it in the
+same session, so it is done; it is kept because the reasoning is the record.*
 
 **`/uas/app.html`, and vendoring those four cdnjs scripts.** It is the top item
 on the backlog and the ruling is already recorded so it cannot be re-debated:
@@ -354,3 +357,111 @@ promise. It is the one page on the estate where the blast radius is a teacher's
 class list rather than a visit counter. It was not done today because a rushed
 change to that page, at the end of a long session, is exactly the change you
 don't make.
+
+
+---
+
+# Addendum — the vendoring, done
+
+Asked for immediately after the close above, so the "another hour" item became
+this hour.
+
+## What changed
+
+`uas/vendor/` — **7 files, 16.8 MB**, each with its SHA-256 in
+`uas/vendor/MANIFEST.md`. Every one of the six cdnjs URLs in `uas/app.html` now
+points at a local path, and `langPath` is set so the OCR language pack is local
+too — it never was before.
+
+**cdnjs is blocked from this container** (403 on CONNECT), so the files came
+from **npm at the exact versions the app already referenced**. That is the
+publisher's own registry, which is what cdnjs mirrors — a stronger source than a
+copy of a copy. *Honest limit: for the same reason, these bytes were never
+byte-compared against what cdnjs would actually have served.*
+
+## The proof
+
+The failing state is built into the harness: **every non-local request is
+aborted**, so a single surviving cdnjs URL kills the feature under test.
+
+```
+1. pdf.js    PASS   extracted "OSMOSIS 1BI0" from a hand-built PDF
+2. jsPDF     PASS   produced a 3,169-byte PDF
+3. tesseract PASS   read "OSMOSIS" — engine, core and language pack all local
+EXTERNAL REQUESTS ATTEMPTED, WHOLE RUN: 0
+CONSOLE ERRORS: 0
+```
+
+The first run **failed**, and usefully: given `corePath` as a *directory*,
+tesseract.js v5 asks for `tesseract-core-simd-lstm.wasm.js`, a variant the
+original code never used. The explicit file path the app already had is the
+right one. A docs-reading would have shipped the directory form.
+
+Then two vendored files turned out never to be fetched — the separate
+`tesseract-core-simd.js` / `.wasm` pair, 3.6 MB — so they were deleted **and the
+verification re-run** rather than assumed. 20.2 MB → 16.8 MB.
+
+## The cost, stated because it cuts against my own earlier argument
+
+I refused to commit a 10 MB video into this repo on the grounds that a Pages
+repo serves every file it holds. `uas/vendor/` is 16.8 MB against a 7.3 MB
+working tree, so the objection deserves an answer rather than a silence.
+
+The film is an **output**: it lives on YouTube and `tools/film/` rebuilds it.
+These are **inputs the tool needs at run time**, and without them the OCR cannot
+work offline at all — which was the entire promise of the tool. Different
+things, different answer. If the size ever bites, a 2.95 MB model variant is
+named in the manifest; that is a product decision, not a security one.
+
+## The drag-and-drop finding, fixed alongside
+
+Searching for a recorded "DnD finding" returned 11 files and **every hit was
+base64 noise inside PDFs and video binaries** — there was no such record. The
+only real drag-and-drop surface on the estate is `wireDrop` in this same file,
+and it had four defects. In descending order of cost:
+
+1. **A file dropped anywhere off-target navigated the browser away from the app.**
+   The records survive in IndexedDB; the open unit and anything half-typed do not.
+2. `dragleave` fires when the pointer crosses onto a **child**, and both zones
+   contain a `<button>`, so the highlight flickered off mid-drag.
+3. The picker filters on `accept=".pdf"`; the drop path did not. A dropped
+   `.docx` went straight into pdf.js and threw a raw library exception.
+4. `dropEffect` was never set.
+
+Proven in both directions against a pristine copy of the previous file:
+
+```
+BEFORE  5 of 8 checks FAIL   — and a dropped .docx showed "Reading the PDF…"
+AFTER   8 of 8 PASS          — a dropped .docx shows
+        "notes.docx" cannot be read here — this tab takes .pdf,application/pdf.
+        Nothing was changed.
+```
+
+**One check I had to correct rather than believe.** `dropEffect = "copy"`
+reported FAIL. Probed before writing it off: a bare `dt.dropEffect = "copy"` on
+a synthetic `DataTransfer` reads back `"none"` even outside any handler, because
+Chromium only honours it during a real drag. The code is right and the *check*
+could not observe it, so the check now asserts the observable and more important
+half — that `dragover` on the zone is `preventDefault`-ed, without which the
+browser refuses the drop at all.
+
+## Documents reconciled in the same commit
+
+The backlog entry required this, and it is the estate's rule 6:
+
+| document | was | now |
+|---|---|---|
+| `/privacy/` | "Three things that happen only if you choose them", cdnjs row in the table | **Two**, row removed, and the OCR gap closed rather than caveated |
+| homepage promise tile | "Four things do reach the internet" | **Three** |
+| `HANDOVER.md` third-party table | 4 hosts | **3**, with the correction noted in place |
+| `uas/app.html` hints ×3 | "Needs internet the first time" | now true: no connection needed |
+
+## Gates after
+
+| gate | result |
+|---|---|
+| cards | 11 cards, 0 bare · sig `bcd83ac080e1b63b` — **unchanged** |
+| floor | **135 checks, 0 console errors, 0 4xx**, worst overflow 1px (the known pre-existing one) |
+| stamp `--check` | 2 data files, 4 pages, 0 stale |
+| offline | 3/3 features, **0 external requests** |
+| drag and drop | **8/8**, against 5/8 failing before |

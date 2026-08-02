@@ -5,50 +5,41 @@ re-deriving anything. Last re-ordered 2 August 2026.
 
 ---
 
-## 1. `/uas/app.html` — vendor the four cdnjs scripts. **Not SRI.**
+## 1. ~~`/uas/app.html` — vendor the four cdnjs scripts~~ — **DONE 2 August 2026**
 
-**This outranks everything else on the list, and the ruling is recorded here so
-it does not get re-debated.**
-
-`uas/app.html` is the page that holds real pupil records — names, marks,
-evidence photographs, in an IndexedDB database called `uas_register`. It is also
-the only page on the estate that pulls **executable code from a third-party CDN
-at run time**:
+Closed. The four libraries and the OCR language pack are vendored under
+`uas/vendor/` with a SHA-256 manifest, and the tool now works with no internet
+connection at all.
 
 ```
-https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js
-https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js
-https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js
-https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js
+PDF text extraction ... PASS   pdf.js, local
+PDF export ............ PASS   jsPDF, local
+OCR ................... PASS   tesseract.js + eng language pack, local
+EXTERNAL REQUESTS ATTEMPTED, WHOLE RUN: 0
 ```
 
-plus `tesseract.js-core` and a language pack whose host is set by the library's
-own default rather than by this site's code — **unread, because cdnjs is blocked
-from the build container.** Four remote scripts execute inside the document
-holding a class list, with **no `integrity` attribute, no `crossorigin`, and no
-pinned hash on any of them**.
+Verified by aborting **every** non-local request in the browser and running all
+three features; a single surviving cdnjs URL would have killed the feature under
+test. See `tools/film/verify_uas_offline.mjs`.
 
-Nothing is wrong today. The pupil data does not leave — the OCR genuinely runs
-in the browser, and that was checked. The problem is blast radius: a substituted
-library there runs in the same document as a register.
+**Two things the fix turned up that the backlog entry did not know.** The
+language pack `tesseract.js` was quietly fetching from
+`tessdata.projectnaptha.com` is **10.9 MB** — bigger than all four libraries put
+together, and from a host this container could not even reach to name it last
+pass. And with `corePath` pointed at a *directory*, tesseract.js v5 asks for
+`tesseract-core-simd-lstm.wasm.js`, a variant the original code never used; the
+explicit file path the app already had is the correct one, and the test found
+that rather than a reading of the docs.
 
-**The decision, made and not to be relitigated: vendor the files into the repo.
-Do not use Subresource Integrity.**
-
-SRI would give integrity but still requires the network, so the tool would still
-break in a room with bad wifi. Vendoring gives integrity **and** offline — and
-offline is that tool's entire promise. It also removes a third-party execution
-context from the one page that matters most. Same work, strictly better outcome.
-
-**When it is done, three things change in the same commit:** `/privacy/` loses
-the `cdnjs.cloudflare.com` row from its table, the homepage promise tile drops
-from four internet-touching things to three, and `HANDOVER.md`'s third-party
-table drops from four hosts to three.
-
-*Deliberately not done on 2 August: a rushed change to a page holding class
-lists, at the end of a long session, is exactly the change you don't make.*
-
----
+**Cost, stated because it cuts against an argument made in the same repo:**
+`uas/vendor/` is **16.8 MB**, against a 7.3 MB working tree. The launch film was
+deliberately *not* committed on the grounds that a Pages repo serves every file
+it holds. The difference is that the film is an output that lives on YouTube and
+can be rebuilt from `tools/film/`, while these are inputs the tool needs at run
+time — and without them the OCR cannot work offline at all, which was the whole
+promise. If the size ever bites, `@tesseract.js-data/eng` ships a 2.95 MB
+`4.0.0_best_int` model: an 8 MB saving, usually equal or better accuracy, a
+little slower. That is a product decision, not a security one.
 
 ## 2. `/resources/medevac-frontier/` overflows 1 px at 900 px wide
 
@@ -104,3 +95,9 @@ Low urgency; noted so it is not rediscovered.
 - **`stamp-data.py`'s hand-maintained page list** — now derived, with an
   empty-population guard tested in both directions.
 - **The launch film** — built, `tools/film/`, publish kit written. Matt uploads.
+- **The cdnjs vendoring** — done, above. `/privacy/`, the homepage promise tile
+  and `HANDOVER.md`'s third-party table all dropped from four hosts to three in
+  the same commit, as that entry required.
+- **Drag and drop in `/uas/app.html`** — four defects fixed, the worst being that
+  a file dropped anywhere off-target navigated the browser away from an open
+  register. 8/8 checks pass; the same checks fail 5/8 on the previous code.

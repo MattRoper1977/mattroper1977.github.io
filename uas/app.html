@@ -306,7 +306,7 @@ table.ssg .vert{writing-mode:vertical-rl;transform:rotate(180deg);white-space:no
     <p>On <b>Units</b>, press <b>Import an outcome sheet</b>. Four routes, most reliable first:</p>
     <p><b>Paste text</b> — open the AQA unit document in Word, select all, copy, paste. Works offline, reads everything.<br>
     <b>PDF upload</b> — for PDFs saved straight from Word (real text inside).<br>
-    <b>Scan / photo (OCR)</b> — for photocopies and photos. Slower, needs internet the first time, and only works when the app is opened from the website (not inside a Claude preview).<br>
+    <b>Scan / photo (OCR)</b> — for photocopies and photos. Slower, but it runs entirely in this browser with no internet connection, when the app is opened from the website (not inside a Claude preview).<br>
     <b>Type it in</b> — blank unit, you type the outcomes yourself.</p>
     <p>Every route lands on the <b>Check what was read</b> screen. Skim it — fix any misread words, add or remove outcomes — then <b>Save unit</b>.</p>
 
@@ -392,14 +392,14 @@ table.ssg .vert{writing-mode:vertical-rl;transform:rotate(180deg);white-space:no
     </div>
 
     <div class="imp-pane" id="imp-pdf" hidden>
-      <p class="hint">Works with PDFs that contain real text (made straight from Word). Scans and photos should go through the OCR tab instead. Needs internet the first time, to fetch the PDF reader. If the console mentions a "fake worker", ignore it — the reader just runs a little slower.</p>
+      <p class="hint">Works with PDFs that contain real text (made straight from Word). Scans and photos should go through the OCR tab instead. The PDF reader is part of this site, so it works with no internet connection at all.</p>
       <div class="drop" id="pdf-drop">Drop a PDF here, or <button class="btn small ghost" id="pdf-pick">choose a file</button></div>
       <input type="file" id="pdf-file" accept=".pdf,application/pdf" hidden>
       <div id="pdf-status"></div>
     </div>
 
     <div class="imp-pane" id="imp-ocr" hidden>
-      <p class="hint">For scanned PDFs and photos of the sheet. The reader runs in your browser — nothing is uploaded anywhere — but it needs internet the first time to fetch the OCR engine, and takes a minute per page. Check the review screen carefully afterwards. <b>Heads up:</b> this tab does not work in the Claude preview window (the sandbox blocks it) — open the app from your own site to use OCR.</p>
+      <p class="hint">For scanned PDFs and photos of the sheet. The reader runs in your browser — nothing is uploaded anywhere, and since 2 August 2026 the OCR engine is part of this site, so it needs no internet connection either. Allow about a minute per page, and check the review screen carefully afterwards.</p>
       <div class="drop" id="ocr-drop">Drop a scanned PDF or photos here, or <button class="btn small ghost" id="ocr-pick">choose files</button></div>
       <input type="file" id="ocr-file" accept=".pdf,image/*" multiple hidden>
       <div class="progressbar" id="ocr-prog" hidden><div></div></div>
@@ -809,27 +809,40 @@ $("#paste-go").addEventListener("click",()=>{
 });
 $("#manual-go").addEventListener("click",()=>openReview(null,{code:"",title:"",level:"",outcomes:[]}));
 
-/* ---------- lazy library loader ---------- */
+/* ---------- lazy library loader ----------
+   All four libraries are VENDORED under uas/vendor/ as of 2026-08-02. They used
+   to be fetched from cdnjs.cloudflare.com at run time, which meant four remote
+   scripts executing in the same document as the pupil register, with no
+   integrity attribute and no pinned hash on any of them. Nothing had gone
+   wrong; the problem was blast radius.
+
+   SRI was considered and rejected. It buys integrity but still requires the
+   network, so the tool would still fail in a room with bad wifi. Vendoring buys
+   integrity AND offline — and offline is this tool's whole promise.
+
+   Versions and SHA-256 for every file: uas/vendor/MANIFEST.md.
+   Still lazy: nothing here is fetched until the teacher opens a PDF, runs OCR
+   or exports, so the page weight of the app itself is unchanged. */
 function loadScript(src){return new Promise((res,rej)=>{
   if(document.querySelector(`script[src="${src}"]`)){res();return}
   const s=document.createElement("script");s.src=src;
-  s.onload=()=>res();s.onerror=()=>rej(new Error("Could not fetch "+src+" — check the internet connection and try again."));
+  s.onload=()=>res();s.onerror=()=>rej(new Error("Could not load "+src+" from this site. These libraries are vendored under uas/vendor/, so this is a missing file rather than a network problem."));
   document.head.appendChild(s);
 })}
 async function ensurePdfJs(){
   if(window.pdfjsLib)return;
-  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
-  window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  await loadScript("vendor/pdfjs/pdf.min.js");
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc="vendor/pdfjs/pdf.worker.min.js";
 }
 async function ensureTesseract(){
   if(window.Tesseract)return;
-  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js");
+  await loadScript("vendor/tesseract/tesseract.min.js");
 }
 
 /* ---------- PDF text route ---------- */
 $("#pdf-pick").addEventListener("click",()=>$("#pdf-file").click());
 $("#pdf-file").addEventListener("change",e=>{if(e.target.files[0])handlePdfText(e.target.files[0]);e.target.value=""});
-wireDrop("#pdf-drop",files=>{if(files[0])handlePdfText(files[0])});
+wireDrop("#pdf-drop",files=>{if(files[0])handlePdfText(files[0])},".pdf,application/pdf","#pdf-status");
 /* pure: pdf.js text items → text with \t column separators (testable) */
 function itemsToText(rawItems){
   const items=rawItems.filter(it=>it.str&&it.str.trim().length)
@@ -875,7 +888,7 @@ async function handlePdfText(file){
 /* ---------- OCR route ---------- */
 $("#ocr-pick").addEventListener("click",()=>$("#ocr-file").click());
 $("#ocr-file").addEventListener("change",e=>{if(e.target.files.length)handleOcr(Array.from(e.target.files));e.target.value=""});
-wireDrop("#ocr-drop",files=>{if(files.length)handleOcr(files)});
+wireDrop("#ocr-drop",files=>{if(files.length)handleOcr(files)},".pdf,image/*","#ocr-status");
 async function handleOcr(files){
   const st=$("#ocr-status"),prog=$("#ocr-prog"),bar=prog.querySelector("div");
   prog.hidden=false;bar.style.width="2%";
@@ -903,11 +916,13 @@ async function handleOcr(files){
     let worker;
     try{
       worker=await window.Tesseract.createWorker("eng",1,{
-        workerPath:"https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/worker.min.js",
-        corePath:"https://cdnjs.cloudflare.com/ajax/libs/tesseract.js-core/5.1.0/tesseract-core-simd.wasm.js"
+        workerPath:"vendor/tesseract/worker.min.js",
+        corePath:"vendor/tesseract/core/tesseract-core-simd.wasm.js",
+        langPath:"vendor/tesseract/tessdata",
+        gzip:true
       });
     }catch(werr){
-      throw new Error("The OCR engine could not start here. If this is the Claude preview window, the sandbox blocks it — the OCR tab works once the app is opened from your site (madebymatt.uk / GitHub Pages). Otherwise check the internet connection. The Paste text tab always works offline.");
+      throw new Error("The OCR engine could not start. Since 2 August 2026 it loads entirely from this site (uas/vendor/) and needs no internet connection at all, so this is most likely a browser that cannot run WebAssembly. The Paste text tab always works.");
     }
     for(let i=0;i<canvases.length;i++){
       st.innerHTML=`<div class="notice ok">Reading page ${i+1} of ${canvases.length}… this takes a minute per page.</div>`;
@@ -930,11 +945,71 @@ function imageToCanvas(file){return new Promise((res,rej)=>{
   img.onerror=()=>rej(new Error("Could not read that image file."));
   img.src=URL.createObjectURL(file);
 })}
-function wireDrop(sel,cb){
-  const el=$(sel);
-  ["dragenter","dragover"].forEach(ev=>el.addEventListener(ev,e=>{e.preventDefault();el.classList.add("drag")}));
-  ["dragleave","drop"].forEach(ev=>el.addEventListener(ev,e=>{e.preventDefault();el.classList.remove("drag")}));
-  el.addEventListener("drop",e=>cb(Array.from(e.dataTransfer.files)));
+/* ---------- drag and drop ----------
+   Four defects fixed 2026-08-02, in descending order of how much they cost:
+
+   1. A file dropped ANYWHERE ELSE on the page made the browser navigate away
+      from the app to display it. This page holds a class register: the records
+      survive in IndexedDB, but the open unit, the review screen and anything
+      half-typed do not. Stray drops are now swallowed by the document.
+   2. `dragleave` fires when the pointer crosses onto a CHILD element, and both
+      drop zones contain a <button>, so the highlight flickered off while the
+      file was still over the zone. Enter/leave are counted instead.
+   3. The file picker filters on accept=".pdf" but the drop path did not, so
+      dropping a .docx handed it straight to pdf.js, which threw a raw library
+      exception at the teacher. Drops now honour the same accept list and say
+      plainly what was ignored.
+   4. dropEffect was never set, so the cursor showed the wrong affordance. */
+
+/* A stray drop must never take the register off screen. Anything outside a
+   registered zone is cancelled. */
+["dragover","drop"].forEach(function(ev){
+  document.addEventListener(ev,function(e){
+    if(e.target&&e.target.closest&&e.target.closest("[data-dropzone]"))return;
+    e.preventDefault();
+    if(e.dataTransfer)e.dataTransfer.dropEffect="none";
+  });
+});
+
+/* Same rules the <input accept="..."> uses, applied to the drop path. */
+function fileMatches(file,accept){
+  if(!accept)return true;
+  const name=(file.name||"").toLowerCase(), type=(file.type||"").toLowerCase();
+  return accept.split(",").map(a=>a.trim().toLowerCase()).filter(Boolean).some(a=>
+    a.charAt(0)==="." ? name.endsWith(a)
+    : a.slice(-2)==="/*" ? type.indexOf(a.slice(0,-1))===0
+    : type===a);
+}
+
+function wireDrop(sel,cb,accept,statusSel){
+  const el=$(sel); if(!el)return;
+  el.setAttribute("data-dropzone","");
+  let depth=0;
+  const clear=()=>{depth=0;el.classList.remove("drag")};
+  el.addEventListener("dragenter",e=>{e.preventDefault();depth++;el.classList.add("drag")});
+  el.addEventListener("dragover",e=>{
+    e.preventDefault();
+    if(e.dataTransfer)e.dataTransfer.dropEffect="copy";
+    el.classList.add("drag");
+  });
+  el.addEventListener("dragleave",e=>{e.preventDefault();if(--depth<=0)clear()});
+  el.addEventListener("drop",e=>{
+    e.preventDefault(); e.stopPropagation(); clear();
+    const files=Array.from((e.dataTransfer&&e.dataTransfer.files)||[]);
+    if(!files.length)return;
+    const ok=files.filter(f=>fileMatches(f,accept));
+    if(!ok.length){
+      const st=statusSel&&$(statusSel);
+      const what=files.length===1?("\u201c"+esc(files[0].name)+"\u201d"):(files.length+" files");
+      if(st)st.innerHTML='<div class="notice err">'+what+' cannot be read here \u2014 this tab takes '+esc(accept||"")+'. Nothing was changed.</div>';
+      return;
+    }
+    if(ok.length<files.length){
+      const st=statusSel&&$(statusSel);
+      if(st)st.innerHTML='<div class="notice">Ignored '+(files.length-ok.length)+' file(s) that are not '+esc(accept||"")+'.</div>';
+    }
+    cb(ok);
+  });
 }
 
 /* =====================================================================
@@ -1179,7 +1254,7 @@ $("#s-pdf").addEventListener("click",()=>downloadPackPDF());
 $("#s-print").addEventListener("click",()=>window.print());
 async function ensureJsPdf(){
   if(window.jspdf&&window.jspdf.jsPDF)return;
-  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+  await loadScript("vendor/jspdf/jspdf.umd.min.js");
 }
 function imgDims(dataURL){return new Promise((res,rej)=>{
   const im=new Image();
@@ -1259,7 +1334,7 @@ async function downloadPackPDF(){
     doc.save(fname);
     warnEl.innerHTML=`<div class="notice ok">Saved <b>${esc(fname)}</b> — cover, summary sheet and ${evs.length} work example${evs.length===1?"":"s"}, ready to attach to an email.</div>`;
   }catch(err){
-    warnEl.innerHTML='<div class="notice err">'+esc(err.message||String(err))+' (The PDF builder needs internet the first time, to fetch its library.)</div>';
+    warnEl.innerHTML='<div class="notice err">'+esc(err.message||String(err))+' (The PDF builder is part of this site and needs no internet connection.)</div>';
   }
 }
 function drawSummaryPDF(doc,u,roster){
