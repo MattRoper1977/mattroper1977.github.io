@@ -92,3 +92,16 @@ on-screen text and the full transcript goes in the description.
   `01.mp4` and the concat list pointed fifteen times at one file. Silent. Shot
   numbers are now explicit and the count is asserted.
 - **`pkill -f serve.mjs` kills the shell that runs it.** Use a fresh port.
+- **A `fetch` that throws cannot tell CORS refusal from a blocked request.**
+  Both surface as the same `TypeError`. `verify_cors_probe.mjs` exists because
+  collapsing them into "refused" would close a question that was never examined.
+  A second `mode:'no-cors'` probe separates them: it resolves opaquely if the
+  request left the browser at all.
+
+## Verifiers that live here but are not about the film
+
+| script | asserts |
+|---|---|
+| `verify_uas_offline.mjs` | `/uas/app.html` completes pdf.js, OCR and jsPDF with every non-local request aborted |
+| `verify_uas_dnd.mjs` | drag-and-drop accepts, rejects and cleans up as intended |
+| `verify_cors_probe.mjs` | `/cors-test.html` reasons correctly in all 3 worlds — permitted, refused, and nothing-left-the-browser. Responses stubbed; it tests the probe, not the vendor |

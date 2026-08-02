@@ -88,8 +88,14 @@ Low urgency; noted so it is not rediscovered.
 ## Closed this session, for the record
 
 - **The contact form** — audited, `_next` fixed to a real thank-you page, copy
-  rewritten to measured truth. What remains is Matt's: the activation test and
-  the dashboard domain-lock.
+  rewritten to measured truth. **The activation question is answered: Matt found
+  the activation mail unclicked and clicked it on 2 August 2026, so the form
+  delivers from that date and delivered nothing for the 15 days before it**
+  (`first live 2026-07-18`, measured across 137 first-parent commits — see
+  `reports/close/2026-08-02-form-complete.md`). What remains is Matt's: the
+  one-button CORS probe at `/cors-test.html` that decides PR #25, and the
+  dashboard domain-lock. **No public page claims the form works** — that is
+  Matt's evidence, not a stranger's.
 - **The accounts surface** — removed. Module kept, fail-closed.
 - **`/privacy/`** — written, every sentence traced to a measurement.
 - **`stamp-data.py`'s hand-maintained page list** — now derived, with an
