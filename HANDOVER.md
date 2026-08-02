@@ -432,11 +432,21 @@ recorded because unreachable is not the same as absent.
 The remaining 22 pages contact nothing external at all, on load or otherwise.
 
 `/uas/app.html` used to be a fourth entry here. Its four libraries — pdf.js, its
-worker, tesseract.js and jsPDF — plus the 10.9 MB English language pack that
+worker, tesseract.js and jsPDF — plus the English language pack that
 `tesseract.js` was quietly pulling from `tessdata.projectnaptha.com`, are now
 vendored under `uas/vendor/` with a SHA-256 manifest. Proven by running the PDF,
 OCR and export paths with **every** non-local request aborted: all three pass,
 0 external requests attempted.
+
+That pack was **10,923,060 bytes** as vendored. On 2 August 2026 it was swapped,
+on Matt's call, for the `4.0.0_best_int` model at **2,952,873 bytes** —
+`uas/vendor/` is now **9,650,123 bytes, down from 17,620,310** (decimal MB:
+17.62 → 9.65, a 7.97 MB saving). The offline gate was re-run rather than
+assumed, and accuracy was measured before and after on both a clean and a
+degraded render: **44/44 words both ways, character-identical transcripts.**
+Note that `tesseract.js` caches the pack in IndexedDB, so the saving reaches
+first-time users and cleared browsers only. Full numbers in
+`uas/vendor/MANIFEST.md`.
 
 The copy describes the request and stops there. It deliberately makes **no
 promise about what any of those four do with what they receive** — that is
