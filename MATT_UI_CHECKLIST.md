@@ -1,7 +1,17 @@
 # Matt — the things only your hands can do
 
-In phone order. Nothing here can be done from a container; that is why it is a
-list rather than a commit.
+In phone order. **Everything on this list was attempted first**, on 2 August
+2026, and each one is here because it was measured as impossible from a
+container — not assumed:
+
+| item | what was tried | result |
+|---|---|---|
+| Enforce HTTPS ×3 | `GET api.github.com/repos/…/pages`, all four repos | **403** — *"Access to this GitHub API path is not permitted through this proxy."* |
+| Contact-form test | searched the connected Gmail; tried to POST the form | wrong mailbox (see §2) · `formsubmit.co` **403 on CONNECT** |
+| FormSubmit domain lock | — | dashboard login, no API |
+| Upload the film | reachability check | `youtube.com` **unreachable from the container** |
+
+Everything else this session is done and merged.
 
 ---
 
@@ -55,6 +65,28 @@ blind. **The checkbox is the only ground truth.**
 
 **This is the highest-value item on the list.** It settles a question nothing in
 the repository can answer, and it takes ninety seconds.
+
+### ⚡ A thirty-second version that may settle it without sending anything
+
+Open **`contactmadebymatt@gmail.com`** and search for `formsubmit`.
+
+- **An activation email, never clicked** → that is your answer. Every message
+  ever sent through the form was discarded. Click the link, then send one test.
+- **An activation email, already clicked / notification emails present** → the
+  form works. Nothing to do.
+- **Nothing at all** → the form has almost certainly never delivered. Send the
+  test below and watch for the activation mail to arrive.
+
+**This was checked as far as it could be.** The Gmail account connected to this
+session is `londonmatt1977@gmail.com`, and it was searched: **0 threads matching
+`formsubmit`, and 0 to, from or delivered-to `contactmadebymatt@gmail.com`** —
+so the two mailboxes are separate and nothing is forwarding between them. That
+zero is therefore **not evidence about the form**; it is evidence that the form's
+mail does not come here. The instrument itself was verified working first
+(201 threads returned on a control query), because a search tool that is simply
+blind returns the same zero as a clean one.
+
+### The full test
 
 **Do this:** open <https://madebymatt.uk/#contact> on your phone, fill in the
 three boxes, press Send. You should land on a new thank-you page. Then check
@@ -148,7 +180,7 @@ This list covers `mattroper1977.github.io` only. The `Lessons`, `Games` and
 do not assume they are clean.
 
 <!-- BRANCH-LIST:BEGIN -->
-**Re-derived 2 August 2026 against `main` at `ecf8b8c`**, after PR #20 merged.
+**Re-derived 2 August 2026 against `main` at `2d7d084`**, after PR #21 merged.
 This list is stale the moment `main` moves, so it is re-derived every pass
 rather than carried; the SHAs below have not changed across three derivations,
 which is a result, not a reason to stop checking.
