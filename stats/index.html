@@ -35,7 +35,18 @@ body{background:var(--dx-cream)}
 .sx-gc{display:flex;flex-wrap:wrap;align-items:center;gap:1rem;justify-content:space-between}
 .sx-gc p{margin:0;color:var(--dx-mut);font-size:.9rem;line-height:1.55;max-width:34rem}
 .sx-gc b{color:var(--dx-ink)}
-.sx-gc a{display:inline-flex;align-items:center;gap:.4rem;font-weight:800;font-size:.9rem;color:var(--dx-navy);background:var(--dx-amber);border-radius:999px;padding:.65rem 1.2rem;text-decoration:none;box-shadow:0 2px 0 var(--dx-ambd)}
+/* `.sx-gc a` used to match EVERY link in this box. That is right for the
+   standalone "Open GoatCounter →" call to action, which is a direct child, and
+   wrong for the link injected mid-sentence inside the <p> on the other branch:
+   it got a 141x43 amber pill in the middle of a paragraph, at 1.53:1 contrast.
+   Scoped to the direct child, so only a link that stands alone becomes a button. */
+.sx-gc>a{display:inline-flex;align-items:center;gap:.4rem;font-weight:800;font-size:.9rem;color:var(--dx-navy);background:var(--dx-amber);border-radius:999px;padding:.65rem 1.2rem;text-decoration:none;box-shadow:0 2px 0 var(--dx-ambd)}
+.sx-gc>a:hover{filter:brightness(1.06)}
+.sx-gc>a:focus-visible{outline:3px solid var(--dx-ink);outline-offset:2px}
+/* A link inside running text stays a link. --dx-eyeb is the estate's inline-link
+   colour and is the one that clears 4.5:1 on this card. */
+.sx-gc p a{color:var(--dx-eyeb);font-weight:700;text-decoration:underline;text-underline-offset:2px}
+.sx-gc p a:hover{text-decoration-thickness:2px}
 .sx-note{max-width:720px;margin:1rem auto 0;text-align:center;font-size:.78rem;color:var(--dx-mut);line-height:1.6}
 .sx-refresh{display:inline-flex;align-items:center;gap:.4rem;font:inherit;font-weight:800;font-size:.8rem;color:var(--dx-ink);background:transparent;border:1.5px solid var(--dx-line);border-radius:999px;padding:.5rem 1.05rem;cursor:pointer}
 .sx-refresh:hover{border-color:var(--dx-ambd);color:var(--dx-ambd)}
@@ -138,7 +149,10 @@ document.getElementById('menu').addEventListener('click',function(){var n=docume
         var base=/^https?:\/\//.test(code)?code.replace(/\/count\/?$/,''):('https://'+code+'.goatcounter.com');
         gc.innerHTML='<p><b>GoatCounter is live.</b> Page-view analytics — top pages, referrers, browsers and trends over time — are on your private GoatCounter dashboard.</p><a href="'+M.esc(base)+'" target="_blank" rel="noopener">Open GoatCounter →</a>';
       } else {
-        gc.innerHTML='<p><b>Want richer analytics?</b> Add a free <a href="https://www.goatcounter.com/" target="_blank" rel="noopener" style="color:var(--dx-ambd);font-weight:700">GoatCounter</a> code to <code>site.json</code> to get top pages, referrers and trends over time. The live counts above keep working either way. See FEATURES.md.</p>';
+        /* No inline style. The old one set color:var(--dx-ambd), which lost to
+           the container rule's amber background and produced 1.53:1 - amber text
+           on an amber pill. The stylesheet now handles both shapes. */
+        gc.innerHTML='<p><b>Want richer analytics?</b> Add a free <a href="https://www.goatcounter.com/" target="_blank" rel="noopener">GoatCounter</a> code to <code>site.json</code> to get top pages, referrers and trends over time. The live counts above keep working either way. See FEATURES.md.</p>';
       }
     });
   }
