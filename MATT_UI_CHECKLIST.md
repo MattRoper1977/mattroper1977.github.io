@@ -1,7 +1,7 @@
 # Matt — the things only your hands can do
 
-Five minutes on a phone. Nothing here can be done from a container; that is why
-it is a list rather than a commit.
+In phone order. Nothing here can be done from a container; that is why it is a
+list rather than a commit.
 
 ---
 
@@ -10,14 +10,14 @@ it is a list rather than a commit.
 **Where:** github.com → each repo → **Settings → Pages** → the *Enforce HTTPS*
 checkbox, at the bottom.
 
-**The three repos**, confirmed this session by their live
-`pages-build-deployment` workflows, all building from `main`:
+**The three repos**, confirmed by their live `pages-build-deployment` workflows,
+all building from `main`:
 
 | repo | Pages | CNAME file |
 |---|---|---|
-| `MattRoper1977/Lessons` | active, last build success 1 Aug | **absent (404)** ✅ |
-| `MattRoper1977/Games` | active, last build success 31 Jul | **absent (404)** ✅ |
-| `MattRoper1977/Matt-s-Apps-` | active, last build success 31 Jul | **absent (404)** ✅ |
+| `MattRoper1977/Lessons` | active | **absent (404)** ✅ |
+| `MattRoper1977/Games` | active | **absent (404)** ✅ |
+| `MattRoper1977/Matt-s-Apps-` | active | **absent (404)** ✅ |
 
 The user site `MattRoper1977/mattroper1977.github.io` carries the CNAME
 (`madebymatt.uk`) and is already enforced. That is correct and is what the three
@@ -51,53 +51,87 @@ blind. **The checkbox is the only ground truth.**
 
 ---
 
-## 2. The Supabase decision — (a), (b) or (c)
+## 2. ⭐ Send yourself a message through the contact form
 
-Accounts are currently **off** and the site collects nothing. Nothing is broken
-and nothing is waiting on you. But the code is still there, and it should end up
-in one of these three states rather than sitting in between.
+**This is the highest-value item on the list.** It settles a question nothing in
+the repository can answer, and it takes ninety seconds.
 
-| | what it means | copy that must change | rough work |
-|---|---|---|---|
-| **(a) Wire it for real** | Supabase Auth handles hashing server-side. Accounts sync between devices. | The two privacy lines in `index.html` and `members/index.html` become **false** and must be rewritten — a password *does* reach a server in this mode. | Largest. Needs a Supabase project, RLS on every table, and the sync module, which is not written. |
-| **(b) Register interest** | Email only. No password, no account. | Same two lines rewritten to promise exactly "we keep your email to tell you when there is something to tell you". | Medium. No password path at all, so no hashing claim to defend. |
-| **(c) Hide until real** | Remove the surface; keep the code on a branch. | None — the lines stop being rendered anywhere, which is already true today. | Smallest. Closest to the current state. |
+**Do this:** open <https://madebymatt.uk/#contact> on your phone, fill in the
+three boxes, press Send. You should land on a new thank-you page. Then check
+`contactmadebymatt@gmail.com`.
 
-**If you pick (a), two things need a decision that is yours and not a
-developer's:** a lawful basis, privacy notice and deletion route under UK GDPR
-before a single record is collected; and, because this is a public education
-site where under-18 visitors are plausible, whether the ICO's Age Appropriate
-Design Code applies. Naming these, not deciding them.
+**If nothing arrives within a few minutes, the form has never worked** — and
+that is genuinely possible.
 
-**Keys, if you go with (a):** the **anon / publishable** key is designed to sit
-in client code — but only behind Row Level Security. The **`service_role` key
-must never be pasted anywhere near the repo, a PR, or a chat.** It bypasses
-every access rule.
+Here is why. The form posts to `https://formsubmit.co/contactmadebymatt@gmail.com`
+— the raw-email form of the endpoint. That shape requires a **one-time
+activation click**: the very first time anyone submits, FormSubmit emails you a
+confirmation link, and **until somebody clicks it, every message is discarded.**
+The visitor sees a success page either way. Nothing in the repository records
+whether that click ever happened, and nothing I can run will tell you. It is
+unknown by construction.
+
+- **A message arrives** → the form works. Nothing more to do.
+- **Nothing arrives** → look for an old FormSubmit activation email (check spam,
+  search `formsubmit`). Click the link, then send a second test.
+- **Either way, tell Claude the result.** If it never worked, every message sent
+  through it since it went up was lost silently, and the fix is a one-line
+  change to a tokenised endpoint.
 
 ---
 
-## 3. Optional — Cloudflare Pages app (30 seconds)
+## 3. FormSubmit dashboard — lock it to your domain
 
+While you are in there: FormSubmit's endpoint accepts a POST **from anywhere**,
+not only from your site. Anyone who reads your page source can post to it,
+including with their own hidden fields. The form now carries a honeypot, which
+stops the lazy bots, but the real control is server-side and it is not something
+I can set from the code.
+
+If FormSubmit offers a **domain lock / allowed-domains** setting, switch it on
+and set it to `madebymatt.uk`. If there is no such setting on the free tier,
+that is worth knowing too — tell Claude and the honeypot stays the only defence.
+
+---
+
+## 4. The Facebook URL — if you want it on the site
+
+The homepage and members page now carry a **Follow the work** card with the
+three channels whose URLs actually exist in the repository: **YouTube**
+(`@matthewroper9166`), **Ko-fi** (`madebymattuk`) and **email**.
+
+If you also run a Facebook page, send Claude the URL and it goes on the card.
+It was deliberately **not** guessed — building a social URL out of a name is how
+you end up linking a stranger's page from your own site.
+
+---
+
+## 5. Optional / whenever
+
+### Cloudflare Pages app (30 seconds)
 github.com → your **account** Settings (not a repo's) → **Applications →
 Installed GitHub Apps** → if *Cloudflare Pages* is listed, uninstall it. The
-Cloudflare project itself is already confirmed not to exist; this is permissions
-hygiene only.
+Cloudflare project itself is confirmed not to exist; this is permissions hygiene
+only.
 
----
-
-## 4. Branches that can be deleted — **site repo only**
+### Branches that can be deleted — **site repo only**
 
 Ref deletion returns 403 from the container, so these need your hands or a
-`git push origin --delete` from the home machine. All are **fully contained in
-`main`** — verified with `git branch -r --merged origin/main`.
+`git push origin --delete` from the home machine.
 
 This list covers `mattroper1977.github.io` only. The `Lessons`, `Games` and
-`Matt-s-Apps-` repos have their own branches, which were **not** enumerated this
-session — do not assume they are clean.
+`Matt-s-Apps-` repos have their own branches, which were **not** enumerated —
+do not assume they are clean.
 
 <!-- BRANCH-LIST:BEGIN -->
-**17 branches, all verified fully contained in `main`** by
-`git branch -r --merged origin/main` — deleting them loses nothing:
+**Re-derived 2 August 2026 against `main` at `69c0457`**, after PR #19 merged —
+the previous list was measured against an older `main` and a list like this is
+stale the moment `main` moves.
+
+**23 remote branches. 18 fully contained in `main`, 4 not, plus `main` itself.**
+Of the 18, one is the branch still being pushed to, so **17 are safe to delete**
+— verified with `git branch -r --merged origin/main`, each confirmed
+`ahead-of-main=0`:
 
 ```
 apexkick-hub-art                               12b0060226
@@ -119,34 +153,36 @@ doors-engine                                   836f428084
 handover-1-aug                                 2af074b177
 ```
 
-Not in this list and **not** safe to delete — these carry commits that are
-**not** in `main`, so deleting them would lose work:
+**Excluded — `claude/build-science-animations-cfr4qo`.** It is contained in
+`main`, but it is the branch this session is pushing to. Deleting it would take
+the open work with it.
+
+**Excluded — these 4 carry commits that are NOT in `main`.** Deleting them loses
+that work:
 
 ```
-claude/axiom-shift-build-yff3x4
-claude/pass-q-audit-c5tg3s
-claude/pass-u-audit-hapesp
-pass-u-audit
+claude/axiom-shift-build-yff3x4    1d779ce82f   2 commits ahead
+claude/pass-q-audit-c5tg3s         6845f444de   8 commits ahead
+claude/pass-u-audit-hapesp         010fbeb0c4   1 commit  ahead
+pass-u-audit                       10c39188b3   3 commits ahead
 ```
 
-Also excluded: `claude/build-science-animations-cfr4qo`, which is the branch this
-session is still pushing to.
+**Excluded — `backup/build-anim-autumn1-v1` is not in this repo at all.**
+It is a branch of **`MattRoper1977/Lessons`**, it is *not* one of the 23 above,
+and it must survive until the tag in §5 below exists. See the next item.
 <!-- BRANCH-LIST:END -->
 
----
+### The `build-anim-autumn1-v1` tag — **Lessons repo**, home machine only
 
-## 5. The `build-anim-autumn1-v1` tag — **Lessons repo**, home machine only
-
-Checked this session, and worth stating precisely because the target repo is
+Re-checked this session against the Lessons remote, because the target repo is
 easy to get wrong:
 
-- `297af43` is in **`MattRoper1977/Lessons`**, not the site repo. It is
-  *"Merge BUILD science animation framework: all five Autumn 1 lessons"*,
-  1 August 2026.
-- The tag `build-anim-autumn1-v1` **does not exist** — `git ls-remote --tags`
-  returns 0 matches.
+- `297af43` is in **`MattRoper1977/Lessons`**, not the site repo.
+- The Lessons remote has **0 tags** — so `build-anim-autumn1-v1` does not exist.
+  That is a population, not a guess: `git ls-remote --tags` returned nothing at
+  all.
 - The branch **`backup/build-anim-autumn1-v1` does exist**, at exactly
-  `297af43f2d135c29d3b322482aa4571e6526b798`. So the commit is currently held
+  `297af43f2d135c29d3b322482aa4571e6526b798`. The commit is currently held
   reachable. Nothing is at risk today.
 
 Tag pushes 403 by ref type from the container, so from your home machine, in a
@@ -160,3 +196,19 @@ git push origin build-anim-autumn1-v1
 **Keep `backup/build-anim-autumn1-v1` until that tag exists.** It is the only
 thing holding that commit reachable. There is also
 `review-base/build-anim-autumn1` at `2f6c49e` — left alone, not investigated.
+
+---
+
+## Decided for you, and reversible if you disagree
+
+**Accounts are gone, not just switched off.** You asked for the call to be made,
+so: the sign-in button, the password box, the members gate and the two "create a
+free account" banners have been removed from the pages. The module underneath is
+untouched and still fail-closed. This closes the UK GDPR and Age Appropriate
+Design Code questions outright, because a site that collects nothing has nothing
+to have a lawful basis for.
+
+**One honest cost, stated rather than buried:** reversing this is no longer a
+one-line flag flip. The markup is gone, so bringing accounts back means
+reverting that commit and *then* flipping `features.accounts.enabled`. If that
+trade is wrong, say so and it comes straight back.

@@ -4,17 +4,10 @@
    reading-background theme (Warm / Pink / Blue / Light / Dark) for free.
    ========================================================================== */
 
-/* ---- nav: log-in button --------------------------------------------------- */
-.mbm-navbtn{
-  display:inline-flex;align-items:center;gap:.4rem;
-  font:inherit;font-weight:800;font-size:.9rem;
-  color:var(--dx-navy,#161D3D);background:var(--dx-amber,#F2A24A);
-  border:0;border-radius:999px;padding:.5rem 1.05rem;min-height:40px;
-  cursor:pointer;box-shadow:0 2px 0 var(--dx-ambd,#C97F2E);
-}
-.mbm-navbtn:hover{filter:brightness(1.06)}
-.mbm-navbtn .mbm-signout{font-weight:700;opacity:.8;text-decoration:underline}
-@media (max-width:680px){.mbm-navbtn{width:100%;justify-content:center;margin-top:.5rem}}
+/* The nav log-in button styles lived here. Removed 2026-08-02 with the
+   accounts surface. Proven dead first: 101 selectors x 26 pages in this
+   repo, plus 1007 files across Lessons and Games, 0 matches and 0
+   references. */
 
 /* ---- live stats section --------------------------------------------------- */
 .mbm-stats{background:var(--dx-lite,#FBF6EA);padding:2.8rem 0 3rem;color:var(--dx-ink,#1B2140)}
@@ -84,84 +77,16 @@
 .mbm-hits:empty::before{content:"\2013"}   /* en-dash while loading */
 body[data-theme="dark"] .mbm-hits-badge{color:var(--dx-navy,#161D3D)}
 
-/* ---- account modal -------------------------------------------------------- */
-.mbm-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem}
-.mbm-modal[hidden]{display:none}
-.mbm-modal-scrim{position:absolute;inset:0;background:rgba(9,13,30,.62);backdrop-filter:blur(3px)}
-.mbm-card{
-  position:relative;width:100%;max-width:420px;background:var(--dx-card,#FFFDF6);
-  border:1.5px solid var(--dx-line,#E3DAC5);border-radius:20px;
-  padding:1.6rem 1.5rem 1.5rem;box-shadow:0 24px 60px rgba(9,13,30,.45);
-}
-.mbm-card h3{margin:.2rem 0 .2rem;font-size:1.4rem;color:var(--dx-title,#161D3D);letter-spacing:-.01em}
-.mbm-card .mbm-sub{margin:0 0 1.15rem;font-size:.86rem;line-height:1.5;color:var(--dx-mut,#4A5170)}
-.mbm-close{
-  position:absolute;top:.7rem;right:.7rem;width:38px;height:38px;border-radius:50%;
-  border:0;background:transparent;color:var(--dx-mut,#4A5170);font-size:1.5rem;line-height:1;cursor:pointer;
-}
-.mbm-close:hover{background:var(--dx-lite,#FBF6EA);color:var(--dx-ink,#1B2140)}
-.mbm-field{display:block;margin-bottom:.85rem}
-.mbm-field span{display:block;font-size:.76rem;font-weight:800;letter-spacing:.04em;color:var(--dx-ink,#1B2140);margin-bottom:.32rem}
-.mbm-field input{
-  width:100%;box-sizing:border-box;font:inherit;font-size:.95rem;
-  background:var(--dx-lite,#FBF6EA);border:1.5px solid var(--dx-line,#E3DAC5);
-  border-radius:12px;padding:.72rem .9rem;color:var(--dx-ink,#1B2140);
-}
-.mbm-field input:focus{outline:none;border-color:var(--dx-ambd,#C97F2E)}
-.mbm-authsubmit{
-  width:100%;font:inherit;font-weight:850;font-size:.98rem;cursor:pointer;
-  background:var(--dx-navy,#161D3D);color:#FFF6E8;border:0;border-radius:999px;
-  padding:.85rem 1.4rem;min-height:48px;margin-top:.3rem;
-}
-.mbm-authsubmit:hover{background:#232C55}
-body[data-theme="dark"] .mbm-authsubmit{background:var(--dx-amber,#F2A24A);color:var(--dx-navy,#161D3D)}
-.mbm-auth-msg{min-height:1.2rem;margin:.7rem 0 0;font-size:.84rem;text-align:center;color:var(--dx-mut,#4A5170)}
-.mbm-auth-msg.ok{color:var(--dx-mintd,#2F6B4D);font-weight:700}
-.mbm-auth-msg.err{color:#B4472E;font-weight:700}
-/* ---- password strength meter (static; never animates) -------------------- */
-.mbm-strength{margin:.1rem 0 .7rem}
-.mbm-strength[hidden]{display:none}
-.mbm-strbar{display:block;height:6px;border-radius:999px;background:var(--dx-line,#E3DAC5);overflow:hidden;margin-bottom:.45rem}
-.mbm-strbar-fill{display:block;height:100%;width:0;border-radius:999px}
-.mbm-strbar-fill.lvl-1{width:33%;background:#B4472E}
-.mbm-strbar-fill.lvl-2{width:66%;background:var(--dx-ambd,#C97F2E)}
-.mbm-strbar-fill.lvl-3{width:100%;background:var(--dx-mintd,#2F6B4D)}
-.mbm-str-label{margin:0 0 .4rem;font-size:.76rem;color:var(--dx-mut,#4A5170)}
-.mbm-str-label b{color:var(--dx-ink,#1B2140)}
-.mbm-str-reqs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.22rem}
-.mbm-str-reqs li{font-size:.74rem;color:var(--dx-mut,#4A5170)}
-.mbm-str-reqs li[data-ok="1"]{color:var(--dx-mintd,#2F6B4D)}
-.mbm-str-reqs .tick{display:inline-block;width:1.1em;font-weight:900;text-align:center}
-body[data-theme="dark"] .mbm-str-reqs li[data-ok="1"]{color:var(--dx-mint,#B9E6CD)}
-body[data-theme="dark"] .mbm-strbar-fill.lvl-3{background:var(--dx-mint,#B9E6CD)}
-.mbm-authforgot{
-  display:block;width:100%;margin:.6rem 0 0;background:transparent;border:0;cursor:pointer;
-  font:inherit;font-size:.8rem;color:var(--dx-ambd,#C97F2E);text-align:center;text-decoration:underline;
-}
-.mbm-authforgot[hidden]{display:none}
-.mbm-authtoggle{
-  display:block;width:100%;margin-top:1rem;background:transparent;border:0;cursor:pointer;
-  font:inherit;font-size:.85rem;color:var(--dx-mut,#4A5170);text-align:center;
-}
-.mbm-authtoggle b{color:var(--dx-ambd,#C97F2E)}
-.mbm-authtoggle:hover b{text-decoration:underline}
-.mbm-privacy{
-  margin:1.1rem 0 0;padding-top:.9rem;border-top:1px solid var(--dx-line,#E3DAC5);
-  font-size:.72rem;line-height:1.5;color:var(--dx-mut,#4A5170);text-align:center;
-}
-.mbm-soon{
-  display:inline-block;margin-bottom:.9rem;font-size:.68rem;font-weight:800;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--dx-mintd,#2F6B4D);background:var(--dx-mint,#B9E6CD);
-  border-radius:999px;padding:.2rem .7rem;
-}
-
-/* member badge on the page when signed in */
-.mbm-memberbadge{
-  max-width:640px;margin:1.2rem auto 0;text-align:center;font-size:.8rem;font-weight:700;
-  color:var(--dx-mintd,#2F6B4D);
-}
-.mbm-memberbadge[hidden]{display:none}
-
+/* ---- account modal, password-strength meter, member badge ------------------
+   All removed 2026-08-02 with the accounts markup. The MBMAuth module in
+   mbm-features.js is untouched; only the styling for markup that no longer
+   exists has gone. Death was proven, not assumed — and the first census was
+   wrong: with counterapi blocked by this container's proxy, .mbm-row,
+   .mbm-track, .mbm-fill and .mbm-num all reported zero matches too. They are
+   very much alive; they only render after the counter replies. Re-running
+   with the counter stubbed brought them back and they were kept. Every
+   conditional-state selector below (.is-you, .mbm-board-empty,
+   [data-ready], :empty::before) is alive for the same reason and stays. */
 /* ---- donation tiers ------------------------------------------------------- */
 .mbm-give{
   max-width:640px;margin:14px auto 6px;background:#0F1530;color:#E8E2D4;
@@ -184,43 +109,9 @@ body[data-theme="dark"] .mbm-strbar-fill.lvl-3{background:var(--dx-mint,#B9E6CD)
 .mbm-give-cta:hover{filter:brightness(1.06)}
 @media (max-width:560px){.mbm-tiers{grid-template-columns:1fr}}
 
-@media print{.mbm-stats,.mbm-give,.mbm-modal,.mbm-navbtn{display:none!important}}
+@media print{.mbm-stats,.mbm-give{display:none!important}}
 
-/* ==========================================================================
-   DOORS — renders site.json doors[] as a wayfinding rail (see initDoors()).
-   Everything is namespaced under .dx-door*. Surfaces and text use the estate
-   custom properties so the reading themes (pink/blue/light/dark) keep driving
-   them; only the accent hue is the door's own art direction.
-   ========================================================================== */
-.dx-doors{padding:1.5rem 0 .3rem;background:var(--dx-cream)}  /* matches #collections/#seeit so the reading themes drive it; body bg is unthemed */
-.dx-doorgrid{display:grid;gap:1rem;grid-template-columns:1fr;margin-top:.9rem;align-items:start}
-@media(min-width:640px){.dx-doorgrid{grid-template-columns:repeat(2,1fr)}}
-@media(min-width:1000px){.dx-doorgrid{grid-template-columns:repeat(3,1fr)}}
-
-.dx-door{display:flex;flex-direction:column;background:var(--dx-card);border:1.5px solid var(--dx-line);
-  border-radius:var(--dx-r2,16px);overflow:hidden;text-decoration:none;color:inherit;
-  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
-.dx-door:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(22,29,61,.14);border-color:var(--dx-doorac)}
-.dx-door:focus-visible{outline:3px solid var(--dx-doorac);outline-offset:2px}
-/* every card carries the accent strip, so cards with no image still read as deliberate */
-.dx-doorbar{height:5px;flex:none;background:var(--dx-doorac)}
-.dx-door figure{margin:0;flex:none;aspect-ratio:16/9;overflow:hidden;background:var(--dx-lite);
-  border-bottom:1.5px solid var(--dx-line)}
-.dx-door figure img{width:100%;height:100%;object-fit:cover;display:block}
-.dx-doorbd{padding:.95rem 1.05rem 1.15rem;display:flex;flex-direction:column;gap:.35rem;flex:1}
-.dx-doorlabel{font-size:.66rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--dx-eyeb)}
-.dx-door h3{font-size:1.05rem;line-height:1.25;color:var(--dx-title);margin:0}
-.dx-door p{font-size:.86rem;line-height:1.5;color:var(--dx-mut);margin:0}
-.dx-doorcta{margin-top:.55rem;align-self:flex-start;font-size:.72rem;font-weight:800;letter-spacing:.05em;
-  color:var(--dx-navy);background:var(--dx-doorac);border-radius:999px;padding:.45rem 1rem}
-
-/* three art directions — accent only, so contrast holds in every reading theme */
-.dx-door{--dx-doorac:var(--dx-amber)}
-.dx-door[data-door="day"]{--dx-doorac:var(--dx-mint)}
-.dx-door[data-door="dusk"]{--dx-doorac:var(--dx-amber)}
-.dx-door[data-door="night"]{--dx-doorac:var(--dx-violet)}
-
-@media(prefers-reduced-motion:reduce){
-  .dx-door{transition:none}
-  .dx-door:hover{transform:none}
-}
+/* The .dx-door* rail styles lived here. initDoors() was removed 2026-08-01
+   and superseded by assets/mbm-doors.js, which renders a.dx-prod into the
+   [data-zone] strips; the CSS was left behind. 15 selectors, 0 matches
+   across 26 pages here and 0 references across 1007 sibling-repo files. */

@@ -62,11 +62,21 @@ Add the same `{ "key": "my-worksheet", "title": "My worksheet" }` to
 
 ---
 
-## 3. Accounts + members' area — SWITCHED OFF (2 August 2026)
+## 3. Accounts + members' area — REMOVED (2 August 2026)
 
-`site.json` → `features.accounts.enabled` is **`false`**. There is no Log in
-button, no sign-in modal and no account. `/members/` is an honest page saying
-so.
+`site.json` → `features.accounts.enabled` is **`false`**, *and* the whole
+visitor-facing surface has been taken out of the markup: the Log in button, the
+sign-in modal and its password field, the members gate and signed-in area, the
+member badge, the homepage account band, the two `zone:"account"` doors and the
+`/uas/` and `/voxel/` sync-offer banners. `/members/` is an honest page saying
+there is nothing to sign in to.
+
+**The reversal is no longer one line.** The paragraphs below were written when
+this was a switched-off flag, and they say a boolean restores everything. That
+is no longer true: flipping `enabled:true` now reveals markup that does not
+exist. Restoring accounts means reverting the removal commit *and then*
+flipping the flag. The module itself — `MBMAuth`, both backends,
+`supabase-schema.sql`, `initAccountUI()` — is untouched and still fail-closed.
 
 **Why, since this section used to claim the opposite.** It said the members
 page had "member-only bonus content, gated behind sign-in". It never did. The
@@ -89,11 +99,14 @@ effect is to invite a visitor to reuse a password they use elsewhere. The
 Supabase path was never switched on — the key slots have been empty since
 `b70dc24` — so this was the only mode that ever ran.
 
-**Nothing was deleted.** `MBMAuth`, the local backend, the Supabase backend,
-`supabase-schema.sql` and the modal markup are all still here and still work.
-The flag takes down the entry points (`initAccountUI` hides the header button
-and the members gate, and sets `data-accounts="off"` on `<html>`), so this is a
-one-line reversal, not a rebuild.
+**The module was not deleted.** `MBMAuth`, the local backend, the Supabase
+backend, `supabase-schema.sql` and `initAccountUI()` are all still here and
+still work; `initAccountUI()` already returns early when `#mbmAccountBtn` and
+`#mbmAuth` are absent, which is why removing the markup broke nothing.
+
+~~The flag takes down the entry points, so this is a one-line reversal, not a
+rebuild.~~ **No longer true** — see the note at the top of this section. The
+markup is gone, so the flag alone restores nothing.
 
 ### What an account will be for — built, dormant, waiting on one thing
 
