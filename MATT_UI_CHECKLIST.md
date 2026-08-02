@@ -61,16 +61,15 @@ blind. **The checkbox is the only ground truth.**
 
 ---
 
-## 2. ⭐ The thirty seconds that settles the contact form
+## 2. ⭐ FIRST TEST — the plain form. Do this one before anything else.
 
 **Mailbox: `contactmadebymatt@gmail.com` — NOT `londonmatt1977@gmail.com`.**
 
-That distinction is the trap that already caught this session. The Gmail account
-connected to Claude is `londonmatt1977@gmail.com`; it was searched and returned
-**0 threads matching `formsubmit` and 0 to, from or delivered-to
-`contactmadebymatt@gmail.com`**, and the two mailboxes have no forwarding
-between them. **That zero came from the wrong population and told us nothing
-about the form.** Search the right mailbox.
+That distinction already caught this session once. The Gmail account connected
+to Claude is `londonmatt1977@gmail.com`; it was searched and returned **0
+threads matching `formsubmit` and 0 to, from or delivered-to
+`contactmadebymatt@gmail.com`**, with no forwarding between them. **That zero
+came from the wrong population and told us nothing about the form.**
 
 **Search 1** — paste exactly:
 
@@ -78,8 +77,8 @@ about the form.** Search the right mailbox.
 in:anywhere from:formsubmit.co
 ```
 
-`in:anywhere` matters: it covers Spam and Trash, which is where activation mail
-usually lands.
+`in:anywhere` matters: it covers Spam and Trash, where activation mail usually
+lands.
 
 **Search 2, only if Search 1 is empty** — paste each:
 
@@ -94,45 +93,79 @@ in:anywhere subject:(activate OR confirm)
 |---|---|---|
 | **A** — activation mail, already confirmed | The form is live | Count the forwarded submissions. Zero is then a real fact about traffic, not a fault |
 | **B** — activation mail, never clicked | Every message submitted before now went nowhere | Click it. **Nothing can be recovered** — the relay does not hold mail for an unactivated address. Then do C's test |
-| **C** — nothing at all | **The absence is informative.** Activation mail is only sent on the *first* submission, so no activation mail most likely means **nobody ever submitted** — nothing was lost — unless it was deleted | Submit the form once from your phone, wait a few minutes, re-run Search 1 |
+| **C** — nothing at all | **The absence is informative.** Activation mail is only sent on the *first* submission, so no activation mail most likely means **nobody ever submitted** — nothing was lost — unless it was deleted | Submit once from your phone, wait a few minutes, re-run Search 1 |
 | **D** — activation mail for a *different* address or endpoint than the page carries | The live form points somewhere else | Bring the real endpoint back to the session |
 
-### Then, in every case
+### Then submit one test message
 
-**Send one test message from your phone** — <https://madebymatt.uk/#contact> —
-and report what arrives. That single test is the only evidence that closes this
-question. Nothing in a container can substitute for it.
+<https://madebymatt.uk/#contact> from your phone, then report what arrives.
+
+**⚠ One thing to expect, so you don't misread it.** The form does not set
+`_captcha` either way, so FormSubmit's own default applies — and I could not
+check what that default is. **If an anti-spam / "are you human" screen appears
+between pressing Send and landing on the thank-you page, that is FormSubmit's
+interstitial, not a failure.** Complete it and carry on. Only treat it as a
+failure if no mail arrives at all.
+
+---
+
+## 2b. SECOND TEST — only after §2 has an answer
+
+**Do not do this until the plain form has been tested.** If both changes are
+live and a submission fails, the result is uninterpretable: it could be the
+browser being refused by the relay, or the endpoint rejecting an unactivated
+address. One test, two unknowns, no conclusion.
+
+**PR #25** (`claude/contact-form-ajax-safety-net`) is open and **held** for
+exactly that reason. Once §2 says the form is live:
+
+1. Merge #25.
+2. Submit the form once more, with the browser's devtools **Network** tab open.
+3. Look at the `POST` to `formsubmit.co/ajax/…`.
+   - **JSON response** → it works; a failed send will now say so instead of
+     showing a false success.
+   - **Blocked / no readable response** → the browser was refused. The page
+     falls back to *"the relay could not be reached — here is the direct
+     address"*, which is safe, but the form never completes that way.
+     **Revert it: `7c20279`.** One revert, nothing else depends on it.
 
 ---
 
 ## 3. FormSubmit — questions I could not answer from here
 
-`formsubmit.co` is not reachable from the container (403 on CONNECT), so
+`formsubmit.co` is unreachable from the container (403 on CONNECT), so
 **everything about how the vendor behaves is unverifiable from my side.** These
-are questions, not instructions, and each is only worth doing if §2 shows the
+are questions, not instructions, and each is only worth asking if §2 shows the
 form is live:
 
 - **Is there a dashboard at all** for a bare-email endpoint, or only for an
-  alias? I could not check.
+  alias?
 - **Is there a domain-lock / allowed-domains setting?** If yes, set it to
   `madebymatt.uk`. The endpoint currently accepts a POST from anywhere, which
   is a **spam-volume and `_cc`/`_replyto` abuse** exposure — *not* a secrecy
-  one. Your address is deliberately public in 31 `mailto:` links; hiding it was
-  never the point and an alias would not be a privacy fix.
-- **Is there a captcha setting, and what is its default?** The form does not
-  set `_captcha` either way, so the vendor's default applies and I cannot read
-  it. If their interstitial is on, that is your only free friction against
-  spam, and turning it off is a trade you should make knowingly.
+  one. Your address is deliberately public in 32 `mailto:` links across 21
+  files; hiding it was never the point and an alias would not be a privacy fix.
+- **What is the `_captcha` default?** See the warning in §2 — this decides
+  whether a stranger meets an interstitial, and it is your only free friction
+  against spam. Turning it off is a trade to make knowingly.
+- **Does the `/ajax/` endpoint share the same activation state as the plain
+  endpoint, or is it activated separately?** If separate, §2b carries a *second*
+  unknown and the ordering argument applies all over again.
+- **Where is the relay, legally?** DNS resolves only to Cloudflare front-end
+  addresses, which says nothing about the company or its servers. The site
+  therefore says *"a third-party relay I do not run"* and names no country.
+  **That wording is deliberate and should not be "improved" into a jurisdiction
+  claim.** If you ever get a straight answer, it belongs in `/privacy/`.
 - **If you are ever given an alias token** (`formsubmit.co/el/…`), send it to
-  the session and it gets swapped in with a count proving every occurrence
-  moved. **Never guess or construct one** — a wrong token silently discards
-  mail exactly like an unactivated address does.
+  the session and it gets swapped with a count proving every occurrence moved.
+  **Never guess or construct one** — a wrong token silently discards mail
+  exactly like an unactivated address does.
 
-What the form already has, verified in the page: `_honey` honeypot (present,
-`aria-hidden="true"`) and `_subject` (`madebymatt.uk contact`) so the mail is
-filterable. No captcha of any kind was added — **no reCAPTCHA, no hCaptcha** —
-because adding Google's captcha to fix a privacy problem is a self-inflicted
-wound.
+What the form already has, verified in the page on merged main: `_honey`
+honeypot (present, `aria-hidden="true"`), `_subject` (`madebymatt.uk contact`),
+and `_next` pointing at `/thanks/` — **followed, not assumed**: HTTP 200, and
+the page it lands on is the right one. No captcha of any kind was added — **no
+reCAPTCHA, no hCaptcha**.
 
 ---
 
