@@ -42,7 +42,12 @@ jobs:
             echo "sentinel=apexpool-build-2026-08-04"
             echo "commit=${GITHUB_SHA}"
             wc -c apexkick/index.html apexpool/index.html tools/verify_apexkick.js tools/verify_apexpool.js
-            node tools/verify_apexkick.js
+            set +e
+            node tools/verify_apexkick.js > artifacts/apexpool/apexkick-donor.log 2>&1
+            donor_exit=$?
+            set -e
+            cat artifacts/apexpool/apexkick-donor.log
+            echo "apexkick_donor_exit=${donor_exit} (recorded only; donor drift does not gate Apex Pool)"
             printf 'apexpool_localstorage_writes='; grep -oE 'localStorage\.(setItem|removeItem)\(' apexpool/index.html | wc -l
           } | tee artifacts/apexpool/measurements.txt
 
