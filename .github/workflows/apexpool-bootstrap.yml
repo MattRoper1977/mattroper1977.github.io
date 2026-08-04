@@ -24,14 +24,16 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          parts = sorted(Path('.apexpool-transfer').glob('index.part*'))
-          if len(parts) != 8:
-              raise SystemExit(f'expected 8 game parts, got {len(parts)}')
-          game = ''.join(p.read_text() for p in parts)
-          if game.count('apexpool-build-2026-08-04') < 2:
+          import base64, gzip
+          parts = sorted(Path('.apexpool-transfer').glob('game.b64.part*'))
+          if len(parts) != 2:
+              raise SystemExit(f'expected 2 compressed game parts, got {len(parts)}')
+          packed = ''.join(p.read_text() for p in parts)
+          game = gzip.decompress(base64.b64decode(packed))
+          if game.count(b'apexpool-build-2026-08-04') < 2:
               raise SystemExit('assembled game sentinel check failed')
           Path('apexpool').mkdir(exist_ok=True)
-          Path('apexpool/index.html').write_text(game)
+          Path('apexpool/index.html').write_bytes(game)
 
           sitemap = Path('sitemap.xml')
           text = sitemap.read_text()
