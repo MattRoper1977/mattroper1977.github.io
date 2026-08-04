@@ -1,0 +1,102 @@
+name: Apex Pool landing contract
+
+on:
+  pull_request:
+    paths:
+      - 'apexpool/**'
+      - 'tools/verify_apexpool.js'
+      - 'tools/verify_apexpool_browser.js'
+      - 'tools/verify_apexpool_landing.js'
+      - 'tools/verify_apexpool_landing_browser.js'
+      - '.github/workflows/apexpool-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apexpool-landing-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Record identity and environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/apexpool
+          {
+            node --version
+            sha256sum apexpool/index.html
+            wc -c apexpool/index.html
+            printf 'jsdom='; node -e "try{require.resolve('jsdom');console.log('present')}catch(e){console.log('absent')}"
+          } | tee artifacts/apexpool/identity.txt
+
+      - name: Run deterministic game contract
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/verify_apexpool.js | tee artifacts/apexpool/game-contract.log
+
+      - name: Run landing delta and non-vacuity contract
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/verify_apexpool_landing.js | tee artifacts/apexpool/landing-contract.log
+          node tools/verify_apexpool_landing.js --self-test | tee artifacts/apexpool/landing-nonvacuity.log
+
+      - name: Install pinned Chromium harness
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Serve repository with bounded readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > artifacts/apexpool/server.log 2>&1 &
+          echo $! > artifacts/apexpool/server.pid
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/apexpool/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat artifacts/apexpool/server.log
+          exit 1
+
+      - name: Run full Chromium game gates
+        shell: bash
+        env:
+          APEXPOOL_BASE_URL: http://127.0.0.1:4173
+          APEXPOOL_ARTIFACT_DIR: artifacts/apexpool
+        run: |
+          set -o pipefail
+          node tools/verify_apexpool_browser.js | tee artifacts/apexpool/browser-contract.log
+
+      - name: Run 360×640 and recovery Chromium gates
+        shell: bash
+        env:
+          APEXPOOL_BASE_URL: http://127.0.0.1:4173
+          APEXPOOL_ARTIFACT_DIR: artifacts/apexpool
+        run: |
+          set -o pipefail
+          node tools/verify_apexpool_landing_browser.js | tee artifacts/apexpool/landing-browser.log
+
+      - name: Upload browser and contract evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apexpool-landing-evidence-${{ github.run_id }}
+          path: artifacts/apexpool/
+          if-no-files-found: error
+          retention-days: 30
