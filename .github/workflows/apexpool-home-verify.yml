@@ -52,7 +52,17 @@ jobs:
           mkdir -p artifacts/apextennis-home
           git show origin/main:site.json > artifacts/apextennis-home/site-before.json
           git show origin/main:index.html > artifacts/apextennis-home/index-before.html
-          node -e "const d=require('./artifacts/apextennis-home/site-before.json');if(!d.doors||d.doors.length!==12)process.exit(1);console.log('baseline doors='+d.doors.length)"
+          # THIRD INSTANCE OF THE A-6 SHAPE. This asserted a hardcoded 12 and has
+          # been RED ON MAIN'S OWN BASELINE since 6e8ab12 (site#44) took doors to
+          # 14 — every PR touching index.html or site.json has failed here since.
+          # Re-pinning at 14 would be the same defect one number later: the Apex
+          # Golf branch removes a door and takes it to 13, so a re-pin goes red
+          # the moment that merges. The pending known change is the proof that
+          # pinning is the wrong shape. DERIVE the count; assert STRUCTURE.
+          node tools/verify_home_doors_baseline.js artifacts/apextennis-home/site-before.json
+          # Non-vacuity: the same invariants must REJECT a deliberately broken
+          # baseline, or the green above means nothing.
+          node tools/verify_home_doors_baseline.js --self-test
 
       - name: Static, structure and idempotency gates
         shell: bash
