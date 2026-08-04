@@ -82,8 +82,19 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/apextennis-home
+          # A mutation fixture written against a literal goes INERT the moment
+          # that literal moves: it edits nothing, the validator correctly
+          # accepts an unmodified file, and the run fails with a message that
+          # blames the validator. That is what happened when the New Release
+          # occupant changed — the fixture still searched for the old tenant.
+          # An inert fixture proves nothing, so every family is now checked for
+          # having actually bitten BEFORE its result is allowed to count.
           reject() {
             local family="$1"
+            if cmp -s index.html /tmp/apextennis-home/index.html && cmp -s site.json /tmp/apextennis-home/site.json; then
+              echo "*** FIXTURE INERT *** ${family} changed nothing, so it proves nothing" >&2
+              exit 1
+            fi
             if python3 tools/verify_apextennis_home.py /tmp/apextennis-home/index.html /tmp/apextennis-home/site.json assets/cards/apex-golf-door.svg assets/cards/apex-tennis-door.svg artifacts/apextennis-home/site-before.json artifacts/apextennis-home/index-before.html >/tmp/apextennis-home/${family}.log 2>&1; then
               cat /tmp/apextennis-home/${family}.log
               echo "validator accepted ${family} mutation" >&2
@@ -124,8 +135,16 @@ jobs:
 
           cp index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
           python3 - <<'PY'
+          import re
           from pathlib import Path
-          p=Path('/tmp/apextennis-home/index.html');p.write_text(p.read_text().replace('data-release="Apex Pool"','data-release="Apex Tennis"',1))
+          # DERIVE the sitting tenant rather than naming one. The ruling this
+          # family guards is "Golf and Tennis do not take New Release", which
+          # holds whoever the occupant currently is.
+          p=Path('/tmp/apextennis-home/index.html');t=p.read_text()
+          m=re.search(r'data-release="([^"]+)"',t)
+          assert m,'no New Release occupant to take over — the fixture would be inert'
+          p.write_text(t.replace(f'data-release="{m.group(1)}"','data-release="Apex Tennis"',1))
+          print(f'  fixture: occupant "{m.group(1)}" -> "Apex Tennis"')
           PY
           reject new-release-takeover
 

@@ -29,11 +29,24 @@ for name,(href,hue) in contracts.items():
 req(index.count('id="homeSports"')==1,'one existing hardcoded homepage Sports section')
 req('Four games about reading the line, calling the plan and making the next decision count.' in index,'Sports lede names the four-game purpose')
 req(index.count('id="newrelease"')==1,'New Release component remains singular')
-req(index.count('data-release="Apex Pool"')==1,'Apex Pool remains the New Release occupant')
+# SEVENTH INSTANCE OF THE SAME SHAPE. This pinned the occupant to Apex Pool and
+# froze the whole #newrelease section byte-for-byte against main, so ANY change
+# of occupant failed here by construction. The spotlight is a rotating surface —
+# freezing its tenant is the one thing the gate must not do. What it should
+# protect is the structure: exactly one occupant, the ruled exclusions, and the
+# rest of the section untouched. Occupant identity is DERIVED and reported.
+occupants=re.findall(r'data-release="([^"]+)"',index)
+req(len(occupants)==1,f'New Release has exactly one occupant (found {len(occupants)}: {occupants})')
+if occupants: print(f'NOTE  New Release occupant is "{occupants[0]}" (derived, not pinned)')
 req('data-release="Apex Tennis"' not in index and 'data-release="Apex Golf"' not in index,'Golf and Tennis do not take New Release')
 if baseline_index:
  release=lambda text:re.search(r'<section[^>]*id="newrelease".*?</section>',text,re.S).group(0)
- req(release(index)==release(baseline_index),'New Release markup is byte-equivalent to current main')
+ # The occupant box may change; everything else in the section may not. Split on
+ # the box boundary and compare only the boxes carrying no data-release.
+ others=lambda text:[b for b in re.split(r'(?=<div class="dx-updbox")',release(text)) if 'data-release=' not in b]
+ now,before=others(index),others(baseline_index)
+ req(len(before)>0,f'non-occupant baseline population is non-empty ({len(before)} block(s)) — an empty comparison would pass vacuously')
+ req(now==before,f'the rest of the New Release section is byte-equivalent to main ({len(before)} non-occupant block(s))')
 req('var(--dx-card)' in index and 'var(--dx-ink)' in index,'Sports keeps homepage theme tokens')
 req('@media(prefers-reduced-motion:reduce){a.dx-sport' in index,'Sports retains explicit reduced-motion protection')
 doors=site.get('doors',[]);titles=[d.get('title') for d in doors]
