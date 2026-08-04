@@ -1,0 +1,40 @@
+name: Normalise Apex Pool browser measurement formats
+
+on:
+  push:
+    branches:
+      - codex/apexpool-land
+    paths:
+      - 'tools/patch_apexpool_measurement_formats.js'
+      - '.github/workflows/apexpool-measurement-prep.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/apexpool-land
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Normalise verifier measurements only
+        run: node tools/patch_apexpool_measurement_formats.js
+      - name: Constrain and publish the verifier-only delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git diff -- tools/verify_apexpool_landing_browser.js
+          test "$(git diff --name-only)" = 'tools/verify_apexpool_landing_browser.js'
+          rm tools/patch_apexpool_measurement_formats.js .github/workflows/apexpool-measurement-prep.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'test: normalise browser measurement formats'
+          git push origin HEAD:codex/apexpool-land
