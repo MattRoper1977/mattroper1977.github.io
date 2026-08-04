@@ -6,6 +6,11 @@ on:
       - codex/apextennis-land
     paths:
       - '.apextennis-upload/READY'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.apextennis-upload/READY'
 
 permissions:
   contents: write
