@@ -25,6 +25,6 @@ ok('top-copy-still-eight',html.includes("The eight I'd put in front of anyone fi
 ok('whole-shelf-uses-complete-manifest',/function drawGrid\(\)\{\n var gs=state\.games\.slice\(\);/.test(html)&&!/collection!=="Sports"/.test(html));
 ok('whole-shelf-copy-restored',html.includes('The whole shelf')&&html.includes('Every game, A to Z'));
 ok('total-count-derived-from-manifest',/var n=state\.games\.length;/.test(html)&&!/var n=\d+;/.test(html));
-ok('three-game-sports-copy-preserved',html.includes('Three Apex games, side by side')&&html.includes('Apex Golf'));
+ok('four-game-sports-copy-preserved',html.includes('Four Apex games, side by side')&&html.includes('Apex Golf')&&html.includes('Apex Tennis'));
 ok('correction-sentinel',html.includes('apexpool-arcade-catalogue-correction-2026-08-04'));
 console.log('='.repeat(68));console.log(fail?`${pass} passed, ${fail} FAILED`:`ALL ${pass} ARCADE SPORTS SOURCE CHECKS PASSED`);process.exit(fail?1:0);
