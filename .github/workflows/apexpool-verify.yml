@@ -42,6 +42,9 @@ jobs:
             echo "sentinel=apexpool-build-2026-08-04"
             echo "commit=${GITHUB_SHA}"
             wc -c apexkick/index.html apexpool/index.html tools/verify_apexkick.js tools/verify_apexpool.js
+            sentinel_count=$(grep -c '^apexpool-build-2026-08-04$' APEXPOOL_REPORT.md)
+            echo "report_sentinel_count=${sentinel_count}"
+            test "${sentinel_count}" -eq 2
             set +e
             node tools/verify_apexkick.js > artifacts/apexpool/apexkick-donor.log 2>&1
             donor_exit=$?
