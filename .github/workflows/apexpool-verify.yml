@@ -52,7 +52,10 @@ jobs:
           } | tee artifacts/apexpool/measurements.txt
 
       - name: Run deterministic contract harness
-        run: node tools/verify_apexpool.js | tee artifacts/apexpool/contract.log
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/verify_apexpool.js | tee artifacts/apexpool/contract.log
 
       - name: Install browser verifier
         run: |
@@ -72,10 +75,13 @@ jobs:
           exit 1
 
       - name: Run Chromium gates
+        shell: bash
         env:
           APEXPOOL_BASE_URL: http://127.0.0.1:4173
           APEXPOOL_ARTIFACT_DIR: artifacts/apexpool
-        run: node tools/verify_apexpool_browser.js | tee artifacts/apexpool/browser.log
+        run: |
+          set -o pipefail
+          node tools/verify_apexpool_browser.js | tee artifacts/apexpool/browser.log
 
       - name: Upload browser and gate evidence
         if: always()
