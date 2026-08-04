@@ -34,8 +34,8 @@ jobs:
           cat .github/apexgolf-payload/p* | base64 --decode > /tmp/apexgolf-final.tgz
           echo "aa3feedf9608d5a9ea592b931dfc1dd1bfc5ae51a3fdf691a9a27af2fbea62e2  /tmp/apexgolf-final.tgz" | sha256sum -c -
           tar -xzf /tmp/apexgolf-final.tgz
+          rm -f .github/workflows/apexgolf-verify.yml
           rm -rf .github/apexgolf-payload
-          rm -f .github/workflows/apexgolf-materialize.yml
 
       - name: Commit materialized build
         shell: bash
