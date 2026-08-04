@@ -37,16 +37,17 @@ jobs:
         run: |
           set -euo pipefail
           test "$(find .biopunk-bootstrap -maxdepth 1 -type f -name 'part-*' | wc -l)" -eq 6
-          cat .biopunk-bootstrap/part-* > /tmp/biopunkhive-release.b64
-          if ! echo '5e28e755ce4d9c81e49f84325f464dac669a3d3cdfee72914adfe368d629e5fd  /tmp/biopunkhive-release.b64' | sha256sum -c -; then
-            python3 - <<'PY'
+          python3 - <<'PY'
           from pathlib import Path
-          import hashlib
-          for index, line in enumerate(Path('.biopunk-bootstrap/part-05').read_bytes().splitlines(keepends=True), 1):
-              print(f'P05 {index:03d} {len(line):03d} {hashlib.sha256(line).hexdigest()}')
+          part = Path('.biopunk-bootstrap/part-05')
+          data = part.read_bytes()
+          if data.endswith(b'AA==') and not data.endswith(b'AA==\n'):
+              part.write_bytes(data + b'\n')
+          elif not data.endswith(b'AA==\n'):
+              raise SystemExit('unexpected final payload bytes')
           PY
-            exit 1
-          fi
+          cat .biopunk-bootstrap/part-* > /tmp/biopunkhive-release.b64
+          echo '5e28e755ce4d9c81e49f84325f464dac669a3d3cdfee72914adfe368d629e5fd  /tmp/biopunkhive-release.b64' | sha256sum -c -
           base64 -d /tmp/biopunkhive-release.b64 > /tmp/biopunkhive-release.tgz
           echo 'ac7702025b950b189354e6d1a4a56c5d8a523660df9b6c87ddd17511a443e258  /tmp/biopunkhive-release.tgz' | sha256sum -c -
           tar -xzf /tmp/biopunkhive-release.tgz -C .
