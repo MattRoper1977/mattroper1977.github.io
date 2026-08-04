@@ -34,12 +34,12 @@ jobs:
           before=$(sha256sum games/index.html | awk '{print $1}')
           python3 tools/apply_arcade_sports_catalogue_correction.py | tee artifacts/arcade-sports/idempotency.log
           test "$before" = "$(sha256sum games/index.html | awk '{print $1}')"
-      - name: Fetch current 33-entry manifest
+      - name: Fetch paired 34-entry manifest branch
         run: |
           curl --fail --silent --show-error --location \
-            https://raw.githubusercontent.com/MattRoper1977/Games/4fcc55cb98417b77c8ec24d7f3cd6770110990e7/games.json \
+            https://raw.githubusercontent.com/MattRoper1977/Games/codex/apextennis-arcade-sports/games.json \
             -o artifacts/arcade-sports/games.json
-          node -e "const d=require('./artifacts/arcade-sports/games.json');if(d.games.length!==33)process.exit(1)"
+          node -e "const d=require('./artifacts/arcade-sports/games.json');if(d.games.length!==34)process.exit(1)"
       - name: Install Chromium
         run: |
           npm install --no-save --no-package-lock playwright@1.55.0
