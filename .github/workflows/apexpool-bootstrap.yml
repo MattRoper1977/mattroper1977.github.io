@@ -1,0 +1,53 @@
+name: Apex Pool branch bootstrap
+
+on:
+  push:
+    branches:
+      - codex/apexpool-build
+    paths:
+      - '.apexpool-transfer/READY'
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/apexpool-build
+          fetch-depth: 0
+      - name: Assemble game and patch sitemap
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          parts = sorted(Path('.apexpool-transfer').glob('index.part*'))
+          if len(parts) != 8:
+              raise SystemExit(f'expected 8 game parts, got {len(parts)}')
+          game = ''.join(p.read_text() for p in parts)
+          if game.count('apexpool-build-2026-08-04') < 2:
+              raise SystemExit('assembled game sentinel check failed')
+          Path('apexpool').mkdir(exist_ok=True)
+          Path('apexpool/index.html').write_text(game)
+
+          sitemap = Path('sitemap.xml')
+          text = sitemap.read_text()
+          url = 'https://madebymatt.uk/apexpool/'
+          if url not in text:
+              needle = '  <url>\n    <loc>https://madebymatt.uk/apexkick/</loc>\n  </url>\n'
+              if needle not in text:
+                  raise SystemExit('Apex Kick sitemap anchor not found')
+              addition = needle + '  <url>\n    <loc>' + url + '</loc>\n  </url>\n'
+              text = text.replace(needle, addition, 1)
+              sitemap.write_text(text)
+          PY
+          rm -rf .apexpool-transfer
+          rm .github/workflows/apexpool-bootstrap.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apexpool/index.html sitemap.xml .apexpool-transfer .github/workflows/apexpool-bootstrap.yml
+          git commit -m 'feat: assemble Apex Pool and add sitemap entry'
+          git push origin HEAD:codex/apexpool-build
