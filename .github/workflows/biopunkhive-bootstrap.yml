@@ -6,12 +6,18 @@ on:
       - 'build/biopunkhive-2026-08-04'
     paths:
       - '.github/workflows/biopunkhive-bootstrap.yml'
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.github/workflows/biopunkhive-bootstrap.yml'
 
 permissions:
   contents: write
 
 concurrency:
-  group: biopunkhive-bootstrap-${{ github.ref }}
+  group: biopunkhive-bootstrap-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 
 jobs:
