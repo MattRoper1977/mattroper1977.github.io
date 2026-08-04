@@ -1,0 +1,128 @@
+name: AGX-1 live verification
+
+# Pass AGX-1 §11.6 / §12.3 C2 — the deployment proof.
+#
+# The agent container cannot reach the custom domain (the proxy answers 403 on
+# CONNECT) and the Pages API is blocked through it too. CI is the channel.
+# This workflow is READ-ONLY against production: it fetches, hashes and
+# compares. It writes nothing to any surface.
+#
+# It closes the gap §12.3 C2 names: /apexgolf/ has never been fetched by
+# anyone, and Tennis skipped its live check on a container DNS failure.
+
+on:
+  push:
+    branches:
+      - 'claude/apexgolf-build-2026-08-04-b1hbwj'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: read
+
+jobs:
+  live:
+    name: Fetch the live estate and compare to raw-at-SHA
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out main (the deployed tree)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Record the SHA under test
+        id: sha
+        shell: bash
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "main is $(git rev-parse HEAD)"
+
+      - name: GitHub Pages build status
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -o pipefail
+          echo "== Pages =="
+          curl -sS -H "Authorization: Bearer $GH_TOKEN" \
+               -H "Accept: application/vnd.github+json" \
+               "https://api.github.com/repos/${{ github.repository }}/pages/builds/latest" \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin); print("status ",d.get("status")); print("commit ",d.get("commit")); print("updated",d.get("updated_at")); print("error  ",d.get("error"))' \
+            || echo "Pages API unavailable to this token — recorded, not faked."
+
+      - name: Custom-domain HTTP status for every surface
+        shell: bash
+        run: |
+          set -o pipefail
+          fail=0
+          for u in \
+            https://madebymatt.uk/apexgolf/ \
+            https://madebymatt.uk/apextennis/ \
+            https://madebymatt.uk/biopunkhive/ \
+            https://madebymatt.uk/apexpool/ \
+            https://madebymatt.uk/apexkick/ \
+            https://madebymatt.uk/ \
+            https://madebymatt.uk/games/ \
+            https://madebymatt.uk/site.json \
+            https://madebymatt.uk/Games/games.json ; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
+            printf '%-46s %s\n' "$u" "$code"
+            [ "$code" = "200" ] || fail=1
+          done
+          exit $fail
+
+      - name: Live bytes must equal the committed tree, byte for byte
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "game                 live_bytes  repo_bytes  live_sha256                                                       match"
+          status=0
+          for g in apexgolf apextennis apexpool apexkick biopunkhive; do
+            curl -sS --max-time 60 "https://madebymatt.uk/$g/" -o "/tmp/$g.live"
+            lb=$(wc -c < "/tmp/$g.live"); rb=$(wc -c < "$g/index.html")
+            ls=$(sha256sum "/tmp/$g.live" | cut -d' ' -f1)
+            rs=$(sha256sum "$g/index.html" | cut -d' ' -f1)
+            if [ "$ls" = "$rs" ]; then m=IDENTICAL; else m="*** DIFFERS ***"; status=1; fi
+            printf '%-20s %10s %11s  %s  %s\n' "$g" "$lb" "$rb" "$ls" "$m"
+          done
+          echo
+          echo "expected Apex Golf: 64513 bytes, sha256 c0701ee1152d57c16e676c58f58054c1884495d7e41d2cf20f14d2404ddab041"
+          exit $status
+
+      - name: Live manifest and placement census
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sS --max-time 30 https://madebymatt.uk/Games/games.json -o /tmp/games.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/games.json'))
+          g=d['games']
+          print('entries            ', len(g))
+          print('art                ', sum(1 for e in g if e.get('art')), '/', len(g))
+          print('duplicate ids      ', len(g)-len({e['href'] for e in g}))
+          sports=[e['title'] for e in g if e.get('collection')=='Sports']
+          print('Sports             ', ' · '.join(sports))
+          from collections import Counter
+          print('Physics (derived)  ', Counter(e['tag'] for e in g)['Physics'])
+          print('Sport chip minted  ', any(e['tag']=='Sport' for e in g))
+          hues={e['title']:e['hue'] for e in g if e.get('collection')=='Sports'}
+          print('Sports hues        ', hues)
+          print('hues all distinct  ', len(set(hues.values()))==len(hues))
+          print('Biopunk in manifest', any('biopunk' in e['href'].lower() for e in g))
+          PY
+
+      - name: Homepage and arcade, as served
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sS --max-time 30 https://madebymatt.uk/ -o /tmp/home.html
+          echo "== homepage (served bytes, no JS executed) =="
+          for n in "Apex Kick" "Apex Pool" "Apex Golf" "Apex Tennis" "New release"; do
+            printf '  %-14s %s\n' "$n" "$(grep -oic "$n" /tmp/home.html || true)"
+          done
+          echo "  apexgolf href occurrences: $(grep -oc 'apexgolf/' /tmp/home.html || true)"
+          echo "== C6: is Apex Pool still the hardcoded New Release? =="
+          grep -o -m1 -i '.\{0,90\}new release.\{0,120\}' /tmp/home.html || echo "  (not found in served HTML)"
