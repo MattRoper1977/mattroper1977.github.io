@@ -28,21 +28,25 @@ jobs:
           from pathlib import Path
           path = Path('tools/verify_apexgolf.js')
           source = path.read_text()
-          old = '''      const match = dom.match(/<pre id="ag-contract-results">([\\s\\S]*?)<\\/pre>/i);
-                assert(match, `${c.name}: browser contract did not return results; DOM tail ${dom.slice(-800)}`);
-                const data = JSON.parse(decodeHtmlText(match[1]));'''
-          new = '''      const openTag = '<pre id="ag-contract-results">';
-                const start = dom.lastIndexOf(openTag);
-                const end = start >= 0 ? dom.indexOf('</pre>', start + openTag.length) : -1;
-                assert(start >= 0 && end > start, `${c.name}: browser contract did not return results; DOM tail ${dom.slice(-800)}`);
-                const payload = decodeHtmlText(dom.slice(start + openTag.length, end));
-                assert(payload.trim().startsWith('{'), `${c.name}: final contract node did not contain JSON; payload ${payload.slice(0, 160)}`);
-                const data = JSON.parse(payload);'''
+          old = (
+              '      const match = dom.match(/<pre id="ag-contract-results">([\\s\\S]*?)<\\/pre>/i);\n'
+              '      assert(match, `${c.name}: browser contract did not return results; DOM tail ${dom.slice(-800)}`);\n'
+              '      const data = JSON.parse(decodeHtmlText(match[1]));'
+          )
+          new = (
+              '      const openTag = \'<pre id="ag-contract-results">\';\n'
+              '      const start = dom.lastIndexOf(openTag);\n'
+              '      const end = start >= 0 ? dom.indexOf(\'</pre>\', start + openTag.length) : -1;\n'
+              '      assert(start >= 0 && end > start, `${c.name}: browser contract did not return results; DOM tail ${dom.slice(-800)}`);\n'
+              '      const payload = decodeHtmlText(dom.slice(start + openTag.length, end));\n'
+              '      assert(payload.trim().startsWith(\'{\'), `${c.name}: final contract node did not contain JSON; payload ${payload.slice(0, 160)}`);\n'
+              '      const data = JSON.parse(payload);'
+          )
           if source.count(old) != 1:
               raise SystemExit(f'rendered contract extraction anchor count was {source.count(old)}')
           source = source.replace(old, new)
-          old_nojs = "      noContract: !/ag-contract-results/.test(noJsDom)"
-          new_nojs = "      noContract: !/<pre id=\"ag-contract-results\">\\s*\\{/.test(noJsDom)"
+          old_nojs = '      noContract: !/ag-contract-results/.test(noJsDom)'
+          new_nojs = '      noContract: !/<pre id="ag-contract-results">\\s*\\{/.test(noJsDom)'
           if source.count(old_nojs) != 1:
               raise SystemExit(f'no-JS contract anchor count was {source.count(old_nojs)}')
           source = source.replace(old_nojs, new_nojs)
