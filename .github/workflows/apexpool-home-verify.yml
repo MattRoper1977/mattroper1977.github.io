@@ -105,12 +105,22 @@ jobs:
           PY
           reject absolute-tennis-door
 
+          # FAMILY 3 REPLACED BY RULING C1. This used to delete Apex Golf's door
+          # and require rejection — but C1 rules that door REMOVED, so the
+          # deletion is now a no-op and the verifier rightly accepts it. A
+          # mutation that no longer mutates proves nothing. The ruled invariant
+          # is the opposite one: Golf must take NO door, so ADDING one must be
+          # rejected. Same family count, testing the contract that is actually
+          # in force.
           cp index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
           python3 - <<'PY'
           import json
-          p='/tmp/apextennis-home/site.json';d=json.load(open(p));d['doors']=[x for x in d['doors'] if x['title']!='Apex Golf'];open(p,'w').write(json.dumps(d,ensure_ascii=False,indent=2)+'\n')
+          p='/tmp/apextennis-home/site.json';d=json.load(open(p))
+          kick=next(i for i,x in enumerate(d['doors']) if x['title']=='Apex Kick')
+          d['doors'].insert(kick+1,{"zone":"games","title":"Apex Golf","desc":"reinstated door","href":"apexgolf/","countKey":"apex-golf","image":"assets/cards/apex-golf-door.svg","imageAlt":"x","imageW":120,"imageH":96,"badgeIcon":"\U0001F3AE","badgeLabel":"plays"})
+          open(p,'w').write(json.dumps(d,ensure_ascii=False,indent=2)+'\n')
           PY
-          reject missing-golf-sibling
+          reject reinstated-golf-door
 
           cp index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
           python3 - <<'PY'
