@@ -177,16 +177,20 @@ async function browserContracts() {
   try {
     for (const c of configs) {
       const dom = await runChrome(browser, `${base}?contract=1&viewport=${c.name}`, c.w, c.h, c.extra);
-      const match = dom.match(/<pre id="ag-contract-results">([\s\S]*?)<\/pre>/i);
-      assert(match, `${c.name}: browser contract did not return results; DOM tail ${dom.slice(-800)}`);
-      const data = JSON.parse(decodeHtmlText(match[1]));
+      const openTag = '<pre id="ag-contract-results">';
+      const start = dom.lastIndexOf(openTag);
+      const end = start >= 0 ? dom.indexOf('</pre>', start + openTag.length) : -1;
+      assert(start >= 0 && end > start, `${c.name}: browser contract did not return results; DOM tail ${dom.slice(-800)}`);
+      const payload = decodeHtmlText(dom.slice(start + openTag.length, end));
+      assert(payload.trim().startsWith('{'), `${c.name}: final contract node did not contain JSON; payload ${payload.slice(0, 160)}`);
+      const data = JSON.parse(payload);
       runs.push({ config: c, data, dom });
     }
     const noJsDom = await runChrome(browser, `${base}?nojs=1`, 360, 740, ['--blink-settings=scriptEnabled=false']);
     const noJs = {
       baseline: /id="noScript"/.test(noJsDom) && /This top-down golf game needs JavaScript/.test(noJsDom),
       killSwitch: /#mbmSplash,#app\{display:none!important\}/.test(noJsDom),
-      noContract: !/ag-contract-results/.test(noJsDom)
+      noContract: !/<pre id="ag-contract-results">\s*\{/.test(noJsDom)
     };
     browserRuns = { browser, runs, noJs };
     return browserRuns;
