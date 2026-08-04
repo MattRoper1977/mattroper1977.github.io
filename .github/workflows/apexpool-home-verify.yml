@@ -1,14 +1,18 @@
-name: Apex Pool homepage publication verify
+name: Apex Sports homepage publication verify
 
 on:
   pull_request:
     paths:
       - 'index.html'
       - 'site.json'
-      - 'assets/cards/off-brand-door.svg'
+      - 'assets/cards/apex-golf-door.svg'
+      - 'assets/cards/apex-tennis-door.svg'
       - 'tools/apply_apexpool_home.js'
+      - 'tools/apply_apextennis_home.js'
       - 'tools/verify_apexpool_home.py'
       - 'tools/verify_apexpool_home_browser.js'
+      - 'tools/verify_apextennis_home.py'
+      - 'tools/verify_apextennis_home_browser.js'
       - '.github/workflows/apexpool-home-verify.yml'
   workflow_dispatch:
 
@@ -16,61 +20,94 @@ permissions:
   contents: read
   pull-requests: read
 
+concurrency:
+  group: apex-sports-home-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
-      - name: Entry condition — Part A is present
+      - name: Entry conditions — both games are landed
         shell: bash
         run: |
           set -euo pipefail
-          test -f apexpool/index.html
-          test "$(sha256sum apexpool/index.html | awk '{print $1}')" = "4de1383f8ee029db438258bb239e4e7f3b7ffd9e603706a9fd145fd397af87ad"
+          test -f apexgolf/index.html
+          test -f apextennis/index.html
+          test "$(sha256sum apextennis/index.html | awk '{print $1}')" = "8e109ab55a0fb2a284f2e2e0bb5baa8bf468eaea8e2e89593fd71a20cdfb9b1f"
+          grep -q 'apexgolf-build-2026-08-04' apexgolf/index.html
+
+      - name: Capture the measured 12-door main baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/apextennis-home
+          git show origin/main:site.json > artifacts/apextennis-home/site-before.json
+          git show origin/main:index.html > artifacts/apextennis-home/index-before.html
+          node -e "const d=require('./artifacts/apextennis-home/site-before.json');if(!d.doors||d.doors.length!==12)process.exit(1);console.log('baseline doors='+d.doors.length)"
 
       - name: Static, structure and idempotency gates
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p artifacts/apexpool-part-c
-          python3 tools/verify_apexpool_home.py | tee artifacts/apexpool-part-c/static.log
+          node --check tools/apply_apextennis_home.js
+          node --check tools/verify_apextennis_home_browser.js
+          python3 tools/verify_apextennis_home.py index.html site.json assets/cards/apex-golf-door.svg assets/cards/apex-tennis-door.svg artifacts/apextennis-home/site-before.json artifacts/apextennis-home/index-before.html | tee artifacts/apextennis-home/static.log
           before_index=$(sha256sum index.html | awk '{print $1}')
           before_site=$(sha256sum site.json | awk '{print $1}')
-          node tools/apply_apexpool_home.js | tee artifacts/apexpool-part-c/idempotency.log
+          node tools/apply_apexpool_home.js | tee artifacts/apextennis-home/idempotency.log
           test "$before_index" = "$(sha256sum index.html | awk '{print $1}')"
           test "$before_site" = "$(sha256sum site.json | awk '{print $1}')"
 
-      - name: Demonstrate static gate failure modes
+      - name: Demonstrate four static failure families
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/apexpool-c
-          cp index.html /tmp/apexpool-c/index.html
-          cp site.json /tmp/apexpool-c/site.json
+          mkdir -p /tmp/apextennis-home
+          reject() {
+            local family="$1"
+            if python3 tools/verify_apextennis_home.py /tmp/apextennis-home/index.html /tmp/apextennis-home/site.json assets/cards/apex-golf-door.svg assets/cards/apex-tennis-door.svg artifacts/apextennis-home/site-before.json artifacts/apextennis-home/index-before.html >/tmp/apextennis-home/${family}.log 2>&1; then
+              cat /tmp/apextennis-home/${family}.log
+              echo "validator accepted ${family} mutation" >&2
+              exit 1
+            fi
+            echo "PASS mutation ${family} rejected" | tee -a artifacts/apextennis-home/nonvacuity.log
+          }
+          cp index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('/tmp/apexpool-c/index.html'); s=p.read_text()
-          s=s.replace('data-sport-game="Apex Pool"','data-sport-game="Pool Duplicate"',1)
-          p.write_text(s)
+          p=Path('/tmp/apextennis-home/index.html');p.write_text(p.read_text().replace('data-sport-game="Apex Tennis"','data-sport-game="Apex Pool"',1))
           PY
-          if python3 tools/verify_apexpool_home.py /tmp/apexpool-c/index.html /tmp/apexpool-c/site.json; then
-            echo 'validator accepted a missing Apex Pool Sports component' >&2; exit 1
-          fi
+          reject missing-tennis-card
 
-          cp index.html /tmp/apexpool-c/index.html
-          cp site.json /tmp/apexpool-c/site.json
+          cp index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
           python3 - <<'PY'
           import json
-          p='/tmp/apexpool-c/site.json'; d=json.load(open(p));
-          d['doors']=[x for x in d['doors'] if x['title']!='Off-Brand']
-          open(p,'w').write(json.dumps(d,ensure_ascii=False,indent=2)+'\n')
+          p='/tmp/apextennis-home/site.json';d=json.load(open(p));next(x for x in d['doors'] if x['title']=='Apex Tennis')['href']='https://madebymatt.uk/apextennis/';open(p,'w').write(json.dumps(d,ensure_ascii=False,indent=2)+'\n')
           PY
-          if python3 tools/verify_apexpool_home.py /tmp/apexpool-c/index.html /tmp/apexpool-c/site.json; then
-            echo 'validator accepted the outgoing occupant disappearing' >&2; exit 1
-          fi
-          echo 'PASS: static gates rejected missing Sports membership and zero-surface demotion' | tee artifacts/apexpool-part-c/non-vacuity.log
+          reject absolute-tennis-door
+
+          cp index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
+          python3 - <<'PY'
+          import json
+          p='/tmp/apextennis-home/site.json';d=json.load(open(p));d['doors']=[x for x in d['doors'] if x['title']!='Apex Golf'];open(p,'w').write(json.dumps(d,ensure_ascii=False,indent=2)+'\n')
+          PY
+          reject missing-golf-sibling
+
+          cp index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/apextennis-home/index.html');p.write_text(p.read_text().replace('data-release="Apex Pool"','data-release="Apex Tennis"',1))
+          PY
+          reject new-release-takeover
 
       - name: Verify held PR 25 remains untouched
         shell: bash
@@ -80,13 +117,13 @@ jobs:
           set -euo pipefail
           curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" -H 'Accept: application/vnd.github+json' \
             https://api.github.com/repos/MattRoper1977/mattroper1977.github.io/pulls/25 > /tmp/pr25.json
-          python3 - <<'PY' | tee artifacts/apexpool-part-c/pr25.log
+          python3 - <<'PY' | tee artifacts/apextennis-home/pr25.log
           import json
           p=json.load(open('/tmp/pr25.json'))
-          assert p['state']=='open', p['state']
-          assert p['merged_at'] is None, p['merged_at']
-          assert p['head']['sha']=='7c202790115ca5de5f71babb570b806e5e57a4aa', p['head']['sha']
-          print('MattRoper1977/mattroper1977.github.io#25 open, unmerged, head 7c202790115ca5de5f71babb570b806e5e57a4aa')
+          assert p['state']=='open',p['state']
+          assert p['merged_at'] is None,p['merged_at']
+          assert p['head']['sha']=='7c202790115ca5de5f71babb570b806e5e57a4aa',p['head']['sha']
+          print('PR #25 open, unmerged and unchanged at 7c202790115ca5de5f71babb570b806e5e57a4aa; it must be re-derived after this homepage change')
           PY
 
       - name: Install Playwright Chromium
@@ -98,16 +135,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m http.server 4173 --bind 127.0.0.1 > artifacts/apexpool-part-c/server.log 2>&1 &
+          python3 -m http.server 4173 --bind 127.0.0.1 > artifacts/apextennis-home/server.log 2>&1 &
           for i in {1..30}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
-          APEXPOOL_BASE_URL=http://127.0.0.1:4173 APEXPOOL_ARTIFACT_DIR=artifacts/apexpool-part-c \
-            node tools/verify_apexpool_home_browser.js | tee artifacts/apexpool-part-c/browser.log
+          APEXTENNIS_HOME_BASE_URL=http://127.0.0.1:4173 APEXTENNIS_HOME_ARTIFACT_DIR=artifacts/apextennis-home \
+            node tools/verify_apexpool_home_browser.js | tee artifacts/apextennis-home/browser.log
 
       - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: apexpool-homepage-${{ github.run_id }}
-          path: artifacts/apexpool-part-c
+          name: apex-tennis-homepage-${{ github.run_id }}
+          path: artifacts/apextennis-home
           if-no-files-found: error
           retention-days: 30
