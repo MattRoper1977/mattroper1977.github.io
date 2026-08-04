@@ -63,7 +63,7 @@ exactly-once rule was never a licence to drop anyone from browse-all.
   "title": "Neon Sync",
   "desc": "NEW · Team hero action where the score isn't your aim — it's whether you were the teammate everyone wants. Hold the point, back your squad, get endorsed.",
   "href": "/neonsync/",
-  "tag": "TAG — SEE THE RULING BELOW",
+  "tag": "Strategy",
   "hue": "#22D3EE",
   "featured": false,
   "hero": false,
@@ -84,9 +84,9 @@ invented external path. It ships with Part A (#47).
 
 ---
 
-## 🔺 THE TAG GAP — flagged for Matt, NOT minted
+## TAG = `Strategy` — RULED (D1). The `Team` mint is WITHDRAWN.
 
-**Derived vocabulary of the 34-entry manifest:**
+**Derived vocabulary of the 34-entry manifest (12 tags):**
 
 ```text
  8  Reflex        2  Sandbox       1  Rhythm
@@ -96,23 +96,44 @@ invented external path. It ships with Part A (#47).
 ```
 
 **Checked for, and ABSENT:** `Multiplayer` · `Arcade` · `Team` · `Shooter` ·
-`Action`. There is **no existing tag that describes a 3v3 team hero game.**
+`Action`. No existing tag names a 3v3 team hero game outright.
 
-Per the instruction, **no tag was minted.** The entry above carries a
-placeholder that must be replaced before it is applied.
+### The ruling, and why it is not a compromise
 
-**The two candidates, with the honest case against each:**
+**`Strategy` passes the pupil-expectation test**, because thinking-beats-twitch
+is not a marketing claim about this game — **it is enforced by the game's own
+code**, and the build's harness measures each enforcement:
 
-| Candidate | For | Against |
+| Enforcement | Harness check | Measured |
 |---|---|---|
-| `Strategy` (3 uses) | role play, holding the point, positioning, team composition | it is not a strategy game in the genre sense |
-| `Reflex` (8 uses) | it is a real-time action game | **contradicts the game's own pitch** — the bots have human reaction times and cannot out-track you; the whole point is that it is decided by reading the fight, not by twitch |
+| bot reaction floor | `reaction-at-least-150ms` | `0.18` s |
+| bot aim error | `aim-error-positive` | `0.075` |
+| no speed advantage | `equal-movement-speed` | pass |
+| bounded vision | `finite-vision` | pass |
 
-**Recommendation: `Strategy`** — it is the least wrong of the two, and it does
-not actively contradict the game's design claim the way `Reflex` does.
-**Alternative: mint `Team`**, which would describe it exactly, at the cost of a
-thirteenth tag. **Matt's ruling either way; do not apply this patch with the
-placeholder in place.**
+A player cannot be out-twitched by the opposition, so what remains to be good
+at is reading the fight, holding the point and spending cooldowns for other
+people. That is what `Strategy` promises a pupil, and the game keeps it.
+
+### Why `Reflex` was rejected — the decisive argument
+
+`Reflex` is the largest tag (8 uses) and the superficially obvious home for a
+real-time action game. **It is the wrong one here, and actively so:** it
+promises exactly the skill the design deliberately removes. A pupil who picks
+Neon Sync off a `Reflex` chip has been told the opposite of what the four
+measurements above enforce, and the pupil most likely to be put off by that
+promise is the one this game was built to welcome.
+
+**A tag that contradicts the game's own design claim is worse than a tag that
+merely under-describes it.** `Strategy` under-describes; `Reflex` misleads.
+
+### The withdrawn alternative
+
+Minting `Team` would have described it exactly, at the cost of a thirteenth
+tag. **Withdrawn by ruling D1** — the 12-tag vocabulary holds, and no tag is
+minted for this landing.
+
+**Apply the entry with `"tag": "Strategy"` exactly as written above.**
 
 ---
 
@@ -164,8 +185,8 @@ Run each as its own step and record the exit code:
 [ ] art 35/35 — every entry still carries a non-empty art path
 [ ] 0 duplicate ids (href uniqueness)
 [ ] hue distinctness re-derived at apply time (the manifest may have moved)
-[ ] tag drawn from the EXISTING vocabulary, or Matt's minted tag — never a
-    placeholder, never silently invented
+[ ] tag is exactly "Strategy" (RULED, D1) — the Team mint is withdrawn and no
+    tag is minted; the 12-tag vocabulary must be unchanged after this patch
 [ ] no `collection` key on the Neon Sync entry
 [ ] every pre-existing entry keeps its shelf presence — count them before/after
 [ ] PRECONDITION 1 verified: the arcade workflow no longer pins or asserts a
