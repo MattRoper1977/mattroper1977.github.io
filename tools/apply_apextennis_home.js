@@ -2,7 +2,7 @@
 'use strict';
 const fs=require('fs'),path=require('path');
 const ROOT=path.join(__dirname,'..'),INDEX=path.join(ROOT,'index.html'),SITE=path.join(ROOT,'site.json');
-const NAMES=['Apex Kick','Apex Pool','Apex Golf','Apex Tennis'];
+const CARD_NAMES=['Apex Kick','Apex Pool','Apex Golf','Apex Tennis'];
 const OLD_LEDE='Two games about reading a line, controlling the finish and making the next decision count.';
 const NEW_LEDE='Four games about reading the line, calling the plan and making the next decision count.';
 const NEW_CARDS=`
@@ -19,25 +19,23 @@ const DOORS=[
 const CATALOG=[{key:'apex-golf',title:'Apex Golf'},{key:'apex-tennis',title:'Apex Tennis'}];
 function count(s,x){return s.split(x).length-1}
 function transformIndex(source){
- const counts=Object.fromEntries(NAMES.map(n=>[n,count(source,`data-sport-game="${n}"`)]));
- if(NAMES.every(n=>counts[n]===1)&&source.includes(NEW_LEDE))return source;
+ const counts=Object.fromEntries(CARD_NAMES.map(n=>[n,count(source,`data-sport-game="${n}"`)]));
+ if(CARD_NAMES.every(n=>counts[n]===1)&&source.includes(NEW_LEDE))return source;
  if(counts['Apex Kick']!==1||counts['Apex Pool']!==1||counts['Apex Golf']!==0||counts['Apex Tennis']!==0)throw Error('homepage Sports membership drift');
  if(count(source,OLD_LEDE)!==1)throw Error('homepage Sports lede drift');
- const poolStart=source.indexOf('<a class="dx-sport" data-sport-game="Apex Pool"');
- const poolEnd=source.indexOf('</a>',poolStart);
+ const poolStart=source.indexOf('<a class="dx-sport" data-sport-game="Apex Pool"'),poolEnd=source.indexOf('</a>',poolStart);
  if(poolStart<0||poolEnd<0)throw Error('Apex Pool card anchor drift');
  source=source.replace(OLD_LEDE,NEW_LEDE);
- const adjustedStart=source.indexOf('<a class="dx-sport" data-sport-game="Apex Pool"');
- const adjustedEnd=source.indexOf('</a>',adjustedStart)+4;
+ const adjustedStart=source.indexOf('<a class="dx-sport" data-sport-game="Apex Pool"'),adjustedEnd=source.indexOf('</a>',adjustedStart)+4;
  source=source.slice(0,adjustedEnd)+NEW_CARDS+source.slice(adjustedEnd);
  if(count(source,'id="homeSports"')!==1||count(source,'data-release="Apex Pool"')!==1||count(source,'id="newrelease"')!==1)throw Error('protected homepage component drift');
  return source;
 }
 function transformSite(source){
  const doc=JSON.parse(source),doors=doc.doors||[],catalog=doc.features?.downloads?.catalog||[];
- const present=NAMES.map(n=>doors.filter(d=>d.title===n).length);
- if(doors.length===14&&present.every(x=>x===1)&&DOORS.every(d=>doors.some(x=>JSON.stringify(x)===JSON.stringify(d))))return source;
- if(doors.length!==12||present[0]!==1||present[1]!==0||present[2]!==0||present[3]!==0)throw Error('door baseline drift');
+ const hits=title=>doors.filter(d=>d.title===title).length;
+ if(doors.length===14&&hits('Apex Kick')===1&&hits('Apex Pool')===0&&hits('Apex Golf')===1&&hits('Apex Tennis')===1&&DOORS.every(d=>doors.some(x=>JSON.stringify(x)===JSON.stringify(d))))return source;
+ if(doors.length!==12||hits('Apex Kick')!==1||hits('Apex Pool')!==0||hits('Apex Golf')!==0||hits('Apex Tennis')!==0)throw Error('door baseline drift');
  const kick=doors.findIndex(d=>d.title==='Apex Kick');if(kick<0)throw Error('Apex Kick door missing');
  doors.splice(kick+1,0,...DOORS.map(x=>({...x})));
  const ci=catalog.findIndex(x=>x.key==='apex-kick');if(ci<0||CATALOG.some(x=>catalog.some(y=>y.key===x.key)))throw Error('count catalogue drift');
