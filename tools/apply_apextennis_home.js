@@ -39,8 +39,17 @@ function transformIndex(source){
 function transformSite(source){
  const doc=JSON.parse(source),doors=doc.doors||[],catalog=doc.features?.downloads?.catalog||[];
  const hits=title=>doors.filter(d=>d.title===title).length;
- if(doors.length===14&&hits('Apex Kick')===1&&hits('Apex Pool')===0&&hits('Apex Golf')===1&&hits('Apex Tennis')===1&&DOORS.every(d=>doors.some(x=>JSON.stringify(x)===JSON.stringify(d))))return source;
- if(doors.length!==12||hits('Apex Kick')!==1||hits('Apex Pool')!==0||hits('Apex Golf')!==0||hits('Apex Tennis')!==0)throw Error('door baseline drift');
+ // The already-applied detector used to require doors.length===14 with an
+ // Apex Golf door present, and the not-yet-applied guard required exactly
+ // 12. Matt's C1 ruling removes Golf's door and takes the count to 13, so
+ // BOTH pins were wrong the moment that landed: the transform matched
+ // neither state and threw 'door baseline drift'. That is the same shape as
+ // the 12-door workflow pin and the arcade manifest pin. So the test is now
+ // COUNT-FREE and asks the only question that actually matters: is every
+ // door this transform adds already present?
+ if(DOORS.every(d=>doors.some(x=>JSON.stringify(x)===JSON.stringify(d))))return source;
+ if(hits('Apex Kick')!==1)throw Error('Apex Kick door missing or duplicated');
+ if(hits('Apex Pool')!==0)throw Error('an Apex Pool door exists; the measured convention is none');
  const kick=doors.findIndex(d=>d.title==='Apex Kick');if(kick<0)throw Error('Apex Kick door missing');
  doors.splice(kick+1,0,...DOORS.map(x=>({...x})));
  const ci=catalog.findIndex(x=>x.key==='apex-kick');if(ci<0||CATALOG.some(x=>catalog.some(y=>y.key===x.key)))throw Error('count catalogue drift');
