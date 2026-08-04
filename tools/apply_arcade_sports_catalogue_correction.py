@@ -3,7 +3,7 @@
 
 Sports remains an additional collection rail. Apex Kick stays in TOP and every
 manifest entry, including all Sports members, remains in the browse-all shelf.
-Exact anchors are intentionally tied to the merged three-game Sports state.
+Exact anchors are intentionally tied to the merged four-game Sports state.
 """
 from __future__ import annotations
 import hashlib
@@ -41,7 +41,7 @@ def desired(text: str) -> bool:
         and "The eight I'd put in front of anyone first" in text
         and 'g.collection==="Sports"' in text
         and 'g.collection!=="Sports"' not in text
-        and 'Three Apex games, side by side' in text
+        and 'Four Apex games, side by side' in text
         and SENTINEL in text
     )
 
@@ -65,7 +65,7 @@ def main() -> int:
         print('ERROR: postcondition failed', file=sys.stderr); return 4
     PATH.write_text(after, encoding='utf-8')
     print('APPLIED:', digest(before), '->', digest(after))
-    print('PLACEMENT: Sports additional; Apex Kick in TOP; all 33 games in whole shelf')
+    print('PLACEMENT: Sports additional; Apex Kick in TOP; all manifest games in whole shelf')
     return 0
 
 if __name__ == '__main__':
