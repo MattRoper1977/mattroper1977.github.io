@@ -1,0 +1,40 @@
+name: Apply Arcade Sports renderer
+
+on:
+  push:
+    branches:
+      - codex/apexpool-arcade-sports
+    paths:
+      - 'tools/apply_arcade_sports.js'
+      - '.github/workflows/arcade-sports-prep.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/apexpool-arcade-sports
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply the collection-driven Sports rail
+        run: node tools/apply_arcade_sports.js
+      - name: Constrain and publish the renderer-only transformation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git diff -- games/index.html
+          test "$(git diff --name-only)" = 'games/index.html'
+          rm tools/apply_arcade_sports.js .github/workflows/arcade-sports-prep.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: add collection-driven Arcade Sports rail'
+          git push origin HEAD:codex/apexpool-arcade-sports
