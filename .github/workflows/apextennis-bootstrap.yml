@@ -28,14 +28,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          wc -c .apextennis-upload/part-*
-          sha256sum .apextennis-upload/part-*
           echo 'cda9f68dbd1af4d941ca757623a3dfaecfde92bda9c14ba4f1f5e49530004317  .apextennis-upload/part-00' > /tmp/expected.sha
           echo 'aa6cc047d7fe4d6fbabfd4884358c51cd0273e2af6d871118a0ffeca785acca1  .apextennis-upload/part-01' >> /tmp/expected.sha
           echo '3be19cc5d97074d49e0c2153e81f14d313405a54856d5ee8951b3a3b09419f53  .apextennis-upload/part-02' >> /tmp/expected.sha
-          echo 'e23a48fef6374f2c73fc0ef1cbe462a377ddd91cb2cec62a6752f390e4a47069  .apextennis-upload/part-03' >> /tmp/expected.sha
+          echo '4fd5cfc0dc5b994ce1333fc96c2db0f634a5bb1deb7228f98ad1b7a8c0c61163  .apextennis-upload/part-03a' >> /tmp/expected.sha
+          echo '00ff4d791a1139376ae596ab9f7bd2d9b8f115d8fba1cf7b32134978edd791cc  .apextennis-upload/part-03b' >> /tmp/expected.sha
           sha256sum --check /tmp/expected.sha
-          cat .apextennis-upload/part-* | base64 --decode > /tmp/apextennis-payload.tar.gz
+          cat .apextennis-upload/part-00 .apextennis-upload/part-01 .apextennis-upload/part-02 .apextennis-upload/part-03a .apextennis-upload/part-03b | base64 --decode > /tmp/apextennis-payload.tar.gz
           tar -xzf /tmp/apextennis-payload.tar.gz
           python3 - <<'PY'
           from pathlib import Path
