@@ -1,0 +1,42 @@
+name: Apex Tennis gates
+on:
+  pull_request:
+    paths:
+      - 'apextennis/index.html'
+      - 'tools/verify_apextennis.js'
+      - 'tools/verify_apextennis_browser.js'
+      - '.github/workflows/apextennis-verify.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: apextennis-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    name: 18 source + rendered contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned real browser
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Measure read-only donors
+        continue-on-error: true
+        shell: bash
+        run: |
+          printf 'Apex Pool bytes: '; wc -c < apexpool/index.html
+          printf 'Apex Pool sha256: '; sha256sum apexpool/index.html | cut -d' ' -f1
+          node tools/verify_apexkick.js | tee /tmp/apexkick.log
+          checks=$(grep -E '^[[:space:]]+(PASS|FAIL)[[:space:]]' /tmp/apexkick.log | wc -l)
+          printf 'Apex Kick measured checks: %s\n' "$checks"
+          test "$checks" -eq 25
+      - name: Run all Apex Tennis gates
+        env:
+          AT_REQUIRE_BROWSER: '1'
+        run: node tools/verify_apextennis.js
