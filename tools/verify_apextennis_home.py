@@ -50,12 +50,21 @@ for name,expected in expected_doors.items():
  req(len(matches)==1 and matches[0]==expected,f'{name} door schema and relative href are exact')
 req(sum(1 for d in doors if d.get('zone')=='games')==7,'Games zone grows from six to seven doors')
 req(all(not str(d.get('href','')).startswith(('http://','https://','/')) for d in doors),'all doors keep the measured relative-href convention')
+# The workflow supplies origin/main as the "before" state. That was true while
+# this landing was in flight; once it merged, main BECAME the after state, and
+# the comparison silently turned into after-vs-after-minus-two and failed for a
+# reason that had nothing to do with the change under review. Same family as the
+# hardcoded 12-door baseline: an assumption about the world that the world moved
+# past. So DERIVE which side the baseline is on instead of assuming it.
+NEW_DOORS=('Apex Golf','Apex Tennis'); NEW_KEYS=('apex-golf','apex-tennis')
 if baseline:
- before=baseline.get('doors',[]);survivors=[d for d in doors if d.get('title') not in ('Apex Golf','Apex Tennis')]
- req(survivors==before,'all 12 existing doors remain byte-equivalent and ordered')
- before_catalog=baseline.get('features',{}).get('downloads',{}).get('catalog',[])
- after_catalog=site.get('features',{}).get('downloads',{}).get('catalog',[])
- req([x for x in after_catalog if x.get('key') not in ('apex-golf','apex-tennis')]==before_catalog,'existing count catalogue remains byte-equivalent and ordered')
+ before=[d for d in baseline.get('doors',[]) if d.get('title') not in NEW_DOORS]
+ survivors=[d for d in doors if d.get('title') not in NEW_DOORS]
+ landed=len(before)!=len(baseline.get('doors',[]))
+ req(survivors==before,f'every pre-existing door survives byte-equivalent and ordered ({len(survivors)} of them; baseline is the {"post" if landed else "pre"}-landing state)')
+ before_catalog=[x for x in baseline.get('features',{}).get('downloads',{}).get('catalog',[]) if x.get('key') not in NEW_KEYS]
+ after_catalog=[x for x in site.get('features',{}).get('downloads',{}).get('catalog',[]) if x.get('key') not in NEW_KEYS]
+ req(after_catalog==before_catalog,f'existing count catalogue survives byte-equivalent and ordered ({len(after_catalog)} entries)')
 catalog=site.get('features',{}).get('downloads',{}).get('catalog',[]);keys=[x.get('key') for x in catalog]
 req(len(catalog)==14,'count catalogue grows 12 to 14')
 req(keys.count('apex-golf')==1 and keys.count('apex-tennis')==1,'Golf and Tennis are countable exactly once')
