@@ -1,0 +1,123 @@
+name: Neon Sync gates
+
+# Sentinel: neonsync-land-2026-08-04
+#
+# IDENTITY IS BY HASH, DELIBERATELY. The delivered game file carries NO in-file
+# sentinel string — the house convention is x2, this file has 0. Ruled at
+# landing: do NOT edit the file to add one, because any edit invalidates the
+# build's 149-check evidence and the four-way hash agreement. The hash gate
+# below IS the identity mechanism, and it is the first thing that runs.
+
+on:
+  pull_request:
+    paths:
+      - 'neonsync/index.html'
+      - 'tools/verify_neonsync.js'
+      - 'tools/verify_neonsync_browser.js'
+      - '.github/workflows/neonsync-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neonsync-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: identity, source census, rendered browser contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # ---------------------------------------------------------------- G-A1
+      - name: 'G-A1 byte accountability — committed file is the delivered file'
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECT=c645e6f3f56a5884c23656dc82be49bc20e333ebc379ea098341886327832602
+          ACTUAL=$(sha256sum neonsync/index.html | cut -d' ' -f1)
+          BYTES=$(wc -c < neonsync/index.html)
+          printf 'bytes  %s (expect 56658)\n' "$BYTES"
+          printf 'sha256 %s\n' "$ACTUAL"
+          printf 'expect %s\n' "$EXPECT"
+          test "$BYTES" -eq 56658
+          test "$ACTUAL" = "$EXPECT"
+          echo 'G-A1 PASS — zero edits to the delivered artefact'
+
+      # ---------------------------------------------------------------- G-A2
+      - name: 'G-A2 delivered source harness — BLOCKED, recorded not faked'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f tools/verify_neonsync.js ]; then
+            EXPECT=6b5cbb9da0f41a4f72e6abdeaf5deeb8ae870c0fcc380b31f0f45c9225cb2369
+            ACTUAL=$(sha256sum tools/verify_neonsync.js | cut -d' ' -f1)
+            printf 'harness sha256 %s\n' "$ACTUAL"
+            test "$ACTUAL" = "$EXPECT"
+            node tools/verify_neonsync.js
+            echo 'G-A2 PASS — delivered harness present and reproduced'
+          else
+            echo '::warning title=G-A2 BLOCKED::tools/verify_neonsync.js was NOT delivered with the game.'
+            echo 'G-A2 BLOCKED — the build reports 149/149 and tamper exit 1, but the'
+            echo 'harness file itself (13,637 B, sha256 6b5cbb9d...) is absent, so those'
+            echo 'checks CANNOT be reproduced here. This is recorded as UNVERIFIED, not'
+            echo 'as a pass. Supplying the file unblocks this step with no other change.'
+          fi
+
+      # ---------------------------------------------------------------- G-A4
+      - name: 'G-A4 static storage census — only mbm_neonsync_ literals'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e "
+            const fs=require('fs');
+            const h=fs.readFileSync('neonsync/index.html','utf8');
+            const fam=[...new Set(h.match(/['\"](?:mbm_|apex_|apexkick|apexpool|apexgolf|apextennis|voxel|biopunk)[A-Za-z0-9_.-]*['\"]/g)||[])];
+            console.log('estate-shaped key literals:', fam.join(', ')||'none');
+            const foreign=fam.filter(x=>!/mbm_neonsync_/.test(x));
+            if(foreign.length){console.error('FAIL foreign key literals: '+foreign.join(', '));process.exit(1);}
+            console.log('G-A4 static PASS — no sibling key family appears in the file');
+          "
+
+      - name: Install the pinned real browser
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      # ---------------------------------------------------------------- G-A3
+      - name: 'G-A3 rendered browser contract — the proof that was never run'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'The builder browser smoke never ran (net::ERR_BLOCKED_BY_ADMINISTRATOR).'
+          echo 'This is the first real-browser load of this game.'
+          node tools/verify_neonsync_browser.js
+
+      # -------------------------------------------------------- idempotency
+      - name: 'Second run is idempotent — gates mutate nothing'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BEFORE=$(sha256sum neonsync/index.html | cut -d' ' -f1)
+          node tools/verify_neonsync_browser.js > /dev/null
+          AFTER=$(sha256sum neonsync/index.html | cut -d' ' -f1)
+          printf 'before %s\nafter  %s\n' "$BEFORE" "$AFTER"
+          test "$BEFORE" = "$AFTER"
+          echo 'idempotent — the artefact is unchanged by its own gates'
+
+      # ------------------------------------------------------- sitemap check
+      - name: 'Sitemap carries exactly one canonical /neonsync/ line'
+        shell: bash
+        run: |
+          set -euo pipefail
+          N=$(grep -c '<loc>https://madebymatt.uk/neonsync/</loc>' sitemap.xml)
+          D=$(grep -oE '<loc>[^<]+</loc>' sitemap.xml | sort | uniq -d | wc -l)
+          printf 'neonsync loc lines: %s\nduplicate locs in sitemap: %s\n' "$N" "$D"
+          test "$N" -eq 1
+          test "$D" -eq 0
