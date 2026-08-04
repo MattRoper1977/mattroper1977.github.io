@@ -108,6 +108,38 @@ jobs:
             "$(wc -c < neonsync/index.html)" "$(sha256sum neonsync/index.html | cut -d' ' -f1)"
           exit $status
 
+      - name: Live site.json door census — the C1 ruling, as served
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The surface list above only proves site.json returns 200. That is
+          # not a door count. C1 removed Apex Golf's door (14 -> 13, games
+          # 8 -> 7) and the ruling is only verified once the SERVED file is
+          # counted, so count it and compare it to the committed tree.
+          curl -sS --max-time 30 https://madebymatt.uk/site.json -o /tmp/site.live.json
+          python3 - <<'PY'
+          import json,sys
+          live=json.load(open('/tmp/site.live.json'))
+          repo=json.load(open('site.json'))
+          def census(d):
+              doors=d.get('doors',[])
+              return (len(doors),
+                      sum(1 for x in doors if x.get('zone')=='games'),
+                      sum(1 for x in doors if x.get('title')=='Apex Golf'))
+          l,r=census(live),census(repo)
+          print(f'  served site.json : {l[0]} doors, {l[1]} in games, {l[2]} Apex Golf door(s)')
+          print(f'  repo   site.json : {r[0]} doors, {r[1]} in games, {r[2]} Apex Golf door(s)')
+          if not l[0]:
+              print('  FAIL served site.json has no doors[] — an empty census would pass vacuously'); sys.exit(1)
+          if l!=r:
+              print('  PENDING served site.json has not caught up with the tree (Pages lag).')
+              sys.exit(0)
+          if l[2]==0 and l[0]==r[0]:
+              print(f'  PASS C1 holds as served: Apex Golf takes NO door, {l[0]} doors, {l[1]} in the games zone')
+          else:
+              print('  FAIL served door census does not satisfy the C1 ruling'); sys.exit(1)
+          PY
+
       - name: Live manifest and placement census
         shell: bash
         run: |
