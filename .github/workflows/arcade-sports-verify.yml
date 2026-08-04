@@ -35,12 +35,38 @@ jobs:
           before=$(sha256sum games/index.html | awk '{print $1}')
           python3 tools/apply_arcade_sports_catalogue_correction.py | tee artifacts/arcade-sports/idempotency.log
           test "$before" = "$(sha256sum games/index.html | awk '{print $1}')"
-      - name: Fetch merged 34-entry manifest
+      # AGX-1 finding A-6. This step used to fetch the manifest pinned at
+      # 900fae5e (Games#11) and assert `length !== 34`. Both ends were frozen,
+      # so the whole chain validated the renderer against a snapshot that could
+      # never change: once the manifest moved to 35 it would have kept
+      # reporting GREEN against a stale world. A green gate against a stale
+      # world is worse than a red one. The count is now DERIVED, and the
+      # manifest is read at main — never at a pin, never against a literal.
+      - name: Fetch the live manifest at main and derive its shape
         run: |
           curl --fail --silent --show-error --location \
-            https://raw.githubusercontent.com/MattRoper1977/Games/900fae5e861332d61b9e3f506e3ace35ac28d92b/games.json \
+            https://raw.githubusercontent.com/MattRoper1977/Games/main/games.json \
             -o artifacts/arcade-sports/games.json
-          node -e "const d=require('./artifacts/arcade-sports/games.json');if(d.games.length!==34)process.exit(1)"
+          node -e "
+            const d = require('./artifacts/arcade-sports/games.json');
+            const g = d.games;
+            if (!Array.isArray(g) || g.length < 1) { console.error('manifest is not a non-empty array'); process.exit(1); }
+            const n = g.length;
+            const art = g.filter(e => e.art && String(e.art).trim()).length;
+            const ids = new Set(g.map(e => e.href));
+            const sports = g.filter(e => e.collection === 'Sports').map(e => e.title);
+            const physics = g.filter(e => e.tag === 'Physics').length;
+            console.log('entries (derived) ', n);
+            console.log('art               ', art + '/' + n);
+            console.log('duplicate hrefs   ', n - ids.size);
+            console.log('Sports            ', sports.join(' · '));
+            console.log('Physics (derived) ', physics);
+            let bad = 0;
+            if (art !== n)        { console.error('FAIL: art is not carried on every entry'); bad = 1; }
+            if (ids.size !== n)   { console.error('FAIL: duplicate hrefs'); bad = 1; }
+            if (g.some(e => e.tag === 'Sport')) { console.error('FAIL: a Sport chip was minted'); bad = 1; }
+            process.exit(bad);
+          "
       - name: Install Chromium
         run: |
           npm install --no-save --no-package-lock playwright@1.55.0

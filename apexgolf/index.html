@@ -373,9 +373,22 @@ function stepBall(ball,hole,dt){
 }
 function simulateShot(hole,ball,maxSeconds){var n=Math.ceil((maxSeconds||MAX_SHOT_SECONDS)/DT),events=[];for(var i=0;i<n&&ball.moving;i++){stepBall(ball,hole,DT);if(ball.lastRestitution)events.push(ball.lastRestitution);}return {ball:ball,events:events,steps:i};}
 function ballStateVector(b){return [b.x,b.y,b.z,b.vx,b.vy,b.vz,b.moving?1:0,b.sunk?1:0];}
+/* AGX-1 finding A-2. This rig used to run a FIXED step count (target =
+   seconds/DT) and merely re-chunk it by renderHz, so it returned an identical
+   state for every refresh rate no matter what the integrator did — epsilon = 0
+   was an identity of the rig, not a measurement of the physics. It now derives
+   its schedule from renderHz exactly as the shipped loop() does: frames =
+   seconds * renderHz, one clamped accumulator tick per frame, substeps capped.
+   The remaining epsilon is real: the accumulator's sub-DT remainder differs
+   between rates, so a correct fixed-step integrator lands within one substep
+   of motion and a frame-rate-dependent one does not. */
 function drive(hole,seconds,renderHz,input){
-  var b=makeBall(hole);launch(b,hole,input.angle,input.power,input.club);var acc=0,frame=1/renderHz,target=Math.round(seconds/DT),steps=0;
-  while(steps<target&&b.moving){acc+=frame;var sub=0;while(acc+1e-12>=DT&&sub<MAX_SUBSTEPS&&steps<target&&b.moving){stepBall(b,hole,DT);acc-=DT;sub++;steps++;}}
+  var b=makeBall(hole);launch(b,hole,input.angle,input.power,input.club);
+  var acc=0,frame=1/renderHz,frames=Math.round(seconds*renderHz);
+  for(var f=0;f<frames&&b.moving;f++){
+    acc+=Math.min(MAX_FRAME_DELTA,frame);
+    var n=0;while(acc>=DT&&n<MAX_SUBSTEPS){stepBall(b,hole,DT);acc-=DT;n++;}
+  }
   return ballStateVector(b);
 }
 function maxDelta(a,b){var m=0;for(var i=0;i<a.length;i++)m=Math.max(m,Math.abs(a[i]-b[i]));return m;}

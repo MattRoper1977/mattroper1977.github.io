@@ -13,7 +13,12 @@ const NEW_CARDS=`
 <span class="dx-sport-icon" aria-hidden="true">🎾</span><span class="dx-sport-copy"><b>Apex Tennis</b><span>Call the point before the serve, then build it on court with real rules and an honest Plan Rating.</span></span><span class="dx-sport-go">Play &rarr;</span>
 </a>`;
 const DOORS=[
- {zone:'games',title:'Apex Golf',desc:'Read the hole, call your stroke count and play nine seeded holes with honest wind and slope.',href:'apexgolf/',countKey:'apex-golf',image:'assets/cards/apex-golf-door.svg',imageAlt:'Apex Golf — a called score of three on a curved top-down hole',imageW:120,imageH:96,badgeIcon:'🎮',badgeLabel:'plays'},
+ /* Apex Golf's door was REMOVED by Matt's C1 ruling (AGX-1): the four-game
+    homepage Sports block is ratified, but one surface per game stands, so
+    Golf keeps its Sports card and does NOT take a door. Pool's
+    spotlight+Sports pairing remains the ruled exception, not the precedent.
+    Do not re-add this entry — re-running this transform must not undo the
+    ruling. */
  {zone:'games',title:'Apex Tennis',desc:'Call the point before the serve, then build it on court with real rules and an honest Plan Rating.',href:'apextennis/',countKey:'apex-tennis',image:'assets/cards/apex-tennis-door.svg',imageAlt:'Apex Tennis — a blue court with a planned ball path and three clauses',imageW:120,imageH:96,badgeIcon:'🎮',badgeLabel:'plays'}
 ];
 const CATALOG=[{key:'apex-golf',title:'Apex Golf'},{key:'apex-tennis',title:'Apex Tennis'}];

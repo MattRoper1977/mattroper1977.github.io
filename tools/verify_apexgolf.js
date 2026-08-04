@@ -271,14 +271,42 @@ gate('G2', 'fixed timestep and refresh-rate invariance', () => {
   const hole = neutralHole(9001, 5);
   const input = { angle: 0.21, power: 0.83, club: 3 };
   const rates = [30, 60, 120, 144];
-  const states = rates.map(hz => AG.drive(hole, 20, hz, input));
+  // 2 s is chosen so seconds*hz is a whole number of frames at every rate:
+  // each rate therefore accumulates the SAME simulated span, and a correct
+  // fixed-step integrator must land on the same state. A duration that does
+  // not divide evenly (0.25 s at 30 Hz -> 7.5 frames) makes the rates simulate
+  // different spans and the resulting delta measures frame-count rounding,
+  // not physics.
+  const SECONDS = 2;
+  const states = rates.map(hz => AG.drive(hole, SECONDS, hz, input));
   let eps = 0;
   for (let i = 1; i < states.length; i++) eps = Math.max(eps, AG.maxDelta(states[0], states[i]));
   assert(eps <= 1e-10, `refresh-rate delta ${eps}`);
+
+  // AGX-1 finding A-2 — THE POSITIVE CONTROL, and the point of this gate.
+  // eps == 0 above is necessary but proves nothing on its own: a rig that
+  // ignores renderHz returns 0 for any integrator, correct or broken, which is
+  // exactly how this limb passed vacuously before. So drive the SAME shot with
+  // the defect this gate exists to catch — physics advanced once per frame at
+  // dt = 1/hz (the B6 shape) — and require the measurement to SEE it. If this
+  // control ever collapses toward 0 the rig has gone blind again and the gate
+  // fails, whatever the shipped game is doing.
+  const control = rates.map(hz => {
+    const b = AG.makeBall(hole);
+    AG.launch(b, hole, input.angle, input.power, input.club);
+    const frames = Math.round(SECONDS * hz), dt = 1 / hz;
+    for (let f = 0; f < frames && b.moving; f++) AG.stepBall(b, hole, dt);
+    return AG.ballStateVector(b);
+  });
+  let epsControl = 0;
+  for (let i = 1; i < control.length; i++) epsControl = Math.max(epsControl, AG.maxDelta(control[0], control[i]));
+  assert(epsControl > 0.1, `positive control did not detect per-frame stepping (ε_control ${epsControl}) — the rig is blind, so ε=0 above is not evidence`);
+
   const suspect = html.match(/ball\.(?:x|y|z)\s*\+=\s*ball\.v(?:x|y|z)(?!\s*\*\s*dt)/g) || [];
   assert(suspect.length === 0, `bare position integration found: ${suspect.join(', ')}`);
   assert(/state\.accumulator\s*\+=\s*frame/.test(html) && /while\(state\.accumulator>=AG\.DT/.test(html), 'render loop lacks fixed-step accumulator');
-  return `30/60/120/144 Hz; measured ε=${eps}`;
+  assert(/frames\s*=\s*Math\.round\(seconds\*renderHz\)/.test(html), 'drive() does not derive its schedule from renderHz');
+  return `30/60/120/144 Hz over ${SECONDS}s; ε=${eps}; positive control ε=${epsControl.toFixed(3)} (rig proven sighted)`;
 });
 
 // G3 — determinism
