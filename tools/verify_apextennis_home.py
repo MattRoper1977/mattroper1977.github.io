@@ -50,18 +50,18 @@ if baseline_index:
 req('var(--dx-card)' in index and 'var(--dx-ink)' in index,'Sports keeps homepage theme tokens')
 req('@media(prefers-reduced-motion:reduce){a.dx-sport' in index,'Sports retains explicit reduced-motion protection')
 doors=site.get('doors',[]);titles=[d.get('title') for d in doors]
-req(len(doors)==14,'door count grows 12 to 14 without deletion')
+req(len(doors)==13,'door count grows 12 to 13 without deletion (Golf takes no door — Matt C1 ruling)')
 req(titles.count('Apex Kick')==1,'Apex Kick door remains exactly once')
 req(titles.count('Apex Pool')==0,'measured no-Pool-door convention remains unchanged')
-req(titles.count('Apex Golf')==1 and titles.count('Apex Tennis')==1,'Golf and Tennis each gain one door')
+req(titles.count('Apex Golf')==0,'Apex Golf takes NO door — one surface per game (Matt C1 ruling)')
+req(titles.count('Apex Tennis')==1,'Apex Tennis gains exactly one door')
 expected_doors={
- 'Apex Golf':{'zone':'games','title':'Apex Golf','desc':'Read the hole, call your stroke count and play nine seeded holes with honest wind and slope.','href':'apexgolf/','countKey':'apex-golf','image':'assets/cards/apex-golf-door.svg','imageAlt':'Apex Golf — a called score of three on a curved top-down hole','imageW':120,'imageH':96,'badgeIcon':'🎮','badgeLabel':'plays'},
  'Apex Tennis':{'zone':'games','title':'Apex Tennis','desc':'Call the point before the serve, then build it on court with real rules and an honest Plan Rating.','href':'apextennis/','countKey':'apex-tennis','image':'assets/cards/apex-tennis-door.svg','imageAlt':'Apex Tennis — a blue court with a planned ball path and three clauses','imageW':120,'imageH':96,'badgeIcon':'🎮','badgeLabel':'plays'}
 }
 for name,expected in expected_doors.items():
  matches=[d for d in doors if d.get('title')==name]
  req(len(matches)==1 and matches[0]==expected,f'{name} door schema and relative href are exact')
-req(sum(1 for d in doors if d.get('zone')=='games')==8,'Games zone grows from six to eight doors')
+req(sum(1 for d in doors if d.get('zone')=='games')==7,'Games zone grows from six to seven doors')
 req(all(not str(d.get('href','')).startswith(('http://','https://','/')) for d in doors),'all doors keep the measured relative-href convention')
 # The workflow supplies origin/main as the "before" state. That was true while
 # this landing was in flight; once it merged, main BECAME the after state, and
@@ -82,7 +82,7 @@ catalog=site.get('features',{}).get('downloads',{}).get('catalog',[]);keys=[x.ge
 req(len(catalog)==14,'count catalogue grows 12 to 14')
 req(keys.count('apex-golf')==1 and keys.count('apex-tennis')==1,'Golf and Tennis are countable exactly once')
 req(len(keys)==len(set(keys)),'count catalogue keys remain unique')
-for asset,title,hue in ((golf_art,'Apex Golf','#7C5CFC'),(tennis_art,'Apex Tennis','#3B6FD4')):
+for asset,title,hue in ((tennis_art,'Apex Tennis','#3B6FD4'),):
  req(asset.is_file(),f'{title} 5:4 door artwork exists')
  if asset.is_file():
   svg=asset.read_text(encoding='utf-8')

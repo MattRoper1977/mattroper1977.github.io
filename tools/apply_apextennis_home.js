@@ -13,7 +13,12 @@ const NEW_CARDS=`
 <span class="dx-sport-icon" aria-hidden="true">🎾</span><span class="dx-sport-copy"><b>Apex Tennis</b><span>Call the point before the serve, then build it on court with real rules and an honest Plan Rating.</span></span><span class="dx-sport-go">Play &rarr;</span>
 </a>`;
 const DOORS=[
- {zone:'games',title:'Apex Golf',desc:'Read the hole, call your stroke count and play nine seeded holes with honest wind and slope.',href:'apexgolf/',countKey:'apex-golf',image:'assets/cards/apex-golf-door.svg',imageAlt:'Apex Golf — a called score of three on a curved top-down hole',imageW:120,imageH:96,badgeIcon:'🎮',badgeLabel:'plays'},
+ /* Apex Golf's door was REMOVED by Matt's C1 ruling (AGX-1): the four-game
+    homepage Sports block is ratified, but one surface per game stands, so
+    Golf keeps its Sports card and does NOT take a door. Pool's
+    spotlight+Sports pairing remains the ruled exception, not the precedent.
+    Do not re-add this entry — re-running this transform must not undo the
+    ruling. */
  {zone:'games',title:'Apex Tennis',desc:'Call the point before the serve, then build it on court with real rules and an honest Plan Rating.',href:'apextennis/',countKey:'apex-tennis',image:'assets/cards/apex-tennis-door.svg',imageAlt:'Apex Tennis — a blue court with a planned ball path and three clauses',imageW:120,imageH:96,badgeIcon:'🎮',badgeLabel:'plays'}
 ];
 const CATALOG=[{key:'apex-golf',title:'Apex Golf'},{key:'apex-tennis',title:'Apex Tennis'}];
@@ -34,8 +39,17 @@ function transformIndex(source){
 function transformSite(source){
  const doc=JSON.parse(source),doors=doc.doors||[],catalog=doc.features?.downloads?.catalog||[];
  const hits=title=>doors.filter(d=>d.title===title).length;
- if(doors.length===14&&hits('Apex Kick')===1&&hits('Apex Pool')===0&&hits('Apex Golf')===1&&hits('Apex Tennis')===1&&DOORS.every(d=>doors.some(x=>JSON.stringify(x)===JSON.stringify(d))))return source;
- if(doors.length!==12||hits('Apex Kick')!==1||hits('Apex Pool')!==0||hits('Apex Golf')!==0||hits('Apex Tennis')!==0)throw Error('door baseline drift');
+ // The already-applied detector used to require doors.length===14 with an
+ // Apex Golf door present, and the not-yet-applied guard required exactly
+ // 12. Matt's C1 ruling removes Golf's door and takes the count to 13, so
+ // BOTH pins were wrong the moment that landed: the transform matched
+ // neither state and threw 'door baseline drift'. That is the same shape as
+ // the 12-door workflow pin and the arcade manifest pin. So the test is now
+ // COUNT-FREE and asks the only question that actually matters: is every
+ // door this transform adds already present?
+ if(DOORS.every(d=>doors.some(x=>JSON.stringify(x)===JSON.stringify(d))))return source;
+ if(hits('Apex Kick')!==1)throw Error('Apex Kick door missing or duplicated');
+ if(hits('Apex Pool')!==0)throw Error('an Apex Pool door exists; the measured convention is none');
  const kick=doors.findIndex(d=>d.title==='Apex Kick');if(kick<0)throw Error('Apex Kick door missing');
  doors.splice(kick+1,0,...DOORS.map(x=>({...x})));
  const ci=catalog.findIndex(x=>x.key==='apex-kick');if(ci<0||CATALOG.some(x=>catalog.some(y=>y.key===x.key)))throw Error('count catalogue drift');
