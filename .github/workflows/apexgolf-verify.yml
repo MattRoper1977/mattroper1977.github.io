@@ -36,7 +36,27 @@ jobs:
           chrome-version: stable
 
       - name: Measure the read-only Apex Kick donor harness
-        run: node tools/verify_apexkick.js
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          printf 'donor index bytes '
+          wc -c < apexkick/index.html
+          printf 'donor index blob '
+          git hash-object apexkick/index.html
+          printf 'donor harness blob '
+          git hash-object tools/verify_apexkick.js
+          node tools/verify_apexkick.js | tee /tmp/apexkick-harness.log
+
+      - name: Assert the donor emitted its measured 25 checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          checks=$(grep -E '^[[:space:]]+(PASS|FAIL)[[:space:]]' /tmp/apexkick-harness.log | wc -l)
+          passes=$(grep -E '^[[:space:]]+PASS[[:space:]]' /tmp/apexkick-harness.log | wc -l)
+          failures=$(grep -E '^[[:space:]]+FAIL[[:space:]]' /tmp/apexkick-harness.log | wc -l)
+          printf 'donor harness measured: %s checks, %s pass, %s fail\n' "$checks" "$passes" "$failures"
+          test "$checks" -eq 25
 
       - name: Run all Apex Golf gates
         env:
