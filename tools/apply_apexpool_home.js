@@ -66,5 +66,6 @@ function transformSite(source){
  if(JSON.stringify(doors.slice(0,-1))!==survivors)throw Error('existing doors changed');const i=catalog.findIndex(x=>x.key==='apex-kick');if(i<0||catalog.some(x=>x.key==='off-brand'))throw Error('catalog baseline drift');catalog.splice(i+1,0,{key:'off-brand',title:'Off-Brand'});return JSON.stringify(d,null,2)+'\n';
 }
 const ib=fs.readFileSync(indexFile,'utf8'),sb=fs.readFileSync(siteFile,'utf8'),ia=transformIndex(ib),sa=transformSite(sb);
-if(transformIndex(ia)!==ia||transformSite(sa)!==sa)throw Error('idempotency failure');if(ia===ib||sa===sb)throw Error('expected index and site changes');
-fs.writeFileSync(indexFile,ia);fs.writeFileSync(siteFile,sa);console.log('Applied Apex Pool New Release, hardcoded Sports, Off-Brand door #12 and six-door grid reflow.');
+if(transformIndex(ia)!==ia||transformSite(sa)!==sa)throw Error('idempotency failure');
+if(ia!==ib)fs.writeFileSync(indexFile,ia);if(sa!==sb)fs.writeFileSync(siteFile,sa);
+console.log(ia===ib&&sa===sb?'NO-OP: homepage publication already canonical.':'Applied Apex Pool New Release, hardcoded Sports, Off-Brand door #12 and six-door grid reflow.');
