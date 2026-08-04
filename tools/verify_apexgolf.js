@@ -6,7 +6,7 @@ const path = require('path');
 const vm = require('vm');
 const os = require('os');
 const http = require('http');
-const { spawnSync } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const GAME_FILE = process.env.AG_GAME_FILE || path.join(ROOT, 'apexgolf', 'index.html');
@@ -106,14 +106,47 @@ function decodeHtmlText(s) {
 function runChrome(browser, url, width, height, extra = []) {
   const args = [
     '--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage',
-    '--hide-scrollbars', `--window-size=${width},${height}`,
-    '--run-all-compositor-stages-before-draw', '--virtual-time-budget=14000',
-    ...extra, '--dump-dom', url
+    '--disable-background-networking', '--disable-component-update', '--disable-default-apps',
+    '--disable-extensions', '--disable-sync', '--no-first-run', '--hide-scrollbars',
+    `--window-size=${width},${height}`, '--run-all-compositor-stages-before-draw',
+    '--virtual-time-budget=14000', ...extra, '--dump-dom', url
   ];
-  const r = spawnSync(browser, args, { encoding: 'utf8', timeout: 45000, maxBuffer: 8 * 1024 * 1024 });
-  if (r.error) fail(`browser launch failed: ${r.error.message}`);
-  if (r.status !== 0) fail(`browser exited ${r.status}; stderr: ${(r.stderr || '').slice(-1200)}`);
-  return r.stdout || '';
+  return new Promise((resolve, reject) => {
+    const child = spawn(browser, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '';
+    let stderr = '';
+    let settled = false;
+    const limit = 8 * 1024 * 1024;
+    const finish = (error, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (error) reject(error); else resolve(value);
+    };
+    const timer = setTimeout(() => {
+      child.kill('SIGKILL');
+      finish(new Error(`browser launch timed out after 45s; stderr: ${stderr.slice(-1200)}`));
+    }, 45000);
+    child.on('error', (error) => finish(new Error(`browser launch failed: ${error.message}`)));
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk;
+      if (Buffer.byteLength(stdout, 'utf8') > limit) {
+        child.kill('SIGKILL');
+        finish(new Error('browser DOM exceeded the 8 MiB contract limit'));
+      }
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk;
+      if (Buffer.byteLength(stderr, 'utf8') > limit) stderr = stderr.slice(-limit);
+    });
+    child.on('close', (code, signal) => {
+      if (code !== 0) {
+        finish(new Error(`browser exited ${code === null ? signal : code}; stderr: ${stderr.slice(-1200)}`));
+        return;
+      }
+      finish(null, stdout);
+    });
+  });
 }
 async function browserContracts() {
   if (browserRuns) return browserRuns;
@@ -143,13 +176,13 @@ async function browserContracts() {
   const runs = [];
   try {
     for (const c of configs) {
-      const dom = runChrome(browser, `${base}?contract=1&viewport=${c.name}`, c.w, c.h, c.extra);
+      const dom = await runChrome(browser, `${base}?contract=1&viewport=${c.name}`, c.w, c.h, c.extra);
       const match = dom.match(/<pre id="ag-contract-results">([\s\S]*?)<\/pre>/i);
       assert(match, `${c.name}: browser contract did not return results; DOM tail ${dom.slice(-800)}`);
       const data = JSON.parse(decodeHtmlText(match[1]));
       runs.push({ config: c, data, dom });
     }
-    const noJsDom = runChrome(browser, `${base}?nojs=1`, 360, 740, ['--blink-settings=scriptEnabled=false']);
+    const noJsDom = await runChrome(browser, `${base}?nojs=1`, 360, 740, ['--blink-settings=scriptEnabled=false']);
     const noJs = {
       baseline: /id="noScript"/.test(noJsDom) && /This top-down golf game needs JavaScript/.test(noJsDom),
       killSwitch: /#mbmSplash,#app\{display:none!important\}/.test(noJsDom),
