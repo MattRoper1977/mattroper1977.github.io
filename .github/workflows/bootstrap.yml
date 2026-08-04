@@ -1,0 +1,21 @@
+name: Bootstrap Arcade Sports catalogue correction
+on:
+  push:
+    branches: ['codex/apexpool-arcade-sports-catalogue']
+    paths: ['.github/workflows/bootstrap.yml']
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: python3 tools/apply_arcade_sports_catalogue_correction.py
+      - run: |
+          git config user.name 'Codex'
+          git config user.email 'noreply@openai.com'
+          git rm .github/workflows/bootstrap.yml
+          git add games/index.html
+          git commit -m 'Restore Sports games to TOP and whole shelf'
+          git push
