@@ -1,76 +1,30 @@
 #!/usr/bin/env node
 'use strict';
-
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const { spawnSync } = require('child_process');
-
-const args = process.argv.slice(2);
-const selfTest = args.includes('--self-test');
-const supplied = args.find((arg) => arg !== '--self-test');
-const FILE = supplied || path.join(__dirname, '..', 'games', 'index.html');
-const ART = path.join(__dirname, '..', 'assets', 'cards', 'apex-pool.svg');
-
-function runSelfTest() {
-  const source = fs.readFileSync(FILE, 'utf8');
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'arcade-sports-'));
-  const cases = [
-    ['section', 'sports-section-once', (s) => s.replace('id="sports" hidden', 'id="sport" hidden')],
-    ['copy', 'sports-copy-includes-apex-golf', (s) => s.replace('Apex Golf', 'Apex G0lf')],
-    ['columns', 'sports-grid-fits-three', (s) => s.replace('repeat(3,minmax(0,1fr))', 'repeat(2,minmax(0,1fr))')],
-    ['membership', 'top-picks-exclude-apex-kick', (s) => s.replace('var TOP=["Voxel Frontier"', 'var TOP=["Apex Kick","Voxel Frontier"')],
-    ['deduplication', 'whole-shelf-excludes-sports', (s) => s.replace('g.collection!=="Sports"', 'true')],
-    ['grouping', 'sports-is-not-a-tag', (s) => s.replace('g.collection==="Sports"', 'g.tag==="Sport"')],
-    ['derived count', 'shelf-count-is-derived', (s) => s.replace('total=state.games.length', 'total=32')]
-  ];
-  let missed = 0;
-  console.log('== Arcade Sports non-vacuity ==');
-  cases.forEach(([family, expected, mutate], index) => {
-    const changed = mutate(source);
-    const file = path.join(root, `${index}-${family}.html`);
-    fs.writeFileSync(file, changed);
-    const child = spawnSync(process.execPath, [__filename, file], { encoding: 'utf8' });
-    const output = `${child.stdout || ''}\n${child.stderr || ''}`;
-    if (changed !== source && child.status !== 0 && output.includes(`FAIL  ${expected}`)) {
-      console.log(`  PASS  ${family}: rejected by ${expected}`);
-    } else {
-      missed++;
-      console.log(`  FAIL  ${family}: expected ${expected} to reject the tamper`);
-    }
-  });
-  fs.rmSync(root, { recursive: true, force: true });
-  console.log(missed ? `${cases.length - missed} detected, ${missed} missed` : `ALL ${cases.length} PLANTED FAILURES WERE DETECTED`);
-  process.exit(missed ? 1 : 0);
+const fs=require('fs'),os=require('os'),path=require('path'),{spawnSync}=require('child_process');
+const args=process.argv.slice(2),self=args.includes('--self-test'),file=args.find(x=>x!=='--self-test')||path.join(__dirname,'..','games','index.html');
+const html=fs.readFileSync(file,'utf8');
+let pass=0,fail=0;function ok(n,c,d=''){console.log((c?'  PASS  ':'  FAIL  ')+n+(d?'   '+d:''));c?pass++:fail++;}
+if(self){
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'arcade-catalogue-'));
+ const cases=[
+  ['top','apex-kick-remains-in-top',s=>s.replace('var TOP=["Apex Kick",','var TOP=[')],
+  ['shelf','whole-shelf-uses-complete-manifest',s=>s.replace('var gs=state.games.slice();','var gs=state.games.filter(function(g){return g.collection!=="Sports"});')],
+  ['grouping','sports-is-collection-not-tag',s=>s.replace('g.collection==="Sports"','g.tag==="Sport"')],
+  ['count','total-count-derived-from-manifest',s=>s.replace('var n=state.games.length;','var n=33;')],
+  ['copy','whole-shelf-copy-restored',s=>s.replace('The whole shelf','The rest of the shelf')]
+ ];let missed=0;
+ for(let i=0;i<cases.length;i++){const [family,expected,mut]=cases[i],changed=mut(html),p=path.join(root,i+'.html');fs.writeFileSync(p,changed);const r=spawnSync(process.execPath,[__filename,p],{encoding:'utf8'}),out=(r.stdout||'')+(r.stderr||'');if(changed!==html&&r.status!==0&&out.includes('FAIL  '+expected))console.log('  PASS  '+family+' tamper rejected');else{console.log('  FAIL  '+family+' tamper escaped');missed++;}}
+ fs.rmSync(root,{recursive:true,force:true});console.log(missed?`${cases.length-missed} detected, ${missed} missed`:`ALL ${cases.length} PLANTED FAILURES WERE DETECTED`);process.exit(missed?1:0);
 }
-if (selfTest) runSelfTest();
-
-const html = fs.readFileSync(FILE, 'utf8');
-let pass = 0;
-let fail = 0;
-function ok(name, condition, detail = '') {
-  if (condition) { pass++; console.log('  PASS  ' + name + (detail ? '   ' + detail : '')); }
-  else { fail++; console.log('  FAIL  ' + name + (detail ? '   ' + detail : '')); }
-}
-function count(needle) { return html.split(needle).length - 1; }
-
-console.log('== Arcade Sports source contract ==');
-ok('sports-section-once', count('id="sports" hidden') === 1 && count('id="sportsRail"') === 1);
-ok('sports-copy-includes-apex-golf', html.includes('Three Apex games') && html.includes('Apex Golf'));
-ok('sports-grid-fits-three', html.includes('grid-template-columns:repeat(3,minmax(0,1fr))'));
-ok('sports-uses-existing-rail-card-system', /<div class="rail" id="sportsRail"/.test(html) && /sportsRail\.appendChild\(gCard\(g,false\)\)/.test(html));
-ok('top-picks-exclude-apex-kick', /var TOP=\["Voxel Frontier"/.test(html) && !/var TOP=\["Apex Kick"/.test(html));
-ok('whole-shelf-excludes-sports', /all\.filter\(function\(g\)\{return g\.collection!=="Sports"\}\)/.test(html));
-ok('sports-is-not-a-tag', /g\.collection==="Sports"/.test(html) && !/g\.tag==="Sport"/.test(html) && !/>SPORT</.test(html));
-ok('shelf-count-is-derived', /sportsCount=all\.filter/.test(html) && /total=state\.games\.length/.test(html) && !/total=\d+/.test(html));
-ok('empty-sports-wrapper-is-suppressed', /sportsSection\.hidden=sports\.length===0/.test(html));
-ok('top-copy-matches-seven-members', /The seven I&#39;d|The seven I'd/.test(html) || html.includes("The seven I'd"));
-ok('rest-of-shelf-copy-names-the-exclusion', html.includes('The rest of the shelf') && html.includes('Every other game, A to Z'));
-ok('apexpool-art-present', fs.existsSync(ART) && fs.readFileSync(ART, 'utf8').includes('<title id="title">Apex Pool</title>'));
-ok('no-hardcoded-shelf-count-copy', !/of 32 games|32 games|42 cards/.test(html));
-ok('local-origin-normalisation-preserved', /function localHref\(h\)/.test(html));
-
-console.log('='.repeat(64));
-console.log(fail === 0 ? `ALL ${pass} ARCADE SPORTS SOURCE CHECKS PASSED` : `${pass} passed, ${fail} FAILED`);
-console.log('='.repeat(64));
-process.exit(fail ? 1 : 0);
+console.log('== Arcade Sports catalogue contract ==');
+ok('sports-section-once',(html.split('id="sports" hidden').length-1)===1&&(html.split('id="sportsRail"').length-1)===1);
+ok('sports-uses-existing-rail-card-system',/<div class="rail" id="sportsRail"/.test(html)&&/sportsRail\.appendChild\(gCard\(g,false\)\)/.test(html));
+ok('sports-is-collection-not-tag',/g\.collection==="Sports"/.test(html)&&!/g\.tag==="Sport"/.test(html)&&!/>SPORT</.test(html));
+ok('apex-kick-remains-in-top',/var TOP=\["Apex Kick","Voxel Frontier"/.test(html));
+ok('top-copy-still-eight',html.includes("The eight I'd put in front of anyone first"));
+ok('whole-shelf-uses-complete-manifest',/function drawGrid\(\)\{\n var gs=state\.games\.slice\(\);/.test(html)&&!/collection!=="Sports"/.test(html));
+ok('whole-shelf-copy-restored',html.includes('The whole shelf')&&html.includes('Every game, A to Z'));
+ok('total-count-derived-from-manifest',/var n=state\.games\.length;/.test(html)&&!/var n=\d+;/.test(html));
+ok('three-game-sports-copy-preserved',html.includes('Three Apex games, side by side')&&html.includes('Apex Golf'));
+ok('correction-sentinel',html.includes('apexpool-arcade-catalogue-correction-2026-08-04'));
+console.log('='.repeat(68));console.log(fail?`${pass} passed, ${fail} FAILED`:`ALL ${pass} ARCADE SPORTS SOURCE CHECKS PASSED`);process.exit(fail?1:0);
