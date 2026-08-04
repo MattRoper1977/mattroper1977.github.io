@@ -10,7 +10,8 @@ on:
     branches:
       - main
     paths:
-      - '.apextennis-upload/READY'
+      - '.apextennis-upload/**'
+      - '.github/workflows/apextennis-bootstrap.yml'
 
 permissions:
   contents: write
@@ -27,6 +28,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          wc -c .apextennis-upload/part-*
+          sha256sum .apextennis-upload/part-*
+          echo 'cda9f68dbd1af4d941ca757623a3dfaecfde92bda9c14ba4f1f5e49530004317  .apextennis-upload/part-00' > /tmp/expected.sha
+          echo 'aa6cc047d7fe4d6fbabfd4884358c51cd0273e2af6d871118a0ffeca785acca1  .apextennis-upload/part-01' >> /tmp/expected.sha
+          echo '3be19cc5d97074d49e0c2153e81f14d313405a54856d5ee8951b3a3b09419f53  .apextennis-upload/part-02' >> /tmp/expected.sha
+          echo 'e23a48fef6374f2c73fc0ef1cbe462a377ddd91cb2cec62a6752f390e4a47069  .apextennis-upload/part-03' >> /tmp/expected.sha
+          sha256sum --check /tmp/expected.sha
           cat .apextennis-upload/part-* | base64 --decode > /tmp/apextennis-payload.tar.gz
           tar -xzf /tmp/apextennis-payload.tar.gz
           python3 - <<'PY'
