@@ -148,6 +148,89 @@ function runChrome(browser, url, width, height, extra = []) {
     });
   });
 }
+// AGX-1 A-3 NON-VACUITY FIXTURE. A limb that says "the hole is visible" is
+// worth nothing until it has been shown to say the opposite. This deliberately
+// re-creates the pre-fix condition -- the read panel stretched back over the
+// whole canvas -- by injecting CSS from the test, and requires the limb to go
+// FALSE. No test-only code ships in the game. If this fixture ever passes, the
+// limb has gone blind and G5 fails on that alone.
+let occlusionFixtureFailed = false;
+async function runOcclusionFixture() {
+  let chromium;
+  try { ({ chromium } = require('playwright')); } catch (e) { return false; }
+  let browser;
+  try {
+    browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext({ viewport: { width: 360, height: 740 } });
+    // Registered on the CONTEXT, not the page: a page-scoped init script does
+    // not apply to the second page opened for the self-check, and the first
+    // version of this self-check reported applied=false for exactly that
+    // reason while the fixture was in fact working.
+    // Inject on DOMContentLoaded, not at document-start: appending to
+    // documentElement before <head> exists loses the node, and the first
+    // version of this fixture did exactly that -- it injected nothing, the
+    // limb reported 9/9, and the fixture would have "proved" non-vacuity
+    // while testing nothing at all. The init script registers before the
+    // game's own boot listener, so this style lands first.
+    await context.addInitScript(() => {
+      const inject = () => {
+        const s = document.createElement('style');
+        s.id = 'ag-occlusion-fixture';
+        s.textContent = '.screen--read{position:absolute!important;inset:0!important;max-height:none!important;margin-top:0!important;width:auto!important}';
+        document.head.appendChild(s);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', inject, { once: true });
+      else inject();
+    });
+    const page = await context.newPage();
+    await page.goto(`file://${GAME_FILE}?contract=1`, { waitUntil: 'load', timeout: 30000 });
+    await page.waitForFunction(() => window.__AG_CONTRACT && Array.isArray(window.__AG_CONTRACT.rows), null, { timeout: 30000 });
+    const data = await page.evaluate(() => window.__AG_CONTRACT);
+    const r = (data.rows || []).find(x => x.name === 'read-view-hole-unoccluded');
+    const rejected = !!r && r.pass === false;
+
+    // SELF-CHECK: prove the fixture actually occluded something. A fixture that
+    // silently fails to bite is worse than no fixture, because it manufactures
+    // confidence. Re-load clean, reach the read view, and measure that the
+    // panel really does cover the canvas centre.
+    const page2 = await context.newPage();
+    await page2.goto(`file://${GAME_FILE}`, { waitUntil: 'load', timeout: 30000 });
+    await page2.waitForTimeout(2500);
+    await page2.locator('text=/Read hole/').first().click({ timeout: 10000 });
+    await page2.waitForTimeout(800);
+    const bite = await page2.evaluate(() => {
+      const el = document.querySelector('.screen--read');
+      const cv = document.getElementById('courseCanvas');
+      if (!el || !cv) return { applied: false, why: 'no panel or canvas' };
+      const cs = getComputedStyle(el), pr = el.getBoundingClientRect(), cr = cv.getBoundingClientRect();
+      const cx = Math.round(cr.left + cr.width / 2), cy = Math.round(cr.top + cr.height / 2);
+      const top = document.elementFromPoint(cx, cy);
+      // The discriminator is whether the override actually took. "Panel covers
+      // the canvas centre" is NOT a discriminator: the fixed, docked panel
+      // covers the centre too, because the hole sits in the upper band.
+      const coversWholeCanvas = pr.top <= cr.top + 2 && pr.bottom >= cr.bottom - 2;
+      return {
+        applied: cs.position === 'absolute' && !!document.getElementById('ag-occlusion-fixture'),
+        position: cs.position,
+        coversWholeCanvas,
+        topAtCentre: top ? (top.id || top.className || top.tagName) : 'none',
+        panel: [Math.round(pr.width), Math.round(pr.height)],
+        canvas: [Math.round(cr.width), Math.round(cr.height)],
+      };
+    });
+    await page2.close();
+    console.log(`      fixture: occluding panel at 360x740 -> limb pass=${r ? r.pass : 'MISSING'} (${r ? r.detail : ''})`);
+    console.log(`      fixture self-check: style applied=${bite.applied} position=${bite.position} panel ${bite.panel} covers whole canvas ${bite.canvas} = ${bite.coversWholeCanvas}`);
+    if (!bite.applied || !bite.coversWholeCanvas) {
+      console.error('      FIXTURE DID NOT BITE — it occluded nothing, so it proves nothing.');
+      return false;
+    }
+    return rejected;
+  } catch (e) {
+    console.error(`      fixture error: ${e.message}`);
+    return false;
+  } finally { if (browser) await browser.close(); }
+}
 async function browserContracts() {
   if (browserRuns) return browserRuns;
   let chromium;
@@ -508,16 +591,27 @@ gate('G18', 'shelf upsert is idempotent and carries art', () => {
 
 async function finish() {
   if (!SKIP_BROWSER) {
-    try { await browserContracts(); }
+    try { await browserContracts(); occlusionFixtureFailed = await runOcclusionFixture(); }
     catch (error) {
       console.error(`BROWSER PREPARATION FAILED — ${error.stack || error}`);
       browserRuns = { error };
     }
 
-    gate('G5', 'whole-hole read view before every stroke', () => {
+    gate('G5', 'whole-hole read view before every stroke, and the hole is visible', () => {
       assert(!browserRuns.error, browserRuns.error && browserRuns.error.message);
       requireRows(['read-view-real-geometry','read-before-subsequent-stroke','real-canvas-pixels']);
-      return `${browserRuns.runs.length} rendered viewport/motion runs`;
+      // AGX-1 A-3 GATE CHANGE: G5 gained a limb. It previously asserted only
+      // that the hole had been PAINTED with real geometry; it never asked
+      // whether the pupil could SEE it. Measured before the fix: 0 of 10 hole
+      // points visible at 360, 390 and 400 px -- not the tee, not the cup.
+      // Asserted at <=400px, which is the width the ruling scoped; the
+      // measurement is reported at every width in the row's detail.
+      requireRows(['read-view-hole-unoccluded'], run => run.config.w <= 400);
+      const narrow = browserRuns.runs.filter(r => r.config.w <= 400)
+        .map(r => `${r.config.name}:${(row(r, 'read-view-hole-unoccluded') || {}).detail}`);
+      assert(narrow.length > 0, 'no <=400px run exists, so the unoccluded limb asserted nothing');
+      assert(occlusionFixtureFailed, 'the unoccluded limb was not proven able to fail');
+      return `${browserRuns.runs.length} rendered runs; ${narrow.join(' | ')}; occluding fixture rejected`;
     }, { browser: true });
 
     gate('G11', 'terrain is colour-independent', () => {

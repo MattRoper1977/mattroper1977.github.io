@@ -67,6 +67,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 .callHint{animation:softPulse 2.4s ease-in-out infinite}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}.splashRule{animation:none;transform:scaleX(1)}.callHint{animation:none}}
 @media (max-width:680px){#topHud{min-height:50px}.hudChip:nth-of-type(3){display:none}.brand{font-size:13px}.hudGroup{gap:4px}.hudChip{padding:5px 7px;font-size:10px}#playControls{grid-template-columns:1fr}#aimReadout{text-align:center;min-width:0}.screen--read .readGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.screen{padding:18px}.legendItem{font-size:9px}}
+@media (max-width:400px){.screen--read{margin-top:auto;max-height:min(52vh,var(--readCap,52vh))}}
 @media (max-height:520px){#topHud{display:none}#legend{display:none}.screen{max-height:94vh;padding:14px}.screen p{margin:.5em 0}.screen--title h1{font-size:3rem}.screen--read .readGrid{margin:7px 0}.screen--read .fact{padding:7px}}
 </style>
 </head>
@@ -436,7 +437,14 @@ function makePattern(kind){var c=document.createElement('canvas');c.width=c.heig
   return ctx.createPattern(c,'repeat');}
 function install(c){canvas=c;ctx=c.getContext&&c.getContext('2d');if(!ctx)return false;patterns.rough=makePattern('rough');patterns.fairway=makePattern('fairway');patterns.green=makePattern('green');patterns.sand=makePattern('sand');patterns.water=makePattern('water');return true;}
 function resize(){if(!canvas||!ctx)return;var r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.round(r.width*dpr)),h=Math.max(1,Math.round(r.height*dpr));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;patterns.rough=makePattern('rough');patterns.fairway=makePattern('fairway');patterns.green=makePattern('green');patterns.sand=makePattern('sand');patterns.water=makePattern('water');}}
-function setView(hole){var m=Math.max(0,Math.min(18,(canvas.width-1)/2,(canvas.height-1)/2)),sx=Math.max(1,canvas.width-m*2)/hole.world.w,sy=Math.max(1,canvas.height-m*2)/hole.world.h,s=Math.min(sx,sy),floor=1/Math.max(hole.world.w,hole.world.h);view.scale=isFinite(s)&&s>0?Math.max(floor,s):floor;view.ox=(canvas.width-hole.world.w*view.scale)/2;view.oy=(canvas.height-hole.world.h*view.scale)/2;}
+/* AGX-1 finding A-3. The read panel is an opaque overlay and the course was
+   fit to the WHOLE canvas, so on a phone the pupil called their stroke count
+   with 0 of 10 hole points visible - not the tee, not the cup. setView now
+   honours a bottom inset so the hole is fit into the band ABOVE a docked
+   panel. The inset is 0 in every phase except the narrow-width read view, so
+   nothing else changes. */
+function setView(hole){var _dpr=Math.min(window.devicePixelRatio||1,2),inset=Math.max(0,Math.min((view.bottomInsetCss||0)*_dpr,canvas.height-1)),avail=Math.max(1,canvas.height-inset),m=Math.max(0,Math.min(18,(canvas.width-1)/2,(avail-1)/2)),sx=Math.max(1,canvas.width-m*2)/hole.world.w,sy=Math.max(1,avail-m*2)/hole.world.h,s=Math.min(sx,sy),floor=1/Math.max(hole.world.w,hole.world.h);view.scale=isFinite(s)&&s>0?Math.max(floor,s):floor;view.ox=(canvas.width-hole.world.w*view.scale)/2;view.oy=(avail-hole.world.h*view.scale)/2;}
+function setBottomInset(cssPx){var v=+cssPx;view.bottomInsetCss=isFinite(v)&&v>0?v:0;}
 function W(p){return{x:view.ox+p.x*view.scale,y:view.oy+p.y*view.scale};}
 function C(p){return{x:(p.x-view.ox)/view.scale,y:(p.y-view.oy)/view.scale};}
 function pathPoly(poly){ctx.beginPath();for(var i=0;i<poly.length;i++){var p=W(poly[i]);i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);}ctx.closePath();}
@@ -460,7 +468,7 @@ function render(hole,ball,aim,phase){if(!ctx||!hole)return null;resize();setView
 function pointer(e){var r=canvas.getBoundingClientRect();return AG.pointerToCanvas(e.clientX,e.clientY,r,canvas.width,canvas.height);}
 function terrainGreyscaleSignatures(){var out={};['rough','fairway','green','sand','water'].forEach(function(k){var c=document.createElement('canvas');c.width=c.height=48;var g=c.getContext('2d');var old=ctx;ctx=g;var pat=makePattern(k);ctx=old;g.fillStyle=pat;g.fillRect(0,0,48,48);var d=g.getImageData(0,0,48,48).data,sum=0,sum2=0,edge=0;for(var i=0;i<d.length;i+=4){var lum=Math.round(.2126*d[i]+.7152*d[i+1]+.0722*d[i+2]);sum+=lum;sum2+=lum*lum;if(i>=4)edge+=Math.abs(lum-Math.round(.2126*d[i-4]+.7152*d[i-3]+.0722*d[i-2]));}var n=d.length/4;out[k]=[Math.round(sum/n),Math.round(Math.sqrt(Math.max(0,sum2/n-(sum/n)*(sum/n)))),Math.round(edge/n)];});return out;}
 function getEvidence(){return JSON.parse(JSON.stringify(evidence));}
-return{install:install,resize:resize,render:render,W:W,C:C,pointer:pointer,getEvidence:getEvidence,terrainGreyscaleSignatures:terrainGreyscaleSignatures,getCanvas:function(){return canvas;},getContext:function(){return ctx;}};
+return{install:install,resize:resize,render:render,W:W,C:C,pointer:pointer,setBottomInset:setBottomInset,getEvidence:getEvidence,terrainGreyscaleSignatures:terrainGreyscaleSignatures,getCanvas:function(){return canvas;},getContext:function(){return ctx;}};
 })();
 </script>
 <script>
@@ -487,8 +495,8 @@ function showTitle(){state.phase='title';$('playControls').classList.add('hidden
 function noCanvasFallback(){state.phase='fallback';$('app').classList.remove('hidden');$('screenHost').innerHTML=renderTitleMarkup('fallback');$('courseCanvas').classList.add('hidden');$('playControls').classList.add('hidden');}
 function showWarning(msg){var el=$('warningBar');if(!msg){el.classList.add('hidden');el.textContent='';return;}el.textContent=msg;el.classList.remove('hidden');}
 function readFacts(){var h=state.hole,w=h.wind.speed;return '<div class="readGrid"><div class="fact"><span>Par</span><b>'+h.par+'</b></div><div class="fact"><span>Length</span><b>'+h.length+' m</b></div><div class="fact"><span>Wind</span><b>'+w.toFixed(1)+' m/s</b></div><div class="fact"><span>Slope</span><b>'+h.slope.strength.toFixed(1)+'</b></div><div class="fact"><span>Water</span><b>'+(h.water.length?'Yes':'No')+'</b></div><div class="fact"><span>Bumpers</span><b>'+h.bumpers.length+'</b></div></div>';}
-function showRead(first){state.phase=first?'read-call':'read-next';$('playControls').classList.add('hidden');var h=state.hole;var call=first?'<label for="callInput">Call your stroke count (1–20)</label><input id="callInput" type="number" inputmode="numeric" min="1" max="20" value="'+AG.clamp(h.par,1,20)+'" aria-describedby="callHelp"><p id="callHelp" class="callHint">An exact call earns the strongest rating. Calls above par + 3 are capped at 60, even when exact.</p>':'';var status=first?'Study the complete hole before making your call.':'The ball is at rest. Read the whole hole again before stroke '+(state.strokes+1)+'.';$('screenHost').innerHTML='<section class="screen screen--read"><div class="eyebrow">Hole '+(state.holeIndex+1)+' of 9</div><h2>'+esc(h.name)+'</h2><p>'+status+'</p>'+readFacts()+call+'<div class="actions"><button type="button" id="playStrokeBtn">'+(first?'Lock call & play':'Play next stroke')+'</button><button type="button" id="copyReadBtn" class="secondary">Copy hole link</button></div></section>';$('copyReadBtn').onclick=copyLink;$('playStrokeBtn').onclick=function(){if(first){var n=Number($('callInput').value);if(!isFinite(n)||n<1||n>20){toast('Choose a call from 1 to 20.');$('callInput').focus();return;}state.called=Math.round(n);}beginAim();};renderNow();}
-function beginAim(){state.phase='aim';$('screenHost').innerHTML='';$('playControls').classList.remove('hidden');$('courseCanvas').focus();updateAimReadout();renderNow();announce('Stroke '+(state.strokes+1)+'. Choose a carry distance, pull back from the ball and release.');}
+function showRead(first){state.phase=first?'read-call':'read-next';$('playControls').classList.add('hidden');var h=state.hole;var call=first?'<label for="callInput">Call your stroke count (1–20)</label><input id="callInput" type="number" inputmode="numeric" min="1" max="20" value="'+AG.clamp(h.par,1,20)+'" aria-describedby="callHelp"><p id="callHelp" class="callHint">An exact call earns the strongest rating. Calls above par + 3 are capped at 60, even when exact.</p>':'';var status=first?'Study the complete hole before making your call.':'The ball is at rest. Read the whole hole again before stroke '+(state.strokes+1)+'.';$('screenHost').innerHTML='<section class="screen screen--read"><div class="eyebrow">Hole '+(state.holeIndex+1)+' of 9</div><h2>'+esc(h.name)+'</h2><p>'+status+'</p>'+readFacts()+call+'<div class="actions"><button type="button" id="playStrokeBtn">'+(first?'Lock call & play':'Play next stroke')+'</button><button type="button" id="copyReadBtn" class="secondary">Copy hole link</button></div></section>';syncReadInset();$('copyReadBtn').onclick=copyLink;$('playStrokeBtn').onclick=function(){if(first){var n=Number($('callInput').value);if(!isFinite(n)||n<1||n>20){toast('Choose a call from 1 to 20.');$('callInput').focus();return;}state.called=Math.round(n);}beginAim();};renderNow();}
+function beginAim(){state.phase='aim';$('screenHost').innerHTML='';AG.Render.setBottomInset(0);$('playControls').classList.remove('hidden');$('courseCanvas').focus();updateAimReadout();renderNow();announce('Stroke '+(state.strokes+1)+'. Choose a carry distance, pull back from the ball and release.');}
 function finishHole(){var actual=state.strokes+state.penalties,rating=AG.callRating(state.called,actual,state.hole.par),toPar=actual-state.hole.par;state.rows.push({hole:state.holeIndex+1,name:state.hole.name,par:state.hole.par,called:state.called,strokes:state.strokes,penalties:state.penalties,actual:actual,toPar:toPar,rating:rating});state.roundToPar+=toPar;state.phase='hole-result';$('playControls').classList.add('hidden');var msg=AG.ratingAnnouncement(state.called,actual,state.hole.par);announce(msg);$('screenHost').innerHTML='<section class="screen screen--result"><div class="eyebrow">Hole complete · '+AG.signedScore(toPar)+'</div><div class="ratingBig">'+rating+'</div><div class="ratingName">'+AG.RATING_NAME+'</div><p>You called <b>'+state.called+'</b> and took <b>'+actual+'</b> including '+state.penalties+' '+(state.penalties===1?'penalty':'penalties')+'.</p><div class="actions"><button type="button" id="nextHoleBtn">'+(state.holeIndex===8?'View scorecard':'Read next hole')+'</button></div></section>';$('nextHoleBtn').onclick=function(){if(state.holeIndex===8)showScorecard();else{state.holeIndex++;startHole();}};updateHud();}
 function showScorecard(){state.phase='scorecard';var rr=AG.roundCallRating(state.rows),total=0,par=0,body='';for(var i=0;i<state.rows.length;i++){var r=state.rows[i];total+=r.actual;par+=r.par;body+='<tr><td>'+r.hole+'. '+esc(r.name)+'</td><td>'+r.par+'</td><td>'+r.called+'</td><td>'+r.actual+'</td><td>'+AG.signedScore(r.toPar)+'</td><td>'+r.rating+'</td></tr>';}saveProgress(rr);$('screenHost').innerHTML='<section class="screen screen--scorecard"><div class="eyebrow">Nine-hole scorecard</div><h2>Round '+AG.signedScore(total-par)+'</h2><p>Round '+AG.RATING_NAME+': <b>'+rr+' / 100</b></p><table><thead><tr><th>Hole</th><th>Par</th><th>Call</th><th>Took</th><th>±</th><th>Read</th></tr></thead><tbody>'+body+'</tbody><tfoot><tr><td>Total</td><td>'+par+'</td><td>—</td><td>'+total+'</td><td>'+AG.signedScore(total-par)+'</td><td>'+rr+'</td></tr></tfoot></table><div class="actions"><button type="button" id="againBtn">New seeded round</button><button type="button" id="homeBtn" class="secondary">Home</button></div></section>';$('againBtn').onclick=function(){state.seed=(Math.imul(state.seed,1664525)+1013904223)>>>0;history.replaceState(null,'',AG.formatHash(state.seed));startRound();};$('homeBtn').onclick=showTitle;announce('Round complete. '+AG.RATING_NAME+' '+rr+' out of 100.');}
 function startRound(){state.course=AG.generateCourse(state.seed);state.holeIndex=0;state.rows=[];state.roundToPar=0;startHole();}
@@ -500,6 +508,19 @@ function strike(angle,power){if(state.phase!=='aim'||state.ball.moving)return;st
 function afterRest(){if(state.ball.penaltyEvent){state.penalties++;toast('Water: one penalty stroke. Ball dropped at the last safe position.');state.ball.penaltyEvent=false;}if(state.ball.sunk){finishHole();return;}if(state.ball.cupRejected){toast('Too quick for the cup — lip-out.');state.ball.cupRejected=false;}showRead(false);updateHud();}
 function update(dt){if(state.paused||!state.ball||state.phase!=='moving')return;var was=state.ball.moving;AG.stepBall(state.ball,state.hole,dt);if(was&&!state.ball.moving)afterRest();}
 function updateHud(){if(!$('hudHole'))return;$('hudHole').textContent=(state.holeIndex+1)+' / 9';$('hudStrokes').textContent=String((state.strokes||0)+(state.penalties||0));$('hudPar').textContent=AG.signedScore(state.roundToPar||0);}
+/* AGX-1 A-3: keep the renderer's bottom inset equal to the height the docked
+   read panel actually occupies, so the hole is fit above it. Measured, not
+   assumed, so it survives any change to the panel's content. Zero in every
+   other phase and at every width above the dock breakpoint. */
+function syncReadInset(){
+ if(!AG.Render||!AG.Render.setBottomInset)return;
+ var reading=state.phase==='read-call'||state.phase==='read-next';
+ var narrow=window.matchMedia&&window.matchMedia('(max-width:400px)').matches;
+ var el=reading&&narrow?$('screenHost').querySelector('.screen--read'):null;
+ if(!el){AG.Render.setBottomInset(0);return;}
+ var stage=$('stage').getBoundingClientRect(),pr=el.getBoundingClientRect();
+ AG.Render.setBottomInset(Math.max(0,stage.bottom-pr.top)+10);
+}
 function renderNow(){if(state.hole)state.renderEvidence=AG.Render.render(state.hole,state.ball,state.aim,state.phase);}
 function loop(now){var sec=now/1000;if(!state.lastFrame)state.lastFrame=sec;var frame=Math.min(AG.MAX_FRAME_DELTA,Math.max(0,sec-state.lastFrame));state.lastFrame=sec;state.accumulator+=frame;var n=0;while(state.accumulator>=AG.DT&&n<AG.MAX_SUBSTEPS){update(AG.DT);state.accumulator-=AG.DT;n++;}renderNow();requestAnimationFrame(loop);}
 function announce(msg){var el=$('live');el.textContent='';setTimeout(function(){el.textContent=msg;},20);}
@@ -515,7 +536,7 @@ function input(){var cv=$('courseCanvas');Array.prototype.forEach.call(document.
   $('pauseBtn').onclick=function(){if(state.phase==='title')return;state.paused=true;$('screenHost').innerHTML='<section class="screen screen--read"><div class="eyebrow">Menu</div><h2>Round paused</h2><div class="actions"><button type="button" id="resumeBtn">Resume</button><button type="button" id="quitBtn" class="secondary">Home</button></div></section>';$('resumeBtn').onclick=function(){state.paused=false;$('screenHost').innerHTML='';if(state.phase==='read-call'||state.phase==='read-next')showRead(state.phase==='read-call');};$('quitBtn').onclick=function(){state.paused=false;showTitle();};};
 }
 function dismissSplash(){var el=$('mbmSplash'),done=false,ev=['pointerdown','click','keydown'];function go(){if(done)return;done=true;for(var i=0;i<ev.length;i++)document.removeEventListener(ev[i],go,true);el.classList.add('out');setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},330);}for(var i=0;i<ev.length;i++)document.addEventListener(ev[i],go,true);setTimeout(go,1100);}
-function boot(){var parsed=AG.parseHash(location.hash);state.seed=parsed.seed;state.warning=parsed.warning;state.shared=!!location.hash;$('noScript').classList.add('hidden');$('app').classList.remove('hidden');dismissSplash();var cv=$('courseCanvas');if(!cv.getContext||!AG.Render.install(cv)){noCanvasFallback();return;}patternsReady=true;showWarning(state.warning);input();showTitle();window.addEventListener('resize',function(){AG.Render.resize();renderNow();});requestAnimationFrame(loop);if(new URLSearchParams(location.search).get('contract')==='1')setTimeout(function(){AG.BrowserContract.run();},60);}
+function boot(){var parsed=AG.parseHash(location.hash);state.seed=parsed.seed;state.warning=parsed.warning;state.shared=!!location.hash;$('noScript').classList.add('hidden');$('app').classList.remove('hidden');dismissSplash();var cv=$('courseCanvas');if(!cv.getContext||!AG.Render.install(cv)){noCanvasFallback();return;}patternsReady=true;showWarning(state.warning);input();showTitle();window.addEventListener('resize',function(){AG.Render.resize();syncReadInset();renderNow();});requestAnimationFrame(loop);if(new URLSearchParams(location.search).get('contract')==='1')setTimeout(function(){AG.BrowserContract.run();},60);}
 function loadHashForTest(hash){var before={settings:Store.bytes('settings'),progress:Store.bytes('progress')},p=AG.parseHash(hash);state.seed=p.seed;state.warning=p.warning;state.course=AG.generateCourse(p.seed);var after={settings:Store.bytes('settings'),progress:Store.bytes('progress')};return{parsed:p,before:before,after:after};}
 function forceRestForTest(){if(!state.ball)return;state.ball.moving=false;state.ball.vx=state.ball.vy=state.ball.vz=0;afterRest();}
 return{boot:boot,state:state,Store:Store,STORAGE_KEYS:STORAGE_KEYS,renderTitleMarkup:renderTitleMarkup,showTitle:showTitle,noCanvasFallback:noCanvasFallback,startRound:startRound,startHole:startHole,showRead:showRead,beginAim:beginAim,strike:strike,afterRest:afterRest,forceRestForTest:forceRestForTest,loadHashForTest:loadHashForTest,renderNow:renderNow,setClub:setClub,announce:announce};
@@ -528,11 +549,44 @@ AG.BrowserContract = (function(){
 function result(name,pass,detail){return{name:name,pass:!!pass,detail:detail||''};}
 function uniqueSignatures(o){var seen={},keys=Object.keys(o);for(var i=0;i<keys.length;i++){var s=o[keys[i]].join(':');if(seen[s])return false;seen[s]=1;}return keys.length===5;}
 function visibleControlsAtLeast44(){var bad=[];Array.prototype.forEach.call(document.querySelectorAll('button,input,select'),function(el){var cs=getComputedStyle(el),r=el.getBoundingClientRect();if(cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0&&(r.width<43.5||r.height<43.5))bad.push((el.id||el.className||el.tagName)+':'+Math.round(r.width)+'x'+Math.round(r.height));});return bad;}
+/* AGX-1 A-3. G5 asked whether the hole had been PAINTED; it never asked
+   whether the hole could be SEEN. This projects real world points through the
+   renderer's own W() and hit-tests each one: if the canvas is not the topmost
+   element there, the pupil cannot see that part of the hole. */
+/* The contract starts 60 ms after boot, while the Made-by-Matt splash is
+   still on top. Hit-testing then measures the splash, not the read panel --
+   a false negative, and it silently blinded the first version of the A-3
+   fixture. Wait for the state a pupil is actually in when they call. */
+function splashGone(){var el=document.getElementById('mbmSplash');
+ return !el||!el.parentNode||getComputedStyle(el).pointerEvents==='none';}
+async function awaitSplashGone(maxMs){var t0=performance.now();
+ while(!splashGone()&&performance.now()-t0<(maxMs||4000))await nextFrame();
+ return splashGone();}
+function holePointsVisible(){
+ var h=AG.App.state.hole;if(!h)return{total:0,visible:0,occluded:['no hole']};
+ var cv=AG.Render.getCanvas(),r=cv.getBoundingClientRect(),dpr=r.width?cv.width/r.width:1;
+ var pts=[{n:'tee',p:h.tee},{n:'cup',p:h.cup},{n:'green',p:{x:h.green.x,y:h.green.y}}],i;
+ for(i=0;i<h.fairway.length;i++)pts.push({n:'fairway'+i,p:h.fairway[i]});
+ var vis=0,occ=[];
+ for(i=0;i<pts.length;i++){
+  var w=AG.Render.W(pts[i].p),vx=r.left+w.x/dpr,vy=r.top+w.y/dpr;
+  var inside=vx>=r.left&&vx<=r.right&&vy>=r.top&&vy<=r.bottom;
+  var el=document.elementFromPoint(Math.round(vx),Math.round(vy));
+  if(inside&&el&&el.id==='courseCanvas')vis++;
+  else occ.push(pts[i].n+'>'+(el?(el.id||el.className||el.tagName):'off-canvas'));
+ }
+ var tl=AG.Render.W({x:0,y:0}),br=AG.Render.W({x:h.world.w,y:h.world.h});
+  var wFrac=(br.x-tl.x)/Math.max(1,cv.width),hFrac=(br.y-tl.y)/Math.max(1,cv.height);
+  return{total:pts.length,visible:vis,occluded:occ,wFrac:wFrac,hFrac:hFrac,
+   usable:wFrac>=.5&&hFrac>=.15};
+}
 function canvasPixelCount(){var c=AG.Render.getCanvas(),d=AG.Render.getContext().getImageData(0,0,c.width,c.height).data,n=0;for(var i=3;i<d.length;i+=4)if(d[i]&&d[i-3]+d[i-2]+d[i-1]>40)n++;return n;}
 function nextFrame(){return new Promise(function(resolve){requestAnimationFrame(function(t){resolve(t);});});}
 async function fpsSample(){var times=[];for(var i=0;i<72;i++)times.push(await nextFrame());var ds=[];for(var j=1;j<times.length;j++)ds.push(times[j]-times[j-1]);var sum=0;for(var k=0;k<ds.length;k++)sum+=ds[k];var avg=sum/ds.length;return{fps:1000/avg,avg:avg,max:Math.max.apply(Math,ds)};}
 async function run(){var rows=[],app=AG.App,state=app.state,load=(performance.getEntriesByType('navigation')[0]||{}).loadEventEnd||performance.now();
-  app.startRound();app.renderNow();await nextFrame();var ev=AG.Render.getEvidence(),pix=canvasPixelCount();rows.push(result('read-view-real-geometry',state.phase==='read-call'&&ev.geometry.fairway>=6&&pix>10000,'phase '+state.phase+', pixels '+pix));
+  app.startRound();app.renderNow();await nextFrame();var ev=AG.Render.getEvidence(),pix=canvasPixelCount();var splashClear=await awaitSplashGone(4000);var hv=holePointsVisible();
+  rows.push(result('read-view-hole-unoccluded',splashClear&&(innerWidth>400||(hv.total>0&&hv.visible===hv.total&&hv.usable)),hv.visible+'/'+hv.total+' hole points visible at '+innerWidth+'px, hole '+Math.round(hv.wFrac*100)+'%x'+Math.round(hv.hFrac*100)+'% of canvas'+(hv.usable?'':' [DEGENERATE SIZE]')+(splashClear?'':' [SPLASH STILL PRESENT - measurement unsafe]')+(hv.occluded.length?'; occluded '+hv.occluded.slice(0,4).join(','):'')+(innerWidth>400?' [asserted only at <=400px per the A-3 ruling; measurement reported at every width]':'')));
+  rows.push(result('read-view-real-geometry',state.phase==='read-call'&&ev.geometry.fairway>=6&&pix>10000,'phase '+state.phase+', pixels '+pix));
   var allForces=AG.PHYSICS_FORCES.every(function(f){return !!AG.FORCE_RENDERERS[f];});var courseForces={};for(var hi=0;hi<state.course.holes.length;hi++){state.hole=state.course.holes[hi];state.ball=AG.makeBall(state.hole);app.renderNow();var e=AG.Render.getEvidence();e.forces.forEach(function(f){courseForces[f]=1;});}state.holeIndex=0;state.hole=state.course.holes[0];state.ball=AG.makeBall(state.hole);app.showRead(true);rows.push(result('force-renderer-coverage',allForces&&AG.PHYSICS_FORCES.every(function(f){return courseForces[f];}),JSON.stringify(courseForces)));
   var sig=AG.Render.terrainGreyscaleSignatures();rows.push(result('greyscale-terrain-patterns',uniqueSignatures(sig)&&ev.terrainLabels.indexOf('ROUGH')>=0&&ev.terrainLabels.indexOf('FAIRWAY')>=0&&ev.terrainLabels.indexOf('GREEN')>=0,JSON.stringify(sig)));
   var bad=visibleControlsAtLeast44();rows.push(result('minimum-target-size',bad.length===0,bad.join(', ')));
