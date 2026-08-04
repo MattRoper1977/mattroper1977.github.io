@@ -1,0 +1,32 @@
+name: Apex Tennis homepage bootstrap
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/apextennis-home-bootstrap.yml'
+      - 'tools/apply_apextennis_home.js'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/apextennis-home-sports
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply the reviewed four-game homepage transform
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/apply_apextennis_home.js
+          python3 tools/verify_apextennis_home.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html site.json
+          git commit -m 'feat: join Golf and Tennis to homepage Sports'
+          git push origin HEAD:codex/apextennis-home-sports
