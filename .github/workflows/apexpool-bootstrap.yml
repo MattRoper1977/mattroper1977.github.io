@@ -35,6 +35,15 @@ jobs:
           Path('apexpool').mkdir(exist_ok=True)
           Path('apexpool/index.html').write_bytes(game)
 
+          import io, tarfile
+          bundle_parts = sorted(Path('.apexpool-transfer').glob('bundle.b64.part*'))
+          if len(bundle_parts) != 2:
+              raise SystemExit(f'expected 2 compressed bundle parts, got {len(bundle_parts)}')
+          bundle_packed = ''.join(p.read_text() for p in bundle_parts)
+          bundle = gzip.decompress(base64.b64decode(bundle_packed))
+          with tarfile.open(fileobj=io.BytesIO(bundle), mode='r:') as archive:
+              archive.extractall('.')
+
           sitemap = Path('sitemap.xml')
           text = sitemap.read_text()
           url = 'https://madebymatt.uk/apexpool/'
