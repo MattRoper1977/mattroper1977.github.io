@@ -174,7 +174,7 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 
 <section class="sec" id="picks"><div class="wrap">
 <h2>Matt's personal top picks</h2>
-<p class="sub">The seven I'd put in front of anyone first — and one line each on why.</p>
+<p class="sub">The eight I'd put in front of anyone first — and one line each on why.</p>
 <div class="rail" id="topRail" aria-label="Matt's top picks"></div>
 </div></section>
 
@@ -230,8 +230,8 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 </div></section>
 
 <section class="sec"><div class="wrap">
-<h2>The rest of the shelf</h2>
-<p class="sub" id="shelfSub">Every other game, A to Z — search and filters above work on this grid.</p>
+<h2>The whole shelf</h2>
+<p class="sub" id="shelfSub">Every game, A to Z — search and filters above work on this grid.</p>
 <div id="allGrid"></div>
 <p class="empty" id="empty" hidden>No games match that — clear the search or tap the chip off to see the shelf again.</p>
 </div></section>
@@ -265,7 +265,7 @@ var TAKES={
 "Neon Garden":"Ambience and pace. The calm one.",
 "Neon Siege":"Place early, think earlier."
 };
-var TOP=["Voxel Frontier","Off-Brand","Glitch Clash","Hold the Mark","Orbital","Slipstream - GP","Grid Chase"];
+var TOP=["Apex Kick","Voxel Frontier","Off-Brand","Glitch Clash","Hold the Mark","Orbital","Slipstream - GP","Grid Chase"];
 var THEMES=[
  ["PHYSICS & GRAVITY","FAVS",["Orbital","Marble"]],
  ["REFLEX & SPEED","FAVS",["Trail Runner","Trekkers Trail Runner — Tees Coast","Grid Chase"]],
@@ -314,7 +314,7 @@ function render(){
  /* top picks */
  var rail=$("topRail");rail.textContent="";
  TOP.forEach(function(t,i){var g=gs.find(function(x){return x.title===t});if(g)rail.appendChild(pickCard(g,i===0))});
- /* Sports is driven by the manifest collection field; it is hidden until the two entries exist. */
+ /* Sports is driven by the manifest collection field and is additional to TOP and browse-all. */
  var sports=gs.filter(function(g){return g.collection==="Sports"});
  var sportsSection=$("sports"),sportsRail=$("sportsRail");sportsRail.textContent="";
  sports.forEach(function(g){sportsRail.appendChild(gCard(g,false))});
@@ -345,8 +345,7 @@ function render(){
  $("exploreBtn").textContent="EXPLORE MATT\u2019S PICKS ("+CURATED.length+" of "+gs.length+" curated)";
 }
 function drawGrid(){
- var all=state.games.slice(),sportsCount=all.filter(function(g){return g.collection==="Sports"}).length;
- var gs=all.filter(function(g){return g.collection!=="Sports"});
+ var gs=state.games.slice();
  var q=state.q.trim().toLowerCase();
  if(q)gs=gs.filter(function(g){return (g.title+" "+(g.tag||"")+" "+(g.desc||"")).toLowerCase().indexOf(q)>=0});
  if(state.tag)gs=gs.filter(function(g){return g.tag===state.tag});
@@ -359,10 +358,10 @@ function drawGrid(){
  var grid=$("allGrid");grid.textContent="";
  gs.forEach(function(g){grid.appendChild(gCard(g,false))});
  $("empty").hidden=gs.length>0;
- var n=state.games.length-sportsCount,total=state.games.length;
+ var n=state.games.length;
  $("countline").textContent=gs.length===n?
-  (CURATED.length+" curated favourites across "+total+" games — "+n+" more on the shelf below."):
-  ("Showing "+gs.length+" of "+n+" shelf games ("+total+" total).");
+  (CURATED.length+" curated favourites of "+n+" games — every one free, single-file and offline-friendly."):
+  ("Showing "+gs.length+" of "+n+" games.");
 }
 $("q").addEventListener("input",function(){state.q=this.value;drawGrid()});
 $("sort").addEventListener("change",function(){state.sort=this.value;drawGrid()});
@@ -379,4 +378,5 @@ fetch(gjs.url,gjs.opts).then(function(r){if(!r.ok)throw 0;return r.json()}).then
 })();
 </script>
 <script defer src="/theme.js"></script>
+<!-- apexpool-arcade-catalogue-correction-2026-08-04 -->
 </body></html>
