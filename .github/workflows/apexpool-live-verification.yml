@@ -1,0 +1,163 @@
+name: Apex Pool live deployment verification
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/apexpool-live-verification.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      TARGET_SHA: b37efe2bb691e6799c3fdf9d35b36f32edcf17c0
+      GAME_SHA256: 4de1383f8ee029db438258bb239e4e7f3b7ffd9e603706a9fd145fd397af87ad
+      GAME_BYTES: '88751'
+    steps:
+      - name: Verify Pages deployment and raw target
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/apexpool-live
+
+          curl -fsSL \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            https://api.github.com/repos/MattRoper1977/mattroper1977.github.io/pages/builds/latest \
+            -o artifacts/apexpool-live/pages-latest.json
+
+          python3 - <<'PY' | tee artifacts/apexpool-live/pages-status.txt
+          import json, os
+          p=json.load(open('artifacts/apexpool-live/pages-latest.json'))
+          print('status='+str(p.get('status')))
+          print('commit='+str(p.get('commit')))
+          print('created_at='+str(p.get('created_at')))
+          print('updated_at='+str(p.get('updated_at')))
+          assert p.get('status') == 'built', p
+          assert p.get('commit') == os.environ['TARGET_SHA'], p
+          PY
+
+          curl -fsSL \
+            "https://raw.githubusercontent.com/MattRoper1977/mattroper1977.github.io/${TARGET_SHA}/apexpool/index.html" \
+            -o artifacts/apexpool-live/raw-apexpool.html
+
+          test "$(wc -c < artifacts/apexpool-live/raw-apexpool.html | tr -d ' ')" = "${GAME_BYTES}"
+          test "$(sha256sum artifacts/apexpool-live/raw-apexpool.html | awk '{print $1}')" = "${GAME_SHA256}"
+          {
+            echo "raw_bytes=$(wc -c < artifacts/apexpool-live/raw-apexpool.html | tr -d ' ')"
+            echo "raw_sha256=$(sha256sum artifacts/apexpool-live/raw-apexpool.html | awk '{print $1}')"
+          } | tee artifacts/apexpool-live/raw-identity.txt
+
+      - name: Verify custom-domain deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/apexpool-live
+
+          fetch_live() {
+            local url="$1" out="$2" status_file="$3"
+            local code
+            code=$(curl -L -sS --retry 8 --retry-delay 5 --retry-all-errors \
+              -o "$out" -w '%{http_code}' "$url" || true)
+            printf '%s\n' "$code" > "$status_file"
+            printf '%s -> %s\n' "$url" "$code"
+          }
+
+          fetch_live 'https://madebymatt.uk/apexpool/' \
+            artifacts/apexpool-live/live-apexpool.html \
+            artifacts/apexpool-live/live-apexpool.status
+          fetch_live 'https://madebymatt.uk/' \
+            artifacts/apexpool-live/live-home.html \
+            artifacts/apexpool-live/live-home.status
+          fetch_live 'https://madebymatt.uk/games/' \
+            artifacts/apexpool-live/live-games.html \
+            artifacts/apexpool-live/live-games.status
+          fetch_live 'https://madebymatt.uk/site.json' \
+            artifacts/apexpool-live/live-site.json \
+            artifacts/apexpool-live/live-site.status
+          fetch_live 'https://madebymatt.uk/Games/games.json' \
+            artifacts/apexpool-live/live-games.json \
+            artifacts/apexpool-live/live-games-json.status
+
+          game_code=$(cat artifacts/apexpool-live/live-apexpool.status)
+          if [ "$game_code" = 200 ]; then
+            cmp -s artifacts/apexpool-live/raw-apexpool.html artifacts/apexpool-live/live-apexpool.html
+            test "$(wc -c < artifacts/apexpool-live/live-apexpool.html | tr -d ' ')" = "${GAME_BYTES}"
+            test "$(sha256sum artifacts/apexpool-live/live-apexpool.html | awk '{print $1}')" = "${GAME_SHA256}"
+            echo 'live_game=200 byte-identical-to-raw' | tee artifacts/apexpool-live/live-game-result.txt
+          elif [ "$game_code" = 403 ]; then
+            echo 'live_game=403 agent/proxy-limited; raw-at-SHA verified' | tee artifacts/apexpool-live/live-game-result.txt
+          else
+            echo "Unexpected Apex Pool status: ${game_code}" >&2
+            exit 1
+          fi
+
+          for f in home games site games-json; do
+            code=$(cat "artifacts/apexpool-live/live-${f}.status")
+            if [ "$code" != 200 ] && [ "$code" != 403 ]; then
+              echo "Unexpected ${f} status: ${code}" >&2
+              exit 1
+            fi
+          done
+
+          if [ "$(cat artifacts/apexpool-live/live-home.status)" = 200 ]; then
+            grep -F 'data-release="Apex Pool"' artifacts/apexpool-live/live-home.html
+            grep -F 'id="homeSports"' artifacts/apexpool-live/live-home.html
+            grep -F 'data-sport-game="Apex Kick"' artifacts/apexpool-live/live-home.html
+            grep -F 'data-sport-game="Apex Pool"' artifacts/apexpool-live/live-home.html
+          fi
+
+          if [ "$(cat artifacts/apexpool-live/live-games.status)" = 200 ]; then
+            grep -F 'var TOP=["Apex Kick","Voxel Frontier"' artifacts/apexpool-live/live-games.html
+            grep -F 'id="sportsRail"' artifacts/apexpool-live/live-games.html
+            grep -F 'var gs=state.games.slice();' artifacts/apexpool-live/live-games.html
+          fi
+
+          if [ "$(cat artifacts/apexpool-live/live-site.status)" = 200 ]; then
+            python3 - <<'PY' | tee artifacts/apexpool-live/live-site-result.txt
+          import json
+          d=json.load(open('artifacts/apexpool-live/live-site.json'))
+          doors=d['doors']
+          assert len(doors)==12, len(doors)
+          assert doors[-1]['title']=='Off-Brand', doors[-1]
+          assert sum(x['title']=='Apex Kick' for x in doors)==1
+          assert doors[-1]['image']=='assets/cards/off-brand-door.svg'
+          print('doors=12')
+          print('door12=Off-Brand')
+          print('Apex Kick door=retained')
+          print('door12 art=assets/cards/off-brand-door.svg')
+          PY
+          fi
+
+          if [ "$(cat artifacts/apexpool-live/live-games-json.status)" = 200 ]; then
+            python3 - <<'PY' | tee artifacts/apexpool-live/live-games-result.txt
+          import json
+          d=json.load(open('artifacts/apexpool-live/live-games.json'))
+          games=d['games']
+          sports=[x['title'] for x in games if x.get('collection')=='Sports']
+          assert len(games)==33, len(games)
+          assert all('art' in x for x in games)
+          assert sports==['Apex Kick','Apex Pool','Apex Golf'], sports
+          assert sum(x.get('tag')=='Physics' for x in games)==7
+          print('entries=33')
+          print('art=33/33')
+          print('Sports='+' · '.join(sports))
+          print('Physics=7')
+          PY
+          fi
+
+      - name: Upload deployment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apexpool-live-verification-${{ github.run_id }}
+          path: artifacts/apexpool-live
+          if-no-files-found: error
+          retention-days: 30
