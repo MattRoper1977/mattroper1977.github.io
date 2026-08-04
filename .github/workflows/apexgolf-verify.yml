@@ -19,7 +19,7 @@ jobs:
   verify:
     name: 18 contract gates
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Check out the proposed tree
         uses: actions/checkout@v4
@@ -29,11 +29,10 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install a real Chrome binary
-        id: chrome
-        uses: browser-actions/setup-chrome@v1
-        with:
-          chrome-version: stable
+      - name: Install the pinned real-browser harness
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
 
       # Donor drift is measured, never hidden, and does not block Golf's independent gates.
       - name: Measure the read-only Apex Kick donor harness
@@ -62,5 +61,4 @@ jobs:
       - name: Run all Apex Golf gates
         env:
           AG_REQUIRE_BROWSER: '1'
-          AG_BROWSER: ${{ steps.chrome.outputs.chrome-path }}
         run: node tools/verify_apexgolf.js
