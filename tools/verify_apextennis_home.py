@@ -7,23 +7,22 @@ index_path=Path(sys.argv[1] if len(sys.argv)>1 else 'index.html')
 site_path=Path(sys.argv[2] if len(sys.argv)>2 else 'site.json')
 golf_art=Path(sys.argv[3] if len(sys.argv)>3 else 'assets/cards/apex-golf-door.svg')
 tennis_art=Path(sys.argv[4] if len(sys.argv)>4 else 'assets/cards/apex-tennis-door.svg')
-baseline_path=Path(sys.argv[5]) if len(sys.argv)>5 and sys.argv[5] else None
+baseline_site_path=Path(sys.argv[5]) if len(sys.argv)>5 and sys.argv[5] else None
+baseline_index_path=Path(sys.argv[6]) if len(sys.argv)>6 and sys.argv[6] else None
 index=index_path.read_text(encoding='utf-8');site=json.loads(site_path.read_text(encoding='utf-8'))
-baseline=json.loads(baseline_path.read_text(encoding='utf-8')) if baseline_path and baseline_path.is_file() else None
-errors=[]
+baseline=json.loads(baseline_site_path.read_text(encoding='utf-8')) if baseline_site_path and baseline_site_path.is_file() else None
+baseline_index=baseline_index_path.read_text(encoding='utf-8') if baseline_index_path and baseline_index_path.is_file() else None
+errors=[];passes=0
 def req(condition:bool,message:str)->None:
+ global passes
  print(('PASS  ' if condition else 'FAIL  ')+message)
- if not condition: errors.append(message)
+ if condition: passes+=1
+ else: errors.append(message)
 expected_cards=['Apex Kick','Apex Pool','Apex Golf','Apex Tennis']
 cards=re.findall(r'data-sport-game="([^"]+)"',index)
 req(cards==expected_cards,'hardcoded Sports order is Kick, Pool, Golf, Tennis')
 for name in expected_cards:req(cards.count(name)==1,f'Sports contains exactly one {name} card')
-contracts={
- 'Apex Kick':('/apexkick/','#2F8F6B'),
- 'Apex Pool':('/apexpool/','#F2A24A'),
- 'Apex Golf':('/apexgolf/','#7C5CFC'),
- 'Apex Tennis':('/apextennis/','#3B6FD4')
-}
+contracts={'Apex Kick':('/apexkick/','#2F8F6B'),'Apex Pool':('/apexpool/','#F2A24A'),'Apex Golf':('/apexgolf/','#7C5CFC'),'Apex Tennis':('/apextennis/','#3B6FD4')}
 for name,(href,hue) in contracts.items():
  pattern=rf'data-sport-game="{re.escape(name)}" href="{re.escape(href)}" style="--sport:{re.escape(hue)}"'
  req(re.search(pattern,index) is not None,f'{name} card keeps exact href and hue')
@@ -32,6 +31,9 @@ req('Four games about reading the line, calling the plan and making the next dec
 req(index.count('id="newrelease"')==1,'New Release component remains singular')
 req(index.count('data-release="Apex Pool"')==1,'Apex Pool remains the New Release occupant')
 req('data-release="Apex Tennis"' not in index and 'data-release="Apex Golf"' not in index,'Golf and Tennis do not take New Release')
+if baseline_index:
+ release=lambda text:re.search(r'<section[^>]*id="newrelease".*?</section>',text,re.S).group(0)
+ req(release(index)==release(baseline_index),'New Release markup is byte-equivalent to current main')
 req('var(--dx-card)' in index and 'var(--dx-ink)' in index,'Sports keeps homepage theme tokens')
 req('@media(prefers-reduced-motion:reduce){a.dx-sport' in index,'Sports retains explicit reduced-motion protection')
 doors=site.get('doors',[]);titles=[d.get('title') for d in doors]
@@ -69,4 +71,4 @@ for asset,title,hue in ((golf_art,'Apex Golf','#7C5CFC'),(tennis_art,'Apex Tenni
 raw=json.dumps(site,ensure_ascii=False)
 req('Apex_Tennis' not in raw and '/Lessons/Apex_Tennis/' not in raw,'no Lessons-repository Apex Tennis contamination')
 if errors: raise SystemExit(1)
-print(f'ALL {36 if baseline else 34} APEX TENNIS HOMEPAGE STATIC GATES PASSED')
+print(f'ALL {passes} APEX TENNIS HOMEPAGE STATIC GATES PASSED')
