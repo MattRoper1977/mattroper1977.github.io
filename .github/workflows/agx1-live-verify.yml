@@ -10,7 +10,14 @@ name: AGX-1 live verification
 # It closes the gap §12.3 C2 names: /apexgolf/ has never been fetched by
 # anyone, and Tennis skipped its live check on a container DNS failure.
 
+# Runs on the verification-only pull request, per §11.6's proven pattern
+# (Apex Pool's instance: run 30908723551, PR site#42, closed unmerged).
+# The PR is opened to carry this run and is then CLOSED UNMERGED by design —
+# closed-unmerged is its correct terminal state, not a failure.
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - 'claude/apexgolf-build-2026-08-04-b1hbwj'

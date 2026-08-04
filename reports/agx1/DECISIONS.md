@@ -67,13 +67,15 @@ were not modified — a delta on either is RED.
 against the real head `4afd3485` (not the brief's `6e8ab129`, which is stale).
 Read-only via the API; no fetch, rebase, merge or close.
 
-**D-k · Routed the live check through a push-triggered workflow on my own
-branch rather than a verification-only PR.** §11.6's proven pattern is a PR
-carrying a workflow, closed unmerged. A `push:` trigger scoped to
-`claude/apexgolf-build-2026-08-04-b1hbwj` achieves the same evidence with a
-smaller footprint: no PR to open, none to remember to close, and nothing that
-could be mistaken for a merge candidate. The workflow is read-only against
-production.
+**D-k · CORRECTED — the live check now uses the verification-only PR pattern.**
+My first route was a `push:` trigger scoped to this branch: same evidence,
+smaller footprint, nothing to remember to close. **Matt re-issued the
+instruction naming the verification-only PR as the pattern and the only thing
+this pass may open.** That is the estate's convention (site#42) and it makes
+the evidence discoverable in the PR record rather than buried in a branch's run
+history, which is the better argument. Re-run under `pull_request:`; the PR
+lands **CLOSED UNMERGED** by design. The `push:` trigger is retained as a
+standing check. The workflow remains read-only against production.
 
 **D-l · Reported the Games repository as unreachable rather than working
 around it.** It is outside this session's allowed scope and no `add_repo` tool
