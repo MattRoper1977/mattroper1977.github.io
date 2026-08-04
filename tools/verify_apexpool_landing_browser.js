@@ -60,6 +60,13 @@ async function assertTargets(page, label) {
     ok('game-responds-200', response && response.status() === 200, response ? String(response.status()) : 'no response');
     await page.waitForFunction(() => window.__AP_DEBUG && document.querySelector('.wordmark'));
     await page.waitForTimeout(1300);
+    const rotateVisible = await page.locator('#rotateHint').isVisible();
+    ok('portrait-choice-overlay-renders', rotateVisible);
+    if (rotateVisible) {
+      await assertTargets(page, 'portrait-choice');
+      await page.locator('#dismissRotate').click();
+      await page.waitForFunction(() => getComputedStyle(document.getElementById('rotateHint')).display === 'none');
+    }
     await assertTargets(page, 'title');
 
     await page.locator('#settingsBtn').click();
