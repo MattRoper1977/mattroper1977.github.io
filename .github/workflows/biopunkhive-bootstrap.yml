@@ -51,6 +51,7 @@ jobs:
           base64 -d /tmp/biopunkhive-release.b64 > /tmp/biopunkhive-release.tgz
           echo 'ac7702025b950b189354e6d1a4a56c5d8a523660df9b6c87ddd17511a443e258  /tmp/biopunkhive-release.tgz' | sha256sum -c -
           tar -xzf /tmp/biopunkhive-release.tgz -C .
+          rm -f .github/workflows/biopunkhive-verify.yml
 
       - name: Generate deterministic delivery identity
         shell: bash
@@ -95,12 +96,11 @@ jobs:
               raise SystemExit('Biopunk Hive sitemap entry is not unique')
           PY
 
-      - name: Replace staging with release commit
+      - name: Publish non-workflow release files
         shell: bash
         run: |
           set -euo pipefail
           rm -rf .biopunk-bootstrap
-          rm -f .github/workflows/biopunkhive-bootstrap.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
