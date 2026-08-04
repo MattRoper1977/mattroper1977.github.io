@@ -17,6 +17,8 @@ function runSelfTest() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'arcade-sports-'));
   const cases = [
     ['section', 'sports-section-once', (s) => s.replace('id="sports" hidden', 'id="sport" hidden')],
+    ['copy', 'sports-copy-includes-apex-golf', (s) => s.replace('Apex Golf', 'Apex G0lf')],
+    ['columns', 'sports-grid-fits-three', (s) => s.replace('repeat(3,minmax(0,1fr))', 'repeat(2,minmax(0,1fr))')],
     ['membership', 'top-picks-exclude-apex-kick', (s) => s.replace('var TOP=["Voxel Frontier"', 'var TOP=["Apex Kick","Voxel Frontier"')],
     ['deduplication', 'whole-shelf-excludes-sports', (s) => s.replace('g.collection!=="Sports"', 'true')],
     ['grouping', 'sports-is-not-a-tag', (s) => s.replace('g.collection==="Sports"', 'g.tag==="Sport"')],
@@ -54,6 +56,8 @@ function count(needle) { return html.split(needle).length - 1; }
 
 console.log('== Arcade Sports source contract ==');
 ok('sports-section-once', count('id="sports" hidden') === 1 && count('id="sportsRail"') === 1);
+ok('sports-copy-includes-apex-golf', html.includes('Three Apex games') && html.includes('Apex Golf'));
+ok('sports-grid-fits-three', html.includes('grid-template-columns:repeat(3,minmax(0,1fr))'));
 ok('sports-uses-existing-rail-card-system', /<div class="rail" id="sportsRail"/.test(html) && /sportsRail\.appendChild\(gCard\(g,false\)\)/.test(html));
 ok('top-picks-exclude-apex-kick', /var TOP=\["Voxel Frontier"/.test(html) && !/var TOP=\["Apex Kick"/.test(html));
 ok('whole-shelf-excludes-sports', /all\.filter\(function\(g\)\{return g\.collection!=="Sports"\}\)/.test(html));
