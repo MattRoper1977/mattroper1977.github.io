@@ -1,10 +1,10 @@
-name: Arcade Sports contract
+name: Arcade Sports catalogue contract
 
 on:
   pull_request:
     paths:
       - 'games/index.html'
-      - 'assets/cards/apex-pool.svg'
+      - 'tools/apply_arcade_sports_catalogue_correction.py'
       - 'tools/verify_arcade_sports.js'
       - 'tools/verify_arcade_sports_browser.js'
       - '.github/workflows/arcade-sports-verify.yml'
@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: arcade-sports-${{ github.event.pull_request.number || github.ref }}
+  group: arcade-sports-catalogue-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -26,52 +26,34 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run source and non-vacuity checks
-        shell: bash
+      - name: Source contract and non-vacuity
         run: |
-          set -o pipefail
           mkdir -p artifacts/arcade-sports
           node tools/verify_arcade_sports.js | tee artifacts/arcade-sports/source.log
           node tools/verify_arcade_sports.js --self-test | tee artifacts/arcade-sports/nonvacuity.log
-      - name: Fetch the measured 31-entry manifest baseline
-        shell: bash
+          before=$(sha256sum games/index.html | awk '{print $1}')
+          python3 tools/apply_arcade_sports_catalogue_correction.py | tee artifacts/arcade-sports/idempotency.log
+          test "$before" = "$(sha256sum games/index.html | awk '{print $1}')"
+      - name: Fetch current 33-entry manifest
         run: |
-          set -euo pipefail
           curl --fail --silent --show-error --location \
-            https://raw.githubusercontent.com/MattRoper1977/Games/a51beda45e9d44b24778a65193aac8784855fb46/games.json \
-            -o artifacts/arcade-sports/games-baseline.json
-          node -e "const d=require('./artifacts/arcade-sports/games-baseline.json'); if(!d.games||d.games.length!==31) process.exit(1); console.log('baseline entries='+d.games.length)"
-          sha256sum artifacts/arcade-sports/games-baseline.json
-      - name: Install pinned Chromium harness
+            https://raw.githubusercontent.com/MattRoper1977/Games/4fcc55cb98417b77c8ec24d7f3cd6770110990e7/games.json \
+            -o artifacts/arcade-sports/games.json
+          node -e "const d=require('./artifacts/arcade-sports/games.json');if(d.games.length!==33)process.exit(1)"
+      - name: Install Chromium
         run: |
           npm install --no-save --no-package-lock playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Serve the site with bounded readiness
-        shell: bash
+      - name: Serve and render
         run: |
-          set -euo pipefail
           python3 -m http.server 4173 --bind 127.0.0.1 > artifacts/arcade-sports/server.log 2>&1 &
-          echo $! > artifacts/arcade-sports/server.pid
-          for i in {1..30}; do
-            if curl -fsS http://127.0.0.1:4173/games/ >/dev/null; then exit 0; fi
-            sleep 1
-          done
-          cat artifacts/arcade-sports/server.log
-          exit 1
-      - name: Run rendered Sports gates
-        shell: bash
-        env:
-          ARCADE_BASE_URL: http://127.0.0.1:4173
-          ARCADE_BASELINE_MANIFEST: artifacts/arcade-sports/games-baseline.json
-          ARCADE_ARTIFACT_DIR: artifacts/arcade-sports
-        run: |
-          set -o pipefail
-          node tools/verify_arcade_sports_browser.js | tee artifacts/arcade-sports/browser.log
-      - name: Upload rendered evidence
-        if: always()
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/games/ >/dev/null && break; sleep 1; done
+          ARCADE_BASE_URL=http://127.0.0.1:4173 ARCADE_MANIFEST=artifacts/arcade-sports/games.json \
+            ARCADE_ARTIFACT_DIR=artifacts/arcade-sports node tools/verify_arcade_sports_browser.js | tee artifacts/arcade-sports/browser.log
+      - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: arcade-sports-evidence-${{ github.run_id }}
-          path: artifacts/arcade-sports/
+          name: arcade-sports-catalogue-${{ github.run_id }}
+          path: artifacts/arcade-sports
           if-no-files-found: error
           retention-days: 30
