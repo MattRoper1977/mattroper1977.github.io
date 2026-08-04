@@ -235,7 +235,10 @@ is Matt's call (C8). **See A-6 — the hardcoded count is only half of it.**
 ## A-5 · Live verification — RESOLVED by CI. C2 is CLOSED.
 
 **Severity:** downgraded from AMBER to **GREEN — closed in this pass**
-**Evidence:** run `30919019077`, conclusion **success**, every step green
+**Evidence:** verification-only PR **site#46**, run `30919678785`, conclusion
+**success**, every step green — PR **closed unmerged by design**, per §11.6's
+proven pattern (Pool's instance: run `30908723551`, PR site#42). A prior
+branch-triggered run `30919019077` returned the same result independently.
 
 The container cannot reach the domain:
 
@@ -525,6 +528,9 @@ homepage. **C6 PASS.**
 
 ```text
 site#25   OPEN, unmerged, head 7c202790115ca5de5f71babb570b806e5e57a4aa  UNTOUCHED
+          mergeable_state: "dirty"   <- GitHub has now COMPUTED it. The Pool
+          record and my first read both saw "unknown"; it is now confirmed
+          NOT MERGEABLE, independently corroborating the overlap below.
 ```
 
 **C5 re-derived** — the brief asked against `6e8ab129`; main is now `4afd3485`,

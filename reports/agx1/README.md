@@ -38,8 +38,8 @@ agreeing with it.
    1,800 Call Rating triples in contract; 6/6 sibling save keys unmoved; clean
    boot over `http://` **and** `file://` with 0 errors and 0 external requests.
    **5 AMBER, 0 RED.** No gate was skipped without being named. Live check
-   closed by CI run `30919019077`: all nine estate endpoints **200**, and all
-   five games byte-identical live-to-committed.
+   closed by verification-only PR site#46, run `30919678785`: all nine estate
+   endpoints **200**, and all five games byte-identical live-to-committed.
 
 4. **Manifest and sitemap counts.** Manifest **34** entries, `art` **34/34**, 0
    duplicate ids, Sports = Kick · Pool · Golf · Tennis, **Physics = 8 derived**
@@ -103,9 +103,12 @@ session's scope (L-1).
 
 ### 5. Nothing — C2 is already closed
 
-`.github/workflows/agx1-live-verify.yml` ran as
-[`30919019077`](https://github.com/MattRoper1977/mattroper1977.github.io/actions/runs/30919019077)
-and returned **success**. All nine estate endpoints returned **200**, and all
+`.github/workflows/agx1-live-verify.yml` ran on verification-only PR
+**[site#46](https://github.com/MattRoper1977/mattroper1977.github.io/pull/46)**
+as run [`30919678785`](https://github.com/MattRoper1977/mattroper1977.github.io/actions/runs/30919678785)
+and returned **success**. The PR is **closed unmerged by design** — that is its
+correct terminal state, not a failure. (An earlier branch-triggered run,
+`30919019077`, returned the same result independently.) All nine estate endpoints returned **200**, and all
 five games are byte-identical live-to-committed:
 
 ```text
