@@ -232,44 +232,81 @@ is Matt's call (C8). **See A-6 — the hardcoded count is only half of it.**
 
 ---
 
-## A-5 · Live verification could not be completed from this container
+## A-5 · Live verification — RESOLVED by CI. C2 is CLOSED.
 
-**Severity:** AMBER — left incomplete, stated plainly
-**Measured:**
+**Severity:** downgraded from AMBER to **GREEN — closed in this pass**
+**Evidence:** run `30919019077`, conclusion **success**, every step green
+
+The container cannot reach the domain:
 
 ```text
-https://madebymatt.uk/apexgolf/          000   (proxy: 403 on CONNECT)
-https://mattroper1977.github.io/apexgolf/ 000  (same)
+https://madebymatt.uk/apexgolf/           000   (proxy: 403 on CONNECT)
+https://mattroper1977.github.io/apexgolf/ 000   (same)
 GitHub Pages API                          blocked at the proxy
 ```
 
-**`https://madebymatt.uk/apexgolf/` has still never been fetched by anyone.**
-
-What I *could* prove, and did:
+So the check was routed to Actions, per §11.6. `.github/workflows/agx1-live-verify.yml`
+ran from a GitHub-hosted runner and returned:
 
 ```text
-raw at 4afd3485  ==  local tree   BYTE-IDENTICAL
-bytes   64513
-sha256  c0701ee1152d57c16e676c58f58054c1884495d7e41d2cf20f14d2404ddab041
-blob    132034b789ccef09bac8d26abf99fd8f9292cb02
+https://madebymatt.uk/apexgolf/                200      <-- FIRST EVER FETCH
+https://madebymatt.uk/apextennis/              200
+https://madebymatt.uk/biopunkhive/             200
+https://madebymatt.uk/apexpool/                200
+https://madebymatt.uk/apexkick/                200
+https://madebymatt.uk/                         200
+https://madebymatt.uk/games/                   200
+https://madebymatt.uk/site.json                200
+https://madebymatt.uk/Games/games.json         200
 ```
 
-That proves **the correct bytes are committed**. It does not prove they are
-served. Per §11.6 the channel is CI, so this pass ships
-`.github/workflows/agx1-live-verify.yml`, which fetches `/apexgolf/`,
-`/apextennis/`, `/biopunkhive/` and the four estate endpoints from a
-GitHub-hosted runner and compares live bytes to the committed tree. **Its result
-is not in this report** — see MATT'S ACTIONS.
+**Live bytes against the committed tree — the step exits non-zero on any
+mismatch, and it passed:**
 
-### C2's third limb — Biopunk's "exact live identity verified" claim
+```text
+game            live_bytes  repo_bytes  live_sha256                        match
+apexgolf             64513       64513  c0701ee1152d57c1…4ddab041      IDENTICAL
+apextennis           59852       59852  8e109ab55a0fb2a2…cdfb9b1f      IDENTICAL
+apexpool             88751       88751  4de1383f8ee029db…97af87ad      IDENTICAL
+apexkick            162122      162122  541697f7a621d15c…5d5f916f      IDENTICAL
+biopunkhive          76841       76841  f129e84bf8718d4b…3790080e      IDENTICAL
+```
 
-**Reclassified.** §12.2 reports site#45 merged with *"exact live identity
-verified"*. This pass finds `tools/biopunkhive.sha256` and a
-`biopunkhive_index.html.gz.b64` reconstruction blob in the tree — i.e. the
-claim is grounded in a **hash-and-reconstruct check against the committed
-file**, not a live fetch of `https://madebymatt.uk/biopunkhive/`. Honest
-reclassification: **that was raw/committed identity, not live identity.** The
-shipped workflow fetches Biopunk live so the claim can be settled properly.
+**Apex Golf is live, served, and byte-identical to the committed file** —
+64,513 bytes, SHA-256 `c0701ee1…`, matching blob `132034b7…`.
+
+**Live manifest census, from the domain rather than from raw:**
+
+```text
+entries 34 · art 34/34 · duplicate ids 0
+Sports  Apex Kick · Apex Pool · Apex Golf · Apex Tennis
+Physics (derived) 8 · Sport chip minted False · hues all distinct True
+Biopunk in manifest False
+```
+
+### All three limbs of C2, discharged
+
+1. **`/apexgolf/`** — fetched, 200, byte-identical. The URL that had never been
+   fetched by anyone now has been.
+2. **`/apextennis/`** — fetched, 200, byte-identical. Tennis skipped this on a
+   container DNS failure; the container was never the channel, and this closes it.
+3. **Biopunk's "exact live identity verified" claim — reclassified, then
+   resolved.** The evidence *in the tree* is a hash-and-reconstruct check
+   against the **committed** file (`tools/biopunkhive.sha256`,
+   `biopunkhive_index.html.gz.b64`), i.e. raw identity, **not** live identity —
+   so as originally stated the claim overreached. This run supplies the missing
+   half: `/biopunkhive/` fetched live, 76,841 bytes, SHA-256 `f129e84b…`,
+   **IDENTICAL**. The claim is now true for the right reason.
+
+### C1, confirmed a third time — from the live domain
+
+```text
+served homepage HTML:  Apex Golf  2 mentions,  apexgolf/ href  1 occurrence
+C6: New Release heading present; Apex Pool 5 mentions
+```
+
+Golf is on the live homepage. A-1 stands, now measured locally with JS off,
+from git history, and from the served bytes.
 
 ---
 

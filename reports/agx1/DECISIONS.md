@@ -81,6 +81,12 @@ exists. Manifest *content* was measured over raw; repository *state* (Games#9's
 commit, Games#12's branch) is recorded as UNVERIFIED in L-1. C8 could not be
 discharged, and saying so is the honest answer.
 
+**D-k2 · Ran the live check and read the result rather than shipping a workflow
+and calling it done.** Run `30919019077` returned success: nine endpoints at
+200, five games byte-identical live-to-committed. **C2 is closed, not
+delegated** — including Tennis's skipped live check and Biopunk's overreaching
+"exact live identity verified" claim, which is now true for the right reason.
+
 **D-m · Changed nothing about the shipped game, its harness, the manifest, the
 sitemap, the homepage or the arcade.** This pass added report artefacts and one
 read-only verification workflow. Everything else is measurement.

@@ -11,7 +11,7 @@ agreeing with it.
 |---|---|
 | [`CHANGESET.md`](CHANGESET.md) | identity gate, environment probe, the derived change set, the zero-delta assertion |
 | [`VERDICTS.md`](VERDICTS.md) | one verdict per commit, each backed by a measurement |
-| [`FINDINGS.md`](FINDINGS.md) | **six AMBER, seven GREEN, three limits** — every finding severity, file, measurement |
+| [`FINDINGS.md`](FINDINGS.md) | **five AMBER, eight GREEN, two limits** — every finding severity, file, measurement |
 | [`DECISIONS.md`](DECISIONS.md) | decisions taken as the pass ran, including three of my own errors caught before shipping |
 
 ---
@@ -37,7 +37,9 @@ agreeing with it.
    my own rigs: 1,000-shot live-hole fuzz 1000/1000 settled, 0 non-finite; all
    1,800 Call Rating triples in contract; 6/6 sibling save keys unmoved; clean
    boot over `http://` **and** `file://` with 0 errors and 0 external requests.
-   **6 AMBER, 0 RED.** No gate was skipped without being named.
+   **5 AMBER, 0 RED.** No gate was skipped without being named. Live check
+   closed by CI run `30919019077`: all nine estate endpoints **200**, and all
+   five games byte-identical live-to-committed.
 
 4. **Manifest and sitemap counts.** Manifest **34** entries, `art` **34/34**, 0
    duplicate ids, Sports = Kick · Pool · Golf · Tennis, **Physics = 8 derived**
@@ -99,27 +101,38 @@ reachable only by typing the URL. Games#12 is prepared and withheld pending your
 ruling. I could not verify its branch is intact — the Games repo is outside this
 session's scope (L-1).
 
-### 5. Check the live-verification workflow run
+### 5. Nothing — C2 is already closed
 
-This pass ships `.github/workflows/agx1-live-verify.yml`, which fetches
-`/apexgolf/`, `/apextennis/`, `/biopunkhive/` and four more endpoints from a
-GitHub runner and compares live bytes to the committed tree. **Its result is not
-in this report** — the container cannot reach the domain (403 at the proxy), so
-the run happens after this push. Read the run before treating C2 as closed.
+`.github/workflows/agx1-live-verify.yml` ran as
+[`30919019077`](https://github.com/MattRoper1977/mattroper1977.github.io/actions/runs/30919019077)
+and returned **success**. All nine estate endpoints returned **200**, and all
+five games are byte-identical live-to-committed:
+
+```text
+apexgolf     64513 B   c0701ee1…   IDENTICAL   <-- first ever live fetch
+apextennis   59852 B   8e109ab5…   IDENTICAL   <-- closes Tennis's skipped check
+apexpool     88751 B   4de1383f…   IDENTICAL
+apexkick    162122 B   541697f7…   IDENTICAL
+biopunkhive  76841 B   f129e84b…   IDENTICAL   <-- Biopunk's live claim now true
+```
+
+Kept only as a standing check; it re-runs on any push to this branch.
 
 ---
 
 ## What I could not reach
 
-- **The live domain.** `madebymatt.uk` and `mattroper1977.github.io` both return
-  `000` — the proxy answers 403 on CONNECT. The Pages API is blocked too.
-  `https://madebymatt.uk/apexgolf/` has **still never been fetched by anyone**.
 - **The Games repository.** Outside this session's allowed scope; no `add_repo`
-  tool exists. Games#9's commit and Games#12's branch state are **UNVERIFIED**.
-- **Biopunk's "exact live identity verified" claim**, reclassified honestly: the
-  evidence in the tree is a hash-and-reconstruct check against the *committed*
-  file, not a live fetch. That is raw identity, not live identity.
-- **Whether a pupil can play it.** Headless Chromium is not a Year 9 thumb.
+  tool exists. **Games#9's commit and Games#12's branch state are UNVERIFIED** —
+  C8 could not be discharged. The manifest *content* was measured (34 entries,
+  Biopunk absent, consistent with "prepared and withheld"); the repository
+  *state* was not.
+- **Whether a pupil can play it.** Headless Chromium is not a Year 9 thumb, and
+  a 200 with matching bytes proves serving, not playability.
+
+The live domain was **not** a limit in the end — it was unreachable from the
+container (403 at the proxy) but reachable from CI, which is what §11.6 says
+the channel is. See A-5.
 
 Nothing further merges unless this prompt is amended in writing.
 
