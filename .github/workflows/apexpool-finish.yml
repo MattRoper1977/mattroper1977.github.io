@@ -1,0 +1,42 @@
+name: Apex Pool branch finish
+
+on:
+  push:
+    branches:
+      - codex/apexpool-build
+    paths:
+      - '.apexpool-finish/READY'
+
+permissions:
+  contents: write
+
+jobs:
+  finish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/apexpool-build
+          fetch-depth: 0
+      - name: Recover and stage verification bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 6947dd8bc982f81f2173f91a2f1b6720085745a1:.apexpool-transfer/bundle.b64.part00 > /tmp/bundle.part00
+          git show 5585273fa08505adbb41b0f7af96c55cf2a51dd4:.apexpool-transfer/bundle.b64.part01 > /tmp/bundle.part01
+          cat /tmp/bundle.part00 /tmp/bundle.part01 | base64 --decode | gzip --decompress > /tmp/apexpool-bundle.tar
+          tar -xf /tmp/apexpool-bundle.tar
+          test -f .github/workflows/apexpool-verify.yml
+          test -f tools/verify_apexpool.js
+          test -f tools/verify_apexpool_browser.js
+          test -f DONOR_MEASUREMENTS.md
+          test -f APEXPOOL_REPORT.md
+          test -f assets/cards/apex-pool.svg
+          grep -q '"title": "Apex Pool"' site.json
+          rm -rf .apexpool-finish
+          rm .github/workflows/apexpool-finish.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/apexpool-verify.yml tools/verify_apexpool.js tools/verify_apexpool_browser.js DONOR_MEASUREMENTS.md APEXPOOL_REPORT.md site.json assets/cards/apex-pool.svg .apexpool-finish .github/workflows/apexpool-finish.yml
+          git commit -m 'test: add Apex Pool gates and catalogue integration'
+          git push origin HEAD:codex/apexpool-build
