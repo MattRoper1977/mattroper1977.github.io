@@ -32,6 +32,11 @@ async function waitBoot(page){await page.goto(BASE+'/apexpool/',{waitUntil:'domc
   record(vp.name+'-no-page-overflow',metrics.scrollW===metrics.innerW&&metrics.scrollH===metrics.innerH,JSON.stringify(metrics));
   record(vp.name+'-sentinel',metrics.debug==='apexpool-build-2026-08-04');
   await page.screenshot({path:path.join(OUT,vp.name+'-title.png'),fullPage:true});
+  const rotateVisible=await page.locator('#rotateHint').isVisible();
+  if(vp.height>vp.width){
+   record(vp.name+'-portrait-choice-visible',rotateVisible);
+   if(rotateVisible)await page.locator('#dismissRotate').click();
+  }else record(vp.name+'-no-rotation-blocker',!rotateVisible);
   await page.locator('[data-mode="classic"]').click();
   await page.waitForFunction(()=>window.__AP_DEBUG.state().running&&window.__AP_DEBUG.state().phase==='aim');
   const game=await page.evaluate(()=>{const g=window.__AP_DEBUG.state(),q=window.AP.cue(g.world);return{hud:!document.getElementById('hud').classList.contains('hidden'),balls:g.world.balls.length,q:{x:q.x,y:q.y},mode:g.mode,phase:g.phase,aria:document.getElementById('live').getAttribute('aria-live')}});
