@@ -150,8 +150,9 @@ function runChrome(browser, url, width, height, extra = []) {
 }
 async function browserContracts() {
   if (browserRuns) return browserRuns;
-  const browser = findBrowser();
-  assert(browser, 'AG_BROWSER does not point to a browser executable');
+  let chromium;
+  try { ({ chromium } = require('playwright')); }
+  catch (error) { fail(`Playwright is required for rendered gates: ${error.message}`); }
   const server = http.createServer((req, res) => {
     let pathname;
     try { pathname = decodeURIComponent(new URL(req.url, 'http://127.0.0.1').pathname); } catch (_) { pathname = '/'; }
@@ -168,33 +169,62 @@ async function browserContracts() {
   const port = server.address().port;
   const base = `http://127.0.0.1:${port}/apexgolf/index.html`;
   const configs = [
-    { name: 'phone', w: 360, h: 740, extra: [] },
-    { name: 'tablet', w: 768, h: 900, extra: [] },
-    { name: 'desktop', w: 1280, h: 800, extra: [] },
-    { name: 'phone-reduced', w: 360, h: 740, extra: ['--force-prefers-reduced-motion=reduce'] }
+    { name: 'phone', w: 360, h: 740, reducedMotion: 'no-preference' },
+    { name: 'tablet', w: 768, h: 900, reducedMotion: 'no-preference' },
+    { name: 'desktop', w: 1280, h: 800, reducedMotion: 'no-preference' },
+    { name: 'phone-reduced', w: 360, h: 740, reducedMotion: 'reduce' }
   ];
   const runs = [];
+  let browser;
   try {
+    browser = await chromium.launch({ headless: true });
     for (const c of configs) {
-      const dom = await runChrome(browser, `${base}?contract=1&viewport=${c.name}`, c.w, c.h, c.extra);
-      const openTag = '<pre id="ag-contract-results">';
-      const start = dom.lastIndexOf(openTag);
-      const end = start >= 0 ? dom.indexOf('</pre>', start + openTag.length) : -1;
-      assert(start >= 0 && end > start, `${c.name}: browser contract did not return results; DOM tail ${dom.slice(-800)}`);
-      const payload = decodeHtmlText(dom.slice(start + openTag.length, end));
-      assert(payload.trim().startsWith('{'), `${c.name}: final contract node did not contain JSON; payload ${payload.slice(0, 160)}`);
-      const data = JSON.parse(payload);
-      runs.push({ config: c, data, dom });
+      const context = await browser.newContext({
+        viewport: { width: c.w, height: c.h },
+        reducedMotion: c.reducedMotion
+      });
+      try {
+        const page = await context.newPage();
+        const pageErrors = [];
+        page.on('pageerror', error => pageErrors.push(error.message));
+        const response = await page.goto(`${base}?contract=1&viewport=${c.name}`, { waitUntil: 'load', timeout: 30000 });
+        assert(response && response.status() === 200, `${c.name}: local page returned ${response ? response.status() : 'no response'}`);
+        await page.waitForFunction(
+          () => window.__AG_CONTRACT && Array.isArray(window.__AG_CONTRACT.rows),
+          null,
+          { timeout: 30000 }
+        );
+        assert(pageErrors.length === 0, `${c.name}: page errors: ${pageErrors.join(' | ')}`);
+        const data = await page.evaluate(() => window.__AG_CONTRACT);
+        const dom = await page.content();
+        runs.push({ config: c, data, dom });
+      } finally {
+        await context.close();
+      }
     }
-    const noJsDom = await runChrome(browser, `${base}?nojs=1`, 360, 740, ['--blink-settings=scriptEnabled=false']);
+    const noJsContext = await browser.newContext({
+      viewport: { width: 360, height: 740 },
+      javaScriptEnabled: false,
+      reducedMotion: 'reduce'
+    });
+    let noJsDom;
+    try {
+      const page = await noJsContext.newPage();
+      const response = await page.goto(`${base}?nojs=1`, { waitUntil: 'load', timeout: 30000 });
+      assert(response && response.status() === 200, `no-JS page returned ${response ? response.status() : 'no response'}`);
+      noJsDom = await page.content();
+    } finally {
+      await noJsContext.close();
+    }
     const noJs = {
       baseline: /id="noScript"/.test(noJsDom) && /This top-down golf game needs JavaScript/.test(noJsDom),
       killSwitch: /#mbmSplash,#app\{display:none!important\}/.test(noJsDom),
       noContract: !/<pre id="ag-contract-results">\s*\{/.test(noJsDom)
     };
-    browserRuns = { browser, runs, noJs };
+    browserRuns = { browser: 'Playwright Chromium', runs, noJs };
     return browserRuns;
   } finally {
+    if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));
   }
 }
