@@ -1,0 +1,45 @@
+name: Apply exact Apex Pool landing patch
+
+on:
+  push:
+    branches:
+      - codex/apexpool-land
+    paths:
+      - 'tools/apply_apexpool_landing.js'
+      - '.github/workflows/apexpool-land-prep.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/apexpool-land
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify supplied identity and apply only the two authorised edits
+        run: node tools/apply_apexpool_landing.js
+      - name: Print and constrain the game diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git diff -- apexpool/index.html
+          test "$(git diff --numstat -- apexpool/index.html)" = $'2\t2\tapexpool/index.html'
+          test "$(git diff --name-only)" = 'apexpool/index.html'
+      - name: Remove the one-shot landing machinery and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm tools/apply_apexpool_landing.js .github/workflows/apexpool-land-prep.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: raise Apex Pool controls to 44px'
+          git push origin HEAD:codex/apexpool-land
