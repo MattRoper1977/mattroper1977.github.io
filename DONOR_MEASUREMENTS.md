@@ -33,16 +33,17 @@ Branch-protection settings: **UNVERIFIED**. The available connector did not expo
 
 ## Apex Kick packaging donor
 
-Source: `MattRoper1977/mattroper1977.github.io@main:apexkick/index.html`, current blob `33c7f1a04d08de0681f833c65a9cf9eb5d2f776e`.
+Source: `MattRoper1977/mattroper1977.github.io@main:apexkick/index.html`.
 
 | Measurement | Command / method | Result |
 |---|---|---|
-| Total bytes | `wc -c apexkick/index.html` in the shipped CI measurement step | `160805` bytes. The current blob is byte-identical to the blob measured at site commit `99a6f19b80dd868682cb0e8a715cfb084e74f9f5`; CI re-measures rather than trusting the historical figure. |
+| Total bytes | `wc -c apexkick/index.html` in `MattRoper1977/mattroper1977.github.io#33` Actions run `30870878876` | **`162122` bytes.** This supersedes the earlier historical `160805` figure; the CI runner measured the PR merge ref against current `main`. |
 | Vendored dependency | source inspection | `vendor/three.min.js`. |
 | Shared script | source inspection | `../assets/mbm-profile.js`. |
 | Immediately before `</body>` | tail inspection | The closing inline game boot script: `if (document.readyState === 'complete' || document.readyState === 'interactive') setTimeout(boot, 0); else window.addEventListener('DOMContentLoaded', boot); })(); /* AK:GAME:END */ </script>`. |
 | HUD/loader script | source inspection | No shared HUD/loader script. Loading UI is internal markup/CSS; only `mbm-profile.js` and vendored Three.js are separate scripts. |
-| Contract check total | `grep` plus control-flow count on `tools/verify_apexkick.js` | **25 clean-run checks**: Kick Rating 5; unlucky marker 5; shipping contract 6; accessibility 7; offline 2. The failure-only diagnostic call inside the fuzz loop is not a passing check. |
+| Contract check total | control-flow count on `tools/verify_apexkick.js` | **25 checks**: Kick Rating 5; unlucky marker 5; shipping contract 6; accessibility 7; offline 2. The failure-only diagnostic call inside the fuzz loop is not a passing check. |
+| Current donor harness result | `node tools/verify_apexkick.js` in Actions run `30870878876` | **24 passed, 1 failed.** The current donor fails only `no-remote-resources`, which reports its absolute canonical/Open Graph URLs: `https://madebymatt.uk/apexkick/` and `https://madebymatt.uk/images/apexkick-hub.jpg`. This is recorded donor drift and does not gate Apex Pool. |
 | Storage literals | source inspection | `apexkick.v1`; `apexkick.muted`. Signed-in saves may pass the slot through `MBMProfile.slot()`, but the donor's own literals are exactly those two. |
 | Screen renderer | counted `screen(` call sites, excluding definition/comment | **7 rendered screen types**: title, awards, stadiums, squad, packs, pack opened, round result. Only title supplies `{ variant: 'title' }`; the other six use the base renderer. |
 | Reduced motion | source search for `prefers-reduced-motion` | Three functional CSS blocks (score/wind, loader, splash), one functional JS `matchMedia` block for FX, plus one explanatory comment. |
