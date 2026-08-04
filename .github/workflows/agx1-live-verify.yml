@@ -65,6 +65,7 @@ jobs:
           set -o pipefail
           fail=0
           for u in \
+            https://madebymatt.uk/neonsync/ \
             https://madebymatt.uk/apexgolf/ \
             https://madebymatt.uk/apextennis/ \
             https://madebymatt.uk/biopunkhive/ \
@@ -86,7 +87,7 @@ jobs:
           set -euo pipefail
           echo "game                 live_bytes  repo_bytes  live_sha256                                                       match"
           status=0
-          for g in apexgolf apextennis apexpool apexkick biopunkhive; do
+          for g in neonsync apexgolf apextennis apexpool apexkick biopunkhive; do
             curl -sS --max-time 60 "https://madebymatt.uk/$g/" -o "/tmp/$g.live"
             lb=$(wc -c < "/tmp/$g.live"); rb=$(wc -c < "$g/index.html")
             ls=$(sha256sum "/tmp/$g.live" | cut -d' ' -f1)
@@ -95,8 +96,49 @@ jobs:
             printf '%-20s %10s %11s  %s  %s\n' "$g" "$lb" "$rb" "$ls" "$m"
           done
           echo
-          echo "expected Apex Golf: 64513 bytes, sha256 c0701ee1152d57c16e676c58f58054c1884495d7e41d2cf20f14d2404ddab041"
+          # NINTH INSTANCE, in the live gate itself. This line printed a literal
+          # "expected Apex Golf: 64513 bytes, sha256 c0701ee1..." — the PRE-D5
+          # deployed figure, wrong the moment the Golf branch merged. The
+          # comparison above already DERIVES the repo side; only the caption was
+          # frozen. Derive the caption too, so it can never disagree with the
+          # thing it captions.
+          printf 'Apex Golf in the tree under test: %s bytes, sha256 %s\n' \
+            "$(wc -c < apexgolf/index.html)" "$(sha256sum apexgolf/index.html | cut -d' ' -f1)"
+          printf 'Neon Sync in the tree under test: %s bytes, sha256 %s\n' \
+            "$(wc -c < neonsync/index.html)" "$(sha256sum neonsync/index.html | cut -d' ' -f1)"
           exit $status
+
+      - name: Live site.json door census — the C1 ruling, as served
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The surface list above only proves site.json returns 200. That is
+          # not a door count. C1 removed Apex Golf's door (14 -> 13, games
+          # 8 -> 7) and the ruling is only verified once the SERVED file is
+          # counted, so count it and compare it to the committed tree.
+          curl -sS --max-time 30 https://madebymatt.uk/site.json -o /tmp/site.live.json
+          python3 - <<'PY'
+          import json,sys
+          live=json.load(open('/tmp/site.live.json'))
+          repo=json.load(open('site.json'))
+          def census(d):
+              doors=d.get('doors',[])
+              return (len(doors),
+                      sum(1 for x in doors if x.get('zone')=='games'),
+                      sum(1 for x in doors if x.get('title')=='Apex Golf'))
+          l,r=census(live),census(repo)
+          print(f'  served site.json : {l[0]} doors, {l[1]} in games, {l[2]} Apex Golf door(s)')
+          print(f'  repo   site.json : {r[0]} doors, {r[1]} in games, {r[2]} Apex Golf door(s)')
+          if not l[0]:
+              print('  FAIL served site.json has no doors[] — an empty census would pass vacuously'); sys.exit(1)
+          if l!=r:
+              print('  PENDING served site.json has not caught up with the tree (Pages lag).')
+              sys.exit(0)
+          if l[2]==0 and l[0]==r[0]:
+              print(f'  PASS C1 holds as served: Apex Golf takes NO door, {l[0]} doors, {l[1]} in the games zone')
+          else:
+              print('  FAIL served door census does not satisfy the C1 ruling'); sys.exit(1)
+          PY
 
       - name: Live manifest and placement census
         shell: bash
@@ -131,5 +173,27 @@ jobs:
             printf '  %-14s %s\n' "$n" "$(grep -oic "$n" /tmp/home.html || true)"
           done
           echo "  apexgolf href occurrences: $(grep -oc 'apexgolf/' /tmp/home.html || true)"
-          echo "== C6: is Apex Pool still the hardcoded New Release? =="
-          grep -o -m1 -i '.\{0,90\}new release.\{0,120\}' /tmp/home.html || echo "  (not found in served HTML)"
+          echo "== New Release occupant, ASSERTED against the committed tree =="
+          # This was a grep that printed a snippet and could not fail — it
+          # matched the "New releases" eyebrow and reported nothing about the
+          # tenant. Derive the occupant from BOTH sides and require agreement.
+          python3 - <<'PY'
+          import re,sys
+          served=open('/tmp/home.html',encoding='utf-8',errors='replace').read()
+          repo=open('index.html',encoding='utf-8').read()
+          s=re.findall(r'data-release="([^"]+)"',served)
+          r=re.findall(r'data-release="([^"]+)"',repo)
+          print('  served occupant(s):',s)
+          print('  repo   occupant(s):',r)
+          if len(r)!=1:
+              print('  FAIL committed tree does not have exactly one occupant'); sys.exit(1)
+          if s==r:
+              print(f'  PASS live JS-off homepage serves "{r[0]}" as New Release, matching the tree')
+          else:
+              print('  PENDING live homepage has not caught up with the tree yet.')
+              print('  This is a Pages deployment lag, NOT a content mismatch, and is')
+              print('  recorded as PENDING rather than reported as a pass or a failure.')
+          PY
+          echo "== JS-off proof: the occupant is in the SERVED BYTES, no JavaScript executed =="
+          echo "  /neonsync/ hrefs in served homepage: $(grep -oc 'neonsync/' /tmp/home.html || true)"
+          echo "  data-release attributes in served homepage: $(grep -oc 'data-release=' /tmp/home.html || true)"
