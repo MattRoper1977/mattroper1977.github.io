@@ -1,0 +1,98 @@
+name: Fix Apex Golf browser harness launcher
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/apexgolf-harness-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+
+      - name: Replace the blocking Chrome launch with a bounded asynchronous child
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tools/verify_apexgolf.js')
+          source = path.read_text()
+          old_import = "const { spawnSync } = require('child_process');"
+          if source.count(old_import) != 1:
+              raise SystemExit('child_process import drifted')
+          source = source.replace(old_import, "const { spawn, spawnSync } = require('child_process');")
+          start = source.index('function runChrome(browser, url, width, height, extra = []) {')
+          end = source.index('async function browserContracts()', start)
+          replacement = '''function runChrome(browser, url, width, height, extra = []) {
+            const args = [
+              '--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage',
+              '--disable-background-networking', '--disable-component-update', '--disable-default-apps',
+              '--disable-extensions', '--disable-sync', '--no-first-run', '--hide-scrollbars',
+              `--window-size=${width},${height}`, '--run-all-compositor-stages-before-draw',
+              '--virtual-time-budget=14000', ...extra, '--dump-dom', url
+            ];
+            return new Promise((resolve, reject) => {
+              const child = spawn(browser, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+              let stdout = '';
+              let stderr = '';
+              let settled = false;
+              const limit = 8 * 1024 * 1024;
+              const finish = (error, value) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timer);
+                if (error) reject(error); else resolve(value);
+              };
+              const timer = setTimeout(() => {
+                child.kill('SIGKILL');
+                finish(new Error(`browser launch timed out after 45s; stderr: ${stderr.slice(-1200)}`));
+              }, 45000);
+              child.on('error', (error) => finish(new Error(`browser launch failed: ${error.message}`)));
+              child.stdout.on('data', (chunk) => {
+                stdout += chunk;
+                if (Buffer.byteLength(stdout, 'utf8') > limit) {
+                  child.kill('SIGKILL');
+                  finish(new Error('browser DOM exceeded the 8 MiB contract limit'));
+                }
+              });
+              child.stderr.on('data', (chunk) => {
+                stderr += chunk;
+                if (Buffer.byteLength(stderr, 'utf8') > limit) stderr = stderr.slice(-limit);
+              });
+              child.on('close', (code, signal) => {
+                if (code !== 0) {
+                  finish(new Error(`browser exited ${code === null ? signal : code}; stderr: ${stderr.slice(-1200)}`));
+                  return;
+                }
+                finish(null, stdout);
+              });
+            });
+          }
+          '''
+          source = source[:start] + replacement + source[end:]
+          old_loop = 'const dom = runChrome(browser, `${base}?contract=1&viewport=${c.name}`, c.w, c.h, c.extra);'
+          old_nojs = "const noJsDom = runChrome(browser, `${base}?nojs=1`, 360, 740, ['--blink-settings=scriptEnabled=false']);"
+          if source.count(old_loop) != 1 or source.count(old_nojs) != 1:
+              raise SystemExit('browser call sites drifted')
+          source = source.replace(old_loop, 'const dom = await runChrome(browser, `${base}?contract=1&viewport=${c.name}`, c.w, c.h, c.extra);')
+          source = source.replace(old_nojs, "const noJsDom = await runChrome(browser, `${base}?nojs=1`, 360, 740, ['--blink-settings=scriptEnabled=false']);")
+          path.write_text(source)
+          PY
+          node --check tools/verify_apexgolf.js
+          node tools/verify_apexgolf.js --no-browser
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/verify_apexgolf.js
+          git commit -m "fix: let Chrome reach the local Golf contract server"
+          git push origin "HEAD:${{ github.head_ref }}"
