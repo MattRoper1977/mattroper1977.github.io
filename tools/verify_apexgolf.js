@@ -158,74 +158,76 @@ let occlusionFixtureFailed = false;
 async function runOcclusionFixture() {
   let chromium;
   try { ({ chromium } = require('playwright')); } catch (e) { return false; }
+  // D5: the limb now asserts at EVERY breakpoint, so it must be proven able to
+  // fail at every breakpoint. A fixture that only bites on a phone would leave
+  // the tablet and desktop limbs unproven — exactly the vacuity this gate
+  // exists to prevent.
+  const VPS = [{ n: 'phone', w: 360, h: 740 }, { n: 'tablet', w: 768, h: 900 }, { n: 'desktop', w: 1280, h: 800 }];
   let browser;
   try {
     browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({ viewport: { width: 360, height: 740 } });
-    // Registered on the CONTEXT, not the page: a page-scoped init script does
-    // not apply to the second page opened for the self-check, and the first
-    // version of this self-check reported applied=false for exactly that
-    // reason while the fixture was in fact working.
-    // Inject on DOMContentLoaded, not at document-start: appending to
-    // documentElement before <head> exists loses the node, and the first
-    // version of this fixture did exactly that -- it injected nothing, the
-    // limb reported 9/9, and the fixture would have "proved" non-vacuity
-    // while testing nothing at all. The init script registers before the
-    // game's own boot listener, so this style lands first.
-    await context.addInitScript(() => {
-      const inject = () => {
-        const s = document.createElement('style');
-        s.id = 'ag-occlusion-fixture';
-        s.textContent = '.screen--read{position:absolute!important;inset:0!important;max-height:none!important;margin-top:0!important;width:auto!important}';
-        document.head.appendChild(s);
-      };
-      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', inject, { once: true });
-      else inject();
-    });
-    const page = await context.newPage();
-    await page.goto(`file://${GAME_FILE}?contract=1`, { waitUntil: 'load', timeout: 30000 });
-    await page.waitForFunction(() => window.__AG_CONTRACT && Array.isArray(window.__AG_CONTRACT.rows), null, { timeout: 30000 });
-    const data = await page.evaluate(() => window.__AG_CONTRACT);
-    const r = (data.rows || []).find(x => x.name === 'read-view-hole-unoccluded');
-    const rejected = !!r && r.pass === false;
+    let allRejected = true;
+    for (const vp of VPS) {
+      const context = await browser.newContext({ viewport: { width: vp.w, height: vp.h } });
+      // Registered on the CONTEXT, not the page, and injected on
+      // DOMContentLoaded rather than at document-start: both were real bugs in
+      // earlier versions of this fixture, one of which made it inject nothing
+      // and "prove" non-vacuity while testing nothing at all.
+      await context.addInitScript(() => {
+        const inject = () => {
+          const s = document.createElement('style');
+          s.id = 'ag-occlusion-fixture';
+          s.textContent = '.screen--read{position:absolute!important;inset:0!important;max-height:none!important;margin-top:0!important;margin-left:0!important;width:auto!important}';
+          document.head.appendChild(s);
+        };
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', inject, { once: true });
+        else inject();
+      });
+      const page = await context.newPage();
+      await page.goto(`file://${GAME_FILE}?contract=1`, { waitUntil: 'load', timeout: 30000 });
+      await page.waitForFunction(() => window.__AG_CONTRACT && Array.isArray(window.__AG_CONTRACT.rows), null, { timeout: 30000 });
+      const data = await page.evaluate(() => window.__AG_CONTRACT);
+      const r = (data.rows || []).find(x => x.name === 'read-view-hole-unoccluded');
+      const rejected = !!r && r.pass === false;
 
-    // SELF-CHECK: prove the fixture actually occluded something. A fixture that
-    // silently fails to bite is worse than no fixture, because it manufactures
-    // confidence. Re-load clean, reach the read view, and measure that the
-    // panel really does cover the canvas centre.
-    const page2 = await context.newPage();
-    await page2.goto(`file://${GAME_FILE}`, { waitUntil: 'load', timeout: 30000 });
-    await page2.waitForTimeout(2500);
-    await page2.locator('text=/Read hole/').first().click({ timeout: 10000 });
-    await page2.waitForTimeout(800);
-    const bite = await page2.evaluate(() => {
-      const el = document.querySelector('.screen--read');
-      const cv = document.getElementById('courseCanvas');
-      if (!el || !cv) return { applied: false, why: 'no panel or canvas' };
-      const cs = getComputedStyle(el), pr = el.getBoundingClientRect(), cr = cv.getBoundingClientRect();
-      const cx = Math.round(cr.left + cr.width / 2), cy = Math.round(cr.top + cr.height / 2);
-      const top = document.elementFromPoint(cx, cy);
-      // The discriminator is whether the override actually took. "Panel covers
-      // the canvas centre" is NOT a discriminator: the fixed, docked panel
-      // covers the centre too, because the hole sits in the upper band.
-      const coversWholeCanvas = pr.top <= cr.top + 2 && pr.bottom >= cr.bottom - 2;
-      return {
-        applied: cs.position === 'absolute' && !!document.getElementById('ag-occlusion-fixture'),
-        position: cs.position,
-        coversWholeCanvas,
-        topAtCentre: top ? (top.id || top.className || top.tagName) : 'none',
-        panel: [Math.round(pr.width), Math.round(pr.height)],
-        canvas: [Math.round(cr.width), Math.round(cr.height)],
-      };
-    });
-    await page2.close();
-    console.log(`      fixture: occluding panel at 360x740 -> limb pass=${r ? r.pass : 'MISSING'} (${r ? r.detail : ''})`);
-    console.log(`      fixture self-check: style applied=${bite.applied} position=${bite.position} panel ${bite.panel} covers whole canvas ${bite.canvas} = ${bite.coversWholeCanvas}`);
-    if (!bite.applied || !bite.coversWholeCanvas) {
-      console.error('      FIXTURE DID NOT BITE — it occluded nothing, so it proves nothing.');
-      return false;
+      // SELF-CHECK: prove the fixture actually occluded something at THIS
+      // viewport. A fixture that silently fails to bite is worse than none,
+      // because it manufactures confidence.
+      const page2 = await context.newPage();
+      await page2.goto(`file://${GAME_FILE}`, { waitUntil: 'load', timeout: 30000 });
+      await page2.waitForTimeout(2500);
+      await page2.locator('text=/Read hole/').first().click({ timeout: 10000 });
+      await page2.waitForTimeout(800);
+      const bite = await page2.evaluate(() => {
+        const el = document.querySelector('.screen--read');
+        const cv = document.getElementById('courseCanvas');
+        if (!el || !cv) return { applied: false };
+        const cs = getComputedStyle(el), pr = el.getBoundingClientRect(), cr = cv.getBoundingClientRect();
+        // The discriminator is whether the override took AND the panel spans
+        // the whole canvas. "Covers the centre" is not a discriminator: a
+        // correctly docked panel covers the centre too.
+        return {
+          applied: cs.position === 'absolute' && !!document.getElementById('ag-occlusion-fixture'),
+          position: cs.position,
+          coversWholeCanvas: pr.top <= cr.top + 2 && pr.bottom >= cr.bottom - 2 && pr.left <= cr.left + 2 && pr.right >= cr.right - 2,
+          panel: [Math.round(pr.width), Math.round(pr.height)],
+          canvas: [Math.round(cr.width), Math.round(cr.height)],
+        };
+      });
+      await page2.close();
+      await context.close();
+
+      console.log(`      fixture ${vp.n} ${vp.w}x${vp.h}: limb pass=${r ? r.pass : 'MISSING'} (${r ? r.detail : ''})`);
+      console.log(`        self-check: applied=${bite.applied} position=${bite.position} panel ${bite.panel} covers canvas ${bite.canvas} = ${bite.coversWholeCanvas}`);
+      if (!bite.applied || !bite.coversWholeCanvas) {
+        console.error(`      FIXTURE DID NOT BITE at ${vp.n} — it occluded nothing, so it proves nothing.`);
+        allRejected = false;
+      } else if (!rejected) {
+        console.error(`      LIMB DID NOT FAIL at ${vp.n} under deliberate occlusion — it is blind there.`);
+        allRejected = false;
+      }
     }
-    return rejected;
+    return allRejected;
   } catch (e) {
     console.error(`      fixture error: ${e.message}`);
     return false;
@@ -606,10 +608,10 @@ async function finish() {
       // points visible at 360, 390 and 400 px -- not the tee, not the cup.
       // Asserted at <=400px, which is the width the ruling scoped; the
       // measurement is reported at every width in the row's detail.
-      requireRows(['read-view-hole-unoccluded'], run => run.config.w <= 400);
-      const narrow = browserRuns.runs.filter(r => r.config.w <= 400)
+      requireRows(['read-view-hole-unoccluded']);   // D5: every breakpoint, not just <=400px
+      const narrow = browserRuns.runs
         .map(r => `${r.config.name}:${(row(r, 'read-view-hole-unoccluded') || {}).detail}`);
-      assert(narrow.length > 0, 'no <=400px run exists, so the unoccluded limb asserted nothing');
+      assert(browserRuns.runs.length >= 3, 'too few viewports for a per-breakpoint claim');
       assert(occlusionFixtureFailed, 'the unoccluded limb was not proven able to fail');
       return `${browserRuns.runs.length} rendered runs; ${narrow.join(' | ')}; occluding fixture rejected`;
     }, { browser: true });
