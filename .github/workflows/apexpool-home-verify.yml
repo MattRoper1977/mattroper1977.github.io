@@ -1,0 +1,113 @@
+name: Apex Pool homepage publication verify
+
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'site.json'
+      - 'assets/cards/off-brand-door.svg'
+      - 'tools/apply_apexpool_home.js'
+      - 'tools/verify_apexpool_home.py'
+      - 'tools/verify_apexpool_home_browser.js'
+      - '.github/workflows/apexpool-home-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Entry condition — Part A is present
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f apexpool/index.html
+          test "$(sha256sum apexpool/index.html | awk '{print $1}')" = "4de1383f8ee029db438258bb239e4e7f3b7ffd9e603706a9fd145fd397af87ad"
+
+      - name: Static, structure and idempotency gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/apexpool-part-c
+          python3 tools/verify_apexpool_home.py | tee artifacts/apexpool-part-c/static.log
+          before_index=$(sha256sum index.html | awk '{print $1}')
+          before_site=$(sha256sum site.json | awk '{print $1}')
+          node tools/apply_apexpool_home.js | tee artifacts/apexpool-part-c/idempotency.log
+          test "$before_index" = "$(sha256sum index.html | awk '{print $1}')"
+          test "$before_site" = "$(sha256sum site.json | awk '{print $1}')"
+
+      - name: Demonstrate static gate failure modes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/apexpool-c
+          cp index.html /tmp/apexpool-c/index.html
+          cp site.json /tmp/apexpool-c/site.json
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/apexpool-c/index.html'); s=p.read_text()
+          s=s.replace('data-sport-game="Apex Pool"','data-sport-game="Pool Duplicate"',1)
+          p.write_text(s)
+          PY
+          if python3 tools/verify_apexpool_home.py /tmp/apexpool-c/index.html /tmp/apexpool-c/site.json; then
+            echo 'validator accepted a missing Apex Pool Sports component' >&2; exit 1
+          fi
+
+          cp index.html /tmp/apexpool-c/index.html
+          cp site.json /tmp/apexpool-c/site.json
+          python3 - <<'PY'
+          import json
+          p='/tmp/apexpool-c/site.json'; d=json.load(open(p));
+          d['doors']=[x for x in d['doors'] if x['title']!='Off-Brand']
+          open(p,'w').write(json.dumps(d,ensure_ascii=False,indent=2)+'\n')
+          PY
+          if python3 tools/verify_apexpool_home.py /tmp/apexpool-c/index.html /tmp/apexpool-c/site.json; then
+            echo 'validator accepted the outgoing occupant disappearing' >&2; exit 1
+          fi
+          echo 'PASS: static gates rejected missing Sports membership and zero-surface demotion' | tee artifacts/apexpool-part-c/non-vacuity.log
+
+      - name: Verify held PR 25 remains untouched
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" -H 'Accept: application/vnd.github+json' \
+            https://api.github.com/repos/MattRoper1977/mattroper1977.github.io/pulls/25 > /tmp/pr25.json
+          python3 - <<'PY' | tee artifacts/apexpool-part-c/pr25.log
+          import json
+          p=json.load(open('/tmp/pr25.json'))
+          assert p['state']=='open', p['state']
+          assert p['merged_at'] is None, p['merged_at']
+          assert p['head']['sha']=='7c202790115ca5de5f71babb570b806e5e57a4aa', p['head']['sha']
+          print('MattRoper1977/mattroper1977.github.io#25 open, unmerged, head 7c202790115ca5de5f71babb570b806e5e57a4aa')
+          PY
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Serve and run JavaScript-on/off render gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > artifacts/apexpool-part-c/server.log 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          APEXPOOL_BASE_URL=http://127.0.0.1:4173 APEXPOOL_ARTIFACT_DIR=artifacts/apexpool-part-c \
+            node tools/verify_apexpool_home_browser.js | tee artifacts/apexpool-part-c/browser.log
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apexpool-homepage-${{ github.run_id }}
+          path: artifacts/apexpool-part-c
+          if-no-files-found: error
+          retention-days: 30

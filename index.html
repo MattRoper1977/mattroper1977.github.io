@@ -62,6 +62,20 @@ body[data-theme="dark"] a.dx-prod:focus-visible{outline-color:var(--dx-amber)}
 .dx-chip.on{background:var(--dx-navy);color:#FFF6E8;border-color:var(--dx-navy)}
 .dx-chip.on:hover{border-color:var(--dx-navy);filter:brightness(1.12)}
 .dx-count{text-align:center;color:var(--dx-mut);font-size:.82rem;margin:1rem 0 0}
+/* ---------- Sports catalogue: hardcoded no-JS baseline ---------- */
+.dx-sports{background:var(--dx-lite);padding:.2rem 0 2.6rem}
+.dx-sports .dx-sports-lede{max-width:42rem;margin:.75rem auto 1rem;text-align:center;color:var(--dx-mut);font-size:.9rem;line-height:1.5}
+.dx-sports-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;max-width:760px;margin:0 auto}
+a.dx-sport{--sport:var(--dx-amber);display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.8rem;min-height:92px;padding:.9rem 1rem;background:var(--dx-card);border:1.5px solid var(--dx-line);border-left:5px solid var(--sport);border-radius:14px;text-decoration:none;color:var(--dx-ink);box-shadow:0 3px 10px #161D3D0d;transition:transform .18s ease,border-color .18s ease}
+a.dx-sport:hover{transform:translateY(-2px);border-color:var(--sport)}
+a.dx-sport:focus-visible{outline:3px solid var(--dx-amber);outline-offset:2px}
+.dx-sport-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--dx-lite);border:1px solid var(--sport);font-size:1.55rem}
+.dx-sport-copy b{display:block;color:var(--dx-title);font-size:1rem;line-height:1.2}
+.dx-sport-copy span{display:block;color:var(--dx-mut);font-size:.76rem;line-height:1.4;margin-top:.2rem}
+.dx-sport-go{font-size:.72rem;font-weight:800;white-space:nowrap;color:var(--dx-eyeb)}
+@media(max-width:620px){.dx-sports-grid{grid-template-columns:1fr}.dx-sport-go{justify-self:end}}
+@media(prefers-reduced-motion:reduce){a.dx-sport{transition:none}a.dx-sport:hover{transform:none}}
+
 /* ---------- latest drops rail ---------- */
 .dx-drops{background:var(--dx-cream);padding:.6rem 0 2.4rem}
 .dx-upd{background:var(--dx-lite);padding:.4rem 0 2.6rem}
@@ -92,7 +106,7 @@ a.dx-drop:hover{transform:translateY(-2px);border-color:var(--dx-ambd)}
 .dx-cards{display:flex;flex-direction:column;gap:3rem}
 .dx-zone{display:flex;flex-direction:column;gap:1rem}
 .dx-duo{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-.dx-duo.dx-trio>.dx-prod:nth-child(3){grid-column:1/-1}
+.dx-duo.dx-trio>.dx-prod:nth-child(3):last-child{grid-column:1/-1}
 @media (min-width:720px){.dx-duo.dx-trio{grid-template-columns:repeat(3,1fr)}.dx-duo.dx-trio>.dx-prod:nth-child(3){grid-column:auto}}
 a.dx-prod{background:var(--dx-card);border:1.5px solid var(--dx-line);border-radius:var(--dx-r2);padding:1.1rem 1rem 1rem;text-decoration:none;color:var(--dx-ink);display:flex;flex-direction:column;align-items:center;gap:.5rem;box-shadow:0 3px 12px #161D3D0f;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
 a.dx-prod:hover{transform:translateY(-3px);box-shadow:0 10px 22px #161D3D1a;border-color:var(--dx-ambd)}
@@ -270,16 +284,16 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 
 <section class="dx-upd" id="newrelease"><div class="dx-wrap">
 <h2 class="dx-eyebrow">New releases</h2>
-<div class="dx-updbox" style="border-left:4px solid #A78BFA">
-<p class="dx-when">July 2026 &middot; Games Arcade</p>
-<h3>Off-Brand &mdash; a whodunnit in the brand workshop</h3>
+<div class="dx-updbox" data-release="Apex Pool" style="border-left:4px solid #F2A24A">
+<p class="dx-when">August 2026 &middot; Games Arcade</p>
+<h3>Apex Pool &mdash; call the leave, then prove it</h3>
 <ul class="dx-updlist">
-<li><span class="dx-dot"></span><span><b>One of the shapes is a Glitch in disguise.</b> Six brand shapes work the workshop; you read the room through movement trails, a scene log and Roll Call statements to work out who doesn't fit.</span></li>
-<li><span class="dx-dot"></span><span><b>Nobody is ever voted out.</b> No one is removed and everything is reversible &mdash; a calm, offline, reduced-motion-aware take on social deduction, with no sound and nothing uploaded.</span></li>
-<li><span class="dx-dot"></span><span><b>Designed for my sweet, adorable niece Clara.</b> Made with love, and free to play like everything else here.</span></li>
+<li><span class="dx-dot"></span><span><b>Call the cue ball's leave, then prove you can read the table.</b> Position play is part of the shot, not an afterthought.</span></li>
+<li><span class="dx-dot"></span><span><b>Play complete offline 8-ball with genuine spin.</b> AI opponents and trick shots give you more than one way to solve the table.</span></li>
+<li><span class="dx-dot"></span><span><b>Get an honest Leave Rating.</b> The cue-ball finish stays visible alongside the result.</span></li>
 </ul>
 <div class="dx-updacts">
-<a class="dx-chip dx-main" href="Lessons/Games/Off_Brand.html">Play Off-Brand &rarr;</a>
+<a class="dx-chip dx-main" href="/apexpool/">Play Apex Pool &rarr;</a>
 <a class="dx-chip" href="games/">Browse the Arcade</a>
 </div>
 </div>
@@ -297,6 +311,21 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 </div>
 </div>
 </div></section>
+
+<!-- apexpool-home-2026-08-04 START -->
+<section class="dx-sports" id="homeSports"><div class="dx-wrap">
+<h2 class="dx-eyebrow">Sports</h2>
+<p class="dx-sports-lede">Two games about reading a line, controlling the finish and making the next decision count.</p>
+<div class="dx-sports-grid" aria-label="Sports games">
+<a class="dx-sport" data-sport-game="Apex Kick" href="/apexkick/" style="--sport:#2F8F6B">
+<span class="dx-sport-icon" aria-hidden="true">⚽</span><span class="dx-sport-copy"><b>Apex Kick</b><span>Bend the free kick around the wall; card stats set the physics, never the dice.</span></span><span class="dx-sport-go">Play &rarr;</span>
+</a>
+<a class="dx-sport" data-sport-game="Apex Pool" href="/apexpool/" style="--sport:#F2A24A">
+<span class="dx-sport-icon" aria-hidden="true">🎱</span><span class="dx-sport-copy"><b>Apex Pool</b><span>Call the cue ball's leave, apply genuine spin and make the table prove you right.</span></span><span class="dx-sport-go">Play &rarr;</span>
+</a>
+</div>
+</div></section>
+<!-- apexpool-home-2026-08-04 END -->
 
 <section class="dx-drops" id="latest" hidden><div class="dx-wrap">
 <h2 class="dx-eyebrow">Latest drops</h2>
