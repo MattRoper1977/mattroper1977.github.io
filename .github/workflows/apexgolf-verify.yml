@@ -1,0 +1,45 @@
+name: Apex Golf gates
+
+on:
+  pull_request:
+    paths:
+      - 'apexgolf/index.html'
+      - 'tools/verify_apexgolf.js'
+      - '.github/workflows/apexgolf-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apexgolf-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: 18 contract gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the proposed tree
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install a real Chrome binary
+        id: chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Measure the read-only Apex Kick donor harness
+        run: node tools/verify_apexkick.js
+
+      - name: Run all Apex Golf gates
+        env:
+          AG_REQUIRE_BROWSER: '1'
+          AG_BROWSER: ${{ steps.chrome.outputs.chrome-path }}
+        run: node tools/verify_apexgolf.js
