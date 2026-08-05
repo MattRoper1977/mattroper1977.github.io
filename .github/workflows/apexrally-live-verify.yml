@@ -1,0 +1,237 @@
+name: Apex Rally live verification
+
+# Names the SERVED hash for the landed game, and counts the Sports cards on the
+# pages as actually served.
+#
+# The agent container cannot reach the custom domain — the proxy answers 403 on
+# CONNECT and madebymatt.uk returns 000 from there. CI is the only channel that
+# can fetch a live path, which is why this exists as a workflow rather than a
+# container step.
+#
+# READ-ONLY against production: it fetches, hashes and counts. It writes nothing
+# to any surface. This branch is verification-only and is closed unmerged by
+# design.
+#
+# Pages lag is reported as PENDING, never as a pass. A served copy that has not
+# caught up with the tree is a deployment timing fact, not a content match, and
+# saying so is the whole point of the gate.
+#
+# A 200 on the homepage is not a census. The card count is taken from the served
+# bytes, and for the JS-driven arcade rail from a real browser against the live
+# origin.
+
+on:
+  push:
+    branches:
+      - 'codex/apexrally-live-verification'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: read
+
+jobs:
+  live:
+    name: Fetch /apexrally/ as served and compare to the committed tree
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out main (the deployed tree)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Record the SHA under test
+        id: sha
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha=$(git rev-parse HEAD)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "main is $sha"
+
+      - name: GitHub Pages build status
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -o pipefail
+          curl -sS -H "Authorization: Bearer $GH_TOKEN" \
+               -H "Accept: application/vnd.github+json" \
+               "https://api.github.com/repos/${{ github.repository }}/pages/builds/latest" \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin); print("status ",d.get("status")); print("commit ",d.get("commit")); print("updated",d.get("updated_at")); print("error  ",d.get("error"))' \
+            || echo "Pages API unavailable to this token — recorded, not faked."
+
+      - name: HTTP status for the new surface
+        shell: bash
+        run: |
+          set -o pipefail
+          fail=0
+          for u in https://madebymatt.uk/apexrally/ https://madebymatt.uk/ https://madebymatt.uk/games/ https://madebymatt.uk/sitemap.xml ; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 40 "$u" || echo 000)
+            printf '%-44s %s\n' "$u" "$code"
+            [ "$code" = "200" ] || fail=1
+          done
+          exit $fail
+
+      - name: Served hash vs committed vs delivered
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          # DELIVERED is an immutable historical fact, so it is the one pinned
+          # value here. Everything else is derived at run time.
+          DELIVERED=c34226418ff016f1fae62ffadf14e15053935550d65e311e493d48c7b84cef04
+
+          curl -fsSL --max-time 60 https://madebymatt.uk/apexrally/ -o artifacts/served.html
+          served_sha=$(sha256sum artifacts/served.html | cut -d' ' -f1)
+          served_bytes=$(wc -c < artifacts/served.html)
+
+          committed_sha=$(sha256sum apexrally/index.html | cut -d' ' -f1)
+          committed_bytes=$(wc -c < apexrally/index.html)
+
+          # raw at the SHA under test — the deployed tree's own bytes
+          curl -fsSL --max-time 60 \
+            "https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.sha.outputs.sha }}/apexrally/index.html" \
+            -o artifacts/raw.html
+          raw_sha=$(sha256sum artifacts/raw.html | cut -d' ' -f1)
+
+          # reverse the two permitted edits and hash back to the delivered file
+          python3 - <<'PY'
+          import hashlib, pathlib
+          src = pathlib.Path('artifacts/served.html').read_text(encoding='utf-8')
+          for line in ('<link rel="canonical" href="https://madebymatt.uk/apexrally/">\n',
+                       '<meta property="og:url" content="https://madebymatt.uk/apexrally/">\n',
+                       '<meta property="og:title" content="Apex Rally — Read the Court">\n'):
+              src = src.replace(line, '')
+          src = src.replace("'mbm_apexrally_v1'", "'apexRally.v1'")
+          raw = src.encode('utf-8')
+          pathlib.Path('artifacts/served_reversed.sha256').write_text(
+              hashlib.sha256(raw).hexdigest() + ' ' + str(len(raw)) + '\n')
+          PY
+          reversed_line=$(cat artifacts/served_reversed.sha256)
+          reversed_sha=${reversed_line%% *}
+          reversed_bytes=${reversed_line##* }
+
+          echo "delivered  sha256 $DELIVERED  50832 bytes"
+          echo "committed  sha256 $committed_sha  $committed_bytes bytes"
+          echo "raw@SHA    sha256 $raw_sha"
+          echo "SERVED     sha256 $served_sha  $served_bytes bytes"
+          echo "served with E1+E2 reversed: sha256 $reversed_sha  $reversed_bytes bytes"
+
+          if [ "$served_sha" != "$raw_sha" ]; then
+            echo "PENDING: served bytes do not match raw at ${{ steps.sha.outputs.sha }} — Pages has not caught up. Not a pass."
+            exit 1
+          fi
+          test "$served_sha" = "$committed_sha"
+          echo "MATCH: served == committed == raw at the SHA under test"
+          test "$reversed_sha" = "$DELIVERED"
+          echo "MATCH: reversing E1+E2 on the SERVED bytes reproduces the delivered artifact exactly"
+
+      - name: Sports card census on the SERVED homepage (no JavaScript involved)
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --max-time 60 https://madebymatt.uk/ -o artifacts/home.html
+          # These cards are hardcoded markup, so counting them in the served
+          # BYTES is itself the no-JS proof: curl executes nothing.
+          cards=$(grep -o 'data-sport-game="[^"]*"' artifacts/home.html | sed 's/.*="//;s/"//' | sort)
+          n=$(printf '%s\n' "$cards" | grep -c . || true)
+          echo "served homepage Sports cards ($n), counted in raw bytes with no JS engine present:"
+          printf '  %s\n' $cards
+          rally=$(grep -c 'data-sport-game="Apex Rally"' artifacts/home.html || true)
+          echo "Apex Rally cards: $rally"
+          test "$rally" -eq 1
+          test "$n" -ge 5
+          # the ruled New Release occupants must be untouched
+          echo "served New Release occupants:"
+          grep -o 'data-release="[^"]*"' artifacts/home.html | sed 's/.*="//;s/"//' | sed 's/^/  /'
+          ! grep -q 'data-release="Apex Rally"' artifacts/home.html
+          echo "no New Release takeover on the served page"
+
+      - name: Served manifest and sitemap
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --max-time 60 https://madebymatt.uk/Games/games.json -o artifacts/games.json
+          python3 - <<'PY'
+          import json
+          g = json.load(open('artifacts/games.json'))['games']
+          rail = [x['title'] for x in g if x.get('collection') == 'Sports']
+          print('served manifest entries:', len(g))
+          print('served art:', sum(1 for x in g if x.get('art')), '/', len(g))
+          print('served Sports rail (%d): %s' % (len(rail), ', '.join(rail)))
+          new = [x['title'] for x in g if x.get('desc','').startswith('NEW · ')]
+          print('served NEW · holder(s):', ', '.join(new) or 'none')
+          assert 'Apex Rally' in rail, 'Apex Rally is not on the served Sports rail'
+          assert len(rail) >= 5, 'served rail has %d members' % len(rail)
+          PY
+          curl -fsSL --max-time 60 https://madebymatt.uk/sitemap.xml -o artifacts/sitemap.xml
+          n=$(grep -c '<loc>https://madebymatt.uk/apexrally/</loc>' artifacts/sitemap.xml || true)
+          echo "served sitemap /apexrally/ entries: $n"
+          test "$n" -eq 1
+
+      - name: Install Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Rendered census on the SERVED pages
+        shell: bash
+        run: |
+          node -e '
+            const { chromium } = require("playwright");
+            const fs = require("fs");
+            (async () => {
+              const b = await chromium.launch();
+              let bad = 0;
+              // arcade rail is manifest-driven, so it needs a real browser
+              const p = await b.newPage({ viewport: { width: 1200, height: 900 } });
+              await p.goto("https://madebymatt.uk/games/", { waitUntil: "load", timeout: 60000 });
+              await p.waitForTimeout(4000);
+              const rail = await p.$$eval("#sportsRail .gcard", els => els.map(e => ({
+                title: e.querySelector("h4 > span").textContent,
+                w: Math.round(e.getBoundingClientRect().width),
+                h: Math.round(e.getBoundingClientRect().height),
+                art: (() => { const i = e.querySelector("img.ga"); return i ? (i.complete && i.naturalWidth > 0) : null; })()
+              })));
+              console.log("SERVED arcade Sports rail (" + rail.length + "):");
+              rail.forEach(r => console.log("  " + r.title.padEnd(14) + " " + r.w + "x" + r.h + "  art loaded: " + r.art));
+              if (!rail.some(r => r.title === "Apex Rally")) { console.error("Apex Rally missing from the served rail"); bad = 1; }
+              if (rail.length < 5) { console.error("served rail has " + rail.length + " cards"); bad = 1; }
+              if (rail.some(r => r.art === false)) { console.error("served rail card art failed to load"); bad = 1; }
+              if (rail.some(r => r.w < 120 || r.h < 44)) { console.error("a served rail card renders below a usable size"); bad = 1; }
+              await p.close();
+
+              // homepage cards at three viewports, JS DISABLED, on the served page
+              for (const vp of [[360,720],[768,1024],[1200,900]]) {
+                const c = await b.newContext({ viewport: { width: vp[0], height: vp[1] }, javaScriptEnabled: false });
+                const q = await c.newPage();
+                await q.goto("https://madebymatt.uk/", { waitUntil: "load", timeout: 60000 });
+                const cards = await q.$$eval(".dx-sports-grid a.dx-sport", els => els.map(e => {
+                  const r = e.getBoundingClientRect();
+                  return { t: e.getAttribute("data-sport-game"), w: Math.round(r.width), h: Math.round(r.height), right: Math.round(r.right) };
+                }));
+                const ov = await q.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+                console.log("SERVED homepage @" + vp[0] + " (JS off): " + cards.length + " cards, overflow " + ov + "px");
+                cards.forEach(c2 => console.log("    " + String(c2.t).padEnd(14) + " " + c2.w + "x" + c2.h));
+                if (cards.length < 5) { console.error("served homepage has " + cards.length + " cards at " + vp[0]); bad = 1; }
+                if (!cards.some(c2 => c2.t === "Apex Rally")) { console.error("Apex Rally missing at " + vp[0]); bad = 1; }
+                if (ov > 0) { console.error("horizontal overflow " + ov + "px at " + vp[0]); bad = 1; }
+                if (cards.some(c2 => c2.w < 120 || c2.h < 44)) { console.error("a served card renders below a usable size at " + vp[0]); bad = 1; }
+                if (cards.some(c2 => c2.right > vp[0] + 1)) { console.error("a served card extends past the viewport at " + vp[0]); bad = 1; }
+                await c.close();
+              }
+              await b.close();
+              process.exit(bad);
+            })().catch(e => { console.error(e); process.exit(1); });
+          '
+
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apexrally-live-${{ github.run_id }}
+          path: artifacts
+          if-no-files-found: warn
+          retention-days: 30
