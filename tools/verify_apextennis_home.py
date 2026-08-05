@@ -60,6 +60,19 @@ dupes=sorted({o for o in occupants if occupants.count(o)>1})
 # gate can read it rather than leaving it as prose. What must hold: a ruled box
 # may carry at most ONE video; a video never creates an occupant; and it must
 # be poster-only until tapped, so the page-weight cost is the poster alone.
+# The YouTube cuts are RETURNED AS DOWNLOADS and must never be committed.
+# This nearly went wrong: an orphan assets branch was checked out into the
+# working tree, which staged the 1080p cuts alongside the clips. Caught before
+# the push, and now guarded so it cannot recur silently.
+import os as _os
+_stray=[]
+for _root,_dirs,_files in _os.walk('.'):
+    if '/.git' in _root: continue
+    for _f in _files:
+        if _f.startswith('youtube-') and _f.endswith('.mp4'):
+            _stray.append(_os.path.join(_root,_f))
+req(not _stray, f'no YouTube cut is committed (found {_stray})')
+
 _boxes=re.findall(r'<div class="dx-updbox"[^>]*data-release="([^"]+)"[^>]*>(.*?)(?=<div class="dx-updbox"|</div></section>)',index,re.S)
 for _name,_body in _boxes:
     _vids=re.findall(r'<video\b[^>]*>',_body)
