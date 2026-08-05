@@ -35,9 +35,28 @@ req(index.count('id="newrelease"')==1,'New Release component remains singular')
 # freezing its tenant is the one thing the gate must not do. What it should
 # protect is the structure: exactly one occupant, the ruled exclusions, and the
 # rest of the section untouched. Occupant identity is DERIVED and reported.
+# EIGHTH INSTANCE, and the fix is a ruling rather than another number.
+# The limb above asserted `len(occupants)==1`. That encoded a single-tenant
+# invariant the stack design had already outgrown: #newrelease is a STACK, and
+# a second game landing gave it a second box by design, not by drift. The gate
+# lagged the design — two copies of one truth, disagreeing.
+#
+# RULING — Matt, 5 Aug 2026: "New Release is a stack; each game holds at most
+# ONE box; ruled occupants = Neon Sync (top, amended for v1.1) + Neon Breach."
+#
+# So the count is no longer asserted. What is asserted is the RULING: the
+# occupant set matches RULED_OCCUPANTS exactly, and the per-game
+# one-surface rule is preserved rather than weakened — it is now enforced
+# directly (no game may hold two boxes) instead of implied by a global count.
+RULED_OCCUPANTS=['Neon Sync','Neon Breach']
 occupants=re.findall(r'data-release="([^"]+)"',index)
-req(len(occupants)==1,f'New Release has exactly one occupant (found {len(occupants)}: {occupants})')
-if occupants: print(f'NOTE  New Release occupant is "{occupants[0]}" (derived, not pinned)')
+unruled=[o for o in occupants if o not in RULED_OCCUPANTS]
+missing=[o for o in RULED_OCCUPANTS if o not in occupants]
+req(not unruled,f'no unruled New Release occupant (found {unruled})')
+req(not missing,f'every ruled occupant is present (missing {missing})')
+dupes=sorted({o for o in occupants if occupants.count(o)>1})
+req(not dupes,f'no game holds more than one homepage surface (found {dupes})')
+print(f'NOTE  New Release occupants are {occupants} (derived, checked against the ruling)')
 req('data-release="Apex Tennis"' not in index and 'data-release="Apex Golf"' not in index,'Golf and Tennis do not take New Release')
 if baseline_index:
  release=lambda text:re.search(r'<section[^>]*id="newrelease".*?</section>',text,re.S).group(0)
