@@ -1,0 +1,134 @@
+name: Neon Breach gates
+
+# IDENTITY IS BY DERIVATION, and for this landing derivation means reverse-apply.
+# The committed game is the pinned audited input plus one disclosed head block
+# (canonical + og). G-B1 removes that block and asserts the remainder hashes to
+# the pin carried by the source harness. Nothing here freezes the committed
+# hash, so a future legitimate head amendment does not rot the gate.
+
+on:
+  pull_request:
+    paths:
+      - 'neonbreach/index.html'
+      - 'tools/verify_neonbreach.js'
+      - 'tools/verify_neonbreach_browser.js'
+      - '.github/workflows/neonbreach-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neonbreach-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: identity, source contract, rendered browser contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # ---------------------------------------------------------------- G-B1
+      - name: 'G-B1 byte accountability — reverse-apply reproduces the pinned input'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs'), crypto = require('crypto');
+          const harness = fs.readFileSync('tools/verify_neonbreach.js', 'utf8');
+          const m = /const\s+PINNED_SHA\s*=\s*['"]([0-9a-f]{64})['"]/.exec(harness);
+          if (!m) { console.error('pinned-input hash missing from the source harness'); process.exit(2); }
+          const PIN = m[1];
+          const html = fs.readFileSync('neonbreach/index.html', 'utf8');
+          const sha = t => crypto.createHash('sha256').update(t).digest('hex');
+          const block = /  <!-- canonical\/og added on landing[\s\S]*?og:description"[^>]*>\n/.exec(html);
+          if (!block) { console.error('the disclosed head block is absent'); process.exit(1); }
+
+          const stripped = html.replace(block[0], '');
+          console.log('committed  %s  (%d B)', sha(html), Buffer.byteLength(html));
+          console.log('reverse    %s  (%d B)', sha(stripped), Buffer.byteLength(stripped));
+          console.log('pinned     %s', PIN);
+          if (Buffer.byteLength(html) > 250 * 1024) { console.error('over the 250 KiB cap'); process.exit(1); }
+
+          // Positive control: the clean reverse-apply must match before any
+          // rejection below can mean anything.
+          if (sha(stripped) !== PIN) { console.error('FAIL reverse-apply does not reproduce the pin'); process.exit(1); }
+          console.log('G-B1 POSITIVE CONTROL FIRED — clean reverse-apply reproduces the pinned input');
+
+          // Tamper proof: a byte outside the disclosed block must be caught.
+          const tampered = html.replace('</body>', '<!-- x --></body>');
+          if (sha(tampered.replace(block[0], '')) === PIN) { console.error('FAIL tamper went undetected'); process.exit(1); }
+          console.log('G-B1 TAMPER FIRED — a byte outside the disclosed block is rejected');
+          console.log('G-B1 PASS — every byte outside the disclosed edit is the audited source');
+          NODE
+
+      # ---------------------------------------------------------------- G-B2
+      - name: 'G-B2 source contract — prove it can fail, then run it'
+        shell: bash
+        run: |
+          set -euo pipefail
+          # A harness that cannot fail is not a harness. The self-test runs
+          # FIRST, so a green contract below is only ever reported by a harness
+          # that has just proved it rejects broken copies AND still accepts a
+          # clean one.
+          node tools/verify_neonbreach.js --self-test
+          node tools/verify_neonbreach.js
+          echo 'G-B2 PASS — tamper fixtures fired, positive control held, contract green'
+
+      # ---------------------------------------------------------------- G-B3
+      - name: 'G-B3 static storage census — no sibling key family appears'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e "
+            const fs=require('fs');
+            const h=fs.readFileSync('neonbreach/index.html','utf8');
+            const fam=[...new Set(h.match(/['\"](?:mbm_|apex_|apexkick|apexpool|apexgolf|apextennis|voxel|biopunk|neonsync)[A-Za-z0-9_.-]*['\"]/g)||[])];
+            console.log('estate-shaped key literals:', fam.join(', ')||'none');
+            if(fam.length){console.error('FAIL sibling key family present: '+fam.join(', '));process.exit(1);}
+            // Recorded deviation: this game uses madebymatt.neonBreach.v1, not
+            // the mbm_<slug>_* dialect. Kept by ruling; it must still be unique.
+            if(!/madebymatt\.neonBreach\.v1/.test(h)){console.error('FAIL own save key missing');process.exit(1);}
+            if(/(?:local|session)Storage\.clear\s*\(/.test(h)){console.error('FAIL a bare clear() would wipe sibling saves');process.exit(1);}
+            console.log('G-B3 PASS — own key present, no sibling family touched, no bare clear()');
+          "
+
+      - name: Install the pinned real browser
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      # ---------------------------------------------------------------- G-B4
+      - name: 'G-B4 rendered browser contract — isolation, WebGL fallback, hidden-tab pause'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/verify_neonbreach_browser.js
+
+      # -------------------------------------------------------- idempotency
+      - name: 'Second run is idempotent — gates mutate nothing'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BEFORE=$(sha256sum neonbreach/index.html | cut -d' ' -f1)
+          node tools/verify_neonbreach_browser.js > /dev/null
+          AFTER=$(sha256sum neonbreach/index.html | cut -d' ' -f1)
+          printf 'before %s\nafter  %s\n' "$BEFORE" "$AFTER"
+          test "$BEFORE" = "$AFTER"
+          echo 'idempotent — the artefact is unchanged by its own gates'
+
+      # ------------------------------------------------------- sitemap check
+      - name: 'Sitemap carries exactly one canonical /neonbreach/ line'
+        shell: bash
+        run: |
+          set -euo pipefail
+          N=$(grep -c '<loc>https://madebymatt.uk/neonbreach/</loc>' sitemap.xml)
+          D=$(grep -oE '<loc>[^<]+</loc>' sitemap.xml | sort | uniq -d | wc -l)
+          printf 'neonbreach loc lines: %s\nduplicate locs in sitemap: %s\n' "$N" "$D"
+          test "$N" -eq 1
+          test "$D" -eq 0
