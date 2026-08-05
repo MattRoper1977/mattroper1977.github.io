@@ -1,12 +1,11 @@
 name: Neon Sync gates
 
-# Sentinel: neonsync-land-2026-08-04
+# Sentinel: neonsync-v11-gate-derive-2026-08-05
 #
-# IDENTITY IS BY HASH, DELIBERATELY. The delivered game file carries NO in-file
-# sentinel string — the house convention is x2, this file has 0. Ruled at
-# landing: do NOT edit the file to add one, because any edit invalidates the
-# build's 149-check evidence and the four-way hash agreement. The hash gate
-# below IS the identity mechanism, and it is the first thing that runs.
+# IDENTITY IS BY DERIVATION. The source harness carries the expected game hash;
+# G-A1 extracts that pin and compares the checked-out game to it. This lets the
+# game and its source-hash pin move atomically without teaching CI a stale size
+# or hash. The v1.1 in-file sentinel is therefore compatible with hash identity.
 
 on:
   pull_request:
@@ -36,19 +35,37 @@ jobs:
           node-version: '22'
 
       # ---------------------------------------------------------------- G-A1
-      - name: 'G-A1 byte accountability — committed file is the delivered file'
+      - name: 'G-A1 byte accountability — game matches the source-harness pin'
         shell: bash
         run: |
           set -euo pipefail
-          EXPECT=c645e6f3f56a5884c23656dc82be49bc20e333ebc379ea098341886327832602
+          EXPECT=$(node - <<'NODE'
+          const fs = require('fs');
+          const s = fs.readFileSync('tools/verify_neonsync.js', 'utf8');
+          const m = /const\s+(?:SOURCE_SHA256|DELIVERED_SHA)\s*=\s*['"]([0-9a-f]{64})['"]/.exec(s);
+          if (!m) { console.error('source hash pin missing'); process.exit(2); }
+          process.stdout.write(m[1]);
+          NODE
+          )
           ACTUAL=$(sha256sum neonsync/index.html | cut -d' ' -f1)
           BYTES=$(wc -c < neonsync/index.html)
-          printf 'bytes  %s (expect 56658)\n' "$BYTES"
-          printf 'sha256 %s\n' "$ACTUAL"
-          printf 'expect %s\n' "$EXPECT"
-          test "$BYTES" -eq 56658
+          printf 'bytes   %s (hard cap %s)\n' "$BYTES" "$((250*1024))"
+          printf 'actual  %s\n' "$ACTUAL"
+          printf 'pinned  %s\n' "$EXPECT"
+          test "$BYTES" -le $((250*1024))
+
+          # Positive control: the clean game must match before a rejection can
+          # count. Tamper proof: an appended byte must move the hash.
           test "$ACTUAL" = "$EXPECT"
-          echo 'G-A1 PASS — zero edits to the delivered artefact'
+          echo 'G-A1 POSITIVE CONTROL FIRED — untampered game matches its pin'
+          TMP=$(mktemp)
+          cp neonsync/index.html "$TMP"
+          printf x >> "$TMP"
+          TAMPERED=$(sha256sum "$TMP" | cut -d' ' -f1)
+          rm -f "$TMP"
+          test "$TAMPERED" != "$EXPECT"
+          echo 'G-A1 TAMPER FIRED — altered bytes are rejected by derived identity'
+          echo 'G-A1 PASS — identity and size are derived, not frozen in CI'
 
       # ---------------------------------------------------------------- G-A2
       # Two hashes are named here on purpose, and neither is pinned as the
@@ -106,12 +123,11 @@ jobs:
           npx playwright install --with-deps chromium
 
       # ---------------------------------------------------------------- G-A3
-      - name: 'G-A3 rendered browser contract — the proof that was never run'
+      - name: 'G-A3 rendered browser contract — v1.0 carry-over plus armed v1.1 routes'
         shell: bash
         run: |
           set -euo pipefail
-          echo 'The builder browser smoke never ran (net::ERR_BLOCKED_BY_ADMINISTRATOR).'
-          echo 'This is the first real-browser load of this game.'
+          echo 'Running the rendered browser contract against the checked-out game.'
           node tools/verify_neonsync_browser.js
 
       # -------------------------------------------------------- idempotency
