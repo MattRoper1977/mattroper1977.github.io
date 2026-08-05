@@ -3,17 +3,11 @@
 /**
  * Neon Sync — rendered browser contract.
  *
- * WHY THIS FILE EXISTS. The build's own source harness (tools/verify_neonsync.js,
- * 13,637 B, sha256 6b5cbb9d…) was NOT delivered with the game, so its 149 checks
- * cannot be reproduced here and gate G-A2 is BLOCKED, not failed. Separately,
- * the builder's browser smoke NEVER RAN — it was stopped by
- * net::ERR_BLOCKED_BY_ADMINISTRATOR — so no real browser has ever loaded this
- * game. That proof was owed at landing. This file pays that debt and nothing
- * more: it does not claim to be, replace, or reproduce the delivered harness.
- *
- * Gates, per the landing brief: boot · hero select · a played point ·
- * post-match card · touch joystick at 360x640 · reduced-motion boot ·
- * storage isolation against every sibling save on the estate.
+ * Identity is derived from the source-harness pin, never duplicated here. The
+ * v1.0 rendered routes remain intact. When the v1.1 sentinel is present, three
+ * additional real-browser routes activate: Volt select/play, Escort reach/push,
+ * and Rhythm Reflex open/exit. Their predicates carry synthetic positive and
+ * tamper controls so the armed extension is proven non-vacuous before content.
  */
 const fs = require('fs');
 const path = require('path');
@@ -22,7 +16,14 @@ const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
 const GAME = process.env.NS_GAME || 'neonsync/index.html';
-const EXPECT_SHA = 'c645e6f3f56a5884c23656dc82be49bc20e333ebc379ea098341886327832602';
+const GAME_PATH = path.join(ROOT, GAME);
+const SOURCE_HARNESS = path.join(ROOT, 'tools', 'verify_neonsync.js');
+const sourceHarness = fs.readFileSync(SOURCE_HARNESS, 'utf8');
+const sourcePin = /const\s+(?:SOURCE_SHA256|DELIVERED_SHA)\s*=\s*['"]([0-9a-f]{64})['"]/.exec(sourceHarness);
+if (!sourcePin) throw new Error('source-harness game hash pin missing');
+const EXPECT_SHA = sourcePin[1];
+const GAME_HTML = fs.readFileSync(GAME_PATH, 'utf8');
+const IS_V11 = /neonsync-v11-2026-08-05/.test(GAME_HTML);
 
 let pass = 0, fail = 0;
 const rows = [];
@@ -43,6 +44,20 @@ const SIBLINGS = {
   'voxelfrontier.world.v2': '{"seed":7}',
 };
 
+const voltProbe = v => !!(v && v.selected === 'volt' && v.player === 'volt' && v.running);
+const escortProbe = v => !!(v && v.mode === 'escort' && v.reachable && v.after > v.before + 0.01);
+const cabinetProbe = v => !!(v && v.opened && v.exited && v.matchUnchanged);
+(function proveV11ProbesCanFail() {
+  const positive = voltProbe({ selected: 'volt', player: 'volt', running: true })
+    && escortProbe({ mode: 'escort', reachable: true, before: 0, after: 1 })
+    && cabinetProbe({ opened: true, exited: true, matchUnchanged: true });
+  const tamperRejected = !voltProbe({ selected: 'zest', player: 'volt', running: true })
+    && !escortProbe({ mode: 'escort', reachable: true, before: 1, after: 1 })
+    && !cabinetProbe({ opened: true, exited: false, matchUnchanged: true });
+  if (!positive || !tamperRejected) throw new Error('v1.1 browser probe controls failed');
+  console.log('V1.1 BROWSER PROBE POSITIVE CONTROL FIRED — Volt, Escort and cabinet predicates accept truth and reject tamper');
+})();
+
 (async () => {
   const server = http.createServer((rq, rs) => {
     let p = path.join(ROOT, decodeURIComponent(new URL(rq.url, 'http://x').pathname));
@@ -58,11 +73,11 @@ const SIBLINGS = {
 
   // ---- identity, restated here so the browser run is anchored to the artefact
   const crypto = require('crypto');
-  const bytes = fs.readFileSync(path.join(ROOT, GAME));
+  const bytes = fs.readFileSync(GAME_PATH);
   const sha = crypto.createHash('sha256').update(bytes).digest('hex');
   console.log('\n== N0 — artefact identity ==');
-  ok('byte-count-56658', bytes.length === 56658, String(bytes.length));
-  ok('sha256-matches-delivery', sha === EXPECT_SHA, sha);
+  ok('under-250-kib', bytes.length <= 250 * 1024, `${bytes.length} bytes`);
+  ok('sha256-matches-source-harness-pin', sha === EXPECT_SHA, `${sha} pinned ${EXPECT_SHA}`);
 
   const browser = await chromium.launch({ headless: true });
 
@@ -233,6 +248,84 @@ const SIBLINGS = {
     ok('reduced-motion-content-still-visible', rm.titleVisible && rm.bodyText > 40, `${rm.bodyText} chars of text`);
     ok('reduced-motion-zero-errors', errs.length === 0, errs.slice(0, 2).join(' | ') || 'none');
     await ctx.close();
+  }
+
+  // ------------------------------------------- v1.1 activated browser routes
+  if (IS_V11) {
+    console.log('\n== N5 — v1.1 Volt, Escort Rush and Rhythm Reflex ==');
+
+    {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+      const page = await ctx.newPage();
+      await page.goto(base, { waitUntil: 'load' });
+      await page.waitForTimeout(900);
+      await page.locator('#heroCard').click();
+      await page.locator('[data-hero="volt"]').click();
+      await page.locator('#play').click();
+      await page.waitForTimeout(900);
+      const v = await page.evaluate(() => {
+        const T = window.__NEON_SYNC_TEST__, G = T.G;
+        const me = G.world && G.world.units.find(u => !u.bot && u.team === 0);
+        return { selected: G.playerHero, player: me && me.hero, running: !!G.running };
+      });
+      ok('volt-selectable-and-playable', voltProbe(v), JSON.stringify(v));
+      await ctx.close();
+    }
+
+    {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+      const page = await ctx.newPage();
+      await page.goto(base, { waitUntil: 'load' });
+      await page.waitForTimeout(900);
+      await page.locator('#escortCard').click();
+      const reachable = await page.locator('#sideAttack').isVisible().catch(() => false);
+      await page.locator('#sideAttack').click();
+      await page.waitForTimeout(500);
+      const before = await page.evaluate(reachable => {
+        const T = window.__NEON_SYNC_TEST__, w = T.G.world;
+        if (!w || w.mode !== 'escort' || !w.payload) return { mode: w && w.mode, reachable, before: 0 };
+        const p = w.payload;
+        for (const u of w.units) {
+          if (!u.alive) continue;
+          if (u.team === w.attackTeam) { u.x = p.x - 8; u.y = p.y; }
+          else { u.x = 40; u.y = 40; }
+        }
+        return { mode: w.mode, reachable, before: p.progress };
+      }, reachable);
+      await page.waitForTimeout(1000);
+      const after = await page.evaluate(() => {
+        const w = window.__NEON_SYNC_TEST__.G.world;
+        return w && w.payload ? w.payload.progress : 0;
+      });
+      const e = { mode: before.mode, reachable: before.reachable, before: before.before, after };
+      ok('escort-reachable-and-float-moves', escortProbe(e), JSON.stringify(e));
+      await ctx.close();
+    }
+
+    {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+      const page = await ctx.newPage();
+      await page.goto(base, { waitUntil: 'load' });
+      await page.waitForTimeout(900);
+      const before = await page.evaluate(() => {
+        const G = window.__NEON_SYNC_TEST__.G;
+        return JSON.stringify({ running: G.running, world: G.world && G.world.mode, playerHero: G.playerHero });
+      });
+      await page.locator('#arcadeCard').click();
+      const opened = await page.locator('#rhythmCabinet').isVisible().catch(() => false);
+      await page.locator('#rhythmExit').click();
+      await page.waitForTimeout(300);
+      const state = await page.evaluate(before => {
+        const G = window.__NEON_SYNC_TEST__.G;
+        const after = JSON.stringify({ running: G.running, world: G.world && G.world.mode, playerHero: G.playerHero });
+        return { exited: !!document.querySelector('.logo') && !document.getElementById('rhythmCabinet'), matchUnchanged: before === after };
+      }, before);
+      const r = { opened, exited: state.exited, matchUnchanged: state.matchUnchanged };
+      ok('cabinet-opens-and-exits-clean', cabinetProbe(r), JSON.stringify(r));
+      await ctx.close();
+    }
+  } else {
+    console.log('\n== N5 — v1.1 routes ARMED; sentinel absent on this pre-content tree ==');
   }
 
   await browser.close();
