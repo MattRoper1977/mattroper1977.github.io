@@ -1,0 +1,63 @@
+name: Relicforge gates
+
+# Every assertion here DERIVES its expected value from the files at HEAD. Nothing
+# is pinned to a manifest count, a relic count or a commit SHA — a workflow that
+# goes red because the estate moved on is a workflow nobody reads. The one thing
+# the harness does assert about numbers is a RELATIONSHIP (the relics and the
+# memories are the same set), which stays true whatever the count becomes.
+
+on:
+  pull_request:
+    paths:
+      - 'relicforge/**'
+      - 'tools/verify_relicforge.js'
+      - 'tools/verify_relicforge_browser.js'
+      - 'sitemap.xml'
+      - '.github/workflows/relicforge-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: relicforge-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: source + rendered contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pinned real browser
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Source gates
+        run: node tools/verify_relicforge.js | tee /tmp/relicforge_source.log
+
+      - name: Rendered gates
+        run: node tools/verify_relicforge_browser.js | tee /tmp/relicforge_browser.log
+
+      - name: Sitemap carries the landing, derived from the directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f relicforge/index.html
+          count=$(grep -c '<loc>https://madebymatt.uk/relicforge/</loc>' sitemap.xml)
+          test "$count" -eq 1 || { echo "expected exactly one sitemap entry, found $count"; exit 1; }
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relicforge-verification
+          path: /tmp/relicforge_*.log
+          if-no-files-found: warn
