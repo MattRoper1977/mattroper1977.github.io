@@ -1,0 +1,125 @@
+name: Apex Rally gates
+
+# Every assertion in this workflow DERIVES its expected value from the files at
+# HEAD. Nothing is pinned to a manifest count, a door count or a commit SHA —
+# three pinned workflows have gone red on main this fortnight for exactly that
+# reason, and a workflow that goes red because the estate moved on is a workflow
+# nobody reads. The one pinned value lives in the harness, not here, and it pins
+# the DELIVERED artifact hash: an immutable historical fact, not a HEAD state.
+
+on:
+  pull_request:
+    paths:
+      - 'apexrally/**'
+      - 'tools/verify_apexrally.js'
+      - 'tools/verify_apexrally_browser.js'
+      - 'assets/cards/apex-rally.svg'
+      - 'sitemap.xml'
+      - '.github/workflows/apexrally-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apexrally-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: source + rendered contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pinned real browser
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Source gates
+        run: node tools/verify_apexrally.js | tee /tmp/apexrally_source.log
+
+      - name: Rendered gates
+        run: node tools/verify_apexrally_browser.js | tee /tmp/apexrally_browser.log
+
+      - name: Gate counts are self-consistent (derived from the logs)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for log in /tmp/apexrally_source.log /tmp/apexrally_browser.log; do
+            passes=$(grep -c '^PASS ' "$log" || true)
+            fails=$(grep -c '^FAIL ' "$log" || true)
+            claimed=$(grep -oE '^ALL [0-9]+ ' "$log" | grep -oE '[0-9]+' || echo 0)
+            echo "$log: $passes PASS, $fails FAIL, summary claims $claimed"
+            test "$fails" -eq 0
+            test "$passes" -gt 0
+            # the summary must not claim more gates than actually ran
+            test "$claimed" -eq "$passes"
+          done
+
+      - name: Single self-contained file at the game path
+        shell: bash
+        run: |
+          set -euo pipefail
+          count=$(find apexrally -type f | wc -l)
+          echo "files under apexrally/: $count"
+          test "$count" -eq 1
+          test -f apexrally/index.html
+
+      - name: Sitemap carries the canonical exactly once (derived)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # expected = 1 per shipped game directory, derived from the tree
+          expected=$(find apexrally -name index.html | wc -l)
+          actual=$(grep -c '<loc>https://madebymatt.uk/apexrally/</loc>' sitemap.xml || true)
+          echo "sitemap /apexrally/ entries: $actual (expected $expected)"
+          test "$actual" -eq "$expected"
+          # and the canonical in the game must agree with the sitemap loc
+          grep -q 'rel="canonical" href="https://madebymatt.uk/apexrally/"' apexrally/index.html
+
+      - name: Card art exists and matches the game's own accent (derived)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f assets/cards/apex-rally.svg
+          python3 -c "import xml.dom.minidom;xml.dom.minidom.parse('assets/cards/apex-rally.svg')"
+          # derive the accent from the GAME's CSS token, never a typed-in hex
+          hue=$(grep -oE '\-\-red:#[0-9a-fA-F]{6}' apexrally/index.html | head -1 | cut -d'#' -f2)
+          echo "game --red token: #$hue"
+          test -n "$hue"
+          grep -qi "#$hue" assets/cards/apex-rally.svg
+          # Card art must not reach the network. w3.org URIs in SVG are XML
+          # namespace identifiers, never fetched, so they are excluded by name.
+          # Done in node rather than a grep pipeline deliberately: `grep -v`
+          # exits 1 when it filters out every line, so under `set -o pipefail`
+          # the pipeline version failed the step precisely when the file was
+          # CLEAN — which is exactly how it failed the first time.
+          node -e '
+            const s = require("fs").readFileSync("assets/cards/apex-rally.svg", "utf8");
+            const urls = (s.match(/https?:\/\/[^"\x27\s)]+/g) || [])
+              .filter(u => !/^https?:\/\/www\.w3\.org\//.test(u));
+            console.log("card art remote refs: " + urls.length +
+                        (urls.length ? " — " + urls.join(", ") : ""));
+            if (urls.length) process.exit(1);
+          '
+
+      - name: No sibling storage keys anywhere in the game (derived census)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # derive the sibling list from the games that actually ship in this repo
+          for dir in apex*/; do
+            slug="${dir%/}"
+            [ "$slug" = "apexrally" ] && continue
+            if grep -q "mbm_${slug}_" apexrally/index.html; then
+              echo "sibling key mbm_${slug}_ found in Apex Rally"; exit 1
+            fi
+          done
+          echo "0 sibling storage keys across $(ls -d apex*/ | wc -l) Apex games"
