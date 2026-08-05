@@ -97,8 +97,12 @@ jobs:
           ffmpeg -v error -y -f concat -safe 0 -i sync.txt -c copy chained-sync.webm
           cd ../..
           PORTRAIT="scale=480:930:force_original_aspect_ratio=increase,crop=480:930"
-          ffmpeg -v error -y -i artifacts/media/chained-sync.webm    -an -vf "$PORTRAIT" -r 20 -c:v libx264 -profile:v high -crf 31 -preset slow -movflags +faststart artifacts/media/clip-neonsync.mp4
-          ffmpeg -v error -y -i artifacts/media/seg-breach-calm.webm -an -vf "$PORTRAIT" -r 20 -c:v libx264 -profile:v high -crf 31 -preset slow -movflags +faststart artifacts/media/clip-neonbreach.mp4
+          # Trim to the measured convention. Playwright records from context
+          # creation, so a raw segment carries navigation and menu time the
+          # clip should not show: -ss 4 skips it, -t 18 lands inside the
+          # 17.5-18.1s the five committed clips actually run to.
+          ffmpeg -v error -y -ss 4 -t 18 -i artifacts/media/chained-sync.webm    -an -vf "$PORTRAIT" -r 20 -c:v libx264 -profile:v high -crf 32 -preset slow -movflags +faststart artifacts/media/clip-neonsync.mp4
+          ffmpeg -v error -y -ss 4 -t 18 -i artifacts/media/seg-breach-calm.webm -an -vf "$PORTRAIT" -r 20 -c:v libx264 -profile:v high -crf 32 -preset slow -movflags +faststart artifacts/media/clip-neonbreach.mp4
           for g in neonsync neonbreach; do
             ffmpeg -v error -y -ss 3 -i "artifacts/media/clip-$g.mp4" -frames:v 1 -c:v libwebp -quality 80 "artifacts/media/poster-$g.webp"
           done

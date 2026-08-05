@@ -42,16 +42,24 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vc-'));
 const tmp = path.join(dir, 'stats.txt');
 execFileSync(FFMPEG, ['-v', 'quiet', '-i', FILE, '-vf', `signalstats,metadata=print:file=${tmp}`, '-an', '-f', 'null', '-'], { stdio: 'ignore' });
 const t = fs.readFileSync(tmp, 'utf8');
-const ystd = [...t.matchAll(/lavfi\.signalstats\.YSTD=([0-9.]+)/g)].map(m => parseFloat(m[1]));
-const yavg = [...t.matchAll(/lavfi\.signalstats\.YAVG=([0-9.]+)/g)].map(m => parseFloat(m[1]));
+// Keys DERIVED from what signalstats actually emits, not assumed. An earlier
+// version of this file measured YSTD — which signalstats does not produce —
+// so the check read zero frames and could ONLY ever fail. A check that can
+// only fail measures nothing, exactly as a check that can only pass measures
+// nothing. Real keys: YMIN/YLOW/YAVG/YHIGH/YMAX/YDIF.
+const num = k => [...t.matchAll(new RegExp('lavfi\\.signalstats\\.' + k + '=([0-9.]+)', 'g'))].map(m => parseFloat(m[1]));
+const ylow = num('YLOW'), yhigh = num('YHIGH'), yavg = num('YAVG'), ydif = num('YDIF');
 fs.rmSync(dir, { recursive: true, force: true });
 
-const meanStd = ystd.reduce((s, x) => s + x, 0) / (ystd.length || 1);
-ok('frames-are-not-flat', meanStd > 8, 'mean YSTD ' + meanStd.toFixed(1));
-let motion = 0;
-for (let i = 1; i < yavg.length; i++) motion += Math.abs(yavg[i] - yavg[i - 1]);
-ok('frames-actually-change', motion / (yavg.length || 1) > 0.05, 'mean |dYAVG| ' + (motion / (yavg.length || 1)).toFixed(3));
-ok('frame-sample-non-empty', ystd.length > 10, ystd.length + ' frames measured');
+const n = yavg.length;
+ok('frame-sample-non-empty', n > 10, n + ' frames measured');
+// Spatial spread: a flat or single-colour frame has YHIGH ~= YLOW.
+const spread = ylow.length ? ylow.map((lo, i) => (yhigh[i] || 0) - lo) : [];
+const meanSpread = spread.reduce((s, x) => s + x, 0) / (spread.length || 1);
+ok('frames-are-not-flat', meanSpread > 20, 'mean (YHIGH-YLOW) ' + meanSpread.toFixed(1));
+// Temporal change: YDIF is the per-frame difference from the previous frame.
+const meanDif = ydif.reduce((s, x) => s + x, 0) / (ydif.length || 1);
+ok('frames-actually-change', meanDif > 0.2, 'mean YDIF ' + meanDif.toFixed(3));
 
 console.log('CLIP_BYTES=' + fs.statSync(FILE).size);
 console.log('CLIP_KB=' + kb);
