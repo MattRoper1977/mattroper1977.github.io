@@ -42,7 +42,7 @@ jobs:
           EXPECT=$(node - <<'NODE'
           const fs = require('fs');
           const s = fs.readFileSync('tools/verify_neonsync.js', 'utf8');
-          const m = /const\s+(?:SOURCE_SHA256|DELIVERED_SHA)\s*=\s*['"]([0-9a-f]{64})['"]/.exec(s);
+          const m = /const\s+(?:GAME_SHA|SOURCE_SHA256|DELIVERED_SHA)\s*=\s*['"]([0-9a-f]{64})['"]/.exec(s);
           if (!m) { console.error('source hash pin missing'); process.exit(2); }
           process.stdout.write(m[1]);
           NODE

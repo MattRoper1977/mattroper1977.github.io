@@ -3,6 +3,18 @@
 /**
  * Neon Sync — rendered browser contract.
  *
+ * SELECTOR ALIGNMENT, 5 Aug 2026 — disclosed with the v1.1 landing.
+ * The N5 routes were ARMED speculatively before v1.1 existed, so their
+ * selectors were guesses. Meeting the real build for the first time, three
+ * were wrong and one route timed out rather than failing usefully:
+ *     #sideAttack     -> #attackSide     (escort side chooser)
+ *     #arcadeCard     -> #rhythmCard     (rhythm entry card)
+ *     #rhythmCabinet  -> #rhythmCanvas   (rhythm surface)
+ * Derived from the committed game, not guessed again. This is a gate change
+ * disclosed in the same commit as the content it judges, because the routes
+ * only became falsifiable once the content existed — the armed-route pattern
+ * cannot be validated any earlier.
+ *
  * Identity is derived from the source-harness pin, never duplicated here. The
  * v1.0 rendered routes remain intact. When the v1.1 sentinel is present, three
  * additional real-browser routes activate: Volt select/play, Escort reach/push,
@@ -19,7 +31,7 @@ const GAME = process.env.NS_GAME || 'neonsync/index.html';
 const GAME_PATH = path.join(ROOT, GAME);
 const SOURCE_HARNESS = path.join(ROOT, 'tools', 'verify_neonsync.js');
 const sourceHarness = fs.readFileSync(SOURCE_HARNESS, 'utf8');
-const sourcePin = /const\s+(?:SOURCE_SHA256|DELIVERED_SHA)\s*=\s*['"]([0-9a-f]{64})['"]/.exec(sourceHarness);
+const sourcePin = /const\s+(?:GAME_SHA|SOURCE_SHA256|DELIVERED_SHA)\s*=\s*['"]([0-9a-f]{64})['"]/.exec(sourceHarness);
 if (!sourcePin) throw new Error('source-harness game hash pin missing');
 const EXPECT_SHA = sourcePin[1];
 const GAME_HTML = fs.readFileSync(GAME_PATH, 'utf8');
@@ -278,16 +290,25 @@ const cabinetProbe = v => !!(v && v.opened && v.exited && v.matchUnchanged);
       await page.goto(base, { waitUntil: 'load' });
       await page.waitForTimeout(900);
       await page.locator('#escortCard').click();
-      const reachable = await page.locator('#sideAttack').isVisible().catch(() => false);
-      await page.locator('#sideAttack').click();
+      const reachable = await page.locator('#attackSide').isVisible().catch(() => false);
+      await page.locator('#attackSide').click();
       await page.waitForTimeout(500);
       const before = await page.evaluate(reachable => {
         const T = window.__NEON_SYNC_TEST__, w = T.G.world;
         if (!w || w.mode !== 'escort' || !w.payload) return { mode: w && w.mode, reachable, before: 0 };
+        // DERIVED FROM THE COMMITTED GAME, not guessed. Two corrections:
+        //   · w.payload carries NO x/y — the Float's position is
+        //     routePoint(payload.progress). The old code read p.x/p.y as
+        //     undefined, so `p.x - 8` was NaN and every attacker was parked at
+        //     NaN. escortCounts() then found zero attackers in range and the
+        //     Float correctly refused to move. That was the harness measuring
+        //     nothing, not the game failing to push.
+        //   · the teams are w.attackerTeam / w.defenderTeam, not w.attackTeam.
         const p = w.payload;
+        const at = NS.routePoint(p.progress);
         for (const u of w.units) {
           if (!u.alive) continue;
-          if (u.team === w.attackTeam) { u.x = p.x - 8; u.y = p.y; }
+          if (u.team === w.attackerTeam) { u.x = at.x; u.y = at.y; }
           else { u.x = 40; u.y = 40; }
         }
         return { mode: w.mode, reachable, before: p.progress };
@@ -311,14 +332,14 @@ const cabinetProbe = v => !!(v && v.opened && v.exited && v.matchUnchanged);
         const G = window.__NEON_SYNC_TEST__.G;
         return JSON.stringify({ running: G.running, world: G.world && G.world.mode, playerHero: G.playerHero });
       });
-      await page.locator('#arcadeCard').click();
-      const opened = await page.locator('#rhythmCabinet').isVisible().catch(() => false);
+      await page.locator('#rhythmCard').click();
+      const opened = await page.locator('#rhythmCanvas').isVisible().catch(() => false);
       await page.locator('#rhythmExit').click();
       await page.waitForTimeout(300);
       const state = await page.evaluate(before => {
         const G = window.__NEON_SYNC_TEST__.G;
         const after = JSON.stringify({ running: G.running, world: G.world && G.world.mode, playerHero: G.playerHero });
-        return { exited: !!document.querySelector('.logo') && !document.getElementById('rhythmCabinet'), matchUnchanged: before === after };
+        return { exited: !!document.querySelector('.logo') && !document.getElementById('rhythmCanvas'), matchUnchanged: before === after };
       }, before);
       const r = { opened, exited: state.exited, matchUnchanged: state.matchUnchanged };
       ok('cabinet-opens-and-exits-clean', cabinetProbe(r), JSON.stringify(r));
