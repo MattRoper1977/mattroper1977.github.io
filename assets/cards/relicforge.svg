@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 96" role="img" aria-labelledby="title desc">
+  <title id="title">Relicforge</title>
+  <desc id="desc">A buried machine being taken apart component by component: its core left glowing and intact while one limb shears away on a torn edge, another sits inside a targeting ring, and the salvaged parts rest on the floor below.</desc>
+  <defs>
+    <linearGradient id="rfbg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#140B22"/><stop offset="1" stop-color="#2A1442"/></linearGradient>
+    <linearGradient id="rfcore" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#E9A8FF"/><stop offset="1" stop-color="#D05CFF"/></linearGradient>
+  </defs>
+
+  <rect width="120" height="96" rx="10" fill="url(#rfbg)"/>
+  <path d="M0 74h120" stroke="#3D2159" stroke-width="1" opacity=".7"/>
+  <g stroke="#3D2159" stroke-width=".8" opacity=".45" fill="none">
+    <path d="M14 74 20 62M40 74l4-12M78 74l-4-12M104 74l-6-12"/>
+  </g>
+
+  <!-- back module, still intact -->
+  <rect x="45" y="24" width="30" height="15" rx="5" fill="#241833" stroke="#D05CFF" stroke-width="1.5"/>
+
+  <!-- legs, damaged: hatch scoring, still attached -->
+  <g>
+    <rect x="44" y="57" width="32" height="11" rx="4.5" fill="#1B1226" stroke="#D05CFF" stroke-width="1.4"/>
+    <path d="M47 68l5-11M53 68l5-11M59 68l5-11M65 68l5-11" stroke="#06040B" stroke-width="1.5" opacity=".75"/>
+  </g>
+
+  <!-- the core: untouched, and the whole point -->
+  <path d="M60 30 74 38v16L60 62 46 54V38Z" fill="#2A1740" stroke="url(#rfcore)" stroke-width="2.4"/>
+  <path d="M60 39 67 43v8l-7 4-7-4v-8Z" fill="url(#rfcore)" opacity=".85"/>
+
+  <!-- right arm: inside the targeting ring, about to go -->
+  <g>
+    <rect x="76" y="41" width="22" height="13" rx="4.5" fill="#1B1226" stroke="#D05CFF" stroke-width="1.4" stroke-dasharray="4 3"/>
+    <circle cx="87" cy="47" r="12.5" fill="none" stroke="#FFFFFF" stroke-width="1.6" opacity=".9"/>
+    <circle cx="87" cy="47" r="17" fill="none" stroke="#FFFFFF" stroke-width="1" opacity=".4"/>
+    <path d="M87 30v5M87 59v5M70 47h5M99 47h5" stroke="#FFFFFF" stroke-width="1.4" opacity=".85"/>
+  </g>
+
+  <!-- left arm: sheared off, tumbling away on a torn edge -->
+  <g transform="rotate(-24 30 44)">
+    <path d="M20 39h20v12H20l3-3-3-3 3-3-3-3Z" fill="#1B1226" stroke="#FFB000" stroke-width="1.4"/>
+  </g>
+  <g stroke="#FFB000" stroke-width="1.6" stroke-linecap="round" opacity=".9">
+    <path d="M42 42l-4-2M43 47l-5 1M44 52l-4 2"/>
+  </g>
+
+  <!-- the stub it left behind -->
+  <path d="M44 43l3 2-3 2 3 2-3 2" fill="none" stroke="#5A4270" stroke-width="1.5"/>
+
+  <!-- floor litter: the memory of the fight -->
+  <g opacity=".55">
+    <rect x="16" y="77" width="15" height="6" rx="2.5" transform="rotate(-13 23 80)" fill="#0E0916" stroke="#FFB000" stroke-width="1.1"/>
+    <rect x="86" y="79" width="13" height="5" rx="2.2" transform="rotate(9 92 81)" fill="#0E0916" stroke="#D05CFF" stroke-width="1.1"/>
+    <rect x="55" y="82" width="11" height="4.5" rx="2" transform="rotate(-5 60 84)" fill="#0E0916" stroke="#56F7A8" stroke-width="1.1"/>
+  </g>
+
+  <!-- salvage rating readout -->
+  <rect x="14" y="88" width="92" height="4" rx="2" fill="#2A1740"/>
+  <rect x="14" y="88" width="76" height="4" rx="2" fill="#56F7A8"/>
+</svg>
