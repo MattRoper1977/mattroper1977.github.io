@@ -1,0 +1,135 @@
+name: Media capture — watch-grid clips and YouTube cuts
+
+# Captures BOTH games from the DEPLOYED urls. The agent container cannot reach
+# madebymatt.uk (the proxy answers 403 on CONNECT), and a clip must show the
+# build visitors actually get, so this runs on a runner.
+#
+# Every gate runs here, in order, and none of them can be skipped:
+#   served-hash precondition -> capture -> ffprobe each segment -> OCR sweep
+#   each segment -> photosensitivity each segment -> chain -> encode ->
+#   OCR + photosensitivity across the finished cut -> verify by extraction.
+#
+# PHOTOSENSITIVITY (WCAG 2.3.1, <=3 general flashes/sec) HAS NO SWAP. A fail
+# is a GAME finding: the job stops and reports. Nothing retunes the capture.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main }
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Capability gate — ffmpeg, ffprobe, tesseract, Chromium
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg tesseract-ocr
+          ffmpeg -version | head -1
+          ffprobe -version | head -1
+          tesseract --version | head -1
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+          echo 'CAPABILITY_GATE=PASS'
+
+      - name: 'PRECONDITION — the SERVED builds must be the ones we capture'
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/media
+          for g in neonsync neonbreach; do
+            curl -sS --max-time 60 "https://madebymatt.uk/$g/" -o "/tmp/$g.live"
+            LS=$(sha256sum "/tmp/$g.live" | cut -d' ' -f1)
+            RS=$(sha256sum "$g/index.html" | cut -d' ' -f1)
+            printf '%-12s served %s\n%-12s repo   %s\n' "$g" "$LS" "" "$RS"
+            test "$LS" = "$RS" || { echo "STOP: served $g is not the committed build"; exit 1; }
+          done
+          echo 'SERVED_BUILDS=VERIFIED'
+
+      - name: Capture segments from the deployed urls
+        run: |
+          set -euo pipefail
+          node tools/capture_clip.js --base https://madebymatt.uk --scene sync-volt    --out artifacts/media --seconds 12
+          node tools/capture_clip.js --base https://madebymatt.uk --scene sync-escort  --out artifacts/media --seconds 8
+          node tools/capture_clip.js --base https://madebymatt.uk --scene breach-calm  --out artifacts/media --seconds 19
+
+      - name: 'ffprobe EVERY segment before chaining'
+        run: |
+          set -euo pipefail
+          for f in artifacts/media/seg-*.webm; do
+            echo "== $f"
+            ffprobe -v quiet -print_format json -show_streams -show_format "$f" \
+              | python3 -c 'import sys,json;d=json.load(sys.stdin);v=[s for s in d["streams"] if s["codec_type"]=="video"][0];print("   %sx%s  %.2fs  %s"%(v["width"],v["height"],float(d["format"]["duration"]),v["codec_name"]))'
+          done
+
+      - name: 'OCR sweep EVERY segment, before chaining'
+        run: |
+          set -euo pipefail
+          for f in artifacts/media/seg-*.webm; do node tools/ocr_sweep.js "$f" --fps 1; done
+
+      - name: 'PHOTOSENSITIVITY on every segment — no swap'
+        run: |
+          set -euo pipefail
+          for f in artifacts/media/seg-*.webm; do node tools/flash_rate.js "$f" --limit 3; done
+
+      - name: Chain and encode to the measured convention
+        run: |
+          set -euo pipefail
+          cd artifacts/media
+          printf "file 'seg-sync-volt.webm'\nfile 'seg-sync-escort.webm'\n" > sync.txt
+          ffmpeg -v error -y -f concat -safe 0 -i sync.txt -c copy chained-sync.webm
+          cd ../..
+          PORTRAIT="scale=480:930:force_original_aspect_ratio=increase,crop=480:930"
+          ffmpeg -v error -y -i artifacts/media/chained-sync.webm    -an -vf "$PORTRAIT" -r 20 -c:v libx264 -profile:v high -crf 31 -preset slow -movflags +faststart artifacts/media/clip-neonsync.mp4
+          ffmpeg -v error -y -i artifacts/media/seg-breach-calm.webm -an -vf "$PORTRAIT" -r 20 -c:v libx264 -profile:v high -crf 31 -preset slow -movflags +faststart artifacts/media/clip-neonbreach.mp4
+          for g in neonsync neonbreach; do
+            ffmpeg -v error -y -ss 3 -i "artifacts/media/clip-$g.mp4" -frames:v 1 -c:v libwebp -quality 80 "artifacts/media/poster-$g.webp"
+          done
+          # YouTube cuts: 1920x1080, silent, <=60s. Returned as downloads only.
+          LAND="scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=0x101014"
+          ffmpeg -v error -y -i artifacts/media/chained-sync.webm    -an -t 60 -vf "$LAND" -c:v libx264 -crf 26 -preset slow -movflags +faststart artifacts/media/youtube-neonsync-1080p.mp4
+          ffmpeg -v error -y -i artifacts/media/seg-breach-calm.webm -an -t 60 -vf "$LAND" -c:v libx264 -crf 26 -preset slow -movflags +faststart artifacts/media/youtube-neonbreach-1080p.mp4
+          ls -l artifacts/media
+
+      - name: 'OCR + PHOTOSENSITIVITY across every FINISHED cut'
+        run: |
+          set -euo pipefail
+          for f in artifacts/media/clip-*.mp4 artifacts/media/youtube-*.mp4; do
+            node tools/ocr_sweep.js "$f" --fps 1
+            node tools/flash_rate.js "$f" --limit 3
+          done
+          for p in artifacts/media/poster-*.webp; do
+            echo "== poster neighbourhood: $p"
+            node tools/ocr_sweep.js "$p" --fps 1
+          done
+
+      - name: 'Verify finished files by extraction, not by trusting the encoder'
+        run: |
+          set -euo pipefail
+          for g in neonsync neonbreach; do
+            node tools/verify_clip.js "artifacts/media/clip-$g.mp4" \
+              --expect-w 480 --expect-h 930 --min-seconds 17 --max-seconds 21 \
+              --min-kb 200 --max-kb 420 --require-silent
+          done
+          for f in artifacts/media/youtube-*.mp4; do
+            node tools/verify_clip.js "$f" --expect-w 1920 --expect-h 1080 \
+              --min-seconds 10 --max-seconds 60 --max-kb 5120 --require-silent
+          done
+          echo '--- sizes, per file ---'
+          for f in artifacts/media/clip-*.mp4 artifacts/media/poster-*.webp artifacts/media/youtube-*.mp4; do
+            printf '%-46s %8s KB\n' "$(basename "$f")" "$(( $(stat -c%s "$f") / 1024 ))"
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: media-${{ github.run_id }}
+          path: artifacts/media
+          retention-days: 30
