@@ -132,9 +132,14 @@ jobs:
               --expect-w 480 --expect-h 930 --min-seconds 17 --max-seconds 21 \
               --min-kb 200 --max-kb 420 --require-silent
           done
+          # The 1080p cuts are portrait footage pillarboxed into landscape, so
+          # the picture occupies a ~556px-wide centre band and the rest is
+          # solid #101014 by design. Statistics are measured on the picture
+          # region; measuring the whole frame would grade the padding.
           for f in artifacts/media/youtube-*.mp4; do
             node tools/verify_clip.js "$f" --expect-w 1920 --expect-h 1080 \
-              --min-seconds 10 --max-seconds 60 --max-kb 5120 --require-silent
+              --min-seconds 10 --max-seconds 60 --max-kb 5120 --require-silent \
+              --measure-crop 600:1080:660:0
           done
           echo '--- sizes, per file ---'
           for f in artifacts/media/clip-*.mp4 artifacts/media/poster-*.webp artifacts/media/youtube-*.mp4; do

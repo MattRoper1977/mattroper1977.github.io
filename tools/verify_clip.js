@@ -40,7 +40,15 @@ if (has('require-silent')) ok('silent-no-audio-stream', a.length === 0, a.length
 // real change between frames.
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vc-'));
 const tmp = path.join(dir, 'stats.txt');
-execFileSync(FFMPEG, ['-v', 'quiet', '-i', FILE, '-vf', `signalstats,metadata=print:file=${tmp}`, '-an', '-f', 'null', '-'], { stdio: 'ignore' });
+// --measure-crop W:H:X:Y restricts the statistics to the PICTURE region.
+// A pillarboxed 1080p cut is mostly solid bars by design, so measuring the
+// whole frame reports the padding's flatness rather than the content's. The
+// crop is disclosed on the command line and printed, so it can never be used
+// to quietly hide a genuinely flat clip.
+const CROP = arg('measure-crop', null);
+const vf = (CROP ? `crop=${CROP},` : '') + `signalstats,metadata=print:file=${tmp}`;
+if (CROP) console.log('  note  statistics measured on the picture region crop=' + CROP);
+execFileSync(FFMPEG, ['-v', 'quiet', '-i', FILE, '-vf', vf, '-an', '-f', 'null', '-'], { stdio: 'ignore' });
 const t = fs.readFileSync(tmp, 'utf8');
 // Keys DERIVED from what signalstats actually emits, not assumed. An earlier
 // version of this file measured YSTD — which signalstats does not produce —
