@@ -74,8 +74,10 @@ jobs:
           set -euo pipefail
           # Apex Rally gets exactly ONE homepage surface. Derived by counting,
           # not by trusting the harness to have looked.
-          n=$(grep -o '/apexrally/' index.html | wc -l)
-          echo "homepage references to /apexrally/: $n"
+          # `|| true` so that zero references fails on the explicit test below
+          # with a readable count, rather than as an opaque pipefail exit
+          n=$(grep -o '/apexrally/' index.html | wc -l || true)
+          echo "homepage references to /apexrally/: $n (expected exactly 1)"
           test "$n" -eq 1
           # New Release boxes are held by ruling; Rally must not have taken one
           ! grep -q 'data-release="Apex Rally"' index.html
