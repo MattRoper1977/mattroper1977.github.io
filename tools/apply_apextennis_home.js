@@ -25,7 +25,16 @@ const CATALOG=[{key:'apex-golf',title:'Apex Golf'},{key:'apex-tennis',title:'Ape
 function count(s,x){return s.split(x).length-1}
 function transformIndex(source){
  const counts=Object.fromEntries(CARD_NAMES.map(n=>[n,count(source,`data-sport-game="${n}"`)]));
- if(CARD_NAMES.every(n=>counts[n]===1)&&source.includes(NEW_LEDE))return source;
+ // ELEVENTH INSTANCE OF THE A-6 SHAPE, in the already-applied detector. This
+ // required `source.includes(NEW_LEDE)` — the exact four-game lede string — so
+ // the moment the lede was rewritten for a fifth sports game the transform
+ // stopped recognising its own completed work, fell through to the
+ // not-yet-applied guard below, and threw "membership drift" on a homepage that
+ // was in fact correct. The transform is applied when the cards it adds are
+ // present and the lede it replaces is gone; what the lede was replaced WITH is
+ // not this script's business, and pinning it made a correct homepage look
+ // broken.
+ if(CARD_NAMES.every(n=>counts[n]===1)&&!source.includes(OLD_LEDE))return source;
  if(counts['Apex Kick']!==1||counts['Apex Pool']!==1||counts['Apex Golf']!==0||counts['Apex Tennis']!==0)throw Error('homepage Sports membership drift');
  if(count(source,OLD_LEDE)!==1)throw Error('homepage Sports lede drift');
  const poolStart=source.indexOf('<a class="dx-sport" data-sport-game="Apex Pool"'),poolEnd=source.indexOf('</a>',poolStart);
@@ -60,4 +69,4 @@ const beforeIndex=fs.readFileSync(INDEX,'utf8'),beforeSite=fs.readFileSync(SITE,
 const afterIndex=transformIndex(beforeIndex),afterSite=transformSite(beforeSite);
 if(transformIndex(afterIndex)!==afterIndex||transformSite(afterSite)!==afterSite)throw Error('idempotency failure');
 if(afterIndex!==beforeIndex)fs.writeFileSync(INDEX,afterIndex);if(afterSite!==beforeSite)fs.writeFileSync(SITE,afterSite);
-console.log(afterIndex===beforeIndex&&afterSite===beforeSite?'NO-OP: four-game homepage Sports is canonical.':'Applied Apex Golf and Apex Tennis to the existing homepage Sports section and relative doors.');
+console.log(afterIndex===beforeIndex&&afterSite===beforeSite?`NO-OP: homepage Sports is canonical (${(afterIndex.match(/data-sport-game="/g)||[]).length} cards).`:'Applied Apex Golf and Apex Tennis to the existing homepage Sports section and relative doors.');
