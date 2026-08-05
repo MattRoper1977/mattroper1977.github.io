@@ -42,10 +42,16 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Source gates
-        run: node tools/verify_relicforge.js | tee /tmp/relicforge_source.log
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/verify_relicforge.js | tee /tmp/relicforge_source.log
 
       - name: Rendered gates
-        run: node tools/verify_relicforge_browser.js | tee /tmp/relicforge_browser.log
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/verify_relicforge_browser.js | tee /tmp/relicforge_browser.log
 
       - name: Sitemap carries the landing, derived from the directory
         shell: bash
