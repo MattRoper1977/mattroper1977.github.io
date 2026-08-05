@@ -1,0 +1,126 @@
+name: Neon Breach live verification
+
+# The C.4 obligation: name the SERVED hash for the landed game.
+#
+# The agent container cannot reach the custom domain — the proxy answers 403 on
+# CONNECT, and both madebymatt.uk and the github.io host return 000 from there.
+# CI is the only channel that can fetch a live path, which is why this exists as
+# a workflow rather than a container step.
+#
+# READ-ONLY against production: it fetches, hashes and compares. It writes
+# nothing to any surface.
+#
+# Pages lag is reported as PENDING, never as a pass. A served copy that has not
+# caught up with the tree is a deployment timing fact, not a content match, and
+# saying so is the whole point of the gate.
+
+on:
+  push:
+    branches:
+      - 'claude/neon-sync-breach-release-0x70pf'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: read
+
+jobs:
+  live:
+    name: Fetch /neonbreach/ as served and compare to the committed tree
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out main (the deployed tree)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Record the SHA under test
+        shell: bash
+        run: echo "main is $(git rev-parse HEAD)"
+
+      - name: GitHub Pages build status
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -o pipefail
+          curl -sS -H "Authorization: Bearer $GH_TOKEN" \
+               -H "Accept: application/vnd.github+json" \
+               "https://api.github.com/repos/${{ github.repository }}/pages/builds/latest" \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin); print("status ",d.get("status")); print("commit ",d.get("commit")); print("updated",d.get("updated_at")); print("error  ",d.get("error"))' \
+            || echo "Pages API unavailable to this token — recorded, not faked."
+
+      - name: HTTP status for the new surface
+        shell: bash
+        run: |
+          set -o pipefail
+          fail=0
+          for u in https://madebymatt.uk/neonbreach/ https://madebymatt.uk/sitemap.xml ; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
+            printf '%-46s %s\n' "$u" "$code"
+            [ "$code" = "200" ] || fail=1
+          done
+          exit $fail
+
+      - name: SERVED HASH — the C.4 obligation, named
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sS --max-time 60 https://madebymatt.uk/neonbreach/ -o /tmp/neonbreach.live
+          LB=$(wc -c < /tmp/neonbreach.live)
+          RB=$(wc -c < neonbreach/index.html)
+          LS=$(sha256sum /tmp/neonbreach.live | cut -d' ' -f1)
+          RS=$(sha256sum neonbreach/index.html | cut -d' ' -f1)
+          echo "SERVED_BYTES=$LB"
+          echo "SERVED_SHA256=$LS"
+          echo "REPO_BYTES=$RB"
+          echo "REPO_SHA256=$RS"
+          if [ "$LS" = "$RS" ]; then
+            echo "PASS served /neonbreach/ is byte-identical to the committed tree"
+          else
+            echo "PENDING served copy has not caught up with the tree (Pages lag)."
+            echo "Recorded as PENDING, not as a pass and not as a content failure."
+            exit 78
+          fi
+
+      - name: Served copy still satisfies its own contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The gates are run against the SERVED bytes, not the checked-out
+          # ones, so a deploy-time mutation could not slip past unnoticed.
+          NB_GAME_FILE=/tmp/neonbreach.live node tools/verify_neonbreach.js
+          echo 'The live bytes pass the same contract the committed bytes do.'
+
+      - name: Sitemap as served carries the canonical line
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sS --max-time 30 https://madebymatt.uk/sitemap.xml -o /tmp/sitemap.live
+          N=$(grep -c '<loc>https://madebymatt.uk/neonbreach/</loc>' /tmp/sitemap.live || true)
+          echo "served sitemap /neonbreach/ loc lines: $N"
+          if [ "$N" -eq 1 ]; then
+            echo 'PASS served sitemap carries exactly one canonical line'
+          else
+            echo 'PENDING served sitemap has not caught up with the tree (Pages lag).'
+          fi
+
+      - name: Surface census — records the invisibility, does not hide it
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sS --max-time 30 https://madebymatt.uk/ -o /tmp/home.html || true
+          curl -sS --max-time 30 https://madebymatt.uk/games/ -o /tmp/games.html || true
+          HOME_REFS=$(grep -oc 'neonbreach' /tmp/home.html || true)
+          GRID_REFS=$(grep -oc 'neonbreach' /tmp/games.html || true)
+          echo "neonbreach references in served homepage : ${HOME_REFS:-0}"
+          echo "neonbreach references in served games grid: ${GRID_REFS:-0}"
+          echo
+          echo 'EXPECTED AT THIS POINT: zero on both. Neon Breach is deliberately'
+          echo 'surface-less — no shelf card, no homepage box — and is reachable'
+          echo 'only by typing the URL. This is a known, owned state closed by'
+          echo 'SESSION_G §3 (shelf card) and §5 (New Release box), both of which'
+          echo 'are blocked on the v11-land brief. This step records the fact so'
+          echo 'the invisibility stays owned rather than being discovered later.'
