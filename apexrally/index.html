@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Apex Rally — Read the Court</title>
+<link rel="canonical" href="https://madebymatt.uk/apexrally/">
+<meta property="og:url" content="https://madebymatt.uk/apexrally/">
+<meta property="og:title" content="Apex Rally — Read the Court">
+<meta name="description" content="A complete single-file tennis rally game. Aim, time, spin and read the court against adaptive opponents on desktop or mobile.">
+<meta name="theme-color" content="#0d1531">
+<style>
+:root{
+  --ink:#0d1531;--ink2:#151f42;--panel:#111a35f2;--panel2:#1a2850;--cream:#f7f2df;
+  --muted:#aeb9d3;--line:#34466f;--mint:#72e1b2;--amber:#ffb45c;--violet:#9d8cff;
+  --red:#ff737c;--blue:#61b7ff;--gold:#ffd65c;--safeT:env(safe-area-inset-top,0px);
+  --safeB:env(safe-area-inset-bottom,0px);--safeL:env(safe-area-inset-left,0px);--safeR:env(safe-area-inset-right,0px)
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(--cream);font-family:Inter,"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;overscroll-behavior:none}
+button,input,select{font:inherit}button{border:0;color:inherit;cursor:pointer;touch-action:manipulation}button:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.hidden{display:none!important}.sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important}
+#app{position:fixed;inset:0;background:radial-gradient(circle at 50% 8%,#223d68 0,#0d1531 56%,#080d20 100%);overflow:hidden}
+#court{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#hud{position:absolute;inset:0;z-index:10;pointer-events:none}
+#topbar{position:absolute;top:calc(8px + var(--safeT));left:calc(8px + var(--safeL));right:calc(8px + var(--safeR));display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:start;gap:8px}
+.hudbox{background:#091125dc;border:1px solid #ffffff20;border-radius:14px;padding:7px 10px;box-shadow:0 6px 20px #0007;backdrop-filter:blur(7px);min-width:0}
+#opponentBox{text-align:right}.tiny{display:block;color:var(--muted);font-size:8px;letter-spacing:.14em;text-transform:uppercase}.hudbox b{display:block;font-size:14px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.scorebox{display:flex;align-items:center;gap:8px;padding:7px 12px}.score{font-size:26px;font-weight:950;font-variant-numeric:tabular-nums;line-height:1}.dash{color:var(--muted)}
+#meterrow{position:absolute;top:calc(65px + var(--safeT));left:50%;transform:translateX(-50%);display:flex;gap:6px;align-items:center;width:min(92vw,520px)}
+.meterchip{flex:1;background:#091125d8;border:1px solid #ffffff1f;border-radius:999px;padding:5px 7px;box-shadow:0 4px 14px #0005}.meterline{height:7px;background:#23304f;border-radius:999px;overflow:hidden}.meterline i{display:block;height:100%;width:0;border-radius:inherit;transition:width .12s linear}.focusbar i{background:linear-gradient(90deg,var(--violet),var(--blue))}.staminabar i{background:linear-gradient(90deg,var(--amber),var(--mint))}.meterlabel{display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-bottom:3px;letter-spacing:.08em;text-transform:uppercase}
+#message{position:absolute;left:50%;top:18%;transform:translateX(-50%) translateY(-5px);max-width:min(90vw,580px);padding:9px 16px;border:1px solid #ffffff24;border-radius:999px;background:#091125ee;text-align:center;font-weight:900;font-size:13px;opacity:0;transition:.18s;box-shadow:0 10px 30px #0009}.showmsg{opacity:1!important;transform:translateX(-50%) translateY(0)!important}
+#chargeWrap{position:absolute;left:50%;bottom:calc(92px + var(--safeB));transform:translateX(-50%);width:min(76vw,390px);padding:8px 10px;border-radius:14px;background:#091125e8;border:1px solid #ffffff24;opacity:0;transition:opacity .12s}.charging{opacity:1!important}.chargeTop{display:flex;justify-content:space-between;font-size:10px;font-weight:800;color:var(--muted);margin-bottom:5px}.chargeLine{height:12px;background:#263554;border-radius:999px;overflow:hidden}.chargeLine i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--mint),var(--amber),var(--red));border-radius:inherit}.sweetBand{position:absolute;left:70%;top:31px;width:13%;height:12px;border:2px solid #fff;border-radius:999px;opacity:.75;pointer-events:none}
+#desktopHelp{position:absolute;left:calc(8px + var(--safeL));bottom:calc(8px + var(--safeB));max-width:440px;padding:7px 10px;border-radius:11px;background:#091125c9;border:1px solid #ffffff1c;color:var(--muted);font-size:10px;line-height:1.45}
+#quickButtons{position:absolute;right:calc(8px + var(--safeR));bottom:calc(8px + var(--safeB));display:flex;gap:6px;pointer-events:auto}.iconbtn{min-width:44px;min-height:44px;border-radius:12px;background:#111b38e8;border:1px solid var(--line);font-weight:900}
+#shotDock{position:absolute;left:50%;bottom:calc(10px + var(--safeB));transform:translateX(-50%);display:flex;gap:6px;pointer-events:auto}.shotbtn{min-width:68px;min-height:44px;border-radius:12px;padding:7px 9px;background:#111b38e8;border:1px solid var(--line);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}.shotbtn span{display:block;font-size:16px;line-height:1;margin-bottom:2px}.shotbtn[aria-pressed="true"]{background:var(--amber);color:#161d35;border-color:#ffe3aa}.shotbtn small{display:block;font-size:8px;opacity:.75}
+#screenLayer{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:calc(14px + var(--safeT)) calc(14px + var(--safeR)) calc(14px + var(--safeB)) calc(14px + var(--safeL));background:linear-gradient(150deg,#071026e8,#101b3be8);overflow:auto}
+.screen{width:min(720px,100%);max-height:100%;overflow:auto;border:1px solid #ffffff26;border-radius:24px;background:linear-gradient(150deg,#121e3bf7,#0d1630f8);box-shadow:0 24px 80px #000b;padding:clamp(20px,4vw,34px)}
+.logo{text-align:center}.logo .eyebrow{color:var(--amber);font-size:11px;text-transform:uppercase;letter-spacing:.18em;font-weight:900}.logo h1{margin:.12em 0 .06em;font-size:clamp(52px,14vw,104px);line-height:.8;letter-spacing:-.065em;font-weight:1000}.logo h1 span{display:block;color:var(--mint)}.tagline{margin:20px auto 8px;max-width:560px;text-align:center;font-size:clamp(16px,4vw,22px);font-weight:780;line-height:1.35}.lede{margin:0 auto;max-width:600px;text-align:center;color:var(--muted);font-size:13px;line-height:1.55}
+.menuGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:24px}.menuCard{min-height:132px;padding:15px;border-radius:16px;background:linear-gradient(145deg,#1c2c52,#111b37);border:1px solid var(--line);text-align:left;box-shadow:0 6px 18px #0004}.menuCard:hover{border-color:var(--amber);transform:translateY(-2px)}.menuCard strong{display:block;font-size:16px;margin:8px 0 5px}.menuCard span{display:block;color:var(--muted);font-size:11px;line-height:1.4}.menuCard .ico{font-size:28px}.menuCard.primary{border-color:#f1aa55;background:linear-gradient(145deg,#53361e,#16223e)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}.btn{min-height:48px;padding:11px 17px;border-radius:13px;background:var(--amber);color:#151d35;font-weight:950;text-transform:uppercase;letter-spacing:.055em;box-shadow:0 3px 0 #a86221;flex:1}.btn.secondary{background:#20325a;color:var(--cream);box-shadow:0 3px 0 #0a1021}.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);box-shadow:none}.btn:disabled{opacity:.45;cursor:not-allowed}
+.sectionTitle{margin:0 0 6px;font-size:clamp(28px,7vw,48px);letter-spacing:-.04em}.sectionLead{color:var(--muted);line-height:1.55;margin:0 0 16px}.opponents{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.opp{padding:14px;border:1px solid var(--line);border-radius:15px;background:#162342;text-align:left}.opp strong{display:block;font-size:15px}.opp small{display:block;color:var(--muted);font-size:10px;line-height:1.4;margin-top:4px}.opp .skill{height:6px;background:#253557;border-radius:999px;margin-top:10px;overflow:hidden}.opp .skill i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--red))}.opp.selected{outline:2px solid var(--gold);background:#263353}
+.howGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.how{padding:13px;border:1px solid var(--line);border-radius:14px;background:#15213e}.how b{display:block;color:var(--mint);margin-bottom:4px}.how p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}.key{display:inline-grid;place-items:center;min-width:25px;height:24px;padding:0 6px;border-radius:6px;background:#26375c;border:1px solid #52658d;color:#fff;font-size:10px;font-weight:900;box-shadow:0 2px 0 #0a1020}
+.statGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:16px 0}.stat{padding:12px 8px;border:1px solid var(--line);border-radius:13px;background:#15213e;text-align:center}.stat b{display:block;color:var(--gold);font-size:22px}.stat span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}.resultHero{text-align:center}.resultHero .big{font-size:clamp(48px,14vw,92px);font-weight:1000;line-height:.9;color:var(--gold)}.resultHero h2{font-size:clamp(28px,7vw,48px);margin:10px 0 4px}.resultHero p{color:var(--muted);margin:0 auto;max-width:520px;line-height:1.55}
+.settingRow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}.settingRow:last-child{border:0}.toggle{min-width:92px;min-height:44px;border-radius:999px;background:#26375b;border:1px solid var(--line);font-weight:900}.toggle[aria-pressed="true"]{background:var(--mint);color:#10213b}
+#mobileControls{position:absolute;inset:0;z-index:20;pointer-events:none;display:none}
+#moveZone{position:absolute;left:calc(10px + var(--safeL));bottom:calc(12px + var(--safeB));width:142px;height:142px;pointer-events:auto;touch-action:none}.joyBase{position:absolute;inset:12px;border-radius:50%;background:#09112599;border:2px solid #ffffff30;box-shadow:inset 0 0 24px #0008}.joyKnob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px;border-radius:50%;background:#9d8cffcc;border:2px solid #fff6;box-shadow:0 7px 20px #0009;transform:translate(0,0)}
+#mobileActions{position:absolute;right:calc(10px + var(--safeR));bottom:calc(12px + var(--safeB));display:grid;grid-template-columns:repeat(2,64px);gap:8px;pointer-events:auto}.mob{min-width:64px;min-height:54px;border-radius:16px;background:#14213fe8;border:1px solid #ffffff2c;font-size:10px;font-weight:950;text-transform:uppercase}.mob.hit{grid-row:span 2;min-height:116px;background:linear-gradient(#ffbf6c,#f08b33);color:#15203a;font-size:16px;box-shadow:0 4px 0 #9e4f1d}.mob.focus{background:#5747a7}.mob[aria-pressed="true"]{outline:3px solid #fff;outline-offset:1px}
+#mobileShots{position:absolute;left:50%;bottom:calc(145px + var(--safeB));transform:translateX(-50%);display:flex;gap:5px;pointer-events:auto}.mshot{width:48px;height:48px;border-radius:12px;background:#121e3de8;border:1px solid #ffffff29;font-size:20px}.mshot[aria-pressed="true"]{background:var(--amber);color:#15203a}
+#rotateNotice{display:none;position:absolute;inset:0;z-index:60;background:#0c1530;align-items:center;justify-content:center;text-align:center;padding:25px}.rotateCard{max-width:360px}.rotateCard b{display:block;font-size:28px;margin-bottom:8px}.rotateCard p{color:var(--muted)}
+#splash{position:fixed;inset:0;z-index:999;background:#111936;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;transition:opacity .3s}.splashOut{opacity:0;pointer-events:none}.splashWord{font-weight:950;font-size:clamp(26px,8vw,46px)}.splashLine{width:min(62vw,340px);height:4px;background:var(--amber);border-radius:4px;transform:scaleX(0);transform-origin:left;animation:sweep .65s ease-out .08s forwards}@keyframes sweep{to{transform:scaleX(1)}}
+.flash{animation:flash .24s ease-out}@keyframes flash{50%{filter:brightness(1.35)}}
+@media(max-width:760px){.menuGrid,.opponents{grid-template-columns:1fr}.menuCard{min-height:100px}.howGrid{grid-template-columns:1fr}.statGrid{grid-template-columns:repeat(2,1fr)}#desktopHelp,#shotDock,#quickButtons{display:none}#topbar{grid-template-columns:1fr auto 1fr}.hudbox b{font-size:11px}.score{font-size:21px}#meterrow{top:calc(58px + var(--safeT))}#message{top:15%;font-size:11px}#chargeWrap{bottom:calc(170px + var(--safeB));width:min(62vw,300px)}}
+@media(pointer:coarse),(max-width:760px){#mobileControls{display:block}}
+@media(max-height:510px) and (orientation:landscape){#moveZone{width:112px;height:112px}.joyKnob{width:48px;height:48px;margin:-24px}#mobileActions{grid-template-columns:repeat(2,58px)}.mob{min-width:58px;min-height:47px}.mob.hit{min-height:102px}#mobileShots{bottom:calc(5px + var(--safeB))}.mshot{width:44px;height:44px}#message{top:12%}}
+@media(max-width:350px) and (orientation:portrait){#rotateNotice{display:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="court" aria-label="Apex Rally tennis court"></canvas>
+  <div id="hud" class="hidden" aria-hidden="true">
+    <div id="topbar">
+      <div class="hudbox"><span class="tiny">You</span><b id="playerName">MATT</b></div>
+      <div class="hudbox scorebox"><span class="score" id="pScore">0</span><span class="dash">–</span><span class="score" id="aScore">0</span></div>
+      <div class="hudbox" id="opponentBox"><span class="tiny">Opponent</span><b id="oppName">ROOKIE ROWAN</b></div>
+    </div>
+    <div id="meterrow">
+      <div class="meterchip"><div class="meterlabel"><span>Stamina</span><span id="staminaText">100</span></div><div class="meterline staminabar"><i id="staminaFill"></i></div></div>
+      <div class="meterchip"><div class="meterlabel"><span>Apex Focus</span><span id="focusText">0</span></div><div class="meterline focusbar"><i id="focusFill"></i></div></div>
+    </div>
+    <div id="message" role="status" aria-live="polite"></div>
+    <div id="chargeWrap"><div class="chargeTop"><span>SHOT POWER</span><span id="chargeText">25%</span></div><div class="chargeLine"><i id="chargeFill"></i></div><div class="sweetBand" aria-hidden="true"></div></div>
+    <div id="desktopHelp">Move <span class="key">WASD</span>/<span class="key">ARROWS</span> · Aim with mouse · Hold/release <span class="key">SPACE</span> · Shots <span class="key">1–4</span> · Focus <span class="key">SHIFT</span></div>
+    <div id="shotDock" role="group" aria-label="Shot type">
+      <button class="shotbtn" data-shot="flat" aria-pressed="false"><span>➜</span>Flat<small>Fast</small></button>
+      <button class="shotbtn" data-shot="topspin" aria-pressed="true"><span>↻</span>Topspin<small>Safe dip</small></button>
+      <button class="shotbtn" data-shot="slice" aria-pressed="false"><span>⌁</span>Slice<small>Low skid</small></button>
+      <button class="shotbtn" data-shot="lob" aria-pressed="false"><span>⌃</span>Lob<small>High arc</small></button>
+    </div>
+    <div id="quickButtons"><button class="iconbtn" id="pauseBtn" aria-label="Pause">Ⅱ</button><button class="iconbtn" id="muteBtn" aria-label="Toggle sound">♪</button></div>
+  </div>
+  <div id="mobileControls" class="hidden" aria-hidden="true">
+    <div id="moveZone" aria-label="Movement joystick"><div class="joyBase"></div><div class="joyKnob" id="joyKnob"></div></div>
+    <div id="mobileShots" role="group" aria-label="Shot type">
+      <button class="mshot" data-shot="flat" aria-label="Flat shot" aria-pressed="false">➜</button>
+      <button class="mshot" data-shot="topspin" aria-label="Topspin shot" aria-pressed="true">↻</button>
+      <button class="mshot" data-shot="slice" aria-label="Slice shot" aria-pressed="false">⌁</button>
+      <button class="mshot" data-shot="lob" aria-label="Lob shot" aria-pressed="false">⌃</button>
+    </div>
+    <div id="mobileActions"><button class="mob hit" id="hitBtn">Hold<br>Hit</button><button class="mob focus" id="focusBtn">Focus</button><button class="mob" id="mobilePause">Pause</button></div>
+  </div>
+  <div id="screenLayer"><div class="screen" id="screen"></div></div>
+  <div id="rotateNotice"><div class="rotateCard"><b>Turn your phone sideways</b><p>Apex Rally is playable in portrait, but the court is easier to read in landscape.</p></div></div>
+  <div id="live" class="sr" aria-live="polite"></div>
+</div>
+<div id="splash"><div class="splashWord">Made by Matt</div><div class="splashLine"></div></div>
+<script>
+(()=>{
+'use strict';
+
+const canvas=document.getElementById('court');
+const ctx=canvas.getContext('2d',{alpha:false});
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const hypot=Math.hypot;
+const TAU=Math.PI*2;
+const COURT_W=720, COURT_L=1280, HALF_W=360, HALF_L=640, NET_H=92, GRAV=2100;
+const touchMode=('ontouchstart' in window)||(navigator.maxTouchPoints>0)||matchMedia('(pointer:coarse)').matches;
+
+const SHOTS={
+  flat:{name:'FLAT',icon:'➜',time:0.69,arc:0.88,bounce:.54,curve:0,error:1.25,stamina:8,color:'#ffb45c'},
+  topspin:{name:'TOPSPIN',icon:'↻',time:0.80,arc:1.02,bounce:.67,curve:0,error:.78,stamina:7,color:'#72e1b2'},
+  slice:{name:'SLICE',icon:'⌁',time:0.89,arc:.78,bounce:.38,curve:72,error:.92,stamina:6,color:'#61b7ff'},
+  lob:{name:'LOB',icon:'⌃',time:1.08,arc:1.32,bounce:.58,curve:0,error:.58,stamina:5,color:'#9d8cff'}
+};
+const OPPONENTS=[
+  {name:'Rookie Rowan',tag:'Learns the centre first',skill:.42,speed:350,reach:122,color:'#72e1b2',style:'steady'},
+  {name:'Mika Slice',tag:'Changes pace and keeps it low',skill:.63,speed:405,reach:128,color:'#61b7ff',style:'slice'},
+  {name:'Nova Vale',tag:'Attacks space before it opens',skill:.82,speed:455,reach:134,color:'#ff737c',style:'attack'}
+];
+const defaults={audio:true,reduced:matchMedia('(prefers-reduced-motion:reduce)').matches,name:'MATT'};
+let saved={settings:{...defaults},stats:{matches:0,wins:0,bestRally:0,sweets:0,aces:0,championships:0,readPoints:0}};
+try{const x=JSON.parse(localStorage.getItem('mbm_apexrally_v1')||'null');if(x){saved.settings={...defaults,...x.settings};saved.stats={...saved.stats,...x.stats}}}catch(_){ }
+function persist(){try{localStorage.setItem('mbm_apexrally_v1',JSON.stringify(saved))}catch(_){}}
+
+let audioCtx=null;
+function wakeAudio(){if(!saved.settings.audio)return;if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume()}
+function tone(freq,dur=.08,type='sine',vol=.045,delay=0){if(!saved.settings.audio)return;wakeAudio();if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=audioCtx.currentTime+delay;o.type=type;o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(audioCtx.destination);o.start(t);o.stop(t+dur+.02)}
+function sfx(kind){if(kind==='hit'){tone(210,.05,'triangle',.06);tone(430,.06,'sine',.025,.02)}else if(kind==='sweet'){tone(310,.05,'triangle',.065);tone(620,.12,'sine',.04,.03)}else if(kind==='bounce'){tone(120,.035,'sine',.025)}else if(kind==='net'){tone(90,.12,'square',.035)}else if(kind==='point'){tone(440,.08,'triangle',.04);tone(660,.11,'triangle',.035,.07)}else if(kind==='lose'){tone(220,.12,'sawtooth',.03);tone(150,.16,'sine',.03,.1)}else if(kind==='focus'){tone(520,.08,'sine',.025);tone(760,.16,'sine',.02,.05)}}
+
+const G={
+  mode:'title',matchType:'quick',oppIndex:0,champIndex:0,scoreP:0,scoreA:0,totalPoints:0,server:'player',faults:0,
+  pointLocked:false,pointHits:0,rally:0,lastReason:'',aim:{x:0,y:-470},shot:'topspin',messageTimer:0,
+  player:{x:0,y:505,stamina:100,focus:0,swing:0,swingPower:.4,readChecked:false},
+  ai:{x:0,y:-505,cool:0,serveTimer:0,swing:0},
+  ball:{x:0,y:495,z:48,vx:0,vy:0,vz:0,live:false,attached:true,lastHitter:null,bounces:0,isServe:true,bounce:.58,curve:0,spin:0,trail:[],pred:null,readChecked:false,netHit:false},
+  keys:new Set(),joyX:0,joyY:0,hitHeld:false,chargeStart:0,focusHeld:false,particles:[],shake:0,flash:0,
+  selectedOpp:0,lastTime:0,acc:0,width:0,height:0,dpr:1,view:null
+};
+
+function resize(){
+  const r=canvas.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);
+  G.width=Math.max(1,r.width);G.height=Math.max(1,r.height);G.dpr=dpr;
+  canvas.width=Math.round(G.width*dpr);canvas.height=Math.round(G.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+  const portraitMobile=(touchMode||G.width<=760)&&G.height>G.width;
+  const top=Math.max(G.height<520?72:94,G.height*.13),reserve=portraitMobile?190:70,bottom=Math.min(G.height-reserve,G.height*(portraitMobile?.79:.91)),h=Math.max(250,bottom-top),w=Math.min(G.width*.94,h*.72);
+  G.view={cx:G.width/2,top,bottom:top+h,h,w,farW:w*.58,nearW:w};
+}
+window.addEventListener('resize',resize,{passive:true});resize();
+
+function worldToScreen(x,y,z=0){
+  const v=G.view,p=clamp((y+HALF_L)/COURT_L,0,1),w=lerp(v.farW,v.nearW,p);
+  return {x:v.cx+(x/HALF_W)*(w/2),y:v.top+p*v.h-z*(.28+.25*p),scale:lerp(.65,1.08,p)};
+}
+function screenToWorld(sx,sy){
+  const v=G.view,p=clamp((sy-v.top)/v.h,0,1),w=lerp(v.farW,v.nearW,p);
+  return {x:clamp((sx-v.cx)/(w/2)*HALF_W,-HALF_W,HALF_W),y:clamp(-HALF_L+p*COURT_L,-HALF_L,HALF_L)};
+}
+function poly(points,fill,stroke,width=1){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke()}}
+function line(a,b,color,width=1,dash=[]){ctx.save();ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dash);ctx.stroke();ctx.restore()}
+function drawCourt(){
+  const v=G.view;
+  ctx.fillStyle='#071024';ctx.fillRect(0,0,G.width,G.height);
+  const glow=ctx.createRadialGradient(v.cx,v.top+v.h*.45,10,v.cx,v.top+v.h*.45,v.w*.8);glow.addColorStop(0,'#243d66');glow.addColorStop(1,'#071024');ctx.fillStyle=glow;ctx.fillRect(0,0,G.width,G.height);
+  const A=worldToScreen(-HALF_W,-HALF_L),B=worldToScreen(HALF_W,-HALF_L),C=worldToScreen(HALF_W,HALF_L),D=worldToScreen(-HALF_W,HALF_L);
+  poly([A,B,C,D],'#18684e','#dfead9',2.2);
+  const inner=318;
+  line(worldToScreen(-inner,-HALF_L),worldToScreen(-inner,HALF_L),'#e9f2e5',1.5);
+  line(worldToScreen(inner,-HALF_L),worldToScreen(inner,HALF_L),'#e9f2e5',1.5);
+  line(worldToScreen(-HALF_W,0),worldToScreen(HALF_W,0),'#eef5e8',2);
+  line(worldToScreen(-inner,-320),worldToScreen(inner,-320),'#e9f2e5',1.4);
+  line(worldToScreen(-inner,320),worldToScreen(inner,320),'#e9f2e5',1.4);
+  line(worldToScreen(0,-320),worldToScreen(0,320),'#e9f2e5',1.2);
+  const netL=worldToScreen(-HALF_W-18,0),netR=worldToScreen(HALF_W+18,0),netLh=worldToScreen(-HALF_W-18,0,NET_H),netRh=worldToScreen(HALF_W+18,0,NET_H);
+  ctx.save();ctx.globalAlpha=.92;poly([netLh,netRh,netR,netL],'#dfe8ee2c','#dfe8ee',1);for(let i=0;i<=18;i++){const x=-HALF_W-18+i*(COURT_W+36)/18;line(worldToScreen(x,0),worldToScreen(x,0,NET_H),'#dfe8ee55',.6)}ctx.restore();
+  // stadium lights and crowd flecks
+  ctx.save();ctx.globalAlpha=.5;for(let i=0;i<26;i++){const x=(i*83%G.width),y=18+(i*47%Math.max(40,v.top-40));ctx.fillStyle=i%3?'#6a78a2':'#ffcc70';ctx.fillRect(x,y,2,2)}ctx.restore();
+  // aim target
+  if(G.mode==='playing')drawTarget();
+}
+function drawTarget(){
+  const p=worldToScreen(G.aim.x,G.aim.y),pulse=saved.settings.reduced?1:1+Math.sin(performance.now()/170)*.08;
+  ctx.save();ctx.translate(p.x,p.y);ctx.scale(pulse,pulse);ctx.strokeStyle=SHOTS[G.shot].color;ctx.lineWidth=2;ctx.setLineDash([6,4]);ctx.beginPath();ctx.arc(0,0,18,0,TAU);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(-25,0);ctx.lineTo(25,0);ctx.moveTo(0,-25);ctx.lineTo(0,25);ctx.stroke();ctx.restore();
+}
+function drawPlayer(actor,isAI=false){
+  const p=worldToScreen(actor.x,actor.y),near=(actor.y+HALF_L)/COURT_L,scale=lerp(.72,1.15,near),facing=isAI?1:-1;
+  ctx.save();ctx.translate(p.x,p.y);ctx.scale(scale,scale);
+  ctx.fillStyle='#0007';ctx.beginPath();ctx.ellipse(0,10,22,8,0,0,TAU);ctx.fill();
+  ctx.fillStyle=isAI?OPPONENTS[G.oppIndex].color:'#ffb45c';ctx.beginPath();ctx.arc(0,-7,15,0,TAU);ctx.fill();
+  ctx.fillStyle='#f1c9a9';ctx.beginPath();ctx.arc(0,-27,8,0,TAU);ctx.fill();
+  ctx.strokeStyle='#e8eef8';ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(0,6);ctx.lineTo(-10,27);ctx.moveTo(0,6);ctx.lineTo(12,27);ctx.stroke();
+  ctx.save();ctx.rotate((isAI?Math.PI:0)+(actor.swing>0?facing*(.55-actor.swing*2.6):facing*.18));ctx.strokeStyle='#d4b58e';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(8,-8);ctx.lineTo(27,-26);ctx.stroke();ctx.strokeStyle='#f5f4ee';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(34,-32,10,15,.4,0,TAU);ctx.stroke();ctx.restore();
+  ctx.restore();
+}
+function drawBall(){
+  const b=G.ball,ground=worldToScreen(b.x,b.y,0),p=worldToScreen(b.x,b.y,b.z),scale=clamp(p.scale*(1+b.z/900),.65,1.45);
+  ctx.save();ctx.fillStyle='#0006';ctx.beginPath();ctx.ellipse(ground.x,ground.y+3,8*scale*(1-b.z/850),4*scale*(1-b.z/850),0,0,TAU);ctx.fill();
+  if(!saved.settings.reduced&&b.trail.length>1){ctx.lineCap='round';for(let i=1;i<b.trail.length;i++){const a=b.trail[i-1],c=b.trail[i],sa=worldToScreen(a.x,a.y,a.z),sc=worldToScreen(c.x,c.y,c.z);ctx.strokeStyle=`rgba(255,222,90,${i/b.trail.length*.35})`;ctx.lineWidth=1+i/b.trail.length*3;ctx.beginPath();ctx.moveTo(sa.x,sa.y);ctx.lineTo(sc.x,sc.y);ctx.stroke()}}
+  ctx.translate(p.x,p.y);ctx.scale(scale,scale);const g=ctx.createRadialGradient(-3,-4,1,0,0,9);g.addColorStop(0,'#fffbd4');g.addColorStop(.45,'#eaff58');g.addColorStop(1,'#88aa16');ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,8,0,TAU);ctx.fill();ctx.strokeStyle='#e6ef78';ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,0,8,0,TAU);ctx.stroke();ctx.restore();
+}
+function drawParticles(){if(saved.settings.reduced)return;ctx.save();for(const p of G.particles){const s=worldToScreen(p.x,p.y,p.z);ctx.globalAlpha=clamp(p.life/.7,0,1);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(s.x,s.y,p.size,0,TAU);ctx.fill()}ctx.restore();ctx.globalAlpha=1}
+function render(){
+  const shake=G.shake>0&&!saved.settings.reduced?(Math.random()-.5)*G.shake:0;ctx.save();ctx.translate(shake,shake*.4);drawCourt();drawPlayer(G.ai,true);drawPlayer(G.player,false);if(G.ball.live||G.ball.attached)drawBall();drawParticles();ctx.restore();
+}
+
+function resetActors(){G.player.x=0;G.player.y=505;G.player.swing=0;G.ai.x=0;G.ai.y=-505;G.ai.cool=0}
+function currentOpponent(){return OPPONENTS[G.oppIndex]}
+function setOpponent(i){G.oppIndex=clamp(i,0,OPPONENTS.length-1);$('oppName').textContent=currentOpponent().name.toUpperCase()}
+function setupPoint(delay=0){
+  G.pointLocked=false;G.rally=0;G.pointHits=0;G.faults=0;resetActors();
+  G.server=G.matchType==='practice'?'player':(Math.floor(G.totalPoints/2)%2===0?'player':'ai');
+  const b=G.ball;b.live=false;b.attached=true;b.lastHitter=null;b.bounces=0;b.isServe=true;b.curve=0;b.trail.length=0;b.pred=null;b.readChecked=false;b.netHit=false;
+  b.x=G.server==='player'?G.player.x:G.ai.x;b.y=G.server==='player'?G.player.y-12:G.ai.y+12;b.z=54;b.vx=b.vy=b.vz=0;
+  G.ai.serveTimer=G.server==='ai'?1.05:0;
+  setTimeout(()=>{if(G.mode==='playing'&&!G.pointLocked)message(G.server==='player'?'YOUR SERVE — AIM, HOLD, RELEASE':'RETURN READY — LET IT BOUNCE',1.4)},delay);
+}
+function startMatch(type,opp=0){
+  G.matchType=type;setOpponent(type==='championship'?G.champIndex:opp);G.scoreP=0;G.scoreA=0;G.totalPoints=0;G.player.focus=type==='practice'?50:18;G.player.stamina=100;G.mode='playing';
+  $('pScore').textContent='0';$('aScore').textContent='0';$('playerName').textContent=(saved.settings.name||'MATT').toUpperCase();showGameUI(true);hideScreen();setupPoint(150);message(type==='practice'?'PRACTICE — BUILD THE LONGEST RALLY':type==='championship'?`ROUND ${G.champIndex+1}: ${currentOpponent().name.toUpperCase()}`:`FIRST TO 7 · WIN BY 2`,1.8);
+}
+function showGameUI(on){$('hud').classList.toggle('hidden',!on);$('mobileControls').classList.toggle('hidden',!on);$('hud').setAttribute('aria-hidden',String(!on));$('mobileControls').setAttribute('aria-hidden',String(!on));updateShotButtons()}
+function message(text,dur=1.2){const el=$('message');el.textContent=text;el.classList.add('showmsg');$('live').textContent=text;G.messageTimer=dur}
+function burst(x,y,z,color,count=12){if(saved.settings.reduced)return;for(let i=0;i<count;i++)G.particles.push({x,y,z,vx:(Math.random()-.5)*210,vy:(Math.random()-.5)*210,vz:100+Math.random()*180,life:.45+Math.random()*.35,size:2+Math.random()*3,color})}
+function updateParticles(dt){for(const p of G.particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.vz-=GRAV*.38*dt;p.life-=dt}G.particles=G.particles.filter(p=>p.life>0)}
+function predictGround(b=G.ball){if(!b.live)return null;const disc=b.vz*b.vz+2*GRAV*Math.max(0,b.z),t=(b.vz+Math.sqrt(Math.max(0,disc)))/GRAV;if(!isFinite(t)||t<0)return null;return {x:b.x+b.vx*t+.5*b.curve*t*t,y:b.y+b.vy*t,t}}
+function legalLanding(x,y,hitter){return Math.abs(x)<=HALF_W&&Math.abs(y)<=HALF_L&&(hitter==='player'?y<0:y>0)}
+function other(side){return side==='player'?'ai':'player'}
+function canHit(side){
+  const b=G.ball;if(!b.live||G.pointLocked||!b.lastHitter||b.lastHitter===side)return false;
+  if(b.isServe&&b.bounces===0)return false;
+  if(side==='player'&&b.y<50)return false;if(side==='ai'&&b.y>-50)return false;
+  const a=side==='player'?G.player:G.ai,reach=side==='player'?138:currentOpponent().reach;
+  return hypot(b.x-a.x,b.y-a.y)<reach&&b.z<190;
+}
+function contactQuality(side){const a=side==='player'?G.player:G.ai,b=G.ball,d=hypot(b.x-a.x,b.y-a.y),ideal=70,distQ=1-Math.abs(d-ideal)/110,heightQ=1-Math.abs(b.z-70)/190;return clamp(distQ*.68+heightQ*.32,0,1)}
+function launchTo(side,targetX,targetY,power,shotName,quality=1,isServe=false){
+  const b=G.ball,cfg=SHOTS[shotName],from=side==='player'?G.player:G.ai;
+  if(isServe){b.x=from.x;b.y=from.y+(side==='player'?-18:18);b.z=58}
+  const dx=targetX-b.x,dy=targetY-b.y,dist=hypot(dx,dy),p=clamp(power,.25,1);
+  let t=cfg.time*(1.18-p*.38)*clamp(dist/760,.72,1.22);if(shotName==='lob')t*=1.08;
+  const err=(1-quality)*cfg.error*(40+70*p);targetX+=((Math.random()-.5)*2)*err;targetY+=((Math.random()-.5)*2)*err*.6;
+  b.vx=(targetX-b.x)/t;b.vy=(targetY-b.y)/t;b.vz=(.5*GRAV*t*t-b.z)/t;b.live=true;b.attached=false;b.lastHitter=side;b.bounces=0;b.isServe=isServe;b.bounce=cfg.bounce;b.curve=shotName==='slice'?cfg.curve*(targetX>=b.x?1:-1)*(side==='player'?1:-1):0;b.spin=shotName;b.netHit=false;b.pred=predictGround(b);b.readChecked=false;b.trail.length=0;
+  G.pointHits++;G.rally=Math.max(0,G.pointHits-1);G.shake=quality>.86?6:2;G.flash=.1;burst(b.x,b.y,b.z,cfg.color,quality>.86?18:8);sfx(quality>.86?'sweet':'hit');
+  if(side==='player'){
+    G.player.stamina=clamp(G.player.stamina-cfg.stamina*(.45+p*.55),0,100);
+    if(quality>.86){saved.stats.sweets++;G.player.focus=clamp(G.player.focus+11,0,100);message('SWEET SPOT · CLEAN CONTACT',.75)}
+  }
+}
+function playerRelease(){
+  if(G.mode!=='playing'||G.pointLocked)return;const held=G.hitHeld?performance.now()-G.chargeStart:0;G.hitHeld=false;$('chargeWrap').classList.remove('charging');$('hitBtn').textContent='Hold\nHit';
+  const power=clamp(.28+held/1100*.72,.28,1);
+  if(G.ball.attached&&G.server==='player'){launchTo('player',G.aim.x,clamp(G.aim.y,-610,-210),power,G.shot,.88,true);message(power>.84?'POWER SERVE':'SERVE IN PLAY',.65);return}
+  G.player.swing=.22;G.player.swingPower=power;
+}
+function playerPress(){if(G.mode!=='playing'||G.pointLocked)return;wakeAudio();if(G.hitHeld)return;G.hitHeld=true;G.chargeStart=performance.now();$('chargeWrap').classList.add('charging');$('hitBtn').innerHTML='Release<br>Hit'}
+function hitPlayer(){
+  const q=contactQuality('player'),power=G.player.swingPower;let ty=clamp(G.aim.y,-610,-75),tx=clamp(G.aim.x,-345,345);
+  if(G.shot==='lob')ty=clamp(ty-70,-620,-260);launchTo('player',tx,ty,power,G.shot,q,false);
+}
+function aiServe(){
+  const o=currentOpponent(),targetX=(Math.random()-.5)*260,targetY=300+Math.random()*190,p=.55+o.skill*.28,q=.78+o.skill*.14;launchTo('ai',targetX,targetY,p,o.style==='slice'?'slice':'topspin',q,true);message(`${o.name.toUpperCase()} SERVES`,.7)
+}
+function hitAI(){
+  const o=currentOpponent();G.ai.swing=.18,b=G.ball,q=clamp(contactQuality('ai')*(.74+o.skill*.35),.3,.98);let shot='topspin';
+  if(o.style==='slice'&&Math.random()<.58)shot='slice';else if(o.style==='attack'&&Math.random()<.5)shot='flat';else if(G.player.y<270&&Math.random()<.28)shot='lob';
+  const away=G.player.x>0?-1:1,tx=clamp(away*(155+Math.random()*155)*(o.skill+.18)+(Math.random()-.5)*(1-o.skill)*260,-340,340),ty=260+Math.random()*330;
+  launchTo('ai',tx,ty,.48+o.skill*.42,shot,q,false);G.ai.cool=.36+(1-o.skill)*.18;
+}
+function serveFault(reason){
+  if(G.pointLocked)return;G.ball.live=false;G.ball.attached=false;G.faults++;sfx('net');if(G.faults<2){G.pointLocked=true;message(`${reason.toUpperCase()} — SECOND SERVE`,1);setTimeout(()=>{G.pointLocked=false;resetServeSame()},900)}else awardPoint(other(G.server),`DOUBLE FAULT · ${reason}`)
+}
+function resetServeSame(){const b=G.ball;b.live=false;b.attached=true;b.lastHitter=null;b.bounces=0;b.isServe=true;b.x=G.server==='player'?G.player.x:G.ai.x;b.y=G.server==='player'?G.player.y-12:G.ai.y+12;b.z=54;b.vx=b.vy=b.vz=0;b.trail.length=0;G.ai.serveTimer=G.server==='ai'?.8:0;message(G.server==='player'?'SECOND SERVE':'SECOND SERVE — READY',.8)}
+function onBounce(){
+  const b=G.ball,h=b.lastHitter;if(!h)return;
+  if(!legalLanding(b.x,b.y,h)){if(b.isServe)serveFault('Fault');else awardPoint(other(h),'OUT');return}
+  b.bounces++;
+  if(b.isServe&&b.bounces===1)b.isServe=false;
+  if(b.bounces>=2){awardPoint(h,'SECOND BOUNCE');return}
+  b.z=.5;b.vz=Math.max(150,-b.vz*b.bounce);b.vx*=.83;b.vy*=.86;b.curve*=.35;sfx('bounce');burst(b.x,b.y,5,'#dfff65',5)
+}
+function awardPoint(winner,reason){
+  if(G.pointLocked)return;G.pointLocked=true;G.ball.live=false;G.ball.attached=false;G.lastReason=reason;saved.stats.bestRally=Math.max(saved.stats.bestRally,G.rally);
+  if(G.matchType==='practice'){message(`${winner==='player'?'POINT WON':'RESET'} · RALLY ${G.rally}`,1.1);if(winner==='player')sfx('point');else sfx('lose');persist();setTimeout(()=>{if(G.mode==='playing')setupPoint()},1050);return}
+  if(winner==='player')G.scoreP++;else G.scoreA++;G.totalPoints++;$('pScore').textContent=G.scoreP;$('aScore').textContent=G.scoreA;
+  if(winner==='player'){sfx('point');message(`YOUR POINT · ${reason}`,1.1)}else{sfx('lose');message(`${currentOpponent().name.toUpperCase()} · ${reason}`,1.1)}
+  const won=(G.scoreP>=7&&G.scoreP-G.scoreA>=2)||G.scoreP>=11,lost=(G.scoreA>=7&&G.scoreA-G.scoreP>=2)||G.scoreA>=11;
+  if(won||lost){saved.stats.matches++;if(won)saved.stats.wins++;persist();setTimeout(()=>matchOver(won),1000)}else setTimeout(()=>{if(G.mode==='playing')setupPoint()},1050)
+}
+function matchOver(won){
+  G.mode='result';showGameUI(false);
+  if(G.matchType==='championship'&&won&&G.champIndex<OPPONENTS.length-1){showScreen(`<div class="resultHero"><div class="big">${G.scoreP}–${G.scoreA}</div><h2>Round won</h2><p>You read ${currentOpponent().name}'s patterns. Next comes ${OPPONENTS[G.champIndex+1].name}.</p></div><div class="statGrid"><div class="stat"><b>${G.rally}</b><span>Last rally</span></div><div class="stat"><b>${saved.stats.bestRally}</b><span>Best rally</span></div><div class="stat"><b>${saved.stats.sweets}</b><span>Sweet spots</span></div><div class="stat"><b>${Math.round(G.player.focus)}</b><span>Focus left</span></div></div><div class="btnrow"><button class="btn" id="nextRound">Next round</button><button class="btn ghost" id="resultMenu">Main menu</button></div>`);$('nextRound').onclick=()=>{G.champIndex++;startMatch('championship')};$('resultMenu').onclick=titleScreen;return}
+  if(G.matchType==='championship'&&won){saved.stats.championships++;persist()}
+  showScreen(`<div class="resultHero"><div class="big">${G.scoreP}–${G.scoreA}</div><h2>${won?(G.matchType==='championship'?'Champion of the line':'Match won'):'Match lost'}</h2><p>${won?'Timing, placement and early reads carried the match.':'The court is already offering another answer. Change the pace, aim earlier and go again.'}</p></div><div class="statGrid"><div class="stat"><b>${saved.stats.bestRally}</b><span>Best rally</span></div><div class="stat"><b>${saved.stats.sweets}</b><span>Sweet spots</span></div><div class="stat"><b>${saved.stats.wins}</b><span>Wins</span></div><div class="stat"><b>${saved.stats.championships}</b><span>Titles</span></div></div><div class="btnrow"><button class="btn" id="again">Play again</button><button class="btn secondary" id="resultMenu">Main menu</button></div>`);$('again').onclick=()=>startMatch(G.matchType,G.oppIndex);$('resultMenu').onclick=titleScreen
+}
+
+function updatePlayer(dt){
+  let x=G.joyX,y=G.joyY;if(G.keys.has('KeyA')||G.keys.has('ArrowLeft'))x-=1;if(G.keys.has('KeyD')||G.keys.has('ArrowRight'))x+=1;if(G.keys.has('KeyW')||G.keys.has('ArrowUp'))y-=1;if(G.keys.has('KeyS')||G.keys.has('ArrowDown'))y+=1;const m=hypot(x,y);if(m>1){x/=m;y/=m}
+  const moving=m>.05,speed=435*(.78+.22*G.player.stamina/100);G.player.x=clamp(G.player.x+x*speed*dt,-325,325);G.player.y=clamp(G.player.y+y*speed*dt,110,590);
+  G.player.stamina=clamp(G.player.stamina+(moving?-5.2:12)*dt,0,100);
+  if(G.player.swing>0){G.player.swing-=dt;if(canHit('player')){hitPlayer();G.player.swing=0}}
+}
+function updateAI(dt){
+  const o=currentOpponent(),b=G.ball;G.ai.cool=Math.max(0,G.ai.cool-dt);G.ai.swing=Math.max(0,G.ai.swing-dt);let tx=0,ty=-490;
+  if(b.live&&b.lastHitter==='player'){
+    const pred=predictGround(b);if(pred){tx=clamp(pred.x,-320,320);ty=clamp(pred.y+90,-575,-120)}if(b.y<0){tx=clamp(b.x,-325,325);ty=clamp(b.y-25,-575,-95)}
+  }else{tx=clamp(-G.player.x*.22,-120,120);ty=-485}
+  const dx=tx-G.ai.x,dy=ty-G.ai.y,d=hypot(dx,dy),spd=o.speed*(d>170?1.08:1);if(d>4){G.ai.x+=dx/d*spd*dt;G.ai.y+=dy/d*spd*dt}G.ai.x=clamp(G.ai.x,-325,325);G.ai.y=clamp(G.ai.y,-590,-100);
+  if(G.ball.attached&&G.server==='ai'){G.ai.serveTimer-=dt;if(G.ai.serveTimer<=0)aiServe()}
+  else if(G.ai.cool<=0&&canHit('ai')){const q=contactQuality('ai');if(q>.25||b.z<70)hitAI()}
+}
+function updateBall(dt){
+  const b=G.ball;if(b.attached){const a=G.server==='player'?G.player:G.ai;b.x=a.x;b.y=a.y+(G.server==='player'?-16:16);b.z=54;return}if(!b.live)return;
+  const py=b.y,pz=b.z;b.vx+=b.curve*dt;b.x+=b.vx*dt;b.y+=b.vy*dt;b.z+=b.vz*dt;b.vz-=GRAV*dt;b.curve*=Math.pow(.985,dt*60);
+  if((py<0&&b.y>=0)||(py>0&&b.y<=0)){if(b.z<NET_H){b.y=py<0?-4:4;b.vy*=-.28;b.vx*=.72;b.vz=Math.abs(b.vz)*.22;b.netHit=true;sfx('net');burst(b.x,0,b.z,'#eef5ff',12);message('NET CORD',.55);if(b.isServe){serveFault('Net');return}}}
+  if(b.z<=0&&b.vz<0){b.z=0;onBounce();if(G.pointLocked)return}
+  if(Math.abs(b.x)>560||Math.abs(b.y)>820){if(b.bounces>=1&&!b.isServe)awardPoint(b.lastHitter,'UNRETURNED');else if(b.isServe)serveFault('Fault');else awardPoint(other(b.lastHitter),'OUT');return}
+  if(!saved.settings.reduced){b.trail.push({x:b.x,y:b.y,z:b.z});if(b.trail.length>18)b.trail.shift()}
+  if(b.lastHitter==='ai'&&!b.readChecked){const pred=predictGround(b);if(pred&&pred.y>0&&pred.t<.48){const d=hypot(G.player.x-pred.x,G.player.y-clamp(pred.y+55,110,590)),q=clamp(1-d/360,0,1);const gain=Math.round(q*12);if(gain>2){G.player.focus=clamp(G.player.focus+gain,0,100);saved.stats.readPoints+=gain;if(q>.72)message(`EARLY READ +${gain} FOCUS`,.65)}b.readChecked=true}}
+}
+function update(dt){
+  if(G.mode!=='playing'){updateParticles(dt);return}
+  if(G.messageTimer>0){G.messageTimer-=dt;if(G.messageTimer<=0)$('message').classList.remove('showmsg')}
+  if(G.hitHeld){const p=clamp(.28+(performance.now()-G.chargeStart)/1100*.72,.28,1);$('chargeFill').style.width=(p*100)+'%';$('chargeText').textContent=Math.round(p*100)+'%'}
+  const focusActive=G.focusHeld&&G.player.focus>0&&G.ball.live;if(focusActive){G.player.focus=clamp(G.player.focus-22*dt,0,100);if(Math.floor(G.player.focus)%12===0&&Math.random()<.04)sfx('focus')}
+  const worldDt=dt*(focusActive?.42:1);updatePlayer(dt);updateAI(worldDt);updateBall(worldDt);updateParticles(dt);
+  if(G.shake>0)G.shake=Math.max(0,G.shake-30*dt);
+  $('staminaFill').style.width=G.player.stamina+'%';$('staminaText').textContent=Math.round(G.player.stamina);$('focusFill').style.width=G.player.focus+'%';$('focusText').textContent=Math.round(G.player.focus);
+}
+function loop(t){if(!G.lastTime)G.lastTime=t;let d=Math.min(.05,(t-G.lastTime)/1000);G.lastTime=t;G.acc+=d;const step=1/120;let n=0;while(G.acc>=step&&n<8){update(step);G.acc-=step;n++}render();requestAnimationFrame(loop)}requestAnimationFrame(loop);
+
+function setShot(name){if(!SHOTS[name])return;G.shot=name;updateShotButtons();message(`${SHOTS[name].name} SELECTED`,.45)}
+function updateShotButtons(){document.querySelectorAll('[data-shot]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.shot===G.shot)))}
+document.querySelectorAll('[data-shot]').forEach(b=>b.addEventListener('click',()=>setShot(b.dataset.shot)));
+
+window.addEventListener('keydown',e=>{
+  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
+  if(G.mode==='playing'){
+    G.keys.add(e.code);if(e.code==='Space'&&!e.repeat)playerPress();if(e.code==='ShiftLeft'||e.code==='ShiftRight')G.focusHeld=true;if(e.code==='Digit1')setShot('flat');if(e.code==='Digit2')setShot('topspin');if(e.code==='Digit3')setShot('slice');if(e.code==='Digit4')setShot('lob');if(e.code==='Escape'||e.code==='KeyP')pauseGame();if(e.code==='KeyM')toggleAudio();
+  }else if(G.mode==='paused'&&(e.code==='Escape'||e.code==='KeyP'))resumeGame();
+});
+window.addEventListener('keyup',e=>{G.keys.delete(e.code);if(e.code==='Space'&&G.mode==='playing')playerRelease();if(e.code==='ShiftLeft'||e.code==='ShiftRight')G.focusHeld=false});
+canvas.addEventListener('pointermove',e=>{if(G.mode!=='playing')return;if(e.pointerType==='mouse'||e.buttons){const r=canvas.getBoundingClientRect(),w=screenToWorld(e.clientX-r.left,e.clientY-r.top);if(w.y<20){G.aim.x=clamp(w.x,-345,345);G.aim.y=clamp(w.y,-615,-70)}}});
+canvas.addEventListener('pointerdown',e=>{if(G.mode!=='playing')return;wakeAudio();const r=canvas.getBoundingClientRect(),w=screenToWorld(e.clientX-r.left,e.clientY-r.top);if(w.y<20){G.aim.x=clamp(w.x,-345,345);G.aim.y=clamp(w.y,-615,-70)}});
+
+const moveZone=$('moveZone'),joy=$('joyKnob');let joyId=null,joyRect=null;
+moveZone.addEventListener('pointerdown',e=>{joyId=e.pointerId;moveZone.setPointerCapture(e.pointerId);joyRect=moveZone.getBoundingClientRect();moveJoy(e)});
+moveZone.addEventListener('pointermove',e=>{if(e.pointerId===joyId)moveJoy(e)});
+function moveJoy(e){const cx=joyRect.left+joyRect.width/2,cy=joyRect.top+joyRect.height/2,dx=e.clientX-cx,dy=e.clientY-cy,max=joyRect.width*.31,m=Math.max(1,hypot(dx,dy)),k=Math.min(1,max/m);G.joyX=dx/max*k;G.joyY=dy/max*k;joy.style.transform=`translate(${G.joyX*max}px,${G.joyY*max}px)`}
+function endJoy(e){if(e.pointerId!==joyId)return;joyId=null;G.joyX=G.joyY=0;joy.style.transform='translate(0,0)'}moveZone.addEventListener('pointerup',endJoy);moveZone.addEventListener('pointercancel',endJoy);
+$('hitBtn').addEventListener('pointerdown',e=>{e.preventDefault();$('hitBtn').setPointerCapture(e.pointerId);playerPress()});$('hitBtn').addEventListener('pointerup',e=>{e.preventDefault();playerRelease()});$('hitBtn').addEventListener('pointercancel',()=>{G.hitHeld=false;$('chargeWrap').classList.remove('charging')});
+$('focusBtn').addEventListener('pointerdown',e=>{e.preventDefault();G.focusHeld=true;$('focusBtn').setAttribute('aria-pressed','true')});['pointerup','pointercancel','pointerleave'].forEach(ev=>$('focusBtn').addEventListener(ev,()=>{G.focusHeld=false;$('focusBtn').setAttribute('aria-pressed','false')}));
+$('pauseBtn').onclick=pauseGame;$('mobilePause').onclick=pauseGame;$('muteBtn').onclick=toggleAudio;
+function toggleAudio(){saved.settings.audio=!saved.settings.audio;persist();$('muteBtn').textContent=saved.settings.audio?'♪':'×';message(saved.settings.audio?'SOUND ON':'SOUND OFF',.5);if(saved.settings.audio)sfx('hit')}
+
+function pauseScreen(){showScreen(`<h2 class="sectionTitle">Paused</h2><p class="sectionLead">The point is frozen exactly where you left it.</p><div class="btnrow"><button class="btn" id="resume">Resume</button><button class="btn secondary" id="pauseHow">Controls</button><button class="btn ghost" id="pauseMenu">Main menu</button></div>`);$('resume').onclick=resumeGame;$('pauseHow').onclick=howScreen;$('pauseMenu').onclick=titleScreen}
+function pauseGame(){if(G.mode!=='playing')return;G.mode='paused';G.hitHeld=false;G.focusHeld=false;pauseScreen()}
+function resumeGame(){G.mode='playing';hideScreen();message('PLAY',.45)}
+
+function showScreen(html){$('screen').innerHTML=html;$('screenLayer').classList.remove('hidden')}
+function hideScreen(){$('screenLayer').classList.add('hidden')}
+function titleScreen(){
+  G.mode='title';G.ball.live=false;G.ball.attached=false;showGameUI(false);showScreen(`<div class="logo"><div class="eyebrow">A new Made by Matt sports game</div><h1>APEX <span>RALLY</span></h1></div><p class="tagline">Win the point before the ball arrives: read the court, move early, then choose the right spin.</p><p class="lede">A complete offline tennis duel with physics-based bounce, four shot types, adaptive opponents, desktop and touch controls, an Apex Focus meter and a three-round championship.</p><div class="menuGrid"><button class="menuCard primary" id="quick"><span class="ico">🎾</span><strong>Quick Match</strong><span>Choose an opponent. First to seven, win by two.</span></button><button class="menuCard" id="champ"><span class="ico">🏆</span><strong>Championship</strong><span>Beat all three styles without losing the line.</span></button><button class="menuCard" id="practice"><span class="ico">◎</span><strong>Practice Rally</strong><span>No match pressure. Build your longest exchange.</span></button></div><div class="btnrow"><button class="btn secondary" id="how">How to play</button><button class="btn ghost" id="settings">Settings & stats</button></div>`);
+  $('quick').onclick=quickScreen;$('champ').onclick=()=>{G.champIndex=0;startMatch('championship')};$('practice').onclick=()=>startMatch('practice',0);$('how').onclick=howScreen;$('settings').onclick=settingsScreen
+}
+function quickScreen(){
+  G.mode='menu';showScreen(`<h2 class="sectionTitle">Choose the return</h2><p class="sectionLead">Each opponent changes what “good positioning” means. Start anywhere.</p><div class="opponents">${OPPONENTS.map((o,i)=>`<button class="opp ${i===G.selectedOpp?'selected':''}" data-opp="${i}"><strong>${o.name}</strong><small>${o.tag}</small><div class="skill"><i style="width:${Math.round(o.skill*100)}%"></i></div></button>`).join('')}</div><div class="btnrow"><button class="btn" id="startQuick">Start match</button><button class="btn ghost" id="back">Back</button></div>`);document.querySelectorAll('[data-opp]').forEach(b=>b.onclick=()=>{G.selectedOpp=Number(b.dataset.opp);quickScreen()});$('startQuick').onclick=()=>startMatch('quick',G.selectedOpp);$('back').onclick=titleScreen
+}
+function howScreen(){
+  const returnMode=G.mode==='paused'?'pause':'menu';G.mode=G.mode==='paused'?'paused':'menu';showScreen(`<h2 class="sectionTitle">Read. Move. Shape.</h2><p class="sectionLead">The ball follows real flight and bounce rules. You do not press a direction to return it: you choose a landing target and let timing decide the quality.</p><div class="howGrid"><div class="how"><b>1 · Move before the bounce</b><p>Use <span class="key">WASD</span> or the left joystick. Reaching the predicted landing area early earns Apex Focus.</p></div><div class="how"><b>2 · Aim on their court</b><p>Move the mouse or tap the far half. The coloured crosshair is where you are asking the ball to land.</p></div><div class="how"><b>3 · Hold, then release</b><p>Hold <span class="key">SPACE</span> or HIT to charge. Release as the ball enters racket range. Clean contact removes most aiming error.</p></div><div class="how"><b>4 · Change the shape</b><p><span class="key">1</span> Flat is fast. <span class="key">2</span> Topspin dips safely. <span class="key">3</span> Slice skids. <span class="key">4</span> Lob buys height.</p></div><div class="how"><b>5 · Use Apex Focus</b><p>Hold <span class="key">SHIFT</span> or FOCUS. The ball and opponent slow while you keep full movement speed.</p></div><div class="how"><b>6 · Respect the serve</b><p>The returner must let the serve bounce once. Two faults lose the point.</p></div></div><div class="btnrow"><button class="btn" id="howBack">${returnMode==='pause'?'Back to pause':'Main menu'}</button></div>`);$('howBack').onclick=returnMode==='pause'?pauseScreen:titleScreen
+}
+function settingsScreen(){
+  G.mode='menu';showScreen(`<h2 class="sectionTitle">Settings & record</h2><p class="sectionLead">Everything is stored only in this browser.</p><div class="settingRow"><div><b>Sound</b><div class="tiny">Generated in the browser</div></div><button class="toggle" id="audioToggle" aria-pressed="${saved.settings.audio}">${saved.settings.audio?'ON':'OFF'}</button></div><div class="settingRow"><div><b>Reduced motion</b><div class="tiny">Removes trails, bursts and shake</div></div><button class="toggle" id="motionToggle" aria-pressed="${saved.settings.reduced}">${saved.settings.reduced?'ON':'OFF'}</button></div><div class="statGrid"><div class="stat"><b>${saved.stats.matches}</b><span>Matches</span></div><div class="stat"><b>${saved.stats.wins}</b><span>Wins</span></div><div class="stat"><b>${saved.stats.bestRally}</b><span>Best rally</span></div><div class="stat"><b>${saved.stats.championships}</b><span>Titles</span></div></div><div class="btnrow"><button class="btn secondary" id="settingsBack">Back</button><button class="btn ghost" id="resetStats">Reset record</button></div>`);$('audioToggle').onclick=()=>{saved.settings.audio=!saved.settings.audio;persist();settingsScreen()};$('motionToggle').onclick=()=>{saved.settings.reduced=!saved.settings.reduced;persist();settingsScreen()};$('settingsBack').onclick=titleScreen;$('resetStats').onclick=()=>{saved.stats={matches:0,wins:0,bestRally:0,sweets:0,aces:0,championships:0,readPoints:0};persist();settingsScreen()}
+}
+
+setTimeout(()=>{$('splash').classList.add('splashOut');setTimeout(()=>$('splash').remove(),350);titleScreen()},900);
+$('muteBtn').textContent=saved.settings.audio?'♪':'×';
+
+})();
+</script>
+</body>
+</html>
