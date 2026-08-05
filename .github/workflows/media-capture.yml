@@ -30,8 +30,11 @@ jobs:
       # step cannot resolve playwright from the workspace install above.
       NODE_PATH: ${{ github.workspace }}/node_modules
     steps:
+      # Check out THIS ref, not main: the capture tooling lives on the branch
+      # under test. The precondition below still compares the SERVED bytes
+      # against the checked-out game files, which are identical to main's —
+      # this branch adds tooling only, no game or content changes.
       - uses: actions/checkout@v4
-        with: { ref: main }
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
 
