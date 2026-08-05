@@ -55,6 +55,20 @@ missing=[o for o in RULED_OCCUPANTS if o not in occupants]
 req(not unruled,f'no unruled New Release occupant (found {unruled})')
 req(not missing,f'every ruled occupant is present (missing {missing})')
 dupes=sorted({o for o in occupants if occupants.count(o)>1})
+# RULING — Matt, 5 Aug 2026: a clip inside a game's New Release box is part of
+# that game's ONE homepage surface, NOT a second surface. Embedded here so the
+# gate can read it rather than leaving it as prose. What must hold: a ruled box
+# may carry at most ONE video; a video never creates an occupant; and it must
+# be poster-only until tapped, so the page-weight cost is the poster alone.
+_boxes=re.findall(r'<div class="dx-updbox"[^>]*data-release="([^"]+)"[^>]*>(.*?)(?=<div class="dx-updbox"|</div></section>)',index,re.S)
+for _name,_body in _boxes:
+    _vids=re.findall(r'<video\b[^>]*>',_body)
+    req(len(_vids)<=1,f'"{_name}" carries at most one clip in its New Release box (found {len(_vids)})')
+    for _v in _vids:
+        req('preload="none"' in _v,f'"{_name}" clip is preload="none" so only its poster loads')
+        req('poster="' in _v,f'"{_name}" clip declares a poster')
+        req('muted' in _v,f'"{_name}" clip is muted')
+        req('data-release=' not in _v,f'"{_name}" clip does not mint a second occupant')
 req(not dupes,f'no game holds more than one homepage surface (found {dupes})')
 print(f'NOTE  New Release occupants are {occupants} (derived, checked against the ruling)')
 req('data-release="Apex Tennis"' not in index and 'data-release="Apex Golf"' not in index,'Golf and Tennis do not take New Release')
