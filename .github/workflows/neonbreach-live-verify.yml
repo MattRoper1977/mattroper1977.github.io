@@ -107,20 +107,32 @@ jobs:
             echo 'PENDING served sitemap has not caught up with the tree (Pages lag).'
           fi
 
-      - name: Surface census — records the invisibility, does not hide it
+      - name: Install the pinned real browser
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      # REPAIRED 5 Aug 2026. The step this replaces greped the served HTML of
+      # /games/ for a slug and printed the result as a measurement. It was not
+      # one: the arcade renders its cards client-side from a fetched manifest,
+      # so that number reads 0 whatever the manifest contains — a figure that
+      # cannot move. Its commentary had also gone stale, still announcing
+      # "EXPECTED AT THIS POINT: zero on both ... blocked on the v11-land
+      # brief" after both surfaces had landed. Commentary that contradicts
+      # reality is the same defect class this programme spent the day
+      # retiring, so it does not survive the day.
+      #
+      # The replacement measures three things from this runner and asserts the
+      # RULING rather than a count: the JS-off homepage occupants, the JS-ON
+      # rendered arcade cards (with a control that must drop when a ruled game
+      # is removed from the manifest), and how /Games/games.json is actually
+      # served — which is NOT from this repo. There is no Games/ directory and
+      # no submodule here; that path is the MattRoper1977/Games project Pages
+      # site mounted under the same custom domain, so a merge in the Games repo
+      # reaches visitors only once THAT site rebuilds. The census reports the
+      # served entry count so a lag is visible instead of assumed.
+      - name: Surface census — JS-off, JS-ON, and the manifest origin
         shell: bash
         run: |
           set -euo pipefail
-          curl -sS --max-time 30 https://madebymatt.uk/ -o /tmp/home.html || true
-          curl -sS --max-time 30 https://madebymatt.uk/games/ -o /tmp/games.html || true
-          HOME_REFS=$(grep -oc 'neonbreach' /tmp/home.html || true)
-          GRID_REFS=$(grep -oc 'neonbreach' /tmp/games.html || true)
-          echo "neonbreach references in served homepage : ${HOME_REFS:-0}"
-          echo "neonbreach references in served games grid: ${GRID_REFS:-0}"
-          echo
-          echo 'EXPECTED AT THIS POINT: zero on both. Neon Breach is deliberately'
-          echo 'surface-less — no shelf card, no homepage box — and is reachable'
-          echo 'only by typing the URL. This is a known, owned state closed by'
-          echo 'SESSION_G §3 (shelf card) and §5 (New Release box), both of which'
-          echo 'are blocked on the v11-land brief. This step records the fact so'
-          echo 'the invisibility stays owned rather than being discovered later.'
+          node tools/verify_surfaces.js --base=https://madebymatt.uk
