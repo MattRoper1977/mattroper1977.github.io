@@ -1,0 +1,109 @@
+name: Apex Rally surfaces
+
+# The two Apex Rally surfaces — the homepage Sports card and the arcade rail —
+# measured rather than grepped.
+#
+# Counts are DERIVED, never pinned. The expected Sports count comes from the
+# live manifest at Games main, the same way arcade-sports-verify.yml does it
+# after AGX-1 finding A-6: a gate pinned to a snapshot keeps reporting green
+# against a stale world, which is worse than reporting red. Adding a sixth
+# sports game should make this check more, not fail.
+
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'games/index.html'
+      - 'site.json'
+      - 'tools/verify_apexrally_surfaces.js'
+      - '.github/workflows/apexrally-surfaces-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apexrally-surfaces-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  surfaces:
+    name: no-JS baseline + reflow at 360/768/1200
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Fetch the live manifest at main and derive the rail
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/apexrally-surfaces
+          curl --fail --silent --show-error --location \
+            https://raw.githubusercontent.com/MattRoper1977/Games/main/games.json \
+            -o artifacts/apexrally-surfaces/games.json
+          node -e '
+            const g = require("./artifacts/apexrally-surfaces/games.json").games;
+            const rail = g.filter(e => e.collection === "Sports");
+            console.log("manifest entries (derived):", g.length);
+            console.log("Sports rail (derived):", rail.map(e => e.title).join(" · "));
+            if (!rail.length) { console.error("FAIL: no Sports collection in the manifest"); process.exit(1); }
+          '
+
+      - name: Install Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Surface gates
+        env:
+          GAMES_MANIFEST: artifacts/apexrally-surfaces/games.json
+        run: node tools/verify_apexrally_surfaces.js | tee artifacts/apexrally-surfaces/surfaces.log
+
+      - name: Arcade catalogue contract still holds
+        run: |
+          node tools/verify_arcade_sports.js | tee artifacts/apexrally-surfaces/arcade.log
+          node tools/verify_arcade_sports.js --self-test | tee artifacts/apexrally-surfaces/arcade-nonvacuity.log
+
+      - name: One surface per game, and the New Release ruling holds
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Apex Rally gets exactly ONE homepage surface. Derived by counting,
+          # not by trusting the harness to have looked.
+          n=$(grep -o '/apexrally/' index.html | wc -l)
+          echo "homepage references to /apexrally/: $n"
+          test "$n" -eq 1
+          # New Release boxes are held by ruling; Rally must not have taken one
+          ! grep -q 'data-release="Apex Rally"' index.html
+          # and no doors[] entry
+          node -e '
+            const s = require("./site.json");
+            const hit = (s.doors || []).filter(d => JSON.stringify(d).includes("apexrally"));
+            console.log(`doors[] entries: ${(s.doors || []).length}, Apex Rally: ${hit.length}`);
+            if (hit.length) process.exit(1);
+          '
+
+      - name: Gate counts are self-consistent (derived from the log)
+        shell: bash
+        run: |
+          set -euo pipefail
+          log=artifacts/apexrally-surfaces/surfaces.log
+          passes=$(grep -c '^PASS ' "$log" || true)
+          fails=$(grep -c '^FAIL ' "$log" || true)
+          claimed=$(grep -oE '^ALL [0-9]+ ' "$log" | grep -oE '[0-9]+' || echo 0)
+          echo "$passes PASS, $fails FAIL, summary claims $claimed"
+          test "$fails" -eq 0
+          test "$passes" -gt 0
+          test "$claimed" -eq "$passes"
+
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apexrally-surfaces-${{ github.run_id }}
+          path: artifacts/apexrally-surfaces
+          if-no-files-found: warn
+          retention-days: 30

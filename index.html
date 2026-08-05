@@ -66,6 +66,9 @@ body[data-theme="dark"] a.dx-prod:focus-visible{outline-color:var(--dx-amber)}
 .dx-sports{background:var(--dx-lite);padding:.2rem 0 2.6rem}
 .dx-sports .dx-sports-lede{max-width:42rem;margin:.75rem auto 1rem;text-align:center;color:var(--dx-mut);font-size:.9rem;line-height:1.5}
 .dx-sports-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;max-width:760px;margin:0 auto}
+/* An odd number of cards leaves the last one alone in a half-width cell. Let it
+   span instead — derived from the count, so it stays right at 4, 5 or 6. */
+.dx-sports-grid>:last-child:nth-child(odd){grid-column:1/-1}
 a.dx-sport{--sport:var(--dx-amber);display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.8rem;min-height:92px;padding:.9rem 1rem;background:var(--dx-card);border:1.5px solid var(--dx-line);border-left:5px solid var(--sport);border-radius:14px;text-decoration:none;color:var(--dx-ink);box-shadow:0 3px 10px #161D3D0d;transition:transform .18s ease,border-color .18s ease}
 a.dx-sport:hover{transform:translateY(-2px);border-color:var(--sport)}
 a.dx-sport:focus-visible{outline:3px solid var(--dx-amber);outline-offset:2px}
@@ -330,7 +333,7 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <!-- apexpool-home-2026-08-04 START -->
 <section class="dx-sports" id="homeSports"><div class="dx-wrap">
 <h2 class="dx-eyebrow">Sports</h2>
-<p class="dx-sports-lede">Four games about reading the line, calling the plan and making the next decision count.</p>
+<p class="dx-sports-lede">Five games about reading the line, calling the plan and making the next decision count.</p>
 <div class="dx-sports-grid" aria-label="Sports games">
 <a class="dx-sport" data-sport-game="Apex Kick" href="/apexkick/" style="--sport:#2F8F6B">
 <span class="dx-sport-icon" aria-hidden="true">⚽</span><span class="dx-sport-copy"><b>Apex Kick</b><span>Bend the free kick around the wall; card stats set the physics, never the dice.</span></span><span class="dx-sport-go">Play &rarr;</span>
@@ -343,6 +346,9 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 </a>
 <a class="dx-sport" data-sport-game="Apex Tennis" href="/apextennis/" style="--sport:#3B6FD4">
 <span class="dx-sport-icon" aria-hidden="true">🎾</span><span class="dx-sport-copy"><b>Apex Tennis</b><span>Call the point before the serve, then build it on court with real rules and an honest Plan Rating.</span></span><span class="dx-sport-go">Play &rarr;</span>
+</a>
+<a class="dx-sport" data-sport-game="Apex Rally" href="/apexrally/" style="--sport:#FF737C">
+<span class="dx-sport-icon" aria-hidden="true">⚔️</span><span class="dx-sport-copy"><b>Apex Rally</b><span>Read the court before the ball arrives, then win the duel against opponents who adapt as you learn them.</span></span><span class="dx-sport-go">Play &rarr;</span>
 </a>
 </div>
 </div></section>
