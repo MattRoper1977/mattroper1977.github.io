@@ -95,13 +95,20 @@ jobs:
           echo "game --red token: #$hue"
           test -n "$hue"
           grep -qi "#$hue" assets/cards/apex-rally.svg
-          # card art must not reach the network. w3.org URIs in SVG are XML
-          # namespace identifiers, never fetched, so they are excluded by name
-          # rather than by a lookahead grep -E does not support.
-          remote=$(grep -oE 'https?://[^"'"'"' )]+' assets/cards/apex-rally.svg \
-                   | grep -v '^https\?://www\.w3\.org/' | wc -l)
-          echo "card art remote refs: $remote"
-          test "$remote" -eq 0
+          # Card art must not reach the network. w3.org URIs in SVG are XML
+          # namespace identifiers, never fetched, so they are excluded by name.
+          # Done in node rather than a grep pipeline deliberately: `grep -v`
+          # exits 1 when it filters out every line, so under `set -o pipefail`
+          # the pipeline version failed the step precisely when the file was
+          # CLEAN — which is exactly how it failed the first time.
+          node -e '
+            const s = require("fs").readFileSync("assets/cards/apex-rally.svg", "utf8");
+            const urls = (s.match(/https?:\/\/[^"\x27\s)]+/g) || [])
+              .filter(u => !/^https?:\/\/www\.w3\.org\//.test(u));
+            console.log("card art remote refs: " + urls.length +
+                        (urls.length ? " — " + urls.join(", ") : ""));
+            if (urls.length) process.exit(1);
+          '
 
       - name: No sibling storage keys anywhere in the game (derived census)
         shell: bash
