@@ -1,0 +1,66 @@
+name: Echo Vault live verification
+
+# VERIFICATION ONLY — never merged. madebymatt.uk is unreachable from the build
+# container (403 on CONNECT), so a runner with real network answers what the
+# container cannot: does /echovault/ serve, is what is SERVED byte-identical to
+# what was MERGED, and how many cards does the shelf actually render.
+# The expected hash is DERIVED from main, not pinned.
+
+on:
+  pull_request:
+    paths: [ '.github/workflows/echovault-live-verify.yml' ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main }
+
+      - name: Expected identity, derived from main
+        id: exp
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "sha=$(sha256sum echovault/index.html | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "bytes=$(wc -c < echovault/index.html)" >> "$GITHUB_OUTPUT"
+          echo "MERGED $(sha256sum echovault/index.html | cut -d' ' -f1) $(wc -c < echovault/index.html) bytes"
+
+      - name: Fetch live and prove byte-identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          code=$(curl --silent --show-error --location --retry 24 --retry-delay 15 --retry-all-errors \
+            --write-out '%{http_code}' -o /tmp/live.html https://madebymatt.uk/echovault/)
+          echo "HTTP $code"; test "$code" = "200"
+          served=$(sha256sum /tmp/live.html | cut -d' ' -f1)
+          echo "SERVED  $served  $(wc -c < /tmp/live.html) bytes"
+          test "$(wc -c < /tmp/live.html)" = "${{ steps.exp.outputs.bytes }}"
+          test "$served" = "${{ steps.exp.outputs.sha }}"
+          echo "SERVED HASH CONFIRMED IDENTICAL TO MERGED: $served"
+          grep -q '<link rel="canonical" href="https://madebymatt.uk/echovault/">' /tmp/live.html
+          grep -q 'mbm_echovault_v1' /tmp/live.html
+          test "$(grep -c 'madebymatt.echoVault' /tmp/live.html || true)" = "0"
+          test "$(grep -o '<script' /tmp/live.html | wc -l)" = "1"
+          echo "canonical present, house key present, legacy key absent, one script element"
+
+      - name: Sitemap
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --location --retry 10 --retry-delay 10 --retry-all-errors https://madebymatt.uk/sitemap.xml -o /tmp/s.xml
+          n=$(grep -c '<loc>https://madebymatt.uk/echovault/</loc>' /tmp/s.xml)
+          echo "sitemap entries for /echovault/: $n"; test "$n" = "1"
+
+      - name: Served shelf census in a real browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+          node tools/verify_echovault_surfaces.js | tee /tmp/census.log
