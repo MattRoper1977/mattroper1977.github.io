@@ -185,10 +185,23 @@ jobs:
           r=re.findall(r'data-release="([^"]+)"',repo)
           print('  served occupant(s):',s)
           print('  repo   occupant(s):',r)
-          if len(r)!=1:
-              print('  FAIL committed tree does not have exactly one occupant'); sys.exit(1)
+          # RULING — Matt, 5 Aug 2026: "New Release is a stack; each game holds
+          # at most ONE box; ruled occupants = Neon Sync (top, amended for
+          # v1.1) + Neon Breach." The old limb asserted len(r)!=1, a
+          # single-tenant invariant the stack design had outgrown. The count is
+          # no longer asserted; the RULING is.
+          RULED_OCCUPANTS=['Neon Sync','Neon Breach']
+          unruled=[o for o in r if o not in RULED_OCCUPANTS]
+          missing=[o for o in RULED_OCCUPANTS if o not in r]
+          dupes=sorted({o for o in r if r.count(o)>1})
+          if unruled:
+              print('  FAIL committed tree carries an unruled New Release occupant:',unruled); sys.exit(1)
+          if missing:
+              print('  FAIL committed tree is missing a ruled occupant:',missing); sys.exit(1)
+          if dupes:
+              print('  FAIL a game holds more than one homepage surface:',dupes); sys.exit(1)
           if s==r:
-              print(f'  PASS live JS-off homepage serves "{r[0]}" as New Release, matching the tree')
+              print('  PASS live JS-off homepage serves',r,'as New Release, matching the tree and the ruling')
           else:
               print('  PENDING live homepage has not caught up with the tree yet.')
               print('  This is a Pages deployment lag, NOT a content mismatch, and is')
