@@ -73,7 +73,10 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Whole-shelf render check
-        run: node tools/verify_relicforge_surfaces.js | tee /tmp/relicforge_surfaces.log
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/verify_relicforge_surfaces.js | tee /tmp/relicforge_surfaces.log
 
       - name: Upload log
         if: always()
