@@ -29,10 +29,27 @@ if (tess.status !== 0) {
   process.exit(2);
 }
 
+// Posters are single-frame images; sampling them at fps=1 yields nothing, so
+// the extraction path is chosen from what the file actually IS rather than
+// assumed. Getting this wrong is how a poster's sweep silently produces no
+// frames — and a sweep over zero frames is not a clean sweep.
+const FFPROBE = arg('ffprobe', process.env.FFPROBE || 'ffprobe');
+let isStill = /\.(webp|png|jpe?g|gif|bmp)$/i.test(FILE);
+try {
+  const meta = JSON.parse(execFileSync(FFPROBE, ['-v', 'quiet', '-print_format', 'json', '-show_streams', '-show_format', FILE], { encoding: 'utf8' }));
+  const v = meta.streams.find(s => s.codec_type === 'video');
+  const dur = parseFloat((meta.format || {}).duration);
+  if (v && (['png', 'mjpeg', 'webp'].includes(v.codec_name) || !(dur > 0.5))) isStill = true;
+} catch (_) { /* fall back to the extension test */ }
+
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ocr-'));
-execFileSync(FFMPEG, ['-v', 'quiet', '-i', FILE, '-vf', `fps=${FPS}`, path.join(dir, 'f-%04d.png')], { stdio: 'ignore' });
+const extract = isStill
+  ? ['-v', 'quiet', '-i', FILE, '-frames:v', '1', path.join(dir, 'f-0001.png')]
+  : ['-v', 'quiet', '-i', FILE, '-vf', `fps=${FPS}`, path.join(dir, 'f-%04d.png')];
+execFileSync(FFMPEG, extract, { stdio: 'ignore' });
 const frames = fs.readdirSync(dir).filter(f => f.endsWith('.png')).sort();
-if (!frames.length) { console.error('OCR_NO_FRAMES: extraction produced nothing'); process.exit(2); }
+if (!frames.length) { console.error('OCR_NO_FRAMES: extraction produced nothing (still=' + isStill + ')'); process.exit(2); }
+console.log('OCR_MODE=' + (isStill ? 'single-frame still' : 'sampled at ' + FPS + ' fps'));
 
 // Things that must never appear in a public clip.
 const PATTERNS = [
