@@ -1,0 +1,84 @@
+name: Relicforge surfaces
+
+# Part C — the whole-shelf render check, measured against the SERVED page in a
+# real browser. The arcade shelf builds every card in JavaScript from
+# /Games/games.json, so the shipped markup contains no cards at all and a grep
+# would report a confident zero. Counts are derived from the live manifest at
+# Games main; nothing is pinned (A-6 register).
+
+on:
+  pull_request:
+    paths:
+      - 'games/index.html'
+      - 'tools/verify_relicforge_surfaces.js'
+      - '.github/workflows/relicforge-surfaces-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: relicforge-surfaces-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  surfaces:
+    name: whole-shelf render check against the served page
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Wait for the served manifest to carry the entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error --location https://madebymatt.uk/Games/games.json -o /tmp/served.json 2>/dev/null; then
+              n=$(python3 -c 'import json;print(len(json.load(open("/tmp/served.json"))["games"]))')
+              hit=$(python3 -c 'import json;print(sum(1 for g in json.load(open("/tmp/served.json"))["games"] if g.get("href")=="/relicforge/"))')
+              echo "attempt $attempt: served manifest $n entries, relicforge $hit"
+              if [ "$hit" = "1" ]; then break; fi
+            else
+              echo "attempt $attempt: served manifest not reachable yet"
+            fi
+            sleep 20
+          done
+          python3 -c 'import json,sys; d=json.load(open("/tmp/served.json")); sys.exit(0 if sum(1 for g in d["games"] if g.get("href")=="/relicforge/")==1 else 1)'
+
+      - name: Derive the expected shelf from Games main
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            https://raw.githubusercontent.com/MattRoper1977/Games/main/games.json -o /tmp/main.json
+          python3 - <<'PY'
+          import json
+          d = json.load(open('/tmp/main.json'))
+          g = d['games']
+          print('MANIFEST ENTRIES AT Games main (derived):', len(g))
+          print('Sports rail (derived):', sum(1 for x in g if x.get('collection') == 'Sports'))
+          rf = [x for x in g if x.get('href') == '/relicforge/']
+          assert len(rf) == 1, f'expected exactly one Relicforge entry, found {len(rf)}'
+          print('Relicforge hue (derived):', rf[0]['hue'])
+          PY
+
+      - name: Install Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Whole-shelf render check
+        run: node tools/verify_relicforge_surfaces.js | tee /tmp/relicforge_surfaces.log
+
+      - name: Upload log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relicforge-surfaces
+          path: /tmp/relicforge_surfaces.log
+          if-no-files-found: warn
