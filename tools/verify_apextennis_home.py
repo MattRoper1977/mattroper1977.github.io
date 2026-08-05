@@ -18,16 +18,43 @@ def req(condition:bool,message:str)->None:
  print(('PASS  ' if condition else 'FAIL  ')+message)
  if condition: passes+=1
  else: errors.append(message)
-expected_cards=['Apex Kick','Apex Pool','Apex Golf','Apex Tennis']
+# NINTH INSTANCE OF THE A-6 SHAPE. This asserted `cards==['Apex Kick','Apex
+# Pool','Apex Golf','Apex Tennis']` — an exact-equality pin on the whole rail,
+# so the fifth sports game failed here by construction, exactly as the pinned
+# door count and the pinned New Release occupant did before it. The rail is an
+# ADDITIVE surface; freezing its membership is the one thing this gate must not
+# do. What it should protect is that no established card is displaced, dropped
+# or duplicated — which holds at four, five or six.
+established=['Apex Kick','Apex Pool','Apex Golf','Apex Tennis']
 cards=re.findall(r'data-sport-game="([^"]+)"',index)
-req(cards==expected_cards,'hardcoded Sports order is Kick, Pool, Golf, Tennis')
-for name in expected_cards:req(cards.count(name)==1,f'Sports contains exactly one {name} card')
+# the established four must still appear, in their established relative order
+positions=[cards.index(n) for n in established if n in cards]
+req(all(n in cards for n in established),
+    f'no established Sports card was dropped (missing {[n for n in established if n not in cards]})')
+req(positions==sorted(positions),
+    f'established Sports cards keep their relative order (got {[c for c in cards if c in established]})')
+req(len(cards)==len(set(cards)),f'no Sports card is duplicated (got {cards})')
+req(len(cards)>=len(established),
+    f'Sports rail did not shrink below its established {len(established)} cards (found {len(cards)})')
+for name in established:req(cards.count(name)==1,f'Sports contains exactly one {name} card')
 contracts={'Apex Kick':('/apexkick/','#2F8F6B'),'Apex Pool':('/apexpool/','#F2A24A'),'Apex Golf':('/apexgolf/','#7C5CFC'),'Apex Tennis':('/apextennis/','#3B6FD4')}
 for name,(href,hue) in contracts.items():
  pattern=rf'data-sport-game="{re.escape(name)}" href="{re.escape(href)}" style="--sport:{re.escape(hue)}"'
  req(re.search(pattern,index) is not None,f'{name} card keeps exact href and hue')
 req(index.count('id="homeSports"')==1,'one existing hardcoded homepage Sports section')
-req('Four games about reading the line, calling the plan and making the next decision count.' in index,'Sports lede names the four-game purpose')
+# TENTH INSTANCE. The lede was pinned to the literal "Four games about reading
+# the line...", which froze the copy at a four-game moment. The invariant worth
+# holding is that the lede's number word AGREES with the number of cards the
+# section actually renders — copy claiming a different count from the one it
+# sits above is the real defect, and that is caught at any count.
+_WORDS={'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,'ten':10}
+_lede=re.search(r'class="dx-sports-lede">([^<]+)<',index)
+_claimed=_WORDS.get(_lede.group(1).strip().split()[0].lower()) if _lede else None
+req(_lede is not None and _claimed==len(cards),
+    f'Sports lede count agrees with the cards rendered '
+    f'(lede says {_lede.group(1).strip().split()[0] if _lede else "?"}, {len(cards)} cards)')
+req(_lede is not None and 'reading the line' in _lede.group(1),
+    'Sports lede keeps its stated purpose')
 req(index.count('id="newrelease"')==1,'New Release component remains singular')
 # SEVENTH INSTANCE OF THE SAME SHAPE. This pinned the occupant to Apex Pool and
 # froze the whole #newrelease section byte-for-byte against main, so ANY change
