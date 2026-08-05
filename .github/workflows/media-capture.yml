@@ -25,6 +25,10 @@ jobs:
   capture:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      # npm install and node run in separate steps; without this the capture
+      # step cannot resolve playwright from the workspace install above.
+      NODE_PATH: ${{ github.workspace }}/node_modules
     steps:
       - uses: actions/checkout@v4
         with: { ref: main }
