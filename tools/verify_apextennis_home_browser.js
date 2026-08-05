@@ -32,26 +32,54 @@ const EXPECT=(SITE.doors||[]).map(d=>({title:d.title,href:d.href,zone:d.zone}));
 const EXPECT_DOORS=EXPECT.length;
 const EXPECT_GAMES=EXPECT.filter(d=>d.zone==='games').length;
 
+// RULING — Matt, 5 Aug 2026: "New Release is a stack; each game holds at most
+// ONE box; ruled occupants = Neon Sync (top, amended for v1.1) + Neon Breach."
+// THIRD COPY of the outgrown single-tenant invariant. R3 named two gates;
+// this browser harness carried a third, deriving its expectations only when
+// exactly one occupant existed and refusing to run otherwise. Same defect,
+// same fix: derive the occupant SET and its per-box href, and assert the
+// ruling instead of a count.
+const RULED_OCCUPANTS=['Neon Sync','Neon Breach'];
 const relTags=HOME.match(/data-release="[^"]+"/g)||[];
-const relStart=HOME.indexOf('data-release="');
-const relEnd=relStart<0?-1:HOME.indexOf('</div></section>',relStart);
-const RELEASE=relTags.length===1?/data-release="([^"]+)"/.exec(relTags[0])[1]:null;
-const RELEASE_HREF=relEnd>relStart?(/class="dx-chip dx-main" href="([^"]+)"/.exec(HOME.slice(relStart,relEnd))||[])[1]:undefined;
+const RELEASES=relTags.map(t=>/data-release="([^"]+)"/.exec(t)[1]);
+// Each box runs from its own data-release to the start of the next box (or the
+// end of the section), so every occupant's main chip is derived independently.
+const boxBounds=(name)=>{
+  const start=HOME.indexOf(`data-release="${name}"`);
+  if(start<0)return null;
+  const nextBox=HOME.indexOf('<div class="dx-updbox"',start+1);
+  const sectionEnd=HOME.indexOf('</div></section>',start);
+  const end=nextBox>start&&(sectionEnd<0||nextBox<sectionEnd)?nextBox:sectionEnd;
+  return end>start?HOME.slice(start,end):null;
+};
+const RELEASE_HREFS={};
+for(const name of RELEASES){
+  const seg=boxBounds(name);
+  RELEASE_HREFS[name]=seg?(/class="dx-chip dx-main" href="([^"]+)"/.exec(seg)||[])[1]:undefined;
+}
+const RELEASE=RELEASES[0]||null;
+const RELEASE_HREF=RELEASE?RELEASE_HREFS[RELEASE]:undefined;
 
 // A derived expectation that came out empty would make every gate below
 // vacuously true, so the derivation is checked before anything is rendered.
 const derivationProblems=[];
 if(!EXPECT_DOORS)derivationProblems.push('site.json has no doors[]');
 if(!EXPECT_GAMES)derivationProblems.push('site.json has no doors in the games zone');
-if(relTags.length!==1)derivationProblems.push(`expected exactly one [data-release] occupant in index.html, found ${relTags.length}`);
-if(!RELEASE_HREF)derivationProblems.push('could not derive the New Release main-chip href from index.html');
+const unruled=RELEASES.filter(r=>!RULED_OCCUPANTS.includes(r));
+const missingRuled=RULED_OCCUPANTS.filter(r=>!RELEASES.includes(r));
+const dupeRelease=[...new Set(RELEASES.filter((r,i)=>RELEASES.indexOf(r)!==i))];
+if(unruled.length)derivationProblems.push(`unruled New Release occupant(s): ${unruled.join(', ')}`);
+if(missingRuled.length)derivationProblems.push(`missing ruled occupant(s): ${missingRuled.join(', ')}`);
+if(dupeRelease.length)derivationProblems.push(`a game holds more than one homepage surface: ${dupeRelease.join(', ')}`);
+const hrefless=RELEASES.filter(r=>!RELEASE_HREFS[r]);
+if(hrefless.length)derivationProblems.push(`could not derive the main-chip href for: ${hrefless.join(', ')}`);
 if(new Set(EXPECT.map(d=>d.href)).size!==EXPECT_DOORS)derivationProblems.push('site.json doors[] contains duplicate hrefs');
 if(derivationProblems.length){
   console.error('DERIVATION FAILED — the expectations this harness checks against could not be read:');
   for(const p of derivationProblems)console.error('  '+p);
   process.exit(1);
 }
-console.log(`derived from the repo: ${EXPECT_DOORS} doors (${EXPECT_GAMES} in the games zone) · New Release occupant "${RELEASE}" -> ${RELEASE_HREF}`);
+console.log(`derived from the repo: ${EXPECT_DOORS} doors (${EXPECT_GAMES} in the games zone) · New Release occupants ${JSON.stringify(RELEASES)} -> ${JSON.stringify(RELEASE_HREFS)}`);
 console.log(`  Apex Golf site.json door: ${EXPECT.some(d=>d.title==='Apex Golf')?'PRESENT':'ABSENT (C1)'}`);
 
 async function isolate(page){
@@ -82,12 +110,16 @@ async function waitForDoors(page){
   // gate, so wait for load and for fonts before taking any measurement.
   await nojsPage.waitForLoadState('load').catch(()=>{});
   await nojsPage.evaluate(()=>document.fonts?document.fonts.ready:null).catch(()=>{});
-  const off=await nojsPage.evaluate(name=>{const cards=[...document.querySelectorAll('#homeSports [data-sport-game]')],boxes=[...document.querySelectorAll('#newrelease [data-release]')],release=document.querySelector(`#newrelease [data-release="${name}"]`);return{cards:cards.map(a=>({title:a.dataset.sportGame,href:a.getAttribute('href'),tag:a.tagName})),releaseBoxes:boxes.length,release:!!release,releaseTitle:release?.querySelector('h3')?.textContent.trim()||'',releaseLinks:release?[...release.querySelectorAll('a')].map(a=>a.getAttribute('href')):[],scrollW:document.documentElement.scrollWidth,innerW:innerWidth};},RELEASE);
+  const off=await nojsPage.evaluate(name=>{const cards=[...document.querySelectorAll('#homeSports [data-sport-game]')],boxes=[...document.querySelectorAll('#newrelease [data-release]')];return{cards:cards.map(a=>({title:a.dataset.sportGame,href:a.getAttribute('href'),tag:a.tagName})),releaseBoxes:boxes.length,occupants:boxes.map(b=>b.getAttribute('data-release')),perBox:Object.fromEntries(boxes.map(b=>[b.getAttribute('data-release'),{title:b.querySelector('h3')?.textContent.trim()||'',links:[...b.querySelectorAll('a')].map(a=>a.getAttribute('href'))}])),scrollW:document.documentElement.scrollWidth,innerW:innerWidth};},RULED_OCCUPANTS);
   rec('js-off-page-200',nojsResponse?.status()===200,String(nojsResponse?.status()||0));
   rec('js-off-four-hardcoded-sports',JSON.stringify(off.cards.map(x=>x.title))===JSON.stringify(['Apex Kick','Apex Pool','Apex Golf','Apex Tennis']),JSON.stringify(off.cards));
   rec('js-off-sports-links',JSON.stringify(off.cards.map(x=>x.href))===JSON.stringify(['/apexkick/','/apexpool/','/apexgolf/','/apextennis/']));
   rec('js-off-anchor-components',off.cards.every(x=>x.tag==='A'));
-  rec('js-off-new-release-occupant-renders',off.releaseBoxes===1&&off.release&&off.releaseTitle.includes(RELEASE)&&off.releaseLinks.includes(RELEASE_HREF),`derived "${RELEASE}" -> ${RELEASE_HREF}; ${JSON.stringify(off)}`);
+  rec('js-off-every-ruled-occupant-renders',
+    off.releaseBoxes===RULED_OCCUPANTS.length&&
+    RULED_OCCUPANTS.every(r=>off.perBox[r]&&off.perBox[r].title.includes(r))&&
+    RULED_OCCUPANTS.every(r=>off.perBox[r]&&off.perBox[r].links.includes(RELEASE_HREFS[r])),
+    `ruled ${JSON.stringify(RULED_OCCUPANTS)} -> ${JSON.stringify(RELEASE_HREFS)}; rendered ${JSON.stringify(off.occupants)}`);
   rec('js-off-no-horizontal-overflow',off.scrollW===off.innerW,`${off.scrollW}/${off.innerW}`);
   await nojsPage.screenshot({path:path.join(OUT,'homepage-js-off-390.png'),fullPage:true});await nojs.close();
 
@@ -98,7 +130,7 @@ async function waitForDoors(page){
     page.on('pageerror',e=>errors.push('page: '+e.message));
     page.on('response',r=>{if(r.status()>=400)errors.push(r.status()+' '+r.url())});
     await isolate(page);const response=await page.goto(BASE+'/',{waitUntil:'domcontentloaded'});await waitForDoors(page);
-    const live=await page.evaluate(name=>{const title=a=>a.querySelector('b')?.textContent.trim()||'';const sport=[...document.querySelectorAll('#homeSports [data-sport-game]')].map(a=>({title:a.dataset.sportGame,href:a.getAttribute('href')}));const doors=[...document.querySelectorAll('[data-zone] a.dx-prod')].map(a=>{const img=a.querySelector('img'),art=a.querySelector('img,svg');return{title:title(a),zone:a.parentElement?.dataset.zone,href:a.getAttribute('href'),art:art?.tagName||'',loaded:!!art&&(!img||(img.complete&&img.naturalWidth>0))};});const games=[...document.querySelectorAll('[data-zone="games"]>a.dx-prod')];const positions=games.map(a=>{const r=a.getBoundingClientRect();return{title:title(a),x:+r.x.toFixed(2),y:+r.y.toFixed(2),w:+r.width.toFixed(2),h:+r.height.toFixed(2)};});const boxes=[...document.querySelectorAll('#newrelease [data-release]')];return{sport,doors,positions,cols:new Set(positions.map(x=>x.x)).size,rows:new Set(positions.map(x=>x.y)).size,doorCount:document.documentElement.getAttribute('data-doors'),artCount:document.documentElement.getAttribute('data-doors-art'),releaseBoxes:boxes.length,releaseOccupants:boxes.map(b=>b.getAttribute('data-release')),release:document.querySelectorAll(`#newrelease [data-release="${name}"]`).length,empty:[...document.querySelector('[data-zone="games"]').children].filter(x=>!x.textContent.trim()).length,scrollW:document.documentElement.scrollWidth,innerW:innerWidth};},RELEASE);
+    const live=await page.evaluate(name=>{const title=a=>a.querySelector('b')?.textContent.trim()||'';const sport=[...document.querySelectorAll('#homeSports [data-sport-game]')].map(a=>({title:a.dataset.sportGame,href:a.getAttribute('href')}));const doors=[...document.querySelectorAll('[data-zone] a.dx-prod')].map(a=>{const img=a.querySelector('img'),art=a.querySelector('img,svg');return{title:title(a),zone:a.parentElement?.dataset.zone,href:a.getAttribute('href'),art:art?.tagName||'',loaded:!!art&&(!img||(img.complete&&img.naturalWidth>0))};});const games=[...document.querySelectorAll('[data-zone="games"]>a.dx-prod')];const positions=games.map(a=>{const r=a.getBoundingClientRect();return{title:title(a),x:+r.x.toFixed(2),y:+r.y.toFixed(2),w:+r.width.toFixed(2),h:+r.height.toFixed(2)};});const boxes=[...document.querySelectorAll('#newrelease [data-release]')];return{sport,doors,positions,cols:new Set(positions.map(x=>x.x)).size,rows:new Set(positions.map(x=>x.y)).size,doorCount:document.documentElement.getAttribute('data-doors'),artCount:document.documentElement.getAttribute('data-doors-art'),releaseBoxes:boxes.length,releaseOccupants:boxes.map(b=>b.getAttribute('data-release')),release:document.querySelectorAll(`#newrelease [data-release="${name}"]`).length,empty:[...document.querySelector('[data-zone="games"]').children].filter(x=>!x.textContent.trim()).length,scrollW:document.documentElement.scrollWidth,innerW:innerWidth};},RULED_OCCUPANTS);
     const named=t=>live.doors.filter(x=>x.title===t);
     rec(vp.name+'-page-200',response?.status()===200,String(response?.status()||0));
     rec(vp.name+'-four-hardcoded-sports',JSON.stringify(live.sport.map(x=>x.title))===JSON.stringify(['Apex Kick','Apex Pool','Apex Golf','Apex Tennis']),JSON.stringify(live.sport));
@@ -119,7 +151,12 @@ async function waitForDoors(page){
     // four games (asserted by -four-hardcoded-sports above). The door side is
     // derived, so this limb is correct both before and after the removal.
     rec(vp.name+'-golf-door-follows-site-json',named('Apex Golf').length===(EXPECT.some(e=>e.title==='Apex Golf')?1:0),`site.json says ${EXPECT.some(e=>e.title==='Apex Golf')?'present':'absent'}, page rendered ${named('Apex Golf').length}`);
-    rec(vp.name+'-one-new-release-occupant',live.releaseBoxes===1&&live.release===1,`${live.releaseBoxes} box(es): ${JSON.stringify(live.releaseOccupants)}; derived "${RELEASE}"`);
+    // FOURTH COPY of the same invariant, in the per-viewport live check.
+    rec(vp.name+'-ruled-new-release-occupants',
+      live.releaseBoxes===RULED_OCCUPANTS.length&&
+      RULED_OCCUPANTS.every(r=>live.releaseOccupants.includes(r))&&
+      live.releaseOccupants.every(r=>RULED_OCCUPANTS.includes(r)),
+      `${live.releaseBoxes} box(es): ${JSON.stringify(live.releaseOccupants)}; ruled ${JSON.stringify(RULED_OCCUPANTS)}`);
     rec(vp.name+'-no-empty-or-overflow',live.empty===0&&live.scrollW===live.innerW,`${live.empty}; ${live.scrollW}/${live.innerW}`);
     rec(vp.name+'-zero-browser-network-errors',errors.length===0,errors.join(' | ')||'none');allErrors.push(...errors.map(x=>vp.name+': '+x));
     await page.screenshot({path:path.join(OUT,'homepage-'+vp.name+'.png'),fullPage:true});await context.close();
