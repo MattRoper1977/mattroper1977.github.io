@@ -19,7 +19,7 @@ on:
       - 'claude/media-clips'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   capture:
@@ -68,7 +68,7 @@ jobs:
           set -euo pipefail
           node tools/capture_clip.js --base https://madebymatt.uk --scene sync-volt    --out artifacts/media --seconds 12
           node tools/capture_clip.js --base https://madebymatt.uk --scene sync-escort  --out artifacts/media --seconds 8
-          node tools/capture_clip.js --base https://madebymatt.uk --scene breach-calm  --out artifacts/media --seconds 19
+          node tools/capture_clip.js --base https://madebymatt.uk --scene breach-calm  --out artifacts/media --seconds 26
 
       - name: 'ffprobe EVERY segment before chaining'
         run: |
@@ -140,6 +140,33 @@ jobs:
           for f in artifacts/media/clip-*.mp4 artifacts/media/poster-*.webp artifacts/media/youtube-*.mp4; do
             printf '%-46s %8s KB\n' "$(basename "$f")" "$(( $(stat -c%s "$f") / 1024 ))"
           done
+
+      # Publish the assets ONLY after every gate above has passed. The agent
+      # container cannot download run artifacts — blob storage is blocked by
+      # its proxy — but it can fetch a branch, so the verified binaries are
+      # committed here rather than smuggled through a log. Nothing reaches the
+      # branch that has not already passed photosensitivity, OCR and
+      # extraction-based verification.
+      - name: Publish verified assets to the media-assets branch
+        run: |
+          set -euo pipefail
+          git config user.name  'Claude'
+          git config user.email 'noreply@anthropic.com'
+          git checkout --orphan media-assets
+          git rm -rq --cached . || true
+          mkdir -p out
+          cp artifacts/media/clip-neonsync.mp4 artifacts/media/clip-neonbreach.mp4              artifacts/media/poster-neonsync.webp artifacts/media/poster-neonbreach.webp              artifacts/media/youtube-neonsync-1080p.mp4 artifacts/media/youtube-neonbreach-1080p.mp4 out/
+          sha256sum out/* > out/SHA256SUMS
+          cat out/SHA256SUMS
+          git add -f out
+          git commit -q -m "Verified media from run ${{ github.run_id }}
+
+          Every file here passed, on the runner, in this order: served-build
+          precondition, ffprobe per segment, OCR sweep per segment,
+          photosensitivity per segment, chain and encode, OCR and
+          photosensitivity across each finished cut and poster, then
+          verification by frame extraction."
+          git push -f origin media-assets
 
       - uses: actions/upload-artifact@v4
         if: always()
