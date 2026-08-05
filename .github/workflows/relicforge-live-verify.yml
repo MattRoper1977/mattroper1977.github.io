@@ -1,0 +1,100 @@
+name: Relicforge live verification
+
+# VERIFICATION ONLY. This branch is never merged; it exists so a runner with real
+# outbound network can answer three questions the build container cannot, because
+# madebymatt.uk is unreachable from there (403 on CONNECT).
+#
+#   1. Does /relicforge/ actually serve, 200?
+#   2. Is what is SERVED byte-identical to what was MERGED?
+#   3. How many cards does the arcade shelf actually render? A 200 is not a census.
+#
+# Everything is DERIVED: the expected hash is computed from the file at main, so
+# this cannot rot when the artifact is next updated.
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/relicforge-live-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Expected identity, derived from main
+        id: expected
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f relicforge/index.html
+          echo "sha=$(sha256sum relicforge/index.html | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "bytes=$(wc -c < relicforge/index.html)" >> "$GITHUB_OUTPUT"
+          echo "MERGED  $(sha256sum relicforge/index.html | cut -d' ' -f1)  $(wc -c < relicforge/index.html) bytes"
+
+      - name: Fetch the live landing
+        shell: bash
+        run: |
+          set -euo pipefail
+          code=$(curl --silent --show-error --location \
+            --retry 20 --retry-delay 15 --retry-all-errors \
+            --write-out '%{http_code}' -o /tmp/live.html \
+            https://madebymatt.uk/relicforge/)
+          echo "HTTP $code"
+          test "$code" = "200"
+          echo "SERVED  $(sha256sum /tmp/live.html | cut -d' ' -f1)  $(wc -c < /tmp/live.html) bytes"
+
+      - name: Byte-identity, served vs merged
+        shell: bash
+        run: |
+          set -euo pipefail
+          served_sha=$(sha256sum /tmp/live.html | cut -d' ' -f1)
+          served_bytes=$(wc -c < /tmp/live.html)
+          echo "expected ${{ steps.expected.outputs.sha }}  ${{ steps.expected.outputs.bytes }}"
+          echo "served   ${served_sha}  ${served_bytes}"
+          test "$served_bytes" = "${{ steps.expected.outputs.bytes }}"
+          test "$served_sha" = "${{ steps.expected.outputs.sha }}"
+          echo "SERVED HASH CONFIRMED IDENTICAL TO MERGED: ${served_sha}"
+
+      - name: The landing is live and self-contained
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '<link rel="canonical" href="https://madebymatt.uk/relicforge/">' /tmp/live.html
+          grep -q 'mbm_relicforge_v1' /tmp/live.html
+          test "$(grep -c 'madebymatt_relicforge_v1' /tmp/live.html || true)" = "0"
+          test "$(grep -o '<script' /tmp/live.html | wc -l)" = "1"
+          echo "canonical present, house storage key present, legacy key absent, one script element"
+
+      - name: Sitemap serves the landing
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 10 --retry-delay 10 --retry-all-errors \
+            https://madebymatt.uk/sitemap.xml -o /tmp/sitemap.xml
+          n=$(grep -c '<loc>https://madebymatt.uk/relicforge/</loc>' /tmp/sitemap.xml)
+          echo "sitemap entries for /relicforge/: $n"
+          test "$n" = "1"
+
+      - name: Shelf census — a 200 is not a census
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 10 --retry-delay 10 --retry-all-errors \
+            https://madebymatt.uk/games/ -o /tmp/games.html
+          echo "games surface: $(wc -c < /tmp/games.html) bytes"
+          manifest=$(curl --fail --silent --show-error --location \
+            https://raw.githubusercontent.com/MattRoper1977/Games/main/games.json \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin); print(len(d["games"]))')
+          echo "MANIFEST ENTRIES ON Games@main (derived): $manifest"
+          hits=$(grep -o '/relicforge/' /tmp/games.html | wc -l || true)
+          echo "RELICFORGE REFERENCES ON THE SERVED SHELF: $hits"
+          echo "NOTE: Part B (the shelf entry) is parked behind an in-flight PR that holds"
+          echo "games.json, so 0 here is the EXPECTED and correct state right now."
