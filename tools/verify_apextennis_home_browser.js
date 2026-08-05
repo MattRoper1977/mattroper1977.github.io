@@ -32,6 +32,35 @@ const EXPECT=(SITE.doors||[]).map(d=>({title:d.title,href:d.href,zone:d.zone}));
 const EXPECT_DOORS=EXPECT.length;
 const EXPECT_GAMES=EXPECT.filter(d=>d.zone==='games').length;
 
+// NINTH INSTANCE OF THE A-6 SHAPE, in the browser half. Six limbs below pinned
+// the Sports rail: the exact four-title list (twice), the exact four-href list
+// (twice), and `sports===4` in the theme and reduced-motion sweeps. The rail is
+// an ADDITIVE surface, so every one of those failed by construction the moment a
+// fifth game landed — the same defect as the pinned door count and the pinned
+// New Release occupant, in a third place.
+//
+// What is worth holding is stronger than a count, and holds at any count: no
+// established card is dropped, displaced, duplicated or re-pointed, and the
+// number rendered stays CONSISTENT with the markup across every theme and
+// viewport. The expected count is DERIVED from index.html, never named here, so
+// a card that silently fails to render in one theme is still caught.
+const ESTABLISHED_SPORTS=[['Apex Kick','/apexkick/'],['Apex Pool','/apexpool/'],['Apex Golf','/apexgolf/'],['Apex Tennis','/apextennis/']];
+const SPORTS_IN_MARKUP=(HOME.match(/data-sport-game="[^"]+"/g)||[]).length;
+// returns null when the contract holds, or a human reason when it does not
+function sportsContract(cards){
+ const titles=cards.map(c=>c.title),href=new Map(cards.map(c=>[c.title,c.href]));
+ const missing=ESTABLISHED_SPORTS.filter(([t])=>!titles.includes(t)).map(([t])=>t);
+ if(missing.length)return'established card dropped: '+missing.join(', ');
+ const pos=ESTABLISHED_SPORTS.map(([t])=>titles.indexOf(t));
+ if(pos.some((v,i)=>i&&v<pos[i-1]))return'established order changed: '+titles.join(', ');
+ if(new Set(titles).size!==titles.length)return'duplicate card: '+titles.join(', ');
+ if(titles.length<ESTABLISHED_SPORTS.length)return'rail shrank to '+titles.length+' cards';
+ const moved=ESTABLISHED_SPORTS.filter(([t,h])=>href.get(t)!==h).map(([t])=>t);
+ if(moved.length)return'established href changed: '+moved.join(', ');
+ if(titles.length!==SPORTS_IN_MARKUP)return`rendered ${titles.length} cards but the markup declares ${SPORTS_IN_MARKUP}`;
+ return null;
+}
+
 // RULING — Matt, 5 Aug 2026: "New Release is a stack; each game holds at most
 // ONE box; ruled occupants = Neon Sync (top, amended for v1.1) + Neon Breach."
 // THIRD COPY of the outgrown single-tenant invariant. R3 named two gates;
@@ -112,8 +141,8 @@ async function waitForDoors(page){
   await nojsPage.evaluate(()=>document.fonts?document.fonts.ready:null).catch(()=>{});
   const off=await nojsPage.evaluate(name=>{const cards=[...document.querySelectorAll('#homeSports [data-sport-game]')],boxes=[...document.querySelectorAll('#newrelease [data-release]')];return{cards:cards.map(a=>({title:a.dataset.sportGame,href:a.getAttribute('href'),tag:a.tagName})),releaseBoxes:boxes.length,occupants:boxes.map(b=>b.getAttribute('data-release')),perBox:Object.fromEntries(boxes.map(b=>[b.getAttribute('data-release'),{title:b.querySelector('h3')?.textContent.trim()||'',links:[...b.querySelectorAll('a')].map(a=>a.getAttribute('href'))}])),scrollW:document.documentElement.scrollWidth,innerW:innerWidth};},RULED_OCCUPANTS);
   rec('js-off-page-200',nojsResponse?.status()===200,String(nojsResponse?.status()||0));
-  rec('js-off-four-hardcoded-sports',JSON.stringify(off.cards.map(x=>x.title))===JSON.stringify(['Apex Kick','Apex Pool','Apex Golf','Apex Tennis']),JSON.stringify(off.cards));
-  rec('js-off-sports-links',JSON.stringify(off.cards.map(x=>x.href))===JSON.stringify(['/apexkick/','/apexpool/','/apexgolf/','/apextennis/']));
+  rec('js-off-hardcoded-sports-contract',sportsContract(off.cards)===null,sportsContract(off.cards)||`${off.cards.length} cards: ${off.cards.map(x=>x.title).join(', ')}`);
+  rec('js-off-sports-links',off.cards.every(x=>/^\/[a-z0-9-]+\/$/.test(x.href||'')),JSON.stringify(off.cards.map(x=>x.href)));
   rec('js-off-anchor-components',off.cards.every(x=>x.tag==='A'));
   rec('js-off-every-ruled-occupant-renders',
     off.releaseBoxes===RULED_OCCUPANTS.length&&
@@ -133,8 +162,8 @@ async function waitForDoors(page){
     const live=await page.evaluate(name=>{const title=a=>a.querySelector('b')?.textContent.trim()||'';const sport=[...document.querySelectorAll('#homeSports [data-sport-game]')].map(a=>({title:a.dataset.sportGame,href:a.getAttribute('href')}));const doors=[...document.querySelectorAll('[data-zone] a.dx-prod')].map(a=>{const img=a.querySelector('img'),art=a.querySelector('img,svg');return{title:title(a),zone:a.parentElement?.dataset.zone,href:a.getAttribute('href'),art:art?.tagName||'',loaded:!!art&&(!img||(img.complete&&img.naturalWidth>0))};});const games=[...document.querySelectorAll('[data-zone="games"]>a.dx-prod')];const positions=games.map(a=>{const r=a.getBoundingClientRect();return{title:title(a),x:+r.x.toFixed(2),y:+r.y.toFixed(2),w:+r.width.toFixed(2),h:+r.height.toFixed(2)};});const boxes=[...document.querySelectorAll('#newrelease [data-release]')];return{sport,doors,positions,cols:new Set(positions.map(x=>x.x)).size,rows:new Set(positions.map(x=>x.y)).size,doorCount:document.documentElement.getAttribute('data-doors'),artCount:document.documentElement.getAttribute('data-doors-art'),releaseBoxes:boxes.length,releaseOccupants:boxes.map(b=>b.getAttribute('data-release')),release:document.querySelectorAll(`#newrelease [data-release="${name}"]`).length,empty:[...document.querySelector('[data-zone="games"]').children].filter(x=>!x.textContent.trim()).length,scrollW:document.documentElement.scrollWidth,innerW:innerWidth};},RULED_OCCUPANTS);
     const named=t=>live.doors.filter(x=>x.title===t);
     rec(vp.name+'-page-200',response?.status()===200,String(response?.status()||0));
-    rec(vp.name+'-four-hardcoded-sports',JSON.stringify(live.sport.map(x=>x.title))===JSON.stringify(['Apex Kick','Apex Pool','Apex Golf','Apex Tennis']),JSON.stringify(live.sport));
-    rec(vp.name+'-sports-links',JSON.stringify(live.sport.map(x=>x.href))===JSON.stringify(['/apexkick/','/apexpool/','/apexgolf/','/apextennis/']));
+    rec(vp.name+'-hardcoded-sports-contract',sportsContract(live.sport)===null,sportsContract(live.sport)||`${live.sport.length} cards: ${live.sport.map(x=>x.title).join(', ')}`);
+    rec(vp.name+'-sports-links',live.sport.every(x=>/^\/[a-z0-9-]+\/$/.test(x.href||'')),JSON.stringify(live.sport.map(x=>x.href)));
     // "N cards, 0 bare" — the count is published next to its population, per
     // the house rule in assets/mbm-doors.js, and N is read from site.json.
     rec(vp.name+'-every-site-json-door-rendered-with-art',live.doorCount===String(EXPECT_DOORS)&&live.artCount===String(EXPECT_DOORS)&&live.doors.length===EXPECT_DOORS&&live.doors.every(x=>x.art),`${live.doorCount}/${live.artCount}; ${live.doors.length} rendered, expected ${EXPECT_DOORS}`);
@@ -148,7 +177,7 @@ async function waitForDoors(page){
     rec(vp.name+'-game-grid-shape',live.positions.length===EXPECT_GAMES&&live.cols===vp.cols&&live.rows===Math.ceil(EXPECT_GAMES/vp.cols),`${live.positions.length} cards, ${live.cols} cols x ${live.rows} rows (expected ${EXPECT_GAMES}, ${vp.cols}, ${Math.ceil(EXPECT_GAMES/vp.cols)})`);
     // C1 is the ruled part and stays pinned where it is a ruling: whatever
     // happens to Golf's site.json door, the homepage Sports block keeps all
-    // four games (asserted by -four-hardcoded-sports above). The door side is
+    // every game (asserted by -hardcoded-sports-contract above). The door side is
     // derived, so this limb is correct both before and after the removal.
     rec(vp.name+'-golf-door-follows-site-json',named('Apex Golf').length===(EXPECT.some(e=>e.title==='Apex Golf')?1:0),`site.json says ${EXPECT.some(e=>e.title==='Apex Golf')?'present':'absent'}, page rendered ${named('Apex Golf').length}`);
     // FOURTH COPY of the same invariant, in the per-viewport live check.
@@ -163,7 +192,7 @@ async function waitForDoors(page){
   }
 
   const themeContext=await browser.newContext({viewport:{width:1200,height:1000}}),themePage=await themeContext.newPage();await isolate(themePage);
-  for(const theme of ['cream','pink','blue','light','dark']){await themePage.goto(BASE+'/',{waitUntil:'domcontentloaded'});await themePage.evaluate(t=>localStorage.setItem('mbm_reading_theme',t),theme);await themePage.reload({waitUntil:'domcontentloaded'});await waitForDoors(themePage);const t=await themePage.evaluate(([theme,name])=>({theme,body:document.body.getAttribute('data-theme')||'cream',sports:document.querySelectorAll('#homeSports [data-sport-game]').length,release:document.querySelectorAll(`#newrelease [data-release="${name}"]`).length,overflow:document.documentElement.scrollWidth===innerWidth}),[theme,RELEASE]);rec('theme-'+theme,t.body===theme&&t.sports===4&&t.release===1&&t.overflow,JSON.stringify(t));}
+  for(const theme of ['cream','pink','blue','light','dark']){await themePage.goto(BASE+'/',{waitUntil:'domcontentloaded'});await themePage.evaluate(t=>localStorage.setItem('mbm_reading_theme',t),theme);await themePage.reload({waitUntil:'domcontentloaded'});await waitForDoors(themePage);const t=await themePage.evaluate(([theme,name])=>({theme,body:document.body.getAttribute('data-theme')||'cream',sports:document.querySelectorAll('#homeSports [data-sport-game]').length,release:document.querySelectorAll(`#newrelease [data-release="${name}"]`).length,overflow:document.documentElement.scrollWidth===innerWidth}),[theme,RELEASE]);rec('theme-'+theme,t.body===theme&&t.sports===SPORTS_IN_MARKUP&&t.release===1&&t.overflow,JSON.stringify(t));}
   await themeContext.close();
 
   /* KNOWN LIMIT, stated rather than papered over: the door DOM is GENERATED
@@ -209,7 +238,7 @@ async function waitForDoors(page){
   }
   rec('every-in-repo-door-target-resolves',unresolved.length===0,unresolved.length?JSON.stringify(unresolved):`${inRepo.length}/${inRepo.length} resolved`);
 
-  const calm=await browser.newContext({viewport:{width:1024,height:768},reducedMotion:'reduce'}),calmPage=await calm.newPage();await isolate(calmPage);await calmPage.goto(BASE+'/',{waitUntil:'domcontentloaded'});await waitForDoors(calmPage);const reduced=await calmPage.evaluate(()=>({sports:document.querySelectorAll('#homeSports [data-sport-game]').length,transition:getComputedStyle(document.querySelector('[data-sport-game="Apex Tennis"]')).transitionDuration,overflow:document.documentElement.scrollWidth===innerWidth}));rec('reduced-motion',reduced.sports===4&&(reduced.transition==='0s'||parseFloat(reduced.transition)<.01)&&reduced.overflow,JSON.stringify(reduced));await calm.close();
+  const calm=await browser.newContext({viewport:{width:1024,height:768},reducedMotion:'reduce'}),calmPage=await calm.newPage();await isolate(calmPage);await calmPage.goto(BASE+'/',{waitUntil:'domcontentloaded'});await waitForDoors(calmPage);const reduced=await calmPage.evaluate(()=>({sports:document.querySelectorAll('#homeSports [data-sport-game]').length,transition:getComputedStyle(document.querySelector('[data-sport-game="Apex Tennis"]')).transitionDuration,overflow:document.documentElement.scrollWidth===innerWidth}));rec('reduced-motion',reduced.sports===SPORTS_IN_MARKUP&&(reduced.transition==='0s'||parseFloat(reduced.transition)<.01)&&reduced.overflow,JSON.stringify(reduced));await calm.close();
   rec('aggregate-zero-errors',allErrors.length===0,allErrors.join(' | ')||'none');
 }catch(e){fail++;console.error(e.stack||e)}finally{if(browser)await browser.close();}
 fs.writeFileSync(path.join(OUT,'browser-report.json'),JSON.stringify({pass,fail,results},null,2));console.log('\n'+(fail?`${pass} passed, ${fail} FAILED`:`ALL ${pass} APEX TENNIS HOMEPAGE BROWSER GATES PASSED`));process.exit(fail?1:0);
