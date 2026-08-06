@@ -11,6 +11,10 @@
 <meta property="og:url" content="https://madebymatt.uk/fracture/">
 <meta property="og:title" content="Relicforge: Fracture Engine">
 <meta property="og:description" content="Three realms, three classes, relic forging and a Chronicle evidence export. Single-file 3D RPG, no dependencies.">
+<meta property="og:image" content="https://madebymatt.uk/fracture/banner.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <title>MadeByMatt: Relicforge — Fracture Engine</title>
 <style>
 :root {
@@ -450,6 +454,25 @@ const RM_MEDIA = window.matchMedia ? window.matchMedia('(prefers-reduced-motion:
 function osReducedMotion() { return Boolean(RM_MEDIA && RM_MEDIA.matches); }
 function motionReduced() { return settings.reducedMotion === true || osReducedMotion(); }
 
+/* Pass 5c trailer slot. Empty until Matt pastes a YouTube ID here after he
+   uploads. It renders a LINK, never an iframe: an embed would add a remote
+   origin to a game whose own head text says zero dependencies, and R1 does not
+   bend for a nice-to-have. Empty string = the control is simply absent. */
+const TRAILER_VIDEO_ID = '';
+
+function mountTrailerLink() {
+  if (!TRAILER_VIDEO_ID) return;                       /* ships empty, renders nothing */
+  const home = document.getElementById('menu-home');
+  if (!home || document.getElementById('trailer-link')) return;
+  const a = document.createElement('a');
+  a.id = 'trailer-link';
+  a.className = 'ui-btn ghost';
+  a.href = `https://www.youtube.com/watch?v=${encodeURIComponent(TRAILER_VIDEO_ID)}`;
+  a.target = '_blank'; a.rel = 'noopener noreferrer';
+  a.textContent = 'Watch the trailer';
+  home.appendChild(a);
+}
+
 /* Accessibility floor: one announce channel, used by toasts and game events. */
 function announce(message) {
   const el = document.getElementById('announce-live');
@@ -804,6 +827,7 @@ function initialise() {
     updateContinueButton();
     populateSettingsUI();
     game.mode = 'menu';
+    mountTrailerLink();
     requestAnimationFrame(mainLoop);
     scheduleSplashClose();
   } catch (error) {
