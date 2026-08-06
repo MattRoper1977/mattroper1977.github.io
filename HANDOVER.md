@@ -6,6 +6,12 @@ Most recent session first.
 
 ---
 
+# 6 August 2026 — Data Manager Studio card on the tools hub
+
+Twelfth tool card added to `tools/index.html` (PEQ & Accreditation, after Evidence Binder, per the ChoreoStudio append-to-category precedent); copy and 🧭 icon taken verbatim from the app's own `apps.json` entry in Matt-s-Apps- at `298c438`; every count on the page derives from `cards.length`, so 11→12 required no literal edits; the link target was verified against that repo commit because this container gets 403 from both live origins.
+
+---
+
 # 1 August 2026 — homepage close
 
 ## The rule this session produced
