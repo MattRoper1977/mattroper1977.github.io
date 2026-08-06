@@ -184,6 +184,12 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 <div class="rail" id="sportsRail" aria-label="Sports games"></div>
 </div></section>
 
+<section class="sec sports rpg" id="rpg" hidden><div class="wrap">
+<h2>Action RPG <small>&middot; build a character, then spend it</small></h2>
+<p class="sub">The Relicforge pair, side by side: strip a buried machine kingdom component by component in Strip the Machine, or carry a Forgeguard, Riftcaller or Shadowsmith through three breaking realms in Fracture Engine.</p>
+<div class="rail" id="rpgRail" aria-label="Action RPG games"></div>
+</div></section>
+
 <section class="sec gx-watch"><div class="wrap">
 <h2>Watch them played</h2>
 <div class="gx-watchgrid">
@@ -323,6 +329,16 @@ function render(){
  var sportsSection=$("sports"),sportsRail=$("sportsRail");sportsRail.textContent="";
  sports.forEach(function(g){sportsRail.appendChild(gCard(g,false))});
  sportsSection.hidden=sports.length===0;
+ /* Action RPG rail. Membership is DERIVED from the tag, never a pinned list —
+    a hand-kept membership array is the exact defect the sports gate was
+    repaired for, and recreating it here would be recreating that bug. Any
+    entry whose tag carries the RPG signal joins with no edit to this file.
+    The rail renders only when the derivation finds two or more members, so a
+    single-game rail never appears. */
+ var rpg=gs.filter(function(g){return /\bRPG\b/.test(String(g.tag||""))});
+ var rpgSection=$("rpg"),rpgRail=$("rpgRail");rpgRail.textContent="";
+ rpg.forEach(function(g){rpgRail.appendChild(gCard(g,false))});
+ rpgSection.hidden=rpg.length<2;
  /* themed grids */
  var tg=$("tgrids");tg.textContent="";
  THEMES.forEach(function(th,i){
