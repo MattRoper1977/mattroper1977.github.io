@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#17101f">
+<meta name="description" content="Lumina Haven is a cozy room-and-garden atelier with decorating, plant care, botanical fusion, soundscapes and photo mode.">
+<title>Lumina Haven — Made by Matt</title>
+<style>
+:root{
+  --ink:#fffaf7;--muted:#d9cfe3;--panel:rgba(21,14,30,.78);--panel2:rgba(31,20,43,.92);
+  --line:rgba(255,255,255,.16);--accent:#d7a7ff;--accent2:#8ce7db;--danger:#ff8b9d;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#120d18;color:var(--ink);font-family:Inter,ui-rounded,"Segoe UI",system-ui,sans-serif}
+button,input,select{font:inherit}
+button{min-height:44px;border:1px solid var(--line);border-radius:15px;background:rgba(255,255,255,.08);color:var(--ink);font-weight:750;cursor:pointer;touch-action:manipulation;transition:transform .14s ease,background .14s ease,border-color .14s ease,opacity .14s ease}
+button:hover{background:rgba(255,255,255,.15);transform:translateY(-1px)}
+button:active{transform:scale(.97)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #fff;outline-offset:3px}
+button.active{background:var(--accent);color:#1b1022;border-color:transparent;box-shadow:0 0 20px rgba(215,167,255,.35)}
+button:disabled{opacity:.42;cursor:not-allowed;transform:none}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.glass{background:var(--panel);border:1px solid var(--line);box-shadow:0 12px 38px rgba(0,0,0,.34);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+#topBar{position:fixed;z-index:20;top:max(10px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:22px;max-width:calc(100vw - 24px);overflow-x:auto;scrollbar-width:none}
+#topBar::-webkit-scrollbar,#catalog::-webkit-scrollbar{display:none}
+.brand{display:flex;align-items:center;gap:8px;white-space:nowrap;padding:0 4px 0 2px}
+.brandMark{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,#ffd6ee,#bfa0ff);color:#25122e;font-weight:1000;box-shadow:0 0 24px rgba(215,167,255,.42)}
+.brandText{font-size:13px;font-weight:950;letter-spacing:.04em}.brandText small{display:block;font-size:9px;color:var(--muted);font-weight:700;letter-spacing:.08em}
+.chipBtn{padding:0 12px;white-space:nowrap;font-size:12px}
+.statChip{height:44px;display:flex;align-items:center;gap:7px;padding:0 12px;border-radius:15px;background:rgba(255,255,255,.07);border:1px solid var(--line);white-space:nowrap;font-size:12px;font-weight:850}.statChip b{color:#ffe095}
+#leftPanel{position:fixed;z-index:18;left:max(10px,env(safe-area-inset-left));top:50%;transform:translateY(-50%);width:188px;border-radius:22px;padding:12px;display:flex;flex-direction:column;gap:13px;max-height:72vh;overflow:auto}
+.panelTitle{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--accent);font-weight:950;margin-bottom:6px}
+.row{display:flex;gap:6px;flex-wrap:wrap}.row button{flex:1;padding:0 8px;font-size:11px;min-width:48px}
+.swatches{display:flex;gap:7px;flex-wrap:wrap}.swatch{width:31px;height:31px;min-height:31px;padding:0;border-radius:50%;border:2px solid rgba(255,255,255,.32)}.swatch.active{box-shadow:0 0 0 3px #fff,0 0 16px rgba(255,255,255,.55)}
+#rightTools{position:fixed;z-index:19;right:max(10px,env(safe-area-inset-right));top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;padding:8px;border-radius:22px}
+.tool{width:48px;min-height:48px;padding:0;font-size:20px;position:relative}.tool[data-tip]:hover::after{content:attr(data-tip);position:absolute;right:58px;top:50%;transform:translateY(-50%);padding:7px 10px;border-radius:10px;background:#140d1c;color:#fff;font-size:11px;white-space:nowrap;border:1px solid var(--line)}
+#catalog{position:fixed;z-index:18;left:50%;transform:translateX(-50%);bottom:max(12px,env(safe-area-inset-bottom));display:flex;gap:8px;padding:9px;border-radius:22px;max-width:calc(100vw - 150px);overflow-x:auto;scrollbar-width:none}
+.catalogItem{width:80px;min-width:80px;height:66px;padding:5px 5px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:9px;line-height:1.1}.catalogItem .ico{font-size:24px}.catalogItem .cost{font-size:9px;color:#ffe095}.catalogItem.locked{filter:saturate(.25);opacity:.62}.catalogItem.newUnlock{animation:glow 1.2s ease-in-out infinite alternate}
+@keyframes glow{to{box-shadow:0 0 22px rgba(215,167,255,.7);border-color:var(--accent)}}
+#inspector{position:fixed;z-index:17;left:50%;transform:translateX(-50%);bottom:94px;width:min(310px,calc(100vw - 30px));padding:11px 14px;border-radius:18px;display:none;gap:8px;flex-direction:column}.inspectHead{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:900;color:var(--accent)}.meterLabel{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);font-weight:750}.meter{height:7px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden}.meter>i{display:block;height:100%;border-radius:inherit;transition:width .25s ease}.waterFill{background:#6ed7ff}.growFill{background:#7ff0a8}
+#status{position:fixed;z-index:15;left:50%;transform:translateX(-50%);bottom:90px;padding:7px 12px;border-radius:14px;font-size:10px;color:var(--muted);pointer-events:none;max-width:58vw;text-align:center}
+#toast{position:fixed;z-index:60;left:50%;top:82px;transform:translate(-50%,-20px);padding:10px 16px;border-radius:18px;background:rgba(255,245,255,.94);color:#25132d;font-weight:900;font-size:12px;opacity:0;pointer-events:none;transition:.25s ease;box-shadow:0 12px 30px rgba(0,0,0,.28)}#toast.show{opacity:1;transform:translate(-50%,0)}
+.modal{position:fixed;z-index:50;inset:0;background:rgba(8,5,13,.78);display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(10px)}.modal.open{display:flex}.modalCard{width:min(520px,100%);max-height:88vh;overflow:auto;background:var(--panel2);border:1px solid rgba(255,255,255,.2);border-radius:26px;padding:20px;box-shadow:0 24px 80px rgba(0,0,0,.55)}.modalCard h2{margin:0 0 5px;font-size:22px}.modalCard p{color:var(--muted);font-size:13px;line-height:1.45}.modalActions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}.primary{background:linear-gradient(135deg,#d7a7ff,#8ce7db);color:#1a1122;border:none;padding:0 17px}.danger{background:rgba(255,90,110,.16);border-color:rgba(255,130,145,.38)}
+.ingredients{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.ingredient{height:72px;padding:5px;font-size:10px;display:flex;flex-direction:column;align-items:center;justify-content:center}.ingredient .big{font-size:25px}.ingredient.selected{background:var(--accent);color:#1a1122}.fusionSlots{display:flex;align-items:center;justify-content:center;gap:14px;margin:14px 0}.slot{width:78px;height:78px;border-radius:20px;border:2px dashed rgba(215,167,255,.6);display:grid;place-items:center;font-size:31px;background:rgba(255,255,255,.035)}
+.mixerRow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin:12px 0}.mixerRow label{font-size:12px;font-weight:850}.mixerRow input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent)}
+.photoFilters{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.photoFilters button{font-size:11px}.stickerInput{width:100%;min-height:44px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.07);color:#fff;padding:0 12px}
+#splash{position:fixed;z-index:100;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 30%,#523568 0,#1a1022 45%,#0d0912 100%);padding:22px}.splashCard{text-align:center;max-width:620px}.splashLogo{font-size:clamp(44px,11vw,94px);font-weight:1000;line-height:.88;letter-spacing:-.055em;background:linear-gradient(135deg,#ffe2f4,#cab7ff 45%,#9debe2);-webkit-background-clip:text;color:transparent;filter:drop-shadow(0 10px 30px rgba(215,167,255,.35))}.splashSub{margin:20px auto;color:#e5d9ea;max-width:520px;line-height:1.5;font-size:14px}.made{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:#bdaec5;margin-bottom:13px}.startBtn{height:56px;padding:0 30px;border-radius:19px;font-size:15px;background:linear-gradient(135deg,#f4c7e6,#bca9ff,#8ce7db);color:#211329;border:0;box-shadow:0 18px 50px rgba(215,167,255,.28)}.splashHints{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:18px}.splashHints span{font-size:10px;padding:7px 9px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#d8cce0}
+#noCanvas{display:none;position:fixed;inset:0;z-index:200;background:#120d18;color:white;padding:30px}
+.mobileOnly{display:none}.photoClean #topBar,.photoClean #leftPanel,.photoClean #rightTools,.photoClean #catalog,.photoClean #inspector,.photoClean #status{display:none!important}
+@media(max-width:850px){
+  #leftPanel{top:auto;bottom:92px;transform:none;width:174px;max-height:45vh}.panelTitle{font-size:9px}
+  #rightTools{right:6px;gap:5px}.tool{width:44px;min-height:44px;font-size:18px}
+  #catalog{max-width:calc(100vw - 18px);bottom:10px;padding-right:58px}
+  #status{display:none}#inspector{bottom:87px}
+  .brandText{display:none}.statChip{padding:0 9px}.chipBtn{padding:0 9px}
+}
+@media(max-width:560px){
+  #topBar{left:8px;right:8px;transform:none;max-width:none}.brand{display:none}
+  #leftPanel{display:none}.tool[data-tip]:hover::after{display:none}#leftPanel.mobileOpen{display:flex;position:fixed;left:8px;right:62px;top:78px;bottom:92px;width:auto;max-height:none;transform:none;z-index:45}.mobileOnly{display:block!important}
+  .catalogItem{width:70px;min-width:70px}.ingredients{grid-template-columns:repeat(2,1fr)}
+  #toast{top:70px;max-width:90vw;text-align:center}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+</style>
+</head>
+<body>
+<canvas id="game" aria-label="Lumina Haven room and garden canvas"></canvas>
+<div id="noCanvas"><h1>Lumina Haven</h1><p>Your browser needs Canvas support to play this game.</p></div>
+
+<div id="topBar" class="glass" aria-label="Lighting and game status">
+  <div class="brand"><div class="brandMark">✦</div><div class="brandText">LUMINA HAVEN<small>MADE BY MATT</small></div></div>
+  <button class="chipBtn paletteBtn active" data-palette="sunset">🌅 Sunset</button>
+  <button class="chipBtn paletteBtn" data-palette="twilight">🌙 Twilight</button>
+  <button class="chipBtn paletteBtn" data-palette="cottage">🌿 Cottage</button>
+  <button class="chipBtn paletteBtn" data-palette="hearth">🔥 Hearth</button>
+  <button class="chipBtn" id="autoLightBtn" title="Automatically move through the four lighting moods">⟳ Auto</button>
+  <div class="statChip">✨ <b id="essenceText">0</b></div>
+  <div class="statChip">🌱 <b id="collectionText">0</b></div>
+</div>
+
+<aside id="leftPanel" class="glass" aria-label="Atelier controls">
+  <button id="closeSettingsBtn" class="mobileOnly" style="width:100%;min-height:40px">Close settings ✕</button>
+  <section><div class="panelTitle">Greenhouse weather</div><div class="row">
+    <button class="weatherBtn active" data-weather="sunny">☀️</button><button class="weatherBtn" data-weather="rain">🌧️</button><button class="weatherBtn" data-weather="mist">🌫️</button>
+  </div></section>
+  <section><div class="panelTitle">Wall tint</div><div class="swatches" id="wallSwatches"></div></section>
+  <section><div class="panelTitle">Wallpaper</div><div class="row" id="patternButtons"></div></section>
+  <section><div class="panelTitle">Room size</div><div class="row">
+    <button class="roomBtn" data-size="8">8×8</button><button class="roomBtn active" data-size="10">10×10</button><button class="roomBtn" data-size="12">12×12</button>
+  </div></section>
+  <section><div class="panelTitle">Placement</div><div class="row"><button id="snapBtn" class="active">🧲 Snap</button><button id="clearBtn" class="danger">Reset</button></div></section>
+</aside>
+
+<nav id="rightTools" class="glass" aria-label="Atelier tools">
+  <button class="tool active" data-tool="hand" data-tip="Move / inspect" aria-label="Move and inspect">✋</button>
+  <button class="tool" data-tool="water" data-tip="Water plants" aria-label="Watering can">🚿</button>
+  <button class="tool" data-tool="prune" data-tip="Prune overgrowth" aria-label="Pruning shears">✂️</button>
+  <button class="tool" id="rotateBtn" data-tip="Rotate selected" aria-label="Rotate selected">↻</button>
+  <button class="tool" id="recolorBtn" data-tip="Recolour selected" aria-label="Recolour selected">🎨</button>
+  <button class="tool" id="deleteBtn" data-tip="Delete selected" aria-label="Delete selected">🗑️</button>
+  <button class="tool" id="fusionBtn" data-tip="Botanical & gem fusion" aria-label="Open fusion laboratory">🧪</button>
+  <button class="tool" id="soundBtn" data-tip="Soundscape mixer" aria-label="Open sound mixer">🎛️</button>
+  <button class="tool" id="photoBtn" data-tip="Photo mode" aria-label="Open photo mode">📸</button>
+  <button class="tool" id="saveBtn" data-tip="Save / export" aria-label="Save and export">💾</button>
+  <button class="tool mobileOnly" id="settingsBtn" data-tip="Room settings" aria-label="Open room settings">⚙️</button>
+  <button class="tool" id="helpBtn" data-tip="How to play" aria-label="How to play">?</button>
+</nav>
+
+<div id="catalog" class="glass" aria-label="Decoration catalogue"></div>
+<div id="inspector" class="glass" aria-live="polite">
+  <div class="inspectHead"><span id="inspectName">Plant</span><span id="inspectStage">MATURE</span></div>
+  <div><div class="meterLabel"><span>HYDRATION</span><span id="waterPct">0%</span></div><div class="meter"><i id="waterFill" class="waterFill"></i></div></div>
+  <div><div class="meterLabel"><span>GROWTH</span><span id="growPct">0%</span></div><div class="meter"><i id="growFill" class="growFill"></i></div></div>
+</div>
+<div id="status" class="glass">Drag objects freely. Glowing forage appears around the room—tap it to collect fusion materials.</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<div id="fusionModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="fusionTitle">
+  <div class="modalCard"><h2 id="fusionTitle">Botanical & Gem Fusion</h2><p>Choose two materials. Known pairings unlock rare living décor, dyes and lights; experimental pairings still create essence.</p>
+    <div class="ingredients" id="ingredientGrid"></div>
+    <div class="fusionSlots"><div class="slot" id="slotA">?</div><b>＋</b><div class="slot" id="slotB">?</div></div>
+    <div id="fusionResult" style="min-height:24px;text-align:center;font-weight:850;color:#ffe095"></div>
+    <div class="modalActions"><button data-close="fusionModal">Close</button><button class="primary" id="fuseNowBtn">Fuse materials</button></div>
+  </div>
+</div>
+
+<div id="soundModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="soundTitle">
+  <div class="modalCard"><h2 id="soundTitle">Soundscape Mixer</h2><p>Every layer is generated live by Web Audio—no sound files are used.</p>
+    <div class="mixerRow"><label>🌧️ Rain on glass <input type="checkbox" id="rainToggle"></label><input id="rainVolume" type="range" min="0" max="1" step=".05" value=".30"></div>
+    <div class="mixerRow"><label>🔥 Cozy hearth <input type="checkbox" id="fireToggle"></label><input id="fireVolume" type="range" min="0" max="1" step=".05" value=".35"></div>
+    <div class="mixerRow"><label>📻 Lofi vinyl <input type="checkbox" id="vinylToggle"></label><input id="vinylVolume" type="range" min="0" max="1" step=".05" value=".38"></div>
+    <div class="modalActions"><button data-close="soundModal">Close</button></div>
+  </div>
+</div>
+
+<div id="photoModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="photoTitle">
+  <div class="modalCard"><h2 id="photoTitle">Aesthetic Photo Mode</h2><p>Choose a filter and optional sticker text. The exported image contains the room only—no interface.</p>
+    <div class="photoFilters"><button class="filterBtn active" data-filter="none">Natural</button><button class="filterBtn" data-filter="warm">Dreamy</button><button class="filterBtn" data-filter="twilight">Twilight</button><button class="filterBtn" data-filter="mono">Lofi Mono</button><button class="filterBtn" data-filter="mist">Soft Mist</button><button class="filterBtn" data-filter="vivid">Gem Pop</button></div>
+    <p><input class="stickerInput" id="stickerText" maxlength="36" value="my lumina haven ✦" aria-label="Photo sticker text"></p>
+    <div class="modalActions"><button data-close="photoModal">Close</button><button id="cleanViewBtn">Preview clean view</button><button class="primary" id="captureBtn">Save PNG</button></div>
+  </div>
+</div>
+
+<div id="saveModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="saveTitle">
+  <div class="modalCard"><h2 id="saveTitle">Save & Share</h2><p>Your haven auto-saves on this device. Export creates a small JSON layout that can be shared and imported later.</p>
+    <input type="file" id="importInput" accept="application/json,.json" hidden>
+    <div class="modalActions"><button data-close="saveModal">Close</button><button id="importBtn">Import layout</button><button id="exportBtn">Export JSON</button><button class="primary" id="manualSaveBtn">Save now</button></div>
+  </div>
+</div>
+
+<div id="helpModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="modalCard"><h2 id="helpTitle">Welcome to Lumina Haven</h2>
+    <p><b>Decorate:</b> choose pieces from the bottom catalogue, then drag them anywhere on the floor. Rotate, recolour or delete the selected piece with the tools on the right.</p>
+    <p><b>Grow:</b> plants lose water slowly. Use the watering can, let growth reach 100%, then prune an overgrown plant for Garden Essence and a Golden Bloom.</p>
+    <p><b>Collect:</b> glowing flowers and gems appear in the room. Tap them, then combine materials in the Fusion Lab to unlock rare décor.</p>
+    <p><b>Relax:</b> switch lighting, weather and procedural sound layers. Tap the cat when it appears. Photo Mode exports your arrangement as a PNG.</p>
+    <div class="modalActions"><button class="primary" data-close="helpModal">Let’s create</button></div>
+  </div>
+</div>
+
+<div id="confirmModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle"><div class="modalCard"><h2 id="confirmTitle">Reset the haven?</h2><p>This restores the starter room and collection. Your exported JSON files are not affected.</p><div class="modalActions"><button data-close="confirmModal">Cancel</button><button class="danger" id="confirmResetBtn">Reset everything</button></div></div></div>
+
+<div id="splash">
+  <div class="splashCard"><div class="made">Made by Matt presents</div><div class="splashLogo">LUMINA<br>HAVEN</div><div class="splashSub">A low-pressure sanctuary game about arranging a beautiful room, nurturing unusual plants, collecting gems and crafting luminous new décor.</div><button id="startBtn" class="startBtn">Enter the Haven</button><div class="splashHints"><span>drag & decorate</span><span>grow & prune</span><span>fuse rare items</span><span>photo mode</span><span>mobile + desktop</span></div></div>
+</div>
+
+<script>
+(()=>{
+'use strict';
+const canvas=document.getElementById('game');
+if(!canvas.getContext){document.getElementById('noCanvas').style.display='block';return;}
+const ctx=canvas.getContext('2d',{alpha:false});
+let W=innerWidth,H=innerHeight,DPR=Math.min(devicePixelRatio||1,2),time=0,last=performance.now(),drag=null,guide={x:null,y:null},toastTimer=0,autoSaveClock=0,spawnClock=0,cleanPreviewTimer=0;
+const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const palettes={
+ sunset:{bg1:'#2a1836',bg2:'#f28e8e',wall:'#5a355d',floor:'#5a3e55',window:'#ffd6b0',ambient:'#ffbf9c'},
+ twilight:{bg1:'#090b24',bg2:'#51417c',wall:'#252342',floor:'#282542',window:'#70e5f0',ambient:'#9f8cff'},
+ cottage:{bg1:'#18271d',bg2:'#8bbd9b',wall:'#435545',floor:'#50483d',window:'#dff0c7',ambient:'#e8dfaa'},
+ hearth:{bg1:'#1c0d0c',bg2:'#7e3525',wall:'#4a2927',floor:'#49332c',window:'#ffac5d',ambient:'#ff804a'}
+};
+const wallColors=['#4a314f','#465345','#6a3f43','#26384d','#5a4938','#6a465d'];
+const patterns=['plain','stripes','brick','arches'];
+const ingredients={
+ sunpetal:{icon:'🌻',name:'Sunpetal'},moonfern:{icon:'🌿',name:'Moon Fern'},rose:{icon:'🌹',name:'Velvet Rose'},moss:{icon:'🍀',name:'Cloud Moss'},quartz:{icon:'💎',name:'Quartz'},amethyst:{icon:'🔮',name:'Amethyst'},opal:{icon:'🫧',name:'Opal'},ember:{icon:'🔥',name:'Hearth Ember'}
+};
+const recipes={
+ 'moonfern|sunpetal':{key:'twilightBloom',name:'Twilight Bloom',icon:'🪻',type:'hybridPlant',tint:'#9b8cff'},
+ 'moss|rose':{key:'velvetVine',name:'Velvet Vine',icon:'🌺',type:'hybridPlant',tint:'#e66a91'},
+ 'amethyst|quartz':{key:'auroraLamp',name:'Aurora Lamp',icon:'💠',type:'auroraLamp',tint:'#a58bff'},
+ 'opal|quartz':{key:'prismMobile',name:'Prism Mobile',icon:'🔷',type:'prism',tint:'#75e5ff'},
+ 'quartz|sunpetal':{key:'solarCrystal',name:'Solar Crystal',icon:'🌟',type:'crystal',tint:'#ffd45c'},
+ 'ember|moonfern':{key:'emberFern',name:'Ember Fern',icon:'🍁',type:'hybridPlant',tint:'#ff8b57'}
+};
+const catalog=[
+ {key:'rug',name:'Cloud Rug',icon:'🧶',type:'rug',cost:8,tint:'#e6d9ef',base:true},
+ {key:'chair',name:'Soft Chair',icon:'🪑',type:'chair',cost:14,tint:'#b7a4c9',base:true},
+ {key:'table',name:'Tea Table',icon:'🫖',type:'table',cost:12,tint:'#a8735d',base:true},
+ {key:'lamp',name:'Glow Lamp',icon:'💡',type:'lamp',cost:16,tint:'#ffe2a3',base:true},
+ {key:'plant',name:'Monstera',icon:'🪴',type:'plant',cost:10,tint:'#55a77a',base:true},
+ {key:'crystal',name:'Crystal Cluster',icon:'🔮',type:'crystal',cost:18,tint:'#bf8cff',base:true},
+ {key:'turntable',name:'Vinyl Deck',icon:'📻',type:'turntable',cost:22,tint:'#8b5e49',base:true},
+ {key:'fireplace',name:'Tiny Hearth',icon:'🔥',type:'fireplace',cost:26,tint:'#6a6675',base:true},
+ {key:'cat',name:'Cozy Cat',icon:'🐱',type:'cat',cost:20,tint:'#e89b67',base:true},
+ {key:'shelf',name:'Curio Shelf',icon:'🗄️',type:'shelf',cost:20,tint:'#815b4a',base:true},
+ {key:'twilightBloom',name:'Twilight Bloom',icon:'🪻',type:'hybridPlant',cost:0,tint:'#9b8cff'},
+ {key:'velvetVine',name:'Velvet Vine',icon:'🌺',type:'hybridPlant',cost:0,tint:'#e66a91'},
+ {key:'auroraLamp',name:'Aurora Lamp',icon:'💠',type:'auroraLamp',cost:0,tint:'#a58bff'},
+ {key:'prismMobile',name:'Prism Mobile',icon:'🔷',type:'prism',cost:0,tint:'#75e5ff'},
+ {key:'solarCrystal',name:'Solar Crystal',icon:'🌟',type:'crystal',cost:0,tint:'#ffd45c'},
+ {key:'emberFern',name:'Ember Fern',icon:'🍁',type:'hybridPlant',cost:0,tint:'#ff8b57'}
+];
+const starter=()=>({
+ version:2,palette:'sunset',weather:'sunny',roomSize:10,wallColor:'#4a314f',pattern:'arches',essence:78,tool:'hand',snap:true,autoLight:false,selectedId:null,nextId:20,
+ inventory:{sunpetal:2,moonfern:2,rose:2,moss:2,quartz:2,amethyst:1,opal:1,ember:1},unlocks:[],newUnlocks:[],
+ objects:[
+  {id:1,type:'rug',name:'Cloud Rug',u:.49,v:.61,rot:0,tint:'#eadcf2'},
+  {id:2,type:'chair',name:'Soft Chair',u:.33,v:.48,rot:-.32,tint:'#b9a5cc'},
+  {id:3,type:'table',name:'Tea Table',u:.52,v:.50,rot:.1,tint:'#a8735d'},
+  {id:4,type:'plant',name:'Monstera',u:.72,v:.38,rot:0,tint:'#55a77a',plant:{water:72,growth:68,bloom:false}},
+  {id:5,type:'lamp',name:'Glow Lamp',u:.77,v:.52,rot:0,tint:'#ffe2a3'},
+  {id:6,type:'cat',name:'Miso the Cat',u:.61,v:.68,rot:.25,tint:'#e89b67'}
+ ],nodes:[],audio:{rain:false,fire:false,vinyl:false,rainVol:.3,fireVol:.35,vinylVol:.38},photoFilter:'none',sticker:'my lumina haven ✦'
+});
+let state=starter();
+try{const raw=localStorage.getItem('mbm_lumina_haven_v2');if(raw){const saved=JSON.parse(raw);state=Object.assign(starter(),saved);state.audio=Object.assign(starter().audio,saved.audio||{});state.inventory=Object.assign(starter().inventory,saved.inventory||{});}}
+catch(e){console.warn('Save could not be read',e);}
+
+let currentPal={...palettes[state.palette]},targetPal=palettes[state.palette];
+let particles=[];for(let i=0;i<120;i++)particles.push({x:Math.random(),y:Math.random(),s:.4+Math.random()*1.2,phase:Math.random()*6.28});
+let sparkles=[];
+let fusionPick=[];
+
+const q=id=>document.getElementById(id);
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const hexToRgb=h=>{h=h.replace('#','');if(h.length===3)h=h.split('').map(x=>x+x).join('');const n=parseInt(h,16);return[(n>>16)&255,(n>>8)&255,n&255]};
+const rgbToHex=a=>'#'+a.map(v=>clamp(Math.round(v),0,255).toString(16).padStart(2,'0')).join('');
+const mixColor=(a,b,t)=>rgbToHex(hexToRgb(a).map((v,i)=>lerp(v,hexToRgb(b)[i],t)));
+const shade=(hex,amt)=>{const r=hexToRgb(hex).map(v=>v+amt);return rgbToHex(r)};
+const selected=()=>state.objects.find(o=>o.id===state.selectedId)||null;
+const isPlant=o=>o&&['plant','hybridPlant'].includes(o.type);
+
+function saveGame(show=false){
+ try{localStorage.setItem('mbm_lumina_haven_v2',JSON.stringify(state));if(show)toast('Haven saved on this device ✦');}
+ catch(e){if(show)toast('Saving is unavailable in this browser');}
+}
+function toast(msg){const el=q('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2400);}
+function openModal(id){q(id).classList.add('open');}
+function closeModal(id){q(id).classList.remove('open');}
+document.addEventListener('click',e=>{const c=e.target.closest('[data-close]');if(c)closeModal(c.dataset.close);if(e.target.classList.contains('modal'))e.target.classList.remove('open');});
+
+function resize(){W=innerWidth;H=innerHeight;DPR=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(DPR,0,0,DPR,0,0);}
+addEventListener('resize',resize);resize();
+
+function roomGeom(){
+ const mobile=W<650;const panelPenalty=mobile?0:80;const expansion=(state.roomSize-10)*14;
+ return{backY:H*.27,frontY:H*.83,backL:W*.24-expansion,backR:W*.76+expansion,frontL:Math.max(52,W*.10-expansion-panelPenalty*.1),frontR:Math.min(W-52,W*.90+expansion+panelPenalty*.1)};
+}
+function worldToScreen(u,v){const g=roomGeom(),y=lerp(g.backY,g.frontY,v),l=lerp(g.backL,g.frontL,v),r=lerp(g.backR,g.frontR,v);return{x:lerp(l,r,u),y,scale:.62+v*.62};}
+function screenToWorld(x,y){const g=roomGeom(),v=clamp((y-g.backY)/(g.frontY-g.backY),.02,.98),l=lerp(g.backL,g.frontL,v),r=lerp(g.backR,g.frontR,v),u=clamp((x-l)/(r-l),.02,.98);return{u,v};}
+function objectRadius(o,s){const map={rug:74,chair:47,table:45,lamp:34,plant:36,hybridPlant:38,crystal:33,turntable:42,fireplace:58,cat:36,shelf:54,auroraLamp:37,prism:34};return(map[o.type]||40)*s;}
+
+function drawWallpaper(g){
+ ctx.save();ctx.beginPath();ctx.rect(0,0,W,g.backY);ctx.clip();const wallBase=mixColor(state.wallColor,currentPal.wall,.24);ctx.fillStyle=wallBase;ctx.fillRect(0,0,W,g.backY+2);
+ const c=mixColor(wallBase,'#ffffff',.15);ctx.strokeStyle=c;ctx.fillStyle=c;ctx.globalAlpha=.35;ctx.lineWidth=2;
+ if(state.pattern==='stripes'){for(let x=0;x<W;x+=38){ctx.fillRect(x,0,16,g.backY)}}
+ else if(state.pattern==='brick'){for(let y=18;y<g.backY;y+=28){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();const off=((y/28)|0)%2?0:32;for(let x=off;x<W;x+=64){ctx.beginPath();ctx.moveTo(x,y-28);ctx.lineTo(x,y);ctx.stroke();}}}
+ else if(state.pattern==='arches'){for(let y=34;y<g.backY;y+=82)for(let x=28;x<W;x+=64){ctx.beginPath();ctx.arc(x,y,22,Math.PI,0);ctx.stroke();ctx.beginPath();ctx.moveTo(x-22,y);ctx.lineTo(x-22,y+28);ctx.moveTo(x+22,y);ctx.lineTo(x+22,y+28);ctx.stroke();}}
+ ctx.restore();ctx.globalAlpha=1;
+}
+function drawRoom(){
+ const g=roomGeom();
+ let grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,currentPal.bg1);grad.addColorStop(.55,currentPal.bg2);grad.addColorStop(1,shade(currentPal.floor,-35));ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+ drawWallpaper(g);
+ // ceiling glow
+ const glow=ctx.createRadialGradient(W*.53,g.backY*.34,5,W*.53,g.backY*.34,W*.48);glow.addColorStop(0,currentPal.ambient+'88');glow.addColorStop(1,'transparent');ctx.fillStyle=glow;ctx.fillRect(0,0,W,g.backY*1.45);
+ // window
+ const wx=W*.5-100,wy=g.backY*.18,ww=200,wh=Math.max(76,g.backY*.56);ctx.save();roundRect(ctx,wx-7,wy-7,ww+14,wh+14,13);ctx.fillStyle=shade(state.wallColor,28);ctx.fill();roundRect(ctx,wx,wy,ww,wh,9);const wg=ctx.createLinearGradient(wx,wy,wx,wy+wh);wg.addColorStop(0,currentPal.window);wg.addColorStop(1,currentPal.bg2);ctx.fillStyle=wg;ctx.fill();ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(wx+ww/2,wy);ctx.lineTo(wx+ww/2,wy+wh);ctx.moveTo(wx,wy+wh*.55);ctx.lineTo(wx+ww,wy+wh*.55);ctx.stroke();ctx.restore();
+ // floor
+ ctx.beginPath();ctx.moveTo(g.backL,g.backY);ctx.lineTo(g.backR,g.backY);ctx.lineTo(g.frontR,g.frontY);ctx.lineTo(g.frontL,g.frontY);ctx.closePath();const fg=ctx.createLinearGradient(0,g.backY,0,g.frontY);fg.addColorStop(0,mixColor(currentPal.floor,'#ffffff',.08));fg.addColorStop(1,shade(currentPal.floor,-22));ctx.fillStyle=fg;ctx.fill();ctx.strokeStyle='rgba(255,255,255,.13)';ctx.lineWidth=2;ctx.stroke();
+ // floor boards and depth lines
+ ctx.save();ctx.beginPath();ctx.moveTo(g.backL,g.backY);ctx.lineTo(g.backR,g.backY);ctx.lineTo(g.frontR,g.frontY);ctx.lineTo(g.frontL,g.frontY);ctx.closePath();ctx.clip();ctx.strokeStyle='rgba(255,255,255,.075)';ctx.lineWidth=1;for(let i=1;i<10;i++){const u=i/10,pa=worldToScreen(u,0),pb=worldToScreen(u,1);ctx.beginPath();ctx.moveTo(pa.x,pa.y);ctx.lineTo(pb.x,pb.y);ctx.stroke();}for(let j=1;j<9;j++){const v=j/9,a=worldToScreen(0,v),b=worldToScreen(1,v);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}ctx.restore();
+ // baseboard
+ ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(g.backL,g.backY);ctx.lineTo(g.backR,g.backY);ctx.stroke();
+ // plants outside window silhouettes
+ ctx.save();ctx.globalAlpha=.22;ctx.fillStyle=shade(currentPal.ambient,-20);for(let i=0;i<6;i++){const x=W*.43+i*34;ctx.beginPath();ctx.ellipse(x,g.backY*.74,10,25,-.5+i*.18,0,Math.PI*2);ctx.fill();}ctx.restore();
+}
+function roundRect(c,x,y,w,h,r){r=Math.min(r,w/2,h/2);c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function ellipseShadow(x,y,rx,ry,a=.28){ctx.save();ctx.globalAlpha=a;ctx.filter='blur(5px)';ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(x,y+6,rx,ry,0,0,Math.PI*2);ctx.fill();ctx.restore();}
+function rotatePoint(x,y,a){return{x:x*Math.cos(a)-y*Math.sin(a),y:x*Math.sin(a)+y*Math.cos(a)}}
+function drawObject(o){
+ const p=worldToScreen(o.u,o.v),s=p.scale,rot=o.rot||0,sel=o.id===state.selectedId;ctx.save();ctx.translate(p.x,p.y);ctx.scale(s,s);ctx.rotate(rot);
+ const t=o.tint||'#cccccc';
+ if(o.type!=='rug'&&o.type!=='prism')ellipseShadow(0,0,objectRadius(o,1)*.62,10,.24);
+ switch(o.type){
+ case'rug':ctx.fillStyle=t;ctx.globalAlpha=.92;ctx.beginPath();ctx.ellipse(0,2,78,34,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle=shade(t,-35);ctx.lineWidth=3;ctx.stroke();ctx.globalAlpha=.26;ctx.strokeStyle='#fff';for(let r=18;r<70;r+=16){ctx.beginPath();ctx.ellipse(0,2,r,r*.43,0,0,Math.PI*2);ctx.stroke();}break;
+ case'chair':drawChair(t);break;
+ case'table':drawTable(t);break;
+ case'lamp':drawLamp(t,false);break;
+ case'auroraLamp':drawLamp(t,true);break;
+ case'plant':drawPlant(o,t,false);break;
+ case'hybridPlant':drawPlant(o,t,true);break;
+ case'crystal':drawCrystal(t);break;
+ case'turntable':drawTurntable(t);break;
+ case'fireplace':drawFireplace(t);break;
+ case'cat':drawCat(t);break;
+ case'shelf':drawShelf(t);break;
+ case'prism':drawPrism(t);break;
+ }
+ if(sel){ctx.globalAlpha=1;ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.setLineDash([7,5]);const r=objectRadius(o,1);ctx.beginPath();ctx.ellipse(0,0,r,r*.55,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,-r*.55,5,0,Math.PI*2);ctx.fill();}
+ ctx.restore();
+}
+function drawChair(t){ctx.fillStyle=shade(t,-24);roundRect(ctx,-33,-39,66,37,13);ctx.fill();ctx.fillStyle=t;roundRect(ctx,-38,-16,76,39,15);ctx.fill();ctx.fillStyle=shade(t,18);roundRect(ctx,-30,-10,60,27,12);ctx.fill();ctx.fillStyle=shade(t,-35);ctx.fillRect(-31,20,9,18);ctx.fillRect(22,20,9,18);ctx.fillStyle=shade(t,28);ctx.beginPath();ctx.arc(0,-15,13,0,Math.PI*2);ctx.fill();}
+function drawTable(t){ctx.fillStyle=shade(t,-42);ctx.fillRect(-28,7,8,31);ctx.fillRect(20,7,8,31);ctx.fillStyle=t;ctx.beginPath();ctx.ellipse(0,0,48,25,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle=shade(t,25);ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#f7d8c2';ctx.beginPath();ctx.ellipse(-8,-5,12,7,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#e7b783';ctx.beginPath();ctx.arc(16,-2,8,0,Math.PI*2);ctx.fill();}
+function drawLamp(t,aurora){if(aurora){const g=ctx.createRadialGradient(0,-30,2,0,-30,62);g.addColorStop(0,t+'cc');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(-70,-100,140,130);}ctx.fillStyle=shade(t,-65);ctx.beginPath();ctx.ellipse(0,22,22,8,0,0,Math.PI*2);ctx.fill();ctx.fillRect(-4,-42,8,66);ctx.fillStyle=t;ctx.beginPath();ctx.moveTo(-28,-50);ctx.lineTo(28,-50);ctx.lineTo(19,-18);ctx.lineTo(-19,-18);ctx.closePath();ctx.fill();ctx.fillStyle=aurora?'rgba(255,255,255,.85)':'rgba(255,244,210,.8)';ctx.beginPath();ctx.ellipse(0,-38,12,15,0,0,Math.PI*2);ctx.fill();if(aurora){ctx.strokeStyle='#fff';ctx.globalAlpha=.6;ctx.beginPath();ctx.arc(0,-38,20+Math.sin(time*2)*3,0,Math.PI*2);ctx.stroke();}}
+function drawPlant(o,t,hybrid){const pl=o.plant||{water:60,growth:60,bloom:false};const grow=.45+Math.min(pl.growth,100)/100*.65;ctx.save();ctx.scale(grow,grow);ctx.fillStyle=hybrid?shade(t,-25):'#9a5e49';ctx.beginPath();ctx.moveTo(-20,0);ctx.lineTo(20,0);ctx.lineTo(15,30);ctx.lineTo(-15,30);ctx.closePath();ctx.fill();ctx.fillStyle='#3a2b24';ctx.beginPath();ctx.ellipse(0,1,19,6,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle=hybrid?t:'#3c865d';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-46);ctx.stroke();for(let i=0;i<7;i++){const a=i*.86+Math.sin(time*.7+i)*.08,yy=-13-i*6,side=i%2?1:-1;ctx.save();ctx.translate(side*(10+i*1.8),yy);ctx.rotate(side*(.55+Math.sin(a)*.18));ctx.fillStyle=hybrid?mixColor(t,'#ffffff',i%3*.15):i%2?'#4fa66f':'#347e58';ctx.beginPath();ctx.ellipse(0,0,18,7,0,0,Math.PI*2);ctx.fill();if(hybrid){ctx.globalAlpha=.45;ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(3,-1,5,2,0,0,Math.PI*2);ctx.fill();}ctx.restore();}if(pl.bloom){ctx.fillStyle='#ffd75e';ctx.shadowColor='#ffd75e';ctx.shadowBlur=20;for(let i=0;i<6;i++){ctx.save();ctx.rotate(i*Math.PI/3);ctx.beginPath();ctx.ellipse(0,-51,7,13,0,0,Math.PI*2);ctx.fill();ctx.restore();}ctx.shadowBlur=0;}ctx.restore();}
+function drawCrystal(t){const g=ctx.createRadialGradient(0,-10,2,0,-10,52);g.addColorStop(0,t+'77');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(-58,-70,116,90);for(let i=0;i<5;i++){const x=(i-2)*10+(i%2)*4,h=28+(i%3)*13;ctx.fillStyle=mixColor(t,'#ffffff',i*.08);ctx.beginPath();ctx.moveTo(x,-h);ctx.lineTo(x+8,-5);ctx.lineTo(x,14);ctx.lineTo(x-8,-5);ctx.closePath();ctx.fill();ctx.strokeStyle='rgba(255,255,255,.42)';ctx.stroke();}}
+function drawTurntable(t){ctx.fillStyle=shade(t,-28);roundRect(ctx,-42,-25,84,50,8);ctx.fill();ctx.fillStyle='#17151b';ctx.beginPath();ctx.ellipse(-8,0,23,17,0,0,Math.PI*2);ctx.fill();ctx.save();ctx.translate(-8,0);ctx.rotate(time*(state.audio.vinyl?2.7:.18));ctx.strokeStyle='#555';for(let r=5;r<22;r+=4){ctx.beginPath();ctx.ellipse(0,0,r,r*.72,0,0,Math.PI*2);ctx.stroke();}ctx.fillStyle='#d7a7ff';ctx.beginPath();ctx.arc(0,0,5,0,Math.PI*2);ctx.fill();ctx.restore();ctx.strokeStyle='#d6b878';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(28,-13);ctx.lineTo(10,6);ctx.stroke();}
+function drawFireplace(t){ctx.fillStyle=t;roundRect(ctx,-50,-55,100,74,10);ctx.fill();ctx.fillStyle='#171217';roundRect(ctx,-32,-40,64,53,18);ctx.fill();ctx.fillStyle='#7b4a32';ctx.fillRect(-25,1,50,9);const flick=.8+Math.sin(time*8)*.12+Math.sin(time*17)*.08;ctx.save();ctx.scale(flick,flick);ctx.translate(0,-2);ctx.fillStyle='#ffb347';ctx.beginPath();ctx.moveTo(0,-40);ctx.bezierCurveTo(26,-19,17,5,0,7);ctx.bezierCurveTo(-19,4,-24,-16,0,-40);ctx.fill();ctx.fillStyle='#ff6d42';ctx.beginPath();ctx.moveTo(0,-24);ctx.bezierCurveTo(12,-12,9,2,0,4);ctx.bezierCurveTo(-9,2,-10,-10,0,-24);ctx.fill();ctx.restore();if(state.audio.fire){for(let i=0;i<4;i++){ctx.fillStyle='#ffd86b';ctx.globalAlpha=.5+.4*Math.sin(time*5+i);ctx.beginPath();ctx.arc((i-1.5)*10,-36-(time*18+i*9)%30,2,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}}}
+function drawCat(t){const breathe=1+Math.sin(time*2.4)*.035;ctx.save();ctx.scale(1,breathe);ctx.fillStyle=t;ctx.beginPath();ctx.ellipse(0,-3,34,20,.1,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(28,-18,18,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.moveTo(17,-31);ctx.lineTo(20,-48);ctx.lineTo(31,-34);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(32,-34);ctx.lineTo(42,-48);ctx.lineTo(45,-29);ctx.closePath();ctx.fill();ctx.strokeStyle=t;ctx.lineWidth=9;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-28,-5);ctx.bezierCurveTo(-51,-17,-50,18,-31,14+Math.sin(time*3)*5);ctx.stroke();ctx.fillStyle='#20151f';ctx.beginPath();ctx.arc(23,-19,2.5,0,Math.PI*2);ctx.arc(35,-19,2.5,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#5b382d';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(29,-13);ctx.lineTo(29,-9);ctx.stroke();ctx.restore();}
+function drawShelf(t){ctx.fillStyle=t;roundRect(ctx,-45,-67,90,84,8);ctx.fill();ctx.fillStyle=shade(t,-35);for(let y=-45;y<=0;y+=23){ctx.fillRect(-39,y,78,6);}ctx.fillStyle='#d7a7ff';ctx.beginPath();ctx.arc(-20,-53,7,0,Math.PI*2);ctx.fill();ctx.fillStyle='#8ce7db';ctx.fillRect(7,-60,14,15);ctx.fillStyle='#ffe095';ctx.beginPath();ctx.moveTo(0,-26);ctx.lineTo(9,-8);ctx.lineTo(-9,-8);ctx.closePath();ctx.fill();}
+function drawPrism(t){ctx.save();ctx.rotate(time*.28);for(let i=0;i<6;i++){ctx.rotate(Math.PI/3);ctx.strokeStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.moveTo(0,-64);ctx.lineTo(0,-22);ctx.stroke();ctx.fillStyle=i%2?t:mixColor(t,'#ff8bd1',.35);ctx.beginPath();ctx.moveTo(0,-28);ctx.lineTo(11,-14);ctx.lineTo(0,0);ctx.lineTo(-11,-14);ctx.closePath();ctx.fill();}ctx.restore();}
+
+function drawNodes(){for(const n of state.nodes){const p=worldToScreen(n.u,n.v),pulse=1+Math.sin(time*4+n.phase)*.16;ctx.save();ctx.translate(p.x,p.y-15*p.scale);ctx.scale(p.scale*pulse,p.scale*pulse);const meta=ingredients[n.kind];const g=ctx.createRadialGradient(0,0,2,0,0,30);g.addColorStop(0,'rgba(255,255,255,.72)');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(-34,-34,68,68);ctx.font='27px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(meta.icon,0,0);ctx.restore();}}
+function drawWeather(){
+ if(state.weather==='rain'){ctx.save();ctx.strokeStyle='rgba(150,220,255,.45)';ctx.lineWidth=1.4;for(const p of particles){const x=(p.x*W+time*45*p.s)%W,y=(p.y*H+time*260*p.s)%H;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-9,y+22);ctx.stroke();}ctx.fillStyle='rgba(50,90,120,.12)';ctx.fillRect(0,0,W,H);ctx.restore();}
+ else if(state.weather==='mist'){ctx.save();for(let i=0;i<8;i++){const x=(Math.sin(time*.08+i*2.2)*.2+.5)*W,y=H*(.15+i*.1);const g=ctx.createRadialGradient(x,y,1,x,y,W*.28);g.addColorStop(0,'rgba(205,240,220,.07)');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}ctx.restore();}
+}
+function drawGuides(){if(!drag)return;ctx.save();ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=1;ctx.setLineDash([5,5]);if(guide.x!=null){ctx.beginPath();ctx.moveTo(guide.x,roomGeom().backY);ctx.lineTo(guide.x,roomGeom().frontY);ctx.stroke();}if(guide.y!=null){ctx.beginPath();ctx.moveTo(roomGeom().frontL,guide.y);ctx.lineTo(roomGeom().frontR,guide.y);ctx.stroke();}ctx.restore();}
+function drawSparkles(){for(const s of sparkles){ctx.save();ctx.globalAlpha=s.life;ctx.fillStyle=s.color;ctx.translate(s.x,s.y);ctx.rotate(time+s.a);ctx.fillRect(-s.size*.5,-1,s.size,2);ctx.fillRect(-1,-s.size*.5,2,s.size);ctx.restore();}}
+function render(){ctx.setTransform(DPR,0,0,DPR,0,0);drawRoom();drawNodes();const objs=[...state.objects].sort((a,b)=>a.v-b.v);for(const o of objs)drawObject(o);drawGuides();drawWeather();drawSparkles();}
+
+function spawnNode(force=false){if(state.nodes.length>=5&&!force)return;const kinds=Object.keys(ingredients),kind=kinds[Math.floor(Math.random()*kinds.length)];state.nodes.push({id:'n'+Date.now()+Math.random(),kind,u:.12+Math.random()*.76,v:.28+Math.random()*.63,phase:Math.random()*6.2});}
+if(!state.nodes.length){spawnNode(true);spawnNode(true);spawnNode(true);}
+function collectNode(n){state.nodes=state.nodes.filter(x=>x!==n);state.inventory[n.kind]=(state.inventory[n.kind]||0)+1;state.essence+=2;burstAt(worldToScreen(n.u,n.v),'#fff6b5',18);toast(`${ingredients[n.kind].icon} ${ingredients[n.kind].name} collected`);updateUI();saveGame();setTimeout(()=>spawnNode(true),2500);}
+function burstAt(p,color,count=12){for(let i=0;i<count;i++)sparkles.push({x:p.x+(Math.random()-.5)*15,y:p.y+(Math.random()-.5)*10,vx:(Math.random()-.5)*55,vy:-25-Math.random()*45,life:1,size:5+Math.random()*7,a:Math.random()*6.28,color});}
+
+function update(dt){time+=dt;const ease=1-Math.exp(-dt*2.3);for(const k of Object.keys(currentPal))currentPal[k]=mixColor(currentPal[k],targetPal[k],ease);
+ // auto palette
+ if(state.autoLight&&Math.floor(time/22)!==Math.floor((time-dt)/22)){const keys=Object.keys(palettes),i=(keys.indexOf(state.palette)+1)%keys.length;setPalette(keys[i],false);}
+ // weather hydrates or dries plants
+ for(const o of state.objects){if(!isPlant(o))continue;o.plant=o.plant||{water:62,growth:35,bloom:false};let waterDelta=state.weather==='rain'?2.0:state.weather==='mist'?.55:-.23;o.plant.water=clamp(o.plant.water+waterDelta*dt,0,100);if(o.plant.water>30&&o.plant.water<96&&!o.plant.bloom)o.plant.growth=clamp(o.plant.growth+1.9*dt,0,100);else if(o.plant.water<12)o.plant.growth=clamp(o.plant.growth-.35*dt,0,100);}
+ spawnClock+=dt;if(spawnClock>10){spawnClock=0;spawnNode();}
+ for(const s of sparkles){s.x+=s.vx*dt;s.y+=s.vy*dt;s.vy+=55*dt;s.life-=dt*.9;s.a+=dt;}sparkles=sparkles.filter(s=>s.life>0);
+ autoSaveClock+=dt;if(autoSaveClock>7){autoSaveClock=0;saveGame();}
+ updateInspector();render();requestAnimationFrame(loop);
+}
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(reducedMotion?Math.min(dt,.02):dt);}
+requestAnimationFrame(loop);
+
+function hitObject(x,y){const sorted=[...state.objects].sort((a,b)=>b.v-a.v);for(const o of sorted){const p=worldToScreen(o.u,o.v),r=objectRadius(o,p.scale);if(((x-p.x)/r)**2+((y-p.y)/(r*.72))**2<1)return o;}return null;}
+function hitNode(x,y){for(const n of state.nodes){const p=worldToScreen(n.u,n.v);if(Math.hypot(x-p.x,y-(p.y-15*p.scale))<32*p.scale)return n;}return null;}
+function pointerPos(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
+canvas.addEventListener('pointerdown',e=>{initAudio();const p=pointerPos(e),node=hitNode(p.x,p.y);if(node){collectNode(node);return;}const o=hitObject(p.x,p.y);state.selectedId=o?o.id:null;updateUI();if(!o)return;if(o.type==='cat'){playPurr();burstAt(worldToScreen(o.u,o.v),'#ffd8ec',10);toast('Miso purrs happily');}
+ if(state.tool==='water'&&isPlant(o)){waterPlant(o);return;}if(state.tool==='prune'&&isPlant(o)){prunePlant(o);return;}if(state.tool!=='hand')return;drag={id:o.id,offset:screenToWorld(p.x,p.y)};canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;const p=pointerPos(e),w=screenToWorld(p.x,p.y),o=state.objects.find(x=>x.id===drag.id);if(!o)return;guide.x=guide.y=null;let u=w.u,v=w.v;if(state.snap){u=Math.round(u*40)/40;v=Math.round(v*40)/40;for(const other of state.objects){if(other===o)continue;if(Math.abs(other.u-u)<.025){u=other.u;guide.x=worldToScreen(u,v).x;}if(Math.abs(other.v-v)<.025){v=other.v;guide.y=worldToScreen(u,v).y;}}}o.u=clamp(u,.04,.96);o.v=clamp(v,.05,.96);});
+canvas.addEventListener('pointerup',e=>{if(drag){drag=null;guide.x=guide.y=null;saveGame();try{canvas.releasePointerCapture(e.pointerId)}catch(_){}}});
+canvas.addEventListener('pointercancel',()=>{drag=null;guide.x=guide.y=null});
+
+function waterPlant(o){o.plant.water=clamp(o.plant.water+30,0,100);o.plant.growth=clamp(o.plant.growth+3,0,100);playWater();burstAt(worldToScreen(o.u,o.v),'#76dcff',16);toast(`${o.name} watered`);updateInspector();saveGame();}
+function prunePlant(o){if(o.plant.growth<99){toast(`${o.name} is not overgrown yet`);playSnip();return;}o.plant.growth=72;o.plant.bloom=true;o.plant.water=clamp(o.plant.water-8,0,100);state.essence+=25;playSnip();playChime();burstAt(worldToScreen(o.u,o.v),'#ffe16b',26);toast('Golden Bloom harvested — +25 Essence');updateUI();saveGame();}
+function addFromCatalog(item){initAudio();const unlocked=item.base||state.unlocks.includes(item.key);if(!unlocked){toast('Discover this item in the Fusion Lab');return;}if(item.cost>state.essence){toast(`You need ${item.cost-state.essence} more Essence`);return;}if(item.cost)state.essence-=item.cost;const id=state.nextId++;const obj={id,type:item.type,name:item.name,u:.46+Math.random()*.08,v:.52+Math.random()*.08,rot:0,tint:item.tint};if(isPlant(obj))obj.plant={water:70,growth:28,bloom:false};state.objects.push(obj);state.selectedId=id;state.newUnlocks=state.newUnlocks.filter(k=>k!==item.key);playChime();burstAt(worldToScreen(obj.u,obj.v),item.tint,14);updateUI();saveGame();}
+function deleteSelected(){const o=selected();if(!o)return toast('Select an object first');state.objects=state.objects.filter(x=>x!==o);state.selectedId=null;toast(`${o.name} returned to storage`);updateUI();saveGame();}
+function rotateSelected(){const o=selected();if(!o)return toast('Select an object first');o.rot=(o.rot||0)+Math.PI/4;playTick();saveGame();}
+function recolorSelected(){const o=selected();if(!o)return toast('Select an object first');const choices=['#d7a7ff','#8ce7db','#ffe095','#ff9eb7','#88a8ff','#a9dc8d','#d09269'];let i=choices.findIndex(c=>c.toLowerCase()===String(o.tint).toLowerCase());o.tint=choices[(i+1)%choices.length];playTick();saveGame();}
+
+function setTool(tool){state.tool=tool;document.querySelectorAll('.tool[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));toast(tool==='hand'?'Move and inspect mode':tool==='water'?'Watering can selected':'Pruning shears selected');saveGame();}
+function setPalette(key,announce=true){state.palette=key;targetPal=palettes[key];document.querySelectorAll('.paletteBtn').forEach(b=>b.classList.toggle('active',b.dataset.palette===key));if(announce)toast(`${key[0].toUpperCase()+key.slice(1)} lighting`);playTick();saveGame();}
+function setWeather(key){state.weather=key;document.querySelectorAll('.weatherBtn').forEach(b=>b.classList.toggle('active',b.dataset.weather===key));if(key==='rain'){state.audio.rain=true;q('rainToggle').checked=true;applyAudio();}toast(key==='rain'?'Gentle rain auto-waters every plant':key==='mist'?'Cottage mist slows moisture loss':'Sunny greenhouse weather');playTick();saveGame();}
+
+function updateInspector(){const o=selected(),ins=q('inspector');if(!isPlant(o)){ins.style.display='none';return;}ins.style.display='flex';const p=o.plant;q('inspectName').textContent=o.name;q('inspectStage').textContent=p.bloom?'GOLDEN BLOOM ✨':p.growth>=99?'OVERGROWN — PRUNE':p.growth>=70?'MATURE':p.growth>=35?'SPROUT':'SEEDLING';q('waterPct').textContent=Math.round(p.water)+'%';q('growPct').textContent=Math.round(p.growth)+'%';q('waterFill').style.width=p.water+'%';q('growFill').style.width=p.growth+'%';}
+function updateUI(){q('essenceText').textContent=Math.floor(state.essence);q('collectionText').textContent=Object.values(state.inventory).reduce((a,b)=>a+b,0);q('snapBtn').classList.toggle('active',state.snap);q('autoLightBtn').classList.toggle('active',state.autoLight);document.querySelectorAll('.roomBtn').forEach(b=>b.classList.toggle('active',Number(b.dataset.size)===state.roomSize));document.querySelectorAll('.weatherBtn').forEach(b=>b.classList.toggle('active',b.dataset.weather===state.weather));document.querySelectorAll('.paletteBtn').forEach(b=>b.classList.toggle('active',b.dataset.palette===state.palette));renderCatalog();updateInspector();}
+function renderCatalog(){const box=q('catalog');box.innerHTML='';for(const item of catalog){const unlocked=item.base||state.unlocks.includes(item.key),b=document.createElement('button');b.className='catalogItem'+(unlocked?'':' locked')+(state.newUnlocks.includes(item.key)?' newUnlock':'');b.innerHTML=`<span class="ico">${unlocked?item.icon:'🔒'}</span><span>${item.name}</span><span class="cost">${unlocked?(item.cost?item.cost+' ✨':'crafted'):'fusion'}</span>`;b.title=unlocked?`${item.name}${item.cost?' — '+item.cost+' Essence':''}`:`Fuse materials to unlock ${item.name}`;b.addEventListener('click',()=>addFromCatalog(item));box.appendChild(b);}}
+function buildControls(){
+ const sw=q('wallSwatches');wallColors.forEach(c=>{const b=document.createElement('button');b.className='swatch';b.style.background=c;b.title=c;b.addEventListener('click',()=>{state.wallColor=c;document.querySelectorAll('.swatch').forEach(x=>x.classList.toggle('active',x===b));playTick();saveGame();});sw.appendChild(b);if(c===state.wallColor)b.classList.add('active');});
+ const pb=q('patternButtons');patterns.forEach(p=>{const b=document.createElement('button');b.textContent=p[0].toUpperCase()+p.slice(1);b.classList.toggle('active',p===state.pattern);b.addEventListener('click',()=>{state.pattern=p;[...pb.children].forEach(x=>x.classList.toggle('active',x===b));playTick();saveGame();});pb.appendChild(b);});
+ document.querySelectorAll('.paletteBtn').forEach(b=>b.addEventListener('click',()=>setPalette(b.dataset.palette)));
+ document.querySelectorAll('.weatherBtn').forEach(b=>b.addEventListener('click',()=>setWeather(b.dataset.weather)));
+ document.querySelectorAll('.roomBtn').forEach(b=>b.addEventListener('click',()=>{state.roomSize=Number(b.dataset.size);updateUI();playTick();saveGame();}));
+ document.querySelectorAll('.tool[data-tool]').forEach(b=>b.addEventListener('click',()=>setTool(b.dataset.tool)));
+ q('snapBtn').addEventListener('click',()=>{state.snap=!state.snap;updateUI();saveGame();});q('autoLightBtn').addEventListener('click',()=>{state.autoLight=!state.autoLight;updateUI();toast(state.autoLight?'Automatic lighting cycle on':'Automatic lighting cycle off');saveGame();});
+ q('settingsBtn').addEventListener('click',()=>q('leftPanel').classList.toggle('mobileOpen'));q('closeSettingsBtn').addEventListener('click',()=>q('leftPanel').classList.remove('mobileOpen'));q('rotateBtn').addEventListener('click',rotateSelected);q('recolorBtn').addEventListener('click',recolorSelected);q('deleteBtn').addEventListener('click',deleteSelected);q('fusionBtn').addEventListener('click',()=>{renderIngredients();openModal('fusionModal');});q('soundBtn').addEventListener('click',()=>openModal('soundModal'));q('photoBtn').addEventListener('click',()=>openModal('photoModal'));q('saveBtn').addEventListener('click',()=>openModal('saveModal'));q('helpBtn').addEventListener('click',()=>openModal('helpModal'));q('clearBtn').addEventListener('click',()=>openModal('confirmModal'));
+}
+
+function renderIngredients(){const grid=q('ingredientGrid');grid.innerHTML='';for(const [key,m] of Object.entries(ingredients)){const b=document.createElement('button');b.className='ingredient'+(fusionPick.includes(key)?' selected':'');b.innerHTML=`<span class="big">${m.icon}</span><span>${m.name}</span><span>× ${state.inventory[key]||0}</span>`;b.disabled=(state.inventory[key]||0)<1;b.addEventListener('click',()=>{const i=fusionPick.indexOf(key);if(i>=0)fusionPick.splice(i,1);else{if(fusionPick.length>=2)fusionPick.shift();fusionPick.push(key);}renderIngredients();});grid.appendChild(b);}q('slotA').textContent=fusionPick[0]?ingredients[fusionPick[0]].icon:'?';q('slotB').textContent=fusionPick[1]?ingredients[fusionPick[1]].icon:'?';}
+q('fuseNowBtn').addEventListener('click',()=>{if(fusionPick.length!==2)return toast('Choose two materials');const[a,b]=fusionPick;if((state.inventory[a]||0)<1||(state.inventory[b]||0)<1)return toast('Not enough materials');state.inventory[a]--;state.inventory[b]--;const key=[a,b].sort().join('|'),recipe=recipes[key];if(recipe){const isNew=!state.unlocks.includes(recipe.key);if(isNew){state.unlocks.push(recipe.key);state.newUnlocks.push(recipe.key);}q('fusionResult').textContent=`${recipe.icon} ${recipe.name} ${isNew?'unlocked!':'refined into +12 Essence'}`;if(isNew){const id=state.nextId++;const obj={id,type:recipe.type,name:recipe.name,u:.5,v:.47,rot:0,tint:recipe.tint};if(isPlant(obj))obj.plant={water:82,growth:45,bloom:false};state.objects.push(obj);state.selectedId=id;}else state.essence+=12;playMagic();burstAt(worldToScreen(.5,.47),recipe.tint,34);}
+ else{const reward=8+Math.floor(Math.random()*7);state.essence+=reward;q('fusionResult').textContent=`Experimental essence created: +${reward} ✨`;playChime();}
+ fusionPick=[];renderIngredients();updateUI();saveGame();});
+
+// Audio engine
+let audioCtx=null,rainGain=null,fireGain=null,vinylGain=null,lofiGain=null,lofiTimer=null,fireTimer=null;
+function initAudio(){if(audioCtx){if(audioCtx.state==='suspended')audioCtx.resume();return;}const A=window.AudioContext||window.webkitAudioContext;if(!A)return;audioCtx=new A();const length=audioCtx.sampleRate*2,buf=audioCtx.createBuffer(1,length,audioCtx.sampleRate),d=buf.getChannelData(0);for(let i=0;i<length;i++)d[i]=Math.random()*2-1;
+ const makeNoise=(type,freq)=>{const s=audioCtx.createBufferSource(),f=audioCtx.createBiquadFilter(),g=audioCtx.createGain();s.buffer=buf;s.loop=true;f.type=type;f.frequency.value=freq;g.gain.value=0;s.connect(f);f.connect(g);g.connect(audioCtx.destination);s.start();return g;};rainGain=makeNoise('lowpass',900);fireGain=makeNoise('lowpass',150);vinylGain=makeNoise('highpass',2300);lofiGain=audioCtx.createGain();lofiGain.gain.value=0;lofiGain.connect(audioCtx.destination);fireTimer=setInterval(()=>{if(!state.audio.fire||!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='triangle';o.frequency.setValueAtTime(230+Math.random()*440,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(45,audioCtx.currentTime+.045);g.gain.setValueAtTime((.025+Math.random()*.06)*state.audio.fireVol,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.045);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.05);},170);applyAudio();}
+function applyAudio(){if(!audioCtx)return;rainGain.gain.setTargetAtTime(state.audio.rain?state.audio.rainVol*.25:0,audioCtx.currentTime,.25);fireGain.gain.setTargetAtTime(state.audio.fire?state.audio.fireVol*.32:0,audioCtx.currentTime,.25);vinylGain.gain.setTargetAtTime(state.audio.vinyl?state.audio.vinylVol*.045:0,audioCtx.currentTime,.25);lofiGain.gain.setTargetAtTime(state.audio.vinyl?state.audio.vinylVol*.42:0,audioCtx.currentTime,.25);if(state.audio.vinyl&&!lofiTimer){playChord();lofiTimer=setInterval(playChord,3100);}else if(!state.audio.vinyl&&lofiTimer){clearInterval(lofiTimer);lofiTimer=null;}}
+function playChord(){if(!state.audio.vinyl||!audioCtx)return;const progressions=[[261.63,329.63,392,493.88],[220,261.63,329.63,392],[293.66,349.23,440,523.25],[196,246.94,293.66,349.23]],notes=progressions[Math.floor(time/3)%progressions.length],filter=audioCtx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=760;filter.connect(lofiGain);for(const f of notes){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.001,audioCtx.currentTime);g.gain.linearRampToValueAtTime(.045,audioCtx.currentTime+.25);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+2.8);o.connect(g);g.connect(filter);o.start();o.stop(audioCtx.currentTime+2.9);}}
+function tone(freq=520,dur=.12,type='sine',gain=.18){initAudio();if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.setValueAtTime(freq,audioCtx.currentTime);g.gain.setValueAtTime(gain,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur);}
+function playTick(){tone(620,.08,'sine',.1)}
+function playChime(){[523,659,784].forEach((f,i)=>setTimeout(()=>tone(f,.28,'sine',.16),i*70))}
+function playMagic(){[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>tone(f,.34,'triangle',.17),i*75))}
+function playSnip(){tone(860,.09,'triangle',.2)}
+function playWater(){initAudio();if(!audioCtx)return;const len=audioCtx.sampleRate*.18,b=audioCtx.createBuffer(1,len,audioCtx.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;const s=audioCtx.createBufferSource(),f=audioCtx.createBiquadFilter(),g=audioCtx.createGain();s.buffer=b;f.type='bandpass';f.frequency.value=1300;f.Q.value=5;g.gain.setValueAtTime(.22,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.18);s.connect(f);f.connect(g);g.connect(audioCtx.destination);s.start();}
+function playPurr(){initAudio();if(!audioCtx)return;const o1=audioCtx.createOscillator(),o2=audioCtx.createOscillator(),g=audioCtx.createGain();o1.type='sawtooth';o2.type='sine';o1.frequency.value=29;o2.frequency.value=58;g.gain.setValueAtTime(.18,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.9);o1.connect(g);o2.connect(g);g.connect(audioCtx.destination);o1.start();o2.start();o1.stop(audioCtx.currentTime+.9);o2.stop(audioCtx.currentTime+.9);}
+q('rainToggle').checked=state.audio.rain;q('fireToggle').checked=state.audio.fire;q('vinylToggle').checked=state.audio.vinyl;q('rainVolume').value=state.audio.rainVol;q('fireVolume').value=state.audio.fireVol;q('vinylVolume').value=state.audio.vinylVol;
+for(const [toggle,key] of [['rainToggle','rain'],['fireToggle','fire'],['vinylToggle','vinyl']])q(toggle).addEventListener('change',e=>{initAudio();state.audio[key]=e.target.checked;applyAudio();saveGame();});for(const [id,key] of [['rainVolume','rainVol'],['fireVolume','fireVol'],['vinylVolume','vinylVol']])q(id).addEventListener('input',e=>{state.audio[key]=Number(e.target.value);applyAudio();saveGame();});
+
+// Photo and files
+let photoFilter=state.photoFilter||'none';document.querySelectorAll('.filterBtn').forEach(b=>b.addEventListener('click',()=>{photoFilter=b.dataset.filter;state.photoFilter=photoFilter;document.querySelectorAll('.filterBtn').forEach(x=>x.classList.toggle('active',x===b));}));q('stickerText').value=state.sticker||'';q('stickerText').addEventListener('input',e=>state.sticker=e.target.value);
+function filterString(f){return f==='warm'?'saturate(1.15) sepia(.18) brightness(1.05)':f==='twilight'?'hue-rotate(26deg) saturate(1.2) brightness(.88)':f==='mono'?'grayscale(.78) contrast(1.08)':f==='mist'?'brightness(1.12) saturate(.82) blur(.35px)':f==='vivid'?'saturate(1.45) contrast(1.08)':'none';}
+q('captureBtn').addEventListener('click',()=>{const out=document.createElement('canvas'),scale=Math.min(2,1920/W);out.width=Math.round(W*scale);out.height=Math.round(H*scale);const c=out.getContext('2d');c.filter=filterString(photoFilter);c.drawImage(canvas,0,0,out.width,out.height);c.filter='none';const pad=26*scale;c.strokeStyle='rgba(255,255,255,.92)';c.lineWidth=18*scale;c.strokeRect(pad/2,pad/2,out.width-pad,out.height-pad);c.fillStyle='rgba(255,255,255,.9)';c.font=`700 ${Math.round(20*scale)}px cursive`;c.textAlign='right';c.fillText(q('stickerText').value||'Lumina Haven ✦',out.width-pad,out.height-pad);out.toBlob(blob=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='lumina_haven_photo.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Photo saved as PNG');},'image/png');state.sticker=q('stickerText').value;saveGame();});
+q('cleanViewBtn').addEventListener('click',()=>{closeModal('photoModal');document.body.classList.add('photoClean');clearTimeout(cleanPreviewTimer);cleanPreviewTimer=setTimeout(()=>document.body.classList.remove('photoClean'),4000);toast('Clean view for four seconds');});
+function downloadText(name,text,type='application/json'){const a=document.createElement('a'),url=URL.createObjectURL(new Blob([text],{type}));a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+q('exportBtn').addEventListener('click',()=>{downloadText('lumina_haven_layout.json',JSON.stringify(state,null,2));toast('Layout exported');});q('importBtn').addEventListener('click',()=>q('importInput').click());q('importInput').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.objects))throw new Error('Missing objects');state=Object.assign(starter(),d);targetPal=palettes[state.palette]||palettes.sunset;currentPal={...targetPal};updateUI();saveGame();closeModal('saveModal');toast('Layout imported');}catch(err){toast('That layout file is not valid');}};r.readAsText(f);e.target.value='';});q('manualSaveBtn').addEventListener('click',()=>saveGame(true));
+q('confirmResetBtn').addEventListener('click',()=>{state=starter();targetPal=palettes[state.palette];currentPal={...targetPal};fusionPick=[];updateUI();saveGame();closeModal('confirmModal');toast('Starter haven restored');});
+
+q('startBtn').addEventListener('click',()=>{initAudio();q('splash').style.display='none';updateUI();toast('Welcome home ✦');});
+q('startBtn').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')q('startBtn').click();});
+addEventListener('keydown',e=>{if(e.key==='r'||e.key==='R')rotateSelected();else if(e.key==='Delete'||e.key==='Backspace')deleteSelected();else if(e.key==='w'||e.key==='W')setTool('water');else if(e.key==='p'||e.key==='P')setTool('prune');else if(e.key==='Escape'){document.body.classList.remove('photoClean');document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open'));}});
+
+buildControls();updateUI();renderIngredients();
+})();
+</script>
+<noscript><div style="position:fixed;inset:0;background:#120d18;color:#fff;padding:30px;z-index:300"><h1>Lumina Haven</h1><p>This game needs JavaScript enabled.</p></div></noscript>
+</body>
+</html>
