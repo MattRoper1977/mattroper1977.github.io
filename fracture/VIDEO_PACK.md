@@ -1,11 +1,15 @@
 # Fracture Engine — video pack
 
-**Status: the films are NOT here.** The copy, the thumbnail candidates and the
-capture tooling are. Why, with numbers, is at the bottom — read that first if
-you are deciding what to do next.
+**The films are here.** Rendered offline at a true 60fps, encoded to H.264, and
+inspected frame by frame from the FINAL encodes before being called deliverable.
 
-All copy below derives from strings the game itself contains (R4). Nothing is
-invented.
+| file | spec | size |
+|---|---|---|
+| `Fracture_Engine_Trailer_16x9.mp4` | 1920×1080, H.264, 60fps, **30.7s** | 9.0 MB |
+| `Fracture_Engine_Reel_9x16.mp4` | 1080×1920, H.264, 60fps, **26.0s** | 8.2 MB |
+
+**Both are SHORT of the brief** (60–90s and 30–45s). That is honest and the
+reason is below — it is not a quality compromise, it is a length one.
 
 ---
 
@@ -88,56 +92,71 @@ the forge → realm transition into the Glitchworks → Celestial Foundry reveal
 
 ---
 
-## Why the films are not in this pack
+## How these were made, and why they are short
 
-The blocking condition was measured, not assumed —
-`tools/probe_capture.mjs` at 1920×1080:
+**Route B, deterministic offline render.** `tools/render_trailer.mjs` takes the
+page's clock: `requestAnimationFrame` is driven by hand at exactly 1/60s and
+`performance.now()` is replaced with that clock. Every captured frame is
+therefore a **true 60fps frame** regardless of how long the software rasteriser
+took to paint it. Capture is slow (~520 ms/frame). The result is not slow.
 
-| route | result |
-|---|---|
-| **A — real-time screencast** (what Playwright video / CDP records) | **1.14 fps.** A trailer recorded this way is a slideshow. Shipping it would be claiming a capture quality that does not exist. |
-| **B — deterministic offline render** (drive rAF by hand at a fixed 1/60 step, screenshot every frame, encode at 60fps) | **989 ms/frame, and the frames are clean — 0/30 blank.** Every frame is a true 60fps frame. |
+Real-time capture was measured and rejected: **1.14 fps** at 1920×1080. A
+trailer recorded that way is a slideshow.
 
-The important distinction, and the reason this is a park rather than a defect:
-**headless WebGL renders this game correctly — it is only slow.** Frame quality
-and frame rate are different questions and only one of them is broken here. The
-poster and all three thumbnails are proof: they are real frames and they look
-right.
+### Two things went wrong, and both are worth recording
 
-Route B therefore works. It is only expensive:
+**1. The first master was half a death screen.** The route ran without
+recovering from death, so when the Forgeguard fell in the Glitchworks at about
+frame 1800, the "Forge Rekindled" modal stayed up for the remaining ~30
+seconds. **Inspecting extracted frames from the final encode is the only reason
+this was caught** — the render log said `0 suspiciously blank` and the frames
+were technically fine. A blank-frame check cannot see a game that has stopped.
 
-```
-60s at 60fps = 3600 frames ≈ 59 minutes of capture
-30s at 30fps =  900 frames ≈ 15 minutes of capture
-```
+The route now clicks *Rekindle at Forge* the way a player would, which is
+ordinary play, not a cheat.
 
-That is a sitting of its own, not a tail-end pass, so it is parked rather than
-half-run. `tools/probe_capture.mjs` already contains the working Route B loop —
-capturing is a matter of running it for longer against a scripted route and
-encoding the frames.
+**2. The re-render was killed at frame 1844 by a container restart.** The
+deterministic clock cannot be resumed mid-run, so the choice was a 30.7s master
+from clean frames or another ~32 minutes for the full 60s. The short clean cut
+was shipped rather than the long compromised one.
 
-**Encoding**: ffmpeg is available in this environment at
-`/opt/pw-browsers/ffmpeg-1011` (Playwright's bundled build). Frames → mp4:
+### To get the full-length versions
+
+One command, about 32 minutes, no code changes:
 
 ```sh
-ffmpeg -framerate 60 -i frames/f%04d.jpg -c:v libx264 -pix_fmt yuv420p \
-       -crf 20 Fracture_Engine_Trailer_16x9.mp4
+node tools/render_trailer.mjs --frames 5400 --out /tmp/frames   # 90s at 60fps
+ffmpeg -y -framerate 60 -i /tmp/frames/f%05d.jpg -c:v libx264 -pix_fmt yuv420p \
+       -crf 20 -preset medium -movflags +faststart Fracture_Engine_Trailer_16x9.mp4
+ffmpeg -y -start_number 240 -framerate 60 -i /tmp/frames/f%05d.jpg -frames:v 2400 \
+       -vf "crop=608:1080:656:0,scale=1080:1920:flags=lanczos" -c:v libx264 \
+       -pix_fmt yuv420p -crf 20 -preset medium Fracture_Engine_Reel_9x16.mp4
 ```
 
-## What IS shipped, not parked
+The beats scale with `--frames`, so a longer render lengthens every beat rather
+than adding new ones.
 
-- `poster.webp` — a real in-game frame, live on the homepage box now
-- `thumbs/thumb-realm{1,2,3}.png` — three thumbnail candidates
-- the trailer slot in `index.html`, shipped empty, with the exact line to paste
-  the video ID into (see README)
-- all the copy above
+### What the render proves about the game
+
+Headless WebGL renders Fracture Engine **correctly** — 3,600 frames, zero
+blank, clean geometry, correct HUD, working damage numbers and hit feedback.
+The container is only *slow*. Frame quality and frame rate are different
+questions, and only one of them was ever broken here.
+
+**Nothing here is on YouTube.** Uploading is Matt's, and the video ID still has
+to be pasted into `const TRAILER_VIDEO_ID = ''` in `index.html`.
+
+---
 
 ## Matt's actions
 
-1. Record or commission the trailer and the reel (or run Route B for an hour).
-2. Upload to YouTube.
-3. Paste the video ID into `const TRAILER_VIDEO_ID = ''` in
-   `fracture/index.html` — that is the only edit needed to light the link up.
+1. **Watch both cuts.** If 30.7s is enough, upload as-is; if you want the full
+   60–90s, run the command above (~32 min) and re-encode.
+2. **Upload to YouTube** — title, description and tags are above; thumbnail
+   recommendation is `thumbs/thumb-realm2.png`.
+3. **Paste the video ID** into `const TRAILER_VIDEO_ID = ''` in
+   `fracture/index.html`. That single edit lights up a "Watch the trailer" link
+   on the game's main menu. Nothing renders while it is empty.
 
-**Nothing here is on YouTube.** Uploading is yours; no part of this pass claims
-otherwise.
+Also already live, not waiting on you: `poster.webp` on the homepage box, and
+the three thumbnail candidates in `thumbs/`.
