@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 96" role="img" aria-labelledby="title desc">
+  <title id="title">Relicforge: Fracture Engine</title>
+  <desc id="desc">A forge core burning gold at the centre of a dark sky, splitting the frame into fracture lines. Three relic shards hang around it in the colours of the three realms — cyan for Ironwood Verge, orange for the Glitchworks, violet for the Celestial Foundry — and a small armoured figure stands below, looking up at the break.</desc>
+  <defs>
+    <radialGradient id="fesky" cx="50%" cy="34%" r="78%">
+      <stop offset="0" stop-color="#12213B"/>
+      <stop offset="0.58" stop-color="#070B14"/>
+      <stop offset="1" stop-color="#03050A"/>
+    </radialGradient>
+    <radialGradient id="fecore" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#FFF3D2"/>
+      <stop offset="0.42" stop-color="#FFC857"/>
+      <stop offset="1" stop-color="#FF8C42" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fefrac" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#55D8FF" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#55D8FF"/>
+      <stop offset="1" stop-color="#A66CFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="fegnd" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16304A"/>
+      <stop offset="1" stop-color="#070B14"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="120" height="96" fill="url(#fesky)"/>
+
+  <!-- fracture lines through the sky -->
+  <g stroke="url(#fefrac)" stroke-width="0.7" fill="none" opacity="0.85">
+    <path d="M4 26 L38 33 L52 24 L86 31 L116 21"/>
+    <path d="M2 58 L30 50 L46 57 L74 47 L118 55"/>
+    <path d="M10 13 L44 19 L70 11 L110 17"/>
+  </g>
+
+  <!-- the forge core -->
+  <circle cx="60" cy="40" r="19" fill="url(#fecore)"/>
+  <circle cx="60" cy="40" r="7.2" fill="#FFC857"/>
+  <circle cx="60" cy="40" r="7.2" fill="none" stroke="#FFF3D2" stroke-width="0.8" opacity="0.9"/>
+  <g stroke="#FFC857" stroke-width="0.6" opacity="0.55" fill="none">
+    <circle cx="60" cy="40" r="12.5"/>
+    <circle cx="60" cy="40" r="16.5" stroke-dasharray="3 4"/>
+  </g>
+
+  <!-- three relic shards, one per realm, in the realms' own accents -->
+  <g stroke-width="0.7">
+    <path d="M27 30 l5.5 -6 l4 7.5 l-5 6.2 z" fill="#55D8FF" fill-opacity="0.88" stroke="#BFEEFF"/>
+    <path d="M89 27 l6 -5 l3 8 l-5.6 5 z" fill="#FF8C42" fill-opacity="0.88" stroke="#FFD3AE"/>
+    <path d="M78 60 l5.6 -5.4 l3.6 7.4 l-5.2 5.6 z" fill="#A66CFF" fill-opacity="0.88" stroke="#DCC6FF"/>
+  </g>
+
+  <!-- ground -->
+  <path d="M0 74 L28 69 L54 74 L82 68 L120 73 L120 96 L0 96 Z" fill="url(#fegnd)"/>
+  <path d="M0 74 L28 69 L54 74 L82 68 L120 73" fill="none" stroke="#55D8FF" stroke-width="0.55" opacity="0.5"/>
+
+  <!-- the armoured figure, looking up -->
+  <g fill="#9FC6E8">
+    <circle cx="54" cy="70.5" r="2.5"/>
+    <path d="M51.2 74 h5.6 l1 8.5 h-7.6 z"/>
+    <rect x="51.6" y="82.5" width="1.9" height="5.4" rx="0.7"/>
+    <rect x="54.6" y="82.5" width="1.9" height="5.4" rx="0.7"/>
+  </g>
+  <path d="M57.4 73.6 l7.4 -6.4" stroke="#FFC857" stroke-width="1.3" stroke-linecap="round"/>
+</svg>
