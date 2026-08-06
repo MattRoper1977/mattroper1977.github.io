@@ -66,8 +66,8 @@ jobs:
       - name: wait for Pages to serve the merged manifest
         run: |
           for i in $(seq 1 40); do
-            if curl -fsS -H 'Cache-Control: no-cache' https://madebymatt.uk/Games/games.json | grep -q '/fracture/'; then
-              echo "served manifest carries /fracture/ after $i attempt(s)"; exit 0
+            if curl -fsS -H 'Cache-Control: no-cache' https://madebymatt.uk/Games/games.json | grep -q '/neonturf/'; then
+              echo "served manifest carries /neonturf/ after $i attempt(s)"; exit 0
             fi
             echo "attempt $i: not yet published, waiting 15s"; sleep 15
           done
