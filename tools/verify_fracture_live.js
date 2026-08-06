@@ -20,6 +20,13 @@
  *   L7  /neonturf/ boots and makes zero off-origin HTTP requests
  *   L8  AM10: Neon Turf carries no NEW marker and no homepage surface
  *
+ * Stage 2C and the Sports rail ruling added the rest:
+ *
+ *   L9   served /luminahaven/ and /auroralinks/ equal their committed blobs
+ *   L10  the arcade's general grid holds every manifest entry, once each
+ *   L11  the Sports rail renders its DERIVED membership, including the first
+ *        non-Apex member, and the rail is icon-distinct on screen
+ *
  * L8 is an ABSENCE check, which is the easiest kind of green to fake — it
  * passes by default when the page fails to load, when the selector is wrong,
  * when nothing renders at all. So it asserts the presence of what should be
@@ -73,8 +80,20 @@ const sha = b => crypto.createHash('sha256').update(b).digest('hex');
   const TURF = games.find(g => /^\/neonturf\/$/.test(String(g.href || '')));
   if (!TURF) throw new Error('no manifest entry points at /neonturf/ — L6-L8 have nothing to verify');
 
+  /* Stage 2C's two games, and the Sports rail, all derived from the manifest —
+     never a typed path and never a typed count. */
+  const TWOC = ['/luminahaven/', '/auroralinks/'].map(href => {
+    const e = games.find(g => g.href === href);
+    if (!e) throw new Error(`no manifest entry points at ${href} — L9 has nothing to verify`);
+    const dir = href.replace(/^\/|\/$/g, '');
+    return { ...e, dir, committed: fs.readFileSync(path.join(SITE_DIR, dir, 'index.html')) };
+  });
+  const RAIL = games.filter(g => g.collection === 'Sports');
+  const EXPECT_RAIL = EXPECT_FAIL ? RAIL.length + 3 : RAIL.length;
+
   console.log(`base ${BASE}`);
   console.log(`derived: ${EXPECT_ENTRIES} entries · RPG rail ${EXPECT_RPG} · NEW holder ${JSON.stringify(EXPECT_MARKER)}`);
+  console.log(`derived: Sports rail ${EXPECT_RAIL} — ${RAIL.map(g => g.title).join(', ')}`);
   console.log(EXPECT_FAIL ? '*** NEGATIVE CONTROL: expectations are deliberately wrong; every gate must go RED ***\n' : '');
 
   const browser = await chromium.launch();
@@ -284,6 +303,84 @@ const sha = b => crypto.createHash('sha256').update(b).digest('hex');
     gate(`L8 AM10: homepage stack is populated and holds no ${SUBJECT.label} surface`,
       home.occupants.length === 3 && !home.occupants.some(o => SUBJECT.name.test(o)) && home.linked === 0,
       `${home.occupants.length} boxes [${home.occupants.join(' | ')}] · ${home.linked} homepage link(s) to /${SUBJECT.slug}/`);
+    await ctx.close();
+  }
+
+  /* ---- L9: the two Stage 2C games serve their committed bytes ---- */
+  for (const g of TWOC) {
+    const ctx = await browser.newContext();
+    const res = await ctx.request.get(`${BASE}/${g.dir}/`, { headers: { 'Cache-Control': 'no-cache' } });
+    const body = Buffer.from(await res.body());
+    const servedSha = sha(body);
+    const expect = EXPECT_FAIL ? sha(Buffer.from('deliberately wrong')) : sha(g.committed);
+    gate(`L9 served /${g.dir}/ index.html SHA equals the committed blob`,
+      servedSha === expect,
+      `served ${servedSha.slice(0, 16)}… vs committed ${sha(g.committed).slice(0, 16)}… (${body.length} vs ${g.committed.length} bytes)`);
+    await ctx.close();
+  }
+
+  /* ---- L10 + L11: the arcade's grid and the Sports rail, as RENDERED ---- */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(`${BASE}/games/`, { waitUntil: 'networkidle', timeout: 60000 });
+    await page.waitForFunction(() => document.querySelectorAll('.gcard').length > 0, null, { timeout: 30000 });
+    await page.evaluate(() => document.querySelectorAll('.gcard img').forEach(i => { i.loading = 'eager'; }));
+    await page.evaluate(() => Promise.all([...document.querySelectorAll('.gcard img')]
+      .map(i => i.complete ? Promise.resolve() : new Promise(r => { i.addEventListener('load', r); i.addEventListener('error', r); setTimeout(r, 5000); }))));
+    const out = await page.evaluate(() => {
+      /* The rails are VIEWS over the grid, so a card can legitimately appear
+         twice. Counting DOM nodes would therefore never equal the manifest.
+         What must match is the set of distinct hrefs outside the rails. */
+      const railCards = new Set([...document.querySelectorAll('#sports .gcard, #rpg .gcard, #picks .gcard')]);
+      const grid = [...document.querySelectorAll('.gcard')].filter(c => !railCards.has(c));
+      const railEls = [...document.querySelectorAll('#sports .gcard')];
+      const sec = document.getElementById('sports');
+      return {
+        gridHrefs: [...new Set(grid.map(c => c.getAttribute('href')))],
+        sportsHidden: sec ? sec.hidden : null,
+        railHrefs: railEls.map(c => c.getAttribute('href')),
+        railTitles: railEls.map(c => { const h = c.querySelector('h4 span'); return h ? h.textContent.trim() : null; }),
+        railArt: railEls.map(c => { const i = c.querySelector('img.ga'); return i ? i.getAttribute('src') : null; }),
+        broken: [...document.querySelectorAll('.gcard img')].filter(i => !i.complete || i.naturalWidth === 0).length
+      };
+    });
+    const manifestHrefs = games.map(g => g.href).sort();
+    const renderedHrefs = out.gridHrefs.slice().sort();
+    const missing = manifestHrefs.filter(h => !renderedHrefs.includes(h));
+    gate('L10 the arcade grid renders every manifest entry, once each',
+      renderedHrefs.length === EXPECT_ENTRIES && missing.length === 0 && !EXPECT_FAIL,
+      `${renderedHrefs.length} distinct grid entries (derived expectation ${EXPECT_ENTRIES})` +
+      (missing.length ? ` · missing ${missing.slice(0, 3).join(', ')}` : '') +
+      ` · ${out.broken} broken card image(s)`);
+
+    const railManifest = RAIL.map(g => g.href).sort();
+    const railRendered = out.railHrefs.slice().sort();
+    const nonApex = RAIL.filter(g => !/^Apex /.test(g.title)).map(g => g.title);
+    gate('L11 the Sports rail renders its derived membership',
+      out.sportsHidden === false && out.railHrefs.length === EXPECT_RAIL &&
+      JSON.stringify(railRendered) === JSON.stringify(railManifest),
+      `hidden=${out.sportsHidden} · ${out.railHrefs.length} rendered (derived ${EXPECT_RAIL})` +
+      ` · non-Apex member(s): ${nonApex.join(', ') || 'none'}`);
+    /* This gate started life as "the rendered rail is icon-distinct on screen"
+       and was WRONG, in the specific way this estate keeps catching: it tested
+       something that is not on the screen.
+
+       gCard() in games/index.html uses the manifest `icon` ONLY as a fallback
+       for a missing `art`, and every entry carries `art`. The icon renders on
+       curated Matt's-Pick cards and nowhere else, so a rail icon collision is a
+       manifest-data question, not a visible one — and a gate asserting it "on
+       screen" would have been measuring a field the page never prints.
+
+       What actually keeps two rail cards from reading as the same game is the
+       card ART and the title. So that is what is checked here. */
+    gate('L11 rail cards are visually distinct — distinct art and distinct titles',
+      out.railArt.filter(Boolean).length === out.railHrefs.length &&
+      new Set(out.railArt).size === out.railArt.length &&
+      new Set(out.railTitles).size === out.railTitles.length && !EXPECT_FAIL,
+      `${new Set(out.railArt).size}/${out.railArt.length} distinct card images · ` +
+      `${new Set(out.railTitles).size}/${out.railTitles.length} distinct titles · ` +
+      `${out.railTitles.join(' | ')}`);
     await ctx.close();
   }
 
