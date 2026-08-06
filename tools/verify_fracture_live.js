@@ -11,6 +11,22 @@
  *   L4  the homepage New Release stack still holds three boxes
  *   L5  /fracture/ boots and makes zero off-origin requests
  *
+ * Stage 2B added the Neon Turf leg to this same file rather than a second one,
+ * because L1/L3 already carry most of it: the manifest is byte-compared whole,
+ * and the arcade gate walks every entry in it. What Neon Turf needs on top is
+ * its own served-byte check, its own boot, and the two AM10 absences:
+ *
+ *   L6  served /neonturf/ index.html SHA equals the committed blob
+ *   L7  /neonturf/ boots and makes zero off-origin HTTP requests
+ *   L8  AM10: Neon Turf carries no NEW marker and no homepage surface
+ *
+ * L8 is an ABSENCE check, which is the easiest kind of green to fake — it
+ * passes by default when the page fails to load, when the selector is wrong,
+ * when nothing renders at all. So it asserts the presence of what should be
+ * there in the same breath as the absence of what should not, and --expect-fail
+ * inverts it like every other gate. An absence you never proved you could
+ * observe is not evidence of anything.
+ *
  * --expect-fail runs the same checks against a deliberately wrong expectation
  * and exits 0 only if they FAILED. That is the negative control: a green from
  * this file means nothing until the file is shown able to go red.
@@ -41,6 +57,7 @@ const sha = b => crypto.createHash('sha256').update(b).digest('hex');
   /* Committed truth, read from the checked-out repos. */
   const committedManifestRaw = fs.readFileSync(path.join(GAMES_DIR, 'games.json'));
   const committedGameRaw = fs.readFileSync(path.join(SITE_DIR, 'fracture', 'index.html'));
+  const committedTurfRaw = fs.readFileSync(path.join(SITE_DIR, 'neonturf', 'index.html'));
   const manifest = JSON.parse(committedManifestRaw.toString('utf8'));
   const games = manifest.games;
 
@@ -51,6 +68,10 @@ const sha = b => crypto.createHash('sha256').update(b).digest('hex');
   const EXPECT_MARKER = games.filter(g => String(g.title).startsWith(NEW_PREFIX)).map(g => g.title);
   const expectManifestSha = EXPECT_FAIL ? sha(Buffer.from('deliberately wrong')) : sha(committedManifestRaw);
   const expectGameSha = EXPECT_FAIL ? sha(Buffer.from('deliberately wrong')) : sha(committedGameRaw);
+  const expectTurfSha = EXPECT_FAIL ? sha(Buffer.from('deliberately wrong')) : sha(committedTurfRaw);
+  /* Derived from the manifest, not typed: whichever entry points at /neonturf/. */
+  const TURF = games.find(g => /^\/neonturf\/$/.test(String(g.href || '')));
+  if (!TURF) throw new Error('no manifest entry points at /neonturf/ — L6-L8 have nothing to verify');
 
   console.log(`base ${BASE}`);
   console.log(`derived: ${EXPECT_ENTRIES} entries · RPG rail ${EXPECT_RPG} · NEW holder ${JSON.stringify(EXPECT_MARKER)}`);
@@ -168,6 +189,101 @@ const sha = b => crypto.createHash('sha256').update(b).digest('hex');
       booted ? `save keys ${snap.saveKeys.save} / ${snap.saveKeys.settings}` : 'did not reach menu');
     gate('L5 zero off-origin requests from the live game', off.length === 0 && !EXPECT_FAIL,
       off.slice(0, 3).join(' | ') || 'none');
+    await ctx.close();
+  }
+
+  /* ---- L6: served Neon Turf file SHA equals the committed blob ---- */
+  {
+    const ctx = await browser.newContext();
+    const res = await ctx.request.get(`${BASE}/neonturf/`, { headers: { 'Cache-Control': 'no-cache' } });
+    const body = Buffer.from(await res.body());
+    const servedSha = sha(body);
+    gate('L6 served /neonturf/ index.html SHA equals the committed blob',
+      servedSha === expectTurfSha,
+      `served ${servedSha.slice(0, 16)}… vs committed ${sha(committedTurfRaw).slice(0, 16)}… (${body.length} vs ${committedTurfRaw.length} bytes)`);
+    await ctx.close();
+  }
+
+  /* ---- L7: Neon Turf boots live and stays self-contained ---- */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+    const page = await ctx.newPage();
+    const off = [];
+    page.on('request', r => {
+      const u = r.url();
+      if (!u.startsWith(BASE) && !u.startsWith('data:') && !u.startsWith('blob:')) off.push(u);
+    });
+    await page.goto(`${BASE}/neonturf/`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    let booted = false, snap = null;
+    try {
+      await page.waitForFunction(() => window.__turf && window.__turf.snapshot(), null, { timeout: 45000 });
+      snap = await page.evaluate(() => window.__turf.snapshot());
+      booted = true;
+    } catch (_) {}
+    gate('L7 /neonturf/ boots on the live site', booted && !EXPECT_FAIL,
+      booted ? `keys ${Object.values(snap.saveKeys).join(' / ')} · shaderFloorOk=${snap.renderer.shaderFloorOk}` +
+               ` · webglUnavailable=${snap.renderer.webglUnavailable} · RM effective=${snap.reducedMotion.effective}` : 'did not boot');
+    /* The one classified remote reference in this game is a STUN URI for the
+       local-duel path. STUN is UDP and never appears as an HTTP request, so
+       this gate is about HTTP only and says so rather than implying it proved
+       something about WebRTC that it did not observe. */
+    gate('L7 zero off-origin HTTP requests from the live game (STUN is UDP, not observed here)',
+      off.length === 0 && !EXPECT_FAIL, off.slice(0, 3).join(' | ') || 'none');
+    await ctx.close();
+  }
+
+  /* ---- L8: AM10 — no NEW marker, no homepage surface ----
+   *
+   * Every other gate in this file goes red under --expect-fail partly via a
+   * blanket `&& !EXPECT_FAIL` term. That proves the REPORTING path can fail. It
+   * does not prove the MEASUREMENT can, and for an absence check that is the
+   * only distinction that matters: "no NEW marker" and "no homepage surface"
+   * both pass trivially on a page that never loaded.
+   *
+   * So L8 gets a real control instead of a synthetic one. Under --expect-fail
+   * it runs the identical measurements against FRACTURE, which by AM10 does
+   * carry the NEW marker and does hold a homepage box. Every assertion is
+   * unchanged; only the subject moves. If the probe is blind — wrong selector,
+   * blank page, silent navigation failure — it reports "no marker, no surface"
+   * for Fracture too, and the control catches it.
+   */
+  {
+    const SUBJECT = EXPECT_FAIL
+      ? { slug: 'fracture', label: 'Fracture Engine', name: /fracture engine/i }
+      : { slug: 'neonturf', label: 'Neon Turf', name: /neon turf/i };
+    const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(`${BASE}/games/`, { waitUntil: 'networkidle', timeout: 60000 });
+    await page.waitForFunction(() => document.querySelectorAll('.gcard').length > 0, null, { timeout: 30000 });
+    const arcade = await page.evaluate(slug => {
+      const card = document.querySelector(`a.gcard[href*="${slug}"]`);
+      return {
+        present: !!card,
+        text: card ? card.textContent.trim().slice(0, 60) : null,
+        marked: card ? card.textContent.includes('NEW · ') : null
+      };
+    }, SUBJECT.slug);
+    /* Presence first. Without it, "no marker" would pass on an empty page. */
+    gate(`L8 ${SUBJECT.label} card is present on the live arcade`, arcade.present,
+      arcade.text || `no card matched a[href*="${SUBJECT.slug}"]`);
+    gate(`L8 AM10: the ${SUBJECT.label} card carries no NEW marker`,
+      arcade.present && arcade.marked === false,
+      arcade.present ? `marked=${arcade.marked}` : 'card absent, so the absence of a marker proves nothing');
+
+    await page.goto(`${BASE}/`, { waitUntil: 'networkidle', timeout: 60000 });
+    const home = await page.evaluate(slug => {
+      const boxes = [...document.querySelectorAll('#newrelease [data-release]')];
+      return {
+        occupants: boxes.map(b => b.getAttribute('data-release')),
+        linked: [...document.querySelectorAll('a[href]')]
+          .filter(a => new RegExp(slug, 'i').test(a.getAttribute('href'))).length
+      };
+    }, SUBJECT.slug);
+    /* Same shape: the stack must be observably populated before its not
+       containing the subject means anything. */
+    gate(`L8 AM10: homepage stack is populated and holds no ${SUBJECT.label} surface`,
+      home.occupants.length === 3 && !home.occupants.some(o => SUBJECT.name.test(o)) && home.linked === 0,
+      `${home.occupants.length} boxes [${home.occupants.join(' | ')}] · ${home.linked} homepage link(s) to /${SUBJECT.slug}/`);
     await ctx.close();
   }
 

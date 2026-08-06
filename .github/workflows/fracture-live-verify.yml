@@ -8,13 +8,22 @@
 #
 # It lives on a branch and is NOT merged to main. Retained, never deleted.
 #
+# COMMITTED TRUTH COMES FROM main, NOT FROM THIS BRANCH.
+# The first version set SITE_DIR to the branch checkout. That happened to be
+# correct for Fracture — branch and main carried byte-identical fracture blobs —
+# but it was correct by accident, and it was already wrong for Neon Turf, which
+# merged to main after this branch was cut and simply does not exist here. main
+# is checked out separately as _site so the comparison is always
+# "served bytes vs what is actually published", never "vs whatever this tool
+# branch happens to be carrying".
+#
 # The control job runs FIRST and gates the real one: verify_fracture_live.js is
 # run against deliberately wrong expectations and the job fails unless the
 # checks go red. A verification job that always exits 0 is the sixth
 # can't-fail instrument this estate has caught, so nothing here is trusted
 # until it has been shown able to fail.
 
-name: Fracture live verification (temporary)
+name: Launch live verification — Fracture + Neon Turf (temporary)
 
 on:
   workflow_dispatch:
@@ -34,6 +43,11 @@ jobs:
         with:
           repository: MattRoper1977/Games
           path: _games
+      # main, for the committed site blobs the served bytes are compared to.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: _site
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -42,7 +56,7 @@ jobs:
         env:
           BASE: https://madebymatt.uk
           GAMES_DIR: _games
-          SITE_DIR: .
+          SITE_DIR: _site
         run: node tools/verify_fracture_live.js --expect-fail
 
   verify-live:
@@ -55,6 +69,11 @@ jobs:
         with:
           repository: MattRoper1977/Games
           path: _games
+      # main, for the committed site blobs the served bytes are compared to.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: _site
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -77,5 +96,5 @@ jobs:
         env:
           BASE: https://madebymatt.uk
           GAMES_DIR: _games
-          SITE_DIR: .
+          SITE_DIR: _site
         run: node tools/verify_fracture_live.js
