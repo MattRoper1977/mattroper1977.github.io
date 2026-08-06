@@ -1,0 +1,81 @@
+# TEMPORARY: live verification of the Fracture Engine launch on a runner.
+#
+# This container cannot reach the origin — the agent proxy answers 403 to
+# CONNECT for madebymatt.uk:443 (derived from the proxy's own relay-failure log,
+# not assumed) — so served-byte and live-render checks have to run from a
+# machine with internet. This is the same CI-runner route that carried the
+# WebKit attestation.
+#
+# It lives on a branch and is NOT merged to main. Retained, never deleted.
+#
+# The control job runs FIRST and gates the real one: verify_fracture_live.js is
+# run against deliberately wrong expectations and the job fails unless the
+# checks go red. A verification job that always exits 0 is the sixth
+# can't-fail instrument this estate has caught, so nothing here is trusted
+# until it has been shown able to fail.
+
+name: Fracture live verification (temporary)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/fracture-live-verify]
+
+permissions:
+  contents: read
+
+jobs:
+  negative-control:
+    name: prove the verifier can fail
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          path: _games
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm i -D playwright@1.56.1 && npx playwright install --with-deps chromium
+      - name: run against deliberately wrong expectations — must go red
+        env:
+          BASE: https://madebymatt.uk
+          GAMES_DIR: _games
+          SITE_DIR: .
+        run: node tools/verify_fracture_live.js --expect-fail
+
+  verify-live:
+    name: verify the live site
+    needs: negative-control
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          path: _games
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm i -D playwright@1.56.1 && npx playwright install --with-deps chromium
+
+      # Pages can still be building when this fires. Wait for the served
+      # manifest to actually carry the new entry rather than failing on a
+      # stale cache and calling that a defect.
+      - name: wait for Pages to serve the merged manifest
+        run: |
+          for i in $(seq 1 40); do
+            if curl -fsS -H 'Cache-Control: no-cache' https://madebymatt.uk/Games/games.json | grep -q '/fracture/'; then
+              echo "served manifest carries /fracture/ after $i attempt(s)"; exit 0
+            fi
+            echo "attempt $i: not yet published, waiting 15s"; sleep 15
+          done
+          echo "TIMED OUT waiting for Pages to publish the merged manifest"; exit 1
+
+      - name: verify
+        env:
+          BASE: https://madebymatt.uk
+          GAMES_DIR: _games
+          SITE_DIR: .
+        run: node tools/verify_fracture_live.js
