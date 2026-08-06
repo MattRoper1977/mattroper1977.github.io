@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#061018">
+<meta name="description" content="Aurora Links 3D is a single-file WebGL golf game with nine holes, clubs, dynamic weather, night floodlights, green reading and a playable course designer.">
+<title>Aurora Links 3D — Made by Matt</title>
+<link rel="canonical" href="https://madebymatt.uk/auroralinks/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Made by Matt">
+<meta property="og:url" content="https://madebymatt.uk/auroralinks/">
+<meta property="og:title" content="Aurora Links 3D">
+<meta property="og:description" content="Nine floodlit holes under an aurora. Call your score before you swing, shape the shot, read the green — then build your own hole in the Course Lab.">
+<meta property="og:image" content="https://madebymatt.uk/auroralinks/banner.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+:root{--cyan:#65efff;--lime:#8dff80;--ink:#f7fbff;--muted:#bdd0dc;--panel:rgba(4,12,18,.78);--line:rgba(255,255,255,.18);--amber:#ffd16c;--danger:#ff7d8e}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#061018;color:var(--ink);font-family:Inter,ui-monospace,"Segoe UI",system-ui,sans-serif}
+button,input,select{font:inherit}button{min-height:44px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:#fff;font-weight:850;cursor:pointer;touch-action:manipulation;transition:.15s ease}button:hover{background:rgba(255,255,255,.16);transform:translateY(-1px)}button:active{transform:scale(.97)}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #fff;outline-offset:3px}button.active{background:var(--cyan);color:#061018;border-color:transparent;box-shadow:0 0 20px rgba(101,239,255,.35)}button:disabled{opacity:.38;cursor:not-allowed;transform:none}
+#glCanvas,#fxCanvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}#fxCanvas{pointer-events:none;z-index:2}.glass{background:var(--panel);border:1px solid var(--line);box-shadow:0 14px 44px rgba(0,0,0,.36);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+#hud{position:fixed;z-index:12;top:max(10px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:flex;gap:11px;align-items:center;padding:8px 14px;border-radius:20px;white-space:nowrap;max-width:calc(100vw - 24px);overflow:auto;scrollbar-width:none;font-size:11px;font-weight:900}#hud::-webkit-scrollbar,#controlBar::-webkit-scrollbar,#clubBar::-webkit-scrollbar,#designerBar::-webkit-scrollbar{display:none}.hudLogo{font-size:13px;color:var(--cyan);letter-spacing:.08em}.hudItem{border-left:1px solid rgba(255,255,255,.14);padding-left:10px}.hudItem b{color:var(--lime)}
+#controlBar{position:fixed;z-index:13;top:58px;left:50%;transform:translateX(-50%);display:flex;gap:7px;padding:7px;border-radius:18px;max-width:calc(100vw - 22px);overflow:auto;scrollbar-width:none}#controlBar button{padding:0 12px;font-size:10px;white-space:nowrap}
+#windCompass{display:inline-grid;place-items:center;width:20px;height:20px;border:1px solid rgba(255,255,255,.25);border-radius:50%;margin-left:3px;color:var(--cyan);transition:transform .25s ease}
+#clubBar{position:fixed;z-index:14;left:50%;transform:translateX(-50%);bottom:93px;display:flex;gap:7px;padding:7px;border-radius:18px;max-width:calc(100vw - 20px);overflow:auto;scrollbar-width:none}.clubBtn{min-width:78px;padding:4px 9px;font-size:10px;line-height:1.15}.clubBtn small{display:block;color:var(--muted);font-weight:700}.clubBtn.active small{color:#17323a}
+#swingArea{position:fixed;z-index:15;left:50%;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom));width:min(350px,calc(100vw - 30px));display:grid;grid-template-columns:1fr 78px;gap:8px;align-items:end}.powerWrap{display:flex;flex-direction:column;gap:6px}.powerTrack{height:16px;border-radius:999px;border:2px solid rgba(255,255,255,.85);background:rgba(0,0,0,.52);overflow:hidden}.powerFill{width:0;height:100%;background:linear-gradient(90deg,#65efff 0,#8dff80 48%,#ffd16c 72%,#ff667a 100%)}#swingBtn{height:54px;background:linear-gradient(135deg,#0d7590,#20a770);border-color:rgba(255,255,255,.42);font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.35)}#swingBtn.charging{background:linear-gradient(135deg,#20a770,#ff9f43)}#shapeControls{display:flex;gap:5px}#shapeControls button{flex:1;min-height:44px;height:44px;font-size:10px;border-radius:12px}
+/* R-TOUCH: #helpBtn is a single '?' glyph, so it collapsed to 31.8px wide
+   at 390x844 while every other control in the bar met the floor on its text
+   alone. Width is now pinned, not left to the content. */
+#helpBtn{min-width:44px}.miniReadout{height:54px;display:flex;flex-direction:column;justify-content:center;align-items:center;border-radius:15px;font-size:9px;color:var(--muted)}.miniReadout b{font-size:15px;color:var(--amber)}
+#hint{position:fixed;z-index:8;left:50%;transform:translateX(-50%);bottom:158px;padding:7px 11px;border-radius:13px;font-size:10px;color:var(--muted);pointer-events:none;text-align:center;max-width:80vw}
+#designerBar{display:none;position:fixed;z-index:17;left:50%;transform:translateX(-50%);top:100px;gap:6px;padding:7px;border-radius:18px;max-width:calc(100vw - 20px);overflow:auto;scrollbar-width:none}#designerBar.show{display:flex}#designerBar button{padding:0 11px;font-size:10px;white-space:nowrap}.designMode #clubBar,.designMode #swingArea,.designMode #hint{display:none}.designMode #controlBar{opacity:.48;pointer-events:none}
+#banner{position:fixed;z-index:30;left:50%;top:38%;transform:translate(-50%,-50%) scale(.92);width:min(440px,calc(100vw - 34px));padding:20px;border-radius:24px;text-align:center;opacity:0;pointer-events:none;transition:.24s ease}#banner.show{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}#banner h2{margin:0 0 7px;color:var(--cyan);font-size:25px}#banner p{color:var(--muted);font-size:12px;line-height:1.45}.bannerActions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:13px}.primary{background:linear-gradient(135deg,var(--cyan),var(--lime));color:#041016;border:0;padding:0 18px}.danger{background:rgba(255,80,100,.16);border-color:rgba(255,125,142,.42)}
+.modal{position:fixed;z-index:50;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,7,11,.82);backdrop-filter:blur(11px)}.modal.open{display:flex}.modalCard{width:min(760px,100%);max-height:90vh;overflow:auto;border-radius:26px;padding:20px;background:rgba(7,18,25,.96);border:1px solid rgba(255,255,255,.2);box-shadow:0 24px 80px rgba(0,0,0,.58)}.modalCard h2{margin:0 0 5px;color:var(--cyan)}.modalCard p{font-size:12px;line-height:1.5;color:var(--muted)}.modalActions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}.modalActions button{padding:0 16px}
+.callGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:16px 0}.callGrid button{font-size:17px}.callSummary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.summaryBox{padding:12px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.05);text-align:center}.summaryBox small{display:block;color:var(--muted);font-size:9px}.summaryBox b{font-size:20px;color:var(--amber)}
+.scoreWrap{overflow-x:auto}.scoreTable{width:100%;border-collapse:collapse;font-size:10px;text-align:center;min-width:650px}.scoreTable th,.scoreTable td{padding:8px 5px;border:1px solid rgba(255,255,255,.15)}.scoreTable th{background:rgba(101,239,255,.13);color:var(--cyan)}.scoreTable .activeCol{background:rgba(101,239,255,.18)}.scoreTable .good{color:var(--lime)}.scoreTable .bad{color:#ff9ca8}
+.editorInfo{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.editorInfo div{padding:9px;border-radius:13px;background:rgba(255,255,255,.05);font-size:10px;text-align:center}.editorInfo b{display:block;color:var(--cyan);font-size:15px}.formRow{display:grid;grid-template-columns:1fr 1fr;gap:10px}.formRow label{font-size:10px;color:var(--muted)}.formRow select,.formRow input{width:100%;height:44px;margin-top:4px;border:1px solid var(--line);border-radius:12px;background:#0b1c25;color:#fff;padding:0 10px}
+#splash{position:fixed;z-index:100;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 25%,#123a4a 0,#07151e 45%,#02070b 100%);padding:22px}.splashCard{text-align:center;max-width:660px}.made{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#9eb8c4;margin-bottom:13px}.splashLogo{font-size:clamp(45px,10vw,94px);font-weight:1000;letter-spacing:-.06em;line-height:.9;background:linear-gradient(135deg,#d9fbff,#65efff 40%,#8dff80 75%,#ffd16c);-webkit-background-clip:text;color:transparent;filter:drop-shadow(0 14px 36px rgba(101,239,255,.25))}.splashSub{max-width:560px;margin:20px auto;color:#c8dae2;line-height:1.55;font-size:14px}.startBtn{height:58px;padding:0 31px;border-radius:19px;border:0;background:linear-gradient(135deg,#65efff,#8dff80);color:#041016;font-size:15px;box-shadow:0 18px 50px rgba(101,239,255,.23)}.features{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:18px}.features span{font-size:9px;padding:7px 9px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.06);color:#bdd0dc}
+#toast{position:fixed;z-index:80;left:50%;top:92px;transform:translate(-50%,-20px);padding:10px 16px;border-radius:17px;background:rgba(238,252,255,.96);color:#061018;font-size:11px;font-weight:950;opacity:0;pointer-events:none;transition:.22s ease;box-shadow:0 13px 35px rgba(0,0,0,.35)}#toast.show{opacity:1;transform:translate(-50%,0)}
+#noWebGL{display:none;position:fixed;z-index:200;inset:0;background:#061018;color:#fff;padding:30px}
+@media(max-width:720px){#hud{left:7px;right:7px;transform:none;max-width:none}.hudLogo{display:none}#controlBar{top:57px}.hideMobile{display:none}.clubBtn{min-width:68px}.callGrid{grid-template-columns:repeat(4,1fr)}.callSummary{grid-template-columns:1fr}.editorInfo{grid-template-columns:repeat(2,1fr)}#designerBar{top:100px}#hint{bottom:156px}.modalCard{padding:16px}}
+@media(max-height:610px){#clubBar{bottom:78px}#swingArea{bottom:8px}.miniReadout{height:48px}#swingBtn{height:48px}#hint{display:none}#controlBar{top:54px}#designerBar{top:96px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+</style>
+</head>
+<body>
+<canvas id="glCanvas" aria-label="Aurora Links 3D WebGL golf course"></canvas><canvas id="fxCanvas" aria-hidden="true"></canvas>
+<div id="noWebGL" role="alertdialog" aria-modal="true" aria-labelledby="noWebGLTitle"><h1 id="noWebGLTitle">Aurora Links 3D</h1><p>This browser or device does not currently provide WebGL. Try enabling hardware acceleration or opening the file in a recent Chrome, Edge, Firefox or Safari browser.</p></div>
+
+<div id="hud" class="glass">
+ <div class="hudLogo">AURORA LINKS 3D</div><div>HOLE <b id="holeHud">1/9</b></div><div class="hudItem">PAR <b id="parHud">4</b></div><div class="hudItem">STROKES <b id="strokeHud">0</b></div><div class="hudItem">ROUND <b id="roundHud">E</b></div><div class="hudItem hideMobile">PIN <b id="distanceHud">0y</b></div><div class="hudItem hideMobile">WIND <b id="windHud">0 mph</b><span id="windCompass">↑</span></div>
+</div>
+<div id="controlBar" class="glass">
+ <button id="scoreBtn">📋 Scorecard</button><button id="gridBtn" class="active">▦ Green read</button><button id="nightBtn">🌙 Night</button><button id="ledBtn">● LED: Cyan</button><button id="cameraBtn">🎥 Camera</button><button id="labBtn">🛠 Course Lab</button><button id="restartBtn">↺ Restart hole</button><button id="helpBtn">?</button>
+</div>
+<div id="designerBar" class="glass">
+ <button class="designTool active" data-tool="tee">🟩 Tee</button><button class="designTool" data-tool="pin">⛳ Pin</button><button class="designTool" data-tool="bunker">Sand</button><button class="designTool" data-tool="water">Water</button><button class="designTool" data-tool="tree">Tree</button><button class="designTool" data-tool="remove">✕ Remove</button><button id="undoBtn">Undo</button><button id="testCustomBtn" class="active">▶ Test</button><button id="exportHoleBtn">⇩ JSON</button><button id="importHoleBtn">⇧ JSON</button><button id="exitLabBtn">Exit lab</button>
+</div>
+
+<div id="clubBar" class="glass"></div>
+<div id="swingArea"><div class="powerWrap"><div class="powerTrack"><div id="powerFill" class="powerFill"></div></div><button id="swingBtn">HOLD FOR POWER</button><div id="shapeControls"><button id="fadeBtn">FADE ◀</button><button id="straightBtn" class="active">STRAIGHT</button><button id="drawBtn">DRAW ▶</button></div></div><div class="miniReadout glass"><span>POWER</span><b id="powerText">0%</b><span id="lieText">FAIRWAY</span></div></div>
+<div id="hint" class="glass">Drag left or right to aim. Hold the swing button, then release at your chosen power.</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<section id="banner" class="glass" aria-live="polite"><h2 id="bannerTitle">Hole complete</h2><p id="bannerText"></p><div class="bannerActions" id="bannerActions"></div></section>
+
+<div id="callModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="callTitle"><div class="modalCard"><h2 id="callTitle">Call your score</h2><p id="callCopy">Study the full hole, then predict how many strokes you will take. Accuracy earns a higher Call Rating.</p><div class="callGrid" id="callGrid"></div><div class="modalActions"><button id="callScorecardBtn">Scorecard</button><button id="callPracticeBtn">Practice — no call</button></div></div></div>
+
+<div id="scoreModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="scoreTitle"><div class="modalCard"><h2 id="scoreTitle">Aurora Links Scorecard</h2><p>Stroke score and your prediction rating are tracked separately. A brave, accurate call can rescue an untidy hole.</p><div class="scoreWrap"><table class="scoreTable" id="scoreTable"></table></div><div class="callSummary"><div class="summaryBox"><small>ROUND TO PAR</small><b id="scoreRound">E</b></div><div class="summaryBox"><small>AVERAGE CALL RATING</small><b id="scoreCall">—</b></div><div class="summaryBox"><small>BEST HOLE</small><b id="scoreBest">—</b></div></div><div class="modalActions"><button data-close="scoreModal">Close</button><button id="newRoundBtn" class="primary">New round</button></div></div></div>
+
+<div id="labModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="labTitle"><div class="modalCard"><h2 id="labTitle">Course Lab</h2><p>Switch to an overhead editor, place features directly on the terrain, then test your hole immediately. The layout can be exported as a shareable JSON file.</p><div class="formRow"><label>Par<select id="editorPar"><option>3</option><option selected>4</option><option>5</option></select></label><label>Weather<select id="editorWeather"><option value="sunny">Sunny</option><option value="breeze">Breeze</option><option value="rain">Rain</option><option value="storm">Storm</option><option value="night">Night</option></select></label></div><div class="editorInfo"><div>TEE<b id="labTee">0, 95</b></div><div>PIN<b id="labPin">0, -95</b></div><div>HAZARDS<b id="labHazards">0</b></div><div>TREES<b id="labTrees">0</b></div></div><div class="modalActions"><button data-close="labModal">Cancel</button><button id="enterLabBtn" class="primary">Enter editor</button></div></div></div>
+<input id="holeFileInput" type="file" accept="application/json,.json" hidden>
+
+<div id="helpModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle"><div class="modalCard"><h2 id="helpTitle">How to play</h2><p><b>Aim:</b> drag anywhere on the course, or use A/D and the arrow keys. The dotted preview adapts to the selected club.</p><p><b>Swing:</b> hold the large swing button or Space. Release at the power you want. Fade and draw add controlled side spin.</p><p><b>Plan:</b> wind changes every hole. Sand kills speed, rough reduces control, water adds a penalty stroke and returns the ball to its previous safe position. On the green, the cyan arrows point downhill.</p><p><b>Call your score:</b> before each tournament hole, predict your strokes. The separate Call Rating rewards reading and nerve, not only perfect timing.</p><p><b>Course Lab:</b> place a tee, pin, bunkers, water and trees with mouse or touch, then test and export the layout.</p><div class="modalActions"><button class="primary" data-close="helpModal">Play</button></div></div></div>
+
+<div id="splash"><div class="splashCard"><div class="made">Made by Matt presents</div><div class="splashLogo">AURORA<br>LINKS 3D</div><div class="splashSub">A complete single-file WebGL golf game with a nine-hole tournament, four-club bag, wind and wet-weather physics, night floodlights, glowing LED balls, green reading and a playable course designer.</div><button id="startBtn" class="startBtn">Tee Off</button><div class="features"><span>offline WebGL engine</span><span>9-hole scorecard</span><span>dynamic weather</span><span>night golf</span><span>course lab + JSON</span><span>touch + desktop</span></div></div></div>
+
+<script>
+(()=>{
+'use strict';
+const glCanvas=document.getElementById('glCanvas'),fxCanvas=document.getElementById('fxCanvas'),fx=fxCanvas.getContext('2d');
+const gl=glCanvas.getContext('webgl',{antialias:true,alpha:false,preserveDrawingBuffer:false})||glCanvas.getContext('experimental-webgl');
+if(!gl){document.getElementById('noWebGL').style.display='block';document.getElementById('splash').style.display='none';return;}
+/* R-GL: context loss, routed through the SAME panel the WebGL-unavailable case
+   already uses — one truth, not two. Without preventDefault the context can
+   never be restored, and without this the game rendered a black void behind a
+   fully live, fully clickable HUD. */
+glCanvas.addEventListener('webglcontextlost',e=>{
+  e.preventDefault();
+  window.__auroraContextLost=(window.__auroraContextLost||0)+1;
+  document.getElementById('noWebGL').style.display='block';
+},false);
+glCanvas.addEventListener('webglcontextrestored',()=>{
+  window.__auroraContextRestored=(window.__auroraContextRestored||0)+1;
+  document.getElementById('noWebGL').style.display='none';
+  try{location.reload()}catch(_){}
+},false);
+const q=id=>document.getElementById(id),clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),lerp=(a,b,t)=>a+(b-a)*t,rad=d=>d*Math.PI/180;
+let W=innerWidth,H=innerHeight,DPR=Math.min(devicePixelRatio||1,2),last=performance.now(),acc=0,FIXED=1/120,gameStarted=false,toastTimer=0,charging=false,chargeStart=0,power=.0,aimDrag=null,time=0,cameraMode=0,greenRead=true,manualNight=false,ledIndex=0,shotShape=0,designerTool='tee',editorUndo=[],pendingPenalty=false;
+
+// ---------- Vector and matrix maths ----------
+const v3=(x=0,y=0,z=0)=>[x,y,z],add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],mul=(a,s)=>[a[0]*s,a[1]*s,a[2]*s],dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],len=a=>Math.hypot(a[0],a[1],a[2]),norm=a=>{const l=len(a)||1;return[a[0]/l,a[1]/l,a[2]/l]},mixV=(a,b,t)=>[lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)];
+const I=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
+function mm(a,b){const o=new Array(16).fill(0);for(let c=0;c<4;c++)for(let r=0;r<4;r++)for(let k=0;k<4;k++)o[c*4+r]+=a[k*4+r]*b[c*4+k];return o;}
+function perspective(fovy,aspect,near,far){const f=1/Math.tan(fovy/2),nf=1/(near-far);return[f/aspect,0,0,0,0,f,0,0,0,0,(far+near)*nf,-1,0,0,2*far*near*nf,0];}
+function lookAt(eye,center,up=[0,1,0]){const z=norm(sub(eye,center)),x=norm(cross(up,z)),y=cross(z,x);return[x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-dot(x,eye),-dot(y,eye),-dot(z,eye),1];}
+function T(x,y,z){const m=I();m[12]=x;m[13]=y;m[14]=z;return m}function S(x,y,z){return[x,0,0,0,0,y,0,0,0,0,z,0,0,0,0,1]}function RY(a){const c=Math.cos(a),s=Math.sin(a);return[c,0,-s,0,0,1,0,0,s,0,c,0,0,0,0,1]}function model(pos,scale=[1,1,1],rotY=0){return mm(mm(T(...pos),RY(rotY)),S(...scale))}
+function inv(a){const out=[],a00=a[0],a01=a[1],a02=a[2],a03=a[3],a10=a[4],a11=a[5],a12=a[6],a13=a[7],a20=a[8],a21=a[9],a22=a[10],a23=a[11],a30=a[12],a31=a[13],a32=a[14],a33=a[15],b00=a00*a11-a01*a10,b01=a00*a12-a02*a10,b02=a00*a13-a03*a10,b03=a01*a12-a02*a11,b04=a01*a13-a03*a11,b05=a02*a13-a03*a12,b06=a20*a31-a21*a30,b07=a20*a32-a22*a30,b08=a20*a33-a23*a30,b09=a21*a32-a22*a31,b10=a21*a33-a23*a31,b11=a22*a33-a23*a32;let det=b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;if(!det)return I();det=1/det;out[0]=(a11*b11-a12*b10+a13*b09)*det;out[1]=(a02*b10-a01*b11-a03*b09)*det;out[2]=(a31*b05-a32*b04+a33*b03)*det;out[3]=(a22*b04-a21*b05-a23*b03)*det;out[4]=(a12*b08-a10*b11-a13*b07)*det;out[5]=(a00*b11-a02*b08+a03*b07)*det;out[6]=(a32*b02-a30*b05-a33*b01)*det;out[7]=(a20*b05-a22*b02+a23*b01)*det;out[8]=(a10*b10-a11*b08+a13*b06)*det;out[9]=(a01*b08-a00*b10-a03*b06)*det;out[10]=(a30*b04-a31*b02+a33*b00)*det;out[11]=(a21*b02-a20*b04-a23*b00)*det;out[12]=(a11*b07-a10*b09-a12*b06)*det;out[13]=(a00*b09-a01*b07+a02*b06)*det;out[14]=(a31*b01-a30*b03-a32*b00)*det;out[15]=(a20*b03-a21*b01+a22*b00)*det;return out;}
+function tp(m,p,w=1){const x=p[0],y=p[1],z=p[2],ow=m[3]*x+m[7]*y+m[11]*z+m[15]*w||1;return[(m[0]*x+m[4]*y+m[8]*z+m[12]*w)/ow,(m[1]*x+m[5]*y+m[9]*z+m[13]*w)/ow,(m[2]*x+m[6]*y+m[10]*z+m[14]*w)/ow]}
+
+// ---------- WebGL mini-engine ----------
+const VS=`attribute vec3 aPosition;attribute vec3 aNormal;attribute vec3 aColor;uniform mat4 uModel;uniform mat4 uView;uniform mat4 uProj;varying vec3 vWorld;varying vec3 vNormal;varying vec3 vColor;void main(){vec4 w=uModel*vec4(aPosition,1.0);vWorld=w.xyz;vNormal=normalize(mat3(uModel)*aNormal);vColor=aColor;gl_Position=uProj*uView*w;}`;
+const FS=`precision mediump float;varying vec3 vWorld;varying vec3 vNormal;varying vec3 vColor;uniform vec3 uBaseColor;uniform float uVertexColor;uniform vec3 uAmbient;uniform vec3 uDirColor;uniform vec3 uDirDirection;uniform vec3 uFogColor;uniform vec3 uCamera;uniform float uFogDensity;uniform float uEmissive;uniform float uAlpha;uniform vec3 uPointPos[5];uniform vec3 uPointColor[5];uniform float uPointPower[5];void main(){vec3 base=mix(uBaseColor,vColor,uVertexColor);vec3 n=normalize(vNormal);float d=max(dot(n,normalize(-uDirDirection)),0.0);vec3 lit=uAmbient+uDirColor*d;for(int i=0;i<5;i++){vec3 L=uPointPos[i]-vWorld;float dist=max(length(L),0.1);float pd=max(dot(n,normalize(L)),0.0);lit+=uPointColor[i]*pd*uPointPower[i]/(1.0+0.035*dist*dist);}vec3 col=base*lit+base*uEmissive;float fog=1.0-exp(-uFogDensity*uFogDensity*distance(vWorld,uCamera)*distance(vWorld,uCamera));col=mix(col,uFogColor,clamp(fog,0.0,0.92));gl_FragColor=vec4(col,uAlpha);}`;
+function shader(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s}const prog=gl.createProgram();gl.attachShader(prog,shader(gl.VERTEX_SHADER,VS));gl.attachShader(prog,shader(gl.FRAGMENT_SHADER,FS));gl.linkProgram(prog);if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(prog));gl.useProgram(prog);
+const A={pos:gl.getAttribLocation(prog,'aPosition'),nor:gl.getAttribLocation(prog,'aNormal'),col:gl.getAttribLocation(prog,'aColor')};
+const U={model:gl.getUniformLocation(prog,'uModel'),view:gl.getUniformLocation(prog,'uView'),proj:gl.getUniformLocation(prog,'uProj'),base:gl.getUniformLocation(prog,'uBaseColor'),vertex:gl.getUniformLocation(prog,'uVertexColor'),ambient:gl.getUniformLocation(prog,'uAmbient'),dirColor:gl.getUniformLocation(prog,'uDirColor'),dir:gl.getUniformLocation(prog,'uDirDirection'),fog:gl.getUniformLocation(prog,'uFogColor'),camera:gl.getUniformLocation(prog,'uCamera'),fogD:gl.getUniformLocation(prog,'uFogDensity'),em:gl.getUniformLocation(prog,'uEmissive'),alpha:gl.getUniformLocation(prog,'uAlpha'),pp:gl.getUniformLocation(prog,'uPointPos[0]'),pc:gl.getUniformLocation(prog,'uPointColor[0]'),pw:gl.getUniformLocation(prog,'uPointPower[0]')};
+function geo(pos,nor,col,idx){const g={count:idx.length};g.pos=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,g.pos);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(pos),gl.STATIC_DRAW);g.nor=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,g.nor);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(nor),gl.STATIC_DRAW);g.col=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,g.col);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(col),gl.STATIC_DRAW);g.idx=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,g.idx);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(idx),gl.STATIC_DRAW);return g}
+function freeGeo(g){if(!g)return;gl.deleteBuffer(g.pos);gl.deleteBuffer(g.nor);gl.deleteBuffer(g.col);gl.deleteBuffer(g.idx)}
+function bindGeo(g){gl.bindBuffer(gl.ARRAY_BUFFER,g.pos);gl.enableVertexAttribArray(A.pos);gl.vertexAttribPointer(A.pos,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,g.nor);gl.enableVertexAttribArray(A.nor);gl.vertexAttribPointer(A.nor,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,g.col);gl.enableVertexAttribArray(A.col);gl.vertexAttribPointer(A.col,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,g.idx)}
+function rgb(hex){if(Array.isArray(hex))return hex;hex=String(hex).replace('#','');const n=parseInt(hex,16);return[((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255]}
+function solidColors(n,c=[1,1,1]){const a=[];for(let i=0;i<n;i++)a.push(...c);return a}
+function makeBox(){const p=[],n=[],idx=[];const faces=[[[0,0,1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]],[[0,0,-1],[1,-1,-1],[-1,-1,-1],[-1,1,-1],[1,1,-1]],[[1,0,0],[1,-1,1],[1,-1,-1],[1,1,-1],[1,1,1]],[[-1,0,0],[-1,-1,-1],[-1,-1,1],[-1,1,1],[-1,1,-1]],[[0,1,0],[-1,1,1],[1,1,1],[1,1,-1],[-1,1,-1]],[[0,-1,0],[-1,-1,-1],[1,-1,-1],[1,-1,1],[-1,-1,1]]];for(const f of faces){const b=p.length/3;for(let i=1;i<5;i++){p.push(...f[i]);n.push(...f[0])}idx.push(b,b+1,b+2,b,b+2,b+3)}return geo(p,n,solidColors(p.length/3),idx)}
+function makePlane(){return geo([-1,0,-1,1,0,-1,1,0,1,-1,0,1],[0,1,0,0,1,0,0,1,0,0,1,0],solidColors(4),[0,1,2,0,2,3])}
+function makeCylinder(rt=.5,rb=.5,h=1,seg=16){const p=[],n=[],idx=[];for(let i=0;i<=seg;i++){const a=i/seg*Math.PI*2,c=Math.cos(a),s=Math.sin(a);p.push(c*rb,-h/2,s*rb,c*rt,h/2,s*rt);const nn=norm([c,(rb-rt)/h,s]);n.push(...nn,...nn)}for(let i=0;i<seg;i++){const b=i*2;idx.push(b,b+1,b+3,b,b+3,b+2)}let base=p.length/3;p.push(0,-h/2,0);n.push(0,-1,0);for(let i=0;i<=seg;i++){const a=i/seg*Math.PI*2;p.push(Math.cos(a)*rb,-h/2,Math.sin(a)*rb);n.push(0,-1,0)}for(let i=0;i<seg;i++)idx.push(base,base+2+i,base+1+i);base=p.length/3;p.push(0,h/2,0);n.push(0,1,0);for(let i=0;i<=seg;i++){const a=i/seg*Math.PI*2;p.push(Math.cos(a)*rt,h/2,Math.sin(a)*rt);n.push(0,1,0)}for(let i=0;i<seg;i++)idx.push(base,base+1+i,base+2+i);return geo(p,n,solidColors(p.length/3),idx)}
+function makeSphere(r=.5,lat=10,lon=14){const p=[],n=[],idx=[];for(let y=0;y<=lat;y++){const v=y/lat,ph=v*Math.PI;for(let x=0;x<=lon;x++){const u=x/lon,th=u*Math.PI*2,s=Math.sin(ph),nx=Math.cos(th)*s,ny=Math.cos(ph),nz=Math.sin(th)*s;p.push(nx*r,ny*r,nz*r);n.push(nx,ny,nz)}}for(let y=0;y<lat;y++)for(let x=0;x<lon;x++){const a=y*(lon+1)+x,b=a+lon+1;idx.push(a,b,a+1,b,b+1,a+1)}return geo(p,n,solidColors(p.length/3),idx)}
+function makeFlag(){return geo([0,0,0,2.3,-.6,0,0,-1.2,0],[0,0,1,0,0,1,0,0,1],solidColors(3),[0,1,2])}
+function makeArrow(){return geo([0,.03,-1.2,.42,.03,.65,0,.03,.36,-.42,.03,.65],[0,1,0,0,1,0,0,1,0,0,1,0],solidColors(4),[0,1,2,0,2,3])}
+const G={box:makeBox(),plane:makePlane(),cyl:makeCylinder(.5,.5,1,14),cone:makeCylinder(0,.58,1,14),sphere:makeSphere(.5,10,14),ball:makeSphere(.5,14,20),flag:makeFlag(),arrow:makeArrow(),cup:makeCylinder(.52,.52,.35,20)};
+
+let view=I(),proj=I(),cameraEye=[0,20,30],cameraTarget=[0,0,0],terrainGeo=null,opaque=[],transparent=[],greenArrows=[];
+function draw(g,pos,scale,rot,color,opts={}){(opts.alpha!=null&&opts.alpha<.999?transparent:opaque).push({g,pos,scale,rot,color,vertex:opts.vertex||0,em:opts.em||0,alpha:opts.alpha==null?1:opts.alpha})}
+function drawNow(d){bindGeo(d.g);gl.uniformMatrix4fv(U.model,false,new Float32Array(model(d.pos,d.scale,d.rot)));gl.uniform3fv(U.base,new Float32Array(rgb(d.color)));gl.uniform1f(U.vertex,d.vertex);gl.uniform1f(U.em,d.em);gl.uniform1f(U.alpha,d.alpha);gl.drawElements(gl.TRIANGLES,d.g.count,gl.UNSIGNED_SHORT,0)}
+
+// ---------- Course data ----------
+const weatherProfiles={
+ sunny:{label:'SUNNY',sky:'#78c9ef',fog:'#9ed9ef',wind:[2,5],wet:0,fogD:.0025,dir:'#fff5de',ambient:'#536b63'},
+ breeze:{label:'BREEZE',sky:'#83bccc',fog:'#9bc4cc',wind:[9,15],wet:0,fogD:.0032,dir:'#f8f1d0',ambient:'#52646b'},
+ rain:{label:'RAIN',sky:'#4b6674',fog:'#657c87',wind:[12,20],wet:1,fogD:.0048,dir:'#c8e3eb',ambient:'#43535b'},
+ storm:{label:'STORM',sky:'#172d3b',fog:'#263e4c',wind:[23,34],wet:1.45,fogD:.0065,dir:'#9bc6dc',ambient:'#26343d'},
+ night:{label:'NIGHT',sky:'#020611',fog:'#08111c',wind:[5,12],wet:0,fogD:.0044,dir:'#51627c',ambient:'#151c31'}
+};
+const pars=[4,3,5,4,4,3,5,4,4],weatherCycle=['sunny','breeze','rain','sunny','storm','night','breeze','rain','night'];
+function seeded(n){let x=Math.sin(n*999.13)*43758.5453;return x-Math.floor(x)}
+function generateHole(i){const par=pars[i],length=par===3?135:par===4?215:270,seed=17+i*37,tee={x:(seeded(seed)-.5)*9,z:length/2-8},pin={x:Math.sin(i*1.37)*20,z:-length/2+9},amp=8+seeded(seed+1)*14,freq=.017+seeded(seed+2)*.012,width=15+(par-3)*2;const bunkers=[{x:pin.x+11,z:pin.z+12,rx:9,rz:6},{x:pin.x-13,z:pin.z+18,rx:7,rz:5}];if(i%2)bunkers.pop();const water=[];if(par>=4&&i!==3)water.push({x:Math.sin(i*.8)*9,z:(tee.z+pin.z)*.5+(i%2?15:-8),w:34+(i%3)*7,d:18});if(i===4)water.push({x:17,z:pin.z+45,w:24,d:34});const trees=[];for(let t=0;t<22;t++){const z=pin.z+18+seeded(seed+50+t)*(tee.z-pin.z-28),cx=centerXFor(z,{seed,amp,freq,tee,pin});const side=seeded(seed+80+t)>.5?1:-1;trees.push({x:cx+side*(width+9+seeded(seed+100+t)*18),z,s:.75+seeded(seed+130+t)*.7});}const wp=weatherProfiles[weatherCycle[i]],windSpeed=Math.round(lerp(wp.wind[0],wp.wind[1],seeded(seed+4))),windAngle=seeded(seed+5)*Math.PI*2;return{number:i+1,par,name:['Aurora Rise','Glasswater Short','Long Lantern','Moorland Bend','Tideglass','Moon Cup','Ember Reach','Rain Garden','Northern Lights'][i],seed,tee,pin,amp,freq,width,weather:weatherCycle[i],windSpeed,windAngle,bunkers,water,trees};}
+let holes=Array.from({length:9},(_,i)=>generateHole(i)),currentHoleIndex=0,currentHole=holes[0],scores=Array(9).fill(null),calls=Array(9).fill(null),ratings=Array(9).fill(null),mode='ROUND',editorHole=null,editorReturnIndex=0;
+/* Saved state is untrusted input. Three real defects lived here:
+     - clamp(NaN,..) is NaN, so a non-numeric `hole` or `led` indexed
+       holes[NaN] / LED[NaN] and threw, leaving a started-but-unplayable round;
+     - `scores` was taken at ANY length, so 12 entries walked holes[i].par past
+       the end of a 9-hole array and threw the same way;
+     - the values land in innerHTML in openScorecard, so a hostile payload
+       could execute script.
+   Everything is now coerced to a number-or-null and the arrays are pinned to
+   exactly 9 slots. escapeCell() below is the second line of defence. */
+function safeIdx(v,max){const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(max,Math.floor(n))):0}
+function safeSlots(v){const out=Array(9).fill(null);if(!Array.isArray(v))return out;
+  for(let i=0;i<9;i++){const n=Number(v[i]);out[i]=(v[i]==null||!Number.isFinite(n))?null:n}
+  return out}
+try{const s=JSON.parse(localStorage.getItem('mbm_aurora_links_round_v1')||'null');if(s&&typeof s==='object'&&!Array.isArray(s)){scores=safeSlots(s.scores);calls=safeSlots(s.calls);ratings=safeSlots(s.ratings);currentHoleIndex=safeIdx(s.hole,8);manualNight=!!s.manualNight;ledIndex=safeIdx(s.led,3);}}
+catch(e){}
+/* R-RM: reduced motion, house OS-as-floor pattern. The game had NONE — no
+   matchMedia call anywhere, no saved setting, no listener — so every canvas
+   effect ran at full intensity for a player who had asked the OS for less.
+   There is no in-game switch to honour here, so the OS preference IS the
+   setting, and a live change listener applies it without a reload.
+
+   Families gated BY NAME:
+     weatherParticles  rain/storm streaks and snow  -> density x0.3
+     cameraEase        the swooping camera follow   -> snaps instead of eases
+     windSway          decorative sway amplitude    -> x0.35
+   The aurora sky gradient is KEPT: it is the game's setting, it does not
+   translate across the screen, and removing it would remove the place rather
+   than the motion. */
+const RM_MEDIA=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)'):null;
+function motionReduced(){return !!(RM_MEDIA&&RM_MEDIA.matches)}
+if(RM_MEDIA){const onRm=()=>{try{updateHUD()}catch(_){}};
+  if(RM_MEDIA.addEventListener)RM_MEDIA.addEventListener('change',onRm);
+  else if(RM_MEDIA.addListener)RM_MEDIA.addListener(onRm);}
+const LED=[{name:'Cyan',hex:'#35efff'},{name:'Magenta',hex:'#ff3bba'},{name:'Lime',hex:'#70ff5d'},{name:'Amber',hex:'#ffb52f'}];
+const CLUBS=[{key:'driver',name:'Driver',carry:'240y',speed:88,loft:16,roll:1.0,control:.76},{key:'iron',name:'7-Iron',carry:'165y',speed:66,loft:32,roll:.72,control:.9},{key:'wedge',name:'Wedge',carry:'95y',speed:48,loft:49,roll:.34,control:.97},{key:'putter',name:'Putter',carry:'Green',speed:23,loft:0,roll:.18,control:1}];let currentClub=CLUBS[0];
+const ball={pos:[0,1,0],vel:[0,0,0],state:'PREVIEW',lastSafe:[0,1,0],lie:'fairway',settle:0,spin:0},BALL_R=.58;
+
+function centerXFor(z,h=currentHole){const span=(h.tee.z-h.pin.z)||1,t=clamp((h.tee.z-z)/span,0,1),line=lerp(h.tee.x,h.pin.x,t);return line+Math.sin(z*h.freq+h.seed*.27)*h.amp*Math.sin(t*Math.PI)}
+function terrainHeight(x,z,h=currentHole){let y=Math.sin((x+h.seed)*.057)*1.05+Math.cos((z-h.seed)*.031)*1.25+Math.sin((x+z)*.022)*.55;const dt=Math.hypot(x-h.tee.x,z-h.tee.z),dc=Math.hypot(x-h.pin.x,z-h.pin.z);y*=1-.78*Math.exp(-dt*dt/220)-.68*Math.exp(-dc*dc/520);if(dc<24)y+=.48*Math.sin((x-h.pin.x)*.15)*Math.cos((z-h.pin.z)*.13);return y}
+function slopeGradient(x,z){const e=.35,h0=terrainHeight(x,z);return{dx:-(terrainHeight(x+e,z)-h0)/e,dz:-(terrainHeight(x,z+e)-h0)/e}}
+function inEllipse(x,z,b){return((x-b.x)/b.rx)**2+((z-b.z)/b.rz)**2<=1}
+function inWater(x,z){return currentHole.water.some(w=>Math.abs(x-w.x)<=w.w/2&&Math.abs(z-w.z)<=w.d/2)}
+function surfaceAt(x,z){if(inWater(x,z))return'water';if(currentHole.bunkers.some(b=>inEllipse(x,z,b)))return'bunker';if(Math.hypot(x-currentHole.pin.x,z-currentHole.pin.z)<23)return'green';const d=Math.abs(x-centerXFor(z));return d<currentHole.width?'fairway':'rough'}
+function lieLabel(l){return({fairway:'FAIRWAY',rough:'ROUGH',bunker:'BUNKER',green:'GREEN',water:'WATER'}[l]||l).toUpperCase()}
+
+function buildTerrain(){freeGeo(terrainGeo);const sx=56,sz=112,p=[],n=[],c=[],idx=[];for(let iz=0;iz<=sz;iz++){const z=-150+iz/sz*300;for(let ix=0;ix<=sx;ix++){const x=-70+ix/sx*140,y=terrainHeight(x,z),gr=slopeGradient(x,z),normal=norm([gr.dx,1,gr.dz]),surf=surfaceAt(x,z);let col=surf==='green'?[.16,.61,.25]:surf==='fairway'?[.18,.52,.22]:[.12,.31,.14];const stripe=Math.sin((z+150)*.42)>0?.022:-.012;col=col.map(v=>clamp(v+stripe,0,1));p.push(x,y,z);n.push(...normal);c.push(...col)}}for(let z=0;z<sz;z++)for(let x=0;x<sx;x++){const a=z*(sx+1)+x,b=a+sx+1;idx.push(a,b,a+1,b,b+1,a+1)}terrainGeo=geo(p,n,c,idx)}
+function buildGreenArrows(){greenArrows=[];for(let z=-18;z<=18;z+=6)for(let x=-18;x<=18;x+=6){if(x*x+z*z>19*19)continue;const wx=currentHole.pin.x+x,wz=currentHole.pin.z+z,g=slopeGradient(wx,wz),steep=Math.hypot(g.dx,g.dz);if(steep<.015)continue;greenArrows.push({pos:[wx,terrainHeight(wx,wz)+.08,wz],rot:Math.atan2(g.dx,g.dz),scale:[.65+steep*4,1,.65+steep*4]})}}
+function rebuildScene(){buildTerrain();buildGreenArrows()}
+
+// ---------- Rendering ----------
+function environment(){const wp=weatherProfiles[currentHole.weather]||weatherProfiles.sunny,isNight=manualNight||currentHole.weather==='night';return{wp,isNight,sky:rgb(isNight?'#020611':wp.sky),fog:rgb(isNight?'#08111c':wp.fog)}}
+function queueScene(){opaque=[];transparent=[];draw(terrainGeo,[0,0,0],[1,1,1],0,'#ffffff',{vertex:1});
+ // tee pad and cup/flag
+ const ty=terrainHeight(currentHole.tee.x,currentHole.tee.z);draw(G.box,[currentHole.tee.x,ty+.08,currentHole.tee.z],[3,.08,2],0,'#43a24c');const cy=terrainHeight(currentHole.pin.x,currentHole.pin.z);draw(G.cup,[currentHole.pin.x,cy-.13,currentHole.pin.z],[1.3,.7,1.3],0,'#090b0d',{em:.03});draw(G.cyl,[currentHole.pin.x,cy+4,currentHole.pin.z],[.14,4,.14],0,'#eef6f7');draw(G.flag,[currentHole.pin.x,cy+7.6,currentHole.pin.z],[1.5,1.5,1.5],0,'#ff465e',{em:.15});
+ // hazards
+ for(const b of currentHole.bunkers){draw(G.cyl,[b.x,terrainHeight(b.x,b.z)+.02,b.z],[b.rx,.09,b.rz],0,'#dabb77')}
+ for(const w of currentHole.water){draw(G.plane,[w.x,terrainHeight(w.x,w.z)+.09,w.z],[w.w/2,1,w.d/2],0,'#168ec1',{alpha:.72,em:.08})}
+ // trees
+ for(const t of currentHole.trees||[]){const y=terrainHeight(t.x,t.z),s=t.s||1;draw(G.cyl,[t.x,y+2.1*s,t.z],[.55*s,2.1*s,.55*s],0,'#69462d');draw(G.cone,[t.x,y+5.3*s,t.z],[2.5*s,3.7*s,2.5*s],0,'#175a35')}
+ // floodlight towers in night mode
+ const env=environment();if(env.isNight){const towers=[[-56,70], [56,70],[-56,-70],[56,-70]];for(const [x,z] of towers){const y=terrainHeight(x,z);draw(G.cyl,[x,y+8,z],[.45,8,.45],0,'#303846');draw(G.box,[x,y+16,z],[2.1,.6,.7],Math.atan2(currentHole.pin.x-x,currentHole.pin.z-z),'#fff8d8',{em:1.3})}}
+ if(greenRead&&(ball.lie==='green'||Math.hypot(ball.pos[0]-currentHole.pin.x,ball.pos[2]-currentHole.pin.z)<55||mode==='DESIGN'))for(const a of greenArrows)draw(G.arrow,a.pos,a.scale,a.rot,'#45efff',{em:.75,alpha:.82});
+ // aim preview
+ if(ball.state==='AIMING'&&mode!=='DESIGN'){const dots=predictDots(.68);for(let i=0;i<dots.length;i++)draw(G.sphere,dots[i],[.19,.19,.19],0,LED[ledIndex].hex,{em:.75,alpha:.78})}
+ // ball
+ if(mode!=='DESIGN'||ball.state!=='PREVIEW')draw(G.ball,ball.pos,[1.16,1.16,1.16],0,'#ffffff',{em:environment().isNight?.55:.08});
+}
+function render3D(){const env=environment();gl.clearColor(...env.sky,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(prog);gl.uniformMatrix4fv(U.view,false,new Float32Array(view));gl.uniformMatrix4fv(U.proj,false,new Float32Array(proj));gl.uniform3fv(U.ambient,new Float32Array(env.isNight?rgb('#1a2437'):rgb(env.wp.ambient)));gl.uniform3fv(U.dirColor,new Float32Array(env.isNight?rgb('#32435a'):rgb(env.wp.dir)));gl.uniform3fv(U.dir,new Float32Array(norm([-.55,-1,-.3])));gl.uniform3fv(U.fog,new Float32Array(env.fog));gl.uniform3fv(U.camera,new Float32Array(cameraEye));gl.uniform1f(U.fogD,env.isNight?.0048:env.wp.fogD);
+ const ppos=[],pcol=[],pow=[];const towers=[[-56,17,70],[56,17,70],[-56,17,-70],[56,17,-70]];for(let i=0;i<4;i++){ppos.push(...towers[i]);pcol.push(...rgb('#fff4d5'));pow.push(env.isNight?180:0)}ppos.push(...ball.pos);pcol.push(...rgb(LED[ledIndex].hex));pow.push(env.isNight?24:3);gl.uniform3fv(U.pp,new Float32Array(ppos));gl.uniform3fv(U.pc,new Float32Array(pcol));gl.uniform1fv(U.pw,new Float32Array(pow));
+ queueScene();gl.disable(gl.BLEND);gl.depthMask(true);for(const d of opaque)drawNow(d);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);for(const d of transparent)drawNow(d);gl.depthMask(true);gl.disable(gl.BLEND);
+}
+function resize(){W=innerWidth;H=innerHeight;DPR=Math.min(devicePixelRatio||1,2);glCanvas.width=Math.round(W*DPR);glCanvas.height=Math.round(H*DPR);fxCanvas.width=Math.round(W*DPR);fxCanvas.height=Math.round(H*DPR);gl.viewport(0,0,glCanvas.width,glCanvas.height);fx.setTransform(DPR,0,0,DPR,0,0);proj=perspective(rad(52),W/H,.1,600)}addEventListener('resize',resize);resize();gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
+
+function projectPoint(p){const clip=tp(mm(proj,view),p);return{x:(clip[0]*.5+.5)*W,y:(1-(clip[1]*.5+.5))*H,z:clip[2]}}
+function drawFX(dt){fx.clearRect(0,0,W,H);const wp=weatherProfiles[currentHole.weather],wet=currentHole.weather==='rain'||currentHole.weather==='storm';if(wet){fx.save();fx.strokeStyle=currentHole.weather==='storm'?'rgba(145,210,255,.58)':'rgba(160,220,255,.42)';fx.lineWidth=currentHole.weather==='storm'?1.7:1.1;/* R-RM: thinning the rain to 30% still leaves 30% of it scrolling down the
+   screen, which is the part that is motion. Under reduced motion the streaks
+   are thinned AND frozen — the weather still reads as rain, it just does not
+   move. The tint below is unaffected either way. */
+ const mo=motionReduced();const count=Math.round((currentHole.weather==='storm'?430:270)*(mo?0.3:1));const wt=mo?0:time;for(let i=0;i<count;i++){const x=(i*71.3+wt*(currentHole.windSpeed+32))%W,y=(i*43.7+wt*(370+currentHole.windSpeed*6))%H;fx.beginPath();fx.moveTo(x,y);fx.lineTo(x-10-Math.sin(currentHole.windAngle)*10,y+24);fx.stroke()}fx.fillStyle=currentHole.weather==='storm'?'rgba(16,31,44,.20)':'rgba(43,76,92,.10)';fx.fillRect(0,0,W,H);fx.restore()}else if(currentHole.weather==='night'||manualNight){fx.fillStyle='rgba(3,5,18,.12)';fx.fillRect(0,0,W,H)}
+ // wind indicator near ball
+ if(ball.state==='AIMING'&&mode!=='DESIGN'){const s=projectPoint(ball.pos);if(s.z<1){fx.save();fx.translate(s.x,s.y-45);fx.rotate(currentHole.windAngle);fx.strokeStyle='rgba(255,255,255,.8)';fx.fillStyle='rgba(101,239,255,.9)';fx.lineWidth=2;fx.beginPath();fx.moveTo(0,15);fx.lineTo(0,-15);fx.stroke();fx.beginPath();fx.moveTo(0,-20);fx.lineTo(-5,-10);fx.lineTo(5,-10);fx.closePath();fx.fill();fx.restore()}}
+}
+
+// ---------- Camera ----------
+function updateCamera(dt){let desiredEye,desiredTarget;if(mode==='DESIGN'){desiredEye=[0,115,92];desiredTarget=[0,0,0]}else if(ball.state==='PREVIEW'){const mid=[(currentHole.tee.x+currentHole.pin.x)/2,0,(currentHole.tee.z+currentHole.pin.z)/2];desiredEye=[mid[0]+62,78,mid[2]+80];desiredTarget=[mid[0],0,mid[2]]}else{const dir=[Math.sin(aimAngle),0,-Math.cos(aimAngle)],right=[dir[2],0,-dir[0]];if(cameraMode===1){desiredEye=[ball.pos[0]+28,ball.pos[1]+36,ball.pos[2]+34];desiredTarget=ball.pos}else if(cameraMode===2){desiredEye=[currentHole.pin.x+28,terrainHeight(currentHole.pin.x,currentHole.pin.z)+18,currentHole.pin.z+30];desiredTarget=ball.pos}else if(ball.state==='IN_FLIGHT'||ball.state==='ROLLING'){desiredEye=[ball.pos[0]+right[0]*7-dir[0]*17,ball.pos[1]+11,ball.pos[2]+right[2]*7-dir[2]*17];desiredTarget=add(ball.pos,mul(dir,5))}else{desiredEye=[ball.pos[0]-dir[0]*18,ball.pos[1]+8.5,ball.pos[2]-dir[2]*18];desiredTarget=[ball.pos[0]+dir[0]*8,ball.pos[1]+1.6,ball.pos[2]+dir[2]*8]}}
+ const k=1-Math.exp(-dt*(mode==='DESIGN'?3.5:5.5));cameraEye=mixV(cameraEye,desiredEye,k);cameraTarget=mixV(cameraTarget,desiredTarget,k);view=lookAt(cameraEye,cameraTarget)}
+
+// ---------- Physics ----------
+let aimAngle=0;
+function windVector(){const k=.055*currentHole.windSpeed;return[Math.sin(currentHole.windAngle)*k,0,-Math.cos(currentHole.windAngle)*k]}
+function predictDots(p=.65){const dots=[],c=currentClub,dir=[Math.sin(aimAngle),0,-Math.cos(aimAngle)],lieMul=ball.lie==='bunker'?.7:ball.lie==='rough'?.88:1,speed=c.speed*(.18+.82*p)*lieMul,loft=rad(c.loft),vel=[dir[0]*speed*Math.cos(loft),speed*Math.sin(loft),dir[2]*speed*Math.cos(loft)];vel[0]+=shotShape*5.5*c.control;let pos=[...ball.pos];if(c.key==='putter'){for(let i=1;i<=17;i++){const t=i*.15;const x=pos[0]+vel[0]*t*.7,z=pos[2]+vel[2]*t*.7;dots.push([x,terrainHeight(x,z)+BALL_R+.03,z])}}else for(let i=1;i<=18;i++){const t=i*.11;const x=pos[0]+vel[0]*t+windVector()[0]*t*t*.5,z=pos[2]+vel[2]*t+windVector()[2]*t*t*.5,y=pos[1]+vel[1]*t-11*t*t;dots.push([x,Math.max(terrainHeight(x,z)+.15,y),z])}return dots}
+function takeShot(){if(ball.state!=='AIMING'||mode==='DESIGN'||pendingPenalty)return;initAudio();const p=clamp(power,.04,1),dir=[Math.sin(aimAngle),0,-Math.cos(aimAngle)],lieMul=ball.lie==='bunker'?.68:ball.lie==='rough'?.86:1,speed=currentClub.speed*(.16+.84*p)*lieMul,loft=rad(currentClub.loft);ball.lastSafe=[...ball.pos];ball.spin=shotShape*4.6*currentClub.control;if(currentClub.key==='putter'){ball.vel=[dir[0]*speed,0,dir[2]*speed];ball.state='ROLLING'}else{ball.vel=[dir[0]*speed*Math.cos(loft),speed*Math.sin(loft),dir[2]*speed*Math.cos(loft)];ball.state='IN_FLIGHT'}currentStrokes++;playSwing();updateHUD();q('swingBtn').textContent='BALL IN PLAY';q('swingBtn').disabled=true}
+function fixedStep(dt){if(ball.state==='IN_FLIGHT'){const w=windVector(),drag=Math.exp(-.055*dt);ball.vel[0]=(ball.vel[0]+w[0]*dt)*drag;ball.vel[2]=(ball.vel[2]+w[2]*dt)*drag;ball.vel[0]+=ball.spin*dt;ball.vel[1]-=22*dt;const prev=[...ball.pos];ball.pos=add(ball.pos,mul(ball.vel,dt));const ground=terrainHeight(ball.pos[0],ball.pos[2])+BALL_R;if(ball.pos[1]<=ground){if(inWater(ball.pos[0],ball.pos[2]))return penalty('Water hazard',1);ball.pos[1]=ground;const wet=weatherProfiles[currentHole.weather].wet,bounce=Math.max(.12,.38-wet*.15);ball.vel[1]=-ball.vel[1]*bounce;ball.vel[0]*=.86;ball.vel[2]*=.86;if(Math.abs(ball.vel[1])<1.6){ball.vel[1]=0;ball.state='ROLLING'}}if(Math.abs(ball.pos[0])>78||Math.abs(ball.pos[2])>158)penalty('Out of bounds',1)}
+ else if(ball.state==='ROLLING'){const prev=[...ball.pos],surf=surfaceAt(ball.pos[0],ball.pos[2]);if(surf==='water')return penalty('Water hazard',1);const gr=slopeGradient(ball.pos[0],ball.pos[2]),wet=weatherProfiles[currentHole.weather].wet;ball.vel[0]+=gr.dx*12.5*dt;ball.vel[2]+=gr.dz*12.5*dt;let sp=Math.hypot(ball.vel[0],ball.vel[2]),decel=surf==='green'?2.0:surf==='fairway'?3.15:surf==='rough'?6.2:surf==='bunker'?12.5:4;decel*=1+wet*.5;if(sp>0){const ns=Math.max(0,sp-decel*dt),f=ns/sp;ball.vel[0]*=f;ball.vel[2]*=f}ball.vel[0]+=ball.spin*dt*.11;ball.spin*=Math.exp(-1.8*dt);ball.pos[0]+=ball.vel[0]*dt;ball.pos[2]+=ball.vel[2]*dt;ball.pos[1]=terrainHeight(ball.pos[0],ball.pos[2])+BALL_R;sp=Math.hypot(ball.vel[0],ball.vel[2]);if(segmentDistance2D(prev,ball.pos,[currentHole.pin.x,currentHole.pin.z])<1.0&&sp<9.5&&surfaceAt(ball.pos[0],ball.pos[2])==='green')return holeBall();if(Math.abs(ball.pos[0])>78||Math.abs(ball.pos[2])>158)return penalty('Out of bounds',1);if(sp<.23){ball.settle+=dt;if(ball.settle>.42){ball.vel=[0,0,0];ball.state='AIMING';ball.settle=0;ball.lie=surfaceAt(ball.pos[0],ball.pos[2]);aimTowardPin();if(ball.lie==='green')selectClub('putter');readyForShot()}}else ball.settle=0}}
+function segmentDistance2D(a,b,p){const ax=a[0],az=a[2],bx=b[0],bz=b[2],dx=bx-ax,dz=bz-az,l2=dx*dx+dz*dz;if(!l2)return Math.hypot(p[0]-ax,p[1]-az);const t=clamp(((p[0]-ax)*dx+(p[1]-az)*dz)/l2,0,1);return Math.hypot(p[0]-(ax+t*dx),p[1]-(az+t*dz))}
+function penalty(label,addStroke){if(pendingPenalty)return;pendingPenalty=true;currentStrokes+=addStroke;playSplash();showToast(`${label} — +${addStroke} penalty`);ball.state='PENALTY';ball.vel=[0,0,0];setTimeout(()=>{ball.pos=[...ball.lastSafe];ball.pos[1]=terrainHeight(ball.pos[0],ball.pos[2])+BALL_R;ball.state='AIMING';ball.lie=surfaceAt(ball.pos[0],ball.pos[2]);aimTowardPin();pendingPenalty=false;readyForShot();updateHUD()},1000)}
+function holeBall(){ball.state='HOLED';ball.vel=[0,0,0];ball.pos=[currentHole.pin.x,terrainHeight(currentHole.pin.x,currentHole.pin.z)+.05,currentHole.pin.z];playSink();const called=mode==='ROUND'?calls[currentHoleIndex]:null,rating=called?callRating(called,currentStrokes,currentHole.par):null;if(mode==='ROUND'){scores[currentHoleIndex]=currentStrokes;ratings[currentHoleIndex]=rating;saveRound()}setTimeout(()=>showHoleResult(rating),700)}
+function callRating(called,actual,par){const err=Math.abs(actual-called),bands=[100,72,45,25,12,5],base=bands[Math.min(err,bands.length-1)];return Math.min(called>par+3?60:100,base)}
+function aimTowardPin(){aimAngle=Math.atan2(currentHole.pin.x-ball.pos[0],-(currentHole.pin.z-ball.pos[2]))}
+function readyForShot(){q('swingBtn').disabled=false;q('swingBtn').textContent='HOLD FOR POWER';power=0;q('powerFill').style.width='0%';q('powerText').textContent='0%';updateHUD()}
+
+// ---------- Flow ----------
+let currentStrokes=0;
+function loadHole(h,{prompt=true}){currentHole=h;updateAmbience();currentStrokes=0;pendingPenalty=false;ball.pos=[h.tee.x,terrainHeight(h.tee.x,h.tee.z)+BALL_R,h.tee.z];ball.lastSafe=[...ball.pos];ball.vel=[0,0,0];ball.state=prompt?'PREVIEW':'AIMING';ball.lie='fairway';shotShape=0;setShape(0);aimTowardPin();currentClub=CLUBS[0];renderClubs();rebuildScene();cameraEye=[h.tee.x+48,45,h.tee.z+50];cameraTarget=[0,0,0];updateHUD();readyForShot();if(prompt&&mode==='ROUND')setTimeout(()=>openCallPrompt(),450);else if(prompt&&mode==='CUSTOM_PLAY')setTimeout(()=>startCustomPlay(),350)}
+function openCallPrompt(){q('callTitle').textContent=`Hole ${currentHole.number}: ${currentHole.name}`;q('callCopy').textContent=`Par ${currentHole.par}. ${currentHole.weather.toUpperCase()} conditions, ${currentHole.windSpeed} mph wind. Study the course, then call your score.`;const grid=q('callGrid');grid.innerHTML='';for(let i=1;i<=7;i++){const b=document.createElement('button');b.textContent=i;b.addEventListener('click',()=>{calls[currentHoleIndex]=i;closeModal('callModal');ball.state='AIMING';readyForShot();showToast(`You called ${i} stroke${i===1?'':'s'}`);saveRound()});grid.appendChild(b)}openModal('callModal')}
+function startCustomPlay(){ball.state='AIMING';readyForShot();showToast('Custom hole test started')}
+function showHoleResult(rating){const diff=currentStrokes-currentHole.par,diffText=diff===0?'level par':diff<0?`${Math.abs(diff)} under par`:`${diff} over par`;q('bannerTitle').textContent=mode==='CUSTOM_PLAY'?'CUSTOM HOLE COMPLETE':`HOLE ${currentHole.number} COMPLETE`;q('bannerText').innerHTML=`${currentStrokes} strokes — ${diffText}.${rating!=null?`<br>Call Rating: <b style="color:var(--amber)">${rating}/100</b>`:''}`;const actions=q('bannerActions');actions.innerHTML='';if(mode==='CUSTOM_PLAY'){actions.append(button('Return to Course Lab',()=>enterDesigner(editorHole)),button('Play again',()=>{hideBanner();loadHole(editorHole,{prompt:false})},'primary'))}else if(currentHoleIndex>=8){actions.append(button('View final scorecard',()=>{hideBanner();openScorecard()},'primary'),button('New round',newRound))}else{actions.append(button('Scorecard',openScorecard),button('Next hole',()=>{hideBanner();currentHoleIndex++;loadHole(holes[currentHoleIndex],{prompt:true})},'primary'))}q('banner').classList.add('show')}
+function button(text,fn,cls=''){const b=document.createElement('button');b.textContent=text;if(cls)b.className=cls;b.addEventListener('click',fn);return b}function hideBanner(){q('banner').classList.remove('show')}
+function restartHole(){hideBanner();if(mode==='ROUND')loadHole(holes[currentHoleIndex],{prompt:false});else if(mode==='CUSTOM_PLAY')loadHole(editorHole,{prompt:false})}
+function newRound(){scores=Array(9).fill(null);calls=Array(9).fill(null);ratings=Array(9).fill(null);currentHoleIndex=0;mode='ROUND';document.body.classList.remove('designMode');q('designerBar').classList.remove('show');closeModal('scoreModal');hideBanner();loadHole(holes[0],{prompt:true});saveRound()}
+function saveRound(){try{localStorage.setItem('mbm_aurora_links_round_v1',JSON.stringify({scores,calls,ratings,hole:currentHoleIndex,manualNight,led:ledIndex}))}catch(e){}}
+
+function renderClubs(){const bar=q('clubBar');bar.innerHTML='';for(const c of CLUBS){const b=document.createElement('button');b.className='clubBtn'+(c.key===currentClub.key?' active':'');b.innerHTML=`${c.name}<small>${c.carry}</small>`;b.addEventListener('click',()=>selectClub(c.key));bar.appendChild(b)}}
+function selectClub(key){if(ball.state!=='AIMING')return;currentClub=CLUBS.find(c=>c.key===key)||CLUBS[0];renderClubs();playTick()}
+function setShape(n){shotShape=n;q('fadeBtn').classList.toggle('active',n<0);q('straightBtn').classList.toggle('active',n===0);q('drawBtn').classList.toggle('active',n>0)}
+function updateHUD(){q('holeHud').textContent=mode==='ROUND'?`${currentHoleIndex+1}/9`:'LAB';q('parHud').textContent=currentHole.par;q('strokeHud').textContent=currentStrokes;const completed=scores.reduce((a,s,i)=>s==null?a:a+s-holes[i].par,0);q('roundHud').textContent=completed===0?'E':completed>0?`+${completed}`:`${completed}`;q('distanceHud').textContent=Math.round(Math.hypot(ball.pos[0]-currentHole.pin.x,ball.pos[2]-currentHole.pin.z))+'y';q('windHud').textContent=currentHole.windSpeed+' mph';q('windCompass').style.transform=`rotate(${currentHole.windAngle}rad)`;ball.lie=ball.state==='AIMING'?surfaceAt(ball.pos[0],ball.pos[2]):ball.lie;q('lieText').textContent=lieLabel(ball.lie);q('nightBtn').classList.toggle('active',manualNight);q('gridBtn').classList.toggle('active',greenRead);q('ledBtn').textContent=`● LED: ${LED[ledIndex].name}`}
+function formatRel(n){return n===0?'E':n>0?`+${n}`:`${n}`}
+/* Defence in depth for the scorecard: even with the loader validating, nothing
+   that came out of storage is written into innerHTML unescaped. */
+function escapeCell(v){return v==null?'—':String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function openScorecard(){let html='<thead><tr><th>Hole</th>';for(let i=0;i<9;i++)html+=`<th class="${i===currentHoleIndex?'activeCol':''}">${i+1}</th>`;html+='<th>Total</th></tr></thead><tbody><tr><th>Par</th>';let par=0,st=0;for(const h of holes){par+=h.par;html+=`<td>${h.par}</td>`}html+=`<td>${par}</td></tr><tr><th>Strokes</th>`;for(const s of scores){if(typeof s==='number'&&Number.isFinite(s))st+=s;html+=`<td>${escapeCell(s)}</td>`}/* `st+=s` string-concatenates a hostile payload into the Total cell when s
+   is a string, which made the totals a fourth injection sink alongside the
+   per-hole rows. safeSlots() already guarantees number-or-null here; this
+   keeps the arithmetic arithmetic regardless of how it is reached. */html+=`<td>${st||'—'}</td></tr><tr><th>To par</th>`;let running=0;for(let i=0;i<9;i++){const s=scores[i];const d=s==null?null:s-holes[i].par;if(d!=null)running+=d;html+=`<td class="${d!=null&&d<0?'good':d>0?'bad':''}">${d==null?'—':formatRel(d)}</td>`}html+=`<td>${formatRel(running)}</td></tr><tr><th>Call</th>`;for(const c of calls)html+=`<td>${escapeCell(c)}</td>`;html+='<td>—</td></tr><tr><th>Rating</th>';for(const r of ratings)html+=`<td>${escapeCell(r)}</td>`;const rr=ratings.filter(x=>x!=null),avg=rr.length?Math.round(rr.reduce((a,b)=>a+b,0)/rr.length):null;html+=`<td>${avg==null?'—':avg}</td></tr></tbody>`;q('scoreTable').innerHTML=html;q('scoreRound').textContent=formatRel(running);q('scoreCall').textContent=avg==null?'—':avg;let best='—',bestScore=99;for(let i=0;i<9;i++)if(scores[i]!=null&&scores[i]-holes[i].par<bestScore){bestScore=scores[i]-holes[i].par;best=`#${i+1} ${formatRel(bestScore)}`}q('scoreBest').textContent=best;openModal('scoreModal')}
+
+// ---------- Designer ----------
+function cloneHole(h){return JSON.parse(JSON.stringify(h))}
+function enterDesigner(h=null){hideBanner();mode='DESIGN';editorReturnIndex=currentHoleIndex;editorHole=h?cloneHole(h):cloneHole(holes[currentHoleIndex]);editorHole.number='LAB';editorUndo=[];currentHole=editorHole;ball.state='PREVIEW';document.body.classList.add('designMode');q('designerBar').classList.add('show');closeModal('labModal');applyEditorForm();rebuildScene();updateHUD();updateLabInfo();showToast('Tap the terrain to place the selected feature')}
+function exitDesigner(){mode='ROUND';document.body.classList.remove('designMode');q('designerBar').classList.remove('show');currentHoleIndex=editorReturnIndex;loadHole(holes[currentHoleIndex],{prompt:false});showToast('Returned to the tournament')}
+function snapshotEditor(){editorUndo.push(cloneHole(editorHole));if(editorUndo.length>20)editorUndo.shift()}
+function undoEditor(){if(!editorUndo.length)return showToast('Nothing to undo');editorHole=editorUndo.pop();currentHole=editorHole;rebuildScene();updateLabInfo();showToast('Last edit undone')}
+function applyEditorForm(){q('editorPar').value=String(editorHole.par);q('editorWeather').value=editorHole.weather||'sunny'}
+function updateLabInfo(){if(!editorHole)return;q('labTee').textContent=`${editorHole.tee.x.toFixed(0)}, ${editorHole.tee.z.toFixed(0)}`;q('labPin').textContent=`${editorHole.pin.x.toFixed(0)}, ${editorHole.pin.z.toFixed(0)}`;q('labHazards').textContent=(editorHole.bunkers.length+editorHole.water.length);q('labTrees').textContent=editorHole.trees.length}
+function screenRay(clientX,clientY){const r=glCanvas.getBoundingClientRect(),x=(clientX-r.left)/r.width*2-1,y=1-(clientY-r.top)/r.height*2,ivp=inv(mm(proj,view)),near=tp(ivp,[x,y,-1]),far=tp(ivp,[x,y,1]),dir=norm(sub(far,near));const t=(0-near[1])/(dir[1]||-.0001);return add(near,mul(dir,t))}
+function editorPlace(e){if(mode!=='DESIGN')return;const p=screenRay(e.clientX,e.clientY);if(Math.abs(p[0])>67||Math.abs(p[2])>145)return;snapshotEditor();if(designerTool==='tee')editorHole.tee={x:p[0],z:p[2]};else if(designerTool==='pin')editorHole.pin={x:p[0],z:p[2]};else if(designerTool==='bunker')editorHole.bunkers.push({x:p[0],z:p[2],rx:8,rz:5.5});else if(designerTool==='water')editorHole.water.push({x:p[0],z:p[2],w:30,d:18});else if(designerTool==='tree')editorHole.trees.push({x:p[0],z:p[2],s:1});else if(designerTool==='remove')removeNearest(p);currentHole=editorHole;rebuildScene();updateLabInfo();playDrop()}
+function removeNearest(p){const groups=[['bunkers','bunkers'],['water','water'],['trees','trees']];let best=null;for(const [key] of groups)editorHole[key].forEach((o,i)=>{const d=Math.hypot(p[0]-o.x,p[2]-o.z);if(!best||d<best.d)best={key,i,d}});if(best&&best.d<18)editorHole[best.key].splice(best.i,1);else showToast('No nearby feature to remove')}
+function testCustom(){editorHole.par=Number(q('editorPar').value);editorHole.weather=q('editorWeather').value;const wp=weatherProfiles[editorHole.weather];editorHole.windSpeed=Math.round((wp.wind[0]+wp.wind[1])/2);editorHole.windAngle=1.2;mode='CUSTOM_PLAY';document.body.classList.remove('designMode');q('designerBar').classList.remove('show');loadHole(editorHole,{prompt:true})}
+function exportHole(){downloadJSON('aurora_links_custom_hole.json',editorHole);showToast('Custom hole exported')}
+function downloadJSON(name,data){const a=document.createElement('a'),url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function importHoleFile(file){const r=new FileReader();r.onload=()=>{try{const h=JSON.parse(r.result);if(!h.tee||!h.pin||!Array.isArray(h.bunkers)||!Array.isArray(h.water))throw new Error();editorHole=Object.assign(generateHole(0),h);editorHole.trees=Array.isArray(h.trees)?h.trees:[];currentHole=editorHole;applyEditorForm();rebuildScene();updateLabInfo();showToast('Hole imported')}catch(e){showToast('That JSON file is not a valid Aurora Links hole')}};r.readAsText(file)}
+
+// ---------- Input ----------
+glCanvas.addEventListener('pointerdown',e=>{if(mode==='DESIGN'){editorPlace(e);return}if(ball.state!=='AIMING')return;aimDrag={x:e.clientX,angle:aimAngle};glCanvas.setPointerCapture(e.pointerId)});glCanvas.addEventListener('pointermove',e=>{if(!aimDrag)return;aimAngle=aimDrag.angle-(e.clientX-aimDrag.x)*.006});glCanvas.addEventListener('pointerup',e=>{aimDrag=null;try{glCanvas.releasePointerCapture(e.pointerId)}catch(_){}});glCanvas.addEventListener('pointercancel',()=>aimDrag=null);
+q('swingBtn').addEventListener('pointerdown',e=>{e.preventDefault();if(ball.state!=='AIMING'||mode==='DESIGN')return;initAudio();charging=true;chargeStart=performance.now();q('swingBtn').classList.add('charging');q('swingBtn').textContent='RELEASE TO SWING'});function releaseSwing(e){if(e)e.preventDefault();if(!charging)return;charging=false;q('swingBtn').classList.remove('charging');takeShot()}q('swingBtn').addEventListener('pointerup',releaseSwing);q('swingBtn').addEventListener('pointercancel',releaseSwing);q('swingBtn').addEventListener('pointerleave',e=>{if(charging&&e.buttons===0)releaseSwing(e)});
+addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat){e.preventDefault();if(ball.state==='AIMING'&&mode!=='DESIGN'){charging=true;chargeStart=performance.now();q('swingBtn').classList.add('charging')}}if(e.key==='a'||e.key==='A'||e.key==='ArrowLeft')aimAngle+=.045;if(e.key==='d'||e.key==='D'||e.key==='ArrowRight')aimAngle-=.045;if(e.key==='1')selectClub('driver');if(e.key==='2')selectClub('iron');if(e.key==='3')selectClub('wedge');if(e.key==='4')selectClub('putter');if(e.key==='Escape'){document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open'));hideBanner()}});addEventListener('keyup',e=>{if(e.code==='Space'&&charging){charging=false;q('swingBtn').classList.remove('charging');takeShot()}});
+
+// ---------- UI events ----------
+function openModal(id){q(id).classList.add('open')}function closeModal(id){q(id).classList.remove('open')}document.addEventListener('click',e=>{const b=e.target.closest('[data-close]');if(b)closeModal(b.dataset.close);if(e.target.classList.contains('modal'))e.target.classList.remove('open')});
+q('scoreBtn').addEventListener('click',openScorecard);q('callScorecardBtn').addEventListener('click',openScorecard);q('callPracticeBtn').addEventListener('click',()=>{calls[currentHoleIndex]=null;closeModal('callModal');ball.state='AIMING';readyForShot();showToast('Practice hole — Call Rating disabled')});q('gridBtn').addEventListener('click',()=>{greenRead=!greenRead;updateHUD();playTick()});q('nightBtn').addEventListener('click',()=>{manualNight=!manualNight;updateHUD();saveRound();playTick()});q('ledBtn').addEventListener('click',()=>{ledIndex=(ledIndex+1)%LED.length;updateHUD();saveRound();playTick()});q('cameraBtn').addEventListener('click',()=>{cameraMode=(cameraMode+1)%3;showToast(['Player camera','High follow camera','Pin camera'][cameraMode]);playTick()});q('restartBtn').addEventListener('click',restartHole);q('helpBtn').addEventListener('click',()=>openModal('helpModal'));q('labBtn').addEventListener('click',()=>openModal('labModal'));q('enterLabBtn').addEventListener('click',()=>enterDesigner());q('newRoundBtn').addEventListener('click',newRound);q('fadeBtn').addEventListener('click',()=>setShape(-1));q('straightBtn').addEventListener('click',()=>setShape(0));q('drawBtn').addEventListener('click',()=>setShape(1));
+document.querySelectorAll('.designTool').forEach(b=>b.addEventListener('click',()=>{designerTool=b.dataset.tool;document.querySelectorAll('.designTool').forEach(x=>x.classList.toggle('active',x===b));showToast(`${b.textContent.trim()} tool selected`)}));q('undoBtn').addEventListener('click',undoEditor);q('testCustomBtn').addEventListener('click',testCustom);q('exportHoleBtn').addEventListener('click',exportHole);q('importHoleBtn').addEventListener('click',()=>q('holeFileInput').click());q('holeFileInput').addEventListener('change',e=>{if(e.target.files[0])importHoleFile(e.target.files[0]);e.target.value=''});q('exitLabBtn').addEventListener('click',exitDesigner);q('editorPar').addEventListener('change',()=>{if(editorHole)editorHole.par=Number(q('editorPar').value)});q('editorWeather').addEventListener('change',()=>{if(editorHole){editorHole.weather=q('editorWeather').value;const wp=weatherProfiles[editorHole.weather];editorHole.windSpeed=Math.round((wp.wind[0]+wp.wind[1])/2);rebuildScene()}});
+
+function showToast(msg){q('toast').textContent=msg;q('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>q('toast').classList.remove('show'),2300)}
+
+// ---------- Audio ----------
+let audioCtx=null,rainGain=null,windGain=null;
+function initAudio(){if(audioCtx){if(audioCtx.state==='suspended')audioCtx.resume();return}const A=window.AudioContext||window.webkitAudioContext;if(!A)return;audioCtx=new A();const len=audioCtx.sampleRate*2,b=audioCtx.createBuffer(1,len,audioCtx.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;function noise(type,freq){const s=audioCtx.createBufferSource(),f=audioCtx.createBiquadFilter(),g=audioCtx.createGain();s.buffer=b;s.loop=true;f.type=type;f.frequency.value=freq;g.gain.value=0;s.connect(f);f.connect(g);g.connect(audioCtx.destination);s.start();return g}rainGain=noise('lowpass',900);windGain=noise('bandpass',420);updateAmbience()}
+function updateAmbience(){if(!audioCtx)return;const storm=currentHole.weather==='storm',rain=currentHole.weather==='rain'||storm;rainGain.gain.setTargetAtTime(rain?(storm?.22:.10):0,audioCtx.currentTime,.4);windGain.gain.setTargetAtTime(currentHole.windSpeed>12?Math.min(.12,currentHole.windSpeed/300):0,audioCtx.currentTime,.4)}
+function tone(f,d=.15,type='sine',vol=.15){initAudio();if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.setValueAtTime(f,audioCtx.currentTime);g.gain.setValueAtTime(vol,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+d);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+d)}
+function playTick(){tone(620,.07,'sine',.08)}function playDrop(){tone(500,.1,'sine',.13)}function playSwing(){initAudio();if(!audioCtx)return;const len=audioCtx.sampleRate*.28,b=audioCtx.createBuffer(1,len,audioCtx.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;const s=audioCtx.createBufferSource(),f=audioCtx.createBiquadFilter(),g=audioCtx.createGain();s.buffer=b;f.type='bandpass';f.frequency.setValueAtTime(220,audioCtx.currentTime);f.frequency.exponentialRampToValueAtTime(1600,audioCtx.currentTime+.13);f.Q.value=3;g.gain.setValueAtTime(.42,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.28);s.connect(f);f.connect(g);g.connect(audioCtx.destination);s.start();setTimeout(()=>tone(currentClub.key==='putter'?180:95,.13,'triangle',.22),85)}function playSplash(){initAudio();if(!audioCtx)return;const len=audioCtx.sampleRate*.48,b=audioCtx.createBuffer(1,len,audioCtx.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;const s=audioCtx.createBufferSource(),f=audioCtx.createBiquadFilter(),g=audioCtx.createGain();s.buffer=b;f.type='lowpass';f.frequency.setValueAtTime(1300,audioCtx.currentTime);f.frequency.exponentialRampToValueAtTime(180,audioCtx.currentTime+.45);g.gain.setValueAtTime(.4,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.48);s.connect(f);f.connect(g);g.connect(audioCtx.destination);s.start()}function playSink(){[420,260,110].forEach((f,i)=>setTimeout(()=>tone(f,.24,'sine',.19),i*80))}
+
+// ---------- Main loop ----------
+/* R-SAVE (verify pass): the re-arm used to be the LAST statement of frame(),
+   so any single throw downstream stopped the game forever with the HUD still
+   live over a frozen or never-painted course. Measured before the fix: a
+   12-entry `scores` array threw inside the boot updateHUD() that ran BEFORE
+   the first arm, and the loop never started at all (0 frames, black canvas);
+   a non-numeric `hole` let it start (7 frames) and then killed it at the
+   first post-start frame (19 frames, unchanged a second later). Both states
+   survived reload. The arm now happens first and the draw is isolated, so a
+   bad frame costs one frame instead of the session. */
+let frameFaults=0;
+function frame(now){requestAnimationFrame(frame);const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;if(charging){const phase=((now-chargeStart)/1150)%2,p=phase<1?phase:2-phase;power=.04+.96*p;q('powerFill').style.width=Math.round(power*100)+'%';q('powerText').textContent=Math.round(power*100)+'%'}acc+=dt;let steps=0;while(acc>=FIXED&&steps<20){fixedStep(FIXED);acc-=FIXED;steps++}updateCamera(dt);
+ try{render3D();drawFX(dt)}
+ catch(err){if(frameFaults++===0){console.error('render fault, loop kept alive',err);showToast('A frame failed to draw — the round is still playable')}}
+}
+/* Splash gate. The game's window keydown handler is registered unconditionally
+   and calls preventDefault() on Space, so Space could never reach the splash —
+   the dismissing key was swallowed by a gameplay handler, which is exactly the
+   leak the rule forbids. A capture-phase handler now takes the key FIRST while
+   the splash is up, stops it propagating, and dismisses. Focus then moves into
+   the app instead of being left on BODY. */
+function splashUp(){const el=q('splash');return !!el&&el.style.display!=='none'&&el.offsetWidth>0}
+function dismissSplash(viaSkip){
+  if(!splashUp())return false;
+  window.__auroraSplashSkips=(window.__auroraSplashSkips||0)+(viaSkip?1:0);
+  document.removeEventListener('keydown',splashKey,true);
+  startRound();
+  return true;
+}
+function splashKey(e){
+  if(!splashUp())return;
+  if(e.key==='Escape'||e.key==='Enter'||e.key===' '||e.code==='Space'){
+    e.preventDefault();e.stopPropagation();dismissSplash(true);
+  }
+}
+document.addEventListener('keydown',splashKey,true);
+q('splash').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();dismissSplash(true)},{capture:true});
+function startRound(){initAudio();gameStarted=true;q('splash').style.display='none';mode='ROUND';currentHole=holes[currentHoleIndex];loadHole(currentHole,{prompt:true});renderClubs();showToast('Welcome to Aurora Links');
+  const focusTarget=document.querySelector('#swingBtn')||document.querySelector('button:not([disabled])');
+  if(focusTarget){try{focusTarget.focus({preventScroll:true})}catch(_){focusTarget.focus()}}
+}
+q('startBtn').addEventListener('click',()=>dismissSplash(true));
+/* Arm before the first HUD paint, not after: updateHUD() reads persisted
+   state, and when that threw, the loop it was standing in front of never
+   started. */
+/* The house diagnostic surface, matching window.__fracture and window.__turf.
+   One reader, so a harness and the game can never disagree about state. */
+window.__aurora={
+ snapshot(){
+  return {
+   splashClosed:!splashUp(),
+   splashSkips:(window.__auroraSplashSkips||0),
+   holeIndex:currentHoleIndex,
+   holeWeathers:holes.map(h=>h.weather),
+   weather:currentHole.weather,
+   manualNight:manualNight,
+   mode:mode,
+   ballState:ball.state,
+   strokes:currentStrokes,
+   scores:scores.slice(),calls:calls.slice(),ratings:ratings.slice(),
+   saveKeys:{round:'mbm_aurora_links_round_v1'},
+   reducedMotion:{effective:motionReduced(),osPreference:!!(RM_MEDIA&&RM_MEDIA.matches)},
+   rainStreaks:(()=>{const wet=currentHole.weather==='rain'||currentHole.weather==='storm';
+     return wet?Math.round((currentHole.weather==='storm'?430:270)*(motionReduced()?0.3:1)):0})(),
+   renderer:{contextLost:(window.__auroraContextLost||0),contextRestored:(window.__auroraContextRestored||0)},
+   frameFaults:frameFaults
+  };
+ }
+};
+rebuildScene();renderClubs();requestAnimationFrame(frame);updateHUD();
+})();
+</script>
+<noscript><div style="position:fixed;z-index:300;inset:0;background:#061018;color:#fff;padding:30px"><h1>Aurora Links 3D</h1><p>This game needs JavaScript enabled.</p></div></noscript>
+</body>
+</html>

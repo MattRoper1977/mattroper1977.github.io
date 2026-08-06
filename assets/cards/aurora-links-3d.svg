@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 96" role="img" aria-labelledby="title desc">
+  <title id="title">Aurora Links 3D</title>
+  <desc id="desc">A floodlit golf green at night under a cyan and lime aurora. The ball sits on the tee with a dotted flight line curving toward a pin on the green, a bunker to one side and water beyond, with two floodlight towers throwing light across the fairway.</desc>
+  <defs>
+    <linearGradient id="alsky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#04121C"/>
+      <stop offset="1" stop-color="#061018"/>
+    </linearGradient>
+    <linearGradient id="alaur" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#65EFFF" stop-opacity="0"/>
+      <stop offset="0.35" stop-color="#65EFFF" stop-opacity="0.85"/>
+      <stop offset="0.68" stop-color="#8DFF80" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#8DFF80" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="alfair" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#123A2A"/>
+      <stop offset="1" stop-color="#0A2119"/>
+    </linearGradient>
+    <radialGradient id="alflood" cx="50%" cy="0%" r="100%">
+      <stop offset="0" stop-color="#FFD16C" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#FFD16C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="120" height="96" fill="url(#alsky)"/>
+
+  <!-- aurora bands -->
+  <path d="M-6 20 C 26 8, 54 26, 78 15 S 118 8, 126 16 L126 30 C 100 22, 70 38, 44 28 S 6 30, -6 32 Z" fill="url(#alaur)" opacity="0.7"/>
+  <path d="M-6 30 C 20 22, 48 36, 76 27 S 116 22, 126 27 L126 36 C 96 32, 66 44, 40 36 S 4 40, -6 40 Z" fill="url(#alaur)" opacity="0.35"/>
+
+  <!-- stars -->
+  <g fill="#F7FBFF" opacity="0.65">
+    <circle cx="14" cy="10" r="0.6"/><circle cx="52" cy="7" r="0.5"/><circle cx="96" cy="9" r="0.6"/>
+    <circle cx="108" cy="20" r="0.45"/><circle cx="30" cy="16" r="0.4"/>
+  </g>
+
+  <!-- fairway -->
+  <path d="M0 58 C 30 50, 90 50, 120 58 L120 96 L0 96 Z" fill="url(#alfair)"/>
+  <path d="M0 58 C 30 50, 90 50, 120 58" fill="none" stroke="#8DFF80" stroke-opacity="0.35" stroke-width="0.6"/>
+
+  <!-- floodlight towers + their light -->
+  <g stroke="#BDD0DC" stroke-width="0.9" stroke-linecap="round">
+    <path d="M16 58 v-16"/><path d="M104 58 v-14"/>
+  </g>
+  <rect x="12.5" y="39" width="7" height="3.4" rx="1" fill="#FFD16C"/>
+  <rect x="100.8" y="41" width="6.4" height="3.2" rx="1" fill="#FFD16C"/>
+  <path d="M16 43 L4 96 L40 96 Z" fill="url(#alflood)"/>
+  <path d="M104 45 L82 96 L118 96 Z" fill="url(#alflood)"/>
+
+  <!-- water beyond, bunker beside -->
+  <ellipse cx="90" cy="63" rx="17" ry="4.4" fill="#65EFFF" fill-opacity="0.22"/>
+  <ellipse cx="90" cy="63" rx="17" ry="4.4" fill="none" stroke="#65EFFF" stroke-opacity="0.4" stroke-width="0.5"/>
+  <ellipse cx="40" cy="72" rx="11" ry="4" fill="#E8DCA8" fill-opacity="0.5"/>
+
+  <!-- the green and the pin -->
+  <ellipse cx="66" cy="72" rx="18" ry="6.4" fill="#1B5A3C"/>
+  <ellipse cx="66" cy="72" rx="18" ry="6.4" fill="none" stroke="#8DFF80" stroke-opacity="0.45" stroke-width="0.5"/>
+  <circle cx="66" cy="72" r="1.5" fill="#04121C"/>
+  <path d="M66 72 v-15" stroke="#F7FBFF" stroke-width="0.8"/>
+  <path d="M66 57 l9 3.2 l-9 3.2 z" fill="#FFD16C"/>
+
+  <!-- the ball, and the shot shape it is about to take -->
+  <circle cx="20" cy="86" r="2.6" fill="#F7FBFF"/>
+  <circle cx="20" cy="86" r="4.6" fill="none" stroke="#65EFFF" stroke-opacity="0.5" stroke-width="0.5"/>
+  <path d="M22 84 C 36 66, 52 62, 64 70" fill="none" stroke="#65EFFF" stroke-width="1"
+        stroke-dasharray="2.4 2.4" stroke-linecap="round" opacity="0.9"/>
+</svg>
