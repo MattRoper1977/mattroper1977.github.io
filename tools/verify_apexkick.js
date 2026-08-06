@@ -133,14 +133,46 @@ ok('unlucky-uses-theme-token', /\.unlucky\{color:var\(--amber-l\)/.test(html));
 
 /* ---- 5. offline + no-network contract ---------------------------------- */
 head('Offline contract');
-const netRefs = (html.match(/https?:\/\/[^"'\s)]+/g) || [])
+/* Count what the browser actually FETCHES, not every http string in the file.
+ * The old form matched any URL anywhere and then subtracted two known-innocent
+ * shapes by hand, so a rel=canonical, an og:url and an og:image all counted as
+ * "remote resources" — three metadata values no browser ever requests while
+ * rendering the page. It reported this game as carrying remote assets when it
+ * carries none.
+ *
+ * A fetchable reference is a URL in a position that triggers a network request:
+ * script/img/iframe/audio/video/source/track/embed src, srcset, poster,
+ * object data, a <link> whose rel actually loads something (stylesheet,
+ * preload, prefetch, icon, manifest — NOT canonical or alternate), CSS url(),
+ * and script-side fetch/XHR/WebSocket targets. Metadata (<meta content>,
+ * rel=canonical) is excluded by construction rather than by allowlist. */
+const FETCHABLE_REL = /\b(stylesheet|preload|prefetch|dns-prefetch|preconnect|icon|apple-touch-icon|manifest|modulepreload)\b/i;
+const netRefs = [];
+{
+  const push = u => { if (/^https?:\/\//.test(u)) netRefs.push(u); };
+  /* element attributes that load */
+  const ATTR = /<(script|img|iframe|audio|video|source|track|embed|object)\b[^>]*?\s(?:src|srcset|poster|data)\s*=\s*["']([^"']+)["']/gi;
+  for (let m; (m = ATTR.exec(html)); ) m[2].split(',').forEach(part => push(part.trim().split(/\s+/)[0]));
+  /* <link>, but only when its rel actually fetches */
+  const LINK = /<link\b[^>]*>/gi;
+  for (let m; (m = LINK.exec(html)); ) {
+    const tag = m[0];
+    const rel = (tag.match(/\brel\s*=\s*["']([^"']+)["']/i) || [, ''])[1];
+    const href = (tag.match(/\bhref\s*=\s*["']([^"']+)["']/i) || [, ''])[1];
+    if (href && FETCHABLE_REL.test(rel)) push(href);
+  }
+  /* CSS url() and script-side network calls */
+  for (let m, re = /url\(\s*["']?([^"')]+)["']?\s*\)/gi; (m = re.exec(html)); ) push(m[1]);
+  for (let m, re = /(?:fetch|open|WebSocket)\s*\(\s*["']([^"']+)["']/g; (m = re.exec(html)); ) push(m[1]);
+}
+const netRefsFiltered = netRefs
   // w3.org URIs in SVG are XML namespace identifiers, never fetched;
   // the games link is a user-clickable navigation, not a resource load.
   .filter(u => !/^https?:\/\/www\.w3\.org\//.test(u))
   .filter(u => !/madebymatt\.uk\/games\//.test(u));
-ok('no-remote-resources', netRefs.length === 0,
-   netRefs.length ? 'found: ' + netRefs.slice(0, 3).join(', ')
-                  : '(no fetchable remote assets; only an XML namespace and a nav link)');
+ok('no-remote-resources', netRefsFiltered.length === 0,
+   netRefsFiltered.length ? 'found fetchable: ' + netRefsFiltered.slice(0, 3).join(', ')
+                  : '(no fetchable remote assets; metadata URLs are not fetched and are not counted)');
 ok('no-network-calls', !/\bfetch\s*\(|XMLHttpRequest|WebSocket/.test(html));
 
 /* ---- summary ------------------------------------------------------------ */

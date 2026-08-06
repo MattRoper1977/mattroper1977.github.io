@@ -12,10 +12,17 @@ const N=games.length;
 let pass=0,fail=0;const results=[];function ok(n,c,d=''){results.push({name:n,ok:c,detail:d});console.log((c?'  PASS  ':'  FAIL  ')+n+(d?'   '+d:''));c?pass++:fail++;}
 (async()=>{let browser;try{browser=await chromium.launch({headless:true});
  const sportsManifest=games.filter(g=>g.collection==='Sports').map(g=>g.title);
+ const sportsHrefs=games.filter(g=>g.collection==='Sports').map(g=>g.href);
  ok('manifest-count-derived',Number.isInteger(N)&&N>0,String(N)+' entries (derived, not asserted against a literal)');
  ok('manifest-art-complete',games.filter(g=>g.art&&String(g.art).trim()).length===N,games.filter(g=>g.art&&String(g.art).trim()).length+'/'+N);
  ok('manifest-no-duplicate-hrefs',new Set(games.map(g=>g.href)).size===N,String(N-new Set(games.map(g=>g.href)).size)+' duplicates');
- ok('manifest-sports-membership',JSON.stringify(sportsManifest)===JSON.stringify(['Apex Kick','Apex Pool','Apex Golf','Apex Tennis']),JSON.stringify(sportsManifest));
+ /* DERIVED: the rail's roster is whatever the manifest says it is. This used
+    to compare against a four-name literal and went stale the moment Apex Rally
+    joined - the exact failure this file's own header warns about. What is
+    actually invariant is that the collection is non-empty and internally
+    consistent; manifest-vs-rendered is asserted per viewport below. */
+ ok('manifest-sports-membership-derived',sportsManifest.length>=2&&new Set(sportsManifest).size===sportsManifest.length,
+    sportsManifest.length+' member(s), all distinct: '+JSON.stringify(sportsManifest));
  for(const vp of [{name:'phone',width:390,height:844},{name:'desktop',width:1280,height:900}]){
   const ctx=await browser.newContext({viewport:{width:vp.width,height:vp.height},reducedMotion:'reduce'}),page=await ctx.newPage(),errors=[],bad=[];
   page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});page.on('pageerror',e=>errors.push('page: '+e.message));
@@ -28,12 +35,18 @@ let pass=0,fail=0;const results=[];function ok(n,c,d=''){results.push({name:n,ok
   const n=(arr,t)=>arr.filter(x=>x.title===t).length;
   ok(vp.name+'-page-200',response&&response.status()===200,response?String(response.status()):'none');
   ok(vp.name+'-sports-rail-matches-manifest',JSON.stringify(s.sports.map(x=>x.title))===JSON.stringify(sportsManifest),JSON.stringify(s.sports.map(x=>x.title))+' vs manifest '+JSON.stringify(sportsManifest));
-  ok(vp.name+'-sports-links',JSON.stringify(s.sports.map(x=>x.href))===JSON.stringify(['/apexkick/','/apexpool/','/apexgolf/','/apextennis/']));
+  ok(vp.name+'-sports-links-match-manifest',JSON.stringify(s.sports.map(x=>x.href))===JSON.stringify(sportsHrefs),
+     JSON.stringify(s.sports.map(x=>x.href))+' vs manifest '+JSON.stringify(sportsHrefs));
   ok(vp.name+'-apex-kick-remains-top',n(s.top,'Apex Kick')===1,s.top.map(x=>x.title).join(' | '));
   ok(vp.name+'-whole-shelf-complete',s.shelf.length===N&&sportsManifest.every(t=>n(s.shelf,t)===1),s.shelf.length+'/'+N);
-  ok(vp.name+'-surface-counts',n(s.top,'Apex Kick')===1&&n(s.sports,'Apex Kick')===1&&n(s.shelf,'Apex Kick')===1&&n(s.sports,'Apex Pool')===1&&n(s.shelf,'Apex Pool')===1&&n(s.sports,'Apex Golf')===1&&n(s.shelf,'Apex Golf')===1&&n(s.sports,'Apex Tennis')===1&&n(s.shelf,'Apex Tennis')===1);
-  ok(vp.name+'-tennis-art-loaded',s.art.some(x=>x.src==='/assets/cards/apex-tennis.svg'&&x.complete&&x.w>0),JSON.stringify(s.art));
-  ok(vp.name+'-copy-names-four',s.copy.includes('Four Apex games')&&s.copy.includes('Apex Tennis'),s.copy);
+  ok(vp.name+'-surface-counts-derived',sportsManifest.every(t=>n(s.sports,t)===1&&n(s.shelf,t)===1),
+     sportsManifest.map(t=>t+':rail'+n(s.sports,t)+'/shelf'+n(s.shelf,t)).join(' '));
+  ok(vp.name+'-rail-art-all-loaded',s.art.length===sportsManifest.length&&s.art.every(x=>x.complete&&x.w>0),
+     s.art.filter(x=>x.complete&&x.w>0).length+'/'+sportsManifest.length+' rail images decoded');
+  {const WORDS=['Zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten'];
+    const want=WORDS[sportsManifest.length]||String(sportsManifest.length);
+    ok(vp.name+'-copy-names-every-member',s.copy.includes(want+' Apex games')&&sportsManifest.every(t=>s.copy.includes(t)),
+       'expected "'+want+' Apex games" + all '+sportsManifest.length+' names :: '+s.copy.slice(0,90));}
   ok(vp.name+'-tag-vocabulary',!s.chips.includes('SPORT')&&s.chips.includes('PHYSICS'),s.chips.join(' | '));
   {const m=/(\d+) curated favourites of (\d+) games/.exec(s.count);
    ok(vp.name+'-derived-total',!!m&&Number(m[2])===N,s.count+'  (manifest N='+N+')');}
