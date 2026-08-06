@@ -1448,7 +1448,7 @@ function clearWorld() {
   clearGroup(effectGroup, true);
   obstacles.length = 0; cameraBlockers.length = 0; hazards.length = 0;
   enemies.length = 0; interactables.length = 0; lootDrops.length = 0; projectiles.length = 0;
-  telegraphs.length = 0; particles.length = 0; shockwaves.length = 0;
+  telegraphs.length = 0; particles.length = 0; shockwaves.length = 0; hitStop = 0;
   damageNumbers.forEach(d => d.el.remove()); damageNumbers.length = 0;
   terrainMesh = null; ambientPoints = null; portalEntity = null; forgeEntity = null; bossRef = null;
   lockTarget = null; nearestInteractable = null; activePylonIndex = -1;
@@ -1900,6 +1900,20 @@ function updateObjectiveState(initial = false) {
   updateHUD(true);
 }
 
+/* B3 realm report. ONE source of truth: the Chronicle's realm row and the
+   end-of-realm card both read this, so the two can never disagree. */
+function realmEvidence(index) {
+  const z = game.progress.zones[index];
+  if (index === 0) return `${z.shards.filter(Boolean).length}/3 shards`;
+  if (index === 1) return `${z.pylons.filter(Boolean).length}/3 pylons`;
+  return z.bossDefeated ? 'Nullsmith defeated' : 'Boss active';
+}
+
+function realmReportLine(index) {
+  const z = game.progress.zones[index];
+  return `${ZONE_DEFS[index].name} — ${realmEvidence(index)} · ${z.chests.filter(Boolean).length}/2 relic caches · ${Math.round(game.kills)} defeated · ${formatTime(game.elapsed)}`;
+}
+
 function transitionToNextZone() {
   if (pendingTransition || game.zoneIndex >= 2) return;
   pendingTransition = true; game.mode = 'transition';
@@ -1913,6 +1927,13 @@ function transitionToNextZone() {
     $('fade-layer').classList.remove('active');
     pendingTransition = false;
     saveGame(false);
+    /* Report on the realm just left, then preview the one just entered. */
+    const left = game.zoneIndex - 1;
+    const next = ZONE_DEFS[game.zoneIndex];
+    const report = realmReportLine(left);
+    showToast('Realm Complete', report, 'green');
+    showStory('MATT // Forge Core', `${report}. Ahead: ${next.realm}, ${next.name} — ${next.objective}.`, 6);
+    announce(`Realm complete. ${report}. Next, ${next.name}. ${next.objective}.`);
   }, 620);
 }
 
@@ -2288,6 +2309,21 @@ function launchEnemyProjectile(enemy, speed) {
   createProjectile({ owner: 'enemy', source: enemy, position: start, direction, speed, damage: enemy.damage, radius: 0.26, colour: game.zoneIndex === 1 ? 0xff7a32 : 0xff4f82, life: 4.0, aoe: 0 });
 }
 
+/* B1 hit-stop. A few frames of held simulation on impact, which reads as
+   weight. It lives INSIDE the fixed timestep (mainLoop consumes it in whole
+   1/60 steps), so it can never desynchronise the simulation from the clock
+   and can never vary with frame rate.
+   REDUCED MOTION: disabled entirely — motionReduced() gates it — because a
+   stuttered camera is exactly the sensation RM exists to avoid. */
+let hitStop = 0;
+const HIT_STOP_LIGHT = 1 / 60 * 2;   /* 2 frames */
+const HIT_STOP_HEAVY = 1 / 60 * 4;   /* 4 frames, crits and kills */
+
+function addHitStop(seconds) {
+  if (motionReduced()) return;
+  hitStop = Math.min(0.09, Math.max(hitStop, seconds));   /* hard ceiling: never a freeze */
+}
+
 function damageEnemy(enemy, rawDamage, options = {}) {
   if (!enemy || enemy.dead) return 0;
   let damage = Math.max(1, rawDamage);
@@ -2302,6 +2338,7 @@ function damageEnemy(enemy, rawDamage, options = {}) {
   spawnDamageNumber(enemy.group.position.x, enemy.group.position.y + (enemy.isBoss ? 4.4 : 2.2), enemy.group.position.z, `${crit ? '✦ ' : ''}${damage}`, crit ? '#ffc857' : '#ffffff');
   spawnBurst(enemy.group.position.x, enemy.group.position.y + 1.1, enemy.group.position.z, crit ? 0xffc857 : 0xff5370, crit ? 10 : 6, 2.5);
   SoundFX.hit(); cameraShake = Math.max(cameraShake, crit ? 0.25 : 0.12);
+  addHitStop(crit ? HIT_STOP_HEAVY : HIT_STOP_LIGHT);
   if (options.knockback && !enemy.isBoss) {
     const dx = enemy.group.position.x - playerGroup.position.x, dz = enemy.group.position.z - playerGroup.position.z, len = Math.max(0.01, Math.hypot(dx, dz));
     moveCircle(enemy.group.position, enemy.radius, dx / len * options.knockback, dz / len * options.knockback);
@@ -3717,7 +3754,10 @@ function mainLoop(now) {
     accumulator += frameDt;
     let steps = 0;
     const fixed = 1 / 60;
-    while (accumulator >= fixed && steps < 5) { updateGame(fixed); accumulator -= fixed; steps++; }
+    while (accumulator >= fixed && steps < 5) {
+      if (hitStop > 0) { hitStop -= fixed; accumulator -= fixed; steps++; continue; }  /* held, in whole steps */
+      updateGame(fixed); accumulator -= fixed; steps++;
+    }
     if (steps === 5) accumulator = 0;
     updateCamera(frameDt);
   } else if (game.started && ['modal', 'dead', 'victory', 'transition'].includes(game.mode)) {
@@ -3760,7 +3800,7 @@ function exportChronicle() {
   }).join('');
   const achievementRows = Object.values(game.progress.achievements).map(a => `<li><strong>${escapeHTML(a.name)}</strong><span>${escapeHTML(a.description)}</span></li>`).join('') || '<li><strong>No achievements yet</strong><span>The Chronicle is still being written.</span></li>';
   const zoneRows = game.progress.zones.map((z, i) => {
-    const detail = i === 0 ? `${z.shards.filter(Boolean).length}/3 shards` : i === 1 ? `${z.pylons.filter(Boolean).length}/3 pylons` : z.bossDefeated ? 'Nullsmith defeated' : 'Boss active';
+    const detail = realmEvidence(i);   /* B3: one source of truth, shared with the end-of-realm card */
     return `<tr><td>${escapeHTML(ZONE_DEFS[i].name)}</td><td>${z.completed ? 'Complete' : 'In progress'}</td><td>${escapeHTML(detail)}</td><td>${z.chests.filter(Boolean).length}/2 caches</td></tr>`;
   }).join('');
   const generated = new Date().toLocaleString();
