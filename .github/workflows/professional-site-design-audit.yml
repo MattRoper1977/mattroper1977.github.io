@@ -30,20 +30,32 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ready=.github/mbm-professional-upgrade-payload.ready
+          ready=.github/mbm-professional-upgrade-payload.ready-v2
           if [[ ! -f "$ready" ]]; then
-            echo "Payload is not marked complete; nothing to apply."
+            echo "Corrected payload is not marked complete; nothing to apply."
             exit 0
           fi
 
-          mapfile -t parts < <(find .github -maxdepth 1 -type f -name 'mbm-professional-upgrade-payload.part-*' | sort)
-          test "${#parts[@]}" -eq 8
+          parts=(
+            .github/mbm-professional-upgrade-payload.part-00
+            .github/mbm-professional-upgrade-payload.part-01
+            .github/mbm-professional-upgrade-payload.part-02
+            .github/mbm-professional-upgrade-payload.part-03
+            .github/mbm-professional-upgrade-payload.part-04
+            .github/mbm-professional-upgrade-payload.part-05
+            .github/mbm-professional-upgrade-payload.part-06
+            .github/mbm-professional-upgrade-payload.part-07a
+            .github/mbm-professional-upgrade-payload.part-07b
+          )
+          for part in "${parts[@]}"; do test -f "$part"; done
           cat "${parts[@]}" | base64 -d >/tmp/mbm-professional-upgrade.tar.gz
           echo "6e65c3953d9cb286daabf7cbbda810576a54f10fed2a945020eaac87f190611f  /tmp/mbm-professional-upgrade.tar.gz" | sha256sum -c -
           tar -tzf /tmp/mbm-professional-upgrade.tar.gz | tee /tmp/payload-files.txt
           test "$(wc -l </tmp/payload-files.txt)" -eq 14
           tar -xzf /tmp/mbm-professional-upgrade.tar.gz
-          rm "$ready" "${parts[@]}"
+          rm "$ready" "${parts[@]}" \
+            .github/mbm-professional-upgrade-payload.ready \
+            .github/mbm-professional-upgrade-payload.part-07
 
           python -m py_compile tools/verify_professional_site.py
           node --check app.js
