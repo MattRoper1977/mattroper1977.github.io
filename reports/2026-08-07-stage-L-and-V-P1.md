@@ -162,6 +162,10 @@ and still asserted. **Two vacuous-pass holes** found while rewriting are now
 closed: an empty shelf and an empty occupant stack both used to sail through,
 the same trap the `site.json` step already guards against.
 
+**Confirmed live.** Run **31181793979**, dispatched on this branch so the
+repaired workflow ran against main's tree — the exact failing case. **Green:
+the first AGX-1 success since 6 August**, after 4+ consecutive failures.
+
 **Five negative controls, each proven to exit non-zero before the green was
 accepted:** off-shelf occupant (`AGX1_SELFTEST=occupant`, built in), empty
 shelf, empty stack, duplicate box, unreadable manifest. Green path exits 0
