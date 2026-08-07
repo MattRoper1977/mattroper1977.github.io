@@ -11,7 +11,11 @@ the resulting source commit.
 from __future__ import annotations
 
 import argparse
+import subprocess
 from pathlib import Path
+
+SAVE05_CONTROL_SHA = "44e2ca04cd39e26a91de0c61f925c690d12ceaf0"
+SAVE05_CONTROL_PATH = Path("/tmp/ouroboros-save05-array-control.html")
 
 
 def replace_once(text: str, old: str, new: str, label: str) -> str:
@@ -19,6 +23,22 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
     if count != 1:
         raise SystemExit(f"{label}: expected exactly one match, found {count}")
     return text.replace(old, new)
+
+
+def write_save05_control(root: Path) -> None:
+    """Freeze the exact merged build the readback found, even on reruns.
+
+    Copying the current branch before patching works once, then becomes a fixed
+    copy after the workflow commits and reruns. Reading the measured close SHA
+    makes the negative control stable and prevents a green fix from erasing the
+    defect that proves the verifier is capable of firing.
+    """
+    proc = subprocess.run(
+        ["git", "-C", str(root), "show", f"{SAVE05_CONTROL_SHA}:ouroboros/index.html"],
+        check=True,
+        capture_output=True,
+    )
+    SAVE05_CONTROL_PATH.write_bytes(proc.stdout)
 
 
 def patch_features(path: Path) -> bool:
@@ -228,7 +248,7 @@ async function activateVisibleControl(page, includeSource, excludeSource = '') {
 
 def patch_ouroboros(path: Path) -> bool:
     text = path.read_text(encoding="utf-8")
-    if "including values nested inside arrays" in text:
+    if "if(Array.isArray(outVal))" in text:
         return False
 
     text = replace_once(
@@ -250,9 +270,9 @@ def patch_ouroboros(path: Path) -> bool:
     };
 ''',
         '''       default it shadows, so a non-finite value can neither reach state nor be
-       round-tripped into null on the next autosave. This includes values nested
-       inside arrays: JSON arrays can contain `1e999` too, and the first repair's
-       object-only walk skipped them. */
+       round-tripped into null on the next autosave. This includes values nested inside arrays:
+       JSON arrays can contain `1e999` too, and the first repair's object-only
+       walk skipped them. */
     const sanitiseNumbers=(baseVal,outVal)=>{
       if(typeof outVal==="number") return Number.isFinite(outVal)?outVal:(typeof baseVal==="number"?baseVal:0);
       if(Array.isArray(outVal)){
@@ -278,6 +298,7 @@ def main() -> int:
     parser.add_argument("--root", type=Path, default=Path("."))
     args = parser.parse_args()
     root = args.root.resolve()
+    write_save05_control(root)
     changed = {
         "features": patch_features(root / "assets/mbm-features.js"),
         "runtime": patch_runtime(root / "tools/full_estate_runtime.mjs"),
