@@ -426,6 +426,111 @@ for (const reduced of [false, true]) {
   }
 }
 
+// ──────────────────────────────────── SAVE-06: the SINK must be safe on its own
+g('SAVE-06 escaping at the sink');
+{
+  const MARK = 'XSSPROBE';
+  const P = { imgerr: `<img src=x onerror="window.${MARK}_img=1">`, svg: `<svg onload="window.${MARK}_svg=1"></svg>` };
+  // Hostile values are written STRAIGHT INTO Game.save, bypassing the loader.
+  // SAVE-02/03's validation drops most of these keys at load time, which is
+  // worth having — but a source-side filter cannot tell a safe sink from a
+  // lucky one, and it leaves the sink loaded for the next caller.
+  const run = async (file) => {
+    const { ctx, page } = await boot(file);
+    await page.evaluate(() => { try { newGame(); } catch (_) {} });
+    await page.waitForTimeout(300);
+    await page.evaluate((p) => {
+      Game.save.codex.achievements = [p.imgerr];
+      Game.save.codex.lore = [p.svg];
+      Game.save.codex.enemies = { [p.imgerr]: 1 };
+      Game.save.materials[p.imgerr] = 4;
+      Game.save.spire = { ...(Game.save.spire || {}), floor: 3, runLoot: { [p.svg]: 2 } };
+    }, P);
+    const rows = [];
+    for (const fn of ['openCodex', 'openForge', 'openSpireSanctuary']) {
+      rows.push(await page.evaluate(async ([name, m]) => {
+        try { document.querySelector('#modalLayer').innerHTML = ''; } catch (_) {}
+        try { window[name](); } catch (_) { return { live: 0, raw: false, text: false }; }
+        await new Promise((r) => setTimeout(r, 220));
+        const layer = document.querySelector('#modalLayer'); const html = layer ? layer.innerHTML : '';
+        return {
+          live: [...(layer ? layer.querySelectorAll('img,svg,script,*[onerror],*[onload]') : [])].filter((el) => (el.outerHTML || '').includes(m)).length,
+          raw: /<(img|svg|script)[^>]*XSSPROBE/i.test(html), text: html.includes(m),
+        };
+      }, [fn, MARK]));
+    }
+    const fired = await page.evaluate((m) => Object.keys(window).filter((k) => k.startsWith(m)), MARK);
+    await ctx.close();
+    return { rows, fired };
+  };
+  const fixed = await run(target);
+  const liveEls = fixed.rows.reduce((n, r) => n + r.live, 0);
+  check('no handler fires from a save', fixed.fired.length === 0,
+    fixed.fired.length ? JSON.stringify(fixed.fired) : 'no injected handler executed');
+  check('no raw markup in any modal', liveEls === 0 && !fixed.rows.some((r) => r.raw),
+    `${liveEls} live elements across Codex/Forge/Spire`);
+  // Not a vacuous pass: the data must still REACH the renderer, as inert text.
+  check('hostile value still rendered as text', fixed.rows.some((r) => r.text),
+    'payload reaches the sink and is escaped — not silently dropped');
+
+  if (CONTROL) {
+    const ctrl = await run(CONTROL);
+    const ctrlLive = ctrl.rows.reduce((n, r) => n + r.live, 0);
+    check('control: sink was unsafe', ctrl.fired.length > 0 || ctrlLive > 0,
+      `pre-fix: ${ctrl.fired.length} handler(s) fired, ${ctrlLive} live element(s) injected`);
+  }
+}
+
+// ───────────────────────────────── A11Y-02: focus management, driven by keys
+g('A11Y-02 modal focus');
+{
+  // Real key sequences through the real UI, reading document.activeElement.
+  // An attribute grep would pass a dialog carrying role="dialog" and no
+  // behaviour whatsoever.
+  const run = async (file) => {
+    const { ctx, page } = await boot(file);
+    await page.evaluate(() => { try { newGame(); } catch (_) {} });
+    await page.waitForTimeout(300);
+    // A real, VISIBLE invoker. Focusing a hidden element silently does nothing
+    // and the return-focus assertion then compares "" to "" and passes for no
+    // reason — which the first version of this probe did.
+    await page.evaluate(() => {
+      const b = document.createElement('button');
+      b.id = 'probe-invoker'; b.textContent = 'invoker';
+      b.style.cssText = 'position:fixed;left:8px;top:8px;z-index:99999;width:80px;height:44px';
+      document.body.appendChild(b); b.focus();
+    });
+    const at = () => page.evaluate(() => {
+      const a = document.activeElement, l = document.querySelector('#modalLayer');
+      return { id: a ? a.id : null, inside: !!(l && a && l.contains(a)), open: !!(l && !l.classList.contains('hidden')) };
+    });
+    const before = await at();
+    await page.evaluate(() => openCodex());
+    await page.waitForTimeout(280);
+    const opened = await at();
+    let escapes = 0;
+    for (let i = 0; i < 12; i++) { await page.keyboard.press('Tab'); const w = await at(); if (w.open && !w.inside) escapes++; }
+    for (let i = 0; i < 12; i++) { await page.keyboard.press('Shift+Tab'); const w = await at(); if (w.open && !w.inside) escapes++; }
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(280);
+    const closed = await at();
+    await ctx.close();
+    return { before, opened, escapes, closed };
+  };
+  const r = await run(target);
+  check('invoker held focus', r.before.id === 'probe-invoker', `before.id=${JSON.stringify(r.before.id)} (guards a vacuous pass)`);
+  check('focus moves into the dialog', r.opened.inside === true, `activeElement inside #modalLayer: ${r.opened.inside}`);
+  check('Tab is trapped', r.escapes === 0, `${r.escapes} escapes across 24 Tab/Shift-Tab presses`);
+  check('Escape closes', r.closed.open === false, `modal open after Escape: ${r.closed.open}`);
+  check('focus returns to invoker', r.closed.id === 'probe-invoker', `${r.before.id} -> ${r.closed.id}`);
+
+  if (CONTROL) {
+    const c = await run(CONTROL);
+    check('control: no focus management', !(c.opened.inside && c.escapes === 0),
+      `pre-fix: focus moved in=${c.opened.inside}, escapes=${c.escapes}`);
+  }
+}
+
 // ────────────────────────────────────────── negative control on the PRE-FIX file
 if (CONTROL) {
   g('negative control (pre-fix file)');

@@ -367,7 +367,7 @@
 
     <div id="cutIn"><div id="cutInContent"><div><div id="cutInPair"></div><div id="cutInName"></div></div></div></div>
     <div id="impactPanel"><div id="impactText"></div></div>
-    <div id="modalLayer" class="hidden"></div>
+    <div id="modalLayer" class="hidden" role="dialog" aria-modal="true" tabindex="-1"></div>
     <div id="toastStack"></div>
 
     <section id="pauseScreen" class="hidden">
@@ -470,6 +470,25 @@ function _ariaPump(){
   el.textContent=next;
   _ariaTimer=setTimeout(_ariaPump,850);
 }
+/* SAVE-06 — escape AT THE SINK.
+   The exploit is not a name field; it is an unrecognised KEY emitted raw
+   through a `||k` / `||id` fallback. A hostile save carrying
+   codex.achievements=["<img src=x onerror=…>"] put a live onerror handler into
+   the Codex and it FIRED — measured, not argued.
+
+   SAVE-02/03's load-time validation already drops most of these keys, and
+   that is worth having, but a source-side filter leaves the sink loaded for
+   the next caller: any future code path that puts an unfamiliar string in one
+   of these collections re-opens the hole. So every save-derived interpolation
+   goes through esc() at the point of insertion, and the gate proves the sink
+   is safe even when the hostile value is placed directly into Game.save,
+   bypassing the loader entirely.
+
+   Severity, stated plainly so it is not misread: saves are local today, so
+   this is not live-exploitable. It is fixed now because the estate ships a
+   cross-device sync module, and save-controlled strings are exactly the class
+   that becomes foreign input the moment sync is switched on. */
+const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function announce(text){
   if(text==null)return;
   const clean=String(text).replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim();
@@ -1475,7 +1494,7 @@ function finishBattle(victory){
   }
   grantBattleRewards(b);
   const grade=b.stats.nodes>=3?"S":b.stats.collapses>=1?"A":b.stats.turns<18?"B":"C";
-  const rewards=Object.entries(b.reward.materials||{}).map(([k,v])=>`${v}× ${MATERIAL_NAMES[k]||k}`).join(" · ")||"Chronos Shards";
+  const rewards=Object.entries(b.reward.materials||{}).map(([k,v])=>`${esc(v)}× ${esc(MATERIAL_NAMES[k]||k)}`).join(" · ")||"Chronos Shards";
   openModal(`<div class="modal brass-frame"><h2>Timeline Secured</h2><div class="kicker">Combat Evaluation — Grade ${grade}</div><div class="modal-grid">
     <div class="station-btn"><b>${fmt(b.stats.damage)} Damage</b><small>Total consolidated output</small></div>
     <div class="station-btn"><b>${b.stats.nodes} Sub-Nodes</b><small>Precision components harvested</small></div>
@@ -1592,7 +1611,7 @@ function updateBattleHUD(){
     const list=$("#nodeList");list.innerHTML="";const body=document.createElement("div");body.className=`node-row ${b.selectedNode==="body"?"selected":""}`;body.innerHTML=`<span>Main Frame</span><span class="node-hp"><i style="width:${pct(target.hp,target.maxHp)}%"></i></span>`;body.onclick=()=>{b.selectedNode="body";updateBattleHUD();};list.appendChild(body);
     for(const n of target.nodes){const gated=isNodeGated(target,n),el=document.createElement("div");el.className=`node-row ${b.selectedNode===n.id?"selected":""} ${n.broken?"broken":""}`;el.innerHTML=`<span>${gated?"◈ ":""}${n.name}</span><span class="node-hp"><i style="width:${pct(n.hp,n.maxHp)}%"></i></span>`;el.title=gated?"Phase-gated: anchor with Tycho's Star Chart":n.effect;el.onclick=()=>{if(!n.broken){b.selectedNode=n.id;updateBattleHUD();}};list.appendChild(el);}
   }
-  const cards=$("#partyCards");cards.innerHTML="";for(const u of b.party){const el=document.createElement("div");el.className=`combat-card ${b.current===u?"current":""} ${!u.alive?"down":""}`;const mech=u.id==="yasuke"?u.stance.toUpperCase():u.id==="ada"?`QUEUE: ${(Game.save.characters.ada.queue||"collapse").toUpperCase()}`:u.id==="tesla"?`COILS: ${b.coils.length}`:`CHARTS: ${b.fields.filter(f=>f.type==="chart").length}`;el.innerHTML=`<div class="row"><span style="color:${u.colour}">${u.name}</span><span>${fmt(u.hp)}</span></div><div class="hpbar"><i style="width:${pct(u.hp,u.maxHp)}%"></i></div><div class="aetherbar"><i style="width:${pct(u.aether,u.maxAether)}%"></i></div><div style="margin-top:3px;color:#bfc4ce;font-size:9px">${mech}${u.barrier?` · Barrier ${fmt(u.barrier)}`:""}</div>`;cards.appendChild(el);}
+  const cards=$("#partyCards");cards.innerHTML="";for(const u of b.party){const el=document.createElement("div");el.className=`combat-card ${b.current===u?"current":""} ${!u.alive?"down":""}`;const mech=u.id==="yasuke"?u.stance.toUpperCase():u.id==="ada"?`QUEUE: ${esc((Game.save.characters.ada.queue||"collapse")).toUpperCase()}`:u.id==="tesla"?`COILS: ${b.coils.length}`:`CHARTS: ${b.fields.filter(f=>f.type==="chart").length}`;el.innerHTML=`<div class="row"><span style="color:${u.colour}">${u.name}</span><span>${fmt(u.hp)}</span></div><div class="hpbar"><i style="width:${pct(u.hp,u.maxHp)}%"></i></div><div class="aetherbar"><i style="width:${pct(u.aether,u.maxAether)}%"></i></div><div style="margin-top:3px;color:#bfc4ce;font-size:9px">${mech}${u.barrier?` · Barrier ${fmt(u.barrier)}`:""}</div>`;cards.appendChild(el);}
   const u=b.current,playerTurn=b.phase==="player"&&u?.team==="party";$("#turnName").textContent=u?.name|| (b.phase==="victory"?"Victory":b.phase==="defeat"?"Defeat":"Timeline processing");$("#turnState").textContent=playerTurn?`Move ${Math.round(u.moved||0)} / ${b.moveRadius} · ${u.aether} Aether`:b.phase.toUpperCase();
   const grid=$("#actionGrid");grid.innerHTML="";if(playerTurn){for(const s of CHARACTER_DEFS[u.id].skills){const btn=document.createElement("button");btn.className="action-btn";btn.disabled=u.aether<s.cost;btn.innerHTML=`<b>${s.name}</b>${s.desc}<small>${s.cost?`${s.cost} Aether`:"No cost"}</small>`;btn.onclick=()=>executeSkill(s.id);grid.appendChild(btn);}const item=document.createElement("button");item.className="action-btn";item.innerHTML=`<b>Consumable</b>Quick-slot engineering<small>R / Item</small>`;item.onclick=openItemMenu;grid.appendChild(item);const res=document.createElement("button");res.className=`action-btn ${b.resonance>=50?"resonance-ready":""}`;res.disabled=b.resonance<50;res.innerHTML=`<b>Resonance</b>Dual / Quad-Tech<small>${Math.round(b.resonance)}% charged</small>`;res.onclick=openResonanceMenu;grid.appendChild(res);}else{grid.innerHTML=`<div style="grid-column:1/-1;padding:18px;text-align:center;color:#b9bdc8;font-size:12px">${b.phase==="enemy"?"Enemy action resolving...":"The Chronos-Grid is advancing..."}</div>`;}
 }
@@ -1660,8 +1679,55 @@ function advanceDialogue(){
   const d=Game.dialogue;if(!d)return;d.index++;if(d.index>=d.lines.length){const cb=d.onDone;Game.dialogue=null;$("#dialogueLayer").classList.add("hidden");cb?.();return;}showDialogueLine();
 }
 
-function openModal(html,onOpen){Game.modal={};const layer=$("#modalLayer");layer.innerHTML=html;layer.classList.remove("hidden");onOpen?.(layer);}
-function closeModal(){const layer=$("#modalLayer");layer.classList.add("hidden");layer.innerHTML="";Game.modal=null;}
+/* A11Y-02 — focus management and a trap.
+   Modals were opened with no focus handling at all: a keyboard or
+   screen-reader user was left on whatever invoked the dialog, Tab walked
+   straight out of it into the live battle controls behind the overlay, and
+   nothing gave focus back on close. The overlay was visually modal and
+   nothing else.
+
+   Focus moves in on open, is trapped between the first and last tabbable
+   descendants, and returns to the invoking control on close — with a fallback
+   to <body> if that control has since been removed from the DOM, which is
+   common here because most invokers are rebuilt on the next render. */
+const TABBABLE='a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+let _modalReturnFocus=null;
+function _modalTabbables(){const l=$("#modalLayer");return l?[...l.querySelectorAll(TABBABLE)].filter(el=>el.getClientRects().length>0):[];}
+function _modalTrap(e){
+  if(e.key!=="Tab")return;
+  const layer=$("#modalLayer");
+  if(!layer||layer.classList.contains("hidden"))return;
+  const items=_modalTabbables();
+  if(!items.length){e.preventDefault();layer.focus();return;}
+  const first=items[0],last=items[items.length-1];
+  if(e.shiftKey&&(document.activeElement===first||document.activeElement===layer)){e.preventDefault();last.focus();}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+}
+function openModal(html,onOpen){
+  Game.modal={};
+  const layer=$("#modalLayer");
+  _modalReturnFocus=(document.activeElement&&document.activeElement!==document.body)?document.activeElement:null;
+  layer.innerHTML=html;layer.classList.remove("hidden");
+  onOpen?.(layer);
+  const items=_modalTabbables();
+  (items[0]||layer).focus();
+  document.addEventListener("keydown",_modalTrap,true);
+}
+function closeModal(){
+  const layer=$("#modalLayer");
+  document.removeEventListener("keydown",_modalTrap,true);
+  layer.classList.add("hidden");layer.innerHTML="";Game.modal=null;
+  const back=_modalReturnFocus;_modalReturnFocus=null;
+  /* offsetParent is null for a position:fixed element even when it is fully
+     visible — the same trap the 44 px census documents. A guard that leans on
+     it alone silently refuses to hand focus back to any fixed-position
+     invoker, which is most of this game's HUD. Checked with getClientRects
+     so the test is "does it occupy space", not "does it have a positioned
+     ancestor". */
+  const visible=el=>el&&document.contains(el)&&(el.getClientRects().length>0);
+  if(visible(back)){back.focus();}
+  else{document.body.focus?.();}
+}
 function openOrrery(){
   const primeReady=Game.save.quest.mintDone&&Game.save.quest.memoryDone.length>=1&&!Game.save.flags.primeDefeated;
   const mintLabel=Game.save.quest.mintDone?"Revisit the transformed Mint":"Investigate the Grand Clockwork Mint";
@@ -1699,7 +1765,7 @@ function handleSpireVictory(b){
   });
 }
 function openSpireSanctuary(floor){
-  const loot=Object.entries(Game.save.spire.runLoot||{}).map(([k,v])=>`${v}× ${MATERIAL_NAMES[k]||k}`).join(" · ")||"No materials";
+  const loot=Object.entries(Game.save.spire.runLoot||{}).map(([k,v])=>`${esc(v)}× ${esc(MATERIAL_NAMES[k]||k)}`).join(" · ")||"No materials";
   openModal(`<div class="modal brass-frame"><h2>Sanctuary Floor ${floor}</h2><div class="kicker">Push your luck or anchor this branch</div><p><b>Unextracted cargo:</b> ${loot}</p><div class="modal-grid"><button class="choice-btn" data-extract><b>Extract</b><small>Keep 100% of run loot, save Floor ${floor+1} as the checkpoint, and return to The Refectory.</small></button><button class="choice-btn" data-descend><b>Descend</b><small>Continue to Floor ${floor+1}. Future rewards increase, but defeat forfeits half the unextracted cargo.</small></button></div></div>`,el=>{el.querySelector("[data-extract]").onclick=()=>extractSpire(true);el.querySelector("[data-descend]").onclick=()=>{closeModal();restoreParty(1);startBattle("spire",buildSpireEncounter(floor+1,Game.save.spire.seed));};});
 }
 function halveRunLoot(){for(const k in Game.save.spire.runLoot)Game.save.spire.runLoot[k]=Math.floor(Game.save.spire.runLoot[k]*.5);}
@@ -1716,7 +1782,7 @@ function setupForgeUI(el){
   const freq=$("#freqDial",el),temp=$("#tempDial",el),bar=$("#forgeHold i",el),status=$("#forgeStatus",el),btn=$("#forgeCalibrate",el);
   function canCraft(r){return Object.entries(r.ingredients).every(([k,v])=>(Game.save.materials[k]||0)>=v);}
   function render(){const r=FORGE_RECIPES[selected];$("#forgeRecipeName",el).textContent=r.name;$("#forgeRecipeDesc",el).textContent=`Target ${r.freq} Hz / ${r.temp}°C · Base yield ${r.out}`;freq.value=r.freq*.82;temp.value=r.temp*1.12;updateDials();
-    $("#materialStores",el).innerHTML=Object.entries(Game.save.materials).filter(([,v])=>v>0).map(([k,v])=>`<span style="color:${Object.keys(r.ingredients).includes(k)?"var(--cyan)":"inherit"}">${MATERIAL_NAMES[k]||k}: <b>${v}</b></span>`).join("<br>");btn.disabled=!canCraft(r);status.textContent=canCraft(r)?"Materials loaded. Tune both dials.":"Missing required materials.";}
+    $("#materialStores",el).innerHTML=Object.entries(Game.save.materials).filter(([,v])=>v>0).map(([k,v])=>`<span style="color:${Object.keys(r.ingredients).includes(k)?"var(--cyan)":"inherit"}">${esc(MATERIAL_NAMES[k]||k)}: <b>${esc(v)}</b></span>`).join("<br>");btn.disabled=!canCraft(r);status.textContent=canCraft(r)?"Materials loaded. Tune both dials.":"Missing required materials.";}
   function updateDials(){const r=FORGE_RECIPES[selected],fv=+freq.value,tv=+temp.value;$("#freqOut",el).textContent=`${fv} Hz`;$("#tempOut",el).textContent=`${tv}°C`;$("#freqNeedle",el).style.left=`${fv/2600*100}%`;$("#tempNeedle",el).style.left=`${tv/1100*100}%`;$("#freqTarget",el).style.cssText=`left:${r.freq*.95/2600*100}%;width:${r.freq*.1/2600*100}%`;$("#tempTarget",el).style.cssText=`left:${r.temp*.95/1100*100}%;width:${r.temp*.1/1100*100}%`;}
   function stop(){clearInterval(timer);timer=null;}
   function start(){if(btn.disabled||timer)return;timer=setInterval(()=>{const r=FORGE_RECIPES[selected],fe=Math.abs(+freq.value-r.freq)/r.freq,te=Math.abs(+temp.value-r.temp)/r.temp;if(fe<=.05&&te<=.05)hold+=.05;else hold=Math.max(0,hold-.1);bar.style.width=`${clamp(hold/3,0,1)*100}%`;status.textContent=fe<=.05&&te<=.05?"Resonance stable... hold position.":"Calibration drifting — adjust the dials.";if(hold>=3){stop();craft(fe<=.01&&te<=.01);}},50);}
@@ -1772,9 +1838,9 @@ function resolveAudit(id,path){
 }
 
 function openCodex(){
-  const discovered=Object.keys(Game.save.codex.enemies).map(id=>`<tr><td>${ENEMY_DEFS[id]?.name||id}</td><td>${Object.keys(Game.save.codex.nodes).filter(k=>k.startsWith(id+":")).length} sub-nodes catalogued</td><td>+${Object.keys(Game.save.codex.nodes).filter(k=>k.startsWith(id+":")).length*3}% precision insight</td></tr>`).join("")||`<tr><td colspan="3">No hostile blueprints compiled.</td></tr>`;
-  const lore=Game.save.codex.lore.filter((v,i,a)=>a.indexOf(v)===i).map(id=>`<div class="choice-btn" style="cursor:default"><b>${LORE_ENTRIES[id]?.title||id}</b><small>${LORE_ENTRIES[id]?.text||"Encrypted."}</small></div>`).join("")||`<p>Classified Punch-Cards remain hidden across Ouroboros.</p>`;
-  const achievements=[...new Set(Game.save.codex.achievements)].map(a=>`<span style="display:inline-block;padding:6px 9px;margin:3px;border:1px solid var(--brass);font:11px Arial,sans-serif">◆ ${a}</span>`).join("")||"No prestige records yet.";
+  const discovered=Object.keys(Game.save.codex.enemies).map(id=>`<tr><td>${esc(ENEMY_DEFS[id]?.name||id)}</td><td>${Object.keys(Game.save.codex.nodes).filter(k=>k.startsWith(id+":")).length} sub-nodes catalogued</td><td>+${Object.keys(Game.save.codex.nodes).filter(k=>k.startsWith(id+":")).length*3}% precision insight</td></tr>`).join("")||`<tr><td colspan="3">No hostile blueprints compiled.</td></tr>`;
+  const lore=Game.save.codex.lore.filter((v,i,a)=>a.indexOf(v)===i).map(id=>`<div class="choice-btn" style="cursor:default"><b>${esc(LORE_ENTRIES[id]?.title||id)}</b><small>${esc(LORE_ENTRIES[id]?.text||"Encrypted.")}</small></div>`).join("")||`<p>Classified Punch-Cards remain hidden across Ouroboros.</p>`;
+  const achievements=[...new Set(Game.save.codex.achievements)].map(a=>`<span style="display:inline-block;padding:6px 9px;margin:3px;border:1px solid var(--brass);font:11px Arial,sans-serif">◆ ${esc(a)}</span>`).join("")||"No prestige records yet.";
   openModal(`<div class="modal brass-frame"><h2>Chronicle Codex</h2><div class="kicker">Knowledge inversion: discovery becomes permanent tactical advantage</div><h3>Sub-Node Anatomical Guide</h3><table class="stat-table"><thead><tr><th>Hostile</th><th>Research</th><th>Insight Modifier</th></tr></thead><tbody>${discovered}</tbody></table><h3>Paradox Logs</h3><div class="modal-grid">${lore}</div><h3>Achievements & Titles</h3><div>${achievements}</div><div class="modal-actions"><button class="ui-btn" data-close>Close Codex</button></div></div>`,el=>el.querySelector("[data-close]").onclick=closeModal);
 }
 function openMintChoice(){
@@ -1832,7 +1898,7 @@ function openSettings(returnTo="title"){
   $("#settingsRows").innerHTML=`${toggle("music","Adaptive Music","Procedural cello, clockwork and combat stems.")}${toggle("sfx","Combat & UI Sound","Synthesised impact, logic, electric and menu cues.")}${toggle("screenShake","Screen Shake","Anime impact movement during critical strikes and sub-node breaks.")}${toggle("reducedMotion","Reduced Motion","Minimises animation, particles, camera motion and flashing transitions.")}${toggle("highContrast","High Contrast","Strengthens panels, outlines and vector indicators.")}${toggle("largeText","Large Narrative Text","Increases dialogue and subtitle size.")}
   <div class="setting-row"><label>Difficulty<small>Story reduces incoming damage; Veteran increases it.</small></label><select id="difficultySelect"><option value="story">Story</option><option value="standard">Standard</option><option value="veteran">Veteran</option></select></div>
   <div class="setting-row"><label>Touch Controls<small>Auto detects coarse-pointer mobile devices.</small></label><select id="touchSelect"><option value="auto">Auto</option><option value="on">Always On</option><option value="off">Off</option></select></div>
-  <div class="setting-row"><label>HUD Scale<small>Scales tactical panels without changing the rendered world.</small></label><input id="uiScaleRange" type="range" min="0.8" max="1.2" step="0.05" value="${s.uiScale||1}"></div>`;
+  <div class="setting-row"><label>HUD Scale<small>Scales tactical panels without changing the rendered world.</small></label><input id="uiScaleRange" type="range" min="0.8" max="1.2" step="0.05" value="${clamp(+s.uiScale||1,0.8,1.2)}"></div>`;
   $("#difficultySelect").value=s.difficulty;$("#touchSelect").value=s.touchMode;$("#settingsScreen").classList.remove("hidden");
   $$("[data-toggle]",$("#settingsRows")).forEach(btn=>btn.onclick=()=>{const k=btn.dataset.toggle;Game.settings[k]=!Game.settings[k];applySettings();/* read back AFTER the floor has had its say, or the label promises something the game will not do */btn.textContent=Game.settings[k]?"On":"Off";if(k==="reducedMotion"&&osReducedMotion())btn.textContent="On (system)";AudioEngine.sfx("confirm");});
 }
