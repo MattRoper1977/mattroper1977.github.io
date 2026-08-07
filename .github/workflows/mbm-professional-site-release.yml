@@ -1,4 +1,4 @@
-name: Made by Matt professional site release
+name: Made by Matt professional site release recovery
 
 on:
   push:
@@ -7,7 +7,6 @@ on:
   workflow_dispatch:
 
 permissions:
-  actions: write
   contents: write
   pull-requests: write
 
@@ -16,14 +15,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  release:
+  recover:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 12
     env:
       BRANCH: codex/mbm-site-professional-design-upgrade-2026-08-07
       REPO: MattRoper1977/mattroper1977.github.io
       PR: "92"
-      PLAYWRIGHT_BROWSERS_PATH: /tmp/mbm-playwright-browsers
     steps:
       - name: Check out the authorised branch
         uses: actions/checkout@v4
@@ -31,28 +29,13 @@ jobs:
           ref: codex/mbm-site-professional-design-upgrade-2026-08-07
           fetch-depth: 0
 
-      - name: Cancel obsolete bootstrap runs and refresh the branch
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Apply the hash-locked payload and remove staging
         shell: bash
         run: |
           set -euo pipefail
-          gh run list --repo "$REPO" --workflow professional-site-design-audit.yml --branch "$BRANCH" --limit 50 \
-            --json databaseId,status \
-            --jq '.[] | select(.status != "completed") | .databaseId' \
-            | while read -r run_id; do
-                [[ -n "$run_id" ]] && gh run cancel "$run_id" --repo "$REPO" || true
-              done
           git fetch origin "$BRANCH"
           git reset --hard "origin/$BRANCH"
-
-      - name: Apply the verified payload when required
-        shell: bash
-        run: |
-          set -euo pipefail
           if [[ ! -f assets/mbm-platform.css ]]; then
-            ready=.github/mbm-professional-upgrade-payload.ready-v4
-            test -f "$ready"
             parts=(
               .github/mbm-professional-upgrade-payload.part-00
               .github/mbm-professional-upgrade-payload.part-01
@@ -93,101 +76,21 @@ jobs:
           node --check tools/verify_professional_site.mjs
           git diff --check
 
-      - name: Install isolated Playwright Chromium
+      - name: Commit the recovered implementation
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf /tmp/mbm-playwright /tmp/mbm-playwright-browsers
-          mkdir -p /tmp/mbm-playwright
-          npm install --prefix /tmp/mbm-playwright --no-save --package-lock=false playwright@1.52.0
-          /tmp/mbm-playwright/node_modules/.bin/playwright install --with-deps chromium
-
-      - name: Run the responsive, keyboard, touch and reduced-motion matrix
-        shell: bash
-        run: |
-          set -euo pipefail
-          restore=0
-          if [[ -e node_modules || -L node_modules ]]; then
-            mv node_modules /tmp/mbm-existing-node-modules
-            restore=1
-          fi
-          ln -s /tmp/mbm-playwright/node_modules node_modules
-          cleanup() {
-            rm -f node_modules
-            if [[ "$restore" -eq 1 ]]; then mv /tmp/mbm-existing-node-modules node_modules; fi
-          }
-          trap cleanup EXIT
-          node tools/verify_professional_site.mjs
-
-      - name: Commit the proved implementation and permanent audit record
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          import datetime, hashlib, json, pathlib, subprocess
-
-          root = pathlib.Path('.')
-          paths = [
-              '.github/workflows/professional-site-design-audit.yml',
-              'index.html', 'games/index.html', 'tools/index.html',
-              'resources/index.html', 'stats/index.html', 'privacy/index.html',
-              'members/index.html', 'styles.css', 'assets/mbm-platform.css',
-              'assets/mbm-platform.js', 'tools/professional_text_baseline.json',
-              'tools/verify_professional_site.py', 'tools/verify_professional_site.mjs',
-          ]
-          digest = hashlib.sha256()
-          file_hashes = {}
-          for item in paths:
-              data = (root / item).read_bytes()
-              sha = hashlib.sha256(data).hexdigest()
-              file_hashes[item] = sha
-              digest.update(item.encode('utf-8') + b'\0' + data + b'\0')
-          def load(path):
-              p = root / path
-              return json.loads(p.read_text()) if p.exists() else None
-          report = {
-              'sentinel': 'mbm-site-professional-design-upgrade-2026-08-07',
-              'result': 'PASS',
-              'proved_at_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
-              'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
-              'implementation_sha256': digest.hexdigest(),
-              'files': file_hashes,
-              'static_report': load('audit-output/static-report.json'),
-              'browser_report': load('audit-output/browser-report.json'),
-              'gates': [
-                  'positive controls', 'authored text order', 'logo hashes',
-                  'credential scan', 'JavaScript syntax', 'responsive matrix',
-                  'keyboard navigation', 'touch targets', 'horizontal overflow',
-                  'reduced motion', 'first-party assets', 'console errors',
-              ],
-          }
-          target = root / 'docs/MBM_PROFESSIONAL_SITE_AUDIT_PASS.json'
-          target.write_text(json.dumps(report, indent=2, sort_keys=True) + '\n')
-          PY
           rm -f .github/workflows/mbm-professional-site-release.yml
           git config user.name "Made by Matt design release"
           git config user.email "actions@users.noreply.github.com"
           git add -A
           git diff --cached --check
-          if ! git diff --cached --quiet; then
-            git commit -m "feat: elevate Made by Matt platform UX"
-            git push origin "HEAD:$BRANCH"
-          fi
+          git commit -m "feat: elevate Made by Matt platform UX"
+          git push origin "HEAD:$BRANCH"
 
-      - name: Mark the proved pull request ready
+      - name: Record the recovery boundary
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          set -euo pipefail
-          gh pr ready "$PR" --repo "$REPO" || true
-          gh pr comment "$PR" --repo "$REPO" --body "Professional site release gate: **PASS**. The hash-locked implementation was applied, staging artefacts were removed, positive controls and static preservation checks passed, and the Playwright responsive/accessibility matrix completed. Permanent evidence: \`docs/MBM_PROFESSIONAL_SITE_AUDIT_PASS.json\`."
-
-      - name: Upload the complete audit evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: mbm-professional-site-release-audit
-          path: audit-output/
-          if-no-files-found: warn
-          retention-days: 30
+          gh pr comment "$PR" --repo "$REPO" --body "Hash-locked implementation payload applied and staging removed. Preservation, positive-control and syntax gates passed. The pull request remains draft until its normal browser/responsive workflow is separately proved."
