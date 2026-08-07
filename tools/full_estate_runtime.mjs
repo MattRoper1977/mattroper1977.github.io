@@ -17,7 +17,7 @@ import { chromium } from 'playwright';
 const SENTINEL = 'mbm-full-repair-upgrade-2026-08-07';
 
 function parseArgs(argv) {
-  const out = { targets: '', baseUrl: 'http://127.0.0.1:4173', report: 'runtime-report.json', markdown: 'runtime-report.md', selfTest: false, concurrency: 2 };
+  const out = { targets: '', baseUrl: 'http://127.0.0.1:4173', report: 'runtime-report.json', markdown: 'runtime-report.md', selfTest: false, concurrency: 4, perTargetTimeout: 30000 };
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--self-test') out.selfTest = true;
@@ -26,6 +26,7 @@ function parseArgs(argv) {
     else if (arg === '--report') out.report = argv[++i];
     else if (arg === '--markdown') out.markdown = argv[++i];
     else if (arg === '--concurrency') out.concurrency = Math.max(1, Number(argv[++i]) || 1);
+    else if (arg === '--per-target-timeout') out.perTargetTimeout = Math.max(1000, Number(argv[++i]) || 30000);
     else throw new Error(`unknown argument: ${arg}`);
   }
   return out;
@@ -41,10 +42,11 @@ function normaliseMessage(value) {
 }
 
 function isIgnorableConsole(text) {
+  // Browser policy messages are not application exceptions. Everything else is retained.
   return /favicon\.ico.*404/i.test(text) || /Download the React DevTools/i.test(text);
 }
 
-async function collectPage(browser, item, baseUrl) {
+async function collectPageBody(browser, item, baseUrl, lifecycle) {
   const profile = item.profile;
   const isMobile = profile === 'mobile';
   const context = await browser.newContext({
@@ -56,6 +58,13 @@ async function collectPage(browser, item, baseUrl) {
     colorScheme: 'dark',
     serviceWorkers: 'block',
   });
+  lifecycle.context = context;
+  context.setDefaultTimeout(5000);
+  context.setDefaultNavigationTimeout(20000);
+  if (lifecycle.timedOut) {
+    await context.close({ reason: 'target watchdog fired before context initialised' }).catch(() => {});
+    throw new Error('target watchdog fired before context initialised');
+  }
   const page = await context.newPage();
   const issues = [];
   const observations = [];
@@ -241,7 +250,8 @@ async function collectPage(browser, item, baseUrl) {
     }
   }
 
-  await context.close();
+  await context.close().catch(() => {});
+  lifecycle.context = null;
   const unique = [];
   const seen = new Set();
   for (const issue of issues) {
@@ -249,6 +259,45 @@ async function collectPage(browser, item, baseUrl) {
     if (!seen.has(key)) { seen.add(key); unique.push(issue); }
   }
   return { target: item.target, kind: item.kind, profile, loaded, issues: unique, observations };
+}
+
+async function collectPage(browser, item, baseUrl, timeoutMs) {
+  const lifecycle = { context: null, timedOut: false };
+  let timer;
+  const body = collectPageBody(browser, item, baseUrl, lifecycle).catch(error => ({
+    target: item.target,
+    kind: item.kind,
+    profile: item.profile,
+    loaded: false,
+    issues: [{
+      severity: 'P0',
+      code: lifecycle.timedOut ? 'TARGET_TIMEOUT' : 'TARGET_HARNESS_ERROR',
+      stage: 'harness',
+      message: normaliseMessage(error?.stack || error),
+    }],
+    observations: [],
+  }));
+  const timeout = new Promise(resolve => {
+    timer = setTimeout(async () => {
+      lifecycle.timedOut = true;
+      const reason = `target exceeded ${timeoutMs}ms watchdog`;
+      await lifecycle.context?.close({ reason }).catch(() => {});
+      lifecycle.context = null;
+      resolve({
+        target: item.target,
+        kind: item.kind,
+        profile: item.profile,
+        loaded: false,
+        issues: [{ severity: 'P0', code: 'TARGET_TIMEOUT', stage: 'harness', message: reason }],
+        observations: [],
+      });
+    }, timeoutMs);
+  });
+  const result = await Promise.race([body, timeout]);
+  clearTimeout(timer);
+  // A timed-out body may reject after its browser context is force-closed.
+  body.catch(() => {});
+  return result;
 }
 
 async function runPool(items, concurrency, worker) {
@@ -309,7 +358,16 @@ async function selfTest(browser, baseUrl) {
   await page.waitForTimeout(100);
   await context.close();
   if (!pageError || !missing) throw new Error(`SELF-TEST FAILED: pageError=${pageError} missingRequest=${missing}`);
-  console.log('SELF-TEST PASSED — injected page exception and missing same-origin script were both detected');
+  const hang = await collectPage(
+    browser,
+    { target: 'data:text/html,<script>while(true){}<\/script>', kind: 'page', profile: 'desktop' },
+    baseUrl,
+    1200,
+  );
+  if (!hang.issues.some(issue => issue.code === 'TARGET_TIMEOUT')) {
+    throw new Error(`SELF-TEST FAILED: target watchdog did not fire: ${JSON.stringify(hang)}`);
+  }
+  console.log('SELF-TEST PASSED — injected exception, missing script and hung target were all detected');
 }
 
 async function main() {
@@ -333,7 +391,7 @@ async function main() {
       items.push({ target, kind: 'page', profile: 'desktop' });
       items.push({ target, kind: 'page', profile: 'mobile' });
     }
-    const results = await runPool(items, args.concurrency, item => collectPage(browser, item, args.baseUrl));
+    const results = await runPool(items, args.concurrency, item => collectPage(browser, item, args.baseUrl, args.perTargetTimeout));
     const counts = {};
     for (const result of results) for (const issue of result.issues) counts[issue.severity] = (counts[issue.severity] || 0) + 1;
     const report = { sentinel: SENTINEL, targetCount: games.length + pages.length, executionCount: items.length, counts, results };
