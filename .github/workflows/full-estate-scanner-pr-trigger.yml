@@ -1,0 +1,62 @@
+name: Install corrected full-estate scanner
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: full-estate-scanner-install-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  install:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/full-repair-upgrade-2026-08-07
+          fetch-depth: 0
+
+      - name: Recover and verify the corrected scanner payload
+        run: |
+          python - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          from pathlib import Path
+
+          carrier = Path('.github/workflows/full-estate-scanner-upgrade.yml').read_text(encoding='utf-8')
+          marker = '          SCANNER_GZIP_BASE64: '
+          lines = [line for line in carrier.splitlines() if line.startswith(marker)]
+          if len(lines) != 1:
+              raise SystemExit(f'expected one scanner payload, found {len(lines)}')
+          data = gzip.decompress(base64.b64decode(lines[0][len(marker):].strip()))
+          digest = hashlib.sha256(data).hexdigest()
+          expected = 'eda32791d79ccfe2d6ad6799fc4f8936ddda4c8d6e30cdc2730d6d98c59e2493'
+          if digest != expected:
+              raise SystemExit(f'scanner payload digest mismatch: {digest}')
+          Path('tools/full_estate_audit.py').write_bytes(data)
+          print(f'wrote {len(data)} bytes, sha256={digest}')
+          PY
+          python -m py_compile tools/full_estate_audit.py
+          python tools/full_estate_audit.py --self-test
+          grep -F 'games_root: Optional[Path]' tools/full_estate_audit.py
+          grep -F 'mounts = (("Lessons", "Lessons"), ("Games", "Games"), ("Matt-s-Apps-", "Apps"))' tools/full_estate_audit.py
+          git diff --check
+
+      - name: Commit the version-matched scanner
+        run: |
+          if git diff --quiet -- tools/full_estate_audit.py; then
+            echo 'Scanner already matches the corrected bytes'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/full_estate_audit.py
+          git commit -m 'test: derive authoritative game and dependency coverage'
+          git push origin HEAD:codex/full-repair-upgrade-2026-08-07
