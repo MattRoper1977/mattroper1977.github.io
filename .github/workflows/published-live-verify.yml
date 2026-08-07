@@ -1,0 +1,98 @@
+name: Published games serve (Stage L-fin)
+
+# The container cannot reach the custom domain — the proxy answers 403 on
+# CONNECT — so CI is the only place serving can be proven. READ-ONLY against
+# production: it fetches, hashes, renders and compares, and writes nothing.
+#
+# "Merged" and "served" are different claims. A shelf entry whose target does
+# not serve is a half-publish arriving from the serving side, and the visitor
+# is the one who pays for it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      paths:
+        description: 'Space-separated published paths to prove, e.g. "/ouroboros/ /novasiege/"'
+        required: false
+        default: '/ouroboros/ /novasiege/'
+  push:
+    branches:
+      - 'claude/live-glowbound-taxonomy-homepage'
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    name: Prove the published paths are served
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # TWO trees. The instrument comes from THIS ref because it is the thing
+      # under development; the bytes it compares against come from main because
+      # that is what is deployed. Checking main over the top once left the run
+      # with no tools/ and it died on MODULE_NOT_FOUND in under a second — a
+      # broken instrument reporting as a failed live leg.
+      - name: Check out this ref (the instrument)
+        uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - name: Check out main (the deployed tree)
+        uses: actions/checkout@v4
+        with: { ref: main, path: _main, fetch-depth: 1 }
+
+      - name: Check out the shelf repository at main
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: _shelf
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install Playwright Chromium
+        run: |
+          npm i --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Record the SHAs under test
+        run: |
+          echo "instrument ref : $(git rev-parse HEAD)"
+          echo "site main      : $(git -C _main rev-parse HEAD)"
+          echo "shelf main     : $(git -C _shelf rev-parse HEAD)"
+
+      - name: HTTP status for every surface
+        run: |
+          set -o pipefail
+          for u in / /games/ /Games/games.json /ouroboros/ /novasiege/ ; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "https://madebymatt.uk$u" || echo "000")
+            printf '  %-34s %s\n' "$u" "$code"
+          done
+          # Reported, not gated — the byte comparison below is the real check
+          # and a 200 proves a response, not the right response.
+
+      - name: Staged games must NOT be served
+        run: |
+          set -o pipefail
+          fail=0
+          for u in https://madebymatt.uk/_staging/ https://madebymatt.uk/_staging/novasiege/ ; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
+            printf '  %-52s %s\n' "$u" "$code"
+            case "$code" in
+              404|403) ;;
+              *) echo "  FAIL reachable, or unreachable for unknown reasons — treated as reachable"; fail=1 ;;
+            esac
+          done
+          exit $fail
+
+      - name: Prove the published paths are SERVED
+        run: |
+          ln -sfn "$PWD/node_modules" tools/node_modules || true
+          cd tools && node verify_published_live.mjs \
+            --repo-root "$GITHUB_WORKSPACE/_main" \
+            --shelf     "$GITHUB_WORKSPACE/_shelf/games.json" \
+            --path /ouroboros/ \
+            --path /novasiege/ \
+            --expect-404 /this-path-does-not-exist-control/
