@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: full-estate-audit-${{ github.event.pull_request.number || github.ref }}
@@ -17,11 +17,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - name: Check out site branch
+      - name: Check out site audit branch
         uses: actions/checkout@v4
         with:
+          repository: MattRoper1977/mattroper1977.github.io
+          ref: codex/full-repair-upgrade-2026-08-07
           path: site
-          persist-credentials: false
+          persist-credentials: true
+          fetch-depth: 0
 
       - name: Check out paired Lessons audit branch
         uses: actions/checkout@v4
@@ -57,9 +60,45 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Apply measured site runtime repairs
+        run: python site/tools/apply_site_runtime_repairs.py --root site
+
+      - name: Prove repair source invariants before commit
+        run: |
+          python -m py_compile site/tools/apply_site_runtime_repairs.py site/tools/full_estate_audit.py
+          node --check site/assets/mbm-features.js
+          node --check site/tools/full_estate_runtime.mjs
+          node --check site/tools/verify_counter_fallback.mjs
+          python - <<'PY'
+          from pathlib import Path
+          features = Path('site/assets/mbm-features.js').read_text(encoding='utf-8')
+          runtime = Path('site/tools/full_estate_runtime.mjs').read_text(encoding='utf-8')
+          assert features.count('remoteCounters: false') == 1
+          assert features.count('function probeRemoteCounters()') == 1
+          assert features.count('return counterJSON(API +') == 2
+          assert 'return timedJSON(API +' not in features
+          assert runtime.count('async function activateVisibleControl') == 1
+          assert "locator('button:visible" not in runtime
+          assert runtime.count('elementFromPoint') >= 2
+          print('SOURCE REGRESSION PASS — counters are local-first; control probes are one-shot and topmost')
+          PY
+          git -C site diff --check
+
+      - name: Commit repaired runtime sources to the authorised branch
+        run: |
+          git -C site config user.name 'github-actions[bot]'
+          git -C site config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C site add assets/mbm-features.js tools/full_estate_runtime.mjs
+          if git -C site diff --cached --quiet; then
+            echo 'Measured runtime repairs already applied'
+          else
+            git -C site commit -m 'fix: stop counter failures and harden browser probes'
+            git -C site push origin HEAD:codex/full-repair-upgrade-2026-08-07
+          fi
+
       - name: Record measured repository revisions
         env:
-          SITE_PR_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          SITE_EVENT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
           SITE_DEFAULT_BASE: ${{ github.event.pull_request.base.sha || '' }}
         run: |
           mkdir -p audit-output
@@ -74,7 +113,7 @@ jobs:
 
           state = {
               'sentinel': 'mbm-full-repair-upgrade-2026-08-07',
-              'site_pr_head': os.environ.get('SITE_PR_HEAD', ''),
+              'site_event_head': os.environ.get('SITE_EVENT_HEAD', ''),
               'site_default_base': os.environ.get('SITE_DEFAULT_BASE', ''),
               'site_tested_tree': sha('site'),
               'lessons_tested_head': sha('Lessons'),
@@ -128,7 +167,11 @@ jobs:
           cat audit-output/http-server.log
           exit 1
 
-      - name: Record CounterAPI CORS and real clip-thumbnail responses
+      - name: Prove local counter fallback and challenged-remote single flight
+        working-directory: site
+        run: node tools/verify_counter_fallback.mjs http://127.0.0.1:4173 | tee ../audit-output/counter-fallback-proof.txt
+
+      - name: Record current external service responses
         continue-on-error: true
         run: |
           set +e
