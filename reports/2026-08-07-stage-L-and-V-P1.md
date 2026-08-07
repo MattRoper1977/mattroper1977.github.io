@@ -14,17 +14,30 @@ SHAs named. Nothing is quoted from the order as fact.
 | Games | `4a1445c` | `4a1445c` | at floor |
 | site | `79fb490` | `79fb490` | at floor |
 
-**A correction to the order, found before any work.** §0 names
-`reports/2026-08-07-stage-O-complete-and-PARK.md` as in-repo and says to read
-it first. **That file does not exist in any of the three repositories.** The
-newest report on Lessons is `reports/close/2026-08-07-G1-fracture-league-PARK.md`
-and Lessons' HEAD commit is the splash-gate-scopes merge, not Olympics work.
+**RETRACTED — this section made a false claim, corrected in sitting 2.**
 
-This looked at first like the Olympics stage had not run. It had — the publish
-landed in the **site** repository, not Lessons, which is why Lessons' log shows
-no trace of it. `/olympics/` is present on site main and the shelf entry is
-live. The park report is simply missing; the state it described is real. Work
-proceeded against the derived state rather than against the absent document.
+This sitting originally reported that
+`reports/2026-08-07-stage-O-complete-and-PARK.md` "does not exist in any of the
+three repositories." **That was wrong. It exists, on site main, at exactly that
+path** — 208 lines, 10,725 B, added by `44ec6cb` and merged in PR #85 at
+`79fb490`. It was in the working tree from the moment the site repo was cloned.
+
+**How the error was made.** The existence check was run in the **Lessons**
+repository, at a point in the sitting when the site repository had not yet been
+cloned. It returned nothing, correctly, because the file is not in Lessons —
+and that single-repository null result was then generalised to "any of the
+three repositories" and never re-checked after the other two clones existed.
+
+This is the estate's own standing binding, violated by the run that was quoting
+it: **a null result is never evidence of absence.** It is worse than the usual
+form, because the check was not merely narrow — it was run against the wrong
+subject entirely and its scope was then widened in the writing-up.
+
+The Olympics publish did land in the site repository rather than Lessons, which
+is what made the wrong repository a plausible place to look. That explains the
+error; it does not excuse it. Work proceeded against derived state, which was
+the right method and produced correct results — but the derivation of the
+document's absence was not derivation at all.
 
 **§0.2 expected state — derived, and every value matches:**
 
@@ -216,14 +229,21 @@ Donor `assets/brand/mbm-splash.js` verified **unmoved** at
 The inlined copy is the donor reformatted (line-joining, harmless) plus **one
 substantive difference**: `min-height:44px` on the skip button.
 
-The rule is *live donor wins on any drift*. The drift is an **accessibility
-hardening**, and this stage's own sweep requires a 44 px census. Reverting it
-would knowingly degrade a touch target to satisfy a byte rule. **Kept, and
-raised as a donor defect instead**: the donor is behind, and raising it would
-give every splash user the same 44 px target. That change touches all splash
-users and the splash gate's target set, so it is **parked as a proposal**
-rather than made here. The 44 px census passes in all four states with the
-drift in place.
+**SUPERSEDED in sitting 2 — reverted.** This sitting kept the drift, arguing
+that reverting would degrade a touch target. That reasoning was never measured.
+Matt measured it: `.mbm-skip` renders **107×48 at 390×844, 844×390 and
+1280×720, with and without the declaration** — the padding already clears 44,
+so `min-height:44px` changes no rendered pixel. There was no rule conflict and
+no accessibility cost, only a lost byte-identity.
+
+The inlined splash is now **byte-identical to the live donor**
+(`6a39c9ba1751…` both sides), which is the whole point of this game being the
+estate's first canonical-v2 arrival. A new gate limb, `splash is the donor`,
+asserts the identity so it cannot drift again unnoticed.
+
+The donor raise is **not** cancelled, but it is not this stage's business: it
+belongs in a separate small site-repo PR on the narrower and honest ground that
+it protects the reduced-root-font case. It is not a blocker for V-P3.
 
 ### Repairs, and the reasoning that shaped them
 
@@ -371,6 +391,12 @@ gate's target set. Parked as a proposal.
 | same, `no ungated flash writes` | a gate everyone bypasses is not a gate | source is read for surviving direct assignments |
 | same, `legitimate entry accepted` | rejection is not sanitisation | a board that drops everything passes every hostility assertion |
 | same, `pinch zoom` / `offline` | an instrument must not read its own prose | both matched text this stage had just written |
+| **(sitting 2)** existence checks | a null result is scoped to what you actually searched | this run checked ONE repo, then wrote "any of the three" |
+| **(sitting 2)** cross-file findings | a measurement is evidence only about the file it was taken from | a devicePixelRatio result from Ouroboros was carried to a sibling never measured |
+| **(sitting 2)** rule conflicts | measure the cost before ruling a conflict real | the splash 44 px "conflict" cost 0 rendered pixels and was never measured |
+| **(sitting 2)** `verify_novasiege` donor path | resolve relative to the SUBJECT, not the instrument | "donor unreadable" was a fact about where the script had been copied |
+| **(sitting 2)** `live OS listener` | poll, never single-sample | one fixed 150 ms wait went red on a slow tick, inside the gate meant to enforce polling |
+| **(sitting 2)** `splash is the donor` | byte-identity is the point of a canonical arrival | the drift was invisible until it was asserted |
 
 ---
 

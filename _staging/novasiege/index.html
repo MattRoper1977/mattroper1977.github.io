@@ -871,7 +871,9 @@ window.__vector=Object.freeze({
 
 <!-- mbm-splash-inline: canonical Made by Matt splash, inlined from the games estate standard. -->
 <script>
-/* Made by Matt splash v2 — single file, no dependencies, self-styling. */
+/* Made by Matt splash v2 — single file, no dependencies, self-styling.
+   Usage: MadeByMattSplash.start({title:"BOSS BATTLE", kicker:"A Made by Matt Simulation",
+          duration:3200, onComplete:function(){}});                                      */
 (function (g) {
   var CSS = ".mbm-splash{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;" +
     "background:radial-gradient(circle at 50% 38%,#222B55,#161D3D 68%);color:#E8E2D4;" +
@@ -889,7 +891,7 @@ window.__vector=Object.freeze({
     "line-height:.95;letter-spacing:.04em;text-transform:uppercase;font-weight:700}" +
     ".mbm-tagline{animation-delay:1.65s;color:#B9E6CD;letter-spacing:.18em;text-transform:uppercase;font-weight:700}" +
     ".mbm-skip{position:absolute;right:22px;bottom:20px;border:1px solid #b9e6cd70;border-radius:99px;" +
-    "background:#0a1026aa;color:#E8E2D4;padding:.65rem 1rem;cursor:pointer;font:inherit;min-height:44px}" +
+    "background:#0a1026aa;color:#E8E2D4;padding:.65rem 1rem;cursor:pointer;font:inherit}" +
     ".mbm-skip:focus-visible{outline:3px solid #F2A24A;outline-offset:3px}" +
     "@keyframes mbmDraw{to{stroke-dashoffset:0}}@keyframes mbmPop{to{transform:scale(1);opacity:1}}" +
     "@keyframes mbmRise{to{opacity:1;transform:translateY(0)}}" +
@@ -902,9 +904,15 @@ window.__vector=Object.freeze({
     'stroke="#E8E2D4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>' +
     '<path class="mstar" d="M50 22.5 L51.48 28.52 L57.5 30 L51.48 31.48 L50 37.5 ' +
     'L48.52 31.48 L42.5 30 L48.52 28.52 Z" fill="#F2A24A"/></svg>';
+
   function start(o) {
-    o = Object.assign({ title: "", kicker: "A Made by Matt Experience", duration: 3200, onComplete: null }, o || {});
-    if (!document.getElementById("mbm-splash-css")) { var st = document.createElement("style"); st.id = "mbm-splash-css"; st.textContent = CSS; document.head.appendChild(st); }
+    o = Object.assign({ title: "", kicker: "A Made by Matt Experience",
+      duration: 3200, onComplete: null }, o || {});
+    if (!document.getElementById("mbm-splash-css")) {
+      var st = document.createElement("style");
+      st.id = "mbm-splash-css"; st.textContent = CSS;
+      document.head.appendChild(st);
+    }
     var reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     var prevFocus = document.activeElement;
     var el = document.createElement("section");
@@ -912,20 +920,36 @@ window.__vector=Object.freeze({
     el.setAttribute("role", "dialog");
     el.setAttribute("aria-modal", "true");
     el.setAttribute("aria-label", "Made by Matt introduction");
-    el.innerHTML = '<div class="mbm-stage">' + MARK + '<p class="mbm-kicker"></p><h1 class="mbm-title"></h1><p class="mbm-tagline">Learn \u2022 Build \u2022 Explore</p></div><button class="mbm-skip" type="button">Skip intro</button>';
+    el.innerHTML = '<div class="mbm-stage">' + MARK +
+      '<p class="mbm-kicker"></p><h1 class="mbm-title"></h1>' +
+      '<p class="mbm-tagline">Learn \u2022 Build \u2022 Explore</p></div>' +
+      '<button class="mbm-skip" type="button">Skip intro</button>';
     el.querySelector(".mbm-kicker").textContent = o.kicker;
     el.querySelector(".mbm-title").textContent = o.title;
     document.body.appendChild(el);
     var done = false, timer;
-    function close() { if (done) return; done = true; clearTimeout(timer); el.classList.add("is-leaving"); window.removeEventListener("keydown", onKey, true); setTimeout(function () { el.remove(); if (prevFocus && prevFocus.focus) prevFocus.focus(); if (typeof o.onComplete === "function") o.onComplete(); }, reduced ? 0 : 600); }
-    el.querySelector(".mbm-skip").addEventListener("click", function (e) { e.stopPropagation(); close(); });
-    el.addEventListener("click", function (e) { e.stopPropagation(); });
-    function onKey(e) { if (done) return; if (e.key === "Escape" || e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); close(); } }
-    window.addEventListener("keydown", onKey, true); el.addEventListener("keydown", onKey); el.tabIndex = -1; el.focus(); timer = setTimeout(close, reduced ? Math.min(o.duration, 1200) : o.duration); return { close: close, element: el };
+    function close() {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      el.classList.add("is-leaving");
+      setTimeout(function () {
+        el.remove();
+        if (prevFocus && prevFocus.focus) prevFocus.focus();
+        if (typeof o.onComplete === "function") o.onComplete();
+      }, reduced ? 0 : 600);
+    }
+    el.querySelector(".mbm-skip").addEventListener("click", close);
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" || e.key === "Enter" || e.key === " ") { e.preventDefault(); close(); }
+    });
+    el.tabIndex = -1;
+    el.focus();
+    timer = setTimeout(close, reduced ? Math.min(o.duration, 1200) : o.duration);
+    return { close: close, element: el };
   }
   g.MadeByMattSplash = { start: start };
 })(window);
-(function () { function boot() { window.MadeByMattSplash.start({ title: 'VECTOR OVERDRIVE', kicker: 'A Made by Matt Arcade', onComplete: function () {} }); } if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot(); })();
 </script>
 </body>
 </html>

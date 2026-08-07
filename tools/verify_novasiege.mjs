@@ -22,7 +22,9 @@
  */
 
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { dirname, join } from 'node:path';
 import { chromium } from 'playwright';
 
 const argv = process.argv.slice(2);
@@ -99,6 +101,32 @@ g('source');
   const vp = (SOURCE.match(/<meta name="viewport" content="([^"]*)"/) || [])[1] || '';
   check('pinch zoom not blocked', !/user-scalable=no|maximum-scale=1/.test(vp), `viewport content: ${vp}`);
 
+  // Splash byte-identity with the live donor. This game is the estate's first
+  // canonical-v2 arrival, and the whole value of that is that the inlined copy
+  // IS the donor. The first version of this file carried the donor plus a
+  // min-height:44px on the skip button; measured at 390x844, 844x390 and
+  // 1280x720 the button renders 107x48 either way, so the declaration bought
+  // no pixel and cost the byte-identity. Reverted, and asserted here so it
+  // cannot drift again unnoticed.
+  {
+    const i = SOURCE.indexOf('mbm-splash-inline');
+    const j = SOURCE.indexOf('<script>', i), k = SOURCE.indexOf('</script>', j);
+    const inlined = i > -1 ? SOURCE.slice(j + 8, k).trim() : '';
+    // Walk up from the TARGET, not from this script. The game is verified at
+    // _staging/novasiege/ today and at novasiege/ after it publishes — those
+    // are different depths — and the script itself may be run from anywhere.
+    // Resolving relative to import.meta.url reported "donor unreadable" purely
+    // because the script had been copied elsewhere, which is a fact about the
+    // harness and not about the game.
+    let donor = '';
+    for (let d = dirname(target), n = 0; n < 6; d = dirname(d), n++) {
+      try { donor = readFileSync(join(d, 'assets/brand/mbm-splash.js'), 'utf8').trim(); break; } catch (_) {}
+    }
+    const h = (t) => createHash('sha256').update(t).digest('hex');
+    check('splash is the donor', donor.length > 0 && inlined === donor,
+      donor.length === 0 ? 'donor unreadable' : `inlined ${h(inlined).slice(0, 12)} vs donor ${h(donor).slice(0, 12)}`);
+  }
+
   check('save keys unchanged', /STORAGE_PREFIX='mbm_vector_overdrive_'/.test(SOURCE), 'mbm_vector_overdrive_ (R4: no renames)');
 
   // A canonical/og URL is a declaration, not a fetch. Only things the browser
@@ -158,9 +186,17 @@ g('reduced motion + photosensitivity');
   check('flash still works when allowed', lit > 0, `probe painted ${lit} (a suppressed-everywhere flash would be a false green)`);
 
   // Live listener: flip the OS mid-session.
+  // Poll, never single-sample. This limb used one fixed 150 ms wait and went
+  // red on a slow tick — the exact binding this estate keeps paying for, in
+  // the instrument that is supposed to enforce it. Waits for the listener to
+  // land, and stays red if it genuinely never does.
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.waitForTimeout(150);
-  const m1 = await page.evaluate(() => window.__vector.motion());
+  let m1 = null;
+  for (let i = 0; i < 40; i++) {
+    m1 = await page.evaluate(() => window.__vector.motion());
+    if (m1.os === true) break;
+    await page.waitForTimeout(50);
+  }
   check('live OS listener', m1.os === true && m1.fx === true, `after OS flip mid-session: os=${m1.os} fx=${m1.fx}`);
 
   await page.evaluate(() => window.__vector.resetFlashPeak());
