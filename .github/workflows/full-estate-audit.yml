@@ -31,6 +31,22 @@ jobs:
           path: Lessons
           persist-credentials: false
 
+      - name: Check out Games catalogue dependency (read-only)
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: Games
+          persist-credentials: false
+
+      - name: Check out app catalogue dependency (read-only)
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Matt-s-Apps-
+          ref: main
+          path: Apps
+          persist-credentials: false
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -55,6 +71,8 @@ jobs:
           python site/tools/full_estate_audit.py \
             --site-root site \
             --lessons-root Lessons \
+            --games-root Games \
+            --apps-root Apps \
             --json-report audit-output/static-audit.json \
             --markdown-report audit-output/static-audit.md \
             --targets audit-output/runtime-targets.json \
@@ -70,8 +88,10 @@ jobs:
         run: |
           mkdir -p public
           rsync -a --exclude='.git' site/ public/
-          rm -rf public/Lessons
+          rm -rf public/Lessons public/Games public/Matt-s-Apps-
           ln -s "$GITHUB_WORKSPACE/Lessons" public/Lessons
+          ln -s "$GITHUB_WORKSPACE/Games" public/Games
+          ln -s "$GITHUB_WORKSPACE/Apps" public/Matt-s-Apps-
           python -m http.server 4173 --bind 127.0.0.1 --directory public >audit-output/http-server.log 2>&1 &
           echo $! > audit-output/http-server.pid
           for attempt in {1..30}; do
@@ -106,11 +126,11 @@ jobs:
 
           blocking = []
           for name in ('static-audit.json', 'runtime-audit.json'):
-              report = Path('audit-output') / name
-              if not report.exists():
+              path = Path('audit-output') / name
+              if not path.exists():
                   blocking.append({'severity': 'P0', 'code': 'REPORT_MISSING', 'path': name, 'message': 'audit report was not produced'})
                   continue
-              data = json.loads(report.read_text(encoding='utf-8'))
+              data = json.loads(path.read_text(encoding='utf-8'))
               if name.startswith('static'):
                   blocking.extend(f for f in data.get('findings', []) if f.get('severity') in {'P0', 'P1'})
               else:
