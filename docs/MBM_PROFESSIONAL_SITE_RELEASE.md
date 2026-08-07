@@ -15,3 +15,7 @@ The professional presentation upgrade is delivered through a focused pull reques
 ## Rollback boundary
 
 The presentation upgrade is concentrated in the shared `assets/mbm-platform.css` and `assets/mbm-platform.js` files plus explicit page integrations. Existing data manifests, lessons, games and application source remain their own sources of truth.
+
+## Release recovery
+
+The completed `ready-v4` payload is retriggered through the permanent release gate after the obsolete `ready-v3` bootstrap path was found incomplete. The release gate must validate the recorded archive hash, run both static and browser checks, remove every staging fragment and then commit the implementation to this branch.
