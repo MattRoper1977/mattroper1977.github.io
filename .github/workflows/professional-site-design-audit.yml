@@ -28,18 +28,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          payload=.github/mbm-professional-upgrade-payload.b64
-          if [[ ! -f "$payload" ]]; then
-            echo "No payload present; this bootstrap has nothing to apply."
+          ready=.github/mbm-professional-upgrade-payload.ready
+          if [[ ! -f "$ready" ]]; then
+            echo "Payload is not marked complete; nothing to apply."
             exit 0
           fi
 
-          base64 -d "$payload" >/tmp/mbm-professional-upgrade.tar.gz
+          mapfile -t parts < <(find .github -maxdepth 1 -type f -name 'mbm-professional-upgrade-payload.part-*' | sort)
+          test "${#parts[@]}" -eq 8
+          cat "${parts[@]}" | base64 -d >/tmp/mbm-professional-upgrade.tar.gz
           echo "6e65c3953d9cb286daabf7cbbda810576a54f10fed2a945020eaac87f190611f  /tmp/mbm-professional-upgrade.tar.gz" | sha256sum -c -
           tar -tzf /tmp/mbm-professional-upgrade.tar.gz | tee /tmp/payload-files.txt
           test "$(wc -l </tmp/payload-files.txt)" -eq 14
           tar -xzf /tmp/mbm-professional-upgrade.tar.gz
-          rm "$payload"
+          rm "$ready" "${parts[@]}"
 
           python -m py_compile tools/verify_professional_site.py
           node --check app.js
