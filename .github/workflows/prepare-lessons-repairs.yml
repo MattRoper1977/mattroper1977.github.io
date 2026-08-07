@@ -1,0 +1,306 @@
+name: Prepare verified Lessons repair payload
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prepare-lessons-repairs-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out site branch for audit scripts
+        uses: actions/checkout@v4
+        with:
+          path: site
+          persist-credentials: false
+
+      - name: Check out authorised Lessons repair branch
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: codex/full-repair-upgrade-2026-08-07
+          path: Lessons
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Preserve negative controls and apply source repairs
+        run: |
+          mkdir -p evidence payload/Games payload/assets/video
+          cp Lessons/Games/Orbital_source.html /tmp/Orbital_source_before.html
+          cp Lessons/Games/Orbital.html /tmp/Orbital_before.html
+          cp Lessons/index.html /tmp/Lessons_index_before.html
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              return text.replace(old, new)
+
+          source_path = Path('Lessons/Games/Orbital_source.html')
+          source = source_path.read_text(encoding='utf-8')
+          if 'pauseReturnState' not in source:
+              source = replace_once(
+                  source,
+                  "let seed=1, gameState='MENU';",
+                  "let seed=1, gameState='MENU', pauseReturnState='AIM';",
+                  'readable state declaration',
+              )
+              source = replace_once(
+                  source,
+                  "function togglePause(){ if(gameState==='AIM'||gameState==='FLY'){ gameState='PAUSE'; show('pause'); } else if(gameState==='PAUSE'){ document.getElementById('pause').classList.add('hidden'); gameState='AIM'; } }",
+                  "function togglePause(){ if(gameState==='AIM'||gameState==='FLY'){ pauseReturnState=gameState; gameState='PAUSE'; show('pause'); } else if(gameState==='PAUSE'){ document.getElementById('pause').classList.add('hidden'); gameState=(pauseReturnState==='FLY'&&probe.flying)?'FLY':'AIM'; } }",
+                  'readable pause function',
+              )
+          source_path.write_text(source, encoding='utf-8')
+
+          release_path = Path('Lessons/Games/Orbital.html')
+          release = release_path.read_text(encoding='utf-8')
+          if 'pauseReturnState' not in release:
+              release = replace_once(
+                  release,
+                  'Qe=1,Ve="MENU",ia=null',
+                  'Qe=1,Ve="MENU",pauseReturnState="AIM",ia=null',
+                  'bundled state declaration',
+              )
+              release = replace_once(
+                  release,
+                  'function ca(){Ve==="AIM"||Ve==="FLY"?(Ve="PAUSE",Qi("pause")):Ve==="PAUSE"&&(document.getElementById("pause").classList.add("hidden"),Ve="AIM")}',
+                  'function ca(){Ve==="AIM"||Ve==="FLY"?(pauseReturnState=Ve,Ve="PAUSE",Qi("pause")):Ve==="PAUSE"&&(document.getElementById("pause").classList.add("hidden"),Ve=pauseReturnState==="FLY"&&We.flying?"FLY":"AIM")}',
+                  'bundled pause function',
+              )
+          release_path.write_text(release, encoding='utf-8')
+
+          index_path = Path('Lessons/index.html')
+          index = index_path.read_text(encoding='utf-8')
+          index = replace_once(
+              index,
+              'src="/assets/video/poster-art.jpg"',
+              'src="assets/video/poster-art.jpg"',
+              'Lessons poster route',
+          )
+          index_path.write_text(index, encoding='utf-8')
+          PY
+
+      - name: Download the exact clip thumbnail and validate its JPEG structure
+        run: |
+          curl --fail --location --silent --show-error --max-time 30 \
+            https://i.ytimg.com/vi/vhuk-K_wWas/hqdefault.jpg \
+            --output Lessons/assets/video/poster-art.jpg
+          python - <<'PY'
+          import hashlib
+          import json
+          import struct
+          from pathlib import Path
+
+          path = Path('Lessons/assets/video/poster-art.jpg')
+          data = path.read_bytes()
+          if len(data) < 4096 or not data.startswith(b'\xff\xd8\xff') or not data.endswith(b'\xff\xd9'):
+              raise SystemExit('download is not a structurally plausible JPEG')
+
+          i = 2
+          width = height = None
+          while i + 3 < len(data):
+              if data[i] != 0xFF:
+                  i += 1
+                  continue
+              while i < len(data) and data[i] == 0xFF:
+                  i += 1
+              marker = data[i]
+              i += 1
+              if marker in {0xD8, 0xD9} or 0xD0 <= marker <= 0xD7:
+                  continue
+              if i + 2 > len(data):
+                  break
+              length = struct.unpack('>H', data[i:i+2])[0]
+              if length < 2 or i + length > len(data):
+                  raise SystemExit('malformed JPEG segment length')
+              if marker in {0xC0,0xC1,0xC2,0xC3,0xC5,0xC6,0xC7,0xC9,0xCA,0xCB,0xCD,0xCE,0xCF}:
+                  height, width = struct.unpack('>HH', data[i+3:i+7])
+                  break
+              i += length
+          if not width or not height or width < 320 or height < 180:
+              raise SystemExit(f'unexpected JPEG dimensions: {width}x{height}')
+          result = {
+              'bytes': len(data),
+              'sha256': hashlib.sha256(data).hexdigest(),
+              'width': width,
+              'height': height,
+          }
+          Path('evidence/poster-image.json').write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(result, indent=2))
+          PY
+
+      - name: Syntax-check both Orbital copies
+        run: |
+          python - <<'PY'
+          import re
+          import subprocess
+          import tempfile
+          from pathlib import Path
+
+          for target in ('Lessons/Games/Orbital_source.html', 'Lessons/Games/Orbital.html'):
+              html = Path(target).read_text(encoding='utf-8')
+              scripts = [
+                  (attrs, body)
+                  for attrs, body in re.findall(r'<script([^>]*)>(.*?)</script>', html, re.S | re.I)
+                  if 'src=' not in attrs.lower() and body.strip()
+              ]
+              if not scripts:
+                  raise SystemExit(f'{target}: no inline scripts found')
+              for attrs, body in scripts:
+                  suffix = '.mjs' if 'type="module"' in attrs.lower() or "type='module'" in attrs.lower() else '.js'
+                  with tempfile.NamedTemporaryFile('w', suffix=suffix, encoding='utf-8') as handle:
+                      handle.write(body)
+                      handle.flush()
+                      subprocess.run(['node', '--check', handle.name], check=True)
+              print(f'{target}: {len(scripts)} inline script block(s) pass node --check')
+          PY
+
+      - name: Prove the Orbital defect and repaired state machine
+        run: |
+          cat > /tmp/verify-orbital-pause.cjs <<'JS'
+          const fs = require('fs');
+
+          function extractFunction(text, name, useLast = false) {
+            const marker = `function ${name}(){`;
+            const start = useLast ? text.lastIndexOf(marker) : text.indexOf(marker);
+            if (start < 0) throw new Error(`${name}: function marker missing`);
+            const braceStart = text.indexOf('{', start);
+            let depth = 0, quote = '', escaped = false;
+            for (let i = braceStart; i < text.length; i++) {
+              const ch = text[i];
+              if (quote) {
+                if (escaped) escaped = false;
+                else if (ch === '\\') escaped = true;
+                else if (ch === quote) quote = '';
+                continue;
+              }
+              if (ch === '"' || ch === "'" || ch === '`') { quote = ch; continue; }
+              if (ch === '{') depth++;
+              else if (ch === '}' && --depth === 0) return text.slice(start, i + 1);
+            }
+            throw new Error(`${name}: unterminated function`);
+          }
+
+          function exerciseReadable(html) {
+            const fn = extractFunction(html, 'togglePause');
+            return exercise(new Function(`
+              let gameState='MENU', pauseReturnState='AIM';
+              let probe={flying:false};
+              const document={getElementById(){return {classList:{add(){}}}}};
+              function show(){}
+              ${fn}
+              return {set(s,f){gameState=s;probe.flying=f},toggle:togglePause,read(){return gameState}};
+            `)());
+          }
+          function exerciseBundled(html) {
+            const fn = extractFunction(html, 'ca', true);
+            return exercise(new Function(`
+              let Ve='MENU', pauseReturnState='AIM';
+              let We={flying:false};
+              const document={getElementById(){return {classList:{add(){}}}}};
+              function Qi(){}
+              ${fn}
+              return {set(s,f){Ve=s;We.flying=f},toggle:ca,read(){return Ve}};
+            `)());
+          }
+          function exercise(game) {
+            game.set('AIM',false); game.toggle(); const aimPause=game.read(); game.toggle(); const aimResume=game.read();
+            game.set('FLY',true); game.toggle(); const flyPause=game.read(); game.toggle(); const flyResume=game.read();
+            game.set('FLY',false); game.toggle(); game.toggle(); const staleResume=game.read();
+            return {aimPause,aimResume,flyPause,flyResume,staleResume};
+          }
+          function gap(r){ return r.flyResume !== 'FLY'; }
+          function fixed(r,label){
+            const expected={aimPause:'PAUSE',aimResume:'AIM',flyPause:'PAUSE',flyResume:'FLY',staleResume:'AIM'};
+            for(const [key,value] of Object.entries(expected)) if(r[key]!==value) throw new Error(`${label} ${key}: ${r[key]} != ${value}`);
+          }
+          const before={
+            readable:exerciseReadable(fs.readFileSync('/tmp/Orbital_source_before.html','utf8')),
+            bundled:exerciseBundled(fs.readFileSync('/tmp/Orbital_before.html','utf8')),
+          };
+          const after={
+            readable:exerciseReadable(fs.readFileSync('Lessons/Games/Orbital_source.html','utf8')),
+            bundled:exerciseBundled(fs.readFileSync('Lessons/Games/Orbital.html','utf8')),
+          };
+          if(!gap(before.readable)||!gap(before.bundled)) throw new Error(`negative control did not reproduce: ${JSON.stringify(before)}`);
+          fixed(after.readable,'readable'); fixed(after.bundled,'bundled');
+          fs.writeFileSync('evidence/orbital-pause.json',JSON.stringify({before,after},null,2)+'\n');
+          console.log('ORBITAL PAUSE PASS — old copies resume flight as AIM; repaired copies preserve FLY and safely fall back from stale flight');
+          console.log(JSON.stringify({before,after},null,2));
+          JS
+          node /tmp/verify-orbital-pause.cjs | tee evidence/orbital-pause.txt
+
+      - name: Prove the poster route control and repaired local response
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          before = Path('/tmp/Lessons_index_before.html').read_text(encoding='utf-8')
+          after = Path('Lessons/index.html').read_text(encoding='utf-8')
+          if before.count('src="/assets/video/poster-art.jpg"') != 1:
+              raise SystemExit('negative control did not contain the broken absolute poster route')
+          if after.count('src="assets/video/poster-art.jpg"') != 1 or '/assets/video/poster-art.jpg' in after:
+              raise SystemExit('repaired page does not contain exactly one relative poster route')
+          print('POSTER SOURCE PASS — broken absolute route reproduced; repaired route is repository-relative')
+          PY
+          python -m http.server 4175 --bind 127.0.0.1 --directory Lessons >evidence/lessons-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill $server_pid 2>/dev/null || true' EXIT
+          for attempt in {1..20}; do
+            curl -fsS http://127.0.0.1:4175/ >/dev/null && break
+            sleep 0.25
+          done
+          curl --fail --silent --show-error --max-time 10 \
+            http://127.0.0.1:4175/assets/video/poster-art.jpg \
+            --output /tmp/served-poster.jpg
+          cmp Lessons/assets/video/poster-art.jpg /tmp/served-poster.jpg
+          echo 'POSTER HTTP PASS — repaired local route serves byte-identical JPEG' | tee evidence/poster-http.txt
+
+      - name: Assemble byte-exact payload and manifest
+        run: |
+          cp Lessons/Games/Orbital_source.html payload/Games/Orbital_source.html
+          cp Lessons/Games/Orbital.html payload/Games/Orbital.html
+          cp Lessons/index.html payload/index.html
+          cp Lessons/assets/video/poster-art.jpg payload/assets/video/poster-art.jpg
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          root=Path('payload')
+          files=[]
+          for path in sorted(p for p in root.rglob('*') if p.is_file()):
+              data=path.read_bytes()
+              files.append({'path':path.relative_to(root).as_posix(),'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()})
+          manifest={'sentinel':'mbm-full-repair-upgrade-2026-08-07','source_lessons_head':'2a12b9f7ecb322cda91d2dfdd544444e6e8f899c','files':files}
+          Path('evidence/payload-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps(manifest,indent=2))
+          PY
+
+      - name: Upload verified Lessons repair payload
+        uses: actions/upload-artifact@v4
+        with:
+          name: lessons-repair-payload-${{ github.run_id }}
+          path: |
+            payload/
+            evidence/
+          if-no-files-found: error
+          retention-days: 14
