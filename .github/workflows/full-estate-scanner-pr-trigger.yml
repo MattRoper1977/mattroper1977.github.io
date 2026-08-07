@@ -71,14 +71,23 @@ jobs:
           grep -F 'mounts = (("Lessons", "Lessons"), ("Games", "Games"), ("Matt-s-Apps-", "Apps"))' tools/full_estate_audit.py
           git diff --check
 
-      - name: Commit the version-matched scanner
+      - name: Commit scanner or remove completed transport
         run: |
-          if git diff --quiet -- tools/full_estate_audit.py; then
-            echo 'Scanner already matches the corrected bytes'
-            exit 0
-          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tools/full_estate_audit.py
-          git commit -m 'test: derive authoritative game and dependency coverage'
+          if ! git diff --quiet -- tools/full_estate_audit.py; then
+            git add tools/full_estate_audit.py
+            git commit -m 'test: derive authoritative game and dependency coverage'
+            git push origin HEAD:codex/full-repair-upgrade-2026-08-07
+            exit 0
+          fi
+          rm -rf tools/.audit-payload
+          rm -f .github/workflows/full-estate-scanner-upgrade.yml
+          rm -f .github/workflows/full-estate-scanner-pr-trigger.yml
+          git add -A tools/.audit-payload .github/workflows/full-estate-scanner-upgrade.yml .github/workflows/full-estate-scanner-pr-trigger.yml
+          if git diff --cached --quiet; then
+            echo 'No completed scanner transport remains'
+            exit 0
+          fi
+          git commit -m 'chore: remove completed scanner transport'
           git push origin HEAD:codex/full-repair-upgrade-2026-08-07
