@@ -821,19 +821,21 @@ function loadGame(){
        numeric field reaching live state, with a benign save loading correctly
        as the control. Every numeric leaf is now checked and falls back to the
        default it shadows, so a non-finite value can neither reach state nor be
-       round-tripped into null on the next autosave. */
-    const finiteMerge=(baseVal,inVal)=>{
-      if(typeof baseVal==="number") return (typeof inVal==="number"&&Number.isFinite(inVal))?inVal:baseVal;
-      return inVal===undefined?baseVal:inVal;
-    };
-    const sanitiseNumbers=(baseObj,outObj)=>{
-      if(!outObj||typeof outObj!=="object")return outObj;
-      for(const k of Object.keys(outObj)){
-        const bv=baseObj?baseObj[k]:undefined, ov=outObj[k];
-        if(ov&&typeof ov==="object"&&!Array.isArray(ov)) sanitiseNumbers(bv,ov);
-        else if(typeof ov==="number"&&!Number.isFinite(ov)) outObj[k]=(typeof bv==="number")?bv:0;
+       round-tripped into null on the next autosave. This includes values nested inside arrays:
+       JSON arrays can contain `1e999` too, and the first repair's object-only
+       walk skipped them. */
+    const sanitiseNumbers=(baseVal,outVal)=>{
+      if(typeof outVal==="number") return Number.isFinite(outVal)?outVal:(typeof baseVal==="number"?baseVal:0);
+      if(Array.isArray(outVal)){
+        const baseArray=Array.isArray(baseVal)?baseVal:[];
+        for(let i=0;i<outVal.length;i++) outVal[i]=sanitiseNumbers(baseArray[i],outVal[i]);
+        return outVal;
       }
-      return outObj;
+      if(outVal&&typeof outVal==="object"){
+        const baseObject=(baseVal&&typeof baseVal==="object"&&!Array.isArray(baseVal))?baseVal:{};
+        for(const k of Object.keys(outVal)) outVal[k]=sanitiseNumbers(baseObject[k],outVal[k]);
+      }
+      return outVal;
     };
     const mergeRecords=(baseObj,inObj)=>{
       if(!inObj||typeof inObj!=="object"||Array.isArray(inObj))return {...baseObj};
