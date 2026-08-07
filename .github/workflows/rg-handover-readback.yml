@@ -3,13 +3,15 @@ name: R-G handover readback
 on:
   push:
     branches: [codex/full-repair-upgrade-2026-08-07]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: rg-handover-readback
+  group: rg-handover-readback-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -129,7 +131,7 @@ jobs:
           git -C site merge-tree --write-tree --messages HEAD refs/remotes/origin/pr25-head > evidence/pr25-merge-tree.txt 2>&1
           merge_exit=$?
           set -e
-          conflict_files=$(grep -Eo 'CONFLICT \([^)]*\):[^\n]*' evidence/pr25-merge-tree.txt | sed -E 's/.* in //' | sort -u | sed '/^$/d' | wc -l || true)
+          conflict_files=$(grep -E '^CONFLICT \(' evidence/pr25-merge-tree.txt | sed -E 's/.* in //' | sort -u | sed '/^$/d' | wc -l || true)
 
           cat > evidence/branch-and-pr25.json <<JSON
           {
@@ -158,14 +160,14 @@ jobs:
       - name: Probe SAVE-05 beyond object-only numeric leaves
         working-directory: site
         run: |
-          cat > /tmp/probe-save05-array.mjs <<'JS'
+          cat > tools/__rg_probe_save05_array.mjs <<'JS'
           import { chromium } from 'playwright';
           import { pathToFileURL } from 'node:url';
           import fs from 'node:fs';
 
           const file = process.argv[2];
           const browser = await chromium.launch({ headless: true });
-          const context = await browser.newContext();
+          const context = await browser.newContext({ reducedMotion: 'reduce' });
           const page = await context.newPage();
           const errors = [];
           page.on('pageerror', error => errors.push(String(error)));
@@ -192,7 +194,7 @@ jobs:
           console.log(JSON.stringify(out, null, 2));
           if (!out.array_gap_reproduced) process.exit(1);
           JS
-          node /tmp/probe-save05-array.mjs "$PWD/ouroboros/index.html"
+          node tools/__rg_probe_save05_array.mjs "$PWD/ouroboros/index.html"
 
       - name: Upload readback evidence
         uses: actions/upload-artifact@v4
