@@ -30,12 +30,31 @@ jobs:
           import hashlib
           from pathlib import Path
 
-          carrier = Path('.github/workflows/full-estate-scanner-upgrade.yml').read_text(encoding='utf-8')
-          marker = '          SCANNER_GZIP_BASE64: '
-          lines = [line for line in carrier.splitlines() if line.startswith(marker)]
-          if len(lines) != 1:
-              raise SystemExit(f'expected one scanner payload, found {len(lines)}')
-          data = gzip.decompress(base64.b64decode(lines[0][len(marker):].strip()))
+          root = Path('tools/.audit-payload')
+          parts = sorted(root.glob('scanner-part-*.txt'))
+          expected_chunk_hashes = [
+              '36414d44bce9d8a72caf81020c6462ca576104b2f355081a222adf413fbd6113',
+              '50b3614757620e62043ae40d3f1bf59fdf7c87bc92da5faea3c83815c35bdcdb',
+              'c6dbcabe5ad304b43ab664ef78deda787ed96ca212f91815251cffe647a1b191',
+              'e5048233eb8159840ea430e466b8a1632c272786b84c46fbf97ac29c22d398c5',
+              '9f69a718dbdd4d1d6b6027043ce7d235a87dbd46c98164d5c9e6f7cbb0bd1302',
+              '0639acdb50b6fcc1c4b0de11bbb828ca782b00fe2759d1e0df036cd7a26410f5',
+              '5f2b38ea14d73629da6f757efcd01bc90fbda25715740ac8dfbe6a43bd268d67',
+              '58c7ea6d9ca1e8cc446c8939477e95cf33b5fd06d68a5c209f97a9fdb8b93bbf',
+          ]
+          if len(parts) != len(expected_chunk_hashes):
+              raise SystemExit(f'expected 8 payload chunks, found {len(parts)}')
+          chunks = []
+          for path, expected_hash in zip(parts, expected_chunk_hashes):
+              chunk = path.read_text(encoding='utf-8').strip()
+              digest = hashlib.sha256(chunk.encode()).hexdigest()
+              if len(chunk) != 1842 or digest != expected_hash:
+                  raise SystemExit(f'{path} failed integrity check: length={len(chunk)} sha256={digest}')
+              chunks.append(chunk)
+          payload = ''.join(chunks)
+          if len(payload) != 14736:
+              raise SystemExit(f'combined payload length mismatch: {len(payload)}')
+          data = gzip.decompress(base64.b64decode(payload))
           digest = hashlib.sha256(data).hexdigest()
           expected = 'eda32791d79ccfe2d6ad6799fc4f8936ddda4c8d6e30cdc2730d6d98c59e2493'
           if digest != expected:
