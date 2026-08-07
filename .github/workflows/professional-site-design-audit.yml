@@ -1,4 +1,4 @@
-name: Apply professional site design payload
+name: Apply verified professional site payload v4
 
 on:
   pull_request:
@@ -12,13 +12,15 @@ permissions:
   contents: write
 
 concurrency:
-  group: mbm-professional-design-payload
-  cancel-in-progress: false
+  group: mbm-professional-design-payload-v4
+  cancel-in-progress: true
 
 jobs:
   apply:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      BRANCH: codex/mbm-site-professional-design-upgrade-2026-08-07
     steps:
       - name: Check out the exact authorised branch
         uses: actions/checkout@v4
@@ -26,59 +28,49 @@ jobs:
           ref: codex/mbm-site-professional-design-upgrade-2026-08-07
           fetch-depth: 0
 
-      - name: Apply the hash-locked implementation payload once
+      - name: Apply, validate and commit the hash-locked implementation
         shell: bash
         run: |
           set -euo pipefail
-          ready=.github/mbm-professional-upgrade-payload.ready-v3
-          if [[ ! -f "$ready" ]]; then
-            echo "Fragment-verified payload is not marked complete; nothing to apply."
-            exit 0
+          git fetch origin "$BRANCH"
+          git reset --hard "origin/$BRANCH"
+          if [[ ! -f assets/mbm-platform.css ]]; then
+            parts=(
+              .github/mbm-professional-upgrade-payload.part-00
+              .github/mbm-professional-upgrade-payload.part-01
+              .github/mbm-professional-upgrade-payload.part-02
+              .github/mbm-professional-upgrade-payload.part-03
+              .github/mbm-professional-upgrade-payload.part-04
+              .github/mbm-professional-upgrade-payload.part-05
+              .github/mbm-professional-upgrade-payload.part-06
+              .github/mbm-professional-upgrade-payload.part-07a
+              .github/mbm-professional-upgrade-payload.part-07b
+              .github/mbm-professional-upgrade-payload.part-07c
+            )
+            for part in "${parts[@]}"; do test -f "$part"; done
+            test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07a)" = "f898a569c8cff8138f0822a18203a5180bf73e35"
+            test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07b)" = "68bf6a82045b4222eb69d69708e84223972c644a"
+            test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07c)" = "f889cb552735293541378c0a8fac5cff2df13e66"
+            cat "${parts[@]}" | base64 -d >/tmp/mbm-professional-upgrade.tar.gz
+            echo "6e65c3953d9cb286daabf7cbbda810576a54f10fed2a945020eaac87f190611f  /tmp/mbm-professional-upgrade.tar.gz" | sha256sum -c -
+            tar -tzf /tmp/mbm-professional-upgrade.tar.gz | tee /tmp/payload-files.txt
+            test "$(wc -l </tmp/payload-files.txt)" -eq 14
+            tar -xzf /tmp/mbm-professional-upgrade.tar.gz
           fi
-
-          parts=(
-            .github/mbm-professional-upgrade-payload.part-00
-            .github/mbm-professional-upgrade-payload.part-01
-            .github/mbm-professional-upgrade-payload.part-02
-            .github/mbm-professional-upgrade-payload.part-03
-            .github/mbm-professional-upgrade-payload.part-04
-            .github/mbm-professional-upgrade-payload.part-05
-            .github/mbm-professional-upgrade-payload.part-06
-            .github/mbm-professional-upgrade-payload.part-07a
-            .github/mbm-professional-upgrade-payload.part-07b-00
-            .github/mbm-professional-upgrade-payload.part-07b-01
-            .github/mbm-professional-upgrade-payload.part-07b-02
-            .github/mbm-professional-upgrade-payload.part-07b-03
-            .github/mbm-professional-upgrade-payload.part-07b-04
-          )
-          for part in "${parts[@]}"; do test -f "$part"; done
-          test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07a)" = "f898a569c8cff8138f0822a18203a5180bf73e35"
-          test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07b-00)" = "e260a6a3bc1074c6771e7e3f85bc9c5fcaa0d22b"
-          test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07b-01)" = "946b5737d3bf6374390aac8fff555c25cf93017c"
-          test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07b-02)" = "9c61fbb5e4901ba45e3a431a736af3e0397a7048"
-          test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07b-03)" = "a8e956a602afb6d9bf6104d46adcc4798fa11b23"
-          test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07b-04)" = "1b523834fed908102ea6c145b2a3e432fa871466"
-          cat "${parts[@]}" | base64 -d >/tmp/mbm-professional-upgrade.tar.gz
-          echo "6e65c3953d9cb286daabf7cbbda810576a54f10fed2a945020eaac87f190611f  /tmp/mbm-professional-upgrade.tar.gz" | sha256sum -c -
-          tar -tzf /tmp/mbm-professional-upgrade.tar.gz | tee /tmp/payload-files.txt
-          test "$(wc -l </tmp/payload-files.txt)" -eq 14
-          tar -xzf /tmp/mbm-professional-upgrade.tar.gz
-          rm "$ready" "${parts[@]}"
-          rm -f \
-            .github/mbm-professional-upgrade-payload.ready \
-            .github/mbm-professional-upgrade-payload.ready-v2 \
-            .github/mbm-professional-upgrade-payload.part-07 \
-            .github/mbm-professional-upgrade-payload.part-07b
-
+          find .github -maxdepth 1 -type f -name 'mbm-professional-upgrade-payload.*' -delete
+          rm -f .github/workflows/mbm-professional-site-release.yml
+          python tools/verify_professional_site.py --self-test
+          python tools/verify_professional_site.py
           python -m py_compile tools/verify_professional_site.py
           node --check app.js
           node --check assets/mbm-platform.js
           node --check tools/verify_professional_site.mjs
           git diff --check
-
           git config user.name "Made by Matt design automation"
           git config user.email "actions@users.noreply.github.com"
           git add -A
-          git diff --cached --stat
-          git commit -m "feat: elevate Made by Matt platform UX"
-          git push origin HEAD:codex/mbm-site-professional-design-upgrade-2026-08-07
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git commit -m "feat: elevate Made by Matt platform UX"
+            git push origin "HEAD:$BRANCH"
+          fi
