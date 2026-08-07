@@ -1,0 +1,136 @@
+name: Full Lessons + Site estate audit
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: full-estate-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out site branch
+        uses: actions/checkout@v4
+        with:
+          path: site
+          persist-credentials: false
+
+      - name: Check out paired Lessons audit branch
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: codex/full-repair-upgrade-2026-08-07
+          path: Lessons
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install audit parser dependencies
+        run: python -m pip install --disable-pip-version-check beautifulsoup4==4.13.4 html5lib==1.1
+
+      - name: Prove static scanner can fail
+        run: python site/tools/full_estate_audit.py --self-test
+
+      - name: Run full static and cross-repository audit
+        id: static
+        continue-on-error: true
+        run: |
+          mkdir -p audit-output
+          python site/tools/full_estate_audit.py \
+            --site-root site \
+            --lessons-root Lessons \
+            --json-report audit-output/static-audit.json \
+            --markdown-report audit-output/static-audit.md \
+            --targets audit-output/runtime-targets.json \
+            --fail-on P1
+
+      - name: Install Playwright Chromium
+        working-directory: site
+        run: |
+          npm install --no-save --no-package-lock playwright@1.54.1
+          npx playwright install --with-deps chromium
+
+      - name: Build combined local Pages tree and start server
+        run: |
+          mkdir -p public
+          rsync -a --exclude='.git' site/ public/
+          rm -rf public/Lessons
+          ln -s "$GITHUB_WORKSPACE/Lessons" public/Lessons
+          python -m http.server 4173 --bind 127.0.0.1 --directory public >audit-output/http-server.log 2>&1 &
+          echo $! > audit-output/http-server.pid
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat audit-output/http-server.log
+          exit 1
+
+      - name: Prove runtime scanner can fail
+        working-directory: site
+        run: node tools/full_estate_runtime.mjs --self-test --base-url http://127.0.0.1:4173
+
+      - name: Run desktop and mobile runtime smoke matrix
+        id: runtime
+        continue-on-error: true
+        working-directory: site
+        run: |
+          node tools/full_estate_runtime.mjs \
+            --targets ../audit-output/runtime-targets.json \
+            --base-url http://127.0.0.1:4173 \
+            --report ../audit-output/runtime-audit.json \
+            --markdown ../audit-output/runtime-audit.md \
+            --concurrency 2
+
+      - name: Print blocking findings and enforce gate
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          blocking = []
+          for name in ('static-audit.json', 'runtime-audit.json'):
+              report = Path('audit-output') / name
+              if not report.exists():
+                  blocking.append({'severity': 'P0', 'code': 'REPORT_MISSING', 'path': name, 'message': 'audit report was not produced'})
+                  continue
+              data = json.loads(report.read_text(encoding='utf-8'))
+              if name.startswith('static'):
+                  blocking.extend(f for f in data.get('findings', []) if f.get('severity') in {'P0', 'P1'})
+              else:
+                  for result in data.get('results', []):
+                      for issue in result.get('issues', []):
+                          if issue.get('severity') in {'P0', 'P1'}:
+                              blocking.append({**issue, 'path': f"{result.get('profile')} {result.get('target')}"})
+          print(f"blocking findings: {len(blocking)}")
+          for finding in blocking[:200]:
+              print(f"{finding.get('severity')} {finding.get('code')} {finding.get('repo', '')}/{finding.get('path', '')}: {finding.get('message')}")
+          if len(blocking) > 200:
+              print(f"... {len(blocking) - 200} more in uploaded reports")
+          raise SystemExit(1 if blocking else 0)
+          PY
+
+      - name: Upload audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-estate-audit-${{ github.run_id }}
+          path: audit-output/
+          if-no-files-found: error
+          retention-days: 14
