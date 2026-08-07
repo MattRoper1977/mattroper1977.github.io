@@ -36,6 +36,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { analyse as rawAnalyse, selfTest } from './flicker_analyse.mjs';
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 
@@ -71,65 +72,20 @@ function serve() {
   return new Promise(r => srv.listen(0, '127.0.0.1', () => r(srv)));
 }
 
-/* ---- signal maths, run on the node side so it is inspectable ------------ */
-function analyse(series) {
-  const n = series.length;
-  const mean = series.reduce((a, b) => a + b, 0) / n;
-  const c = series.map(v => v - mean);
-  const min = Math.min(...series), max = Math.max(...series);
-  const ptp = max - min;
-
-  /* Peak counting with PROMINENCE, and a threshold proportional to the signal's
-     own range. The first version used an absolute tolerance, which made the
-     count depend on whether the units were 0-1 or 0-255 — it reported 0 peaks
-     for the very waveform it was built to measure, and 26/sec for the same
-     waveform scaled by 100. See --self-test: a rate this tool reports is only
-     worth reading because that test says it can recover a known one. */
-  const tol = ptp * 0.05;
-  let peaks = 0;
-  for (let i = 1; i < n - 1; i++) {
-    if (c[i] > c[i - 1] && c[i] >= c[i + 1]) {
-      let l = c[i]; for (let j = i - 1; j >= 0 && c[j] <= c[j + 1]; j--) l = Math.min(l, c[j]);
-      let r = c[i]; for (let j = i + 1; j < n && c[j] <= c[j - 1]; j++) r = Math.min(r, c[j]);
-      if (c[i] - Math.max(l, r) > tol) peaks++;
-    }
-  }
-  let crossings = 0;
-  for (let i = 1; i < n; i++) if ((c[i - 1] < 0 && c[i] >= 0) || (c[i - 1] > 0 && c[i] <= 0)) crossings++;
-
-  let worst = 0;
-  for (let i = 1; i < n; i++) worst = Math.max(worst, Math.abs(series[i] - series[i - 1]));
-
-  const dur = n / FPS;
-  return {
-    peaksPerSec: +(peaks / dur).toFixed(3),
-    zeroXPerSec: +((crossings / 2) / dur).toFixed(3),
-    worstFrameSwing: +worst.toFixed(3),
-    peakToPeak: +ptp.toFixed(3),
-    mean: +mean.toFixed(2),
-    samples: n
-  };
-}
+/* ---- signal maths ------------------------------------------------------
+   MOVED, NOT CHANGED. This was ~40 lines of peak-counting living here, until
+   Global Games needed a flash census of its own and the choice was to copy it
+   or to share it. Copying is how two standards start. The method — prominence
+   with a threshold proportional to the signal's own range — and the self-test
+   cases are byte-identical to what shipped here; they just live in
+   tools/flicker_analyse.mjs now, so a correction reaches both instruments. */
+const analyse = series => rawAnalyse(series, FPS);
 
 /* The instrument's own control. A rate-measuring tool that has never been shown
    to recover a KNOWN rate is an opinion generator. */
 if (process.argv.includes('--self-test')) {
-  const mk = f => { const a = []; for (let i = 0; i < FPS * 8; i++) a.push(f(i / FPS)); return a; };
-  const flick = t => 0.8 + Math.sin(t * 8) * 0.12 + Math.sin(t * 17) * 0.08;
-  const cases = [
-    ['pure 17 rad/s  (2.706 Hz)', mk(t => Math.sin(t * 17)), 2.706],
-    ['pure 8 rad/s   (1.273 Hz)', mk(t => Math.sin(t * 8)), 1.273],
-    ['the shipped flick waveform', mk(flick), 2.706],
-    ['the same, scaled x100     ', mk(t => flick(t) * 100), 2.706],
-    ['static                    ', mk(() => 0.8), 0]
-  ];
-  let bad = 0;
-  for (const [name, sig, expect] of cases) {
-    const r = analyse(sig);
-    const ok = Math.abs(r.peaksPerSec - expect) <= 0.15;
-    if (!ok) bad++;
-    console.log(`${ok ? 'PASS' : 'FAIL'}  ${name} -> ${r.peaksPerSec} peaks/sec (expected ~${expect})`);
-  }
+  const { bad, lines } = selfTest(FPS);
+  for (const l of lines) console.log(l);
   console.log(bad === 0
     ? 'SELF-TEST PASSED: the analyser recovers known rates and is scale-invariant.'
     : `SELF-TEST FAILED: ${bad} case(s) wrong — no measurement from this tool means anything.`);
