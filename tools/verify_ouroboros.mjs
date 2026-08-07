@@ -150,7 +150,11 @@ g('source');
     'no og:image claimed (banner is U-P4)');
   check('noscript fallback', /<noscript>/.test(SOURCE),
     'a JS-off visitor is told why, and given a way back to the arcade');
-  check('pinch zoom not blocked',
+  // The meta tag alone is NOT evidence. This file's viewport meta was already
+  // clean while `touch-action:none` on html,body blocked pinch page-wide — a
+  // defect the meta-only version of this limb passed straight over. The
+  // computed value is checked on the live page below; this is the meta half.
+  check('viewport meta permits zoom',
     !/user-scalable=no|maximum-scale=1/.test((SOURCE.match(/<meta name="viewport" content="([^"]*)"/) || [])[1] || ''),
     `viewport: ${(SOURCE.match(/<meta name="viewport" content="([^"]*)"/) || [])[1]}`);
 
@@ -232,6 +236,72 @@ g('U-2 reduced motion as a floor');
   await ctx.close();
 }
 
+// ────────────────────────────────────── the frame loop must survive a throw
+g('loop resilience');
+{
+  const { ctx, page } = await boot(target);
+  // Measure that the loop is alive, then make render() throw on the very next
+  // frame, then measure again. A loop whose reschedule sits after unguarded
+  // work stops for good; one that reschedules in `finally` keeps its clock.
+  const t0 = await page.evaluate(() => Game.time);
+  await page.waitForTimeout(300);
+  const t1 = await page.evaluate(() => Game.time);
+  check('loop is running', t1 > t0, `Game.time advanced ${(t1 - t0).toFixed(3)}s`);
+
+  const threw = await page.evaluate(() => {
+    const orig = window.render;   // a function declaration, so this one IS on window
+    let fired = 0;
+    window.render = function () { fired++; if (fired <= 3) throw new Error('negative control: render threw'); return orig.apply(this, arguments); };
+    return true;
+  });
+  await page.waitForTimeout(600);
+  const t2 = await page.evaluate(() => Game.time);
+  check('loop survives a throw', threw && t2 > t1,
+    `after render() threw 3 frames, Game.time advanced a further ${(t2 - t1).toFixed(3)}s (a dead loop would be 0)`);
+  await ctx.close();
+}
+
+// ───────────────────────────────────────────── aria widening, not last-write
+g('aria widening (A11Y-01)');
+{
+  const { ctx, page } = await boot(target);
+  const heard = await page.evaluate(async () => {
+    const el = document.getElementById('ariaLive');
+    const seen = [];
+    const mo = new MutationObserver(() => { const t = el.textContent.trim(); if (t && seen[seen.length - 1] !== t) seen.push(t); });
+    mo.observe(el, { childList: true, characterData: true, subtree: true });
+    // A burst in one frame — exactly what a resonance technique produces.
+    ['alpha one', 'beta two', 'gamma three', 'delta four'].forEach((m) => window.announce(m));
+    await new Promise((r) => setTimeout(r, 4200));
+    mo.disconnect();
+    return seen;
+  });
+  check('a burst is not collapsed', heard.length >= 4,
+    `${heard.length} of 4 announcements reached the live region: ${JSON.stringify(heard)}`);
+  check('markup stripped', !heard.some((h) => /[<>]/.test(h)), 'live region carries words, not tags');
+  await ctx.close();
+}
+
+// ───────────────────────────────────────────────── save on the way out
+g('visibilitychange (SAVE-11)');
+{
+  const { ctx, page } = await boot(target);
+  await page.evaluate(() => { window.__ouroboros.newGame(); });
+  await page.waitForTimeout(300);
+  await page.evaluate(() => { localStorage.removeItem(window.__ouroboros.saveKey()); });
+  const gone = await page.evaluate(() => window.__ouroboros.saveRaw());
+  check('save cleared for the probe', gone === null, 'storage emptied so the next write is attributable');
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await page.waitForTimeout(300);
+  const back = await page.evaluate(() => window.__ouroboros.saveRaw());
+  check('hiding the tab writes a save', typeof back === 'string' && back.length > 0,
+    back ? `${back.length} bytes written on visibilitychange` : 'nothing was written');
+  await ctx.close();
+}
+
 // ─────────────────────────────────────────────────────── R7 save round-trip
 g('R7 save round-trip');
 {
@@ -244,8 +314,59 @@ g('R7 save round-trip');
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction('!!(window.__ouroboros || window.OuroborosDebug)', null, { timeout: 25000 });
   const after = await page.evaluate(() => window.__ouroboros.saveRaw());
-  check('save reloads lossless', before === after,
-    before === after ? 'byte-identical across reload' : 'save drifted on reload');
+
+  /* This limb used to assert byte-equality, and byte-equality is the wrong
+     assertion. `pagehide` now writes a save on the way out — which is the
+     point of SAVE-11 — so a reload legitimately advances the play clock. The
+     first version read that as "save drifted on reload" and would have had me
+     rip out a working fix to satisfy it. Measured: exactly one field moved,
+     playTime 0 -> 0.4166, with the key count identical at 18 either side.
+
+     R7 is that nothing is LOST or CORRUPTED across the round trip, not that
+     no counter may ever advance. So: identical key sets, every field
+     identical except monotonic clocks, and those must be non-decreasing —
+     which additionally catches a save that RESETS the clock on load, a real
+     corruption the byte-equality version would have passed straight over
+     whenever the numbers happened to line up. */
+  const MONOTONIC = new Set(['playTime']);
+  const cmp = await page.evaluate(([a, b, mono]) => {
+    const A = JSON.parse(a), B = JSON.parse(b);
+    const out = { sameKeys: true, changed: [], regressed: [] };
+    const walk = (x, y, path) => {
+      const keys = new Set([...Object.keys(x || {}), ...Object.keys(y || {})]);
+      for (const k of keys) {
+        const p = path ? path + '.' + k : k;
+        const vx = x ? x[k] : undefined, vy = y ? y[k] : undefined;
+        if (vx === undefined || vy === undefined) { out.sameKeys = false; out.changed.push(p + ' (present on one side only)'); continue; }
+        if (vx && vy && typeof vx === 'object' && typeof vy === 'object' && !Array.isArray(vx)) { walk(vx, vy, p); continue; }
+        if (JSON.stringify(vx) !== JSON.stringify(vy)) {
+          if (mono.includes(k)) { if (!(Number(vy) >= Number(vx))) out.regressed.push(`${p}: ${vx} -> ${vy}`); }
+          else out.changed.push(`${p}: ${JSON.stringify(vx)} -> ${JSON.stringify(vy)}`);
+        }
+      }
+    };
+    walk(A, B, '');
+    return out;
+  }, [before, after, [...MONOTONIC]]);
+
+  check('save reloads lossless', cmp.sameKeys && cmp.changed.length === 0,
+    cmp.changed.length ? `fields changed: ${JSON.stringify(cmp.changed.slice(0, 4))}` : 'same key set; every non-clock field identical across reload');
+  check('play clock never regresses', cmp.regressed.length === 0,
+    cmp.regressed.length ? JSON.stringify(cmp.regressed) : 'monotonic fields advanced or held');
+  await ctx.close();
+}
+
+// ────────────────────────────────── pinch zoom, measured on the live page
+g('pinch zoom (computed)');
+{
+  const { ctx, page } = await boot(target);
+  const ta = await page.evaluate(() => ({
+    body: getComputedStyle(document.body).touchAction,
+    html: getComputedStyle(document.documentElement).touchAction,
+  }));
+  const blocks = (v) => v === 'none' || /pinch-zoom/.test(v) === false && v === 'none';
+  check('page permits pinch zoom', ta.body !== 'none' && ta.html !== 'none',
+    `computed touch-action — html:${ta.html} body:${ta.body}`);
   await ctx.close();
 }
 
@@ -260,6 +381,11 @@ g('hostile saves');
     ['NaN-ish numbers', '{"progress":"NaN","settings":{"reducedMotion":"yes"}}'],
     ['hostile string', '{"progress":1,"characters":{"yasuke":{"name":"<img src=x onerror=alert(1)>"}}}'],
     ['absurd numbers', '{"progress":1e309,"party":[{"hp":-99999999}]}'],
+    ['top-level array', '[{"progress":9}]'],
+    ['top-level number', '42'],
+    ['top-level string', '"a save, honest"'],
+    ['top-level bool', 'true'],
+    ['character replaced by a primitive', '{"characters":{"yasuke":7}}'],
   ];
   for (const [label, payload] of probes) {
     const ctx = await browser.newContext();

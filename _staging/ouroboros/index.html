@@ -47,7 +47,14 @@
     --sub-size:20px;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020309;color:var(--text);font-family:Georgia,"Times New Roman",serif;touch-action:none;overscroll-behavior:none}
+  /* OURO-HEAD-03. The viewport meta permits zoom, but `touch-action:none` here
+     blocked pinch page-wide anyway — a clean meta tag is not evidence that
+     zoom works. `manipulation` keeps the double-tap-zoom delay suppressed and
+     gives pinch back. The play surfaces below still take `none`, which is
+     where it was actually needed: stopping the page scrolling under a thumb
+     that is driving the joystick. */
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020309;color:var(--text);font-family:Georgia,"Times New Roman",serif;touch-action:manipulation;overscroll-behavior:none}
+  #gameCanvas,#touchControls,#joystickBase{touch-action:none}
   button,input,select{font:inherit}
   button{color:var(--text)}
   #app{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 20%,#252047 0,#080b16 42%,#020309 100%)}
@@ -446,7 +453,32 @@ function hexAlpha(hex,a){
   if(hex.startsWith("#") && hex.length===7){const n=parseInt(hex.slice(1),16);return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`;}
   return hex;
 }
-function announce(text){ $("#ariaLive").textContent=text; }
+/* A11Y-01. This was a bare assignment to a single polite live region, so a
+   burst of announcements in one frame — a resonance technique fires several —
+   left a screen-reader user hearing only the last one. Widened into a queue
+   that drains at a readable cadence, and every message is cleared before the
+   next is written so two identical strings in a row are still two
+   announcements rather than one no-op mutation.
+   Markup is stripped: the battle log is written as HTML (<strong> etc.) and a
+   live region should carry the words, not the tags. */
+const _ariaQueue=[]; let _ariaTimer=null;
+function _ariaPump(){
+  const el=$("#ariaLive");
+  if(!el||!_ariaQueue.length){ _ariaTimer=null; return; }
+  const next=_ariaQueue.shift();
+  el.textContent="";
+  el.textContent=next;
+  _ariaTimer=setTimeout(_ariaPump,850);
+}
+function announce(text){
+  if(text==null)return;
+  const clean=String(text).replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim();
+  if(!clean)return;
+  if(_ariaQueue[_ariaQueue.length-1]===clean)return;   /* de-dupe a repeat */
+  _ariaQueue.push(clean);
+  if(_ariaQueue.length>12)_ariaQueue.splice(0,_ariaQueue.length-12);
+  if(!_ariaTimer)_ariaPump();
+}
 function screenFlash(colour="#fff", strength=1){
   const el=$("#screenFlash"); if(!el)return;
   /* Reduced motion suppresses the flash outright. shake() has always been
@@ -713,6 +745,18 @@ function applySettings(){
   AudioEngine.setEnabled(Game.settings.music,Game.settings.sfx);
 }
 
+/* SAVE-11. A mobile tab can be evicted without warning and nothing was
+   written on the way out, so progress since the last explicit save was simply
+   lost. pagehide is the reliable one on iOS; visibilitychange covers the rest.
+   Both are guarded because they can fire before the first save exists. */
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="hidden"){
+    try{ if(Game.save) saveGame(true); }catch(_){}
+    if(Game.settings && Game.settings.autoPause && Game.screen==="explore") Game.paused=true;
+  }
+});
+addEventListener("pagehide",()=>{ try{ if(Game.save) saveGame(true); }catch(_){} });
+
 /* Live OS listener, attached IMMEDIATELY AFTER the function it calls and never
    above it. If a player turns reduced motion on mid-session the game complies
    at once, with no reload; if they turn it off, their own stored preference is
@@ -740,8 +784,27 @@ function saveGame(silent=false){
 function loadGame(){
   try{
     const raw=Store.getItem(SAVE_KEY); if(!raw)return false;
-    const loaded=JSON.parse(raw); const base=defaultSave();
-    Game.save={...base,...loaded,settings:{...base.settings,...loaded.settings},characters:{...base.characters,...loaded.characters},inventory:{...base.inventory,...loaded.inventory},materials:{...base.materials,...loaded.materials},codex:{...base.codex,...loaded.codex},quest:{...base.quest,...loaded.quest},flags:{...base.flags,...loaded.flags},spire:{...base.spire,...loaded.spire}};
+    const parsed=JSON.parse(raw); const base=defaultSave();
+    /* SAVE-02. A top-level array, number, string, boolean or null was spread
+       straight into the save object. Spreading an array yields numeric keys;
+       spreading a primitive yields nothing and silently produced a blank game
+       that then overwrote the real one. A save that is not a plain object is
+       not a save. */
+    if(!parsed||typeof parsed!=="object"||Array.isArray(parsed)){ console.warn("Save is not an object; ignoring it and keeping the current game."); return false; }
+    const loaded=parsed;
+    /* SAVE-03. Nested records were shallow-merged, so one malformed character
+       replaced a whole default wholesale and lost its skills/stat shape. Merge
+       each record against its own default instead of the container. */
+    const mergeRecords=(baseObj,inObj)=>{
+      if(!inObj||typeof inObj!=="object"||Array.isArray(inObj))return {...baseObj};
+      const out={...baseObj};
+      for(const k of Object.keys(baseObj)){
+        const v=inObj[k];
+        out[k]=(v&&typeof v==="object"&&!Array.isArray(v))?{...baseObj[k],...v}:baseObj[k];
+      }
+      return out;
+    };
+    Game.save={...base,...loaded,settings:{...base.settings,...loaded.settings},characters:mergeRecords(base.characters,loaded.characters),inventory:{...base.inventory,...loaded.inventory},materials:{...base.materials,...loaded.materials},codex:{...base.codex,...loaded.codex},quest:{...base.quest,...loaded.quest},flags:{...base.flags,...loaded.flags},spire:{...base.spire,...loaded.spire}};
     Game.player.x=Game.save.player?.x||155; Game.player.y=Game.save.player?.y||555;
     applySettings(); return true;
   }catch(err){console.warn("Load failed",err);return false;}
@@ -1517,7 +1580,12 @@ function openItemMenu(){
 }
 function updateBattleHUD(){
   const b=Game.battle;if(!b)return;const target=currentTarget();
-  $("#battleLog").innerHTML=b.log;$("#resonanceValue").textContent=`${Math.round(b.resonance)}%`;$("#resonanceFill").style.width=`${b.resonance}%`;
+  /* A11Y-04. The battle log is the game's primary combat feedback and was
+     announced at only 2 of its 19 write sites. Announcing HERE, at the single
+     point where it reaches the DOM, covers every one of them and cannot drift
+     as new log writes are added. */
+  const _logEl=$("#battleLog");
+  if(_logEl.innerHTML!==b.log){ _logEl.innerHTML=b.log; announce(b.log); }$("#resonanceValue").textContent=`${Math.round(b.resonance)}%`;$("#resonanceFill").style.width=`${b.resonance}%`;
   const timeline=$("#timelineIcons");timeline.innerHTML="";const remaining=b.queue.slice(Math.max(0,b.queueIndex),b.queueIndex+9);remaining.forEach((u,i)=>{const el=document.createElement("div");el.className=`turn-icon ${u.team==="enemy"?"enemy":""} ${i===0&&b.current===u?"current":""}`;el.style.left=`${5+i*(90/Math.max(1,remaining.length-1))}%`;el.style.color=u.colour||"#fff";el.textContent=u.team==="party"?CHARACTER_DEFS[u.id].short.slice(0,2):u.glyph;el.title=u.name;timeline.appendChild(el);});
   if(target){
     $("#targetName").textContent=target.name;$("#targetMeta").textContent=`HP ${fmt(target.hp)} / ${fmt(target.maxHp)} · Stagger ${Math.round(target.stagger)} / ${target.staggerMax}${target.collapseTurns>0?" · MATRIX COLLAPSE":""}`;$("#targetWire .wire-glyph").textContent=target.glyph;
@@ -1799,7 +1867,19 @@ function render(){
   ctx.save();ctx.clearRect(0,0,W,H);if(Game.screen==="title"||Game.screen==="boot")renderTitleCanvas();else if(Game.screen==="cinematic")renderCinematic();else if(Game.screen==="explore")renderExplore();else if(Game.screen==="battle")renderBattle();else renderTitleCanvas();ctx.restore();
 }
 function loop(ts){
-  if(!Game.last)Game.last=ts;const dt=clamp((ts-Game.last)/1000,0,.05);Game.last=ts;Game.time+=dt;Game.dt=dt;update(dt);render();Game.input.pressed.clear();Game.input.pointer.clicked=false;requestAnimationFrame(loop);
+  /* The reschedule used to be the LAST statement, after unguarded update() and
+     render(). One throw anywhere in either — a malformed save, an unexpected
+     null — and requestAnimationFrame was never reached: the game froze for
+     good, with a console error nobody was looking at.
+     `finally`, not `catch`. The error still propagates and is still visible;
+     it just no longer takes the frame loop with it. Swallowing it in a bare
+     catch would turn a loud bug into a silent one, which is the trap this
+     estate has paid for three times over. */
+  try{
+    if(!Game.last)Game.last=ts;const dt=clamp((ts-Game.last)/1000,0,.05);Game.last=ts;Game.time+=dt;Game.dt=dt;update(dt);render();Game.input.pressed.clear();Game.input.pointer.clicked=false;
+  } finally {
+    requestAnimationFrame(loop);
+  }
 }
 
 function bindUI(){
