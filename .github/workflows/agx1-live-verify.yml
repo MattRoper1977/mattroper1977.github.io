@@ -177,8 +177,12 @@ jobs:
           # This was a grep that printed a snippet and could not fail — it
           # matched the "New releases" eyebrow and reported nothing about the
           # tenant. Derive the occupant from BOTH sides and require agreement.
+          # The shelf is fetched here rather than inherited from the census
+          # step's /tmp/games.json: a gate that depends on a previous step's
+          # leftovers passes for the wrong reason the day that step is moved.
+          curl -sS --max-time 30 https://madebymatt.uk/Games/games.json -o /tmp/shelf.json || true
           python3 - <<'PY'
-          import re,sys
+          import re,sys,os,json
           served=open('/tmp/home.html',encoding='utf-8',errors='replace').read()
           repo=open('index.html',encoding='utf-8').read()
           s=re.findall(r'data-release="([^"]+)"',served)
@@ -186,20 +190,52 @@ jobs:
           print('  served occupant(s):',s)
           print('  repo   occupant(s):',r)
           # RULING — Matt, 5 Aug 2026: "New Release is a stack; each game holds
-          # at most ONE box; ruled occupants = Neon Sync (top, amended for
-          # v1.1) + Neon Breach." The old limb asserted len(r)!=1, a
-          # single-tenant invariant the stack design had outgrown. The count is
-          # no longer asserted; the RULING is.
-          RULED_OCCUPANTS=['Neon Sync','Neon Breach']
-          unruled=[o for o in r if o not in RULED_OCCUPANTS]
-          missing=[o for o in RULED_OCCUPANTS if o not in r]
+          # at most ONE box." That ruling is durable and is still asserted below.
+          #
+          # TENTH INSTANCE, and the second in this same limb. The membership
+          # list beside the ruling was a PIN: RULED_OCCUPANTS=['Neon Sync',
+          # 'Neon Breach'], frozen 5 Aug. Relicforge's homepage box landed
+          # legitimately on 6 Aug (0b6caa9, "Fracture Engine Pass 4: card art,
+          # the RPG rail, and the homepage box) and from that commit this gate
+          # failed on EVERY branch — 31118184732 onward — while printing
+          # served and repo occupants that were byte-identical to each other.
+          # The homepage was never wrong; the allowlist was. A pin that has to
+          # be hand-edited every time a game ships is not an invariant, it is a
+          # scheduled outage.
+          #
+          # Derived replacement: an occupant is legitimate iff it NAMES A GAME
+          # THAT IS ACTUALLY ON THE SHELF. A typo, a phantom, or a box for a
+          # game that never shipped still fails; a game that legitimately
+          # launched passes with no edit here. The shelf is the same served
+          # manifest the census step above reads, and the NEW· marker prefix is
+          # stripped before comparison because the marker rides on the shelf
+          # title, not on the homepage box.
+          shelf=[]
+          try:
+              shelf=json.load(open('/tmp/shelf.json'))['games']
+          except Exception as e:
+              print('  FAIL served shelf manifest unreadable, cannot derive occupants:',e); sys.exit(1)
+          strip_marker=lambda t: re.sub(r'^NEW\s*·\s*','',t).strip()
+          known={strip_marker(e['title']) for e in shelf}
+          print('  shelf titles      :',len(known),'derived from the served manifest')
+
+          # Negative control. The gate must prove it can exit non-zero, so this
+          # injects an occupant naming a game that is not on the shelf.
+          if os.environ.get('AGX1_SELFTEST')=='occupant':
+              r=r+['Ghost Game That Never Shipped']
+              print('  SELF-TEST injecting an off-shelf occupant:',r[-1])
+
+          if not known:
+              print('  FAIL served shelf has no games — an empty shelf would pass vacuously'); sys.exit(1)
+          if not r:
+              print('  FAIL committed tree carries NO New Release occupant — an empty stack would pass vacuously'); sys.exit(1)
+          unknown=[o for o in r if strip_marker(o) not in known]
           dupes=sorted({o for o in r if r.count(o)>1})
-          if unruled:
-              print('  FAIL committed tree carries an unruled New Release occupant:',unruled); sys.exit(1)
-          if missing:
-              print('  FAIL committed tree is missing a ruled occupant:',missing); sys.exit(1)
+          if unknown:
+              print('  FAIL New Release occupant does not name a game on the shelf:',unknown); sys.exit(1)
           if dupes:
               print('  FAIL a game holds more than one homepage surface:',dupes); sys.exit(1)
+          print('  PASS every occupant names a live shelf game; no game holds two boxes')
           if s==r:
               print('  PASS live JS-off homepage serves',r,'as New Release, matching the tree and the ruling')
           else:
