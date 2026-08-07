@@ -49,8 +49,8 @@ jobs:
             )
             for part in "${parts[@]}"; do test -f "$part"; done
             test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07a)" = "f898a569c8cff8138f0822a18203a5180bf73e35"
-            test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07b)" = "68bf6a82045b4222eb69d69708e84223972c644a"
-            test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07c)" = "f889cb552735293541378c0a8fac5cff2df13e66"
+            test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07b)" = "68bf30f3b230054115490c06376b0ab7e8b53918"
+            test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07c)" = "563f89d5d30a6efbd6f914a2c088be8f17db0a59"
             cat "${parts[@]}" | base64 -d >/tmp/mbm-professional-upgrade.tar.gz
             echo "6e65c3953d9cb286daabf7cbbda810576a54f10fed2a945020eaac87f190611f  /tmp/mbm-professional-upgrade.tar.gz" | sha256sum -c -
             tar -tzf /tmp/mbm-professional-upgrade.tar.gz | tee /tmp/payload-files.txt
