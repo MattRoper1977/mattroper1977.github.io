@@ -66,9 +66,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      # TWO trees, deliberately. The instrument must come from THIS ref (it is
+      # the thing under development), while the bytes it compares against must
+      # come from main (the thing actually deployed). Checking out main over
+      # the top gave a tree with no tools/ and the run died in under a second
+      # on MODULE_NOT_FOUND — a broken instrument, not a finding about the
+      # estate.
+      - name: Check out this ref (the instrument)
+        uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
       - name: Check out main (the deployed tree)
         uses: actions/checkout@v4
-        with: { ref: main, fetch-depth: 1 }
+        with: { ref: main, path: _main, fetch-depth: 1 }
 
       - name: Check out the shelf repository at main
         uses: actions/checkout@v4
@@ -88,7 +98,8 @@ jobs:
 
       - name: Record the SHAs under test
         run: |
-          echo "site  main is $(git rev-parse HEAD)"
+          echo "instrument ref is $(git rev-parse HEAD)"
+          echo "site  main is $(git -C _main rev-parse HEAD)"
           echo "shelf main is $(git -C _shelf rev-parse HEAD)"
 
       - name: Every surface must answer 200
@@ -119,7 +130,7 @@ jobs:
             a=$(sha256sum /tmp/served-games.json    | cut -d' ' -f1)
             b=$(sha256sum _shelf/games.json         | cut -d' ' -f1)
             c=$(sha256sum /tmp/served-olympics.html | cut -d' ' -f1)
-            d=$(sha256sum olympics/index.html       | cut -d' ' -f1)
+            d=$(sha256sum _main/olympics/index.html | cut -d' ' -f1)
             echo "attempt $i: shelf $( [ "$a" = "$b" ] && echo match || echo differs ), olympics $( [ "$c" = "$d" ] && echo match || echo differs )"
             [ "$a" = "$b" ] && [ "$c" = "$d" ] && break
             sleep 15
@@ -132,5 +143,5 @@ jobs:
             --served-games    /tmp/served-games.json \
             --repo-games      "$GITHUB_WORKSPACE/_shelf/games.json" \
             --served-olympics /tmp/served-olympics.html \
-            --repo-olympics   "$GITHUB_WORKSPACE/olympics/index.html" \
+            --repo-olympics   "$GITHUB_WORKSPACE/_main/olympics/index.html" \
             --arcade-url      https://madebymatt.uk/games/
