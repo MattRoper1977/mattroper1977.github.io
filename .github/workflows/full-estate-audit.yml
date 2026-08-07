@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: full-estate-audit-${{ github.event.pull_request.number || github.ref }}
@@ -17,11 +17,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - name: Check out site branch
+      - name: Check out site audit branch
         uses: actions/checkout@v4
         with:
+          repository: MattRoper1977/mattroper1977.github.io
+          ref: codex/full-repair-upgrade-2026-08-07
           path: site
-          persist-credentials: false
+          persist-credentials: true
+          fetch-depth: 0
 
       - name: Check out paired Lessons audit branch
         uses: actions/checkout@v4
@@ -57,6 +60,59 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Apply one-shot audit instrumentation repair
+        run: python site/tools/apply_audit_instrumentation_patch.py --root site
+
+      - name: Install audit parser dependencies
+        run: python -m pip install --disable-pip-version-check beautifulsoup4==4.13.4 html5lib==1.1
+
+      - name: Prove repaired instrumentation before committing it
+        run: |
+          python -m py_compile site/tools/full_estate_audit.py
+          node --check site/tools/full_estate_runtime.mjs
+          python site/tools/full_estate_audit.py --self-test
+          python - <<'PY'
+          import importlib.util
+          import sys
+          import tempfile
+          from pathlib import Path
+
+          spec = importlib.util.spec_from_file_location('audit', 'site/tools/full_estate_audit.py')
+          module = importlib.util.module_from_spec(spec)
+          sys.modules[spec.name] = module
+          spec.loader.exec_module(module)
+          with tempfile.TemporaryDirectory() as tmp:
+              root = Path(tmp)
+              lessons = root / 'Lessons'
+              site = root / 'site'
+              lessons.mkdir()
+              site.mkdir()
+              (lessons / 'index.html').write_text('<!doctype html><title>Lessons</title>', encoding='utf-8')
+              (site / 'index.html').write_text('<!doctype html><title>Site</title>', encoding='utf-8')
+              audit = module.Audit(lessons, site)
+              assert audit._map_reference('site', 'tools/index.html', '../Lessons/')[:2] == ('Lessons', '')
+              assert audit._map_reference('Lessons', 'primary/index.html', '../../index.html')[:2] == ('site', 'index.html')
+              stripped = audit._strip_js_comments("/* fetch('/comment-only.js') */ fetch('/real.js')")
+              assert '/comment-only.js' not in stripped and '/real.js' in stripped
+              for value in ('GET', 'HEAD', r'https:\/\/madebymatt\.uk\/game\/', r'([^'):
+                  assert not audit._looks_reference(value), value
+              assert audit._looks_reference('./worker.min.js')
+          print('REGRESSION PASSED — relative mounts, comment masking and regex/method rejection are correct')
+          PY
+          git -C site diff --check
+
+      - name: Commit repaired scanner and runtime runner to the authorised branch
+        run: |
+          git -C site config user.name 'github-actions[bot]'
+          git -C site config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C site add tools/full_estate_audit.py tools/full_estate_runtime.mjs
+          if git -C site diff --cached --quiet; then
+            echo 'Instrumentation already repaired'
+          else
+            git -C site commit -m 'test: repair audit path and timeout classification'
+            git -C site push origin HEAD:codex/full-repair-upgrade-2026-08-07
+          fi
+
       - name: Record measured repository revisions
         env:
           SITE_PR_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -74,7 +130,7 @@ jobs:
 
           state = {
               'sentinel': 'mbm-full-repair-upgrade-2026-08-07',
-              'site_pr_head': os.environ.get('SITE_PR_HEAD', ''),
+              'site_event_head': os.environ.get('SITE_PR_HEAD', ''),
               'site_default_base': os.environ.get('SITE_DEFAULT_BASE', ''),
               'site_tested_tree': sha('site'),
               'lessons_tested_head': sha('Lessons'),
@@ -84,9 +140,6 @@ jobs:
           Path('audit-output/repository-state.json').write_text(json.dumps(state, indent=2) + '\n', encoding='utf-8')
           print(json.dumps(state, indent=2))
           PY
-
-      - name: Install audit parser dependencies
-        run: python -m pip install --disable-pip-version-check beautifulsoup4==4.13.4 html5lib==1.1
 
       - name: Prove static scanner can fail
         run: python site/tools/full_estate_audit.py --self-test
