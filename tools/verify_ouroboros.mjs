@@ -370,6 +370,36 @@ g('pinch zoom (computed)');
   await ctx.close();
 }
 
+// ──────────────────────────────── SAVE-05: non-finite numbers must not land
+g('SAVE-05 non-finite numerics');
+{
+  const KEY = 'mbm_ouroboros_chronos_unbound_v1';
+  const { ctx, page } = await boot(target);
+  // Positive control FIRST. A clean result here means nothing unless a benign
+  // save is shown to load through the same path — otherwise "reject
+  // everything" would score identically to "sanitise correctly".
+  const benign = await page.evaluate(([k]) => {
+    localStorage.setItem(k, '{"progress":3,"materials":{"brass":42}}');
+    const ok = loadGame();
+    return { ok, brass: Game.save.materials.brass };
+  }, [KEY]);
+  check('control: a benign save loads', benign.ok === true && benign.brass === 42,
+    `loadGame ${benign.ok}, brass ${benign.brass}`);
+
+  const hostile = await page.evaluate(([k]) => {
+    // JSON has no Infinity token, but 1e999 PARSES to Infinity.
+    localStorage.setItem(k, '{"progress":3,"materials":{"brass":1e999},"playTime":1e999}');
+    const ok = loadGame();
+    return { ok, brass: Game.save.materials.brass, finite: Number.isFinite(Game.save.materials.brass),
+             pt: Game.save.playTime, ptFinite: Number.isFinite(Game.save.playTime) };
+  }, [KEY]);
+  check('non-finite falls back to default', hostile.finite === true && hostile.ptFinite === true,
+    `brass ${JSON.stringify(hostile.brass)} finite=${hostile.finite}; playTime finite=${hostile.ptFinite}`);
+  check('save still loads (not discarded)', hostile.ok === true && hostile.brass !== null,
+    `loadGame ${hostile.ok} — sanitised, not thrown away`);
+  await ctx.close();
+}
+
 // ────────────────────────────────────────── hostile saves must not crash it
 g('hostile saves');
 {

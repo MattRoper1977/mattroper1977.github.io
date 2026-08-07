@@ -814,6 +814,27 @@ function loadGame(){
     /* SAVE-03. Nested records were shallow-merged, so one malformed character
        replaced a whole default wholesale and lost its skills/stat shape. Merge
        each record against its own default instead of the container. */
+    /* SAVE-05. JSON has no Infinity token, but `1e999` PARSES to Infinity —
+       so the "JSON cannot express it" assumption is false. Measured on the
+       live file: a save carrying {"materials":{"brass":1e999}} loaded with
+       brass === null and Number.isFinite(brass) === false, i.e. a destroyed
+       numeric field reaching live state, with a benign save loading correctly
+       as the control. Every numeric leaf is now checked and falls back to the
+       default it shadows, so a non-finite value can neither reach state nor be
+       round-tripped into null on the next autosave. */
+    const finiteMerge=(baseVal,inVal)=>{
+      if(typeof baseVal==="number") return (typeof inVal==="number"&&Number.isFinite(inVal))?inVal:baseVal;
+      return inVal===undefined?baseVal:inVal;
+    };
+    const sanitiseNumbers=(baseObj,outObj)=>{
+      if(!outObj||typeof outObj!=="object")return outObj;
+      for(const k of Object.keys(outObj)){
+        const bv=baseObj?baseObj[k]:undefined, ov=outObj[k];
+        if(ov&&typeof ov==="object"&&!Array.isArray(ov)) sanitiseNumbers(bv,ov);
+        else if(typeof ov==="number"&&!Number.isFinite(ov)) outObj[k]=(typeof bv==="number")?bv:0;
+      }
+      return outObj;
+    };
     const mergeRecords=(baseObj,inObj)=>{
       if(!inObj||typeof inObj!=="object"||Array.isArray(inObj))return {...baseObj};
       const out={...baseObj};
@@ -824,6 +845,7 @@ function loadGame(){
       return out;
     };
     Game.save={...base,...loaded,settings:{...base.settings,...loaded.settings},characters:mergeRecords(base.characters,loaded.characters),inventory:{...base.inventory,...loaded.inventory},materials:{...base.materials,...loaded.materials},codex:{...base.codex,...loaded.codex},quest:{...base.quest,...loaded.quest},flags:{...base.flags,...loaded.flags},spire:{...base.spire,...loaded.spire}};
+    sanitiseNumbers(base,Game.save);
     Game.player.x=Game.save.player?.x||155; Game.player.y=Game.save.player?.y||555;
     applySettings(); return true;
   }catch(err){console.warn("Load failed",err);return false;}
