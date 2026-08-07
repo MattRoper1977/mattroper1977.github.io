@@ -100,7 +100,7 @@
   /* ----- config ----------------------------------------------------------- */
   var CFG = {
     stats: {
-      enabled: true, namespace: "madebymatt-uk", geo: true,
+      enabled: true, remoteCounters: false, namespace: "madebymatt-uk", geo: true,
       roster: ["GB", "US", "IE", "CA", "AU", "NZ", "IN", "DE", "FR", "ES", "NL", "IT", "SE", "PL", "ZA", "NG", "KE", "AE", "SG", "PH", "PK", "MY", "BR", "MX", "JP"]
     },
     downloads: { enabled: true, catalog: [] },
@@ -127,7 +127,49 @@
      COUNTER SERVICE (counterapi.dev v1 — keyless, public) + local fallback
      ===================================================================== */
   var API = "https://api.counterapi.dev/v1/";
+  var counterProbe = null;
+  var counterRemoteAvailable = null;
   function safeKey(k) { return String(k).toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60); }
+
+  /* CounterAPI began returning a browser challenge instead of JSON. The old
+     implementation issued one failing request per displayed counter, creating
+     a console/request storm on every page. Remote counters are therefore
+     opt-in. If explicitly enabled, one shared probe establishes capability;
+     one failed probe opens the circuit and every counter uses the existing
+     device-local fallback without another network request. */
+  function remoteCountersEnabled() {
+    return !!(CFG.stats && CFG.stats.remoteCounters === true);
+  }
+  function probeRemoteCounters() {
+    if (!remoteCountersEnabled()) return Promise.resolve(false);
+    if (counterRemoteAvailable === true) return Promise.resolve(true);
+    if (counterRemoteAvailable === false) return Promise.resolve(false);
+    if (!counterProbe) {
+      var probeKey = safeKey((CFG.stats && CFG.stats.visitKey) || "visits_total");
+      counterProbe = timedJSON(API + CFG.stats.namespace + "/" + probeKey, 4000)
+        .then(function (data) {
+          if (pluckCount(data) == null) throw new Error("counter probe payload invalid");
+          counterRemoteAvailable = true;
+          return true;
+        })
+        .catch(function () {
+          counterRemoteAvailable = false;
+          return false;
+        });
+    }
+    return counterProbe;
+  }
+  function counterJSON(url) {
+    return probeRemoteCounters()
+      .then(function (available) {
+        if (!available) throw new Error("remote counters disabled or unavailable");
+        return timedJSON(url, 6000);
+      })
+      .catch(function (error) {
+        counterRemoteAvailable = false;
+        throw error;
+      });
+  }
   function pluckCount(j) {
     if (j == null) return null;
     if (typeof j === "number") return j;
@@ -141,13 +183,13 @@
   }
   function bump(key) {
     var k = safeKey(key), lk = "mbm_c_" + k;
-    return timedJSON(API + CFG.stats.namespace + "/" + k + "/up", 6000)
+    return counterJSON(API + CFG.stats.namespace + "/" + k + "/up", 6000)
       .then(function (j) { var n = pluckCount(j); if (n != null) { ls.set(lk, n); return n; } throw 0; })
       .catch(function () { var n = (ls.get(lk, 0) || 0) + 1; ls.set(lk, n); return n; });
   }
   function read(key) {
     var k = safeKey(key), lk = "mbm_c_" + k;
-    return timedJSON(API + CFG.stats.namespace + "/" + k, 6000)
+    return counterJSON(API + CFG.stats.namespace + "/" + k, 6000)
       .then(function (j) { var n = pluckCount(j); if (n != null) { ls.set(lk, n); return n; } throw 0; })
       .catch(function () { return ls.get(lk, null); });
   }
