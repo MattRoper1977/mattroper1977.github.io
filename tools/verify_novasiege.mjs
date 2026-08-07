@@ -266,6 +266,52 @@ g('leaderboard');
   await ctx.close();
 }
 
+// ────────────────────────────────────────────────────────── R7: saves survive
+g('save round-trip (R7)');
+{
+  // A save the GAME ITSELF wrote must load back lossless. Writing a fixture by
+  // hand and reading it back would only prove localStorage works; this makes
+  // the game author the bytes, reloads, and requires them unchanged and the
+  // state actually restored.
+  const ctx = await browser.newContext({ hasTouch: true });
+  const page = await ctx.newPage();
+  await page.goto(URL_, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction('!!window.__vector', null, { timeout: 20000 });
+
+  // Make the game write: a legitimate board entry and a settings change.
+  await page.evaluate(() => {
+    window.__vector.mergeRaw({ id: 'r7-entry', name: 'r7', score: 4242, wave: 5, seed: 11, skin: 'a', time: 99 });
+    document.getElementById('audio-toggle').click();
+  });
+  const before = await page.evaluate(() => {
+    const o = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k.startsWith('mbm_vector_overdrive_')) o[k] = localStorage.getItem(k);
+    }
+    return o;
+  });
+  check('game wrote a save', Object.keys(before).length > 0, `${Object.keys(before).length} keys under mbm_vector_overdrive_`);
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction('!!window.__vector', null, { timeout: 20000 });
+  const after = await page.evaluate(() => {
+    const o = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k.startsWith('mbm_vector_overdrive_')) o[k] = localStorage.getItem(k);
+    }
+    return o;
+  });
+  const same = JSON.stringify(before) === JSON.stringify(after);
+  check('save reloads lossless', same,
+    same ? 'every key byte-identical across reload' : `drift: ${JSON.stringify(Object.keys(after))}`);
+
+  const restored = await page.evaluate(() => window.__vector.board().some((r) => r.id === 'r7-entry' && r.score === 4242));
+  check('state actually restored', restored, 'the written board entry is present after reload');
+  await ctx.close();
+}
+
 // ───────────────────────────────────────────────────────────────── daily seed
 g('daily run');
 {
