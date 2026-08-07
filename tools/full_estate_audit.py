@@ -17,6 +17,7 @@ import dataclasses
 import html
 import json
 import os
+import posixpath
 import re
 import shutil
 import subprocess
@@ -330,6 +331,70 @@ class Audit:
             detail = (proc.stderr or proc.stdout).strip().replace(str(path), rel)
             self.add("P0", "JS_SYNTAX" if kind == "file" else "INLINE_JS_SYNTAX", repo, rel, detail[:2000])
 
+    @staticmethod
+    def _should_scan_dynamic_references(rel: str) -> bool:
+        lower = rel.lower()
+        parts = set(PurePosixPath(lower).parts)
+        name = PurePosixPath(lower).name
+        if "vendor" in parts or lower.startswith("_pass"):
+            return False
+        if name.endswith((".min.js", ".wasm.js")):
+            return False
+        if lower == "tools/full_estate_runtime.mjs" or lower.startswith("tools/verify_") or lower.startswith("tools/film/"):
+            return False
+        return True
+
+    @staticmethod
+    def _strip_js_comments(text: str) -> str:
+        """Mask JavaScript comments while preserving strings and line positions."""
+        out: list[str] = []
+        i = 0
+        state = "code"
+        quote = ""
+        while i < len(text):
+            char = text[i]
+            nxt = text[i + 1] if i + 1 < len(text) else ""
+            if state == "code":
+                if char in {"'", '"', "`"}:
+                    state = "string"
+                    quote = char
+                    out.append(char)
+                elif char == "/" and nxt == "/":
+                    out.extend((" ", " "))
+                    i += 2
+                    state = "line-comment"
+                    continue
+                elif char == "/" and nxt == "*":
+                    out.extend((" ", " "))
+                    i += 2
+                    state = "block-comment"
+                    continue
+                else:
+                    out.append(char)
+            elif state == "string":
+                out.append(char)
+                if char == "\\" and i + 1 < len(text):
+                    out.append(text[i + 1])
+                    i += 2
+                    continue
+                if char == quote:
+                    state = "code"
+            elif state == "line-comment":
+                if char in "\r\n":
+                    out.append(char)
+                    state = "code"
+                else:
+                    out.append(" ")
+            else:
+                if char == "*" and nxt == "/":
+                    out.extend((" ", " "))
+                    i += 2
+                    state = "code"
+                    continue
+                out.append("\n" if char == "\n" else " ")
+            i += 1
+        return "".join(out)
+
     def _check_javascript_syntax(self) -> None:
         for repo, state in self.repos.items():
             if repo not in self.primary_repos:
@@ -341,8 +406,9 @@ class Audit:
                 self.js_checked += 1
                 self._run_node_check(repo, rel, p, "file")
                 text = self._read_text(repo, p)
-                if text:
-                    for match in list(STATIC_JS_REF_RE.finditer(text)) + list(ASSIGN_JS_REF_RE.finditer(text)):
+                if text and self._should_scan_dynamic_references(rel):
+                    scan_text = self._strip_js_comments(text)
+                    for match in list(STATIC_JS_REF_RE.finditer(scan_text)) + list(ASSIGN_JS_REF_RE.finditer(scan_text)):
                         raw = match.group(2).strip()
                         if self._looks_reference(raw):
                             self._check_reference(repo, rel, raw, "script", "dynamic")
@@ -410,7 +476,25 @@ class Audit:
 
     @staticmethod
     def _looks_reference(raw: str) -> bool:
-        return bool(raw) and not raw.startswith(("${", "{{", "<%")) and not re.search(r"[{}]", raw)
+        raw = raw.strip()
+        if not raw or raw.startswith(("${", "{{", "<%")) or re.search(r"[{}]", raw):
+            return False
+        if raw.upper() in {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "CONNECT", "TRACE"}:
+            return False
+        if raw.startswith(("/dev/std", "\\/", "(?:", "([^")) or "\\." in raw:
+            return False
+        if raw.startswith(("/", "./", "../", "//", "#")):
+            return True
+        try:
+            if urllib.parse.urlsplit(raw).scheme:
+                return True
+        except ValueError:
+            return False
+        return bool(re.search(
+            r"\.(?:html?|js|mjs|cjs|css|json|webmanifest|svg|png|jpe?g|gif|webp|avif|mp3|wav|ogg|mp4|webm|wasm|pdf)(?:[?#].*)?$",
+            raw,
+            re.I,
+        ))
 
     @staticmethod
     def _is_external_url(raw: str) -> bool:
@@ -552,9 +636,17 @@ class Audit:
 
         if not path:
             return (source_repo, source_rel, fragment, "same-document")
-        base = PurePosixPath(source_rel).parent
-        rel = (base / path).as_posix()
-        return (source_repo, rel, fragment, "relative")
+        mount_prefix = {
+            "site": "",
+            "Lessons": "Lessons",
+            "Games": "Games",
+            "Apps": "Matt-s-Apps-",
+        }.get(source_repo, "")
+        served_source = "/" + "/".join(part for part in (mount_prefix, source_rel) if part)
+        served_target = posixpath.normpath(posixpath.join(posixpath.dirname(served_source), path))
+        if not served_target.startswith("/"):
+            served_target = "/" + served_target
+        return self._map_site_path(served_target, fragment, "relative")
 
     @staticmethod
     def _map_site_path(path: str, fragment: str, relation: str) -> tuple[str, str, str, str]:

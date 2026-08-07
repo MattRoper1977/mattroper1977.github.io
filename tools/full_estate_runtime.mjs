@@ -297,6 +297,14 @@ async function collectPage(browser, item, baseUrl, timeoutMs) {
   clearTimeout(timer);
   // A timed-out body may reject after its browser context is force-closed.
   body.catch(() => {});
+  if (lifecycle.timedOut && !result.issues.some(issue => issue.code === 'TARGET_TIMEOUT')) {
+    const reason = `target exceeded ${timeoutMs}ms watchdog`;
+    result.loaded = false;
+    result.issues = [
+      ...result.issues.filter(issue => !(issue.code === 'NAVIGATION_FAILED' && issue.message.includes(reason))),
+      { severity: 'P0', code: 'TARGET_TIMEOUT', stage: 'harness', message: reason },
+    ];
+  }
   return result;
 }
 
