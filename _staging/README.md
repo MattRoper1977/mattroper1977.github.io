@@ -15,7 +15,7 @@ Work that is finished and proven but whose publish stage has not run waits
 here, in full, with its gate. Moving it out is a publish, and a publish is all
 four things at once.
 
-## Current occupant
+## Current occupants
 
 ### `novasiege/` — Vector Overdrive: Nova Siege
 
@@ -23,3 +23,9 @@ Stage V-P1 complete and gated (`tools/verify_novasiege.mjs`, 38/38 limbs with
 two negative controls). Stage V-P2 enhancement bands, V-P3 publish and V-P4
 media are parked; see `reports/2026-08-07-stage-L-and-V-P1.md` for the derived
 conditions each is waiting on.
+
+### `ouroboros/` — Ouroboros: Chronos Unbound
+
+Stage U-P1 complete and gated (`tools/verify_ouroboros.mjs`, 47/47 limbs with a
+negative control run against the pre-fix file). U-P2 bands, U-P3 publish and
+U-P4 media are parked; see `reports/2026-08-07-sitting-2-stage-U.md`.

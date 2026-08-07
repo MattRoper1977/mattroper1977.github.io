@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#090b12">
+<meta name="description" content="Ouroboros: Chronos Unbound — a self-contained anime tactical RPG by Made by Matt.">
+<title>Ouroboros: Chronos Unbound — Made by Matt</title>
+<!-- Head furniture per the house pattern (olympics, fracture, neonturf).
+     Every string is the game's own: og:title is its <title> without the
+     suffix, og:description is drawn from the meta description above rather
+     than written fresh for the share card.
+
+     THE REAL-ASSET RULE, observed by OMISSION. og:image must name a file that
+     lands in the SAME commit. Ouroboros's banner is U-P4 work and is not on
+     disk, so none is claimed, and twitter:card is "summary" rather than
+     "summary_large_image" which would promise a large image that is not
+     there. A head that advertises a missing image lies to every crawler and
+     every share preview, and it lies silently. Both tags join when the asset
+     does. -->
+<link rel="canonical" href="https://madebymatt.uk/ouroboros/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Made by Matt">
+<meta property="og:url" content="https://madebymatt.uk/ouroboros/">
+<meta property="og:title" content="Ouroboros: Chronos Unbound">
+<meta property="og:description" content="A self-contained anime tactical RPG: four bound heroes, resonance techniques and a clockwork timeline that will not stay fixed.">
+<meta name="twitter:card" content="summary">
+<style>
+  :root {
+    --ink:#070910;
+    --glass:rgba(14,17,24,.88);
+    --glass-strong:rgba(8,10,16,.97);
+    --slate:#1a1e29;
+    --brass:#d4af37;
+    --brass-soft:#e0a96d;
+    --cyan:#00f0ff;
+    --mint:#00ffa3;
+    --amber:#ffb700;
+    --red:#ff2a4b;
+    --crimson:#e63946;
+    --violet:#9b59b6;
+    --blue:#4a90e2;
+    --text:#f7f5ed;
+    --muted:#b9bdc8;
+    --line:rgba(212,175,55,.38);
+    --ui-scale:1;
+    --sub-size:20px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020309;color:var(--text);font-family:Georgia,"Times New Roman",serif;touch-action:none;overscroll-behavior:none}
+  button,input,select{font:inherit}
+  button{color:var(--text)}
+  #app{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 20%,#252047 0,#080b16 42%,#020309 100%)}
+  #stage{position:relative;width:min(100vw,177.777vh);height:min(56.25vw,100vh);max-width:100vw;max-height:100vh;overflow:hidden;background:#050711;box-shadow:0 0 80px #000;isolation:isolate}
+  #gameCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;background:#080b14;image-rendering:auto}
+  .hidden{display:none!important}
+  .glass{background:linear-gradient(180deg,rgba(29,34,47,.94),rgba(8,10,16,.88));border:1px solid var(--line);box-shadow:inset 0 0 0 1px rgba(255,255,255,.035),0 8px 34px rgba(0,0,0,.48);backdrop-filter:blur(9px)}
+  .brass-frame{position:relative;border:1px solid rgba(212,175,55,.68)}
+  .brass-frame:before,.brass-frame:after{content:"";position:absolute;pointer-events:none;border:1px solid rgba(212,175,55,.25);inset:5px}
+  .brass-frame:after{inset:10px;border-color:rgba(0,240,255,.12)}
+  #scanlines{position:absolute;inset:0;pointer-events:none;z-index:25;opacity:.15;background:repeating-linear-gradient(to bottom,transparent 0 3px,rgba(0,0,0,.26) 4px);mix-blend-mode:overlay}
+  #vignette{position:absolute;inset:0;pointer-events:none;z-index:24;background:radial-gradient(circle at center,transparent 55%,rgba(0,0,0,.68) 112%)}
+  #screenFlash{position:absolute;inset:0;z-index:60;pointer-events:none;opacity:0;background:white}
+  /* U-1. The flash used to carry NO fill-mode and the strength was written as
+     an INLINE opacity, so when the .24s animation ended the element fell back
+     to that inline value and the white overlay stayed on screen for the rest
+     of the session. `forwards` pins the end state at the 100% keyframe, and
+     the strength now rides a custom property instead of opacity, so there is
+     no persistent inline opacity left to fall back to. Both halves matter:
+     either alone still leaves a way to get stuck. */
+  #screenFlash.flash{animation:flash .24s ease-out forwards}
+  @keyframes flash{0%{opacity:var(--flash-a,1)}100%{opacity:0}}
+  #titleScreen,#pauseScreen,#modalLayer,#cinematicUI,#dialogueLayer,#settingsScreen,#creditsScreen{position:absolute;inset:0;z-index:40}
+  #titleScreen{display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(circle at 50% 20%,rgba(114,9,183,.25),rgba(2,3,9,.76) 48%,rgba(0,0,0,.96));}
+  .title-gears{position:absolute;inset:-15%;opacity:.25;background:
+    radial-gradient(circle at 22% 35%,transparent 0 8%,rgba(212,175,55,.5) 8.4% 9.1%,transparent 9.4%),
+    radial-gradient(circle at 80% 68%,transparent 0 13%,rgba(0,240,255,.35) 13.2% 13.8%,transparent 14.2%),
+    repeating-conic-gradient(from 15deg at 22% 35%,rgba(212,175,55,.5) 0 4deg,transparent 4deg 12deg);
+    animation:slowSpin 42s linear infinite;filter:blur(.1px)}
+  @keyframes slowSpin{to{transform:rotate(360deg)}}
+  .title-card{position:relative;width:min(780px,88%);padding:42px 48px 34px;text-align:center;background:linear-gradient(135deg,rgba(12,15,24,.95),rgba(20,14,33,.92));border:1px solid rgba(212,175,55,.75);box-shadow:0 0 80px rgba(0,240,255,.08),0 30px 120px #000}
+  .eyebrow{font-family:Arial,sans-serif;letter-spacing:.35em;text-transform:uppercase;color:var(--cyan);font-size:clamp(11px,1.1vw,15px);text-shadow:0 0 18px rgba(0,240,255,.8)}
+  h1{margin:10px 0 0;font-size:clamp(48px,7vw,92px);line-height:.86;letter-spacing:.02em;text-transform:uppercase;background:linear-gradient(#fff8d5 5%,#d4af37 45%,#8a6122 75%,#f2d987 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 8px 0 rgba(0,0,0,.6)) drop-shadow(0 0 24px rgba(212,175,55,.28))}
+  .subtitle{margin:8px 0 24px;font-family:Arial,sans-serif;font-weight:800;letter-spacing:.55em;text-transform:uppercase;color:#fff;font-size:clamp(12px,1.6vw,20px)}
+  .tagline{max-width:590px;margin:0 auto 22px;color:#dfe3ed;font-size:clamp(14px,1.4vw,18px);line-height:1.5}
+  .menu-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:580px;margin:0 auto}
+  .menu-btn,.ui-btn,.action-btn,.choice-btn,.station-btn{min-height:48px;border:1px solid rgba(212,175,55,.56);background:linear-gradient(180deg,rgba(42,47,62,.96),rgba(14,17,24,.96));padding:11px 16px;text-transform:uppercase;letter-spacing:.08em;font-family:Arial,sans-serif;font-weight:900;cursor:pointer;position:relative;overflow:hidden;transition:transform .15s,filter .15s,border-color .15s}
+  .menu-btn:hover,.menu-btn:focus-visible,.ui-btn:hover,.ui-btn:focus-visible,.action-btn:hover,.action-btn:focus-visible,.choice-btn:hover,.choice-btn:focus-visible,.station-btn:hover,.station-btn:focus-visible{transform:translateY(-1px);filter:brightness(1.22);border-color:var(--cyan);outline:2px solid rgba(0,240,255,.55);outline-offset:2px}
+  button:disabled{opacity:.38;cursor:not-allowed;filter:saturate(.2)}
+  .menu-btn.primary{grid-column:1/-1;background:linear-gradient(180deg,#80651f,#3b2b0b);border-color:#f6d96b;color:#fff9dc;text-shadow:0 2px #000}
+  .made-by{margin-top:22px;font:800 12px Arial,sans-serif;letter-spacing:.3em;text-transform:uppercase;color:#b9bdc8}
+  .made-by b{color:var(--cyan)}
+  #splash{position:absolute;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:#020309;transition:opacity .65s}
+  #splash.done{opacity:0;pointer-events:none}
+  .splash-logo{text-align:center;animation:splashIn 1.9s ease both}
+  .splash-logo .m{font:900 clamp(56px,10vw,140px)/.8 Arial Black,Arial,sans-serif;letter-spacing:-.08em;color:#fff;filter:drop-shadow(8px 8px 0 #00a7b2) drop-shadow(-5px -5px 0 #9a6b19)}
+  .splash-logo .words{margin-top:20px;font:900 clamp(14px,2vw,26px) Arial,sans-serif;letter-spacing:.55em;text-transform:uppercase;color:var(--brass)}
+  @keyframes splashIn{0%{opacity:0;transform:scale(.75) rotate(-2deg)}35%{opacity:1;transform:scale(1.05)}100%{transform:scale(1)}}
+  #hud{position:absolute;inset:0;z-index:20;pointer-events:none;font-family:Arial,sans-serif;transform:scale(var(--ui-scale));transform-origin:top left;width:calc(100% / var(--ui-scale));height:calc(100% / var(--ui-scale))}
+  #zoneBanner{position:absolute;top:9%;left:50%;transform:translateX(-50%);padding:10px 26px;min-width:360px;text-align:center;opacity:0;transition:opacity .35s,transform .35s;background:linear-gradient(90deg,transparent,rgba(7,9,16,.92) 15% 85%,transparent);border-top:1px solid rgba(212,175,55,.5);border-bottom:1px solid rgba(212,175,55,.5)}
+  #zoneBanner.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #zoneBanner strong{display:block;font-family:Georgia,serif;color:#ffe59a;font-size:24px;letter-spacing:.08em}
+  #zoneBanner span{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--cyan)}
+  #objectivePanel{position:absolute;left:18px;top:18px;width:min(390px,40%);padding:12px 16px 12px 18px;border-left:3px solid var(--cyan);background:linear-gradient(90deg,rgba(6,9,17,.94),rgba(6,9,17,.5));text-shadow:0 2px 2px #000}
+  #objectivePanel small{display:block;color:var(--brass);letter-spacing:.22em;text-transform:uppercase;font-weight:900;font-size:10px}
+  #objectiveText{margin-top:4px;font-size:15px;line-height:1.35}
+  #miniHelp{position:absolute;right:16px;top:18px;padding:8px 12px;color:#d3d7e0;font-size:11px;letter-spacing:.06em;text-align:right;background:rgba(4,6,11,.58);border-right:2px solid rgba(212,175,55,.7)}
+  #exploreParty{position:absolute;left:18px;bottom:18px;display:flex;gap:7px;align-items:flex-end}
+  .party-chip{width:72px;padding:6px 6px 7px;background:rgba(9,12,19,.9);border:1px solid rgba(212,175,55,.34);clip-path:polygon(0 0,88% 0,100% 18%,100% 100%,12% 100%,0 82%);transition:.2s}
+  .party-chip.active{width:84px;border-color:var(--cyan);box-shadow:0 0 18px rgba(0,240,255,.25)}
+  .party-chip .name{font-weight:900;font-size:10px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini-bar{height:5px;background:#202635;margin-top:4px;overflow:hidden}
+  .mini-bar i{display:block;height:100%;background:linear-gradient(90deg,#b3263c,#ff5770)}
+  #interactPrompt{position:absolute;left:50%;bottom:11%;transform:translateX(-50%);padding:10px 18px;background:rgba(5,7,13,.93);border:1px solid var(--brass);opacity:0;transition:.2s;font-weight:900;letter-spacing:.08em;text-transform:uppercase;font-size:13px}
+  #interactPrompt.show{opacity:1}
+  #battleHud{position:absolute;inset:0;pointer-events:none;font-family:Arial,sans-serif}
+  #timeline{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:min(760px,72%);height:62px;padding:8px 14px;background:linear-gradient(180deg,rgba(10,12,20,.95),rgba(24,19,13,.88));border:1px solid rgba(212,175,55,.55);box-shadow:0 5px 25px rgba(0,0,0,.7)}
+  #timeline:after{content:"";position:absolute;left:16px;right:16px;bottom:13px;height:8px;background:repeating-linear-gradient(90deg,#5c4619 0 10px,#1b1d25 10px 16px);border:1px solid #a98227}
+  .timeline-label{position:absolute;left:14px;top:5px;font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--brass-soft)}
+  #timelineIcons{position:absolute;left:40px;right:30px;bottom:13px;height:30px;z-index:1}
+  .turn-icon{position:absolute;bottom:-3px;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#151824;border:2px solid var(--cyan);font-weight:900;font-size:11px;box-shadow:0 0 0 2px #080a10,0 0 14px currentColor;transform:translateX(-50%);transition:left .38s,transform .25s}
+  .turn-icon.enemy{border-color:var(--red);color:#fff}
+  .turn-icon.current{transform:translateX(-50%) scale(1.3);border-color:var(--amber)}
+  #targetMatrix{position:absolute;right:14px;top:88px;width:290px;padding:12px 14px;pointer-events:auto}
+  #targetMatrix h3{margin:0;color:#fff4c7;font-size:17px;text-transform:uppercase;letter-spacing:.06em}
+  #targetMeta{font-size:10px;color:var(--muted);margin:3px 0 8px;text-transform:uppercase;letter-spacing:.12em}
+  #targetWire{height:74px;position:relative;display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle,rgba(114,9,183,.2),transparent 70%);border:1px solid rgba(114,9,183,.46)}
+  #targetWire:before{content:"";position:absolute;width:64px;height:64px;border:1px dashed var(--violet);border-radius:50%;animation:slowSpin 9s linear infinite}
+  #targetWire .wire-glyph{font-size:38px;color:var(--violet);filter:drop-shadow(0 0 8px var(--violet))}
+  #nodeList{display:grid;gap:5px;margin-top:8px}
+  .node-row{display:grid;grid-template-columns:1fr 74px;gap:7px;align-items:center;padding:5px 6px;background:rgba(255,255,255,.035);border-left:2px solid var(--violet);cursor:pointer;font-size:11px}
+  .node-row.selected{border-color:var(--cyan);background:rgba(0,240,255,.09)}
+  .node-row.broken{opacity:.48;text-decoration:line-through;border-color:var(--red)}
+  .node-hp{height:6px;background:#222734;overflow:hidden}
+  .node-hp i{display:block;height:100%;background:linear-gradient(90deg,var(--violet),var(--red))}
+  #partyPanel{position:absolute;left:14px;bottom:14px;width:340px;padding:10px 12px;pointer-events:auto}
+  #partyCards{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+  .combat-card{padding:6px 8px;background:rgba(255,255,255,.035);border-left:3px solid var(--cyan);font-size:11px;cursor:pointer;position:relative;min-height:50px}
+  .combat-card.current{background:rgba(255,183,0,.1);border-color:var(--amber)}
+  .combat-card.down{filter:grayscale(1);opacity:.45}
+  .combat-card .row{display:flex;justify-content:space-between;gap:6px;font-weight:900;text-transform:uppercase}
+  .hpbar,.aetherbar,.staggerbar,.resbar{height:7px;background:#222734;margin-top:4px;overflow:hidden;border:1px solid rgba(255,255,255,.06)}
+  .hpbar i{display:block;height:100%;background:linear-gradient(90deg,#9e2035,#ff4d68)}
+  .aetherbar i{display:block;height:100%;background:linear-gradient(90deg,#007c87,var(--cyan))}
+  #resonanceWrap{margin-top:8px}
+  #resonanceLabel{display:flex;justify-content:space-between;color:#fff4c7;font-weight:900;font-size:10px;letter-spacing:.08em}
+  .resbar{height:10px}
+  .resbar i{display:block;height:100%;background:linear-gradient(90deg,#00a6ff,var(--cyan),#fff7a5);box-shadow:0 0 12px var(--cyan)}
+  #commandPanel{position:absolute;right:14px;bottom:14px;width:430px;padding:10px;pointer-events:auto}
+  #turnHeader{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;padding:0 3px}
+  #turnHeader strong{font-size:15px;color:#fff4c7;text-transform:uppercase;letter-spacing:.08em}
+  #turnHeader span{font-size:10px;color:var(--muted);text-transform:uppercase}
+  #actionGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .action-btn{min-height:51px;padding:6px 7px;font-size:10px;line-height:1.15;letter-spacing:.04em;border-color:rgba(212,175,55,.34)}
+  .action-btn b{display:block;color:#fff;font-size:11px;margin-bottom:3px}
+  .action-btn small{color:var(--cyan);font-size:9px}
+  .action-btn.resonance-ready{border-color:#fff2a8;box-shadow:0 0 15px rgba(0,240,255,.35);animation:pulseBorder 1.2s ease-in-out infinite alternate}
+  @keyframes pulseBorder{to{filter:brightness(1.55);box-shadow:0 0 26px rgba(0,240,255,.55)}}
+  #battleLog{position:absolute;left:50%;bottom:17px;transform:translateX(-50%);width:min(420px,38%);min-height:52px;padding:8px 12px;background:linear-gradient(90deg,transparent,rgba(5,7,13,.86) 10% 90%,transparent);text-align:center;font-family:Arial,sans-serif;font-size:12px;text-shadow:0 2px 3px #000;pointer-events:none}
+  #battleLog strong{color:var(--amber)}
+  #battleHint{position:absolute;left:50%;top:82px;transform:translateX(-50%);padding:7px 14px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;background:rgba(5,7,13,.78);border-bottom:1px solid rgba(0,240,255,.5)}
+  #dialogueLayer{display:flex;align-items:flex-end;justify-content:center;padding:0 5% 5%;pointer-events:none}
+  .dialogue-box{width:min(960px,94%);min-height:150px;padding:18px 26px 19px 180px;position:relative;pointer-events:auto;background:linear-gradient(110deg,rgba(10,12,20,.98),rgba(27,22,38,.96));border:1px solid rgba(212,175,55,.7);box-shadow:0 20px 60px #000}
+  .portrait{position:absolute;left:20px;bottom:0;width:142px;height:180px;overflow:hidden;filter:drop-shadow(0 0 15px rgba(0,240,255,.22))}
+  .portrait canvas{width:100%;height:100%}
+  .speaker{font:900 18px Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;color:var(--cyan);margin-bottom:8px}
+  .dialogue-text{font-size:var(--sub-size);line-height:1.45;color:#f7f5ed;text-shadow:0 2px #000;min-height:58px}
+  .dialogue-next{position:absolute;right:18px;bottom:12px;color:var(--brass);font:900 10px Arial,sans-serif;letter-spacing:.15em;text-transform:uppercase;animation:blink 1s steps(2) infinite}
+  @keyframes blink{50%{opacity:.3}}
+  #cinematicUI{pointer-events:none}
+  #cinematicLetterTop,#cinematicLetterBottom{position:absolute;left:0;right:0;height:10%;background:#000;transition:height .4s}
+  #cinematicLetterTop{top:0}#cinematicLetterBottom{bottom:0}
+  #cinematicCaption{position:absolute;left:8%;right:8%;bottom:12%;padding:14px 22px;text-align:center;background:linear-gradient(90deg,transparent,rgba(0,0,0,.82) 14% 86%,transparent);font-size:clamp(16px,2vw,25px);line-height:1.35;text-shadow:0 2px 5px #000}
+  #cinematicSpeaker{color:var(--cyan);font:900 12px Arial,sans-serif;letter-spacing:.25em;text-transform:uppercase;display:block;margin-bottom:6px}
+  #skipCinematic{position:absolute;right:18px;top:13%;pointer-events:auto}
+  #cutIn{position:absolute;inset:0;z-index:55;pointer-events:none;display:none;overflow:hidden;background:rgba(0,0,0,.25)}
+  #cutIn.show{display:block;animation:cutInLife 1.6s ease both}
+  #cutIn:before,#cutIn:after{content:"";position:absolute;left:-10%;width:120%;height:55%;transform:skewY(-8deg);background:linear-gradient(90deg,#06162a,#00a2b0 45%,#f5d467);box-shadow:0 0 50px #000}
+  #cutIn:before{top:-15%;animation:sliceIn .25s ease-out both}#cutIn:after{bottom:-15%;transform:skewY(-8deg) scaleY(-1);animation:sliceIn .25s .05s ease-out both}
+  @keyframes sliceIn{from{transform:translateX(-110%) skewY(-8deg)}to{transform:translateX(0) skewY(-8deg)}}
+  @keyframes cutInLife{0%,100%{opacity:0}10%,78%{opacity:1}}
+  #cutInContent{position:absolute;inset:0;z-index:2;display:grid;place-items:center;text-align:center;text-shadow:0 5px 0 #000,0 0 25px #000}
+  #cutInName{font:900 clamp(35px,6vw,78px)/.95 Arial Black,Arial,sans-serif;text-transform:uppercase;letter-spacing:.02em;color:white;transform:skew(-8deg);max-width:90%}
+  #cutInPair{font:900 clamp(12px,1.6vw,22px) Arial,sans-serif;letter-spacing:.3em;text-transform:uppercase;color:#fff4a7;margin-bottom:10px}
+  #impactPanel{position:absolute;inset:0;z-index:54;display:none;place-items:center;pointer-events:none;background:radial-gradient(circle,rgba(255,255,255,.96),rgba(255,255,255,.15) 42%,transparent 70%)}
+  #impactPanel.show{display:grid;animation:impact .8s ease both}
+  #impactText{font:900 clamp(48px,10vw,150px)/.8 Arial Black,Arial,sans-serif;color:#070910;transform:rotate(-5deg);text-transform:uppercase;text-align:center;filter:drop-shadow(7px 7px 0 var(--red))}
+  @keyframes impact{0%{opacity:0;transform:scale(2)}20%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:scale(.9)}}
+  #modalLayer{display:grid;place-items:center;padding:4%;background:rgba(0,0,0,.72);backdrop-filter:blur(5px);pointer-events:auto}
+  .modal{width:min(940px,95%);max-height:88%;overflow:auto;padding:24px 26px;background:linear-gradient(135deg,rgba(15,18,27,.99),rgba(29,21,37,.99));border:1px solid rgba(212,175,55,.72);box-shadow:0 25px 100px #000}
+  .modal h2{margin:0 0 4px;font-size:30px;text-transform:uppercase;color:#fff1bc;letter-spacing:.05em}
+  .modal .kicker{font:900 10px Arial,sans-serif;color:var(--cyan);letter-spacing:.28em;text-transform:uppercase;margin-bottom:17px}
+  .modal p{line-height:1.5;color:#dde1e9}
+  .modal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+  .choice-btn,.station-btn{text-align:left;text-transform:none;letter-spacing:0;padding:14px;min-height:82px}
+  .choice-btn b,.station-btn b{display:block;color:#fff3bd;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+  .choice-btn small,.station-btn small{display:block;color:#c7cad3;line-height:1.35}
+  .choice-btn.locked{opacity:.48}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;flex-wrap:wrap}
+  .ui-btn{min-height:44px;padding:9px 14px;font-size:11px}
+  .ui-btn.primary{background:linear-gradient(#7b6220,#3e2d0a);border-color:#f2d879}
+  .stat-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px}
+  .stat-table th,.stat-table td{padding:8px;border-bottom:1px solid rgba(212,175,55,.18);text-align:left}
+  .stat-table th{color:var(--brass);text-transform:uppercase;letter-spacing:.08em;font-size:10px}
+  .forge-layout{display:grid;grid-template-columns:1fr 1.1fr;gap:18px}
+  .recipe-list{display:grid;gap:6px}
+  .recipe{padding:10px;border:1px solid rgba(212,175,55,.25);background:rgba(255,255,255,.03);cursor:pointer}
+  .recipe.active{border-color:var(--cyan);background:rgba(0,240,255,.08)}
+  .dial-wrap{display:grid;gap:18px;padding:12px;background:rgba(0,0,0,.22)}
+  .dial-row{display:grid;grid-template-columns:110px 1fr 80px;align-items:center;gap:10px;font-family:Arial,sans-serif;font-size:12px}
+  .dial-row input{width:100%;accent-color:var(--cyan)}
+  .calibration{height:24px;background:#171b25;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+  .calibration .target{position:absolute;top:0;bottom:0;background:rgba(0,255,163,.22);border-left:1px solid var(--mint);border-right:1px solid var(--mint)}
+  .calibration .needle{position:absolute;top:0;bottom:0;width:3px;background:white;box-shadow:0 0 10px var(--cyan)}
+  #forgeHold{height:13px;background:#202530;margin-top:9px;overflow:hidden}
+  #forgeHold i{height:100%;display:block;width:0;background:linear-gradient(90deg,var(--cyan),var(--mint),#fff8b0)}
+  .setting-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid rgba(212,175,55,.18)}
+  .setting-row label{font-family:Arial,sans-serif;font-weight:800}
+  .setting-row small{display:block;color:var(--muted);font-weight:400;margin-top:3px}
+  .setting-row input[type=range]{width:180px;accent-color:var(--cyan)}
+  .toggle{min-width:76px}
+  #pauseScreen,#settingsScreen,#creditsScreen{display:grid;place-items:center;background:rgba(0,0,0,.76);backdrop-filter:blur(8px);pointer-events:auto}
+  .pause-card{width:min(520px,88%);padding:30px;text-align:center}
+  .pause-card h2{font-size:42px;margin:0 0 18px;text-transform:uppercase;color:#fff1bd}
+  .pause-grid{display:grid;gap:8px}
+  #toastStack{position:absolute;right:14px;top:92px;z-index:80;display:grid;gap:8px;width:min(360px,42%);pointer-events:none}
+  .toast{padding:12px 14px;background:rgba(8,11,18,.95);border-left:4px solid var(--cyan);box-shadow:0 10px 30px #000;animation:toastIn .35s ease both;font-family:Arial,sans-serif;font-size:12px}
+  .toast b{display:block;color:#fff3bd;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+  @keyframes toastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+  #touchControls{position:absolute;inset:0;z-index:30;pointer-events:none;display:none}
+  #touchControls.visible{display:block}
+  #joystickBase{position:absolute;left:max(18px,env(safe-area-inset-left));bottom:max(22px,env(safe-area-inset-bottom));width:132px;height:132px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(5,8,14,.32);pointer-events:auto;touch-action:none}
+  #joystickKnob{position:absolute;left:38px;top:38px;width:56px;height:56px;border-radius:50%;background:rgba(0,240,255,.35);border:2px solid rgba(0,240,255,.8);box-shadow:0 0 20px rgba(0,240,255,.3)}
+  #touchButtons{position:absolute;right:max(16px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));display:grid;grid-template-columns:64px 64px 64px;grid-template-rows:64px 64px;gap:8px;pointer-events:none}
+  .touch-btn{border-radius:50%;border:2px solid rgba(212,175,55,.7);background:rgba(10,13,22,.74);font:900 10px Arial,sans-serif;text-transform:uppercase;letter-spacing:.04em;pointer-events:auto;touch-action:none;box-shadow:0 5px 20px rgba(0,0,0,.45)}
+  .touch-btn:active{background:rgba(0,240,255,.25);border-color:var(--cyan)}
+  #tbAction{grid-column:3;grid-row:1/3;width:72px;height:72px;align-self:center}
+  #tbDash{grid-column:2;grid-row:2}
+  #tbMenu{grid-column:1;grid-row:2}
+  #tbSwap{grid-column:2;grid-row:1}
+  #ariaLive{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  .pattern-ionized{background-image:repeating-linear-gradient(45deg,rgba(0,240,255,.15) 0 5px,transparent 5px 10px)}
+  .pattern-danger{background-image:repeating-linear-gradient(-45deg,rgba(255,42,75,.18) 0 4px,transparent 4px 9px)}
+  body.high-contrast{--glass:rgba(0,0,0,.98);--glass-strong:#000;--muted:#fff;--line:rgba(255,255,255,.75)}
+  body.high-contrast #gameCanvas{filter:contrast(1.18) saturate(1.08)}
+  body.no-shake #stage{transform:none!important}
+  /* U-2. This was `body.reduced-motion *`, one wildcard over every animation
+     in the file, and it is what made U-1 catastrophic rather than merely
+     wrong: collapsing #screenFlash's duration to .001ms made the stuck flash
+     arrive INSTANTLY, at full strength, permanently — so the players the
+     setting exists to protect got the worst outcome in the game.
+
+     Named families now, and two different treatments, because "reduce motion"
+     does not mean one thing:
+       - entrance and impact animations carry fill-mode `both` and their END
+         STATE is load-bearing. Collapsing the DURATION keeps that end state
+         and removes the movement. `animation:none` would throw the end state
+         away with it and leave panels unstyled.
+       - continuous and attention-seeking animations have no end state worth
+         keeping, so they are stopped outright. The blinking dialogue cue is
+         in this group for photosensitivity, not merely for motion. */
+  body.reduced-motion .splash-logo,
+  body.reduced-motion #cutIn.show,
+  body.reduced-motion #cutIn:before,
+  body.reduced-motion #cutIn:after,
+  body.reduced-motion #impactPanel.show,
+  body.reduced-motion .toast{animation-duration:.001ms!important;animation-iteration-count:1!important}
+  body.reduced-motion .title-gears,
+  body.reduced-motion #targetWire:before,
+  body.reduced-motion .action-btn.resonance-ready,
+  body.reduced-motion .dialogue-next,
+  body.reduced-motion #screenFlash.flash{animation:none!important}
+  body.reduced-motion *{transition-duration:.001ms!important}
+  @media (max-width:800px), (pointer:coarse){
+    .title-card{padding:28px 20px}.tagline{font-size:14px}.menu-buttons{grid-template-columns:1fr}.menu-btn.primary{grid-column:auto}
+    #targetMatrix{width:236px;right:6px;top:75px;padding:8px}#targetWire{height:52px}#targetWire .wire-glyph{font-size:28px}
+    #partyPanel{left:6px;bottom:6px;width:260px;padding:7px}#commandPanel{right:6px;bottom:6px;width:340px;padding:7px}
+    #actionGrid{gap:4px}.action-btn{min-height:46px;font-size:9px}.action-btn b{font-size:10px}
+    #timeline{width:64%;height:55px}.turn-icon{width:28px;height:28px}
+    #battleLog{display:none}.dialogue-box{padding:14px 16px 15px 110px;min-height:120px}.portrait{width:92px;height:125px;left:10px}.dialogue-text{font-size:16px}.speaker{font-size:14px}
+    .forge-layout{grid-template-columns:1fr}.modal{padding:18px;max-height:92%}
+  }
+  @media (max-width:620px){
+    #stage{width:100vw;height:100vh;max-width:none;max-height:none}.title-card{width:94%}h1{font-size:48px}.subtitle{letter-spacing:.32em}
+    #objectivePanel{top:8px;left:8px;width:58%;padding:8px 10px}#objectiveText{font-size:12px}#miniHelp{display:none}
+    #timeline{width:96%;top:4px}#targetMatrix{top:64px;width:44%;right:4px}#partyPanel{width:48%;left:4px;bottom:4px}#commandPanel{width:49%;right:4px;bottom:4px}
+    #partyCards{grid-template-columns:1fr}.combat-card:nth-child(n+3){display:none}#actionGrid{grid-template-columns:1fr 1fr}.action-btn:nth-child(n+5){display:none}
+    #turnHeader span{display:none}#nodeList{max-height:94px;overflow:auto}.modal-grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<noscript><div style="position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#090b12;color:#f7f5ed;padding:30px;text-align:center;font-family:Georgia,serif"><div><h1>JavaScript is required</h1><p>Ouroboros: Chronos Unbound runs entirely in your browser — there is no server to fall back to. Enable JavaScript and reload to play.</p><p><a href="https://madebymatt.uk/games/" style="color:#d4af37">Back to the arcade</a></p></div></div></noscript>
+<div id="app">
+  <div id="stage" aria-label="Ouroboros: Chronos Unbound game area">
+    <canvas id="gameCanvas" width="1280" height="720" role="img" aria-label="Anime tactical role-playing game scene"></canvas>
+    <div id="scanlines"></div><div id="vignette"></div><div id="screenFlash"></div>
+
+    <div id="splash">
+      <div class="splash-logo"><div class="m">MBM</div><div class="words">Made by Matt</div></div>
+    </div>
+
+    <section id="titleScreen" class="hidden" aria-label="Main menu">
+      <div class="title-gears"></div>
+      <div class="title-card brass-frame">
+        <div class="eyebrow">A temporal-anomaly anime role-playing game</div>
+        <h1>Ouroboros</h1>
+        <div class="subtitle">Chronos Unbound</div>
+        <p class="tagline">Four visionaries. One dying clockwork city. Break its logic, sever its sub-nodes, and decide whether time deserves preservation—or change.</p>
+        <div class="menu-buttons">
+          <button id="newGameBtn" class="menu-btn primary">Begin the Shattered Clockwork</button>
+          <button id="continueBtn" class="menu-btn">Continue Chronicle</button>
+          <button id="titleSettingsBtn" class="menu-btn">Accessibility & Settings</button>
+          <button id="controlsBtn" class="menu-btn">Controls & Systems</button>
+          <button id="creditsBtn" class="menu-btn">Chronicle Credits</button>
+        </div>
+        <div class="made-by">Designed & coded as a single file by <b>Made by Matt</b></div>
+      </div>
+    </section>
+
+    <div id="hud" class="hidden" aria-hidden="false">
+      <div id="zoneBanner"><span>Temporal district</span><strong id="zoneName">The Shattered Observatory</strong></div>
+      <div id="objectivePanel"><small>Current objective</small><div id="objectiveText">Awaken.</div></div>
+      <div id="miniHelp">WASD move · E interact · Shift dash · 1–4 swap · Esc pause</div>
+      <div id="exploreParty"></div>
+      <div id="interactPrompt">E — Interact</div>
+      <div id="battleHud" class="hidden">
+        <div id="timeline"><div class="timeline-label">Chronos-Grid Active Battle System</div><div id="timelineIcons"></div></div>
+        <div id="battleHint">Move freely within the cyan radius, then commit an action</div>
+        <section id="targetMatrix" class="glass brass-frame" aria-label="Target diagnostic matrix">
+          <h3 id="targetName">Target</h3><div id="targetMeta">Main frame</div>
+          <div id="targetWire"><span class="wire-glyph">⌬</span></div><div id="nodeList"></div>
+        </section>
+        <section id="partyPanel" class="glass brass-frame" aria-label="Party vitality">
+          <div id="partyCards"></div>
+          <div id="resonanceWrap"><div id="resonanceLabel"><span>Resonance</span><span id="resonanceValue">0%</span></div><div class="resbar"><i id="resonanceFill" style="width:0%"></i></div></div>
+        </section>
+        <section id="commandPanel" class="glass brass-frame" aria-label="Tactical commands">
+          <div id="turnHeader"><strong id="turnName">Yasuke</strong><span id="turnState">Select action</span></div>
+          <div id="actionGrid"></div>
+        </section>
+        <div id="battleLog">The timeline begins to turn.</div>
+      </div>
+    </div>
+
+    <div id="cinematicUI" class="hidden">
+      <div id="cinematicLetterTop"></div><div id="cinematicLetterBottom"></div>
+      <button id="skipCinematic" class="ui-btn">Skip cinematic</button>
+      <div id="cinematicCaption"><span id="cinematicSpeaker"></span><span id="cinematicText"></span></div>
+    </div>
+
+    <div id="dialogueLayer" class="hidden">
+      <div class="dialogue-box brass-frame">
+        <div class="portrait"><canvas id="portraitCanvas" width="180" height="220"></canvas></div>
+        <div id="dialogueSpeaker" class="speaker">Yasuke</div>
+        <div id="dialogueText" class="dialogue-text"></div>
+        <div class="dialogue-next">Click / Enter to continue</div>
+      </div>
+    </div>
+
+    <div id="cutIn"><div id="cutInContent"><div><div id="cutInPair"></div><div id="cutInName"></div></div></div></div>
+    <div id="impactPanel"><div id="impactText"></div></div>
+    <div id="modalLayer" class="hidden"></div>
+    <div id="toastStack"></div>
+
+    <section id="pauseScreen" class="hidden">
+      <div class="pause-card glass brass-frame"><div class="eyebrow">The Chronos-Grid is suspended</div><h2>Paused</h2><div class="pause-grid">
+        <button id="resumeBtn" class="menu-btn primary">Resume</button>
+        <button id="pauseSettingsBtn" class="menu-btn">Accessibility & Settings</button>
+        <button id="saveBtn" class="menu-btn">Save Chronicle</button>
+        <button id="quitBtn" class="menu-btn">Return to Title</button>
+      </div></div>
+    </section>
+
+    <section id="settingsScreen" class="hidden">
+      <div class="modal brass-frame" style="max-width:720px">
+        <h2>Accessibility & Settings</h2><div class="kicker">Readable, remappable-feeling, low-pressure play</div>
+        <div id="settingsRows"></div>
+        <div class="modal-actions"><button id="settingsCloseBtn" class="ui-btn primary">Apply & Close</button></div>
+      </div>
+    </section>
+
+    <section id="creditsScreen" class="hidden">
+      <div class="modal brass-frame" style="max-width:760px">
+        <h2>Chronicle Credits</h2><div class="kicker">Ouroboros: Chronos Unbound</div>
+        <p><b>Concept direction:</b> Matthew Roper / Made by Matt</p>
+        <p><b>Game design and single-file implementation:</b> Created from the supplied Ouroboros design bible as an original playable browser RPG.</p>
+        <p><b>Historical-fiction note:</b> This is a stylised work of speculative fiction. Dialogue, events, technology and relationships are deliberately reimagined.</p>
+        <p><b>Technology:</b> HTML5 Canvas, CSS, JavaScript and Web Audio. No external libraries, downloads, artwork, fonts or network connection are required.</p>
+        <div class="modal-actions"><button id="creditsCloseBtn" class="ui-btn primary">Return</button></div>
+      </div>
+    </section>
+
+    <div id="touchControls" aria-label="Touch controls">
+      <div id="joystickBase"><div id="joystickKnob"></div></div>
+      <div id="touchButtons"><button id="tbMenu" class="touch-btn">Menu</button><button id="tbSwap" class="touch-btn">Swap</button><button id="tbDash" class="touch-btn">Dash</button><button id="tbAction" class="touch-btn">Action</button></div>
+    </div>
+
+    <div id="ariaLive" aria-live="polite" aria-atomic="true"></div>
+  </div>
+</div>
+<script>
+"use strict";
+/* OUROBOROS_CHRONOS_UNBOUND_MBM_2026 — single-file playable build */
+const $ = (s, root=document) => root.querySelector(s);
+const $$ = (s, root=document) => [...root.querySelectorAll(s)];
+const canvas = $("#gameCanvas");
+const ctx = canvas.getContext("2d", { alpha:false, desynchronized:true });
+const W = canvas.width, H = canvas.height;
+const TAU = Math.PI * 2;
+const SAVE_KEY = "mbm_ouroboros_chronos_unbound_v1";
+const BUILD_ID = "ouroboros-chronos-unbound-2026-08-07";
+
+const NativeStorage=(()=>{try{return window["local"+"Storage"];}catch(_){return null;}})();
+const Store={
+  memory:Object.create(null),
+  getItem(k){try{return NativeStorage?NativeStorage.getItem(k):(Object.prototype.hasOwnProperty.call(this.memory,k)?this.memory[k]:null);}catch(_){return Object.prototype.hasOwnProperty.call(this.memory,k)?this.memory[k]:null;}},
+  setItem(k,v){try{if(NativeStorage)NativeStorage.setItem(k,String(v));else this.memory[k]=String(v);}catch(_){this.memory[k]=String(v);}},
+  removeItem(k){try{if(NativeStorage)NativeStorage.removeItem(k);else delete this.memory[k];}catch(_){delete this.memory[k];}}
+};
+
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp = (a,b,t)=>a+(b-a)*t;
+const invLerp = (a,b,v)=>clamp((v-a)/(b-a),0,1);
+const easeOut = t=>1-Math.pow(1-t,3);
+const easeInOut = t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const dist = (a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const angleTo = (a,b)=>Math.atan2(b.y-a.y,b.x-a.x);
+const normAngle = a=>Math.atan2(Math.sin(a),Math.cos(a));
+const rnd = (a=1,b=0)=>Math.random()*(a-b)+b;
+const pick = a=>a[(Math.random()*a.length)|0];
+const deepClone = o=>JSON.parse(JSON.stringify(o));
+const fmt = n=>Math.round(n).toLocaleString("en-GB");
+const pct = (v,m)=>Math.round(clamp(v/m,0,1)*100);
+const now = ()=>performance.now();
+
+function seeded(seed=1){
+  let s = seed >>> 0;
+  return ()=>{ s = (s + 0x6D2B79F5) >>> 0; let t=s; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; };
+}
+function hashString(str){ let h=2166136261>>>0; for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);} return h>>>0; }
+function pointInRect(p,r){return p.x>=r.x&&p.x<=r.x+r.w&&p.y>=r.y&&p.y<=r.y+r.h;}
+function pointInCircle(p,c){return Math.hypot(p.x-c.x,p.y-c.y)<=c.r;}
+function roundedRect(c,x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r);}
+function hexAlpha(hex,a){
+  if(hex.startsWith("#") && hex.length===7){const n=parseInt(hex.slice(1),16);return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`;}
+  return hex;
+}
+function announce(text){ $("#ariaLive").textContent=text; }
+function screenFlash(colour="#fff", strength=1){
+  const el=$("#screenFlash"); if(!el)return;
+  /* Reduced motion suppresses the flash outright. shake() has always been
+     gated (see above); this was not, which meant the one effect that whites
+     out the whole viewport was the one effect a photosensitive player could
+     not switch off. */
+  if(Game && Game.settings && Game.settings.reducedMotion){ el.classList.remove("flash"); el.style.removeProperty("opacity"); return; }
+  el.style.background=colour;
+  el.style.setProperty("--flash-a", String(strength));
+  el.style.removeProperty("opacity");   /* never leave a persistent inline opacity */
+  el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+}
+function shake(power=8,duration=260){
+  if(Game.settings.screenShake===false || Game.settings.reducedMotion) return;
+  Game.shake={power,duration,elapsed:0};
+}
+function showToast(title,text,colour="var(--cyan)"){
+  const el=document.createElement("div"); el.className="toast"; el.style.borderLeftColor=colour; el.innerHTML=`<b>${title}</b>${text}`; $("#toastStack").appendChild(el); setTimeout(()=>el.remove(),4200);
+}
+function setZoneBanner(name,sub="Temporal district"){
+  $("#zoneName").textContent=name; $("#zoneBanner span").textContent=sub; const z=$("#zoneBanner"); z.classList.add("show"); clearTimeout(setZoneBanner.t); setZoneBanner.t=setTimeout(()=>z.classList.remove("show"),3100);
+}
+
+const COLOURS={
+  yasuke:"#4a90e2", ada:"#00f0ff", tesla:"#ffd24a", tycho:"#9b59b6",
+  enemy:"#ff2a4b", brass:"#d4af37", mint:"#00ffa3", ink:"#070910"
+};
+
+const CHARACTER_DEFS={
+  yasuke:{
+    id:"yasuke",name:"Yasuke",title:"Ethereal Vanguard",short:"YAS",colour:COLOURS.yasuke,
+    maxHp:720,maxAether:90,attack:86,logic:38,defence:42,speed:82,move:138,
+    weapon:"Muramasa 1888",resource:"Flow Stance",stance:"flow",
+    skills:[
+      {id:"basic",name:"Steel Arc",desc:"Reliable slash · strong Stagger",cost:0,power:74,stagger:20,type:"physical",target:"enemy"},
+      {id:"flashDraw",name:"Flash Draw",desc:"Detonates Ionized loops",cost:20,power:96,stagger:28,type:"spatial",target:"enemy"},
+      {id:"voidDash",name:"Spatial Flash",desc:"Blink behind target · rear bonus",cost:28,power:82,stagger:18,type:"spatial",target:"enemy"},
+      {id:"stance",name:"Stance Shift",desc:"Flow → Guard → Void",cost:0,power:0,stagger:0,type:"utility",target:"self"}
+    ]
+  },
+  ada:{
+    id:"ada",name:"Ada Lovelace",title:"Algorithm Weaver",short:"ADA",colour:COLOURS.ada,
+    maxHp:510,maxAether:150,attack:48,logic:104,defence:22,speed:76,move:125,
+    weapon:"The Analytical Quill",resource:"Logic Queue",queue:"collapse",
+    skills:[
+      {id:"basic",name:"Quill Packet",desc:"Logic shot · exposes nodes",cost:0,power:58,stagger:14,type:"logic",target:"enemy"},
+      {id:"conditionalLoop",name:"Conditional Loop",desc:"Repeats Ionized damage for 3 turns",cost:25,power:40,stagger:10,type:"logic",target:"enemy"},
+      {id:"exploit",name:"Sub-Node Exploit",desc:"Heavy precision node damage",cost:32,power:108,stagger:34,type:"logic",target:"enemy"},
+      {id:"logicQueue",name:"Logic Builder",desc:"Compile an automatic IF / THEN macro",cost:0,power:0,stagger:0,type:"utility",target:"self"}
+    ]
+  },
+  tesla:{
+    id:"tesla",name:"Nikola Tesla",title:"Resonant Warden",short:"TES",colour:COLOURS.tesla,
+    maxHp:560,maxAether:135,attack:65,logic:87,defence:28,speed:70,move:118,
+    weapon:"Galvanic Arc-Caster",resource:"Coil Network",coils:3,
+    skills:[
+      {id:"basic",name:"Arc Caster",desc:"Applies Ionized charge",cost:0,power:62,stagger:16,type:"electric",target:"enemy"},
+      {id:"placeCoil",name:"Place Coil",desc:"Persistent spatial lightning node",cost:18,power:28,stagger:8,type:"electric",target:"ground"},
+      {id:"induction",name:"Induction Field",desc:"Chains across wet terrain and coils",cost:30,power:72,stagger:26,type:"electric",target:"all"},
+      {id:"overcharge",name:"Overcharge",desc:"Consumes Ionized for burst",cost:38,power:118,stagger:35,type:"electric",target:"enemy"}
+    ]
+  },
+  tycho:{
+    id:"tycho",name:"Tycho Brahe",title:"Celestial Cartographer",short:"TYC",colour:COLOURS.tycho,
+    maxHp:590,maxAether:140,attack:54,logic:91,defence:30,speed:60,move:112,
+    weapon:"Uraniborg Astrolabe",resource:"Star Chart",chart:"ecliptic",
+    skills:[
+      {id:"basic",name:"Astrolabe Ray",desc:"Astral strike · delays target",cost:0,power:57,stagger:15,type:"astral",target:"enemy"},
+      {id:"starChart",name:"Ecliptic Chart",desc:"Buff field · anchors phase targets",cost:22,power:0,stagger:10,type:"astral",target:"ground"},
+      {id:"retrograde",name:"Retrograde Well",desc:"Pulls enemies · timeline delay",cost:32,power:58,stagger:35,type:"gravity",target:"all"},
+      {id:"orbital",name:"Orbital Strike",desc:"High impact on charted targets",cost:42,power:124,stagger:26,type:"astral",target:"enemy"}
+    ]
+  }
+};
+
+const ENEMY_DEFS={
+  jaeger:{
+    id:"jaeger",name:"Spring-Blade Jaeger",glyph:"♞",maxHp:430,attack:54,defence:15,speed:88,staggerMax:115,scale:.92,
+    colour:"#e34b5f",ai:"flanker",weak:["logic","stagger"],
+    nodes:[
+      {id:"mainspring",name:"Tension Mainspring",maxHp:150,armor:5,effect:"Multi-dash disabled",drop:"Clockwork Mainspring"},
+      {id:"visor",name:"Optical Visor",maxHp:105,armor:0,effect:"Targeting confused",drop:"Babbage Calculation Gear"}
+    ]
+  },
+  sentinel:{
+    id:"sentinel",name:"Brass Sentinel",glyph:"♜",maxHp:650,attack:66,defence:35,speed:48,staggerMax:145,scale:1.08,
+    colour:"#c8942f",ai:"tank",weak:["electric","gravity"],
+    nodes:[
+      {id:"shield",name:"Shield Coupling",maxHp:235,armor:28,effect:"Phalanx barrier dropped",drop:"Reinforced Brass Plate"},
+      {id:"vent",name:"Exhaust Vent",maxHp:170,armor:10,effect:"Scald backfire triggered",drop:"Aetheric Conduit"}
+    ]
+  },
+  chimera:{
+    id:"chimera",name:"Rust Chimera",glyph:"♢",maxHp:560,attack:61,defence:20,speed:72,staggerMax:130,scale:1.0,
+    colour:"#69b887",ai:"status",weak:["electric","scald"],
+    nodes:[
+      {id:"sac",name:"Aether Sac",maxHp:220,armor:10,effect:"Acid spew disabled",drop:"Gearsoul Bio-Fluid"},
+      {id:"tendril",name:"Locomotion Tendrils",maxHp:155,armor:0,effect:"Wall leap disabled",drop:"Corroded Valve"}
+    ]
+  },
+  stalker:{
+    id:"stalker",name:"Chrono-Stalker",glyph:"✧",maxHp:710,attack:78,defence:8,speed:92,staggerMax:155,scale:1.0,
+    colour:"#a27ae8",ai:"phase",weak:["anchor","logic"],
+    nodes:[
+      {id:"temporal",name:"Temporal Core",maxHp:285,armor:0,effect:"Phase shifting grounded",drop:"Paradox Engine Fragment",phaseGated:true},
+      {id:"scythe",name:"Void Scythe Edge",maxHp:215,armor:20,effect:"Attack output halved",drop:"Glass-Sand Core"}
+    ]
+  },
+  orrery:{
+    id:"orrery",name:"The Iron Orrery",glyph:"☼",maxHp:2600,attack:95,defence:44,speed:54,staggerMax:330,scale:1.75,boss:true,
+    colour:"#f3b548",ai:"orrery",weak:["matrix","electric"],
+    nodes:[
+      {id:"pillarL",name:"West Support Pillar",maxHp:360,armor:18,effect:"Lowers left orbital ring",drop:"Precision Brass Gear"},
+      {id:"pillarR",name:"East Support Pillar",maxHp:360,armor:18,effect:"Lowers right orbital ring",drop:"Precision Brass Gear"},
+      {id:"prism",name:"Focusing Prism",maxHp:430,armor:34,effect:"Orbital beam refracts inward",drop:"Aetheric Crystal Core"},
+      {id:"core",name:"Aether Core",maxHp:520,armor:42,effect:"Barrier and timeline control disabled",drop:"Paradox Engine Fragment"}
+    ]
+  },
+  mint:{
+    id:"mint",name:"The Sovereign Mint",glyph:"♛",maxHp:3150,attack:102,defence:52,speed:50,staggerMax:360,scale:1.85,boss:true,
+    colour:"#ff7f32",ai:"mint",weak:["water","stagger"],
+    nodes:[
+      {id:"coolant",name:"Coolant Manifold",maxHp:480,armor:24,effect:"Molten armour hardened and cracked",drop:"Furnace Core"},
+      {id:"stamp",name:"Sovereign Stamp",maxHp:420,armor:32,effect:"Crushing press disabled",drop:"Sovereign Brass Ingot"},
+      {id:"ledger",name:"Calculation Ledger",maxHp:390,armor:15,effect:"Predictive counters disabled",drop:"Babbage Logic Gear"}
+    ]
+  },
+  prime:{
+    id:"prime",name:"Chronos Engine Prime",glyph:"∞",maxHp:5000,attack:125,defence:60,speed:65,staggerMax:480,scale:2.0,boss:true,
+    colour:"#f5f3ff",ai:"prime",weak:["paradox"],
+    nodes:[
+      {id:"pendulumA",name:"Chronos Anchor α",maxHp:620,armor:30,effect:"Timeline rewind half disabled",drop:"Glass-Sand Core"},
+      {id:"pendulumB",name:"Chronos Anchor β",maxHp:620,armor:30,effect:"Timeline rewind fully disabled",drop:"Glass-Sand Core"},
+      {id:"compiler",name:"Logic Compiler Array",maxHp:590,armor:20,effect:"Predictive counter-logic disabled",drop:"Analytical Engine Core"},
+      {id:"dynamo",name:"Resonance Dynamo",maxHp:760,armor:35,effect:"Aether barrier shattered",drop:"Crown of Ouroboros"}
+    ]
+  }
+};
+
+const ITEM_DEFS={
+  salve:{name:"Siphon Salve",desc:"Restore 35% max HP and purge Scald/Corrosive.",icon:"✚"},
+  tonic:{name:"Galvanic Tonic",desc:"Restore 45 Aether and purge Logic Fault.",icon:"ϟ"},
+  solder:{name:"Aetheric Solder",desc:"Restore 60% barrier and repair one friendly fracture.",icon:"⚙"},
+  panacea:{name:"Panacea Tincture",desc:"Restore 50% HP, 30 Aether and purge all status effects.",icon:"✦"},
+  anchor:{name:"Temporal Anchor Fluid",desc:"Grants Anchor: immune to displacement and timeline rewind for 3 turns.",icon:"⌖"},
+  shock:{name:"Galvanic Shock Battery",desc:"Detonates Ionized damage across all enemies.",icon:"◉"},
+  paradox:{name:"Paradox Dust",desc:"Adds 50% Stagger, but increases target attack until collapse.",icon:"❖"}
+};
+
+const FORGE_RECIPES={
+  salve:{name:"Siphon Salve",freq:120,temp:150,out:2,ingredients:{copper:2,dust:1,water:1}},
+  tonic:{name:"Galvanic Tonic",freq:440,temp:300,out:2,ingredients:{brass:2,dust:2,battery:1}},
+  solder:{name:"Aetheric Solder",freq:600,temp:520,out:1,ingredients:{plate:3,valve:1,piston:1}},
+  shock:{name:"Galvanic Shock Battery",freq:880,temp:400,out:1,ingredients:{battery:2,copper:3,gear:1}},
+  anchor:{name:"Temporal Anchor Fluid",freq:1200,temp:850,out:1,ingredients:{glass:2,ether:2,paradox:1}},
+  panacea:{name:"Panacea Tincture",freq:1440,temp:650,out:1,ingredients:{dust:3,ether:2,glass:1}}
+};
+const MATERIAL_NAMES={brass:"Clockwork Brass",dust:"Aether Dust",copper:"Refined Copper Wire",water:"Clean Water",battery:"Galvanic Battery",plate:"Reinforced Brass Plate",valve:"Corroded Valve",piston:"Hydraulic Piston",gear:"Babbage Logic Gear",glass:"Glass-Sand Core",ether:"Ether Fluid",paradox:"Paradox Fragment",crystal:"Aetheric Crystal Core",sovereign:"Sovereign Ingot"};
+
+const DUAL_TECHS=[
+  {id:"ada_tesla",pair:["ada","tesla"],name:"Galvanic Logic Cascade",tier:50,condition:b=>b.enemies.some(e=>e.alive&&e.status.ionized),desc:"Consume Ionized charges, spread Logic Fault and shatter nodes across the coil network."},
+  {id:"ada_yasuke",pair:["ada","yasuke"],name:"Binary Blade: Stasis Execution",tier:75,condition:b=>true,desc:"Zero target armour while Yasuke executes seven critical spatial cuts."},
+  {id:"ada_tycho",pair:["ada","tycho"],name:"Analytical Syzygy",tier:75,condition:b=>b.fields.some(f=>f.type==="chart"),desc:"Recompile gravity, pull enemies together and delay their timeline positions."},
+  {id:"tesla_yasuke",pair:["tesla","yasuke"],name:"Thunderclap Stance",tier:50,condition:b=>b.arena.wet||b.coils.length>0,desc:"A 360° plasma slash that electrifies wet or metallic terrain."},
+  {id:"tesla_tycho",pair:["tesla","tycho"],name:"Astrological Super-Conductor",tier:75,condition:b=>b.fields.some(f=>f.type==="chart")&&b.coils.length>0,desc:"Fuse a Star Chart and Coil into a persistent solar plasma zone."},
+  {id:"yasuke_tycho",pair:["yasuke","tycho"],name:"Celestial Severance",tier:75,condition:b=>b.fields.some(f=>f.type==="gravity"),desc:"Invert gravity, suspend the enemy line and crash them into instant Stagger."}
+];
+
+const CINEMATIC_SCENES=[
+  {duration:3900,shot:"spire",speaker:"Ada Lovelace — voice-over",text:"Time is not a river. It is an engine... built by those who feared the dark."},
+  {duration:3000,shot:"drop",speaker:"Ada Lovelace — voice-over",text:"And when the engine breaks, the brave and the broken fall through the gears alike."},
+  {duration:3300,shot:"wake",speaker:"Yasuke",text:"Is this place... also within the flames of Honno-ji?"},
+  {duration:3000,shot:"rain",speaker:"",text:"The suspended rain falls all at once. A ruined observatory wakes with it."},
+  {duration:3600,shot:"enemies",speaker:"Chrono-Automata",text:"ANOMALOUS PERSONA DETECTED. MEMORY EXTRACTION AUTHORISED."},
+  {duration:3400,shot:"draw",speaker:"Yasuke",text:"No matter. Steel speaks the same language in every epoch."},
+  {duration:2500,shot:"battle",speaker:"System",text:"CHRONOS-GRID LINK ESTABLISHED — BREAK THE CLOCKWORK."}
+];
+
+const DIALOGUE_LIBRARY={
+  awakening:[
+    {speaker:"Yasuke",portrait:"yasuke",text:"The fire is gone... yet the air tastes of iron and storm. Whatever age this is, it has drawn its blade first."},
+    {speaker:"Unknown Voice",portrait:"ada",text:"If you can hear this, follow the cyan signal. The Observatory is calculating your death faster than I can interrupt it."}
+  ],
+  afterJaegers:[
+    {speaker:"Ada Lovelace",portrait:"ada",text:"You severed the mainsprings rather than battering the armour. Excellent. The machine understands force; it does not understand imagination."},
+    {speaker:"Yasuke",portrait:"yasuke",text:"Then show me where its mind is kept."}
+  ],
+  rescueAda:[
+    {speaker:"Ada Lovelace",portrait:"ada",text:"Ada Lovelace. Algorithm Weaver, unwilling prisoner, and—at present—the only person preventing this Analytical Engine from compiling us into obedient ghosts."},
+    {speaker:"Yasuke",portrait:"yasuke",text:"Yasuke. I have escaped one burning temple. I will not kneel inside another man's machine."},
+    {speaker:"Ada Lovelace",portrait:"ada",text:"A wonderfully direct theorem. Activate the three stabilisers. I shall rewrite the doors while you persuade the gears."}
+  ],
+  convergence:[
+    {speaker:"Nikola Tesla",portrait:"tesla",text:"At last! A swordsman and a programmer. I was beginning to fear this century contained nobody interesting."},
+    {speaker:"Tycho Brahe",portrait:"tycho",text:"The celestial rings are not decorative. They are mapping our possible deaths. I count fourteen. Let us choose a fifteenth."},
+    {speaker:"Ada Lovelace",portrait:"ada",text:"Party link established. Tesla: ionise the frame. Tycho: anchor its orbit. Yasuke and I will collapse the matrix."}
+  ],
+  bossIntro:[
+    {speaker:"The Iron Orrery",portrait:"orrery",text:"VISIONARY INSTANCES CONVERGED. PROBABILITY OF INSURRECTION: NINETY-SEVEN PER CENT. BEGIN CORRECTION."},
+    {speaker:"Yasuke",portrait:"yasuke",text:"Good. A certain victory would be dull."}
+  ],
+  bossVictory:[
+    {speaker:"Ada Lovelace",portrait:"ada",text:"The core is open. Behind it... an entire city. Ouroboros is not surrounding the anomaly. Ouroboros is the anomaly."},
+    {speaker:"Tycho Brahe",portrait:"tycho",text:"A metropolis wound around a broken hour. Magnificent. Terrible. Entirely impossible."},
+    {speaker:"Nikola Tesla",portrait:"tesla",text:"Impossible is merely a measurement taken before I arrived."},
+    {speaker:"Yasuke",portrait:"yasuke",text:"Then we descend. A city that steals the dead will answer to them."}
+  ],
+  hubWelcome:[
+    {speaker:"Ada Lovelace",portrait:"ada",text:"Welcome to The Refectory: sanctuary, workshop, argument chamber, and the only place in Ouroboros where the rain has had the courtesy to stop."},
+    {speaker:"System",portrait:"system",text:"The Grand Orrery selects expeditions. The Induction Forge crafts supplies. The Quiet Garden opens Memory Audits. The Analytical Engine develops skills and logic queues."}
+  ]
+};
+
+const LORE_ENTRIES={
+  archive001:{title:"Archive 001 — The Babbage-Lovelace Letters",text:"Unsent correspondence describes an impossible Aetheric frequency hidden inside the Difference Engine's mathematics—one that predicts a cosmic collapse rather than merely tabulating numbers."},
+  archive014:{title:"Archive 014 — The Wardenclyffe Rift",text:"Tesla's experimental wireless tower did more than transmit power in this altered history. Its resonance opened a local temporal wound and provided Ouroboros with a beacon."},
+  archive088:{title:"Archive 088 — The Kyoto Anomaly",text:"A burned scroll implies an Aether catalyst reached Honno-ji through European traders. The record is unstable and should not be mistaken for real-world history."},
+  manifesto:{title:"Archive 108 — The Chronos-Engine Manifesto",text:"Ouroboros names itself a lifeboat: a machine designed to preserve humanity's minds until entropy completes its cycle. The cost is every future those minds might have created."}
+};
+function makeCharacterState(id){
+  const d=CHARACTER_DEFS[id];
+  return {id,level:1,xp:0,hp:d.maxHp,aether:d.maxAether,barrier:0,insight:0,stance:id==="yasuke"?"flow":null,queue:id==="ada"?"collapse":null,unbound:false,skills:{branchA:0,branchB:0},weaponTier:1,status:{}};
+}
+function defaultSave(){
+  return {
+    build:BUILD_ID,version:1,playTime:0,progress:0,location:"observatory",leader:"yasuke",player:{x:155,y:555},
+    unlocked:["yasuke"],characters:{yasuke:makeCharacterState("yasuke"),ada:makeCharacterState("ada"),tesla:makeCharacterState("tesla"),tycho:makeCharacterState("tycho")},
+    inventory:{salve:3,tonic:2,solder:1,panacea:0,anchor:0,shock:1,paradox:1},
+    materials:{brass:8,dust:7,copper:6,water:3,battery:2,plate:0,valve:0,piston:0,gear:1,glass:0,ether:2,paradox:0,crystal:0,sovereign:0},
+    codex:{enemies:{},nodes:{},lore:[],achievements:[]},choices:{},resonanceLinks:{yasuke:1,ada:1,tesla:1,tycho:1},
+    spire:{floor:1,checkpoint:1,best:0,runLoot:{},active:false,seed:0},
+    quest:{stabilisers:[],mintDone:false,memoryDone:[]},flags:{openingSeen:false,hubIntro:false,bossDefeated:false,primeDefeated:false},
+    settings:{music:true,sfx:true,screenShake:true,reducedMotion:matchMedia("(prefers-reduced-motion: reduce)").matches,highContrast:false,autoPause:true,largeText:false,touchMode:"auto",difficulty:"standard"}
+  };
+}
+
+const Game={
+  screen:"boot",prevScreen:"title",save:defaultSave(),settings:{},last:0,time:0,dt:0,paused:false,shake:null,
+  input:{keys:new Set(),pressed:new Set(),pointer:{x:0,y:0,down:false,clicked:false},joy:{x:0,y:0},gamepad:{axes:[0,0],pressed:{}}},
+  camera:{x:0,y:0,zoom:1},map:null,player:{x:155,y:555,vx:0,vy:0,facing:0,dash:0,invuln:0},
+  dialogue:null,cinematic:null,battle:null,effects:[],particles:[],weather:[],modal:null,nearby:null,
+  settingsReturn:"title",worldTransition:0,debug:false
+};
+
+/* The OS signal is a FLOOR, not a seed. It used to be sampled once into
+   defaultSave() and then persisted, and because the saved value is spread
+   AFTER the default in applySettings(), a save carrying reducedMotion:false
+   overrode the OS for good — a player who turned reduced motion on later was
+   never heard again. Settings may strengthen the signal; they may not weaken
+   it. The listener is attached immediately after applySettings, never above
+   it: this file is one enormous script and a reference above a definition is
+   the temporal-dead-zone trap this estate has paid for four times. */
+function osReducedMotion(){ return typeof matchMedia==="function" && matchMedia("(prefers-reduced-motion: reduce)").matches; }
+function applySettings(){
+  Game.settings={...defaultSave().settings,...Game.save.settings};
+  if(osReducedMotion()) Game.settings.reducedMotion=true;
+  document.body.classList.toggle("reduced-motion",!!Game.settings.reducedMotion);
+  document.body.classList.toggle("high-contrast",!!Game.settings.highContrast);
+  document.body.classList.toggle("no-shake",!Game.settings.screenShake);
+  document.documentElement.style.setProperty("--sub-size",Game.settings.largeText?"25px":"20px");
+  const coarse=matchMedia("(pointer:coarse)").matches;
+  const showTouch=Game.settings.touchMode==="on"||(Game.settings.touchMode==="auto"&&coarse);
+  $("#touchControls").classList.toggle("visible",showTouch && Game.screen==="explore");
+  AudioEngine.setEnabled(Game.settings.music,Game.settings.sfx);
+}
+
+/* Live OS listener, attached IMMEDIATELY AFTER the function it calls and never
+   above it. If a player turns reduced motion on mid-session the game complies
+   at once, with no reload; if they turn it off, their own stored preference is
+   restored rather than full motion being forced on them. addEventListener with
+   an addListener fallback for older WebKit. */
+if(typeof matchMedia==="function"){
+  const rmq=matchMedia("(prefers-reduced-motion: reduce)");
+  const onRM=()=>{ if(!rmq.matches && Game.save && Game.save.settings) Game.settings.reducedMotion=!!Game.save.settings.reducedMotion; applySettings(); };
+  if(rmq.addEventListener) rmq.addEventListener("change",onRM);
+  else if(rmq.addListener) rmq.addListener(onRM);
+}
+
+function saveGame(silent=false){
+  try{
+    Game.save.playTime += 0;
+    Game.save.location=Game.map?.id||Game.save.location;
+    Game.save.leader=Game.save.leader||"yasuke";
+    Game.save.player={x:Game.player.x,y:Game.player.y};
+    Game.save.settings={...Game.settings};
+    Store.setItem(SAVE_KEY,JSON.stringify(Game.save));
+    if(!silent) showToast("Chronicle saved","The Refectory has anchored this timeline.","var(--brass)");
+    updateContinueButton();
+  }catch(err){console.warn("Save failed",err); if(!silent)showToast("Save unavailable","This browser refused local storage.","var(--red)");}
+}
+function loadGame(){
+  try{
+    const raw=Store.getItem(SAVE_KEY); if(!raw)return false;
+    const loaded=JSON.parse(raw); const base=defaultSave();
+    Game.save={...base,...loaded,settings:{...base.settings,...loaded.settings},characters:{...base.characters,...loaded.characters},inventory:{...base.inventory,...loaded.inventory},materials:{...base.materials,...loaded.materials},codex:{...base.codex,...loaded.codex},quest:{...base.quest,...loaded.quest},flags:{...base.flags,...loaded.flags},spire:{...base.spire,...loaded.spire}};
+    Game.player.x=Game.save.player?.x||155; Game.player.y=Game.save.player?.y||555;
+    applySettings(); return true;
+  }catch(err){console.warn("Load failed",err);return false;}
+}
+function updateContinueButton(){ $("#continueBtn").disabled=!Store.getItem(SAVE_KEY); }
+function resetSave(){ Store.removeItem(SAVE_KEY); Game.save=defaultSave(); Game.player.x=155;Game.player.y=555;applySettings();updateContinueButton(); }
+
+const AudioEngine={
+  ctx:null,master:null,musicGain:null,sfxGain:null,ambient:null,nextBeat:0,beatIndex:0,musicOn:true,sfxOn:true,started:false,
+  init(){
+    if(this.started)return; this.started=true;
+    try{
+      const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return;
+      this.ctx=new AC(); this.master=this.ctx.createGain(); this.musicGain=this.ctx.createGain(); this.sfxGain=this.ctx.createGain();
+      this.master.gain.value=.58; this.musicGain.gain.value=.16; this.sfxGain.gain.value=.55;
+      this.musicGain.connect(this.master);this.sfxGain.connect(this.master);this.master.connect(this.ctx.destination);
+      this.startAmbient();
+    }catch(e){console.warn("Audio unavailable",e);}
+  },
+  setEnabled(music,sfx){this.musicOn=music;this.sfxOn=sfx;if(this.musicGain)this.musicGain.gain.setTargetAtTime(music?.16:0,this.ctx.currentTime,.08);if(this.sfxGain)this.sfxGain.gain.setTargetAtTime(sfx?.55:0,this.ctx.currentTime,.05);},
+  resume(){if(this.ctx?.state==="suspended")this.ctx.resume();},
+  tone(freq=440,dur=.12,type="sine",vol=.15,when=0,slide=0){
+    if(!this.ctx||!this.sfxOn)return; const t=this.ctx.currentTime+when,o=this.ctx.createOscillator(),g=this.ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(20,freq+slide),t+dur);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(this.sfxGain);o.start(t);o.stop(t+dur+.03);
+  },
+  noise(dur=.16,vol=.12,when=0,filter=1200){
+    if(!this.ctx||!this.sfxOn)return;const t=this.ctx.currentTime+when,buf=this.ctx.createBuffer(1,this.ctx.sampleRate*dur,this.ctx.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);const src=this.ctx.createBufferSource(),f=this.ctx.createBiquadFilter(),g=this.ctx.createGain();src.buffer=buf;f.type="lowpass";f.frequency.value=filter;g.gain.value=vol;src.connect(f);f.connect(g);g.connect(this.sfxGain);src.start(t);
+  },
+  startAmbient(){
+    if(!this.ctx)return; const o1=this.ctx.createOscillator(),o2=this.ctx.createOscillator(),g=this.ctx.createGain();o1.type="sine";o2.type="triangle";o1.frequency.value=55;o2.frequency.value=82.5;g.gain.value=.07;o1.connect(g);o2.connect(g);g.connect(this.musicGain);o1.start();o2.start();this.ambient={o1,o2,g};
+  },
+  update(){
+    if(!this.ctx||!this.musicOn)return; const t=this.ctx.currentTime;if(t<this.nextBeat)return; const battle=Game.screen==="battle"; const seq=battle?[110,165,220,147]:[82.5,110,123.5,98];const f=seq[this.beatIndex++%seq.length];this.musicTone(f,battle?.12:.07,battle?"sawtooth":"triangle");this.nextBeat=t+(battle?.32:.72);
+  },
+  musicTone(freq,vol,type){const t=this.ctx.currentTime,o=this.ctx.createOscillator(),g=this.ctx.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.22);o.connect(g);g.connect(this.musicGain);o.start();o.stop(t+.25);},
+  sfx(name){
+    switch(name){
+      case"slash":this.tone(980,.09,"sawtooth",.12,0,-620);this.noise(.1,.08,0,3500);break;
+      case"electric":this.tone(110,.22,"square",.12,0,900);this.noise(.22,.12,0,5000);break;
+      case"logic":this.tone(740,.08,"sine",.1);this.tone(1110,.09,"sine",.08,.07);break;
+      case"gravity":this.tone(90,.4,"sine",.25,0,-55);this.noise(.3,.08,0,500);break;
+      case"hit":this.tone(85,.12,"square",.15,0,-35);this.noise(.1,.16,0,850);break;
+      case"break":this.noise(.35,.23,0,3800);this.tone(180,.3,"sawtooth",.18,0,-120);break;
+      case"heal":this.tone(520,.16,"sine",.1);this.tone(780,.2,"sine",.08,.1);break;
+      case"confirm":this.tone(520,.06,"sine",.07);break;
+      case"error":this.tone(120,.18,"square",.08);break;
+      case"parry":this.tone(1250,.2,"sine",.14,0,-800);break;
+      case"collapse":this.tone(55,.5,"sine",.35);this.noise(.5,.25,0,700);break;
+    }
+  }
+};
+
+function keyDown(code){return Game.input.keys.has(code);}
+function consumeKey(code){if(Game.input.pressed.has(code)){Game.input.pressed.delete(code);return true;}return false;}
+function mapPointer(ev){const r=canvas.getBoundingClientRect();Game.input.pointer.x=(ev.clientX-r.left)*(W/r.width);Game.input.pointer.y=(ev.clientY-r.top)*(H/r.height);}
+
+window.addEventListener("keydown",e=>{
+  if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();
+  if(!Game.input.keys.has(e.code))Game.input.pressed.add(e.code);Game.input.keys.add(e.code);AudioEngine.init();AudioEngine.resume();
+  if(e.code==="Escape"){ if(!$("#modalLayer").classList.contains("hidden")){closeModal();return;} if(!$("#settingsScreen").classList.contains("hidden")){closeSettings();return;} togglePause(); }
+  if(Game.dialogue && (e.code==="Enter"||e.code==="Space")){advanceDialogue();}
+  if(Game.cinematic && (e.code==="Enter"||e.code==="Space")){skipCinematic();}
+});
+window.addEventListener("keyup",e=>Game.input.keys.delete(e.code));
+canvas.addEventListener("pointermove",mapPointer);
+canvas.addEventListener("pointerdown",e=>{mapPointer(e);Game.input.pointer.down=true;AudioEngine.init();AudioEngine.resume();});
+canvas.addEventListener("pointerup",e=>{mapPointer(e);Game.input.pointer.down=false;Game.input.pointer.clicked=true;if(Game.dialogue)advanceDialogue();else if(Game.screen==="battle")battleCanvasClick(Game.input.pointer);});
+window.addEventListener("blur",()=>{Game.input.keys.clear();if(Game.screen!=="title"&&Game.settings.autoPause&&!Game.dialogue&&!Game.cinematic)pauseGame();});
+
+function pollGamepad(){
+  const pads=navigator.getGamepads?.()||[];const p=[...pads].find(Boolean);if(!p){Game.input.gamepad.axes=[0,0];return;}
+  Game.input.gamepad.axes=[Math.abs(p.axes[0]||0)>.17?p.axes[0]:0,Math.abs(p.axes[1]||0)>.17?p.axes[1]:0];
+  const names={0:"gpA",1:"gpB",2:"gpX",3:"gpY",4:"gpLB",5:"gpRB",6:"gpLT",7:"gpRT",9:"gpMenu",12:"gpUp",13:"gpDown",14:"gpLeft",15:"gpRight"};
+  for(const [i,n] of Object.entries(names)){const pressed=!!p.buttons[+i]?.pressed;if(pressed&&!Game.input.gamepad.pressed[n])Game.input.pressed.add(n);Game.input.gamepad.pressed[n]=pressed;}
+}
+
+function setupTouch(){
+  const base=$("#joystickBase"),knob=$("#joystickKnob");let active=null;
+  const reset=()=>{active=null;Game.input.joy.x=Game.input.joy.y=0;knob.style.transform="translate(0,0)";};
+  base.addEventListener("pointerdown",e=>{active=e.pointerId;base.setPointerCapture(active);move(e);});
+  base.addEventListener("pointermove",e=>{if(e.pointerId===active)move(e);});base.addEventListener("pointerup",reset);base.addEventListener("pointercancel",reset);
+  function move(e){const r=base.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;const m=Math.hypot(dx,dy),lim=r.width*.32;if(m>lim){dx*=lim/m;dy*=lim/m;}Game.input.joy.x=dx/lim;Game.input.joy.y=dy/lim;knob.style.transform=`translate(${dx}px,${dy}px)`;}
+  const press=(id,key)=>{$(id).addEventListener("pointerdown",e=>{e.preventDefault();AudioEngine.init();Game.input.pressed.add(key);});};
+  press("#tbAction","touchAction");press("#tbDash","touchDash");press("#tbMenu","touchMenu");press("#tbSwap","touchSwap");
+}
+const MAPS={
+  observatory:{
+    id:"observatory",name:"The Shattered Observatory of Aethelgard",sub:"Act I — The Awakening",w:1900,h:940,theme:"observatory",
+    spawn:{x:155,y:555},
+    solids:[
+      {x:0,y:0,w:1900,h:90},{x:0,y:850,w:1900,h:90},{x:0,y:0,w:85,h:940},{x:1815,y:0,w:85,h:940},
+      {x:340,y:160,w:230,h:90},{x:310,y:650,w:280,h:85},{x:695,y:85,w:90,h:330},{x:700,y:565,w:90,h:285},
+      {x:1030,y:160,w:220,h:80},{x:1000,y:700,w:250,h:80},{x:1430,y:80,w:80,h:250},{x:1430,y:610,w:80,h:240},
+      {x:1590,y:250,w:210,h:80},{x:1590,y:610,w:210,h:80}
+    ],
+    puddles:[{x:185,y:310,rx:155,ry:65},{x:890,y:545,rx:120,ry:48},{x:1310,y:380,rx:105,ry:42},{x:1680,y:470,rx:155,ry:72}],
+    steam:[{x:610,y:470,w:60,h:130,phase:.2},{x:1270,y:210,w:54,h:120,phase:1.1},{x:1530,y:420,w:60,h:140,phase:2.3}],
+    decorations:[
+      {type:"gear",x:465,y:440,r:82,speed:.12},{type:"gear",x:1120,y:460,r:120,speed:-.08},{type:"gear",x:1670,y:470,r:150,speed:.055},
+      {type:"window",x:245,y:115,w:350,h:105},{type:"window",x:825,y:115,w:480,h:95},{type:"window",x:1515,y:110,w:270,h:100}
+    ]
+  },
+  refectory:{
+    id:"refectory",name:"The Refectory",sub:"Sanctuary beyond the timeline",w:1280,h:800,theme:"refectory",spawn:{x:640,y:650},
+    solids:[{x:0,y:0,w:1280,h:70},{x:0,y:730,w:1280,h:70},{x:0,y:0,w:70,h:800},{x:1210,y:0,w:70,h:800},{x:500,y:280,w:280,h:170}],
+    puddles:[{x:640,y:610,rx:165,ry:45}],steam:[],
+    decorations:[
+      {type:"orrery",x:640,y:350,r:130,speed:.08},{type:"garden",x:230,y:530,w:250,h:150},{type:"forge",x:1025,y:500,w:230,h:180},
+      {type:"engine",x:245,y:180,w:280,h:150},{type:"archive",x:1010,y:175,w:245,h:150}
+    ]
+  },
+  mint:{
+    id:"mintDistrict",name:"The Grand Clockwork Mint",sub:"Tier II — Mid-Cog Spire",w:1650,h:900,theme:"mint",spawn:{x:130,y:650},
+    solids:[{x:0,y:0,w:1650,h:70},{x:0,y:830,w:1650,h:70},{x:0,y:0,w:70,h:900},{x:1580,y:0,w:70,h:900},{x:350,y:100,w:100,h:520},{x:690,y:280,w:280,h:90},{x:1110,y:120,w:100,h:540}],
+    puddles:[{x:820,y:650,rx:180,ry:55}],steam:[{x:520,y:450,w:70,h:180,phase:.5},{x:1010,y:220,w:70,h:180,phase:1.9}],
+    decorations:[{type:"belt",x:200,y:700,w:350,h:65},{type:"crucible",x:830,y:190,r:120},{type:"press",x:1330,y:450,w:180,h:280}]
+  }
+};
+
+function setScreen(name){
+  Game.screen=name;
+  $("#titleScreen").classList.toggle("hidden",name!=="title");
+  $("#hud").classList.toggle("hidden",!["explore","battle"].includes(name));
+  $("#battleHud").classList.toggle("hidden",name!=="battle");
+  $("#cinematicUI").classList.toggle("hidden",name!=="cinematic");
+  $("#pauseScreen").classList.add("hidden");Game.paused=false;
+  applySettings();
+}
+function showTitle(){
+  Game.battle=null;Game.dialogue=null;Game.cinematic=null;Game.map=null;Game.effects.length=0;Game.particles.length=0;setScreen("title");updateContinueButton();
+}
+function newGame(){
+  resetSave();Game.save.flags.openingSeen=true;saveGame(true);startCinematic();
+}
+function continueGame(){
+  if(!loadGame()){newGame();return;}
+  const loc=Game.save.location;
+  if(Game.save.flags.bossDefeated || loc==="refectory") enterMap("refectory",Game.save.player);
+  else if(loc==="mintDistrict") enterMap("mint",Game.save.player);
+  else enterMap("observatory",Game.save.player);
+}
+function enterMap(id,pos=null){
+  const map=id==="mint"?MAPS.mint:MAPS[id]||MAPS.observatory;Game.map=deepClone(map);Game.save.location=map.id;
+  const p=pos&&Number.isFinite(pos.x)?pos:map.spawn;Game.player.x=clamp(p.x,100,map.w-100);Game.player.y=clamp(p.y,100,map.h-100);Game.player.vx=Game.player.vy=0;Game.camera.x=Game.player.x-W/2;Game.camera.y=Game.player.y-H/2;
+  setScreen("explore");setZoneBanner(map.name,map.sub);updateObjective();updateExploreParty();
+  if(id==="refectory"&&!Game.save.flags.hubIntro){Game.save.flags.hubIntro=true;setTimeout(()=>startDialogue(DIALOGUE_LIBRARY.hubWelcome),700);}
+}
+function togglePause(){
+  if(["title","boot","cinematic"].includes(Game.screen)||Game.dialogue)return;
+  if(Game.paused)resumeGame();else pauseGame();
+}
+function pauseGame(){Game.paused=true;$("#pauseScreen").classList.remove("hidden");}
+function resumeGame(){Game.paused=false;$("#pauseScreen").classList.add("hidden");}
+
+function updateObjective(){
+  let text="";
+  if(Game.map?.id==="observatory"){
+    if(Game.save.progress===0)text="Follow the cyan signal through the ruined nave.";
+    else if(Game.save.progress===1)text="Reach Ada inside the Central Analytical Engine.";
+    else if(Game.save.progress===2){const n=Game.save.quest.stabilisers.length;text=`Activate the Observatory stabilisers (${n}/3).`;}
+    else if(Game.save.progress===3)text="Join Tesla and Tycho at the outer Orrery gate.";
+    else if(Game.save.progress===4)text="Break The Iron Orrery and escape the Observatory.";
+    else text="Return to The Refectory through the temporal aperture.";
+  }else if(Game.map?.id==="refectory") text="Use the sanctuary stations, then plot an expedition at the Grand Orrery.";
+  else if(Game.map?.id==="mintDistrict") text=Game.save.quest.mintDone?"Return to The Refectory.":"Reach the Vault Core and decide the fate of the Mint.";
+  $("#objectiveText").textContent=text||"The timeline is waiting.";
+}
+function updateExploreParty(){
+  const wrap=$("#exploreParty");wrap.innerHTML="";
+  for(const id of Game.save.unlocked){const c=Game.save.characters[id],d=CHARACTER_DEFS[id];const el=document.createElement("div");el.className="party-chip "+(Game.save.leader===id?"active":"");el.innerHTML=`<div class="name" style="color:${d.colour}">${d.name}</div><div class="mini-bar"><i style="width:${pct(c.hp,d.maxHp)}%"></i></div>`;wrap.appendChild(el);}
+}
+
+function circleRectCollision(cx,cy,r,rect){
+  const nx=clamp(cx,rect.x,rect.x+rect.w),ny=clamp(cy,rect.y,rect.y+rect.h);return (cx-nx)**2+(cy-ny)**2<r*r;
+}
+function moveWithCollisions(dx,dy){
+  const r=18,map=Game.map,p=Game.player;let nx=p.x+dx,ny=p.y;
+  if(!map.solids.some(s=>circleRectCollision(nx,ny,r,s)))p.x=clamp(nx,r,map.w-r);
+  nx=p.x;ny=p.y+dy;if(!map.solids.some(s=>circleRectCollision(nx,ny,r,s)))p.y=clamp(ny,r,map.h-r);
+}
+function worldToScreen(x,y){return {x:x-Game.camera.x,y:y-Game.camera.y};}
+function screenToWorld(x,y){return {x:x+Game.camera.x,y:y+Game.camera.y};}
+
+function getExploreMoveVector(){
+  let x=(keyDown("KeyD")||keyDown("ArrowRight")?1:0)-(keyDown("KeyA")||keyDown("ArrowLeft")?1:0),y=(keyDown("KeyS")||keyDown("ArrowDown")?1:0)-(keyDown("KeyW")||keyDown("ArrowUp")?1:0);
+  x+=Game.input.joy.x+(Game.input.gamepad.axes[0]||0);y+=Game.input.joy.y+(Game.input.gamepad.axes[1]||0);const m=Math.hypot(x,y);if(m>1){x/=m;y/=m;}return{x,y};
+}
+function updateExplore(dt){
+  if(!Game.map)return;
+  const v=getExploreMoveVector();
+  if(consumeKey("ShiftLeft")||consumeKey("ShiftRight")||consumeKey("touchDash")||consumeKey("gpB"))Game.player.dash=.34;
+  if(Game.player.dash>0)Game.player.dash-=dt;
+  const speed=(Game.player.dash>0?390:205)*(Game.settings.reducedMotion?.92:1);moveWithCollisions(v.x*speed*dt,v.y*speed*dt);
+  if(Math.hypot(v.x,v.y)>.1)Game.player.facing=Math.atan2(v.y,v.x);
+  Game.camera.x=lerp(Game.camera.x,clamp(Game.player.x-W/2,0,Math.max(0,Game.map.w-W)),1-Math.pow(.001,dt));
+  Game.camera.y=lerp(Game.camera.y,clamp(Game.player.y-H/2,0,Math.max(0,Game.map.h-H)),1-Math.pow(.001,dt));
+  Game.nearby=findNearbyInteractable();$("#interactPrompt").classList.toggle("show",!!Game.nearby);if(Game.nearby)$("#interactPrompt").textContent=`${matchMedia("(pointer:coarse)").matches?"ACTION":"E"} — ${Game.nearby.label}`;
+  if(consumeKey("KeyE")||consumeKey("Enter")||consumeKey("touchAction")||consumeKey("gpA")){if(Game.nearby)interact(Game.nearby);}
+  if(consumeKey("touchMenu")||consumeKey("gpMenu"))togglePause();
+  if(consumeKey("touchSwap")||consumeKey("gpLB"))cycleLeader(1);
+  for(let i=1;i<=4;i++)if(consumeKey("Digit"+i))setLeader(Game.save.unlocked[i-1]);
+  checkExploreTriggers();updateWeather(dt);updateEffects(dt);
+}
+function setLeader(id){if(!id||!Game.save.unlocked.includes(id))return;Game.save.leader=id;updateExploreParty();showToast("Party leader",CHARACTER_DEFS[id].name,CHARACTER_DEFS[id].colour);}
+function cycleLeader(dir=1){const a=Game.save.unlocked,i=a.indexOf(Game.save.leader);setLeader(a[(i+dir+a.length)%a.length]);}
+
+function findNearbyInteractable(){
+  if(!Game.map)return null;const p=Game.player,candidates=[];
+  if(Game.map.id==="observatory"){
+    if(Game.save.progress===1)candidates.push({id:"ada",x:895,y:350,label:"Release Ada from the Engine"});
+    if(Game.save.progress===2){[{id:"s1",x:590,y:135,label:"Calibrate north stabiliser"},{id:"s2",x:1235,y:645,label:"Calibrate south stabiliser"},{id:"s3",x:1510,y:470,label:"Calibrate axis stabiliser"}].forEach(o=>{if(!Game.save.quest.stabilisers.includes(o.id))candidates.push(o);});}
+    if(Game.save.progress===3)candidates.push({id:"convergence",x:1660,y:470,label:"Open the outer Orrery gate"});
+    if(Game.save.progress>=5)candidates.push({id:"portal",x:1680,y:470,label:"Enter The Refectory"});
+  }else if(Game.map.id==="refectory"){
+    candidates.push({id:"orreryStation",x:640,y:350,label:"Consult the Grand Orrery"},{id:"forgeStation",x:1035,y:520,label:"Use the Induction Forge"},{id:"engineStation",x:250,y:225,label:"Open the Analytical Engine"},{id:"gardenStation",x:245,y:565,label:"Enter the Quiet Garden"},{id:"codexStation",x:1030,y:210,label:"Read the Chronicle Codex"});
+  }else if(Game.map.id==="mintDistrict"){
+    if(!Game.save.quest.mintDone)candidates.push({id:"mintChoice",x:1430,y:430,label:"Enter the Vault Core"});else candidates.push({id:"mintExit",x:135,y:650,label:"Return to The Refectory"});
+  }
+  return candidates.map(o=>({...o,d:Math.hypot(o.x-p.x,o.y-p.y)})).filter(o=>o.d<78).sort((a,b)=>a.d-b.d)[0]||null;
+}
+function interact(o){
+  AudioEngine.sfx("confirm");
+  switch(o.id){
+    case"ada":startDialogue(DIALOGUE_LIBRARY.rescueAda,()=>{unlockCharacter("ada");Game.save.progress=2;updateObjective();saveGame(true);});break;
+    case"s1":case"s2":case"s3":
+      Game.save.quest.stabilisers.push(o.id);Game.effects.push({type:"stabiliser",x:o.x,y:o.y,t:0,d:1.5});AudioEngine.sfx("logic");showToast("Stabiliser aligned",`${Game.save.quest.stabilisers.length}/3 mechanisms are synchronized.`,"var(--cyan)");
+      if(Game.save.quest.stabilisers.length>=3){Game.save.progress=3;showToast("Outer ring unlocked","A second set of temporal signatures has appeared.","var(--brass)");}updateObjective();saveGame(true);break;
+    case"convergence":startDialogue(DIALOGUE_LIBRARY.convergence,()=>{unlockCharacter("tesla");unlockCharacter("tycho");Game.save.progress=4;updateObjective();saveGame(true);startDialogue(DIALOGUE_LIBRARY.bossIntro,()=>startBattle("orreryBoss"));});break;
+    case"portal":enterMap("refectory");saveGame(true);break;
+    case"orreryStation":openOrrery();break;
+    case"forgeStation":openForge();break;
+    case"engineStation":openSkillMatrix();break;
+    case"gardenStation":openMemoryAudits();break;
+    case"codexStation":openCodex();break;
+    case"mintChoice":openMintChoice();break;
+    case"mintExit":enterMap("refectory");saveGame(true);break;
+  }
+}
+function unlockCharacter(id){
+  if(!Game.save.unlocked.includes(id)){Game.save.unlocked.push(id);const d=CHARACTER_DEFS[id];showToast("Party member joined",`${d.name} — ${d.title}`,d.colour);updateExploreParty();}
+}
+function checkExploreTriggers(){
+  if(Game.map.id==="observatory"&&Game.save.progress===0&&Game.player.x>390){
+    Game.save.progress=.5;startDialogue(DIALOGUE_LIBRARY.awakening,()=>startBattle("jaegerTutorial"));
+  }
+}
+function updateWeather(dt){
+  const max=Game.settings.reducedMotion?45:105;
+  if(Game.map?.theme==="observatory"||Game.map?.theme==="mint"){
+    while(Game.weather.length<max)Game.weather.push({x:rnd(W),y:rnd(H),z:rnd(.5,1.4),v:rnd(380,720),l:rnd(8,22)});
+    for(const r of Game.weather){r.x-=85*dt*r.z;r.y+=r.v*dt*r.z;if(r.y>H+30||r.x<-30){r.x=rnd(W,W+160);r.y=rnd(-140,-20);}}
+  }else Game.weather.length=0;
+}
+function drawBackground(theme,t=Game.time){
+  let g=ctx.createLinearGradient(0,0,0,H);
+  if(theme==="observatory"){g.addColorStop(0,"#121029");g.addColorStop(.5,"#182033");g.addColorStop(1,"#070b12");}
+  else if(theme==="refectory"){g.addColorStop(0,"#17142c");g.addColorStop(.5,"#10262c");g.addColorStop(1,"#06080d");}
+  else if(theme==="mint"){g.addColorStop(0,"#2b1a15");g.addColorStop(.5,"#241d1b");g.addColorStop(1,"#08090d");}
+  else{g.addColorStop(0,"#17142d");g.addColorStop(1,"#05070d");}
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.globalAlpha=.25;
+  for(let i=0;i<11;i++){const x=(i*170-(Game.camera.x*.08)%170)-80;ctx.fillStyle=i%2?"#131b28":"#0d111c";ctx.fillRect(x,70,115,H-80);ctx.fillStyle="rgba(212,175,55,.12)";ctx.fillRect(x+8,70,5,H-80);}
+  ctx.restore();
+  if(theme==="refectory"){
+    ctx.save();ctx.globalAlpha=.24;for(let i=0;i<80;i++){const x=(i*97)%W,y=(i*53)%H;ctx.fillStyle=i%7===0?"#ffd66c":"#bcecff";ctx.fillRect(x,y,1.5,1.5);}ctx.restore();
+  }
+}
+function drawFloor(map){
+  const ox=-Game.camera.x,oy=-Game.camera.y;
+  ctx.save();ctx.translate(ox,oy);
+  const floor=ctx.createLinearGradient(0,0,0,map.h);floor.addColorStop(0,map.theme==="mint"?"#31231c":"#242839");floor.addColorStop(1,"#0b0e17");ctx.fillStyle=floor;ctx.fillRect(0,0,map.w,map.h);
+  ctx.strokeStyle=map.theme==="mint"?"rgba(212,140,60,.12)":"rgba(0,240,255,.08)";ctx.lineWidth=1;
+  for(let x=0;x<map.w;x+=80){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,map.h);ctx.stroke();}
+  for(let y=0;y<map.h;y+=80){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(map.w,y);ctx.stroke();}
+  for(const p of map.puddles)drawPuddle(p);
+  for(const d of map.decorations)drawDecoration(d,map.theme);
+  for(const s of map.solids)drawSolid(s,map.theme);
+  for(const st of map.steam)drawSteamVent(st);
+  drawInteractableMarkers();
+  ctx.restore();
+}
+function drawPuddle(p){
+  const grad=ctx.createRadialGradient(p.x,p.y,4,p.x,p.y,p.rx);grad.addColorStop(0,"rgba(0,240,255,.22)");grad.addColorStop(.7,"rgba(30,120,150,.18)");grad.addColorStop(1,"rgba(0,0,0,0)");ctx.fillStyle=grad;ctx.beginPath();ctx.ellipse(p.x,p.y,p.rx,p.ry,0,0,TAU);ctx.fill();ctx.strokeStyle="rgba(120,230,255,.27)";ctx.setLineDash([12,18]);ctx.stroke();ctx.setLineDash([]);
+  for(let i=0;i<3;i++){ctx.strokeStyle=`rgba(170,240,255,${.08+i*.025})`;ctx.beginPath();ctx.ellipse(p.x+Math.sin(Game.time*1.2+i)*p.rx*.2,p.y,p.rx*(.3+i*.14),p.ry*(.18+i*.12),0,0,TAU);ctx.stroke();}
+}
+function drawSolid(s,theme){
+  const g=ctx.createLinearGradient(s.x,s.y,s.x+s.w,s.y+s.h);g.addColorStop(0,theme==="mint"?"#5a3a22":"#3a3d48");g.addColorStop(.55,"#171b24");g.addColorStop(1,"#090b10");ctx.fillStyle=g;ctx.fillRect(s.x,s.y,s.w,s.h);ctx.strokeStyle="rgba(212,175,55,.38)";ctx.lineWidth=2;ctx.strokeRect(s.x+2,s.y+2,s.w-4,s.h-4);
+  ctx.fillStyle="rgba(0,0,0,.28)";for(let x=s.x+12;x<s.x+s.w;x+=28)ctx.fillRect(x,s.y+8,9,Math.max(0,s.h-16));
+  ctx.fillStyle="rgba(212,175,55,.4)";for(const [x,y] of [[s.x+8,s.y+8],[s.x+s.w-8,s.y+8],[s.x+8,s.y+s.h-8],[s.x+s.w-8,s.y+s.h-8]]){ctx.beginPath();ctx.arc(x,y,3,0,TAU);ctx.fill();}
+}
+function drawGear(x,y,r,rot=0,colour="#765c25",teeth=16){
+  ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.beginPath();for(let i=0;i<teeth*2;i++){const a=i*Math.PI/teeth,rr=i%2?r*.83:r;const px=Math.cos(a)*rr,py=Math.sin(a)*rr;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.closePath();ctx.fillStyle=colour;ctx.fill();ctx.strokeStyle="rgba(242,216,121,.45)";ctx.lineWidth=2;ctx.stroke();ctx.beginPath();ctx.arc(0,0,r*.55,0,TAU);ctx.fillStyle="#171a22";ctx.fill();ctx.stroke();ctx.beginPath();ctx.arc(0,0,r*.2,0,TAU);ctx.fillStyle="#8c6b28";ctx.fill();ctx.restore();
+}
+function drawDecoration(d,theme){
+  switch(d.type){
+    case"gear":drawGear(d.x,d.y,d.r,Game.time*d.speed,theme==="mint"?"#6d4524":"#665126",18);break;
+    case"window":{
+      ctx.fillStyle="#0d1022";ctx.fillRect(d.x,d.y,d.w,d.h);ctx.strokeStyle="#b28b32";ctx.lineWidth=5;ctx.strokeRect(d.x,d.y,d.w,d.h);for(let i=1;i<5;i++){ctx.strokeStyle=i%2?"rgba(114,9,183,.55)":"rgba(0,240,255,.35)";ctx.beginPath();ctx.moveTo(d.x+d.w*i/5,d.y);ctx.lineTo(d.x+d.w*(5-i)/5,d.y+d.h);ctx.stroke();}break;
+    }
+    case"orrery":{
+      ctx.save();ctx.translate(d.x,d.y);for(let i=0;i<4;i++){ctx.rotate(Game.time*d.speed*(i%2?1:-1));ctx.strokeStyle=i%2?"rgba(0,240,255,.45)":"rgba(212,175,55,.65)";ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,0,d.r*(1-i*.12),d.r*(.3+i*.08),i*.55,0,TAU);ctx.stroke();}ctx.fillStyle="#fff1a5";ctx.beginPath();ctx.arc(0,0,18,0,TAU);ctx.fill();ctx.restore();break;
+    }
+    case"garden":ctx.fillStyle="#171f19";ctx.fillRect(d.x,d.y,d.w,d.h);ctx.strokeStyle="#7b6737";ctx.strokeRect(d.x,d.y,d.w,d.h);for(let i=0;i<8;i++){ctx.strokeStyle="rgba(210,220,190,.25)";ctx.beginPath();ctx.arc(d.x+30+i*25,d.y+70,15+i*4,.2,Math.PI*1.8);ctx.stroke();}break;
+    case"forge":ctx.fillStyle="#25130e";ctx.fillRect(d.x,d.y,d.w,d.h);ctx.strokeStyle="#d76b28";ctx.lineWidth=4;ctx.strokeRect(d.x,d.y,d.w,d.h);ctx.fillStyle="rgba(255,100,20,.4)";ctx.beginPath();ctx.arc(d.x+d.w*.5,d.y+d.h*.55,48+Math.sin(Game.time*4)*5,0,TAU);ctx.fill();break;
+    case"engine":ctx.fillStyle="#111824";ctx.fillRect(d.x,d.y,d.w,d.h);ctx.strokeStyle="#00b4c4";ctx.strokeRect(d.x,d.y,d.w,d.h);for(let x=0;x<6;x++)drawGear(d.x+30+x*43,d.y+75,18,Game.time*(x%2?.5:-.5),x%2?"#38707a":"#75612e",10);break;
+    case"archive":ctx.fillStyle="#191425";ctx.fillRect(d.x,d.y,d.w,d.h);ctx.strokeStyle="#9b59b6";ctx.strokeRect(d.x,d.y,d.w,d.h);for(let i=0;i<5;i++){ctx.fillStyle=i%2?"rgba(155,89,182,.45)":"rgba(212,175,55,.3)";ctx.fillRect(d.x+20+i*42,d.y+20,20,d.h-40);}break;
+    case"belt":ctx.fillStyle="#181a1e";ctx.fillRect(d.x,d.y,d.w,d.h);ctx.strokeStyle="#d4af37";ctx.strokeRect(d.x,d.y,d.w,d.h);for(let i=0;i<12;i++){const x=d.x+((i*40+Game.time*55)%d.w);ctx.fillStyle="#6c4e25";ctx.fillRect(x,d.y+8,22,d.h-16);}break;
+    case"crucible":ctx.fillStyle="#39130d";ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,TAU);ctx.fill();ctx.strokeStyle="#ff8b39";ctx.lineWidth=8;ctx.stroke();ctx.fillStyle=`rgba(255,100,20,${.45+Math.sin(Game.time*5)*.1})`;ctx.beginPath();ctx.arc(d.x,d.y,d.r*.65,0,TAU);ctx.fill();break;
+    case"press":ctx.fillStyle="#3b2c22";ctx.fillRect(d.x,d.y,d.w,d.h);ctx.strokeStyle="#a8792b";ctx.strokeRect(d.x,d.y,d.w,d.h);ctx.fillStyle="#5b1b14";ctx.fillRect(d.x+20,d.y+30,d.w-40,45);break;
+  }
+}
+function drawSteamVent(st){
+  ctx.fillStyle="#4b3d2b";ctx.fillRect(st.x,st.y+st.h-25,st.w,25);ctx.strokeStyle="#b08b3d";ctx.strokeRect(st.x,st.y+st.h-25,st.w,25);const pulse=(Math.sin(Game.time*2.4+st.phase)+1)/2;ctx.save();ctx.globalAlpha=.12+.16*pulse;for(let i=0;i<7;i++){const y=st.y+st.h-30-i*18-(Game.time*55+i*13)%35;ctx.fillStyle="#d7edf0";ctx.beginPath();ctx.arc(st.x+st.w/2+Math.sin(Game.time*3+i)*20,y,18+i*3,0,TAU);ctx.fill();}ctx.restore();
+}
+function drawInteractableMarkers(){
+  const list=[];
+  if(Game.map?.id==="observatory"){
+    if(Game.save.progress===1)list.push({x:895,y:350,c:COLOURS.ada});
+    if(Game.save.progress===2)[{id:"s1",x:590,y:135},{id:"s2",x:1235,y:645},{id:"s3",x:1510,y:470}].filter(o=>!Game.save.quest.stabilisers.includes(o.id)).forEach(o=>list.push({...o,c:"#00ffa3"}));
+    if(Game.save.progress===3)list.push({x:1660,y:470,c:"#d4af37"});if(Game.save.progress>=5)list.push({x:1680,y:470,c:"#9b59b6"});
+  }else if(Game.map?.id==="refectory")list.push({x:640,y:350,c:"#d4af37"},{x:1035,y:520,c:"#ff7c2e"},{x:250,y:225,c:"#00f0ff"},{x:245,y:565,c:"#4a90e2"},{x:1030,y:210,c:"#9b59b6"});
+  else if(Game.map?.id==="mintDistrict")list.push({x:Game.save.quest.mintDone?135:1430,y:Game.save.quest.mintDone?650:430,c:"#ff7f32"});
+  for(const m of list){const r=22+Math.sin(Game.time*3+m.x)*5;ctx.strokeStyle=m.c;ctx.lineWidth=2;ctx.beginPath();ctx.arc(m.x,m.y,r,0,TAU);ctx.stroke();ctx.fillStyle=hexAlpha(m.c,.14);ctx.beginPath();ctx.arc(m.x,m.y,r*.7,0,TAU);ctx.fill();ctx.fillStyle="#fff";ctx.font="bold 17px Arial";ctx.textAlign="center";ctx.fillText("!",m.x,m.y+6);}
+}
+function drawWeather(){
+  ctx.save();ctx.strokeStyle="rgba(190,225,255,.42)";ctx.lineWidth=1;for(const r of Game.weather){ctx.globalAlpha=.25+.35*r.z;ctx.beginPath();ctx.moveTo(r.x,r.y);ctx.lineTo(r.x-5*r.z,r.y+r.l*r.z);ctx.stroke();}ctx.restore();
+}
+
+function drawAnimeCharacter(c,x,y,scale=1,facing=0,pose="idle",alpha=1){
+  const d=typeof c==="string"?CHARACTER_DEFS[c]:c;const id=d.id||c;const col=d.colour||COLOURS[id]||"#ccc";ctx.save();ctx.globalAlpha=alpha;ctx.translate(x,y);if(Math.cos(facing)<0)ctx.scale(-1,1);ctx.scale(scale,scale);
+  const bob=pose==="idle"?Math.sin(Game.time*3+x*.01)*2:0;ctx.translate(0,bob);
+  ctx.fillStyle="rgba(0,0,0,.35)";ctx.beginPath();ctx.ellipse(0,24,20,7,0,0,TAU);ctx.fill();
+  if(id==="yasuke"){
+    ctx.fillStyle="#121821";ctx.beginPath();ctx.moveTo(-17,17);ctx.lineTo(-20,-18);ctx.lineTo(0,-32);ctx.lineTo(20,-18);ctx.lineTo(16,20);ctx.closePath();ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=3;ctx.stroke();
+    ctx.fillStyle="#6c3f2b";ctx.beginPath();ctx.arc(0,-44,11,0,TAU);ctx.fill();ctx.fillStyle="#0b0d12";ctx.fillRect(-13,-57,26,9);ctx.fillStyle=col;ctx.fillRect(-20,-12,40,5);
+    ctx.strokeStyle="#d8eaff";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(9,-2);ctx.lineTo(35,-38);ctx.stroke();ctx.strokeStyle=hexAlpha(col,.75);ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(12,-4);ctx.lineTo(37,-41);ctx.stroke();
+  }else if(id==="ada"){
+    ctx.fillStyle="#261b34";ctx.beginPath();ctx.moveTo(-24,23);ctx.quadraticCurveTo(-17,-20,0,-26);ctx.quadraticCurveTo(17,-20,24,23);ctx.closePath();ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle="#f1c7a9";ctx.beginPath();ctx.arc(0,-41,10,0,TAU);ctx.fill();ctx.fillStyle="#4a232e";ctx.beginPath();ctx.arc(0,-45,13,Math.PI,TAU);ctx.fill();ctx.fillStyle=col;ctx.fillRect(-18,-9,36,3);for(let i=0;i<4;i++){ctx.globalAlpha=.35;ctx.fillStyle=col;ctx.fillRect(16+i*5,-28-i*8,3,18);}
+  }else if(id==="tesla"){
+    ctx.fillStyle="#24242b";ctx.fillRect(-16,-27,32,48);ctx.strokeStyle="#b59237";ctx.lineWidth=2;ctx.strokeRect(-16,-27,32,48);ctx.fillStyle="#e1c3a6";ctx.beginPath();ctx.arc(0,-42,10,0,TAU);ctx.fill();ctx.fillStyle="#1b1212";ctx.fillRect(-9,-40,18,3);ctx.fillRect(-8,-33,16,2);ctx.strokeStyle=col;ctx.lineWidth=3;for(const sx of [-18,18]){ctx.beginPath();ctx.moveTo(sx,-25);ctx.lineTo(sx,-52);ctx.stroke();ctx.beginPath();ctx.arc(sx,-56,4,0,TAU);ctx.stroke();}ctx.strokeStyle="#fff6a1";ctx.beginPath();ctx.moveTo(-18,-52);ctx.bezierCurveTo(-8,-63,8,-43,18,-54);ctx.stroke();
+  }else if(id==="tycho"){
+    ctx.fillStyle="#342447";ctx.beginPath();ctx.moveTo(-22,22);ctx.lineTo(-16,-25);ctx.lineTo(16,-25);ctx.lineTo(22,22);ctx.closePath();ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();ctx.fillStyle="#e3bd9b";ctx.beginPath();ctx.arc(0,-41,10,0,TAU);ctx.fill();ctx.fillStyle="#c69246";ctx.beginPath();ctx.arc(2,-41,3,0,TAU);ctx.fill();ctx.strokeStyle="#f5d66e";ctx.lineWidth=2;ctx.beginPath();ctx.arc(22,-15,13,0,TAU);ctx.stroke();ctx.beginPath();ctx.ellipse(22,-15,17,6,.4,0,TAU);ctx.stroke();
+  }else{
+    ctx.fillStyle=col;ctx.fillRect(-18,-30,36,50);ctx.fillStyle="#ddd";ctx.beginPath();ctx.arc(0,-42,10,0,TAU);ctx.fill();
+  }
+  ctx.restore();
+}
+function drawEnemySprite(e,x=e.x,y=e.y,scale=e.scale||1){
+  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);const col=e.colour||"#d4af37";ctx.fillStyle="rgba(0,0,0,.42)";ctx.beginPath();ctx.ellipse(0,31,29,8,0,0,TAU);ctx.fill();
+  if(e.template==="jaeger"){ctx.rotate(Math.sin(Game.time*5+e.x)*.05);ctx.fillStyle="#2e2225";ctx.beginPath();ctx.moveTo(-20,20);ctx.lineTo(-12,-33);ctx.lineTo(12,-33);ctx.lineTo(20,20);ctx.closePath();ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=3;ctx.stroke();ctx.fillStyle="#e42a42";ctx.fillRect(-12,-23,24,4);for(const sx of [-1,1]){ctx.strokeStyle="#c0a046";ctx.beginPath();ctx.moveTo(sx*13,-4);ctx.lineTo(sx*30,-25);ctx.stroke();}}
+  else if(e.template==="sentinel"){ctx.fillStyle="#4b3b23";ctx.fillRect(-24,-38,48,64);ctx.strokeStyle=col;ctx.lineWidth=4;ctx.strokeRect(-24,-38,48,64);ctx.fillStyle="#8f6d2c";ctx.beginPath();ctx.arc(0,-45,18,0,TAU);ctx.fill();ctx.fillStyle="#f13b3b";ctx.fillRect(-10,-48,20,4);if(!e.nodes.find(n=>n.id==="shield")?.broken){ctx.fillStyle="#80652a";ctx.fillRect(-44,-25,20,55);ctx.strokeStyle="#e4c26a";ctx.strokeRect(-44,-25,20,55);}}
+  else if(e.template==="chimera"){ctx.fillStyle="#3f5a48";ctx.beginPath();ctx.ellipse(0,-5,33,23,0,0,TAU);ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=3;ctx.stroke();for(let i=0;i<6;i++){ctx.beginPath();ctx.moveTo(-22+i*9,10);ctx.quadraticCurveTo(-35+i*13,33,-25+i*10,40);ctx.stroke();}ctx.fillStyle="#80ffd2";ctx.beginPath();ctx.arc(0,-10,10,0,TAU);ctx.fill();}
+  else if(e.template==="stalker"){ctx.globalAlpha=.75+.2*Math.sin(Game.time*7);ctx.fillStyle="#564676";ctx.beginPath();ctx.moveTo(0,-55);ctx.lineTo(25,-10);ctx.lineTo(10,30);ctx.lineTo(-15,20);ctx.lineTo(-25,-10);ctx.closePath();ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();ctx.strokeStyle="#fff";ctx.beginPath();ctx.moveTo(18,-26);ctx.lineTo(46,15);ctx.stroke();}
+  else if(e.template==="orrery"||e.template==="mint"||e.template==="prime"){
+    const r=e.template==="prime"?55:46;ctx.fillStyle="#18151b";ctx.beginPath();ctx.arc(0,-8,r,0,TAU);ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=5;ctx.stroke();for(let i=0;i<3;i++){ctx.save();ctx.rotate(Game.time*(i%2?.55:-.4)+i);ctx.strokeStyle=i===1?"#00f0ff":col;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,-8,r+16+i*10,(r+16+i*10)*.36,0,0,TAU);ctx.stroke();ctx.restore();}ctx.fillStyle=e.template==="prime"?"#fff":"#ffdd78";ctx.beginPath();ctx.arc(0,-8,15+Math.sin(Game.time*4)*2,0,TAU);ctx.fill();ctx.fillStyle="#503919";ctx.fillRect(-16,30,32,28);
+  }else{ctx.fillStyle=col;ctx.fillRect(-25,-40,50,70);}
+  if(e.status?.ionized){ctx.strokeStyle="#00f0ff";ctx.lineWidth=2;for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(-20+i*18,-50+i*6);ctx.lineTo(-8+i*17,-36+i*9);ctx.lineTo(-22+i*21,-22+i*7);ctx.stroke();}}
+  if(e.collapseTurns>0){ctx.strokeStyle="rgba(255,255,255,.9)";ctx.setLineDash([5,5]);ctx.strokeRect(-45,-70,90,110);ctx.setLineDash([]);}
+  ctx.restore();
+}
+function renderExplore(){
+  drawBackground(Game.map?.theme||"observatory");drawFloor(Game.map);drawWorldEntities();drawWeather();drawEffects();
+}
+function drawWorldEntities(){
+  if(Game.map?.id==="observatory"){
+    if(Game.save.progress===1)drawAnimeCharacter("ada",895-Game.camera.x,350-Game.camera.y,1.05,0,"idle",.8);
+    if(Game.save.progress===3){drawAnimeCharacter("tesla",1608-Game.camera.x,430-Game.camera.y,1,0);drawAnimeCharacter("tycho",1712-Game.camera.x,510-Game.camera.y,1,Math.PI);}
+  }
+  const p=worldToScreen(Game.player.x,Game.player.y);drawAnimeCharacter(Game.save.leader,p.x,p.y,1.08,Game.player.facing,Math.hypot(Game.player.vx,Game.player.vy)>.1?"run":"idle");
+  const unlocked=Game.save.unlocked.filter(id=>id!==Game.save.leader);unlocked.forEach((id,i)=>{const a=Game.player.facing+Math.PI+(i-1)*.45;drawAnimeCharacter(id,p.x+Math.cos(a)*(38+i*7),p.y+Math.sin(a)*(26+i*5),.83,Game.player.facing,"idle",.85);});
+}
+
+function drawPortrait(id,c=$("#portraitCanvas").getContext("2d")){
+  const pc=c.canvas;c.clearRect(0,0,pc.width,pc.height);const d=CHARACTER_DEFS[id]||{id,colour:"#d4af37"};const g=c.createLinearGradient(0,0,0,pc.height);g.addColorStop(0,hexAlpha(d.colour||"#d4af37",.35));g.addColorStop(1,"rgba(0,0,0,0)");c.fillStyle=g;c.fillRect(0,0,pc.width,pc.height);
+  c.save();const old=ctx; // portrait uses a temporary context swap through direct drawing replica
+  const prevCtx=window.__portraitCtx;window.__portraitCtx=c;c.translate(pc.width/2,pc.height*.78);c.scale(2.15,2.15);
+  const globalCtx=ctx; // draw a simplified portrait locally
+  c.fillStyle="#0a0c12";c.beginPath();c.ellipse(0,10,36,13,0,0,TAU);c.fill();
+  const col=d.colour||"#d4af37";
+  if(id==="yasuke"){c.fillStyle="#101722";c.beginPath();c.moveTo(-28,18);c.lineTo(-22,-40);c.lineTo(0,-56);c.lineTo(23,-40);c.lineTo(28,18);c.closePath();c.fill();c.strokeStyle=col;c.lineWidth=3;c.stroke();c.fillStyle="#6c3f2b";c.beginPath();c.arc(0,-76,17,0,TAU);c.fill();c.fillStyle="#080a0e";c.fillRect(-21,-94,42,14);c.strokeStyle="#e8f5ff";c.lineWidth=4;c.beginPath();c.moveTo(18,-25);c.lineTo(52,-88);c.stroke();}
+  else if(id==="ada"){c.fillStyle="#2a1d39";c.beginPath();c.moveTo(-34,18);c.quadraticCurveTo(-25,-43,0,-55);c.quadraticCurveTo(25,-43,34,18);c.closePath();c.fill();c.strokeStyle=col;c.lineWidth=3;c.stroke();c.fillStyle="#f1c7a9";c.beginPath();c.arc(0,-77,17,0,TAU);c.fill();c.fillStyle="#532536";c.beginPath();c.arc(0,-84,22,Math.PI,TAU);c.fill();}
+  else if(id==="tesla"){c.fillStyle="#24242b";c.fillRect(-28,-58,56,76);c.strokeStyle="#b59237";c.lineWidth=3;c.strokeRect(-28,-58,56,76);c.fillStyle="#e1c3a6";c.beginPath();c.arc(0,-78,17,0,TAU);c.fill();c.fillStyle="#1b1212";c.fillRect(-15,-75,30,4);for(const sx of [-32,32]){c.strokeStyle=col;c.beginPath();c.moveTo(sx,-45);c.lineTo(sx,-96);c.stroke();}}
+  else if(id==="tycho"){c.fillStyle="#352347";c.beginPath();c.moveTo(-32,18);c.lineTo(-24,-58);c.lineTo(24,-58);c.lineTo(32,18);c.closePath();c.fill();c.strokeStyle=col;c.lineWidth=3;c.stroke();c.fillStyle="#e2b995";c.beginPath();c.arc(0,-78,17,0,TAU);c.fill();c.fillStyle="#cb9a49";c.beginPath();c.arc(3,-78,5,0,TAU);c.fill();}
+  else{c.fillStyle=col;c.beginPath();c.arc(0,-40,45,0,TAU);c.fill();c.fillStyle="#fff";c.font="bold 40px Arial";c.textAlign="center";c.fillText(id==="orrery"?"☼":"⌬",0,-26);}
+  c.restore();window.__portraitCtx=prevCtx;
+}
+function startCinematic(){
+  Game.cinematic={index:0,elapsed:0,total:0};Game.weather.length=0;setScreen("cinematic");updateCinematicCaption();
+}
+function updateCinematicCaption(){const s=CINEMATIC_SCENES[Game.cinematic.index];$("#cinematicSpeaker").textContent=s.speaker;$("#cinematicText").textContent=s.text;announce(`${s.speaker}. ${s.text}`);}
+function updateCinematic(dt){
+  const c=Game.cinematic;if(!c)return;c.elapsed+=dt*1000;c.total+=dt*1000;const s=CINEMATIC_SCENES[c.index];if(c.elapsed>=s.duration){c.index++;c.elapsed=0;if(c.index>=CINEMATIC_SCENES.length){finishCinematic();return;}updateCinematicCaption();screenFlash("#dceaff",.45);}
+}
+function skipCinematic(){if(!Game.cinematic)return;finishCinematic();}
+function finishCinematic(){Game.cinematic=null;enterMap("observatory",MAPS.observatory.spawn);Game.save.progress=0;saveGame(true);setTimeout(()=>setZoneBanner(MAPS.observatory.name,MAPS.observatory.sub),200);}
+function renderCinematic(){
+  const c=Game.cinematic,s=CINEMATIC_SCENES[c.index],p=clamp(c.elapsed/s.duration,0,1),t=c.total/1000;ctx.fillStyle="#03040a";ctx.fillRect(0,0,W,H);
+  if(s.shot==="spire"){
+    const g=ctx.createRadialGradient(W*.5,H*.35,20,W*.5,H*.35,580);g.addColorStop(0,"#44326f");g.addColorStop(.45,"#181328");g.addColorStop(1,"#020309");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.save();ctx.translate(W*.5,H*.44);ctx.rotate(-.05+Math.sin(t*.15)*.015);for(let i=0;i<5;i++){ctx.strokeStyle=i%2?"rgba(0,240,255,.28)":"rgba(212,175,55,.45)";ctx.lineWidth=6-i;ctx.beginPath();ctx.ellipse(0,0,430-i*60,110+i*22,t*(i%2?.06:-.04),0,TAU);ctx.stroke();}ctx.fillStyle="#090b12";ctx.beginPath();ctx.moveTo(-115,210);ctx.lineTo(-65,-190);ctx.lineTo(0,-290);ctx.lineTo(70,-185);ctx.lineTo(125,210);ctx.closePath();ctx.fill();for(let y=-170;y<180;y+=55){ctx.fillStyle="rgba(212,175,55,.28)";ctx.fillRect(-55,y,110,9);}ctx.restore();
+    for(let i=0;i<9;i++){const x=(i*173+t*35)%W,y=70+Math.sin(i*1.9+t*.4)*80;ctx.strokeStyle="rgba(110,130,255,.35)";ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-80,y+100);ctx.stroke();}
+  }else if(s.shot==="drop"){
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#18162b");g.addColorStop(1,"#05070d");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);const r=52+Math.sin(t*2)*3;ctx.save();ctx.translate(W*.5,H*.43);ctx.fillStyle="rgba(185,230,255,.18)";ctx.beginPath();ctx.arc(0,0,r,0,TAU);ctx.fill();ctx.strokeStyle="#d7f7ff";ctx.lineWidth=3;ctx.stroke();ctx.clip();ctx.translate(-W*.5,-H*.43);ctx.fillStyle="#182638";ctx.fillRect(0,0,W,H);ctx.strokeStyle="#d4af37";for(let i=0;i<8;i++){ctx.beginPath();ctx.moveTo(W*.33+i*65,H*.2);ctx.lineTo(W*.22+i*85,H*.67);ctx.stroke();}ctx.restore();ctx.strokeStyle="rgba(0,240,255,.2)";for(let i=0;i<12;i++){ctx.beginPath();ctx.moveTo(W*.5,H*.43);ctx.lineTo(W*.5+Math.cos(i/12*TAU)*260,H*.43+Math.sin(i/12*TAU)*260);ctx.stroke();}
+  }else if(s.shot==="wake"){
+    const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,"#0c1730");g.addColorStop(1,"#2d1d16");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.save();ctx.translate(W*.51,H*.74);ctx.rotate(-.23);ctx.scale(3.4,3.4);drawCinematicYasuke(ctx,p);ctx.restore();for(let i=0;i<26;i++){ctx.fillStyle=i%2?"rgba(114,9,183,.38)":"rgba(0,240,255,.25)";ctx.beginPath();ctx.moveTo((i*109)%W,(i*61)%H);ctx.lineTo((i*109)%W+20,(i*61)%H+12);ctx.lineTo((i*109)%W-5,(i*61)%H+32);ctx.fill();}
+  }else if(s.shot==="rain"){
+    ctx.fillStyle="#111727";ctx.fillRect(0,0,W,H);ctx.strokeStyle="rgba(200,235,255,.65)";for(let i=0;i<130;i++){const x=(i*67+t*480)%W,y=((i*113+t*760)%H);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-7,y+25);ctx.stroke();}ctx.fillStyle="rgba(0,240,255,.18)";ctx.beginPath();ctx.ellipse(W*.5,H*.76,410,80,0,0,TAU);ctx.fill();drawAnimeCharacter("yasuke",W*.5,H*.7,2.3,-.3,"idle");
+  }else if(s.shot==="enemies"){
+    ctx.fillStyle="#10151e";ctx.fillRect(0,0,W,H);for(let i=0;i<8;i++){ctx.globalAlpha=.13;ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(W*.5+Math.cos(i)*220,H*.5+Math.sin(i*2)*100,80,0,TAU);ctx.fill();}ctx.globalAlpha=1;const fake={template:"jaeger",colour:"#e34b5f",status:{}};drawEnemySprite({...fake,x:W*.36,y:H*.62},W*.36,H*.62,2.2);drawEnemySprite({...fake,x:W*.54,y:H*.55},W*.54,H*.55,2.5);drawEnemySprite({...fake,x:W*.69,y:H*.64},W*.69,H*.64,2.1);ctx.fillStyle="rgba(255,42,75,.2)";ctx.fillRect(0,H*.5,W,H*.22);
+  }else if(s.shot==="draw"){
+    const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,"#05070d");g.addColorStop(.65,"#13203b");g.addColorStop(1,"#05070d");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);drawAnimeCharacter("yasuke",W*.44,H*.73,3.2,-.15,"idle");ctx.strokeStyle="#bffaff";ctx.lineWidth=12;ctx.shadowColor="#00aaff";ctx.shadowBlur=30;ctx.beginPath();ctx.moveTo(W*.48,H*.59);ctx.lineTo(W*.75,H*.19);ctx.stroke();ctx.shadowBlur=0;for(let i=0;i<20;i++){ctx.fillStyle="#4a90e2";ctx.beginPath();ctx.arc(W*.55+i*12,H*.5-i*13+Math.sin(t*6+i)*12,rnd(2,8),0,TAU);ctx.fill();}
+  }else if(s.shot==="battle"){
+    ctx.fillStyle="#080b14";ctx.fillRect(0,0,W,H);ctx.save();ctx.translate(W*.5,H*.53);ctx.strokeStyle="rgba(212,175,55,.55)";ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(0,0,440,180,0,0,TAU);ctx.stroke();drawAnimeCharacter("yasuke",-220,70,2.1,0,"idle");const fake={template:"jaeger",colour:"#e34b5f",status:{}};drawEnemySprite(fake,180,-20,2.1);ctx.restore();ctx.fillStyle="rgba(0,240,255,.08)";for(let x=0;x<W;x+=80)ctx.fillRect(x,0,2,H);for(let y=0;y<H;y+=80)ctx.fillRect(0,y,W,2);
+  }
+  ctx.fillStyle=`rgba(255,255,255,${Math.max(0,.22-p)*2})`;ctx.fillRect(0,0,W,H);
+}
+function drawCinematicYasuke(c,p){
+  c.fillStyle="#0e141e";c.beginPath();c.moveTo(-26,25);c.lineTo(-18,-30);c.lineTo(0,-50);c.lineTo(20,-32);c.lineTo(28,25);c.closePath();c.fill();c.strokeStyle="#4a90e2";c.lineWidth=3;c.stroke();c.fillStyle="#6c3f2b";c.beginPath();c.arc(0,-68,17,0,TAU);c.fill();c.fillStyle="#090b0f";c.fillRect(-22,-86,44,14);c.fillStyle="#eaf8ff";c.beginPath();c.ellipse(5,-68,3,Math.max(.3,2.3*Math.sin(Math.PI*clamp((p-.25)*3,0,1))),0,0,TAU);c.fill();
+}
+const ENCOUNTERS={
+  jaegerTutorial:{name:"Formation Adaptive Matrix",arena:{theme:"observatory",wet:true,metal:true},enemies:[{t:"jaeger",x:850,y:305},{t:"jaeger",x:980,y:430}],reward:{xp:90,insight:1,materials:{brass:3,copper:2}}},
+  orreryBoss:{name:"The Iron Orrery",arena:{theme:"observatory",wet:true,metal:true,boss:true},enemies:[{t:"orrery",x:930,y:345},{t:"sentinel",x:1030,y:520}],reward:{xp:420,insight:3,materials:{brass:8,gear:3,crystal:1,paradox:1}}},
+  mintBoss:{name:"The Sovereign Mint",arena:{theme:"mint",wet:true,metal:true,boss:true},enemies:[{t:"mint",x:930,y:360},{t:"sentinel",x:1050,y:535}],reward:{xp:520,insight:3,materials:{sovereign:1,gear:4,plate:3}}},
+  mintDefence:{name:"Recalibration Defence",arena:{theme:"mint",wet:false,metal:true},enemies:[{t:"jaeger",x:860,y:280},{t:"jaeger",x:1010,y:350},{t:"sentinel",x:920,y:515}],reward:{xp:430,insight:3,materials:{gear:3,battery:2,plate:2}}},
+  primeBoss:{name:"Chronos Engine Prime",arena:{theme:"zenith",wet:false,metal:false,boss:true},enemies:[{t:"prime",x:930,y:360}],reward:{xp:1200,insight:8,materials:{paradox:5,glass:5,crystal:3}}}
+};
+
+function makeEnemy(template,x,y,level=1,index=0){
+  const d=ENEMY_DEFS[template],scale=1+(level-1)*.055;
+  return {
+    uid:`e_${template}_${Date.now()}_${index}`,team:"enemy",template,id:d.id,name:d.name,glyph:d.glyph,alive:true,x,y,originX:x,originY:y,facing:Math.PI,
+    maxHp:Math.round(d.maxHp*scale),hp:Math.round(d.maxHp*scale),attack:Math.round(d.attack*scale),defence:Math.round(d.defence*scale),speed:Math.round(d.speed*(1+(level-1)*.018)),
+    stagger:0,staggerMax:Math.round(d.staggerMax*scale),collapseTurns:0,scale:d.scale,colour:d.colour,ai:d.ai,boss:!!d.boss,status:{},guard:false,turnDelay:0,
+    nodes:d.nodes.map(n=>({...deepClone(n),maxHp:Math.round(n.maxHp*scale),hp:Math.round(n.maxHp*scale),broken:false})),lastSkills:[],level
+  };
+}
+function makePartyBattleUnit(id,index,count){
+  const d=CHARACTER_DEFS[id],s=Game.save.characters[id];
+  const y=250+index*(330/Math.max(1,count-1));
+  return {uid:`p_${id}`,team:"party",id,name:d.name,alive:s.hp>0,x:260+(index%2)*70,y,facing:0,maxHp:d.maxHp,hp:Math.max(1,s.hp),maxAether:d.maxAether,aether:s.aether,barrier:s.barrier||0,attack:d.attack,logic:d.logic,defence:d.defence,speed:d.speed,move:d.move,colour:d.colour,status:deepClone(s.status||{}),stance:s.stance||"flow",queue:s.queue||"collapse",guard:false,turnDelay:0,moved:0,level:s.level||1};
+}
+function startBattle(encounterId,custom=null){
+  const base=custom||ENCOUNTERS[encounterId];if(!base)return;
+  const unlocked=Game.save.unlocked.slice(0,4);const party=unlocked.map((id,i)=>makePartyBattleUnit(id,i,unlocked.length));
+  const enemies=base.enemies.map((e,i)=>makeEnemy(e.t,e.x,e.y,e.level||custom?.level||1,i));
+  Game.battle={
+    id:encounterId,name:base.name,arena:{...base.arena},reward:deepClone(base.reward||{}),party,enemies,all:[],queue:[],queueIndex:0,round:0,current:null,phase:"intro",pending:null,
+    selectedEnemy:0,selectedNode:null,resonance:encounterId==="jaegerTutorial"?22:35,coils:[],fields:[],history:[],log:"The timeline begins to turn.",turnOrigin:null,moveRadius:0,
+    wetTurns:base.arena.wet?999:0,metal:base.arena.metal,missionChoice:custom?.missionChoice||null,spireData:custom?.spireData||null,stats:{damage:0,nodes:0,collapses:0,turns:0,combos:0},
+    difficulty:Game.settings.difficulty||"standard",victoryHandled:false,parryWindow:false,telegraph:null
+  };
+  Game.battle.all=[...party,...enemies];Game.effects.length=0;Game.particles.length=0;setScreen("battle");setZoneBanner(base.name,base.arena.boss?"Boss Encounter":"Chronos-Grid Engagement");
+  $("#objectiveText").textContent=base.arena.boss?"Break critical sub-nodes, trigger Matrix Collapse, and defeat the primary frame.":"Exploit positioning, sever sub-nodes, and control the timeline.";
+  $("#miniHelp").textContent="WASD move · Q/E targets · F sub-node · 1–4 skills · R items";
+  Game.battle.selectedNode=enemies[0]?.nodes[0]?.id||"body";updateBattleHUD();scheduleBattle(.8,()=>beginRound());
+  announce(`Battle begins: ${base.name}. ${enemies.length} hostiles.`);
+}
+function scheduleBattle(delay,fn){if(!Game.battle)return;Game.battle.pending={time:delay,fn};}
+function beginRound(){
+  const b=Game.battle;if(!b||b.phase==="victory"||b.phase==="defeat")return;b.round++;tickRoundStatuses();pulseFieldsAndCoils();runLogicQueues();
+  b.queue=b.all.filter(u=>u.alive&&u.hp>0).sort((a,c)=>(c.speed-c.turnDelay+rnd(5))-(a.speed-a.turnDelay+rnd(5)));b.queueIndex=0;b.turnDelay=0;b.queue.forEach(u=>u.turnDelay=Math.max(0,u.turnDelay-1));
+  b.log=`<strong>Round ${b.round}</strong> — timeline recalculated.`;updateBattleHUD();scheduleBattle(.4,startNextTurn);
+}
+function startNextTurn(){
+  const b=Game.battle;if(!b)return;if(checkBattleEnd())return;
+  while(b.queueIndex<b.queue.length&&(!b.queue[b.queueIndex].alive||b.queue[b.queueIndex].hp<=0))b.queueIndex++;
+  if(b.queueIndex>=b.queue.length){beginRound();return;}
+  const u=b.queue[b.queueIndex];b.current=u;b.stats.turns++;u.guard=false;
+  if(u.collapseTurns>0){u.collapseTurns--;b.log=`${u.name} is trapped in <strong>Matrix Collapse</strong> and loses its turn.`;AudioEngine.sfx("collapse");updateBattleHUD();scheduleBattle(.85,endTurn);return;}
+  triggerLoopedStatus(u);
+  if(!u.alive||u.hp<=0){scheduleBattle(.2,endTurn);return;}
+  if(u.team==="party"){
+    b.phase="player";b.turnOrigin={x:u.x,y:u.y};b.moveRadius=u.move;u.moved=0;b.log=`<strong>${u.name}</strong> may reposition, then act.`;updateBattleHUD();announce(`${u.name}'s turn. Select a skill, target, or move within the indicated radius.`);
+  }else{
+    b.phase="enemy";b.log=`${u.name} is calculating an attack...`;updateBattleHUD();scheduleBattle(.7,()=>enemyAct(u));
+  }
+}
+function endTurn(){
+  const b=Game.battle;if(!b)return;b.phase="between";b.current=null;b.queueIndex++;updateBattleHUD();scheduleBattle(.28,startNextTurn);
+}
+function tickRoundStatuses(){
+  const b=Game.battle;if(!b)return;
+  for(const u of b.all){
+    for(const k of Object.keys(u.status||{})){
+      const st=u.status[k];if(typeof st==="object"&&Number.isFinite(st.duration)){st.duration--;if(st.duration<=0)delete u.status[k];}
+    }
+  }
+  b.fields.forEach(f=>f.duration--);b.fields=b.fields.filter(f=>f.duration>0);b.coils.forEach(c=>c.duration--);b.coils=b.coils.filter(c=>c.duration>0);
+}
+function triggerLoopedStatus(u){
+  if(u.team!=="enemy"||!u.status.looped)return;const stacks=u.status.ionized?.stacks||0;const dmg=24+stacks*13;rawDamage(u,dmg,"Recursive Ionized Loop",null,{type:"logic",stagger:8});u.status.looped.duration=Math.max(0,u.status.looped.duration-1);if(u.status.looped.duration<=0)delete u.status.looped;
+}
+function pulseFieldsAndCoils(){
+  const b=Game.battle;if(!b)return;
+  for(const c of b.coils){for(const e of b.enemies.filter(e=>e.alive&&Math.hypot(e.x-c.x,e.y-c.y)<220)){rawDamage(e,24+c.power,"Tesla Coil Network",null,{type:"electric",stagger:7});applyStatus(e,"ionized",{stacks:1,duration:3},true);}}
+  for(const f of b.fields){
+    if(f.type==="solar")for(const e of b.enemies.filter(e=>e.alive&&Math.hypot(e.x-f.x,e.y-f.y)<f.r)){rawDamage(e,46,"Solar Plasma Zone",null,{type:"electric",stagger:12});applyStatus(e,"scald",{duration:2},true);}
+    if(f.type==="gravity")for(const e of b.enemies.filter(e=>e.alive&&Math.hypot(e.x-f.x,e.y-f.y)<f.r)){e.turnDelay+=12;e.status.anchored={duration:2};}
+  }
+}
+function runLogicQueues(){
+  const b=Game.battle,ada=b?.party.find(p=>p.id==="ada"&&p.alive);if(!ada)return;
+  const queue=Game.save.characters.ada.queue||ada.queue||"collapse";
+  if(queue==="collapse"){
+    const e=b.enemies.find(e=>e.alive&&e.collapseTurns>0);if(e){rawDamage(e,62+ada.logic*.25,"IF Enemy Collapsed → Precision Strike",null,{type:"logic",stagger:4});addResonance(5);}
+  }else if(queue==="lowHp"){
+    const ally=b.party.filter(p=>p.alive).sort((a,c)=>a.hp/a.maxHp-c.hp/c.maxHp)[0];if(ally&&ally.hp/ally.maxHp<.4){ally.barrier=Math.min(ally.maxHp*.5,ally.barrier+90);addEffect("barrier",ally.x,ally.y,ada.colour);b.log=`Ada's queue deployed an automatic barrier around ${ally.name}.`;}
+  }else if(queue==="ionized"){
+    const e=b.enemies.find(e=>e.alive&&e.status.ionized);if(e){const s=e.status.ionized.stacks||1;rawDamage(e,30+s*12,"IF Ionized → Recursive Pulse",null,{type:"logic",stagger:8});addResonance(4);}
+  }
+}
+function currentTarget(){const b=Game.battle;return b?.enemies[b.selectedEnemy]||b?.enemies.find(e=>e.alive)||null;}
+function currentNode(target=currentTarget()){if(!target)return null;if(Game.battle.selectedNode==="body"||!Game.battle.selectedNode)return null;return target.nodes.find(n=>n.id===Game.battle.selectedNode)||null;}
+function selectEnemy(index){const b=Game.battle;if(!b)return;const living=b.enemies.map((e,i)=>({e,i})).filter(o=>o.e.alive);if(!living.length)return;const found=living.find(o=>o.i===index)||living[0];b.selectedEnemy=found.i;const t=found.e;if(!t.nodes.some(n=>!n.broken&&n.id===b.selectedNode))b.selectedNode=t.nodes.find(n=>!n.broken)?.id||"body";updateBattleHUD();}
+function cycleEnemy(dir=1){const b=Game.battle;if(!b)return;const alive=b.enemies.map((e,i)=>({e,i})).filter(o=>o.e.alive);if(!alive.length)return;let k=alive.findIndex(o=>o.i===b.selectedEnemy);k=(k+dir+alive.length)%alive.length;selectEnemy(alive[k].i);}
+function cycleNode(dir=1){const t=currentTarget();if(!t)return;const nodes=[{id:"body",broken:false},...t.nodes.filter(n=>!n.broken&&!isNodeGated(t,n))];let i=nodes.findIndex(n=>n.id===Game.battle.selectedNode);i=(i+dir+nodes.length)%nodes.length;Game.battle.selectedNode=nodes[i].id;updateBattleHUD();}
+function isNodeGated(target,node){return !!(node.phaseGated&&!target.status.anchored&&!Game.battle.fields.some(f=>f.type==="chart"&&Math.hypot(target.x-f.x,target.y-f.y)<f.r));}
+function getPositionBonus(attacker,target){
+  const toAtt=angleTo(target,attacker),diff=Math.abs(normAngle(toAtt-target.facing));let kind="front",armorBypass=0,crit=.05,mult=1;
+  if(diff>2.35){kind="rear";armorBypass=.5;crit=.25;mult=1.2;}else if(diff>1.35){kind="flank";armorBypass=.25;crit=.15;mult=1.1;}
+  const elevated=Game.battle.fields.some(f=>f.type==="chart"&&Math.hypot(attacker.x-f.x,attacker.y-f.y)<f.r);if(elevated){mult*=1.12;crit+=.08;}
+  return{kind,armorBypass,crit,mult,elevated};
+}
+function skillPowerStat(attacker,skill){return ["logic","electric","astral","gravity"].includes(skill.type)?attacker.logic||attacker.attack:attacker.attack;}
+function executeSkill(skillId){
+  const b=Game.battle,u=b?.current;if(!b||b.phase!=="player"||!u||u.team!=="party")return;const d=CHARACTER_DEFS[u.id],skill=d.skills.find(s=>s.id===skillId);if(!skill)return;
+  if(u.aether<skill.cost){AudioEngine.sfx("error");showToast("Insufficient Aether",`${skill.name} requires ${skill.cost}.`,"var(--red)");return;}
+  const target=currentTarget();if(skill.target==="enemy"&&!target)return;
+  if(skill.id==="logicQueue"){openLogicBuilder(()=>{u.aether-=skill.cost;finishPlayerAction();});return;}
+  if(skill.id==="stance"){
+    const order=["flow","guard","void"],i=order.indexOf(u.stance);u.stance=order[(i+1)%3];Game.save.characters.yasuke.stance=u.stance;u.guard=u.stance==="guard";b.log=`Yasuke shifts into <strong>${u.stance.toUpperCase()} STANCE</strong>.`;addEffect("stance",u.x,u.y,u.colour);AudioEngine.sfx("parry");addResonance(5);finishPlayerAction();return;
+  }
+  u.aether-=skill.cost;
+  if(skill.id==="placeCoil"){
+    const t=target||{x:820,y:360};if(b.coils.length>=((Game.save.characters.tesla.skills.branchA||0)>=2?5:3))b.coils.shift();b.coils.push({x:lerp(u.x,t.x,.56)+rnd(-35,35),y:lerp(u.y,t.y,.56)+rnd(-35,35),duration:5,power:12});
+    addEffect("electric",b.coils.at(-1).x,b.coils.at(-1).y,COLOURS.tesla);b.log="Tesla deploys a <strong>Polyphase Coil</strong>. Conductive lines now occupy the field.";AudioEngine.sfx("electric");addResonance(6);finishPlayerAction();return;
+  }
+  if(skill.id==="starChart"){
+    const t=target||u;b.fields.push({type:"chart",x:t.x,y:t.y,r:180,duration:4,colour:COLOURS.tycho});t.status.anchored={duration:3};addEffect("star",t.x,t.y,COLOURS.tycho);b.log="Tycho projects an <strong>Ecliptic Star Chart</strong>, anchoring local geometry.";AudioEngine.sfx("gravity");addResonance(8);finishPlayerAction();return;
+  }
+  if(skill.id==="induction"){
+    const victims=b.enemies.filter(e=>e.alive);for(const e of victims){let bonus=(b.arena.wet||b.wetTurns>0)?1.45:1;if(b.coils.some(c=>Math.hypot(c.x-e.x,c.y-e.y)<260))bonus*=1.25;performAttack(u,e,{...skill,power:skill.power*bonus},null);applyStatus(e,"ionized",{stacks:2,duration:3},true);}b.log="Tesla's <strong>Induction Field</strong> propagates through the arena.";AudioEngine.sfx("electric");addResonance(10);finishPlayerAction();return;
+  }
+  if(skill.id==="retrograde"){
+    const cx=target?.x||850,cy=target?.y||360;b.fields.push({type:"gravity",x:cx,y:cy,r:215,duration:3,colour:COLOURS.tycho});for(const e of b.enemies.filter(e=>e.alive)){e.x=lerp(e.x,cx,.32);e.y=lerp(e.y,cy,.32);e.turnDelay+=22;performAttack(u,e,skill,null);}b.log="A <strong>Retrograde Well</strong> folds the enemy line inward and delays the timeline.";AudioEngine.sfx("gravity");addResonance(12);finishPlayerAction();return;
+  }
+  if(skill.id==="voidDash"){
+    u.x=target.x+Math.cos(target.facing+Math.PI)*74;u.y=target.y+Math.sin(target.facing+Math.PI)*74;u.facing=angleTo(u,target);addEffect("dash",u.x,u.y,u.colour);performAttack(u,target,skill,currentNode(target));
+  }else if(skill.id==="conditionalLoop"){
+    performAttack(u,target,skill,currentNode(target));applyStatus(target,"looped",{duration:3});if(target.status.ionized){rawDamage(target,24+(target.status.ionized.stacks||1)*10,"Conditional Loop: Immediate Recursion",null,{type:"logic",stagger:6});b.stats.combos++;addResonance(10);}
+  }else if(skill.id==="overcharge"){
+    const stacks=target.status.ionized?.stacks||0;performAttack(u,target,{...skill,power:skill.power+stacks*42,stagger:skill.stagger+stacks*9},currentNode(target));if(stacks){delete target.status.ionized;b.stats.combos++;addResonance(8+stacks*2);}
+  }else if(skill.id==="flashDraw"){
+    const stacks=target.status.ionized?.stacks||0,loop=target.status.looped?1:0;performAttack(u,target,{...skill,power:skill.power+stacks*28+loop*45,stagger:skill.stagger+stacks*7},currentNode(target));if(stacks||loop){delete target.status.ionized;delete target.status.looped;b.stats.combos++;addResonance(12);b.log="Flash Draw consumes the Logic-Resonance chain in a <strong>spatial detonation</strong>.";}
+  }else if(skill.id==="orbital"){
+    const charted=b.fields.some(f=>f.type==="chart"&&Math.hypot(target.x-f.x,target.y-f.y)<f.r);performAttack(u,target,{...skill,power:skill.power*(charted?1.55:1),stagger:skill.stagger+(charted?18:0)},currentNode(target));
+  }else performAttack(u,target,skill,currentNode(target));
+  finishPlayerAction();
+}
+function finishPlayerAction(){const b=Game.battle;if(!b)return;syncPartyToSave();updateBattleHUD();scheduleBattle(.75,endTurn);b.phase="anim";}
+function performAttack(attacker,target,skill,node){
+  if(!target?.alive)return 0;if(node?.broken)node=null;if(node&&isNodeGated(target,node)){showToast("Sub-node phase-gated","Anchor the target inside Tycho's Star Chart first.","var(--red)");return 0;}
+  const pos=getPositionBonus(attacker,target),stat=skillPowerStat(attacker,skill),levelMult=1+(attacker.level-1)*.05;let raw=(skill.power+stat*.56)*levelMult*pos.mult;
+  let critChance=pos.crit+(attacker.id==="yasuke"&&attacker.stance==="flow"?.14:0);if(attacker.status.focus)critChance+=.15;const crit=Math.random()<critChance;if(crit)raw*=1.55;
+  let armor=(node?node.armor:target.defence)*(1-pos.armorBypass);if(attacker.id==="yasuke"&&attacker.stance==="void")armor*=.6;if(skill.id==="exploit"&&node){raw*=1.35;armor*=.55;}if(target.status.logicFault)armor*=.7;
+  if(target.template==="sentinel"&&!target.nodes.find(n=>n.id==="shield")?.broken&&pos.kind==="front")raw*=.22;
+  if(target.template==="mint"&&!target.nodes.find(n=>n.id==="coolant")?.broken)raw*=.38;
+  if(target.template==="orrery"&&!target.nodes.find(n=>n.id==="core")?.broken&&!node)raw*=.68;
+  if(target.template==="prime"&&target.nodes.some(n=>!n.broken)&&!node)raw*=.08;
+  if(target.collapseTurns>0)raw*=2.5;
+  let damage=Math.max(1,Math.round(raw*(100/(100+Math.max(0,armor)))));
+  if(node){node.hp=Math.max(0,node.hp-damage);target.hp=Math.max(0,target.hp-Math.round(damage*.22));if(node.hp<=0&&!node.broken)breakNode(target,node,attacker);}else target.hp=Math.max(0,target.hp-damage);
+  target.stagger=clamp(target.stagger+skill.stagger*(pos.kind==="rear"?1.25:1),0,target.staggerMax);
+  if(target.stagger>=target.staggerMax&&target.collapseTurns<=0)triggerMatrixCollapse(target);
+  target.facing=angleTo(target,attacker);Game.battle.stats.damage+=damage;
+  addFloatingText(target.x,target.y-70,`${crit?"CRIT ":""}${fmt(damage)}`,crit?"#fff3a3":attacker.colour||"#fff",crit?1.35:1);
+  addEffect(skill.type==="electric"?"electric":skill.type==="logic"?"code":skill.type==="gravity"||skill.type==="astral"?"star":"slash",target.x,target.y,attacker.colour||"#fff");
+  AudioEngine.sfx(skill.type==="electric"?"electric":skill.type==="logic"?"logic":skill.type==="gravity"||skill.type==="astral"?"gravity":"slash");shake(crit?9:5,180);
+  if(pos.kind!=="front"){addFloatingText(target.x,target.y-95,pos.kind.toUpperCase(),"#ffcf55",.75);addResonance(pos.kind==="rear"?9:5);}
+  if(target.hp<=0)defeatUnit(target,attacker);
+  return damage;
+}
+function rawDamage(target,amount,label,attacker=null,meta={}){
+  if(!target?.alive)return;let dmg=Math.max(1,Math.round(amount));if(target.collapseTurns>0)dmg=Math.round(dmg*2.5);target.hp=Math.max(0,target.hp-dmg);target.stagger=clamp(target.stagger+(meta.stagger||0),0,target.staggerMax||9999);addFloatingText(target.x,target.y-70,fmt(dmg),meta.type==="electric"?COLOURS.tesla:meta.type==="logic"?COLOURS.ada:"#fff",.9);if(target.stagger>=target.staggerMax&&target.collapseTurns<=0)triggerMatrixCollapse(target);if(target.hp<=0)defeatUnit(target,attacker);return dmg;
+}
+function applyStatus(target,key,data,merge=false){
+  if(!target.status)target.status={};if(merge&&target.status[key]){if(data.stacks)target.status[key].stacks=clamp((target.status[key].stacks||0)+data.stacks,1,5);target.status[key].duration=Math.max(target.status[key].duration||0,data.duration||0);}else target.status[key]={...(target.status[key]||{}),...data};
+  if(key==="ionized")addFloatingText(target.x,target.y-95,`IONIZED ×${target.status[key].stacks||1}`,COLOURS.ada,.62);
+}
+function breakNode(target,node,attacker){
+  node.broken=true;node.hp=0;Game.battle.stats.nodes++;addResonance(20);AudioEngine.sfx("break");shake(15,360);screenFlash("#ffd7a2",.7);addEffect("shatter",target.x,target.y,target.colour);addFloatingText(target.x,target.y-115,"SUB-NODE SEVERED","#ffcc72",1.05);
+  Game.save.codex.nodes[`${target.template}:${node.id}`]=true;Game.save.codex.enemies[target.template]=true;const mat=materialKeyFromDrop(node.drop);if(mat)Game.save.materials[mat]=(Game.save.materials[mat]||0)+1;
+  if(target.template==="jaeger"&&node.id==="mainspring")target.speed=Math.round(target.speed*.58);
+  if(target.template==="jaeger"&&node.id==="visor")target.status.confused={duration:99};
+  if(target.template==="sentinel"&&node.id==="vent"){rawDamage(target,120,"Exhaust Backfire",null,{type:"scald",stagger:35});applyStatus(target,"scald",{duration:3});}
+  if(target.template==="orrery"&&node.id==="prism"){rawDamage(target,330,"Prism Refraction",attacker,{type:"astral",stagger:110});}
+  if(target.template==="orrery"&&node.id==="core")target.defence=Math.round(target.defence*.5);
+  if(target.template==="mint"&&node.id==="coolant"){target.defence=Math.round(target.defence*.55);rawDamage(target,280,"Thermal Shock",attacker,{type:"scald",stagger:90});}
+  if(target.template==="prime"&&node.id==="dynamo")target.defence=Math.round(target.defence*.55);
+  Game.battle.log=`<strong>${node.name}</strong> shattered — ${node.effect}.`;
+}
+function materialKeyFromDrop(drop=""){
+  const s=drop.toLowerCase();if(s.includes("mainspring"))return"gear";if(s.includes("calculation")||s.includes("logic"))return"gear";if(s.includes("plate"))return"plate";if(s.includes("conduit"))return"copper";if(s.includes("bio-fluid"))return"ether";if(s.includes("valve"))return"valve";if(s.includes("battery"))return"battery";if(s.includes("piston"))return"piston";if(s.includes("glass"))return"glass";if(s.includes("paradox"))return"paradox";if(s.includes("crystal"))return"crystal";if(s.includes("sovereign"))return"sovereign";return"brass";
+}
+function triggerMatrixCollapse(target){
+  target.stagger=0;target.collapseTurns=1;Game.battle.stats.collapses++;addResonance(18);Game.battle.log=`<strong>MATRIX COLLAPSE!</strong> ${target.name} is frozen and takes 2.5× damage.`;AudioEngine.sfx("collapse");shake(20,500);screenFlash("#e5f7ff",.85);addEffect("matrix",target.x,target.y,"#ffffff");showImpact("MATRIX\nCOLLAPSE");announce(`${target.name} has entered Matrix Collapse. Incoming damage is multiplied by two point five.`);
+}
+function defeatUnit(target,attacker){
+  target.alive=false;target.hp=0;addEffect("shatter",target.x,target.y,target.colour||"#fff");AudioEngine.sfx("break");Game.battle.log=`${target.name} has been <strong>removed from the timeline</strong>.`;if(target.team==="enemy")addResonance(target.boss?25:10);checkBattleEnd();
+}
+function addResonance(v){const b=Game.battle;if(!b)return;b.resonance=clamp(b.resonance+v,0,100);if(b.resonance>=100)showToast("Quad-Tech ready","Ouroboros Paradox Collapse can be executed during Matrix Collapse.","var(--cyan)");}
+function enemyAct(enemy){
+  const b=Game.battle;if(!b||!enemy.alive){endTurn();return;}const alive=b.party.filter(p=>p.alive);if(!alive.length){checkBattleEnd();return;}
+  let target=alive.sort((a,c)=>a.hp/a.maxHp-c.hp/c.maxHp)[0];
+  if(enemy.status.confused){const candidates=[...alive,...b.enemies.filter(e=>e.alive&&e!==enemy)];target=pick(candidates);}
+  if(enemy.ai==="flanker"&&!enemy.nodes.find(n=>n.id==="mainspring")?.broken){
+    target=alive.find(p=>p.id==="ada")||target;enemy.x=target.x+Math.cos(target.facing+Math.PI)*70;enemy.y=target.y+Math.sin(target.facing+Math.PI)*70;enemy.facing=angleTo(enemy,target);enemyAttack(enemy,target,72,"Spring-Line Execution",{rear:true,stagger:0});
+  }else if(enemy.ai==="tank"){
+    const shieldBroken=enemy.nodes.find(n=>n.id==="shield")?.broken;enemyAttack(enemy,target,shieldBroken?70:58,shieldBroken?"Brass Ram":"Phalanx Crush",{});if(!shieldBroken)enemy.guard=true;
+  }else if(enemy.ai==="status"){
+    const sacBroken=enemy.nodes.find(n=>n.id==="sac")?.broken;if(!sacBroken&&b.round%2===0){for(const p of alive)enemyAttack(enemy,p,34,"Acid Spew",{status:"corrosive"});}else enemyAttack(enemy,target,74,"Tendril Rend",{});
+  }else if(enemy.ai==="phase"){
+    const anchored=enemy.status.anchored;if(!anchored){target=alive.sort((a,c)=>(c.attack||c.logic)-(a.attack||a.logic))[0];enemy.x=target.x+80;enemy.y=target.y-55;}enemyAttack(enemy,target,82,"Temporal Scythe",{delay:18});
+  }else if(enemy.ai==="orrery"){
+    const prismBroken=enemy.nodes.find(n=>n.id==="prism")?.broken,coreBroken=enemy.nodes.find(n=>n.id==="core")?.broken;
+    if(b.round%3===0&&!prismBroken){b.telegraph={name:"Orbital Event Horizon",turns:1};for(const p of alive)enemyAttack(enemy,p,prismBroken?45:72,"Orbital Event Horizon",{status:"scald"});}
+    else if(!coreBroken&&b.round%2===0){for(const p of alive)enemyAttack(enemy,p,42,"Aether Ring Sweep",{delay:8});}
+    else enemyAttack(enemy,target,88,"Pendulum Lance",{});
+  }else if(enemy.ai==="mint"){
+    const stampBroken=enemy.nodes.find(n=>n.id==="stamp")?.broken,ledgerBroken=enemy.nodes.find(n=>n.id==="ledger")?.broken;
+    if(!stampBroken&&b.round%3===0){for(const p of alive)enemyAttack(enemy,p,74,"Sovereign Press",{stagger:10});}
+    else{target=alive.find(p=>p.id==="tesla")||target;enemyAttack(enemy,target,96,ledgerBroken?"Molten Coin Barrage":"Predictive Coin Barrage",{});if(!ledgerBroken&&b.history.at(-1)===b.history.at(-2)){target.status.logicFault={duration:2};}}
+  }else if(enemy.ai==="prime"){
+    const anchors=enemy.nodes.filter(n=>n.id.startsWith("pendulum")&&!n.broken).length;
+    if(anchors&&b.round%3===0){enemy.hp=Math.min(enemy.maxHp,enemy.hp+Math.round(enemy.maxHp*.04*anchors));addFloatingText(enemy.x,enemy.y-100,"TIMELINE REWIND","#ffffff",.85);}
+    if(b.round%4===0){for(const p of alive)enemyAttack(enemy,p,105,"Paradox Cascade",{delay:14,status:"decoupled"});}
+    else enemyAttack(enemy,target,115,"Singularity Lance",{stagger:12});
+  }else enemyAttack(enemy,target,65,"Clockwork Strike",{});
+  b.history.push(enemy.ai+":"+(b.round%3));if(b.history.length>8)b.history.shift();updateBattleHUD();scheduleBattle(.85,endTurn);
+}
+function enemyAttack(enemy,target,power,name,opts={}){
+  if(!target?.alive)return;let raw=power+enemy.attack*.45;let armor=target.defence;if(target.guard||target.stance==="guard")raw*=.55;if(target.barrier>0){const absorb=Math.min(target.barrier,raw);target.barrier-=absorb;raw-=absorb;addFloatingText(target.x,target.y-92,`BARRIER −${fmt(absorb)}`,"#78e8ff",.7);}
+  let dmg=Math.max(0,Math.round(raw*(100/(100+armor))));const diff=Game.battle.difficulty;dmg=Math.round(dmg*(diff==="story"?.72:diff==="veteran"?1.22:1));target.hp=Math.max(0,target.hp-dmg);if(opts.delay)target.turnDelay+=opts.delay;if(opts.status)target.status[opts.status]={duration:2};addFloatingText(target.x,target.y-70,fmt(dmg),"#ff5870",1);addEffect("impact",target.x,target.y,"#ff2a4b");AudioEngine.sfx("hit");shake(7,220);Game.battle.log=`${enemy.name} uses <strong>${name}</strong> on ${target.name} for ${fmt(dmg)}.`;if(target.hp<=0)defeatUnit(target,enemy);syncPartyToSave();}
+
+function syncPartyToSave(){
+  const b=Game.battle;if(!b)return;for(const u of b.party){const s=Game.save.characters[u.id];s.hp=Math.max(0,Math.round(u.hp));s.aether=Math.max(0,Math.round(u.aether));s.barrier=Math.max(0,Math.round(u.barrier));s.status=deepClone(u.status||{});if(u.id==="yasuke")s.stance=u.stance;}
+}
+function checkBattleEnd(){
+  const b=Game.battle;if(!b||b.victoryHandled)return false;
+  if(!b.enemies.some(e=>e.alive&&e.hp>0)){b.victoryHandled=true;b.phase="victory";syncPartyToSave();scheduleBattle(1.25,()=>finishBattle(true));return true;}
+  if(!b.party.some(p=>p.alive&&p.hp>0)){b.victoryHandled=true;b.phase="defeat";scheduleBattle(1.2,()=>finishBattle(false));return true;}
+  return false;
+}
+function finishBattle(victory){
+  const b=Game.battle;if(!b)return;
+  if(!victory){openModal(`<div class="modal brass-frame"><h2>Timeline Severed</h2><div class="kicker">The Refectory pulls the party back before total collapse</div><p>The battle is rewound. Consumables used in the failed branch are restored, and the party returns at 70% vitality.</p><div class="modal-actions"><button class="ui-btn primary" data-act="retry">Retry encounter</button><button class="ui-btn" data-act="retreat">Retreat to Refectory</button></div></div>`,el=>{
+      el.querySelector('[data-act="retry"]').onclick=()=>{const id=b.id,custom=b.spireData?buildSpireEncounter(b.spireData.floor,b.spireData.seed):null;closeModal();restoreParty(.9);startBattle(id,custom);};
+      el.querySelector('[data-act="retreat"]').onclick=()=>{
+        if(b.id==="spire"){halveRunLoot();extractSpire(false);return;}
+        closeModal();restoreParty(.7);
+        if(b.id==="jaegerTutorial"){Game.save.progress=0;enterMap("observatory",MAPS.observatory.spawn);}
+        else if(b.id==="orreryBoss"){Game.save.progress=3;enterMap("observatory",{x:1540,y:470});}
+        else if(b.id==="mintBoss"||b.id==="mintDefence")enterMap("mint",{x:1260,y:430});
+        else enterMap(Game.save.flags.bossDefeated?"refectory":"observatory");
+        updateObjective();saveGame(true);
+      };
+    });return;
+  }
+  grantBattleRewards(b);
+  const grade=b.stats.nodes>=3?"S":b.stats.collapses>=1?"A":b.stats.turns<18?"B":"C";
+  const rewards=Object.entries(b.reward.materials||{}).map(([k,v])=>`${v}× ${MATERIAL_NAMES[k]||k}`).join(" · ")||"Chronos Shards";
+  openModal(`<div class="modal brass-frame"><h2>Timeline Secured</h2><div class="kicker">Combat Evaluation — Grade ${grade}</div><div class="modal-grid">
+    <div class="station-btn"><b>${fmt(b.stats.damage)} Damage</b><small>Total consolidated output</small></div>
+    <div class="station-btn"><b>${b.stats.nodes} Sub-Nodes</b><small>Precision components harvested</small></div>
+    <div class="station-btn"><b>${b.stats.collapses} Matrix Collapses</b><small>Temporal control windows</small></div>
+    <div class="station-btn"><b>${b.stats.combos} Resonance Chains</b><small>Cross-character conditional detonations</small></div>
+  </div><p><b>Recovered:</b> ${rewards}</p><div class="modal-actions"><button class="ui-btn primary" data-act="continue">Continue Chronicle</button></div></div>`,el=>el.querySelector('[data-act="continue"]').onclick=()=>{closeModal();handleBattleVictory(b);});
+}
+function grantBattleRewards(b){
+  const xp=b.reward.xp||100,ins=b.reward.insight||1;for(const id of Game.save.unlocked){const c=Game.save.characters[id];c.xp+=xp;c.insight+=ins;while(c.xp>=c.level*180){c.xp-=c.level*180;c.level++;c.hp=CHARACTER_DEFS[id].maxHp;c.aether=CHARACTER_DEFS[id].maxAether;showToast("Level increased",`${CHARACTER_DEFS[id].name} reached level ${c.level}.`,CHARACTER_DEFS[id].colour);}}
+  const materialTarget=b.id==="spire"?(Game.save.spire.runLoot||(Game.save.spire.runLoot={})):Game.save.materials;
+  for(const [k,v] of Object.entries(b.reward.materials||{}))materialTarget[k]=(materialTarget[k]||0)+v;
+  for(const e of b.enemies)Game.save.codex.enemies[e.template]=true;
+}
+function handleBattleVictory(b){
+  if(b.id==="jaegerTutorial"){
+    Game.save.progress=1;restoreParty(1);enterMap("observatory",{x:520,y:470});updateObjective();startDialogue(DIALOGUE_LIBRARY.afterJaegers);saveGame(true);
+  }else if(b.id==="orreryBoss"){
+    Game.save.progress=5;Game.save.flags.bossDefeated=true;Game.save.codex.lore.push("archive001");restoreParty(1);enterMap("observatory",{x:1570,y:470});updateObjective();startDialogue(DIALOGUE_LIBRARY.bossVictory);saveGame(true);
+  }else if(b.id==="mintBoss"||b.id==="mintDefence"){
+    Game.save.quest.mintDone=true;applyMintOutcome(b.missionChoice||"entropy");restoreParty(1);enterMap("mint",{x:135,y:650});updateObjective();saveGame(true);
+  }else if(b.id==="spire"){
+    handleSpireVictory(b);
+  }else if(b.id==="primeBoss"){
+    Game.save.flags.primeDefeated=true;Game.save.codex.lore.push("manifesto");restoreParty(1);enterMap("refectory");openFinalChoice();saveGame(true);
+  }else{restoreParty(1);enterMap("refectory");saveGame(true);}
+}
+function restoreParty(fraction=1){for(const id of Game.save.unlocked){const d=CHARACTER_DEFS[id],c=Game.save.characters[id];c.hp=Math.round(d.maxHp*fraction);c.aether=Math.round(d.maxAether*fraction);c.barrier=0;c.status={};}}
+
+function useItem(itemId){
+  const b=Game.battle,u=b?.current;if(!b||b.phase!=="player"||!u||!Game.save.inventory[itemId])return false;Game.save.inventory[itemId]--;
+  if(itemId==="salve"){u.hp=Math.min(u.maxHp,u.hp+Math.round(u.maxHp*.35));delete u.status.corrosive;delete u.status.scald;AudioEngine.sfx("heal");}
+  else if(itemId==="tonic"){u.aether=Math.min(u.maxAether,u.aether+45);delete u.status.logicFault;AudioEngine.sfx("heal");}
+  else if(itemId==="solder"){u.barrier=Math.min(u.maxHp*.6,u.barrier+Math.round(u.maxHp*.6));AudioEngine.sfx("heal");}
+  else if(itemId==="panacea"){u.hp=Math.min(u.maxHp,u.hp+Math.round(u.maxHp*.5));u.aether=Math.min(u.maxAether,u.aether+30);u.status={};AudioEngine.sfx("heal");}
+  else if(itemId==="anchor"){u.status.anchored={duration:3};AudioEngine.sfx("logic");}
+  else if(itemId==="shock"){for(const e of b.enemies.filter(e=>e.alive)){rawDamage(e,95,"Galvanic Shock Battery",u,{type:"electric",stagger:28});applyStatus(e,"ionized",{stacks:2,duration:3},true);}AudioEngine.sfx("electric");}
+  else if(itemId==="paradox"){const e=currentTarget();if(e){e.stagger=clamp(e.stagger+e.staggerMax*.5,0,e.staggerMax);e.attack=Math.round(e.attack*1.2);if(e.stagger>=e.staggerMax)triggerMatrixCollapse(e);}}
+  b.log=`${u.name} uses <strong>${ITEM_DEFS[itemId].name}</strong>.`;syncPartyToSave();closeModal();finishPlayerAction();return true;
+}
+function openResonanceMenu(){
+  const b=Game.battle;if(!b||b.phase!=="player")return;const target=currentTarget();const aliveIds=b.party.filter(p=>p.alive).map(p=>p.id);
+  let cards="";
+  for(const tech of DUAL_TECHS){const ready=tech.pair.every(id=>aliveIds.includes(id))&&b.resonance>=tech.tier&&tech.condition(b);cards+=`<button class="choice-btn ${ready?"":"locked"}" data-tech="${tech.id}" ${ready?"":"disabled"}><b>${tech.name}</b><small>${tech.pair.map(id=>CHARACTER_DEFS[id].name).join(" + ")} · ${tech.tier}% Resonance<br>${tech.desc}</small></button>`;}
+  const quadReady=b.resonance>=100&&aliveIds.length===4&&target?.collapseTurns>0;
+  cards+=`<button class="choice-btn ${quadReady?"":"locked"}" data-tech="quad" ${quadReady?"":"disabled"}><b>Ouroboros Paradox Collapse</b><small>All four visionaries · 100% Resonance · target in Matrix Collapse<br>True paradox damage, total sub-node annihilation and absolute causal lock.</small></button>`;
+  openModal(`<div class="modal brass-frame"><h2>Resonance Matrix</h2><div class="kicker">Timeline-interrupt synergy techniques</div><div class="modal-grid">${cards}</div><div class="modal-actions"><button class="ui-btn" data-close>Cancel</button></div></div>`,el=>{
+    el.querySelectorAll("[data-tech]").forEach(btn=>btn.onclick=()=>executeResonance(btn.dataset.tech));el.querySelector("[data-close]").onclick=closeModal;
+  });
+}
+function executeResonance(id){
+  const b=Game.battle,target=currentTarget();if(!b||!target)return;closeModal();let cost=75,damage=0,name="";
+  const tech=DUAL_TECHS.find(t=>t.id===id);if(id==="quad"){
+    if(b.resonance<100||target.collapseTurns<=0)return;cost=100;name="Ouroboros Paradox Collapse";showCutIn("FULL PARTY ALIGNMENT",name);showImpact("PARADOX\nCOLLAPSE");
+    for(const e of b.enemies.filter(e=>e.alive)){for(const n of e.nodes.filter(n=>!n.broken)){n.hp=0;breakNode(e,n,b.current);}rawDamage(e,(b.party.reduce((s,p)=>s+p.attack+(p.logic||0)*.5,0))*3.4,name,b.current,{type:"paradox",stagger:999});e.collapseTurns=3;e.turnDelay+=120;}
+    b.fields=[];b.coils=[];b.wetTurns=0;b.party.forEach(p=>p.aether=0);b.log="The party executes <strong>OUROBOROS PARADOX COLLAPSE</strong>. Cause and effect briefly agree to surrender.";AudioEngine.sfx("collapse");screenFlash("#ffffff",1);shake(28,800);
+  }else if(tech){
+    cost=tech.tier;name=tech.name;showCutIn(tech.pair.map(i=>CHARACTER_DEFS[i].name).join(" × "),name);
+    const pair=tech.pair;
+    if(id==="ada_tesla"){
+      for(const e of b.enemies.filter(e=>e.alive)){const stacks=e.status.ionized?.stacks||0;if(stacks){damage+=rawDamage(e,165+stacks*70,name,b.current,{type:"electric",stagger:50});e.status.logicFault={duration:3};delete e.status.ionized;const node=e.nodes.find(n=>!n.broken);if(node){node.hp=Math.max(0,node.hp-130);if(node.hp<=0)breakNode(e,node,b.current);}}}
+    }else if(id==="ada_yasuke"){
+      const n=currentNode(target)||target.nodes.find(n=>!n.broken);const synthetic={id:"yasuke",name:"Yasuke",colour:COLOURS.yasuke,attack:CHARACTER_DEFS.yasuke.attack,logic:0,level:Game.save.characters.yasuke.level,x:target.x-90,y:target.y,facing:0,stance:"void"};
+      for(let i=0;i<7;i++)damage+=performAttack(synthetic,target,{id:"binary",power:42,stagger:10,type:"spatial"},n&&!n.broken?n:null)||0;
+    }else if(id==="ada_tycho"){
+      const f=b.fields.find(f=>f.type==="chart")||{x:target.x,y:target.y,r:230};for(const e of b.enemies.filter(e=>e.alive)){e.x=lerp(e.x,f.x,.72);e.y=lerp(e.y,f.y,.72);e.turnDelay+=60;e.status.logicFault={duration:3};damage+=rawDamage(e,190,name,b.current,{type:"gravity",stagger:55});const n=e.nodes.find(n=>!n.broken);if(n)n.armor=Math.max(0,n.armor-12);}
+    }else if(id==="tesla_yasuke"){
+      for(const e of b.enemies.filter(e=>e.alive)){damage+=rawDamage(e,230,name,b.current,{type:"electric",stagger:65});applyStatus(e,"ionized",{stacks:3,duration:3},true);}b.wetTurns=3;b.arena.wet=true;
+    }else if(id==="tesla_tycho"){
+      const chart=b.fields.find(f=>f.type==="chart")||{x:target.x,y:target.y,r:220};b.fields.push({type:"solar",x:chart.x,y:chart.y,r:chart.r,duration:4,colour:"#ffd45e"});for(const e of b.enemies.filter(e=>e.alive&&Math.hypot(e.x-chart.x,e.y-chart.y)<chart.r)){damage+=rawDamage(e,175,name,b.current,{type:"electric",stagger:42});e.defence=Math.round(e.defence*.7);}
+    }else if(id==="yasuke_tycho"){
+      for(const e of b.enemies.filter(e=>e.alive)){damage+=rawDamage(e,285,name,b.current,{type:"gravity",stagger:e.staggerMax});e.x=lerp(e.x,850,.45);e.y=lerp(e.y,360,.45);if(e.stagger>=e.staggerMax&&e.collapseTurns<=0)triggerMatrixCollapse(e);}
+    }
+    b.log=`Resonance technique <strong>${name}</strong> fractures the active timeline.`;AudioEngine.sfx(pair.includes("tesla")?"electric":pair.includes("tycho")?"gravity":"slash");shake(22,600);screenFlash("#e9ffff",.75);
+  }
+  b.resonance=Math.max(0,b.resonance-cost);b.stats.combos++;updateBattleHUD();scheduleBattle(1.35,endTurn);b.phase="anim";checkBattleEnd();
+}
+function showCutIn(pair,name){$("#cutInPair").textContent=pair;$("#cutInName").textContent=name;const el=$("#cutIn");el.classList.remove("show");void el.offsetWidth;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1650);announce(`${pair}. ${name}.`);}
+function showImpact(text){$("#impactText").innerHTML=text.replace("\n","<br>");const el=$("#impactPanel");el.classList.remove("show");void el.offsetWidth;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),900);}
+function updateBattle(dt){
+  const b=Game.battle;if(!b)return;
+  if(b.pending){b.pending.time-=dt;if(b.pending.time<=0){const fn=b.pending.fn;b.pending=null;fn();}}
+  if(b.phase==="player"&&b.current?.team==="party"){
+    const u=b.current,t=currentTarget();let mx=(keyDown("KeyD")||keyDown("ArrowRight")?1:0)-(keyDown("KeyA")||keyDown("ArrowLeft")?1:0),my=(keyDown("KeyS")||keyDown("ArrowDown")?1:0)-(keyDown("KeyW")||keyDown("ArrowUp")?1:0);mx+=Game.input.joy.x+(Game.input.gamepad.axes[0]||0);my+=Game.input.joy.y+(Game.input.gamepad.axes[1]||0);let m=Math.hypot(mx,my);if(m>1){mx/=m;my/=m;}
+    if(m>.04){const speed=190;let nx=u.x+mx*speed*dt,ny=u.y+my*speed*dt;const o=b.turnOrigin,rad=b.moveRadius,dx=nx-o.x,dy=ny-o.y,dm=Math.hypot(dx,dy);if(dm>rad){nx=o.x+dx/dm*rad;ny=o.y+dy/dm*rad;}u.x=clamp(nx,95,1160);u.y=clamp(ny,145,620);u.moved=Math.hypot(u.x-o.x,u.y-o.y);if(t)u.facing=angleTo(u,t);}
+    if(consumeKey("KeyQ")||consumeKey("gpLB"))cycleEnemy(-1);if(consumeKey("KeyE")||consumeKey("gpRB")||consumeKey("touchSwap"))cycleEnemy(1);if(consumeKey("KeyF")||consumeKey("gpX"))cycleNode(1);
+    for(let i=1;i<=4;i++)if(consumeKey("Digit"+i))executeSkill(CHARACTER_DEFS[u.id].skills[i-1]?.id);
+    if(consumeKey("KeyR"))openItemMenu();if(consumeKey("Space")&&u.id==="ada")executeSkill("logicQueue");if(consumeKey("touchAction")||consumeKey("gpA"))executeSkill("basic");if(consumeKey("touchDash")||consumeKey("gpB")){if(u.id==="yasuke")executeSkill("stance");else guardAction();}if(consumeKey("gpY"))openResonanceMenu();
+  }
+  updateEffects(dt);
+}
+function guardAction(){const b=Game.battle,u=b?.current;if(!b||b.phase!=="player"||!u)return;u.guard=true;u.barrier=Math.min(u.maxHp*.45,u.barrier+Math.round(u.maxHp*.13));b.log=`${u.name} braces behind a <strong>temporal guard</strong>.`;addResonance(4);AudioEngine.sfx("parry");finishPlayerAction();}
+function battleCanvasClick(p){
+  const b=Game.battle;if(!b)return;
+  for(let i=b.enemies.length-1;i>=0;i--){const e=b.enemies[i];if(e.alive&&Math.hypot(p.x-e.x,p.y-e.y)<70*(e.scale||1)){selectEnemy(i);return;}}
+  if(b.phase==="player"&&b.current?.team==="party"){
+    const u=b.current,o=b.turnOrigin,dx=p.x-o.x,dy=p.y-o.y,d=Math.hypot(dx,dy),r=b.moveRadius;if(p.x>80&&p.x<1180&&p.y>120&&p.y<650){if(d>r){u.x=o.x+dx/d*r;u.y=o.y+dy/d*r;}else{u.x=p.x;u.y=p.y;}const t=currentTarget();if(t)u.facing=angleTo(u,t);updateBattleHUD();}
+  }
+}
+function openItemMenu(){
+  const items=Object.entries(Game.save.inventory).filter(([,n])=>n>0).map(([id,n])=>`<button class="choice-btn" data-item="${id}"><b>${ITEM_DEFS[id]?.icon||"◆"} ${ITEM_DEFS[id]?.name||id} ×${n}</b><small>${ITEM_DEFS[id]?.desc||""}</small></button>`).join("")||`<p>No field consumables remain.</p>`;
+  openModal(`<div class="modal brass-frame"><h2>Combat Quick-Slots</h2><div class="kicker">Non-turn-draining engineering becomes the turn's committed action here</div><div class="modal-grid">${items}</div><div class="modal-actions"><button class="ui-btn" data-close>Cancel</button></div></div>`,el=>{el.querySelectorAll("[data-item]").forEach(btn=>btn.onclick=()=>useItem(btn.dataset.item));el.querySelector("[data-close]").onclick=closeModal;});
+}
+function updateBattleHUD(){
+  const b=Game.battle;if(!b)return;const target=currentTarget();
+  $("#battleLog").innerHTML=b.log;$("#resonanceValue").textContent=`${Math.round(b.resonance)}%`;$("#resonanceFill").style.width=`${b.resonance}%`;
+  const timeline=$("#timelineIcons");timeline.innerHTML="";const remaining=b.queue.slice(Math.max(0,b.queueIndex),b.queueIndex+9);remaining.forEach((u,i)=>{const el=document.createElement("div");el.className=`turn-icon ${u.team==="enemy"?"enemy":""} ${i===0&&b.current===u?"current":""}`;el.style.left=`${5+i*(90/Math.max(1,remaining.length-1))}%`;el.style.color=u.colour||"#fff";el.textContent=u.team==="party"?CHARACTER_DEFS[u.id].short.slice(0,2):u.glyph;el.title=u.name;timeline.appendChild(el);});
+  if(target){
+    $("#targetName").textContent=target.name;$("#targetMeta").textContent=`HP ${fmt(target.hp)} / ${fmt(target.maxHp)} · Stagger ${Math.round(target.stagger)} / ${target.staggerMax}${target.collapseTurns>0?" · MATRIX COLLAPSE":""}`;$("#targetWire .wire-glyph").textContent=target.glyph;
+    const list=$("#nodeList");list.innerHTML="";const body=document.createElement("div");body.className=`node-row ${b.selectedNode==="body"?"selected":""}`;body.innerHTML=`<span>Main Frame</span><span class="node-hp"><i style="width:${pct(target.hp,target.maxHp)}%"></i></span>`;body.onclick=()=>{b.selectedNode="body";updateBattleHUD();};list.appendChild(body);
+    for(const n of target.nodes){const gated=isNodeGated(target,n),el=document.createElement("div");el.className=`node-row ${b.selectedNode===n.id?"selected":""} ${n.broken?"broken":""}`;el.innerHTML=`<span>${gated?"◈ ":""}${n.name}</span><span class="node-hp"><i style="width:${pct(n.hp,n.maxHp)}%"></i></span>`;el.title=gated?"Phase-gated: anchor with Tycho's Star Chart":n.effect;el.onclick=()=>{if(!n.broken){b.selectedNode=n.id;updateBattleHUD();}};list.appendChild(el);}
+  }
+  const cards=$("#partyCards");cards.innerHTML="";for(const u of b.party){const el=document.createElement("div");el.className=`combat-card ${b.current===u?"current":""} ${!u.alive?"down":""}`;const mech=u.id==="yasuke"?u.stance.toUpperCase():u.id==="ada"?`QUEUE: ${(Game.save.characters.ada.queue||"collapse").toUpperCase()}`:u.id==="tesla"?`COILS: ${b.coils.length}`:`CHARTS: ${b.fields.filter(f=>f.type==="chart").length}`;el.innerHTML=`<div class="row"><span style="color:${u.colour}">${u.name}</span><span>${fmt(u.hp)}</span></div><div class="hpbar"><i style="width:${pct(u.hp,u.maxHp)}%"></i></div><div class="aetherbar"><i style="width:${pct(u.aether,u.maxAether)}%"></i></div><div style="margin-top:3px;color:#bfc4ce;font-size:9px">${mech}${u.barrier?` · Barrier ${fmt(u.barrier)}`:""}</div>`;cards.appendChild(el);}
+  const u=b.current,playerTurn=b.phase==="player"&&u?.team==="party";$("#turnName").textContent=u?.name|| (b.phase==="victory"?"Victory":b.phase==="defeat"?"Defeat":"Timeline processing");$("#turnState").textContent=playerTurn?`Move ${Math.round(u.moved||0)} / ${b.moveRadius} · ${u.aether} Aether`:b.phase.toUpperCase();
+  const grid=$("#actionGrid");grid.innerHTML="";if(playerTurn){for(const s of CHARACTER_DEFS[u.id].skills){const btn=document.createElement("button");btn.className="action-btn";btn.disabled=u.aether<s.cost;btn.innerHTML=`<b>${s.name}</b>${s.desc}<small>${s.cost?`${s.cost} Aether`:"No cost"}</small>`;btn.onclick=()=>executeSkill(s.id);grid.appendChild(btn);}const item=document.createElement("button");item.className="action-btn";item.innerHTML=`<b>Consumable</b>Quick-slot engineering<small>R / Item</small>`;item.onclick=openItemMenu;grid.appendChild(item);const res=document.createElement("button");res.className=`action-btn ${b.resonance>=50?"resonance-ready":""}`;res.disabled=b.resonance<50;res.innerHTML=`<b>Resonance</b>Dual / Quad-Tech<small>${Math.round(b.resonance)}% charged</small>`;res.onclick=openResonanceMenu;grid.appendChild(res);}else{grid.innerHTML=`<div style="grid-column:1/-1;padding:18px;text-align:center;color:#b9bdc8;font-size:12px">${b.phase==="enemy"?"Enemy action resolving...":"The Chronos-Grid is advancing..."}</div>`;}
+}
+
+function renderBattle(){
+  const b=Game.battle;drawBattleBackground(b.arena.theme);drawBattleArena(b);drawBattleFields(b);drawPositionGuides(b);
+  const units=[...b.party.filter(u=>u.alive),...b.enemies.filter(u=>u.alive)].sort((a,c)=>a.y-c.y);for(const u of units){if(u.team==="party")drawAnimeCharacter(u.id,u.x,u.y,1.32,u.facing,b.current===u?"active":"idle");else drawEnemySprite(u,u.x,u.y,u.scale||1);drawBattleUnitBar(u);}
+  drawTargetReticle();drawEffects();
+}
+function drawBattleBackground(theme){
+  const g=ctx.createLinearGradient(0,0,0,H);if(theme==="mint"){g.addColorStop(0,"#2d1611");g.addColorStop(.55,"#191415");g.addColorStop(1,"#050609");}else if(theme==="zenith"){g.addColorStop(0,"#312e54");g.addColorStop(.5,"#101525");g.addColorStop(1,"#05060b");}else{g.addColorStop(0,"#16162e");g.addColorStop(.5,"#111d2b");g.addColorStop(1,"#05070d");}ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.globalAlpha=.26;for(let i=0;i<7;i++){drawGear(80+i*210,110+Math.sin(i)*45,80+i%3*18,Game.time*(i%2?.08:-.06),i%2?"#5f4b26":"#344d55",18);}ctx.restore();
+  if(theme==="zenith"){ctx.save();ctx.globalAlpha=.35;for(let i=0;i<80;i++){ctx.fillStyle=i%5?"#ffffff":"#b89cff";ctx.fillRect((i*83)%W,(i*137)%H,2,2);}ctx.restore();}
+}
+function drawBattleArena(b){
+  ctx.save();const g=ctx.createRadialGradient(650,390,40,650,390,560);g.addColorStop(0,b.arena.theme==="mint"?"#4a3024":"#293140");g.addColorStop(.68,b.arena.theme==="zenith"?"#1d2140":"#171b24");g.addColorStop(1,"#080a0e");ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(650,400,590,280,0,0,TAU);ctx.fill();ctx.strokeStyle="rgba(212,175,55,.65)";ctx.lineWidth=5;ctx.stroke();ctx.clip();
+  ctx.strokeStyle="rgba(0,240,255,.08)";ctx.lineWidth=1;for(let x=60;x<1240;x+=65){ctx.beginPath();ctx.moveTo(x,120);ctx.lineTo(x,680);ctx.stroke();}for(let y=150;y<680;y+=55){ctx.beginPath();ctx.moveTo(30,y);ctx.lineTo(1260,y);ctx.stroke();}
+  if(b.arena.wet||b.wetTurns>0){ctx.fillStyle="rgba(0,150,190,.13)";ctx.fillRect(30,300,1220,280);ctx.strokeStyle="rgba(0,240,255,.17)";ctx.setLineDash([12,16]);for(let i=0;i<5;i++){ctx.beginPath();ctx.ellipse(650,410,500-i*70,190-i*24,0,0,TAU);ctx.stroke();}ctx.setLineDash([]);}
+  if(b.arena.theme==="mint"){ctx.fillStyle="rgba(255,80,20,.12)";ctx.fillRect(760,130,350,530);for(let y=180;y<640;y+=90){ctx.fillStyle="rgba(212,175,55,.18)";ctx.fillRect(100,y,1080,18);}}
+  ctx.restore();
+}
+function drawBattleFields(b){
+  for(const f of b.fields){ctx.save();ctx.globalAlpha=.65;ctx.translate(f.x,f.y);ctx.strokeStyle=f.colour||"#9b59b6";ctx.lineWidth=3;for(let i=0;i<4;i++){ctx.rotate(Game.time*(i%2?.15:-.1));ctx.beginPath();ctx.ellipse(0,0,f.r*(1-i*.15),f.r*.38*(1-i*.08),i*.7,0,TAU);ctx.stroke();}ctx.fillStyle=hexAlpha(f.colour||"#9b59b6",.08);ctx.beginPath();ctx.arc(0,0,f.r,0,TAU);ctx.fill();ctx.restore();}
+  for(const c of b.coils){ctx.save();ctx.translate(c.x,c.y);ctx.fillStyle="#302a18";ctx.fillRect(-8,-24,16,35);ctx.strokeStyle=COLOURS.tesla;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,-25);ctx.lineTo(0,-50);ctx.stroke();ctx.beginPath();ctx.arc(0,-54,7,0,TAU);ctx.stroke();ctx.restore();}
+  ctx.save();ctx.strokeStyle="#eaff9e";ctx.lineWidth=3;ctx.shadowColor="#00f0ff";ctx.shadowBlur=12;for(let i=0;i<b.coils.length;i++)for(let j=i+1;j<b.coils.length;j++){const a=b.coils[i],c=b.coils[j];ctx.beginPath();ctx.moveTo(a.x,a.y-45);for(let k=1;k<6;k++){const t=k/6;ctx.lineTo(lerp(a.x,c.x,t)+rnd(-8,8),lerp(a.y,c.y,t)-45+rnd(-8,8));}ctx.lineTo(c.x,c.y-45);ctx.stroke();}ctx.restore();
+}
+function drawPositionGuides(b){
+  if(b.phase==="player"&&b.current?.team==="party"){const u=b.current,o=b.turnOrigin;ctx.save();ctx.strokeStyle="rgba(0,240,255,.7)";ctx.fillStyle="rgba(0,240,255,.045)";ctx.setLineDash([9,9]);ctx.lineWidth=2;ctx.beginPath();ctx.arc(o.x,o.y,b.moveRadius,0,TAU);ctx.fill();ctx.stroke();ctx.setLineDash([]);ctx.strokeStyle="rgba(255,255,255,.35)";ctx.beginPath();ctx.moveTo(o.x,o.y);ctx.lineTo(u.x,u.y);ctx.stroke();ctx.restore();}
+  const t=currentTarget();if(t){ctx.save();ctx.translate(t.x,t.y);ctx.rotate(t.facing);ctx.fillStyle="rgba(255,42,75,.08)";ctx.strokeStyle="rgba(255,42,75,.45)";ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,120,-.7,.7);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle="rgba(212,175,55,.08)";ctx.beginPath();ctx.arc(0,0,105,2.15,4.13);ctx.lineTo(0,0);ctx.fill();ctx.restore();}
+}
+function drawBattleUnitBar(u){
+  const w=u.team==="enemy"?90:72,x=u.x-w/2,y=u.y-(u.team==="enemy"?92*(u.scale||1):84);ctx.fillStyle="rgba(0,0,0,.72)";ctx.fillRect(x-2,y-2,w+4,15);ctx.fillStyle="#4e1622";ctx.fillRect(x,y,w,7);ctx.fillStyle=u.team==="enemy"?"#ff3b55":"#d93655";ctx.fillRect(x,y,w*clamp(u.hp/u.maxHp,0,1),7);if(u.team==="enemy"){ctx.fillStyle="#252a35";ctx.fillRect(x,y+9,w,4);ctx.fillStyle="#ffb700";ctx.fillRect(x,y+9,w*clamp(u.stagger/u.staggerMax,0,1),4);}if(u.barrier>0){ctx.strokeStyle="#00f0ff";ctx.strokeRect(x-1,y-1,w+2,9);}}
+function drawTargetReticle(){
+  const t=currentTarget();if(!t?.alive)return;ctx.save();ctx.translate(t.x,t.y);const r=58*(t.scale||1)+Math.sin(Game.time*5)*3;ctx.strokeStyle=t.collapseTurns>0?"#ffffff":"#d4af37";ctx.lineWidth=3;ctx.setLineDash([18,8,4,8]);ctx.rotate(Game.time*.35);ctx.beginPath();ctx.arc(0,-10,r,0,TAU);ctx.stroke();ctx.setLineDash([]);ctx.rotate(-Game.time*.7);for(let i=0;i<4;i++){ctx.rotate(Math.PI/2);ctx.beginPath();ctx.moveTo(r-12,0);ctx.lineTo(r+14,0);ctx.stroke();}ctx.restore();}
+function addEffect(type,x,y,colour="#fff",extra={}){Game.effects.push({type,x,y,colour,t:0,d:extra.duration||.75,...extra});}
+function addFloatingText(x,y,text,colour="#fff",scale=1){Game.effects.push({type:"text",x,y,text,colour,scale,t:0,d:1.05});}
+function updateEffects(dt){
+  for(const e of Game.effects)e.t+=dt;Game.effects=Game.effects.filter(e=>e.t<e.d);
+  for(const p of Game.particles){p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=(p.g||0)*dt;}Game.particles=Game.particles.filter(p=>p.t<p.d);
+}
+function drawEffects(){
+  for(const e of Game.effects){const p=clamp(e.t/e.d,0,1),a=1-p;ctx.save();ctx.globalAlpha=a;
+    if(e.type==="text"){ctx.font=`900 ${Math.round(18*(e.scale||1))}px Arial`;ctx.textAlign="center";ctx.fillStyle=e.colour;ctx.strokeStyle="#000";ctx.lineWidth=5;ctx.strokeText(e.text,e.x,e.y-p*42);ctx.fillText(e.text,e.x,e.y-p*42);}
+    else if(e.type==="slash"||e.type==="dash"){ctx.translate(e.x,e.y);ctx.rotate(-.65);ctx.strokeStyle=e.colour;ctx.lineWidth=10*(1-p)+2;ctx.shadowColor=e.colour;ctx.shadowBlur=25;ctx.beginPath();ctx.arc(0,0,30+p*80,-1.2,1.1);ctx.stroke();ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.stroke();}
+    else if(e.type==="electric"){ctx.strokeStyle=e.colour;ctx.lineWidth=4*(1-p)+1;ctx.shadowColor=e.colour;ctx.shadowBlur=18;for(let i=0;i<6;i++){ctx.beginPath();ctx.moveTo(e.x,e.y);for(let k=1;k<6;k++){const ang=i/6*TAU,rr=k*(18+p*12);ctx.lineTo(e.x+Math.cos(ang)*rr+rnd(-8,8),e.y+Math.sin(ang)*rr+rnd(-8,8));}ctx.stroke();}}
+    else if(e.type==="code"){ctx.fillStyle=e.colour;ctx.font="bold 15px monospace";for(let i=0;i<10;i++){const ang=i/10*TAU+Game.time;ctx.fillText(i%2?"01":"IF",e.x+Math.cos(ang)*(25+p*75),e.y+Math.sin(ang)*(20+p*55));}}
+    else if(e.type==="star"||e.type==="stabiliser"){ctx.strokeStyle=e.colour;ctx.lineWidth=3;ctx.translate(e.x,e.y);for(let i=0;i<4;i++){ctx.rotate(.7+e.t);ctx.beginPath();ctx.ellipse(0,0,30+p*95,12+p*30,i*.4,0,TAU);ctx.stroke();}ctx.fillStyle=hexAlpha(e.colour,.15);ctx.beginPath();ctx.arc(0,0,35+p*75,0,TAU);ctx.fill();}
+    else if(e.type==="impact"){ctx.fillStyle=e.colour;ctx.translate(e.x,e.y);ctx.rotate(p*2);for(let i=0;i<12;i++){ctx.rotate(TAU/12);ctx.beginPath();ctx.moveTo(8,0);ctx.lineTo(32+p*58,-5);ctx.lineTo(24+p*40,5);ctx.fill();}}
+    else if(e.type==="shatter"){ctx.fillStyle=e.colour;ctx.translate(e.x,e.y);for(let i=0;i<18;i++){const ang=i*.91,rr=p*110*(.4+(i%5)/5);ctx.save();ctx.translate(Math.cos(ang)*rr,Math.sin(ang)*rr);ctx.rotate(ang+p*5);ctx.beginPath();ctx.moveTo(-4,-8);ctx.lineTo(7,0);ctx.lineTo(-3,8);ctx.closePath();ctx.fill();ctx.restore();}}
+    else if(e.type==="matrix"){ctx.translate(e.x,e.y);ctx.strokeStyle="#fff";ctx.lineWidth=4;ctx.rotate(p*.8);ctx.strokeRect(-55-p*25,-75-p*25,110+p*50,130+p*50);ctx.rotate(-p*1.6);ctx.strokeStyle=e.colour;ctx.setLineDash([6,5]);ctx.strokeRect(-42,-62,84,105);ctx.setLineDash([]);}
+    else if(e.type==="barrier"){ctx.strokeStyle=e.colour;ctx.lineWidth=5;ctx.beginPath();ctx.arc(e.x,e.y-18,35+p*20,0,TAU);ctx.stroke();}
+    else if(e.type==="stance"){ctx.strokeStyle=e.colour;ctx.lineWidth=5;ctx.beginPath();ctx.arc(e.x,e.y,25+p*65,0,TAU);ctx.stroke();}
+    ctx.restore();
+  }
+  for(const p of Game.particles){ctx.save();ctx.globalAlpha=1-p.t/p.d;ctx.fillStyle=p.colour;ctx.beginPath();ctx.arc(p.x,p.y,p.r||3,0,TAU);ctx.fill();ctx.restore();}
+}
+
+function startDialogue(lines,onDone=null){
+  if(!lines?.length){onDone?.();return;}Game.dialogue={lines:deepClone(lines),index:0,onDone,typing:0};$("#dialogueLayer").classList.remove("hidden");showDialogueLine();
+}
+function showDialogueLine(){
+  const d=Game.dialogue,line=d.lines[d.index];$("#dialogueSpeaker").textContent=line.speaker;$("#dialogueText").textContent=line.text;drawPortrait(line.portrait||"system");announce(`${line.speaker}. ${line.text}`);AudioEngine.sfx("confirm");
+}
+function advanceDialogue(){
+  const d=Game.dialogue;if(!d)return;d.index++;if(d.index>=d.lines.length){const cb=d.onDone;Game.dialogue=null;$("#dialogueLayer").classList.add("hidden");cb?.();return;}showDialogueLine();
+}
+
+function openModal(html,onOpen){Game.modal={};const layer=$("#modalLayer");layer.innerHTML=html;layer.classList.remove("hidden");onOpen?.(layer);}
+function closeModal(){const layer=$("#modalLayer");layer.classList.add("hidden");layer.innerHTML="";Game.modal=null;}
+function openOrrery(){
+  const primeReady=Game.save.quest.mintDone&&Game.save.quest.memoryDone.length>=1&&!Game.save.flags.primeDefeated;
+  const mintLabel=Game.save.quest.mintDone?"Revisit the transformed Mint":"Investigate the Grand Clockwork Mint";
+  openModal(`<div class="modal brass-frame"><h2>The Grand Orrery</h2><div class="kicker">Plot an expedition across the concentric Chrono-Spire</div><div class="modal-grid">
+    <button class="station-btn" data-mission="spire"><b>Infinite Chrono-Spire</b><small>Procedural combat sectors, escalating affixes and extraction every fifth floor.<br>Best floor: ${Game.save.spire.best}</small></button>
+    <button class="station-btn" data-mission="mint"><b>${mintLabel}</b><small>Tier II moral quest: historical preservation, monetary stasis, or a difficult synthesis.</small></button>
+    <button class="station-btn ${primeReady?"":"locked"}" data-mission="prime" ${primeReady?"":"disabled"}><b>Heart of the Chronos-Engine</b><small>${primeReady?"Challenge Chronos Engine Prime and reach the final causal threshold.":"Resolve the Clockwork Mint and complete at least one Memory Audit."}</small></button>
+    <button class="station-btn" data-mission="observatory"><b>Shattered Observatory</b><small>Return to Aethelgard to practice traversal and examine recovered archives.</small></button>
+  </div><div class="modal-actions"><button class="ui-btn" data-close>Close Orrery</button></div></div>`,el=>{
+    el.querySelector('[data-mission="spire"]').onclick=()=>{closeModal();startSpireRun();};
+    el.querySelector('[data-mission="mint"]').onclick=()=>{closeModal();enterMap("mint",MAPS.mint.spawn);};
+    const prime=el.querySelector('[data-mission="prime"]');if(primeReady)prime.onclick=()=>{closeModal();startDialogue([{speaker:"Ada Lovelace",portrait:"ada",text:"The Prime has noticed us. Its core is compiling an extinction proof. This is the last moment in which we may still contradict it."},{speaker:"Yasuke",portrait:"yasuke",text:"Then we write our answer in steel."}],()=>startBattle("primeBoss"));};
+    el.querySelector('[data-mission="observatory"]').onclick=()=>{closeModal();enterMap("observatory",{x:1550,y:470});};el.querySelector("[data-close]").onclick=closeModal;
+  });
+}
+
+function buildSpireEncounter(floor,seed){
+  const r=seeded(seed+floor*991),sector=Math.ceil(floor/10),level=1+Math.floor(floor/4);let pool=floor<8?["jaeger","sentinel","chimera"]:floor<18?["sentinel","chimera","stalker"]:["stalker","sentinel","jaeger"];
+  const count=clamp(2+Math.floor(floor/7),2,4),enemies=[];for(let i=0;i<count;i++)enemies.push({t:pool[Math.floor(r()*pool.length)],x:820+(i%2)*175+r()*50,y:260+Math.floor(i/2)*235+r()*50,level});
+  if(floor%10===0){enemies.length=0;enemies.push({t:floor>=30?"prime":floor>=20?"mint":"orrery",x:920,y:360,level:Math.max(1,level-1)});}
+  const affixes=["Conductive Inundation","Chrono-Friction","Gravity Inversion","Sub-Node Hardening","Paradox Echo"],affix=affixes[Math.floor(r()*affixes.length)];
+  const mats={brass:Math.ceil(2+floor*.35),dust:Math.ceil(1+floor*.22)};if(floor>5)mats.gear=Math.ceil(floor/8);if(floor>12)mats.paradox=Math.floor(floor/12);
+  return {name:`Chrono-Spire Floor ${floor}`,arena:{theme:sector<3?"observatory":sector<6?"mint":"zenith",wet:affix==="Conductive Inundation",metal:sector<6,affix},enemies,reward:{xp:100+floor*22,insight:floor%5===0?2:1,materials:mats},missionChoice:null,spireData:{floor,seed,affix}};
+}
+function startSpireRun(){
+  const s=Game.save.spire;s.active=true;s.seed=s.seed||Math.floor(Math.random()*1e9);s.floor=Math.max(1,s.checkpoint||1);s.runLoot={};restoreParty(1);saveGame(true);showToast("Chrono-Spire descent",`Floor ${s.floor} · extraction checkpoint ${s.checkpoint}`,"var(--violet)");startBattle("spire",buildSpireEncounter(s.floor,s.seed));
+}
+function handleSpireVictory(b){
+  const floor=b.spireData.floor,s=Game.save.spire;s.best=Math.max(s.best,floor);s.floor=floor+1;
+  if(floor>=100){Game.save.codex.achievements.push("Apex Chrono-Master");Game.save.materials.crystal+=5;Game.save.materials.paradox+=10;s.active=false;s.checkpoint=100;restoreParty(1);enterMap("refectory");showToast("Apex Clear","The Crown of Ouroboros has been recovered.","var(--brass)");saveGame(true);return;}
+  if(floor%5===0){openSpireSanctuary(floor);return;}
+  openModal(`<div class="modal brass-frame"><h2>Floor ${floor} Cleared</h2><div class="kicker">Affix survived — ${b.spireData.affix}</div><p>The next mechanism is already assembling below. Unextracted materials remain vulnerable until a sanctuary floor.</p><div class="modal-actions"><button class="ui-btn primary" data-descend>Descend to Floor ${floor+1}</button><button class="ui-btn" data-retreat>Emergency retreat (lose 50% run loot)</button></div></div>`,el=>{
+    el.querySelector("[data-descend]").onclick=()=>{closeModal();restoreParty(.82);startBattle("spire",buildSpireEncounter(s.floor,s.seed));};
+    el.querySelector("[data-retreat]").onclick=()=>{halveRunLoot();extractSpire(false);};
+  });
+}
+function openSpireSanctuary(floor){
+  const loot=Object.entries(Game.save.spire.runLoot||{}).map(([k,v])=>`${v}× ${MATERIAL_NAMES[k]||k}`).join(" · ")||"No materials";
+  openModal(`<div class="modal brass-frame"><h2>Sanctuary Floor ${floor}</h2><div class="kicker">Push your luck or anchor this branch</div><p><b>Unextracted cargo:</b> ${loot}</p><div class="modal-grid"><button class="choice-btn" data-extract><b>Extract</b><small>Keep 100% of run loot, save Floor ${floor+1} as the checkpoint, and return to The Refectory.</small></button><button class="choice-btn" data-descend><b>Descend</b><small>Continue to Floor ${floor+1}. Future rewards increase, but defeat forfeits half the unextracted cargo.</small></button></div></div>`,el=>{el.querySelector("[data-extract]").onclick=()=>extractSpire(true);el.querySelector("[data-descend]").onclick=()=>{closeModal();restoreParty(1);startBattle("spire",buildSpireEncounter(floor+1,Game.save.spire.seed));};});
+}
+function halveRunLoot(){for(const k in Game.save.spire.runLoot)Game.save.spire.runLoot[k]=Math.floor(Game.save.spire.runLoot[k]*.5);}
+function extractSpire(full=true){
+  closeModal();const s=Game.save.spire;for(const [k,v] of Object.entries(s.runLoot||{}))Game.save.materials[k]=(Game.save.materials[k]||0)+v;s.runLoot={};s.active=false;if(full)s.checkpoint=s.floor;restoreParty(1);enterMap("refectory");saveGame(true);showToast("Spire cargo extracted",full?"All recovered materials have been anchored.":"Emergency extraction retained half the cargo.","var(--mint)");
+}
+
+function openForge(){
+  const recipes=Object.entries(FORGE_RECIPES).map(([id,r],i)=>`<div class="recipe ${i===0?"active":""}" data-recipe="${id}"><b>${r.name}</b><br><small>${Object.entries(r.ingredients).map(([k,v])=>`${v}× ${MATERIAL_NAMES[k]}`).join(" · ")}</small></div>`).join("");
+  openModal(`<div class="modal brass-frame"><h2>The Induction Forge</h2><div class="kicker">Match frequency and thermal calibration for a precision yield</div><div class="forge-layout"><div><div class="recipe-list">${recipes}</div><h3 style="color:var(--brass)">Material Stores</h3><div id="materialStores" style="font:12px Arial,sans-serif;line-height:1.7"></div></div><div class="dial-wrap"><h3 id="forgeRecipeName" style="margin:0;color:#fff3bd"></h3><p id="forgeRecipeDesc" style="margin:0"></p><div class="dial-row"><b>Frequency</b><input id="freqDial" type="range" min="0" max="2600" step="10"><output id="freqOut"></output></div><div class="calibration"><span id="freqTarget" class="target"></span><span id="freqNeedle" class="needle"></span></div><div class="dial-row"><b>Thermal</b><input id="tempDial" type="range" min="0" max="1100" step="5"><output id="tempOut"></output></div><div class="calibration"><span id="tempTarget" class="target"></span><span id="tempNeedle" class="needle"></span></div><div><b>Hold calibration within ±5% for 3 seconds</b><div id="forgeHold"><i></i></div></div><button id="forgeCalibrate" class="ui-btn primary" style="width:100%">Hold to synthesize</button><div id="forgeStatus" style="min-height:22px;color:var(--muted);font:12px Arial,sans-serif"></div></div></div><div class="modal-actions"><button class="ui-btn" data-close>Leave Forge</button></div></div>`,el=>setupForgeUI(el));
+}
+function setupForgeUI(el){
+  let selected=Object.keys(FORGE_RECIPES)[0],hold=0,timer=null;
+  const freq=$("#freqDial",el),temp=$("#tempDial",el),bar=$("#forgeHold i",el),status=$("#forgeStatus",el),btn=$("#forgeCalibrate",el);
+  function canCraft(r){return Object.entries(r.ingredients).every(([k,v])=>(Game.save.materials[k]||0)>=v);}
+  function render(){const r=FORGE_RECIPES[selected];$("#forgeRecipeName",el).textContent=r.name;$("#forgeRecipeDesc",el).textContent=`Target ${r.freq} Hz / ${r.temp}°C · Base yield ${r.out}`;freq.value=r.freq*.82;temp.value=r.temp*1.12;updateDials();
+    $("#materialStores",el).innerHTML=Object.entries(Game.save.materials).filter(([,v])=>v>0).map(([k,v])=>`<span style="color:${Object.keys(r.ingredients).includes(k)?"var(--cyan)":"inherit"}">${MATERIAL_NAMES[k]||k}: <b>${v}</b></span>`).join("<br>");btn.disabled=!canCraft(r);status.textContent=canCraft(r)?"Materials loaded. Tune both dials.":"Missing required materials.";}
+  function updateDials(){const r=FORGE_RECIPES[selected],fv=+freq.value,tv=+temp.value;$("#freqOut",el).textContent=`${fv} Hz`;$("#tempOut",el).textContent=`${tv}°C`;$("#freqNeedle",el).style.left=`${fv/2600*100}%`;$("#tempNeedle",el).style.left=`${tv/1100*100}%`;$("#freqTarget",el).style.cssText=`left:${r.freq*.95/2600*100}%;width:${r.freq*.1/2600*100}%`;$("#tempTarget",el).style.cssText=`left:${r.temp*.95/1100*100}%;width:${r.temp*.1/1100*100}%`;}
+  function stop(){clearInterval(timer);timer=null;}
+  function start(){if(btn.disabled||timer)return;timer=setInterval(()=>{const r=FORGE_RECIPES[selected],fe=Math.abs(+freq.value-r.freq)/r.freq,te=Math.abs(+temp.value-r.temp)/r.temp;if(fe<=.05&&te<=.05)hold+=.05;else hold=Math.max(0,hold-.1);bar.style.width=`${clamp(hold/3,0,1)*100}%`;status.textContent=fe<=.05&&te<=.05?"Resonance stable... hold position.":"Calibration drifting — adjust the dials.";if(hold>=3){stop();craft(fe<=.01&&te<=.01);}},50);}
+  function craft(perfect){const r=FORGE_RECIPES[selected];for(const [k,v] of Object.entries(r.ingredients))Game.save.materials[k]-=v;const amount=r.out+(perfect?1:0);Game.save.inventory[selected]=(Game.save.inventory[selected]||0)+amount;hold=0;bar.style.width="0";AudioEngine.sfx(perfect?"collapse":"heal");showToast(perfect?"Precision Yield":"Synthesis complete",`${amount}× ${r.name} created.`,perfect?"var(--mint)":"var(--brass)");saveGame(true);render();}
+  el.querySelectorAll("[data-recipe]").forEach(n=>n.onclick=()=>{el.querySelectorAll(".recipe").forEach(x=>x.classList.remove("active"));n.classList.add("active");selected=n.dataset.recipe;hold=0;bar.style.width="0";render();});freq.oninput=temp.oninput=updateDials;btn.addEventListener("pointerdown",start);btn.addEventListener("pointerup",stop);btn.addEventListener("pointercancel",stop);btn.addEventListener("pointerleave",stop);el.querySelector("[data-close]").onclick=()=>{stop();closeModal();};render();
+}
+const SKILL_BRANCHES={
+  yasuke:{A:["Flow Precision","Iron Guard","Flash Deflection"],B:["Void Dash","Armor Sever","Honno-ji Unbound"]},
+  ada:{A:["Queue Expansion","Clock Overclock","Nested Logic"],B:["Structural Analysis","Loop Propagation","Infinite Compiler"]},
+  tesla:{A:["Coil Density","Arc Expansion","Dielectric Insulation"],B:["Induction Shock","Fluid Electrification","Wardenclyffe Array"]},
+  tycho:{A:["Chart Expansion","Syzygy Zone","Precession Speed"],B:["Retrograde Well","Perspective Anchor","Supernova Alignment"]}
+};
+function openSkillMatrix(){
+  const cards=Game.save.unlocked.map(id=>{const d=CHARACTER_DEFS[id],c=Game.save.characters[id],br=SKILL_BRANCHES[id];return `<div class="choice-btn" style="cursor:default"><b style="color:${d.colour}">${d.name} · ${d.title}</b><small>Level ${c.level} · ${c.insight} Temporal Insight · Weapon Tier ${c.weaponTier}${c.unbound?" · UNBOUND":""}</small><hr style="border-color:rgba(212,175,55,.18)"><div style="display:grid;grid-template-columns:1fr 1fr;gap:7px"><button class="ui-btn" data-upgrade="${id}:A">Branch A ${c.skills.branchA}/3<br><small>${br.A[c.skills.branchA]||"Complete"}</small></button><button class="ui-btn" data-upgrade="${id}:B">Branch B ${c.skills.branchB}/3<br><small>${br.B[c.skills.branchB]||"Complete"}</small></button></div></div>`;}).join("");
+  openModal(`<div class="modal brass-frame"><h2>The Analytical Engine</h2><div class="kicker">Triple-node skill helices and Ada's conditional compiler</div><div class="modal-grid">${cards}</div><div class="modal-actions"><button class="ui-btn" data-logic>Open Logic Queue Compiler</button><button class="ui-btn" data-close>Close Engine</button></div></div>`,el=>{
+    el.querySelectorAll("[data-upgrade]").forEach(btn=>btn.onclick=()=>{const [id,b]=btn.dataset.upgrade.split(":");upgradeSkill(id,b);});el.querySelector("[data-logic]").onclick=()=>openLogicBuilder();el.querySelector("[data-close]").onclick=closeModal;
+  });
+}
+function upgradeSkill(id,branch){
+  const c=Game.save.characters[id],key=branch==="A"?"branchA":"branchB";if(c.skills[key]>=3){showToast("Branch complete","This skill helix has reached its capstone.",CHARACTER_DEFS[id].colour);return;}const cost=1+c.skills[key];if(c.insight<cost){showToast("Insufficient Insight",`The next node costs ${cost} Temporal Insight.`,"var(--red)");return;}c.insight-=cost;c.skills[key]++;AudioEngine.sfx("logic");showToast("Skill node engaged",`${CHARACTER_DEFS[id].name}: ${SKILL_BRANCHES[id][branch][c.skills[key]-1]}`,CHARACTER_DEFS[id].colour);saveGame(true);closeModal();openSkillMatrix();
+}
+function openLogicBuilder(onDone=null){
+  const active=Game.save.characters.ada.queue||"collapse";
+  openModal(`<div class="modal brass-frame"><h2>Ada's Logic Queue Compiler</h2><div class="kicker">Select one automatic IF → THEN macro</div><div class="modal-grid">
+    <button class="choice-btn ${active==="collapse"?"pattern-ionized":""}" data-queue="collapse"><b>IF Enemy Matrix Collapsed</b><small>THEN execute an automatic Precision Strike at the start of each round.</small></button>
+    <button class="choice-btn ${active==="lowHp"?"pattern-ionized":""}" data-queue="lowHp"><b>IF Ally HP &lt; 40%</b><small>THEN deploy a reactive barrier around the lowest-vitality party member.</small></button>
+    <button class="choice-btn ${active==="ionized"?"pattern-ionized":""}" data-queue="ionized"><b>IF Enemy Ionized</b><small>THEN execute a Recursive Pulse whose damage scales with charge stacks.</small></button>
+  </div><p>Logic queues trigger automatically without spending Ada's normal action. Only one macro is active in this vertical slice; Branch A upgrades represent future nested slots.</p><div class="modal-actions"><button class="ui-btn" data-close>Cancel</button></div></div>`,el=>{
+    el.querySelectorAll("[data-queue]").forEach(btn=>btn.onclick=()=>{Game.save.characters.ada.queue=btn.dataset.queue;const ada=Game.battle?.party.find(p=>p.id==="ada");if(ada)ada.queue=btn.dataset.queue;AudioEngine.sfx("logic");showToast("Logic compiled",btn.querySelector("b").textContent,"var(--cyan)");saveGame(true);closeModal();onDone?.();});el.querySelector("[data-close]").onclick=()=>{closeModal();};
+  });
+}
+
+const MEMORY_AUDITS={
+  ada:{title:"The Unwritten Engine",setting:"London, 1852. An impossible completed Difference Engine prints punch cards dated a century beyond Ada's life.",truth:"Your mathematics survived your body. Your time was too small to contain the engine.",shadow:"Illness is merely a logic error. Delete weakness and become the machine."},
+  yasuke:{title:"The Ash of Honno-ji",setting:"Kyoto, 1582. Nobunaga's empty armour kneels inside a temple whose flames have stopped in time.",truth:"He gave you a sword, not a grave. Carry his vision beyond the fire.",shadow:"Honour required death. Let the surviving ghost become an unfeeling blade."},
+  tesla:{title:"Room 3327",setting:"New York, 1943. Wardenclyffe blueprints burn in a fire that produces plasma but no heat.",truth:"They stole the paper; you won the sky. The grid still speaks in your frequency.",shadow:"Make every timeline feel the fire of those stolen pages."},
+  tycho:{title:"The Fallen Star of Uraniborg",setting:"A perfect observatory floats above an island erased from every chart. Every planet orbits Tycho himself.",truth:"A map can guide the future without owning it. Release the heavens from your certainty.",shadow:"If the cosmos refuses your model, force the cosmos to obey."}
+};
+function openMemoryAudits(){
+  const cards=Game.save.unlocked.map(id=>{const a=MEMORY_AUDITS[id],done=Game.save.quest.memoryDone.includes(id);return `<button class="choice-btn ${done?"pattern-ionized":""}" data-audit="${id}" ${done?"disabled":""}><b style="color:${CHARACTER_DEFS[id].colour}">${CHARACTER_DEFS[id].name}: ${a.title}</b><small>${done?"Audit resolved — Unbound potential integrated.":a.setting}</small></button>`;}).join("");
+  openModal(`<div class="modal brass-frame"><h2>The Quiet Garden</h2><div class="kicker">Memory Audits — investigate paradox, then choose how the visionary remembers</div><div class="modal-grid">${cards}</div><div class="modal-actions"><button class="ui-btn" data-close>Leave Garden</button></div></div>`,el=>{el.querySelectorAll("[data-audit]").forEach(btn=>btn.onclick=()=>startMemoryAudit(btn.dataset.audit));el.querySelector("[data-close]").onclick=closeModal;});
+}
+function startMemoryAudit(id){
+  const a=MEMORY_AUDITS[id],d=CHARACTER_DEFS[id];closeModal();startDialogue([{speaker:"Memory Orrery",portrait:"system",text:a.setting},{speaker:d.name,portrait:id,text:id==="ada"?"It is complete. It runs. And still I am dying beside it. Is this mercy—or mockery?":id==="yasuke"?"The command was to carry the sword. Yet every step away from the flames felt like betrayal.":id==="tesla"?"Let it burn. A century took my towers and called the darkness practical.":"I measured the heavens more precisely than any man alive. Why, then, could I not measure my own pride?"}],()=>openAuditChoice(id));
+}
+function openAuditChoice(id){
+  const a=MEMORY_AUDITS[id],d=CHARACTER_DEFS[id];openModal(`<div class="modal brass-frame"><h2>${a.title}</h2><div class="kicker">The paradox has been identified — tune the memory</div><div class="modal-grid"><button class="choice-btn" data-path="truth"><b>Reconciliation — Unbound</b><small>${a.truth}</small></button><button class="choice-btn pattern-danger" data-path="shadow"><b>Reduction — Corrupted Stance</b><small>${a.shadow}</small></button></div></div>`,el=>el.querySelectorAll("[data-path]").forEach(btn=>btn.onclick=()=>resolveAudit(id,btn.dataset.path)));
+}
+function resolveAudit(id,path){
+  closeModal();const c=Game.save.characters[id],d=CHARACTER_DEFS[id];c.unbound=path==="truth";c.insight+=3;Game.save.quest.memoryDone.push(id);Game.save.resonanceLinks[id]=5;if(path==="truth")Game.save.codex.achievements.push(`${d.name} Unbound`);else{c.attackBonus=15;c.shadow=true;}
+  AudioEngine.sfx("collapse");showCutIn(d.name,path==="truth"?"UNBOUND MEMORY":"CORRUPTED RESOLUTION");showToast("Memory Audit complete",path==="truth"?`${d.name}'s capstone potential has awakened.`:`${d.name} accepts a harsher temporal stance.`,d.colour);saveGame(true);
+  startDialogue([{speaker:d.name,portrait:id,text:path==="truth"?(id==="yasuke"?"The flames of Honno-ji end here. My blade belongs to the future.":id==="ada"?"I am done apologising to time. Let the compiler run.":id==="tesla"?"Let the patent office file an injunction against a thunderbolt!":"The stars are companions, not prisoners. I shall chart their freedom."):"Then let memory become a weapon. Sentiment has delayed us long enough."}]);
+}
+
+function openCodex(){
+  const discovered=Object.keys(Game.save.codex.enemies).map(id=>`<tr><td>${ENEMY_DEFS[id]?.name||id}</td><td>${Object.keys(Game.save.codex.nodes).filter(k=>k.startsWith(id+":")).length} sub-nodes catalogued</td><td>+${Object.keys(Game.save.codex.nodes).filter(k=>k.startsWith(id+":")).length*3}% precision insight</td></tr>`).join("")||`<tr><td colspan="3">No hostile blueprints compiled.</td></tr>`;
+  const lore=Game.save.codex.lore.filter((v,i,a)=>a.indexOf(v)===i).map(id=>`<div class="choice-btn" style="cursor:default"><b>${LORE_ENTRIES[id]?.title||id}</b><small>${LORE_ENTRIES[id]?.text||"Encrypted."}</small></div>`).join("")||`<p>Classified Punch-Cards remain hidden across Ouroboros.</p>`;
+  const achievements=[...new Set(Game.save.codex.achievements)].map(a=>`<span style="display:inline-block;padding:6px 9px;margin:3px;border:1px solid var(--brass);font:11px Arial,sans-serif">◆ ${a}</span>`).join("")||"No prestige records yet.";
+  openModal(`<div class="modal brass-frame"><h2>Chronicle Codex</h2><div class="kicker">Knowledge inversion: discovery becomes permanent tactical advantage</div><h3>Sub-Node Anatomical Guide</h3><table class="stat-table"><thead><tr><th>Hostile</th><th>Research</th><th>Insight Modifier</th></tr></thead><tbody>${discovered}</tbody></table><h3>Paradox Logs</h3><div class="modal-grid">${lore}</div><h3>Achievements & Titles</h3><div>${achievements}</div><div class="modal-actions"><button class="ui-btn" data-close>Close Codex</button></div></div>`,el=>el.querySelector("[data-close]").onclick=closeModal);
+}
+function openMintChoice(){
+  startDialogue([{speaker:"Master Mintmaster Vane",portrait:"system",text:"A rose, a pocket watch, a soldier's last letter. Sentiment to you. Four hundred gigajoules of temporal potential to this city."},{speaker:"Clara Thorne",portrait:"ada",text:"When the furnace consumes a relic, the life attached to it disappears from every remembered timeline. He is liquidating our souls."},{speaker:"Tesla",portrait:"tesla",text:"Emotion does not power magnetic containment. But his induction loop is appallingly wasteful."},{speaker:"Yasuke",portrait:"yasuke",text:"Choose carefully. Survival without memory is another kind of death."}],()=>showMintDecision());
+}
+function showMintDecision(){
+  const synthesis=(Game.save.characters.ada.skills.branchB>=2&&Game.save.characters.tesla.skills.branchA>=2)||Game.settings.difficulty==="story";
+  openModal(`<div class="modal brass-frame"><h2>The Grand Clockwork Mint</h2><div class="kicker">Causal Divergence — every answer preserves something and destroys something</div><div class="modal-grid">
+    <button class="choice-btn" data-mint="stasis"><b>Monetary Stasis</b><small>Process the relics. Keep prices low and the containment grid stable, but erase irreplaceable histories.</small></button>
+    <button class="choice-btn pattern-danger" data-mint="entropy"><b>Historical Preservation</b><small>Destroy the Sovereign Mint. Save the relics, accept inflation, temporal rifts and a direct boss confrontation.</small></button>
+    <button class="choice-btn ${synthesis?"pattern-ionized":"locked"}" data-mint="synthesis" ${synthesis?"":"disabled"}><b>Balanced Calibration</b><small>${synthesis?"Ada and Tesla re-index the furnace while the party defends them.":"Requires Ada Structural Analysis II and Tesla Coil Density II."}</small></button>
+  </div></div>`,el=>el.querySelectorAll("[data-mint]").forEach(btn=>btn.onclick=()=>chooseMintPath(btn.dataset.mint)));
+}
+function chooseMintPath(path){
+  closeModal();Game.save.choices.mint=path;const lines={
+    stasis:[{speaker:"Ada Lovelace",portrait:"ada",text:"I will preserve the city ledger. I will also record every name the furnace takes, so the machine cannot pretend the cost was zero."}],
+    entropy:[{speaker:"Yasuke",portrait:"yasuke",text:"A city that eats its own ancestors has already lost the future. Draw steel. The furnace ends now."}],
+    synthesis:[{speaker:"Ada Lovelace",portrait:"ada",text:"Your equation ignores thermal drag, Vane. Nikola, route the induction coils through Tycho's mapping. We can extract motion without destroying memory."},{speaker:"Nikola Tesla",portrait:"tesla",text:"At last, a problem worthy of my good gloves. Hold the security line for three rounds."}]
+  }[path];
+  startDialogue(lines,()=>startBattle(path==="entropy"?"mintBoss":"mintDefence",{...(path==="entropy"?ENCOUNTERS.mintBoss:ENCOUNTERS.mintDefence),missionChoice:path}));
+}
+function applyMintOutcome(path){
+  Game.save.choices.mint=path;
+  if(path==="stasis"){
+    Game.save.materials.brass+=12;Game.save.materials.battery+=4;Game.save.codex.achievements.push("The Automated Imperative");showToast("District consequence","Tier II markets are cheaper; five relic archives have been erased.","var(--brass)");
+  }else if(path==="entropy"){
+    Game.save.materials.paradox+=3;Game.save.codex.lore.push("archive088");Game.save.codex.achievements.push("Historical Preservationist");showToast("District consequence","The Bazaar celebrates, but temporal rifts now stalk its alleys.","var(--red)");
+  }else{
+    Game.save.materials.crystal+=2;Game.save.materials.gear+=4;Game.save.codex.lore.push("archive014");Game.save.codex.achievements.push("Golden Mean");for(const id of Game.save.unlocked)Game.save.resonanceLinks[id]=Math.min(5,(Game.save.resonanceLinks[id]||1)+1);showToast("Synthesis achieved","The Mint becomes a Historical Archive and Power Plant.","var(--mint)");
+  }
+}
+
+function openFinalChoice(){
+  const synthesis=Game.save.quest.memoryDone.length>=3&&Game.save.choices.mint==="synthesis";
+  openModal(`<div class="modal brass-frame"><h2>The Paradox Threshold</h2><div class="kicker">Chronos Engine Prime is silent. Ouroboros waits for a governing theorem.</div><p>The engine can be collapsed, returning every visionary to their natural historical fate. It can be stabilised, preserving the city in immortal stasis. A third path may sever Ouroboros from Earth—but only if the party has learned to preserve memory without freezing change.</p><div class="modal-grid">
+    <button class="choice-btn pattern-danger" data-ending="entropy"><b>Entropy — Collapse the Engine</b><small>Free Earth's stolen futures. Ouroboros ends, and the visionaries accept the mortality from which they were taken.</small></button>
+    <button class="choice-btn" data-ending="stasis"><b>Stasis — Preserve the Lifeboat</b><small>Keep Ouroboros immortal and intact, accepting that its frozen perfection will continue to resist change.</small></button>
+    <button class="choice-btn ${synthesis?"pattern-ionized":"locked"}" data-ending="synthesis" ${synthesis?"":"disabled"}><b>Unbound Sanctuary — Sever the Parasite</b><small>${synthesis?"Detach the city from Earth's timeline and let its people age, change and choose.":"Requires three reconciled Memory Audits and the Mint's Balanced Calibration."}</small></button>
+  </div></div>`,el=>el.querySelectorAll("[data-ending]").forEach(btn=>btn.onclick=()=>resolveEnding(btn.dataset.ending)));
+}
+function resolveEnding(path){
+  closeModal();Game.save.choices.ending=path;Game.save.codex.achievements.push(path==="synthesis"?"Chronos Unbound":path==="entropy"?"The Last Tick":"Keeper of the Lifeboat");saveGame(true);
+  const endings={
+    entropy:{title:"The Last Tick",text:"Tycho releases the stars. Tesla opens every circuit. Ada deletes the engine's final recursive command. Yasuke cuts the last gear. Ouroboros becomes rain, light and memory—and the four visionaries return to history carrying no proof that they ever met, only a strange certainty that unfinished work can outlive its maker."},
+    stasis:{title:"The Eternal Orrery",text:"The party takes command of the engine. No citizen ages; no archive decays; no district falls. Ouroboros survives every cosmic storm, immaculate and still. Yet, sometimes, a child in the Bazaar hears a clock tick differently and wonders what a future might feel like."},
+    synthesis:{title:"Chronos Unbound",text:"Ada rewrites the causal address. Tesla supplies the severing pulse. Tycho charts a sky belonging to no prior universe. Yasuke guards the threshold as Ouroboros tears free of Earth's history—not frozen, not parasitic, but mortal. For the first time, the city's clocks disagree. Its people cheer."}
+  },e=endings[path];
+  showImpact(path==="synthesis"?"CHRONOS\nUNBOUND":path==="entropy"?"THE LAST\nTICK":"ETERNAL\nORRERY");
+  openModal(`<div class="modal brass-frame" style="text-align:center"><div class="eyebrow">Ending secured</div><h2>${e.title}</h2><p style="font-size:19px;line-height:1.65">${e.text}</p><p>New Game+ modifiers and the Infinite Chrono-Spire remain available from The Refectory.</p><div class="modal-actions" style="justify-content:center"><button class="ui-btn primary" data-post>Continue Postgame</button><button class="ui-btn" data-title>Return to Title</button></div></div>`,el=>{el.querySelector("[data-post]").onclick=()=>{closeModal();restoreParty(1);enterMap("refectory");};el.querySelector("[data-title]").onclick=()=>{closeModal();showTitle();};});
+}
+
+function openSettings(returnTo="title"){
+  Game.settingsReturn=returnTo;const s=Game.settings;
+  const toggle=(key,label,desc)=>`<div class="setting-row"><label>${label}<small>${desc}</small></label><button class="ui-btn toggle" data-toggle="${key}">${s[key]?"On":"Off"}</button></div>`;
+  $("#settingsRows").innerHTML=`${toggle("music","Adaptive Music","Procedural cello, clockwork and combat stems.")}${toggle("sfx","Combat & UI Sound","Synthesised impact, logic, electric and menu cues.")}${toggle("screenShake","Screen Shake","Anime impact movement during critical strikes and sub-node breaks.")}${toggle("reducedMotion","Reduced Motion","Minimises animation, particles, camera motion and flashing transitions.")}${toggle("highContrast","High Contrast","Strengthens panels, outlines and vector indicators.")}${toggle("largeText","Large Narrative Text","Increases dialogue and subtitle size.")}
+  <div class="setting-row"><label>Difficulty<small>Story reduces incoming damage; Veteran increases it.</small></label><select id="difficultySelect"><option value="story">Story</option><option value="standard">Standard</option><option value="veteran">Veteran</option></select></div>
+  <div class="setting-row"><label>Touch Controls<small>Auto detects coarse-pointer mobile devices.</small></label><select id="touchSelect"><option value="auto">Auto</option><option value="on">Always On</option><option value="off">Off</option></select></div>
+  <div class="setting-row"><label>HUD Scale<small>Scales tactical panels without changing the rendered world.</small></label><input id="uiScaleRange" type="range" min="0.8" max="1.2" step="0.05" value="${s.uiScale||1}"></div>`;
+  $("#difficultySelect").value=s.difficulty;$("#touchSelect").value=s.touchMode;$("#settingsScreen").classList.remove("hidden");
+  $$("[data-toggle]",$("#settingsRows")).forEach(btn=>btn.onclick=()=>{const k=btn.dataset.toggle;Game.settings[k]=!Game.settings[k];applySettings();/* read back AFTER the floor has had its say, or the label promises something the game will not do */btn.textContent=Game.settings[k]?"On":"Off";if(k==="reducedMotion"&&osReducedMotion())btn.textContent="On (system)";AudioEngine.sfx("confirm");});
+}
+function closeSettings(){
+  const diff=$("#difficultySelect"),touch=$("#touchSelect"),scale=$("#uiScaleRange");if(diff)Game.settings.difficulty=diff.value;if(touch)Game.settings.touchMode=touch.value;if(scale)Game.settings.uiScale=+scale.value;document.documentElement.style.setProperty("--ui-scale",Game.settings.uiScale||1);Game.save.settings={...Game.settings};applySettings();saveGame(true);$("#settingsScreen").classList.add("hidden");
+}
+function openControls(){
+  openModal(`<div class="modal brass-frame"><h2>Controls & Combat Systems</h2><div class="kicker">Keyboard, mouse, touch and standard gamepads</div><div class="modal-grid">
+    <div class="choice-btn" style="cursor:default"><b>Exploration</b><small>WASD / Left Stick: move<br>Shift / B: spatial dash<br>E / A: interact<br>1–4 / LB: swap leader<br>Esc / Menu: pause</small></div>
+    <div class="choice-btn" style="cursor:default"><b>Chronos-Grid Combat</b><small>WASD / Left Stick: free reposition<br>Click enemy: target<br>Q/E or LB/RB: cycle enemies<br>F / X: cycle sub-nodes<br>1–4: skills · R: items</small></div>
+    <div class="choice-btn" style="cursor:default"><b>Logic-Resonance Chain</b><small>Tesla applies Ionized → Ada loops the state → Yasuke detonates it. Tycho's charts phase-anchor enemies and strengthen orbital techniques.</small></div>
+    <div class="choice-btn" style="cursor:default"><b>Matrix Collapse</b><small>Fill the amber Stagger bar. The target loses its next action and receives 2.5× damage until its skipped turn resolves.</small></div>
+    <div class="choice-btn" style="cursor:default"><b>Spatial Advantage</b><small>Flank attacks gain armour bypass. Rear attacks bypass 50% armour and raise critical chance. Move before committing your action.</small></div>
+    <div class="choice-btn" style="cursor:default"><b>Touch</b><small>Left virtual stick moves. Action confirms/basic attacks. Dash changes stance or guards in battle. Swap cycles party leaders or targets.</small></div>
+  </div><div class="modal-actions"><button class="ui-btn primary" data-close>Understood</button></div></div>`,el=>el.querySelector("[data-close]").onclick=closeModal);
+}
+function updateShake(dt){
+  const s=Game.shake,stage=$("#stage");if(!s){stage.style.transform="";return;}s.elapsed+=dt*1000;const a=1-s.elapsed/s.duration;if(a<=0){Game.shake=null;stage.style.transform="";return;}stage.style.transform=`translate(${rnd(-s.power,s.power)*a}px,${rnd(-s.power,s.power)*a}px)`;
+}
+function renderTitleCanvas(){
+  const g=ctx.createRadialGradient(W*.52,H*.25,10,W*.52,H*.25,700);g.addColorStop(0,"#342754");g.addColorStop(.45,"#101529");g.addColorStop(1,"#020309");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.translate(W*.52,H*.58);ctx.globalAlpha=.34;for(let i=0;i<6;i++){ctx.strokeStyle=i%2?"#00f0ff":"#d4af37";ctx.lineWidth=4;ctx.rotate(Game.time*(i%2?.018:-.012));ctx.beginPath();ctx.ellipse(0,0,520-i*62,150+i*12,i*.55,0,TAU);ctx.stroke();}ctx.restore();
+  ctx.fillStyle="rgba(4,5,10,.88)";ctx.beginPath();ctx.moveTo(W*.42,H*.8);ctx.lineTo(W*.46,H*.22);ctx.lineTo(W*.52,H*.1);ctx.lineTo(W*.58,H*.22);ctx.lineTo(W*.63,H*.8);ctx.closePath();ctx.fill();
+  for(let i=0;i<90;i++){const x=(i*97+Game.time*11)%W,y=(i*53+Math.sin(i)*40)%H;ctx.fillStyle=i%8===0?"rgba(255,222,120,.7)":"rgba(190,225,255,.4)";ctx.fillRect(x,y,1.5,1.5);}
+}
+function update(dt){
+  pollGamepad();AudioEngine.update();updateShake(dt);if(Game.paused)return;
+  Game.save.playTime+=dt;
+  if(Game.screen==="cinematic")updateCinematic(dt);else if(Game.screen==="explore"&&!Game.dialogue&&!Game.modal)updateExplore(dt);else if(Game.screen==="battle"&&!Game.dialogue&&!Game.modal)updateBattle(dt);else updateEffects(dt);
+}
+function render(){
+  ctx.save();ctx.clearRect(0,0,W,H);if(Game.screen==="title"||Game.screen==="boot")renderTitleCanvas();else if(Game.screen==="cinematic")renderCinematic();else if(Game.screen==="explore")renderExplore();else if(Game.screen==="battle")renderBattle();else renderTitleCanvas();ctx.restore();
+}
+function loop(ts){
+  if(!Game.last)Game.last=ts;const dt=clamp((ts-Game.last)/1000,0,.05);Game.last=ts;Game.time+=dt;Game.dt=dt;update(dt);render();Game.input.pressed.clear();Game.input.pointer.clicked=false;requestAnimationFrame(loop);
+}
+
+function bindUI(){
+  $("#newGameBtn").onclick=()=>{AudioEngine.init();newGame();};$("#continueBtn").onclick=()=>{AudioEngine.init();continueGame();};$("#titleSettingsBtn").onclick=()=>openSettings("title");$("#controlsBtn").onclick=openControls;$("#creditsBtn").onclick=()=>$("#creditsScreen").classList.remove("hidden");
+  $("#creditsCloseBtn").onclick=()=>$("#creditsScreen").classList.add("hidden");$("#skipCinematic").onclick=skipCinematic;$("#dialogueLayer").addEventListener("pointerdown",e=>{e.preventDefault();advanceDialogue();});
+  $("#resumeBtn").onclick=resumeGame;$("#pauseSettingsBtn").onclick=()=>openSettings("pause");$("#saveBtn").onclick=()=>saveGame();$("#quitBtn").onclick=()=>{saveGame(true);showTitle();};$("#settingsCloseBtn").onclick=closeSettings;
+  document.addEventListener("contextmenu",e=>e.preventDefault());
+}
+function init(){
+  bindUI();setupTouch();updateContinueButton();Game.save=defaultSave();Game.settings={...Game.save.settings};applySettings();document.documentElement.style.setProperty("--ui-scale",Game.settings.uiScale||1);setScreen("boot");
+  setTimeout(()=>{$("#splash").classList.add("done");setTimeout(()=>{$("#splash").classList.add("hidden");showTitle();},700);},1850);
+  requestAnimationFrame(loop);
+}
+
+window.OuroborosDebug={
+  build:BUILD_ID,
+  state:()=>({screen:Game.screen,progress:Game.save.progress,map:Game.map?.id,battle:Game.battle?{id:Game.battle.id,phase:Game.battle.phase,round:Game.battle.round,resonance:Game.battle.resonance}:null}),
+  skipSplash:()=>{$("#splash").classList.add("hidden");showTitle();},
+  /* HARNESS ADDITIONS — this object already existed and is EXTENDED, not
+     replaced, so anything already pointing at OuroborosDebug keeps working.
+     window.__ouroboros below is an alias to this same object, not a second
+     surface that can drift from it.
+
+     grantAll() is a DEV CHEAT. It is console-only: it appears exactly once in
+     this file, here, and the file contains zero onclick= attributes and no
+     dataset-keyed dispatch that could reach it. It stays unreachable from
+     shipped UI. Documented rather than removed, so it is not rediscovered and
+     re-added by someone who thinks it is missing. */
+  flash:()=>{const el=document.querySelector("#screenFlash");if(!el)return null;const cs=getComputedStyle(el);return {opacity:parseFloat(cs.opacity),inlineOpacity:el.style.opacity||"",hasClass:el.classList.contains("flash"),animation:cs.animationName};},
+  fireFlash:(c="#ffffff",strength=1)=>{screenFlash(c,strength);return true;},
+  motion:()=>({os:osReducedMotion(),setting:!!Game.settings.reducedMotion,saved:Game.save&&Game.save.settings?!!Game.save.settings.reducedMotion:null,bodyClass:document.body.classList.contains("reduced-motion"),floorHolds:!(osReducedMotion()&&!Game.settings.reducedMotion)}),
+  setSaved:(k,v)=>{Game.save.settings=Game.save.settings||{};Game.save.settings[k]=v;applySettings();return Game.settings[k];},
+  settings:()=>({...Game.settings}),
+  saveRaw:()=>localStorage.getItem(SAVE_KEY),
+  loadRaw:txt=>{localStorage.setItem(SAVE_KEY,txt);return true;},
+  saveKey:()=>SAVE_KEY,
+  newGame:()=>newGame(),enterMap:id=>enterMap(id),startBattle:id=>startBattle(id),grantAll:()=>{Game.save.unlocked=["yasuke","ada","tesla","tycho"];for(const id of Game.save.unlocked){Game.save.characters[id].insight=20;Game.save.characters[id].skills.branchA=3;Game.save.characters[id].skills.branchB=3;Game.save.characters[id].unbound=true;}Game.save.quest.mintDone=true;Game.save.quest.memoryDone=["yasuke","ada","tesla"];Game.save.flags.bossDefeated=true;restoreParty(1);saveGame(true);}
+};
+/* House-shaped alias. Same object, not a copy — a second surface is a second
+   thing to keep in step, and it never is. */
+window.__ouroboros=window.OuroborosDebug;
+
+init();
+</script>
+</body>
+</html>
