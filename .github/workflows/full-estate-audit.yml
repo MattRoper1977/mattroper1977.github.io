@@ -142,7 +142,8 @@ jobs:
             --base-url http://127.0.0.1:4173 \
             --report ../audit-output/runtime-audit.json \
             --markdown ../audit-output/runtime-audit.md \
-            --concurrency 2
+            --concurrency 4 \
+            --per-target-timeout 30000
 
       - name: Print blocking findings and enforce gate
         if: always()
