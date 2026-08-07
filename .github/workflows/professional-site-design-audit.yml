@@ -30,9 +30,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ready=.github/mbm-professional-upgrade-payload.ready-v2
+          ready=.github/mbm-professional-upgrade-payload.ready-v3
           if [[ ! -f "$ready" ]]; then
-            echo "Corrected payload is not marked complete; nothing to apply."
+            echo "Fragment-verified payload is not marked complete; nothing to apply."
             exit 0
           fi
 
@@ -45,17 +45,30 @@ jobs:
             .github/mbm-professional-upgrade-payload.part-05
             .github/mbm-professional-upgrade-payload.part-06
             .github/mbm-professional-upgrade-payload.part-07a
-            .github/mbm-professional-upgrade-payload.part-07b
+            .github/mbm-professional-upgrade-payload.part-07b-00
+            .github/mbm-professional-upgrade-payload.part-07b-01
+            .github/mbm-professional-upgrade-payload.part-07b-02
+            .github/mbm-professional-upgrade-payload.part-07b-03
+            .github/mbm-professional-upgrade-payload.part-07b-04
           )
           for part in "${parts[@]}"; do test -f "$part"; done
+          test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07a)" = "f898a569c8cff8138f0822a18203a5180bf73e35"
+          test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07b-00)" = "e260a6a3bc1074c6771e7e3f85bc9c5fcaa0d22b"
+          test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07b-01)" = "946b5737d3bf6374390aac8fff555c25cf93017c"
+          test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07b-02)" = "9c61fbb5e4901ba45e3a431a736af3e0397a7048"
+          test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07b-03)" = "a8e956a602afb6d9bf6104d46adcc4798fa11b23"
+          test "$(git hash-object .github/mbm-professional-upgrade-payload.part-07b-04)" = "1b523834fed908102ea6c145b2a3e432fa871466"
           cat "${parts[@]}" | base64 -d >/tmp/mbm-professional-upgrade.tar.gz
           echo "6e65c3953d9cb286daabf7cbbda810576a54f10fed2a945020eaac87f190611f  /tmp/mbm-professional-upgrade.tar.gz" | sha256sum -c -
           tar -tzf /tmp/mbm-professional-upgrade.tar.gz | tee /tmp/payload-files.txt
           test "$(wc -l </tmp/payload-files.txt)" -eq 14
           tar -xzf /tmp/mbm-professional-upgrade.tar.gz
-          rm "$ready" "${parts[@]}" \
+          rm "$ready" "${parts[@]}"
+          rm -f \
             .github/mbm-professional-upgrade-payload.ready \
-            .github/mbm-professional-upgrade-payload.part-07
+            .github/mbm-professional-upgrade-payload.ready-v2 \
+            .github/mbm-professional-upgrade-payload.part-07 \
+            .github/mbm-professional-upgrade-payload.part-07b
 
           python -m py_compile tools/verify_professional_site.py
           node --check app.js
