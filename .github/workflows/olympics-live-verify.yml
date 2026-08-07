@@ -117,6 +117,31 @@ jobs:
           done
           exit $fail
 
+      # R1 from the other side. A game staged under _staging/ is deliberately
+      # NOT on the shelf, in the sitemap or in the marker state. If Pages
+      # serves it anyway then it is silently live — a half-publish in reverse,
+      # and the red line is breached from the direction nobody watches.
+      # Jekyll excludes underscore-prefixed directories and this repo carries
+      # no .nojekyll, so the expectation is 404. Expectation is not evidence,
+      # hence this step.
+      - name: Staged games must NOT be served
+        run: |
+          set -o pipefail
+          fail=0
+          for u in \
+            https://madebymatt.uk/_staging/ \
+            https://madebymatt.uk/_staging/novasiege/ \
+            https://madebymatt.uk/_staging/novasiege/index.html ; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
+            printf '%-52s %s\n' "$u" "$code"
+            case "$code" in
+              404|403) ;;
+              200) echo "  FAIL a staged game is publicly reachable — half-publish in reverse"; fail=1 ;;
+              *)   echo "  FAIL unexpected status; treat as reachable until proven otherwise"; fail=1 ;;
+            esac
+          done
+          exit $fail
+
       - name: Fetch the served bytes
         run: |
           set -euo pipefail
