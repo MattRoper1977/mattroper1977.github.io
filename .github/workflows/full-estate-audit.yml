@@ -60,6 +60,9 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Preserve the measured SAVE-05 pre-repair control
+        run: cp site/ouroboros/index.html /tmp/ouroboros-save05-array-control.html
+
       - name: Apply measured site runtime repairs
         run: python site/tools/apply_site_runtime_repairs.py --root site
 
@@ -69,18 +72,23 @@ jobs:
           node --check site/assets/mbm-features.js
           node --check site/tools/full_estate_runtime.mjs
           node --check site/tools/verify_counter_fallback.mjs
+          node --check site/tools/verify_ouroboros_save05_arrays.mjs
           python - <<'PY'
           from pathlib import Path
           features = Path('site/assets/mbm-features.js').read_text(encoding='utf-8')
           runtime = Path('site/tools/full_estate_runtime.mjs').read_text(encoding='utf-8')
+          ouroboros = Path('site/ouroboros/index.html').read_text(encoding='utf-8')
           assert features.count('remoteCounters: false') == 1
           assert features.count('function probeRemoteCounters()') == 1
-          assert features.count('return counterJSON(API +') == 2
-          assert 'return timedJSON(API +' not in features
+          assert features.count('return counterJSON(API + CFG.stats.namespace +') == 2
+          assert 'return timedJSON(API + CFG.stats.namespace +' not in features
           assert runtime.count('async function activateVisibleControl') == 1
           assert "locator('button:visible" not in runtime
           assert runtime.count('elementFromPoint') >= 2
-          print('SOURCE REGRESSION PASS — counters are local-first; control probes are one-shot and topmost')
+          assert ouroboros.count('including values nested inside arrays') == 1
+          assert 'const finiteMerge=' not in ouroboros
+          assert 'if(Array.isArray(outVal))' in ouroboros
+          print('SOURCE REGRESSION PASS — counters local-first; probes topmost; SAVE-05 traverses arrays')
           PY
           git -C site diff --check
 
@@ -88,11 +96,11 @@ jobs:
         run: |
           git -C site config user.name 'github-actions[bot]'
           git -C site config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git -C site add assets/mbm-features.js tools/full_estate_runtime.mjs
+          git -C site add assets/mbm-features.js tools/full_estate_runtime.mjs ouroboros/index.html
           if git -C site diff --cached --quiet; then
             echo 'Measured runtime repairs already applied'
           else
-            git -C site commit -m 'fix: stop counter failures and harden browser probes'
+            git -C site commit -m 'fix: harden counters, browser probes and Ouroboros saves'
             git -C site push origin HEAD:codex/full-repair-upgrade-2026-08-07
           fi
 
@@ -147,8 +155,16 @@ jobs:
       - name: Install Playwright Chromium
         working-directory: site
         run: |
-          npm install --no-save --no-package-lock playwright@1.54.1
+          npm install --no-save --no-package-lock playwright@1.56.1
           npx playwright install --with-deps chromium
+
+      - name: Prove SAVE-05 array gap and repaired behaviour
+        working-directory: site
+        run: |
+          node tools/verify_ouroboros_save05_arrays.mjs --expect-gap /tmp/ouroboros-save05-array-control.html \
+            | tee ../audit-output/ouroboros-save05-array-control.txt
+          node tools/verify_ouroboros_save05_arrays.mjs ouroboros/index.html \
+            | tee ../audit-output/ouroboros-save05-array-fixed.txt
 
       - name: Build combined local Pages tree and start server
         run: |
