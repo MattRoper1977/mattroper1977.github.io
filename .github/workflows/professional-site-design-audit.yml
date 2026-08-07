@@ -1,0 +1,48 @@
+name: Professional site design audit
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: professional-site-design-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact branch under review
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Record repository state and create deterministic source snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit-output
+          {
+            echo "sentinel=mbm-site-professional-design-upgrade-2026-08-07"
+            echo "head=$(git rev-parse HEAD)"
+            echo "branch=$(git branch --show-current)"
+            echo "files=$(find . -path './.git' -prune -o -type f -print | wc -l)"
+            echo "html=$(find . -path './.git' -prune -o -type f -iname '*.html' -print | wc -l)"
+            echo "css=$(find . -path './.git' -prune -o -type f -iname '*.css' -print | wc -l)"
+            echo "js=$(find . -path './.git' -prune -o -type f \( -iname '*.js' -o -iname '*.mjs' -o -iname '*.cjs' \) -print | wc -l)"
+          } | tee audit-output/repository-state.txt
+          find . -path './.git' -prune -o -type f -printf '%P\t%s\n' | sort > audit-output/file-inventory.tsv
+          tar --exclude='./.git' --exclude='./audit-output/site-source.tar.gz' -czf audit-output/site-source.tar.gz .
+
+      - name: Upload source and measured inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: professional-site-source-${{ github.run_id }}
+          path: audit-output/
+          if-no-files-found: error
+          retention-days: 7
