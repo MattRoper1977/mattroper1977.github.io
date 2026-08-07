@@ -85,7 +85,7 @@ jobs:
           assert runtime.count('async function activateVisibleControl') == 1
           assert "locator('button:visible" not in runtime
           assert runtime.count('elementFromPoint') >= 2
-          assert ouroboros.count('including values nested inside arrays') == 1
+          assert ouroboros.count('includes values nested inside arrays') == 1
           assert 'const finiteMerge=' not in ouroboros
           assert 'if(Array.isArray(outVal))' in ouroboros
           print('SOURCE REGRESSION PASS — counters local-first; probes topmost; SAVE-05 traverses arrays')
