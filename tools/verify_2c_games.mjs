@@ -331,11 +331,36 @@ async function lumina(browser, base) {
       off.motion > MOTION_FLOOR && churnRatio >= 20 && on.mq === true,
       `churn RM off ${churn(off).toFixed(5)} (motion ${off.motion} / progress ${off.progress}) · ` +
       `RM on ${churn(on).toFixed(5)} (motion ${on.motion} / progress ${on.progress}) · ratio ${churnRatio.toFixed(1)}x`);
-    /* The gate that separates "reduced motion" from "slowed game". */
+    /* The gate that separates "reduced motion" from "slowed game".
+     *
+     * ONE-SIDED, ruled 2026-08-07. It was a +/-10% band and it flaked: across
+     * runs at a green tip it read 0.902, 0.947, 1.008, 1.050 and 1.143. The
+     * measurement is world progress per unit of WALL time, so it is sensitive
+     * to render cost — and the upper excursions are benign by construction.
+     * With a fixed timestep the simulation cannot run fast; a ratio above 1
+     * only means the RM path had less to draw and fitted more frames into the
+     * two seconds. There is no defect on that side to catch.
+     *
+     * THE FLOOR IS DERIVED, not chosen for comfort:
+     *   - the defect is a dt clamp, and its ratio is set by the clamp against
+     *     the frame interval: 0.02/0.0333 = 0.60 at 30fps, 0.02/0.05 = 0.40 at
+     *     20fps. The pristine file measures 0.400. So the defect FAMILY reaches
+     *     up to about 0.60, and a floor must sit above that to bite at any
+     *     frame rate where the defect shows.
+     *   - the lowest healthy reading observed at a green tip is 0.902.
+     * 0.75 sits 25% above the worst-case defect ratio and 17% below the lowest
+     * observed healthy reading. The measurement method is unchanged; only the
+     * shape of the assertion moved.
+     *
+     * The ratio is still REPORTED on both sides, so a genuine speed-up would
+     * still be visible to anyone reading the output even though it is not
+     * failed on. */
+    const L4B_FLOOR = 0.75;
     const progRatio = off.progress > 0 ? on.progress / off.progress : 0;
     gate('L4b reduced motion does not slow the world down',
-      off.progress > 0.5 && progRatio >= 0.9 && progRatio <= 1.1,
-      `world progress over 2s: RM off ${off.progress} · RM on ${on.progress} · ratio ${progRatio.toFixed(3)} (must be 1.0, not a slowdown)`);
+      off.progress > 0.5 && progRatio >= L4B_FLOOR,
+      `world progress over 2s: RM off ${off.progress} · RM on ${on.progress} · ratio ${progRatio.toFixed(3)} ` +
+      `(floor ${L4B_FLOOR}: above the dt-clamp defect family, which tops out near 0.60; the pristine file reads 0.400)`);
   }
 
   /* L5 — OS preference is a live floor, not a boot-time sample. */
