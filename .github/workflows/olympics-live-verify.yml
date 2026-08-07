@@ -1,0 +1,136 @@
+name: Olympics live leg (Stage L1)
+
+# Closes the live half of the Olympics publish.
+#
+# The agent container cannot reach the custom domain — the proxy answers 403
+# on CONNECT — so CI is the only channel that can see what the world is
+# actually served. This workflow is READ-ONLY against production: it fetches,
+# hashes, renders and compares. It writes to no surface.
+#
+# What L1 asks, and what each is answered by:
+#   served games.json byte-equal to main's blob  -> games.json-bytes
+#   46 entries served                            -> shelf-count (DERIVED from
+#                                                   main's blob, never pinned)
+#   sole NEW· marker, held by /olympics/         -> marker-sole-holder,
+#                                                   marker-is-olympics
+#   /olympics/ index byte-equal                  -> olympics-bytes
+#   arcade renders 46                            -> arcade-renders-shelf
+#
+# The negative-control job runs FIRST and the live job will not start unless
+# it passes. A gate that has never been seen to fail is not evidence, and this
+# estate has already paid for that lesson twice.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'claude/estate-finish-two-games-us1b19'
+
+permissions:
+  contents: read
+
+jobs:
+  negative_control:
+    name: Prove every limb can exit non-zero
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the site
+        uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - name: Check out the shelf repository
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: _shelf
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install Playwright Chromium
+        run: |
+          npm i --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Self-test — knock over every limb in turn
+        run: |
+          ln -sfn "$PWD/node_modules" tools/node_modules || true
+          bash tools/verify_olympics_live_selftest.sh "$PWD/_shelf/games.json"
+
+  live:
+    name: The live estate, as served
+    needs: negative_control
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out main (the deployed tree)
+        uses: actions/checkout@v4
+        with: { ref: main, fetch-depth: 1 }
+
+      - name: Check out the shelf repository at main
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: _shelf
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install Playwright Chromium
+        run: |
+          npm i --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Record the SHAs under test
+        run: |
+          echo "site  main is $(git rev-parse HEAD)"
+          echo "shelf main is $(git -C _shelf rev-parse HEAD)"
+
+      - name: Every surface must answer 200
+        run: |
+          set -o pipefail
+          fail=0
+          for u in \
+            https://madebymatt.uk/ \
+            https://madebymatt.uk/games/ \
+            https://madebymatt.uk/olympics/ \
+            https://madebymatt.uk/Games/games.json ; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
+            printf '%-46s %s\n' "$u" "$code"
+            [ "$code" = "200" ] || fail=1
+          done
+          exit $fail
+
+      - name: Fetch the served bytes
+        run: |
+          set -euo pipefail
+          # Poll rather than single-sample. Pages can serve a stale edge copy
+          # for a few seconds after a deploy, and a single sample taken inside
+          # that window is how this estate previously recorded two branded
+          # splashes as unbranded.
+          for i in $(seq 1 10); do
+            curl -sS --max-time 60 https://madebymatt.uk/Games/games.json -o /tmp/served-games.json
+            curl -sS --max-time 60 https://madebymatt.uk/olympics/        -o /tmp/served-olympics.html
+            a=$(sha256sum /tmp/served-games.json    | cut -d' ' -f1)
+            b=$(sha256sum _shelf/games.json         | cut -d' ' -f1)
+            c=$(sha256sum /tmp/served-olympics.html | cut -d' ' -f1)
+            d=$(sha256sum olympics/index.html       | cut -d' ' -f1)
+            echo "attempt $i: shelf $( [ "$a" = "$b" ] && echo match || echo differs ), olympics $( [ "$c" = "$d" ] && echo match || echo differs )"
+            [ "$a" = "$b" ] && [ "$c" = "$d" ] && break
+            sleep 15
+          done
+
+      - name: Assert the live leg
+        run: |
+          ln -sfn "$PWD/node_modules" tools/node_modules || true
+          cd tools && node verify_olympics_live.mjs \
+            --served-games    /tmp/served-games.json \
+            --repo-games      "$GITHUB_WORKSPACE/_shelf/games.json" \
+            --served-olympics /tmp/served-olympics.html \
+            --repo-olympics   "$GITHUB_WORKSPACE/olympics/index.html" \
+            --arcade-url      https://madebymatt.uk/games/
