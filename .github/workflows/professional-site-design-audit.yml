@@ -1,48 +1,55 @@
-name: Professional site design audit
+name: Apply professional site design payload
 
 on:
-  pull_request:
-    branches: [main]
+  push:
+    branches:
+      - codex/mbm-site-professional-design-upgrade-2026-08-07
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: professional-site-design-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: mbm-professional-design-payload
+  cancel-in-progress: false
 
 jobs:
-  snapshot:
+  apply:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
-      - name: Check out exact branch under review
+      - name: Check out the exact authorised branch
         uses: actions/checkout@v4
         with:
+          ref: codex/mbm-site-professional-design-upgrade-2026-08-07
           fetch-depth: 0
 
-      - name: Record repository state and create deterministic source snapshot
+      - name: Apply the hash-locked implementation payload once
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p audit-output
-          {
-            echo "sentinel=mbm-site-professional-design-upgrade-2026-08-07"
-            echo "head=$(git rev-parse HEAD)"
-            echo "branch=$(git branch --show-current)"
-            echo "files=$(find . -path './.git' -prune -o -type f -print | wc -l)"
-            echo "html=$(find . -path './.git' -prune -o -type f -iname '*.html' -print | wc -l)"
-            echo "css=$(find . -path './.git' -prune -o -type f -iname '*.css' -print | wc -l)"
-            echo "js=$(find . -path './.git' -prune -o -type f \( -iname '*.js' -o -iname '*.mjs' -o -iname '*.cjs' \) -print | wc -l)"
-          } | tee audit-output/repository-state.txt
-          find . -path './.git' -prune -o -type f -printf '%P\t%s\n' | sort > audit-output/file-inventory.tsv
-          tar --exclude='./.git' --exclude='./audit-output/site-source.tar.gz' -czf audit-output/site-source.tar.gz .
+          payload=.github/mbm-professional-upgrade-payload.b64
+          if [[ ! -f "$payload" ]]; then
+            echo "No payload present; this bootstrap has nothing to apply."
+            exit 0
+          fi
 
-      - name: Upload source and measured inventory
-        uses: actions/upload-artifact@v4
-        with:
-          name: professional-site-source-${{ github.run_id }}
-          path: audit-output/
-          if-no-files-found: error
-          retention-days: 7
+          base64 -d "$payload" >/tmp/mbm-professional-upgrade.tar.gz
+          echo "6e65c3953d9cb286daabf7cbbda810576a54f10fed2a945020eaac87f190611f  /tmp/mbm-professional-upgrade.tar.gz" | sha256sum -c -
+          tar -tzf /tmp/mbm-professional-upgrade.tar.gz | tee /tmp/payload-files.txt
+          test "$(wc -l </tmp/payload-files.txt)" -eq 14
+          tar -xzf /tmp/mbm-professional-upgrade.tar.gz
+          rm "$payload"
+
+          python -m py_compile tools/verify_professional_site.py
+          node --check app.js
+          node --check assets/mbm-platform.js
+          node --check tools/verify_professional_site.mjs
+          git diff --check
+
+          git config user.name "Made by Matt design automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --stat
+          git commit -m "feat: elevate Made by Matt platform UX"
+          git push origin HEAD:codex/mbm-site-professional-design-upgrade-2026-08-07
