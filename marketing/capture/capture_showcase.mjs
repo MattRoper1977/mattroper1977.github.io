@@ -70,9 +70,13 @@ async function visible(locator, timeout = 1800) {
 
 async function clickTextButton(page, regex, timeout = 1600) {
   const byRole = page.getByRole('button', { name: regex }).first();
-  if (await visible(byRole, timeout)) { await byRole.click(); return true; }
+  if (await visible(byRole, timeout)) {
+    try { await byRole.click({ timeout: 2200 }); return true; } catch {}
+  }
   const byText = page.locator('button').filter({ hasText: regex }).first();
-  if (await visible(byText, 500)) { await byText.click(); return true; }
+  if (await visible(byText, 500)) {
+    try { await byText.click({ timeout: 2200 }); return true; } catch {}
+  }
   return false;
 }
 
@@ -138,6 +142,15 @@ async function lessonInteraction(page) {
 }
 
 async function designStudioInteraction(page) {
+  const newModal = page.locator('#newModal.open');
+  if (await visible(newModal, 1200)) {
+    const start = page.locator('#newGo');
+    if (!(await visible(start, 700))) throw new Error('Design Studio New design modal is open but Start is unavailable');
+    await start.click({ timeout: 2200 });
+    await newModal.waitFor({ state: 'hidden', timeout: 2500 }).catch(() => {});
+    await page.waitForTimeout(450);
+  }
+
   const canvas = page.locator('#disp');
   const box = await canvas.boundingBox().catch(() => null);
   if (!box) return false;
@@ -374,6 +387,12 @@ await mobileScene('mobile_apps', mobile.mobile_apps, async (page, scene) => {
   await smoothScroll(page, 520, 1000); await page.waitForTimeout(700);
   if (await clickTextLink(page, /Design Studio/i, 1000)) { await settle(page, 700); scene.interactions.push('opened Design Studio on mobile'); }
   else await gotoLive(page, `${BASE}Matt-s-Apps-/Design_Studio.html`, scene.id);
+  const start = page.locator('#newGo');
+  if (await visible(start, 700)) {
+    await start.click({ timeout: 2200 });
+    scene.interactions.push('started blank Design Studio document on mobile');
+    await page.waitForTimeout(700);
+  }
   await page.waitForTimeout(1700);
 });
 
