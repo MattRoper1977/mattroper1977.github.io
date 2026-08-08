@@ -18,9 +18,6 @@ function publicSupabaseConfig(accounts){
   const key=String((accounts&&accounts.supabaseAnonKey)||'').trim();
   if(!url&&!key)return {configured:false,safe:true};
   const urlSafe=/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(url);
-  // Modern publishable keys are the preferred browser key. A legacy anon JWT is
-  // still accepted for compatibility, but a modern secret key/service-role JWT
-  // must never be accepted by this public configuration gate.
   const publishable=/^sb_publishable_[A-Za-z0-9_-]{16,}$/.test(key);
   let legacyAnon=false;
   if(/^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(key)){
@@ -35,8 +32,6 @@ function publicSupabaseConfig(accounts){
   return {configured:true,safe:urlSafe&&!privileged&&(publishable||legacyAnon)};
 }
 function ownPolicy(schema,column){
-  // Accept both auth.uid() = column and Supabase's recommended optimized form
-  // (select auth.uid()) = column, while still requiring an authenticated role.
   const escaped=column.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   const uid='(?:\\(\\s*select\\s+)?auth\\.uid\\(\\)\\s*\\)?';
   const ownership=new RegExp(uid+'\\s*=\\s*'+escaped,'i');
@@ -75,6 +70,8 @@ function scan(overrides={}){
   need(!/\bpassword\b\s+(text|varchar|bytea)/i.test(schema),'schema contains a password column');
   need(/revoke all on function public\.handle_new_user\(\) from public/i.test(schema),'trigger security-definer function remains directly executable by PUBLIC');
   need(/grant update\s*\(\s*name\s*,\s*display_name\s*,\s*updated_at\s*\)\s+on table public\.profiles to authenticated/i.test(schema),'profile client grants are not column-restricted');
+  need(!/from\(['"]profiles['"]\)\s*\.upsert\s*\(/i.test(account),'profile update still uses UPSERT and therefore requires INSERT privilege');
+  need(/from\(['"]profiles['"]\)[\s\S]{0,220}?\.update\s*\([\s\S]{0,180}?\.eq\(['"]id['"]\s*,\s*u\.id\)/i.test(account),'profile update is not an ownership-filtered UPDATE');
   need(/\/account\/\?mode=login/.test(members)&&/\/account\/\?mode=register/.test(members),'Members signed-out login/create routes missing');
   need(/autocomplete="username"/.test(accountPage)&&/autocomplete="current-password"/.test(accountPage)&&/autocomplete="new-password"/.test(accountPage),'password-manager semantics missing');
   need(/resendVerification/.test(account)&&/Resend verification email/.test(accountPage),'verification resend path missing');
@@ -86,18 +83,12 @@ function scan(overrides={}){
   need(/SUPABASE_SERVICE_ROLE_KEY/.test(del)&&/auth\.admin\.deleteUser/.test(del),'server-side account deletion path missing');
   need(/\[functions\.subscribe-mailing-list\][\s\S]*verify_jwt\s*=\s*false/.test(cfg),'public subscription function configuration missing');
   need(/\[functions\.delete-account\][\s\S]*verify_jwt\s*=\s*true/.test(cfg),'account deletion JWT verification missing');
-  // P3-A: an unauthenticated caller must not learn whether an address is on the
-  // list. A distinguishable already_subscribed state IS that disclosure, so the
-  // state must not exist on either side of the wire.
   need(!/already_subscribed/.test(sub),'subscribe endpoint discloses existing membership to an anonymous caller');
   need(!/already_subscribed/.test(mailingJs),'mailing UI branches on existing membership, rebuilding the enumeration oracle');
-  // P3-B: /account/ must offer an unsubscribe, JWT-verified, with the address
-  // taken from the token rather than the request body.
   need(/\[functions\.unsubscribe-mailing-list\][\s\S]*verify_jwt\s*=\s*true/.test(cfg),'unsubscribe function is not JWT-verified');
   need(/userData\.user\.email/.test(unsub),'unsubscribe function does not derive the address from the verified token');
   need(/BUTTONDOWN_API_KEY/.test(unsub)&&/Deno\.env\.get/.test(unsub),'unsubscribe Buttondown token is not server-side env configuration');
   need(/unsubscribeMailing/.test(account)&&/mailUnsubBtn/.test(accountPage),'self-service unsubscribe control missing from /account/');
-  // P2-A: the deletion copy must not imply erasure reaches the mailing list.
   need(/not.{0,12}removed by deleting your account/i.test(accountPage),'account deletion copy does not state that mailing subscription survives');
   return findings;
 }
@@ -116,6 +107,9 @@ const secretFixture=JSON.parse(read('site.json'));
 secretFixture.features.accounts.supabaseAnonKey='sb_'+'secret_'+'positive_control_not_a_real_key';
 const secretPositive=scan({'site.json':JSON.stringify(secretFixture)});
 ok(secretPositive.some(x=>/malformed or privileged|secret key appears/i.test(x)),'positive control: injected Supabase secret is rejected');
+const profileUpsertFixture=read('assets/mbm-account.js').replace(".update({ display_name: name, name: name, updated_at: nowISO() })", ".upsert({ id: u.id, display_name: name, name: name, updated_at: nowISO() }, { onConflict: 'id' })");
+const profilePositive=scan({'assets/mbm-account.js':profileUpsertFixture});
+ok(profilePositive.some(x=>/UPSERT.*INSERT privilege/i.test(x)),'positive control: profile UPSERT regression is rejected');
 ok(site.features.mailing.enabled===false,'mailing remains disabled until real provider proof');
 console.log(`\n${pass} passed · ${fail} failed`);
 if(fail)process.exit(1);
