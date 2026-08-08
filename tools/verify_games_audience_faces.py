@@ -25,7 +25,7 @@ def check_tree(root:Path=ROOT)->list[str]:
     if 'g.art?' not in games or 'a moment from play' not in games: errors.append("top-picks renderer is not using manifest art")
     for phrase in GAMES_COPY:
         if phrase not in games: errors.append(f"existing Games wording changed or missing: {phrase[:72]}")
-    if games.count('/assets/brand/micro_mark.svg')<2: errors.append("Games header/footer are not using the canonical logo asset")
+    if games.count('<svg class="mono" viewBox="0 0 100 100" aria-hidden="true">')!=2: errors.append("Games immutable logo markup is not present twice")
     home=text("index.html")
     for heading in ["Teachers","Pupils &amp; learners","Schools &amp; organisations","Partners"]:
         if heading not in home: errors.append(f"homepage audience wording disappeared: {heading}")
