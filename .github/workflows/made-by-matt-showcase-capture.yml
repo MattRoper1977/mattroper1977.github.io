@@ -47,11 +47,9 @@ jobs:
           sudo apt-get install -y ffmpeg fonts-dejavu-core jq
           npm install --no-save --package-lock=false playwright
           npx playwright install --with-deps chromium
-          {
-            echo "ffmpeg=$(ffmpeg -version | head -1)"
-            echo "ffprobe=$(ffprobe -version | head -1)"
-            echo "playwright=$(node -e \"console.log(require('playwright/package.json').version)\")"
-          } | tee -a showcase-output/environment-probe.txt
+          ffmpeg -version | head -1 | sed 's/^/ffmpeg=/' | tee -a showcase-output/environment-probe.txt
+          ffprobe -version | head -1 | sed 's/^/ffprobe=/' | tee -a showcase-output/environment-probe.txt
+          node -p '"playwright=" + require("playwright/package.json").version' | tee -a showcase-output/environment-probe.txt
 
       - name: Capture genuine production browser footage
         env:
