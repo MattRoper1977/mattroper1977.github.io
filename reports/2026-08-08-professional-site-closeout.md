@@ -105,7 +105,7 @@ The permanent audit record is `docs/MBM_PROFESSIONAL_SITE_AUDIT_PASS.json`.
 - Final head: `43086183556d4b7dbbd227c6e011259763a6289e`
 - PR audit run: `31229651053` — SUCCESS, attempt 1
 - Merged: 7 August 2026 at 23:23 UTC
-- Merge commit: `4291cc7ba706a3cffd0b71e58e678f7765b6c7e1`
+- Merge commit: `4291cc7ba706fd66f3b76f6d4eeb87eac88d8f0b`
 
 ### Production proof
 
@@ -113,7 +113,7 @@ The permanent audit record is `docs/MBM_PROFESSIONAL_SITE_AUDIT_PASS.json`.
 - Verification head: `e1393c3d73f7e3178cafb0298a540185566ced3b`
 - Live run: `31229845015` — SUCCESS, attempt 1
 - Live job: `93031630140`
-- Verification merge commit: `a1ca4ce0c7cb4fb0b2be4112dd0c276084982067`
+- Verification merge commit: `a1ca8093c64e519f2e17dce643401a04d31b8b07`
 - Retained artifact: `professional-site-live-31229845015`
 
 The production run proved:
