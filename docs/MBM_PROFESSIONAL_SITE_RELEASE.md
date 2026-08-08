@@ -2,20 +2,40 @@
 
 Sentinel: `mbm-site-professional-design-upgrade-2026-08-07`
 
-The professional presentation upgrade is delivered through a focused pull request. It does not rename established public routes, replace existing authored wording, redraw brand artwork, create authentication or alter game/lesson runtime code.
+## Release status
 
-## Release sequence
+**CLOSED — merged, deployed and live-verified.**
 
-1. Run static preservation, syntax and positive-control checks.
-2. Run the Playwright responsive/accessibility matrix and retain its report and representative screenshots.
-3. Review the homepage, Games, Tools, Resources, Stats, Privacy and Members entry points in the pull request.
-4. Merge only after required checks pass.
-5. Verify the served GitHub Pages deployment and first-party assets after publication.
+The professional presentation upgrade was merged through PR #92 on **7 August 2026 at 23:23 UTC**.
 
-## Rollback boundary
+- Implementation merge commit: `4291cc7ba706a3cffd0b71e58e678f7765b6c7e1`
+- Final implementation head: `43086183556d4b7dbbd227c6e011259763a6289e`
+- PR audit run: `31229651053` — **SUCCESS**, first attempt
+- Permanent live-verification PR: #93
+- Live-verification merge commit: `a1ca4ce0c7cb4fb0b2be4112dd0c276084982067`
+- Production proof run: `31229845015` — **SUCCESS**, first attempt
+- Retained proof artifact: `professional-site-live-31229845015`
 
-The presentation upgrade is concentrated in the shared `assets/mbm-platform.css` and `assets/mbm-platform.js` files plus explicit page integrations. Existing data manifests, lessons, games and application source remain their own sources of truth.
+## What was proved
 
-## Release recovery
+The production verifier checked the served website after deployment rather than treating a Git commit as proof.
 
-The completed `ready-v4` payload is retriggered through the permanent release gate after the obsolete `ready-v3` bootstrap path was found incomplete. The release gate must validate the recorded archive hash, run both static and browser checks, remove every staging fragment and then commit the implementation to this branch.
+- Seven entry pages returned HTTP 200 and contained the professional platform marker: `/`, `/games/`, `/tools/`, `/resources/`, `/members/`, `/privacy/` and `/stats/`.
+- `assets/mbm-platform.css` and `assets/mbm-platform.js` were byte-identical to the committed files.
+- `/Games/games.json`, `/Lessons/resources.json` and `/Matt-s-Apps-/tools.json` returned HTTP 200 and valid JSON.
+- A deliberate impossible-marker fixture failed with one detected error, proving the live verifier is non-vacuous.
+
+## Preservation boundary
+
+The release did not rename established public routes, rewrite Matt's authored body wording, redraw the Made by Matt logo, introduce credentials or fake authentication, or alter game/lesson runtime code. Related repositories were read for discovery and were not changed.
+
+The presentation upgrade remains concentrated in `assets/mbm-platform.css`, `assets/mbm-platform.js` and the explicit page integrations recorded in PR #92. Existing data manifests, Lessons, Games and application source remain their own sources of truth.
+
+## Permanent regression protection
+
+PR #93 added:
+
+- `.github/workflows/professional-site-live-verify.yml`
+- `tools/verify_professional_site_live.py`
+
+The live proof runs on relevant changes and can also be dispatched manually. The complete closeout is recorded in `reports/2026-08-08-professional-site-closeout.md`.
