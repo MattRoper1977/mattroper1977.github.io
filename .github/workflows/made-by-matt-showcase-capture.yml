@@ -66,6 +66,24 @@ jobs:
           set -euo pipefail
           bash marketing/capture/build_showcase.sh showcase-output
 
+      - name: Retain reusable production system
+        run: |
+          set -euo pipefail
+          mkdir -p showcase-output/reusable-production-system
+          cp marketing/capture/capture_showcase.mjs showcase-output/reusable-production-system/
+          cp marketing/capture/shots.json showcase-output/reusable-production-system/
+          cp marketing/capture/build_showcase.sh showcase-output/reusable-production-system/
+          cp .github/workflows/made-by-matt-showcase-capture.yml showcase-output/reusable-production-system/
+          cat > showcase-output/reusable-production-system/README.md <<'EOF'
+          # Made by Matt showcase regeneration
+
+          1. Keep `capture_showcase.mjs`, `shots.json` and `build_showcase.sh` together under `marketing/capture/`.
+          2. Keep `made-by-matt-showcase-capture.yml` under `.github/workflows/`.
+          3. Trigger the workflow manually, or create a disposable file under `marketing/capture/run-requests/` in a pull request.
+          4. The workflow records the live production estate, builds landscape/mobile outputs, validates them with ffprobe, and uploads the media package as a workflow artifact.
+          5. Do not commit generated MP4 binaries to the normal website source tree unless a deliberate media-storage decision is made later.
+          EOF
+
       - name: Final readback
         run: |
           set -euo pipefail
