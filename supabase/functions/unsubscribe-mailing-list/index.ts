@@ -1,6 +1,6 @@
 // mbm-accounts-members-mailing-2026-08-08
 // Authenticated self-service unsubscribe, for the /account/ page.
-// BUTTONDOWN_API_KEY stays in Supabase Edge Function secret storage.
+// BUTTONDOWN_API_KEY/buttondown_api_key stays in Supabase Edge Function secret storage.
 //
 // WHY THIS IS AUTHENTICATED WHILE SUBSCRIBE IS NOT:
 // an unauthenticated endpoint that takes an address and unsubscribes it would
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
 
   const url = Deno.env.get('SUPABASE_URL') || ''
   const anon = Deno.env.get('SUPABASE_ANON_KEY') || ''
-  const token = Deno.env.get('BUTTONDOWN_API_KEY') || ''
+  const token = Deno.env.get('BUTTONDOWN_API_KEY') || Deno.env.get('buttondown_api_key') || ''
   if (!url || !anon || !token) return json(503, { ok: false, message: 'The mailing list is not configured yet.' }, origin)
 
   const authHeader = req.headers.get('Authorization') || ''
