@@ -45,6 +45,7 @@ function scan(overrides={}){
   const members=get('members/index.html');
   const accountPage=get('account/index.html');
   const mailing=get('mailing-list/index.html');
+  const privacy=get('privacy/index.html');
   const mailingJs=get('assets/mbm-mailing.js');
   const profile=get('assets/mbm-profile.js');
   const del=get('supabase/functions/delete-account/index.ts');
@@ -72,6 +73,8 @@ function scan(overrides={}){
   need(/grant update\s*\(\s*name\s*,\s*display_name\s*,\s*updated_at\s*\)\s+on table public\.profiles to authenticated/i.test(schema),'profile client grants are not column-restricted');
   need(!/from\(['"]profiles['"]\)\s*\.upsert\s*\(/i.test(account),'profile update still uses UPSERT and therefore requires INSERT privilege');
   need(/from\(['"]profiles['"]\)[\s\S]{0,220}?\.update\s*\([\s\S]{0,180}?\.eq\(['"]id['"]\s*,\s*u\.id\)/i.test(account),'profile update is not an ownership-filtered UPDATE');
+  need(/adultAccountNotice/.test(account)&&/intended for adults and teachers/i.test(account),'account registration does not state the adult/teacher audience');
+  need(/intended for adults and teachers/i.test(privacy)&&/Pupils can use the public/i.test(privacy),'privacy page does not state the adult/teacher account audience');
   need(/\/account\/\?mode=login/.test(members)&&/\/account\/\?mode=register/.test(members),'Members signed-out login/create routes missing');
   need(/autocomplete="username"/.test(accountPage)&&/autocomplete="current-password"/.test(accountPage)&&/autocomplete="new-password"/.test(accountPage),'password-manager semantics missing');
   need(/resendVerification/.test(account)&&/Resend verification email/.test(accountPage),'verification resend path missing');
@@ -79,6 +82,7 @@ function scan(overrides={}){
   need(/mbm_cloud_identity_v1/.test(profile)&&/mbm_session/.test(profile),'offline game profile does not preserve cloud/legacy slot continuity');
   need(/type="checkbox"[^>]+required/.test(mailing),'mailing consent checkbox is not required');
   need(/Creating an account never joins|creating an account never joins|account.*never.*subscrib/i.test(mailing+accountPage),'account/mailing consent separation copy missing');
+  need(/double opt-in/i.test(privacy)&&/Buttondown is the sender of record/i.test(privacy),'mailing double-opt-in/sender policy is not documented');
   need(/BUTTONDOWN_API_KEY/.test(sub)&&/Deno\.env\.get/.test(sub),'Buttondown token is not server-side env configuration');
   need(/SUPABASE_SERVICE_ROLE_KEY/.test(del)&&/auth\.admin\.deleteUser/.test(del),'server-side account deletion path missing');
   need(/\[functions\.subscribe-mailing-list\][\s\S]*verify_jwt\s*=\s*false/.test(cfg),'public subscription function configuration missing');
