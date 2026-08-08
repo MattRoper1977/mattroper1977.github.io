@@ -45,4 +45,4 @@ jobs:
             --data '{"action":"inspect"}' \
             "$url/functions/v1/subscribe-mailing-list")
           echo "$body"
-          node -e 'const j=JSON.parse(process.argv[1]); if(!j.ok||j.providerStatus!==200||j.found!==true||j.count!==1) process.exit(1); console.log("PASS provider readback: one QA record, type="+j.subscriberType)' "$body'
+          node -e 'const j=JSON.parse(process.argv[1]); if(!j.ok||j.providerStatus!==200||j.found!==true||j.count!==1) process.exit(1); console.log("PASS provider readback: one QA record, type="+j.subscriberType)' "$body"
