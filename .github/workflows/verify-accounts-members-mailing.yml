@@ -35,9 +35,23 @@ jobs:
           node --check assets/mbm-account.js
           node --check assets/mbm-mailing.js
           node --check assets/mbm-platform.js
-      - name: One-shot sanitized Buttondown rejection classification
+      - name: One-shot real Buttondown signup proof
         shell: bash
         run: |
           set -euo pipefail
           url=$(node -p "require('./site.json').features.accounts.supabaseUrl")
-          curl --fail --silent --show-error -X POST "$url/functions/v1/subscribe-mailing-list"
+          key=$(node -p "require('./site.json').features.accounts.supabaseAnonKey")
+          email="contactmadebymatt+pr99-firewall-${GITHUB_RUN_ID}@gmail.com"
+          echo "QA_ALIAS=$email"
+          endpoint="$url/functions/v1/subscribe-mailing-list"
+          first=$(curl --silent --show-error --write-out $'\n%{http_code}' -H 'Origin: https://madebymatt.uk' -H "apikey: $key" -H 'Content-Type: application/json' --data "{\"email\":\"$email\",\"consent\":true,\"company\":\"\"}" "$endpoint")
+          code=${first##*$'\n'}; body=${first%$'\n'*}
+          echo "FIRST_HTTP=$code"; echo "FIRST_BODY=$body"
+          test "$code" = 200
+          node -e 'const j=JSON.parse(process.argv[1]);if(j.ok!==true||j.state!=="pending_confirmation")process.exit(1)' "$body"
+          second=$(curl --silent --show-error --write-out $'\n%{http_code}' -H 'Origin: https://madebymatt.uk' -H "apikey: $key" -H 'Content-Type: application/json' --data "{\"email\":\"$email\",\"consent\":true,\"company\":\"\"}" "$endpoint")
+          code2=${second##*$'\n'}; body2=${second%$'\n'*}
+          echo "SECOND_HTTP=$code2"; echo "SECOND_BODY=$body2"
+          test "$code2" = 200
+          test "$body2" = "$body"
+          echo 'PASS real signup + duplicate are accepted and indistinguishable'
