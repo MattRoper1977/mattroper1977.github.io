@@ -83,16 +83,16 @@ jobs:
 
           account_path = Path('assets/mbm-account.js')
           account = account_path.read_text(encoding='utf-8')
-          old = """  function deleteAccount() {
-            return requireUser().then(function () {
-              return sb.functions.invoke('delete-account', { body: { confirm: true } });
-            }).then(function (r) {
-              if (r.error) throw r.error;
-              state.user = null; state.profile = null; state.member = null; writeOfflineIdentity(null); emit(); return true;
-            }).catch(function (err) { throw new Error(publicError(err, 'Automatic deletion is not available yet. Please use the deletion contact shown on this page.')); });
-          }
-          """
-          new = """  function deleteAccount() {
+          start_marker = '  function deleteAccount() {'
+          end_marker = '\n\n  /* Mailing unsubscribe'
+          start = account.find(start_marker)
+          end = account.find(end_marker, start)
+          if start < 0 or end < 0:
+              raise SystemExit('deleteAccount source boundaries are missing')
+          old_block = account[start:end]
+          if "sb.functions.invoke('delete-account'" not in old_block or "state.user = null" not in old_block:
+              raise SystemExit('deleteAccount source no longer matches the reviewed lifecycle')
+          new_block = """  function deleteAccount() {
             return requireUser().then(function () {
               return sb.functions.invoke('delete-account', { body: { confirm: true } });
             }).then(function (r) {
@@ -105,11 +105,8 @@ jobs:
               state.user = null; state.profile = null; state.member = null; state.recovery = false;
               writeOfflineIdentity(null); emit(); return true;
             }).catch(function (err) { throw new Error(publicError(err, 'Automatic deletion is not available yet. Please use the deletion contact shown on this page.')); });
-          }
-          """
-          if old not in account:
-              raise SystemExit('deleteAccount source block no longer matches expected reviewed implementation')
-          account_path.write_text(account.replace(old, new, 1), encoding='utf-8')
+          }"""
+          account_path.write_text(account[:start] + new_block + account[end:], encoding='utf-8')
 
           gate_path = Path('tools/verify_accounts_members_mailing.js')
           gate = gate_path.read_text(encoding='utf-8')
