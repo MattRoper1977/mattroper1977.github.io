@@ -85,13 +85,29 @@ The browser previously used `profiles.upsert(...)` even though authenticated use
 - PR #101 repaired the Apex Rally verifier's false assumption that the curated five-card homepage Apex Sports strip must equal the broader manifest `collection: Sports`. Its Rally surface gate, including the log self-consistency check, passed before merge.
 - Neither repair changes homepage/game content; both remove verifier drift that pre-dated #99.
 
+## Real mailing-provider probe — BLOCKED AT SECRET, NOT NETWORK
+
+A one-shot GitHub Actions probe was run from a hosted runner using only the public Supabase project URL/publishable key and a disposable Gmail plus-address under the Made by Matt mailbox. This was deliberately chosen to distinguish provider configuration from the earlier local-container egress limitation.
+
+Measured result:
+
+- the GitHub runner reached the deployed `subscribe-mailing-list` Edge Function;
+- a consented real subscription request returned **HTTP 503** immediately;
+- the deployed function returns that 503 before contacting Buttondown when `BUTTONDOWN_API_KEY` is absent;
+- therefore the current production blocker is the missing Supabase Edge Function secret, not GitHub-runner network access;
+- no Buttondown confirmation was expected or claimed because the function stopped before the provider call;
+- the temporary probe workflow/trigger was removed after the result.
+
+Mailing remains `enabled:false` and no provider lifecycle is claimed as passed.
+
 ## Remaining production acceptance work
 
 The account data-isolation gate and inherited estate CI blockers are now complete. PR #99 remains Draft only for provider/deployment-dependent acceptance that must not be fabricated:
 
-1. self-service account deletion is proven from the real production origin after the account route is deployed;
-2. real Buttondown subscribe → provider readback/confirmation → duplicate handling → unsubscribe is proven, after which `features.mailing.enabled` may be switched to `true`;
-3. final CI is reviewed against the current main branch;
-4. PR #99 is marked Ready, merged, and the served production `/account/`, `/members/`, `/mailing-list/` and `/privacy/` surfaces are verified.
+1. store the real Buttondown credential as the Supabase Edge Function secret `BUTTONDOWN_API_KEY`, then rerun subscribe → confirmation/readback → duplicate → unsubscribe proof;
+2. only after that provider lifecycle passes, set `features.mailing.enabled=true`;
+3. review final CI against the current main branch;
+4. mark PR #99 Ready and merge;
+5. after deployment, prove self-service account deletion from the real production origin and verify the served `/account/`, `/members/`, `/mailing-list/` and `/privacy/` surfaces on mobile/accessibility checks.
 
 No unproven provider-dependent gate is claimed as complete.
