@@ -37,10 +37,18 @@ Deno.serve(async (req) => {
     return json(502, { ok: false, message: 'The mailing service could not be reached. Please try again.' }, origin)
   }
 
+  // The caller is unauthenticated, so the reply must not reveal whether an
+  // address is already on the list. A first-time subscribe and a duplicate
+  // therefore return an IDENTICAL body. Do not reintroduce a distinguishable
+  // state, status code or message here: any of them rebuilds the enumeration
+  // oracle that this uniformity exists to close.
   if (response.ok) return json(200, { ok: true, state: 'pending_confirmation' }, origin)
   const detail = (await response.text()).toLowerCase()
   if ((response.status === 400 || response.status === 409) && /already|exists|subscriber/.test(detail)) {
-    return json(200, { ok: true, state: 'already_subscribed' }, origin)
+    // Already active, or previously unsubscribed. Either way the caller gets
+    // the same answer a new subscriber gets. No resubscribe is sent, so an
+    // address that opted out stays opted out.
+    return json(200, { ok: true, state: 'pending_confirmation' }, origin)
   }
   if (response.status === 429) return json(429, { ok: false, message: 'Too many subscription attempts. Please try again later.' }, origin)
   return json(502, { ok: false, message: 'The mailing service could not complete that request. Please try again.' }, origin)

@@ -68,7 +68,7 @@ header can exercise the real production function without widening
 | auth user removed | **mechanism correct, NOT RUN** | `delete-account/index.ts` → `auth.admin.deleteUser(userData.user.id)` |
 | `profiles` row removed | **declared (cascade), NOT RUN** | `profiles.id references auth.users(id) on delete cascade` — cascade, not an explicit delete |
 | `member_data` row removed | **declared (cascade), NOT RUN** | `member_data.user_id references auth.users(id) on delete cascade` |
-| **Buttondown subscriber removed or unsubscribed** | **RED — ABSENT BY DESIGN** | see below |
+| **Buttondown subscriber removed or unsubscribed** | **still not automatic — now reachable, and stated** | see P2-A below |
 | device-local storage cleared | **PARTIAL** | `deleteAccount()` calls `writeOfflineIdentity(null)`, clearing `mbm_cloud_identity_v1` only. Legacy `mbm_session`/`mbm_users` are cleared solely by the separate, manual "remove legacy record" button (`account/index.html:176`). Game saves are deliberately untouched. |
 | seven-word-code sync rows | **out of scope, and stated** | not keyed to an account; deliberately not widened |
 
@@ -108,6 +108,26 @@ it is a small decision with three defensible answers:
 Recommendation: **(2)**. It satisfies §3.2's missing unsubscribe requirement and
 §2.2's spirit with one piece of work, and it does not silently end a
 subscription the user may want to keep.
+
+**Chosen and applied (Matt, 2026-08-08): option (2).** An authenticated
+unsubscribe now exists on `/account/` — see P3 for the implementation — so
+leaving the list no longer depends on having a mailing to hand. Deletion still
+does not silently unsubscribe, and the copy on `/account/` now says so
+explicitly rather than pointing at an email link the user may not have:
+
+> *"Mailing-list subscription is deliberately separate and is **not** removed by
+> deleting your account. Unsubscribe first using the button in 'Want Made by
+> Matt updates?' above, or the link in any mailing."*
+
+The same panel now also states, in the user's own terms, that on-device game
+and lesson saves and seven-word-code sync data are not held against the account
+and are not reached by the deletion — §2.2's honesty requirement, discharged in
+copy rather than by widening the delete.
+
+Against §2.2 as literally written this cell is **still not automatic**: a
+deleted account leaves an active subscription if the user does not unsubscribe
+first. That is the deliberate, now-stated position, and it is pinned by a gate
+assertion so the copy cannot silently drift back.
 
 ### 2.2 copy check — the seven-word-code rows
 
@@ -150,8 +170,8 @@ confirmation, not a single tap: the user must type `DELETE` exactly, checked at
 The tension is real: "prove on the production origin" and "before merge"
 conflict, because the production origin is what merging creates.
 
-**Recommendation: (b) — merge with the mailing flag OFF, prove deletion on the
-real origin, then flip the flag.**
+**Recommendation: (b). Chosen by Matt, 2026-08-08 — merge with the mailing flag
+OFF, prove deletion on the real origin, then flip the flag.**
 
 Reasons, in order of weight:
 
@@ -184,7 +204,8 @@ That last point is worth weighing before choosing. It was not available when
 the PR body was written, and it makes (a) more attractive than it looked.
 I still recommend (b) on precedent, but the gap between them has narrowed.
 
-**This is Matt's decision. Nothing has been merged, flipped or configured.**
+**Decision recorded. Nothing has been merged, flipped or configured** — (b)
+cannot begin until P1 and P2 are green, and they are not.
 
 ---
 

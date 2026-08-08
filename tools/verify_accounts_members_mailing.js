@@ -54,6 +54,7 @@ function scan(overrides={}){
   const profile=get('assets/mbm-profile.js');
   const del=get('supabase/functions/delete-account/index.ts');
   const sub=get('supabase/functions/subscribe-mailing-list/index.ts');
+  const unsub=get('supabase/functions/unsubscribe-mailing-list/index.ts');
   const cfg=get('supabase/config.toml');
   const findings=[];
   function need(cond,msg){if(!cond)findings.push(msg)}
@@ -85,11 +86,24 @@ function scan(overrides={}){
   need(/SUPABASE_SERVICE_ROLE_KEY/.test(del)&&/auth\.admin\.deleteUser/.test(del),'server-side account deletion path missing');
   need(/\[functions\.subscribe-mailing-list\][\s\S]*verify_jwt\s*=\s*false/.test(cfg),'public subscription function configuration missing');
   need(/\[functions\.delete-account\][\s\S]*verify_jwt\s*=\s*true/.test(cfg),'account deletion JWT verification missing');
+  // P3-A: an unauthenticated caller must not learn whether an address is on the
+  // list. A distinguishable already_subscribed state IS that disclosure, so the
+  // state must not exist on either side of the wire.
+  need(!/already_subscribed/.test(sub),'subscribe endpoint discloses existing membership to an anonymous caller');
+  need(!/already_subscribed/.test(mailingJs),'mailing UI branches on existing membership, rebuilding the enumeration oracle');
+  // P3-B: /account/ must offer an unsubscribe, JWT-verified, with the address
+  // taken from the token rather than the request body.
+  need(/\[functions\.unsubscribe-mailing-list\][\s\S]*verify_jwt\s*=\s*true/.test(cfg),'unsubscribe function is not JWT-verified');
+  need(/userData\.user\.email/.test(unsub),'unsubscribe function does not derive the address from the verified token');
+  need(/BUTTONDOWN_API_KEY/.test(unsub)&&/Deno\.env\.get/.test(unsub),'unsubscribe Buttondown token is not server-side env configuration');
+  need(/unsubscribeMailing/.test(account)&&/mailUnsubBtn/.test(accountPage),'self-service unsubscribe control missing from /account/');
+  // P2-A: the deletion copy must not imply erasure reaches the mailing list.
+  need(/not.{0,12}removed by deleting your account/i.test(accountPage),'account deletion copy does not state that mailing subscription survives');
   return findings;
 }
 
 [
- 'assets/mbm-account.js','assets/mbm-account.css','assets/mbm-mailing.js','assets/mbm-profile.js','account/index.html','members/index.html','mailing-list/index.html','privacy/index.html','supabase-schema.sql','supabase/functions/delete-account/index.ts','supabase/functions/subscribe-mailing-list/index.ts','supabase/config.toml','docs/ACCOUNTS_MAILING_SETUP.md'
+ 'assets/mbm-account.js','assets/mbm-account.css','assets/mbm-mailing.js','assets/mbm-profile.js','account/index.html','members/index.html','mailing-list/index.html','privacy/index.html','supabase-schema.sql','supabase/functions/delete-account/index.ts','supabase/functions/subscribe-mailing-list/index.ts','supabase/functions/unsubscribe-mailing-list/index.ts','supabase/config.toml','docs/ACCOUNTS_MAILING_SETUP.md'
 ].forEach(p=>ok(exists(p),'required file '+p));
 const real=scan();ok(real.length===0,'real tree passes account/security static gate');if(real.length)real.forEach(x=>console.error('  ',x));
 const tampered=read('assets/mbm-account.js')+'\nlocalStorage.setItem("password","positive-control");\n';

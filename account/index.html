@@ -122,7 +122,9 @@
 
 <div class="ma-panel ma-danger-zone" style="margin-top:1rem">
 <h2>Delete account</h2>
-<p>Account deletion removes the authentication identity, profile and synchronised member data. Mailing-list subscription is separate and must be unsubscribed separately through its own email link.</p>
+<p>Account deletion removes the authentication identity, profile and synchronised member data. It is permanent and cannot be undone.</p>
+<p>Mailing-list subscription is deliberately separate and is <b>not</b> removed by deleting your account. Unsubscribe first using the button in “Want Made by Matt updates?” above, or the link in any mailing.</p>
+<p>Anything saved by a game or lesson on this device, and anything synced by a seven-word code, is not held against your account and is not reached by this deletion.</p>
 <div class="ma-field"><label for="deleteConfirm">Type DELETE to confirm</label><input id="deleteConfirm" type="text" autocomplete="off" spellcheck="false"></div>
 <div class="ma-actions"><button class="ma-btn danger" id="deleteBtn" type="button">Delete my account</button></div>
 <p class="ma-status" id="deleteStatus" role="status" aria-live="polite"></p>
@@ -134,7 +136,9 @@
 <p class="ma-kicker">Updates are separate</p>
 <h2>Want Made by Matt updates?</h2>
 <p>The mailing list is independent from your account. You can join without an account, or have an account and never join.</p>
-<a class="ma-btn secondary" href="/mailing-list/">Mailing list</a>
+<div class="ma-actions"><a class="ma-btn secondary" href="/mailing-list/">Mailing list</a><button class="ma-btn secondary" id="mailUnsubBtn" type="button">Unsubscribe this address</button></div>
+<p>Unsubscribing applies to your account email address only. The unsubscribe link in any mailing still works too.</p>
+<p class="ma-status" id="mailUnsubStatus" role="status" aria-live="polite"></p>
 </section>
 </div>
 </main>
@@ -174,6 +178,12 @@ $('#profileForm').addEventListener('submit',function(e){e.preventDefault();var f
 $('#logoutBtn').addEventListener('click',function(){setStatus('#accountStatus','Logging out…');MBMAccount.logout().catch(function(err){setStatus('#accountStatus',err.message,'err')})});
 $('#migrateLegacy').addEventListener('click',function(){setStatus('#legacyStatus','Copying the old display name…');MBMAccount.migrateLegacyDisplayName().then(function(){setStatus('#legacyStatus','Display name copied. The old password record was not uploaded.','ok')}).catch(function(err){setStatus('#legacyStatus',err.message,'err')})});
 $('#removeLegacy').addEventListener('click',function(){if(MBMAccount.clearLegacyAccount()){setStatus('#legacyStatus','Old local account record removed from this browser. Existing game saves were not deleted.','ok');$('#removeLegacy').disabled=true}else setStatus('#legacyStatus','Could not remove the old browser record.','err')});
+$('#mailUnsubBtn').addEventListener('click',function(){var b=this;b.disabled=true;setStatus('#mailUnsubStatus','Updating your mailing preferences…');
+ MBMAccount.unsubscribeMailing().then(function(state){
+  /* This caller is authenticated and asking about their own verified address,
+     so reporting the real state back is their own data, not a disclosure. */
+  setStatus('#mailUnsubStatus',state==='not_subscribed'?'That address is not on the mailing list.':'Unsubscribed. You will not receive further mailings at this address.','ok');
+ }).catch(function(err){setStatus('#mailUnsubStatus',err.message,'err')}).finally(function(){b.disabled=false})});
 $('#deleteBtn').addEventListener('click',function(){if($('#deleteConfirm').value.trim()!=='DELETE'){setStatus('#deleteStatus','Type DELETE exactly before deleting the account.','err');return}this.disabled=true;setStatus('#deleteStatus','Deleting account…');MBMAccount.deleteAccount().then(function(){setStatus('#deleteStatus','Account deleted.','ok');location.href='/'}).catch(function(err){setStatus('#deleteStatus',err.message+' You can also request deletion at contactmadebymatt@gmail.com.','err');$('#deleteBtn').disabled=false})});
 
 MBMAccount.subscribe(function(s){

@@ -29,9 +29,12 @@ function bind(form){
  var status=form.querySelector('[data-mailing-status]'),submit=form.querySelector('[type="submit"]');
  function say(text,kind){if(!status)return;status.textContent=text||'';status.className='ma-status'+(kind?' '+kind:'')}
  form.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(form);say('Joining the mailing list…');if(submit)submit.disabled=true;
-  subscribe({email:fd.get('email'),consent:fd.get('consent')==='yes',company:fd.get('company')}).then(function(result){
-   if(result.state==='already_subscribed')say('That address is already on the list. You can use the unsubscribe link in any mailing if you want to leave.','ok');
-   else say('Nearly done — check your inbox and confirm the subscription.','ok');
+  subscribe({email:fd.get('email'),consent:fd.get('consent')==='yes',company:fd.get('company')}).then(function(){
+   /* One message for every accepted submission. Branching on whether the
+      address was already subscribed would tell an anonymous visitor who is on
+      the list, so the endpoint no longer distinguishes the two and neither
+      does this copy. */
+   say('Nearly done — check your inbox and confirm the subscription.','ok');
    form.reset();
   }).catch(function(err){say(err.message,'err')}).finally(function(){if(submit)submit.disabled=false});
  });

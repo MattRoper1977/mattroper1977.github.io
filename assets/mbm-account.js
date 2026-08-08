@@ -361,6 +361,20 @@
     }).catch(function (err) { throw new Error(publicError(err, 'Automatic deletion is not available yet. Please use the deletion contact shown on this page.')); });
   }
 
+  /* Mailing unsubscribe for a signed-in user. The address is derived from the
+     verified JWT server-side and is deliberately never sent from here, so this
+     control cannot be pointed at anybody else's address. */
+  function unsubscribeMailing() {
+    return requireUser().then(function () {
+      return sb.functions.invoke('unsubscribe-mailing-list', { body: {} });
+    }).then(function (r) {
+      if (r.error) throw r.error;
+      return (r.data && r.data.state) || 'unsubscribed';
+    }).catch(function (err) {
+      throw new Error(publicError(err, 'Could not update your mailing preferences. You can still use the unsubscribe link in any mailing.'));
+    });
+  }
+
   function refresh() {
     if (!sb || !state.configured) return Promise.resolve(snapshot());
     return sb.auth.getSession().then(function (r) { if (r.error) throw r.error; return hydrate(r.data && r.data.session); }).then(snapshot);
@@ -420,6 +434,7 @@
     clearLegacyAccount: clearLegacyAccount,
     readOfflineIdentity: readOfflineIdentity,
     deleteAccount: deleteAccount,
+    unsubscribeMailing: unsubscribeMailing,
     refresh: refresh,
     _mergeMemberData: mergeMemberData,
     _normaliseMemberData: normaliseMemberData,

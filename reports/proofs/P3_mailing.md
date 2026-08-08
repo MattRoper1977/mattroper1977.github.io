@@ -1,7 +1,12 @@
 # P3 — Buttondown: subscribe → readback → duplicates → unsubscribe
 
-**Status: RED.** Two required behaviours are absent or wrong in source, provable
-without touching the provider. The four live sub-proofs were not run.
+**Status: two source-level reds FIXED in this branch; the four live sub-proofs
+remain NOT RUN.**
+
+`P3-A` (enumeration leak) and `P3-B` (no unsubscribe) were found by source
+analysis, are fixed here, and each fix is pinned by a gate assertion with a
+proven negative control. Everything requiring `api.buttondown.com` is still
+unproven — the session has no route to it.
 
 Date: 2026-08-08 · Branch @ `144ae9a` · PR #99
 
@@ -42,11 +47,11 @@ path is inert by design and the form does not render.
 
 | case | status |
 |---|---|
-| (i) already-subscribed and active | **RED — discloses membership** |
+| (i) already-subscribed and active | **was RED (disclosed membership) — FIXED** |
 | (ii) previously unsubscribed | NOT RUN (source reading below) |
 | (iii) same address twice in quick succession | NOT RUN |
 
-> **FINDING P3-A — enumeration leak. This is the exact leak §3.2 names.**
+> **FINDING P3-A — enumeration leak. This is the exact leak §3.2 names. FIXED.**
 >
 > The function returns a *distinguishable* state for an address already on the
 > list, and the UI reports it verbatim to an unauthenticated caller:
@@ -63,14 +68,20 @@ path is inert by design and the form does not render.
 > to an unauthenticated caller of whether an address is already on the list —
 > that is an enumeration leak dressed as a helpful message."*
 >
-> **Fix:** collapse both paths to one indistinguishable response and one piece
-> of copy — the "check your inbox" wording works for both cases, because a
-> genuine duplicate genuinely does not need a new confirmation. Delete the
-> `already_subscribed` state rather than renaming it; any distinguishable state
-> reconstructs the oracle.
+> **Fix applied.** Both paths now return an identical
+> `{ok:true, state:'pending_confirmation'}`, and the UI has a single message for
+> every accepted submission. The `already_subscribed` state is deleted rather
+> than renamed — any distinguishable state reconstructs the oracle. The
+> "check your inbox" wording is honest for both cases, because a genuine
+> duplicate does not need a new confirmation.
 >
-> Not applied — this is behaviour change on the feature under proof, and it
-> lands with the §3.2 rework rather than as a drive-by edit.
+> Pinned by two assertions in `tools/verify_accounts_members_mailing.js`:
+> the string `already_subscribed` may not appear in the Edge Function or in
+> `mbm-mailing.js`. Both were negative-controlled — reintroducing the state on
+> either side of the wire makes the gate fail.
+>
+> Still requires the live run to confirm Buttondown's actual status codes reach
+> that branch as expected.
 
 On case (ii), source reading is *encouraging but unproven*: the function POSTs
 only `{email_address}` and never sends a resubscribe or `subscriber_type`
@@ -81,24 +92,37 @@ then reads the type back from the provider. Note that under P3-A the opted-out
 person is *also* told they are "already on the list", which is the same
 disclosure with an added consent edge.
 
-### Unsubscribe — **RED, one half does not exist**
+### Unsubscribe — **P3-B was RED (absent); now BUILT, still NOT RUN**
 
 - **From the email link:** Buttondown-provided, **NOT RUN** (needs a real
   delivered mailing).
-- **From `/account/`:** **ABSENT.** There is no unsubscribe control anywhere in
-  the branch. A full search for `unsubscrib` across `account/`, `members/`,
-  `assets/`, `mailing-list/`, `supabase/` and `site.json` returns only prose,
-  one status message, and `authSubscription.unsubscribe()` (an unrelated
-  Supabase auth listener teardown). `MBMMailing` exposes `subscribe` and `bind`
-  and no unsubscribe method at all.
+- **From `/account/`:** **was ABSENT — now implemented.**
 
-  `account/index.html:125` states the position deliberately: mailing "must be
-  unsubscribed separately through its own email link." That is a coherent
-  design, but it does not satisfy §3.2's explicit requirement of an unsubscribe
-  from `/account/`, and it makes leaving dependent on the user still having a
-  mailing to hand.
+  The original finding: no unsubscribe control existed anywhere in the branch. A
+  search for `unsubscrib` across `account/`, `members/`, `assets/`,
+  `mailing-list/`, `supabase/` and `site.json` returned only prose, one status
+  message, and `authSubscription.unsubscribe()` (an unrelated Supabase auth
+  listener teardown). `MBMMailing` had no unsubscribe method at all.
 
-  This is the same piece of work recommended as option (2) in **P2-A**. One
+  Now added:
+  - `supabase/functions/unsubscribe-mailing-list/index.ts` — `verify_jwt = true`,
+    and **the address is derived from the caller's verified token, never from
+    the request body**. There is no address parameter to forge, so this control
+    cannot be pointed at anyone else. Fails closed: it never reports an
+    unsubscribe the provider did not accept.
+  - `MBMAccount.unsubscribeMailing()` in `assets/mbm-account.js`.
+  - A button and live status region on `/account/` (`#mailUnsubBtn`).
+
+  Note on disclosure: this endpoint *may* distinguish `unsubscribed` from
+  `not_subscribed`, where the public subscribe endpoint may not. The caller is
+  authenticated and asking about their own verified address, so that is their
+  own data, not an enumeration oracle. The asymmetry is deliberate and
+  commented at both ends.
+
+  Pinned by four gate assertions (JWT verification, token-derived address,
+  server-side secret, control present on the page), each negative-controlled.
+
+  This is the same piece of work recommended as option (2) in **P2-A** — one
   control discharges both.
 
 ### Failure mode — **source-verified, correct**

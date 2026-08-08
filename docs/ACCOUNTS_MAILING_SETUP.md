@@ -70,10 +70,37 @@ secret storage as:
 BUTTONDOWN_API_KEY=<private value>
 ```
 
-The deployed `subscribe-mailing-list` function reads that value server-side. The
-browser never receives it. The endpoint is intentionally public because joining
-the mailing list does not require a Made by Matt account; its code still requires
-explicit consent, checks a honeypot, validates input and restricts browser origin.
+Both `subscribe-mailing-list` and `unsubscribe-mailing-list` read that value
+server-side. The browser never receives it. Deploy both:
+
+```sh
+supabase functions deploy subscribe-mailing-list
+supabase functions deploy unsubscribe-mailing-list
+```
+
+`subscribe-mailing-list` is intentionally public, because joining the mailing
+list does not require a Made by Matt account; its code still requires explicit
+consent, checks a honeypot, validates input and restricts browser origin. It
+returns an **identical** response whether or not the address is already on the
+list. That uniformity is deliberate: a distinguishable "already subscribed"
+reply would let an anonymous caller test whether any address is on the list.
+
+`unsubscribe-mailing-list` backs the unsubscribe control on `/account/` and is
+the opposite case: it **requires** a verified JWT (`verify_jwt = true`) and
+takes the address from the caller's token, never from the request body. Without
+that, the endpoint would let anyone unsubscribe anyone, and would answer "is
+this address on the list?" to a stranger.
+
+Proving the provider round-trip:
+
+```sh
+SUPABASE_URL=… SUPABASE_ANON_KEY=sb_publishable_… \
+BUTTONDOWN_API_KEY=…  QA_MAIL_EMAIL=qa+p3@… \
+node tools/proofs/p3_mailing.mjs
+```
+
+Run it from an operator machine. The key belongs in Edge Function secret
+storage and in that shell only — never in the repo, never in CI.
 
 Only after a real Buttondown subscription and unsubscribe have been read back
 from the provider may this be changed:

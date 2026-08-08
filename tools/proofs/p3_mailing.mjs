@@ -74,10 +74,11 @@ async function run() {
   step('duplicate: no second record created', afterDup.count === after1.count, `provider records for address=${afterDup.count}`);
   step('duplicate: no crash', d1.status < 500, `HTTP ${d1.status}`);
   /* 3.2 — an unauthenticated caller must not learn whether an address is on
-     the list. A distinct "already_subscribed" state IS that disclosure. */
-  step('duplicate: no membership disclosure to an anonymous caller',
-    d1b.state !== 'already_subscribed',
-    `state="${d1b.state}" — a state distinguishable from a first-time subscribe is an enumeration oracle`);
+     the list. The duplicate reply must be byte-identical to the first-time
+     reply; ANY distinguishable state rebuilds the oracle. */
+  step('duplicate: reply is indistinguishable from a first-time subscribe',
+    JSON.stringify(d1b) === JSON.stringify(b1) && d1.status === s1.status,
+    `first="${JSON.stringify(b1)}" (HTTP ${s1.status}) vs duplicate="${JSON.stringify(d1b)}" (HTTP ${d1.status})`);
 
   /* --- 2c. same address twice in quick succession --- */
   const [r1, r2] = await Promise.all([subscribe(EMAIL), subscribe(EMAIL)]);
@@ -115,7 +116,8 @@ async function run() {
 
   console.log('\nSTILL REQUIRING A HUMAN (this harness cannot see them):');
   console.log('  · unsubscribe from the EMAIL LINK — send a real campaign and click it.');
-  console.log('  · unsubscribe from /account/ — no such control exists in the branch; see P3 report.');
+  console.log('  · unsubscribe from /account/ — sign in as the QA user, click "Unsubscribe this address",');
+  console.log('    then re-run this script and confirm the provider reports subscriber_type=unsubscribed.');
   console.log('  · the unsubscribe footer and sender-of-record in outgoing mail — read a delivered message.');
 
   const red = steps.filter(s => s.outcome === 'FAIL');
