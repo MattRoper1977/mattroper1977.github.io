@@ -1,4 +1,4 @@
-name: MBM Games audience production status
+name: MBM Games audience production closeout
 
 on:
   push:
@@ -8,123 +8,178 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  actions: read
-  pull-requests: read
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: mbm-games-audience-production-closeout
+  cancel-in-progress: false
 
 jobs:
-  status:
+  prove:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 40
+    env:
+      RELEASE_SHA: e4bff239c49012f41067c1313dc7a2f943923282
+      SENTINEL: mbm-games-audience-faces-2026-08-08
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
 
-      - name: Capture push workflow, Pages and live route evidence
+      - name: Install Chromium harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+
+      - name: Wait for and prove the exact served release
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit-output reports/proofs
+          routes=(/ /games/ /start/ /for/pupils/ /for/teachers/ /for/parents-carers/ /for/schools-semh/ /for/trusts/ /for/councils-organisations/ /for/partners/ /Lessons/ /Matt-s-Apps-/ /tools/ /resources/)
+          release_routes=(/games/ /start/ /for/pupils/ /for/teachers/ /for/parents-carers/ /for/schools-semh/ /for/trusts/ /for/councils-organisations/ /for/partners/)
+
+          ready=0
+          for _ in $(seq 1 60); do
+            curl -fsS --retry 2 -H 'Cache-Control: no-cache, no-store, max-age=0' "https://madebymatt.uk/games/?mbm=${RELEASE_SHA}" -o /tmp/mbm-games-live.html || true
+            curl -fsS --retry 2 -H 'Cache-Control: no-cache, no-store, max-age=0' "https://madebymatt.uk/start/?mbm=${RELEASE_SHA}" -o /tmp/mbm-start-live.html || true
+            if grep -Fq "$SENTINEL" /tmp/mbm-games-live.html 2>/dev/null && grep -Fq "$SENTINEL" /tmp/mbm-start-live.html 2>/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 10
+          done
+          test "$ready" -eq 1
+
+          : > audit-output/live-routes.tsv
+          for route in "${routes[@]}"; do
+            file="/tmp/mbm-route-$(echo "$route" | tr '/-' '__').html"
+            status=$(curl -sS -L --retry 3 -H 'Cache-Control: no-cache, no-store, max-age=0' -o "$file" -w '%{http_code}' "https://madebymatt.uk${route}?mbm=${RELEASE_SHA}")
+            test "$status" = 200
+            bytes=$(wc -c < "$file")
+            printf '%s\t%s\t%s\n' "$route" "$status" "$bytes" >> audit-output/live-routes.tsv
+          done
+
+          for route in "${release_routes[@]}"; do
+            file="/tmp/mbm-route-$(echo "$route" | tr '/-' '__').html"
+            grep -Fq "$SENTINEL" "$file"
+          done
+          grep -Fq 'See every audience view' /tmp/mbm-route-_.html
+          grep -Fq 'Nothing is locked away by your choice' /tmp/mbm-route-_start_.html
+          grep -Fq 'data-mbm-adult-features="off"' /tmp/mbm-route-_for_pupils_.html
+
+          for asset in mbm-games-hub.css mbm-audience.css mbm-audience.js; do
+            curl -fsS --retry 3 -H 'Cache-Control: no-cache, no-store, max-age=0' "https://madebymatt.uk/assets/${asset}?mbm=${RELEASE_SHA}" -o "/tmp/${asset}"
+            cmp "assets/${asset}" "/tmp/${asset}"
+          done
+
+          MBM_BASE_URL=https://madebymatt.uk/ MBM_CACHE_BUST="$RELEASE_SHA" node tools/verify_games_audience_faces.mjs
+
+      - name: Build the permanent production report
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, pathlib, re, time
+
+          root=pathlib.Path('.')
+          browser=json.loads((root/'audit-output/browser-results.json').read_text(encoding='utf-8'))
+          routes=[]
+          for line in (root/'audit-output/live-routes.tsv').read_text(encoding='utf-8').splitlines():
+              route,status,size=line.split('\t')
+              routes.append({'route':route,'status':int(status),'bytes':int(size)})
+          assets={}
+          for name in ['mbm-games-hub.css','mbm-audience.css','mbm-audience.js']:
+              local=(root/'assets'/name).read_bytes()
+              served=pathlib.Path('/tmp',name).read_bytes()
+              assets[name]={
+                  'local_sha256':hashlib.sha256(local).hexdigest(),
+                  'served_sha256':hashlib.sha256(served).hexdigest(),
+                  'byte_identical':local==served,
+                  'bytes':len(local),
+              }
+          report={
+              'sentinel':os.environ['SENTINEL'],
+              'release_merge_sha':os.environ['RELEASE_SHA'],
+              'proof_source_sha':os.environ['GITHUB_SHA'],
+              'proof_workflow_run_id':int(os.environ['GITHUB_RUN_ID']),
+              'generated_at_epoch':time.time(),
+              'premerge':{
+                  'run_id':31282502572,
+                  'artifact':'mbm-games-audience-preview-31282502572',
+                  'artifact_sha256':'bd103ed76aeeae9e66541c395728f24e1e91d3f5a4258d67e20cf999b8746490',
+              },
+              'routes':routes,
+              'assets':assets,
+              'browser':browser,
+              'result':'PASS',
+          }
+          errors=[]
+          if len(routes)!=14 or any(item['status']!=200 for item in routes): errors.append('route gate')
+          if any(not item['byte_identical'] for item in assets.values()): errors.append('asset parity')
+          if browser.get('fatal') or browser.get('errors'): errors.append('browser gate')
+          if len(browser.get('widths',[]))!=8: errors.append('width matrix')
+          if len(browser.get('faces',[]))!=7: errors.append('audience matrix')
+          if errors:
+              report['result']='FAIL';report['errors']=errors
+              raise SystemExit('production report failed: '+', '.join(errors))
+          path=root/'reports/proofs/mbm-games-audience-production-2026-08-08.json'
+          path.write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+
+          markdown=f'''# Games Hub and audience views — production proof
+
+Sentinel: `{report["sentinel"]}`
+
+- Release merge: `{report["release_merge_sha"]}`
+- Production proof run: `{report["proof_workflow_run_id"]}`
+- Result: **PASS**
+- Routes returning HTTP 200: **{len(routes)} of {len(routes)}**
+- Responsive widths: **{len(browser.get("widths",[]))}**
+- Audience faces: **{len(browser.get("faces",[]))}**
+- Byte-identical shared release assets: **{sum(1 for item in assets.values() if item["byte_identical"])} of {len(assets)}**
+- Browser errors: **0**
+
+The proof covers `/games/`, `/start/`, all seven audience pages, the main Made by Matt destinations, the pupil/adult feature boundary, local audience preference, navigation, touch targets, images, horizontal overflow and first-party runtime failures. The machine-readable evidence is `reports/proofs/mbm-games-audience-production-2026-08-08.json`.
+'''
+          (root/'reports/2026-08-08-games-audience-production.md').write_text(markdown,encoding='utf-8')
+          print(json.dumps({'result':'PASS','routes':len(routes),'widths':len(browser.get('widths',[])),'faces':len(browser.get('faces',[]))},indent=2))
+          PY
+          git diff --check
+
+      - name: Commit the permanent proof report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Made by Matt Games production proof'
+          git config user.email 'actions@users.noreply.github.com'
+          git add reports/proofs/mbm-games-audience-production-2026-08-08.json reports/2026-08-08-games-audience-production.md
+          git diff --cached --check
+          git commit -m 'docs: record Games and audience production proof'
+          git push origin HEAD:main
+          git rev-parse HEAD > /tmp/mbm-proof-commit
+
+      - name: Record production completion on PR 103
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          set -euo pipefail
-          mkdir -p production-status
-          python - <<'PY'
-          import hashlib, json, os, pathlib, time, urllib.error, urllib.request
+          proof_commit=$(cat /tmp/mbm-proof-commit)
+          gh pr comment 103 --repo "$GITHUB_REPOSITORY" --body "Games + audience production proof passed. Release merge: \`${RELEASE_SHA}\`. Proof run: \`${GITHUB_RUN_ID}\`. Permanent report commit: \`${proof_commit}\`. Fourteen live routes returned HTTP 200; the Games hub, chooser and seven audience pages contained the release marker; the 320–1440px Games/chooser matrix, all seven audience faces, pupil/adult boundary, local view preference, images, touch targets, navigation and first-party runtime gates passed with zero browser errors."
 
-          repo='MattRoper1977/mattroper1977.github.io'
-          merge_sha='e4bff239c49012f41067c1313dc7a2f943923282'
-          sentinel='mbm-games-audience-faces-2026-08-08'
-          token=os.environ['GH_TOKEN']
-          api_headers={
-            'Accept':'application/vnd.github+json',
-            'Authorization':f'Bearer {token}',
-            'X-GitHub-Api-Version':'2022-11-28',
-            'User-Agent':'Made-by-Matt-games-audience-status/1',
-          }
-
-          def request(url, *, json_body=True, no_cache=False):
-            headers=dict(api_headers)
-            if 'api.github.com' not in url:
-              headers.pop('Authorization',None)
-              headers['Accept']='text/html,*/*'
-            if no_cache:
-              headers['Cache-Control']='no-cache, no-store, max-age=0'
-              headers['Pragma']='no-cache'
-            req=urllib.request.Request(url,headers=headers)
-            try:
-              with urllib.request.urlopen(req,timeout=45) as response:
-                raw=response.read();status=response.status;final=response.geturl();rh=dict(response.headers.items())
-            except urllib.error.HTTPError as exc:
-              raw=exc.read();status=exc.code;final=exc.geturl();rh=dict(exc.headers.items())
-            text=raw.decode('utf-8','replace')
-            if json_body:
-              try: body=json.loads(text)
-              except json.JSONDecodeError: body=text
-            else:
-              body=text
-            return {'url':url,'final_url':final,'status':status,'headers':rh,'raw':raw,'body':body}
-
-          api=f'https://api.github.com/repos/{repo}'
-          runs_response=request(f'{api}/actions/runs?branch=main&per_page=100')
-          runs=runs_response['body']
-          relevant=[]
-          if isinstance(runs,dict):
-            for run in runs.get('workflow_runs',[]):
-              if run.get('name')=='Verify Games and audience faces' or run.get('head_sha')==merge_sha:
-                item={k:run.get(k) for k in ['id','name','event','status','conclusion','head_sha','head_branch','run_number','run_attempt','created_at','updated_at','html_url']}
-                jobs_response=request(f"{api}/actions/runs/{run['id']}/jobs?per_page=100")
-                jobs=jobs_response['body']
-                item['jobs']=[{
-                  **{k:j.get(k) for k in ['id','name','status','conclusion','started_at','completed_at','html_url']},
-                  'steps':[{k:s.get(k) for k in ['name','status','conclusion','number']} for s in j.get('steps',[])]
-                } for j in (jobs.get('jobs',[]) if isinstance(jobs,dict) else [])]
-                artifacts_response=request(f"{api}/actions/runs/{run['id']}/artifacts?per_page=100")
-                artifacts=artifacts_response['body']
-                item['artifacts']=[{k:a.get(k) for k in ['id','name','size_in_bytes','expired','created_at','expires_at','archive_download_url','digest']} for a in (artifacts.get('artifacts',[]) if isinstance(artifacts,dict) else [])]
-                relevant.append(item)
-
-          pages=request(f'{api}/pages')['body']
-          latest_build=request(f'{api}/pages/builds/latest')['body']
-          deployments=request(f'{api}/deployments?environment=github-pages&per_page=20')['body']
-
-          routes=['/','/games/','/start/','/for/pupils/','/for/teachers/','/for/parents-carers/','/for/schools-semh/','/for/trusts/','/for/councils-organisations/','/for/partners/','/Lessons/','/Matt-s-Apps-/','/tools/','/resources/']
-          live={}
-          for route in routes:
-            url='https://madebymatt.uk'+route+'?mbm='+merge_sha
-            response=request(url,json_body=False,no_cache=True)
-            raw=response.pop('raw');text=response.pop('body')
-            title=''
-            if '<title>' in text and '</title>' in text:
-              title=text.split('<title>',1)[1].split('</title>',1)[0]
-            live[route]={
-              **response,
-              'bytes':len(raw),
-              'sha256':hashlib.sha256(raw).hexdigest(),
-              'sentinel':sentinel in text,
-              'title':title,
-              'choose_view':'Choose your view' in text,
-            }
-
-          comments=request(f'{api}/issues/103/comments?per_page=100')['body']
-          result={
-            'merge_sha':merge_sha,
-            'sentinel':sentinel,
-            'generated_at':time.time(),
-            'actions_api_status':runs_response['status'],
-            'runs':relevant,
-            'pages':pages,
-            'latest_pages_build':latest_build,
-            'deployments':deployments,
-            'live':live,
-            'pr103_comments':comments,
-          }
-          path=pathlib.Path('production-status/status.json')
-          path.write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8')
-          print(path.read_text(encoding='utf-8'))
-          PY
-
-      - name: Upload production status
+      - name: Upload production evidence and screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mbm-games-audience-production-status-${{ github.run_id }}
-          path: production-status/
+          name: mbm-games-audience-live-${{ github.run_id }}
+          path: |
+            audit-output/
+            reports/proofs/mbm-games-audience-production-2026-08-08.json
+            reports/2026-08-08-games-audience-production.md
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 30
