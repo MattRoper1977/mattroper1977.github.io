@@ -1,0 +1,176 @@
+name: Verify Games and audience faces
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'games/index.html'
+      - 'index.html'
+      - 'start/**'
+      - 'for/**'
+      - 'assets/mbm-games-hub.css'
+      - 'assets/mbm-audience.css'
+      - 'assets/mbm-audience.js'
+      - 'audience-sitemap.xml'
+      - 'robots.txt'
+      - 'docs/MBM_GAMES_AUDIENCE_FACES.md'
+      - 'tools/verify_games_audience_faces.py'
+      - 'tools/verify_games_audience_faces.mjs'
+      - '.github/workflows/verify-games-audience-faces.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'games/index.html'
+      - 'index.html'
+      - 'start/**'
+      - 'for/**'
+      - 'assets/mbm-games-hub.css'
+      - 'assets/mbm-audience.css'
+      - 'assets/mbm-audience.js'
+      - 'audience-sitemap.xml'
+      - 'robots.txt'
+      - 'docs/MBM_GAMES_AUDIENCE_FACES.md'
+      - 'tools/verify_games_audience_faces.py'
+      - 'tools/verify_games_audience_faces.mjs'
+      - '.github/workflows/verify-games-audience-faces.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: mbm-games-audience-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify wording, routes, boundaries and positive control
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          python tools/verify_games_audience_faces.py --self-test
+          node --check assets/mbm-audience.js
+          node --check tools/verify_games_audience_faces.mjs
+          python - <<'PY'
+          from pathlib import Path
+          for path in [Path('assets/mbm-games-hub.css'),Path('assets/mbm-audience.css')]:
+              text=path.read_text(encoding='utf-8')
+              if text.count('{')!=text.count('}'):
+                  raise SystemExit(f'unbalanced CSS braces: {path}')
+          PY
+          python - <<'PY'
+          from pathlib import Path
+          import re,subprocess,tempfile
+          pages=[Path('games/index.html'),Path('start/index.html'),*sorted(Path('for').glob('*/index.html'))]
+          with tempfile.TemporaryDirectory() as td:
+              td=Path(td)
+              for page in pages:
+                  for i,body in enumerate(re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',page.read_text(encoding='utf-8'),re.S|re.I)):
+                      if not body.strip():continue
+                      target=td/f'{page.parent.name}-{i}.js';target.write_text(body,encoding='utf-8')
+                      subprocess.run(['node','--check',str(target)],check=True)
+          PY
+          git diff --check origin/main...HEAD
+
+  browser-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out Games manifest source of truth
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: _games
+          fetch-depth: 1
+      - name: Assemble same-origin fixture without contacting production accounts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _served/Games
+          rsync -a --exclude=.git --exclude=_served --exclude=_games --exclude=audit-output --exclude=node_modules ./ _served/
+          cp _games/games.json _served/Games/games.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path=Path('_served/site.json');data=json.loads(path.read_text(encoding='utf-8'))
+          features=data.setdefault('features',{})
+          if isinstance(features.get('accounts'),dict):features['accounts']['enabled']=False
+          if isinstance(features.get('mailing'),dict):features['mailing']['enabled']=False
+          path.write_text(json.dumps(data,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Install Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Run responsive and audience matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m http.server 4173 --bind 127.0.0.1 --directory _served >/tmp/mbm-games-audience-http.log 2>&1 &
+          server=$!;trap 'kill $server || true' EXIT
+          for _ in $(seq 1 30);do curl -fsS http://127.0.0.1:4173/games/ >/dev/null&&break;sleep 1;done
+          MBM_BASE_URL=http://127.0.0.1:4173/ node tools/verify_games_audience_faces.mjs
+      - name: Print browser evidence
+        if: always()
+        run: test ! -f audit-output/browser-results.json || cat audit-output/browser-results.json
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mbm-games-audience-${{ github.event.pull_request.number || github.run_id }}-${{ github.run_id }}
+          path: audit-output/
+          if-no-files-found: error
+          retention-days: 14
+
+  live-proof:
+    if: github.event_name != 'pull_request'
+    needs: [static-contract,browser-matrix]
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Wait for exact served revision and primary routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          ready=0
+          for _ in $(seq 1 60);do
+            if curl -fsS --retry 2 -H 'Cache-Control: no-cache, no-store, max-age=0' "https://madebymatt.uk/games/?mbm=${GITHUB_SHA}" -o /tmp/mbm-games.html \
+              && curl -fsS --retry 2 -H 'Cache-Control: no-cache, no-store, max-age=0' "https://madebymatt.uk/start/?mbm=${GITHUB_SHA}" -o /tmp/mbm-start.html \
+              && grep -Fq 'mbm-games-audience-faces-2026-08-08' /tmp/mbm-games.html \
+              && grep -Fq 'mbm-games-audience-faces-2026-08-08' /tmp/mbm-start.html;then ready=1;break;fi
+            sleep 10
+          done
+          test "$ready" -eq 1
+          for route in / /games/ /Lessons/ /Matt-s-Apps-/ /tools/ /resources/ /start/ /for/pupils/ /for/teachers/ /for/parents-carers/ /for/schools-semh/ /for/trusts/ /for/councils-organisations/ /for/partners/;do curl -fsS --retry 3 "https://madebymatt.uk$route" >/dev/null;done
+      - name: Prove live Games and audience experience
+        run: MBM_BASE_URL=https://madebymatt.uk/ MBM_CACHE_BUST="$GITHUB_SHA" node tools/verify_games_audience_faces.mjs
+      - name: Record production proof on PR 103
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment 103 --repo "$GITHUB_REPOSITORY" --body "Games + audience production proof passed on merged source \`$GITHUB_SHA\`. Full 320–1440px Games/chooser matrix, all seven audience faces, pupil/adult boundary, local view preference and first-party runtime checks passed. Run: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+      - name: Upload production evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mbm-games-audience-live-${{ github.run_id }}
+          path: audit-output/
+          if-no-files-found: error
+          retention-days: 30
