@@ -1,0 +1,109 @@
+name: Post-upgrade final estate closeout audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/post-upgrade-final-estate-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mbm-post-upgrade-final-estate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full-estate-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Check out primary site estate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check out Lessons source of truth
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: main
+          path: _estate/Lessons
+          fetch-depth: 0
+
+      - name: Check out Games source of truth
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: _estate/Games
+          fetch-depth: 0
+
+      - name: Check out Apps source of truth
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Matt-s-Apps-
+          ref: main
+          path: _estate/Apps
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Chromium audit runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+
+      - name: Re-run permanent release gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          base="$(git merge-base origin/main HEAD)"
+          node tools/verify_professional_site.js --base "$base" --self-test
+          node tools/verify_accounts_members_mailing.js
+          node tools/test_member_merge.js
+          node --check assets/mbm-account.js
+          node --check assets/mbm-mailing.js
+          node --check assets/mbm-platform.js
+          python tools/verify_games_audience_faces.py --self-test
+          git diff --check "$base"...HEAD
+
+      - name: Restore compressed closeout verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat <<'B64' | base64 -d | gzip -d > /tmp/verify_post_upgrade_estate.mjs
+          H4sICGrBd2oCA3ZlcmlmeV9wb3N0X3VwZ3JhZGVfZXN0YXRlLm1qcwDMO9t220aS7/4KKOMZAI4ISErGsanIimLLsWdsSyvK62REWWoCTRIWCCBoQBIj8pz9iP2Xfd9P2S/ZquoLGiBlJ7O756yOTRJ9qaqurns3/rQR1qIMR0kW8uzayfKYP3BrwR1RlUlUubsPHiSzIi8rZyyccZnPHBfH9McCukxP0e4KC3hKBLfGFKya2oPwuemNynlR5Xa/bGlG5C3suQX5zhEFu8kG8yxyli0Q0ySNL4CUiIvW+GiK5NUzM7xI2fymTCZTWm+UZ6JyTo6OTp09R00PopvY83dV348Hg0Poy/iN8/7kjafHAAODtz++vcDuC+hwFgvHnVZVIfphOGMxH81nrKqC+ip0DazDn48Pn58evrgYvDoAmANgezZZAdkahWBdP4CRs4amo/dELrA1+JQnmYf0bzouq+Ok6uV1VdSVC89FLqpeXUxKIKc3TjKW9rioWMUbij68fnH6agDAzr7Z2dp0vnmMH0/h49tv4OO7x082ne2tnW/hc+cJNGx/++3WuZ7798NfLk6AlEOa/8Bx3BCxhhM240L+fAPrgrHy4S3woyd6B0UherKlyvNUdZZc5HUZ0UQCxaIor7NK9s74bMRLNXTGkhT41ksTobqLMrlm0Vw+4AqF+VlWGuA4L8OiLhKNEZ8rzqKpAUwjWMmzSvQi+LbbRTRFYnuCz6Y2xKqsRWWNQ6IjwNHLywnLEsGqxDBAwa8ygvzAMPL50cnhxduD05PXP/9/Y2hD5Mnh8ZGm687JgKS+44oEhGnTiZOyL5VouWl3K2r1iBWBvVDiuNkM9TsgfsK1/x4AcmB3OvLm98ymcTC5We/rn97htrx4fTJQ6j/glXfmBpOElAvNzsUsj+uU6FtRvgvBy2seuxaec6N2p4c/n4Ken3ZAT6tZihPwB31/ItDBTH1H6rtSj0KoUXlGP27V9Fksh90SJcFcNc+Z+lHl6of4VX1fTyzqBkfvT54f/h/S93mCkBBFCb9OYp5FHMi4g20VoJpJxlPY2Nlo1rvXvvWiNBcc9qK3s7XzuLf1BP6RFkw46B4MiA+qPi3sBTx4YF7z14MjZY59HMhvCx7BuMGU9VtmGztHTPD3JVCBxj+YlnyMrWBIoivRd87O8ankQF1S5WXCTRsY+riO0CD0QUJjXqT5fAZLAlLqNN0Ez8huUv0wKvMbECGcK2U6ya5hbF7OcbIA8X7B5gTZKfIKGcPSo7KYskziA6fOspilecaPwRaQMDbAqrxiqUBIBRMCe8C6j8EOqJ83rMyAGTBiC5RiCRsyBruGpEPYUM4YmAr+YQraD/444t41S2vuA7SSV3WZac9GzdqFAUdSHBsOxdfhBDbbafwa4DDwxZTt/PXxCkgZJARRyWHLXjEx9Vw5EqDURYz7KKcEcTIBMfDcKb91O6BTzgtvJiywKATHMoLx0GSm1yBsz0DSqtNkhiKkWzcdmNcGRzvuoaXZdPIrsDK8Ag6CrLogy4Jf8zKp5vjIyzIvwbygDCvBzqoSu6ShwukgTWC8Ocu8/MrXsPpruS37fAsHbJBjlCWQkhgUNTCJEPnYnYwd+RQAgmawlIRAioHz9Z6zTbBSCAtxRrOMPViIEgt3db4WmDaE7igpYWYM8gLWHKT5xLt8eKepc/Yd9/hgMHCdvrMeP474cHDyDke4Lw9ev3GXzsM7ZOVSg1Gbse9cOv/1b//utJuXlzjRXV4SZ5QoaPS7D6w95pmoS/4iKT3wISg3YxHMruA3xqDYtkmyFNWlSK7B40A8wJ1lW05uWHolh4I8oQs9l6KA/N0AePwWHK/QAH1fEwSjkTwIGxzPFpt8jFSAIsQdOm6SavoSOHw6L9DqKFokMlsAEgELAvsGxsTznb/8xXZ2wZQJNQz5CbMBNVjdmu8SFEnIGGxUKwQlCqxpu59D6UuWjMnQwSrVaCN0egquBUfDECnNOIMGL5ttIy5Z3C55KqkZw2xL04lW6ISI7JpbIwJRpEnlUbfghS/X44Yd24Hs9jog1S4gmbQN2A2Gra7GTzqzIWiQKFk5EbDmgsJCNABL2yyAralTFBGT5niujDfkPMhnbsBAK2ZHeQzK0FcIwUCx2x/r8RidxuNvnUcUuauvTScIAo11aeyBxBeg06yFswEqtuU7FaRMN2QYD9FueZdAAegPUqB4A5Z7qbwFuCXoA4KWffg28GIweWj4mwbYpra6KR/RGtFNd5a224n5czK4ahMaSA2zTCp1y6Nj2NBN58zt9cgeunK7z5GJn2XdkzbniFu20ceMAby/l2QQ6dmbV1tpInVuUoBgmF0HEA1MgF9oyih0UM+ggHaI4Ts1CCIro+kxK9lMwAN4Mwh4gM7WOIuZdYfGLM+SiKUDUMUjQvI/IHejTa4xTxin4OAaTcaU3J58lMSbhrUkJuIVBJMnsOfcq1ue8bbShgUjqFvYywotCtCDjfgTvMmb/IaXzyEOA/Ng4djA2SBDBAQdhgxZscmazrNYfABTKZW8TdWb5Iqn8wOBPP/fo0u7dphD9najG0yfB0kWpXXMBY1BopjAKochbcyraHoKnV5dpp+1IAX8wIiZ3TBQXJon56diskKg+CP8zTNbzBQSSYQOfedg1FeVgN6CCoV+ygs+hn5+M0W/EHsMQXDBxkkhpAu6UQP/USZp24fk6MetW2C2vYEGH1OKtZjE7635ZIxMrAVIISNS1kq8ySXM8rjuVmKXltQIRts/t6Zvk05ZYkc7LIQrMM1f2HCbs/mWwXmjVdCJbgO2I0ki/mt2aXQpRAeOzBSgpQfMxCVU6s8KFzfYyZitmySobB5Oof+c1xNyisnZULGCMb1Yytk+nxWYMf2rnn4fs95vNU8YlSlfb0SBkghDCwJnpHfxshAtlnBxVmag8mQZrNExTzHSEMxRgPWoGlsI2SiMJ7Q6+bZBqzf+EYFC6MZDVdDXt3LtiyTDhgrTIT6KNtKRvvOzl9BQpUU2YAxZwJQRoog0ARVVOkGYvLJZqgGotqCgbyUQcid5A5lWOA2+w1E2aBWjDlKvw0NI3bMw1pdhHlTUmcTTdEhtvpq08YQQXPdvwQjD8yAWAl9tG9x8TOEbkk0fQkKQgic29eeWEGyaViH+EHzqWQVMTbxHsxpyDEJQJP7Bk3iSwmQEl8gT/0Cum4Z2iiUUum1kckoy0tNhUy93J+S6lU9co7BrgjJWwHhC5cAnBkH0Y0dWQcDnZPwINFQMh2kPJtU02W40qLmSNzOaF7xHq6jQp96afgjjc+uxRBav9ZOUE5fCa5MPLfJdOrw9Q+xBuuyiitq7xRbaAuILf8USxSwvw2O3gWCxCAZzz0E6pMTsuPfIh+AHCXRAVa6PHy2DajOZMHBkMZi/+5qYGsNkz6kT9myWo0S0Bds/jyfzZJKlTKqvIbVkXUR/1TJY/dz2ZaymMS+S5VF9psCzlx2ofuTUy8N23C+Sl30Ztp1H6mFculqXCMyywd/ECdKL0FpjKaKnZGNwFqTY5y5Jb/uFawUVNt8dXjwgopqlimUAX9rjmzDCb1ekYN4pCzJ5CM4spJFVzzu0T7tZXkDr7OEm7y8AikCIjl3Igx6gPQNbRgV3iYxQNJblKX5pE0WNEgiBERIfM8U9L473fmmv7UF//5hiEzSpv/p6dZ2q78A3lfzvTEWVKr+Dz/8+dWfb7ee/jl6TV9q4biKXp6lc7NAdJqQ3ZdSJ3XM23KcaZJxdJVAqkomw2G5P8xCvzGEKH04LqAzCRV+/vCD6/srDvAMHAPIFkPLDYGSqEefIGQ7B+wSQJpE3NvReas7rFzb1RlS7xwLjgLS1z9UIodzjfJpRdHGTeZlLXWUEq1w+I0vMpk7USizN3SueqT+ERAqCcUa6ts2VCG2dR5jGOCErkSvJ20Mmf1bVngR1u8iicn3zwMBYa3XVVNTTNVQjMc0KthXlkoaKUteN2GflHFaS4nyoOs9dFdfwFw700SQzmMExUYpbwxMyzMrz2Fs6lixRpeXVEBMFOk+yW/p1WxrLKsgZsAM+Ia/kHXt+okVi6eY26ikERntd4pTEM/OUA009HYsesUxkMcx7TSpCRw2CAHVn2AwKIZ8xkwMnjexbKZUktonst2XO4eAjWuVGCOA/6IujPjIaVQkFh4IBqyv4iXNFLhw+qF45TyDWHp3jYnOcoILyU6aJlhDoJQQ7bNBp0FgMLllt6OEerq+BOYGmWuo/Y2XudkPRZreEvBaaDlNjQl0P/mNSwSUToZDPJa6giDjYZhAeiQqOc7/4s6uLg8jjrl1ViFJggUihZ21UdP69cDnGCxV9SqpmhxEeR8egS1e09EgPcyu1/T/yg7ShIk1PZhHvWRJWpd8Bds8q9jtPZ2REPf0YOJ3TxdEuKeyHGCpQlsXiOVYpyUr1FIEq5CgSwhyT+9TC3NYKEuzWEIAB3qPTDzr1q+69Vv0Z5g/yyeKJeiZQjZd4tw11uuuma7sszIhBU2wBUpCVMwhtS2LTYJtrcY6W2yWAyIcfvS+l3+LPfm3eCb//CFk1FKmCZbfEi0VYxUWilCMLqSIXZwd9P7Ber9t9Z5e9M7vnmwutXYoSI0kSjigCGUBajCoC4anfGoAOF5Qxyb0Jyzefn/w/viALoAMDk/+9TUs6+TozeHF3w9/Wfz4/vT06N2Low/vLg6OX2MTLOPRWX/vHL++cs/PPn7lDjOiCR9/J114Lg+sxhCeZ9dJmWeUK8hztnuIZBGWRC+q/Ipni5KPQZ6n6gkPfSBgi/8AbdLceOQkwcaf9S6cc1X4WUCKMStSvqBzvmmexrxcxPVsNvd/5/KgNZZhfS9NrlZW1DUSg7ocMzocBvsHK0WV3V98EosZ/AfNXqBV8I1FBCFR1H9cDEMfJtB1iQV20odYxHkkFhgCQIi2IJs6rUe+NwwXD30LTDtghZzwfYl5ckj3f/b7w3CIjKeeaQ7At3e+GwZb9G8b8faH8df+/sIafvZxKIbA60dRHstTPmGawmQF35sku0KEuGjY0oUoowUjnuBW7uE+DmkjCcC9tCwabL4aS/M0RhShVXYDDz29alsywCgZ4uzt9lft+hqtXYsnRNGChTUXqoZfxxxMGO+1VPvrHyZ4iWUYQGTWkTXLZ6zB2hSKqRLXBOPSMFJeTImUBLe7GtW1XE9bnB/e0aBgBvoH6Tgef7TKJ0jA2dpLFJ1ysC229r2TYRgamewW6Mizc8wLOycnu1ZGogZ1DoDaHrO7pnUn0g0cffBjteAB3/LS79ZJGtbjPZEu+ViMKAqiHzlv3R4IhyCkYjg4f7Q/fAQcwKsE9vWCr0Dch8NgAVZsODz3H321cE2LSy2ummNzwtMIIWLCgnk4vAsnJNMQduqoB/mzOnC5MtC344qO1LW2/nNnAKsVVwgOVNxBLFkTLyir//0GGLJqXnCKYpSMmPkkTiraJldt0LrfhzjhmUvruWcE1ithBNBnh0hrVrlcH1/WmbpRERtH7sxYecVLiqJt394JpO2uVtC5igcV1yHFRaAtFW0DbXWp083FvVDZNRtEsP06qmxQdHSmjaTTKTN4vE65438R5/PBwEkEMK7CClAW4e0l5JMlYB02WT1f4NKr07dvHBCVGqMI4bCSr+Bp7XEbUavrC5hg3+lOYcUtJ6/9O/GvCQk6vGs6vsQqQEIOqBfza57mBcVGeDc3yex8Rkj/glhXHVMb+Wr/l9c5ZWXcQ8caO3EiIFDClN75lwOIjMEPAVLbI7XR2T3rsyosr41BL3VZROfadjKrc9lWqUnFMqEGIELXzu2xzpyXrJx/0P1YWLCRdTFg7GFmLeKETTIIL5Jo8SujAtqiKJ8+XeQZ74lpXpnoifJ0tC7h6eHb46OTg5NfnOMTGKmn6Rl6gs4nMN03k9372W9oApaHEDXUE7MO4BZECRkVU1fW29mKNQPW74jegRM+FtZtSYu3dCr4nGVxgrW4z+0aJEEQr9Mh4iKZYQUfviYLQSZHLEQ1x2wSfF6LmRgnUfxrRb5FNll8Kvj+ZHHDR8VikkCMeD1ZJFG+uMnH4539JiwmIN1azplO3egMUO2B9kjWOCKWhrQX2S58YrIIbKUx3XxUjqhaXuYyfHhHgyFswO1u9yowK+2UUmPWRjm1HEWXqZoNClgcq562n1Jls+6xgrPXXVh3yzZa4DGjbfi5ptrYRSDdZhAE9xBA9RuNa215ElfdJ30H058Ctck4iZi8ZOoacA7q1i7YM3Us4hQ8k9UraeHwOx+7eFvMFm4y8V8wNWgIKDKlA/MhxTQPF/J7f42UNXeOumc1gMQg7GJpH2vXFdfFROsyh3Vi7+PFP5AiaQe1v+1tb/l09U93LS/t1CqvpibCwoKhNj14HS1p1Qw90I9zn2pqBUWFtDzaLO9MKQ51U9agi+2Z2zoFcjYMwkaI5Xk2Bfxreo3Cr+tsy3/D8OV9wrhmC7ryuG7IHxDJRp5QyTM6gMeQn94baJfFinoE22TK/fffsrA61IsLukO94NC+uKHfdOi02q88tLusexm2cKj72Eo8LGq7kto+YuzckJS74rd4SGW3e8Z1JUcd8iKN5O1+rKsqz+L8JnMOjl9Dbpqm8j0nRS4saCNkRTIMRmbkMEA3mGrNtBaGFzQsiAhNOLNaHhjOMYw6jCfceanOhMV9VKGggMr1yhwiH0iTeIkmCKbbVIHZUOPOIIPfx7GL+wtqTU3Pv4dwtHBqX5r6nRpDuUMywUCa4bUnHrvt89CEDIqV7q/bFEs0fH/d0g1aJYpCRRwOqOQIL0viBV081JW3Z8ZAy4jR1UScvx+MOaThoGf7gQawH+ipqDd0oRfvrNw7Gq84gZ6XSs0UPe7nJ6V8wqL5G6TppSKJ5tMh1Lp1Ku3R8ZRZHtgK2HtgoHyrpotRTft9azKD20tqxNhtzsPaxkW/CWRblxnLkjEIDV5DWr237NIbVmpnm+JQW5NtECvJOQFYI0HtSbutOVi5ozN4Qo4WYUJreEYt9F6Jr42LukDYgSDT5ldUaW0gqSkaWPjx3eGHoXj0n/+hFUedKhKWKqlS/YqGRaC6S4Lw+oZ5pD6g31lPnhGxsmRz2OcD/A4SQd8EVpCTkuSYA7UtuntjNy4d5Vovv4RZ8goT1DpLfq1RuqjJjtp16E0d8jiEMNoDl3LaffjwbQQH2KU4i+/cMLBdWUVXhC1m23i3u30rW0lM9ru5o44+H/y+6yP2ZRwweSWLqvdlKl6Ctf8bCK58+wU8B/j25vWC9tbIF2ToLYbVY1v1ws060DK6JMi7+goLEY8o5OEDbDcWnDQcqYk53TVw70F4JG8iqANZTdsfxt9Cu0Fmj+Tb9a3bNlQW+0hnBKbmjjGrqo1p5IiCcgTZ0H4TRBJG15b5mJe4X8LDqAEjngneRmxdr4YFrM8HxyWbyIJL+1ixlCcZo9Wi/gLfdOOlru17eCrje8GjfX+4HU4SfXWUCpL4cDPF40fPowYK3elGPBHr+507ouwGRtDIs51zc/PenD5iP6bryDy0yVXeX1Q87S8+sWsmM9P+AlIj1l+M0nzUb85J2M3KyyP2fc/VW+gwo2GlnR3efxV9XS4p76P7DZ/13Q55ya+PNqG5tL3EB3ljfYkXL9SkvhNzLOK8P3n9PJ8VEABnlYKs8olt374r2bkET00gASRMtbTlSufNwWr4iOxLmsSySCUcyPhi9IsjsK01RAqluaoHdgRLB49CK2NVN58RzaYlVGuvPtOrhcemmtW6+gzmFBXWiGrzXjdZMpVtPVv7VoFMV+T6LBHXdrtV9fjv5o61KY7j+N2/YoVcdbcRd4cwSSzEI5iSYldZdkrCcaoQKfbYFWzpHuSWEyLc/a58zy9LP+e9cKC4kg+2uJnZmZ6Znn5Nd8+x6/OMHtBEdAcO7/Xilm0RYleqXIOh/V61dMT/2govXLqA//u+2DBXDVAdYDAvnu+eW3ESz6/xPbVd9RRIUrwKevTic/AYr2fvjDxx/JqR4BoQV3VaZn98jAQwMWzh1X/28F7RdxbKObimj79+JM4pDtdLbw7UmaPRq6wduch9AMm1DKmreBwn+IcjlYm3NXXgfOVsHzMS9N2gNs7YLs1KHQZlGrY9kSPkjX64S85nLiYO9oLIeNXdpmBkwg4w4nT4IupgNOoOdkCx2CPGsPN+gH8Dd8gfMgXmA89P4lmsBvNXSd/0e9FmI+2LnkTKpe8F96nGM1qGfmmOefIeNkxXo5EnkpjH2BBEMzcRGhjrOUVHuA3b/s3B36DgxYZThFZn8pdjUtzNrRlL+LN0tKOjqVAJ+CKzYp+eHew+1DjIaIG7SJ08exbrFqjncMfH1PjEPWo6AFosmXpHvDRm0N6uf3nsxtzhG24vdHPpBGpIhBBdAXQQSti1HjbqyGVA2AHGL+4ya9zOeJQ7SBRlDqB4flNF4VI4wv0EzI5t9kx0EIyiuQ4DOjwqHa64FWidG1c0IQ7EqEmCGEiA/gXvgoroqldNIwibf+4BFlH2dpNB5V1LSoCOUMvjv++d/G6vq7ftSFOofG9Q64U3kApRHl8GY9Wl+l0GNOr9sC5bBNn8hCQOEVv3jFTqda7CMunOaaEcR1zPIirlkdAJGvLIWxWUQ5Sh/OXScbDZLy3EcmJd27w9pm9Su6st/DBDbp4LsSICS0Ux+E6ItMtQZDw0C7vH2umE6pTKGNQKGgRUSKiOlhLhboFrmV5ipbBmmY2QmgfUV9kCmi7tiQXcMV0skxwy5DPxEWwhAhvtwU+Oiw4dbiZfkiMC7wREqUZYAWRere3s+Wa2XBei792h0La+dSPxKA6PrpUSnIQqfqwbcwlBWHESNPj1XubiDrBjezUeKrcpfmGaHTufP3t2chfNb4k4NVSesOUxwacPijTtmMBRiVzTVVfUIjS4hxMgRd1+AN+J4vXMp8wcgrBVIoRASM6qUTdvDeRbCfTfAH//gPjrIJeHxMMZOoxyUBnjpR61yJ+emO8e8QBxK9vJNjc2KOjHlu3tZlsSDOeOcKACm12EL+tWCUjkyp0wSPk0yU2b8YTuEbU+nRKDrQstrILjHrgFQCzdTcfeLQSLLdLKEQIR/7jUJb2sMF1jQ9/KJ9yXib788K8Q7UzyaIFawyk+Vjc/kOMO5bRp13qt+cA3NAmJuceKEK+HuwrO9B1w2nTR6fV+30acoVMHSi9S4Ri+/fQ7sqY+UiGm+YU7iGhaxp2Rl+bWxtYCnahIezS2MG1jbEZtEaBkqJF0VxkZw2AmrjbAweTMFbadY8LnmGuNusU/ncPrFvBZ45IQC9bDNeYCWmEMFUsSALr+vs0A3Yh340Iuczm0uZIjMbhbWxRFBnHHatTCeNUayS06UdEawB65G45JgW5ckkA5k9wWPtV4Im3EoEVl6NEKpTTycpt/8N7qL9qx5Wmbj547B942kLrw+pOXl2YwA4ZmZuDsQ+Bt5NYYb4XNjRS8AmLGv4A1PAJA4AQNard8Dcm4ZOBjtEgCKFW/DYRmuawpUxxFO+sxlfLBi6ojEPWy/VR8QpD4LrPeXvbUFHAXMbDuxUtjidZc7f3sKu7kE0NVGWtb8r24wTWaSIgi7DHTmpuL5IdzUNTwpvSQ82SJn72T+WbwofhUA7FcXF3Us/K4l51gfskboJ/Tj3W1eM0peq7QL7IoMzWh9jEi4Abwfj6sFufT6fmoWmBYbDMfjuurfPG2QkLz85D8PWbw7fTSc6pPZCdBYgCAHkzK72GS/0Sv/dHo5hD/rSdVSfECVxoFSRyVxRIpB971V+6hm/dpbbos0vIVtEk5o3kr5Kd+XSENwgxw1aji4PnAYQikTlQWuRY5yXdIneEIHI5qKHkL9V3fNwc/6V/XJd9cEp3HkosKM8d6RaPqwxWyiN6mKaL0spieQ31r+/rHKwHhjMb9lfp/lm2qm05suBcHhjcFiHmfPbO9ujao2K2ZbvujAj5GfojyK1rBrfHMix5PMe84FanVFJz2vDDQnvPHxgZakpbJU4aBE2AxhPeQq7qorVXXGGqzTanLSsw7wuu7LQPACm59s5HtZ99ubWUgolJej3VUJOZnVflmyl5u3BYP2TcvsHGH6yk3HKgHlzM1DHQSSUGQNtslZNAQSqTF3aj1DIPMKYvILX1JCbIk+YAks3OLOEXW2+ofc2TGXDYsoIAVgijmGrvsT4H04B+cNFDkfOJzPHjfDsyCjx8knCe6E9DwEptDUeiA0DmUgj6qNV1OgCLpCkmcSRAh8wUl4cGzKXB5C8CgBW1fehtgwJvxAvFqdXB/6bcF0qG6UodsxRvcX2pPc/I+MXqTln5gltHN9/tUcyQppFi7awOYN5BgVe03Cay1J2IeO6IPns4JSy4qi5mJiyDBPNzeWtXYbh4B7ltFRUyWEyfDsuo3I7euEC19rb9V76flOZ9eTcN7qr6aYrDZL5imAU5mOR2LSo28ifbdZPDZijL4ZO4Y+Ndr2CmxE/xRFD7X+mgSXCiU+3Z1UBd42WIZdUahom7C9DiuMF1647c2LIj5Vte3JTZns+loROR+u50pOK3WfVOk5RbbK/EU/3O0O7xLQoA1++64rCh5X7MVxOpH5mM4P7Obd8BUMasjplvFdn30y0TFoMe/QYIKgJkVk/L+3vrULvpaSP82m4bfVGVddDtdJvFNT2p7Y+EM/Dvv5Gx+rhrXZplHSGM3Vv4KG9gjogdT0kx/f3T0l6yZU6StqJOr6Y/LfOUxiFPVot/EOusjdNCVhm0uCnRDIOmikmFlecRAhmNqCe3aQ7q/MOJiNgVh8wObBXGQN+ijNy4+d7Vv93jYAX3czlFm0LpAyLJJdUEJSHSKeaASny5PaT4RGWjGnB2rnQik7hPYncvNyhYLTgCRWtnSxwPvUcQTEt2iKHdjQ3Xsew47Vqxnx+hSu7vG7dZOOnkwoJtXVuRmkOgUgPA6xAZm3hClBCEaHWPmmCQbi1T2Di4sWNqnj/oYDjUqJJXvZDqpKDEj15ECUY9Mpt+LugRUpwYqtvO1oFPZdsUiSQ7UHiffp+DSroU8dDu0mMc40u4aqajD6ee1E1lkKZ8VZT3F9YyXyOR4aM4KDl49H02Hxejoom76GMkHRwX+6XM9yKr2h4GlLuVGDeTXsOxlNJ6ZZVfHhCFaiOrpqBhWo2PY9921r2+l/XLt5DTP3XWm5OmYQJuad7w6fh5BOI5TEQK2TOKO6GFiy7xTDfP3aSVtzG0F1PWb/u850ZRtyKXJfZNzaV3Fzu3qw4+fKLChLuMtEUFK6NUMJ+QAkluVJqzn8pAWx4u3DBigqKcErncJtzrRpdxKltSMK8Cgra3LzxmQX9I5kP4SfQvsLEpAg3xx3NTYXL4VDpOQnCZz8r4+x5zfpLsrHetjXQf9nWdNgASIAEYffMGMlIkufnOv6cDfa+dDoPFnH0N8k0igy2pCx9dpDuh6cAVTHuKVawfdgnvV58sCbZQdUZxQze6k+oPJfnT6CxYAWBjM3DAPznm6x749FNJFF3dnbExpKBVwb1J86iGUnTyYgDPCx+pmOC1mZR/DvuC7V3TiO8kZ06F/+IxpkZNTnsFBKZoHT/rJ42Z9J7qPp0O8Ei1nBSawwu+bARM5ilgQSBuR0gX9BQUA12TzMJ0ZLxKRH5ndMrgI/2qlnTgqhp2EZvEB6HbzYJGiQinEkHz0GP5UvUqRZbK7QWsi27R/niKQW59SIn9I28SuJ1knXaXQQZ0mLQ6EW+R1Xo0sWTWDgOAFCh0mhqM+2JvbCAok7X1+d1GUoMjaKsogj9+QXBd0gVZoWyTy3DpmxoNOtv0ul4+kprq5sn0ym0BCpzqcMmIP/5CGeStZpWYtpFQ+PrTion++im1psZ4xgbW/SZaxP1lwtL9VgNQSH1HJAW6kqTk2IucarK+pBv7ZESG+nnQZpQOo+xSBhLaM55ugw8MXnMPYMRDfZ1gOe5xcXXRrNAwpkPrWxGo61qweY+i4YY2aEkF6k001C+BzRUQ/rllqk0h3MG6uTD8HnbTbkZf3Okk568mEY9/SHEzcxr0uxN7SfQjtvACtjzRPCRdDU/LVhazD4EDj3HCd1FfTc0Kj0C6+dbAubWgP2l0zL1KtdWIpaDWgNBDNBaptNC/kE4fEuPlyOsfsDAB6r574gD8OItDuR5j4tKjHsCpDfLFI4HoyOLqoYJkomYcu58It09kghKi/X+CPiq5gqoLz+ELDssKYyWiRnwzsFQ7mQdIGvBx5xKjaUdI8FJZGzQdg1hfj8p1rrhgJtGpkTmxAdlODPp1V5zXG07yGBVvPno6m5/UE/wZIhCAxchQlqeooI5iH4h6PIgquJl0DwjsuMKV004a4xfxqejbFlGpXoHbOG7weHVeCuve0loSrPR1tta8m1bX3xaMmiDlQ4Dhgzi47WXoDUg8C3ztr3YIxuscBvFpI4TQ3AK4pumvt78Jn89bd/zmpFTjJJ64q8Sm5TN+nI2KL5cC8F5giOSRWqa01B3l/PC2rXULzzoMWznsXML16+H/ON+wvXdqQklbw7lsXIYs6FKe1yfDeAgVzWR5zg9eQDYPPMcdnEnn06+vmkBOUdR+I5CEweI1Uz1qg8BUo0zQn6RVTSUdj/7YUU4HXGG1OFSBoomgmP9nr+3Zj/fnWxnJ/gmxood/5dcrKqE2yKsLV1fnuXfhpXqn8rx/s+4REHNak2tYAdaXjA00DEE/bJlf4Akai49NjpprxqrgqMN3UVc1+AwoKtVmQOj2b2tyIFiL6fCHX84uUbNG2H+0vUDD8cm/tO6iuLImrdwNo/PV5wS5Mwqb0rGkSfpG+21+xWLpvY+CzH7vh2OxP5iXPwvgMVPTjS3fXJOY28e+/21oFF9VtzbxbYLeRE+mWcB9UPwsOHffCT3wXBzJlOF7I1meY42FGeuXr+284n1nPUHkJbPdOiNIOeWlXMDbYDDhzrVwLDBQjxuQK01HvitATjAu9FHttTn9/4h9kW1SfP8ZacSp2MCRM+6Q44jmXUSE9f6ex/p0cOw70eoKA9zlPupsFPkDXM+j4layt+ADZdwl//uUod4PI6eFrvV7in4wOnaegjoNMNrxBtRzolvN8Km96xs+nZvSWbSePOoiLTnvZO/Mo63t8w1FRQN9qXb4/PU199md9ipXypOpXzgOty+Rnr+RhVjeh37vvD3hw93W0tnHfeg+zOkN7qRcIZaBAcQb+pI1d0jj0Ey8/aRDdv3//C9/FSw56KG/DOsN5724u5RlW7CNuwzhtXtxLttH3N5fm6dYkIKFHqAdS6Ia8T1SPnaeX7MUaDB5/IRGX/InrX5oE5zvvTLcBoyREU3jQ6R3wlQBm12+Zqs19RrnUNBhUk6RJvppL+1KMM/odGdsEiuSY70y6LM6tyc8wPHDEVM6t1kETZ7Lz9KkgXKftiYbgqdg8nIf4xPpPsXIutZXfY+VXVw1JXMrf0busTmn4LOvd0zQb3NMNxvRDdgeApJX0JC0ap/zUeM06WfUolTT7HgN1Zmxr+kia5viki8nBINqcyXdk0+jNJ+hgaQVqTadnHq6mN+caWDubUVK9qQEvs2Z+CYJjVcIW8wzte2pE9YMH1YDWr6N/I99VcnQ85bgJOIwOvy6PSW/my/f4EI/z/NoqAzXzMZpD8T1xHkbW32YlC7qNeRcuWDvLYs5vaLq8TgXUGxfmclSTrDf4+/FG70XR+3ByCzrF15KyxXsJ038Yky5mxcc9OgJE1eEI0Hv2efpZK7s+0ZOBtipKqWGrAqddWxFw8ugN5PeT1z/8dPDj/4BPkDdEsj9K3y6vqsICPedt5n2VC1fec+OoeutMiwpZKEfCdvaRbp+MLiAYoO+1Z0hcgFDOPGG/9TGc5KJ6l8C3rAfEM4D//gMX6sHED4UAAA==
+          B64
+          node --check /tmp/verify_post_upgrade_estate.mjs
+
+      - name: Crawl, render and audit the integrated production estate
+        shell: bash
+        env:
+          MBM_BASE_URL: https://madebymatt.uk/
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          export MBM_EXPECTED_SHA="$(git merge-base origin/main HEAD)"
+          node /tmp/verify_post_upgrade_estate.mjs
+
+      - name: Print closeout summary
+        if: always()
+        shell: bash
+        run: |
+          test ! -f audit-output/post-upgrade-final-estate/summary.md || cat audit-output/post-upgrade-final-estate/summary.md
+
+      - name: Upload closeout evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-upgrade-final-estate-${{ github.run_id }}
+          path: audit-output/post-upgrade-final-estate/
+          if-no-files-found: error
+          retention-days: 30
