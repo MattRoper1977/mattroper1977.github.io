@@ -1,0 +1,49 @@
+name: PR99 mailing provider probe
+
+on:
+  push:
+    branches: [agent/accounts-members-mailing-2026-08-08]
+    paths:
+      - '.github/workflows/pr99-mailing-provider-probe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  provider-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Submit real provider probe twice and verify anonymous replies match
+        shell: bash
+        run: |
+          set -euo pipefail
+          url=$(node -p "require('./site.json').features.accounts.supabaseUrl")
+          key=$(node -p "require('./site.json').features.accounts.supabaseAnonKey")
+          email="contactmadebymatt+pr99-provider-${GITHUB_RUN_ID}@gmail.com"
+          endpoint="$url/functions/v1/subscribe-mailing-list"
+          printf '%s' "$email" > /tmp/qa-mail-address
+          request() {
+            curl --fail-with-body --silent --show-error \
+              -H 'Origin: https://madebymatt.uk' \
+              -H "apikey: $key" \
+              -H 'Content-Type: application/json' \
+              --data "{\"email\":\"$email\",\"consent\":true,\"company\":\"\"}" \
+              "$endpoint"
+          }
+          first=$(request)
+          second=$(request)
+          node -e 'const a=JSON.parse(process.argv[1]),b=JSON.parse(process.argv[2]); if(a.ok!==true||b.ok!==true) process.exit(1); if(JSON.stringify(a)!==JSON.stringify(b)) { console.error("duplicate reply differed from first-time reply"); process.exit(1); } console.log("PASS provider endpoint accepted first + duplicate with indistinguishable public replies");' "$first" "$second"
+      - name: Prove invalid address and missing consent fail closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          url=$(node -p "require('./site.json').features.accounts.supabaseUrl")
+          key=$(node -p "require('./site.json').features.accounts.supabaseAnonKey")
+          endpoint="$url/functions/v1/subscribe-mailing-list"
+          code=$(curl --silent --output /tmp/invalid --write-out '%{http_code}' -H 'Origin: https://madebymatt.uk' -H "apikey: $key" -H 'Content-Type: application/json' --data '{"email":"not-an-email","consent":true,"company":""}' "$endpoint")
+          test "$code" = 400
+          code=$(curl --silent --output /tmp/no-consent --write-out '%{http_code}' -H 'Origin: https://madebymatt.uk' -H "apikey: $key" -H 'Content-Type: application/json' --data '{"email":"contactmadebymatt+no-consent@gmail.com","consent":false,"company":""}' "$endpoint")
+          test "$code" = 400
+          echo 'PASS invalid address + missing consent fail closed'
