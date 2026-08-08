@@ -1,8 +1,11 @@
 name: Professional site live verification
 
+# This is a served-production parity gate. Running it on pull_request is
+# self-contradictory whenever a PR changes a served file: the workflow checks
+# out the proposed PR source but compares it with madebymatt.uk, which still
+# serves main until the PR is merged. PRs are covered by the professional-site
+# design/static audit; this workflow proves production after main changes.
 on:
-  pull_request:
-    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
@@ -11,7 +14,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: professional-site-live-${{ github.event.pull_request.number || github.ref }}
+  group: professional-site-live-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
