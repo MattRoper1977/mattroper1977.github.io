@@ -14,7 +14,7 @@ GAMES_COPY=["A Made by Matt collection","MATT'S <span>CURATED FAVS</span> HUB","
 def check_tree(root:Path=ROOT)->list[str]:
     errors=[]
     def text(p): return (root/p).read_text(encoding="utf-8")
-    required=["games/index.html","index.html","sitemap.xml","assets/mbm-games-hub.css","assets/mbm-audience.css","assets/mbm-audience.js","start/index.html",*FACES.values()]
+    required=["games/index.html","index.html","audience-sitemap.xml","robots.txt","assets/mbm-games-hub.css","assets/mbm-audience.css","assets/mbm-audience.js","start/index.html",*FACES.values()]
     for p in required:
         if not (root/p).is_file(): errors.append(f"missing required file: {p}")
     if errors:return errors
@@ -58,10 +58,11 @@ def check_tree(root:Path=ROOT)->list[str]:
     js=text("assets/mbm-audience.js")
     if 'mbm_audience_view' not in js or 'localStorage' not in js: errors.append("audience chooser does not keep its local-only view preference")
     if re.search(r'location\s*\.(?:href|replace|assign)',js): errors.append("audience preference must not auto-redirect visitors")
-    sitemap=text("sitemap.xml")
+    sitemap=text("audience-sitemap.xml")
     for route in AUDIENCE_URLS:
         url='https://madebymatt.uk'+route
-        if url not in sitemap: errors.append(f"sitemap missing {url}")
+        if url not in sitemap: errors.append(f"audience sitemap missing {url}")
+    if 'Sitemap: https://madebymatt.uk/audience-sitemap.xml' not in text('robots.txt'): errors.append('robots.txt does not expose audience sitemap')
     joined='\n'.join(text(p) for p in ["start/index.html",*FACES.values()]).lower()
     for phrase in ["our council partner","our trust partner","trusted by schools","accredited by","used by thousands","award-winning"]:
         if phrase in joined: errors.append(f"unsupported business claim detected: {phrase}")
@@ -70,7 +71,7 @@ def check_tree(root:Path=ROOT)->list[str]:
 def self_test():
     with tempfile.TemporaryDirectory() as td:
         dst=Path(td)
-        for p in ["games/index.html","index.html","sitemap.xml","assets/mbm-games-hub.css","assets/mbm-audience.css","assets/mbm-audience.js","start/index.html",*FACES.values()]:
+        for p in ["games/index.html","index.html","audience-sitemap.xml","robots.txt","assets/mbm-games-hub.css","assets/mbm-audience.css","assets/mbm-audience.js","start/index.html",*FACES.values()]:
             target=dst/p;target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(ROOT/p,target)
         target=dst/"start/index.html";target.write_text(target.read_text(encoding="utf-8").replace(SENTINEL,"BROKEN-SENTINEL"),encoding="utf-8")
         if not any('sentinel' in e.lower() for e in check_tree(dst)): raise SystemExit("positive control failed: sentinel mutation was not detected")
@@ -84,6 +85,6 @@ def main():
         print(f"[FAIL] {len(errors)} static error(s)")
         for e in errors:print(' -',e)
         return 1
-    print("[PASS] Games wording, audience faces, adult/pupil boundary, routes and sitemap")
+    print("[PASS] Games wording, audience faces, adult/pupil boundary, routes and audience sitemap")
     return 0
 if __name__=='__main__':raise SystemExit(main())
