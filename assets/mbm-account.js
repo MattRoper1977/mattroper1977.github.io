@@ -379,6 +379,16 @@
     });
   }
 
+  function applyAccountAudienceNotice() {
+    var form = d.getElementById('registerForm');
+    if (!form || d.getElementById('adultAccountNotice')) return;
+    var notice = d.createElement('p');
+    notice.id = 'adultAccountNotice';
+    notice.className = 'ma-account-audience';
+    notice.innerHTML = '<b>Adult and teacher accounts.</b> Made by Matt accounts are intended for adults and teachers. Pupils can use public Games, Lessons, Apps, Tools and Resources without creating an account.';
+    form.insertBefore(notice, form.firstChild);
+  }
+
   function refresh() {
     if (!sb || !state.configured) return Promise.resolve(snapshot());
     return sb.auth.getSession().then(function (r) { if (r.error) throw r.error; return hydrate(r.data && r.data.session); }).then(snapshot);
@@ -392,6 +402,7 @@
   }
 
   function boot() {
+    applyAccountAudienceNotice();
     loadConfig().then(function () {
       if (!state.configured) {
         state.error = 'Cloud account configuration is not active yet.';
