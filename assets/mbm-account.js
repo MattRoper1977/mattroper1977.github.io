@@ -357,13 +357,19 @@
   }
 
   function deleteAccount() {
-    return requireUser().then(function () {
-      return sb.functions.invoke('delete-account', { body: { confirm: true } });
-    }).then(function (r) {
-      if (r.error) throw r.error;
-      state.user = null; state.profile = null; state.member = null; writeOfflineIdentity(null); emit(); return true;
-    }).catch(function (err) { throw new Error(publicError(err, 'Automatic deletion is not available yet. Please use the deletion contact shown on this page.')); });
-  }
+  return requireUser().then(function () {
+    return sb.functions.invoke('delete-account', { body: { confirm: true } });
+  }).then(function (r) {
+    if (r.error) throw r.error;
+    // The Edge Function has removed the Auth identity and account rows.
+    // Also clear Supabase's provider-managed browser session so a reload
+    // cannot revive a stale local session after successful deletion.
+    return sb.auth.signOut({ scope: 'local' }).catch(function () { return null; });
+  }).then(function () {
+    state.user = null; state.profile = null; state.member = null; state.recovery = false;
+    writeOfflineIdentity(null); emit(); return true;
+  }).catch(function (err) { throw new Error(publicError(err, 'Automatic deletion is not available yet. Please use the deletion contact shown on this page.')); });
+}
 
   /* Mailing unsubscribe for a signed-in user. The address is derived from the
      verified JWT server-side and is deliberately never sent from here, so this

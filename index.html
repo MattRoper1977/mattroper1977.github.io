@@ -410,7 +410,7 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
      went is the markup that advertised it. Restoring it is a revert of this
      commit, not a flag flip — that trade is recorded in the close report. -->
 <article class="dx-zone"><h2 class="dx-eyebrow">Follow the work</h2>
-<p class="dx-bandlead">There is no account and no mailing list. If you want to see what gets built next, these are the places I actually post.</p>
+<p class="dx-bandlead">Accounts are optional and built for adults and teachers who want their Made by Matt favourites available on another device. Teacher updates are also optional and use a separate double-opt-in mailing list.</p>
 <div class="dx-follow">
 <a class="dx-fcard" href="https://www.youtube.com/@matthewroper9166" rel="noopener"><b>YouTube</b><span>Walkthroughs of the games and lessons, and what went wrong making them.</span></a>
 <a class="dx-fcard" href="https://ko-fi.com/madebymattuk" rel="noopener"><b>Ko-fi</b><span>Where the commissioned-resource requests come in, and where updates get posted.</span></a>
@@ -492,8 +492,8 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <section class="dx-std" id="standard"><div class="dx-wrap">
 <h2><b>THE PROMISE</b> | how every tool behaves</h2>
 <div class="dx-tiles">
-<div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-free"/></svg><b>Free</b><p>Everything here is free to use — no trials, no locked features, nothing to sign up for. There is no account, so there is nothing to forget the password to.</p></div>
-<div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-shield"/></svg><b>Nothing uploaded</b><p>Lessons, registers and pupil records stay in your browser on your device — nothing about your class is ever sent anywhere. Three things do reach the internet. One happens on its own — an anonymous visit counter, on this page and the stats page. Two happen only if you choose them: sending the contact form, and pressing play on a video. <a href="/privacy/">All four, in plain English &rarr;</a></p></div>
+<div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-free"/></svg><b>Free</b><p>Everything here is free to use — no trials and no locked features. An adult/teacher account is optional and is only for useful account-backed features such as carrying your saved Made by Matt shortcuts between devices.</p></div>
+<div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-shield"/></svg><b>Nothing uploaded</b><p>Lessons, registers and pupil records stay in your browser on your device — they are not uploaded into your account. Some optional services do use the internet: the anonymous visit counter, the contact form, videos you choose to play, adult/teacher account identity and saved hub shortcuts, and the separate teacher mailing list. <a href="/privacy/">All four, in plain English &rarr;</a></p></div>
 <div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-off"/></svg><b>Offline-friendly</b><p>Core experiences remain useful where connectivity is unreliable.</p></div>
 <div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-board"/></svg><b>Teacher-built</b><p>Designed in a real classroom — accessible, calm-mode aware and ready for the whiteboard.</p></div>
 </div></div></section>
@@ -514,29 +514,13 @@ a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:foc
 <button class="dx-send" type="submit">Send message</button>
 </form>
 
-<!-- TEACHER UPDATES — deliberately NOT tied to the account.
-     Matt asked to be able to tell people about new resources. This is the
-     version that does not put a child's email on a server: a separate,
-     adults-only list with its OWN opt-in tick, which nothing else on the site
-     can set for you. Creating an account does not add you to it, and joining it
-     does not create an account. The two are unconnected by design.
-     It posts to the same relay the contact form already uses, so this adds NO
-     new third party. -->
+<!-- TEACHER UPDATES — separate explicit consent; Buttondown is reached only through /mailing-list/. -->
 <div class="dx-teach">
 <h3>Teacher updates</h3>
-<p class="dx-cnote"><b>For teachers and other adults.</b> An occasional email when a new lesson pack, tool or game goes up. That is all it is for &mdash; no newsletter, no schedule I would have to keep, and nothing automated.</p>
-<p class="dx-cnote"><b>This is separate from an account.</b> Making an account does not put you on this list, and joining this list does not make you an account. Accounts never leave your own device; this list means sending an email address to the same third-party relay as the contact form, so only do it if you are happy with that.</p>
-<form action="https://formsubmit.co/contactmadebymatt@gmail.com" method="POST" class="dx-tform">
-<input type="hidden" name="_subject" value="madebymatt.uk - teacher updates opt-in">
-<input type="hidden" name="_next" value="https://madebymatt.uk/thanks/">
-<input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true">
-<label class="dx-tlab" for="tuEmail">Your email</label>
-<input class="dx-tin" id="tuEmail" type="email" name="email" required autocomplete="email" placeholder="you@school.sch.uk">
-<label class="dx-tcheck"><input type="checkbox" name="consent" value="I am an adult and I agree to receive occasional emails about new resources" required>
-<span>I am a <b>teacher or other adult</b>, and I would like occasional emails about new resources. I can ask to be taken off at any time by replying to any of them, or by emailing directly.</span></label>
-<button type="submit" class="dx-tbtn">Join the teacher list</button>
-</form>
-<p class="dx-cnote" style="font-size:.82rem">Under 18? Please don't use this form &mdash; ask a teacher to sign up instead. Everything on the site is free without it.</p>
+<p class="dx-cnote"><b>For teachers and other adults.</b> A weekly Made by Matt update covering what changed on the site and a clearly labelled look at what is coming next.</p>
+<p class="dx-cnote"><b>This is separate from an account.</b> Creating an account never subscribes you. Joining the mailing list uses Buttondown double opt-in and you can unsubscribe at any time.</p>
+<p><a class="dx-tbtn" href="/mailing-list/">Join teacher updates</a> <a class="dx-chip" href="/account/">Account</a></p>
+<p class="dx-cnote" style="font-size:.82rem">Under 18? Please don't use the mailing list or create an account — ask a teacher or another adult. Everything public on the site stays free without either.</p>
 </div>
 
 <div class="dx-about" id="about">

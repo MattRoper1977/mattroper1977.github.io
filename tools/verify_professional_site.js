@@ -4,12 +4,13 @@
 /*
  * Static verifier for mbm-site-professional-design-upgrade-2026-08-07.
  * Zero dependencies. It validates the shared platform contract, preservation
- * rules, accessibility floor and a positive-control mutation.
+ * rules, accessibility floor and mutation-based positive controls.
  *
  * Account/member/privacy copy is an explicitly authorised functional exception
  * under mbm-accounts-members-mailing-2026-08-08. Those pages still retain all
- * platform, logo, navigation, no-fake-auth and accessibility checks; only the
- * old byte-for-byte authored-copy comparison is relaxed for those two surfaces.
+ * platform, logo, navigation, no-fake-auth and accessibility checks. Homepage
+ * account/mailing truth is normalised only inside four named structural regions;
+ * all unrelated authored homepage wording remains preservation-protected.
  */
 const fs = require('fs');
 const path = require('path');
@@ -31,6 +32,36 @@ const KEY_PAGES = [
 const PRIMARY_LINKS = ['/games/', '/Lessons/', '/Matt-s-Apps-/', '/tools/', '/resources/'];
 const MORE_LINKS = ['/stats/', '/members/', '/#about', '/privacy/'];
 const EXTERNAL_MOUNTS = new Set(['/Lessons/', '/Matt-s-Apps-/', '/Games/']);
+
+/*
+ * These are the only homepage regions whose authored wording may change for
+ * the production account/mailing truth correction. They are deliberately
+ * identified by existing, narrow structure: one named band lead, two specific
+ * promise tiles, and the dedicated Teacher updates component. The replacement
+ * leaves surrounding authored copy in the preservation comparison.
+ */
+const HOME_TRUTH_REGIONS = Object.freeze([
+  {
+    name: 'follow-work-account-mailing-lede',
+    pattern: /(<article\b[^>]*>\s*<h2\b[^>]*>Follow the work<\/h2>\s*)<p\b(?=[^>]*\bclass=["'][^"']*\bdx-bandlead\b[^"']*["'])[^>]*>[\s\S]*?<\/p>/i,
+    replacement: '$1<p class="dx-bandlead">__MBM_AUTHORISED_FOLLOW_TRUTH__</p>'
+  },
+  {
+    name: 'public-access-promise-tile',
+    pattern: /<div\b(?=[^>]*\bclass=["'][^"']*\bdx-tile\b[^"']*["'])[^>]*>\s*<svg\b[\s\S]*?<use\b[^>]*\bhref=["']#dxi-free["'][^>]*\/?>(?:<\/use>)?[\s\S]*?<\/svg>\s*<b>Free<\/b>\s*<p\b[^>]*>[\s\S]*?<\/p>\s*<\/div>/i,
+    replacement: '<div class="dx-tile">__MBM_AUTHORISED_PUBLIC_ACCESS_TRUTH__</div>'
+  },
+  {
+    name: 'classroom-data-privacy-promise-tile',
+    pattern: /<div\b(?=[^>]*\bclass=["'][^"']*\bdx-tile\b[^"']*["'])[^>]*>\s*<svg\b[\s\S]*?<use\b[^>]*\bhref=["']#dxi-shield["'][^>]*\/?>(?:<\/use>)?[\s\S]*?<\/svg>\s*<b>Nothing uploaded<\/b>\s*<p\b[^>]*>[\s\S]*?<\/p>\s*<\/div>/i,
+    replacement: '<div class="dx-tile">__MBM_AUTHORISED_DATA_PRIVACY_TRUTH__</div>'
+  },
+  {
+    name: 'teacher-updates-component',
+    pattern: /<!--\s*TEACHER UPDATES[\s\S]*?<div\b(?=[^>]*\bclass=["'][^"']*\bdx-teach\b[^"']*["'])[^>]*>\s*<h3>Teacher updates<\/h3>[\s\S]*?<\/div>\s*(?=<div\b[^>]*\bclass=["'][^"']*\bdx-about\b[^"']*["'][^>]*\bid=["']about["'])/i,
+    replacement: '__MBM_AUTHORISED_TEACHER_UPDATES__\n\n'
+  }
+]);
 
 function parseArgs(argv) {
   const out = { base: 'origin/main', selfTest: false };
@@ -92,6 +123,63 @@ function visibleAuthoredText(html) {
   s = s.replace(/<[^>]+>/g, ' ');
   return decodeEntities(s).replace(/\s+/g, ' ').trim();
 }
+function matchCount(source, pattern) {
+  const flags = pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`;
+  return [...source.matchAll(new RegExp(pattern.source, flags))].length;
+}
+function captureExactly(source, region, failures, label) {
+  const count = matchCount(source, region.pattern);
+  assert(count === 1, `${label}: authorised homepage region ${region.name} matched ${count} times (expected 1)`, failures);
+  return count === 1 ? source.match(region.pattern)[0] : '';
+}
+function canonicalHomeTruthCopy(html, failures, label) {
+  let s = html;
+  for (const region of HOME_TRUTH_REGIONS) {
+    const count = matchCount(s, region.pattern);
+    assert(count === 1, `${label}: authorised homepage region ${region.name} matched ${count} times (expected 1)`, failures);
+    if (count === 1) s = s.replace(region.pattern, region.replacement);
+  }
+  return s;
+}
+function verifyHomeTruthContracts(home, failures) {
+  const regions = new Map();
+  for (const region of HOME_TRUTH_REGIONS) regions.set(region.name, captureExactly(home, region, failures, 'index.html'));
+
+  const follow = regions.get('follow-work-account-mailing-lede') || '';
+  const free = regions.get('public-access-promise-tile') || '';
+  const privacy = regions.get('classroom-data-privacy-promise-tile') || '';
+  const teacher = regions.get('teacher-updates-component') || '';
+
+  assert(/Accounts are optional/i.test(follow), 'homepage follow-work copy must state that accounts are optional', failures);
+  assert(/adults? and teachers?/i.test(follow), 'homepage follow-work copy must position accounts for adults/teachers', failures);
+  assert(/separate double-opt-in mailing list/i.test(follow), 'homepage follow-work copy must distinguish the double-opt-in mailing list', failures);
+
+  assert(/Everything here is free to use/i.test(free), 'homepage Free promise must retain free public access', failures);
+  assert(/account is optional/i.test(free), 'homepage Free promise must keep account registration optional', failures);
+  assert(/between devices/i.test(free), 'homepage Free promise must describe the narrow cross-device benefit', failures);
+
+  assert(/Lessons, registers and pupil records stay in your browser/i.test(privacy), 'homepage privacy promise must keep pupil/classroom records local', failures);
+  assert(/not uploaded into your account/i.test(privacy), 'homepage privacy promise must distinguish local classroom data from account data', failures);
+  assert(/account identity and saved hub shortcuts/i.test(privacy), 'homepage privacy promise must identify narrow account-backed network data', failures);
+  assert(/separate teacher mailing list/i.test(privacy), 'homepage privacy promise must identify the separate mailing service', failures);
+  assert(/href=["']\/privacy\/["']/i.test(privacy), 'homepage privacy promise must retain the detailed privacy route', failures);
+
+  assert(/href=["']\/mailing-list\/["']/i.test(teacher), 'Teacher updates must link to /mailing-list/', failures);
+  assert(/href=["']\/account\/["']/i.test(teacher), 'Teacher updates must retain the optional /account/ route', failures);
+  assert(/separate from an account/i.test(teacher), 'Teacher updates must state mailing consent is separate from account creation', failures);
+  assert(/Creating an account never subscribes you/i.test(teacher), 'Teacher updates must state account creation does not subscribe', failures);
+  assert(/double opt-in/i.test(teacher), 'Teacher updates must state double opt-in', failures);
+  assert(/unsubscribe at any time/i.test(teacher), 'Teacher updates must state unsubscribe availability', failures);
+  assert(/Under 18/i.test(teacher), 'Teacher updates must retain the adult-only audience boundary', failures);
+  assert(/Everything public on the site stays free without either/i.test(teacher), 'Teacher updates must keep public content ungated', failures);
+  assert(!/<form\b/i.test(teacher), 'Teacher updates must not contain a competing signup form', failures);
+  assert(!/formsubmit\.co/i.test(teacher), 'Teacher updates must not route mailing consent through FormSubmit', failures);
+
+  assert(!/There is no account and no mailing list/i.test(home), 'obsolete no-account/no-mailing statement remains', failures);
+  assert(!/There is no account, so there is nothing to forget the password to/i.test(home), 'obsolete no-account Free promise remains', failures);
+  assert(!/Accounts never leave your own device/i.test(home), 'obsolete device-only account claim remains', failures);
+  assert(!/class=["'][^"']*\bdx-tform\b/i.test(home), 'obsolete FormSubmit Teacher updates form remains', failures);
+}
 function gitShow(ref, rel) {
   return cp.execFileSync('git', ['show', `${ref}:${rel}`], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 }
@@ -140,6 +228,7 @@ function verify(base, overrides = null) {
     assert(home.includes(`href="${href}"`) || home.includes(`href='${href}'`), `homepage audience route missing: ${href}`, failures);
     assert(localRouteExists(href), `homepage audience route has no proven destination: ${href}`, failures);
   }
+  verifyHomeTruthContracts(home, failures);
 
   for (const rel of KEY_PAGES) {
     const html = relRead(rel, overrides);
@@ -179,8 +268,10 @@ function verify(base, overrides = null) {
       if (FUNCTIONAL_COPY_PAGES.has(rel)) {
         assert(current.includes(ACCOUNT_SENTINEL), `${rel}: authorised account/privacy copy changed without account sentinel`, failures);
       } else {
-        const before = visibleAuthoredText(baseline);
-        const after = visibleAuthoredText(current);
+        const beforeSource = rel === 'index.html' ? canonicalHomeTruthCopy(baseline, failures, `${rel} baseline`) : baseline;
+        const afterSource = rel === 'index.html' ? canonicalHomeTruthCopy(current, failures, `${rel} current`) : current;
+        const before = visibleAuthoredText(beforeSource);
+        const after = visibleAuthoredText(afterSource);
         assert(before === after, `${rel}: authored body wording changed outside permitted chrome/audience/auth regions`, failures);
       }
     } catch (error) { failures.push(`${rel}: could not compare authored wording with ${base}: ${error.message}`); }
@@ -189,6 +280,11 @@ function verify(base, overrides = null) {
   return failures;
 }
 function printFailures(failures) { for (const failure of failures) console.error(`  - ${failure}`); }
+function requireMutation(home, from, to, label) {
+  const mutated = home.replace(from, to);
+  if (mutated === home) throw new Error(`${label} fixture could not be created`);
+  return mutated;
+}
 function main() {
   const args = parseArgs(process.argv.slice(2));
   const first = verify(args.base);
@@ -199,14 +295,49 @@ function main() {
   console.log(`[PASS] current implementation: ${KEY_PAGES.length} key pages, shared platform, preservation and route contracts`);
   if (args.selfTest) {
     const home = relRead('index.html');
-    const mutation = home.replace('id="audiences"', 'id="audiences-broken"');
-    if (mutation === home) { console.error('[FAIL] positive-control fixture could not be created'); process.exit(1); }
-    const controlled = verify(args.base, { 'index.html': mutation });
-    if (!controlled.length) { console.error('[FAIL] positive-control mutation was not detected'); process.exit(1); }
-    console.log(`[PASS] positive control: deliberately broken audience fixture rejected (${controlled.length} detected issue${controlled.length === 1 ? '' : 's'})`);
+
+    const authorisedMutation = requireMutation(
+      home,
+      'A weekly Made by Matt update covering what changed on the site and a clearly labelled look at what is coming next.',
+      'A regular Made by Matt update covering what changed on the site and a clearly labelled look at what is coming next.',
+      'authorised-region mutation'
+    );
+    const authorised = verify(args.base, { 'index.html': authorisedMutation });
+    if (authorised.length) {
+      console.error('[FAIL] authorised account/mailing wording mutation was rejected');
+      printFailures(authorised); process.exit(1);
+    }
+    console.log('[PASS] positive control: authorised account/mailing wording mutation accepted');
+
+    const unrelatedMutation = requireMutation(home, 'Browse the Arcade', 'Browse every Arcade', 'unrelated authored-copy mutation');
+    const unrelated = verify(args.base, { 'index.html': unrelatedMutation });
+    if (!unrelated.some((failure) => failure.includes('authored body wording changed'))) {
+      console.error('[FAIL] unrelated authored homepage wording mutation was not rejected by preservation');
+      printFailures(unrelated); process.exit(1);
+    }
+    console.log(`[PASS] positive control: unrelated authored-copy mutation rejected (${unrelated.length} detected issue${unrelated.length === 1 ? '' : 's'})`);
+
+    const structuralMutation = requireMutation(
+      home,
+      '<a class="dx-tbtn" href="/mailing-list/">Join teacher updates</a>',
+      '<a class="dx-tbtn" href="/mailing-list-broken/">Join teacher updates</a>',
+      'account/mailing structure mutation'
+    );
+    const structural = verify(args.base, { 'index.html': structuralMutation });
+    if (!structural.some((failure) => failure.includes('Teacher updates must link to /mailing-list/'))) {
+      console.error('[FAIL] broken account/mailing structure was not rejected');
+      printFailures(structural); process.exit(1);
+    }
+    console.log(`[PASS] positive control: structural account/mailing mutation rejected (${structural.length} detected issue${structural.length === 1 ? '' : 's'})`);
+
+    const audienceMutation = requireMutation(home, 'id="audiences"', 'id="audiences-broken"', 'audience structure mutation');
+    const audience = verify(args.base, { 'index.html': audienceMutation });
+    if (!audience.length) { console.error('[FAIL] broken audience fixture was not rejected'); process.exit(1); }
+    console.log(`[PASS] positive control: deliberately broken audience fixture rejected (${audience.length} detected issue${audience.length === 1 ? '' : 's'})`);
+
     const restored = verify(args.base);
     if (restored.length) { console.error('[FAIL] restored implementation did not pass'); printFailures(restored); process.exit(1); }
-    console.log('[PASS] restored implementation after positive control');
+    console.log('[PASS] restored implementation after positive controls');
   }
 }
 try { main(); } catch (error) { console.error(`[FAIL] ${error.stack || error.message}`); process.exit(1); }
