@@ -1,0 +1,86 @@
+name: Apply Games and audience integration
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/mbm-games-audience-apply.yml'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: mbm-games-audience-apply
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.event.pull_request.head.ref == 'codex/mbm-games-audience-faces-2026-08-08'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out authorised feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/mbm-games-audience-faces-2026-08-08
+          fetch-depth: 0
+
+      - name: Apply bounded integrations and remove temporary transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def once(text, old, new, label):
+              count=text.count(old)
+              if count!=1:
+                  raise SystemExit(f'{label}: expected one anchor, found {count}')
+              return text.replace(old,new,1)
+
+          games=Path('games/index.html')
+          text=games.read_text(encoding='utf-8')
+          text=once(text,'<meta name="viewport" content="width=device-width,initial-scale=1">','<meta name="viewport" content="width=device-width,initial-scale=1">\n<meta name="mbm-platform-version" content="mbm-games-audience-faces-2026-08-08">','Games sentinel')
+          text=once(text,'<link rel="stylesheet" href="/assets/mbm-platform.css">\n</head><body>','<link rel="stylesheet" href="/assets/mbm-platform.css">\n<link rel="stylesheet" href="/assets/mbm-games-hub.css">\n</head><body class="mbm-games-hub">','Games polish CSS')
+          old_logo='<svg class="mono" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47" fill="none" stroke="#B9E6CD" stroke-width="3.4"/><g transform="translate(0 2)"><path d="M28 71 L28 37 L50 59 L72 37 L72 71" fill="none" stroke="#E8E2D4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M50 22.5 L51.48 28.52 L57.5 30 L51.48 31.48 L50 37.5 L48.52 31.48 L42.5 30 L48.52 28.52 Z" fill="#F2A24A"/></g></svg>'
+          if text.count(old_logo)!=2: raise SystemExit(f'Games logo anchor count {text.count(old_logo)}')
+          text=text.replace(old_logo,'<img class="mono" src="/assets/brand/micro_mark.svg" alt="">')
+          text=once(text,'<div class="mbm-nav-panel"><a href="/stats/">Stats</a>','<div class="mbm-nav-panel"><a href="/start/">Choose your view</a><a href="/stats/">Stats</a>','Games audience nav')
+          section_replacements=[
+            ('<section class="sec"><div class="wrap">\n<div class="bar2">','<section class="sec browse-tools"><div class="wrap">\n<div class="bar2">','browse tools'),
+            ('<section class="sec"><div class="wrap">\n<h2>Themed favourites','<section class="sec themes"><div class="wrap">\n<h2>Themed favourites','themes'),
+            ('<section class="sec"><div class="wrap">\n<h2>The whole shelf','<section class="sec whole-shelf"><div class="wrap">\n<h2>The whole shelf','whole shelf'),
+          ]
+          for old,new,label in section_replacements:text=once(text,old,new,label)
+          old='''function pickCard(g,lead){\n var a=document.createElement("a");a.className="pick"+(lead?" lead":"");a.href=localHref(g.href);\n a.innerHTML='<div class="art" style="background:'+tint(g.hue)+'">'+(g.icon||"🎮")+'</div>'+\n '<div class="bd"><span class="badge">MATT\\u2019S PICK</span><h3></h3><span class="tagc"></span>'+\n '<div class="take"><b>Matt\\u2019s take:</b> <span></span></div></div>';\n a.querySelector("h3").textContent=g.title;\n a.querySelector(".tagc").textContent=g.tag||"";\n a.querySelector(".take span").textContent="\\u201C"+(TAKES[g.title]||"")+"\\u201D";\n return a;\n}'''
+          new='''function pickCard(g,lead){\n var a=document.createElement("a");a.className="pick"+(lead?" lead":"");a.href=localHref(g.href);\n var art=g.art?'<div class="art"><img src="'+esc(g.art)+'" width="640" height="360" loading="lazy" decoding="async" alt=""></div>'\n              :'<div class="art" style="background:'+tint(g.hue)+'">'+(g.icon||"🎮")+'</div>';\n a.innerHTML=art+\n '<div class="bd"><span class="badge">MATT\\u2019S PICK</span><h3></h3><span class="tagc"></span>'+\n '<div class="take"><b>Matt\\u2019s take:</b> <span></span></div></div>';\n a.querySelector("h3").textContent=g.title;\n a.querySelector(".tagc").textContent=g.tag||"";\n a.querySelector(".take span").textContent="\\u201C"+(TAKES[g.title]||"")+"\\u201D";\n var im=a.querySelector("img");if(im)im.alt=g.title+" — a moment from play";\n return a;\n}'''
+          text=once(text,old,new,'top-pick manifest art')
+          games.write_text(text,encoding='utf-8')
+
+          home=Path('index.html');text=home.read_text(encoding='utf-8')
+          old='<div class="mbm-audience-head"><div><p>Made by Matt</p><h2 id="mbmAudienceTitle">Choose your route</h2></div></div>'
+          new='<div class="mbm-audience-head"><div><p>Made by Matt</p><h2 id="mbmAudienceTitle">Choose your route</h2></div><a href="/start/">See every audience view</a></div>'
+          home.write_text(once(text,old,new,'homepage audience chooser link'),encoding='utf-8')
+
+          workflow=Path('.github/workflows/verify-games-audience-faces.yml');text=workflow.read_text(encoding='utf-8')
+          text=text.replace("      - 'sitemap.xml'\n","      - 'audience-sitemap.xml'\n      - 'robots.txt'\n")
+          workflow.write_text(text,encoding='utf-8')
+          PY
+          rm -f .github/workflows/mbm-games-audience-source.yml
+          rm -f .github/workflows/mbm-games-audience-apply.yml
+          python tools/verify_games_audience_faces.py --self-test
+          node --check assets/mbm-audience.js
+          node --check tools/verify_games_audience_faces.mjs
+          git diff --check
+
+      - name: Commit the tested integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "Made by Matt audience release"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "feat: elevate Games and add audience landing views"
+          git push origin HEAD:codex/mbm-games-audience-faces-2026-08-08
