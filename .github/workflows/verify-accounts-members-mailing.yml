@@ -44,15 +44,24 @@ jobs:
           endpoint="$url/functions/v1/subscribe-mailing-list"
           echo "QA_ALIAS=$email"
           request() {
-            curl --fail-with-body --silent --show-error \
+            local out=$1
+            curl --silent --show-error --output "$out" --write-out '%{http_code}' \
               -H 'Origin: https://madebymatt.uk' \
               -H "apikey: $key" \
               -H 'Content-Type: application/json' \
               --data "{\"email\":\"$email\",\"consent\":true,\"company\":\"\"}" \
               "$endpoint"
           }
-          first=$(request)
-          second=$(request)
+          first_status=$(request /tmp/first.json)
+          echo "FIRST_HTTP=$first_status"
+          echo -n 'FIRST_BODY='; cat /tmp/first.json; echo
+          test "$first_status" = 200
+          second_status=$(request /tmp/second.json)
+          echo "SECOND_HTTP=$second_status"
+          echo -n 'SECOND_BODY='; cat /tmp/second.json; echo
+          test "$second_status" = 200
+          first=$(cat /tmp/first.json)
+          second=$(cat /tmp/second.json)
           node -e 'const a=JSON.parse(process.argv[1]),b=JSON.parse(process.argv[2]); if(a.ok!==true||b.ok!==true) process.exit(1); if(JSON.stringify(a)!==JSON.stringify(b)) { console.error("duplicate reply differed from first-time reply"); process.exit(1); } console.log("PASS provider accepted first + duplicate with indistinguishable public replies");' "$first" "$second"
           bad=$(curl --silent --output /tmp/bad --write-out '%{http_code}' -H 'Origin: https://madebymatt.uk' -H "apikey: $key" -H 'Content-Type: application/json' --data '{"email":"not-an-email","consent":true,"company":""}' "$endpoint")
           test "$bad" = 400
