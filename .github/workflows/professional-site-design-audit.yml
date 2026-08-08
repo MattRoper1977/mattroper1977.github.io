@@ -1,9 +1,8 @@
 name: Apply Made by Matt professional platform upgrade
 
 on:
-  push:
-    branches:
-      - codex/mbm-site-professional-design-upgrade-2026-08-07
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -15,6 +14,7 @@ concurrency:
 
 jobs:
   apply:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -27,13 +27,12 @@ jobs:
           ref: codex/mbm-site-professional-design-upgrade-2026-08-07
           fetch-depth: 0
 
-      - name: Assemble and verify exact tested patch
+      - name: Assemble, verify and apply exact tested patch
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin "$BRANCH" main
           git reset --hard "origin/$BRANCH"
-
           parts=(
             .github/mbm-professional-final.part-00
             .github/mbm-professional-final.part-01
@@ -52,14 +51,10 @@ jobs:
             test -f "${parts[$i]}"
             test "$(git hash-object "${parts[$i]}")" = "${expected[$i]}"
           done
-
           cat "${parts[@]}" | base64 -d > /tmp/mbm-final.patch.gz
           echo "$PATCH_SHA256  /tmp/mbm-final.patch.gz" | sha256sum -c -
           gzip -dc /tmp/mbm-final.patch.gz > /tmp/mbm-final.patch
-
-          grep '^diff --git a/' /tmp/mbm-final.patch \
-            | sed -E 's#^diff --git a/([^ ]+) b/.*#\1#' \
-            > /tmp/mbm-final.paths
+          grep '^diff --git a/' /tmp/mbm-final.patch | sed -E 's#^diff --git a/([^ ]+) b/.*#\1#' > /tmp/mbm-final.paths
           cat > /tmp/mbm-final.expected-paths <<'EOF'
           app.js
           assets/mbm-platform.css
@@ -81,7 +76,7 @@ jobs:
           git apply /tmp/mbm-final.patch
           sed -i 's/[[:space:]]\+$//' reports/2026-08-07-professional-site-upgrade.md
 
-      - name: Install permanent audit workflow and remove transport
+      - name: Install permanent read-only audit and remove transport
         shell: bash
         run: |
           set -euo pipefail
@@ -109,7 +104,6 @@ jobs:
                   uses: actions/checkout@v4
                   with:
                     fetch-depth: 0
-
                 - name: Verify preservation, platform contract and positive control
                   shell: bash
                   run: |
@@ -120,28 +114,18 @@ jobs:
                     node --check assets/mbm-platform.js
                     node --check theme.js
                     git diff --check origin/main...HEAD
-
-                - name: Record deterministic source snapshot
+                - name: Record measured inventory
                   shell: bash
                   run: |
                     set -euo pipefail
                     mkdir -p audit-output
-                    {
-                      echo "sentinel=mbm-site-professional-design-upgrade-2026-08-07"
-                      echo "head=$(git rev-parse HEAD)"
-                      echo "branch=$(git branch --show-current)"
-                      echo "files=$(find . -path './.git' -prune -o -type f -print | wc -l)"
-                      echo "html=$(find . -path './.git' -prune -o -type f -iname '*.html' -print | wc -l)"
-                      echo "css=$(find . -path './.git' -prune -o -type f -iname '*.css' -print | wc -l)"
-                      echo "js=$(find . -path './.git' -prune -o -type f \( -iname '*.js' -o -iname '*.mjs' -o -iname '*.cjs' \) -print | wc -l)"
-                    } | tee audit-output/repository-state.txt
+                    echo "sentinel=mbm-site-professional-design-upgrade-2026-08-07" > audit-output/repository-state.txt
+                    echo "head=$(git rev-parse HEAD)" >> audit-output/repository-state.txt
                     find . -path './.git' -prune -o -type f -printf '%P\t%s\n' | sort > audit-output/file-inventory.tsv
-                    tar --exclude='./.git' --exclude='./audit-output/site-source.tar.gz' -czf audit-output/site-source.tar.gz .
-
-                - name: Upload source and measured inventory
+                - name: Upload measured inventory
                   uses: actions/upload-artifact@v4
                   with:
-                    name: professional-site-source
+                    name: professional-site-audit
                     path: audit-output/
                     if-no-files-found: error
                     retention-days: 7
@@ -157,12 +141,9 @@ jobs:
           node --check assets/mbm-platform.js
           node --check theme.js
           git diff --check
-
           git config user.name "Made by Matt design automation"
           git config user.email "actions@users.noreply.github.com"
           git add -A
           git diff --cached --check
           git commit -m "feat: elevate Made by Matt platform UX"
           git push origin "HEAD:$BRANCH"
-
-# contents-api trigger: 2026-08-08T00:01Z
