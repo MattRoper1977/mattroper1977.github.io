@@ -1,0 +1,61 @@
+name: Professional site live verification
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: professional-site-live-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out exact source under verification
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate verifier syntax
+        run: python -m py_compile tools/verify_professional_site_live.py
+
+      - name: Prove the served platform and cross-repository feeds
+        run: |
+          set -euo pipefail
+          python tools/verify_professional_site_live.py \
+            --base https://madebymatt.uk/ \
+            --attempts 36 \
+            --delay 10 \
+            --timeout 20 \
+            --json-out live-output/production.json
+
+      - name: Prove the verifier rejects a broken fixture
+        run: |
+          set -euo pipefail
+          if python tools/verify_professional_site_live.py \
+            --base https://madebymatt.uk/ \
+            --attempts 1 \
+            --delay 0 \
+            --timeout 20 \
+            --expect-home-marker __MBM_DELIBERATE_MISSING_MARKER__ \
+            --json-out live-output/positive-control.json; then
+            echo "Positive control failed: impossible marker was accepted."
+            exit 1
+          fi
+          python -c "import json; d=json.load(open('live-output/positive-control.json')); assert not d['passed']; assert any('__MBM_DELIBERATE_MISSING_MARKER__' in e for e in d['errors']); print('Positive control: PASS — broken marker was rejected.')"
+
+      - name: Upload production proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: professional-site-live-${{ github.run_id }}
+          path: live-output/
+          if-no-files-found: error
+          retention-days: 14
