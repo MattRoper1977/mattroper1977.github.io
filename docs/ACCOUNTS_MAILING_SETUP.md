@@ -1,185 +1,108 @@
-# Made by Matt accounts + mailing list — activation guide
+# Made by Matt accounts + mailing list — production guide
 
 Sentinel: `mbm-accounts-members-mailing-2026-08-08`
 
-The repository contains the browser UI, RLS schema, account-data merge logic,
-account-deletion Edge Function, mailing subscription Edge Function, privacy copy
-and permanent static validator.
+## Production state — 8 August 2026
 
-## Current production provisioning status — 8 August 2026
+Supabase accounts and Buttondown mailing infrastructure are provisioned and provider-tested on PR #99.
 
-The Supabase infrastructure is now partly provisioned rather than hypothetical:
+- Supabase Auth is the only account credential system; there is no browser/local-password fallback.
+- `public.profiles` and `public.member_data` are protected by own-row RLS.
+- `/account/` supports registration, verification, login/logout, recovery, display name and account deletion.
+- `/members/` stores only deliberately narrow account-backed favourites.
+- Buttondown subscription and unsubscribe are proxied through Supabase Edge Functions; the private API credential stays server-side.
+- `features.mailing.enabled` is `true` after real provider create/confirmation/duplicate/unsubscribe proof.
+- Accounts are intended for adults and teachers. Pupils can use all public Made by Matt content without an account.
 
-- the existing Made by Matt production project in London is connected;
-- `public.profiles` and `public.member_data` are deployed with RLS;
-- the production account migration has been applied;
-- the public project URL and provider publishable browser key are in `site.json`;
-- `delete-account` is deployed with JWT verification enabled;
-- `subscribe-mailing-list` is deployed as the intentionally public subscription
-  endpoint, but the private Buttondown credential has not yet been provisioned;
-- mailing therefore remains `enabled:false` until real provider proof exists.
+## Supabase Auth production URLs
 
-The account code has no local-password fallback. Public content remains usable
-whether account services are available or not.
-
-## 1. Supabase Auth settings still required
-
-In the already-connected production Supabase project:
-
-1. Set the Authentication **Site URL** to `https://madebymatt.uk`.
-2. Allow these redirect URLs:
-   - `https://madebymatt.uk/account/`
-   - `https://madebymatt.uk/account/?mode=recovery`
-3. Keep email confirmation enabled unless there is a documented reason not to.
-
-The project URL and publishable browser key are public configuration by provider
-design. RLS is the user-data boundary.
-
-### Never put these in `site.json` or browser JavaScript
-
-- `SUPABASE_SERVICE_ROLE_KEY`
-- any `sb_secret_...` key
-- database password
-- SMTP password
-- OAuth client secret
-- any user's password
-- copied access/refresh tokens
-
-## 2. Account deletion
-
-`supabase/functions/delete-account` is deployed to the production project and
-retains JWT verification. Its code validates the signed-in user and performs the
-admin deletion only at the trusted Edge Function boundary.
-
-Supabase supplies its hosted function environment with the required project/admin
-values; privileged values must never be copied into the public site.
-
-A disposable authenticated QA account must still be used to prove deletion end
-to end after Auth redirects/email flows are configured.
-
-## 3. Buttondown — still required for mailing
-
-Create or select the real Made by Matt Buttondown newsletter and make
-`contactmadebymatt@gmail.com` the appropriate owner/administrative contact. Keep
-Buttondown's confirmation/double-opt-in and unsubscribe mechanisms.
-
-Create the Buttondown API credential and store it only in Supabase Edge Function
-secret storage as:
+Site URL:
 
 ```text
-BUTTONDOWN_API_KEY=<private value>
+https://madebymatt.uk
 ```
 
-Both `subscribe-mailing-list` and `unsubscribe-mailing-list` read that value
-server-side. The browser never receives it. Deploy both:
+Allowed redirects:
 
-```sh
-supabase functions deploy subscribe-mailing-list
-supabase functions deploy unsubscribe-mailing-list
+```text
+https://madebymatt.uk/account/
+https://madebymatt.uk/account/?mode=recovery
 ```
 
-`subscribe-mailing-list` is intentionally public, because joining the mailing
-list does not require a Made by Matt account; its code still requires explicit
-consent, checks a honeypot, validates input and restricts browser origin. It
-returns an **identical** response whether or not the address is already on the
-list. That uniformity is deliberate: a distinguishable "already subscribed"
-reply would let an anonymous caller test whether any address is on the list.
+Keep email confirmation enabled unless a later documented product decision changes it.
 
-`unsubscribe-mailing-list` backs the unsubscribe control on `/account/` and is
-the opposite case: it **requires** a verified JWT (`verify_jwt = true`) and
-takes the address from the caller's token, never from the request body. Without
-that, the endpoint would let anyone unsubscribe anyone, and would answer "is
-this address on the list?" to a stranger.
+## Secrets
 
-Proving the provider round-trip:
+Never place these in `site.json`, browser JavaScript, GitHub issues/PRs or chat:
 
-```sh
-SUPABASE_URL=… SUPABASE_ANON_KEY=sb_publishable_… \
-BUTTONDOWN_API_KEY=…  QA_MAIL_EMAIL=qa+p3@… \
-node tools/proofs/p3_mailing.mjs
+- Supabase service-role/secret keys;
+- database passwords;
+- SMTP/OAuth secrets;
+- copied access/refresh tokens;
+- Buttondown API credentials;
+- user passwords.
+
+The browser-visible Supabase project URL and `sb_publishable_…` key are public client configuration by design; RLS is the per-user data boundary.
+
+The Buttondown API credential is stored only in Supabase Edge Function secret storage. The deployed functions accept the canonical uppercase name and the dashboard-compatible lowercase name:
+
+```text
+BUTTONDOWN_API_KEY
+buttondown_api_key
 ```
 
-Run it from an operator machine. The key belongs in Edge Function secret
-storage and in that shell only — never in the repo, never in CI.
+Only one real value is required.
 
-Only after a real Buttondown subscription and unsubscribe have been read back
-from the provider may this be changed:
+## Mailing integration
 
-```json
-"mailing": {
-  "enabled": true,
-  "provider": "buttondown",
-  "functionName": "subscribe-mailing-list",
-  "adminContact": "contactmadebymatt@gmail.com"
-}
+`subscribe-mailing-list` is intentionally public because joining the mailing list does not require an account. It still requires explicit consent, validates email, checks a honeypot and restricts browser origin.
+
+Buttondown performs spam/firewall checks on API-created subscribers. Because this server-to-server integration deliberately does **not** collect or forward a subscriber IP, the proxy uses Buttondown's documented `X-Buttondown-Bypass-Firewall: true` integration header. Buttondown rate-limits that bypass route; a provider 429 is returned honestly to the visitor as a retry-later state rather than fake success.
+
+A first-time signup and an existing-address signup receive the same public success response. Duplicate status is never inferred from error wording: on Buttondown 400/409 the function proves whether the subscriber exists using the provider retrieve-by-email endpoint before replying success. This prevents both membership enumeration and false-success errors.
+
+`unsubscribe-mailing-list` is JWT-verified. It derives the address from the authenticated Supabase identity, retrieves Buttondown with `/subscribers/{email}`, and updates the current `type` field to `unsubscribed`. The browser cannot supply a different target address.
+
+Buttondown's current subscriber field names are:
+
+```text
+email_address
+type
 ```
 
-Account creation and mailing consent remain independent.
+Do not regress to the retired `email` / `subscriber_type` names.
 
-## 4. Required QA before PR #99 can leave Draft
+## Provider proof completed
 
-Use disposable controlled identities only. Do not put passwords, tokens or raw
-subscriber addresses in evidence.
+The release evidence includes:
 
-### Account lifecycle
+- real signup through the Supabase proxy;
+- Buttondown confirmation email delivered to the controlled QA Gmail alias, proving double opt-in creation;
+- duplicate public response identical to first-time success;
+- active disposable subscriber changed `regular → unsubscribed` with provider readback;
+- invalid email and missing consent fail closed;
+- QA subscriber records deleted after proof;
+- invalid credential and firewall failure modes observed and corrected without exposing credentials.
 
-- Create a production account.
-- Confirm the verification email and callback.
-- Log in; prove incorrect credentials are denied.
-- Request and complete a real password reset.
-- Refresh and prove session persistence.
-- Log out and prove account-backed member data is no longer readable.
-- Delete a disposable account and prove the Auth/profile/member rows are gone.
+The operator harness remains at `tools/proofs/p3_mailing.mjs` for future re-validation. Evidence JSON generated by that script contains QA details and is ignored by Git; do not commit it.
 
-### Authorization
+## Account proof completed before merge
 
-Create User A and User B. A must read A and be unable to read B; B must read B
-and be unable to read A. This must be tested through real authenticated clients,
-not inferred from the SQL file alone.
+- registration and email confirmation;
+- login/logout;
+- password recovery;
+- clean-browser cross-device member favourites;
+- User A/User B RLS isolation including blocked cross-user write;
+- least-privilege display-name update.
 
-### Cross-device proof — mandatory
+After merge, the remaining production-only acceptance item is to prove self-service deletion from the real `https://madebymatt.uk/account/` origin and verify the served account/member/mailing/privacy surfaces.
 
-1. Clean Browser Context A: sign in and save one Members shortcut.
-2. Confirm the server write.
-3. Close A.
-4. Clean Browser Context B: no copied cookies/localStorage/IndexedDB/session.
-5. Sign in normally to the same account.
-6. Confirm the shortcut from A appears from server-backed `member_data`.
-7. Change an appropriate shortcut in B, then reload A (or clean C) and confirm
-   the updated account state is obtained without silently losing newer data.
+## What remains device-local
 
-### Mailing proof — mandatory
+- reading/background preferences;
+- UAS/ASDAN pupil records, marks and evidence;
+- standalone/offline caches;
+- legacy local account data until explicitly removed;
+- existing local game saves.
 
-- Submit a disposable email with consent checked.
-- Confirm the endpoint's expected pending/confirmation state.
-- Read back the subscriber in the real Buttondown newsletter.
-- Complete confirmation where configured.
-- Repeat the same address and verify safe duplicate handling.
-- Test invalid email and unticked consent.
-- Use the real provider unsubscribe route and verify Buttondown reflects it.
-
-### Production surfaces
-
-After merge, verify the served site rather than only repository files:
-
-- `https://madebymatt.uk/`
-- `https://madebymatt.uk/account/`
-- `https://madebymatt.uk/members/`
-- `https://madebymatt.uk/mailing-list/`
-- `https://madebymatt.uk/privacy/`
-
-Check approximately 320, 360, 390, 430, 768, 1024, 1280 and 1440 CSS px, including
-keyboard/focus states, autofill/password-manager behaviour, error/status
-announcements, reduced motion and touch targets.
-
-## 5. What deliberately remains device-local
-
-- reading/background preference
-- existing UAS/ASDAN pupil records, marks and evidence
-- standalone/offline content caches
-- legacy local account record until the user explicitly removes it
-- existing local game saves
-
-The first genuine account-backed dataset remains deliberately narrow: optional
-display name + saved Made by Matt hub shortcuts. The account system must not
-blindly upload arbitrary `localStorage` values or pupil records.
+No account workflow blindly uploads arbitrary `localStorage` values or pupil records.
