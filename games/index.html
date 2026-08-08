@@ -1,5 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="mbm-platform-version" content="mbm-games-audience-faces-2026-08-08">
 <title>Matt's Curated Favs — The Arcade — Made by Matt</title>
 <link rel="canonical" href="https://madebymatt.uk/games/">
 <meta property="og:url" content="https://madebymatt.uk/games/">
@@ -152,10 +153,11 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 <script>window.MBM_DATA_STAMP={"/site.json":"bffd1881bc26","/data/resources.json":"6db846b84893"};window.MBM_STAMP=function(u){var D=window.MBM_DATA_STAMP||{},k=String(u==null?"":u),p=k.charAt(0)==="/"?k:"/"+k.replace(/^\.\//,""),h=D[p]||D[k];return h?{url:k+(k.indexOf("?")<0?"?":"&")+"v="+h,opts:{}}:{url:k,opts:{cache:"no-cache"}};};</script>
 <!-- DATA-STAMP:END -->
 <link rel="stylesheet" href="/assets/mbm-platform.css">
-</head><body>
+<link rel="stylesheet" href="/assets/mbm-games-hub.css">
+</head><body class="mbm-games-hub">
 <a class="skip" href="#main">Skip to content</a>
 <header class="header mbm-site-header"><div class="bar"><a class="brand" href="https://madebymatt.uk/"><svg class="mono" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47" fill="none" stroke="#B9E6CD" stroke-width="3.4"/><g transform="translate(0 2)"><path d="M28 71 L28 37 L50 59 L72 37 L72 71" fill="none" stroke="#E8E2D4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M50 22.5 L51.48 28.52 L57.5 30 L51.48 31.48 L50 37.5 L48.52 31.48 L42.5 30 L48.52 28.52 Z" fill="#F2A24A"/></g></svg><span><strong>MADE BY MATT</strong>
-<small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links"><a href="/games/" aria-current="page">Games</a><a href="/Lessons/">Lessons</a><a href="/Matt-s-Apps-/">Apps</a><a href="/tools/">Tools</a><a href="/resources/">Resources</a></div><details class="mbm-nav-more"><summary>More</summary><div class="mbm-nav-panel"><a href="/stats/">Stats</a><a href="/members/">Members</a><a href="/#about">About</a><a href="/privacy/">Privacy</a></div></details><details class="mbm-theme-menu"><summary>Display</summary><div class="mbm-theme-panel"><div class="mbm-theme-slot" data-mbm-theme-slot></div></div></details></nav></div></header>
+<small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links"><a href="/games/" aria-current="page">Games</a><a href="/Lessons/">Lessons</a><a href="/Matt-s-Apps-/">Apps</a><a href="/tools/">Tools</a><a href="/resources/">Resources</a></div><details class="mbm-nav-more"><summary>More</summary><div class="mbm-nav-panel"><a href="/start/">Choose your view</a><a href="/stats/">Stats</a><a href="/members/">Members</a><a href="/#about">About</a><a href="/privacy/">Privacy</a></div></details><details class="mbm-theme-menu"><summary>Display</summary><div class="mbm-theme-panel"><div class="mbm-theme-slot" data-mbm-theme-slot></div></div></details></nav></div></header>
 <main id="main">
 
 <section class="hero"><div class="hero-in">
@@ -217,7 +219,7 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 <p class="gx-watchnote">Real gameplay — no scripted demo reel — captured on a phone or straight from the browser and hosted right here. Nothing loads until you press play, and nothing plays sound.</p>
 </div></section>
 
-<section class="sec"><div class="wrap">
+<section class="sec browse-tools"><div class="wrap">
 <div class="bar2">
 <label class="search" aria-label="Search all games"><input type="search" id="q" placeholder="Search the shelf — snake, physics, cards…"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="#C97F2E" stroke-width="2.4"/><path d="M15.5 15.5 21 21" stroke="#C97F2E" stroke-width="2.6" stroke-linecap="round"/></svg></label>
 <select id="sort" aria-label="Sort games"><option value="curated">Curated first</option><option value="az">A to Z</option><option value="tag">By tag</option></select>
@@ -226,7 +228,7 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 <p class="countline" id="countline" aria-live="polite" aria-atomic="true">Loading the shelf…</p>
 </div></section>
 
-<section class="sec"><div class="wrap">
+<section class="sec themes"><div class="wrap">
 <h2>Themed favourites <small>· curated grids</small></h2>
 <div class="tgrids" id="tgrids"></div>
 </div></section>
@@ -237,7 +239,7 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 <div class="rail" id="classRail" aria-label="Classroom favourites"></div>
 </div></section>
 
-<section class="sec"><div class="wrap">
+<section class="sec whole-shelf"><div class="wrap">
 <h2>The whole shelf</h2>
 <p class="sub" id="shelfSub">Every game, A to Z — search and filters above work on this grid.</p>
 <div id="allGrid"></div>
@@ -287,12 +289,15 @@ function localHref(h){/* keep every game on the madebymatt.uk origin so the HUD'
  return String(h||"").replace(/^https?:\/\/[^\/]*(?:mattroper1977\.github\.io|madebymatt\.uk)/i,"");}
 function pickCard(g,lead){
  var a=document.createElement("a");a.className="pick"+(lead?" lead":"");a.href=localHref(g.href);
- a.innerHTML='<div class="art" style="background:'+tint(g.hue)+'">'+(g.icon||"🎮")+'</div>'+
+ var art=g.art?'<div class="art"><img src="'+esc(g.art)+'" width="640" height="360" loading="lazy" decoding="async" alt=""></div>'
+              :'<div class="art" style="background:'+tint(g.hue)+'">'+(g.icon||"🎮")+'</div>';
+ a.innerHTML=art+
  '<div class="bd"><span class="badge">MATT\u2019S PICK</span><h3></h3><span class="tagc"></span>'+
  '<div class="take"><b>Matt\u2019s take:</b> <span></span></div></div>';
  a.querySelector("h3").textContent=g.title;
  a.querySelector(".tagc").textContent=g.tag||"";
  a.querySelector(".take span").textContent="\u201C"+(TAKES[g.title]||"")+"\u201D";
+ var im=a.querySelector("img");if(im)im.alt=g.title+" — a moment from play";
  return a;
 }
 function esc(t){return String(t==null?"":t).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});}

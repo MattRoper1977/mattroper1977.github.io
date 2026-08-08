@@ -1,0 +1,77 @@
+name: MBM Games audience preview QA
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/mbm-games-audience-preview.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    if: github.event.pull_request.head.ref == 'codex/mbm-games-audience-faces-2026-08-08'
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - name: Check out exact feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/mbm-games-audience-faces-2026-08-08
+      - name: Check out Games manifest source of truth
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: _games
+          fetch-depth: 1
+      - name: Run static and syntax gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/verify_games_audience_faces.py --self-test
+          node --check assets/mbm-audience.js
+          node --check tools/verify_games_audience_faces.mjs
+          git diff --check
+      - name: Assemble same-origin fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _served/Games
+          rsync -a --exclude=.git --exclude=_served --exclude=_games --exclude=audit-output --exclude=node_modules ./ _served/
+          cp _games/games.json _served/Games/games.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path=Path('_served/site.json');data=json.loads(path.read_text(encoding='utf-8'))
+          features=data.setdefault('features',{})
+          if isinstance(features.get('accounts'),dict):features['accounts']['enabled']=False
+          if isinstance(features.get('mailing'),dict):features['mailing']['enabled']=False
+          path.write_text(json.dumps(data,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Install Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Run full responsive matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m http.server 4173 --bind 127.0.0.1 --directory _served >/tmp/mbm-preview-http.log 2>&1 &
+          server=$!;trap 'kill $server || true' EXIT
+          for _ in $(seq 1 30);do curl -fsS http://127.0.0.1:4173/games/ >/dev/null&&break;sleep 1;done
+          MBM_BASE_URL=http://127.0.0.1:4173/ node tools/verify_games_audience_faces.mjs
+      - name: Print evidence
+        if: always()
+        run: test ! -f audit-output/browser-results.json || cat audit-output/browser-results.json
+      - name: Upload evidence and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mbm-games-audience-preview-${{ github.run_id }}
+          path: audit-output/
+          if-no-files-found: error
+          retention-days: 14
