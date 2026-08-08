@@ -17,7 +17,6 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
           replacements={
@@ -30,23 +29,24 @@ jobs:
           }
           for old,new in replacements.items():
               if s.count(old)!=1:
-                  raise SystemExit(f'expected exactly one stale copy occurrence: {old[:60]!r}; found {s.count(old)}')
+                  raise SystemExit(f'expected exactly one stale copy occurrence, found {s.count(old)}: {old[:70]}')
               s=s.replace(old,new)
-          pattern=r'<!-- TEACHER UPDATES — deliberately NOT tied to the account\.[\s\S]*?\n<div class="dx-about" id="about">'
+          start=s.find('<!-- TEACHER UPDATES')
+          end=s.find('<div class="dx-about" id="about">', start)
+          if start<0 or end<0:
+              raise SystemExit(f'teacher-update block boundaries missing: start={start} end={end}')
           replacement='''<!-- TEACHER UPDATES — separate explicit consent; Buttondown is reached only through /mailing-list/. -->
-          <div class="dx-teach">
-          <h3>Teacher updates</h3>
-          <p class="dx-cnote"><b>For teachers and other adults.</b> A weekly Made by Matt update covering what changed on the site and a clearly labelled look at what is coming next.</p>
-          <p class="dx-cnote"><b>This is separate from an account.</b> Creating an account never subscribes you. Joining the mailing list uses Buttondown double opt-in and you can unsubscribe at any time.</p>
-          <p><a class="dx-tbtn" href="/mailing-list/">Join teacher updates</a> <a class="dx-chip" href="/account/">Account</a></p>
-          <p class="dx-cnote" style="font-size:.82rem">Under 18? Please don't use the mailing list or create an account — ask a teacher or another adult. Everything public on the site stays free without either.</p>
-          </div>
+<div class="dx-teach">
+<h3>Teacher updates</h3>
+<p class="dx-cnote"><b>For teachers and other adults.</b> A weekly Made by Matt update covering what changed on the site and a clearly labelled look at what is coming next.</p>
+<p class="dx-cnote"><b>This is separate from an account.</b> Creating an account never subscribes you. Joining the mailing list uses Buttondown double opt-in and you can unsubscribe at any time.</p>
+<p><a class="dx-tbtn" href="/mailing-list/">Join teacher updates</a> <a class="dx-chip" href="/account/">Account</a></p>
+<p class="dx-cnote" style="font-size:.82rem">Under 18? Please don't use the mailing list or create an account — ask a teacher or another adult. Everything public on the site stays free without either.</p>
+</div>
 
-          <div class="dx-about" id="about">'''
-          s2,n=re.subn(pattern,replacement,s,count=1)
-          if n!=1:
-              raise SystemExit(f'expected one old teacher-updates block, replaced {n}')
-          p.write_text(s2,encoding='utf-8')
+'''
+          s=s[:start]+replacement+s[end:]
+          p.write_text(s,encoding='utf-8')
           PY
           git diff --check
           grep -q 'href="/mailing-list/"' index.html
