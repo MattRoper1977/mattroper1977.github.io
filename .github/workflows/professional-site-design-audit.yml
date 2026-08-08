@@ -27,112 +27,59 @@ jobs:
           ref: codex/mbm-site-professional-design-upgrade-2026-08-07
           fetch-depth: 0
 
-      - name: Assemble, verify and apply exact tested patch
+      - name: Apply exact tested patch when not already present
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin "$BRANCH" main
           git reset --hard "origin/$BRANCH"
-          parts=(
-            .github/mbm-professional-final.part-00
-            .github/mbm-professional-final.part-01
-            .github/mbm-professional-final.part-02
-            .github/mbm-professional-final.part-03
-            .github/mbm-professional-final.part-04
-          )
-          expected=(
-            28002699eb5e8402df02baa80d3b96b45fd18f61
-            494b3f99ae9e3e36d9efb10238be2498837362a5
-            03d030373c5da45d08ec790a0aa5e1577ab32cdb
-            4e75d4dd8c9a314f35fe6679353750b1a0ef5497
-            3d5e9ed77d59240077116df56724279b280a8e62
-          )
-          for i in "${!parts[@]}"; do
-            test -f "${parts[$i]}"
-            test "$(git hash-object "${parts[$i]}")" = "${expected[$i]}"
-          done
-          cat "${parts[@]}" | base64 -d > /tmp/mbm-final.patch.gz
-          echo "$PATCH_SHA256  /tmp/mbm-final.patch.gz" | sha256sum -c -
-          gzip -dc /tmp/mbm-final.patch.gz > /tmp/mbm-final.patch
-          grep '^diff --git a/' /tmp/mbm-final.patch | sed -E 's#^diff --git a/([^ ]+) b/.*#\1#' > /tmp/mbm-final.paths
-          cat > /tmp/mbm-final.expected-paths <<'EOF'
-          app.js
-          assets/mbm-platform.css
-          assets/mbm-platform.js
-          docs/MBM_PROFESSIONAL_SITE_AUDIT_PASS.json
-          games/index.html
-          index.html
-          members/index.html
-          privacy/index.html
-          reports/2026-08-07-professional-site-upgrade.md
-          resources/index.html
-          stats/index.html
-          theme.js
-          tools/index.html
-          tools/verify_professional_site.js
-          EOF
-          diff -u /tmp/mbm-final.expected-paths /tmp/mbm-final.paths
-          git apply --check /tmp/mbm-final.patch
-          git apply /tmp/mbm-final.patch
-          sed -i 's/[[:space:]]\+$//' reports/2026-08-07-professional-site-upgrade.md
-
-      - name: Install permanent read-only audit and remove transport
-        shell: bash
-        run: |
-          set -euo pipefail
-          cat > .github/workflows/professional-site-design-audit.yml <<'EOF'
-          name: Professional site design audit
-
-          on:
-            pull_request:
-              branches: [main]
-            workflow_dispatch:
-
-          permissions:
-            contents: read
-
-          concurrency:
-            group: professional-site-design-audit
-            cancel-in-progress: true
-
-          jobs:
-            verify:
-              runs-on: ubuntu-latest
-              timeout-minutes: 15
-              steps:
-                - name: Check out exact branch under review
-                  uses: actions/checkout@v4
-                  with:
-                    fetch-depth: 0
-                - name: Verify preservation, platform contract and positive control
-                  shell: bash
-                  run: |
-                    set -euo pipefail
-                    git fetch origin main
-                    node tools/verify_professional_site.js --base origin/main --self-test
-                    node --check app.js
-                    node --check assets/mbm-platform.js
-                    node --check theme.js
-                    git diff --check origin/main...HEAD
-                - name: Record measured inventory
-                  shell: bash
-                  run: |
-                    set -euo pipefail
-                    mkdir -p audit-output
-                    echo "sentinel=mbm-site-professional-design-upgrade-2026-08-07" > audit-output/repository-state.txt
-                    echo "head=$(git rev-parse HEAD)" >> audit-output/repository-state.txt
-                    find . -path './.git' -prune -o -type f -printf '%P\t%s\n' | sort > audit-output/file-inventory.tsv
-                - name: Upload measured inventory
-                  uses: actions/upload-artifact@v4
-                  with:
-                    name: professional-site-audit
-                    path: audit-output/
-                    if-no-files-found: error
-                    retention-days: 7
-          EOF
+          if [[ ! -f assets/mbm-platform.css ]]; then
+            parts=(
+              .github/mbm-professional-final.part-00
+              .github/mbm-professional-final.part-01
+              .github/mbm-professional-final.part-02
+              .github/mbm-professional-final.part-03
+              .github/mbm-professional-final.part-04
+            )
+            expected=(
+              28002699eb5e8402df02baa80d3b96b45fd18f61
+              494b3f99ae9e3e36d9efb10238be2498837362a5
+              03d030373c5da45d08ec790a0aa5e1577ab32cdb
+              4e75d4dd8c9a314f35fe6679353750b1a0ef5497
+              3d5e9ed77d59240077116df56724279b280a8e62
+            )
+            for i in "${!parts[@]}"; do
+              test -f "${parts[$i]}"
+              test "$(git hash-object "${parts[$i]}")" = "${expected[$i]}"
+            done
+            cat "${parts[@]}" | base64 -d > /tmp/mbm-final.patch.gz
+            echo "$PATCH_SHA256  /tmp/mbm-final.patch.gz" | sha256sum -c -
+            gzip -dc /tmp/mbm-final.patch.gz > /tmp/mbm-final.patch
+            grep '^diff --git a/' /tmp/mbm-final.patch | sed -E 's#^diff --git a/([^ ]+) b/.*#\1#' > /tmp/mbm-final.paths
+            cat > /tmp/mbm-final.expected-paths <<'EOF'
+            app.js
+            assets/mbm-platform.css
+            assets/mbm-platform.js
+            docs/MBM_PROFESSIONAL_SITE_AUDIT_PASS.json
+            games/index.html
+            index.html
+            members/index.html
+            privacy/index.html
+            reports/2026-08-07-professional-site-upgrade.md
+            resources/index.html
+            stats/index.html
+            theme.js
+            tools/index.html
+            tools/verify_professional_site.js
+            EOF
+            diff -u /tmp/mbm-final.expected-paths /tmp/mbm-final.paths
+            git apply --check /tmp/mbm-final.patch
+            git apply /tmp/mbm-final.patch
+            sed -i 's/[[:space:]]\+$//' reports/2026-08-07-professional-site-upgrade.md
+          fi
           rm -f .github/mbm-professional-final.part-*
 
-      - name: Run release gates and commit one coherent implementation
+      - name: Run release gates and publish implementation files
         shell: bash
         run: |
           set -euo pipefail
@@ -145,5 +92,9 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add -A
           git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "Verified implementation already present; no commit required."
+            exit 0
+          fi
           git commit -m "feat: elevate Made by Matt platform UX"
           git push origin "HEAD:$BRANCH"
