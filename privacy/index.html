@@ -16,11 +16,13 @@ body[data-theme="dark"]{--pv-cream:#121834;--pv-card:#1B234A;--pv-ink:#E8E2D4;--
 <section class="pv-sec"><div class="pv-wrap">
 <div class="pv-lead">
 <p><b>Public Made by Matt content does not require an account.</b> Games, Lessons, Apps, Tools and Resources remain public unless a resource was already legitimately restricted for another reason.</p>
+<p><b>Made by Matt accounts are intended for adults and teachers.</b> Pupils can use the public learning, game and tool content without creating an account.</p>
 <p><b>The optional account is cloud-backed only when the configured Supabase service is active.</b> The account page does not fall back to a local JavaScript password. If cloud configuration is missing, registration and login stay unavailable rather than pretending to be secure.</p>
-<p><b>The mailing list is separate from the account.</b> Creating an account never subscribes you. Joining the list requires its own unticked consent box and, when activated, confirmation through the mailing provider.</p>
+<p><b>The mailing list is separate from the account.</b> Creating an account never subscribes you. Joining the list requires its own unticked consent box and double opt-in through the mailing provider.</p>
 </div>
 
 <h2>Optional Made by Matt account</h2>
+<p>The optional account is intended for adults and teachers who want account-backed member preferences across devices. Pupils do not need an account to use public Made by Matt learning content.</p>
 <p>If you choose to create an account, the minimum identity is an <b>email address</b> plus the password you submit directly to the authentication provider. A display name is optional. The site does not ask the account system for date of birth, school, pupil details, postal address or sensitive characteristics.</p>
 <p><b>Supabase Auth is the password authority.</b> Made by Matt JavaScript does not store, hash, compare, back up or receive a separate copy of your password. Supabase manages the authenticated session used by the browser. The Made by Matt database stores an account profile and deliberately limited member data such as saved Made by Matt shortcuts.</p>
 <p>Database access is controlled so an authenticated user can read and change only rows belonging to that user's Auth identity. Password data is not duplicated into the profile or member-data tables.</p>
@@ -34,8 +36,10 @@ body[data-theme="dark"]{--pv-cream:#121834;--pv-card:#1B234A;--pv-ink:#E8E2D4;--
 <p>A mailing-list subscription is independent. Deleting an account does not silently unsubscribe an independently subscribed email address.</p>
 
 <h2>Mailing list</h2>
-<p>When the mailing system is enabled, the subscription form sends the email address you deliberately enter to a Made by Matt serverless subscription endpoint. That endpoint passes the subscription request to <b>Buttondown</b>, with its private API key kept in server-side secret storage rather than the webpage. The intended flow uses confirmation before a normal subscription is active and preserves the provider's unsubscribe mechanism.</p>
+<p>When the mailing system is enabled, the subscription form sends the email address you deliberately enter to a Made by Matt serverless subscription endpoint. That endpoint passes the subscription request to <b>Buttondown</b>, with its private API key kept in server-side secret storage rather than the webpage.</p>
+<p><b>Made by Matt uses double opt-in for the mailing list.</b> A subscription request is not treated as ordinary active marketing consent until the provider confirmation step is completed. Buttondown is the sender of record, and mailing messages retain Buttondown's unsubscribe route.</p>
 <p>The administrative contact for this feature is <a href="mailto:contactmadebymatt@gmail.com">contactmadebymatt@gmail.com</a>. The mailing-list form is not part of account registration, the consent box is not pre-checked, and an account holder may leave it entirely alone.</p>
+<p>Signed-in account holders also have a self-service mailing unsubscribe control. The server derives the email address from the verified account session rather than accepting an arbitrary address from the browser.</p>
 <div class="pv-note"><p><b>Activation is explicit.</b> If the mailing backend has not been configured, the form does not claim that a subscription succeeded. The page states that the service is unavailable instead.</p></div>
 
 <h2>Cross-device member data</h2>
@@ -58,14 +62,15 @@ body[data-theme="dark"]{--pv-cream:#121834;--pv-card:#1B234A;--pv-ink:#E8E2D4;--
 <p>The UAS Register, ASDAN tools and other surfaces that explicitly say their pupil records stay on the device are not automatically changed by the account system. Authentication must not turn a local pupil-data store into cloud data by accident. Public/offline lessons and standalone apps continue to launch without contacting the account service as a precondition.</p>
 
 <h2>Children and education use</h2>
-<p>Made by Matt is used in education. The account is therefore deliberately data-minimised and is not a pupil-profile system: do not enter school records, pupil evidence or sensitive personal details into the optional display-name or member-favourite features. The mailing list is a separate marketing choice and is not bundled into an account.</p>
+<p>Made by Matt is used in education, but the optional account system is intended for adults and teachers rather than pupil account ownership. Pupils can use the public learning, games, apps, tools and resources without creating an account. The account is deliberately data-minimised and is not a pupil-profile system: do not enter school records, pupil evidence or sensitive personal details into the optional display-name or member-favourite features.</p>
+<p>The mailing list is a separate adult marketing choice, uses its own consent action and double opt-in, and is never bundled into account creation.</p>
 
 <h2>Security and secrets</h2>
 <ul><li>No Gmail password, SMTP password, Supabase service-role key, Buttondown API key or other private credential belongs in GitHub or browser code.</li><li>The public Supabase project URL and browser key may be published only because the provider designs them for client use; row-level security remains the data boundary.</li><li>Account deletion uses a server-side service-role secret and requires an authenticated user session.</li><li>Mailing-list administration uses a server-side provider token; the browser never receives it.</li></ul>
 
 <h2>Questions, unsubscribe or deletion</h2>
-<p>For account-data questions or deletion assistance, email <a href="mailto:contactmadebymatt@gmail.com">contactmadebymatt@gmail.com</a>. Mailing-list messages retain their own unsubscribe mechanism, so unsubscribing does not require deleting a Made by Matt account.</p>
-<div class="pv-foot"><p>Updated 8 August 2026 for the cloud-account and separate mailing-list architecture. This page avoids claiming that an unconfigured external service is already live.</p><p><a href="/">Back to Made by Matt</a></p></div>
+<p>For account-data questions or deletion assistance, email <a href="mailto:contactmadebymatt@gmail.com">contactmadebymatt@gmail.com</a>. Mailing-list messages retain their own unsubscribe mechanism, and signed-in account holders may also use the Account-page unsubscribe control; unsubscribing does not require deleting a Made by Matt account.</p>
+<div class="pv-foot"><p>Updated 8 August 2026 for the cloud-account, adult/teacher account audience and separate double-opt-in mailing-list architecture.</p><p><a href="/">Back to Made by Matt</a></p></div>
 </div></section></main>
 <script defer src="/assets/mbm-platform.js"></script>
 </body></html>
