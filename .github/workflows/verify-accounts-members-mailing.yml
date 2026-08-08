@@ -34,3 +34,31 @@ jobs:
           node --check assets/mbm-account.js
           node --check assets/mbm-mailing.js
           node --check assets/mbm-platform.js
+      # TEMPORARY PR #99 provider proof. Removed immediately after this run.
+      # Uses only deliberately public Supabase client configuration. The private
+      # Buttondown credential remains inside the deployed Edge Function.
+      - name: One-shot real mailing-provider delivery probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          url=$(node -p "require('./site.json').features.accounts.supabaseUrl")
+          key=$(node -p "require('./site.json').features.accounts.supabaseAnonKey")
+          email="contactmadebymatt+pr99-provider-${GITHUB_RUN_ID}@gmail.com"
+          endpoint="$url/functions/v1/subscribe-mailing-list"
+          echo "QA_ALIAS=$email"
+          request() {
+            curl --fail-with-body --silent --show-error \
+              -H 'Origin: https://madebymatt.uk' \
+              -H "apikey: $key" \
+              -H 'Content-Type: application/json' \
+              --data "{\"email\":\"$email\",\"consent\":true,\"company\":\"\"}" \
+              "$endpoint"
+          }
+          first=$(request)
+          second=$(request)
+          node -e 'const a=JSON.parse(process.argv[1]),b=JSON.parse(process.argv[2]); if(a.ok!==true||b.ok!==true) process.exit(1); if(JSON.stringify(a)!==JSON.stringify(b)) { console.error("duplicate reply differed from first-time reply"); process.exit(1); } console.log("PASS provider endpoint accepted first + duplicate with indistinguishable public replies");' "$first" "$second"
+          bad=$(curl --silent --output /tmp/bad --write-out '%{http_code}' -H 'Origin: https://madebymatt.uk' -H "apikey: $key" -H 'Content-Type: application/json' --data '{"email":"not-an-email","consent":true,"company":""}' "$endpoint")
+          test "$bad" = 400
+          no=$(curl --silent --output /tmp/no --write-out '%{http_code}' -H 'Origin: https://madebymatt.uk' -H "apikey: $key" -H 'Content-Type: application/json' --data '{"email":"contactmadebymatt+no-consent@gmail.com","consent":false,"company":""}' "$endpoint")
+          test "$no" = 400
+          echo 'PASS invalid address and missing consent fail closed'
