@@ -1,0 +1,231 @@
+name: R-G handover readback
+
+on:
+  push:
+    branches: [codex/full-repair-upgrade-2026-08-07]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: rg-handover-readback-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out site at the claimed close tip
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/mattroper1977.github.io
+          ref: 44e2ca04cd39e26a91de0c61f925c690d12ceaf0
+          path: site
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check out Games at the claimed close tip
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: 2591276e1a9dc74954eba45e5993e891ef59cb6b
+          path: Games
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check out Lessons at the claimed close tip
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: aad7b5017bbf517915304e2280894e9874647822
+          path: Lessons
+          fetch-depth: 1
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Derive heads, catalogue, sitemap and taxonomy counts
+        run: |
+          mkdir -p evidence
+          python - <<'PY'
+          import json
+          import re
+          import subprocess
+          import xml.etree.ElementTree as ET
+          from collections import Counter
+          from pathlib import Path
+
+          def sha(path):
+              return subprocess.check_output(['git', '-C', path, 'rev-parse', 'HEAD'], text=True).strip()
+
+          games_doc = json.loads(Path('Games/games.json').read_text(encoding='utf-8'))
+          games = games_doc['games']
+          new_holders = [g['href'] for g in games if re.match(r'^NEW\s*·', g.get('title', ''))]
+          collections = Counter(g.get('collection') for g in games)
+          date_added = sum('dateAdded' in g for g in games)
+          rpg_by_live_rule = [g['href'] for g in games if re.search(r'\bRPG\b', str(g.get('tag', '')))]
+
+          sitemap = ET.parse('site/sitemap.xml').getroot()
+          ns = {'sm': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
+          sitemap_urls = sitemap.findall('sm:url', ns)
+          if not sitemap_urls:
+              sitemap_urls = sitemap.findall('url')
+
+          result = {
+              'sentinel': 'mbm-full-repair-upgrade-2026-08-07',
+              'heads': {'site': sha('site'), 'Games': sha('Games'), 'Lessons': sha('Lessons')},
+              'shelf_count': len(games),
+              'sitemap_count': len(sitemap_urls),
+              'new_holders': new_holders,
+              'collection_counts': {str(k): v for k, v in sorted(collections.items(), key=lambda item: str(item[0]))},
+              'dateAdded_count': date_added,
+              'rpg_rail_count_by_shipped_tag_rule': len(rpg_by_live_rule),
+              'rpg_rail_members': rpg_by_live_rule,
+              'rpg_collection_count': collections.get('RPG', 0),
+          }
+          expected = {
+              'heads': {
+                  'site': '44e2ca04cd39e26a91de0c61f925c690d12ceaf0',
+                  'Games': '2591276e1a9dc74954eba45e5993e891ef59cb6b',
+                  'Lessons': 'aad7b5017bbf517915304e2280894e9874647822',
+              },
+              'shelf_count': 48,
+              'sitemap_count': 456,
+              'new_holders': ['/novasiege/'],
+              'collection_counts': {'None': 39, 'RPG': 1, 'Shooter': 1, 'Sports': 7},
+              'dateAdded_count': 0,
+              'rpg_rail_count_by_shipped_tag_rule': 3,
+              'rpg_collection_count': 1,
+          }
+          result['matches_handover'] = all(result[key] == value for key, value in expected.items())
+          Path('evidence/rg-readback.json').write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(result, indent=2))
+          if not result['matches_handover']:
+              raise SystemExit('derived repository counts differ from the handover')
+          PY
+
+      - name: Measure merged-branch ancestry and PR 25 surfaces
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -u
+          git -C site fetch --no-tags origin \
+            refs/heads/claude/live-glowbound-taxonomy-homepage:refs/remotes/origin/rg-site-head \
+            refs/heads/claude/contact-form-ajax-safety-net:refs/remotes/origin/pr25-head
+          git -C Games fetch --no-tags origin \
+            refs/heads/claude/estate-close-glowbound:refs/remotes/origin/rg-games-head
+
+          site_ahead=$(git -C site rev-list --count HEAD..refs/remotes/origin/rg-site-head)
+          games_ahead=$(git -C Games rev-list --count HEAD..refs/remotes/origin/rg-games-head)
+          pr25_metadata_files=$(gh pr view 25 --repo MattRoper1977/mattroper1977.github.io --json changedFiles --jq .changedFiles)
+          pr25_current_delta_files=$(git -C site diff --name-only HEAD...refs/remotes/origin/pr25-head | sed '/^$/d' | wc -l)
+
+          set +e
+          git -C site merge-tree --write-tree --messages HEAD refs/remotes/origin/pr25-head > evidence/pr25-merge-tree.txt 2>&1
+          merge_tree_exit=$?
+          set -e
+          merge_tree_conflict_files=$(grep -E '^CONFLICT \(' evidence/pr25-merge-tree.txt | sed -E 's/.* in //' | sort -u | sed '/^$/d' | wc -l || true)
+
+          worktree=$(mktemp -d)
+          git -C site worktree add --detach "$worktree" HEAD >/dev/null
+          set +e
+          git -C "$worktree" -c user.name='R-G readback' -c user.email='readback@example.invalid' \
+            merge --no-commit --no-ff refs/remotes/origin/pr25-head > evidence/pr25-worktree-merge.txt 2>&1
+          worktree_merge_exit=$?
+          set -e
+          worktree_conflict_files=$(git -C "$worktree" diff --name-only --diff-filter=U | sed '/^$/d' | wc -l)
+          conflict_hunks=$(grep -c '^<<<<<<< ' "$worktree/index.html" || true)
+          git -C "$worktree" merge --abort >/dev/null 2>&1 || true
+          git -C site worktree remove --force "$worktree" >/dev/null
+
+          cat > evidence/branch-and-pr25.json <<JSON
+          {
+            "site_close_branch_ahead_of_main": $site_ahead,
+            "games_close_branch_ahead_of_main": $games_ahead,
+            "pr25_github_metadata_changed_files": $pr25_metadata_files,
+            "pr25_current_main_triple_dot_files": $pr25_current_delta_files,
+            "pr25_merge_tree_exit": $merge_tree_exit,
+            "pr25_merge_tree_conflict_files": $merge_tree_conflict_files,
+            "pr25_worktree_merge_exit": $worktree_merge_exit,
+            "pr25_worktree_conflict_files": $worktree_conflict_files,
+            "pr25_conflict_hunks": $conflict_hunks
+          }
+          JSON
+          cat evidence/branch-and-pr25.json
+          cat evidence/pr25-merge-tree.txt
+          cat evidence/pr25-worktree-merge.txt
+
+          test "$site_ahead" -eq 0
+          test "$games_ahead" -eq 0
+          test "$pr25_metadata_files" -eq 5
+          test "$pr25_current_delta_files" -eq 2
+          test "$merge_tree_exit" -eq 1
+          test "$merge_tree_conflict_files" -eq 1
+          test "$worktree_merge_exit" -eq 1
+          test "$worktree_conflict_files" -eq 1
+          test "$conflict_hunks" -eq 1
+
+      - name: Install focused browser probe
+        working-directory: site
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Probe SAVE-05 beyond object-only numeric leaves
+        working-directory: site
+        run: |
+          cat > tools/__rg_probe_save05_array.mjs <<'JS'
+          import { chromium } from 'playwright';
+          import { pathToFileURL } from 'node:url';
+          import fs from 'node:fs';
+
+          const file = process.argv[2];
+          const browser = await chromium.launch({ headless: true });
+          const context = await browser.newContext({ reducedMotion: 'reduce' });
+          const page = await context.newPage();
+          const errors = [];
+          page.on('pageerror', error => errors.push(String(error)));
+          await page.goto(pathToFileURL(file).href, { waitUntil: 'domcontentloaded' });
+          await page.waitForFunction(() => typeof window.OuroborosDebug === 'object', null, { timeout: 25000 });
+          const result = await page.evaluate(() => {
+            const key = window.OuroborosDebug.saveKey();
+            localStorage.setItem(key, '{"quest":{"stabilisers":[1e999,{"charge":1e999}]}}');
+            const ok = loadGame();
+            const values = Game.save.quest.stabilisers;
+            return {
+              ok,
+              first: values[0],
+              firstFinite: Number.isFinite(values[0]),
+              nested: values[1]?.charge,
+              nestedFinite: Number.isFinite(values[1]?.charge),
+              roundTrip: JSON.parse(JSON.stringify(values)),
+            };
+          });
+          await context.close();
+          await browser.close();
+          const out = { errors, result, array_gap_reproduced: result.ok && (!result.firstFinite || !result.nestedFinite) };
+          fs.writeFileSync('../evidence/save05-array-probe.json', JSON.stringify(out, null, 2) + '\n');
+          console.log(JSON.stringify(out, null, 2));
+          if (!out.array_gap_reproduced) process.exit(1);
+          JS
+          node tools/__rg_probe_save05_array.mjs "$PWD/ouroboros/index.html"
+
+      - name: Upload readback evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rg-handover-readback-${{ github.run_id }}
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 14

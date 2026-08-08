@@ -1,0 +1,110 @@
+name: Prepare verified Lessons repair payload
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prepare-lessons-repairs-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out site repair tools
+        uses: actions/checkout@v4
+        with:
+          path: site
+          persist-credentials: false
+
+      - name: Check out authorised Lessons repair branch
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: codex/full-repair-upgrade-2026-08-07
+          path: Lessons
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Preserve negative controls and fetch the real clip thumbnail
+        run: |
+          mkdir -p evidence payload Lessons/assets/video
+          cp Lessons/Games/Orbital_source.html /tmp/Orbital_source_before.html
+          cp Lessons/Games/Orbital.html /tmp/Orbital_before.html
+          cp Lessons/index.html /tmp/Lessons_index_before.html
+          curl --fail --location --silent --show-error --max-time 30 \
+            https://i.ytimg.com/vi/vhuk-K_wWas/hqdefault.jpg \
+            --output Lessons/assets/video/poster-art.jpg
+
+      - name: Build the byte-exact payload and syntax-check executable scripts
+        run: |
+          python site/tools/prepare_lessons_repair_payload.py \
+            --lessons-root Lessons \
+            --payload-root payload \
+            --evidence-root evidence \
+            | tee evidence/payload-builder.txt
+
+      - name: Prove the Orbital defect and repaired state machine
+        run: |
+          node site/tools/verify_orbital_pause_payload.cjs \
+            /tmp/Orbital_source_before.html \
+            /tmp/Orbital_before.html \
+            Lessons/Games/Orbital_source.html \
+            Lessons/Games/Orbital.html \
+            evidence/orbital-pause.json \
+            | tee evidence/orbital-pause.txt
+
+      - name: Prove the poster route control and repaired local response
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          before = Path('/tmp/Lessons_index_before.html').read_text(encoding='utf-8')
+          after = Path('Lessons/index.html').read_text(encoding='utf-8')
+          if before.count('src="/assets/video/poster-art.jpg"') != 1:
+              raise SystemExit('negative control did not contain the broken absolute poster route')
+          if after.count('src="assets/video/poster-art.jpg"') != 1 or 'src="/assets/video/poster-art.jpg"' in after:
+              raise SystemExit('repaired page does not contain exactly one relative poster route')
+          print('POSTER SOURCE PASS — broken absolute route reproduced; repaired route is repository-relative')
+          PY
+          python -m http.server 4175 --bind 127.0.0.1 --directory Lessons >evidence/lessons-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill $server_pid 2>/dev/null || true' EXIT
+          for attempt in {1..20}; do
+            curl -fsS http://127.0.0.1:4175/ >/dev/null && break
+            sleep 0.25
+          done
+          curl --fail --silent --show-error --max-time 10 \
+            http://127.0.0.1:4175/assets/video/poster-art.jpg \
+            --output /tmp/served-poster.jpg
+          cmp Lessons/assets/video/poster-art.jpg /tmp/served-poster.jpg
+          echo 'POSTER HTTP PASS — repaired local route serves the byte-identical JPEG' | tee evidence/poster-http.txt
+
+      - name: Prove the builder and verifier source files are syntactically valid
+        run: |
+          python -m py_compile site/tools/prepare_lessons_repair_payload.py
+          node --check site/tools/verify_orbital_pause_payload.cjs
+          git -C Lessons diff --check
+
+      - name: Upload verified Lessons repair payload
+        uses: actions/upload-artifact@v4
+        with:
+          name: lessons-repair-payload-${{ github.run_id }}
+          path: |
+            payload/
+            evidence/
+          if-no-files-found: error
+          retention-days: 14

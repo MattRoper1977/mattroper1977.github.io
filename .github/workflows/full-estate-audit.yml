@@ -1,0 +1,270 @@
+name: Full Lessons + Site estate audit
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: full-estate-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out site audit branch
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/mattroper1977.github.io
+          ref: codex/full-repair-upgrade-2026-08-07
+          path: site
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Check out paired Lessons audit branch
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: codex/full-repair-upgrade-2026-08-07
+          path: Lessons
+          persist-credentials: false
+
+      - name: Check out Games catalogue dependency (read-only)
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: Games
+          persist-credentials: false
+
+      - name: Check out app catalogue dependency (read-only)
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Matt-s-Apps-
+          ref: main
+          path: Apps
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Preserve the measured SAVE-05 pre-repair control
+        run: cp site/ouroboros/index.html /tmp/ouroboros-save05-array-control.html
+
+      - name: Apply measured site runtime repairs
+        run: python site/tools/apply_site_runtime_repairs.py --root site
+
+      - name: Prove repair source invariants before commit
+        run: |
+          python -m py_compile site/tools/apply_site_runtime_repairs.py site/tools/full_estate_audit.py
+          node --check site/assets/mbm-features.js
+          node --check site/tools/full_estate_runtime.mjs
+          node --check site/tools/verify_counter_fallback.mjs
+          node --check site/tools/verify_ouroboros_save05_arrays.mjs
+          python - <<'PY'
+          from pathlib import Path
+          features = Path('site/assets/mbm-features.js').read_text(encoding='utf-8')
+          runtime = Path('site/tools/full_estate_runtime.mjs').read_text(encoding='utf-8')
+          ouroboros = Path('site/ouroboros/index.html').read_text(encoding='utf-8')
+          assert features.count('remoteCounters: false') == 1
+          assert features.count('function probeRemoteCounters()') == 1
+          assert features.count('return counterJSON(API + CFG.stats.namespace +') == 2
+          assert 'return timedJSON(API + CFG.stats.namespace +' not in features
+          assert runtime.count('async function activateVisibleControl') == 1
+          assert "locator('button:visible" not in runtime
+          assert runtime.count('elementFromPoint') >= 2
+          assert ouroboros.count('includes values nested inside arrays') == 1
+          assert 'const finiteMerge=' not in ouroboros
+          assert 'if(Array.isArray(outVal))' in ouroboros
+          print('SOURCE REGRESSION PASS — counters local-first; probes topmost; SAVE-05 traverses arrays')
+          PY
+          git -C site diff --check
+
+      - name: Commit repaired runtime sources to the authorised branch
+        run: |
+          git -C site config user.name 'github-actions[bot]'
+          git -C site config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C site add assets/mbm-features.js tools/full_estate_runtime.mjs ouroboros/index.html
+          if git -C site diff --cached --quiet; then
+            echo 'Measured runtime repairs already applied'
+          else
+            git -C site commit -m 'fix: harden counters, browser probes and Ouroboros saves'
+            git -C site push origin HEAD:codex/full-repair-upgrade-2026-08-07
+          fi
+
+      - name: Record measured repository revisions
+        env:
+          SITE_EVENT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          SITE_DEFAULT_BASE: ${{ github.event.pull_request.base.sha || '' }}
+        run: |
+          mkdir -p audit-output
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+
+          def sha(path):
+              return subprocess.check_output(['git', '-C', path, 'rev-parse', 'HEAD'], text=True).strip()
+
+          state = {
+              'sentinel': 'mbm-full-repair-upgrade-2026-08-07',
+              'site_event_head': os.environ.get('SITE_EVENT_HEAD', ''),
+              'site_default_base': os.environ.get('SITE_DEFAULT_BASE', ''),
+              'site_tested_tree': sha('site'),
+              'lessons_tested_head': sha('Lessons'),
+              'games_dependency_head': sha('Games'),
+              'apps_dependency_head': sha('Apps'),
+          }
+          Path('audit-output/repository-state.json').write_text(json.dumps(state, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(state, indent=2))
+          PY
+
+      - name: Install audit parser dependencies
+        run: python -m pip install --disable-pip-version-check beautifulsoup4==4.13.4 html5lib==1.1
+
+      - name: Prove static scanner can fail
+        run: python site/tools/full_estate_audit.py --self-test
+
+      - name: Run full static and cross-repository audit
+        id: static
+        continue-on-error: true
+        run: |
+          python site/tools/full_estate_audit.py \
+            --site-root site \
+            --lessons-root Lessons \
+            --games-root Games \
+            --apps-root Apps \
+            --json-report audit-output/static-audit.json \
+            --markdown-report audit-output/static-audit.md \
+            --targets audit-output/runtime-targets.json \
+            --fail-on P1
+
+      - name: Install Playwright Chromium
+        working-directory: site
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Prove SAVE-05 array gap and repaired behaviour
+        working-directory: site
+        run: |
+          node tools/verify_ouroboros_save05_arrays.mjs --expect-gap /tmp/ouroboros-save05-array-control.html \
+            | tee ../audit-output/ouroboros-save05-array-control.txt
+          node tools/verify_ouroboros_save05_arrays.mjs ouroboros/index.html \
+            | tee ../audit-output/ouroboros-save05-array-fixed.txt
+
+      - name: Build combined local Pages tree and start server
+        run: |
+          mkdir -p public
+          rsync -a --exclude='.git' site/ public/
+          rm -rf public/Lessons public/Games public/Matt-s-Apps-
+          ln -s "$GITHUB_WORKSPACE/Lessons" public/Lessons
+          ln -s "$GITHUB_WORKSPACE/Games" public/Games
+          ln -s "$GITHUB_WORKSPACE/Apps" public/Matt-s-Apps-
+          python -m http.server 4173 --bind 127.0.0.1 --directory public >audit-output/http-server.log 2>&1 &
+          echo $! > audit-output/http-server.pid
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat audit-output/http-server.log
+          exit 1
+
+      - name: Prove local counter fallback and challenged-remote single flight
+        working-directory: site
+        run: node tools/verify_counter_fallback.mjs http://127.0.0.1:4173 | tee ../audit-output/counter-fallback-proof.txt
+
+      - name: Record current external service responses
+        continue-on-error: true
+        run: |
+          set +e
+          curl -sS --max-time 20 -D audit-output/counterapi-madebymatt.headers \
+            -H 'Origin: https://madebymatt.uk' \
+            -o audit-output/counterapi-madebymatt.json \
+            https://api.counterapi.dev/v1/madebymatt-uk/visits_total
+          echo $? > audit-output/counterapi-madebymatt.exit
+          curl -sS --max-time 20 -D audit-output/counterapi-local.headers \
+            -H 'Origin: http://127.0.0.1:4173' \
+            -o audit-output/counterapi-local.json \
+            https://api.counterapi.dev/v1/madebymatt-uk/visits_total
+          echo $? > audit-output/counterapi-local.exit
+          curl -sS --max-time 20 -D audit-output/poster-art.headers \
+            -o /dev/null \
+            https://i.ytimg.com/vi/vhuk-K_wWas/hqdefault.jpg
+          echo $? > audit-output/poster-art.exit
+
+      - name: Prove runtime scanner can fail
+        working-directory: site
+        run: node tools/full_estate_runtime.mjs --self-test --base-url http://127.0.0.1:4173
+
+      - name: Isolate the slow-game candidates
+        working-directory: site
+        run: |
+          node tools/full_estate_slow_probe.mjs \
+            --base-url http://127.0.0.1:4173 \
+            --report ../audit-output/slow-game-probe.json \
+            --markdown ../audit-output/slow-game-probe.md
+
+      - name: Run desktop and mobile runtime smoke matrix
+        id: runtime
+        continue-on-error: true
+        working-directory: site
+        run: |
+          node tools/full_estate_runtime.mjs \
+            --targets ../audit-output/runtime-targets.json \
+            --base-url http://127.0.0.1:4173 \
+            --report ../audit-output/runtime-audit.json \
+            --markdown ../audit-output/runtime-audit.md \
+            --concurrency 2 \
+            --per-target-timeout 45000
+
+      - name: Print blocking findings and enforce gate
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          blocking = []
+          for name in ('static-audit.json', 'runtime-audit.json'):
+              report = Path('audit-output') / name
+              if not report.exists():
+                  blocking.append({'severity': 'P0', 'code': 'REPORT_MISSING', 'path': name, 'message': 'audit report was not produced'})
+                  continue
+              data = json.loads(report.read_text(encoding='utf-8'))
+              if name.startswith('static'):
+                  blocking.extend(f for f in data.get('findings', []) if f.get('severity') in {'P0', 'P1'})
+              else:
+                  for result in data.get('results', []):
+                      for issue in result.get('issues', []):
+                          if issue.get('severity') in {'P0', 'P1'}:
+                              blocking.append({**issue, 'path': f"{result.get('profile')} {result.get('target')}"})
+          print(f"blocking findings: {len(blocking)}")
+          for finding in blocking[:200]:
+              print(f"{finding.get('severity')} {finding.get('code')} {finding.get('repo', '')}/{finding.get('path', '')}: {finding.get('message')}")
+          if len(blocking) > 200:
+              print(f"... {len(blocking) - 200} more in uploaded reports")
+          raise SystemExit(1 if blocking else 0)
+          PY
+
+      - name: Upload audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-estate-audit-${{ github.run_id }}
+          path: audit-output/
+          if-no-files-found: error
+          retention-days: 14
