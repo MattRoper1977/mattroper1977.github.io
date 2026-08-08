@@ -60,6 +60,7 @@ function scan(overrides={}){
   need(/subscribers\/\$\{encodeURIComponent\(email\)\}/.test(sub),'duplicate handling does not prove an existing subscriber through retrieve-by-email');
   need(!/already\|exists\|subscriber/.test(sub),'broad Buttondown error-text matching can misreport a failed signup as success');
   need(/SUPABASE_SERVICE_ROLE_KEY/.test(del)&&/auth\.admin\.deleteUser/.test(del),'server-side account deletion path missing');
+  need(/functions\.invoke\(['\"]delete-account['\"][\s\S]{0,700}?auth\.signOut\(\{\s*scope:\s*['\"]local['\"]\s*\}\)/.test(account),'successful account deletion does not clear the provider-managed local session');
   need(/\[functions\.subscribe-mailing-list\][\s\S]*verify_jwt\s*=\s*false/.test(cfg),'public subscription function configuration missing');
   need(/\[functions\.delete-account\][\s\S]*verify_jwt\s*=\s*true/.test(cfg),'account deletion JWT verification missing');
   need(!/already_subscribed/.test(sub),'subscribe endpoint discloses existing membership to an anonymous caller');
@@ -85,6 +86,8 @@ const secretFixture=JSON.parse(read('site.json'));secretFixture.features.account
 const secretPositive=scan({'site.json':JSON.stringify(secretFixture)});ok(secretPositive.some(x=>/malformed or privileged|secret key appears/i.test(x)),'positive control: injected Supabase secret is rejected');
 const profileUpsertFixture=read('assets/mbm-account.js').replace(".update({ display_name: name, name: name, updated_at: nowISO() })", ".upsert({ id: u.id, display_name: name, name: name, updated_at: nowISO() }, { onConflict: 'id' })");
 const profilePositive=scan({'assets/mbm-account.js':profileUpsertFixture});ok(profilePositive.some(x=>/UPSERT.*INSERT privilege/i.test(x)),'positive control: profile UPSERT regression is rejected');
+const deleteSessionFixture=read('assets/mbm-account.js').replace("return sb.auth.signOut({ scope: 'local' }).catch(function () { return null; });","return Promise.resolve();");
+const deleteSessionPositive=scan({'assets/mbm-account.js':deleteSessionFixture});ok(deleteSessionPositive.some(x=>/provider-managed local session/.test(x)),'positive control: deleted-account session cleanup regression is rejected');
 ok(site.features.mailing.enabled===true,'mailing is enabled after real Buttondown provider proof');
 console.log(`\n${pass} passed · ${fail} failed`);if(fail)process.exit(1);
 console.log(pub.configured?'SUPABASE PUBLIC CONFIG: configured and account/provider acceptance recorded.':'EXTERNAL BLOCK: live account acceptance requires Supabase public configuration and provider QA.');
