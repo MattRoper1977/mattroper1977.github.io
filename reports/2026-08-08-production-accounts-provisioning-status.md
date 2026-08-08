@@ -79,15 +79,19 @@ A JWT-verified `unsubscribe-mailing-list` Edge Function now derives the email ad
 
 The browser previously used `profiles.upsert(...)` even though authenticated users intentionally have no INSERT grant on `profiles`. That was a real least-privilege mismatch. It is now fixed by using an ownership-filtered `UPDATE` on the trigger-created profile row; database grants remain narrow and unchanged. A permanent positive control rejects a regression back to UPSERT.
 
+## Estate verifier repairs completed separately
+
+- PR #100 repaired the stale Apex Sports/New Release tenant allow-list by deriving the additive stack contract. It merged with the Apex Sports publication, AGX-1, professional design and live checks green.
+- PR #101 repaired the Apex Rally verifier's false assumption that the curated five-card homepage Apex Sports strip must equal the broader manifest `collection: Sports`. Its Rally surface gate, including the log self-consistency check, passed before merge.
+- Neither repair changes homepage/game content; both remove verifier drift that pre-dated #99.
+
 ## Remaining production acceptance work
 
-The account data-isolation gate is now complete. PR #99 remains Draft only for provider/deployment-dependent acceptance that must not be fabricated:
+The account data-isolation gate and inherited estate CI blockers are now complete. PR #99 remains Draft only for provider/deployment-dependent acceptance that must not be fabricated:
 
 1. self-service account deletion is proven from the real production origin after the account route is deployed;
 2. real Buttondown subscribe → provider readback/confirmation → duplicate handling → unsubscribe is proven, after which `features.mailing.enabled` may be switched to `true`;
 3. final CI is reviewed against the current main branch;
 4. PR #99 is marked Ready, merged, and the served production `/account/`, `/members/`, `/mailing-list/` and `/privacy/` surfaces are verified.
-
-Apex Sports' unrelated stale New Release verifier was repaired separately in PR #100 and merged before this final #99 pass, so it is no longer an inherited red on the account PR.
 
 No unproven provider-dependent gate is claimed as complete.
