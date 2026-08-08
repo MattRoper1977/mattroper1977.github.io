@@ -40,7 +40,8 @@ function boot(){
   +'@media print{.mbm-sw-wrap{display:none!important}}';
   document.head.appendChild(st);
 
-  var mount=document.querySelector('nav#nav')
+  var mount=document.querySelector('[data-mbm-theme-slot]')
+        ||document.querySelector('nav#nav')
         ||document.querySelector('nav.xnav')
         ||document.querySelector('header nav')
         ||document.querySelector('nav')

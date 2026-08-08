@@ -56,4 +56,4 @@ Promise.all([grab('/Lessons/resources.json'),grab('/data/resources.json')]).then
   render()});
 ['search','subject','type'].forEach(id=>$('#'+id).addEventListener(id==='search'?'input':'change',render));
 }
-$('#menu').addEventListener('click',()=>{let n=$('#nav'),o=n.classList.toggle('open');$('#menu').setAttribute('aria-expanded',o)});
+{const m=$('#menu'),n=$('#nav');if(m&&n)m.addEventListener('click',()=>{const o=n.classList.toggle('open');m.setAttribute('aria-expanded',o)})}
