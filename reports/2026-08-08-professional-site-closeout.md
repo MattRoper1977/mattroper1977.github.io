@@ -1,7 +1,7 @@
 # Made by Matt professional site upgrade — final closeout
 
-**Sentinel:** `mbm-site-professional-design-upgrade-2026-08-07`  
-**Status:** CLOSED — merged, deployed and live-verified  
+**Sentinel:** `mbm-site-professional-design-upgrade-2026-08-07`
+**Status:** CLOSED — merged, deployed and live-verified
 **Repository:** `MattRoper1977/mattroper1977.github.io`
 
 This document closes the publication items that were intentionally left pending in `reports/2026-08-07-professional-site-upgrade.md`.
