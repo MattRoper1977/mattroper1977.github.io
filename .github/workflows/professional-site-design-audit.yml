@@ -1,0 +1,58 @@
+name: Professional site design audit
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: professional-site-design-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact branch under review
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify preservation, platform contract and positive control
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          node tools/verify_professional_site.js --base origin/main --self-test
+          node --check app.js
+          node --check assets/mbm-platform.js
+          node --check theme.js
+          git diff --check origin/main...HEAD
+
+      - name: Record deterministic source inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit-output
+          {
+            echo "sentinel=mbm-site-professional-design-upgrade-2026-08-07"
+            echo "head=$(git rev-parse HEAD)"
+            echo "branch=$(git branch --show-current)"
+            echo "files=$(find . -path './.git' -prune -o -type f -print | wc -l)"
+            echo "html=$(find . -path './.git' -prune -o -type f -iname '*.html' -print | wc -l)"
+            echo "css=$(find . -path './.git' -prune -o -type f -iname '*.css' -print | wc -l)"
+            echo "js=$(find . -path './.git' -prune -o -type f \( -iname '*.js' -o -iname '*.mjs' -o -iname '*.cjs' \) -print | wc -l)"
+          } | tee audit-output/repository-state.txt
+          find . -path './.git' -prune -o -type f -printf '%P\t%s\n' | sort > audit-output/file-inventory.tsv
+
+      - name: Upload measured inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: professional-site-audit-${{ github.run_id }}
+          path: audit-output/
+          if-no-files-found: error
+          retention-days: 7

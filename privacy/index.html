@@ -36,14 +36,10 @@ body{background:var(--dx-cream)}
 .pv-foot{border-top:1px solid var(--dx-line);margin-top:2.4rem;padding-top:1.2rem;font-size:.84rem}
 code{background:var(--dx-lite);border:1px solid var(--dx-line);border-radius:5px;padding:.06rem .32rem;font-size:.86em;color:var(--dx-ink)}
 </style>
+<link rel="stylesheet" href="/assets/mbm-platform.css">
 </head><body>
 <a class="skip" href="#main">Skip to content</a>
-<header class="header"><div class="bar">
-<a class="brand" href="../index.html"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a>
-<button class="menu" id="menu" aria-expanded="false" aria-controls="nav">Menu</button>
-<nav class="nav" id="nav" aria-label="Main navigation">
-<a href="../games/">Games</a><a href="../Lessons/">Lessons</a><a href="../Matt-s-Apps-/">Apps</a><a href="../tools/">Tools</a><a href="../resources/">Resources</a><a href="../stats/">Stats</a><a href="./" aria-current="page">Privacy</a>
-</nav></div></header>
+<header class="header mbm-site-header"><div class="bar"><a class="brand" href="../index.html"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links"><a href="/games/">Games</a><a href="/Lessons/">Lessons</a><a href="/Matt-s-Apps-/">Apps</a><a href="/tools/">Tools</a><a href="/resources/">Resources</a></div><details class="mbm-nav-more"><summary>More</summary><div class="mbm-nav-panel"><a href="/stats/">Stats</a><a href="/members/">Members</a><a href="/#about">About</a><a href="/privacy/" aria-current="page">Privacy</a></div></details></nav></div></header>
 
 <main id="main">
 <section class="pv-hero">
@@ -131,4 +127,5 @@ code{background:var(--dx-lite);border:1px solid var(--dx-line);border-radius:5px
 (function(){try{var t=localStorage.getItem('mbm_reading_theme');if(t&&t!=='cream')document.body.setAttribute('data-theme',t);}catch(e){}})();
 document.getElementById('menu').addEventListener('click',function(){var n=document.getElementById('nav'),o=n.classList.toggle('open');this.setAttribute('aria-expanded',o);});
 </script>
+<script defer src="/assets/mbm-platform.js"></script>
 </body></html>
