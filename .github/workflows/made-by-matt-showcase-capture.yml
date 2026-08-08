@@ -3,9 +3,8 @@ name: Made by Matt live showcase capture
 on:
   pull_request:
     branches: [main]
-  push:
-    branches:
-      - codex/mbm-live-showcase-video-2026-08-08
+    paths:
+      - 'marketing/capture/run-requests/**'
   workflow_dispatch:
 
 permissions:
@@ -20,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - name: Check out capture branch
+      - name: Check out capture source
         uses: actions/checkout@v4
 
       - name: Set up Node
