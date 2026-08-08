@@ -1,122 +1,80 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Your account · Made by Matt</title>
-<meta name="description" content="A free Made by Matt account. It stays on your device, keeps your game progress separate from anyone else using the same computer, and switches on bonus content in Apex Kick and Voxel Frontier.">
+<!doctype html>
+<!-- mbm-accounts-members-mailing-2026-08-08 -->
+
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Members · Made by Matt</title>
+<meta name="description" content="Your Made by Matt Members area — account-backed favourites and settings that can follow you between devices.">
 <meta name="theme-color" content="#161D3D"><link rel="canonical" href="https://madebymatt.uk/members/">
 <link rel="icon" href="../favicon.svg"><link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<link rel="stylesheet" href="../styles.css">
-<style>
-:root{--dx-navy:#161D3D;--dx-deep:#0F1530;--dx-mint:#B9E6CD;--dx-mintd:#2F6B4D;--dx-amber:#F2A24A;--dx-ambd:#C97F2E;--dx-cream:#F6F1E4;--dx-card:#FFFDF6;--dx-ink:#1B2140;--dx-mut:#4A5170;--dx-lite:#FBF6EA;--dx-line:#E3DAC5;--dx-title:#161D3D;--dx-eyeb:#8A5620;--dx-r2:16px;--dx-h1:#232C55;--dx-h2:#161D3D}
-body[data-theme="dark"]{--dx-cream:#121834;--dx-lite:#161D3D;--dx-card:#1B234A;--dx-ink:#E8E2D4;--dx-mut:#A9B2CC;--dx-line:#2E3860;--dx-title:#E8E2D4;--dx-eyeb:#F2A24A}
-body{background:var(--dx-cream)}
-.mb-wrap{max-width:960px;margin:auto;padding:0 1rem}
-.mb-hero{background:radial-gradient(ellipse 120% 70% at 50% -20%,var(--dx-h1),var(--dx-h2) 70%);color:#E8E2D4;text-align:center;padding:2.8rem 1rem 2.4rem}
-.mb-hero h1{font-size:clamp(1.7rem,5.5vw,2.6rem);margin:.4rem auto .5rem;max-width:20ch;letter-spacing:-.02em}
-.mb-hero p{color:#C9D1E2;max-width:36rem;margin:0 auto;line-height:1.55}
-.mb-eyebrow{color:var(--dx-amber);font-size:.74rem;font-weight:800;letter-spacing:.24em;text-transform:uppercase}
-.mb-sec{padding:2.4rem 0 3rem}
-.mb-panel{background:var(--dx-card);border:1.5px solid var(--dx-line);border-radius:var(--dx-r2);padding:1.6rem 1.5rem;box-shadow:0 3px 12px rgba(22,29,61,.07);color:var(--dx-ink);max-width:720px;margin:0 auto}
-.mb-panel h2{margin:.1rem 0 .5rem;color:var(--dx-title);font-size:1.35rem}
-.mb-panel p{color:var(--dx-mut);line-height:1.6;margin:.4rem 0}
-/* the contact address is a 291px unbreakable token and pushed 320px viewports
-   12px wide before this line existed. Measured, not guessed. */
-.mb-panel a,.mb-note a{color:var(--dx-eyeb);font-weight:700;overflow-wrap:anywhere}
-.mb-btn{display:inline-flex;align-items:center;gap:.4rem;font-weight:800;font-size:.95rem;color:var(--dx-navy);background:var(--dx-amber);border:0;border-radius:999px;padding:.75rem 1.4rem;min-height:46px;cursor:pointer;box-shadow:0 2px 0 var(--dx-ambd);text-decoration:none;margin-top:.6rem}
-.mb-btn:hover{filter:brightness(1.06)}
-.mb-follow{max-width:720px;margin:1.4rem auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem}
-@media(max-width:720px){.mb-follow{grid-template-columns:1fr}}
-.mb-fcard{display:block;background:var(--dx-card);border:1.5px solid var(--dx-line);border-radius:var(--dx-r2);padding:1rem 1.05rem;text-decoration:none;box-shadow:0 3px 10px rgba(22,29,61,.06)}
-.mb-fcard b{display:block;color:var(--dx-title);font-size:1rem;margin-bottom:.25rem}
-.mb-fcard span{display:block;color:var(--dx-mut);font-size:.84rem;line-height:1.5}
-.mb-fcard:hover{border-color:var(--dx-ambd)}
-.mb-fcard:focus-visible{outline:3px solid var(--dx-amber);outline-offset:2px}
-.mb-note{max-width:720px;margin:1.4rem auto 0;text-align:center;font-size:.8rem;color:var(--dx-mut);line-height:1.6}
-.mb-note a{color:var(--dx-eyeb);font-weight:700}
-.sy-off{background:var(--dx-lite);border:1.5px dashed var(--dx-line);border-radius:12px;padding:.9rem 1rem;color:var(--dx-mut);font-size:.92rem;line-height:1.6}
-.sy-off b{color:var(--dx-title)}
-.sy-why{display:block;margin-top:.35rem;font-size:.85rem;opacity:.85}
-.sy-on h3{margin:.1rem 0 .5rem;color:var(--dx-title);font-size:1.1rem}
-.sy-on p{color:var(--dx-mut);line-height:1.6;margin:.4rem 0}
-.sy-warn{background:#FFF6E6;border-left:4px solid var(--dx-amber);padding:.7rem .9rem;border-radius:8px;color:#5A3E12!important}
-body[data-theme="dark"] .sy-warn{background:#3A2E14;color:#F2DFA4!important}
-.sy-acts{display:flex;flex-wrap:wrap;gap:.6rem;margin:.9rem 0 .2rem}
-.sy-btn{font:inherit;font-weight:800;font-size:.92rem;color:var(--dx-navy);background:var(--dx-amber);border:0;border-radius:999px;padding:.7rem 1.3rem;min-height:46px;cursor:pointer;box-shadow:0 2px 0 var(--dx-ambd)}
-.sy-btn.sec{background:transparent;color:var(--dx-title);border:1.5px solid var(--dx-line);box-shadow:none}
-.sy-btn:focus-visible{outline:3px solid var(--dx-eyeb);outline-offset:2px}
-.sy-out{margin-top:.8rem}
-.sy-out.err{color:#8A2020}
-body[data-theme="dark"] .sy-out.err{color:#F0B9B9}
-.sy-code{font:700 1.05rem/1.5 ui-monospace,"Cascadia Mono",Consolas,monospace;background:var(--dx-lite);border:1.5px solid var(--dx-line);border-radius:10px;padding:.8rem .9rem;word-break:break-word;color:var(--dx-title)!important;user-select:all}
-.sy-meta{font-size:.82rem;opacity:.8}
-.sy-lab{display:block;font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dx-eyeb);margin-bottom:.3rem}
-.sy-in{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1.5px solid var(--dx-line);background:var(--dx-card);color:var(--dx-ink);font:inherit}
-.sy-in:focus-visible{outline:3px solid var(--dx-amber);outline-offset:2px}
-</style>
-<link rel="stylesheet" href="/assets/mbm-platform.css">
-</head><body>
+<link rel="stylesheet" href="../styles.css"><link rel="stylesheet" href="/assets/mbm-platform.css"><link rel="stylesheet" href="/assets/mbm-account.css">
+</head><body class="ma-page">
 <a class="skip" href="#main">Skip to content</a>
-<header class="header mbm-site-header"><div class="bar"><a class="brand" href="../index.html"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links"><a href="/games/">Games</a><a href="/Lessons/">Lessons</a><a href="/Matt-s-Apps-/">Apps</a><a href="/tools/">Tools</a><a href="/resources/">Resources</a></div><details class="mbm-nav-more"><summary>More</summary><div class="mbm-nav-panel"><a href="/stats/">Stats</a><a href="/members/" aria-current="page">Members</a><a href="/#about">About</a><a href="/privacy/">Privacy</a></div></details></nav></div></header>
-
+<header class="header mbm-site-header"><div class="bar"><a class="brand" href="../index.html"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links"><a href="/games/">Games</a><a href="/Lessons/">Lessons</a><a href="/Matt-s-Apps-/">Apps</a><a href="/tools/">Tools</a><a href="/resources/">Resources</a></div><details class="mbm-nav-more"><summary>More</summary><div class="mbm-nav-panel"><a href="/account/">Account</a><a href="/members/" aria-current="page">Members</a><a href="/stats/">Stats</a><a href="/#about">About</a><a href="/privacy/">Privacy</a></div></details></nav></div></header>
 <main id="main">
-<section class="mb-hero">
-<p class="mb-eyebrow">Your account</p>
-<h1>A free account, and it never leaves this device</h1>
-<p>No cost, no email sent anywhere, no server behind it. It does two useful things and it does not pretend to do more.</p>
+<section class="ma-hero"><p class="ma-eyebrow">Made by Matt Members</p><h1>Your useful bits, wherever you sign in</h1><p>Save the Made by Matt areas you use most. These member choices belong to your real account and can be restored in a clean browser after you sign in.</p></section>
+<div class="ma-wrap">
+<noscript><div class="ma-panel"><h2>Account features need JavaScript</h2><p>Games, lessons, apps, tools and resources stay public. Only account-backed member features need JavaScript and a connection.</p></div></noscript>
+
+<section class="ma-panel" id="membersLoading" aria-live="polite"><h2>Checking your account…</h2><p>The public site remains available while this loads.</p></section>
+<section class="ma-panel" id="membersUnavailable" hidden><p class="ma-kicker">Members</p><h2>Secure account setup is not active yet</h2><p>The Members page will not invent a local-password account. The cloud account project must be configured before registration or sign-in is offered.</p><div class="ma-actions"><a class="ma-btn secondary" href="/">Back to Made by Matt</a></div></section>
+<section class="ma-panel" id="membersSignedOut" hidden><p class="ma-kicker">Made by Matt Members</p><h2>Sign in to access your account</h2><p>Already a member? Log in. New here? Create an account. Public Made by Matt content stays free and accessible either way.</p><div class="ma-actions"><a class="ma-btn" href="/account/?mode=login">Log in</a><a class="ma-btn secondary" href="/account/?mode=register">Create account</a></div></section>
+
+<section id="membersSignedIn" hidden>
+<div class="ma-panel">
+<div class="ma-row spread"><div><p class="ma-kicker">Your Members area</p><h2 id="hello">Welcome back</h2></div><a class="ma-btn secondary" href="/account/">Account settings</a></div>
+<p>Save or remove these shortcuts. The choice is stored in your account, not just this browser.</p>
+<p class="ma-sync"><span class="ma-dot on" id="syncDot" aria-hidden="true"></span><span id="syncState">Connected to member sync.</span></p>
+<p class="ma-status" id="memberStatus" role="status" aria-live="polite"></p>
+<div class="ma-saved-grid" id="favourites"></div>
+</div>
+
+<div class="ma-grid" style="margin-top:1rem">
+<div class="ma-panel"><h2>Saved to your account</h2><div id="savedList"><p>No saved shortcuts yet.</p></div></div>
+<div class="ma-panel"><h2>What stays local</h2><p>Not every browser setting belongs in an account. Reading-background choice remains a device preference. Pupil registers, marks, evidence and other classroom records are not swept into member sync.</p><p>Existing offline games and lessons continue to work independently of sign-in.</p></div>
+</div>
+
+<div class="ma-panel" id="localNotice" style="margin-top:1rem" hidden><h2>Existing local profile preserved</h2><p id="localNoticeText"></p><p>Your old local password record is not uploaded. Existing local game saves are not deleted. You can manage the old profile from <a href="/account/">Account settings</a>.</p></div>
 </section>
-
-<section class="mb-sec"><div class="mb-wrap">
-
-<div class="mb-panel">
-<h2>What it actually does</h2>
-<p><b>1. It keeps your progress separate from everyone else's.</b> On a shared classroom laptop, two people playing Voxel Frontier used to build over each other's world, and two people playing Apex Kick shared one squad and one goal tally. Signed in, each account gets its own saves. Signed out, everything works exactly as it did &mdash; your existing save is untouched and still there.</p>
-<p><b>2. It switches on bonus content.</b> In <b>Apex Kick</b>, the Members' Floodlights ground &mdash; night sky, full floodlights, no goal requirement. In <b>Voxel Frontier</b>, two extra blocks in the hotbar: <b>Snow</b> and <b>Water</b>.</p>
 </div>
-
-<div class="mb-panel" style="margin-top:1.4rem">
-<h2>What it is not, said plainly</h2>
-<p><b>It is not a lock, and the bonus content is not hidden from anyone.</b> This site is a set of static files. Every page and every game is served in full to anybody who asks for the URL &mdash; there is no server here that could check who you are before handing a file over. So the extras are <b>switched on</b> for account holders rather than <b>kept from</b> everybody else. Anyone determined to reach them can. That is a true description of what is happening, and it is better than a padlock icon that does nothing.</p>
-<p><b>Syncing between devices is a separate, optional thing</b> &mdash; see the panel below. The account itself still never leaves this device. If syncing is switched on and you choose to use it, your <i>game saves</i> (not your account) are encrypted here and copied to a server that cannot read them. If it is not switched on, the panel below says so plainly.</p>
-<p><b>There is no password reset.</b> Nobody, including me, can see or recover your password &mdash; only a hashed form of it exists, in your own browser. If you forget it, make another account. Because of that: <b>please do not reuse a password you use anywhere else.</b> It guards nothing here, so a real password would only be at risk for no benefit.</p>
-</div>
-
-<div class="mb-panel" style="margin-top:1.4rem">
-<h2>Where your details go</h2>
-<p><b>Nowhere.</b> Your name, email and a salted SHA-256 hash of your password are written to this browser's own storage and never transmitted. There is no account database, no server, and no third party involved in signing in. Clearing your browser data deletes the account entirely and leaves nothing behind anywhere else.</p>
-<p>That also means I have no way of knowing who has an account, or how many exist. If you want to hear about new resources, that is a <b>separate, adults-only list</b> with its own tick box on the <a href="../index.html#contact">home page</a> &mdash; making an account does not put you on it, and joining it does not make you an account.</p>
-<p>The full picture is on the <a href="../privacy/">data and privacy page</a>.</p>
-</div>
-
-<div class="mb-panel" style="margin-top:1.4rem" id="mbmSyncPanel">
-<h2>Between devices</h2>
-<div id="mbmSync"><div class="sy-off">Checking&hellip;</div></div>
-</div>
-
-<h2 class="mb-note" style="font-size:1.05rem;color:var(--dx-title);font-weight:800;margin-top:2.2rem">Follow the work instead</h2>
-<p class="mb-note" style="margin-top:.2rem">There is no mailing list and nothing collects your email. These are the places things actually get posted.</p>
-<div class="mb-follow">
-<a class="mb-fcard" href="https://www.youtube.com/@matthewroper9166" rel="noopener"><b>YouTube</b><span>Walkthroughs of the games and lessons, and what went wrong making them.</span></a>
-<a class="mb-fcard" href="https://ko-fi.com/madebymattuk" rel="noopener"><b>Ko-fi</b><span>Where the commissioned-resource requests come in, and where updates get posted.</span></a>
-<a class="mb-fcard" href="mailto:contactmadebymatt@gmail.com"><b>Email me</b><span>Tell me what would be useful and I will usually build it. This reaches me directly.</span></a>
-</div>
-
-<div class="mb-panel" style="margin-top:1.4rem">
-<h2>Commissioned resources</h2>
-<p>This was never behind the login, and it still isn't. Donate, then email <a href="mailto:contactmadebymatt@gmail.com">contactmadebymatt@gmail.com</a> with your class, subject, or the problem you are wrestling with, and I will build a set of resources around it. Every one is handmade. Full details at the foot of the <a href="../index.html">home page</a>.</p>
-<div style="margin-top:1rem"><a class="mb-btn" href="https://ko-fi.com/madebymattuk" style="margin-top:0">☕ Support Made by Matt</a></div>
-</div>
-
-<p class="mb-note">Want to know exactly what this site does and does not send anywhere? <a href="../privacy/">Read the data and privacy page</a>.</p>
-</div></section>
 </main>
-
-<footer class="footer"><div class="bar"><div class="brand"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></div><span class="muted">Interactive lessons, simulations and games · madebymatt.uk</span></div></footer>
-
+<footer class="footer"><div class="bar"><div class="brand"><img src="/assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></div><span class="muted">Members adds convenience; it does not put public content behind a paywall.</span></div></footer>
+<script src="/assets/mbm-account.js"></script><script defer src="/assets/mbm-platform.js"></script>
 <script>
-/* carry over the reading theme chosen on the homepage */
-(function(){try{var t=localStorage.getItem('mbm_reading_theme');if(t&&t!=='cream')document.body.setAttribute('data-theme',t);}catch(e){}})();
-document.getElementById('menu').addEventListener('click',function(){var n=document.getElementById('nav'),o=n.classList.toggle('open');this.setAttribute('aria-expanded',o);});
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)};
+var hubs=[
+ {href:'/games/',title:'Games',desc:'Browser games and simulations.'},
+ {href:'/Lessons/',title:'Lessons',desc:'BUILD, GROW and LAUNCH learning.'},
+ {href:'/Matt-s-Apps-/',title:'Apps',desc:'Creative browser studios and apps.'},
+ {href:'/tools/',title:'Tools',desc:'Practical Made by Matt utilities.'},
+ {href:'/resources/',title:'Resources',desc:'Searchable lessons, activities and files.'}
+];
+function say(text,kind){var e=$('#memberStatus');e.textContent=text||'';e.className='ma-status'+(kind?' '+kind:'')}
+function map(){return MBMAccount.favouriteMap()||{}}
+function render(){
+ var m=map(),grid=$('#favourites');grid.innerHTML='';
+ hubs.forEach(function(h){var rec=m[h.href],saved=!!(rec&&rec.saved),card=document.createElement('article');card.className='ma-save-card';
+  var b=document.createElement('b');b.textContent=h.title;var span=document.createElement('span');span.textContent=h.desc;var a=document.createElement('a');a.href=h.href;a.textContent='Open '+h.title;var btn=document.createElement('button');btn.type='button';btn.className='ma-save';btn.setAttribute('aria-pressed',saved?'true':'false');btn.textContent=saved?'Saved ✓':'Save shortcut';
+  btn.addEventListener('click',function(){var next=btn.getAttribute('aria-pressed')!=='true';btn.disabled=true;say(next?'Saving…':'Removing…');MBMAccount.setFavourite(h.href,h.title,next).then(function(){say(next?'Saved to your account.':'Removed from your account.','ok');render()}).catch(function(err){say(err.message,'err')}).finally(function(){btn.disabled=false})});
+  card.append(b,span,a,btn);grid.appendChild(card);
+ });
+ var saved=MBMAccount.savedFavourites(),list=$('#savedList');list.innerHTML='';
+ if(!saved.length){var p=document.createElement('p');p.textContent='No saved shortcuts yet.';list.appendChild(p)}else{var ul=document.createElement('ul');ul.className='ma-list';saved.forEach(function(x){var li=document.createElement('li'),a=document.createElement('a');a.href=x.href;a.textContent=x.title||x.href;li.appendChild(a);ul.appendChild(li)});list.appendChild(ul)}
+}
+MBMAccount.subscribe(function(s){
+ $('#membersLoading').hidden=s.ready;
+ if(!s.ready)return;
+ $('#membersUnavailable').hidden=s.configured;
+ $('#membersSignedOut').hidden=!s.configured||!!s.user;
+ $('#membersSignedIn').hidden=!s.configured||!s.user;
+ if(!s.configured||!s.user)return;
+ var name=(s.profile&&(s.profile.display_name||s.profile.name))||s.user.name||'';$('#hello').textContent=name?'Welcome, '+name.split(' ')[0]:'Welcome back';
+ $('#syncDot').className='ma-dot '+(s.online?'on':'off');$('#syncState').textContent=s.online?'Connected — member changes can sync to your account.':'Offline — public content and local saves keep working. Sync resumes when the connection returns.';
+ var legacy=MBMAccount.legacyLocalProfile();$('#localNotice').hidden=!legacy;if(legacy)$('#localNoticeText').textContent='An older on-device profile for '+legacy.email+' is still present in this browser. It has not been destroyed or silently uploaded.';
+ render();
+});
+})();
 </script>
-<script src="../assets/mbm-profile.js"></script>
-<script src="../assets/mbm-sync.js"></script>
-<script src="../assets/mbm-sync-ui.js"></script>
-<script defer src="/assets/mbm-platform.js"></script>
 </body></html>
