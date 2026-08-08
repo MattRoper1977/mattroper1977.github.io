@@ -6,7 +6,8 @@ const source=fs.readFileSync(path.join(__dirname,'..','assets','mbm-account.js')
 const store=new Map();
 const localStorage={getItem:k=>store.has(k)?store.get(k):null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k)};
 const window={addEventListener(){},dispatchEvent(){},location:{origin:'https://madebymatt.uk'}};
-const context={window,document:{},navigator:{onLine:true},location:window.location,localStorage,console,setTimeout,clearTimeout,Promise,URL,CustomEvent:function(){}};
+const document={getElementById(){return null}};
+const context={window,document,navigator:{onLine:true},location:window.location,localStorage,console,setTimeout,clearTimeout,Promise,URL,CustomEvent:function(){}};
 context.fetch=async()=>({ok:true,json:async()=>({features:{accounts:{enabled:true,provider:'supabase',supabaseUrl:'',supabaseAnonKey:''},mailing:{enabled:false}}})});
 vm.createContext(context);vm.runInContext(source,context,{filename:'mbm-account.js'});
 const merge=window.MBMAccount._mergeMemberData;
