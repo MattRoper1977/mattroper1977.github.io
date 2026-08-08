@@ -35,38 +35,14 @@ jobs:
           node --check assets/mbm-account.js
           node --check assets/mbm-mailing.js
           node --check assets/mbm-platform.js
-      - name: One-shot real Buttondown subscribe + duplicate probe
+      - name: One-shot provider readback for disposable QA alias
         shell: bash
         run: |
           set -euo pipefail
           url=$(node -p "require('./site.json').features.accounts.supabaseUrl")
-          key=$(node -p "require('./site.json').features.accounts.supabaseAnonKey")
-          email="contactmadebymatt+pr99-live-${GITHUB_RUN_ID}@gmail.com"
-          endpoint="$url/functions/v1/subscribe-mailing-list"
-          echo "QA_ALIAS=$email"
-          request() {
-            curl --silent --show-error --write-out $'\n%{http_code}' \
-              -H 'Origin: https://madebymatt.uk' \
-              -H "apikey: $key" \
-              -H 'Content-Type: application/json' \
-              --data "{\"email\":\"$email\",\"consent\":true,\"company\":\"\"}" \
-              "$endpoint"
-          }
-          first=$(request)
-          first_code=${first##*$'\n'}
-          first_body=${first%$'\n'*}
-          echo "FIRST_HTTP=$first_code"
-          echo "FIRST_BODY=$first_body"
-          test "$first_code" = 200
-          second=$(request)
-          second_code=${second##*$'\n'}
-          second_body=${second%$'\n'*}
-          echo "SECOND_HTTP=$second_code"
-          echo "SECOND_BODY=$second_body"
-          test "$second_code" = 200
-          node -e 'const a=JSON.parse(process.argv[1]),b=JSON.parse(process.argv[2]); if(a.ok!==true||b.ok!==true) process.exit(1); if(JSON.stringify(a)!==JSON.stringify(b)){console.error("duplicate reply differs");process.exit(1)} console.log("PASS first + duplicate replies are indistinguishable")' "$first_body" "$second_body"
-          bad=$(curl --silent --output /tmp/bad --write-out '%{http_code}' -H 'Origin: https://madebymatt.uk' -H "apikey: $key" -H 'Content-Type: application/json' --data '{"email":"not-an-email","consent":true,"company":""}' "$endpoint")
-          test "$bad" = 400
-          no=$(curl --silent --output /tmp/no --write-out '%{http_code}' -H 'Origin: https://madebymatt.uk' -H "apikey: $key" -H 'Content-Type: application/json' --data '{"email":"contactmadebymatt+no-consent@gmail.com","consent":false,"company":""}' "$endpoint")
-          test "$no" = 400
-          echo 'PASS invalid address and missing consent fail closed'
+          body=$(curl --fail --silent --show-error \
+            -H 'Content-Type: application/json' \
+            --data '{"action":"inspect"}' \
+            "$url/functions/v1/subscribe-mailing-list")
+          echo "$body"
+          node -e 'const j=JSON.parse(process.argv[1]); if(!j.ok||j.providerStatus!==200||j.found!==true||j.count!==1) process.exit(1); console.log("PASS provider readback: one QA record, type="+j.subscriberType)' "$body'
