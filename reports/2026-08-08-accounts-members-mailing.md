@@ -13,173 +13,125 @@ account record and salted SHA-256 password hash in browser storage, which could
 separate local game save slots but could not provide cross-device identity or
 password recovery.
 
-Git history shows the account UI was removed on 2 August because a static Pages
-site could not honestly present that local password as access control. A later
-change restored the local account for non-security game bonuses/save slots and
-added a separate teacher email relay. The 7 August professional upgrade then left
-Members visible without a clear modern account-creation journey. The real root
-issue is therefore older: **cloud auth was designed but never provisioned**, and
-the only active fallback was a browser-local password.
+The restored architecture therefore makes Supabase Auth canonical and removes
+local-password fallback from the real account journey.
 
 ## B. Authentication architecture
 
-Canonical identity is now Supabase Auth, through `assets/mbm-account.js`.
-The new account journey has no local-password fallback. If the project URL/public
-browser key are absent, registration/login are unavailable and the page explains
-the dependency.
-
-Passwords stay with Supabase Auth. The site code does not hash, compare, store or
+Canonical identity is Supabase Auth through `assets/mbm-account.js`.
+Passwords stay with Supabase Auth. Site code does not hash, compare, store or
 back up a password itself.
+
+The production project is now connected using its provider-intended public URL
+and publishable browser key. Missing/invalid cloud configuration still fails
+closed; no browser-local password backend is substituted.
 
 ## C. Account UX
 
-New stable route: `/account/`.
+Stable route: `/account/`.
 
-Implemented UI/logic for:
-
-- Create account
-- email verification/confirmation state
-- Login
-- Logout
-- Forgot password/reset email
-- Password recovery-link update
-- persistent provider-managed session
-- optional display-name update
-- account status
-- account deletion via authenticated server function
-- password-manager autocomplete semantics
-- accessible live status/error messages
-- mobile-first 44px+ controls and reduced-motion support
+Implemented UI/logic for registration, verification resend, login/logout,
+password-reset email, recovery-link password update, persistent provider session,
+optional display-name update, account status and self-service deletion via a
+trusted Edge Function.
 
 ## D. Members integration
 
-`/members/` now has explicit states:
+`/members/` is auth-aware. Signed-out users get real login/create-account routes;
+signed-in users can manage deliberately narrow account-backed hub favourites.
+Public Games, Lessons, Apps, Tools and Resources remain ungated.
 
-- cloud service not configured — truthful unavailable state
-- configured but signed out — Log in + Create account
-- signed in — member dashboard with account-backed saved hub shortcuts
+## E. Cross-device sync design
 
-Public Games, Lessons, Apps, Tools and Resources are not gated.
+Cloud member data is deliberately limited to optional display name and saved
+Made by Matt hub shortcuts. Reading/background preference, pupil registers,
+marks, evidence and arbitrary browser storage are not swept into the account.
 
-## E. Cross-device sync
-
-The first account-backed member dataset is deliberately narrow:
-
-- optional display name (`profiles`)
-- saved Made by Matt hub shortcuts (`member_data`)
-
-Reading-background preference stays device-local. Pupil registers, marks,
-evidence and unrelated browser storage are not uploaded.
-
-Favourite records are merged per href using their update timestamps. The
-`member_data` row has an optimistic `version`; stale writes fail with
-`version_conflict`, causing the client to refetch, merge and retry rather than
-silently replace a newer server copy.
+Favourite records merge per href using timestamps. `member_data.version` and
+`update_member_data` provide optimistic compare-and-swap conflict handling so a
+stale browser refetches/merges rather than silently replacing newer server data.
 
 ## F. Existing member migration
 
-Legacy `mbm_users` / `mbm_session` records are preserved by default.
-
-- old password/hash data is never uploaded
-- a signed-in cloud user may explicitly copy only the old display name
-- removing the old account record is an explicit action
-- existing game saves are not deleted
-- `mbm-profile.js` now prefers the non-secret cloud identity hint but retains a
-  legacy profile as a local save-slot identity; using the same email keeps the
-  historical email-derived slot tag stable on that device
-
-The offline identity hint is not authorization and cannot read RLS data.
+Legacy `mbm_users` / `mbm_session` records are preserved by default. Old
+password/hash data is never uploaded. A signed-in cloud user may explicitly copy
+only the old display name; local game saves are not deleted.
 
 ## G. Mailing list
 
-New route: `/mailing-list/` plus `assets/mbm-mailing.js`.
+`/mailing-list/` remains independent from account creation. The form requires an
+unticked consent checkbox and includes a honeypot.
 
-Architecture:
+The production `subscribe-mailing-list` Supabase Edge Function is deployed, but
+`BUTTONDOWN_API_KEY` has not yet been provisioned and no real Buttondown
+subscription/readback/unsubscribe proof has occurred. Consequently
+`features.mailing.enabled` correctly remains `false`.
 
-visitor form → Supabase Edge Function → Buttondown API → provider confirmation /
-unsubscribe system.
+## H. Production Supabase provisioning completed
 
-The form requires a separate unticked consent checkbox and includes a honeypot.
-Creating an account never invokes mailing subscription.
+- Existing Made by Matt Supabase project reused in `eu-west-1` (London).
+- Production migration `mbm_accounts_members_production` applied.
+- `public.profiles` and `public.member_data` exist with RLS enabled.
+- Own-row policies are active for authenticated users.
+- `public.update_member_data` runs SECURITY INVOKER.
+- Trigger helper `handle_new_user` creates profile/member rows and is not directly
+  executable by public/browser roles.
+- Browser profile grants are column-restricted so `tier` is not client-writable.
+- `delete-account` Edge Function is ACTIVE with JWT verification enabled.
+- `subscribe-mailing-list` Edge Function is ACTIVE with JWT verification disabled
+  intentionally for independent public opt-in.
+- Supabase security advisor returned no findings after provisioning.
+- Supabase performance advisor returned no findings after provisioning.
 
-The browser never receives the Buttondown API key. The intended administrative
-owner/contact is `contactmadebymatt@gmail.com`.
+## I. Privacy/security boundary
 
-The mailing feature remains disabled in `site.json` until the real Buttondown
-newsletter/key and function deployment are proven. While disabled the page never
-claims a subscription succeeded.
+No Gmail password, SMTP password, Supabase service-role/secret key, Buttondown API
+key, copied session token or refresh token belongs in public configuration or
+evidence. The public Supabase URL/publishable browser key are intentionally client
+configuration; RLS is the per-user data boundary.
 
-## H. Security
-
-- Supabase Auth is password authority.
-- RLS on `profiles` and `member_data` uses `auth.uid()`.
-- No password column exists in either table.
-- Optimistic member-data update RPC runs as the authenticated caller.
-- Supabase service-role key exists only in the account-deletion Edge Function
-  environment.
-- Buttondown API key exists only in the subscription Edge Function environment.
-- Account deletion requires a valid Auth user and server-side admin operation.
-- Mailing endpoint validates explicit consent, rejects non-production browser
-  origins and uses a honeypot; provider confirmation/anti-abuse remains in the
-  final subscription path.
-- No test password/token/session cookie belongs in reports or public evidence.
-
-## I. Privacy
-
-`/privacy/` is rewritten where the old local-account/no-mailing claims became
-false or misleading. It now distinguishes:
-
-- public content
-- optional Supabase account identity
-- deliberately limited account-backed member data
-- old local profile preservation
-- separate mailing consent/provider
-- separate encrypted game-save sync
-- classroom records that remain device-local
-- deletion and unsubscribe paths
-
-It does not claim an unconfigured service is already live.
+Account deletion and mailing unsubscribe remain separate operations. Account
+creation never implies mailing consent.
 
 ## J. Repository testing
 
 Permanent gate: `node tools/verify_accounts_members_mailing.js`.
 
-The gate checks required routes/files, cloud-only provider configuration,
-password-manager semantics, no password column, RLS ownership policies,
-optimistic conflict function, server-side secret boundaries, account/mailing
-consent separation and Edge Function JWT settings.
+The validator now accepts either absent fail-closed Supabase config or a valid
+provider publishable browser configuration, rejects secret/service-role shaped
+configuration, checks the hardened RLS form, verifies the account/mailing secret
+boundaries, and retains positive controls for local password storage and
+privileged Supabase key injection.
 
-Positive control: the validator injects a fake
-`localStorage.setItem("password", ...)` into an in-memory fixture and must fail
-that fixture. The real tree must pass.
+`node tools/test_member_merge.js` remains the deterministic member conflict gate.
 
-## K. Cross-device proof
+## K. Cross-device production proof
 
-**BLOCKED BY EXTERNAL INFRASTRUCTURE.** The repository has no live Supabase
-project URL/public key. A two-browser proof would be fake until a real project is
-provisioned. Exact proof steps are in `docs/ACCOUNTS_MAILING_SETUP.md`.
+**NOT YET CLAIMED.** A real provider-backed two-clean-browser lifecycle requires
+Supabase Auth Site URL/redirect/email settings to be confirmed and disposable QA
+email identities to complete real verification/login/recovery flows.
 
-## L. Production proof
+## L. Buttondown production proof
 
-Repository routes and fail-closed behaviour can be deployed safely without
-secrets, but genuine account creation/login/reset/member round-trip/deletion and
-mailing subscription cannot be called production-complete until the external
-services are connected and the live tests pass.
+**NOT YET CLAIMED.** No authenticated Buttondown administration surface is
+available to the current executor, so the newsletter, private API credential,
+subscriber readback and unsubscribe proof cannot be fabricated.
 
-## M. Outstanding external dependencies
+## M. Exact remaining provider-dependent work
 
-1. Create/select a Supabase project owned by Made by Matt.
-2. Run `supabase-schema.sql`.
-3. Configure Auth site/redirect URLs for `https://madebymatt.uk`.
-4. Put the public Supabase project URL + browser anon key in `site.json`.
-5. Deploy `delete-account` Edge Function.
-6. Create/select a Buttondown newsletter administered through
-   `contactmadebymatt@gmail.com`.
-7. Store `BUTTONDOWN_API_KEY` as a Supabase Function secret.
-8. Deploy `subscribe-mailing-list`.
-9. Prove real subscribe/confirm/unsubscribe, then set `features.mailing.enabled`
-   to `true`.
-10. Run the mandatory two-clean-browser cross-device proof and User-A/User-B RLS
-    isolation proof before declaring final acceptance gates green.
+1. In the existing Supabase project, configure Authentication Site URL as
+   `https://madebymatt.uk`, allow `/account/` and `/account/?mode=recovery`, and
+   keep email confirmation enabled as intended.
+2. Create/select the real Buttondown newsletter administered for
+   `contactmadebymatt@gmail.com`, generate its private API credential and store it
+   as the Supabase Edge Function secret `BUTTONDOWN_API_KEY`.
+3. Run real registration/verification/login/logout/password recovery/deletion.
+4. Run User-A/User-B negative authorization proof with authenticated sessions.
+5. Run isolated Browser A → Browser B account-backed member-data round trip.
+6. Run Buttondown subscribe/readback/duplicate/unsubscribe proof, then enable the
+   mailing feature.
+7. Only then mark PR #99 Ready, merge it and execute final served-production,
+   mobile and accessibility verification.
 
-No missing external secret has been replaced by pretend security.
+PR #99 remains Draft because the remaining provider-dependent acceptance gates
+have not been faked.
