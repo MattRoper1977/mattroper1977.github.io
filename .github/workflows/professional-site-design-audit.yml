@@ -56,22 +56,22 @@ jobs:
             echo "$PATCH_SHA256  /tmp/mbm-final.patch.gz" | sha256sum -c -
             gzip -dc /tmp/mbm-final.patch.gz > /tmp/mbm-final.patch
             grep '^diff --git a/' /tmp/mbm-final.patch | sed -E 's#^diff --git a/([^ ]+) b/.*#\1#' > /tmp/mbm-final.paths
-            cat > /tmp/mbm-final.expected-paths <<'EOF'
-            app.js
-            assets/mbm-platform.css
-            assets/mbm-platform.js
-            docs/MBM_PROFESSIONAL_SITE_AUDIT_PASS.json
-            games/index.html
-            index.html
-            members/index.html
-            privacy/index.html
-            reports/2026-08-07-professional-site-upgrade.md
-            resources/index.html
-            stats/index.html
-            theme.js
-            tools/index.html
-            tools/verify_professional_site.js
-            EOF
+            printf '%s\n' \
+              app.js \
+              assets/mbm-platform.css \
+              assets/mbm-platform.js \
+              docs/MBM_PROFESSIONAL_SITE_AUDIT_PASS.json \
+              games/index.html \
+              index.html \
+              members/index.html \
+              privacy/index.html \
+              reports/2026-08-07-professional-site-upgrade.md \
+              resources/index.html \
+              stats/index.html \
+              theme.js \
+              tools/index.html \
+              tools/verify_professional_site.js \
+              > /tmp/mbm-final.expected-paths
             diff -u /tmp/mbm-final.expected-paths /tmp/mbm-final.paths
             git apply --check /tmp/mbm-final.patch
             git apply /tmp/mbm-final.patch
