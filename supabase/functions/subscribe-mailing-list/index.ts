@@ -1,6 +1,6 @@
 // mbm-accounts-members-mailing-2026-08-08
 // Public mailing-list subscription proxy.
-// BUTTONDOWN_API_KEY stays in Supabase Edge Function secret storage.
+// BUTTONDOWN_API_KEY/buttondown_api_key stays in Supabase Edge Function secret storage.
 // No subscriber address is logged by this function.
 const ALLOWED = new Set((Deno.env.get('MBM_ALLOWED_ORIGINS') || 'https://madebymatt.uk').split(',').map(x => x.trim()).filter(Boolean))
 function cors(origin: string | null) {
@@ -16,7 +16,10 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return json(405, { ok: false, message: 'Method not allowed.' }, origin)
   if (origin && !ALLOWED.has(origin)) return json(403, { ok: false, message: 'Origin not allowed.' }, origin)
 
-  const token = Deno.env.get('BUTTONDOWN_API_KEY') || ''
+  // Supabase's dashboard may store custom secret names in lowercase. Keep the
+  // original uppercase name for CLI/env compatibility, but accept the exact
+  // lowercase dashboard name Matt is using in production too.
+  const token = Deno.env.get('BUTTONDOWN_API_KEY') || Deno.env.get('buttondown_api_key') || ''
   if (!token) return json(503, { ok: false, message: 'The mailing list is not configured yet.' }, origin)
 
   let body: { email?: string, consent?: boolean, company?: string } = {}
