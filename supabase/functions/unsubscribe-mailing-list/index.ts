@@ -1,18 +1,6 @@
 // mbm-accounts-members-mailing-2026-08-08
 // Authenticated self-service unsubscribe, for the /account/ page.
 // BUTTONDOWN_API_KEY/buttondown_api_key stays in Supabase Edge Function secret storage.
-//
-// WHY THIS IS AUTHENTICATED WHILE SUBSCRIBE IS NOT:
-// an unauthenticated endpoint that takes an address and unsubscribes it would
-// let anyone remove anyone from the list, and would answer "was this address
-// subscribed?" to a stranger. So the address here is NEVER read from the
-// request body — it is derived from the caller's verified JWT, exactly as
-// delete-account derives its user id. There is no address parameter to forge.
-//
-// Because the caller is authenticated and is asking about their own verified
-// address, reporting their real state back to them is not an enumeration leak;
-// it is their own data. That is why this function may distinguish
-// 'unsubscribed' from 'not_subscribed' where subscribe-mailing-list may not.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const ALLOWED = new Set((Deno.env.get('MBM_ALLOWED_ORIGINS') || 'https://madebymatt.uk').split(',').map(x => x.trim()).filter(Boolean))
@@ -45,31 +33,30 @@ Deno.serve(async (req) => {
   const email = String(userData.user.email || '').trim().toLowerCase()
   if (!email) return json(400, { ok: false, message: 'This account has no email address on record.' }, origin)
 
-  const bd = (path: string, init?: RequestInit) => fetch(`https://api.buttondown.com/v1/${path}`, {
-    ...init, headers: { Authorization: `Token ${token}`, 'Content-Type': 'application/json', Accept: 'application/json', ...(init?.headers || {}) }
-  })
+  const bdHeaders = { Authorization: `Token ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' }
 
   let lookup: Response
   try {
-    lookup = await bd(`subscribers?email=${encodeURIComponent(email)}`)
+    lookup = await fetch(`https://api.buttondown.com/v1/subscribers/${encodeURIComponent(email)}`, { headers: bdHeaders })
   } catch (_) {
     return json(502, { ok: false, message: 'The mailing service could not be reached. Please try again.' }, origin)
   }
+  if (lookup.status === 404) return json(200, { ok: true, state: 'not_subscribed' }, origin)
   if (lookup.status === 429) return json(429, { ok: false, message: 'Too many requests. Please try again later.' }, origin)
   if (!lookup.ok) return json(502, { ok: false, message: 'The mailing service could not complete that request. Please try again.' }, origin)
 
-  const found = ((await lookup.json().catch(() => ({}))).results || [])
-    .find((s: { email_address?: string }) => String(s.email_address || '').toLowerCase() === email)
-  if (!found) return json(200, { ok: true, state: 'not_subscribed' }, origin)
-  if (found.subscriber_type === 'unsubscribed') return json(200, { ok: true, state: 'unsubscribed' }, origin)
+  const found = await lookup.json().catch(() => ({}))
+  if (found.type === 'unsubscribed') return json(200, { ok: true, state: 'unsubscribed' }, origin)
 
   let patch: Response
   try {
-    patch = await bd(`subscribers/${found.id}`, { method: 'PATCH', body: JSON.stringify({ subscriber_type: 'unsubscribed' }) })
+    patch = await fetch(`https://api.buttondown.com/v1/subscribers/${encodeURIComponent(email)}`, {
+      method: 'PATCH', headers: bdHeaders, body: JSON.stringify({ type: 'unsubscribed' })
+    })
   } catch (_) {
     return json(502, { ok: false, message: 'The mailing service could not be reached. Please try again.' }, origin)
   }
-  // Fail closed: never report an unsubscribe the provider did not accept.
+  if (patch.status === 429) return json(429, { ok: false, message: 'Too many requests. Please try again later.' }, origin)
   if (!patch.ok) return json(502, { ok: false, message: 'The mailing service could not complete that request. Please try again.' }, origin)
   return json(200, { ok: true, state: 'unsubscribed' }, origin)
 })
