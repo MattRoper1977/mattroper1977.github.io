@@ -16,6 +16,7 @@ on:
       - 'tools/verify_accounts_members_mailing.js'
       - 'tools/test_member_merge.js'
       - 'docs/ACCOUNTS_MAILING_SETUP.md'
+      - '.github/workflows/verify-accounts-members-mailing.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -34,3 +35,9 @@ jobs:
           node --check assets/mbm-account.js
           node --check assets/mbm-mailing.js
           node --check assets/mbm-platform.js
+      - name: One-shot status-only Buttondown diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            https://fhulisooqhbyldphmnca.supabase.co/functions/v1/subscribe-mailing-list
