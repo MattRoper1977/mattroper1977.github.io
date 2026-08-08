@@ -165,7 +165,8 @@ jobs:
       - name: Record production proof on PR 103
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh pr comment 103 --repo "$GITHUB_REPOSITORY" --body "Games + audience production proof passed on merged source \`$GITHUB_SHA\`. Full 320–1440px Games/chooser matrix, all seven audience faces, pupil/adult boundary, local view preference and first-party runtime checks passed. Run: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+        run: |
+          gh pr comment 103 --repo "$GITHUB_REPOSITORY" --body "Games + audience production proof passed on merged source \`$GITHUB_SHA\`. Full 320–1440px Games/chooser matrix, all seven audience faces, pupil/adult boundary, local view preference and first-party runtime checks passed. Run: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
       - name: Upload production evidence
         if: always()
         uses: actions/upload-artifact@v4
