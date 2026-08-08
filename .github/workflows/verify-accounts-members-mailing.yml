@@ -16,7 +16,6 @@ on:
       - 'tools/verify_accounts_members_mailing.js'
       - 'tools/test_member_merge.js'
       - 'docs/ACCOUNTS_MAILING_SETUP.md'
-      - '.github/workflows/verify-accounts-members-mailing.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -35,16 +34,3 @@ jobs:
           node --check assets/mbm-account.js
           node --check assets/mbm-mailing.js
           node --check assets/mbm-platform.js
-      - name: One-shot status-only Buttondown diagnostic
-        shell: bash
-        run: |
-          set -euo pipefail
-          url=$(node -p "require('./site.json').features.accounts.supabaseUrl")
-          key=$(node -p "require('./site.json').features.accounts.supabaseAnonKey")
-          email="contactmadebymatt+pr99-status-${GITHUB_RUN_ID}@gmail.com"
-          curl --silent --show-error \
-            -H 'Origin: https://madebymatt.uk' \
-            -H "apikey: $key" \
-            -H 'Content-Type: application/json' \
-            --data "{\"email\":\"$email\",\"consent\":true,\"company\":\"\"}" \
-            "$url/functions/v1/subscribe-mailing-list"
