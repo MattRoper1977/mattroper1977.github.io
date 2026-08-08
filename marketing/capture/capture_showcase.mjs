@@ -99,6 +99,12 @@ async function largestCanvasBox(page) {
 }
 
 async function gameGesture(page) {
+  const play = page.locator('#bPlay');
+  if (await visible(play, 1800)) {
+    await play.click({ timeout: 2200 });
+    await page.waitForTimeout(1400);
+  }
+
   const b = await largestCanvasBox(page);
   if (!b) return false;
   const sx = b.x + b.width * 0.48;
@@ -259,7 +265,7 @@ await captureScene(browser, {
     if (clicked) { scene.interactions.push('opened Apex Kick from live hub'); await settle(page, 1000); }
     else { await gotoLive(page, `${BASE}apexkick/`, scene.id); scene.interactions.push('opened Apex Kick direct fallback'); }
     await page.waitForTimeout(1100);
-    if (await gameGesture(page)) scene.interactions.push('performed live canvas gameplay gesture');
+    if (await gameGesture(page)) scene.interactions.push('started Apex Kick through its live Play control and performed a gameplay gesture');
     await page.waitForTimeout(4300);
   }
 });
@@ -369,8 +375,7 @@ await mobileScene('mobile_games', mobile.mobile_games, async (page, scene) => {
   await smoothScroll(page, 620, 1100); scene.interactions.push('mobile curated games shelf'); await page.waitForTimeout(900);
   if (await clickTextLink(page, /Apex Kick/i, 1300)) { await settle(page, 650); scene.interactions.push('opened Apex Kick on mobile viewport'); }
   else await gotoLive(page, `${BASE}apexkick/`, scene.id);
-  const b = await largestCanvasBox(page);
-  if (b) { await page.touchscreen.tap(b.x + b.width * 0.5, b.y + b.height * 0.6).catch(() => {}); scene.interactions.push('mobile game tap'); }
+  if (await gameGesture(page)) scene.interactions.push('started Apex Kick and performed a mobile gameplay gesture');
   await page.waitForTimeout(2200);
 });
 
