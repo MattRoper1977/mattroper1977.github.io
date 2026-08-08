@@ -289,7 +289,7 @@ function localHref(h){/* keep every game on the madebymatt.uk origin so the HUD'
  return String(h||"").replace(/^https?:\/\/[^\/]*(?:mattroper1977\.github\.io|madebymatt\.uk)/i,"");}
 function pickCard(g,lead){
  var a=document.createElement("a");a.className="pick"+(lead?" lead":"");a.href=localHref(g.href);
- var art=g.art?'<div class="art"><img src="'+esc(g.art)+'" width="640" height="360" loading="lazy" decoding="async" alt=""></div>'
+ var art=g.art?'<div class="art"><img src="'+esc(g.art)+'" width="640" height="360" loading="eager" decoding="async" alt=""></div>'
               :'<div class="art" style="background:'+tint(g.hue)+'">'+(g.icon||"🎮")+'</div>';
  a.innerHTML=art+
  '<div class="bd"><span class="badge">MATT\u2019S PICK</span><h3></h3><span class="tagc"></span>'+
