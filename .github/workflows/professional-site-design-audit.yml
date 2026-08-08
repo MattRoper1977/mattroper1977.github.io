@@ -1,4 +1,4 @@
-name: Apply Made by Matt professional platform upgrade
+name: Professional site design audit
 
 on:
   pull_request:
@@ -6,95 +6,53 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: mbm-professional-platform-apply
+  group: professional-site-design-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  apply:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+  verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    env:
-      BRANCH: codex/mbm-site-professional-design-upgrade-2026-08-07
-      PATCH_SHA256: 1af9f0d44c133a9d0ebb1ee40be9d67a5026aefadf8919fd7fba36cadbb65cf0
+    timeout-minutes: 15
     steps:
-      - name: Check out exact authorised branch
+      - name: Check out exact branch under review
         uses: actions/checkout@v4
         with:
-          ref: codex/mbm-site-professional-design-upgrade-2026-08-07
           fetch-depth: 0
 
-      - name: Apply exact tested patch when not already present
+      - name: Verify preservation, platform contract and positive control
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin "$BRANCH" main
-          git reset --hard "origin/$BRANCH"
-          if [[ ! -f assets/mbm-platform.css ]]; then
-            parts=(
-              .github/mbm-professional-final.part-00
-              .github/mbm-professional-final.part-01
-              .github/mbm-professional-final.part-02
-              .github/mbm-professional-final.part-03
-              .github/mbm-professional-final.part-04
-            )
-            expected=(
-              28002699eb5e8402df02baa80d3b96b45fd18f61
-              494b3f99ae9e3e36d9efb10238be2498837362a5
-              03d030373c5da45d08ec790a0aa5e1577ab32cdb
-              4e75d4dd8c9a314f35fe6679353750b1a0ef5497
-              3d5e9ed77d59240077116df56724279b280a8e62
-            )
-            for i in "${!parts[@]}"; do
-              test -f "${parts[$i]}"
-              test "$(git hash-object "${parts[$i]}")" = "${expected[$i]}"
-            done
-            cat "${parts[@]}" | base64 -d > /tmp/mbm-final.patch.gz
-            echo "$PATCH_SHA256  /tmp/mbm-final.patch.gz" | sha256sum -c -
-            gzip -dc /tmp/mbm-final.patch.gz > /tmp/mbm-final.patch
-            grep '^diff --git a/' /tmp/mbm-final.patch | sed -E 's#^diff --git a/([^ ]+) b/.*#\1#' > /tmp/mbm-final.paths
-            printf '%s\n' \
-              app.js \
-              assets/mbm-platform.css \
-              assets/mbm-platform.js \
-              docs/MBM_PROFESSIONAL_SITE_AUDIT_PASS.json \
-              games/index.html \
-              index.html \
-              members/index.html \
-              privacy/index.html \
-              reports/2026-08-07-professional-site-upgrade.md \
-              resources/index.html \
-              stats/index.html \
-              theme.js \
-              tools/index.html \
-              tools/verify_professional_site.js \
-              > /tmp/mbm-final.expected-paths
-            diff -u /tmp/mbm-final.expected-paths /tmp/mbm-final.paths
-            git apply --check /tmp/mbm-final.patch
-            git apply /tmp/mbm-final.patch
-            sed -i 's/[[:space:]]\+$//' reports/2026-08-07-professional-site-upgrade.md
-          fi
-          rm -f .github/mbm-professional-final.part-*
-
-      - name: Run release gates and publish implementation files
-        shell: bash
-        run: |
-          set -euo pipefail
+          git fetch origin main
           node tools/verify_professional_site.js --base origin/main --self-test
           node --check app.js
           node --check assets/mbm-platform.js
           node --check theme.js
-          git diff --check
-          git config user.name "Made by Matt design automation"
-          git config user.email "actions@users.noreply.github.com"
-          git add -A
-          git diff --cached --check
-          if git diff --cached --quiet; then
-            echo "Verified implementation already present; no commit required."
-            exit 0
-          fi
-          git commit -m "feat: elevate Made by Matt platform UX"
-          git push origin "HEAD:$BRANCH"
+          git diff --check origin/main...HEAD
+
+      - name: Record deterministic source inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit-output
+          {
+            echo "sentinel=mbm-site-professional-design-upgrade-2026-08-07"
+            echo "head=$(git rev-parse HEAD)"
+            echo "branch=$(git branch --show-current)"
+            echo "files=$(find . -path './.git' -prune -o -type f -print | wc -l)"
+            echo "html=$(find . -path './.git' -prune -o -type f -iname '*.html' -print | wc -l)"
+            echo "css=$(find . -path './.git' -prune -o -type f -iname '*.css' -print | wc -l)"
+            echo "js=$(find . -path './.git' -prune -o -type f \( -iname '*.js' -o -iname '*.mjs' -o -iname '*.cjs' \) -print | wc -l)"
+          } | tee audit-output/repository-state.txt
+          find . -path './.git' -prune -o -type f -printf '%P\t%s\n' | sort > audit-output/file-inventory.tsv
+
+      - name: Upload measured inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: professional-site-audit-${{ github.run_id }}
+          path: audit-output/
+          if-no-files-found: error
+          retention-days: 7
