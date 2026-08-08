@@ -1,0 +1,71 @@
+name: Post-PR99 verifier truth-region update
+on:
+  push:
+    branches: [fix/post-pr99-homepage-account-mailing-truth]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[truth-gate-fixed]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/post-pr99-homepage-account-mailing-truth
+          fetch-depth: 0
+      - name: Permit only the homepage account/mailing truth regions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('tools/verify_professional_site.js')
+          s=p.read_text(encoding='utf-8')
+          anchor="function gitShow(ref, rel) {"
+          if anchor not in s:
+              raise SystemExit('gitShow anchor missing')
+          helper=r'''function canonicalHomeTruthCopy(html) {
+  let s = html;
+  // PR #102 is a narrow functional-copy exception following the production
+  // account/mailing launch. Canonicalise only the three exact old/new truth
+  // statements, plus the dedicated teacher-updates component. Everything else
+  // on the authored homepage remains byte-text protected by the verifier.
+  const pairs = [
+    [
+      'There is no account and no mailing list. If you want to see what gets built next, these are the places I actually post.',
+      'Accounts are optional and built for adults and teachers who want their Made by Matt favourites available on another device. Teacher updates are also optional and use a separate double-opt-in mailing list.'
+    ],
+    [
+      'Everything here is free to use — no trials, no locked features, nothing to sign up for. There is no account, so there is nothing to forget the password to.',
+      'Everything here is free to use — no trials and no locked features. An adult/teacher account is optional and is only for useful account-backed features such as carrying your saved Made by Matt shortcuts between devices.'
+    ],
+    [
+      'Lessons, registers and pupil records stay in your browser on your device — nothing about your class is ever sent anywhere. Three things do reach the internet. One happens on its own — an anonymous visit counter, on this page and the stats page. Two happen only if you choose them: sending the contact form, and pressing play on a video.',
+      'Lessons, registers and pupil records stay in your browser on your device — they are not uploaded into your account. Some optional services do use the internet: the anonymous visit counter, the contact form, videos you choose to play, adult/teacher account identity and saved hub shortcuts, and the separate teacher mailing list.'
+    ]
+  ];
+  for (const [oldText, newText] of pairs) {
+    s = s.replace(oldText, '__MBM_APPROVED_ACCOUNT_MAILING_TRUTH__');
+    s = s.replace(newText, '__MBM_APPROVED_ACCOUNT_MAILING_TRUTH__');
+  }
+  s = s.replace(/<!-- TEACHER UPDATES[\s\S]*?<div class="dx-about" id="about">/,
+    '__MBM_APPROVED_TEACHER_UPDATES__<div class="dx-about" id="about">');
+  return s;
+}
+'''
+          if 'function canonicalHomeTruthCopy(html)' not in s:
+              s=s.replace(anchor,helper+anchor,1)
+          old="""        const before = visibleAuthoredText(baseline);\n        const after = visibleAuthoredText(current);\n        assert(before === after, `${rel}: authored body wording changed outside permitted chrome/audience/auth regions`, failures);"""
+          new="""        const beforeSource = rel === 'index.html' ? canonicalHomeTruthCopy(baseline) : baseline;\n        const afterSource = rel === 'index.html' ? canonicalHomeTruthCopy(current) : current;\n        const before = visibleAuthoredText(beforeSource);\n        const after = visibleAuthoredText(afterSource);\n        assert(before === after, `${rel}: authored body wording changed outside permitted chrome/audience/auth regions`, failures);"""
+          if old not in s:
+              raise SystemExit('comparison block missing')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          node --check tools/verify_professional_site.js
+          git diff --check
+      - name: Commit gate update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/verify_professional_site.js
+          git commit -m "test: permit only account and mailing truth regions [truth-gate-fixed]"
+          git push origin HEAD:fix/post-pr99-homepage-account-mailing-truth
