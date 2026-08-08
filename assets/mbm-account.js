@@ -299,7 +299,11 @@
     name = String(name || '').trim().slice(0, 80);
     if (!name) return Promise.reject(new Error('Enter a display name first.'));
     return requireUser().then(function (u) {
-      return sb.from('profiles').upsert({ id: u.id, display_name: name, name: name, updated_at: nowISO() }, { onConflict: 'id' }).select('id,display_name,name,tier,created_at,updated_at').single();
+      return sb.from('profiles')
+        .update({ display_name: name, name: name, updated_at: nowISO() })
+        .eq('id', u.id)
+        .select('id,display_name,name,tier,created_at,updated_at')
+        .single();
     }).then(function (r) {
       if (r.error) throw r.error;
       state.profile = r.data; state.user.name = name; writeOfflineIdentity(state.user, state.profile); emit(); return clone(r.data);
