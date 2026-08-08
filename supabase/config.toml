@@ -1,0 +1,11 @@
+# mbm-accounts-members-mailing-2026-08-08
+# Public newsletter endpoint: it has no Supabase user JWT by design. It is
+# protected by explicit consent validation, honeypot, origin allow-list and the
+# mailing provider's double opt-in/anti-abuse controls. The Buttondown API key
+# remains a server-side Edge Function secret.
+[functions.subscribe-mailing-list]
+verify_jwt = false
+
+# Account deletion MUST retain JWT verification.
+[functions.delete-account]
+verify_jwt = true

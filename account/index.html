@@ -1,0 +1,196 @@
+<!doctype html>
+<!-- mbm-accounts-members-mailing-2026-08-08 -->
+
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Account · Made by Matt</title>
+<meta name="description" content="Create, verify and manage your Made by Matt account. Sign in on another device to access the same account-backed member data.">
+<meta name="theme-color" content="#161D3D">
+<link rel="canonical" href="https://madebymatt.uk/account/">
+<link rel="icon" href="../favicon.svg">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="/assets/mbm-platform.css">
+<link rel="stylesheet" href="/assets/mbm-account.css">
+</head>
+<body class="ma-page">
+<a class="skip" href="#main">Skip to content</a>
+<header class="header mbm-site-header"><div class="bar"><a class="brand" href="/"><img src="/assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links"><a href="/games/">Games</a><a href="/Lessons/">Lessons</a><a href="/Matt-s-Apps-/">Apps</a><a href="/tools/">Tools</a><a href="/resources/">Resources</a></div><details class="mbm-nav-more"><summary>More</summary><div class="mbm-nav-panel"><a href="/account/" aria-current="page">Account</a><a href="/members/">Members</a><a href="/stats/">Stats</a><a href="/#about">About</a><a href="/privacy/">Privacy</a></div></details></nav></div></header>
+
+<main id="main">
+<section class="ma-hero">
+<p class="ma-eyebrow">Made by Matt account</p>
+<h1>One account, across your devices</h1>
+<p>Create an account once, then use the same sign-in on another computer, phone or browser. Public games, lessons, apps, tools and resources stay public.</p>
+</section>
+
+<div class="ma-wrap">
+<noscript><div class="ma-panel"><h2>JavaScript is needed for account management</h2><p>The public Made by Matt site still works without signing in. Account creation, sign-in and synchronisation need JavaScript and an internet connection.</p></div></noscript>
+
+<section class="ma-panel" id="servicePanel" aria-live="polite">
+<p class="ma-kicker">Account service</p>
+<h2 id="serviceTitle">Checking account availability…</h2>
+<p id="serviceText">The page is checking the configured authentication service.</p>
+</section>
+
+<section class="ma-grid" id="signedOut" hidden>
+<div class="ma-panel">
+<p class="ma-status" id="linkStatus" role="status" aria-live="polite"></p>
+<div class="ma-tabs" role="tablist" aria-label="Account action">
+<button class="ma-tab" id="loginTab" role="tab" aria-selected="true" aria-controls="loginForm" type="button">Log in</button>
+<button class="ma-tab" id="registerTab" role="tab" aria-selected="false" aria-controls="registerForm" type="button">Create account</button>
+</div>
+
+<form class="ma-form" id="loginForm" autocomplete="on" novalidate>
+<div class="ma-field"><label for="loginEmail">Email</label><input id="loginEmail" name="email" type="email" inputmode="email" autocomplete="username" required></div>
+<div class="ma-field"><label for="loginPassword">Password</label><div class="ma-pass"><input id="loginPassword" name="password" type="password" autocomplete="current-password" required><button class="ma-show" type="button" data-show="loginPassword" aria-label="Show password">Show</button></div></div>
+<div class="ma-row spread"><button class="ma-btn" type="submit">Log in</button><button class="ma-linkbtn" id="forgotBtn" type="button">Forgot password?</button></div>
+<p class="ma-status" id="loginStatus" role="status" aria-live="polite"></p>
+</form>
+
+<form class="ma-form" id="registerForm" autocomplete="on" hidden novalidate>
+<div class="ma-field"><label for="registerName">Display name <span aria-hidden="true">·</span> optional</label><input id="registerName" name="name" type="text" autocomplete="name" maxlength="80"><small>This is for your Made by Matt account display only.</small></div>
+<div class="ma-field"><label for="registerEmail">Email</label><input id="registerEmail" name="email" type="email" inputmode="email" autocomplete="username" required></div>
+<div class="ma-field"><label for="registerPassword">Password</label><div class="ma-pass"><input id="registerPassword" name="password" type="password" minlength="10" autocomplete="new-password" aria-describedby="passwordHelp" required><button class="ma-show" type="button" data-show="registerPassword" aria-label="Show password">Show</button></div><small id="passwordHelp">Use at least 10 characters. Your password is handled by the authentication provider, not stored by Made by Matt JavaScript.</small></div>
+<div class="ma-field"><label for="registerConfirm">Confirm password</label><div class="ma-pass"><input id="registerConfirm" name="confirm" type="password" minlength="10" autocomplete="new-password" required><button class="ma-show" type="button" data-show="registerConfirm" aria-label="Show password confirmation">Show</button></div></div>
+<div class="ma-row spread"><button class="ma-btn" type="submit">Create account</button><button class="ma-linkbtn" id="resendVerification" type="button">Resend verification email</button></div>
+<p class="ma-status" id="registerStatus" role="status" aria-live="polite"></p>
+</form>
+
+<form class="ma-form" id="resetForm" hidden novalidate>
+<h3>Reset your password</h3>
+<p>Enter the email used for your account. The authentication provider will send a reset link; nobody can read or send you your old password.</p>
+<div class="ma-field"><label for="resetEmail">Email</label><input id="resetEmail" type="email" inputmode="email" autocomplete="username" required></div>
+<div class="ma-row"><button class="ma-btn" type="submit">Send reset link</button><button class="ma-btn secondary" id="resetBack" type="button">Back to login</button></div>
+<p class="ma-status" id="resetStatus" role="status" aria-live="polite"></p>
+</form>
+</div>
+
+<div class="ma-panel">
+<p class="ma-kicker">What an account changes</p>
+<h2>Useful, not a paywall</h2>
+<ul class="ma-list">
+<li>Your member favourites and account settings can follow you between devices.</li>
+<li>Existing public Games, Lessons, Apps, Tools and Resources remain available without an account.</li>
+<li>Offline-first content keeps working; cloud sync simply waits until a connection returns.</li>
+<li>Joining the mailing list is a separate choice. Creating an account never subscribes you.</li>
+</ul>
+<p><a href="/privacy/">Read what the account stores and why</a>.</p>
+</div>
+</section>
+
+<section class="ma-panel" id="recoveryPanel" hidden>
+<p class="ma-kicker">Password recovery</p>
+<h2>Choose a new password</h2>
+<form class="ma-form" id="recoveryForm">
+<div class="ma-field"><label for="newPassword">New password</label><div class="ma-pass"><input id="newPassword" type="password" minlength="10" autocomplete="new-password" required><button class="ma-show" type="button" data-show="newPassword" aria-label="Show new password">Show</button></div></div>
+<div class="ma-field"><label for="newPasswordConfirm">Confirm new password</label><div class="ma-pass"><input id="newPasswordConfirm" type="password" minlength="10" autocomplete="new-password" required><button class="ma-show" type="button" data-show="newPasswordConfirm" aria-label="Show new password confirmation">Show</button></div></div>
+<button class="ma-btn" type="submit">Update password</button>
+<p class="ma-status" id="recoveryStatus" role="status" aria-live="polite"></p>
+</form>
+</section>
+
+<section id="signedIn" hidden>
+<div class="ma-panel">
+<p class="ma-kicker">Signed in</p>
+<div class="ma-identity"><div class="ma-avatar" id="avatar" aria-hidden="true">M</div><div><b id="accountName">Made by Matt member</b><span id="accountEmail"></span></div></div>
+<div class="ma-actions"><a class="ma-btn" href="/members/">Open Members</a><button class="ma-btn secondary" id="logoutBtn" type="button">Log out</button></div>
+<p class="ma-status" id="accountStatus" role="status" aria-live="polite"></p>
+</div>
+
+<div class="ma-grid" style="margin-top:1rem">
+<div class="ma-panel">
+<h2>Account details</h2>
+<form class="ma-form" id="profileForm">
+<div class="ma-field"><label for="profileName">Display name</label><input id="profileName" type="text" autocomplete="name" maxlength="80"></div>
+<button class="ma-btn" type="submit">Save name</button>
+<p class="ma-status" id="profileStatus" role="status" aria-live="polite"></p>
+</form>
+<div class="ma-divider"></div>
+<p class="ma-sync"><span class="ma-dot on" aria-hidden="true"></span><span id="syncLabel">Account-backed member data is available on this device.</span></p>
+</div>
+
+<div class="ma-panel" id="legacyPanel" hidden>
+<h2>Old on-device account found</h2>
+<p id="legacyText">An older Made by Matt local profile exists in this browser. Its password or password hash will never be uploaded.</p>
+<div class="ma-actions"><button class="ma-btn secondary" id="migrateLegacy" type="button">Copy display name</button><button class="ma-btn secondary" id="removeLegacy" type="button">Remove old local account record</button></div>
+<p class="ma-status" id="legacyStatus" role="status" aria-live="polite"></p>
+</div>
+</div>
+
+<div class="ma-panel ma-danger-zone" style="margin-top:1rem">
+<h2>Delete account</h2>
+<p>Account deletion removes the authentication identity, profile and synchronised member data. Mailing-list subscription is separate and must be unsubscribed separately through its own email link.</p>
+<div class="ma-field"><label for="deleteConfirm">Type DELETE to confirm</label><input id="deleteConfirm" type="text" autocomplete="off" spellcheck="false"></div>
+<div class="ma-actions"><button class="ma-btn danger" id="deleteBtn" type="button">Delete my account</button></div>
+<p class="ma-status" id="deleteStatus" role="status" aria-live="polite"></p>
+<p>If self-service deletion is temporarily unavailable, email <a href="mailto:contactmadebymatt@gmail.com">contactmadebymatt@gmail.com</a> from the account address and request deletion.</p>
+</div>
+</section>
+
+<section class="ma-panel" style="margin-top:1rem">
+<p class="ma-kicker">Updates are separate</p>
+<h2>Want Made by Matt updates?</h2>
+<p>The mailing list is independent from your account. You can join without an account, or have an account and never join.</p>
+<a class="ma-btn secondary" href="/mailing-list/">Mailing list</a>
+</section>
+</div>
+</main>
+
+<footer class="footer"><div class="bar"><div class="brand"><img src="/assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></div><span class="muted">Interactive lessons, simulations and games · madebymatt.uk</span></div></footer>
+<script src="/assets/mbm-account.js"></script>
+<script defer src="/assets/mbm-platform.js"></script>
+<script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)};
+function setStatus(id,text,kind){var el=$(id);if(!el)return;el.textContent=text||'';el.className='ma-status'+(kind?' '+kind:'');}
+function busy(form,on){Array.prototype.forEach.call(form.querySelectorAll('button,input'),function(el){if(el.type!=='email'&&el.type!=='password'&&el.type!=='text'||on)el.disabled=!!on;});}
+function showMode(mode){
+ var login=$('#loginForm'),reg=$('#registerForm'),reset=$('#resetForm');
+ login.hidden=mode!=='login';reg.hidden=mode!=='register';reset.hidden=mode!=='reset';
+ $('#loginTab').setAttribute('aria-selected',mode==='login'?'true':'false');
+ $('#registerTab').setAttribute('aria-selected',mode==='register'?'true':'false');
+ if(mode==='login')setTimeout(function(){$('#loginEmail').focus()},0);
+ if(mode==='register')setTimeout(function(){$('#registerEmail').focus()},0);
+}
+function initialMode(){var m=new URLSearchParams(location.search).get('mode');return m==='register'?'register':m==='reset'?'reset':'login'}
+function linkErrorNotice(){var q=new URLSearchParams(location.search),h=new URLSearchParams((location.hash||'').replace(/^#/,''));var code=(q.get('error_code')||h.get('error_code')||q.get('error')||h.get('error')||'').toLowerCase();if(!code)return '';if(/otp_expired|expired/.test(code))return 'That verification or password-recovery link has expired. Request a new email below.';return 'That account link could not be used. Request a fresh verification or password-reset email below.'}
+$('#loginTab').addEventListener('click',function(){showMode('login')});
+$('#registerTab').addEventListener('click',function(){showMode('register')});
+$('#forgotBtn').addEventListener('click',function(){$('#resetEmail').value=$('#loginEmail').value;showMode('reset')});
+$('#resetBack').addEventListener('click',function(){showMode('login')});
+Array.prototype.forEach.call(document.querySelectorAll('[data-show]'),function(btn){btn.addEventListener('click',function(){var input=document.getElementById(btn.getAttribute('data-show'));var show=input.type==='password';input.type=show?'text':'password';btn.textContent=show?'Hide':'Show';btn.setAttribute('aria-label',(show?'Hide ':'Show ')+(input.labels&&input.labels[0]?input.labels[0].textContent.toLowerCase():'password'))})});
+
+$('#loginForm').addEventListener('submit',function(e){e.preventDefault();var form=this;setStatus('#loginStatus','Logging in…');busy(form,true);MBMAccount.login($('#loginEmail').value,$('#loginPassword').value).then(function(){setStatus('#loginStatus','Logged in.','ok');form.reset()}).catch(function(err){setStatus('#loginStatus',err.message,'err')}).finally(function(){busy(form,false)})});
+var lastVerificationEmail='';
+$('#registerForm').addEventListener('submit',function(e){e.preventDefault();var form=this,p=$('#registerPassword').value,c=$('#registerConfirm').value,email=$('#registerEmail').value;if(p!==c){setStatus('#registerStatus','The two passwords do not match.','err');return}setStatus('#registerStatus','Creating your account…');busy(form,true);MBMAccount.register($('#registerName').value,email,p).then(function(r){lastVerificationEmail=r.email||email;if(r.needsConfirmation){setStatus('#registerStatus','Account created. Check your email to verify it, then return here to log in. If the message does not arrive, use Resend verification email.','ok');}else{setStatus('#registerStatus','Account created and signed in.','ok')}form.reset();if(lastVerificationEmail)$('#registerEmail').value=lastVerificationEmail}).catch(function(err){setStatus('#registerStatus',err.message,'err')}).finally(function(){busy(form,false)})});
+$('#resendVerification').addEventListener('click',function(){var email=($('#registerEmail').value||$('#loginEmail').value||lastVerificationEmail).trim();if(!email){setStatus('#registerStatus','Enter the account email address first, then resend verification.','err');return}this.disabled=true;setStatus('#registerStatus','Sending a new verification email…');MBMAccount.resendVerification(email).then(function(){lastVerificationEmail=email;setStatus('#registerStatus','A fresh verification email has been requested. Check your inbox and spam folder.','ok')}).catch(function(err){setStatus('#registerStatus',err.message,'err')}).finally(function(){$('#resendVerification').disabled=false})});
+$('#resetForm').addEventListener('submit',function(e){e.preventDefault();var form=this;setStatus('#resetStatus','Sending reset link…');busy(form,true);MBMAccount.resetPassword($('#resetEmail').value).then(function(){setStatus('#resetStatus','If that address belongs to an account, check its inbox for the reset link.','ok')}).catch(function(err){setStatus('#resetStatus',err.message,'err')}).finally(function(){busy(form,false)})});
+$('#recoveryForm').addEventListener('submit',function(e){e.preventDefault();var form=this,p=$('#newPassword').value,c=$('#newPasswordConfirm').value;if(p!==c){setStatus('#recoveryStatus','The two passwords do not match.','err');return}setStatus('#recoveryStatus','Updating password…');busy(form,true);MBMAccount.updatePassword(p).then(function(){setStatus('#recoveryStatus','Password updated. You can keep using this signed-in session.','ok');form.reset()}).catch(function(err){setStatus('#recoveryStatus',err.message,'err')}).finally(function(){busy(form,false)})});
+$('#profileForm').addEventListener('submit',function(e){e.preventDefault();var form=this;setStatus('#profileStatus','Saving…');busy(form,true);MBMAccount.updateDisplayName($('#profileName').value).then(function(){setStatus('#profileStatus','Display name saved.','ok')}).catch(function(err){setStatus('#profileStatus',err.message,'err')}).finally(function(){busy(form,false)})});
+$('#logoutBtn').addEventListener('click',function(){setStatus('#accountStatus','Logging out…');MBMAccount.logout().catch(function(err){setStatus('#accountStatus',err.message,'err')})});
+$('#migrateLegacy').addEventListener('click',function(){setStatus('#legacyStatus','Copying the old display name…');MBMAccount.migrateLegacyDisplayName().then(function(){setStatus('#legacyStatus','Display name copied. The old password record was not uploaded.','ok')}).catch(function(err){setStatus('#legacyStatus',err.message,'err')})});
+$('#removeLegacy').addEventListener('click',function(){if(MBMAccount.clearLegacyAccount()){setStatus('#legacyStatus','Old local account record removed from this browser. Existing game saves were not deleted.','ok');$('#removeLegacy').disabled=true}else setStatus('#legacyStatus','Could not remove the old browser record.','err')});
+$('#deleteBtn').addEventListener('click',function(){if($('#deleteConfirm').value.trim()!=='DELETE'){setStatus('#deleteStatus','Type DELETE exactly before deleting the account.','err');return}this.disabled=true;setStatus('#deleteStatus','Deleting account…');MBMAccount.deleteAccount().then(function(){setStatus('#deleteStatus','Account deleted.','ok');location.href='/'}).catch(function(err){setStatus('#deleteStatus',err.message+' You can also request deletion at contactmadebymatt@gmail.com.','err');$('#deleteBtn').disabled=false})});
+
+MBMAccount.subscribe(function(s){
+ $('#servicePanel').hidden=false;
+ if(!s.ready){$('#serviceTitle').textContent='Checking account availability…';$('#serviceText').textContent='The page is checking the configured authentication service.';return}
+ if(!s.configured){$('#serviceTitle').textContent='Account service setup is not active yet';$('#serviceText').innerHTML='The secure cloud account code is in place, but the Supabase project values have not yet been configured. No local-password fallback is used. Public Made by Matt content remains available. <a href="mailto:contactmadebymatt@gmail.com">Contact Made by Matt</a> if you need help.';$('#signedOut').hidden=true;$('#signedIn').hidden=true;$('#recoveryPanel').hidden=true;return}
+ $('#servicePanel').hidden=true;
+ $('#recoveryPanel').hidden=!s.recovery;
+ $('#signedOut').hidden=!!s.user||s.recovery;
+ $('#signedIn').hidden=!s.user||s.recovery;
+ if(!s.user){var notice=linkErrorNotice();if(notice)setStatus('#linkStatus',notice,'err');showMode(initialMode());return}
+ var name=(s.profile&&(s.profile.display_name||s.profile.name))||s.user.name||'Made by Matt member';
+ $('#accountName').textContent=name;$('#accountEmail').textContent=s.user.email||'';$('#avatar').textContent=(name.trim().charAt(0)||'M').toUpperCase();$('#profileName').value=name==='Made by Matt member'?'':name;
+ $('#syncLabel').textContent=s.online?'Member data is connected to your account and can follow you to another device.':'You are offline. Public content and local saves still work; account sync will resume when the connection returns.';
+ var legacy=MBMAccount.legacyLocalProfile();$('#legacyPanel').hidden=!legacy;if(legacy){$('#legacyText').textContent='An older on-device profile for '+legacy.email+' exists in this browser. You can copy only its display name; its password record is never uploaded. If this cloud account uses the same email, existing per-account game save slots keep the same local slot tag.'}
+});
+})();
+</script>
+</body>
+</html>

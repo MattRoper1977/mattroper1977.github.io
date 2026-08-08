@@ -1,0 +1,36 @@
+name: Verify accounts, members and mailing
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'account/**'
+      - 'members/**'
+      - 'mailing-list/**'
+      - 'privacy/**'
+      - 'assets/mbm-account.*'
+      - 'assets/mbm-mailing.js'
+      - 'assets/mbm-platform.js'
+      - 'site.json'
+      - 'supabase-schema.sql'
+      - 'supabase/**'
+      - 'tools/verify_accounts_members_mailing.js'
+      - 'tools/test_member_merge.js'
+      - 'docs/ACCOUNTS_MAILING_SETUP.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify fail-closed account and mailing architecture
+        run: |
+          node tools/verify_accounts_members_mailing.js
+          node tools/test_member_merge.js
+          node --check assets/mbm-account.js
+          node --check assets/mbm-mailing.js
+          node --check assets/mbm-platform.js

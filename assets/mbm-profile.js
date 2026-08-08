@@ -1,46 +1,46 @@
-/* mbm-profile.js — the smallest thing that makes a game account-aware.
+/* mbm-profile.js — zero-network account hint for standalone games.
+ * mbm-accounts-members-mailing-2026-08-08
  *
- * WHY THIS EXISTS AND NOT mbm-features.js. Apex Kick and Voxel Frontier are
- * self-contained single files with one vendored dependency each, and they work
- * with the network cut. mbm-features.js would drag the visit counter
- * (api.counterapi.dev) into a game page that today makes zero external
- * requests. This file makes ZERO network requests of any kind — it only reads
- * localStorage keys that MBMAuth already writes.
+ * WHY THIS EXISTS
+ * Apex Kick / Voxel Frontier remain offline-first. This shim makes ZERO network
+ * requests. It does not validate a Supabase session and therefore must never be
+ * used as authorization. Real member data is protected by Supabase Auth + RLS.
  *
- * WHAT IT HONESTLY DOES
- *   1. Per-account save slots. Two people on one classroom laptop stop
- *      overwriting each other's world. Signed out behaves exactly as before,
- *      byte for byte — the same key, so no existing save is orphaned.
- *   2. A signed-in flag, which the games use to offer bonus content.
- *
- * WHAT IT DOES NOT DO, SAID PLAINLY
- *   It is NOT a lock. This is a static site: every file, including every bonus
- *   asset, is served in full to anyone who asks for the URL. Bonus content here
- *   is ENABLED for account holders, not hidden from anyone else. Any page that
- *   implies otherwise is lying, and this estate has spent a whole day removing
- *   claims of exactly that shape.
- *
- *   It is also NOT cross-device sync. A device-local account cannot sync — it
- *   has nowhere to sync to. Nothing here may claim otherwise.
+ * WHAT IT DOES
+ *   1. Prefer the non-secret cloud identity hint written after a genuine
+ *      Supabase session is established (`mbm_cloud_identity_v1`).
+ *   2. Preserve the older device-local profile as a legacy save-slot identity,
+ *      so existing local game saves are not orphaned before a user migrates.
+ *   3. Keep signed-out storage keys byte-for-byte unchanged.
+ *   4. Offer game bonus content as a convenience only. It is NOT a lock: this
+ *      is a static public site and bonus assets are not confidential.
  */
 (function (w) {
   "use strict";
-  var SESSION = "mbm_session", USERS = "mbm_users";
+  var CLOUD = "mbm_cloud_identity_v1", SESSION = "mbm_session", USERS = "mbm_users";
 
   function raw(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
-  function json(k, d) { try { return JSON.parse(raw(k)) || d; } catch (e) { return d; } }
+  function parsedRaw(value, d) { try { return JSON.parse(value) || d; } catch (e) { return d; } }
+  function json(k, d) { return parsedRaw(raw(k), d); }
 
-  function user() {
+  function cloudUser() {
+    var rec = json(CLOUD, null);
+    if (!rec || !rec.id || !rec.email) return null;
+    return { id: String(rec.id), email: String(rec.email).toLowerCase(), name: String(rec.name || ""), cloud: true };
+  }
+  function legacyUser() {
     var email = raw(SESSION);
     if (!email) return null;
     var rec = json(USERS, {})[email];
-    if (!rec) return null;                       // session pointing at a deleted account
-    return { email: email, name: rec.name || "" };
+    if (!rec) return null;
+    return { email: String(email).toLowerCase(), name: rec.name || "", cloud: false, legacy: true };
   }
+  function user() { return cloudUser() || legacyUser(); }
 
-  /* A short, stable, non-reversible tag for the slot suffix. The email is
-     already in localStorage in clear — this is not protecting it, it is keeping
-     an address out of every save key so a shared screen does not show it. */
+  /* A short stable tag avoids putting the email itself in a visible save key.
+     It is not a security hash; the source email is already local to the device.
+     Keeping the same email-based function preserves old per-account save slots
+     when that person upgrades to a real cloud account with the same address. */
   function tag(email) {
     var h = 5381, s = String(email).toLowerCase();
     for (var i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
@@ -50,24 +50,14 @@
   var MBMProfile = {
     user: user,
     signedIn: function () { return !!user(); },
+    cloud: function () { var u = user(); return !!(u && u.cloud); },
+    legacy: function () { var u = user(); return !!(u && u.legacy); },
     name: function () { var u = user(); return u ? (u.name || "").split(" ")[0] : ""; },
-
-    /* Signed out -> the original key, unchanged. That is deliberate: an
-       existing save must not disappear the day this ships. */
-    slot: function (key) {
-      var u = user();
-      return u ? key + "~" + tag(u.email) : key;
-    },
-
-    /* Bonus content is offered, never hidden. See the note above. */
+    slot: function (key) { var u = user(); return u ? key + "~" + tag(u.email) : key; },
     bonus: function () { return !!user(); },
-
-    /* Fires when another tab signs in or out. Same-tab changes do not raise
-       `storage`, so games should also re-check on visibilitychange if they
-       care; both games here read at load, which is enough. */
     onChange: function (cb) {
       w.addEventListener("storage", function (e) {
-        if (e.key === SESSION || e.key === USERS) { try { cb(user()); } catch (err) {} }
+        if (e.key === CLOUD || e.key === SESSION || e.key === USERS) { try { cb(user()); } catch (err) {} }
       });
     }
   };

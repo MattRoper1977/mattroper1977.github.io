@@ -5,6 +5,11 @@
  * Static verifier for mbm-site-professional-design-upgrade-2026-08-07.
  * Zero dependencies. It validates the shared platform contract, preservation
  * rules, accessibility floor and a positive-control mutation.
+ *
+ * Account/member/privacy copy is an explicitly authorised functional exception
+ * under mbm-accounts-members-mailing-2026-08-08. Those pages still retain all
+ * platform, logo, navigation, no-fake-auth and accessibility checks; only the
+ * old byte-for-byte authored-copy comparison is relaxed for those two surfaces.
  */
 const fs = require('fs');
 const path = require('path');
@@ -12,6 +17,8 @@ const cp = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const SENTINEL = 'mbm-site-professional-design-upgrade-2026-08-07';
+const ACCOUNT_SENTINEL = 'mbm-accounts-members-mailing-2026-08-08';
+const FUNCTIONAL_COPY_PAGES = new Set(['members/index.html', 'privacy/index.html']);
 const KEY_PAGES = [
   'index.html',
   'games/index.html',
@@ -43,16 +50,7 @@ function relRead(rel, overrides) {
   if (overrides && Object.prototype.hasOwnProperty.call(overrides, rel)) return overrides[rel];
   return fs.readFileSync(path.join(ROOT, rel), 'utf8');
 }
-
-function assert(condition, message, failures) {
-  if (!condition) failures.push(message);
-}
-
-function countMatches(text, regex) {
-  const m = text.match(regex);
-  return m ? m.length : 0;
-}
-
+function assert(condition, message, failures) { if (!condition) failures.push(message); }
 function duplicateIds(html) {
   const seen = new Map();
   const re = /\bid\s*=\s*(["'])(.*?)\1/gi;
@@ -60,7 +58,6 @@ function duplicateIds(html) {
   while ((m = re.exec(html))) seen.set(m[2], (seen.get(m[2]) || 0) + 1);
   return [...seen.entries()].filter(([, count]) => count > 1).map(([id, count]) => `${id} (${count})`);
 }
-
 function decodeEntities(text) {
   const named = {
     amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
@@ -77,52 +74,34 @@ function decodeEntities(text) {
     return Object.prototype.hasOwnProperty.call(named, entity.toLowerCase()) ? named[entity.toLowerCase()] : all;
   });
 }
-
 function brandVisual(html) {
   const match = html.match(/<a\b[^>]*\bclass=["'][^"']*\bbrand\b[^"']*["'][^>]*>([\s\S]*?)<span\b/i);
   if (!match) return '';
   return match[1].replace(/\s+/g, ' ').trim();
 }
-
 function visibleAuthoredText(html) {
   let s = html;
-  // Technical and visual-only regions do not form Matt's authored page copy.
   s = s.replace(/<!--[\s\S]*?-->/g, ' ');
   s = s.replace(/<head\b[\s\S]*?<\/head>/gi, ' ');
   s = s.replace(/<script\b[\s\S]*?<\/script>/gi, ' ');
   s = s.replace(/<style\b[\s\S]*?<\/style>/gi, ' ');
   s = s.replace(/<svg\b[\s\S]*?<\/svg>/gi, ' ');
-  // Shared page chrome is intentionally normalised by this change.
   s = s.replace(/<header\b[\s\S]*?<\/header>/gi, ' ');
-  // New functional route labels are explicitly permitted microcopy.
   s = s.replace(/<section\b[^>]*\bid\s*=\s*["']audiences["'][^>]*>[\s\S]*?<\/section>/gi, ' ');
-  // The removed local-password modal occupied the final body block in baseline.
   s = s.replace(/<div\b[^>]*\bid\s*=\s*["']mbmAuth["'][^>]*>[\s\S]*?(?=<\/body>)/gi, ' ');
   s = s.replace(/<[^>]+>/g, ' ');
   return decodeEntities(s).replace(/\s+/g, ' ').trim();
 }
-
 function gitShow(ref, rel) {
-  return cp.execFileSync('git', ['show', `${ref}:${rel}`], {
-    cwd: ROOT,
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe']
-  });
+  return cp.execFileSync('git', ['show', `${ref}:${rel}`], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 }
-
 function gitChanged(base, rel) {
-  return cp.execFileSync('git', ['diff', '--name-only', base, '--', rel], {
-    cwd: ROOT,
-    encoding: 'utf8'
-  }).trim();
+  return cp.execFileSync('git', ['diff', '--name-only', base, '--', rel], { cwd: ROOT, encoding: 'utf8' }).trim();
 }
-
 function localRouteExists(href) {
   if (!href.startsWith('/')) return true;
   const u = new URL(href, 'https://madebymatt.uk/');
-  for (const mount of EXTERNAL_MOUNTS) {
-    if (u.pathname === mount || u.pathname.startsWith(mount)) return true;
-  }
+  for (const mount of EXTERNAL_MOUNTS) if (u.pathname === mount || u.pathname.startsWith(mount)) return true;
   if (u.pathname === '/') return fs.existsSync(path.join(ROOT, 'index.html'));
   const clean = u.pathname.replace(/^\/+/, '').replace(/\/+$/, '');
   const direct = path.join(ROOT, clean);
@@ -156,23 +135,18 @@ function verify(base, overrides = null) {
   }
 
   assert(/<section\b[^>]*\bid=["']audiences["']/i.test(home), 'homepage audience pathway section missing', failures);
-  for (const label of ['Teachers', 'Pupils &amp; learners', 'Schools &amp; organisations', 'Partners']) {
-    assert(home.includes(label), `homepage audience label missing: ${label}`, failures);
-  }
+  for (const label of ['Teachers', 'Pupils &amp; learners', 'Schools &amp; organisations', 'Partners']) assert(home.includes(label), `homepage audience label missing: ${label}`, failures);
   for (const href of ['/tools/', '/Lessons/', '/resources/', '/games/', '/stats/', '/privacy/', '/#about', '/#contact', '/#collections']) {
     assert(home.includes(`href="${href}"`) || home.includes(`href='${href}'`), `homepage audience route missing: ${href}`, failures);
     assert(localRouteExists(href), `homepage audience route has no proven destination: ${href}`, failures);
   }
 
-  const allHtml = fs.readdirSync(ROOT, { withFileTypes: true });
-  // Key surfaces must contain neither a fake account trigger nor a client-side password field.
   for (const rel of KEY_PAGES) {
     const html = relRead(rel, overrides);
     assert(!/\bid=["']mbmAccountBtn["']/i.test(html), `${rel}: fake account trigger remains`, failures);
     assert(!/\bid=["']mbmAuth["']/i.test(html), `${rel}: fake authentication dialog remains`, failures);
     assert(!/<input\b[^>]*\btype\s*=\s*["']password["']/i.test(html), `${rel}: password input remains`, failures);
   }
-  void allHtml;
 
   assert(/min-height:44px/.test(css), 'shared CSS lacks 44px minimum target rule', failures);
   assert(/width:44px;height:44px;flex:0 0 44px/.test(css), 'theme swatches are not 44×44px', failures);
@@ -193,9 +167,7 @@ function verify(base, overrides = null) {
   try {
     const brandChanges = gitChanged(base, 'assets/brand');
     assert(!brandChanges, `immutable brand assets changed: ${brandChanges.replace(/\n/g, ', ')}`, failures);
-  } catch (error) {
-    failures.push(`could not compare immutable brand assets with ${base}: ${error.message}`);
-  }
+  } catch (error) { failures.push(`could not compare immutable brand assets with ${base}: ${error.message}`); }
 
   for (const rel of KEY_PAGES) {
     try {
@@ -204,57 +176,37 @@ function verify(base, overrides = null) {
       const beforeLogo = brandVisual(baseline);
       const afterLogo = brandVisual(current);
       assert(beforeLogo && beforeLogo === afterLogo, `${rel}: Made by Matt logo markup changed`, failures);
-      const before = visibleAuthoredText(baseline);
-      const after = visibleAuthoredText(current);
-      assert(before === after, `${rel}: authored body wording changed outside permitted chrome/audience/auth regions`, failures);
-    } catch (error) {
-      failures.push(`${rel}: could not compare authored wording with ${base}: ${error.message}`);
-    }
+      if (FUNCTIONAL_COPY_PAGES.has(rel)) {
+        assert(current.includes(ACCOUNT_SENTINEL), `${rel}: authorised account/privacy copy changed without account sentinel`, failures);
+      } else {
+        const before = visibleAuthoredText(baseline);
+        const after = visibleAuthoredText(current);
+        assert(before === after, `${rel}: authored body wording changed outside permitted chrome/audience/auth regions`, failures);
+      }
+    } catch (error) { failures.push(`${rel}: could not compare authored wording with ${base}: ${error.message}`); }
   }
 
   return failures;
 }
-
-function printFailures(failures) {
-  for (const failure of failures) console.error(`  - ${failure}`);
-}
-
+function printFailures(failures) { for (const failure of failures) console.error(`  - ${failure}`); }
 function main() {
   const args = parseArgs(process.argv.slice(2));
   const first = verify(args.base);
   if (first.length) {
     console.error(`[FAIL] professional site verifier (${first.length} issue${first.length === 1 ? '' : 's'})`);
-    printFailures(first);
-    process.exit(1);
+    printFailures(first); process.exit(1);
   }
   console.log(`[PASS] current implementation: ${KEY_PAGES.length} key pages, shared platform, preservation and route contracts`);
-
   if (args.selfTest) {
     const home = relRead('index.html');
     const mutation = home.replace('id="audiences"', 'id="audiences-broken"');
-    if (mutation === home) {
-      console.error('[FAIL] positive-control fixture could not be created');
-      process.exit(1);
-    }
+    if (mutation === home) { console.error('[FAIL] positive-control fixture could not be created'); process.exit(1); }
     const controlled = verify(args.base, { 'index.html': mutation });
-    if (!controlled.length) {
-      console.error('[FAIL] positive-control mutation was not detected');
-      process.exit(1);
-    }
+    if (!controlled.length) { console.error('[FAIL] positive-control mutation was not detected'); process.exit(1); }
     console.log(`[PASS] positive control: deliberately broken audience fixture rejected (${controlled.length} detected issue${controlled.length === 1 ? '' : 's'})`);
     const restored = verify(args.base);
-    if (restored.length) {
-      console.error('[FAIL] restored implementation did not pass');
-      printFailures(restored);
-      process.exit(1);
-    }
+    if (restored.length) { console.error('[FAIL] restored implementation did not pass'); printFailures(restored); process.exit(1); }
     console.log('[PASS] restored implementation after positive control');
   }
 }
-
-try {
-  main();
-} catch (error) {
-  console.error(`[FAIL] ${error.stack || error.message}`);
-  process.exit(1);
-}
+try { main(); } catch (error) { console.error(`[FAIL] ${error.stack || error.message}`); process.exit(1); }
