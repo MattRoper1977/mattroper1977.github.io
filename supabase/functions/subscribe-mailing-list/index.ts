@@ -1,7 +1,7 @@
 // mbm-accounts-members-mailing-2026-08-08
 // Public mailing-list subscription proxy.
 // BUTTONDOWN_API_KEY/buttondown_api_key stays in Supabase Edge Function secret storage.
-// No subscriber address is logged by this function.
+// No subscriber address, provider response body or credential is logged.
 const ALLOWED = new Set((Deno.env.get('MBM_ALLOWED_ORIGINS') || 'https://madebymatt.uk').split(',').map(x => x.trim()).filter(Boolean))
 function cors(origin: string | null) {
   const safe = origin && ALLOWED.has(origin) ? origin : 'https://madebymatt.uk'
@@ -16,43 +16,54 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return json(405, { ok: false, message: 'Method not allowed.' }, origin)
   if (origin && !ALLOWED.has(origin)) return json(403, { ok: false, message: 'Origin not allowed.' }, origin)
 
-  // Supabase's dashboard may store custom secret names in lowercase. Keep the
-  // original uppercase name for CLI/env compatibility, but accept the exact
-  // lowercase dashboard name Matt is using in production too.
   const token = Deno.env.get('BUTTONDOWN_API_KEY') || Deno.env.get('buttondown_api_key') || ''
   if (!token) return json(503, { ok: false, message: 'The mailing list is not configured yet.' }, origin)
 
   let body: { email?: string, consent?: boolean, company?: string } = {}
   try { body = await req.json() } catch (_) { return json(400, { ok: false, message: 'Please check the form and try again.' }, origin) }
   const email = String(body.email || '').trim().toLowerCase()
-  if (String(body.company || '').trim()) return json(200, { ok: true, state: 'pending_confirmation' }, origin) // honeypot: quiet success
+  if (String(body.company || '').trim()) return json(200, { ok: true, state: 'pending_confirmation' }, origin)
   if (body.consent !== true) return json(400, { ok: false, message: 'Consent is required to join the mailing list.' }, origin)
   if (!validEmail(email)) return json(400, { ok: false, message: 'Enter a valid email address.' }, origin)
+
+  const headers = {
+    'Authorization': `Token ${token}`,
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    // Supabase is a server-to-server proxy and does not forward/store a
+    // subscriber IP. Buttondown documents this header for integrations that
+    // do not have the subscriber IP; it is rate-limited by Buttondown.
+    'X-Buttondown-Bypass-Firewall': 'true'
+  }
 
   let response: Response
   try {
     response = await fetch('https://api.buttondown.com/v1/subscribers', {
-      method: 'POST',
-      headers: { 'Authorization': `Token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ email_address: email })
+      method: 'POST', headers, body: JSON.stringify({ email_address: email })
     })
   } catch (_) {
     return json(502, { ok: false, message: 'The mailing service could not be reached. Please try again.' }, origin)
   }
 
-  // The caller is unauthenticated, so the reply must not reveal whether an
-  // address is already on the list. A first-time subscribe and a duplicate
-  // therefore return an IDENTICAL body. Do not reintroduce a distinguishable
-  // state, status code or message here: any of them rebuilds the enumeration
-  // oracle that this uniformity exists to close.
   if (response.ok) return json(200, { ok: true, state: 'pending_confirmation' }, origin)
-  const detail = (await response.text()).toLowerCase()
-  if ((response.status === 400 || response.status === 409) && /already|exists|subscriber/.test(detail)) {
-    // Already active, or previously unsubscribed. Either way the caller gets
-    // the same answer a new subscriber gets. No resubscribe is sent, so an
-    // address that opted out stays opted out.
-    return json(200, { ok: true, state: 'pending_confirmation' }, origin)
+  if (response.status === 429) return json(429, { ok: false, message: 'The mailing list is busy right now. Please try again later.' }, origin)
+
+  // Buttondown intentionally returns 400 for an existing subscriber. Never
+  // infer "duplicate" from error prose: that previously let unrelated 400s
+  // (including firewall blocks) masquerade as success. Prove existence through
+  // the authenticated retrieve-by-email endpoint before returning the same
+  // enumeration-safe public response as a first-time signup.
+  if (response.status === 400 || response.status === 409) {
+    try {
+      const existing = await fetch(`https://api.buttondown.com/v1/subscribers/${encodeURIComponent(email)}`, {
+        headers: { 'Authorization': `Token ${token}`, 'Accept': 'application/json' }
+      })
+      if (existing.ok) return json(200, { ok: true, state: 'pending_confirmation' }, origin)
+      if (existing.status === 429) return json(429, { ok: false, message: 'The mailing list is busy right now. Please try again later.' }, origin)
+    } catch (_) {
+      return json(502, { ok: false, message: 'The mailing service could not be reached. Please try again.' }, origin)
+    }
   }
-  if (response.status === 429) return json(429, { ok: false, message: 'Too many subscription attempts. Please try again later.' }, origin)
+
   return json(502, { ok: false, message: 'The mailing service could not complete that request. Please try again.' }, origin)
 })
