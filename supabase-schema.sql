@@ -8,6 +8,7 @@
 -- * member_data uses optimistic versioning so a stale browser cannot silently
 --   replace a newer account copy. The client refetches, merges, and retries.
 -- * Auth-user deletion cascades to profile + member data.
+-- * Browser roles receive only the table/column grants needed by the client.
 
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -39,19 +40,19 @@ drop policy if exists "profiles_select_own" on public.profiles;
 drop policy if exists "profiles_insert_own" on public.profiles;
 drop policy if exists "profiles_update_own" on public.profiles;
 drop policy if exists "profiles_delete_own" on public.profiles;
-create policy "profiles_select_own" on public.profiles for select to authenticated using (auth.uid() = id);
-create policy "profiles_insert_own" on public.profiles for insert to authenticated with check (auth.uid() = id);
-create policy "profiles_update_own" on public.profiles for update to authenticated using (auth.uid() = id) with check (auth.uid() = id);
-create policy "profiles_delete_own" on public.profiles for delete to authenticated using (auth.uid() = id);
+create policy "profiles_select_own" on public.profiles for select to authenticated using ((select auth.uid()) = id);
+create policy "profiles_insert_own" on public.profiles for insert to authenticated with check ((select auth.uid()) = id and tier = 'member');
+create policy "profiles_update_own" on public.profiles for update to authenticated using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
+create policy "profiles_delete_own" on public.profiles for delete to authenticated using ((select auth.uid()) = id);
 
 drop policy if exists "member_data_select_own" on public.member_data;
 drop policy if exists "member_data_insert_own" on public.member_data;
 drop policy if exists "member_data_update_own" on public.member_data;
 drop policy if exists "member_data_delete_own" on public.member_data;
-create policy "member_data_select_own" on public.member_data for select to authenticated using (auth.uid() = user_id);
-create policy "member_data_insert_own" on public.member_data for insert to authenticated with check (auth.uid() = user_id);
-create policy "member_data_update_own" on public.member_data for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "member_data_delete_own" on public.member_data for delete to authenticated using (auth.uid() = user_id);
+create policy "member_data_select_own" on public.member_data for select to authenticated using ((select auth.uid()) = user_id);
+create policy "member_data_insert_own" on public.member_data for insert to authenticated with check ((select auth.uid()) = user_id);
+create policy "member_data_update_own" on public.member_data for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+create policy "member_data_delete_own" on public.member_data for delete to authenticated using ((select auth.uid()) = user_id);
 
 create or replace function public.handle_new_user()
 returns trigger
@@ -76,10 +77,25 @@ begin
 end;
 $$;
 
+-- Trigger-only function: do not expose direct execution to browser roles.
+revoke all on function public.handle_new_user() from public;
+revoke all on function public.handle_new_user() from anon;
+revoke all on function public.handle_new_user() from authenticated;
+
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
 after insert on auth.users
 for each row execute procedure public.handle_new_user();
+
+-- Safe backfill for a project that already had Auth users.
+insert into public.profiles (id, name, display_name, tier)
+select u.id,
+       nullif(coalesce(u.raw_user_meta_data->>'name', u.raw_user_meta_data->>'display_name', ''), ''),
+       nullif(coalesce(u.raw_user_meta_data->>'display_name', u.raw_user_meta_data->>'name', ''), ''),
+       'member'
+from auth.users u
+left join public.profiles p on p.id = u.id
+where p.id is null;
 
 insert into public.member_data (user_id, data, version)
 select u.id, '{"schema":1,"favourites":{}}'::jsonb, 1
@@ -118,6 +134,19 @@ $$;
 revoke all on function public.update_member_data(bigint, jsonb) from public;
 grant execute on function public.update_member_data(bigint, jsonb) to authenticated;
 
+-- Data API grants are deliberately narrower than the RLS policy surface.
+-- The client never inserts/deletes profiles; the Auth trigger owns creation and
+-- Auth deletion cascades removal. Users may edit only their own name fields.
+revoke all on table public.profiles from anon;
+revoke all on table public.profiles from authenticated;
+grant select on table public.profiles to authenticated;
+grant update (name, display_name, updated_at) on table public.profiles to authenticated;
+
+revoke all on table public.member_data from anon;
+revoke all on table public.member_data from authenticated;
+grant select, insert, update, delete on table public.member_data to authenticated;
+
 -- Useful readback after running this file:
 -- select tablename, rowsecurity from pg_tables where schemaname='public' and tablename in ('profiles','member_data');
--- select proname from pg_proc where proname='update_member_data';
+-- select policyname, tablename, cmd, roles from pg_policies where schemaname='public' and tablename in ('profiles','member_data');
+-- select proname, prosecdef from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and proname in ('handle_new_user','update_member_data');
