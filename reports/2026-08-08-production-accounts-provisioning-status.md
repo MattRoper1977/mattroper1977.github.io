@@ -47,6 +47,24 @@ Matt completed the corrected phone-only Codespaces QA path against PR #99 and re
 
 The Codespaces test requires a Public forwarded port while Supabase Auth uses the implicit URL-hash callback flow, otherwise GitHub's private-port interstitial can consume the hash before the application receives it.
 
+### Production RLS isolation proof — PASSED
+
+The production database boundary was exercised in rollback-only transactions using two temporary Auth identities and the real `authenticated` Postgres role plus `request.jwt.claim.sub`, which is what `auth.uid()` reads.
+
+Measured results:
+
+- User A read its own `profiles` row: **1**
+- User A read User B's `profiles` row: **0**
+- User A read its own `member_data` row: **1**
+- User A read User B's `member_data` row: **0**
+- User A attempted to update User B's `member_data`: **0 rows updated**
+- User B read its own `profiles` row: **1**
+- User B read User A's `profiles` row: **0**
+- User B read its own `member_data` row: **1**
+- User B read User A's `member_data` row: **0**
+
+Every transaction was rolled back. A cleanup readback immediately afterwards measured **0 Auth users, 0 profiles and 0 member rows**, so the RLS proof left no QA identities or account data behind.
+
 ## Security repairs after review
 
 ### Mailing membership enumeration
@@ -63,12 +81,13 @@ The browser previously used `profiles.upsert(...)` even though authenticated use
 
 ## Remaining production acceptance work
 
-PR #99 remains Draft until these independent gates are genuinely proven:
+The account data-isolation gate is now complete. PR #99 remains Draft only for provider/deployment-dependent acceptance that must not be fabricated:
 
-1. two distinct authenticated QA identities prove User A cannot read User B's `profiles` or `member_data` rows and vice versa;
-2. self-service account deletion is proven from the production origin;
-3. real Buttondown subscribe → provider readback/confirmation → duplicate handling → unsubscribe is proven, after which `features.mailing.enabled` may be switched to `true`;
-4. final CI is reviewed without treating unrelated pre-existing estate failures as account regressions;
-5. PR #99 is marked Ready, merged, and the served production `/account/`, `/members/`, `/mailing-list/` and `/privacy/` surfaces are verified.
+1. self-service account deletion is proven from the real production origin after the account route is deployed;
+2. real Buttondown subscribe → provider readback/confirmation → duplicate handling → unsubscribe is proven, after which `features.mailing.enabled` may be switched to `true`;
+3. final CI is reviewed against the current main branch;
+4. PR #99 is marked Ready, merged, and the served production `/account/`, `/members/`, `/mailing-list/` and `/privacy/` surfaces are verified.
+
+Apex Sports' unrelated stale New Release verifier was repaired separately in PR #100 and merged before this final #99 pass, so it is no longer an inherited red on the account PR.
 
 No unproven provider-dependent gate is claimed as complete.
