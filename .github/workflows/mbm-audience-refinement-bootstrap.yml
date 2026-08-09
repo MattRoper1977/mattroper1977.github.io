@@ -65,3 +65,57 @@ jobs:
             artifacts/bootstrap
           if-no-files-found: error
           retention-days: 1
+
+  related-sources:
+    name: Capture canonical Lessons, Games and Apps source metadata
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: 93d570041f4c7214a0c41e3b58ce9ca280f446cb
+          path: related/Lessons
+          fetch-depth: 1
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: 2591276e1a9dc74954eba45e5993e891ef59cb6b
+          path: related/Games
+          fetch-depth: 1
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Matt-s-Apps-
+          ref: dc06f6914eff776a7d18f67f16ab280235dab9da
+          path: related/Apps
+          fetch-depth: 1
+
+      - name: Collect canonical manifests and inventories
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bundle/apps-html
+          cp related/Lessons/resources.json bundle/lessons-resources.json
+          cp related/Games/games.json bundle/games.json
+          cp related/Apps/index.html bundle/apps-index.html
+          cp related/Apps/README.md bundle/apps-readme.md
+          find related/Lessons -path '*/.git' -prune -o -type f -printf '%P\t%s\n' | sort > bundle/lessons-files.tsv
+          find related/Games -path '*/.git' -prune -o -type f -printf '%P\t%s\n' | sort > bundle/games-files.tsv
+          find related/Apps -path '*/.git' -prune -o -maxdepth 2 -type f -printf '%P\t%s\n' | sort > bundle/apps-files.tsv
+          find related/Apps -maxdepth 1 -type f -name '*.html' -print0 | xargs -0 -r -I{} cp '{}' bundle/apps-html/
+          cat > bundle/source-commits.json <<'JSON'
+          {
+            "Lessons": "93d570041f4c7214a0c41e3b58ce9ca280f446cb",
+            "Games": "2591276e1a9dc74954eba45e5993e891ef59cb6b",
+            "Apps": "dc06f6914eff776a7d18f67f16ab280235dab9da"
+          }
+          JSON
+          tar -czf related-source-manifests.tgz bundle
+          sha256sum related-source-manifests.tgz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mbm-related-source-manifests
+          path: related-source-manifests.tgz
+          if-no-files-found: error
+          retention-days: 1
