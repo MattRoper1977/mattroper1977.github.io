@@ -5,35 +5,103 @@ re-deriving anything. Last re-ordered 2 August 2026.
 
 ---
 
-## 0a. `verify_professional_site.js` — 8 findings against `main/index.html`, cause not established
+## 0a. `verify_professional_site.js` — 8 findings, cause identified, two one-line fixes not yet authorised
 
 `verify-games-audience-faces.yml` fails on `main` at *Verify professional shell
-preservation against the target*. Eight findings, all about `main/index.html`:
-five "authorised homepage region … matched 0 times (expected 1)", plus a logo
-visual change, authored body wording outside permitted regions, and privacy
-copy changed without an account sentinel.
+preservation against the target*. Eight findings: five "authorised homepage
+region … matched 0 times (expected 1)", a logo visual change, authored body
+wording outside permitted regions, and privacy copy changed without an account
+sentinel.
 
-**Do not "fix" these by adjusting the expectations.** Measured evidence:
+**Do not "fix" these by adjusting the expectations.** Nothing below changes an
+expectation; it identifies what the check was comparing.
 
-- All five region patterns, extracted from the verifier and evaluated in Node
-  against the committed `main/index.html`, match **exactly once each**.
-- The verifier nonetheless reports 0 for all five.
+### What `base` is — printed at run time, not inferred
 
-So the check is not evaluating them against the committed file. It runs
-`verify(base, overrides)` and the step is named *against the target* — it is a
-drift comparison against a pinned baseline copy that this pass did not locate.
+Instrumented copy of the verifier, run exactly as CI runs it:
 
-That means neither "the page is wrong" nor "the verifier is wrong" is
-established, and adjusting an expectation to reach green would be
-indistinguishable from a vacuous green. Left red deliberately.
+```
+base argument      : "origin/main"
+base rev-parse     : d0f9c2ae965d66a76af90595a08fb8cdfc27fd01
+base full name     : refs/remotes/origin/main
+base is a live URL : false
+overrides          : null
+```
 
-To start: find what `base`/`overrides` resolve to in the failing path and which
-artefact supplies the target. If the target is a pinned snapshot, the question
-becomes whether `main/index.html` was intended to move — which is an editorial
-call, not a verifier one.
+So `base` is an ordinary **git ref** — not a live URL, not a pinned snapshot
+artefact — and `overrides` is `null` on the failing run. The findings are about
+what is committed, not about what is served. Call sites agree:
+`professional-site-design-audit.yml` passes `--base origin/main`;
+`verify-games-audience-faces.yml` passes `origin/main` on a pull request and
+`HEAD^` on a push.
+
+### The mechanism
+
+`verify()` maps the baseline path for the homepage and only the homepage:
+
+```js
+const baselineRel = rel === 'main/index.html' ? 'index.html' : rel;
+```
+
+Printed at run time, that is what the two sides actually are:
+
+| side | read from | bytes | `<title>` |
+|---|---|---|---|
+| baseline | `origin/main:index.html` | 14,780 | Learning and creation, made simple. · Made by Matt |
+| current | worktree `main/index.html` | 69,047 | Made by Matt — Learn • Build • Explore |
+
+The baseline is **the audience chooser**. The other six key pages read
+`base:<same path>` and are byte-identical to the worktree. The five regions do
+not appear in the chooser because they never did — note the failing labels say
+`main/index.html *baseline*`, which is the side being read, not the page.
+
+### Why it was once right, and when it went stale
+
+The remap and `main/index.html` arrived in the same commit, `50817f0` (#110),
+which moved the professional homepage from `/` to `/main/` and gave `/` to the
+chooser. Against a base that predates that move, comparing the new
+`main/index.html` against the old `index.html` was the correct preservation
+comparison. It is a **one-shot mapping**: every base since #110 merged already
+contains `main/index.html`, so the comparison has been reading the chooser ever
+since.
+
+### What each finding costs
+
+- **7 of the 8** come from the remap. Same verifier, remap disabled as a
+  measurement only: **1 issue remains**.
+- **The 8th is independent.** `b11b449` ("Recover the PR #110 audience
+  discovery implementation from `.mbm-closeout`") *replaced* the privacy page's
+  sentinel line rather than adding to it —
+  `mbm-accounts-members-mailing-2026-08-08` became
+  `mbm-audience-discovery-teach-professional-hubs-closeout-2026-08-09`. The
+  account/mailing copy that sentinel authorises is still on the page (the
+  Supabase and Buttondown rows, the deletion contact). `members/index.html`
+  kept its sentinel; `privacy/index.html` lost it.
+
+### The cost that is not in the finding count
+
+`main()` exits on the first failure, before `--self-test`. So the **four
+positive controls have not run on `main` since #110 merged** — the step that
+proves this gate can fail has itself been failing before it reaches them.
+
+### Measured, not applied
+
+With `baselineRel = rel` and the account sentinel restored alongside the
+closeout one, the verifier passes **and all four controls fire**, including
+*unrelated authored-copy mutation rejected* — so the corrected baseline path
+still catches drift and this is not a vacuous green.
+
+Neither change was made. Both are one-liners awaiting a decision:
+
+1. **The remap.** Drop it, or make it conditional on `base` not already
+   containing `main/index.html`. Dropping it is simpler and correct for every
+   base from here on; the conditional keeps a rerun against a pre-#110 base
+   meaningful, which nothing currently needs.
+2. **The privacy sentinel.** The page is authorised under both changes, so it
+   should carry both sentinel lines. Restoring it changes no copy.
 
 These findings predate the audience-discovery sequence. One of the original
-nine was a stale label list and is fixed; the remaining eight are untouched.
+nine was a stale label list and is fixed.
 
 ---
 
