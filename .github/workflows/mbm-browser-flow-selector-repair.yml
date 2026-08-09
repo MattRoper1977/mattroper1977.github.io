@@ -1,0 +1,114 @@
+name: Temporary browser journey selector repair
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/mbm-browser-flow-selector-repair.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Make journey proof operate responsive navigation honestly
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tools/verify_games_audience_faces.mjs')
+          text=p.read_text(encoding='utf-8')
+
+          def replace_once(old,new):
+              global text
+              count=text.count(old)
+              if count!=1:
+                  raise SystemExit(f'expected one occurrence, found {count}: {old[:140]!r}')
+              text=text.replace(old,new,1)
+
+          replace_once(
+          '''async function clickAndPath(page, selector, expectedPath, label) {
+            await Promise.all([
+              page.waitForURL(url => url.pathname === expectedPath, { timeout: 45000 }),
+              page.locator(selector).first().click()
+            ]);
+            await settle(page);
+            ensure(pathnameOf(page.url()) === expectedPath, `${label} ended at ${page.url()}`);
+          }
+          ''',
+          '''async function clickAndPath(page, selector, expectedPath, label) {
+            await Promise.all([
+              page.waitForURL(url => url.pathname === expectedPath, { timeout: 45000 }),
+              page.locator(selector).first().click()
+            ]);
+            await settle(page);
+            ensure(pathnameOf(page.url()) === expectedPath, `${label} ended at ${page.url()}`);
+          }
+          async function clickNavAndPath(page, href, expectedPath, label, text) {
+            const menu = page.locator('#menu');
+            if (await menu.isVisible().catch(() => false)) {
+              if (await menu.getAttribute('aria-expanded') !== 'true') await menu.click();
+              ensure((await visibleBox(page, '#nav')).visible, `${label}: responsive navigation did not open`);
+            }
+            let link = page.locator(`#nav a[href="${href}"]`);
+            if (text) link = link.filter({ hasText: text });
+            ensure(await link.count() >= 1, `${label}: navigation link ${href} is missing`);
+            if (!(await link.first().isVisible())) {
+              const more = page.locator('#nav details.mbm-nav-more');
+              ensure(await more.count() === 1, `${label}: hidden navigation link has no More panel`);
+              if (!(await more.getAttribute('open'))) await more.locator('summary').click();
+            }
+            ensure(await link.first().isVisible(), `${label}: navigation link ${href} is still hidden`);
+            await Promise.all([
+              page.waitForURL(url => url.pathname === expectedPath, { timeout: 45000 }),
+              link.first().click()
+            ]);
+            await settle(page);
+            ensure(pathnameOf(page.url()) === expectedPath, `${label} ended at ${page.url()}`);
+          }
+          ''')
+
+          replacements={
+          '''    await clickAndPath(page, 'a[href="/"] >> text="Choose homepage"', '/', 'Flow A main → chooser');''':
+          '''    await clickNavAndPath(page, '/', '/', 'Flow A main → chooser', 'Choose homepage');''',
+          '''    await clickAndPath(page, 'nav a[href="/games/"]', '/games/', 'Flow B Games');''':
+          '''    await clickNavAndPath(page, '/games/', '/games/', 'Flow B Games', 'Games');''',
+          '''    await clickAndPath(page, 'a[href="/"] >> text="Choose homepage"', '/', 'Flow B main → chooser');''':
+          '''    await clickNavAndPath(page, '/', '/', 'Flow B main → chooser', 'Choose homepage');''',
+          '''    await clickAndPath(page, 'nav a[href="/games/"]', '/games/', 'Flow D Games');''':
+          '''    await clickNavAndPath(page, '/games/', '/games/', 'Flow D Games', 'Games');''',
+          '''    await clickAndPath(page, 'nav a[href="/resources/"]', '/resources/', 'Flow D Resources');''':
+          '''    await clickNavAndPath(page, '/resources/', '/resources/', 'Flow D Resources', 'Resources');''',
+          '''    await clickAndPath(page, 'nav a[href="/privacy/"]', '/privacy/', 'Flow D Privacy');''':
+          '''    await clickNavAndPath(page, '/privacy/', '/privacy/', 'Flow D Privacy', 'Privacy');''',
+          '''    await clickAndPath(page, 'a[href="/account/"]', '/account/', 'Flow G Account');''':
+          '''    await clickNavAndPath(page, '/account/', '/account/', 'Flow G Account', 'Account');'''
+          }
+          for old,new in replacements.items(): replace_once(old,new)
+          p.write_text(text,encoding='utf-8')
+          PY
+          node --check tools/verify_games_audience_faces.mjs
+
+      - name: Commit selector repair and remove this workflow
+        shell: bash
+        env:
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          git config user.name 'OpenAI Codex'
+          git config user.email 'codex@openai.com'
+          git rm -f .github/workflows/mbm-browser-flow-selector-repair.yml
+          git add tools/verify_games_audience_faces.mjs
+          git diff --check
+          git commit -m 'test: exercise responsive navigation in browser flows'
+          git push origin "HEAD:${HEAD_BRANCH}"
