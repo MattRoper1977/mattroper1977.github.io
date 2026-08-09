@@ -164,7 +164,7 @@ async function testRoot(page, width, target) {
   target.choiceCount = await page.locator('[data-mbm-face-choice]').count();
   ensure(target.choiceCount === 7, `root has ${target.choiceCount} audience choices at ${width}px`);
   const routes = await page.locator('[data-mbm-face-choice]').evaluateAll(links => links.map(link => link.getAttribute('href')));
-  const labels = await page.locator('[data-mbm-face-choice] h3').allInnerTexts();
+  const labels = await page.locator('[data-mbm-face-choice]').evaluateAll(links => links.map(link => link.getAttribute('data-mbm-face-label')));
   ensure(JSON.stringify(routes) === JSON.stringify(expectedRoutes), `root routes differ at ${width}px: ${JSON.stringify(routes)}`);
   ensure(JSON.stringify(labels) === JSON.stringify(expectedLabels), `root labels differ at ${width}px: ${JSON.stringify(labels)}`);
   ensure(await page.locator('#group-people').count() === 1 && await page.locator('#group-organisations').count() === 1, 'root audience grouping is missing');
