@@ -25,6 +25,9 @@ jobs:
       - name: Generated audience HTML is byte-for-byte reproducible
         run: python3 tools/render_audience_homepages.py --check
 
+      - name: Generated discovery hubs are byte-for-byte reproducible
+        run: python3 tools/render_discovery_hubs.py --check
+
       - name: Audience accents meet contrast
         run: python3 tools/check_audience_accents.py
 
