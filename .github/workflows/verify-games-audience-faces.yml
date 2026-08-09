@@ -130,11 +130,18 @@ jobs:
           node tools/verify_professional_site.js --base "$base" --self-test
 
       - name: Verify accounts, Members, Supabase and mailing regressions
+        # Runs even if an earlier step failed. This suite has not run in CI
+        # since #110 because step 5 fails ahead of it - the gate that watches
+        # the auth path, switched off across the pass that changed the auth
+        # path. A step carrying its own coverage must not be removed by an
+        # unrelated failure; !cancelled() keeps it out of a cancelled run.
+        if: ${{ !cancelled() }}
         run: |
           node tools/verify_accounts_members_mailing.js
           node tools/test_member_merge.js
 
       - name: Verify JavaScript, Python and embedded-script syntax
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           set -euo pipefail
@@ -177,6 +184,7 @@ jobs:
           PY
 
       - name: Check patch hygiene and remove temporary bootstrap machinery
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           set -euo pipefail
