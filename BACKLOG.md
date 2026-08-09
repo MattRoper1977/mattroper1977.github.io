@@ -127,15 +127,43 @@ closeout one, the verifier passes **and all four controls fire**, including
 *unrelated authored-copy mutation rejected* — so the corrected baseline path
 still catches drift and this is not a vacuous green.
 
-Neither change was made — they are the two decisions in §9 of the finishing
-instruction. Both are one-liners awaiting a ruling:
+Neither change was made. Both await a ruling.
 
-1. **The remap.** Drop it, or make it conditional on `base` not already
-   containing `main/index.html`. Dropping it is simpler and correct for every
-   base from here on; the conditional keeps a rerun against a pre-#110 base
-   meaningful, which nothing currently needs.
-2. **The privacy sentinel.** The page is authorised under both changes, so it
-   should carry both sentinel lines. Restoring it changes no copy.
+**0a-A · the remap.** Remove it, and add an explicit precondition in its place:
+if `base` does not contain `main/index.html`, **fail with a message naming the
+reason**. Not a conditional — a conditional silently substitutes a different
+file and is indistinguishable from correct behaviour until it isn't, which is
+how this defect survived. A pre-#110 base should be an explicit, deliberate
+invocation, not a hidden branch.
+
+**0a-B · the sentinel. The additive proposal was withdrawn; this replaces it.**
+Three objections defeated it:
+
+- No page in the estate carries two sentinels (59 HTML files, 16 sentinels), so
+  additive sentinels would be **inventing a convention, not restoring one**.
+- Name-matching cannot decide authorship. The locked chooser copy names
+  Supabase and Buttondown *in order to promise it does not use them* — that
+  sentence is authored by the audience pass. A rule keyed on names would flag
+  half the estate.
+- The real gap is `main/index.html`, which carries accounts/mailing prose and
+  counter prose with **no sentinel at all**, escaping only because the verifier
+  governs `/main/` by region comparison.
+
+So: **one sentinel per page stays**, meaning the pass that last authored the
+file, and authorisation becomes a **declared input** — a map of page →
+authorising passes, in the same class as `gameIdOverrides`, `canonicalAliases`
+and `reclassifyAsGame`. A relation that cannot be derived from the page gets
+written down where it can be reviewed.
+
+The boundary, written once and applied consistently: **copy is authorised by the
+pass whose feature's behaviour it describes**, not by every pass whose systems
+it names. The privacy page's accounts/mailing copy describes the accounts
+feature's behaviour. The chooser's sentence describes the *audience-preference*
+feature's behaviour and names the others only as things it does not touch.
+
+`main/index.html` gets an explicit entry either way, so it is governed on
+purpose rather than by accident. If region comparison is judged sufficient
+governance for `/main/`, record that in the map rather than leaving it implicit.
 
 These findings predate the audience-discovery sequence. One of the original
 nine was a stale label list and is fixed.

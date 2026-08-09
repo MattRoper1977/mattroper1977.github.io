@@ -208,17 +208,38 @@ jobs:
           done
           MBM_BASE_URL=http://127.0.0.1:4173/ python3 tools/verify_audience_discovery_browser.py
 
+      # An upload path and a tool's output path that drift apart caused both
+      # symptoms of this defect: `error` on a stale path turned a working proof
+      # red, and `ignore` on a stale path uploaded nothing while reporting
+      # success. Choosing between those two settings is treating the symptom -
+      # so compare the two paths instead of trusting them to agree.
+      - name: The upload path is the path the tool writes
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib, re, sys
+          sys.path.insert(0, "tools")
+          from verify_audience_discovery_browser import ARTIFACTS, ROOT
+          workflow = pathlib.Path(".github/workflows/mbm-audience-discovery-closeout.yml").read_text(encoding="utf-8")
+          block = re.search(r"name:\s*browser-proof\s*\n\s*(?:#[^\n]*\n\s*)*path:\s*(\S+)", workflow)
+          if not block:
+              raise SystemExit("could not find the browser-proof upload path in the workflow")
+          declared = (ROOT / block.group(1)).resolve()
+          if declared != ARTIFACTS.resolve():
+              raise SystemExit(f"upload path {declared} is not where the tool writes ({ARTIFACTS})")
+          print(f"upload path agrees with the tool: {block.group(1)}")
+          PY
+
       - name: Upload browser proof artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: browser-proof
-          # The tool writes here; the old path (artifacts/browser) was written
-          # by nothing, and `ignore` meant the step reported success while
-          # uploading an empty set. `warn` keeps that visible without turning
-          # an earlier failure into two, since this step runs on always().
+          # Kept in step with the tool by the check above. `error` because a
+          # silently empty upload is worse than a red step: if the proof did not
+          # run, that is the thing worth knowing.
           path: audit-output/audience-discovery
-          if-no-files-found: warn
+          if-no-files-found: error
 
       - name: Locked chooser copy cannot silently disappear
         run: |

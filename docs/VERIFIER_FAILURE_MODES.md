@@ -75,6 +75,11 @@ Swept across the estate: 66 tools, 19 with a control suite, 3 with this shape
 (`verify_professional_site.js`, `verify_games_audience_faces.py`,
 `verify_education_hub.py`). All three now aggregate.
 
+Two of the three were **green** at the time of the sweep, and that is the reason
+to sweep rather than to wait: a latent instrument defect in a passing tool is
+invisible until the day it matters, and the day it matters is the day the tool
+goes red.
+
 **Rule:** controls run whether or not the subject verified, and the exit code is
 the union. A skipped control is a reported state, never a silent absence.
 
@@ -85,9 +90,25 @@ looked for the message *authored body wording changed* anywhere in the mutated
 run. That message was already in the 8-finding baseline, so the control would
 have reported PASS without its mutation doing anything at all.
 
-**Rule:** evaluate a control as a **delta** against the unmutated run. If the
-signal it looks for is already in the baseline, the control cannot distinguish
-its mutation from the pre-existing failure — report INCONCLUSIVE, never PASS.
+**Rule:** evaluate a control as a **delta** against the unmutated run, never
+against zero. If the signal it looks for is already in the baseline, the control
+cannot distinguish its mutation from the pre-existing failure — report
+INCONCLUSIVE, never PASS.
+
+A control therefore has **four** outcomes, and a suite that cannot express all
+four is under-reporting:
+
+| state | meaning |
+|---|---|
+| `PASS` | the mutation produced the expected new finding |
+| `FAIL` | it did not — the gate this control tests is not working |
+| `INCONCLUSIVE` | the signal was already in the baseline; this control proved nothing |
+| `ERROR` | the fixture could not be built, so the control never reached its gate |
+
+**Each state must itself be proven**, the same way the gates are: `FAIL` by
+breaking the assertion a control depends on, `ERROR` by making a fixture
+unbuildable, `INCONCLUSIVE` against a genuinely red baseline. A state that has
+never been observed is a state you are guessing about.
 
 ## 8. A step that reports success while doing nothing
 
@@ -96,8 +117,23 @@ nothing writes, with `if-no-files-found: ignore`; and a control run wrote its
 deliberate failure into the *committed* artifact, so the repository's own record
 of the estate briefly described a run that was engineered to fail.
 
-**Rule:** if a step can do nothing, make doing nothing visible. Control runs
-write to scratch (`--artifacts`), so the committed record cannot be a control's.
+The `ignore` variant is the mirror image of a failure earlier in this sequence,
+where `error` on a mismatched path turned a working proof red. Same defect, two
+symptoms: **the workflow's path and the tool's path had drifted apart, and
+nothing compared them.** Choosing between `ignore` and `error` is treating the
+symptom.
+
+**Rules, all three:**
+
+- an artifact step **fails on absence** (`if-no-files-found: error`) — a
+  silently empty upload is worse than a red step;
+- **assert the workflow's path and the tool's configured output path agree**,
+  rather than trusting that they do. `mbm-audience-discovery-closeout.yml`
+  imports `ARTIFACTS` from the tool and compares it with the `path:` it
+  declares;
+- **control runs write to scratch** (`--artifacts`), so the committed record can
+  never be a control's, and the control step asserts the committed artifact is
+  untouched afterwards.
 
 ---
 
