@@ -28,6 +28,12 @@ jobs:
       - name: Generated discovery hubs are byte-for-byte reproducible
         run: python3 tools/render_discovery_hubs.py --check
 
+      - name: Search index regenerates from its sources
+        run: python3 tools/build_mbm_search_index.py --check
+
+      - name: Education hub metadata and derived status
+        run: python3 tools/verify_education_hub.py --as-of 2026-08-09 --self-test
+
       - name: Audience accents meet contrast
         run: python3 tools/check_audience_accents.py
 
@@ -104,6 +110,49 @@ jobs:
       - name: Audience verifier proves its own seven controls
         run: python3 tools/verify_games_audience_faces.py --self-test
 
+      - name: Search index check reads git, not the working tree
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("data/mbm-search-index.json")
+          d = json.loads(p.read_text(encoding="utf-8"))
+          d["entries"][0]["title"] = "DELIBERATELY WRONG"
+          p.write_text(json.dumps(d, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+          # The reference is the committed blob, so a corrupted worktree file
+          # must not change the verdict.
+          out=$(python3 tools/build_mbm_search_index.py --check 2>&1 || true)
+          git checkout -- data/mbm-search-index.json
+          if grep -q "DIFFERS" <<<"$out"; then
+            echo "check read the working tree instead of the blob"; exit 1
+          fi
+          echo "control detected: reference is git"
+
+      - name: An undeclared diff aborts the write
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("data/source-manifests/lessons-resources.json")
+          d = json.loads(p.read_text(encoding="utf-8"))
+          d[0]["title"] = d[0]["title"] + " (edited)"
+          p.write_text(json.dumps(d, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+          out=$(python3 tools/build_mbm_search_index.py --write 2>&1 || true)
+          git checkout -- data/source-manifests/lessons-resources.json
+          if grep -q "write aborted" <<<"$out"; then
+            echo "control detected: undeclared diff refused"
+          else
+            echo "write was not refused"; echo "$out" | head -10; exit 1
+          fi
+
+      - name: External link classification controls
+        run: python3 tools/check_education_hub_links.py --self-test
+
+      - name: Browser proof controls
+        run: python3 tools/verify_audience_discovery_browser.py --self-test
+
       - name: Locked chooser copy cannot silently disappear
         run: |
           set -euo pipefail
@@ -136,26 +185,51 @@ jobs:
     # and on demand - never as a proxy for a branch that has not shipped.
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
       - name: Read back the published routes
         run: |
-          set -euo pipefail
+          set -uo pipefail
           base="https://madebymatt.uk"
-          fail=0
-          for route in / /main/ /for/pupils/ /for/teachers/ /for/parents-carers/ \
-                       /for/schools-semh/ /for/trusts/ /for/councils-organisations/ \
-                       /for/partners/ /education-hub/ /resources/; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' --retry 3 --retry-all-errors "$base$route")
-            printf '  %-34s %s\n' "$route" "$code"
-            [ "$code" = "200" ] || fail=1
+          routes="/ /main/ /start/ /teach/ /resources/ /education-hub/ \
+                  /for/pupils/ /for/teachers/ /for/parents-carers/ /for/schools-semh/ \
+                  /for/trusts/ /for/councils-organisations/ /for/partners/"
+          # Pages deployment lags a merge by minutes. A single check turns that
+          # lag into a false failure, so retry on a schedule and print every
+          # attempt - including the ones that failed, which are the ones a
+          # single check would have recorded.
+          delays="0 300 300 300"
+          attempt=0
+          pending="$routes"
+          for delay in $delays; do
+            [ "$delay" -gt 0 ] && { echo "--- waiting ${delay}s for deployment ---"; sleep "$delay"; }
+            attempt=$((attempt + 1))
+            echo "--- attempt $attempt at $(date -u +%H:%M:%SZ) ---"
+            still=""
+            for route in $pending; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$base$route")
+              printf '  %-34s %s\n' "$route" "$code"
+              [ "$code" = "200" ] || still="$still $route"
+            done
+            pending="$still"
+            [ -z "$pending" ] && break
+            echo "  still not 200:$pending"
           done
+
           echo "--- these must NOT be served ---"
+          negatives=0
           for route in /__probe_do_not_create__ /.mbm-closeout/patch.xz.b64.00; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' --retry 2 --retry-all-errors "$base$route")
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$base$route")
             printf '  %-34s %s\n' "$route" "$code"
-            [ "$code" = "404" ] || fail=1
+            [ "$code" = "404" ] || negatives=1
           done
-          exit $fail
+
+          if [ -n "$pending" ]; then
+            echo "routes never reached 200 after $attempt attempts:$pending"; exit 1
+          fi
+          if [ "$negatives" != "0" ]; then
+            echo "a path that must be removed is still served"; exit 1
+          fi
+          echo "all 13 routes 200; both removed paths 404; $attempt attempt(s)"
