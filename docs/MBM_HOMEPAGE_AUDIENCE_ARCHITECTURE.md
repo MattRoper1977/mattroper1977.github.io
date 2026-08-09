@@ -37,6 +37,10 @@ The local preference key remains `mbm_audience_view`. It is a browser-only navig
 
 `main/index.html` was derived directly from the baseline `index.html`. The professional-site preservation verifier compares the full-home surface at `/main/` against that baseline while allowing only the explicitly authorised architecture, metadata, navigation and account/mailing truth changes. `assets/mbm-doors.js` resolves catalogue paths from the domain root so the same `site.json` data remains valid below `/main/` without changing canonical data conventions.
 
+## Counter-service fallback
+
+The former CounterAPI v1 endpoints returned HTTP 410 during the branch browser proof. `assets/mbm-features.js` therefore keeps visit, country and resource-open tallies in local browser storage by default and makes any future remote counter an explicit opt-in that must first be verified. The public `/main/`, `/stats/` and `/privacy/` wording describes those tallies as device-local and no longer presents unavailable worldwide totals as live data. This repair does not alter Supabase accounts, Buttondown consent or the separate local audience-homepage preference.
+
 ## First-party visual provenance
 
 The audience homepages use only owner-controlled assets already in the production estate:
