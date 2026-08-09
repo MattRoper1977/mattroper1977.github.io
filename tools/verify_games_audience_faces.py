@@ -141,6 +141,66 @@ def promoted_images(source: str) -> list[tuple[str, str, str]]:
     ]
 
 
+def check_main_audience_cards(main_html: str, config: Mapping[str, object]) -> list[str]:
+    """/main/'s chooser cards are generated; assert nothing else looks like one.
+
+    On 2026-08-09 /main/ served THIRTEEN cards in one role="list": the seven
+    generated ones plus six legacy duplicates beginning one byte past the
+    :END marker. They carried no description and no icon, and they were
+    announced as list items alongside the real seven.
+
+    Nothing caught it, and the reason is the species worth recording.
+    spliced_main_page() replaces its marker region and passes everything
+    outside it through verbatim, so --check compared the file against itself
+    outside the region and was byte-exact green over six duplicates. A
+    byte-exact check scoped to a delimited region cannot see a defect
+    immediately outside the delimiter.
+
+    So the region is not enough: the absence of the generated element kind
+    OUTSIDE the region has to be asserted too. Values come from the data file
+    that owns them - counting seven here would just be the second-literal trap
+    in a new place.
+    """
+    from render_audience_homepages import CARDS_BEGIN, CARDS_END
+
+    errors: list[str] = []
+    audiences = config["audiences"]  # type: ignore[index]
+    begin, end = main_html.find(CARDS_BEGIN), main_html.find(CARDS_END)
+    if begin == -1 or end == -1 or end < begin:
+        return ["main/index.html: the generated audience-card region is missing or inverted"]
+
+    positions = [m.start() for m in re.finditer(r'<article class="mbm-audience-card"', main_html)]
+    outside = [pos for pos in positions if not (begin < pos < end)]
+    if outside:
+        errors.append(
+            f"main/index.html: {len(outside)} audience card(s) sit OUTSIDE the generated region "
+            f"(first at byte {outside[0]}, region is {begin}-{end}); the grid must contain only "
+            f"generated cards"
+        )
+    if len(positions) != len(audiences):
+        errors.append(
+            f"main/index.html: {len(positions)} audience card(s) for {len(audiences)} audiences"
+        )
+
+    region = main_html[begin:end]
+    for index, (aid, audience) in enumerate(audiences.items(), start=1):  # type: ignore[union-attr]
+        card = re.search(
+            rf'<article class="mbm-audience-card" data-index="{index:02d}"[\s\S]*?</article>', region
+        )
+        if not card:
+            errors.append(f"main/index.html: no generated card at data-index {index:02d} for {aid}")
+            continue
+        markup = card.group(0)
+        if f'href="{audience["route"]}"' not in markup:  # type: ignore[index]
+            errors.append(f"main/index.html: card {index:02d} does not link to {audience['route']}")
+        if f'>{html.escape(audience["chooserLinkText"], quote=False)}</a>' not in markup:  # type: ignore[index]
+            errors.append(
+                f"main/index.html: card {index:02d} link text is not the declared "
+                f"chooserLinkText {audience['chooserLinkText']!r}"
+            )
+    return errors
+
+
 def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) -> list[str]:
     errors: list[str] = []
     required = [
@@ -229,6 +289,7 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
             errors.append(f"locked chooser copy missing or altered: {sentence[:60]}…")
 
     main = read(root, "main/index.html", overrides)
+    errors.extend(check_main_audience_cards(main, config))
     if canonical_of(main) != "https://madebymatt.uk/main/":
         errors.append("/main/ canonical is wrong")
     if og_url_of(main) != "https://madebymatt.uk/main/":

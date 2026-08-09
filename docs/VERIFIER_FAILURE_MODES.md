@@ -360,6 +360,53 @@ fail on a definition-only change.
 
 ---
 
+## 20. A byte-exact check scoped to a delimited region cannot see the defect just outside it
+
+`spliced_main_page()` regenerates the region between `MBM-AUDIENCE-CARDS:BEGIN`
+and `:END` and **passes everything outside it through verbatim**:
+
+```python
+return html[:start] + generated + html[end + len(CARDS_END):]
+```
+
+So `render_audience_homepages.py --check` compares the file against itself
+outside the region. It was byte-exact and **green** while `/main/` served
+**thirteen** audience cards in one `role="list"` — the seven generated ones plus
+six legacy duplicates beginning **one byte past the `:END` marker**, carrying no
+description and no icon, announced to assistive technology alongside the real
+seven.
+
+The duplicates came from the first-run splice in #116, which located the
+existing cards with
+
+```python
+re.search(r'(?:<article class="mbm-audience-card"[\s\S]*?</article>)+', html)
+```
+
+The cards are separated by a newline, so the `+` could not continue past the
+first one: it matched **1 of 7**, the generated block replaced card 01, and
+02–07 survived. Measured rather than inferred — that exact pattern run against
+the pre-#116 file matches a 191-byte span containing one `<article>`.
+
+Two lessons, and the second is the general one:
+
+- **A repetition of a non-greedy group is not "all the adjacent ones."** If the
+  items are separated by anything at all, it matches one. Anchor on
+  first-start to last-end, or match the container.
+- **A region-scoped generator must also assert the absence of its own output
+  kind outside its region.** The region check answers *is what I generated
+  correct*; it cannot answer *is what I generated the only thing here*. Those
+  are different questions and only the second catches this.
+
+`check_main_audience_cards()` now asserts the count against
+`len(data["audiences"])`, that **zero** cards lie outside the region, and that
+each card's route and link text match the data — proven red by re-inserting a
+legacy card, by deleting a generated one, and by rewriting a declared
+`chooserLinkText`.
+
+---
+
+
 
 ## The shape they share
 
