@@ -1,4 +1,4 @@
-name: Verify homepage architecture and audience homepages
+name: Verify audience discovery, Teach and Education hubs
 
 on:
   pull_request:
@@ -8,28 +8,37 @@ on:
       - 'main/**'
       - 'start/**'
       - 'for/**'
-      - 'games/index.html'
+      - 'teach/**'
+      - 'resources/**'
+      - 'education-hub/**'
+      - 'privacy/**'
       - 'account/**'
       - 'members/**'
       - 'mailing-list/**'
-      - 'privacy/**'
-      - 'resources/**'
-      - 'tools/index.html'
-      - 'stats/**'
-      - '404.html'
       - 'assets/mbm-audience.css'
       - 'assets/mbm-audience.js'
-      - 'assets/mbm-doors.js'
       - 'assets/mbm-platform.css'
       - 'assets/mbm-platform.js'
+      - 'assets/mbm-search.css'
+      - 'assets/mbm-search.js'
+      - 'assets/mbm-recent.js'
       - 'data/audience-homepages.json'
+      - 'data/education-hub.json'
+      - 'data/mbm-search-editorial.json'
+      - 'data/mbm-search-index.json'
+      - 'data/source-manifests/**'
+      - 'data/visual-provenance.json'
       - 'site.json'
       - 'site.webmanifest'
       - 'sitemap.xml'
       - 'audience-sitemap.xml'
-      - 'robots.txt'
       - 'tools/render_audience_homepages.py'
-      - 'tools/stamp-data.py'
+      - 'tools/render_discovery_hubs.py'
+      - 'tools/build_mbm_search_index.py'
+      - 'tools/verify_audience_discovery_closeout.py'
+      - 'tools/verify_audience_discovery_browser.py'
+      - 'tools/verify_education_hub.py'
+      - 'tools/check_education_hub_links.py'
       - 'tools/verify_games_audience_faces.py'
       - 'tools/verify_games_audience_faces.mjs'
       - 'tools/verify_professional_site.js'
@@ -42,28 +51,37 @@ on:
       - 'main/**'
       - 'start/**'
       - 'for/**'
-      - 'games/index.html'
+      - 'teach/**'
+      - 'resources/**'
+      - 'education-hub/**'
+      - 'privacy/**'
       - 'account/**'
       - 'members/**'
       - 'mailing-list/**'
-      - 'privacy/**'
-      - 'resources/**'
-      - 'tools/index.html'
-      - 'stats/**'
-      - '404.html'
       - 'assets/mbm-audience.css'
       - 'assets/mbm-audience.js'
-      - 'assets/mbm-doors.js'
       - 'assets/mbm-platform.css'
       - 'assets/mbm-platform.js'
+      - 'assets/mbm-search.css'
+      - 'assets/mbm-search.js'
+      - 'assets/mbm-recent.js'
       - 'data/audience-homepages.json'
+      - 'data/education-hub.json'
+      - 'data/mbm-search-editorial.json'
+      - 'data/mbm-search-index.json'
+      - 'data/source-manifests/**'
+      - 'data/visual-provenance.json'
       - 'site.json'
       - 'site.webmanifest'
       - 'sitemap.xml'
       - 'audience-sitemap.xml'
-      - 'robots.txt'
       - 'tools/render_audience_homepages.py'
-      - 'tools/stamp-data.py'
+      - 'tools/render_discovery_hubs.py'
+      - 'tools/build_mbm_search_index.py'
+      - 'tools/verify_audience_discovery_closeout.py'
+      - 'tools/verify_audience_discovery_browser.py'
+      - 'tools/verify_education_hub.py'
+      - 'tools/check_education_hub_links.py'
       - 'tools/verify_games_audience_faces.py'
       - 'tools/verify_games_audience_faces.mjs'
       - 'tools/verify_professional_site.js'
@@ -75,47 +93,69 @@ permissions:
   contents: read
 
 concurrency:
-  group: mbm-homepage-audience-${{ github.event.pull_request.number || github.ref }}
+  group: mbm-audience-discovery-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   static-contract:
-    name: Static architecture, preservation and positive controls
+    name: Static architecture, derivation, preservation and mutations
     runs-on: ubuntu-latest
-    timeout-minutes: 16
+    timeout-minutes: 22
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Verify generated audience homepages are current
-        run: python3 tools/render_audience_homepages.py --check
-      - name: Verify homepage architecture and seven positive controls
+
+      - name: Verify generated pages and canonical search data
+        run: |
+          python3 tools/render_audience_homepages.py --check
+          python3 tools/render_discovery_hubs.py --check
+          python3 tools/build_mbm_search_index.py --check
+          python3 tools/verify_education_hub.py --as-of 2026-08-09 --self-test
+          python3 tools/stamp-data.py --check
+
+      - name: Verify Revision 3 architecture and all positive controls
         run: python3 tools/verify_games_audience_faces.py --self-test
-      - name: Verify original homepage preservation and professional shell
+
+      - name: Verify professional shell preservation against the target branch
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin main
-          node tools/verify_professional_site.js --base origin/main --self-test
-      - name: Verify accounts, Members, Supabase and mailing contracts
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin main
+            base=origin/main
+          else
+            base=HEAD^
+          fi
+          node tools/verify_professional_site.js --base "$base" --self-test
+
+      - name: Verify accounts, Members, Supabase and mailing regressions
         run: |
           node tools/verify_accounts_members_mailing.js
           node tools/test_member_merge.js
-      - name: Verify content-hash data stamps
-        run: python3 tools/stamp-data.py --check
-      - name: Verify script, inline-script and CSS syntax
+
+      - name: Verify JavaScript, Python and embedded-script syntax
         shell: bash
         run: |
           set -euo pipefail
           node --check assets/mbm-audience.js
-          node --check assets/mbm-doors.js
+          node --check assets/mbm-search.js
+          node --check assets/mbm-recent.js
           node --check assets/mbm-platform.js
           node --check tools/verify_games_audience_faces.mjs
-          python3 -m py_compile tools/render_audience_homepages.py tools/verify_games_audience_faces.py
+          node --check tools/verify_professional_site.js
+          python3 -m py_compile \
+            tools/render_audience_homepages.py \
+            tools/render_discovery_hubs.py \
+            tools/build_mbm_search_index.py \
+            tools/verify_audience_discovery_closeout.py \
+            tools/verify_audience_discovery_browser.py \
+            tools/verify_education_hub.py \
+            tools/check_education_hub_links.py
           python3 - <<'PY'
           from pathlib import Path
           import json, re, subprocess, tempfile
-          pages=[Path('index.html'),Path('main/index.html'),Path('start/index.html'),Path('games/index.html'),*sorted(Path('for').glob('*/index.html'))]
+          pages=[Path('index.html'),Path('main/index.html'),Path('start/index.html'),Path('teach/index.html'),Path('resources/index.html'),Path('education-hub/index.html'),Path('privacy/index.html'),*sorted(Path('for').glob('*/index.html'))]
           with tempfile.TemporaryDirectory() as td:
               td=Path(td)
               for page in pages:
@@ -125,57 +165,77 @@ jobs:
                       if not body.strip() or re.search(r'\bsrc\s*=',attrs,re.I): continue
                       type_match=re.search(r'\btype\s*=\s*["\']([^"\']+)',attrs,re.I)
                       script_type=type_match.group(1).lower() if type_match else 'text/javascript'
-                      if script_type=='application/ld+json':
-                          json.loads(body)
-                          continue
-                      if script_type not in ('text/javascript','application/javascript','module'):
-                          continue
+                      if script_type=='application/ld+json': json.loads(body); continue
+                      if script_type not in ('text/javascript','application/javascript','module'): continue
                       target=td/f'{page.parent.name or "root"}-{i}.js'
                       target.write_text(body,encoding='utf-8')
                       subprocess.run(['node','--check',str(target)],check=True)
-          for path in [Path('assets/mbm-audience.css'),Path('assets/mbm-platform.css')]:
+          for path in [Path('assets/mbm-audience.css'),Path('assets/mbm-platform.css'),Path('assets/mbm-search.css')]:
               text=path.read_text(encoding='utf-8')
               if text.count('{')!=text.count('}'):
                   raise SystemExit(f'unbalanced CSS braces: {path}')
           PY
-      - name: Check patch hygiene
+
+      - name: Check patch hygiene and remove temporary bootstrap machinery
         shell: bash
         run: |
           set -euo pipefail
-          if [ "${{ github.event_name }}" = pull_request ]; then
+          test ! -e .github/workflows/mbm-audience-refinement-bootstrap.yml
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
             git fetch origin main
             git diff --check origin/main...HEAD
           else
             git diff --check HEAD^
           fi
 
-  browser-matrix:
-    name: Same-origin responsive, visual and journey proof
+  external-links:
+    name: Bounded authoritative external-link validation
     runs-on: ubuntu-latest
-    timeout-minutes: 38
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - name: Check out canonical Games data
+      - name: Check all 40 curated official destinations
+        run: python3 tools/check_education_hub_links.py --timeout 18 --workers 4 --report artifacts/education-hub-links.json
+      - name: Print link summary
+        if: always()
+        run: test ! -f artifacts/education-hub-links.json || cat artifacts/education-hub-links.json
+      - name: Upload redirect-aware link report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mbm-education-hub-links-${{ github.run_id }}
+          path: artifacts/education-hub-links.json
+          if-no-files-found: error
+          retention-days: 30
+
+  browser-matrix:
+    name: Same-origin mobile, desktop, accessibility and privacy proof
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out pinned canonical Games data
         uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Games
-          ref: main
+          ref: 2591276e1a9dc74954eba45e5993e891ef59cb6b
           path: _sources/Games
           fetch-depth: 1
-      - name: Check out canonical Lessons estate
+      - name: Check out pinned canonical Lessons estate
         uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          ref: main
+          ref: 93d570041f4c7214a0c41e3b58ce9ca280f446cb
           path: _sources/Lessons
           fetch-depth: 1
-      - name: Check out canonical Apps estate
+      - name: Check out pinned canonical Apps estate
         uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Matt-s-Apps-
-          ref: main
+          ref: dc06f6914eff776a7d18f67f16ab280235dab9da
           path: _sources/Apps
           fetch-depth: 1
+
       - name: Assemble the real same-origin Made by Matt estate
         shell: bash
         run: |
@@ -195,29 +255,31 @@ jobs:
           if isinstance(features.get('mailing'),dict): features['mailing']['enabled']=False
           path.write_text(json.dumps(data,indent=2)+'\n',encoding='utf-8')
           PY
+
       - name: Install Chromium browser runtime
+        run: |
+          python3 -m pip install --disable-pip-version-check playwright==1.54.0
+          python3 -m playwright install --with-deps chromium
+
+      - name: Run permanent browser matrix and journeys
         shell: bash
         run: |
           set -euo pipefail
-          npm install --no-save --no-package-lock playwright@1.54.2
-          npx playwright install --with-deps chromium
-      - name: Run viewport matrix, screenshots and flows A–G
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -m http.server 4173 --bind 127.0.0.1 --directory _served >/tmp/mbm-homepage-http.log 2>&1 &
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory _served >/tmp/mbm-audience-http.log 2>&1 &
           server=$!
           trap 'kill $server || true' EXIT
           for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
-          MBM_BASE_URL=http://127.0.0.1:4173/ MBM_FULL_ESTATE=1 node tools/verify_games_audience_faces.mjs
+          MBM_BASE_URL=http://127.0.0.1:4173/ MBM_FULL_ESTATE=1 python3 tools/verify_audience_discovery_browser.py
+
       - name: Print browser summary
         if: always()
-        run: test ! -f audit-output/browser-results.json || cat audit-output/browser-results.json
-      - name: Upload screenshots and browser evidence
+        run: test ! -f audit-output/audience-discovery/browser-results.json || cat audit-output/audience-discovery/browser-results.json
+
+      - name: Upload 390px, 1440px and state evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mbm-homepage-audience-${{ github.event.pull_request.number || github.run_id }}-${{ github.run_id }}
+          name: mbm-audience-discovery-browser-${{ github.event.pull_request.number || github.run_id }}-${{ github.run_id }}
           path: audit-output/
           if-no-files-found: error
           retention-days: 30
@@ -225,16 +287,17 @@ jobs:
   live-proof:
     name: Exact production deployment and live browser proof
     if: github.event_name == 'push'
-    needs: [static-contract, browser-matrix]
+    needs: [static-contract, external-links, browser-matrix]
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
       - name: Install Chromium browser runtime
         run: |
-          npm install --no-save --no-package-lock playwright@1.54.2
-          npx playwright install --with-deps chromium
-      - name: Wait for and byte-compare the exact deployed architecture
+          python3 -m pip install --disable-pip-version-check playwright==1.54.0
+          python3 -m playwright install --with-deps chromium
+
+      - name: Wait for and byte-compare the exact deployed static pages
         shell: bash
         run: |
           set -euo pipefail
@@ -242,6 +305,9 @@ jobs:
             [index.html]="/"
             [main/index.html]="/main/"
             [start/index.html]="/start/"
+            [teach/index.html]="/teach/"
+            [resources/index.html]="/resources/"
+            [education-hub/index.html]="/education-hub/"
             [for/pupils/index.html]="/for/pupils/"
             [for/teachers/index.html]="/for/teachers/"
             [for/parents-carers/index.html]="/for/parents-carers/"
@@ -250,42 +316,38 @@ jobs:
             [for/councils-organisations/index.html]="/for/councils-organisations/"
             [for/partners/index.html]="/for/partners/"
           )
-          ready=0
           mkdir -p /tmp/mbm-live
+          ready=0
           for _ in $(seq 1 72); do
             failed=0
             for file in "${!pages[@]}"; do
-              route=${pages[$file]}
-              out="/tmp/mbm-live/${file//\//__}"
-              curl -fsS --retry 2 -H 'Cache-Control: no-cache, no-store, max-age=0' "https://madebymatt.uk${route}?mbm=${GITHUB_SHA}" -o "$out" || { failed=1; break; }
-              cmp -s "$file" "$out" || { failed=1; break; }
+              route="${pages[$file]}"
+              target="/tmp/mbm-live/${file//\//-}"
+              curl -fsSL -H 'Cache-Control: no-cache' "https://madebymatt.uk${route}?mbm=${GITHUB_SHA}" -o "$target" || { failed=1; break; }
+              cmp -s "$file" "$target" || { failed=1; break; }
             done
             if [ "$failed" -eq 0 ]; then ready=1; break; fi
             sleep 10
           done
           test "$ready" -eq 1
-          for route in / /main/ /start/ /for/pupils/ /for/teachers/ /for/parents-carers/ /for/schools-semh/ /for/trusts/ /for/councils-organisations/ /for/partners/ /games/ /Lessons/ /Matt-s-Apps-/ /tools/ /resources/ /account/ /members/ /mailing-list/ /privacy/; do
-            curl -fsS --retry 3 -H 'Cache-Control: no-cache, no-store, max-age=0' "https://madebymatt.uk${route}?mbm=${GITHUB_SHA}" >/dev/null
-          done
-      - name: Run the full live viewport and journey proof
-        run: MBM_BASE_URL=https://madebymatt.uk/ MBM_CACHE_BUST="$GITHUB_SHA" MBM_FULL_ESTATE=1 node tools/verify_games_audience_faces.mjs
-      - name: Record production summary
-        if: always()
-        shell: bash
+          echo "deployed_sha=${GITHUB_SHA}" | tee production-deployment.txt
+          echo "verified_at=$(date -u +%FT%TZ)" | tee -a production-deployment.txt
+
+      - name: Run the permanent verifier against production
         run: |
-          {
-            echo "### Homepage audience production proof"
-            echo
-            echo "- Source SHA: \`$GITHUB_SHA\`"
-            echo "- Architecture pages byte-compared: 10"
-            echo "- Required live routes probed: 18"
-            echo "- Browser evidence: \`audit-output/browser-results.json\`"
-          } >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload production screenshots and evidence
+          MBM_BASE_URL=https://madebymatt.uk/ \
+          MBM_FULL_ESTATE=1 \
+          MBM_LIVE=1 \
+          MBM_CACHE_BUST=${GITHUB_SHA} \
+          python3 tools/verify_audience_discovery_browser.py
+
+      - name: Upload production browser and SHA proof
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mbm-homepage-audience-live-${{ github.run_id }}
-          path: audit-output/
+          name: mbm-audience-discovery-production-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            audit-output/
+            production-deployment.txt
           if-no-files-found: error
-          retention-days: 45
+          retention-days: 30
