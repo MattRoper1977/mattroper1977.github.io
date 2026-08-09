@@ -387,6 +387,28 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
         errors.append("shared hero lacks the detailed local line-art texture")
 
     audience_js = read(root, "assets/mbm-audience.js", overrides)
+    # The brand resolver holds the seven routes as a literal because a static
+    # asset cannot read the JSON at build time. That is a known liability, so
+    # equality with the data file is asserted rather than assumed - a second
+    # copy is only tolerable when it cannot drift silently.
+    js_routes = dict(re.findall(r"(\w+):'(/for/[a-z-]+/)'", audience_js))
+    data_routes = {aid: a["route"] for aid, a in config["audiences"].items()}  # type: ignore[union-attr]
+    if js_routes != data_routes:
+        only_js = {k: v for k, v in js_routes.items() if data_routes.get(k) != v}
+        only_data = {k: v for k, v in data_routes.items() if js_routes.get(k) != v}
+        errors.append(
+            f"assets/mbm-audience.js ROUTES have drifted from data/audience-homepages.json: "
+            f"js={only_js} data={only_data}"
+        )
+    # Anchored to the call sites. A substring test accepts a.brandX and
+    # data-mbm-adult-featuresX - species 19, which this check reproduced on its
+    # first draft minutes after the species was written down.
+    if not re.search(r"querySelectorAll\('a\.brand'\)", audience_js):
+        errors.append("assets/mbm-audience.js no longer selects the brand link to resolve it")
+    if not re.search(r"getAttribute\('data-mbm-adult-features'\)", audience_js):
+        errors.append("assets/mbm-audience.js no longer consults the pupil adult-feature flag "
+                      "when resolving the brand link")
+
     if "mbm_audience_view" not in audience_js or "localStorage" not in audience_js:
         errors.append("local audience preference implementation missing")
     if re.search(r'location\s*\.(?:href|replace|assign)|window\.location\s*=', audience_js):

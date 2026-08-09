@@ -12,6 +12,38 @@ function write(value){try{if(allowed[value])localStorage.setItem(KEY,value);}cat
 function clear(){try{localStorage.removeItem(KEY);}catch(_){}}
 if(allowed[face])write(face);
 
+/* The brand link resolves to the homepage the visitor chose.
+
+   The HTML keeps href="/main/" as the static default: it is the no-JS answer,
+   the no-preference answer, and a stable literal for the byte-for-byte gate.
+   Only the href is rewritten at run time, never the served bytes - the choice
+   is a per-device preference on cached static pages.
+
+   THE PUPIL RULE. /for/pupils/ carries data-mbm-adult-features="off" and its
+   brand link pointed at /main/, the adult platform homepage. On any page
+   carrying that flag the brand resolves to /for/pupils/, or to "/" when there
+   is no usable preference - never to /main/. This is asserted in the browser
+   harness, not left as a convention. */
+/* KNOWN LIABILITY: a static asset cannot read the JSON at build time, so
+   these seven routes are a literal. verify_games_audience_faces.py asserts
+   they equal data/audience-homepages.json exactly, so the copy cannot drift
+   silently - which is the only thing that makes a second literal tolerable. */
+var ROUTES={pupils:'/for/pupils/',teachers:'/for/teachers/',parents:'/for/parents-carers/',schools:'/for/schools-semh/',trusts:'/for/trusts/',councils:'/for/councils-organisations/',partners:'/for/partners/'};
+function adultSuppressed(){return body.getAttribute('data-mbm-adult-features')==='off';}
+function brandTarget(){
+  var saved=read();
+  if(adultSuppressed())return saved==='pupils'?ROUTES.pupils:'/';
+  return saved&&ROUTES[saved]?ROUTES[saved]:'/main/';
+}
+function paintBrand(){
+  var links=doc.querySelectorAll('a.brand');
+  for(var i=0;i<links.length;i+=1){links[i].setAttribute('href',brandTarget());}
+}
+function initBrand(){
+  paintBrand();
+  window.addEventListener('storage',function(event){if(event.key===KEY)paintBrand();});
+}
+
 function initChooser(){
   if(face!=='chooser')return;
   var cards=Array.prototype.slice.call(doc.querySelectorAll('[data-mbm-face-choice]'));
@@ -62,6 +94,6 @@ function initVideos(){
     },{once:true});
   });
 }
-function init(){initChooser();initSurprise();initVideos();}
+function init(){initBrand();initChooser();initSurprise();initVideos();}
 if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

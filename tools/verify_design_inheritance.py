@@ -249,6 +249,23 @@ def main() -> None:
                 f"{floor} so the page cannot decay into a plain directory"
             )
 
+    # The chooser's own purpose is the homepage-type options. They sat third,
+    # below the hero and below a full "Explore the live platform" block, which
+    # put them past the fold on a phone. Asserted by index rather than by
+    # presence: presence was already true when the order was wrong.
+    root_markup = (ROOT / "index.html").read_text(encoding="utf-8")
+    order = [
+        ("the hero", root_markup.find("mf-discovery-hero")),
+        ("the homepage-type choices", root_markup.find('id="homepage-choices"')),
+        ("the explore-the-platform block", root_markup.find("mf-main-option")),
+    ]
+    for (earlier, at), (later, then) in zip(order, order[1:]):
+        if at == -1 or then == -1:
+            findings.fail("/", f"cannot locate {earlier if at == -1 else later} on the chooser")
+        elif at > then:
+            findings.fail("/", f"{later} renders before {earlier}; the homepage-type options "
+                               f"belong directly under the hero")
+
     checked = sum(1 for _, path, _ in surfaces if path.is_file())
     print(f"Design inheritance checked across {checked} surface(s).")
     for note in findings.notes:
