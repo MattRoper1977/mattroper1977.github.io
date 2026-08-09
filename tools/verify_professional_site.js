@@ -196,6 +196,10 @@ function verifyHomeTruthContracts(home, failures) {
 function gitShow(ref, rel) {
   return cp.execFileSync('git', ['show', `${ref}:${rel}`], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 }
+function gitHasPath(ref, rel) {
+  const result = cp.spawnSync('git', ['cat-file', '-e', `${ref}:${rel}`], { cwd: ROOT });
+  return result.status === 0;
+}
 function gitChanged(base, rel) {
   return cp.execFileSync('git', ['diff', '--name-only', base, '--', rel], { cwd: ROOT, encoding: 'utf8' }).trim();
 }
@@ -287,8 +291,28 @@ function verify(base, overrides = null) {
 
   for (const rel of KEY_PAGES) {
     try {
-      const baselineRel = rel === 'main/index.html' ? 'index.html' : rel;
-      const baseline = gitShow(base, baselineRel);
+      // BACKLOG 0a-A. This used to remap main/index.html's baseline to
+      // index.html, which was correct for exactly one commit: #110, which moved
+      // the professional homepage from / to /main/ and gave / to the chooser.
+      // Against a base predating that move, comparing the new page with the old
+      // path was the right preservation comparison. It is a one-shot mapping,
+      // and every base since #110 merged already contains main/index.html - so
+      // for weeks it compared the 14,780-byte chooser against the 69,047-byte
+      // homepage and reported five "matched 0 times" findings about neither.
+      //
+      // Removed rather than made conditional. A conditional would silently
+      // substitute a different file and be indistinguishable from correct
+      // behaviour until it wasn't, which is how this survived. A base that
+      // cannot support the comparison is a loud failure instead.
+      if (!gitHasPath(base, rel)) {
+        failures.push(
+          `${rel}: ${base} does not contain this path, so there is no baseline to preserve ` +
+          `against. This comparison needs a base from after #110 moved the homepage to /main/; ` +
+          `comparing an older base is a deliberate, explicit act, not something to infer here.`
+        );
+        continue;
+      }
+      const baseline = gitShow(base, rel);
       const current = relRead(rel, overrides);
       const beforeLogo = brandVisual(baseline).replace(/src=["']assets\//g, 'src="/assets/');
       const afterLogo = brandVisual(current).replace(/src=["']assets\//g, 'src="/assets/');
