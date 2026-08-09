@@ -39,12 +39,22 @@ jobs:
           ref: main
           fetch-depth: 1
 
-      - name: Record the SHA under test
+      - name: Record the SHA and derive the full-home route under test
         id: sha
         shell: bash
         run: |
+          set -euo pipefail
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "main is $(git rev-parse HEAD)"
+          if test -f main/index.html; then
+            echo "FULL_HOME_ROUTE=/main/" >> "$GITHUB_ENV"
+            echo "FULL_HOME_FILE=main/index.html" >> "$GITHUB_ENV"
+            echo "full homepage is /main/"
+          else
+            echo "FULL_HOME_ROUTE=/" >> "$GITHUB_ENV"
+            echo "FULL_HOME_FILE=index.html" >> "$GITHUB_ENV"
+            echo "full homepage is legacy root /"
+          fi
 
       - name: GitHub Pages build status
         shell: bash
@@ -72,6 +82,7 @@ jobs:
             https://madebymatt.uk/apexpool/ \
             https://madebymatt.uk/apexkick/ \
             https://madebymatt.uk/ \
+            "https://madebymatt.uk${FULL_HOME_ROUTE}" \
             https://madebymatt.uk/games/ \
             https://madebymatt.uk/site.json \
             https://madebymatt.uk/Games/games.json ; do
@@ -167,8 +178,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl -sS --max-time 30 https://madebymatt.uk/ -o /tmp/home.html
-          echo "== homepage (served bytes, no JS executed) =="
+          curl -sS --max-time 30 "https://madebymatt.uk${FULL_HOME_ROUTE}" -o /tmp/home.html
+          echo "== full homepage at ${FULL_HOME_ROUTE} (served bytes, no JS executed) =="
           for n in "Apex Kick" "Apex Pool" "Apex Golf" "Apex Tennis" "New release"; do
             printf '  %-14s %s\n' "$n" "$(grep -oic "$n" /tmp/home.html || true)"
           done
@@ -184,7 +195,7 @@ jobs:
           python3 - <<'PY'
           import re,sys,os,json
           served=open('/tmp/home.html',encoding='utf-8',errors='replace').read()
-          repo=open('index.html',encoding='utf-8').read()
+          repo=open(os.environ['FULL_HOME_FILE'],encoding='utf-8').read()
           s=re.findall(r'data-release="([^"]+)"',served)
           r=re.findall(r'data-release="([^"]+)"',repo)
           print('  served occupant(s):',s)
@@ -237,12 +248,12 @@ jobs:
               print('  FAIL a game holds more than one homepage surface:',dupes); sys.exit(1)
           print('  PASS every occupant names a live shelf game; no game holds two boxes')
           if s==r:
-              print('  PASS live JS-off homepage serves',r,'as New Release, matching the tree and the ruling')
+              print('  PASS live JS-off full homepage serves',r,'as New Release, matching the tree and the ruling')
           else:
               print('  PENDING live homepage has not caught up with the tree yet.')
               print('  This is a Pages deployment lag, NOT a content mismatch, and is')
               print('  recorded as PENDING rather than reported as a pass or a failure.')
           PY
           echo "== JS-off proof: the occupant is in the SERVED BYTES, no JavaScript executed =="
-          echo "  /neonsync/ hrefs in served homepage: $(grep -oc 'neonsync/' /tmp/home.html || true)"
-          echo "  data-release attributes in served homepage: $(grep -oc 'data-release=' /tmp/home.html || true)"
+          echo "  /neonsync/ hrefs in served full homepage: $(grep -oc 'neonsync/' /tmp/home.html || true)"
+          echo "  data-release attributes in served full homepage: $(grep -oc 'data-release=' /tmp/home.html || true)"
