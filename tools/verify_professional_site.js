@@ -19,6 +19,7 @@ const cp = require('child_process');
 const ROOT = path.resolve(__dirname, '..');
 const SENTINEL = 'mbm-site-professional-design-upgrade-2026-08-07';
 const ACCOUNT_SENTINEL = 'mbm-accounts-members-mailing-2026-08-08';
+const COUNTER_SENTINEL = 'mbm-counter-local-fallback-2026-08-09';
 const FUNCTIONAL_COPY_PAGES = new Set(['members/index.html', 'privacy/index.html']);
 const CHOOSER_PAGE = 'index.html';
 const KEY_PAGES = [
@@ -61,6 +62,11 @@ const HOME_TRUTH_REGIONS = Object.freeze([
     name: 'teacher-updates-component',
     pattern: /<!--\s*TEACHER UPDATES[\s\S]*?<div\b(?=[^>]*\bclass=["'][^"']*\bdx-teach\b[^"']*["'])[^>]*>\s*<h3>Teacher updates<\/h3>[\s\S]*?<\/div>\s*(?=<div\b[^>]*\bclass=["'][^"']*\bdx-about\b[^"']*["'][^>]*\bid=["']about["'])/i,
     replacement: '__MBM_AUTHORISED_TEACHER_UPDATES__\n\n'
+  },
+  {
+    name: 'device-local-counter-panel',
+    pattern: /<section\b(?=[^>]*\bid\s*=\s*["']mbmStats["'])[^>]*>[\s\S]*?<\/section>/i,
+    replacement: '__MBM_AUTHORISED_LOCAL_COUNTER_PANEL__'
   }
 ]);
 
@@ -180,6 +186,12 @@ function verifyHomeTruthContracts(home, failures) {
   assert(!/There is no account, so there is nothing to forget the password to/i.test(home), 'obsolete no-account Free promise remains', failures);
   assert(!/Accounts never leave your own device/i.test(home), 'obsolete device-only account claim remains', failures);
   assert(!/class=["'][^"']*\bdx-tform\b/i.test(home), 'obsolete FormSubmit Teacher updates form remains', failures);
+
+  const counterPanel = captureExactly(home, HOME_TRUTH_REGIONS.find(region => region.name === 'device-local-counter-panel'), failures, 'main/index.html');
+  assert(/Private · on this device/i.test(counterPanel), 'homepage counter panel must identify device-local activity', failures);
+  assert(/Visits on this device/i.test(counterPanel), 'homepage counter panel must label device-local visits', failures);
+  assert(/No counter request/i.test(counterPanel), 'homepage counter panel must state that no remote counter request is sent', failures);
+  assert(!/counterapi\.dev/i.test(counterPanel), 'homepage counter panel still names the retired CounterAPI service', failures);
 }
 function gitShow(ref, rel) {
   return cp.execFileSync('git', ['show', `${ref}:${rel}`], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
@@ -275,14 +287,20 @@ function verify(base, overrides = null) {
       const beforeLogo = brandVisual(baseline).replace(/src=["']assets\//g, 'src="/assets/');
       const afterLogo = brandVisual(current).replace(/src=["']assets\//g, 'src="/assets/');
       assert(beforeLogo && beforeLogo === afterLogo, `${rel}: Made by Matt logo visual changed`, failures);
-      if (FUNCTIONAL_COPY_PAGES.has(rel)) {
+      if (rel === 'stats/index.html') {
+        assert(current.includes(COUNTER_SENTINEL), `${rel}: authorised device-local counter copy changed without counter sentinel`, failures);
+        assert(/Activity on this device/i.test(current), `${rel}: device-local activity title missing`, failures);
+        assert(/Visits on this device/i.test(current), `${rel}: device-local visit label missing`, failures);
+        assert(/stored only in this browser/i.test(current), `${rel}: local-storage explanation missing`, failures);
+        assert(!/counterapi\.dev/i.test(current), `${rel}: retired CounterAPI claim remains`, failures);
+      } else if (FUNCTIONAL_COPY_PAGES.has(rel)) {
         assert(current.includes(ACCOUNT_SENTINEL), `${rel}: authorised account/privacy copy changed without account sentinel`, failures);
       } else {
         const beforeSource = rel === 'main/index.html' ? canonicalHomeTruthCopy(baseline, failures, `${rel} baseline`) : baseline;
         const afterSource = rel === 'main/index.html' ? canonicalHomeTruthCopy(current, failures, `${rel} current`) : current;
         const before = visibleAuthoredText(beforeSource);
         const after = visibleAuthoredText(afterSource);
-        assert(before === after, `${rel}: authored body wording changed outside permitted chrome/audience/auth regions`, failures);
+        assert(before === after, `${rel}: authored body wording changed outside permitted chrome/audience/auth/counter regions`, failures);
       }
     } catch (error) { failures.push(`${rel}: could not compare authored wording with ${base}: ${error.message}`); }
   }
