@@ -39,7 +39,7 @@ The local preference key remains `mbm_audience_view`. It is a browser-only navig
 
 ## Counter-service fallback
 
-The former CounterAPI v1 endpoints returned HTTP 410 during the branch browser proof. `assets/mbm-features.js` therefore keeps visit, country and resource-open tallies in local browser storage by default and makes any future remote counter an explicit opt-in that must first be verified. The public `/main/`, `/stats/` and `/privacy/` wording describes those tallies as device-local and no longer presents unavailable worldwide totals as live data. This repair does not alter Supabase accounts, Buttondown consent or the separate local audience-homepage preference.
+The former CounterAPI v1 endpoints returned HTTP 410 during the branch browser proof. `assets/mbm-features.js` therefore keeps visit, country and resource-open tallies in local browser storage by default and makes any future remote counter an explicit opt-in that must first be verified. The public `/main/`, `/stats/` and `/privacy/` wording describes those tallies as device-local and no longer presents unavailable worldwide totals as live data. `tools/verify_professional_site.js` permits only the named counter panel and sentinel-marked stats page to carry this correction, while continuing to reject unrelated authored-copy mutations. This repair does not alter Supabase accounts, Buttondown consent or the separate local audience-homepage preference.
 
 ## First-party visual provenance
 
