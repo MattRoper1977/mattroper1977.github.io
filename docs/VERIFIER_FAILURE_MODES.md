@@ -248,6 +248,33 @@ from the file that owns it. Where it genuinely cannot, the literal is a known
 liability — say so beside it, so the next person moving a page knows which
 instruments they have just invalidated.
 
+## 15. A fix is applied where it was applied, never where it was discussed
+
+The provenance tool was given a retry that waits on the right signal. Its
+sibling, the production route matrix in
+`mbm-audience-discovery-closeout.yml`, was **not touched**, and a later
+instruction described it as *"now that its retry waits on the right signal"* —
+an assumption that a fix discussed in one place had landed in another. It had
+not: `delays="0 300 300 300"`, retry-on-non-200, unchanged.
+
+Cheap to catch and easy to miss, because the corrected instrument and the
+uncorrected one share a vocabulary and a purpose. It went the same way twice
+more in one afternoon:
+
+- `MBM_FULL_ESTATE=1`, `MBM_LIVE=1` and `MBM_CACHE_BUST=${GITHUB_SHA}` were
+  still being set for a step that had been switched from the `.mjs` to the
+  Python harness. Only the `.mjs` reads the first; nothing reads the other two.
+  `MBM_CACHE_BUST=${GITHUB_SHA}` is the one to remember — it looks exactly like
+  a provenance mechanism tying a run to a commit, and did nothing whatsoever.
+- Two step names kept the `.mjs`'s vocabulary — *"permanent"*, *"matrix"*,
+  *"journeys"* — on steps running a tool that does none of those things.
+
+**Rule:** when a fix has siblings, name them and check each one. And when
+switching a step from one tool to another, the surrounding scaffolding —
+environment variables, step names, docs — is part of the switch. **A step name
+is documentation with a CI badge attached**, and it is read far more often than
+any file in `docs/`.
+
 ---
 
 ## The shape they share

@@ -203,8 +203,22 @@ watch, since vendoring touches the auth path" — across the pass that changed t
 auth path. It is green locally on the merged tree at 21 passed · 0 failed, which
 is why nothing burned. Local green is not the estate's gate.
 
-**Fixing 0a-A un-skips all three steps for free.** That makes it the highest
-value change available here: not a red verifier, three gates dark on a live site.
+**And it darks an entire downstream job.** `live-proof` — *"Exact production
+deployment and live browser proof"* — declares
+`needs: [static-contract, external-links, browser-matrix]`. `static-contract` is
+the job failing at step 5, so `live-proof` has been **skipped on every push
+since #110**. It is the job that waits for the deployment and **byte-compares all
+13 deployed pages against the committed tree**.
+
+So the estate already had a correct deployment proof, and 0a-A switched it off.
+Nobody noticed because a skipped job reads as *not applicable* rather than as
+*we lost our deployment proof* — which is how this morning's route matrix came
+to be the only thing anyone was reading.
+
+**Fixing 0a-A un-skips three steps and that whole job, for free.** That makes it
+the highest-value change available here by a distance: not a red verifier, but
+the accounts regression suite and the byte-level deployment proof both dark on a
+live site.
 
 ---
 

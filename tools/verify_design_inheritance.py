@@ -173,7 +173,8 @@ def main() -> None:
         "BACKLOG 0a (instrument · ruling-pending): verify_professional_site.js has 8 open findings "
         "- 7 a stale baseline path remap reading the chooser instead of the homepage, 1 a privacy "
         "sentinel a recovery commit overwrote. Steps 6-8 of verify-games-audience-faces.yml skip "
-        "behind it, so the accounts/mailing regression suite has not run in CI since #110"
+        "behind it AND the live-proof job needs it, so the accounts/mailing regression suite and "
+        "the byte-compare of all 13 deployed pages have both been dark since #110"
     )
     findings.note(
         "BACKLOG 0a-B (instrument · ruling-pending): main/index.html carries accounts/mailing and "
@@ -185,7 +186,8 @@ def main() -> None:
     )
     findings.note(
         "BACKLOG 0c (instrument · work-pending): the live gate's markers are derived and proven red "
-        "locally, but unproven against the real origin until merged"
+        "locally; its readiness signal now comes from the provenance tool rather than a third "
+        "signal of its own. Unproven against the real origin until merged"
     )
     findings.note(
         "BACKLOG 0d (instrument · ruling-pending): verify_games_audience_faces.mjs is node --check'd "

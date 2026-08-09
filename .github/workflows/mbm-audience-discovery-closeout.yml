@@ -268,7 +268,7 @@ jobs:
           git checkout -- for/teachers/index.html
 
   production:
-    name: Production routes reachable (not a deployment proof)
+    name: Routes serve 200 and removed paths 404 - reachability, not deployment
     # Only meaningful against what is actually published, so it runs on main
     # and on demand - never as a proxy for a branch that has not shipped.
     if: github.event_name != 'pull_request'
@@ -277,7 +277,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Read back the published routes
+      - name: Read back the published routes (reachability only)
         run: |
           set -uo pipefail
           base="https://madebymatt.uk"
