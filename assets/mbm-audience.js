@@ -30,7 +30,7 @@ function paint(){
   if(!saved||!continueLink)return;
   var card=selectedCard(saved);
   if(!card)return;
-  continueLink.href=card.getAttribute('href')||card.href;
+  continueLink.setAttribute('href',card.getAttribute('href')||card.href);
   continueLink.textContent='Continue with '+(card.getAttribute('data-mbm-face-label')||'your last homepage');
 }
 if(clearButton)clearButton.addEventListener('click',function(){clear();paint();clearButton.focus()});
