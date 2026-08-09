@@ -517,3 +517,41 @@ body[data-theme="dark"].mbm-face-page .mf-surprise-card{background:linear-gradie
 @media(max-width:1024px){.mf-tip-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mf-task-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:780px){.mf-root-highlights,.mf-route-grid,.mf-task-grid,.mf-tip-grid{grid-template-columns:1fr}.mf-root-search{width:100%}.mf-surprise-card{grid-template-columns:1fr}.mf-surprise-card .mf-btn{width:100%}.mf-recent-head{align-items:start;flex-direction:column}.mf-root-section-head{align-items:start;flex-direction:column}.mf-root-highlights{width:100%}}
 @media(max-width:520px){.mf-root-search .mbm-search-form{grid-template-columns:1fr}.mf-root-search .mbm-search-submit{width:100%}.mf-route-card{min-height:145px}.mf-task-card,.mf-tip{min-height:155px}}
+
+/* Studio band — the compact foot of the chooser. Quiet by construction: text
+   links only, no button treatment, no tiers, no amounts. It sits after the
+   audience section so the seven front doors are always reached first. */
+.mf-studio-band{padding-top:0}
+.mf-band{
+  max-width:46rem;
+  margin:0 auto;
+  padding:1.15rem 1.3rem;
+  border:1px solid var(--mf-line,#E3DAC5);
+  border-radius:16px;
+  background:var(--mf-card,#FFFDF6);
+  text-align:center;
+}
+.mf-band-signpost{
+  margin:0 0 .4rem;
+  color:var(--mf-muted,#4A5170);
+  font-size:.7rem;
+  font-weight:800;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+.mf-band-about{margin:0 0 .7rem;color:var(--mf-ink,#1B2140);font-size:.92rem;line-height:1.55}
+.mf-band-links{display:flex;flex-wrap:wrap;gap:.9rem;justify-content:center;margin:0}
+.mf-band-link{
+  color:#8A5620;
+  font-size:.82rem;
+  font-weight:750;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  min-height:38px;
+  display:inline-flex;
+  align-items:center;
+}
+.mf-band-link:focus-visible{outline:3px solid var(--mf-amber,#F2A24A);outline-offset:2px}
+body[data-theme="dark"] .mf-band{background:#1B234A;border-color:#2E3860}
+body[data-theme="dark"] .mf-band-about{color:#E8E2D4}
+body[data-theme="dark"] .mf-band-link{color:#F2A24A}

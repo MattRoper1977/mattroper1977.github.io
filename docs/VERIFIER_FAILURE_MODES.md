@@ -275,6 +275,28 @@ environment variables, step names, docs — is part of the switch. **A step name
 is documentation with a CI badge attached**, and it is read far more often than
 any file in `docs/`.
 
+## 16. When derivation would change what is on screen, declare the exception
+
+Species 14 says derive. This is its boundary, and the estate has now reached it
+three times: `gameIdOverrides`, the proposed page-to-passes authorisation map,
+and `chooserLinkText`.
+
+Four of the seven chooser link texts differ from both `label` and `navLabel`.
+Deriving them would have been tidier, would have satisfied every gate, and would
+have **silently rewritten four visible link texts** — *"Open family homepage"*
+becoming *"Open parent & carer homepage"*, and three more.
+
+Derivation is a property of the instrument. Copy is a property of the product.
+When they disagree, the instrument does not get to win by being neater.
+
+**Rule:** where derivation would change what a visitor sees, record the value as
+a declared input in the file that owns it, with a note saying why it cannot be
+derived. That is not an exception to species 14 — it is the same principle,
+which is that a value should live in one reviewable place rather than as a
+literal inside a page.
+
+---
+
 ---
 
 ## The shape they share

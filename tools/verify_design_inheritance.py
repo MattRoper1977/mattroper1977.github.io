@@ -170,11 +170,9 @@ def main() -> None:
     findings.note("BACKLOG 0 (content · ruling-pending): /resources/ is still the pre-closeout "
                   "catalogue; the closeout rewrite is unrecoverable")
     findings.note(
-        "BACKLOG 0a (instrument · ruling-pending): verify_professional_site.js has 8 open findings "
-        "- 7 a stale baseline path remap reading the chooser instead of the homepage, 1 a privacy "
-        "sentinel a recovery commit overwrote. Steps 6-8 of verify-games-audience-faces.yml skip "
-        "behind it AND the live-proof job needs it, so the accounts/mailing regression suite and "
-        "the byte-compare of all 13 deployed pages have both been dark since #110"
+        "BACKLOG 0a (instrument · ruling-pending): 0a-A is applied and took verify_professional_site.js "
+        "from 8 findings to 1. The survivor is the privacy sentinel - 0a-B - so step 5 is still red. "
+        "Ruling on 0a-B takes it to zero and turns static-contract green for the first time since #110"
     )
     findings.note(
         "BACKLOG 0a-B (instrument · ruling-pending): main/index.html carries accounts/mailing and "
@@ -188,6 +186,11 @@ def main() -> None:
         "BACKLOG 0c (instrument · work-pending): the live gate's markers are derived and proven red "
         "locally; its readiness signal now comes from the provenance tool rather than a third "
         "signal of its own. Unproven against the real origin until merged"
+    )
+    findings.note(
+        "BACKLOG 0e (content · ruling-pending): /main/ calls the estate offline-first and says "
+        "nothing is uploaded, while the same page lists the optional services that do use the "
+        "internet. Authored copy - recorded, not edited"
     )
     findings.note(
         "BACKLOG 0d (instrument · ruling-pending): verify_games_audience_faces.mjs is node --check'd "
