@@ -155,6 +155,9 @@ jobs:
       - name: External link classification controls
         run: python3 tools/check_education_hub_links.py --self-test
 
+      - name: Skipped-job guard controls
+        run: python3 tools/check_no_skipped_jobs.py --self-test
+
       - name: Install the browser the proof drives
         run: |
           set -euo pipefail
