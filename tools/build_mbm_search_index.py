@@ -46,6 +46,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -61,6 +62,24 @@ CATEGORY_ORDER = ["lesson", "resource", "game", "app", "tool", "page"]
 # Pinned canonical game ids, declared in the editorial file. Asserted so that
 # adding or dropping one is a deliberate act rather than a quiet edit.
 PINNED_GAME_IDS = 8
+
+# Every entry in the committed index follows one key order, with keys that do
+# not apply omitted rather than nulled. The thirteen distinct sequences in the
+# file are all subsequences of this. Entries are emitted through finalise() so
+# a builder cannot introduce a fourteenth by listing its keys in a different
+# order - which is exactly what happened to game and app pathway.
+CANONICAL_KEYS = [
+    "id", "sourceId", "title", "description", "route", "category", "contentType",
+    "subject", "family", "year", "pathway", "format", "audience", "source",
+    "tasks", "keywords", "image", "action", "safeForPupils", "external",
+]
+
+
+def finalise(entry: dict[str, Any]) -> dict[str, Any]:
+    unknown = set(entry) - set(CANONICAL_KEYS)
+    if unknown:
+        raise SystemExit(f"entry {entry.get('id')!r} has keys outside the canonical order: {sorted(unknown)}")
+    return {k: entry[k] for k in CANONICAL_KEYS if entry.get(k) is not None}
 
 # Categories whose derivation is not yet fully recovered. They are still built
 # and still compared - they simply fail, loudly, instead of being skipped. The
@@ -237,9 +256,7 @@ def build_lessons_and_resources(records, rules, reclassify: set[str], dropped: s
             "safeForPupils": safe,
             "external": is_external(record),
         }
-        # An absent pathway or task set is absent, not null - the committed
-        # index omits the key entirely.
-        entries.append({k: v for k, v in entry.items() if v is not None})
+        entries.append(finalise(entry))
     return entries
 
 
@@ -287,7 +304,7 @@ def build_games(games: list[dict[str, Any]], rules, overrides: dict[str, str]) -
             "safeForPupils": True,
             "external": False,
         }
-        entries.append({k: v for k, v in entry.items() if v is not None})
+        entries.append(finalise(entry))
     return entries
 
 
@@ -332,7 +349,7 @@ def build_apps(spaces, rules, aliases: dict[str, str], game_hrefs: set[str]) -> 
                 "safeForPupils": not teacher_space,
                 "external": route.startswith("http"),
             }
-            entries.append({k: v for k, v in entry.items() if v is not None})
+            entries.append(finalise(entry))
     return entries
 
 
@@ -358,7 +375,7 @@ def build_pages(hubs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         for optional in ("image", "tasks"):
             if hub.get(optional):
                 entry[optional] = hub[optional]
-        entries.append(entry)
+        entries.append(finalise(entry))
     return entries
 
 
@@ -366,35 +383,86 @@ def serialise(index: dict[str, Any]) -> str:
     return json.dumps(index, ensure_ascii=False, indent=2) + "\n"
 
 
+INDEX_REL = "data/mbm-search-index.json"
+
+
+def committed_text() -> str:
+    """Read the reference from git, never from the working tree.
+
+    The working-tree file is a path this tool can write. Comparing against it
+    means that once --write has run, --check compares the generator with its
+    own output and returns green regardless. Reading the blob makes that
+    circularity structurally impossible rather than something to remember.
+    """
+    result = subprocess.run(
+        ["git", "show", f"HEAD:{INDEX_REL}"],
+        capture_output=True, text=True, cwd=str(ROOT),
+    )
+    if result.returncode != 0:
+        raise SystemExit(
+            f"cannot read {INDEX_REL} from git HEAD, so there is no trustworthy "
+            f"reference to compare against: {result.stderr.strip()}"
+        )
+    return result.stdout
+
+
+def committed_index() -> dict[str, Any]:
+    return json.loads(committed_text())
+
+
 def committed_slice(category: str) -> list[dict[str, Any]]:
-    return [e for e in load_json(INDEX)["entries"] if e["category"] == category]
+    return [e for e in committed_index()["entries"] if e["category"] == category]
 
 
 def compare_slice(category: str, produced: list[dict[str, Any]]) -> list[str]:
-    """Byte-compare one category against the committed index."""
-    want = serialise(committed_slice(category))
-    got = serialise(sorted(produced, key=lambda e: e["title"].casefold()))
-    if want == got:
-        return []
+    """Compare one category against the git blob, byte for byte.
+
+    Dict equality ignores key order, so a field-by-field diff alone reports
+    "identical" for two entries whose keys are ordered differently. That is how
+    eighteen entries with a misplaced `pathway` passed this check while the
+    written file differed by sixty-eight lines. The serialised comparison is
+    authoritative; the field diff exists only to say where.
+    """
     want_entries = committed_slice(category)
     got_entries = sorted(produced, key=lambda e: e["title"].casefold())
+    if serialise(want_entries) == serialise(got_entries):
+        return []
+
     problems = []
     if len(want_entries) != len(got_entries):
         problems.append(f"{category}: {len(got_entries)} entries produced, {len(want_entries)} committed")
     for a, b in zip(want_entries, got_entries):
-        if a == b:
-            continue
         fields = sorted({k for k in set(a) | set(b) if a.get(k) != b.get(k)})
-        problems.append(f"{category}/{a.get('sourceId')}: differs on {fields}")
+        if fields:
+            problems.append(f"{category}/{a.get('sourceId')}: differs on {fields}")
+        elif list(a) != list(b):
+            problems.append(
+                f"{category}/{a.get('sourceId')}: same values, different key order — "
+                f"committed {list(a)}, generated {list(b)}"
+            )
+    if not problems:
+        problems.append(f"{category}: serialised output differs but no entry does; check the envelope")
     return problems[:20]
+
+
+def json_paths(value: Any, prefix: str = "") -> dict[str, Any]:
+    """Flatten to leaf paths so a diff can be checked against a declaration."""
+    flat: dict[str, Any] = {}
+    if isinstance(value, dict):
+        for key, item in value.items():
+            flat.update(json_paths(item, f"{prefix}.{key}" if prefix else key))
+    else:
+        flat[prefix] = json.dumps(value, ensure_ascii=False, sort_keys=True)
+    return flat
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="compare only (the default behaviour)")
     parser.add_argument("--category", choices=CATEGORY_ORDER, help="prove one category in isolation")
-    parser.add_argument("--write", action="store_true", help="write, but refuse on any difference")
-    parser.add_argument("--accept-drift", metavar="REASON", help="permit --write to change the committed index")
+    parser.add_argument("--write", action="store_true", help="write, but only the differences you declare")
+    parser.add_argument("--expect-diff", metavar="PATH", action="append", default=[],
+                        help="a JSON path the write is permitted to change; repeatable")
     args = parser.parse_args()
 
     editorial = load_json(EDITORIAL)
@@ -489,17 +557,47 @@ def main() -> None:
         raise SystemExit(1)
 
     if args.write:
-        if not args.accept_drift:
-            print("nothing to write: the committed index already matches", file=sys.stderr)
-        else:
-            index = load_json(INDEX)
-            index["sourceHashes"] = source_hashes()
-            index["entries"] = [e for c in CATEGORY_ORDER for e in sorted(produced[c], key=lambda x: x["title"].casefold())]
-            handle = tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=str(INDEX.parent), delete=False, suffix=".tmp")
-            handle.write(serialise(index))
-            handle.close()
-            os.replace(handle.name, INDEX)
-            print(f"index written; drift accepted: {args.accept_drift}")
+        before = committed_index()
+        after = dict(before)
+        after["sourceHashes"] = source_hashes()
+        after["entries"] = [
+            e for c in CATEGORY_ORDER
+            for e in sorted(produced[c], key=lambda x: x["title"].casefold())
+        ]
+
+        # A free-text reason is a promise, not a gate. Every changed leaf path
+        # must be one you named, or the write does not happen.
+        old_paths, new_paths = json_paths(before), json_paths(after)
+        changed = sorted(
+            {k for k in set(old_paths) | set(new_paths) if old_paths.get(k) != new_paths.get(k)}
+        )
+        declared = set(args.expect_diff)
+        undeclared = [c for c in changed if c not in declared]
+        if not changed:
+            print("nothing to write: the generated index already matches the committed one")
+            return
+        if undeclared:
+            print("write aborted — these paths would change but were not declared:", file=sys.stderr)
+            for path in undeclared[:20]:
+                print(f"  - {path}", file=sys.stderr)
+            print(f"declare them with --expect-diff, or fix the generator ({len(changed)} changed in total)",
+                  file=sys.stderr)
+            raise SystemExit(1)
+        unused = sorted(declared - set(changed))
+        if unused:
+            print("write aborted — these --expect-diff paths did not change:", file=sys.stderr)
+            for path in unused:
+                print(f"  - {path}", file=sys.stderr)
+            raise SystemExit(1)
+
+        handle = tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=str(INDEX.parent),
+                                             delete=False, suffix=".tmp")
+        handle.write(serialise(after))
+        handle.close()
+        os.replace(handle.name, INDEX)
+        print(f"index written; {len(changed)} declared path(s) changed:")
+        for path in changed:
+            print(f"  - {path}")
 
 
 if __name__ == "__main__":
