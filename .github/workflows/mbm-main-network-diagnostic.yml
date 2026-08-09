@@ -1,57 +1,195 @@
-name: Temporary main-page network diagnostic
+name: Temporary retired-counter repair
 
 on:
   pull_request:
     branches: [main]
     paths:
       - '.github/workflows/mbm-main-network-diagnostic.yml'
-      - 'tools/diagnose_main_network.mjs'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  trace:
+  repair:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - name: Check out canonical Games data
+      - name: Check out the implementation branch
         uses: actions/checkout@v4
         with:
-          repository: MattRoper1977/Games
-          ref: main
-          path: _sources/Games
-          fetch-depth: 1
-      - name: Assemble same-origin site
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Keep retired counters local and correct public wording
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p _served/Games
-          rsync -a --exclude=.git --exclude=_served --exclude=_sources --exclude=node_modules --exclude=audit-output ./ _served/
-          cp _sources/Games/games.json _served/Games/games.json
           python3 - <<'PY'
-          import json
           from pathlib import Path
-          path=Path('_served/site.json')
-          data=json.loads(path.read_text(encoding='utf-8'))
-          features=data.setdefault('features',{})
-          if isinstance(features.get('accounts'),dict): features['accounts']['enabled']=False
-          if isinstance(features.get('mailing'),dict): features['mailing']['enabled']=False
-          path.write_text(json.dumps(data,indent=2)+'\n',encoding='utf-8')
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one occurrence, found {count}: {old[:100]!r}')
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          features = Path('assets/mbm-features.js')
+          text = features.read_text(encoding='utf-8')
+          replacements = [
+              (
+                  '     1. Live visitor stats  — total visits + where in the world people come from\n'
+                  '     2. Open / download counts — a running tally next to each resource or tool',
+                  '     1. Visitor stats — device-local unless a verified remote counter is enabled\n'
+                  '     2. Open / download counts — device-local tallies next to resources and tools'
+              ),
+              (
+                  '   Privacy: only anonymous country tallies ever leave the browser for the stats.\n'
+                  '   Device accounts are hashed and never uploaded. Cloud accounts use Supabase Auth',
+                  '   Privacy: counter tallies stay in the browser unless a verified remote counter is\n'
+                  '   explicitly enabled. Cloud accounts use Supabase Auth'
+              ),
+              (
+                  '      enabled: true, namespace: "madebymatt-uk", geo: true,',
+                  '      enabled: true, remote: false, namespace: "madebymatt-uk", geo: true,'
+              ),
+              (
+                  '  /* ========================================================================\n'
+                  '     COUNTER SERVICE (counterapi.dev v1 — keyless, public) + local fallback\n'
+                  '     ===================================================================== */\n'
+                  '  var API = "https://api.counterapi.dev/v1/";\n'
+                  '  function safeKey(k) { return String(k).toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60); }\n'
+                  '  function pluckCount(j) {\n'
+                  '    if (j == null) return null;\n'
+                  '    if (typeof j === "number") return j;\n'
+                  '    var f = ["count", "value", "up_count", "Count", "data"];\n'
+                  '    for (var i = 0; i < f.length; i++) {\n'
+                  '      var v = j[f[i]];\n'
+                  '      if (typeof v === "number") return v;\n'
+                  '      if (v && typeof v === "object" && typeof v.count === "number") return v.count;\n'
+                  '    }\n'
+                  '    return null;\n'
+                  '  }\n'
+                  '  function bump(key) {\n'
+                  '    var k = safeKey(key), lk = "mbm_c_" + k;\n'
+                  '    return timedJSON(API + CFG.stats.namespace + "/" + k + "/up", 6000)\n'
+                  '      .then(function (j) { var n = pluckCount(j); if (n != null) { ls.set(lk, n); return n; } throw 0; })\n'
+                  '      .catch(function () { var n = (ls.get(lk, 0) || 0) + 1; ls.set(lk, n); return n; });\n'
+                  '  }\n'
+                  '  function read(key) {\n'
+                  '    var k = safeKey(key), lk = "mbm_c_" + k;\n'
+                  '    return timedJSON(API + CFG.stats.namespace + "/" + k, 6000)\n'
+                  '      .then(function (j) { var n = pluckCount(j); if (n != null) { ls.set(lk, n); return n; } throw 0; })\n'
+                  '      .catch(function () { return ls.get(lk, null); });\n'
+                  '  }',
+                  '  /* ========================================================================\n'
+                  '     COUNTERS — device-local by default; remote service is explicit opt-in\n'
+                  '     ------------------------------------------------------------------------\n'
+                  '     CounterAPI v1 began returning HTTP 410 in August 2026. Remote calls are\n'
+                  '     therefore disabled unless features.stats.remote is deliberately set true\n'
+                  '     after a working service has been verified. Callers keep the same read() and\n'
+                  '     bump() API and continue with honest localStorage tallies without noise.\n'
+                  '     ===================================================================== */\n'
+                  '  var API = "https://api.counterapi.dev/v1/";\n'
+                  '  function safeKey(k) { return String(k).toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60); }\n'
+                  '  function pluckCount(j) {\n'
+                  '    if (j == null) return null;\n'
+                  '    if (typeof j === "number") return j;\n'
+                  '    var f = ["count", "value", "up_count", "Count", "data"];\n'
+                  '    for (var i = 0; i < f.length; i++) {\n'
+                  '      var v = j[f[i]];\n'
+                  '      if (typeof v === "number") return v;\n'
+                  '      if (v && typeof v === "object" && typeof v.count === "number") return v.count;\n'
+                  '    }\n'
+                  '    return null;\n'
+                  '  }\n'
+                  '  function remoteCountersEnabled() { return !!(CFG.stats && CFG.stats.remote === true); }\n'
+                  '  function localBump(lk) { var n = (ls.get(lk, 0) || 0) + 1; ls.set(lk, n); return n; }\n'
+                  '  function bump(key) {\n'
+                  '    var k = safeKey(key), lk = "mbm_c_" + k;\n'
+                  '    if (!remoteCountersEnabled()) return Promise.resolve(localBump(lk));\n'
+                  '    return timedJSON(API + CFG.stats.namespace + "/" + k + "/up", 6000)\n'
+                  '      .then(function (j) { var n = pluckCount(j); if (n != null) { ls.set(lk, n); return n; } throw 0; })\n'
+                  '      .catch(function () { return localBump(lk); });\n'
+                  '  }\n'
+                  '  function read(key) {\n'
+                  '    var k = safeKey(key), lk = "mbm_c_" + k;\n'
+                  '    if (!remoteCountersEnabled()) return Promise.resolve(ls.get(lk, null));\n'
+                  '    return timedJSON(API + CFG.stats.namespace + "/" + k, 6000)\n'
+                  '      .then(function (j) { var n = pluckCount(j); if (n != null) { ls.set(lk, n); return n; } throw 0; })\n'
+                  '      .catch(function () { return ls.get(lk, null); });\n'
+                  '  }'
+              ),
+              (
+                  '      if (n != null && n < 100) mount.classList.add("mbm-quiet"); /* social-proof floor */',
+                  '      if (CFG.stats.remote === true && n != null && n < 100) mount.classList.add("mbm-quiet"); /* remote social-proof floor */'
+              )
+          ]
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'assets/mbm-features.js: expected one occurrence, found {count}: {old[:120]!r}')
+              text = text.replace(old, new, 1)
+          features.write_text(text, encoding='utf-8')
+
+          main_replacements = {
+              'Live · around the world 🌍': 'Private · on this device',
+              'Visits worldwide': 'Visits on this device',
+              'Countries reached': 'Countries seen here',
+              'Where visitors come from': 'Country activity on this device',
+              'Counting the first visitors…': 'No local visits counted yet.',
+              'These tallies come from a lightweight public visit counter (counterapi.dev): each visit adds an anonymous +1, plus your country. Your country is worked out on your own device from its time zone — your location is never looked up and your IP address is never sent or stored.':
+              'These counters stay in this browser. Each visit or resource open adds a local tally, and the coarse country is worked out on the device from its time zone. No counter request, IP address or audience preference is sent to a remote counter service.'
+          }
+          for old, new in main_replacements.items():
+              replace_once('main/index.html', old, new)
+
+          stats_replacements = {
+              '<title>Live stats — Made by Matt</title>': '<title>Activity on this device — Made by Matt</title>',
+              '<meta property="og:title" content="Made by Matt, by the numbers">': '<meta property="og:title" content="Made by Matt activity on this device">',
+              '<meta property="og:description" content="Live open and download counts for the lessons, tools and games on Made by Matt.">': '<meta property="og:description" content="Private, device-local visit and open counts for Made by Matt.">',
+              '<meta name="description" content="Live visitor and usage stats for madebymatt.uk — visits, countries reached and the most-opened resources.">': '<meta name="description" content="Private visit, country and resource-open tallies stored only in this browser.">',
+              '<p class="sx-eyebrow">Live · around the world 🌍</p>': '<p class="sx-eyebrow">Private · on this device</p>',
+              '<h1>Made by Matt, by the numbers.</h1>': '<h1>Your Made by Matt activity on this device.</h1>',
+              '<p>A live look at how the site is used — visits, the countries people come from, and the resources getting the most love. Anonymous, aggregate counts only.</p>': '<p>A private look at visits, coarse country activity and resource opens recorded only in this browser.</p>',
+              '<span class="lab">Visits worldwide</span>': '<span class="lab">Visits on this device</span>',
+              '<span class="lab">Countries reached</span>': '<span class="lab">Countries seen here</span>',
+              '<span class="lab">Total opens & plays</span>': '<span class="lab">Opens & plays here</span>',
+              '<h2>Where visitors come from</h2>': '<h2>Country activity on this device</h2>',
+              '<p class="sx-empty">Loading the world map…</p>': '<p class="sx-empty">Loading local country activity…</p>',
+              '<h2>Most-opened resources</h2>': '<h2>Resources opened on this device</h2>',
+              '<p class="sx-empty">Loading resource stats…</p>': '<p class="sx-empty">Loading local resource activity…</p>',
+              'Visit totals and country tallies are anonymous aggregates from a lightweight public counter (counterapi.dev), mirrored on your device so this page still works if it\'s briefly unavailable. Each visitor\'s country is worked out on their own device from its time zone — no IP addresses are looked up, and no personal data is stored by this site.':
+              'Visit, country and resource-open tallies are stored only in this browser. The coarse country is worked out on the device from its time zone — no IP address is looked up, and no counter request or audience preference is sent to a remote counter service.',
+              'The live counts above keep working either way.': 'The local counts above keep working either way.'
+          }
+          for old, new in stats_replacements.items():
+              replace_once('stats/index.html', old, new)
+
+          replace_once(
+              'privacy/index.html',
+              '<tr><td><b>Use the visit counters</b></td><td>Counter requests and the coarse country code derived on-device from the time zone</td><td><b>counterapi.dev</b></td></tr>',
+              '<tr><td><b>Use the local visit and open counters</b></td><td>Counts stay in this browser; the coarse country is derived on-device from the time zone</td><td><b>No remote counter service while remote counters are disabled</b></td></tr>'
+          )
+          replace_once(
+              'privacy/index.html',
+              'Updated 8 August 2026 for the cloud-account, adult/teacher account audience and separate double-opt-in mailing-list architecture.',
+              'Updated 9 August 2026 for the homepage architecture, device-local counters, cloud-account audience and separate double-opt-in mailing-list architecture.'
+          )
           PY
-      - name: Install Chromium
+
+      - name: Commit repair and remove temporary diagnostics
         shell: bash
+        env:
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
-          npm install --no-save --no-package-lock playwright@1.54.2
-          npx playwright install --with-deps chromium
-      - name: Trace failed resources
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -m http.server 4173 --bind 127.0.0.1 --directory _served >/tmp/mbm-diag-http.log 2>&1 &
-          server=$!
-          trap 'kill $server || true' EXIT
-          for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
-          MBM_BASE_URL=http://127.0.0.1:4173/ node tools/diagnose_main_network.mjs
+          git config user.name 'OpenAI Codex'
+          git config user.email 'codex@openai.com'
+          git rm -f .github/workflows/mbm-main-network-diagnostic.yml tools/diagnose_main_network.mjs
+          git add assets/mbm-features.js main/index.html stats/index.html privacy/index.html
+          git diff --check
+          git commit -m 'fix: keep retired counters local and silent'
+          git push origin "HEAD:${HEAD_BRANCH}"
