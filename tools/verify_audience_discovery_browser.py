@@ -12,8 +12,9 @@ the markup:
   * typing into any search field sends nothing off-origin, and no request
     carries the typed query - the page loads its own index from this origin,
     which is the design; the keystrokes leaving the site is what must not happen
-  * the pupil page makes no off-origin request at all - adult surfaces load an
-    account library from a CDN and that stays out of the pupil experience
+  * no surface contacts a third party at page load, with an explicit allow-list
+    that is empty on purpose - the estate serves its own assets, search index
+    and account client
   * no request reaches a YouTube or Google host until a play control is
     deliberately activated
   * URL state survives a reload - a shared link restores its own filters
@@ -29,6 +30,9 @@ into local search fields, and clicks navigation.
 Usage:
   MBM_BASE_URL=http://127.0.0.1:4173/ python3 tools/verify_audience_discovery_browser.py
   python3 tools/verify_audience_discovery_browser.py --self-test
+  # a control run, which deliberately breaks the estate, keeps its output away
+  # from the committed artifact:
+  MBM_BASE_URL=... python3 tools/verify_audience_discovery_browser.py --artifacts "$RUNNER_TEMP/ctl"
 """
 from __future__ import annotations
 
@@ -40,7 +44,17 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACTS = ROOT / "artifacts" / "browser"
+# The workflow that calls this tool uploads audit-output/ and prints
+# audit-output/audience-discovery/browser-results.json. That contract predates
+# this tool, so the tool conforms to it rather than the other way round.
+#
+# It is only the *default*, though, and that matters. A control run deliberately
+# breaks the estate to prove an assertion fires; when it wrote here, the
+# committed artifact ended up recording a deliberate failure as the estate's
+# state, and someone had to notice and revert it by hand. Control runs pass
+# --artifacts pointing at a scratch directory, so the situation cannot arise
+# rather than being caught.
+ARTIFACTS = ROOT / "audit-output" / "audience-discovery"
 
 # Some environments ship a Chromium that Playwright did not download itself;
 # launching it directly avoids fetching a second copy. Where no such binary
@@ -60,6 +74,23 @@ AUDIENCE_ROUTES = [
 SEARCH_ROUTES = ["/", "/teach/", "/education-hub/"]
 
 VIDEO_HOSTS = ("youtube.com", "youtu.be", "youtube-nocookie.com", "ytimg.com", "googlevideo.com")
+
+# No surface may contact a third party just because someone opened it. The
+# estate serves its own assets, its own search index and its own account
+# client, so this list is empty on purpose: an entry here is a deliberate,
+# reviewable exception, not a default. A Supabase client fetched from a CDN at
+# page load is exactly what this exists to catch.
+BOOT_ORIGIN_ALLOWLIST: dict[str, tuple[str, ...]] = {}
+
+# Every surface the estate serves, so the boot check is estate-wide rather than
+# a guarantee about one page.
+#
+# /start/ is deliberately absent. It redirects to "/", so measuring it here
+# would record the root's result a second time under another name and report 13
+# surfaces when 12 were visited. It gets its own redirect assertion instead, and
+# the printed count says so.
+ALL_SURFACES = ["/", "/main/", "/teach/", "/resources/", "/education-hub/"] + AUDIENCE_ROUTES
+REDIRECTS = {"/start/": "/"}
 ADULT_CTA = ("/account/", "/mailing-list/", "/members/")
 
 
@@ -81,10 +112,10 @@ def external_requests(urls: list[str], base: str) -> list[str]:
     return [u for u in urls if not u.startswith(origin) and not u.startswith("data:")]
 
 
-def run(base: str, findings: Findings) -> None:
+def run(base: str, findings: Findings, artifacts: Path) -> None:
     from playwright.sync_api import sync_playwright
 
-    ARTIFACTS.mkdir(parents=True, exist_ok=True)
+    artifacts.mkdir(parents=True, exist_ok=True)
     base = base.rstrip("/") + "/"
 
     with sync_playwright() as pw:
@@ -102,7 +133,7 @@ def run(base: str, findings: Findings) -> None:
                            f"{label}: root exposes the people group")
             findings.check(page.locator("#audience-organisations").count() == 1,
                            f"{label}: root exposes the organisations group")
-            page.screenshot(path=str(ARTIFACTS / f"root-{label}.png"), full_page=False)
+            page.screenshot(path=str(artifacts / f"root-{label}.png"), full_page=False)
 
             # B: typing must not send the query anywhere. The page loads its
             # own index from this origin, which is the design - what must never
@@ -142,7 +173,7 @@ def run(base: str, findings: Findings) -> None:
             main_html = page.locator("main#main").inner_html()
             leaked = [c for c in ADULT_CTA if f'href="{c}"' in main_html]
             findings.check(not leaked, "pupil main content carries no adult CTA", ", ".join(leaked))
-            page.screenshot(path=str(ARTIFACTS / f"pupils-{label}.png"), full_page=False)
+            page.screenshot(path=str(artifacts / f"pupils-{label}.png"), full_page=False)
 
             context.close()
 
@@ -173,6 +204,44 @@ def run(base: str, findings: Findings) -> None:
                        f"{count_before!r} vs {count_after!r}")
         context.close()
 
+        # E1: the routes that are redirects are redirects. Asserting this is
+        # what lets the boot count below be honest: /start/ is not a surface
+        # that was skipped, it is a route whose behaviour is checked here.
+        context = browser.new_context(viewport={"width": 1440, "height": 900})
+        page = context.new_page()
+        for route, target in REDIRECTS.items():
+            page.goto(base.rstrip("/") + route, wait_until="networkidle")
+            expected = base.rstrip("/") + target
+            landed = page.url.rstrip("/") or page.url
+            findings.check(landed == expected.rstrip("/"),
+                           f"{route} redirects to {target}", f"landed on {page.url}")
+        context.close()
+
+        # E2: no surface contacts a third party at page load. This is the
+        # estate-wide form of the pupil guarantee - the assertion that catches
+        # an off-origin dependency nobody went looking for.
+        #
+        # A control that re-introduces an off-origin boot fetch will not make
+        # /for/pupils/ fail, and that is the pupil guarantee working rather
+        # than a gap: mbm-account.js is never injected on a page carrying
+        # data-mbm-adult-features="off", so there is nothing there to break.
+        context = browser.new_context(viewport={"width": 1440, "height": 900})
+        for route in ALL_SURFACES:
+            # A fresh page per route, so one surface's requests cannot be
+            # attributed to the next.
+            page = context.new_page()
+            boot: list[str] = []
+            page.on("request", lambda r, sink=boot: sink.append(r.url))
+            page.goto(base.rstrip("/") + route, wait_until="networkidle")
+            page.wait_for_timeout(700)
+            allowed = BOOT_ORIGIN_ALLOWLIST.get(route, ())
+            offending = [u for u in external_requests(boot, base)
+                         if not any(a in u for a in allowed)]
+            findings.check(not offending, f"boot: {route} contacts no third party",
+                           ", ".join(sorted(set(offending))[:3]))
+            page.close()
+        context.close()
+
         # F: 320px reflow - nothing may scroll horizontally.
         context = browser.new_context(viewport={"width": 320, "height": 720})
         page = context.new_page()
@@ -183,7 +252,7 @@ def run(base: str, findings: Findings) -> None:
             )
             findings.check(overflow <= 1, f"320px: {route} does not scroll horizontally",
                            f"overflow {overflow}px")
-        page.screenshot(path=str(ARTIFACTS / "reflow-320.png"), full_page=False)
+        page.screenshot(path=str(artifacts / "reflow-320.png"), full_page=False)
         context.close()
 
         # G: both audience groups reachable with JavaScript disabled.
@@ -197,7 +266,7 @@ def run(base: str, findings: Findings) -> None:
         for route in AUDIENCE_ROUTES:
             page.goto(base.rstrip("/") + route, wait_until="domcontentloaded")
             findings.check(page.locator("h1").count() >= 1, f"no-JS: {route} renders a heading")
-        page.screenshot(path=str(ARTIFACTS / "nojs-root.png"), full_page=False)
+        page.screenshot(path=str(artifacts / "nojs-root.png"), full_page=False)
         context.close()
 
         browser.close()
@@ -269,7 +338,12 @@ def self_test() -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--self-test", action="store_true", help="prove the checks can fail")
-    parser.add_argument("--report", type=Path, default=ARTIFACTS / "results.json")
+    parser.add_argument("--artifacts", type=Path, default=ARTIFACTS,
+                        help="where screenshots and the report are written; control runs must "
+                             "pass a scratch directory so a deliberate failure is never recorded "
+                             "as the estate's committed state")
+    parser.add_argument("--report", type=Path, default=None,
+                        help="report path (defaults to <artifacts>/results.json)")
     args = parser.parse_args()
 
     if args.self_test:
@@ -281,17 +355,25 @@ def main() -> None:
     if not base:
         raise SystemExit("MBM_BASE_URL is required, e.g. http://127.0.0.1:4173/")
 
-    findings = Findings()
-    run(base, findings)
+    report = args.report or args.artifacts / "results.json"
 
-    args.report.parent.mkdir(parents=True, exist_ok=True)
-    args.report.write_text(json.dumps({
+    findings = Findings()
+    run(base, findings, args.artifacts)
+
+    report.parent.mkdir(parents=True, exist_ok=True)
+    report.write_text(json.dumps({
         "baseUrl": base,
+        "bootSurfaces": len(ALL_SURFACES),
+        "redirectAssertions": len(REDIRECTS),
         "passed": findings.passes,
         "failed": findings.failures,
     }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     print(f"Browser proof against {base}: {len(findings.passes)} passed · {len(findings.failures)} failed")
+    print(f"  boot check: {len(ALL_SURFACES)} distinct surfaces + "
+          f"{len(REDIRECTS)} redirect assertion(s); /start/ redirects to / and is asserted, not visited twice")
+    if args.artifacts != ARTIFACTS:
+        print(f"  artifacts written to {args.artifacts} (not the committed location)")
     for failure in findings.failures:
         print(f"  FAIL {failure}", file=sys.stderr)
     if findings.failures:

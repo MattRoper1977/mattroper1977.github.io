@@ -382,7 +382,7 @@
       return { email: u.email, name: md.name || md.full_name || (u.email || "").split("@")[0], tier: md.tier || "member", cloud: true };
     }
     function initSupabase(url, key) {
-      return import(/* @vite-ignore */ "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm").then(function (m) {
+      return import(/* @vite-ignore */ "/assets/vendor/supabase-js-2.112.2.esm.js").then(function (m) {
         sb = m.createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true } });
         sb.auth.onAuthStateChange(function (_ev, session) { setUser(sbUser(session)); });
         return sb.auth.getSession().then(function (r) { setUser(sbUser(r.data && r.data.session)); provider = "supabase"; });

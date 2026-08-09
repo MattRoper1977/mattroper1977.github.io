@@ -5,6 +5,171 @@ re-deriving anything. Last re-ordered 2 August 2026.
 
 ---
 
+## 0a. `verify_professional_site.js` — 8 findings, cause identified, two one-line fixes not yet authorised
+
+`verify-games-audience-faces.yml` fails on `main` at *Verify professional shell
+preservation against the target*. Eight findings: five "authorised homepage
+region … matched 0 times (expected 1)", a logo visual change, authored body
+wording outside permitted regions, and privacy copy changed without an account
+sentinel.
+
+**Do not "fix" these by adjusting the expectations.** Nothing below changes an
+expectation; it identifies what the check was comparing.
+
+### What `base` is — printed at run time, not inferred
+
+Instrumented copy of the verifier, run exactly as CI runs it:
+
+```
+base argument      : "origin/main"
+base rev-parse     : d0f9c2ae965d66a76af90595a08fb8cdfc27fd01
+base full name     : refs/remotes/origin/main
+base is a live URL : false
+overrides          : null
+```
+
+So `base` is an ordinary **git ref** — not a live URL, not a pinned snapshot
+artefact — and `overrides` is `null` on the failing run. The findings are about
+what is committed, not about what is served. Call sites agree:
+`professional-site-design-audit.yml` passes `--base origin/main`;
+`verify-games-audience-faces.yml` passes `origin/main` on a pull request and
+`HEAD^` on a push.
+
+### The mechanism
+
+`verify()` maps the baseline path for the homepage and only the homepage:
+
+```js
+const baselineRel = rel === 'main/index.html' ? 'index.html' : rel;
+```
+
+Printed at run time, that is what the two sides actually are:
+
+| side | read from | bytes | `<title>` |
+|---|---|---|---|
+| baseline | `origin/main:index.html` | 14,780 | Learning and creation, made simple. · Made by Matt |
+| current | worktree `main/index.html` | 69,047 | Made by Matt — Learn • Build • Explore |
+
+The baseline is **the audience chooser**. The other six key pages read
+`base:<same path>` and are byte-identical to the worktree. The five regions do
+not appear in the chooser because they never did — note the failing labels say
+`main/index.html *baseline*`, which is the side being read, not the page.
+
+### Why it was once right, and when it went stale
+
+The remap and `main/index.html` arrived in the same commit, `50817f0` (#110),
+which moved the professional homepage from `/` to `/main/` and gave `/` to the
+chooser. Against a base that predates that move, comparing the new
+`main/index.html` against the old `index.html` was the correct preservation
+comparison. It is a **one-shot mapping**: every base since #110 merged already
+contains `main/index.html`, so the comparison has been reading the chooser ever
+since.
+
+### What each finding costs
+
+- **7 of the 8** come from the remap. Same verifier, remap disabled as a
+  measurement only: **1 issue remains**.
+- **The 8th is independent.** `b11b449` ("Recover the PR #110 audience
+  discovery implementation from `.mbm-closeout`") *replaced* the privacy page's
+  sentinel line rather than adding to it —
+  `mbm-accounts-members-mailing-2026-08-08` became
+  `mbm-audience-discovery-teach-professional-hubs-closeout-2026-08-09`. The
+  account/mailing copy that sentinel authorises is still on the page (the
+  Supabase and Buttondown rows, the deletion contact). `members/index.html`
+  kept its sentinel; `privacy/index.html` lost it.
+
+### The cost that is not in the finding count — now fixed
+
+`main()` exited on the first failure, before `--self-test`. So the **four
+positive controls had not run on `main` since #110 merged** — the step that
+proves this gate can fail had itself been failing before it reached them.
+
+`--self-test` now runs every control and aggregates. Doing that exposed a
+second defect the old shape hid: the control *unrelated authored-copy mutation
+rejected* looks for the message "authored body wording changed", **which is
+already finding 7 of the baseline**. Compared against zero it would have
+reported PASS without its mutation doing anything. Controls are now evaluated
+as a delta against the unmutated run, and a signal already present in the
+baseline reports INCONCLUSIVE. Recorded as species 6 and 7 in
+`docs/VERIFIER_FAILURE_MODES.md`.
+
+Swept for the same shape: 66 tools, 19 with a control suite, **3 with the
+defect** — this file plus `verify_games_audience_faces.py` and
+`verify_education_hub.py`, both of which returned before dispatching their
+controls. All three now aggregate; all three proved on a red subject.
+
+### Sentinel sweep (0a-B context)
+
+59 HTML files scanned, 16 carry a sentinel, and **none carries more than one** —
+so the additive model does not exist anywhere in the estate yet. Pages carrying
+prose authored by a pass whose sentinel is absent:
+
+- **`privacy/index.html`** — 20 accounts/mailing prose markers, sentinel
+  displaced by the closeout pass. The known finding.
+- **`main/index.html`** — 6 accounts/mailing and 4 device-local-counter prose
+  markers, and **no sentinel at all**. Two authorising passes, nothing recorded.
+  It escapes the check because the verifier governs `main/` by region
+  comparison rather than by sentinel, but under an additive rule it is the
+  clearest multi-pass page in the estate.
+
+Eleven further apparent hits are false positives and are named here so nobody
+re-derives them: generic English ("auto-saves on this device" in two game
+pages), or one pass writing *about* another's feature — the locked chooser copy
+names Supabase and Buttondown in order to promise it does *not* use them, and
+that sentence is authored by the audience pass, which is the sentinel it
+carries. **Writing about a feature is not being authorised by that pass**, and
+any additive rule needs to say so or it will flag half the estate.
+
+### Measured, not applied
+
+With `baselineRel = rel` and the account sentinel restored alongside the
+closeout one, the verifier passes **and all four controls fire**, including
+*unrelated authored-copy mutation rejected* — so the corrected baseline path
+still catches drift and this is not a vacuous green.
+
+Neither change was made. Both await a ruling.
+
+**0a-A · the remap.** Remove it, and add an explicit precondition in its place:
+if `base` does not contain `main/index.html`, **fail with a message naming the
+reason**. Not a conditional — a conditional silently substitutes a different
+file and is indistinguishable from correct behaviour until it isn't, which is
+how this defect survived. A pre-#110 base should be an explicit, deliberate
+invocation, not a hidden branch.
+
+**0a-B · the sentinel. The additive proposal was withdrawn; this replaces it.**
+Three objections defeated it:
+
+- No page in the estate carries two sentinels (59 HTML files, 16 sentinels), so
+  additive sentinels would be **inventing a convention, not restoring one**.
+- Name-matching cannot decide authorship. The locked chooser copy names
+  Supabase and Buttondown *in order to promise it does not use them* — that
+  sentence is authored by the audience pass. A rule keyed on names would flag
+  half the estate.
+- The real gap is `main/index.html`, which carries accounts/mailing prose and
+  counter prose with **no sentinel at all**, escaping only because the verifier
+  governs `/main/` by region comparison.
+
+So: **one sentinel per page stays**, meaning the pass that last authored the
+file, and authorisation becomes a **declared input** — a map of page →
+authorising passes, in the same class as `gameIdOverrides`, `canonicalAliases`
+and `reclassifyAsGame`. A relation that cannot be derived from the page gets
+written down where it can be reviewed.
+
+The boundary, written once and applied consistently: **copy is authorised by the
+pass whose feature's behaviour it describes**, not by every pass whose systems
+it names. The privacy page's accounts/mailing copy describes the accounts
+feature's behaviour. The chooser's sentence describes the *audience-preference*
+feature's behaviour and names the others only as things it does not touch.
+
+`main/index.html` gets an explicit entry either way, so it is governed on
+purpose rather than by accident. If region comparison is judged sufficient
+governance for `/main/`, record that in the map rather than leaving it implicit.
+
+These findings predate the audience-discovery sequence. One of the original
+nine was a stale label list and is fixed.
+
+---
+
 ## 0. `/resources/` — the closeout rewrite is unrecoverable, page never rebuilt
 
 The PR #110 closeout replaced `resources/index.html` with a 12-line page. That

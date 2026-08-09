@@ -211,7 +211,7 @@
 
   function initSupabase() {
     var a = state.config.accounts;
-    return import(/* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm')
+    return import(/* @vite-ignore */ '/assets/vendor/supabase-js-2.112.2.esm.js')
       .then(function (mod) {
         sb = mod.createClient(String(a.supabaseUrl).replace(/\/+$/, ''), String(a.supabaseAnonKey), {
           auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
@@ -229,9 +229,14 @@
   }
 
   function requireConfigured() {
-    if (!state.configured || !sb) return Promise.reject(new Error('Account service is not configured.'));
+    if (!state.configured) return Promise.reject(new Error('Account service is not configured.'));
     if (navigator.onLine === false) return Promise.reject(new Error('offline'));
-    return Promise.resolve();
+    // The client is loaded on demand. Every action route reaches the service
+    // through here, so this is the one place that has to make sure it exists.
+    if (sb) return Promise.resolve();
+    return initSupabase().then(function () {
+      if (!sb) throw new Error('Account service is not configured.');
+    });
   }
   function requireUser() {
     return requireConfigured().then(function () {
@@ -407,6 +412,26 @@
     return function () { listeners = listeners.filter(function (x) { return x !== fn; }); };
   }
 
+  function needsClientAtBoot() {
+    // A discovery page has no reason to pull an auth client before anyone has
+    // asked for an account - the same principle as making no network request
+    // on typing, and none to YouTube before a deliberate Play. Load it at boot
+    // only where there is a session to restore or an account surface to serve;
+    // everywhere else requireConfigured() loads it on first use.
+    try {
+      var path = String(w.location && w.location.pathname || '');
+      if (/^\/(account|members)\//.test(path)) return true;
+      if (d.querySelector('[data-mbm-account-form], [data-mbm-account-panel], [data-mbm-member-panel]')) return true;
+      var store = w.localStorage;
+      for (var i = 0; i < store.length; i++) {
+        var key = store.key(i);
+        // supabase-js persists its session under sb-<project-ref>-auth-token
+        if (key && /^sb-.*-auth-token$/.test(key)) return true;
+      }
+    } catch (e) { return true; }
+    return false;
+  }
+
   function boot() {
     applyAccountAudienceNotice();
     loadConfig().then(function () {
@@ -417,6 +442,7 @@
         state.member = null;
         return null;
       }
+      if (!needsClientAtBoot()) return null;
       return initSupabase();
     }).catch(function (err) {
       state.configured = false;

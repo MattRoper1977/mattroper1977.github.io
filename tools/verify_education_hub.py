@@ -235,28 +235,36 @@ def self_test(as_of: str) -> None:
     mutate("lastReviewed in the future",
            lambda d: d["resources"][7].update(lastReviewed="2099-01-01"), "after the as-of date")
 
+    # Evaluated as a delta against the unmutated data. If the committed data
+    # already fails on the message a control looks for, that control cannot
+    # tell its mutation apart from the pre-existing failure, and saying so is
+    # the only honest outcome - reporting a pass there would be vacuous.
+    baseline = set(check(base, as_of))
+
     failures = 0
     for label, mutated, expect in controls:
-        found = check(mutated, as_of)
-        if any(expect in item for item in found):
+        added = [item for item in check(mutated, as_of) if item not in baseline]
+        if any(expect in item for item in baseline):
+            print(f"  [INCONCLUSIVE] {label}: the committed data already fails on {expect!r}",
+                  file=sys.stderr)
+        elif any(expect in item for item in added):
             print(f"  [PASS] control detected: {label}")
         else:
             print(f"  [FAIL] control NOT detected: {label}", file=sys.stderr)
-            for item in found[:3]:
+            for item in added[:3]:
                 print(f"           saw: {item}", file=sys.stderr)
             failures += 1
 
-    restored = check(base, as_of)
-    if restored:
-        print("  [FAIL] committed data does not verify after the controls", file=sys.stderr)
-        for item in restored[:5]:
+    restored = set(check(base, as_of))
+    if restored != baseline:
+        print("  [FAIL] the data does not verify the same way after the controls", file=sys.stderr)
+        for item in sorted(restored ^ baseline)[:5]:
             print(f"    - {item}", file=sys.stderr)
         failures += 1
     else:
-        print(f"  [PASS] committed data verifies after {len(controls)} positive controls")
+        print(f"  [PASS] committed data verifies identically after {len(controls)} positive controls")
 
-    if failures:
-        raise SystemExit(1)
+    return failures
 
 
 def main() -> None:
@@ -279,13 +287,19 @@ def main() -> None:
         print("\nEducation hub failures:", file=sys.stderr)
         for error in errors:
             print(f"  - {error}", file=sys.stderr)
-        raise SystemExit(1)
+    else:
+        print("  every resource has a declared publisher, an approved https domain and a derived status")
 
-    print("  every resource has a declared publisher, an approved https domain and a derived status")
-
+    # The controls run whether or not the data verified. Exiting first would
+    # switch off the suite that proves these checks can fail at exactly the
+    # moment the tool is reporting a problem - which is when it matters most.
+    control_failures = 0
     if args.self_test:
         print("\nPositive controls:")
-        self_test(as_of)
+        control_failures = self_test(as_of)
+
+    if errors or control_failures:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

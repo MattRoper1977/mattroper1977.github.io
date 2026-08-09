@@ -403,38 +403,67 @@ def mutate(source: str, old: str, new: str, label: str) -> str:
     return changed
 
 
-def expect_failure(label: str, overrides: Mapping[str, str], expected: str) -> None:
-    failures = check_tree(ROOT, overrides)
-    if not any(expected.lower() in item.lower() for item in failures):
+def expect_failure(label: str, overrides: Mapping[str, str], expected: str,
+                   baseline: set[str] | None = None) -> int:
+    """Run one control and report it. Returns 1 if the control is a problem.
+
+    Two things this deliberately does not do any more. It does not stop the
+    suite on a failure - a control that stops its siblings hides how much of
+    the instrument still works. And it does not compare against zero: with a
+    red tree, "the mutated run reports X" proves nothing if the unmutated run
+    already reported X, so the comparison is a delta, and a signal already
+    present in the baseline is reported INCONCLUSIVE rather than passed.
+    """
+    baseline = set() if baseline is None else baseline
+    if any(expected.lower() in item.lower() for item in baseline):
+        print(f"[INCONCLUSIVE] {label}: the tree already fails on {expected!r}, so this "
+              f"mutation cannot be told apart from that pre-existing failure")
+        return 0
+    added = [item for item in check_tree(ROOT, overrides) if item not in baseline]
+    if not any(expected.lower() in item.lower() for item in added):
         print(f"[FAIL] positive control not detected: {label}")
-        for item in failures:
+        for item in added:
             print(" -", item)
-        raise SystemExit(1)
+        return 1
     print(f"[PASS] positive control: {label}")
+    return 0
 
 
-def self_test() -> None:
+def self_test(baseline: set[str] | None = None) -> int:
+    baseline = set() if baseline is None else baseline
+    problems = 0
+
+    def control(label, overrides, expected):
+        nonlocal problems
+        problems += expect_failure(label, overrides, expected, baseline)
+
     chooser = read(ROOT, "index.html")
     pupils = read(ROOT, FACES["pupils"])
     teachers = read(ROOT, FACES["teachers"])
     js = read(ROOT, "assets/mbm-audience.js")
-    expect_failure("removed /main/ chooser link", {"index.html": mutate(chooser, '<a class="mf-btn primary" href="/main/">', '<a class="mf-btn primary" href="/main-missing/">', "main link")}, "does not expose the separate Main")
-    expect_failure("changed chooser heading", {"index.html": mutate(chooser, '>Choose your own homepage type</h2>', '>Choose a homepage</h2>', "chooser heading")}, "missing the mandated 'Choose your own homepage type' heading")
-    expect_failure("wrong audience canonical", {FACES["teachers"]: mutate(teachers, '<link rel="canonical" href="https://madebymatt.uk/for/teachers/">', '<link rel="canonical" href="https://madebymatt.uk/for/teacher-broken/">', "canonical")}, "canonical is wrong")
-    expect_failure("broken promoted image", {FACES["teachers"]: mutate(teachers, "/images/lesson-hub-card.webp", "/images/not-real.webp", "image")}, "promoted image path is broken")
+    control("removed /main/ chooser link", {"index.html": mutate(chooser, '<a class="mf-btn primary" href="/main/">', '<a class="mf-btn primary" href="/main-missing/">', "main link")}, "does not expose the separate Main")
+    control("changed chooser heading", {"index.html": mutate(chooser, '>Choose your own homepage type</h2>', '>Choose a homepage</h2>', "chooser heading")}, "missing the mandated 'Choose your own homepage type' heading")
+    control("wrong audience canonical", {FACES["teachers"]: mutate(teachers, '<link rel="canonical" href="https://madebymatt.uk/for/teachers/">', '<link rel="canonical" href="https://madebymatt.uk/for/teacher-broken/">', "canonical")}, "canonical is wrong")
+    control("broken promoted image", {FACES["teachers"]: mutate(teachers, "/images/lesson-hub-card.webp", "/images/not-real.webp", "image")}, "promoted image path is broken")
     pupil_nav = mutate(pupils, '<div class="mbm-nav-panel">', '<div class="mbm-nav-panel"><a href="/account/">Account</a>', "pupil adult link")
-    expect_failure("adult link inserted into pupil navigation", {FACES["pupils"]: pupil_nav}, "pupil primary navigation exposes adult")
+    control("adult link inserted into pupil navigation", {FACES["pupils"]: pupil_nav}, "pupil primary navigation exposes adult")
     network_js = mutate(js, "function init(){", "function init(){fetch('/preference-leak');", "network request")
-    expect_failure("local preference network request", {"assets/mbm-audience.js": network_js}, "attempts a network request")
-    old_label = mutate(chooser, "Academy trusts &amp; education groups", "Academy trusts &amp; trusts", "old label")
-    expect_failure("reverted obsolete audience label", {"index.html": old_label}, "obsolete public audience label remains")
-    restored = check_tree(ROOT)
-    if restored:
-        print("[FAIL] restored implementation failed after positive controls")
-        for item in restored:
+    control("local preference network request", {"assets/mbm-audience.js": network_js}, "attempts a network request")
+    # Derive the label to replace. Re-typing it here is the trap this file
+    # was already fixed for once.
+    current_trust_label = public_labels(json.loads(read(ROOT, "data/audience-homepages.json")))["trusts"]
+    old_label = mutate(chooser, current_trust_label, "Academy trusts &amp; trusts", "old label")
+    control("reverted obsolete audience label", {"index.html": old_label}, "obsolete public audience label remains")
+    restored = set(check_tree(ROOT))
+    if restored != baseline:
+        print("[FAIL] the tree does not verify the same way after the positive controls")
+        for item in sorted(restored ^ baseline):
             print(" -", item)
-        raise SystemExit(1)
-    print("[PASS] restored implementation after seven positive controls")
+        problems += 1
+    else:
+        print(f"[PASS] tree verifies identically after seven positive controls "
+              f"({len(baseline)} baseline finding(s))")
+    return problems
 
 
 def main() -> int:
@@ -446,11 +475,14 @@ def main() -> int:
         print(f"[FAIL] {len(errors)} static error(s)")
         for error in errors:
             print(" -", error)
-        return 1
-    print("[PASS] root chooser, preserved /main/, seven visual audience homepages, local preference, labels, routes and integration boundaries")
-    if args.self_test:
-        self_test()
-    return 0
+    else:
+        print("[PASS] root chooser, preserved /main/, seven visual audience homepages, local preference, labels, routes and integration boundaries")
+
+    # The controls run whether or not the tree verified. Returning first would
+    # switch off the suite that proves these checks can fail at exactly the
+    # moment the tool is reporting a problem - which is when it matters most.
+    problems = self_test(set(errors)) if args.self_test else 0
+    return 1 if (errors or problems) else 0
 
 
 if __name__ == "__main__":
