@@ -168,7 +168,7 @@ async function testRoot(page, width, target) {
   ensure(JSON.stringify(routes) === JSON.stringify(expectedRoutes), `root routes differ at ${width}px: ${JSON.stringify(routes)}`);
   ensure(JSON.stringify(labels) === JSON.stringify(expectedLabels), `root labels differ at ${width}px: ${JSON.stringify(labels)}`);
   ensure(await page.locator('#group-people').count() === 1 && await page.locator('#group-organisations').count() === 1, 'root audience grouping is missing');
-  await assertImagesDecode(page, '.mf-hero-mark, .mf-main-card-mark', `root ${width}`);
+  await assertImagesDecode(page, '.mf-hero-mark, .mf-main-card-mark img', `root ${width}`);
   await assertTouchTargets(page, '.mf-actions a, .mf-main-card, .mf-choice', `root ${width}`);
   await testMenu(page, width, target, { screenshot: width === 390 ? 'root-390-menu-open.png' : undefined });
   if (width === 390 || width === 1440) await page.screenshot({ path: path.join(out, `root-${width}.png`), fullPage: true });
