@@ -167,6 +167,7 @@ def main() -> None:
     # output so a later reader sees the gap rather than inferring completeness
     # from a green run. See BACKLOG.md item 0.
     findings.note("/resources/ is still the pre-closeout catalogue; the closeout rewrite is unrecoverable (BACKLOG.md item 0)")
+    findings.note("verify_professional_site.js has 8 unresolved findings against main/index.html (BACKLOG.md item 0a)")
 
     surfaces: list[tuple[str, Path, str]] = [
         ("/", ROOT / "index.html", "audience"),

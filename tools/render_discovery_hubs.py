@@ -21,7 +21,10 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SENTINEL = "mbm-audience-discovery-teach-professional-hubs-closeout-2026-08-09"
+# The sentinel is owned by render_audience_homepages.py. Importing it keeps
+# one definition; a second copy here would drift the moment that one moved.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from render_audience_homepages import SENTINEL  # noqa: E402
 ORIGIN = "https://madebymatt.uk"
 
 INDEX_PATH = ROOT / "data" / "mbm-search-index.json"

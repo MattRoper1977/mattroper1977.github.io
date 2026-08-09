@@ -426,7 +426,10 @@ def self_test() -> None:
     expect_failure("adult link inserted into pupil navigation", {FACES["pupils"]: pupil_nav}, "pupil primary navigation exposes adult")
     network_js = mutate(js, "function init(){", "function init(){fetch('/preference-leak');", "network request")
     expect_failure("local preference network request", {"assets/mbm-audience.js": network_js}, "attempts a network request")
-    old_label = mutate(chooser, "Academy trusts &amp; education groups", "Academy trusts &amp; trusts", "old label")
+    # Derive the label to replace. Re-typing it here is the trap this file
+    # was already fixed for once.
+    current_trust_label = public_labels(json.loads(read(ROOT, "data/audience-homepages.json")))["trusts"]
+    old_label = mutate(chooser, current_trust_label, "Academy trusts &amp; trusts", "old label")
     expect_failure("reverted obsolete audience label", {"index.html": old_label}, "obsolete public audience label remains")
     restored = check_tree(ROOT)
     if restored:

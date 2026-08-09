@@ -12,8 +12,9 @@ the markup:
   * typing into any search field sends nothing off-origin, and no request
     carries the typed query - the page loads its own index from this origin,
     which is the design; the keystrokes leaving the site is what must not happen
-  * the pupil page makes no off-origin request at all - adult surfaces load an
-    account library from a CDN and that stays out of the pupil experience
+  * no surface contacts a third party at page load, with an explicit allow-list
+    that is empty on purpose - the estate serves its own assets, search index
+    and account client
   * no request reaches a YouTube or Google host until a play control is
     deliberately activated
   * URL state survives a reload - a shared link restores its own filters
@@ -40,7 +41,10 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACTS = ROOT / "artifacts" / "browser"
+# The workflow that calls this tool uploads audit-output/ and prints
+# audit-output/audience-discovery/browser-results.json. That contract predates
+# this tool, so the tool conforms to it rather than the other way round.
+ARTIFACTS = ROOT / "audit-output" / "audience-discovery"
 
 # Some environments ship a Chromium that Playwright did not download itself;
 # launching it directly avoids fetching a second copy. Where no such binary
@@ -60,6 +64,17 @@ AUDIENCE_ROUTES = [
 SEARCH_ROUTES = ["/", "/teach/", "/education-hub/"]
 
 VIDEO_HOSTS = ("youtube.com", "youtu.be", "youtube-nocookie.com", "ytimg.com", "googlevideo.com")
+
+# No surface may contact a third party just because someone opened it. The
+# estate serves its own assets, its own search index and its own account
+# client, so this list is empty on purpose: an entry here is a deliberate,
+# reviewable exception, not a default. A Supabase client fetched from a CDN at
+# page load is exactly what this exists to catch.
+BOOT_ORIGIN_ALLOWLIST: dict[str, tuple[str, ...]] = {}
+
+# Every surface the estate serves, so the boot check is estate-wide rather than
+# a guarantee about one page.
+ALL_SURFACES = ["/", "/main/", "/start/", "/teach/", "/resources/", "/education-hub/"] + AUDIENCE_ROUTES
 ADULT_CTA = ("/account/", "/mailing-list/", "/members/")
 
 
@@ -171,6 +186,26 @@ def run(base: str, findings: Findings) -> None:
         findings.check("evidence" in count_after and count_before == count_after,
                        "restored URL state yields the same results",
                        f"{count_before!r} vs {count_after!r}")
+        context.close()
+
+        # E2: no surface contacts a third party at page load. This is the
+        # estate-wide form of the pupil guarantee - the assertion that catches
+        # an off-origin dependency nobody went looking for.
+        context = browser.new_context(viewport={"width": 1440, "height": 900})
+        for route in ALL_SURFACES:
+            # A fresh page per route, so one surface's requests cannot be
+            # attributed to the next.
+            page = context.new_page()
+            boot: list[str] = []
+            page.on("request", lambda r, sink=boot: sink.append(r.url))
+            page.goto(base.rstrip("/") + route, wait_until="networkidle")
+            page.wait_for_timeout(700)
+            allowed = BOOT_ORIGIN_ALLOWLIST.get(route, ())
+            offending = [u for u in external_requests(boot, base)
+                         if not any(a in u for a in allowed)]
+            findings.check(not offending, f"boot: {route} contacts no third party",
+                           ", ".join(sorted(set(offending))[:3]))
+            page.close()
         context.close()
 
         # F: 320px reflow - nothing may scroll horizontally.

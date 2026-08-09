@@ -5,6 +5,38 @@ re-deriving anything. Last re-ordered 2 August 2026.
 
 ---
 
+## 0a. `verify_professional_site.js` — 8 findings against `main/index.html`, cause not established
+
+`verify-games-audience-faces.yml` fails on `main` at *Verify professional shell
+preservation against the target*. Eight findings, all about `main/index.html`:
+five "authorised homepage region … matched 0 times (expected 1)", plus a logo
+visual change, authored body wording outside permitted regions, and privacy
+copy changed without an account sentinel.
+
+**Do not "fix" these by adjusting the expectations.** Measured evidence:
+
+- All five region patterns, extracted from the verifier and evaluated in Node
+  against the committed `main/index.html`, match **exactly once each**.
+- The verifier nonetheless reports 0 for all five.
+
+So the check is not evaluating them against the committed file. It runs
+`verify(base, overrides)` and the step is named *against the target* — it is a
+drift comparison against a pinned baseline copy that this pass did not locate.
+
+That means neither "the page is wrong" nor "the verifier is wrong" is
+established, and adjusting an expectation to reach green would be
+indistinguishable from a vacuous green. Left red deliberately.
+
+To start: find what `base`/`overrides` resolve to in the failing path and which
+artefact supplies the target. If the target is a pinned snapshot, the question
+becomes whether `main/index.html` was intended to move — which is an editorial
+call, not a verifier one.
+
+These findings predate the audience-discovery sequence. One of the original
+nine was a stale label list and is fixed; the remaining eight are untouched.
+
+---
+
 ## 0. `/resources/` — the closeout rewrite is unrecoverable, page never rebuilt
 
 The PR #110 closeout replaced `resources/index.html` with a 12-line page. That

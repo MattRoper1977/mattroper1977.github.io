@@ -164,6 +164,27 @@ jobs:
       - name: Browser proof controls
         run: python3 tools/verify_audience_discovery_browser.py --self-test
 
+      - name: A re-introduced off-origin boot fetch goes red
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib
+          p = pathlib.Path("assets/mbm-account.js")
+          t = p.read_text(encoding="utf-8")
+          p.write_text(t.replace("  function boot() {",
+              "  function boot() {\n    try { fetch('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm').catch(function(){}); } catch(e){}",
+              1), encoding="utf-8")
+          PY
+          python3 -m http.server 4174 --bind 127.0.0.1 >/tmp/ctl.log 2>&1 &
+          for _ in $(seq 1 20); do curl -sf -o /dev/null http://127.0.0.1:4174/ && break || sleep 1; done
+          out=$(MBM_BASE_URL=http://127.0.0.1:4174/ python3 tools/verify_audience_discovery_browser.py 2>&1 || true)
+          git checkout -- assets/mbm-account.js
+          if grep -q "contacts no third party" <<<"$out"; then
+            echo "control detected: off-origin boot fetch caught"
+          else
+            echo "estate-wide boot assertion did not fire"; echo "$out" | tail -20; exit 1
+          fi
+
       - name: Browser proof against the checked-out estate
         run: |
           set -euo pipefail

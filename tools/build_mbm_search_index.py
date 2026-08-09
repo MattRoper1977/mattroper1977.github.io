@@ -12,8 +12,8 @@ several surfaces read, and a generator that is 99% right would corrupt it
 silently:
 
   * the default invocation compares and never writes
-  * --write regenerates, byte-compares, and refuses on any difference unless
-    --accept-drift is passed with a reason
+  * --check resolves its reference from the git blob, never the working tree
+  * --write refuses unless every changed leaf path was named with --expect-diff
   * writes go to a temp file and are moved into place atomically, never edited
     in place
 
@@ -30,14 +30,12 @@ Derivation, in one place so it is reviewable:
                 publishes - matched on route, never on title, and asserted
                 by identity rather than by count
 
-Reproduces lesson, resource and page - 423 of the 511 committed entries.
-game, app and tool do not yet reproduce and the tool says so rather than
-passing quietly; see NOT_REPRODUCED below.
+All 511 committed entries reproduce byte-identically.
 
 Usage:
   python3 tools/build_mbm_search_index.py --check
   python3 tools/build_mbm_search_index.py --check --category lesson
-  python3 tools/build_mbm_search_index.py --write
+  python3 tools/build_mbm_search_index.py --write --expect-diff sourceHashes.mbm-search-editorial.json
 """
 from __future__ import annotations
 
@@ -80,15 +78,6 @@ def finalise(entry: dict[str, Any]) -> dict[str, Any]:
     if unknown:
         raise SystemExit(f"entry {entry.get('id')!r} has keys outside the canonical order: {sorted(unknown)}")
     return {k: entry[k] for k in CANONICAL_KEYS if entry.get(k) is not None}
-
-# Categories whose derivation is not yet fully recovered. They are still built
-# and still compared - they simply fail, loudly, instead of being skipped. The
-# blocker for `game` is its id rule: 40 of the 48 manifest games take an id from
-# their route, but 8 take one from their title, and those 8 are exactly the
-# games other surfaces reference by searchId. That list lives in
-# data/audience-homepages.json, which consumes the index rather than sourcing
-# it, so the rule is not derivable from the declared inputs alone.
-NOT_REPRODUCED = {"game", "app", "tool"}
 
 # Pathway names are short and collide with ordinary English - "growth" is not
 # GROW, "Building" is not BUILD - so these match on word boundaries.
