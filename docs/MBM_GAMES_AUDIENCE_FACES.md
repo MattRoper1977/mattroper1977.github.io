@@ -2,6 +2,8 @@
 
 Sentinel: `mbm-games-audience-faces-2026-08-08`
 
+> **Current status:** this remains the historical record for the Games hub upgrade. The homepage-routing and audience-homepage architecture was superseded by `mbm-homepage-audience-routing-2026-08-09`. See `docs/MBM_HOMEPAGE_AUDIENCE_ARCHITECTURE.md` for the current canonical routes, labels and regression contract.
+
 ## Purpose
 
 This release closes the remaining visual gap between `/games/` and the professional Made by Matt platform, then adds a new audience-entry layer without rewriting existing authored Games copy or turning one audience choice into a permission system.
@@ -23,7 +25,7 @@ The Games catalogue remains sourced from `/Games/games.json`. No game runtime is
 
 ## Audience entry architecture
 
-Chooser: `/start/`.
+Canonical chooser: `/`. The former `/start/` URL is a noindex compatibility route to `/`. The preserved full general homepage is `/main/`.
 
 Faces:
 
@@ -35,7 +37,7 @@ Faces:
 - `/for/councils-organisations/`
 - `/for/partners/`
 
-The homepage's existing audience section is preserved and gains one additive link to the full chooser.
+The preserved full homepage at `/main/` retains its audience section and links to the canonical chooser at `/`.
 
 ### No gating
 
@@ -49,12 +51,12 @@ Adult-facing views can surface the existing account, Members, mailing-list and P
 
 ## Audience copy boundary
 
-Existing authored wording on `/games/` is preservation-tested. New explanatory copy exists only on the new `/start/` and `/for/.../` pages. The professional/institutional pages explicitly avoid implying a school, trust, council or business relationship that does not exist.
+Existing authored wording on `/games/` is preservation-tested. The current explanatory architecture lives on `/`, `/main/` and the `/for/.../` homepages. The professional/institutional pages explicitly avoid implying a school, trust, council or business relationship that does not exist.
 
 ## Verification
 
-`tools/verify_games_audience_faces.py` protects existing Games copy anchors, canonical logo use, exactly seven audience choices, the pupil/adult feature boundary, platform routes, local-only audience preference, sitemap entries and a positive control that deliberately corrupts the chooser sentinel and must fail.
+`tools/verify_games_audience_faces.py` protects the root chooser, preserved `/main/` homepage, exact seven-route taxonomy, real visual-content floors, pupil/adult feature boundary, local-only preference, metadata and navigation. Its mutation controls deliberately remove or corrupt seven separate release requirements and must fail.
 
-`tools/verify_games_audience_faces.mjs` checks the rendered release at 320, 360, 390, 430, 768, 1024, 1280 and 1440 CSS pixels, including menu/focus behaviour, Games manifest rendering and artwork, chooser/face structure, pupil adult-feature suppression, local face preference, first-party requests and horizontal overflow.
+`tools/verify_games_audience_faces.mjs` checks the rendered release at 320, 360, 390, 430, 768, 1024, 1280 and 1440 CSS pixels, including menu/focus behaviour, `/main/` preservation, real imagery, all seven audience homepages, pupil adult-feature suppression, local preference, representative journeys, first-party requests and horizontal overflow.
 
 The permanent workflow repeats the browser checks against the served production deployment after merge.

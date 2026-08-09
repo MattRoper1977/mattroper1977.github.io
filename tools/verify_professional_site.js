@@ -20,8 +20,9 @@ const ROOT = path.resolve(__dirname, '..');
 const SENTINEL = 'mbm-site-professional-design-upgrade-2026-08-07';
 const ACCOUNT_SENTINEL = 'mbm-accounts-members-mailing-2026-08-08';
 const FUNCTIONAL_COPY_PAGES = new Set(['members/index.html', 'privacy/index.html']);
+const CHOOSER_PAGE = 'index.html';
 const KEY_PAGES = [
-  'index.html',
+  'main/index.html',
   'games/index.html',
   'tools/index.html',
   'resources/index.html',
@@ -30,7 +31,7 @@ const KEY_PAGES = [
   'stats/index.html'
 ];
 const PRIMARY_LINKS = ['/games/', '/Lessons/', '/Matt-s-Apps-/', '/tools/', '/resources/'];
-const MORE_LINKS = ['/stats/', '/members/', '/#about', '/privacy/'];
+const MORE_LINKS = ['/main/', '/', '/stats/', '/members/', '/main/#about', '/privacy/'];
 const EXTERNAL_MOUNTS = new Set(['/Lessons/', '/Matt-s-Apps-/', '/Games/']);
 
 /*
@@ -143,7 +144,7 @@ function canonicalHomeTruthCopy(html, failures, label) {
 }
 function verifyHomeTruthContracts(home, failures) {
   const regions = new Map();
-  for (const region of HOME_TRUTH_REGIONS) regions.set(region.name, captureExactly(home, region, failures, 'index.html'));
+  for (const region of HOME_TRUTH_REGIONS) regions.set(region.name, captureExactly(home, region, failures, 'main/index.html'));
 
   const follow = regions.get('follow-work-account-mailing-lede') || '';
   const free = regions.get('public-access-promise-tile') || '';
@@ -200,12 +201,20 @@ function verify(base, overrides = null) {
   const failures = [];
   const css = relRead('assets/mbm-platform.css', overrides);
   const js = relRead('assets/mbm-platform.js', overrides);
-  const home = relRead('index.html', overrides);
+  const home = relRead('main/index.html', overrides);
+  const chooser = relRead(CHOOSER_PAGE, overrides);
 
   assert(css.includes(SENTINEL), 'shared CSS sentinel missing', failures);
   assert(js.includes(SENTINEL), 'shared JavaScript sentinel missing', failures);
   assert(fs.existsSync(path.join(ROOT, 'assets/mbm-platform.css')), 'assets/mbm-platform.css missing', failures);
   assert(fs.existsSync(path.join(ROOT, 'assets/mbm-platform.js')), 'assets/mbm-platform.js missing', failures);
+
+  assert(/href=["']\/assets\/mbm-platform\.css["']/i.test(chooser), `${CHOOSER_PAGE}: shared CSS not loaded`, failures);
+  assert(/src=["']\/assets\/mbm-platform\.js["']/i.test(chooser), `${CHOOSER_PAGE}: shared JavaScript not loaded`, failures);
+  assert(/<header\b[^>]*\bmbm-site-header\b/i.test(chooser), `${CHOOSER_PAGE}: shared header class missing`, failures);
+  assert(/<button\b[^>]*\bclass=["'][^"']*\bmenu\b/i.test(chooser), `${CHOOSER_PAGE}: mobile Menu control missing`, failures);
+  assert(/<nav\b[^>]*\baria-label=["']Site navigation["']/i.test(chooser), `${CHOOSER_PAGE}: named site navigation missing`, failures);
+  assert(/<details\b[^>]*\bmbm-nav-more\b/i.test(chooser), `${CHOOSER_PAGE}: More disclosure missing`, failures);
 
   for (const rel of KEY_PAGES) {
     const html = relRead(rel, overrides);
@@ -223,8 +232,8 @@ function verify(base, overrides = null) {
   }
 
   assert(/<section\b[^>]*\bid=["']audiences["']/i.test(home), 'homepage audience pathway section missing', failures);
-  for (const label of ['Teachers', 'Pupils &amp; learners', 'Schools &amp; organisations', 'Partners']) assert(home.includes(label), `homepage audience label missing: ${label}`, failures);
-  for (const href of ['/tools/', '/Lessons/', '/resources/', '/games/', '/stats/', '/privacy/', '/#about', '/#contact', '/#collections']) {
+  for (const label of ['Pupils &amp; learners', 'Teachers &amp; education staff', 'Parents &amp; carers', 'Schools &amp; specialist settings', 'Academy trusts', 'Local authorities &amp; education services', 'Education organisations &amp; service providers']) assert(home.includes(label), `homepage audience label missing: ${label}`, failures);
+  for (const href of ['/tools/', '/Lessons/', '/resources/', '/games/', '/stats/', '/privacy/', '/main/#about', '/main/#contact', '/main/#collections', '/', '/for/pupils/', '/for/teachers/', '/for/parents-carers/', '/for/schools-semh/', '/for/trusts/', '/for/councils-organisations/', '/for/partners/']) {
     assert(home.includes(`href="${href}"`) || home.includes(`href='${href}'`), `homepage audience route missing: ${href}`, failures);
     assert(localRouteExists(href), `homepage audience route has no proven destination: ${href}`, failures);
   }
@@ -260,16 +269,17 @@ function verify(base, overrides = null) {
 
   for (const rel of KEY_PAGES) {
     try {
-      const baseline = gitShow(base, rel);
+      const baselineRel = rel === 'main/index.html' ? 'index.html' : rel;
+      const baseline = gitShow(base, baselineRel);
       const current = relRead(rel, overrides);
-      const beforeLogo = brandVisual(baseline);
-      const afterLogo = brandVisual(current);
-      assert(beforeLogo && beforeLogo === afterLogo, `${rel}: Made by Matt logo markup changed`, failures);
+      const beforeLogo = brandVisual(baseline).replace(/src=["']assets\//g, 'src="/assets/');
+      const afterLogo = brandVisual(current).replace(/src=["']assets\//g, 'src="/assets/');
+      assert(beforeLogo && beforeLogo === afterLogo, `${rel}: Made by Matt logo visual changed`, failures);
       if (FUNCTIONAL_COPY_PAGES.has(rel)) {
         assert(current.includes(ACCOUNT_SENTINEL), `${rel}: authorised account/privacy copy changed without account sentinel`, failures);
       } else {
-        const beforeSource = rel === 'index.html' ? canonicalHomeTruthCopy(baseline, failures, `${rel} baseline`) : baseline;
-        const afterSource = rel === 'index.html' ? canonicalHomeTruthCopy(current, failures, `${rel} current`) : current;
+        const beforeSource = rel === 'main/index.html' ? canonicalHomeTruthCopy(baseline, failures, `${rel} baseline`) : baseline;
+        const afterSource = rel === 'main/index.html' ? canonicalHomeTruthCopy(current, failures, `${rel} current`) : current;
         const before = visibleAuthoredText(beforeSource);
         const after = visibleAuthoredText(afterSource);
         assert(before === after, `${rel}: authored body wording changed outside permitted chrome/audience/auth regions`, failures);
@@ -292,9 +302,9 @@ function main() {
     console.error(`[FAIL] professional site verifier (${first.length} issue${first.length === 1 ? '' : 's'})`);
     printFailures(first); process.exit(1);
   }
-  console.log(`[PASS] current implementation: ${KEY_PAGES.length} key pages, shared platform, preservation and route contracts`);
+  console.log(`[PASS] current implementation: chooser + ${KEY_PAGES.length} key pages, shared platform, /main/ preservation and route contracts`);
   if (args.selfTest) {
-    const home = relRead('index.html');
+    const home = relRead('main/index.html');
 
     const authorisedMutation = requireMutation(
       home,
@@ -302,7 +312,7 @@ function main() {
       'A regular Made by Matt update covering what changed on the site and a clearly labelled look at what is coming next.',
       'authorised-region mutation'
     );
-    const authorised = verify(args.base, { 'index.html': authorisedMutation });
+    const authorised = verify(args.base, { 'main/index.html': authorisedMutation });
     if (authorised.length) {
       console.error('[FAIL] authorised account/mailing wording mutation was rejected');
       printFailures(authorised); process.exit(1);
@@ -310,7 +320,7 @@ function main() {
     console.log('[PASS] positive control: authorised account/mailing wording mutation accepted');
 
     const unrelatedMutation = requireMutation(home, 'Browse the Arcade', 'Browse every Arcade', 'unrelated authored-copy mutation');
-    const unrelated = verify(args.base, { 'index.html': unrelatedMutation });
+    const unrelated = verify(args.base, { 'main/index.html': unrelatedMutation });
     if (!unrelated.some((failure) => failure.includes('authored body wording changed'))) {
       console.error('[FAIL] unrelated authored homepage wording mutation was not rejected by preservation');
       printFailures(unrelated); process.exit(1);
@@ -323,7 +333,7 @@ function main() {
       '<a class="dx-tbtn" href="/mailing-list-broken/">Join teacher updates</a>',
       'account/mailing structure mutation'
     );
-    const structural = verify(args.base, { 'index.html': structuralMutation });
+    const structural = verify(args.base, { 'main/index.html': structuralMutation });
     if (!structural.some((failure) => failure.includes('Teacher updates must link to /mailing-list/'))) {
       console.error('[FAIL] broken account/mailing structure was not rejected');
       printFailures(structural); process.exit(1);
@@ -331,7 +341,7 @@ function main() {
     console.log(`[PASS] positive control: structural account/mailing mutation rejected (${structural.length} detected issue${structural.length === 1 ? '' : 's'})`);
 
     const audienceMutation = requireMutation(home, 'id="audiences"', 'id="audiences-broken"', 'audience structure mutation');
-    const audience = verify(args.base, { 'index.html': audienceMutation });
+    const audience = verify(args.base, { 'main/index.html': audienceMutation });
     if (!audience.length) { console.error('[FAIL] broken audience fixture was not rejected'); process.exit(1); }
     console.log(`[PASS] positive control: deliberately broken audience fixture rejected (${audience.length} detected issue${audience.length === 1 ? '' : 's'})`);
 

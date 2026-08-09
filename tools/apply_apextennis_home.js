@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 const fs=require('fs'),path=require('path');
-const ROOT=path.join(__dirname,'..'),INDEX=path.join(ROOT,'index.html'),SITE=path.join(ROOT,'site.json');
+const ROOT=path.join(__dirname,'..'),MAIN=path.join(ROOT,'main','index.html'),INDEX=fs.existsSync(MAIN)?MAIN:path.join(ROOT,'index.html'),SITE=path.join(ROOT,'site.json');
 const CARD_NAMES=['Apex Kick','Apex Pool','Apex Golf','Apex Tennis'];
 const OLD_LEDE='Two games about reading a line, controlling the finish and making the next decision count.';
 const NEW_LEDE='Four games about reading the line, calling the plan and making the next decision count.';

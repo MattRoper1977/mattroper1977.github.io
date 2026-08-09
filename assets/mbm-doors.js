@@ -236,10 +236,20 @@
     return door;
   }
 
+  // site.json keeps the measured repository-relative convention, but the full
+  // homepage now lives at /main/. Resolve every first-party door and image from
+  // the domain root so moving the renderer does not turn Lessons/ into
+  // /main/Lessons/ or assets/ into /main/assets/.
+  function rootPath(value) {
+    var s = String(value == null ? "" : value);
+    if (!s || s.charAt(0) === "/" || s.charAt(0) === "#" || /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(s)) return s;
+    return "/" + s.replace(/^\.\//, "");
+  }
+
   function buildCard(door, doc) {
     var a = doc.createElement("a");
     a.className = "dx-prod";
-    a.setAttribute("href", door.href);
+    a.setAttribute("href", rootPath(door.href));
     if (door.countKey) a.setAttribute("data-mbm-count", door.countKey);
 
     // A door can carry either a photographic image or a template of SVG art.
@@ -250,7 +260,7 @@
     if (door.image) {
       var im = doc.createElement("img");
       im.className = "dx-art";
-      im.setAttribute("src", door.image);
+      im.setAttribute("src", rootPath(door.image));
       im.setAttribute("alt", door.imageAlt || "");
       im.setAttribute("loading", "lazy");
       im.setAttribute("decoding", "async");

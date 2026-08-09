@@ -86,8 +86,13 @@ if baseline_index:
  release=lambda text:re.search(r'<section[^>]*id="newrelease".*?</section>',text,re.S).group(0)
  others=lambda text:[b for b in re.split(r'(?=<div class="dx-updbox")',release(text)) if 'data-release=' not in b]
  now,before=others(index),others(baseline_index)
+ # Moving the full homepage from / to /main/ requires first-party href/src
+ # values that were relative at the old root to gain one leading slash. Strip
+ # that migration-only prefix before the byte comparison; any changed target,
+ # wording or structure still fails.
+ architecture_normalise=lambda block:re.sub(r'((?:href|src)=["\'])/(?!/)',r'\1',block)
  req(len(before)>0,f'non-occupant baseline population is non-empty ({len(before)} block(s)) — an empty comparison would pass vacuously')
- req(now==before,f'the rest of the New Release section is byte-equivalent to main ({len(before)} non-occupant block(s))')
+ req([architecture_normalise(x) for x in now]==[architecture_normalise(x) for x in before],f'the rest of the New Release section is architecture-normalised byte-equivalent to main ({len(before)} non-occupant block(s))')
 req('var(--dx-card)' in index and 'var(--dx-ink)' in index,'Sports keeps homepage theme tokens')
 req('@media(prefers-reduced-motion:reduce){a.dx-sport' in index,'Sports retains explicit reduced-motion protection')
 doors=site.get('doors',[]);titles=[d.get('title') for d in doors]

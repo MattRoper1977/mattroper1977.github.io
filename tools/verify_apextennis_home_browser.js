@@ -9,8 +9,11 @@ function rec(name,ok,detail=''){results.push({name,ok,detail});console.log((ok?'
 
 const ROOT=path.join(__dirname,'..');
 const SITE=JSON.parse(fs.readFileSync(path.join(ROOT,'site.json'),'utf8'));
-const HOME=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
-const EXPECT=(SITE.doors||[]).map(d=>({title:d.title,href:d.href,zone:d.zone}));
+const HOME_PATH=fs.existsSync(path.join(ROOT,'main','index.html'))?path.join(ROOT,'main','index.html'):path.join(ROOT,'index.html');
+const HOME_ROUTE=HOME_PATH.endsWith(path.join('main','index.html'))?'/main/':'/';
+const HOME=fs.readFileSync(HOME_PATH,'utf8');
+const rootHref=h=>{const s=String(h||'');return !s||s.startsWith('/')||/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(s)?s:'/'+s.replace(/^\.\//,'');};
+const EXPECT=(SITE.doors||[]).map(d=>({title:d.title,href:rootHref(d.href),sourceHref:d.href,zone:d.zone}));
 const EXPECT_DOORS=EXPECT.length;
 const EXPECT_GAMES=EXPECT.filter(d=>d.zone==='games').length;
 
@@ -104,7 +107,7 @@ function releaseContract(rendered){
 
   const nojs=await browser.newContext({viewport:{width:390,height:844},javaScriptEnabled:false,reducedMotion:'reduce'});
   const nojsPage=await nojs.newPage();await isolate(nojsPage);
-  const nojsResponse=await nojsPage.goto(BASE+'/',{waitUntil:'domcontentloaded'});
+  const nojsResponse=await nojsPage.goto(BASE+HOME_ROUTE,{waitUntil:'domcontentloaded'});
   await nojsPage.waitForLoadState('load').catch(()=>{});
   await nojsPage.evaluate(()=>document.fonts?document.fonts.ready:null).catch(()=>{});
   const off=await nojsPage.evaluate(()=>{const cards=[...document.querySelectorAll('#homeSports [data-sport-game]')],boxes=[...document.querySelectorAll('#newrelease [data-release]')];return{cards:cards.map(a=>({title:a.dataset.sportGame,href:a.getAttribute('href'),tag:a.tagName})),releaseBoxes:boxes.length,occupants:boxes.map(b=>b.getAttribute('data-release')),perBox:Object.fromEntries(boxes.map(b=>[b.getAttribute('data-release'),{title:b.querySelector('h3')?.textContent.trim()||'',links:[...b.querySelectorAll('a')].map(a=>a.getAttribute('href'))}])),scrollW:document.documentElement.scrollWidth,innerW:innerWidth};});
@@ -122,7 +125,7 @@ function releaseContract(rendered){
     page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});
     page.on('pageerror',e=>errors.push('page: '+e.message));
     page.on('response',r=>{if(r.status()>=400)errors.push(r.status()+' '+r.url())});
-    await isolate(page);const response=await page.goto(BASE+'/',{waitUntil:'domcontentloaded'});await waitForDoors(page);
+    await isolate(page);const response=await page.goto(BASE+HOME_ROUTE,{waitUntil:'domcontentloaded'});await waitForDoors(page);
     const live=await page.evaluate(()=>{const title=a=>a.querySelector('b')?.textContent.trim()||'';const sport=[...document.querySelectorAll('#homeSports [data-sport-game]')].map(a=>({title:a.dataset.sportGame,href:a.getAttribute('href')}));const doors=[...document.querySelectorAll('[data-zone] a.dx-prod')].map(a=>{const img=a.querySelector('img'),art=a.querySelector('img,svg');return{title:title(a),zone:a.parentElement?.dataset.zone,href:a.getAttribute('href'),art:art?.tagName||'',loaded:!!art&&(!img||(img.complete&&img.naturalWidth>0))};});const games=[...document.querySelectorAll('[data-zone="games"]>a.dx-prod')];const positions=games.map(a=>{const r=a.getBoundingClientRect();return{title:title(a),x:+r.x.toFixed(2),y:+r.y.toFixed(2),w:+r.width.toFixed(2),h:+r.height.toFixed(2)};});const boxes=[...document.querySelectorAll('#newrelease [data-release]')];return{sport,doors,positions,cols:new Set(positions.map(x=>x.x)).size,rows:new Set(positions.map(x=>x.y)).size,doorCount:document.documentElement.getAttribute('data-doors'),artCount:document.documentElement.getAttribute('data-doors-art'),releaseBoxes:boxes.length,releaseOccupants:boxes.map(b=>b.getAttribute('data-release')),perBox:Object.fromEntries(boxes.map(b=>[b.getAttribute('data-release'),{title:b.querySelector('h3')?.textContent.trim()||'',links:[...b.querySelectorAll('a')].map(a=>a.getAttribute('href'))}])),empty:[...document.querySelector('[data-zone="games"]').children].filter(x=>!x.textContent.trim()).length,scrollW:document.documentElement.scrollWidth,innerW:innerWidth};});
     const named=t=>live.doors.filter(x=>x.title===t);
     rec(vp.name+'-page-200',response?.status()===200,String(response?.status()||0));
@@ -142,12 +145,12 @@ function releaseContract(rendered){
   }
 
   const themeContext=await browser.newContext({viewport:{width:1200,height:1000}}),themePage=await themeContext.newPage();await isolate(themePage);
-  for(const theme of ['cream','pink','blue','light','dark']){await themePage.goto(BASE+'/',{waitUntil:'domcontentloaded'});await themePage.evaluate(t=>localStorage.setItem('mbm_reading_theme',t),theme);await themePage.reload({waitUntil:'domcontentloaded'});await waitForDoors(themePage);const t=await themePage.evaluate(theme=>({theme,body:document.body.getAttribute('data-theme')||'cream',sports:document.querySelectorAll('#homeSports [data-sport-game]').length,releases:document.querySelectorAll('#newrelease [data-release]').length,overflow:document.documentElement.scrollWidth===innerWidth}),theme);rec('theme-'+theme,t.body===theme&&t.sports===SPORTS_IN_MARKUP&&t.releases===RELEASES.length&&t.overflow,JSON.stringify(t));}
+  for(const theme of ['cream','pink','blue','light','dark']){await themePage.goto(BASE+HOME_ROUTE,{waitUntil:'domcontentloaded'});await themePage.evaluate(t=>localStorage.setItem('mbm_reading_theme',t),theme);await themePage.reload({waitUntil:'domcontentloaded'});await waitForDoors(themePage);const t=await themePage.evaluate(theme=>({theme,body:document.body.getAttribute('data-theme')||'cream',sports:document.querySelectorAll('#homeSports [data-sport-game]').length,releases:document.querySelectorAll('#newrelease [data-release]').length,overflow:document.documentElement.scrollWidth===innerWidth}),theme);rec('theme-'+theme,t.body===theme&&t.sports===SPORTS_IN_MARKUP&&t.releases===RELEASES.length&&t.overflow,JSON.stringify(t));}
   await themeContext.close();
 
-  const targetPath=h=>path.join(ROOT,decodeURIComponent(String(h).split(/[?#]/)[0]));
-  const inRepo=EXPECT.filter(d=>fs.existsSync(targetPath(d.href)));
-  const offRepo=EXPECT.filter(d=>!fs.existsSync(targetPath(d.href)));
+  const targetPath=h=>path.join(ROOT,decodeURIComponent(String(h).split(/[?#]/)[0]).replace(/^\//,''));
+  const inRepo=EXPECT.filter(d=>fs.existsSync(targetPath(d.sourceHref)));
+  const offRepo=EXPECT.filter(d=>!fs.existsSync(targetPath(d.sourceHref)));
   console.log(`  door targets: ${inRepo.length} in this repo (resolution asserted), ${offRepo.length} served from elsewhere (not assertable here): ${offRepo.map(d=>d.title+' -> '+d.href).join(', ')||'none'}`);
   rec('door-resolution-population-non-empty',inRepo.length>0,`${inRepo.length} in-repo door targets to check`);
   const BASE_SITE=process.env.APEXTENNIS_HOME_BASE_SITE||path.join(OUT,'site-before.json');
@@ -158,10 +161,10 @@ function releaseContract(rendered){
     rec('no-door-newly-unresolvable-vs-base',newlyOff.length===0,newlyOff.length?JSON.stringify(newlyOff):`${offRepo.length} off-repo door(s), all of them already off-repo on the base branch`);
   }else rec('no-door-newly-unresolvable-vs-base',false,`NOT RUN — no base site.json at ${BASE_SITE}; recorded as unverified, not as a pass`);
   const unresolved=[];
-  for(const d of inRepo){let status=0;try{const r=await fetch(BASE+'/'+d.href,{redirect:'follow'});status=r.status;}catch(e){status=-1;}if(status>=400||status<0)unresolved.push({title:d.title,href:d.href,status});}
+  for(const d of inRepo){let status=0;try{const r=await fetch(BASE+d.href,{redirect:'follow'});status=r.status;}catch(e){status=-1;}if(status>=400||status<0)unresolved.push({title:d.title,href:d.href,status});}
   rec('every-in-repo-door-target-resolves',unresolved.length===0,unresolved.length?JSON.stringify(unresolved):`${inRepo.length}/${inRepo.length} resolved`);
 
-  const calm=await browser.newContext({viewport:{width:1024,height:768},reducedMotion:'reduce'}),calmPage=await calm.newPage();await isolate(calmPage);await calmPage.goto(BASE+'/',{waitUntil:'domcontentloaded'});await waitForDoors(calmPage);const reduced=await calmPage.evaluate(()=>({sports:document.querySelectorAll('#homeSports [data-sport-game]').length,transition:getComputedStyle(document.querySelector('[data-sport-game="Apex Tennis"]')).transitionDuration,overflow:document.documentElement.scrollWidth===innerWidth}));rec('reduced-motion',reduced.sports===SPORTS_IN_MARKUP&&(reduced.transition==='0s'||parseFloat(reduced.transition)<.01)&&reduced.overflow,JSON.stringify(reduced));await calm.close();
+  const calm=await browser.newContext({viewport:{width:1024,height:768},reducedMotion:'reduce'}),calmPage=await calm.newPage();await isolate(calmPage);await calmPage.goto(BASE+HOME_ROUTE,{waitUntil:'domcontentloaded'});await waitForDoors(calmPage);const reduced=await calmPage.evaluate(()=>({sports:document.querySelectorAll('#homeSports [data-sport-game]').length,transition:getComputedStyle(document.querySelector('[data-sport-game="Apex Tennis"]')).transitionDuration,overflow:document.documentElement.scrollWidth===innerWidth}));rec('reduced-motion',reduced.sports===SPORTS_IN_MARKUP&&(reduced.transition==='0s'||parseFloat(reduced.transition)<.01)&&reduced.overflow,JSON.stringify(reduced));await calm.close();
   rec('aggregate-zero-errors',allErrors.length===0,allErrors.join(' | ')||'none');
 }catch(e){fail++;console.error(e.stack||e)}finally{if(browser)await browser.close();}
 fs.writeFileSync(path.join(OUT,'browser-report.json'),JSON.stringify({pass,fail,results},null,2));console.log('\n'+(fail?`${pass} passed, ${fail} FAILED`:`ALL ${pass} APEX TENNIS HOMEPAGE BROWSER GATES PASSED`));process.exit(fail?1:0);
