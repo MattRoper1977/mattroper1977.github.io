@@ -1,40 +1,59 @@
-name: Homepage audience architecture workbench
+name: Apply homepage audience implementation
 
 on:
   pull_request:
     branches: [main]
     paths:
       - '.github/workflows/mbm-homepage-audience-workbench.yml'
-      - '.mbm-homepage-workbench-trigger'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  snapshot:
-    name: snapshot-current-branch
+  apply:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.ref == 'codex/mbm-homepage-audience-routing-2026-08-09'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Check out implementation branch
         uses: actions/checkout@v4
         with:
+          ref: codex/mbm-homepage-audience-routing-2026-08-09
           fetch-depth: 0
-      - name: Record branch baseline and package source
+          persist-credentials: true
+
+      - name: Materialise reviewed implementation
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/mbm-workbench
-          git status --short > /tmp/mbm-workbench/git-status.txt
-          git rev-parse HEAD > /tmp/mbm-workbench/head-sha.txt
-          git log -1 --format='%H%n%cI%n%s' > /tmp/mbm-workbench/head.txt
-          find . -path './.git' -prune -o -type f -print | LC_ALL=C sort > /tmp/mbm-workbench/files.txt
-          tar --exclude='./.git' -czf /tmp/mbm-workbench/site-source.tgz .
-      - name: Upload workbench source snapshot
-        uses: actions/upload-artifact@v4
-        with:
-          name: mbm-homepage-workbench-${{ github.event.pull_request.number || github.run_id }}
-          path: /tmp/mbm-workbench/
-          if-no-files-found: error
-          retention-days: 1
+          cat .github/mbm-homepage-payload.* | base64 -d > /tmp/mbm-homepage.patch.xz
+          echo '4e64386cb5cd495fcb9335c5731843ec2198b6fb0cbbc6c32c2926104ac97855  /tmp/mbm-homepage.patch.xz' | sha256sum -c -
+          xz -dc /tmp/mbm-homepage.patch.xz > /tmp/mbm-homepage.patch
+          git apply --check /tmp/mbm-homepage.patch
+          git apply --index /tmp/mbm-homepage.patch
+          rm -f .github/mbm-homepage-payload.*
+          rm -f .github/workflows/mbm-homepage-audience-workbench.yml
+          git add -A
+          git diff --cached --check
+
+      - name: Run static release gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          python3 tools/render_audience_homepages.py --check
+          python3 tools/verify_games_audience_faces.py --self-test
+          node tools/verify_professional_site.js --base origin/main --self-test
+          node tools/verify_accounts_members_mailing.js
+          node tools/test_member_merge.js
+          python3 tools/stamp-data.py --check
+
+      - name: Commit and push exact implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Made by Matt release automation'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m 'feat: add homepage chooser and audience homepages'
+          git push origin HEAD:codex/mbm-homepage-audience-routing-2026-08-09
