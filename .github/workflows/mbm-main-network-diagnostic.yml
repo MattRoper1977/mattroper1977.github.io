@@ -1,0 +1,57 @@
+name: Temporary main-page network diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/mbm-main-network-diagnostic.yml'
+      - 'tools/diagnose_main_network.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  trace:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out canonical Games data
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: _sources/Games
+          fetch-depth: 1
+      - name: Assemble same-origin site
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _served/Games
+          rsync -a --exclude=.git --exclude=_served --exclude=_sources --exclude=node_modules --exclude=audit-output ./ _served/
+          cp _sources/Games/games.json _served/Games/games.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path=Path('_served/site.json')
+          data=json.loads(path.read_text(encoding='utf-8'))
+          features=data.setdefault('features',{})
+          if isinstance(features.get('accounts'),dict): features['accounts']['enabled']=False
+          if isinstance(features.get('mailing'),dict): features['mailing']['enabled']=False
+          path.write_text(json.dumps(data,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Install Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Trace failed resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory _served >/tmp/mbm-diag-http.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
+          for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          MBM_BASE_URL=http://127.0.0.1:4173/ node tools/diagnose_main_network.mjs
