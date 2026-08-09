@@ -80,9 +80,27 @@ def delta_e(one: str, two: str) -> float:
     return math.dist(lab(one), lab(two))
 
 
+MIN_NON_TEXT_CONTRAST = 3.0
+
+
 def load_accents() -> dict[str, str]:
     data = json.loads(DATA_PATH.read_text(encoding="utf-8"))
     return {aid: audience["accent"] for aid, audience in data["audiences"].items()}
+
+
+def load_visual_accents() -> dict[str, str]:
+    """Accents used only where they carry no text.
+
+    An audience whose specified cue cannot reach 4.5:1 keeps the cue here - on
+    rules, bars and washes, which are non-text UI at 3:1 - while --face-accent
+    carries a darker compliant tone everywhere text or an icon sits on it.
+    """
+    data = json.loads(DATA_PATH.read_text(encoding="utf-8"))
+    return {
+        aid: audience["accentVisual"]
+        for aid, audience in data["audiences"].items()
+        if audience.get("accentVisual")
+    }
 
 
 def main() -> None:
@@ -117,6 +135,18 @@ def main() -> None:
     print(f"\nworst pairwise separation: delta-E {pairs[0][0]:.1f} ({pairs[0][1]} vs {pairs[0][2]})")
     for distance, a, b in pairs[:3]:
         print(f"  {distance:6.1f}  {a} vs {b}")
+
+    visual = load_visual_accents()
+    if visual:
+        print("\nNon-text accents (3:1 bar - rules, bars and washes only):")
+        for aid, accent in visual.items():
+            on_cream = contrast(accent, CREAM_SURFACE)
+            on_navy = contrast(accent, NAVY_HERO)
+            flag = ""
+            if on_cream < MIN_NON_TEXT_CONTRAST:
+                failures.append(f"{aid}: non-text accent {accent} is {on_cream:.2f}:1 on cream, below {MIN_NON_TEXT_CONTRAST}:1")
+                flag = "  <- fails non-text bar"
+            print(f"  {aid:<10}{accent:<9}on cream {on_cream:>5.2f}   on navy {on_navy:>5.2f}{flag}")
 
     duplicates = {c for c in accents.values() if list(accents.values()).count(c) > 1}
     if duplicates:

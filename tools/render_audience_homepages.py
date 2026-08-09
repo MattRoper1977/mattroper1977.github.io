@@ -328,7 +328,7 @@ def audience_page(data: dict[str, Any], aid: str, audience: dict[str, Any]) -> s
     description = audience["lead"]
     return f'''<!doctype html>
 <!-- {SENTINEL} -->
-<html lang="en-GB">{head(f"{audience['label']} · Made by Matt", description, audience['route'])}<body class="mbm-face-page" {body_attrs} style="--face-accent:{esc(audience['accent'])};--face-soft:{esc(audience['soft'])}">
+<html lang="en-GB">{head(f"{audience['label']} · Made by Matt", description, audience['route'])}<body class="mbm-face-page" {body_attrs} style="--face-accent:{esc(audience['accent'])};--face-accent-visual:{esc(audience.get('accentVisual') or audience['accent'])};--face-soft:{esc(audience['soft'])}">
 <a class="skip" href="#main">Skip to content</a>{general_header(current=audience['route'], audience=audience)}<main id="main">{hero(audience)}{sections}{utility_section(audience)}{note_section(audience)}{switcher(data, aid)}</main>{footer(audience['label'], quiet=not audience.get('adultFeatures'))}{scripts()}</body></html>
 '''
 
