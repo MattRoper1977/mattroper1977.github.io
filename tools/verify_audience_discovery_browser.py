@@ -42,12 +42,16 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 ARTIFACTS = ROOT / "artifacts" / "browser"
 
-# The pre-installed browser, which the environment asks us to launch directly
-# rather than downloading a second copy.
-CHROMIUM = os.environ.get(
-    "MBM_CHROMIUM",
-    "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-)
+# Some environments ship a Chromium that Playwright did not download itself;
+# launching it directly avoids fetching a second copy. Where no such binary
+# exists - a CI runner with its own managed browser - fall back to Playwright's
+# own resolution rather than failing on a path that was only ever a shortcut.
+_PREINSTALLED = os.environ.get("MBM_CHROMIUM", "/opt/pw-browsers/chromium-1194/chrome-linux/chrome")
+CHROMIUM = _PREINSTALLED if Path(_PREINSTALLED).exists() else None
+
+
+def launch(pw):
+    return pw.chromium.launch(executable_path=CHROMIUM) if CHROMIUM else pw.chromium.launch()
 
 AUDIENCE_ROUTES = [
     "/for/pupils/", "/for/teachers/", "/for/parents-carers/", "/for/schools-semh/",
@@ -84,7 +88,7 @@ def run(base: str, findings: Findings) -> None:
     base = base.rstrip("/") + "/"
 
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(executable_path=CHROMIUM)
+        browser = launch(pw)
 
         for width, height, label in ((390, 844, "phone"), (1440, 900, "desktop")):
             context = browser.new_context(viewport={"width": width, "height": height})
@@ -206,7 +210,7 @@ def self_test() -> None:
 
     failures = 0
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(executable_path=CHROMIUM)
+        browser = launch(pw)
 
         # Control 1: a search that fires a request while typing.
         context = browser.new_context()
