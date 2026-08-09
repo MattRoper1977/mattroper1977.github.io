@@ -1,0 +1,66 @@
+name: MBM audience refinement bootstrap snapshot
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mbm-audience-refinement-bootstrap-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  snapshot:
+    name: Capture exact branch source and baseline inventory
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Record source state
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/bootstrap
+          {
+            echo "sentinel=mbm-audience-discovery-teach-professional-hubs-2026-08-09"
+            echo "sha=$(git rev-parse HEAD)"
+            echo "base=${{ github.event.pull_request.base.sha || 'workflow-dispatch' }}"
+            echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+            echo "files=$(git ls-files | wc -l)"
+            echo "bytes=$(du -sb . --exclude=.git | awk '{print $1}')"
+          } | tee artifacts/bootstrap/state.txt
+          git ls-files -s > artifacts/bootstrap/git-files.txt
+          find . -path './.git' -prune -o -type f -printf '%P\t%s\n' | sort > artifacts/bootstrap/files.tsv
+
+      - name: Run current architecture baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/bootstrap
+          python3 tools/render_audience_homepages.py --check | tee artifacts/bootstrap/render-check.log
+          python3 tools/verify_games_audience_faces.py --self-test | tee artifacts/bootstrap/audience-static.log
+          node tools/verify_accounts_members_mailing.js | tee artifacts/bootstrap/accounts.log
+          node tools/test_member_merge.js | tee artifacts/bootstrap/member-merge.log
+          python3 tools/stamp-data.py --check | tee artifacts/bootstrap/stamp-data.log
+
+      - name: Package exact source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar --exclude=.git --exclude='./mbm-source-snapshot.tgz' -czf mbm-source-snapshot.tgz .
+          sha256sum mbm-source-snapshot.tgz | tee artifacts/bootstrap/source-sha256.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mbm-audience-refinement-bootstrap
+          path: |
+            mbm-source-snapshot.tgz
+            artifacts/bootstrap
+          if-no-files-found: error
+          retention-days: 1
