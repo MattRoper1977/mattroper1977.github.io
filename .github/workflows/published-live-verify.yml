@@ -89,10 +89,21 @@ jobs:
 
       - name: Prove the published paths are SERVED
         run: |
+          set -euo pipefail
           ln -sfn "$PWD/node_modules" tools/node_modules || true
+          # The `paths` input was declared and then ignored: this step hard-coded
+          # the two defaults, so a dispatch asking for other paths silently proved
+          # the same two and reported success. An input that is accepted and
+          # discarded is worse than no input, because it advertises a capability
+          # that does not exist - someone reaches for it during an incident and
+          # gets a green answer to a question they never asked.
+          paths="${{ inputs.paths }}"
+          [ -n "$paths" ] || paths='/ouroboros/ /novasiege/'
+          args=()
+          for p in $paths; do args+=(--path "$p"); done
+          echo "proving these paths: $paths"
           cd tools && node verify_published_live.mjs \
             --repo-root "$GITHUB_WORKSPACE/_main" \
             --shelf     "$GITHUB_WORKSPACE/_shelf/games.json" \
-            --path /ouroboros/ \
-            --path /novasiege/ \
+            "${args[@]}" \
             --expect-404 /this-path-does-not-exist-control/

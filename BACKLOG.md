@@ -3,9 +3,25 @@
 Named, ordered, and each one carries the evidence needed to start it without
 re-deriving anything. Last re-ordered 2 August 2026.
 
+**Every item declares its kind**, because a backlog that does not distinguish
+*waiting on a ruling* from *waiting on someone to do it* quietly turns the
+second into the first:
+
+- **ruling-pending** — the work is understood; someone has to decide.
+- **work-pending** — the decision is made; someone has to do it.
+
+And its class, because they are not equally urgent:
+
+- **instrument** — something that reports on the estate. Fix these first: every
+  future report depends on them, and a false green is invisible by definition.
+- **content** — something the estate serves. A missing page is at least visible.
+
 ---
 
 ## 0a. `verify_professional_site.js` — 8 findings, cause identified, two one-line fixes not yet authorised
+
+**instrument · ruling-pending** — and more urgent than it looks: see the note at
+the end of this item about steps 6–8.
 
 `verify-games-audience-faces.yml` fails on `main` at *Verify professional shell
 preservation against the target*. Eight findings: five "authorised homepage
@@ -168,9 +184,113 @@ governance for `/main/`, record that in the map rather than leaving it implicit.
 These findings predate the audience-discovery sequence. One of the original
 nine was a stale label list and is fixed.
 
+### This is not a cosmetic red — three CI steps are dark behind it
+
+Measured on `main` at `a8bfa2a`, `verify-games-audience-faces.yml`:
+
+```
+ 3. ok    Verify generated pages and canonical search data
+ 4. ok    Verify Revision 3 architecture and all positive controls
+ 5. FAIL  Verify professional shell preservation against the target branch
+ 6. skip  Verify accounts, Members, Supabase and mailing regressions
+ 7. skip  Verify JavaScript, Python and embedded-script syntax
+ 8. skip  Check patch hygiene and remove temporary bootstrap machinery
+```
+
+Steps after a failing step do not run. So **`verify_accounts_members_mailing.js`
+has not run in CI since #110** — the suite PR #114's own brief named "the gate to
+watch, since vendoring touches the auth path" — across the pass that changed the
+auth path. It is green locally on the merged tree at 21 passed · 0 failed, which
+is why nothing burned. Local green is not the estate's gate.
+
+**Fixing 0a-A un-skips all three steps for free.** That makes it the highest
+value change available here: not a red verifier, three gates dark on a live site.
+
+---
+
+## 0b. Deployment provenance — the production matrix could not fail
+
+**instrument · work-pending** — built in this pass; the live legs cannot run
+until it is on `main`.
+
+On 9 August the production route matrix printed
+
+```
+all 13 routes 200; both removed paths 404; 1 attempt(s)
+```
+
+**31 seconds before the deployment it was reporting on existed** (19:45:43Z; the
+Pages deployment for `a8bfa2a` completed 19:46:14Z), and printed the identical
+line again 8m46s after it completed. Same output, same `1 attempt(s)`, either
+side of the event.
+
+The cause is retry-on-failure semantics: it re-checked only routes that were not
+200. A route that served 200 before a merge serves 200 after it, so `pending`
+emptied on the first attempt and the ladder never engaged. It was measuring that
+the site exists.
+
+**Built:** `tools/verify_deployment_provenance.py` and
+`.github/workflows/mbm-deployment-provenance.yml`, in three layers — trigger on
+the deployment event and take the SHA from the payload; assert GitHub's own
+deployed SHA equals the expected one; fetch a *witness* file from the origin and
+compare sha256 against the committed bytes. Retry now waits on provenance
+mismatch, not on a status code.
+
+**The trap found while building it, worth keeping:** the obvious witness is the
+data stamp, and it is the wrong one. `tools/stamp-data.py` only moves when
+`site.json` or `data/resources.json` move, and #114 changed neither — a Layer 3
+built on the stamp alone would have passed vacuously on the exact deployment
+that motivated it. So the witness is chosen per deployment from the files that
+actually changed, and where no served file changed the origin genuinely cannot
+tell two commits apart and the check reports INCONCLUSIVE rather than a pass.
+
+**To close:** merge, then confirm the workflow fires on a real deployment and
+its live negative control goes red. A `workflow_dispatch` cannot be used to
+pre-prove it, because GitHub only offers dispatch for workflows already on the
+default branch.
+
+---
+
+## 0c. The live gate has been red since #110
+
+**instrument · work-pending** — fixed in this pass; unproven against the origin
+until merged.
+
+`professional-site-live-verify.yml` has failed on `main` on every run from
+`50817f0` (#110) onward, and passed on the two before it. `PAGE_MARKERS["/"]`
+still described the pre-#110 professional homepage:
+
+| required on `/` | reality |
+|---|---|
+| `id="audiences"` | absent — it moved to `/main/` in #110 |
+| `Schools &amp; organisations` | absent — retired by D1 |
+| `Partners` | absent — retired by D1 |
+
+So the estate's only live gate was dark for the entire recovery sequence, and
+`/main/` — the actual professional homepage — was not checked live **at all**.
+
+The private-copy sweep predicted this: `verify_professional_site_live.py` was
+one of two files recorded as holding labels as literals and deliberately left
+alone as the riskier live-production class. That call was right at the time; a
+gate dark for a fortnight is what changes it.
+
+**Fixed** by deriving the chooser's markers from `data/audience-homepages.json`,
+the same file the renderer reads, rather than re-typing a corrected list — which
+would only reset the clock on the same trap. Structural literals that genuinely
+cannot be derived (`mbm-platform.css`, `mbm-site-header`) say so beside
+themselves. `/main/` gained its own entry.
+
+Proven red three ways before green: a label relabelled in the data file only, the
+chooser losing a group container, and `/main/` losing `id="audiences"`.
+
+**To close:** merge, then confirm the workflow passes against the real origin.
+
 ---
 
 ## 0. `/resources/` — the closeout rewrite is unrecoverable, page never rebuilt
+
+**content · ruling-pending** — the only item here that is genuinely waiting on a
+decision rather than on work, and the one that stays printed longest.
 
 The PR #110 closeout replaced `resources/index.html` with a 12-line page. That
 replacement fell inside the corrupted tail of the `.mbm-closeout` blob and is

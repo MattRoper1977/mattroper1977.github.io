@@ -163,18 +163,29 @@ def main() -> None:
 
     findings = Findings()
 
-    # Surfaces deliberately held at their pre-closeout state. Recorded in the
-    # output so a later reader sees the gap rather than inferring completeness
-    # from a green run. See BACKLOG.md item 0.
-    findings.note("/resources/ is still the pre-closeout catalogue; the closeout rewrite is unrecoverable (BACKLOG.md item 0)")
+    # Open items, printed on every run so a later reader sees the gaps rather
+    # than inferring completeness from a green result. Each says which kind it
+    # is, because "waiting on a ruling" and "waiting on someone to do it" decay
+    # differently and a list that blurs them turns the second into the first.
+    findings.note("BACKLOG 0 (content · ruling-pending): /resources/ is still the pre-closeout "
+                  "catalogue; the closeout rewrite is unrecoverable")
     findings.note(
-        "verify_professional_site.js still has 8 open findings; cause identified - 7 are a stale "
-        "baseline path remap reading the chooser instead of the homepage, 1 is a privacy sentinel a "
-        "recovery commit overwrote. Two one-line fixes, neither authorised yet (BACKLOG.md item 0a)"
+        "BACKLOG 0a (instrument · ruling-pending): verify_professional_site.js has 8 open findings "
+        "- 7 a stale baseline path remap reading the chooser instead of the homepage, 1 a privacy "
+        "sentinel a recovery commit overwrote. Steps 6-8 of verify-games-audience-faces.yml skip "
+        "behind it, so the accounts/mailing regression suite has not run in CI since #110"
     )
     findings.note(
-        "main/index.html carries accounts/mailing and device-local-counter prose but no sentinel "
-        "at all; it is governed by region comparison instead. Open under BACKLOG.md item 0a-B"
+        "BACKLOG 0a-B (instrument · ruling-pending): main/index.html carries accounts/mailing and "
+        "device-local-counter prose but no sentinel at all; it is governed by region comparison"
+    )
+    findings.note(
+        "BACKLOG 0b (instrument · work-pending): deployment provenance is built but its live legs "
+        "cannot run until the workflow is on main - a workflow_dispatch needs the default branch"
+    )
+    findings.note(
+        "BACKLOG 0c (instrument · work-pending): the live gate's markers are derived and proven red "
+        "locally, but unproven against the real origin until merged"
     )
 
     surfaces: list[tuple[str, Path, str]] = [

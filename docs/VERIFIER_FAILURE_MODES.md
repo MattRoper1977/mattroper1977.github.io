@@ -135,6 +135,43 @@ symptom.
   never be a control's, and the control step asserts the committed artifact is
   untouched afterwards.
 
+## 9. A retry conditioned on the wrong signal never engages
+
+The production route matrix was told to re-check at 5, 10 and 15 minutes before
+failing — retry-*on-failure* semantics. It re-checked only routes that were not
+200. A route that served 200 before a merge serves 200 after it, so the pending
+set emptied on the first attempt and the ladder never ran. The check reported
+
+```
+all 13 routes 200; both removed paths 404; 1 attempt(s)
+```
+
+**31 seconds before the deployment it was describing existed**, and printed the
+identical line 8m46s after it completed.
+
+A check that produces the same pass whether or not the thing it tests has
+happened is not a weak check — it is not a check. And it was not detectable from
+its output: `1 attempt(s)` reads like confidence.
+
+**Rule:** retry on the signal that is actually still settling, not on the one
+that happens to be easy to observe. For a deployment that is *provenance*
+mismatch — the served bytes not yet being the expected commit — never a status
+code. Ask what the check would report if the event had not happened; if the
+answer is "the same thing", the signal is wrong.
+
+## 10. A declared input that is silently discarded
+
+`published-live-verify.yml` accepted a `paths` input and the step that ran
+hard-coded `/ouroboros/ /novasiege/`. A dispatch asking for other paths proved
+the default two and reported success.
+
+Worse than having no input, because it advertises a capability that does not
+exist — someone reaches for it during an incident and gets a green answer to a
+question they never asked.
+
+**Rule:** wire the input through or delete it. If a parameter is accepted,
+something must be able to fail when it is wrong.
+
 ---
 
 ## The shape they share
