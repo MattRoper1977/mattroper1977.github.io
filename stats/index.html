@@ -1,15 +1,15 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Live stats — Made by Matt</title>
+<title>Activity on this device — Made by Matt</title>
 <link rel="canonical" href="https://madebymatt.uk/stats/">
 <meta property="og:url" content="https://madebymatt.uk/stats/">
-<meta property="og:title" content="Made by Matt, by the numbers">
-<meta property="og:description" content="Live open and download counts for the lessons, tools and games on Made by Matt.">
+<meta property="og:title" content="Made by Matt activity on this device">
+<meta property="og:description" content="Private, device-local visit and open counts for Made by Matt.">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Made by Matt">
 <meta property="og:image" content="https://madebymatt.uk/assets/og-cover.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://madebymatt.uk/assets/og-cover.png">
-<meta name="description" content="Live visitor and usage stats for madebymatt.uk — visits, countries reached and the most-opened resources.">
+<meta name="description" content="Private visit, country and resource-open tallies stored only in this browser.">
 <meta name="theme-color" content="#161D3D">
 <link rel="icon" href="../favicon.svg"><link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="stylesheet" href="../styles.css">
@@ -61,26 +61,26 @@ body{background:var(--dx-cream)}
 
 <main id="main">
 <section class="sx-hero">
-<p class="sx-eyebrow">Live · around the world 🌍</p>
-<h1>Made by Matt, by the numbers.</h1>
-<p>A live look at how the site is used — visits, the countries people come from, and the resources getting the most love. Anonymous, aggregate counts only.</p>
+<p class="sx-eyebrow">Private · on this device</p>
+<h1>Your Made by Matt activity on this device.</h1>
+<p>A private look at visits, coarse country activity and resource opens recorded only in this browser.</p>
 </section>
 
 <section class="sx-sec"><div class="sx-wrap">
 <div class="sx-metrics">
-<div class="sx-metric"><span class="big" id="sxVisits">—</span><span class="lab">Visits worldwide</span></div>
-<div class="sx-metric"><span class="big" id="sxCountries">—</span><span class="lab">Countries reached</span></div>
-<div class="sx-metric"><span class="big" id="sxResources">—</span><span class="lab">Total opens & plays</span></div>
+<div class="sx-metric"><span class="big" id="sxVisits">—</span><span class="lab">Visits on this device</span></div>
+<div class="sx-metric"><span class="big" id="sxCountries">—</span><span class="lab">Countries seen here</span></div>
+<div class="sx-metric"><span class="big" id="sxResources">—</span><span class="lab">Opens & plays here</span></div>
 </div>
 
 <div class="sx-card">
-<h2>Where visitors come from</h2>
-<div class="mbm-board" id="sxBoard"><p class="sx-empty">Loading the world map…</p></div>
+<h2>Country activity on this device</h2>
+<div class="mbm-board" id="sxBoard"><p class="sx-empty">Loading local country activity…</p></div>
 </div>
 
 <div class="sx-card" id="sxResCard">
-<h2>Most-opened resources</h2>
-<div class="mbm-board" id="sxResBoard"><p class="sx-empty">Loading resource stats…</p></div>
+<h2>Resources opened on this device</h2>
+<div class="mbm-board" id="sxResBoard"><p class="sx-empty">Loading local resource activity…</p></div>
 </div>
 
 <div class="sx-card">
@@ -89,7 +89,7 @@ body{background:var(--dx-cream)}
 </div>
 
 <div style="text-align:center"><button class="sx-refresh" id="sxRefresh" type="button">↻ Refresh numbers</button></div>
-<p class="sx-note">Visit totals and country tallies are anonymous aggregates from a lightweight public counter (counterapi.dev), mirrored on your device so this page still works if it's briefly unavailable. Each visitor's country is worked out on their own device from its time zone — no IP addresses are looked up, and no personal data is stored by this site.</p>
+<p class="sx-note">Visit, country and resource-open tallies are stored only in this browser. The coarse country is worked out on the device from its time zone — no IP address is looked up, and no counter request or audience preference is sent to a remote counter service.</p>
 </div></section>
 </main>
 
@@ -148,7 +148,7 @@ document.getElementById('menu').addEventListener('click',function(){var n=docume
         /* No inline style. The old one set color:var(--dx-ambd), which lost to
            the container rule's amber background and produced 1.53:1 - amber text
            on an amber pill. The stylesheet now handles both shapes. */
-        gc.innerHTML='<p><b>Want richer analytics?</b> Add a free <a href="https://www.goatcounter.com/" target="_blank" rel="noopener">GoatCounter</a> code to <code>site.json</code> to get top pages, referrers and trends over time. The live counts above keep working either way. See FEATURES.md.</p>';
+        gc.innerHTML='<p><b>Want richer analytics?</b> Add a free <a href="https://www.goatcounter.com/" target="_blank" rel="noopener">GoatCounter</a> code to <code>site.json</code> to get top pages, referrers and trends over time. The local counts above keep working either way. See FEATURES.md.</p>';
       }
     });
   }
