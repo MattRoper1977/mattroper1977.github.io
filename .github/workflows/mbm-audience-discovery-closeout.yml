@@ -28,6 +28,9 @@ jobs:
       - name: Audience accents meet contrast
         run: python3 tools/check_audience_accents.py
 
+      - name: Audience architecture, labels and privacy contract hold
+        run: python3 tools/verify_games_audience_faces.py
+
       - name: Design inheritance holds across audience surfaces
         run: python3 tools/verify_design_inheritance.py
 
@@ -80,6 +83,9 @@ jobs:
             echo "design gate did not notice a duplicate mark above the heading"; exit 1
           fi
           git checkout -- for/teachers/index.html
+
+      - name: Audience verifier proves its own seven controls
+        run: python3 tools/verify_games_audience_faces.py --self-test
 
       - name: Design gate notices a missing hero mark
         run: |
