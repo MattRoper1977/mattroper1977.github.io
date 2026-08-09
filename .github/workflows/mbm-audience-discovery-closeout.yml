@@ -109,10 +109,13 @@ jobs:
           set -euo pipefail
           sed -i 's/, and it is not sent to Supabase, Buttondown or analytics\.//' tools/render_audience_homepages.py
           python3 tools/render_audience_homepages.py
-          if python3 tools/verify_games_audience_faces.py 2>&1 | grep -q "locked chooser copy missing"; then
+          # Capture first, then match. Under pipefail the verifier's own exit 1
+          # - which is the thing being proven - would otherwise fail the `if`.
+          out=$(python3 tools/verify_games_audience_faces.py 2>&1 || true)
+          if grep -q "locked chooser copy missing" <<<"$out"; then
             echo "control detected"
           else
-            echo "locked-copy guard did not fire"; exit 1
+            echo "locked-copy guard did not fire"; echo "$out" | head -20; exit 1
           fi
           git checkout -- tools/render_audience_homepages.py index.html
 
