@@ -38,16 +38,11 @@ MICRO_MARK = "/assets/brand/micro_mark.svg"
 HERO_MARK = "/assets/brand/hero_mark.svg"
 CANONICAL_MARKS = {MICRO_MARK, HERO_MARK}
 
-# The six adult audience homepages each carry three genuine visual previews
-# today. The floor sits at that measured level so it catches a page decaying
-# into a directory, without churning on ordinary editorial edits.
-#
-# The specification for this check said four. That figure counted the three
-# shared brand marks (two micro marks in the header and footer, one hero mark)
-# alongside the genuine previews. Measured with brand marks excluded, every
-# adult page carries three. Raising the pages to four genuine previews is a
-# content change, not a verifier change, so the floor records what is true.
-MIN_ADULT_VISUAL_PREVIEWS = 3
+# The per-audience floors live in the audience-faces verifier, which already
+# owns them. Importing rather than restating avoids the second-literal problem
+# that made that verifier go stale in the first place.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from verify_games_audience_faces import MIN_PROMOTED_VISUALS  # noqa: E402
 
 IMG_SRC = re.compile(r'<img[^>]*\bsrc="([^"]+)"', re.I)
 BRAND_LIKE = re.compile(r"(mark|logo|brand)", re.I)
@@ -214,14 +209,14 @@ def main() -> None:
         if f"--face-accent:{audience['accent']}" not in markup:
             findings.fail(route, f"--face-accent does not resolve to the ruled value {audience['accent']}")
 
-        if audience.get("adultFeatures"):
-            previews = genuine_previews(markup)
-            if len(previews) < MIN_ADULT_VISUAL_PREVIEWS:
-                findings.fail(
-                    route,
-                    f"only {len(previews)} genuine visual preview(s); adult pages need at least "
-                    f"{MIN_ADULT_VISUAL_PREVIEWS} so the page cannot decay into a plain directory"
-                )
+        floor = MIN_PROMOTED_VISUALS[aid]
+        previews = genuine_previews(markup)
+        if len(previews) < floor:
+            findings.fail(
+                route,
+                f"only {len(previews)} genuine visual preview(s); this audience needs at least "
+                f"{floor} so the page cannot decay into a plain directory"
+            )
 
     checked = sum(1 for _, path, _ in surfaces if path.is_file())
     print(f"Design inheritance checked across {checked} surface(s).")
