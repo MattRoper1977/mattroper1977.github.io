@@ -363,6 +363,28 @@ async function clickAndPath(page, selector, expectedPath, label) {
   await settle(page);
   ensure(pathnameOf(page.url()) === expectedPath, `${label} ended at ${page.url()}`);
 }
+async function clickNavAndPath(page, href, expectedPath, label, text) {
+  const menu = page.locator('#menu');
+  if (await menu.isVisible().catch(() => false)) {
+    if (await menu.getAttribute('aria-expanded') !== 'true') await menu.click();
+    ensure((await visibleBox(page, '#nav')).visible, `${label}: responsive navigation did not open`);
+  }
+  let link = page.locator(`#nav a[href="${href}"]`);
+  if (text) link = link.filter({ hasText: text });
+  ensure(await link.count() >= 1, `${label}: navigation link ${href} is missing`);
+  if (!(await link.first().isVisible())) {
+    const more = page.locator('#nav details.mbm-nav-more');
+    ensure(await more.count() === 1, `${label}: hidden navigation link has no More panel`);
+    if (!(await more.getAttribute('open'))) await more.locator('summary').click();
+  }
+  ensure(await link.first().isVisible(), `${label}: navigation link ${href} is still hidden`);
+  await Promise.all([
+    page.waitForURL(url => url.pathname === expectedPath, { timeout: 45000 }),
+    link.first().click()
+  ]);
+  await settle(page);
+  ensure(pathnameOf(page.url()) === expectedPath, `${label} ended at ${page.url()}`);
+}
 async function runFlowA(browser) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await prepareContext(context);
@@ -370,7 +392,7 @@ async function runFlowA(browser) {
   try {
     await go(page, '/', bucket('flow-a-root'), { identity: SENTINEL });
     await clickAndPath(page, '.mf-main-card', '/main/', 'Flow A root → main');
-    await clickAndPath(page, 'a[href="/"] >> text="Choose homepage"', '/', 'Flow A main → chooser');
+    await clickNavAndPath(page, '/', '/', 'Flow A main → chooser', 'Choose homepage');
     await clickAndPath(page, '[data-mbm-face-choice="pupils"]', '/for/pupils/', 'Flow A chooser → pupils');
     results.flows.A = { passed: true, finalPath: pathnameOf(page.url()) };
   } finally {
@@ -386,9 +408,9 @@ async function runFlowB(browser) {
     await clickAndPath(page, '.mf-feature[data-feature-id="apex-kick"] .mf-media', '/apexkick/', 'Flow B featured game');
     await page.goto(withCache(routeUrl('/for/pupils/')), { waitUntil: 'domcontentloaded' });
     await settle(page);
-    await clickAndPath(page, 'nav a[href="/games/"]', '/games/', 'Flow B Games');
+    await clickNavAndPath(page, '/games/', '/games/', 'Flow B Games', 'Games');
     await clickAndPath(page, 'a.brand[href="/main/"]', '/main/', 'Flow B Games → main');
-    await clickAndPath(page, 'a[href="/"] >> text="Choose homepage"', '/', 'Flow B main → chooser');
+    await clickNavAndPath(page, '/', '/', 'Flow B main → chooser', 'Choose homepage');
     results.flows.B = { passed: true, finalPath: pathnameOf(page.url()), game: '/apexkick/' };
   } finally {
     await context.close();
@@ -425,13 +447,13 @@ async function runFlowD(browser) {
   const page = await context.newPage();
   try {
     await go(page, '/for/parents-carers/', bucket('flow-d-parent'), { identity: SENTINEL });
-    await clickAndPath(page, 'nav a[href="/games/"]', '/games/', 'Flow D Games');
+    await clickNavAndPath(page, '/games/', '/games/', 'Flow D Games', 'Games');
     await page.goto(withCache(routeUrl('/for/parents-carers/')), { waitUntil: 'domcontentloaded' });
     await settle(page);
-    await clickAndPath(page, 'nav a[href="/resources/"]', '/resources/', 'Flow D Resources');
+    await clickNavAndPath(page, '/resources/', '/resources/', 'Flow D Resources', 'Resources');
     await page.goto(withCache(routeUrl('/for/parents-carers/')), { waitUntil: 'domcontentloaded' });
     await settle(page);
-    await clickAndPath(page, 'nav a[href="/privacy/"]', '/privacy/', 'Flow D Privacy');
+    await clickNavAndPath(page, '/privacy/', '/privacy/', 'Flow D Privacy', 'Privacy');
     await clickAndPath(page, 'a.brand[href="/main/"]', '/main/', 'Flow D Privacy → main');
     results.flows.D = { passed: true, finalPath: pathnameOf(page.url()) };
   } finally {
@@ -480,7 +502,7 @@ async function runFlowG(browser) {
   const page = await context.newPage();
   try {
     await go(page, '/main/', bucket('flow-g-main'), { identity: 'Learning that feels worth exploring.' });
-    await clickAndPath(page, 'a[href="/account/"]', '/account/', 'Flow G Account');
+    await clickNavAndPath(page, '/account/', '/account/', 'Flow G Account', 'Account');
     ensure(await page.locator('#loginTab').innerText() === 'Log in', 'Flow G login tab is missing');
     ensure(await page.locator('#registerTab').innerText() === 'Create account', 'Flow G signup tab is missing');
     ensure(await page.locator('#forgotBtn').count() === 1 && await page.locator('#resetForm').count() === 1, 'Flow G password-reset UI is missing');
