@@ -258,6 +258,17 @@
     "intervention-y10-v-i-r-teacher-app",
     "lundy-loop-calibration-game"
   ],
+  "_gameIdOverridesNote": "Eight Arcade games keep a search id derived from their title rather than their route. These ids predate the route rule and are referenced by searchId from consuming surfaces - the pupil homepage's game cards and surprise set among them - so they are pinned for stability rather than migrated. A game with no override here takes the route-derived id, which is the intended default. Do not tidy this list: removing an entry renames a canonical id and breaks every searchId that points at it.",
+  "gameIdOverrides": {
+    "/novasiege/": "game-vector-overdrive-nova-siege",
+    "/ouroboros/": "game-ouroboros-chronos-unbound",
+    "/olympics/": "game-global-games-championship-simulator",
+    "/fracture/": "game-relicforge-fracture-engine",
+    "/voxel/": "game-voxel-frontier",
+    "/apexkick/": "game-apex-kick",
+    "/apexpool/": "game-apex-pool",
+    "/apextennis/": "game-apex-tennis"
+  },
   "canonicalAliases": {
     "https://madebymatt.uk/uas/": "/uas/",
     "https://madebymatt.uk/asdan/": "/asdan/",

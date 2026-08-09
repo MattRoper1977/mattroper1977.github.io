@@ -58,6 +58,10 @@ INDEX = ROOT / "data" / "mbm-search-index.json"
 
 CATEGORY_ORDER = ["lesson", "resource", "game", "app", "tool", "page"]
 
+# Pinned canonical game ids, declared in the editorial file. Asserted so that
+# adding or dropping one is a deliberate act rather than a quiet edit.
+PINNED_GAME_IDS = 8
+
 # Categories whose derivation is not yet fully recovered. They are still built
 # and still compared - they simply fail, loudly, instead of being skipped. The
 # blocker for `game` is its id rule: 40 of the 48 manifest games take an id from
@@ -125,8 +129,12 @@ def word_match(text: str, terms: list[str]) -> bool:
     return any(re.search(r"\b" + re.escape(term) + r"\b", text) for term in terms)
 
 
-def tasks_for(text: str, rules: dict[str, list[str]]) -> list[str] | None:
-    matched = [task for task, words in rules.items() if any(word in text for word in words)]
+def tasks_for(text: str, rules: dict[str, list[str]], always: set[str] | None = None) -> list[str] | None:
+    always = always or set()
+    matched = [
+        task for task, words in rules.items()
+        if task in always or any(word in text for word in words)
+    ]
     return matched or None
 
 
@@ -161,6 +169,17 @@ def lessons_route(record: dict[str, Any]) -> str:
     if file.endswith("/index.html"):
         file = file[: -len("index.html")]
     return "/Lessons/" + file
+
+
+def app_name_words(name: str) -> str:
+    """Normalise an app name for its id and keyword.
+
+    "&" is spelled out and the remaining punctuation becomes spacing, so
+    "Rubric & Feedback Studio" reads as "rubric and feedback studio" and
+    "Now / Next Board" as "now next board".
+    """
+    spelled = name.replace("&", " and ")
+    return " ".join(re.sub(r"[^a-z0-9]+", " ", spelled.lower()).split())
 
 
 def slug(value: str) -> str:
@@ -209,7 +228,7 @@ def build_lessons_and_resources(records, rules, reclassify: set[str], dropped: s
             "family": record.get("family"),
             "year": record.get("year"),
             "pathway": pathway_for(route_text),
-            "format": lessons_format(record),
+            "format": "Game" if category == "game" else lessons_format(record),
             "audience": audience,
             "source": "Lesson Hub",
             "tasks": tasks_for(text, rules),
@@ -224,7 +243,7 @@ def build_lessons_and_resources(records, rules, reclassify: set[str], dropped: s
     return entries
 
 
-def build_games(games: list[dict[str, Any]], rules) -> list[dict[str, Any]]:
+def build_games(games: list[dict[str, Any]], rules, overrides: dict[str, str]) -> list[dict[str, Any]]:
     """The Games manifest is the canonical source for the Arcade.
 
     Manifest titles carry a promotional "NEW · " prefix that belongs on the
@@ -234,22 +253,35 @@ def build_games(games: list[dict[str, Any]], rules) -> list[dict[str, Any]]:
     for game in games:
         title = re.sub(r"^NEW\s*·\s*", "", game["title"]).strip()
         source_id = slug(title)
-        text = " ".join([title, game.get("desc") or "", game.get("tag") or "",
-                         game.get("collection") or ""]).lower()
+        # The id comes from the route by default. Eight games keep a
+        # title-derived id that predates that rule and is referenced by
+        # searchId from consuming surfaces; those are declared, not inferred.
+        entry_id = overrides.get(game["href"], "game-" + slug(game["href"]))
+        # Tasks come from the classification fields, not the promotional
+        # description: an Arcade blurb mentioning "design" or "create" is
+        # marketing copy, not a teaching task.
+        text = " ".join([title, game.get("tag") or "", game.get("collection") or ""]).lower()
         entry = {
-            "id": f"game-{source_id}",
+            "id": entry_id,
             "sourceId": source_id,
             "title": title,
             "description": game.get("desc") or "",
             "route": game["href"],
             "category": "game",
             "contentType": "Browser game",
-            "subject": game.get("collection"),
+            "subject": game.get("collection") or game.get("tag"),
             "format": "Game",
             "audience": ["pupils", "teachers", "parents-carers"],
             "source": "Games",
+            # Pathway does use the description: an Arcade blurb saying a game
+            # was built for BUILD is a genuine pathway signal, where the same
+            # blurb saying "design" is not a teaching task.
+            "pathway": pathway_for(" ".join([text, game.get("desc") or "", game["href"]]).lower()),
             "tasks": tasks_for(text, rules),
-            "keywords": keywords_for(game.get("tag"), game.get("collection"), source_id.replace("-", " ")),
+            # The committed index keeps the empty slot when a game has no
+            # collection, so these are not filtered for truthiness.
+            "keywords": sorted({game.get("tag") or "", game.get("collection") or "",
+                                source_id.replace("-", " ")}),
             "image": game.get("art"),
             "action": f"Play {title}",
             "safeForPupils": True,
@@ -259,7 +291,7 @@ def build_games(games: list[dict[str, Any]], rules) -> list[dict[str, Any]]:
     return entries
 
 
-def build_apps(spaces: list[dict[str, Any]], rules) -> list[dict[str, Any]]:
+def build_apps(spaces, rules, aliases: dict[str, str], game_hrefs: set[str]) -> list[dict[str, Any]]:
     """Apps and teacher tools share one manifest; the space they sit in decides
     which they are, who they are for, and whether a pupil should see them."""
     entries = []
@@ -267,24 +299,38 @@ def build_apps(spaces: list[dict[str, Any]], rules) -> list[dict[str, Any]]:
         teacher_space = space["cat"] == "Teacher tools"
         for item in space["items"]:
             name = item["n"]
+            raw = item["f"]
+            route = aliases.get(raw, raw if raw.startswith("http") else "/Matt-s-Apps-/" + raw)
+            # An app whose canonical route the Games manifest already publishes
+            # is that game, listed twice. Same route-based rule as the Lessons
+            # games, applied after aliasing.
+            if route in game_hrefs:
+                continue
             text = " ".join([name, item.get("d") or "", space["cat"]]).lower()
             entry = {
-                "id": f"app-{slug(name)}",
+                "id": "app-" + app_name_words(name).replace(" ", "-"),
                 "sourceId": item["f"],
                 "title": name,
                 "description": item.get("d") or "",
-                "route": item["f"] if item["f"].startswith("http") else "/Matt-s-Apps-/" + item["f"],
+                "route": route,
                 "category": "tool" if teacher_space else "app",
                 "contentType": "Teacher tool" if teacher_space else "Browser app",
                 "subject": space["cat"],
                 "format": "Browser tool" if teacher_space else "Browser app",
                 "audience": ["teachers", "schools-semh"] if teacher_space else ["pupils", "teachers"],
                 "source": "Apps",
-                "tasks": tasks_for(text, rules),
-                "keywords": keywords_for(space["cat"], name.lower()),
+                # Pathway reads the description and the filename; the app's
+                # display name is not a pathway signal ("Typing Tutor" is not
+                # Tutor Time).
+                "pathway": pathway_for(" ".join([item.get("d") or "", item["f"]]).lower()),
+                # Everything in the teacher-tools space supports assessment by
+                # virtue of being there, whether or not its blurb says so - all
+                # ten carry the task in the committed index.
+                "tasks": tasks_for(text, rules, always={"assess-understanding"} if teacher_space else set()),
+                "keywords": keywords_for(space["cat"], app_name_words(name)),
                 "action": f"Open {name}",
                 "safeForPupils": not teacher_space,
-                "external": item["f"].startswith("http"),
+                "external": route.startswith("http"),
             }
             entries.append({k: v for k, v in entry.items() if v is not None})
     return entries
@@ -381,11 +427,52 @@ def main() -> None:
     produced: dict[str, list[dict[str, Any]]] = {c: [] for c in CATEGORY_ORDER}
     for entry in build_lessons_and_resources(records, rules, reclassify, dropped):
         produced[entry["category"]].append(entry)
-    for entry in build_games(load_json(MANIFESTS / "games.json")["games"], rules):
+    overrides = editorial.get("gameIdOverrides", {})
+    aliases = editorial.get("canonicalAliases", {})
+    games = load_json(MANIFESTS / "games.json")["games"]
+
+    # Guard the declared overrides. A pinned id that no longer matches anything
+    # is stale data, and a pinned id that collides with a derived one silently
+    # renames a different game.
+    unused = set(overrides) - {g["href"] for g in games}
+    if unused:
+        print(f"gameIdOverrides entries match no game: {sorted(unused)}", file=sys.stderr)
+        raise SystemExit(1)
+    derived = {"game-" + slug(g["href"]) for g in games if g["href"] not in overrides}
+    collisions = sorted(set(overrides.values()) & derived)
+    if collisions:
+        print(f"gameIdOverrides collide with route-derived ids: {collisions}", file=sys.stderr)
+        raise SystemExit(1)
+    if len(set(overrides.values())) != len(overrides):
+        print("gameIdOverrides map two routes to the same id", file=sys.stderr)
+        raise SystemExit(1)
+    if len(overrides) != PINNED_GAME_IDS:
+        print(f"gameIdOverrides holds {len(overrides)} entries, expected {PINNED_GAME_IDS}. "
+              "A pinned canonical id was added or removed; say so deliberately.", file=sys.stderr)
+        raise SystemExit(1)
+    print(f"  overrides  {len(overrides):>4} pinned    all used, no collisions")
+
+    for entry in build_games(games, rules, overrides):
         produced["game"].append(entry)
-    for entry in build_apps(load_json(MANIFESTS / "apps.json")["spaces"], rules):
+    for entry in build_apps(load_json(MANIFESTS / "apps.json")["spaces"], rules, aliases, game_hrefs):
         produced[entry["category"]].append(entry)
     produced["page"] = build_pages(editorial["hubs"])
+
+    # Close the loop on the pinned ids: every searchId a consuming surface
+    # points at must exist in the generated index. Without this the override
+    # list is a magic list; with it, it justifies itself.
+    all_ids = {e["id"] for c in CATEGORY_ORDER for e in produced[c]}
+    referenced: set[str] = set()
+    for path in sorted((ROOT / "data").glob("*.json")):
+        if path.name == "mbm-search-index.json":
+            continue
+        for match in re.finditer(r'"searchId"\s*:\s*"([^"]+)"', path.read_text(encoding="utf-8")):
+            referenced.add(match.group(1))
+    dangling = sorted(referenced - all_ids)
+    if dangling:
+        print(f"searchId references that resolve to nothing: {dangling}", file=sys.stderr)
+        raise SystemExit(1)
+    print(f"  searchId   {len(referenced):>4} swept     all resolve")
 
     categories = [args.category] if args.category else CATEGORY_ORDER
     failures: list[str] = []
