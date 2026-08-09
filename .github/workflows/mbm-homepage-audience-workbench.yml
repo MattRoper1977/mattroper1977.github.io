@@ -1,0 +1,40 @@
+name: Homepage audience architecture workbench
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/mbm-homepage-audience-workbench.yml'
+      - '.mbm-homepage-workbench-trigger'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    name: snapshot-current-branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out implementation branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record branch baseline and package source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/mbm-workbench
+          git status --short > /tmp/mbm-workbench/git-status.txt
+          git rev-parse HEAD > /tmp/mbm-workbench/head-sha.txt
+          git log -1 --format='%H%n%cI%n%s' > /tmp/mbm-workbench/head.txt
+          find . -path './.git' -prune -o -type f -print | LC_ALL=C sort > /tmp/mbm-workbench/files.txt
+          tar --exclude='./.git' -czf /tmp/mbm-workbench/site-source.tgz .
+      - name: Upload workbench source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: mbm-homepage-workbench-${{ github.event.pull_request.number || github.run_id }}
+          path: /tmp/mbm-workbench/
+          if-no-files-found: error
+          retention-days: 1
