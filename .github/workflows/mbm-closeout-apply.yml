@@ -1,0 +1,66 @@
+name: MBM one-use closeout patch application
+
+on:
+  push:
+    branches:
+      - codex/mbm-audience-discovery-teach-professional-hubs-2026-08-09
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: mbm-closeout-apply-pr-110
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/mbm-audience-discovery-teach-professional-hubs-2026-08-09
+          fetch-depth: 0
+
+      - name: Download and validate the exact implementation patch
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 5 --retry-all-errors \
+            --output /tmp/mbm-closeout.mbox.gz \
+            https://filebin.net/mbm-closeout-20260809-pr110/mbm-closeout.mbox.gz
+          gzip --test /tmp/mbm-closeout.mbox.gz
+          gzip --decompress --stdout /tmp/mbm-closeout.mbox.gz > /tmp/mbm-closeout.mbox
+          test -s /tmp/mbm-closeout.mbox
+
+      - name: Apply the recovered implementation and remove one-use machinery
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git am --3way /tmp/mbm-closeout.mbox
+          rm -f __probe_do_not_create__
+          rm -f .github/workflows/mbm-closeout-apply.yml
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: remove closeout bootstrap machinery"
+          fi
+          git push origin HEAD:codex/mbm-audience-discovery-teach-professional-hubs-2026-08-09
+
+      - name: Dispatch the permanent closeout workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5; do
+            if gh workflow run mbm-audience-discovery-closeout.yml \
+              --repo MattRoper1977/mattroper1977.github.io \
+              --ref codex/mbm-audience-discovery-teach-professional-hubs-2026-08-09; then
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
