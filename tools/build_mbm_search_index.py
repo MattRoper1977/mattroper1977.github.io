@@ -26,7 +26,13 @@ Derivation, in one place so it is reviewable:
                 against title + description + keywords + family + subject
   pathway       matched on word boundaries against that text plus the file path,
                 so "growth" does not imply GROW and "Building" does not imply BUILD
-  drops         Lessons-repo games that duplicate a Games manifest route
+  drops         Lessons-repo games whose route the Games manifest already
+                publishes - matched on route, never on title, and asserted
+                by identity rather than by count
+
+Reproduces lesson, resource and page - 423 of the 511 committed entries.
+game, app and tool do not yet reproduce and the tool says so rather than
+passing quietly; see NOT_REPRODUCED below.
 
 Usage:
   python3 tools/build_mbm_search_index.py --check
@@ -51,6 +57,15 @@ EDITORIAL = ROOT / "data" / "mbm-search-editorial.json"
 INDEX = ROOT / "data" / "mbm-search-index.json"
 
 CATEGORY_ORDER = ["lesson", "resource", "game", "app", "tool", "page"]
+
+# Categories whose derivation is not yet fully recovered. They are still built
+# and still compared - they simply fail, loudly, instead of being skipped. The
+# blocker for `game` is its id rule: 40 of the 48 manifest games take an id from
+# their route, but 8 take one from their title, and those 8 are exactly the
+# games other surfaces reference by searchId. That list lives in
+# data/audience-homepages.json, which consumes the index rather than sourcing
+# it, so the rule is not derivable from the declared inputs alone.
+NOT_REPRODUCED = {"game", "app", "tool"}
 
 # Pathway names are short and collide with ordinary English - "growth" is not
 # GROW, "Building" is not BUILD - so these match on word boundaries.
@@ -148,6 +163,10 @@ def lessons_route(record: dict[str, Any]) -> str:
     return "/Lessons/" + file
 
 
+def slug(value: str) -> str:
+    return re.sub(r"-+", "-", re.sub(r"[^a-z0-9]+", "-", value.lower())).strip("-")
+
+
 def lessons_format(record: dict[str, Any]) -> str:
     file = (record.get("file") or "").lower()
     if file.endswith(".pdf"):
@@ -202,6 +221,72 @@ def build_lessons_and_resources(records, rules, reclassify: set[str], dropped: s
         # An absent pathway or task set is absent, not null - the committed
         # index omits the key entirely.
         entries.append({k: v for k, v in entry.items() if v is not None})
+    return entries
+
+
+def build_games(games: list[dict[str, Any]], rules) -> list[dict[str, Any]]:
+    """The Games manifest is the canonical source for the Arcade.
+
+    Manifest titles carry a promotional "NEW · " prefix that belongs on the
+    Games hub, not in a search result, so it is stripped here.
+    """
+    entries = []
+    for game in games:
+        title = re.sub(r"^NEW\s*·\s*", "", game["title"]).strip()
+        source_id = slug(title)
+        text = " ".join([title, game.get("desc") or "", game.get("tag") or "",
+                         game.get("collection") or ""]).lower()
+        entry = {
+            "id": f"game-{source_id}",
+            "sourceId": source_id,
+            "title": title,
+            "description": game.get("desc") or "",
+            "route": game["href"],
+            "category": "game",
+            "contentType": "Browser game",
+            "subject": game.get("collection"),
+            "format": "Game",
+            "audience": ["pupils", "teachers", "parents-carers"],
+            "source": "Games",
+            "tasks": tasks_for(text, rules),
+            "keywords": keywords_for(game.get("tag"), game.get("collection"), source_id.replace("-", " ")),
+            "image": game.get("art"),
+            "action": f"Play {title}",
+            "safeForPupils": True,
+            "external": False,
+        }
+        entries.append({k: v for k, v in entry.items() if v is not None})
+    return entries
+
+
+def build_apps(spaces: list[dict[str, Any]], rules) -> list[dict[str, Any]]:
+    """Apps and teacher tools share one manifest; the space they sit in decides
+    which they are, who they are for, and whether a pupil should see them."""
+    entries = []
+    for space in spaces:
+        teacher_space = space["cat"] == "Teacher tools"
+        for item in space["items"]:
+            name = item["n"]
+            text = " ".join([name, item.get("d") or "", space["cat"]]).lower()
+            entry = {
+                "id": f"app-{slug(name)}",
+                "sourceId": item["f"],
+                "title": name,
+                "description": item.get("d") or "",
+                "route": item["f"] if item["f"].startswith("http") else "/Matt-s-Apps-/" + item["f"],
+                "category": "tool" if teacher_space else "app",
+                "contentType": "Teacher tool" if teacher_space else "Browser app",
+                "subject": space["cat"],
+                "format": "Browser tool" if teacher_space else "Browser app",
+                "audience": ["teachers", "schools-semh"] if teacher_space else ["pupils", "teachers"],
+                "source": "Apps",
+                "tasks": tasks_for(text, rules),
+                "keywords": keywords_for(space["cat"], name.lower()),
+                "action": f"Open {name}",
+                "safeForPupils": not teacher_space,
+                "external": item["f"].startswith("http"),
+            }
+            entries.append({k: v for k, v in entry.items() if v is not None})
     return entries
 
 
@@ -271,22 +356,40 @@ def main() -> None:
     reclassify = set(editorial["reclassifyAsGame"])
     records = load_json(MANIFESTS / "lessons-resources.json")
 
-    games_routes = {g.get("file") for g in load_json(MANIFESTS / "games.json")["games"]}
-    dropped = {r["id"] for r in records if r["type"] == "game" and r["id"] not in reclassify
-               and (r.get("file") or "").split("/")[-1] in {(f or "").split("/")[-1] for f in games_routes if f}}
+    # A Lessons-repo game is dropped when the Games manifest already publishes
+    # that exact route. Matching on route rather than title matters: the
+    # manifest hosts several games under /Lessons/Games/ itself, and two
+    # different games can share a name.
+    game_hrefs = {g["href"] for g in load_json(MANIFESTS / "games.json")["games"]}
+    dropped = {
+        r["id"] for r in records
+        if r["type"] == "game" and "/Lessons/" + r["file"] in game_hrefs
+    }
+
+    # The drop list is part of what this tool must justify. A count that
+    # matches while the wrong records were dropped is exactly the vacuous green
+    # this index is meant to be protected from, so it is compared by identity.
+    committed_ids = {e["sourceId"] for e in load_json(INDEX)["entries"]}
+    expected_drops = {r["id"] for r in records if r["type"] == "game" and r["id"] not in committed_ids}
+    if dropped != expected_drops:
+        print(f"drop set differs by identity: {len(dropped)} computed, {len(expected_drops)} expected", file=sys.stderr)
+        for sid in sorted(dropped ^ expected_drops)[:10]:
+            print(f"  - {sid}", file=sys.stderr)
+        raise SystemExit(1)
+    print(f"  drops      {len(dropped):>4} records  identity asserted")
 
     produced: dict[str, list[dict[str, Any]]] = {c: [] for c in CATEGORY_ORDER}
     for entry in build_lessons_and_resources(records, rules, reclassify, dropped):
+        produced[entry["category"]].append(entry)
+    for entry in build_games(load_json(MANIFESTS / "games.json")["games"], rules):
+        produced["game"].append(entry)
+    for entry in build_apps(load_json(MANIFESTS / "apps.json")["spaces"], rules):
         produced[entry["category"]].append(entry)
     produced["page"] = build_pages(editorial["hubs"])
 
     categories = [args.category] if args.category else CATEGORY_ORDER
     failures: list[str] = []
     for category in categories:
-        if not produced[category] and category in ("app", "tool", "game"):
-            print(f"  {category:<9} NOT IMPLEMENTED", file=sys.stderr)
-            failures.append(f"{category}: not implemented")
-            continue
         problems = compare_slice(category, produced[category])
         status = "reproduces" if not problems else "DIFFERS"
         print(f"  {category:<9} {len(produced[category]):>4} entries  {status}")
