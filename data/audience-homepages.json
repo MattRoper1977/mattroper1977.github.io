@@ -1,16 +1,36 @@
 {
-  "sentinel": "mbm-homepage-audience-routing-2026-08-09",
+  "sentinel": "mbm-audience-discovery-teach-professional-hubs-closeout-2026-08-09",
   "preferenceKey": "mbm_audience_view",
+  "root": {
+    "title": "Learning and creation, made simple.",
+    "lead": "Search lessons, games, tools, apps and resources — or choose a homepage tailored to you.",
+    "primaryCta": {
+      "label": "Explore the live platform",
+      "href": "/main/"
+    },
+    "audienceHeading": "Choose your own homepage type"
+  },
   "groups": [
     {
       "id": "people",
       "title": "For people",
-      "audiences": ["pupils", "teachers", "parents"]
+      "description": "Learner, teacher and family starting points.",
+      "audiences": [
+        "pupils",
+        "teachers",
+        "parents"
+      ]
     },
     {
       "id": "organisations",
       "title": "For organisations",
-      "audiences": ["schools", "trusts", "councils", "partners"]
+      "description": "Settings, trusts, councils and collaborators.",
+      "audiences": [
+        "schools",
+        "trusts",
+        "councils",
+        "partners"
+      ]
     }
   ],
   "audiences": {
@@ -18,328 +38,1500 @@
       "route": "/for/pupils/",
       "label": "Pupils & learners",
       "navLabel": "Pupil homepage",
-      "accent": "#2F6B4D",
+      "accent": "#288240",
       "soft": "#DDEFE5",
       "icon": "spark",
-      "chooserDescription": "Start with games, lessons and activities you can open, play and explore.",
-      "title": "Made by Matt for Pupils & learners",
-      "lead": "Games, lessons and activities with quick routes to something you can play, explore or learn from.",
+      "adultFeatures": false,
+      "chooserDescription": "Start with real games, then jump into lessons and activities.",
+      "title": "Play first. Explore next. Learn your way.",
+      "lead": "Open a real Made by Matt game straight away, then move into lessons, pathways and creative activities when you are ready.",
       "primaryCtas": [
-        {"label": "Play the games", "href": "/games/", "style": "primary"},
-        {"label": "Explore lessons", "href": "/Lessons/", "style": "secondary"}
+        {
+          "label": "Play a game now",
+          "href": "#start-playing",
+          "style": "primary"
+        },
+        {
+          "label": "Explore lessons",
+          "href": "/Lessons/",
+          "style": "secondary"
+        }
       ],
       "quickLinks": [
-        {"label": "Pupil homepage", "href": "/for/pupils/"},
-        {"label": "Games", "href": "/games/"},
-        {"label": "Lessons", "href": "/Lessons/"},
-        {"label": "Resources", "href": "/resources/"},
-        {"label": "Main homepage", "href": "/main/"}
+        {
+          "label": "Pupil homepage",
+          "href": "/for/pupils/"
+        },
+        {
+          "label": "Games",
+          "href": "/games/"
+        },
+        {
+          "label": "Lessons",
+          "href": "/Lessons/"
+        },
+        {
+          "label": "Resources",
+          "href": "/resources/"
+        },
+        {
+          "label": "Main homepage",
+          "href": "/main/"
+        }
       ],
       "sections": [
         {
+          "type": "features",
           "id": "start-playing",
-          "kicker": "Featured now",
-          "title": "Start playing",
-          "lead": "Choose a real Made by Matt game and go straight to play.",
+          "kicker": "Games first",
+          "title": "Choose a game and play",
+          "lead": "Eight genuine Made by Matt games, each with a direct Play action.",
           "features": [
-            {"id": "apex-kick", "kind": "Game", "title": "Apex Kick", "description": "Curl a free kick around the wall. Card stats set the physics, never the dice.", "href": "/apexkick/", "action": "Play Apex Kick", "image": "/assets/cards/apex-kick.webp", "alt": "Apex Kick football game artwork", "width": 352, "height": 198},
-            {"id": "voxel-frontier", "kind": "Game", "title": "Voxel Frontier", "description": "Mine, build and explore a procedurally generated block world with caves, trees and a day and night cycle.", "href": "/voxel/", "action": "Play Voxel Frontier", "image": "/assets/cards/voxel-frontier.webp", "alt": "Voxel Frontier block-world game artwork", "width": 352, "height": 198},
-            {"id": "relicforge-fracture", "kind": "Browser RPG", "title": "Relicforge: Fracture Engine", "description": "Explore three linked realms in a browser adventure built around a world breaking apart.", "href": "/fracture/", "action": "Play Fracture Engine", "image": "/fracture/poster.webp", "alt": "Relicforge Fracture Engine showing the Forgeguard in Ironwood Verge", "width": 1200, "height": 630}
+            {
+              "id": "apex-kick",
+              "kind": "Physics game",
+              "title": "Apex Kick",
+              "description": "Curl a free kick around the wall and see how close your plan was.",
+              "href": "/apexkick/",
+              "action": "Play Apex Kick",
+              "image": "/assets/cards/apex-kick.webp",
+              "alt": "Apex Kick football game artwork",
+              "width": 352,
+              "height": 198,
+              "searchId": "game-apex-kick"
+            },
+            {
+              "id": "voxel-frontier",
+              "kind": "Sandbox game",
+              "title": "Voxel Frontier",
+              "description": "Mine, build and explore a procedurally generated block world.",
+              "href": "/voxel/",
+              "action": "Play Voxel Frontier",
+              "image": "/assets/cards/voxel-frontier.webp",
+              "alt": "Voxel Frontier block-world game artwork",
+              "width": 352,
+              "height": 198,
+              "searchId": "game-voxel-frontier"
+            },
+            {
+              "id": "nova-siege",
+              "kind": "Wave shooter",
+              "title": "Vector Overdrive: Nova Siege",
+              "description": "Survive a 360-degree arena, draft upgrades and face a dreadnought.",
+              "href": "/novasiege/",
+              "action": "Play Nova Siege",
+              "image": "/assets/cards/nova-siege.webp",
+              "alt": "Vector Overdrive Nova Siege game artwork",
+              "width": 352,
+              "height": 198,
+              "searchId": "game-vector-overdrive-nova-siege"
+            },
+            {
+              "id": "ouroboros",
+              "kind": "Tactical RPG",
+              "title": "Ouroboros: Chronos Unbound",
+              "description": "Guide four visionaries through a dying clockwork city.",
+              "href": "/ouroboros/",
+              "action": "Play Ouroboros",
+              "image": "/assets/cards/ouroboros.webp",
+              "alt": "Ouroboros Chronos Unbound game artwork",
+              "width": 352,
+              "height": 198,
+              "searchId": "game-ouroboros-chronos-unbound"
+            },
+            {
+              "id": "fracture",
+              "kind": "Browser RPG",
+              "title": "Relicforge: Fracture Engine",
+              "description": "Explore three linked realms in a world breaking apart.",
+              "href": "/fracture/",
+              "action": "Play Fracture Engine",
+              "image": "/assets/cards/fracture-engine.svg",
+              "alt": "Relicforge Fracture Engine artwork",
+              "width": 352,
+              "height": 198,
+              "searchId": "game-relicforge-fracture-engine"
+            },
+            {
+              "id": "apex-tennis",
+              "kind": "Physics game",
+              "title": "Apex Tennis",
+              "description": "Plan the path, strike the ball and read the court.",
+              "href": "/apextennis/",
+              "action": "Play Apex Tennis",
+              "image": "/assets/cards/apex-tennis.svg",
+              "alt": "Apex Tennis court and planned ball path artwork",
+              "width": 352,
+              "height": 198,
+              "searchId": "game-apex-tennis"
+            },
+            {
+              "id": "apex-pool",
+              "kind": "Physics game",
+              "title": "Apex Pool",
+              "description": "Call the shot, set the power and see whether the table does what you expected.",
+              "href": "/apexpool/",
+              "action": "Play Apex Pool",
+              "image": "/assets/cards/apex-pool.svg",
+              "alt": "Apex Pool table artwork",
+              "width": 352,
+              "height": 198,
+              "searchId": "game-apex-pool"
+            },
+            {
+              "id": "global-games",
+              "kind": "Sports game",
+              "title": "Global Games",
+              "description": "Compete across nine events in a full championship.",
+              "href": "/olympics/",
+              "action": "Play Global Games",
+              "image": "/assets/cards/global-games.svg",
+              "alt": "Global Games championship artwork",
+              "width": 352,
+              "height": 198,
+              "searchId": "game-global-games-championship-simulator"
+            }
           ]
         },
         {
+          "type": "surprise",
+          "id": "surprise",
+          "kicker": "Not sure what to choose?",
+          "title": "Surprise me",
+          "lead": "Pick one game from the pupil-safe set on this page. The choice is made in your browser and needs no third-party service."
+        },
+        {
+          "type": "features",
           "id": "learn-explore",
-          "kicker": "Learn and explore",
+          "kicker": "Learn and make",
           "title": "Open something to learn from",
-          "lead": "Move from games into lessons and public learning resources without creating an account.",
+          "lead": "Move from play into lessons, pathways and creation without needing an account.",
           "features": [
-            {"id": "lesson-hub", "kind": "Lesson Hub", "title": "Browse the Lesson Hub", "description": "Find lesson packs, schemes and print sets in one place, organised by subject, year and programme.", "href": "/Lessons/", "action": "Explore lessons", "image": "/images/lesson-hub-card.webp", "alt": "The Lesson Hub with course, dashboard and quiz panels", "width": 450, "height": 360},
-            {"id": "asdan-suite", "kind": "Learning pathways", "title": "BUILD, GROW and LAUNCH", "description": "Explore the Made by Matt ASDAN learning pathways and the activities organised within them.", "href": "/resources/?q=asdan", "action": "See the pathways", "image": "/assets/video/poster-asdan.webp", "alt": "Made by Matt ASDAN learning and evidence preview", "width": 1280, "height": 720}
+            {
+              "id": "lesson-hub",
+              "kind": "Lesson Hub",
+              "title": "Browse the Lesson Hub",
+              "description": "Find lesson packs, schemes and print sets by subject, year and programme.",
+              "href": "/Lessons/",
+              "action": "Explore lessons",
+              "image": "/images/lesson-hub-card.webp",
+              "alt": "The Lesson Hub with course, dashboard and quiz panels",
+              "width": 450,
+              "height": 360,
+              "searchId": "page-lesson-hub"
+            },
+            {
+              "id": "asdan-suite",
+              "kind": "Learning pathways",
+              "title": "BUILD, GROW and LAUNCH",
+              "description": "Explore pathway materials and activities organised within the Lesson Hub.",
+              "href": "/resources/?q=asdan",
+              "action": "See the pathways",
+              "image": "/assets/video/poster-asdan.webp",
+              "alt": "Made by Matt ASDAN learning and evidence preview",
+              "width": 1280,
+              "height": 720,
+              "searchId": "resource-asdan-master-hub"
+            },
+            {
+              "id": "studio-suite",
+              "kind": "Creative apps",
+              "title": "Make something",
+              "description": "Use the Made by Matt Studio Suite for art, audio, animation, web pages and more.",
+              "href": "/Matt-s-Apps-/",
+              "action": "Browse creative apps",
+              "image": "/assets/video/poster-art.webp",
+              "alt": "Made by Matt art and creator-studio preview",
+              "width": 1280,
+              "height": 720,
+              "searchId": "page-apps-hub"
+            }
           ]
+        },
+        {
+          "type": "recent",
+          "id": "recent",
+          "title": "Recently explored",
+          "lead": "These public items are remembered only on this device. You can clear them at any time."
         }
       ],
       "utilities": [
-        {"title": "All games", "description": "Browse the complete Arcade and choose another game.", "href": "/games/"},
-        {"title": "Learning resources", "description": "Search the public catalogue by subject or type.", "href": "/resources/"},
-        {"title": "Main Made by Matt homepage", "description": "See the complete platform and broad navigation.", "href": "/main/"}
+        {
+          "title": "All games",
+          "description": "Browse the complete Arcade.",
+          "href": "/games/"
+        },
+        {
+          "title": "Resource search",
+          "description": "Search lessons, games, apps and tools.",
+          "href": "/resources/"
+        },
+        {
+          "title": "Main Made by Matt homepage",
+          "description": "See the complete platform and broad navigation.",
+          "href": "/main/"
+        }
       ],
       "noteTitle": "Public content stays open",
-      "note": "Public games, lessons and learning areas can be explored without creating an account. Accounts and the mailing list are for adults. Ask a parent, carer, teacher or another trusted adult before using any email or account feature.",
-      "adultFeatures": false
+      "note": "Public games, lessons and learning areas can be explored without creating an account. Accounts and the mailing list are for adults. Ask a parent, carer, teacher or another trusted adult before using any email or account feature."
     },
     "teachers": {
       "route": "/for/teachers/",
       "label": "Teachers & education staff",
       "navLabel": "Teacher homepage",
-      "accent": "#C97F2E",
+      "accent": "#974220",
       "soft": "#F8E4CB",
       "icon": "book",
-      "chooserDescription": "Find classroom-ready lessons, teaching tools, apps and resources.",
-      "title": "Made by Matt for Teachers & education staff",
-      "lead": "Classroom-ready lessons, practical tools, apps and resources organised around real teaching workflows.",
+      "adultFeatures": true,
+      "chooserDescription": "Start with a teaching task, then reach the right lesson, pathway or tool.",
+      "title": "Start with the teaching task.",
+      "lead": "Move from what you need to do—teach, plan, assess, capture evidence, manage information or create—into the right Made by Matt material.",
       "primaryCtas": [
-        {"label": "Explore lessons", "href": "/Lessons/", "style": "primary"},
-        {"label": "Open teacher tools", "href": "/tools/", "style": "secondary"}
+        {
+          "label": "Open the Teach Hub",
+          "href": "/teach/",
+          "style": "primary"
+        },
+        {
+          "label": "Search all resources",
+          "href": "/resources/",
+          "style": "secondary"
+        }
       ],
       "quickLinks": [
-        {"label": "Teacher homepage", "href": "/for/teachers/"},
-        {"label": "Lessons", "href": "/Lessons/"},
-        {"label": "Teacher tools", "href": "/tools/"},
-        {"label": "Apps", "href": "/Matt-s-Apps-/"},
-        {"label": "Resources", "href": "/resources/"}
+        {
+          "label": "Teacher homepage",
+          "href": "/for/teachers/"
+        },
+        {
+          "label": "Teach Hub",
+          "href": "/teach/"
+        },
+        {
+          "label": "Lessons",
+          "href": "/Lessons/"
+        },
+        {
+          "label": "Teacher tools",
+          "href": "/tools/"
+        },
+        {
+          "label": "Education Hub",
+          "href": "/education-hub/"
+        }
       ],
       "sections": [
         {
-          "id": "lesson-pathways",
-          "kicker": "Lesson Hub and pathways",
-          "title": "Plan from the learning, not from a blank page",
-          "lead": "Open the live Lesson Hub, then move into the pathway or collection that fits the class in front of you.",
-          "features": [
-            {"id": "lesson-hub", "kind": "Lesson Hub", "title": "Every lesson collection", "description": "Browse lesson packs, schemes and print sets by subject, year or programme.", "href": "/Lessons/", "action": "Open the Lesson Hub", "image": "/images/lesson-hub-card.webp", "alt": "The Lesson Hub with course, dashboard and quiz panels", "width": 450, "height": 360},
-            {"id": "asdan-suite", "kind": "BUILD · GROW · LAUNCH", "title": "ASDAN learning pathways", "description": "Explore the current BUILD, GROW and LAUNCH materials and their evidence-aware lesson sequences.", "href": "/resources/?q=asdan", "action": "Browse ASDAN resources", "image": "/assets/video/poster-asdan.webp", "alt": "Made by Matt ASDAN learning and evidence preview", "width": 1280, "height": 720}
+          "type": "tasks",
+          "id": "teacher-tasks",
+          "kicker": "Six practical routes",
+          "title": "What do you need to do?",
+          "lead": "Each shortcut opens the deeper teacher search with the relevant task already selected."
+        },
+        {
+          "type": "routes",
+          "id": "pathways",
+          "kicker": "Pathways and teaching",
+          "title": "Move from curriculum to classroom",
+          "lead": "Use canonical Made by Matt destinations rather than hunting through separate collections.",
+          "items": [
+            {
+              "title": "Lesson Hub",
+              "description": "Search classroom-ready lessons, schemes and teaching packs.",
+              "href": "/Lessons/",
+              "action": "Open the Lesson Hub",
+              "searchId": "page-lesson-hub"
+            },
+            {
+              "title": "BUILD",
+              "description": "Find BUILD pathway hubs, sequences and resources.",
+              "href": "/teach/?pathway=BUILD",
+              "action": "View BUILD material"
+            },
+            {
+              "title": "GROW",
+              "description": "Find GROW pathway hubs, sequences and resources.",
+              "href": "/teach/?pathway=GROW",
+              "action": "View GROW material"
+            },
+            {
+              "title": "LAUNCH",
+              "description": "Find LAUNCH pathway hubs, sequences and resources.",
+              "href": "/teach/?pathway=LAUNCH",
+              "action": "View LAUNCH material"
+            }
           ]
         },
         {
-          "id": "tools-apps",
-          "kicker": "Tools and apps",
-          "title": "Practical support for classroom workflow",
-          "lead": "Use real browser tools for tracking, evidence, organisation and resource creation.",
-          "features": [
-            {"id": "studio-suite", "kind": "Creator apps", "title": "Made by Matt Studio Suite", "description": "Open the creator studios for designing, teaching and building resources for the whiteboard.", "href": "/Matt-s-Apps-/", "action": "Browse the apps", "image": "/assets/video/poster-art.webp", "alt": "Made by Matt art and creator-studio preview", "width": 1280, "height": 720},
-            {"id": "apex-tennis", "kind": "Interactive learning", "title": "Apex Tennis", "description": "An example of a browser game that combines planning, rules and immediate play.", "href": "/apextennis/", "action": "Open Apex Tennis", "image": "/assets/cards/apex-tennis.svg", "alt": "Apex Tennis court and planned ball path artwork", "width": 352, "height": 198}
+          "type": "routes",
+          "id": "workflow-tools",
+          "kicker": "Workflow tools",
+          "title": "Evidence, assessment and learner information",
+          "lead": "Direct routes to genuine Made by Matt browser tools.",
+          "items": [
+            {
+              "title": "Evidence Binder",
+              "description": "Capture and tag work for portfolios.",
+              "href": "/Matt-s-Apps-/Evidence_Binder.html",
+              "action": "Open Evidence Binder",
+              "searchId": "app-evidence-binder"
+            },
+            {
+              "title": "Data Manager Studio",
+              "description": "Work with cohorts, learner IDs, evidence coverage and review queues locally.",
+              "href": "/Matt-s-Apps-/Data_Manager_Studio.html",
+              "action": "Open Data Manager Studio",
+              "searchId": "app-data-manager-studio"
+            },
+            {
+              "title": "UAS Register",
+              "description": "Date-stamp outcomes, file evidence and export a summary.",
+              "href": "/uas/",
+              "action": "Open UAS Register",
+              "searchId": "app-uas-register"
+            },
+            {
+              "title": "ASDAN Register",
+              "description": "Track PEQ and Short Course evidence and sign-off.",
+              "href": "/asdan/",
+              "action": "Open ASDAN Register",
+              "searchId": "app-asdan-register"
+            },
+            {
+              "title": "Rubric & Feedback Studio",
+              "description": "Mark against a rubric and build feedback.",
+              "href": "/Matt-s-Apps-/Rubric_Studio.html",
+              "action": "Open Rubric & Feedback Studio",
+              "searchId": "app-rubric-and-feedback-studio"
+            },
+            {
+              "title": "Exit Ticket & Quick Marks",
+              "description": "Run an immediate class understanding check.",
+              "href": "/Matt-s-Apps-/Exit_Ticket.html",
+              "action": "Open Exit Ticket",
+              "searchId": "app-exit-ticket-and-quick-marks"
+            }
           ]
+        },
+        {
+          "type": "features",
+          "id": "teacher-visuals",
+          "kicker": "See the platform",
+          "title": "Teaching and creation in context",
+          "lead": "Genuine Made by Matt imagery from the live Lesson Hub and Studio Suite.",
+          "features": [
+            {
+              "id": "lesson-hub",
+              "kind": "Lesson Hub",
+              "title": "Every lesson collection",
+              "description": "Browse lesson packs, schemes and print sets by subject, year or programme.",
+              "href": "/Lessons/",
+              "action": "Open the Lesson Hub",
+              "image": "/images/lesson-hub-card.webp",
+              "alt": "The Lesson Hub with course, dashboard and quiz panels",
+              "width": 450,
+              "height": 360,
+              "searchId": "page-lesson-hub"
+            },
+            {
+              "id": "asdan-suite",
+              "kind": "Pathway material",
+              "title": "BUILD, GROW and LAUNCH",
+              "description": "Search evidence-aware pathway material across the canonical catalogue.",
+              "href": "/resources/?q=asdan",
+              "action": "Browse pathway resources",
+              "image": "/assets/video/poster-asdan.webp",
+              "alt": "Made by Matt ASDAN learning and evidence preview",
+              "width": 1280,
+              "height": 720,
+              "searchId": "resource-asdan-master-hub"
+            },
+            {
+              "id": "studio-suite",
+              "kind": "Creator apps",
+              "title": "Made by Matt Studio Suite",
+              "description": "Choose tools for art, audio, animation, documents, whiteboards and more.",
+              "href": "/Matt-s-Apps-/",
+              "action": "Browse the apps",
+              "image": "/assets/video/poster-art.webp",
+              "alt": "Made by Matt art and creator-studio preview",
+              "width": 1280,
+              "height": 720,
+              "searchId": "page-apps-hub"
+            },
+            {
+              "id": "games-arcade",
+              "kind": "Games and arcade",
+              "title": "The Made by Matt Arcade",
+              "description": "Browse the browser games used in lessons, tutor time and enrichment.",
+              "href": "/games/",
+              "action": "Open the Arcade",
+              "image": "/assets/cards/apex-kick.webp",
+              "alt": "Apex Kick football game artwork",
+              "width": 352,
+              "height": 198,
+              "searchId": "page-games-hub"
+            }
+          ]
+        },
+        {
+          "type": "video",
+          "id": "teacher-video",
+          "kicker": "Owner-controlled demonstration",
+          "title": "Watch only when you choose",
+          "lead": "The local poster loads first. YouTube receives no request until the play control is deliberately activated.",
+          "poster": "/assets/video/poster-asdan.webp",
+          "videoId": "aGy0z4mZEXg",
+          "titleText": "Made by Matt ASDAN demonstration"
+        },
+        {
+          "type": "recent",
+          "id": "recent",
+          "title": "Recently explored",
+          "lead": "A local-only shortcut back to public Made by Matt items."
         }
       ],
       "utilities": [
-        {"title": "UAS Register", "description": "Date-stamp outcomes, file evidence and export the official summary.", "href": "/uas/app.html"},
-        {"title": "ASDAN Register", "description": "Track PEQ and Short Course evidence and sign-off as you go.", "href": "/asdan/app.html"},
-        {"title": "Evidence Binder", "description": "Capture, tag and organise evidence in a dedicated browser tool.", "href": "/Matt-s-Apps-/Evidence_Binder.html"},
-        {"title": "Data Manager Studio", "description": "Open the live data-management workspace from the tools collection.", "href": "/Matt-s-Apps-/Data_Manager_Studio.html"}
+        {
+          "title": "Teach Hub",
+          "description": "Teacher-first search and filters.",
+          "href": "/teach/"
+        },
+        {
+          "title": "Education Hub",
+          "description": "Made by Matt and authoritative external resources, clearly separated.",
+          "href": "/education-hub/"
+        },
+        {
+          "title": "Studio Suite",
+          "description": "Browse all Made by Matt browser apps.",
+          "href": "/Matt-s-Apps-/"
+        },
+        {
+          "title": "Main homepage",
+          "description": "See the complete platform.",
+          "href": "/main/"
+        }
       ],
       "noteTitle": "Optional adult features",
-      "note": "An adult or teacher account is optional and supports account-backed features such as carrying saved Made by Matt shortcuts between devices. Teacher updates use a separate double-opt-in mailing list; creating an account never subscribes you.",
-      "adultFeatures": true
+      "note": "An adult or teacher account is optional and supports account-backed features such as carrying saved Made by Matt shortcuts between devices. Teacher updates use a separate double-opt-in mailing list; creating an account never subscribes you."
     },
     "parents": {
       "route": "/for/parents-carers/",
       "label": "Parents & carers",
       "navLabel": "Parent & carer homepage",
-      "accent": "#6E58B8",
+      "accent": "#827212",
+      "accentVisual": "#A98402",
       "soft": "#E9E1F6",
       "icon": "home",
-      "chooserDescription": "See the games, learning resources and public content available to children and families.",
-      "title": "Made by Matt for Parents & carers",
-      "lead": "A clear way to explore the games, lessons and public learning resources available through Made by Matt.",
+      "adultFeatures": true,
+      "chooserDescription": "Understand what is available and choose a clear, family-friendly starting point.",
+      "title": "See what is here, then choose together.",
+      "lead": "A calm overview of Made by Matt games, lessons and public learning resources, with clear routes and plain-English explanations.",
       "primaryCtas": [
-        {"label": "Explore games", "href": "/games/", "style": "primary"},
-        {"label": "Browse learning resources", "href": "/resources/", "style": "secondary"}
+        {
+          "label": "Explore games together",
+          "href": "/games/",
+          "style": "primary"
+        },
+        {
+          "label": "Browse learning resources",
+          "href": "/resources/",
+          "style": "secondary"
+        }
       ],
       "quickLinks": [
-        {"label": "Parent & carer homepage", "href": "/for/parents-carers/"},
-        {"label": "Games", "href": "/games/"},
-        {"label": "Lessons", "href": "/Lessons/"},
-        {"label": "Resources", "href": "/resources/"},
-        {"label": "Privacy", "href": "/privacy/"}
+        {
+          "label": "Parent & carer homepage",
+          "href": "/for/parents-carers/"
+        },
+        {
+          "label": "Games",
+          "href": "/games/"
+        },
+        {
+          "label": "Lessons",
+          "href": "/Lessons/"
+        },
+        {
+          "label": "Resources",
+          "href": "/resources/"
+        },
+        {
+          "label": "Privacy",
+          "href": "/privacy/"
+        }
       ],
       "sections": [
         {
+          "type": "features",
           "id": "explore-together",
           "kicker": "Explore together",
-          "title": "See what is available before choosing where to start",
-          "lead": "These are live examples from the public Made by Matt collection.",
+          "title": "Start with a real example",
+          "lead": "These live parts of the public platform show the range without asking for an account.",
           "features": [
-            {"id": "apex-kick", "kind": "Game", "title": "Apex Kick", "description": "A quick browser football game built around aiming, curl and readable physics.", "href": "/apexkick/", "action": "Open Apex Kick", "image": "/assets/cards/apex-kick.webp", "alt": "Apex Kick football game artwork", "width": 352, "height": 198},
-            {"id": "voxel-frontier", "kind": "Game", "title": "Voxel Frontier", "description": "A block-world game for mining, building and exploring in the browser.", "href": "/voxel/", "action": "Open Voxel Frontier", "image": "/assets/cards/voxel-frontier.webp", "alt": "Voxel Frontier block-world game artwork", "width": 352, "height": 198},
-            {"id": "lesson-hub", "kind": "Learning resources", "title": "Lesson Hub", "description": "Browse lesson packs and public learning materials organised by subject, year and programme.", "href": "/Lessons/", "action": "Browse lessons", "image": "/images/lesson-hub-card.webp", "alt": "The Lesson Hub with course, dashboard and quiz panels", "width": 450, "height": 360}
+            {
+              "id": "apex-kick",
+              "kind": "Game",
+              "title": "Apex Kick",
+              "description": "A quick physics game built around planning a free kick.",
+              "href": "/apexkick/",
+              "action": "Play Apex Kick",
+              "image": "/assets/cards/apex-kick.webp",
+              "alt": "Apex Kick football game artwork",
+              "width": 352,
+              "height": 198,
+              "searchId": "game-apex-kick"
+            },
+            {
+              "id": "lesson-hub",
+              "kind": "Lesson Hub",
+              "title": "Lesson Hub",
+              "description": "Browse classroom material by subject, year and programme.",
+              "href": "/Lessons/",
+              "action": "Open the Lesson Hub",
+              "image": "/images/lesson-hub-card.webp",
+              "alt": "The Lesson Hub with course, dashboard and quiz panels",
+              "width": 450,
+              "height": 360,
+              "searchId": "page-lesson-hub"
+            },
+            {
+              "id": "studio-suite",
+              "kind": "Creative apps",
+              "title": "Make and create",
+              "description": "Explore browser-based tools for art, audio, animation and documents.",
+              "href": "/Matt-s-Apps-/",
+              "action": "Browse the apps",
+              "image": "/assets/video/poster-art.webp",
+              "alt": "Made by Matt art and creator-studio preview",
+              "width": 1280,
+              "height": 720,
+              "searchId": "page-apps-hub"
+            }
+          ]
+        },
+        {
+          "type": "tips",
+          "id": "parent-tips",
+          "kicker": "Helpful starting points",
+          "title": "A few practical ways to use the platform",
+          "lead": "General suggestions for exploring public content; they are not statutory, safeguarding or clinical advice.",
+          "items": [
+            {
+              "title": "Choose together",
+              "description": "Open the game or resource first and decide whether it suits the learner, device and moment."
+            },
+            {
+              "title": "Use the audience homepage",
+              "description": "The pupil face keeps adult account and mailing actions out of the main learner journey."
+            },
+            {
+              "title": "Keep the route simple",
+              "description": "Use direct Play and Open actions rather than sending a learner through several hubs."
+            },
+            {
+              "title": "Check the source label",
+              "description": "The Education Hub clearly separates Made by Matt material from official external guidance."
+            }
+          ]
+        },
+        {
+          "type": "routes",
+          "id": "trusted-resources",
+          "kicker": "Clearly labelled external help",
+          "title": "Trusted education and online-safety sources",
+          "lead": "These links open filtered views in the Professional Education Hub before any external navigation.",
+          "items": [
+            {
+              "title": "NSPCC resources",
+              "description": "Find NSPCC safeguarding and online-safety resources in the curated external collection.",
+              "href": "/education-hub/?origin=external&source=NSPCC",
+              "action": "View NSPCC sources"
+            },
+            {
+              "title": "Childnet resources",
+              "description": "Find Childnet online-safety resources for families and education settings.",
+              "href": "/education-hub/?origin=external&source=Childnet",
+              "action": "View Childnet sources"
+            },
+            {
+              "title": "CEOP Safety Centre",
+              "description": "Reach the clearly labelled CEOP Safety Centre entries in the external collection.",
+              "href": "/education-hub/?origin=external&source=CEOP+Safety+Centre",
+              "action": "View CEOP sources"
+            }
+          ]
+        },
+        {
+          "type": "faq",
+          "id": "faq",
+          "kicker": "Questions families often ask",
+          "title": "Parent and carer FAQ",
+          "items": [
+            {
+              "question": "Does a child need an account to use public games or lessons?",
+              "answer": "No. Public games, lessons and learning areas can be opened without creating an account."
+            },
+            {
+              "question": "What does the pupil homepage change?",
+              "answer": "It changes presentation and navigation only. It does not create a child profile, grant permissions or hide other public content."
+            },
+            {
+              "question": "Is the mailing list connected to an account?",
+              "answer": "No. Teacher updates use a separate adult mailing-list process, and creating an account never subscribes anyone."
+            },
+            {
+              "question": "Does Made by Matt replace school or safeguarding advice?",
+              "answer": "No. Made by Matt provides learning content and tools. Official external material is labelled by publisher in the Education Hub."
+            }
           ]
         }
       ],
       "utilities": [
-        {"title": "Games", "description": "Browse the complete public Arcade.", "href": "/games/"},
-        {"title": "Lessons", "description": "Open the live lesson collection.", "href": "/Lessons/"},
-        {"title": "Resources", "description": "Search the public catalogue by subject or type.", "href": "/resources/"},
-        {"title": "Privacy in plain English", "description": "See what the site sends, stores and keeps on the device.", "href": "/privacy/"}
+        {
+          "title": "Pupil homepage",
+          "description": "Open the game-first learner view.",
+          "href": "/for/pupils/"
+        },
+        {
+          "title": "Privacy",
+          "description": "Read how local preferences and recent items work.",
+          "href": "/privacy/"
+        },
+        {
+          "title": "Main homepage",
+          "description": "Explore the complete platform.",
+          "href": "/main/"
+        }
       ],
-      "noteTitle": "Accounts are not required for public content",
-      "note": "Games, lessons and public learning resources can be opened without an account. Adult accounts, Members and teacher updates are separate optional features. Made by Matt supports exploration and learning; it does not replace a school, teacher, assessment or professional support service.",
-      "adultFeatures": true
+      "noteTitle": "Clear boundaries",
+      "note": "Made by Matt provides public educational content and browser tools. It does not provide statutory safeguarding, medical or clinical advice. Where official external resources are included, the publisher is clearly identified."
     },
     "schools": {
       "route": "/for/schools-semh/",
       "label": "Schools & specialist settings",
-      "navLabel": "Schools homepage",
-      "accent": "#257A68",
-      "soft": "#DCEFEA",
+      "navLabel": "School & setting homepage",
+      "accent": "#0477BC",
+      "soft": "#D9EEE9",
       "icon": "school",
-      "chooserDescription": "Explore lessons, tools, accessibility features and resources for a range of educational contexts.",
-      "title": "Made by Matt for Schools & specialist settings",
-      "lead": "Explore curriculum resources, teaching tools, accessibility features and public platform information for mainstream, specialist and SEMH contexts.",
+      "adultFeatures": true,
+      "chooserDescription": "Map teaching, resources and practical browser tools around the needs of a setting.",
+      "title": "A clearer map for schools and SEMH settings.",
+      "lead": "Start with the teaching or workflow need, then move into lessons, pathways, tools and clearly labelled authoritative guidance.",
       "primaryCtas": [
-        {"label": "Explore the platform", "href": "/main/", "style": "primary"},
-        {"label": "Open lessons and pathways", "href": "/Lessons/", "style": "secondary"}
+        {
+          "label": "Map the platform",
+          "href": "#platform-map",
+          "style": "primary"
+        },
+        {
+          "label": "Open the Education Hub",
+          "href": "/education-hub/",
+          "style": "secondary"
+        }
       ],
       "quickLinks": [
-        {"label": "Schools homepage", "href": "/for/schools-semh/"},
-        {"label": "Lessons", "href": "/Lessons/"},
-        {"label": "Tools", "href": "/tools/"},
-        {"label": "Apps", "href": "/Matt-s-Apps-/"},
-        {"label": "Resources", "href": "/resources/"}
+        {
+          "label": "School & setting homepage",
+          "href": "/for/schools-semh/"
+        },
+        {
+          "label": "Teach Hub",
+          "href": "/teach/"
+        },
+        {
+          "label": "Resources",
+          "href": "/resources/"
+        },
+        {
+          "label": "Education Hub",
+          "href": "/education-hub/"
+        },
+        {
+          "label": "Main homepage",
+          "href": "/main/"
+        }
       ],
       "sections": [
         {
-          "id": "platform-overview",
-          "kicker": "Platform overview",
-          "title": "See the live resources in context",
-          "lead": "Review the current lessons, pathways, apps and public platform surfaces rather than a brochure version of them.",
+          "type": "tips",
+          "id": "priorities",
+          "kicker": "Start with the need",
+          "title": "Choose a priority",
+          "lead": "Use these as discovery routes, not as claims about outcomes or approval.",
+          "items": [
+            {
+              "title": "Find adaptable teaching material",
+              "description": "Search lessons, schemes and support resources by subject, pathway and format."
+            },
+            {
+              "title": "Build evidence-aware workflows",
+              "description": "Reach registers, evidence tools and portfolio-oriented resources without invented approval claims."
+            },
+            {
+              "title": "Support classroom routines",
+              "description": "Find practical browser tools for planning, quick checks and organisation."
+            },
+            {
+              "title": "Review professional guidance",
+              "description": "Use publisher-labelled official and sector sources in the Education Hub."
+            }
+          ]
+        },
+        {
+          "type": "routes",
+          "id": "platform-map",
+          "kicker": "Platform map",
+          "title": "Move to the right Made by Matt surface",
+          "lead": "The same public platform, organised around common education workflows.",
+          "items": [
+            {
+              "title": "Teach Hub",
+              "description": "Task-first discovery for teachers and education staff.",
+              "href": "/teach/",
+              "action": "Open the Teach Hub",
+              "searchId": "page-teach"
+            },
+            {
+              "title": "Lesson Hub",
+              "description": "Lessons, schemes and pathway material.",
+              "href": "/Lessons/",
+              "action": "Open the Lesson Hub",
+              "searchId": "page-lesson-hub"
+            },
+            {
+              "title": "Tools Hub",
+              "description": "Evidence, data, assessment and classroom tools.",
+              "href": "/tools/",
+              "action": "Open the Tools Hub",
+              "searchId": "page-tools-hub"
+            },
+            {
+              "title": "Resource Catalogue",
+              "description": "Search all 511 canonical internal destinations.",
+              "href": "/resources/",
+              "action": "Search all internal material",
+              "searchId": "page-resources"
+            }
+          ]
+        },
+        {
+          "type": "features",
+          "id": "visual-map",
+          "kicker": "Genuine platform views",
+          "title": "Lessons, pathways and creation",
+          "lead": "Real Made by Matt artwork and product captures—not concept products.",
           "features": [
-            {"id": "lesson-hub", "kind": "Lessons and pathways", "title": "Lesson Hub", "description": "Browse current lesson packs, schemes and print sets by subject, year and programme.", "href": "/Lessons/", "action": "Open the Lesson Hub", "image": "/images/lesson-hub-card.webp", "alt": "The Lesson Hub with course, dashboard and quiz panels", "width": 450, "height": 360},
-            {"id": "asdan-suite", "kind": "BUILD · GROW · LAUNCH", "title": "ASDAN pathway resources", "description": "Explore the current pathway materials and evidence-aware lesson sequences available on the site.", "href": "/resources/?q=asdan", "action": "Browse ASDAN resources", "image": "/assets/video/poster-asdan.webp", "alt": "Made by Matt ASDAN learning and evidence preview", "width": 1280, "height": 720},
-            {"id": "studio-suite", "kind": "Apps and creation", "title": "Studio Suite", "description": "See the creator apps used to design, organise and present learning resources in the browser.", "href": "/Matt-s-Apps-/", "action": "Browse the apps", "image": "/assets/video/poster-art.webp", "alt": "Made by Matt art and creator-studio preview", "width": 1280, "height": 720}
+            {
+              "id": "lesson-hub",
+              "kind": "Teaching material",
+              "title": "Lesson Hub",
+              "description": "Browse lesson packs, schemes and pathway materials.",
+              "href": "/Lessons/",
+              "action": "Open the Lesson Hub",
+              "image": "/images/lesson-hub-card.webp",
+              "alt": "The Lesson Hub with course, dashboard and quiz panels",
+              "width": 450,
+              "height": 360,
+              "searchId": "page-lesson-hub"
+            },
+            {
+              "id": "asdan-suite",
+              "kind": "Pathway material",
+              "title": "BUILD, GROW and LAUNCH",
+              "description": "Search evidence-aware pathway material across the canonical catalogue.",
+              "href": "/resources/?q=asdan",
+              "action": "Browse pathway resources",
+              "image": "/assets/video/poster-asdan.webp",
+              "alt": "Made by Matt ASDAN learning and evidence preview",
+              "width": 1280,
+              "height": 720,
+              "searchId": "resource-asdan-master-hub"
+            },
+            {
+              "id": "studio-suite",
+              "kind": "Tools and apps",
+              "title": "Made by Matt Studio Suite",
+              "description": "Explore classroom, evidence, data and creation tools.",
+              "href": "/tools/",
+              "action": "Open the Tools Hub",
+              "image": "/assets/video/poster-art.webp",
+              "alt": "Made by Matt art and creator-studio preview",
+              "width": 1280,
+              "height": 720,
+              "searchId": "page-tools-hub"
+            }
+          ]
+        },
+        {
+          "type": "routes",
+          "id": "official-guidance",
+          "kicker": "Authoritative external material",
+          "title": "Open the Professional Education Hub",
+          "lead": "Made by Matt material and external publisher resources remain visibly separate.",
+          "items": [
+            {
+              "title": "Relevant official and sector material",
+              "description": "Use the local curated dataset and filters before deliberately leaving Made by Matt.",
+              "href": "/education-hub/?origin=external&audience=schools-semh",
+              "action": "Search authoritative resources"
+            },
+            {
+              "title": "Made by Matt internal catalogue",
+              "description": "Search only the canonical Made by Matt index for lessons, resources, tools and apps.",
+              "href": "/resources/",
+              "action": "Search internal material"
+            }
           ]
         }
       ],
       "utilities": [
-        {"title": "Teacher tools", "description": "Review the live collection of classroom and evidence tools.", "href": "/tools/"},
-        {"title": "Accessibility and display", "description": "Use reading themes, keyboard navigation and responsive public pages, then review the detailed privacy information.", "href": "/privacy/"},
-        {"title": "SEMH and specialist context", "description": "Explore resources shaped by real specialist and SEMH teaching experience without assuming one resource fits every setting.", "href": "/Lessons/"},
-        {"title": "Contact Made by Matt", "description": "Use the established contact route to ask a question or discuss a need.", "href": "/main/#contact"}
+        {
+          "title": "Teach Hub",
+          "description": "Teacher-first task and pathway search.",
+          "href": "/teach/"
+        },
+        {
+          "title": "Resource Catalogue",
+          "description": "One canonical internal search index.",
+          "href": "/resources/"
+        },
+        {
+          "title": "Contact",
+          "description": "Use the established Made by Matt contact route.",
+          "href": "mailto:contactmadebymatt@gmail.com"
+        },
+        {
+          "title": "Main homepage",
+          "description": "Explore the complete platform.",
+          "href": "/main/"
+        }
       ],
-      "noteTitle": "Accurate, setting-by-setting review",
-      "note": "Made by Matt has a genuine SEMH and specialist-teaching background, but no page claims formal SEND or SEMH approval, universal suitability, accreditation, guaranteed outcomes or adoption by a school. Review the live resources against the needs and policies of your own setting.",
-      "adultFeatures": true
+      "noteTitle": "Capability without unsupported claims",
+      "note": "Made by Matt is not described as approved for SEMH or endorsed by a school. The page describes genuine platform capabilities and routes only."
     },
     "trusts": {
       "route": "/for/trusts/",
-      "label": "Academy trusts",
-      "navLabel": "Academy trusts homepage",
-      "accent": "#315F87",
-      "soft": "#DDE8F2",
+      "label": "Academy trusts & education groups",
+      "navLabel": "Trust & group homepage",
+      "accent": "#0D6E70",
+      "soft": "#DCE5F6",
       "icon": "network",
-      "chooserDescription": "Review the breadth of the platform, curriculum resources, practical tools, privacy and current public information.",
-      "title": "Made by Matt for Academy trusts",
-      "lead": "Review the breadth of Made by Matt across lessons, games, tools, apps, accessibility, privacy and current public platform information.",
+      "adultFeatures": true,
+      "chooserDescription": "Explore platform breadth, teaching workflows and authoritative guidance without invented deployment claims.",
+      "title": "A platform map for trusts.",
+      "lead": "Review genuine Made by Matt teaching, resource and workflow surfaces alongside date-aware official guidance.",
       "primaryCtas": [
-        {"label": "Explore the current platform", "href": "/main/", "style": "primary"},
-        {"label": "Review lessons and resources", "href": "/Lessons/", "style": "secondary"}
+        {
+          "label": "Map the platform",
+          "href": "#platform-map",
+          "style": "primary"
+        },
+        {
+          "label": "Open the Education Hub",
+          "href": "/education-hub/",
+          "style": "secondary"
+        }
       ],
       "quickLinks": [
-        {"label": "Academy trusts homepage", "href": "/for/trusts/"},
-        {"label": "Platform overview", "href": "/main/"},
-        {"label": "Lessons & resources", "href": "/Lessons/"},
-        {"label": "Tools & apps", "href": "/tools/"},
-        {"label": "Privacy", "href": "/privacy/"}
+        {
+          "label": "Trust & group homepage",
+          "href": "/for/trusts/"
+        },
+        {
+          "label": "Teach Hub",
+          "href": "/teach/"
+        },
+        {
+          "label": "Resources",
+          "href": "/resources/"
+        },
+        {
+          "label": "Education Hub",
+          "href": "/education-hub/"
+        },
+        {
+          "label": "Main homepage",
+          "href": "/main/"
+        }
       ],
       "sections": [
         {
-          "id": "platform-at-a-glance",
-          "kicker": "Platform at a glance",
-          "title": "Review the live collection",
-          "lead": "Move directly into the public platform, curriculum resources and practical tools as they exist now.",
+          "type": "tips",
+          "id": "priorities",
+          "kicker": "Start with the need",
+          "title": "Choose a priority",
+          "lead": "Use these as discovery routes, not as claims about outcomes or approval.",
+          "items": [
+            {
+              "title": "Map teaching content",
+              "description": "Explore subject, pathway and format coverage across the canonical internal index."
+            },
+            {
+              "title": "Review workflow tools",
+              "description": "See genuine evidence, register, data and feedback tools without assuming a procurement model."
+            },
+            {
+              "title": "Find date-aware guidance",
+              "description": "Distinguish current, upcoming and evergreen official publications by effective date."
+            },
+            {
+              "title": "Understand boundaries",
+              "description": "No fabricated trust adoption, licensing package or accreditation claim is presented."
+            }
+          ]
+        },
+        {
+          "type": "routes",
+          "id": "platform-map",
+          "kicker": "Platform map",
+          "title": "Move to the right Made by Matt surface",
+          "lead": "The same public platform, organised around common education workflows.",
+          "items": [
+            {
+              "title": "Teach Hub",
+              "description": "Task-first routes across lessons, pathways and tools.",
+              "href": "/teach/",
+              "action": "Open the Teach Hub",
+              "searchId": "page-teach"
+            },
+            {
+              "title": "Education Hub",
+              "description": "Made by Matt and authoritative external resources, clearly separated.",
+              "href": "/education-hub/",
+              "action": "Open the Education Hub",
+              "searchId": "page-education-hub"
+            },
+            {
+              "title": "Resource Catalogue",
+              "description": "Search one deterministic internal index.",
+              "href": "/resources/",
+              "action": "Search the catalogue",
+              "searchId": "page-resources"
+            },
+            {
+              "title": "Tools Hub",
+              "description": "Browse genuine teacher and workflow tools.",
+              "href": "/tools/",
+              "action": "Open the Tools Hub",
+              "searchId": "page-tools-hub"
+            }
+          ]
+        },
+        {
+          "type": "features",
+          "id": "visual-map",
+          "kicker": "Genuine platform views",
+          "title": "Lessons, pathways and creation",
+          "lead": "Real Made by Matt artwork and product captures—not concept products.",
           "features": [
-            {"id": "platform-cover", "kind": "Made by Matt platform", "title": "The complete public homepage", "description": "Explore games, lessons, apps, tools, resources and the current platform information from one broad starting point.", "href": "/main/", "action": "Open the main homepage", "image": "/assets/og-cover.png", "alt": "Made by Matt Learn Build Explore platform cover", "width": 1200, "height": 630},
-            {"id": "lesson-hub", "kind": "Curriculum and teaching resources", "title": "Lesson Hub", "description": "See current lesson packs, schemes and print sets organised by subject, year and programme.", "href": "/Lessons/", "action": "Review the Lesson Hub", "image": "/images/lesson-hub-card.webp", "alt": "The Lesson Hub with course, dashboard and quiz panels", "width": 450, "height": 360},
-            {"id": "studio-suite", "kind": "Tools and apps", "title": "Live browser tools", "description": "Review the real tools and creator apps available to teaching staff and education teams.", "href": "/tools/", "action": "Open the tools collection", "image": "/assets/video/poster-art.webp", "alt": "Made by Matt art and creator-studio preview", "width": 1280, "height": 720}
+            {
+              "id": "lesson-hub",
+              "kind": "Teaching material",
+              "title": "Lesson Hub",
+              "description": "Browse lesson packs, schemes and pathway materials.",
+              "href": "/Lessons/",
+              "action": "Open the Lesson Hub",
+              "image": "/images/lesson-hub-card.webp",
+              "alt": "The Lesson Hub with course, dashboard and quiz panels",
+              "width": 450,
+              "height": 360,
+              "searchId": "page-lesson-hub"
+            },
+            {
+              "id": "asdan-suite",
+              "kind": "Pathway material",
+              "title": "BUILD, GROW and LAUNCH",
+              "description": "Search evidence-aware pathway material across the canonical catalogue.",
+              "href": "/resources/?q=asdan",
+              "action": "Browse pathway resources",
+              "image": "/assets/video/poster-asdan.webp",
+              "alt": "Made by Matt ASDAN learning and evidence preview",
+              "width": 1280,
+              "height": 720,
+              "searchId": "resource-asdan-master-hub"
+            },
+            {
+              "id": "studio-suite",
+              "kind": "Tools and apps",
+              "title": "Made by Matt Studio Suite",
+              "description": "Explore classroom, evidence, data and creation tools.",
+              "href": "/tools/",
+              "action": "Open the Tools Hub",
+              "image": "/assets/video/poster-art.webp",
+              "alt": "Made by Matt art and creator-studio preview",
+              "width": 1280,
+              "height": 720,
+              "searchId": "page-tools-hub"
+            }
+          ]
+        },
+        {
+          "type": "routes",
+          "id": "official-guidance",
+          "kicker": "Authoritative external material",
+          "title": "Open the Professional Education Hub",
+          "lead": "Made by Matt material and external publisher resources remain visibly separate.",
+          "items": [
+            {
+              "title": "Relevant official and sector material",
+              "description": "Use the local curated dataset and filters before deliberately leaving Made by Matt.",
+              "href": "/education-hub/?origin=external&audience=trusts",
+              "action": "Search authoritative resources"
+            },
+            {
+              "title": "Made by Matt internal catalogue",
+              "description": "Search only the canonical Made by Matt index for lessons, resources, tools and apps.",
+              "href": "/resources/",
+              "action": "Search internal material"
+            }
           ]
         }
       ],
       "utilities": [
-        {"title": "ASDAN pathways", "description": "See the BUILD, GROW and LAUNCH resource collection in practice.", "href": "/resources/?q=asdan"},
-        {"title": "Games and interactive content", "description": "Open the Arcade and review browser experiences directly.", "href": "/games/"},
-        {"title": "Account and Members", "description": "Review the optional adult account and account-backed Members area.", "href": "/account/"},
-        {"title": "Privacy information", "description": "Read the current data, account and third-party service information.", "href": "/privacy/"}
+        {
+          "title": "Teach Hub",
+          "description": "Teacher-first task and pathway search.",
+          "href": "/teach/"
+        },
+        {
+          "title": "Resource Catalogue",
+          "description": "One canonical internal search index.",
+          "href": "/resources/"
+        },
+        {
+          "title": "Contact",
+          "description": "Use the established Made by Matt contact route.",
+          "href": "mailto:contactmadebymatt@gmail.com"
+        },
+        {
+          "title": "Main homepage",
+          "description": "Explore the complete platform.",
+          "href": "/main/"
+        }
       ],
-      "noteTitle": "Public information for independent review",
-      "note": "This page groups current public information for review. It does not imply adoption, endorsement, procurement, a contract or an existing relationship with an academy trust.",
-      "adultFeatures": true
+      "noteTitle": "Capability without unsupported claims",
+      "note": "No trust deployment statistics, procurement claims, licensing packages or official endorsement are implied. Contact uses the established Made by Matt email only."
     },
     "councils": {
       "route": "/for/councils-organisations/",
-      "label": "Local authorities & education services",
-      "navLabel": "Local authorities homepage",
-      "accent": "#8B6818",
-      "soft": "#F2E8C9",
+      "label": "Local authorities & education partners",
+      "navLabel": "Local authority homepage",
+      "accent": "#794390",
+      "soft": "#F1E3D2",
       "icon": "civic",
-      "chooserDescription": "Explore public learning resources, accessibility information and practical education tools.",
-      "title": "Made by Matt for Local authorities & education services",
-      "lead": "Explore public learning resources, accessibility information and practical tools across the Made by Matt platform.",
+      "adultFeatures": true,
+      "chooserDescription": "Explore public educational content, platform capabilities and authoritative sources at organisation level.",
+      "title": "Discovery for councils and education organisations.",
+      "lead": "Move from organisational priorities into genuine Made by Matt content, tools and clearly sourced external education material.",
       "primaryCtas": [
-        {"label": "Explore public resources", "href": "/resources/", "style": "primary"},
-        {"label": "Review the platform", "href": "/main/", "style": "secondary"}
+        {
+          "label": "Map the platform",
+          "href": "#platform-map",
+          "style": "primary"
+        },
+        {
+          "label": "Open the Education Hub",
+          "href": "/education-hub/",
+          "style": "secondary"
+        }
       ],
       "quickLinks": [
-        {"label": "Local authorities homepage", "href": "/for/councils-organisations/"},
-        {"label": "Resources", "href": "/resources/"},
-        {"label": "Lessons", "href": "/Lessons/"},
-        {"label": "Tools", "href": "/tools/"},
-        {"label": "Privacy", "href": "/privacy/"}
+        {
+          "label": "Local authority homepage",
+          "href": "/for/councils-organisations/"
+        },
+        {
+          "label": "Teach Hub",
+          "href": "/teach/"
+        },
+        {
+          "label": "Resources",
+          "href": "/resources/"
+        },
+        {
+          "label": "Education Hub",
+          "href": "/education-hub/"
+        },
+        {
+          "label": "Main homepage",
+          "href": "/main/"
+        }
       ],
       "sections": [
         {
-          "id": "public-resources",
-          "kicker": "Public learning resources",
-          "title": "Open the live material",
-          "lead": "Review public lessons, specialist-context material, practical tools and the current platform information directly.",
+          "type": "tips",
+          "id": "priorities",
+          "kicker": "Start with the need",
+          "title": "Choose a priority",
+          "lead": "Use these as discovery routes, not as claims about outcomes or approval.",
+          "items": [
+            {
+              "title": "Explore public learning provision",
+              "description": "Map games, lessons, pathway resources and creative apps across the public platform."
+            },
+            {
+              "title": "Find professional resources",
+              "description": "Use audience, source and jurisdiction filters in the Education Hub."
+            },
+            {
+              "title": "Review practical tools",
+              "description": "See genuine classroom, evidence and data tools without an invented service offer."
+            },
+            {
+              "title": "Use direct contact",
+              "description": "Contact Made by Matt only through the established email route when a conversation is needed."
+            }
+          ]
+        },
+        {
+          "type": "routes",
+          "id": "platform-map",
+          "kicker": "Platform map",
+          "title": "Move to the right Made by Matt surface",
+          "lead": "The same public platform, organised around common education workflows.",
+          "items": [
+            {
+              "title": "Complete platform",
+              "description": "See the broad Made by Matt platform composition.",
+              "href": "/main/",
+              "action": "Explore the live platform",
+              "searchId": "page-main-home"
+            },
+            {
+              "title": "Professional Education Hub",
+              "description": "Search internal and authoritative external resources.",
+              "href": "/education-hub/",
+              "action": "Open the Education Hub",
+              "searchId": "page-education-hub"
+            },
+            {
+              "title": "Resource Catalogue",
+              "description": "Search all canonical internal destinations.",
+              "href": "/resources/",
+              "action": "Search the catalogue",
+              "searchId": "page-resources"
+            },
+            {
+              "title": "Games and creative apps",
+              "description": "Explore genuine public Made by Matt products.",
+              "href": "/games/",
+              "action": "Browse games",
+              "searchId": "page-games-hub"
+            }
+          ]
+        },
+        {
+          "type": "features",
+          "id": "visual-map",
+          "kicker": "Genuine platform views",
+          "title": "Lessons, pathways and creation",
+          "lead": "Real Made by Matt artwork and product captures—not concept products.",
           "features": [
-            {"id": "lesson-hub", "kind": "Lessons", "title": "Lesson Hub", "description": "Browse live lesson packs, schemes and print sets organised by subject, year and programme.", "href": "/Lessons/", "action": "Open the Lesson Hub", "image": "/images/lesson-hub-card.webp", "alt": "The Lesson Hub with course, dashboard and quiz panels", "width": 450, "height": 360},
-            {"id": "asdan-suite", "kind": "Specialist-context resources", "title": "BUILD, GROW and LAUNCH", "description": "Explore the current pathway resources and their evidence-aware learning sequences.", "href": "/resources/?q=asdan", "action": "Browse ASDAN resources", "image": "/assets/video/poster-asdan.webp", "alt": "Made by Matt ASDAN learning and evidence preview", "width": 1280, "height": 720},
-            {"id": "platform-cover", "kind": "Public platform information", "title": "Made by Matt platform", "description": "Review games, tools, apps, privacy and the complete public collection from the main homepage.", "href": "/main/", "action": "Explore the platform", "image": "/assets/og-cover.png", "alt": "Made by Matt Learn Build Explore platform cover", "width": 1200, "height": 630}
+            {
+              "id": "lesson-hub",
+              "kind": "Teaching material",
+              "title": "Lesson Hub",
+              "description": "Browse lesson packs, schemes and pathway materials.",
+              "href": "/Lessons/",
+              "action": "Open the Lesson Hub",
+              "image": "/images/lesson-hub-card.webp",
+              "alt": "The Lesson Hub with course, dashboard and quiz panels",
+              "width": 450,
+              "height": 360,
+              "searchId": "page-lesson-hub"
+            },
+            {
+              "id": "asdan-suite",
+              "kind": "Pathway material",
+              "title": "BUILD, GROW and LAUNCH",
+              "description": "Search evidence-aware pathway material across the canonical catalogue.",
+              "href": "/resources/?q=asdan",
+              "action": "Browse pathway resources",
+              "image": "/assets/video/poster-asdan.webp",
+              "alt": "Made by Matt ASDAN learning and evidence preview",
+              "width": 1280,
+              "height": 720,
+              "searchId": "resource-asdan-master-hub"
+            },
+            {
+              "id": "studio-suite",
+              "kind": "Tools and apps",
+              "title": "Made by Matt Studio Suite",
+              "description": "Explore classroom, evidence, data and creation tools.",
+              "href": "/tools/",
+              "action": "Open the Tools Hub",
+              "image": "/assets/video/poster-art.webp",
+              "alt": "Made by Matt art and creator-studio preview",
+              "width": 1280,
+              "height": 720,
+              "searchId": "page-tools-hub"
+            }
+          ]
+        },
+        {
+          "type": "routes",
+          "id": "official-guidance",
+          "kicker": "Authoritative external material",
+          "title": "Open the Professional Education Hub",
+          "lead": "Made by Matt material and external publisher resources remain visibly separate.",
+          "items": [
+            {
+              "title": "Relevant official and sector material",
+              "description": "Use the local curated dataset and filters before deliberately leaving Made by Matt.",
+              "href": "/education-hub/?origin=external&audience=councils-organisations",
+              "action": "Search authoritative resources"
+            },
+            {
+              "title": "Made by Matt internal catalogue",
+              "description": "Search only the canonical Made by Matt index for lessons, resources, tools and apps.",
+              "href": "/resources/",
+              "action": "Search internal material"
+            }
           ]
         }
       ],
       "utilities": [
-        {"title": "Practical teacher tools", "description": "See the live register, evidence, organisation and classroom utilities.", "href": "/tools/"},
-        {"title": "Accessibility and themes", "description": "Review keyboard access, responsive design, reading themes and privacy information on the live pages.", "href": "/privacy/"},
-        {"title": "Games and interactive resources", "description": "Explore public browser experiences without an account gate.", "href": "/games/"},
-        {"title": "Contact", "description": "Use the established Made by Matt contact route for questions.", "href": "/main/#contact"}
+        {
+          "title": "Teach Hub",
+          "description": "Teacher-first task and pathway search.",
+          "href": "/teach/"
+        },
+        {
+          "title": "Resource Catalogue",
+          "description": "One canonical internal search index.",
+          "href": "/resources/"
+        },
+        {
+          "title": "Contact",
+          "description": "Use the established Made by Matt contact route.",
+          "href": "mailto:contactmadebymatt@gmail.com"
+        },
+        {
+          "title": "Main homepage",
+          "description": "Explore the complete platform.",
+          "href": "/main/"
+        }
       ],
-      "noteTitle": "Current public information",
-      "note": "This page brings together current public information for review. It does not imply a council contract, commissioned provision, local-authority approval, statutory compliance beyond the published facts or an existing partnership.",
-      "adultFeatures": true
+      "noteTitle": "Capability without unsupported claims",
+      "note": "Made by Matt is not presented as endorsed by a council or education organisation. No proposal process, customer list or commercial arrangement is invented."
     },
     "partners": {
       "route": "/for/partners/",
       "label": "Education organisations & service providers",
       "navLabel": "Organisation homepage",
-      "accent": "#7C5CC9",
-      "soft": "#E7E0F6",
+      "accent": "#BD496E",
+      "soft": "#F4DDE5",
       "icon": "collaborate",
-      "chooserDescription": "See the live education technology, games, apps and tools, and find ways to contact Made by Matt.",
-      "title": "Made by Matt for Education organisations & service providers",
-      "lead": "See the live games, apps, tools and educational resources, and learn how to contact Made by Matt.",
+      "adultFeatures": true,
+      "chooserDescription": "Search the genuine portfolio and understand capabilities without invented partnership schemes.",
+      "title": "Explore the genuine Made by Matt portfolio.",
+      "lead": "Use the canonical catalogue to inspect real games, lessons, apps, tools and education hubs—without fictional clients, programmes or proposal routes.",
       "primaryCtas": [
-        {"label": "Explore the live work", "href": "/main/", "style": "primary"},
-        {"label": "Contact Made by Matt", "href": "/main/#contact", "style": "secondary"}
+        {
+          "label": "Map the platform",
+          "href": "#platform-map",
+          "style": "primary"
+        },
+        {
+          "label": "Open the Education Hub",
+          "href": "/education-hub/",
+          "style": "secondary"
+        }
       ],
       "quickLinks": [
-        {"label": "Organisation homepage", "href": "/for/partners/"},
-        {"label": "Games", "href": "/games/"},
-        {"label": "Apps", "href": "/Matt-s-Apps-/"},
-        {"label": "Tools", "href": "/tools/"},
-        {"label": "Lessons & resources", "href": "/Lessons/"}
+        {
+          "label": "Organisation homepage",
+          "href": "/for/partners/"
+        },
+        {
+          "label": "Teach Hub",
+          "href": "/teach/"
+        },
+        {
+          "label": "Resources",
+          "href": "/resources/"
+        },
+        {
+          "label": "Education Hub",
+          "href": "/education-hub/"
+        },
+        {
+          "label": "Main homepage",
+          "href": "/main/"
+        }
       ],
       "sections": [
         {
-          "id": "live-portfolio",
-          "kicker": "Live portfolio",
-          "title": "Open the work, not a mock-up",
-          "lead": "Move straight into real browser games, practical apps and education resources.",
+          "type": "tips",
+          "id": "priorities",
+          "kicker": "Start with the need",
+          "title": "Choose a priority",
+          "lead": "Use these as discovery routes, not as claims about outcomes or approval.",
+          "items": [
+            {
+              "title": "Explore the portfolio",
+              "description": "Search genuine public products by content type, source, subject and audience."
+            },
+            {
+              "title": "See design breadth",
+              "description": "Move between games, lesson systems, creative apps and professional browser tools."
+            },
+            {
+              "title": "Review provenance",
+              "description": "Product imagery and source manifests are tied to real routes and pinned repository commits."
+            },
+            {
+              "title": "Use the established contact",
+              "description": "Contact uses contactmadebymatt@gmail.com; no invented proposal or licensing action appears."
+            }
+          ]
+        },
+        {
+          "type": "routes",
+          "id": "platform-map",
+          "kicker": "Platform map",
+          "title": "Move to the right Made by Matt surface",
+          "lead": "The same public platform, organised around common education workflows.",
+          "items": [
+            {
+              "title": "Games",
+              "description": "Browse genuine Made by Matt browser games and artwork.",
+              "href": "/games/",
+              "action": "Browse the games",
+              "searchId": "page-games-hub"
+            },
+            {
+              "title": "Lesson Hub",
+              "description": "Explore the live lesson and resource estate.",
+              "href": "/Lessons/",
+              "action": "Open the Lesson Hub",
+              "searchId": "page-lesson-hub"
+            },
+            {
+              "title": "Apps and tools",
+              "description": "Browse creative, classroom and workflow applications.",
+              "href": "/Matt-s-Apps-/",
+              "action": "Browse the apps",
+              "searchId": "page-apps-hub"
+            },
+            {
+              "title": "Resource Catalogue",
+              "description": "Search the complete canonical internal portfolio.",
+              "href": "/resources/",
+              "action": "Search the portfolio",
+              "searchId": "page-resources"
+            }
+          ]
+        },
+        {
+          "type": "features",
+          "id": "visual-map",
+          "kicker": "Genuine platform views",
+          "title": "Lessons, pathways and creation",
+          "lead": "Real Made by Matt artwork and product captures—not concept products.",
           "features": [
-            {"id": "relicforge-fracture", "kind": "Game and interactive experience", "title": "Relicforge: Fracture Engine", "description": "A browser RPG spanning three linked realms in a world breaking apart.", "href": "/fracture/", "action": "Open Fracture Engine", "image": "/fracture/poster.webp", "alt": "Relicforge Fracture Engine showing the Forgeguard in Ironwood Verge", "width": 1200, "height": 630},
-            {"id": "apex-kick", "kind": "Game", "title": "Apex Kick", "description": "A compact browser sports game built around readable aiming, curl and physics.", "href": "/apexkick/", "action": "Open Apex Kick", "image": "/assets/cards/apex-kick.webp", "alt": "Apex Kick football game artwork", "width": 352, "height": 198},
-            {"id": "studio-suite", "kind": "Apps and practical tools", "title": "Made by Matt Studio Suite", "description": "A collection of browser tools for creating, organising and presenting education resources.", "href": "/Matt-s-Apps-/", "action": "Browse the apps", "image": "/assets/video/poster-art.webp", "alt": "Made by Matt art and creator-studio preview", "width": 1280, "height": 720},
-            {"id": "lesson-hub", "kind": "Education resources", "title": "Lesson Hub", "description": "The live collection of lesson packs, schemes and print sets organised by subject, year and programme.", "href": "/Lessons/", "action": "Open the Lesson Hub", "image": "/images/lesson-hub-card.webp", "alt": "The Lesson Hub with course, dashboard and quiz panels", "width": 450, "height": 360}
+            {
+              "id": "lesson-hub",
+              "kind": "Teaching material",
+              "title": "Lesson Hub",
+              "description": "Browse lesson packs, schemes and pathway materials.",
+              "href": "/Lessons/",
+              "action": "Open the Lesson Hub",
+              "image": "/images/lesson-hub-card.webp",
+              "alt": "The Lesson Hub with course, dashboard and quiz panels",
+              "width": 450,
+              "height": 360,
+              "searchId": "page-lesson-hub"
+            },
+            {
+              "id": "asdan-suite",
+              "kind": "Pathway material",
+              "title": "BUILD, GROW and LAUNCH",
+              "description": "Search evidence-aware pathway material across the canonical catalogue.",
+              "href": "/resources/?q=asdan",
+              "action": "Browse pathway resources",
+              "image": "/assets/video/poster-asdan.webp",
+              "alt": "Made by Matt ASDAN learning and evidence preview",
+              "width": 1280,
+              "height": 720,
+              "searchId": "resource-asdan-master-hub"
+            },
+            {
+              "id": "studio-suite",
+              "kind": "Tools and apps",
+              "title": "Made by Matt Studio Suite",
+              "description": "Explore classroom, evidence, data and creation tools.",
+              "href": "/tools/",
+              "action": "Open the Tools Hub",
+              "image": "/assets/video/poster-art.webp",
+              "alt": "Made by Matt art and creator-studio preview",
+              "width": 1280,
+              "height": 720,
+              "searchId": "page-tools-hub"
+            },
+            {
+              "id": "games-arcade",
+              "kind": "Games and arcade",
+              "title": "The Made by Matt Arcade",
+              "description": "Browse the browser games used in lessons, tutor time and enrichment.",
+              "href": "/games/",
+              "action": "Open the Arcade",
+              "image": "/assets/cards/apex-kick.webp",
+              "alt": "Apex Kick football game artwork",
+              "width": 352,
+              "height": 198,
+              "searchId": "page-games-hub"
+            }
+          ]
+        },
+        {
+          "type": "routes",
+          "id": "official-guidance",
+          "kicker": "Authoritative external material",
+          "title": "Open the Professional Education Hub",
+          "lead": "Made by Matt material and external publisher resources remain visibly separate.",
+          "items": [
+            {
+              "title": "Relevant official and sector material",
+              "description": "Use the local curated dataset and filters before deliberately leaving Made by Matt.",
+              "href": "/education-hub/?origin=external&audience=partners",
+              "action": "Search authoritative resources"
+            },
+            {
+              "title": "Made by Matt internal catalogue",
+              "description": "Search only the canonical Made by Matt index for lessons, resources, tools and apps.",
+              "href": "/resources/",
+              "action": "Search internal material"
+            }
           ]
         }
       ],
       "utilities": [
-        {"title": "Games", "description": "Browse the complete live Arcade.", "href": "/games/"},
-        {"title": "Tools", "description": "Review practical teaching, evidence and organisation tools.", "href": "/tools/"},
-        {"title": "Teacher updates", "description": "Join the separate adult double-opt-in mailing list for site updates.", "href": "/mailing-list/"},
-        {"title": "Privacy", "description": "Review data, account and third-party service information.", "href": "/privacy/"}
+        {
+          "title": "Teach Hub",
+          "description": "Teacher-first task and pathway search.",
+          "href": "/teach/"
+        },
+        {
+          "title": "Resource Catalogue",
+          "description": "One canonical internal search index.",
+          "href": "/resources/"
+        },
+        {
+          "title": "Contact",
+          "description": "Use the established Made by Matt contact route.",
+          "href": "mailto:contactmadebymatt@gmail.com"
+        },
+        {
+          "title": "Main homepage",
+          "description": "Explore the complete platform.",
+          "href": "/main/"
+        }
       ],
-      "noteTitle": "A portfolio, not a claimed relationship",
-      "note": "This page is for education-focused organisations and service providers exploring the public work. It does not imply that the visitor is already a partner, customer or client, and it makes no claim of endorsement or an existing relationship.",
-      "adultFeatures": true
+      "noteTitle": "Capability without unsupported claims",
+      "note": "No partnership scheme, customer logo, partner count, licensing programme, proposal button or commercial arrangement is invented. The page presents only genuine public work and the established contact email."
     }
   }
 }

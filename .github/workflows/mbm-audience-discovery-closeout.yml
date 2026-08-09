@@ -1,0 +1,161 @@
+name: MBM audience discovery closeout
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mbm-audience-discovery-closeout-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    name: Static gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generated audience HTML is byte-for-byte reproducible
+        run: python3 tools/render_audience_homepages.py --check
+
+      - name: Generated discovery hubs are byte-for-byte reproducible
+        run: python3 tools/render_discovery_hubs.py --check
+
+      - name: Audience accents meet contrast
+        run: python3 tools/check_audience_accents.py
+
+      - name: Audience architecture, labels and privacy contract hold
+        run: python3 tools/verify_games_audience_faces.py
+
+      - name: Design inheritance holds across audience surfaces
+        run: python3 tools/verify_design_inheritance.py
+
+  gate-controls:
+    name: Gates are proven red, not just green
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # A gate that has never failed is not evidence. Each control perturbs the
+      # tree and asserts the matching verifier notices, then restores it.
+      - name: Renderer notices a hand-edited generated page
+        run: |
+          set -euo pipefail
+          python3 tools/render_audience_homepages.py --check
+          sed -i 's/Start with the teaching task./Start with the teaching task!/' for/teachers/index.html
+          if python3 tools/render_audience_homepages.py --check; then
+            echo "renderer did not notice a hand-edited generated page"; exit 1
+          fi
+          git checkout -- for/teachers/index.html
+
+      - name: Accent gate notices a contrast regression
+        run: |
+          set -euo pipefail
+          python3 tools/check_audience_accents.py
+          # Derive the tone to replace instead of naming it. A control that
+          # hard-codes a colour stops firing the moment the palette moves,
+          # which is how a gate quietly becomes decorative.
+          python3 - <<'PY'
+          import json, pathlib
+          path = pathlib.Path("data/audience-homepages.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          current = data["audiences"]["teachers"]["accent"]
+          path.write_text(
+              path.read_text(encoding="utf-8").replace(
+                  f'"accent": "{current}"', '"accent": "#F2C48A"', 1
+              ),
+              encoding="utf-8",
+          )
+          PY
+          if python3 tools/check_audience_accents.py; then
+            echo "accent gate did not notice a below-AA accent"; exit 1
+          fi
+          git checkout -- data/audience-homepages.json
+
+      - name: Design gate notices a duplicate mark above the heading
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          path = "for/teachers/index.html"
+          markup = open(path).read()
+          i = markup.find("<h1")
+          open(path, "w").write(
+              markup[:i]
+              + '<img src="/assets/brand/micro_mark.svg" alt="" width="48" height="48">'
+              + markup[i:]
+          )
+          PY
+          if python3 tools/verify_design_inheritance.py --report 2>&1 \
+             | grep -q "small duplicate brand mark sits above the page heading"; then
+            echo "control detected"
+          else
+            echo "design gate did not notice a duplicate mark above the heading"; exit 1
+          fi
+          git checkout -- for/teachers/index.html
+
+      - name: Audience verifier proves its own seven controls
+        run: python3 tools/verify_games_audience_faces.py --self-test
+
+      - name: Locked chooser copy cannot silently disappear
+        run: |
+          set -euo pipefail
+          sed -i 's/, and it is not sent to Supabase, Buttondown or analytics\.//' tools/render_audience_homepages.py
+          python3 tools/render_audience_homepages.py
+          # Capture first, then match. Under pipefail the verifier's own exit 1
+          # - which is the thing being proven - would otherwise fail the `if`.
+          out=$(python3 tools/verify_games_audience_faces.py 2>&1 || true)
+          if grep -q "locked chooser copy missing" <<<"$out"; then
+            echo "control detected"
+          else
+            echo "locked-copy guard did not fire"; echo "$out" | head -20; exit 1
+          fi
+          git checkout -- tools/render_audience_homepages.py index.html
+
+      - name: Design gate notices a missing hero mark
+        run: |
+          set -euo pipefail
+          sed -i 's|<img class="mf-hero-mark"[^>]*>||' for/teachers/index.html
+          if python3 tools/verify_design_inheritance.py --report 2>&1 | grep -q "hero mark"; then
+            echo "control detected"
+          else
+            echo "design gate did not notice a missing hero mark"; exit 1
+          fi
+          git checkout -- for/teachers/index.html
+
+  production:
+    name: Production routes
+    # Only meaningful against what is actually published, so it runs on main
+    # and on demand - never as a proxy for a branch that has not shipped.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read back the published routes
+        run: |
+          set -euo pipefail
+          base="https://madebymatt.uk"
+          fail=0
+          for route in / /main/ /for/pupils/ /for/teachers/ /for/parents-carers/ \
+                       /for/schools-semh/ /for/trusts/ /for/councils-organisations/ \
+                       /for/partners/ /education-hub/ /resources/; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --retry 3 --retry-all-errors "$base$route")
+            printf '  %-34s %s\n' "$route" "$code"
+            [ "$code" = "200" ] || fail=1
+          done
+          echo "--- these must NOT be served ---"
+          for route in /__probe_do_not_create__ /.mbm-closeout/patch.xz.b64.00; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --retry 2 --retry-all-errors "$base$route")
+            printf '  %-34s %s\n' "$route" "$code"
+            [ "$code" = "404" ] || fail=1
+          done
+          exit $fail

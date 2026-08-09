@@ -8,14 +8,24 @@ load-bearing architecture/privacy contract and prove the verifier fails.
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Mapping
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
-SENTINEL = "mbm-homepage-audience-routing-2026-08-09"
+
+# The architecture sentinel is whatever the renderer stamps onto the pages it
+# generates. Holding a second copy of it here is what made this verifier go
+# stale: it kept asserting the pre-closeout sentinel long after the renderer
+# had moved on, so all seven audience pages failed for a reason that was never
+# about the pages.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from render_audience_homepages import SENTINEL  # noqa: E402
+
 GAMES_SENTINEL = "mbm-games-audience-faces-2026-08-08"
 FACES = {
     "pupils": "for/pupils/index.html",
@@ -26,15 +36,28 @@ FACES = {
     "councils": "for/councils-organisations/index.html",
     "partners": "for/partners/index.html",
 }
-LABELS = {
-    "pupils": "Pupils &amp; learners",
-    "teachers": "Teachers &amp; education staff",
-    "parents": "Parents &amp; carers",
-    "schools": "Schools &amp; specialist settings",
-    "trusts": "Academy trusts",
-    "councils": "Local authorities &amp; education services",
-    "partners": "Education organisations &amp; service providers",
-}
+# Public labels come from the same data file the renderer reads, so there is
+# one place to change a label and no second copy to drift.
+#
+# HISTORICAL_LABELS are wordings that have appeared publicly at some point and
+# should not come back by accident. A wording is only obsolete if it is not the
+# current label, so relabelling can never make this list fire on itself.
+HISTORICAL_LABELS = [
+    "Teachers &amp; support staff",
+    "Schools &amp; SEMH settings",
+    "Academy trusts &amp; trusts",
+    "Trusts &amp; multi-academy trusts",
+    "Councils &amp; education organisations",
+    "Partners &amp; businesses",
+    "Partners &amp; collaborators",
+]
+
+
+def public_labels(config: Mapping[str, object]) -> dict[str, str]:
+    audiences = config["audiences"]  # type: ignore[index]
+    return {key: html.escape(value["label"], quote=False) for key, value in audiences.items()}  # type: ignore[index]
+
+
 ROUTES = {key: "/" + path.removesuffix("index.html") for key, path in FACES.items()}
 MAJOR_MAIN_ANCHORS = [
     'Learning that feels worth exploring.', 'id="audiences"', 'id="resources"',
@@ -50,6 +73,21 @@ GAMES_COPY = [
     "The whole shelf", "Every game, A to Z — search and filters above work on this grid.",
     "I teach science and art in an alternative provision in the North East, and every file on this shelf started life in front of a real class."
 ]
+# Per-audience floor on genuinely promoted visuals. These are deliberate
+# editorial levels, not one blanket number: the pupil page leads with games, so
+# it carries more, while a page whose job is orientation carries fewer. The
+# design-inheritance verifier imports these rather than keeping its own copy.
+MIN_PROMOTED_VISUALS = {"pupils": 5, "teachers": 4, "parents": 3, "schools": 3, "trusts": 3, "councils": 3, "partners": 4}
+# Locked copy on the discovery root. These state what the audience preference
+# is and is not, and they are the reason a visitor can trust the choice is
+# local. They are asserted verbatim, not by keyword.
+LOCKED_CHOOSER_COPY = [
+    "This preference stays in this browser. It is not an account, profile, "
+    "consent choice or tracking identifier, and it is not sent to Supabase, "
+    "Buttondown or analytics.",
+    "Choosing one does not create an account, change permissions or hide public content.",
+]
+
 EMOJI_RE = re.compile("[\U0001F300-\U0001FAFF\u2600-\u27BF]")
 
 
@@ -137,6 +175,7 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
         errors.append("Games immutable logo markup is not present twice")
 
     config = json.loads(read(root, "data/audience-homepages.json", overrides))
+    labels = public_labels(config)
     if config.get("sentinel") != SENTINEL:
         errors.append("audience content configuration sentinel missing")
     if config.get("preferenceKey") != "mbm_audience_view":
@@ -147,8 +186,8 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
     chooser = read(root, "index.html", overrides)
     if SENTINEL not in chooser:
         errors.append("root chooser missing architecture sentinel")
-    if not re.search(r'<h1\b[^>]*>Choose your own homepage type</h1>', chooser):
-        errors.append("root chooser H1 is not the mandated wording")
+    if not re.search(r'<h([12])\b[^>]*>Choose your own homepage type</h\1>', chooser):
+        errors.append("root chooser is missing the mandated 'Choose your own homepage type' heading")
     chooser_hero = extract_hero(chooser)
     if '/assets/brand/hero_mark.svg' not in chooser_hero:
         errors.append("root chooser hero does not use the official Made by Matt mark")
@@ -160,18 +199,34 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
         errors.append("root chooser OpenGraph URL is not https://madebymatt.uk/")
     if chooser.count('data-mbm-face-choice=') != 7:
         errors.append("root chooser does not expose exactly seven audience choices")
-    if not re.search(r'<a\b[^>]*\bclass=["\'][^"\']*\bmf-main-card\b[^"\']*["\'][^>]*\bhref=["\']/main/["\']', chooser, re.I) or "Main Made by Matt homepage" not in chooser:
+    # The main homepage has to stay a distinct, prominent route from the root,
+    # so a visitor is never funnelled into an audience view. The discovery root
+    # carries it as the primary hero action; the earlier chooser carried it as
+    # a dedicated card. Either satisfies the requirement - what matters is that
+    # it is a first-class call to action, not a nav afterthought.
+    main_card = re.search(r'<a\b[^>]*\bclass=["\'][^"\']*\bmf-main-card\b[^"\']*["\'][^>]*\bhref=["\']/main/["\']', chooser, re.I)
+    main_cta = re.search(r'<a\b[^>]*\bclass=["\'][^"\']*\bmf-btn primary\b[^"\']*["\'][^>]*\bhref=["\']/main/["\']', chooser, re.I)
+    if not (main_card or main_cta):
         errors.append("root chooser does not expose the separate Main Made by Matt homepage")
     if 'id="group-people"' not in chooser or 'id="group-organisations"' not in chooser:
         errors.append("root chooser does not clearly group people and organisations")
     for key, route in ROUTES.items():
         if chooser.count(f'href="{route}"') != 1:
             errors.append(f"root chooser must link exactly once to {route}")
-        if LABELS[key] not in chooser:
-            errors.append(f"root chooser missing final public label: {LABELS[key]}")
+        if labels[key] not in chooser:
+            errors.append(f"root chooser missing final public label: {labels[key]}")
     for phrase in ["localStorage", "Supabase", "Buttondown", "analytics", "does not create an account", "not an account"]:
         if phrase not in chooser and phrase not in read(root, "assets/mbm-audience.js", overrides):
             errors.append(f"chooser local-preference explanation missing: {phrase}")
+
+    # Locked copy. The closeout dropped both of these once already, and the
+    # loop above could not catch it: it passes if the word appears anywhere in
+    # the chooser OR in the audience script, so "Supabase" surviving in a code
+    # comment would have masked the sentence disappearing from the page. These
+    # assert the sentences themselves, on the page, verbatim.
+    for sentence in LOCKED_CHOOSER_COPY:
+        if sentence not in chooser:
+            errors.append(f"locked chooser copy missing or altered: {sentence[:60]}…")
 
     main = read(root, "main/index.html", overrides)
     if canonical_of(main) != "https://madebymatt.uk/main/":
@@ -192,8 +247,8 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
     for key, route in ROUTES.items():
         if not contains_href(main, route):
             errors.append(f"/main/ audience section missing {route}")
-        if LABELS[key] not in main:
-            errors.append(f"/main/ audience section missing final label: {LABELS[key]}")
+        if labels[key] not in main:
+            errors.append(f"/main/ audience section missing final label: {labels[key]}")
 
     start = read(root, "start/index.html", overrides)
     if canonical_of(start) != "https://madebymatt.uk/":
@@ -205,7 +260,6 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
     if not contains_href(start, "/") or not contains_href(start, "/main/"):
         errors.append("legacy /start/ lacks usable fallback links")
 
-    min_visual = {"pupils": 5, "teachers": 4, "parents": 3, "schools": 3, "trusts": 3, "councils": 3, "partners": 4}
     for key, rel in FACES.items():
         page = read(root, rel, overrides)
         expected_canonical = "https://madebymatt.uk" + ROUTES[key]
@@ -229,11 +283,11 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
             errors.append(f"{key}: Main homepage link missing")
         if not contains_href(page, "/"):
             errors.append(f"{key}: Choose homepage link missing")
-        if LABELS[key] not in page:
+        if labels[key] not in page:
             errors.append(f"{key}: final public label missing")
         images = promoted_images(page)
-        if len(images) < min_visual[key]:
-            errors.append(f"{key}: real visual floor not met ({len(images)} < {min_visual[key]})")
+        if len(images) < MIN_PROMOTED_VISUALS[key]:
+            errors.append(f"{key}: real visual floor not met ({len(images)} < {MIN_PROMOTED_VISUALS[key]})")
         for attrs, src, alt in images:
             if not alt.strip():
                 errors.append(f"{key}: informative promoted image has empty alt text: {src}")
@@ -314,7 +368,8 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
         errors.append("PWA shortcuts do not distinguish Choose and Main homepage")
 
     joined = "\n".join(read(root, rel, overrides) for rel in ["index.html", *FACES.values()])
-    for old in ["Teachers &amp; support staff", "Schools &amp; SEMH settings", "Academy trusts &amp; trusts", "Councils &amp; education organisations", "Partners &amp; businesses"]:
+    current = set(labels.values())
+    for old in [item for item in HISTORICAL_LABELS if item not in current]:
         if old in joined:
             errors.append(f"obsolete public audience label remains: {old}")
     lowered = joined.lower()
@@ -363,15 +418,15 @@ def self_test() -> None:
     pupils = read(ROOT, FACES["pupils"])
     teachers = read(ROOT, FACES["teachers"])
     js = read(ROOT, "assets/mbm-audience.js")
-    expect_failure("removed /main/ chooser link", {"index.html": mutate(chooser, '<a class="mf-main-card" href="/main/">', '<a class="mf-main-card" href="/main-missing/">', "main link")}, "does not expose the separate Main")
-    expect_failure("changed root H1", {"index.html": mutate(chooser, '<h1 id="page-title">Choose your own homepage type</h1>', '<h1 id="page-title">Choose a homepage</h1>', "root H1")}, "H1 is not the mandated wording")
+    expect_failure("removed /main/ chooser link", {"index.html": mutate(chooser, '<a class="mf-btn primary" href="/main/">', '<a class="mf-btn primary" href="/main-missing/">', "main link")}, "does not expose the separate Main")
+    expect_failure("changed chooser heading", {"index.html": mutate(chooser, '>Choose your own homepage type</h2>', '>Choose a homepage</h2>', "chooser heading")}, "missing the mandated 'Choose your own homepage type' heading")
     expect_failure("wrong audience canonical", {FACES["teachers"]: mutate(teachers, '<link rel="canonical" href="https://madebymatt.uk/for/teachers/">', '<link rel="canonical" href="https://madebymatt.uk/for/teacher-broken/">', "canonical")}, "canonical is wrong")
     expect_failure("broken promoted image", {FACES["teachers"]: mutate(teachers, "/images/lesson-hub-card.webp", "/images/not-real.webp", "image")}, "promoted image path is broken")
     pupil_nav = mutate(pupils, '<div class="mbm-nav-panel">', '<div class="mbm-nav-panel"><a href="/account/">Account</a>', "pupil adult link")
     expect_failure("adult link inserted into pupil navigation", {FACES["pupils"]: pupil_nav}, "pupil primary navigation exposes adult")
-    network_js = mutate(js, "paint();\n})();", "fetch('/preference-leak');\npaint();\n})();", "network request")
+    network_js = mutate(js, "function init(){", "function init(){fetch('/preference-leak');", "network request")
     expect_failure("local preference network request", {"assets/mbm-audience.js": network_js}, "attempts a network request")
-    old_label = mutate(chooser, "Academy trusts", "Academy trusts &amp; trusts", "old label")
+    old_label = mutate(chooser, "Academy trusts &amp; education groups", "Academy trusts &amp; trusts", "old label")
     expect_failure("reverted obsolete audience label", {"index.html": old_label}, "obsolete public audience label remains")
     restored = check_tree(ROOT)
     if restored:

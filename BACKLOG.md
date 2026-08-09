@@ -5,6 +5,29 @@ re-deriving anything. Last re-ordered 2 August 2026.
 
 ---
 
+## 0. `/resources/` — the closeout rewrite is unrecoverable, page never rebuilt
+
+The PR #110 closeout replaced `resources/index.html` with a 12-line page. That
+replacement fell inside the corrupted tail of the `.mbm-closeout` blob and is
+gone. Checked against all 108 remote branches: no 12-line version exists
+anywhere, so it cannot be ported the way `/teach/` was.
+
+`/resources/` is therefore still the pre-closeout 244-line catalogue. That is a
+deliberate hold, not an oversight — approximating a page nobody can diff against
+the original is how you end up with a rewrite that only looks finished.
+
+No verifier assumes the rewrite landed. The only check touching the page is the
+generic chrome assertion in `verify_games_audience_faces.py` (header brand leads
+to `/main/`, general navigation offers Choose homepage), which the current page
+satisfies on its own terms. Nothing is going green on work that was never done.
+
+To start: decide whether the catalogue should be rebuilt against
+`data/mbm-search-index.json` the way `/teach/` and `/education-hub/` are, in
+which case it belongs in `tools/render_discovery_hubs.py` alongside them. The
+current page predates that renderer and is hand-maintained.
+
+---
+
 ## 1. ~~`/uas/app.html` — vendor the four cdnjs scripts~~ — **DONE 2 August 2026**
 
 Closed. The four libraries and the OCR language pack are vendored under
