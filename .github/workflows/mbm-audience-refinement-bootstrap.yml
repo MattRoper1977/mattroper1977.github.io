@@ -53,7 +53,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tar --exclude=.git --exclude='./mbm-source-snapshot.tgz' -czf mbm-source-snapshot.tgz .
+          tar --exclude=.git -czf /tmp/mbm-source-snapshot.tgz .
+          mv /tmp/mbm-source-snapshot.tgz ./mbm-source-snapshot.tgz
           sha256sum mbm-source-snapshot.tgz | tee artifacts/bootstrap/source-sha256.txt
 
       - uses: actions/upload-artifact@v4
