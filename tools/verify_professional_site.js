@@ -244,7 +244,13 @@ function verify(base, overrides = null) {
   }
 
   assert(/<section\b[^>]*\bid=["']audiences["']/i.test(home), 'homepage audience pathway section missing', failures);
-  for (const label of ['Pupils &amp; learners', 'Teachers &amp; education staff', 'Parents &amp; carers', 'Schools &amp; specialist settings', 'Academy trusts', 'Local authorities &amp; education services', 'Education organisations &amp; service providers']) assert(home.includes(label), `homepage audience label missing: ${label}`, failures);
+  // Labels come from the same data file the renderer reads. This list used to
+  // be a second copy, which meant a relabel showed up here as a spurious
+  // failure about a label nothing serves any more.
+  const audienceData = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'audience-homepages.json'), 'utf8'));
+  const audienceLabels = Object.values(audienceData.audiences)
+    .map(a => a.label.replace(/&/g, '&amp;'));
+  for (const label of audienceLabels) assert(home.includes(label), `homepage audience label missing: ${label}`, failures);
   for (const href of ['/tools/', '/Lessons/', '/resources/', '/games/', '/stats/', '/privacy/', '/main/#about', '/main/#contact', '/main/#collections', '/', '/for/pupils/', '/for/teachers/', '/for/parents-carers/', '/for/schools-semh/', '/for/trusts/', '/for/councils-organisations/', '/for/partners/']) {
     assert(home.includes(`href="${href}"`) || home.includes(`href='${href}'`), `homepage audience route missing: ${href}`, failures);
     assert(localRouteExists(href), `homepage audience route has no proven destination: ${href}`, failures);
