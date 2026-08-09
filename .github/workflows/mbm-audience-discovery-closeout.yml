@@ -177,12 +177,26 @@ jobs:
           PY
           python3 -m http.server 4174 --bind 127.0.0.1 >/tmp/ctl.log 2>&1 &
           for _ in $(seq 1 20); do curl -sf -o /dev/null http://127.0.0.1:4174/ && break || sleep 1; done
-          out=$(MBM_BASE_URL=http://127.0.0.1:4174/ python3 tools/verify_audience_discovery_browser.py 2>&1 || true)
+          # --artifacts keeps this deliberate failure out of the committed
+          # artifact. It landed there once and had to be reverted by hand; a
+          # hazard the harness can remove is better than one it has to police.
+          out=$(MBM_BASE_URL=http://127.0.0.1:4174/ python3 tools/verify_audience_discovery_browser.py \
+                  --artifacts "${RUNNER_TEMP:-/tmp}/boot-control" 2>&1 || true)
           git checkout -- assets/mbm-account.js
           if grep -q "contacts no third party" <<<"$out"; then
             echo "control detected: off-origin boot fetch caught"
+            # /for/pupils/ is expected NOT to fire here: mbm-account.js is never
+            # injected on a page carrying data-mbm-adult-features="off", so the
+            # control has nothing to break there. That is the pupil guarantee
+            # working, and it reads as a pass.
+            echo "note: /for/pupils/ does not fire - the account script is never injected there"
           else
             echo "estate-wide boot assertion did not fire"; echo "$out" | tail -20; exit 1
+          fi
+          # The point of --artifacts is that this can no longer happen; assert
+          # it, so a future edit that drops the flag is caught here.
+          if ! git diff --quiet audit-output/; then
+            echo "a control run modified the committed artifact"; git diff --stat audit-output/; exit 1
           fi
 
       - name: Browser proof against the checked-out estate
@@ -199,8 +213,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: browser-proof
-          path: artifacts/browser
-          if-no-files-found: ignore
+          # The tool writes here; the old path (artifacts/browser) was written
+          # by nothing, and `ignore` meant the step reported success while
+          # uploading an empty set. `warn` keeps that visible without turning
+          # an earlier failure into two, since this step runs on always().
+          path: audit-output/audience-discovery
+          if-no-files-found: warn
 
       - name: Locked chooser copy cannot silently disappear
         run: |

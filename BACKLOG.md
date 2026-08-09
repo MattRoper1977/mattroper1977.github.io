@@ -78,11 +78,47 @@ since.
   Supabase and Buttondown rows, the deletion contact). `members/index.html`
   kept its sentinel; `privacy/index.html` lost it.
 
-### The cost that is not in the finding count
+### The cost that is not in the finding count — now fixed
 
-`main()` exits on the first failure, before `--self-test`. So the **four
-positive controls have not run on `main` since #110 merged** — the step that
-proves this gate can fail has itself been failing before it reaches them.
+`main()` exited on the first failure, before `--self-test`. So the **four
+positive controls had not run on `main` since #110 merged** — the step that
+proves this gate can fail had itself been failing before it reached them.
+
+`--self-test` now runs every control and aggregates. Doing that exposed a
+second defect the old shape hid: the control *unrelated authored-copy mutation
+rejected* looks for the message "authored body wording changed", **which is
+already finding 7 of the baseline**. Compared against zero it would have
+reported PASS without its mutation doing anything. Controls are now evaluated
+as a delta against the unmutated run, and a signal already present in the
+baseline reports INCONCLUSIVE. Recorded as species 6 and 7 in
+`docs/VERIFIER_FAILURE_MODES.md`.
+
+Swept for the same shape: 66 tools, 19 with a control suite, **3 with the
+defect** — this file plus `verify_games_audience_faces.py` and
+`verify_education_hub.py`, both of which returned before dispatching their
+controls. All three now aggregate; all three proved on a red subject.
+
+### Sentinel sweep (0a-B context)
+
+59 HTML files scanned, 16 carry a sentinel, and **none carries more than one** —
+so the additive model does not exist anywhere in the estate yet. Pages carrying
+prose authored by a pass whose sentinel is absent:
+
+- **`privacy/index.html`** — 20 accounts/mailing prose markers, sentinel
+  displaced by the closeout pass. The known finding.
+- **`main/index.html`** — 6 accounts/mailing and 4 device-local-counter prose
+  markers, and **no sentinel at all**. Two authorising passes, nothing recorded.
+  It escapes the check because the verifier governs `main/` by region
+  comparison rather than by sentinel, but under an additive rule it is the
+  clearest multi-pass page in the estate.
+
+Eleven further apparent hits are false positives and are named here so nobody
+re-derives them: generic English ("auto-saves on this device" in two game
+pages), or one pass writing *about* another's feature — the locked chooser copy
+names Supabase and Buttondown in order to promise it does *not* use them, and
+that sentence is authored by the audience pass, which is the sentinel it
+carries. **Writing about a feature is not being authorised by that pass**, and
+any additive rule needs to say so or it will flag half the estate.
 
 ### Measured, not applied
 
@@ -91,7 +127,8 @@ closeout one, the verifier passes **and all four controls fire**, including
 *unrelated authored-copy mutation rejected* — so the corrected baseline path
 still catches drift and this is not a vacuous green.
 
-Neither change was made. Both are one-liners awaiting a decision:
+Neither change was made — they are the two decisions in §9 of the finishing
+instruction. Both are one-liners awaiting a ruling:
 
 1. **The remap.** Drop it, or make it conditional on `base` not already
    containing `main/index.html`. Dropping it is simpler and correct for every

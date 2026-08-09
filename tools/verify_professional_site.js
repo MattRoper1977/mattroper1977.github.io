@@ -319,59 +319,142 @@ function requireMutation(home, from, to, label) {
   if (mutated === home) throw new Error(`${label} fixture could not be created`);
   return mutated;
 }
-function main() {
-  const args = parseArgs(process.argv.slice(2));
-  const first = verify(args.base);
-  if (first.length) {
-    console.error(`[FAIL] professional site verifier (${first.length} issue${first.length === 1 ? '' : 's'})`);
-    printFailures(first); process.exit(1);
-  }
-  console.log(`[PASS] current implementation: chooser + ${KEY_PAGES.length} key pages, shared platform, /main/ preservation and route contracts`);
-  if (args.selfTest) {
-    const home = relRead('main/index.html');
-
-    const authorisedMutation = requireMutation(
+/*
+ * The controls, declared rather than inlined, so that every one of them runs.
+ *
+ * They used to sit after an early `process.exit(1)`, which meant a red
+ * verifier disabled the suite whose whole job is to prove the verifier can go
+ * red - at exactly the moment that reassurance is worth having. They had not
+ * run since #110 merged. See BACKLOG.md item 0a.
+ *
+ * Aggregating exposes a second problem the old shape hid. A control is
+ * evaluated as a *delta* against the unmutated run, because with a red
+ * baseline "the mutated run reports failure X" proves nothing if the
+ * unmutated run already reported X. Where that is so, the control cannot tell
+ * its mutation apart from the pre-existing failure, and it says so
+ * (INCONCLUSIVE) rather than claiming a pass it has not earned.
+ */
+const SELF_TEST_CONTROLS = Object.freeze([
+  {
+    name: 'authorised account/mailing wording mutation accepted',
+    mutate: (home) => requireMutation(
       home,
       'A weekly Made by Matt update covering what changed on the site and a clearly labelled look at what is coming next.',
       'A regular Made by Matt update covering what changed on the site and a clearly labelled look at what is coming next.',
       'authorised-region mutation'
-    );
-    const authorised = verify(args.base, { 'main/index.html': authorisedMutation });
-    if (authorised.length) {
-      console.error('[FAIL] authorised account/mailing wording mutation was rejected');
-      printFailures(authorised); process.exit(1);
-    }
-    console.log('[PASS] positive control: authorised account/mailing wording mutation accepted');
-
-    const unrelatedMutation = requireMutation(home, 'Browse the Arcade', 'Browse every Arcade', 'unrelated authored-copy mutation');
-    const unrelated = verify(args.base, { 'main/index.html': unrelatedMutation });
-    if (!unrelated.some((failure) => failure.includes('authored body wording changed'))) {
-      console.error('[FAIL] unrelated authored homepage wording mutation was not rejected by preservation');
-      printFailures(unrelated); process.exit(1);
-    }
-    console.log(`[PASS] positive control: unrelated authored-copy mutation rejected (${unrelated.length} detected issue${unrelated.length === 1 ? '' : 's'})`);
-
-    const structuralMutation = requireMutation(
+    ),
+    expect: 'no-new-findings'
+  },
+  {
+    name: 'unrelated authored-copy mutation rejected',
+    mutate: (home) => requireMutation(home, 'Browse the Arcade', 'Browse every Arcade', 'unrelated authored-copy mutation'),
+    expect: 'new-finding-matching',
+    needle: 'authored body wording changed'
+  },
+  {
+    name: 'structural account/mailing mutation rejected',
+    mutate: (home) => requireMutation(
       home,
       '<a class="dx-tbtn" href="/mailing-list/">Join teacher updates</a>',
       '<a class="dx-tbtn" href="/mailing-list-broken/">Join teacher updates</a>',
       'account/mailing structure mutation'
-    );
-    const structural = verify(args.base, { 'main/index.html': structuralMutation });
-    if (!structural.some((failure) => failure.includes('Teacher updates must link to /mailing-list/'))) {
-      console.error('[FAIL] broken account/mailing structure was not rejected');
-      printFailures(structural); process.exit(1);
+    ),
+    expect: 'new-finding-matching',
+    needle: 'Teacher updates must link to /mailing-list/'
+  },
+  {
+    name: 'deliberately broken audience fixture rejected',
+    mutate: (home) => requireMutation(home, 'id="audiences"', 'id="audiences-broken"', 'audience structure mutation'),
+    expect: 'any-new-finding'
+  }
+]);
+
+function runControl(control, base, home, baseline) {
+  let mutated;
+  try {
+    mutated = control.mutate(home);
+  } catch (error) {
+    // A fixture that cannot be built means the control never reached the gate
+    // it tests. That is a reported state, not a silent absence.
+    return { state: 'ERROR', detail: error.message };
+  }
+
+  const added = verify(base, { 'main/index.html': mutated }).filter((failure) => !baseline.has(failure));
+
+  if (control.expect === 'no-new-findings') {
+    return added.length === 0
+      ? { state: 'PASS', detail: 'the authorised mutation introduced no new finding' }
+      : { state: 'FAIL', detail: `the authorised mutation was rejected (${added.length} new finding(s))`, added };
+  }
+
+  if (control.expect === 'any-new-finding') {
+    return added.length > 0
+      ? { state: 'PASS', detail: `the broken fixture produced ${added.length} new finding(s)` }
+      : { state: 'FAIL', detail: 'the broken fixture produced no new finding' };
+  }
+
+  if ([...baseline].some((failure) => failure.includes(control.needle))) {
+    return {
+      state: 'INCONCLUSIVE',
+      detail: `the baseline already fails on "${control.needle}", so a mutated run cannot be told apart from that pre-existing failure`
+    };
+  }
+  return added.some((failure) => failure.includes(control.needle))
+    ? { state: 'PASS', detail: `the mutation produced the expected new finding ("${control.needle}")` }
+    : { state: 'FAIL', detail: `no new finding matched "${control.needle}"`, added };
+}
+
+function restoredControl(base, baseline) {
+  const restored = verify(base);
+  const added = restored.filter((failure) => !baseline.has(failure));
+  const removed = [...baseline].filter((failure) => !restored.includes(failure));
+  if (added.length || removed.length) {
+    return { state: 'FAIL', detail: `the run after the controls differs from the baseline (+${added.length}/-${removed.length})`, added };
+  }
+  return {
+    state: 'PASS',
+    detail: baseline.size ? `identical to the ${baseline.size}-finding baseline` : 'clean, as it was before the controls ran'
+  };
+}
+
+function main() {
+  const args = parseArgs(process.argv.slice(2));
+  const first = verify(args.base);
+  const baseline = new Set(first);
+
+  if (first.length) {
+    console.error(`[FAIL] professional site verifier (${first.length} issue${first.length === 1 ? '' : 's'})`);
+    printFailures(first);
+  } else {
+    console.log(`[PASS] current implementation: chooser + ${KEY_PAGES.length} key pages, shared platform, /main/ preservation and route contracts`);
+  }
+
+  let controlProblems = 0;
+  if (args.selfTest) {
+    const home = relRead('main/index.html');
+    const results = SELF_TEST_CONTROLS.map((control) => ({ name: control.name, ...runControl(control, args.base, home, baseline) }));
+    results.push({ name: 'implementation restored after the controls', ...restoredControl(args.base, baseline) });
+
+    const tally = results.reduce((acc, result) => Object.assign(acc, { [result.state]: (acc[result.state] || 0) + 1 }), {});
+    console.log(`\n--self-test: ${results.length} controls, all run and aggregated (no fail-fast)`);
+    for (const result of results) {
+      const line = `  [${result.state}] ${result.name} - ${result.detail}`;
+      if (result.state === 'PASS') console.log(line); else console.error(line);
+      if (result.added && result.added.length) printFailures(result.added);
     }
-    console.log(`[PASS] positive control: structural account/mailing mutation rejected (${structural.length} detected issue${structural.length === 1 ? '' : 's'})`);
+    console.log(`  ${tally.PASS || 0} passed · ${tally.FAIL || 0} failed · ${tally.INCONCLUSIVE || 0} inconclusive · ${tally.ERROR || 0} errored`);
 
-    const audienceMutation = requireMutation(home, 'id="audiences"', 'id="audiences-broken"', 'audience structure mutation');
-    const audience = verify(args.base, { 'main/index.html': audienceMutation });
-    if (!audience.length) { console.error('[FAIL] broken audience fixture was not rejected'); process.exit(1); }
-    console.log(`[PASS] positive control: deliberately broken audience fixture rejected (${audience.length} detected issue${audience.length === 1 ? '' : 's'})`);
+    controlProblems = (tally.FAIL || 0) + (tally.ERROR || 0);
+    // An inconclusive control is a consequence of the red baseline, and the
+    // run already fails because of it; counting it again would report one
+    // problem twice. With a clean baseline there is no such excuse, so it
+    // counts.
+    if (!first.length) controlProblems += (tally.INCONCLUSIVE || 0);
+  }
 
-    const restored = verify(args.base);
-    if (restored.length) { console.error('[FAIL] restored implementation did not pass'); printFailures(restored); process.exit(1); }
-    console.log('[PASS] restored implementation after positive controls');
+  if (first.length || controlProblems) {
+    console.error(`\n[RED] ${first.length} baseline finding(s), ${controlProblems} control problem(s)`);
+    process.exit(1);
   }
 }
 try { main(); } catch (error) { console.error(`[FAIL] ${error.stack || error.message}`); process.exit(1); }

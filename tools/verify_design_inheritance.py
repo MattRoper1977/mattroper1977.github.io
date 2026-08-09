@@ -168,9 +168,13 @@ def main() -> None:
     # from a green run. See BACKLOG.md item 0.
     findings.note("/resources/ is still the pre-closeout catalogue; the closeout rewrite is unrecoverable (BACKLOG.md item 0)")
     findings.note(
-        "verify_professional_site.js still has 8 open findings; cause now identified - 7 are a stale "
+        "verify_professional_site.js still has 8 open findings; cause identified - 7 are a stale "
         "baseline path remap reading the chooser instead of the homepage, 1 is a privacy sentinel a "
         "recovery commit overwrote. Two one-line fixes, neither authorised yet (BACKLOG.md item 0a)"
+    )
+    findings.note(
+        "main/index.html carries accounts/mailing and device-local-counter prose but no sentinel "
+        "at all; it is governed by region comparison instead. Open under BACKLOG.md item 0a-B"
     )
 
     surfaces: list[tuple[str, Path, str]] = [
