@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import html
 import json
 import sys
 import time
@@ -20,18 +21,50 @@ from urllib.parse import urlencode, urljoin
 from urllib.request import Request, urlopen
 
 DEFAULT_BASE = "https://madebymatt.uk/"
+# Anchored to this file, not to the working directory. The ASSETS comparison
+# below reads relative paths and so depends on being run from the repo root;
+# anything added here should not inherit that.
+ROOT = Path(__file__).resolve().parents[1]
+
+# Structural markers, which are literals on purpose and each say why.
+#
+#   mbm-platform.css / mbm-platform.js  filenames, owned by the shared platform
+#                                       and not derivable from any data file
+#   mbm-site-header                     the class the shared header carries;
+#                                       structure, not content
+SHARED_SHELL = ("mbm-platform.css", "mbm-platform.js", "mbm-site-header")
+
+
+def chooser_markers() -> tuple[str, ...]:
+    """What `/` must serve, derived from the file that owns it.
+
+    This list used to be typed out, and it went stale the moment #110 moved the
+    professional homepage from `/` to `/main/` and D1 relabelled the audiences.
+    It then failed on main for every run from #110 onward - the estate's only
+    live gate, dark for the whole recovery sequence, because nobody re-reads a
+    list that looks settled.
+
+    Re-typing a corrected list would only reset the clock on the same trap, so
+    the labels come from the same data file the renderer reads. Change a label
+    in one place and this follows.
+    """
+    data = json.loads((ROOT / "data" / "audience-homepages.json").read_text(encoding="utf-8"))
+    labels = tuple(html.escape(a["label"], quote=False) for a in data["audiences"].values())
+    return SHARED_SHELL + (
+        # The two group containers the chooser is built around: structure the
+        # renderer emits, and the thing a visitor needs in order to choose.
+        'id="audience-people"',
+        'id="audience-organisations"',
+    ) + labels
+
 
 PAGE_MARKERS: dict[str, tuple[str, ...]] = {
-    "/": (
-        "mbm-platform.css",
-        "mbm-platform.js",
-        "mbm-site-header",
-        'id="audiences"',
-        "Teachers",
-        "Pupils &amp; learners",
-        "Schools &amp; organisations",
-        "Partners",
-    ),
+    "/": chooser_markers(),
+    # /main/ is the professional homepage since #110. It was not checked live at
+    # all - the old entry asserted its markers against `/`, which is now the
+    # chooser, so the real homepage went unverified while a passing-looking
+    # check pointed at the wrong page.
+    "/main/": SHARED_SHELL + ('id="audiences"',),
     "/games/": ("mbm-platform.css", "mbm-platform.js", "mbm-site-header", 'aria-current="page">Games'),
     "/tools/": ("mbm-platform.css", "mbm-platform.js", "mbm-site-header", 'aria-current="page">Tools'),
     "/resources/": ("mbm-platform.css", "mbm-platform.js", "mbm-site-header", 'aria-current="page">Resources'),

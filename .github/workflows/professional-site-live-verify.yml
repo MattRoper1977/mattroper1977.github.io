@@ -30,6 +30,25 @@ jobs:
       - name: Validate verifier syntax
         run: python -m py_compile tools/verify_professional_site_live.py
 
+      # READINESS COMES FROM ONE PLACE NOW.
+      #
+      # This workflow used to establish readiness with its own signal - page
+      # markers plus the sha256 of mbm-platform.css/js - which moves only when
+      # those two assets move. On 9 August it retried 36 times against a
+      # deployment it could not have detected. Same mistake as the route matrix,
+      # and as a stamp-based provenance check: a readiness signal chosen from
+      # what was convenient rather than from what changes.
+      #
+      # It consumes the provenance tool rather than keeping a third signal. That
+      # tool picks its witness per deployment from the files that actually
+      # changed, and reports INCONCLUSIVE where none did. By the time the step
+      # below runs, the origin is known to be serving this commit, and its own
+      # retry is a safety net rather than the thing establishing readiness.
+      - name: The origin is serving this commit, before anything is asserted about it
+        run: |
+          set -euo pipefail
+          python3 tools/verify_deployment_provenance.py --expected-sha "${{ github.sha }}"
+
       - name: Prove the served platform and cross-repository feeds
         run: |
           set -euo pipefail

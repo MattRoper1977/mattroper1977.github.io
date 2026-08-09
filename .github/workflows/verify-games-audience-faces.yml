@@ -261,7 +261,7 @@ jobs:
           python3 -m pip install --disable-pip-version-check playwright==1.54.0
           python3 -m playwright install --with-deps chromium
 
-      - name: Run permanent browser matrix and journeys
+      - name: Browser proof at 390px and 1440px, 320px reflow, no-JS and no third party at load
         shell: bash
         run: |
           set -euo pipefail
@@ -269,7 +269,10 @@ jobs:
           server=$!
           trap 'kill $server || true' EXIT
           for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
-          MBM_BASE_URL=http://127.0.0.1:4173/ MBM_FULL_ESTATE=1 python3 tools/verify_audience_discovery_browser.py
+          # MBM_FULL_ESTATE was dropped here: it is read only by
+          # verify_games_audience_faces.mjs, which this step does not run, so
+          # setting it advertised behaviour nothing implements.
+          MBM_BASE_URL=http://127.0.0.1:4173/ python3 tools/verify_audience_discovery_browser.py
 
       - name: Print browser summary
         if: always()
@@ -333,12 +336,15 @@ jobs:
           echo "deployed_sha=${GITHUB_SHA}" | tee production-deployment.txt
           echo "verified_at=$(date -u +%FT%TZ)" | tee -a production-deployment.txt
 
-      - name: Run the permanent verifier against production
+      # MBM_FULL_ESTATE, MBM_LIVE and MBM_CACHE_BUST were all set here and read
+      # by nothing: this tool reads MBM_BASE_URL and MBM_CHROMIUM only. The last
+      # is the worst of the three - MBM_CACHE_BUST=${GITHUB_SHA} looks like a
+      # provenance mechanism tying the run to a commit, and did nothing at all.
+      # They were left behind when this step was switched from the .mjs, which
+      # does read MBM_FULL_ESTATE, to the Python harness, which does not.
+      - name: Browser proof against the production origin
         run: |
           MBM_BASE_URL=https://madebymatt.uk/ \
-          MBM_FULL_ESTATE=1 \
-          MBM_LIVE=1 \
-          MBM_CACHE_BUST=${GITHUB_SHA} \
           python3 tools/verify_audience_discovery_browser.py
 
       - name: Upload production browser and SHA proof

@@ -1,0 +1,89 @@
+name: Deployment provenance
+
+# LAYER 1 of the provenance check: it must be unable to run early.
+#
+# The production route matrix reported on a deployment 31 seconds before that
+# deployment existed, because nothing gated it. Nothing gated it because it ran
+# on `push`, and a push happens before a build. This runs on the deployment
+# event itself and takes the SHA from the event payload rather than from
+# github.sha, so there is no ordering in which it can describe a deployment
+# that has not happened.
+#
+# Layers 2 and 3 live in tools/verify_deployment_provenance.py.
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: 'Commit the origin must be serving (defaults to the latest github-pages deployment)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  deployments: read
+  pages: read
+
+concurrency:
+  group: mbm-deployment-provenance
+  cancel-in-progress: false
+
+jobs:
+  provenance:
+    name: The origin is serving the commit we think it is
+    # A deployment_status fires for every state (queued, in_progress, failure).
+    # Only success means there is something to verify.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' &&
+       github.event.deployment.environment == 'github-pages')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Resolve the SHA under test from the event, not from the branch
+        id: target
+        run: |
+          set -euo pipefail
+          sha="${{ github.event.deployment.sha }}"
+          if [ -z "$sha" ]; then sha="${{ inputs.expected_sha }}"; fi
+          if [ -z "$sha" ]; then
+            sha=$(curl -sS --max-time 30 \
+              "https://api.github.com/repos/${{ github.repository }}/deployments?environment=github-pages&per_page=1" \
+              | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["sha"] if d else "")')
+          fi
+          if [ -z "$sha" ]; then
+            echo "no SHA could be resolved to verify - refusing to guess"; exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "verifying $sha"
+
+      # fetch-depth: 0 on purpose. Choosing a witness means diffing the expected
+      # commit against the one deployed before it, and a shallow clone cannot.
+      # The tool says so by name when the history is missing, rather than
+      # quietly finding no witness and calling that a pass.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.target.outputs.sha }}
+          fetch-depth: 0
+
+      - name: Controls - the check must be able to go red
+        run: python3 tools/verify_deployment_provenance.py --self-test
+
+      # The live negative control §3 requires. HEAD~1 is a real, resolvable
+      # commit that is no longer the deployed one, so this exercises the real
+      # API and the real origin rather than a fixture - and it asserts the
+      # failure names the SHA, so a control that goes red for an unrelated
+      # reason is not counted as working.
+      - name: Live negative control - a commit that is not deployed is rejected
+        run: |
+          set -euo pipefail
+          previous=$(git rev-parse HEAD~1)
+          echo "asserting $previous is NOT what the origin serves"
+          python3 tools/verify_deployment_provenance.py \
+            --expected-sha "$previous" --must-not-be-deployed
+
+      - name: Prove the origin is serving this commit
+        run: |
+          python3 tools/verify_deployment_provenance.py \
+            --expected-sha "${{ steps.target.outputs.sha }}"

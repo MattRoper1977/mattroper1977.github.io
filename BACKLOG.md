@@ -3,9 +3,25 @@
 Named, ordered, and each one carries the evidence needed to start it without
 re-deriving anything. Last re-ordered 2 August 2026.
 
+**Every item declares its kind**, because a backlog that does not distinguish
+*waiting on a ruling* from *waiting on someone to do it* quietly turns the
+second into the first:
+
+- **ruling-pending** — the work is understood; someone has to decide.
+- **work-pending** — the decision is made; someone has to do it.
+
+And its class, because they are not equally urgent:
+
+- **instrument** — something that reports on the estate. Fix these first: every
+  future report depends on them, and a false green is invisible by definition.
+- **content** — something the estate serves. A missing page is at least visible.
+
 ---
 
 ## 0a. `verify_professional_site.js` — 8 findings, cause identified, two one-line fixes not yet authorised
+
+**instrument · ruling-pending** — and more urgent than it looks: see the note at
+the end of this item about steps 6–8.
 
 `verify-games-audience-faces.yml` fails on `main` at *Verify professional shell
 preservation against the target*. Eight findings: five "authorised homepage
@@ -168,9 +184,218 @@ governance for `/main/`, record that in the map rather than leaving it implicit.
 These findings predate the audience-discovery sequence. One of the original
 nine was a stale label list and is fixed.
 
+### This is not a cosmetic red — three CI steps are dark behind it
+
+Measured on `main` at `a8bfa2a`, `verify-games-audience-faces.yml`:
+
+```
+ 3. ok    Verify generated pages and canonical search data
+ 4. ok    Verify Revision 3 architecture and all positive controls
+ 5. FAIL  Verify professional shell preservation against the target branch
+ 6. skip  Verify accounts, Members, Supabase and mailing regressions
+ 7. skip  Verify JavaScript, Python and embedded-script syntax
+ 8. skip  Check patch hygiene and remove temporary bootstrap machinery
+```
+
+Steps after a failing step do not run. So **`verify_accounts_members_mailing.js`
+has not run in CI since #110** — the suite PR #114's own brief named "the gate to
+watch, since vendoring touches the auth path" — across the pass that changed the
+auth path. It is green locally on the merged tree at 21 passed · 0 failed, which
+is why nothing burned. Local green is not the estate's gate.
+
+**And it darks an entire downstream job.** `live-proof` — *"Exact production
+deployment and live browser proof"* — declares
+`needs: [static-contract, external-links, browser-matrix]`. `static-contract` is
+the job failing at step 5, so `live-proof` has been **skipped on every push
+since #110**. It is the job that waits for the deployment and **byte-compares all
+13 deployed pages against the committed tree**.
+
+So the estate already had a correct deployment proof, and 0a-A switched it off.
+Nobody noticed because a skipped job reads as *not applicable* rather than as
+*we lost our deployment proof* — which is how this morning's route matrix came
+to be the only thing anyone was reading.
+
+**Fixing 0a-A un-skips three steps and that whole job, for free.** That makes it
+the highest-value change available here by a distance: not a red verifier, but
+the accounts regression suite and the byte-level deployment proof both dark on a
+live site.
+
+---
+
+## 0b. Deployment provenance — the production matrix could not fail
+
+**instrument · work-pending** — built in this pass; the live legs cannot run
+until it is on `main`.
+
+On 9 August the production route matrix printed
+
+```
+all 13 routes 200; both removed paths 404; 1 attempt(s)
+```
+
+**31 seconds before the deployment it was reporting on existed** (19:45:43Z; the
+Pages deployment for `a8bfa2a` completed 19:46:14Z), and printed the identical
+line again 8m46s after it completed. Same output, same `1 attempt(s)`, either
+side of the event.
+
+The cause is retry-on-failure semantics: it re-checked only routes that were not
+200. A route that served 200 before a merge serves 200 after it, so `pending`
+emptied on the first attempt and the ladder never engaged. It was measuring that
+the site exists.
+
+**Built:** `tools/verify_deployment_provenance.py` and
+`.github/workflows/mbm-deployment-provenance.yml`, in three layers — trigger on
+the deployment event and take the SHA from the payload; assert GitHub's own
+deployed SHA equals the expected one; fetch a *witness* file from the origin and
+compare sha256 against the committed bytes. Retry now waits on provenance
+mismatch, not on a status code.
+
+**The trap found while building it, worth keeping:** the obvious witness is the
+data stamp, and it is the wrong one. `tools/stamp-data.py` only moves when
+`site.json` or `data/resources.json` move, and #114 changed neither — a Layer 3
+built on the stamp alone would have passed vacuously on the exact deployment
+that motivated it. So the witness is chosen per deployment from the files that
+actually changed, and where no served file changed the origin genuinely cannot
+tell two commits apart and the check reports INCONCLUSIVE rather than a pass.
+
+**To close:** merge, then confirm the workflow fires on a real deployment and
+its live negative control goes red. A `workflow_dispatch` cannot be used to
+pre-prove it, because GitHub only offers dispatch for workflows already on the
+default branch.
+
+---
+
+## 0c. The live gate has been red since #110
+
+**instrument · work-pending** — fixed in this pass; unproven against the origin
+until merged.
+
+`professional-site-live-verify.yml` has failed on `main` on every run from
+`50817f0` (#110) onward, and passed on the two before it. `PAGE_MARKERS["/"]`
+still described the pre-#110 professional homepage:
+
+| required on `/` | reality |
+|---|---|
+| `id="audiences"` | absent — it moved to `/main/` in #110 |
+| `Schools &amp; organisations` | absent — retired by D1 |
+| `Partners` | absent — retired by D1 |
+
+So the estate's only live gate was dark for the entire recovery sequence, and
+`/main/` — the actual professional homepage — was not checked live **at all**.
+
+The private-copy sweep predicted this: `verify_professional_site_live.py` was
+one of two files recorded as holding labels as literals and deliberately left
+alone as the riskier live-production class. That call was right at the time; a
+gate dark for a fortnight is what changes it.
+
+**Fixed** by deriving the chooser's markers from `data/audience-homepages.json`,
+the same file the renderer reads, rather than re-typing a corrected list — which
+would only reset the clock on the same trap. Structural literals that genuinely
+cannot be derived (`mbm-platform.css`, `mbm-site-header`) say so beside
+themselves. `/main/` gained its own entry.
+
+Proven red three ways before green: a label relabelled in the data file only, the
+chooser losing a group container, and `/main/` losing `id="audiences"`.
+
+**To close:** merge, then confirm the workflow passes against the real origin.
+
+---
+
+## 0d. `verify_games_audience_faces.mjs` is syntax-checked and never run
+
+**instrument · ruling-pending** — found by the `/` versus `/main/` sweep, which
+it passed: its route model is entirely post-#110. The defect is that nothing
+evaluates it.
+
+`verify-games-audience-faces.yml` mentions the file three times: twice in a
+`paths:` filter, and once as
+
+```
+node --check tools/verify_games_audience_faces.mjs
+```
+
+which parses it. Nothing in the repository executes it. It is 550 lines of
+Playwright assertions — eight viewports, menu and focus behaviour, `/main/`
+preservation, all seven audience homepages, pupil adult-feature suppression,
+local preference, journeys, first-party requests, overflow — and none of it has
+run.
+
+Two documents describe it as though it does:
+`docs/MBM_GAMES_AUDIENCE_FACES.md:60` and
+`docs/MBM_HOMEPAGE_AUDIENCE_ARCHITECTURE.md:58`. That is species 10 in prose —
+a capability advertised and not delivered — and it is why the file reads as
+covered rather than dormant.
+
+It also still holds audience labels as literals (recorded in the #114
+private-copy sweep). They happen to be current, but **nothing can tell you
+whether they stay that way**, because nothing evaluates them. An unrun check is
+worse than a stale one: a stale check eventually goes red.
+
+### The docs are corrected; that part needed no ruling
+
+Both documents now say what actually runs. They previously described the `.mjs`
+as active coverage, which made the estate's own record of what is protected
+wrong — and a stale doc, unlike a stale check, never goes red.
+
+### "Just run it" is not available
+
+Spot-checking 8 of its 78 assertions against the committed tree, **at least
+three are definitively stale**:
+
+| assertion | reality |
+|---|---|
+| root `<h1>` is *"Choose your own homepage type"* | that text is an `<h2>`; the `<h1>` is *"Learning and creation, made simple."* |
+| `.mf-main-card` href is `/main/` | the selector matches nothing anywhere in the estate — the chooser uses `.mf-btn primary`, which the static verifier accepts as the alternative |
+| `/start/` destination `<h1>` | same as the first |
+
+Two more could not be settled statically because they are rendered at runtime
+(the Continue wording, the theme swatches — `theme.js` does inject five, so that
+one probably passes). Three of the eight would pass. So switching it on means
+repairing it first, and the repairs are in the hard-coded-literal class that
+species 14 is about.
+
+### Triage against what runs today
+
+78 assertions, against `verify_audience_discovery_browser.py`'s 49 and the
+static verifiers that do run:
+
+**Already covered** — route reachability, sentinel identity, 320px overflow,
+root labels/routes/grouping/canonical, `/main/` canonical, og:url, identity
+heading, preserved sections, per-audience canonical and H1 and visual floors,
+promoted destinations being first-party, pupil adult-CTA suppression, `/start/`
+reaching the chooser, `loading="lazy"` at source level.
+
+**Genuinely additive**, roughly 43 assertion kinds in six clusters:
+
+| cluster | kinds | note |
+|---|---|---|
+| local preference lifecycle | 8 | store, no forced redirect, root marks last choice, Continue panel exposure/href/wording, Forget clears, panel hidden after | nothing behavioural covers this; only the key *name* is asserted statically |
+| responsive menu and focus | 8 | visible/hidden by width, ≥43px touch target, starts closed, expands, Escape closes, focus returns to the menu | the CSS rules are asserted at source; the behaviour is not |
+| runtime error collection | 4 | page errors, console errors, failed first-party requests, first-party HTTP errors |
+| account surfaces, live | 6 | login/register forms, Members loads, tabs, forgot/reset, callback status |
+| journeys through the real UI | 5 | opening Menu and the collapsed More disclosure before activating a hidden route |
+| theme behaviour | 3 | five controls, applied to `html` *and* `body`, `aria-pressed` |
+
+Plus singles: exactly one `<h1>` per route, image presence and decode failure,
+`aria-current` on the audience page, below-fold lazy-loading measured rather
+than asserted at source, games top-picks count, promoted destination live status.
+
+**Rough port size:** the additive subset is six coherent blocks, and B7 already
+owns the browser scaffolding — contexts, viewports, request capture, the
+`Findings` reporter. So this is on the order of 150–200 lines added to the
+Python harness, not 550 ported. The preference lifecycle and the menu/focus
+block are the two worth doing first; they are the largest genuinely-uncovered
+behaviour on the estate.
+
+**Matt's call is the cost, not whether the coverage matters.** Values must be
+derived, not re-typed, or this recreates the class the sweep just closed.
+
 ---
 
 ## 0. `/resources/` — the closeout rewrite is unrecoverable, page never rebuilt
+
+**content · ruling-pending** — the only item here that is genuinely waiting on a
+decision rather than on work, and the one that stays printed longest.
 
 The PR #110 closeout replaced `resources/index.html` with a 12-line page. That
 replacement fell inside the corrupted tail of the `.mbm-closeout` blob and is
