@@ -90,6 +90,18 @@ jobs:
       - name: Audience verifier proves its own seven controls
         run: python3 tools/verify_games_audience_faces.py --self-test
 
+      - name: Locked chooser copy cannot silently disappear
+        run: |
+          set -euo pipefail
+          sed -i 's/, and it is not sent to Supabase, Buttondown or analytics\.//' tools/render_audience_homepages.py
+          python3 tools/render_audience_homepages.py
+          if python3 tools/verify_games_audience_faces.py 2>&1 | grep -q "locked chooser copy missing"; then
+            echo "control detected"
+          else
+            echo "locked-copy guard did not fire"; exit 1
+          fi
+          git checkout -- tools/render_audience_homepages.py index.html
+
       - name: Design gate notices a missing hero mark
         run: |
           set -euo pipefail

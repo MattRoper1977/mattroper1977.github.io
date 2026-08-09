@@ -78,6 +78,16 @@ GAMES_COPY = [
 # it carries more, while a page whose job is orientation carries fewer. The
 # design-inheritance verifier imports these rather than keeping its own copy.
 MIN_PROMOTED_VISUALS = {"pupils": 5, "teachers": 4, "parents": 3, "schools": 3, "trusts": 3, "councils": 3, "partners": 4}
+# Locked copy on the discovery root. These state what the audience preference
+# is and is not, and they are the reason a visitor can trust the choice is
+# local. They are asserted verbatim, not by keyword.
+LOCKED_CHOOSER_COPY = [
+    "This preference stays in this browser. It is not an account, profile, "
+    "consent choice or tracking identifier, and it is not sent to Supabase, "
+    "Buttondown or analytics.",
+    "Choosing one does not create an account, change permissions or hide public content.",
+]
+
 EMOJI_RE = re.compile("[\U0001F300-\U0001FAFF\u2600-\u27BF]")
 
 
@@ -208,6 +218,15 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
     for phrase in ["localStorage", "Supabase", "Buttondown", "analytics", "does not create an account", "not an account"]:
         if phrase not in chooser and phrase not in read(root, "assets/mbm-audience.js", overrides):
             errors.append(f"chooser local-preference explanation missing: {phrase}")
+
+    # Locked copy. The closeout dropped both of these once already, and the
+    # loop above could not catch it: it passes if the word appears anywhere in
+    # the chooser OR in the audience script, so "Supabase" surviving in a code
+    # comment would have masked the sentence disappearing from the page. These
+    # assert the sentences themselves, on the page, verbatim.
+    for sentence in LOCKED_CHOOSER_COPY:
+        if sentence not in chooser:
+            errors.append(f"locked chooser copy missing or altered: {sentence[:60]}…")
 
     main = read(root, "main/index.html", overrides)
     if canonical_of(main) != "https://madebymatt.uk/main/":
