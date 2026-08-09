@@ -20,7 +20,41 @@ const ROOT = path.resolve(__dirname, '..');
 const SENTINEL = 'mbm-site-professional-design-upgrade-2026-08-07';
 const ACCOUNT_SENTINEL = 'mbm-accounts-members-mailing-2026-08-08';
 const COUNTER_SENTINEL = 'mbm-counter-local-fallback-2026-08-09';
-const FUNCTIONAL_COPY_PAGES = new Set(['members/index.html', 'privacy/index.html']);
+/*
+ * BACKLOG 0a-B. Which passes authorise the copy on a page is not derivable from
+ * the page, so it is declared in data/copy-authorisation.json and read here.
+ * One sentinel per page is unchanged; what changed is that the verifier no
+ * longer demands one *particular* pass's sentinel on a page several passes
+ * authorise. privacy/index.html carries the closeout sentinel because that pass
+ * wrote it last, and the accounts copy it also carries is authorised by the map.
+ */
+const AUTHORISATION = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'copy-authorisation.json'), 'utf8'));
+
+function authorisationProblems() {
+  const problems = [];
+  if (!String(AUTHORISATION._boundary || '').includes('BEHAVIOUR')) {
+    problems.push('data/copy-authorisation.json: the boundary rule is missing, so the map cannot be reviewed');
+  }
+  for (const [rel, entry] of Object.entries(AUTHORISATION.pages)) {
+    if (!fs.existsSync(path.join(ROOT, rel))) {
+      problems.push(`data/copy-authorisation.json: ${rel} is declared but does not exist`);
+    }
+    for (const pass of entry.authorisedBy) {
+      if (!AUTHORISATION.passes[pass]) {
+        problems.push(`data/copy-authorisation.json: ${rel} names pass "${pass}", which is not declared`);
+      }
+    }
+  }
+  return problems;
+}
+
+function sentinelIsAuthorised(rel, html) {
+  const entry = AUTHORISATION.pages[rel];
+  if (!entry || entry.governedBy === 'region-comparison') return null;
+  const accepted = entry.authorisedBy.map((pass) => AUTHORISATION.passes[pass]).filter(Boolean);
+  if (accepted.some((sentinel) => html.includes(sentinel))) return null;
+  return `${rel}: carries none of the sentinels of the passes that authorise its copy (${entry.authorisedBy.join(', ')})`;
+}
 const CHOOSER_PAGE = 'index.html';
 const KEY_PAGES = [
   'main/index.html',
@@ -215,6 +249,7 @@ function localRouteExists(href) {
 
 function verify(base, overrides = null) {
   const failures = [];
+  failures.push(...authorisationProblems());
   const css = relRead('assets/mbm-platform.css', overrides);
   const js = relRead('assets/mbm-platform.js', overrides);
   const home = relRead('main/index.html', overrides);
@@ -323,8 +358,14 @@ function verify(base, overrides = null) {
         assert(/Visits on this device/i.test(current), `${rel}: device-local visit label missing`, failures);
         assert(/stored only in this browser/i.test(current), `${rel}: local-storage explanation missing`, failures);
         assert(!/counterapi\.dev/i.test(current), `${rel}: retired CounterAPI claim remains`, failures);
-      } else if (FUNCTIONAL_COPY_PAGES.has(rel)) {
-        assert(current.includes(ACCOUNT_SENTINEL), `${rel}: authorised account/privacy copy changed without account sentinel`, failures);
+      // A page governed by region comparison stays in the preservation diff:
+      // declaring it in the map records how it is governed, it does not move it
+      // out of the comparison. Routing main/index.html here switched off the
+      // homepage's authored-copy preservation entirely, and the unrelated-copy
+      // control caught it on the same run.
+      } else if (AUTHORISATION.pages[rel] && AUTHORISATION.pages[rel].governedBy !== 'region-comparison') {
+        const problem = sentinelIsAuthorised(rel, current);
+        if (problem) failures.push(problem);
       } else {
         const beforeSource = rel === 'main/index.html' ? canonicalHomeTruthCopy(baseline, failures, `${rel} baseline`) : baseline;
         const afterSource = rel === 'main/index.html' ? canonicalHomeTruthCopy(current, failures, `${rel} current`) : current;

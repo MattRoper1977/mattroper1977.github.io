@@ -152,7 +152,8 @@ file and is indistinguishable from correct behaviour until it isn't, which is
 how this defect survived. A pre-#110 base should be an explicit, deliberate
 invocation, not a hidden branch.
 
-**0a-B · the sentinel. The additive proposal was withdrawn; this replaces it.**
+**0a-B · APPLIED 2026-08-09** — `data/copy-authorisation.json`. The additive
+proposal was withdrawn; the declared map replaced it.
 Three objections defeated it:
 
 - No page in the estate carries two sentinels (59 HTML files, 16 sentinels), so

@@ -170,13 +170,9 @@ def main() -> None:
     findings.note("BACKLOG 0 (content · ruling-pending): /resources/ is still the pre-closeout "
                   "catalogue; the closeout rewrite is unrecoverable")
     findings.note(
-        "BACKLOG 0a (instrument · ruling-pending): 0a-A is applied and took verify_professional_site.js "
-        "from 8 findings to 1. The survivor is the privacy sentinel - 0a-B - so step 5 is still red. "
-        "Ruling on 0a-B takes it to zero and turns static-contract green for the first time since #110"
-    )
-    findings.note(
-        "BACKLOG 0a-B (instrument · ruling-pending): main/index.html carries accounts/mailing and "
-        "device-local-counter prose but no sentinel at all; it is governed by region comparison"
+        "BACKLOG 0a: CLOSED 2026-08-09. 0a-A removed the baseline remap; 0a-B declared copy "
+        "authorisation in data/copy-authorisation.json. verify_professional_site.js reports zero "
+        "findings with all five controls passing - green for the first time since #110"
     )
     findings.note(
         "BACKLOG 0b (instrument · work-pending): deployment provenance is built but its live legs "
