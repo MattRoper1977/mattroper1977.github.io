@@ -173,15 +173,8 @@ def mark_stage(audience: dict[str, Any]) -> str:
     return f'''<div class="mf-mark-stage"><span class="mf-halo mf-halo-one" aria-hidden="true"></span><span class="mf-halo mf-halo-two" aria-hidden="true"></span><img class="mf-hero-mark" src="/assets/brand/hero_mark.svg" alt="" width="640" height="640" fetchpriority="high"><span class="mf-audience-badge" style="--badge-accent:{esc(audience['accent'])}">{icon(audience['icon'], 'mf-badge-icon')}<span>{esc(audience['label'])}</span></span></div>'''
 
 
-def pupil_game_mark_stage(audience: dict[str, Any]) -> str:
-    """Legacy game-artwork hero, retained for data that still sets heroImage."""
-    route = find_feature_route(audience, audience.get("heroSearchId", "")) or "/games/"
-    return f'''<div class="mf-mark-stage"><a class="mf-pupil-hero-game" href="#start-playing"{recent_attrs(audience.get('heroSearchId'), route)}><img src="{esc(audience['heroImage'])}" alt="{esc(audience['heroImageAlt'])}" width="352" height="198" fetchpriority="high"><span><img src="/assets/brand/micro_mark.svg" alt="" width="100" height="100"><b>Game-first pupil homepage</b></span></a></div>'''
-
-
 def hero(audience: dict[str, Any]) -> str:
-    stage = pupil_game_mark_stage(audience) if audience.get("heroImage") else mark_stage(audience)
-    return f'''<section class="mf-hero" aria-labelledby="page-title"><div class="mf-hero-texture" aria-hidden="true"></div><div class="mf-wrap mf-hero-grid">{stage}{hero_copy(audience)}</div></section>'''
+    return f'''<section class="mf-hero" aria-labelledby="page-title"><div class="mf-hero-texture" aria-hidden="true"></div><div class="mf-wrap mf-hero-grid">{mark_stage(audience)}{hero_copy(audience)}</div></section>'''
 
 
 def section_head(section: dict[str, Any]) -> str:
@@ -435,11 +428,12 @@ def validate(data: dict[str, Any]) -> None:
                     raise SystemExit(f"{aid}: promoted image does not exist: {feature['image']}")
                 if not feature.get("alt"):
                     raise SystemExit(f"{aid}: promoted image has no alt text: {feature['id']}")
-        for key in ("heroImage",):
-            if audience.get(key):
-                source = audience[key].split("?", 1)[0].lstrip("/")
-                if not (ROOT / source).is_file():
-                    raise SystemExit(f"{aid}: hero image does not exist: {audience[key]}")
+        # Every audience homepage uses the shared hero mark. A per-audience
+        # hero image would reintroduce the small-duplicate-logo treatment the
+        # pupil page was corrected for, so the field is rejected outright.
+        for key in ("heroImage", "heroImageAlt", "heroSearchId"):
+            if key in audience:
+                raise SystemExit(f"{aid}: {key} is no longer supported; the shared hero mark is used on every audience homepage")
 
 
 def main() -> None:
