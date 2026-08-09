@@ -60,7 +60,21 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/check_audience_accents.py
-          sed -i 's/"accent": "#A6620C"/"accent": "#F2C48A"/' data/audience-homepages.json
+          # Derive the tone to replace instead of naming it. A control that
+          # hard-codes a colour stops firing the moment the palette moves,
+          # which is how a gate quietly becomes decorative.
+          python3 - <<'PY'
+          import json, pathlib
+          path = pathlib.Path("data/audience-homepages.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          current = data["audiences"]["teachers"]["accent"]
+          path.write_text(
+              path.read_text(encoding="utf-8").replace(
+                  f'"accent": "{current}"', '"accent": "#F2C48A"', 1
+              ),
+              encoding="utf-8",
+          )
+          PY
           if python3 tools/check_audience_accents.py; then
             echo "accent gate did not notice a below-AA accent"; exit 1
           fi
