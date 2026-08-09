@@ -290,7 +290,21 @@ jobs:
   live-proof:
     name: Exact production deployment and live browser proof
     if: github.event_name == 'push'
-    needs: [static-contract, external-links, browser-matrix]
+    # NO `needs:`, deliberately. It declared
+    #   needs: [static-contract, external-links, browser-matrix]
+    # and all three were *quality gates*, not data dependencies: this job
+    # downloads no artifact and reads no `needs.*` output, and none of the three
+    # declares `outputs`. They meant "do not bother if that one was red".
+    #
+    # static-contract has been red since #110 (BACKLOG 0a-A), so this job - the
+    # one that waits for the deployment and byte-compares all 13 deployed pages
+    # against the committed tree - has been skipped on every push for weeks. A
+    # gate guarding coverage must not be able to switch that coverage off, and a
+    # skipped job is the worst way to lose it: it renders grey, reads as "not
+    # applicable", and badges often score it as success.
+    #
+    # It waits for the deployment itself (72 attempts, below), so the ordering
+    # bought nothing its own readiness loop does not already provide.
     runs-on: ubuntu-latest
     timeout-minutes: 55
     steps:
@@ -357,3 +371,22 @@ jobs:
             production-deployment.txt
           if-no-files-found: error
           retention-days: 30
+
+  # A skipped job is not a pass. This runs on always() so that a red or skipped
+  # upstream cannot remove the very check that reports it - the mistake
+  # live-proof itself was built on.
+  no-silent-skips:
+    name: No expected job was silently skipped
+    if: always()
+    needs: [static-contract, external-links, browser-matrix, live-proof]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every job ran, or was skipped by declared design
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          python3 tools/check_no_skipped_jobs.py \
+            --results "$RESULTS" --event "${{ github.event_name }}"
