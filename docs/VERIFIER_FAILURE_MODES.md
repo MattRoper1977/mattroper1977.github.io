@@ -222,6 +222,32 @@ in its life, no matter how carefully it was maintained.
 strictly larger class of drift. When a literal is unavoidable, say beside it why
 it cannot be derived.
 
+## 14. An instrument with an opinion about layout should derive it
+
+The design rule behind 1 and 13, and the thing a sweep of nine instruments
+actually established.
+
+Three instruments were caught believing `/` was the professional homepage after
+#110 moved it to `/main/`: the preservation baseline remap, the sentinel
+governance for `main/index.html`, and `PAGE_MARKERS`. The sweep expected to find
+more, and found none — but the interesting result was *which* instruments
+survived.
+
+`verify_home_doors_baseline.js` carries a pre-move name — "home doors" — and is
+entirely current, because it never had a route opinion to go stale: it validates
+`site.json`'s `doors[]`, and the data followed the move. `stamp-data.py` is the
+same: it discovers its pages by walking for the scripts that fetch data, so a
+page moving changes nothing.
+
+Every instrument that broke held a **hard-coded** opinion about layout. Every
+one that survived **derived** its opinion from data. The name is irrelevant; the
+literal is the defect.
+
+**Rule:** an instrument that must know where something lives should read that
+from the file that owns it. Where it genuinely cannot, the literal is a known
+liability — say so beside it, so the next person moving a page knows which
+instruments they have just invalidated.
+
 ---
 
 ## The shape they share

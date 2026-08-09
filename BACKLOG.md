@@ -317,11 +317,64 @@ private-copy sweep). They happen to be current, but **nothing can tell you
 whether they stay that way**, because nothing evaluates them. An unrun check is
 worse than a stale one: a stale check eventually goes red.
 
-Three ways out, and the choice is a judgement about cost, not correctness:
-run it in CI and accept a Playwright leg on every push; fold the assertions
-`verify_audience_discovery_browser.py` does not already make into that tool and
-delete this one; or keep it as a manual instrument and correct the two documents
-so nobody reads it as coverage.
+### The docs are corrected; that part needed no ruling
+
+Both documents now say what actually runs. They previously described the `.mjs`
+as active coverage, which made the estate's own record of what is protected
+wrong — and a stale doc, unlike a stale check, never goes red.
+
+### "Just run it" is not available
+
+Spot-checking 8 of its 78 assertions against the committed tree, **at least
+three are definitively stale**:
+
+| assertion | reality |
+|---|---|
+| root `<h1>` is *"Choose your own homepage type"* | that text is an `<h2>`; the `<h1>` is *"Learning and creation, made simple."* |
+| `.mf-main-card` href is `/main/` | the selector matches nothing anywhere in the estate — the chooser uses `.mf-btn primary`, which the static verifier accepts as the alternative |
+| `/start/` destination `<h1>` | same as the first |
+
+Two more could not be settled statically because they are rendered at runtime
+(the Continue wording, the theme swatches — `theme.js` does inject five, so that
+one probably passes). Three of the eight would pass. So switching it on means
+repairing it first, and the repairs are in the hard-coded-literal class that
+species 14 is about.
+
+### Triage against what runs today
+
+78 assertions, against `verify_audience_discovery_browser.py`'s 49 and the
+static verifiers that do run:
+
+**Already covered** — route reachability, sentinel identity, 320px overflow,
+root labels/routes/grouping/canonical, `/main/` canonical, og:url, identity
+heading, preserved sections, per-audience canonical and H1 and visual floors,
+promoted destinations being first-party, pupil adult-CTA suppression, `/start/`
+reaching the chooser, `loading="lazy"` at source level.
+
+**Genuinely additive**, roughly 43 assertion kinds in six clusters:
+
+| cluster | kinds | note |
+|---|---|---|
+| local preference lifecycle | 8 | store, no forced redirect, root marks last choice, Continue panel exposure/href/wording, Forget clears, panel hidden after | nothing behavioural covers this; only the key *name* is asserted statically |
+| responsive menu and focus | 8 | visible/hidden by width, ≥43px touch target, starts closed, expands, Escape closes, focus returns to the menu | the CSS rules are asserted at source; the behaviour is not |
+| runtime error collection | 4 | page errors, console errors, failed first-party requests, first-party HTTP errors |
+| account surfaces, live | 6 | login/register forms, Members loads, tabs, forgot/reset, callback status |
+| journeys through the real UI | 5 | opening Menu and the collapsed More disclosure before activating a hidden route |
+| theme behaviour | 3 | five controls, applied to `html` *and* `body`, `aria-pressed` |
+
+Plus singles: exactly one `<h1>` per route, image presence and decode failure,
+`aria-current` on the audience page, below-fold lazy-loading measured rather
+than asserted at source, games top-picks count, promoted destination live status.
+
+**Rough port size:** the additive subset is six coherent blocks, and B7 already
+owns the browser scaffolding — contexts, viewports, request capture, the
+`Findings` reporter. So this is on the order of 150–200 lines added to the
+Python harness, not 550 ported. The preference lifecycle and the menu/focus
+block are the two worth doing first; they are the largest genuinely-uncovered
+behaviour on the estate.
+
+**Matt's call is the cost, not whether the coverage matters.** Values must be
+derived, not re-typed, or this recreates the class the sweep just closed.
 
 ---
 

@@ -55,4 +55,18 @@ No stock classroom photography, invented partner/customer logos, testimonials or
 
 ## Regression gates
 
-`tools/verify_games_audience_faces.py` protects the static architecture and includes mutation-based positive controls. `tools/verify_games_audience_faces.mjs` covers responsive browser flows, keyboard menus, themes, local preference behaviour, imagery and representative destinations. Its journeys deliberately open the responsive **Menu** and collapsed **More** disclosure before activating hidden routes, so the proof reflects real keyboard and touch navigation rather than bypassing the interface. The GitHub Actions workflow `verify-games-audience-faces.yml` runs the static checks, assembles the related read-only estates for browser proof and performs live production readback after merge.
+`tools/verify_games_audience_faces.py` protects the static architecture and includes mutation-based positive controls.
+
+**The browser proof is `tools/verify_audience_discovery_browser.py`** — 49 assertions at 390px and
+1440px, a 320px reflow pass over 11 routes, an estate-wide check that no surface contacts a third
+party at page load, a no-JavaScript pass, and controls proving each of them can fail.
+
+> `tools/verify_games_audience_faces.mjs` is **not run**. CI parses it with `node --check`; nothing
+> executes it. So the responsive flows, keyboard menus, themes, local-preference behaviour, imagery
+> and representative destinations it contains are **not currently covered**, and at least three of
+> its assertions are stale against the committed tree. Its journeys were written to open the
+> responsive **Menu** and collapsed **More** disclosure before activating hidden routes — real
+> coverage the estate believed it had. BACKLOG item 0d tracks triaging the additive subset into the
+> Python harness. This paragraph previously described that coverage as active.
+
+The GitHub Actions workflow `verify-games-audience-faces.yml` runs the static checks, assembles the related read-only estates for browser proof and performs live production readback after merge.

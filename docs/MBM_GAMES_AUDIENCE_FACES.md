@@ -57,6 +57,21 @@ Existing authored wording on `/games/` is preservation-tested. The current expla
 
 `tools/verify_games_audience_faces.py` protects the root chooser, preserved `/main/` homepage, exact seven-route taxonomy, real visual-content floors, pupil/adult feature boundary, local-only preference, metadata and navigation. Its mutation controls deliberately remove or corrupt seven separate release requirements and must fail.
 
-`tools/verify_games_audience_faces.mjs` checks the rendered release at 320, 360, 390, 430, 768, 1024, 1280 and 1440 CSS pixels, including menu/focus behaviour, `/main/` preservation, real imagery, all seven audience homepages, pupil adult-feature suppression, local preference, representative journeys, first-party requests and horizontal overflow.
+> **`tools/verify_games_audience_faces.mjs` is not executed, and is not coverage.**
+> `verify-games-audience-faces.yml` names it three times: twice in `paths:` trigger filters, and
+> once as `node --check`, which only parses it. Nothing runs it. Its assertions have therefore
+> never been evaluated, and at least three are provably stale against the committed tree — it
+> expects the chooser's `<h1>` to read *"Choose your own homepage type"* (that text is an `<h2>`;
+> the `<h1>` is *"Learning and creation, made simple."*), and it reads `.mf-main-card`, a selector
+> that matches nothing anywhere in the estate. Tracked as BACKLOG item 0d.
+>
+> This paragraph used to describe those 550 lines as though they ran.
 
-The permanent workflow repeats the browser checks against the served production deployment after merge.
+**The browser proof that does run is `tools/verify_audience_discovery_browser.py`**: 49 assertions
+at 390px and 1440px, a 320px reflow pass over 11 routes, an estate-wide no-third-party-at-load
+check over 12 surfaces plus a `/start/` redirect assertion, a no-JavaScript pass, and controls
+proving each of them can fail.
+
+For the record, what the unrun `.mjs` *would* check if it were repaired and run: the rendered release at 320, 360, 390, 430, 768, 1024, 1280 and 1440 CSS pixels, including menu/focus behaviour, `/main/` preservation, real imagery, all seven audience homepages, pupil adult-feature suppression, local preference, representative journeys, first-party requests and horizontal overflow.
+
+The permanent workflow repeats the *static* checks against the served production deployment after merge. Deployment provenance — that the served bytes are the commit under test — is `tools/verify_deployment_provenance.py`.

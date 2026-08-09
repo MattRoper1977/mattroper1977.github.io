@@ -268,7 +268,7 @@ jobs:
           git checkout -- for/teachers/index.html
 
   production:
-    name: Production routes
+    name: Production routes reachable (not a deployment proof)
     # Only meaningful against what is actually published, so it runs on main
     # and on demand - never as a proxy for a branch that has not shipped.
     if: github.event_name != 'pull_request'
@@ -284,10 +284,19 @@ jobs:
           routes="/ /main/ /start/ /teach/ /resources/ /education-hub/ \
                   /for/pupils/ /for/teachers/ /for/parents-carers/ /for/schools-semh/ \
                   /for/trusts/ /for/councils-organisations/ /for/partners/"
-          # Pages deployment lags a merge by minutes. A single check turns that
-          # lag into a false failure, so retry on a schedule and print every
-          # attempt - including the ones that failed, which are the ones a
-          # single check would have recorded.
+          # WHAT THIS DOES AND DOES NOT PROVE.
+          #
+          # It proves the routes are reachable and that two removed paths are
+          # gone. It does NOT prove anything about a deployment, and it cannot:
+          # the retry ladder below re-checks only routes that are not yet 200,
+          # and a route that served 200 before a merge serves 200 after it. On
+          # 9 August it printed "all 13 routes 200 ... 1 attempt(s)" 31 seconds
+          # before the deployment it appeared to describe existed, and printed
+          # the identical line 8m46s after that deployment completed.
+          #
+          # Deployment provenance is proven by mbm-deployment-provenance.yml,
+          # which triggers on the deployment event and compares served bytes
+          # against the commit. Read this step as reachability only.
           delays="0 300 300 300"
           attempt=0
           pending="$routes"
@@ -321,3 +330,5 @@ jobs:
             echo "a path that must be removed is still served"; exit 1
           fi
           echo "all 13 routes 200; both removed paths 404; $attempt attempt(s)"
+          echo "reachability only - this proves nothing about which commit is deployed;"
+          echo "see mbm-deployment-provenance.yml for that."
