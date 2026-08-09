@@ -3,7 +3,7 @@ name: Apex Sports homepage publication verify
 on:
   pull_request:
     paths:
-      - 'index.html'
+      - 'main/index.html'
       - 'site.json'
       - 'assets/cards/apex-golf-door.svg'
       - 'assets/cards/apex-tennis-door.svg'
@@ -70,11 +70,11 @@ jobs:
           set -euo pipefail
           node --check tools/apply_apextennis_home.js
           node --check tools/verify_apextennis_home_browser.js
-          python3 tools/verify_apextennis_home.py index.html site.json assets/cards/apex-golf-door.svg assets/cards/apex-tennis-door.svg artifacts/apextennis-home/site-before.json artifacts/apextennis-home/index-before.html | tee artifacts/apextennis-home/static.log
-          before_index=$(sha256sum index.html | awk '{print $1}')
+          python3 tools/verify_apextennis_home.py main/index.html site.json assets/cards/apex-golf-door.svg assets/cards/apex-tennis-door.svg artifacts/apextennis-home/site-before.json artifacts/apextennis-home/index-before.html | tee artifacts/apextennis-home/static.log
+          before_index=$(sha256sum main/index.html | awk '{print $1}')
           before_site=$(sha256sum site.json | awk '{print $1}')
           node tools/apply_apexpool_home.js | tee artifacts/apextennis-home/idempotency.log
-          test "$before_index" = "$(sha256sum index.html | awk '{print $1}')"
+          test "$before_index" = "$(sha256sum main/index.html | awk '{print $1}')"
           test "$before_site" = "$(sha256sum site.json | awk '{print $1}')"
 
       - name: Demonstrate four static failure families
@@ -91,7 +91,7 @@ jobs:
           # having actually bitten BEFORE its result is allowed to count.
           reject() {
             local family="$1"
-            if cmp -s index.html /tmp/apextennis-home/index.html && cmp -s site.json /tmp/apextennis-home/site.json; then
+            if cmp -s main/index.html /tmp/apextennis-home/index.html && cmp -s site.json /tmp/apextennis-home/site.json; then
               echo "*** FIXTURE INERT *** ${family} changed nothing, so it proves nothing" >&2
               exit 1
             fi
@@ -102,14 +102,14 @@ jobs:
             fi
             echo "PASS mutation ${family} rejected" | tee -a artifacts/apextennis-home/nonvacuity.log
           }
-          cp index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
+          cp main/index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
           python3 - <<'PY'
           from pathlib import Path
           p=Path('/tmp/apextennis-home/index.html');p.write_text(p.read_text().replace('data-sport-game="Apex Tennis"','data-sport-game="Apex Pool"',1))
           PY
           reject missing-tennis-card
 
-          cp index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
+          cp main/index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
           python3 - <<'PY'
           import json
           p='/tmp/apextennis-home/site.json';d=json.load(open(p));next(x for x in d['doors'] if x['title']=='Apex Tennis')['href']='https://madebymatt.uk/apextennis/';open(p,'w').write(json.dumps(d,ensure_ascii=False,indent=2)+'\n')
@@ -123,7 +123,7 @@ jobs:
           # is the opposite one: Golf must take NO door, so ADDING one must be
           # rejected. Same family count, testing the contract that is actually
           # in force.
-          cp index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
+          cp main/index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
           python3 - <<'PY'
           import json
           p='/tmp/apextennis-home/site.json';d=json.load(open(p))
@@ -133,7 +133,7 @@ jobs:
           PY
           reject reinstated-golf-door
 
-          cp index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
+          cp main/index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
           python3 - <<'PY'
           import re
           from pathlib import Path
