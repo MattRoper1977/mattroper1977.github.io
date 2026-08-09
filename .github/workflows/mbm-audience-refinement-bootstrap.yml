@@ -97,6 +97,7 @@ jobs:
           mkdir -p bundle/apps-html
           cp related/Lessons/resources.json bundle/lessons-resources.json
           cp related/Games/games.json bundle/games.json
+          cp related/Apps/apps.json bundle/apps.json
           cp related/Apps/index.html bundle/apps-index.html
           cp related/Apps/README.md bundle/apps-readme.md
           find related/Lessons -path '*/.git' -prune -o -type f -printf '%P\t%s\n' | sort > bundle/lessons-files.tsv
