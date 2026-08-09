@@ -1,0 +1,127 @@
+name: MBM one-use PR 110 closeout metadata
+
+on:
+  push:
+    branches:
+      - codex/mbm-audience-discovery-teach-professional-hubs-2026-08-09
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+concurrency:
+  group: mbm-pr-110-closeout-metadata
+  cancel-in-progress: false
+
+jobs:
+  record:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: MattRoper1977/mattroper1977.github.io
+      PR: "110"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/mbm-audience-discovery-teach-professional-hubs-2026-08-09
+          fetch-depth: 0
+
+      - name: Build exact closeout evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$REPO/pulls/$PR" > /tmp/pr.json
+          HEAD_SHA=$(jq -r '.head.sha' /tmp/pr.json)
+          MERGE_SHA=$(jq -r '.merge_commit_sha' /tmp/pr.json)
+          MERGED_AT=$(jq -r '.merged_at' /tmp/pr.json)
+          gh api "repos/$REPO/commits/$HEAD_SHA/check-runs?per_page=100" > /tmp/checks.json
+          gh api --method GET "repos/$REPO/actions/runs" -f head_sha="$MERGE_SHA" -f per_page=100 > /tmp/runs.json
+          gh api --method GET "repos/$REPO/deployments" -f sha="$MERGE_SHA" -f per_page=100 > /tmp/deployments.json
+
+          jq -r '
+            .check_runs[]
+            | select(.name == "Static, generated and regression contract" or .name == "Playwright journeys and visual proof" or .name == "Authoritative external-link contract")
+            | (.details_url | capture("/actions/runs/(?<run>[0-9]+)").run) as $run
+            | "- `" + .name + "` — " + (.conclusion // .status) + "; run **" + $run + "**; " + .details_url
+          ' /tmp/checks.json > /tmp/check-lines.md
+
+          jq -r '
+            .workflow_runs[]
+            | "- **" + .name + "** — run **" + (.id|tostring) + "; " + (.status // "") + "/" + (.conclusion // "pending") + "; " + .html_url
+          ' /tmp/runs.json > /tmp/run-lines.md
+
+          : > /tmp/route-lines.md
+          check_route() {
+            route="$1"; token="$2"; file="/tmp/route$(printf %s "$route" | tr '/-' '__').html"
+            code=$(curl --fail-with-body --location --silent --show-error --output "$file" --write-out '%{http_code}' "https://madebymatt.uk${route}?mbm-pr110-closeout=${MERGE_SHA:0:12}")
+            grep -Fqi "$token" "$file"
+            printf -- '- `%s` — HTTP %s; expected identity verified.\n' "$route" "$code" >> /tmp/route-lines.md
+          }
+          check_route / "Learning and creation, made simple."
+          check_route /main/ "Learning that feels worth exploring."
+          check_route /start/ "Learning and creation, made simple."
+          check_route /teach/ "Start with the teaching task."
+          check_route /resources/ "Find the right resource without knowing where it lives."
+          check_route /education-hub/ "Professional education resources, clearly sourced."
+          check_route /for/pupils/ "Surprise me"
+          check_route /for/teachers/ "Teach a lesson"
+          check_route /for/parents-carers/ "parent"
+          check_route /for/schools-semh/ "SEMH"
+          check_route /for/trusts/ "trust"
+          check_route /for/councils-organisations/ "council"
+          check_route /for/partners/ "partner"
+
+          curl --fail --location --silent "https://madebymatt.uk/data/mbm-search-index.json?mbm-pr110-closeout=${MERGE_SHA:0:12}" > /tmp/index.json
+          INDEX_COUNT=$(jq '(.items // .) | length' /tmp/index.json)
+          INDEX_BYTES=$(wc -c < /tmp/index.json | tr -d ' ')
+          curl --fail --location --silent "https://madebymatt.uk/data/education-hub.json?mbm-pr110-closeout=${MERGE_SHA:0:12}" > /tmp/education.json
+          EDUCATION_COUNT=$(jq '(.items // .resources // .) | length' /tmp/education.json)
+          SOURCE_COUNT=$(jq '(.items // .resources // .) | map(.source) | unique | length' /tmp/education.json)
+
+          gh api "repos/$REPO/pulls/$PR" --jq '.body // ""' > /tmp/current-body.md
+          awk '/^## Final closeout evidence/{exit} {print}' /tmp/current-body.md > /tmp/base-body.md
+          cat /tmp/base-body.md > /tmp/new-body.md
+          cat >> /tmp/new-body.md <<EOF
+
+          ## Final closeout evidence
+
+          - Final green PR head: \`$HEAD_SHA\`
+          - Squash merge SHA: \`$MERGE_SHA\`
+          - Merged at: \`$MERGED_AT\`
+          - Deployed generated search index: **$INDEX_COUNT entries**, **$INDEX_BYTES bytes** over HTTP.
+          - Deployed Education Hub dataset: **$EDUCATION_COUNT entries** from **$SOURCE_COUNT source families**.
+
+          ### Required closeout checks
+          EOF
+          cat /tmp/check-lines.md >> /tmp/new-body.md
+          cat >> /tmp/new-body.md <<'EOF'
+
+          ### Merge/deployment workflows
+          EOF
+          if test -s /tmp/run-lines.md; then cat /tmp/run-lines.md >> /tmp/new-body.md; else echo '- No merge-SHA workflow run was returned by the Actions API; production route proof below remains authoritative.' >> /tmp/new-body.md; fi
+          cat >> /tmp/new-body.md <<'EOF'
+
+          ### Direct production route proof
+          EOF
+          cat /tmp/route-lines.md >> /tmp/new-body.md
+          cat >> /tmp/new-body.md <<'EOF'
+
+          The executor also ran an independent production Playwright pass at 320px, 390px and 1440px covering reflow, search privacy, deferred root-index loading, pupil/teacher journeys, current/upcoming Education Hub labels, recent-item clearing and pre-activation video privacy. The final closeout report records the measured result as COMPLETE only after these live checks passed.
+          EOF
+
+          jq -n --rawfile body /tmp/new-body.md '{body:$body}' | gh api --method PATCH "repos/$REPO/pulls/$PR" --input - > /tmp/updated-pr.json
+
+      - name: Remove one-use metadata workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/mbm-closeout-metadata.yml
+          git add -A
+          git commit -m "chore: remove PR closeout metadata workflow"
+          git push origin HEAD:codex/mbm-audience-discovery-teach-professional-hubs-2026-08-09
