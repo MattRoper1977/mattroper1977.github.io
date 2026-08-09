@@ -132,20 +132,25 @@ jobs:
       - name: An undeclared diff aborts the write
         run: |
           set -euo pipefail
+          # Perturb only the editorial file's bytes, so every category still
+          # reproduces and the run reaches the write gate. Mutating a source
+          # manifest instead would fail --check first and never exercise it.
           python3 - <<'PY'
-          import json, pathlib
-          p = pathlib.Path("data/source-manifests/lessons-resources.json")
-          d = json.loads(p.read_text(encoding="utf-8"))
-          d[0]["title"] = d[0]["title"] + " (edited)"
-          p.write_text(json.dumps(d, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          import pathlib
+          p = pathlib.Path("data/mbm-search-editorial.json")
+          t = p.read_text(encoding="utf-8")
+          p.write_text(t.replace('"schemaVersion": 1,',
+                                 '"schemaVersion": 1,\n  "_controlProbe": "transient",', 1),
+                       encoding="utf-8")
           PY
           out=$(python3 tools/build_mbm_search_index.py --write 2>&1 || true)
-          git checkout -- data/source-manifests/lessons-resources.json
+          git checkout -- data/mbm-search-editorial.json
           if grep -q "write aborted" <<<"$out"; then
             echo "control detected: undeclared diff refused"
           else
             echo "write was not refused"; echo "$out" | head -10; exit 1
           fi
+          git diff --quiet data/mbm-search-index.json || { echo "index was modified"; exit 1; }
 
       - name: External link classification controls
         run: python3 tools/check_education_hub_links.py --self-test
