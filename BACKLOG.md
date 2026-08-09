@@ -287,6 +287,44 @@ chooser losing a group container, and `/main/` losing `id="audiences"`.
 
 ---
 
+## 0d. `verify_games_audience_faces.mjs` is syntax-checked and never run
+
+**instrument · ruling-pending** — found by the `/` versus `/main/` sweep, which
+it passed: its route model is entirely post-#110. The defect is that nothing
+evaluates it.
+
+`verify-games-audience-faces.yml` mentions the file three times: twice in a
+`paths:` filter, and once as
+
+```
+node --check tools/verify_games_audience_faces.mjs
+```
+
+which parses it. Nothing in the repository executes it. It is 550 lines of
+Playwright assertions — eight viewports, menu and focus behaviour, `/main/`
+preservation, all seven audience homepages, pupil adult-feature suppression,
+local preference, journeys, first-party requests, overflow — and none of it has
+run.
+
+Two documents describe it as though it does:
+`docs/MBM_GAMES_AUDIENCE_FACES.md:60` and
+`docs/MBM_HOMEPAGE_AUDIENCE_ARCHITECTURE.md:58`. That is species 10 in prose —
+a capability advertised and not delivered — and it is why the file reads as
+covered rather than dormant.
+
+It also still holds audience labels as literals (recorded in the #114
+private-copy sweep). They happen to be current, but **nothing can tell you
+whether they stay that way**, because nothing evaluates them. An unrun check is
+worse than a stale one: a stale check eventually goes red.
+
+Three ways out, and the choice is a judgement about cost, not correctness:
+run it in CI and accept a Playwright leg on every push; fold the assertions
+`verify_audience_discovery_browser.py` does not already make into that tool and
+delete this one; or keep it as a manual instrument and correct the two documents
+so nobody reads it as coverage.
+
+---
+
 ## 0. `/resources/` — the closeout rewrite is unrecoverable, page never rebuilt
 
 **content · ruling-pending** — the only item here that is genuinely waiting on a

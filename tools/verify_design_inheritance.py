@@ -187,6 +187,11 @@ def main() -> None:
         "BACKLOG 0c (instrument · work-pending): the live gate's markers are derived and proven red "
         "locally, but unproven against the real origin until merged"
     )
+    findings.note(
+        "BACKLOG 0d (instrument · ruling-pending): verify_games_audience_faces.mjs is node --check'd "
+        "and never executed - 550 lines of browser assertions that have never run, described as "
+        "coverage in two docs"
+    )
 
     surfaces: list[tuple[str, Path, str]] = [
         ("/", ROOT / "index.html", "audience"),

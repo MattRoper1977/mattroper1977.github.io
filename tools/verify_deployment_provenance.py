@@ -132,6 +132,12 @@ def resolve(sha: str) -> str | None:
     return out.strip() if code == 0 else None
 
 
+def short(ref: str) -> str:
+    """Abbreviate a sha but keep any suffix, so `<sha>^` does not print as `<sha>`."""
+    head, sep, tail = ref.partition("^")
+    return head[:7] + sep + tail
+
+
 def served_url(rel: str) -> str:
     """Repo path -> the path a visitor would request."""
     if rel == "index.html":
@@ -170,6 +176,24 @@ def data_stamp_of(sha: str) -> str | None:
             return None
         digests.append(hashlib.sha256(blob).hexdigest()[:12])
     return ",".join(digests)
+
+
+def witness_pair(limit: int = 40) -> tuple[str, str] | None:
+    """The most recent (parent, commit) where a *served* file changed.
+
+    The controls need a pair Layer 3 can actually witness. Taking HEAD and its
+    parent looked obvious and was wrong: a commit touching only tools/ and
+    docs/ leaves no witness, and the control then passes having exercised
+    nothing - species 3, in the tool written to demonstrate species 3.
+    """
+    code, out = git("rev-list", f"--max-count={limit}", "HEAD")
+    if code != 0:
+        return None
+    for sha in out.split():
+        parent = resolve(f"{sha}^")
+        if parent and changed_served_files(parent, sha):
+            return parent, sha
+    return None
 
 
 def deployed_sha(transport: Transport, repo: str) -> tuple[str | None, str]:
@@ -222,14 +246,14 @@ def check_once(transport: Transport, expected: str, base_url: str, repo: str) ->
     reference = witness_base or f"{expected}^"
     if resolve(reference) is None:
         findings.append(("3 origin witness", FAIL,
-                         f"cannot resolve {reference} to choose a witness; "
+                         f"cannot resolve {short(reference)} to choose a witness; "
                          f"a shallow checkout will do this - the workflow needs fetch-depth: 0"))
         return findings
 
     witnesses = changed_served_files(reference, expected)
     if not witnesses:
         findings.append(("3 origin witness", INCONCLUSIVE,
-                         f"no served file differs between {reference[:7]} and {expected[:7]}, so the "
+                         f"no served file differs between {short(reference)} and {short(expected)}, so the "
                          f"origin cannot tell them apart. Layer 2 carries the proof for this deployment"))
         return findings
 
@@ -336,9 +360,21 @@ def self_test() -> int:
         print("  [ERROR] controls need at least two commits of history", file=sys.stderr)
         return 1
 
+    # The controls need a commit pair that actually changed a served file, or
+    # Layer 3 has no witness and the control silently stops testing what it
+    # tests. Found rather than assumed: a branch whose last commit touches only
+    # tools/ and docs/ - which is exactly what happened the first time this ran
+    # - would otherwise have produced a passing control that exercised nothing.
+    pair = witness_pair()
+    if pair is None:
+        print("  [ERROR] no commit in recent history changes a served file, so the "
+              "Layer 3 controls cannot be built", file=sys.stderr)
+        return 1
+    witness_parent, witness_commit = pair
+
     def live_files(sha: str) -> dict[str, bytes]:
         served = {}
-        for rel in changed_served_files(parent, head)[:3]:
+        for rel in changed_served_files(witness_parent, witness_commit)[:3]:
             blob = committed_bytes(sha, rel)
             if blob is not None:
                 served["/" + served_url(rel).lstrip("/")] = (200, blob)
@@ -366,24 +402,24 @@ def self_test() -> int:
 
     # The mandatory one: a commit that is not deployed must go red.
     control("an undeployed SHA goes red",
-            FakeTransport(deployed=parent, files=live_files(parent)),
-            head, FAIL, "expected")
+            FakeTransport(deployed=witness_parent, files=live_files(witness_parent)),
+            witness_commit, FAIL, "expected")
 
     control("no deployment at all goes red",
             FakeTransport(deployed=None, files={}),
-            head, FAIL, "no source could say")
+            witness_commit, FAIL, "no source could say")
 
     control("the origin serving other bytes goes red",
-            FakeTransport(deployed=head, files={"/": (200, b"<html>stale</html>")}),
-            head, FAIL, "origin answered HTTP 404")
+            FakeTransport(deployed=witness_commit, files={"/": (200, b"<html>stale</html>")}),
+            witness_commit, FAIL, "origin answered HTTP 404")
 
     control("a matching deployment passes",
-            FakeTransport(deployed=head, files=live_files(head)),
-            head, PASS, "deployed commit is")
+            FakeTransport(deployed=witness_commit, files=live_files(witness_commit)),
+            witness_commit, PASS, "deployed commit is")
 
     # The four-state discipline: no witness must read as inconclusive, never as
     # a pass earned at the origin.
-    empty = check_once(FakeTransport(deployed=head, files=live_files(head)), head,
+    empty = check_once(FakeTransport(deployed=witness_commit, files=live_files(witness_commit)), witness_commit,
                        "https://example.invalid/", "o/r")
     witness_states = [state for layer, state, _ in empty if layer.startswith("3 ")]
     if INCONCLUSIVE not in witness_states and PASS not in witness_states:
@@ -425,16 +461,26 @@ def main() -> int:
     if args.must_not_be_deployed:
         findings = check_once(transport, expected, args.base_url, args.repo)
         report(1, findings)
-        if verdict(findings) == PASS:
-            print(f"[FAIL] control: {expected[:7]} is not supposed to be deployed, "
-                  f"but the check passed for it", file=sys.stderr)
+        # Judge on Layer 2 alone. The overall verdict is the wrong thing to read
+        # here: this control asserts a SHA is *not* deployed, and Layer 3 can go
+        # red for reasons that have nothing to do with the SHA - an unreachable
+        # origin, for one - which would let the control claim success while
+        # never reaching the gate it tests.
+        layer2 = [(state, detail) for layer, state, detail in findings if layer.startswith("2 ")]
+        if not layer2:
+            print("[ERROR] the control produced no Layer 2 finding at all", file=sys.stderr)
             return 1
-        layer2 = [d for layer, state, d in findings if layer.startswith("2 ") and state == FAIL]
-        if not any("expected" in d or "no source" in d for d in layer2):
-            print("[FAIL] control went red, but not because of the SHA - "
-                  "it did not reach the gate it tests", file=sys.stderr)
+        state, detail = layer2[0]
+        if state == PASS:
+            print(f"[ERROR] control premise is false: {short(expected)} IS the deployed commit, "
+                  f"so it cannot serve as a negative control. Pass a commit that is not deployed.",
+                  file=sys.stderr)
             return 1
-        print(f"[PASS] control: an undeployed commit is rejected ({layer2[0]})")
+        if "expected" not in detail and "no source" not in detail:
+            print(f"[FAIL] Layer 2 went red, but not because of the SHA - "
+                  f"it did not reach the gate it tests ({detail})", file=sys.stderr)
+            return 1
+        print(f"[PASS] control: an undeployed commit is rejected ({detail})")
         return 0
 
     state, findings = run(transport, expected, args.base_url, args.repo,
