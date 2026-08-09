@@ -1,5 +1,6 @@
 /* mbm-site-professional-design-upgrade-2026-08-07
    mbm-accounts-members-mailing-2026-08-08
+   mbm-homepage-audience-routing-2026-08-09
    Progressive platform navigation and interaction layer. No public content
    depends on this file: if it fails, native links and page content remain usable. */
 (function(){
@@ -99,8 +100,12 @@
      of games/lessons. It always points at a real route. When Supabase is not
      configured the route explains that safely; it never creates a local
      password as a fallback. */
+  function adultFeaturesAllowed(){
+    return !doc.body||doc.body.getAttribute('data-mbm-adult-features')!=='off';
+  }
   function accountTargets(){
     var links=[];
+    if(!adultFeaturesAllowed())return links;
     each(doc.querySelectorAll('header.header nav'),function(nav){
       var existing=nav.querySelector('a[href="/account/"],a[href="https://madebymatt.uk/account/"]');
       if(existing){existing.setAttribute('data-mbm-account-nav','1');links.push(existing);return;}
@@ -114,6 +119,7 @@
     return links;
   }
   function ensureSecondaryLink(href,text,attr){
+    if(!adultFeaturesAllowed())return;
     each(doc.querySelectorAll('header.header nav .mbm-nav-panel'),function(panel){
       if(panel.querySelector('a['+attr+']'))return;
       var a=doc.createElement('a');a.href=href;a.textContent=text;a.setAttribute(attr,'1');
@@ -129,9 +135,10 @@
     doc.head.appendChild(style);
   }
   function reflectMailingFooter(enabled){
+    if(!adultFeaturesAllowed()||doc.body.getAttribute('data-mbm-mailing-footer')==='off')enabled=false;
     each(doc.querySelectorAll('footer.footer'),function(footer){
       var existing=footer.querySelector('[data-mbm-mailing-cta]');
-      if(!enabled){if(existing&&existing.parentNode)existing.parentNode.removeChild(existing);return;}
+      if(!enabled||footer.getAttribute('data-mbm-mailing-cta')==='off'){if(existing&&existing.parentNode)existing.parentNode.removeChild(existing);return;}
       if(existing)return;
       ensurePlatformExtrasStyle();
       var a=doc.createElement('a');a.href='/mailing-list/';a.textContent='Join mailing list';a.className='mbm-mailing-cta';a.setAttribute('data-mbm-mailing-cta','1');
@@ -172,6 +179,13 @@
   }
 
   function initAccountNav(){
+    if(!adultFeaturesAllowed()){
+      removeSecondary('data-mbm-account-nav');
+      removeSecondary('data-mbm-register-nav');
+      removeSecondary('data-mbm-mailing-nav');
+      reflectMailingFooter(false);
+      return;
+    }
     accountTargets();
     retireLegacyTeacherList();
     function attach(){

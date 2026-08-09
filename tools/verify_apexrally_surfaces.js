@@ -20,6 +20,10 @@ const http = require('http');
 const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
+const HOME_PATH = fs.existsSync(path.join(ROOT, 'main', 'index.html'))
+  ? path.join(ROOT, 'main', 'index.html')
+  : path.join(ROOT, 'index.html');
+const HOME_ROUTE = HOME_PATH.endsWith(path.join('main', 'index.html')) ? '/main/' : '/';
 const VIEWPORTS = [
   { name: '360', width: 360, height: 720 },
   { name: '768', width: 768, height: 1024 },
@@ -80,7 +84,7 @@ function manifestSports() {
     await gate('C1', 'homepage Sports cards render with JS disabled', async () => {
       const ctx = await browser.newContext({ javaScriptEnabled: false, viewport: VIEWPORTS[2] });
       const page = await ctx.newPage();
-      await page.goto(origin + '/index.html', { waitUntil: 'load' });
+      await page.goto(origin + HOME_ROUTE, { waitUntil: 'load' });
       const cards = await page.locator('.dx-sports-grid a.dx-sport').all();
       const names = [];
       for (const c of cards) names.push((await c.getAttribute('data-sport-game')) || '');
@@ -102,7 +106,7 @@ function manifestSports() {
     await gate('C2', 'homepage Apex Sports curation remains valid without sibling displacement', async () => {
       const ctx = await browser.newContext({ javaScriptEnabled: false, viewport: VIEWPORTS[2] });
       const page = await ctx.newPage();
-      await page.goto(origin + '/index.html', { waitUntil: 'load' });
+      await page.goto(origin + HOME_ROUTE, { waitUntil: 'load' });
       const names = await page.$$eval('.dx-sports-grid a.dx-sport', els => els.map(e => e.getAttribute('data-sport-game')));
       const SIBLINGS = ['Apex Kick', 'Apex Pool', 'Apex Golf', 'Apex Tennis'];
       SIBLINGS.forEach(s => assert(names.includes(s), `${s} was displaced from the homepage`));
@@ -125,7 +129,7 @@ function manifestSports() {
       for (const vp of VIEWPORTS) {
         const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, javaScriptEnabled: false });
         const page = await ctx.newPage();
-        await page.goto(origin + '/index.html', { waitUntil: 'load' });
+        await page.goto(origin + HOME_ROUTE, { waitUntil: 'load' });
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
         assert(overflow <= 0, `${vp.name}: page overflows horizontally by ${overflow}px`);
         const boxes = await page.$$eval('.dx-sports-grid a.dx-sport', els => els.map(e => {
@@ -168,7 +172,7 @@ function manifestSports() {
     });
 
     await gate('C5', 'one homepage surface, New Release untouched, no doors entry', async () => {
-      const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+      const home = fs.readFileSync(HOME_PATH, 'utf8');
       const occurrences = (home.match(/\/apexrally\//g) || []).length;
       assert(occurrences === 1, `Apex Rally appears ${occurrences} times on the homepage; it gets exactly one surface`);
       const releases = [...home.matchAll(/data-release="([^"]+)"/g)].map(m => m[1]);

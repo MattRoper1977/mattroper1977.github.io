@@ -1,0 +1,637 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Made by Matt — Learn • Build • Explore</title><meta name="description" content="Classroom-ready teacher tools, games and interactive lessons — free, accessible and built in a real classroom. Made by Matt."><meta name="theme-color" content="#161D3D"><meta property="og:title" content="Made by Matt — Learn • Build • Explore"><meta property="og:description" content="Learning that feels worth exploring — teacher tools, games and lesson packs."><meta property="og:url" content="https://madebymatt.uk/main/"><meta property="og:type" content="website"><meta property="og:site_name" content="Made by Matt"><meta property="og:image" content="https://madebymatt.uk/assets/og-cover.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://madebymatt.uk/assets/og-cover.png"><link rel="canonical" href="https://madebymatt.uk/main/"><link rel="icon" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/assets/mbm-features.css">
+<style id="dxStyles">
+:root{--dx-navy:#161D3D;--dx-deep:#0F1530;--dx-mint:#B9E6CD;--dx-mintd:#2F6B4D;--dx-amber:#F2A24A;--dx-ambd:#C97F2E;--dx-cream:#F6F1E4;--dx-card:#FFFDF6;--dx-ink:#1B2140;--dx-mut:#4A5170;--dx-violet:#A78BFA;--dx-lite:#FBF6EA;--dx-line:#E3DAC5;--dx-title:#161D3D;--dx-eyeb:#8A5620;--dx-r2:16px;--dx-h1:#232C55;--dx-h2:#161D3D}
+body[data-theme="pink"]{--dx-cream:#F9E8EC;--dx-lite:#FDF2F4;--dx-card:#FFF9FA;--dx-line:#EBD5DB;--dx-h1:#8E2E55;--dx-h2:#5E1B39}
+body[data-theme="blue"]{--dx-cream:#E7EEF7;--dx-lite:#F1F6FC;--dx-card:#F8FBFF;--dx-line:#D3DEEC;--dx-h1:#1F4E79;--dx-h2:#10304F}
+body[data-theme="light"]{--dx-cream:#F7F7F4;--dx-lite:#FAFAF8;--dx-card:#FFFFFF;--dx-line:#E4E4E0;--dx-h1:#3C4668;--dx-h2:#262E48}
+body[data-theme="dark"]{--dx-cream:#121834;--dx-lite:#161D3D;--dx-card:#1B234A;--dx-ink:#E8E2D4;--dx-mut:#A9B2CC;--dx-line:#2E3860;--dx-title:#E8E2D4;--dx-eyeb:#F2A24A;--dx-h1:#1B2450;--dx-h2:#090D1E}
+body[data-theme="dark"] .dx-main{background:var(--dx-amber);color:var(--dx-navy);border-color:var(--dx-amber)}
+body[data-theme="dark"] .dx-main:hover{background:var(--dx-amber);filter:brightness(1.07)}
+body[data-theme="dark"] .dx-chip.on{background:var(--dx-amber);color:var(--dx-navy);border-color:var(--dx-amber)}
+body[data-theme="dark"] .dx-tile svg{color:var(--dx-amber)}
+body[data-theme="dark"] a.dx-prod:focus-visible{outline-color:var(--dx-amber)}
+/* ---------- header utility: reading swatches (inside nav) ---------- */
+.dx-swatches{display:flex;align-items:center;gap:.1rem;flex-wrap:wrap}
+.swlabel{display:none;width:100%;margin:.5rem 0 .1rem;color:#C9D1E2;font-size:.7rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.dx-sw{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;background:transparent;border:0;border-radius:50%;cursor:pointer}
+.dx-sw i{display:block;width:18px;height:18px;border-radius:50%;border:1.5px solid #FFFFFF55;transition:transform .15s ease}
+.dx-sw:hover i{transform:scale(1.2);border-color:#FFF}
+.dx-sw[aria-pressed="true"] i{border-color:#FFF;box-shadow:0 0 0 3px var(--dx-amber)}
+.dx-sw[data-t="cream"] i{background:#F6F1E4}
+.dx-sw[data-t="pink"] i{background:#F4C9D4}
+.dx-sw[data-t="blue"] i{background:#BFD6EE}
+.dx-sw[data-t="light"] i{background:#FFFFFF}
+.dx-sw[data-t="dark"] i{background:#161D3D;border-color:#B9E6CD99}
+.header .bar{flex-wrap:wrap}
+@media (max-width:680px){.swlabel{display:block}.dx-swatches{width:100%;gap:.35rem;margin-top:.5rem;padding-top:.2rem;border-top:1px solid #B9E6CD2C}}
+/* ---------- hero ---------- */
+.dx-hero{position:relative;background:radial-gradient(ellipse 120% 70% at 50% -20%,var(--dx-h1),var(--dx-h2) 70%);transition:background .35s ease;color:#E8E2D4;text-align:center;padding:3rem 1rem 2.8rem;overflow:hidden}
+.dx-hero .pat{position:absolute;inset:0;opacity:.09;pointer-events:none}
+.dx-hero>*:not(.pat){position:relative}
+.dx-hero img.mark{width:min(150px,34vw);filter:drop-shadow(0 14px 30px #00000073)}
+.dx-hero h1{font-size:clamp(1.9rem,6.4vw,3.2rem);letter-spacing:-.02em;line-height:1.08;margin:1rem auto .6rem;max-width:16ch}
+.dx-hero .lead{color:#C9D1E2;font-size:clamp(.92rem,2.2vw,1.08rem);max-width:34rem;margin:0 auto;line-height:1.55}
+.dx-cta{display:flex;gap:.7rem;justify-content:center;flex-wrap:wrap;margin-top:1.4rem}
+.dx-btn{display:inline-flex;align-items:center;font-weight:800;font-size:.9rem;padding:.68rem 1.3rem;min-height:44px;border-radius:999px;text-decoration:none}
+.dx-btn.p{background:var(--dx-amber);color:var(--dx-navy);box-shadow:0 2px 0 var(--dx-ambd)}
+.dx-btn.p:hover{filter:brightness(1.06)}
+.dx-btn.s{color:var(--dx-mint);border:1.5px solid #B9E6CD77}
+.dx-btn.s:hover{border-color:var(--dx-mint)}
+/* ---------- shared canvas + wrap ---------- */
+.dx-wrap{max-width:1000px;margin:auto;padding:0 1rem}
+.dx-eyebrow{display:flex;align-items:center;justify-content:center;gap:.8rem;margin:0;color:var(--dx-eyeb);font-size:.84rem;font-weight:800;letter-spacing:.24em;text-transform:uppercase;text-align:center}
+.dx-eyebrow::before,.dx-eyebrow::after{content:"";flex:1;height:1.5px;background:var(--dx-line);border-radius:2px}
+/* ---------- search-first band ---------- */
+.dx-search{background:var(--dx-cream);padding:2.6rem 0 1.4rem}
+.dx-search h2{text-align:center;color:var(--dx-eyeb);font-size:1.25rem;letter-spacing:.02em;margin:0 0 1rem}
+.dx-bar{display:flex;max-width:620px;margin:0 auto;background:var(--dx-card);border:2px solid var(--dx-ink);border-radius:999px;overflow:hidden}
+.dx-bar input{flex:1;min-width:0;border:0;background:transparent;padding:.9rem 1.3rem;min-height:52px;font:inherit;font-size:.95rem;color:var(--dx-ink)}
+.dx-bar input:focus{outline:none}
+.dx-bar button{border:0;background:transparent;padding:0 1.15rem;cursor:pointer}
+.dx-bar button svg{width:22px;height:22px;display:block}
+.dx-bar:focus-within{border-color:var(--dx-ambd)}
+.dx-chipwrap{position:relative;margin-top:1rem}
+.dx-chips{display:flex;gap:.5rem;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x proximity;justify-content:flex-start;padding:.15rem .2rem .3rem;scrollbar-width:none;-ms-overflow-style:none}
+.dx-chips::-webkit-scrollbar{display:none}
+.dx-chipwrap::after{content:"";position:absolute;top:0;bottom:0;right:0;width:44px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--dx-cream));opacity:1;transition:opacity .2s ease}
+.dx-chipwrap.at-end::after{opacity:0}
+@media (prefers-reduced-motion:reduce){.dx-chipwrap::after{transition:none}}
+.dx-chip{flex:0 0 auto;scroll-snap-align:start;white-space:nowrap;display:inline-flex;align-items:center;font-size:.78rem;font-weight:700;color:var(--dx-ink);background:var(--dx-card);border:1.5px solid var(--dx-line);border-radius:999px;padding:.5rem 1.05rem;min-height:44px;text-decoration:none}
+.dx-chip:hover{border-color:var(--dx-ambd)}
+.dx-chip.on{background:var(--dx-navy);color:#FFF6E8;border-color:var(--dx-navy)}
+.dx-chip.on:hover{border-color:var(--dx-navy);filter:brightness(1.12)}
+.dx-count{text-align:center;color:var(--dx-mut);font-size:.82rem;margin:1rem 0 0}
+/* ---------- Sports catalogue: hardcoded no-JS baseline ---------- */
+.dx-sports{background:var(--dx-lite);padding:.2rem 0 2.6rem}
+.dx-sports .dx-sports-lede{max-width:42rem;margin:.75rem auto 1rem;text-align:center;color:var(--dx-mut);font-size:.9rem;line-height:1.5}
+.dx-sports-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;max-width:760px;margin:0 auto}
+/* An odd number of cards leaves the last one alone in a half-width cell. Let it
+   span instead — derived from the count, so it stays right at 4, 5 or 6. */
+.dx-sports-grid>:last-child:nth-child(odd){grid-column:1/-1}
+a.dx-sport{--sport:var(--dx-amber);display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.8rem;min-height:92px;padding:.9rem 1rem;background:var(--dx-card);border:1.5px solid var(--dx-line);border-left:5px solid var(--sport);border-radius:14px;text-decoration:none;color:var(--dx-ink);box-shadow:0 3px 10px #161D3D0d;transition:transform .18s ease,border-color .18s ease}
+a.dx-sport:hover{transform:translateY(-2px);border-color:var(--sport)}
+a.dx-sport:focus-visible{outline:3px solid var(--dx-amber);outline-offset:2px}
+.dx-sport-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--dx-lite);border:1px solid var(--sport);font-size:1.55rem}
+.dx-sport-copy b{display:block;color:var(--dx-title);font-size:1rem;line-height:1.2}
+.dx-sport-copy span{display:block;color:var(--dx-mut);font-size:.76rem;line-height:1.4;margin-top:.2rem}
+.dx-sport-go{font-size:.72rem;font-weight:800;white-space:nowrap;color:var(--dx-eyeb)}
+@media(max-width:620px){.dx-sports-grid{grid-template-columns:1fr}.dx-sport-go{justify-self:end}}
+@media(prefers-reduced-motion:reduce){a.dx-sport{transition:none}a.dx-sport:hover{transform:none}}
+
+/* ---------- latest drops rail ---------- */
+.dx-drops{background:var(--dx-cream);padding:.6rem 0 2.4rem}
+.dx-upd{background:var(--dx-lite);padding:.4rem 0 2.6rem}
+.dx-updbox{max-width:760px;margin:1rem auto 0;background:var(--dx-card);border:1.5px solid var(--dx-line);
+  border-radius:var(--dx-r2);padding:1.15rem 1.25rem;box-shadow:0 2px 10px rgba(22,29,61,.06)}
+.dx-updbox h3{margin:0 0 .2rem;font-size:1.06rem;color:var(--dx-title);letter-spacing:-.01em}
+.dx-updbox .dx-when{font-size:.76rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--dx-eyeb);margin:0 0 .7rem}
+.dx-updlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.5rem}
+.dx-updlist li{display:flex;gap:.6rem;align-items:flex-start;font-size:.93rem;line-height:1.5;color:var(--dx-mut)}
+.dx-updlist b{color:var(--dx-ink)}
+.dx-updlist .dx-dot{flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:var(--dx-mint);
+  border:1.5px solid var(--dx-mintd);margin-top:.42rem}
+.dx-updacts{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem}
+@media (prefers-reduced-motion:reduce){.dx-updbox{transition:none}}
+
+.dx-stack{display:flex;flex-direction:column;gap:.55rem;margin-top:1rem;max-width:640px;margin-left:auto;margin-right:auto}
+a.dx-drop{display:flex;align-items:center;gap:.7rem;min-height:52px;background:var(--dx-card);border:1.5px solid var(--dx-line);border-radius:14px;padding:.55rem .9rem;text-decoration:none;box-shadow:0 3px 10px #161D3D0d;transition:transform .18s ease,border-color .18s ease}
+a.dx-drop:hover{transform:translateY(-2px);border-color:var(--dx-ambd)}
+.dx-drop .pill.t-build{background:#985710;color:#FFF6E8}
+.dx-drop .pill.t-grow{background:#2F6B4D;color:#FFF6E8}
+.dx-drop .pill.t-launch{background:#81680F;color:#FFF6E8}
+.dx-drop .pill{flex:0 0 auto;font-size:.62rem;font-weight:800;letter-spacing:.12em;background:var(--dx-amber);color:var(--dx-navy);border-radius:999px;padding:.18rem .55rem}
+.dx-drop b{flex:1;font-size:.8rem;line-height:1.3;color:var(--dx-ink)}
+.dx-drop small{flex:0 0 auto;font-size:.68rem;color:var(--dx-mut);text-align:right}
+@media (max-width:520px){.dx-drop small{display:none}}
+/* ---------- de-nested collection zones ---------- */
+.dx-dir{background:var(--dx-cream);padding:1rem 0 3rem}
+.dx-cards{display:flex;flex-direction:column;gap:3rem}
+.dx-zone{display:flex;flex-direction:column;gap:1rem}
+.dx-duo{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.dx-duo.dx-trio>.dx-prod:nth-child(3):last-child{grid-column:1/-1}
+@media (min-width:720px){.dx-duo.dx-trio{grid-template-columns:repeat(3,1fr)}.dx-duo.dx-trio>.dx-prod:nth-child(3){grid-column:auto}}
+a.dx-prod{background:var(--dx-card);border:1.5px solid var(--dx-line);border-radius:var(--dx-r2);padding:1.1rem 1rem 1rem;text-decoration:none;color:var(--dx-ink);display:flex;flex-direction:column;align-items:center;gap:.5rem;box-shadow:0 3px 12px #161D3D0f;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+a.dx-prod:hover{transform:translateY(-3px);box-shadow:0 10px 22px #161D3D1a;border-color:var(--dx-ambd)}
+a.dx-prod:focus-visible{outline:3px solid var(--dx-navy);outline-offset:2px}
+/* Card art is now uniformly 5:4 — every door either uses a 0 0 120 96 SVG
+   template or a photo cut to that ratio, so the row is even at every width
+   with nothing cropped and nothing letterboxed.
+
+   It was not always so, and the history is worth keeping because the check
+   that was supposed to catch it could not. Studio Suite used to carry a
+   1200x670 photo. At 120px tall that needs 215px of width; below ~546px of
+   viewport the card is narrower than that, max-width clamped it, and
+   object-fit:contain letterboxed it:
+
+     viewport   photo painted   sibling SVG   difference
+       320px       58.97px          96px      39% shorter
+       390px       78.51px          96px      18% shorter
+       421px       85.15px         120px      29% shorter
+      >=546px      120px           120px      match
+
+   The harness reported an even row throughout, because it measured
+   getBoundingClientRect() on the <img> — which returns the BOX. Every card's
+   box was already identical; the painted content was what differed. If you
+   ever check this again, measure naturalWidth/naturalHeight scaled into the
+   box, not the box.
+
+   height rather than aspect-ratio is still the rule here, and object-fit is
+   still belt-and-braces, so a future door carrying art of some other ratio
+   degrades to a letterbox rather than a crop. Better a visible gap than a
+   silently eaten wordmark. */
+.dx-prod svg,.dx-prod .dx-art{height:120px;width:auto;max-width:100%;display:block}
+.dx-prod .dx-art{border-radius:10px;object-fit:contain;object-position:center}
+@media (max-width:420px){.dx-prod svg,.dx-prod .dx-art{height:96px}}
+.dx-bandlead{margin:.35rem auto 1rem;max-width:52ch;text-align:center;font-size:.82rem;line-height:1.55;color:var(--dx-mut)}
+.dx-prod b{font-size:.92rem;color:var(--dx-navy);text-align:center;line-height:1.2}
+.dx-prod p{margin:0;font-size:.75rem;line-height:1.45;color:var(--dx-mut);text-align:center;max-width:34ch}
+.dx-acts{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.2rem}
+.dx-main,.dx-sub{display:inline-flex;align-items:center;font-size:.8rem;font-weight:800;text-decoration:none;border-radius:999px;padding:.55rem 1.15rem;min-height:44px}
+.dx-n{display:inline-block;margin:0 .3rem 0 .15rem;font-variant-numeric:tabular-nums}
+.dx-main{background:var(--dx-navy);color:#FFF6E8;border:1.5px solid var(--dx-navy)}
+.dx-main:hover{background:#232C55;border-color:#232C55}
+.dx-sub{background:transparent;color:var(--dx-ink);border:1.5px solid var(--dx-ink)}
+.dx-sub:hover{border-color:var(--dx-ambd);color:var(--dx-ambd)}
+/* ---------- promise grid ---------- */
+.dx-std{background:var(--dx-cream);padding:3rem 0 3.4rem}
+.dx-std h2{text-align:center;color:var(--dx-ink);font-size:1.05rem;letter-spacing:.06em;margin:0 0 1.2rem}
+.dx-std h2 b{color:var(--dx-ambd)}
+.dx-tiles{display:grid;grid-template-columns:1fr;gap:.8rem}
+@media (min-width:560px){.dx-tiles{grid-template-columns:repeat(2,1fr)}}
+@media (min-width:960px){.dx-tiles{grid-template-columns:repeat(4,1fr)}}
+.dx-tile{background:var(--dx-card);border:1.5px solid var(--dx-line);border-radius:var(--dx-r2);padding:1rem .85rem;text-align:center;box-shadow:0 3px 10px #161D3D0a}
+.dx-tile svg{width:42px;height:42px;color:var(--dx-ambd)}
+.dx-tile b{display:block;color:var(--dx-ink);font-size:.92rem;margin:.3rem 0 .2rem}
+.dx-tile p{margin:0;font-size:.78rem;line-height:1.5;color:var(--dx-mut)}
+/* ---------- contact ---------- */
+.dx-contact{background:var(--dx-navy);color:#E8E2D4;padding:2.2rem 0 2rem}
+.dx-contact h2{text-align:center;font-size:1.25rem;margin:0 0 1.1rem}
+.dx-contact form{max-width:520px;margin:0 auto;display:grid;gap:.85rem}
+.dx-follow{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem}
+@media(max-width:720px){.dx-follow{grid-template-columns:1fr}}
+.dx-fcard{display:block;background:var(--dx-card);border:1.5px solid var(--dx-line);border-radius:var(--dx-r2);padding:1rem 1.05rem;text-decoration:none;box-shadow:0 3px 10px rgba(22,29,61,.06)}
+.dx-fcard b{display:block;color:var(--dx-title);font-size:1rem;margin-bottom:.25rem}
+.dx-fcard span{display:block;color:var(--dx-mut);font-size:.84rem;line-height:1.5}
+.dx-fcard:hover{border-color:var(--dx-ambd)}
+.dx-fcard:focus-visible{outline:3px solid var(--dx-amber);outline-offset:2px}
+.dx-cdirect{max-width:520px;margin:0 auto 1.1rem;padding:.7rem .85rem;border:1.5px solid #3A4470;border-radius:12px;background:#0F1530;font-size:.85rem;line-height:1.55;color:#C9D1E2;text-align:left}
+/* Teacher updates. Visually a sibling of the contact form, deliberately not a
+   louder call to action than it — this is a side offer, not the point of the page. */
+.dx-teach{margin-top:2rem;padding-top:1.6rem;border-top:1.5px solid rgba(185,230,205,.22)}
+.dx-teach h3{color:#E8E2D4;font-size:1.05rem;margin:0 0 .5rem}
+.dx-tform{display:grid;gap:.75rem;max-width:560px;margin-top:1rem}
+.dx-tlab{font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#B9E6CD}
+.dx-tin{width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(185,230,205,.35);background:rgba(255,255,255,.06);color:inherit;font:inherit}
+.dx-tin:focus-visible{outline:3px solid #F2A24A;outline-offset:2px}
+.dx-tcheck{display:flex;gap:.65rem;align-items:flex-start;font-size:.88rem;line-height:1.55;color:#C9D1E2}
+.dx-tcheck input{margin-top:.25rem;width:20px;height:20px;flex:0 0 20px;accent-color:#F2A24A}
+.dx-tcheck b{color:#E8E2D4}
+.dx-tbtn{justify-self:start;font:inherit;font-weight:800;background:#F2A24A;color:#161D3D;border:0;border-radius:999px;padding:.8rem 1.5rem;min-height:46px;cursor:pointer;box-shadow:0 2px 0 #C97F2E}
+.dx-tbtn:hover{filter:brightness(1.06)}
+.dx-tbtn:focus-visible{outline:3px solid #B9E6CD;outline-offset:2px}
+
+.dx-cdirect a{color:#B9E6CD;font-weight:700;overflow-wrap:anywhere}
+.dx-cnote{max-width:520px;margin:0 auto .7rem;font-size:.84rem;line-height:1.6;color:#C9D1E2;text-align:left}
+.dx-cnote b{color:#E8E2D4}
+.dx-cnote a{color:#B9E6CD;font-weight:700}
+.dx-field{display:block;font-size:.78rem;font-weight:700;letter-spacing:.04em;color:#C9D1E2}
+.dx-field input,.dx-field textarea{display:block;width:100%;box-sizing:border-box;margin-top:.35rem;background:#0F1530;border:1.5px solid #3A4470;border-radius:12px;color:#E8E2D4;font:inherit;font-size:.92rem;padding:.75rem .95rem}
+.dx-field input:focus,.dx-field textarea:focus{outline:none;border-color:var(--dx-amber)}
+.dx-send{font:inherit;font-weight:800;font-size:.95rem;background:var(--dx-amber);color:var(--dx-navy);border:0;border-radius:999px;padding:.8rem 1.4rem;min-height:44px;cursor:pointer;box-shadow:0 2px 0 var(--dx-ambd)}
+.dx-send:hover{filter:brightness(1.06)}
+.dx-about{max-width:560px;margin:1.8rem auto 0;text-align:center;font-size:.9rem;line-height:1.6;color:#C9D1E2}
+.dx-about h3{color:#E8E2D4;font-size:1rem;margin:0 0 .4rem}
+.dx-about b{color:var(--dx-mint);letter-spacing:.06em}
+a.dx-btn:focus-visible,.dx-sub:focus-visible,.dx-main:focus-visible,.dx-chip:focus-visible,a.dx-drop:focus-visible,.dx-send:focus-visible,.dx-sw:focus-visible{outline:3px solid var(--dx-amber);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){a.dx-prod,a.dx-drop,.dx-sw i,.dx-hero{transition:none}a.dx-prod:hover,a.dx-drop:hover,.dx-sw:hover i{transform:none}}
+@media (max-width:420px){.dx-duo{grid-template-columns:1fr 1fr;gap:.55rem}.dx-prod p{display:none}}
+@media print{.dx-drops{display:none!important}}
+/* ---------- see it in action: video band ---------- */
+.dx-video{background:var(--dx-cream);padding:2.4rem 0 3rem}
+.dx-video .dx-eyebrow{margin-bottom:1.4rem}
+.dx-vidgrid{display:grid;grid-template-columns:1fr;gap:1.4rem}
+@media (min-width:720px){.dx-vidgrid{grid-template-columns:1fr 1fr}}
+.dx-vid{margin:0;display:flex;flex-direction:column;gap:.7rem}
+.dx-vidbtn{position:relative;display:block;width:100%;padding:0;border:1.5px solid var(--dx-line);background:var(--dx-navy);border-radius:var(--dx-r2);overflow:hidden;cursor:pointer;aspect-ratio:16/9}
+.dx-vidbtn img{display:block;width:100%;height:100%;object-fit:cover}
+.dx-vidbtn::after{content:"";position:absolute;left:50%;top:50%;width:64px;height:64px;transform:translate(-50%,-50%);border-radius:50%;background:var(--dx-amber) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 7.5v9l7.5-4.5z' fill='%23161D3D'/%3E%3C/svg%3E") center/60% no-repeat;box-shadow:0 6px 18px rgba(22,29,61,.4)}
+.dx-vidbtn:hover{border-color:var(--dx-mint)}
+.dx-vidbtn:hover::after{filter:brightness(1.06)}
+.dx-vidbtn:focus-visible{outline:3px solid var(--dx-mint);outline-offset:3px}
+.dx-vid iframe{display:block;width:100%;height:100%;aspect-ratio:16/9;border:0;border-radius:var(--dx-r2);background:var(--dx-navy)}
+.dx-vid figcaption{font-size:.86rem;line-height:1.5;color:var(--dx-mut)}
+.dx-vid figcaption b{color:var(--dx-ink)}
+.dx-vidnote{margin:1.5rem auto 0;max-width:44rem;text-align:center;font-size:.82rem;line-height:1.6;color:var(--dx-mut)}
+.dx-vidnote a{color:var(--dx-ambd);font-weight:700;text-decoration:none;white-space:nowrap}
+.dx-vidnote a:hover{text-decoration:underline}
+/* recently improved: folded tail */
+.dx-more{margin-top:.6rem}
+.dx-more>summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;color:var(--dx-ambd);font-size:.86rem;font-weight:700;padding:.2rem 0}
+.dx-more>summary::-webkit-details-marker{display:none}
+.dx-more>summary::before{content:"+";font-weight:800}
+.dx-more[open]>summary::before{content:"\2212"}
+.dx-more>summary:hover{text-decoration:underline}
+.dx-more>summary:focus-visible{outline:3px solid var(--dx-amber);outline-offset:2px;border-radius:4px}
+.dx-more .dx-updlist{margin-top:.5rem}
+/* quiet the visit counter until it's earned */
+#mbmStats.mbm-quiet .mbm-metrics,#mbmStats.mbm-quiet .mbm-boardwrap{display:none}
+</style><!-- DATA-STAMP:BEGIN generated by tools/stamp-data.py, do not edit by hand -->
+<script>window.MBM_DATA_STAMP={"/site.json":"6c357219c0a3","/data/resources.json":"6db846b84893"};window.MBM_STAMP=function(u){var D=window.MBM_DATA_STAMP||{},k=String(u==null?"":u),p=k.charAt(0)==="/"?k:"/"+k.replace(/^\.\//,""),h=D[p]||D[k];return h?{url:k+(k.indexOf("?")<0?"?":"&")+"v="+h,opts:{}}:{url:k,opts:{cache:"no-cache"}};};</script>
+<!-- DATA-STAMP:END -->
+<link rel="manifest" href="/site.webmanifest">
+<link rel="stylesheet" href="/assets/mbm-platform.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Made by Matt — Learn • Build • Explore","description":"Classroom-ready teacher tools, games and interactive lessons — free, accessible and built in a real classroom.","url":"https://madebymatt.uk/main/","isPartOf":{"@type":"WebSite","name":"Made by Matt","url":"https://madebymatt.uk/"}}</script>
+</head><body data-mbm-general-home="main"><a class="skip" href="#main">Skip to content</a><header class="header mbm-site-header"><div class="bar"><a class="brand" href="/main/"><img src="/assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links"><a href="/games/">Games</a><a href="/Lessons/">Lessons</a><a href="/Matt-s-Apps-/">Apps</a><a href="/tools/">Tools</a><a href="/resources/">Resources</a></div><details class="mbm-nav-more"><summary>More</summary><div class="mbm-nav-panel"><a href="/main/" aria-current="page">Main homepage</a><a href="/">Choose homepage</a><a href="/stats/">Stats</a><a href="/members/">Members</a><a href="/main/#about">About</a><a href="/main/#collections">Follow the work</a><a href="/main/#contact">Contact</a><a href="/privacy/">Privacy</a></div></details><details class="mbm-theme-menu"><summary>Display</summary><div class="mbm-theme-panel"><div class="dx-swatches" role="group" aria-label="Reading background"><span class="swlabel">Reading background</span><button class="dx-sw" type="button" data-t="cream" aria-pressed="true" title="Warm" aria-label="Warm reading background"><i></i></button><button class="dx-sw" type="button" data-t="pink" aria-pressed="false" title="Pink" aria-label="Pink reading background"><i></i></button><button class="dx-sw" type="button" data-t="blue" aria-pressed="false" title="Blue" aria-label="Blue reading background"><i></i></button><button class="dx-sw" type="button" data-t="light" aria-pressed="false" title="Light" aria-label="Light reading background"><i></i></button><button class="dx-sw" type="button" data-t="dark" aria-pressed="false" title="Dark" aria-label="Dark reading background"><i></i></button></div></div></details></nav></div></header>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="dxi-free" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M9.2 15.5c.6.8 1.6 1.3 2.8 1.3 1.7 0 2.9-.9 2.9-2.2 0-2.9-5.4-1.5-5.4-4.3 0-1.2 1.1-2.1 2.6-2.1 1.1 0 2 .4 2.6 1.1M12 6.6v1.6M12 16.8v1.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+<symbol id="dxi-shield" viewBox="0 0 24 24"><path d="M12 3.2 5 5.8v5.4c0 4.5 3 7.7 7 9.6 4-1.9 7-5.1 7-9.6V5.8L12 3.2Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="dxi-off" viewBox="0 0 24 24"><path d="M5 13a7 7 0 0 1 11.6-5.2M19 13a7 7 0 0 1-.5 2.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.2 13a3.8 3.8 0 0 1 6.3-2.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="16" r="1.4" fill="currentColor"/><path d="M4 4l16 16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+<symbol id="dxi-board" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M7 8h7M7 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12 16v3M8.5 21h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+</defs></svg>
+<main id="main">
+
+<section class="dx-hero">
+<svg class="pat" viewBox="0 0 720 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+<g fill="none" stroke="#B9E6CD" stroke-width="1.4">
+<rect x="40" y="52" width="52" height="66" rx="7"/><path d="M52 72h28M52 86h28M52 100h18"/>
+<rect x="612" y="60" width="52" height="66" rx="7"/><path d="M624 80h28M624 94h28M624 108h18"/>
+<rect x="86" y="278" width="52" height="66" rx="7"/><path d="M98 298h28M98 312h28M98 326h18"/>
+<rect x="586" y="270" width="52" height="66" rx="7"/><path d="M598 290h28M598 304h28M598 318h18"/>
+<path d="M92 118 L200 190M612 126 L520 190M138 312 L236 258M586 302 L492 256" stroke-dasharray="3 6"/>
+</g>
+<g fill="#F2A24A"><circle cx="200" cy="190" r="3.2"/><circle cx="520" cy="190" r="3.2"/><circle cx="236" cy="258" r="3.2"/><circle cx="492" cy="256" r="3.2"/><circle cx="360" cy="46" r="2.4"/><circle cx="160" cy="60" r="2"/><circle cx="560" cy="360" r="2.4"/><circle cx="120" cy="200" r="2"/><circle cx="600" cy="205" r="2"/></g>
+</svg>
+<img class="mark" src="/assets/brand/hero_mark.svg" alt="Made by Matt twin-peak M emblem">
+<h1>Learning that feels worth exploring.</h1>
+<p class="lead">Classroom-ready experiences designed to turn participation into progress—accessible, engaging and built for real teaching contexts.</p>
+<div class="dx-cta"><a class="dx-btn p" href="/tools/">Explore the teacher tools</a><a class="dx-btn s" href="/games/">Play the games</a></div>
+</section>
+
+<section class="mbm-audience" id="audiences" aria-labelledby="mbmAudienceTitle"><div class="mbm-audience-wrap">
+<div class="mbm-audience-head"><div><p>Made by Matt</p><h2 id="mbmAudienceTitle">Choose your own homepage type</h2></div><a href="/">See every homepage type</a></div>
+<div class="mbm-audience-grid" role="list">
+<article class="mbm-audience-card" data-index="01" role="listitem"><h3>Pupils &amp; learners</h3><div class="mbm-audience-links"><a href="/for/pupils/">Open pupil homepage</a></div></article>
+<article class="mbm-audience-card" data-index="02" role="listitem"><h3>Teachers &amp; education staff</h3><div class="mbm-audience-links"><a href="/for/teachers/">Open teacher homepage</a></div></article>
+<article class="mbm-audience-card" data-index="03" role="listitem"><h3>Parents &amp; carers</h3><div class="mbm-audience-links"><a href="/for/parents-carers/">Open family homepage</a></div></article>
+<article class="mbm-audience-card" data-index="04" role="listitem"><h3>Schools &amp; specialist settings</h3><div class="mbm-audience-links"><a href="/for/schools-semh/">Open schools homepage</a></div></article>
+<article class="mbm-audience-card" data-index="05" role="listitem"><h3>Academy trusts</h3><div class="mbm-audience-links"><a href="/for/trusts/">Open trust homepage</a></div></article>
+<article class="mbm-audience-card" data-index="06" role="listitem"><h3>Local authorities &amp; education services</h3><div class="mbm-audience-links"><a href="/for/councils-organisations/">Open local-authority homepage</a></div></article>
+<article class="mbm-audience-card" data-index="07" role="listitem"><h3>Education organisations &amp; service providers</h3><div class="mbm-audience-links"><a href="/for/partners/">Open organisation homepage</a></div></article>
+</div></div></section>
+
+<section class="dx-search" id="resources"><div class="dx-wrap">
+<h2>Search the catalogue</h2>
+<form class="dx-bar" action="/resources/" method="get" role="search">
+<input type="search" name="q" placeholder="Physics, trekkers, simulation…" aria-label="Search the resource catalogue">
+<button type="submit" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="#C97F2E" stroke-width="2.4"/><path d="M15.5 15.5 21 21" stroke="#C97F2E" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+</form>
+<div class="dx-chipwrap"><div class="dx-chips" id="dxChips">
+<a class="dx-chip on" href="/resources/">All subjects</a>
+<a class="dx-chip" href="/resources/?subject=Primary%20Science">Primary Science</a>
+<a class="dx-chip" href="/resources/?subject=Humanities">Humanities</a>
+<a class="dx-chip" href="/resources/?subject=Art%20%C2%B7%20Teesside%20Studio%20Suite">Art</a>
+<a class="dx-chip" href="/resources/?type=Game">Games</a>
+<a class="dx-chip" href="/resources/?type=Teacher">Teacher tools</a>
+<a class="dx-chip" href="/resources/?subject=Science%20%C2%B7%20Teesside">Science · Teesside</a>
+<a class="dx-chip" href="/resources/?q=trekkers">Trekkers</a>
+<a class="dx-chip" href="/resources/?q=vocational">Vocational &amp; PfA</a>
+</div></div>
+<p class="dx-count" id="dxCount">The full catalogue, one search away.</p>
+</div></section>
+
+<section class="dx-upd" id="newrelease"><div class="dx-wrap">
+<h2 class="dx-eyebrow">New releases</h2>
+<div class="dx-updbox" data-release="Relicforge: Fracture Engine" style="border-left:4px solid #5E8BFF">
+<p class="dx-when">August 2026 &middot; Games Arcade</p>
+<h3>NEW &middot; Relicforge: Fracture Engine &mdash; three realms, breaking apart.</h3>
+<ul class="dx-updlist">
+<li><span class="dx-dot"></span><span><b>Three realms, and their relic logic is the way through.</b> Ironwood Verge and its Forge Shards, the Glitchworks and its Fracture Pylons, then the Celestial Foundry and the Nullsmith itself.</span></li>
+<li><span class="dx-dot"></span><span><b>Pick a Forgeguard, a Riftcaller or a Shadowsmith</b> &mdash; an armoured vanguard, an arcane controller or a relic assassin &mdash; then temper what you recover at the forge between fights.</span></li>
+<li><span class="dx-dot"></span><span><b>Export a Chronicle of the whole run.</b> A standalone evidence record of realms, relics and achievements, generated on your own device with no account and no server.</span></li>
+</ul>
+<img src="/fracture/poster.webp" alt="Relicforge: Fracture Engine &mdash; the Forgeguard in Ironwood Verge, objective panel showing Recover the Forge Shards." width="1200" height="630" loading="lazy" decoding="async" class="dx-updclip" style="display:block;width:100%;max-width:480px;height:auto;margin:12px 0;border-radius:12px">
+<div class="dx-updacts">
+<a class="dx-chip dx-main" href="/fracture/">Play Fracture Engine &rarr;</a>
+<a class="dx-chip" href="/games/">Browse the Arcade</a>
+</div>
+</div>
+<div class="dx-updbox" data-release="Neon Sync" style="border-left:4px solid #22D3EE">
+<p class="dx-when">August 2026 &middot; Games Arcade &middot; v1.1</p>
+<h3>UPDATED &middot; Neon Sync v1.1 &mdash; a fourth hero and a second way to play.</h3>
+<ul class="dx-updlist">
+<li><span class="dx-dot"></span><span><b>Volt joins the roster as a Striker.</b> Tether Darts chain between enemies, Pin Bolt locks a target down, and Surge Rail lays a lane that speeds up whoever runs it &mdash; your team included.</span></li>
+<li><span class="dx-dot"></span><span><b>Escort Rush is a whole second mode.</b> Attackers push the Sound Float along one route with one checkpoint; defenders hold it until the five-minute horn. Overtime only survives while attackers are actually pushing.</span></li>
+<li><span class="dx-dot"></span><span><b>The score is still not your aim &mdash; it is whether you were the teammate everyone wants.</b> Hold the objective, back your squad, get endorsed. A support who never eliminates anyone still outscores a lone striker.</span></li>
+</ul>
+<video controls preload="none" playsinline muted poster="/assets/video/poster-neonsync.webp" src="/assets/video/clip-neonsync.mp4" width="480" height="930" class="dx-updclip" style="display:block;width:100%;max-width:480px;height:auto;margin:12px 0;border-radius:12px"></video>
+<div class="dx-updacts">
+<a class="dx-chip dx-main" href="/neonsync/">Play Neon Sync &rarr;</a>
+<a class="dx-chip" href="/games/">Browse the Arcade</a>
+</div>
+</div>
+<div class="dx-updbox" data-release="Neon Breach" style="border-left:4px solid #FFD000">
+<p class="dx-when">August 2026 &middot; Games Arcade</p>
+<h3>NEW &middot; Neon Breach &mdash; hold the arena, wave after wave.</h3>
+<ul class="dx-updlist">
+<li><span class="dx-dot"></span><span><b>Survive escalating drone waves in a procedural neon arena.</b> Clear a wave, draft an upgrade, go again &mdash; the run is over when you are, and every run is built differently.</span></li>
+<li><span class="dx-dot"></span><span><b>Three weapons and a perk draft after every clear.</b> The Pulse Rifle, Arc Scattergun and Ion Rail each want a different range, and eight perks stack into a build you choose rather than one you unlock.</span></li>
+<li><span class="dx-dot"></span><span><b>Full touch controls, built in.</b> Joystick, fire, aim, jump and reload all work on a phone, and the game pauses itself the moment you switch away.</span></li>
+</ul>
+<video controls preload="none" playsinline muted poster="/assets/video/poster-neonbreach.webp" src="/assets/video/clip-neonbreach.mp4" width="480" height="930" class="dx-updclip" style="display:block;width:100%;max-width:480px;height:auto;margin:12px 0;border-radius:12px"></video>
+<div class="dx-updacts">
+<a class="dx-chip dx-main" href="/neonbreach/">Play Neon Breach &rarr;</a>
+<a class="dx-chip" href="/games/">Browse the Arcade</a>
+</div>
+</div>
+<div class="dx-updbox" style="border-left:4px solid #2F6B4D">
+<p class="dx-when">July 2026 &middot; Science &middot; Teesside</p>
+<h3>New science for 2026&ndash;27 &mdash; all three pathways</h3>
+<ul class="dx-updlist">
+<li><span class="dx-dot"></span><span><b>25 new lessons landed across BUILD, GROW and LAUNCH.</b> One drop, every pathway covered.</span></li>
+<li><span class="dx-dot"></span><span><b>Built for the post-baseline weeks of the new year</b>, when classes are settled and ready to get into the science.</span></li>
+<li><span class="dx-dot"></span><span><b>Single-file and offline-first</b> like everything else here &mdash; nothing to install, and nothing uploaded.</span></li>
+</ul>
+<div class="dx-updacts">
+<a class="dx-chip dx-main" href="/resources/?subject=Science%20%C2%B7%20Teesside">Browse the science &rarr;</a>
+<a class="dx-chip" href="/Lessons/">Lesson hub</a>
+</div>
+</div>
+</div></section>
+
+<!-- apexpool-home-2026-08-04 START -->
+<section class="dx-sports" id="homeSports"><div class="dx-wrap">
+<h2 class="dx-eyebrow">Sports</h2>
+<p class="dx-sports-lede">Five games about reading the line, calling the plan and making the next decision count.</p>
+<div class="dx-sports-grid" aria-label="Sports games">
+<a class="dx-sport" data-sport-game="Apex Kick" href="/apexkick/" style="--sport:#2F8F6B">
+<span class="dx-sport-icon" aria-hidden="true">⚽</span><span class="dx-sport-copy"><b>Apex Kick</b><span>Bend the free kick around the wall; card stats set the physics, never the dice.</span></span><span class="dx-sport-go">Play &rarr;</span>
+</a>
+<a class="dx-sport" data-sport-game="Apex Pool" href="/apexpool/" style="--sport:#F2A24A">
+<span class="dx-sport-icon" aria-hidden="true">🎱</span><span class="dx-sport-copy"><b>Apex Pool</b><span>Call the cue ball's leave, apply genuine spin and make the table prove you right.</span></span><span class="dx-sport-go">Play &rarr;</span>
+</a>
+<a class="dx-sport" data-sport-game="Apex Golf" href="/apexgolf/" style="--sport:#7C5CFC">
+<span class="dx-sport-icon" aria-hidden="true">⛳</span><span class="dx-sport-copy"><b>Apex Golf</b><span>Call your stroke count, read honest wind and slope, then make the hole prove you right.</span></span><span class="dx-sport-go">Play &rarr;</span>
+</a>
+<a class="dx-sport" data-sport-game="Apex Tennis" href="/apextennis/" style="--sport:#3B6FD4">
+<span class="dx-sport-icon" aria-hidden="true">🎾</span><span class="dx-sport-copy"><b>Apex Tennis</b><span>Call the point before the serve, then build it on court with real rules and an honest Plan Rating.</span></span><span class="dx-sport-go">Play &rarr;</span>
+</a>
+<a class="dx-sport" data-sport-game="Apex Rally" href="/apexrally/" style="--sport:#FF737C">
+<span class="dx-sport-icon" aria-hidden="true">⚔️</span><span class="dx-sport-copy"><b>Apex Rally</b><span>Read the court before the ball arrives, then win the duel against opponents who adapt as you learn them.</span></span><span class="dx-sport-go">Play &rarr;</span>
+</a>
+</div>
+</div></section>
+<!-- apexpool-home-2026-08-04 END -->
+
+<section class="dx-drops" id="latest" hidden><div class="dx-wrap">
+<h2 class="dx-eyebrow">Latest drops</h2>
+<div class="dx-stack" id="dxNew" aria-label="Recently added resources"></div>
+</div></section>
+
+
+<!-- Card artwork. Kept as markup and referenced by doors[].art, so the
+     config stays readable and the SVG stays exactly as authored. -->
+<template id="art-uas-register"><svg viewBox="0 0 120 96" role="img" aria-label="UAS Register — stamped Unit claimed, September 2026"><rect x="14" y="6" width="76" height="84" rx="6" fill="#FFFDF6" stroke="#161D3D" stroke-width="2.5" transform="rotate(-4 52 48)"/><g transform="rotate(-4 52 48)"><path d="M24 24h56M24 34h56M24 44h40M24 54h48" stroke="#8B93B0" stroke-width="2.4" stroke-linecap="round"/></g><g transform="rotate(7 82 62)"><rect x="52" y="48" width="62" height="30" rx="6" fill="#B9E6CD" stroke="#2F6B4D" stroke-width="2.5"/><text x="83" y="61" text-anchor="middle" font-family="Poppins,sans-serif" font-size="8.4" font-weight="800" fill="#161D3D">UNIT CLAIMED ✓</text><text x="83" y="72" text-anchor="middle" font-family="Poppins,sans-serif" font-size="7" font-weight="700" fill="#2F6B4D">SEPT 2026</text></g></svg></template>
+<template id="art-asdan-register"><svg viewBox="0 0 120 96" role="img" aria-label="ASDAN Register — stamped Signed off, evidence filed"><rect x="14" y="6" width="76" height="84" rx="6" fill="#FFFDF6" stroke="#161D3D" stroke-width="2.5" transform="rotate(3 52 48)"/><g transform="rotate(3 52 48)"><path d="M24 24h56M24 34h56M24 44h40M24 54h48" stroke="#8B93B0" stroke-width="2.4" stroke-linecap="round"/></g><g transform="rotate(-6 62 64)"><rect x="32" y="50" width="62" height="30" rx="6" fill="#F2A24A" stroke="#C97F2E" stroke-width="2.5"/><text x="63" y="63" text-anchor="middle" font-family="Poppins,sans-serif" font-size="8.4" font-weight="800" fill="#161D3D">SIGNED OFF ✓</text><text x="63" y="74" text-anchor="middle" font-family="Poppins,sans-serif" font-size="7" font-weight="700" fill="#7A4A12">EVIDENCE FILED</text></g></svg></template>
+<template id="art-hold-the-mark"><svg viewBox="0 0 120 96" role="img" aria-label="Hold the Mark — brand shapes defending the M mark"><rect x="8" y="8" width="104" height="80" rx="10" fill="#232C55"/><path d="M14 66 C34 58 50 70 66 62 82 54 98 66 106 60" fill="none" stroke="#3A4470" stroke-width="2"/><path d="M50 56 L54 40 L60 52 L66 40 L70 56" fill="none" stroke="#E8E2D4" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="60" cy="47" r="19" fill="none" stroke="#B9E6CD" stroke-width="2.4"/><circle cx="28" cy="30" r="7" fill="none" stroke="#B9E6CD" stroke-width="3.4"/><path d="M88 24 l3.4 6.8 7.4 1-5.4 5.2 1.3 7.4-6.7-3.5-6.7 3.5 1.3-7.4-5.4-5.2 7.4-1Z" fill="#F2A24A"/><rect x="22" y="68" width="14" height="14" rx="3" fill="none" stroke="#F2A24A" stroke-width="3.2"/><path d="M92 64 v16 M86 80 h12" stroke="#B9E6CD" stroke-width="3.4" stroke-linecap="round"/></svg></template>
+<template id="art-glitch-clash"><svg viewBox="0 0 120 96" role="img" aria-label="Glitch Clash — card battle beam clash"><rect x="8" y="8" width="104" height="80" rx="10" fill="#1B1533"/><rect x="18" y="22" width="34" height="50" rx="6" fill="#232C55" stroke="#A78BFA" stroke-width="2.6" transform="rotate(-7 35 47)"/><circle cx="35" cy="40" r="8" fill="none" stroke="#B9E6CD" stroke-width="2.8" transform="rotate(-7 35 47)"/><rect x="68" y="22" width="34" height="50" rx="6" fill="#232C55" stroke="#F2A24A" stroke-width="2.6" transform="rotate(7 85 47)"/><path d="M85 34 l2.6 5.2 5.6.8-4 3.9 1 5.6-5.2-2.7-5.2 2.7 1-5.6-4-3.9 5.6-.8Z" fill="#F2A24A" transform="rotate(7 85 47)"/><path d="M50 47 H70" stroke="#A78BFA" stroke-width="6" stroke-linecap="round"/><circle cx="60" cy="47" r="6.4" fill="#E8E2D4"/><path d="M60 12 v6M60 78 v6" stroke="#A78BFA" stroke-width="2.4" stroke-linecap="round"/></svg></template>
+<template id="art-apex-kick"><svg viewBox="0 0 120 96" role="img" aria-label="Apex Kick — a free kick curling around the wall into the top corner"><rect x="8" y="8" width="104" height="80" rx="10" fill="#12203C"/><path d="M8 66h104" stroke="#2F6B4D" stroke-width="2" opacity=".7"/><rect x="34" y="30" width="52" height="30" rx="2" fill="none" stroke="#E8E2D4" stroke-width="3"/><path d="M40 34h40M40 40h40M40 46h40M40 52h40M46 32v28M54 32v28M62 32v28M70 32v28M78 32v28" stroke="#8FA3C8" stroke-width=".9" opacity=".55"/><g fill="#2F6BD1"><rect x="44" y="46" width="6" height="16" rx="2"/><rect x="52" y="46" width="6" height="16" rx="2"/><rect x="60" y="46" width="6" height="16" rx="2"/></g><g fill="#D8AB86"><circle cx="47" cy="43" r="2.6"/><circle cx="55" cy="43" r="2.6"/><circle cx="63" cy="43" r="2.6"/></g><path d="M26 78 C40 76 66 70 78 46" fill="none" stroke="#F2A24A" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="5 4"/><circle cx="26" cy="78" r="4.6" fill="#F6F1E4" stroke="#161D3D" stroke-width="1.4"/><circle cx="79" cy="42" r="3.4" fill="#B9E6CD"/></svg></template>
+<template id="art-asdan-suite"><svg viewBox="0 0 120 96" role="img" aria-label="ASDAN suite — BUILD, GROW and LAUNCH as three rising steps"><rect x="10" y="10" width="100" height="76" rx="8" fill="#FFFDF6" stroke="#161D3D" stroke-width="2.6"/><rect x="10" y="10" width="100" height="18" rx="8" fill="#161D3D"/><text x="60" y="23.5" text-anchor="middle" font-family="Poppins,sans-serif" font-size="10" font-weight="800" fill="#FFF6E8">ASDAN</text><rect x="22" y="58" width="22" height="18" rx="3" fill="#B9E6CD" stroke="#2F6B4D" stroke-width="2.2"/><rect x="49" y="48" width="22" height="28" rx="3" fill="#F2A24A" stroke="#C97F2E" stroke-width="2.2"/><rect x="76" y="38" width="22" height="38" rx="3" fill="#A78BFA" stroke="#161D3D" stroke-width="2.2"/><text x="33" y="71" text-anchor="middle" font-family="Poppins,sans-serif" font-size="9" font-weight="800" fill="#161D3D">B</text><text x="60" y="71" text-anchor="middle" font-family="Poppins,sans-serif" font-size="9" font-weight="800" fill="#161D3D">G</text><text x="87" y="71" text-anchor="middle" font-family="Poppins,sans-serif" font-size="9" font-weight="800" fill="#161D3D">L</text><path d="M18 80h84" stroke="#8B93B0" stroke-width="2.4" stroke-linecap="round"/></svg></template>
+<template id="art-y4-6-science"><svg viewBox="0 0 120 96" role="img" aria-label="Years 4 to 6 science — calendar and flask"><rect x="20" y="14" width="62" height="68" rx="8" fill="#FFFDF6" stroke="#161D3D" stroke-width="2.6"/><rect x="20" y="14" width="62" height="18" rx="8" fill="#161D3D"/><text x="51" y="27" text-anchor="middle" font-family="Poppins,sans-serif" font-size="10" font-weight="800" fill="#FFF6E8">Y4–6</text><path d="M32 44h10M46 44h10M60 44h10M32 56h10M46 56h10M60 56h10M32 68h10M46 68h10" stroke="#8B93B0" stroke-width="3.2" stroke-linecap="round"/><path d="M92 40 v12 l9 16a5 5 0 0 1-4.4 7.6H84.4A5 5 0 0 1 80 68l9-16V40" fill="#B9E6CD" stroke="#2F6B4D" stroke-width="2.4"/><path d="M86 40h12" stroke="#2F6B4D" stroke-width="2.4" stroke-linecap="round"/></svg></template>
+<template id="art-studio-suite"><svg viewBox="0 0 120 96" role="img" aria-label="Studio Suite — three lit studios on an evening workbench"><rect x="8" y="8" width="104" height="80" rx="10" fill="#161D3D"/><ellipse cx="60" cy="46" rx="45" ry="25" fill="#232C55"/><rect x="17" y="33" width="24" height="21" rx="3" fill="#232C55" stroke="#B9E6CD" stroke-width="2.2"/><circle cx="29" cy="43.5" r="4.6" fill="none" stroke="#B9E6CD" stroke-width="2"/><path d="M29 41v2.5l1.8 1.4" stroke="#B9E6CD" stroke-width="1.6" stroke-linecap="round"/><rect x="49" y="36" width="24" height="18" rx="2.5" fill="#232C55" stroke="#F2A24A" stroke-width="2.2"/><path d="M49 42.5h24" stroke="#F2A24A" stroke-width="2"/><path d="M54 36l-3 6.5M61 36l-3 6.5M68 36l-3 6.5" stroke="#F2A24A" stroke-width="1.6"/><circle cx="93" cy="43" r="9.5" fill="none" stroke="#A78BFA" stroke-width="3"/><circle cx="93" cy="43" r="3.2" fill="#A78BFA"/><path d="M93 29.5v4M93 52.5v4M79.5 43h4M102.5 43h4M85.4 35.4l2.8 2.8M100.6 50.6l-2.8-2.8M100.6 35.4l-2.8 2.8M85.4 50.6l2.8-2.8" stroke="#A78BFA" stroke-width="2.4" stroke-linecap="round"/><rect x="17" y="60" width="24" height="10" rx="2.5" fill="#232C55" stroke="#3A4470" stroke-width="1.8"/><rect x="49" y="60" width="24" height="10" rx="2.5" fill="#232C55" stroke="#3A4470" stroke-width="1.8"/><rect x="81" y="60" width="24" height="10" rx="2.5" fill="#232C55" stroke="#3A4470" stroke-width="1.8"/><path d="M13 73h94" stroke="#8A6A48" stroke-width="4.4" stroke-linecap="round"/><circle cx="60" cy="80" r="2.6" fill="#F2A24A"/></svg></template>
+<template id="art-voxel-frontier"><svg viewBox="0 0 120 96" role="img" aria-label="Voxel Frontier — a block world with a pick"><rect x="8" y="8" width="104" height="80" rx="10" fill="#1A2A1E"/><g stroke="#0F1A12" stroke-width="1.2"><rect x="20" y="52" width="18" height="18" fill="#6BAF57"/><rect x="38" y="52" width="18" height="18" fill="#7CC066"/><rect x="56" y="44" width="18" height="18" fill="#7CC066"/><rect x="74" y="52" width="18" height="18" fill="#6BAF57"/><rect x="20" y="70" width="18" height="14" fill="#8A6A48"/><rect x="38" y="70" width="18" height="14" fill="#7A5C3E"/><rect x="56" y="62" width="18" height="22" fill="#8A6A48"/><rect x="74" y="70" width="18" height="14" fill="#7A5C3E"/></g><circle cx="92" cy="26" r="8" fill="#F2E2A8"/><path d="M34 40 L52 22" stroke="#C9A227" stroke-width="4" stroke-linecap="round"/><path d="M44 18 q10 2 14 10" fill="none" stroke="#E8E2D4" stroke-width="4" stroke-linecap="round"/></svg></template>
+<template id="art-medevac-frontier"><svg viewBox="0 0 120 96" role="img" aria-label="Medevac Frontier — a helicopter over a twilight canyon"><rect x="8" y="8" width="104" height="80" rx="10" fill="#221636"/><path d="M8 70 L30 54 L46 66 L64 46 L84 62 L112 44 L112 88 L8 88Z" fill="#3A2650"/><path d="M8 78 L34 66 L58 76 L82 62 L112 74 L112 88 L8 88Z" fill="#1B1029"/><circle cx="90" cy="26" r="7" fill="#F2A24A" opacity=".85"/><g><rect x="40" y="30" width="30" height="13" rx="6" fill="#B9E6CD"/><path d="M70 36 L86 33 L86 39 Z" fill="#B9E6CD"/><path d="M30 27 h48" stroke="#E8E2D4" stroke-width="3" stroke-linecap="round"/><path d="M46 43 v6 M64 43 v6 M40 49 h30" stroke="#E8E2D4" stroke-width="2.6" stroke-linecap="round"/><path d="M52 33 h6 M55 30 v6" stroke="#E04A4A" stroke-width="2.4" stroke-linecap="round"/></g></svg></template>
+<section class="dx-dir" id="collections"><div class="dx-wrap">
+<div class="dx-cards">
+
+<!-- The two account-door art templates (art-account-worlds,
+     art-account-units) were removed here on 2026-08-02 with their doors.
+     Was the "Free account" band. Removed 2026-08-02 along with the rest of the
+     accounts surface: it offered a cloud-sync benefit that was never built, and
+     an offer nobody can accept is not a feature, it is a promise. The MBMAuth
+     module in assets/mbm-features.js is untouched and still fail-closed; what
+     went is the markup that advertised it. Restoring it is a revert of this
+     commit, not a flag flip — that trade is recorded in the close report. -->
+<article class="dx-zone"><h2 class="dx-eyebrow">Follow the work</h2>
+<p class="dx-bandlead">Accounts are optional and built for adults and teachers who want their Made by Matt favourites available on another device. Teacher updates are also optional and use a separate double-opt-in mailing list.</p>
+<div class="dx-follow">
+<a class="dx-fcard" href="https://www.youtube.com/@matthewroper9166" rel="noopener"><b>YouTube</b><span>Walkthroughs of the games and lessons, and what went wrong making them.</span></a>
+<a class="dx-fcard" href="https://ko-fi.com/madebymattuk" rel="noopener"><b>Ko-fi</b><span>Where the commissioned-resource requests come in, and where updates get posted.</span></a>
+<a class="dx-fcard" href="mailto:contactmadebymatt@gmail.com"><b>Email me</b><span>Tell me what would be useful and I will usually build it. This reaches me directly.</span></a>
+</div></article>
+
+<article class="dx-zone"><h2 class="dx-eyebrow">Teacher Tools</h2>
+<div class="dx-duo" data-zone="tools">
+</div>
+<div class="dx-acts"><a class="dx-main" href="/tools/">All tools →</a><a class="dx-sub" href="/tools/#drawer">The drawer</a></div></article>
+
+<article class="dx-zone"><h2 class="dx-eyebrow">Games &amp; Sims</h2>
+<div class="dx-duo dx-trio" data-zone="games">
+</div>
+<div class="dx-acts"><a class="dx-main" href="/games/">Browse the Arcade<span class="dx-n" id="nGames"></span> →</a><a class="dx-sub" href="/resources/?type=Game">All games</a></div></article>
+
+<article class="dx-zone"><h2 class="dx-eyebrow">Lesson Hub</h2>
+<div class="dx-duo" data-zone="lessons">
+</div>
+<div class="dx-acts"><a class="dx-main" href="/Lessons/">Lesson packs<span class="dx-n" id="nLessons"></span> →</a><a class="dx-sub" href="/resources/">Full catalogue</a></div></article>
+
+</div></div></section>
+<section class="dx-video" id="seeit"><div class="dx-wrap">
+<h2 class="dx-eyebrow">See it in action</h2>
+<div class="dx-vidgrid">
+  <figure class="dx-vid">
+    <button class="dx-vidbtn" type="button" data-yt="aGy0z4mZEXg"
+      aria-label="Play video: the free ASDAN-style register and PfA toolkit, 27 seconds">
+      <img src="/assets/video/poster-asdan.webp" alt="" width="1280" height="720" loading="lazy">
+    </button>
+    <figcaption><b>The registers &amp; the PfA toolkit</b> — the ASDAN-style register, the evidence tracker and 79 lessons in 27 seconds.</figcaption>
+  </figure>
+  <figure class="dx-vid">
+    <button class="dx-vidbtn" type="button" data-yt="vhuk-K_wWas"
+      aria-label="Play video: a full year of art that runs itself">
+      <img src="/assets/video/poster-art.webp" alt="" width="1280" height="720" loading="lazy">
+    </button>
+    <figcaption><b>A full year of art — and it runs itself.</b> Explore, Bronze and Silver, with a print pack behind every lesson.</figcaption>
+  </figure>
+</div>
+<p class="dx-vidnote">Videos play here via YouTube's privacy-enhanced player, and nothing loads from YouTube until you press play. <a href="https://www.youtube.com/@matthewroper9166" rel="noopener">More on the channel &rarr;</a></p>
+</div></section>
+<section class="dx-upd" id="improved"><div class="dx-wrap">
+<h2 class="dx-eyebrow">Recently improved</h2>
+<div class="dx-updbox">
+<p class="dx-when">July 2026 &middot; Tutor Time</p>
+<h3>All ten Tutor Time decks rebuilt on one engine</h3>
+<ul class="dx-updlist">
+<li><span class="dx-dot"></span><span><b>An illustration on every deck.</b> Ten hand-drawn scenes that argue the idea rather than decorate it &mdash; scales that don't bend, five routes on one hand, a mend drawn stronger than the break.</span></li>
+<li><span class="dx-dot"></span><span><b>Phone-feed and news-band scenes</b> on Deepfakes, Vapes and Pressure Points &mdash; a group chat going from a joke to a threat in ten minutes, with the timestamps showing.</span></li>
+<li><span class="dx-dot"></span><span><b>Calm Mode on every deck.</b> One tap stills every animation and silences the chime. Everything also respects the reduced-motion setting on the device.</span></li>
+</ul>
+<details class="dx-more"><summary>Three more improvements</summary>
+<ul class="dx-updlist">
+<li><span class="dx-dot"></span><span><b>An anonymous box that stays private.</b> What a pupil types never appears on the screen and is never saved to the device &mdash; it reaches staff on a printed sheet with a safeguarding sign-off, and nowhere else.</span></li>
+<li><span class="dx-dot"></span><span><b>Class lists clear themselves.</b> Saved on the device as before, but wiped automatically after a fortnight, with a clear-now button in the cold-call panel.</span></li>
+<li><span class="dx-dot"></span><span><b>Progress seals and a printable evidence sheet</b> on every deck, so a session leaves a record without anyone writing one up.</span></li>
+</ul></details>
+<div class="dx-updacts">
+<a class="dx-chip dx-main" href="/Lessons/?q=tutor%20time">Open the Tutor Time decks &rarr;</a>
+<a class="dx-chip" href="/Lessons/">Full lesson hub</a>
+</div>
+</div>
+</div></section>
+<section class="mbm-stats" id="mbmStats"><div class="dx-wrap">
+<h2 class="dx-eyebrow">Private · on this device</h2>
+<p class="mbm-here" id="mbmHere">Hello — glad you're here.</p>
+<div class="mbm-metrics">
+<div class="mbm-metric"><span class="mbm-big" id="mbmVisits">—</span><span class="mbm-lab">Visits on this device</span></div>
+<div class="mbm-metric"><span class="mbm-big" id="mbmCountries">—</span><span class="mbm-lab">Countries seen here</span></div>
+</div>
+<div class="mbm-boardwrap">
+<p class="mbm-board-title">Country activity on this device</p>
+<div class="mbm-board" id="mbmBoard"><p class="mbm-board-empty">No local visits counted yet.</p></div>
+</div>
+<p class="mbm-note">These counters stay in this browser. Each visit or resource open adds a local tally, and the coarse country is worked out on the device from its time zone. No counter request, IP address or audience preference is sent to a remote counter service.</p>
+</div></section>
+
+<section class="dx-std" id="standard"><div class="dx-wrap">
+<h2><b>THE PROMISE</b> | how every tool behaves</h2>
+<div class="dx-tiles">
+<div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-free"/></svg><b>Free</b><p>Everything here is free to use — no trials and no locked features. An adult/teacher account is optional and is only for useful account-backed features such as carrying your saved Made by Matt shortcuts between devices.</p></div>
+<div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-shield"/></svg><b>Nothing uploaded</b><p>Lessons, registers and pupil records stay in your browser on your device — they are not uploaded into your account. Some optional services do use the internet: the anonymous visit counter, the contact form, videos you choose to play, adult/teacher account identity and saved hub shortcuts, and the separate teacher mailing list. <a href="/privacy/">All four, in plain English &rarr;</a></p></div>
+<div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-off"/></svg><b>Offline-friendly</b><p>Core experiences remain useful where connectivity is unreliable.</p></div>
+<div class="dx-tile"><svg aria-hidden="true"><use href="#dxi-board"/></svg><b>Teacher-built</b><p>Designed in a real classroom — accessible, calm-mode aware and ready for the whiteboard.</p></div>
+</div></div></section>
+
+</main>
+
+<section class="dx-contact" id="contact"><div class="dx-wrap">
+<h2>Say hello</h2>
+<p class="dx-cnote">Questions, ideas, bug reports, or just tell me what would be useful. When you press Send, your name, email and message are posted to <b>formsubmit.co</b> — a third-party relay I do not run. I can tell you what your browser sends and where it goes; what happens after that is theirs, not mine. <a href="/privacy/">What this site does with data &rarr;</a></p>
+<p class="dx-cdirect">Or skip the relay entirely and <a href="mailto:contactmadebymatt@gmail.com">email me directly at contactmadebymatt@gmail.com</a> &mdash; same inbox, nothing in between.</p>
+<form action="https://formsubmit.co/contactmadebymatt@gmail.com" method="POST">
+<input type="hidden" name="_subject" value="madebymatt.uk contact">
+<input type="hidden" name="_next" value="https://madebymatt.uk/thanks/">
+<input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true">
+<label class="dx-field">Your name<input type="text" name="name" required autocomplete="name"></label>
+<label class="dx-field">Your email<input type="email" name="email" required autocomplete="email"></label>
+<label class="dx-field">Your message<textarea name="message" rows="5" required></textarea></label>
+<button class="dx-send" type="submit">Send message</button>
+</form>
+
+<!-- TEACHER UPDATES — separate explicit consent; Buttondown is reached only through /mailing-list/. -->
+<div class="dx-teach">
+<h3>Teacher updates</h3>
+<p class="dx-cnote"><b>For teachers and other adults.</b> A weekly Made by Matt update covering what changed on the site and a clearly labelled look at what is coming next.</p>
+<p class="dx-cnote"><b>This is separate from an account.</b> Creating an account never subscribes you. Joining the mailing list uses Buttondown double opt-in and you can unsubscribe at any time.</p>
+<p><a class="dx-tbtn" href="/mailing-list/">Join teacher updates</a> <a class="dx-chip" href="/account/">Account</a></p>
+<p class="dx-cnote" style="font-size:.82rem">Under 18? Please don't use the mailing list or create an account — ask a teacher or another adult. Everything public on the site stays free without either.</p>
+</div>
+
+<div class="dx-about" id="about">
+<h3>About the studio</h3>
+<p><strong style="color:#E8E2D4">Made by a teacher, for real classrooms.</strong> Made by Matt combines interactive tools, games, and simulations to drive inclusive education, turning focus and decision-making into the core experience.</p>
+<p><b>Learn • Build • Explore.</b></p>
+</div>
+</div></section>
+<footer class="footer"><div class="bar"><a class="brand" href="/main/"><img src="/assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><span class="muted">Interactive lessons, simulations and games · <a href="/privacy/" style="color:inherit;font-weight:700">Data and privacy</a></span></div><div class="mbm-kofi" style="max-width:640px;margin:18px auto 6px;background:#161D3D;border:1px solid rgba(185,230,205,.35);border-radius:10px;padding:16px 18px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;justify-content:space-between"><p style="font-size:.85rem;color:#C9D1E2;line-height:1.45;max-width:380px;margin:0;text-align:left;text-transform:none;letter-spacing:normal"><strong style="color:#E8E2D4">Everything here is free to use.</strong> If a lesson or tool has saved you an evening, a coffee helps cover hosting, domains and development time.</p><a href="https://ko-fi.com/madebymattuk" style="display:inline-flex;align-items:center;gap:8px;background:#F2A24A;color:#161D3D;font-weight:700;font-size:.9rem;padding:10px 18px;border-radius:8px;text-decoration:none;box-shadow:0 2px 0 #C97F2E">☕ Support Made by Matt</a></div>
+<div class="mbm-give">
+<h3>Donate, and I'll build something just for you 🎁</h3>
+<p class="mbm-give-lead">Everything here stays free — always. But a donation lets me build a <b>bespoke set of resources, lessons and tools around your exact needs</b>: tell me your class, subject or the problem you're wrestling with, and I'll craft something for it. Each is handmade — so the bigger the donation, the bigger the set, since they take real time (and a little money) to build well.</p>
+<div class="mbm-tiers">
+<div class="mbm-tier"><span class="mbm-tier-amt">☕ From £5</span><span class="mbm-tier-name">A thank-you</span><span class="mbm-tier-desc">My genuine thanks, plus one small custom resource made for something you're working on.</span></div>
+<div class="mbm-tier"><span class="mbm-tier-amt">🎒 From £20</span><span class="mbm-tier-name">A supporter set</span><span class="mbm-tier-desc">A small, handpicked bundle of lessons, tools or activities shaped to your class's needs.</span></div>
+<div class="mbm-tier"><span class="mbm-tier-amt">🏫 From £50</span><span class="mbm-tier-name">A patron set</span><span class="mbm-tier-desc">A fuller, tailor-made collection — lessons, tools and resources designed end-to-end around exactly what you need.</span></div>
+</div>
+<p class="mbm-give-foot">After you donate, drop me a line at <a href="mailto:contactmadebymatt@gmail.com" style="color:#B9E6CD;font-weight:700">contactmadebymatt@gmail.com</a> telling me what you'd love, and I'll get building. <a class="mbm-give-cta" href="https://ko-fi.com/madebymattuk">☕ Donate on Ko-fi</a></p>
+</div>
+<p class="mbm-contact" style="text-align:center;font-size:.85rem;opacity:.85;margin:16px auto 10px;max-width:90%">Questions, ideas or bug reports — <a href="mailto:contactmadebymatt@gmail.com" style="color:inherit;font-weight:600">contactmadebymatt@gmail.com</a></p>
+</footer>
+<script>
+(function(){
+/* see tools/stamp-data.py — stamped where this repo owns the file, revalidated where it does not */
+var g=function(u){var s=window.MBM_STAMP?window.MBM_STAMP(u):{url:u,opts:{cache:"no-cache"}};
+return fetch(s.url,s.opts).then(function(r){if(!r.ok)throw 0;return r.json()}).catch(function(){return[]})};
+Promise.all([g('/Lessons/resources.json'),g('/data/resources.json'),g('/Games/games.json')]).then(function(a){
+var les=Array.isArray(a[0])?a[0].filter(function(r){return r.subject!=="Live Lessons"}):[];
+var site=Array.isArray(a[1])?a[1]:[];
+var n=les.length+site.length,el=document.getElementById('dxCount');
+if(el&&n)el.textContent=n+' resources and counting — every lesson, game and tool.';
+var nw=document.getElementById('dxNew'),sec=document.getElementById('latest');
+if(nw&&les.length){
+var tierOf=function(r){var f=r.url||r.file||'',i,T=['BUILD','GROW','LAUNCH'];
+for(i=0;i<3;i++){var t=T[i];
+if(new RegExp('(^|/)'+t.charAt(0)+t.slice(1).toLowerCase()+'/').test(f)||new RegExp('(^|/)'+t+'[_/]').test(f))return t;}
+var hay=((r.family||'')+' '+(r.title||'')).toUpperCase();
+for(i=0;i<3;i++){if(new RegExp('\\b'+T[i]+'\\b').test(hay))return T[i];}
+return '';};
+var pool=les.filter(function(r){return r.added}).sort(function(x,y){return String(y.added).localeCompare(String(x.added))});
+var seen={},recent=[];
+pool.forEach(function(r){var fam=r.family||r.subject||'';
+if(recent.length<4&&!seen[fam]){seen[fam]=1;recent.push(r);}});
+recent.forEach(function(r){
+var a2=document.createElement('a');a2.className='dx-drop';
+a2.href='/Lessons/'+encodeURI(r.url||r.file||'');
+var tr=tierOf(r);
+var s=document.createElement('span');s.className='pill'+(tr?' t-'+tr.toLowerCase():'');s.textContent=tr||'NEW';a2.appendChild(s);
+var b=document.createElement('b');b.textContent=r.title||'';a2.appendChild(b);
+if(r.subject){var sm=document.createElement('small');sm.textContent=r.subject;a2.appendChild(sm);}
+nw.appendChild(a2);});
+if(recent.length&&sec)sec.hidden=false;
+}
+var gl=Array.isArray(a[2])?a[2]:(a[2]&&Array.isArray(a[2].games)?a[2].games:[]);
+var ng=document.getElementById('nGames');if(ng&&gl.length)ng.textContent=' '+gl.length;
+var nl=document.getElementById('nLessons');if(nl&&les.length)nl.textContent=' '+les.length;
+});
+})();
+(function(){
+var names={cream:'Warm',pink:'Pink',blue:'Blue',light:'Light',dark:'Dark'};
+var sws=document.querySelectorAll('.dx-sw');
+if(!sws.length)return;
+var cur='cream';
+try{cur=localStorage.getItem('mbm_reading_theme')||'cream'}catch(e){}
+if(!names[cur])cur='cream';
+function apply(t,save){cur=t;
+if(t==='cream'){document.body.removeAttribute('data-theme')}else{document.body.setAttribute('data-theme',t)}
+for(var i=0;i<sws.length;i++){sws[i].setAttribute('aria-pressed',sws[i].getAttribute('data-t')===t?'true':'false')}
+if(save){try{localStorage.setItem('mbm_reading_theme',t)}catch(e){}}}
+for(var j=0;j<sws.length;j++){sws[j].addEventListener('click',function(){apply(this.getAttribute('data-t'),true)})}
+apply(cur,false);
+})();
+(function(){
+var btns=document.querySelectorAll('.dx-vidbtn');
+if(!btns.length)return;
+Array.prototype.forEach.call(btns,function(btn){
+btn.addEventListener('click',function(){
+var id=btn.getAttribute('data-yt');if(!id)return;
+try{
+var fig=btn.parentNode;
+var ifr=document.createElement('iframe');
+ifr.src='https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0';
+ifr.title='Made by Matt video';
+ifr.setAttribute('allow','autoplay; encrypted-media; picture-in-picture; fullscreen');
+ifr.setAttribute('allowfullscreen','');
+ifr.setAttribute('loading','lazy');
+ifr.width='1280';ifr.height='720';
+fig.replaceChild(ifr,btn);
+}catch(e){
+try{window.open('https://youtu.be/'+id,'_blank','noopener');}catch(_){}
+}
+});
+});
+})();
+</script>
+<script>
+(function(){var w=document.querySelector('.dx-chipwrap'),c=document.getElementById('dxChips');
+if(!w||!c)return;
+function upd(){var end=c.scrollLeft+c.clientWidth>=c.scrollWidth-2||c.scrollWidth<=c.clientWidth+1;
+w.classList.toggle('at-end',end);}
+c.addEventListener('scroll',upd,{passive:true});
+window.addEventListener('resize',upd);upd();})();
+</script>
+<!-- The auth modal was removed 2026-08-02. It carried the only password
+     field on the estate, guarding a members page with nothing behind it.
+     assets/mbm-features.js initAccountUI() already tolerates its absence
+     (it returns early when #mbmAccountBtn / #mbmAuth are missing). -->
+<script src="/app.js"></script>
+<script src="/assets/mbm-features.js"></script><script defer src="/assets/mbm-doors.js"></script>
+<script defer src="/assets/mbm-platform.js"></script>
+</body></html>

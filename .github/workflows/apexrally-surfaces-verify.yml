@@ -1,6 +1,6 @@
 name: Apex Rally surfaces
 
-# The two Apex Rally surfaces — the homepage Sports card and the arcade rail —
+# The two Apex Rally surfaces — the full /main/ homepage Sports card and the arcade rail —
 # measured rather than grepped.
 #
 # Counts are DERIVED, never pinned. The expected Sports count comes from the
@@ -13,6 +13,7 @@ on:
   pull_request:
     paths:
       - 'index.html'
+      - 'main/index.html'
       - 'games/index.html'
       - 'site.json'
       - 'tools/verify_apexrally_surfaces.js'
@@ -76,11 +77,13 @@ jobs:
           # not by trusting the harness to have looked.
           # `|| true` so that zero references fails on the explicit test below
           # with a readable count, rather than as an opaque pipefail exit
-          n=$(grep -o '/apexrally/' index.html | wc -l || true)
-          echo "homepage references to /apexrally/: $n (expected exactly 1)"
+          home=main/index.html
+          test -f "$home" || home=index.html
+          n=$(grep -o '/apexrally/' "$home" | wc -l || true)
+          echo "full-home references to /apexrally/ in $home: $n (expected exactly 1)"
           test "$n" -eq 1
           # New Release boxes are held by ruling; Rally must not have taken one
-          ! grep -q 'data-release="Apex Rally"' index.html
+          ! grep -q 'data-release="Apex Rally"' "$home"
           # and no doors[] entry
           node -e '
             const s = require("./site.json");
