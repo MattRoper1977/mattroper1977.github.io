@@ -1,0 +1,155 @@
+name: Verification-only homepage production readback
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/mbm-production-readback-proof.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mbm-homepage-production-readback-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  EXPECTED_SHA: d96d18acf45e30395b64c273f170fea50c9eb3fe
+
+jobs:
+  live-readback:
+    name: Exact merged SHA and live browser proof
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - name: Check out the exact merged production source
+        uses: actions/checkout@v4
+        with:
+          ref: d96d18acf45e30395b64c273f170fea50c9eb3fe
+          fetch-depth: 1
+
+      - name: Install Chromium browser runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+
+      - name: Wait for and byte-compare the exact production architecture
+        shell: bash
+        run: |
+          set -euo pipefail
+          declare -A pages=(
+            [index.html]="/"
+            [main/index.html]="/main/"
+            [start/index.html]="/start/"
+            [for/pupils/index.html]="/for/pupils/"
+            [for/teachers/index.html]="/for/teachers/"
+            [for/parents-carers/index.html]="/for/parents-carers/"
+            [for/schools-semh/index.html]="/for/schools-semh/"
+            [for/trusts/index.html]="/for/trusts/"
+            [for/councils-organisations/index.html]="/for/councils-organisations/"
+            [for/partners/index.html]="/for/partners/"
+          )
+          mkdir -p /tmp/mbm-live audit-output
+          ready=0
+          attempts=0
+          for attempt in $(seq 1 90); do
+            attempts=$attempt
+            failed=0
+            for file in "${!pages[@]}"; do
+              route=${pages[$file]}
+              out="/tmp/mbm-live/${file//\//__}"
+              curl -fsS --retry 2 -H 'Cache-Control: no-cache, no-store, max-age=0' "https://madebymatt.uk${route}?mbm=${EXPECTED_SHA}" -o "$out" || { failed=1; break; }
+              cmp -s "$file" "$out" || { failed=1; break; }
+            done
+            if [ "$failed" -eq 0 ]; then ready=1; break; fi
+            sleep 10
+          done
+          test "$ready" -eq 1
+          printf 'expected_sha=%s\nattempts=%s\nverified_utc=%s\n' "$EXPECTED_SHA" "$attempts" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > audit-output/deployment-proof.txt
+          curl -fsSIL -H 'Cache-Control: no-cache, no-store, max-age=0' "https://madebymatt.uk/?mbm=${EXPECTED_SHA}" > audit-output/root-headers.txt
+          curl -fsSIL -H 'Cache-Control: no-cache, no-store, max-age=0' "https://madebymatt.uk/main/?mbm=${EXPECTED_SHA}" > audit-output/main-headers.txt
+
+      - name: Record every required production URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime, hashlib, json, re, urllib.request
+          from pathlib import Path
+          from urllib.parse import urljoin
+
+          sha='d96d18acf45e30395b64c273f170fea50c9eb3fe'
+          base='https://madebymatt.uk/'
+          routes=['/','/main/','/start/','/for/pupils/','/for/teachers/','/for/parents-carers/','/for/schools-semh/','/for/trusts/','/for/councils-organisations/','/for/partners/','/games/','/Lessons/','/Matt-s-Apps-/','/tools/','/resources/','/account/','/members/','/mailing-list/','/privacy/']
+          architecture={
+            '/':'index.html','/main/':'main/index.html','/start/':'start/index.html','/for/pupils/':'for/pupils/index.html','/for/teachers/':'for/teachers/index.html','/for/parents-carers/':'for/parents-carers/index.html','/for/schools-semh/':'for/schools-semh/index.html','/for/trusts/':'for/trusts/index.html','/for/councils-organisations/':'for/councils-organisations/index.html','/for/partners/':'for/partners/index.html'
+          }
+          def text_match(pattern,text):
+              m=re.search(pattern,text,re.I|re.S)
+              return re.sub(r'<[^>]+>',' ',m.group(1)).strip() if m else None
+          results=[]
+          for route in routes:
+              url=urljoin(base,route)+'?mbm='+sha
+              request=urllib.request.Request(url,headers={'Cache-Control':'no-cache, no-store, max-age=0','User-Agent':'Made-by-Matt-production-proof/2026-08-09'})
+              with urllib.request.urlopen(request,timeout=45) as response:
+                  body=response.read()
+                  status=response.status
+                  final_url=response.geturl()
+                  headers=dict(response.headers.items())
+              text=body.decode('utf-8','replace')
+              record={
+                'route':route,'status':status,'final_url':final_url,'bytes':len(body),'sha256':hashlib.sha256(body).hexdigest(),
+                'title':text_match(r'<title[^>]*>(.*?)</title>',text),
+                'canonical':(re.search(r'<link[^>]+rel=["\']canonical["\'][^>]+href=["\']([^"\']+)',text,re.I) or re.search(r'<link[^>]+href=["\']([^"\']+)["\'][^>]+rel=["\']canonical["\']',text,re.I)).group(1) if (re.search(r'<link[^>]+rel=["\']canonical["\'][^>]+href=["\']([^"\']+)',text,re.I) or re.search(r'<link[^>]+href=["\']([^"\']+)["\'][^>]+rel=["\']canonical["\']',text,re.I)) else None,
+                'h1':text_match(r'<h1[^>]*>(.*?)</h1>',text),
+                'etag':headers.get('ETag'),'last_modified':headers.get('Last-Modified'),'server':headers.get('Server'),
+                'architecture_byte_match':None
+              }
+              if route in architecture:
+                  record['architecture_byte_match']=body==Path(architecture[route]).read_bytes()
+              results.append(record)
+          failures=[r for r in results if r['status']<200 or r['status']>=400 or r['architecture_byte_match'] is False]
+          report={'sentinel':'mbm-homepage-audience-routing-2026-08-09','expected_sha':sha,'verified_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'route_count':len(results),'architecture_byte_matches':sum(r['architecture_byte_match'] is True for r in results),'failures':failures,'routes':results}
+          Path('audit-output/production-url-results.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+          if failures: raise SystemExit(json.dumps(failures,indent=2))
+          print(json.dumps(report,indent=2))
+          PY
+
+      - name: Run the full live viewport and journey proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          MBM_BASE_URL=https://madebymatt.uk/ MBM_CACHE_BUST="$EXPECTED_SHA" MBM_FULL_ESTATE=1 node tools/verify_games_audience_faces.mjs
+
+      - name: Print production evidence
+        if: always()
+        shell: bash
+        run: |
+          test ! -f audit-output/deployment-proof.txt || cat audit-output/deployment-proof.txt
+          test ! -f audit-output/production-url-results.json || cat audit-output/production-url-results.json
+          test ! -f audit-output/browser-results.json || cat audit-output/browser-results.json
+
+      - name: Publish verification summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '### Verification-only Made by Matt production readback'
+            echo
+            echo "- Exact merged source SHA: \`$EXPECTED_SHA\`"
+            echo '- Architecture pages byte-compared: **10**'
+            echo '- Required production routes fetched: **19**'
+            echo '- Full responsive/browser journey evidence: `audit-output/browser-results.json`'
+            echo '- This PR is verification-only and must not be merged.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload production proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mbm-homepage-production-readback-${{ github.event.pull_request.number }}-${{ github.run_id }}
+          path: audit-output/
+          if-no-files-found: error
+          retention-days: 45
