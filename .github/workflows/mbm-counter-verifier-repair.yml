@@ -1,0 +1,84 @@
+name: Temporary counter preservation verifier repair
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/mbm-counter-verifier-repair.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Add the narrow device-local counter preservation exception
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one occurrence, found {count}: {old[:120]!r}')
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          verifier = Path('tools/verify_professional_site.js')
+          text = verifier.read_text(encoding='utf-8')
+          replacements = [
+              (
+                  "const ACCOUNT_SENTINEL = 'mbm-accounts-members-mailing-2026-08-08';\nconst FUNCTIONAL_COPY_PAGES",
+                  "const ACCOUNT_SENTINEL = 'mbm-accounts-members-mailing-2026-08-08';\nconst COUNTER_SENTINEL = 'mbm-counter-local-fallback-2026-08-09';\nconst FUNCTIONAL_COPY_PAGES"
+              ),
+              (
+                  "  }\n]);\n\nfunction parseArgs(argv)",
+                  "  },\n  {\n    name: 'device-local-counter-panel',\n    pattern: /<section\\b(?=[^>]*\\bid\\s*=\\s*[\"']mbmStats[\"'])[^>]*>[\\s\\S]*?<\\/section>/i,\n    replacement: '__MBM_AUTHORISED_LOCAL_COUNTER_PANEL__'\n  }\n]);\n\nfunction parseArgs(argv)"
+              ),
+              (
+                  "  assert(!/class=[\"'][^\"']*\\bdx-tform\\b/i.test(home), 'obsolete FormSubmit Teacher updates form remains', failures);\n}",
+                  "  assert(!/class=[\"'][^\"']*\\bdx-tform\\b/i.test(home), 'obsolete FormSubmit Teacher updates form remains', failures);\n\n  const counterPanel = captureExactly(home, HOME_TRUTH_REGIONS.find(region => region.name === 'device-local-counter-panel'), failures, 'main/index.html');\n  assert(/Private · on this device/i.test(counterPanel), 'homepage counter panel must identify device-local activity', failures);\n  assert(/Visits on this device/i.test(counterPanel), 'homepage counter panel must label device-local visits', failures);\n  assert(/No counter request/i.test(counterPanel), 'homepage counter panel must state that no remote counter request is sent', failures);\n  assert(!/counterapi\\.dev/i.test(counterPanel), 'homepage counter panel still names the retired CounterAPI service', failures);\n}"
+              ),
+              (
+                  "      if (FUNCTIONAL_COPY_PAGES.has(rel)) {\n        assert(current.includes(ACCOUNT_SENTINEL), `${rel}: authorised account/privacy copy changed without account sentinel`, failures);\n      } else {\n        const beforeSource = rel === 'main/index.html' ? canonicalHomeTruthCopy(baseline, failures, `${rel} baseline`) : baseline;\n        const afterSource = rel === 'main/index.html' ? canonicalHomeTruthCopy(current, failures, `${rel} current`) : current;\n        const before = visibleAuthoredText(beforeSource);\n        const after = visibleAuthoredText(afterSource);\n        assert(before === after, `${rel}: authored body wording changed outside permitted chrome/audience/auth regions`, failures);\n      }",
+                  "      if (rel === 'stats/index.html') {\n        assert(current.includes(COUNTER_SENTINEL), `${rel}: authorised device-local counter copy changed without counter sentinel`, failures);\n        assert(/Activity on this device/i.test(current), `${rel}: device-local activity title missing`, failures);\n        assert(/Visits on this device/i.test(current), `${rel}: device-local visit label missing`, failures);\n        assert(/stored only in this browser/i.test(current), `${rel}: local-storage explanation missing`, failures);\n        assert(!/counterapi\\.dev/i.test(current), `${rel}: retired CounterAPI claim remains`, failures);\n      } else if (FUNCTIONAL_COPY_PAGES.has(rel)) {\n        assert(current.includes(ACCOUNT_SENTINEL), `${rel}: authorised account/privacy copy changed without account sentinel`, failures);\n      } else {\n        const beforeSource = rel === 'main/index.html' ? canonicalHomeTruthCopy(baseline, failures, `${rel} baseline`) : baseline;\n        const afterSource = rel === 'main/index.html' ? canonicalHomeTruthCopy(current, failures, `${rel} current`) : current;\n        const before = visibleAuthoredText(beforeSource);\n        const after = visibleAuthoredText(afterSource);\n        assert(before === after, `${rel}: authored body wording changed outside permitted chrome/audience/auth/counter regions`, failures);\n      }"
+              )
+          ]
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'tools/verify_professional_site.js: expected one occurrence, found {count}: {old[:140]!r}')
+              text = text.replace(old, new, 1)
+          verifier.write_text(text, encoding='utf-8')
+
+          replace_once(
+              'stats/index.html',
+              '<!doctype html><html lang="en">',
+              '<!doctype html><!-- mbm-counter-local-fallback-2026-08-09 --><html lang="en">'
+          )
+          PY
+
+      - name: Commit verifier repair and remove this workflow
+        shell: bash
+        env:
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          git config user.name 'OpenAI Codex'
+          git config user.email 'codex@openai.com'
+          git rm -f .github/workflows/mbm-counter-verifier-repair.yml
+          git add tools/verify_professional_site.js stats/index.html
+          git diff --check
+          git commit -m 'test: preserve the device-local counter correction'
+          git push origin "HEAD:${HEAD_BRANCH}"
