@@ -334,7 +334,12 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
         errors.append("local audience preference script attempts a network request")
 
     platform_js = read(root, "assets/mbm-platform.js", overrides)
-    if "adultFeaturesAllowed" not in platform_js or "data-mbm-adult-features" not in platform_js:
+    # Anchored to the definition site. A bare substring is defeated two ways:
+    # renaming the function to adultFeaturesAllowedGone still contains the name,
+    # and so does every call site - which is how the sibling check on
+    # reflectMailingFooter passed twice while broken.
+    if not re.search(r"function\s+adultFeaturesAllowed\s*\(", platform_js) \
+            or "data-mbm-adult-features" not in platform_js:
         errors.append("platform JavaScript does not enforce the pupil adult-feature boundary")
     # 2026-08-09: the chooser may carry mailing and support as quiet text links
     # in the studio band. That is a product decision, so the vague "restrained"

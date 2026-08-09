@@ -297,7 +297,69 @@ literal inside a page.
 
 ---
 
+## 17. A step that could never have passed, hidden by a red above it
+
+The `py_compile` list in `verify-games-audience-faces.yml` named
+`tools/verify_audience_discovery_closeout.py` — **a file that has never been
+committed to this repository.** Not deleted; never created. That step was
+invalid from the day the line was written, and nobody ever saw it fail because
+nobody ever saw it run: it sat behind a step that had been red since #110, and
+GitHub skips the rest of a job after a failing step.
+
+**The corollary is the part worth keeping: the skipped-step pathology hides not
+only real failures but configuration that was never valid in the first place.**
+One red step above is enough to make a permanently broken step look like part of
+a working suite, indefinitely.
+
+Deleted and never-existed are different defects. A deletion is drift — something
+moved and a reference did not follow. A never-existed reference means nobody has
+ever run what that line describes, so whatever it was meant to check is
+unchecked and always has been.
+
+**Rule:** assert that every path a workflow references exists, as a standing
+guard rather than a sweep — `tools/check_workflow_paths.py`. The class is
+invisible by construction, so it will not be found by looking.
+
+## 18. A stale local base
+
+A branch for new work was cut from `50817f0`, a commit from the #110 era, because
+the local `main` lagged the remote by two merges. Caught on the status readback
+before anything was written, but only by luck of reading the output.
+
+Nothing about the local branch says it is stale. `git checkout -B new main`
+reads identically whether `main` is current or a fortnight behind.
+
+**Rule:** re-derive the base from the remote immediately before branching —
+`git fetch origin main` then branch from `FETCH_HEAD`, or update local `main`
+first and verify the SHA. **Never trust local `main`.**
+
+## 19. A substring assertion on an identifier is defeated two ways
+
+`verify_games_audience_faces.py` asserted the mechanism existed with
+`"reflectMailingFooter" in platform_js`. Renaming the definition to
+`reflectMailingFooterGone` **satisfied it** — the old name is a substring of the
+new one.
+
+The first fix, matching `\breflectMailingFooter\b\s*\(`, **also passed**,
+because a **second occurrence at the call site** still matched while the
+definition was gone.
+
+Both holes were found by the control, not by review. *A control that only ever
+goes green would have shipped both.*
+
+**Rule:** assert against the anchored **definition site** —
+`function\s+<name>\s*\(` — not a bare substring and not any mention of the
+name, **and confirm the assertion fails when the definition alone is changed.**
+A fix that passes without that proof is the same defect wearing a repair.
+
+Swept across the estate: 191 functions defined in `assets/*.js`, 24 assertions
+naming one, 23 coincidental collisions (`sha256`, `search`), **one genuine bare
+assertion** — on `adultFeaturesAllowed`, the pupil adult-feature boundary, which
+is the most load-bearing assertion in the estate. Now anchored, and proven to
+fail on a definition-only change.
+
 ---
+
 
 ## The shape they share
 
