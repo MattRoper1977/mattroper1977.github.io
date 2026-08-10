@@ -24,7 +24,28 @@
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { chromium } from 'playwright';
+/* Playwright, resolved rather than assumed. ESM import() does not honour
+ * NODE_PATH, so a globally installed playwright is invisible to a bare
+ * specifier and this gate died at its import line - it has not judged anything
+ * in this environment. Falling back to an explicit path makes it run; if none
+ * of them resolve it says so instead of throwing a module-not-found stack. */
+let chromium;
+{
+  const tried = [];
+  for (const spec of ['playwright', process.env.MBM_PLAYWRIGHT,
+    '/opt/node22/lib/node_modules/playwright/index.js'].filter(Boolean)) {
+    try {
+      const mod = await import(spec);
+      chromium = mod.chromium || (mod.default && mod.default.chromium);
+      if (chromium) break;
+      tried.push(spec + ' (no chromium export)');
+    } catch (e) { tried.push(spec + ' (' + (e.code || e) + ')'); }
+  }
+  if (!chromium) {
+    console.error('INCONCLUSIVE: playwright is not importable, so nothing could be rendered. Tried: ' + tried.join('; '));
+    process.exit(3);
+  }
+}
 
 const argv = process.argv.slice(2);
 const ci = argv.indexOf('--control');

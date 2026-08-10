@@ -25,6 +25,7 @@
  */
 'use strict';
 const fs = require('fs');
+const { stripExitRegion, hasExitRegion, exitRegion } = require('./mbm_exit_region.js');
 const path = require('path');
 const crypto = require('crypto');
 
@@ -71,12 +72,26 @@ const loreIds = (src) => {
   return block ? [...block.matchAll(/^      (\w+):/gm)].map(m => m[1]) : [];
 };
 
-gate('G1', 'single file, single script, no dependency', () => {
-  const open = (html.match(/<script/g) || []).length;
-  const close = (html.match(/<\/script>/g) || []).length;
-  assert(open === 1 && close === 1, `expected exactly one script element, saw ${open}/${close}`);
-  assert(!/\brequire\(|\bimport\s+.*\sfrom\s/.test(html), 'module syntax present in a standalone file');
-  return `${bytes} bytes, sha256 ${sha.slice(0, 12)}…`;
+/* G1 judges THE GAME, so it judges the file with the platform's stamped exit
+ * region removed. That region is an inline control - no src, no dependency, no
+ * request - stamped into all eleven declared single-file games by
+ * tools/render_inline_exit.py, so a child on a locked-down school device has a
+ * way out of the page. The game's own promise is unchanged: one file, one game
+ * script, nothing fetched.
+ *
+ * The amendment is paired, deliberately. /neonbreach/ is the precedent for
+ * amending a single-file game's verifier to admit a script, and that script
+ * then rendered nothing for months because no gate ever looked. Here the
+ * rendering is proven in a browser by tools/verify_inline_exit.mjs. */
+gate('G1', 'single file, single game script, plus the stamped exit region', () => {
+  const game = stripExitRegion(html);
+  const open = (game.match(/<script/g) || []).length;
+  const close = (game.match(/<\/script>/g) || []).length;
+  assert(open === 1 && close === 1, `expected exactly one script element in the game itself, saw ${open}/${close}`);
+  assert(!/\brequire\(|\bimport\s+.*\sfrom\s/.test(game), 'module syntax present in a standalone file');
+  assert(hasExitRegion(html), 'the stamped inline exit region is missing \u2014 this game has no way out');
+  assert(!/\bsrc\s*=/i.test(exitRegion(html)), 'the exit region fetches something; it must stay inline');
+  return `${bytes} bytes, sha256 ${sha.slice(0, 12)}\u2026 \u00b7 1 game script + exit region (${Buffer.byteLength(exitRegion(html))} B)`;
 });
 
 gate('G2', 'no remote runtime resources (corrected form)', () => {
