@@ -43,7 +43,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from render_audience_homepages import root_game_routes  # noqa: E402
+from render_audience_homepages import SEARCH_INDEX, root_game_routes  # noqa: E402
 from verify_hud_homepage import (  # noqa: E402
     MIN_CONTROL, launch, overlap, preference_key, homepage_choices, Findings,
 )
@@ -346,6 +346,16 @@ def main() -> None:
           f"x {len(VIEWPORTS)} viewport(s), from the search index")
     print(f"  {len(routes) - len(excluded)} route(s) wired · {len(excluded)} declared in "
           f"data/hud-coverage.json")
+    # Scope, printed rather than implied. "every inventory game is wired or
+    # declared" reads estate-wide and is true of this repository's share; the
+    # rest are governed by the other repository's ledger, and no check here can
+    # see them. Derived from the canonical inventory so the fraction cannot go
+    # stale while the sentence stays confident.
+    total = len({e["route"] for e in json.loads(SEARCH_INDEX.read_text(encoding="utf-8"))["entries"]
+                 if e.get("category") == "game"})
+    print(f"  scope: {len(routes)} of {total} game route(s) in the canonical inventory. The other "
+          f"{total - len(routes)} are governed by the Lessons repository's own ledger, which nothing "
+          f"here can read.")
     for note in notes:
         print(f"  note: {note}")
 
