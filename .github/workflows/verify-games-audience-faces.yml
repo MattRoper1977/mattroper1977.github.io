@@ -298,6 +298,9 @@ jobs:
           python3 tools/verify_hud_homepage.py --self-test
           MBM_BASE_URL=http://127.0.0.1:4174/ python3 tools/verify_hud_homepage.py \
             --report audit-output/audience-discovery/hud-homepage.json
+          python3 tools/verify_hud_on_games.py --self-test
+          MBM_BASE_URL=http://127.0.0.1:4174/ python3 tools/verify_hud_on_games.py \
+            --report audit-output/audience-discovery/hud-on-games.json
 
       - name: Print browser summary
         if: always()
