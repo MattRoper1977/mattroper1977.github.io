@@ -590,6 +590,80 @@ ledgers say which of those they mean.
 
 ---
 
+## 28. A liveness threshold that encodes the harness's own frame rate
+
+`verify_games_offline_runtime` counts requestAnimationFrame ticks in a 1200 ms
+window and calls fewer than five a stall — reported as `webgl-stalled(4raf)`.
+In a headless browser without hardware acceleration rAF is throttled, so a page
+that is running perfectly well delivers four ticks. `Trail_Runner.html` and
+`Trekkers_Trail_Runner_Tees_Coast.html` were carried as broken for two passes on
+that number. Driven with a real browser both build a full-viewport canvas, tick
+eight frames, report WebGL available and raise no errors.
+
+The rebuilt gate then made the *same* mistake from the other end: it calibrated a
+floor at 25% of a blank page's rate, and nine games failed it, none of them
+broken. They open on a menu and are legitimately idle until someone presses
+Start. A rate floor also assumes every game is animating.
+
+**Rule:** a threshold on a rate measures whatever is slowest in the stack,
+usually the harness. Assert the thing you actually mean — here, that the page can
+schedule a frame at all — and print the rate as information beside it.
+
+---
+
+## 29. A control that fails to fail
+
+The dock-geometry sweep's control shrank a button from script and asserted the
+sweep went red. It did not: those buttons carry a 1.5 px border and sit in a flex
+row, so a height set inline kept measuring at or above the 44 px floor. The
+control reported green, which reads as "the gate can catch this" — and would have
+certified a gate nobody had shown could catch anything.
+
+The working control rebuilds the actual defect: it serves the pre-fix `hud.js`,
+with the `min-height` removed from `.mbmhud-btn`, and requires the sweep to
+report the six controls at 28 px.
+
+**Rule:** a control must reconstruct the defect, not simulate it. If the control
+itself passes when it should fail, it is a second gate that needs a control.
+
+---
+
+## 30. A gate that judges the game reading something that is not the game
+
+Eleven declared single-file games gained a stamped inline exit region — a
+platform control, identical in all eleven. Six gates then reported it as a fault
+in the *game*: biopunkhive's storage-isolation scan read the region's one
+platform key as a leak through the game's prefixed helper; neonsync counted it as
+a second storage-prefix literal; Axiom Shift's id-resolution scan read the
+region's runtime `getElementById` calls as ids the game references and never
+defines. Two of those six could not have been predicted from reading the
+verifiers and were found only by running them.
+
+**Rule:** when a file carries both a game and a platform region, every gate that
+asserts something about "this game" must be scoped to the game. One shared
+stripper, emitted by the same generator that stamps the region — not a regex
+retyped in each gate, which is the second-literal trap once per gate.
+
+---
+
+## 31. An extraction anchored on a position any tag can move
+
+`verify_axiomshift.sh` extracted "the script" by slicing from the first
+`<script>` to the last `</script>`. That is not an extraction; it is a guess that
+the file holds exactly one block. The moment a second one appears the slice
+swallows the first block's closing tag and `node --check` reports
+`SyntaxError: Unexpected token '<'` — blaming the game for a fault in the reader.
+PR #105 recorded exactly this failure and read it as the game being unable to
+carry an external script. The same slice appeared a second time inside
+`verify_axiomshift.js`, building its VM shell. `verify_charcoal.sh` and
+`verify_offbrand.sh` had walked every block correctly all along.
+
+**Rule:** parse the structure you claim to be reading. An anchor derived from
+`indexOf`/`lastIndexOf` over a whole file is a position, and positions move.
+
+
+---
+
 
 
 ## The shape they share
