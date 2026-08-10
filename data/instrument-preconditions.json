@@ -1,0 +1,26 @@
+{
+  "_why": "Some instruments in this repository cannot run from this repository. They need a second or third checked-out estate - the Games repo, the Lessons repo - and they default to an absolute path where those happened to sit on one machine. That is not wrong; the estates really are separate repositories and production really does serve them on one origin. What was wrong is that the requirement was undeclared, so an instrument that could not run announced itself with ENOENT at the moment somebody was writing a report, and INCONCLUSIVE became something discovered rather than something designed.",
+  "_contract": "An instrument listed here MUST detect its missing input and exit with the declared code and a message naming what it needed and which variable supplies it. It must never die on a raw filesystem error, and it must never report FAIL - a precondition it cannot meet is a statement about the environment, not about the subject. tools/check_instrument_preconditions.py asserts that every entry names a tool that exists and an environment variable that tool actually reads.",
+  "_states": {
+    "0": "PASS - ran and the subject satisfied it",
+    "1": "FAIL - ran and the subject did not satisfy it",
+    "2": "ERROR - the harness could not judge; a served tree was wrong, an argument was bad",
+    "3": "INCONCLUSIVE - a declared precondition is unmet, so the instrument did not judge at all"
+  },
+  "instruments": [
+    {
+      "tool": "tools/verify_fracture_surfaces.js",
+      "needs": "the Games estate, for Games/games.json - every card count, rail membership and marker holder is derived from that manifest rather than pinned",
+      "suppliedBy": "GAMES_DIR",
+      "alsoNeeds": [{ "what": "the Lessons estate", "suppliedBy": "LESSONS_DIR" }],
+      "unmetExit": 3,
+      "note": "Serves the site repo at / and the Games repo at /Games/ exactly as production does, so it cannot be satisfied from one checkout. Not referenced by any workflow at the time of writing."
+    },
+    {
+      "tool": "tools/verify_olympics_arcade.mjs",
+      "needs": "the Games estate, for Games/games.json",
+      "suppliedBy": "GAMES_DIR",
+      "unmetExit": 3
+    }
+  ]
+}
