@@ -158,6 +158,12 @@ jobs:
       - name: Skipped-job guard controls
         run: python3 tools/check_no_skipped_jobs.py --self-test
 
+      - name: Workflows reference no path that does not exist
+        run: |
+          set -euo pipefail
+          python3 tools/check_workflow_paths.py --self-test
+          python3 tools/check_workflow_paths.py
+
       - name: Install the browser the proof drives
         run: |
           set -euo pipefail

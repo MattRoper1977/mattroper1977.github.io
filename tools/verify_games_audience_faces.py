@@ -334,10 +334,47 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
         errors.append("local audience preference script attempts a network request")
 
     platform_js = read(root, "assets/mbm-platform.js", overrides)
-    if "adultFeaturesAllowed" not in platform_js or "data-mbm-adult-features" not in platform_js:
+    # Anchored to the definition site. A bare substring is defeated two ways:
+    # renaming the function to adultFeaturesAllowedGone still contains the name,
+    # and so does every call site - which is how the sibling check on
+    # reflectMailingFooter passed twice while broken.
+    if not re.search(r"function\s+adultFeaturesAllowed\s*\(", platform_js) \
+            or "data-mbm-adult-features" not in platform_js:
         errors.append("platform JavaScript does not enforce the pupil adult-feature boundary")
-    if "data-mbm-mailing-footer" not in platform_js:
-        errors.append("platform JavaScript cannot keep mailing promotion restrained on the chooser")
+    # 2026-08-09: the chooser may carry mailing and support as quiet text links
+    # in the studio band. That is a product decision, so the vague "restrained"
+    # assertion is replaced by five precise ones rather than relaxed. The
+    # mechanism itself must survive - the pupil boundary depends on the same
+    # adultFeaturesAllowed() condition.
+    # A substring test would accept reflectMailingFooterGone(); the control that
+    # renamed the function caught exactly that. Match the token, not the text.
+    if not re.search(r"function\s+reflectMailingFooter\s*\(", platform_js) or "data-mbm-mailing-footer" not in platform_js:
+        errors.append("platform JavaScript no longer carries the reflectMailingFooter mechanism")
+    mechanism = re.search(r"function reflectMailingFooter\([\s\S]{0,400}", platform_js)
+    if not mechanism or "adultFeaturesAllowed()" not in mechanism.group(0):
+        errors.append("reflectMailingFooter no longer gates on adultFeaturesAllowed(); the pupil boundary depends on it")
+
+    band = re.search(r'<section class="mf-section mf-studio-band"[\s\S]*?</section>', chooser)
+    if not band:
+        errors.append("root chooser is missing the studio band")
+    else:
+        band_html = band.group(0)
+        # 1. mailing and support appear only as text links, never as buttons.
+        if re.search(r'class="[^"]*\bmf-btn\b', band_html):
+            errors.append("studio band uses a button treatment; mailing and support are text links")
+        # 2. no account or member route on the chooser at all.
+        for route in ("/account/", "/members/"):
+            if contains_href(chooser, route):
+                errors.append(f"root chooser exposes {route}; the chooser carries no account route at all")
+        # 3. no price, tier or donate card.
+        if re.search(r"[£$€]\s?\d|\bdonate\b|\btier\b|\bper month\b", band_html, re.I):
+            errors.append("studio band names a price, tier or donation amount")
+        # 4. a Ko-fi widget or script would put a third-party request on the front door.
+        if re.search(r"<script|<iframe|ko-fi\.com/[^\"']*widget", band_html, re.I):
+            errors.append("studio band embeds a widget or script; the support link must be a plain anchor")
+        # 5. the band sits after the audience section, never above it.
+        if chooser.find('id="homepage-choices"') > chooser.find('mf-studio-band'):
+            errors.append("studio band sits above the audience section; it belongs after it")
 
     site = json.loads(read(root, "site.json", overrides))
     for door in site.get("doors", []):

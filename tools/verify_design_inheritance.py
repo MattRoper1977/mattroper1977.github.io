@@ -170,15 +170,9 @@ def main() -> None:
     findings.note("BACKLOG 0 (content · ruling-pending): /resources/ is still the pre-closeout "
                   "catalogue; the closeout rewrite is unrecoverable")
     findings.note(
-        "BACKLOG 0a (instrument · ruling-pending): verify_professional_site.js has 8 open findings "
-        "- 7 a stale baseline path remap reading the chooser instead of the homepage, 1 a privacy "
-        "sentinel a recovery commit overwrote. Steps 6-8 of verify-games-audience-faces.yml skip "
-        "behind it AND the live-proof job needs it, so the accounts/mailing regression suite and "
-        "the byte-compare of all 13 deployed pages have both been dark since #110"
-    )
-    findings.note(
-        "BACKLOG 0a-B (instrument · ruling-pending): main/index.html carries accounts/mailing and "
-        "device-local-counter prose but no sentinel at all; it is governed by region comparison"
+        "BACKLOG 0a: CLOSED 2026-08-09. 0a-A removed the baseline remap; 0a-B declared copy "
+        "authorisation in data/copy-authorisation.json. verify_professional_site.js reports zero "
+        "findings with all five controls passing - green for the first time since #110"
     )
     findings.note(
         "BACKLOG 0b (instrument · work-pending): deployment provenance is built but its live legs "
@@ -188,6 +182,11 @@ def main() -> None:
         "BACKLOG 0c (instrument · work-pending): the live gate's markers are derived and proven red "
         "locally; its readiness signal now comes from the provenance tool rather than a third "
         "signal of its own. Unproven against the real origin until merged"
+    )
+    findings.note(
+        "BACKLOG 0e (content · ruling-pending): /main/ calls the estate offline-first and says "
+        "nothing is uploaded, while the same page lists the optional services that do use the "
+        "internet. Authored copy - recorded, not edited"
     )
     findings.note(
         "BACKLOG 0d (instrument · ruling-pending): verify_games_audience_faces.mjs is node --check'd "

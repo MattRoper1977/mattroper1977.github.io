@@ -152,7 +152,8 @@ file and is indistinguishable from correct behaviour until it isn't, which is
 how this defect survived. A pre-#110 base should be an explicit, deliberate
 invocation, not a hidden branch.
 
-**0a-B · the sentinel. The additive proposal was withdrawn; this replaces it.**
+**0a-B · APPLIED 2026-08-09** — `data/copy-authorisation.json`. The additive
+proposal was withdrawn; the declared map replaced it.
 Three objections defeated it:
 
 - No page in the estate carries two sentinels (59 HTML files, 16 sentinels), so
@@ -389,6 +390,38 @@ behaviour on the estate.
 
 **Matt's call is the cost, not whether the coverage matters.** Values must be
 derived, not re-typed, or this recreates the class the sweep just closed.
+
+---
+
+## 0e. `/main/` disagrees with itself about offline and uploading
+
+**content · ruling-pending** — authored wording on a live site. Recorded, not
+edited: it is Matt's copy and his call.
+
+`/main/` says, in one place:
+
+> Single-file and offline-first like everything else here — nothing to install,
+> and nothing uploaded
+
+and in another, the carve-out:
+
+> lessons, registers and pupil records stay in your browser on your device — they
+> are not uploaded into your account. **Some optional services do use the
+> internet:** the anonymous visit counter, the contact form, videos you choose to
+> play, adult/teacher account identity and saved hub shortcuts, and the separate
+> teacher mailing list.
+
+Both are on the same page. The first reads as a blanket promise; the second is
+the accurate one. There is no service worker anywhere in the estate, so
+"offline-first" is true of standalone lessons and apps and not of the site.
+
+Found while checking a proposed About line for the studio band, which contained
+the same two claims. That line was not shipped — see `studioBand._aboutProvenance`
+in `data/audience-homepages.json` for what was shipped and why.
+
+**To start:** decide whether the blanket sentence should be narrowed to match the
+carve-out, or the carve-out promoted. Either is a copy edit; neither is
+derivable, so it needs an author.
 
 ---
 

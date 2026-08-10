@@ -369,8 +369,8 @@ def chooser_page(data: dict[str, Any]) -> str:
     cta = root["primaryCta"]
     return f'''<!doctype html>
 <!-- {SENTINEL} -->
-<html lang="en-GB">{head(title, description, "/")}<body class="mbm-face-page mbm-face-chooser" data-mbm-audience-face="chooser" data-mbm-mailing-footer="off">
-<a class="skip" href="#main">Skip to content</a>{general_header(current="/", chooser=True)}<main id="main"><section class="mf-hero mf-discovery-hero" aria-labelledby="page-title"><div class="mf-hero-texture" aria-hidden="true"></div><div class="mf-wrap mf-hero-grid"><div class="mf-mark-stage"><span class="mf-halo mf-halo-one" aria-hidden="true"></span><span class="mf-halo mf-halo-two" aria-hidden="true"></span><img class="mf-hero-mark" src="/assets/brand/hero_mark.svg" alt="" width="640" height="640" fetchpriority="high"><span class="mf-audience-badge mf-platform-badge">{icon('network', 'mf-badge-icon')}<span>One live platform</span></span></div><div class="mf-hero-copy"><p class="mf-kicker">Made by Matt · discover what you need</p><h1 id="page-title">{esc(root['title'])}</h1><p class="mf-lead">{esc(root['lead'])}</p><div class="mf-actions"><a class="mf-btn primary" href="{esc(cta['href'])}">{esc(cta['label'])}</a></div>{root_search()}</div></div></section>{root_highlights()}<section class="mf-choices" id="homepage-choices" aria-labelledby="audience-title"><div class="mf-wrap"><div class="mf-choice-intro"><p>Choose a relevant front door</p><h2 id="audience-title">{esc(root['audienceHeading'])}</h2><span>All seven homepages lead into the same public Made by Matt platform. Choose by person or organisation. Choosing one does not create an account, change permissions or hide public content.</span><nav aria-label="Audience groups">{"".join(nav_links)}</nav></div>{"".join(groups)}<div class="mf-continue" data-mbm-face-continue aria-live="polite"><span><b>Last used on this device</b><small>This preference stays in this browser. It is not an account, profile, consent choice or tracking identifier, and it is not sent to Supabase, Buttondown or analytics.</small></span><span class="mf-continue-actions"><a href="/">Continue</a><button class="mf-clear" type="button" data-mbm-face-clear>Forget this preference</button></span></div></div></section><section class="mf-section mf-note-section"><div class="mf-wrap"><div class="mf-note"><span class="mf-note-mark" aria-hidden="true">{icon('spark')}</span><div><p class="mf-note-kicker">Nothing is locked by this choice</p><h2>Different homepages, the same public platform</h2><p>Audience selection changes presentation and navigation only. It does not authenticate anyone, create a child profile, grant permissions or prevent a visitor from opening another public part of the site.</p></div></div></div></section></main>{footer("Discovery homepage", quiet=True)}{scripts()}</body></html>
+<html lang="en-GB">{head(title, description, "/")}<body class="mbm-face-page mbm-face-chooser" data-mbm-audience-face="chooser">
+<a class="skip" href="#main">Skip to content</a>{general_header(current="/", chooser=True)}<main id="main"><section class="mf-hero mf-discovery-hero" aria-labelledby="page-title"><div class="mf-hero-texture" aria-hidden="true"></div><div class="mf-wrap mf-hero-grid"><div class="mf-mark-stage"><span class="mf-halo mf-halo-one" aria-hidden="true"></span><span class="mf-halo mf-halo-two" aria-hidden="true"></span><img class="mf-hero-mark" src="/assets/brand/hero_mark.svg" alt="" width="640" height="640" fetchpriority="high"><span class="mf-audience-badge mf-platform-badge">{icon('network', 'mf-badge-icon')}<span>One live platform</span></span></div><div class="mf-hero-copy"><p class="mf-kicker">Made by Matt · discover what you need</p><h1 id="page-title">{esc(root['title'])}</h1><p class="mf-lead">{esc(root['lead'])}</p><div class="mf-actions"><a class="mf-btn primary" href="{esc(cta['href'])}">{esc(cta['label'])}</a></div>{root_search()}</div></div></section>{root_highlights()}<section class="mf-choices" id="homepage-choices" aria-labelledby="audience-title"><div class="mf-wrap"><div class="mf-choice-intro"><p>Choose a relevant front door</p><h2 id="audience-title">{esc(root['audienceHeading'])}</h2><span>All seven homepages lead into the same public Made by Matt platform. Choose by person or organisation. Choosing one does not create an account, change permissions or hide public content.</span><nav aria-label="Audience groups">{"".join(nav_links)}</nav></div>{"".join(groups)}<div class="mf-continue" data-mbm-face-continue aria-live="polite"><span><b>Last used on this device</b><small>This preference stays in this browser. It is not an account, profile, consent choice or tracking identifier, and it is not sent to Supabase, Buttondown or analytics.</small></span><span class="mf-continue-actions"><a href="/">Continue</a><button class="mf-clear" type="button" data-mbm-face-clear>Forget this preference</button></span></div></div></section><section class="mf-section mf-note-section"><div class="mf-wrap"><div class="mf-note"><span class="mf-note-mark" aria-hidden="true">{icon('spark')}</span><div><p class="mf-note-kicker">Nothing is locked by this choice</p><h2>Different homepages, the same public platform</h2><p>Audience selection changes presentation and navigation only. It does not authenticate anyone, create a child profile, grant permissions or prevent a visitor from opening another public part of the site.</p></div></div></div></section>{studio_band(data)}</main>{footer("Discovery homepage", quiet=True)}{scripts()}</body></html>
 '''
 
 
@@ -425,6 +425,39 @@ def spliced_main_page(data: dict[str, Any]) -> str:
     if not run:
         raise SystemExit("main/index.html: no audience cards found to generate over")
     return html[:run.start()] + generated + html[run.end():]
+
+
+def studio_band(data: dict[str, Any]) -> str:
+    """The compact studio band at the foot of the chooser.
+
+    Rendered from data, never hand-written, so the About line and the support
+    destination live in the file that owns them. Deliberately small: an About
+    line, quiet text links and the adult signpost. No tiers, no amounts, no
+    primary button, no /account/ or /members/ route, no widget or script - a
+    Ko-fi embed would put a third-party request on the front door, which PR #114
+    spent its whole length removing.
+
+    Mailing is NOT duplicated here. The estate already has a mechanism -
+    reflectMailingFooter() injects a plain text link into the footer bar unless
+    data-mbm-mailing-footer is "off" or adultFeaturesAllowed() is false - so the
+    chooser enables that rather than growing a second one. The pupil page keeps
+    its protection through the second condition, which is untouched.
+    """
+    band = data["studioBand"]
+    links = "".join(
+        f'<a class="mf-band-link" href="{esc(link["href"])}"'
+        + (' rel="noopener external" target="_blank"' if link.get("external") else "")
+        + f'>{esc(link["label"])}</a>'
+        for link in band["links"]
+    )
+    return (
+        '<section class="mf-section mf-studio-band" aria-labelledby="studio-band-title">'
+        '<div class="mf-wrap"><div class="mf-band">'
+        f'<p class="mf-band-signpost" id="studio-band-title">{esc(band["signpost"])}</p>'
+        f'<p class="mf-band-about">{esc(band["about"])}</p>'
+        f'<p class="mf-band-links">{links}</p>'
+        '</div></div></section>'
+    )
 
 
 def outputs(data: dict[str, Any]) -> dict[Path, str]:

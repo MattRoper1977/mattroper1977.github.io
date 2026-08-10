@@ -378,8 +378,13 @@ def self_test() -> int:
             blob = committed_bytes(sha, rel)
             if blob is not None:
                 served["/" + served_url(rel).lstrip("/")] = (200, blob)
-        stamp = data_stamp_of(sha)
-        served["/"] = (200, f"<html>{stamp}</html>".encode())
+        # The stamp fixture serves "/", and so does index.html when the root is
+        # itself a witness - which it became the first time a commit changed the
+        # root page. Writing the stamp unconditionally clobbered the real bytes
+        # and failed the control on a fixture collision rather than on anything
+        # about the tool. Only stand in for "/" when nothing else claims it.
+        if "/" not in served:
+            served["/"] = (200, f"<html>{data_stamp_of(sha)}</html>".encode())
         return served
 
     problems = 0

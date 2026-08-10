@@ -1,0 +1,31 @@
+{
+  "_convention": "One sentinel per page, unchanged. A page carries exactly one sentinel comment: the pass that last authored the file. That is what a sentinel has always meant here, and no page grows a second one.",
+  "_why": "Which passes *authorise* the copy on a page is a different question from which pass last touched it, and it cannot be derived from the page. The closeout pass stamped its own sentinel over the accounts sentinel on privacy/index.html while leaving the accounts copy in place, and a verifier asking 'does this page carry the accounts sentinel' then reported a finding about neither the page nor the pass. So the relation is declared here, where it can be reviewed - the same class as gameIdOverrides, canonicalAliases, reclassifyAsGame and chooserLinkText.",
+  "_boundary": "Copy is authorised by the pass whose feature's BEHAVIOUR it describes - not by every pass whose systems it names. The privacy page's accounts and mailing copy describes how the accounts feature behaves, so the accounts pass authorises it. The chooser's locked sentence names Supabase and Buttondown only as things the audience preference does NOT touch: it describes the audience-preference feature's behaviour, so the audience pass authorises it and the accounts pass does not. Name-matching would flag half the estate; this test does not.",
+  "passes": {
+    "professional-design-upgrade": "mbm-site-professional-design-upgrade-2026-08-07",
+    "accounts-members-mailing": "mbm-accounts-members-mailing-2026-08-08",
+    "counter-local-fallback": "mbm-counter-local-fallback-2026-08-09",
+    "homepage-audience-routing": "mbm-homepage-audience-routing-2026-08-09",
+    "audience-discovery-closeout": "mbm-audience-discovery-teach-professional-hubs-closeout-2026-08-09"
+  },
+  "pages": {
+    "members/index.html": {
+      "authorisedBy": ["accounts-members-mailing"],
+      "note": "Account-backed member data and its narrow scope. One pass, one sentinel, no ambiguity."
+    },
+    "privacy/index.html": {
+      "authorisedBy": ["accounts-members-mailing", "audience-discovery-closeout"],
+      "note": "Two passes genuinely authorise copy here. The accounts pass authored the Supabase, Buttondown and deletion sections; the closeout pass authored the audience-choice, recent-items and same-origin-search sections. The page carries the closeout sentinel because that pass wrote it last. BACKLOG 0a-B."
+    },
+    "stats/index.html": {
+      "authorisedBy": ["counter-local-fallback"],
+      "note": "Device-local activity copy. Additionally asserted verbatim by the counter checks in verify_professional_site.js."
+    },
+    "main/index.html": {
+      "authorisedBy": ["accounts-members-mailing", "counter-local-fallback"],
+      "governedBy": "region-comparison",
+      "note": "Recorded on purpose rather than left to escape by accident. This page carries accounts/mailing prose and device-local-counter prose and no sentinel at all, because it is governed by the HOME_TRUTH_REGIONS comparison instead - each authorised region is replaced by a placeholder before the preservation diff, so the copy is pinned more tightly than a sentinel would pin it. Declaring that here is the decision, not the absence of one."
+    }
+  }
+}
