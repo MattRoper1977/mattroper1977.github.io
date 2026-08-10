@@ -279,6 +279,26 @@ jobs:
           # setting it advertised behaviour nothing implements.
           MBM_BASE_URL=http://127.0.0.1:4173/ python3 tools/verify_audience_discovery_browser.py
 
+      # hud.js is the one script the estate serves onto pages it does not
+      # otherwise control, and its chosen-homepage control is the only part of
+      # the audience preference a visitor meets on a game. A tool nobody runs
+      # is a doc asserting coverage that does not exist, so it runs here.
+      # !cancelled() for the reason the accounts suite carries it: this step
+      # owns coverage nothing else has, and an unrelated red above it must not
+      # switch that coverage off.
+      - name: HUD chosen-homepage control across four layouts and three viewports
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory _served >/tmp/mbm-hud-http.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
+          for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:4174/ >/dev/null && break; sleep 1; done
+          python3 tools/verify_hud_homepage.py --self-test
+          MBM_BASE_URL=http://127.0.0.1:4174/ python3 tools/verify_hud_homepage.py \
+            --report audit-output/audience-discovery/hud-homepage.json
+
       - name: Print browser summary
         if: always()
         run: test ! -f audit-output/audience-discovery/browser-results.json || cat audit-output/audience-discovery/browser-results.json
