@@ -16,6 +16,19 @@
     ],
     "mailingViaFooterMechanism": true
   },
+  "mainOption": {
+    "_note": "/main/ is a homepage type a visitor can choose, and it is deliberately NOT a member of `audiences`. Two reasons, both load-bearing. First, mechanical: outputs() writes ROOT/<route>/index.html for every member of `audiences`, so adding `main` there would render audience_page() straight over the hand-maintained /main/ and destroy it - validate() now rejects that by name rather than leaving it to be discovered. Second, semantic: the seven are audience faces, each with sections, quickLinks, a face accent and a floor on promoted visuals. /main/ has none of those; it is the platform itself. It carries only what a chooser card needs, which is why the record is this short.",
+    "_accentProvenance": "Measured, not picked. accent is --mf-navy and soft is --mf-cream: the two brand tokens the estate already owns, so the platform card is painted in the platform's own colours and no new colour is minted. Measurements at 2026-08-10: 16.15:1 on the cream surface and 16.44:1 against white text (bar 4.5:1); nearest audience accent delta-E 40.49 (councils #794390), above the seven's own worst-pair floor of 38.40, so it does not collapse neighbour distinctness. --mf-deep #0F1530 measured better on separation (44.74) and was not chosen: it is the hero ground, not the identity colour. The soft sits delta-E 3.5 from the nearest existing soft (councils #F1E3D2), above the seven softs' own floor of 2.78. check_audience_accents.py re-measures all of this on every run.",
+    "_linkTextNote": "chooserLinkText plays the same role it plays for the seven - the visible text of the link that opens this homepage from another homepage. For an audience that link sits on /main/; for /main/ it sits in the switcher at the foot of each audience homepage. Its wording is the literal that switcher() carried before this record existed, adopted unchanged so retiring the literal changed no visible copy and no served byte.",
+    "id": "main",
+    "route": "/main/",
+    "label": "Main homepage",
+    "chooserDescription": "See the whole platform on one page: every section of Made by Matt, with no audience filter.",
+    "chooserLinkText": "Main Made by Matt homepage",
+    "accent": "#161D3D",
+    "soft": "#E8E2D4",
+    "icon": "platform"
+  },
   "root": {
     "title": "Learning and creation, made simple.",
     "lead": "Search lessons, games, tools, apps and resources — or choose a homepage tailored to you.",

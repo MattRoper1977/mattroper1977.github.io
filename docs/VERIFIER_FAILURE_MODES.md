@@ -360,6 +360,372 @@ fail on a definition-only change.
 
 ---
 
+## 20. A byte-exact check scoped to a delimited region cannot see the defect just outside it
+
+`spliced_main_page()` regenerates the region between `MBM-AUDIENCE-CARDS:BEGIN`
+and `:END` and **passes everything outside it through verbatim**:
+
+```python
+return html[:start] + generated + html[end + len(CARDS_END):]
+```
+
+So `render_audience_homepages.py --check` compares the file against itself
+outside the region. It was byte-exact and **green** while `/main/` served
+**thirteen** audience cards in one `role="list"` — the seven generated ones plus
+six legacy duplicates beginning **one byte past the `:END` marker**, carrying no
+description and no icon, announced to assistive technology alongside the real
+seven.
+
+The duplicates came from the first-run splice in #116, which located the
+existing cards with
+
+```python
+re.search(r'(?:<article class="mbm-audience-card"[\s\S]*?</article>)+', html)
+```
+
+The cards are separated by a newline, so the `+` could not continue past the
+first one: it matched **1 of 7**, the generated block replaced card 01, and
+02–07 survived. Measured rather than inferred — that exact pattern run against
+the pre-#116 file matches a 191-byte span containing one `<article>`.
+
+Two lessons, and the second is the general one:
+
+- **A repetition of a non-greedy group is not "all the adjacent ones."** If the
+  items are separated by anything at all, it matches one. Anchor on
+  first-start to last-end, or match the container.
+- **A region-scoped generator must also assert the absence of its own output
+  kind outside its region.** The region check answers *is what I generated
+  correct*; it cannot answer *is what I generated the only thing here*. Those
+  are different questions and only the second catches this.
+
+`check_main_audience_cards()` now asserts the count against
+`len(data["audiences"])`, that **zero** cards lie outside the region, and that
+each card's route and link text match the data — proven red by re-inserting a
+legacy card, by deleting a generated one, and by rewriting a declared
+`chooserLinkText`.
+
+---
+
+## 21. A comparison is only as wide as its extractor
+
+`verify_games_audience_faces.py` proved the brand resolver's route table had not
+drifted from the data file, by comparing both sides:
+
+```python
+js_routes = dict(re.findall(r"(\w+):'(/for/[a-z-]+/)'", audience_js))
+data_routes = {aid: a["route"] for aid, a in config["audiences"].items()}
+```
+
+Correct, and it caught real drift. But the extractor **can only ever see routes
+under `/for/`**. When `/main/` became a selectable homepage type on 2026-08-10
+and `main:'/main/'` was added to `ROUTES`, that entry was invisible to the
+pattern — and the right-hand side was built from `audiences`, which does not
+contain it either. Both sides are filtered by the same unstated assumption, so
+they agree **by construction**: the check would have gone on reporting seven
+against seven, and reporting agreement, about a list it was not reading.
+
+This is not species 11. There the signal did not move when the event happened.
+Here the signal is fine; the **extractor silently narrows the domain**, and a
+comparison over a narrowed domain is a comparison about something else.
+
+**Rule:** extract from the **named container** — `var ROUTES={…}` — and parse
+every entry in it, then compare against the full declared set. If the extractor
+returns nothing, that is a finding, not an empty agreement. Proven red by
+deleting `,main:'/main/'` from the table.
+
+---
+
+## 22. When the fix makes a bar easy to clear, the control has to break the fix
+
+The dark theme repainted the chooser cards, and the accents kept painting raw:
+2.0–2.9:1 for the seven audience colours on the dark icon square, all under the
+3:1 bar for non-text UI, and **1.18:1** for the platform option, whose accent is
+the brand navy. Not dim — gone.
+
+No accent can fix that from the data side. The same colour has to clear 4.5:1 on
+the cream surface, which forces it dark. So the theme lifts it instead:
+`color-mix(in srgb, var(--choice-accent) 45%, #E8E2D4)`, measured at worst
+4.03:1.
+
+And that is exactly what makes the new assertion look proven when it is not. At
+a 45% lift **almost no colour can fail the 3:1 bar** — even pure black clears it.
+A control that mutates the accent therefore passes trivially, or cannot be
+constructed at all, and the assertion ships unfalsified while looking green.
+
+**Rule:** when a mechanism is introduced *because* a bar could not otherwise be
+met, the control must break **the mechanism**, not its input. Here the control
+re-runs the identical measurement against a recipe that paints the raw accent,
+and requires it to go red — it does, for all eight homepage types. If the theme
+ever stops lifting, that control is what notices.
+
+---
+
+## 23. A count is not a measurement until its units are stated
+
+Root and `/main/` were reported as **15,253 B** and **72,320 B**, and confirmed a
+second time against the shipped files. Both figures were right, and both were
+mislabelled: they are `len(path.read_text())` — **characters**. The pages carry
+`·`, `—` and other multi-byte UTF-8, so the byte counts are **15,296** and
+**72,471**, 43 B and 151 B larger.
+
+Nothing downstream cared until a byte budget did. Headroom against a ~17 KB cap
+computed from characters is wrong by exactly the multi-byte content of the page,
+and reads as more room than exists.
+
+**Rule:** a size figure states the unit it was taken in, and a byte figure is
+taken in bytes — `len(read_bytes())`, `wc -c`, `stat -c %s`. `read_text()`
+counts characters. This is the same discipline as asserting on evidence rather
+than proxies: a character count is a proxy for a byte count, and the two differ
+by however much of the file is not ASCII.
+
+**Swept 2026-08-10**, bounded to `tools/` and `docs/`, asking one question of
+each figure: *is this characters or bytes, and which does its consumer expect?*
+Every Python tool: clean — no `len()` over decoded text anywhere. In JavaScript
+most `.length` figures are on a `Buffer` or an array and are genuinely bytes
+(`verify_apexpool_landing`, `verify_published_live`, `render_olympics_stills`,
+`verify_neonsync_browser`); `verify_apexgolf` already says "serialised
+characters". **Two genuine cases**, both in `verify_ouroboros.mjs`, both
+reporting the length of a localStorage *string* as "bytes written". Neither
+assertion depended on the unit — only the evidence line did — so both are now
+labelled `characters`.
+
+And the budget the species was found on is now enforced in bytes, printed on
+every run: `ROOT_WEIGHT_CAP` in `verify_games_audience_faces.py`.
+
+---
+
+## 24. A trap you have named is not a trap you have closed
+
+Species 23 — *a count is not a measurement until its units are stated* — was
+recorded after root and `/main/` were reported as **15,253 B** and **72,320 B**
+when both were character counts.
+
+The part worth recording is not the mistake. It is that the **same two files had
+already been measured in both units, in the same session, and the difference
+explicitly noted** — 43 and 151 bytes of multi-byte UTF-8. The trap was known,
+written down, and walked into two passes later, on the same two numbers.
+
+Writing a species down creates the feeling of having handled it, and that
+feeling is the failure mode. A register entry changes nothing on its own: it is
+a note to a future reader, not a check. Every entry here that has stayed closed
+stayed closed because something **executes** — a control, a gate, a derived
+value that cannot be typed wrong.
+
+**Rule:** when a species is recorded, ask what now *executes* to catch it. If
+the answer is "we will remember", the entry documents a hazard rather than
+repairing one, and it should say so. Species 23 now has `ROOT_WEIGHT_CAP`,
+measured in bytes and printed on every run — that is the part that closed it,
+not the paragraph.
+
+---
+
+## 25. A finding inferred from your own re-implementation is true of nothing
+
+A census of `hud.js` coverage was challenged on the grounds that it had counted
+ternary expressions as matches. It had not: the ternaries were in a **regex
+written to audit the census**, not in the census. The audit re-implemented the
+thing it was auditing, the re-implementation had a defect, and the defect was
+then reported as a finding about the original.
+
+This is species 5 — *never re-implement a check in another language to test it*
+— arriving from the other direction. There the second implementation produced a
+false green; here it produced a **false red**, attributed to code that never had
+the problem. False reds are the more expensive of the two, because someone then
+goes and "fixes" working code.
+
+**Rule:** to test an instrument, drive **the instrument** — mutate its input and
+require its verdict to move. A second implementation can only ever tell you that
+two things disagree, never which of them is wrong.
+
+---
+
+## 26. A harness ported between language bindings inherits the syntax, not the semantics
+
+`verify_hud_on_lessons_games.mjs` was written by porting a working Python
+harness. Python's Playwright binding accepts a **function source string**:
+
+```python
+page.evaluate("(id) => { ... }", "mbmhud-back")   # calls it with the argument
+```
+
+The Node binding does not. It evaluates a string as an **expression**, so the
+arrow function is constructed, the argument is discarded, and the result is a
+non-serialisable function — which arrives back as `undefined`.
+
+Every probe in the ported suite returned `undefined`. Nothing threw. No error
+appeared anywhere. The suite was **green by never asserting anything**, and it
+looked exactly like a suite that had passed.
+
+It was caught only because one assertion was written to compare against a
+specific string (`'ON TOP'`) rather than to test truthiness. Had it been
+`if (result)`, the port would have shipped.
+
+**Rule:** a harness moved across language bindings is a **new** harness. Prove
+at least one assertion in it can go RED in the new binding before trusting any
+green from it — and prefer real functions over source strings, because a real
+function cannot be misread as an expression by anything.
+
+The general form is worse than the instance: **the failure mode of a mistranslated
+binding is silence, not error.** A binding difference that threw would have been
+found in a minute.
+
+---
+
+## 27. Units belong on counts, not only on sizes
+
+Species 23 was about bytes — 15,253 characters reported as bytes. The next
+report made the same class of mistake on a **count**: ten wired Lessons games
+read as eleven files, because one of the filenames is
+`Trekkers_Trail_Runner (2).html` and the bracketed 2 reads as a quantity.
+
+Nothing about species 23 is specific to bytes. `555` is not a measurement until
+it says whether it counts routes, files, assertions or viewports; `39 games` is
+not one until it says whether a game is a route or a file — here it happens to
+be both, and one filename was enough to make that stop being obvious.
+
+**Rule:** every figure in a report or a tool's output carries its unit, and the
+unit names the thing counted, not its container. The HUD tools now print
+`assertion(s)`, `route(s)`, `file(s)` and `viewport(s)` at every figure, and the
+ledgers say which of those they mean.
+
+---
+
+## 28. A liveness threshold that encodes the harness's own frame rate
+
+`verify_games_offline_runtime` counts requestAnimationFrame ticks in a 1200 ms
+window and calls fewer than five a stall — reported as `webgl-stalled(4raf)`.
+In a headless browser without hardware acceleration rAF is throttled, so a page
+that is running perfectly well delivers four ticks. `Trail_Runner.html` and
+`Trekkers_Trail_Runner_Tees_Coast.html` were carried as broken for two passes on
+that number. Driven with a real browser both build a full-viewport canvas, tick
+eight frames, report WebGL available and raise no errors.
+
+The rebuilt gate then made the *same* mistake from the other end: it calibrated a
+floor at 25% of a blank page's rate, and nine games failed it, none of them
+broken. They open on a menu and are legitimately idle until someone presses
+Start. A rate floor also assumes every game is animating.
+
+**Rule:** a threshold on a rate measures whatever is slowest in the stack,
+usually the harness. Assert the thing you actually mean — here, that the page can
+schedule a frame at all — and print the rate as information beside it.
+
+---
+
+## 29. A control that fails to fail
+
+The dock-geometry sweep's control shrank a button from script and asserted the
+sweep went red. It did not: those buttons carry a 1.5 px border and sit in a flex
+row, so a height set inline kept measuring at or above the 44 px floor. The
+control reported green, which reads as "the gate can catch this" — and would have
+certified a gate nobody had shown could catch anything.
+
+The working control rebuilds the actual defect: it serves the pre-fix `hud.js`,
+with the `min-height` removed from `.mbmhud-btn`, and requires the sweep to
+report the six controls at 28 px.
+
+**Rule:** a control must reconstruct the defect, not simulate it. If the control
+itself passes when it should fail, it is a second gate that needs a control.
+
+---
+
+## 30. A gate that judges the game reading something that is not the game
+
+Eleven declared single-file games gained a stamped inline exit region — a
+platform control, identical in all eleven. Six gates then reported it as a fault
+in the *game*: biopunkhive's storage-isolation scan read the region's one
+platform key as a leak through the game's prefixed helper; neonsync counted it as
+a second storage-prefix literal; Axiom Shift's id-resolution scan read the
+region's runtime `getElementById` calls as ids the game references and never
+defines. Two of those six could not have been predicted from reading the
+verifiers and were found only by running them.
+
+**Rule:** when a file carries both a game and a platform region, every gate that
+asserts something about "this game" must be scoped to the game. One shared
+stripper, emitted by the same generator that stamps the region — not a regex
+retyped in each gate, which is the second-literal trap once per gate.
+
+---
+
+## 31. An extraction anchored on a position any tag can move
+
+`verify_axiomshift.sh` extracted "the script" by slicing from the first
+`<script>` to the last `</script>`. That is not an extraction; it is a guess that
+the file holds exactly one block. The moment a second one appears the slice
+swallows the first block's closing tag and `node --check` reports
+`SyntaxError: Unexpected token '<'` — blaming the game for a fault in the reader.
+PR #105 recorded exactly this failure and read it as the game being unable to
+carry an external script. The same slice appeared a second time inside
+`verify_axiomshift.js`, building its VM shell. `verify_charcoal.sh` and
+`verify_offbrand.sh` had walked every block correctly all along.
+
+**Rule:** parse the structure you claim to be reading. An anchor derived from
+`indexOf`/`lastIndexOf` over a whole file is a position, and positions move.
+
+
+---
+
+## 32. A correctly computed number from the wrong instrument
+
+Placing a new game on the shelf needs a hue far enough from every neighbour. The
+brief named the formula in `tools/check_audience_accents.py` — CIE76 Euclidean
+in CIELAB — and a candidate was derived that cleared every existing hue by a
+comfortable margin on that measure. It then failed, because the gate that
+actually rules the Sports rail is `tools/verify_sports_rail.js`, and that gate
+uses **CIEDE2000 with a floor of 25**. The same pair measured ΔE76 29.6 and
+ΔE00 22.9 — one passes, one fails, and the arithmetic was right both times.
+
+This is the second occasion in a fortnight on which two ΔE formulas have
+returned contradictory verdicts on one pair of colours.
+
+**Rule:** name the gate that rules, not a formula found elsewhere in the repo. A
+correctly computed number from the wrong instrument is still a wrong answer.
+Derive against the check that will judge you.
+
+---
+
+## 33. An estimate sitting in a table of measurements
+
+The Phase 1 decision table costed the inline exit control at "~500–800 B per
+file". It shipped at **3,222 B** — four times that. The decision does not move:
+eleven files at 3,222 B is a cost worth paying, and the reason it was taken (a
+child on a locked-down device can leave the page) has nothing to do with the
+byte count. But the figure sat unlabelled among measured ones in a table whose
+other rows were all measurements, and it was read as one.
+
+**Rule:** an estimate in a cost table is labelled as an estimate, or it will be
+read as a measurement. Ledgers carry the measured figure once it exists.
+
+---
+
+## 34. A guardrail whose refusal is unreachable
+
+`tools/build_mbm_search_index.py` protects the search index with `--write
+--expect-diff`: every changed leaf path must be declared or the write does not
+happen. Sound, and it did block a careless rewrite. But its control flow is:
+
+    if failures:            # the reproduce check, comparing by POSITION
+        raise SystemExit(1)
+    if args.write:          # the declaration machinery
+
+so `--write` is only ever reached when the entries already reproduce — that is,
+only when there is nothing to write. Confirmed both ways: on a clean tree it
+runs and prints "nothing to write"; with one entry added it exits 1 at the
+reproduce check without evaluating a single declared path. No game or app can be
+added to this index by the tool that owns it.
+
+The diagnosis was initially milder — "declaring dozens of paths is tedious" —
+because the positional diff reported 59 untouched entries as changed and that
+looked like the whole problem. It was a symptom of the same alignment defect.
+
+**Rule:** a guardrail is only as good as the path that reaches it. If the strict
+branch can only run in the case where it has nothing to do, the protection is
+unreachable and the tool has quietly stopped being able to do its job. Test the
+refusal path with a real change, not only the acceptance path with none.
+
+
+---
+
+
 
 ## The shape they share
 

@@ -111,6 +111,8 @@ jobs:
           python3 tools/build_mbm_search_index.py --check
           python3 tools/verify_education_hub.py --as-of 2026-08-09 --self-test
           python3 tools/stamp-data.py --check
+          python3 tools/check_instrument_preconditions.py --self-test
+          python3 tools/check_instrument_preconditions.py
 
       - name: Verify Revision 3 architecture and all positive controls
         run: python3 tools/verify_games_audience_faces.py --self-test
@@ -278,6 +280,29 @@ jobs:
           # verify_games_audience_faces.mjs, which this step does not run, so
           # setting it advertised behaviour nothing implements.
           MBM_BASE_URL=http://127.0.0.1:4173/ python3 tools/verify_audience_discovery_browser.py
+
+      # hud.js is the one script the estate serves onto pages it does not
+      # otherwise control, and its chosen-homepage control is the only part of
+      # the audience preference a visitor meets on a game. A tool nobody runs
+      # is a doc asserting coverage that does not exist, so it runs here.
+      # !cancelled() for the reason the accounts suite carries it: this step
+      # owns coverage nothing else has, and an unrelated red above it must not
+      # switch that coverage off.
+      - name: HUD chosen-homepage control across four layouts and three viewports
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory _served >/tmp/mbm-hud-http.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
+          for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:4174/ >/dev/null && break; sleep 1; done
+          python3 tools/verify_hud_homepage.py --self-test
+          MBM_BASE_URL=http://127.0.0.1:4174/ python3 tools/verify_hud_homepage.py \
+            --report audit-output/audience-discovery/hud-homepage.json
+          python3 tools/verify_hud_on_games.py --self-test
+          MBM_BASE_URL=http://127.0.0.1:4174/ python3 tools/verify_hud_on_games.py \
+            --report audit-output/audience-discovery/hud-on-games.json
 
       - name: Print browser summary
         if: always()

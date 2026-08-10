@@ -25,9 +25,22 @@ import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 
+import fsSync from 'node:fs';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SITE = path.join(HERE, '..');
 const GAMES = process.env.GAMES_DIR || '/home/user/Games';
+/* A declared precondition, honoured rather than discovered - see
+ * data/instrument-preconditions.json. Exit 3 is INCONCLUSIVE: the instrument
+ * did not judge, which is a statement about the environment and never about
+ * the subject. */
+if (!GAMES || !fsSync.existsSync(path.join(GAMES, 'games.json'))) {
+  console.error('INCONCLUSIVE: the Games estate is not available, so this instrument did not judge.');
+  console.error(`  looked for : ${path.join(String(GAMES), 'games.json')}`);
+  console.error('  supplied by: GAMES_DIR=<path to that estate>');
+  console.error('  declared in: data/instrument-preconditions.json');
+  process.exit(3);
+}
+
 const HREF = '/olympics/';
 
 let red = 0;

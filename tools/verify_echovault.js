@@ -11,6 +11,7 @@
  */
 'use strict';
 const fs=require('fs'), path=require('path'), crypto=require('crypto');
+const {stripExitRegion,hasExitRegion,exitRegion}=require('./mbm_exit_region.js');
 const ROOT=path.resolve(__dirname,'..');
 const FILE=process.env.EV_GAME_FILE||process.argv[2]||path.join(ROOT,'echovault','index.html');
 const html=fs.readFileSync(FILE,'utf8');
@@ -24,10 +25,25 @@ const RUNTIME_SRC=/<(?:script|img|audio|video|source|iframe|embed)\b[^>]*\bsrc\s
 const RUNTIME_LINK=/<link\b[^>]*\brel\s*=\s*["'](?:stylesheet|preload|prefetch|icon|apple-touch-icon|manifest)["'][^>]*\bhref\s*=\s*["'](?:https?:)?\/\//gi;
 const remote=s=>[...s.matchAll(RUNTIME_SRC),...s.matchAll(RUNTIME_LINK)].map(m=>m[0]);
 
-gate('G1','single file, single script',()=>{
-  const o=(html.match(/<script/g)||[]).length, c=(html.match(/<\/script>/g)||[]).length;
-  assert(o===1&&c===1,`expected one script element, saw ${o}/${c}`);
-  return `${bytes} bytes, sha256 ${sha.slice(0,12)}…`;
+/* G1 judges THE GAME, so it judges the file with the platform's stamped exit
+ * region removed. That region is an inline control - no src, no dependency, no
+ * request - stamped into all eleven declared single-file games by
+ * tools/render_inline_exit.py, so a child on a locked-down school device has a
+ * way out of the page. The game's own promise is unchanged: still one file,
+ * still one game script, still nothing fetched.
+ *
+ * The amendment is paired, deliberately. /neonbreach/ is the precedent for
+ * amending a single-file game's verifier to admit a script, and that script
+ * then rendered nothing for months because no gate ever looked. Here the
+ * rendering is proven in a browser by tools/verify_inline_exit.mjs, and the
+ * region's byte-equality across the eleven is proven there too. */
+gate('G1','single file, single game script, plus the stamped exit region',()=>{
+  const game=stripExitRegion(html);
+  const o=(game.match(/<script/g)||[]).length, c=(game.match(/<\/script>/g)||[]).length;
+  assert(o===1&&c===1,`expected one script element in the game itself, saw ${o}/${c}`);
+  assert(hasExitRegion(html),'the stamped inline exit region is missing — this game has no way out');
+  assert(!/\bsrc\s*=/i.test(exitRegion(html)),'the exit region fetches something; it must stay inline');
+  return `${bytes} bytes, sha256 ${sha.slice(0,12)}… · 1 game script + exit region (${Buffer.byteLength(exitRegion(html))} B)`;
 });
 gate('G2','no remote runtime resources (corrected form)',()=>{
   const r=remote(html);

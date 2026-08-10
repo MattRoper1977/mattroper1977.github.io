@@ -12,11 +12,16 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
+const { stripExitRegion } = require('./mbm_exit_region.js');
 const { spawnSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const GAME = process.env.NS_GAME_FILE || path.join(ROOT, 'neonsync', 'index.html');
-const GAME_SHA = '6f10b2989f73db70d63ed036853af0b3508e2166ff892c13118e18cf9bcc22a5';
+/* Moved 2026-08-10 when the stamped inline exit region was added to all eleven
+ * declared single-file games. The file changed deliberately, so the pin moves
+ * with it in the same commit - a ledger updated in a later commit than the file
+ * it describes is a stale doc with a hash attached. Previous: 6f10b2989f73db70d63ed036853af0b3508e2166ff892c13118e18cf9bcc22a5 */
+const GAME_SHA = 'd743938906c54e607309c6ad1a5574911f08773e26465f8306bd122cc1acd0ed';
 const BASE_SHA = 'c645e6f3f56a5884c23656dc82be49bc20e333ebc379ea098341886327832602';
 const BASE_BYTES = 56658;
 const html = fs.readFileSync(GAME, 'utf8');
@@ -333,7 +338,13 @@ ok('telegraph-rendered-proof-carried', /telegraphRendered:true/.test(html) && /e
 // ---------------------------------------------------------------------- G6
 group('G6 — storage isolation');
 {
-  const literals = [...new Set(html.match(/['"](?:mbm_|apex_|apexkick|apexpool|apexgolf|apextennis|voxel|biopunk)[A-Za-z0-9_.-]*['"]/g) || [])];
+  /* Storage isolation is a claim about THE GAME. The stamped inline exit region
+     names one platform key (mbm_audience_view) so it can decide whether a
+     chosen-homepage control renders. That is the platform's key, not a second
+     save prefix for this game, and counting it here reports the exit control
+     as a storage leak. Scope the scan to the game itself. */
+  const game = stripExitRegion(html);
+  const literals = [...new Set(game.match(/['"](?:mbm_|apex_|apexkick|apexpool|apexgolf|apextennis|voxel|biopunk)[A-Za-z0-9_.-]*['"]/g) || [])];
   ok('single-storage-prefix-literal', literals.length === 1 && /mbm_neonsync_/.test(literals[0]), literals.join(', ') || 'none');
   ok('no-apex-sibling-keys', !literals.some(x => /apex|voxel|biopunk/.test(x)));
   ok('all-storage-writes-use-helper', (html.match(/localStorage\.setItem/g) || []).length === 1 && /localStorage\.setItem\(this\.key\(k\)/.test(html));

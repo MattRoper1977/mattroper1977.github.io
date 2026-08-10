@@ -21,6 +21,28 @@ const path = require('path');
 const SITE = process.env.SITE_DIR || path.join(__dirname, '..');
 const GAMES = process.env.GAMES_DIR || '/home/user/Games';
 const LESSONS = process.env.LESSONS_DIR || '/workspace/lessons';
+/* A declared precondition, honoured rather than discovered.
+ *
+ * This gate serves the site repo at / and the Games repo at /Games/ exactly as
+ * production does, so it cannot be satisfied from one checkout. It used to
+ * default GAMES_DIR to one machine's path and then die on ENOENT the moment
+ * somebody ran it anywhere else - so "this instrument cannot run here" arrived
+ * as a stack trace at report time instead of as a state the tool knows about.
+ *
+ * Exit 3 is INCONCLUSIVE: the instrument did not judge. It is deliberately not
+ * FAIL, because an unmet precondition is a statement about the environment and
+ * never about the subject. Declared in data/instrument-preconditions.json. */
+function requirePrecondition(label, dir, variable, probe) {
+  if (dir && fs.existsSync(path.join(dir, probe))) return;
+  console.error(`INCONCLUSIVE: ${label} is not available, so this instrument did not judge.`);
+  console.error(`  looked for : ${path.join(String(dir), probe)}`);
+  console.error(`  supplied by: ${variable}=<path to that estate>`);
+  console.error('  declared in: data/instrument-preconditions.json');
+  process.exit(3);
+}
+requirePrecondition('the Games estate', GAMES, 'GAMES_DIR', 'games.json');
+requirePrecondition('the Lessons estate', LESSONS, 'LESSONS_DIR', 'README.md');
+
 const NEW_PREFIX = 'NEW · ';
 const RPG = /\bRPG\b/;
 

@@ -37,7 +37,11 @@ ICONS = {
     "school": '<path d="M3.5 20.5h17M5.5 20.5V8.2L12 4l6.5 4.2v12.3M8.3 11.2h.1M12 11.2h.1M15.7 11.2h.1M8.3 14.6h.1M15.7 14.6h.1M10.3 20.5v-4.1h3.4v4.1"/>',
     "network": '<circle cx="12" cy="5" r="2.4"/><circle cx="5" cy="18.5" r="2.4"/><circle cx="19" cy="18.5" r="2.4"/><path d="m10.8 7.1-4.5 8.9M13.2 7.1l4.5 8.9M7.4 18.5h9.2"/>',
     "civic": '<path d="M3 9.5h18M5 9.5v9.2M9.5 9.5v9.2M14.5 9.5v9.2M19 9.5v9.2M3 19h18M12 3l8 4H4l8-4Z"/>',
-    "collaborate": '<circle cx="8" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M2.8 20v-2.1A4.9 4.9 0 0 1 7.7 13h.6a4.9 4.9 0 0 1 3.7 1.7M12 20v-2.1a4.9 4.9 0 0 1 4.9-4.9h.6a4.9 4.9 0 0 1 4.9 4.9V20"/>'
+    "collaborate": '<circle cx="8" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M2.8 20v-2.1A4.9 4.9 0 0 1 7.7 13h.6a4.9 4.9 0 0 1 3.7 1.7M12 20v-2.1a4.9 4.9 0 0 1 4.9-4.9h.6a4.9 4.9 0 0 1 4.9 4.9V20"/>',
+    # The platform option needs its own glyph: all seven audience glyphs are
+    # taken, and reusing one would make the icon a duplicate cue on a card whose
+    # whole job is to read as a different kind of thing. Four panes, one frame.
+    "platform": '<rect x="3.6" y="3.6" width="7" height="7" rx="1.8"/><rect x="13.4" y="3.6" width="7" height="7" rx="1.8"/><rect x="3.6" y="13.4" width="7" height="7" rx="1.8"/><rect x="13.4" y="13.4" width="7" height="7" rx="1.8"/>'
 }
 
 SEARCH_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.2 4.2"/></svg>'
@@ -318,7 +322,13 @@ def switcher(data: dict[str, Any], current: str) -> str:
     for aid, item in data["audiences"].items():
         cur = ' aria-current="page"' if aid == current else ""
         links.append(f'<a href="{esc(item["route"])}"{cur}>{esc(item["label"])}</a>')
-    return f'''<section class="mf-switch" aria-labelledby="switch-title"><div class="mf-wrap"><div class="mf-switch-head"><p>One platform · several front doors</p><h2 id="switch-title">Choose another homepage</h2></div><div class="mf-switch-grid">{"".join(links)}</div><div class="mf-switch-actions"><a class="mf-btn primary" href="/main/">Main Made by Matt homepage</a><a class="mf-btn quiet" href="/">Choose homepage</a></div></div></section>'''
+    # The /main/ action used to be a hand-written route and a hand-written
+    # label, in a function that already had the data file open. It is the same
+    # link the chooser card is, seen from the other side, so it reads the same
+    # record. The wording was adopted from the literal it replaced, so retiring
+    # the literal moved no bytes.
+    main = data["mainOption"]
+    return f'''<section class="mf-switch" aria-labelledby="switch-title"><div class="mf-wrap"><div class="mf-switch-head"><p>One platform · several front doors</p><h2 id="switch-title">Choose another homepage</h2></div><div class="mf-switch-grid">{"".join(links)}</div><div class="mf-switch-actions"><a class="mf-btn primary" href="{esc(main["route"])}">{esc(main["chooserLinkText"])}</a><a class="mf-btn quiet" href="/">Choose homepage</a></div></div></section>'''
 
 
 def audience_page(data: dict[str, Any], aid: str, audience: dict[str, Any]) -> str:
@@ -335,6 +345,13 @@ def audience_page(data: dict[str, Any], aid: str, audience: dict[str, Any]) -> s
 
 
 def chooser_card(aid: str, audience: dict[str, Any]) -> str:
+    """One selectable homepage type.
+
+    Serves two kinds of record: the seven entries in `audiences`, and the
+    `mainOption`. It reads only the six keys both kinds carry - label, route,
+    chooserDescription, accent, soft, icon - which is why the platform option
+    needed no card shape of its own and cannot drift away from the seven.
+    """
     return f'''<a class="mf-choice" data-mbm-face-choice="{esc(aid)}" data-mbm-face-label="{esc(audience['label'])}" href="{esc(audience['route'])}" style="--choice-accent:{esc(audience['accent'])};--choice-soft:{esc(audience['soft'])}"><span class="mf-last">Last used on this device</span><span class="mf-choice-icon">{icon(audience['icon'])}</span><span class="mf-choice-copy"><strong>{esc(audience['label'])}</strong><small>{esc(audience['chooserDescription'])}</small></span><span class="mf-arrow" aria-hidden="true">→</span></a>'''
 
 
@@ -370,7 +387,7 @@ def chooser_page(data: dict[str, Any]) -> str:
     return f'''<!doctype html>
 <!-- {SENTINEL} -->
 <html lang="en-GB">{head(title, description, "/")}<body class="mbm-face-page mbm-face-chooser" data-mbm-audience-face="chooser">
-<a class="skip" href="#main">Skip to content</a>{general_header(current="/", chooser=True)}<main id="main"><section class="mf-hero mf-discovery-hero" aria-labelledby="page-title"><div class="mf-hero-texture" aria-hidden="true"></div><div class="mf-wrap mf-hero-grid"><div class="mf-mark-stage"><span class="mf-halo mf-halo-one" aria-hidden="true"></span><span class="mf-halo mf-halo-two" aria-hidden="true"></span><img class="mf-hero-mark" src="/assets/brand/hero_mark.svg" alt="" width="640" height="640" fetchpriority="high"><span class="mf-audience-badge mf-platform-badge">{icon('network', 'mf-badge-icon')}<span>One live platform</span></span></div><div class="mf-hero-copy"><p class="mf-kicker">Made by Matt · discover what you need</p><h1 id="page-title">{esc(root['title'])}</h1><p class="mf-lead">{esc(root['lead'])}</p><div class="mf-actions"><a class="mf-btn primary" href="{esc(cta['href'])}">{esc(cta['label'])}</a></div>{root_search()}</div></div></section>{root_highlights()}<section class="mf-choices" id="homepage-choices" aria-labelledby="audience-title"><div class="mf-wrap"><div class="mf-choice-intro"><p>Choose a relevant front door</p><h2 id="audience-title">{esc(root['audienceHeading'])}</h2><span>All seven homepages lead into the same public Made by Matt platform. Choose by person or organisation. Choosing one does not create an account, change permissions or hide public content.</span><nav aria-label="Audience groups">{"".join(nav_links)}</nav></div>{"".join(groups)}<div class="mf-continue" data-mbm-face-continue aria-live="polite"><span><b>Last used on this device</b><small>This preference stays in this browser. It is not an account, profile, consent choice or tracking identifier, and it is not sent to Supabase, Buttondown or analytics.</small></span><span class="mf-continue-actions"><a href="/">Continue</a><button class="mf-clear" type="button" data-mbm-face-clear>Forget this preference</button></span></div></div></section><section class="mf-section mf-note-section"><div class="mf-wrap"><div class="mf-note"><span class="mf-note-mark" aria-hidden="true">{icon('spark')}</span><div><p class="mf-note-kicker">Nothing is locked by this choice</p><h2>Different homepages, the same public platform</h2><p>Audience selection changes presentation and navigation only. It does not authenticate anyone, create a child profile, grant permissions or prevent a visitor from opening another public part of the site.</p></div></div></div></section>{studio_band(data)}</main>{footer("Discovery homepage", quiet=True)}{scripts()}</body></html>
+<a class="skip" href="#main">Skip to content</a>{general_header(current="/", chooser=True)}<main id="main"><section class="mf-hero mf-discovery-hero" aria-labelledby="page-title"><div class="mf-hero-texture" aria-hidden="true"></div><div class="mf-wrap mf-hero-grid"><div class="mf-mark-stage"><span class="mf-halo mf-halo-one" aria-hidden="true"></span><span class="mf-halo mf-halo-two" aria-hidden="true"></span><img class="mf-hero-mark" src="/assets/brand/hero_mark.svg" alt="" width="640" height="640" fetchpriority="high"><span class="mf-audience-badge mf-platform-badge">{icon('network', 'mf-badge-icon')}<span>One live platform</span></span></div><div class="mf-hero-copy"><p class="mf-kicker">Made by Matt · discover what you need</p><h1 id="page-title">{esc(root['title'])}</h1><p class="mf-lead">{esc(root['lead'])}</p><div class="mf-actions"><a class="mf-btn primary" href="{esc(cta['href'])}">{esc(cta['label'])}</a></div>{root_search()}</div></div></section><section class="mf-choices" id="homepage-choices" aria-labelledby="audience-title"><div class="mf-wrap"><div class="mf-choice-intro"><p>Choose a relevant front door</p><h2 id="audience-title">{esc(root['audienceHeading'])}</h2><span>Every homepage here leads into the same public Made by Matt platform. Choose by person or organisation, or choose the main homepage. Choosing one does not create an account, change permissions or hide public content.</span><nav aria-label="Audience groups">{"".join(nav_links)}</nav></div>{"".join(groups)}<div class="mf-choice-grid mf-choice-platform">{chooser_card(data["mainOption"]["id"], data["mainOption"])}</div><div class="mf-continue" data-mbm-face-continue aria-live="polite"><span><b>Last used on this device</b><small>This preference stays in this browser. It is not an account, profile, consent choice or tracking identifier, and it is not sent to Supabase, Buttondown or analytics.</small></span><span class="mf-continue-actions"><a href="/">Continue</a><button class="mf-clear" type="button" data-mbm-face-clear>Forget this preference</button></span></div></div></section>{root_highlights()}<section class="mf-section mf-note-section"><div class="mf-wrap"><div class="mf-note"><span class="mf-note-mark" aria-hidden="true">{icon('spark')}</span><div><p class="mf-note-kicker">Nothing is locked by this choice</p><h2>Different homepages, the same public platform</h2><p>Audience selection changes presentation and navigation only. It does not authenticate anyone, create a child profile, grant permissions or prevent a visitor from opening another public part of the site.</p></div></div></div></section>{studio_band(data)}</main>{footer("Discovery homepage", quiet=True)}{scripts()}</body></html>
 '''
 
 
@@ -407,6 +424,111 @@ def main_audience_cards(data: dict[str, Any]) -> str:
             f'</div></article>'
         )
     return "".join(cards)
+
+
+# hud.js is the estate-wide floating control layer. It is served to games,
+# apps, registers and lessons from the site origin, and it now offers a second
+# control that opens the homepage the visitor chose.
+#
+# It cannot read data/audience-homepages.json at run time. A fetch on a game's
+# load path would put a request in front of a child mid-session, break the
+# offline promise, and trip the estate-wide "no third party at page load"
+# assertion PR #114 spent its whole length earning. So the routes and labels
+# are GENERATED into the file between markers, the same way stamp-data.py
+# splices its stamp and the same way /main/'s cards are spliced - and --check
+# fails if the region drifts from the data.
+#
+# Unlike the /main/ cards, this splice REQUIRES its markers. The first-run
+# branch below them is what produced species 20: a regex that matched one card
+# of seven and left six duplicates outside the region, where a byte-exact check
+# could not see them. There is no first-run branch here.
+HUD_JS = ROOT / "hud.js"
+HUD_BEGIN = "  /* MBM-HOMEPAGE-CHOICES:BEGIN generated by tools/render_audience_homepages.py, do not edit by hand */"
+HUD_END = "  /* MBM-HOMEPAGE-CHOICES:END */"
+
+# The second generated region in hud.js, from a different source: the canonical
+# game inventory. hud.js decided what kind of page it was on from four path
+# patterns, and the site's own root-level games - /echovault/, /relicforge/,
+# /fracture/, /olympics/ and the rest - matched none of them. A script tag
+# alone gave them nothing, because BACK resolved null and mount() had nothing
+# to append. That is the whole reason they were stranded.
+#
+# The fix is a derived set, not a fifth pattern. A fifth pattern would be a
+# hand-written second copy of an inventory this estate already keeps, and it
+# would go stale the first time a game shipped.
+SEARCH_INDEX = ROOT / "data" / "mbm-search-index.json"
+ROOT_GAMES_BEGIN = "  /* MBM-ROOT-GAMES:BEGIN generated by tools/render_audience_homepages.py, do not edit by hand */"
+ROOT_GAMES_END = "  /* MBM-ROOT-GAMES:END */"
+# A site root-level game is a search-index entry of category "game" whose route
+# is a single path segment. Everything else with that category lives under
+# /Lessons/ or /Games/, which hud.js already recognises by path.
+ROOT_GAME_ROUTE = re.compile(r"^/[A-Za-z0-9_-]+/$")
+
+
+def root_game_routes() -> list[str]:
+    index = json.loads(SEARCH_INDEX.read_text(encoding="utf-8"))
+    routes = {
+        entry["route"] for entry in index["entries"]
+        if entry.get("category") == "game" and ROOT_GAME_ROUTE.match(entry.get("route", ""))
+    }
+    if not routes:
+        raise SystemExit(
+            "data/mbm-search-index.json yielded no root-level game routes. Generating an empty set "
+            "would silently strand every root game again, so this is a failure, not an empty region."
+        )
+    return sorted(routes)
+
+
+def hud_root_games(routes: list[str] | None = None) -> str:
+    routes = root_game_routes() if routes is None else routes
+    body = ",".join(f"{json.dumps(route)}:1" for route in routes)
+    return (
+        f"{ROOT_GAMES_BEGIN}\n"
+        f"  var ROOT_GAMES = {{{body}}};\n"
+        f"{ROOT_GAMES_END}"
+    )
+
+
+def hud_homepage_choices(data: dict[str, Any]) -> str:
+    """The eight homepage types as hud.js needs them: stored value -> route, label.
+
+    Keys are quoted rather than bare. Every current ID is a valid JavaScript
+    identifier, so quoting changes nothing today - and it means an ID that is
+    not one can never turn generated data into a syntax error on every game in
+    the estate.
+    """
+    choices = [(aid, a["route"], a["label"]) for aid, a in data["audiences"].items()]
+    main = data["mainOption"]
+    choices.append((main["id"], main["route"], main["label"]))
+    body = ",".join(
+        f'{json.dumps(aid)}:{{r:{json.dumps(route)},l:{json.dumps(label)}}}'
+        for aid, route, label in choices
+    )
+    return (
+        f"{HUD_BEGIN}\n"
+        f"  var HOME_KEY = {json.dumps(data['preferenceKey'])};\n"
+        f"  var HOMES = {{{body}}};\n"
+        f"{HUD_END}"
+    )
+
+
+def _splice_region(source: str, begin: str, end_marker: str, generated: str, name: str) -> str:
+    start = source.find(begin)
+    if start < 0:
+        raise SystemExit(
+            f"hud.js: the {name} region is missing. It is not generated into place - the markers "
+            f"belong to hud.js and this tool only fills between them."
+        )
+    end = source.find(end_marker, start)
+    if end < 0:
+        raise SystemExit(f"hud.js: unterminated {name} region")
+    return source[:start] + generated + source[end + len(end_marker):]
+
+
+def spliced_hud_js(data: dict[str, Any], source: str | None = None) -> str:
+    source = HUD_JS.read_text(encoding="utf-8") if source is None else source
+    source = _splice_region(source, HUD_BEGIN, HUD_END, hud_homepage_choices(data), "MBM-HOMEPAGE-CHOICES")
+    return _splice_region(source, ROOT_GAMES_BEGIN, ROOT_GAMES_END, hud_root_games(), "MBM-ROOT-GAMES")
 
 
 def spliced_main_page(data: dict[str, Any]) -> str:
@@ -465,6 +587,7 @@ def outputs(data: dict[str, Any]) -> dict[Path, str]:
     for aid, audience in data["audiences"].items():
         result[ROOT / audience["route"].strip("/") / "index.html"] = audience_page(data, aid, audience)
     result[MAIN_PAGE] = spliced_main_page(data)
+    result[HUD_JS] = spliced_hud_js(data)
     return result
 
 
@@ -480,7 +603,58 @@ SECTION_REQUIRED = {
 }
 
 
+MAIN_OPTION_KEYS = ("id", "route", "label", "chooserDescription", "chooserLinkText", "accent", "soft", "icon")
+
+
+def validate_main_option(data: dict[str, Any]) -> dict[str, Any]:
+    """The platform option, and the one shape mistake that would destroy a page.
+
+    `mainOption` is a homepage type a visitor can choose, held outside
+    `audiences` on purpose. The reason is mechanical and unforgiving: outputs()
+    writes ROOT/<route>/index.html for every member of `audiences`, so a `main`
+    entry there would render an audience_page() over the hand-maintained
+    /main/ - 72 KB of preserved homepage replaced by a generated face, in one
+    render, with --check going green afterwards because the committed file
+    would then match what the renderer produces. So it is rejected by name and
+    with the consequence spelled out, not left to the ID-set mismatch below,
+    whose message says nothing about what would have happened.
+    """
+    if "main" in data.get("audiences", {}):
+        raise SystemExit(
+            "audiences must not contain 'main': /main/ is hand-maintained, and outputs() renders "
+            "an audience page over ROOT/<route>/index.html for every member of audiences, so this "
+            "would overwrite main/index.html. The platform option belongs in the mainOption key."
+        )
+    main = data.get("mainOption")
+    if not isinstance(main, dict):
+        raise SystemExit("mainOption is missing; the chooser cannot offer /main/ as a homepage type without it")
+    for key in MAIN_OPTION_KEYS:
+        if not str(main.get(key, "")).strip():
+            raise SystemExit(f"mainOption: {key!r} is required")
+    if main["id"] != "main":
+        raise SystemExit(f"mainOption: id must be 'main', got {main['id']!r}; it is the stored preference value")
+    if main["route"] != "/main/":
+        raise SystemExit(f"mainOption: route must be '/main/', got {main['route']!r}")
+    if main["icon"] not in ICONS:
+        raise SystemExit(f"mainOption: unknown icon {main['icon']!r}")
+    if main["id"] in data.get("audiences", {}):
+        raise SystemExit("mainOption id collides with an audience ID")
+    taken_routes = {a["route"] for a in data.get("audiences", {}).values()}
+    if main["route"] in taken_routes:
+        raise SystemExit("mainOption route collides with an audience route")
+    # Colour is never the only cue here, but a duplicate accent or a duplicate
+    # glyph would make the platform card read as one of the seven. Contrast and
+    # separation are measured by tools/check_audience_accents.py, which reads
+    # this record; what belongs here is only that it is its own.
+    for field in ("accent", "soft", "icon"):
+        clash = [aid for aid, a in data.get("audiences", {}).items() if a.get(field) == main[field]]
+        if clash:
+            raise SystemExit(f"mainOption: {field} {main[field]!r} is already used by {clash[0]}")
+    return main
+
+
 def validate(data: dict[str, Any]) -> None:
+    validate_main_option(data)
     expected = {"pupils", "teachers", "parents", "schools", "trusts", "councils", "partners"}
     actual = set(data.get("audiences", {}))
     if actual != expected:
@@ -521,10 +695,145 @@ def validate(data: dict[str, Any]) -> None:
                 raise SystemExit(f"{aid}: {key} is no longer supported; the shared hero mark is used on every audience homepage")
 
 
+def self_test() -> int:
+    """Prove the mainOption guards fire, by breaking the record seven ways.
+
+    Every control mutates a copy of the shipped data and expects validate() to
+    reject it for the stated reason. Two things this does deliberately. It
+    validates the real data first and stops if that fails - a control run
+    against already-invalid data would "pass" on the pre-existing rejection and
+    prove nothing. And it matches the reason, not merely the rejection: a guard
+    that fires for the wrong reason is a guard that is not testing what its
+    label claims.
+    """
+    data = json.loads(DATA_PATH.read_text(encoding="utf-8"))
+    try:
+        validate(data)
+    except SystemExit as exc:
+        print(f"[FAIL] precondition: the shipped data does not validate, so no control below can be "
+              f"told apart from that failure: {exc}")
+        return 1
+
+    problems = 0
+
+    def control(label: str, break_it, expected: str) -> None:
+        nonlocal problems
+        broken = json.loads(json.dumps(data))
+        break_it(broken)
+        try:
+            validate(broken)
+        except SystemExit as exc:
+            if expected.lower() in str(exc).lower():
+                print(f"[PASS] positive control: {label}")
+                return
+            print(f"[FAIL] {label}: rejected, but for another reason: {exc}")
+        else:
+            print(f"[FAIL] positive control not detected: {label}")
+        problems += 1
+
+    def set_main(key: str, value: Any):
+        return lambda d: d["mainOption"].__setitem__(key, value)
+
+    audience_accent = next(iter(data["audiences"].values()))["accent"]
+    audience_icon = next(iter(data["audiences"].values()))["icon"]
+
+    control("main added to audiences",
+            lambda d: d["audiences"].__setitem__("main", dict(d["mainOption"])),
+            "audiences must not contain 'main'")
+    control("mainOption removed", lambda d: d.pop("mainOption"), "mainOption is missing")
+    control("mainOption route repointed", set_main("route", "/main-platform/"), "route must be '/main/'")
+    control("mainOption id renamed", set_main("id", "platform"), "id must be 'main'")
+    control("mainOption accent duplicates an audience", set_main("accent", audience_accent), "is already used by")
+    control("mainOption icon duplicates an audience", set_main("icon", audience_icon), "is already used by")
+    control("mainOption chooserLinkText emptied", set_main("chooserLinkText", "  "), "'chooserLinkText' is required")
+
+    # hud.js carries a generated region because it cannot read the data file at
+    # run time. That makes --check the only thing standing between the estate's
+    # games and a stale route table, so it gets its own controls: one proving a
+    # data change alone makes the committed file stale, one proving the splice
+    # refuses a file whose markers have gone.
+    committed_hud = HUD_JS.read_text(encoding="utf-8")
+    if spliced_hud_js(data) != committed_hud:
+        print("[FAIL] precondition: hud.js is already stale against the data, so the control below "
+              "cannot be told apart from that")
+        problems += 1
+    else:
+        moved = json.loads(json.dumps(data))
+        moved["audiences"]["teachers"]["label"] = "Teachers, moved by a control"
+        if spliced_hud_js(moved) == committed_hud:
+            print("[FAIL] positive control not detected: a label change alone leaves hud.js unchanged, "
+                  "so --check could never see the data move")
+            problems += 1
+        else:
+            print("[PASS] positive control: a data change alone makes the committed hud.js stale")
+
+    # The root-game map has the same shape of risk from a different source, and
+    # a worse failure mode: a stale or empty set does not break a page, it
+    # silently strands every game in it - which is the state this repair found.
+    routes = root_game_routes()
+    print(f"[INFO] root-game inventory: {len(routes)} single-segment game route(s) from "
+          f"{SEARCH_INDEX.relative_to(ROOT)}")
+    # Two directions, because they fail differently and the first draft of this
+    # control tested neither. A control that regenerates the region and compares
+    # it to the correct file is asking whether the generator repairs its own
+    # output; it always does, and it proves nothing about --check.
+    #
+    # 1. The inventory moves and the committed file does not: a new game ships.
+    shipped = _splice_region(committed_hud, ROOT_GAMES_BEGIN, ROOT_GAMES_END,
+                             hud_root_games(routes + ["/a-new-game/"]), "MBM-ROOT-GAMES")
+    if shipped == committed_hud:
+        print("[FAIL] positive control not detected: a game added to the inventory changes nothing in hud.js")
+        problems += 1
+    else:
+        print("[PASS] positive control: a game entering the inventory makes the committed hud.js stale")
+    # 2. The committed region is edited by hand and the inventory does not move:
+    #    entries are dropped, and every game in them is stranded again in
+    #    silence, because a missing back control is not an error anywhere.
+    thinned = _splice_region(committed_hud, ROOT_GAMES_BEGIN, ROOT_GAMES_END,
+                             hud_root_games(routes[:1]), "MBM-ROOT-GAMES")
+    if spliced_hud_js(data, thinned) != thinned:
+        print(f"[PASS] positive control: a hand-thinned root-game map ({len(routes)} routes down to 1) "
+              f"is caught by --check")
+    else:
+        print("[FAIL] positive control not detected: --check cannot see a hand-thinned root-game map")
+        problems += 1
+
+    without_markers = committed_hud.replace(HUD_BEGIN, "  /* gone */", 1)
+    try:
+        spliced_hud_js(data, without_markers)
+    except SystemExit as exc:
+        if "region is missing" in str(exc):
+            print("[PASS] positive control: the splice refuses a hud.js whose markers have gone")
+        else:
+            print(f"[FAIL] marker control: refused for another reason: {exc}")
+            problems += 1
+    else:
+        print("[FAIL] positive control not detected: the splice accepted a hud.js with no markers")
+        problems += 1
+
+    # The first control's premise, shown rather than asserted: the path
+    # outputs() would compute for an audience routed at /main/ is the
+    # hand-maintained page itself. Read-only - it compares paths, it does not
+    # render.
+    collision = ROOT / "/main/".strip("/") / "index.html"
+    if collision != MAIN_PAGE:
+        print(f"[FAIL] the overwrite hazard the first control guards is no longer real: "
+              f"outputs() would write {collision}, not {MAIN_PAGE}")
+        problems += 1
+    else:
+        print(f"[PASS] hazard is real: an audience routed at /main/ would render over {MAIN_PAGE.relative_to(ROOT)}")
+
+    print(f"\n{'[FAIL]' if problems else '[PASS]'} mainOption self-test: {problems} problem(s)")
+    return problems
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="fail if committed HTML differs from rendered output")
+    parser.add_argument("--self-test", action="store_true", help="prove the mainOption guards fire")
     args = parser.parse_args()
+    if args.self_test:
+        raise SystemExit(1 if self_test() else 0)
     data = json.loads(DATA_PATH.read_text(encoding="utf-8"))
     validate(data)
     changed: list[str] = []

@@ -303,6 +303,10 @@ body.mbm-face-page img{max-width:100%}
 .mf-group-head p{margin:0;color:#8A5620;font-size:.66rem;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
 .mf-group-head h2{margin:.22rem 0 0;color:var(--mf-navy);font-size:clamp(1.55rem,4vw,2.45rem);line-height:1.05}
 .mf-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}
+/* The platform option is one card, not a pair, so it spans the row rather than
+   sitting in the left column with a hole beside it. Same spacing as the gap
+   between two audience groups, because that is the join it is standing in for. */
+.mf-choice-platform{margin-top:clamp(2.8rem,6vw,4.7rem);grid-template-columns:1fr}
 .mf-choice{
   --choice-accent:#2F6B4D;
   --choice-soft:#DDEFE5;
@@ -384,6 +388,20 @@ body[data-theme="dark"].mbm-face-page .mf-clear{color:#F1ECDF}
 body[data-theme="dark"].mbm-face-page .mf-continue-actions a{color:#161D3D}
 body[data-theme="dark"].mbm-face-page .mf-choice-icon,
 body[data-theme="dark"].mbm-face-page .mf-utility-icon{background:#202953}
+/* Under the dark theme the icon square becomes #202953 and the card #1B234A,
+   but the glyph and the left bar kept painting in the raw accent - measured at
+   2.0-2.9:1 for the seven audiences, all of them under the 3:1 bar for non-text
+   UI. The platform option made it impossible to leave: its accent is the brand
+   navy, which lands at 1.18:1 on that square. The glyph would not have been dim,
+   it would have been gone.
+   No accent can fix this from the data side - the same colour has to clear
+   4.5:1 on the cream surface, which forces it dark - so the theme lifts it
+   instead, keeping the hue and moving it toward the dark theme's own ink.
+   Measured at 45%: worst 4.03:1 on the icon square and 4.37:1 on the card
+   (both the platform option); the seven land between 5.5:1 and 6.4:1. */
+body[data-theme="dark"].mbm-face-page .mf-choice{--choice-ink:color-mix(in srgb,var(--choice-accent) 45%,#E8E2D4)}
+body[data-theme="dark"].mbm-face-page .mf-choice::before{background:var(--choice-ink)}
+body[data-theme="dark"].mbm-face-page .mf-choice-icon{color:var(--choice-ink)}
 body[data-theme="dark"].mbm-face-page .mf-note{background:linear-gradient(135deg,color-mix(in srgb,var(--face-accent) 17%,#1B234A),#1B234A)}
 
 /* Legacy /start/ compatibility page. */

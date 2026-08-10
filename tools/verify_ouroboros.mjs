@@ -24,7 +24,28 @@
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { chromium } from 'playwright';
+/* Playwright, resolved rather than assumed. ESM import() does not honour
+ * NODE_PATH, so a globally installed playwright is invisible to a bare
+ * specifier and this gate died at its import line - it has not judged anything
+ * in this environment. Falling back to an explicit path makes it run; if none
+ * of them resolve it says so instead of throwing a module-not-found stack. */
+let chromium;
+{
+  const tried = [];
+  for (const spec of ['playwright', process.env.MBM_PLAYWRIGHT,
+    '/opt/node22/lib/node_modules/playwright/index.js'].filter(Boolean)) {
+    try {
+      const mod = await import(spec);
+      chromium = mod.chromium || (mod.default && mod.default.chromium);
+      if (chromium) break;
+      tried.push(spec + ' (no chromium export)');
+    } catch (e) { tried.push(spec + ' (' + (e.code || e) + ')'); }
+  }
+  if (!chromium) {
+    console.error('INCONCLUSIVE: playwright is not importable, so nothing could be rendered. Tried: ' + tried.join('; '));
+    process.exit(3);
+  }
+}
 
 const argv = process.argv.slice(2);
 const ci = argv.indexOf('--control');
@@ -298,7 +319,7 @@ g('visibilitychange (SAVE-11)');
   await page.waitForTimeout(300);
   const back = await page.evaluate(() => window.__ouroboros.saveRaw());
   check('hiding the tab writes a save', typeof back === 'string' && back.length > 0,
-    back ? `${back.length} bytes written on visibilitychange` : 'nothing was written');
+    back ? `${back.length} characters written on visibilitychange` : 'nothing was written');
   await ctx.close();
 }
 
@@ -310,7 +331,7 @@ g('R7 save round-trip');
   await page.waitForTimeout(400);
   const before = await page.evaluate(() => window.__ouroboros.saveRaw());
   check('game wrote a save', typeof before === 'string' && before.length > 0,
-    `${before ? before.length : 0} bytes under ${await page.evaluate(() => window.__ouroboros.saveKey())}`);
+    `${before ? before.length : 0} characters under ${await page.evaluate(() => window.__ouroboros.saveKey())}`);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction('!!(window.__ouroboros || window.OuroborosDebug)', null, { timeout: 25000 });
   const after = await page.evaluate(() => window.__ouroboros.saveRaw());

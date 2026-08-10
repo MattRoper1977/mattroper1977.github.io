@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 const fs=require('fs'),path=require('path'),vm=require('vm'),crypto=require('crypto'),os=require('os');
+const {stripExitRegion}=require('./mbm_exit_region.js');
 const FILE=process.argv[2]&&!process.argv[2].startsWith('--')?process.argv[2]:path.join(__dirname,'..','biopunkhive','index.html');
 const SELF=process.argv.includes('--self-test');
 const source=fs.readFileSync(FILE,'utf8');
@@ -31,8 +32,15 @@ function audit(html,quiet){
   !quiet&&console.log('\n== G2 · storage isolation ==');
   push('storage-prefix-exact',/var PREFIX='mbm_biopunkhive_';/.test(html));
   push('one-prefix-declaration',(html.match(/var PREFIX=/g)||[]).length===1,`${(html.match(/var PREFIX=/g)||[]).length}`);
-  const writes=[...html.matchAll(/localStorage\.(?:setItem|removeItem)\(([^\n;]+)/g)].map(m=>m[1]);
-  const reads=[...html.matchAll(/localStorage\.getItem\(([^\n;]+)/g)].map(m=>m[1]);
+  /* Storage discipline is a claim about THE GAME. The stamped inline exit
+     region reads one platform key (mbm_audience_view) to decide whether a
+     chosen-homepage control should render; it is not the game's save and it
+     does not go through the game's prefixed helper because it is not the
+     game's storage. Scope the scan to the game, or this gate reports the
+     platform's control as a leak in the game's isolation. */
+  const game=stripExitRegion(html);
+  const writes=[...game.matchAll(/localStorage\.(?:setItem|removeItem)\(([^\n;]+)/g)].map(m=>m[1]);
+  const reads=[...game.matchAll(/localStorage\.getItem\(([^\n;]+)/g)].map(m=>m[1]);
   push('all-storage-writes-through-helper',writes.length===2&&writes.every(x=>/this\.key\(k\)/.test(x)),writes.join(' | '));
   push('all-storage-reads-through-helper',reads.length===1&&reads.every(x=>/this\.key\(k\)/.test(x)),reads.join(' | '));
   push('one-storage-helper',(html.match(/var Store=\{/g)||[]).length===1);

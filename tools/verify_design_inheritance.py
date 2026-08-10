@@ -191,7 +191,12 @@ def main() -> None:
     findings.note(
         "BACKLOG 0d (instrument · ruling-pending): verify_games_audience_faces.mjs is node --check'd "
         "and never executed - 550 lines of browser assertions that have never run, described as "
-        "coverage in two docs"
+        "coverage in two docs. Confirmed stale on 2026-08-10 beyond the parts this pass touched: it "
+        "asserts .mf-main-card carries the /main/ link, and that class has not been on the chooser "
+        "since the discovery root replaced the card with a hero action. The homepage-choice count "
+        "and route/label expectations were re-derived when /main/ became selectable, so the file "
+        "does not encode a claim this pass made false - but that is repair of one assertion, not "
+        "the ruling"
     )
 
     surfaces: list[tuple[str, Path, str]] = [
@@ -248,6 +253,23 @@ def main() -> None:
                 f"only {len(previews)} genuine visual preview(s); this audience needs at least "
                 f"{floor} so the page cannot decay into a plain directory"
             )
+
+    # The chooser's own purpose is the homepage-type options. They sat third,
+    # below the hero and below a full "Explore the live platform" block, which
+    # put them past the fold on a phone. Asserted by index rather than by
+    # presence: presence was already true when the order was wrong.
+    root_markup = (ROOT / "index.html").read_text(encoding="utf-8")
+    order = [
+        ("the hero", root_markup.find("mf-discovery-hero")),
+        ("the homepage-type choices", root_markup.find('id="homepage-choices"')),
+        ("the explore-the-platform block", root_markup.find("mf-main-option")),
+    ]
+    for (earlier, at), (later, then) in zip(order, order[1:]):
+        if at == -1 or then == -1:
+            findings.fail("/", f"cannot locate {earlier if at == -1 else later} on the chooser")
+        elif at > then:
+            findings.fail("/", f"{later} renders before {earlier}; the homepage-type options "
+                               f"belong directly under the hero")
 
     checked = sum(1 for _, path, _ in surfaces if path.is_file())
     print(f"Design inheritance checked across {checked} surface(s).")

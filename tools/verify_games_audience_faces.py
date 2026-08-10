@@ -90,6 +90,21 @@ LOCKED_CHOOSER_COPY = [
 
 EMOJI_RE = re.compile("[\U0001F300-\U0001FAFF\u2600-\u27BF]")
 
+# The discovery root's page-weight budget, in BYTES.
+#
+# It is a declared editorial budget, not a measured limit: the root is the first
+# thing a visitor on a phone downloads, and 17 KiB is the ceiling that was ruled
+# for it. It was quoted in prose for several passes while nothing enforced it,
+# which is the shape this estate has already ruled against - a claim nothing
+# tests is a doc asserting coverage that does not exist. So it is a gate, and
+# every run prints the measured figure and the headroom whether it passes or not.
+#
+# Bytes, and read as bytes. The figure was twice reported from
+# len(path.read_text()), which counts CHARACTERS: the root carries `\u00B7`, `\u2014` and
+# other multi-byte UTF-8, so that undercounted by 43 B and read as more headroom
+# than existed. Species 23.
+ROOT_WEIGHT_CAP = 17408
+
 
 def read(root: Path, rel: str, overrides: Mapping[str, str] | None = None) -> str:
     if overrides and rel in overrides:
@@ -141,6 +156,66 @@ def promoted_images(source: str) -> list[tuple[str, str, str]]:
     ]
 
 
+def check_main_audience_cards(main_html: str, config: Mapping[str, object]) -> list[str]:
+    """/main/'s chooser cards are generated; assert nothing else looks like one.
+
+    On 2026-08-09 /main/ served THIRTEEN cards in one role="list": the seven
+    generated ones plus six legacy duplicates beginning one byte past the
+    :END marker. They carried no description and no icon, and they were
+    announced as list items alongside the real seven.
+
+    Nothing caught it, and the reason is the species worth recording.
+    spliced_main_page() replaces its marker region and passes everything
+    outside it through verbatim, so --check compared the file against itself
+    outside the region and was byte-exact green over six duplicates. A
+    byte-exact check scoped to a delimited region cannot see a defect
+    immediately outside the delimiter.
+
+    So the region is not enough: the absence of the generated element kind
+    OUTSIDE the region has to be asserted too. Values come from the data file
+    that owns them - counting seven here would just be the second-literal trap
+    in a new place.
+    """
+    from render_audience_homepages import CARDS_BEGIN, CARDS_END
+
+    errors: list[str] = []
+    audiences = config["audiences"]  # type: ignore[index]
+    begin, end = main_html.find(CARDS_BEGIN), main_html.find(CARDS_END)
+    if begin == -1 or end == -1 or end < begin:
+        return ["main/index.html: the generated audience-card region is missing or inverted"]
+
+    positions = [m.start() for m in re.finditer(r'<article class="mbm-audience-card"', main_html)]
+    outside = [pos for pos in positions if not (begin < pos < end)]
+    if outside:
+        errors.append(
+            f"main/index.html: {len(outside)} audience card(s) sit OUTSIDE the generated region "
+            f"(first at byte {outside[0]}, region is {begin}-{end}); the grid must contain only "
+            f"generated cards"
+        )
+    if len(positions) != len(audiences):
+        errors.append(
+            f"main/index.html: {len(positions)} audience card(s) for {len(audiences)} audiences"
+        )
+
+    region = main_html[begin:end]
+    for index, (aid, audience) in enumerate(audiences.items(), start=1):  # type: ignore[union-attr]
+        card = re.search(
+            rf'<article class="mbm-audience-card" data-index="{index:02d}"[\s\S]*?</article>', region
+        )
+        if not card:
+            errors.append(f"main/index.html: no generated card at data-index {index:02d} for {aid}")
+            continue
+        markup = card.group(0)
+        if f'href="{audience["route"]}"' not in markup:  # type: ignore[index]
+            errors.append(f"main/index.html: card {index:02d} does not link to {audience['route']}")
+        if f'>{html.escape(audience["chooserLinkText"], quote=False)}</a>' not in markup:  # type: ignore[index]
+            errors.append(
+                f"main/index.html: card {index:02d} link text is not the declared "
+                f"chooserLinkText {audience['chooserLinkText']!r}"
+            )
+    return errors
+
+
 def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) -> list[str]:
     errors: list[str] = []
     required = [
@@ -184,6 +259,14 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
         errors.append("audience content configuration does not contain exactly the seven stable IDs")
 
     chooser = read(root, "index.html", overrides)
+    # Measured in bytes, from the same source the rest of this function reads,
+    # so a control that mutates the chooser is weighed as the mutated chooser.
+    root_bytes = len(chooser.encode("utf-8"))
+    if root_bytes > ROOT_WEIGHT_CAP:
+        errors.append(
+            f"the discovery root is {root_bytes:,} B, over the {ROOT_WEIGHT_CAP:,} B page-weight "
+            f"budget by {root_bytes - ROOT_WEIGHT_CAP:,} B"
+        )
     if SENTINEL not in chooser:
         errors.append("root chooser missing architecture sentinel")
     if not re.search(r'<h([12])\b[^>]*>Choose your own homepage type</h\1>', chooser):
@@ -197,8 +280,59 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
         errors.append("root chooser canonical is not https://madebymatt.uk/")
     if og_url_of(chooser) != "https://madebymatt.uk/":
         errors.append("root chooser OpenGraph URL is not https://madebymatt.uk/")
-    if chooser.count('data-mbm-face-choice=') != 7:
-        errors.append("root chooser does not expose exactly seven audience choices")
+    # The chooser offers the seven audiences AND the platform option, so the
+    # expected count is derived from the data rather than typed. It was typed
+    # once - as 7 - and adding the eighth homepage type would have failed here
+    # for a reason that was never about the page.
+    main_option = config.get("mainOption") or {}
+    expected_choices = len(config.get("audiences", {})) + (1 if main_option else 0)
+    if chooser.count('data-mbm-face-choice=') != expected_choices:
+        errors.append(
+            f"root chooser exposes {chooser.count('data-mbm-face-choice=')} homepage choice(s); "
+            f"the data declares {len(config.get('audiences', {}))} audience(s) plus the platform option"
+        )
+    # The platform option is a homepage type, so it is a card like the others -
+    # same shape, same stored value, its own accent and glyph. Asserted from
+    # the record, never from a second copy of its wording.
+    if not main_option:
+        errors.append("data/audience-homepages.json declares no mainOption; /main/ cannot be chosen")
+    else:
+        card = re.search(
+            rf'<a class="mf-choice" data-mbm-face-choice="{re.escape(main_option["id"])}"[\s\S]*?</a>',
+            chooser
+        )
+        if not card:
+            errors.append("root chooser offers no platform-option card; /main/ is not selectable")
+        else:
+            markup = card.group(0)
+            for label, needle in (
+                ("route", f'href="{main_option["route"]}"'),
+                ("label", f'data-mbm-face-label="{html.escape(main_option["label"], quote=True)}"'),
+                ("accent", f'--choice-accent:{main_option["accent"]}'),
+                ("soft", f'--choice-soft:{main_option["soft"]}'),
+                ("description", f'<small>{html.escape(main_option["chooserDescription"], quote=False)}</small>'),
+            ):
+                if needle not in markup:
+                    errors.append(f"root chooser platform card does not carry the declared {label}: {needle}")
+            # Position, derived rather than asserted by eye: the platform option
+            # is the foot of the chooser. Above the audience groups it would
+            # read as the recommended answer on a page whose purpose is to
+            # offer audience front doors; below the continue box it would sit
+            # outside the choices altogether.
+            last_group = config["groups"][-1]["id"]  # type: ignore[index]
+            after = chooser.find(f'data-mbm-audience-group="{last_group}"')
+            at = chooser.find('data-mbm-face-choice="%s"' % main_option["id"])
+            before = chooser.find("mf-continue")
+            if not (after < at < before) or -1 in (after, at, before):
+                errors.append(
+                    f"root chooser platform card is out of position (last group at {after}, card at {at}, "
+                    f"continue box at {before}); it belongs at the foot of the choices"
+                )
+            # Whether that accent, soft and glyph are distinct from the seven is
+            # settled by validate() in the renderer, which rejects a collision
+            # by name and has a control for each. Restating it here would be a
+            # second implementation of the same rule, which is how the two go
+            # out of step.
     # The main homepage has to stay a distinct, prominent route from the root,
     # so a visitor is never funnelled into an audience view. The discovery root
     # carries it as the primary hero action; the earlier chooser carried it as
@@ -229,6 +363,20 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
             errors.append(f"locked chooser copy missing or altered: {sentence[:60]}…")
 
     main = read(root, "main/index.html", overrides)
+    errors.extend(check_main_audience_cards(main, config))
+    # THE WRITE ASYMMETRY, half one. Choosing /main/ stores the preference;
+    # arriving at /main/ must not. /main/ is the brand link's default, a nav
+    # item on every surface, the footer link and the hero call to action, so a
+    # visitor lands there constantly without having chosen it - and the script
+    # writes the preference for whatever data-mbm-audience-face the body
+    # declares. If this page ever declared one, the first accidental visit
+    # would overwrite a deliberate choice, and the chooser would report it back
+    # as "last used on this device". The other half - the guard in the script -
+    # is asserted below, because an invariant that rests on a hand-maintained
+    # page continuing not to have an attribute is not an invariant.
+    if re.search(r'\bdata-mbm-audience-face=', main):
+        errors.append("/main/ declares data-mbm-audience-face; landing on the platform homepage would "
+                      "overwrite the visitor's chosen homepage")
     if canonical_of(main) != "https://madebymatt.uk/main/":
         errors.append("/main/ canonical is wrong")
     if og_url_of(main) != "https://madebymatt.uk/main/":
@@ -326,6 +474,67 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
         errors.append("shared hero lacks the detailed local line-art texture")
 
     audience_js = read(root, "assets/mbm-audience.js", overrides)
+    # The brand resolver holds the routes as a literal because a static asset
+    # cannot read the JSON at build time. That is a known liability, so
+    # equality with the data file is asserted rather than assumed - a second
+    # copy is only tolerable when it cannot drift silently.
+    #
+    # Extracted from the named object, not by pattern. The previous form matched
+    # `(\w+):'(/for/[a-z-]+/)'` anywhere in the file, which meant it could only
+    # ever see routes under /for/: adding main:'/main/' would have been invisible
+    # to it, and the drift check would have gone on comparing seven against seven
+    # and reporting agreement about a list it was not reading. A signal that
+    # cannot see the change it is meant to police is not a check.
+    routes_literal = re.search(r"var ROUTES=\{([^}]*)\};", audience_js)
+    js_routes = dict(re.findall(r"(\w+):'([^']+)'", routes_literal.group(1))) if routes_literal else {}
+    if not routes_literal:
+        errors.append("assets/mbm-audience.js no longer declares a ROUTES table to compare against the data")
+    data_routes = {aid: a["route"] for aid, a in config["audiences"].items()}  # type: ignore[union-attr]
+    if main_option:
+        data_routes[main_option["id"]] = main_option["route"]
+    # One list, not two. read() and write() used to gate on a separate `allowed`
+    # object holding the same key set, so a homepage type could become routable
+    # without becoming storable, or the reverse. They gate on ROUTES now, and
+    # that is asserted at the definition sites rather than assumed.
+    for name in ("read", "write"):
+        if not re.search(rf"function {name}\(\w*\)\{{[^}}]*ROUTES\[", audience_js):
+            errors.append(f"assets/mbm-audience.js {name}() no longer gates the stored preference on ROUTES; "
+                          f"the allow-list and the route table must stay one list")
+    if js_routes != data_routes:
+        only_js = {k: v for k, v in js_routes.items() if data_routes.get(k) != v}
+        only_data = {k: v for k, v in data_routes.items() if js_routes.get(k) != v}
+        errors.append(
+            f"assets/mbm-audience.js ROUTES have drifted from data/audience-homepages.json: "
+            f"js={only_js} data={only_data}"
+        )
+    # Anchored to the call sites. A substring test accepts a.brandX and
+    # data-mbm-adult-featuresX - species 19, which this check reproduced on its
+    # first draft minutes after the species was written down.
+    if not re.search(r"querySelectorAll\('a\.brand'\)", audience_js):
+        errors.append("assets/mbm-audience.js no longer selects the brand link to resolve it")
+    if not re.search(r"getAttribute\('data-mbm-adult-features'\)", audience_js):
+        errors.append("assets/mbm-audience.js no longer consults the pupil adult-feature flag "
+                      "when resolving the brand link")
+
+    # THE WRITE ASYMMETRY, half two: the guard in the script itself.
+    if main_option:
+        exception = re.search(r"var LANDING_EXCEPTION='([^']*)';", audience_js)
+        if not exception or exception.group(1) != main_option["id"]:
+            errors.append(
+                f"assets/mbm-audience.js does not name {main_option['id']!r} as the homepage type that "
+                f"landing may not assert; got {exception.group(1) if exception else 'no declaration'!r}"
+            )
+        if not re.search(r"if\(face&&face!==LANDING_EXCEPTION\)write\(face\);", audience_js):
+            errors.append("assets/mbm-audience.js writes the preference on landing without excluding the "
+                          "platform homepage; an accidental visit would overwrite a deliberate choice")
+    # And the other side of it: choosing a card records the choice. Anchored to
+    # the definition site and to the wiring, because a name that appears only in
+    # a comment or only at a call site proves nothing about either.
+    if not re.search(r"function recordChoice\(\w*\)\{", audience_js):
+        errors.append("assets/mbm-audience.js no longer records a homepage choice when a card is chosen")
+    if not re.search(r"addEventListener\('click',function\(\)\{recordChoice\(", audience_js):
+        errors.append("assets/mbm-audience.js defines recordChoice but never wires it to a choice card")
+
     if "mbm_audience_view" not in audience_js or "localStorage" not in audience_js:
         errors.append("local audience preference implementation missing")
     if re.search(r'location\s*\.(?:href|replace|assign)|window\.location\s*=', audience_js):
@@ -433,6 +642,16 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
     return errors
 
 
+def card_markup(chooser: str, main_option: Mapping[str, object]) -> str:
+    """The platform card as it stands in the page, for controls that move it."""
+    found = re.search(
+        rf'<a class="mf-choice" data-mbm-face-choice="{re.escape(str(main_option["id"]))}"[\s\S]*?</a>', chooser
+    )
+    if not found:
+        raise SystemExit("positive-control fixture could not be created: platform card")
+    return found.group(0)
+
+
 def mutate(source: str, old: str, new: str, label: str) -> str:
     changed = source.replace(old, new, 1)
     if changed == source:
@@ -469,9 +688,11 @@ def expect_failure(label: str, overrides: Mapping[str, str], expected: str,
 def self_test(baseline: set[str] | None = None) -> int:
     baseline = set() if baseline is None else baseline
     problems = 0
+    controls_run = 0
 
     def control(label, overrides, expected):
-        nonlocal problems
+        nonlocal problems, controls_run
+        controls_run += 1
         problems += expect_failure(label, overrides, expected, baseline)
 
     chooser = read(ROOT, "index.html")
@@ -491,6 +712,52 @@ def self_test(baseline: set[str] | None = None) -> int:
     current_trust_label = public_labels(json.loads(read(ROOT, "data/audience-homepages.json")))["trusts"]
     old_label = mutate(chooser, current_trust_label, "Academy trusts &amp; trusts", "old label")
     control("reverted obsolete audience label", {"index.html": old_label}, "obsolete public audience label remains")
+
+    # /main/ as a selectable homepage type. Each of these breaks one claim the
+    # feature rests on, and each is here because the claim is otherwise only
+    # asserted by a green run - which says nothing about whether the assertion
+    # can fail.
+    config = json.loads(read(ROOT, "data/audience-homepages.json"))
+    main_option = config["mainOption"]
+    main_page = read(ROOT, "main/index.html")
+    control("platform option removed from the chooser",
+            {"index.html": chooser.replace(card_markup(chooser, main_option), "", 1)},
+            "offers no platform-option card")
+    # The page-weight budget. Padded with a comment rather than real content so
+    # the control tests the weighing and nothing else: any other assertion in
+    # check_tree sees a chooser identical to the committed one apart from bytes
+    # it ignores.
+    over_budget = chooser.replace(
+        "</body>", "<!--" + "w" * (ROOT_WEIGHT_CAP - len(chooser.encode("utf-8")) + 1) + "--></body>", 1
+    )
+    control("discovery root pushed one byte over the page-weight budget",
+            {"index.html": over_budget}, "over the")
+
+    hoisted = chooser.replace(card_markup(chooser, main_option), "", 1)
+    hoisted = hoisted.replace('<section class="mf-choice-group"', card_markup(chooser, main_option) + '<section class="mf-choice-group"', 1)
+    control("platform option hoisted above the audience groups", {"index.html": hoisted},
+            "platform card is out of position")
+    control("platform route dropped from the script's route table",
+            {"assets/mbm-audience.js": mutate(js, ",main:'/main/'}", "}", "js route table")},
+            "have drifted from data/audience-homepages.json")
+    control("landing on /main/ made to assert a homepage face",
+            {"main/index.html": mutate(main_page, '<body data-mbm-general-home="main">',
+                                       '<body data-mbm-general-home="main" data-mbm-audience-face="main">',
+                                       "main landing face")},
+            "landing on the platform homepage would overwrite")
+    control("landing guard removed from the script",
+            {"assets/mbm-audience.js": mutate(js, "if(face&&face!==LANDING_EXCEPTION)write(face);",
+                                              "if(face)write(face);", "landing guard")},
+            "writes the preference on landing without excluding")
+    control("choice recorder left unwired",
+            {"assets/mbm-audience.js": mutate(js, "card.addEventListener('click',function(){recordChoice(card);});",
+                                              "card.setAttribute('data-wired','');", "recorder wiring")},
+            "never wires it to a choice card")
+    control("storable and routable split back into two lists",
+            {"assets/mbm-audience.js": mutate(js, "return ROUTES[value]?value:'';",
+                                              "return {pupils:1}[value]?value:'';", "split allow-list")},
+            "must stay one list")
+
     restored = set(check_tree(ROOT))
     if restored != baseline:
         print("[FAIL] the tree does not verify the same way after the positive controls")
@@ -498,7 +765,8 @@ def self_test(baseline: set[str] | None = None) -> int:
             print(" -", item)
         problems += 1
     else:
-        print(f"[PASS] tree verifies identically after seven positive controls "
+        # Derived. This line said "seven" while thirteen controls ran above it.
+        print(f"[PASS] tree verifies identically after {controls_run} positive controls "
               f"({len(baseline)} baseline finding(s))")
     return problems
 
@@ -508,6 +776,14 @@ def main() -> int:
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
     errors = check_tree()
+
+    # Printed on every run, green or red. A budget only anyone remembers when it
+    # is breached is a budget nobody is steering by; this is the number and the
+    # room left in it, in the units it was taken in.
+    root_bytes = len((ROOT / "index.html").read_bytes())
+    print(f"[INFO] discovery root: {root_bytes:,} B of the {ROOT_WEIGHT_CAP:,} B budget, "
+          f"{ROOT_WEIGHT_CAP - root_bytes:,} B headroom")
+
     if errors:
         print(f"[FAIL] {len(errors)} static error(s)")
         for error in errors:
