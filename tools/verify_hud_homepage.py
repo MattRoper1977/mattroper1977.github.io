@@ -341,8 +341,12 @@ def main() -> None:
             {"baseUrl": base, "passed": findings.passes, "failed": findings.failures}, indent=2
         ), encoding="utf-8")
 
-    print(f"HUD homepage control against {base}: {len(findings.passes)} passed · {len(findings.failures)} failed")
-    print(f"  {len(LAYOUTS)} hud.js layout(s) x {len(VIEWPORTS)} viewport(s) x "
+    # Every count carries its unit - species 23 is about bytes only because that
+    # is where it was caught; a bare "555" is no more a measurement than a bare
+    # "16,154" was.
+    print(f"HUD homepage control against {base}: {len(findings.passes)} assertion(s) passed · "
+          f"{len(findings.failures)} failed")
+    print(f"  {len(LAYOUTS)} hud.js layout branch(es) x {len(VIEWPORTS)} viewport(s) x "
           f"{len(homepage_choices())} homepage type(s)")
     if findings.failures:
         print("\nFailures:", file=sys.stderr)

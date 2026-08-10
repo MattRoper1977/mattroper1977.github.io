@@ -336,8 +336,16 @@ def main() -> None:
     run(base, findings, notes)
 
     routes = root_game_routes()
-    print(f"HUD on games against {base}: {len(findings.passes)} passed · {len(findings.failures)} failed")
-    print(f"  {len(routes)} root-level game(s) x {len(VIEWPORTS)} viewport(s), from the search index")
+    excluded = excluded_routes()
+    # Every count carries its unit. "10" is not a measurement until it says
+    # whether it counts routes, files or assertions - the same discipline as
+    # species 23, which is about bytes only because that is where it was caught.
+    print(f"HUD on games against {base}: {len(findings.passes)} assertion(s) passed · "
+          f"{len(findings.failures)} failed")
+    print(f"  {len(routes)} root-level game route(s), one index.html file each, "
+          f"x {len(VIEWPORTS)} viewport(s), from the search index")
+    print(f"  {len(routes) - len(excluded)} route(s) wired · {len(excluded)} declared in "
+          f"data/hud-coverage.json")
     for note in notes:
         print(f"  note: {note}")
 
