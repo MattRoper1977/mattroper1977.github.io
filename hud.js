@@ -71,15 +71,15 @@
   + "." + NS + "-mod{flex:1;min-width:150px;background:#FFFDF6;border:1.5px solid #E0D6C0;border-radius:12px;padding:9px 10px;display:flex;flex-direction:column;gap:6px}"
   + "." + NS + "-mod b{font-size:10px;letter-spacing:.14em;color:#4A5170}"
   + "." + NS + "-btns{display:flex;gap:6px;flex-wrap:wrap}"
-  + "." + NS + "-btn{font:800 12px/1 Poppins,'Segoe UI',sans-serif;letter-spacing:.04em;background:#FFFDF6;color:#161D3D;border:1.5px solid #161D3D;border-radius:999px;padding:7px 12px;cursor:pointer}"
+  + "." + NS + "-btn{font:800 12px/1 Poppins,'Segoe UI',sans-serif;letter-spacing:.04em;background:#FFFDF6;color:#161D3D;border:1.5px solid #161D3D;border-radius:999px;padding:7px 12px;cursor:pointer;box-sizing:border-box;min-height:44px;display:inline-flex;align-items:center;justify-content:center}"
   + "." + NS + "-btn:hover{background:#161D3D;color:#FFF6E8}"
   + "." + NS + "-btn.amber{background:#F2A24A;border-color:#C97F2E;color:#161D3D}"
   + "." + NS + "-btn.amber:hover{filter:brightness(1.06);background:#F2A24A;color:#161D3D}"
   + "." + NS + "-btn.mint{background:#B9E6CD;border-color:#2F6B4D;color:#143324}"
   + "." + NS + "-btn:focus-visible{outline:3px solid #F2A24A;outline-offset:2px}"
   + "#" + NS + "-name{font:800 17px/1.2 Poppins,'Segoe UI',sans-serif;color:#161D3D;min-height:22px}"
-  + "#" + NS + "-names{width:100%;box-sizing:border-box;font:12px/1.4 Poppins,'Segoe UI',sans-serif;border:1.5px solid #C9C0AB;border-radius:8px;padding:6px;resize:vertical;min-height:34px;max-height:90px;background:#fff}"
-  + "#" + NS + "-meter{display:flex;align-items:flex-end;gap:2px;height:34px}"
+  + "#" + NS + "-names{width:100%;box-sizing:border-box;font:12px/1.4 Poppins,'Segoe UI',sans-serif;border:1.5px solid #C9C0AB;border-radius:8px;padding:6px;resize:vertical;min-height:44px;max-height:90px;background:#fff}"
+  + "#" + NS + "-meter{display:flex;align-items:flex-end;gap:2px;height:44px}"
   + "#" + NS + "-meter i{flex:1;background:#2F8F6B;border-radius:2px 2px 0 0;min-height:2px;transition:height .12s ease}"
   + "#" + NS + "-meter.loud i{background:#C25B4E}"
   + "." + NS + "-note{font-size:10px;color:#4A5170;line-height:1.35}"
@@ -327,6 +327,11 @@
       src.connect(an);
       var data = new Uint8Array(an.frequencyBinCount);
       var bars = $("meter").children;
+      /* Bar heights are inline styles, so they are driven from the meter's OWN
+         rendered height rather than from a literal repeated beside it. The two
+         used to be the same number typed twice, and changing one without the
+         other is a silently half-height meter. */
+      var meterH = Math.round($("meter").getBoundingClientRect().height) || 44;
       /* reduced-motion: the bars are driven by inline heights, so CSS animation:none
          cannot reach them. When the pupil/teacher has asked for reduced motion we keep
          the meter VISUAL (it is a regulation aid, not decoration) but drop it to ~4
@@ -346,7 +351,7 @@
         var avg = 0;
         for (var i = 0; i < bars.length; i++) {
           var v = data[i] / 255; avg += v;
-          var h = easy ? (Math.round(v * 5) / 5) * 34 : v * 34;
+          var h = (easy ? (Math.round(v * 5) / 5) : v) * meterH;
           bars[i].style.height = Math.max(2, Math.round(h)) + "px";
         }
         $("meter").classList.toggle("loud", (avg / bars.length) > 0.55);
