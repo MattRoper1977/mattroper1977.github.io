@@ -494,6 +494,51 @@ every run: `ROOT_WEIGHT_CAP` in `verify_games_audience_faces.py`.
 
 ---
 
+## 24. A trap you have named is not a trap you have closed
+
+Species 23 — *a count is not a measurement until its units are stated* — was
+recorded after root and `/main/` were reported as **15,253 B** and **72,320 B**
+when both were character counts.
+
+The part worth recording is not the mistake. It is that the **same two files had
+already been measured in both units, in the same session, and the difference
+explicitly noted** — 43 and 151 bytes of multi-byte UTF-8. The trap was known,
+written down, and walked into two passes later, on the same two numbers.
+
+Writing a species down creates the feeling of having handled it, and that
+feeling is the failure mode. A register entry changes nothing on its own: it is
+a note to a future reader, not a check. Every entry here that has stayed closed
+stayed closed because something **executes** — a control, a gate, a derived
+value that cannot be typed wrong.
+
+**Rule:** when a species is recorded, ask what now *executes* to catch it. If
+the answer is "we will remember", the entry documents a hazard rather than
+repairing one, and it should say so. Species 23 now has `ROOT_WEIGHT_CAP`,
+measured in bytes and printed on every run — that is the part that closed it,
+not the paragraph.
+
+---
+
+## 25. A finding inferred from your own re-implementation is true of nothing
+
+A census of `hud.js` coverage was challenged on the grounds that it had counted
+ternary expressions as matches. It had not: the ternaries were in a **regex
+written to audit the census**, not in the census. The audit re-implemented the
+thing it was auditing, the re-implementation had a defect, and the defect was
+then reported as a finding about the original.
+
+This is species 5 — *never re-implement a check in another language to test it*
+— arriving from the other direction. There the second implementation produced a
+false green; here it produced a **false red**, attributed to code that never had
+the problem. False reds are the more expensive of the two, because someone then
+goes and "fixes" working code.
+
+**Rule:** to test an instrument, drive **the instrument** — mutate its input and
+require its verdict to move. A second implementation can only ever tell you that
+two things disagree, never which of them is wrong.
+
+---
+
 
 
 ## The shape they share

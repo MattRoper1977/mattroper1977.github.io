@@ -204,13 +204,13 @@ def measure(accents: dict[str, str], main_option: dict | None, out=print,
 
     floor, floor_a, floor_b = separation_floor(accents)
     out(f"\nworst pairwise separation among the {len(accents)} audiences: "
-        f"delta-E {floor:.1f} ({floor_a} vs {floor_b})")
+        f"delta-E {floor:.1f} CIE76 ({floor_a} vs {floor_b})")
 
     if main_option:
         nearest, nearest_id = min(
             (delta_e(main_option["accent"], accent), aid) for aid, accent in accents.items()
         )
-        out(f"platform option {main_option['accent']}: nearest audience accent delta-E {nearest:.1f} "
+        out(f"platform option {main_option['accent']}: nearest audience accent delta-E {nearest:.1f} CIE76 "
             f"({nearest_id})")
         if nearest < floor:
             failures.append(
