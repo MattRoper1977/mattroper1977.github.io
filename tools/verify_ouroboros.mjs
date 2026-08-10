@@ -298,7 +298,7 @@ g('visibilitychange (SAVE-11)');
   await page.waitForTimeout(300);
   const back = await page.evaluate(() => window.__ouroboros.saveRaw());
   check('hiding the tab writes a save', typeof back === 'string' && back.length > 0,
-    back ? `${back.length} bytes written on visibilitychange` : 'nothing was written');
+    back ? `${back.length} characters written on visibilitychange` : 'nothing was written');
   await ctx.close();
 }
 
@@ -310,7 +310,7 @@ g('R7 save round-trip');
   await page.waitForTimeout(400);
   const before = await page.evaluate(() => window.__ouroboros.saveRaw());
   check('game wrote a save', typeof before === 'string' && before.length > 0,
-    `${before ? before.length : 0} bytes under ${await page.evaluate(() => window.__ouroboros.saveKey())}`);
+    `${before ? before.length : 0} characters under ${await page.evaluate(() => window.__ouroboros.saveKey())}`);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction('!!(window.__ouroboros || window.OuroborosDebug)', null, { timeout: 25000 });
   const after = await page.evaluate(() => window.__ouroboros.saveRaw());

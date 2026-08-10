@@ -478,6 +478,20 @@ counts characters. This is the same discipline as asserting on evidence rather
 than proxies: a character count is a proxy for a byte count, and the two differ
 by however much of the file is not ASCII.
 
+**Swept 2026-08-10**, bounded to `tools/` and `docs/`, asking one question of
+each figure: *is this characters or bytes, and which does its consumer expect?*
+Every Python tool: clean — no `len()` over decoded text anywhere. In JavaScript
+most `.length` figures are on a `Buffer` or an array and are genuinely bytes
+(`verify_apexpool_landing`, `verify_published_live`, `render_olympics_stills`,
+`verify_neonsync_browser`); `verify_apexgolf` already says "serialised
+characters". **Two genuine cases**, both in `verify_ouroboros.mjs`, both
+reporting the length of a localStorage *string* as "bytes written". Neither
+assertion depended on the unit — only the evidence line did — so both are now
+labelled `characters`.
+
+And the budget the species was found on is now enforced in bytes, printed on
+every run: `ROOT_WEIGHT_CAP` in `verify_games_audience_faces.py`.
+
 ---
 
 
