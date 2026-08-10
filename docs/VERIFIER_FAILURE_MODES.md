@@ -664,6 +664,67 @@ carry an external script. The same slice appeared a second time inside
 
 ---
 
+## 32. A correctly computed number from the wrong instrument
+
+Placing a new game on the shelf needs a hue far enough from every neighbour. The
+brief named the formula in `tools/check_audience_accents.py` — CIE76 Euclidean
+in CIELAB — and a candidate was derived that cleared every existing hue by a
+comfortable margin on that measure. It then failed, because the gate that
+actually rules the Sports rail is `tools/verify_sports_rail.js`, and that gate
+uses **CIEDE2000 with a floor of 25**. The same pair measured ΔE76 29.6 and
+ΔE00 22.9 — one passes, one fails, and the arithmetic was right both times.
+
+This is the second occasion in a fortnight on which two ΔE formulas have
+returned contradictory verdicts on one pair of colours.
+
+**Rule:** name the gate that rules, not a formula found elsewhere in the repo. A
+correctly computed number from the wrong instrument is still a wrong answer.
+Derive against the check that will judge you.
+
+---
+
+## 33. An estimate sitting in a table of measurements
+
+The Phase 1 decision table costed the inline exit control at "~500–800 B per
+file". It shipped at **3,222 B** — four times that. The decision does not move:
+eleven files at 3,222 B is a cost worth paying, and the reason it was taken (a
+child on a locked-down device can leave the page) has nothing to do with the
+byte count. But the figure sat unlabelled among measured ones in a table whose
+other rows were all measurements, and it was read as one.
+
+**Rule:** an estimate in a cost table is labelled as an estimate, or it will be
+read as a measurement. Ledgers carry the measured figure once it exists.
+
+---
+
+## 34. A guardrail whose refusal is unreachable
+
+`tools/build_mbm_search_index.py` protects the search index with `--write
+--expect-diff`: every changed leaf path must be declared or the write does not
+happen. Sound, and it did block a careless rewrite. But its control flow is:
+
+    if failures:            # the reproduce check, comparing by POSITION
+        raise SystemExit(1)
+    if args.write:          # the declaration machinery
+
+so `--write` is only ever reached when the entries already reproduce — that is,
+only when there is nothing to write. Confirmed both ways: on a clean tree it
+runs and prints "nothing to write"; with one entry added it exits 1 at the
+reproduce check without evaluating a single declared path. No game or app can be
+added to this index by the tool that owns it.
+
+The diagnosis was initially milder — "declaring dozens of paths is tedious" —
+because the positional diff reported 59 untouched entries as changed and that
+looked like the whole problem. It was a symptom of the same alignment defect.
+
+**Rule:** a guardrail is only as good as the path that reaches it. If the strict
+branch can only run in the case where it has nothing to do, the protection is
+unreachable and the tool has quietly stopped being able to do its job. Test the
+refusal path with a real change, not only the acceptance path with none.
+
+
+---
+
 
 
 ## The shape they share
