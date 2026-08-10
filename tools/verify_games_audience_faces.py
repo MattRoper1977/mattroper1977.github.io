@@ -90,6 +90,21 @@ LOCKED_CHOOSER_COPY = [
 
 EMOJI_RE = re.compile("[\U0001F300-\U0001FAFF\u2600-\u27BF]")
 
+# The discovery root's page-weight budget, in BYTES.
+#
+# It is a declared editorial budget, not a measured limit: the root is the first
+# thing a visitor on a phone downloads, and 17 KiB is the ceiling that was ruled
+# for it. It was quoted in prose for several passes while nothing enforced it,
+# which is the shape this estate has already ruled against - a claim nothing
+# tests is a doc asserting coverage that does not exist. So it is a gate, and
+# every run prints the measured figure and the headroom whether it passes or not.
+#
+# Bytes, and read as bytes. The figure was twice reported from
+# len(path.read_text()), which counts CHARACTERS: the root carries `\u00B7`, `\u2014` and
+# other multi-byte UTF-8, so that undercounted by 43 B and read as more headroom
+# than existed. Species 23.
+ROOT_WEIGHT_CAP = 17408
+
 
 def read(root: Path, rel: str, overrides: Mapping[str, str] | None = None) -> str:
     if overrides and rel in overrides:
@@ -244,6 +259,14 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
         errors.append("audience content configuration does not contain exactly the seven stable IDs")
 
     chooser = read(root, "index.html", overrides)
+    # Measured in bytes, from the same source the rest of this function reads,
+    # so a control that mutates the chooser is weighed as the mutated chooser.
+    root_bytes = len(chooser.encode("utf-8"))
+    if root_bytes > ROOT_WEIGHT_CAP:
+        errors.append(
+            f"the discovery root is {root_bytes:,} B, over the {ROOT_WEIGHT_CAP:,} B page-weight "
+            f"budget by {root_bytes - ROOT_WEIGHT_CAP:,} B"
+        )
     if SENTINEL not in chooser:
         errors.append("root chooser missing architecture sentinel")
     if not re.search(r'<h([12])\b[^>]*>Choose your own homepage type</h\1>', chooser):
@@ -700,6 +723,16 @@ def self_test(baseline: set[str] | None = None) -> int:
     control("platform option removed from the chooser",
             {"index.html": chooser.replace(card_markup(chooser, main_option), "", 1)},
             "offers no platform-option card")
+    # The page-weight budget. Padded with a comment rather than real content so
+    # the control tests the weighing and nothing else: any other assertion in
+    # check_tree sees a chooser identical to the committed one apart from bytes
+    # it ignores.
+    over_budget = chooser.replace(
+        "</body>", "<!--" + "w" * (ROOT_WEIGHT_CAP - len(chooser.encode("utf-8")) + 1) + "--></body>", 1
+    )
+    control("discovery root pushed one byte over the page-weight budget",
+            {"index.html": over_budget}, "over the")
+
     hoisted = chooser.replace(card_markup(chooser, main_option), "", 1)
     hoisted = hoisted.replace('<section class="mf-choice-group"', card_markup(chooser, main_option) + '<section class="mf-choice-group"', 1)
     control("platform option hoisted above the audience groups", {"index.html": hoisted},
@@ -743,6 +776,14 @@ def main() -> int:
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
     errors = check_tree()
+
+    # Printed on every run, green or red. A budget only anyone remembers when it
+    # is breached is a budget nobody is steering by; this is the number and the
+    # room left in it, in the units it was taken in.
+    root_bytes = len((ROOT / "index.html").read_bytes())
+    print(f"[INFO] discovery root: {root_bytes:,} B of the {ROOT_WEIGHT_CAP:,} B budget, "
+          f"{ROOT_WEIGHT_CAP - root_bytes:,} B headroom")
+
     if errors:
         print(f"[FAIL] {len(errors)} static error(s)")
         for error in errors:
