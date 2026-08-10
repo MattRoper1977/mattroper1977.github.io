@@ -91,6 +91,9 @@ BOOT_ORIGIN_ALLOWLIST: dict[str, tuple[str, ...]] = {}
 # the printed count says so.
 ALL_SURFACES = ["/", "/main/", "/teach/", "/resources/", "/education-hub/"] + AUDIENCE_ROUTES
 REDIRECTS = {"/start/": "/"}
+# The stored homepage preference. Named once here so the browser assertions and
+# the script are talking about the same key.
+KEY = "mbm_audience_view"
 ADULT_CTA = ("/account/", "/mailing-list/", "/members/")
 
 
@@ -260,13 +263,73 @@ def run(base: str, findings: Findings, artifacts: Path) -> None:
                                       viewport={"width": 1440, "height": 900})
         page = context.new_page()
         page.goto(base, wait_until="domcontentloaded")
+        # Derived from the data, not typed. This said 7 when the chooser grew an
+        # eighth homepage type, which would have failed here for a reason that
+        # was never about JavaScript being off.
+        expected_choices = len(AUDIENCE_ROUTES) + 1
         links = page.locator('a[data-mbm-face-choice]').count()
-        findings.check(links == 7, "no-JS: all seven audience choices are real links",
+        findings.check(links == expected_choices,
+                       f"no-JS: all {expected_choices} homepage choices are real links",
                        f"found {links}")
         for route in AUDIENCE_ROUTES:
             page.goto(base.rstrip("/") + route, wait_until="domcontentloaded")
             findings.check(page.locator("h1").count() >= 1, f"no-JS: {route} renders a heading")
         page.screenshot(path=str(artifacts / "nojs-root.png"), full_page=False)
+        context.close()
+
+        # H: the write asymmetry. /main/ is a homepage a visitor can choose,
+        # and it is also the page the brand link, the footer, a nav item on
+        # every surface and the hero call to action all point at - so a visitor
+        # lands on it constantly without having chosen it. Choosing it must
+        # record the choice; arriving at it must not. Static checks can see the
+        # guard; only a browser can see whether the storage actually moved.
+        context = browser.new_context(viewport={"width": 1440, "height": 900})
+        page = context.new_page()
+        page.goto(base, wait_until="networkidle")
+        page.evaluate(f"() => localStorage.removeItem({KEY!r})")
+
+        page.click('a[data-mbm-face-choice="main"]')
+        page.wait_for_load_state("domcontentloaded")
+        chose = page.evaluate(f"() => localStorage.getItem({KEY!r})")
+        findings.check(chose == "main", "choosing the platform homepage records the choice",
+                       f"stored {chose!r}")
+        findings.check(page.url.rstrip("/").endswith("/main"),
+                       "the platform card navigates to /main/", page.url)
+
+        page.evaluate(f"() => localStorage.removeItem({KEY!r})")
+        page.goto(base.rstrip("/") + "/main/", wait_until="networkidle")
+        page.wait_for_timeout(400)
+        landed = page.evaluate(f"() => localStorage.getItem({KEY!r})")
+        findings.check(landed is None, "landing on /main/ records nothing",
+                       f"stored {landed!r}")
+
+        # And the consequence, stated as the journey it protects: a deliberate
+        # choice survives an accidental visit to the platform homepage.
+        page.goto(base, wait_until="networkidle")
+        page.click('a[data-mbm-face-choice="teachers"]')
+        page.wait_for_load_state("domcontentloaded")
+        page.goto(base.rstrip("/") + "/main/", wait_until="networkidle")
+        page.wait_for_timeout(400)
+        survived = page.evaluate(f"() => localStorage.getItem({KEY!r})")
+        findings.check(survived == "teachers",
+                       "a chosen homepage survives a visit to /main/", f"stored {survived!r}")
+
+        # The brand link honours a chosen /main/ ...
+        page.evaluate(f"() => localStorage.setItem({KEY!r}, 'main')")
+        page.goto(base.rstrip("/") + "/resources/", wait_until="networkidle")
+        brand = page.get_attribute("a.brand", "href")
+        findings.check(brand == "/main/", "a chosen /main/ resolves the brand link", f"brand {brand!r}")
+
+        # ... and the pupil rule still outranks it. /for/pupils/ writes its own
+        # face on landing, so the value read here is 'pupils', not 'main'; what
+        # matters is that no stored value can put the adult platform homepage
+        # behind the brand on a page that suppresses adult features.
+        page.evaluate(f"() => localStorage.setItem({KEY!r}, 'main')")
+        page.goto(base.rstrip("/") + "/for/pupils/", wait_until="networkidle")
+        pupil_brand = page.get_attribute("a.brand", "href")
+        findings.check(pupil_brand != "/main/",
+                       "a chosen /main/ cannot reach the brand link on the pupil page",
+                       f"brand {pupil_brand!r}")
         context.close()
 
         browser.close()
@@ -326,6 +389,29 @@ def self_test() -> None:
             print(f"  [PASS] control detected: 320px overflow ({overflow}px)")
         else:
             print("  [FAIL] reflow control did not fire", file=sys.stderr)
+            failures += 1
+        context.close()
+
+        # Control 4: a homepage that records itself as the visitor's choice
+        # merely because they arrived. This is the defect the write asymmetry
+        # exists to prevent, so the assertion has to be shown failing on it.
+        context = browser.new_context()
+        page = context.new_page()
+        # A real origin, because set_content on about:blank is opaque and
+        # localStorage is denied there - the control would fail for a reason
+        # that has nothing to do with what it is testing.
+        fixture = (
+            f"<body data-mbm-audience-face='main'>"
+            f"<script>localStorage.setItem({KEY!r}, document.body.dataset.mbmAudienceFace)</script>"
+        )
+        page.route("**/*", lambda route: route.fulfill(status=200, content_type="text/html", body=fixture))
+        page.goto("https://landing-write.invalid/main/", wait_until="domcontentloaded")
+        page.wait_for_timeout(200)
+        landed = page.evaluate(f"() => localStorage.getItem({KEY!r})")
+        if landed == "main":
+            print("  [PASS] control detected: landing on a page records it as the chosen homepage")
+        else:
+            print("  [FAIL] landing-write control did not fire", file=sys.stderr)
             failures += 1
         context.close()
 

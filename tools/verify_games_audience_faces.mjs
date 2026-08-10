@@ -11,8 +11,12 @@ const fullEstate = process.env.MBM_FULL_ESTATE === '1' || !['127.0.0.1', 'localh
 const widths = [320, 360, 390, 430, 768, 1024, 1280, 1440];
 const config = JSON.parse(fs.readFileSync(path.join(root, 'data/audience-homepages.json'), 'utf8'));
 const audiences = Object.entries(config.audiences).map(([id, item]) => ({ id, ...item }));
-const expectedLabels = audiences.map(item => item.label);
-const expectedRoutes = audiences.map(item => item.route);
+// The chooser offers the seven audiences and then the platform option, in that
+// DOM order. mainOption is a homepage type held outside `audiences` - the data
+// file records why - so it is appended here rather than folded into the map.
+const choices = [...audiences, { id: config.mainOption.id, ...config.mainOption }];
+const expectedLabels = choices.map(item => item.label);
+const expectedRoutes = choices.map(item => item.route);
 const visualFloor = { pupils: 3, teachers: 2, parents: 2, schools: 2, trusts: 2, councils: 2, partners: 2 };
 const mainSections = ['audiences', 'resources', 'newrelease', 'homeSports', 'latest', 'collections', 'seeit', 'improved', 'mbmStats', 'standard', 'contact', 'about'];
 const results = {
@@ -162,7 +166,7 @@ async function testRoot(page, width, target) {
   ensure(target.canonical === 'https://madebymatt.uk/', `root canonical is ${target.canonical}`);
   ensure(await page.locator('.mf-main-card').getAttribute('href') === '/main/', 'root main-homepage option is incorrect');
   target.choiceCount = await page.locator('[data-mbm-face-choice]').count();
-  ensure(target.choiceCount === 7, `root has ${target.choiceCount} audience choices at ${width}px`);
+  ensure(target.choiceCount === choices.length, `root has ${target.choiceCount} homepage choices at ${width}px, expected ${choices.length}`);
   const routes = await page.locator('[data-mbm-face-choice]').evaluateAll(links => links.map(link => link.getAttribute('href')));
   const labels = await page.locator('[data-mbm-face-choice]').evaluateAll(links => links.map(link => link.getAttribute('data-mbm-face-label')));
   ensure(JSON.stringify(routes) === JSON.stringify(expectedRoutes), `root routes differ at ${width}px: ${JSON.stringify(routes)}`);

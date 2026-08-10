@@ -406,6 +406,80 @@ legacy card, by deleting a generated one, and by rewriting a declared
 
 ---
 
+## 21. A comparison is only as wide as its extractor
+
+`verify_games_audience_faces.py` proved the brand resolver's route table had not
+drifted from the data file, by comparing both sides:
+
+```python
+js_routes = dict(re.findall(r"(\w+):'(/for/[a-z-]+/)'", audience_js))
+data_routes = {aid: a["route"] for aid, a in config["audiences"].items()}
+```
+
+Correct, and it caught real drift. But the extractor **can only ever see routes
+under `/for/`**. When `/main/` became a selectable homepage type on 2026-08-10
+and `main:'/main/'` was added to `ROUTES`, that entry was invisible to the
+pattern — and the right-hand side was built from `audiences`, which does not
+contain it either. Both sides are filtered by the same unstated assumption, so
+they agree **by construction**: the check would have gone on reporting seven
+against seven, and reporting agreement, about a list it was not reading.
+
+This is not species 11. There the signal did not move when the event happened.
+Here the signal is fine; the **extractor silently narrows the domain**, and a
+comparison over a narrowed domain is a comparison about something else.
+
+**Rule:** extract from the **named container** — `var ROUTES={…}` — and parse
+every entry in it, then compare against the full declared set. If the extractor
+returns nothing, that is a finding, not an empty agreement. Proven red by
+deleting `,main:'/main/'` from the table.
+
+---
+
+## 22. When the fix makes a bar easy to clear, the control has to break the fix
+
+The dark theme repainted the chooser cards, and the accents kept painting raw:
+2.0–2.9:1 for the seven audience colours on the dark icon square, all under the
+3:1 bar for non-text UI, and **1.18:1** for the platform option, whose accent is
+the brand navy. Not dim — gone.
+
+No accent can fix that from the data side. The same colour has to clear 4.5:1 on
+the cream surface, which forces it dark. So the theme lifts it instead:
+`color-mix(in srgb, var(--choice-accent) 45%, #E8E2D4)`, measured at worst
+4.03:1.
+
+And that is exactly what makes the new assertion look proven when it is not. At
+a 45% lift **almost no colour can fail the 3:1 bar** — even pure black clears it.
+A control that mutates the accent therefore passes trivially, or cannot be
+constructed at all, and the assertion ships unfalsified while looking green.
+
+**Rule:** when a mechanism is introduced *because* a bar could not otherwise be
+met, the control must break **the mechanism**, not its input. Here the control
+re-runs the identical measurement against a recipe that paints the raw accent,
+and requires it to go red — it does, for all eight homepage types. If the theme
+ever stops lifting, that control is what notices.
+
+---
+
+## 23. A count is not a measurement until its units are stated
+
+Root and `/main/` were reported as **15,253 B** and **72,320 B**, and confirmed a
+second time against the shipped files. Both figures were right, and both were
+mislabelled: they are `len(path.read_text())` — **characters**. The pages carry
+`·`, `—` and other multi-byte UTF-8, so the byte counts are **15,296** and
+**72,471**, 43 B and 151 B larger.
+
+Nothing downstream cared until a byte budget did. Headroom against a ~17 KB cap
+computed from characters is wrong by exactly the multi-byte content of the page,
+and reads as more room than exists.
+
+**Rule:** a size figure states the unit it was taken in, and a byte figure is
+taken in bytes — `len(read_bytes())`, `wc -c`, `stat -c %s`. `read_text()`
+counts characters. This is the same discipline as asserting on evidence rather
+than proxies: a character count is a proxy for a byte count, and the two differ
+by however much of the file is not ASCII.
+
+---
+
 
 
 ## The shape they share

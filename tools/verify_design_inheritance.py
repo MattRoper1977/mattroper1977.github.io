@@ -191,7 +191,12 @@ def main() -> None:
     findings.note(
         "BACKLOG 0d (instrument · ruling-pending): verify_games_audience_faces.mjs is node --check'd "
         "and never executed - 550 lines of browser assertions that have never run, described as "
-        "coverage in two docs"
+        "coverage in two docs. Confirmed stale on 2026-08-10 beyond the parts this pass touched: it "
+        "asserts .mf-main-card carries the /main/ link, and that class has not been on the chooser "
+        "since the discovery root replaced the card with a hero action. The homepage-choice count "
+        "and route/label expectations were re-derived when /main/ became selectable, so the file "
+        "does not encode a claim this pass made false - but that is repair of one assertion, not "
+        "the ruling"
     )
 
     surfaces: list[tuple[str, Path, str]] = [
