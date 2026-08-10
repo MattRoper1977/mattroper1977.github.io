@@ -49,6 +49,50 @@ VIEWPORTS = ((320, 640, "320"), (768, 1024, "768"), (1440, 900, "1440"))
 # assertion passing for the wrong reason: a box with no area cannot intersect
 # anything, so "they do not overlap" would be true of a control that vanished.
 MIN_CONTROL = 24
+# The touch-target floor this estate enforces elsewhere. #mbmhud-back sat at
+# 34x34 until verify_2c_games caught it on two games; raising it was an
+# estate-wide change, so the floor is now measured across everything the HUD
+# renders rather than argued about per element.
+MIN_TARGET = 44
+
+# Every interactive thing the HUD puts on a page, measured where it renders,
+# split into what this gate holds and what it only reports.
+#
+# ALWAYS-ON CHROME - the back control and the home control - is what this pass
+# owns and what §3 asked to be re-verified after the 34px uplift. Asserted.
+#
+# THE TEACHER DOCK is a different matter. Seven of its controls render at 28-39
+# px high, and raising them changes a surface teachers use in front of a class,
+# on every lesson page in the estate. That is a product decision on somebody
+# else's surface, so it is reported on every run and gated by nothing here -
+# a gate that goes red on a decision nobody has taken is a gate that gets
+# switched off.
+#
+# Note what reading the CSS predicted and the browser did not confirm: three
+# `34px` literals in hud.js looked like the risk, and none of them is - two are
+# a display height and a font size, and the third is a textarea whose rendered
+# box clears the floor. The seven that do fail were nowhere in that reading.
+HUD_TARGETS_JS = """(ids) => {
+  const roots = ['mbmhud-back', 'mbmhud-home', 'mbmhud-pill', 'mbmhud-dock',
+                 'mbmhud-timerbox', 'mbmhud-calm'].map(id => document.getElementById(id)).filter(Boolean);
+  const seen = new Set(), out = [];
+  for (const root of roots) {
+    for (const el of [root, ...root.querySelectorAll('*')]) {
+      if (!el.matches('a[href],button,input,select,textarea,[role=button]')) continue;
+      if (seen.has(el)) continue;
+      seen.add(el);
+      const b = el.getBoundingClientRect();
+      if (b.width === 0 && b.height === 0) continue;
+      if (getComputedStyle(el).visibility === 'hidden') continue;
+      const label = el.id || ('.' + String(el.className).trim().split(/\\s+/)[0]);
+      if (b.height < 44 || b.width < 44)
+        out.push({id: label, w: b.width, h: b.height, chrome: ids.includes(el.id)});
+    }
+  }
+  return out;
+}"""
+# The controls this pass put on the page and is answerable for.
+HUD_CHROME = ["mbmhud-back", "mbmhud-home"]
 
 # One fixture per hud.js layout branch. The path is the whole point: hud.js
 # decides everything from location.pathname, so a fixture at /Games/ is the
@@ -130,7 +174,7 @@ def serve_fixtures(page, base: str) -> None:
     page.route("**/*", handler)
 
 
-def run(base: str, findings: Findings) -> None:
+def run(base: str, findings: Findings, notes: list[str]) -> None:
     from playwright.sync_api import sync_playwright
 
     base = base.rstrip("/") + "/"
@@ -236,6 +280,42 @@ def run(base: str, findings: Findings) -> None:
                                f"{vp}/{layout}: clicking the home control opens the chosen homepage",
                                f"landed on {landed!r}")
 
+            # E: the 44px floor, across everything the HUD puts on the page and
+            # not only the two controls this pass added.
+            #
+            # Raising #mbmhud-back from 34px was an estate-wide change - it
+            # renders on every page loading hud.js, not only the two games whose
+            # gate caught it - so the floor is measured here rather than argued.
+            # The dock is opened first because its controls are display:none
+            # until then, and a zero-size element is skipped by every sweep of
+            # this kind: "nothing under 44px" is trivially true of a closed dock.
+            for layout, path in LAYOUTS:
+                page.goto(origin + path, wait_until="domcontentloaded")
+                page.evaluate(f"() => localStorage.setItem({key!r}, 'teachers')")
+                page.reload(wait_until="domcontentloaded")
+                page.wait_for_timeout(120)
+                opened = page.evaluate(
+                    "() => { const p = document.getElementById('mbmhud-pill');"
+                    " if (p) { p.click(); return true; } return false; }"
+                )
+                page.wait_for_timeout(150)
+                small = page.evaluate(HUD_TARGETS_JS, HUD_CHROME)
+                chrome_small = [s for s in small if s["chrome"]]
+                findings.check(not chrome_small,
+                               f"{vp}/{layout}: the always-on HUD chrome meets the {MIN_TARGET}px floor",
+                               "; ".join(f"{s['id']} {s['w']:.0f}x{s['h']:.0f}" for s in chrome_small[:4]))
+                dock_small = [s for s in small if not s["chrome"]]
+                if dock_small:
+                    notes.append(f"{vp}/{layout}: {len(dock_small)} teacher-dock control(s) under the "
+                                 f"{MIN_TARGET}px floor: "
+                                 + "; ".join(f"{s['id']} {s['w']:.0f}x{s['h']:.0f}" for s in dock_small[:4]))
+                if layout == "lesson":
+                    # Without this the sweep above is vacuous on the one layout
+                    # that has a dock: every control in a closed dock has a zero
+                    # box, and "nothing under 44px" is trivially true of nothing.
+                    findings.check(opened, f"{vp}/{layout}: the teacher dock opened, so its controls "
+                                           f"were actually measured")
+
             off_origin = [u for u in seen if not u.startswith(origin) and not u.startswith("data:")]
             findings.check(not off_origin, f"{vp}: the HUD loads nothing off-origin",
                            ", ".join(sorted(set(off_origin))[:3]))
@@ -333,12 +413,14 @@ def main() -> None:
         raise SystemExit("MBM_BASE_URL is required, e.g. http://127.0.0.1:4173/")
 
     findings = Findings()
-    run(base, findings)
+    notes: list[str] = []
+    run(base, findings, notes)
 
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(
-            {"baseUrl": base, "passed": findings.passes, "failed": findings.failures}, indent=2
+            {"baseUrl": base, "notes": notes, "passed": findings.passes, "failed": findings.failures},
+            indent=2
         ), encoding="utf-8")
 
     # Every count carries its unit - species 23 is about bytes only because that
@@ -348,6 +430,10 @@ def main() -> None:
           f"{len(findings.failures)} failed")
     print(f"  {len(LAYOUTS)} hud.js layout branch(es) x {len(VIEWPORTS)} viewport(s) x "
           f"{len(homepage_choices())} homepage type(s)")
+    # Printed every run, gated by nothing. A finding on somebody else's surface
+    # that only appears when it breaks a build is a finding nobody sees.
+    for note in dict.fromkeys(notes):
+        print(f"  note: {note}")
     if findings.failures:
         print("\nFailures:", file=sys.stderr)
         for failure in findings.failures:

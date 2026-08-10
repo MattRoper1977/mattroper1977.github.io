@@ -539,6 +539,57 @@ two things disagree, never which of them is wrong.
 
 ---
 
+## 26. A harness ported between language bindings inherits the syntax, not the semantics
+
+`verify_hud_on_lessons_games.mjs` was written by porting a working Python
+harness. Python's Playwright binding accepts a **function source string**:
+
+```python
+page.evaluate("(id) => { ... }", "mbmhud-back")   # calls it with the argument
+```
+
+The Node binding does not. It evaluates a string as an **expression**, so the
+arrow function is constructed, the argument is discarded, and the result is a
+non-serialisable function — which arrives back as `undefined`.
+
+Every probe in the ported suite returned `undefined`. Nothing threw. No error
+appeared anywhere. The suite was **green by never asserting anything**, and it
+looked exactly like a suite that had passed.
+
+It was caught only because one assertion was written to compare against a
+specific string (`'ON TOP'`) rather than to test truthiness. Had it been
+`if (result)`, the port would have shipped.
+
+**Rule:** a harness moved across language bindings is a **new** harness. Prove
+at least one assertion in it can go RED in the new binding before trusting any
+green from it — and prefer real functions over source strings, because a real
+function cannot be misread as an expression by anything.
+
+The general form is worse than the instance: **the failure mode of a mistranslated
+binding is silence, not error.** A binding difference that threw would have been
+found in a minute.
+
+---
+
+## 27. Units belong on counts, not only on sizes
+
+Species 23 was about bytes — 15,253 characters reported as bytes. The next
+report made the same class of mistake on a **count**: ten wired Lessons games
+read as eleven files, because one of the filenames is
+`Trekkers_Trail_Runner (2).html` and the bracketed 2 reads as a quantity.
+
+Nothing about species 23 is specific to bytes. `555` is not a measurement until
+it says whether it counts routes, files, assertions or viewports; `39 games` is
+not one until it says whether a game is a route or a file — here it happens to
+be both, and one filename was enough to make that stop being obvious.
+
+**Rule:** every figure in a report or a tool's output carries its unit, and the
+unit names the thing counted, not its container. The HUD tools now print
+`assertion(s)`, `route(s)`, `file(s)` and `viewport(s)` at every figure, and the
+ledgers say which of those they mean.
+
+---
+
 
 
 ## The shape they share
