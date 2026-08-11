@@ -640,16 +640,19 @@ class PointParticles{
   draw(){this.sync();renderer.draw(this.mesh,{pointMode:true,pointSize:this.size,blend:true,additive:this.additive,unlit:true,doubleSided:true})}
 }
 class WeatherParticles{
-  constructor(max){this.max=max;this.positions=new Float32Array(max*3);this.colors=new Float32Array(max*4);this.mesh=new Mesh(renderer,{positions:this.positions,normals:new Float32Array(max*3),colors:this.colors,uvs:new Float32Array(max*2)},{dynamic:true,mode:renderer.gl.POINTS});this.seeded=false;this.kind='none'}
-  reset(kind,center){this.kind=kind;const rng=seeded(5771);for(let i=0;i<this.max;i++){this.positions[i*3]=center.x+(rng()-.5)*70;this.positions[i*3+1]=center.y+rng()*34;this.positions[i*3+2]=center.z+(rng()-.5)*70;const c=kind==='snow'?[.62,.70,.76,0]:kind==='dust'?[.58,.42,.26,0]:[.38,.54,.70,0];this.colors.set(c,i*4)}this.seeded=true}
-  update(dt,center,intensity,kind){if(intensity<=.01)return;if(!this.seeded||kind!==this.kind)this.reset(kind,center);for(let i=0;i<this.max;i++){let x=this.positions[i*3],y=this.positions[i*3+1],z=this.positions[i*3+2];if(kind==='snow'){const sc=MOTION.weather()?1:.5;x+=Math.sin(y*.4+i)*dt*.8*sc;y-=dt*(4+intensity*4)*sc;z+=Math.cos(y*.3+i)*dt*.5*sc}else if(kind==='dust'){x+=dt*(7+intensity*8);y-=dt*.8;z+=Math.sin(i)*dt}else{y-=dt*(MOTION.weather()?(12+intensity*10):(7+intensity*5));x+=dt*1.5}if(y<center.y||Math.abs(x-center.x)>40||Math.abs(z-center.z)>40){// Re-enter near the column it left, not at a fresh random point: a
+  constructor(max){this.max=max;// Its own PRNG, not the global one. reset() already used seeded() for the
+    // initial layout; respawn used Math.random, which made the scene
+    // unrepeatable and a straddling flash measurement unresolvable.
+    this.rng=seeded(90210);this.positions=new Float32Array(max*3);this.colors=new Float32Array(max*4);this.mesh=new Mesh(renderer,{positions:this.positions,normals:new Float32Array(max*3),colors:this.colors,uvs:new Float32Array(max*2)},{dynamic:true,mode:renderer.gl.POINTS});this.seeded=false;this.kind='none'}
+  reset(kind,center){this.kind=kind;this.rng=seeded(90210);const rng=seeded(5771);for(let i=0;i<this.max;i++){this.positions[i*3]=center.x+(rng()-.5)*70;this.positions[i*3+1]=center.y+rng()*34;this.positions[i*3+2]=center.z+(rng()-.5)*70;const c=kind==='snow'?[.62,.70,.76,0]:kind==='dust'?[.58,.42,.26,0]:[.38,.54,.70,0];this.colors.set(c,i*4)}this.seeded=true}
+  update(dt,center,intensity,kind){if(intensity<=.01)return;if(!this.seeded||kind!==this.kind)this.reset(kind,center);for(let i=0;i<this.max;i++){let x=this.positions[i*3],y=this.positions[i*3+1],z=this.positions[i*3+2];if(kind==='snow'){const sc=MOTION.weather()?.55:.28;x+=Math.sin(y*.4+i)*dt*.8*sc;y-=dt*(4+intensity*4)*sc;z+=Math.cos(y*.3+i)*dt*.5*sc}else if(kind==='dust'){x+=dt*(7+intensity*8);y-=dt*.8;z+=Math.sin(i)*dt}else{y-=dt*(MOTION.weather()?(12+intensity*10):(7+intensity*5));x+=dt*1.5}if(y<center.y||Math.abs(x-center.x)>40||Math.abs(z-center.z)>40){// Re-enter near the column it left, not at a fresh random point: a
       // teleport is an instantaneous luminance change in two tiles at once.
-      x=Math.abs(x-center.x)>40?center.x+(Math.random()-.5)*70:x;y=center.y+28+Math.random()*10;z=Math.abs(z-center.z)>40?center.z+(Math.random()-.5)*70:z}this.positions[i*3]=x;this.positions[i*3+1]=y;this.positions[i*3+2]=z}this.mesh.updatePositions(this.positions)}
+      x=Math.abs(x-center.x)>40?center.x+(this.rng()-.5)*70:x;y=center.y+28+this.rng()*10;z=Math.abs(z-center.z)>40?center.z+(this.rng()-.5)*70:z}this.positions[i*3]=x;this.positions[i*3+1]=y;this.positions[i*3+2]=z}this.mesh.updatePositions(this.positions)}
   draw(intensity){if(intensity<=.01)return;const calm=!MOTION.weather();
     // At night the same speck sits against a far darker sky, so the cap
     // tightens there rather than applying one number everywhere.
-    const night=game.env&&game.env.time==='night'?.62:1;
-    renderer.draw(this.mesh,{pointMode:true,pointSize:(this.kind==='snow'?2.9:this.kind==='dust'?4.4:1.8)*(calm?.85:1),blend:true,additive:false,unlit:true,opacity:clamp(intensity*(calm?.20:.44)*night,0,1),doubleSided:true})}
+    const night=game.env&&game.env.time==='night'?.46:1;
+    renderer.draw(this.mesh,{pointMode:true,pointSize:(this.kind==='snow'?2.2:this.kind==='dust'?4.4:1.4)*(calm?.85:1),blend:true,additive:false,unlit:true,opacity:clamp(intensity*(calm?.14:.26)*night,0,1),doubleSided:true})}
 }
 let particles=null;
 
@@ -868,7 +871,54 @@ function boot(){
   try{renderer=new Renderer(dom.canvas);initPrimitives();game.quality=actualQuality(save.settings.quality);bindControls();renderMenu();buildWorld({preview:true});game.env=environmentFor(game.trackDef,save.settings.weather,save.settings.time);game.lastFrame=performance.now();requestAnimationFrame(frame);setTimeout(()=>dom.loading.classList.add('out'),550);setTimeout(()=>dom.loading.classList.add('hidden'),950);
     (function(){const sp=document.getElementById('mbmSplash');if(!sp)return;const rm=RM_QUERY.matches,hold=rm?900:1750,fade=rm?60:470;let done=false;
       const close=()=>{if(done)return;done=true;try{if(sp.__cleanup)sp.__cleanup()}catch(_){}sp.classList.add('out');setTimeout(()=>{sp.classList.add('hidden');sp.setAttribute('data-mbm-splash-state','closed')},fade)};
-      const onKey=e=>{e.preventDefault();e.stopPropagation();close()};const onTap=e=>{e.preventDefault();e.stopPropagation();close()};sp.addEventListener('pointerdown',onTap,true);window.addEventListener('keydown',onKey,true);const timer=setTimeout(close,hold);sp.__cleanup=()=>{clearTimeout(timer);window.removeEventListener('keydown',onKey,true);sp.removeEventListener('pointerdown',onTap,true)};window.__mbmSplashClose=close;})();if(new URLSearchParams(location.search).get('test')==='1'){dom.selftest.style.display='block';setTimeout(async()=>{const r=await runSelfTests();console.log('RALLY_VECTOR_3D_SELFTEST',r)},500)}}catch(e){console.error(e);dom.loading.classList.add('hidden');dom.unsupported.classList.remove('hidden');document.body.dataset.boot='fail';dom.selftest.textContent=e.stack||String(e)}
+      const onKey=e=>{e.preventDefault();e.stopPropagation();close()};const onTap=e=>{e.preventDefault();e.stopPropagation();close()};sp.addEventListener('pointerdown',onTap,true);window.addEventListener('keydown',onKey,true);const timer=setTimeout(close,hold);sp.__cleanup=()=>{clearTimeout(timer);window.removeEventListener('keydown',onKey,true);sp.removeEventListener('pointerdown',onTap,true)};window.__mbmSplashClose=close;})();// ---- test seam ------------------------------------------------------
+// Read-mostly entry points, same shape as Neon Meridian's __NM and Glitch
+// Clash's __GC*: a named export object, not game internals made global.
+//
+// This exists because every flash measurement taken of this game before it
+// was measuring a car STANDING STILL at the start line. Clicking #startBtn
+// begins a 3.8s countdown; the snow falls throughout, so the frame moves and
+// a vacuity guard is satisfied, but the world is not going past the camera.
+// A photosensitivity census of a parked rally car is a census of nothing.
+let _autoOn=false;
+const _origPollInput=pollInput;
+pollInput=function(){
+  if(_autoOn&&game.car&&world){
+    const c=game.car,tr=world.track;
+    const look=tr.sampleAtProgress(game.totalProgress+.006);
+    const dx=c.pos.x-look.p.x,dz=c.pos.z-look.p.z;
+    const lat=dx*look.side.x+dz*look.side.z;
+    let err=Math.atan2(look.tan.x,look.tan.z)-c.heading;
+    while(err>Math.PI)err-=TAU;while(err<-Math.PI)err+=TAU;
+    game.touch.steer=clamp(err*1.5-lat*.12,-1,1);
+    game.touch.throttle=c.speed>24?.30:1;
+    game.touch.brake=0;
+  }
+  _origPollInput();
+};
+window.__RV={
+  version:VERSION,
+  get mode(){return game.mode},
+  get countdown(){return +game.countdown.toFixed(2)},
+  get speed(){return game.car?+(game.car.speed||0).toFixed(2):0},
+  get progress(){return +(game.totalProgress||0).toFixed(4)},
+  get env(){return game.env?{kind:game.env.kind,precip:game.env.precip,time:game.env.time,wet:game.env.wet}:null},
+  motionOn,
+  drive(on){game.keys.KeyW=!!on;game.keys.ArrowUp=!!on;return !!on},
+  // Holding the throttle straight puts the car into a snowbank inside two
+  // seconds on a narrow nordic stage -- measured: speed 15.76 at 60 frames,
+  // 0.89 and pinned from 120 onwards. A flash census needs SUSTAINED driving,
+  // so this steers down the racing line using the same track sampling and the
+  // same heading convention the game's own AI uses. Off by default; it only
+  // writes game.touch, which pollInput already combines.
+  autopilot(on){_autoOn=!!on;if(!on){game.touch.steer=0;game.touch.throttle=0}return _autoOn},
+  // Skip the countdown so a census reaches the driving state it means to test.
+  skipCountdown(){game.countdown=0;game.countMark=0;return game.countdown},
+  state(){return{mode:game.mode,countdown:+game.countdown.toFixed(2),
+    speed:this.speed,progress:this.progress,motion:motionOn(),
+    kind:game.env?game.env.kind:null,time:game.env?game.env.time:null}}
+};
+if(new URLSearchParams(location.search).get('test')==='1'){dom.selftest.style.display='block';setTimeout(async()=>{const r=await runSelfTests();console.log('RALLY_VECTOR_3D_SELFTEST',r)},500)}}catch(e){console.error(e);dom.loading.classList.add('hidden');dom.unsupported.classList.remove('hidden');document.body.dataset.boot='fail';dom.selftest.textContent=e.stack||String(e)}
 }
 boot();
 })();

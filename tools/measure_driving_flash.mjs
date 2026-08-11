@@ -172,6 +172,22 @@ async function measure(scene, reduce) {
     if (err) { console.error(`SETUP FAILED for "${scene.name}": ${err}`); process.exitCode = 1; }
   }
   await page.evaluate(f => window.__drive(f), 60);
+  // Rally: clicking start begins a 3.8s countdown, and every Rally number in
+  // the earlier tables was taken with the car STILL SITTING AT THE LINE.
+  if (scene.game === 'rallyvector3d') {
+    const rst = await page.evaluate(() => {
+      if (!window.__RV) return null;
+      window.__RV.skipCountdown(); window.__RV.autopilot(true); return window.__RV.state();
+    });
+    await page.evaluate(f => window.__drive(f), 420);
+    const after = await page.evaluate(() => (window.__RV ? window.__RV.state() : null));
+    if (!after || after.mode !== 'running' || after.speed < 15 || after.progress < 0.05) {
+      console.error(`SCENE NOT DRIVING for "${scene.name}": ${JSON.stringify(after || rst)}`);
+      process.exitCode = 1;
+    } else if (!reduce) {
+      console.log(`  state  ${scene.name}: ${JSON.stringify(after)}`);
+    }
+  }
   await page.addScriptTag({ content: SAMPLER });
 
   /* THE SCENE-STATE ASSERTION.
