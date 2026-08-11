@@ -263,6 +263,16 @@ try{document.body.dataset.mbmReduce=osReduce?'1':'0'}catch(e){}
 function onRM(e){osReduce=!!(e&&e.matches);document.body.dataset.mbmReduce=osReduce?'1':'0';if(typeof renderMenu==='function'&&game&&game.mode==='menu')try{renderMenu()}catch(err){}}
 try{RM_QUERY.addEventListener('change',onRM)}catch(e){try{RM_QUERY.addListener(onRM)}catch(e2){}}
 function motionOn(){return !!save.settings.motion&&!osReduce}
+// Named families, each with a call site. Before this, motionOn() reached
+// only the camera -- the weather layer, the wiper and the splatter alpha
+// ran at full strength whatever the OS asked for.
+const MOTION={
+  shake(){return motionOn()},
+  cameraFov(){return motionOn()},
+  weather(){return motionOn()},
+  wiper(){return motionOn()},
+  splatter(){return motionOn()}
+};
 
 const M4={
   create:()=>new Float32Array(16),
@@ -510,7 +520,7 @@ const SplatterSystem={
     if(!this.ctx)this.ctx=dom.lens.getContext('2d');const d=Math.min(devicePixelRatio||1,2),w=Math.max(1,innerWidth),h=Math.max(1,innerHeight);if(this.w!==w||this.h!==h||this.dpr!==d){this.w=w;this.h=h;this.dpr=d;dom.lens.width=Math.floor(w*d);dom.lens.height=Math.floor(h*d);this.ctx.setTransform(d,0,0,d,0,0)}
   },
   updateAndDraw(dt){
-    this.ensure();const ctx=this.ctx,w=this.w,h=this.h;ctx.clearRect(0,0,w,h);const wet=game.mode==='running'&&game.env?.wet>.18;this.wiperPhase=mod(this.wiperPhase+dt*(wet?1.05:.18),1);const wipeX=.12+.76*(.5-.5*Math.cos(this.wiperPhase*TAU));
+    this.ensure();const ctx=this.ctx,w=this.w,h=this.h;ctx.clearRect(0,0,w,h);const wet=game.mode==='running'&&game.env?.wet>.18;this.wiperPhase=mod(this.wiperPhase+dt*(MOTION.wiper()?(wet?1.05:.18):(wet?.42:.08)),1);const wipeX=.12+.76*(.5-.5*Math.cos(this.wiperPhase*TAU));
     for(let i=this.splatters.length-1;i>=0;i--){const s=this.splatters[i];s.alpha-=dt*(wet?.16:.11);if(wet&&Math.abs(s.x-wipeX)<.07)s.alpha-=dt*1.9;if(s.alpha<=0){this.splatters.splice(i,1);continue}ctx.fillStyle=`rgba(${s.color},${clamp(s.alpha,0,.9)})`;ctx.beginPath();ctx.ellipse(s.x*w,s.y*h,s.r,s.r*.72,0,0,TAU);ctx.fill();for(const d of s.drops){ctx.beginPath();ctx.arc((s.x+d[0])*w,(s.y+d[1])*h,s.r*d[2],0,TAU);ctx.fill()}}
     if(wet&&!osReduce){ctx.save();ctx.strokeStyle='rgba(205,230,245,.12)';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(w*.5,h*1.02);ctx.quadraticCurveTo(w*wipeX,h*.72,w*wipeX,h*.22);ctx.stroke();ctx.restore()}
   }
@@ -631,9 +641,15 @@ class PointParticles{
 }
 class WeatherParticles{
   constructor(max){this.max=max;this.positions=new Float32Array(max*3);this.colors=new Float32Array(max*4);this.mesh=new Mesh(renderer,{positions:this.positions,normals:new Float32Array(max*3),colors:this.colors,uvs:new Float32Array(max*2)},{dynamic:true,mode:renderer.gl.POINTS});this.seeded=false;this.kind='none'}
-  reset(kind,center){this.kind=kind;const rng=seeded(5771);for(let i=0;i<this.max;i++){this.positions[i*3]=center.x+(rng()-.5)*70;this.positions[i*3+1]=center.y+rng()*34;this.positions[i*3+2]=center.z+(rng()-.5)*70;const c=kind==='snow'?[.88,.96,1,0]:kind==='dust'?[.76,.52,.28,0]:[.52,.78,1,0];this.colors.set(c,i*4)}this.seeded=true}
-  update(dt,center,intensity,kind){if(intensity<=.01)return;if(!this.seeded||kind!==this.kind)this.reset(kind,center);for(let i=0;i<this.max;i++){let x=this.positions[i*3],y=this.positions[i*3+1],z=this.positions[i*3+2];if(kind==='snow'){x+=Math.sin(y*.4+i)*dt*.8;y-=dt*(4+intensity*4);z+=Math.cos(y*.3+i)*dt*.5}else if(kind==='dust'){x+=dt*(7+intensity*8);y-=dt*.8;z+=Math.sin(i)*dt}else{y-=dt*(24+intensity*22);x+=dt*3}if(y<center.y||Math.abs(x-center.x)>40||Math.abs(z-center.z)>40){x=center.x+(Math.random()-.5)*70;y=center.y+28+Math.random()*10;z=center.z+(Math.random()-.5)*70}this.positions[i*3]=x;this.positions[i*3+1]=y;this.positions[i*3+2]=z}this.mesh.updatePositions(this.positions)}
-  draw(intensity){if(intensity<=.01)return;renderer.draw(this.mesh,{pointMode:true,pointSize:this.kind==='snow'?3.8:this.kind==='dust'?5.5:2.2,blend:true,additive:false,unlit:true,opacity:clamp(intensity*.82,0,1),doubleSided:true})}
+  reset(kind,center){this.kind=kind;const rng=seeded(5771);for(let i=0;i<this.max;i++){this.positions[i*3]=center.x+(rng()-.5)*70;this.positions[i*3+1]=center.y+rng()*34;this.positions[i*3+2]=center.z+(rng()-.5)*70;const c=kind==='snow'?[.62,.70,.76,0]:kind==='dust'?[.58,.42,.26,0]:[.38,.54,.70,0];this.colors.set(c,i*4)}this.seeded=true}
+  update(dt,center,intensity,kind){if(intensity<=.01)return;if(!this.seeded||kind!==this.kind)this.reset(kind,center);for(let i=0;i<this.max;i++){let x=this.positions[i*3],y=this.positions[i*3+1],z=this.positions[i*3+2];if(kind==='snow'){const sc=MOTION.weather()?1:.5;x+=Math.sin(y*.4+i)*dt*.8*sc;y-=dt*(4+intensity*4)*sc;z+=Math.cos(y*.3+i)*dt*.5*sc}else if(kind==='dust'){x+=dt*(7+intensity*8);y-=dt*.8;z+=Math.sin(i)*dt}else{y-=dt*(MOTION.weather()?(12+intensity*10):(7+intensity*5));x+=dt*1.5}if(y<center.y||Math.abs(x-center.x)>40||Math.abs(z-center.z)>40){// Re-enter near the column it left, not at a fresh random point: a
+      // teleport is an instantaneous luminance change in two tiles at once.
+      x=Math.abs(x-center.x)>40?center.x+(Math.random()-.5)*70:x;y=center.y+28+Math.random()*10;z=Math.abs(z-center.z)>40?center.z+(Math.random()-.5)*70:z}this.positions[i*3]=x;this.positions[i*3+1]=y;this.positions[i*3+2]=z}this.mesh.updatePositions(this.positions)}
+  draw(intensity){if(intensity<=.01)return;const calm=!MOTION.weather();
+    // At night the same speck sits against a far darker sky, so the cap
+    // tightens there rather than applying one number everywhere.
+    const night=game.env&&game.env.time==='night'?.62:1;
+    renderer.draw(this.mesh,{pointMode:true,pointSize:(this.kind==='snow'?2.9:this.kind==='dust'?4.4:1.8)*(calm?.85:1),blend:true,additive:false,unlit:true,opacity:clamp(intensity*(calm?.20:.44)*night,0,1),doubleSided:true})}
 }
 let particles=null;
 

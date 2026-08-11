@@ -121,13 +121,17 @@ const SCENES = [
   // script-scoped consts, so every line threw ReferenceError into a swallowed
   // catch and all six scenes silently measured a parked car in daylight.
   { game: 'neonmeridian', name: 'pursuit strobe, driving', worst: true,
-    setup: `window.__NM.heat(100); window.__NM.drive(true);` },
+    setup: `window.__NM.heat(100); window.__NM.drive(true);`,
+    expect: s => s.cops === 3 && s.speed > 1 },
   { game: 'neonmeridian', name: 'night + rain, driving',
-    setup: `window.__NM.set('tod','night'); window.__NM.set('weather','rain'); window.__NM.drive(true);` },
+    setup: `window.__NM.set('tod','night'); window.__NM.set('weather','rain'); window.__NM.drive(true);`,
+    expect: s => s.tod === 'night' && s.rain > 0.9 && s.drops > 10 && s.speed > 1 },
   { game: 'neonmeridian', name: 'pursuit + night + rain, driving', worst: true,
-    setup: `window.__NM.set('tod','night'); window.__NM.set('weather','rain'); window.__NM.heat(100); window.__NM.drive(true);` },
+    setup: `window.__NM.set('tod','night'); window.__NM.set('weather','rain'); window.__NM.heat(100); window.__NM.drive(true);`,
+    expect: s => s.tod === 'night' && s.rain > 0.9 && s.drops > 10 && s.cops === 3 && s.speed > 1 },
   { game: 'neonmeridian', name: 'parked, daylight (vacuity control)',
-    setup: `window.__NM.drive(false);`, expectStill: true },
+    setup: `window.__NM.drive(false);`, expectStill: true,
+    expect: s => s.speed < 3 },
   // Rally is seeded through its save, which it reads from localStorage at boot,
   // so no seam is needed. Its weather is clear / rain / storm-dust; it has NO
   // lightning and nothing in it strobes, which the numbers below either
@@ -169,6 +173,22 @@ async function measure(scene, reduce) {
   }
   await page.evaluate(f => window.__drive(f), 60);
   await page.addScriptTag({ content: SAMPLER });
+
+  /* THE SCENE-STATE ASSERTION.
+     The vacuity guard asks "did the frame move". It does NOT ask "is this the
+     scene I asked for", and that gap hid a real error: WeatherSystem captures
+     its override once at construction, so setting setting.weather afterwards
+     changed nothing and the "night + rain" scenes measured night driving with
+     no rain at all -- moving, non-vacuous, and the wrong measurement. */
+  if (scene.expect) {
+    const st = await page.evaluate(() => (window.__NM ? window.__NM.state() : null));
+    if (!st || !scene.expect(st)) {
+      console.error(`SCENE STATE WRONG for "${scene.name}": ${JSON.stringify(st)}`);
+      process.exitCode = 1;
+    } else if (!reduce) {
+      console.log(`  state  ${scene.name}: ${JSON.stringify(st)}`);
+    }
+  }
 
   const frames = Math.round(SECONDS * FPS);
   await page.evaluate(n => {
