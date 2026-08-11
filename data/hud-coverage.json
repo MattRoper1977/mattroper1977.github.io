@@ -38,6 +38,15 @@
       ]
     },
     {
+      "route": "/neonmeridian/",
+      "verifier": "tools/verify_driving_games.mjs",
+      "gates": [
+        "zero-external-script-dependencies",
+        "zero-remote-subresources"
+      ],
+      "note": "Added at launch, 2026-08-11. Unlike the 2026-08-10 eight this was not measured by flipping a verifier red, because the game had never shipped and had no verifier to flip. The declaration rests on the contract it arrives with: a single self-contained HTML file with no external script and no remote subresource. tools/verify_driving_games.mjs now polices that, so the claim is falsifiable from here on."
+    },
+    {
       "route": "/neonsync/",
       "verifier": "tools/verify_neonsync.js",
       "gates": [
@@ -60,6 +69,15 @@
       "gates": [
         "offline"
       ]
+    },
+    {
+      "route": "/rallyvector3d/",
+      "verifier": "tools/verify_driving_games.mjs",
+      "gates": [
+        "zero-external-script-dependencies",
+        "zero-remote-subresources"
+      ],
+      "note": "Added at launch, 2026-08-11, on the same basis as /neonmeridian/. Its only off-origin string is <link rel=canonical>, which is metadata and never fetched."
     },
     {
       "route": "/relicforge/",

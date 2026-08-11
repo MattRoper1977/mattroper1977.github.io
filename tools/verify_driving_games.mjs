@@ -1,0 +1,117 @@
+/* The single-file contract for /neonmeridian/ and /rallyvector3d/.
+ *
+ * WHY THIS EXISTS
+ * data/hud-coverage.json declares both games unable to carry <script
+ * src="/hud.js">, and verify_hud_on_games.py requires every such declaration to
+ * name a verifier that exists. A declaration whose verifier is imaginary is a
+ * promise nobody keeps, so this is that file -- and it polices the thing the
+ * declaration actually claims: these two are self-contained, offline-first,
+ * single HTML files with no external runtime dependency.
+ *
+ * Both games ARRIVED that way. The only off-origin string in either file is
+ * Rally's <link rel="canonical">, which is metadata and never fetched. Adding
+ * the HUD script would retract that, which is precisely why they are declared.
+ *
+ * JUDGING THE GAME, NOT THE PLATFORM
+ * The stamped inline-exit region is not part of the game: it is a platform
+ * control, identical across every declared game, and it is stripped before the
+ * game's own contract is judged -- through the shared helper, never a local
+ * regex. That the region is PRESENT is asserted separately here, and that it
+ * RENDERS is verify_inline_exit.mjs's job in a browser. The /neonbreach/
+ * precedent is the warning: a verifier amended to admit a script that then
+ * rendered nothing for months, with nothing paired to notice.
+ */
+'use strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(HERE, '..');
+const { stripPlatformRegions } = require('./mbm_exit_region.js');
+
+const GAMES = [
+  { route: '/neonmeridian/', slug: 'neonmeridian', title: 'Neon Meridian: Open Drive' },
+  { route: '/rallyvector3d/', slug: 'rallyvector3d', title: 'Rally Vector 3D' },
+];
+
+let failed = 0;
+const t = (name, ok, detail = '') => {
+  if (!ok) failed++;
+  console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  — ' + detail : ''}`);
+};
+
+for (const g of GAMES) {
+  const file = path.join(ROOT, g.slug, 'index.html');
+  console.log(`\n=== ${g.route} ===`);
+  if (!fs.existsSync(file)) { t(`${g.slug} index.html exists`, false, file); continue; }
+
+  const raw = fs.readFileSync(file, 'utf8');
+  // The platform regions come off before the game is judged.
+  const html = stripPlatformRegions(raw);
+
+  // 1. No external script, anywhere. This is the promise the declaration makes.
+  const srcScripts = [...html.matchAll(/<script\b[^>]*\bsrc\s*=/gi)].map(m => m[0]);
+  t(`${g.slug}: zero external script dependencies`, srcScripts.length === 0,
+    srcScripts.slice(0, 3).join(' '));
+
+  // 2. No remote subresource of any kind on the runtime path. <link rel=
+  //    canonical/og are metadata and are excluded by name, not by hand-waving.
+  const remote = [...html.matchAll(/\b(?:src|href)\s*=\s*["'](https?:)?\/\/[^"']+/gi)]
+    .map(m => m[0])
+    .filter(s => {
+      const i = html.indexOf(s);
+      const ctx = html.slice(Math.max(0, i - 200), i);
+      return !/rel\s*=\s*["']canonical|property\s*=\s*["']og:/i.test(ctx);
+    });
+  t(`${g.slug}: zero remote subresources on the runtime path`, remote.length === 0,
+    remote.slice(0, 3).join(' '));
+
+  // 3. It is genuinely ONE file: no imports, no fetch of a sibling asset.
+  const imports = [...html.matchAll(/\bimport\s+[^;]*\bfrom\s*["'][^"']+["']/g)].map(m => m[0]);
+  t(`${g.slug}: no module imports`, imports.length === 0, imports.slice(0, 2).join(' '));
+
+  // 4. The Made by Matt splash is present, and gate-visible by the estate's
+  //    own literal rather than by whatever markup the game happens to use.
+  t(`${g.slug}: carries the mbm-splash-inline marker`,
+    raw.includes('mbm-splash-inline'));
+  t(`${g.slug}: splash declares its slug`,
+    raw.includes(`data-mbm-splash="${g.slug}"`));
+
+  // 5. The inline exit region is stamped. Rendering is proved elsewhere.
+  t(`${g.slug}: inline exit region stamped`,
+    raw.includes('MBM-INLINE-EXIT:BEGIN') && raw.includes('MBM-INLINE-EXIT:END'));
+
+  // 6. Head furniture that the shelf and the search index rely on.
+  t(`${g.slug}: canonical points at its own route`,
+    new RegExp(`rel=["']canonical["'][^>]*href=["']https://madebymatt\\.uk${g.route}["']`).test(raw));
+  t(`${g.slug}: has a meta description`, /<meta\s+name=["']description["']/i.test(raw));
+  t(`${g.slug}: has a theme-color`, /<meta\s+name=["']theme-color["']/i.test(raw));
+
+  // 7. Save keys are house-shaped. A game that writes an un-prefixed key
+  //    collides with every other game on the origin.
+  const keys = [...raw.matchAll(/["'](mbm_[a-z0-9_]+)["']/g)].map(m => m[1]);
+  t(`${g.slug}: uses house-prefixed save keys`, keys.length > 0,
+    [...new Set(keys)].join(','));
+  // The pre-house names must not survive as live reads.
+  const stale = [...raw.matchAll(/store\.(?:get|set)\(\s*['"](meridian_[a-z_]+)['"]/g)].map(m => m[1]);
+  t(`${g.slug}: no live reads of a pre-house key`, stale.length === 0, stale.join(','));
+
+  // 8. Reduced motion: the OS must be a floor, not a default. Assert the SHAPE
+  //    that makes that true -- a stored flag ANDed with the live OS query --
+  //    because the defect that shipped twice was a stored false overriding it.
+  //    Match on the DECISION, not on the spelling of its left operand: an
+  //    earlier draft required the stored flag to sit immediately before the
+  //    &&, which "setting.motion!==false&&!osReduce" satisfies behaviourally
+  //    but not textually -- a red on a game whose runtime behaviour was
+  //    already proved correct.
+  const mo = raw.match(/function\s+motionOn\s*\(\s*\)\s*\{([^}]*)\}/);
+  t(`${g.slug}: has a single motionOn() decision point`, !!mo);
+  t(`${g.slug}: reduced motion ANDs the live OS query (OS is a floor)`,
+    !!mo && /&&\s*!\s*osReduce/.test(mo[1]), mo ? mo[1].trim() : 'no motionOn()');
+}
+
+console.log(failed ? `\n${failed} FAILED` : '\nall passed');
+process.exit(failed ? 1 : 0);
