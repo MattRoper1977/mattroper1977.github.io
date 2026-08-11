@@ -504,6 +504,30 @@ let last=performance.now(),acc=0,frames=0,fpsTimer=0,fpsAvg=60,qualityCooldown=0
 function loop(now){requestAnimationFrame(loop);let dt=Math.min((now-last)/1000,.05);last=now;if(!running)return;if(!mapOpen&&!photoMode&&!garageOpen){acc+=dt;let steps=0;while(acc>=FIX&&steps<6){physicsStep(FIX);updateTraffic(FIX);updateParticles(FIX);MissionSystem.update(FIX);acc-=FIX;steps++}}if(mapOpen&&now-lastMapPaint>45){drawFullMap();lastMapPaint=now}updateCamera(dt);updateAudio();render(dt);updateHUD();frames++;fpsTimer+=dt;qualityCooldown-=dt;if(fpsTimer>2){fpsAvg=frames/fpsTimer;frames=0;fpsTimer=0;if(fpsAvg<34&&qualityCooldown<=0&&(setting.quality==='Ultra'||setting.quality==='High')){setting.quality=setting.quality==='Ultra'?'High':'Medium';$('#quality').value=setting.quality;applyQuality();saveSettings();qualityCooldown=12;toast('ADAPTIVE GRAPHICS',`Quality adjusted to ${setting.quality} for smoother driving`)}}}
 requestAnimationFrame(loop);
 
+// ---- test seam ----------------------------------------------------------
+// Read-mostly entry points for the estate's instruments, in the shape Glitch
+// Clash established: a named export object rather than making game internals
+// global. The photosensitivity census needs to force the worst case -- full
+// pursuit heat, a specific time of day and weather, and the throttle held --
+// because a census that measures a parked car in daylight is a census of
+// nothing. An earlier run did exactly that: every setup line threw
+// ReferenceError against these script-scoped consts and was silently swallowed,
+// and all six scenes reported an identical, static frame.
+window.__NM={
+  version:VERSION,
+  get setting(){return setting},
+  get progress(){return progress},
+  get player(){return player},
+  get pursuit(){return PursuitSystem},
+  motionOn,
+  heat(v){const h=Math.max(0,Math.min(100,v));PursuitSystem.heat=h;
+    const want=h>82?3:h>55?2:h>30?1:0;
+    while(PursuitSystem.cops.length<want)PursuitSystem.spawnCop();
+    return PursuitSystem.cops.length},
+  // keys are indexed by KeyboardEvent.code, not by character.
+  drive(on){keys.KeyW=!!on;keys.ArrowUp=!!on;return !!on},
+  set(k,v){if(k in setting){setting[k]=v;try{applyQuality()}catch(_){}return setting[k]}return null}
+};
 function start(){if(running)return;running=true;$('#boot').classList.add('hidden');$('#hud').classList.remove('hidden');if(matchMedia('(pointer:coarse)').matches)$('#touch').classList.remove('hidden');initAudio();audio?.ac.resume?.();spawnTraffic(qualityCfg[setting.quality].traffic,player.x,player.z);applyQuality();rebuildStream(true);cam.look=V(player.x,1,player.z);toast('WELCOME TO MERIDIAN BAY','Free drive · Shift nitro · G garage · K Meridian FM · M GPS/challenges/racing · P photo mode');setTimeout(()=>$('#controlsHint').style.opacity='.25',6500)}
 window.__MERIDIAN_START__=start;window.__MERIDIAN_ENGINE_READY__=true;
 const playButton=$('#playBtn');if(playButton)playButton.onclick=start;
