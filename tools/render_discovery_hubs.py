@@ -562,12 +562,13 @@ EDUCATION_PUBLISHERS = [
 # Teacher-facing further reading for /teach/. One annotation sentence each,
 # saying WHEN to use it rather than what it is.
 #
-# The TES shop URL is deliberately a placeholder. Three repositories were
-# searched for any TES address and none exists in the estate, so inventing one
-# was the only alternative and that is not a thing to do with a link that
-# carries Matt's name.
+# The TES shop URL was a visible placeholder until Matt supplied the real
+# address on 2026-08-12. It was never guessed: three repositories were searched
+# and no TES address existed anywhere in the estate, so the card rendered
+# [MATT: TES SHOP URL] where it could not ship unnoticed.
 TEACH_EXPLORATIONS = [
-    ("[MATT: TES SHOP URL]", "Matt's TES shop",
+    ("https://www.tes.com/teaching-resources/shop/Online_Teaching_Resources",
+     "Matt's TES shop",
      "When you want the packaged, print-ready versions of this material to hand to a colleague.",
      "Opens TES \u00b7 leaves Made by Matt"),
     ("https://www.stem.org.uk/resources", "STEM Learning",
