@@ -193,7 +193,7 @@ const DEFAULT_SAVE={
   records:{},progress:{xp:0,wins:0,stages:0,events:0,unlocked:['classic']}
 };
 const SAFE={
-  tracks:['alpine','desert','nordic'],drivers:['balanced','attack','control'],
+  tracks:['alpine','desert','nordic','coastal','timber','canyon'],drivers:['balanced','attack','control'],
   weather:['clear','rain','storm'],time:['day','dusk','night'],
   quality:['auto','high','medium','low'],assist:['balanced','pro','strong'],
   patterns:['stripes','swoosh','checker','camo'],skins:['classic','forest','cyber','champion','carbon','aurora']
@@ -370,7 +370,10 @@ class Builder{
 const TRACKS=[
   {id:'alpine',name:'Alpine Pass',icon:'⛰️',surface:'Mixed tarmac',tag:'Balanced',roadWidth:10.5,baseGrip:1.0,rut:0.18,seed:9137,sky:'#78b9e6',fog:'#8abbd9',terrain:['#2e7148','#6b573d'],road:'#303840',curb:'#e75d55',accent:'#f6e0c1',par:86,weather:'clear',time:'day',desc:'Fast mountain tarmac, gravel cuts and a committed downhill finale.',points:[[0,3,0],[65,8,112],[150,15,155],[235,12,78],[185,7,-25],[255,13,-132],[138,19,-226],[-5,10,-208],[-118,15,-118],[-154,7,18],[-72,5,96]]},
   {id:'desert',name:'Sahara Run',icon:'🏜️',surface:'Loose sand',tag:'Drift',roadWidth:11.5,baseGrip:.77,rut:.95,seed:4519,sky:'#e6a451',fog:'#d99248',terrain:['#b77b36','#76502c'],road:'#79513a',curb:'#f3c552',accent:'#ffedd0',par:92,weather:'storm',time:'dusk',desc:'Broad sand ridges, sweeping slides and a long dust-filled power section.',points:[[0,2,0],[92,5,145],[212,14,128],[292,9,-22],[205,4,-172],[42,10,-258],[-126,6,-205],[-225,12,-58],[-165,5,82],[-58,3,128]]},
-  {id:'nordic',name:'Nordic Night',icon:'❄️',surface:'Snow and ice',tag:'Technical',roadWidth:9.8,baseGrip:.59,rut:1.2,seed:7813,sky:'#172b48',fog:'#314968',terrain:['#d6e6ed','#7990a2'],road:'#556672',curb:'#54a9df',accent:'#dff7ff',par:96,weather:'rain',time:'night',desc:'Narrow frozen roads, snowbanks and low-grip corners under floodlights.',points:[[0,3,0],[42,6,92],[122,10,128],[183,7,48],[108,5,-52],[176,12,-158],[66,7,-221],[-72,11,-158],[-128,6,-38],[-82,4,67]]}
+  {id:'nordic',name:'Nordic Night',icon:'❄️',surface:'Snow and ice',tag:'Technical',roadWidth:9.8,baseGrip:.59,rut:1.2,seed:7813,sky:'#172b48',fog:'#314968',terrain:['#d6e6ed','#7990a2'],road:'#556672',curb:'#54a9df',accent:'#dff7ff',par:96,weather:'rain',time:'night',desc:'Narrow frozen roads, snowbanks and low-grip corners under floodlights.',points:[[0,3,0],[42,6,92],[122,10,128],[183,7,48],[108,5,-52],[176,12,-158],[66,7,-221],[-72,11,-158],[-128,6,-38],[-82,4,67]]},
+  {id:'coastal',name:'Cliffline Dash',icon:'🌊',surface:'Sea-spray tarmac',tag:'Fast',roadWidth:10.8,baseGrip:.93,rut:.24,seed:2287,sky:'#8fc6e8',fog:'#a9cfe0',terrain:['#3c6b52','#8a8f79'],road:'#39424b',curb:'#e8734f',accent:'#f2e6cf',par:88,weather:'rain',time:'day',desc:'Wet coast road, long fast sweepers and a cliff-edge run to the line.',points:[[0,11,-219],[133,16,-207],[144,13,-66],[155,5,22],[185,2,160],[63,7,213],[-39,14,134],[-141,15,122],[-252,9,36],[-172,3,-79],[-75,4,-117]]},
+  {id:'timber',name:'Timberline Loop',icon:'🌲',surface:'Forest gravel',tag:'Blind crests',roadWidth:9.6,baseGrip:.84,rut:.62,seed:6631,sky:'#5f7f6a',fog:'#7d9382',terrain:['#274b30','#5c4a30'],road:'#6a5946',curb:'#d8c24a',accent:'#eef3dd',par:94,weather:'clear',time:'dusk',desc:'Narrow gravel between the trees, blind crests and a tightening final loop.',points:[[0,18,-223],[86,18,-133],[127,4,-58],[226,9,33],[99,21,86],[48,13,163],[-61,3,208],[-88,14,76],[-199,20,29],[-173,8,-79],[-65,5,-100]]},
+  {id:'canyon',name:'Copper Canyon',icon:'⛰️',surface:'Hardpack and shale',tag:'Exposed',roadWidth:10.2,baseGrip:.88,rut:.48,seed:8419,sky:'#d99a63',fog:'#c98d5e',terrain:['#9c5a34','#6d4326'],road:'#7b6350',curb:'#f0b64a',accent:'#ffeed6',par:91,weather:'storm',time:'day',desc:'Exposed shale ledges above the canyon, wind-blown dust and a long descent.',points:[[0,19,-267],[116,16,-180],[147,7,-67],[169,3,24],[174,9,151],[76,17,260],[-69,18,235],[-138,11,120],[-155,4,22],[-180,5,-82],[-139,13,-217]]}
 ];
 const DRIVERS=[
   {id:'balanced',name:'Vector Works',icon:'⚙️',tag:'Balanced',maxSpeed:47,accel:22,handling:1.0,brake:29,desc:'Predictable weight transfer and a wide operating window.'},
@@ -570,7 +573,7 @@ const SpotlightSystem={
 };
 
 const CampaignSystem={
-  active:false,currentStageIdx:0,stageSequence:['alpine','desert','nordic'],serviceMinutes:45,cumulativeTime:0,results:[],carry:null,stageStartCarry:null,
+  active:false,currentStageIdx:0,stageSequence:['alpine','desert','nordic','coastal','timber','canyon'],serviceMinutes:45,cumulativeTime:0,results:[],carry:null,stageStartCarry:null,
   freshCarry(){return{damage:0,engine:1,steeringBias:0,impacts:[]}},
   cloneCarry(c){return{damage:num(c?.damage,0,100,0),engine:num(c?.engine,.48,1,1),steeringBias:num(c?.steeringBias,-.24,.24,0),impacts:Array.isArray(c?.impacts)?c.impacts.slice(0,12).map(x=>({...x})):[]}},
   prepareStage(){const id=this.stageSequence[this.currentStageIdx],def=trackById(id);save.settings.track=id;save.settings.weather=def.weather;save.settings.time=def.time;persistSoon()},
@@ -914,6 +917,28 @@ window.__RV={
   autopilot(on){_autoOn=!!on;if(!on){game.touch.steer=0;game.touch.throttle=0}return _autoOn},
   // Skip the countdown so a census reaches the driving state it means to test.
   skipCountdown(){game.countdown=0;game.countMark=0;return game.countdown},
+  track(){return save.settings.track},
+  noteCount(){return world&&world.track?world.track.notes.length:0},
+  // Record through the game's OWN leaderboard system, so this proves the stage
+  // can hold a ghost rather than proving a hand-written blob can be stored.
+  recordGhost(time){
+    const id=save.settings.track;
+    // Prefer the run the game ACTUALLY recorded. cleanGhost rejects anything
+    // under 10 frames, so a three-frame stub would have returned false and a
+    // green here would have meant nothing.
+    const live=Array.isArray(game.ghostRecording)?game.ghostRecording:[];
+    const tele=live.length>=10?live:null;
+    const ok=tele?GhostLeaderboardSystem.saveRun(id,time,'Verifier',tele):false;
+    const board=GhostLeaderboardSystem.getLeaderboard(id);
+    return {track:id,stored:board.length,recordedFrames:live.length,accepted:!!ok};
+  },
+  readGhost(){
+    const id=save.settings.track;
+    const board=GhostLeaderboardSystem.getLeaderboard(id);
+    const tel=GhostLeaderboardSystem.bestTelemetry(id);
+    return {track:id,entries:board.length,telemetry:tel?tel.length:0,
+      key:GhostLeaderboardSystem.key(id)};
+  },
   state(){return{mode:game.mode,countdown:+game.countdown.toFixed(2),
     speed:this.speed,progress:this.progress,motion:motionOn(),
     kind:game.env?game.env.kind:null,time:game.env?game.env.time:null}}
