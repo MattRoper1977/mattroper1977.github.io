@@ -1,0 +1,175 @@
+name: Driving games live verification
+
+# The P6 obligation for /neonmeridian/ and /rallyvector3d/.
+#
+# The agent container cannot reach the origin: the proxy answers 403 on CONNECT
+# and madebymatt.uk returns 000 from there. CI is the only channel that can
+# fetch a live path, which is why this is a workflow and not a container step.
+#
+# READ-ONLY against production. It fetches, hashes, renders and compares. It
+# writes to no surface.
+#
+# Pages lag is reported as PENDING, never as a pass: a served copy that has not
+# caught up with the tree is a deployment timing fact, not a content match.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: read
+
+jobs:
+  live:
+    name: Fetch both games as served and compare to the committed tree
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out main (the deployed tree)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Record the SHA under test
+        shell: bash
+        run: echo "main is $(git rev-parse HEAD)"
+
+      - name: GitHub Pages build status
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -sS -H "Authorization: Bearer $GH_TOKEN" \
+               -H "Accept: application/vnd.github+json" \
+               "https://api.github.com/repos/${{ github.repository }}/pages/builds/latest" \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin); print("status ",d.get("status")); print("commit ",d.get("commit")); print("updated",d.get("updated_at")); print("error  ",d.get("error"))' \
+            || echo "Pages API unavailable to this token — recorded, not faked."
+
+      - name: NEGATIVE CONTROL — a path that must NOT match
+        shell: bash
+        run: |
+          # Before any green counts, prove the comparison can fail. A URL that
+          # does not exist must not hash-equal a committed blob.
+          set -o pipefail
+          got=$(curl -sS -L -o /tmp/nc.bin -w '%{http_code}' \
+            "https://madebymatt.uk/neonmeridian/definitely-not-here-$(date +%s).html" || true)
+          echo "control HTTP $got"
+          if [ "$got" = "200" ]; then
+            echo "CONTROL FAILED: a nonexistent path returned 200"; exit 1
+          fi
+          echo "control OK: the fetch path can report a miss"
+
+      - name: Served bytes == committed bytes
+        shell: bash
+        run: |
+          set -o pipefail
+          fail=0
+          check () {
+            url="$1"; file="$2"
+            code=$(curl -sS -L -o /tmp/served -w '%{http_code}' "$url" || echo 000)
+            if [ "$code" != "200" ]; then echo "FAIL $url -> HTTP $code"; fail=1; return; fi
+            a=$(sha256sum /tmp/served | cut -d' ' -f1)
+            b=$(sha256sum "$file"    | cut -d' ' -f1)
+            if [ "$a" = "$b" ]; then
+              echo "MATCH $url"
+              echo "      sha256 $a"
+            else
+              echo "PENDING $url — served does not match the tree (Pages lag or drift)"
+              echo "      served    $a"
+              echo "      committed $b"
+              fail=1
+            fi
+          }
+          check https://madebymatt.uk/data/source-manifests/games.json data/source-manifests/games.json
+          check https://madebymatt.uk/neonmeridian/index.html          neonmeridian/index.html
+          check https://madebymatt.uk/rallyvector3d/index.html         rallyvector3d/index.html
+          exit $fail
+
+      - name: Install Playwright
+        run: npm i -D playwright@1.56.1 && npx playwright install --with-deps chromium
+
+      - name: Arcade, homepage, pupil page and both games — rendered on the origin
+        shell: bash
+        run: |
+          cat > /tmp/live.mjs <<'EOF'
+          import { chromium } from 'playwright';
+          const B = 'https://madebymatt.uk';
+          let fail = 0;
+          const t = (n, ok, d='') => { if(!ok) fail++; console.log(`${ok?'PASS':'FAIL'}  ${n}${d?'  — '+d:''}`); };
+          const br = await chromium.launch();
+
+          // 1. The arcade renders every card, at two viewports, with art painted
+          //    and nothing spilling sideways.
+          for (const vp of [{name:'phone',width:390,height:844},{name:'desktop',width:1280,height:900}]) {
+            const c = await br.newContext({viewport:{width:vp.width,height:vp.height}});
+            const p = await c.newPage();
+            await p.goto(B+'/games/', {waitUntil:'networkidle', timeout:60000});
+            await p.waitForTimeout(1500);
+            const r = await p.evaluate(async () => {
+              const cards = [...document.querySelectorAll('a[href^="/"]')].filter(a=>a.querySelector('img'));
+              const imgs = [...document.querySelectorAll('img')];
+              await Promise.all(imgs.map(i=>i.complete?null:new Promise(r=>{i.onload=i.onerror=r})));
+              const broken = imgs.filter(i=>i.naturalWidth===0).map(i=>i.getAttribute('src'));
+              return { cards: cards.length,
+                overflow: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
+                broken,
+                hasNM: !!document.querySelector('a[href="/neonmeridian/"]'),
+                hasRV: !!document.querySelector('a[href="/rallyvector3d/"]'),
+                newMarker: (document.body.innerText.match(/NEW ·/g)||[]).length };
+            });
+            t(`[${vp.name}] arcade renders 50+ cards`, r.cards >= 50, `${r.cards} cards`);
+            t(`[${vp.name}] zero horizontal overflow`, r.overflow === 0, `${r.overflow}px`);
+            t(`[${vp.name}] no broken card art`, r.broken.length === 0, r.broken.slice(0,3).join(' '));
+            t(`[${vp.name}] both new games on the shelf`, r.hasNM && r.hasRV, JSON.stringify(r));
+            t(`[${vp.name}] exactly one NEW marker`, r.newMarker === 1, `${r.newMarker}`);
+            await c.close();
+          }
+
+          // 2. Homepage New-release boxes and pupil-page cards, on the origin.
+          {
+            const c = await br.newContext(); const p = await c.newPage();
+            await p.goto(B+'/main/', {waitUntil:'networkidle', timeout:60000});
+            const rel = await p.evaluate(()=>[...document.querySelectorAll('[data-release]')].map(e=>e.getAttribute('data-release')));
+            t('homepage carries both New-release boxes',
+              rel.includes('Rally Vector 3D') && rel.includes('Neon Meridian'), JSON.stringify(rel));
+            await p.goto(B+'/for/pupils/', {waitUntil:'networkidle', timeout:60000});
+            const ids = await p.evaluate(()=>[...document.querySelectorAll('[data-feature-id]')].map(e=>e.getAttribute('data-feature-id')));
+            t('pupil page carries both mf-feature cards',
+              ids.includes('rally-vector-3d') && ids.includes('neon-meridian'), JSON.stringify(ids.slice(0,8)));
+            await c.close();
+          }
+
+          // 3. Both games boot live with nothing off-origin. The splash is
+          //    polled from t=0, not sampled after a settle wait, because it
+          //    self-closes at ~2.2s.
+          for (const [slug, sel] of [['neonmeridian','#playBtn'], ['rallyvector3d','#startBtn']]) {
+            const c = await br.newContext({viewport:{width:900,height:700}});
+            const p = await c.newPage();
+            const off = [], errs = [];
+            p.on('request', q => { const u=q.url(); if(!u.startsWith(B) && !u.startsWith('data:') && !u.startsWith('blob:')) off.push(u); });
+            p.on('pageerror', e => errs.push(String(e)));
+            await p.addInitScript(()=>{ window.__sp={seen:false,closed:false};
+              setInterval(()=>{ const el=document.querySelector('#mbmSplash,.mbm-splash'); if(!el){ if(window.__sp.seen) window.__sp.closed=true; return; }
+                const cs=getComputedStyle(el), r=el.getBoundingClientRect();
+                const up = cs.display!=='none' && cs.visibility!=='hidden' && Number(cs.opacity)>0.05 && r.width>200;
+                if(up) window.__sp.seen=true; else if(window.__sp.seen) window.__sp.closed=true; }, 60); });
+            await p.goto(`${B}/${slug}/`, {waitUntil:'load', timeout:60000});
+            await p.waitForTimeout(4500);
+            await p.evaluate(s=>{const b=document.querySelector(s); if(b)b.click();}, sel);
+            await p.waitForTimeout(3000);
+            const sp = await p.evaluate(()=>window.__sp);
+            const exit = await p.evaluate(()=>{const a=document.getElementById('mbmexit-back');
+              if(!a) return null; const r=a.getBoundingClientRect(); return {w:Math.round(r.width),h:Math.round(r.height)};});
+            t(`${slug}: zero off-origin requests`, off.length === 0, off.slice(0,3).join(' '));
+            t(`${slug}: no uncaught error`, errs.length === 0, errs.slice(0,1).join(''));
+            t(`${slug}: splash played and closed`, !!(sp&&sp.seen&&sp.closed), JSON.stringify(sp));
+            t(`${slug}: inline exit rendered >=44px`, !!exit && exit.w>=44 && exit.h>=44, JSON.stringify(exit));
+            await c.close();
+          }
+
+          await br.close();
+          console.log(fail ? `\n${fail} FAILED` : '\nall live checks passed');
+          process.exit(fail ? 1 : 0);
+          EOF
+          node /tmp/live.mjs
