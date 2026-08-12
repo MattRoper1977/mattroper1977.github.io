@@ -94,3 +94,45 @@ The shelf cannot keep absorbing games at this floor. The next launch faces the
 same wall, and the choice is a product one: relax the floor and record
 breaches as here, retire or recolour older entries, or accept that hue stops
 being the shelf's distinguishing device and let the card art carry it.
+
+---
+
+## 3. Live leg (C3) — half proved, half parked
+
+Run 31588255023 on `main` 57bbe7f, CI-runner route (the container cannot reach
+the origin; the proxy answers 403 on CONNECT).
+
+**Proved, with the negative control passing first:**
+
+| step | outcome |
+|---|---|
+| negative control — a nonexistent path must not return 200 | **PASS** |
+| served bytes == committed bytes, all three | **PASS** |
+
+Because the comparison reported MATCH, the served hashes are the committed
+ones:
+
+```
+9ae7210bf7dec63c216aa23fa2edb24a2b790a7c3c3b362ab2660202ebf93d6f  games.json
+771c72c3a5e35db4ecc493a7e76492a7dc8c888b0ffd20de1fe97f2bf5bc16cc  neonmeridian/index.html
+4af053f5432151d169cee8949c5df84cda165a884a73ed558a1569137b0c434a  rallyvector3d/index.html
+```
+
+**Parked, with the evidence:** the rendered half — arcade at two viewports,
+homepage boxes, pupil cards, both games booting with zero off-origin requests.
+The step ran 19.5 minutes and was cancelled by the job's own 20-minute timeout
+having emitted nothing. Node buffers stdout to a pipe, so whatever it had
+printed died with the process; the runner reported orphan `node` and
+`headless_shell` on cleanup, so the browser was alive throughout.
+
+This is a HARNESS budget fault, not a live-content failure, and it is not the
+Pages queue fault the order allows a re-dispatch for. One re-dispatch was
+already spent on a genuine fix (the script lived in /tmp, where an ESM import
+cannot resolve a workspace-installed playwright).
+
+What the next pass should change before re-running, in order of likelihood:
+1. raise `timeout-minutes` well above 20 and add a per-step timeout;
+2. drop `waitUntil:'networkidle'` — on a fifty-card arcade it may never
+   settle; `domcontentloaded` plus an explicit image-decode wait is enough;
+3. write progress to a file as well as stdout, so a killed run still leaves
+   partial evidence instead of nothing.
