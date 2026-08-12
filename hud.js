@@ -437,5 +437,77 @@
     KEY_HOSTS[kh].addEventListener("keypress", holdKeys);
   }
 
+  /* ---------- slide-change announcer ----------
+     A deck changes slide by toggling a class. Nothing in that is an event a
+     screen reader is told about, so a reader who cannot see the screen gets
+     silence where a sighted reader gets a new slide. This watches the deck and
+     writes the new slide's HEADING into a polite live region.
+
+     Headings only, never body text: a slide's body can be hundreds of words and
+     a polite region would read the lot over the top of whatever the teacher is
+     saying. The heading is what a sighted reader takes from the transition.
+
+     The countdown stays aria-live="off" and is deliberately not observed. A
+     live timer announces every single second, which is the loudest possible way
+     to make a room unusable. That verdict is settled and this does not reopen
+     it.
+
+     Lesson mode only, and entirely inside the enclosing try/catch: if any part
+     of this throws, the page is exactly as it was. */
+  if (IS_LESSON && window.MutationObserver) {
+    var slides = document.querySelectorAll(".slide");
+    if (slides.length > 1) {
+      var say = el("div", { id: NS + "-say", "aria-live": "polite", "aria-atomic": "true" });
+      /* Visually hidden, but never display:none - a display:none live region is
+         not in the accessibility tree and announces nothing at all. */
+      say.style.cssText = "position:absolute!important;width:1px;height:1px;margin:-1px;"
+        + "padding:0;border:0;clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden;white-space:nowrap";
+      document.body.appendChild(say);
+
+      var lastIndex = -1, sayTimer = null;
+      function activeSlide() {
+        for (var i = 0; i < slides.length; i++) {
+          var s = slides[i];
+          if (s.classList.contains("active") || s.classList.contains("show")) return i;
+        }
+        for (var j = 0; j < slides.length; j++) {
+          if (getComputedStyle(slides[j]).display !== "none") return j;
+        }
+        return -1;
+      }
+      function headingOf(slide) {
+        var h = slide.querySelector("h1,h2,h3,[data-title]");
+        var text = h ? (h.getAttribute("data-title") || h.textContent || "") : "";
+        if (!text) text = slide.getAttribute("data-title") || "";
+        return text.replace(/\s+/g, " ").trim().slice(0, 140);
+      }
+      function announce() {
+        var i = activeSlide();
+        if (i < 0 || i === lastIndex) return;
+        lastIndex = i;
+        var text = headingOf(slides[i]);
+        if (!text) return;
+        /* Clearing first is what makes a repeat announce at all: two slides can
+           share a heading, and an unchanged textContent is not a change. */
+        /* Do not staple a full stop onto a heading that already ends in one:
+           "what is a force?. Slide 2" is how that reads out loud. */
+        var joined = text + (/[.!?:;—-]$/.test(text) ? " " : ". ")
+          + "Slide " + (i + 1) + " of " + slides.length;
+        say.textContent = "";
+        setTimeout(function () { say.textContent = joined; }, 60);
+      }
+      /* Debounced: a transition can touch several slides' classes in one frame,
+         and a reveal-step deck fires far more often than it changes slide. */
+      var observer = new MutationObserver(function () {
+        if (sayTimer) clearTimeout(sayTimer);
+        sayTimer = setTimeout(announce, 220);
+      });
+      for (var k = 0; k < slides.length; k++) {
+        observer.observe(slides[k], { attributes: true, attributeFilter: ["class", "style", "hidden"] });
+      }
+      lastIndex = activeSlide();   /* the first slide is not a transition */
+    }
+  }
+
   } catch (e) { /* the HUD must never break a lesson */ }
 })();
