@@ -217,9 +217,19 @@ def section_heading(kicker: str, heading_id: str, heading: str, note: str) -> st
 
 
 def start_card(href: str, small: str, strong: str, span: str) -> str:
+    """A route card. An external href is marked and made safe HERE, because the
+    JavaScript-free fallback grid on the Education Hub mixes internal routes
+    with four gov.uk / EEF links, and those were rendering as plain in-site
+    cards: no target, no rel, and nothing to say the link leaves Made by Matt.
+    Deciding that at the single point every card passes through means no future
+    caller can reintroduce it by adding one more row to a list."""
+    external = href.startswith("http://") or href.startswith("https://")
+    attrs = ' target="_blank" rel="noopener noreferrer external"' if external else ""
+    mark = ' <span class="mbm-outbound-mark" aria-hidden="true">\u2197</span>' if external else ""
+    leaves = "<small>Leaves Made by Matt</small>" if external else ""
     return J(
-        f'<a class="mbm-start-card" href="{href}">',
-        f"<small>{small}</small><strong>{strong}</strong><span>{span}</span></a>",
+        f'<a class="mbm-start-card" href="{href}"{attrs}>',
+        f"<small>{small}</small><strong>{strong}{mark}</strong><span>{span}</span>{leaves}</a>",
     )
 
 
@@ -308,6 +318,41 @@ TEACH_SECTIONS = [
         ["page-games-hub", "page-education-hub"],
     ),
 ]
+
+
+def outbound_card(href: str, name: str, note: str, cta: str) -> str:
+    """One external link. target/rel and the visible marker are set here and
+    nowhere else, so no caller can emit an unsafe or unmarked outbound link."""
+    return J(
+        f'<a class="mbm-outbound-link" href="{href}" target="_blank" '
+        'rel="noopener noreferrer external">',
+        f'<strong>{name} <span class="mbm-outbound-mark" aria-hidden="true">\u2197</span></strong>',
+        f"<span>{note}</span><small>{cta}</small></a>",
+    )
+
+
+def explorations_section(*, sid: str, kicker: str, heading: str, note: str,
+                         entries, tagged: bool = False) -> str:
+    if tagged:
+        cards = J(*[
+            J(
+                f'<a class="mbm-outbound-link" href="{href}" target="_blank" '
+                'rel="noopener noreferrer external">',
+                f'<strong>{name} <span class="mbm-outbound-mark" aria-hidden="true">\u2197</span></strong>',
+                f"<span>{note_}</span>",
+                '<small class="mbm-outbound-tags">External \u2197 \u00b7 '
+                'not checked by Made by Matt</small></a>',
+            )
+            for href, name, note_ in entries
+        ])
+    else:
+        cards = J(*[outbound_card(h, n, d, c) for h, n, d, c in entries])
+    return J(
+        f'<section class="mbm-outbound-panel" id="{sid}" aria-labelledby="{sid}-title">',
+        '<div class="mbm-hub-wrap">',
+        section_heading(kicker, f"{sid}-title", heading, note),
+        f'<div class="mbm-outbound-grid">{cards}</div></div></section>',
+    )
 
 
 def teach_body(index: dict) -> str:
@@ -462,6 +507,14 @@ def teach_body(index: dict) -> str:
         # curated sections
         J(*section_blocks),
         # no-JS baseline
+        explorations_section(
+            sid="teach-explorations",
+            kicker="Approved explorations",
+            heading="Further resources, outside Made by Matt.",
+            note="Everything below leaves this site, and every one of them is marked \u2197. "
+                 "Each line says when to reach for it, not what it is.",
+            entries=TEACH_EXPLORATIONS,
+        ),
         "<noscript>",
         '<section class="mbm-start-here" aria-labelledby="teach-nojs-title">',
         '<div class="mbm-hub-wrap">',
@@ -504,6 +557,47 @@ EDUCATION_PUBLISHERS = [
     ("https://www.ceop.police.uk/safety-centre", "CEOP Safety Centre",
      "Official information and reporting routes for online sexual abuse.",
      "Open CEOP · leaves Made by Matt"),
+]
+
+# Teacher-facing further reading for /teach/. One annotation sentence each,
+# saying WHEN to use it rather than what it is.
+#
+# The TES shop URL is deliberately a placeholder. Three repositories were
+# searched for any TES address and none exists in the estate, so inventing one
+# was the only alternative and that is not a thing to do with a link that
+# carries Matt's name.
+TEACH_EXPLORATIONS = [
+    ("[MATT: TES SHOP URL]", "Matt's TES shop",
+     "When you want the packaged, print-ready versions of this material to hand to a colleague.",
+     "Opens TES \u00b7 leaves Made by Matt"),
+    ("https://www.stem.org.uk/resources", "STEM Learning",
+     "When a science or D&T sequence needs a second, externally quality-assured activity to sit beside your own.",
+     "Opens STEM Learning \u00b7 leaves Made by Matt"),
+    ("https://www.ase.org.uk/resources", "Association for Science Education",
+     "When you want subject-association guidance on practical work, safety or progression before you plan it.",
+     "Opens the ASE \u00b7 leaves Made by Matt"),
+]
+
+# Parent- and learner-facing, for the Education Hub.
+FAMILY_EXPLORATIONS = [
+    ("https://www.thenational.academy", "Oak National Academy",
+     "When a family asks what their child should be covering, and you want to point at a curriculum rather than a worksheet.",
+     "Opens Oak \u00b7 leaves Made by Matt"),
+    ("https://www.bbc.co.uk/bitesize", "BBC Bitesize",
+     "When a pupil needs revision material at home that does not depend on anything you have set up.",
+     "Opens BBC Bitesize \u00b7 leaves Made by Matt"),
+]
+
+# Pupil-adjacent, kept in its own bounded grid because the audience is
+# different. The tags are NOT asserted here: see the note rendered above the
+# grid and reports/2026-08-12-external-links-STOP.md.
+PUPIL_ADJACENT = [
+    ("https://phet.colorado.edu/en/simulations/browse", "PhET Simulations",
+     "When a class needs to vary one thing at a time in a simulation you cannot safely run in the room."),
+    ("https://scratch.mit.edu/explore/projects/all", "Scratch",
+     "When a pupil is ready to build the thing rather than answer questions about it."),
+    ("https://code.org/students", "Code.org",
+     "When you want a structured computing sequence that a pupil can carry on with at home."),
 ]
 
 EDUCATION_NOJS = [
@@ -555,14 +649,7 @@ def education_body(education: dict) -> str:
         ),
     )
 
-    publishers = J(*[
-        J(
-            f'<a class="mbm-outbound-link" href="{href}" target="_blank" '
-            'rel="noopener noreferrer external">',
-            f"<strong>{name}</strong><span>{note}</span><small>{cta}</small></a>",
-        )
-        for href, name, note, cta in EDUCATION_PUBLISHERS
-    ])
+    publishers = J(*[outbound_card(h, n, d, c) for h, n, d, c in EDUCATION_PUBLISHERS])
 
     nojs = J(*[start_card(h, s, t, d) for h, s, t, d in EDUCATION_NOJS])
 
@@ -662,6 +749,25 @@ def education_body(education: dict) -> str:
             "does not contact them.",
         ),
         f'<div class="mbm-outbound-grid">{publishers}</div></div></section>',
+        explorations_section(
+            sid="family-explorations",
+            kicker="For families and learners",
+            heading="What to point a parent or carer at.",
+            note="Two routes a family can use at home without anything being set up for them. "
+                 "Both leave this site.",
+            entries=FAMILY_EXPLORATIONS,
+        ),
+        explorations_section(
+            sid="pupil-adjacent",
+            kicker="Pupil-facing \u00b7 a different audience",
+            heading="Places a pupil can work directly.",
+            note="Kept separate on purpose: these are for pupils, not for planning. "
+                 "They are third-party sites and Made by Matt does not check what they "
+                 "show, whether they ask for a login, or what they carry alongside "
+                 "their content \u2014 look before you send a class.",
+            entries=PUPIL_ADJACENT,
+            tagged=True,
+        ),
         "<noscript>",
         '<section class="mbm-start-here" aria-labelledby="nojs-title">',
         '<div class="mbm-hub-wrap">',

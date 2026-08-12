@@ -188,3 +188,13 @@
   .mbm-search-meta{align-items:flex-start;flex-direction:column}.mbm-sort-wrap{width:100%;justify-content:space-between}.mbm-sort-wrap select{max-width:65%}
 }
 @media (prefers-reduced-motion:reduce){.mbm-search-submit,.mbm-task-card,.mbm-start-card,.mbm-result-card,.mbm-recent-card{transition:none!important}.mbm-search-submit:hover,.mbm-task-card:hover,.mbm-start-card:hover{transform:none}}
+
+/* Outbound links carry a visible marker so nobody mistakes one for a native
+   Made by Matt tool. aria-hidden on the glyph itself: the surrounding copy
+   already says the link leaves the site, and a screen reader announcing
+   "north east arrow" after every title is noise, not information. */
+.mbm-outbound-mark{font-size:.85em;line-height:1}
+.mbm-outbound-tags{margin-top:auto;padding-top:.5rem;color:var(--ms-muted);font-size:.72rem;font-weight:800;letter-spacing:.02em}
+[data-theme="dark"] .mbm-outbound-tags{color:#B8C0D5}
+[data-theme="highlumen"] .mbm-outbound-link{background:#FFFFFF;border-color:#4A4A4A;color:#000000}
+[data-theme="highlumen"] .mbm-outbound-tags{color:#3A3A3A}
