@@ -33,6 +33,17 @@ jobs:
           node --check theme.js
           git diff --check origin/main...HEAD
 
+      # theme.js is the canonical reading-theme engine for the whole estate, and
+      # the homepage carries its own separate implementation of it. Scoped to
+      # what this repository owns on purpose: Lessons and Apps gate their own
+      # copies against this one, which is what lets the three merge in
+      # dependency order rather than deadlocking on each other.
+      - name: Reading themes agree across the engine, the homepage and every site page
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/verify_theme_parity.py --scope site --self-test
+
       - name: Record deterministic source inventory
         shell: bash
         run: |

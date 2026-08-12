@@ -224,11 +224,21 @@ def self_test() -> int:
 
 
 def main() -> int:
+    global LESSONS, APPS, TARGETS
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--check", action="store_true",
                     help="report drift and exit 1 without writing anything")
+    ap.add_argument("--lessons", help="path to the Lessons checkout, when it is not beside the site repo")
+    ap.add_argument("--apps", help="path to the Apps checkout, when it is not beside the site repo")
     ap.add_argument("--self-test", action="store_true")
     a = ap.parse_args()
+    if a.lessons or a.apps:
+        # Named explicitly, so ONLY those are targets: a CI job that hands over
+        # one checkout must not silently also measure whatever happens to be
+        # sitting at the default path.
+        LESSONS = Path(a.lessons).resolve() if a.lessons else None
+        APPS = Path(a.apps).resolve() if a.apps else None
+        TARGETS = [t for t in (("Lessons", LESSONS), ("Apps", APPS)) if t[1] is not None]
     if a.self_test:
         # The tree must be in sync before the self-test's idempotency claim
         # means anything, so sync first and say so.

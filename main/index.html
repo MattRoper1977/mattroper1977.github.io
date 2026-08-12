@@ -592,6 +592,13 @@ var ng=document.getElementById('nGames');if(ng&&gl.length)ng.textContent=' '+gl.
 var nl=document.getElementById('nLessons');if(nl&&les.length)nl.textContent=' '+les.length;
 });
 })();
+/* mbm-theme-engine:begin
+   The homepage's own implementation of the reading-theme engine. It is not
+   /theme.js because it does not inject swatches: it binds the hand-written
+   .dx-sw buttons this page already lays out. Same storage key, same six
+   values, same cream-removes-the-attribute rule.
+   tools/verify_theme_parity.py extracts between these two markers, so keep
+   them wrapped around the whole implementation. See docs/THEME_ENGINE.md. */
 (function(){
 var names={cream:'Warm',pink:'Pink',blue:'Blue',light:'Light',dark:'Dark',highlumen:'High lumen'};
 var sws=document.querySelectorAll('.dx-sw');
@@ -610,6 +617,7 @@ if(save){try{localStorage.setItem('mbm_reading_theme',t)}catch(e){}}}
 for(var j=0;j<sws.length;j++){sws[j].addEventListener('click',function(){apply(this.getAttribute('data-t'),true)})}
 apply(cur,false);
 })();
+/* mbm-theme-engine:end */
 (function(){
 var btns=document.querySelectorAll('.dx-vidbtn');
 if(!btns.length)return;
