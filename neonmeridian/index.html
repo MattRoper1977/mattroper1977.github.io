@@ -215,6 +215,19 @@ landmark('Aurora Prism','Arts and events hall',675,-35,L=>{const ch=chunks.get(n
 landmark('Tideglass Quay','Harbour promenade tower',60,760,L=>{const ch=chunks.get(nearestNode(L.x,L.z).id).arr;addBox(ch,L.x,37,L.z,28,74,24,[.24,.42,.46],1,.22);addBox(ch,L.x,77,L.z,36,6,32,[.68,.79,.76],0,.5)});
 landmark('Foundry Stack','Ironworks heritage marker',-740,130,L=>{const ch=chunks.get(nearestNode(L.x,L.z).id).arr;addBox(ch,L.x,35,L.z,9,70,9,[.36,.24,.18],0,.8);addBox(ch,L.x,72,L.z,13,5,13,[.55,.31,.16],0,.7)});
 landmark('Summit Beacon','Greenbelt overlook',650,-715,L=>{const ch=chunks.get(nearestNode(L.x,L.z).id).arr;addBox(ch,L.x,18,L.z,20,36,20,[.28,.33,.29],0,.75);addBox(ch,L.x,42,L.z,3,30,3,[.75,.82,.72],0,.35);addBox(ch,L.x,58,L.z,6,3,6,[.35,.95,.78],7,.2,1)});
+// Six more, taking the register from one landmark per district to two -- and
+// closing the one district that had NONE. districtAt() puts WESTHAVEN in the
+// residual band the other six rules do not claim, so nothing had ever been
+// placed there and a driver crossing it saw no discovery at all.
+// Placed through the same landmark() registry as the shipped six, so they
+// stream, route, appear in the map list and count towards discovery by the
+// same code -- no parallel path, and no hand-placement outside the system.
+landmark('Westhaven Terrace','Westhaven residential rise',-640,-448,L=>{const ch=chunks.get(nearestNode(L.x,L.z).id).arr;addBox(ch,L.x,14,L.z,26,28,18,[.30,.34,.40],0,.80);addBox(ch,L.x,31,L.z,18,8,12,[.38,.43,.49],0,.62);addBox(ch,L.x,38,L.z,4,4,4,[.35,.95,.78],7,.2,1)});
+landmark('Harborline Lantern','West quay signal light',-410,700,L=>{const ch=chunks.get(nearestNode(L.x,L.z).id).arr;addBox(ch,L.x,9,L.z,10,18,10,[.24,.42,.46],0,.70);addBox(ch,L.x,26,L.z,3,18,3,[.68,.79,.76],0,.35);addBox(ch,L.x,38,L.z,7,4,7,[1,.77,.38],7,.2,1)});
+landmark('Ironworks Gantry','Foundry crane walk',-820,-160,L=>{const ch=chunks.get(nearestNode(L.x,L.z).id).arr;addBox(ch,L.x,11,L.z,9,22,9,[.36,.30,.26],0,.85);addBox(ch,L.x,24,L.z,44,3,4,[.44,.36,.30],0,.78);addBox(ch,L.x+18,30,L.z,5,12,5,[.91,.45,.18],7,.25,.9)});
+landmark('Northpoint Mast','Transmission ridge',-180,-820,L=>{const ch=chunks.get(nearestNode(L.x,L.z).id).arr;addBox(ch,L.x,10,L.z,14,20,14,[.29,.32,.36],0,.78);addBox(ch,L.x,40,L.z,2.4,40,2.4,[.80,.84,.88],0,.30);addBox(ch,L.x,62,L.z,5,3,5,[.18,.72,.69],7,.2,1)});
+landmark('Aurora Vault','Eastside exhibition hall',700,330,L=>{const ch=chunks.get(nearestNode(L.x,L.z).id).arr;addBox(ch,L.x,8,L.z,34,16,26,[.22,.26,.38],0,.55);addBox(ch,L.x,20,L.z,22,10,18,[.30,.36,.52],5,.30);addBox(ch,L.x,29,L.z,8,3,8,[.28,.85,.76],7,.2,1)});
+landmark('Summit Cascade','Greenbelt water steps',420,-560,L=>{const ch=chunks.get(nearestNode(L.x,L.z).id).arr;addBox(ch,L.x,6,L.z,30,12,22,[.26,.34,.30],0,.80);addBox(ch,L.x,14,L.z,20,6,14,[.30,.40,.36],3,.20);addBox(ch,L.x,22,L.z,5,3,5,[.35,.95,.78],7,.2,1)});
 // roads added globally to per-node chunk by edge midpoint owner
 for(const e of edges){const A=nodes.get(e.a),B=nodes.get(e.b),dx=B.x-A.x,dz=B.z-A.z,dy=(B.y||0)-(A.y||0),flatLen=Math.hypot(dx,dz),yaw=Math.atan2(dx,dz),pitch=-Math.atan2(dy,flatLen||1),mx=(A.x+B.x)/2,my=((A.y||0)+(B.y||0))/2+ROAD_TOP/2,mz=(A.z+B.z)/2,w=e.major?15:11;const owner=chunks.get(A.id).arr;addBox(owner,mx,my,mz,w,ROAD_TOP,flatLen+2,[.14,.15,.16],2,.96,0,yaw,1,pitch);const rx=Math.cos(yaw),rz=-Math.sin(yaw);for(const side of [-1,1]){addBox(owner,mx+rx*side*(w/2+1.7),my+.12,mz+rz*side*(w/2+1.7),2.8,.32,Math.max(6,flatLen-24),[.39,.40,.39],6,.95,0,yaw,1,pitch);if(my>1.8)addBox(owner,mx+rx*side*(w/2+.45),my+1.0,mz+rz*side*(w/2+.45),.16,1.8,flatLen,[.28,.33,.35],0,.65,0,yaw,1,pitch)}if(my>2.2){const supports=Math.max(1,Math.floor(flatLen/55));for(let i=0;i<=supports;i++){const t=(i+.5)/(supports+1),sx=lerp(A.x,B.x,t),sz=lerp(A.z,B.z,t),deck=lerp(A.y||0,B.y||0,t);if(deck>2.5){for(const side of [-1,1])addBox(owner,sx+rx*side*4.2,deck*.5,sz+rz*side*4.2,.75,deck,.75,[.24,.27,.28],0,.82)}}}}
 for(const n of nodes.values()){const ar=chunks.get(n.id).arr;addBox(ar,n.x,(n.y||0)+ROAD_TOP/2,n.z,18,ROAD_TOP+.04,18,[.14,.15,.16],2,.96)}
@@ -554,6 +567,8 @@ window.__NM={
   // ONCE at construction, so assigning setting.weather alone changes nothing.
   // A census scene that asked for rain and silently got none is exactly the
   // kind of quiet wrong answer these seams exist to prevent.
+  landmarks(){return landmarks.map(l=>({name:l.name,desc:l.desc,x:l.x,z:l.z,
+    district:districtAt(l.x,l.z)}))},
   set(k,v){if(!(k in setting))return null;setting[k]=v;
     if(k==='weather'){WeatherSystem.override=v==='dry'?0:v==='rain'?1:null;
       if(v==='rain')WeatherSystem.rain=1;if(v==='dry')WeatherSystem.rain=0}
