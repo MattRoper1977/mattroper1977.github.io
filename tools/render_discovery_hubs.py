@@ -721,11 +721,11 @@ def main(argv: list[str] | None = None) -> int:
                 stale.append(rel)
                 print(f"STALE  {rel}", file=sys.stderr)
             else:
-                print(f"ok     {rel} ({len(content)} bytes)")
+                print(f"ok     {rel} ({len(content.encode('utf-8'))} bytes)")
         else:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(content, encoding="utf-8")
-            print(f"wrote  {rel} ({len(content)} bytes)")
+            print(f"wrote  {rel} ({len(content.encode('utf-8'))} bytes)")
 
     if stale:
         print(
