@@ -398,5 +398,44 @@
     }
   }, true);
 
+  /* ---------- keys typed into the HUD stay in the HUD ----------
+     The dock is a panel inside the page, so a key pressed in its name list
+     bubbles to whatever the lesson bound on document. 93 of the 234 arrow-key
+     decks in the estate never check the event target, and those advance the
+     slide mid-word: measured on /Lessons/primary/year5/science/autumn/forces/
+     Lesson1_Friction.html, typing a name and pressing ArrowRight twice moved
+     the deck from slide 0 to slide 2 while the caret went nowhere, because the
+     lesson calls preventDefault as well.
+
+     Deliberately bubble-phase on the HUD's own hosts, not capture on document:
+     capture would fire before the textarea itself saw the key and would break
+     typing outright. It calls stopPropagation only - never preventDefault - so
+     the caret, the newline and the selection all keep working.
+
+     Escape returns immediately. Its layering (calm overlay, then dock, then the
+     lesson's own dialogs) is decided by the capture-phase handler above and
+     nothing here may reorder it. Tab is absent for the same reason: focus must
+     still be able to leave the dock. */
+  var HELD_KEYS = {
+    ArrowLeft: 1, ArrowRight: 1, ArrowUp: 1, ArrowDown: 1,
+    PageUp: 1, PageDown: 1, Home: 1, End: 1, Enter: 1, " ": 1, Spacebar: 1
+  };
+  function holdKeys(ev) {
+    if (ev.key === "Escape") return;
+    if (!HELD_KEYS[ev.key]) return;
+    ev.stopPropagation();
+  }
+  /* Held for any target inside the HUD, not only for text entry. Space on the
+     dock's own buttons is the same defect wearing a different hat: it activates
+     the button AND advances the lesson on every deck that does not special-case
+     it. */
+  var KEY_HOSTS = [dock, timerbox, calm];
+  for (var kh = 0; kh < KEY_HOSTS.length; kh++) {
+    if (!KEY_HOSTS[kh]) continue;
+    KEY_HOSTS[kh].addEventListener("keydown", holdKeys);
+    KEY_HOSTS[kh].addEventListener("keyup", holdKeys);
+    KEY_HOSTS[kh].addEventListener("keypress", holdKeys);
+  }
+
   } catch (e) { /* the HUD must never break a lesson */ }
 })();
