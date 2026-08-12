@@ -87,6 +87,17 @@ a.fbtn:focus-visible,a.go:focus-visible,.tchip:focus-visible,.bridge .acts a:foc
 [data-theme="dark"] .fcard,[data-theme="dark"] .bridge{background:linear-gradient(150deg,#1F2A52,#182142);border-color:#C97F2E}
 [data-theme="dark"] .bridge .stamp{background:#1E3A2C;color:#B9E6CD;border-color:#2F6B4D}
 [data-theme="dark"] a.fbtn.p,[data-theme="dark"] a.go,[data-theme="dark"] .bridge .acts a:hover{background:#F2A24A;color:#161D3D}
+/* High lumen — projector / IWB. Additive, and measured on the rendered
+   page rather than eyeballed from hex values. Amber stays light: it is a
+   background here, and near-black on it is already 9.05:1. */
+[data-theme="highlumen"]{--cream:#FFFFFF;--dk:#FFFFFF;--card:#FFFFFF;--ink:#000000;--mut:#3A3A3A;--ambd:#7A4A00;--mint:#FFFFFF;--mintd:#0F5132}
+[data-theme="highlumen"] body{background:#FFFFFF}
+[data-theme="highlumen"] .tx-hero,[data-theme="highlumen"] .tcard,[data-theme="highlumen"] .commit{background:#FFFFFF;border-color:#4A4A4A}
+html[data-theme="highlumen"] .tcard h3 em{color:#5C4A00!important}
+[data-theme="highlumen"] .fcard,[data-theme="highlumen"] .bridge{background:#FFFFFF;border-color:#4A4A4A}
+[data-theme="highlumen"] .bridge .stamp{background:#FFFFFF;color:#0F5132;border-color:#0F5132}
+[data-theme="highlumen"] a.fbtn.p,[data-theme="highlumen"] a.go,[data-theme="highlumen"] .bridge .acts a:hover{background:#7A4A00;color:#FFFFFF}
+[data-theme="highlumen"] :focus-visible{outline:3px solid #0B1020;outline-offset:2px}
 </style>
 <script>try{var t=localStorage.getItem('mbm_reading_theme');if(t&&t!=='cream')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 <link rel="stylesheet" href="/assets/mbm-platform.css">
