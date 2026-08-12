@@ -34,13 +34,30 @@ same "cream removes the attribute" rule — different code, because it is doing 
 different job. It cannot be replaced by the canonical engine without redesigning
 the homepage's Display panel, which is not a theme-engine change.
 
-### Who loads what
+### The loader table
 
-    theme.js                    11 pages in this repository
-                                (index, main is NOT one of them — see above,
-                                 for/*, games, resources, tools)
-    Lessons  mbm-theme.js       Lessons/index.html
-    Apps     mbm-theme.js       Matt-s-Apps-/index.html
+Measured, not assumed. This table is what decided that both copies stay and
+become generated rather than being deleted: each is loaded by something.
+
+| engine | loaded by | count |
+|---|---|---|
+| `theme.js` (this repo) | `index`, `for/×7`, `games`, `resources`, `tools` — and **`Lessons/primary/index.html`**, over the network by absolute path | 12 |
+| Lessons `assets/mbm-theme.js` | `Lessons/index.html` | 1 |
+| Apps `assets/mbm-theme.js` | `Matt-s-Apps-/index.html` | 1 |
+| homepage inline block | `main/index.html` | 1 |
+
+`primary-hub` is the odd one: it is a Lessons page that loads **this**
+repository's `/theme.js` rather than the copy sitting in its own repo. That
+works on the deployed domain, where the site is mounted at the root, and it is
+why `--scope lessons` measures the canonical too.
+
+Nothing else loads any of them. Every distribution-pack recipe in the estate was
+searched (`_passsci1/build_pack.py`, `tools/build_staff_pack.py`, the four
+`_glv3` bundle tools) — **none references the theme engine**, so no `file://`
+pack carries it and no offline artefact depends on it. The `file://` concern in
+this estate is `hud.js`, which is a separate, already-documented property.
+
+### Ported, and not
 
 Seven pages are **ported** — they carry `[data-theme="X"]` CSS for every theme:
 `main`, `tools`, `resources`, `games` (this repo), `lessons-hub`, `primary-hub`
@@ -51,6 +68,42 @@ stored key and applies Dark only; `privacy/index.html` carries Dark CSS and no
 applier at all. Neither offers a swatch. They are out of the parity contract
 because they do not claim to offer the themes — noted here so that the next
 person who greps for `data-theme` and finds them knows they were seen.
+
+Decks, studios, games and the `uas` / `asdan` registers are **unported**. That is
+future work and deliberately not this pass's.
+
+### The CSS dialects
+
+Each ported page implements the same six themes in its **own variable
+vocabulary**, inside a `<style id="mbmTheme">` block. There is no shared theme
+stylesheet, and adding one is not a small change:
+
+| page | dialect |
+|---|---|
+| `main` | `--dx-cream`, `--dx-lite`, `--dx-card`, `--dx-ink`, `--dx-mut`, `--dx-line` |
+| `tools` | `--cream`, `--dk`, `--card`, `--ink`, `--mut`, `--ambd` |
+| `resources` | `--rx-cream`, `--rx-card`, `--rx-deep`, `--rx-ink` |
+| `games`, `lessons-hub`, `creator-hub` | `--cream`, `--cream-dk`, `--card`, `--ink`, `--mut` |
+| `primary-hub` | `--paper`, `--paper2`, `--bark`, `--forest`, `--ink`, `--line`, `--moss` |
+
+This is why the gate checks **which themes a page styles**, not what it styles
+them to: the values are per-page by design, the value *list* is not.
+
+`main` is the one page whose theme rules are not in an `mbmTheme` block — they
+run through its main stylesheet — so it is named as the exception in the gate
+rather than silently tolerated.
+
+### The pre-paint snippet
+
+Six of the seven ported pages carry a one-line script in `<head>` that reads
+`mbm_reading_theme` and sets `data-theme` **before anything paints**, so the
+page does not show cream and then repaint. It is the other place the default
+value's name is written down, so the gate asserts it: exactly one per page, and
+it must treat `cream` as the default.
+
+`main` has none — it applies inside its inline engine instead, so it can flash.
+That is pre-existing, out of this pass's scope (no functional edits to the
+homepage implementation), and recorded here rather than quietly accepted.
 
 ---
 
@@ -97,6 +150,12 @@ together, and the parity gate will hold you to it:
 
 Never edit `assets/mbm-theme.js` in Lessons or Apps. It opens with a header
 saying so, and three separate checks will revert or fail you.
+
+### The standing rule
+
+> Any future theme value lands via: **edit canonical → sync → add per-page CSS
+> → parity gate proves completeness.** In that order, and the gate is what says
+> you are finished — not your own count of the places you remembered.
 
 ---
 

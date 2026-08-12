@@ -88,6 +88,22 @@ DEFAULT = "cream"
 BEGIN, END = "mbm-theme-engine:begin", "mbm-theme-engine:end"
 SCOPES = ("all", "site", "lessons", "apps")
 
+# Six of the seven ported pages keep their theme rules in one named block, and
+# the page CSS is read from it rather than from every <style> on the page: a
+# stray [data-theme] rule elsewhere must not be able to stand in for the real
+# ones. The homepage is the exception — its theme rules are woven through its
+# main stylesheet — so it is named here rather than silently tolerated.
+THEME_STYLE = '<style id="mbmTheme">'
+UNANCHORED = {"homepage"}
+
+# The pre-paint snippet: it sets data-theme from storage before anything is
+# painted, so the page does not flash cream and then repaint. It is the one
+# other place the DEFAULT value's name is written down, on every page that has
+# one. The homepage has none — it applies inside its inline engine instead, so
+# it can flash. That is pre-existing and is recorded, not silently accepted.
+NOFLASH = re.compile(r"localStorage\.getItem\('mbm_reading_theme'\)")
+NO_PREPAINT = {"homepage"}
+
 
 def homepage_path() -> Path:
     return SITE / "main" / "index.html"
@@ -144,12 +160,15 @@ def order_list(text: str) -> list[str] | None:
     return [x.strip().strip("'\"") for x in m.group(1).split(",") if x.strip()] if m else None
 
 
-def page_css(html: str) -> str:
+def page_css(html: str, label: str = "") -> str:
+    """The page's theme rules, from its named block where it has one."""
+    if label not in UNANCHORED and THEME_STYLE in html:
+        return html.split(THEME_STYLE, 1)[1].split("</style>", 1)[0]
     return "\n".join(re.findall(r"<style[^>]*>(.*?)</style>", html, re.S))
 
 
-def css_themes(html: str) -> set[str]:
-    return set(re.findall(r'\[data-theme="([a-z-]+)"\]', page_css(html)))
+def css_themes(html: str, label: str = "") -> set[str]:
+    return set(re.findall(r'\[data-theme="([a-z-]+)"\]', page_css(html, label)))
 
 
 def homepage_block(html: str) -> str | None:
@@ -248,7 +267,22 @@ def check(scope: str = "all", override: dict[Path, str] | None = None) -> list[s
         if not path.exists():
             problems.append(f"page {label}: missing {path}")
             continue
-        vals = css_themes(read(path))
+        html = read(path)
+        if label not in UNANCHORED and THEME_STYLE not in html:
+            problems.append(f"page {label}: lost its {THEME_STYLE} block, so its theme rules can "
+                            f"no longer be told apart from the rest of its CSS")
+        # The pre-paint snippet names the default value. If the default were
+        # ever renamed, these would keep testing for a value nothing sets and
+        # every page would flash — silently, because nothing errors.
+        if label not in NO_PREPAINT:
+            n = len(NOFLASH.findall(html))
+            if n != 1:
+                problems.append(f"page {label}: has {n} pre-paint theme snippets, expected 1 — "
+                                f"without it the page paints {DEFAULT} and then repaints")
+            elif not re.search(r"!==?'%s'" % DEFAULT, html):
+                problems.append(f"page {label}: its pre-paint snippet does not treat '{DEFAULT}' "
+                                f"as the default, so the default would paint as a theme")
+        vals = css_themes(html, label)
         missing = sorted(css_expected - vals)
         extra = sorted(vals - css_expected)
         if missing:
@@ -336,14 +370,39 @@ def self_test(scope: str) -> int:
             if not hits:
                 problems.append("direction 3: a page missing a theme's rules was not caught")
 
+    # direction 4 — a page loses the named block its theme rules live in, and
+    # direction 5 — a page loses its pre-paint snippet. Both are silent in a
+    # browser: the first leaves the rules unfindable, the second makes the page
+    # flash. Neither errors, so neither is noticed without being asserted.
+    anchored = next((p for _o, l, p in selected(pages(), scope)
+                     if p is not None and p.exists() and l not in UNANCHORED
+                     and p != SITE / "theme.js"), None)
+    if anchored is not None:
+        text = anchored.read_text(encoding="utf-8")
+        for n, (desc, mutated, want) in enumerate((
+            ("its named theme block", text.replace(THEME_STYLE, "<style>", 1), "mbmTheme"),
+            ("its pre-paint snippet",
+             NOFLASH.sub("localStorage.getItem('x')", text, count=1), "pre-paint"),
+        ), start=4):
+            if mutated == text:
+                problems.append(f"direction {n}: THE GRAFT DID NOT LAND — {anchored.name} unchanged")
+                continue
+            hits = [p for p in check(scope, {anchored: mutated}) if want in p]
+            print(f"   direction {n} — a page loses {desc}: {len(hits)} finding(s)")
+            for h in hits[:1]:
+                print(f"      {h}")
+            if not hits:
+                problems.append(f"direction {n}: losing {desc} was not caught")
+
     for p in problems:
         print("   FAIL " + p)
     if problems:
         print(f"[FAIL] parity self-test: {len(problems)} problem(s)")
         return 1
     print("[PASS] parity self-test: a seventh theme is caught whether it appears in the engine "
-          "or on the homepage, a page that stops styling one is caught, and losing the "
-          "sentinels fails rather than passes")
+          "or on the homepage, a page that stops styling one is caught, a page that loses its "
+          "named theme block or its pre-paint snippet is caught, and losing the sentinels "
+          "fails rather than passes")
     return 0
 
 
@@ -382,7 +441,7 @@ def main() -> int:
         if path == SITE / "theme.js":
             continue
         print("%-34s CSS    %s" % ("page       " + label,
-                                   sorted(css_themes(path.read_text(encoding="utf-8")))
+                                   sorted(css_themes(path.read_text(encoding="utf-8"), label))
                                    if path and path.exists() else "MISSING"))
 
     problems = check(a.scope)
