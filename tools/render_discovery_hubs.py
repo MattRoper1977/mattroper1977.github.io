@@ -324,13 +324,23 @@ def teach_body(index: dict) -> str:
         for eid, kind in TEACH_SHORTCUTS
     ])
 
-    task_links = J(*[
+    # Real anchors, so a task deep-links, survives reload and still works with
+    # JavaScript off. The search app upgrades them in place. The reset is the
+    # same control carrying no task, which is also the unfiltered page.
+    task_links = J(
+        *[
+            J(
+                f'<a class="mbm-task-card" href="/teach/?task={t["id"]}" data-mbm-task-query="{t["id"]}">',
+                f'<strong>{t["label"]}</strong><span>{t["description"]}</span></a>',
+            )
+            for t in tasks
+        ],
         J(
-            f'<a class="mbm-task-card" href="/teach/?task={t["id"]}" data-mbm-task-query="{t["id"]}">',
-            f'<strong>{t["label"]}</strong><span>{t["description"]}</span></a>',
-        )
-        for t in tasks
-    ])
+            '<a class="mbm-task-card mbm-task-card-reset" href="/teach/" data-mbm-task-reset>',
+            "<strong>Show everything</strong>",
+            "<span>Clear the task filter and list all teacher material again.</span></a>",
+        ),
+    )
 
     section_blocks = []
     for sid, heading, note, ids in TEACH_SECTIONS:
@@ -404,7 +414,8 @@ def teach_body(index: dict) -> str:
             "Start with the teaching task",
             "teach-tasks-title",
             "What do you need to do right now?",
-            "Choosing a task filters the workspace below. Every route stays inside Made by Matt.",
+            "Choosing a task filters the workspace below and takes you straight to it. "
+            "Every route stays inside Made by Matt.",
         ),
         f'<div class="mbm-task-grid">{task_links}</div></div></section>',
         # shortcuts

@@ -249,13 +249,22 @@
     });
     var sort=root.querySelector('[data-mbm-sort]');if(sort&&params.has('sort'))sort.value=params.get('sort')||'relevance';
   }
-  function writeUrl(root){
+  function writeUrl(root,push){
     var params=new URLSearchParams();
     var q=root.querySelector('input[name="q"]');if(q&&q.value.trim())params.set('q',q.value.trim());
     var filters=readFilters(root);Object.keys(filters).sort().forEach(function(key){params.set(key,filters[key]);});
     var sort=root.querySelector('[data-mbm-sort]');if(sort&&sort.value&&sort.value!=='relevance')params.set('sort',sort.value);
     var url=location.pathname+(params.toString()?'?'+params.toString():'')+location.hash;
-    history.replaceState(null,'',url);
+    // Typing replaces; choosing a task pushes, so Back undoes the choice.
+    if(push)history.pushState(null,'',url);else history.replaceState(null,'',url);
+  }
+  /* The task cards are a sibling section of the search app, not a descendant
+     of it. Scoping this lookup to the app root bound zero of the six and the
+     cards fell back to a whole-page reload whose only visible effect was
+     ~3300px below the fold. Look them up in the document. */
+  function taskControls(root){
+    var scope=root.ownerDocument||doc;
+    return Array.prototype.slice.call(scope.querySelectorAll('[data-mbm-task-query],[data-mbm-task-reset]'));
   }
   function fillSelect(select,values,label){
     if(!select||select.options.length>1)return;
@@ -316,7 +325,30 @@
       var ih=root.querySelector('[data-mbm-internal-count]');if(ih)ih.textContent=internal.length+' Made by Matt result'+(internal.length===1?'':'s');
       var eh=root.querySelector('[data-mbm-external-count]');if(eh)eh.textContent=external.length+' authoritative external result'+(external.length===1?'':'s');
     }
-    function refresh(updateUrl){
+    /* Colour is never the only cue: the chosen card carries aria-current and a
+       data attribute the stylesheet keys its selected treatment off. */
+    function reflectTasks(){
+      var control=root.querySelector('[data-mbm-filter="task"]');
+      if(!control)return;
+      var current=control.value||'';
+      taskControls(root).forEach(function(link){
+        var task=link.getAttribute('data-mbm-task-query')||'';
+        var isReset=link.hasAttribute('data-mbm-task-reset');
+        var on=isReset?current==='':(task!==''&&task===current);
+        if(on){link.setAttribute('aria-current','true');link.setAttribute('data-mbm-task-active','true');}
+        else{link.removeAttribute('aria-current');link.removeAttribute('data-mbm-task-active');}
+      });
+    }
+    /* On a phone the workspace sits ~3300px down. Filtering without bringing it
+       into view is indistinguishable, to the person holding the phone, from
+       nothing having happened at all. */
+    function revealWorkspace(){
+      var calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+      root.scrollIntoView({behavior:calm?'auto':'smooth',block:'start'});
+      if(!root.hasAttribute('tabindex'))root.setAttribute('tabindex','-1');
+      try{root.focus({preventScroll:true});}catch(_){}
+    }
+    function refresh(updateUrl,push){
       if(!allEntries.length)return;
       var query=input?input.value.trim():'';
       var filters=readFilters(root);
@@ -328,7 +360,8 @@
       if(loadMore){loadMore.hidden=currentRows.length<=shown;loadMore.setAttribute('aria-label','Show more search results');}
       var empty=root.querySelector('[data-mbm-empty]');if(empty)empty.hidden=currentRows.length>0;
       renderActive(filters);
-      if(updateUrl)writeUrl(root);
+      reflectTasks();
+      if(updateUrl)writeUrl(root,push);
     }
     function reset(){
       if(input)input.value='';
@@ -351,9 +384,16 @@
       if(sort)sort.addEventListener('change',function(){shown=pageSize;refresh(true);});
       if(loadMore)loadMore.addEventListener('click',function(){var previous=shown;shown+=pageSize;refresh(false);var cards=root.querySelectorAll('[data-result-id]');var next=cards[Math.max(0,previous)];if(next){next.setAttribute('tabindex','-1');next.focus({preventScroll:true});next.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}});
       if(clear)clear.addEventListener('click',reset);
-      root.querySelectorAll('[data-mbm-task-query]').forEach(function(link){link.addEventListener('click',function(event){
-        var task=link.getAttribute('data-mbm-task-query');
-        if(task){event.preventDefault();var control=root.querySelector('[data-mbm-filter="task"]');if(control)control.value=task;shown=pageSize;refresh(true);root.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}
+      taskControls(root).forEach(function(link){link.addEventListener('click',function(event){
+        var control=root.querySelector('[data-mbm-filter="task"]');
+        if(!control)return;                       // no task filter here: let the link navigate
+        if(event.metaKey||event.ctrlKey||event.shiftKey||event.button)return;  // open-in-new-tab still works
+        var task=link.getAttribute('data-mbm-task-query')||'';
+        event.preventDefault();
+        control.value=task;                       // '' on the reset control = show everything
+        shown=pageSize;
+        refresh(true,true);
+        revealWorkspace();
       });});
       window.addEventListener('popstate',function(){stateFromUrl(root);shown=pageSize;refresh(false);});
     }

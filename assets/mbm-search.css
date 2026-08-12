@@ -70,6 +70,14 @@
 .mbm-task-card small{color:var(--ms-muted);font-size:.82rem;line-height:1.5}
 .mbm-task-go{margin-top:auto;padding-top:.8rem;color:var(--ms-mint-deep);font-size:.76rem;font-weight:900}
 .mbm-task-card:hover{transform:translateY(-3px);box-shadow:var(--ms-shadow)}
+/* The chosen task. Colour is never the only cue: the border thickens, the left
+   rule widens and a "Showing" glyph appears, so the state survives greyscale,
+   High Contrast and every colourblind palette. */
+.mbm-task-card[data-mbm-task-active]{border:2px solid var(--ms-navy);box-shadow:0 0 0 3px rgba(22,29,61,.13)}
+.mbm-task-card[data-mbm-task-active]::before{width:9px}
+.mbm-task-card[data-mbm-task-active]::after{content:"\2713 Showing";position:absolute;top:.8rem;right:.95rem;color:var(--ms-navy);font-size:.72rem;font-weight:900;letter-spacing:.04em}
+.mbm-task-card-reset{background:var(--ms-cream)}
+.mbm-task-card-reset::before{background:var(--ms-muted)}
 
 /* Search controls */
 .mbm-search-workspace{position:relative;padding:clamp(2.5rem,6vw,5rem) 0 5rem;background:var(--ms-cream)}
@@ -153,6 +161,9 @@
 [data-theme="dark"] .mbm-filter-panel,[data-theme="dark"] .mbm-search-toolbar,[data-theme="dark"] .mbm-result-card,[data-theme="dark"] .mbm-start-card,[data-theme="dark"] .mbm-task-card,[data-theme="dark"] .mbm-result-group{background:#1B234A;border-color:#35416F;color:#E8E2D4}
 [data-theme="dark"] .mbm-result-card h3,[data-theme="dark"] .mbm-task-card strong,[data-theme="dark"] .mbm-start-card strong,[data-theme="dark"] .mbm-section-heading h2,[data-theme="dark"] .mbm-filter-panel h2,[data-theme="dark"] .mbm-result-group h2{color:#F6F1E4}
 [data-theme="dark"] .mbm-result-description,[data-theme="dark"] .mbm-result-meta,[data-theme="dark"] .mbm-task-card small,[data-theme="dark"] .mbm-start-card span,[data-theme="dark"] .mbm-filter-panel>p{color:#B8C0D5}
+/* The light active treatment is near-black on a near-black card under Dark. */
+[data-theme="dark"] .mbm-task-card[data-mbm-task-active]{border-color:#F6F1E4;box-shadow:0 0 0 3px rgba(246,241,228,.22)}
+[data-theme="dark"] .mbm-task-card[data-mbm-task-active]::after{color:#F6F1E4}
 [data-theme="dark"] .mbm-search-toolbar .mbm-search-field,[data-theme="dark"] .mbm-filter select,[data-theme="dark"] .mbm-filter input,[data-theme="dark"] .mbm-origin-filter button{background:#11172F;color:#F6F1E4;border-color:#46527B}
 
 @media (max-width:900px){
