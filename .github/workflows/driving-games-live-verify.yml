@@ -92,7 +92,7 @@ jobs:
       - name: Arcade, homepage, pupil page and both games — rendered on the origin
         shell: bash
         run: |
-          cat > /tmp/live.mjs <<'EOF'
+          cat > "$GITHUB_WORKSPACE/live.mjs" <<'EOF'
           import { chromium } from 'playwright';
           const B = 'https://madebymatt.uk';
           let fail = 0;
@@ -172,4 +172,4 @@ jobs:
           console.log(fail ? `\n${fail} FAILED` : '\nall live checks passed');
           process.exit(fail ? 1 : 0);
           EOF
-          node /tmp/live.mjs
+          cd "$GITHUB_WORKSPACE" && node live.mjs
