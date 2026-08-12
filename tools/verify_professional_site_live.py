@@ -58,16 +58,36 @@ def chooser_markers() -> tuple[str, ...]:
     ) + labels
 
 
+# The five non-cream reading themes, as they appear in a page's own CSS. Cream
+# is the default and REMOVES the attribute rather than setting it, so it has no
+# rule and must not be looked for — see docs/THEME_ENGINE.md.
+#
+# This is the served-side half of the theme contract. tools/verify_theme_parity.py
+# proves the sources agree with one another; these prove the agreement survived
+# being deployed. They are here because the failure they guard against — a page
+# offering six swatches and styling five — shipped on 2026-08-12 and was
+# invisible from every direction except a rendered page.
+THEME_RULES: tuple[str, ...] = tuple(
+    f'[data-theme="{t}"]' for t in ("pink", "blue", "light", "dark", "highlumen"))
+
 PAGE_MARKERS: dict[str, tuple[str, ...]] = {
     "/": chooser_markers(),
     # /main/ is the professional homepage since #110. It was not checked live at
     # all - the old entry asserted its markers against `/`, which is now the
     # chooser, so the real homepage went unverified while a passing-looking
     # check pointed at the wrong page.
-    "/main/": SHARED_SHELL + ('id="audiences"',),
-    "/games/": ("mbm-platform.css", "mbm-platform.js", "mbm-site-header", 'aria-current="page">Games'),
-    "/tools/": ("mbm-platform.css", "mbm-platform.js", "mbm-site-header", 'aria-current="page">Tools'),
-    "/resources/": ("mbm-platform.css", "mbm-platform.js", "mbm-site-header", 'aria-current="page">Resources'),
+    "/main/": SHARED_SHELL + ('id="audiences"',) + THEME_RULES,
+    "/games/": ("mbm-platform.css", "mbm-platform.js", "mbm-site-header", 'aria-current="page">Games') + THEME_RULES,
+    "/tools/": ("mbm-platform.css", "mbm-platform.js", "mbm-site-header", 'aria-current="page">Tools') + THEME_RULES,
+    "/resources/": ("mbm-platform.css", "mbm-platform.js", "mbm-site-header", 'aria-current="page">Resources') + THEME_RULES,
+    # The two companion estates, mounted under this domain. They are the only
+    # themed surfaces this gate can reach that live in another repository, and
+    # they are the ones that shipped with five swatches, so they are checked
+    # from the serving side rather than trusted to their own CI.
+    "/Lessons/": SHARED_SHELL + THEME_RULES,
+    "/Matt-s-Apps-/": SHARED_SHELL + THEME_RULES,
+    # Consumers, not ported surfaces: they read the stored theme and style Dark
+    # only. No swatches, so no theme-rule assertion — see docs/THEME_ENGINE.md.
     "/members/": ("mbm-platform.css", "mbm-platform.js", "mbm-site-header"),
     "/privacy/": ("mbm-platform.css", "mbm-platform.js", "mbm-site-header"),
     "/stats/": ("mbm-platform.css", "mbm-platform.js", "mbm-site-header"),
@@ -76,6 +96,11 @@ PAGE_MARKERS: dict[str, tuple[str, ...]] = {
 ASSETS: dict[str, Path] = {
     "/assets/mbm-platform.css": Path("assets/mbm-platform.css"),
     "/assets/mbm-platform.js": Path("assets/mbm-platform.js"),
+    # The canonical reading-theme engine, served from the domain root and loaded
+    # by twelve pages across two repositories — including Lessons/primary/,
+    # which reaches for this file rather than the copy in its own repo. Compared
+    # byte-for-byte with source, exactly as the platform assets are.
+    "/theme.js": Path("theme.js"),
 }
 
 JSON_SURFACES = (
