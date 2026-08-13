@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parent.parent
 # The sentinel is owned by render_audience_homepages.py. Importing it keeps
 # one definition; a second copy here would drift the moment that one moved.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from render_audience_homepages import SENTINEL  # noqa: E402
+from render_audience_homepages import SENTINEL, support_pill  # noqa: E402
 ORIGIN = "https://madebymatt.uk"
 
 INDEX_PATH = ROOT / "data" / "mbm-search-index.json"
@@ -156,7 +156,12 @@ def footer() -> str:
         '<p class="mbm-contact" style="text-align:center;font-size:.85rem;opacity:.85;'
         'margin:16px auto 10px;max-width:90%">Questions, ideas or bug reports — ',
         '<a href="mailto:contactmadebymatt@gmail.com" style="color:inherit;font-weight:700">'
-        "contactmadebymatt@gmail.com</a></p></footer>",
+        "contactmadebymatt@gmail.com</a></p>",
+        # Both hubs are adult-facing, so both carry the pill unconditionally.
+        # It sits after the existing footer content, and it is the same block
+        # the six /for/ faces carry - imported, not re-typed.
+        support_pill(),
+        "</footer>",
         '<script defer src="/assets/mbm-search.js"></script>',
         '<script defer src="/assets/mbm-recent.js"></script>',
         '<script defer src="/assets/mbm-platform.js"></script>',
