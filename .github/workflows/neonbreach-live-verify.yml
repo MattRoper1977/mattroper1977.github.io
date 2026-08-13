@@ -19,12 +19,41 @@ name: Neon Breach live verification
 # workflow dispatch-only in practice. It now fires on pushes to main touching
 # its subjects, including this file: the retargeting merge is the firing proof.
 # Lag is already a recorded timing fact here, not a failure.
+# WIDENED 2026-08-14. The retargeting above fixed WHICH BRANCH this fires on and
+# left WHAT IT WATCHES too narrow — register species 37: a workflow's path filter
+# must include every file its assertions read. #127 re-pointed the surface census
+# at data/new-release-occupants.json; that merge changed the record and both
+# verifiers and fired nothing, so the evidence had to be hand-dispatched. A gate
+# that only runs when someone remembers to press it is not a gate.
+#
+# Full read set of this workflow, audited rather than guessed:
+#   READ DIRECTLY
+#     neonbreach/index.html              hashed against the served copy
+#     tools/verify_neonbreach.js         run against the SERVED bytes
+#     tools/verify_surfaces.js           the surface census
+#     data/new-release-occupants.json    the census's declared occupant record
+#   ASSERTED IN SERVED FORM (the repo file is the subject of the assertion, so a
+#   change to it changes what the step measures — the same reason
+#   neonbreach/index.html has always been listed)
+#     sitemap.xml                        served sitemap must carry one canonical line
+#     games/index.html                   S2/S2c count cards in the served arcade
+#   NOT FILTERABLE FROM HERE, and stated rather than left implied
+#     MattRoper1977/Games games.json     served at /Games/games.json from the Games
+#                                        project site. A shelf change there cannot
+#                                        fire a workflow in this repository; the
+#                                        census reports the served entry count so
+#                                        that lag is visible instead of assumed.
 on:
   push:
     branches:
       - main
     paths:
       - 'neonbreach/index.html'
+      - 'tools/verify_neonbreach.js'
+      - 'tools/verify_surfaces.js'
+      - 'data/new-release-occupants.json'
+      - 'sitemap.xml'
+      - 'games/index.html'
       - '.github/workflows/neonbreach-live-verify.yml'
   workflow_dispatch:
 
