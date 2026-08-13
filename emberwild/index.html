@@ -1,0 +1,1610 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a1320">
+  <meta name="description" content="Emberwild is an original creature-collector: explore the Vale, battle and capture Emberkin, then delve procedurally generated Depths. Call the Catch before every throw and find out whether you know your own odds.">
+  <title>Emberwild — Made by Matt</title>
+  <link rel="canonical" href="https://madebymatt.uk/emberwild/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Made by Matt">
+  <meta property="og:title" content="Emberwild — Made by Matt">
+  <meta property="og:description" content="An original creature-collector. Explore the Vale, delve the Depths, and call your own catch odds.">
+  <meta property="og:url" content="https://madebymatt.uk/emberwild/">
+  <meta name="build-stamp" content="emberwild-build-2026-08-13">
+  <style>
+    :root {
+      --ink: #eef6ff;
+      --muted: #96adbf;
+      --panel: rgba(10, 18, 31, .94);
+      --line: #5b7391;
+      --gold: #f6d979;
+      --mint: #71d5c3;
+      --danger: #ff7b7b;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #07111d; color: var(--ink); }
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      touch-action: none;
+      overscroll-behavior: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    button, input { font: inherit; }
+    button { touch-action: manipulation; }
+    [hidden] { display: none !important; }
+    #app, #world-canvas, #ui-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #app { overflow: hidden; background: #07111d; }
+    #world-canvas {
+      z-index: 1;
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    #ui-canvas { z-index: 5; display: block; pointer-events: auto; }
+    #sr-status {
+      position: fixed; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
+      clip-path: inset(50%); white-space: nowrap;
+    }
+    .glass {
+      background: linear-gradient(180deg, rgba(18, 31, 49, .96), rgba(7, 15, 27, .97));
+      border: 2px solid rgba(244, 248, 242, .95);
+      box-shadow: inset 0 0 0 4px rgba(77, 105, 137, .75), 0 18px 50px rgba(0,0,0,.45);
+    }
+    #start-screen {
+      position: fixed; inset: 0; z-index: 30;
+      display: grid; place-items: center;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(75, 196, 183, .16), transparent 34%),
+        radial-gradient(circle at 80% 75%, rgba(246, 217, 121, .12), transparent 30%),
+        linear-gradient(145deg, #08131f 0%, #101d30 55%, #061019 100%);
+      padding: max(18px, var(--safe-top)) 18px max(18px, var(--safe-bottom));
+      overflow: auto;
+    }
+    #start-screen::before {
+      content: ""; position: absolute; inset: 0; opacity: .18; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(circle at center, black, transparent 75%);
+    }
+    .start-card {
+      position: relative; width: min(760px, 96vw); padding: clamp(24px, 5vw, 50px);
+      border-radius: 12px; text-align: center;
+    }
+    .eyebrow {
+      color: var(--mint); letter-spacing: .22em; text-transform: uppercase; font-weight: 800;
+      font-size: clamp(10px, 1.5vw, 13px); margin-bottom: 12px;
+    }
+    .brand {
+      margin: 0; line-height: .9; letter-spacing: .02em; font-size: clamp(48px, 11vw, 104px);
+      font-weight: 950; color: #f5f8ee;
+      text-shadow: 0 5px 0 #39516b, 0 9px 0 rgba(0,0,0,.35);
+    }
+    .brand span { color: var(--gold); }
+    .subtitle { margin: 18px auto 8px; max-width: 640px; color: #bfd0dc; font-size: clamp(14px, 2.3vw, 19px); line-height: 1.55; }
+    .original-note { margin: 10px auto 22px; color: #8198aa; font-size: 12px; line-height: 1.45; max-width: 650px; }
+    .start-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-width: 560px; margin: 0 auto; }
+    .pixel-button {
+      appearance: none; border: 2px solid #f6f8f2; border-radius: 7px; padding: 14px 16px;
+      color: #fff; background: #17304a; font-weight: 850; letter-spacing: .03em; cursor: pointer;
+      box-shadow: inset 0 0 0 3px #365878, 0 5px 0 #060b12; transition: transform .08s ease, filter .08s ease;
+    }
+    .pixel-button:hover { filter: brightness(1.12); }
+    .pixel-button:active { transform: translateY(3px); box-shadow: inset 0 0 0 3px #365878, 0 2px 0 #060b12; }
+    .pixel-button.primary { background: #1f665f; box-shadow: inset 0 0 0 3px #4c9c8f, 0 5px 0 #060b12; }
+    .pixel-button.gold { background: #81692c; box-shadow: inset 0 0 0 3px #b79a4a, 0 5px 0 #060b12; }
+    .pixel-button:disabled { opacity: .38; cursor: not-allowed; filter: grayscale(.8); }
+    .start-meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 20px; margin-top: 22px; color: #8ea4b4; font: 11px ui-monospace, monospace; }
+    #renderer-status { color: var(--mint); }
+    #help-panel {
+      position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 18px;
+      background: rgba(1, 6, 12, .82); backdrop-filter: blur(8px);
+    }
+    .help-card { width: min(760px, 96vw); max-height: 90vh; overflow: auto; padding: 28px; border-radius: 10px; }
+    .help-card h2 { color: var(--gold); margin: 0 0 14px; }
+    .help-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .help-grid section { background: rgba(255,255,255,.04); border: 1px solid #40536a; padding: 15px; }
+    .help-grid h3 { color: var(--mint); margin: 0 0 8px; font-size: 14px; }
+    .help-grid p { margin: 0; color: #bed0dc; line-height: 1.5; font-size: 13px; }
+    .help-actions { margin-top: 18px; display: flex; justify-content: flex-end; }
+    #quick-controls {
+      position: fixed; z-index: 9; top: max(92px, calc(var(--safe-top) + 82px)); right: 12px;
+      display: flex; gap: 6px; pointer-events: auto;
+    }
+    .icon-button {
+      width: 44px; height: 44px; min-width: 44px; min-height: 44px; border-radius: 6px; border: 1px solid #dfe9ef; color: #eaf5fb;
+      background: rgba(8, 17, 29, .76); box-shadow: inset 0 0 0 2px #3b5068; font-weight: 900;
+    }
+    #touch-controls { position: fixed; inset: 0; z-index: 12; pointer-events: none; }
+    #touch-dpad {
+      position: absolute; left: max(18px, env(safe-area-inset-left)); bottom: calc(18px + var(--safe-bottom));
+      width: 148px; height: 148px; pointer-events: auto;
+    }
+    .dpad-button {
+      position: absolute; width: 48px; height: 48px; border: 1px solid rgba(255,255,255,.75); border-radius: 9px;
+      background: rgba(10, 18, 31, .57); color: #fff; box-shadow: inset 0 0 0 3px rgba(73, 97, 123, .48);
+      font-size: 21px; font-weight: 900; backdrop-filter: blur(4px);
+    }
+    .dpad-button:active { background: rgba(113, 213, 195, .55); }
+    .dpad-up { left: 50px; top: 0; } .dpad-down { left: 50px; bottom: 0; }
+    .dpad-left { left: 0; top: 50px; } .dpad-right { right: 0; top: 50px; }
+    .dpad-center { position: absolute; left: 51px; top: 51px; width: 46px; height: 46px; border-radius: 7px; background: rgba(10,18,31,.44); border: 1px solid rgba(255,255,255,.2); }
+    #touch-actions {
+      position: absolute; right: max(18px, env(safe-area-inset-right)); bottom: calc(18px + var(--safe-bottom));
+      width: 170px; height: 142px; pointer-events: auto;
+    }
+    .action-button {
+      position: absolute; width: 64px; height: 64px; border-radius: 50%; border: 2px solid rgba(255,255,255,.85);
+      color: #fff; font-size: 22px; font-weight: 950; background: rgba(69, 40, 73, .68);
+      box-shadow: inset 0 0 0 4px rgba(196, 116, 190, .34), 0 4px 10px rgba(0,0,0,.35);
+    }
+    .action-button:active { transform: translateY(2px); filter: brightness(1.2); }
+    #touch-a { right: 0; top: 10px; background: rgba(31,102,95,.76); box-shadow: inset 0 0 0 4px rgba(91,191,169,.42), 0 4px 10px rgba(0,0,0,.35); }
+    #touch-b { left: 16px; bottom: 0; }
+    #touch-menu {
+      position: absolute; right: 72px; bottom: 0; width: 60px; height: 44px; min-width: 44px; min-height: 44px;
+      border-radius: 22px;
+      border: 1px solid #fff; background: rgba(10,18,31,.65); color: #fff; font-weight: 800; font-size: 10px;
+    }
+    #profiler {
+      position: fixed; z-index: 20; top: max(12px, var(--safe-top)); right: 12px; width: 210px;
+      padding: 10px; border: 1px solid #536b84; border-radius: 6px; background: rgba(4,10,18,.92);
+      color: #eaf5fb; font: 11px/1.55 ui-monospace, monospace; pointer-events: none;
+    }
+    #profiler strong { color: var(--mint); }
+    #map-import { display: none; }
+    .high-contrast #quick-controls button, .high-contrast .dpad-button, .high-contrast .action-button { border-width: 3px; background-color: rgba(0,0,0,.88); }
+    .high-contrast #world-canvas { filter: contrast(1.24) saturate(.92); }
+    @media (pointer: fine) and (min-width: 900px) {
+      #touch-controls { display: none; }
+    }
+    @media (max-width: 650px) {
+      .start-actions { grid-template-columns: 1fr; }
+      .help-grid { grid-template-columns: 1fr; }
+      #quick-controls { top: 84px; }
+      /* G5: the old rule scaled these by .9 here, which took the 48px d-pad
+         buttons to 43.2px rendered — under the floor on exactly the phone-sized
+         viewport this query targets. The controls keep their full size; the
+         pad is narrowed instead so it still fits a small screen. */
+      #touch-dpad { width: 140px; height: 140px; }
+      .dpad-up, .dpad-down { left: 46px; }
+      .dpad-left, .dpad-right { top: 46px; }
+      .dpad-center { left: 47px; top: 47px; width: 46px; height: 46px; }
+    }
+    /* --- House furniture: Made by Matt splash (clean generator family;
+       the donor is Neon Meridian's inline splash, which carries the `done`
+       guard that the render_splash.py family leaks on). --- */
+    #mbmSplash{position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;background:radial-gradient(circle at 50% 42%,#123049,#07111c 72%);transition:opacity .45s ease;cursor:pointer}
+    #mbmSplash.out{opacity:0}#mbmSplash.hidden{display:none}
+    .mbmSplashInner{text-align:center;padding:24px;max-width:min(92vw,560px)}
+    .mbmMark{display:flex;flex-direction:column;align-items:center;gap:3px;color:#E8E2D4;font-weight:900;line-height:1}
+    .mbmMark span{font-size:clamp(13px,3.2vw,18px);letter-spacing:.30em;opacity:.8}
+    .mbmMark b{font-size:clamp(44px,12vw,86px);letter-spacing:-.035em}
+    .mbmRule{width:0;height:3px;margin:20px auto 15px;border-radius:999px;background:linear-gradient(90deg,#f2a24a,#58f2cf);animation:mbmRuleIn .8s .12s ease-out forwards}
+    @keyframes mbmRuleIn{to{width:min(58vw,300px)}}
+    .mbmTag{margin:0;color:#9FB4C4;font-size:clamp(13px,3.4vw,17px);letter-spacing:.04em}
+    .mbmSkip{margin:14px 0 0;color:#63798B;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+
+    /* Screen-reader-only text. #sr-status is the live region; this is the
+       class for labels that must be announced but not seen. */
+    .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+    /* G11: a visible focus ring on every focusable thing, keyboard-only. */
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+      outline: 3px solid var(--gold, #f2a24a); outline-offset: 2px; border-radius: 4px;
+    }
+
+    /* G8: ONE renderer-failure panel site. Both the canvas-unavailable path
+       and any context-loss path raise this same element — there is deliberately
+       no second copy. */
+    #renderer-failure{position:fixed;inset:0;z-index:2147482500;display:none;place-items:center;padding:24px;background:#07111c;color:#e8f2f8;font:15px/1.6 system-ui,-apple-system,'Segoe UI',sans-serif}
+    #renderer-failure[data-open="1"]{display:grid}
+    #renderer-failure .rf-card{max-width:min(94vw,520px);text-align:center;border:1px solid #40536a;border-radius:10px;padding:26px;background:rgba(255,255,255,.04)}
+    #renderer-failure h2{margin:0 0 12px;color:#f2a24a;font-size:19px}
+    #renderer-failure p{margin:0 0 10px;color:#bed0dc}
+
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+      /* The splash rule is a width animation, so the blanket duration override
+         above would leave it at width 0. Give it its final state outright. */
+      .mbmRule{animation:none;width:min(58vw,300px)}
+      #mbmSplash{transition:none}
+    }
+  </style>
+</head>
+<body>
+<!-- mbm-splash-inline: canonical Made by Matt splash, in the estate grammar. Not stamped by tools/render_splash.py: that generator is HELD on the donor skip-leak. -->
+<div id="mbmSplash" data-mbm-splash="emberwild" data-mbm-splash-state="open" role="img" aria-label="Made by Matt — Emberwild">
+  <div class="mbmSplashInner">
+    <div class="mbmMark"><span>MADE BY</span><b>MATT</b></div>
+    <div class="mbmRule"></div>
+    <p class="mbmTag">Emberwild</p>
+    <p class="mbmSkip">Tap or press any key to skip</p>
+  </div>
+</div>
+
+<noscript>
+  <div style="position:fixed;inset:0;z-index:2147482900;display:grid;place-items:center;padding:24px;background:#07111c;color:#e8f2f8;font:15px/1.6 system-ui,-apple-system,'Segoe UI',sans-serif">
+    <div style="max-width:min(94vw,520px);text-align:center;border:1px solid #40536a;border-radius:10px;padding:26px;background:rgba(255,255,255,.04)">
+      <h2 style="margin:0 0 12px;color:#f2a24a;font-size:19px">Emberwild needs JavaScript</h2>
+      <p style="margin:0 0 10px;color:#bed0dc">This is a single-file game that runs entirely in your browser — there is no server to fall back to. Switch JavaScript on for this page and reload to play.</p>
+      <p style="margin:0;color:#8ea4b4;font-size:13px">Made by Matt</p>
+    </div>
+  </div>
+</noscript>
+
+<!-- G8: the ONE renderer-failure panel. Both the canvas-unavailable path and
+     the context-loss path raise this same element. Do not add a second copy. -->
+<div id="renderer-failure" role="alertdialog" aria-modal="true" aria-labelledby="rf-title" aria-describedby="rf-body">
+  <div class="rf-card">
+    <h2 id="rf-title">The Vale can't be drawn</h2>
+    <p id="rf-body">Emberwild needs a working 2D canvas and this browser hasn't given it one. That is usually a very old browser, or hardware acceleration being switched off mid-session.</p>
+    <p>Your save is untouched. Reload the page to try again.</p>
+  </div>
+</div>
+
+  <main id="app" aria-label="Emberwild — a 2.5D creature-collector">
+    <canvas id="world-canvas" aria-hidden="true"></canvas>
+    <canvas id="ui-canvas" aria-label="Game interface. Use keyboard, touch controls, or click visible menu choices."></canvas>
+    <div id="sr-status" role="status" aria-live="polite"></div>
+
+    <div id="quick-controls" aria-label="Display and audio controls">
+      <button class="icon-button" id="toggle-audio" aria-label="Toggle audio" title="Toggle procedural audio">♫</button>
+      <button class="icon-button" id="toggle-contrast" aria-label="Toggle high contrast" title="Toggle high contrast">◐</button>
+    </div>
+
+    <div id="touch-controls" aria-label="Touch game controls">
+      <div id="touch-dpad" aria-label="Directional pad">
+        <button class="dpad-button dpad-up" data-dir="N" aria-label="Move north">▲</button>
+        <button class="dpad-button dpad-left" data-dir="W" aria-label="Move west">◀</button>
+        <span class="dpad-center" aria-hidden="true"></span>
+        <button class="dpad-button dpad-right" data-dir="E" aria-label="Move east">▶</button>
+        <button class="dpad-button dpad-down" data-dir="S" aria-label="Move south">▼</button>
+      </div>
+      <div id="touch-actions">
+        <button class="action-button" id="touch-a" aria-label="Confirm or interact">A</button>
+        <button class="action-button" id="touch-b" aria-label="Cancel or go back">B</button>
+        <button id="touch-menu" aria-label="Open field kit menu">MENU</button>
+      </div>
+    </div>
+
+    <aside id="profiler" hidden aria-label="Performance profiler"></aside>
+    <input id="map-import" type="file" accept="application/json,.json" aria-label="Import an EMBERWILD map JSON file">
+  </main>
+
+  <section id="start-screen" aria-labelledby="game-title">
+    <div class="start-card glass">
+      <div class="eyebrow">Made by Matt · Original engine vertical slice</div>
+      <h1 class="brand" id="game-title">AETHER<span>WILD</span></h1>
+      <p class="subtitle">A playable 2.5D monster-RPG engine: raised terrain, pixel billboards, ledge vaults, encounters, turn-based battles, procedural audio, saving, mobile controls and an editor-compatible map schema.</p>
+      <p class="original-note">All creatures, names, environments, sounds and artwork in this package are original. It contains no Pokémon assets or proprietary franchise content.</p>
+      <div class="start-actions">
+        <button class="pixel-button primary" id="start-new">Start new journey</button>
+        <button class="pixel-button gold" id="start-continue">Continue verified save</button>
+        <button class="pixel-button" id="start-info">Controls & engine notes</button>
+        <button class="pixel-button" onclick="document.getElementById('map-import').click()">Import editor map</button>
+      </div>
+      <div class="start-meta">
+        <span>WASD / Arrows · Z/Enter confirm · X/Esc back · M menu · T test encounter · P profiler</span>
+        <span id="renderer-status">Software 2.5D ready</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="help-panel" hidden aria-labelledby="help-title">
+    <div class="help-card glass">
+      <h2 id="help-title">Field controls & architecture</h2>
+      <div class="help-grid">
+        <section><h3>Explore</h3><p>Use WASD, arrow keys or the touch D-pad. Movement snaps to grid centres but animates smoothly. Hold Shift to sprint. Approach a character and press Z, Enter, Space or A.</p></section>
+        <section><h3>Battle</h3><p>Choose Fight, Bag, Team or Run. Damage uses derived stats, move priority, speed, STAB, type multipliers, critical rolls and integer truncation. Prism Pods can capture wild Emberkin.</p></section>
+        <section><h3>World systems</h3><p>The route includes elevation, stairs, a directional ledge vault, tall-grass encounters, a water garden, a cutaway lodge, an NPC sightcone and an elevation-aware A* pathfinder.</p></section>
+        <section><h3>Rendering</h3><p>The built-in low-resolution software renderer is fully offline. When Three.js r128 is reachable, the game upgrades itself to an orthographic WebGL scene with billboard sprites, nearest filtering and dithered roof occlusion.</p></section>
+        <section><h3>Audio & accessibility</h3><p>Every sound is synthesized with Web Audio pulse, noise and FM channels. Audio unlocks only after a user gesture. High contrast, screen-reader status mirroring, keyboard access and reduced-motion browser preferences are supported.</p></section>
+        <section><h3>Testing tools</h3><p>Press T to trigger a safe test encounter and P to show performance telemetry. Press I to import a JSON map exported by the companion editor.</p></section>
+      </div>
+      <div class="help-actions"><button class="pixel-button primary" id="help-close">Return</button></div>
+    </div>
+  </section>
+
+  <script>'use strict';
+
+/*
+ * EMBERWILD // 2.5D Monster RPG Engine
+ * Made by Matt — original vertical slice and reusable engine scaffold.
+ *
+ * Core gameplay is asset-free and runs through the built-in software 2.5D
+ * renderer. When Three.js r128 can be reached, the game upgrades itself to a
+ * true WebGL orthographic scene without reloading. No third-party character,
+ * creature, map, sound, or franchise assets are included.
+ */
+
+(() => {
+  const APP_VERSION = '1.0.0';
+  const SAVE_SCHEMA_VERSION = 2;
+  const TILE_SIZE = 2;
+  const ELEVATION_WORLD = 1.0;
+  const CARDINALS = Object.freeze({
+    N: { x: 0, z: -1 },
+    S: { x: 0, z: 1 },
+    E: { x: 1, z: 0 },
+    W: { x: -1, z: 0 }
+  });
+
+  const Direction = Object.freeze({ N: 'N', S: 'S', E: 'E', W: 'W' });
+  const GameMode = Object.freeze({
+    BOOT: 'BOOT',
+    OVERWORLD: 'OVERWORLD',
+    DIALOGUE: 'DIALOGUE',
+    MENU: 'MENU',
+    TRANSITION: 'TRANSITION',
+    BATTLE: 'BATTLE',
+    PAUSED: 'PAUSED'
+  });
+  const MoveState = Object.freeze({ IDLE: 0, WALKING: 1, VAULTING: 2, STAIRS: 3 });
+  const Surface = Object.freeze({
+    WALKABLE: 0,
+    BLOCKED: 1,
+    TALL_GRASS: 2,
+    STAIRS: 3,
+    WATER: 4,
+    ICE: 5
+  });
+  const Ground = Object.freeze({
+    MEADOW: 1,
+    PATH: 2,
+    TALL_GRASS: 3,
+    WATER: 4,
+    STONE: 5,
+    FLOOR: 6,
+    BRIDGE: 7,
+    FLOWERS: 8
+  });
+  const WeatherType = Object.freeze({ CLEAR: 'clear', SUN: 'sun', RAIN: 'rain', SAND: 'sand' });
+  const StatusType = Object.freeze({ NONE: 'none', BURN: 'brn', POISON: 'psn', PARALYSIS: 'par', SLEEP: 'slp' });
+
+  const Type = Object.freeze({
+    NEUTRAL: 'neutral',
+    EMBER: 'ember',
+    TIDE: 'tide',
+    GROVE: 'grove',
+    VOLT: 'volt',
+    STONE: 'stone',
+    WIND: 'wind'
+  });
+
+  const TYPE_COLORS = Object.freeze({
+    neutral: '#d8d6ce', ember: '#ff765d', tide: '#52b9ff', grove: '#77d66b',
+    volt: '#ffe35b', stone: '#c4a77d', wind: '#b5e8ed'
+  });
+
+  const TypeChart = Object.freeze({
+    ember: { grove: 2, tide: 0.5, stone: 0.5, ember: 0.5 },
+    tide: { ember: 2, stone: 2, grove: 0.5, tide: 0.5 },
+    grove: { tide: 2, stone: 2, ember: 0.5, wind: 0.5, grove: 0.5 },
+    volt: { tide: 2, wind: 2, grove: 0.5, stone: 0 },
+    stone: { ember: 2, wind: 2, tide: 0.5, grove: 0.5 },
+    wind: { grove: 2, stone: 0.5, volt: 0.5 },
+    neutral: {}
+  });
+
+  const MOVES = Object.freeze({
+    quick_jab: { id: 'quick_jab', name: 'Quick Jab', type: Type.NEUTRAL, category: 'physical', power: 40, accuracy: 100, pp: 35, priority: 1, effect: null },
+    leaflash: { id: 'leaflash', name: 'Leaflash', type: Type.GROVE, category: 'physical', power: 50, accuracy: 95, pp: 25, priority: 0, effect: null },
+    guard_bloom: { id: 'guard_bloom', name: 'Guard Bloom', type: Type.GROVE, category: 'status', power: 0, accuracy: 100, pp: 20, priority: 0, effect: { kind: 'stage', stat: 'defense', amount: 1, target: 'self' } },
+    pollen_drowse: { id: 'pollen_drowse', name: 'Pollen Drowse', type: Type.GROVE, category: 'status', power: 0, accuracy: 80, pp: 15, priority: 0, effect: { kind: 'status', status: StatusType.SLEEP, target: 'enemy' } },
+    ember_arc: { id: 'ember_arc', name: 'Ember Arc', type: Type.EMBER, category: 'special', power: 48, accuracy: 100, pp: 25, priority: 0, effect: { kind: 'chanceStatus', status: StatusType.BURN, chance: 0.1, target: 'enemy' } },
+    cinder_rush: { id: 'cinder_rush', name: 'Cinder Rush', type: Type.EMBER, category: 'physical', power: 65, accuracy: 90, pp: 15, priority: 0, effect: null },
+    tidal_pulse: { id: 'tidal_pulse', name: 'Tidal Pulse', type: Type.TIDE, category: 'special', power: 55, accuracy: 100, pp: 20, priority: 0, effect: null },
+    mist_mend: { id: 'mist_mend', name: 'Mist Mend', type: Type.TIDE, category: 'status', power: 0, accuracy: 100, pp: 10, priority: 0, effect: { kind: 'heal', fraction: 0.25, target: 'self' } },
+    static_peck: { id: 'static_peck', name: 'Static Peck', type: Type.VOLT, category: 'physical', power: 50, accuracy: 95, pp: 25, priority: 0, effect: { kind: 'chanceStatus', status: StatusType.PARALYSIS, chance: 0.15, target: 'enemy' } },
+    storm_chirp: { id: 'storm_chirp', name: 'Storm Chirp', type: Type.VOLT, category: 'special', power: 60, accuracy: 90, pp: 15, priority: 0, effect: null },
+    pebble_burst: { id: 'pebble_burst', name: 'Pebble Burst', type: Type.STONE, category: 'physical', power: 55, accuracy: 95, pp: 20, priority: 0, effect: null },
+    dust_veil: { id: 'dust_veil', name: 'Dust Veil', type: Type.STONE, category: 'status', power: 0, accuracy: 100, pp: 20, priority: 0, effect: { kind: 'stage', stat: 'defense', amount: 1, target: 'self' } },
+    gustline: { id: 'gustline', name: 'Gustline', type: Type.WIND, category: 'special', power: 50, accuracy: 100, pp: 25, priority: 0, effect: null },
+    sky_feint: { id: 'sky_feint', name: 'Sky Feint', type: Type.WIND, category: 'physical', power: 55, accuracy: 95, pp: 20, priority: 0, effect: null }
+  });
+
+  const SPECIES = Object.freeze({
+    spriglet: {
+      id: 'spriglet', name: 'Spriglet', types: [Type.GROVE], catchRate: 180, baseExpYield: 64, growth: 'MEDIUM_FAST',
+      baseStats: { hp: 52, attack: 54, defense: 55, spAttack: 48, spDefense: 52, speed: 50 },
+      moves: ['quick_jab', 'leaflash', 'guard_bloom', 'pollen_drowse'],
+      palette: ['#1d3422', '#6edc68', '#caff90', '#fff1bf'], silhouette: 'leaf'
+    },
+    cindrel: {
+      id: 'cindrel', name: 'Cindrel', types: [Type.EMBER], catchRate: 165, baseExpYield: 68, growth: 'MEDIUM_FAST',
+      baseStats: { hp: 49, attack: 58, defense: 42, spAttack: 61, spDefense: 45, speed: 62 },
+      moves: ['quick_jab', 'ember_arc', 'cinder_rush', 'guard_bloom'],
+      palette: ['#3a1e24', '#ff664f', '#ffbd4a', '#fff2b0'], silhouette: 'fox'
+    },
+    tidefin: {
+      id: 'tidefin', name: 'Tidefin', types: [Type.TIDE], catchRate: 175, baseExpYield: 66, growth: 'MEDIUM_FAST',
+      baseStats: { hp: 58, attack: 46, defense: 54, spAttack: 58, spDefense: 60, speed: 44 },
+      moves: ['quick_jab', 'tidal_pulse', 'mist_mend', 'gustline'],
+      palette: ['#12263a', '#2a9ee8', '#65d4f3', '#e6fbff'], silhouette: 'fin'
+    },
+    voltwing: {
+      id: 'voltwing', name: 'Voltwing', types: [Type.VOLT, Type.WIND], catchRate: 130, baseExpYield: 82, growth: 'FAST',
+      baseStats: { hp: 44, attack: 55, defense: 40, spAttack: 63, spDefense: 44, speed: 78 },
+      moves: ['quick_jab', 'static_peck', 'storm_chirp', 'gustline'],
+      palette: ['#302b19', '#ffdc3f', '#f8f2b8', '#87dfe4'], silhouette: 'bird'
+    },
+    stonebud: {
+      id: 'stonebud', name: 'Stonebud', types: [Type.STONE, Type.GROVE], catchRate: 190, baseExpYield: 62, growth: 'SLOW',
+      baseStats: { hp: 66, attack: 54, defense: 72, spAttack: 38, spDefense: 60, speed: 28 },
+      moves: ['quick_jab', 'pebble_burst', 'dust_veil', 'leaflash'],
+      palette: ['#342f2b', '#9f835f', '#7ccd68', '#dce7bc'], silhouette: 'bud'
+    },
+    cloudlet: {
+      id: 'cloudlet', name: 'Cloudlet', types: [Type.WIND], catchRate: 200, baseExpYield: 58, growth: 'FAST',
+      baseStats: { hp: 46, attack: 40, defense: 42, spAttack: 55, spDefense: 50, speed: 68 },
+      moves: ['quick_jab', 'gustline', 'sky_feint', 'mist_mend'],
+      palette: ['#293548', '#c2e7ef', '#ffffff', '#8abbd3'], silhouette: 'cloud'
+    }
+  });
+
+  const ITEMS = Object.freeze({
+    prism_pod: { id: 'prism_pod', name: 'Prism Pod', description: 'A faceted capture capsule for wild Emberkin.', ballMultiplier: 1.0 },
+    bright_pod: { id: 'bright_pod', name: 'Bright Pod', description: 'A stronger capture capsule.', ballMultiplier: 1.5 },
+    field_tonic: { id: 'field_tonic', name: 'Field Tonic', description: 'Restores 20 HP.', heal: 20 }
+  });
+
+  const ENCOUNTER_TABLE = Object.freeze([
+    { species: 'cindrel', weight: 24, min: 4, max: 6 },
+    { species: 'tidefin', weight: 21, min: 4, max: 6 },
+    { species: 'cloudlet', weight: 22, min: 3, max: 6 },
+    { species: 'stonebud', weight: 19, min: 4, max: 7 },
+    { species: 'voltwing', weight: 14, min: 5, max: 8 }
+  ]);
+
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const damp = (current, target, lambda, dt) => lerp(current, target, 1 - Math.exp(-lambda * dt));
+  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  const directionFromDelta = (dx, dz) => dz < 0 ? 'N' : dz > 0 ? 'S' : dx > 0 ? 'E' : 'W';
+  const oppositeDirection = d => ({ N: 'S', S: 'N', E: 'W', W: 'E' }[d] || 'S');
+
+  class DeterministicPRNG {
+    constructor(seed = 0x4d415454) { this.seed = seed >>> 0 || 0x4d415454; }
+    random() {
+      let x = this.seed >>> 0;
+      x ^= x << 13; x ^= x >>> 17; x ^= x << 5;
+      this.seed = x >>> 0;
+      return this.seed / 4294967296;
+    }
+    int(min, max) { return Math.floor(this.random() * (max - min + 1)) + min; }
+    pick(arr) { return arr[this.int(0, arr.length - 1)]; }
+  }
+
+  class BitmaskFlags {
+    constructor(totalFlags = 256) { this.size = Math.ceil(totalFlags / 32); this.data = new Uint32Array(this.size); }
+    valid(flagId) { return Number.isInteger(flagId) && flagId >= 0 && flagId < this.size * 32; }
+    set(flagId) { if (this.valid(flagId)) this.data[flagId >> 5] |= (1 << (flagId & 31)); }
+    clear(flagId) { if (this.valid(flagId)) this.data[flagId >> 5] &= ~(1 << (flagId & 31)); }
+    get(flagId) { return this.valid(flagId) && (this.data[flagId >> 5] & (1 << (flagId & 31))) !== 0; }
+    toggle(flagId) { if (this.valid(flagId)) this.data[flagId >> 5] ^= (1 << (flagId & 31)); }
+    exportArray() { return Array.from(this.data); }
+    importArray(arr = []) { for (let i = 0; i < this.size; i++) this.data[i] = Number(arr[i] || 0) >>> 0; }
+  }
+
+  class ChecksumEngine {
+    static crcTable = null;
+    static getTable() {
+      if (this.crcTable) return this.crcTable;
+      const table = new Uint32Array(256);
+      for (let n = 0; n < 256; n++) {
+        let c = n;
+        for (let k = 0; k < 8; k++) c = (c & 1) ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+        table[n] = c >>> 0;
+      }
+      this.crcTable = table;
+      return table;
+    }
+    static crc32(str) {
+      const table = this.getTable();
+      let crc = 0 ^ -1;
+      for (let i = 0; i < str.length; i++) crc = (crc >>> 8) ^ table[(crc ^ str.charCodeAt(i)) & 0xFF];
+      return ((crc ^ -1) >>> 0).toString(16).padStart(8, '0');
+    }
+    static stableStringify(value) {
+      if (Array.isArray(value)) return `[${value.map(v => this.stableStringify(v)).join(',')}]`;
+      if (value && typeof value === 'object') {
+        return `{${Object.keys(value).sort().map(k => `${JSON.stringify(k)}:${this.stableStringify(value[k])}`).join(',')}}`;
+      }
+      return JSON.stringify(value);
+    }
+    static generateHash(payload) {
+      const copy = JSON.parse(JSON.stringify(payload));
+      delete copy.checksum;
+      return this.crc32(this.stableStringify(copy));
+    }
+    static verify(payload) { return Boolean(payload && payload.checksum && this.generateHash(payload) === payload.checksum); }
+  }
+
+  // §3 storage contract: this is the ONLY place a storage key is built and the
+  // only place localStorage is touched. Every subsystem — the save slots, the
+  // custom-map import, the PC boxes, the Trainer Read history — goes through
+  // here, so the namespace is provable by grep rather than by inspection.
+  // A sibling game's key cannot be written because the prefix is applied here
+  // and nowhere else.
+  const EWStore = Object.freeze({
+    PREFIX: 'mbm_emberwild_',
+    key(name) { return EWStore.PREFIX + String(name); },
+    get(name) { try { return localStorage.getItem(EWStore.key(name)); } catch (_) { return null; } },
+    set(name, value) { try { localStorage.setItem(EWStore.key(name), value); return true; } catch (_) { return false; } },
+    remove(name) { try { localStorage.removeItem(EWStore.key(name)); } catch (_) {} },
+    // Enumerate only our own keys — used by the harness and by hostile-save recovery.
+    ours() {
+      const out = [];
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.indexOf(EWStore.PREFIX) === 0) out.push(k);
+        }
+      } catch (_) {}
+      return out;
+    }
+  });
+
+  // G8: the single renderer-failure site. Every path that can leave us without
+  // a drawable surface — a browser that refuses a 2D context at boot, or a
+  // context lost mid-session — calls this one function and raises the one
+  // panel in the markup. There is deliberately no second copy of this text.
+  const EWRendererFailure = Object.freeze({
+    raise(reason) {
+      try {
+        const el = document.getElementById('renderer-failure');
+        if (!el) return;
+        el.setAttribute('data-open', '1');
+        el.setAttribute('data-reason', String(reason || 'unknown'));
+        const sr = document.getElementById('sr-status');
+        if (sr) sr.textContent = 'The Vale cannot be drawn. Your save is untouched. Reload to try again.';
+      } catch (_) {}
+    },
+    isRaised() {
+      const el = document.getElementById('renderer-failure');
+      return Boolean(el && el.getAttribute('data-open') === '1');
+    }
+  });
+
+  class SaveManager {
+    constructor(prefix = EWStore.PREFIX) { this.prefix = prefix; }
+    encode(text) {
+      const bytes = new TextEncoder().encode(text);
+      let binary = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+      return btoa(binary);
+    }
+    decode(encoded) {
+      const binary = atob(encoded);
+      const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }
+    write(slot, payload) {
+      try {
+        payload.checksum = ChecksumEngine.generateHash(payload);
+        const encoded = this.encode(JSON.stringify(payload));
+        const tempName = `${slot}_TEMP`, mainName = `${slot}`, backupName = `${slot}_BACKUP`;
+        EWStore.set(tempName, encoded);
+        const verifyTemp = JSON.parse(this.decode(EWStore.get(tempName)));
+        if (!ChecksumEngine.verify(verifyTemp)) throw new Error('TEMP_CHECKSUM_FAILED');
+        const existing = EWStore.get(mainName);
+        if (existing) EWStore.set(backupName, existing);
+        EWStore.set(mainName, encoded);
+        EWStore.remove(tempName);
+        return { success: true, checksum: payload.checksum };
+      } catch (error) {
+        return { success: false, error: error && error.message ? error.message : 'SAVE_FAILED' };
+      }
+    }
+    read(slot) {
+      const keys = [`${slot}`, `${slot}_BACKUP`, `${slot}_TEMP`];
+      for (const key of keys) {
+        try {
+          const encoded = EWStore.get(key);
+          if (!encoded) continue;
+          const payload = JSON.parse(this.decode(encoded));
+          if (!ChecksumEngine.verify(payload)) continue;
+          return { success: true, data: this.migrate(payload), source: key };
+        } catch (error) { /* try next buffer */ }
+      }
+      return { success: false, error: 'SAVE_NOT_FOUND_OR_CORRUPT' };
+    }
+    migrate(payload) {
+      const data = JSON.parse(JSON.stringify(payload));
+      if (!data.version) data.version = 1;
+      if (data.version === 1) {
+        data.settings = data.settings || { audio: true, reducedMotion: false, highContrast: false };
+        data.version = 2;
+      }
+      return data;
+    }
+    hasSave(slot = 'SLOT_1') { return Boolean(EWStore.get(slot)); }
+    clear(slot = 'SLOT_1') {
+      ['','_TEMP','_BACKUP'].forEach(suffix => EWStore.remove(`${slot}${suffix}`));
+    }
+  }
+
+  class RetroAudioEngine {
+    constructor() {
+      this.ctx = null; this.master = null; this.compressor = null; this.enabled = true;
+      this.pulseWaves = {}; this.noiseBuffer = null; this.musicTimer = null; this.musicStep = 0; this.tempo = 132;
+    }
+    init() {
+      if (this.ctx) return;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) { this.enabled = false; return; }
+      this.ctx = new AudioCtx();
+      this.master = this.ctx.createGain();
+      this.master.gain.value = 0.22;
+      this.compressor = this.ctx.createDynamicsCompressor();
+      this.compressor.threshold.value = -12;
+      this.compressor.knee.value = 30;
+      this.compressor.ratio.value = 10;
+      this.compressor.attack.value = 0.003;
+      this.compressor.release.value = 0.2;
+      this.master.connect(this.compressor);
+      this.compressor.connect(this.ctx.destination);
+      this.pulseWaves['12.5'] = this.generatePulseWave(0.125);
+      this.pulseWaves['25'] = this.generatePulseWave(0.25);
+      this.pulseWaves['50'] = this.generatePulseWave(0.5);
+      const len = Math.floor(this.ctx.sampleRate * 0.5);
+      this.noiseBuffer = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+      const data = this.noiseBuffer.getChannelData(0);
+      let lfsr = 0x7fff;
+      for (let i = 0; i < len; i++) {
+        const bit = ((lfsr >> 0) ^ (lfsr >> 1)) & 1;
+        lfsr = (lfsr >> 1) | (bit << 14);
+        data[i] = (lfsr & 1) ? 0.7 : -0.7;
+      }
+    }
+    generatePulseWave(duty) {
+      const harmonics = 64;
+      const real = new Float32Array(harmonics);
+      const imag = new Float32Array(harmonics);
+      for (let n = 1; n < harmonics; n++) {
+        const magnitude = (2 / (n * Math.PI)) * Math.sin(n * Math.PI * duty);
+        imag[n] = magnitude;
+      }
+      return this.ctx.createPeriodicWave(real, imag, { disableNormalization: false });
+    }
+    ensure() {
+      if (!this.enabled) return false;
+      if (!this.ctx) this.init();
+      if (!this.ctx) return false;
+      if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+      return true;
+    }
+    setEnabled(enabled) { this.enabled = Boolean(enabled); if (!this.enabled) this.stopMusic(); }
+    setVolume(value) { if (this.master) this.master.gain.setTargetAtTime(clamp(value, 0, 0.7), this.ctx.currentTime, 0.02); }
+    pulse(freq, duration = 0.08, duty = '25', gainValue = 0.14, endFreq = null) {
+      if (!this.ensure()) return;
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      if (this.pulseWaves[duty]) osc.setPeriodicWave(this.pulseWaves[duty]); else osc.type = 'square';
+      osc.frequency.setValueAtTime(Math.max(1, freq), now);
+      if (endFreq) osc.frequency.exponentialRampToValueAtTime(Math.max(1, endFreq), now + duration);
+      gain.gain.setValueAtTime(gainValue, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      osc.connect(gain); gain.connect(this.master);
+      osc.start(now); osc.stop(now + duration + 0.01);
+    }
+    noise(duration = 0.12, filterType = 'bandpass', startFreq = 1200, endFreq = 300, gainValue = 0.16) {
+      if (!this.ensure()) return;
+      const now = this.ctx.currentTime;
+      const source = this.ctx.createBufferSource();
+      source.buffer = this.noiseBuffer;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = filterType;
+      filter.frequency.setValueAtTime(Math.max(20, startFreq), now);
+      filter.frequency.exponentialRampToValueAtTime(Math.max(20, endFreq), now + duration);
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(gainValue, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      source.connect(filter); filter.connect(gain); gain.connect(this.master);
+      source.start(now, 0, Math.min(duration, 0.49));
+    }
+    playUI(type = 'select') {
+      if (type === 'error') this.pulse(150, 0.16, '50', 0.18, 90);
+      else if (type === 'confirm') { this.pulse(660, 0.06, '25', 0.13, 880); setTimeout(() => this.pulse(990, 0.08, '25', 0.1), 45); }
+      else this.pulse(760, 0.055, '25', 0.10, 920);
+    }
+    playStep() { this.pulse(170, 0.035, '12.5', 0.035, 145); }
+    playGrass() { this.noise(0.11, 'bandpass', 1500, 650, 0.11); }
+    playLedge() { this.pulse(190, 0.23, '25', 0.16, 460); setTimeout(() => this.pulse(210, 0.1, '50', 0.12, 110), 190); }
+    playImpact(critical = false) { this.noise(critical ? 0.24 : 0.16, 'lowpass', critical ? 1400 : 800, 100, critical ? 0.28 : 0.20); this.pulse(critical ? 150 : 105, critical ? 0.25 : 0.16, '50', 0.18, 35); }
+    playEnergy(type) {
+      if (type === Type.EMBER) { this.noise(0.35, 'bandpass', 300, 1400, 0.16); this.pulse(260, 0.34, '12.5', 0.12, 720); }
+      else if (type === Type.VOLT) { this.pulse(1100, 0.28, '12.5', 0.15, 120); this.noise(0.12, 'highpass', 2500, 700, 0.10); }
+      else if (type === Type.TIDE) { this.noise(0.42, 'lowpass', 200, 1600, 0.18); this.pulse(140, 0.38, '50', 0.08, 80); }
+      else if (type === Type.GROVE) { this.pulse(330, 0.14, '25', 0.11, 520); setTimeout(() => this.pulse(620, 0.12, '25', 0.09, 760), 90); }
+      else if (type === Type.WIND) { this.noise(0.28, 'bandpass', 1800, 500, 0.13); }
+      else { this.playImpact(false); }
+    }
+    playCry(speciesId) {
+      if (!this.ensure()) return;
+      const speciesIndex = Object.keys(SPECIES).indexOf(speciesId);
+      const base = 150 + speciesIndex * 35;
+      const now = this.ctx.currentTime;
+      const carrier = this.ctx.createOscillator();
+      const mod = this.ctx.createOscillator();
+      const modGain = this.ctx.createGain();
+      const gain = this.ctx.createGain();
+      carrier.type = 'sawtooth'; mod.type = 'square';
+      mod.frequency.value = 45 + speciesIndex * 3;
+      modGain.gain.value = 110 + speciesIndex * 16;
+      carrier.frequency.setValueAtTime(base, now);
+      carrier.frequency.exponentialRampToValueAtTime(base * 1.55, now + 0.13);
+      carrier.frequency.exponentialRampToValueAtTime(base * 0.72, now + 0.35);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
+      mod.connect(modGain); modGain.connect(carrier.frequency); carrier.connect(gain); gain.connect(this.master);
+      mod.start(now); carrier.start(now); mod.stop(now + 0.36); carrier.stop(now + 0.36);
+    }
+    playCapture(stage = 'shake') {
+      if (stage === 'throw') this.pulse(320, 0.22, '25', 0.14, 840);
+      else if (stage === 'click') { this.pulse(900, 0.08, '12.5', 0.13, 1350); setTimeout(() => this.pulse(1500, 0.18, '12.5', 0.12, 1900), 70); }
+      else this.pulse(420, 0.09, '50', 0.10, 180);
+    }
+    startBattleMusic() {
+      if (!this.ensure() || this.musicTimer) return;
+      const lead = [261.63, 0, 311.13, 392, 0, 349.23, 311.13, 233.08, 261.63, 0, 392, 349.23, 311.13, 0, 233.08, 0];
+      const bass = [130.81, 130.81, 0, 130.81, 155.56, 155.56, 0, 155.56, 174.61, 174.61, 0, 174.61, 196, 196, 233.08, 0];
+      const stepMs = ((60 / this.tempo) / 4) * 1000;
+      this.musicStep = 0;
+      this.musicTimer = setInterval(() => {
+        if (!this.enabled) return;
+        const i = this.musicStep % 16;
+        if (lead[i]) this.pulse(lead[i], 0.1, '25', 0.045);
+        if (bass[i]) this.pulse(bass[i], 0.14, '50', 0.055);
+        if (i % 8 === 4) this.noise(0.06, 'highpass', 1600, 500, 0.035);
+        this.musicStep++;
+      }, stepMs);
+    }
+    stopMusic() { if (this.musicTimer) clearInterval(this.musicTimer); this.musicTimer = null; }
+  }
+
+  class HapticEngine {
+    constructor() { this.enabled = typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function'; }
+    trigger(type) {
+      if (!this.enabled) return;
+      const patterns = { step: 6, button: 10, ledge: [12, 24, 18], light: 20, heavy: [35, 25, 60], capture: [15, 30, 15, 30, 35] };
+      try { navigator.vibrate(patterns[type] || 8); } catch (error) { /* non-critical */ }
+    }
+  }
+
+  class StatEngine {
+    static calculateHP(base, iv = 20, ev = 0, level = 5) {
+      return Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100) + level + 10;
+    }
+    static calculateStat(base, iv = 20, ev = 0, level = 5, nature = 1.0) {
+      const raw = Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100) + 5;
+      return Math.floor(raw * nature);
+    }
+    static stageMultiplier(stage) {
+      const s = clamp(stage, -6, 6);
+      return s >= 0 ? (2 + s) / 2 : 2 / (2 + Math.abs(s));
+    }
+  }
+
+  class Monster {
+    constructor({ speciesId, level = 5, nickname = null, seed = 12345, currentHP = null, currentExp = null, status = StatusType.NONE, moves = null }) {
+      const species = SPECIES[speciesId];
+      if (!species) throw new Error(`Unknown species: ${speciesId}`);
+      this.speciesId = speciesId;
+      this.species = species;
+      this.name = nickname || species.name;
+      this.level = clamp(Math.floor(level), 1, 100);
+      this.types = [...species.types];
+      this.seed = seed >>> 0;
+      const rng = new DeterministicPRNG(this.seed);
+      this.ivs = { hp: rng.int(12, 31), attack: rng.int(12, 31), defense: rng.int(12, 31), spAttack: rng.int(12, 31), spDefense: rng.int(12, 31), speed: rng.int(12, 31) };
+      this.evs = { hp: 0, attack: 0, defense: 0, spAttack: 0, spDefense: 0, speed: 0 };
+      this.nature = { attack: 1, defense: 1, spAttack: 1, spDefense: 1, speed: 1 };
+      this.stats = this.calculateStats();
+      this.currentHP = currentHP == null ? this.stats.hp : clamp(currentHP, 0, this.stats.hp);
+      this.currentExp = currentExp == null ? GrowthCurves.required(this.level, species.growth) : currentExp;
+      this.status = status || StatusType.NONE;
+      this.sleepTurns = 0; this.toxicCount = 0;
+      this.stages = { attack: 0, defense: 0, spAttack: 0, spDefense: 0, speed: 0, accuracy: 0, evasion: 0 };
+      const moveIds = moves || species.moves;
+      this.moves = moveIds.slice(0, 4).map(id => ({ ...MOVES[id], currentPP: MOVES[id].pp }));
+    }
+    calculateStats() {
+      const b = this.species.baseStats, L = this.level;
+      return {
+        hp: StatEngine.calculateHP(b.hp, this.ivs.hp, this.evs.hp, L),
+        attack: StatEngine.calculateStat(b.attack, this.ivs.attack, this.evs.attack, L, this.nature.attack),
+        defense: StatEngine.calculateStat(b.defense, this.ivs.defense, this.evs.defense, L, this.nature.defense),
+        spAttack: StatEngine.calculateStat(b.spAttack, this.ivs.spAttack, this.evs.spAttack, L, this.nature.spAttack),
+        spDefense: StatEngine.calculateStat(b.spDefense, this.ivs.spDefense, this.evs.spDefense, L, this.nature.spDefense),
+        speed: StatEngine.calculateStat(b.speed, this.ivs.speed, this.evs.speed, L, this.nature.speed)
+      };
+    }
+    effectiveStat(name) {
+      let value = this.stats[name] || 1;
+      value = Math.floor(value * StatEngine.stageMultiplier(this.stages[name] || 0));
+      if (name === 'speed' && this.status === StatusType.PARALYSIS) value = Math.floor(value * 0.5);
+      if (name === 'attack' && this.status === StatusType.BURN) value = Math.floor(value * 0.5);
+      return Math.max(1, value);
+    }
+    resetBattleState() { Object.keys(this.stages).forEach(k => this.stages[k] = 0); this.toxicCount = 0; }
+    healFull() { this.currentHP = this.stats.hp; this.status = StatusType.NONE; this.moves.forEach(m => m.currentPP = m.pp); }
+    toJSON() {
+      return { speciesId: this.speciesId, level: this.level, nickname: this.name === this.species.name ? null : this.name, seed: this.seed, currentHP: this.currentHP, currentExp: this.currentExp, status: this.status, moves: this.moves.map(m => m.id) };
+    }
+  }
+
+  class GrowthCurves {
+    static required(level, rate = 'MEDIUM_FAST') {
+      const n = clamp(Math.floor(level), 1, 100);
+      if (rate === 'FAST') return Math.floor(4 * n ** 3 / 5);
+      if (rate === 'SLOW') return Math.floor(5 * n ** 3 / 4);
+      if (rate === 'MEDIUM_SLOW') return Math.max(0, Math.floor(6 * n ** 3 / 5) - 15 * n ** 2 + 100 * n - 140);
+      return n ** 3;
+    }
+  }
+
+  class ProgressionEngine {
+    static award(mon, amount) {
+      const previousStats = { ...mon.stats };
+      const startLevel = mon.level;
+      mon.currentExp += Math.max(0, Math.floor(amount));
+      while (mon.level < 100 && mon.currentExp >= GrowthCurves.required(mon.level + 1, mon.species.growth)) mon.level++;
+      const levelsGained = mon.level - startLevel;
+      if (levelsGained > 0) {
+        const oldMax = mon.stats.hp;
+        mon.stats = mon.calculateStats();
+        mon.currentHP = clamp(mon.currentHP + (mon.stats.hp - oldMax), 1, mon.stats.hp);
+      }
+      const deltas = {};
+      Object.keys(mon.stats).forEach(k => deltas[k] = mon.stats[k] - previousStats[k]);
+      return { levelsGained, newLevel: mon.level, deltas };
+    }
+  }
+
+  class DamageEngine {
+    static effectiveness(moveType, defenderTypes) {
+      let multiplier = 1;
+      for (const type of defenderTypes) {
+        const chart = TypeChart[moveType] || {};
+        if (Object.prototype.hasOwnProperty.call(chart, type)) multiplier *= chart[type];
+      }
+      return multiplier;
+    }
+    static calculate(attacker, defender, move, rng, weather = WeatherType.CLEAR) {
+      if (move.category === 'status') return { damage: 0, effectiveness: 1, crit: false, randomRoll: 100 };
+      const physical = move.category === 'physical';
+      let A = attacker.effectiveStat(physical ? 'attack' : 'spAttack');
+      let D = defender.effectiveStat(physical ? 'defense' : 'spDefense');
+      const crit = rng.random() < 1 / 24;
+      if (crit) {
+        const atkKey = physical ? 'attack' : 'spAttack';
+        const defKey = physical ? 'defense' : 'spDefense';
+        if (attacker.stages[atkKey] < 0) A = attacker.stats[atkKey];
+        if (defender.stages[defKey] > 0) D = defender.stats[defKey];
+      }
+      const levelFactor = Math.floor((2 * attacker.level) / 5) + 2;
+      let base = Math.floor(Math.floor((levelFactor * move.power * A) / Math.max(1, D)) / 50) + 2;
+      if (crit) base = Math.floor(base * 1.5);
+      let weatherMult = 1;
+      if (weather === WeatherType.SUN) { if (move.type === Type.EMBER) weatherMult = 1.5; if (move.type === Type.TIDE) weatherMult = 0.5; }
+      if (weather === WeatherType.RAIN) { if (move.type === Type.TIDE) weatherMult = 1.5; if (move.type === Type.EMBER) weatherMult = 0.5; }
+      base = Math.floor(base * weatherMult);
+      const randomRoll = rng.int(85, 100);
+      base = Math.floor(base * randomRoll / 100);
+      if (attacker.types.includes(move.type)) base = Math.floor(base * 1.5);
+      const effectiveness = this.effectiveness(move.type, defender.types);
+      base = Math.floor(base * effectiveness);
+      return { damage: effectiveness === 0 ? 0 : Math.max(1, base), effectiveness, crit, randomRoll };
+    }
+  }
+
+  class StatusAndWeatherEngine {
+    constructor() { this.weather = WeatherType.CLEAR; this.weatherTurns = 0; }
+    preAction(mon, rng) {
+      if (mon.currentHP <= 0) return { canMove: false, message: `${mon.name} cannot act.` };
+      if (mon.status === StatusType.SLEEP) {
+        if (!mon.sleepTurns) mon.sleepTurns = rng.int(1, 3);
+        mon.sleepTurns--;
+        if (mon.sleepTurns <= 0) { mon.status = StatusType.NONE; return { canMove: true, message: `${mon.name} woke up!` }; }
+        return { canMove: false, message: `${mon.name} is drifting in a deep sleep…` };
+      }
+      if (mon.status === StatusType.PARALYSIS && rng.random() < 0.25) return { canMove: false, message: `${mon.name} is locked by static!` };
+      return { canMove: true, message: null };
+    }
+    processEnd(monsters) {
+      const logs = [];
+      if (this.weather !== WeatherType.CLEAR) {
+        this.weatherTurns--;
+        if (this.weatherTurns <= 0) { logs.push(`The ${this.weather} field faded.`); this.weather = WeatherType.CLEAR; }
+      }
+      for (const mon of monsters) {
+        if (mon.currentHP <= 0) continue;
+        if (mon.status === StatusType.BURN || mon.status === StatusType.POISON) {
+          const divisor = mon.status === StatusType.BURN ? 16 : 8;
+          const dmg = Math.max(1, Math.floor(mon.stats.hp / divisor));
+          mon.currentHP = Math.max(0, mon.currentHP - dmg);
+          logs.push(`${mon.name} lost ${dmg} HP to ${mon.status === StatusType.BURN ? 'scorch' : 'toxin'}.`);
+        }
+        if (this.weather === WeatherType.SAND && !mon.types.includes(Type.STONE)) {
+          const dmg = Math.max(1, Math.floor(mon.stats.hp / 16));
+          mon.currentHP = Math.max(0, mon.currentHP - dmg);
+          logs.push(`${mon.name} was buffeted by the sand field.`);
+        }
+      }
+      return logs;
+    }
+  }
+
+  class CatchRateCalculator {
+    static calculate(mon, ballMultiplier, rng) {
+      const maxHP = mon.stats.hp, currentHP = mon.currentHP, catchRate = mon.species.catchRate;
+      let statusMult = 1;
+      if (mon.status === StatusType.SLEEP) statusMult = 2;
+      else if ([StatusType.BURN, StatusType.POISON, StatusType.PARALYSIS].includes(mon.status)) statusMult = 1.5;
+      const hpFactor = Math.floor(((3 * maxHP - 2 * currentHP) * catchRate * ballMultiplier) / (3 * maxHP));
+      const a = Math.max(1, Math.floor(hpFactor * statusMult));
+      if (a >= 255) return { captured: true, shakes: 4, probability: 1, a, b: 65535 };
+      const b = Math.floor(65535 * Math.pow(a / 255, 0.25));
+      let shakes = 0;
+      const rolls = [];
+      for (let i = 0; i < 4; i++) {
+        const r = rng.int(0, 65535); rolls.push(r);
+        if (r < b) shakes++; else break;
+      }
+      return { captured: shakes === 4, shakes, rolls, a, b, probability: Math.pow(b / 65536, 4) };
+    }
+  }
+
+  class EncounterEngine {
+    constructor(rng) { this.rng = rng; this.stepsSinceBattle = 99; this.graceSteps = 3; this.baseRate = 18; }
+    onStep(isTallGrass) {
+      this.stepsSinceBattle++;
+      if (!isTallGrass || this.stepsSinceBattle <= this.graceSteps) return null;
+      if (this.rng.random() * 187.5 >= this.baseRate) return null;
+      this.stepsSinceBattle = 0;
+      const total = ENCOUNTER_TABLE.reduce((s, e) => s + e.weight, 0);
+      let roll = this.rng.random() * total;
+      for (const entry of ENCOUNTER_TABLE) {
+        roll -= entry.weight;
+        if (roll <= 0) return { speciesId: entry.species, level: this.rng.int(entry.min, entry.max) };
+      }
+      const fallback = ENCOUNTER_TABLE[0];
+      return { speciesId: fallback.species, level: fallback.min };
+    }
+    resetGrace() { this.stepsSinceBattle = 0; }
+  }
+
+  class ElevationMap {
+    constructor(width, depth, tileSize = TILE_SIZE) {
+      this.width = width; this.depth = depth; this.tileSize = tileSize;
+      this.cells = Array.from({ length: width * depth }, () => ({ ground: Ground.MEADOW, height: 0, surface: Surface.WALKABLE, ledge: null, slope: null, tags: [] }));
+      this.entities = []; this.warps = [];
+    }
+    index(x, z) { return z * this.width + x; }
+    inBounds(x, z) { return x >= 0 && x < this.width && z >= 0 && z < this.depth; }
+    getCell(x, z) { return this.inBounds(x, z) ? this.cells[this.index(x, z)] : null; }
+    setCell(x, z, patch) { if (this.inBounds(x, z)) Object.assign(this.cells[this.index(x, z)], patch); }
+    eachCell(callback) { for (let z = 0; z < this.depth; z++) for (let x = 0; x < this.width; x++) callback(this.getCell(x, z), x, z); }
+    importSchema(payload) {
+      if (!payload || !payload.layers || !payload.width || !payload.height) throw new Error('Invalid map schema');
+      this.width = payload.width; this.depth = payload.height; this.tileSize = payload.tileSize || TILE_SIZE;
+      const length = this.width * this.depth;
+      this.cells = Array.from({ length }, (_, i) => {
+        const ground = Number(payload.layers.ground?.[i] ?? Ground.MEADOW);
+        const height = Number(payload.layers.elevation?.[i] ?? 0);
+        const mask = Number(payload.layers.bitmask?.[i] ?? 0);
+        const surface = mask & 0x0F;
+        const ledgeNum = (mask >> 4) & 0x0F;
+        return { ground, height, surface, ledge: [null, 'S', 'N', 'E', 'W'][ledgeNum] || null, slope: null, tags: [] };
+      });
+      this.entities = Array.isArray(payload.entities) ? payload.entities : [];
+      this.warps = Array.isArray(payload.warps) ? payload.warps : [];
+    }
+    exportSchema(id = 'mbm_emberwild_custom') {
+      const ground = [], elevation = [], bitmask = [];
+      this.eachCell(cell => {
+        ground.push(cell.ground); elevation.push(cell.height);
+        const ledgeValue = ({ S: 1, N: 2, E: 3, W: 4 }[cell.ledge] || 0) << 4;
+        bitmask.push((cell.surface & 0x0F) | ledgeValue);
+      });
+      return { version: 1, id, name: id, width: this.width, height: this.depth, tileSize: this.tileSize, layers: { ground, elevation, bitmask }, entities: this.entities, warps: this.warps };
+    }
+  }
+
+  function buildDemoMap() {
+    const map = new ElevationMap(22, 20);
+    map.eachCell((cell, x, z) => {
+      const border = x === 0 || z === 0 || x === map.width - 1 || z === map.depth - 1;
+      if (border) Object.assign(cell, { ground: Ground.STONE, surface: Surface.BLOCKED, tags: ['boundary'] });
+    });
+    // Main route and crossroads.
+    for (let z = 1; z < 19; z++) for (let x = 9; x <= 11; x++) map.setCell(x, z, { ground: Ground.PATH, surface: Surface.WALKABLE });
+    for (let x = 1; x < 21; x++) for (let z = 11; z <= 13; z++) map.setCell(x, z, { ground: Ground.PATH, surface: Surface.WALKABLE });
+    // Pond and stone bridge.
+    for (let z = 3; z <= 8; z++) for (let x = 2; x <= 7; x++) map.setCell(x, z, { ground: Ground.WATER, surface: Surface.WATER, tags: ['water'] });
+    for (let z = 3; z <= 8; z++) map.setCell(5, z, { ground: Ground.BRIDGE, surface: Surface.WALKABLE, tags: ['bridge'] });
+    // Tall grass encounter beds.
+    const patches = [[12,14,19,18],[12,9,15,10],[2,14,7,17],[13,2,18,7]];
+    for (const [x1,z1,x2,z2] of patches) for (let z = z1; z <= z2; z++) for (let x = x1; x <= x2; x++) {
+      if ((x + z) % 5 !== 0) map.setCell(x, z, { ground: Ground.TALL_GRASS, surface: Surface.TALL_GRASS, tags: ['encounter'] });
+    }
+    // Elevated plateau.
+    for (let z = 2; z <= 8; z++) for (let x = 13; x <= 19; x++) {
+      map.setCell(x, z, { height: 1, ground: ((x + z) % 3 === 0 ? Ground.FLOWERS : Ground.MEADOW), surface: Surface.WALKABLE, tags: ['plateau'] });
+    }
+    // Cliffs are represented by height discontinuity; only stairs allow ascent.
+    map.setCell(15, 9, { height: 1, ground: Ground.STONE, surface: Surface.STAIRS, slope: 'N', tags: ['stairs'] });
+    map.setCell(15, 10, { height: 0, ground: Ground.STONE, surface: Surface.STAIRS, slope: 'N', tags: ['stairs'] });
+    // One-way south ledge: jump from z=8 to z=10.
+    map.setCell(18, 8, { height: 1, ground: Ground.STONE, surface: Surface.WALKABLE, ledge: 'S', tags: ['ledge'] });
+    map.setCell(18, 9, { height: 0, ground: Ground.STONE, surface: Surface.BLOCKED, tags: ['cliff-face'] });
+    map.setCell(18, 10, { height: 0, ground: Ground.PATH, surface: Surface.WALKABLE, tags: ['landing'] });
+    // Research lodge shell with walkable interior and doorway.
+    for (let z = 14; z <= 18; z++) for (let x = 2; x <= 7; x++) map.setCell(x, z, { ground: Ground.FLOOR, surface: Surface.BLOCKED, tags: ['lodge'] });
+    for (let z = 15; z <= 17; z++) for (let x = 3; x <= 6; x++) map.setCell(x, z, { ground: Ground.FLOOR, surface: Surface.WALKABLE, tags: ['lodge', 'interior'] });
+    map.setCell(4, 18, { ground: Ground.FLOOR, surface: Surface.WALKABLE, tags: ['lodge', 'door'] });
+    map.setCell(4, 17, { ground: Ground.FLOOR, surface: Surface.WALKABLE, tags: ['lodge', 'interior'] });
+    // Decorative flower strips.
+    for (let x = 12; x <= 18; x += 2) map.setCell(x, 13, { ground: Ground.FLOWERS, surface: Surface.WALKABLE });
+    map.entities = [
+      { id: 'player_spawn', type: 'PLAYER_SPAWN', x: 10, z: 17, y: 0, facing: 'N' },
+      { id: 'guide_mira', type: 'NPC', x: 12, z: 12, y: 0, facing: 'W', name: 'Mira', dialogue: ['Prism Route bends around the old water gardens.', 'Tall grass can hide an Emberkin. T weakens the veil for a test encounter.'] },
+      { id: 'warden_lyle', type: 'TRAINER', x: 16, z: 5, y: 1, facing: 'S', name: 'Warden Lyle', sight: 4, flag: 12, party: [{ speciesId: 'voltwing', level: 7 }] },
+      { id: 'researcher_ena', type: 'HEALER', x: 4, z: 15, y: 0, facing: 'S', name: 'Ena', dialogue: ['The lodge array can restore your partner.', 'Your field notes have been autosaved.'] },
+      { id: 'prism_cache', type: 'ITEM', x: 19, z: 3, y: 1, itemId: 'bright_pod', qty: 2, flag: 13 },
+      { id: 'route_sign', type: 'SIGN', x: 9, z: 14, y: 0, facing: 'S', dialogue: ['PRISM ROUTE', 'North: Flower Plateau • West: Water Garden • South: Research Lodge'] }
+    ];
+    return map;
+  }
+
+  class AStarPathfinder {
+    constructor(map, isOccupied = () => false) { this.map = map; this.isOccupied = isOccupied; }
+    key(x, z) { return `${x},${z}`; }
+    heuristic(a, b) {
+      const ca = this.map.getCell(a.x, a.z), cb = this.map.getCell(b.x, b.z);
+      return Math.abs(a.x - b.x) + Math.abs(a.z - b.z) + Math.abs((ca?.height || 0) - (cb?.height || 0)) * 1.5;
+    }
+    traversal(from, to, dir, goal) {
+      const a = this.map.getCell(from.x, from.z), b = this.map.getCell(to.x, to.z);
+      if (!a || !b || b.surface === Surface.BLOCKED || b.surface === Surface.WATER) return Infinity;
+      if (this.isOccupied(to.x, to.z) && !(to.x === goal.x && to.z === goal.z)) return Infinity;
+      const h = b.height - a.height;
+      if (h === 0) return 1;
+      if ((a.surface === Surface.STAIRS || b.surface === Surface.STAIRS) && Math.abs(h) === 1) return 1.5;
+      if (a.ledge === directionFromDelta(dir.x, dir.z) && h < 0) return 0.75;
+      return Infinity;
+    }
+    findPath(start, goal, maxIterations = 1200) {
+      if (!this.map.getCell(start.x, start.z) || !this.map.getCell(goal.x, goal.z)) return [];
+      const open = [{ ...start, f: this.heuristic(start, goal) }];
+      const came = new Map(), g = new Map([[this.key(start.x, start.z), 0]]), closed = new Set();
+      let iterations = 0;
+      while (open.length && iterations++ < maxIterations) {
+        open.sort((a, b) => a.f - b.f);
+        const current = open.shift();
+        const ck = this.key(current.x, current.z);
+        if (current.x === goal.x && current.z === goal.z) {
+          const path = [{ x: current.x, z: current.z }];
+          let key = ck;
+          while (came.has(key)) { const prev = came.get(key); path.unshift(prev); key = this.key(prev.x, prev.z); }
+          return path;
+        }
+        closed.add(ck);
+        for (const dir of Object.values(CARDINALS)) {
+          const n = { x: current.x + dir.x, z: current.z + dir.z };
+          const nk = this.key(n.x, n.z);
+          if (closed.has(nk)) continue;
+          const cost = this.traversal(current, n, dir, goal);
+          if (!Number.isFinite(cost)) continue;
+          const tentative = (g.get(ck) ?? Infinity) + cost;
+          if (tentative < (g.get(nk) ?? Infinity)) {
+            came.set(nk, { x: current.x, z: current.z }); g.set(nk, tentative);
+            const f = tentative + this.heuristic(n, goal);
+            const existing = open.find(o => o.x === n.x && o.z === n.z);
+            if (existing) existing.f = f; else open.push({ ...n, f });
+          }
+        }
+      }
+      return [];
+    }
+  }
+
+  class NPCActor {
+    constructor(data, map) {
+      Object.assign(this, data);
+      this.grid = { x: data.x, z: data.z, y: data.y || map.getCell(data.x, data.z)?.height || 0 };
+      this.render = { x: this.grid.x, z: this.grid.z, y: this.grid.y, arc: 0 };
+      this.state = 'IDLE'; this.path = []; this.moveProgress = 0; this.moveFrom = null; this.moveTo = null;
+      this.wanderTimer = 2 + Math.random() * 4;
+    }
+    beginStep(to, map) {
+      if (this.state !== 'IDLE') return false;
+      const cell = map.getCell(to.x, to.z); if (!cell) return false;
+      this.moveFrom = { ...this.grid }; this.moveTo = { x: to.x, z: to.z, y: cell.height };
+      this.grid = { ...this.moveTo }; this.moveProgress = 0; this.state = 'MOVING';
+      this.facing = directionFromDelta(this.moveTo.x - this.moveFrom.x, this.moveTo.z - this.moveFrom.z);
+      return true;
+    }
+    update(dt) {
+      if (this.state === 'MOVING') {
+        this.moveProgress = Math.min(1, this.moveProgress + dt / 0.28);
+        const t = this.moveProgress * this.moveProgress * (3 - 2 * this.moveProgress);
+        this.render.x = lerp(this.moveFrom.x, this.moveTo.x, t);
+        this.render.z = lerp(this.moveFrom.z, this.moveTo.z, t);
+        this.render.y = lerp(this.moveFrom.y, this.moveTo.y, t);
+        if (this.moveProgress >= 1) this.state = 'IDLE';
+      }
+    }
+  }
+
+  class SpriteFactory {
+    constructor() { this.cache = new Map(); }
+    canvas(key, width, height, draw) {
+      if (this.cache.has(key)) return this.cache.get(key);
+      const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false; draw(ctx, width, height);
+      this.cache.set(key, canvas); return canvas;
+    }
+    player(direction = 'S', frame = 0) {
+      return this.canvas(`player_${direction}_${frame}`, 20, 28, ctx => {
+        ctx.clearRect(0, 0, 20, 28);
+        const step = frame % 2;
+        ctx.fillStyle = '#101521'; ctx.fillRect(6, 22 + step, 3, 5 - step); ctx.fillRect(11, 22 + (1-step), 3, 4 + step);
+        ctx.fillStyle = '#315a8a'; ctx.fillRect(5, 13, 10, 10);
+        ctx.fillStyle = '#67b7d1'; ctx.fillRect(7, 14, 6, 8);
+        ctx.fillStyle = '#ffd1a3'; ctx.fillRect(6, 6, 8, 8);
+        ctx.fillStyle = '#9d3045'; ctx.fillRect(4, 3, 12, 5); ctx.fillRect(direction === 'E' ? 12 : 3, 6, 5, 2);
+        ctx.fillStyle = '#1a1b24';
+        if (direction === 'N') { ctx.fillRect(7, 7, 6, 2); }
+        else if (direction === 'S') { ctx.fillRect(7, 9, 2, 2); ctx.fillRect(11, 9, 2, 2); }
+        else if (direction === 'E') ctx.fillRect(12, 9, 2, 2);
+        else ctx.fillRect(6, 9, 2, 2);
+        ctx.fillStyle = '#f1c84e'; ctx.fillRect(3, 14, 2, 5); ctx.fillRect(15, 14, 2, 5);
+      });
+    }
+    npc(id, direction = 'S') {
+      const palettes = {
+        guide_mira: ['#3c224f','#e2a5ff','#f1c6a8','#29353f'],
+        warden_lyle: ['#263d30','#79c28d','#e6b68f','#182029'],
+        researcher_ena: ['#5b2945','#ef8fbf','#f4c3aa','#f1f0e8'],
+        default: ['#33435a','#84a7dc','#e7ba96','#222936']
+      };
+      const p = palettes[id] || palettes.default;
+      return this.canvas(`npc_${id}_${direction}`, 20, 28, ctx => {
+        ctx.fillStyle = p[3]; ctx.fillRect(6, 22, 3, 6); ctx.fillRect(11, 22, 3, 6);
+        ctx.fillStyle = p[0]; ctx.fillRect(4, 13, 12, 10);
+        ctx.fillStyle = p[1]; ctx.fillRect(7, 14, 6, 8);
+        ctx.fillStyle = p[2]; ctx.fillRect(6, 6, 8, 8);
+        ctx.fillStyle = p[0]; ctx.fillRect(5, 3, 10, 5);
+        ctx.fillStyle = '#1b1d24';
+        if (direction === 'S') { ctx.fillRect(7, 9, 2, 2); ctx.fillRect(11, 9, 2, 2); }
+        else if (direction === 'N') ctx.fillRect(7, 7, 6, 2);
+        else if (direction === 'E') ctx.fillRect(12, 9, 2, 2);
+        else ctx.fillRect(6, 9, 2, 2);
+      });
+    }
+    monster(speciesId, back = false) {
+      const sp = SPECIES[speciesId];
+      return this.canvas(`monster_${speciesId}_${back}`, 48, 48, (ctx, w, h) => {
+        const [dark, main, light, accent] = sp.palette;
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(24, 40, 15, 4, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = dark;
+        if (sp.silhouette === 'fox') {
+          ctx.fillRect(12, 15, 24, 22); ctx.fillRect(10, 8, 8, 13); ctx.fillRect(30, 8, 8, 13); ctx.fillRect(33, 29, 10, 7);
+        } else if (sp.silhouette === 'bird') {
+          ctx.fillRect(15, 13, 20, 25); ctx.fillRect(5, 20, 12, 10); ctx.fillRect(33, 20, 10, 10); ctx.fillRect(20, 7, 8, 9);
+        } else if (sp.silhouette === 'fin') {
+          ctx.fillRect(10, 16, 28, 20); ctx.fillRect(34, 10, 8, 18); ctx.fillRect(4, 23, 10, 8);
+        } else if (sp.silhouette === 'bud') {
+          ctx.fillRect(13, 16, 22, 22); ctx.fillRect(8, 11, 12, 12); ctx.fillRect(28, 9, 11, 14);
+        } else if (sp.silhouette === 'cloud') {
+          ctx.fillRect(9, 18, 30, 15); ctx.fillRect(14, 11, 13, 13); ctx.fillRect(25, 14, 12, 12);
+        } else {
+          ctx.fillRect(13, 15, 22, 23); ctx.fillRect(10, 8, 13, 14); ctx.fillRect(26, 7, 12, 15);
+        }
+        ctx.fillStyle = main; ctx.fillRect(15, 16, 18, 18); ctx.fillRect(18, 11, 12, 10);
+        ctx.fillStyle = light; ctx.fillRect(19, 18, 10, 11); ctx.fillRect(16, 33, 6, 5); ctx.fillRect(27, 33, 6, 5);
+        ctx.fillStyle = accent; ctx.fillRect(20, 12, 8, 4);
+        if (!back) { ctx.fillStyle = '#11151c'; ctx.fillRect(19, 20, 3, 3); ctx.fillRect(27, 20, 3, 3); ctx.fillRect(22, 26, 5, 2); }
+        else { ctx.fillStyle = dark; ctx.fillRect(18, 20, 12, 3); }
+      });
+    }
+  }
+
+  class SoftwareWorldRenderer {
+    constructor(canvas, game, spriteFactory) {
+      this.canvas = canvas; this.ctx = canvas.getContext('2d', { alpha: false }); this.game = game; this.sprites = spriteFactory;
+      if (!this.ctx) { EWRendererFailure.raise('world-canvas-2d-unavailable'); throw new Error('CANVAS_2D_UNAVAILABLE'); }
+      // A lost context is a pause we can report, not a silent freeze.
+      canvas.addEventListener('contextlost', e => { e.preventDefault(); EWRendererFailure.raise('world-canvas-context-lost'); }, false);
+      this.width = 480; this.height = 270; this.canvas.width = this.width; this.canvas.height = this.height;
+      this.ctx.imageSmoothingEnabled = false;
+      this.camera = { sx: 0, sy: 0 };
+      this.tileW = 28; this.tileH = 14; this.elevationPx = 18;
+      this.visible = true; this.kind = 'Software 2.5D';
+      this.waterTime = 0;
+    }
+    setVisible(visible) { this.visible = visible; this.canvas.style.display = visible ? 'block' : 'none'; }
+    project(x, z, y = 0) {
+      const sx = (x - z) * this.tileW * 0.5;
+      const sy = (x + z) * this.tileH * 0.5 - y * this.elevationPx;
+      return { x: sx - this.camera.sx + this.width / 2, y: sy - this.camera.sy + this.height / 2 };
+    }
+    colorForGround(ground, variant = 0) {
+      const colors = {
+        [Ground.MEADOW]: ['#5a9f4d','#68aa55'], [Ground.PATH]: ['#c8ad78','#d2b985'], [Ground.TALL_GRASS]: ['#3f873b','#4a963f'],
+        [Ground.WATER]: ['#2d79a5','#318ab8'], [Ground.STONE]: ['#8d887e','#9d978a'], [Ground.FLOOR]: ['#bb8a62','#c99a70'],
+        [Ground.BRIDGE]: ['#9e704d','#b17f58'], [Ground.FLOWERS]: ['#65a34e','#77b85c']
+      };
+      return (colors[ground] || colors[Ground.MEADOW])[variant & 1];
+    }
+    drawDiamond(ctx, p, fill) {
+      ctx.beginPath(); ctx.moveTo(p.x, p.y - this.tileH/2); ctx.lineTo(p.x + this.tileW/2, p.y); ctx.lineTo(p.x, p.y + this.tileH/2); ctx.lineTo(p.x - this.tileW/2, p.y); ctx.closePath();
+      ctx.fillStyle = fill; ctx.fill();
+    }
+    drawTile(cell, x, z) {
+      const ctx = this.ctx; const p = this.project(x, z, cell.height);
+      if (p.x < -40 || p.x > this.width + 40 || p.y < -60 || p.y > this.height + 60) return;
+      const sideDepth = 5 + cell.height * this.elevationPx;
+      if (cell.height > 0) {
+        ctx.fillStyle = '#5c594f'; ctx.beginPath(); ctx.moveTo(p.x-this.tileW/2,p.y); ctx.lineTo(p.x,p.y+this.tileH/2); ctx.lineTo(p.x,p.y+this.tileH/2+sideDepth); ctx.lineTo(p.x-this.tileW/2,p.y+sideDepth); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#6e695d'; ctx.beginPath(); ctx.moveTo(p.x+this.tileW/2,p.y); ctx.lineTo(p.x,p.y+this.tileH/2); ctx.lineTo(p.x,p.y+this.tileH/2+sideDepth); ctx.lineTo(p.x+this.tileW/2,p.y+sideDepth); ctx.closePath(); ctx.fill();
+      }
+      this.drawDiamond(ctx, p, this.colorForGround(cell.ground, (x + z) & 1));
+      ctx.strokeStyle = 'rgba(18,25,24,0.17)'; ctx.lineWidth = 0.7; ctx.stroke();
+      if (cell.ground === Ground.WATER) {
+        const wave = Math.sin(this.waterTime * 2 + x * 0.8 + z) * 2;
+        ctx.strokeStyle = 'rgba(172,232,245,0.55)'; ctx.beginPath(); ctx.moveTo(p.x - 8 + wave, p.y); ctx.lineTo(p.x + 7 + wave, p.y); ctx.stroke();
+      } else if (cell.ground === Ground.TALL_GRASS) {
+        ctx.strokeStyle = '#285f2b'; ctx.lineWidth = 1;
+        for (let i = -8; i <= 8; i += 5) { ctx.beginPath(); ctx.moveTo(p.x+i,p.y+3); ctx.lineTo(p.x+i-1,p.y-5-((x+z+i)&2)); ctx.stroke(); }
+      } else if (cell.ground === Ground.FLOWERS) {
+        ctx.fillStyle = (x + z) % 2 ? '#ffd36b' : '#ff92b2'; ctx.fillRect(p.x - 3, p.y - 3, 2, 2); ctx.fillRect(p.x + 4, p.y, 2, 2);
+      } else if (cell.surface === Surface.STAIRS) {
+        ctx.strokeStyle = '#5f594f'; for (let i = -5; i <= 5; i += 3) { ctx.beginPath(); ctx.moveTo(p.x-8,p.y+i*0.4); ctx.lineTo(p.x+8,p.y+i*0.4); ctx.stroke(); }
+      }
+      if (cell.ledge) {
+        ctx.strokeStyle = '#efe2ac'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x - 10, p.y + 3); ctx.lineTo(p.x + 10, p.y + 3); ctx.stroke();
+      }
+    }
+    drawBuilding() {
+      const ctx = this.ctx; const game = this.game;
+      const inside = game.isPlayerInsideLodge();
+      const p = this.project(4.5, 15.8, 0);
+      const w = 72, h = 62;
+      ctx.fillStyle = '#6b4939'; ctx.fillRect(p.x - w/2, p.y - h + 15, w, h - 15);
+      ctx.fillStyle = '#a56b4e'; ctx.fillRect(p.x - 30, p.y - h + 20, 60, 35);
+      ctx.fillStyle = '#ffe1a1'; ctx.fillRect(p.x - 22, p.y - h + 28, 13, 12); ctx.fillRect(p.x + 9, p.y - h + 28, 13, 12);
+      ctx.fillStyle = '#3a2c2b'; ctx.fillRect(p.x - 7, p.y - 16, 14, 24);
+      const playerBehind = game.player.render.z < 18 && game.player.render.z > 13 && game.player.render.x >= 2 && game.player.render.x <= 7;
+      const opacity = inside ? 0.08 : playerBehind ? 0.32 : 1;
+      ctx.save(); ctx.globalAlpha = opacity;
+      ctx.fillStyle = '#59394d';
+      ctx.beginPath(); ctx.moveTo(p.x - 44, p.y - h + 17); ctx.lineTo(p.x, p.y - h - 20); ctx.lineTo(p.x + 44, p.y - h + 17); ctx.lineTo(p.x, p.y - h + 37); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#d89c6a'; ctx.stroke();
+      if (opacity < 0.8) this.applyBayerDither(p.x - 44, p.y - h - 20, 88, 57, opacity);
+      ctx.restore();
+      ctx.fillStyle = '#d8c59a'; ctx.font = '7px monospace'; ctx.textAlign = 'center'; ctx.fillText('RESEARCH LODGE', p.x, p.y - h + 12);
+    }
+    applyBayerDither(x, y, w, h, opacity) {
+      const matrix = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+      const ctx = this.ctx; ctx.save(); ctx.globalAlpha = 0.65; ctx.fillStyle = '#18232b';
+      const threshold = opacity * 16;
+      for (let py = Math.floor(y); py < y+h; py += 2) for (let px = Math.floor(x); px < x+w; px += 2) if (matrix[Math.abs(py)%4][Math.abs(px)%4] >= threshold) ctx.fillRect(px, py, 1, 1);
+      ctx.restore();
+    }
+    drawShadow(render, scale = 1) {
+      const p = this.project(render.x, render.z, render.y);
+      this.ctx.save(); this.ctx.globalAlpha = 0.25; this.ctx.fillStyle = '#101515'; this.ctx.beginPath(); this.ctx.ellipse(p.x, p.y + 4, 8*scale, 3*scale, 0, 0, Math.PI*2); this.ctx.fill(); this.ctx.restore();
+    }
+    drawActor(render, canvas, scale = 1, yOffset = 0) {
+      const p = this.project(render.x, render.z, render.y + (render.arc || 0));
+      const w = canvas.width * scale, h = canvas.height * scale;
+      this.ctx.drawImage(canvas, Math.round(p.x - w/2), Math.round(p.y - h + 5 - yOffset), Math.round(w), Math.round(h));
+    }
+    drawItem(entity) {
+      const p = this.project(entity.x, entity.z, entity.y || 0);
+      this.ctx.fillStyle = '#e2f7ff'; this.ctx.beginPath(); this.ctx.arc(p.x, p.y - 7, 4, 0, Math.PI*2); this.ctx.fill();
+      this.ctx.strokeStyle = '#6ed8ff'; this.ctx.stroke(); this.ctx.fillStyle = '#ffbe4b'; this.ctx.fillRect(p.x-1,p.y-9,2,4);
+    }
+    update(dt) {
+      if (!this.visible) return;
+      this.waterTime += dt;
+      const target = this.projectRaw(this.game.player.render.x, this.game.player.render.z, this.game.player.render.y);
+      this.camera.sx = damp(this.camera.sx, target.x, 7, dt);
+      this.camera.sy = damp(this.camera.sy, target.y - 18, 7, dt);
+    }
+    projectRaw(x,z,y=0) { return { x:(x-z)*this.tileW*0.5, y:(x+z)*this.tileH*0.5-y*this.elevationPx }; }
+    render() {
+      if (!this.visible) return;
+      const ctx = this.ctx; ctx.imageSmoothingEnabled = false;
+      const tod = this.game.timeOfDay;
+      const sky = tod < 0.2 || tod > 0.82 ? '#18233e' : tod < 0.3 ? '#d77f6a' : tod > 0.7 ? '#da8a61' : '#86c6d8';
+      ctx.fillStyle = sky; ctx.fillRect(0,0,this.width,this.height);
+      ctx.fillStyle = tod < 0.2 || tod > 0.82 ? '#24304b' : '#bed6c1'; ctx.fillRect(0, this.height*0.35, this.width, this.height*0.65);
+      const map = this.game.map;
+      const cells = [];
+      map.eachCell((cell,x,z) => cells.push({ cell,x,z,depth:x+z+cell.height*0.4 }));
+      cells.sort((a,b)=>a.depth-b.depth);
+      for (const item of cells) this.drawTile(item.cell,item.x,item.z);
+      this.drawBuilding();
+      const actors = [];
+      for (const npc of this.game.npcs) {
+        if (npc.flag != null && this.game.flags.get(npc.flag) && npc.type === 'ITEM') continue;
+        actors.push({ depth:npc.render.x+npc.render.z+npc.render.y*0.5, kind:'npc', npc });
+      }
+      actors.push({ depth:this.game.player.render.x+this.game.player.render.z+this.game.player.render.y*0.5+0.1, kind:'player' });
+      actors.sort((a,b)=>a.depth-b.depth);
+      for (const actor of actors) {
+        if (actor.kind === 'player') {
+          const jumpScale = 1 - (this.game.player.render.arc || 0)*0.18;
+          this.drawShadow(this.game.player.render, clamp(jumpScale,0.45,1));
+          this.drawActor(this.game.player.render, this.sprites.player(this.game.player.facing, this.game.player.walkFrame), 0.72);
+        } else {
+          const npc = actor.npc;
+          if (npc.type === 'ITEM') { this.drawItem(npc); continue; }
+          this.drawShadow(npc.render, 0.85); this.drawActor(npc.render, this.sprites.npc(npc.id,npc.facing),0.68);
+          if (npc.alertTimer > 0) {
+            const p=this.project(npc.render.x,npc.render.z,npc.render.y); ctx.fillStyle='#fff'; ctx.fillRect(p.x-5,p.y-34,10,12); ctx.fillStyle='#e8424c'; ctx.font='bold 10px monospace'; ctx.textAlign='center'; ctx.fillText('!',p.x,p.y-24);
+          }
+        }
+      }
+      // Foreground grass partially occludes feet.
+      const pc = map.getCell(this.game.player.grid.x,this.game.player.grid.z);
+      if (pc?.surface === Surface.TALL_GRASS && this.game.player.motionState !== MoveState.VAULTING) {
+        const p=this.project(this.game.player.render.x,this.game.player.render.z,this.game.player.render.y); ctx.strokeStyle='#245b2a'; ctx.lineWidth=2;
+        for(let i=-8;i<=8;i+=4){ctx.beginPath();ctx.moveTo(p.x+i,p.y+6);ctx.lineTo(p.x+i-1,p.y-2);ctx.stroke();}
+      }
+      // Time-of-day grade.
+      ctx.save();
+      if (tod < 0.18 || tod > 0.84) { ctx.fillStyle='rgba(35,45,92,0.34)'; ctx.fillRect(0,0,this.width,this.height); }
+      else if (tod < 0.3 || tod > 0.7) { ctx.fillStyle='rgba(255,128,72,0.10)'; ctx.fillRect(0,0,this.width,this.height); }
+      ctx.restore();
+    }
+    getStats() { return { calls: 1, triangles: 0, geometries: 0, textures: this.sprites.cache.size }; }
+    dispose() {}
+  }
+
+  // ThreeWorldRenderer removed at P1: the CDN loader was the file's only external
+  // request. The software 2.5D renderer is primary and complete.
+
+  class PerformanceProfiler {
+    constructor(element) { this.el=element;this.visible=false;this.last=performance.now();this.ema=16.67;this.alpha=0.08;this.history=[];this.heapHistory=[]; }
+    toggle(){this.visible=!this.visible;this.el.hidden=!this.visible;}
+    update(renderer){if(!this.visible)return;const now=performance.now(),dt=now-this.last;this.last=now;this.ema=this.alpha*dt+(1-this.alpha)*this.ema;const fps=Math.round(1000/Math.max(1,this.ema));const stats=renderer?.getStats?.()||{};let heap='N/A';if(performance.memory){heap=(performance.memory.usedJSHeapSize/1048576).toFixed(1)+' MB';this.heapHistory.push(Number.parseFloat(heap));if(this.heapHistory.length>120)this.heapHistory.shift();}this.history.push(fps);if(this.history.length>120)this.history.shift();this.el.innerHTML=`<strong>ENGINE PROFILER</strong><br>FPS ${fps} · ${this.ema.toFixed(1)} ms<br>Draw calls ${stats.calls??0}<br>Triangles ${stats.triangles??0}<br>Geom / Tex ${stats.geometries??0} / ${stats.textures??0}<br>Heap ${heap}<br>Renderer ${renderer?.kind||'Unknown'}`;}
+  }
+
+  class DialogueController {
+    constructor(ui) { this.ui=ui;this.active=false;this.lines=[];this.index=0;this.display='';this.charIndex=0;this.timer=0;this.charDelay=0.024;this.resolve=null;this.previousMode=null; }
+    show(lines, game, options={}) {
+      if (!Array.isArray(lines)) lines=[String(lines)];
+      if (this.resolve) { const old=this.resolve; this.resolve=null; old(); }
+      this.lines=lines;this.index=0;this.display='';this.charIndex=0;this.timer=0;this.active=true;this.previousMode=options.preserveMode?game.mode:(game.mode===GameMode.BATTLE?GameMode.BATTLE:GameMode.OVERWORLD);if(game.mode!==GameMode.BATTLE)game.mode=GameMode.DIALOGUE;
+      return new Promise(resolve=>this.resolve=resolve);
+    }
+    update(dt,audio){if(!this.active)return;if(this.charIndex<this.lines[this.index].length){this.timer+=dt;while(this.timer>=this.charDelay&&this.charIndex<this.lines[this.index].length){this.timer-=this.charDelay;this.charIndex++;this.display=this.lines[this.index].slice(0,this.charIndex);if(this.charIndex%3===0)audio?.pulse(700+(this.charIndex%5)*20,0.018,'25',0.018);}}}
+    advance(game){if(!this.active)return false;const line=this.lines[this.index];if(this.charIndex<line.length){this.charIndex=line.length;this.display=line;return true;}if(this.index<this.lines.length-1){this.index++;this.display='';this.charIndex=0;this.timer=0;return true;}this.active=false;if(game.mode===GameMode.DIALOGUE)game.mode=this.previousMode||GameMode.OVERWORLD;const r=this.resolve;this.resolve=null;if(r)r();return true;}
+  }
+
+  class UIOverlay {
+    constructor(canvas, game, sprites) {
+      this.canvas=canvas;this.ctx=canvas.getContext('2d');if(!this.ctx){EWRendererFailure.raise('ui-canvas-2d-unavailable');throw new Error('CANVAS_2D_UNAVAILABLE');}canvas.addEventListener('contextlost',e=>{e.preventDefault();EWRendererFailure.raise('ui-canvas-context-lost');},false);this.game=game;this.sprites=sprites;this.dpr=1;this.w=window.innerWidth;this.h=window.innerHeight;this.regions=[];this.flash=0;this.shake=0;this.dialogue=new DialogueController(this);this.menuIndex=0;this.menuItems=[];
+      this.resize();window.addEventListener('resize',()=>this.resize());
+      canvas.addEventListener('pointerdown',e=>this.onPointer(e));
+    }
+    resize(){this.w=window.innerWidth;this.h=window.innerHeight;this.dpr=Math.min(window.devicePixelRatio||1,2);this.canvas.width=Math.floor(this.w*this.dpr);this.canvas.height=Math.floor(this.h*this.dpr);this.canvas.style.width=this.w+'px';this.canvas.style.height=this.h+'px';this.ctx.setTransform(this.dpr,0,0,this.dpr,0,0);this.ctx.imageSmoothingEnabled=false;}
+    frame(x,y,w,h,opts={}){const c=this.ctx;c.save();c.fillStyle=opts.shadow||'rgba(0,0,0,.4)';c.fillRect(x+4,y+4,w,h);c.fillStyle=opts.bg||'rgba(16,23,37,.94)';c.fillRect(x,y,w,h);c.strokeStyle=opts.outer||'#f5f6ee';c.lineWidth=2;c.strokeRect(x+1,y+1,w-2,h-2);c.strokeStyle=opts.inner||'#5b7391';c.strokeRect(x+5,y+5,w-10,h-10);c.restore();}
+    text(text,x,y,size=14,color='#fff',align='left',weight='bold'){const c=this.ctx;c.font=`${weight} ${size}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;c.fillStyle=color;c.textAlign=align;c.textBaseline='top';c.fillText(text,x,y);}
+    wrap(text,maxWidth,size=15){const c=this.ctx;c.font=`bold ${size}px ui-monospace, monospace`;const words=text.split(/\s+/);const lines=[];let current='';for(const word of words){const test=current?`${current} ${word}`:word;if(c.measureText(test).width<=maxWidth)current=test;else{if(current)lines.push(current);current=word;}}if(current)lines.push(current);return lines;}
+    addRegion(x,y,w,h,action,label){this.regions.push({x,y,w,h,action,label});}
+    onPointer(e){const rect=this.canvas.getBoundingClientRect();const x=(e.clientX-rect.left)*this.w/rect.width,y=(e.clientY-rect.top)*this.h/rect.height;for(let i=this.regions.length-1;i>=0;i--){const r=this.regions[i];if(x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h){this.game.handleUIAction(r.action);return;}}if(this.dialogue.active)this.game.handleConfirm();}
+    update(dt){this.dialogue.update(dt,this.game.audio);this.flash=Math.max(0,this.flash-dt*3);this.shake=Math.max(0,this.shake-dt*4);}
+    drawOverworldHUD(){const g=this.game;this.frame(12,12,250,72,{bg:'rgba(13,23,35,.86)'});this.text(g.currentLocationName(),26,24,15,'#f6d979');this.text(`Partner  ${g.party[0].name}  Lv${g.party[0].level}`,26,45,12,'#eef6ff');this.text(`Pods ${g.inventory.prism_pod||0}  •  ${g.renderer.kind}`,26,61,10,'#a9bdd0','left','normal');
+      const objectiveW=Math.min(320,this.w-24);this.frame(this.w-objectiveW-12,12,objectiveW,52,{bg:'rgba(13,23,35,.78)'});this.text('FIELD NOTE',this.w-objectiveW,22,10,'#71d5c3');this.text(g.objective,this.w-objectiveW,38,11,'#fff','left','normal');
+    }
+    drawDialogue(){if(!this.dialogue.active)return;const boxW=Math.min(720,this.w-30),boxH=116,x=(this.w-boxW)/2,y=this.h-boxH-18;this.frame(x,y,boxW,boxH);const lines=this.wrap(this.dialogue.display,boxW-42,16);lines.slice(0,3).forEach((line,i)=>this.text(line,x+20,y+20+i*24,16,'#fff','left','bold'));if(this.dialogue.charIndex>=this.dialogue.lines[this.dialogue.index].length&&Math.sin(performance.now()/180)>0){this.text('▼',x+boxW-30,y+boxH-28,16,'#f6d979');}this.addRegion(x,y,boxW,boxH,'CONFIRM','Advance dialogue');}
+    drawMenu(){const items=this.game.getPauseMenuItems();this.menuItems=items;const w=Math.min(430,this.w-30),h=70+items.length*44,x=(this.w-w)/2,y=(this.h-h)/2;this.frame(x,y,w,h,{bg:'rgba(10,18,31,.97)'});this.text('FIELD KIT',x+22,y+18,19,'#f6d979');items.forEach((item,i)=>{const ry=y+54+i*44;const selected=i===this.menuIndex;this.ctx.fillStyle=selected?'rgba(111,213,195,.2)':'rgba(255,255,255,.035)';this.ctx.fillRect(x+12,ry,w-24,36);this.text(selected?'▶':' ',x+22,ry+9,13,'#71d5c3');this.text(item.label,x+45,ry+8,14,item.disabled?'#68727d':'#fff');this.text(item.detail||'',x+w-20,ry+10,10,'#8fa7bb','right','normal');this.addRegion(x+12,ry,w-24,36,{type:'MENU_SELECT',index:i},item.label);});}
+    hpBar(x,y,w,current,max){const ratio=clamp(current/max,0,1);this.ctx.fillStyle='#222b32';this.ctx.fillRect(x,y,w,10);this.ctx.fillStyle=ratio<=.2?'#f05c5c':ratio<=.5?'#f2d15b':'#62d07b';this.ctx.fillRect(x,y,Math.floor(w*ratio),10);this.ctx.fillStyle='rgba(255,255,255,.28)';this.ctx.fillRect(x,y,Math.floor(w*ratio),2);}
+    drawBattleMonster(mon,x,y,back,scale,animTarget){const img=this.sprites.monster(mon.speciesId,back);let ox=0,oy=0;if(this.game.battle?.anim?.target===animTarget){const a=this.game.battle.anim;ox=Math.sin(performance.now()*0.06)*a.shake*8;oy=a.recoil?Math.sin(performance.now()*0.03)*4:0;}this.ctx.save();if(this.game.battle?.anim?.flashTarget===animTarget&&Math.sin(performance.now()*0.04)>0)this.ctx.globalAlpha=.35;this.ctx.drawImage(img,x-img.width*scale/2+ox,y-img.height*scale+oy,img.width*scale,img.height*scale);this.ctx.restore();}
+    drawBattle(){const b=this.game.battle;if(!b)return;const c=this.ctx;c.save();const grad=c.createLinearGradient(0,0,0,this.h);grad.addColorStop(0,'#203c5a');grad.addColorStop(.55,'#709c8a');grad.addColorStop(1,'#253b39');c.fillStyle=grad;c.fillRect(0,0,this.w,this.h);c.fillStyle='rgba(255,255,255,.12)';for(let i=0;i<9;i++){c.beginPath();c.arc((i*139+80)%this.w,(i*71+40)%(this.h*.55),18+(i%3)*8,0,Math.PI*2);c.fill();}
+      c.fillStyle='rgba(22,29,36,.28)';c.beginPath();c.ellipse(this.w*.73,this.h*.43,110,28,0,0,Math.PI*2);c.fill();c.beginPath();c.ellipse(this.w*.27,this.h*.72,125,32,0,0,Math.PI*2);c.fill();
+      this.drawBattleMonster(b.enemy,this.w*.72,this.h*.47,false,Math.min(3.3,this.w/300),'enemy');this.drawBattleMonster(b.player,this.w*.28,this.h*.77,true,Math.min(3.8,this.w/270),'player');
+      const enemyW=Math.min(310,this.w*.46),playerW=Math.min(330,this.w*.48);this.frame(18,24,enemyW,82,{bg:'rgba(15,23,35,.9)'});this.text(b.enemy.name.toUpperCase(),34,38,16,'#fff');this.text(`Lv${b.enemy.level}`,18+enemyW-26,39,13,'#f6d979','right');this.text('HP',35,66,10,'#f6d979');this.hpBar(65,67,enemyW-90,b.enemyDisplayHP,b.enemy.stats.hp);
+      this.frame(this.w-playerW-18,this.h-226,playerW,92,{bg:'rgba(15,23,35,.92)'});this.text(b.player.name.toUpperCase(),this.w-playerW, this.h-211,16,'#fff');this.text(`Lv${b.player.level}`,this.w-44,this.h-210,13,'#f6d979','right');this.text('HP',this.w-playerW+3,this.h-181,10,'#f6d979');this.hpBar(this.w-playerW+34,this.h-180,playerW-68,b.playerDisplayHP,b.player.stats.hp);this.text(`${Math.ceil(b.playerDisplayHP)}/${b.player.stats.hp}`,this.w-36,this.h-162,12,'#fff','right','normal');
+      const msgW=Math.min(700,this.w-24);this.frame(12,this.h-126,msgW,114,{bg:'rgba(10,17,29,.96)'});const msgLines=this.wrap(b.message||'Choose an action.',msgW-38,15);msgLines.slice(0,3).forEach((line,i)=>this.text(line,30,this.h-105+i*23,15,'#fff'));
+      if(!b.busy)this.drawBattleMenu(b);
+      if(b.captureAnim){const a=b.captureAnim;const t=a.t;const sx=this.w*.25,sy=this.h*.7,tx=this.w*.71,ty=this.h*.42;const x=lerp(sx,tx,t),y=lerp(sy,ty,t)-Math.sin(Math.PI*t)*this.h*.25;c.fillStyle='#e8fbff';c.beginPath();c.arc(x,y,10,0,Math.PI*2);c.fill();c.strokeStyle='#66dcf0';c.lineWidth=3;c.stroke();c.fillStyle='#ffcf51';c.fillRect(x-2,y-8,4,6);}
+      if(this.flash>0){c.fillStyle=`rgba(255,255,255,${Math.min(.45,this.flash)})`;c.fillRect(0,0,this.w,this.h);}c.restore();}
+    drawBattleMenu(b){const panelW=Math.min(360,this.w*.45),panelH=b.menu==='moves'?174:142,x=this.w-panelW-14,y=this.h-panelH-12;this.frame(x,y,panelW,panelH,{bg:'rgba(9,16,28,.98)'});let entries=[];if(b.menu==='main')entries=[['FIGHT','BATTLE_FIGHT'],['BAG','BATTLE_BAG'],['TEAM','BATTLE_TEAM'],['RUN','BATTLE_RUN']];else if(b.menu==='moves')entries=b.player.moves.map((m,i)=>[`${m.name}\n${m.type.toUpperCase()}  ${m.currentPP}/${m.pp}`,{type:'BATTLE_MOVE',index:i}]);else if(b.menu==='bag')entries=[[`PRISM POD  x${this.game.inventory.prism_pod||0}`,'BATTLE_POD'],[`FIELD TONIC  x${this.game.inventory.field_tonic||0}`,'BATTLE_TONIC'],['BACK','BATTLE_BACK']];
+      const cols=2,rows=Math.ceil(entries.length/cols),gap=8,pad=14,cellW=(panelW-pad*2-gap)/2,cellH=(panelH-pad*2-gap*(rows-1))/rows;entries.forEach((entry,i)=>{const col=i%2,row=Math.floor(i/2),rx=x+pad+col*(cellW+gap),ry=y+pad+row*(cellH+gap);const selected=i===b.cursor;this.ctx.fillStyle=selected?'rgba(246,217,121,.22)':'rgba(255,255,255,.045)';this.ctx.fillRect(rx,ry,cellW,cellH);this.ctx.strokeStyle=selected?'#f6d979':'#42516a';this.ctx.strokeRect(rx+.5,ry+.5,cellW-1,cellH-1);const lines=String(entry[0]).split('\n');this.text(lines[0],rx+12,ry+10,13,selected?'#fff':'#dce6ef');if(lines[1])this.text(lines[1],rx+12,ry+30,9,TYPE_COLORS[lines[1].split(' ')[0].toLowerCase()]||'#9fb2c3','left','normal');this.addRegion(rx,ry,cellW,cellH,entry[1],lines[0]);});}
+    render(){const c=this.ctx;c.setTransform(this.dpr,0,0,this.dpr,0,0);c.clearRect(0,0,this.w,this.h);this.regions=[];if(this.game.mode===GameMode.BATTLE)this.drawBattle();else{this.drawOverworldHUD();if(this.game.mode===GameMode.MENU)this.drawMenu();}this.drawDialogue();if(this.game.toast){this.frame(this.w/2-170,90,340,45,{bg:'rgba(12,20,31,.92)'});this.text(this.game.toast.text,this.w/2,104,12,this.game.toast.color||'#fff','center');}if(this.game.settings.highContrast){c.strokeStyle='#fff';c.lineWidth=2;c.strokeRect(1,1,this.w-2,this.h-2);}}
+  }
+
+  class PlayerController {
+    constructor(spawn, map, game) {
+      this.map=map;this.game=game;this.grid={x:spawn.x,z:spawn.z,y:spawn.y||0};this.render={x:spawn.x,z:spawn.z,y:spawn.y||0,arc:0};this.facing=spawn.facing||'N';this.motionState=MoveState.IDLE;this.progress=0;this.duration=.22;this.from=null;this.to=null;this.buffered=null;this.walkFrame=0;
+    }
+    directionMatchesLedge(direction,ledge){return direction===ledge;}
+    tryMove(dx,dz){if(this.motionState!==MoveState.IDLE){this.buffered={dx,dz};return false;}if(this.game.mode!==GameMode.OVERWORLD)return false;const direction=directionFromDelta(dx,dz);this.facing=direction;const current=this.map.getCell(this.grid.x,this.grid.z);if(!current)return false;
+      if(this.directionMatchesLedge(direction,current.ledge)){
+        const landing={x:this.grid.x+dx*2,z:this.grid.z+dz*2};const landingCell=this.map.getCell(landing.x,landing.z);if(landingCell&&landingCell.surface!==Surface.BLOCKED&&landingCell.surface!==Surface.WATER&&landingCell.height===current.height-1){this.startMotion(landing.x,landing.z,landingCell.height,MoveState.VAULTING,.43);this.game.audio.playLedge();this.game.haptics.trigger('ledge');return true;}this.game.bump();return false;
+      }
+      const tx=this.grid.x+dx,tz=this.grid.z+dz,target=this.map.getCell(tx,tz);if(!target||target.surface===Surface.BLOCKED||target.surface===Surface.WATER||this.game.isOccupied(tx,tz)){this.game.bump();return false;}const diff=target.height-current.height;if(diff===0){this.startMotion(tx,tz,target.height,MoveState.WALKING,this.game.input.sprint?.16:.23);return true;}if(Math.abs(diff)===1&&(current.surface===Surface.STAIRS||target.surface===Surface.STAIRS)){this.startMotion(tx,tz,target.height,MoveState.STAIRS,.3);return true;}this.game.bump();return false;
+    }
+    startMotion(x,z,y,state,duration){this.from={...this.grid};this.to={x,z,y};this.grid={x,z,y};this.motionState=state;this.progress=0;this.duration=duration;this.walkFrame^=1;this.game.audio.playStep();this.game.haptics.trigger('step');}
+    update(dt){if(this.motionState===MoveState.IDLE)return;this.progress=Math.min(1,this.progress+dt/this.duration);const smooth=this.progress*this.progress*(3-2*this.progress);this.render.x=lerp(this.from.x,this.to.x,smooth);this.render.z=lerp(this.from.z,this.to.z,smooth);this.render.y=lerp(this.from.y,this.to.y,smooth);this.render.arc=this.motionState===MoveState.VAULTING?4*.75*this.progress*(1-this.progress):0;if(this.progress>=1){const completed=this.motionState;this.render={x:this.grid.x,z:this.grid.z,y:this.grid.y,arc:0};this.motionState=MoveState.IDLE;this.game.onPlayerStepComplete(completed);const b=this.buffered;this.buffered=null;if(b)setTimeout(()=>this.tryMove(b.dx,b.dz),0);}}
+    teleport(x,z,y=null){const cell=this.map.getCell(x,z);this.grid={x,z,y:y??cell?.height??0};this.render={x,z,y:this.grid.y,arc:0};this.motionState=MoveState.IDLE;}
+  }
+
+  class InputManager {
+    constructor(game){this.game=game;this.keys=new Set();this.sprint=false;this.repeatTimer=null;this.activeDirection=null;this.bindKeyboard();this.bindTouch();}
+    bindKeyboard(){window.addEventListener('keydown',e=>{const key=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright',' ','enter'].includes(key))e.preventDefault();if(e.repeat&&['z','x','enter','escape','m','p','t','i'].includes(key))return;this.keys.add(key);this.sprint=e.shiftKey||this.keys.has('shift');if(key==='arrowup'||key==='w')this.move('N');else if(key==='arrowdown'||key==='s')this.move('S');else if(key==='arrowleft'||key==='a')this.move('W');else if(key==='arrowright'||key==='d')this.move('E');else if(key==='z'||key==='enter'||key===' ')this.game.handleConfirm();else if(key==='x'||key==='escape')this.game.handleCancel();else if(key==='m'||key==='tab'){e.preventDefault();this.game.toggleMenu();}else if(key==='p')this.game.profiler.toggle();else if(key==='t')this.game.startWildEncounter(true);else if(key==='i')document.getElementById('map-import')?.click();});window.addEventListener('keyup',e=>{this.keys.delete(e.key.toLowerCase());this.sprint=this.keys.has('shift');});}
+    move(dir){if(this.game.mode===GameMode.BATTLE){this.game.battle?.navigate(dir);return;}if(this.game.mode===GameMode.MENU){this.game.navigateMenu(dir);return;}const v=CARDINALS[dir];this.game.player.tryMove(v.x,v.z);}
+    bindTouch(){const dpad=document.getElementById('touch-dpad');if(!dpad)return;const startRepeat=dir=>{this.activeDirection=dir;this.move(dir);clearInterval(this.repeatTimer);this.repeatTimer=setInterval(()=>this.move(dir),180);};const stop=()=>{this.activeDirection=null;clearInterval(this.repeatTimer);this.repeatTimer=null;};dpad.querySelectorAll('[data-dir]').forEach(btn=>{btn.addEventListener('pointerdown',e=>{e.preventDefault();btn.setPointerCapture?.(e.pointerId);startRepeat(btn.dataset.dir);});btn.addEventListener('pointerup',stop);btn.addEventListener('pointercancel',stop);btn.addEventListener('pointerleave',e=>{if(e.buttons===0)stop();});});document.getElementById('touch-a')?.addEventListener('pointerdown',e=>{e.preventDefault();this.game.haptics.trigger('button');this.game.handleConfirm();});document.getElementById('touch-b')?.addEventListener('pointerdown',e=>{e.preventDefault();this.game.haptics.trigger('button');this.game.handleCancel();});document.getElementById('touch-menu')?.addEventListener('pointerdown',e=>{e.preventDefault();this.game.toggleMenu();});}
+  }
+
+  class BattleController {
+    constructor(game){this.game=game;this.rng=new DeterministicPRNG((Date.now()^0x4d415454)>>>0);this.field=new StatusAndWeatherEngine();this.state='IDLE';this.menu='main';this.cursor=0;this.busy=false;this.message='';this.anim=null;this.captureAnim=null;this.playerDisplayHP=1;this.enemyDisplayHP=1;}
+    start(enemy,trainer=false,trainerName=null){this.player=this.game.party.find(m=>m.currentHP>0)||this.game.party[0];this.enemy=enemy;this.trainer=trainer;this.trainerName=trainerName;this.player.resetBattleState();this.enemy.resetBattleState();this.playerDisplayHP=this.player.currentHP;this.enemyDisplayHP=this.enemy.currentHP;this.state='BOUT_START';this.menu='main';this.cursor=0;this.busy=true;this.message=trainer?`${trainerName} challenges you!`:`A wild ${enemy.name} emerged from the veil!`;this.game.mode=GameMode.BATTLE;this.game.setRendererVisible(false);this.game.audio.playCry(enemy.speciesId);this.game.audio.startBattleMusic();this.openingSequence();}
+    async openingSequence(){await this.game.delay(650);this.message=`Go, ${this.player.name}!`;this.game.audio.playCry(this.player.speciesId);await this.game.delay(500);this.state='MENU_SELECT';this.message='Choose an action.';this.busy=false;}
+    navigate(dir){if(this.busy)return;let count=this.menu==='main'?4:this.menu==='moves'?this.player.moves.length:3;const cols=2;if(dir==='E')this.cursor=Math.min(count-1,this.cursor+1);if(dir==='W')this.cursor=Math.max(0,this.cursor-1);if(dir==='S')this.cursor=Math.min(count-1,this.cursor+cols);if(dir==='N')this.cursor=Math.max(0,this.cursor-cols);this.game.audio.playUI();}
+    confirm(){if(this.busy)return;if(this.menu==='main'){['BATTLE_FIGHT','BATTLE_BAG','BATTLE_TEAM','BATTLE_RUN'].forEach((a,i)=>{if(i===this.cursor)this.game.handleUIAction(a);});}else if(this.menu==='moves')this.selectMove(this.cursor);else if(this.menu==='bag'){if(this.cursor===0)this.usePod();else if(this.cursor===1)this.useTonic();else this.back();}}
+    back(){if(this.busy)return;if(this.menu==='main')return;this.menu='main';this.cursor=0;this.message='Choose an action.';this.game.audio.playUI();}
+    showFight(){if(this.busy)return;this.menu='moves';this.cursor=0;this.message='Select a technique.';this.game.audio.playUI();}
+    showBag(){if(this.busy)return;this.menu='bag';this.cursor=0;this.message='Select a field item.';this.game.audio.playUI();}
+    async showTeam(){if(this.busy)return;this.busy=true;this.message='This vertical slice carries one active partner.';await this.game.delay(700);this.busy=false;this.message='Choose an action.';}
+    async tryRun(){if(this.busy)return;if(this.trainer){this.busy=true;this.message='You cannot leave a Warden challenge.';await this.game.delay(700);this.busy=false;return;}this.busy=true;if(this.rng.random()<.82){this.message='You slipped safely out of the encounter.';await this.game.delay(550);this.end('RUN');}else{this.message='The veil closed the escape route!';await this.game.delay(500);await this.executeEnemyOnly();}}
+    async useTonic(){if(this.busy)return;if((this.game.inventory.field_tonic||0)<=0){this.message='No Field Tonics remain.';return;}if(this.player.currentHP>=this.player.stats.hp){this.message=`${this.player.name} is already at full vitality.`;return;}this.busy=true;this.game.inventory.field_tonic--;const heal=Math.min(20,this.player.stats.hp-this.player.currentHP);this.player.currentHP+=heal;this.message=`Field Tonic restored ${heal} HP.`;this.game.audio.playUI('confirm');await this.game.delay(650);await this.executeEnemyOnly();}
+    async usePod(){if(this.busy)return;if(this.trainer){this.message='Prism Pods cannot bind a Warden partner.';return;}if((this.game.inventory.prism_pod||0)<=0){this.message='No Prism Pods remain.';return;}this.busy=true;this.game.inventory.prism_pod--;this.message='You cast a Prism Pod!';this.game.audio.playCapture('throw');this.captureAnim={t:0};const start=performance.now();while(this.captureAnim&&this.captureAnim.t<1){this.captureAnim.t=Math.min(1,(performance.now()-start)/650);await sleep(16);}this.captureAnim=null;const result=CatchRateCalculator.calculate(this.enemy,1,this.rng);for(let i=0;i<result.shakes;i++){this.message=`The pod resonates${'.'.repeat((i%3)+1)}`;this.game.audio.playCapture('shake');await this.game.delay(420);}if(result.captured){this.game.audio.playCapture('click');this.game.haptics.trigger('capture');this.message=`Signal locked! ${this.enemy.name} joined your field archive.`;this.game.collection[this.enemy.speciesId]=(this.game.collection[this.enemy.speciesId]||0)+1;await this.game.delay(950);this.end('CAPTURED');}else{this.message=result.shakes===0?`${this.enemy.name} broke free instantly!`:`${this.enemy.name} burst out of the pod!`;await this.game.delay(650);await this.executeEnemyOnly();}}
+    resolveOrder(playerMove,enemyMove){const a={mon:this.player,move:playerMove,isPlayer:true},b={mon:this.enemy,move:enemyMove,isPlayer:false};const pa=playerMove.priority||0,pb=enemyMove.priority||0;if(pa!==pb)return pa>pb?[a,b]:[b,a];const sa=this.player.effectiveStat('speed'),sb=this.enemy.effectiveStat('speed');if(sa!==sb)return sa>sb?[a,b]:[b,a];return this.rng.random()<.5?[a,b]:[b,a];}
+    enemyChooseMove(){const usable=this.enemy.moves.filter(m=>m.currentPP>0);return usable.length?usable[this.rng.int(0,usable.length-1)]:MOVES.quick_jab;}
+    async selectMove(index){if(this.busy)return;const move=this.player.moves[index];if(!move||move.currentPP<=0){this.message='That technique has no energy left.';this.game.audio.playUI('error');return;}this.busy=true;this.menu='main';const enemyMove=this.enemyChooseMove();const queue=this.resolveOrder(move,enemyMove);for(const action of queue){if(action.mon.currentHP<=0)continue;const defender=action.isPlayer?this.enemy:this.player;await this.executeAction(action.mon,defender,action.move,action.isPlayer);if(defender.currentHP<=0)break;}await this.afterTurn();}
+    async executeEnemyOnly(){if(this.enemy.currentHP<=0){await this.resolveVictory();return;}const move=this.enemyChooseMove();await this.executeAction(this.enemy,this.player,move,false);await this.afterTurn();}
+    async executeAction(attacker,defender,move,isPlayer){const pre=this.field.preAction(attacker,this.rng);if(pre.message){this.message=pre.message;await this.game.delay(500);}if(!pre.canMove)return;move.currentPP=Math.max(0,(move.currentPP??move.pp)-1);this.message=`${attacker.name} used ${move.name}!`;this.game.audio.playEnergy(move.type);await this.game.delay(380);if(this.rng.random()*100>move.accuracy){this.message='The technique missed its mark.';this.game.audio.playUI('error');await this.game.delay(500);return;}if(move.category==='status'){await this.applyMoveEffect(attacker,defender,move);return;}const result=DamageEngine.calculate(attacker,defender,move,this.rng,this.field.weather);this.anim={target:isPlayer?'enemy':'player',shake:result.crit?1.4:0.8,recoil:true,flashTarget:isPlayer?'enemy':'player'};this.game.audio.playImpact(result.crit);this.game.haptics.trigger(result.effectiveness>1?'heavy':'light');defender.currentHP=Math.max(0,defender.currentHP-result.damage);this.message=`${defender.name} lost ${result.damage} HP.`;await this.game.delay(450);this.anim=null;if(result.crit){this.message='A critical resonance!';await this.game.delay(350);}if(result.effectiveness>1){this.message='The type pattern amplified the strike!';await this.game.delay(420);}else if(result.effectiveness===0){this.message='The type pattern cancelled the strike.';await this.game.delay(420);}else if(result.effectiveness<1){this.message='The type pattern softened the strike.';await this.game.delay(420);}if(move.effect&&this.rng.random()<(move.effect.chance||1))await this.applyMoveEffect(attacker,defender,move,true);}
+    async applyMoveEffect(attacker,defender,move,silentIntro=false){const effect=move.effect;if(!effect)return;const target=effect.target==='self'?attacker:defender;if(effect.kind==='stage'){const old=target.stages[effect.stat]||0;target.stages[effect.stat]=clamp(old+effect.amount,-6,6);this.message=`${target.name}'s ${effect.stat} rose.`;this.game.audio.playUI('confirm');}else if(effect.kind==='status'||effect.kind==='chanceStatus'){if(target.status===StatusType.NONE){target.status=effect.status;if(effect.status===StatusType.SLEEP)target.sleepTurns=this.rng.int(1,3);this.message=`${target.name} gained ${effect.status.toUpperCase()} status.`;}else if(!silentIntro)this.message='The status pattern could not take hold.';}else if(effect.kind==='heal'){const amount=Math.max(1,Math.floor(target.stats.hp*effect.fraction));const healed=Math.min(amount,target.stats.hp-target.currentHP);target.currentHP+=healed;this.message=`${target.name} restored ${healed} HP.`;}await this.game.delay(500);}
+    async afterTurn(){this.playerDisplayHP=this.player.currentHP;this.enemyDisplayHP=this.enemy.currentHP;if(this.enemy.currentHP<=0){await this.resolveVictory();return;}if(this.player.currentHP<=0){await this.resolveDefeat();return;}for(const log of this.field.processEnd([this.player,this.enemy])){this.message=log;await this.game.delay(480);if(this.enemy.currentHP<=0){await this.resolveVictory();return;}if(this.player.currentHP<=0){await this.resolveDefeat();return;}}this.state='MENU_SELECT';this.menu='main';this.cursor=0;this.message='Choose an action.';this.busy=false;}
+    async resolveVictory(){this.enemy.currentHP=0;this.enemyDisplayHP=0;this.message=`${this.enemy.name} dispersed from the field.`;await this.game.delay(650);const exp=Math.max(1,Math.floor(this.enemy.species.baseExpYield*this.enemy.level*(this.trainer?1.5:1)/7));this.message=`${this.player.name} gained ${exp} EXP.`;const progress=ProgressionEngine.award(this.player,exp);await this.game.delay(650);if(progress.levelsGained>0){this.game.audio.playUI('confirm');this.message=`${this.player.name} reached Lv${this.player.level}!`;await this.game.delay(850);}if(this.trainer){const npc=this.game.activeTrainerNPC;if(npc?.flag!=null)this.game.flags.set(npc.flag);this.game.inventory.prism_pod+=2;this.message=`${this.trainerName}: “Strong field reading. Take two Prism Pods.”`;await this.game.delay(900);}this.end('VICTORY');}
+    async resolveDefeat(){this.playerDisplayHP=0;this.message=`${this.player.name} can no longer hold the field.`;await this.game.delay(800);this.game.party.forEach(m=>m.healFull());this.game.player.teleport(10,17,0);this.end('DEFEAT');this.game.toastMessage('The Lodge array restored your partner.','#f6d979');}
+    end(reason){this.game.audio.stopMusic();this.state='IDLE';this.busy=false;this.game.battle=null;this.game.mode=GameMode.OVERWORLD;this.game.setRendererVisible(true);this.game.encounters.resetGrace();this.game.save('AUTOSAVE');this.game.activeTrainerNPC=null;}
+    update(dt){this.playerDisplayHP=damp(this.playerDisplayHP,this.player.currentHP,7,dt);this.enemyDisplayHP=damp(this.enemyDisplayHP,this.enemy.currentHP,7,dt);}
+  }
+
+  class EmberwildGame {
+    constructor(){
+      this.version=APP_VERSION;this.mode=GameMode.BOOT;this.map=buildDemoMap();this.flags=new BitmaskFlags(256);this.rng=new DeterministicPRNG((Date.now()^0xa37e5d)>>>0);this.audio=new RetroAudioEngine();this.haptics=new HapticEngine();this.saveManager=new SaveManager();this.sprites=new SpriteFactory();this.inventory={prism_pod:6,bright_pod:0,field_tonic:3};this.collection={spriglet:1};this.settings={audio:true,reducedMotion:false,highContrast:false,touchControls:'auto',renderer:'auto'};this.playTime=0;this.steps=0;this.objective='Explore Prism Route and meet the Flower Plateau Warden.';this.toast=null;this.toastTimer=0;this.battle=null;this.activeTrainerNPC=null;
+      const spawn=this.map.entities.find(e=>e.type==='PLAYER_SPAWN')||{x:10,z:17,y:0,facing:'N'};
+      this.party=[new Monster({speciesId:'spriglet',level:6,seed:0x4d415454})];
+      this.npcs=this.map.entities.filter(e=>e.type!=='PLAYER_SPAWN').map(e=>new NPCActor(e,this.map));
+      this.player=new PlayerController(spawn,this.map,this);
+      this.encounters=new EncounterEngine(this.rng);
+      this.softwareRenderer=new SoftwareWorldRenderer(document.getElementById('world-canvas'),this,this.sprites);this.renderer=this.softwareRenderer;
+      this.ui=new UIOverlay(document.getElementById('ui-canvas'),this,this.sprites);this.profiler=new PerformanceProfiler(document.getElementById('profiler'));this.input=new InputManager(this);
+      this.pathfinder=new AStarPathfinder(this.map,(x,z)=>this.isOccupied(x,z));
+      this.lastTime=performance.now();this.running=false;this.menuIndex=0;this.lastAutoSaveStep=0;
+      this.bindControls();this.setupImport();this.updateContinueButton();this.announceRenderer();
+      window.__EMBERWILD__=this;
+    }
+    bindControls(){document.getElementById('start-new')?.addEventListener('click',()=>this.startNew());document.getElementById('start-continue')?.addEventListener('click',()=>this.continueGame());document.getElementById('start-info')?.addEventListener('click',()=>document.getElementById('help-panel').hidden=false);document.getElementById('help-close')?.addEventListener('click',()=>document.getElementById('help-panel').hidden=true);document.getElementById('toggle-audio')?.addEventListener('click',()=>{this.settings.audio=!this.settings.audio;this.audio.setEnabled(this.settings.audio);this.toastMessage(`Audio ${this.settings.audio?'on':'off'}.`);});document.getElementById('toggle-contrast')?.addEventListener('click',()=>{this.settings.highContrast=!this.settings.highContrast;document.body.classList.toggle('high-contrast',this.settings.highContrast);this.toastMessage(`High contrast ${this.settings.highContrast?'on':'off'}.`);});}
+    setupImport(){const input=document.getElementById('map-import');input?.addEventListener('change',async()=>{const file=input.files?.[0];if(!file)return;try{const payload=JSON.parse(await file.text());this.loadCustomMap(payload);this.toastMessage('Custom map loaded from the editor.','#71d5c3');}catch(error){this.toastMessage(`Map import failed: ${error.message}`,'#ff7b7b');}input.value='';});}
+    updateContinueButton(){const btn=document.getElementById('start-continue');if(btn)btn.disabled=!this.saveManager.hasSave('SLOT_1');}
+    startNew(){this.saveManager.clear('SLOT_1');this.audio.init();this.audio.setEnabled(this.settings.audio);this.mode=GameMode.OVERWORLD;document.getElementById('start-screen').hidden=true;this.running=true;this.lastTime=performance.now();this.save('AUTOSAVE');requestAnimationFrame(t=>this.loop(t));window.__EMBERWILD_READY__=true;this.ui.dialogue.show(['Welcome to EMBERWILD: PRISM ROUTE.','Move with WASD or the D-pad. Press Z / A to interact.'],this);}
+    continueGame(){this.audio.init();const result=this.load('SLOT_1');document.getElementById('start-screen').hidden=true;this.mode=GameMode.OVERWORLD;this.running=true;this.lastTime=performance.now();requestAnimationFrame(t=>this.loop(t));window.__EMBERWILD_READY__=true;if(!result.success)this.toastMessage('Save unavailable; a new journey was opened.','#ffce7c');}
+    announceRenderer(){const status=document.getElementById('renderer-status');if(status)status.textContent='Offline software 2.5D renderer active';}
+    // enableThreeRenderer / useSoftwareRenderer removed at P1 with the CDN loader.
+    useSoftwareRenderer(){/* software renderer is the only renderer */}
+    setRendererVisible(v){this.softwareRenderer.setVisible(v&&this.renderer===this.softwareRenderer);}
+    loop(now){if(!this.running)return;const dt=Math.min(.05,(now-this.lastTime)/1000);this.lastTime=now;this.update(dt);this.render();requestAnimationFrame(t=>this.loop(t));}
+    update(dt){this.playTime+=dt;this.player.update(dt);for(const npc of this.npcs)npc.update(dt);if(this.battle)this.battle.update(dt);this.ui.update(dt);if(this.toast){this.toastTimer-=dt;if(this.toastTimer<=0)this.toast=null;}if(this.mode!==GameMode.BATTLE){this.timeOfDay=(0.56+(this.playTime/180))%1;this.renderer.update(dt);}this.profiler.update(this.renderer);this.updateSRStatus();}
+    render(){if(this.mode!==GameMode.BATTLE)this.renderer.render();this.ui.render();}
+    updateSRStatus(){const sr=document.getElementById('sr-status');if(!sr)return;const text=this.mode===GameMode.BATTLE?this.battle?.message:`${this.currentLocationName()}. ${this.objective}`;if(text&&sr.textContent!==text)sr.textContent=text;}
+    currentLocationName(){const c=this.map.getCell(this.player.grid.x,this.player.grid.z);if(c?.tags?.includes('interior'))return'Research Lodge';if(c?.tags?.includes('plateau'))return'Flower Plateau';if(c?.tags?.includes('bridge')||c?.tags?.includes('water'))return'Water Garden';return'Prism Route';}
+    get timeOfDay(){return this._timeOfDay??0.56;}set timeOfDay(v){this._timeOfDay=v;}
+    delay(ms){return sleep(this.settings.reducedMotion?Math.min(120,ms*.25):ms);}
+    toastMessage(text,color='#fff'){this.toast={text,color};this.toastTimer=2.4;}
+    bump(){this.audio.playUI('error');this.haptics.trigger('button');}
+    isOccupied(x,z){if(this.player?.grid.x===x&&this.player?.grid.z===z)return true;return this.npcs.some(n=>n.type!=='ITEM'&&n.grid.x===x&&n.grid.z===z&&!(n.flag!=null&&this.flags.get(n.flag)));}
+    isPlayerInsideLodge(){const {x,z}=this.player.grid;return x>=3&&x<=6&&z>=15&&z<=17;}
+    onPlayerStepComplete(state){this.steps++;const cell=this.map.getCell(this.player.grid.x,this.player.grid.z);if(cell?.surface===Surface.TALL_GRASS)this.audio.playGrass();this.checkItemPickup();this.checkTrainerSight();if(this.mode!==GameMode.OVERWORLD)return;const encounter=this.encounters.onStep(cell?.surface===Surface.TALL_GRASS);if(encounter)setTimeout(()=>this.startWildEncounter(false,encounter),120);if(this.steps-this.lastAutoSaveStep>=12){this.lastAutoSaveStep=this.steps;this.save('AUTOSAVE');}}
+    entityAt(x,z,predicate=()=>true){return this.npcs.find(n=>n.grid.x===x&&n.grid.z===z&&predicate(n)&&!(n.flag!=null&&this.flags.get(n.flag)));}
+    checkItemPickup(){const item=this.entityAt(this.player.grid.x,this.player.grid.z,n=>n.type==='ITEM');if(!item)return;this.flags.set(item.flag);this.inventory[item.itemId]=(this.inventory[item.itemId]||0)+(item.qty||1);this.toastMessage(`Found ${item.qty||1} ${ITEMS[item.itemId]?.name||item.itemId}!`,'#f6d979');this.audio.playUI('confirm');this.save('AUTOSAVE');}
+    checkTrainerSight(){if(this.mode!==GameMode.OVERWORLD)return;for(const npc of this.npcs){if(npc.type!=='TRAINER'||(npc.flag!=null&&this.flags.get(npc.flag)))continue;const dir=CARDINALS[npc.facing];for(let k=1;k<=npc.sight;k++){const x=npc.grid.x+dir.x*k,z=npc.grid.z+dir.z*k,cell=this.map.getCell(x,z);if(!cell||cell.surface===Surface.BLOCKED||cell.height!==npc.grid.y)break;if(x===this.player.grid.x&&z===this.player.grid.z){this.triggerTrainer(npc);return;}}}}
+    async triggerTrainer(npc){if(this.mode!==GameMode.OVERWORLD)return;this.mode=GameMode.TRANSITION;npc.alertTimer=1;this.audio.playUI('confirm');await this.delay(450);npc.alertTimer=0;const goal={x:this.player.grid.x-CARDINALS[npc.facing].x,z:this.player.grid.z-CARDINALS[npc.facing].z};const path=this.pathfinder.findPath(npc.grid,goal).slice(1,3);for(const step of path){npc.beginStep(step,this.map);while(npc.state!=='IDLE')await sleep(16);}await this.ui.dialogue.show([`${npc.name}: “The plateau answers only to a steady signal.”`,`“Show me how your partner reads the field.”`],this);this.activeTrainerNPC=npc;const party=npc.party?.[0]||{speciesId:'voltwing',level:7};this.startBattle(new Monster({...party,seed:this.rng.int(1,0xffffffff)}),true,npc.name);}
+    checkInteraction(){const v=CARDINALS[this.player.facing],tx=this.player.grid.x+v.x,tz=this.player.grid.z+v.z;const npc=this.entityAt(tx,tz,n=>n.type!=='ITEM');if(npc){if(npc.type==='HEALER'){this.party.forEach(m=>m.healFull());this.save('AUTOSAVE');this.ui.dialogue.show(npc.dialogue||['Your partner is restored.'],this);return true;}if(npc.type==='TRAINER'&&npc.flag!=null&&this.flags.get(npc.flag)){this.ui.dialogue.show([`${npc.name}: “Your signal held. Keep mapping the route.”`],this);return true;}this.ui.dialogue.show(npc.dialogue||[`${npc.name} nods.`],this);return true;}return false;}
+    handleConfirm(){this.audio.playUI('confirm');if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.confirm();return;}if(this.mode===GameMode.MENU){const items=this.getPauseMenuItems();this.executePauseItem(items[this.ui.menuIndex]);return;}if(this.mode===GameMode.OVERWORLD)this.checkInteraction();}
+    handleCancel(){if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.back();return;}if(this.mode===GameMode.MENU){this.toggleMenu();return;}this.audio.playUI();}
+    toggleMenu(){if(this.mode===GameMode.BATTLE||this.mode===GameMode.TRANSITION||this.ui.dialogue.active)return;if(this.mode===GameMode.MENU){this.mode=GameMode.OVERWORLD;return;}if(this.mode===GameMode.OVERWORLD){this.mode=GameMode.MENU;this.ui.menuIndex=0;this.audio.playUI();}}
+    navigateMenu(dir){const items=this.getPauseMenuItems();if(dir==='N'||dir==='W')this.ui.menuIndex=(this.ui.menuIndex-1+items.length)%items.length;else this.ui.menuIndex=(this.ui.menuIndex+1)%items.length;this.audio.playUI();}
+    getPauseMenuItems(){return[
+      {label:'Save field state',detail:'CRC32 + double buffer',action:'SAVE'},
+      {label:'Load last manual save',detail:this.saveManager.hasSave('SLOT_1')?'available':'empty',action:'LOAD'},
+      {label:`Audio: ${this.settings.audio?'ON':'OFF'}`,detail:'procedural APU',action:'AUDIO'},
+      {label:`Renderer: ${this.renderer.kind}`,detail:'offline software 2.5D',action:'RENDERER'},
+      {label:'Open map JSON',detail:'editor-compatible',action:'IMPORT'},
+      {label:'Trigger test encounter',detail:'vertical-slice QA',action:'TEST_BATTLE'},
+      {label:'Close field kit',detail:'M / Esc',action:'CLOSE'}
+    ];}
+    executePauseItem(item){if(!item)return;switch(item.action){case'SAVE':this.save('SLOT_1');this.toastMessage('Manual save verified.','#71d5c3');break;case'LOAD':{const r=this.load('SLOT_1');this.toastMessage(r.success?'Manual save restored.':'No valid manual save.');break;}case'AUDIO':this.settings.audio=!this.settings.audio;this.audio.setEnabled(this.settings.audio);this.toastMessage(`Audio ${this.settings.audio?'on':'off'}.`);break;case'RENDERER':this.toastMessage('Offline software 2.5D renderer — the only renderer.');break;case'IMPORT':document.getElementById('map-import')?.click();break;case'TEST_BATTLE':this.mode=GameMode.OVERWORLD;this.startWildEncounter(true);break;case'CLOSE':this.mode=GameMode.OVERWORLD;break;}}
+    handleUIAction(action){if(typeof action==='object'){if(action.type==='MENU_SELECT'){this.ui.menuIndex=action.index;this.executePauseItem(this.getPauseMenuItems()[action.index]);}else if(action.type==='BATTLE_MOVE')this.battle?.selectMove(action.index);return;}switch(action){case'CONFIRM':this.handleConfirm();break;case'BATTLE_FIGHT':this.battle?.showFight();break;case'BATTLE_BAG':this.battle?.showBag();break;case'BATTLE_TEAM':this.battle?.showTeam();break;case'BATTLE_RUN':this.battle?.tryRun();break;case'BATTLE_POD':this.battle?.usePod();break;case'BATTLE_TONIC':this.battle?.useTonic();break;case'BATTLE_BACK':this.battle?.back();break;}}
+    startWildEncounter(force=false,encounter=null){if(this.mode!==GameMode.OVERWORLD||this.player.motionState!==MoveState.IDLE)return false;const e=encounter||{speciesId:this.rng.pick(Object.keys(SPECIES).filter(id=>id!=='spriglet')),level:this.rng.int(4,7)};this.startBattle(new Monster({speciesId:e.speciesId,level:e.level,seed:this.rng.int(1,0xffffffff)}),false,null);return true;}
+    startBattle(enemy,trainer=false,trainerName=null){this.battle=new BattleController(this);this.battle.start(enemy,trainer,trainerName);}
+    serialize(){return{version:SAVE_SCHEMA_VERSION,appVersion:this.version,timestamp:Date.now(),playTimeSeconds:Math.floor(this.playTime),player:{x:this.player.grid.x,z:this.player.grid.z,y:this.player.grid.y,facing:this.player.facing},party:this.party.map(m=>m.toJSON()),inventory:{...this.inventory},collection:{...this.collection},flags:this.flags.exportArray(),settings:{...this.settings},steps:this.steps};}
+    save(slot='SLOT_1'){const result=this.saveManager.write(slot,this.serialize());this.updateContinueButton();return result;}
+    load(slot='SLOT_1'){const result=this.saveManager.read(slot);if(!result.success)return result;const d=result.data;try{if(d.player)this.player.teleport(d.player.x,d.player.z,d.player.y),this.player.facing=d.player.facing||'N';if(Array.isArray(d.party)&&d.party.length)this.party=d.party.map(m=>new Monster(m));this.inventory={prism_pod:6,field_tonic:3,...d.inventory};this.collection={...d.collection};this.flags.importArray(d.flags);this.settings={...this.settings,...d.settings};this.audio.setEnabled(this.settings.audio);this.playTime=d.playTimeSeconds||0;this.steps=d.steps||0;document.body.classList.toggle('high-contrast',this.settings.highContrast);return{success:true};}catch(error){return{success:false,error:error.message};}}
+    loadCustomMap(payload){this.map.importSchema(payload);const spawn=this.map.entities.find(e=>e.type==='PLAYER_SPAWN')||{x:1,z:1,y:0,facing:'S'};this.npcs=this.map.entities.filter(e=>e.type!=='PLAYER_SPAWN').map(e=>new NPCActor(e,this.map));this.player.map=this.map;this.player.teleport(spawn.x,spawn.z,spawn.y);this.player.facing=spawn.facing||'S';this.pathfinder=new AStarPathfinder(this.map,(x,z)=>this.isOccupied(x,z));this.renderer=this.softwareRenderer;this.mode=GameMode.OVERWORLD;}
+  }
+
+  function boot(){const game=new EmberwildGame();window.addEventListener('beforeunload',()=>{if(game.running&&game.mode!==GameMode.BATTLE)game.save('AUTOSAVE');});}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+
+  // Expose pure systems for QA and extension.
+  window.EmberwildEngine={APP_VERSION,Direction,GameMode,MoveState,Surface,Ground,Type,WeatherType,StatusType,MOVES,SPECIES,ITEMS,DeterministicPRNG,BitmaskFlags,ChecksumEngine,SaveManager,RetroAudioEngine,StatEngine,Monster,GrowthCurves,ProgressionEngine,DamageEngine,StatusAndWeatherEngine,CatchRateCalculator,EncounterEngine,ElevationMap,AStarPathfinder,buildDemoMap};
+})();
+</script>
+<script>
+(function(){try{
+var sp=document.getElementById('mbmSplash');if(!sp)return;
+var rm=false;try{rm=matchMedia('(prefers-reduced-motion: reduce)').matches}catch(_){}
+var hold=rm?900:1750,fade=rm?60:470,done=false,timer=0;
+function onKey(e){e.preventDefault();e.stopPropagation();close()}
+function onTap(e){e.preventDefault();e.stopPropagation();close()}
+function close(){if(done)return;done=true;clearTimeout(timer);
+  window.removeEventListener('keydown',onKey,true);
+  sp.removeEventListener('pointerdown',onTap,true);
+  sp.classList.add('out');
+  setTimeout(function(){sp.classList.add('hidden');
+    sp.setAttribute('data-mbm-splash-state','closed')},fade);}
+window.addEventListener('keydown',onKey,true);
+sp.addEventListener('pointerdown',onTap,true);
+timer=setTimeout(close,hold);
+window.__mbmSplashClose=close;
+}catch(e){}})();
+</script>
+<!-- MBM-INLINE-EXIT:BEGIN generated by tools/render_inline_exit.py, do not edit by hand -->
+<script>(function(){"use strict";
+try{
+if(window.__mbmExit)return;window.__mbmExit=1;
+var HOMES={"pupils":{"r":"/for/pupils/","l":"Pupils & learners"},"teachers":{"r":"/for/teachers/","l":"Teachers & education staff"},"parents":{"r":"/for/parents-carers/","l":"Parents & carers"},"schools":{"r":"/for/schools-semh/","l":"Schools & specialist settings"},"trusts":{"r":"/for/trusts/","l":"Academy trusts & education groups"},"councils":{"r":"/for/councils-organisations/","l":"Local authorities & education partners"},"partners":{"r":"/for/partners/","l":"Education organisations & service providers"},"main":{"r":"/main/","l":"Main homepage"}};
+var KEY="mbm_audience_view";
+function lsGet(k){try{var v=localStorage.getItem(k);return v===null?"":v;}catch(e){return "";}}
+function el(t,a,h){var e=document.createElement(t);for(var k in a)e.setAttribute(k,a[k]);if(h!==undefined)e.innerHTML=h;return e;}
+function adultOff(){try{var d=document.documentElement,b=document.body;
+return (d&&d.getAttribute("data-mbm-adult-features")==="off")||(b&&b.getAttribute("data-mbm-adult-features")==="off");}catch(e){return false;}}
+function chosen(){var v=lsGet(KEY);
+if(!Object.prototype.hasOwnProperty.call(HOMES,v))return null;
+var h=HOMES[v];
+if(h.r==="/main/"&&adultOff())return null;
+return h;}
+function mount(){
+if(!document.body||document.getElementById("mbmexit-back"))return;
+var st=document.createElement("style");st.id="mbmexit-style";st.textContent="#mbmexit-back,#mbmexit-home{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));z-index:2147483000;width:44px;height:44px;min-width:44px;min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(22,29,61,.72);color:#B9E6CD;border:1.5px solid rgba(185,230,205,.45);font:700 16px/1 Poppins,'Segoe UI',system-ui,sans-serif;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:.55}#mbmexit-back{left:calc(8px + env(safe-area-inset-left,0px))}#mbmexit-home{left:calc(58px + env(safe-area-inset-left,0px))}#mbmexit-back:hover,#mbmexit-home:hover{opacity:1;border-color:#B9E6CD}#mbmexit-back:focus-visible,#mbmexit-home:focus-visible{opacity:1;outline:3px solid #F2A24A;outline-offset:2px;border-color:#B9E6CD}@media print{#mbmexit-back,#mbmexit-home{display:none!important}}";
+(document.head||document.documentElement).appendChild(st);
+var back=el("a",{id:"mbmexit-back",href:"/games/","aria-label":"Back: Arcade",title:"Back to the Arcade"},"\u2190");
+document.body.appendChild(back);
+var h=chosen();
+if(h){var home=el("a",{id:"mbmexit-home",href:h.r,"aria-label":"Your homepage: "+h.l,title:"Your homepage: "+h.l},"<svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 10.6 12 4.2l8 6.4\"/><path d=\"M6.2 9.6V19.8h11.6V9.6\"/></svg>");
+document.body.appendChild(home);}
+}
+if(document.body)mount();else document.addEventListener("DOMContentLoaded",mount);
+}catch(e){}
+})();</script>
+<!-- MBM-INLINE-EXIT:END -->
+
+</body>
+</html>
