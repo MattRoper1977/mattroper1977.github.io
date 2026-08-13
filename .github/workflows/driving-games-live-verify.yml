@@ -115,7 +115,10 @@ jobs:
           cat > "$GITHUB_WORKSPACE/live.mjs" <<'EOF'
           import { chromium } from 'playwright';
           import { appendFileSync } from 'node:fs';
-          const B = 'https://madebymatt.uk';
+          // Overridable so this leg's OWN code — not a copy of it — can be
+          // driven against a mutated shelf on a local origin. Defaults to
+          // production, so CI behaviour is unchanged.
+          const B = process.env.LIVE_BASE || 'https://madebymatt.uk';
           const LOG = process.env.LIVE_LOG || '/tmp/driving-live.log';
           const T0 = Date.now();
           let fail = 0;
@@ -151,6 +154,27 @@ jobs:
           const IMG_MS = Number(process.env.IMG_MS || 3000);
           const br = await chromium.launch();
 
+          // RE-SCOPED 2026-08-13. The old limb counted rendered "NEW ·"
+          // occurrences in body.innerText and called anything but 1 a failure.
+          // That proxy is wrong in two directions at once: it PASSES a shelf
+          // with no holder at all whenever the page text happens to contain
+          // "NEW ·" once, and it FALSE-FAILS a legitimate holder rendering in
+          // more than one rail — which is what happened when the marker moved
+          // to a game in a rail'd collection.
+          //
+          // The ruled invariant is about the SHELF: exactly one entry holds the
+          // marker. Rendering is a second, separate question: that holder's
+          // marker must actually reach the page. Both are asserted, so neither
+          // can be satisfied by the other's accident.
+          phase('phase 0: the shelf declares the NEW· holder');
+          const NEW_MARKER = /^NEW\s*·\s*/;
+          const shelf = await (await fetch(B + '/Games/games.json', { cache: 'no-store' })).json();
+          const holders = (shelf.games || []).filter((g) => NEW_MARKER.test(String(g.title || '')));
+          t('shelf declares exactly one NEW· holder', holders.length === 1,
+            `${holders.length}: ${JSON.stringify(holders.map((h) => h.href))}`);
+          const HOLDER = holders.length === 1 ? holders[0].href : null;
+          mark(`NEW· holder declared by the shelf: ${HOLDER === null ? 'NOT SINGULAR' : HOLDER}`);
+
           phase('phase 1: arcade at two viewports');
           // 1. The arcade renders every card, at two viewports, with art painted
           //    and nothing spilling sideways.
@@ -161,7 +185,7 @@ jobs:
             await p.goto(B+'/games/', {waitUntil:'networkidle', timeout:60000});
             await p.waitForTimeout(1500);
             mark(`[${vp.name}] arcade evaluate (image race, ceiling ${IMG_MS}ms)`);
-            const r = await p.evaluate(async (IMG_MS) => {
+            const r = await p.evaluate(async ({ IMG_MS, HOLDER }) => {
               // ASSIST (ruling 1.3). Card art below the fold is loading="lazy",
               // so in a headless run it never enters the viewport, never starts
               // loading, and never fires load OR error. Scrolling the document
@@ -242,8 +266,17 @@ jobs:
                 broken, unresolved, slowest, waitMs, imgCount: imgs.length,
                 hasNM: !!document.querySelector('a[href="/neonmeridian/"]'),
                 hasRV: !!document.querySelector('a[href="/rallyvector3d/"]'),
-                newMarker: (document.body.innerText.match(/NEW ·/g)||[]).length };
-            }, IMG_MS);
+                // The holder's OWN marker where it is rendered, not a page-wide
+                // text tally. A holder legitimately in two rails renders twice
+                // and that is not a defect; a holder rendering none is.
+                holderRendered: HOLDER === null ? -1
+                  : [...document.querySelectorAll('a[href]')]
+                      .filter((a) => a.getAttribute('href') === HOLDER)
+                      .filter((a) => /NEW\s*·/.test(a.innerText)).length,
+                holderAnchors: HOLDER === null ? -1
+                  : [...document.querySelectorAll('a[href]')]
+                      .filter((a) => a.getAttribute('href') === HOLDER).length };
+            }, { IMG_MS, HOLDER });
             mark(`[${vp.name}] image race done in ${r.waitMs}ms over ${r.imgCount} img; ${r.unresolved.length} timed out`);
             for (const u of r.unresolved) mark(`[${vp.name}]   TIMED OUT (reported, not counted): ${JSON.stringify(u)}`);
             for (const sl of r.slowest) mark(`[${vp.name}]   slowest load: ${JSON.stringify(sl)}`);
@@ -251,7 +284,8 @@ jobs:
             t(`[${vp.name}] zero horizontal overflow`, r.overflow === 0, `${r.overflow}px`);
             t(`[${vp.name}] no broken card art`, r.broken.length === 0, r.broken.slice(0,3).join(' '));
             t(`[${vp.name}] both new games on the shelf`, r.hasNM && r.hasRV, JSON.stringify(r));
-            t(`[${vp.name}] exactly one NEW marker`, r.newMarker === 1, `${r.newMarker}`);
+            t(`[${vp.name}] the declared NEW· holder renders its marker`, r.holderRendered >= 1,
+              `${HOLDER}: ${r.holderRendered} marker(s) across ${r.holderAnchors} anchor(s)`);
             await c.close();
           }
 
