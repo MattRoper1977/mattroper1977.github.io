@@ -31,9 +31,18 @@ catch (_) { ({ chromium } = require('playwright-core')); }
 const BASE = (process.argv.find(a => a.startsWith('--base=')) || '--base=https://madebymatt.uk').split('=').slice(1).join('=');
 
 // The ruling, restated where it is enforced.
-// Matt, 5 Aug 2026: New Release is a stack; each game holds at most ONE box;
-// ruled occupants = Neon Sync (top, amended for v1.1) + Neon Breach.
-const RULED_OCCUPANTS = ['Neon Sync', 'Neon Breach'];
+// Matt, 5 Aug 2026: New Release is a stack; each game holds at most ONE box.
+//
+// WHO occupies it is NOT restated here any more. This file froze
+// ['Neon Sync', 'Neon Breach'] on 5 Aug and went stale the moment the boxes
+// moved — by site commits 69c1d57 and 3e6deb0 (the 2026-08-12 driving-games
+// launch: Neon Meridian, then Rally Vector 3D) — and nothing noticed, because
+// this workflow could fire only on a launch branch that had already merged.
+// The occupant set is a declared shelf fact with exactly one writer, so it is
+// read from that writer. A frozen copy here was the defect, not the ruling.
+const OCCUPANT_RECORD = path.join(__dirname, '..', 'data', 'new-release-occupants.json');
+const RECORD = JSON.parse(fs.readFileSync(OCCUPANT_RECORD, 'utf8'));
+const RULED_OCCUPANTS = Object.keys(RECORD.occupants);
 // Games ruled onto the arcade shelf this programme.
 const RULED_CARDS = [
   { title: 'Neon Sync',    href: '/neonsync/' },
@@ -60,8 +69,15 @@ function launchOpts() {
   console.log('Surface census against ' + BASE + '\n');
 
   /* ---------------------------------------------------- 1 · JS-OFF homepage */
+  // SECOND defect in this limb, same commit. It fetched BASE + '/' — which was
+  // the full homepage until #110 gave / to the audience chooser and moved the
+  // homepage to /main/. Since then this read a page with no data-release boxes
+  // at all and reported `served occupants: []`, so the frozen list above could
+  // not have matched even if it had been current. Both halves had to move for
+  // this limb to measure anything: the surface it reads, and where it reads the
+  // ruling from. Same species as BACKLOG 0a-A.
   console.log('S1 — homepage New Release boxes (static markup, served bytes)');
-  const home = await get(BASE + '/');
+  const home = await get(BASE + '/main/');
   const occupants = [...home.matchAll(/data-release="([^"]+)"/g)].map(m => m[1]);
   console.log('       served occupants: ' + JSON.stringify(occupants));
   for (const r of RULED_OCCUPANTS) ok('ruled occupant served: ' + r, occupants.includes(r));

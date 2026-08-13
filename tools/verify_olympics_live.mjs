@@ -79,8 +79,38 @@ const hrefs = holders.map((e) => e.href);
 check('marker-sole-holder', holders.length === 1,
   `${holders.length} entr${holders.length === 1 ? 'y' : 'ies'} carry NEW· ${JSON.stringify(hrefs)}`);
 
-check('marker-is-olympics', holders.length === 1 && holders[0].href === '/olympics/',
-  `holder href ${JSON.stringify(hrefs[0] ?? null)}`);
+// RETARGETED 2026-08-13, commission 2. This asserted `=== '/olympics/'`, an
+// inline frozen holder. True when written, false from the moment the marker
+// moved — Relicforge, then Nova Siege, then Rally Vector 3D by site commits
+// 69c1d57 and 3e6deb0, landing on the canonical shelf in Games commit aa3e3bf,
+// which transferred the marker off Nova Siege in the same commit. Unnoticed
+// for the usual reason: this workflow fired only on a launch branch that had
+// already merged.
+//
+// The holder is a declared shelf fact with one writer, so it is read from
+// data/new-release-occupants.json rather than restated here. Reading the
+// record is not trusting it: the served shelf is the other side of the
+// comparison, so a record that disagrees with production is a red in whichever
+// direction it disagrees. An unreadable or holder-less record is a failure of
+// this harness, reported as its own limb — never a silent pass, and never
+// counted as a rejection.
+const RECORD_PATH = new URL('../data/new-release-occupants.json', import.meta.url);
+let RECORD = null, recordError = null;
+try { RECORD = JSON.parse(readFileSync(RECORD_PATH, 'utf8')); }
+catch (e) { recordError = String((e && e.message) || e); }
+
+check('holder-record-readable', RECORD !== null && typeof RECORD.newReleaseHolder === 'string',
+  RECORD === null
+    ? `data/new-release-occupants.json unreadable: ${recordError}`
+    : `newReleaseHolder ${JSON.stringify(RECORD.newReleaseHolder ?? null)}`);
+
+const declaredHolder = (RECORD && typeof RECORD.newReleaseHolder === 'string')
+  ? `/${RECORD.newReleaseHolder}/`
+  : null;
+
+check('marker-matches-record',
+  declaredHolder !== null && holders.length === 1 && holders[0].href === declaredHolder,
+  `served holder ${JSON.stringify(hrefs[0] ?? null)} vs declared ${JSON.stringify(declaredHolder)}`);
 
 // ---------------------------------------------------------------- A4 bytes
 const so = readFileSync(servedOlympics);
