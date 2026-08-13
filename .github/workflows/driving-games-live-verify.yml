@@ -100,63 +100,43 @@ jobs:
           check https://madebymatt.uk/rallyvector3d/index.html         rallyvector3d/index.html
           exit $fail
 
-      # PARKED 2026-08-13, ruled by Matt. Commission 1(a).
-      #
-      # The rendered leg below has a stdout-buffering defect: node buffers its
-      # output to the pipe, the step outruns the job's 20-minute cap, and the
-      # cancellation takes every line it had printed with it. Measured twice —
-      # 19.5 min at the 2026-08-12 launch (recorded in
-      # reports/2026-08-12-two-driving-games-launch.md), 20.3 min on the
-      # 2026-08-13 retarget run 31689095437 — both emitting nothing at all.
-      #
-      # Retargeting this workflow to push:main made that silent cancellation a
-      # cost on every qualifying push. So the leg is PARKED, not deleted and
-      # not skipped quietly: the step below always runs, always states the
-      # park in the log AND in the run summary, and always exits 0 without
-      # launching a browser. The Playwright install is parked with it — there
-      # is no reason to spend two minutes fetching a browser nothing drives.
-      #
-      # The cap is NOT raised. Every other leg in this job — the negative
-      # control, the served-bytes comparison, the Pages status — keeps running
-      # and keeps its own verdict, so this workflow still fails when the bytes
-      # are wrong. Commission 1(b) fixes the buffering and un-parks the leg
-      # with a red-then-green proof; until then this is a stated park.
-      - name: 'PARKED — rendered leg (stdout-buffering defect)'
-        shell: bash
-        run: |
-          set -euo pipefail
-          MSG='PARKED: stdout-buffering defect — see register'
-          echo "$MSG"
-          echo "  leg     : Arcade, homepage, pupil page and both games — rendered on the origin"
-          echo "  evidence: 19.5 min 2026-08-12 launch; 20.3 min run 31689095437, both emitted nothing"
-          echo "  cap     : job timeout-minutes 20, unchanged"
-          echo "  scope   : this leg only — every other leg in this job ran and reported above"
-          {
-            echo "### $MSG"
-            echo ""
-            echo "\`driving-games-live-verify\` rendered leg is parked, not skipped silently."
-            echo ""
-            echo "| | |"
-            echo "|---|---|"
-            echo "| leg | Arcade, homepage, pupil page and both games — rendered on the origin |"
-            echo "| defect | node stdout buffered to the pipe; run dies at the cap having emitted nothing |"
-            echo "| measured | 19.5 min (2026-08-12 launch) · 20.3 min (run 31689095437) |"
-            echo "| cap | \`timeout-minutes: 20\`, unchanged |"
-            echo "| other legs | ran normally and kept their verdicts |"
-            echo "| un-park | commission 1(b), red-then-green required |"
-          } >> "$GITHUB_STEP_SUMMARY"
+      # UN-PARKED 2026-08-13 by commission 1(b). The park step and its
+      # `if: false` gate are removed together: a run must not announce a park
+      # that is not in force. 1(a)'s park text stays in the git history and in
+      # the register; if this fix does not hold, 1(a) is restored wholesale.
+      - name: Install Playwright
+        run: npm i -D playwright@1.56.1 && npx playwright install --with-deps chromium
 
       - name: Arcade, homepage, pupil page and both games — rendered on the origin
-        if: false
         shell: bash
+        env:
+          LIVE_LOG: /tmp/driving-live.log
         run: |
           cat > "$GITHUB_WORKSPACE/live.mjs" <<'EOF'
           import { chromium } from 'playwright';
+          import { appendFileSync } from 'node:fs';
           const B = 'https://madebymatt.uk';
+          const LOG = process.env.LIVE_LOG || '/tmp/driving-live.log';
+          const T0 = Date.now();
           let fail = 0;
-          const t = (n, ok, d='') => { if(!ok) fail++; console.log(`${ok?'PASS':'FAIL'}  ${n}${d?'  — '+d:''}`); };
+          // THE FIX (commission 1(b)). console.log to a pipe is buffered by
+          // libuv and is lost wholesale when the job is cancelled, which is why
+          // two 20-minute deaths emitted nothing. appendFileSync is a
+          // synchronous write to a real fd: it is on disk before the next line
+          // runs, so a killed run is still diagnosable from the file, which an
+          // `if: always()` step prints. stdbuf was rejected — it retunes stdio
+          // buffering and node's stdout to a pipe does not go through stdio.
+          const mark = (line) => {
+            const el = ((Date.now() - T0) / 1000).toFixed(1).padStart(6);
+            const s = `[${el}s] ${line}`;
+            console.log(s);
+            try { appendFileSync(LOG, s + '\n'); } catch (_) {}
+          };
+          const t = (n, ok, d='') => { if(!ok) fail++; mark(`${ok?'PASS':'FAIL'}  ${n}${d?'  — '+d:''}`); };
+          const phase = (n) => mark(`---- ${n}`);
           const br = await chromium.launch();
 
+          phase('phase 1: arcade at two viewports');
           // 1. The arcade renders every card, at two viewports, with art painted
           //    and nothing spilling sideways.
           for (const vp of [{name:'phone',width:390,height:844},{name:'desktop',width:1280,height:900}]) {
@@ -184,6 +164,7 @@ jobs:
             await c.close();
           }
 
+          phase('phase 2: homepage + pupil page');
           // 2. Homepage New-release boxes and pupil-page cards, on the origin.
           {
             const c = await br.newContext(); const p = await c.newPage();
@@ -198,6 +179,7 @@ jobs:
             await c.close();
           }
 
+          phase('phase 3: both games boot');
           // 3. Both games boot live with nothing off-origin. The splash is
           //    polled from t=0, not sampled after a settle wait, because it
           //    self-closes at ~2.2s.
@@ -227,7 +209,21 @@ jobs:
           }
 
           await br.close();
-          console.log(fail ? `\n${fail} FAILED` : '\nall live checks passed');
+          phase(fail ? `${fail} FAILED` : 'all live checks passed');
           process.exit(fail ? 1 : 0);
           EOF
           cd "$GITHUB_WORKSPACE" && node live.mjs
+
+      # The whole point of 1(b): the progress file survives a kill, so a run
+      # that dies is diagnosable instead of silent. always(), so it prints on
+      # cancellation and failure as well as success.
+      - name: Rendered-leg progress log (survives a cancellation)
+        if: always()
+        shell: bash
+        run: |
+          if [ -s "${LIVE_LOG:-/tmp/driving-live.log}" ]; then
+            echo "== incremental progress, written synchronously per check =="
+            cat "${LIVE_LOG:-/tmp/driving-live.log}"
+          else
+            echo "progress log empty or absent — the leg did not reach its first check"
+          fi
