@@ -121,6 +121,15 @@ SOURCE_TYPES = {
     "support":  dict(category="resource", contentType="Support resource",
                      audience=["teachers", "pupils", "schools-semh"], safe=True),
     "game":     dict(category="game",     contentType="Interactive game"),
+    # The GROW Estate v3 close (Lessons, 2026-08-12/13) introduced two further
+    # spellings in resources.json. The Lessons hub's own renderer treats
+    # "Lesson" as a lesson and gives "hub" records an OPEN HUB action, so the
+    # same semantics apply here rather than a guess: a Hub record is a
+    # navigation page for a family of lessons - pupil-safe, support-audience,
+    # opened rather than viewed.
+    "Lesson":   dict(category="lesson",   contentType="Lesson"),
+    "Hub":      dict(category="resource", contentType="Lesson hub",
+                     audience=["teachers", "pupils", "schools-semh"], safe=True),
 }
 
 
@@ -238,7 +247,11 @@ def build_lessons_and_resources(records, rules, reclassify: set[str], dropped: s
         else:
             content_type = spec["contentType"]
             audience, safe = spec["audience"], spec["safe"]
-            action = f"View resource: {record['title']}"
+            # A hub is opened, not viewed - same verb the Lessons hub uses.
+            if content_type == "Lesson hub":
+                action = f"Open hub: {record['title']}"
+            else:
+                action = f"View resource: {record['title']}"
 
         entry = {
             "id": f"{category}-{record['id']}",
