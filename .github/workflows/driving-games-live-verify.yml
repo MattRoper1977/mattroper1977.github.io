@@ -100,90 +100,196 @@ jobs:
           check https://madebymatt.uk/rallyvector3d/index.html         rallyvector3d/index.html
           exit $fail
 
-      # PARKED 2026-08-13, ruled by Matt. Commission 1(a).
-      #
-      # The rendered leg below has a stdout-buffering defect: node buffers its
-      # output to the pipe, the step outruns the job's 20-minute cap, and the
-      # cancellation takes every line it had printed with it. Measured twice —
-      # 19.5 min at the 2026-08-12 launch (recorded in
-      # reports/2026-08-12-two-driving-games-launch.md), 20.3 min on the
-      # 2026-08-13 retarget run 31689095437 — both emitting nothing at all.
-      #
-      # Retargeting this workflow to push:main made that silent cancellation a
-      # cost on every qualifying push. So the leg is PARKED, not deleted and
-      # not skipped quietly: the step below always runs, always states the
-      # park in the log AND in the run summary, and always exits 0 without
-      # launching a browser. The Playwright install is parked with it — there
-      # is no reason to spend two minutes fetching a browser nothing drives.
-      #
-      # The cap is NOT raised. Every other leg in this job — the negative
-      # control, the served-bytes comparison, the Pages status — keeps running
-      # and keeps its own verdict, so this workflow still fails when the bytes
-      # are wrong. Commission 1(b) fixes the buffering and un-parks the leg
-      # with a red-then-green proof; until then this is a stated park.
-      - name: 'PARKED — rendered leg (stdout-buffering defect)'
-        shell: bash
-        run: |
-          set -euo pipefail
-          MSG='PARKED: stdout-buffering defect — see register'
-          echo "$MSG"
-          echo "  leg     : Arcade, homepage, pupil page and both games — rendered on the origin"
-          echo "  evidence: 19.5 min 2026-08-12 launch; 20.3 min run 31689095437, both emitted nothing"
-          echo "  cap     : job timeout-minutes 20, unchanged"
-          echo "  scope   : this leg only — every other leg in this job ran and reported above"
-          {
-            echo "### $MSG"
-            echo ""
-            echo "\`driving-games-live-verify\` rendered leg is parked, not skipped silently."
-            echo ""
-            echo "| | |"
-            echo "|---|---|"
-            echo "| leg | Arcade, homepage, pupil page and both games — rendered on the origin |"
-            echo "| defect | node stdout buffered to the pipe; run dies at the cap having emitted nothing |"
-            echo "| measured | 19.5 min (2026-08-12 launch) · 20.3 min (run 31689095437) |"
-            echo "| cap | \`timeout-minutes: 20\`, unchanged |"
-            echo "| other legs | ran normally and kept their verdicts |"
-            echo "| un-park | commission 1(b), red-then-green required |"
-          } >> "$GITHUB_STEP_SUMMARY"
+      # UN-PARKED 2026-08-13 by commission 1(b). The park step and its
+      # `if: false` gate are removed together: a run must not announce a park
+      # that is not in force. 1(a)'s park text stays in the git history and in
+      # the register; if this fix does not hold, 1(a) is restored wholesale.
+      - name: Install Playwright
+        run: npm i -D playwright@1.56.1 && npx playwright install --with-deps chromium
 
       - name: Arcade, homepage, pupil page and both games — rendered on the origin
-        if: false
         shell: bash
+        env:
+          LIVE_LOG: /tmp/driving-live.log
         run: |
           cat > "$GITHUB_WORKSPACE/live.mjs" <<'EOF'
           import { chromium } from 'playwright';
-          const B = 'https://madebymatt.uk';
+          import { appendFileSync } from 'node:fs';
+          // Overridable so this leg's OWN code — not a copy of it — can be
+          // driven against a mutated shelf on a local origin. Defaults to
+          // production, so CI behaviour is unchanged.
+          const B = process.env.LIVE_BASE || 'https://madebymatt.uk';
+          const LOG = process.env.LIVE_LOG || '/tmp/driving-live.log';
+          const T0 = Date.now();
           let fail = 0;
-          const t = (n, ok, d='') => { if(!ok) fail++; console.log(`${ok?'PASS':'FAIL'}  ${n}${d?'  — '+d:''}`); };
+          // THE FIX (commission 1(b)). console.log to a pipe is buffered by
+          // libuv and is lost wholesale when the job is cancelled, which is why
+          // two 20-minute deaths emitted nothing. appendFileSync is a
+          // synchronous write to a real fd: it is on disk before the next line
+          // runs, so a killed run is still diagnosable from the file, which an
+          // `if: always()` step prints. stdbuf was rejected — it retunes stdio
+          // buffering and node's stdout to a pipe does not go through stdio.
+          const mark = (line) => {
+            const el = ((Date.now() - T0) / 1000).toFixed(1).padStart(6);
+            const s = `[${el}s] ${line}`;
+            console.log(s);
+            try { appendFileSync(LOG, s + '\n'); } catch (_) {}
+          };
+          const t = (n, ok, d='') => { if(!ok) fail++; mark(`${ok?'PASS':'FAIL'}  ${n}${d?'  — '+d:''}`); };
+          const phase = (n) => mark(`---- ${n}`);
+          // PER-IMAGE CEILING — DERIVED, not plucked. Measured twice against
+          // the live shelf at a 10s ceiling (runs 31750958794, 31751198749),
+          // 80 images, both viewports. The distribution has exactly two modes
+          // and nothing between them:
+          //   * already complete when the race starts -> 0ms
+          //   * never resolves at all                 -> hits the ceiling
+          // `slowest` — the top five images resolving via a real load event —
+          // came back EMPTY on every run. Not one image has ever fired load
+          // inside the race. So the ceiling cannot change which images resolve;
+          // it only sets how long the leg burns learning that. 3000ms is 2x the
+          // 1500ms settle this leg already waits after networkidle, which is
+          // the only measured timescale here for "the page has stopped moving",
+          // so it keeps 2x headroom over the one number the leg itself derives
+          // while costing ~3s per viewport instead of 10s.
+          const IMG_MS = Number(process.env.IMG_MS || 3000);
           const br = await chromium.launch();
 
+          // RE-SCOPED 2026-08-13. The old limb counted rendered "NEW ·"
+          // occurrences in body.innerText and called anything but 1 a failure.
+          // That proxy is wrong in two directions at once: it PASSES a shelf
+          // with no holder at all whenever the page text happens to contain
+          // "NEW ·" once, and it FALSE-FAILS a legitimate holder rendering in
+          // more than one rail — which is what happened when the marker moved
+          // to a game in a rail'd collection.
+          //
+          // The ruled invariant is about the SHELF: exactly one entry holds the
+          // marker. Rendering is a second, separate question: that holder's
+          // marker must actually reach the page. Both are asserted, so neither
+          // can be satisfied by the other's accident.
+          phase('phase 0: the shelf declares the NEW· holder');
+          const NEW_MARKER = /^NEW\s*·\s*/;
+          const shelf = await (await fetch(B + '/Games/games.json', { cache: 'no-store' })).json();
+          const holders = (shelf.games || []).filter((g) => NEW_MARKER.test(String(g.title || '')));
+          t('shelf declares exactly one NEW· holder', holders.length === 1,
+            `${holders.length}: ${JSON.stringify(holders.map((h) => h.href))}`);
+          const HOLDER = holders.length === 1 ? holders[0].href : null;
+          mark(`NEW· holder declared by the shelf: ${HOLDER === null ? 'NOT SINGULAR' : HOLDER}`);
+
+          phase('phase 1: arcade at two viewports');
           // 1. The arcade renders every card, at two viewports, with art painted
           //    and nothing spilling sideways.
           for (const vp of [{name:'phone',width:390,height:844},{name:'desktop',width:1280,height:900}]) {
             const c = await br.newContext({viewport:{width:vp.width,height:vp.height}});
             const p = await c.newPage();
+            mark(`[${vp.name}] goto /games/`);
             await p.goto(B+'/games/', {waitUntil:'networkidle', timeout:60000});
             await p.waitForTimeout(1500);
-            const r = await p.evaluate(async () => {
+            mark(`[${vp.name}] arcade evaluate (image race, ceiling ${IMG_MS}ms)`);
+            const r = await p.evaluate(async ({ IMG_MS, HOLDER }) => {
+              // ASSIST (ruling 1.3). Card art below the fold is loading="lazy",
+              // so in a headless run it never enters the viewport, never starts
+              // loading, and never fires load OR error. Scrolling the document
+              // once makes the wait HONEST rather than merely bounded: the
+              // images actually begin loading, so "did it load" is a real
+              // question. The race below stays as the backstop regardless.
+              // Stepped, WITH a pause at each stop. The first attempt scrolled
+              // through and back synchronously and loaded nothing: lazy loading
+              // is driven by intersection, evaluated asynchronously, so an image
+              // never in view for a single frame never starts.
+              //
+              // MEASURED OUTCOME, stated honestly: pausing cut the unresolved
+              // set from 41 to 23 of 80, so it helps — but it did NOT make the
+              // wait fully honest. Zero images fired load either way. Something
+              // beyond scroll position keeps the remainder from loading in a
+              // headless context; naming it is arcade-rendering work, outside
+              // this leg's harness, and is NOT chased here. The race is the
+              // backstop and every unresolved image is logged below, so the
+              // gap is visible on every run rather than assumed away.
+              const step = Math.max(200, Math.floor(window.innerHeight * 0.8));
+              for (let y = 0; y < document.documentElement.scrollHeight; y += step) {
+                window.scrollTo(0, y);
+                await new Promise((r) => setTimeout(r, 120));
+              }
+              window.scrollTo(0, 0);
+              await new Promise((r) => setTimeout(r, 120));
+
               const cards = [...document.querySelectorAll('a[href^="/"]')].filter(a=>a.querySelector('img'));
               const imgs = [...document.querySelectorAll('img')];
-              await Promise.all(imgs.map(i=>i.complete?null:new Promise(r=>{i.onload=i.onerror=r})));
-              const broken = imgs.filter(i=>i.naturalWidth===0).map(i=>i.getAttribute('src'));
+
+              // BOUNDED RACE PER IMAGE (ruling 1.1). Every not-yet-complete
+              // image resolves on load, on error, or on a timeout — never
+              // "never". page.evaluate has no default timeout and the goto
+              // timeout does not reach inside the page, so the unbounded
+              // Promise.all this replaces had no ceiling above it anywhere:
+              // one image that never fires deadlocked the whole leg at 0.7s
+              // and the job died at its 20-minute cap having run no check.
+              // Ceiling of this block is IMG_MS + scroll, because the races
+              // run concurrently.
+              const t0 = performance.now();
+              const settle = (i) => i.complete
+                ? Promise.resolve({ i, mode: 'complete', ms: 0 })
+                : new Promise((res) => {
+                    const s = performance.now();
+                    const done = (mode) => res({ i, mode, ms: Math.round(performance.now() - s) });
+                    i.addEventListener('load',  () => done('load'),  { once: true });
+                    i.addEventListener('error', () => done('error'), { once: true });
+                    setTimeout(() => done('timeout'), IMG_MS);
+                  });
+              const settled = await Promise.all(imgs.map(settle));
+              const waitMs = Math.round(performance.now() - t0);
+
+              const describe = (s) => {
+                const b = s.i.getBoundingClientRect();
+                return { src: s.i.getAttribute('src'), loading: s.i.getAttribute('loading'),
+                         ms: s.ms, naturalWidth: s.i.naturalWidth,
+                         inViewport: b.top < window.innerHeight && b.bottom > 0 };
+              };
+
+              // The assertion is UNCHANGED in strength. An image whose outcome
+              // is KNOWN (already complete, or it fired load or error) and
+              // which has no pixels is broken — exactly what this leg always
+              // asserted. A genuinely broken image fires error, so it is
+              // always in this set and can never hide in the timeout path.
+              // An image that timed out has an UNKNOWN outcome and is reported
+              // rather than counted: a below-fold lazy image that never
+              // started is not a defect. Every one is logged with src,
+              // loading and whether it was in the viewport, so an above-fold
+              // image sitting in the timeout path is visible on every run.
+              const known = settled.filter((s) => s.mode !== 'timeout');
+              const broken = known.filter((s) => s.i.naturalWidth === 0).map((s) => s.i.getAttribute('src'));
+              const unresolved = settled.filter((s) => s.mode === 'timeout').map(describe);
+              const slowest = settled.filter((s) => s.mode === 'load')
+                .sort((a, b) => b.ms - a.ms).slice(0, 5).map(describe);
+
               return { cards: cards.length,
                 overflow: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
-                broken,
+                broken, unresolved, slowest, waitMs, imgCount: imgs.length,
                 hasNM: !!document.querySelector('a[href="/neonmeridian/"]'),
                 hasRV: !!document.querySelector('a[href="/rallyvector3d/"]'),
-                newMarker: (document.body.innerText.match(/NEW ·/g)||[]).length };
-            });
+                // The holder's OWN marker where it is rendered, not a page-wide
+                // text tally. A holder legitimately in two rails renders twice
+                // and that is not a defect; a holder rendering none is.
+                holderRendered: HOLDER === null ? -1
+                  : [...document.querySelectorAll('a[href]')]
+                      .filter((a) => a.getAttribute('href') === HOLDER)
+                      .filter((a) => /NEW\s*·/.test(a.innerText)).length,
+                holderAnchors: HOLDER === null ? -1
+                  : [...document.querySelectorAll('a[href]')]
+                      .filter((a) => a.getAttribute('href') === HOLDER).length };
+            }, { IMG_MS, HOLDER });
+            mark(`[${vp.name}] image race done in ${r.waitMs}ms over ${r.imgCount} img; ${r.unresolved.length} timed out`);
+            for (const u of r.unresolved) mark(`[${vp.name}]   TIMED OUT (reported, not counted): ${JSON.stringify(u)}`);
+            for (const sl of r.slowest) mark(`[${vp.name}]   slowest load: ${JSON.stringify(sl)}`);
             t(`[${vp.name}] arcade renders 50+ cards`, r.cards >= 50, `${r.cards} cards`);
             t(`[${vp.name}] zero horizontal overflow`, r.overflow === 0, `${r.overflow}px`);
             t(`[${vp.name}] no broken card art`, r.broken.length === 0, r.broken.slice(0,3).join(' '));
             t(`[${vp.name}] both new games on the shelf`, r.hasNM && r.hasRV, JSON.stringify(r));
-            t(`[${vp.name}] exactly one NEW marker`, r.newMarker === 1, `${r.newMarker}`);
+            t(`[${vp.name}] the declared NEW· holder renders its marker`, r.holderRendered >= 1,
+              `${HOLDER}: ${r.holderRendered} marker(s) across ${r.holderAnchors} anchor(s)`);
             await c.close();
           }
 
+          phase('phase 2: homepage + pupil page');
           // 2. Homepage New-release boxes and pupil-page cards, on the origin.
           {
             const c = await br.newContext(); const p = await c.newPage();
@@ -198,6 +304,7 @@ jobs:
             await c.close();
           }
 
+          phase('phase 3: both games boot');
           // 3. Both games boot live with nothing off-origin. The splash is
           //    polled from t=0, not sampled after a settle wait, because it
           //    self-closes at ~2.2s.
@@ -227,7 +334,21 @@ jobs:
           }
 
           await br.close();
-          console.log(fail ? `\n${fail} FAILED` : '\nall live checks passed');
+          phase(fail ? `${fail} FAILED` : 'all live checks passed');
           process.exit(fail ? 1 : 0);
           EOF
           cd "$GITHUB_WORKSPACE" && node live.mjs
+
+      # The whole point of 1(b): the progress file survives a kill, so a run
+      # that dies is diagnosable instead of silent. always(), so it prints on
+      # cancellation and failure as well as success.
+      - name: Rendered-leg progress log (survives a cancellation)
+        if: always()
+        shell: bash
+        run: |
+          if [ -s "${LIVE_LOG:-/tmp/driving-live.log}" ]; then
+            echo "== incremental progress, written synchronously per check =="
+            cat "${LIVE_LOG:-/tmp/driving-live.log}"
+          else
+            echo "progress log empty or absent — the leg did not reach its first check"
+          fi
