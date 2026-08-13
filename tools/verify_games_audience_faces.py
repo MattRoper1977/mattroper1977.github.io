@@ -651,11 +651,14 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
 # from "every adult page" would silently enrol the next adult page somebody
 # adds, which is exactly the decision that should require a human.
 #
-# /resources/ is in neither list on purpose. It carries a pill that predates
-# this pass, and it is reachable by pupils through the pupil homepage's no-JS
-# search fallback (action="/resources/"). Listing it as required would ratify a
-# placement nobody ruled on; listing it as forbidden would fail the tree for a
-# state this pass did not create. It is recorded in the report instead.
+# /resources/ sat in neither list for one pass, on purpose: it carried a pill
+# that predated the support-buttons pass, and it is reachable by pupils through
+# the pupil homepage's no-JS search fallback (action="/resources/"). Requiring
+# the pill would have ratified a placement nobody ruled on; forbidding it would
+# have failed the tree for a state that pass did not create. Matt ruled on
+# 2026-08-13: no commerce on pupil-reachable surfaces, so the pill is removed
+# and the page joins the forbidden list. The interim is recorded in
+# data/support-pill.json so the sequence survives.
 PILL_PAGES = [
     "main/index.html",
     "teach/index.html",
@@ -669,10 +672,11 @@ PILL_PAGES = [
     "for/partners/index.html",
 ]
 # Zero Ko-fi, zero commerce. The pupil homepage carries
-# data-mbm-adult-features="off"; the chooser is mixed-audience and carries only
+# data-mbm-adult-features="off"; /resources/ is where the pupil homepage's
+# no-JS search fallback lands; the chooser is mixed-audience and carries only
 # the studio band's quiet text link, which is ruled by studioBand and asserted
 # above, not here.
-PILL_FORBIDDEN = ["for/pupils/index.html"]
+PILL_FORBIDDEN = ["for/pupils/index.html", "resources/index.html"]
 
 
 def check_support_pill(root: Path = ROOT, overrides: Mapping[str, str] | None = None) -> list[str]:
@@ -866,6 +870,10 @@ def self_test(baseline: set[str] | None = None) -> int:
             {FACES["pupils"]: mutate(read(ROOT, FACES["pupils"]), "</footer>", block + "</footer>",
                                      "pupil pill graft")},
             "for/pupils/index.html: carries 1 Ko-fi reference(s); this surface must carry none")
+    control("support pill restored to the pupil-reachable catalogue",
+            {"resources/index.html": mutate(read(ROOT, "resources/index.html"), "</footer>",
+                                            block + "</footer>", "resources pill graft")},
+            "resources/index.html: carries 1 Ko-fi reference(s); this surface must carry none")
     control("support pill href altered on one page",
             {FACES["partners"]: mutate(partners, pill["href"], "https://ko-fi.com/madebymatt-uk", "href")},
             "does not carry the declared Ko-fi href and label verbatim")
