@@ -174,6 +174,31 @@ jobs:
           print('Biopunk in manifest', any('biopunk' in e['href'].lower() for e in g))
           PY
 
+      # THE MIRROR LEG — ruled 2026-08-13, closing the two-shelves divergence.
+      # The served /Games/games.json (the Games repository's file, which the
+      # arcade fetches at runtime) is the canonical shelf; this repository's
+      # data/source-manifests/games.json is a generated mirror of it, written
+      # only by tools/render_games_manifest_mirror.py. No local gate can see
+      # both repositories, so the byte comparison runs HERE, against the
+      # served canonical, on every pull request. The 2026-08-12 launch put two
+      # shelf entries in the mirror by hand and the estate ran for a day with
+      # two hand-written shelves; the census report carries the account. This
+      # leg is what makes that impossible to repeat silently.
+      - name: Shelf mirror equals the served canonical, byte for byte
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sS --max-time 30 https://madebymatt.uk/Games/games.json -o /tmp/canonical.json
+          if cmp -s /tmp/canonical.json data/source-manifests/games.json; then
+            echo "  PASS mirror is byte-identical to the served canonical ($(wc -c < /tmp/canonical.json) bytes)"
+          else
+            echo "  FAIL data/source-manifests/games.json is not the served canonical:"
+            echo "       mirror    $(wc -c < data/source-manifests/games.json) B $(sha256sum data/source-manifests/games.json | cut -c1-16)"
+            echo "       canonical $(wc -c < /tmp/canonical.json) B $(sha256sum /tmp/canonical.json | cut -c1-16)"
+            echo "       regenerate with tools/render_games_manifest_mirror.py --write, never by hand"
+            exit 1
+          fi
+
       - name: Homepage and arcade, as served
         shell: bash
         run: |
@@ -214,39 +239,53 @@ jobs:
           # be hand-edited every time a game ships is not an invariant, it is a
           # scheduled outage.
           #
-          # Derived replacement: an occupant is legitimate iff it NAMES A GAME
-          # THAT IS ACTUALLY ON THE SHELF. A typo, a phantom, or a box for a
-          # game that never shipped still fails; a game that legitimately
-          # launched passes with no edit here. The shelf is the same served
-          # manifest the census step above reads, and the NEW· marker prefix is
-          # stripped before comparison because the marker rides on the shelf
-          # title, not on the homepage box.
+          # ELEVENTH INSTANCE — and the repair is a different mechanism, ruled
+          # 2026-08-13. The derived replacement below compared DISPLAY TITLES:
+          # occupant "Rally Vector 3D" against shelf title "Rally Vector 3D —
+          # Championship Edition" is honest copy on both sides, and the title
+          # match called it a phantom anyway. Display strings are authored per
+          # surface; identity is the folder slug. So the check now maps each
+          # occupant label to its slug through data/new-release-occupants.json
+          # — a declared editorial input, the sixth of its kind — and asks the
+          # only real question: is /<slug>/ an href on the served shelf?
+          #
+          # This is NOT the RULED_OCCUPANTS pin returning: that pin froze
+          # MEMBERSHIP (who may occupy), which stays derived from the shelf.
+          # The record declares IDENTITY (what a label means), which nothing
+          # on the page binds machine-readably. A new box means a new line in
+          # the record — a visible decision — and an unmapped occupant fails
+          # loudly below, which the self-test proves on demand.
           shelf=[]
           try:
               shelf=json.load(open('/tmp/shelf.json'))['games']
           except Exception as e:
               print('  FAIL served shelf manifest unreadable, cannot derive occupants:',e); sys.exit(1)
-          strip_marker=lambda t: re.sub(r'^NEW\s*·\s*','',t).strip()
-          known={strip_marker(e['title']) for e in shelf}
-          print('  shelf titles      :',len(known),'derived from the served manifest')
+          slugs={str(e.get('href','')).strip('/') for e in shelf}
+          occupants=json.load(open('data/new-release-occupants.json'))['occupants']
+          print('  shelf slugs       :',len(slugs),'derived from the served manifest')
+          print('  occupant record   :',occupants)
 
           # Negative control. The gate must prove it can exit non-zero, so this
-          # injects an occupant naming a game that is not on the shelf.
+          # injects an occupant with no entry in the record.
           if os.environ.get('AGX1_SELFTEST')=='occupant':
               r=r+['Ghost Game That Never Shipped']
-              print('  SELF-TEST injecting an off-shelf occupant:',r[-1])
+              print('  SELF-TEST injecting an unmapped occupant:',r[-1])
 
-          if not known:
+          if not slugs:
               print('  FAIL served shelf has no games — an empty shelf would pass vacuously'); sys.exit(1)
           if not r:
               print('  FAIL committed tree carries NO New Release occupant — an empty stack would pass vacuously'); sys.exit(1)
-          unknown=[o for o in r if strip_marker(o) not in known]
+          unmapped=[o for o in r if o not in occupants]
+          if unmapped:
+              print('  FAIL occupant has no entry in data/new-release-occupants.json (a new box is a visible decision):',unmapped); sys.exit(1)
+          offshelf=[o for o in r if occupants[o] not in slugs]
           dupes=sorted({o for o in r if r.count(o)>1})
-          if unknown:
-              print('  FAIL New Release occupant does not name a game on the shelf:',unknown); sys.exit(1)
+          if offshelf:
+              print('  FAIL occupant maps to a slug that is not on the served shelf:',
+                    [f'{o} -> /{occupants[o]}/' for o in offshelf]); sys.exit(1)
           if dupes:
               print('  FAIL a game holds more than one homepage surface:',dupes); sys.exit(1)
-          print('  PASS every occupant names a live shelf game; no game holds two boxes')
+          print('  PASS every occupant maps to a live shelf slug; no game holds two boxes')
           if s==r:
               print('  PASS live JS-off full homepage serves',r,'as New Release, matching the tree and the ruling')
           else:
