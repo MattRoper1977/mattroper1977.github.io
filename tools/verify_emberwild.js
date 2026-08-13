@@ -25,8 +25,11 @@ const GAME = process.argv[2] && !process.argv[2].startsWith('--')
   : path.resolve(__dirname, '..', 'emberwild', 'index.html');
 
 const SELFTEST = process.argv.includes('--selftest');
-const CHROME = process.env.EMBERWILD_CHROME
-  || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+// Use an explicitly pinned Chromium when one is present (local sandbox), and
+// otherwise let Playwright pick the browser it installed (CI). Passing an
+// executablePath that does not exist fails harder than having none at all.
+const PINNED = process.env.EMBERWILD_CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+const CHROME = PINNED && fs.existsSync(PINNED) ? PINNED : undefined;
 
 // CI trap: node buffers stdout and the runner kills silent jobs. Flush per line.
 function say(s) { process.stdout.write(s + '\n'); }
@@ -246,7 +249,7 @@ async function browserGates(gamePath) {
     gate('GB', 'browser gates', false, 'playwright unavailable — run in CI (SHIPPED-AS-CI)');
     return;
   }
-  const browser = await chromium.launch({ executablePath: CHROME });
+  const browser = await chromium.launch(CHROME ? { executablePath: CHROME } : {});
   try {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const external = [], errors = [];
