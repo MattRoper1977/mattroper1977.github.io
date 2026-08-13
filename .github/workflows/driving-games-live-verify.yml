@@ -12,8 +12,22 @@ name: Driving games live verification
 # Pages lag is reported as PENDING, never as a pass: a served copy that has not
 # caught up with the tree is a deployment timing fact, not a content match.
 
+# RETARGETED 2026-08-13 (census ruling). This was workflow_dispatch-only: an
+# instrument that looks like an automatic gate but never fires on its own. It
+# now runs on pushes to main that touch its subjects — including this file, so
+# the retargeting merge itself is the proof the trigger fires. Deployment lag
+# is already handled inside: served-vs-tree mismatches are recorded as a
+# timing fact, not failed as a content mismatch.
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'rallyvector3d/index.html'
+      - 'neonmeridian/index.html'
+      - 'data/source-manifests/games.json'
+      - '.github/workflows/driving-games-live-verify.yml'
 
 permissions:
   contents: read

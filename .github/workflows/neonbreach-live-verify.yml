@@ -14,10 +14,18 @@ name: Neon Breach live verification
 # caught up with the tree is a deployment timing fact, not a content match, and
 # saying so is the whole point of the gate.
 
+# RETARGETED 2026-08-13 (census ruling). The old push branch was this game's
+# launch branch — valid when written, dead the day its PR merged, leaving the
+# workflow dispatch-only in practice. It now fires on pushes to main touching
+# its subjects, including this file: the retargeting merge is the firing proof.
+# Lag is already a recorded timing fact here, not a failure.
 on:
   push:
     branches:
-      - 'claude/neon-sync-breach-release-0x70pf'
+      - main
+    paths:
+      - 'neonbreach/index.html'
+      - '.github/workflows/neonbreach-live-verify.yml'
   workflow_dispatch:
 
 permissions:
