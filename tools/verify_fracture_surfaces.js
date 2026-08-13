@@ -13,7 +13,6 @@
  *   SITE_DIR=... GAMES_DIR=... node tools/verify_fracture_surfaces.js
  */
 'use strict';
-const { chromium } = require('playwright');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -42,6 +41,12 @@ function requirePrecondition(label, dir, variable, probe) {
 }
 requirePrecondition('the Games estate', GAMES, 'GAMES_DIR', 'games.json');
 requirePrecondition('the Lessons estate', LESSONS, 'LESSONS_DIR', 'README.md');
+
+/* Loaded only after the preconditions hold. Required at the top of the file,
+ * a machine without playwright crashed on module load - exit 1 and a stack
+ * trace - before the guard above could say INCONCLUSIVE and exit 3, so the
+ * tool could not honour the contract it declares. */
+const { chromium } = require('playwright');
 
 const NEW_PREFIX = 'NEW · ';
 const RPG = /\bRPG\b/;
