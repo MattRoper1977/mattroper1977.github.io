@@ -100,10 +100,54 @@ jobs:
           check https://madebymatt.uk/rallyvector3d/index.html         rallyvector3d/index.html
           exit $fail
 
-      - name: Install Playwright
-        run: npm i -D playwright@1.56.1 && npx playwright install --with-deps chromium
+      # PARKED 2026-08-13, ruled by Matt. Commission 1(a).
+      #
+      # The rendered leg below has a stdout-buffering defect: node buffers its
+      # output to the pipe, the step outruns the job's 20-minute cap, and the
+      # cancellation takes every line it had printed with it. Measured twice —
+      # 19.5 min at the 2026-08-12 launch (recorded in
+      # reports/2026-08-12-two-driving-games-launch.md), 20.3 min on the
+      # 2026-08-13 retarget run 31689095437 — both emitting nothing at all.
+      #
+      # Retargeting this workflow to push:main made that silent cancellation a
+      # cost on every qualifying push. So the leg is PARKED, not deleted and
+      # not skipped quietly: the step below always runs, always states the
+      # park in the log AND in the run summary, and always exits 0 without
+      # launching a browser. The Playwright install is parked with it — there
+      # is no reason to spend two minutes fetching a browser nothing drives.
+      #
+      # The cap is NOT raised. Every other leg in this job — the negative
+      # control, the served-bytes comparison, the Pages status — keeps running
+      # and keeps its own verdict, so this workflow still fails when the bytes
+      # are wrong. Commission 1(b) fixes the buffering and un-parks the leg
+      # with a red-then-green proof; until then this is a stated park.
+      - name: 'PARKED — rendered leg (stdout-buffering defect)'
+        shell: bash
+        run: |
+          set -euo pipefail
+          MSG='PARKED: stdout-buffering defect — see register'
+          echo "$MSG"
+          echo "  leg     : Arcade, homepage, pupil page and both games — rendered on the origin"
+          echo "  evidence: 19.5 min 2026-08-12 launch; 20.3 min run 31689095437, both emitted nothing"
+          echo "  cap     : job timeout-minutes 20, unchanged"
+          echo "  scope   : this leg only — every other leg in this job ran and reported above"
+          {
+            echo "### $MSG"
+            echo ""
+            echo "\`driving-games-live-verify\` rendered leg is parked, not skipped silently."
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| leg | Arcade, homepage, pupil page and both games — rendered on the origin |"
+            echo "| defect | node stdout buffered to the pipe; run dies at the cap having emitted nothing |"
+            echo "| measured | 19.5 min (2026-08-12 launch) · 20.3 min (run 31689095437) |"
+            echo "| cap | \`timeout-minutes: 20\`, unchanged |"
+            echo "| other legs | ran normally and kept their verdicts |"
+            echo "| un-park | commission 1(b), red-then-green required |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Arcade, homepage, pupil page and both games — rendered on the origin
+        if: false
         shell: bash
         run: |
           cat > "$GITHUB_WORKSPACE/live.mjs" <<'EOF'
