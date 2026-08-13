@@ -23,6 +23,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = ROOT / "data" / "audience-homepages.json"
+SUPPORT_PILL_PATH = ROOT / "data" / "support-pill.json"
 SENTINEL = "mbm-audience-discovery-teach-professional-hubs-closeout-2026-08-09"
 
 # /start/ is a frozen legacy redirect that the closeout deliberately left
@@ -144,9 +145,41 @@ def general_header(*, current: str, audience: dict[str, Any] | None = None, choo
     return f'''<header class="header mbm-site-header"><div class="bar">{brand()}<button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links">{primary_html}</div><details class="mbm-nav-more"><summary>More</summary><div class="mbm-nav-panel">{more_html}</div></details>{display_menu()}</nav></div></header>'''
 
 
-def footer(label: str, *, quiet: bool = False) -> str:
+def support_pill() -> str:
+    """The Ko-fi support pill, built from data/support-pill.json and nowhere else.
+
+    Shared with render_discovery_hubs.py by import, the same way SENTINEL is:
+    /teach/ and /education-hub/ carry the identical block, so a second copy of
+    this markup would drift the moment one of them moved.
+
+    A plain anchor by construction. No widget, no script, no iframe - nothing
+    off-origin is requested until a visitor clicks it. target="_blank" is paired
+    with rel="noopener noreferrer" and an aria-label that says the tab opens,
+    because a new tab a screen-reader user was not told about is the defect.
+    """
+    pill = json.loads(SUPPORT_PILL_PATH.read_text(encoding="utf-8"))
+    return (
+        f'<div class="{esc(pill["containerClass"])}" style="{esc(pill["containerStyle"])}">'
+        f'<p style="{esc(pill["leadStyle"])}">'
+        f'<strong style="color:#E8E2D4">{esc(pill["leadStrong"])}</strong> {esc(pill["lead"])}</p>'
+        f'<a href="{esc(pill["href"])}" rel="noopener noreferrer" target="_blank"'
+        f' aria-label="{esc(pill["ariaLabel"])}"'
+        f' style="{esc(pill["linkStyle"])}">{esc(pill["label"])}</a></div>'
+    )
+
+
+def footer(label: str, *, quiet: bool = False, support: bool = False) -> str:
+    """The shared audience footer.
+
+    `support` is passed explicitly rather than derived from `quiet`. The two
+    happen to coincide today - the pupil page and the root chooser are both
+    quiet, and neither carries the pill - but they are different questions, and
+    a page that became quiet for a mailing reason would otherwise silently lose
+    or gain a Ko-fi link. The caller states which it wants.
+    """
     quiet_attr = ' data-mbm-mailing-cta="off"' if quiet else ""
-    return f'''<footer class="footer mf-footer"{quiet_attr}><div class="bar">{brand()}<span class="muted">{esc(label)} · <a href="/main/">Main homepage</a> · <a href="/">Choose homepage</a> · <a href="/privacy/">Privacy</a></span></div></footer>'''
+    pill = support_pill() if support else ""
+    return f'''<footer class="footer mf-footer"{quiet_attr}><div class="bar">{brand()}<span class="muted">{esc(label)} · <a href="/main/">Main homepage</a> · <a href="/">Choose homepage</a> · <a href="/privacy/">Privacy</a></span></div>{pill}</footer>'''
 
 
 def scripts() -> str:
@@ -340,7 +373,7 @@ def audience_page(data: dict[str, Any], aid: str, audience: dict[str, Any]) -> s
     return f'''<!doctype html>
 <!-- {SENTINEL} -->
 <html lang="en-GB">{head(f"{audience['label']} · Made by Matt", description, audience['route'])}<body class="mbm-face-page" {body_attrs} style="--face-accent:{esc(audience['accent'])};--face-accent-visual:{esc(audience.get('accentVisual') or audience['accent'])};--face-soft:{esc(audience['soft'])}">
-<a class="skip" href="#main">Skip to content</a>{general_header(current=audience['route'], audience=audience)}<main id="main">{hero(audience)}{sections}{utility_section(audience)}{note_section(audience)}{switcher(data, aid)}</main>{footer(audience['label'], quiet=not audience.get('adultFeatures'))}{scripts()}</body></html>
+<a class="skip" href="#main">Skip to content</a>{general_header(current=audience['route'], audience=audience)}<main id="main">{hero(audience)}{sections}{utility_section(audience)}{note_section(audience)}{switcher(data, aid)}</main>{footer(audience['label'], quiet=not audience.get('adultFeatures'), support=bool(audience.get('adultFeatures')))}{scripts()}</body></html>
 '''
 
 

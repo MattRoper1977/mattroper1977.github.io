@@ -639,6 +639,94 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
         if not contains_href(page, "/") or "Choose homepage" not in page:
             errors.append(f"{rel}: general navigation lacks Choose homepage")
 
+    errors.extend(check_support_pill(root, overrides))
+
+    return errors
+
+
+# The pages that carry the Ko-fi support pill, and the pages that must never.
+#
+# PILL_PAGES is stated rather than derived, because "which surfaces may carry
+# commerce" is an editorial ruling and not a property of the tree. Deriving it
+# from "every adult page" would silently enrol the next adult page somebody
+# adds, which is exactly the decision that should require a human.
+#
+# /resources/ is in neither list on purpose. It carries a pill that predates
+# this pass, and it is reachable by pupils through the pupil homepage's no-JS
+# search fallback (action="/resources/"). Listing it as required would ratify a
+# placement nobody ruled on; listing it as forbidden would fail the tree for a
+# state this pass did not create. It is recorded in the report instead.
+PILL_PAGES = [
+    "main/index.html",
+    "teach/index.html",
+    "tools/index.html",
+    "education-hub/index.html",
+    "for/teachers/index.html",
+    "for/parents-carers/index.html",
+    "for/schools-semh/index.html",
+    "for/trusts/index.html",
+    "for/councils-organisations/index.html",
+    "for/partners/index.html",
+]
+# Zero Ko-fi, zero commerce. The pupil homepage carries
+# data-mbm-adult-features="off"; the chooser is mixed-audience and carries only
+# the studio band's quiet text link, which is ruled by studioBand and asserted
+# above, not here.
+PILL_FORBIDDEN = ["for/pupils/index.html"]
+
+
+def check_support_pill(root: Path = ROOT, overrides: Mapping[str, str] | None = None) -> list[str]:
+    """The support pill is present where it was ruled, and absent where it was not.
+
+    Every literal is read from data/support-pill.json, the same record the two
+    renderers build from. Re-typing the href here would let the record and the
+    gate drift apart and still both look green - which is the failure mode this
+    file has already been repaired for once.
+    """
+    errors: list[str] = []
+    pill = json.loads(read(root, "data/support-pill.json", overrides))
+    href, label = str(pill["href"]), str(pill["label"])
+    anchor = re.compile(
+        r'<a\b[^>]*\bhref=["\']' + re.escape(href) + r'["\'][^>]*>' + re.escape(label) + r"</a>"
+    )
+
+    for rel in PILL_PAGES:
+        page = read(root, rel, overrides)
+        containers = page.count(f'<div class="{pill["containerClass"]}"')
+        if containers != 1:
+            errors.append(f"{rel}: carries {containers} support pill(s); every adult page carries exactly one")
+            continue
+        found = anchor.search(page)
+        if not found:
+            errors.append(f"{rel}: support pill does not carry the declared Ko-fi href and label verbatim")
+            continue
+        tag = found.group(0)
+        # A new tab the visitor was not told about, or one opened without
+        # noopener, is the defect - not a style preference.
+        for attr, why in [
+            ('rel="noopener noreferrer"', "rel=\"noopener noreferrer\""),
+            ('target="_blank"', 'target="_blank"'),
+            (f'aria-label="{pill["ariaLabel"]}"', "the declared aria-label"),
+            ("min-height:44px", "a 44px minimum touch target"),
+        ]:
+            if attr not in tag:
+                errors.append(f"{rel}: support pill is missing {why}")
+        # B7: no off-origin request may fire at page load. A plain anchor
+        # fires nothing until it is clicked; a widget, script or iframe does.
+        if re.search(r"<script[^>]*ko-?fi|<iframe[^>]*ko-?fi|ko-fi\.com/[^\"']*widget", page, re.I):
+            errors.append(f"{rel}: embeds a Ko-fi widget, script or iframe; the pill must be a plain anchor")
+        # The print rule the estate already owns keys off the container class
+        # and off .footer, and both only reach it inside the footer.
+        footer_at = page.find("<footer")
+        if footer_at < 0 or page.find(f'<div class="{pill["containerClass"]}"') < footer_at:
+            errors.append(f"{rel}: support pill sits outside the footer, where the print rule does not reach it")
+
+    for rel in PILL_FORBIDDEN:
+        page = read(root, rel, overrides)
+        hits = len(re.findall(r"ko-?fi\.com", page, re.I))
+        if hits:
+            errors.append(f"{rel}: carries {hits} Ko-fi reference(s); this surface must carry none")
+
     return errors
 
 
@@ -757,6 +845,47 @@ def self_test(baseline: set[str] | None = None) -> int:
             {"assets/mbm-audience.js": mutate(js, "return ROUTES[value]?value:'';",
                                               "return {pupils:1}[value]?value:'';", "split allow-list")},
             "must stay one list")
+
+    # The support pill, in both directions. Each control breaks exactly one
+    # clause of the ruling and proves check_support_pill names the page that
+    # broke it. Every fixture goes through mutate(), which raises when a
+    # replacement does not land - a graft that silently no-ops would leave the
+    # control measuring a clean tree and reporting a pass for it.
+    pill = json.loads(read(ROOT, "data/support-pill.json"))
+    teach = read(ROOT, "teach/index.html")
+    partners = read(ROOT, FACES["partners"])
+    block = re.search(r'<div class="' + re.escape(pill["containerClass"]) + r'"[\s\S]*?</div>', teach)
+    if not block:
+        raise SystemExit("positive-control fixture could not be created: support pill block")
+    block = block.group(0)
+
+    control("support pill removed from /teach/",
+            {"teach/index.html": mutate(teach, block, "", "pill removal")},
+            "teach/index.html: carries 0 support pill")
+    control("support pill grafted onto the pupil homepage",
+            {FACES["pupils"]: mutate(read(ROOT, FACES["pupils"]), "</footer>", block + "</footer>",
+                                     "pupil pill graft")},
+            "for/pupils/index.html: carries 1 Ko-fi reference(s); this surface must carry none")
+    control("support pill href altered on one page",
+            {FACES["partners"]: mutate(partners, pill["href"], "https://ko-fi.com/madebymatt-uk", "href")},
+            "does not carry the declared Ko-fi href and label verbatim")
+    control("support pill opened in a new tab without noopener",
+            {FACES["partners"]: mutate(partners, ' rel="noopener noreferrer"', "", "rel")},
+            'support pill is missing rel="noopener noreferrer"')
+    control("support pill stripped of its aria-label",
+            {FACES["partners"]: mutate(partners, f' aria-label="{pill["ariaLabel"]}"', "", "aria-label")},
+            "support pill is missing the declared aria-label")
+    control("support pill dropped below the 44px touch target",
+            {FACES["partners"]: mutate(partners, "min-height:44px;", "", "touch target")},
+            "support pill is missing a 44px minimum touch target")
+    control("support pill lifted out of the footer, where print cannot hide it",
+            {"teach/index.html": mutate(mutate(teach, block, "", "pill lift"), "<footer", block + "<footer",
+                                        "pill reinsertion")},
+            "sits outside the footer")
+    control("Ko-fi widget script embedded beside the pill",
+            {"teach/index.html": mutate(teach, block, block + '<script src="https://ko-fi.com/widget.js"></script>',
+                                        "widget")},
+            "embeds a Ko-fi widget, script or iframe")
 
     restored = set(check_tree(ROOT))
     if restored != baseline:
