@@ -951,6 +951,907 @@
     }
   }
 
+  // ===================================================================
+  // THE DEPTHS — deterministic dungeon generation.
+  //
+  // Grafted from the EMBERWILD v1.2 expansion. The v1.2 zip named as the
+  // primary source was absent from the supplied archive, so these modules were
+  // taken from the Complete Expansion Studio standalone, whose script blocks
+  // carry data-inlined-source="../src/*.js" attributes. That provenance was
+  // corroborated: the studio's inlined engine-core.js is byte-identical to the
+  // pin-verified v1.1 src/engine-core.js, so the inlined blocks are authentic
+  // engine source even though the studio wrapper itself failed its pin.
+  //
+  // It lives in its OWN closure on purpose. The engine and the chassis both
+  // define Surface, and they disagree: engine WATER=2/ICE=4/TALL_GRASS=5
+  // against chassis TALL_GRASS=2/WATER=4/ICE=5. Sharing a scope would put
+  // grass where water belongs and nothing would throw. Everything crossing the
+  // boundary goes through EWDepthsBridge, which remaps explicitly.
+  // ===================================================================
+  const EWDepths = (function(){
+    'use strict';
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+    const EXPANSION_VERSION = '1.2.0';
+  const Direction = Object.freeze({ NONE: 0, SOUTH: 1, NORTH: 2, EAST: 3, WEST: 4 });
+  const Surface = Object.freeze({ WALKABLE: 0, BLOCKED: 1, WATER: 2, STAIRS: 3, ICE: 4, TALL_GRASS: 5 });
+  const MovementState = Object.freeze({ IDLE: 0, WALKING: 1, VAULTING: 2, CLIMBING_STAIRS: 3 });
+
+  const ElevationMasks = Object.freeze({
+    HEIGHT: 0x000F,
+    SLOPE_DIR: 0x00F0,
+    LEDGE_DIR: 0x0F00,
+    SURFACE: 0xF000
+  });
+
+  function encodeCell({ height = 0, slope = Direction.NONE, ledge = Direction.NONE, surface = Surface.WALKABLE } = {}) {
+    return ((surface & 0x0F) << 12) | ((ledge & 0x0F) << 8) | ((slope & 0x0F) << 4) | (height & 0x0F);
+  }
+
+  function decodeCell(value) {
+    return {
+      height: value & ElevationMasks.HEIGHT,
+      slope: (value & ElevationMasks.SLOPE_DIR) >>> 4,
+      ledge: (value & ElevationMasks.LEDGE_DIR) >>> 8,
+      surface: (value & ElevationMasks.SURFACE) >>> 12
+    };
+  }
+
+  function directionFromVector(dx, dz) {
+    if (dz === 1 && dx === 0) return Direction.SOUTH;
+    if (dz === -1 && dx === 0) return Direction.NORTH;
+    if (dx === 1 && dz === 0) return Direction.EAST;
+    if (dx === -1 && dz === 0) return Direction.WEST;
+    return Direction.NONE;
+  }
+
+
+  function directionVector(direction) {
+    if (direction === Direction.NORTH) return { dx: 0, dz: -1 };
+    if (direction === Direction.SOUTH) return { dx: 0, dz: 1 };
+    if (direction === Direction.EAST) return { dx: 1, dz: 0 };
+    if (direction === Direction.WEST) return { dx: -1, dz: 0 };
+    return { dx: 0, dz: 0 };
+  }
+
+  class DeterministicPRNG {
+    constructor(seed = 0x6D2B79F5) {
+      this.seed = (seed >>> 0) || 0x6D2B79F5;
+    }
+    random() {
+      let x = this.seed >>> 0;
+      x ^= x << 13;
+      x ^= x >>> 17;
+      x ^= x << 5;
+      this.seed = x >>> 0;
+      return this.seed / 4294967296;
+    }
+    range(min, max) {
+      return Math.floor(this.random() * (max - min + 1)) + min;
+    }
+    chance(probability) {
+      return this.random() < probability;
+    }
+    pick(array) {
+      if (!Array.isArray(array) || array.length === 0) return undefined;
+      return array[this.range(0, array.length - 1)];
+    }
+  }
+
+  class ChecksumEngine {
+    static crc32(text) {
+      let crc = 0xFFFFFFFF;
+      for (let index = 0; index < text.length; index += 1) {
+        crc ^= text.charCodeAt(index);
+        for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (-(crc & 1) & 0xEDB88320);
+      }
+      return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+    static stableStringify(value) {
+      if (value === null || typeof value !== 'object') return JSON.stringify(value);
+      if (Array.isArray(value)) return `[${value.map((item) => this.stableStringify(item)).join(',')}]`;
+      return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${this.stableStringify(value[key])}`).join(',')}}`;
+    }
+    static generateHash(dataObject) {
+      const copy = deepClone(dataObject);
+      delete copy.checksum;
+      return this.crc32(this.stableStringify(copy)).toString(16).padStart(8, '0');
+    }
+    static verify(dataObject) { return Boolean(dataObject?.checksum) && this.generateHash(dataObject) === dataObject.checksum; }
+  }
+
+  function asUint32(value) {
+    if (Number.isFinite(value)) return Number(value) >>> 0;
+    return ChecksumEngine.crc32(String(value ?? 'EMBERWILD')) >>> 0;
+  }
+
+  function canonicalise(value, seen = new WeakSet()) {
+    if (value === null || typeof value !== 'object') {
+      if (typeof value === 'number' && !Number.isFinite(value)) return String(value);
+      return value;
+    }
+    if (seen.has(value)) throw new TypeError('Cannot canonicalise cyclic data');
+    seen.add(value);
+    if (ArrayBuffer.isView(value)) {
+      seen.delete(value);
+      return Array.from(value);
+    }
+    if (value instanceof ArrayBuffer) {
+      seen.delete(value);
+      return Array.from(new Uint8Array(value));
+    }
+    if (Array.isArray(value)) {
+      const result = value.map((entry) => canonicalise(entry, seen));
+      seen.delete(value);
+      return result;
+    }
+    const result = {};
+    for (const key of Object.keys(value).sort()) result[key] = canonicalise(value[key], seen);
+    seen.delete(value);
+    return result;
+  }
+
+  function stableStringify(value) {
+    return JSON.stringify(canonicalise(value));
+  }
+
+  function hashObject(value) {
+    return ChecksumEngine.crc32(stableStringify(value)).toString(16).padStart(8, '0');
+  }
+
+
+  class ElevationMap {
+    constructor(width, depth, defaultCell = null) {
+      this.width = Math.max(1, Math.trunc(width));
+      this.depth = Math.max(1, Math.trunc(depth));
+      this.grid = new Uint16Array(this.width * this.depth);
+      this.metadata = new Map();
+      if (defaultCell) this.grid.fill(encodeCell(defaultCell));
+    }
+    inBounds(x, z) { return Number.isInteger(x) && Number.isInteger(z) && x >= 0 && x < this.width && z >= 0 && z < this.depth; }
+    index(x, z) { return this.inBounds(x, z) ? z * this.width + x : -1; }
+    getCell(x, z) {
+      const index = this.index(x, z);
+      if (index < 0) return null;
+      return { ...decodeCell(this.grid[index]), ...(this.metadata.get(index) || {}) };
+    }
+    setCell(x, z, cell = {}) {
+      const index = this.index(x, z);
+      if (index < 0) return false;
+      const current = decodeCell(this.grid[index]);
+      this.grid[index] = encodeCell({ ...current, ...cell });
+      const extra = { ...cell };
+      ['height', 'slope', 'ledge', 'surface'].forEach((key) => delete extra[key]);
+      if (Object.keys(extra).length) this.metadata.set(index, { ...(this.metadata.get(index) || {}), ...extra });
+      return true;
+    }
+    setMetadata(x, z, extra = {}) {
+      const index = this.index(x, z);
+      if (index < 0) return false;
+      this.metadata.set(index, { ...(this.metadata.get(index) || {}), ...extra });
+      return true;
+    }
+    isWalkable(cell) { return Boolean(cell) && ![Surface.BLOCKED, Surface.WATER].includes(cell.surface); }
+    validateStep(fromX, fromZ, dx, dz, occupied = null) {
+      if (Math.abs(dx) + Math.abs(dz) !== 1) return { allowed: false, reason: 'CARDINAL_ONLY' };
+      const from = this.getCell(fromX, fromZ);
+      const toX = fromX + dx;
+      const toZ = fromZ + dz;
+      const target = this.getCell(toX, toZ);
+      if (!from || !target) return { allowed: false, reason: 'OUT_OF_BOUNDS' };
+      if (occupied && occupied.has(`${toX},${toZ}`)) return { allowed: false, reason: 'OCCUPIED' };
+      const direction = directionFromVector(dx, dz);
+      if (from.ledge === direction) {
+        const landingX = fromX + dx * 2;
+        const landingZ = fromZ + dz * 2;
+        const landing = this.getCell(landingX, landingZ);
+        if (!landing || !this.isWalkable(landing)) return { allowed: false, reason: 'VAULT_LANDING_BLOCKED' };
+        if (occupied && occupied.has(`${landingX},${landingZ}`)) return { allowed: false, reason: 'VAULT_LANDING_OCCUPIED' };
+        if (landing.height !== from.height - 1) return { allowed: false, reason: 'VAULT_HEIGHT_INVALID' };
+        return { allowed: true, mode: MovementState.VAULTING, targetX: landingX, targetZ: landingZ, targetCell: landing, crossedCell: target };
+      }
+      const heightDelta = target.height - from.height;
+      if (heightDelta === 0 && this.isWalkable(target)) return { allowed: true, mode: MovementState.WALKING, targetX: toX, targetZ: toZ, targetCell: target };
+      const stairs = from.surface === Surface.STAIRS || target.surface === Surface.STAIRS;
+      if (stairs && Math.abs(heightDelta) === 1 && this.isWalkable(target)) return { allowed: true, mode: MovementState.CLIMBING_STAIRS, targetX: toX, targetZ: toZ, targetCell: target };
+      return { allowed: false, reason: target.surface === Surface.BLOCKED ? 'BLOCKED' : target.surface === Surface.WATER ? 'WATER' : 'HEIGHT_MISMATCH' };
+    }
+    exportSchema(id = 'map') {
+      return {
+        version: 1,
+        id,
+        width: this.width,
+        depth: this.depth,
+        packedCells: Array.from(this.grid),
+        metadata: Array.from(this.metadata.entries())
+      };
+    }
+    static fromSchema(schema) {
+      if (!schema || !schema.width || !schema.depth || !Array.isArray(schema.packedCells)) throw new Error('Invalid elevation map schema');
+      const map = new ElevationMap(schema.width, schema.depth);
+      map.grid.set(schema.packedCells.slice(0, map.grid.length));
+      map.metadata = new Map(schema.metadata || []);
+      return map;
+    }
+  }
+
+  class AStarPathfinder {
+    constructor(map) { this.map = map; }
+    heuristic(x, z, y, goalX, goalZ, goalY) { return Math.abs(x - goalX) + Math.abs(z - goalZ) + Math.abs(y - goalY) * 1.5; }
+    findPath(startX, startZ, goalX, goalZ, occupied = null, maxIterations = 4096) {
+      const start = this.map.getCell(startX, startZ);
+      const goal = this.map.getCell(goalX, goalZ);
+      if (!start || !goal || !this.map.isWalkable(goal)) return [];
+      const key = (x, z) => `${x},${z}`;
+      const open = [{ x: startX, z: startZ, f: this.heuristic(startX, startZ, start.height, goalX, goalZ, goal.height) }];
+      const openKeys = new Set([key(startX, startZ)]);
+      const closed = new Set();
+      const cameFrom = new Map();
+      const g = new Map([[key(startX, startZ), 0]]);
+      let iterations = 0;
+      while (open.length && iterations < maxIterations) {
+        iterations += 1;
+        open.sort((a, b) => a.f - b.f);
+        const current = open.shift();
+        const currentKey = key(current.x, current.z);
+        openKeys.delete(currentKey);
+        if (current.x === goalX && current.z === goalZ) return this.reconstruct(cameFrom, current);
+        closed.add(currentKey);
+        for (const direction of [{ dx: 0, dz: -1 }, { dx: 0, dz: 1 }, { dx: 1, dz: 0 }, { dx: -1, dz: 0 }]) {
+          const validation = this.map.validateStep(current.x, current.z, direction.dx, direction.dz, occupied);
+          if (!validation.allowed || validation.mode === MovementState.VAULTING) continue;
+          const neighborKey = key(validation.targetX, validation.targetZ);
+          if (closed.has(neighborKey)) continue;
+          const stepCost = validation.mode === MovementState.CLIMBING_STAIRS ? 1.5 : 1;
+          const tentative = (g.get(currentKey) ?? Infinity) + stepCost;
+          if (tentative >= (g.get(neighborKey) ?? Infinity)) continue;
+          cameFrom.set(neighborKey, { x: current.x, z: current.z });
+          g.set(neighborKey, tentative);
+          const cell = validation.targetCell;
+          const f = tentative + this.heuristic(validation.targetX, validation.targetZ, cell.height, goalX, goalZ, goal.height);
+          if (!openKeys.has(neighborKey)) {
+            open.push({ x: validation.targetX, z: validation.targetZ, f });
+            openKeys.add(neighborKey);
+          } else {
+            const entry = open.find((item) => item.x === validation.targetX && item.z === validation.targetZ);
+            if (entry) entry.f = f;
+          }
+        }
+      }
+      return [];
+    }
+    reconstruct(cameFrom, current) {
+      const path = [{ x: current.x, z: current.z }];
+      let currentKey = `${current.x},${current.z}`;
+      while (cameFrom.has(currentKey)) {
+        const previous = cameFrom.get(currentKey);
+        path.unshift(previous);
+        currentKey = `${previous.x},${previous.z}`;
+      }
+      return path;
+    }
+  }
+
+  const DungeonMode = Object.freeze({
+    CAVERN: 'cavern',
+    RUINS: 'ruins',
+    HYBRID: 'hybrid'
+  });
+
+  const DungeonEntityType = Object.freeze({
+    PLAYER_SPAWN: 'PLAYER_SPAWN',
+    FLOOR_EXIT: 'FLOOR_EXIT',
+    STAIRS_UP: 'STAIRS_UP',
+    STAIRS_DOWN: 'STAIRS_DOWN',
+    ENEMY: 'ENEMY',
+    LOOT: 'LOOT',
+    HEALING_POOL: 'HEALING_POOL',
+    BOSS: 'BOSS',
+    WARP: 'WARP'
+  });
+
+  class DungeonGenerator {
+    constructor(options = {}) {
+      this.defaults = {
+        width: 31,
+        depth: 25,
+        floors: 3,
+        mode: DungeonMode.HYBRID,
+        wallDensity: 0.45,
+        smoothingPasses: 4,
+        roomAttempts: 55,
+        enemyCount: 8,
+        lootCount: 5,
+        raisedTerraces: 2,
+        ...options
+      };
+    }
+
+    _index(x, z, width) { return z * width + x; }
+    _coords(index, width) { return { x: index % width, z: Math.floor(index / width) }; }
+    _inBounds(x, z, width, depth) { return x >= 0 && x < width && z >= 0 && z < depth; }
+    _isFloor(grid, x, z, width, depth) {
+      return this._inBounds(x, z, width, depth) && grid[this._index(x, z, width)] === 0;
+    }
+
+    _newWallGrid(width, depth) {
+      const grid = new Uint8Array(width * depth);
+      grid.fill(1);
+      return grid;
+    }
+
+    _carveRect(grid, x, z, roomWidth, roomDepth, width, depth) {
+      for (let rz = z; rz < z + roomDepth; rz += 1) {
+        for (let rx = x; rx < x + roomWidth; rx += 1) {
+          if (rx > 0 && rx < width - 1 && rz > 0 && rz < depth - 1) grid[this._index(rx, rz, width)] = 0;
+        }
+      }
+    }
+
+    _carveCorridor(grid, from, to, width, depth, horizontalFirst = true, thickness = 1) {
+      const carve = (x, z) => {
+        const half = Math.floor(thickness / 2);
+        for (let dz = -half; dz <= half; dz += 1) {
+          for (let dx = -half; dx <= half; dx += 1) {
+            const tx = x + dx;
+            const tz = z + dz;
+            if (tx > 0 && tx < width - 1 && tz > 0 && tz < depth - 1) grid[this._index(tx, tz, width)] = 0;
+          }
+        }
+      };
+      let x = from.x;
+      let z = from.z;
+      const moveX = () => {
+        while (x !== to.x) {
+          carve(x, z);
+          x += Math.sign(to.x - x);
+        }
+      };
+      const moveZ = () => {
+        while (z !== to.z) {
+          carve(x, z);
+          z += Math.sign(to.z - z);
+        }
+      };
+      if (horizontalFirst) { moveX(); moveZ(); } else { moveZ(); moveX(); }
+      carve(to.x, to.z);
+    }
+
+    _generateRuins(width, depth, rng, options) {
+      const grid = this._newWallGrid(width, depth);
+      const rooms = [];
+      const attempts = Math.max(12, options.roomAttempts);
+      for (let attempt = 0; attempt < attempts; attempt += 1) {
+        const roomWidth = rng.range(4, Math.min(10, width - 4));
+        const roomDepth = rng.range(4, Math.min(9, depth - 4));
+        const x = rng.range(1, Math.max(1, width - roomWidth - 2));
+        const z = rng.range(1, Math.max(1, depth - roomDepth - 2));
+        const candidate = { x, z, width: roomWidth, depth: roomDepth, center: { x: Math.floor(x + roomWidth / 2), z: Math.floor(z + roomDepth / 2) } };
+        const overlaps = rooms.some((room) => (
+          candidate.x - 1 < room.x + room.width && candidate.x + candidate.width + 1 > room.x &&
+          candidate.z - 1 < room.z + room.depth && candidate.z + candidate.depth + 1 > room.z
+        ));
+        if (overlaps) continue;
+        this._carveRect(grid, x, z, roomWidth, roomDepth, width, depth);
+        if (rooms.length) this._carveCorridor(grid, rooms[rooms.length - 1].center, candidate.center, width, depth, rng.chance(0.5), rng.chance(0.18) ? 2 : 1);
+        rooms.push(candidate);
+      }
+      if (!rooms.length) {
+        this._carveRect(grid, 2, 2, Math.max(3, width - 4), Math.max(3, depth - 4), width, depth);
+        rooms.push({ x: 2, z: 2, width: width - 4, depth: depth - 4, center: { x: Math.floor(width / 2), z: Math.floor(depth / 2) } });
+      }
+      return { grid, rooms };
+    }
+
+    _countWalls(grid, x, z, width, depth) {
+      let walls = 0;
+      for (let dz = -1; dz <= 1; dz += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          if (dx === 0 && dz === 0) continue;
+          const nx = x + dx;
+          const nz = z + dz;
+          if (!this._inBounds(nx, nz, width, depth) || grid[this._index(nx, nz, width)] === 1) walls += 1;
+        }
+      }
+      return walls;
+    }
+
+    _generateCavern(width, depth, rng, options) {
+      let grid = this._newWallGrid(width, depth);
+      for (let z = 1; z < depth - 1; z += 1) {
+        for (let x = 1; x < width - 1; x += 1) {
+          grid[this._index(x, z, width)] = rng.chance(options.wallDensity) ? 1 : 0;
+        }
+      }
+      for (let pass = 0; pass < options.smoothingPasses; pass += 1) {
+        const next = new Uint8Array(grid);
+        for (let z = 1; z < depth - 1; z += 1) {
+          for (let x = 1; x < width - 1; x += 1) {
+            const walls = this._countWalls(grid, x, z, width, depth);
+            next[this._index(x, z, width)] = walls >= 5 ? 1 : 0;
+          }
+        }
+        grid = next;
+      }
+      const center = { x: Math.floor(width / 2), z: Math.floor(depth / 2) };
+      this._carveRect(grid, center.x - 2, center.z - 2, 5, 5, width, depth);
+      return { grid, rooms: [{ x: center.x - 2, z: center.z - 2, width: 5, depth: 5, center }] };
+    }
+
+    _generateHybrid(width, depth, rng, options) {
+      const cave = this._generateCavern(width, depth, rng, options);
+      const ruins = this._generateRuins(width, depth, rng, { ...options, roomAttempts: Math.max(18, Math.floor(options.roomAttempts * 0.55)) });
+      const grid = new Uint8Array(width * depth);
+      for (let index = 0; index < grid.length; index += 1) grid[index] = cave.grid[index] === 0 || ruins.grid[index] === 0 ? 0 : 1;
+      return { grid, rooms: ruins.rooms };
+    }
+
+    _components(grid, width, depth) {
+      const visited = new Uint8Array(grid.length);
+      const components = [];
+      const directions = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+      for (let index = 0; index < grid.length; index += 1) {
+        if (grid[index] !== 0 || visited[index]) continue;
+        const component = [];
+        const queue = [index];
+        visited[index] = 1;
+        for (let cursor = 0; cursor < queue.length; cursor += 1) {
+          const current = queue[cursor];
+          component.push(current);
+          const { x, z } = this._coords(current, width);
+          for (const [dx, dz] of directions) {
+            const nx = x + dx;
+            const nz = z + dz;
+            if (!this._inBounds(nx, nz, width, depth)) continue;
+            const nextIndex = this._index(nx, nz, width);
+            if (!visited[nextIndex] && grid[nextIndex] === 0) {
+              visited[nextIndex] = 1;
+              queue.push(nextIndex);
+            }
+          }
+        }
+        components.push(component);
+      }
+      components.sort((a, b) => b.length - a.length);
+      return components;
+    }
+
+    _nearestCells(componentA, componentB, width) {
+      let best = null;
+      let bestDistance = Infinity;
+      const strideA = Math.max(1, Math.floor(componentA.length / 220));
+      const strideB = Math.max(1, Math.floor(componentB.length / 220));
+      for (let ai = 0; ai < componentA.length; ai += strideA) {
+        const a = this._coords(componentA[ai], width);
+        for (let bi = 0; bi < componentB.length; bi += strideB) {
+          const b = this._coords(componentB[bi], width);
+          const distance = Math.abs(a.x - b.x) + Math.abs(a.z - b.z);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            best = { a, b };
+          }
+        }
+      }
+      return best;
+    }
+
+    _connectComponents(grid, width, depth, rng) {
+      let components = this._components(grid, width, depth);
+      let guard = 0;
+      while (components.length > 1 && guard < 64) {
+        guard += 1;
+        const main = components[0];
+        let candidate = null;
+        let candidateDistance = Infinity;
+        let candidateIndex = 1;
+        for (let index = 1; index < components.length; index += 1) {
+          const nearest = this._nearestCells(main, components[index], width);
+          if (!nearest) continue;
+          const distance = Math.abs(nearest.a.x - nearest.b.x) + Math.abs(nearest.a.z - nearest.b.z);
+          if (distance < candidateDistance) {
+            candidate = nearest;
+            candidateDistance = distance;
+            candidateIndex = index;
+          }
+        }
+        if (!candidate) break;
+        this._carveCorridor(grid, candidate.a, candidate.b, width, depth, rng.chance(0.5), 2);
+        components = this._components(grid, width, depth);
+        if (components.length > 1 && candidateIndex >= components.length) candidateIndex = components.length - 1;
+      }
+      return components;
+    }
+
+    _bfs(grid, width, depth, start) {
+      const distances = new Int32Array(grid.length);
+      distances.fill(-1);
+      const startIndex = this._index(start.x, start.z, width);
+      if (grid[startIndex] !== 0) return { distances, farthest: start, farthestDistance: 0 };
+      distances[startIndex] = 0;
+      const queue = [startIndex];
+      let farthestIndex = startIndex;
+      for (let cursor = 0; cursor < queue.length; cursor += 1) {
+        const current = queue[cursor];
+        const { x, z } = this._coords(current, width);
+        const currentDistance = distances[current];
+        if (currentDistance > distances[farthestIndex]) farthestIndex = current;
+        for (const [dx, dz] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+          const nx = x + dx;
+          const nz = z + dz;
+          if (!this._inBounds(nx, nz, width, depth)) continue;
+          const next = this._index(nx, nz, width);
+          if (grid[next] === 0 && distances[next] === -1) {
+            distances[next] = currentDistance + 1;
+            queue.push(next);
+          }
+        }
+      }
+      return { distances, farthest: this._coords(farthestIndex, width), farthestDistance: distances[farthestIndex] };
+    }
+
+    _farthestPair(grid, width, depth) {
+      const firstIndex = grid.findIndex((value) => value === 0);
+      if (firstIndex < 0) return { entrance: { x: 1, z: 1 }, exit: { x: width - 2, z: depth - 2 }, distance: 0 };
+      const first = this._coords(firstIndex, width);
+      const a = this._bfs(grid, width, depth, first).farthest;
+      const bResult = this._bfs(grid, width, depth, a);
+      return { entrance: a, exit: bResult.farthest, distance: bResult.farthestDistance };
+    }
+
+    _walkableCells(grid, width, exclusions = new Set()) {
+      const result = [];
+      for (let index = 0; index < grid.length; index += 1) {
+        if (grid[index] !== 0) continue;
+        const position = this._coords(index, width);
+        if (!exclusions.has(`${position.x},${position.z}`)) result.push(position);
+      }
+      return result;
+    }
+
+    _pickUniqueCells(grid, width, rng, count, exclusions = new Set()) {
+      const candidates = this._walkableCells(grid, width, exclusions);
+      const result = [];
+      while (candidates.length && result.length < count) {
+        const index = rng.range(0, candidates.length - 1);
+        const [cell] = candidates.splice(index, 1);
+        exclusions.add(`${cell.x},${cell.z}`);
+        result.push(cell);
+      }
+      return result;
+    }
+
+    _buildElevation(grid, width, depth, rng, entrance, exit, requestedTerraces) {
+      const heights = new Uint8Array(grid.length);
+      const surfaces = new Uint8Array(grid.length);
+      const ledges = new Uint8Array(grid.length);
+      for (let index = 0; index < grid.length; index += 1) surfaces[index] = grid[index] === 1 ? Surface.BLOCKED : Surface.WALKABLE;
+      const forbidden = new Set([`${entrance.x},${entrance.z}`, `${exit.x},${exit.z}`]);
+
+      // A terrace is committed only when the floor remains traversable. This
+      // prevents a raised platform from accidentally sealing a one-cell ruins
+      // corridor or splitting a cavern route after topology repair.
+      const routeStillOpen = () => {
+        const map = new ElevationMap(width, depth);
+        for (let index = 0; index < grid.length; index += 1) {
+          map.grid[index] = grid[index] === 1
+            ? encodeCell({ height: Math.min(15, (heights[index] || 0) + 1), surface: Surface.BLOCKED })
+            : encodeCell({ height: heights[index], surface: surfaces[index], ledge: ledges[index] });
+        }
+        return new AStarPathfinder(map).findPath(entrance.x, entrance.z, exit.x, exit.z).length > 0;
+      };
+
+      let terracesPlaced = 0;
+      for (let attempt = 0; attempt < requestedTerraces * 16 && terracesPlaced < requestedTerraces; attempt += 1) {
+        const center = { x: rng.range(3, width - 4), z: rng.range(3, depth - 4) };
+        const radiusX = rng.range(1, 2);
+        const radiusZ = rng.range(1, 2);
+        const cells = [];
+        let valid = true;
+        for (let z = center.z - radiusZ; z <= center.z + radiusZ; z += 1) {
+          for (let x = center.x - radiusX; x <= center.x + radiusX; x += 1) {
+            const key = `${x},${z}`;
+            const index = this._index(x, z, width);
+            if (forbidden.has(key) || !this._isFloor(grid, x, z, width, depth) || heights[index] !== 0) { valid = false; break; }
+            cells.push({ x, z });
+          }
+          if (!valid) break;
+        }
+        if (!valid) continue;
+        const edges = cells.filter((cell) => cell.x === center.x - radiusX || cell.x === center.x + radiusX || cell.z === center.z - radiusZ || cell.z === center.z + radiusZ);
+        const stairCandidates = [];
+        for (const edge of edges) {
+          for (const direction of [Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST]) {
+            const vector = directionVector(direction);
+            const outside = { x: edge.x + vector.dx, z: edge.z + vector.dz };
+            if (!cells.some((cell) => cell.x === outside.x && cell.z === outside.z) && this._isFloor(grid, outside.x, outside.z, width, depth)) {
+              stairCandidates.push({ edge, outside, direction });
+            }
+          }
+        }
+        if (!stairCandidates.length) continue;
+
+        // Keep a compact rollback snapshot so failed terrain edits never leak
+        // into later generation attempts.
+        const heightsBefore = new Uint8Array(heights);
+        const surfacesBefore = new Uint8Array(surfaces);
+        const ledgesBefore = new Uint8Array(ledges);
+
+        const stair = stairCandidates[rng.range(0, stairCandidates.length - 1)];
+        cells.forEach((cell) => { heights[this._index(cell.x, cell.z, width)] = 1; });
+        surfaces[this._index(stair.edge.x, stair.edge.z, width)] = Surface.STAIRS;
+        const opposite = ({
+          [Direction.NORTH]: Direction.SOUTH,
+          [Direction.SOUTH]: Direction.NORTH,
+          [Direction.EAST]: Direction.WEST,
+          [Direction.WEST]: Direction.EAST
+        })[stair.direction];
+        const farEdge = edges.find((edge) => {
+          if (opposite === Direction.NORTH) return edge.z === center.z - radiusZ;
+          if (opposite === Direction.SOUTH) return edge.z === center.z + radiusZ;
+          if (opposite === Direction.EAST) return edge.x === center.x + radiusX;
+          return edge.x === center.x - radiusX;
+        });
+        if (farEdge) {
+          const vector = directionVector(opposite);
+          const landing = { x: farEdge.x + vector.dx * 2, z: farEdge.z + vector.dz * 2 };
+          if (this._isFloor(grid, landing.x, landing.z, width, depth) && heights[this._index(landing.x, landing.z, width)] === 0) {
+            ledges[this._index(farEdge.x, farEdge.z, width)] = opposite;
+          }
+        }
+
+        if (!routeStillOpen()) {
+          heights.set(heightsBefore);
+          surfaces.set(surfacesBefore);
+          ledges.set(ledgesBefore);
+          continue;
+        }
+
+        terracesPlaced += 1;
+      }
+      return { heights, surfaces, ledges, terracesPlaced };
+    }
+
+    _toFloorSchema(grid, width, depth, rng, floorIndex, totalFloors, mode, options) {
+      const pair = this._farthestPair(grid, width, depth);
+      const elevation = this._buildElevation(grid, width, depth, rng, pair.entrance, pair.exit, options.raisedTerraces);
+      const packedCells = new Array(width * depth);
+      const metadata = [];
+      for (let z = 0; z < depth; z += 1) {
+        for (let x = 0; x < width; x += 1) {
+          const index = this._index(x, z, width);
+          if (grid[index] === 1) {
+            let neighbourHeight = 0;
+            for (const [dx, dz] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+              const nx = x + dx;
+              const nz = z + dz;
+              if (this._inBounds(nx, nz, width, depth)) neighbourHeight = Math.max(neighbourHeight, elevation.heights[this._index(nx, nz, width)] || 0);
+            }
+            packedCells[index] = encodeCell({ height: Math.min(15, neighbourHeight + 1), surface: Surface.BLOCKED });
+            metadata.push([index, { tileKind: mode === DungeonMode.RUINS ? 'ruin_wall' : 'cave_wall' }]);
+          } else {
+            let surface = elevation.surfaces[index];
+            if (surface === Surface.WALKABLE && rng.chance(mode === DungeonMode.CAVERN ? 0.07 : 0.035)) surface = Surface.TALL_GRASS;
+            packedCells[index] = encodeCell({
+              height: elevation.heights[index],
+              surface,
+              ledge: elevation.ledges[index]
+            });
+            metadata.push([index, { tileKind: surface === Surface.TALL_GRASS ? 'glow_moss' : mode === DungeonMode.RUINS ? 'ruin_floor' : 'cave_floor' }]);
+          }
+        }
+      }
+
+      const floorId = `floor_${floorIndex + 1}`;
+      const entranceType = floorIndex === 0 ? DungeonEntityType.PLAYER_SPAWN : DungeonEntityType.STAIRS_UP;
+      const exitType = floorIndex === totalFloors - 1 ? DungeonEntityType.FLOOR_EXIT : DungeonEntityType.STAIRS_DOWN;
+      const entranceHeight = decodeCell(packedCells[this._index(pair.entrance.x, pair.entrance.z, width)]).height;
+      const exitHeight = decodeCell(packedCells[this._index(pair.exit.x, pair.exit.z, width)]).height;
+      const entities = [
+        { id: `${floorId}_entrance`, type: entranceType, x: pair.entrance.x, z: pair.entrance.z, y: entranceHeight, facing: 'S' },
+        { id: `${floorId}_exit`, type: exitType, x: pair.exit.x, z: pair.exit.z, y: exitHeight, facing: 'N' }
+      ];
+      const exclusions = new Set([`${pair.entrance.x},${pair.entrance.z}`, `${pair.exit.x},${pair.exit.z}`]);
+      const enemyCells = this._pickUniqueCells(grid, width, rng, options.enemyCount + (floorIndex * 2), exclusions);
+      enemyCells.forEach((cell, index) => entities.push({
+        id: `${floorId}_enemy_${index + 1}`,
+        type: index === enemyCells.length - 1 && floorIndex === totalFloors - 1 ? DungeonEntityType.BOSS : DungeonEntityType.ENEMY,
+        x: cell.x,
+        z: cell.z,
+        y: decodeCell(packedCells[this._index(cell.x, cell.z, width)]).height,
+        facing: ['N', 'S', 'E', 'W'][rng.range(0, 3)],
+        encounterTable: floorIndex === totalFloors - 1 ? 'deep_dungeon' : 'dungeon'
+      }));
+      const lootCells = this._pickUniqueCells(grid, width, rng, options.lootCount, exclusions);
+      lootCells.forEach((cell, index) => entities.push({
+        id: `${floorId}_loot_${index + 1}`,
+        type: DungeonEntityType.LOOT,
+        x: cell.x,
+        z: cell.z,
+        y: decodeCell(packedCells[this._index(cell.x, cell.z, width)]).height,
+        lootTable: floorIndex === totalFloors - 1 ? 'rare' : 'standard'
+      }));
+      const healCell = this._pickUniqueCells(grid, width, rng, 1, exclusions)[0];
+      if (healCell) entities.push({
+        id: `${floorId}_healing_pool`, type: DungeonEntityType.HEALING_POOL,
+        x: healCell.x, z: healCell.z,
+        y: decodeCell(packedCells[this._index(healCell.x, healCell.z, width)]).height
+      });
+
+      const warps = [];
+      if (floorIndex > 0) warps.push({
+        id: `${floorId}_up`, x: pair.entrance.x, z: pair.entrance.z, y: entranceHeight,
+        targetFloor: `floor_${floorIndex}`, targetEntity: `floor_${floorIndex}_exit`
+      });
+      if (floorIndex < totalFloors - 1) warps.push({
+        id: `${floorId}_down`, x: pair.exit.x, z: pair.exit.z, y: exitHeight,
+        targetFloor: `floor_${floorIndex + 2}`, targetEntity: `floor_${floorIndex + 2}_entrance`
+      });
+
+      return {
+        version: 2,
+        id: floorId,
+        name: `Dungeon Floor ${floorIndex + 1}`,
+        width,
+        depth,
+        tileSize: 2,
+        packedCells,
+        metadata,
+        entities,
+        warps,
+        entrance: pair.entrance,
+        exit: pair.exit,
+        routeDistance: pair.distance,
+        terracesPlaced: elevation.terracesPlaced
+      };
+    }
+
+    generate(options = {}) {
+      const config = { ...this.defaults, ...options };
+      const width = clamp(Math.trunc(config.width) | 1, 15, 63);
+      const depth = clamp(Math.trunc(config.depth) | 1, 15, 63);
+      const floors = clamp(Math.trunc(config.floors), 1, 8);
+      const mode = Object.values(DungeonMode).includes(config.mode) ? config.mode : DungeonMode.HYBRID;
+      const seed = asUint32(config.seed ?? Date.now());
+      const masterRng = new DeterministicPRNG(seed || 0xE17ECAFE);
+      const floorSchemas = [];
+      for (let floorIndex = 0; floorIndex < floors; floorIndex += 1) {
+        masterRng.random();
+        const floorSeed = (masterRng.seed >>> 0) || (seed + floorIndex + 1);
+        const rng = new DeterministicPRNG(floorSeed);
+        let generated;
+        if (mode === DungeonMode.CAVERN) generated = this._generateCavern(width, depth, rng, config);
+        else if (mode === DungeonMode.RUINS) generated = this._generateRuins(width, depth, rng, config);
+        else generated = this._generateHybrid(width, depth, rng, config);
+        this._connectComponents(generated.grid, width, depth, rng);
+        const floor = this._toFloorSchema(generated.grid, width, depth, rng, floorIndex, floors, mode, config);
+        floor.seed = floorSeed >>> 0;
+        floorSchemas.push(floor);
+      }
+      const dungeon = {
+        version: 2,
+        engineVersion: EXPANSION_VERSION,
+        id: config.id || `dungeon_${seed.toString(16).padStart(8, '0')}`,
+        name: config.name || `${mode[0].toUpperCase()}${mode.slice(1)} Expedition`,
+        seed,
+        mode,
+        width,
+        depth,
+        tileSize: 2,
+        floors: floorSchemas,
+        generatedAt: new Date().toISOString()
+      };
+      const validation = this.validate(dungeon);
+      dungeon.validation = validation;
+      dungeon.checksum = hashObject({ ...dungeon, generatedAt: undefined, validation: undefined, checksum: undefined });
+      return dungeon;
+    }
+
+    validate(dungeon) {
+      const errors = [];
+      const warnings = [];
+      if (!dungeon || !Array.isArray(dungeon.floors) || !dungeon.floors.length) {
+        return { valid: false, errors: ['NO_FLOORS'], warnings, floorReports: [] };
+      }
+      const floorIds = new Set(dungeon.floors.map((floor) => floor.id));
+      const floorReports = dungeon.floors.map((floor) => {
+        const report = { floorId: floor.id, errors: [], warnings: [], pathLength: 0 };
+        if (!floor.width || !floor.depth || !Array.isArray(floor.packedCells) || floor.packedCells.length !== floor.width * floor.depth) report.errors.push('INVALID_CELL_MATRIX');
+        const entranceEntity = floor.entities?.find((entity) => [DungeonEntityType.PLAYER_SPAWN, DungeonEntityType.STAIRS_UP].includes(entity.type));
+        const exitEntity = floor.entities?.find((entity) => [DungeonEntityType.FLOOR_EXIT, DungeonEntityType.STAIRS_DOWN].includes(entity.type));
+        if (!entranceEntity) report.errors.push('MISSING_ENTRANCE');
+        if (!exitEntity) report.errors.push('MISSING_EXIT');
+        if (entranceEntity && exitEntity && report.errors.length === 0) {
+          try {
+            const map = ElevationMap.fromSchema({ width: floor.width, depth: floor.depth, packedCells: floor.packedCells, metadata: floor.metadata || [] });
+            const path = new AStarPathfinder(map).findPath(entranceEntity.x, entranceEntity.z, exitEntity.x, exitEntity.z);
+            report.pathLength = path.length;
+            if (!path.length) report.errors.push('ENTRANCE_EXIT_UNREACHABLE');
+            for (const entity of floor.entities || []) {
+              const cell = map.getCell(entity.x, entity.z);
+              if (!cell || !map.isWalkable(cell)) report.errors.push(`ENTITY_ON_BLOCKED_CELL:${entity.id}`);
+              else if (Number.isFinite(entity.y) && entity.y !== cell.height) report.warnings.push(`ENTITY_HEIGHT_MISMATCH:${entity.id}`);
+            }
+          } catch (error) {
+            report.errors.push(`MAP_PARSE_ERROR:${error.message}`);
+          }
+        }
+        for (const warp of floor.warps || []) {
+          if (warp.targetFloor && !floorIds.has(warp.targetFloor)) report.errors.push(`ORPHAN_WARP:${warp.id}`);
+        }
+        errors.push(...report.errors.map((error) => `${floor.id}:${error}`));
+        warnings.push(...report.warnings.map((warning) => `${floor.id}:${warning}`));
+        return report;
+      });
+      return { valid: errors.length === 0, errors, warnings, floorReports };
+    }
+  }
+    return { DungeonGenerator, DungeonMode, DungeonEntityType, Surface, Direction, decodeCell, ElevationMap, AStarPathfinder };
+  })();
+
+  // -------------------------------------------------------------------
+  // EWDepthsBridge — the ONLY crossing point between engine schema and
+  // chassis schema (§6-P3: adapt at the loader, never fork the schema).
+  //
+  // Two real deltas, both measured rather than assumed:
+  //
+  //  1. Field names. The engine floor carries {width, depth, packedCells,
+  //     metadata}; the chassis importSchema wants {width, height, layers:{
+  //     ground, elevation, bitmask}}. Note 'depth' vs 'height'.
+  //
+  //  2. Surface enums COLLIDE. They share names and disagree on values:
+  //        engine   WALKABLE 0 BLOCKED 1 WATER 2 STAIRS 3 ICE 4 TALL_GRASS 5
+  //        chassis  WALKABLE 0 BLOCKED 1 TALL_GRASS 2 STAIRS 3 WATER 4 ICE 5
+  //     Passing a packed cell straight through would put tall grass where
+  //     water belongs and ice where grass belongs, silently. SURFACE_MAP
+  //     below is the explicit remap; it is the reason this bridge exists.
+  // -------------------------------------------------------------------
+  const EWDepthsBridge = (function(){
+    const E = EWDepths.Surface;                       // engine values
+    // engine value -> chassis value
+    const SURFACE_MAP = {
+      [E.WALKABLE]:   Surface.WALKABLE,
+      [E.BLOCKED]:    Surface.BLOCKED,
+      [E.WATER]:      Surface.WATER,
+      [E.STAIRS]:     Surface.STAIRS,
+      [E.ICE]:        Surface.ICE,
+      [E.TALL_GRASS]: Surface.TALL_GRASS
+    };
+    // Ground is cosmetic in the chassis renderer; pick a floor tone per surface
+    // so the Depths read as caverns rather than meadow.
+    const GROUND_FOR = {
+      [Surface.WALKABLE]:   Ground.FLOOR,
+      [Surface.BLOCKED]:    Ground.STONE,
+      [Surface.TALL_GRASS]: Ground.TALL_GRASS,
+      [Surface.STAIRS]:     Ground.PATH,
+      [Surface.WATER]:      Ground.WATER,
+      [Surface.ICE]:        Ground.PATH
+    };
+    // The chassis packs ledge as an index into [null,'S','N','E','W'], which is
+    // exactly the engine's Direction ordering — so this one lines up, and the
+    // test below pins that it still does.
+    function toChassisSchema(floor){
+      const n = floor.width * floor.depth;
+      const ground = new Array(n), elevation = new Array(n), bitmask = new Array(n);
+      for (let i = 0; i < n; i++){
+        const cell = EWDepths.decodeCell(floor.packedCells[i]);
+        const surface = SURFACE_MAP[cell.surface];
+        if (surface === undefined) throw new Error('DEPTHS_UNMAPPED_SURFACE:' + cell.surface);
+        ground[i] = GROUND_FOR[surface] ?? Ground.FLOOR;
+        elevation[i] = cell.height & 0x0F;
+        bitmask[i] = (surface & 0x0F) | ((cell.ledge & 0x0F) << 4);
+      }
+      return {
+        id: floor.id,
+        width: floor.width,
+        height: floor.depth,            // <- the field-name delta
+        tileSize: TILE_SIZE,
+        layers: { ground, elevation, bitmask },
+        entities: (floor.entities || []).map(e => ({ ...e })),
+        warps: (floor.warps || []).map(w => ({ ...w }))
+      };
+    }
+    return { toChassisSchema, SURFACE_MAP };
+  })();
+
   class CatchRateCalculator {
     // §5.1 — No hidden dice. The catch probability is a PURE function of state
     // the player can see on the battle screen: the species' catch rate, the
@@ -1133,6 +2034,7 @@
       { id: 'warden_lyle', type: 'TRAINER', x: 16, z: 5, y: 1, facing: 'S', name: 'Warden Lyle', sight: 4, flag: 12, party: [{ speciesId: 'voltwing', level: 7 }] },
       { id: 'researcher_ena', type: 'HEALER', x: 4, z: 15, y: 0, facing: 'S', name: 'Ena', dialogue: ['The lodge array can restore your partner.', 'Your field notes have been autosaved.'] },
       { id: 'prism_cache', type: 'ITEM', x: 19, z: 3, y: 1, itemId: 'bright_pod', qty: 2, flag: 13 },
+      { id: 'depths_mouth', type: 'DEPTHS_ENTRANCE', x: 6, z: 6, y: 0, facing: 'S', name: 'The Depths', dialogue: ['A cold seam in the rock breathes up at you.'] },
       { id: 'route_sign', type: 'SIGN', x: 9, z: 14, y: 0, facing: 'S', dialogue: ['PRISM ROUTE', 'North: Flower Plateau • West: Water Garden • South: Research Lodge'] }
     ];
     return map;
@@ -1572,14 +2474,16 @@
     async applyMoveEffect(attacker,defender,move,silentIntro=false){const effect=move.effect;if(!effect)return;const target=effect.target==='self'?attacker:defender;if(effect.kind==='stage'){const old=target.stages[effect.stat]||0;target.stages[effect.stat]=clamp(old+effect.amount,-6,6);this.message=`${target.name}'s ${effect.stat} rose.`;this.game.audio.playUI('confirm');}else if(effect.kind==='status'||effect.kind==='chanceStatus'){if(target.status===StatusType.NONE){target.status=effect.status;if(effect.status===StatusType.SLEEP)target.sleepTurns=this.rng.int(1,3);this.message=`${target.name} gained ${effect.status.toUpperCase()} status.`;}else if(!silentIntro)this.message='The status pattern could not take hold.';}else if(effect.kind==='heal'){const amount=Math.max(1,Math.floor(target.stats.hp*effect.fraction));const healed=Math.min(amount,target.stats.hp-target.currentHP);target.currentHP+=healed;this.message=`${target.name} restored ${healed} HP.`;}await this.game.delay(500);}
     async afterTurn(){this.playerDisplayHP=this.player.currentHP;this.enemyDisplayHP=this.enemy.currentHP;if(this.enemy.currentHP<=0){await this.resolveVictory();return;}if(this.player.currentHP<=0){await this.resolveDefeat();return;}for(const log of this.field.processEnd([this.player,this.enemy])){this.message=log;await this.game.delay(480);if(this.enemy.currentHP<=0){await this.resolveVictory();return;}if(this.player.currentHP<=0){await this.resolveDefeat();return;}}this.state='MENU_SELECT';this.menu='main';this.cursor=0;this.message='Choose an action.';this.busy=false;}
     async resolveVictory(){this.enemy.currentHP=0;this.enemyDisplayHP=0;this.message=`${this.enemy.name} dispersed from the field.`;await this.game.delay(650);const exp=Math.max(1,Math.floor(this.enemy.species.baseExpYield*this.enemy.level*(this.trainer?1.5:1)/7));this.message=`${this.player.name} gained ${exp} EXP.`;const progress=ProgressionEngine.award(this.player,exp);await this.game.delay(650);if(progress.levelsGained>0){this.game.audio.playUI('confirm');this.message=`${this.player.name} reached Lv${this.player.level}!`;await this.game.delay(850);}if(this.trainer){const npc=this.game.activeTrainerNPC;if(npc?.flag!=null)this.game.flags.set(npc.flag);this.game.inventory.prism_pod+=2;this.message=`${this.trainerName}: “Strong field reading. Take two Prism Pods.”`;await this.game.delay(900);}this.end('VICTORY');}
-    async resolveDefeat(){this.playerDisplayHP=0;this.message=`${this.player.name} can no longer hold the field.`;await this.game.delay(800);this.game.party.forEach(m=>m.healFull());this.game.player.teleport(10,17,0);this.end('DEFEAT');this.game.toastMessage('The Lodge array restored your partner.','#f6d979');}
+    async resolveDefeat(){this.playerDisplayHP=0;this.message=`${this.player.name} can no longer hold the field.`;await this.game.delay(800);// SEMH-safe: a Depths defeat returns you to THIS floor's entrance, healed —
+      // not to the Vale, and with nothing taken off you.
+      if(this.game.depths){this.end('DEFEAT');this.game.depthsRecover();return;}this.game.party.forEach(m=>m.healFull());this.game.player.teleport(10,17,0);this.end('DEFEAT');this.game.toastMessage('The Lodge array restored your partner.','#f6d979');}
     end(reason){this.game.audio.stopMusic();this.state='IDLE';this.busy=false;this.game.battle=null;this.game.mode=GameMode.OVERWORLD;this.game.setRendererVisible(true);this.game.encounters.resetGrace();this.game.save('AUTOSAVE');this.game.activeTrainerNPC=null;}
     update(dt){this.playerDisplayHP=damp(this.playerDisplayHP,this.player.currentHP,7,dt);this.enemyDisplayHP=damp(this.enemyDisplayHP,this.enemy.currentHP,7,dt);}
   }
 
   class EmberwildGame {
     constructor(){
-      this.version=APP_VERSION;this.mode=GameMode.BOOT;this.callHistory=[];this.charmTier=1;this.map=buildDemoMap();this.flags=new BitmaskFlags(256);this.rng=new DeterministicPRNG((Date.now()^0xa37e5d)>>>0);this.audio=new RetroAudioEngine();this.haptics=new HapticEngine();this.saveManager=new SaveManager();this.sprites=new SpriteFactory();this.inventory={prism_pod:6,bright_pod:0,field_tonic:3};this.collection={spriglet:1};this.settings={audio:true,reducedMotion:false,highContrast:false,touchControls:'auto',renderer:'auto'};this.playTime=0;this.steps=0;this.objective='Explore Prism Route and meet the Flower Plateau Warden.';this.toast=null;this.toastTimer=0;this.battle=null;this.activeTrainerNPC=null;
+      this.version=APP_VERSION;this.mode=GameMode.BOOT;this.callHistory=[];this.charmTier=1;this.depthsRecord={deepest:0};this.depths=null;this.map=buildDemoMap();this.flags=new BitmaskFlags(256);this.rng=new DeterministicPRNG((Date.now()^0xa37e5d)>>>0);this.audio=new RetroAudioEngine();this.haptics=new HapticEngine();this.saveManager=new SaveManager();this.sprites=new SpriteFactory();this.inventory={prism_pod:6,bright_pod:0,field_tonic:3};this.collection={spriglet:1};this.settings={audio:true,reducedMotion:false,highContrast:false,touchControls:'auto',renderer:'auto'};this.playTime=0;this.steps=0;this.objective='Explore Prism Route and meet the Flower Plateau Warden.';this.toast=null;this.toastTimer=0;this.battle=null;this.activeTrainerNPC=null;
       const spawn=this.map.entities.find(e=>e.type==='PLAYER_SPAWN')||{x:10,z:17,y:0,facing:'N'};
       this.party=[new Monster({speciesId:'spriglet',level:6,seed:0x4d415454})];
       this.npcs=this.map.entities.filter(e=>e.type!=='PLAYER_SPAWN').map(e=>new NPCActor(e,this.map));
@@ -1620,7 +2524,7 @@
     checkItemPickup(){const item=this.entityAt(this.player.grid.x,this.player.grid.z,n=>n.type==='ITEM');if(!item)return;this.flags.set(item.flag);this.inventory[item.itemId]=(this.inventory[item.itemId]||0)+(item.qty||1);this.toastMessage(`Found ${item.qty||1} ${ITEMS[item.itemId]?.name||item.itemId}!`,'#f6d979');this.audio.playUI('confirm');this.save('AUTOSAVE');}
     checkTrainerSight(){if(this.mode!==GameMode.OVERWORLD)return;for(const npc of this.npcs){if(npc.type!=='TRAINER'||(npc.flag!=null&&this.flags.get(npc.flag)))continue;const dir=CARDINALS[npc.facing];for(let k=1;k<=npc.sight;k++){const x=npc.grid.x+dir.x*k,z=npc.grid.z+dir.z*k,cell=this.map.getCell(x,z);if(!cell||cell.surface===Surface.BLOCKED||cell.height!==npc.grid.y)break;if(x===this.player.grid.x&&z===this.player.grid.z){this.triggerTrainer(npc);return;}}}}
     async triggerTrainer(npc){if(this.mode!==GameMode.OVERWORLD)return;this.mode=GameMode.TRANSITION;npc.alertTimer=1;this.audio.playUI('confirm');await this.delay(450);npc.alertTimer=0;const goal={x:this.player.grid.x-CARDINALS[npc.facing].x,z:this.player.grid.z-CARDINALS[npc.facing].z};const path=this.pathfinder.findPath(npc.grid,goal).slice(1,3);for(const step of path){npc.beginStep(step,this.map);while(npc.state!=='IDLE')await sleep(16);}await this.ui.dialogue.show([`${npc.name}: “The plateau answers only to a steady signal.”`,`“Show me how your partner reads the field.”`],this);this.activeTrainerNPC=npc;const party=npc.party?.[0]||{speciesId:'voltwing',level:7};this.startBattle(new Monster({...party,seed:this.rng.int(1,0xffffffff)}),true,npc.name);}
-    checkInteraction(){const v=CARDINALS[this.player.facing],tx=this.player.grid.x+v.x,tz=this.player.grid.z+v.z;const npc=this.entityAt(tx,tz,n=>n.type!=='ITEM');if(npc){if(npc.type==='HEALER'){this.party.forEach(m=>m.healFull());this.save('AUTOSAVE');this.ui.dialogue.show(npc.dialogue||['Your partner is restored.'],this);return true;}if(npc.type==='TRAINER'&&npc.flag!=null&&this.flags.get(npc.flag)){this.ui.dialogue.show([`${npc.name}: “Your signal held. Keep mapping the route.”`],this);return true;}this.ui.dialogue.show(npc.dialogue||[`${npc.name} nods.`],this);return true;}return false;}
+    checkInteraction(){const v=CARDINALS[this.player.facing],tx=this.player.grid.x+v.x,tz=this.player.grid.z+v.z;const npc=this.entityAt(tx,tz,n=>n.type!=='ITEM');if(npc){if(npc.type==='DEPTHS_ENTRANCE'){this.ui.dialogue.show(['A cold seam in the rock breathes up at you.','You climb down into the Depths.'],this).then(()=>this.enterDepths());return true;}if(npc.type==='STAIRS_DOWN'){this.descend();return true;}if(npc.type==='STAIRS_UP'){if(this.depths&&this.depths.floorIndex>0)this.loadDepthsFloor(this.depths.floorIndex-1);else this.leaveDepths(false);return true;}if(npc.type==='FLOOR_EXIT'){this.leaveDepths(true);return true;}if(npc.type==='HEALING_POOL'){this.party.forEach(m=>m.healFull());this.save('AUTOSAVE');this.announce('The pool restores your party.');this.ui.dialogue.show(['Still water, faintly lit.','Your party is restored.'],this);return true;}if(npc.type==='LOOT'){this.collectDepthsLoot(npc);return true;}if(npc.type==='BOSS'||npc.type==='ENEMY'){this.startDepthsBattle(npc);return true;}if(npc.type==='HEALER'){this.party.forEach(m=>m.healFull());this.save('AUTOSAVE');this.ui.dialogue.show(npc.dialogue||['Your partner is restored.'],this);return true;}if(npc.type==='TRAINER'&&npc.flag!=null&&this.flags.get(npc.flag)){this.ui.dialogue.show([`${npc.name}: “Your signal held. Keep mapping the route.”`],this);return true;}this.ui.dialogue.show(npc.dialogue||[`${npc.name} nods.`],this);return true;}return false;}
     handleConfirm(){this.audio.playUI('confirm');if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.confirm();return;}if(this.mode===GameMode.MENU){const items=this.getPauseMenuItems();this.executePauseItem(items[this.ui.menuIndex]);return;}if(this.mode===GameMode.OVERWORLD)this.checkInteraction();}
     handleCancel(){if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.back();return;}if(this.mode===GameMode.MENU){this.toggleMenu();return;}this.audio.playUI();}
     toggleMenu(){if(this.mode===GameMode.BATTLE||this.mode===GameMode.TRANSITION||this.ui.dialogue.active)return;if(this.mode===GameMode.MENU){this.mode=GameMode.OVERWORLD;return;}if(this.mode===GameMode.OVERWORLD){this.mode=GameMode.MENU;this.ui.menuIndex=0;this.audio.playUI();}}
@@ -1638,6 +2542,105 @@
     handleUIAction(action){if(typeof action==='object'){if(action.type==='MENU_SELECT'){this.ui.menuIndex=action.index;this.executePauseItem(this.getPauseMenuItems()[action.index]);}else if(action.type==='BATTLE_MOVE')this.battle?.selectMove(action.index);else if(action.type==='BATTLE_CALL')this.battle?.commitCall(action.band);return;}switch(action){case'CONFIRM':this.handleConfirm();break;case'BATTLE_FIGHT':this.battle?.showFight();break;case'BATTLE_BAG':this.battle?.showBag();break;case'BATTLE_TEAM':this.battle?.showTeam();break;case'BATTLE_RUN':this.battle?.tryRun();break;case'BATTLE_POD':this.battle?.usePod();break;case'BATTLE_TONIC':this.battle?.useTonic();break;case'BATTLE_BACK':this.battle?.back();break;}}
     startWildEncounter(force=false,encounter=null){if(this.mode!==GameMode.OVERWORLD||this.player.motionState!==MoveState.IDLE)return false;const e=encounter||{speciesId:this.rng.pick(Object.keys(SPECIES).filter(id=>id!=='spriglet')),level:this.rng.int(4,7)};this.startBattle(new Monster({speciesId:e.speciesId,level:e.level,seed:this.rng.int(1,0xffffffff)}),false,null);return true;}
     startBattle(enemy,trainer=false,trainerName=null){this.battle=new BattleController(this);this.battle.start(enemy,trainer,trainerName);}
+    collectDepthsLoot(npc){
+      // Loot tiers map onto the charm the next pod is thrown with, so a delve
+      // feeds the twist: better charm, higher true odds, a different call.
+      const roll=this.rng.random();
+      if(roll<0.45){this.inventory.prism_pod=(this.inventory.prism_pod||0)+2;this.announce('You found two Prism Pods.');this.ui.dialogue.show(['A cracked cache.','Two Prism Pods.'],this);}
+      else if(roll<0.75){this.inventory.field_tonic=(this.inventory.field_tonic||0)+2;this.announce('You found two Field Tonics.');this.ui.dialogue.show(['A sealed tin.','Two Field Tonics.'],this);}
+      else{this.inventory.bright_pod=(this.inventory.bright_pod||0)+1;this.charmTier=Math.min(2.5,(this.charmTier||1)+0.25);this.announce('You found a Bright Pod. Charm tier is now '+this.charmTier.toFixed(2)+'.');this.ui.dialogue.show(['A bright pod, warm to hold.','Your charm tier rises to '+this.charmTier.toFixed(2)+'.'],this);}
+      this.npcs=this.npcs.filter(n=>n!==npc);
+      this.save('AUTOSAVE');
+    }
+    startDepthsBattle(npc){
+      // Additive: the Depths scale the enemy TEMPLATE before it reaches the
+      // engine. mkFighter equivalent runs untouched afterwards.
+      const floor=(this.depths?this.depths.floorIndex:0)+1;
+      const boss=npc.type==='BOSS';
+      const pool=Object.keys(SPECIES).filter(id=>id!=='spriglet');
+      const speciesId=this.rng.pick(pool);
+      const level=Math.max(3,Math.min(40,(boss?6:3)+floor*2+this.rng.int(0,2)));
+      this.npcs=this.npcs.filter(n=>n!==npc);
+      const enemy=new Monster({speciesId,level,seed:this.rng.int(1,0xffffffff)});
+      if(boss){enemy.name=enemy.name+' (Depthwarden)';}
+      this.announce((boss?'A Depthwarden blocks the way. ':'')+enemy.name+', level '+level+'.');
+      this.startBattle(enemy,false,null);
+      this.depthsBossPending=boss;
+    }
+    // ---------------- THE DEPTHS ----------------
+    // A delve is additive: it changes which map is loaded and which encounter
+    // table is rolled, never the battle rules. Engine resolves a Depths turn
+    // exactly as it resolves a Vale turn.
+    enterDepths(){
+      const depth=(this.depthsRecord&&this.depthsRecord.deepest)||0;
+      // Shallow delves are caverns, mid are ruins, deep are hybrid (§4).
+      const mode=depth<3?'cavern':depth<6?'ruins':'hybrid';
+      const floors=Math.min(5,3+Math.floor(depth/3));
+      // The seed is explicit so a delve is reproducible and G2 can pin it.
+      const seed=(this.rng.int(1,0xffffffff))>>>0;
+      let dungeon;
+      try{ dungeon=new EWDepths.DungeonGenerator().generate({seed,mode,floors,enemyCount:7,lootCount:4}); }
+      catch(err){ this.toastMessage('The seam collapsed before you could enter.','#ffce7c'); return false; }
+      if(!dungeon.validation.valid){ this.toastMessage('That seam led nowhere. Try again.','#ffce7c'); return false; }
+      this.valeReturn={x:this.player.grid.x,z:this.player.grid.z,y:this.player.grid.y,facing:this.player.facing};
+      this.valeMap=this.map;
+      this.depths={dungeon,floorIndex:0,seed,mode};
+      this.loadDepthsFloor(0);
+      this.announce('You descend into the Depths. Floor 1 of '+dungeon.floors.length+', '+mode+'.');
+      return true;
+    }
+    loadDepthsFloor(index){
+      const floor=this.depths.dungeon.floors[index];
+      // The one crossing point — engine schema in, chassis schema out.
+      const schema=EWDepthsBridge.toChassisSchema(floor);
+      this.map=new ElevationMap(schema.width,schema.height);
+      this.map.importSchema(schema);
+      this.depths.floorIndex=index;
+      const entry=schema.entities.find(e=>e.type==='PLAYER_SPAWN')||schema.entities.find(e=>e.type==='STAIRS_UP')||{x:1,z:1,y:0,facing:'S'};
+      this.depthsEntry={x:entry.x,z:entry.z,y:entry.y||0,facing:entry.facing||'S'};
+      this.npcs=schema.entities.filter(e=>e.type!=='PLAYER_SPAWN').map(e=>new NPCActor(e,this.map));
+      this.player.map=this.map;
+      this.player.teleport(entry.x,entry.z,entry.y||0);
+      this.player.facing=entry.facing||'S';
+      this.pathfinder=new AStarPathfinder(this.map,(x,z)=>this.isOccupied(x,z));
+      this.mode=GameMode.OVERWORLD;
+      const deepest=Math.max((this.depthsRecord&&this.depthsRecord.deepest)||0,index+1);
+      this.depthsRecord={deepest};
+      this.objective='Depths — floor '+(index+1)+' of '+this.depths.dungeon.floors.length;
+      this.save('AUTOSAVE');
+    }
+    descend(){
+      if(!this.depths)return false;
+      const next=this.depths.floorIndex+1;
+      if(next>=this.depths.dungeon.floors.length)return false;
+      this.loadDepthsFloor(next);
+      this.announce('Floor '+(next+1)+'.');
+      return true;
+    }
+    leaveDepths(cleared){
+      if(!this.depths)return;
+      this.map=this.valeMap;this.player.map=this.map;
+      const r=this.valeReturn||{x:6,z:7,y:0,facing:'S'};
+      this.npcs=this.map.entities.filter(e=>e.type!=='PLAYER_SPAWN').map(e=>new NPCActor(e,this.map));
+      this.player.teleport(r.x,r.z,r.y);this.player.facing=r.facing;
+      this.pathfinder=new AStarPathfinder(this.map,(x,z)=>this.isOccupied(x,z));
+      this.depths=null;this.mode=GameMode.OVERWORLD;
+      this.objective='Explore Prism Route and meet the Flower Plateau warden.';
+      this.save('AUTOSAVE');
+      this.announce(cleared?'You surface from the Depths, delve complete.':'You surface from the Depths.');
+    }
+    // SEMH-safe (§4): fainting in the Depths costs progress on the floor, not
+    // the run and not the roster. You wake at the floor entrance, healed.
+    // No permadeath, no timer, nothing lost.
+    depthsRecover(){
+      this.party.forEach(m=>m.healFull());
+      const e=this.depthsEntry||{x:1,z:1,y:0,facing:'S'};
+      this.player.teleport(e.x,e.z,e.y);this.player.facing=e.facing;
+      this.mode=GameMode.OVERWORLD;
+      this.toastMessage('You come to at the floor entrance, party restored.','#71d5c3');
+      this.announce('You were carried back to the floor entrance. Your party is restored. Nothing was lost.');
+      this.save('AUTOSAVE');
+    }
     // §5 — the Trainer Read ledger. Kept on the game rather than the battle
     // so it survives an encounter ending, and saved with everything else.
     recordCall(band,p){if(!Array.isArray(this.callHistory))this.callHistory=[];this.callHistory.push({band,p});
@@ -1646,9 +2649,9 @@
     trainerReadScore(){return trainerRead(this.callHistory||[]);}
     // §5.6 / G11 — every reveal is announced, not just drawn on a canvas.
     announce(text,holdMs=6000){const sr=document.getElementById('sr-status');if(sr)sr.textContent=String(text);this.srHoldUntil=performance.now()+holdMs;}
-    serialize(){return{version:SAVE_SCHEMA_VERSION,appVersion:this.version,timestamp:Date.now(),playTimeSeconds:Math.floor(this.playTime),player:{x:this.player.grid.x,z:this.player.grid.z,y:this.player.grid.y,facing:this.player.facing},party:this.party.map(m=>m.toJSON()),inventory:{...this.inventory},collection:{...this.collection},flags:this.flags.exportArray(),settings:{...this.settings},steps:this.steps,callHistory:(this.callHistory||[]).slice(-200),charmTier:this.charmTier||1};}
+    serialize(){return{version:SAVE_SCHEMA_VERSION,appVersion:this.version,timestamp:Date.now(),playTimeSeconds:Math.floor(this.playTime),player:{x:this.player.grid.x,z:this.player.grid.z,y:this.player.grid.y,facing:this.player.facing},party:this.party.map(m=>m.toJSON()),inventory:{...this.inventory},collection:{...this.collection},flags:this.flags.exportArray(),settings:{...this.settings},steps:this.steps,callHistory:(this.callHistory||[]).slice(-200),charmTier:this.charmTier||1,depthsRecord:this.depthsRecord||{deepest:0}};}
     save(slot='SLOT_1'){const result=this.saveManager.write(slot,this.serialize());this.updateContinueButton();return result;}
-    load(slot='SLOT_1'){const result=this.saveManager.read(slot);if(!result.success)return result;const d=result.data;try{if(d.player)this.player.teleport(d.player.x,d.player.z,d.player.y),this.player.facing=d.player.facing||'N';if(Array.isArray(d.party)&&d.party.length)this.party=d.party.map(m=>new Monster(m));this.inventory={prism_pod:6,field_tonic:3,...d.inventory};this.collection={...d.collection};this.flags.importArray(d.flags);this.settings={...this.settings,...d.settings};this.audio.setEnabled(this.settings.audio);this.playTime=d.playTimeSeconds||0;this.steps=d.steps||0;this.callHistory=Array.isArray(d.callHistory)?d.callHistory.filter(e=>e&&typeof e.p==='number'):[];this.charmTier=typeof d.charmTier==='number'&&isFinite(d.charmTier)?d.charmTier:1;document.body.classList.toggle('high-contrast',this.settings.highContrast);return{success:true};}catch(error){return{success:false,error:error.message};}}
+    load(slot='SLOT_1'){const result=this.saveManager.read(slot);if(!result.success)return result;const d=result.data;try{if(d.player)this.player.teleport(d.player.x,d.player.z,d.player.y),this.player.facing=d.player.facing||'N';if(Array.isArray(d.party)&&d.party.length)this.party=d.party.map(m=>new Monster(m));this.inventory={prism_pod:6,field_tonic:3,...d.inventory};this.collection={...d.collection};this.flags.importArray(d.flags);this.settings={...this.settings,...d.settings};this.audio.setEnabled(this.settings.audio);this.playTime=d.playTimeSeconds||0;this.steps=d.steps||0;this.callHistory=Array.isArray(d.callHistory)?d.callHistory.filter(e=>e&&typeof e.p==='number'):[];this.charmTier=typeof d.charmTier==='number'&&isFinite(d.charmTier)?d.charmTier:1;this.depthsRecord=(d.depthsRecord&&typeof d.depthsRecord.deepest==='number'&&isFinite(d.depthsRecord.deepest))?{deepest:Math.max(0,Math.trunc(d.depthsRecord.deepest))}:{deepest:0};document.body.classList.toggle('high-contrast',this.settings.highContrast);return{success:true};}catch(error){return{success:false,error:error.message};}}
     loadCustomMap(payload){this.map.importSchema(payload);const spawn=this.map.entities.find(e=>e.type==='PLAYER_SPAWN')||{x:1,z:1,y:0,facing:'S'};this.npcs=this.map.entities.filter(e=>e.type!=='PLAYER_SPAWN').map(e=>new NPCActor(e,this.map));this.player.map=this.map;this.player.teleport(spawn.x,spawn.z,spawn.y);this.player.facing=spawn.facing||'S';this.pathfinder=new AStarPathfinder(this.map,(x,z)=>this.isOccupied(x,z));this.renderer=this.softwareRenderer;this.mode=GameMode.OVERWORLD;}
   }
 
@@ -1661,6 +2664,8 @@
   // §5.2 — the twist's public surface. trainerRead is pure: same history in,
   // same score out, no globals, no clock, no RNG. The harness scores against
   // this exact function rather than a copy of it.
+  window.__EMBERWILD_DEPTHS__ = EWDepths;
+  window.__EMBERWILD_BRIDGE__ = EWDepthsBridge;
   window.EW = Object.freeze({
     trainerRead,
     callAccuracy,

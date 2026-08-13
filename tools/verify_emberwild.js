@@ -368,6 +368,58 @@ async function browserGates(gamePath) {
       `rule width ${rm.ruleWidth}px, splash ${rm.splash}, ${rmErrors.length} errors`);
     await rmPage.close();
 
+    // G2 — determinism. Two FRESH generations from one seed must agree, for
+    // every mode. Run inside the page against the shipped generator.
+    const det = await page.evaluate(() => {
+      const out = { pairs: 0, identical: 0, invalid: 0, modes: [] };
+      const G = window.__EMBERWILD_DEPTHS__;
+      for (const mode of ['cavern', 'ruins', 'hybrid']) {
+        for (const seed of [1, 42, 99999, 3735928559]) {
+          const a = new G.DungeonGenerator().generate({ seed, mode, floors: 3 });
+          const b = new G.DungeonGenerator().generate({ seed, mode, floors: 3 });
+          out.pairs++;
+          if (a.checksum === b.checksum) out.identical++;
+          if (!a.validation.valid) out.invalid++;
+        }
+        out.modes.push(mode);
+      }
+      return out;
+    });
+    gate('G2', 'same seed -> identical dungeon checksums',
+      det.identical === det.pairs && det.pairs > 0,
+      `${det.identical}/${det.pairs} identical across ${det.modes.join('/')}`);
+    gate('G2b', 'every generated floor is route-valid', det.invalid === 0,
+      `${det.invalid} invalid dungeons`);
+
+    // The bridge is the one crossing point, and the enums it remaps genuinely
+    // collide. Pin the remap so a future edit cannot quietly put grass where
+    // water belongs.
+    const remap = await page.evaluate(() => window.__EMBERWILD_BRIDGE__.SURFACE_MAP);
+    // engine -> chassis: WATER 2->4, ICE 4->5, TALL_GRASS 5->2
+    const remapOK = remap[2] === 4 && remap[4] === 5 && remap[5] === 2
+      && remap[0] === 0 && remap[1] === 1 && remap[3] === 3;
+    gate('D1', 'Depths surface remap is explicit and correct', remapOK,
+      `engine 2->${remap[2]} (water), 4->${remap[4]} (ice), 5->${remap[5]} (grass)`);
+
+    // A delve must actually run: generate, load, render, descend, surface.
+    const delve = await page.evaluate(() => {
+      const g = window.__EMBERWILD__;
+      const entered = g.enterDepths();
+      const types = [...new Set(g.npcs.map(n => n.type))];
+      const descended = g.descend();
+      const floor = g.depths && g.depths.floorIndex;
+      g.party.forEach(m => (m.currentHP = 0));
+      g.depthsRecover();
+      const healed = g.party.every(m => m.currentHP > 0);
+      g.leaveDepths(true);
+      return { entered, types, descended, floor, healed, surfaced: g.depths === null };
+    });
+    gate('D2', 'a delve runs: enter, populate, descend, recover, surface',
+      delve.entered && delve.descended && delve.healed && delve.surfaced,
+      `entities ${delve.types.join('/')}, reached floor ${delve.floor + 1}`);
+    gate('D3', 'SEMH rule: a Depths defeat heals and never ends the run',
+      delve.healed, 'party restored at the floor entrance');
+
     // G8 runtime — the panel is raised by the failure path, and there is one.
     const g8 = await page.evaluate(() => {
       window.EW.rendererFailure.raise('harness-probe');
