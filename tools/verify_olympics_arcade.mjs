@@ -23,7 +23,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
-const { chromium } = require('playwright');
 
 import fsSync from 'node:fs';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -40,6 +39,12 @@ if (!GAMES || !fsSync.existsSync(path.join(GAMES, 'games.json'))) {
   console.error('  declared in: data/instrument-preconditions.json');
   process.exit(3);
 }
+
+/* Loaded only after the precondition holds. Required above the guard, a
+ * machine without playwright crashed on module load - exit 1 and a stack
+ * trace - before this file could say INCONCLUSIVE and exit 3, so it could
+ * not honour the contract it declares. */
+const { chromium } = require('playwright');
 
 const HREF = '/olympics/';
 
