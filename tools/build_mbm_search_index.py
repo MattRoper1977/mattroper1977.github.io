@@ -30,12 +30,28 @@ Derivation, in one place so it is reviewable:
                 publishes - matched on route, never on title, and asserted
                 by identity rather than by count
 
-All 511 committed entries reproduce byte-identically.
+Comparison is by IDENTITY, not by position. The original compare aligned the
+committed and produced lists by zipping them after a title sort; one insertion
+made every entry past it pair with its neighbour, so dozens of untouched games
+were reported as differing (see tools/diff_search_index_by_key.py, which
+diagnosed this). Entries are now keyed on their stable id and classified as
+ADDED, REMOVED, CHANGED or MOVED_ONLY. A position-only move is reported but is
+not a failure and never needs declaring; a REMOVED entry is the loudest
+failure and has its own declaration flag, because a silent removal is the one
+change a search index must never absorb quietly.
+
+--check is the reproduction gate: it is green only when the generated index
+serialises byte-identically to the committed blob. --write is the repair path:
+it is reachable even when the entry set changed - that is its purpose - but
+every change must be declared. Envelope leaves and added/changed entries are
+declared with --expect-diff; removed entries only with --expect-removed.
 
 Usage:
   python3 tools/build_mbm_search_index.py --check
   python3 tools/build_mbm_search_index.py --check --category lesson
   python3 tools/build_mbm_search_index.py --write --expect-diff sourceHashes.mbm-search-editorial.json
+  python3 tools/build_mbm_search_index.py --write \
+      --expect-diff entries.game-apexrally3d --expect-removed game-retired-id ...
 """
 from __future__ import annotations
 
@@ -399,39 +415,50 @@ def committed_index() -> dict[str, Any]:
     return json.loads(committed_text())
 
 
-def committed_slice(category: str) -> list[dict[str, Any]]:
-    return [e for e in committed_index()["entries"] if e["category"] == category]
+def entry_key(entry: dict[str, Any]) -> str:
+    return entry.get("id") or entry.get("route")
 
 
-def compare_slice(category: str, produced: list[dict[str, Any]]) -> list[str]:
-    """Compare one category against the git blob, byte for byte.
+def classify_by_key(before: list[dict[str, Any]], after: list[dict[str, Any]]) -> dict[str, Any]:
+    """Identity-keyed classification of two entry lists.
 
-    Dict equality ignores key order, so a field-by-field diff alone reports
-    "identical" for two entries whose keys are ordered differently. That is how
-    eighteen entries with a misplaced `pathway` passed this check while the
-    written file differed by sixty-eight lines. The serialised comparison is
-    authoritative; the field diff exists only to say where.
+    This is the estate's one comparison engine for the search index; the
+    positional zip it replaced reported dozens of untouched entries as
+    differing after a single insertion. tools/diff_search_index_by_key.py
+    reuses this function rather than reimplementing it - two classifiers
+    would agree right up until the day it mattered.
+
+    Serialised equality remains the authoritative reproduction test (dict
+    equality ignores key order, which is how eighteen entries with a
+    misplaced `pathway` once passed a field diff while the written file
+    differed by sixty-eight lines). The classification exists to say what
+    ACTUALLY changed: ADDED, REMOVED, CHANGED in content, or MOVED_ONLY -
+    identical content at a different position, which is a consequence of a
+    sorted list absorbing an insertion, not a change anyone made.
     """
-    want_entries = committed_slice(category)
-    got_entries = sorted(produced, key=lambda e: e["title"].casefold())
-    if serialise(want_entries) == serialise(got_entries):
-        return []
+    old = {entry_key(e): e for e in before}
+    new = {entry_key(e): e for e in after}
+    added = [k for k in new if k not in old]
+    removed = [k for k in old if k not in new]
+    common = [k for k in new if k in old]
+    changed = [k for k in common if old[k] != new[k]]
+    key_order_differs = [
+        k for k in common
+        if old[k] == new[k] and list(old[k]) != list(new[k])
+    ]
+    old_order = {k: i for i, k in enumerate(entry_key(e) for e in before)}
+    new_order = {k: i for i, k in enumerate(entry_key(e) for e in after)}
+    moved = [k for k in common
+             if old_order[k] != new_order[k] and k not in changed]
+    return {
+        "old": old, "new": new,
+        "added": added, "removed": removed, "changed": changed,
+        "moved": moved, "key_order_differs": key_order_differs,
+    }
 
-    problems = []
-    if len(want_entries) != len(got_entries):
-        problems.append(f"{category}: {len(got_entries)} entries produced, {len(want_entries)} committed")
-    for a, b in zip(want_entries, got_entries):
-        fields = sorted({k for k in set(a) | set(b) if a.get(k) != b.get(k)})
-        if fields:
-            problems.append(f"{category}/{a.get('sourceId')}: differs on {fields}")
-        elif list(a) != list(b):
-            problems.append(
-                f"{category}/{a.get('sourceId')}: same values, different key order — "
-                f"committed {list(a)}, generated {list(b)}"
-            )
-    if not problems:
-        problems.append(f"{category}: serialised output differs but no entry does; check the envelope")
-    return problems[:20]
+
+def changed_fields(a: dict[str, Any], b: dict[str, Any]) -> list[str]:
+    return sorted({k for k in set(a) | set(b) if a.get(k) != b.get(k)})
 
 
 def json_paths(value: Any, prefix: str = "") -> dict[str, Any]:
@@ -452,6 +479,10 @@ def main() -> None:
     parser.add_argument("--write", action="store_true", help="write, but only the differences you declare")
     parser.add_argument("--expect-diff", metavar="PATH", action="append", default=[],
                         help="a JSON path the write is permitted to change; repeatable")
+    parser.add_argument("--expect-removed", metavar="ENTRY_KEY", action="append", default=[],
+                        help="an entry key the write is permitted to REMOVE; repeatable. "
+                             "Removal is the loudest failure and never rides in under "
+                             "--expect-diff")
     args = parser.parse_args()
 
     editorial = load_json(EDITORIAL)
@@ -469,17 +500,26 @@ def main() -> None:
         if r["type"] == "game" and "/Lessons/" + r["file"] in game_hrefs
     }
 
-    # The drop list is part of what this tool must justify. A count that
-    # matches while the wrong records were dropped is exactly the vacuous green
-    # this index is meant to be protected from, so it is compared by identity.
-    committed_ids = {e["sourceId"] for e in load_json(INDEX)["entries"]}
-    expected_drops = {r["id"] for r in records if r["type"] == "game" and r["id"] not in committed_ids}
-    if dropped != expected_drops:
-        print(f"drop set differs by identity: {len(dropped)} computed, {len(expected_drops)} expected", file=sys.stderr)
-        for sid in sorted(dropped ^ expected_drops)[:10]:
+    # The drop list is part of what this tool must justify - by identity, not
+    # by count. The old assertion compared the drop set against the committed
+    # index's absentees, which is only meaningful while the committed index is
+    # fresh; against updated sources it condemned every legitimate addition.
+    # Instead, every dropped record must name the published route that
+    # justifies dropping it, re-derived here independently of the drop
+    # comprehension so an edit to one cannot silently satisfy the other.
+    # The consequences stay loud in the identity classification below: a
+    # wrongly-dropped record surfaces as a REMOVED entry, a wrongly-kept one
+    # as an ADDED entry, and neither writes without being declared.
+    by_id = {r["id"]: r for r in records}
+    unjustified = [sid for sid in sorted(dropped)
+                   if "/Lessons/" + by_id[sid]["file"] not in game_hrefs]
+    if unjustified:
+        print("dropped records whose route the Games manifest does not publish:",
+              file=sys.stderr)
+        for sid in unjustified[:10]:
             print(f"  - {sid}", file=sys.stderr)
         raise SystemExit(1)
-    print(f"  drops      {len(dropped):>4} records  identity asserted")
+    print(f"  drops      {len(dropped):>4} records  each justified by a published route")
 
     produced: dict[str, list[dict[str, Any]]] = {c: [] for c in CATEGORY_ORDER}
     for entry in build_lessons_and_resources(records, rules, reclassify, dropped):
@@ -531,62 +571,130 @@ def main() -> None:
         raise SystemExit(1)
     print(f"  searchId   {len(referenced):>4} swept     all resolve")
 
-    categories = [args.category] if args.category else CATEGORY_ORDER
-    failures: list[str] = []
-    for category in categories:
-        problems = compare_slice(category, produced[category])
-        status = "reproduces" if not problems else "DIFFERS"
-        print(f"  {category:<9} {len(produced[category]):>4} entries  {status}")
-        failures.extend(problems)
+    before = committed_index()
+    after_entries = [
+        e for c in CATEGORY_ORDER
+        for e in sorted(produced[c], key=lambda x: x["title"].casefold())
+    ]
+    cls = classify_by_key(before["entries"], after_entries)
+    category_of = {entry_key(e): e["category"] for e in before["entries"]}
+    category_of.update({entry_key(e): e["category"] for e in after_entries})
 
-    if failures:
-        print("\nGenerator does not reproduce the committed index:", file=sys.stderr)
-        for failure in failures[:20]:
-            print(f"  - {failure}", file=sys.stderr)
+    categories = [args.category] if args.category else CATEGORY_ORDER
+    for category in categories:
+        delta = [k for group in ("added", "removed", "changed")
+                 for k in cls[group] if category_of.get(k) == category]
+        status = "reproduces" if not delta else "DIFFERS"
+        print(f"  {category:<9} {len(produced[category]):>4} entries  {status}")
+
+    if not args.write:
+        # The reproduction gate. Serialised equality is authoritative; the
+        # classification says what actually changed. A MOVED_ONLY entry is a
+        # consequence of a sorted list absorbing an insertion, so it is
+        # reported here but never listed as a difference in its own right.
+        in_scope = lambda keys: [k for k in keys if args.category is None
+                                 or category_of.get(k) == args.category]
+        added, removed, changed = (in_scope(cls[g]) for g in ("added", "removed", "changed"))
+        reproduces = serialise(before["entries"]) == serialise(after_entries)
+        if args.category is None and not reproduces or added or removed or changed:
+            print("\nGenerator does not reproduce the committed index:", file=sys.stderr)
+            for k in removed[:10]:
+                print(f"  - REMOVED {k}  ({cls['old'][k]['title']})", file=sys.stderr)
+            for k in added[:10]:
+                print(f"  + ADDED   {k}  ({cls['new'][k]['title']})", file=sys.stderr)
+            for k in changed[:10]:
+                print(f"  ~ CHANGED {k}  on {changed_fields(cls['old'][k], cls['new'][k])}",
+                      file=sys.stderr)
+            for k in cls["key_order_differs"][:5]:
+                print(f"  ~ KEY ORDER {k}: committed {list(cls['old'][k])}, "
+                      f"generated {list(cls['new'][k])}", file=sys.stderr)
+            if cls["moved"]:
+                print(f"  ({len(cls['moved'])} further entries moved position only "
+                      "- not failures)", file=sys.stderr)
+            raise SystemExit(1)
+        return
+
+    # --write. Reachable even when the entry set changed - that is the point:
+    # the old flow raised before this line whenever there was anything to
+    # write. Reachable is not unguarded: every envelope leaf and every added
+    # or content-changed entry must be declared with --expect-diff, and a
+    # REMOVED entry - the loudest failure this file has - only writes when
+    # named with --expect-removed. A position-only move needs no declaration.
+    after = dict(before)
+    after["sourceProvenance"] = load_json(MANIFESTS / "provenance.json")["sources"]
+    after["sourceHashes"] = source_hashes()
+    after["teacherTasks"] = editorial["teacherTasks"]
+    counts: dict[str, int] = {"total": len(after_entries)}
+    for category in CATEGORY_ORDER:
+        counts[category] = sum(1 for e in after_entries if e["category"] == category)
+    after["counts"] = counts
+    after["entries"] = after_entries
+
+    envelope_before = {k: v for k, v in before.items() if k != "entries"}
+    envelope_after = {k: v for k, v in after.items() if k != "entries"}
+    old_paths, new_paths = json_paths(envelope_before), json_paths(envelope_after)
+    changed_leaves = sorted(
+        {k for k in set(old_paths) | set(new_paths) if old_paths.get(k) != new_paths.get(k)}
+    )
+    entry_changes = sorted(f"entries.{k}" for k in cls["added"] + cls["changed"])
+    changed = changed_leaves + entry_changes
+
+    declared = set(args.expect_diff)
+    declared_removed = set(args.expect_removed)
+
+    if not changed and not cls["removed"] and not cls["moved"] and not cls["key_order_differs"]:
+        print("nothing to write: the generated index already matches the committed one")
+        return
+
+    # Removals first, and separately: a removal that rode in under a generic
+    # declaration is exactly the quiet loss this gate exists to prevent.
+    undeclared_removed = [k for k in cls["removed"] if k not in declared_removed]
+    if undeclared_removed:
+        print("write aborted — these entries would be REMOVED but were not declared:",
+              file=sys.stderr)
+        for k in undeclared_removed[:20]:
+            print(f"  - {k}  ({cls['old'][k]['title']})", file=sys.stderr)
+        print("every removal must be named with --expect-removed; "
+              "--expect-diff does not cover a removal", file=sys.stderr)
+        raise SystemExit(1)
+    unused_removed = sorted(declared_removed - set(cls["removed"]))
+    if unused_removed:
+        print("write aborted — these --expect-removed entries were not removed:",
+              file=sys.stderr)
+        for k in unused_removed:
+            print(f"  - {k}", file=sys.stderr)
         raise SystemExit(1)
 
-    if args.write:
-        before = committed_index()
-        after = dict(before)
-        after["sourceHashes"] = source_hashes()
-        after["entries"] = [
-            e for c in CATEGORY_ORDER
-            for e in sorted(produced[c], key=lambda x: x["title"].casefold())
-        ]
+    undeclared = [c for c in changed if c not in declared]
+    if undeclared:
+        print("write aborted — these paths would change but were not declared:", file=sys.stderr)
+        for path in undeclared[:20]:
+            print(f"  - {path}", file=sys.stderr)
+        print(f"declare them with --expect-diff, or fix the generator ({len(changed)} changed in total)",
+              file=sys.stderr)
+        raise SystemExit(1)
+    unused = sorted(declared - set(changed))
+    if unused:
+        print("write aborted — these --expect-diff paths did not change:", file=sys.stderr)
+        for path in unused:
+            print(f"  - {path}", file=sys.stderr)
+        raise SystemExit(1)
 
-        # A free-text reason is a promise, not a gate. Every changed leaf path
-        # must be one you named, or the write does not happen.
-        old_paths, new_paths = json_paths(before), json_paths(after)
-        changed = sorted(
-            {k for k in set(old_paths) | set(new_paths) if old_paths.get(k) != new_paths.get(k)}
-        )
-        declared = set(args.expect_diff)
-        undeclared = [c for c in changed if c not in declared]
-        if not changed:
-            print("nothing to write: the generated index already matches the committed one")
-            return
-        if undeclared:
-            print("write aborted — these paths would change but were not declared:", file=sys.stderr)
-            for path in undeclared[:20]:
-                print(f"  - {path}", file=sys.stderr)
-            print(f"declare them with --expect-diff, or fix the generator ({len(changed)} changed in total)",
-                  file=sys.stderr)
-            raise SystemExit(1)
-        unused = sorted(declared - set(changed))
-        if unused:
-            print("write aborted — these --expect-diff paths did not change:", file=sys.stderr)
-            for path in unused:
-                print(f"  - {path}", file=sys.stderr)
-            raise SystemExit(1)
-
-        handle = tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=str(INDEX.parent),
-                                             delete=False, suffix=".tmp")
-        handle.write(serialise(after))
-        handle.close()
-        os.replace(handle.name, INDEX)
-        print(f"index written; {len(changed)} declared path(s) changed:")
-        for path in changed:
-            print(f"  - {path}")
+    handle = tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=str(INDEX.parent),
+                                         delete=False, suffix=".tmp")
+    handle.write(serialise(after))
+    handle.close()
+    os.replace(handle.name, INDEX)
+    print(f"index written; {len(cls['added'])} added, {len(cls['removed'])} removed, "
+          f"{len(cls['changed'])} changed, {len(cls['moved'])} moved position only")
+    for path in changed_leaves:
+        print(f"  - {path}")
+    for k in cls["added"]:
+        print(f"  + entries.{k}")
+    for k in cls["removed"]:
+        print(f"  - entries.{k} (REMOVED, declared)")
+    for k in cls["changed"]:
+        print(f"  ~ entries.{k} on {changed_fields(cls['old'][k], cls['new'][k])}")
 
 
 if __name__ == "__main__":
