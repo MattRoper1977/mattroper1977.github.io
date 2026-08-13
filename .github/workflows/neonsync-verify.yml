@@ -103,18 +103,39 @@ jobs:
           echo 'G-A2 PASS — harness proved it can fail, then passed the contract'
 
       # ---------------------------------------------------------------- G-A4
-      - name: 'G-A4 static storage census — only mbm_neonsync_ literals'
+      # The census consults data/inline-exit-storage-grant.json — ruled
+      # 2026-08-13, census finding 5. The inline exit (8432492) reads
+      # mbm_audience_view in every exit-bearing game to route back to the
+      # visitor's chosen homepage; the grant attributes that key to the shared
+      # component at FAMILY level, so this census clears it without a per-game
+      # exception and without an edit the day another game gains the exit. A
+      # key NOT in the grant still fails, and the control below proves that
+      # refusal on every run.
+      - name: 'G-A4 static storage census — only mbm_neonsync_ and granted component keys'
         shell: bash
         run: |
           set -euo pipefail
           node -e "
             const fs=require('fs');
+            const granted=new Set(JSON.parse(fs.readFileSync('data/inline-exit-storage-grant.json','utf8')).allowedKeys);
             const h=fs.readFileSync('neonsync/index.html','utf8');
             const fam=[...new Set(h.match(/['\"](?:mbm_|apex_|apexkick|apexpool|apexgolf|apextennis|voxel|biopunk)[A-Za-z0-9_.-]*['\"]/g)||[])];
             console.log('estate-shaped key literals:', fam.join(', ')||'none');
-            const foreign=fam.filter(x=>!/mbm_neonsync_/.test(x));
+            const cleared=fam.filter(x=>granted.has(x.replace(/['\"]/g,'')));
+            if(cleared.length)console.log('granted to the inline-exit component:',cleared.join(', '));
+            const foreign=fam.filter(x=>!/mbm_neonsync_/.test(x)&&!granted.has(x.replace(/['\"]/g,'')));
             if(foreign.length){console.error('FAIL foreign key literals: '+foreign.join(', '));process.exit(1);}
-            console.log('G-A4 static PASS — no sibling key family appears in the file');
+            console.log('G-A4 static PASS — no sibling key family beyond the component grant');
+          "
+          node -e "
+            const fs=require('fs');
+            const granted=new Set(JSON.parse(fs.readFileSync('data/inline-exit-storage-grant.json','utf8')).allowedKeys);
+            const q=String.fromCharCode(39);
+            const h=fs.readFileSync('neonsync/index.html','utf8')+q+'mbm_ghost_key'+q;
+            const fam=[...new Set(h.match(/['\"](?:mbm_|apex_|apexkick|apexpool|apexgolf|apextennis|voxel|biopunk)[A-Za-z0-9_.-]*['\"]/g)||[])];
+            const foreign=fam.filter(x=>!/mbm_neonsync_/.test(x)&&!granted.has(x.replace(/['\"]/g,'')));
+            if(!foreign.some(x=>x.includes('mbm_ghost_key'))){console.error('CONTROL FAIL: an ungranted key was not caught — the grant is a hole');process.exit(1);}
+            console.log('control PASS — an ungranted key still fails the census');
           "
 
       - name: Install the pinned real browser
