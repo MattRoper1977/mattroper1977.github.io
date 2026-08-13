@@ -156,9 +156,19 @@ jobs:
               // once makes the wait HONEST rather than merely bounded: the
               // images actually begin loading, so "did it load" is a real
               // question. The race below stays as the backstop regardless.
-              const step = Math.max(200, window.innerHeight);
-              for (let y = 0; y < document.documentElement.scrollHeight; y += step) window.scrollTo(0, y);
+              // Stepped, WITH a pause at each stop. The first attempt scrolled
+              // through and back synchronously and loaded nothing: lazy loading
+              // is driven by intersection, which is evaluated asynchronously,
+              // so an image that is never in view for a single frame never
+              // starts. Measured: 41 of 80 images timed out at the ceiling and
+              // ZERO ever fired load. The pause is what makes the assist real.
+              const step = Math.max(200, Math.floor(window.innerHeight * 0.8));
+              for (let y = 0; y < document.documentElement.scrollHeight; y += step) {
+                window.scrollTo(0, y);
+                await new Promise((r) => setTimeout(r, 120));
+              }
               window.scrollTo(0, 0);
+              await new Promise((r) => setTimeout(r, 120));
 
               const cards = [...document.querySelectorAll('a[href^="/"]')].filter(a=>a.querySelector('img'));
               const imgs = [...document.querySelectorAll('img')];
