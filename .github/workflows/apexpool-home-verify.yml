@@ -1,10 +1,42 @@
 name: Apex Sports homepage publication verify
 
+# TRIGGER SHAPE, RULED 2026-08-13. This workflow was pull_request-only, and
+# its path filter did not include the two game files its entry conditions
+# assert. Both blind spots bit at once: e65a190 changed apextennis/index.html
+# by push to main, no run fired anywhere, and the sha256 pin below sat
+# unsatisfiable for three days while every PR that happened to touch
+# main/index.html went red for someone else's reason. 151 recorded runs of
+# this workflow, all pull_request, zero ever on main. So: the asserted game
+# files are now in the path filter, and the same paths run on push to main —
+# a stale assertion now fails the commit that staled it, not the next
+# stranger's PR. On a push run origin/main is the pushed commit, so the
+# preservation legs compare the tree to itself and pass vacuously; the pin,
+# structure, mutation-family and browser gates all still bite, and they are
+# what a main run is for.
 on:
   pull_request:
     paths:
       - 'main/index.html'
       - 'site.json'
+      - 'apexgolf/index.html'
+      - 'apextennis/index.html'
+      - 'assets/cards/apex-golf-door.svg'
+      - 'assets/cards/apex-tennis-door.svg'
+      - 'tools/apply_apexpool_home.js'
+      - 'tools/apply_apextennis_home.js'
+      - 'tools/verify_apexpool_home.py'
+      - 'tools/verify_apexpool_home_browser.js'
+      - 'tools/verify_apextennis_home.py'
+      - 'tools/verify_apextennis_home_browser.js'
+      - '.github/workflows/apexpool-home-verify.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'main/index.html'
+      - 'site.json'
+      - 'apexgolf/index.html'
+      - 'apextennis/index.html'
       - 'assets/cards/apex-golf-door.svg'
       - 'assets/cards/apex-tennis-door.svg'
       - 'tools/apply_apexpool_home.js'
@@ -42,7 +74,17 @@ jobs:
           set -euo pipefail
           test -f apexgolf/index.html
           test -f apextennis/index.html
-          test "$(sha256sum apextennis/index.html | awk '{print $1}')" = "8e109ab55a0fb2a284f2e2e0bb5baa8bf468eaea8e2e89593fd71a20cdfb9b1f"
+          # PIN PROVENANCE, RULED 2026-08-13. apextennis/index.html has exactly
+          # two commits: e6ee788 (Build Apex Tennis, #41) wrote the previously
+          # pinned 8e109ab5…, and e65a190 (Stage 2B HUD wiring) changed it to
+          # the sha below by adding one declared line — <script defer
+          # src="/hud.js"></script>, the exact +38 bytes its own commit message
+          # promises, nothing else in the diff. The pin was not updated then,
+          # so this step failed every run from 2026-08-10 to 2026-08-13 (first
+          # recorded red: claude/switcher; diagnosed on PR #119, run
+          # 94395985023). Fourth instance of the A-6 shape in this file — see
+          # the doors-baseline comment below for the ruling on pins generally.
+          test "$(sha256sum apextennis/index.html | awk '{print $1}')" = "f94cd319ba06a5d4b5a8c78ecb6b70d6158c7083f47713f99a57d2aca1ed63d2"
           grep -q 'apexgolf-build-2026-08-04' apexgolf/index.html
 
       - name: Capture the measured 12-door main baseline
@@ -51,7 +93,17 @@ jobs:
           set -euo pipefail
           mkdir -p artifacts/apextennis-home
           git show origin/main:site.json > artifacts/apextennis-home/site-before.json
-          git show origin/main:index.html > artifacts/apextennis-home/index-before.html
+          # FOURTH INSTANCE OF THE A-6 SHAPE, and the exact defect BACKLOG 0a-A
+          # already repaired in verify_professional_site.js: this captured
+          # origin/main:index.html, which was the full homepage for exactly one
+          # commit. Since #110 gave / to the chooser, that file has no
+          # newrelease section, so verify_apextennis_home.py crashed on its own
+          # baseline — and reject() counted the crash as a rejection, turning
+          # all four mutation families vacuously green. Masked behind the
+          # doors-baseline red, then behind the stale pin above; surfaced
+          # 2026-08-13 the moment the pin was corrected. The full homepage
+          # lives at main/index.html, so the baseline comes from there.
+          git show origin/main:main/index.html > artifacts/apextennis-home/index-before.html
           # THIRD INSTANCE OF THE A-6 SHAPE. This asserted a hardcoded 12 and has
           # been RED ON MAIN'S OWN BASELINE since 6e8ab12 (site#44) took doors to
           # 14 — every PR touching index.html or site.json has failed here since.
