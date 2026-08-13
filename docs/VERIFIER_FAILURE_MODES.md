@@ -818,6 +818,77 @@ filter must include every file its assertions read, not only the files its
 author expected to edit. A workflow whose only trigger is a feature branch has
 a shelf life equal to that branch's.
 
+
+---
+
+
+## 38. A proxy that measures the rendering of an invariant, not the invariant
+
+The driving-games live leg asserted `exactly one NEW marker` by counting
+occurrences of the text `NEW ·` in `document.body.innerText` on `/games/`. The
+ruled invariant is about the **shelf**: exactly one manifest entry holds the
+ephemeral marker. Those are different questions, and the proxy is wrong in both
+directions at once.
+
+It **false-fails** a legitimate holder. `/games/` renders a rail'd collection in
+`#sportsRail` *in addition to* `#allGrid`, so a marker-holding game in a rail'd
+collection renders twice and the count reads 2. That is exactly what happened
+when the marker moved to Rally Vector 3D, which carried `collection: "Sports"`.
+The shelf was correct, the page was correct, and the gate was red.
+
+It also **passes vacuously**: a shelf with no holder at all satisfies the count
+whenever the page text happens to contain `NEW ·` once, for any reason.
+
+The repair was not to adjust the number. It was to assert the two real
+questions separately — (a) the served manifest declares exactly one holder, and
+(b) that holder's own anchor carries the marker on the page, at both viewports —
+so neither can be satisfied by the other's accident. Proven by a fixture where
+the shelf is correct but the render is stripped: limb (b) fails **alone**, which
+is what shows the limbs are independent rather than one implying the other.
+
+**Rule:** when a gate can only see a rendering of the thing it is ruling on,
+say so and assert the ruled fact at its source as well. A count of how many
+times an invariant is *displayed* is not a measurement of the invariant, and it
+will go red the first time the estate legitimately displays it twice.
+
+
+---
+
+
+## 39. A negative control that depends on a real defect existing
+
+`verify_sports_rail.js` S8 proves the hue-breach record is selective — that it
+refuses an unrecorded sub-floor pair, and refuses a recorded pair whose hue has
+since moved. It opened with:
+
+    const breaches = recordedBreaches();
+    assert(breaches.length > 0, 'no recorded breach to exercise the control against');
+
+and drew its fixtures from `breaches[0]` — the **live** record. So the control
+worked only while the estate actually carried a declared breach. The day the
+last one was retired as inert, S8 would have failed: not because anything
+regressed, but because the estate got healthier. A control whose green depends
+on a real defect being present is a control with an expiry date, and it fails in
+the direction that looks like a regression.
+
+Same family as *crashes counted as rejections* (species 35): in both, the
+harness reports on its own circumstances and the reader takes it for a
+statement about the artefact.
+
+The repair is a **committed synthetic fixture** the control consumes instead —
+with deliberately fictional identifiers, so it can never be mistaken for the
+live record nor silently excuse a real collision — plus two things the old shape
+never had: the control re-measures its own fixture every run and fails if the
+fixture has stopped being a genuine breach, and the live record, if it carries
+anything at all, is checked for self-consistency. The live record is then free
+to be **empty**, which is the strong state: with nothing recorded, the gate
+refuses every sub-floor pair a change introduces and has nowhere to hide one.
+
+**Rule:** a control must carry its own fixture. If the only way to prove a gate
+can fail is to point at a defect the estate happens to have, the proof
+evaporates the moment the defect is fixed — and its disappearance is
+indistinguishable from a break.
+
 ---
 
 
