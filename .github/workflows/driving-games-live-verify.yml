@@ -134,9 +134,21 @@ jobs:
           };
           const t = (n, ok, d='') => { if(!ok) fail++; mark(`${ok?'PASS':'FAIL'}  ${n}${d?'  — '+d:''}`); };
           const phase = (n) => mark(`---- ${n}`);
-          // PER-IMAGE CEILING. Set from measurement, not plucked — see the
-          // commit message for the observed distribution on the live shelf.
-          const IMG_MS = Number(process.env.IMG_MS || 10000);
+          // PER-IMAGE CEILING — DERIVED, not plucked. Measured twice against
+          // the live shelf at a 10s ceiling (runs 31750958794, 31751198749),
+          // 80 images, both viewports. The distribution has exactly two modes
+          // and nothing between them:
+          //   * already complete when the race starts -> 0ms
+          //   * never resolves at all                 -> hits the ceiling
+          // `slowest` — the top five images resolving via a real load event —
+          // came back EMPTY on every run. Not one image has ever fired load
+          // inside the race. So the ceiling cannot change which images resolve;
+          // it only sets how long the leg burns learning that. 3000ms is 2x the
+          // 1500ms settle this leg already waits after networkidle, which is
+          // the only measured timescale here for "the page has stopped moving",
+          // so it keeps 2x headroom over the one number the leg itself derives
+          // while costing ~3s per viewport instead of 10s.
+          const IMG_MS = Number(process.env.IMG_MS || 3000);
           const br = await chromium.launch();
 
           phase('phase 1: arcade at two viewports');
@@ -158,10 +170,17 @@ jobs:
               // question. The race below stays as the backstop regardless.
               // Stepped, WITH a pause at each stop. The first attempt scrolled
               // through and back synchronously and loaded nothing: lazy loading
-              // is driven by intersection, which is evaluated asynchronously,
-              // so an image that is never in view for a single frame never
-              // starts. Measured: 41 of 80 images timed out at the ceiling and
-              // ZERO ever fired load. The pause is what makes the assist real.
+              // is driven by intersection, evaluated asynchronously, so an image
+              // never in view for a single frame never starts.
+              //
+              // MEASURED OUTCOME, stated honestly: pausing cut the unresolved
+              // set from 41 to 23 of 80, so it helps — but it did NOT make the
+              // wait fully honest. Zero images fired load either way. Something
+              // beyond scroll position keeps the remainder from loading in a
+              // headless context; naming it is arcade-rendering work, outside
+              // this leg's harness, and is NOT chased here. The race is the
+              // backstop and every unresolved image is logged below, so the
+              // gap is visible on every run rather than assumed away.
               const step = Math.max(200, Math.floor(window.innerHeight * 0.8));
               for (let y = 0; y < document.documentElement.scrollHeight; y += step) {
                 window.scrollTo(0, y);
