@@ -24,6 +24,33 @@ name: Olympics live leg (Stage L1)
 # branch — valid when written, dead the day its PR merged. Now fires on pushes
 # to main touching its subjects, including this file: the retargeting merge is
 # the firing proof. The serve leg already retries on a bounded loop.
+# WIDENED 2026-08-14. The retargeting above fixed WHICH BRANCH this fires on and
+# left WHAT IT WATCHES too narrow — register species 37: a workflow's path filter
+# must include every file its assertions read. #127 rewrote this workflow's own
+# instrument and gave it a declared input, and the merge fired nothing at all.
+#
+# Full read set of this workflow, audited rather than guessed:
+#   READ DIRECTLY
+#     tools/verify_olympics_live.mjs          the instrument itself
+#     tools/verify_olympics_live_selftest.sh  the negative control that gates the
+#                                             live job — if it cannot run, nothing
+#                                             downstream of it means anything
+#     data/new-release-occupants.json         the declared NEW· holder, read by the
+#                                             instrument and now copied into the
+#                                             self-test's scratch tree with it
+#     olympics/index.html                     hashed against the served copy
+#     games/index.html                        the self-test serves this tree and the
+#                                             arcade limbs render it
+#   NOT FILTERABLE FROM HERE, and stated rather than left implied
+#     MattRoper1977/Games games.json          checked out as _shelf and served at
+#                                             /Games/games.json. A cross-repository
+#                                             checkout cannot appear in a path
+#                                             filter, so a shelf move in the Games
+#                                             repo will never fire this workflow —
+#                                             the marker moving to Emberwild in
+#                                             Games ca9a8c6 is exactly that case.
+#                                             It is caught here only when something
+#                                             in THIS repo moves, or on dispatch.
 on:
   workflow_dispatch:
   push:
@@ -31,6 +58,10 @@ on:
       - main
     paths:
       - 'olympics/index.html'
+      - 'games/index.html'
+      - 'tools/verify_olympics_live.mjs'
+      - 'tools/verify_olympics_live_selftest.sh'
+      - 'data/new-release-occupants.json'
       - '.github/workflows/olympics-live-verify.yml'
 
 permissions:
