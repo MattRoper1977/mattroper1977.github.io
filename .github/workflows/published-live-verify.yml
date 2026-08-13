@@ -8,6 +8,15 @@ name: Published games serve (Stage L-fin)
 # not serve is a half-publish arriving from the serving side, and the visitor
 # is the one who pays for it.
 
+# RETARGETED 2026-08-13 (census ruling). The old push branch was the
+# glowbound landing branch — valid when written, dead the day it merged. Two
+# replacements, because this instrument's real job is steady-state drift
+# detection of served paths: pushes to main touching its subjects (including
+# this file — the retargeting merge is the firing proof), and a weekly
+# schedule, so a path that stops serving is caught within a week even when
+# nothing pushes. A push-time run can race the Pages deploy; its byte
+# comparison names both sizes and hashes, so a lag read is recognisable and a
+# re-dispatch settles it.
 on:
   workflow_dispatch:
     inputs:
@@ -17,7 +26,14 @@ on:
         default: '/ouroboros/ /novasiege/'
   push:
     branches:
-      - 'claude/live-glowbound-taxonomy-homepage'
+      - main
+    paths:
+      - 'ouroboros/index.html'
+      - 'novasiege/index.html'
+      - 'games/index.html'
+      - '.github/workflows/published-live-verify.yml'
+  schedule:
+    - cron: '17 6 * * 1'
 
 permissions:
   contents: read
