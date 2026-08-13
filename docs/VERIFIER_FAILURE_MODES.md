@@ -723,6 +723,101 @@ unreachable and the tool has quietly stopped being able to do its job. Test the
 refusal path with a real change, not only the acceptance path with none.
 
 
+
+---
+
+
+## 35. A mutation harness that counts a crash as a rejection
+
+`apexpool-home-verify.yml` proves four static failure families by mutating a
+fixture and requiring the validator to reject it. `reject()` decided that by
+exit status:
+
+    if python3 tools/verify_apextennis_home.py ... > log 2>&1; then
+      echo "validator accepted ${family} mutation" >&2; exit 1
+    fi
+
+Any non-zero exit counted as a rejection — including the validator dying. And
+it was dying: its baseline came from `origin/main:index.html`, the full
+homepage for exactly one commit before #110 gave `/` to the chooser, so
+`re.search(r'<section[^>]*id="newrelease"...').group(0)` raised
+`AttributeError` on every invocation. The clean run and all four mutated runs
+crashed identically, so all four families reported PASS while measuring
+nothing. Masked twice over — behind the doors-baseline red, then behind the
+stale sha256 pin above it — and surfaced only when the pin was corrected and
+the step below it could run for the first time in three days.
+
+The fixture-inertness guard the file already carried did not help: it checks
+that the mutation *changed the file*, which it did. Nothing checked that the
+rejection was an *assertion* rather than a death.
+
+**Rule:** a mutation harness must distinguish "the validator judged this and
+refused it" from "the validator failed to run". Assert on the named finding,
+not on the exit code alone; a harness whose verifier dies is reporting on its
+own health, not on the artefact.
+
+
+---
+
+
+## 36. Two proofs, both true, about different files
+
+The 2026-08-12 driving-games launch wrote two shelf entries into
+`data/source-manifests/games.json` in the site repository, in commits titled
+*"single-writer commit 1 of 2"* and *"writer 2 of 2"*. Its live proof then
+fetched `https://madebymatt.uk/data/source-manifests/games.json` and
+byte-compared it to that file: **MATCH**, hash recorded in the launch report.
+
+The arcade does not read that file. `games/index.html` fetches
+`/Games/games.json` at runtime — the Games repository's manifest, mounted at
+the same origin — and that shelf stayed at 48 entries. Both proofs were sound.
+Neither was about the shelf the visitor sees, and the estate ran for a day with
+two hand-maintained shelves and no gate able to see both, because no single
+repository contains both files.
+
+AGX-1 reported it, but as a phantom-occupant finding — the homepage's New
+Release boxes naming games "not on the shelf" — which reads as a homepage
+defect rather than a divergence between two manifests.
+
+**Rule:** a live proof vouches for the artefact it fetched and nothing else, so
+every such proof must name its URL where the result is read, and a claim of the
+form "X is deployed" must state which path was fetched to establish it. Where
+two repositories hold copies of one fact, one is canonical and the other is
+generated from it — and the comparison lives wherever both can be reached,
+which for a two-repository split means the live gate.
+
+
+---
+
+
+## 37. A trigger shape that cannot fire where the change lands
+
+Eighteen of this repository's twenty-six workflows ran on `pull_request` only.
+Three more fired on `push` to branches that were their own launch branches —
+long since merged, never pushed to again — and one was `workflow_dispatch`-only
+from birth. All of them look like automatic gates in the file and in the
+Actions tab.
+
+The consequence is not that they never run; it is *when* they run. A commit
+pushed to `main` that breaks such a gate produces no failure anywhere. The gate
+then fails the next unrelated pull request that happens to touch its path
+filter, blaming a stranger's diff for a defect landed days earlier. Measured:
+`8432492` staled three gates in a single push to main (a byte pin, a pinned
+reconstruction, a storage census) and fired none of them;
+`apexpool-home-verify` had 151 recorded runs, every one a `pull_request`, none
+ever on `main`, while its sha256 pin sat unsatisfiable for three days. Its path
+filter also omitted the two game files its own entry conditions assert, so even
+a PR touching those files would not have run it.
+
+The dead push branches make this worse rather than better: they still exist on
+the remote, so the trigger reads as live.
+
+**Rule:** a gate must be able to fire on the ref where the change it guards
+actually lands. If it guards `main`, it runs on pushes to `main` — and its path
+filter must include every file its assertions read, not only the files its
+author expected to edit. A workflow whose only trigger is a feature branch has
+a shelf life equal to that branch's.
+
 ---
 
 
