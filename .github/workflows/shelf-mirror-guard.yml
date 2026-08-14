@@ -1,0 +1,67 @@
+name: Shelf mirror is not stale
+
+# data/source-manifests/games.json is a MIRROR of the canonical shelf, which
+# lives in the Games repository and is served at /Games/games.json. The mirror
+# is written only by tools/render_games_manifest_mirror.py.
+#
+# Why this workflow exists, given a mirror check already existed:
+# agx1-live-verify.yml carries a mirror leg, and it works — it is what caught
+# this drift. But it runs only on `pull_request` in THIS repository, so a
+# canonical-side change (a Games-repo merge) fires nothing at the time it
+# happens. The mirror then sits stale until somebody opens an unrelated site
+# PR, which inherits a red that has nothing to do with it. That is exactly
+# what happened twice: #128 regenerated the mirror, Games#32 added Emberwild
+# to the canonical, and EW-GRAFT1's CI wore the failure.
+#
+# So this is the SITE half of a pair. It fires on push to main and on pull
+# requests, filtered to the files this side owns. The half that fires on a
+# canonical-side change lives in the Games repository
+# (.github/workflows/shelf-mirror-guard.yml there) and runs the same check
+# from the other direction. Neither half alone is sufficient, and the pair is
+# deliberate: a guard that only watches the side that rarely moves is not a
+# guard.
+#
+# The comparison is the generator's own --check. It is not reimplemented here:
+# a second implementation of "are these the same" is a second thing to drift.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'data/source-manifests/games.json'
+      - 'tools/render_games_manifest_mirror.py'
+      - '.github/workflows/shelf-mirror-guard.yml'
+  pull_request:
+    paths:
+      - 'data/source-manifests/games.json'
+      - 'tools/render_games_manifest_mirror.py'
+      - '.github/workflows/shelf-mirror-guard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shelf-mirror-guard-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mirror:
+    name: Mirror equals the canonical shelf
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # The canonical is in another repository. Clone it anonymously — it is
+      # public, so this needs no token and no secret, and it works unchanged
+      # on forks and in local runs. This is the estate's established
+      # cross-repo pattern (see Games/.github/workflows/validate-games-json.yml).
+      - name: Fetch the canonical shelf (public, no token)
+        run: git clone --depth 1 https://github.com/MattRoper1977/Games.git _games
+
+      - name: Mirror is byte-identical to the canonical
+        run: |
+          set -euo pipefail
+          python3 tools/render_games_manifest_mirror.py \
+            --canonical "$GITHUB_WORKSPACE/_games/games.json" --check
