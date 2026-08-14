@@ -152,7 +152,7 @@ main{max-width:1480px;margin:0 auto;padding:20px 16px 90px}.view{display:none}.v
 <a class="skip-link" href="#app-main">Skip to main content</a>
 <header class="app-header">
   <div class="header-top">
-    <div class="brand">ASDAN Moderation Lab<small>v5.2 · Made by Matt</small></div>
+    <div class="brand">ASDAN Moderation Lab<small>2026-08-14c · Made by Matt</small></div>
     <span class="test-flag">SEPARATE FROM THE DAILY REGISTER</span>
     <div class="header-actions">
       <button class="icon-btn labelled" id="global-storage" title="Storage status">💾 <span id="global-storage-text">Checking…</span></button>
@@ -588,11 +588,13 @@ function seedDemoState(){
   const state=blankState();
   state.demo=true;
   state.centre={...state.centre,name:"Demonstration Centre (fictional)",number:"00000",school:"Demonstration School",assessorName:"A. Assessor",assessorInitials:"AA"};
+  /* Forename + surname-initial is the format schools use to anonymise REAL pupils, so it
+     is indistinguishable from live data on a public URL. These are unmistakably fictional. */
   state.pupils=[
-    {id:"p-riley-r",forename:"Riley",surname:"R",candidateNo:"4012",uln:"",group:"KS4-B",archived:false},
-    {id:"p-zach-r",forename:"Zach",surname:"R",candidateNo:"4013",uln:"",group:"KS4-B",archived:false},
-    {id:"p-leo-m",forename:"Leo",surname:"M",candidateNo:"4014",uln:"",group:"KS4-B",archived:false},
-    {id:"p-ava-t",forename:"Ava",surname:"T",candidateNo:"4015",uln:"",group:"KS4-A",archived:false}
+    {id:"p-riley-r",forename:"Riley",surname:"Demo",candidateNo:"DEMO-4012",uln:"",group:"DEMO COHORT",archived:false},
+    {id:"p-zach-r",forename:"Zach",surname:"Demo",candidateNo:"DEMO-4013",uln:"",group:"DEMO COHORT",archived:false},
+    {id:"p-leo-m",forename:"Leo",surname:"Demo",candidateNo:"DEMO-4014",uln:"",group:"DEMO COHORT",archived:false},
+    {id:"p-ava-t",forename:"Ava",surname:"Demo",candidateNo:"DEMO-4015",uln:"",group:"DEMO COHORT",archived:false}
   ];
   const short={
     id:"prog-independent-living",kind:"short",code:"IL",title:"Independent Living",pathway:"GROW",targetCredits:2,
@@ -1420,8 +1422,12 @@ function bindStudioEvents(){
   window.addEventListener("mouseup", onPointerUp);
 
   canvas.addEventListener("touchstart", e=>{e.preventDefault(); onPointerDown(e);},{passive:false});
-  window.addEventListener("touchmove", onPointerMove);
+  /* touchmove MUST be non-passive: without it the browser scrolls the page under the
+     finger and a redaction box can never be drawn on a tablet. touchcancel matters too —
+     an interrupted drag (call, notification) otherwise leaves the studio mid-box. */
+  window.addEventListener("touchmove", e=>{ if(e.cancelable) e.preventDefault(); onPointerMove(e); },{passive:false});
   window.addEventListener("touchend", onPointerUp);
+  window.addEventListener("touchcancel", onPointerUp);
 
   $("#tool-blur").addEventListener("click",()=>{
     studioMode="blur";

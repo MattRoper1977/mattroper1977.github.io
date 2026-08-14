@@ -89,7 +89,13 @@ try {
   const appSha = execFileSync('sha256sum', [path.join(ROOT, 'asdan/app.html')], { encoding: 'utf8' }).split(' ')[0];
   check(appSha === 'e92239177d068140c2d31d73b4048e6b82c54b63b9b461e31576580da1a1985d',
     'asdan/app.html is untouched by this landing', appSha.slice(0, 24) + '…');
-  check(/v5\.2 · Made by Matt/.test(src), 'the build identifies as v5.2');
+  /* The brand carries the build identity. Asserted as PRESENT and reported,
+     not pinned to one string: the build was rebranded v5.2 -> 2026-08-14c
+     between two landings in a single session, and a gate that fails on a
+     version bump teaches people to edit the gate rather than read it. What is
+     pinned substantively is the behaviour below. */
+  const brand = (src.match(/ASDAN Moderation Lab<small>([^<]+)<\/small>/) || [])[1] || '';
+  check(/ · Made by Matt$/.test(brand.trim()), 'the build declares its identity in the brand', brand.trim());
 
   /* ---------------- 2. the five grafts ---------------- */
   console.log('\n--- 2. the five grafts, each asserted in the landed file ---');
@@ -125,6 +131,38 @@ try {
     (nonComment.length ? ` — USER-FACING at line(s) ${nonComment.map(([n]) => n).join(', ')}` : ''));
   check(/does not encode/.test(src),
     "copy: the page says plainly it does not encode ASDAN's published requirements");
+
+  /*
+   * DEMO DATA MUST NOT LOOK LIKE REAL DATA.
+   *
+   * The earlier build seeded pupils as Riley R / Zach R in group KS4-B with
+   * candidate numbers 4012-4015. Forename plus surname-initial is exactly the
+   * format schools use to anonymise REAL pupils, so on a public URL the demo
+   * cohort was indistinguishable from live centre data - and this app prints
+   * moderation packs. Every seeded pupil must now be unmistakably fictional on
+   * its face.
+   */
+  const demoPupils = [...src.matchAll(/\{id:"p-[^"]+",forename:"([^"]*)",surname:"([^"]*)",candidateNo:"([^"]*)",uln:"[^"]*",group:"([^"]*)"/g)]
+    .map(m => ({ forename: m[1], surname: m[2], candidateNo: m[3], group: m[4] }));
+  check(demoPupils.length > 0, 'the demo cohort is findable in source', `${demoPupils.length} pupils`);
+  const notObviouslyDemo = demoPupils.filter(p =>
+    !/DEMO/i.test(p.candidateNo) || !/DEMO/i.test(p.group) || /^[A-Z]$/.test(p.surname));
+  check(notObviouslyDemo.length === 0,
+    'every demo pupil is unmistakably fictional — DEMO-prefixed number, DEMO cohort, no single-initial surname',
+    notObviouslyDemo.length
+      ? notObviouslyDemo.map(p => `${p.forename} ${p.surname}/${p.candidateNo}/${p.group}`).join(', ')
+      : demoPupils.map(p => `${p.forename} ${p.surname} ${p.candidateNo}`).join(', '));
+
+  /*
+   * The redaction studio is used on tablets. A passive touchmove lets the
+   * browser scroll the page under the finger, so a redaction box can never be
+   * drawn; touchcancel matters because an interrupted drag - a call, a
+   * notification - otherwise leaves the studio stuck mid-box.
+   */
+  check(/touchmove[\s\S]{0,160}\{\s*passive\s*:\s*false\s*\}/.test(src),
+    'touchmove is bound non-passive so a redaction box can be drawn on a tablet');
+  check(/addEventListener\("touchcancel"/.test(src),
+    'touchcancel is handled so an interrupted drag does not strand the studio mid-box');
 
   /* ---------------- 3. source ---------------- */
   console.log('\n--- 3. source ---');
