@@ -3961,6 +3961,7 @@
       // A lost context is a pause we can report, not a silent freeze.
       canvas.addEventListener('contextlost', e => { e.preventDefault(); EWRendererFailure.raise('world-canvas-context-lost'); }, false);
       this.camera = { sx: 0, sy: 0 };
+      this.camSnapX = 0; this.camSnapY = 0;   // P2: whole-texel sampling offsets
       this.tileW = 28; this.tileH = 14; this.elevationPx = 18;
       this.visible = true; this.kind = 'Software 2.5D';
       this.waterTime = 0;
@@ -3989,13 +3990,33 @@
       // Cap the long side so an extreme aspect cannot allocate a huge buffer.
       const w = Math.round(Math.min(vw * scale, SHORT * 2.6));
       const h = Math.round(Math.min(vh * scale, SHORT * 2.6));
-      if (w === this.width && h === this.height) return;
-      this.width = w; this.height = h;
-      this.canvas.width = w; this.canvas.height = h;
+      if (w !== this.width || h !== this.height) {
+        this.width = w; this.height = h;
+        this.canvas.width = w; this.canvas.height = h;
+      }
+      this.applyLetterbox(vw, vh);
+      if (w === this.canvas.width && h === this.canvas.height && this._sized) return;
+      this._sized = true;
       // A resized 2D context loses its state, so the nearest-neighbour flag has
       // to be reapplied here rather than only in the constructor.
       this.ctx.imageSmoothingEnabled = false;
       this.fitToMap(this.game && this.game.map);
+    }
+    // One scale factor for both axes — see resize(). Presenting the buffer at
+    // its own aspect is the only way to make a texel square, because the
+    // buffer's integer dimensions can never match the viewport's aspect
+    // exactly. The remainder is centred as a letterbox; at the sizes this game
+    // runs on it is a fraction of a pixel, not a band.
+    applyLetterbox(vw, vh) {
+      const k = Math.min(vw / this.width, vh / this.height);
+      const cw = this.width * k, ch = this.height * k;
+      const st = this.canvas.style;
+      st.width = cw + 'px';
+      st.height = ch + 'px';
+      st.left = ((vw - cw) / 2) + 'px';
+      st.top = ((vh - ch) / 2) + 'px';
+      st.right = 'auto'; st.bottom = 'auto';
+      this.presentScale = k;
     }
     // An aspect-correct buffer stops the tiles being stretched, but on its own
     // it leaves the world sitting as a small island in a tall portrait frame:
@@ -4019,7 +4040,11 @@
     project(x, z, y = 0) {
       const sx = (x - z) * this.tileW * 0.5;
       const sy = (x + z) * this.tileH * 0.5 - y * this.elevationPx;
-      return { x: sx - this.camera.sx + this.width / 2, y: sy - this.camera.sy + this.height / 2 };
+      // Texel snap. camera.sx/sy are damped floats; sampling the world at a
+      // fractional offset makes the pixel grid crawl while walking. Snap the
+      // READ rather than the stored value, so the damping stays smooth and
+      // only the sampling lands on whole texels.
+      return { x: sx - this.camSnapX + this.width / 2, y: sy - this.camSnapY + this.height / 2 };
     }
     setRegionGrade(regionKey, depthsFloor = 0) {
       const g = REGION_GRADES[regionKey] || REGION_GRADES.vale;
@@ -4078,6 +4103,25 @@
         ctx.strokeStyle = 'rgba(10,14,16,0.30)'; ctx.lineWidth = 1.6;
         ctx.beginPath(); ctx.moveTo(p.x, p.y - this.tileH/2); ctx.lineTo(p.x + this.tileW/2, p.y); ctx.stroke();
       }
+      // Cliff-top lip: the inverse case. Where the neighbour DROPS away, catch
+      // the edge with a thin highlight so the top of a drop reads as an edge
+      // and not merely as a change of colour. Same two edges, opposite test,
+      // so it costs at most two more strokes on tiles that already qualify.
+      // Vale only, on two grounds that agree. Measured: the lip costs ~0.5ms
+      // of a 4.9ms Depths frame at 4x throttle (5.5 with, 5.0 without) because
+      // the dungeon generator makes elevation churn on most of its 775 cells.
+      // And a bright lip fights the cave grading the Depths deliberately wear.
+      // The Vale is where the vaultable ledges are, so it is where the lip earns.
+      if (cell.height > 0 && !this.game.depths) {
+        if (nW && nW.height < cell.height) {
+          ctx.strokeStyle = 'rgba(255,246,214,0.22)'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(p.x - this.tileW/2, p.y); ctx.lineTo(p.x, p.y - this.tileH/2); ctx.stroke();
+        }
+        if (nN && nN.height < cell.height) {
+          ctx.strokeStyle = 'rgba(255,246,214,0.22)'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(p.x, p.y - this.tileH/2); ctx.lineTo(p.x + this.tileW/2, p.y); ctx.stroke();
+        }
+      }
       if (cell.ground === Ground.WATER) {
         // waterRipple (registered EWMotion family): the highlight drifts;
         // under reduced motion it holds still but still reads as water.
@@ -4121,9 +4165,25 @@
       for (let py = Math.floor(y); py < y+h; py += 2) for (let px = Math.floor(x); px < x+w; px += 2) if (matrix[Math.abs(py)%4][Math.abs(px)%4] >= threshold) ctx.fillRect(px, py, 1, 1);
       ctx.restore();
     }
+    // P1 grounding. This used to project at render.y — the ACTOR's own height —
+    // so during a ledge vault the shadow climbed into the air with the player
+    // instead of staying on the ground beneath them, and the jump read as a
+    // sprite sliding rather than a body leaving the floor. The shadow now
+    // projects onto the GROUND under the actor and attenuates with the gap:
+    // smaller and fainter the higher they are, which is the whole tell.
     drawShadow(render, scale = 1) {
-      const p = this.project(render.x, render.z, render.y);
-      this.ctx.save(); this.ctx.globalAlpha = 0.25; this.ctx.fillStyle = '#101515'; this.ctx.beginPath(); this.ctx.ellipse(p.x, p.y + 4, 8*scale, 3*scale, 0, 0, Math.PI*2); this.ctx.fill(); this.ctx.restore();
+      const map = this.game.map;
+      const cell = map ? map.getCell(Math.round(render.x), Math.round(render.z)) : null;
+      const groundY = cell ? cell.height : render.y;
+      const lift = Math.max(0, (render.y + (render.arc || 0)) - groundY);
+      const p = this.project(render.x, render.z, groundY);
+      const shrink = 1 / (1 + lift * 0.55);
+      const fade = 1 / (1 + lift * 0.95);
+      const ctx = this.ctx;
+      ctx.save(); ctx.globalAlpha = 0.25 * fade; ctx.fillStyle = '#101515';
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y + 4, 8 * scale * shrink, 3 * scale * shrink, 0, 0, Math.PI * 2);
+      ctx.fill(); ctx.restore();
     }
     drawActor(render, canvas, scale = 1, yOffset = 0) {
       const p = this.project(render.x, render.z, render.y + (render.arc || 0));
@@ -4152,6 +4212,8 @@
       const target = this.projectRaw(this.game.player.render.x, this.game.player.render.z, this.game.player.render.y);
       this.camera.sx = damp(this.camera.sx, target.x, 7, dt);
       this.camera.sy = damp(this.camera.sy, target.y - 18, 7, dt);
+      this.camSnapX = Math.round(this.camera.sx);
+      this.camSnapY = Math.round(this.camera.sy);
     }
     projectRaw(x,z,y=0) { return { x:(x-z)*this.tileW*0.5, y:(x+z)*this.tileH*0.5-y*this.elevationPx }; }
     render() {
@@ -4190,8 +4252,9 @@
       actors.sort((a,b)=>a.depth-b.depth);
       for (const actor of actors) {
         if (actor.kind === 'player') {
-          const jumpScale = 1 - (this.game.player.render.arc || 0)*0.18;
-          this.drawShadow(this.game.player.render, clamp(jumpScale,0.45,1));
+          // Height attenuation now lives in drawShadow, so the old ad-hoc
+          // jump scale here would double-count it.
+          this.drawShadow(this.game.player.render, 1);
           this.drawActor(this.game.player.render, this.sprites.player(this.game.player.facing, this.game.player.walkFrame), 0.72);
         } else {
           const npc = actor.npc;
