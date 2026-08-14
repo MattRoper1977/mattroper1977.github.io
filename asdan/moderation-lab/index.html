@@ -932,7 +932,7 @@ function auditCandidate(program,pupil){
     headline=`${summary.core.toFixed(1)}h core + ${summary.overflow.toFixed(1)}h overflow · ${summary.credits} credits`;
   }
   for(const key of REQUIRED_DOCS)if(!enrol.closingDocs[key])issues.push({level:"error",code:"CLOSING_DOC",msg:`${DOC_LABELS[key]} is outstanding.`});
-  
+
   // Anti-bunching diagnostic: flag if >= 70% of criteria share the exact same assessment date
   const records=program.kind==="peq"
     ?Object.values(enrol.criteria||{}).filter(r=>r.dateAchieved)
@@ -1106,7 +1106,7 @@ function bindProgrammeEditor(p){
     $$('[data-delete-criterion]').forEach(b=>b.addEventListener("click",async()=>commit("Assessment criterion deleted",()=>{p.criteria=p.criteria.filter(c=>c.id!==b.dataset.deleteCriterion);})));
   }
   $("#add-slot").addEventListener("click",async()=>{const name=$("#new-slot-name").value.trim()||p.title,minutes=Math.max(5,Number($("#new-slot-mins").value||50)),days=$("#new-slot-days").value.split(",").map(x=>Number(x.trim())).filter(x=>x>=0&&x<=6);await commit("Lesson slot added",()=>S.slots.push({id:uid("slot"),name,programId:p.id,minutes,days:[...new Set(days)]}));});
-  $$('[data-delete-slot]').forEach(b=>b.addEventListener("click",async()=>commit("Lesson slot deleted",()=>{S.slots=S.slots.filter(s=>s.id!==b.dataset.deleteSlot);S.registers=S.registers.filter(r=>r.slotId!==b.dataset.deleteSlot);}))); 
+  $$('[data-delete-slot]').forEach(b=>b.addEventListener("click",async()=>commit("Lesson slot deleted",()=>{S.slots=S.slots.filter(s=>s.id!==b.dataset.deleteSlot);S.registers=S.registers.filter(r=>r.slotId!==b.dataset.deleteSlot);})));
 }
 
 /* ------------------------- Track (Fixed pu.id Scope) ------------------------- */
@@ -1200,12 +1200,12 @@ function riskProfile(program,pupil){
   const ageDays=enrol?.createdAt?Math.max(0,(Date.now()-new Date(enrol.createdAt).getTime())/86400000):999;if(ageDays<=30){score+=6;factors.push("new enrolment");}
   if(program.kind==="peq"){const target=Number(program.glhTarget||0)*60,mins=programHoursMinutes(program.id,pupil.id),ratio=target?mins/target:0;if(ratio>=.8&&ratio<1){score+=9;factors.push("borderline GLH");}}
   else{const c=shortCreditSummary(program,pupil.id),ratio=c.target?c.total/c.target:0;if(ratio>=.8&&ratio<1){score+=9;factors.push("borderline credit hours");}const bal=sectionBalanceData(program,pupil.id);if(program.sectionRule?.enabled&&!bal.ok){score+=8;factors.push("A:B balance");}}
-  
+
   const records=program.kind==="peq"?Object.values(enrol?.criteria||{}):Object.values(enrol?.challenges||{});
   const signed=records.filter(r=>r.assessorInitials),initials=new Set(signed.map(r=>r.assessorInitials).filter(Boolean));
   if(signed.length>0&&signed.length<3){score+=5;factors.push("limited assessor decisions");}
   if(initials.size>1){score+=4;factors.push("multiple assessors");}
-  
+
   const iv=ivFor(program.id,pupil.id);if(iv&&iv.status!=="passed"){score+=12;factors.push("open IV action");}
   if(!factors.length)factors.push(audit.ready?"low current risk":"portfolio gaps");
   const tier=score>=28?"high":score>=12?"medium":"low";
@@ -1244,7 +1244,7 @@ function renderIV(){
   const items=[{value:"",label:"All programmes"},...S.programmes.map(p=>({value:p.id,label:programmeLabel(p)}))];
   setOptions($("#iv-programme"),items,UI.ivProgramme??$("#iv-programme").value,"All programmes");UI.ivProgramme=$("#iv-programme").value;
   const samples=S.ivSamples.filter(x=>x.sampled&&(!UI.ivProgramme||x.programId===UI.ivProgramme));$("#iv-sample-count").textContent=`${samples.length} sampled`;
-  
+
   // Render Assessor CAMERA Representation Summary
   const assessorStats={};
   for(const prog of S.programmes.filter(p=>!UI.ivProgramme||p.id===UI.ivProgramme)){
@@ -1273,7 +1273,7 @@ function renderIV(){
   host.innerHTML=`<div class="table-wrap"><table class="table"><thead><tr><th>Candidate</th><th>Programme</th><th>A · S · C · V</th><th>Decision</th><th>Action points</th><th>IV / date</th><th></th></tr></thead><tbody>${samples.map(s=>{const pu=getPupil(s.pupilId),p=getProgramme(s.programId),checks=s.checklist||{};return `<tr data-iv-row="${s.id}"><td><b>${esc(pu?`${pu.forename} ${pu.surname}`:"Unknown")}</b><br><span class="risk-pill ${esc(s.riskTier||"medium")}">${esc((s.riskTier||"medium").toUpperCase())} ${Number(s.riskScore||0)}</span><br><span class="micro">${esc(s.reason||s.method||"")}</span></td><td>${esc(p?.code||"")}<br><span class="micro">${esc(p?.title||"")}</span></td><td><div class="iv-row-actions" style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px">${[["authenticity","A"],["sufficiency","S"],["currency","C"],["validity","V"]].map(([key,label])=>`<button class="chip ${checks[key]?"on":""}" data-iv-check="${s.id}:${key}" title="${key}" style="min-height:34px;padding:4px 8px;font-size:0.75rem">${checks[key]?"✓ ":""}${label}</button>`).join("")}</div></td><td><select class="input" data-iv-status="${s.id}"><option value="pending" ${s.status==="pending"?"selected":""}>Pending</option><option value="actions" ${s.status==="actions"?"selected":""}>Actions required</option><option value="passed" ${s.status==="passed"?"selected":""}>Passed</option></select></td><td><textarea class="input" data-iv-actions="${s.id}" style="min-width:190px;min-height:64px">${esc(s.actions||"")}</textarea></td><td><input class="input" data-iv-name="${s.id}" value="${esc(s.ivName||S.centre.ivName||"")}" placeholder="IV name"><input class="input" data-iv-signature="${s.id}" value="${esc(s.signature||S.centre.ivSignature||"")}" placeholder="Typed signature" style="margin-top:4px"><input class="input" data-iv-date="${s.id}" type="date" value="${esc(s.date||todayISO())}" style="margin-top:4px"></td><td><button class="btn small" data-save-iv="${s.id}">Save</button><button class="btn secondary small" data-remove-iv="${s.id}" style="margin-top:5px">Remove</button></td></tr>`;}).join("")}</tbody></table></div>`;
   $$('[data-iv-check]').forEach(b=>b.addEventListener("click",async()=>{const[id,key]=b.dataset.ivCheck.split(":");await commit(`${key} IV check updated`,()=>{const s=S.ivSamples.find(x=>x.id===id);s.checklist=s.checklist||{};s.checklist[key]=!s.checklist[key];});}));
   $$('[data-save-iv]').forEach(b=>b.addEventListener("click",async()=>{const id=b.dataset.saveIv,s=S.ivSamples.find(x=>x.id===id);if(!s)return;await commit("IV sampling record saved",()=>{s.status=$(`[data-iv-status="${CSS.escape(id)}"]`).value;s.actions=$(`[data-iv-actions="${CSS.escape(id)}"]`).value.trim();s.ivName=$(`[data-iv-name="${CSS.escape(id)}"]`).value.trim();s.signature=$(`[data-iv-signature="${CSS.escape(id)}"]`).value.trim();s.date=$(`[data-iv-date="${CSS.escape(id)}"]`).value||todayISO();const checks=Object.values(s.checklist||{});if(s.status==="passed"&&(!checks.length||!checks.every(Boolean)))s.status="actions";if(s.status==="passed"&&s.actions)s.status="actions";const e=getEnrollment(s.programId,s.pupilId,true);e.closingDocs.ivSignOff=s.status==="passed";});}));
-  $$('[data-remove-iv]').forEach(b=>b.addEventListener("click",async()=>commit("Candidate removed from IV sample",()=>{S.ivSamples=S.ivSamples.filter(x=>x.id!==b.dataset.removeIv);}))); 
+  $$('[data-remove-iv]').forEach(b=>b.addEventListener("click",async()=>commit("Candidate removed from IV sample",()=>{S.ivSamples=S.ivSamples.filter(x=>x.id!==b.dataset.removeIv);})));
 }
 async function generateIVSample(){
   const scope=$("#iv-programme").value,percent=Number($("#iv-percent").value||15),mode=$("#iv-mode").value;let candidates=[];
