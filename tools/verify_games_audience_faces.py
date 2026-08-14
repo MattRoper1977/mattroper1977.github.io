@@ -852,8 +852,14 @@ def self_test(baseline: set[str] | None = None) -> int:
             {"assets/mbm-audience.js": mutate(js, ",main:'/main/'}", "}", "js route table")},
             "have drifted from data/audience-homepages.json")
     control("landing on /main/ made to assert a homepage face",
-            {"main/index.html": mutate(main_page, '<body data-mbm-general-home="main">',
-                                       '<body data-mbm-general-home="main" data-mbm-audience-face="main">',
+            # Anchored on the ONE attribute this control is about, not on the
+            # whole <body> tag. Matching the tag meant that adding any unrelated
+            # attribute to it silently stopped the fixture landing - which is
+            # what happened when the fail-closed pass added
+            # data-mbm-adult-features="on", and this control quietly tested
+            # nothing from 6bdeafa until it was noticed in CI.
+            {"main/index.html": mutate(main_page, 'data-mbm-general-home="main"',
+                                       'data-mbm-general-home="main" data-mbm-audience-face="main"',
                                        "main landing face")},
             "landing on the platform homepage would overwrite")
     control("landing guard removed from the script",
