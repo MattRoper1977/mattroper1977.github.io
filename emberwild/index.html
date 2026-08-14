@@ -38,13 +38,14 @@
     button, input { font: inherit; }
     button { touch-action: manipulation; }
     [hidden] { display: none !important; }
-    #app, #world-canvas, #ui-canvas {
+    #app, #world-canvas, #fx-canvas, #ui-canvas {
       position: fixed;
       inset: 0;
       width: 100%;
       height: 100%;
     }
     #app { overflow: hidden; background: #07111d; }
+    #fx-canvas { z-index: 2; pointer-events: none; }
     #world-canvas {
       z-index: 1;
       display: block;
@@ -280,6 +281,7 @@
 
   <main id="app" aria-label="Emberwild — a 2.5D creature-collector">
     <canvas id="world-canvas" aria-hidden="true"></canvas>
+    <canvas id="fx-canvas" aria-hidden="true"></canvas>
     <canvas id="ui-canvas" aria-label="Game interface. Use keyboard, touch controls, or click visible menu choices."></canvas>
     <div id="sr-status" role="status" aria-live="polite"></div>
 
@@ -345,6 +347,790 @@
     </div>
   </section>
 
+  <script>
+/* Adopted verbatim from the Complete Expansion Studio inlined source
+   (data-inlined-source="../src/gpu-particle-suite.js") under the standing
+   Studio-extraction ruling; slice sha in the pass report. Registers
+   window.EWParticles: WebGL2 instanced particles with a Canvas 2D
+   fallback — the fallback is a first-class path and the harness runs it
+   with the GPU path force-disabled. */
+/*
+ * EMBERWILD // GPU Particle Suite v1.2.0
+ * Zero-dependency WebGL2 instanced particles with a Canvas fallback.
+ * Copyright (c) 2026 Matt Roper / Made by Matt.
+ */
+(function (root, factory) {
+  const api = factory(root.EWCore || (typeof require === 'function' ? require('./engine-core.js') : null));
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  root.EWParticles = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (Core) {
+  'use strict';
+
+  const DeterministicPRNG = Core?.DeterministicPRNG || class {
+    constructor(seed = 0xA17E5EED) { this.seed = seed >>> 0; }
+    random() { let x = this.seed; x ^= x << 13; x ^= x >>> 17; x ^= x << 5; this.seed = x >>> 0; return this.seed / 4294967296; }
+    range(min, max) { return Math.floor(this.random() * (max - min + 1)) + min; }
+  };
+
+  const ParticleShape = Object.freeze({
+    CIRCLE: 0,
+    LEAF: 1,
+    STREAK: 2,
+    SPARK: 3,
+    EMBER: 4,
+    RING: 5,
+    STAR: 6,
+    SMOKE: 7
+  });
+
+  const ParticleBlend = Object.freeze({ ALPHA: 'alpha', ADDITIVE: 'additive' });
+
+  function systemPrefersReducedMotion() {
+    try {
+      return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function motionScaleValue(value, fallback = 0.35) {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? Math.max(0.08, Math.min(1, numeric)) : fallback;
+  }
+
+  const ParticlePresetLibrary = Object.freeze({
+    snow: Object.freeze({ label: 'Gentle Snow', count: 1500, loop: true, shape: ParticleShape.CIRCLE, blend: ParticleBlend.ALPHA, acceleration: [0, -0.35, 0], wind: [0.15, 0, 0.08], stretch: 1 }),
+    rain: Object.freeze({ label: 'Rainfall', count: 1900, loop: true, shape: ParticleShape.STREAK, blend: ParticleBlend.ALPHA, acceleration: [0, -5.5, 0], wind: [0.7, 0, 0.1], stretch: 5.5 }),
+    leaves: Object.freeze({ label: 'Autumn Leaves', count: 850, loop: true, shape: ParticleShape.LEAF, blend: ParticleBlend.ALPHA, acceleration: [0, -0.35, 0], wind: [0.8, 0, 0.2], stretch: 1.5 }),
+    sandstorm: Object.freeze({ label: 'Sandstorm', count: 2200, loop: true, shape: ParticleShape.STREAK, blend: ParticleBlend.ALPHA, acceleration: [0, -0.05, 0], wind: [3.8, 0.2, 0.5], stretch: 3.8 }),
+    fireflies: Object.freeze({ label: 'Night Fireflies', count: 420, loop: true, shape: ParticleShape.CIRCLE, blend: ParticleBlend.ADDITIVE, acceleration: [0, 0, 0], wind: [0.06, 0.03, 0.03], stretch: 1 }),
+    sparks: Object.freeze({ label: 'Battle Sparks', count: 620, loop: false, shape: ParticleShape.SPARK, blend: ParticleBlend.ADDITIVE, acceleration: [0, -7.8, 0], wind: [0, 0, 0], stretch: 1 }),
+    flame: Object.freeze({ label: 'Flame Stream', count: 900, loop: false, shape: ParticleShape.EMBER, blend: ParticleBlend.ADDITIVE, acceleration: [0, 1.2, 0], wind: [0.9, 0.1, 0], stretch: 1.2 }),
+    healing: Object.freeze({ label: 'Healing Motes', count: 520, loop: false, shape: ParticleShape.RING, blend: ParticleBlend.ADDITIVE, acceleration: [0, 0.7, 0], wind: [0, 0, 0], stretch: 1 }),
+    evolution: Object.freeze({ label: 'Evolution Burst', count: 1100, loop: false, shape: ParticleShape.STAR, blend: ParticleBlend.ADDITIVE, acceleration: [0, -1.8, 0], wind: [0, 0, 0], stretch: 1 }),
+    capture: Object.freeze({ label: 'Capture Stars', count: 520, loop: false, shape: ParticleShape.STAR, blend: ParticleBlend.ADDITIVE, acceleration: [0, -2.5, 0], wind: [0, 0, 0], stretch: 1 }),
+    smoke: Object.freeze({ label: 'Impact Smoke', count: 650, loop: false, shape: ParticleShape.SMOKE, blend: ParticleBlend.ALPHA, acceleration: [0, 0.3, 0], wind: [0.18, 0, 0.08], stretch: 1 })
+  });
+
+  const VERTEX_SHADER = `#version 300 es
+    precision highp float;
+    layout(location=0) in vec2 aCorner;
+    layout(location=1) in vec3 aStart;
+    layout(location=2) in vec3 aVelocity;
+    layout(location=3) in vec2 aLife;
+    layout(location=4) in vec4 aColor;
+    layout(location=5) in float aSize;
+    layout(location=6) in vec2 aRotation;
+    layout(location=7) in vec3 aTurbulence;
+
+    uniform float uTime;
+    uniform float uLooping;
+    uniform float uStretch;
+    uniform vec3 uAcceleration;
+    uniform vec3 uWind;
+    uniform mat4 uViewProjection;
+    uniform vec3 uCameraRight;
+    uniform vec3 uCameraUp;
+
+    out vec2 vUv;
+    out vec4 vColor;
+    out float vAge;
+    out float vAlive;
+
+    void main() {
+      float duration = max(0.02, aLife.y);
+      float elapsed = uTime - aLife.x;
+      float alive = step(0.0, elapsed);
+      float age = elapsed / duration;
+      if (uLooping > 0.5) {
+        age = fract(max(age, 0.0));
+      } else {
+        alive *= 1.0 - step(1.0, age);
+        age = clamp(age, 0.0, 1.0);
+      }
+      float seconds = age * duration;
+      vec3 position = aStart + (aVelocity + uWind) * seconds + 0.5 * uAcceleration * seconds * seconds;
+      float amplitude = aTurbulence.x;
+      float frequency = aTurbulence.y;
+      float phase = aTurbulence.z;
+      position.x += sin(seconds * frequency + phase) * amplitude;
+      position.z += cos(seconds * frequency * 0.83 + phase * 1.31) * amplitude;
+      position.y += sin(seconds * frequency * 0.41 + phase) * amplitude * 0.32;
+
+      float angle = aRotation.x + aRotation.y * seconds;
+      float c = cos(angle);
+      float s = sin(angle);
+      vec2 local = aCorner * vec2(aSize, aSize * uStretch);
+      local = mat2(c, -s, s, c) * local;
+      vec3 world = position + uCameraRight * local.x + uCameraUp * local.y;
+      gl_Position = uViewProjection * vec4(world, 1.0);
+      if (alive < 0.5) gl_Position = vec4(3.0, 3.0, 3.0, 1.0);
+      vUv = aCorner + 0.5;
+      vColor = aColor;
+      vAge = age;
+      vAlive = alive;
+    }
+  `;
+
+  const FRAGMENT_SHADER = `#version 300 es
+    precision highp float;
+    uniform int uShape;
+    in vec2 vUv;
+    in vec4 vColor;
+    in float vAge;
+    in float vAlive;
+    out vec4 outColor;
+
+    float circle(vec2 p) { return 1.0 - smoothstep(0.34, 0.5, length(p)); }
+    float star(vec2 p) {
+      float angle = atan(p.y, p.x);
+      float radius = length(p);
+      float spikes = 0.23 + 0.15 * cos(angle * 5.0);
+      return 1.0 - smoothstep(spikes, spikes + 0.11, radius);
+    }
+
+    void main() {
+      if (vAlive < 0.5) discard;
+      vec2 p = vUv - 0.5;
+      float mask = 1.0;
+      if (uShape == 0) {
+        mask = circle(p);
+      } else if (uShape == 1) {
+        float leaf = abs(p.x * 1.2) + abs(p.y * 0.72);
+        mask = 1.0 - smoothstep(0.34, 0.52, leaf);
+        mask *= 0.75 + 0.25 * smoothstep(-0.2, 0.3, p.y);
+      } else if (uShape == 2) {
+        mask = (1.0 - smoothstep(0.10, 0.49, abs(p.x))) * (1.0 - smoothstep(0.38, 0.5, abs(p.y)));
+      } else if (uShape == 3) {
+        float core = 1.0 - smoothstep(0.08, 0.22, length(p));
+        float cross = max(1.0 - smoothstep(0.01, 0.12, abs(p.x)), 1.0 - smoothstep(0.01, 0.12, abs(p.y)));
+        mask = max(core, cross * (1.0 - smoothstep(0.05, 0.5, length(p))));
+      } else if (uShape == 4) {
+        float body = circle(vec2(p.x * 1.15, p.y * 0.85));
+        float hotCore = 1.0 - smoothstep(0.02, 0.22, length(p + vec2(0.0, 0.09)));
+        mask = max(body * 0.8, hotCore);
+      } else if (uShape == 5) {
+        float radius = length(p);
+        mask = 1.0 - smoothstep(0.035, 0.09, abs(radius - 0.32));
+      } else if (uShape == 6) {
+        mask = star(p);
+      } else {
+        float cloud = circle(p) * 0.72 + circle((p - vec2(0.14, -0.08)) * 1.25) * 0.35 + circle((p + vec2(0.13, 0.07)) * 1.3) * 0.3;
+        mask = clamp(cloud, 0.0, 1.0);
+      }
+      float fadeIn = smoothstep(0.0, 0.08, vAge);
+      float fadeOut = 1.0 - smoothstep(0.72, 1.0, vAge);
+      float alpha = mask * fadeIn * fadeOut * vColor.a;
+      if (alpha < 0.015) discard;
+      vec3 rgb = vColor.rgb;
+      if (uShape == 3 || uShape == 4 || uShape == 6) rgb += vec3(mask * 0.32);
+      outColor = vec4(rgb, alpha);
+    }
+  `;
+
+  function createShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      const log = gl.getShaderInfoLog(shader);
+      gl.deleteShader(shader);
+      throw new Error(`Particle shader compilation failed: ${log}`);
+    }
+    return shader;
+  }
+
+  function createProgram(gl, vertexSource, fragmentSource) {
+    const program = gl.createProgram();
+    const vertex = createShader(gl, gl.VERTEX_SHADER, vertexSource);
+    const fragment = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+    gl.attachShader(program, vertex);
+    gl.attachShader(program, fragment);
+    gl.linkProgram(program);
+    gl.deleteShader(vertex);
+    gl.deleteShader(fragment);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      const log = gl.getProgramInfoLog(program);
+      gl.deleteProgram(program);
+      throw new Error(`Particle program link failed: ${log}`);
+    }
+    return program;
+  }
+
+  function normalise3(vector) {
+    const length = Math.hypot(vector[0], vector[1], vector[2]) || 1;
+    return [vector[0] / length, vector[1] / length, vector[2] / length];
+  }
+
+  function cross3(a, b) {
+    return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  }
+
+  function subtract3(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+  function dot3(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+
+  function mat4Multiply(a, b) {
+    const out = new Float32Array(16);
+    for (let column = 0; column < 4; column += 1) {
+      for (let row = 0; row < 4; row += 1) {
+        out[column * 4 + row] =
+          a[0 * 4 + row] * b[column * 4 + 0] +
+          a[1 * 4 + row] * b[column * 4 + 1] +
+          a[2 * 4 + row] * b[column * 4 + 2] +
+          a[3 * 4 + row] * b[column * 4 + 3];
+      }
+    }
+    return out;
+  }
+
+  function mat4Ortho(left, right, bottom, top, near, far) {
+    const lr = 1 / (left - right);
+    const bt = 1 / (bottom - top);
+    const nf = 1 / (near - far);
+    return new Float32Array([
+      -2 * lr, 0, 0, 0,
+      0, -2 * bt, 0, 0,
+      0, 0, 2 * nf, 0,
+      (left + right) * lr, (top + bottom) * bt, (far + near) * nf, 1
+    ]);
+  }
+
+  function mat4LookAt(eye, center, up) {
+    const z = normalise3(subtract3(eye, center));
+    const x = normalise3(cross3(up, z));
+    const y = cross3(z, x);
+    return {
+      matrix: new Float32Array([
+        x[0], y[0], z[0], 0,
+        x[1], y[1], z[1], 0,
+        x[2], y[2], z[2], 0,
+        -dot3(x, eye), -dot3(y, eye), -dot3(z, eye), 1
+      ]),
+      right: x,
+      up: y
+    };
+  }
+
+  function setAttribute(gl, program, location, buffer, components, divisor = 1) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.enableVertexAttribArray(location);
+    gl.vertexAttribPointer(location, components, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribDivisor(location, divisor);
+  }
+
+  function copyColour(target, offset, colour, alpha = 1) {
+    target[offset] = colour[0];
+    target[offset + 1] = colour[1];
+    target[offset + 2] = colour[2];
+    target[offset + 3] = alpha;
+  }
+
+  class GPUParticleSuite {
+    constructor(canvas, options = {}) {
+      if (!canvas || typeof canvas.getContext !== 'function') throw new TypeError('GPUParticleSuite requires a canvas');
+      this.canvas = canvas;
+      this.maxParticles = Math.max(64, Math.trunc(options.maxParticles || 4000));
+      this.activeCount = 0;
+      this.currentPreset = options.preset || 'snow';
+      this.seed = options.seed || 0xE17ECAFE;
+      this.reducedMotion = options.reducedMotion ?? systemPrefersReducedMotion();
+      this.reducedMotionScale = motionScaleValue(options.reducedMotionScale, 0.35);
+      this.requestedCount = 0;
+      this.lastPresetOptions = {};
+      this.clearColour = options.clearColour || [0.025, 0.04, 0.08, 0];
+      this.autoResize = options.autoResize !== false;
+      this.running = false;
+      this.startTime = 0;
+      this.timeOffset = 0;
+      this.lastFrameTime = 0;
+      this.fps = 0;
+      this._fpsAccumulator = 0;
+      this._fpsFrames = 0;
+      this._animationFrame = 0;
+      this.contextLost = false;
+      this.camera = {
+        eye: options.cameraEye || [8, 7, 12],
+        center: options.cameraCenter || [0, 1.8, 0],
+        up: [0, 1, 0],
+        viewHeight: options.viewHeight || 12,
+        near: -80,
+        far: 80
+      };
+      this.gl = canvas.getContext('webgl2', {
+        alpha: true,
+        antialias: false,
+        depth: false,
+        stencil: false,
+        premultipliedAlpha: true,
+        powerPreference: 'high-performance'
+      });
+      if (!this.gl) throw new Error('WEBGL2_UNAVAILABLE');
+      this._allocateArrays();
+      this._initialiseGL();
+      this.canvas.addEventListener('webglcontextlost', (event) => {
+        event.preventDefault();
+        this.contextLost = true;
+        this.stop();
+        options.onContextLost?.();
+      });
+      this.canvas.addEventListener('webglcontextrestored', () => {
+        this.contextLost = false;
+        this._initialiseGL();
+        this.setPreset(this.currentPreset, { count: this.activeCount || undefined });
+        options.onContextRestored?.();
+      });
+      if (this.autoResize && typeof ResizeObserver !== 'undefined') {
+        this.resizeObserver = new ResizeObserver(() => this.resize());
+        this.resizeObserver.observe(canvas);
+      }
+      this.resize();
+      this.setPreset(this.currentPreset, options);
+    }
+
+    _allocateArrays() {
+      const count = this.maxParticles;
+      this.arrays = {
+        start: new Float32Array(count * 3),
+        velocity: new Float32Array(count * 3),
+        life: new Float32Array(count * 2),
+        colour: new Float32Array(count * 4),
+        size: new Float32Array(count),
+        rotation: new Float32Array(count * 2),
+        turbulence: new Float32Array(count * 3)
+      };
+    }
+
+    _initialiseGL() {
+      const gl = this.gl;
+      this.program = createProgram(gl, VERTEX_SHADER, FRAGMENT_SHADER);
+      this.vao = gl.createVertexArray();
+      gl.bindVertexArray(this.vao);
+      this.cornerBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.cornerBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+        -0.5, -0.5, 0.5, -0.5, -0.5, 0.5,
+        -0.5, 0.5, 0.5, -0.5, 0.5, 0.5
+      ]), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      gl.vertexAttribDivisor(0, 0);
+      this.buffers = {};
+      const definitions = [
+        ['start', 1, 3], ['velocity', 2, 3], ['life', 3, 2], ['colour', 4, 4],
+        ['size', 5, 1], ['rotation', 6, 2], ['turbulence', 7, 3]
+      ];
+      for (const [name, location, components] of definitions) {
+        const buffer = gl.createBuffer();
+        this.buffers[name] = buffer;
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, this.arrays[name].byteLength, gl.DYNAMIC_DRAW);
+        setAttribute(gl, this.program, location, buffer, components, 1);
+      }
+      gl.bindVertexArray(null);
+      this.uniforms = {
+        time: gl.getUniformLocation(this.program, 'uTime'),
+        looping: gl.getUniformLocation(this.program, 'uLooping'),
+        stretch: gl.getUniformLocation(this.program, 'uStretch'),
+        acceleration: gl.getUniformLocation(this.program, 'uAcceleration'),
+        wind: gl.getUniformLocation(this.program, 'uWind'),
+        viewProjection: gl.getUniformLocation(this.program, 'uViewProjection'),
+        cameraRight: gl.getUniformLocation(this.program, 'uCameraRight'),
+        cameraUp: gl.getUniformLocation(this.program, 'uCameraUp'),
+        shape: gl.getUniformLocation(this.program, 'uShape')
+      };
+      gl.disable(gl.DEPTH_TEST);
+      gl.enable(gl.BLEND);
+    }
+
+    _uploadBuffers() {
+      const gl = this.gl;
+      for (const [name, buffer] of Object.entries(this.buffers)) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        const components = ({ start: 3, velocity: 3, life: 2, colour: 4, size: 1, rotation: 2, turbulence: 3 })[name];
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.arrays[name].subarray(0, this.activeCount * components));
+      }
+    }
+
+    _setParticle(index, data) {
+      const startOffset = index * 3;
+      const lifeOffset = index * 2;
+      const colourOffset = index * 4;
+      this.arrays.start.set(data.start, startOffset);
+      this.arrays.velocity.set(data.velocity, startOffset);
+      this.arrays.life[lifeOffset] = data.birth;
+      this.arrays.life[lifeOffset + 1] = data.duration;
+      copyColour(this.arrays.colour, colourOffset, data.colour, data.alpha ?? 1);
+      this.arrays.size[index] = data.size;
+      this.arrays.rotation[lifeOffset] = data.rotation || 0;
+      this.arrays.rotation[lifeOffset + 1] = data.spin || 0;
+      this.arrays.turbulence[startOffset] = data.turbulence?.[0] || 0;
+      this.arrays.turbulence[startOffset + 1] = data.turbulence?.[1] || 0;
+      this.arrays.turbulence[startOffset + 2] = data.turbulence?.[2] || 0;
+    }
+
+    _randomSphere(rng, speedMin, speedMax) {
+      const theta = rng.random() * Math.PI * 2;
+      const y = rng.random() * 2 - 1;
+      const radial = Math.sqrt(Math.max(0, 1 - y * y));
+      const speed = speedMin + rng.random() * (speedMax - speedMin);
+      return [Math.cos(theta) * radial * speed, y * speed, Math.sin(theta) * radial * speed];
+    }
+
+    _generateParticle(name, index, rng, now, origin, options) {
+      const bounds = options.bounds || [18, 11, 15];
+      const rand = (min, max) => min + rng.random() * (max - min);
+      const base = {
+        start: [origin[0], origin[1], origin[2]], velocity: [0, 0, 0], birth: now,
+        duration: 1, colour: [1, 1, 1], alpha: 1, size: 0.2,
+        rotation: rand(0, Math.PI * 2), spin: rand(-2, 2), turbulence: [0, 1, rand(0, Math.PI * 2)]
+      };
+      if (name === 'snow') {
+        base.start = [rand(-bounds[0] / 2, bounds[0] / 2), rand(0, bounds[1]), rand(-bounds[2] / 2, bounds[2] / 2)];
+        base.velocity = [rand(-0.18, 0.18), rand(-0.55, -0.25), rand(-0.12, 0.12)];
+        base.duration = rand(7, 13); base.birth = now - rng.random() * base.duration;
+        base.colour = [rand(0.82, 1), rand(0.9, 1), 1]; base.alpha = rand(0.55, 0.95); base.size = rand(0.06, 0.16);
+        base.turbulence = [rand(0.08, 0.28), rand(0.8, 1.8), rand(0, 6.28)]; base.spin = rand(-0.4, 0.4);
+      } else if (name === 'rain') {
+        base.start = [rand(-bounds[0] / 2, bounds[0] / 2), rand(1, bounds[1]), rand(-bounds[2] / 2, bounds[2] / 2)];
+        base.velocity = [rand(0.1, 0.5), rand(-5.5, -3.8), rand(-0.1, 0.1)];
+        base.duration = rand(1.4, 2.7); base.birth = now - rng.random() * base.duration;
+        base.colour = [rand(0.38, 0.55), rand(0.65, 0.82), 1]; base.alpha = rand(0.24, 0.55); base.size = rand(0.025, 0.055);
+        base.rotation = -0.12; base.spin = 0;
+      } else if (name === 'leaves') {
+        base.start = [rand(-bounds[0] / 2, bounds[0] / 2), rand(0, bounds[1]), rand(-bounds[2] / 2, bounds[2] / 2)];
+        base.velocity = [rand(-0.2, 0.4), rand(-0.65, -0.18), rand(-0.22, 0.22)];
+        base.duration = rand(6, 11); base.birth = now - rng.random() * base.duration;
+        const palette = [[0.92, 0.32, 0.08], [1, 0.62, 0.08], [0.65, 0.18, 0.07], [0.82, 0.7, 0.1]];
+        base.colour = palette[rng.range(0, palette.length - 1)]; base.alpha = rand(0.65, 1); base.size = rand(0.12, 0.28);
+        base.turbulence = [rand(0.25, 0.7), rand(1.2, 2.8), rand(0, 6.28)]; base.spin = rand(-4, 4);
+      } else if (name === 'sandstorm') {
+        base.start = [rand(-bounds[0] / 2, bounds[0] / 2), rand(-0.5, bounds[1] * 0.65), rand(-bounds[2] / 2, bounds[2] / 2)];
+        base.velocity = [rand(2.5, 4.6), rand(-0.1, 0.35), rand(-0.3, 0.3)];
+        base.duration = rand(2.6, 5); base.birth = now - rng.random() * base.duration;
+        base.colour = [rand(0.58, 0.92), rand(0.36, 0.68), rand(0.12, 0.3)]; base.alpha = rand(0.12, 0.42); base.size = rand(0.02, 0.08);
+        base.turbulence = [rand(0.08, 0.3), rand(1.2, 3.4), rand(0, 6.28)]; base.rotation = Math.PI / 2; base.spin = 0;
+      } else if (name === 'fireflies') {
+        base.start = [rand(-bounds[0] / 2, bounds[0] / 2), rand(0.1, bounds[1] * 0.55), rand(-bounds[2] / 2, bounds[2] / 2)];
+        base.velocity = [rand(-0.1, 0.1), rand(-0.04, 0.12), rand(-0.1, 0.1)];
+        base.duration = rand(4.5, 9); base.birth = now - rng.random() * base.duration;
+        base.colour = rng.random() < 0.5 ? [0.55, 1, 0.28] : [1, 0.92, 0.28]; base.alpha = rand(0.45, 1); base.size = rand(0.05, 0.13);
+        base.turbulence = [rand(0.2, 0.65), rand(0.6, 1.8), rand(0, 6.28)]; base.spin = 0;
+      } else if (name === 'sparks') {
+        base.velocity = this._randomSphere(rng, 2.5, 8.5); base.velocity[1] = Math.abs(base.velocity[1]) + rand(0.6, 3.2);
+        base.duration = rand(0.28, 0.72); base.birth = now + rand(0, 0.12); base.colour = rng.random() < 0.3 ? [0.35, 0.95, 1] : [1, rand(0.58, 0.95), 0.08];
+        base.alpha = 1; base.size = rand(0.035, 0.11); base.spin = rand(-10, 10);
+      } else if (name === 'flame') {
+        base.start = [origin[0] + rand(-0.15, 0.15), origin[1] + rand(-0.18, 0.18), origin[2] + rand(-0.15, 0.15)];
+        base.velocity = [rand(2.0, 5.2), rand(0.1, 1.3), rand(-0.8, 0.8)]; base.duration = rand(0.32, 0.9); base.birth = now + index * 0.0015;
+        base.colour = rng.random() < 0.45 ? [1, 0.18, 0.02] : [1, rand(0.52, 0.92), 0.03]; base.alpha = rand(0.55, 1); base.size = rand(0.08, 0.28);
+        base.turbulence = [rand(0.05, 0.26), rand(4, 10), rand(0, 6.28)]; base.spin = rand(-5, 5);
+      } else if (name === 'healing') {
+        const angle = rng.random() * Math.PI * 2; const radius = rand(0.15, 1.8);
+        base.start = [origin[0] + Math.cos(angle) * radius, origin[1] - 1 + rand(-0.3, 0.2), origin[2] + Math.sin(angle) * radius];
+        base.velocity = [Math.cos(angle + Math.PI / 2) * rand(0.1, 0.5), rand(0.8, 2.4), Math.sin(angle + Math.PI / 2) * rand(0.1, 0.5)];
+        base.duration = rand(0.9, 1.9); base.birth = now + rand(0, 0.7); base.colour = rng.random() < 0.5 ? [0.22, 1, 0.62] : [0.48, 0.94, 1];
+        base.alpha = rand(0.65, 1); base.size = rand(0.08, 0.2); base.turbulence = [rand(0.12, 0.35), rand(2, 4), rand(0, 6.28)]; base.spin = rand(-2, 2);
+      } else if (name === 'evolution') {
+        const angle = rng.random() * Math.PI * 2; const radial = rand(0.2, 1.6);
+        base.start = [origin[0] + Math.cos(angle) * radial, origin[1] + rand(-0.7, 1.4), origin[2] + Math.sin(angle) * radial];
+        const velocity = this._randomSphere(rng, 1.2, 5.5); velocity[1] += rand(0.7, 3.8); base.velocity = velocity;
+        base.duration = rand(0.65, 1.7); base.birth = now + rand(0, 0.28); base.colour = rng.random() < 0.5 ? [1, 0.82, 0.2] : [0.2, 1, 0.86];
+        base.alpha = 1; base.size = rand(0.06, 0.22); base.spin = rand(-8, 8);
+      } else if (name === 'capture') {
+        const angle = rng.random() * Math.PI * 2; const speed = rand(1.6, 4.8);
+        base.start = [origin[0], origin[1], origin[2]]; base.velocity = [Math.cos(angle) * speed, rand(1.0, 4.2), Math.sin(angle) * speed];
+        base.duration = rand(0.5, 1.25); base.birth = now + rand(0, 0.18); base.colour = rng.random() < 0.4 ? [0.28, 0.9, 1] : [1, 0.9, 0.3];
+        base.alpha = 1; base.size = rand(0.06, 0.18); base.spin = rand(-9, 9);
+      } else {
+        const velocity = this._randomSphere(rng, 0.3, 1.4); velocity[1] = Math.abs(velocity[1]) + rand(0.15, 0.9); base.velocity = velocity;
+        base.start = [origin[0] + rand(-0.5, 0.5), origin[1] + rand(-0.3, 0.3), origin[2] + rand(-0.5, 0.5)];
+        base.duration = rand(0.8, 2.1); base.birth = now + rand(0, 0.2); base.colour = [rand(0.35, 0.7), rand(0.35, 0.7), rand(0.38, 0.75)];
+        base.alpha = rand(0.18, 0.5); base.size = rand(0.18, 0.5); base.turbulence = [rand(0.04, 0.16), rand(0.7, 1.8), rand(0, 6.28)]; base.spin = rand(-0.5, 0.5);
+      }
+      return base;
+    }
+
+    setPreset(name, options = {}) {
+      const preset = ParticlePresetLibrary[name];
+      if (!preset) throw new Error(`Unknown particle preset: ${name}`);
+      if (options.reducedMotion !== undefined) this.reducedMotion = Boolean(options.reducedMotion);
+      if (options.reducedMotionScale !== undefined) this.reducedMotionScale = motionScaleValue(options.reducedMotionScale, this.reducedMotionScale);
+      this.currentPreset = name;
+      this.preset = { ...preset, ...options };
+      this.requestedCount = Math.max(1, Math.trunc(options.count || preset.count));
+      const countScale = this.reducedMotion ? this.reducedMotionScale : 1;
+      this.activeCount = Math.min(this.maxParticles, Math.max(1, Math.trunc(this.requestedCount * countScale)));
+      this.lastPresetOptions = { ...options, count: this.requestedCount };
+      const rng = new DeterministicPRNG((options.seed ?? this.seed) >>> 0 || 0xE17ECAFE);
+      const now = options.time ?? this.currentTimeSeconds();
+      const origin = options.origin || [0, 1.5, 0];
+      for (let index = 0; index < this.activeCount; index += 1) {
+        const particle = this._generateParticle(name, index, rng, now, origin, options);
+        if (this.reducedMotion) {
+          particle.velocity = particle.velocity.map((value) => value * this.reducedMotionScale);
+          particle.spin *= this.reducedMotionScale;
+          if (particle.turbulence) particle.turbulence[0] *= this.reducedMotionScale;
+        }
+        this._setParticle(index, particle);
+      }
+      this._uploadBuffers();
+      return this.stats();
+    }
+
+    setReducedMotion(enabled, scale = this.reducedMotionScale) {
+      this.reducedMotion = Boolean(enabled);
+      this.reducedMotionScale = motionScaleValue(scale, this.reducedMotionScale);
+      return this.setPreset(this.currentPreset, { ...this.lastPresetOptions, reducedMotion: this.reducedMotion, reducedMotionScale: this.reducedMotionScale });
+    }
+
+    triggerBurst(name = 'sparks', origin = [0, 1.5, 0], count = null, options = {}) {
+      if (ParticlePresetLibrary[name]?.loop) throw new Error('triggerBurst requires a non-looping preset');
+      return this.setPreset(name, { ...options, origin, count: count || options.count || ParticlePresetLibrary[name]?.count });
+    }
+
+    setCamera(camera = {}) {
+      this.camera = { ...this.camera, ...camera };
+    }
+
+    currentTimeSeconds() {
+      if (!this.startTime) return this.timeOffset;
+      return this.timeOffset + (((typeof performance !== 'undefined' ? performance.now() : Date.now()) - this.startTime) / 1000);
+    }
+
+    resize(width = null, height = null) {
+      const rect = this.canvas.getBoundingClientRect();
+      const cssWidth = Math.max(1, width || rect.width || this.canvas.clientWidth || 640);
+      const cssHeight = Math.max(1, height || rect.height || this.canvas.clientHeight || 360);
+      const dpr = Math.min((typeof devicePixelRatio !== 'undefined' ? devicePixelRatio : 1), 2);
+      const targetWidth = Math.max(1, Math.floor(cssWidth * dpr));
+      const targetHeight = Math.max(1, Math.floor(cssHeight * dpr));
+      if (this.canvas.width !== targetWidth || this.canvas.height !== targetHeight) {
+        this.canvas.width = targetWidth;
+        this.canvas.height = targetHeight;
+      }
+      this.gl.viewport(0, 0, targetWidth, targetHeight);
+      return { width: targetWidth, height: targetHeight, dpr };
+    }
+
+    render(timeSeconds = this.currentTimeSeconds()) {
+      if (this.contextLost) return;
+      const gl = this.gl;
+      this.resize();
+      gl.clearColor(this.clearColour[0], this.clearColour[1], this.clearColour[2], this.clearColour[3]);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.useProgram(this.program);
+      gl.bindVertexArray(this.vao);
+      const aspect = this.canvas.width / Math.max(1, this.canvas.height);
+      const viewHeight = this.camera.viewHeight;
+      const projection = mat4Ortho(-viewHeight * aspect, viewHeight * aspect, -viewHeight, viewHeight, this.camera.near, this.camera.far);
+      const view = mat4LookAt(this.camera.eye, this.camera.center, this.camera.up);
+      const viewProjection = mat4Multiply(projection, view.matrix);
+      gl.uniform1f(this.uniforms.time, timeSeconds);
+      gl.uniform1f(this.uniforms.looping, this.preset.loop ? 1 : 0);
+      gl.uniform1f(this.uniforms.stretch, this.preset.stretch || 1);
+      const motionScale = this.reducedMotion ? this.reducedMotionScale : 1;
+      gl.uniform3fv(this.uniforms.acceleration, this.preset.acceleration.map((value) => value * motionScale));
+      gl.uniform3fv(this.uniforms.wind, this.preset.wind.map((value) => value * motionScale));
+      gl.uniformMatrix4fv(this.uniforms.viewProjection, false, viewProjection);
+      gl.uniform3fv(this.uniforms.cameraRight, view.right);
+      gl.uniform3fv(this.uniforms.cameraUp, view.up);
+      gl.uniform1i(this.uniforms.shape, this.preset.shape);
+      if (this.preset.blend === ParticleBlend.ADDITIVE) gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+      else gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, this.activeCount);
+      gl.bindVertexArray(null);
+      this._updateFPS();
+    }
+
+    _updateFPS() {
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (this.lastFrameTime) {
+        const delta = now - this.lastFrameTime;
+        this._fpsAccumulator += delta;
+        this._fpsFrames += 1;
+        if (this._fpsAccumulator >= 500) {
+          this.fps = Math.round(1000 / (this._fpsAccumulator / this._fpsFrames));
+          this._fpsAccumulator = 0;
+          this._fpsFrames = 0;
+        }
+      }
+      this.lastFrameTime = now;
+    }
+
+    start() {
+      if (this.running) return;
+      this.running = true;
+      this.startTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const frame = () => {
+        if (!this.running) return;
+        this.render();
+        this._animationFrame = requestAnimationFrame(frame);
+      };
+      this._animationFrame = requestAnimationFrame(frame);
+    }
+
+    stop() {
+      if (!this.running) return;
+      this.timeOffset = this.currentTimeSeconds();
+      this.running = false;
+      if (this._animationFrame) cancelAnimationFrame(this._animationFrame);
+      this._animationFrame = 0;
+      this.startTime = 0;
+    }
+
+    stats() {
+      return {
+        renderer: 'WebGL2 instanced',
+        preset: this.currentPreset,
+        activeParticles: this.activeCount,
+        maxParticles: this.maxParticles,
+        drawCalls: this.activeCount > 0 ? 1 : 0,
+        fps: this.fps,
+        reducedMotion: this.reducedMotion,
+        motionScale: this.reducedMotion ? this.reducedMotionScale : 1,
+        contextLost: this.contextLost
+      };
+    }
+
+    dispose() {
+      this.stop();
+      this.resizeObserver?.disconnect();
+      const gl = this.gl;
+      for (const buffer of Object.values(this.buffers || {})) gl.deleteBuffer(buffer);
+      if (this.cornerBuffer) gl.deleteBuffer(this.cornerBuffer);
+      if (this.vao) gl.deleteVertexArray(this.vao);
+      if (this.program) gl.deleteProgram(this.program);
+    }
+  }
+
+  class CanvasParticleFallback {
+    constructor(canvas, options = {}) {
+      this.canvas = canvas;
+      this.ctx = canvas.getContext('2d');
+      this.maxParticles = Math.min(1000, options.maxParticles || 700);
+      this.particles = [];
+      this.currentPreset = 'snow';
+      this.reducedMotion = options.reducedMotion ?? systemPrefersReducedMotion();
+      this.reducedMotionScale = motionScaleValue(options.reducedMotionScale, 0.35);
+      this.requestedCount = 0;
+      this.lastPresetOptions = {};
+      this.running = false;
+      this.lastTime = 0;
+      this.fps = 0;
+      this.setPreset(options.preset || 'snow', options);
+    }
+
+    resize() {
+      const rect = this.canvas.getBoundingClientRect();
+      const dpr = Math.min(typeof devicePixelRatio !== 'undefined' ? devicePixelRatio : 1, 2);
+      const width = Math.max(1, Math.floor((rect.width || 640) * dpr));
+      const height = Math.max(1, Math.floor((rect.height || 360) * dpr));
+      if (this.canvas.width !== width || this.canvas.height !== height) { this.canvas.width = width; this.canvas.height = height; }
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { width: width / dpr, height: height / dpr, dpr };
+    }
+
+    setPreset(name, options = {}) {
+      if (!ParticlePresetLibrary[name]) throw new Error(`Unknown particle preset: ${name}`);
+      if (options.reducedMotion !== undefined) this.reducedMotion = Boolean(options.reducedMotion);
+      if (options.reducedMotionScale !== undefined) this.reducedMotionScale = motionScaleValue(options.reducedMotionScale, this.reducedMotionScale);
+      this.currentPreset = name;
+      this.requestedCount = options.count || Math.floor(ParticlePresetLibrary[name].count * 0.28);
+      this.lastPresetOptions = { ...options, count: this.requestedCount };
+      const countScale = this.reducedMotion ? this.reducedMotionScale : 1;
+      const count = Math.min(this.maxParticles, Math.max(1, Math.trunc(this.requestedCount * countScale)));
+      const velocityScale = this.reducedMotion ? this.reducedMotionScale : 1;
+      const rng = new DeterministicPRNG((options.seed || 12345) >>> 0);
+      this.particles = Array.from({ length: count }, () => ({
+        x: rng.random(), y: rng.random(), z: rng.random(), vx: (rng.random() - 0.5) * 0.12 * velocityScale, vy: (0.08 + rng.random() * 0.22) * velocityScale,
+        size: 1 + rng.random() * 3, phase: rng.random() * Math.PI * 2, life: rng.random()
+      }));
+      return this.stats();
+    }
+
+    setReducedMotion(enabled, scale = this.reducedMotionScale) {
+      this.reducedMotion = Boolean(enabled);
+      this.reducedMotionScale = motionScaleValue(scale, this.reducedMotionScale);
+      return this.setPreset(this.currentPreset, { ...this.lastPresetOptions, reducedMotion: this.reducedMotion, reducedMotionScale: this.reducedMotionScale });
+    }
+
+    triggerBurst(name = 'sparks', origin = [0.5, 0.5], count = 180) {
+      this.currentPreset = name;
+      const motionScale = this.reducedMotion ? this.reducedMotionScale : 1;
+      const rng = new DeterministicPRNG(Date.now() >>> 0);
+      this.particles = Array.from({ length: Math.min(this.maxParticles, Math.max(1, Math.trunc(count * motionScale))) }, () => {
+        const angle = rng.random() * Math.PI * 2;
+        const speed = 0.15 + rng.random() * 0.55;
+        return { x: origin[0], y: origin[1], vx: Math.cos(angle) * speed * motionScale, vy: Math.sin(angle) * speed * motionScale, size: 1 + rng.random() * 4, life: 1, phase: 0 };
+      });
+    }
+
+    render(time = 0) {
+      const { width, height } = this.resize();
+      const ctx = this.ctx;
+      ctx.clearRect(0, 0, width, height);
+      const burst = !ParticlePresetLibrary[this.currentPreset]?.loop;
+      for (const particle of this.particles) {
+        if (burst) {
+          particle.x += particle.vx * 0.018;
+          particle.y += particle.vy * 0.018;
+          particle.vy += 0.42 * 0.018;
+          particle.life -= 0.014;
+        } else {
+          particle.y += particle.vy * 0.004;
+          particle.x += particle.vx * 0.005 + Math.sin(time + particle.phase) * 0.0005;
+          if (particle.y > 1.05) particle.y = -0.05;
+          if (particle.x > 1.05) particle.x = -0.05;
+          if (particle.x < -0.05) particle.x = 1.05;
+        }
+        if (particle.life <= 0) continue;
+        const x = particle.x * width;
+        const y = particle.y * height;
+        ctx.globalAlpha = burst ? Math.max(0, particle.life) : 0.75;
+        ctx.fillStyle = this.currentPreset === 'snow' ? '#e8f7ff' : this.currentPreset === 'rain' ? '#72b7ed' : '#ffd36d';
+        ctx.beginPath();
+        ctx.arc(x, y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    start() {
+      if (this.running) return;
+      this.running = true;
+      const loop = (now) => {
+        if (!this.running) return;
+        this.render(now / 1000);
+        requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+    }
+    stop() { this.running = false; }
+    stats() { return { renderer: 'Canvas 2D fallback', preset: this.currentPreset, activeParticles: this.particles.length, maxParticles: this.maxParticles, drawCalls: this.particles.length, fps: this.fps, reducedMotion: this.reducedMotion, motionScale: this.reducedMotion ? this.reducedMotionScale : 1 }; }
+    dispose() { this.stop(); this.particles = []; }
+  }
+
+  function createParticleSuite(canvas, options = {}) {
+    try { return new GPUParticleSuite(canvas, options); }
+    catch (error) {
+      options.onFallback?.(error);
+      return new CanvasParticleFallback(canvas, options);
+    }
+  }
+
+  return Object.freeze({
+    ParticleShape,
+    ParticleBlend,
+    ParticlePresetLibrary,
+    GPUParticleSuite,
+    CanvasParticleFallback,
+    createParticleSuite,
+    VERTEX_SHADER,
+    FRAGMENT_SHADER
+  });
+});
+
+</script>
   <script>'use strict';
 
 /*
@@ -359,7 +1145,7 @@
 
 (() => {
   const APP_VERSION = '1.0.0';
-  const SAVE_SCHEMA_VERSION = 2;
+  const SAVE_SCHEMA_VERSION = 3;
   const TILE_SIZE = 2;
   const ELEVATION_WORLD = 1.0;
   const CARDINALS = Object.freeze({
@@ -440,7 +1226,9 @@
     pebble_burst: { id: 'pebble_burst', name: 'Pebble Burst', type: Type.STONE, category: 'physical', power: 55, accuracy: 95, pp: 20, priority: 0, effect: null },
     dust_veil: { id: 'dust_veil', name: 'Dust Veil', type: Type.STONE, category: 'status', power: 0, accuracy: 100, pp: 20, priority: 0, effect: { kind: 'stage', stat: 'defense', amount: 1, target: 'self' } },
     gustline: { id: 'gustline', name: 'Gustline', type: Type.WIND, category: 'special', power: 50, accuracy: 100, pp: 25, priority: 0, effect: null },
-    sky_feint: { id: 'sky_feint', name: 'Sky Feint', type: Type.WIND, category: 'physical', power: 55, accuracy: 95, pp: 20, priority: 0, effect: null }
+    sky_feint: { id: 'sky_feint', name: 'Sky Feint', type: Type.WIND, category: 'physical', power: 55, accuracy: 95, pp: 20, priority: 0, effect: null },
+    // Adopted from v1.1 game.js (engine sfx field dropped; chassis has none).
+    crown_flare: { id: 'crown_flare', name: 'Crown Flare', type: Type.EMBER, category: 'special', power: 82, accuracy: 100, pp: 10, priority: 0, effect: null }
   });
 
   const SPECIES = Object.freeze({
@@ -479,6 +1267,17 @@
       baseStats: { hp: 46, attack: 40, defense: 42, spAttack: 55, spDefense: 50, speed: 68 },
       moves: ['quick_jab', 'gustline', 'sky_feint', 'mist_mend'],
       palette: ['#293548', '#c2e7ef', '#ffffff', '#8abbd3'], silhouette: 'cloud'
+    },
+    // Adopted from the pin-verified v1.1 game.js registry, bridged to the
+    // chassis schema: engine Types.FIRE/AIR -> chassis EMBER/WIND, engine
+    // 'quick_strike' -> the chassis's equivalent basic hit 'quick_jab',
+    // palette object -> [outline, body, light, accent] in chassis order.
+    // Appended LAST: the Den codec stores registry indices.
+    pyrelume: {
+      id: 'pyrelume', baseSpeciesId: 'cindrel', name: 'Pyrelume', types: [Type.EMBER, Type.WIND], catchRate: 28, baseExpYield: 164, growth: 'MEDIUM_FAST',
+      baseStats: { hp: 70, attack: 79, defense: 61, spAttack: 88, spDefense: 67, speed: 91 },
+      moves: ['quick_jab', 'ember_arc', 'cinder_rush', 'crown_flare'],
+      palette: ['#321e32', '#ef7b42', '#ffe08a', '#70ddd1'], silhouette: 'flare'
     }
   });
 
@@ -657,6 +1456,13 @@
         data.settings = data.settings || { audio: true, reducedMotion: false, highContrast: false };
         data.version = 2;
       }
+      if (data.version === 2) {
+        // v3 adds the Den and creature uids. A pre-Den save loads with the
+        // party intact and an empty Den; old keys are never deleted.
+        data.den = Array.isArray(data.den) ? data.den : [];
+        data.nextUid = Number.isFinite(data.nextUid) ? data.nextUid : 1;
+        data.version = 3;
+      }
       return data;
     }
     hasSave(slot = 'SLOT_1') { return Boolean(EWStore.get(slot)); }
@@ -715,7 +1521,103 @@
       if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
       return true;
     }
-    setEnabled(enabled) { this.enabled = Boolean(enabled); if (!this.enabled) this.stopMusic(); }
+    setEnabled(enabled) { this.enabled = Boolean(enabled); if (!this.enabled) { this.stopMusic(); this.setAmbience(null); } }
+    // ---------------- AMBIENT BEDS ----------------
+    // Procedural, like everything else in this engine — no samples. One
+    // bed at a time, keyed by region: the Vale gets a soft wind wash with
+    // sparse birdsong figures, the Depths a low rumble with occasional
+    // drips. Beds route through the master gain so the existing mute
+    // setting governs them, duck under battle, and hold classroom-quiet
+    // levels. No stingers, ever — nothing in a bed exceeds a whisper.
+    initBed() {
+      if (this.bed || !this.ctx) return;
+      const gain = this.ctx.createGain();
+      gain.gain.value = 0;
+      gain.connect(this.master);
+      this.bed = { gain, key: null, nodes: [], timer: null, level: 0 };
+    }
+    stopBedNodes() {
+      if (!this.bed) return;
+      if (this.bed.timer) { clearInterval(this.bed.timer); this.bed.timer = null; }
+      for (const n of this.bed.nodes) { try { n.stop ? n.stop() : n.disconnect(); } catch (_) {} }
+      this.bed.nodes = [];
+    }
+    setAmbience(regionKey) {
+      if (!this.ctx) return;
+      this.initBed();
+      const key = this.enabled ? regionKey : null;
+      if (this.bed.key === key) return;
+      this.bed.key = key;
+      this.stopBedNodes();
+      const now = this.ctx.currentTime;
+      this.bed.gain.gain.cancelScheduledValues(now);
+      if (!key) { this.bed.gain.gain.linearRampToValueAtTime(0, now + 0.6); return; }
+      const depths = key === 'depths';
+      this.bed.level = depths ? 0.075 : 0.05;
+      this.bed.gain.gain.linearRampToValueAtTime(this.bed.level, now + 1.4);
+      if (depths) {
+        // low rumble: detuned triangle pair through a gentle lowpass
+        const lp = this.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 130;
+        lp.connect(this.bed.gain);
+        for (const f of [52, 57.5]) {
+          const o = this.ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = f;
+          const g = this.ctx.createGain(); g.gain.value = 0.5;
+          o.connect(g); g.connect(lp); o.start();
+          this.bed.nodes.push(o, g);
+        }
+        this.bed.nodes.push(lp);
+      } else {
+        // wind: the engine's noise buffer through a slowly wandering bandpass
+        if (this.noiseBuffer) {
+          const src = this.ctx.createBufferSource(); src.buffer = this.noiseBuffer; src.loop = true;
+          const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 420; bp.Q.value = 0.6;
+          const g = this.ctx.createGain(); g.gain.value = 0.5;
+          const lfo = this.ctx.createOscillator(); lfo.frequency.value = 0.07;
+          const lfoGain = this.ctx.createGain(); lfoGain.gain.value = 160;
+          lfo.connect(lfoGain); lfoGain.connect(bp.frequency);
+          src.connect(bp); bp.connect(g); g.connect(this.bed.gain);
+          src.start(); lfo.start();
+          this.bed.nodes.push(src, bp, g, lfo, lfoGain);
+        }
+      }
+      // sparse figures: birdsong in daylight regions, drips below
+      this.bed.timer = setInterval(() => {
+        if (!this.enabled || !this.ctx || this.bed.key !== key) return;
+        if (Math.random() > 0.42) return;
+        const t = this.ctx.currentTime;
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.connect(g); g.connect(this.bed.gain);
+        if (depths) {
+          o.type = 'sine'; o.frequency.setValueAtTime(1180 + Math.random() * 500, t);
+          o.frequency.exponentialRampToValueAtTime(320, t + 0.16);
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(0.5, t + 0.012);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+          o.start(t); o.stop(t + 0.34);
+        } else {
+          o.type = 'triangle';
+          const base = 1560 + Math.random() * 640;
+          o.frequency.setValueAtTime(base, t);
+          o.frequency.setValueAtTime(base * 1.22, t + 0.07);
+          o.frequency.setValueAtTime(base * 0.94, t + 0.15);
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(0.34, t + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+          o.start(t); o.stop(t + 0.3);
+        }
+      }, 3400 + Math.floor(Math.random() * 2400));
+    }
+    // battle and menus sit on top; the bed steps back rather than compete
+    setBedDucked(ducked) {
+      if (!this.bed || !this.ctx || !this.bed.key) return;
+      const target = (ducked ? 0.28 : 1) * this.bed.level;
+      const g = this.bed.gain.gain;
+      if (Math.abs((this._bedTarget ?? -1) - target) < 0.001) return;
+      this._bedTarget = target;
+      g.cancelScheduledValues(this.ctx.currentTime);
+      g.linearRampToValueAtTime(target, this.ctx.currentTime + 0.5);
+    }
     setVolume(value) { if (this.master) this.master.gain.setTargetAtTime(clamp(value, 0, 0.7), this.ctx.currentTime, 0.02); }
     pulse(freq, duration = 0.08, duty = '25', gainValue = 0.14, endFreq = null) {
       if (!this.ensure()) return;
@@ -829,11 +1731,12 @@
   }
 
   class Monster {
-    constructor({ speciesId, level = 5, nickname = null, seed = 12345, currentHP = null, currentExp = null, status = StatusType.NONE, moves = null }) {
+    constructor({ speciesId, level = 5, nickname = null, seed = 12345, currentHP = null, currentExp = null, status = StatusType.NONE, moves = null, uid = 0 }) {
       const species = SPECIES[speciesId];
       if (!species) throw new Error(`Unknown species: ${speciesId}`);
       this.speciesId = speciesId;
       this.species = species;
+      this.uid = uid || 0;
       this.name = nickname || species.name;
       this.level = clamp(Math.floor(level), 1, 100);
       this.types = [...species.types];
@@ -872,7 +1775,7 @@
     resetBattleState() { Object.keys(this.stages).forEach(k => this.stages[k] = 0); this.toxicCount = 0; }
     healFull() { this.currentHP = this.stats.hp; this.status = StatusType.NONE; this.moves.forEach(m => m.currentPP = m.pp); }
     toJSON() {
-      return { speciesId: this.speciesId, level: this.level, nickname: this.name === this.species.name ? null : this.name, seed: this.seed, currentHP: this.currentHP, currentExp: this.currentExp, status: this.status, moves: this.moves.map(m => m.id) };
+      return { speciesId: this.speciesId, level: this.level, nickname: this.name === this.species.name ? null : this.name, seed: this.seed, currentHP: this.currentHP, currentExp: this.currentExp, status: this.status, moves: this.moves.map(m => m.id), uid: this.uid || 0 };
     }
   }
 
@@ -975,6 +1878,802 @@
         }
       }
       return logs;
+    }
+  }
+
+  // ===================================================================
+  // ENGINE PARTS — verbatim blocks from the pin-verified v1.1
+  // EMBERWILD_2_5D_ENGINE src/engine-core.js (zip sha ae4423894c82…).
+  // Slice provenance (line ranges + hashes) is recorded in the pass
+  // report; nothing in this closure is edited, only selected. It lives in
+  // its OWN closure because the engine and the chassis disagree on enum
+  // VALUES again:
+  //
+  //   StatusType   engine 'sleep' / 'burn' / 'poison' / 'paralysis'
+  //                chassis 'slp'  / 'brn'  / 'psn'    / 'par'
+  //
+  // A chassis status fed straight to the codec would hit
+  // BOX_STATUS_TO_ID['slp'] -> undefined -> ?? 0 -> NONE: the status
+  // would be dropped silently, no throw — the Surface trap in a new coat.
+  // EWDen below is the only crossing point and maps status explicitly.
+  // ===================================================================
+  const EWEngineParts = (function(){
+    'use strict';
+    // Shims for engine symbols that only dead paths reference. hydrate()
+    // builds an ENGINE Monster and applyEvolution() calls the ENGINE
+    // StatEngine — the chassis bridge replaces both, so these throw
+    // loudly if anything ever wanders down the unused path.
+    const Types = Object.freeze({ NORMAL: 'normal' });
+    function Monster(){ throw new Error('EWEngineParts: hydrate is not the chassis path — use EWDen.toMonster'); }
+    const StatEngine = { calculateAll(){ throw new Error('EWEngineParts: engine applyEvolution is replaced by the chassis bridge'); } };
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const deepClone = (value) => JSON.parse(JSON.stringify(value));
+  const STAT_KEYS = Object.freeze(['hp', 'attack', 'defense', 'spAttack', 'spDefense', 'speed']);
+  const StatusType = Object.freeze({ NONE: 'none', BURN: 'burn', POISON: 'poison', TOXIC: 'toxic', PARALYSIS: 'paralysis', SLEEP: 'sleep', FREEZE: 'freeze' });
+  class ChecksumEngine {
+    static crc32(text) {
+      let crc = 0xFFFFFFFF;
+      for (let index = 0; index < text.length; index += 1) {
+        crc ^= text.charCodeAt(index);
+        for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (-(crc & 1) & 0xEDB88320);
+      }
+      return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+    static stableStringify(value) {
+      if (value === null || typeof value !== 'object') return JSON.stringify(value);
+      if (Array.isArray(value)) return `[${value.map((item) => this.stableStringify(item)).join(',')}]`;
+      return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${this.stableStringify(value[key])}`).join(',')}}`;
+    }
+    static generateHash(dataObject) {
+      const copy = deepClone(dataObject);
+      delete copy.checksum;
+      return this.crc32(this.stableStringify(copy)).toString(16).padStart(8, '0');
+    }
+    static verify(dataObject) { return Boolean(dataObject?.checksum) && this.generateHash(dataObject) === dataObject.checksum; }
+  }
+  const Gender = Object.freeze({
+    UNKNOWN: 'unknown',
+    FEMALE: 'female',
+    MALE: 'male',
+    GENDERLESS: 'genderless'
+  });
+  const EvolutionMethod = Object.freeze({
+    LEVEL_UP: 'level_up',
+    ITEM: 'item',
+    FRIENDSHIP: 'friendship',
+    LINK: 'link',
+    LOCATION: 'location',
+    CUSTOM: 'custom'
+  });
+  const EvolutionState = Object.freeze({
+    IDLE: 'idle',
+    ZOOM: 'zoom',
+    PULSE: 'pulse',
+    BURST: 'burst',
+    REVEAL: 'reveal',
+    CANCELLED: 'cancelled',
+    COMPLETE: 'complete'
+  });
+  const BOX_STATUS_TO_ID = Object.freeze({
+    [StatusType.NONE]: 0,
+    [StatusType.BURN]: 1,
+    [StatusType.POISON]: 2,
+    [StatusType.TOXIC]: 3,
+    [StatusType.PARALYSIS]: 4,
+    [StatusType.SLEEP]: 5,
+    [StatusType.FREEZE]: 6
+  });
+  const BOX_ID_TO_STATUS = Object.freeze(Object.fromEntries(Object.entries(BOX_STATUS_TO_ID).map(([key, value]) => [value, key])));
+  const BOX_GENDER_TO_ID = Object.freeze({ [Gender.UNKNOWN]: 0, [Gender.FEMALE]: 1, [Gender.MALE]: 2, [Gender.GENDERLESS]: 3 });
+  const BOX_ID_TO_GENDER = Object.freeze(Object.fromEntries(Object.entries(BOX_GENDER_TO_ID).map(([key, value]) => [value, key])));
+  function normaliseIdCollection(values) {
+    if (Array.isArray(values)) return values;
+    if (values && typeof values === 'object') return Object.keys(values);
+    return [];
+  }
+
+  function heldItemId(monster) {
+    const value = monster?.heldItem;
+    if (!value) return null;
+    return typeof value === 'string' || typeof value === 'number' ? value : value.id || null;
+  }
+
+  function moveId(move) {
+    if (!move) return null;
+    return typeof move === 'string' || typeof move === 'number' ? move : move.id || null;
+  }
+
+  function statValue(source, key, fallback = 0) {
+    if (Array.isArray(source)) return Number.isFinite(source[STAT_KEYS.indexOf(key)]) ? source[STAT_KEYS.indexOf(key)] : fallback;
+    return Number.isFinite(source?.[key]) ? source[key] : fallback;
+  }
+
+  function bytesToBase64(bytes) {
+    if (!(bytes instanceof Uint8Array)) throw new TypeError('bytesToBase64 expects Uint8Array');
+    if (typeof Buffer !== 'undefined') return Buffer.from(bytes).toString('base64');
+    if (typeof btoa === 'function') {
+      let binary = '';
+      const chunk = 0x8000;
+      for (let offset = 0; offset < bytes.length; offset += chunk) {
+        binary += String.fromCharCode(...bytes.subarray(offset, Math.min(bytes.length, offset + chunk)));
+      }
+      return btoa(binary);
+    }
+    throw new Error('No Base64 encoder available');
+  }
+
+  function base64ToBytes(value) {
+    if (typeof value !== 'string') throw new TypeError('base64ToBytes expects a string');
+    if (typeof Buffer !== 'undefined') return new Uint8Array(Buffer.from(value, 'base64'));
+    if (typeof atob === 'function') {
+      const binary = atob(value);
+      const output = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) output[index] = binary.charCodeAt(index);
+      return output;
+    }
+    throw new Error('No Base64 decoder available');
+  }
+
+  function crc16Ccitt(bytes, length = bytes.length) {
+    let crc = 0xFFFF;
+    for (let index = 0; index < length; index += 1) {
+      crc ^= bytes[index] << 8;
+      for (let bit = 0; bit < 8; bit += 1) crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+    }
+    return crc & 0xFFFF;
+  }
+
+  function writeFixedAscii(bytes, offset, length, text) {
+    const clean = String(text || '').replace(/[^\x20-\x7E]/g, '?').slice(0, length);
+    bytes.fill(0, offset, offset + length);
+    for (let index = 0; index < clean.length; index += 1) bytes[offset + index] = clean.charCodeAt(index);
+  }
+
+  function readFixedAscii(bytes, offset, length) {
+    let output = '';
+    for (let index = 0; index < length; index += 1) {
+      const code = bytes[offset + index];
+      if (code === 0) break;
+      output += String.fromCharCode(code);
+    }
+    return output.trimEnd();
+  }
+  class CompactIdRegistry {
+    constructor(values = [], name = 'registry') {
+      this.name = name;
+      this.ids = [null];
+      this.indices = new Map();
+      for (const id of normaliseIdCollection(values)) this.register(id);
+    }
+    register(id) {
+      if (id === null || id === undefined || id === '') return 0;
+      if (this.indices.has(id)) return this.indices.get(id);
+      if (this.ids.length > 0xFFFF) throw new RangeError(`${this.name} exceeds the 65,535-entry codec limit`);
+      const index = this.ids.length;
+      this.ids.push(id);
+      this.indices.set(id, index);
+      return index;
+    }
+    indexOf(id, options = {}) {
+      if (id === null || id === undefined || id === '') return 0;
+      const index = this.indices.get(id);
+      if (index !== undefined) return index;
+      if (options.registerUnknown) return this.register(id);
+      throw new Error(`Unknown ${this.name} id: ${String(id)}`);
+    }
+    idAt(index) {
+      const value = this.ids[index];
+      if (index === 0) return null;
+      if (value === undefined) throw new Error(`Unknown ${this.name} index: ${index}`);
+      return value;
+    }
+    snapshot() { return this.ids.slice(1); }
+    get size() { return this.ids.length - 1; }
+  }
+
+  class MonsterBoxCodec {
+    static get RECORD_BYTES() { return 64; }
+    static get MAGIC() { return 0xE7; }
+    static get VERSION() { return 1; }
+
+    constructor(options = {}) {
+      this.species = options.species instanceof CompactIdRegistry ? options.species : new CompactIdRegistry(options.speciesIds || options.species || [], 'species');
+      this.moves = options.moves instanceof CompactIdRegistry ? options.moves : new CompactIdRegistry(options.moveIds || options.moves || [], 'move');
+      this.items = options.items instanceof CompactIdRegistry ? options.items : new CompactIdRegistry(options.itemIds || options.items || [], 'item');
+      this.natures = options.natures instanceof CompactIdRegistry ? options.natures : new CompactIdRegistry(options.natureIds || options.natures || ['neutral'], 'nature');
+      this.languages = options.languages instanceof CompactIdRegistry ? options.languages : new CompactIdRegistry(options.languageIds || options.languages || ['COMMON'], 'language');
+      this.registryFingerprint = ChecksumEngine.generateHash({
+        species: this.species.snapshot(),
+        moves: this.moves.snapshot(),
+        items: this.items.snapshot(),
+        natures: this.natures.snapshot(),
+        languages: this.languages.snapshot()
+      });
+    }
+
+    isEmpty(record) {
+      if (!(record instanceof Uint8Array) || record.length < MonsterBoxCodec.RECORD_BYTES) return true;
+      for (let index = 0; index < MonsterBoxCodec.RECORD_BYTES; index += 1) if (record[index] !== 0) return false;
+      return true;
+    }
+
+    pack(monster) {
+      const data = typeof monster?.serialize === 'function' ? monster.serialize() : deepClone(monster || {});
+      if (!data.speciesId) throw new Error('Cannot encode a monster without speciesId');
+      const bytes = new Uint8Array(MonsterBoxCodec.RECORD_BYTES);
+      const view = new DataView(bytes.buffer);
+
+      bytes[0] = MonsterBoxCodec.MAGIC;
+      bytes[1] = MonsterBoxCodec.VERSION;
+      view.setUint16(2, this.species.indexOf(data.speciesId), true);
+      bytes[4] = clamp(Math.trunc(data.level || 1), 1, 100);
+      bytes[5] = clamp(this.natures.indexOf(data.natureId || data.nature || 'neutral'), 0, 255);
+
+      const gender = BOX_GENDER_TO_ID[data.gender] ?? BOX_GENDER_TO_ID[Gender.UNKNOWN];
+      const ability = clamp(Math.trunc(data.abilitySlot || 0), 0, 3);
+      const shiny = data.flags?.shiny ? 1 : 0;
+      const isEgg = data.isEgg ? 1 : 0;
+      bytes[6] = (gender & 0x03) | ((ability & 0x03) << 2) | (shiny << 4) | (isEgg << 5);
+      const languageIndex = this.languages.indexOf(data.language || 'COMMON');
+      if (languageIndex > 31) throw new RangeError('The PC codec supports at most 31 registered languages');
+      bytes[7] = (BOX_STATUS_TO_ID[data.status] ?? 0) | ((languageIndex & 0x1F) << 3);
+      bytes[8] = clamp(Math.trunc(data.friendship ?? 70), 0, 255);
+      bytes[9] = clamp(Math.ceil(Math.max(0, data.stepsToHatch || 0) / 256), 0, 255);
+      view.setUint16(10, this.items.indexOf(heldItemId(data)), true);
+      view.setUint32(12, (Number(data.otId) || 0) >>> 0, true);
+      view.setUint32(16, (Number(data.personalitySeed) || 0) >>> 0, true);
+      view.setUint32(20, clamp(Math.trunc(data.currentExp || 0), 0, 0xFFFFFFFF) >>> 0, true);
+      view.setUint16(24, clamp(Math.trunc(data.currentHP || 0), 0, 0xFFFF), true);
+
+      for (let index = 0; index < STAT_KEYS.length; index += 1) {
+        const key = STAT_KEYS[index];
+        bytes[26 + index] = clamp(Math.trunc(statValue(data.ivs, key, 0)), 0, 31);
+        bytes[32 + index] = clamp(Math.trunc(statValue(data.evs, key, 0)), 0, 252);
+      }
+
+      const moveSlots = Array.isArray(data.moves) ? data.moves.slice(0, 4) : [];
+      for (let index = 0; index < 4; index += 1) {
+        const move = moveSlots[index];
+        view.setUint16(38 + index * 2, this.moves.indexOf(moveId(move)), true);
+        bytes[46 + index] = clamp(Math.trunc(move?.currentPP ?? move?.pp ?? 0), 0, 255);
+      }
+
+      writeFixedAscii(bytes, 50, 10, data.nickname || '');
+      view.setUint16(60, this.species.indexOf(data.baseSpeciesId || data.speciesId), true);
+      view.setUint16(62, crc16Ccitt(bytes, 62), true);
+      return bytes;
+    }
+
+    validate(record) {
+      if (!(record instanceof Uint8Array) || record.length !== MonsterBoxCodec.RECORD_BYTES) return { valid: false, error: 'RECORD_LENGTH' };
+      if (this.isEmpty(record)) return { valid: true, empty: true };
+      if (record[0] !== MonsterBoxCodec.MAGIC) return { valid: false, error: 'RECORD_MAGIC' };
+      if (record[1] !== MonsterBoxCodec.VERSION) return { valid: false, error: 'RECORD_VERSION' };
+      const view = new DataView(record.buffer, record.byteOffset, record.byteLength);
+      if (view.getUint16(62, true) !== crc16Ccitt(record, 62)) return { valid: false, error: 'RECORD_CHECKSUM' };
+      try {
+        this.species.idAt(view.getUint16(2, true));
+        this.natures.idAt(record[5]);
+        this.languages.idAt(record[7] >>> 3);
+        this.items.idAt(view.getUint16(10, true));
+        this.species.idAt(view.getUint16(60, true));
+        for (let index = 0; index < 4; index += 1) this.moves.idAt(view.getUint16(38 + index * 2, true));
+      } catch (error) {
+        return { valid: false, error: 'REGISTRY_MISMATCH', detail: error.message };
+      }
+      return { valid: true, empty: false };
+    }
+
+    unpack(record) {
+      const validation = this.validate(record);
+      if (!validation.valid) throw new Error(`Invalid PC record: ${validation.error}${validation.detail ? ` (${validation.detail})` : ''}`);
+      if (validation.empty) return null;
+      const view = new DataView(record.buffer, record.byteOffset, record.byteLength);
+      const flags = record[6];
+      const ivs = {};
+      const evs = {};
+      for (let index = 0; index < STAT_KEYS.length; index += 1) {
+        ivs[STAT_KEYS[index]] = record[26 + index];
+        evs[STAT_KEYS[index]] = record[32 + index];
+      }
+      const moves = [];
+      for (let index = 0; index < 4; index += 1) {
+        const id = this.moves.idAt(view.getUint16(38 + index * 2, true));
+        if (id !== null) moves.push({ id, currentPP: record[46 + index] });
+      }
+      return {
+        speciesId: this.species.idAt(view.getUint16(2, true)),
+        baseSpeciesId: this.species.idAt(view.getUint16(60, true)) || this.species.idAt(view.getUint16(2, true)),
+        level: record[4],
+        natureId: this.natures.idAt(record[5]) || 'neutral',
+        gender: BOX_ID_TO_GENDER[flags & 0x03] || Gender.UNKNOWN,
+        abilitySlot: (flags >>> 2) & 0x03,
+        flags: { shiny: Boolean(flags & 0x10), captured: true },
+        isEgg: Boolean(flags & 0x20),
+        status: BOX_ID_TO_STATUS[record[7] & 0x07] || StatusType.NONE,
+        language: this.languages.idAt(record[7] >>> 3) || 'COMMON',
+        friendship: record[8],
+        stepsToHatch: record[9] * 256,
+        heldItem: this.items.idAt(view.getUint16(10, true)),
+        otId: view.getUint32(12, true),
+        personalitySeed: view.getUint32(16, true),
+        currentExp: view.getUint32(20, true),
+        currentHP: view.getUint16(24, true),
+        ivs,
+        evs,
+        moves,
+        nickname: readFixedAscii(record, 50, 10)
+      };
+    }
+
+    hydrate(record, resolvers = {}) {
+      const decoded = record instanceof Uint8Array ? this.unpack(record) : record;
+      if (!decoded) return null;
+      if (typeof resolvers.species !== 'function') throw new Error('MonsterBoxCodec.hydrate requires a species resolver');
+      const species = resolvers.species(decoded.speciesId);
+      if (!species) throw new Error(`Species resolver returned no data for ${decoded.speciesId}`);
+      const resolvedMoves = decoded.moves.map((slot) => {
+        const definition = typeof resolvers.move === 'function' ? resolvers.move(slot.id) : null;
+        return { id: slot.id, name: slot.id, type: Types.NORMAL, category: 'physical', power: 1, accuracy: 100, pp: slot.currentPP, ...(definition || {}), currentPP: slot.currentPP };
+      });
+      const natureMultipliers = typeof resolvers.nature === 'function' ? resolvers.nature(decoded.natureId) : null;
+      return new Monster({
+        ...species,
+        ...decoded,
+        name: species.name || decoded.speciesId,
+        baseSpeciesId: decoded.baseSpeciesId || species.baseSpeciesId || decoded.speciesId,
+        types: species.types || [Types.NORMAL],
+        baseStats: species.baseStats,
+        catchRate: species.catchRate,
+        baseExpYield: species.baseExpYield,
+        growthRate: species.growthRate,
+        eggGroups: species.eggGroups || [],
+        natures: natureMultipliers || species.natures,
+        moves: resolvedMoves
+      });
+    }
+  }
+
+  class EvolutionEngine {
+    constructor(options = {}) {
+      this.rules = options.rules || {};
+      this.speciesResolver = options.speciesResolver || (() => null);
+      this.stasisItemId = options.stasisItemId || 'stasis_charm';
+    }
+
+    getRules(speciesId) {
+      const rules = this.rules[speciesId];
+      if (!rules) return [];
+      return Array.isArray(rules) ? rules : [rules];
+    }
+
+    checkEligibility(monster, trigger = {}, context = {}) {
+      if (!monster || monster.isEgg) return null;
+      const triggerData = typeof trigger === 'string' ? { type: trigger } : trigger;
+      for (const rule of this.getRules(monster.speciesId)) {
+        const method = rule.method || EvolutionMethod.LEVEL_UP;
+        if (method !== triggerData.type) continue;
+        if (heldItemId(monster) === this.stasisItemId && method !== EvolutionMethod.ITEM) continue;
+        if (Number.isFinite(rule.minLevel) && monster.level < rule.minLevel) continue;
+        if (rule.requiredItem && triggerData.itemId !== rule.requiredItem) continue;
+        if (Number.isFinite(rule.minFriendship) && monster.friendship < rule.minFriendship) continue;
+        if (rule.gender && monster.gender !== rule.gender) continue;
+        if (rule.locationId && context.locationId !== rule.locationId) continue;
+        if (rule.timeOfDay && context.timeOfDay !== rule.timeOfDay) continue;
+        if (rule.requiredHeldItem && heldItemId(monster) !== rule.requiredHeldItem) continue;
+        if (typeof rule.condition === 'function' && !rule.condition(monster, triggerData, context)) continue;
+        return rule;
+      }
+      return null;
+    }
+
+    applyEvolution(monster, rule, options = {}) {
+      if (!monster || !rule?.target) throw new Error('Evolution requires a monster and target rule');
+      const target = options.targetSpecies || this.speciesResolver(rule.target);
+      if (!target) throw new Error(`No target species data for ${rule.target}`);
+      const before = typeof monster.serialize === 'function' ? monster.serialize() : deepClone(monster);
+      const oldStats = { ...monster.stats };
+      const damageDebt = Math.max(0, monster.maxHP - monster.currentHP);
+      const hpRatio = monster.maxHP > 0 ? monster.currentHP / monster.maxHP : 0;
+      monster.speciesId = target.id || rule.target;
+      monster.name = target.name || String(monster.speciesId);
+      monster.types = [...(target.types || monster.types)];
+      monster.baseStats = { ...monster.baseStats, ...(target.baseStats || {}) };
+      monster.catchRate = target.catchRate ?? monster.catchRate;
+      monster.baseExpYield = target.baseExpYield ?? monster.baseExpYield;
+      monster.growthRate = target.growthRate || monster.growthRate;
+      monster.eggGroups = [...(target.eggGroups || monster.eggGroups || [])];
+      monster.stats = StatEngine.calculateAll(monster.baseStats, monster.level, monster.ivs, monster.evs, monster.natures);
+      if (options.hpMode === 'ratio') monster.currentHP = clamp(Math.round(monster.stats.hp * hpRatio), 1, monster.stats.hp);
+      else monster.currentHP = clamp(monster.stats.hp - damageDebt, monster.currentHP > 0 ? 1 : 0, monster.stats.hp);
+      monster.flags = { ...monster.flags, evolved: true };
+      const statDeltas = {};
+      for (const key of Object.keys(monster.stats)) statDeltas[key] = monster.stats[key] - (oldStats[key] || 0);
+      return {
+        success: true,
+        before,
+        after: typeof monster.serialize === 'function' ? monster.serialize() : deepClone(monster),
+        targetSpeciesId: monster.speciesId,
+        statDeltas,
+        evolutionMove: rule.evolutionMove || null
+      };
+    }
+  }
+
+  class EvolutionSequence {
+    constructor(engine, options = {}) {
+      if (!(engine instanceof EvolutionEngine)) throw new TypeError('EvolutionSequence requires an EvolutionEngine');
+      this.engine = engine;
+      this.timings = { zoom: 1.1, pulse: 3.8, burst: 0.65, reveal: 1.7, cancel: 0.45, ...(options.timings || {}) };
+      this.onEvent = typeof options.onEvent === 'function' ? options.onEvent : null;
+      this.reset();
+    }
+
+    reset() {
+      this.state = EvolutionState.IDLE;
+      this.timer = 0;
+      this.elapsed = 0;
+      this.monster = null;
+      this.rule = null;
+      this.options = {};
+      this.cancelRequested = false;
+      this.applied = false;
+      this.result = null;
+      this._burstEventSent = false;
+    }
+
+    _emit(type, payload = {}) { this.onEvent?.({ type, state: this.state, elapsed: this.elapsed, ...payload }); }
+
+    start(monster, rule, options = {}) {
+      if (this.state !== EvolutionState.IDLE && this.state !== EvolutionState.COMPLETE) throw new Error('Evolution sequence is already active');
+      this.monster = monster;
+      this.rule = rule;
+      this.options = options;
+      this.timer = 0;
+      this.elapsed = 0;
+      this.cancelRequested = false;
+      this.applied = false;
+      this.result = null;
+      this._burstEventSent = false;
+      this.state = EvolutionState.ZOOM;
+      this._emit('START', { speciesId: monster.speciesId, target: rule.target });
+      return this.snapshot();
+    }
+
+    get active() { return ![EvolutionState.IDLE, EvolutionState.COMPLETE].includes(this.state); }
+
+    canCancel() {
+      const method = this.rule?.method || EvolutionMethod.LEVEL_UP;
+      const methodAllows = [EvolutionMethod.LEVEL_UP, EvolutionMethod.FRIENDSHIP].includes(method);
+      return this.state === EvolutionState.PULSE && methodAllows && this.rule?.cancelable !== false && this.options.allowCancel !== false && this.phaseProgress() < 0.92;
+    }
+
+    requestCancel() {
+      if (!this.canCancel()) return false;
+      this.cancelRequested = true;
+      return true;
+    }
+
+    phaseDuration() {
+      if (this.state === EvolutionState.ZOOM) return this.timings.zoom;
+      if (this.state === EvolutionState.PULSE) return this.timings.pulse;
+      if (this.state === EvolutionState.BURST) return this.timings.burst;
+      if (this.state === EvolutionState.REVEAL) return this.timings.reveal;
+      if (this.state === EvolutionState.CANCELLED) return this.timings.cancel;
+      return 0;
+    }
+
+    phaseProgress() {
+      const duration = this.phaseDuration();
+      return duration > 0 ? clamp(this.timer / duration, 0, 1) : 1;
+    }
+
+    update(deltaSeconds) {
+      if (!this.active) return this.snapshot();
+      const delta = clamp(Number(deltaSeconds) || 0, 0, 0.25);
+      this.timer += delta;
+      this.elapsed += delta;
+
+      if (this.state === EvolutionState.ZOOM && this.timer >= this.timings.zoom) {
+        this.state = EvolutionState.PULSE;
+        this.timer = 0;
+        this._emit('PULSE_START');
+      } else if (this.state === EvolutionState.PULSE) {
+        if (this.cancelRequested) {
+          this.state = EvolutionState.CANCELLED;
+          this.timer = 0;
+          this._emit('CANCELLED');
+        } else if (this.timer >= this.timings.pulse) {
+          this.state = EvolutionState.BURST;
+          this.timer = 0;
+          this.result = this.engine.applyEvolution(this.monster, this.rule, this.options);
+          this.applied = true;
+          this._emit('EVOLUTION_APPLIED', { result: this.result });
+        }
+      } else if (this.state === EvolutionState.BURST) {
+        if (!this._burstEventSent) {
+          this._burstEventSent = true;
+          this._emit('BURST');
+        }
+        if (this.timer >= this.timings.burst) {
+          this.state = EvolutionState.REVEAL;
+          this.timer = 0;
+          this._emit('REVEAL');
+        }
+      } else if (this.state === EvolutionState.REVEAL && this.timer >= this.timings.reveal) {
+        this.state = EvolutionState.COMPLETE;
+        this.timer = 0;
+        this._emit('COMPLETE', { evolved: true, result: this.result });
+      } else if (this.state === EvolutionState.CANCELLED && this.timer >= this.timings.cancel) {
+        this.result = { success: false, cancelled: true, speciesId: this.monster.speciesId };
+        this.state = EvolutionState.COMPLETE;
+        this.timer = 0;
+        this._emit('COMPLETE', { evolved: false, result: this.result });
+      }
+      return this.snapshot();
+    }
+
+    snapshot() {
+      const progress = this.phaseProgress();
+      let pulseMix = this.applied ? 1 : 0;
+      let brightness = 1;
+      let flashOpacity = 0;
+      let cameraZoom = 0;
+      let worldDim = 0;
+      let scale = 1;
+      if (this.state === EvolutionState.ZOOM) {
+        cameraZoom = progress;
+        worldDim = progress * 0.72;
+        scale = 1 + progress * 0.08;
+      } else if (this.state === EvolutionState.PULSE) {
+        const frequency = 1.5 * Math.exp(2.45 * progress);
+        pulseMix = 0.5 + 0.5 * Math.cos(this.timer * frequency * Math.PI * 2);
+        brightness = 1 + 3 * progress * progress;
+        worldDim = 0.72 + progress * 0.18;
+        cameraZoom = 1;
+        scale = 1 + pulseMix * 0.18;
+      } else if (this.state === EvolutionState.BURST) {
+        pulseMix = 1;
+        brightness = 5;
+        flashOpacity = Math.sin(progress * Math.PI);
+        worldDim = 0.95;
+        cameraZoom = 1;
+        scale = 1.18 + Math.sin(progress * Math.PI) * 0.16;
+      } else if (this.state === EvolutionState.REVEAL) {
+        pulseMix = 1;
+        brightness = lerp(5, 1, clamp(progress * 1.4, 0, 1));
+        flashOpacity = 1 - clamp(progress * 2, 0, 1);
+        worldDim = lerp(0.9, 0, progress);
+        cameraZoom = 1 - progress;
+        scale = lerp(1.18, 1, progress);
+      } else if (this.state === EvolutionState.CANCELLED) {
+        pulseMix = 0;
+        brightness = lerp(2, 1, progress);
+        worldDim = lerp(0.75, 0, progress);
+        cameraZoom = 1 - progress;
+      }
+      return {
+        state: this.state,
+        active: this.active,
+        elapsed: this.elapsed,
+        phaseProgress: progress,
+        pulseMix,
+        showTarget: this.applied || pulseMix >= 0.5,
+        brightness,
+        flashOpacity,
+        cameraZoom,
+        worldDim,
+        scale,
+        canCancel: this.canCancel(),
+        applied: this.applied,
+        result: this.result
+      };
+    }
+  }
+
+    return { StatusType, Gender, EvolutionMethod, EvolutionState, EvolutionEngine, EvolutionSequence,
+             CompactIdRegistry, MonsterBoxCodec, bytesToBase64, base64ToBytes };
+  })();
+
+  // -------------------------------------------------------------------
+  // EWDen — the chassis side of the PC box graft ("the Den").
+  //
+  // The adopted MonsterBoxCodec stores registry INDICES, so the registries
+  // handed to it are the chassis registries in declaration order. That
+  // order is now load-bearing: new species/moves/items must be APPENDED to
+  // their object literals, never inserted, or every resting creature would
+  // silently decode as its neighbour. The codec's registry fingerprint is
+  // stored with each save for diagnostics, but records are validated
+  // per-record rather than all-or-nothing — one damaged record must not
+  // cost a pupil the other twenty-nine (a deliberate, recorded softening
+  // of the spec's atomic import for SEMH reasons).
+  // -------------------------------------------------------------------
+  const EWDen = (function(){
+    // The status enums collide by VALUE ('slp' vs 'sleep') — map both ways,
+    // explicitly, or the codec zeroes the status without a throw.
+    const TO_ENGINE_STATUS = { none:'none', brn:'burn', psn:'poison', par:'paralysis', slp:'sleep' };
+    const FROM_ENGINE_STATUS = { none:'none', burn:'brn', poison:'psn', paralysis:'par', sleep:'slp', toxic:'psn', freeze:'none' };
+    const codec = new EWEngineParts.MonsterBoxCodec({
+      species: Object.keys(SPECIES),
+      moves: Object.keys(MOVES),
+      items: Object.keys(ITEMS)
+    });
+    const CAPACITY = 30;
+    // chassis Monster -> base64 64-byte record. Encode-before-mutate: this
+    // either returns a record or throws with the party untouched.
+    function pack(mon){
+      const bytes = codec.pack({
+        speciesId: mon.speciesId,
+        baseSpeciesId: (SPECIES[mon.speciesId] && SPECIES[mon.speciesId].baseSpeciesId) || mon.speciesId,
+        level: mon.level,
+        status: TO_ENGINE_STATUS[mon.status] || 'none',
+        friendship: 70,
+        personalitySeed: mon.seed,
+        otId: mon.uid || 0,
+        currentExp: mon.currentExp,
+        currentHP: mon.currentHP,
+        ivs: mon.ivs, evs: mon.evs,
+        moves: mon.moves.map(m => ({ id: m.id, currentPP: m.currentPP })),
+        nickname: mon.name === mon.species.name ? '' : mon.name
+      });
+      return EWEngineParts.bytesToBase64(bytes);
+    }
+    function decode(b64){
+      if (typeof b64 !== 'string' || !b64) return null;
+      let bytes;
+      try { bytes = EWEngineParts.base64ToBytes(b64); } catch (_) { return null; }
+      if (!(bytes instanceof Uint8Array) || bytes.length !== 64) return null;
+      const v = codec.validate(bytes);
+      if (!v.valid || v.empty) return null;
+      return codec.unpack(bytes);
+    }
+    function validateRecord(b64){ return decode(b64) !== null; }
+    // A cheap look at a record for list rows — no Monster construction.
+    function inspect(b64){
+      const d = decode(b64);
+      if (!d) return null;
+      const sp = SPECIES[d.speciesId];
+      return sp ? { speciesId: d.speciesId, name: d.nickname || sp.name, level: d.level, uid: d.otId, currentHP: d.currentHP } : null;
+    }
+    // base64 record -> chassis Monster. Decode-before-clear: throws (or
+    // returns null) with the Den untouched. The chassis constructor refills
+    // move PP — a rest in the Den restores energy, which we say out loud
+    // rather than hide.
+    function toMonster(b64){
+      const d = decode(b64);
+      if (!d) return null;
+      const moveIds = d.moves.map(m => m.id).filter(id => MOVES[id]);
+      const mon = new Monster({
+        speciesId: d.speciesId,
+        level: d.level,
+        seed: d.personalitySeed,
+        currentHP: d.currentHP,
+        currentExp: d.currentExp,
+        nickname: d.nickname || null,
+        status: FROM_ENGINE_STATUS[d.status] || 'none',
+        moves: moveIds.length ? moveIds : null
+      });
+      mon.uid = d.otId || 0;
+      return mon;
+    }
+    return { codec, CAPACITY, pack, toMonster, inspect, validateRecord };
+  })();
+
+  // -------------------------------------------------------------------
+  // EWMotion — the reduced-motion family register. Every animation family
+  // shipped in this file is named here and consulted BY NAME at its call
+  // site; a name with no call site is a phantom family (recorded trap)
+  // and the harness greps for exactly that. The OS preference is the
+  // floor; the in-game Calm setting can only ADD restraint on top.
+  // -------------------------------------------------------------------
+  const EWMotion = {
+    families: {
+      evolution:   'full ZOOM/PULSE/BURST/REVEAL vs static crossfade reveal',
+      emberMotes:  'drifting ember particles vs absent',
+      grassShimmer:'tall-grass colour breathing vs static grass',
+      waterRipple: 'moving water highlight vs still highlight'
+    },
+    _os: null,
+    _watch(){
+      if (EWMotion._os !== null) return;
+      try {
+        const mq = matchMedia('(prefers-reduced-motion: reduce)');
+        EWMotion._os = mq.matches;
+        const onChange = () => { EWMotion._os = mq.matches; try { window.__EMBERWILD__ && window.__EMBERWILD__.refreshMotion(); } catch(_) {} };
+        if (mq.addEventListener) mq.addEventListener('change', onChange); else if (mq.addListener) mq.addListener(onChange);
+      } catch(_) { EWMotion._os = false; }
+    },
+    prefersReduced(){
+      EWMotion._watch();
+      if (EWMotion._os) return true;
+      const g = typeof window !== 'undefined' ? window.__EMBERWILD__ : null;
+      return !!(g && g.settings && g.settings.reducedMotion);
+    },
+    active(name){
+      if (!(name in EWMotion.families)) throw new Error('EWMotion: unregistered family ' + name);
+      return !EWMotion.prefersReduced();
+    }
+  };
+
+  // -------------------------------------------------------------------
+  // EWFx — ember motes through the adopted particle suite. GPU path when
+  // WebGL2 exists, the suite's own Canvas 2D fallback otherwise; the
+  // harness force-disables WebGL2 in one run and requires motes anyway.
+  // Cosmetic by contract: failure here parks the feature VISIBLY in
+  // stats() ('failed:…'), it never throws into the game loop, and it is
+  // never wrapped in a bare silent catch.
+  // -------------------------------------------------------------------
+  const EWFx = {
+    suite: null, canvas: null, state: 'idle', zone: null,
+    ensure(){
+      if (this.suite || String(this.state).indexOf('failed') === 0) return this.suite;
+      try {
+        this.canvas = document.getElementById('fx-canvas');
+        if (!this.canvas || !window.EWParticles) throw new Error('fx canvas or EWParticles missing');
+        this.suite = window.EWParticles.createParticleSuite(this.canvas, {
+          preset: 'fireflies', count: 0, maxParticles: 160,
+          onFallback: () => { EWFx.state = 'fallback'; }
+        });
+        if (this.state !== 'fallback') this.state = 'gpu';
+      } catch (err) { this.state = 'failed:' + err.message; this.suite = null; }
+      return this.suite;
+    },
+    // zone: null | 'seam' | 'depths'. Density is hard-capped for phone
+    // perf; motes are ambience and must never obscure gameplay.
+    set(zone){
+      const on = zone && EWMotion.active('emberMotes');
+      const key = on ? zone : null;
+      if (key === this.zone) return;
+      this.zone = key;
+      const suite = on ? this.ensure() : this.suite;
+      if (!suite) return;
+      if (!on) {
+        suite.stop();
+        try { const c = this.canvas.getContext('2d'); if (c) c.clearRect(0, 0, this.canvas.width, this.canvas.height); } catch(_) {}
+        return;
+      }
+      suite.setPreset('fireflies', { count: zone === 'depths' ? 110 : 34 });
+      suite.start();
+    },
+    stats(){ return this.suite ? { state: this.state, ...this.suite.stats() } : { state: this.state, renderer: 'none' }; }
+  };
+
+  // -------------------------------------------------------------------
+  // EWEvo — the chassis side of the evolution graft.
+  //
+  // The engine's EvolutionEngine and EvolutionSequence are adopted
+  // verbatim in EWEngineParts; what the engine cannot know is the chassis
+  // Monster, whose stats live on a frozen SPECIES reference and are
+  // recomputed by the chassis StatEngine. applyEvolution is therefore
+  // REPLACED here (spec behaviour kept: damage debt is preserved — a
+  // creature 11 HP below its old maximum is 11 HP below its new one).
+  // The rule table is the v1.1 data verbatim.
+  // -------------------------------------------------------------------
+  const EVOLUTION_RULES = Object.freeze({
+    cindrel: Object.freeze({ method: EWEngineParts.EvolutionMethod.LEVEL_UP, minLevel: 16, target: 'pyrelume', evolutionMove: 'crown_flare', cancelable: true })
+  });
+  class EmberEvolutionEngine extends EWEngineParts.EvolutionEngine {
+    applyEvolution(monster, rule, options = {}) {
+      const target = SPECIES[rule.target];
+      if (!monster || !target) throw new Error('Evolution requires a monster and a known target species');
+      const before = monster.toJSON();
+      const oldMax = monster.stats.hp;
+      const damageDebt = Math.max(0, oldMax - monster.currentHP);
+      const keptNickname = monster.name !== monster.species.name ? monster.name : null;
+      monster.speciesId = target.id;
+      monster.species = target;             // rebind the frozen reference
+      monster.name = keptNickname || target.name;
+      monster.types = [...target.types];
+      monster.stats = monster.calculateStats();
+      monster.currentHP = clamp(monster.stats.hp - damageDebt, monster.currentHP > 0 ? 1 : 0, monster.stats.hp);
+      let learned = null;
+      if (rule.evolutionMove && MOVES[rule.evolutionMove] && !monster.moves.some(m => m.id === rule.evolutionMove)) {
+        const mv = MOVES[rule.evolutionMove];
+        monster.moves[monster.moves.length - 1] = { ...mv, currentPP: mv.pp };
+        learned = mv.name;
+      }
+      return { success: true, before, after: monster.toJSON(), targetSpeciesId: monster.speciesId, learned };
     }
   }
 
@@ -2193,10 +3892,22 @@
         else ctx.fillRect(6, 9, 2, 2);
       });
     }
-    monster(speciesId, back = false) {
+    // §5-C: no creature may be visually identical between Vale and Depths.
+    // The 'depths' variant is the same silhouette palette-shifted toward
+    // the dark, with ember eyes and an ember accent — cheap, derived from
+    // the roster art pipeline, and proven different by pixel stats.
+    monster(speciesId, back = false, variant = '') {
       const sp = SPECIES[speciesId];
-      return this.canvas(`monster_${speciesId}_${back}`, 48, 48, (ctx, w, h) => {
-        const [dark, main, light, accent] = sp.palette;
+      const shade = hex => {
+        const f = 0.58;
+        const r = Math.round(parseInt(hex.slice(1,3),16)*f), g = Math.round(parseInt(hex.slice(3,5),16)*f), b = Math.round(parseInt(hex.slice(5,7),16)*(f+0.10));
+        return '#'+[r,g,b].map(v=>Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0')).join('');
+      };
+      return this.canvas(`monster_${speciesId}_${back}_${variant}`, 48, 48, (ctx, w, h) => {
+        const deep = variant === 'depths';
+        const [dark, main, light, accent] = deep
+          ? [shade(sp.palette[0]), shade(sp.palette[1]), shade(sp.palette[2]), '#ff9d47']
+          : sp.palette;
         ctx.clearRect(0, 0, w, h);
         ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(24, 40, 15, 4, 0, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = dark;
@@ -2210,17 +3921,38 @@
           ctx.fillRect(13, 16, 22, 22); ctx.fillRect(8, 11, 12, 12); ctx.fillRect(28, 9, 11, 14);
         } else if (sp.silhouette === 'cloud') {
           ctx.fillRect(9, 18, 30, 15); ctx.fillRect(14, 11, 13, 13); ctx.fillRect(25, 14, 12, 12);
+        } else if (sp.silhouette === 'flare') {
+          // Pyrelume: the fox line grown tall, with a crown of flame. Ears
+          // sweep higher, the body is leaner, and the accent teal picks out
+          // the crown so the evolved form cannot be mistaken for Cindrel.
+          ctx.fillRect(13, 14, 22, 24); ctx.fillRect(8, 4, 8, 16); ctx.fillRect(32, 4, 8, 16); ctx.fillRect(34, 30, 11, 6);
+          ctx.fillRect(20, 2, 8, 8);
         } else {
           ctx.fillRect(13, 15, 22, 23); ctx.fillRect(10, 8, 13, 14); ctx.fillRect(26, 7, 12, 15);
         }
         ctx.fillStyle = main; ctx.fillRect(15, 16, 18, 18); ctx.fillRect(18, 11, 12, 10);
         ctx.fillStyle = light; ctx.fillRect(19, 18, 10, 11); ctx.fillRect(16, 33, 6, 5); ctx.fillRect(27, 33, 6, 5);
         ctx.fillStyle = accent; ctx.fillRect(20, 12, 8, 4);
-        if (!back) { ctx.fillStyle = '#11151c'; ctx.fillRect(19, 20, 3, 3); ctx.fillRect(27, 20, 3, 3); ctx.fillRect(22, 26, 5, 2); }
+        if (sp.silhouette === 'flare') { ctx.fillStyle = light; ctx.fillRect(21, 3, 2, 6); ctx.fillRect(25, 1, 2, 8); ctx.fillStyle = accent; ctx.fillRect(23, 5, 2, 5); ctx.fillRect(10, 6, 2, 4); ctx.fillRect(36, 6, 2, 4); }
+        if (!back) { ctx.fillStyle = deep ? '#ffb35c' : '#11151c'; ctx.fillRect(19, 20, 3, 3); ctx.fillRect(27, 20, 3, 3); ctx.fillStyle = '#11151c'; ctx.fillRect(22, 26, 5, 2); if (deep) { ctx.fillStyle = 'rgba(255,157,71,.5)'; ctx.fillRect(18, 19, 5, 5); ctx.fillRect(26, 19, 5, 5); } }
         else { ctx.fillStyle = dark; ctx.fillRect(18, 20, 12, 3); }
       });
     }
   }
+
+  // §6 — one grading function, data-driven per region, never per-tile
+  // hacks. Each named region carries an ambient tint mixed into every
+  // ground colour, the elevation side faces, and the backdrop. The Depths
+  // deepen slightly per floor for a sense of descent — readable dark,
+  // never oppressive (SEMH): the floor, the walls, the exits and the
+  // creatures stay legible at phone brightness.
+  const REGION_GRADES = Object.freeze({
+    vale:    { tint: [255, 238, 198], mix: 0.07 },
+    plateau: { tint: [255, 226, 168], mix: 0.10 },
+    water:   { tint: [198, 232, 255], mix: 0.11 },
+    lodge:   { tint: [255, 219, 176], mix: 0.13 },
+    depths:  { tint: [64, 56, 78],    mix: 0.20 }   // + 0.045 per floor below
+  });
 
   class SoftwareWorldRenderer {
     constructor(canvas, game, spriteFactory) {
@@ -2232,6 +3964,11 @@
       this.tileW = 28; this.tileH = 14; this.elevationPx = 18;
       this.visible = true; this.kind = 'Software 2.5D';
       this.waterTime = 0;
+      // live grade state: blended toward the target so region changes are
+      // a breath, not a jump-cut; the colour LUT clears when the
+      // quantised grade moves.
+      this.grade = { tint: [255,255,255], mix: 0, tTint: [255,255,255], tMix: 0, lut: new Map(), key: '' };
+      this.shimmerOn = true; this.rippleOn = true;
       this.resize();
       window.addEventListener('resize', () => this.resize());
       // iOS fires orientationchange before innerWidth/innerHeight settle.
@@ -2284,13 +4021,33 @@
       const sy = (x + z) * this.tileH * 0.5 - y * this.elevationPx;
       return { x: sx - this.camera.sx + this.width / 2, y: sy - this.camera.sy + this.height / 2 };
     }
+    setRegionGrade(regionKey, depthsFloor = 0) {
+      const g = REGION_GRADES[regionKey] || REGION_GRADES.vale;
+      this.grade.tTint = g.tint;
+      this.grade.tMix = regionKey === 'depths' ? Math.min(0.34, g.mix + depthsFloor * 0.045) : g.mix;
+    }
+    gradedColor(hex) {
+      const gr = this.grade;
+      const key = hex + gr.key;
+      const hit = gr.lut.get(key);
+      if (hit) return hit;
+      const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+      const m = gr.mix;
+      const out = '#'+[
+        Math.round(r + (gr.tint[0]-r)*m),
+        Math.round(g + (gr.tint[1]-g)*m),
+        Math.round(b + (gr.tint[2]-b)*m)
+      ].map(v=>Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0')).join('');
+      gr.lut.set(key, out);
+      return out;
+    }
     colorForGround(ground, variant = 0) {
       const colors = {
         [Ground.MEADOW]: ['#5a9f4d','#68aa55'], [Ground.PATH]: ['#c8ad78','#d2b985'], [Ground.TALL_GRASS]: ['#3f873b','#4a963f'],
         [Ground.WATER]: ['#2d79a5','#318ab8'], [Ground.STONE]: ['#8d887e','#9d978a'], [Ground.FLOOR]: ['#bb8a62','#c99a70'],
         [Ground.BRIDGE]: ['#9e704d','#b17f58'], [Ground.FLOWERS]: ['#65a34e','#77b85c']
       };
-      return (colors[ground] || colors[Ground.MEADOW])[variant & 1];
+      return this.gradedColor((colors[ground] || colors[Ground.MEADOW])[variant & 1]);
     }
     drawDiamond(ctx, p, fill) {
       ctx.beginPath(); ctx.moveTo(p.x, p.y - this.tileH/2); ctx.lineTo(p.x + this.tileW/2, p.y); ctx.lineTo(p.x, p.y + this.tileH/2); ctx.lineTo(p.x - this.tileW/2, p.y); ctx.closePath();
@@ -2301,13 +4058,30 @@
       if (p.x < -40 || p.x > this.width + 40 || p.y < -60 || p.y > this.height + 60) return;
       const sideDepth = 5 + cell.height * this.elevationPx;
       if (cell.height > 0) {
-        ctx.fillStyle = '#5c594f'; ctx.beginPath(); ctx.moveTo(p.x-this.tileW/2,p.y); ctx.lineTo(p.x,p.y+this.tileH/2); ctx.lineTo(p.x,p.y+this.tileH/2+sideDepth); ctx.lineTo(p.x-this.tileW/2,p.y+sideDepth); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = '#6e695d'; ctx.beginPath(); ctx.moveTo(p.x+this.tileW/2,p.y); ctx.lineTo(p.x,p.y+this.tileH/2); ctx.lineTo(p.x,p.y+this.tileH/2+sideDepth); ctx.lineTo(p.x+this.tileW/2,p.y+sideDepth); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = this.gradedColor('#5c594f'); ctx.beginPath(); ctx.moveTo(p.x-this.tileW/2,p.y); ctx.lineTo(p.x,p.y+this.tileH/2); ctx.lineTo(p.x,p.y+this.tileH/2+sideDepth); ctx.lineTo(p.x-this.tileW/2,p.y+sideDepth); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = this.gradedColor('#6e695d'); ctx.beginPath(); ctx.moveTo(p.x+this.tileW/2,p.y); ctx.lineTo(p.x,p.y+this.tileH/2); ctx.lineTo(p.x,p.y+this.tileH/2+sideDepth); ctx.lineTo(p.x+this.tileW/2,p.y+sideDepth); ctx.closePath(); ctx.fill();
       }
-      this.drawDiamond(ctx, p, this.colorForGround(cell.ground, (x + z) & 1));
+      // grassShimmer (registered EWMotion family): tall grass breathes
+      // between its two close greens; static under reduced motion.
+      const shimmer = (this.shimmerOn && cell.ground === Ground.TALL_GRASS) ? (Math.floor(this.waterTime * 1.6) & 1) : 0;
+      this.drawDiamond(ctx, p, this.colorForGround(cell.ground, ((x + z) & 1) ^ shimmer));
       ctx.strokeStyle = 'rgba(18,25,24,0.17)'; ctx.lineWidth = 0.7; ctx.stroke();
+      // Ambient occlusion at elevation changes: a tile sitting under a
+      // taller neighbour picks up a shaded top edge, so ledges read as 3D.
+      const map = this.game.map;
+      const nW = map.getCell(x - 1, z), nN = map.getCell(x, z - 1);
+      if (nW && nW.height > cell.height) {
+        ctx.strokeStyle = 'rgba(10,14,16,0.30)'; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(p.x - this.tileW/2, p.y); ctx.lineTo(p.x, p.y - this.tileH/2); ctx.stroke();
+      }
+      if (nN && nN.height > cell.height) {
+        ctx.strokeStyle = 'rgba(10,14,16,0.30)'; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(p.x, p.y - this.tileH/2); ctx.lineTo(p.x + this.tileW/2, p.y); ctx.stroke();
+      }
       if (cell.ground === Ground.WATER) {
-        const wave = Math.sin(this.waterTime * 2 + x * 0.8 + z) * 2;
+        // waterRipple (registered EWMotion family): the highlight drifts;
+        // under reduced motion it holds still but still reads as water.
+        const wave = this.rippleOn ? Math.sin(this.waterTime * 2 + x * 0.8 + z) * 2 : 0;
         ctx.strokeStyle = 'rgba(172,232,245,0.55)'; ctx.beginPath(); ctx.moveTo(p.x - 8 + wave, p.y); ctx.lineTo(p.x + 7 + wave, p.y); ctx.stroke();
       } else if (cell.ground === Ground.TALL_GRASS) {
         ctx.strokeStyle = '#285f2b'; ctx.lineWidth = 1;
@@ -2358,12 +4132,23 @@
     }
     drawItem(entity) {
       const p = this.project(entity.x, entity.z, entity.y || 0);
+      this.ctx.save(); this.ctx.globalAlpha = 0.22; this.ctx.fillStyle = '#101515';
+      this.ctx.beginPath(); this.ctx.ellipse(p.x, p.y + 3, 7, 2.6, 0, 0, Math.PI*2); this.ctx.fill(); this.ctx.restore();
       this.ctx.fillStyle = '#e2f7ff'; this.ctx.beginPath(); this.ctx.arc(p.x, p.y - 7, 4, 0, Math.PI*2); this.ctx.fill();
       this.ctx.strokeStyle = '#6ed8ff'; this.ctx.stroke(); this.ctx.fillStyle = '#ffbe4b'; this.ctx.fillRect(p.x-1,p.y-9,2,4);
     }
     update(dt) {
       if (!this.visible) return;
       this.waterTime += dt;
+      // RM families read once per frame; drawTile consults these flags.
+      this.shimmerOn = EWMotion.active('grassShimmer');
+      this.rippleOn = EWMotion.active('waterRipple');
+      const gr = this.grade;
+      const a = 1 - Math.exp(-dt / 0.55);
+      gr.mix += (gr.tMix - gr.mix) * a;
+      for (let i = 0; i < 3; i++) gr.tint[i] += (gr.tTint[i] - gr.tint[i]) * a;
+      const key = '|' + Math.round(gr.mix*50) + ',' + gr.tint.map(v=>Math.round(v/8)).join(',');
+      if (key !== gr.key) { gr.key = key; gr.lut.clear(); }
       const target = this.projectRaw(this.game.player.render.x, this.game.player.render.z, this.game.player.render.y);
       this.camera.sx = damp(this.camera.sx, target.x, 7, dt);
       this.camera.sy = damp(this.camera.sy, target.y - 18, 7, dt);
@@ -2373,9 +4158,23 @@
       if (!this.visible) return;
       const ctx = this.ctx; ctx.imageSmoothingEnabled = false;
       const tod = this.game.timeOfDay;
-      const sky = tod < 0.2 || tod > 0.82 ? '#18233e' : tod < 0.3 ? '#d77f6a' : tod > 0.7 ? '#da8a61' : '#86c6d8';
-      ctx.fillStyle = sky; ctx.fillRect(0,0,this.width,this.height);
-      ctx.fillStyle = tod < 0.2 || tod > 0.82 ? '#24304b' : '#bed6c1'; ctx.fillRect(0, this.height*0.35, this.width, this.height*0.65);
+      if (this.game.depths) {
+        // The Depths used to render the overworld sky — the one defect the
+        // art pass existed to close. Readable dark: a slate-to-ember
+        // gradient that deepens slightly per floor, never pitch black.
+        const floor = this.game.depths.floorIndex || 0;
+        const deep = Math.min(0.3, floor * 0.055);
+        const grad = ctx.createLinearGradient(0, 0, 0, this.height);
+        grad.addColorStop(0, this.gradedColor('#191527'));
+        grad.addColorStop(0.55, this.gradedColor('#241c26'));
+        grad.addColorStop(1, this.gradedColor('#2e2018'));
+        ctx.fillStyle = grad; ctx.globalAlpha = 1; ctx.fillRect(0,0,this.width,this.height);
+        ctx.fillStyle = 'rgba(6,5,10,' + deep.toFixed(3) + ')'; ctx.fillRect(0,0,this.width,this.height);
+      } else {
+        const sky = tod < 0.2 || tod > 0.82 ? '#18233e' : tod < 0.3 ? '#d77f6a' : tod > 0.7 ? '#da8a61' : '#86c6d8';
+        ctx.fillStyle = this.gradedColor(sky); ctx.fillRect(0,0,this.width,this.height);
+        ctx.fillStyle = this.gradedColor(tod < 0.2 || tod > 0.82 ? '#24304b' : '#bed6c1'); ctx.fillRect(0, this.height*0.35, this.width, this.height*0.65);
+      }
       const map = this.game.map;
       const cells = [];
       map.eachCell((cell,x,z) => cells.push({ cell,x,z,depth:x+z+cell.height*0.4 }));
@@ -2397,7 +4196,37 @@
         } else {
           const npc = actor.npc;
           if (npc.type === 'ITEM') { this.drawItem(npc); continue; }
-          this.drawShadow(npc.render, 0.85); this.drawActor(npc.render, this.sprites.npc(npc.id,npc.facing),0.68);
+          if (npc.type === 'ENEMY' || npc.type === 'BOSS') {
+            const sc = npc.type === 'BOSS' ? 0.95 : 0.7;
+            this.drawShadow(npc.render, sc);
+            this.drawActor(npc.render, this.sprites.monster(npc.speciesId || 'cindrel', false, 'depths'), sc);
+          } else if (npc.type === 'HEALING_POOL') {
+            const pp = this.project(npc.render.x, npc.render.z, npc.render.y);
+            ctx.save(); ctx.globalAlpha = 0.85; ctx.fillStyle = '#2b7d86';
+            ctx.beginPath(); ctx.ellipse(pp.x, pp.y, 9, 4.5, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#8fe3df'; ctx.beginPath(); ctx.ellipse(pp.x, pp.y, 5.5, 2.6, 0, 0, Math.PI*2); ctx.fill();
+            const gl = this.rippleOn ? Math.sin(this.waterTime * 1.4 + pp.x) * 0.5 + 0.5 : 0.5;
+            ctx.globalAlpha = 0.25 + gl * 0.3; ctx.fillStyle = '#bffcf3';
+            ctx.beginPath(); ctx.ellipse(pp.x, pp.y - 1, 2.5, 1.2, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
+          } else if (npc.type === 'STAIRS_DOWN' || npc.type === 'STAIRS_UP' || npc.type === 'FLOOR_EXIT') {
+            const pp = this.project(npc.render.x, npc.render.z, npc.render.y);
+            ctx.save(); ctx.fillStyle = 'rgba(8,10,14,.72)';
+            ctx.beginPath(); ctx.ellipse(pp.x, pp.y, 10, 5, 0, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = npc.type === 'STAIRS_DOWN' ? '#ffb35c' : '#8fe3df'; ctx.lineWidth = 1.4;
+            const dn = npc.type === 'STAIRS_DOWN';
+            ctx.beginPath(); ctx.moveTo(pp.x, pp.y + (dn ? -7 : 3)); ctx.lineTo(pp.x, pp.y + (dn ? 3 : -7));
+            ctx.moveTo(pp.x - 4, pp.y + (dn ? -1 : -3)); ctx.lineTo(pp.x, pp.y + (dn ? 3 : -7)); ctx.lineTo(pp.x + 4, pp.y + (dn ? -1 : -3));
+            ctx.stroke(); ctx.restore();
+          } else if (npc.type === 'LOOT') {
+            const pp = this.project(npc.render.x, npc.render.z, npc.render.y);
+            ctx.save(); ctx.globalAlpha = 0.22; ctx.fillStyle = '#101515';
+            ctx.beginPath(); ctx.ellipse(pp.x, pp.y + 2, 8, 3, 0, 0, Math.PI*2); ctx.fill();
+            ctx.globalAlpha = 1; ctx.fillStyle = '#7a5a34'; ctx.fillRect(pp.x - 7, pp.y - 9, 14, 10);
+            ctx.fillStyle = '#a8804c'; ctx.fillRect(pp.x - 7, pp.y - 9, 14, 4);
+            ctx.fillStyle = '#ffd36b'; ctx.fillRect(pp.x - 1, pp.y - 6, 2, 3); ctx.restore();
+          } else {
+            this.drawShadow(npc.render, 0.85); this.drawActor(npc.render, this.sprites.npc(npc.id,npc.facing),0.68);
+          }
           if (npc.alertTimer > 0) {
             const p=this.project(npc.render.x,npc.render.z,npc.render.y); ctx.fillStyle='#fff'; ctx.fillRect(p.x-5,p.y-34,10,12); ctx.fillStyle='#e8424c'; ctx.font='bold 10px monospace'; ctx.textAlign='center'; ctx.fillText('!',p.x,p.y-24);
           }
@@ -2492,10 +4321,127 @@
       // Recorded for the layout gate, so the fix is measurable rather than eyeballed.
       this.hudBoxes={locationPanel:{x:panelX,y:panelY,w:panelW,h:panelH},fieldNote:{x:noteX,y:noteY,w:noteW,h:noteH}};
     }
+    // THE DEN — modal, portrait-first. Every tap target is at least 44px
+    // and the panel is laid out to clear the fixed DOM widgets (estate
+    // back button, quick controls, d-pad, A/B/MENU) in both orientations;
+    // denBoxes records the rectangles so the layout gate can measure
+    // rather than trust.
+    drawDen(){
+      const g=this.game,v=g.denView;if(!v)return;
+      const portrait=this.h>this.w;
+      const px=portrait?12:Math.max(180,Math.round((this.w-500)/2));
+      const pw=portrait?this.w-24:Math.min(500,this.w-px-190);
+      const py=portrait?140:10;
+      const ph=portrait?Math.min(520,this.h-py-184):this.h-20;
+      this.frame(px,py,pw,ph,{bg:'rgba(8,15,26,.98)'});
+      this.text('THE DEN',px+18,py+12,18,'#f6d979');
+      this.text(`Party ${g.party.length}/6 · Resting ${g.den.length}/${EWDen.CAPACITY}`,px+pw-18,py+16,10,'#8fa7bb','right','normal');
+      const tabY=py+40,tabW=Math.floor((pw-36)/2);
+      const tabs=[['party','PARTY'],['den','RESTING']];
+      this.denBoxes={panel:{x:px,y:py,w:pw,h:ph}};
+      tabs.forEach((t,i)=>{
+        const tx=px+12+i*(tabW+12),active=v.tab===t[0];
+        this.ctx.fillStyle=active?'rgba(111,213,195,.25)':'rgba(255,255,255,.05)';
+        this.ctx.fillRect(tx,tabY,tabW,44);
+        this.ctx.strokeStyle=active?'#71d5c3':'#42516a';this.ctx.strokeRect(tx+.5,tabY+.5,tabW-1,43);
+        this.text(t[1],tx+tabW/2,tabY+14,13,active?'#fff':'#9fb2c3','center');
+        this.addRegion(tx,tabY,tabW,44,{type:'DEN_TAB',tab:t[0]},t[1]+' tab');
+        this.denBoxes['tab_'+t[0]]={x:tx,y:tabY,w:tabW,h:44};
+      });
+      const listY=tabY+52;
+      const rowH=Math.max(44,Math.min(52,Math.floor((ph-(listY-py)-104)/6)));
+      const pages=Math.max(1,Math.ceil(g.den.length/6));
+      for(let i=0;i<6;i++){
+        const ry=listY+i*(rowH+4);
+        let label='—',sub='',occupied=false,spriteId=null,selected=false;
+        if(v.tab==='party'){
+          const m=g.party[i];
+          if(m){occupied=true;spriteId=m.speciesId;label=m.name;sub=`Lv${m.level} · ${m.currentHP>0?m.currentHP+' HP':'resting'}`;}
+          else label='(open spot)';
+          selected=v.sel&&v.sel.list==='party'&&v.sel.index===i;
+        }else{
+          const idx=v.page*6+i;
+          const info=idx<g.den.length?EWDen.inspect(g.den[idx]):null;
+          if(info){occupied=true;spriteId=info.speciesId;label=info.name;sub=`Lv${info.level} · rested`;}
+          else label=idx<EWDen.CAPACITY?'(quiet nook)':'';
+          selected=v.sel&&v.sel.list==='den'&&v.sel.index===idx;
+        }
+        const cursorHere=v.cursor===i;
+        this.ctx.fillStyle=selected?'rgba(246,217,121,.25)':cursorHere?'rgba(111,213,195,.14)':'rgba(255,255,255,.04)';
+        this.ctx.fillRect(px+12,ry,pw-24,rowH);
+        this.ctx.strokeStyle=selected?'#f6d979':'#39485e';this.ctx.strokeRect(px+12.5,ry+.5,pw-25,rowH-1);
+        if(spriteId){const img=this.sprites.monster(spriteId,false);this.ctx.imageSmoothingEnabled=false;this.ctx.drawImage(img,px+18,ry+Math.floor((rowH-36)/2),36,36);}
+        this.text(label,px+62,ry+Math.floor(rowH/2)-14,13,occupied?'#fff':'#5c6c7c');
+        if(sub)this.text(sub,px+62,ry+Math.floor(rowH/2)+4,10,'#8fa7bb','left','normal');
+        this.addRegion(px+12,ry,pw-24,rowH,{type:'DEN_ROW',list:v.tab,index:i},label);
+        this.denBoxes['row'+i]={x:px+12,y:ry,w:pw-24,h:rowH};
+      }
+      const footY=listY+6*(rowH+4)+4;
+      if(v.tab==='den'&&pages>1){
+        this.ctx.fillStyle='rgba(255,255,255,.06)';
+        this.ctx.fillRect(px+12,footY,44,44);this.ctx.fillRect(px+64,footY,44,44);
+        this.text('◀',px+34,footY+14,15,'#fff','center');this.text('▶',px+86,footY+14,15,'#fff','center');
+        this.addRegion(px+12,footY,44,44,{type:'DEN_PAGE',dir:-1},'Previous page');
+        this.addRegion(px+64,footY,44,44,{type:'DEN_PAGE',dir:1},'Next page');
+        this.text(`${v.page+1}/${pages}`,px+130,footY+14,11,'#8fa7bb','left','normal');
+        this.denBoxes.pagePrev={x:px+12,y:footY,w:44,h:44};
+        this.denBoxes.pageNext={x:px+64,y:footY,w:44,h:44};
+      }
+      const actW=Math.min(190,Math.floor((pw-36)/2));
+      const actX=px+pw-12-actW,closeX=actX-actW-12;
+      const actLabel=v.sel?(v.sel.list==='party'?'SETTLE IN DEN':'REJOIN PARTY'):'PICK SOMEONE';
+      this.ctx.fillStyle=v.sel?'rgba(111,213,195,.25)':'rgba(255,255,255,.05)';
+      this.ctx.fillRect(actX,footY,actW,44);
+      this.ctx.strokeStyle=v.sel?'#71d5c3':'#42516a';this.ctx.strokeRect(actX+.5,footY+.5,actW-1,43);
+      this.text(actLabel,actX+actW/2,footY+14,12,v.sel?'#fff':'#68727d','center');
+      this.addRegion(actX,footY,actW,44,{type:'DEN_ACT'},actLabel);
+      this.ctx.fillStyle='rgba(255,255,255,.06)';
+      this.ctx.fillRect(closeX,footY,actW,44);
+      this.ctx.strokeStyle='#42516a';this.ctx.strokeRect(closeX+.5,footY+.5,actW-1,43);
+      this.text('CLOSE',closeX+actW/2,footY+14,12,'#fff','center');
+      this.addRegion(closeX,footY,actW,44,{type:'DEN_CLOSE'},'Close the Den');
+      this.denBoxes.actBtn={x:actX,y:footY,w:actW,h:44};
+      this.denBoxes.closeBtn={x:closeX,y:footY,w:actW,h:44};
+      const line=this.wrap(String(v.line||''),pw-36,11)[0]||'';
+      this.text(line,px+18,footY+52,11,'#9fd8c8','left','normal');
+    }
+    // EVOLUTION overlay. The engine snapshot drives everything; the drawn
+    // crossfade is the low-passed copy (see updateEvolution) and the flash
+    // amplitude is deliberately soft — the census gate is the authority
+    // over the source material. Under reduced motion this is a static
+    // two-sprite crossfade: no zoom, no pulse, no burst, no flash.
+    drawEvolution(){
+      const g=this.game,e=g.evo;if(!e)return;
+      const snap=e.seq.snapshot();
+      const c=this.ctx;
+      const dim=e.reduced?0.72:snap.worldDim;
+      c.fillStyle=`rgba(5,9,16,${(dim*.92).toFixed(3)})`;c.fillRect(0,0,this.w,this.h);
+      const cx=this.w/2,cy=Math.min(this.h*.38,this.h-300);
+      const size=Math.min(200,this.w*.44)*(e.reduced?1:snap.scale);
+      const mix=Math.max(0,Math.min(1,e.drawnMix));
+      const src=this.sprites.monster(e.sourceId,false),tgt=this.sprites.monster(e.targetId,false);
+      c.save();c.imageSmoothingEnabled=false;
+      if(!e.reduced&&snap.brightness>1){c.globalAlpha=Math.min(.3,(snap.brightness-1)*.075);c.fillStyle='#ffe9c4';c.beginPath();c.arc(cx,cy,size*.72,0,Math.PI*2);c.fill();}
+      c.globalAlpha=1-mix;c.drawImage(src,cx-size/2,cy-size/2,size,size);
+      c.globalAlpha=mix;c.drawImage(tgt,cx-size/2,cy-size/2,size,size);
+      if(!e.reduced&&snap.flashOpacity>0){c.globalAlpha=Math.min(.55,snap.flashOpacity*.55);c.fillStyle='#fff6e6';c.fillRect(0,0,this.w,this.h);}
+      c.restore();
+      const srcName=SPECIES[e.sourceId].name;
+      let line;
+      if(snap.state==='cancelled')line=`${e.mon.name} paused, and stayed just as they are.`;
+      else if(snap.state==='reveal'||snap.state==='complete')line=`${srcName} evolved into ${SPECIES[e.targetId].name}!`;
+      else line=`What's this? ${srcName} is changing!`;
+      this.text(line,cx,cy+size/2+34,16,'#fff','center');
+      if(snap.result&&snap.result.learned&&(snap.state==='reveal'||snap.state==='complete'))this.text(`${e.mon.name} learned ${snap.result.learned}!`,cx,cy+size/2+58,13,'#f6d979','center');
+      const hints=[];
+      if(snap.canCancel)hints.push('B — not yet');
+      if(snap.state!=='complete'&&snap.state!=='cancelled')hints.push('A — hurry along');
+      if(hints.length)this.text(hints.join('    '),cx,cy+size/2+84,11,'#9fb2c3','center','normal');
+    }
     drawDialogue(){if(!this.dialogue.active)return;const boxW=Math.min(720,this.w-30),boxH=116,x=(this.w-boxW)/2,y=this.h-boxH-18;this.frame(x,y,boxW,boxH);const lines=this.wrap(this.dialogue.display,boxW-42,16);lines.slice(0,3).forEach((line,i)=>this.text(line,x+20,y+20+i*24,16,'#fff','left','bold'));if(this.dialogue.charIndex>=this.dialogue.lines[this.dialogue.index].length&&Math.sin(performance.now()/180)>0){this.text('▼',x+boxW-30,y+boxH-28,16,'#f6d979');}this.addRegion(x,y,boxW,boxH,'CONFIRM','Advance dialogue');}
-    drawMenu(){const items=this.game.getPauseMenuItems();this.menuItems=items;const w=Math.min(430,this.w-30),h=70+items.length*44,x=(this.w-w)/2,y=(this.h-h)/2;this.frame(x,y,w,h,{bg:'rgba(10,18,31,.97)'});this.text('FIELD KIT',x+22,y+18,19,'#f6d979');items.forEach((item,i)=>{const ry=y+54+i*44;const selected=i===this.menuIndex;this.ctx.fillStyle=selected?'rgba(111,213,195,.2)':'rgba(255,255,255,.035)';this.ctx.fillRect(x+12,ry,w-24,36);this.text(selected?'▶':' ',x+22,ry+9,13,'#71d5c3');this.text(item.label,x+45,ry+8,14,item.disabled?'#68727d':'#fff');this.text(item.detail||'',x+w-20,ry+10,10,'#8fa7bb','right','normal');this.addRegion(x+12,ry,w-24,36,{type:'MENU_SELECT',index:i},item.label);});}
+    drawMenu(){const items=this.game.getPauseMenuItems();this.menuItems=items;const w=Math.min(430,this.w-30),h=70+items.length*52,x=(this.w-w)/2,y=(this.h-h)/2;this.frame(x,y,w,h,{bg:'rgba(10,18,31,.97)'});this.text('FIELD KIT',x+22,y+18,19,'#f6d979');items.forEach((item,i)=>{const ry=y+54+i*52;const selected=i===this.menuIndex;this.ctx.fillStyle=selected?'rgba(111,213,195,.2)':'rgba(255,255,255,.035)';this.ctx.fillRect(x+12,ry,w-24,44);this.text(selected?'▶':' ',x+22,ry+13,13,'#71d5c3');this.text(item.label,x+45,ry+12,14,item.disabled?'#68727d':'#fff');this.text(item.detail||'',x+w-20,ry+14,10,'#8fa7bb','right','normal');this.addRegion(x+12,ry,w-24,44,{type:'MENU_SELECT',index:i},item.label);});}
     hpBar(x,y,w,current,max){const ratio=clamp(current/max,0,1);this.ctx.fillStyle='#222b32';this.ctx.fillRect(x,y,w,10);this.ctx.fillStyle=ratio<=.2?'#f05c5c':ratio<=.5?'#f2d15b':'#62d07b';this.ctx.fillRect(x,y,Math.floor(w*ratio),10);this.ctx.fillStyle='rgba(255,255,255,.28)';this.ctx.fillRect(x,y,Math.floor(w*ratio),2);}
-    drawBattleMonster(mon,x,y,back,scale,animTarget){const img=this.sprites.monster(mon.speciesId,back);let ox=0,oy=0;if(this.game.battle?.anim?.target===animTarget){const a=this.game.battle.anim;ox=Math.sin(performance.now()*0.06)*a.shake*8;oy=a.recoil?Math.sin(performance.now()*0.03)*4:0;}this.ctx.save();if(this.game.battle?.anim?.flashTarget===animTarget&&Math.sin(performance.now()*0.04)>0)this.ctx.globalAlpha=.35;this.ctx.drawImage(img,x-img.width*scale/2+ox,y-img.height*scale+oy,img.width*scale,img.height*scale);this.ctx.restore();}
+    drawBattleMonster(mon,x,y,back,scale,animTarget){const img=this.sprites.monster(mon.speciesId,back,this.game.depths?'depths':'');let ox=0,oy=0;if(this.game.battle?.anim?.target===animTarget){const a=this.game.battle.anim;ox=Math.sin(performance.now()*0.06)*a.shake*8;oy=a.recoil?Math.sin(performance.now()*0.03)*4:0;}this.ctx.save();if(this.game.battle?.anim?.flashTarget===animTarget&&Math.sin(performance.now()*0.04)>0)this.ctx.globalAlpha=.35;this.ctx.drawImage(img,x-img.width*scale/2+ox,y-img.height*scale+oy,img.width*scale,img.height*scale);this.ctx.restore();}
     drawBattle(){const b=this.game.battle;if(!b)return;const c=this.ctx;c.save();const grad=c.createLinearGradient(0,0,0,this.h);grad.addColorStop(0,'#203c5a');grad.addColorStop(.55,'#709c8a');grad.addColorStop(1,'#253b39');c.fillStyle=grad;c.fillRect(0,0,this.w,this.h);c.fillStyle='rgba(255,255,255,.12)';for(let i=0;i<9;i++){c.beginPath();c.arc((i*139+80)%this.w,(i*71+40)%(this.h*.55),18+(i%3)*8,0,Math.PI*2);c.fill();}
       c.fillStyle='rgba(22,29,36,.28)';c.beginPath();c.ellipse(this.w*.73,this.h*.43,110,28,0,0,Math.PI*2);c.fill();c.beginPath();c.ellipse(this.w*.27,this.h*.72,125,32,0,0,Math.PI*2);c.fill();
       this.drawBattleMonster(b.enemy,this.w*.72,this.h*.47,false,Math.min(3.3,this.w/300),'enemy');this.drawBattleMonster(b.player,this.w*.28,this.h*.77,true,Math.min(3.8,this.w/270),'player');
@@ -2507,7 +4453,7 @@
       if(this.flash>0){c.fillStyle=`rgba(255,255,255,${Math.min(.45,this.flash)})`;c.fillRect(0,0,this.w,this.h);}c.restore();}
     drawBattleMenu(b){const isCall=b.menu==='call';const panelW=isCall?Math.min(430,this.w-28):Math.min(360,this.w*.45),panelH=isCall?188:(b.menu==='moves'?174:142),x=isCall?Math.round((this.w-panelW)/2):this.w-panelW-14,y=isCall?Math.max(12,this.h-panelH-150):this.h-panelH-12;this.frame(x,y,panelW,panelH,{bg:'rgba(9,16,28,.98)'});let entries=[];if(b.menu==='main')entries=[['FIGHT','BATTLE_FIGHT'],['BAG','BATTLE_BAG'],['TEAM','BATTLE_TEAM'],['RUN','BATTLE_RUN']];else if(b.menu==='moves')entries=b.player.moves.map((m,i)=>[`${m.name}\n${m.type.toUpperCase()}  ${m.currentPP}/${m.pp}`,{type:'BATTLE_MOVE',index:i}]);else if(b.menu==='bag')entries=[[`PRISM POD  x${this.game.inventory.prism_pod||0}`,'BATTLE_POD'],[`FIELD TONIC  x${this.game.inventory.field_tonic||0}`,'BATTLE_TONIC'],['BACK','BATTLE_BACK']];else if(b.menu==='call')entries=[['LONG SHOT\nunder 30%',{type:'BATTLE_CALL',band:'LONG_SHOT'}],['COIN FLIP\n30 - 70%',{type:'BATTLE_CALL',band:'COIN_FLIP'}],['SURE THING\nover 70%',{type:'BATTLE_CALL',band:'SURE_THING'}],['SKIP THE CALL\nno rating change',{type:'BATTLE_CALL',band:null}]];
       const cols=2,rows=Math.ceil(entries.length/cols),gap=8,pad=14,cellW=(panelW-pad*2-gap)/2,cellH=(panelH-pad*2-gap*(rows-1))/rows;entries.forEach((entry,i)=>{const col=i%2,row=Math.floor(i/2),rx=x+pad+col*(cellW+gap),ry=y+pad+row*(cellH+gap);const selected=i===b.cursor;this.ctx.fillStyle=selected?'rgba(246,217,121,.22)':'rgba(255,255,255,.045)';this.ctx.fillRect(rx,ry,cellW,cellH);this.ctx.strokeStyle=selected?'#f6d979':'#42516a';this.ctx.strokeRect(rx+.5,ry+.5,cellW-1,cellH-1);const lines=String(entry[0]).split('\n');this.text(lines[0],rx+10,ry+10,b.menu==='call'?11:13,selected?'#fff':'#dce6ef');if(lines[1])this.text(lines[1],rx+10,ry+28,9,TYPE_COLORS[lines[1].split(' ')[0].toLowerCase()]||'#9fb2c3','left','normal');this.addRegion(rx,ry,cellW,cellH,entry[1],lines[0]);});}
-    render(){const c=this.ctx;c.setTransform(this.dpr,0,0,this.dpr,0,0);c.clearRect(0,0,this.w,this.h);this.regions=[];if(this.game.mode===GameMode.BATTLE)this.drawBattle();else{this.drawOverworldHUD();if(this.game.mode===GameMode.MENU)this.drawMenu();}this.drawDialogue();if(this.game.toast){this.frame(this.w/2-170,90,340,45,{bg:'rgba(12,20,31,.92)'});this.text(this.game.toast.text,this.w/2,104,12,this.game.toast.color||'#fff','center');}if(this.game.settings.highContrast){c.strokeStyle='#fff';c.lineWidth=2;c.strokeRect(1,1,this.w-2,this.h-2);}}
+    render(){const c=this.ctx;c.setTransform(this.dpr,0,0,this.dpr,0,0);c.clearRect(0,0,this.w,this.h);this.regions=[];if(this.game.mode===GameMode.BATTLE)this.drawBattle();else{this.drawOverworldHUD();if(this.game.mode===GameMode.MENU)(this.game.denView?this.drawDen():this.drawMenu());}this.drawDialogue();if(this.game.evo)this.drawEvolution();if(this.game.toast){this.frame(this.w/2-170,90,340,45,{bg:'rgba(12,20,31,.92)'});this.text(this.game.toast.text,this.w/2,104,12,this.game.toast.color||'#fff','center');}if(this.game.settings.highContrast){c.strokeStyle='#fff';c.lineWidth=2;c.strokeRect(1,1,this.w-2,this.h-2);}}
   }
 
   class PlayerController {
@@ -2529,7 +4475,7 @@
   class InputManager {
     constructor(game){this.game=game;this.keys=new Set();this.sprint=false;this.repeatTimer=null;this.activeDirection=null;this.bindKeyboard();this.bindTouch();}
     bindKeyboard(){window.addEventListener('keydown',e=>{const key=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright',' ','enter'].includes(key))e.preventDefault();if(e.repeat&&['z','x','enter','escape','m','p','t','i'].includes(key))return;this.keys.add(key);this.sprint=e.shiftKey||this.keys.has('shift');if(key==='arrowup'||key==='w')this.move('N');else if(key==='arrowdown'||key==='s')this.move('S');else if(key==='arrowleft'||key==='a')this.move('W');else if(key==='arrowright'||key==='d')this.move('E');else if(key==='z'||key==='enter'||key===' ')this.game.handleConfirm();else if(key==='x'||key==='escape')this.game.handleCancel();else if(key==='m'||key==='tab'){e.preventDefault();this.game.toggleMenu();}else if(key==='p')this.game.profiler.toggle();else if(key==='t')this.game.startWildEncounter(true);else if(key==='i')document.getElementById('map-import')?.click();});window.addEventListener('keyup',e=>{this.keys.delete(e.key.toLowerCase());this.sprint=this.keys.has('shift');});}
-    move(dir){if(this.game.mode===GameMode.BATTLE){this.game.battle?.navigate(dir);return;}if(this.game.mode===GameMode.MENU){this.game.navigateMenu(dir);return;}const v=CARDINALS[dir];this.game.player.tryMove(v.x,v.z);}
+    move(dir){if(this.game.evo)return;if(this.game.mode===GameMode.BATTLE){this.game.battle?.navigate(dir);return;}if(this.game.mode===GameMode.MENU){this.game.navigateMenu(dir);return;}const v=CARDINALS[dir];this.game.player.tryMove(v.x,v.z);}
     bindTouch(){const dpad=document.getElementById('touch-dpad');if(!dpad)return;const startRepeat=dir=>{this.activeDirection=dir;this.move(dir);clearInterval(this.repeatTimer);this.repeatTimer=setInterval(()=>this.move(dir),180);};const stop=()=>{this.activeDirection=null;clearInterval(this.repeatTimer);this.repeatTimer=null;};dpad.querySelectorAll('[data-dir]').forEach(btn=>{btn.addEventListener('pointerdown',e=>{e.preventDefault();btn.setPointerCapture?.(e.pointerId);startRepeat(btn.dataset.dir);});btn.addEventListener('pointerup',stop);btn.addEventListener('pointercancel',stop);btn.addEventListener('pointerleave',e=>{if(e.buttons===0)stop();});});document.getElementById('touch-a')?.addEventListener('pointerdown',e=>{e.preventDefault();this.game.haptics.trigger('button');this.game.handleConfirm();});document.getElementById('touch-b')?.addEventListener('pointerdown',e=>{e.preventDefault();this.game.haptics.trigger('button');this.game.handleCancel();});document.getElementById('touch-menu')?.addEventListener('pointerdown',e=>{e.preventDefault();this.game.toggleMenu();});}
   }
 
@@ -2569,9 +4515,14 @@
       const read=this.game.trainerReadScore();
       const verdict=band?(callAccuracy(band,odds.p)>=1?'Read good.':'Read off.'):'No call made.';
       const readLine=band?` Trainer Read ${read.score}.`:'';
-      this.game.announce(`True odds were ${pct} per cent. ${verdict}${readLine}`);
-      if(result.captured){this.game.audio.playCapture('click');this.game.haptics.trigger('capture');this.message=`True odds ${pct}%. ${verdict} Signal locked — ${this.enemy.name} joined your field archive.`;this.game.collection[this.enemy.speciesId]=(this.game.collection[this.enemy.speciesId]||0)+1;await this.game.delay(1500);this.end('CAPTURED');}
-      else{this.message=`True odds ${pct}%. ${verdict} ${this.enemy.name} burst out of the pod!`;await this.game.delay(1400);await this.executeEnemyOnly();}}
+      const revealLine=`True odds were ${pct} per cent. ${verdict}${readLine}`;
+      if(result.captured){this.game.audio.playCapture('click');this.game.haptics.trigger('capture');const placed=this.game.receiveCapture(this.enemy);this.message=`True odds ${pct}%. ${verdict} Signal locked — ${placed.line}`;
+        // ONE utterance. A second announce() in the same tick would replace
+        // the reveal before a screen reader ever spoke it — CI caught exactly
+        // that on a successful capture (§5.6: the odds are always announced).
+        this.game.announce(`${revealLine} ${placed.line}`);
+        await this.game.delay(1500);this.end('CAPTURED');}
+      else{this.message=`True odds ${pct}%. ${verdict} ${this.enemy.name} burst out of the pod!`;this.game.announce(`${revealLine} ${this.enemy.name} burst out of the pod!`);await this.game.delay(1400);await this.executeEnemyOnly();}}
     resolveOrder(playerMove,enemyMove){const a={mon:this.player,move:playerMove,isPlayer:true},b={mon:this.enemy,move:enemyMove,isPlayer:false};const pa=playerMove.priority||0,pb=enemyMove.priority||0;if(pa!==pb)return pa>pb?[a,b]:[b,a];const sa=this.player.effectiveStat('speed'),sb=this.enemy.effectiveStat('speed');if(sa!==sb)return sa>sb?[a,b]:[b,a];return this.rng.random()<.5?[a,b]:[b,a];}
     enemyChooseMove(){const usable=this.enemy.moves.filter(m=>m.currentPP>0);return usable.length?usable[this.rng.int(0,usable.length-1)]:MOVES.quick_jab;}
     async selectMove(index){if(this.busy)return;const move=this.player.moves[index];if(!move||move.currentPP<=0){this.message='That technique has no energy left.';this.game.audio.playUI('error');return;}this.busy=true;this.menu='main';const enemyMove=this.enemyChooseMove();const queue=this.resolveOrder(move,enemyMove);for(const action of queue){if(action.mon.currentHP<=0)continue;const defender=action.isPlayer?this.enemy:this.player;await this.executeAction(action.mon,defender,action.move,action.isPlayer);if(defender.currentHP<=0)break;}await this.afterTurn();}
@@ -2579,7 +4530,7 @@
     async executeAction(attacker,defender,move,isPlayer){const pre=this.field.preAction(attacker,this.rng);if(pre.message){this.message=pre.message;await this.game.delay(500);}if(!pre.canMove)return;move.currentPP=Math.max(0,(move.currentPP??move.pp)-1);this.message=`${attacker.name} used ${move.name}!`;this.game.audio.playEnergy(move.type);await this.game.delay(380);if(this.rng.random()*100>move.accuracy){this.message='The technique missed its mark.';this.game.audio.playUI('error');await this.game.delay(500);return;}if(move.category==='status'){await this.applyMoveEffect(attacker,defender,move);return;}const result=DamageEngine.calculate(attacker,defender,move,this.rng,this.field.weather);this.anim={target:isPlayer?'enemy':'player',shake:result.crit?1.4:0.8,recoil:true,flashTarget:isPlayer?'enemy':'player'};this.game.audio.playImpact(result.crit);this.game.haptics.trigger(result.effectiveness>1?'heavy':'light');defender.currentHP=Math.max(0,defender.currentHP-result.damage);this.message=`${defender.name} lost ${result.damage} HP.`;await this.game.delay(450);this.anim=null;if(result.crit){this.message='A critical resonance!';await this.game.delay(350);}if(result.effectiveness>1){this.message='The type pattern amplified the strike!';await this.game.delay(420);}else if(result.effectiveness===0){this.message='The type pattern cancelled the strike.';await this.game.delay(420);}else if(result.effectiveness<1){this.message='The type pattern softened the strike.';await this.game.delay(420);}if(move.effect&&this.rng.random()<(move.effect.chance||1))await this.applyMoveEffect(attacker,defender,move,true);}
     async applyMoveEffect(attacker,defender,move,silentIntro=false){const effect=move.effect;if(!effect)return;const target=effect.target==='self'?attacker:defender;if(effect.kind==='stage'){const old=target.stages[effect.stat]||0;target.stages[effect.stat]=clamp(old+effect.amount,-6,6);this.message=`${target.name}'s ${effect.stat} rose.`;this.game.audio.playUI('confirm');}else if(effect.kind==='status'||effect.kind==='chanceStatus'){if(target.status===StatusType.NONE){target.status=effect.status;if(effect.status===StatusType.SLEEP)target.sleepTurns=this.rng.int(1,3);this.message=`${target.name} gained ${effect.status.toUpperCase()} status.`;}else if(!silentIntro)this.message='The status pattern could not take hold.';}else if(effect.kind==='heal'){const amount=Math.max(1,Math.floor(target.stats.hp*effect.fraction));const healed=Math.min(amount,target.stats.hp-target.currentHP);target.currentHP+=healed;this.message=`${target.name} restored ${healed} HP.`;}await this.game.delay(500);}
     async afterTurn(){this.playerDisplayHP=this.player.currentHP;this.enemyDisplayHP=this.enemy.currentHP;if(this.enemy.currentHP<=0){await this.resolveVictory();return;}if(this.player.currentHP<=0){await this.resolveDefeat();return;}for(const log of this.field.processEnd([this.player,this.enemy])){this.message=log;await this.game.delay(480);if(this.enemy.currentHP<=0){await this.resolveVictory();return;}if(this.player.currentHP<=0){await this.resolveDefeat();return;}}this.state='MENU_SELECT';this.menu='main';this.cursor=0;this.message='Choose an action.';this.busy=false;}
-    async resolveVictory(){this.enemy.currentHP=0;this.enemyDisplayHP=0;this.message=`${this.enemy.name} dispersed from the field.`;await this.game.delay(650);const exp=Math.max(1,Math.floor(this.enemy.species.baseExpYield*this.enemy.level*(this.trainer?1.5:1)/7));this.message=`${this.player.name} gained ${exp} EXP.`;const progress=ProgressionEngine.award(this.player,exp);await this.game.delay(650);if(progress.levelsGained>0){this.game.audio.playUI('confirm');this.message=`${this.player.name} reached Lv${this.player.level}!`;await this.game.delay(850);}if(this.trainer){const npc=this.game.activeTrainerNPC;if(npc?.flag!=null)this.game.flags.set(npc.flag);this.game.inventory.prism_pod+=2;this.message=`${this.trainerName}: “Strong field reading. Take two Prism Pods.”`;await this.game.delay(900);}this.end('VICTORY');}
+    async resolveVictory(){this.enemy.currentHP=0;this.enemyDisplayHP=0;this.message=`${this.enemy.name} dispersed from the field.`;await this.game.delay(650);const exp=Math.max(1,Math.floor(this.enemy.species.baseExpYield*this.enemy.level*(this.trainer?1.5:1)/7));this.message=`${this.player.name} gained ${exp} EXP.`;const progress=ProgressionEngine.award(this.player,exp);await this.game.delay(650);if(progress.levelsGained>0){this.game.audio.playUI('confirm');this.message=`${this.player.name} reached Lv${this.player.level}!`;await this.game.delay(850);this.game.queueEvolutionCheck(this.player);}if(this.trainer){const npc=this.game.activeTrainerNPC;if(npc?.flag!=null)this.game.flags.set(npc.flag);this.game.inventory.prism_pod+=2;this.message=`${this.trainerName}: “Strong field reading. Take two Prism Pods.”`;await this.game.delay(900);}this.end('VICTORY');}
     async resolveDefeat(){this.playerDisplayHP=0;this.message=`${this.player.name} can no longer hold the field.`;await this.game.delay(800);// SEMH-safe: a Depths defeat returns you to THIS floor's entrance, healed —
       // not to the Vale, and with nothing taken off you.
       if(this.game.depths){this.end('DEFEAT');this.game.depthsRecover();return;}this.game.party.forEach(m=>m.healFull());this.game.player.teleport(10,17,0);this.end('DEFEAT');this.game.toastMessage('The Lodge array restored your partner.','#f6d979');}
@@ -2589,7 +4540,7 @@
 
   class EmberwildGame {
     constructor(){
-      this.version=APP_VERSION;this.mode=GameMode.BOOT;this.callHistory=[];this.charmTier=1;this.depthsRecord={deepest:0};this.depths=null;this.map=buildDemoMap();this.flags=new BitmaskFlags(256);this.rng=new DeterministicPRNG((Date.now()^0xa37e5d)>>>0);this.audio=new RetroAudioEngine();this.haptics=new HapticEngine();this.saveManager=new SaveManager();this.sprites=new SpriteFactory();this.inventory={prism_pod:6,bright_pod:0,field_tonic:3};this.collection={spriglet:1};this.settings={audio:true,reducedMotion:false,highContrast:false,touchControls:'auto',renderer:'auto'};this.playTime=0;this.steps=0;this.objective='Explore Prism Route and meet the Flower Plateau Warden.';this.toast=null;this.toastTimer=0;this.battle=null;this.activeTrainerNPC=null;
+      this.version=APP_VERSION;this.mode=GameMode.BOOT;this.callHistory=[];this.charmTier=1;this.depthsRecord={deepest:0};this.depths=null;this.den=[];this.nextUid=1;this.denView=null;this.evo=null;this.pendingEvolutions=[];this.evolutionEngine=new EmberEvolutionEngine({rules:EVOLUTION_RULES});this.map=buildDemoMap();this.flags=new BitmaskFlags(256);this.rng=new DeterministicPRNG((Date.now()^0xa37e5d)>>>0);this.audio=new RetroAudioEngine();this.haptics=new HapticEngine();this.saveManager=new SaveManager();this.sprites=new SpriteFactory();this.inventory={prism_pod:6,bright_pod:0,field_tonic:3};this.collection={spriglet:1};this.settings={audio:true,reducedMotion:false,highContrast:false,touchControls:'auto',renderer:'auto'};this.playTime=0;this.steps=0;this.objective='Explore Prism Route and meet the Flower Plateau Warden.';this.toast=null;this.toastTimer=0;this.battle=null;this.activeTrainerNPC=null;
       const spawn=this.map.entities.find(e=>e.type==='PLAYER_SPAWN')||{x:10,z:17,y:0,facing:'N'};
       this.party=[new Monster({speciesId:'spriglet',level:6,seed:0x4d415454})];
       this.npcs=this.map.entities.filter(e=>e.type!=='PLAYER_SPAWN').map(e=>new NPCActor(e,this.map));
@@ -2612,13 +4563,13 @@
     useSoftwareRenderer(){/* software renderer is the only renderer */}
     setRendererVisible(v){this.softwareRenderer.setVisible(v&&this.renderer===this.softwareRenderer);}
     loop(now){if(!this.running)return;const dt=Math.min(.05,(now-this.lastTime)/1000);this.lastTime=now;this.update(dt);this.render();requestAnimationFrame(t=>this.loop(t));}
-    update(dt){this.playTime+=dt;this.player.update(dt);for(const npc of this.npcs)npc.update(dt);if(this.battle)this.battle.update(dt);this.ui.update(dt);if(this.toast){this.toastTimer-=dt;if(this.toastTimer<=0)this.toast=null;}if(this.mode!==GameMode.BATTLE){this.timeOfDay=(0.56+(this.playTime/180))%1;this.renderer.update(dt);}this.profiler.update(this.renderer);this.updateSRStatus();}
+    update(dt){this.playTime+=dt;this.driveAmbience();if(this.evo)this.updateEvolution(dt);else if(this.pendingEvolutions.length&&this.mode===GameMode.OVERWORLD&&!this.ui.dialogue.active)this.maybeStartEvolution();this.player.update(dt);for(const npc of this.npcs)npc.update(dt);if(this.battle)this.battle.update(dt);this.ui.update(dt);if(this.toast){this.toastTimer-=dt;if(this.toastTimer<=0)this.toast=null;}if(this.mode!==GameMode.BATTLE){this.timeOfDay=(0.56+(this.playTime/180))%1;this.renderer.update(dt);}this.profiler.update(this.renderer);this.updateSRStatus();}
     render(){if(this.mode!==GameMode.BATTLE)this.renderer.render();this.ui.render();}
     updateSRStatus(){const sr=document.getElementById('sr-status');if(!sr)return;      // A deliberate announcement (the catch reveal) holds the live region for
       // a few seconds; otherwise the next frame would overwrite it before any
       // screen reader had finished speaking it.
       if(this.srHoldUntil&&performance.now()<this.srHoldUntil)return;const text=this.mode===GameMode.BATTLE?this.battle?.message:`${this.currentLocationName()}. ${this.objective}`;if(text&&sr.textContent!==text)sr.textContent=text;}
-    currentLocationName(){const c=this.map.getCell(this.player.grid.x,this.player.grid.z);if(c?.tags?.includes('interior'))return'Research Lodge';if(c?.tags?.includes('plateau'))return'Flower Plateau';if(c?.tags?.includes('bridge')||c?.tags?.includes('water'))return'Water Garden';return'Prism Route';}
+    currentLocationName(){if(this.depths)return 'The Depths';const c=this.map.getCell(this.player.grid.x,this.player.grid.z);if(c?.tags?.includes('interior'))return'Research Lodge';if(c?.tags?.includes('plateau'))return'Flower Plateau';if(c?.tags?.includes('bridge')||c?.tags?.includes('water'))return'Water Garden';return'Prism Route';}
     get timeOfDay(){return this._timeOfDay??0.56;}set timeOfDay(v){this._timeOfDay=v;}
     delay(ms){return sleep(this.settings.reducedMotion?Math.min(120,ms*.25):ms);}
     toastMessage(text,color='#fff'){this.toast={text,color};this.toastTimer=2.4;}
@@ -2631,21 +4582,22 @@
     checkTrainerSight(){if(this.mode!==GameMode.OVERWORLD)return;for(const npc of this.npcs){if(npc.type!=='TRAINER'||(npc.flag!=null&&this.flags.get(npc.flag)))continue;const dir=CARDINALS[npc.facing];for(let k=1;k<=npc.sight;k++){const x=npc.grid.x+dir.x*k,z=npc.grid.z+dir.z*k,cell=this.map.getCell(x,z);if(!cell||cell.surface===Surface.BLOCKED||cell.height!==npc.grid.y)break;if(x===this.player.grid.x&&z===this.player.grid.z){this.triggerTrainer(npc);return;}}}}
     async triggerTrainer(npc){if(this.mode!==GameMode.OVERWORLD)return;this.mode=GameMode.TRANSITION;npc.alertTimer=1;this.audio.playUI('confirm');await this.delay(450);npc.alertTimer=0;const goal={x:this.player.grid.x-CARDINALS[npc.facing].x,z:this.player.grid.z-CARDINALS[npc.facing].z};const path=this.pathfinder.findPath(npc.grid,goal).slice(1,3);for(const step of path){npc.beginStep(step,this.map);while(npc.state!=='IDLE')await sleep(16);}await this.ui.dialogue.show([`${npc.name}: “The plateau answers only to a steady signal.”`,`“Show me how your partner reads the field.”`],this);this.activeTrainerNPC=npc;const party=npc.party?.[0]||{speciesId:'voltwing',level:7};this.startBattle(new Monster({...party,seed:this.rng.int(1,0xffffffff)}),true,npc.name);}
     checkInteraction(){const v=CARDINALS[this.player.facing],tx=this.player.grid.x+v.x,tz=this.player.grid.z+v.z;const npc=this.entityAt(tx,tz,n=>n.type!=='ITEM');if(npc){if(npc.type==='DEPTHS_ENTRANCE'){this.ui.dialogue.show(['A cold seam in the rock breathes up at you.','You climb down into the Depths.'],this).then(()=>this.enterDepths());return true;}if(npc.type==='STAIRS_DOWN'){this.descend();return true;}if(npc.type==='STAIRS_UP'){if(this.depths&&this.depths.floorIndex>0)this.loadDepthsFloor(this.depths.floorIndex-1);else this.leaveDepths(false);return true;}if(npc.type==='FLOOR_EXIT'){this.leaveDepths(true);return true;}if(npc.type==='HEALING_POOL'){this.party.forEach(m=>m.healFull());this.save('AUTOSAVE');this.announce('The pool restores your party.');this.ui.dialogue.show(['Still water, faintly lit.','Your party is restored.'],this);return true;}if(npc.type==='LOOT'){this.collectDepthsLoot(npc);return true;}if(npc.type==='BOSS'||npc.type==='ENEMY'){this.startDepthsBattle(npc);return true;}if(npc.type==='HEALER'){this.party.forEach(m=>m.healFull());this.save('AUTOSAVE');this.ui.dialogue.show(npc.dialogue||['Your partner is restored.'],this);return true;}if(npc.type==='TRAINER'&&npc.flag!=null&&this.flags.get(npc.flag)){this.ui.dialogue.show([`${npc.name}: “Your signal held. Keep mapping the route.”`],this);return true;}this.ui.dialogue.show(npc.dialogue||[`${npc.name} nods.`],this);return true;}return false;}
-    handleConfirm(){this.audio.playUI('confirm');if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.confirm();return;}if(this.mode===GameMode.MENU){const items=this.getPauseMenuItems();this.executePauseItem(items[this.ui.menuIndex]);return;}if(this.mode===GameMode.OVERWORLD)this.checkInteraction();}
-    handleCancel(){if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.back();return;}if(this.mode===GameMode.MENU){this.toggleMenu();return;}this.audio.playUI();}
+    handleConfirm(){if(this.evo){this.skipEvolution();return;}this.audio.playUI('confirm');if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.confirm();return;}if(this.mode===GameMode.MENU&&this.denView){this.denKeyConfirm();return;}if(this.mode===GameMode.MENU){const items=this.getPauseMenuItems();this.executePauseItem(items[this.ui.menuIndex]);return;}if(this.mode===GameMode.OVERWORLD)this.checkInteraction();}
+    handleCancel(){if(this.evo){this.cancelEvolution();return;}if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.back();return;}if(this.mode===GameMode.MENU&&this.denView){this.closeDen();this.audio.playUI();return;}if(this.mode===GameMode.MENU){this.toggleMenu();return;}this.audio.playUI();}
     toggleMenu(){if(this.mode===GameMode.BATTLE||this.mode===GameMode.TRANSITION||this.ui.dialogue.active)return;if(this.mode===GameMode.MENU){this.mode=GameMode.OVERWORLD;return;}if(this.mode===GameMode.OVERWORLD){this.mode=GameMode.MENU;this.ui.menuIndex=0;this.audio.playUI();}}
-    navigateMenu(dir){const items=this.getPauseMenuItems();if(dir==='N'||dir==='W')this.ui.menuIndex=(this.ui.menuIndex-1+items.length)%items.length;else this.ui.menuIndex=(this.ui.menuIndex+1)%items.length;this.audio.playUI();}
+    navigateMenu(dir){if(this.denView){this.denKeyMove(dir);return;}const items=this.getPauseMenuItems();if(dir==='N'||dir==='W')this.ui.menuIndex=(this.ui.menuIndex-1+items.length)%items.length;else this.ui.menuIndex=(this.ui.menuIndex+1)%items.length;this.audio.playUI();}
     getPauseMenuItems(){return[
       {label:'Save field state',detail:'CRC32 + double buffer',action:'SAVE'},
       {label:'Load last manual save',detail:this.saveManager.hasSave('SLOT_1')?'available':'empty',action:'LOAD'},
+      {label:'Emberkin Den',detail:`party ${this.party.length} · resting ${this.den.length}`,action:'DEN'},
       {label:`Audio: ${this.settings.audio?'ON':'OFF'}`,detail:'procedural APU',action:'AUDIO'},
       {label:`Renderer: ${this.renderer.kind}`,detail:'offline software 2.5D',action:'RENDERER'},
       {label:'Open map JSON',detail:'editor-compatible',action:'IMPORT'},
       {label:'Trigger test encounter',detail:'vertical-slice QA',action:'TEST_BATTLE'},
       {label:'Close field kit',detail:'M / Esc',action:'CLOSE'}
     ];}
-    executePauseItem(item){if(!item)return;switch(item.action){case'SAVE':this.save('SLOT_1');this.toastMessage('Manual save verified.','#71d5c3');break;case'LOAD':{const r=this.load('SLOT_1');this.toastMessage(r.success?'Manual save restored.':'No valid manual save.');break;}case'AUDIO':this.settings.audio=!this.settings.audio;this.audio.setEnabled(this.settings.audio);this.toastMessage(`Audio ${this.settings.audio?'on':'off'}.`);break;case'RENDERER':this.toastMessage('Offline software 2.5D renderer — the only renderer.');break;case'IMPORT':document.getElementById('map-import')?.click();break;case'TEST_BATTLE':this.mode=GameMode.OVERWORLD;this.startWildEncounter(true);break;case'CLOSE':this.mode=GameMode.OVERWORLD;break;}}
-    handleUIAction(action){if(typeof action==='object'){if(action.type==='MENU_SELECT'){this.ui.menuIndex=action.index;this.executePauseItem(this.getPauseMenuItems()[action.index]);}else if(action.type==='BATTLE_MOVE')this.battle?.selectMove(action.index);else if(action.type==='BATTLE_CALL')this.battle?.commitCall(action.band);return;}switch(action){case'CONFIRM':this.handleConfirm();break;case'BATTLE_FIGHT':this.battle?.showFight();break;case'BATTLE_BAG':this.battle?.showBag();break;case'BATTLE_TEAM':this.battle?.showTeam();break;case'BATTLE_RUN':this.battle?.tryRun();break;case'BATTLE_POD':this.battle?.usePod();break;case'BATTLE_TONIC':this.battle?.useTonic();break;case'BATTLE_BACK':this.battle?.back();break;}}
+    executePauseItem(item){if(!item)return;switch(item.action){case'SAVE':this.save('SLOT_1');this.toastMessage('Manual save verified.','#71d5c3');break;case'LOAD':{const r=this.load('SLOT_1');this.toastMessage(r.success?'Manual save restored.':'No valid manual save.');break;}case'AUDIO':this.settings.audio=!this.settings.audio;this.audio.setEnabled(this.settings.audio);this.toastMessage(`Audio ${this.settings.audio?'on':'off'}.`);break;case'RENDERER':this.toastMessage('Offline software 2.5D renderer — the only renderer.');break;case'DEN':this.openDen();break;case'IMPORT':document.getElementById('map-import')?.click();break;case'TEST_BATTLE':this.mode=GameMode.OVERWORLD;this.startWildEncounter(true);break;case'CLOSE':this.mode=GameMode.OVERWORLD;break;}}
+    handleUIAction(action){if(typeof action==='object'){if(String(action.type||'').indexOf('DEN_')===0){this.denAction(action);return;}if(action.type==='MENU_SELECT'){this.ui.menuIndex=action.index;this.executePauseItem(this.getPauseMenuItems()[action.index]);}else if(action.type==='BATTLE_MOVE')this.battle?.selectMove(action.index);else if(action.type==='BATTLE_CALL')this.battle?.commitCall(action.band);return;}switch(action){case'CONFIRM':this.handleConfirm();break;case'BATTLE_FIGHT':this.battle?.showFight();break;case'BATTLE_BAG':this.battle?.showBag();break;case'BATTLE_TEAM':this.battle?.showTeam();break;case'BATTLE_RUN':this.battle?.tryRun();break;case'BATTLE_POD':this.battle?.usePod();break;case'BATTLE_TONIC':this.battle?.useTonic();break;case'BATTLE_BACK':this.battle?.back();break;}}
     startWildEncounter(force=false,encounter=null){if(this.mode!==GameMode.OVERWORLD||this.player.motionState!==MoveState.IDLE)return false;const e=encounter||{speciesId:this.rng.pick(Object.keys(SPECIES).filter(id=>id!=='spriglet')),level:this.rng.int(4,7)};this.startBattle(new Monster({speciesId:e.speciesId,level:e.level,seed:this.rng.int(1,0xffffffff)}),false,null);return true;}
     startBattle(enemy,trainer=false,trainerName=null){this.battle=new BattleController(this);this.battle.start(enemy,trainer,trainerName);}
     collectDepthsLoot(npc){
@@ -2663,8 +4615,8 @@
       // engine. mkFighter equivalent runs untouched afterwards.
       const floor=(this.depths?this.depths.floorIndex:0)+1;
       const boss=npc.type==='BOSS';
-      const pool=Object.keys(SPECIES).filter(id=>id!=='spriglet');
-      const speciesId=this.rng.pick(pool);
+      const pool=Object.keys(SPECIES).filter(id=>id!=='spriglet'&&id!=='pyrelume');
+      const speciesId=npc.speciesId||this.rng.pick(pool);
       const level=Math.max(3,Math.min(40,(boss?6:3)+floor*2+this.rng.int(0,2)));
       this.npcs=this.npcs.filter(n=>n!==npc);
       const enemy=new Monster({speciesId,level,seed:this.rng.int(1,0xffffffff)});
@@ -2705,6 +4657,17 @@
       const entry=schema.entities.find(e=>e.type==='PLAYER_SPAWN')||schema.entities.find(e=>e.type==='STAIRS_UP')||{x:1,z:1,y:0,facing:'S'};
       this.depthsEntry={x:entry.x,z:entry.z,y:entry.y||0,facing:entry.facing||'S'};
       this.npcs=schema.entities.filter(e=>e.type!=='PLAYER_SPAWN').map(e=>new NPCActor(e,this.map));
+      // What you see is what you fight: each ENEMY/BOSS binds a species
+      // from its own id, drawn as the Depths variant in the corridor and
+      // spawned as the same species when the battle starts.
+      const pool=Object.keys(SPECIES).filter(id=>id!=='spriglet'&&id!=='pyrelume');
+      for(const n of this.npcs){
+        if(n.type==='ENEMY'||n.type==='BOSS'){
+          let h=0;const idStr=String(n.id||'x');
+          for(let i=0;i<idStr.length;i++)h=(h*31+idStr.charCodeAt(i))>>>0;
+          n.speciesId=pool[h%pool.length];
+        }
+      }
       this.player.map=this.map;
       this.player.teleport(entry.x,entry.z,entry.y||0);
       this.player.facing=entry.facing||'S';
@@ -2749,6 +4712,206 @@
       this.announce('You were carried back to the floor entrance. Your party is restored. Nothing was lost.');
       this.save('AUTOSAVE');
     }
+    // ---------------- AMBIENCE ----------------
+    currentRegionKey(){
+      if(this.depths)return 'depths';
+      const n=this.currentLocationName();
+      return n==='Water Garden'?'water':n==='Research Lodge'?'lodge':n==='Flower Plateau'?'plateau':'vale';
+    }
+    // One driver, once per frame: the renderer's grade target, the ember
+    // motes zone, and (Phase E) the ambient audio bed all follow the same
+    // region key, so the world changes as one thing rather than three.
+    driveAmbience(){
+      const key=this.currentRegionKey();
+      this.softwareRenderer.setRegionGrade(key,this.depths?this.depths.floorIndex:0);
+      const seam=!this.depths&&this.npcs.some(n=>n.type==='DEPTHS_ENTRANCE'&&Math.max(Math.abs(n.grid.x-this.player.grid.x),Math.abs(n.grid.z-this.player.grid.z))<=6);
+      EWFx.set(this.depths?'depths':(seam?'seam':null));
+      this.audio.setAmbience(this.depths?'depths':'vale');
+      this.audio.setBedDucked(this.mode===GameMode.BATTLE||this.mode===GameMode.MENU);
+    }
+    refreshMotion(){
+      // Re-evaluate every registered family when the OS preference flips.
+      const zone=EWFx.zone; EWFx.zone='__stale__'; EWFx.set(zone==='__stale__'?null:zone);
+    }
+    // ---------------- EVOLUTION ----------------
+    queueEvolutionCheck(mon){
+      const rule=this.evolutionEngine.checkEligibility(mon,{type:EWEngineParts.EvolutionMethod.LEVEL_UP});
+      if(rule&&!this.pendingEvolutions.some(p=>p.mon===mon))this.pendingEvolutions.push({mon,rule});
+    }
+    maybeStartEvolution(){
+      if(this.evo||!this.pendingEvolutions.length||this.mode!==GameMode.OVERWORLD)return false;
+      const {mon,rule}=this.pendingEvolutions.shift();
+      // Re-check: the party may have changed since the battle.
+      if(!this.party.includes(mon))return this.maybeStartEvolution();
+      const seq=new EWEngineParts.EvolutionSequence(this.evolutionEngine);
+      const sourceId=mon.speciesId;
+      seq.start(mon,rule);
+      // §4 — reduced motion is not optional here. The RM route is a static
+      // crossfade reveal: same information, no zoom, no pulse, no burst.
+      // 'evolution' is a registered EWMotion family with this call site.
+      const reduced=!EWMotion.active('evolution');
+      this.evo={seq,mon,sourceId,targetId:rule.target,reduced,drawnMix:0,done:false,linesShown:false};
+      this.announce(`What's this? ${mon.name} is changing! Press B to wait, A to hurry along.`);
+      this.audio.playCapture('throw');
+      return true;
+    }
+    updateEvolution(dt){
+      const e=this.evo;if(!e)return;
+      const snap=e.seq.update(dt);
+      // The engine pulse crossfade reaches ~17 Hz at the end of the phase.
+      // Drawn as a raw alternation that is a flash risk, so the DRAWN mix
+      // follows the sequence through a low-pass: the census gate is the
+      // authority and this is the softening the brief licenses. The engine
+      // still applies the evolution identically — only ink is smoothed.
+      const target=e.reduced?(snap.state==='zoom'?0:snap.state==='pulse'?0.35*snap.phaseProgress:1):snap.pulseMix;
+      const alpha=1-Math.exp(-dt/0.16);
+      e.drawnMix+=(target-e.drawnMix)*alpha;
+      if(snap.state==='reveal'&&!e.linesShown){
+        e.linesShown=true;
+        const learned=snap.result&&snap.result.learned;
+        this.announce(`${SPECIES[e.sourceId].name} evolved into ${e.mon.name}!`+(learned?` ${e.mon.name} learned ${learned}!`:''));
+        this.audio.playCapture('click');
+      }
+      if(snap.state==='cancelled'&&!e.linesShown){e.linesShown=true;this.announce(`${e.mon.name} paused, and stayed just as they are. That's fine too.`);}
+      if(!e.seq.active){
+        this.evo=null;this.save('AUTOSAVE');
+        // let any further pending evolutions follow on
+        setTimeout(()=>this.maybeStartEvolution(),400);
+      }
+    }
+    // A skip is not a cancel: the result must be identical whether the
+    // player watches, skips, or runs reduced motion. The engine's own
+    // update loop is fast-forwarded so BURST still applies the change.
+    skipEvolution(){
+      const e=this.evo;if(!e)return;
+      let guard=0;
+      while(e.seq.active&&guard++<80)e.seq.update(0.25);
+      this.updateEvolution(0.001);
+    }
+    cancelEvolution(){const e=this.evo;if(e&&e.seq.canCancel())e.seq.requestCancel();}
+    // Gate seam: start a real Cindrel->Pyrelume without grinding to Lv16.
+    startEvolutionForGate(){
+      const mon=this.party.find(m=>m.speciesId==='cindrel')||this.party[0];
+      if(mon.speciesId!=='cindrel')return false;
+      const oldMax=mon.stats.hp;mon.level=16;mon.stats=mon.calculateStats();mon.currentHP=Math.max(1,Math.min(mon.stats.hp,mon.currentHP+(mon.stats.hp-oldMax)));
+      this.queueEvolutionCheck(mon);
+      return this.maybeStartEvolution();
+    }
+    // ---------------- THE DEN ----------------
+    // Hostile-save posture: every record is validated individually and a
+    // damaged one costs only itself. Duplicate uids (a tampered save
+    // cloning a creature into party and Den at once) are REPAIRED by
+    // reassigning the copy a fresh uid — nothing a pupil owns is ever
+    // deleted to satisfy bookkeeping.
+    restoreDen(d){
+      this.nextUid=Number.isFinite(d.nextUid)?Math.max(1,Math.trunc(d.nextUid)):1;
+      const raw=Array.isArray(d.den)?d.den:[];
+      let dropped=0;
+      const kept=[];
+      for(const r of raw){ if(typeof r==='string'&&EWDen.validateRecord(r))kept.push(r); else dropped++; }
+      // uid ceiling first, so repairs cannot collide with future captures
+      let maxSeen=0;
+      this.party.forEach(m=>{ if(Number.isFinite(m.uid))maxSeen=Math.max(maxSeen,m.uid); });
+      kept.forEach(r=>{ const i=EWDen.inspect(r); if(i&&Number.isFinite(i.uid))maxSeen=Math.max(maxSeen,i.uid); });
+      this.nextUid=Math.max(this.nextUid,maxSeen+1);
+      const seen=new Set();
+      this.party.forEach(m=>{ if(!m.uid||seen.has(m.uid))m.uid=this.nextUid++; seen.add(m.uid); });
+      this.den=kept.map(r=>{
+        const info=EWDen.inspect(r);
+        if(!info){ dropped++; return null; }
+        if(info.uid&&!seen.has(info.uid)){ seen.add(info.uid); return r; }
+        const mon=EWDen.toMonster(r);
+        if(!mon){ dropped++; return null; }
+        mon.uid=this.nextUid++; seen.add(mon.uid);
+        return EWDen.pack(mon);
+      }).filter(Boolean);
+      if(dropped>0)this.toastMessage(`${dropped} Den record${dropped===1?'':'s'} couldn't be woken.`,'#ffce7c');
+    }
+    assignUid(mon){ if(!mon.uid)mon.uid=this.nextUid++; return mon; }
+    // Every capture has a home. Party first; a full party sends the new
+    // arrival to rest in the Den. The Den's browse capacity is soft for
+    // captures — a pupil's creature is never refused, never lost.
+    receiveCapture(mon){
+      this.assignUid(mon);
+      if(typeof mon.resetBattleState==='function')mon.resetBattleState();
+      this.collection[mon.speciesId]=(this.collection[mon.speciesId]||0)+1;
+      if(this.party.length<6){ this.party.push(mon); return { where:'party', line:`${mon.name} joined your party.` }; }
+      try{ this.den.push(EWDen.pack(mon)); return { where:'den', line:`${mon.name} was sent home to rest in the Den.` }; }
+      catch(err){ this.party.push(mon); return { where:'party', line:`${mon.name} squeezed into your party.` }; }
+    }
+    // Spec transaction rules, kept: encode BEFORE the party changes;
+    // decode BEFORE the Den changes; the last creature who can still stand
+    // never leaves the party.
+    denDeposit(partyIndex){
+      const mon=this.party[partyIndex];
+      if(!mon)return{ok:false,line:'No one is standing there.'};
+      if(this.party.length<=1)return{ok:false,line:'Your last partner stays with you.'};
+      const conscious=this.party.filter(m=>m.currentHP>0).length;
+      if(mon.currentHP>0&&conscious<=1)return{ok:false,line:'Someone has to lead the way — they stay with you.'};
+      if(this.den.length>=EWDen.CAPACITY)return{ok:false,line:'The Den is full and cosy as it is.'};
+      let record;
+      try{ record=EWDen.pack(mon); }catch(err){ return{ok:false,line:'The Den could not settle them just now.'}; }
+      this.party.splice(partyIndex,1);
+      this.den.push(record);
+      this.save('AUTOSAVE');
+      return{ok:true,line:`${mon.name} is resting in the Den.`};
+    }
+    denWithdraw(denIndex){
+      if(this.party.length>=6)return{ok:false,line:'Your party is full — settle someone into the Den first.'};
+      const record=this.den[denIndex];
+      if(record===undefined)return{ok:false,line:'That nook is empty.'};
+      const mon=EWDen.toMonster(record);
+      if(!mon)return{ok:false,line:'That record could not be woken.'};
+      this.assignUid(mon);
+      this.den.splice(denIndex,1);
+      this.party.push(mon);
+      this.save('AUTOSAVE');
+      return{ok:true,line:`${mon.name} rejoined your party, rested and ready.`};
+    }
+    denSwap(partyIndex,denIndex){
+      const mon=this.party[partyIndex];
+      const record=this.den[denIndex];
+      if(!mon||record===undefined)return{ok:false,line:'Nothing to trade places with.'};
+      const incoming=EWDen.toMonster(record);
+      if(!incoming)return{ok:false,line:'That record could not be woken.'};
+      // The swap must leave someone standing.
+      const consciousAfter=this.party.filter((m,i)=>i!==partyIndex&&m.currentHP>0).length+(incoming.currentHP>0?1:0);
+      if(consciousAfter<1)return{ok:false,line:'That trade would leave no one to lead the way.'};
+      let record2;
+      try{ record2=EWDen.pack(mon); }catch(err){ return{ok:false,line:'The Den could not settle them just now.'}; }
+      this.assignUid(incoming);
+      this.party[partyIndex]=incoming;
+      this.den[denIndex]=record2;
+      this.save('AUTOSAVE');
+      return{ok:true,line:`${incoming.name} rejoined the party; ${mon.name} is resting in the Den.`};
+    }
+    denKeyMove(dir){const v=this.denView;const count=v.tab==='party'?6:6;if(dir==='N')v.cursor=(v.cursor-1+count)%count;else if(dir==='S')v.cursor=(v.cursor+1)%count;else if(dir==='W'||dir==='E'){v.tab=v.tab==='party'?'den':'party';v.cursor=0;}this.audio.playUI();}
+    denKeyConfirm(){const v=this.denView;this.denAction({type:'DEN_ROW',list:v.tab,index:v.cursor});}
+    openDen(){ this.denView={tab:'party',cursor:0,page:0,sel:null,line:'Tap a creature, then tap where it should go.'}; this.mode=GameMode.MENU; }
+    closeDen(){ this.denView=null; }
+    denAction(action){
+      const v=this.denView; if(!v)return;
+      const pages=Math.max(1,Math.ceil(this.den.length/6));
+      if(action.type==='DEN_CLOSE'){ this.closeDen(); this.audio.playUI(); return; }
+      if(action.type==='DEN_TAB'){ v.tab=action.tab; v.cursor=0; this.audio.playUI(); return; }
+      if(action.type==='DEN_PAGE'){ v.page=(v.page+action.dir+pages)%pages; this.audio.playUI(); return; }
+      if(action.type==='DEN_ROW'){
+        const idx=action.list==='den'?v.page*6+action.index:action.index;
+        if(action.list==='party'&&!this.party[idx]&&v.sel&&v.sel.list==='den'){ const r=this.denWithdraw(v.sel.index); v.line=r.line; if(r.ok)v.sel=null; this.audio.playUI(r.ok?'confirm':'error'); return; }
+        if(action.list==='den'&&idx>=this.den.length&&v.sel&&v.sel.list==='party'){ const r=this.denDeposit(v.sel.index); v.line=r.line; if(r.ok)v.sel=null; this.audio.playUI(r.ok?'confirm':'error'); return; }
+        if(!v.sel){ if((action.list==='party'&&this.party[idx])||(action.list==='den'&&idx<this.den.length)){ v.sel={list:action.list,index:idx}; v.line='Now tap where they should go.'; this.audio.playUI(); } return; }
+        if(v.sel.list===action.list){ v.sel={list:action.list,index:idx}; this.audio.playUI(); return; }
+        const r=v.sel.list==='party'
+          ?(idx<this.den.length?this.denSwap(v.sel.index,idx):this.denDeposit(v.sel.index))
+          :(this.party[idx]?this.denSwap(idx,v.sel.index):this.denWithdraw(v.sel.index));
+        v.line=r.line; if(r.ok)v.sel=null; this.audio.playUI(r.ok?'confirm':'error'); return;
+      }
+      if(action.type==='DEN_ACT'){
+        if(!v.sel){ v.line='Tap a creature first.'; return; }
+        const r=v.sel.list==='party'?this.denDeposit(v.sel.index):this.denWithdraw(v.sel.index);
+        v.line=r.line; if(r.ok)v.sel=null; this.audio.playUI(r.ok?'confirm':'error'); return;
+      }
+    }
     // §5 — the Trainer Read ledger. Kept on the game rather than the battle
     // so it survives an encounter ending, and saved with everything else.
     recordCall(band,p){if(!Array.isArray(this.callHistory))this.callHistory=[];this.callHistory.push({band,p});
@@ -2757,9 +4920,9 @@
     trainerReadScore(){return trainerRead(this.callHistory||[]);}
     // §5.6 / G11 — every reveal is announced, not just drawn on a canvas.
     announce(text,holdMs=6000){const sr=document.getElementById('sr-status');if(sr)sr.textContent=String(text);this.srHoldUntil=performance.now()+holdMs;}
-    serialize(){return{version:SAVE_SCHEMA_VERSION,appVersion:this.version,timestamp:Date.now(),playTimeSeconds:Math.floor(this.playTime),player:{x:this.player.grid.x,z:this.player.grid.z,y:this.player.grid.y,facing:this.player.facing},party:this.party.map(m=>m.toJSON()),inventory:{...this.inventory},collection:{...this.collection},flags:this.flags.exportArray(),settings:{...this.settings},steps:this.steps,callHistory:(this.callHistory||[]).slice(-200),charmTier:this.charmTier||1,depthsRecord:this.depthsRecord||{deepest:0}};}
+    serialize(){return{version:SAVE_SCHEMA_VERSION,appVersion:this.version,timestamp:Date.now(),playTimeSeconds:Math.floor(this.playTime),player:{x:this.player.grid.x,z:this.player.grid.z,y:this.player.grid.y,facing:this.player.facing},party:this.party.map(m=>m.toJSON()),inventory:{...this.inventory},collection:{...this.collection},flags:this.flags.exportArray(),settings:{...this.settings},steps:this.steps,callHistory:(this.callHistory||[]).slice(-200),charmTier:this.charmTier||1,depthsRecord:this.depthsRecord||{deepest:0},den:this.den.slice(),nextUid:this.nextUid,denFingerprint:EWDen.codec.registryFingerprint};}
     save(slot='SLOT_1'){const result=this.saveManager.write(slot,this.serialize());this.updateContinueButton();return result;}
-    load(slot='SLOT_1'){const result=this.saveManager.read(slot);if(!result.success)return result;const d=result.data;try{if(d.player)this.player.teleport(d.player.x,d.player.z,d.player.y),this.player.facing=d.player.facing||'N';if(Array.isArray(d.party)&&d.party.length)this.party=d.party.map(m=>new Monster(m));this.inventory={prism_pod:6,field_tonic:3,...d.inventory};this.collection={...d.collection};this.flags.importArray(d.flags);this.settings={...this.settings,...d.settings};this.audio.setEnabled(this.settings.audio);this.playTime=d.playTimeSeconds||0;this.steps=d.steps||0;this.callHistory=Array.isArray(d.callHistory)?d.callHistory.filter(e=>e&&typeof e.p==='number'):[];this.charmTier=typeof d.charmTier==='number'&&isFinite(d.charmTier)?d.charmTier:1;this.depthsRecord=(d.depthsRecord&&typeof d.depthsRecord.deepest==='number'&&isFinite(d.depthsRecord.deepest))?{deepest:Math.max(0,Math.trunc(d.depthsRecord.deepest))}:{deepest:0};document.body.classList.toggle('high-contrast',this.settings.highContrast);return{success:true};}catch(error){return{success:false,error:error.message};}}
+    load(slot='SLOT_1'){const result=this.saveManager.read(slot);if(!result.success)return result;const d=result.data;try{if(d.player)this.player.teleport(d.player.x,d.player.z,d.player.y),this.player.facing=d.player.facing||'N';if(Array.isArray(d.party)&&d.party.length)this.party=d.party.map(m=>new Monster(m));this.inventory={prism_pod:6,field_tonic:3,...d.inventory};this.collection={...d.collection};this.flags.importArray(d.flags);this.settings={...this.settings,...d.settings};this.audio.setEnabled(this.settings.audio);this.playTime=d.playTimeSeconds||0;this.steps=d.steps||0;this.callHistory=Array.isArray(d.callHistory)?d.callHistory.filter(e=>e&&typeof e.p==='number'):[];this.charmTier=typeof d.charmTier==='number'&&isFinite(d.charmTier)?d.charmTier:1;this.depthsRecord=(d.depthsRecord&&typeof d.depthsRecord.deepest==='number'&&isFinite(d.depthsRecord.deepest))?{deepest:Math.max(0,Math.trunc(d.depthsRecord.deepest))}:{deepest:0};this.restoreDen(d);document.body.classList.toggle('high-contrast',this.settings.highContrast);return{success:true};}catch(error){return{success:false,error:error.message};}}
     loadCustomMap(payload){this.map.importSchema(payload);const spawn=this.map.entities.find(e=>e.type==='PLAYER_SPAWN')||{x:1,z:1,y:0,facing:'S'};this.npcs=this.map.entities.filter(e=>e.type!=='PLAYER_SPAWN').map(e=>new NPCActor(e,this.map));this.player.map=this.map;this.player.teleport(spawn.x,spawn.z,spawn.y);this.player.facing=spawn.facing||'S';this.pathfinder=new AStarPathfinder(this.map,(x,z)=>this.isOccupied(x,z));this.renderer=this.softwareRenderer;this.softwareRenderer.fitToMap(this.map);this.mode=GameMode.OVERWORLD;}
   }
 
@@ -2773,6 +4936,10 @@
   // same score out, no globals, no clock, no RNG. The harness scores against
   // this exact function rather than a copy of it.
   window.__EMBERWILD_DEPTHS__ = EWDepths;
+  window.__EMBERWILD_DEN__ = EWDen;
+  window.__EMBERWILD_FX__ = EWFx;
+  window.__EMBERWILD_MOTION__ = EWMotion;
+  window.__EMBERWILD_PARTS__ = EWEngineParts;
   window.__EMBERWILD_BRIDGE__ = EWDepthsBridge;
   window.EW = Object.freeze({
     trainerRead,
