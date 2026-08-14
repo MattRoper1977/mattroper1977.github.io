@@ -211,9 +211,20 @@ async function tabReach(page, ids) {
     // /rallyvector3d/, three .chassis-card on /relicforge/) yields the same
     // descriptor on consecutive presses; the walk read that as a cycle and
     // stopped before it ever reached the exit, then reported those three exits
-    // unreachable. They are reachable, at presses 14, 27 and 8. The check
+    // unreachable. They are reachable, at presses 14, 27 and 12. The check
     // written to replace a vacuous proxy had a false negative of its own, and
     // only a reproduction showed it.
+    //
+    // /relicforge/ read 8 here until it was re-measured, and the difference is
+    // not a typo worth silently fixing: the number is TOUCH-CAPABILITY
+    // dependent, not viewport dependent. At 390x844 with hasTouch true it is
+    // 12; with hasTouch false, and at 1440x900, it is 8. Four .touch-button
+    // controls - #touch-fire, #touch-utility, #touch-dash, #touch-pause - sit
+    // in the DOM either way but only enter the tab order under touch, at
+    // presses 8-11. Every context below is created with hasTouch: true, so 12
+    // is the number this file actually asserts. /apexpool/ and
+    // /rallyvector3d/ measure 14 and 27 with touch on or off, which is why
+    // only relicforge's row was ever wrong.
     const where = await page.evaluate(() => {
       const a = document.activeElement;
       if (!a || a === document.body) return { id: null, repeat: false };
