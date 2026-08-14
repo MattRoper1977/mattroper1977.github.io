@@ -114,7 +114,11 @@ def head_lines(*, title: str, description: str, path: str) -> list[str]:
                 separators=(",", ":"),
             ),
             "</script></head>",
-            '<body class="mbm-hub-page" data-mbm-mailing-footer="off">',
+            # adult-features="on" is the opt-in the fail-closed default now
+            # requires; mailing-footer="off" is the narrowing these two hubs
+            # already carried, and it still applies on top of it. Both hubs are
+            # declared in data/adult-surfaces.json.
+            '<body class="mbm-hub-page" data-mbm-adult-features="on" data-mbm-mailing-footer="off">',
             '<a class="skip" href="#main">Skip to content</a>',
         ),
     ]

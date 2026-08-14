@@ -100,8 +100,25 @@
      of games/lessons. It always points at a real route. When Supabase is not
      configured the route explains that safely; it never creates a local
      password as a fallback. */
+  /* Fail-closed, and deliberately so. This used to read !=='off', which meant
+     every page in the estate got the account and mailing affordances unless it
+     remembered to opt out - and exactly one page ever did. A page that forgot
+     the marker got a sign-in link in front of whoever was reading it, silently,
+     with nothing failing anywhere.
+
+     The default is now the other way round. Only 'on' allows them; absent,
+     misspelt, mangled by a renderer or simply forgotten all read as no. The
+     cost of a mistake becomes a missing link on an adult page, which somebody
+     reports, instead of a sign-in link on a child's page, which nobody sees.
+
+     Which pages may say 'on' is declared in data/adult-surfaces.json and
+     asserted against the tree by verify_adult_surfaces.py. It is not read here:
+     this file must work from file:// with no fetch, and a page cannot be
+     trusted to describe itself anyway - the gate is what makes the marker
+     honest. Note this is the same attribute the estate already had, with its
+     default inverted, not a new marker convention. */
   function adultFeaturesAllowed(){
-    return !doc.body||doc.body.getAttribute('data-mbm-adult-features')!=='off';
+    return !!doc.body&&doc.body.getAttribute('data-mbm-adult-features')==='on';
   }
   function accountTargets(){
     var links=[];

@@ -1,0 +1,94 @@
+name: Adult-affordance boundary is fail-closed
+
+# assets/mbm-platform.js injects the account link, the create-account link, the
+# mailing link and the footer mailing CTA into any page it considers adult. It
+# used to consider every page adult and suppress them only where a page said
+# data-mbm-adult-features="off" - and exactly one page in the estate ever said
+# it. The default is inverted now: only "on" allows them.
+#
+# Two legs, because one of them cannot see the thing that matters.
+#
+#   static   the record, the marker on every page, and the mechanism itself,
+#            with seven mutation controls
+#   browser  what a browser actually renders. The affordances are in no page's
+#            source - they are created after load - so a static gate is blind
+#            to them. That is not hypothetical: the chooser's own ruling, "no
+#            /account/ or /members/ route at all", passed its static gate for
+#            as long as it existed while the rendered page carried an injected
+#            Account anchor. The browser leg is what caught it.
+#
+# The schedule is not decoration. The path filters below can only fire on a
+# change to a file this repository owns, and the failure mode being guarded
+# against is a page that quietly stops carrying its marker - which can arrive
+# through a renderer change, a merge, or a dependency of a dependency. A weekly
+# run means the boundary is re-measured whether or not anybody touched a file
+# the filter happens to name.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.html'
+      - 'assets/mbm-platform.js'
+      - 'data/adult-surfaces.json'
+      - 'data/support-pill.json'
+      - 'tools/render_audience_homepages.py'
+      - 'tools/render_discovery_hubs.py'
+      - 'tools/verify_adult_surfaces.py'
+      - 'tools/verify_adult_surfaces_browser.py'
+      - 'tools/verify_games_audience_faces.py'
+      - '.github/workflows/verify-adult-surfaces.yml'
+  pull_request:
+    paths:
+      - '**/*.html'
+      - 'assets/mbm-platform.js'
+      - 'data/adult-surfaces.json'
+      - 'data/support-pill.json'
+      - 'tools/render_audience_homepages.py'
+      - 'tools/render_discovery_hubs.py'
+      - 'tools/verify_adult_surfaces.py'
+      - 'tools/verify_adult_surfaces_browser.py'
+      - 'tools/verify_games_audience_faces.py'
+      - '.github/workflows/verify-adult-surfaces.yml'
+  schedule:
+    # 06:40 Mondays UTC. Off the hour on purpose: GitHub sheds scheduled runs at
+    # popular minutes, and a safeguarding gate that silently does not run is
+    # worse than one that runs late.
+    - cron: '40 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: adult-surfaces-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    name: Record, markers and mechanism
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fail-closed default, declaration matches the tree, controls run
+        run: python3 tools/verify_adult_surfaces.py --self-test
+
+  browser:
+    name: What a browser actually renders
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Playwright
+        run: |
+          python3 -m pip install --disable-pip-version-check playwright==1.54.0
+          python3 -m playwright install --with-deps chromium
+      - name: No undeclared page receives an injected adult affordance
+        run: python3 tools/verify_adult_surfaces_browser.py --self-test

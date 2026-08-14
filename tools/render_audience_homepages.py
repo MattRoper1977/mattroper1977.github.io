@@ -366,7 +366,15 @@ def switcher(data: dict[str, Any], current: str) -> str:
 
 def audience_page(data: dict[str, Any], aid: str, audience: dict[str, Any]) -> str:
     body_attrs = f'data-mbm-audience-face="{esc(aid)}"'
-    if not audience.get("adultFeatures"):
+    # Both branches now state the verdict. adultFeaturesAllowed() is fail-closed,
+    # so "off" and absent mean the same thing to the browser - but a generated
+    # page that says nothing is indistinguishable from one the renderer forgot,
+    # and data/adult-surfaces.json is asserted against the marker actually
+    # present in the tree. The explicit "off" is also what /for/pupils/ is
+    # checked for, by verify_games_audience_faces.py and by the browser suite.
+    if audience.get("adultFeatures"):
+        body_attrs += ' data-mbm-adult-features="on"'
+    else:
         body_attrs += ' data-mbm-adult-features="off" data-mbm-mailing-footer="off"'
     sections = "".join(content_section(audience, section, i) for i, section in enumerate(audience["sections"]))
     description = audience["lead"]
