@@ -359,7 +359,7 @@
 
 (() => {
   const APP_VERSION = '1.0.0';
-  const SAVE_SCHEMA_VERSION = 2;
+  const SAVE_SCHEMA_VERSION = 3;
   const TILE_SIZE = 2;
   const ELEVATION_WORLD = 1.0;
   const CARDINALS = Object.freeze({
@@ -657,6 +657,13 @@
         data.settings = data.settings || { audio: true, reducedMotion: false, highContrast: false };
         data.version = 2;
       }
+      if (data.version === 2) {
+        // v3 adds the Den and creature uids. A pre-Den save loads with the
+        // party intact and an empty Den; old keys are never deleted.
+        data.den = Array.isArray(data.den) ? data.den : [];
+        data.nextUid = Number.isFinite(data.nextUid) ? data.nextUid : 1;
+        data.version = 3;
+      }
       return data;
     }
     hasSave(slot = 'SLOT_1') { return Boolean(EWStore.get(slot)); }
@@ -829,11 +836,12 @@
   }
 
   class Monster {
-    constructor({ speciesId, level = 5, nickname = null, seed = 12345, currentHP = null, currentExp = null, status = StatusType.NONE, moves = null }) {
+    constructor({ speciesId, level = 5, nickname = null, seed = 12345, currentHP = null, currentExp = null, status = StatusType.NONE, moves = null, uid = 0 }) {
       const species = SPECIES[speciesId];
       if (!species) throw new Error(`Unknown species: ${speciesId}`);
       this.speciesId = speciesId;
       this.species = species;
+      this.uid = uid || 0;
       this.name = nickname || species.name;
       this.level = clamp(Math.floor(level), 1, 100);
       this.types = [...species.types];
@@ -872,7 +880,7 @@
     resetBattleState() { Object.keys(this.stages).forEach(k => this.stages[k] = 0); this.toxicCount = 0; }
     healFull() { this.currentHP = this.stats.hp; this.status = StatusType.NONE; this.moves.forEach(m => m.currentPP = m.pp); }
     toJSON() {
-      return { speciesId: this.speciesId, level: this.level, nickname: this.name === this.species.name ? null : this.name, seed: this.seed, currentHP: this.currentHP, currentExp: this.currentExp, status: this.status, moves: this.moves.map(m => m.id) };
+      return { speciesId: this.speciesId, level: this.level, nickname: this.name === this.species.name ? null : this.name, seed: this.seed, currentHP: this.currentHP, currentExp: this.currentExp, status: this.status, moves: this.moves.map(m => m.id), uid: this.uid || 0 };
     }
   }
 
@@ -977,6 +985,685 @@
       return logs;
     }
   }
+
+  // ===================================================================
+  // ENGINE PARTS — verbatim blocks from the pin-verified v1.1
+  // EMBERWILD_2_5D_ENGINE src/engine-core.js (zip sha ae4423894c82…).
+  // Slice provenance (line ranges + hashes) is recorded in the pass
+  // report; nothing in this closure is edited, only selected. It lives in
+  // its OWN closure because the engine and the chassis disagree on enum
+  // VALUES again:
+  //
+  //   StatusType   engine 'sleep' / 'burn' / 'poison' / 'paralysis'
+  //                chassis 'slp'  / 'brn'  / 'psn'    / 'par'
+  //
+  // A chassis status fed straight to the codec would hit
+  // BOX_STATUS_TO_ID['slp'] -> undefined -> ?? 0 -> NONE: the status
+  // would be dropped silently, no throw — the Surface trap in a new coat.
+  // EWDen below is the only crossing point and maps status explicitly.
+  // ===================================================================
+  const EWEngineParts = (function(){
+    'use strict';
+    // Shims for engine symbols that only dead paths reference. hydrate()
+    // builds an ENGINE Monster and applyEvolution() calls the ENGINE
+    // StatEngine — the chassis bridge replaces both, so these throw
+    // loudly if anything ever wanders down the unused path.
+    const Types = Object.freeze({ NORMAL: 'normal' });
+    function Monster(){ throw new Error('EWEngineParts: hydrate is not the chassis path — use EWDen.toMonster'); }
+    const StatEngine = { calculateAll(){ throw new Error('EWEngineParts: engine applyEvolution is replaced by the chassis bridge'); } };
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const deepClone = (value) => JSON.parse(JSON.stringify(value));
+  const STAT_KEYS = Object.freeze(['hp', 'attack', 'defense', 'spAttack', 'spDefense', 'speed']);
+  const StatusType = Object.freeze({ NONE: 'none', BURN: 'burn', POISON: 'poison', TOXIC: 'toxic', PARALYSIS: 'paralysis', SLEEP: 'sleep', FREEZE: 'freeze' });
+  class ChecksumEngine {
+    static crc32(text) {
+      let crc = 0xFFFFFFFF;
+      for (let index = 0; index < text.length; index += 1) {
+        crc ^= text.charCodeAt(index);
+        for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (-(crc & 1) & 0xEDB88320);
+      }
+      return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+    static stableStringify(value) {
+      if (value === null || typeof value !== 'object') return JSON.stringify(value);
+      if (Array.isArray(value)) return `[${value.map((item) => this.stableStringify(item)).join(',')}]`;
+      return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${this.stableStringify(value[key])}`).join(',')}}`;
+    }
+    static generateHash(dataObject) {
+      const copy = deepClone(dataObject);
+      delete copy.checksum;
+      return this.crc32(this.stableStringify(copy)).toString(16).padStart(8, '0');
+    }
+    static verify(dataObject) { return Boolean(dataObject?.checksum) && this.generateHash(dataObject) === dataObject.checksum; }
+  }
+  const Gender = Object.freeze({
+    UNKNOWN: 'unknown',
+    FEMALE: 'female',
+    MALE: 'male',
+    GENDERLESS: 'genderless'
+  });
+  const EvolutionMethod = Object.freeze({
+    LEVEL_UP: 'level_up',
+    ITEM: 'item',
+    FRIENDSHIP: 'friendship',
+    LINK: 'link',
+    LOCATION: 'location',
+    CUSTOM: 'custom'
+  });
+  const EvolutionState = Object.freeze({
+    IDLE: 'idle',
+    ZOOM: 'zoom',
+    PULSE: 'pulse',
+    BURST: 'burst',
+    REVEAL: 'reveal',
+    CANCELLED: 'cancelled',
+    COMPLETE: 'complete'
+  });
+  const BOX_STATUS_TO_ID = Object.freeze({
+    [StatusType.NONE]: 0,
+    [StatusType.BURN]: 1,
+    [StatusType.POISON]: 2,
+    [StatusType.TOXIC]: 3,
+    [StatusType.PARALYSIS]: 4,
+    [StatusType.SLEEP]: 5,
+    [StatusType.FREEZE]: 6
+  });
+  const BOX_ID_TO_STATUS = Object.freeze(Object.fromEntries(Object.entries(BOX_STATUS_TO_ID).map(([key, value]) => [value, key])));
+  const BOX_GENDER_TO_ID = Object.freeze({ [Gender.UNKNOWN]: 0, [Gender.FEMALE]: 1, [Gender.MALE]: 2, [Gender.GENDERLESS]: 3 });
+  const BOX_ID_TO_GENDER = Object.freeze(Object.fromEntries(Object.entries(BOX_GENDER_TO_ID).map(([key, value]) => [value, key])));
+  function normaliseIdCollection(values) {
+    if (Array.isArray(values)) return values;
+    if (values && typeof values === 'object') return Object.keys(values);
+    return [];
+  }
+
+  function heldItemId(monster) {
+    const value = monster?.heldItem;
+    if (!value) return null;
+    return typeof value === 'string' || typeof value === 'number' ? value : value.id || null;
+  }
+
+  function moveId(move) {
+    if (!move) return null;
+    return typeof move === 'string' || typeof move === 'number' ? move : move.id || null;
+  }
+
+  function statValue(source, key, fallback = 0) {
+    if (Array.isArray(source)) return Number.isFinite(source[STAT_KEYS.indexOf(key)]) ? source[STAT_KEYS.indexOf(key)] : fallback;
+    return Number.isFinite(source?.[key]) ? source[key] : fallback;
+  }
+
+  function bytesToBase64(bytes) {
+    if (!(bytes instanceof Uint8Array)) throw new TypeError('bytesToBase64 expects Uint8Array');
+    if (typeof Buffer !== 'undefined') return Buffer.from(bytes).toString('base64');
+    if (typeof btoa === 'function') {
+      let binary = '';
+      const chunk = 0x8000;
+      for (let offset = 0; offset < bytes.length; offset += chunk) {
+        binary += String.fromCharCode(...bytes.subarray(offset, Math.min(bytes.length, offset + chunk)));
+      }
+      return btoa(binary);
+    }
+    throw new Error('No Base64 encoder available');
+  }
+
+  function base64ToBytes(value) {
+    if (typeof value !== 'string') throw new TypeError('base64ToBytes expects a string');
+    if (typeof Buffer !== 'undefined') return new Uint8Array(Buffer.from(value, 'base64'));
+    if (typeof atob === 'function') {
+      const binary = atob(value);
+      const output = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) output[index] = binary.charCodeAt(index);
+      return output;
+    }
+    throw new Error('No Base64 decoder available');
+  }
+
+  function crc16Ccitt(bytes, length = bytes.length) {
+    let crc = 0xFFFF;
+    for (let index = 0; index < length; index += 1) {
+      crc ^= bytes[index] << 8;
+      for (let bit = 0; bit < 8; bit += 1) crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+    }
+    return crc & 0xFFFF;
+  }
+
+  function writeFixedAscii(bytes, offset, length, text) {
+    const clean = String(text || '').replace(/[^\x20-\x7E]/g, '?').slice(0, length);
+    bytes.fill(0, offset, offset + length);
+    for (let index = 0; index < clean.length; index += 1) bytes[offset + index] = clean.charCodeAt(index);
+  }
+
+  function readFixedAscii(bytes, offset, length) {
+    let output = '';
+    for (let index = 0; index < length; index += 1) {
+      const code = bytes[offset + index];
+      if (code === 0) break;
+      output += String.fromCharCode(code);
+    }
+    return output.trimEnd();
+  }
+  class CompactIdRegistry {
+    constructor(values = [], name = 'registry') {
+      this.name = name;
+      this.ids = [null];
+      this.indices = new Map();
+      for (const id of normaliseIdCollection(values)) this.register(id);
+    }
+    register(id) {
+      if (id === null || id === undefined || id === '') return 0;
+      if (this.indices.has(id)) return this.indices.get(id);
+      if (this.ids.length > 0xFFFF) throw new RangeError(`${this.name} exceeds the 65,535-entry codec limit`);
+      const index = this.ids.length;
+      this.ids.push(id);
+      this.indices.set(id, index);
+      return index;
+    }
+    indexOf(id, options = {}) {
+      if (id === null || id === undefined || id === '') return 0;
+      const index = this.indices.get(id);
+      if (index !== undefined) return index;
+      if (options.registerUnknown) return this.register(id);
+      throw new Error(`Unknown ${this.name} id: ${String(id)}`);
+    }
+    idAt(index) {
+      const value = this.ids[index];
+      if (index === 0) return null;
+      if (value === undefined) throw new Error(`Unknown ${this.name} index: ${index}`);
+      return value;
+    }
+    snapshot() { return this.ids.slice(1); }
+    get size() { return this.ids.length - 1; }
+  }
+
+  class MonsterBoxCodec {
+    static get RECORD_BYTES() { return 64; }
+    static get MAGIC() { return 0xE7; }
+    static get VERSION() { return 1; }
+
+    constructor(options = {}) {
+      this.species = options.species instanceof CompactIdRegistry ? options.species : new CompactIdRegistry(options.speciesIds || options.species || [], 'species');
+      this.moves = options.moves instanceof CompactIdRegistry ? options.moves : new CompactIdRegistry(options.moveIds || options.moves || [], 'move');
+      this.items = options.items instanceof CompactIdRegistry ? options.items : new CompactIdRegistry(options.itemIds || options.items || [], 'item');
+      this.natures = options.natures instanceof CompactIdRegistry ? options.natures : new CompactIdRegistry(options.natureIds || options.natures || ['neutral'], 'nature');
+      this.languages = options.languages instanceof CompactIdRegistry ? options.languages : new CompactIdRegistry(options.languageIds || options.languages || ['COMMON'], 'language');
+      this.registryFingerprint = ChecksumEngine.generateHash({
+        species: this.species.snapshot(),
+        moves: this.moves.snapshot(),
+        items: this.items.snapshot(),
+        natures: this.natures.snapshot(),
+        languages: this.languages.snapshot()
+      });
+    }
+
+    isEmpty(record) {
+      if (!(record instanceof Uint8Array) || record.length < MonsterBoxCodec.RECORD_BYTES) return true;
+      for (let index = 0; index < MonsterBoxCodec.RECORD_BYTES; index += 1) if (record[index] !== 0) return false;
+      return true;
+    }
+
+    pack(monster) {
+      const data = typeof monster?.serialize === 'function' ? monster.serialize() : deepClone(monster || {});
+      if (!data.speciesId) throw new Error('Cannot encode a monster without speciesId');
+      const bytes = new Uint8Array(MonsterBoxCodec.RECORD_BYTES);
+      const view = new DataView(bytes.buffer);
+
+      bytes[0] = MonsterBoxCodec.MAGIC;
+      bytes[1] = MonsterBoxCodec.VERSION;
+      view.setUint16(2, this.species.indexOf(data.speciesId), true);
+      bytes[4] = clamp(Math.trunc(data.level || 1), 1, 100);
+      bytes[5] = clamp(this.natures.indexOf(data.natureId || data.nature || 'neutral'), 0, 255);
+
+      const gender = BOX_GENDER_TO_ID[data.gender] ?? BOX_GENDER_TO_ID[Gender.UNKNOWN];
+      const ability = clamp(Math.trunc(data.abilitySlot || 0), 0, 3);
+      const shiny = data.flags?.shiny ? 1 : 0;
+      const isEgg = data.isEgg ? 1 : 0;
+      bytes[6] = (gender & 0x03) | ((ability & 0x03) << 2) | (shiny << 4) | (isEgg << 5);
+      const languageIndex = this.languages.indexOf(data.language || 'COMMON');
+      if (languageIndex > 31) throw new RangeError('The PC codec supports at most 31 registered languages');
+      bytes[7] = (BOX_STATUS_TO_ID[data.status] ?? 0) | ((languageIndex & 0x1F) << 3);
+      bytes[8] = clamp(Math.trunc(data.friendship ?? 70), 0, 255);
+      bytes[9] = clamp(Math.ceil(Math.max(0, data.stepsToHatch || 0) / 256), 0, 255);
+      view.setUint16(10, this.items.indexOf(heldItemId(data)), true);
+      view.setUint32(12, (Number(data.otId) || 0) >>> 0, true);
+      view.setUint32(16, (Number(data.personalitySeed) || 0) >>> 0, true);
+      view.setUint32(20, clamp(Math.trunc(data.currentExp || 0), 0, 0xFFFFFFFF) >>> 0, true);
+      view.setUint16(24, clamp(Math.trunc(data.currentHP || 0), 0, 0xFFFF), true);
+
+      for (let index = 0; index < STAT_KEYS.length; index += 1) {
+        const key = STAT_KEYS[index];
+        bytes[26 + index] = clamp(Math.trunc(statValue(data.ivs, key, 0)), 0, 31);
+        bytes[32 + index] = clamp(Math.trunc(statValue(data.evs, key, 0)), 0, 252);
+      }
+
+      const moveSlots = Array.isArray(data.moves) ? data.moves.slice(0, 4) : [];
+      for (let index = 0; index < 4; index += 1) {
+        const move = moveSlots[index];
+        view.setUint16(38 + index * 2, this.moves.indexOf(moveId(move)), true);
+        bytes[46 + index] = clamp(Math.trunc(move?.currentPP ?? move?.pp ?? 0), 0, 255);
+      }
+
+      writeFixedAscii(bytes, 50, 10, data.nickname || '');
+      view.setUint16(60, this.species.indexOf(data.baseSpeciesId || data.speciesId), true);
+      view.setUint16(62, crc16Ccitt(bytes, 62), true);
+      return bytes;
+    }
+
+    validate(record) {
+      if (!(record instanceof Uint8Array) || record.length !== MonsterBoxCodec.RECORD_BYTES) return { valid: false, error: 'RECORD_LENGTH' };
+      if (this.isEmpty(record)) return { valid: true, empty: true };
+      if (record[0] !== MonsterBoxCodec.MAGIC) return { valid: false, error: 'RECORD_MAGIC' };
+      if (record[1] !== MonsterBoxCodec.VERSION) return { valid: false, error: 'RECORD_VERSION' };
+      const view = new DataView(record.buffer, record.byteOffset, record.byteLength);
+      if (view.getUint16(62, true) !== crc16Ccitt(record, 62)) return { valid: false, error: 'RECORD_CHECKSUM' };
+      try {
+        this.species.idAt(view.getUint16(2, true));
+        this.natures.idAt(record[5]);
+        this.languages.idAt(record[7] >>> 3);
+        this.items.idAt(view.getUint16(10, true));
+        this.species.idAt(view.getUint16(60, true));
+        for (let index = 0; index < 4; index += 1) this.moves.idAt(view.getUint16(38 + index * 2, true));
+      } catch (error) {
+        return { valid: false, error: 'REGISTRY_MISMATCH', detail: error.message };
+      }
+      return { valid: true, empty: false };
+    }
+
+    unpack(record) {
+      const validation = this.validate(record);
+      if (!validation.valid) throw new Error(`Invalid PC record: ${validation.error}${validation.detail ? ` (${validation.detail})` : ''}`);
+      if (validation.empty) return null;
+      const view = new DataView(record.buffer, record.byteOffset, record.byteLength);
+      const flags = record[6];
+      const ivs = {};
+      const evs = {};
+      for (let index = 0; index < STAT_KEYS.length; index += 1) {
+        ivs[STAT_KEYS[index]] = record[26 + index];
+        evs[STAT_KEYS[index]] = record[32 + index];
+      }
+      const moves = [];
+      for (let index = 0; index < 4; index += 1) {
+        const id = this.moves.idAt(view.getUint16(38 + index * 2, true));
+        if (id !== null) moves.push({ id, currentPP: record[46 + index] });
+      }
+      return {
+        speciesId: this.species.idAt(view.getUint16(2, true)),
+        baseSpeciesId: this.species.idAt(view.getUint16(60, true)) || this.species.idAt(view.getUint16(2, true)),
+        level: record[4],
+        natureId: this.natures.idAt(record[5]) || 'neutral',
+        gender: BOX_ID_TO_GENDER[flags & 0x03] || Gender.UNKNOWN,
+        abilitySlot: (flags >>> 2) & 0x03,
+        flags: { shiny: Boolean(flags & 0x10), captured: true },
+        isEgg: Boolean(flags & 0x20),
+        status: BOX_ID_TO_STATUS[record[7] & 0x07] || StatusType.NONE,
+        language: this.languages.idAt(record[7] >>> 3) || 'COMMON',
+        friendship: record[8],
+        stepsToHatch: record[9] * 256,
+        heldItem: this.items.idAt(view.getUint16(10, true)),
+        otId: view.getUint32(12, true),
+        personalitySeed: view.getUint32(16, true),
+        currentExp: view.getUint32(20, true),
+        currentHP: view.getUint16(24, true),
+        ivs,
+        evs,
+        moves,
+        nickname: readFixedAscii(record, 50, 10)
+      };
+    }
+
+    hydrate(record, resolvers = {}) {
+      const decoded = record instanceof Uint8Array ? this.unpack(record) : record;
+      if (!decoded) return null;
+      if (typeof resolvers.species !== 'function') throw new Error('MonsterBoxCodec.hydrate requires a species resolver');
+      const species = resolvers.species(decoded.speciesId);
+      if (!species) throw new Error(`Species resolver returned no data for ${decoded.speciesId}`);
+      const resolvedMoves = decoded.moves.map((slot) => {
+        const definition = typeof resolvers.move === 'function' ? resolvers.move(slot.id) : null;
+        return { id: slot.id, name: slot.id, type: Types.NORMAL, category: 'physical', power: 1, accuracy: 100, pp: slot.currentPP, ...(definition || {}), currentPP: slot.currentPP };
+      });
+      const natureMultipliers = typeof resolvers.nature === 'function' ? resolvers.nature(decoded.natureId) : null;
+      return new Monster({
+        ...species,
+        ...decoded,
+        name: species.name || decoded.speciesId,
+        baseSpeciesId: decoded.baseSpeciesId || species.baseSpeciesId || decoded.speciesId,
+        types: species.types || [Types.NORMAL],
+        baseStats: species.baseStats,
+        catchRate: species.catchRate,
+        baseExpYield: species.baseExpYield,
+        growthRate: species.growthRate,
+        eggGroups: species.eggGroups || [],
+        natures: natureMultipliers || species.natures,
+        moves: resolvedMoves
+      });
+    }
+  }
+
+  class EvolutionEngine {
+    constructor(options = {}) {
+      this.rules = options.rules || {};
+      this.speciesResolver = options.speciesResolver || (() => null);
+      this.stasisItemId = options.stasisItemId || 'stasis_charm';
+    }
+
+    getRules(speciesId) {
+      const rules = this.rules[speciesId];
+      if (!rules) return [];
+      return Array.isArray(rules) ? rules : [rules];
+    }
+
+    checkEligibility(monster, trigger = {}, context = {}) {
+      if (!monster || monster.isEgg) return null;
+      const triggerData = typeof trigger === 'string' ? { type: trigger } : trigger;
+      for (const rule of this.getRules(monster.speciesId)) {
+        const method = rule.method || EvolutionMethod.LEVEL_UP;
+        if (method !== triggerData.type) continue;
+        if (heldItemId(monster) === this.stasisItemId && method !== EvolutionMethod.ITEM) continue;
+        if (Number.isFinite(rule.minLevel) && monster.level < rule.minLevel) continue;
+        if (rule.requiredItem && triggerData.itemId !== rule.requiredItem) continue;
+        if (Number.isFinite(rule.minFriendship) && monster.friendship < rule.minFriendship) continue;
+        if (rule.gender && monster.gender !== rule.gender) continue;
+        if (rule.locationId && context.locationId !== rule.locationId) continue;
+        if (rule.timeOfDay && context.timeOfDay !== rule.timeOfDay) continue;
+        if (rule.requiredHeldItem && heldItemId(monster) !== rule.requiredHeldItem) continue;
+        if (typeof rule.condition === 'function' && !rule.condition(monster, triggerData, context)) continue;
+        return rule;
+      }
+      return null;
+    }
+
+    applyEvolution(monster, rule, options = {}) {
+      if (!monster || !rule?.target) throw new Error('Evolution requires a monster and target rule');
+      const target = options.targetSpecies || this.speciesResolver(rule.target);
+      if (!target) throw new Error(`No target species data for ${rule.target}`);
+      const before = typeof monster.serialize === 'function' ? monster.serialize() : deepClone(monster);
+      const oldStats = { ...monster.stats };
+      const damageDebt = Math.max(0, monster.maxHP - monster.currentHP);
+      const hpRatio = monster.maxHP > 0 ? monster.currentHP / monster.maxHP : 0;
+      monster.speciesId = target.id || rule.target;
+      monster.name = target.name || String(monster.speciesId);
+      monster.types = [...(target.types || monster.types)];
+      monster.baseStats = { ...monster.baseStats, ...(target.baseStats || {}) };
+      monster.catchRate = target.catchRate ?? monster.catchRate;
+      monster.baseExpYield = target.baseExpYield ?? monster.baseExpYield;
+      monster.growthRate = target.growthRate || monster.growthRate;
+      monster.eggGroups = [...(target.eggGroups || monster.eggGroups || [])];
+      monster.stats = StatEngine.calculateAll(monster.baseStats, monster.level, monster.ivs, monster.evs, monster.natures);
+      if (options.hpMode === 'ratio') monster.currentHP = clamp(Math.round(monster.stats.hp * hpRatio), 1, monster.stats.hp);
+      else monster.currentHP = clamp(monster.stats.hp - damageDebt, monster.currentHP > 0 ? 1 : 0, monster.stats.hp);
+      monster.flags = { ...monster.flags, evolved: true };
+      const statDeltas = {};
+      for (const key of Object.keys(monster.stats)) statDeltas[key] = monster.stats[key] - (oldStats[key] || 0);
+      return {
+        success: true,
+        before,
+        after: typeof monster.serialize === 'function' ? monster.serialize() : deepClone(monster),
+        targetSpeciesId: monster.speciesId,
+        statDeltas,
+        evolutionMove: rule.evolutionMove || null
+      };
+    }
+  }
+
+  class EvolutionSequence {
+    constructor(engine, options = {}) {
+      if (!(engine instanceof EvolutionEngine)) throw new TypeError('EvolutionSequence requires an EvolutionEngine');
+      this.engine = engine;
+      this.timings = { zoom: 1.1, pulse: 3.8, burst: 0.65, reveal: 1.7, cancel: 0.45, ...(options.timings || {}) };
+      this.onEvent = typeof options.onEvent === 'function' ? options.onEvent : null;
+      this.reset();
+    }
+
+    reset() {
+      this.state = EvolutionState.IDLE;
+      this.timer = 0;
+      this.elapsed = 0;
+      this.monster = null;
+      this.rule = null;
+      this.options = {};
+      this.cancelRequested = false;
+      this.applied = false;
+      this.result = null;
+      this._burstEventSent = false;
+    }
+
+    _emit(type, payload = {}) { this.onEvent?.({ type, state: this.state, elapsed: this.elapsed, ...payload }); }
+
+    start(monster, rule, options = {}) {
+      if (this.state !== EvolutionState.IDLE && this.state !== EvolutionState.COMPLETE) throw new Error('Evolution sequence is already active');
+      this.monster = monster;
+      this.rule = rule;
+      this.options = options;
+      this.timer = 0;
+      this.elapsed = 0;
+      this.cancelRequested = false;
+      this.applied = false;
+      this.result = null;
+      this._burstEventSent = false;
+      this.state = EvolutionState.ZOOM;
+      this._emit('START', { speciesId: monster.speciesId, target: rule.target });
+      return this.snapshot();
+    }
+
+    get active() { return ![EvolutionState.IDLE, EvolutionState.COMPLETE].includes(this.state); }
+
+    canCancel() {
+      const method = this.rule?.method || EvolutionMethod.LEVEL_UP;
+      const methodAllows = [EvolutionMethod.LEVEL_UP, EvolutionMethod.FRIENDSHIP].includes(method);
+      return this.state === EvolutionState.PULSE && methodAllows && this.rule?.cancelable !== false && this.options.allowCancel !== false && this.phaseProgress() < 0.92;
+    }
+
+    requestCancel() {
+      if (!this.canCancel()) return false;
+      this.cancelRequested = true;
+      return true;
+    }
+
+    phaseDuration() {
+      if (this.state === EvolutionState.ZOOM) return this.timings.zoom;
+      if (this.state === EvolutionState.PULSE) return this.timings.pulse;
+      if (this.state === EvolutionState.BURST) return this.timings.burst;
+      if (this.state === EvolutionState.REVEAL) return this.timings.reveal;
+      if (this.state === EvolutionState.CANCELLED) return this.timings.cancel;
+      return 0;
+    }
+
+    phaseProgress() {
+      const duration = this.phaseDuration();
+      return duration > 0 ? clamp(this.timer / duration, 0, 1) : 1;
+    }
+
+    update(deltaSeconds) {
+      if (!this.active) return this.snapshot();
+      const delta = clamp(Number(deltaSeconds) || 0, 0, 0.25);
+      this.timer += delta;
+      this.elapsed += delta;
+
+      if (this.state === EvolutionState.ZOOM && this.timer >= this.timings.zoom) {
+        this.state = EvolutionState.PULSE;
+        this.timer = 0;
+        this._emit('PULSE_START');
+      } else if (this.state === EvolutionState.PULSE) {
+        if (this.cancelRequested) {
+          this.state = EvolutionState.CANCELLED;
+          this.timer = 0;
+          this._emit('CANCELLED');
+        } else if (this.timer >= this.timings.pulse) {
+          this.state = EvolutionState.BURST;
+          this.timer = 0;
+          this.result = this.engine.applyEvolution(this.monster, this.rule, this.options);
+          this.applied = true;
+          this._emit('EVOLUTION_APPLIED', { result: this.result });
+        }
+      } else if (this.state === EvolutionState.BURST) {
+        if (!this._burstEventSent) {
+          this._burstEventSent = true;
+          this._emit('BURST');
+        }
+        if (this.timer >= this.timings.burst) {
+          this.state = EvolutionState.REVEAL;
+          this.timer = 0;
+          this._emit('REVEAL');
+        }
+      } else if (this.state === EvolutionState.REVEAL && this.timer >= this.timings.reveal) {
+        this.state = EvolutionState.COMPLETE;
+        this.timer = 0;
+        this._emit('COMPLETE', { evolved: true, result: this.result });
+      } else if (this.state === EvolutionState.CANCELLED && this.timer >= this.timings.cancel) {
+        this.result = { success: false, cancelled: true, speciesId: this.monster.speciesId };
+        this.state = EvolutionState.COMPLETE;
+        this.timer = 0;
+        this._emit('COMPLETE', { evolved: false, result: this.result });
+      }
+      return this.snapshot();
+    }
+
+    snapshot() {
+      const progress = this.phaseProgress();
+      let pulseMix = this.applied ? 1 : 0;
+      let brightness = 1;
+      let flashOpacity = 0;
+      let cameraZoom = 0;
+      let worldDim = 0;
+      let scale = 1;
+      if (this.state === EvolutionState.ZOOM) {
+        cameraZoom = progress;
+        worldDim = progress * 0.72;
+        scale = 1 + progress * 0.08;
+      } else if (this.state === EvolutionState.PULSE) {
+        const frequency = 1.5 * Math.exp(2.45 * progress);
+        pulseMix = 0.5 + 0.5 * Math.cos(this.timer * frequency * Math.PI * 2);
+        brightness = 1 + 3 * progress * progress;
+        worldDim = 0.72 + progress * 0.18;
+        cameraZoom = 1;
+        scale = 1 + pulseMix * 0.18;
+      } else if (this.state === EvolutionState.BURST) {
+        pulseMix = 1;
+        brightness = 5;
+        flashOpacity = Math.sin(progress * Math.PI);
+        worldDim = 0.95;
+        cameraZoom = 1;
+        scale = 1.18 + Math.sin(progress * Math.PI) * 0.16;
+      } else if (this.state === EvolutionState.REVEAL) {
+        pulseMix = 1;
+        brightness = lerp(5, 1, clamp(progress * 1.4, 0, 1));
+        flashOpacity = 1 - clamp(progress * 2, 0, 1);
+        worldDim = lerp(0.9, 0, progress);
+        cameraZoom = 1 - progress;
+        scale = lerp(1.18, 1, progress);
+      } else if (this.state === EvolutionState.CANCELLED) {
+        pulseMix = 0;
+        brightness = lerp(2, 1, progress);
+        worldDim = lerp(0.75, 0, progress);
+        cameraZoom = 1 - progress;
+      }
+      return {
+        state: this.state,
+        active: this.active,
+        elapsed: this.elapsed,
+        phaseProgress: progress,
+        pulseMix,
+        showTarget: this.applied || pulseMix >= 0.5,
+        brightness,
+        flashOpacity,
+        cameraZoom,
+        worldDim,
+        scale,
+        canCancel: this.canCancel(),
+        applied: this.applied,
+        result: this.result
+      };
+    }
+  }
+
+    return { StatusType, Gender, EvolutionMethod, EvolutionState, EvolutionEngine, EvolutionSequence,
+             CompactIdRegistry, MonsterBoxCodec, bytesToBase64, base64ToBytes };
+  })();
+
+  // -------------------------------------------------------------------
+  // EWDen — the chassis side of the PC box graft ("the Den").
+  //
+  // The adopted MonsterBoxCodec stores registry INDICES, so the registries
+  // handed to it are the chassis registries in declaration order. That
+  // order is now load-bearing: new species/moves/items must be APPENDED to
+  // their object literals, never inserted, or every resting creature would
+  // silently decode as its neighbour. The codec's registry fingerprint is
+  // stored with each save for diagnostics, but records are validated
+  // per-record rather than all-or-nothing — one damaged record must not
+  // cost a pupil the other twenty-nine (a deliberate, recorded softening
+  // of the spec's atomic import for SEMH reasons).
+  // -------------------------------------------------------------------
+  const EWDen = (function(){
+    // The status enums collide by VALUE ('slp' vs 'sleep') — map both ways,
+    // explicitly, or the codec zeroes the status without a throw.
+    const TO_ENGINE_STATUS = { none:'none', brn:'burn', psn:'poison', par:'paralysis', slp:'sleep' };
+    const FROM_ENGINE_STATUS = { none:'none', burn:'brn', poison:'psn', paralysis:'par', sleep:'slp', toxic:'psn', freeze:'none' };
+    const codec = new EWEngineParts.MonsterBoxCodec({
+      species: Object.keys(SPECIES),
+      moves: Object.keys(MOVES),
+      items: Object.keys(ITEMS)
+    });
+    const CAPACITY = 30;
+    // chassis Monster -> base64 64-byte record. Encode-before-mutate: this
+    // either returns a record or throws with the party untouched.
+    function pack(mon){
+      const bytes = codec.pack({
+        speciesId: mon.speciesId,
+        baseSpeciesId: (SPECIES[mon.speciesId] && SPECIES[mon.speciesId].baseSpeciesId) || mon.speciesId,
+        level: mon.level,
+        status: TO_ENGINE_STATUS[mon.status] || 'none',
+        friendship: 70,
+        personalitySeed: mon.seed,
+        otId: mon.uid || 0,
+        currentExp: mon.currentExp,
+        currentHP: mon.currentHP,
+        ivs: mon.ivs, evs: mon.evs,
+        moves: mon.moves.map(m => ({ id: m.id, currentPP: m.currentPP })),
+        nickname: mon.name === mon.species.name ? '' : mon.name
+      });
+      return EWEngineParts.bytesToBase64(bytes);
+    }
+    function decode(b64){
+      if (typeof b64 !== 'string' || !b64) return null;
+      let bytes;
+      try { bytes = EWEngineParts.base64ToBytes(b64); } catch (_) { return null; }
+      if (!(bytes instanceof Uint8Array) || bytes.length !== 64) return null;
+      const v = codec.validate(bytes);
+      if (!v.valid || v.empty) return null;
+      return codec.unpack(bytes);
+    }
+    function validateRecord(b64){ return decode(b64) !== null; }
+    // A cheap look at a record for list rows — no Monster construction.
+    function inspect(b64){
+      const d = decode(b64);
+      if (!d) return null;
+      const sp = SPECIES[d.speciesId];
+      return sp ? { speciesId: d.speciesId, name: d.nickname || sp.name, level: d.level, uid: d.otId, currentHP: d.currentHP } : null;
+    }
+    // base64 record -> chassis Monster. Decode-before-clear: throws (or
+    // returns null) with the Den untouched. The chassis constructor refills
+    // move PP — a rest in the Den restores energy, which we say out loud
+    // rather than hide.
+    function toMonster(b64){
+      const d = decode(b64);
+      if (!d) return null;
+      const moveIds = d.moves.map(m => m.id).filter(id => MOVES[id]);
+      const mon = new Monster({
+        speciesId: d.speciesId,
+        level: d.level,
+        seed: d.personalitySeed,
+        currentHP: d.currentHP,
+        currentExp: d.currentExp,
+        nickname: d.nickname || null,
+        status: FROM_ENGINE_STATUS[d.status] || 'none',
+        moves: moveIds.length ? moveIds : null
+      });
+      mon.uid = d.otId || 0;
+      return mon;
+    }
+    return { codec, CAPACITY, pack, toMonster, inspect, validateRecord };
+  })();
 
   // ===================================================================
   // THE DEPTHS — deterministic dungeon generation.
@@ -2492,8 +3179,92 @@
       // Recorded for the layout gate, so the fix is measurable rather than eyeballed.
       this.hudBoxes={locationPanel:{x:panelX,y:panelY,w:panelW,h:panelH},fieldNote:{x:noteX,y:noteY,w:noteW,h:noteH}};
     }
+    // THE DEN — modal, portrait-first. Every tap target is at least 44px
+    // and the panel is laid out to clear the fixed DOM widgets (estate
+    // back button, quick controls, d-pad, A/B/MENU) in both orientations;
+    // denBoxes records the rectangles so the layout gate can measure
+    // rather than trust.
+    drawDen(){
+      const g=this.game,v=g.denView;if(!v)return;
+      const portrait=this.h>this.w;
+      const px=portrait?12:Math.max(180,Math.round((this.w-500)/2));
+      const pw=portrait?this.w-24:Math.min(500,this.w-px-190);
+      const py=portrait?140:10;
+      const ph=portrait?Math.min(520,this.h-py-184):this.h-20;
+      this.frame(px,py,pw,ph,{bg:'rgba(8,15,26,.98)'});
+      this.text('THE DEN',px+18,py+12,18,'#f6d979');
+      this.text(`Party ${g.party.length}/6 · Resting ${g.den.length}/${EWDen.CAPACITY}`,px+pw-18,py+16,10,'#8fa7bb','right','normal');
+      const tabY=py+40,tabW=Math.floor((pw-36)/2);
+      const tabs=[['party','PARTY'],['den','RESTING']];
+      this.denBoxes={panel:{x:px,y:py,w:pw,h:ph}};
+      tabs.forEach((t,i)=>{
+        const tx=px+12+i*(tabW+12),active=v.tab===t[0];
+        this.ctx.fillStyle=active?'rgba(111,213,195,.25)':'rgba(255,255,255,.05)';
+        this.ctx.fillRect(tx,tabY,tabW,44);
+        this.ctx.strokeStyle=active?'#71d5c3':'#42516a';this.ctx.strokeRect(tx+.5,tabY+.5,tabW-1,43);
+        this.text(t[1],tx+tabW/2,tabY+14,13,active?'#fff':'#9fb2c3','center');
+        this.addRegion(tx,tabY,tabW,44,{type:'DEN_TAB',tab:t[0]},t[1]+' tab');
+        this.denBoxes['tab_'+t[0]]={x:tx,y:tabY,w:tabW,h:44};
+      });
+      const listY=tabY+52;
+      const rowH=Math.max(44,Math.min(52,Math.floor((ph-(listY-py)-104)/6)));
+      const pages=Math.max(1,Math.ceil(g.den.length/6));
+      for(let i=0;i<6;i++){
+        const ry=listY+i*(rowH+4);
+        let label='—',sub='',occupied=false,spriteId=null,selected=false;
+        if(v.tab==='party'){
+          const m=g.party[i];
+          if(m){occupied=true;spriteId=m.speciesId;label=m.name;sub=`Lv${m.level} · ${m.currentHP>0?m.currentHP+' HP':'resting'}`;}
+          else label='(open spot)';
+          selected=v.sel&&v.sel.list==='party'&&v.sel.index===i;
+        }else{
+          const idx=v.page*6+i;
+          const info=idx<g.den.length?EWDen.inspect(g.den[idx]):null;
+          if(info){occupied=true;spriteId=info.speciesId;label=info.name;sub=`Lv${info.level} · rested`;}
+          else label=idx<EWDen.CAPACITY?'(quiet nook)':'';
+          selected=v.sel&&v.sel.list==='den'&&v.sel.index===idx;
+        }
+        const cursorHere=v.cursor===i;
+        this.ctx.fillStyle=selected?'rgba(246,217,121,.25)':cursorHere?'rgba(111,213,195,.14)':'rgba(255,255,255,.04)';
+        this.ctx.fillRect(px+12,ry,pw-24,rowH);
+        this.ctx.strokeStyle=selected?'#f6d979':'#39485e';this.ctx.strokeRect(px+12.5,ry+.5,pw-25,rowH-1);
+        if(spriteId){const img=this.sprites.monster(spriteId,false);this.ctx.imageSmoothingEnabled=false;this.ctx.drawImage(img,px+18,ry+Math.floor((rowH-36)/2),36,36);}
+        this.text(label,px+62,ry+Math.floor(rowH/2)-14,13,occupied?'#fff':'#5c6c7c');
+        if(sub)this.text(sub,px+62,ry+Math.floor(rowH/2)+4,10,'#8fa7bb','left','normal');
+        this.addRegion(px+12,ry,pw-24,rowH,{type:'DEN_ROW',list:v.tab,index:i},label);
+        this.denBoxes['row'+i]={x:px+12,y:ry,w:pw-24,h:rowH};
+      }
+      const footY=listY+6*(rowH+4)+4;
+      if(v.tab==='den'&&pages>1){
+        this.ctx.fillStyle='rgba(255,255,255,.06)';
+        this.ctx.fillRect(px+12,footY,44,44);this.ctx.fillRect(px+64,footY,44,44);
+        this.text('◀',px+34,footY+14,15,'#fff','center');this.text('▶',px+86,footY+14,15,'#fff','center');
+        this.addRegion(px+12,footY,44,44,{type:'DEN_PAGE',dir:-1},'Previous page');
+        this.addRegion(px+64,footY,44,44,{type:'DEN_PAGE',dir:1},'Next page');
+        this.text(`${v.page+1}/${pages}`,px+130,footY+14,11,'#8fa7bb','left','normal');
+        this.denBoxes.pagePrev={x:px+12,y:footY,w:44,h:44};
+        this.denBoxes.pageNext={x:px+64,y:footY,w:44,h:44};
+      }
+      const actW=Math.min(190,Math.floor((pw-36)/2));
+      const actX=px+pw-12-actW,closeX=actX-actW-12;
+      const actLabel=v.sel?(v.sel.list==='party'?'SETTLE IN DEN':'REJOIN PARTY'):'PICK SOMEONE';
+      this.ctx.fillStyle=v.sel?'rgba(111,213,195,.25)':'rgba(255,255,255,.05)';
+      this.ctx.fillRect(actX,footY,actW,44);
+      this.ctx.strokeStyle=v.sel?'#71d5c3':'#42516a';this.ctx.strokeRect(actX+.5,footY+.5,actW-1,43);
+      this.text(actLabel,actX+actW/2,footY+14,12,v.sel?'#fff':'#68727d','center');
+      this.addRegion(actX,footY,actW,44,{type:'DEN_ACT'},actLabel);
+      this.ctx.fillStyle='rgba(255,255,255,.06)';
+      this.ctx.fillRect(closeX,footY,actW,44);
+      this.ctx.strokeStyle='#42516a';this.ctx.strokeRect(closeX+.5,footY+.5,actW-1,43);
+      this.text('CLOSE',closeX+actW/2,footY+14,12,'#fff','center');
+      this.addRegion(closeX,footY,actW,44,{type:'DEN_CLOSE'},'Close the Den');
+      this.denBoxes.actBtn={x:actX,y:footY,w:actW,h:44};
+      this.denBoxes.closeBtn={x:closeX,y:footY,w:actW,h:44};
+      const line=this.wrap(String(v.line||''),pw-36,11)[0]||'';
+      this.text(line,px+18,footY+52,11,'#9fd8c8','left','normal');
+    }
     drawDialogue(){if(!this.dialogue.active)return;const boxW=Math.min(720,this.w-30),boxH=116,x=(this.w-boxW)/2,y=this.h-boxH-18;this.frame(x,y,boxW,boxH);const lines=this.wrap(this.dialogue.display,boxW-42,16);lines.slice(0,3).forEach((line,i)=>this.text(line,x+20,y+20+i*24,16,'#fff','left','bold'));if(this.dialogue.charIndex>=this.dialogue.lines[this.dialogue.index].length&&Math.sin(performance.now()/180)>0){this.text('▼',x+boxW-30,y+boxH-28,16,'#f6d979');}this.addRegion(x,y,boxW,boxH,'CONFIRM','Advance dialogue');}
-    drawMenu(){const items=this.game.getPauseMenuItems();this.menuItems=items;const w=Math.min(430,this.w-30),h=70+items.length*44,x=(this.w-w)/2,y=(this.h-h)/2;this.frame(x,y,w,h,{bg:'rgba(10,18,31,.97)'});this.text('FIELD KIT',x+22,y+18,19,'#f6d979');items.forEach((item,i)=>{const ry=y+54+i*44;const selected=i===this.menuIndex;this.ctx.fillStyle=selected?'rgba(111,213,195,.2)':'rgba(255,255,255,.035)';this.ctx.fillRect(x+12,ry,w-24,36);this.text(selected?'▶':' ',x+22,ry+9,13,'#71d5c3');this.text(item.label,x+45,ry+8,14,item.disabled?'#68727d':'#fff');this.text(item.detail||'',x+w-20,ry+10,10,'#8fa7bb','right','normal');this.addRegion(x+12,ry,w-24,36,{type:'MENU_SELECT',index:i},item.label);});}
+    drawMenu(){const items=this.game.getPauseMenuItems();this.menuItems=items;const w=Math.min(430,this.w-30),h=70+items.length*52,x=(this.w-w)/2,y=(this.h-h)/2;this.frame(x,y,w,h,{bg:'rgba(10,18,31,.97)'});this.text('FIELD KIT',x+22,y+18,19,'#f6d979');items.forEach((item,i)=>{const ry=y+54+i*52;const selected=i===this.menuIndex;this.ctx.fillStyle=selected?'rgba(111,213,195,.2)':'rgba(255,255,255,.035)';this.ctx.fillRect(x+12,ry,w-24,44);this.text(selected?'▶':' ',x+22,ry+13,13,'#71d5c3');this.text(item.label,x+45,ry+12,14,item.disabled?'#68727d':'#fff');this.text(item.detail||'',x+w-20,ry+14,10,'#8fa7bb','right','normal');this.addRegion(x+12,ry,w-24,44,{type:'MENU_SELECT',index:i},item.label);});}
     hpBar(x,y,w,current,max){const ratio=clamp(current/max,0,1);this.ctx.fillStyle='#222b32';this.ctx.fillRect(x,y,w,10);this.ctx.fillStyle=ratio<=.2?'#f05c5c':ratio<=.5?'#f2d15b':'#62d07b';this.ctx.fillRect(x,y,Math.floor(w*ratio),10);this.ctx.fillStyle='rgba(255,255,255,.28)';this.ctx.fillRect(x,y,Math.floor(w*ratio),2);}
     drawBattleMonster(mon,x,y,back,scale,animTarget){const img=this.sprites.monster(mon.speciesId,back);let ox=0,oy=0;if(this.game.battle?.anim?.target===animTarget){const a=this.game.battle.anim;ox=Math.sin(performance.now()*0.06)*a.shake*8;oy=a.recoil?Math.sin(performance.now()*0.03)*4:0;}this.ctx.save();if(this.game.battle?.anim?.flashTarget===animTarget&&Math.sin(performance.now()*0.04)>0)this.ctx.globalAlpha=.35;this.ctx.drawImage(img,x-img.width*scale/2+ox,y-img.height*scale+oy,img.width*scale,img.height*scale);this.ctx.restore();}
     drawBattle(){const b=this.game.battle;if(!b)return;const c=this.ctx;c.save();const grad=c.createLinearGradient(0,0,0,this.h);grad.addColorStop(0,'#203c5a');grad.addColorStop(.55,'#709c8a');grad.addColorStop(1,'#253b39');c.fillStyle=grad;c.fillRect(0,0,this.w,this.h);c.fillStyle='rgba(255,255,255,.12)';for(let i=0;i<9;i++){c.beginPath();c.arc((i*139+80)%this.w,(i*71+40)%(this.h*.55),18+(i%3)*8,0,Math.PI*2);c.fill();}
@@ -2507,7 +3278,7 @@
       if(this.flash>0){c.fillStyle=`rgba(255,255,255,${Math.min(.45,this.flash)})`;c.fillRect(0,0,this.w,this.h);}c.restore();}
     drawBattleMenu(b){const isCall=b.menu==='call';const panelW=isCall?Math.min(430,this.w-28):Math.min(360,this.w*.45),panelH=isCall?188:(b.menu==='moves'?174:142),x=isCall?Math.round((this.w-panelW)/2):this.w-panelW-14,y=isCall?Math.max(12,this.h-panelH-150):this.h-panelH-12;this.frame(x,y,panelW,panelH,{bg:'rgba(9,16,28,.98)'});let entries=[];if(b.menu==='main')entries=[['FIGHT','BATTLE_FIGHT'],['BAG','BATTLE_BAG'],['TEAM','BATTLE_TEAM'],['RUN','BATTLE_RUN']];else if(b.menu==='moves')entries=b.player.moves.map((m,i)=>[`${m.name}\n${m.type.toUpperCase()}  ${m.currentPP}/${m.pp}`,{type:'BATTLE_MOVE',index:i}]);else if(b.menu==='bag')entries=[[`PRISM POD  x${this.game.inventory.prism_pod||0}`,'BATTLE_POD'],[`FIELD TONIC  x${this.game.inventory.field_tonic||0}`,'BATTLE_TONIC'],['BACK','BATTLE_BACK']];else if(b.menu==='call')entries=[['LONG SHOT\nunder 30%',{type:'BATTLE_CALL',band:'LONG_SHOT'}],['COIN FLIP\n30 - 70%',{type:'BATTLE_CALL',band:'COIN_FLIP'}],['SURE THING\nover 70%',{type:'BATTLE_CALL',band:'SURE_THING'}],['SKIP THE CALL\nno rating change',{type:'BATTLE_CALL',band:null}]];
       const cols=2,rows=Math.ceil(entries.length/cols),gap=8,pad=14,cellW=(panelW-pad*2-gap)/2,cellH=(panelH-pad*2-gap*(rows-1))/rows;entries.forEach((entry,i)=>{const col=i%2,row=Math.floor(i/2),rx=x+pad+col*(cellW+gap),ry=y+pad+row*(cellH+gap);const selected=i===b.cursor;this.ctx.fillStyle=selected?'rgba(246,217,121,.22)':'rgba(255,255,255,.045)';this.ctx.fillRect(rx,ry,cellW,cellH);this.ctx.strokeStyle=selected?'#f6d979':'#42516a';this.ctx.strokeRect(rx+.5,ry+.5,cellW-1,cellH-1);const lines=String(entry[0]).split('\n');this.text(lines[0],rx+10,ry+10,b.menu==='call'?11:13,selected?'#fff':'#dce6ef');if(lines[1])this.text(lines[1],rx+10,ry+28,9,TYPE_COLORS[lines[1].split(' ')[0].toLowerCase()]||'#9fb2c3','left','normal');this.addRegion(rx,ry,cellW,cellH,entry[1],lines[0]);});}
-    render(){const c=this.ctx;c.setTransform(this.dpr,0,0,this.dpr,0,0);c.clearRect(0,0,this.w,this.h);this.regions=[];if(this.game.mode===GameMode.BATTLE)this.drawBattle();else{this.drawOverworldHUD();if(this.game.mode===GameMode.MENU)this.drawMenu();}this.drawDialogue();if(this.game.toast){this.frame(this.w/2-170,90,340,45,{bg:'rgba(12,20,31,.92)'});this.text(this.game.toast.text,this.w/2,104,12,this.game.toast.color||'#fff','center');}if(this.game.settings.highContrast){c.strokeStyle='#fff';c.lineWidth=2;c.strokeRect(1,1,this.w-2,this.h-2);}}
+    render(){const c=this.ctx;c.setTransform(this.dpr,0,0,this.dpr,0,0);c.clearRect(0,0,this.w,this.h);this.regions=[];if(this.game.mode===GameMode.BATTLE)this.drawBattle();else{this.drawOverworldHUD();if(this.game.mode===GameMode.MENU)(this.game.denView?this.drawDen():this.drawMenu());}this.drawDialogue();if(this.game.toast){this.frame(this.w/2-170,90,340,45,{bg:'rgba(12,20,31,.92)'});this.text(this.game.toast.text,this.w/2,104,12,this.game.toast.color||'#fff','center');}if(this.game.settings.highContrast){c.strokeStyle='#fff';c.lineWidth=2;c.strokeRect(1,1,this.w-2,this.h-2);}}
   }
 
   class PlayerController {
@@ -2570,7 +3341,7 @@
       const verdict=band?(callAccuracy(band,odds.p)>=1?'Read good.':'Read off.'):'No call made.';
       const readLine=band?` Trainer Read ${read.score}.`:'';
       this.game.announce(`True odds were ${pct} per cent. ${verdict}${readLine}`);
-      if(result.captured){this.game.audio.playCapture('click');this.game.haptics.trigger('capture');this.message=`True odds ${pct}%. ${verdict} Signal locked — ${this.enemy.name} joined your field archive.`;this.game.collection[this.enemy.speciesId]=(this.game.collection[this.enemy.speciesId]||0)+1;await this.game.delay(1500);this.end('CAPTURED');}
+      if(result.captured){this.game.audio.playCapture('click');this.game.haptics.trigger('capture');const placed=this.game.receiveCapture(this.enemy);this.message=`True odds ${pct}%. ${verdict} Signal locked — ${placed.line}`;this.game.announce(placed.line);await this.game.delay(1500);this.end('CAPTURED');}
       else{this.message=`True odds ${pct}%. ${verdict} ${this.enemy.name} burst out of the pod!`;await this.game.delay(1400);await this.executeEnemyOnly();}}
     resolveOrder(playerMove,enemyMove){const a={mon:this.player,move:playerMove,isPlayer:true},b={mon:this.enemy,move:enemyMove,isPlayer:false};const pa=playerMove.priority||0,pb=enemyMove.priority||0;if(pa!==pb)return pa>pb?[a,b]:[b,a];const sa=this.player.effectiveStat('speed'),sb=this.enemy.effectiveStat('speed');if(sa!==sb)return sa>sb?[a,b]:[b,a];return this.rng.random()<.5?[a,b]:[b,a];}
     enemyChooseMove(){const usable=this.enemy.moves.filter(m=>m.currentPP>0);return usable.length?usable[this.rng.int(0,usable.length-1)]:MOVES.quick_jab;}
@@ -2589,7 +3360,7 @@
 
   class EmberwildGame {
     constructor(){
-      this.version=APP_VERSION;this.mode=GameMode.BOOT;this.callHistory=[];this.charmTier=1;this.depthsRecord={deepest:0};this.depths=null;this.map=buildDemoMap();this.flags=new BitmaskFlags(256);this.rng=new DeterministicPRNG((Date.now()^0xa37e5d)>>>0);this.audio=new RetroAudioEngine();this.haptics=new HapticEngine();this.saveManager=new SaveManager();this.sprites=new SpriteFactory();this.inventory={prism_pod:6,bright_pod:0,field_tonic:3};this.collection={spriglet:1};this.settings={audio:true,reducedMotion:false,highContrast:false,touchControls:'auto',renderer:'auto'};this.playTime=0;this.steps=0;this.objective='Explore Prism Route and meet the Flower Plateau Warden.';this.toast=null;this.toastTimer=0;this.battle=null;this.activeTrainerNPC=null;
+      this.version=APP_VERSION;this.mode=GameMode.BOOT;this.callHistory=[];this.charmTier=1;this.depthsRecord={deepest:0};this.depths=null;this.den=[];this.nextUid=1;this.denView=null;this.map=buildDemoMap();this.flags=new BitmaskFlags(256);this.rng=new DeterministicPRNG((Date.now()^0xa37e5d)>>>0);this.audio=new RetroAudioEngine();this.haptics=new HapticEngine();this.saveManager=new SaveManager();this.sprites=new SpriteFactory();this.inventory={prism_pod:6,bright_pod:0,field_tonic:3};this.collection={spriglet:1};this.settings={audio:true,reducedMotion:false,highContrast:false,touchControls:'auto',renderer:'auto'};this.playTime=0;this.steps=0;this.objective='Explore Prism Route and meet the Flower Plateau Warden.';this.toast=null;this.toastTimer=0;this.battle=null;this.activeTrainerNPC=null;
       const spawn=this.map.entities.find(e=>e.type==='PLAYER_SPAWN')||{x:10,z:17,y:0,facing:'N'};
       this.party=[new Monster({speciesId:'spriglet',level:6,seed:0x4d415454})];
       this.npcs=this.map.entities.filter(e=>e.type!=='PLAYER_SPAWN').map(e=>new NPCActor(e,this.map));
@@ -2631,21 +3402,22 @@
     checkTrainerSight(){if(this.mode!==GameMode.OVERWORLD)return;for(const npc of this.npcs){if(npc.type!=='TRAINER'||(npc.flag!=null&&this.flags.get(npc.flag)))continue;const dir=CARDINALS[npc.facing];for(let k=1;k<=npc.sight;k++){const x=npc.grid.x+dir.x*k,z=npc.grid.z+dir.z*k,cell=this.map.getCell(x,z);if(!cell||cell.surface===Surface.BLOCKED||cell.height!==npc.grid.y)break;if(x===this.player.grid.x&&z===this.player.grid.z){this.triggerTrainer(npc);return;}}}}
     async triggerTrainer(npc){if(this.mode!==GameMode.OVERWORLD)return;this.mode=GameMode.TRANSITION;npc.alertTimer=1;this.audio.playUI('confirm');await this.delay(450);npc.alertTimer=0;const goal={x:this.player.grid.x-CARDINALS[npc.facing].x,z:this.player.grid.z-CARDINALS[npc.facing].z};const path=this.pathfinder.findPath(npc.grid,goal).slice(1,3);for(const step of path){npc.beginStep(step,this.map);while(npc.state!=='IDLE')await sleep(16);}await this.ui.dialogue.show([`${npc.name}: “The plateau answers only to a steady signal.”`,`“Show me how your partner reads the field.”`],this);this.activeTrainerNPC=npc;const party=npc.party?.[0]||{speciesId:'voltwing',level:7};this.startBattle(new Monster({...party,seed:this.rng.int(1,0xffffffff)}),true,npc.name);}
     checkInteraction(){const v=CARDINALS[this.player.facing],tx=this.player.grid.x+v.x,tz=this.player.grid.z+v.z;const npc=this.entityAt(tx,tz,n=>n.type!=='ITEM');if(npc){if(npc.type==='DEPTHS_ENTRANCE'){this.ui.dialogue.show(['A cold seam in the rock breathes up at you.','You climb down into the Depths.'],this).then(()=>this.enterDepths());return true;}if(npc.type==='STAIRS_DOWN'){this.descend();return true;}if(npc.type==='STAIRS_UP'){if(this.depths&&this.depths.floorIndex>0)this.loadDepthsFloor(this.depths.floorIndex-1);else this.leaveDepths(false);return true;}if(npc.type==='FLOOR_EXIT'){this.leaveDepths(true);return true;}if(npc.type==='HEALING_POOL'){this.party.forEach(m=>m.healFull());this.save('AUTOSAVE');this.announce('The pool restores your party.');this.ui.dialogue.show(['Still water, faintly lit.','Your party is restored.'],this);return true;}if(npc.type==='LOOT'){this.collectDepthsLoot(npc);return true;}if(npc.type==='BOSS'||npc.type==='ENEMY'){this.startDepthsBattle(npc);return true;}if(npc.type==='HEALER'){this.party.forEach(m=>m.healFull());this.save('AUTOSAVE');this.ui.dialogue.show(npc.dialogue||['Your partner is restored.'],this);return true;}if(npc.type==='TRAINER'&&npc.flag!=null&&this.flags.get(npc.flag)){this.ui.dialogue.show([`${npc.name}: “Your signal held. Keep mapping the route.”`],this);return true;}this.ui.dialogue.show(npc.dialogue||[`${npc.name} nods.`],this);return true;}return false;}
-    handleConfirm(){this.audio.playUI('confirm');if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.confirm();return;}if(this.mode===GameMode.MENU){const items=this.getPauseMenuItems();this.executePauseItem(items[this.ui.menuIndex]);return;}if(this.mode===GameMode.OVERWORLD)this.checkInteraction();}
-    handleCancel(){if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.back();return;}if(this.mode===GameMode.MENU){this.toggleMenu();return;}this.audio.playUI();}
+    handleConfirm(){this.audio.playUI('confirm');if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.confirm();return;}if(this.mode===GameMode.MENU&&this.denView){this.denKeyConfirm();return;}if(this.mode===GameMode.MENU){const items=this.getPauseMenuItems();this.executePauseItem(items[this.ui.menuIndex]);return;}if(this.mode===GameMode.OVERWORLD)this.checkInteraction();}
+    handleCancel(){if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.back();return;}if(this.mode===GameMode.MENU&&this.denView){this.closeDen();this.audio.playUI();return;}if(this.mode===GameMode.MENU){this.toggleMenu();return;}this.audio.playUI();}
     toggleMenu(){if(this.mode===GameMode.BATTLE||this.mode===GameMode.TRANSITION||this.ui.dialogue.active)return;if(this.mode===GameMode.MENU){this.mode=GameMode.OVERWORLD;return;}if(this.mode===GameMode.OVERWORLD){this.mode=GameMode.MENU;this.ui.menuIndex=0;this.audio.playUI();}}
-    navigateMenu(dir){const items=this.getPauseMenuItems();if(dir==='N'||dir==='W')this.ui.menuIndex=(this.ui.menuIndex-1+items.length)%items.length;else this.ui.menuIndex=(this.ui.menuIndex+1)%items.length;this.audio.playUI();}
+    navigateMenu(dir){if(this.denView){this.denKeyMove(dir);return;}const items=this.getPauseMenuItems();if(dir==='N'||dir==='W')this.ui.menuIndex=(this.ui.menuIndex-1+items.length)%items.length;else this.ui.menuIndex=(this.ui.menuIndex+1)%items.length;this.audio.playUI();}
     getPauseMenuItems(){return[
       {label:'Save field state',detail:'CRC32 + double buffer',action:'SAVE'},
       {label:'Load last manual save',detail:this.saveManager.hasSave('SLOT_1')?'available':'empty',action:'LOAD'},
+      {label:'Emberkin Den',detail:`party ${this.party.length} · resting ${this.den.length}`,action:'DEN'},
       {label:`Audio: ${this.settings.audio?'ON':'OFF'}`,detail:'procedural APU',action:'AUDIO'},
       {label:`Renderer: ${this.renderer.kind}`,detail:'offline software 2.5D',action:'RENDERER'},
       {label:'Open map JSON',detail:'editor-compatible',action:'IMPORT'},
       {label:'Trigger test encounter',detail:'vertical-slice QA',action:'TEST_BATTLE'},
       {label:'Close field kit',detail:'M / Esc',action:'CLOSE'}
     ];}
-    executePauseItem(item){if(!item)return;switch(item.action){case'SAVE':this.save('SLOT_1');this.toastMessage('Manual save verified.','#71d5c3');break;case'LOAD':{const r=this.load('SLOT_1');this.toastMessage(r.success?'Manual save restored.':'No valid manual save.');break;}case'AUDIO':this.settings.audio=!this.settings.audio;this.audio.setEnabled(this.settings.audio);this.toastMessage(`Audio ${this.settings.audio?'on':'off'}.`);break;case'RENDERER':this.toastMessage('Offline software 2.5D renderer — the only renderer.');break;case'IMPORT':document.getElementById('map-import')?.click();break;case'TEST_BATTLE':this.mode=GameMode.OVERWORLD;this.startWildEncounter(true);break;case'CLOSE':this.mode=GameMode.OVERWORLD;break;}}
-    handleUIAction(action){if(typeof action==='object'){if(action.type==='MENU_SELECT'){this.ui.menuIndex=action.index;this.executePauseItem(this.getPauseMenuItems()[action.index]);}else if(action.type==='BATTLE_MOVE')this.battle?.selectMove(action.index);else if(action.type==='BATTLE_CALL')this.battle?.commitCall(action.band);return;}switch(action){case'CONFIRM':this.handleConfirm();break;case'BATTLE_FIGHT':this.battle?.showFight();break;case'BATTLE_BAG':this.battle?.showBag();break;case'BATTLE_TEAM':this.battle?.showTeam();break;case'BATTLE_RUN':this.battle?.tryRun();break;case'BATTLE_POD':this.battle?.usePod();break;case'BATTLE_TONIC':this.battle?.useTonic();break;case'BATTLE_BACK':this.battle?.back();break;}}
+    executePauseItem(item){if(!item)return;switch(item.action){case'SAVE':this.save('SLOT_1');this.toastMessage('Manual save verified.','#71d5c3');break;case'LOAD':{const r=this.load('SLOT_1');this.toastMessage(r.success?'Manual save restored.':'No valid manual save.');break;}case'AUDIO':this.settings.audio=!this.settings.audio;this.audio.setEnabled(this.settings.audio);this.toastMessage(`Audio ${this.settings.audio?'on':'off'}.`);break;case'RENDERER':this.toastMessage('Offline software 2.5D renderer — the only renderer.');break;case'DEN':this.openDen();break;case'IMPORT':document.getElementById('map-import')?.click();break;case'TEST_BATTLE':this.mode=GameMode.OVERWORLD;this.startWildEncounter(true);break;case'CLOSE':this.mode=GameMode.OVERWORLD;break;}}
+    handleUIAction(action){if(typeof action==='object'){if(String(action.type||'').indexOf('DEN_')===0){this.denAction(action);return;}if(action.type==='MENU_SELECT'){this.ui.menuIndex=action.index;this.executePauseItem(this.getPauseMenuItems()[action.index]);}else if(action.type==='BATTLE_MOVE')this.battle?.selectMove(action.index);else if(action.type==='BATTLE_CALL')this.battle?.commitCall(action.band);return;}switch(action){case'CONFIRM':this.handleConfirm();break;case'BATTLE_FIGHT':this.battle?.showFight();break;case'BATTLE_BAG':this.battle?.showBag();break;case'BATTLE_TEAM':this.battle?.showTeam();break;case'BATTLE_RUN':this.battle?.tryRun();break;case'BATTLE_POD':this.battle?.usePod();break;case'BATTLE_TONIC':this.battle?.useTonic();break;case'BATTLE_BACK':this.battle?.back();break;}}
     startWildEncounter(force=false,encounter=null){if(this.mode!==GameMode.OVERWORLD||this.player.motionState!==MoveState.IDLE)return false;const e=encounter||{speciesId:this.rng.pick(Object.keys(SPECIES).filter(id=>id!=='spriglet')),level:this.rng.int(4,7)};this.startBattle(new Monster({speciesId:e.speciesId,level:e.level,seed:this.rng.int(1,0xffffffff)}),false,null);return true;}
     startBattle(enemy,trainer=false,trainerName=null){this.battle=new BattleController(this);this.battle.start(enemy,trainer,trainerName);}
     collectDepthsLoot(npc){
@@ -2749,6 +3521,121 @@
       this.announce('You were carried back to the floor entrance. Your party is restored. Nothing was lost.');
       this.save('AUTOSAVE');
     }
+    // ---------------- THE DEN ----------------
+    // Hostile-save posture: every record is validated individually and a
+    // damaged one costs only itself. Duplicate uids (a tampered save
+    // cloning a creature into party and Den at once) are REPAIRED by
+    // reassigning the copy a fresh uid — nothing a pupil owns is ever
+    // deleted to satisfy bookkeeping.
+    restoreDen(d){
+      this.nextUid=Number.isFinite(d.nextUid)?Math.max(1,Math.trunc(d.nextUid)):1;
+      const raw=Array.isArray(d.den)?d.den:[];
+      let dropped=0;
+      const kept=[];
+      for(const r of raw){ if(typeof r==='string'&&EWDen.validateRecord(r))kept.push(r); else dropped++; }
+      // uid ceiling first, so repairs cannot collide with future captures
+      let maxSeen=0;
+      this.party.forEach(m=>{ if(Number.isFinite(m.uid))maxSeen=Math.max(maxSeen,m.uid); });
+      kept.forEach(r=>{ const i=EWDen.inspect(r); if(i&&Number.isFinite(i.uid))maxSeen=Math.max(maxSeen,i.uid); });
+      this.nextUid=Math.max(this.nextUid,maxSeen+1);
+      const seen=new Set();
+      this.party.forEach(m=>{ if(!m.uid||seen.has(m.uid))m.uid=this.nextUid++; seen.add(m.uid); });
+      this.den=kept.map(r=>{
+        const info=EWDen.inspect(r);
+        if(!info){ dropped++; return null; }
+        if(info.uid&&!seen.has(info.uid)){ seen.add(info.uid); return r; }
+        const mon=EWDen.toMonster(r);
+        if(!mon){ dropped++; return null; }
+        mon.uid=this.nextUid++; seen.add(mon.uid);
+        return EWDen.pack(mon);
+      }).filter(Boolean);
+      if(dropped>0)this.toastMessage(`${dropped} Den record${dropped===1?'':'s'} couldn't be woken.`,'#ffce7c');
+    }
+    assignUid(mon){ if(!mon.uid)mon.uid=this.nextUid++; return mon; }
+    // Every capture has a home. Party first; a full party sends the new
+    // arrival to rest in the Den. The Den's browse capacity is soft for
+    // captures — a pupil's creature is never refused, never lost.
+    receiveCapture(mon){
+      this.assignUid(mon);
+      if(typeof mon.resetBattleState==='function')mon.resetBattleState();
+      this.collection[mon.speciesId]=(this.collection[mon.speciesId]||0)+1;
+      if(this.party.length<6){ this.party.push(mon); return { where:'party', line:`${mon.name} joined your party.` }; }
+      try{ this.den.push(EWDen.pack(mon)); return { where:'den', line:`${mon.name} was sent home to rest in the Den.` }; }
+      catch(err){ this.party.push(mon); return { where:'party', line:`${mon.name} squeezed into your party.` }; }
+    }
+    // Spec transaction rules, kept: encode BEFORE the party changes;
+    // decode BEFORE the Den changes; the last creature who can still stand
+    // never leaves the party.
+    denDeposit(partyIndex){
+      const mon=this.party[partyIndex];
+      if(!mon)return{ok:false,line:'No one is standing there.'};
+      if(this.party.length<=1)return{ok:false,line:'Your last partner stays with you.'};
+      const conscious=this.party.filter(m=>m.currentHP>0).length;
+      if(mon.currentHP>0&&conscious<=1)return{ok:false,line:'Someone has to lead the way — they stay with you.'};
+      if(this.den.length>=EWDen.CAPACITY)return{ok:false,line:'The Den is full and cosy as it is.'};
+      let record;
+      try{ record=EWDen.pack(mon); }catch(err){ return{ok:false,line:'The Den could not settle them just now.'}; }
+      this.party.splice(partyIndex,1);
+      this.den.push(record);
+      this.save('AUTOSAVE');
+      return{ok:true,line:`${mon.name} is resting in the Den.`};
+    }
+    denWithdraw(denIndex){
+      if(this.party.length>=6)return{ok:false,line:'Your party is full — settle someone into the Den first.'};
+      const record=this.den[denIndex];
+      if(record===undefined)return{ok:false,line:'That nook is empty.'};
+      const mon=EWDen.toMonster(record);
+      if(!mon)return{ok:false,line:'That record could not be woken.'};
+      this.assignUid(mon);
+      this.den.splice(denIndex,1);
+      this.party.push(mon);
+      this.save('AUTOSAVE');
+      return{ok:true,line:`${mon.name} rejoined your party, rested and ready.`};
+    }
+    denSwap(partyIndex,denIndex){
+      const mon=this.party[partyIndex];
+      const record=this.den[denIndex];
+      if(!mon||record===undefined)return{ok:false,line:'Nothing to trade places with.'};
+      const incoming=EWDen.toMonster(record);
+      if(!incoming)return{ok:false,line:'That record could not be woken.'};
+      // The swap must leave someone standing.
+      const consciousAfter=this.party.filter((m,i)=>i!==partyIndex&&m.currentHP>0).length+(incoming.currentHP>0?1:0);
+      if(consciousAfter<1)return{ok:false,line:'That trade would leave no one to lead the way.'};
+      let record2;
+      try{ record2=EWDen.pack(mon); }catch(err){ return{ok:false,line:'The Den could not settle them just now.'}; }
+      this.assignUid(incoming);
+      this.party[partyIndex]=incoming;
+      this.den[denIndex]=record2;
+      this.save('AUTOSAVE');
+      return{ok:true,line:`${incoming.name} rejoined the party; ${mon.name} is resting in the Den.`};
+    }
+    denKeyMove(dir){const v=this.denView;const count=v.tab==='party'?6:6;if(dir==='N')v.cursor=(v.cursor-1+count)%count;else if(dir==='S')v.cursor=(v.cursor+1)%count;else if(dir==='W'||dir==='E'){v.tab=v.tab==='party'?'den':'party';v.cursor=0;}this.audio.playUI();}
+    denKeyConfirm(){const v=this.denView;this.denAction({type:'DEN_ROW',list:v.tab,index:v.cursor});}
+    openDen(){ this.denView={tab:'party',cursor:0,page:0,sel:null,line:'Tap a creature, then tap where it should go.'}; this.mode=GameMode.MENU; }
+    closeDen(){ this.denView=null; }
+    denAction(action){
+      const v=this.denView; if(!v)return;
+      const pages=Math.max(1,Math.ceil(this.den.length/6));
+      if(action.type==='DEN_CLOSE'){ this.closeDen(); this.audio.playUI(); return; }
+      if(action.type==='DEN_TAB'){ v.tab=action.tab; v.cursor=0; this.audio.playUI(); return; }
+      if(action.type==='DEN_PAGE'){ v.page=(v.page+action.dir+pages)%pages; this.audio.playUI(); return; }
+      if(action.type==='DEN_ROW'){
+        const idx=action.list==='den'?v.page*6+action.index:action.index;
+        if(action.list==='party'&&!this.party[idx]&&v.sel&&v.sel.list==='den'){ const r=this.denWithdraw(v.sel.index); v.line=r.line; if(r.ok)v.sel=null; this.audio.playUI(r.ok?'confirm':'error'); return; }
+        if(action.list==='den'&&idx>=this.den.length&&v.sel&&v.sel.list==='party'){ const r=this.denDeposit(v.sel.index); v.line=r.line; if(r.ok)v.sel=null; this.audio.playUI(r.ok?'confirm':'error'); return; }
+        if(!v.sel){ if((action.list==='party'&&this.party[idx])||(action.list==='den'&&idx<this.den.length)){ v.sel={list:action.list,index:idx}; v.line='Now tap where they should go.'; this.audio.playUI(); } return; }
+        if(v.sel.list===action.list){ v.sel={list:action.list,index:idx}; this.audio.playUI(); return; }
+        const r=v.sel.list==='party'
+          ?(idx<this.den.length?this.denSwap(v.sel.index,idx):this.denDeposit(v.sel.index))
+          :(this.party[idx]?this.denSwap(idx,v.sel.index):this.denWithdraw(v.sel.index));
+        v.line=r.line; if(r.ok)v.sel=null; this.audio.playUI(r.ok?'confirm':'error'); return;
+      }
+      if(action.type==='DEN_ACT'){
+        if(!v.sel){ v.line='Tap a creature first.'; return; }
+        const r=v.sel.list==='party'?this.denDeposit(v.sel.index):this.denWithdraw(v.sel.index);
+        v.line=r.line; if(r.ok)v.sel=null; this.audio.playUI(r.ok?'confirm':'error'); return;
+      }
+    }
     // §5 — the Trainer Read ledger. Kept on the game rather than the battle
     // so it survives an encounter ending, and saved with everything else.
     recordCall(band,p){if(!Array.isArray(this.callHistory))this.callHistory=[];this.callHistory.push({band,p});
@@ -2757,9 +3644,9 @@
     trainerReadScore(){return trainerRead(this.callHistory||[]);}
     // §5.6 / G11 — every reveal is announced, not just drawn on a canvas.
     announce(text,holdMs=6000){const sr=document.getElementById('sr-status');if(sr)sr.textContent=String(text);this.srHoldUntil=performance.now()+holdMs;}
-    serialize(){return{version:SAVE_SCHEMA_VERSION,appVersion:this.version,timestamp:Date.now(),playTimeSeconds:Math.floor(this.playTime),player:{x:this.player.grid.x,z:this.player.grid.z,y:this.player.grid.y,facing:this.player.facing},party:this.party.map(m=>m.toJSON()),inventory:{...this.inventory},collection:{...this.collection},flags:this.flags.exportArray(),settings:{...this.settings},steps:this.steps,callHistory:(this.callHistory||[]).slice(-200),charmTier:this.charmTier||1,depthsRecord:this.depthsRecord||{deepest:0}};}
+    serialize(){return{version:SAVE_SCHEMA_VERSION,appVersion:this.version,timestamp:Date.now(),playTimeSeconds:Math.floor(this.playTime),player:{x:this.player.grid.x,z:this.player.grid.z,y:this.player.grid.y,facing:this.player.facing},party:this.party.map(m=>m.toJSON()),inventory:{...this.inventory},collection:{...this.collection},flags:this.flags.exportArray(),settings:{...this.settings},steps:this.steps,callHistory:(this.callHistory||[]).slice(-200),charmTier:this.charmTier||1,depthsRecord:this.depthsRecord||{deepest:0},den:this.den.slice(),nextUid:this.nextUid,denFingerprint:EWDen.codec.registryFingerprint};}
     save(slot='SLOT_1'){const result=this.saveManager.write(slot,this.serialize());this.updateContinueButton();return result;}
-    load(slot='SLOT_1'){const result=this.saveManager.read(slot);if(!result.success)return result;const d=result.data;try{if(d.player)this.player.teleport(d.player.x,d.player.z,d.player.y),this.player.facing=d.player.facing||'N';if(Array.isArray(d.party)&&d.party.length)this.party=d.party.map(m=>new Monster(m));this.inventory={prism_pod:6,field_tonic:3,...d.inventory};this.collection={...d.collection};this.flags.importArray(d.flags);this.settings={...this.settings,...d.settings};this.audio.setEnabled(this.settings.audio);this.playTime=d.playTimeSeconds||0;this.steps=d.steps||0;this.callHistory=Array.isArray(d.callHistory)?d.callHistory.filter(e=>e&&typeof e.p==='number'):[];this.charmTier=typeof d.charmTier==='number'&&isFinite(d.charmTier)?d.charmTier:1;this.depthsRecord=(d.depthsRecord&&typeof d.depthsRecord.deepest==='number'&&isFinite(d.depthsRecord.deepest))?{deepest:Math.max(0,Math.trunc(d.depthsRecord.deepest))}:{deepest:0};document.body.classList.toggle('high-contrast',this.settings.highContrast);return{success:true};}catch(error){return{success:false,error:error.message};}}
+    load(slot='SLOT_1'){const result=this.saveManager.read(slot);if(!result.success)return result;const d=result.data;try{if(d.player)this.player.teleport(d.player.x,d.player.z,d.player.y),this.player.facing=d.player.facing||'N';if(Array.isArray(d.party)&&d.party.length)this.party=d.party.map(m=>new Monster(m));this.inventory={prism_pod:6,field_tonic:3,...d.inventory};this.collection={...d.collection};this.flags.importArray(d.flags);this.settings={...this.settings,...d.settings};this.audio.setEnabled(this.settings.audio);this.playTime=d.playTimeSeconds||0;this.steps=d.steps||0;this.callHistory=Array.isArray(d.callHistory)?d.callHistory.filter(e=>e&&typeof e.p==='number'):[];this.charmTier=typeof d.charmTier==='number'&&isFinite(d.charmTier)?d.charmTier:1;this.depthsRecord=(d.depthsRecord&&typeof d.depthsRecord.deepest==='number'&&isFinite(d.depthsRecord.deepest))?{deepest:Math.max(0,Math.trunc(d.depthsRecord.deepest))}:{deepest:0};this.restoreDen(d);document.body.classList.toggle('high-contrast',this.settings.highContrast);return{success:true};}catch(error){return{success:false,error:error.message};}}
     loadCustomMap(payload){this.map.importSchema(payload);const spawn=this.map.entities.find(e=>e.type==='PLAYER_SPAWN')||{x:1,z:1,y:0,facing:'S'};this.npcs=this.map.entities.filter(e=>e.type!=='PLAYER_SPAWN').map(e=>new NPCActor(e,this.map));this.player.map=this.map;this.player.teleport(spawn.x,spawn.z,spawn.y);this.player.facing=spawn.facing||'S';this.pathfinder=new AStarPathfinder(this.map,(x,z)=>this.isOccupied(x,z));this.renderer=this.softwareRenderer;this.softwareRenderer.fitToMap(this.map);this.mode=GameMode.OVERWORLD;}
   }
 
@@ -2773,6 +3660,8 @@
   // same score out, no globals, no clock, no RNG. The harness scores against
   // this exact function rather than a copy of it.
   window.__EMBERWILD_DEPTHS__ = EWDepths;
+  window.__EMBERWILD_DEN__ = EWDen;
+  window.__EMBERWILD_PARTS__ = EWEngineParts;
   window.__EMBERWILD_BRIDGE__ = EWDepthsBridge;
   window.EW = Object.freeze({
     trainerRead,
