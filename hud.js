@@ -35,7 +35,7 @@
      script tag is present, BACK resolves null, mount() has nothing to append,
      and the page renders no HUD at all while looking as though it carries one.
      Shipping the tag without this entry would have been that bug again. */
-  var ROOT_TOOLS = { "/artsaward/": 1, "/evidence-binder/moderator-pro/": 1 };
+  var ROOT_TOOLS = { "/artsaward/": 1, "/evidence-binder/moderator-pro/": 1, "/asdan/moderation-lab/": 1 };
 
   var IS_GAME = /\/Games\//.test(PATH)
     || Object.prototype.hasOwnProperty.call(ROOT_GAMES, ROUTE);

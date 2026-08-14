@@ -43,6 +43,7 @@ const ROUTES = [
   ['/Lessons/anything.html', 'lesson'],
   ['/artsaward/', 'NEW tool route'],
   ['/evidence-binder/moderator-pro/', 'NEW tool route'],
+  ['/asdan/moderation-lab/', 'NEW tool route'],
   ['/somethingelse/', 'unknown — must stay null'],
   ['/asdan/', 'asdan index — must stay null'],
 ];
@@ -105,7 +106,7 @@ for (const [route, cls] of ROUTES) {
 }
 console.log(`\nchanged-from-non-null (regressions): ${regressions}`);
 console.log(`changed-from-null (intended additions): ${added}`);
-console.log(regressions === 0 && added === 2
-  ? '\nPASS — exactly the two intended routes gained a target, nothing else moved.'
+console.log(regressions === 0 && added === 3
+  ? '\nPASS — exactly the three intended routes gained a target, nothing else moved.'
   : '\nFAIL — the change is not purely additive.');
-process.exit(regressions === 0 && added === 2 ? 0 : 1);
+process.exit(regressions === 0 && added === 3 ? 0 : 1);
