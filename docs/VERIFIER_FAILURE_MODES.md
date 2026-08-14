@@ -1000,6 +1000,47 @@ breach existing. This pass re-confirmed it rather than rediscovering it.*
 
 ---
 
+## 45. An instrument that consumes the resource it measures
+
+A probe was written to answer "does the particle layer paint?" It counted
+non-transparent pixels the obvious way:
+
+    const g = c.getContext('2d');
+    const d = g.getImageData(0, 0, c.width, c.height).data;
+
+A canvas holds exactly one context type for its lifetime. That call bound a 2D
+context to `#fx-canvas` while the layer was still idle — so when the game later
+asked the same canvas for `webgl2`, it got null, and the explicit capability
+gate at `index.html:667` correctly stood the GPU path down and fell back.
+
+The probe then reported the fallback as a finding: *"the GPU constructor threw,
+~20 KB carried and never executed."* That went into a committed report as
+measured fact. It was measured. It was also caused, entirely, by the
+measurement.
+
+Demonstrated by removing exactly one line and changing nothing else:
+
+| run | `EWFx.state` | renderer | fps |
+|---|---|---|---|
+| without the `getContext('2d')` | `gpu` | WebGL2 instanced | 58 |
+| with it | `fallback` | Canvas 2D fallback | 0 |
+
+This is not #35 (a crash counted as a rejection) or #38 (a proxy for the
+invariant). Both of those measure the wrong thing. This one measures the right
+thing, correctly, in a world the act of measuring created — and every number in
+the report was internally consistent, which is exactly why it read as solid.
+
+**Rule:** before trusting a reading, ask what the probe *did* to the subject, not
+just what it read from it. Anything exclusive — a canvas context, a lock, a
+single-use token, a port, a `once` listener, a stream that can only be consumed
+once — is spent by the observation. Where a subject exposes its own state
+(`stats()`, a status flag, a counter it maintains), read that instead of
+re-deriving it from the resource. And a finding that a path "never runs" deserves
+one more question than a finding that it does: what would have to be true for it
+to run, and did I make that false?
+
+---
+
 ## The shape they share
 
 None of these is a wrong assertion. Every one is a correct assertion that
