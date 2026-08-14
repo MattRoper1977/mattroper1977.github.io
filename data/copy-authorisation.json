@@ -10,7 +10,8 @@
     "audience-discovery-closeout": "mbm-audience-discovery-teach-professional-hubs-closeout-2026-08-09",
     "teach-task-filter": "mbm-teach-green-2026-08-12",
     "external-explorations": "mbm-teach-green-links-2026-08-12",
-    "support-buttons": "mbm-support-buttons-2026-08-12"
+    "support-buttons": "mbm-support-buttons-2026-08-12",
+    "games-audience-faces": "mbm-games-audience-faces-2026-08-08"
   },
   "pages": {
     "members/index.html": {
@@ -36,6 +37,10 @@
     "resources/index.html": {
       "authorisedBy": ["support-buttons"],
       "note": "Ruled by Matt 2026-08-13: /resources/ is pupil-reachable (the pupil homepage's no-JS search fallback posts to it), so the Ko-fi pill it carried from before the support-buttons pass is REMOVED rather than ratified. The removal deletes authored copy - the pill's free-to-use sentence - so this pass authorises that page's copy change and stamps its sentinel. The page had no sentinel before; one page, one sentinel, as above."
+    },
+    "games/index.html": {
+      "authorisedBy": ["games-audience-faces", "support-buttons"],
+      "note": "Ruled by Matt 2026-08-14, extending the 2026-08-13 ruling that closed /resources/: no commerce on pupil-reachable surfaces. The arcade is the page the pupil homepage links straight to, and it carried a page-local <a class=\"kofi\"> anchor of its own - outside data/support-pill.json entirely, so neither that record nor check_support_pill() had ever seen it. Removing it deletes authored copy (the 'Buy me a coffee' label), which is why the page is declared here. Two passes genuinely authorise copy on it, as on privacy/index.html: games-audience-faces authored the arcade and owns the sentinel the page must keep - verify_games_audience_faces.py pins it as GAMES_SENTINEL and the browser suite re-checks it, so it cannot be restamped the way /resources/ was - and support-buttons owns the commerce copy being removed. Declaring the page moves it from byte-exact authored-copy comparison to sentinel authorisation. That is a real relaxation and is stated rather than glossed; against it, the specific thing that changed is now pinned harder than before in the opposite direction, because games/index.html joined PILL_FORBIDDEN with its own positive control where previously nothing pinned it at all. The logo-visual check on this page is unaffected: it runs before the branch."
     },
     "main/index.html": {
       "authorisedBy": ["accounts-members-mailing", "counter-local-fallback"],

@@ -676,7 +676,15 @@ PILL_PAGES = [
 # no-JS search fallback lands; the chooser is mixed-audience and carries only
 # the studio band's quiet text link, which is ruled by studioBand and asserted
 # above, not here.
-PILL_FORBIDDEN = ["for/pupils/index.html", "resources/index.html"]
+#
+# games/index.html joined on 2026-08-14 under the same 2026-08-13 ruling, found
+# by measuring the rendered estate rather than by reading this list. The arcade
+# carried its own page-local <a class="kofi"> anchor - different class,
+# different label, outside data/support-pill.json entirely - so neither the
+# record nor this gate had ever seen it. It is more pupil-reachable than
+# /resources/ was, not less: the pupil homepage links straight to /games/,
+# where /resources/ was only reached through that page's no-JS search fallback.
+PILL_FORBIDDEN = ["for/pupils/index.html", "resources/index.html", "games/index.html"]
 
 
 def check_support_pill(root: Path = ROOT, overrides: Mapping[str, str] | None = None) -> list[str]:
@@ -874,6 +882,14 @@ def self_test(baseline: set[str] | None = None) -> int:
             {"resources/index.html": mutate(read(ROOT, "resources/index.html"), "</footer>",
                                             block + "</footer>", "resources pill graft")},
             "resources/index.html: carries 1 Ko-fi reference(s); this surface must carry none")
+    # The arcade is the page the pupil homepage links straight to. It carried a
+    # page-local anchor of its own for long enough that no list had ever seen
+    # it, so the control grafts the declared pill back on rather than that
+    # anchor: what must fail is any Ko-fi reference, whatever markup carries it.
+    control("support pill grafted onto the arcade the pupil homepage links to",
+            {"games/index.html": mutate(read(ROOT, "games/index.html"), "</footer>",
+                                        block + "</footer>", "arcade pill graft")},
+            "games/index.html: carries 1 Ko-fi reference(s); this surface must carry none")
     control("support pill href altered on one page",
             {FACES["partners"]: mutate(partners, pill["href"], "https://ko-fi.com/madebymatt-uk", "href")},
             "does not carry the declared Ko-fi href and label verbatim")
