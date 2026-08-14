@@ -24,6 +24,14 @@
       "reason": "The adult-affordance gate in assets/mbm-platform.js is fail-open: adultFeaturesAllowed() suppresses only when a page sets data-mbm-adult-features=\"off\", and exactly one page in the estate does. Standing the mailing flag down removes the mailing affordances from every unmarked page while the gate is inverted to fail-closed.",
       "revertsWhen": "The fail-closed adult-surface gate (A1) is green and deployed. This flag goes back to true at that point; it is not left standing.",
       "measured": "Nineteen platform pages measured in a browser with /site.json intercepted, so the same build was read under both settings. Flipping to false removes the secondary nav mailing link on 18 pages and the footer CTA on 13, and on /mailing-list/ hides the subscribe form and shows the not-active notice. No erasure or contact route is lost on any page: the visible mailto count never falls, and rises from 1 to 2 on /mailing-list/; the /account/ unsubscribe and delete controls are unchanged everywhere. /for/pupils/ shows no change at all, because it already carried zero mailing affordances - the child-facing surface that actually loses them is /games/, which carries no marker."
+    },
+    {
+      "flag": "features.accounts.enabled",
+      "asserted": true,
+      "since": "2026-08-14",
+      "reason": "Same fail-open gate. Standing accounts down removes the sign-in affordance from every unmarked page while assets/mbm-platform.js is inverted to fail-closed. This one is not free, and the cost is recorded in measured rather than argued away.",
+      "revertsWhen": "The fail-closed adult-surface gate (A1) is green and deployed. This flag goes back to true at that point; it is not left standing.",
+      "measured": "Same nineteen-page browser measurement. Only two pages move. On /account/: the sign-in form goes from visible to hidden, the not-active service panel from hidden to visible, and the visible mailto count from 0 to 1. On /members/ the page begins stating the service is not active. Nothing else changes anywhere. What this measurement CANNOT show, stated rather than glossed: the self-service delete control lives inside the signed-in panel, so it reads as not visible under both settings when signed out, and its true cost is that sign-in is the thing being removed - with accounts off, nobody can reach it. The documented erasure route survives and is unaffected: /privacy/ keeps three visible mailto routes and states both deletion and unsubscribe under both settings, and the /account/ page gains a Contact route it did not previously show. One honest defect found in passing: the mailing unsubscribe button on /account/ sits outside the signed-in panel, so it stays visibly present under both settings while requiring a session to work. That is a pre-existing dead control, not something this stand-down created."
     }
   ]
 }
