@@ -88,6 +88,21 @@ function scan(overrides={}){
   need(/found\.type\s*===\s*['"]unsubscribed['"]/.test(unsub)&&/JSON\.stringify\(\{\s*type:\s*['"]unsubscribed['"]\s*\}\)/.test(unsub),'unsubscribe does not use Buttondown current `type` field');
   need(/BUTTONDOWN_API_KEY/.test(unsub)&&/Deno\.env\.get/.test(unsub),'unsubscribe Buttondown token is not server-side env configuration');
   need(/unsubscribeMailing/.test(account)&&/mailUnsubBtn/.test(accountPage),'self-service unsubscribe control missing from /account/');
+  /* And it must live INSIDE the signed-in panel. It sat outside for as long as
+     it existed, which meant a signed-out visitor saw a working-looking
+     Unsubscribe button that could only ever fail: unsubscribeMailing derives the
+     address from the verified session, so with no session there is nothing for
+     it to act on. A control you can press and watch do nothing teaches people
+     the site is broken; one you cannot find until you are signed in is simply
+     honest. Structural, not a substring: the button's offset has to fall between
+     where #signedIn opens and where it closes. */
+  {
+    const open=accountPage.indexOf('<section id="signedIn"');
+    const btn=accountPage.indexOf('id="mailUnsubBtn"');
+    const close=open<0?-1:accountPage.indexOf('</section>',btn<0?open:btn);
+    need(open>=0&&btn>open&&close>btn,'the /account/ unsubscribe control is outside the signed-in panel, so a signed-out visitor is shown a button that cannot work');
+    need(/<section id="signedIn"[^>]*\bhidden\b/.test(accountPage),'#signedIn is not hidden by default, so the signed-out state would expose the signed-in controls');
+  }
   need(/not.{0,12}removed by deleting your account/i.test(accountPage),'account deletion copy does not state that mailing subscription survives');
   return findings;
 }
