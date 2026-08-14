@@ -243,7 +243,7 @@ def self_test(baseline: set[str]) -> int:
     )
     control(
         "a commerce surface dropped from the adult declaration",
-        {RECORD: mutate(record, '{ "page": "tools/index.html"', '{ "page": "tools-was-here/index.html"',
+        {RECORD: mutate(record, '"page": "tools/index.html"', '"page": "tools-was-here/index.html"',
                         "pill containment")},
         "tools/index.html: carries the Ko-fi support pill but is not a declared adult surface",
     )
