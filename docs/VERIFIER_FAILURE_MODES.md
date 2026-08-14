@@ -970,6 +970,34 @@ And treat a new gate's first findings as suspect until each one is traced back
 to the markup that produced it: a gate that goes red on the two most carefully
 configured pages in the estate is far likelier to be wrong than they are.
 
+## 44. A label can hide the measurement that produced it
+
+A0.1 asked whether standing the accounts flag down was clean or dirty. The
+measurement said dirty: sign-in disappears, and with it the route to the
+self-service deletion control. Both true, and both the wrong place to stop.
+
+What the same run also measured, and what the word "dirty" swallowed whole: the
+erasure route did not vanish, it *degraded* — `/account/` went from zero visible
+`mailto:` routes to one, `/privacy/` kept all three and kept stating both
+deletion and unsubscribe, and per-email unsubscribe never read the flag at all.
+The honest finding was not "dirty" but "the self-service path closes and the
+documented path becomes more prominent", and only the second version supports a
+decision. It is also the version that surfaced a third option nobody had listed:
+flip mailing, which is clean by the same test, and rule on accounts separately.
+
+The failure mode is that a binary verdict is a lossy summary that *feels* like a
+result. Once "dirty" is written down, the gradient behind it stops being asked
+about, and the next reader inherits a label instead of a measurement.
+
+**Rule:** when a check reduces to a verdict, keep reporting the quantity that
+produced it. Prefer "1 route to 2, self-service closed" over "dirty". If a
+finding cannot be stated as a number that moved, it is not finished being
+measured — and a binary that admits no third option is usually a sign that the
+question, not the estate, needs the work.
+
+*Related and already filed: #39, a negative control must not depend on a real
+breach existing. This pass re-confirmed it rather than rediscovering it.*
+
 ---
 
 ## The shape they share
