@@ -109,6 +109,13 @@ class Overriding(http.server.SimpleHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802
         rel = self.path.split("?")[0].lstrip("/")
+        # A page is requested as a directory ("/for/pupils/") but overridden by
+        # its file path ("for/pupils/index.html"). Without this the override
+        # silently never matched and the real page was served instead - which is
+        # exactly how a control passes while testing nothing. It was caught
+        # because the control reported FAIL rather than assuming it had fired.
+        if rel.endswith("/") or rel == "":
+            rel += "index.html"
         if rel in self.overrides:
             body = self.overrides[rel]
             self.send_response(200)
