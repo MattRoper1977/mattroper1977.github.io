@@ -684,7 +684,18 @@ PILL_PAGES = [
 # record nor this gate had ever seen it. It is more pupil-reachable than
 # /resources/ was, not less: the pupil homepage links straight to /games/,
 # where /resources/ was only reached through that page's no-JS search fallback.
-PILL_FORBIDDEN = ["for/pupils/index.html", "resources/index.html", "games/index.html"]
+#
+# Derived, not retyped. On 2026-08-14 the same reasoning was extended from
+# commerce to the account routes (R5), so verify_professional_site.js needed
+# this exact list too - and a list kept in two files is a list that drifts,
+# which is species 1 in docs/VERIFIER_FAILURE_MODES.md. It is stated once, in
+# data/adult-surfaces.json, and read here.
+PILL_FORBIDDEN = [
+    str(entry["page"])
+    for entry in json.loads((ROOT / "data" / "adult-surfaces.json").read_text(encoding="utf-8"))[
+        "pupilReachableSurfaces"
+    ]
+]
 
 
 def check_support_pill(root: Path = ROOT, overrides: Mapping[str, str] | None = None) -> list[str]:
@@ -841,8 +852,14 @@ def self_test(baseline: set[str] | None = None) -> int:
             {"assets/mbm-audience.js": mutate(js, ",main:'/main/'}", "}", "js route table")},
             "have drifted from data/audience-homepages.json")
     control("landing on /main/ made to assert a homepage face",
-            {"main/index.html": mutate(main_page, '<body data-mbm-general-home="main">',
-                                       '<body data-mbm-general-home="main" data-mbm-audience-face="main">',
+            # Anchored on the ONE attribute this control is about, not on the
+            # whole <body> tag. Matching the tag meant that adding any unrelated
+            # attribute to it silently stopped the fixture landing - which is
+            # what happened when the fail-closed pass added
+            # data-mbm-adult-features="on", and this control quietly tested
+            # nothing from 6bdeafa until it was noticed in CI.
+            {"main/index.html": mutate(main_page, 'data-mbm-general-home="main"',
+                                       'data-mbm-general-home="main" data-mbm-audience-face="main"',
                                        "main landing face")},
             "landing on the platform homepage would overwrite")
     control("landing guard removed from the script",

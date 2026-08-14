@@ -123,12 +123,20 @@
 <div class="ma-panel ma-danger-zone" style="margin-top:1rem">
 <h2>Delete account</h2>
 <p>Account deletion removes the authentication identity, profile and synchronised member data. It is permanent and cannot be undone.</p>
-<p>Mailing-list subscription is deliberately separate and is <b>not</b> removed by deleting your account. Unsubscribe first using the button in “Want Made by Matt updates?” above, or the link in any mailing.</p>
+<p>Mailing-list subscription is deliberately separate and is <b>not</b> removed by deleting your account. Unsubscribe first using Mailing preferences below, or the link in any mailing.</p>
 <p>Anything saved by a game or lesson on this device, and anything synced by a seven-word code, is not held against your account and is not reached by this deletion.</p>
 <div class="ma-field"><label for="deleteConfirm">Type DELETE to confirm</label><input id="deleteConfirm" type="text" autocomplete="off" spellcheck="false"></div>
 <div class="ma-actions"><button class="ma-btn danger" id="deleteBtn" type="button">Delete my account</button></div>
 <p class="ma-status" id="deleteStatus" role="status" aria-live="polite"></p>
 <p>If self-service deletion is temporarily unavailable, email <a href="mailto:contactmadebymatt@gmail.com">contactmadebymatt@gmail.com</a> from the account address and request deletion.</p>
+</div>
+<div class="ma-panel" style="margin-top:1rem">
+<p class="ma-kicker">Updates are separate</p>
+<h2>Mailing preferences</h2>
+<p>This unsubscribes the email address on this account. It lives here rather than on the signed-out page because it needs your session to know which address to act on — a button you can press while signed out could only fail.</p>
+<div class="ma-actions"><button class="ma-btn secondary" id="mailUnsubBtn" type="button">Unsubscribe this address</button></div>
+<p>Unsubscribing applies to your account email address only. The unsubscribe link in any mailing still works too.</p>
+<p class="ma-status" id="mailUnsubStatus" role="status" aria-live="polite"></p>
 </div>
 </section>
 
@@ -136,9 +144,8 @@
 <p class="ma-kicker">Updates are separate</p>
 <h2>Want Made by Matt updates?</h2>
 <p>The mailing list is independent from your account. You can join without an account, or have an account and never join.</p>
-<div class="ma-actions"><a class="ma-btn secondary" href="/mailing-list/">Mailing list</a><button class="ma-btn secondary" id="mailUnsubBtn" type="button">Unsubscribe this address</button></div>
-<p>Unsubscribing applies to your account email address only. The unsubscribe link in any mailing still works too.</p>
-<p class="ma-status" id="mailUnsubStatus" role="status" aria-live="polite"></p>
+<div class="ma-actions"><a class="ma-btn secondary" href="/mailing-list/">Mailing list</a></div>
+<p>If you have an account, a one-press unsubscribe for its email address appears in your account panel once you are signed in. The unsubscribe link in any mailing always works, account or not.</p>
 </section>
 </div>
 </main>

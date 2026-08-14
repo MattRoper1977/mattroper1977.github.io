@@ -42,47 +42,50 @@ currently rendered rather than wake anything, and that is a product decision.
 
 **Not acted on.** §4.2 needs re-specifying against this measurement.
 
-## 2. The WebGL bytes exist, and they are the path that never runs
+## 2. CORRECTED — the WebGL path runs. The earlier finding was my instrument.
 
-The order asks for the dead-WebGL census, *"run it now if it never ran — it
-funds this pass"*. The carried record recorded zero `THREE.` references and
-concluded there was nothing to reclaim. Both halves of that need separating:
-Three.js absent is not WebGL absent.
+**This section replaces what was first committed here, which was wrong.**
 
-Static census of the shipped file:
+The first version of this report concluded that `GPUParticleSuite` was ~20 KB
+carried and never executed, because the Depths particle layer measured
+`renderer: "Canvas 2D fallback"` in a browser where WebGL2 was available. That
+reading was produced by the probe, not by the game.
 
-| token | count |
-|---|---|
-| `THREE.` | 0 |
-| `WebGLRenderer` | 0 |
-| `getContext('webgl2'` | **1** |
-| `createShader` | **4** |
-| `getContext('2d'` | 5 |
+The probe — `fxprobe.js` — counted painted pixels by calling
+`getElementById('fx-canvas').getContext('2d')` during its Vale stage, while
+`EWFx` was still idle and the canvas unsized. A canvas holds exactly one context
+type for life. That call bound a 2D context to `#fx-canvas`, so the later
+`getContext('webgl2')` returned null, and the explicit capability gate at
+`index.html:667` did what it is there for: threw `WEBGL2_UNAVAILABLE`, and
+`createParticleSuite` fell back.
 
-`class GPUParticleSuite` spans lines 628–1004, **19,995 B**, plus the
-`VERTEX_SHADER` and `FRAGMENT_SHADER` exports beside it. It is reachable:
-`createParticleSuite()` at `:1113` tries `new GPUParticleSuite(...)` and falls
-back to `CanvasParticleFallback` on throw, and `EWFx` calls that factory at
-`:2614`.
+Demonstrated causally, same drive, same file, one line different:
 
-Measured at runtime, in a browser that reports `webgl2Available: true`:
+| run | `EWFx.state` | `stats().renderer` | fps | drawCalls |
+|---|---|---|---|---|
+| without the 2D touch | `gpu` | **WebGL2 instanced** | 58 | 1 |
+| with the 2D touch | `fallback` | Canvas 2D fallback | 0 | 110 |
 
-| scene | `EWFx.state` | zone | fx-canvas buffer | painted px | renderer |
-|---|---|---|---|---|---|
-| Vale | `idle` | `null` | 300×150 | 0 | — |
-| Depths | `fallback` | `depths` | 390×844 | **3,248** | **Canvas 2D fallback** |
+So the shipped build runs the GPU path in normal play. The constructor completes,
+both shaders compile, the program links, and it renders: 175 real
+`drawArraysInstanced(TRIANGLES, first=0, count=6, instances=110)` calls and 528
+non-zero-alpha pixels on a `readPixels` sweep.
 
-The particle layer works — 110 active particles on the `fireflies` preset,
-3,248 painted pixels, correctly sized buffer. It works on the **fallback**. The
-GPU constructor threw, in a browser where WebGL2 is available, so the ~20 KB of
-suite and shaders is carried and never executed.
+Category: **(a) a deliberate capability gate working as designed.** It is
+definitively not a constructor bug. The capability was absent because the
+measuring harness had removed it.
 
-That is real headroom, and it is also possibly a bug rather than dead code: a
-GPU path that throws where WebGL2 is available may be meant to work. Which of
-those it is decides whether the bytes are reclaimed or the constructor is fixed,
-and that is not a call to make inside a graphics phase.
+Consequences that stand:
 
-**Not acted on.** Reported as the census result the order asked for.
+- There is **no** recoverable headroom here. The 19,995 bytes are live code.
+- The only in-game 2D touch of that canvas is at `index.html:2633`, inside
+  `EWFx.set`'s zone-off branch, and it sits behind `if (!suite) return;` at
+  `:2630` — so normal play always reaches webgl2 first.
+- Any future suite that probes `#fx-canvas` with `getContext('2d')` before
+  entering the Depths will manufacture this same false reading.
+
+Registered as failure mode #45: an instrument that consumes the resource it is
+measuring.
 
 ## 3. The Vale's 300×150 fx-canvas is not the Glitch Clash defect
 
@@ -124,4 +127,12 @@ measuring in.
 asks to wake something that is already awake, and its stated risk is the
 opposite of the real one. §4.3–§4.5 were not reached.
 
-The pass stops here rather than proceeding on a premise it has just disproved.
+§4.2's readability question has since been answered and is recorded in the close
+readback: the grade does paint, five distinct states landing exactly on the
+source thresholds, and across 37 sample points spanning 0→1 the weakest text in
+the game holds 8.01:1 — so the 180-second cycle spends **0%** of its time below
+4.5:1 on text. The player sprite is a separate matter and never reaches 4.5:1 at
+any value.
+
+Section 2 above was rewritten on the same day it was written, because it was
+wrong. The pass stops on a disproved premise; it also corrects its own.
