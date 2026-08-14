@@ -36,6 +36,15 @@ on:
       - 'data/source-manifests/games.json'
       - 'tools/render_games_manifest_mirror.py'
       - '.github/workflows/shelf-mirror-guard.yml'
+  # A path filter fires only on a change to a file THIS repository owns, and the
+  # drift this guard exists for arrives from the other one. The Games half
+  # covers the canonical moving; neither half fires when a merge lands without
+  # touching a filtered path, when a run is skipped, or when the two
+  # repositories go out of step for a reason nobody predicted. A weekly run
+  # re-asks the question regardless. Same shape published-live-verify.yml
+  # already proves, offset from it so the two do not queue together.
+  schedule:
+    - cron: '23 6 * * 1'
   workflow_dispatch:
 
 permissions:

@@ -202,6 +202,33 @@ def measure(overrides: dict[str, bytes] | None = None) -> tuple[list[str], int]:
             ok(chooser["anyMembersHref"] == 0,
                f"the chooser carries {chooser['anyMembersHref']} /members/ route(s) in the rendered "
                "DOM; the same ruling covers members")
+
+            # No-JS. Today this is true because the affordances are injected and
+            # nothing injects without JavaScript - so it looks like an assertion
+            # that cannot fail. It is worth making anyway: the cheapest way to
+            # "fix" a missing link on an adult page is to inline it into the
+            # markup, and that would put it on every page that shares the
+            # template, silently, with the fail-closed default powerless to stop
+            # it because there would be nothing left to gate. This is the check
+            # that would notice.
+            nojs = context.browser.new_context(
+                viewport={"width": 1280, "height": 900}, java_script_enabled=False)
+            nojs_page = nojs.new_page()
+            for rel in pages:
+                if rel in declared:
+                    continue
+                try:
+                    nojs_page.goto(base.rstrip("/") + route_of(rel), wait_until="load", timeout=25000)
+                    html = nojs_page.content()
+                except Exception as err:  # noqa: BLE001
+                    ok(False, f"{rel}: could not be measured with JavaScript disabled ({str(err)[:70]})")
+                    continue
+                stamped = html.count('data-mbm-account-nav="1"') + html.count('data-mbm-mailing-nav="1"')
+                ok(stamped == 0,
+                   f"{rel}: serves {stamped} pre-baked adult affordance(s) in its markup. With "
+                   "JavaScript disabled nothing can be injected, so anything present here was "
+                   "inlined, and the fail-closed default cannot reach it.")
+            nojs.close()
             browser.close()
     finally:
         if server is not None:
