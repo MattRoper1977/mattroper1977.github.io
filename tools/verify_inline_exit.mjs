@@ -201,25 +201,45 @@ async function tabReach(page, ids) {
     document.body.focus();
     document.body.removeAttribute('tabindex');
   });
-  const seen = new Set();
   for (let i = 1; i <= TAB_CAP; i++) {
     await page.keyboard.press('Tab');
+    // Cycle detection keys on ELEMENT IDENTITY, stamped on the node itself.
+    //
+    // It first keyed on a descriptor string - tag, id, class, href - and that
+    // was wrong in a way that mattered. A page with a run of id-less identical
+    // controls (seven .mode-card on /apexpool/, nine .pickCard on
+    // /rallyvector3d/, three .chassis-card on /relicforge/) yields the same
+    // descriptor on consecutive presses; the walk read that as a cycle and
+    // stopped before it ever reached the exit, then reported those three exits
+    // unreachable. They are reachable, at presses 14, 27 and 8. The check
+    // written to replace a vacuous proxy had a false negative of its own, and
+    // only a reproduction showed it.
     const where = await page.evaluate(() => {
       const a = document.activeElement;
-      if (!a || a === document.body) return { id: null, key: 'BODY' };
-      return { id: a.id || null, key: (a.tagName || '') + '#' + (a.id || '') + '.' + (a.className || '') + '@' + (a.getAttribute('href') || '') };
+      if (!a || a === document.body) return { id: null, repeat: false };
+      const repeat = a.hasAttribute('data-mbm-tabwalk');
+      if (!repeat) a.setAttribute('data-mbm-tabwalk', '1');
+      return { id: a.id || null, repeat };
     });
     if (where.id && Object.prototype.hasOwnProperty.call(out, where.id) && out[where.id] === false) {
       out[where.id] = true;
       out.presses[where.id] = i;
-      if (ids.every(x => out[x] === true)) return out;
+      if (ids.every(x => out[x] === true)) { await clearWalkMarks(page); return out; }
     }
-    // The order has cycled: every remaining id is unreachable, and pressing on
-    // would only re-walk the same ring.
-    if (seen.has(where.key)) return out;
-    seen.add(where.key);
+    // Landed on an element this walk has already visited: the order has cycled
+    // and every remaining id is genuinely unreachable.
+    if (where.repeat) { await clearWalkMarks(page); return out; }
   }
+  await clearWalkMarks(page);
   return out;
+}
+
+// The walk must not leave the page different from how it found it: the probe is
+// not allowed to become part of what later checks measure.
+async function clearWalkMarks(page) {
+  await page.evaluate(() => {
+    for (const e of document.querySelectorAll('[data-mbm-tabwalk]')) e.removeAttribute('data-mbm-tabwalk');
+  });
 }
 
 async function main() {
