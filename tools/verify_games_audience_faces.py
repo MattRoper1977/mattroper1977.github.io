@@ -684,7 +684,18 @@ PILL_PAGES = [
 # record nor this gate had ever seen it. It is more pupil-reachable than
 # /resources/ was, not less: the pupil homepage links straight to /games/,
 # where /resources/ was only reached through that page's no-JS search fallback.
-PILL_FORBIDDEN = ["for/pupils/index.html", "resources/index.html", "games/index.html"]
+#
+# Derived, not retyped. On 2026-08-14 the same reasoning was extended from
+# commerce to the account routes (R5), so verify_professional_site.js needed
+# this exact list too - and a list kept in two files is a list that drifts,
+# which is species 1 in docs/VERIFIER_FAILURE_MODES.md. It is stated once, in
+# data/adult-surfaces.json, and read here.
+PILL_FORBIDDEN = [
+    str(entry["page"])
+    for entry in json.loads((ROOT / "data" / "adult-surfaces.json").read_text(encoding="utf-8"))[
+        "pupilReachableSurfaces"
+    ]
+]
 
 
 def check_support_pill(root: Path = ROOT, overrides: Mapping[str, str] | None = None) -> list[str]:

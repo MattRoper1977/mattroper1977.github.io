@@ -1,30 +1,81 @@
 {
   "_decision": "2026-08-14: which pages may carry adult affordances - the account nav link, the create-account link, the mailing nav link and the footer mailing CTA - is declared here and nowhere else. Before this record the question had no answer in the tree: assets/mbm-platform.js allowed them on every page and suppressed them only where a page said data-mbm-adult-features=\"off\", and exactly one page in the estate said it. A page that forgot the marker got the affordances, silently, and nothing failed.",
-
   "_failClosed": "The default is now the opposite. adultFeaturesAllowed() returns true only for data-mbm-adult-features=\"on\". Absent, misspelt, mangled by a renderer or simply forgotten all mean the same thing: no adult affordances. The failure mode of a mistake is a missing link on an adult page, which is visible and gets reported, instead of a sign-in link on a child's page, which is not.",
-
   "_notANewConvention": "This reuses the attribute the estate already had, with its default inverted. No new data-mbm-* marker is introduced. Pages that are deliberately not adult keep saying \"off\" where they already said it - \"off\" and absent are the same verdict now, but the explicit form still records intent, and /for/pupils/ in particular is asserted to carry it by verify_games_audience_faces.py and by the browser suite.",
-
   "_whyNotTheKofiSetAlone": "The ruled Ko-fi adult set is a COMMERCE ruling - which surfaces may ask for money. Reusing it verbatim as the adult-affordance allow-list would have removed the account navigation from /account/, /members/, /mailing-list/ and /privacy/: the pages whose entire function is the account and mailing machinery, and the page that carries the data-rights routes. Those four are listed here with that reason against each. The Ko-fi ten are all present, because a surface that may ask for money is by definition adult; verify_games_audience_faces.py asserts that containment rather than trusting these two lists to agree.",
-
   "_measuredExclusions": "Three pages that carry adult affordances today are deliberately NOT here, each on evidence. / (the chooser) is mixed-audience, and data/audience-homepages.json already records Matt's ruling that it carries 'no /account/ or /members/ route at all'. That ruling is currently violated at RUNTIME: the chooser's source has zero /account/ hrefs and passes its static gate, while the browser shows one anchor carrying data-mbm-account-nav, injected by accountTargets(). Leaving the chooser off this list is what makes the ruling true in the browser as well as in the source. /resources/ is pupil-reachable through the pupil homepage's no-JS search fallback and was closed to commerce on 2026-08-13 for that reason; the same reasoning excludes it here. /stats/ is device-local activity with no account function.",
-
   "_boundary": "This record governs the four platform-injected affordances only. It does not remove links a page carries in its own markup: /games/ and /stats/ both hold a static Members link that no default can reach, and /privacy/ holds a static Account link. Those are page content, and changing them is a copy decision, not a default.",
-
+  "_pupilReachable": "The other half of the same question, and the reason it lives here rather than in a third file. data/support-pill.json records Matt's 2026-08-13 ruling - no commerce on pupil-reachable surfaces - and verify_games_audience_faces.py kept that list as PILL_FORBIDDEN. On 2026-08-14 the same reasoning was extended from commerce to the account routes (R5), which meant a second gate needed the same list, and a list held in two places is a list that drifts. It is stated once here. PILL_FORBIDDEN in verify_games_audience_faces.py and the nav contract in verify_professional_site.js both read it, and verify_adult_surfaces_browser.py sweeps these pages in the rendered DOM for all four affordance classes at once.",
+  "pupilReachableSurfaces": [
+    {
+      "page": "for/pupils/index.html",
+      "reason": "The pupil homepage itself. Carries data-mbm-adult-features=\"off\"."
+    },
+    {
+      "page": "games/index.html",
+      "reason": "The arcade. The pupil homepage links straight to it - more directly reachable than /resources/, which is reached only through that page's no-JS search fallback."
+    },
+    {
+      "page": "resources/index.html",
+      "reason": "Where the pupil homepage's no-JS search fallback lands (action=\"/resources/\"). Closed to commerce on 2026-08-13 for exactly this reason."
+    }
+  ],
   "adultSurfaces": [
-    { "page": "main/index.html", "reason": "The general homepage. Carries the Ko-fi pill and the full account and mailing prose." },
-    { "page": "teach/index.html", "reason": "Teacher hub. Ko-fi set. Keeps its own data-mbm-mailing-footer=\"off\" narrowing." },
-    { "page": "education-hub/index.html", "reason": "Professional education hub. Ko-fi set. Same footer narrowing." },
-    { "page": "tools/index.html", "reason": "Tools hub, addressed to the adult running the tool. Ko-fi set." },
-    { "page": "for/teachers/index.html", "reason": "Adult audience face. Ko-fi set. adultFeatures: true in data/audience-homepages.json." },
-    { "page": "for/parents-carers/index.html", "reason": "Adult audience face. Ko-fi set. adultFeatures: true." },
-    { "page": "for/schools-semh/index.html", "reason": "Adult audience face. Ko-fi set. adultFeatures: true." },
-    { "page": "for/trusts/index.html", "reason": "Adult audience face. Ko-fi set. adultFeatures: true." },
-    { "page": "for/partners/index.html", "reason": "Adult audience face. Ko-fi set. adultFeatures: true." },
-    { "page": "for/councils-organisations/index.html", "reason": "Adult audience face. Ko-fi set. adultFeatures: true." },
-    { "page": "account/index.html", "reason": "Not in the Ko-fi set, and here anyway: this page IS the account machinery. Excluding it would strip the account navigation from the page whose only purpose is reaching an account." },
-    { "page": "members/index.html", "reason": "Not in the Ko-fi set. Account-backed member data; unreachable and meaningless without an account." },
-    { "page": "mailing-list/index.html", "reason": "Not in the Ko-fi set. The subscribe page itself." },
-    { "page": "privacy/index.html", "reason": "Not in the Ko-fi set. Carries the deletion and unsubscribe routes; an adult arriving to exercise a data right needs the account navigation to be there." }
+    {
+      "page": "main/index.html",
+      "reason": "The general homepage. Carries the Ko-fi pill and the full account and mailing prose."
+    },
+    {
+      "page": "teach/index.html",
+      "reason": "Teacher hub. Ko-fi set. Keeps its own data-mbm-mailing-footer=\"off\" narrowing."
+    },
+    {
+      "page": "education-hub/index.html",
+      "reason": "Professional education hub. Ko-fi set. Same footer narrowing."
+    },
+    {
+      "page": "tools/index.html",
+      "reason": "Tools hub, addressed to the adult running the tool. Ko-fi set."
+    },
+    {
+      "page": "for/teachers/index.html",
+      "reason": "Adult audience face. Ko-fi set. adultFeatures: true in data/audience-homepages.json."
+    },
+    {
+      "page": "for/parents-carers/index.html",
+      "reason": "Adult audience face. Ko-fi set. adultFeatures: true."
+    },
+    {
+      "page": "for/schools-semh/index.html",
+      "reason": "Adult audience face. Ko-fi set. adultFeatures: true."
+    },
+    {
+      "page": "for/trusts/index.html",
+      "reason": "Adult audience face. Ko-fi set. adultFeatures: true."
+    },
+    {
+      "page": "for/partners/index.html",
+      "reason": "Adult audience face. Ko-fi set. adultFeatures: true."
+    },
+    {
+      "page": "for/councils-organisations/index.html",
+      "reason": "Adult audience face. Ko-fi set. adultFeatures: true."
+    },
+    {
+      "page": "account/index.html",
+      "reason": "Not in the Ko-fi set, and here anyway: this page IS the account machinery. Excluding it would strip the account navigation from the page whose only purpose is reaching an account."
+    },
+    {
+      "page": "members/index.html",
+      "reason": "Not in the Ko-fi set. Account-backed member data; unreachable and meaningless without an account."
+    },
+    {
+      "page": "mailing-list/index.html",
+      "reason": "Not in the Ko-fi set. The subscribe page itself."
+    },
+    {
+      "page": "privacy/index.html",
+      "reason": "Not in the Ko-fi set. Carries the deletion and unsubscribe routes; an adult arriving to exercise a data right needs the account navigation to be there."
+    }
   ]
 }

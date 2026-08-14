@@ -30,6 +30,24 @@ const COUNTER_SENTINEL = 'mbm-counter-local-fallback-2026-08-09';
  */
 const AUTHORISATION = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'copy-authorisation.json'), 'utf8'));
 
+/*
+ * Which pages a child reaches, read from the one place it is declared. The nav
+ * contract below used to require /members/ on every key page. That is an
+ * account-backed route, and Matt's R5 of 2026-08-14 extends the 2026-08-13
+ * commerce ruling to it: no account routes on a pupil-reachable surface either.
+ *
+ * The requirement is not dropped, it is SPLIT, so nothing is exempted. A key
+ * page that is not pupil-reachable must still carry the link; a key page that
+ * IS must not carry it. Two assertions where there was one, and the list they
+ * both read is data/adult-surfaces.json, so this gate and PILL_FORBIDDEN in
+ * verify_games_audience_faces.py cannot drift apart.
+ */
+const PUPIL_REACHABLE = new Set(
+  JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'adult-surfaces.json'), 'utf8'))
+    .pupilReachableSurfaces.map((entry) => String(entry.page))
+);
+const ACCOUNT_BACKED_LINKS = new Set(['/members/', '/account/']);
+
 function authorisationProblems() {
   const problems = [];
   if (!String(AUTHORISATION._boundary || '').includes('BEHAVIOUR')) {
@@ -275,8 +293,14 @@ function verify(base, overrides = null) {
     assert(/<button\b[^>]*\bclass=["'][^"']*\bmenu\b/i.test(html), `${rel}: mobile Menu control missing`, failures);
     assert(/<nav\b[^>]*\baria-label=["']Site navigation["']/i.test(html), `${rel}: named site navigation missing`, failures);
     assert(/<details\b[^>]*\bmbm-nav-more\b/i.test(html), `${rel}: More disclosure missing`, failures);
+    const pupilReachable = PUPIL_REACHABLE.has(rel);
     for (const href of [...PRIMARY_LINKS, ...MORE_LINKS]) {
-      assert(html.includes(`href="${href}"`) || html.includes(`href='${href}'`), `${rel}: navigation link ${href} missing`, failures);
+      const present = html.includes(`href="${href}"`) || html.includes(`href='${href}'`);
+      if (pupilReachable && ACCOUNT_BACKED_LINKS.has(href)) {
+        assert(!present, `${rel}: carries account-backed navigation link ${href}, and this surface is declared pupil-reachable in data/adult-surfaces.json`, failures);
+      } else {
+        assert(present, `${rel}: navigation link ${href} missing`, failures);
+      }
     }
     const dupes = duplicateIds(html);
     assert(dupes.length === 0, `${rel}: duplicate IDs: ${dupes.join(', ')}`, failures);
