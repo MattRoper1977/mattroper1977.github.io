@@ -893,6 +893,85 @@ indistinguishable from a break.
 
 
 
+## 40. A static gate cannot see a link that is not in the file
+
+`data/audience-homepages.json` records the ruling that the chooser carries "no
+`/account/` or `/members/` route at all". `verify_games_audience_faces.py`
+asserts it by searching `index.html` for the href. `index.html` contains zero of
+them, so the gate passed, every run, for as long as the ruling had existed.
+
+Measured in a browser, the rendered chooser carried an `Account` anchor stamped
+`data-mbm-account-nav`, created after load by `accountTargets()` in
+`assets/mbm-platform.js` and appended to the nav. The ruling was false in the
+only place it mattered, and its own gate was structurally incapable of noticing.
+
+This is not #4 or #30. Those read the wrong file. This one read the *right*
+file — and the answer was not in a file at all.
+
+**Rule:** when the thing under test is created at runtime, the gate has to run
+the runtime. Before writing a static assertion about what a page contains, ask
+whether anything on that page writes to the DOM. If it does, a source search
+answers a different question from the one being asked, and it will answer it
+confidently forever.
+
+## 41. A default that is open makes every omission silent
+
+`adultFeaturesAllowed()` returned true unless a page carried
+`data-mbm-adult-features="off"`. Nineteen pages load the platform script.
+Exactly one carried the marker. Every other page — including the arcade, which
+the pupil homepage links straight to — was served the account and mailing
+affordances, and nothing went red anywhere, because the code was doing precisely
+what it said.
+
+The defect is not the missing marker. It is that *forgetting* was
+indistinguishable from *deciding*: a page nobody had ever considered and a page
+that had been considered and approved produced byte-identical behaviour.
+
+**Rule:** for a boundary that protects somebody, make the permissive state the
+one that has to be written down. Then a mistake fails toward a missing link on
+an adult page, which somebody reports, rather than toward a sign-in link on a
+child's page, which nobody sees. Pair it with a gate that checks the declaration
+in *both* directions — see #42.
+
+## 42. A review must ask what arrives, not only what is lost
+
+Standing the accounts flag down was reviewed by asking which routes disappeared.
+The answer was none: every erasure and contact route survived. That review was
+correct and incomplete. It never asked what the flip *added* — a "service is not
+active" panel and a second `mailto:` on `/account/` — and those arrivals were
+the more interesting half, because one of them is a new visible promise about a
+service that is deliberately switched off.
+
+The asymmetry has a structural form too. A gate asserting "every declared adult
+surface carries the marker" is one-directional: it passes a tree in which some
+*other* page has quietly grown the marker. The reverse — nothing outside the
+declaration carries it — is a different assertion about a different failure, and
+both are needed. `verify_adult_surfaces.py` runs them as PA2 and PA3 for exactly
+that reason.
+
+**Rule:** for any change that synchronises two things — a record against a tree,
+a flag against a set of pages, one estate against another — a review that only
+enumerates removals is half a review. Ask what appeared. Both directions get an
+assertion, and neither may stand in for the other.
+
+## 43. One attribute name meaning two different things
+
+`data-mbm-mailing-cta` is the stamp `mbm-platform.js` puts on the anchor it
+creates (`="1"`), and *also* the marker a page puts on its own `<footer>` to
+refuse that injection (`="off"`). `/` and `/for/pupils/` carry the second.
+
+A new browser gate counted injected affordances with the selector
+`[data-mbm-mailing-cta]` and reported findings against both — that is, against
+the two pages whose markup most explicitly refuses the thing it claimed they had
+received. It was reading a refusal as a receipt.
+
+**Rule:** when an attribute name is overloaded, match the value, not the name.
+And treat a new gate's first findings as suspect until each one is traced back
+to the markup that produced it: a gate that goes red on the two most carefully
+configured pages in the estate is far likelier to be wrong than they are.
+
+---
+
 ## The shape they share
 
 None of these is a wrong assertion. Every one is a correct assertion that
