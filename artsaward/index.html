@@ -2,6 +2,24 @@
 <html lang="en-GB">
 <head>
   <meta charset="utf-8">
+  <!-- The offline claim, enforced rather than asserted. connect-src 'none'
+       blocks fetch, XHR, WebSocket, EventSource and sendBeacon; a candidate's
+       evidence cannot leave this browser even if a future edit tries.
+
+       DELIBERATELY connect-src ALONE. A CSP restricts only the directives it
+       names - there is no default-src here, so scripts, styles, images, fonts
+       and navigation are untouched. That matters: this is an 809 KB
+       single-file app built almost entirely from inline script and inline
+       style, and a fuller policy would have to re-permit all of it, which is
+       a large change to prove and an easy one to get subtly wrong.
+
+       Outbound Trinity links keep working. CSP does not govern navigation -
+       following a link is not a fetch - so the two resource-library links in
+       the guidance are unaffected, and that is asserted in the gate rather
+       than assumed. Measured before shipping: this app contains zero fetch(,
+       XMLHttpRequest, sendBeacon, EventSource, WebSocket and dynamic import(,
+       and /hud.js makes no request either, by its own design note. -->
+  <meta http-equiv="Content-Security-Policy" content="connect-src 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="dark light">
   <meta name="description" content="Offline Arts Award evidence, assessment and moderation preparation workspace for Discover, Explore, Bronze, Silver and Gold.">

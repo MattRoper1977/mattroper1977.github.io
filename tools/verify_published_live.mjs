@@ -2,7 +2,28 @@
 /* Stage L-fin — prove a published path is actually SERVED.
  *
  *   node tools/verify_published_live.mjs --repo-root <dir> --shelf <games.json>
- *        --path /ouroboros/ --path /novasiege/ [--expect-404 /nope-does-not-exist/]
+ *        --path /ouroboros/ --path /novasiege/
+ *        [--tool-path /artsaward/] [--expect-404 /nope-does-not-exist/]
+ *
+ * ROUTE TYPE IS DECLARED, NOT INFERRED.
+ *   --path       a GAME route. Serves, AND has a shelf entry, AND renders an
+ *                arcade card.
+ *   --tool-path  a TEACHER TOOL route. Serves, and must NOT be on the arcade
+ *                shelf.
+ *
+ * The split exists because three tool routes were dispatched through --path and
+ * the run went red on six limbs, every one of them "no arcade card" — for pages
+ * that correctly have none. A red nobody acts on is worse than no red at all:
+ * it trains people to skim past this instrument, and the reds it does need to
+ * raise arrive in the same colour.
+ *
+ * Type is NOT derived from the shelf. "It is a game if the shelf lists it"
+ * would make the shelf assertion circular: a game accidentally dropped from
+ * games.json would reclassify itself as a tool and skip the very check that
+ * exists to catch that. The caller declares the type and the gate holds it to
+ * it — in BOTH directions, since a tool route is asserted ABSENT from the
+ * shelf rather than merely unexamined. An unexamined property is invisible; an
+ * asserted one is not.
  *
  * "Merged" and "served" are different claims (R10). A shelf entry whose target
  * does not serve is a half-publish arriving from the serving side, and it is
@@ -29,7 +50,12 @@ const all = (n) => argv.reduce((a, v, i) => (v === n ? [...a, argv[i + 1]] : a),
 const ORIGIN = val('--origin') || 'https://madebymatt.uk';
 const REPO_ROOT = val('--repo-root') || '.';
 const SHELF = val('--shelf');
-const PATHS = all('--path');
+const GAME_PATHS = all('--path');
+const TOOL_PATHS = all('--tool-path');
+const PATHS = [
+  ...GAME_PATHS.map((p) => ({ p, kind: 'game' })),
+  ...TOOL_PATHS.map((p) => ({ p, kind: 'tool' })),
+];
 const CONTROL = val('--expect-404');
 
 const sha = (b) => createHash('sha256').update(b).digest('hex');
@@ -83,8 +109,8 @@ let servedShelf = null;
 }
 
 // ─────────────────────────────────────────── each published path, byte-for-byte
-for (const p of PATHS) {
-  g(`served path ${p}`);
+for (const { p, kind } of PATHS) {
+  g(`served ${kind} path ${p}`);
   const repoFile = join(REPO_ROOT, p.replace(/^\/|\/$/g, ''), 'index.html');
   let repoBytes = null;
   try { repoBytes = readFileSync(repoFile); } catch (e) {
@@ -98,9 +124,16 @@ for (const p of PATHS) {
     body ? `served ${body.length}B ${sha(body).slice(0, 12)} vs repo ${repoBytes.length}B ${sha(repoBytes).slice(0, 12)}`
          : 'no body returned');
 
-  // The shelf entry must point here, and the served shelf must carry it.
+  // The shelf is the ARCADE shelf. A game must be on it; a teacher tool must
+  // not. Both are asserted — the tool case is a claim about the shelf, not an
+  // omission from the report.
   const entry = servedShelf ? servedShelf.games.find((e) => e.href === p) : null;
-  check('shelf entry exists for this path', !!entry, entry ? `"${entry.title}"` : 'no entry with this href');
+  if (kind === 'game') {
+    check('shelf entry exists for this path', !!entry, entry ? `"${entry.title}"` : 'no entry with this href');
+  } else {
+    check('correctly absent from the arcade shelf', !entry,
+      entry ? `a tool route is listed as a game: "${entry.title}"` : 'no game entry, as expected for a tool route');
+  }
 
   // Off-origin requests at runtime, measured on the SERVED page.
   const ctx = await browser.newContext();
@@ -143,18 +176,82 @@ g('arcade renders the new entries');
   }
   check('arcade renders the whole shelf', rendered === expected,
     `${rendered} cards occupy real space, shelf is ${expected} (rendered, not node-counted)`);
-  for (const p of PATHS) {
-    const found = await page.evaluate((href) => {
+
+  /* One predicate, used by the assertions and by the control below, so the
+     control cannot drift from the thing it is certifying. */
+  const cardFor = (href) => page.evaluate((h) => {
+    const grid = document.getElementById('allGrid');
+    if (!grid) return false;
+    return [...grid.querySelectorAll('a.gcard')].some((a) => {
+      const r = a.getBoundingClientRect();
+      return a.getAttribute('href') && a.getAttribute('href').includes(h) && r.width > 0 && r.height > 0;
+    });
+  }, href).catch(() => false);
+
+  for (const p of GAME_PATHS) {
+    const found = await cardFor(p);
+    check(`arcade shows a card for ${p}`, found,
+      found ? 'card is rendered and occupies space' : 'no rendered card links here');
+  }
+  for (const p of TOOL_PATHS) {
+    const found = await cardFor(p);
+    check(`arcade shows NO card for tool route ${p}`, !found,
+      found ? 'a teacher tool is rendering an arcade card' : 'no arcade card, as expected for a tool route');
+  }
+  await ctx.close();
+}
+
+/* ──────────────────────────── the arcade-card check must be able to go red
+ *
+ * The ask, verbatim: a real game route with its card removed must still go RED.
+ * That is done literally here rather than by analogy — a real shelf game is
+ * located on the rendered arcade, its card is removed from the live DOM, and
+ * the SAME predicate is re-run. Nothing on the site is touched; the removal
+ * happens in this browser context and is discarded with it.
+ *
+ * Both directions, because a check that is always red proves as little as one
+ * that is always green: the card must be FOUND before removal and ABSENT
+ * after. If the shelf is empty or unreadable this is reported as INCONCLUSIVE
+ * rather than skipped, since a silently absent control is the failure this
+ * whole instrument exists to avoid.
+ */
+{
+  g('control: the arcade-card check must be able to go red');
+  const sample = servedShelf && servedShelf.games ? servedShelf.games.find((e) => e.href) : null;
+  if (!sample) {
+    check('a real game is available to use as the control', false,
+      'the served shelf yielded no entry — the card check below is uncertified');
+  } else {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(`${ORIGIN}/games/`, { waitUntil: 'domcontentloaded', timeout: 45000 }).catch(() => {});
+    const cardFor = (href) => page.evaluate((h) => {
       const grid = document.getElementById('allGrid');
       if (!grid) return false;
       return [...grid.querySelectorAll('a.gcard')].some((a) => {
         const r = a.getBoundingClientRect();
-        return a.getAttribute('href') && a.getAttribute('href').includes(href) && r.width > 0 && r.height > 0;
+        return a.getAttribute('href') && a.getAttribute('href').includes(h) && r.width > 0 && r.height > 0;
       });
-    }, p).catch(() => false);
-    check(`arcade shows a card for ${p}`, found, found ? 'card is rendered and occupies space' : 'no rendered card links here');
+    }, href).catch(() => false);
+
+    for (let i = 0; i < 60; i++) { if (await cardFor(sample.href)) break; await page.waitForTimeout(250); }
+    check(`CONTROL: a real game (${sample.href}) IS found before removal`,
+      await cardFor(sample.href), 'the check is not always-red');
+
+    const removed = await page.evaluate((h) => {
+      const grid = document.getElementById('allGrid');
+      if (!grid) return 0;
+      const hits = [...grid.querySelectorAll('a.gcard')]
+        .filter((a) => a.getAttribute('href') && a.getAttribute('href').includes(h));
+      hits.forEach((a) => a.remove());
+      return hits.length;
+    }, sample.href).catch(() => 0);
+
+    check(`CONTROL: with its card removed, ${sample.href} goes RED`,
+      removed > 0 && !(await cardFor(sample.href)),
+      `${removed} card node(s) removed from the live DOM — the check reports absent`);
+    await ctx.close();
   }
-  await ctx.close();
 }
 
 // ─────────────────────────────────────────────── proves-can-fail control

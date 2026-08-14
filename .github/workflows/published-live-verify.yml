@@ -21,9 +21,13 @@ on:
   workflow_dispatch:
     inputs:
       paths:
-        description: 'Space-separated published paths to prove, e.g. "/ouroboros/ /novasiege/"'
+        description: 'Space-separated GAME paths — serve, shelf entry, arcade card. e.g. "/ouroboros/ /novasiege/"'
         required: false
         default: '/ouroboros/ /novasiege/'
+      tool_paths:
+        description: 'Space-separated TEACHER TOOL paths — serve, and must NOT be on the arcade shelf. e.g. "/artsaward/"'
+        required: false
+        default: ''
   push:
     branches:
       - main
@@ -113,11 +117,22 @@ jobs:
           # discarded is worse than no input, because it advertises a capability
           # that does not exist - someone reaches for it during an incident and
           # gets a green answer to a question they never asked.
+          #
+          # Route type is passed through, not guessed. Games go to --path and
+          # are held to shelf entry + arcade card; teacher tools go to
+          # --tool-path and are held to serving plus an assertion that they are
+          # ABSENT from the arcade shelf. Sending three tool routes through
+          # --path once produced six reds that all said "no arcade card" about
+          # pages that correctly have none, which is the kind of red that
+          # teaches people to stop reading this job.
           paths="${{ inputs.paths }}"
-          [ -n "$paths" ] || paths='/ouroboros/ /novasiege/'
+          tool_paths="${{ inputs.tool_paths }}"
+          [ -n "$paths$tool_paths" ] || paths='/ouroboros/ /novasiege/'
           args=()
           for p in $paths; do args+=(--path "$p"); done
-          echo "proving these paths: $paths"
+          for p in $tool_paths; do args+=(--tool-path "$p"); done
+          echo "proving these game paths: ${paths:-(none)}"
+          echo "proving these tool paths: ${tool_paths:-(none)}"
           cd tools && node verify_published_live.mjs \
             --repo-root "$GITHUB_WORKSPACE/_main" \
             --shelf     "$GITHUB_WORKSPACE/_shelf/games.json" \
