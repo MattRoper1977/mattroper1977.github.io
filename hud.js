@@ -26,10 +26,22 @@
   var ROOT_GAMES = {"/apexgolf/":1,"/apexkick/":1,"/apexpool/":1,"/apexrally/":1,"/apextennis/":1,"/auroralinks/":1,"/biopunkhive/":1,"/echovault/":1,"/emberwild/":1,"/fracture/":1,"/hyperdraft/":1,"/luminahaven/":1,"/medevac/":1,"/neonbreach/":1,"/neonmeridian/":1,"/neonsync/":1,"/neonturf/":1,"/novasiege/":1,"/olympics/":1,"/ouroboros/":1,"/rallyvector3d/":1,"/relicforge/":1,"/voxel/":1};
   /* MBM-ROOT-GAMES:END */
 
+  /* Teacher tools that live at their own root route rather than under
+     /Matt-s-Apps-/ or as /<name>/app.html. Listed rather than pattern-matched,
+     so admitting a tool to the HUD stays a deliberate act.
+
+     /artsaward/ is here because it matched none of the four patterns below,
+     which is the /neonbreach/ failure described above repeating exactly: the
+     script tag is present, BACK resolves null, mount() has nothing to append,
+     and the page renders no HUD at all while looking as though it carries one.
+     Shipping the tag without this entry would have been that bug again. */
+  var ROOT_TOOLS = { "/artsaward/": 1, "/evidence-binder/moderator-pro/": 1, "/asdan/moderation-lab/": 1 };
+
   var IS_GAME = /\/Games\//.test(PATH)
     || Object.prototype.hasOwnProperty.call(ROOT_GAMES, ROUTE);
   var IS_APP = /\/Matt-s-Apps-\/.+\.html/.test(PATH);
-  var IS_REG = /^\/(uas|asdan)\/app\.html$/.test(PATH);
+  var IS_REG = /^\/(uas|asdan)\/app\.html$/.test(PATH)
+    || Object.prototype.hasOwnProperty.call(ROOT_TOOLS, ROUTE);
   var IS_LESSON = /\/Lessons\//.test(PATH) && !IS_GAME;
   var BACK = IS_GAME ? { h: "/games/", l: "\u2190 Arcade" }
     : IS_APP ? { h: "/Matt-s-Apps-/", l: "\u2190 Studios" }
