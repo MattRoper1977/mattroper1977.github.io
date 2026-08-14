@@ -13,6 +13,10 @@ on:
       - 'assets/mbm-mailing.js'
       - 'assets/mbm-platform.js'
       - 'site.json'
+      # The flag gates read this record, so a change to it moves the gate's
+      # verdict just as surely as a change to site.json does. Without this line
+      # a stand-down could be added or removed without the gate ever running.
+      - 'data/feature-standdown.json'
       - 'supabase-schema.sql'
       - 'supabase/**'
       - 'tools/verify_accounts_members_mailing.js'

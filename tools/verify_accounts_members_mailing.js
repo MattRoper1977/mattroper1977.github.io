@@ -22,6 +22,23 @@ function publicSupabaseConfig(accounts){
   const privileged=/^sb_secret_/i.test(key)||/service[_-]?role/i.test(key);
   return {configured:true,safe:urlSafe&&!privileged&&(publishable||legacyAnon)};
 }
+/* A feature flag may sit away from its asserted value only while
+   data/feature-standdown.json declares it. That record is the ONLY thing that
+   lets the flag gates at the bottom accept an off flag, and every descriptive
+   field is required: a missing file, an unparseable file, an empty list, a
+   blank reason or an entry naming a different flag all leave the gate demanding
+   the asserted value. Removing the entry is what forces the revert. The
+   positive controls prove each of those rejections, so this is not a hole. */
+const STANDDOWN='data/feature-standdown.json';
+function standDownFor(flagPath,docText){
+  let doc;
+  try{doc=JSON.parse(docText!==undefined?docText:(exists(STANDDOWN)?read(STANDDOWN):'{}'))}catch(_){return null}
+  const list=Array.isArray(doc&&doc.standDowns)?doc.standDowns:[];
+  const filled=v=>typeof v==='string'&&v.trim().length>0;
+  return list.find(e=>e&&e.flag===flagPath&&filled(e.reason)&&filled(e.revertsWhen)&&filled(e.measured)&&/^\d{4}-\d{2}-\d{2}$/.test(String(e.since||'')))||null;
+}
+function flagGateOk(value,flagPath,docText){return value===true||!!standDownFor(flagPath,docText)}
+function flagGateLabel(flagPath,whenHeld){const s=standDownFor(flagPath);return s?flagPath+' is stood down by a declared record — reverts when: '+s.revertsWhen:whenHeld}
 function ownPolicy(schema,column){const escaped=column.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const uid='(?:\\(\\s*select\\s+)?auth\\.uid\\(\\)\\s*\\)?';return /to\s+authenticated/i.test(schema)&&new RegExp(uid+'\\s*=\\s*'+escaped,'i').test(schema)}
 function scan(overrides={}){
   const get=p=>Object.prototype.hasOwnProperty.call(overrides,p)?overrides[p]:read(p);
@@ -88,7 +105,19 @@ const profileUpsertFixture=read('assets/mbm-account.js').replace(".update({ disp
 const profilePositive=scan({'assets/mbm-account.js':profileUpsertFixture});ok(profilePositive.some(x=>/UPSERT.*INSERT privilege/i.test(x)),'positive control: profile UPSERT regression is rejected');
 const deleteSessionFixture=read('assets/mbm-account.js').replace("return sb.auth.signOut({ scope: 'local' }).catch(function () { return null; });","return Promise.resolve();");
 const deleteSessionPositive=scan({'assets/mbm-account.js':deleteSessionFixture});ok(deleteSessionPositive.some(x=>/provider-managed local session/.test(x)),'positive control: deleted-account session cleanup regression is rejected');
-ok(site.features.mailing.enabled===true,'mailing is enabled after real Buttondown provider proof');
+ok(flagGateOk(site.features.mailing.enabled,'features.mailing.enabled'),flagGateLabel('features.mailing.enabled','mailing is enabled after real Buttondown provider proof'));
+/* Accounts had no flag gate at all, so a flip there was silent. It is guarded
+   the same way now — strictly additive, and it is what makes a stand-down of
+   either flag impossible to leave standing unnoticed. */
+ok(flagGateOk(site.features.accounts.enabled,'features.accounts.enabled'),flagGateLabel('features.accounts.enabled','accounts are enabled after Supabase provider configuration'));
+const SD_OK='{"standDowns":[{"flag":"features.mailing.enabled","since":"2026-08-14","reason":"r","revertsWhen":"w","measured":"m"}]}';
+ok(flagGateOk(false,'features.mailing.enabled',SD_OK),'a complete declared stand-down does satisfy the flag gate');
+ok(!flagGateOk(false,'features.mailing.enabled','{"standDowns":[]}'),'positive control: a flag off with no declared stand-down is rejected');
+ok(!flagGateOk(false,'features.mailing.enabled','{}'),'positive control: a stand-down record with no list is rejected');
+ok(!flagGateOk(false,'features.mailing.enabled','not json'),'positive control: an unparseable stand-down record is rejected');
+ok(!flagGateOk(false,'features.mailing.enabled',SD_OK.replace('"reason":"r"','"reason":"  "')),'positive control: a stand-down with a blank reason is rejected');
+ok(!flagGateOk(false,'features.mailing.enabled',SD_OK.replace('"revertsWhen":"w"','"revertsWhen":""')),'positive control: a stand-down that never says what reverts it is rejected');
+ok(!flagGateOk(false,'features.mailing.enabled',SD_OK.replace('features.mailing.enabled','features.accounts.enabled')),'positive control: a stand-down naming another flag does not cover this one');
 console.log(`\n${pass} passed · ${fail} failed`);if(fail)process.exit(1);
 console.log(pub.configured?'SUPABASE PUBLIC CONFIG: configured and account/provider acceptance recorded.':'EXTERNAL BLOCK: live account acceptance requires Supabase public configuration and provider QA.');
 console.log('MAILING PROVIDER PROOF: real create + duplicate uniformity + confirmation delivery + active unsubscribe/readback passed before enablement.');
