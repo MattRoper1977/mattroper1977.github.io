@@ -4154,15 +4154,51 @@
       ctx.fillStyle = '#59394d';
       ctx.beginPath(); ctx.moveTo(p.x - 44, p.y - h + 17); ctx.lineTo(p.x, p.y - h - 20); ctx.lineTo(p.x + 44, p.y - h + 17); ctx.lineTo(p.x, p.y - h + 37); ctx.closePath(); ctx.fill();
       ctx.strokeStyle = '#d89c6a'; ctx.stroke();
-      if (opacity < 0.8) this.applyBayerDither(p.x - 44, p.y - h - 20, 88, 57, opacity);
+      if (opacity < 0.8) this.applyBayerDither(p.x - 44, p.y - h - 20, 88, 57, opacity, ctx => {
+        ctx.moveTo(p.x - 44, p.y - h + 17); ctx.lineTo(p.x, p.y - h - 20);
+        ctx.lineTo(p.x + 44, p.y - h + 17); ctx.lineTo(p.x, p.y - h + 37); ctx.closePath();
+      });
       ctx.restore();
       ctx.fillStyle = '#d8c59a'; ctx.font = '7px monospace'; ctx.textAlign = 'center'; ctx.fillText('RESEARCH LODGE', p.x, p.y - h + 12);
     }
-    applyBayerDither(x, y, w, h, opacity) {
+    /* F2 remediation. Two defects, fixed together because both move the painted
+       pixel count and measuring them apart would make each number unreadable.
+
+       1. THE LATTICE WAS ANCHORED TO THE SCREEN, NOT THE ROOF.
+          The old loop stepped `px += 2` from Math.floor(x) and then indexed the
+          matrix with Math.abs(px)%4. Stepping by two means px%4 only ever takes
+          TWO of its four values, and which two is decided by the parity of
+          Math.floor(x) — that is, by where the camera happens to be. So of the
+          matrix's sixteen thresholds only four were reachable at any moment, and
+          a ONE-PIXEL PAN swapped them for a different four. Measured coverage by
+          parity, reproducible from the matrix alone:
+
+            opacity 0.32 -> 0% / 100% / 100% / 50%
+            opacity 0.08 -> 50% / 100% / 100% / 100%
+
+          The 0% is the worst measured fillRect count going 1305 -> 0 on a single
+          pixel of camera movement, with a median coverage-state run length of one
+          frame: a 9.97-14.91 Hz flicker over the changing region, four to six
+          times the estate's 2.4 Hz line and unaware of reduced motion.
+
+          The lattice is now indexed by CELL ORDINAL from the rect's own origin,
+          so it is glued to the roof and pans with it. All sixteen thresholds are
+          reachable, and coverage is identical at every parity and across a
+          one-pixel pan — which is the acceptance property, not a side effect.
+
+       2. THE RECT WAS NEVER CLIPPED TO THE ROOF (R10).
+          It was an axis-aligned 88x57 while the roof is a diamond, so the stipple
+          spilled onto the lodge walls and the floor beside it. The caller now
+          passes the same polygon it fills, and it is clipped to it. */
+    applyBayerDither(x, y, w, h, opacity, clipPath) {
       const matrix = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
-      const ctx = this.ctx; ctx.save(); ctx.globalAlpha = 0.65; ctx.fillStyle = '#18232b';
+      const ctx = this.ctx; ctx.save();
+      if (clipPath) { ctx.beginPath(); clipPath(ctx); ctx.clip(); }
+      ctx.globalAlpha = 0.65; ctx.fillStyle = '#18232b';
       const threshold = opacity * 16;
-      for (let py = Math.floor(y); py < y+h; py += 2) for (let px = Math.floor(x); px < x+w; px += 2) if (matrix[Math.abs(py)%4][Math.abs(px)%4] >= threshold) ctx.fillRect(px, py, 1, 1);
+      for (let py = Math.floor(y), row = 0; py < y+h; py += 2, row++)
+        for (let px = Math.floor(x), col = 0; px < x+w; px += 2, col++)
+          if (matrix[row & 3][col & 3] >= threshold) ctx.fillRect(px, py, 1, 1);
       ctx.restore();
     }
     // P1 grounding. This used to project at render.y — the ACTOR's own height —
