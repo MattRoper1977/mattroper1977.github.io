@@ -4515,9 +4515,14 @@
       const read=this.game.trainerReadScore();
       const verdict=band?(callAccuracy(band,odds.p)>=1?'Read good.':'Read off.'):'No call made.';
       const readLine=band?` Trainer Read ${read.score}.`:'';
-      this.game.announce(`True odds were ${pct} per cent. ${verdict}${readLine}`);
-      if(result.captured){this.game.audio.playCapture('click');this.game.haptics.trigger('capture');const placed=this.game.receiveCapture(this.enemy);this.message=`True odds ${pct}%. ${verdict} Signal locked — ${placed.line}`;this.game.announce(placed.line);await this.game.delay(1500);this.end('CAPTURED');}
-      else{this.message=`True odds ${pct}%. ${verdict} ${this.enemy.name} burst out of the pod!`;await this.game.delay(1400);await this.executeEnemyOnly();}}
+      const revealLine=`True odds were ${pct} per cent. ${verdict}${readLine}`;
+      if(result.captured){this.game.audio.playCapture('click');this.game.haptics.trigger('capture');const placed=this.game.receiveCapture(this.enemy);this.message=`True odds ${pct}%. ${verdict} Signal locked — ${placed.line}`;
+        // ONE utterance. A second announce() in the same tick would replace
+        // the reveal before a screen reader ever spoke it — CI caught exactly
+        // that on a successful capture (§5.6: the odds are always announced).
+        this.game.announce(`${revealLine} ${placed.line}`);
+        await this.game.delay(1500);this.end('CAPTURED');}
+      else{this.message=`True odds ${pct}%. ${verdict} ${this.enemy.name} burst out of the pod!`;this.game.announce(`${revealLine} ${this.enemy.name} burst out of the pod!`);await this.game.delay(1400);await this.executeEnemyOnly();}}
     resolveOrder(playerMove,enemyMove){const a={mon:this.player,move:playerMove,isPlayer:true},b={mon:this.enemy,move:enemyMove,isPlayer:false};const pa=playerMove.priority||0,pb=enemyMove.priority||0;if(pa!==pb)return pa>pb?[a,b]:[b,a];const sa=this.player.effectiveStat('speed'),sb=this.enemy.effectiveStat('speed');if(sa!==sb)return sa>sb?[a,b]:[b,a];return this.rng.random()<.5?[a,b]:[b,a];}
     enemyChooseMove(){const usable=this.enemy.moves.filter(m=>m.currentPP>0);return usable.length?usable[this.rng.int(0,usable.length-1)]:MOVES.quick_jab;}
     async selectMove(index){if(this.busy)return;const move=this.player.moves[index];if(!move||move.currentPP<=0){this.message='That technique has no energy left.';this.game.audio.playUI('error');return;}this.busy=true;this.menu='main';const enemyMove=this.enemyChooseMove();const queue=this.resolveOrder(move,enemyMove);for(const action of queue){if(action.mon.currentHP<=0)continue;const defender=action.isPlayer?this.enemy:this.player;await this.executeAction(action.mon,defender,action.move,action.isPlayer);if(defender.currentHP<=0)break;}await this.afterTurn();}
