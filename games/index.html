@@ -292,7 +292,25 @@ var TAKES={
 "Neon Garden":"Ambience and pace. The calm one.",
 "Neon Siege":"Place early, think earlier."
 };
-var TOP=["Apex Kick","Voxel Frontier","Off-Brand","Glitch Clash","Hold the Mark","Orbital","Slipstream - GP","Grid Chase"];
+/* TOP is a SUBSET of CURATED, never a replacement for it. The five games
+   leaving the rail - Glitch Clash, Hold the Mark, Orbital, Slipstream - GP,
+   Grid Chase - keep their takes above and stay curated, so they keep their
+   MATT'S PICK badge in browse-all. Nothing was deleted from TAKES.
+
+   Four slots, not eight, and deliberately so. The intended eight were
+   Emberwild, Global Games, Apex Kick, Apex Pool, Relicforge, Voxel Frontier,
+   Aurora Links 3D, Off-Brand. Five of those have no take, and a take is Matt's
+   voice - not something this file may invent. Rather than pad the rail with a
+   selection nobody chose, it carries only the intended games that already have
+   one. The remaining four slots are Matt's to fill when the takes exist.
+
+   Also unresolved, and the reason the href re-keying still matters: Emberwild,
+   Global Games and Relicforge match NO manifest title exactly. "Relicforge"
+   alone is ambiguous - the manifest holds both "Relicforge: Fracture Engine"
+   (/fracture/) and "Relicforge - Strip the Machine" (/relicforge/), and the
+   ruling wants the latter. The renderer at :346 does `if(g)`, so a title that
+   fails to resolve is SILENTLY SKIPPED and the rail just comes out shorter. */
+var TOP=["Apex Kick","Voxel Frontier","Off-Brand","Trail Runner"];
 var THEMES=[
  ["PHYSICS & GRAVITY","FAVS",["Orbital","Marble"]],
  ["REFLEX & SPEED","FAVS",["Trail Runner","Trekkers Trail Runner — Tees Coast","Grid Chase"]],
