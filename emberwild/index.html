@@ -440,7 +440,9 @@
     pebble_burst: { id: 'pebble_burst', name: 'Pebble Burst', type: Type.STONE, category: 'physical', power: 55, accuracy: 95, pp: 20, priority: 0, effect: null },
     dust_veil: { id: 'dust_veil', name: 'Dust Veil', type: Type.STONE, category: 'status', power: 0, accuracy: 100, pp: 20, priority: 0, effect: { kind: 'stage', stat: 'defense', amount: 1, target: 'self' } },
     gustline: { id: 'gustline', name: 'Gustline', type: Type.WIND, category: 'special', power: 50, accuracy: 100, pp: 25, priority: 0, effect: null },
-    sky_feint: { id: 'sky_feint', name: 'Sky Feint', type: Type.WIND, category: 'physical', power: 55, accuracy: 95, pp: 20, priority: 0, effect: null }
+    sky_feint: { id: 'sky_feint', name: 'Sky Feint', type: Type.WIND, category: 'physical', power: 55, accuracy: 95, pp: 20, priority: 0, effect: null },
+    // Adopted from v1.1 game.js (engine sfx field dropped; chassis has none).
+    crown_flare: { id: 'crown_flare', name: 'Crown Flare', type: Type.EMBER, category: 'special', power: 82, accuracy: 100, pp: 10, priority: 0, effect: null }
   });
 
   const SPECIES = Object.freeze({
@@ -479,6 +481,17 @@
       baseStats: { hp: 46, attack: 40, defense: 42, spAttack: 55, spDefense: 50, speed: 68 },
       moves: ['quick_jab', 'gustline', 'sky_feint', 'mist_mend'],
       palette: ['#293548', '#c2e7ef', '#ffffff', '#8abbd3'], silhouette: 'cloud'
+    },
+    // Adopted from the pin-verified v1.1 game.js registry, bridged to the
+    // chassis schema: engine Types.FIRE/AIR -> chassis EMBER/WIND, engine
+    // 'quick_strike' -> the chassis's equivalent basic hit 'quick_jab',
+    // palette object -> [outline, body, light, accent] in chassis order.
+    // Appended LAST: the Den codec stores registry indices.
+    pyrelume: {
+      id: 'pyrelume', baseSpeciesId: 'cindrel', name: 'Pyrelume', types: [Type.EMBER, Type.WIND], catchRate: 28, baseExpYield: 164, growth: 'MEDIUM_FAST',
+      baseStats: { hp: 70, attack: 79, defense: 61, spAttack: 88, spDefense: 67, speed: 91 },
+      moves: ['quick_jab', 'ember_arc', 'cinder_rush', 'crown_flare'],
+      palette: ['#321e32', '#ef7b42', '#ffe08a', '#70ddd1'], silhouette: 'flare'
     }
   });
 
@@ -1664,6 +1677,66 @@
     }
     return { codec, CAPACITY, pack, toMonster, inspect, validateRecord };
   })();
+
+  // -------------------------------------------------------------------
+  // EWMotion — the reduced-motion family register. Every animation family
+  // shipped in this file is named here and consulted BY NAME at its call
+  // site; a name with no call site is a phantom family (recorded trap)
+  // and the harness greps for exactly that. The OS preference is the
+  // floor; the in-game Calm setting can only ADD restraint on top.
+  // -------------------------------------------------------------------
+  const EWMotion = {
+    families: {
+      evolution: 'full ZOOM/PULSE/BURST/REVEAL vs static crossfade reveal'
+    },
+    prefersReduced(){
+      try { if (matchMedia('(prefers-reduced-motion: reduce)').matches) return true; } catch(_) {}
+      const g = typeof window !== 'undefined' ? window.__EMBERWILD__ : null;
+      return !!(g && g.settings && g.settings.reducedMotion);
+    },
+    active(name){
+      if (!(name in EWMotion.families)) throw new Error('EWMotion: unregistered family ' + name);
+      return !EWMotion.prefersReduced();
+    }
+  };
+
+  // -------------------------------------------------------------------
+  // EWEvo — the chassis side of the evolution graft.
+  //
+  // The engine's EvolutionEngine and EvolutionSequence are adopted
+  // verbatim in EWEngineParts; what the engine cannot know is the chassis
+  // Monster, whose stats live on a frozen SPECIES reference and are
+  // recomputed by the chassis StatEngine. applyEvolution is therefore
+  // REPLACED here (spec behaviour kept: damage debt is preserved — a
+  // creature 11 HP below its old maximum is 11 HP below its new one).
+  // The rule table is the v1.1 data verbatim.
+  // -------------------------------------------------------------------
+  const EVOLUTION_RULES = Object.freeze({
+    cindrel: Object.freeze({ method: EWEngineParts.EvolutionMethod.LEVEL_UP, minLevel: 16, target: 'pyrelume', evolutionMove: 'crown_flare', cancelable: true })
+  });
+  class EmberEvolutionEngine extends EWEngineParts.EvolutionEngine {
+    applyEvolution(monster, rule, options = {}) {
+      const target = SPECIES[rule.target];
+      if (!monster || !target) throw new Error('Evolution requires a monster and a known target species');
+      const before = monster.toJSON();
+      const oldMax = monster.stats.hp;
+      const damageDebt = Math.max(0, oldMax - monster.currentHP);
+      const keptNickname = monster.name !== monster.species.name ? monster.name : null;
+      monster.speciesId = target.id;
+      monster.species = target;             // rebind the frozen reference
+      monster.name = keptNickname || target.name;
+      monster.types = [...target.types];
+      monster.stats = monster.calculateStats();
+      monster.currentHP = clamp(monster.stats.hp - damageDebt, monster.currentHP > 0 ? 1 : 0, monster.stats.hp);
+      let learned = null;
+      if (rule.evolutionMove && MOVES[rule.evolutionMove] && !monster.moves.some(m => m.id === rule.evolutionMove)) {
+        const mv = MOVES[rule.evolutionMove];
+        monster.moves[monster.moves.length - 1] = { ...mv, currentPP: mv.pp };
+        learned = mv.name;
+      }
+      return { success: true, before, after: monster.toJSON(), targetSpeciesId: monster.speciesId, learned };
+    }
+  }
 
   // ===================================================================
   // THE DEPTHS — deterministic dungeon generation.
@@ -2897,12 +2970,19 @@
           ctx.fillRect(13, 16, 22, 22); ctx.fillRect(8, 11, 12, 12); ctx.fillRect(28, 9, 11, 14);
         } else if (sp.silhouette === 'cloud') {
           ctx.fillRect(9, 18, 30, 15); ctx.fillRect(14, 11, 13, 13); ctx.fillRect(25, 14, 12, 12);
+        } else if (sp.silhouette === 'flare') {
+          // Pyrelume: the fox line grown tall, with a crown of flame. Ears
+          // sweep higher, the body is leaner, and the accent teal picks out
+          // the crown so the evolved form cannot be mistaken for Cindrel.
+          ctx.fillRect(13, 14, 22, 24); ctx.fillRect(8, 4, 8, 16); ctx.fillRect(32, 4, 8, 16); ctx.fillRect(34, 30, 11, 6);
+          ctx.fillRect(20, 2, 8, 8);
         } else {
           ctx.fillRect(13, 15, 22, 23); ctx.fillRect(10, 8, 13, 14); ctx.fillRect(26, 7, 12, 15);
         }
         ctx.fillStyle = main; ctx.fillRect(15, 16, 18, 18); ctx.fillRect(18, 11, 12, 10);
         ctx.fillStyle = light; ctx.fillRect(19, 18, 10, 11); ctx.fillRect(16, 33, 6, 5); ctx.fillRect(27, 33, 6, 5);
         ctx.fillStyle = accent; ctx.fillRect(20, 12, 8, 4);
+        if (sp.silhouette === 'flare') { ctx.fillStyle = light; ctx.fillRect(21, 3, 2, 6); ctx.fillRect(25, 1, 2, 8); ctx.fillStyle = accent; ctx.fillRect(23, 5, 2, 5); ctx.fillRect(10, 6, 2, 4); ctx.fillRect(36, 6, 2, 4); }
         if (!back) { ctx.fillStyle = '#11151c'; ctx.fillRect(19, 20, 3, 3); ctx.fillRect(27, 20, 3, 3); ctx.fillRect(22, 26, 5, 2); }
         else { ctx.fillStyle = dark; ctx.fillRect(18, 20, 12, 3); }
       });
@@ -3263,6 +3343,39 @@
       const line=this.wrap(String(v.line||''),pw-36,11)[0]||'';
       this.text(line,px+18,footY+52,11,'#9fd8c8','left','normal');
     }
+    // EVOLUTION overlay. The engine snapshot drives everything; the drawn
+    // crossfade is the low-passed copy (see updateEvolution) and the flash
+    // amplitude is deliberately soft — the census gate is the authority
+    // over the source material. Under reduced motion this is a static
+    // two-sprite crossfade: no zoom, no pulse, no burst, no flash.
+    drawEvolution(){
+      const g=this.game,e=g.evo;if(!e)return;
+      const snap=e.seq.snapshot();
+      const c=this.ctx;
+      const dim=e.reduced?0.72:snap.worldDim;
+      c.fillStyle=`rgba(5,9,16,${(dim*.92).toFixed(3)})`;c.fillRect(0,0,this.w,this.h);
+      const cx=this.w/2,cy=Math.min(this.h*.38,this.h-300);
+      const size=Math.min(200,this.w*.44)*(e.reduced?1:snap.scale);
+      const mix=Math.max(0,Math.min(1,e.drawnMix));
+      const src=this.sprites.monster(e.sourceId,false),tgt=this.sprites.monster(e.targetId,false);
+      c.save();c.imageSmoothingEnabled=false;
+      if(!e.reduced&&snap.brightness>1){c.globalAlpha=Math.min(.3,(snap.brightness-1)*.075);c.fillStyle='#ffe9c4';c.beginPath();c.arc(cx,cy,size*.72,0,Math.PI*2);c.fill();}
+      c.globalAlpha=1-mix;c.drawImage(src,cx-size/2,cy-size/2,size,size);
+      c.globalAlpha=mix;c.drawImage(tgt,cx-size/2,cy-size/2,size,size);
+      if(!e.reduced&&snap.flashOpacity>0){c.globalAlpha=Math.min(.55,snap.flashOpacity*.55);c.fillStyle='#fff6e6';c.fillRect(0,0,this.w,this.h);}
+      c.restore();
+      const srcName=SPECIES[e.sourceId].name;
+      let line;
+      if(snap.state==='cancelled')line=`${e.mon.name} paused, and stayed just as they are.`;
+      else if(snap.state==='reveal'||snap.state==='complete')line=`${srcName} evolved into ${SPECIES[e.targetId].name}!`;
+      else line=`What's this? ${srcName} is changing!`;
+      this.text(line,cx,cy+size/2+34,16,'#fff','center');
+      if(snap.result&&snap.result.learned&&(snap.state==='reveal'||snap.state==='complete'))this.text(`${e.mon.name} learned ${snap.result.learned}!`,cx,cy+size/2+58,13,'#f6d979','center');
+      const hints=[];
+      if(snap.canCancel)hints.push('B — not yet');
+      if(snap.state!=='complete'&&snap.state!=='cancelled')hints.push('A — hurry along');
+      if(hints.length)this.text(hints.join('    '),cx,cy+size/2+84,11,'#9fb2c3','center','normal');
+    }
     drawDialogue(){if(!this.dialogue.active)return;const boxW=Math.min(720,this.w-30),boxH=116,x=(this.w-boxW)/2,y=this.h-boxH-18;this.frame(x,y,boxW,boxH);const lines=this.wrap(this.dialogue.display,boxW-42,16);lines.slice(0,3).forEach((line,i)=>this.text(line,x+20,y+20+i*24,16,'#fff','left','bold'));if(this.dialogue.charIndex>=this.dialogue.lines[this.dialogue.index].length&&Math.sin(performance.now()/180)>0){this.text('▼',x+boxW-30,y+boxH-28,16,'#f6d979');}this.addRegion(x,y,boxW,boxH,'CONFIRM','Advance dialogue');}
     drawMenu(){const items=this.game.getPauseMenuItems();this.menuItems=items;const w=Math.min(430,this.w-30),h=70+items.length*52,x=(this.w-w)/2,y=(this.h-h)/2;this.frame(x,y,w,h,{bg:'rgba(10,18,31,.97)'});this.text('FIELD KIT',x+22,y+18,19,'#f6d979');items.forEach((item,i)=>{const ry=y+54+i*52;const selected=i===this.menuIndex;this.ctx.fillStyle=selected?'rgba(111,213,195,.2)':'rgba(255,255,255,.035)';this.ctx.fillRect(x+12,ry,w-24,44);this.text(selected?'▶':' ',x+22,ry+13,13,'#71d5c3');this.text(item.label,x+45,ry+12,14,item.disabled?'#68727d':'#fff');this.text(item.detail||'',x+w-20,ry+14,10,'#8fa7bb','right','normal');this.addRegion(x+12,ry,w-24,44,{type:'MENU_SELECT',index:i},item.label);});}
     hpBar(x,y,w,current,max){const ratio=clamp(current/max,0,1);this.ctx.fillStyle='#222b32';this.ctx.fillRect(x,y,w,10);this.ctx.fillStyle=ratio<=.2?'#f05c5c':ratio<=.5?'#f2d15b':'#62d07b';this.ctx.fillRect(x,y,Math.floor(w*ratio),10);this.ctx.fillStyle='rgba(255,255,255,.28)';this.ctx.fillRect(x,y,Math.floor(w*ratio),2);}
@@ -3278,7 +3391,7 @@
       if(this.flash>0){c.fillStyle=`rgba(255,255,255,${Math.min(.45,this.flash)})`;c.fillRect(0,0,this.w,this.h);}c.restore();}
     drawBattleMenu(b){const isCall=b.menu==='call';const panelW=isCall?Math.min(430,this.w-28):Math.min(360,this.w*.45),panelH=isCall?188:(b.menu==='moves'?174:142),x=isCall?Math.round((this.w-panelW)/2):this.w-panelW-14,y=isCall?Math.max(12,this.h-panelH-150):this.h-panelH-12;this.frame(x,y,panelW,panelH,{bg:'rgba(9,16,28,.98)'});let entries=[];if(b.menu==='main')entries=[['FIGHT','BATTLE_FIGHT'],['BAG','BATTLE_BAG'],['TEAM','BATTLE_TEAM'],['RUN','BATTLE_RUN']];else if(b.menu==='moves')entries=b.player.moves.map((m,i)=>[`${m.name}\n${m.type.toUpperCase()}  ${m.currentPP}/${m.pp}`,{type:'BATTLE_MOVE',index:i}]);else if(b.menu==='bag')entries=[[`PRISM POD  x${this.game.inventory.prism_pod||0}`,'BATTLE_POD'],[`FIELD TONIC  x${this.game.inventory.field_tonic||0}`,'BATTLE_TONIC'],['BACK','BATTLE_BACK']];else if(b.menu==='call')entries=[['LONG SHOT\nunder 30%',{type:'BATTLE_CALL',band:'LONG_SHOT'}],['COIN FLIP\n30 - 70%',{type:'BATTLE_CALL',band:'COIN_FLIP'}],['SURE THING\nover 70%',{type:'BATTLE_CALL',band:'SURE_THING'}],['SKIP THE CALL\nno rating change',{type:'BATTLE_CALL',band:null}]];
       const cols=2,rows=Math.ceil(entries.length/cols),gap=8,pad=14,cellW=(panelW-pad*2-gap)/2,cellH=(panelH-pad*2-gap*(rows-1))/rows;entries.forEach((entry,i)=>{const col=i%2,row=Math.floor(i/2),rx=x+pad+col*(cellW+gap),ry=y+pad+row*(cellH+gap);const selected=i===b.cursor;this.ctx.fillStyle=selected?'rgba(246,217,121,.22)':'rgba(255,255,255,.045)';this.ctx.fillRect(rx,ry,cellW,cellH);this.ctx.strokeStyle=selected?'#f6d979':'#42516a';this.ctx.strokeRect(rx+.5,ry+.5,cellW-1,cellH-1);const lines=String(entry[0]).split('\n');this.text(lines[0],rx+10,ry+10,b.menu==='call'?11:13,selected?'#fff':'#dce6ef');if(lines[1])this.text(lines[1],rx+10,ry+28,9,TYPE_COLORS[lines[1].split(' ')[0].toLowerCase()]||'#9fb2c3','left','normal');this.addRegion(rx,ry,cellW,cellH,entry[1],lines[0]);});}
-    render(){const c=this.ctx;c.setTransform(this.dpr,0,0,this.dpr,0,0);c.clearRect(0,0,this.w,this.h);this.regions=[];if(this.game.mode===GameMode.BATTLE)this.drawBattle();else{this.drawOverworldHUD();if(this.game.mode===GameMode.MENU)(this.game.denView?this.drawDen():this.drawMenu());}this.drawDialogue();if(this.game.toast){this.frame(this.w/2-170,90,340,45,{bg:'rgba(12,20,31,.92)'});this.text(this.game.toast.text,this.w/2,104,12,this.game.toast.color||'#fff','center');}if(this.game.settings.highContrast){c.strokeStyle='#fff';c.lineWidth=2;c.strokeRect(1,1,this.w-2,this.h-2);}}
+    render(){const c=this.ctx;c.setTransform(this.dpr,0,0,this.dpr,0,0);c.clearRect(0,0,this.w,this.h);this.regions=[];if(this.game.mode===GameMode.BATTLE)this.drawBattle();else{this.drawOverworldHUD();if(this.game.mode===GameMode.MENU)(this.game.denView?this.drawDen():this.drawMenu());}this.drawDialogue();if(this.game.evo)this.drawEvolution();if(this.game.toast){this.frame(this.w/2-170,90,340,45,{bg:'rgba(12,20,31,.92)'});this.text(this.game.toast.text,this.w/2,104,12,this.game.toast.color||'#fff','center');}if(this.game.settings.highContrast){c.strokeStyle='#fff';c.lineWidth=2;c.strokeRect(1,1,this.w-2,this.h-2);}}
   }
 
   class PlayerController {
@@ -3300,7 +3413,7 @@
   class InputManager {
     constructor(game){this.game=game;this.keys=new Set();this.sprint=false;this.repeatTimer=null;this.activeDirection=null;this.bindKeyboard();this.bindTouch();}
     bindKeyboard(){window.addEventListener('keydown',e=>{const key=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright',' ','enter'].includes(key))e.preventDefault();if(e.repeat&&['z','x','enter','escape','m','p','t','i'].includes(key))return;this.keys.add(key);this.sprint=e.shiftKey||this.keys.has('shift');if(key==='arrowup'||key==='w')this.move('N');else if(key==='arrowdown'||key==='s')this.move('S');else if(key==='arrowleft'||key==='a')this.move('W');else if(key==='arrowright'||key==='d')this.move('E');else if(key==='z'||key==='enter'||key===' ')this.game.handleConfirm();else if(key==='x'||key==='escape')this.game.handleCancel();else if(key==='m'||key==='tab'){e.preventDefault();this.game.toggleMenu();}else if(key==='p')this.game.profiler.toggle();else if(key==='t')this.game.startWildEncounter(true);else if(key==='i')document.getElementById('map-import')?.click();});window.addEventListener('keyup',e=>{this.keys.delete(e.key.toLowerCase());this.sprint=this.keys.has('shift');});}
-    move(dir){if(this.game.mode===GameMode.BATTLE){this.game.battle?.navigate(dir);return;}if(this.game.mode===GameMode.MENU){this.game.navigateMenu(dir);return;}const v=CARDINALS[dir];this.game.player.tryMove(v.x,v.z);}
+    move(dir){if(this.game.evo)return;if(this.game.mode===GameMode.BATTLE){this.game.battle?.navigate(dir);return;}if(this.game.mode===GameMode.MENU){this.game.navigateMenu(dir);return;}const v=CARDINALS[dir];this.game.player.tryMove(v.x,v.z);}
     bindTouch(){const dpad=document.getElementById('touch-dpad');if(!dpad)return;const startRepeat=dir=>{this.activeDirection=dir;this.move(dir);clearInterval(this.repeatTimer);this.repeatTimer=setInterval(()=>this.move(dir),180);};const stop=()=>{this.activeDirection=null;clearInterval(this.repeatTimer);this.repeatTimer=null;};dpad.querySelectorAll('[data-dir]').forEach(btn=>{btn.addEventListener('pointerdown',e=>{e.preventDefault();btn.setPointerCapture?.(e.pointerId);startRepeat(btn.dataset.dir);});btn.addEventListener('pointerup',stop);btn.addEventListener('pointercancel',stop);btn.addEventListener('pointerleave',e=>{if(e.buttons===0)stop();});});document.getElementById('touch-a')?.addEventListener('pointerdown',e=>{e.preventDefault();this.game.haptics.trigger('button');this.game.handleConfirm();});document.getElementById('touch-b')?.addEventListener('pointerdown',e=>{e.preventDefault();this.game.haptics.trigger('button');this.game.handleCancel();});document.getElementById('touch-menu')?.addEventListener('pointerdown',e=>{e.preventDefault();this.game.toggleMenu();});}
   }
 
@@ -3350,7 +3463,7 @@
     async executeAction(attacker,defender,move,isPlayer){const pre=this.field.preAction(attacker,this.rng);if(pre.message){this.message=pre.message;await this.game.delay(500);}if(!pre.canMove)return;move.currentPP=Math.max(0,(move.currentPP??move.pp)-1);this.message=`${attacker.name} used ${move.name}!`;this.game.audio.playEnergy(move.type);await this.game.delay(380);if(this.rng.random()*100>move.accuracy){this.message='The technique missed its mark.';this.game.audio.playUI('error');await this.game.delay(500);return;}if(move.category==='status'){await this.applyMoveEffect(attacker,defender,move);return;}const result=DamageEngine.calculate(attacker,defender,move,this.rng,this.field.weather);this.anim={target:isPlayer?'enemy':'player',shake:result.crit?1.4:0.8,recoil:true,flashTarget:isPlayer?'enemy':'player'};this.game.audio.playImpact(result.crit);this.game.haptics.trigger(result.effectiveness>1?'heavy':'light');defender.currentHP=Math.max(0,defender.currentHP-result.damage);this.message=`${defender.name} lost ${result.damage} HP.`;await this.game.delay(450);this.anim=null;if(result.crit){this.message='A critical resonance!';await this.game.delay(350);}if(result.effectiveness>1){this.message='The type pattern amplified the strike!';await this.game.delay(420);}else if(result.effectiveness===0){this.message='The type pattern cancelled the strike.';await this.game.delay(420);}else if(result.effectiveness<1){this.message='The type pattern softened the strike.';await this.game.delay(420);}if(move.effect&&this.rng.random()<(move.effect.chance||1))await this.applyMoveEffect(attacker,defender,move,true);}
     async applyMoveEffect(attacker,defender,move,silentIntro=false){const effect=move.effect;if(!effect)return;const target=effect.target==='self'?attacker:defender;if(effect.kind==='stage'){const old=target.stages[effect.stat]||0;target.stages[effect.stat]=clamp(old+effect.amount,-6,6);this.message=`${target.name}'s ${effect.stat} rose.`;this.game.audio.playUI('confirm');}else if(effect.kind==='status'||effect.kind==='chanceStatus'){if(target.status===StatusType.NONE){target.status=effect.status;if(effect.status===StatusType.SLEEP)target.sleepTurns=this.rng.int(1,3);this.message=`${target.name} gained ${effect.status.toUpperCase()} status.`;}else if(!silentIntro)this.message='The status pattern could not take hold.';}else if(effect.kind==='heal'){const amount=Math.max(1,Math.floor(target.stats.hp*effect.fraction));const healed=Math.min(amount,target.stats.hp-target.currentHP);target.currentHP+=healed;this.message=`${target.name} restored ${healed} HP.`;}await this.game.delay(500);}
     async afterTurn(){this.playerDisplayHP=this.player.currentHP;this.enemyDisplayHP=this.enemy.currentHP;if(this.enemy.currentHP<=0){await this.resolveVictory();return;}if(this.player.currentHP<=0){await this.resolveDefeat();return;}for(const log of this.field.processEnd([this.player,this.enemy])){this.message=log;await this.game.delay(480);if(this.enemy.currentHP<=0){await this.resolveVictory();return;}if(this.player.currentHP<=0){await this.resolveDefeat();return;}}this.state='MENU_SELECT';this.menu='main';this.cursor=0;this.message='Choose an action.';this.busy=false;}
-    async resolveVictory(){this.enemy.currentHP=0;this.enemyDisplayHP=0;this.message=`${this.enemy.name} dispersed from the field.`;await this.game.delay(650);const exp=Math.max(1,Math.floor(this.enemy.species.baseExpYield*this.enemy.level*(this.trainer?1.5:1)/7));this.message=`${this.player.name} gained ${exp} EXP.`;const progress=ProgressionEngine.award(this.player,exp);await this.game.delay(650);if(progress.levelsGained>0){this.game.audio.playUI('confirm');this.message=`${this.player.name} reached Lv${this.player.level}!`;await this.game.delay(850);}if(this.trainer){const npc=this.game.activeTrainerNPC;if(npc?.flag!=null)this.game.flags.set(npc.flag);this.game.inventory.prism_pod+=2;this.message=`${this.trainerName}: “Strong field reading. Take two Prism Pods.”`;await this.game.delay(900);}this.end('VICTORY');}
+    async resolveVictory(){this.enemy.currentHP=0;this.enemyDisplayHP=0;this.message=`${this.enemy.name} dispersed from the field.`;await this.game.delay(650);const exp=Math.max(1,Math.floor(this.enemy.species.baseExpYield*this.enemy.level*(this.trainer?1.5:1)/7));this.message=`${this.player.name} gained ${exp} EXP.`;const progress=ProgressionEngine.award(this.player,exp);await this.game.delay(650);if(progress.levelsGained>0){this.game.audio.playUI('confirm');this.message=`${this.player.name} reached Lv${this.player.level}!`;await this.game.delay(850);this.game.queueEvolutionCheck(this.player);}if(this.trainer){const npc=this.game.activeTrainerNPC;if(npc?.flag!=null)this.game.flags.set(npc.flag);this.game.inventory.prism_pod+=2;this.message=`${this.trainerName}: “Strong field reading. Take two Prism Pods.”`;await this.game.delay(900);}this.end('VICTORY');}
     async resolveDefeat(){this.playerDisplayHP=0;this.message=`${this.player.name} can no longer hold the field.`;await this.game.delay(800);// SEMH-safe: a Depths defeat returns you to THIS floor's entrance, healed —
       // not to the Vale, and with nothing taken off you.
       if(this.game.depths){this.end('DEFEAT');this.game.depthsRecover();return;}this.game.party.forEach(m=>m.healFull());this.game.player.teleport(10,17,0);this.end('DEFEAT');this.game.toastMessage('The Lodge array restored your partner.','#f6d979');}
@@ -3360,7 +3473,7 @@
 
   class EmberwildGame {
     constructor(){
-      this.version=APP_VERSION;this.mode=GameMode.BOOT;this.callHistory=[];this.charmTier=1;this.depthsRecord={deepest:0};this.depths=null;this.den=[];this.nextUid=1;this.denView=null;this.map=buildDemoMap();this.flags=new BitmaskFlags(256);this.rng=new DeterministicPRNG((Date.now()^0xa37e5d)>>>0);this.audio=new RetroAudioEngine();this.haptics=new HapticEngine();this.saveManager=new SaveManager();this.sprites=new SpriteFactory();this.inventory={prism_pod:6,bright_pod:0,field_tonic:3};this.collection={spriglet:1};this.settings={audio:true,reducedMotion:false,highContrast:false,touchControls:'auto',renderer:'auto'};this.playTime=0;this.steps=0;this.objective='Explore Prism Route and meet the Flower Plateau Warden.';this.toast=null;this.toastTimer=0;this.battle=null;this.activeTrainerNPC=null;
+      this.version=APP_VERSION;this.mode=GameMode.BOOT;this.callHistory=[];this.charmTier=1;this.depthsRecord={deepest:0};this.depths=null;this.den=[];this.nextUid=1;this.denView=null;this.evo=null;this.pendingEvolutions=[];this.evolutionEngine=new EmberEvolutionEngine({rules:EVOLUTION_RULES});this.map=buildDemoMap();this.flags=new BitmaskFlags(256);this.rng=new DeterministicPRNG((Date.now()^0xa37e5d)>>>0);this.audio=new RetroAudioEngine();this.haptics=new HapticEngine();this.saveManager=new SaveManager();this.sprites=new SpriteFactory();this.inventory={prism_pod:6,bright_pod:0,field_tonic:3};this.collection={spriglet:1};this.settings={audio:true,reducedMotion:false,highContrast:false,touchControls:'auto',renderer:'auto'};this.playTime=0;this.steps=0;this.objective='Explore Prism Route and meet the Flower Plateau Warden.';this.toast=null;this.toastTimer=0;this.battle=null;this.activeTrainerNPC=null;
       const spawn=this.map.entities.find(e=>e.type==='PLAYER_SPAWN')||{x:10,z:17,y:0,facing:'N'};
       this.party=[new Monster({speciesId:'spriglet',level:6,seed:0x4d415454})];
       this.npcs=this.map.entities.filter(e=>e.type!=='PLAYER_SPAWN').map(e=>new NPCActor(e,this.map));
@@ -3383,7 +3496,7 @@
     useSoftwareRenderer(){/* software renderer is the only renderer */}
     setRendererVisible(v){this.softwareRenderer.setVisible(v&&this.renderer===this.softwareRenderer);}
     loop(now){if(!this.running)return;const dt=Math.min(.05,(now-this.lastTime)/1000);this.lastTime=now;this.update(dt);this.render();requestAnimationFrame(t=>this.loop(t));}
-    update(dt){this.playTime+=dt;this.player.update(dt);for(const npc of this.npcs)npc.update(dt);if(this.battle)this.battle.update(dt);this.ui.update(dt);if(this.toast){this.toastTimer-=dt;if(this.toastTimer<=0)this.toast=null;}if(this.mode!==GameMode.BATTLE){this.timeOfDay=(0.56+(this.playTime/180))%1;this.renderer.update(dt);}this.profiler.update(this.renderer);this.updateSRStatus();}
+    update(dt){this.playTime+=dt;if(this.evo)this.updateEvolution(dt);else if(this.pendingEvolutions.length&&this.mode===GameMode.OVERWORLD&&!this.ui.dialogue.active)this.maybeStartEvolution();this.player.update(dt);for(const npc of this.npcs)npc.update(dt);if(this.battle)this.battle.update(dt);this.ui.update(dt);if(this.toast){this.toastTimer-=dt;if(this.toastTimer<=0)this.toast=null;}if(this.mode!==GameMode.BATTLE){this.timeOfDay=(0.56+(this.playTime/180))%1;this.renderer.update(dt);}this.profiler.update(this.renderer);this.updateSRStatus();}
     render(){if(this.mode!==GameMode.BATTLE)this.renderer.render();this.ui.render();}
     updateSRStatus(){const sr=document.getElementById('sr-status');if(!sr)return;      // A deliberate announcement (the catch reveal) holds the live region for
       // a few seconds; otherwise the next frame would overwrite it before any
@@ -3402,8 +3515,8 @@
     checkTrainerSight(){if(this.mode!==GameMode.OVERWORLD)return;for(const npc of this.npcs){if(npc.type!=='TRAINER'||(npc.flag!=null&&this.flags.get(npc.flag)))continue;const dir=CARDINALS[npc.facing];for(let k=1;k<=npc.sight;k++){const x=npc.grid.x+dir.x*k,z=npc.grid.z+dir.z*k,cell=this.map.getCell(x,z);if(!cell||cell.surface===Surface.BLOCKED||cell.height!==npc.grid.y)break;if(x===this.player.grid.x&&z===this.player.grid.z){this.triggerTrainer(npc);return;}}}}
     async triggerTrainer(npc){if(this.mode!==GameMode.OVERWORLD)return;this.mode=GameMode.TRANSITION;npc.alertTimer=1;this.audio.playUI('confirm');await this.delay(450);npc.alertTimer=0;const goal={x:this.player.grid.x-CARDINALS[npc.facing].x,z:this.player.grid.z-CARDINALS[npc.facing].z};const path=this.pathfinder.findPath(npc.grid,goal).slice(1,3);for(const step of path){npc.beginStep(step,this.map);while(npc.state!=='IDLE')await sleep(16);}await this.ui.dialogue.show([`${npc.name}: “The plateau answers only to a steady signal.”`,`“Show me how your partner reads the field.”`],this);this.activeTrainerNPC=npc;const party=npc.party?.[0]||{speciesId:'voltwing',level:7};this.startBattle(new Monster({...party,seed:this.rng.int(1,0xffffffff)}),true,npc.name);}
     checkInteraction(){const v=CARDINALS[this.player.facing],tx=this.player.grid.x+v.x,tz=this.player.grid.z+v.z;const npc=this.entityAt(tx,tz,n=>n.type!=='ITEM');if(npc){if(npc.type==='DEPTHS_ENTRANCE'){this.ui.dialogue.show(['A cold seam in the rock breathes up at you.','You climb down into the Depths.'],this).then(()=>this.enterDepths());return true;}if(npc.type==='STAIRS_DOWN'){this.descend();return true;}if(npc.type==='STAIRS_UP'){if(this.depths&&this.depths.floorIndex>0)this.loadDepthsFloor(this.depths.floorIndex-1);else this.leaveDepths(false);return true;}if(npc.type==='FLOOR_EXIT'){this.leaveDepths(true);return true;}if(npc.type==='HEALING_POOL'){this.party.forEach(m=>m.healFull());this.save('AUTOSAVE');this.announce('The pool restores your party.');this.ui.dialogue.show(['Still water, faintly lit.','Your party is restored.'],this);return true;}if(npc.type==='LOOT'){this.collectDepthsLoot(npc);return true;}if(npc.type==='BOSS'||npc.type==='ENEMY'){this.startDepthsBattle(npc);return true;}if(npc.type==='HEALER'){this.party.forEach(m=>m.healFull());this.save('AUTOSAVE');this.ui.dialogue.show(npc.dialogue||['Your partner is restored.'],this);return true;}if(npc.type==='TRAINER'&&npc.flag!=null&&this.flags.get(npc.flag)){this.ui.dialogue.show([`${npc.name}: “Your signal held. Keep mapping the route.”`],this);return true;}this.ui.dialogue.show(npc.dialogue||[`${npc.name} nods.`],this);return true;}return false;}
-    handleConfirm(){this.audio.playUI('confirm');if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.confirm();return;}if(this.mode===GameMode.MENU&&this.denView){this.denKeyConfirm();return;}if(this.mode===GameMode.MENU){const items=this.getPauseMenuItems();this.executePauseItem(items[this.ui.menuIndex]);return;}if(this.mode===GameMode.OVERWORLD)this.checkInteraction();}
-    handleCancel(){if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.back();return;}if(this.mode===GameMode.MENU&&this.denView){this.closeDen();this.audio.playUI();return;}if(this.mode===GameMode.MENU){this.toggleMenu();return;}this.audio.playUI();}
+    handleConfirm(){if(this.evo){this.skipEvolution();return;}this.audio.playUI('confirm');if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.confirm();return;}if(this.mode===GameMode.MENU&&this.denView){this.denKeyConfirm();return;}if(this.mode===GameMode.MENU){const items=this.getPauseMenuItems();this.executePauseItem(items[this.ui.menuIndex]);return;}if(this.mode===GameMode.OVERWORLD)this.checkInteraction();}
+    handleCancel(){if(this.evo){this.cancelEvolution();return;}if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.back();return;}if(this.mode===GameMode.MENU&&this.denView){this.closeDen();this.audio.playUI();return;}if(this.mode===GameMode.MENU){this.toggleMenu();return;}this.audio.playUI();}
     toggleMenu(){if(this.mode===GameMode.BATTLE||this.mode===GameMode.TRANSITION||this.ui.dialogue.active)return;if(this.mode===GameMode.MENU){this.mode=GameMode.OVERWORLD;return;}if(this.mode===GameMode.OVERWORLD){this.mode=GameMode.MENU;this.ui.menuIndex=0;this.audio.playUI();}}
     navigateMenu(dir){if(this.denView){this.denKeyMove(dir);return;}const items=this.getPauseMenuItems();if(dir==='N'||dir==='W')this.ui.menuIndex=(this.ui.menuIndex-1+items.length)%items.length;else this.ui.menuIndex=(this.ui.menuIndex+1)%items.length;this.audio.playUI();}
     getPauseMenuItems(){return[
@@ -3520,6 +3633,70 @@
       this.toastMessage('You come to at the floor entrance, party restored.','#71d5c3');
       this.announce('You were carried back to the floor entrance. Your party is restored. Nothing was lost.');
       this.save('AUTOSAVE');
+    }
+    // ---------------- EVOLUTION ----------------
+    queueEvolutionCheck(mon){
+      const rule=this.evolutionEngine.checkEligibility(mon,{type:EWEngineParts.EvolutionMethod.LEVEL_UP});
+      if(rule&&!this.pendingEvolutions.some(p=>p.mon===mon))this.pendingEvolutions.push({mon,rule});
+    }
+    maybeStartEvolution(){
+      if(this.evo||!this.pendingEvolutions.length||this.mode!==GameMode.OVERWORLD)return false;
+      const {mon,rule}=this.pendingEvolutions.shift();
+      // Re-check: the party may have changed since the battle.
+      if(!this.party.includes(mon))return this.maybeStartEvolution();
+      const seq=new EWEngineParts.EvolutionSequence(this.evolutionEngine);
+      const sourceId=mon.speciesId;
+      seq.start(mon,rule);
+      // §4 — reduced motion is not optional here. The RM route is a static
+      // crossfade reveal: same information, no zoom, no pulse, no burst.
+      // 'evolution' is a registered EWMotion family with this call site.
+      const reduced=!EWMotion.active('evolution');
+      this.evo={seq,mon,sourceId,targetId:rule.target,reduced,drawnMix:0,done:false,linesShown:false};
+      this.announce(`What's this? ${mon.name} is changing! Press B to wait, A to hurry along.`);
+      this.audio.playCapture('throw');
+      return true;
+    }
+    updateEvolution(dt){
+      const e=this.evo;if(!e)return;
+      const snap=e.seq.update(dt);
+      // The engine pulse crossfade reaches ~17 Hz at the end of the phase.
+      // Drawn as a raw alternation that is a flash risk, so the DRAWN mix
+      // follows the sequence through a low-pass: the census gate is the
+      // authority and this is the softening the brief licenses. The engine
+      // still applies the evolution identically — only ink is smoothed.
+      const target=e.reduced?(snap.state==='zoom'?0:snap.state==='pulse'?0.35*snap.phaseProgress:1):snap.pulseMix;
+      const alpha=1-Math.exp(-dt/0.16);
+      e.drawnMix+=(target-e.drawnMix)*alpha;
+      if(snap.state==='reveal'&&!e.linesShown){
+        e.linesShown=true;
+        const learned=snap.result&&snap.result.learned;
+        this.announce(`${SPECIES[e.sourceId].name} evolved into ${e.mon.name}!`+(learned?` ${e.mon.name} learned ${learned}!`:''));
+        this.audio.playCapture('click');
+      }
+      if(snap.state==='cancelled'&&!e.linesShown){e.linesShown=true;this.announce(`${e.mon.name} paused, and stayed just as they are. That's fine too.`);}
+      if(!e.seq.active){
+        this.evo=null;this.save('AUTOSAVE');
+        // let any further pending evolutions follow on
+        setTimeout(()=>this.maybeStartEvolution(),400);
+      }
+    }
+    // A skip is not a cancel: the result must be identical whether the
+    // player watches, skips, or runs reduced motion. The engine's own
+    // update loop is fast-forwarded so BURST still applies the change.
+    skipEvolution(){
+      const e=this.evo;if(!e)return;
+      let guard=0;
+      while(e.seq.active&&guard++<80)e.seq.update(0.25);
+      this.updateEvolution(0.001);
+    }
+    cancelEvolution(){const e=this.evo;if(e&&e.seq.canCancel())e.seq.requestCancel();}
+    // Gate seam: start a real Cindrel->Pyrelume without grinding to Lv16.
+    startEvolutionForGate(){
+      const mon=this.party.find(m=>m.speciesId==='cindrel')||this.party[0];
+      if(mon.speciesId!=='cindrel')return false;
+      const oldMax=mon.stats.hp;mon.level=16;mon.stats=mon.calculateStats();mon.currentHP=Math.max(1,Math.min(mon.stats.hp,mon.currentHP+(mon.stats.hp-oldMax)));
+      this.queueEvolutionCheck(mon);
+      return this.maybeStartEvolution();
     }
     // ---------------- THE DEN ----------------
     // Hostile-save posture: every record is validated individually and a
