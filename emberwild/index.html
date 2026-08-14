@@ -1521,7 +1521,103 @@
       if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
       return true;
     }
-    setEnabled(enabled) { this.enabled = Boolean(enabled); if (!this.enabled) this.stopMusic(); }
+    setEnabled(enabled) { this.enabled = Boolean(enabled); if (!this.enabled) { this.stopMusic(); this.setAmbience(null); } }
+    // ---------------- AMBIENT BEDS ----------------
+    // Procedural, like everything else in this engine — no samples. One
+    // bed at a time, keyed by region: the Vale gets a soft wind wash with
+    // sparse birdsong figures, the Depths a low rumble with occasional
+    // drips. Beds route through the master gain so the existing mute
+    // setting governs them, duck under battle, and hold classroom-quiet
+    // levels. No stingers, ever — nothing in a bed exceeds a whisper.
+    initBed() {
+      if (this.bed || !this.ctx) return;
+      const gain = this.ctx.createGain();
+      gain.gain.value = 0;
+      gain.connect(this.master);
+      this.bed = { gain, key: null, nodes: [], timer: null, level: 0 };
+    }
+    stopBedNodes() {
+      if (!this.bed) return;
+      if (this.bed.timer) { clearInterval(this.bed.timer); this.bed.timer = null; }
+      for (const n of this.bed.nodes) { try { n.stop ? n.stop() : n.disconnect(); } catch (_) {} }
+      this.bed.nodes = [];
+    }
+    setAmbience(regionKey) {
+      if (!this.ctx) return;
+      this.initBed();
+      const key = this.enabled ? regionKey : null;
+      if (this.bed.key === key) return;
+      this.bed.key = key;
+      this.stopBedNodes();
+      const now = this.ctx.currentTime;
+      this.bed.gain.gain.cancelScheduledValues(now);
+      if (!key) { this.bed.gain.gain.linearRampToValueAtTime(0, now + 0.6); return; }
+      const depths = key === 'depths';
+      this.bed.level = depths ? 0.075 : 0.05;
+      this.bed.gain.gain.linearRampToValueAtTime(this.bed.level, now + 1.4);
+      if (depths) {
+        // low rumble: detuned triangle pair through a gentle lowpass
+        const lp = this.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 130;
+        lp.connect(this.bed.gain);
+        for (const f of [52, 57.5]) {
+          const o = this.ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = f;
+          const g = this.ctx.createGain(); g.gain.value = 0.5;
+          o.connect(g); g.connect(lp); o.start();
+          this.bed.nodes.push(o, g);
+        }
+        this.bed.nodes.push(lp);
+      } else {
+        // wind: the engine's noise buffer through a slowly wandering bandpass
+        if (this.noiseBuffer) {
+          const src = this.ctx.createBufferSource(); src.buffer = this.noiseBuffer; src.loop = true;
+          const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 420; bp.Q.value = 0.6;
+          const g = this.ctx.createGain(); g.gain.value = 0.5;
+          const lfo = this.ctx.createOscillator(); lfo.frequency.value = 0.07;
+          const lfoGain = this.ctx.createGain(); lfoGain.gain.value = 160;
+          lfo.connect(lfoGain); lfoGain.connect(bp.frequency);
+          src.connect(bp); bp.connect(g); g.connect(this.bed.gain);
+          src.start(); lfo.start();
+          this.bed.nodes.push(src, bp, g, lfo, lfoGain);
+        }
+      }
+      // sparse figures: birdsong in daylight regions, drips below
+      this.bed.timer = setInterval(() => {
+        if (!this.enabled || !this.ctx || this.bed.key !== key) return;
+        if (Math.random() > 0.42) return;
+        const t = this.ctx.currentTime;
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.connect(g); g.connect(this.bed.gain);
+        if (depths) {
+          o.type = 'sine'; o.frequency.setValueAtTime(1180 + Math.random() * 500, t);
+          o.frequency.exponentialRampToValueAtTime(320, t + 0.16);
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(0.5, t + 0.012);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+          o.start(t); o.stop(t + 0.34);
+        } else {
+          o.type = 'triangle';
+          const base = 1560 + Math.random() * 640;
+          o.frequency.setValueAtTime(base, t);
+          o.frequency.setValueAtTime(base * 1.22, t + 0.07);
+          o.frequency.setValueAtTime(base * 0.94, t + 0.15);
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(0.34, t + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+          o.start(t); o.stop(t + 0.3);
+        }
+      }, 3400 + Math.floor(Math.random() * 2400));
+    }
+    // battle and menus sit on top; the bed steps back rather than compete
+    setBedDucked(ducked) {
+      if (!this.bed || !this.ctx || !this.bed.key) return;
+      const target = (ducked ? 0.28 : 1) * this.bed.level;
+      const g = this.bed.gain.gain;
+      if (Math.abs((this._bedTarget ?? -1) - target) < 0.001) return;
+      this._bedTarget = target;
+      g.cancelScheduledValues(this.ctx.currentTime);
+      g.linearRampToValueAtTime(target, this.ctx.currentTime + 0.5);
+    }
     setVolume(value) { if (this.master) this.master.gain.setTargetAtTime(clamp(value, 0, 0.7), this.ctx.currentTime, 0.02); }
     pulse(freq, duration = 0.08, duty = '25', gainValue = 0.14, endFreq = null) {
       if (!this.ensure()) return;
@@ -4625,6 +4721,8 @@
       this.softwareRenderer.setRegionGrade(key,this.depths?this.depths.floorIndex:0);
       const seam=!this.depths&&this.npcs.some(n=>n.type==='DEPTHS_ENTRANCE'&&Math.max(Math.abs(n.grid.x-this.player.grid.x),Math.abs(n.grid.z-this.player.grid.z))<=6);
       EWFx.set(this.depths?'depths':(seam?'seam':null));
+      this.audio.setAmbience(this.depths?'depths':'vale');
+      this.audio.setBedDucked(this.mode===GameMode.BATTLE||this.mode===GameMode.MENU);
     }
     refreshMotion(){
       // Re-evaluate every registered family when the OS preference flips.
