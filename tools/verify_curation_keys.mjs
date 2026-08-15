@@ -149,11 +149,27 @@ function readPage() {
     return rec;
   });
 
-  const themes = declaratorInit(ast, 'THEMES').elements.map(el => ({
-    name: literal(el.elements[0]),
-    kind: literal(el.elements[1]),
-    hrefs: el.elements[2].elements.map(literal)
-  }));
+  const taxonomy = declaratorInit(ast, 'TAXONOMY').elements.map(el => {
+    const rec = {};
+    for (const pr of el.properties) {
+      const k = pr.key.name || pr.key.value;
+      rec[k] = pr.value.type === 'ArrayExpression' ? pr.value.elements.map(literal) : literal(pr.value);
+    }
+    return rec;
+  });
+  const genreOrder = declaratorInit(ast, 'GENRE_ORDER').elements.map(literal);
+  const feelOrder = declaratorInit(ast, 'FEEL_ORDER').elements.map(el => literal(el.elements[0]));
+
+  /* `tag` is the manifest's OTHER taxonomy. The genre record is authoritative,
+     so the page must not read tag for display — two taxonomies on one page is
+     the drift this record exists to end. Counted from the AST like `featured`. */
+  let tagReads = 0;
+  walk(ast, n => {
+    if (n.type === 'MemberExpression') {
+      const nm = n.computed ? (n.property.type === 'Literal' ? n.property.value : null) : n.property.name;
+      if (nm === 'tag') tagReads++;
+    }
+  });
 
   /* Every read of a `.featured` / ['featured'] member, and any object literal
      key named featured. Comments are invisible to this by construction. */
@@ -168,15 +184,15 @@ function readPage() {
     if (n.type === 'Property' && (n.key.name === 'featured' || n.key.value === 'featured')) featuredReads.push(n.start);
   });
 
-  return { curation, themes, featuredReads };
+  return { curation, taxonomy, genreOrder, feelOrder, tagReads, featuredReads };
 }
 
-function canonical({ curation, themes }) {
+function canonical({ curation, taxonomy }) {
   /* Sorted and re-serialised, so the digest is a property of the RECORD and
      not of how the file happens to be laid out. */
   return JSON.stringify({
     curation: curation.map(c => ({ href: c.href, rail: c.rail ?? null, take: c.take })).sort((a, b) => a.href.localeCompare(b.href)),
-    themes: themes.map(t => ({ name: t.name, kind: t.kind, hrefs: [...t.hrefs].sort() })).sort((a, b) => a.name.localeCompare(b.name))
+    taxonomy: taxonomy.map(t => ({ href: t.href, genre: t.genre, feels: [...(t.feels || [])].sort() })).sort((a, b) => a.href.localeCompare(b.href))
   });
 }
 
@@ -213,7 +229,7 @@ function orphans(record, games) {
   };
   record.curation.forEach(c => claim('curated', c.href));
   record.curation.filter(c => c.rail).forEach(c => claim('rail', c.href));
-  record.themes.forEach(t => t.hrefs.forEach(h => claim(`theme:${t.name}`, h)));
+  record.taxonomy.forEach(t => claim('genre', t.href));
   return out;
 }
 
@@ -221,11 +237,11 @@ const record = readPage();
 const games = manifestFrom(MANIFEST);
 
 console.log('=== CURATION KEYS RESOLVE ===\n');
-console.log(`  manifest entries: ${games.length}   curated: ${record.curation.length}   railed: ${record.curation.filter(c => c.rail).length}   themed keys: ${record.themes.reduce((n, t) => n + t.hrefs.length, 0)}\n`);
+console.log(`  manifest entries: ${games.length}   curated: ${record.curation.length}   railed: ${record.curation.filter(c => c.rail).length}   taxonomy entries: ${record.taxonomy.length}   genres: ${record.genreOrder.length}   feels: ${record.feelOrder.length}\n`);
 
 const orph = orphans(record, games);
 check(orph.length === 0, 'every curated / rail / theme key resolves to exactly one manifest entry',
-  orph.length ? orph.map(o => `${o.kind} ${o.key} -> ${o.matches} matches`).join('; ') : `${record.curation.length + record.curation.filter(c => c.rail).length + record.themes.reduce((n, t) => n + t.hrefs.length, 0)} keys, 0 orphans`);
+  orph.length ? orph.map(o => `${o.kind} ${o.key} -> ${o.matches} matches`).join('; ') : `${record.curation.length + record.curation.filter(c => c.rail).length + record.taxonomy.length} keys, 0 orphans`);
 
 const dupes = record.curation.map(c => norm(c.href)).filter((h, i, a) => a.indexOf(h) !== i);
 check(dupes.length === 0, 'no href appears twice in the record', dupes.join(', ') || `${record.curation.length} distinct`);
@@ -241,6 +257,71 @@ check(emptyTake.length === 0, 'every curated entry carries a non-empty take',
 const railNoTake = record.curation.filter(c => c.rail && !String(c.take || '').trim());
 check(railNoTake.length === 0, 'no rail slot without a take — the rail may not paint empty quotation marks',
   railNoTake.map(c => c.href).join(', ') || `${rails.length} rail slots, ${rails.length} takes`);
+
+/* ---------------- the taxonomy ---------------- */
+
+/* One genre per game, exactly — counted per href rather than trusted to the
+   shape of the array, because an array can hold the same href twice and a map
+   would silently keep only the last. Zero and two are both RED. */
+function genreCensus(taxonomy, games) {
+  const per = new Map();
+  for (const t of taxonomy) {
+    const k = norm(t.href);
+    per.set(k, (per.get(k) || 0) + 1);
+  }
+  const twice = [...per].filter(([, n]) => n > 1).map(([h, n]) => `${h} x${n}`);
+  const none = games.map(g => norm(g.href)).filter(h => !per.has(h));
+  return { per, twice, none };
+}
+
+const cens = genreCensus(record.taxonomy, games);
+check(cens.none.length === 0, 'every manifest game has a genre — none is left out',
+  cens.none.join(', ') || `${games.length} games, ${record.taxonomy.length} taxonomy entries`);
+check(cens.twice.length === 0, 'no game carries two genres',
+  cens.twice.join(', ') || `${cens.per.size} games, each appearing exactly once`);
+
+const byGenre = new Map();
+for (const t of record.taxonomy) byGenre.set(t.genre, (byGenre.get(t.genre) || 0) + 1);
+const undeclared = [...byGenre.keys()].filter(g => !record.genreOrder.includes(g));
+check(undeclared.length === 0, 'every genre used is declared in GENRE_ORDER', undeclared.join(', ') || `${byGenre.size} genres`);
+const empty = record.genreOrder.filter(g => !byGenre.has(g));
+check(empty.length === 0, 'every declared genre has at least one game', empty.join(', ') || 'none empty');
+
+/* The floor is 2, ruled hard: a genre below it is RED, not a warning. */
+const FLOOR = 2;
+const thin = [...byGenre].filter(([, n]) => n < FLOOR);
+check(thin.length === 0, `no genre holds fewer than ${FLOOR} games`,
+  thin.map(([g, n]) => `${g}=${n}`).join(', ') || [...byGenre].map(([g, n]) => `${g}=${n}`).join(' '));
+
+const CATCH_ALL = /^(other|misc|miscellaneous|uncategoris?ed|general|everything else)$/i;
+const bucket = record.genreOrder.filter(g => CATCH_ALL.test(g.trim()));
+check(bucket.length === 0, 'no catch-all bucket genre', bucket.join(', ') || `${record.genreOrder.length} named genres`);
+
+const feelsUsed = new Set(record.taxonomy.flatMap(t => t.feels || []));
+const badFeels = [...feelsUsed].filter(f => !record.feelOrder.includes(f));
+check(badFeels.length === 0, 'every feel used is declared in FEEL_ORDER', badFeels.join(', ') || [...feelsUsed].sort().join(' '));
+const noFeel = record.taxonomy.filter(t => !(t.feels || []).length);
+check(noFeel.length === 0, 'every game carries at least one feel', noFeel.map(t => t.href).join(', ') || `${record.taxonomy.length} games`);
+
+/* Rule 6: the three themed grids were MIGRATED into feels, not discarded.
+   Asserted member by member — the grids are gone from the page, so this is the
+   only surviving evidence that the curation work came with them. */
+const MIGRATED = [
+  ['PHYSICS & GRAVITY', '/Lessons/Games/Orbital.html', 'gravity'],
+  ['PHYSICS & GRAVITY', '/Lessons/Games/Marble.html', 'gravity'],
+  ['REFLEX & SPEED', '/Lessons/Games/Trail_Runner.html', 'fast'],
+  ['REFLEX & SPEED', '/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html', 'fast'],
+  ['REFLEX & SPEED', '/Lessons/Games/Grid_Chase.html', 'fast'],
+  ['CALM & STRATEGY', '/Lessons/Games/Neon_Garden.html', 'calm'],
+  ['CALM & STRATEGY', '/Lessons/Games/Neon_Siege.html', 'thinky']
+];
+const feelOf = new Map(record.taxonomy.map(t => [norm(t.href), t.feels || []]));
+const lost = MIGRATED.filter(([, h, f]) => !(feelOf.get(norm(h)) || []).includes(f));
+check(lost.length === 0, 'every former themed-grid member kept its migrated feel',
+  lost.map(([r, h, f]) => `${r} ${h} lost '${f}'`).join('; ') || `${MIGRATED.length}/${MIGRATED.length} migrated`);
+
+check(record.tagReads === 0, 'the page never reads the manifest `tag` field — one taxonomy, not two',
+  `${record.tagReads} reads`);
 
 /* Hrefs that must never be curated, and why. Under title-keying a third
    Slipstream could have drifted in on a near-match; this pins the ruling so
@@ -314,7 +395,7 @@ const scratchManifest = (mutate) => {
     return orphans(record, manifestFrom(f)).filter(x => x.key === href);
   });
   const kinds = new Set(found.map(x => x.kind.split(':')[0]));
-  check(found.length > 0 && kinds.has('curated') && kinds.has('rail') && kinds.has('theme'),
+  check(found.length > 0 && kinds.has('curated') && kinds.has('rail') && kinds.has('genre'),
     'CONTROL: move a game\'s href and the gate goes RED — on every kind of key it holds',
     found.map(x => `${x.kind} ${x.key} -> ${x.matches}`).join('; ') || 'stayed green — the gate is a no-op');
 }
@@ -341,11 +422,50 @@ const scratchManifest = (mutate) => {
 
 /* The exclusion list must be able to fail too, or it is decoration. */
 {
-  const smuggled = { curation: [...record.curation, { href: '/hyperdraft/', take: 'x' }], themes: record.themes };
+  const smuggled = { curation: [...record.curation, { href: '/hyperdraft/', take: 'x' }], taxonomy: record.taxonomy };
   const set = new Set(smuggled.curation.map(c => norm(c.href)));
   check(NEVER_CURATED.some(([h]) => set.has(h)),
     'CONTROL: smuggle /hyperdraft/ into the record and the exclusion limb catches it',
     `${NEVER_CURATED.filter(([h]) => set.has(h)).length} intruder(s) detected, shipped tree has ${intruders.length}`);
+}
+
+/* The taxonomy limbs must each be able to fail. Every mutation below runs
+   through genreCensus / the same counters the shipping limbs use — a control
+   that exercises a re-implementation proves nothing about the gate. */
+{
+  const two = [...record.taxonomy, { href: '/voxel/', genre: 'Sports', feels: ['calm'] }];
+  const c = genreCensus(two, games);
+  check(c.twice.length === 1 && c.twice[0].startsWith('/voxel/'),
+    'CONTROL: a game placed in TWO genres is caught',
+    c.twice.join(', ') || 'not caught — the one-genre limb is a no-op');
+}
+{
+  const dropped = record.taxonomy.filter(t => norm(t.href) !== '/voxel/');
+  const c = genreCensus(dropped, games);
+  check(c.none.length === 1 && c.none[0] === '/voxel/',
+    'CONTROL: a game removed from EVERY genre is caught',
+    c.none.join(', ') || 'not caught — the zero-genre limb is a no-op');
+}
+{
+  /* Action & Survival holds exactly 2, so removing one puts it under the floor.
+     Picking the genre with the least headroom is deliberate: a control that
+     removes a game from a genre of ten proves the arithmetic, not the floor. */
+  const victimGenre = [...byGenre].sort((a, b) => a[1] - b[1])[0][0];
+  const victim = record.taxonomy.find(t => t.genre === victimGenre);
+  const reduced = record.taxonomy.filter(t => t !== victim);
+  const counts = new Map();
+  for (const t of reduced) counts.set(t.genre, (counts.get(t.genre) || 0) + 1);
+  const nowThin = [...counts].filter(([, n]) => n < FLOOR);
+  check(nowThin.some(([g]) => g === victimGenre),
+    `CONTROL: deleting a game from the smallest genre (${victimGenre}, ${byGenre.get(victimGenre)}) drops it under the floor and reds`,
+    nowThin.map(([g, n]) => `${g}=${n}`).join(', ') || 'floor did not fire');
+}
+{
+  const renamed = record.genreOrder.map(g => g);
+  const withBucket = { genreOrder: [...renamed, 'Other'] };
+  check(withBucket.genreOrder.some(g => CATCH_ALL.test(g)),
+    'CONTROL: an "Other" bucket would be caught by the catch-all test',
+    `${withBucket.genreOrder.filter(g => CATCH_ALL.test(g)).join(', ')} detected, shipped tree has ${bucket.length}`);
 }
 
 /* The featured scan must be able to fail. Inject a real read into a copy of
@@ -418,25 +538,42 @@ if (!chromium) {
       await page.waitForTimeout(250);
     }
     await page.waitForTimeout(500);
-    const out = await page.evaluate(() => ({
-      picks: [...document.querySelectorAll('a.pick')].map(a => {
-        const b = a.getBoundingClientRect();
-        return {
-          title: (a.querySelector('h3') || {}).textContent || '',
-          href: a.getAttribute('href'),
-          take: ((a.querySelector('.take span') || {}).textContent || '').replace(/[“”"]/g, '').trim(),
-          painted: b.width > 0 && b.height > 0
-        };
-      }),
-      /* Scoped to the whole-shelf grid. A bare '.gcard .mini' counts the same
-         game several times over, because the sports, RPG, themed and classroom
-         rails each render their own card for it — 31 badge nodes for 18 curated
-         games. Browse-all is the one place each game appears exactly once, so
-         it is the only count that answers "how many games carry the badge". */
-      badges: document.querySelectorAll('#allGrid .gcard .mini').length,
-      badgesEverywhere: document.querySelectorAll('.gcard .mini').length,
-      shelf: document.querySelectorAll('#allGrid .gcard').length
-    }));
+    const out = await page.evaluate(() => {
+      /* PAINTED, never node-counted. A section hidden by [hidden] keeps its
+         nodes, so querySelectorAll().length reports cards nobody can see —
+         this instrument reported 20 cards for a 12-game filter until it was
+         corrected, which is the same class of error as the 300x150 canvas. */
+      const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+      const n = h => String(h || '').replace(/^https?:\/\/[^/]*(?:mattroper1977\.github\.io|madebymatt\.uk)/i, '');
+      const all = [...document.querySelectorAll('a.pick,a.gcard')].filter(vis);
+      const per = {};
+      all.map(e => n(e.getAttribute('href'))).forEach(h => { per[h] = (per[h] || 0) + 1; });
+      return {
+        picks: [...document.querySelectorAll('a.pick')].filter(vis).map(a => {
+          const b = a.getBoundingClientRect();
+          return {
+            title: (a.querySelector('h3') || {}).textContent || '',
+            href: n(a.getAttribute('href')),
+            take: ((a.querySelector('.take span') || {}).textContent || '').replace(/[\u201C\u201D"]/g, '').trim(),
+            label: (a.querySelector('.tagc') || {}).textContent || '',
+            painted: b.width > 0 && b.height > 0
+          };
+        }),
+        cards: all.length,
+        distinct: new Set(all.map(e => n(e.getAttribute('href')))).size,
+        per,
+        genres: [...document.querySelectorAll('#genreSections details.gsec')].map(d => ({
+          name: d.querySelector('.gname').textContent,
+          label: d.querySelector('.gnum').textContent,
+          cards: [...d.querySelectorAll('a.gcard')].filter(vis).length,
+          open: d.open
+        })),
+        badges: [...document.querySelectorAll('#genreSections .gcard .mini')].filter(vis).length,
+        shelfSub: (document.getElementById('shelfSub') || {}).textContent || '',
+        countline: (document.getElementById('countline') || {}).textContent || '',
+        feels: [...document.querySelectorAll('#feels .chip')].map(c => c.textContent.trim())
+      };
+    });
     await browser.close(); server.close();
     return out;
   }
@@ -453,8 +590,35 @@ if (!chromium) {
     'and they are the declared hrefs, in the declared order', live.picks.map(p => p.href).join(' · '));
   check(live.picks.every(p => p.painted && p.take), 'every painted card occupies space and carries a take',
     `${live.picks.filter(p => p.painted).length} painted, ${live.picks.filter(p => p.take).length} with takes`);
-  check(live.badges === record.curation.length, 'browse-all carries exactly one MATT\'S PICK badge per curated game — the departing games kept theirs',
-    `${live.badges} badges in browse-all of ${live.shelf} cards, ${record.curation.length} curated entries (${live.badgesEverywhere} badge nodes across every rail)`);
+  check(live.cards === 60 && live.distinct === 52,
+    'the hub paints 60 cards for 52 distinct games — down from 82 for 52',
+    `${live.cards} cards, ${live.distinct} distinct`);
+  const twice = Object.entries(live.per).filter(([, n]) => n > 1);
+  check(twice.every(([, n]) => n === 2), 'no game is painted more than twice',
+    twice.map(([h, n]) => `${h}x${n}`).join(' ') || 'none twice');
+  check(JSON.stringify(twice.map(t => t[0]).sort()) === JSON.stringify(live.picks.map(p => p.href).sort()),
+    'and every game painted twice IS in TOP — the one permitted duplication',
+    `${twice.length} twice, ${live.picks.length} picks`);
+  check(live.distinct === record.taxonomy.length,
+    'distinct games painted == distinct games in the record',
+    `${live.distinct} painted, ${record.taxonomy.length} in record`);
+  check(live.genres.length === record.genreOrder.length && live.genres[0] && live.genres[0].open
+        && live.genres.slice(1).every(g => !g.open),
+    'nine genre accordions, the first open and the rest shut',
+    `${live.genres.length} sections, ${live.genres.filter(g => g.open).length} open`);
+  const labelDrift = live.genres.filter(g => {
+    const want = record.taxonomy.filter(t => t.genre === g.name).length;
+    return g.cards !== want || g.label !== `${want} game${want === 1 ? '' : 's'}`;
+  });
+  check(labelDrift.length === 0, 'every genre\'s heading count is recomputed from the record, not written down',
+    labelDrift.map(g => `${g.name} shows "${g.label}" for ${g.cards}`).join('; ')
+      || live.genres.map(g => `${g.name}=${g.cards}`).join(' '));
+  check(live.badges === record.curation.length,
+    'one MATT\'S PICK badge per curated game in the genre sections',
+    `${live.badges} badges, ${record.curation.length} curated entries`);
+  check(live.picks.every(p => p.label && record.genreOrder.includes(p.label)),
+    'each pick card labels itself with its GENRE, not the manifest tag',
+    live.picks.map(p => p.label).join(' · '));
 
   /* The authored takes, byte-for-byte, read off the PAINTED card.
      A take is Matt's voice. The failure mode is not deletion — it is a
@@ -496,6 +660,88 @@ if (!chromium) {
      prove nothing about the rail, and this control first failed for exactly
      that reason when Trail Runner moved off in favour of the intended eight. */
   const RENAME_HREF = '/apexkick/';
+  /* Feel filters. The rule they exist to keep: a filter may change WHICH cards
+     show, and may never give any single game a second card. The old page broke
+     exactly this — four rails each drew their own copy — and the first version
+     of this build broke it again in a subtler way, by leaving the Top Picks
+     rail up while filtering, so a game in TOP that matched painted twice. */
+  const feelProbe = async () => {
+    const server = http.createServer((req, res) => {
+      let pth = decodeURIComponent(req.url.split('?')[0]);
+      if (pth === '/Games/games.json') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(fs.readFileSync(MANIFEST)); return; }
+      if (pth.endsWith('/')) pth += 'index.html';
+      const f = path.join(ROOT, pth);
+      if (!fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404).end('nf'); return; }
+      res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' });
+      res.end(fs.readFileSync(f));
+    });
+    await new Promise(r => server.listen(0, '127.0.0.1', r));
+    const browser = await chromium.launch();
+    const pg = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();
+    await pg.goto(`http://127.0.0.1:${server.address().port}/games/`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    for (let i = 0; i < 60; i++) { if (await pg.evaluate(() => document.querySelectorAll('a.gcard').length).catch(() => 0)) break; await pg.waitForTimeout(250); }
+    await pg.waitForTimeout(400);
+    const READ = `(()=>{const vis=e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0;};
+      const n=h=>String(h||'').replace(/^https?:\\/\\/[^/]*(?:mattroper1977\\.github\\.io|madebymatt\\.uk)/i,'');
+      const a=[...document.querySelectorAll('a.pick,a.gcard')].filter(vis);const per={};
+      a.map(e=>n(e.getAttribute('href'))).forEach(h=>{per[h]=(per[h]||0)+1});
+      return {cards:a.length,distinct:new Set(a.map(e=>n(e.getAttribute('href')))).size,max:Math.max(0,...Object.values(per))};})()`;
+    const out = [];
+    for (const [key] of record.feelOrder.map(f => [f])) {
+      await pg.evaluate(k => {
+        const b = [...document.querySelectorAll('#feels .chip')].find(c => c.getAttribute('aria-label').toLowerCase().startsWith(k.replace('-', ' ')));
+        if (b) b.click();
+      }, key);
+      await pg.waitForTimeout(200);
+      const m = await pg.evaluate(READ);
+      out.push({ key, ...m, want: record.taxonomy.filter(t => (t.feels || []).includes(key)).length });
+      await pg.evaluate(k => {
+        const b = [...document.querySelectorAll('#feels .chip')].find(c => c.getAttribute('aria-pressed') === 'true');
+        if (b) b.click();
+      }, key);
+      await pg.waitForTimeout(150);
+    }
+    /* Tap targets with every accordion opened, so nothing hides behind a shut
+       section. WCAG 2.5.8 exempts a target inside a sentence, whose size is
+       constrained by the line-height of the prose around it; those are listed
+       separately rather than silently dropped. */
+    await pg.evaluate(() => document.querySelectorAll('details.gsec').forEach(d => { d.open = true; }));
+    await pg.waitForTimeout(250);
+    const targets = await pg.evaluate(() => {
+      /* WCAG 2.5.8's inline exception, tested by structure rather than by tag
+         name: a target is 'in a sentence' when its parent carries text of its
+         own around it, so its height is set by the prose line-height. A
+         closest('p') test missed the footer email, which sits in a div. */
+      const inSentence = e => {
+        const par = e.parentElement; if (!par) return false;
+        const around = (par.textContent || '').replace(e.textContent || '', '').trim();
+        return around.length > 0;
+      };
+      return [...document.querySelectorAll('a,button,summary,select,input')]
+        .map(e => ({ e, r: e.getBoundingClientRect() }))
+        .filter(o => o.r.width > 0 && o.r.height > 0 && (o.r.height < 44 || o.r.width < 44))
+        .map(o => ({ tag: o.e.tagName, inline: inSentence(o.e), w: Math.round(o.r.width), h: Math.round(o.r.height),
+                     text: (o.e.textContent || '').trim().slice(0, 30) }));
+    });
+    await browser.close(); server.close();
+    return { out, targets };
+  };
+  const probe = await feelProbe();
+  console.log();
+  probe.out.forEach(f => console.log(`  feel ${f.key.padEnd(10)} cards ${String(f.cards).padStart(3)}  distinct ${String(f.distinct).padStart(3)}  max/game ${f.max}  record says ${f.want}`));
+  check(probe.out.every(f => f.max <= 1), 'no feel filter gives any single game more than one card',
+    probe.out.map(f => `${f.key}=${f.max}`).join(' '));
+  check(probe.out.every(f => f.cards === f.want && f.distinct === f.want),
+    'each feel paints exactly as many cards as the record says carry it',
+    probe.out.map(f => `${f.key} ${f.cards}/${f.want}`).join('  '));
+  const distinctCounts = new Set(probe.out.map(f => f.cards));
+  check(distinctCounts.size > 1, 'CONTROL: the filters are not all showing the same set — they really filter',
+    `${distinctCounts.size} distinct result sizes across ${probe.out.length} feels: ${[...distinctCounts].sort((a, b) => a - b).join(', ')}`);
+  const blocking = probe.targets.filter(t => !t.inline);
+  check(blocking.length === 0, 'every non-inline target is at least 44px at 390px',
+    blocking.map(t => `${t.tag} ${t.w}x${t.h} "${t.text}"`).join('; ')
+      || `0 under 44px; ${probe.targets.length} inline-in-sentence link(s) exempt under WCAG 2.5.8: ${probe.targets.map(t => `"${t.text}"`).join(', ')}`);
+
   const renamed = scratchManifest(gs => { gs.find(g => g.href === RENAME_HREF).title = 'Apex Kick RENAMED'; });
   const after = await railOf(renamed);
   check(after.picks.length === live.picks.length,

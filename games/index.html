@@ -14,13 +14,14 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{font-family:var(--font);background:var(--cream);color:var(--ink);line-height:1.5}
-.skip{position:absolute;left:-9999px;top:0;background:var(--amber-lt);color:var(--navy);padding:.6rem 1rem;z-index:99;font-weight:800}
+.skip{position:absolute;left:-9999px;top:0;background:var(--amber-lt);color:var(--navy);padding:.6rem 1rem;z-index:99;font-weight:800;min-height:44px;display:inline-flex;align-items:center}
 .skip:focus{left:8px;top:8px}
 a{color:inherit}
 /* header + footer (family chassis) */
 .header{background:var(--navy);color:#E8E2D4;position:sticky;top:0;z-index:40}
 .header .bar{max-width:var(--max);margin:auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.65rem 1rem;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:.6rem;text-decoration:none}
+.brand{display:flex;align-items:center;gap:.6rem;text-decoration:none;min-height:44px}/* 44px floor on the masthead link: it measured 38px tall at 390px, and it is
+   a real navigation control rather than a link inside a sentence. */
 .mono{width:38px;height:38px}
 .brand strong{display:block;font-size:.85rem;letter-spacing:.12em}
 .brand small{display:block;font-size:.6rem;letter-spacing:.22em;color:#AEB6CE}
@@ -88,10 +89,6 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 .chip[aria-pressed="true"]{background:var(--navy);color:var(--mint);border-color:var(--navy)}
 .countline{font-size:.78rem;color:var(--mut);margin:.4rem 0 0}
 /* themed grids */
-.tgrids{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem}
-.tg h3{font-size:.78rem;letter-spacing:.1em;color:var(--mut);margin-bottom:.55rem}
-.tg h3 b{color:var(--navy)}
-.tg .cards{display:grid;gap:.6rem}
 /* cards (grid + classroom) */
 .gcard{display:flex;gap:.7rem;background:var(--card);border:1.5px solid #E0D6C0;border-left-width:6px;border-radius:12px;padding:.6rem .7rem;text-decoration:none;align-items:center;transition:transform .14s ease}
 .gcard:hover{transform:translateY(-2px)}
@@ -104,19 +101,25 @@ select#sort{font:inherit;font-size:.82rem;font-weight:700;color:var(--ink);backg
 .gcard .ga{flex:0 0 96px;width:96px;aspect-ratio:16/9;height:auto;border-radius:9px;
   object-fit:cover;object-position:38% 50%;background:#161D3D;display:block}
 @media (min-width:560px){.gcard .ga{flex-basis:124px;width:124px}}
-.class .gcard .ga{flex:0 0 88px;width:88px}
 .gcard .tx{min-width:0}
 .gcard h4{font-size:.86rem;color:var(--navy);line-height:1.2;display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
 .mini{font-size:.55rem;font-weight:800;letter-spacing:.1em;background:var(--navy);color:var(--mint);border-radius:999px;padding:.14rem .45rem}
 .gcard p{font-size:.7rem;color:var(--mut);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .gcard .qt{font-size:.68rem;color:#5A4A1E;background:#FBF3DE;border-radius:8px;padding:.25rem .5rem;margin-top:.25rem;display:inline-block}
 /* classroom favourites rail */
-.class .gcard{flex:0 0 250px}
-/* Sports is a collection rail, not a tag: the named Apex games sit together without changing their chips. */
-.sports .gcard{flex:0 0 min(420px,calc(100vw - 2.2rem))}
 @media(min-width:760px){.sports .rail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible}.sports .gcard{min-width:0}}
 /* all grid */
-#allGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.7rem}
+#flatResults,.gsec .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.7rem}
+/* Genre accordions. <summary> carries the 44px target itself rather than a
+   child, so the whole row is the hit area at 390px, and the marker is kept
+   (list-style is untouched) so the open/shut state is not colour-only. */
+.gsec{border:1.5px solid #C9C0AB;border-radius:14px;background:var(--card);margin:0 0 .6rem;overflow:hidden}
+.gsec>summary{display:flex;align-items:center;justify-content:space-between;gap:.6rem;min-height:56px;padding:.7rem 1rem;cursor:pointer;touch-action:manipulation;font-weight:800;color:var(--navy)}
+.gsec>summary:focus-visible{outline:3px solid var(--navy);outline-offset:-3px}
+.gsec .gname{font-size:.95rem;letter-spacing:.02em}
+.gsec .gnum{font-size:.72rem;font-weight:800;letter-spacing:.06em;color:var(--mut);white-space:nowrap}
+.gsec[open]>summary{border-bottom:1.5px solid #C9C0AB}
+.gsec .cards{padding:.75rem}
 .empty{color:var(--mut);font-size:.85rem;padding:.8rem 0}
 /* from matt + footer */
 .frommatt{background:var(--cream-dk);border-top:1.5px solid #E0D6C0;padding:1.4rem 1rem;margin-top:1.6rem}
@@ -196,18 +199,6 @@ html[data-theme="highlumen"] .line1,html[data-theme="highlumen"] .line2{color:#3
 <div class="rail" id="topRail" aria-label="Matt's top picks"></div>
 </div></section>
 
-<section class="sec sports" id="sports" hidden><div class="wrap">
-<h2>Sports <small>· precision and position play</small></h2>
-<p class="sub">Five Apex games, side by side: bend the ball in Apex Kick, control the cue ball's leave in Apex Pool, call your score in Apex Golf, call the point before the serve in Apex Tennis, then read the court and win the duel in Apex Rally.</p>
-<div class="rail" id="sportsRail" aria-label="Sports games"></div>
-</div></section>
-
-<section class="sec sports rpg" id="rpg" hidden><div class="wrap">
-<h2>Action RPG <small>&middot; build a character, then spend it</small></h2>
-<p class="sub">The Relicforge pair, side by side: strip a buried machine kingdom component by component in Strip the Machine, or carry a Forgeguard, Riftcaller or Shadowsmith through three breaking realms in Fracture Engine.</p>
-<div class="rail" id="rpgRail" aria-label="Action RPG games"></div>
-</div></section>
-
 <section class="sec gx-watch"><div class="wrap">
 <h2>Watch them played</h2>
 <div class="gx-watchgrid">
@@ -239,29 +230,25 @@ html[data-theme="highlumen"] .line1,html[data-theme="highlumen"] .line2{color:#3
 
 <section class="sec browse-tools"><div class="wrap">
 <div class="bar2">
-<label class="search" aria-label="Search all games"><input type="search" id="q" placeholder="Search the shelf — snake, physics, cards…"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="#C97F2E" stroke-width="2.4"/><path d="M15.5 15.5 21 21" stroke="#C97F2E" stroke-width="2.6" stroke-linecap="round"/></svg></label>
-<select id="sort" aria-label="Sort games"><option value="curated">Curated first</option><option value="az">A to Z</option><option value="tag">By tag</option></select>
+<label class="search" aria-label="Search all games"><input type="search" id="q" placeholder="Search the shelf — snake, rally, cards…"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="#C97F2E" stroke-width="2.4"/><path d="M15.5 15.5 21 21" stroke="#C97F2E" stroke-width="2.6" stroke-linecap="round"/></svg></label>
+<select id="sort" aria-label="Sort games"><option value="curated">Curated first</option><option value="az">A to Z</option><option value="genre">By genre</option></select>
 </div>
-<div class="chips" id="chips" role="group" aria-label="Filter by tag"></div>
+<div class="chips" id="feels" role="group" aria-label="Filter by feel"></div>
 <p class="countline" id="countline" aria-live="polite" aria-atomic="true">Loading the shelf…</p>
 </div></section>
 
-<section class="sec themes"><div class="wrap">
-<h2>Themed favourites <small>· curated grids</small></h2>
-<div class="tgrids" id="tgrids"></div>
-</div></section>
-
-<section class="sec class"><div class="wrap">
-<h2>Classroom favourites</h2>
-<p class="sub">Built for my own classes and road-tested in front of them — the whole-class games my pupils actually ask for.</p>
-<div class="rail" id="classRail" aria-label="Classroom favourites"></div>
-</div></section>
-
 <section class="sec whole-shelf"><div class="wrap">
-<h2>The whole shelf</h2>
-<p class="sub" id="shelfSub">Every game, A to Z — search and filters above work on this grid.</p>
-<div id="allGrid"></div>
-<p class="empty" id="empty" hidden>No games match that — clear the search or tap the chip off to see the shelf again.</p>
+<h2>Browse by genre</h2>
+<p class="sub" id="shelfSub">Loading the shelf…</p>
+<!-- Genre sections are <details> accordions: the first opens, the rest stay
+     shut. Native disclosure rather than a scripted one, so keyboard and screen
+     reader behaviour is the browser's and the summary is a real 44px target.
+     When a search or feel filter is active the accordions are replaced by ONE
+     flat result list - filtering inside nine sections makes a visitor hunt
+     through nine headings for two matches. -->
+<div id="genreSections"></div>
+<div id="flatResults" hidden></div>
+<p class="empty" id="empty" hidden>No games match that — clear the search or tap the feel off to see the shelf again.</p>
 </div></section>
 
 </main>
@@ -371,12 +358,107 @@ var CURATION=[
    dropped it, and the tempting repair was to rename the manifest entry to fit
    the page. Keying on /rallyvector3d/ makes the title irrelevant instead, so
    the canonical shelf is left alone. It is not curated: no take. */
-var THEMES=[
- ["PHYSICS & GRAVITY","FAVS",["/Lessons/Games/Orbital.html","/Lessons/Games/Marble.html"]],
- ["REFLEX & SPEED","FAVS",["/Lessons/Games/Trail_Runner.html","/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html","/Lessons/Games/Grid_Chase.html"]],
- ["CALM & STRATEGY","PICKS",["/Lessons/Games/Neon_Garden.html","/Lessons/Games/Neon_Siege.html"]]
+/* GENRE AND FEEL - the browse taxonomy, in the same declared record as the
+   curation above and keyed the same way, on href. It is not a second source:
+   nothing else in this repository declares a genre, and the gate proves the
+   page holds no hardcoded genre list or count.
+
+   Two rules it exists to enforce, and both were failures before it:
+
+   ONE genre per game, exactly. A game in zero genres or two is RED. The
+   structure helps but does not decide it - an array can hold a duplicate, so
+   tools/verify_curation_keys.mjs counts entries per href rather than trusting
+   the shape.
+
+   FEEL IS A TAG, NEVER A SECTION. The old page carried a Sports rail, an
+   Action RPG rail, three themed grids and a classroom rail on top of the whole
+   shelf, so it painted 82 cards for 52 games - a game appeared up to four
+   times and the MATT'S PICK badge count read 31 for 18 games. Feels filter the
+   one list; they never draw a second card. The three themed grids are not
+   discarded, they are migrated: PHYSICS & GRAVITY -> gravity, REFLEX & SPEED
+   -> fast, CALM & STRATEGY -> calm and thinky. Every former member still
+   carries its feel, and the gate asserts that member by member rather than
+   taking this comment's word for it.
+
+   The manifest also carries a `tag` field. It is NOT the genre and does not
+   agree with it - Neon Meridian is tagged Sandbox and its genre is Racing &
+   Driving, on the verb. The genre record is authoritative; `tag` is no longer
+   read for display anywhere on this page, and the gate proves that too. */
+var GENRE_ORDER=[
+ "Arcade & Reflex",
+ "Sports",
+ "Strategy & Puzzle",
+ "Party & Whole-Class",
+ "Physics & Simulation",
+ "Adventure & RPG",
+ "Racing & Driving",
+ "Sandbox & Creative",
+ "Action & Survival"
 ];
-var state={q:"",tag:null,sort:"curated",games:[]};
+var FEEL_ORDER=[
+ ["calm","CALM"],
+ ["fast","FAST"],
+ ["thinky","THINKY"],
+ ["gravity","GRAVITY"],
+ ["quick-go","QUICK GO"],
+ ["long-haul","LONG HAUL"],
+ ["together","TOGETHER"]
+];
+var TAXONOMY=[
+ {href:"/Lessons/Games/Axiom_Shift.html",                 genre:"Arcade & Reflex",  feels:["fast","quick-go"]},
+ {href:"/Lessons/Games/Globe_Snake (1).html",             genre:"Arcade & Reflex",  feels:["fast","quick-go"]},
+ {href:"/Lessons/Games/Grid_Chase.html",                  genre:"Arcade & Reflex",  feels:["fast","quick-go"]},
+ {href:"/Lessons/Games/Neon_Snake_Overdrive.html",        genre:"Arcade & Reflex",  feels:["fast","quick-go"]},
+ {href:"/Lessons/Games/OneGuy.html",                      genre:"Arcade & Reflex",  feels:["fast","quick-go"]},
+ {href:"/Lessons/Games/Slipstream.html",                  genre:"Arcade & Reflex",  feels:["fast","quick-go"]},
+ {href:"/Lessons/Games/Static.html",                      genre:"Arcade & Reflex",  feels:["fast","quick-go"]},
+ {href:"/Lessons/Games/Trail_Runner.html",                genre:"Arcade & Reflex",  feels:["fast","quick-go"]},
+ {href:"/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html",genre:"Arcade & Reflex",  feels:["fast","long-haul"]},
+ {href:"/Lessons/Games/Vortex.html",                      genre:"Arcade & Reflex",  feels:["fast","quick-go"]},
+ {href:"/apexgolf/",                                      genre:"Sports",           feels:["thinky","quick-go"]},
+ {href:"/apexkick/",                                      genre:"Sports",           feels:["quick-go","gravity"]},
+ {href:"/apexpool/",                                      genre:"Sports",           feels:["thinky","quick-go"]},
+ {href:"/apexrally/",                                     genre:"Sports",           feels:["fast","quick-go"]},
+ {href:"/apextennis/",                                    genre:"Sports",           feels:["thinky","quick-go"]},
+ {href:"/auroralinks/",                                   genre:"Sports",           feels:["calm","long-haul"]},
+ {href:"/neonturf/",                                      genre:"Sports",           feels:["fast","together"]},
+ {href:"/olympics/",                                      genre:"Sports",           feels:["together","long-haul"]},
+ {href:"/biopunkhive/",                                   genre:"Strategy & Puzzle",feels:["calm","long-haul"]},
+ {href:"/echovault/",                                     genre:"Strategy & Puzzle",feels:["thinky","long-haul"]},
+ {href:"/Lessons/Games/Hold_the_Mark.html",               genre:"Strategy & Puzzle",feels:["thinky","quick-go"]},
+ {href:"/Lessons/Games/Lumins.html",                      genre:"Strategy & Puzzle",feels:["thinky","calm"]},
+ {href:"/Lessons/Games/Neon_Siege.html",                  genre:"Strategy & Puzzle",feels:["thinky"]},
+ {href:"/Lessons/Games/Prism.html",                       genre:"Strategy & Puzzle",feels:["thinky","calm"]},
+ {href:"/Lessons/Games/The_Last_Lighthouse_v1_1_The_Archipelago_Update_FINAL.html",genre:"Strategy & Puzzle",feels:["thinky","long-haul"]},
+ {href:"/neonsync/",                                      genre:"Strategy & Puzzle",feels:["thinky","together"]},
+ {href:"/Lessons/Games/Charcoal.html",                    genre:"Party & Whole-Class",feels:["together","quick-go","thinky"]},
+ {href:"/Lessons/Games/KidsVsStaff_Showdown (3).html",    genre:"Party & Whole-Class",feels:["together"]},
+ {href:"/Lessons/Games/Off_Brand.html",                   genre:"Party & Whole-Class",feels:["together","thinky"]},
+ {href:"/Lessons/Games/WorldCup_ThreeLions_Final.html",   genre:"Party & Whole-Class",feels:["together","long-haul"]},
+ {href:"/Lessons/Games/WorldCup_v3_MatchDirector.html",   genre:"Party & Whole-Class",feels:["together"]},
+ {href:"/Lessons/Games/WorldCup_v5_Showdown.html",        genre:"Party & Whole-Class",feels:["together","quick-go"]},
+ {href:"/Lessons/Games/Grapple.html",                     genre:"Physics & Simulation",feels:["gravity","quick-go"]},
+ {href:"/Lessons/Games/Marble.html",                      genre:"Physics & Simulation",feels:["gravity","calm"]},
+ {href:"/Lessons/Games/Orbital.html",                     genre:"Physics & Simulation",feels:["gravity","calm"]},
+ {href:"/Lessons/Games/Wrecking_Crew.html",               genre:"Physics & Simulation",feels:["gravity","quick-go"]},
+ {href:"/medevac/",                                       genre:"Physics & Simulation",feels:["thinky","gravity"]},
+ {href:"/emberwild/",                                     genre:"Adventure & RPG",  feels:["long-haul","calm"]},
+ {href:"/fracture/",                                      genre:"Adventure & RPG",  feels:["thinky","long-haul"]},
+ {href:"/Lessons/Games/Glitch_Clash.html",                genre:"Adventure & RPG",  feels:["thinky","long-haul"]},
+ {href:"/ouroboros/",                                     genre:"Adventure & RPG",  feels:["thinky","long-haul"]},
+ {href:"/relicforge/",                                    genre:"Adventure & RPG",  feels:["thinky","long-haul"]},
+ {href:"/hyperdraft/",                                    genre:"Racing & Driving", feels:["fast","thinky"]},
+ {href:"/Lessons/Games/Slipstream_GP.html",               genre:"Racing & Driving", feels:["fast","long-haul"]},
+ {href:"/neonmeridian/",                                  genre:"Racing & Driving", feels:["calm","long-haul"]},
+ {href:"/rallyvector3d/",                                 genre:"Racing & Driving", feels:["fast","long-haul"]},
+ {href:"/Lessons/Games/Neon_Garden.html",                 genre:"Sandbox & Creative",feels:["calm"]},
+ {href:"/Lessons/Games/voxelcraft.html",                  genre:"Sandbox & Creative",feels:["calm","long-haul"]},
+ {href:"/luminahaven/",                                   genre:"Sandbox & Creative",feels:["calm","long-haul"]},
+ {href:"/voxel/",                                         genre:"Sandbox & Creative",feels:["calm","long-haul"]},
+ {href:"/neonbreach/",                                    genre:"Action & Survival",feels:["fast"]},
+ {href:"/novasiege/",                                     genre:"Action & Survival",feels:["fast","long-haul"]}
+];
+var state={q:"",feel:null,sort:"curated",games:[]};
 var $=function(id){return document.getElementById(id)};
 function tint(hue){return hue+"26"}
 function localHref(h){/* keep every game on the madebymatt.uk origin so the HUD's saved names and reading theme carry across */
@@ -400,6 +482,13 @@ var TAKE={},CURATED=[],TOP=[];
  TOP=railed.map(function(r){return r.k});
 })();
 function takeOf(g){return TAKE[keyOf(g)]||""}
+/* Taxonomy lookups, derived from TAXONOMY exactly as TAKE/TOP are derived from
+   CURATION — same key, same normalisation, no second copy of the mapping. */
+var GENRE={},FEELS={};
+(function(){TAXONOMY.forEach(function(t){var k=localHref(t.href);GENRE[k]=t.genre;FEELS[k]=t.feels||[];});})();
+function genreOf(g){return GENRE[keyOf(g)]||""}
+function feelsOf(g){return FEELS[keyOf(g)]||[]}
+function hasFeel(g,f){return feelsOf(g).indexOf(f)>=0}
 function pickCard(g,lead){
  var a=document.createElement("a");a.className="pick"+(lead?" lead":"");a.href=localHref(g.href);
  var art=g.art?'<div class="art"><img src="'+esc(g.art)+'" width="640" height="360" loading="eager" decoding="async" alt=""></div>'
@@ -408,7 +497,10 @@ function pickCard(g,lead){
  '<div class="bd"><span class="badge">MATT\u2019S PICK</span><h3></h3><span class="tagc"></span>'+
  '<div class="take"><b>Matt\u2019s take:</b> <span></span></div></div>';
  a.querySelector("h3").textContent=g.title;
- a.querySelector(".tagc").textContent=g.tag||"";
+ /* The genre record, not the manifest `tag`. They disagree — Apex Kick is
+    tagged Physics and its genre is Sports — and a page showing one label
+    while browsing by the other is two taxonomies in front of a visitor. */
+ a.querySelector(".tagc").textContent=genreOf(g);
  a.querySelector(".take span").textContent="\u201C"+takeOf(g)+"\u201D";
  var im=a.querySelector("img");if(im)im.alt=g.title+" — a moment from play";
  return a;
@@ -437,70 +529,97 @@ function gCard(g,withTake){
 }
 function render(){
  var gs=state.games;
- /* top picks */
+ /* top picks — the ONE deliberate duplication on this page. Eight of the 52
+    appear twice: once here as a pick, once in their genre. Everything else
+    appears exactly once. That is why the page paints 60 cards for 52 games
+    rather than the 82 it used to. */
  var rail=$("topRail");rail.textContent="";
  /* No `if(g)`: a TOP href that resolves to nothing is a defect, and the old
     silent skip is exactly what let a rename shrink this rail unnoticed.
     tools/verify_curation_keys.mjs reds before a build ever gets here. */
  TOP.forEach(function(h,i){var g=gs.find(function(x){return keyOf(x)===h});if(g)rail.appendChild(pickCard(g,i===0))});
- /* Sports is driven by the manifest collection field and is additional to TOP and browse-all. */
- var sports=gs.filter(function(g){return g.collection==="Sports"});
- var sportsSection=$("sports"),sportsRail=$("sportsRail");sportsRail.textContent="";
- sports.forEach(function(g){sportsRail.appendChild(gCard(g,false))});
- sportsSection.hidden=sports.length===0;
- /* Action RPG rail. Membership is DERIVED from the tag, never a pinned list —
-    a hand-kept membership array is the exact defect the sports gate was
-    repaired for, and recreating it here would be recreating that bug. Any
-    entry whose tag carries the RPG signal joins with no edit to this file.
-    The rail renders only when the derivation finds two or more members, so a
-    single-game rail never appears. */
- var rpg=gs.filter(function(g){return /\bRPG\b/.test(String(g.tag||""))});
- var rpgSection=$("rpg"),rpgRail=$("rpgRail");rpgRail.textContent="";
- rpg.forEach(function(g){rpgRail.appendChild(gCard(g,false))});
- rpgSection.hidden=rpg.length<2;
- /* themed grids */
- var tg=$("tgrids");tg.textContent="";
- THEMES.forEach(function(th,i){
-  var d=document.createElement("div");d.className="tg";
-  d.innerHTML="<h3>GRID "+(i+1)+": <b></b> "+th[1]+'</h3><div class="cards"></div>';
-  d.querySelector("b").textContent=th[0];
-  var c=d.querySelector(".cards");
-  th[2].forEach(function(h){var g=gs.find(function(x){return keyOf(x)===h});if(g)c.appendChild(gCard(g,true))});
-  tg.appendChild(d);
- });
- /* classroom favourites = the real class games */
- var cr=$("classRail");cr.textContent="";
- gs.filter(function(g){return (g.tag||"")==="Class game"}).forEach(function(g){cr.appendChild(gCard(g,false))});
- /* chips */
- var tags=[];gs.forEach(function(g){if(g.tag&&tags.indexOf(g.tag)<0)tags.push(g.tag)});tags.sort();
- var ch=$("chips");ch.textContent="";
- tags.forEach(function(t){
-  var b=document.createElement("button");b.className="chip";b.type="button";b.textContent=t.toUpperCase();
-  b.setAttribute("aria-pressed",state.tag===t?"true":"false");
-  b.addEventListener("click",function(){state.tag=(state.tag===t?null:t);render()});
-  ch.appendChild(b);
+ /* feel filters. Derived from FEEL_ORDER and counted from the record, so a
+    feel nobody uses shows 0 rather than quietly not existing. */
+ var fh=$("feels");fh.textContent="";
+ FEEL_ORDER.forEach(function(f){
+  var key=f[0],n=gs.filter(function(g){return hasFeel(g,key)}).length;
+  var b=document.createElement("button");b.className="chip";b.type="button";
+  b.textContent=f[1]+" "+n;
+  b.setAttribute("aria-pressed",state.feel===key?"true":"false");
+  b.setAttribute("aria-label",f[1]+", "+n+" game"+(n===1?"":"s"));
+  b.addEventListener("click",function(){state.feel=(state.feel===key?null:key);render()});
+  fh.appendChild(b);
  });
  drawGrid();
  $("exploreBtn").textContent="EXPLORE MATT\u2019S PICKS ("+CURATED.length+" of "+gs.length+" curated)";
 }
-function drawGrid(){
- var gs=state.games.slice();
- var q=state.q.trim().toLowerCase();
- if(q)gs=gs.filter(function(g){return (g.title+" "+(g.tag||"")+" "+(g.desc||"")).toLowerCase().indexOf(q)>=0});
- if(state.tag)gs=gs.filter(function(g){return g.tag===state.tag});
- if(state.sort==="az")gs.sort(function(a,b){return a.title.localeCompare(b.title)});
- else if(state.sort==="tag")gs.sort(function(a,b){return (a.tag||"").localeCompare(b.tag||"")||a.title.localeCompare(b.title)});
- else gs.sort(function(a,b){
+function sortGames(list){
+ var out=list.slice();
+ if(state.sort==="az")out.sort(function(a,b){return a.title.localeCompare(b.title)});
+ else if(state.sort==="genre")out.sort(function(a,b){return String(genreOf(a)).localeCompare(String(genreOf(b)))||a.title.localeCompare(b.title)});
+ else out.sort(function(a,b){
   var ca=CURATED.indexOf(keyOf(a))>=0?0:1,cb=CURATED.indexOf(keyOf(b))>=0?0:1;
   return ca-cb||a.title.localeCompare(b.title);
  });
- var grid=$("allGrid");grid.textContent="";
- gs.forEach(function(g){grid.appendChild(gCard(g,false))});
- $("empty").hidden=gs.length>0;
- var n=state.games.length;
- $("countline").textContent=gs.length===n?
-  (CURATED.length+" curated favourites of "+n+" games — every one free, single-file and offline-friendly."):
-  ("Showing "+gs.length+" of "+n+" games.");
+ return out;
+}
+function matches(g){
+ var q=state.q.trim().toLowerCase();
+ if(q){
+  /* genre and feels are searchable; `tag` is NOT, because the record is the
+     taxonomy and searching a field the page never shows would surface a game
+     for a word a visitor cannot see anywhere on it. */
+  var hay=(g.title+" "+(g.desc||"")+" "+genreOf(g)+" "+feelsOf(g).join(" ")).toLowerCase();
+  if(hay.indexOf(q)<0)return false;
+ }
+ if(state.feel&&!hasFeel(g,state.feel))return false;
+ return true;
+}
+function drawGrid(){
+ var all=state.games, n=all.length;
+ var filtering=state.q.trim()!==""||state.feel!==null;
+ var hits=all.filter(matches);
+ var host=$("genreSections"),flat=$("flatResults");
+ host.textContent="";flat.textContent="";
+ if(filtering){
+  /* FLATTEN. One list, one card per game — never a per-genre re-filter, which
+     would make a visitor open nine accordions to find two matches. */
+  host.hidden=true;flat.hidden=false;
+  sortGames(hits).forEach(function(g){flat.appendChild(gCard(g,false))});
+ }else{
+  host.hidden=false;flat.hidden=true;
+  GENRE_ORDER.forEach(function(gname,i){
+   var members=sortGames(all.filter(function(g){return genreOf(g)===gname}));
+   if(!members.length)return;
+   var d=document.createElement("details");d.className="gsec";if(i===0)d.open=true;
+   var sm=document.createElement("summary");
+   sm.innerHTML='<span class="gname"></span><span class="gnum"></span>';
+   sm.querySelector(".gname").textContent=gname;
+   sm.querySelector(".gnum").textContent=members.length+" game"+(members.length===1?"":"s");
+   d.appendChild(sm);
+   var c=document.createElement("div");c.className="cards";
+   members.forEach(function(g){c.appendChild(gCard(g,false))});
+   d.appendChild(c);host.appendChild(d);
+  });
+ }
+ /* The picks rail stands down while filtering. Leaving it up meant a game
+    that is BOTH in TOP and a match painted twice under a filter — measured at
+    20 cards for 12 CALM matches — which is the duplication this whole pass
+    exists to remove, reintroduced by the filter. Filtering flattens the PAGE,
+    not just the shelf. */
+ var picks=document.getElementById("picks");
+ if(picks)picks.hidden=filtering;
+ $("empty").hidden=hits.length>0;
+ /* Every number below is counted here, from the record and the shelf. None is
+    written into the markup — a hardcoded total is a number that goes stale
+    silently, and this page shipped one for months. */
+ var genreCount=GENRE_ORDER.filter(function(gn){return all.some(function(g){return genreOf(g)===gn})}).length;
+ $("shelfSub").textContent=filtering
+  ? ("Filtered — showing "+hits.length+" of "+n+" games as one list.")
+  : (n+" games across "+genreCount+" genres. Open a genre, or filter by feel above.");
+ $("countline").textContent=filtering
+  ? ("Showing "+hits.length+" of "+n+" games."+(state.feel?" Feel: "+state.feel+".":""))
+  : (CURATED.length+" curated favourites of "+n+" games \u2014 every one free, single-file and offline-friendly.");
 }
 $("q").addEventListener("input",function(){state.q=this.value;drawGrid()});
 $("sort").addEventListener("change",function(){state.sort=this.value;drawGrid()});
