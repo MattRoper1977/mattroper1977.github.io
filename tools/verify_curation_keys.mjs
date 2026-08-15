@@ -47,7 +47,21 @@ import { createRequire } from 'node:module';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const require_ = createRequire(import.meta.url);
-const acorn = require_(path.join(HERE, '..', 'node_modules', 'acorn'));
+/* acorn is resolved, never assumed. node_modules is gitignored, so a runner
+   has it only because the workflow installed it — and a MODULE_NOT_FOUND
+   stack trace is a crash, not a judgement. If it cannot be found this exits 2
+   and says so, because a gate that did not run must not be mistaken for one
+   that passed. (It went red exactly this way on its first CI run.) */
+let acorn;
+for (const spec of ['acorn', path.join(HERE, '..', 'node_modules', 'acorn'), path.join(HERE, 'node_modules', 'acorn')]) {
+  try { acorn = require_(spec); if (acorn) break; } catch (e) { /* next */ }
+}
+if (!acorn) {
+  console.error('INCONCLUSIVE: acorn is not importable, so the record was never parsed.');
+  console.error('Install it first:  npm i --no-save acorn@8.18.0');
+  console.error('This gate did not judge anything. That is not a pass.');
+  process.exit(2);
+}
 
 const EMIT = process.argv.includes('--emit');
 const ROOT = process.argv.slice(2).find(a => !a.startsWith('--')) || path.join(HERE, '..');

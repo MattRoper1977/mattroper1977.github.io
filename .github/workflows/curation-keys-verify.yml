@@ -74,9 +74,13 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
 
-      - name: Install Playwright Chromium
+      - name: Install acorn and Playwright Chromium
+        # acorn is what makes this gate read the RECORD rather than the file's
+        # prose about the record. node_modules is gitignored, so it has to be
+        # installed here; without it the gate exits 2 INCONCLUSIVE rather than
+        # crashing, which is how the omission was caught on the first run.
         run: |
-          npm i --no-save playwright@1.56.1
+          npm i --no-save acorn@8.18.0 playwright@1.56.1
           npx playwright install --with-deps chromium
 
       - name: Record what is under test
