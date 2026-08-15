@@ -47,6 +47,24 @@ from verify_games_audience_faces import MIN_PROMOTED_VISUALS  # noqa: E402
 IMG_SRC = re.compile(r'<img[^>]*\bsrc="([^"]+)"', re.I)
 BRAND_LIKE = re.compile(r"(mark|logo|brand)", re.I)
 
+# The words "mark", "logo" and "brand" catch a redrawn brand asset — and they
+# also catch two GAMES, because Off-Brand and Hold the Mark are named after the
+# brand on purpose. Their card art is /assets/cards/off-brand.svg and
+# /assets/cards/hold-the-mark.webp, and a substring match on the whole path
+# reported both as non-canonical marks the moment the pupil page began showing
+# the full shelf.
+#
+# So game card art is exempt from the name heuristic — but the exemption is not
+# a free pass into a directory. is_game_art() only exempts a path the canonical
+# shelf actually declares as a game's art, so a redrawn mark dropped into
+# /assets/cards/ is still caught: it would not be in the manifest.
+_SHELF = json.loads((ROOT / "data" / "source-manifests" / "games.json").read_text(encoding="utf-8"))["games"]
+GAME_ART = {str(g.get("art") or "").split("?", 1)[0] for g in _SHELF if g.get("art")}
+
+
+def is_game_art(clean: str) -> bool:
+    return clean in GAME_ART
+
 
 class Findings:
     """Design drift and missing surfaces are both failures, but they are not
@@ -89,7 +107,7 @@ def check_shared_dna(page: str, markup: str, findings: Findings) -> None:
     # A redrawn or re-exported mark is the quiet way brand consistency rots.
     for src in IMG_SRC.findall(markup):
         clean = src.split("?", 1)[0]
-        if BRAND_LIKE.search(clean) and clean not in CANONICAL_MARKS:
+        if BRAND_LIKE.search(clean) and clean not in CANONICAL_MARKS and not is_game_art(clean):
             findings.fail(page, f"non-canonical brand mark: {src}")
 
     for src in IMG_SRC.findall(markup):
@@ -110,7 +128,7 @@ def check_no_duplicate_mark_above_heading(page: str, markup: str, findings: Find
         clean = src.split("?", 1)[0]
         if clean == MICRO_MARK:
             findings.fail(page, "a small duplicate brand mark sits above the page heading; the large hero mark belongs there")
-        elif clean not in CANONICAL_MARKS and BRAND_LIKE.search(clean):
+        elif clean not in CANONICAL_MARKS and BRAND_LIKE.search(clean) and not is_game_art(clean):
             findings.fail(page, f"a non-canonical mark sits above the page heading: {src}")
 
 
