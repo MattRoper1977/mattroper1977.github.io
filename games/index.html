@@ -276,52 +276,111 @@ html[data-theme="highlumen"] .line1,html[data-theme="highlumen"] .line2{color:#3
 <script>
 (function(){
 "use strict";
-/* Curation — Matt's lever: edit takes/themes/order here. Titles must match games.json. */
-var TAKES={
-"Apex Kick":"The physics are the game. Bend one round the wall and you\u2019ll see it.",
-"Voxel Frontier":"An endless world from a seed. Ten minutes becomes an evening.",
-"Off-Brand":"Six shapes, one impostor, zero eliminations. Clara-approved.",
-"Glitch Clash":"Deeper than it looks. Build the trio, read the clash — pure masterclass.",
-"Hold the Mark":"Our brand as a game. The Focus meter is the whole philosophy.",
-"Orbital":"Gravity you can feel. One more orbit, every time.",
-"Slipstream - GP":"Flow state on wheels.",
-"Grid Chase":"Thirty seconds becomes thirty minutes.",
-"Marble":"Meticulous balancing — deceptively calm.",
-"Trail Runner":"The perfect reset between lessons.",
-"Trekkers Trail Runner — Tees Coast":"Our coast, our miles — the Tees on tap.",
-"Neon Garden":"Ambience and pace. The calm one.",
-"Neon Siege":"Place early, think earlier."
-};
-/* TOP is a SUBSET of CURATED, never a replacement for it. The five games
-   leaving the rail - Glitch Clash, Hold the Mark, Orbital, Slipstream - GP,
-   Grid Chase - keep their takes above and stay curated, so they keep their
-   MATT'S PICK badge in browse-all. Nothing was deleted from TAKES.
+/* Curation — Matt's lever. ONE record, keyed by href.
 
-   Four slots, not eight, and deliberately so. The intended eight were
-   Emberwild, Global Games, Apex Kick, Apex Pool, Relicforge, Voxel Frontier,
-   Aurora Links 3D, Off-Brand. Five of those have no take, and a take is Matt's
-   voice - not something this file may invent. Rather than pad the rail with a
-   selection nobody chose, it carries only the intended games that already have
-   one. The remaining four slots are Matt's to fill when the takes exist.
+   It used to be three: `featured` in games.json, TAKES here, TOP here. Three
+   sources meant three things to keep in step, and the page only ever read two
+   of them. What forced the collapse was not tidiness, it was a measured
+   failure: every one of those lookups matched on TITLE, and a title is not an
+   identity. `gs.find(x.title===t)` followed by `if(g)` skips a miss in
+   SILENCE, so renaming a game deleted its take and shortened a rail with
+   nothing going red — proven at the time by renaming Trail Runner in a scratch
+   manifest and watching the rail go 4 -> 3 without an error.
 
-   Also unresolved, and the reason the href re-keying still matters: Emberwild,
-   Global Games and Relicforge match NO manifest title exactly. "Relicforge"
-   alone is ambiguous - the manifest holds both "Relicforge: Fracture Engine"
-   (/fracture/) and "Relicforge - Strip the Machine" (/relicforge/), and the
-   ruling wants the latter. The renderer at :346 does `if(g)`, so a title that
-   fails to resolve is SILENTLY SKIPPED and the rail just comes out shorter. */
-var TOP=["Apex Kick","Voxel Frontier","Off-Brand","Trail Runner"];
-var THEMES=[
- ["PHYSICS & GRAVITY","FAVS",["Orbital","Marble"]],
- ["REFLEX & SPEED","FAVS",["Trail Runner","Trekkers Trail Runner — Tees Coast","Grid Chase"]],
- ["CALM & STRATEGY","PICKS",["Neon Garden","Neon Siege"]]
+   Three of the eight games intended for the rail already could not be matched
+   by title: the manifest calls them "NEW · Emberwild" (a title that carries a
+   temporary prefix and WILL change), "Global Games: Championship Simulator",
+   and — worse — "Relicforge" alone is ambiguous across
+   "Relicforge: Fracture Engine" (/fracture/) and "Relicforge — Strip the
+   Machine" (/relicforge/). Slipstream is the same trap three ways:
+   /Lessons/Games/Slipstream.html, /Lessons/Games/Slipstream_GP.html and
+   /hyperdraft/. An href tells those apart and a title cannot.
+
+   href is already unique across all 52 manifest entries and never absolute,
+   so keying on it needs no new field and no schema change — the stable-id
+   question stays open rather than being forced by this file.
+
+   `featured` was derived, not guessed, before being dropped from curation:
+   NOTHING renders from it. The site's app.js reads a `featured` on a DIFFERENT
+   dataset (the resources catalogue), and games.json's own copy has no reader
+   on either repo — it survives only as a required schema key that eight gates
+   in the Games repository assert on, which is why it is left exactly where it
+   is rather than removed. tools/verify_curation_keys.mjs re-measures that
+   claim on every run, so if anything ever starts reading it, this comment
+   stops being true out loud instead of quietly.
+
+   take  — Matt's voice. Nothing in this repo may write or edit one.
+   rail  — position on Top Picks, 1-based. Omit to be curated but not railed.
+           A rail slot without a take is a RED, not an empty quote mark. */
+var CURATION=[
+ {href:"/apexkick/",                                     rail:1, take:"The physics are the game. Bend one round the wall and you\u2019ll see it."},
+ {href:"/voxel/",                                        rail:2, take:"An endless world from a seed. Ten minutes becomes an evening."},
+ {href:"/Lessons/Games/Off_Brand.html",                  rail:3, take:"Six shapes, one impostor, zero eliminations. Clara-approved."},
+ {href:"/Lessons/Games/Trail_Runner.html",               rail:4, take:"The perfect reset between lessons."},
+ {href:"/Lessons/Games/Glitch_Clash.html",                       take:"Deeper than it looks. Build the trio, read the clash — pure masterclass."},
+ {href:"/Lessons/Games/Hold_the_Mark.html",                      take:"Our brand as a game. The Focus meter is the whole philosophy."},
+ {href:"/Lessons/Games/Orbital.html",                            take:"Gravity you can feel. One more orbit, every time."},
+ {href:"/Lessons/Games/Slipstream_GP.html",                      take:"Flow state on wheels."},
+ {href:"/Lessons/Games/Grid_Chase.html",                         take:"Thirty seconds becomes thirty minutes."},
+ {href:"/Lessons/Games/Marble.html",                             take:"Meticulous balancing — deceptively calm."},
+ {href:"/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html",   take:"Our coast, our miles — the Tees on tap."},
+ {href:"/Lessons/Games/Neon_Garden.html",                        take:"Ambience and pace. The calm one."},
+ {href:"/Lessons/Games/Neon_Siege.html",                         take:"Place early, think earlier."}
 ];
-var CURATED=Object.keys(TAKES);
+/* The rail carries four, and the four are the ones that HAVE a take. The
+   intended eight are Emberwild, Global Games, Apex Kick, Apex Pool,
+   Relicforge (/relicforge/, not /fracture/), Voxel Frontier, Aurora Links 3D
+   and Off-Brand. Five of those have no take, a take is Matt's voice, and a
+   rail slot without one is now a gate failure rather than a card with empty
+   quotation marks. So the rail stays at four until the takes exist.
+
+   The games that left the rail — Glitch Clash, Hold the Mark, Orbital,
+   Slipstream - GP, Grid Chase — kept their takes above and stay curated, so
+   they keep their MATT'S PICK badge in browse-all. Nothing was deleted.
+
+   Slipstream GP: Hyperdraft (/hyperdraft/) is deliberately absent: no take, no
+   rail slot, not curated. Under title-keying a third Slipstream could have
+   drifted into curation on a near-match; under href-keying it cannot, and
+   tools/verify_curation_keys.mjs reds if it ever appears here.
+
+   Two names that came up while this was being settled, recorded so they are
+   not re-litigated. "Neon Beach" is not a game: it exists in neither the
+   manifest nor the site, and was a typo for Neon Breach (/neonbreach/). It is
+   dropped, and Neon Breach is not curated either - it has no take. "Rally
+   Vector 3D" is titled "Rally Vector 3D - Championship Edition" in the
+   manifest; under the old title-keying that mismatch would have silently
+   dropped it, and the tempting repair was to rename the manifest entry to fit
+   the page. Keying on /rallyvector3d/ makes the title irrelevant instead, so
+   the canonical shelf is left alone. It is not curated: no take. */
+var THEMES=[
+ ["PHYSICS & GRAVITY","FAVS",["/Lessons/Games/Orbital.html","/Lessons/Games/Marble.html"]],
+ ["REFLEX & SPEED","FAVS",["/Lessons/Games/Trail_Runner.html","/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html","/Lessons/Games/Grid_Chase.html"]],
+ ["CALM & STRATEGY","PICKS",["/Lessons/Games/Neon_Garden.html","/Lessons/Games/Neon_Siege.html"]]
+];
 var state={q:"",tag:null,sort:"curated",games:[]};
 var $=function(id){return document.getElementById(id)};
 function tint(hue){return hue+"26"}
 function localHref(h){/* keep every game on the madebymatt.uk origin so the HUD's saved names and reading theme carry across */
  return String(h||"").replace(/^https?:\/\/[^\/]*(?:mattroper1977\.github\.io|madebymatt\.uk)/i,"");}
+/* Derived from CURATION, never maintained alongside it. Both sides of every
+   comparison go through localHref, so a manifest that ever starts carrying
+   absolute hrefs still matches — the normalisation is the key, not the raw
+   string. Placed AFTER localHref rather than above it: this runs at load, and
+   a reference reaching upward into a temporal dead zone is the exact trap this
+   estate has been bitten by before. */
+function keyOf(g){return localHref(g&&g.href)}
+var TAKE={},CURATED=[],TOP=[];
+(function(){
+ var railed=[];
+ CURATION.forEach(function(c){
+  var k=localHref(c.href);
+  TAKE[k]=c.take; CURATED.push(k);
+  if(c.rail)railed.push({k:k,at:c.rail});
+ });
+ railed.sort(function(a,b){return a.at-b.at});
+ TOP=railed.map(function(r){return r.k});
+})();
+function takeOf(g){return TAKE[keyOf(g)]||""}
 function pickCard(g,lead){
  var a=document.createElement("a");a.className="pick"+(lead?" lead":"");a.href=localHref(g.href);
  var art=g.art?'<div class="art"><img src="'+esc(g.art)+'" width="640" height="360" loading="eager" decoding="async" alt=""></div>'
@@ -331,14 +390,14 @@ function pickCard(g,lead){
  '<div class="take"><b>Matt\u2019s take:</b> <span></span></div></div>';
  a.querySelector("h3").textContent=g.title;
  a.querySelector(".tagc").textContent=g.tag||"";
- a.querySelector(".take span").textContent="\u201C"+(TAKES[g.title]||"")+"\u201D";
+ a.querySelector(".take span").textContent="\u201C"+takeOf(g)+"\u201D";
  var im=a.querySelector("img");if(im)im.alt=g.title+" — a moment from play";
  return a;
 }
 function esc(t){return String(t==null?"":t).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});}
 function gCard(g,withTake){
  var a=document.createElement("a");a.className="gcard";a.href=localHref(g.href);a.style.borderLeftColor=g.hue||"#C9C0AB";
- var badge=CURATED.indexOf(g.title)>=0?'<span class="mini">MATT\u2019S PICK</span>':"";
+ var badge=CURATED.indexOf(keyOf(g))>=0?'<span class="mini">MATT\u2019S PICK</span>':"";
  /* Card art. Every entry in games.json carries an `art` path — a real captured
     frame where the game could be driven to one, a generated card where it could
     not — so this never renders an empty slot. The emoji stays as the fallback
@@ -347,21 +406,24 @@ function gCard(g,withTake){
  var art = g.art ? '<img class="ga" src="'+esc(g.art)+'" width="640" height="360" loading="lazy" decoding="async" alt="">'
                  : '<div class="ic" style="background:'+tint(g.hue||"#C9C0AB")+'">'+(g.icon||"🎮")+'</div>';
  a.innerHTML = art +
- '<div class="tx"><h4><span></span>'+badge+'</h4><p></p>'+(withTake&&TAKES[g.title]?'<span class="qt"></span>':"")+'</div>';
+ '<div class="tx"><h4><span></span>'+badge+'</h4><p></p>'+(withTake&&takeOf(g)?'<span class="qt"></span>':"")+'</div>';
  a.querySelector("h4 span").textContent=g.title;
  var im=a.querySelector("img.ga");
  if(im) im.alt = g.art && /\.svg$/.test(g.art)
    ? g.title+" \u2014 title card"
    : g.title+" \u2014 a moment from play";
  a.querySelector("p").textContent=(g.desc||"").replace(/^NEW\s*·\s*/,"");
- var q=a.querySelector(".qt");if(q)q.textContent="\u201C"+TAKES[g.title]+"\u201D";
+ var q=a.querySelector(".qt");if(q)q.textContent="\u201C"+takeOf(g)+"\u201D";
  return a;
 }
 function render(){
  var gs=state.games;
  /* top picks */
  var rail=$("topRail");rail.textContent="";
- TOP.forEach(function(t,i){var g=gs.find(function(x){return x.title===t});if(g)rail.appendChild(pickCard(g,i===0))});
+ /* No `if(g)`: a TOP href that resolves to nothing is a defect, and the old
+    silent skip is exactly what let a rename shrink this rail unnoticed.
+    tools/verify_curation_keys.mjs reds before a build ever gets here. */
+ TOP.forEach(function(h,i){var g=gs.find(function(x){return keyOf(x)===h});if(g)rail.appendChild(pickCard(g,i===0))});
  /* Sports is driven by the manifest collection field and is additional to TOP and browse-all. */
  var sports=gs.filter(function(g){return g.collection==="Sports"});
  var sportsSection=$("sports"),sportsRail=$("sportsRail");sportsRail.textContent="";
@@ -384,7 +446,7 @@ function render(){
   d.innerHTML="<h3>GRID "+(i+1)+": <b></b> "+th[1]+'</h3><div class="cards"></div>';
   d.querySelector("b").textContent=th[0];
   var c=d.querySelector(".cards");
-  th[2].forEach(function(t){var g=gs.find(function(x){return x.title===t});if(g)c.appendChild(gCard(g,true))});
+  th[2].forEach(function(h){var g=gs.find(function(x){return keyOf(x)===h});if(g)c.appendChild(gCard(g,true))});
   tg.appendChild(d);
  });
  /* classroom favourites = the real class games */
@@ -410,7 +472,7 @@ function drawGrid(){
  if(state.sort==="az")gs.sort(function(a,b){return a.title.localeCompare(b.title)});
  else if(state.sort==="tag")gs.sort(function(a,b){return (a.tag||"").localeCompare(b.tag||"")||a.title.localeCompare(b.title)});
  else gs.sort(function(a,b){
-  var ca=CURATED.indexOf(a.title)>=0?0:1,cb=CURATED.indexOf(b.title)>=0?0:1;
+  var ca=CURATED.indexOf(keyOf(a))>=0?0:1,cb=CURATED.indexOf(keyOf(b))>=0?0:1;
   return ca-cb||a.title.localeCompare(b.title);
  });
  var grid=$("allGrid");grid.textContent="";
