@@ -133,10 +133,21 @@ function gate(id, name, fn) {
     // Every rail we claim to inspect must therefore be proven non-empty first.
     assert(shelf.picks.length > 0,
       'the curated pick rail selector matched nothing — the gate would be vacuous, not passing');
-    assert(shelf.themed.length > 0,
-      'the themed-grid selector matched nothing — the gate would be vacuous, not passing');
-    assert(!shelf.picks.includes(HREF), 'Relicforge took a curated pick slot it was not given');
-    assert(!shelf.themed.includes(HREF), 'Relicforge appeared in a themed grid it was not added to');
+    // The non-vacuity guard above is the point of this block and it stays. What
+    // it guards has moved: the themed grids were absorbed into feel tags, so a
+    // '#tgrids' selector now matches nothing and would make THIS guard the
+    // vacuous one. The browse structure takes its place — it is the selector
+    // every count in this file depends on.
+    assert(shelf.all.length > 0,
+      'the browse-structure selector matched nothing — the gate would be vacuous, not passing');
+    // This limb used to read "Relicforge took a curated pick slot it was not given".
+    // That was true when it was written and is not any more: the Top Picks rail
+    // is a ruled, declared eight, and a game may hold exactly one slot in it.
+    // Asserting absence would now make a deliberate curation decision a defect,
+    // so the assertion is the one that survives a ruling — at most one slot,
+    // never two.
+    const slots = shelf.picks.filter(h => h === HREF).length;
+    assert(slots <= 1, `Relicforge holds ${slots} slots on the Top Picks rail — a rail slot may only be held once`);
 
     // Every rendered pick must still be a real manifest entry.
     const manifestHrefs = new Set(shelf.all);
@@ -144,7 +155,7 @@ function gate(id, name, fn) {
     assert(orphanPicks.length === 0, `picks pointing outside the manifest: ${orphanPicks.join(', ')}`);
 
     assert(errors.length === 0, `page errors: ${errors.slice(0, 2).join(' | ')}`);
-    return `${shelf.picks.length} curated picks and ${shelf.themed.length} themed cards intact, all in the manifest, no duplicates, 0 page errors`;
+    return `${shelf.picks.length} curated picks intact over ${shelf.all.length} browse cards, all in the manifest, no duplicates, ${slots} pick slot(s) held, 0 page errors`;
   });
 
   await gate('C6', 'the count line reports the new total', () => {
