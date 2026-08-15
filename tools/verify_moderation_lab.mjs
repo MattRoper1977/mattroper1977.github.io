@@ -219,6 +219,15 @@ try {
       return { ev: v.contentStamp, mod: v.stamp };
     };
     const a = await stamp();
+    /* MOD- carries the print timestamp, and the app never promised more
+       resolution than the clock has. Two prints inside the same millisecond
+       are, as far as the document is concerned, the same copy — so this
+       asserted something the app does not claim and failed about one run in
+       five for a reason that had nothing to do with the code under test.
+       Waiting for the clock to actually advance is the fix, and it is a wait
+       on the real condition rather than a sleep long enough to usually work. */
+    const t0 = Date.now();
+    while (Date.now() === t0) { /* spin until the millisecond turns over */ }
     const a2 = await stamp();                       // same portfolio, printed twice
     const probe = { id: 'gate-probe-ev', ref: 'GATE-EV1', pupilId: pup.id, programId: prog.id,
       targetId: '', evidenceType: 'photo', caption: 'probe', date: '2026-08-14',

@@ -573,3 +573,27 @@ body[data-theme="dark"].mbm-face-page .mf-surprise-card{background:linear-gradie
 body[data-theme="dark"] .mf-band{background:#1B234A;border-color:#2E3860}
 body[data-theme="dark"] .mf-band-about{color:#E8E2D4}
 body[data-theme="dark"] .mf-band-link{color:#F2A24A}
+
+/* Pupil homepage: the Top Picks rail and the genre accordions.
+   Every genre <summary> is a real control, so it carries the 44px floor
+   itself rather than relying on its text — measured at 364x25 before this,
+   which is a tap target a child has to aim at. The masthead link measured
+   186x42 and is floored for the same reason. */
+.mf-pupil-rail{display:grid;gap:.8rem;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))}
+.mf-pupil-genres{display:grid;gap:.6rem}
+.mf-pupil-genre{border:1.5px solid rgba(22,29,61,.18);border-radius:14px;overflow:hidden;background:#fff}
+.mf-pupil-genre>summary{display:flex;align-items:center;justify-content:space-between;gap:.6rem;
+  min-height:56px;padding:.75rem 1rem;cursor:pointer;touch-action:manipulation;font-weight:800}
+.mf-pupil-genre>summary:focus-visible{outline:3px solid #161D3D;outline-offset:-3px}
+.mf-pupil-gname{font-size:1rem}
+.mf-pupil-gnum{font-size:.78rem;font-weight:800;color:#4b5273;white-space:nowrap}
+.mf-pupil-genre[open]>summary{border-bottom:1.5px solid rgba(22,29,61,.18)}
+.mf-pupil-grid{display:grid;gap:.8rem;padding:.85rem;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))}
+.mf-pupil-game{border:1.5px solid rgba(22,29,61,.14);border-radius:12px;overflow:hidden;background:#fff;display:flex;flex-direction:column}
+.mf-pupil-game .mf-media{display:block;min-height:44px}
+.mf-pupil-game img{width:100%;height:auto;display:block}
+.mf-pupil-emoji{display:flex;align-items:center;justify-content:center;min-height:96px;font-size:2.4rem}
+.mf-pupil-game h3{font-size:1rem;margin:.2rem 0}
+.mf-pupil-take{font-size:.86rem;color:#3b4166}
+.mf-pupil-game .mf-text-link{min-height:44px;display:inline-flex;align-items:center}
+.mf-masthead a.mf-brand,.mf-brand{min-height:44px;display:inline-flex;align-items:center}
