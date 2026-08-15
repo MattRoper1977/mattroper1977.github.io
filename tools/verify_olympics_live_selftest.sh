@@ -171,7 +171,13 @@ cp "$GAMES_JSON" "$WORK/hidden/Games/games.json"
 python3 - "$WORK/hidden/games/index.html" <<'PY'
 import sys
 p=sys.argv[1]; s=open(p,encoding='utf-8').read()
-s=s.replace('</head>','<style>#allGrid a.gcard{display:none!important}</style></head>',1)
+# Both containers: the browse structure moved from #allGrid to #genreSections,
+# and this control's whole point is that the cards are PRESENT in the DOM and
+# given no box. Hiding a selector that no longer matches makes the mutation a
+# no-op — the cards kept rendering, the limb stayed green, and the self-test
+# correctly reported a limb it could not knock over. A control that stops
+# mutating is the most dangerous kind: it reports success about nothing.
+s=s.replace('</head>','<style>#allGrid a.gcard,#genreSections a.gcard{display:none!important}</style></head>',1)
 open(p,'w',encoding='utf-8').write(s)
 PY
 HIDDEN_URL="$(serve "$WORK/hidden")/games/"
