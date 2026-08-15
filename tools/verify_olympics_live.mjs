@@ -145,10 +145,17 @@ if (arcadeUrl) {
   const expected = sEntries.length;
   let rendered = -1;
   for (let i = 0; i < 60; i++) {
+    // The browse structure moved from one A-Z grid (#allGrid) to genre
+    // accordions (#genreSections). This job reads the SERVED page, so across a
+    // deploy it is genuinely either, and reading only the old one returns -1 —
+    // "the selector matched nothing", which is indistinguishable from a shelf
+    // that failed to render. Sections are opened first: a card inside a shut
+    // <details> occupies no space, so a folded shelf would read as a short one.
     rendered = await page.evaluate(() => {
-      const grid = document.getElementById('allGrid');
-      if (!grid) return -1;
-      return [...grid.querySelectorAll('a.gcard')].filter((el) => {
+      document.querySelectorAll('details.gsec').forEach((d) => { d.open = true; });
+      const roots = [...document.querySelectorAll('#allGrid, #genreSections')];
+      if (!roots.length) return -1;
+      return roots.flatMap((g) => [...g.querySelectorAll('a.gcard')]).filter((el) => {
         const r = el.getBoundingClientRect();
         return r.width > 0 && r.height > 0 && el.offsetParent !== null;
       }).length;
@@ -158,7 +165,7 @@ if (arcadeUrl) {
   }
 
   check('arcade-renders-shelf', rendered === expected,
-    `${rendered} cards occupy real space in #allGrid, shelf is ${expected} (rendered, not node-counted)`);
+    `${rendered} cards occupy real space in the browse structure, shelf is ${expected} (rendered, not node-counted)`);
 
   const countline = (await page.textContent('#countline').catch(() => '')) || '';
   check('arcade-countline', countline.includes(String(expected)),
