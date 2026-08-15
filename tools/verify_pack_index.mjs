@@ -6,9 +6,41 @@ import { IDBFactory as FDBFactory, IDBKeyRange as FDBKeyRange } from "fake-index
 // actually printed on. Seed shape matters — a 2-item portfolio passes vacuously,
 // so this seeds 3 photo plates + 5 short witness slips, which straddles three
 // weighted pages and is the shape that exposed the defect.
+// The pack to judge is argv[2], and there is deliberately no default: this gate
+// is pointed at a scratch copy by verify_pack_index_control.sh as often as at
+// the shipped file, and a default would make "I forgot the argument" and "I
+// meant the shipped one" the same command.
+//
+// It used to be read straight into fs.readFileSync, so running it bare died as
+//   TypeError [ERR_INVALID_ARG_TYPE]: The "path" argument must be of type
+//   string or an instance of Buffer or URL. Received undefined
+// over four frames of node internals. That is a failure, so it was never a
+// false green — but it reads as the tool being broken rather than the command
+// being incomplete, and it names neither the argument nor what to pass. The
+// ways of arriving with nothing to judge are separated below, all exiting 2,
+// which is the code verify_pack_index_control.sh already uses for INCONCLUSIVE.
+function inconclusive(reason, ...detail) {
+  console.error(`INCONCLUSIVE: ${reason}`);
+  for (const line of detail) console.error(`  ${line}`);
+  console.error("  This gate judged nothing. That is not a pass.");
+  console.error("  usage: node tools/verify_pack_index.mjs <path/to/pack/index.html>");
+  console.error("  the shipped pack is asdan/moderation-lab/index.html");
+  process.exit(2);
+}
+
 const SRC = process.argv[2];
+if (SRC === undefined) inconclusive("no pack file was given.");
+if (!SRC.trim()) inconclusive("the pack file argument is empty.");
+if (!fs.existsSync(SRC)) inconclusive("the pack file does not exist.", `given: ${SRC}`);
+
 const raw = fs.readFileSync(SRC, "utf8");
-const appScript = raw.match(/<script>\n"use strict";([\s\S]*?)<\/script>/)[0].replace(/^<script>|<\/script>$/g, "");
+const appMatch = raw.match(/<script>\n"use strict";([\s\S]*?)<\/script>/);
+// Without this the call was `.match(...)[0]`, so a real HTML file that simply is
+// not a pack died as "Cannot read properties of null (reading '0')". Same class
+// of unreadable crash as the missing argument, so it gets the same treatment
+// rather than being left as the one remaining way to fail illegibly.
+if (!appMatch) inconclusive("that file has no pack application script, so there is no page map to check.", `read: ${SRC}`);
+const appScript = appMatch[0].replace(/^<script>|<\/script>$/g, "");
 const html = raw.replace(appScript, "");
 
 const errors = [];
