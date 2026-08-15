@@ -242,9 +242,33 @@ function twistGates(EW) {
 // ---------------------------------------------------------------------------
 // Browser gates.
 // ---------------------------------------------------------------------------
+/* Resolve playwright explicitly instead of relying on ambient NODE_PATH.
+ *
+ * CI installs it into the REPOSITORY ROOT (`npm install --no-save playwright`
+ * in emberwild-verify.yml), and this file lives in tools/, so Node's default
+ * resolution walks up and finds it there. Anywhere else - a fresh checkout, a
+ * machine with playwright installed globally - it does not, because Node does
+ * not search the global root unless NODE_PATH says so. GB then reported FAIL,
+ * and that red sat in the estate's standing count as though it were a property
+ * of the game rather than of the machine.
+ *
+ * The assertion below is unchanged. Only the search path is.
+ */
+function loadPlaywright() {
+  const repoRoot = path.resolve(__dirname, '..');
+  // /opt/node22/bin/node -> /opt/node22/lib/node_modules
+  const globalRoot = path.resolve(path.dirname(process.execPath), '..', 'lib', 'node_modules');
+  const paths = [
+    path.join(repoRoot, 'node_modules'),
+    globalRoot,
+    ...(process.env.NODE_PATH || '').split(path.delimiter).filter(Boolean),
+  ].filter(p => { try { return fs.existsSync(p); } catch (_) { return false; } });
+  return require(require.resolve('playwright', { paths }));
+}
+
 async function browserGates(gamePath) {
   let chromium;
-  try { ({ chromium } = require('playwright')); }
+  try { ({ chromium } = loadPlaywright()); }
   catch (_) {
     gate('GB', 'browser gates', false, 'playwright unavailable — run in CI (SHIPPED-AS-CI)');
     return;

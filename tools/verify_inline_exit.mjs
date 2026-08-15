@@ -177,6 +177,82 @@ const PROBE = (id) => {
   };
 };
 
+/*
+ * A real tab walk, not a proxy for one.
+ *
+ * Focus is reset to the very start of the document, then Tab is pressed and
+ * document.activeElement is followed until every wanted id has been landed on,
+ * the order cycles back to where it began, or the press cap is hit. The cap is
+ * a FAILURE, never a pass: a control the walk never reaches is not reachable,
+ * whatever .focus() would have said about it.
+ *
+ * Why the walk starts from document.body with a blur rather than from wherever
+ * focus happens to be: a page that has already moved focus onto or past the
+ * control would make the first Tab land on it by accident, which is the same
+ * false positive in a different costume.
+ */
+const TAB_CAP = 120;
+async function tabReach(page, ids) {
+  const out = { presses: {} };
+  for (const id of ids) { out[id] = false; out.presses[id] = null; }
+  await page.evaluate(() => {
+    if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+    document.body.setAttribute('tabindex', '-1');
+    document.body.focus();
+    document.body.removeAttribute('tabindex');
+  });
+  for (let i = 1; i <= TAB_CAP; i++) {
+    await page.keyboard.press('Tab');
+    // Cycle detection keys on ELEMENT IDENTITY, stamped on the node itself.
+    //
+    // It first keyed on a descriptor string - tag, id, class, href - and that
+    // was wrong in a way that mattered. A page with a run of id-less identical
+    // controls (seven .mode-card on /apexpool/, nine .pickCard on
+    // /rallyvector3d/, three .chassis-card on /relicforge/) yields the same
+    // descriptor on consecutive presses; the walk read that as a cycle and
+    // stopped before it ever reached the exit, then reported those three exits
+    // unreachable. They are reachable, at presses 14, 27 and 12. The check
+    // written to replace a vacuous proxy had a false negative of its own, and
+    // only a reproduction showed it.
+    //
+    // /relicforge/ read 8 here until it was re-measured, and the difference is
+    // not a typo worth silently fixing: the number is TOUCH-CAPABILITY
+    // dependent, not viewport dependent. At 390x844 with hasTouch true it is
+    // 12; with hasTouch false, and at 1440x900, it is 8. Four .touch-button
+    // controls - #touch-fire, #touch-utility, #touch-dash, #touch-pause - sit
+    // in the DOM either way but only enter the tab order under touch, at
+    // presses 8-11. Every context below is created with hasTouch: true, so 12
+    // is the number this file actually asserts. /apexpool/ and
+    // /rallyvector3d/ measure 14 and 27 with touch on or off, which is why
+    // only relicforge's row was ever wrong.
+    const where = await page.evaluate(() => {
+      const a = document.activeElement;
+      if (!a || a === document.body) return { id: null, repeat: false };
+      const repeat = a.hasAttribute('data-mbm-tabwalk');
+      if (!repeat) a.setAttribute('data-mbm-tabwalk', '1');
+      return { id: a.id || null, repeat };
+    });
+    if (where.id && Object.prototype.hasOwnProperty.call(out, where.id) && out[where.id] === false) {
+      out[where.id] = true;
+      out.presses[where.id] = i;
+      if (ids.every(x => out[x] === true)) { await clearWalkMarks(page); return out; }
+    }
+    // Landed on an element this walk has already visited: the order has cycled
+    // and every remaining id is genuinely unreachable.
+    if (where.repeat) { await clearWalkMarks(page); return out; }
+  }
+  await clearWalkMarks(page);
+  return out;
+}
+
+// The walk must not leave the page different from how it found it: the probe is
+// not allowed to become part of what later checks measure.
+async function clearWalkMarks(page) {
+  await page.evaluate(() => {
+    for (const e of document.querySelectorAll('[data-mbm-tabwalk]')) e.removeAttribute('data-mbm-tabwalk');
+  });
+}
+
 async function main() {
   // ESM import() does not honour NODE_PATH, so a globally installed playwright
   // is invisible to a bare specifier. Resolve it explicitly and say where it
@@ -259,18 +335,22 @@ async function main() {
             `${vp}px ${t.route}: homepage control resolves the stored choice`, home.resolved);
           check(home.onTop === 'ON TOP', `${vp}px ${t.route}: homepage control is on top`, home.onTop);
         }
-        // keyboard: both controls must be reachable by Tab from the document start
-        const reach = await page.evaluate(() => {
-          const ids = ['mbmexit-back', 'mbmexit-home'];
-          return ids.map(id => {
-            const e = document.getElementById(id);
-            if (!e) return null;
-            e.focus();
-            return document.activeElement === e;
-          });
-        });
-        check(reach[0] === true, `${vp}px ${t.route}: exit takes keyboard focus`);
-        if (home.present) check(reach[1] === true, `${vp}px ${t.route}: homepage control takes keyboard focus`);
+        // Keyboard: both controls must be reachable by Tab from the document
+        // start. This says what it does now. It used to say exactly this
+        // sentence while the code below it called e.focus() and compared
+        // document.activeElement - which is a different and much weaker claim,
+        // because .focus() succeeds on elements Tab can never reach:
+        // tabindex="-1", elements removed from the tab order, elements present
+        // but not tabbable. A child on a locked-down device using only a
+        // keyboard is exactly who this control exists for, so the proxy was
+        // guarding the case it could not see. The negative control below proves
+        // the difference: a tabindex="-1" clone passes the old check and fails
+        // this one.
+        const reach = await tabReach(page, ['mbmexit-back', 'mbmexit-home']);
+        check(reach['mbmexit-back'] === true,
+          `${vp}px ${t.route}: exit is reachable by Tab`, `presses: ${reach.presses['mbmexit-back']}`);
+        if (home.present) check(reach['mbmexit-home'] === true,
+          `${vp}px ${t.route}: homepage control is reachable by Tab`, `presses: ${reach.presses['mbmexit-home']}`);
       }
       await ctx.close();
     }
@@ -309,6 +389,35 @@ async function main() {
     const stillBack = await page.evaluate(PROBE, 'mbmexit-back');
     check(!noPref.present, 'control: with no stored homepage the second control does not render at all');
     check(stillBack.present, 'control: with no stored homepage the exit control is still there');
+
+    /* 4. THE PROXY CONTROL — the whole reason the keyboard check changed.
+     *
+     * An element that .focus() reaches and Tab cannot: an anchor with
+     * tabindex="-1". The old check called e.focus() and compared
+     * document.activeElement, so it passed on exactly this element. The tab
+     * walk cannot reach it, so it fails. BOTH outcomes are asserted here — a
+     * control that only showed the new check failing would not prove the old
+     * one was ever wrong. */
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_MS });
+    await page.waitForTimeout(SETTLE_MS);
+    const proxyProbe = await page.evaluate(() => {
+      const a = document.createElement('a');
+      a.id = 'mbmexit-proxytest';
+      a.href = '/games/';
+      a.textContent = 'unreachable';
+      a.setAttribute('tabindex', '-1');
+      document.body.appendChild(a);
+      // The OLD check, verbatim, on this element.
+      a.focus();
+      return { oldCheckSays: document.activeElement === a };
+    });
+    const proxyWalk = await tabReach(page, ['mbmexit-proxytest']);
+    check(proxyProbe.oldCheckSays === true,
+      'control: a tabindex="-1" anchor PASSES the old .focus()/activeElement check — the proxy was vacuous');
+    check(proxyWalk['mbmexit-proxytest'] === false,
+      'control: the same anchor FAILS the tab walk — the new check is not a proxy',
+      `presses to reach: ${proxyWalk.presses['mbmexit-proxytest']}`);
+    await page.evaluate(() => document.getElementById('mbmexit-proxytest')?.remove());
 
     await ctx.close();
 
