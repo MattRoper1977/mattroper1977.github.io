@@ -313,30 +313,49 @@ html[data-theme="highlumen"] .line1,html[data-theme="highlumen"] .line2{color:#3
    rail  — position on Top Picks, 1-based. Omit to be curated but not railed.
            A rail slot without a take is a RED, not an empty quote mark. */
 var CURATION=[
- {href:"/apexkick/",                                     rail:1, take:"The physics are the game. Bend one round the wall and you\u2019ll see it."},
- {href:"/voxel/",                                        rail:2, take:"An endless world from a seed. Ten minutes becomes an evening."},
- {href:"/Lessons/Games/Off_Brand.html",                  rail:3, take:"Six shapes, one impostor, zero eliminations. Clara-approved."},
- {href:"/Lessons/Games/Trail_Runner.html",               rail:4, take:"The perfect reset between lessons."},
- {href:"/Lessons/Games/Glitch_Clash.html",                       take:"Deeper than it looks. Build the trio, read the clash — pure masterclass."},
- {href:"/Lessons/Games/Hold_the_Mark.html",                      take:"Our brand as a game. The Focus meter is the whole philosophy."},
- {href:"/Lessons/Games/Orbital.html",                            take:"Gravity you can feel. One more orbit, every time."},
- {href:"/Lessons/Games/Slipstream_GP.html",                      take:"Flow state on wheels."},
- {href:"/Lessons/Games/Grid_Chase.html",                         take:"Thirty seconds becomes thirty minutes."},
- {href:"/Lessons/Games/Marble.html",                             take:"Meticulous balancing — deceptively calm."},
- {href:"/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html",   take:"Our coast, our miles — the Tees on tap."},
- {href:"/Lessons/Games/Neon_Garden.html",                        take:"Ambience and pace. The calm one."},
- {href:"/Lessons/Games/Neon_Siege.html",                         take:"Place early, think earlier."}
+ {href:"/emberwild/",                                   rail:1, take:"Madebymatt meets creature collecting - shh, you know the one."},
+ {href:"/olympics/",                                    rail:2, take:"The weather's too hot and you're not a pro - enjoy athletics at home."},
+ {href:"/apexkick/",                                    rail:3, take:"The physics are the game. Bend one round the wall and you\u2019ll see it."},
+ {href:"/apexpool/",                                    rail:4, take:"Good at pool - be great with Apex Pool"},
+ {href:"/relicforge/",                                  rail:5, take:"Be a warrior and solve the quest."},
+ {href:"/voxel/",                                       rail:6, take:"An endless world from a seed. Ten minutes becomes an evening."},
+ {href:"/auroralinks/",                                 rail:7, take:"Can't afford your own clubs - the realism means you don't need any."},
+ {href:"/Lessons/Games/Off_Brand.html",                 rail:8, take:"Six shapes, one impostor, zero eliminations. Clara-approved."},
+ {href:"/Lessons/Games/Trail_Runner.html",                      take:"The perfect reset between lessons."},
+ {href:"/Lessons/Games/Glitch_Clash.html",                      take:"Deeper than it looks. Build the trio, read the clash — pure masterclass."},
+ {href:"/Lessons/Games/Hold_the_Mark.html",                     take:"Our brand as a game. The Focus meter is the whole philosophy."},
+ {href:"/Lessons/Games/Orbital.html",                           take:"Gravity you can feel. One more orbit, every time."},
+ {href:"/Lessons/Games/Slipstream_GP.html",                     take:"Flow state on wheels."},
+ {href:"/Lessons/Games/Grid_Chase.html",                        take:"Thirty seconds becomes thirty minutes."},
+ {href:"/Lessons/Games/Marble.html",                            take:"Meticulous balancing — deceptively calm."},
+ {href:"/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html",        take:"Our coast, our miles — the Tees on tap."},
+ {href:"/Lessons/Games/Neon_Garden.html",                       take:"Ambience and pace. The calm one."},
+ {href:"/Lessons/Games/Neon_Siege.html",                        take:"Place early, think earlier."}
 ];
-/* The rail carries four, and the four are the ones that HAVE a take. The
-   intended eight are Emberwild, Global Games, Apex Kick, Apex Pool,
-   Relicforge (/relicforge/, not /fracture/), Voxel Frontier, Aurora Links 3D
-   and Off-Brand. Five of those have no take, a take is Matt's voice, and a
-   rail slot without one is now a gate failure rather than a card with empty
-   quotation marks. So the rail stays at four until the takes exist.
+/* The rail carries eight, which is what it was always meant to carry. It sat
+   at four for one reason only: five of the intended eight had no take, a take
+   is Matt's voice, and this file may not invent one. The five arrived, so the
+   rail is full.
 
-   The games that left the rail — Glitch Clash, Hold the Mark, Orbital,
-   Slipstream - GP, Grid Chase — kept their takes above and stay curated, so
-   they keep their MATT'S PICK badge in browse-all. Nothing was deleted.
+   The five new takes are Matt's words, used exactly as written - no edit, no
+   capitalisation change, no added full stop. "Good at pool - be great with
+   Apex Pool" ends without a stop deliberately; if you are tempted to add one,
+   don't. tools/verify_curation_keys.mjs compares every one of them against
+   the authored text byte-for-byte, in the RENDERED page, so a helpful tidy-up
+   goes red rather than through.
+
+   One name needed resolving, and it is exactly what href-keying is for. The
+   game listed as "Global Games" is titled "Global Games: Championship
+   Simulator" in the manifest and lives at /olympics/ - there is no
+   /globalgames/ route, in the manifest or on disk. Under the old title-keying
+   a near-miss like that vanished in silence; here it is one unambiguous
+   match, and the key records which game is meant. Relicforge is /relicforge/
+   ("Relicforge - Strip the Machine"), NOT /fracture/ ("Relicforge: Fracture
+   Engine") - the two are indistinguishable by the name people use for them.
+
+   Trail Runner leaves the rail and keeps its take, so it stays curated and
+   keeps its MATT'S PICK badge in browse-all, exactly as the five that left
+   before it did. Nothing was ever deleted from this record.
 
    Slipstream GP: Hyperdraft (/hyperdraft/) is deliberately absent: no take, no
    rail slot, not curated. Under title-keying a third Slipstream could have

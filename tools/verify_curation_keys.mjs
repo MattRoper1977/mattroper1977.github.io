@@ -303,11 +303,20 @@ const scratchManifest = (mutate) => {
 /* Positive control, direction one: the gate is not always-green. Break the
    manifest the way the OLD keying broke — take the href away. */
 {
-  const f = scratchManifest(gs => { gs.find(g => g.href === '/Lessons/Games/Trail_Runner.html').href = '/Lessons/Games/Trail_Runner_MOVED.html'; });
-  const o = orphans(record, manifestFrom(f));
-  check(o.length > 0 && o.some(x => x.key === '/Lessons/Games/Trail_Runner.html'),
-    'CONTROL: move a game\'s href and the gate goes RED, naming the orphan',
-    o.map(x => `${x.kind} ${x.key} -> ${x.matches}`).join('; ') || 'stayed green — the gate is a no-op');
+  /* Two games, because no single one is curated AND railed AND themed, and a
+     control that exercises one key kind says nothing about the other two.
+     /apexkick/ is curated + railed; Trail Runner is curated + themed. Between
+     them every kind the orphan rule emits is driven red at least once, and
+     that is asserted rather than assumed. */
+  const MOVE = ['/apexkick/', '/Lessons/Games/Trail_Runner.html'];
+  const found = MOVE.flatMap(href => {
+    const f = scratchManifest(gs => { gs.find(g => g.href === href).href = href.replace(/\/?$/, '') + '_MOVED/'; });
+    return orphans(record, manifestFrom(f)).filter(x => x.key === href);
+  });
+  const kinds = new Set(found.map(x => x.kind.split(':')[0]));
+  check(found.length > 0 && kinds.has('curated') && kinds.has('rail') && kinds.has('theme'),
+    'CONTROL: move a game\'s href and the gate goes RED — on every kind of key it holds',
+    found.map(x => `${x.kind} ${x.key} -> ${x.matches}`).join('; ') || 'stayed green — the gate is a no-op');
 }
 
 /* Direction two: a key that matches TWICE is caught, not silently taking the
@@ -419,7 +428,14 @@ if (!chromium) {
           painted: b.width > 0 && b.height > 0
         };
       }),
-      badges: document.querySelectorAll('.gcard .mini').length
+      /* Scoped to the whole-shelf grid. A bare '.gcard .mini' counts the same
+         game several times over, because the sports, RPG, themed and classroom
+         rails each render their own card for it — 31 badge nodes for 18 curated
+         games. Browse-all is the one place each game appears exactly once, so
+         it is the only count that answers "how many games carry the badge". */
+      badges: document.querySelectorAll('#allGrid .gcard .mini').length,
+      badgesEverywhere: document.querySelectorAll('.gcard .mini').length,
+      shelf: document.querySelectorAll('#allGrid .gcard').length
     }));
     await browser.close(); server.close();
     return out;
@@ -437,18 +453,59 @@ if (!chromium) {
     'and they are the declared hrefs, in the declared order', live.picks.map(p => p.href).join(' · '));
   check(live.picks.every(p => p.painted && p.take), 'every painted card occupies space and carries a take',
     `${live.picks.filter(p => p.painted).length} painted, ${live.picks.filter(p => p.take).length} with takes`);
-  check(live.badges >= record.curation.length, 'the games that left the rail keep their MATT\'S PICK badge',
-    `${live.badges} badges rendered, ${record.curation.length} curated entries`);
+  check(live.badges === record.curation.length, 'browse-all carries exactly one MATT\'S PICK badge per curated game — the departing games kept theirs',
+    `${live.badges} badges in browse-all of ${live.shelf} cards, ${record.curation.length} curated entries (${live.badgesEverywhere} badge nodes across every rail)`);
 
-  const renamed = scratchManifest(gs => { gs.find(g => g.href === '/Lessons/Games/Trail_Runner.html').title = 'Trail Runner RENAMED'; });
+  /* The authored takes, byte-for-byte, read off the PAINTED card.
+     A take is Matt's voice. The failure mode is not deletion — it is a
+     helpful tidy-up: a full stop added to a line that deliberately has none,
+     a straight apostrophe curled, a hyphen promoted to an em dash. Every one
+     of those survives a "the take is non-empty" check and every one of them
+     is a rewrite. So this compares bytes, with Buffer.byteLength rather than
+     string length, because two strings of equal length can differ by an
+     encoding and a length check would call that identical. */
+  const AUTHORED = [
+    ['/emberwild/', 'Madebymatt meets creature collecting - shh, you know the one.'],
+    ['/olympics/', "The weather's too hot and you're not a pro - enjoy athletics at home."],
+    ['/apexpool/', 'Good at pool - be great with Apex Pool'],
+    ['/relicforge/', 'Be a warrior and solve the quest.'],
+    ['/auroralinks/', "Can't afford your own clubs - the realism means you don't need any."]
+  ];
+  const painted = new Map(live.picks.map(p => [p.href, p.take]));
+  const drift = AUTHORED.filter(([h, t]) => painted.get(h) !== t);
+  check(drift.length === 0, 'each of the five new takes is on the page character-for-character as authored',
+    drift.length
+      ? drift.map(([h, t]) => `${h}: authored ${Buffer.byteLength(t)}B "${t}" vs painted ${Buffer.byteLength(painted.get(h) || '')}B "${painted.get(h)}"`).join(' | ')
+      : AUTHORED.map(([h, t]) => `${h}=${Buffer.byteLength(t)}B`).join(' '));
+
+  /* …and that comparison must be able to fail, or it is a no-op that says
+     yes to anything. The mutation is the smallest real one: a single full
+     stop appended to the take that deliberately ends without one. */
+  {
+    const [h, t] = AUTHORED.find(([k]) => k === '/apexpool/');
+    const tidied = t + '.';
+    check(Buffer.byteLength(tidied) === Buffer.byteLength(t) + 1 && tidied !== t,
+      'CONTROL: the mutation is real — one full stop added to the take that has none',
+      `${Buffer.byteLength(t)}B -> ${Buffer.byteLength(tidied)}B`);
+    check(painted.get(h) !== tidied,
+      'CONTROL: and the comparison rejects it, so a helpful tidy-up cannot pass',
+      `painted "${painted.get(h)}" !== tidied "${tidied}"`);
+  }
+
+  /* Rename a game that is ON the rail — renaming one that has left it would
+     prove nothing about the rail, and this control first failed for exactly
+     that reason when Trail Runner moved off in favour of the intended eight. */
+  const RENAME_HREF = '/apexkick/';
+  const renamed = scratchManifest(gs => { gs.find(g => g.href === RENAME_HREF).title = 'Apex Kick RENAMED'; });
   const after = await railOf(renamed);
   check(after.picks.length === live.picks.length,
-    'CONTROL (browser): the rename that used to take this rail 4 -> 3 now changes nothing',
-    `${live.picks.length} -> ${after.picks.length} cards`);
-  const slot = after.picks.find(p => p.href === '/Lessons/Games/Trail_Runner.html');
-  check(!!slot && slot.title === 'Trail Runner RENAMED' && !!slot.take,
-    'CONTROL (browser): the renamed game keeps its slot AND its take — the take followed the href, not the title',
-    slot ? `"${slot.title}" · take=${slot.take ? 'kept' : 'LOST'}` : 'slot vanished');
+    'CONTROL (browser): a rename of a railed game leaves the rail its full length',
+    `${live.picks.length} -> ${after.picks.length} cards (title-keying took it 4 -> 3)`);
+  const slot = after.picks.find(p => p.href === RENAME_HREF);
+  const before = painted.get(RENAME_HREF);
+  check(!!slot && slot.title === 'Apex Kick RENAMED' && slot.take === before,
+    'CONTROL (browser): the renamed game keeps its slot AND its take, byte-identical — the take followed the href, not the title',
+    slot ? `"${slot.title}" · take ${Buffer.byteLength(slot.take)}B, was ${Buffer.byteLength(before || '')}B` : 'slot vanished');
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
