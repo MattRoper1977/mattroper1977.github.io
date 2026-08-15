@@ -3750,7 +3750,18 @@
     // Research lodge shell with walkable interior and doorway.
     for (let z = 14; z <= 18; z++) for (let x = 2; x <= 7; x++) map.setCell(x, z, { ground: Ground.FLOOR, surface: Surface.BLOCKED, tags: ['lodge'] });
     for (let z = 15; z <= 17; z++) for (let x = 3; x <= 6; x++) map.setCell(x, z, { ground: Ground.FLOOR, surface: Surface.WALKABLE, tags: ['lodge', 'interior'] });
-    map.setCell(4, 18, { ground: Ground.FLOOR, surface: Surface.WALKABLE, tags: ['lodge', 'door'] });
+    // The door is on the NORTH wall, and has to be. It sat at (4,18) — the south
+    // wall — which opens onto z=19, and this map is ElevationMap(22, 20), so z=19
+    // is the boundary row every eachCell() pass sets BLOCKED. The door therefore
+    // faced off the edge of the world and could never open: BFS from the spawn at
+    // (10,17) over the game's own cells reached 286 of them and 0 of the lodge's
+    // 12 interior tiles, stranding HEALER Ena at (4,15) with her.
+    // (4,14) opens onto (4,13), which is the east-west crossroads laid down above,
+    // so the lodge now joins the map's main component: 286 -> 299 reachable, 12 of
+    // 12 interior. Nine other single-cell openings measure identically (the rest of
+    // the north wall, and x=2 or x=7 at z=15..17); this one keeps the door in the
+    // column it was already in and needs no entity moved.
+    map.setCell(4, 14, { ground: Ground.FLOOR, surface: Surface.WALKABLE, tags: ['lodge', 'door'] });
     map.setCell(4, 17, { ground: Ground.FLOOR, surface: Surface.WALKABLE, tags: ['lodge', 'interior'] });
     // Decorative flower strips.
     for (let x = 12; x <= 18; x += 2) map.setCell(x, 13, { ground: Ground.FLOWERS, surface: Surface.WALKABLE });

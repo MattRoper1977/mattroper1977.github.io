@@ -307,21 +307,32 @@ try {
     return { spawn, reachable, cellsWalkable, goal: path.goal, pathLen: reachable ? path.steps : 0, counts };
   });
   /*
-   * REPORTED, NOT ASSERTED, and deliberately so.
+   * NOW ASSERTED. It used to be reported and not asserted, because it could not
+   * be made true. The cutaway's trigger cells (x 3-6, z 15-17) were walkable,
+   * but the lodge's only door sat at (4,18) and opened onto z=19 — and the map
+   * is ElevationMap(22, 20), so z=19 is the boundary row that eachCell() sets
+   * BLOCKED across its whole width. BFS from spawn reached 286 cells and none of
+   * them were inside. That held on the unmodified pin too, so it was pre-existing
+   * topology rather than anything F2 did, which is why it was not allowed to fail
+   * this suite. Filed as issue #145.
    *
-   * The cutaway's trigger cells (x 3-6, z 15-17) are walkable, but on the
-   * overworld map their only door at (4,18) opens onto z=19, which is solid
-   * across its whole width. BFS from spawn reaches 286 cells and none of them
-   * are inside the lodge. That was measured on the UNMODIFIED pin as well as on
-   * the remediated file, so it is a pre-existing map-topology fact and nothing
-   * to do with this change - which is why it is not allowed to fail this suite.
-   * It does mean the cutaway is reached by something other than walking, and
-   * that is worth Matt knowing.
+   * The door has since moved to (4,14) on the north wall, opening onto the z=13
+   * crossroads: 286 -> 299 cells reachable, 12 of 12 interior, and HEALER Ena at
+   * (4,15) stops being unreachable. So the thing this gate wanted to say is true
+   * at last, and is now a condition of passing rather than a footnote.
+   *
+   * The old detail line was a HARD-CODED string reading "does NOT reach them"
+   * while the assertion covered only cellsWalkable. The moment the door moved it
+   * would have gone on printing that under a green tick — a passing gate stating
+   * the opposite of the fact, which is worse than one that fails. Every value
+   * below is measured.
    */
-  check(routed.cellsWalkable,
-    'the cutaway trigger cells are walkable (reached by other than walking - see note)',
+  check(routed.cellsWalkable && routed.reachable,
+    'the cutaway trigger cells are walkable AND reachable on foot from spawn',
     `walkable=${routed.cellsWalkable}; BFS from spawn (${routed.spawn.x},${routed.spawn.z}) ` +
-    `does NOT reach them — same on the unmodified pin, so pre-existing`);
+    (routed.reachable
+      ? `reaches (${routed.goal.x},${routed.goal.z}) in ${routed.pathLen} steps`
+      : `does NOT reach any of them — the cutaway cannot be triggered by walking`));
 
   const total = Math.ceil(57 / 2) * Math.ceil(88 / 2);
   const series = routed.counts.map(n => n / total);
