@@ -1191,7 +1191,14 @@ function renderReadiness(){
   $("#gap-table").innerHTML=`<table class="table"><thead><tr><th>Pupil</th><th>Status</th><th>Code</th><th>Gap</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.pu.forename)} ${esc(r.pu.surname)}</td><td><span class="tag ${r.i.level==="error"?"bad":"warn"}">${esc(r.i.level)}</span></td><td>${esc(r.i.code)}</td><td>${esc(r.i.msg)}</td></tr>`).join("")||'<tr><td colspan="4">No gaps found.</td></tr>'}</tbody></table>`;
 }
 
-/* ------------------------- Multi-Assessor CAMERA IQA Engine ------------------------- */
+/* ------------------------- Multi-assessor IQA sampling engine -------------------------
+   Two headings here used to carry an unexplained acronym: never expanded,
+   never rendered to a moderator, never referenced by a line of code, and so
+   not lookup-able by anyone reading this file. They now say what the code
+   does. Nothing else changed - no identifier, no behaviour, no output. The
+   word itself is deliberately not repeated here, because a gate in
+   tools/verify_moderation_lab.mjs exists to keep it out of this file and a
+   note explaining the removal would defeat it. */
 function cryptoShuffle(items){
   const a=items.slice();for(let i=a.length-1;i>0;i--){const buf=new Uint32Array(1);crypto.getRandomValues(buf);const j=buf[0]%(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;
 }
@@ -1245,7 +1252,7 @@ function renderIV(){
   setOptions($("#iv-programme"),items,UI.ivProgramme??$("#iv-programme").value,"All programmes");UI.ivProgramme=$("#iv-programme").value;
   const samples=S.ivSamples.filter(x=>x.sampled&&(!UI.ivProgramme||x.programId===UI.ivProgramme));$("#iv-sample-count").textContent=`${samples.length} sampled`;
 
-  // Render Assessor CAMERA Representation Summary
+  // Render the per-assessor representation summary
   const assessorStats={};
   for(const prog of S.programmes.filter(p=>!UI.ivProgramme||p.id===UI.ivProgramme)){
     for(const pupil of enrolledPupils(prog)){
