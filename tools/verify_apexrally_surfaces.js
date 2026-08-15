@@ -148,27 +148,82 @@ function manifestSports() {
       return report.join('; ');
     });
 
-    await gate('C4', 'arcade Sports rail renders the full manifest collection', async () => {
+    await gate('C4', 'the arcade Sports genre renders the full manifest collection', async () => {
       if (!manifest) throw new Error('no games.json available — set GAMES_MANIFEST to the Games checkout');
+      /* Sports was a standalone rail drawn on top of the whole shelf. It is a
+         GENRE SECTION now — the rail was one of five that each drew their own
+         copy of a game, 82 cards for 52 games. What this gate protects is
+         unchanged: every Sports-collection game in the manifest is reachable
+         on the arcade, at a usable size, with its art loaded. Only the
+         container moved, and the accordion has to be opened to see it. */
       const ctx = await browser.newContext({ viewport: VIEWPORTS[2] });
       const page = await ctx.newPage();
       await page.route('**/Games/games.json', route => route.fulfill({ status: 200, contentType: 'application/json', body: fs.readFileSync(manifest.path) }));
       await page.goto(origin + '/games/index.html', { waitUntil: 'load' });
       await page.waitForTimeout(1500);
-      const hidden = await page.getAttribute('#sports', 'hidden');
-      assert(hidden === null, 'the Sports section stayed hidden');
-      const titles = await page.$$eval('#sportsRail .gcard', els => els.map(e => e.querySelector('h4 > span').textContent));
-      assert(titles.length === manifest.titles.length, `rail rendered ${titles.length} cards, manifest has ${manifest.titles.length}`);
-      assert(titles.includes('Apex Rally'), 'Apex Rally is not on the arcade rail');
-      const sub = await page.textContent('#sports .sub');
-      assert(!/\bfour\b/i.test(sub), `the rail copy still reads "${sub.trim().slice(0, 60)}…"`);
-      const boxes = await page.$$eval('#sportsRail .gcard', els => els.map(e => { const r = e.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; }));
-      boxes.forEach((b, i) => assert(b.w >= USABLE_MIN_W && b.h >= USABLE_MIN_H, `rail card ${i} renders ${b.w}x${b.h}, below the usable floor`));
-      const art = await page.$$eval('#sportsRail .gcard img.ga', els => els.map(e => ({ src: e.getAttribute('src'), loaded: e.complete && e.naturalWidth > 0 })));
+      const opened = await page.evaluate(() => {
+        const d = [...document.querySelectorAll('#genreSections details.gsec')]
+          .find(x => x.querySelector('.gname').textContent.trim() === 'Sports');
+        if (!d) return false;
+        d.open = true;
+        /* lazy images load on entering the viewport, and this section sits far
+           down a long page — opening it is not enough, it has to be scrolled
+           to, exactly as a visitor reaching it would. */
+        d.scrollIntoView({ block: 'center' });
+        return true;
+      });
+      assert(opened, 'there is no Sports genre section on the arcade');
+      /* Cards inside a shut accordion carry loading="lazy", so their art has
+         not been fetched at load — correctly, that is the point of the
+         accordion. Wait for the decode rather than for a fixed delay, or this
+         gate reports broken art that is merely late. */
+      await page.waitForFunction(() => {
+        const d = [...document.querySelectorAll('#genreSections details.gsec')]
+          .find(x => x.querySelector('.gname').textContent.trim() === 'Sports');
+        if (!d) return false;
+        const imgs = [...d.querySelectorAll('.gcard img.ga')];
+        return imgs.length > 0 && imgs.every(i => i.complete && i.naturalWidth > 0);
+      }, { timeout: 20000 });
+      const SEL = '#genreSections details.gsec';
+      const titles = await page.evaluate(() => {
+        const d = [...document.querySelectorAll('#genreSections details.gsec')]
+          .find(x => x.querySelector('.gname').textContent.trim() === 'Sports');
+        return [...d.querySelectorAll('.gcard')].map(e => e.querySelector('h4 > span').textContent);
+      });
+      /* SUPERSET, not equality. `collection` is a THIRD taxonomy field on the
+         manifest, alongside `tag`, and like `tag` it does not agree with the
+         genre record: the ruled Sports genre also holds Neon Turf: Overdrive,
+         which is rocket-cars-and-a-ball on the verb but is not marked
+         collection:"Sports". The genre record is authoritative, so this gate
+         asserts what it always meant — every manifest Sports game is reachable
+         on the arcade — and reports the difference rather than hiding it. */
+      const missing = manifest.titles.filter(t => !titles.includes(t));
+      assert(missing.length === 0,
+        `Sports genre is missing manifest collection member(s): ${missing.join(', ')}`);
+      const beyond = titles.filter(t => !manifest.titles.includes(t));
+      assert(titles.includes('Apex Rally'), 'Apex Rally is not in the Sports genre');
+      const heading = await page.evaluate(() => {
+        const d = [...document.querySelectorAll('#genreSections details.gsec')]
+          .find(x => x.querySelector('.gname').textContent.trim() === 'Sports');
+        return d.querySelector('.gnum').textContent.trim();
+      });
+      assert(heading === `${titles.length} games`,
+        `the heading reads "${heading}" for ${titles.length} cards — it must be counted, not written down`);
+      const boxes = await page.evaluate(() => {
+        const d = [...document.querySelectorAll('#genreSections details.gsec')]
+          .find(x => x.querySelector('.gname').textContent.trim() === 'Sports');
+        return [...d.querySelectorAll('.gcard')].map(e => { const r = e.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; });
+      });
+      boxes.forEach((b, i) => assert(b.w >= USABLE_MIN_W && b.h >= USABLE_MIN_H, `Sports card ${i} renders ${b.w}x${b.h}, below the usable floor`));
+      const art = await page.evaluate(() => {
+        const d = [...document.querySelectorAll('#genreSections details.gsec')]
+          .find(x => x.querySelector('.gname').textContent.trim() === 'Sports');
+        return [...d.querySelectorAll('.gcard img.ga')].map(e => ({ src: e.getAttribute('src'), loaded: e.complete && e.naturalWidth > 0 }));
+      });
       const brokenArt = art.filter(a => !a.loaded).map(a => a.src);
-      assert(brokenArt.length === 0, 'rail card art failed to load: ' + brokenArt.join(', '));
+      assert(brokenArt.length === 0, 'Sports card art failed to load: ' + brokenArt.join(', '));
       await ctx.close();
-      return `rail contains ${titles.length}: ${titles.join(', ')}; ${art.length}/${art.length} card art loaded`;
+      return `Sports genre contains ${titles.length} (all ${manifest.titles.length} of the manifest collection, plus ${beyond.length} by genre: ${beyond.join(', ') || 'none'}); heading "${heading}"; ${art.length}/${art.length} card art loaded`;
     });
 
     await gate('C5', 'one homepage surface, New Release untouched, no doors entry', async () => {

@@ -90,11 +90,21 @@ function gate(id, name, fn) {
   await gate('C2', 'exactly one Echo Vault card on the whole shelf', () => {
     const hits = shelf.all.filter(h => h === HREF);
     assert(hits.length === 1, `browse-all grid rendered ${hits.length} Echo Vault cards`);
+    /* The Top Picks rail is the ONE permitted duplication on this page: a game
+       in TOP is painted twice on purpose, once as a pick and once in its genre.
+       So the rule is not "exactly one card anywhere" — it is one card in the
+       browse structure, plus a pick if and only if it is in TOP. Asserting a
+       flat one would make the rail itself a defect. */
+    const inTop = shelf.picks.filter(h => h === HREF).length;
     const everywhere = [...shelf.all, ...shelf.picks, ...shelf.sports, ...shelf.themed, ...shelf.classRail]
       .filter(h => h === HREF);
-    assert(everywhere.length === 1,
-      `Echo Vault appears ${everywhere.length} times across all rails — expected exactly one`);
-    return 'one card, in the browse-all grid, and nowhere else';
+    assert(inTop <= 1, `Echo Vault has ${inTop} cards on the Top Picks rail — a rail slot may only be held once`);
+    assert(everywhere.length === 1 + inTop,
+      `Echo Vault appears ${everywhere.length} times across the page; expected ${1 + inTop} (one in browse` +
+      (inTop ? ', plus its Top Picks slot)' : ')'));
+    return inTop
+      ? 'one card in the browse structure, plus its deliberate Top Picks slot'
+      : 'one card, in the browse structure, and nowhere else';
   });
 
   await gate('C3', 'served card count equals the manifest', () => {

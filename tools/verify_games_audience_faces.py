@@ -69,8 +69,12 @@ GAMES_COPY = [
     "A personally selected showcase of the challenges that are truly infinite fun — skill, strategy and pure enjoyment, direct to you. Every game plays free in the browser: no installs, no accounts, no ads.",
     "Matt's personal top picks", "The eight I'd put in front of anyone first — and one line each on why.",
     "Watch them played", "Real gameplay — no scripted demo reel — captured on a phone or straight from the browser and hosted right here. Nothing loads until you press play, and nothing plays sound.",
-    "Themed favourites", "Classroom favourites", "Built for my own classes and road-tested in front of them — the whole-class games my pupils actually ask for.",
-    "The whole shelf", "Every game, A to Z — search and filters above work on this grid.",
+    # The themed grids, the classroom rail and "The whole shelf" were ABSORBED
+    # into genre sections and feel tags: the hub painted 82 cards for 52 games
+    # because those rails each drew their own copy of a game. Their wording is
+    # replaced here rather than merely deleted, so this list keeps protecting
+    # the same surface instead of quietly protecting less of it.
+    "Browse by genre",
     "I teach science and art in an alternative provision in the North East, and every file on this shelf started life in front of a real class."
 ]
 # Per-audience floor on genuinely promoted visuals. These are deliberate
