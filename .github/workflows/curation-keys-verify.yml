@@ -1,0 +1,107 @@
+name: Curation keys resolve
+
+# games/index.html keys its curation on href, not on title, and this is the
+# gate that makes that safe. Before it, every curated lookup matched on title
+# and the renderer swallowed a miss with `if (g)`: renaming a game deleted its
+# take and shortened the Top Picks rail with nothing going red anywhere. That
+# was measured — a rename took the rail from 4 cards to 3 on a fully green
+# tree.
+#
+# Two path filters matter and neither is optional:
+#
+#   games/index.html                     the record itself
+#   data/source-manifests/games.json     the mirror of the canonical shelf
+#
+# The second is the one that is easy to leave out and the one that carries the
+# risk. An orphan is created by the MANIFEST moving, not by the page moving,
+# and the manifest is owned by another repository — the mirror here is written
+# by tools/render_games_manifest_mirror.py when the canonical changes. So a
+# curated href can be orphaned by a merge that never touches this page. Watching
+# only the page would mean this gate is silent for exactly the change it exists
+# to catch.
+#
+# The canonical shelf is checked out and compared against too, so the run is
+# held to what the site actually serves rather than to a mirror that may itself
+# be mid-drift. shelf-mirror-guard.yml owns the mirror-vs-canonical question;
+# this job only reports the two SHAs so a failure here can be read against it.
+
+on:
+  pull_request:
+    paths:
+      - 'games/index.html'
+      - 'data/source-manifests/games.json'
+      - 'tools/verify_curation_keys.mjs'
+      - '.github/workflows/curation-keys-verify.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'games/index.html'
+      - 'data/source-manifests/games.json'
+      - 'tools/verify_curation_keys.mjs'
+      - '.github/workflows/curation-keys-verify.yml'
+  # A path filter fires only on a change to a file this repository owns, and an
+  # orphan can arrive from the canonical side without any file here moving.
+  # Same reasoning as shelf-mirror-guard.yml, offset so the two do not queue
+  # together.
+  schedule:
+    - cron: '41 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: curation-keys-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  keys:
+    name: Every curated and rail key resolves to exactly one entry
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - name: Check out the canonical shelf
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: _shelf
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install acorn and Playwright Chromium
+        # acorn is what makes this gate read the RECORD rather than the file's
+        # prose about the record. node_modules is gitignored, so it has to be
+        # installed here; without it the gate exits 2 INCONCLUSIVE rather than
+        # crashing, which is how the omission was caught on the first run.
+        run: |
+          npm i --no-save acorn@8.18.0 playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Record what is under test
+        run: |
+          echo "site ref   : $(git rev-parse HEAD)"
+          echo "shelf main : $(git -C _shelf rev-parse HEAD)"
+          echo "mirror     : $(sha256sum data/source-manifests/games.json | cut -c1-12)"
+          echo "canonical  : $(sha256sum _shelf/games.json | cut -c1-12)"
+
+      - name: Keys resolve against the mirror, with controls
+        run: node tools/verify_curation_keys.mjs
+
+      - name: Keys resolve against the CANONICAL shelf too
+        # The gate reads data/source-manifests/games.json. If the mirror were
+        # stale in a way that happened to keep every curated href alive, the
+        # run above would be green about a shelf nobody serves. Pointing the
+        # same gate at the canonical file closes that gap without duplicating
+        # the assertions.
+        run: |
+          set -euo pipefail
+          cp data/source-manifests/games.json /tmp/mirror-backup.json
+          cp _shelf/games.json data/source-manifests/games.json
+          node tools/verify_curation_keys.mjs
+          cp /tmp/mirror-backup.json data/source-manifests/games.json
