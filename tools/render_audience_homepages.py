@@ -194,6 +194,124 @@ def hero_copy(audience: dict[str, Any]) -> str:
     return f'''<div class="mf-hero-copy"><p class="mf-kicker">A Made by Matt homepage</p><h1 id="page-title">{esc(audience['title'])}</h1><p class="mf-lead">{esc(audience['lead'])}</p><div class="mf-actions">{ctas}</div><div class="mf-home-links"><a href="/main/">Main homepage</a><a href="/">Choose another homepage</a></div></div>'''
 
 
+# ---------------------------------------------------------------------------
+# The games record. THE SAME ONE /games/ READS — not a copy of it.
+#
+# games/index.html holds one declared curation-and-taxonomy record, keyed on
+# href: CURATION (take, rail slot) and TAXONOMY (genre, feels), with
+# GENRE_ORDER naming the sections. The pupil homepage is generated, so it
+# cannot fetch that record at runtime the way /games/ does — it reads it here,
+# at render time, from the same file.
+#
+# That is the whole point. This estate has already produced `featured`, TAKES,
+# TOP, `tag` and `collection` as competing sources of one truth; the pupil page
+# hand-listing ten games was a sixth. Nothing below hand-lists a game, a genre
+# or a count: change a genre in games/index.html and this page moves with
+# /games/, which tools/verify_pupil_genres.mjs proves by doing exactly that.
+GAMES_PAGE = ROOT / "games" / "index.html"
+GAMES_MANIFEST = ROOT / "data" / "source-manifests" / "games.json"
+
+
+def _js_array(src: str, name: str) -> str:
+    start = src.index("var " + name + "=[")
+    depth = 0
+    i = src.index("[", start)
+    for j in range(i, len(src)):
+        if src[j] == "[":
+            depth += 1
+        elif src[j] == "]":
+            depth -= 1
+            if depth == 0:
+                return src[i:j + 1]
+    raise SystemExit("unterminated " + name + " in " + str(GAMES_PAGE))
+
+
+def games_record() -> dict[str, Any]:
+    """CURATION + TAXONOMY + GENRE_ORDER, joined to the shelf manifest."""
+    src = GAMES_PAGE.read_text(encoding="utf-8")
+    order = re.findall(r'"((?:[^"\\]|\\.)*)"', _js_array(src, "GENRE_ORDER"))
+    tax = {}
+    for m in re.finditer(r'\{href:"([^"]+)",\s*genre:"([^"]+)",\s*feels:\[([^\]]*)\]\}',
+                         _js_array(src, "TAXONOMY")):
+        tax[m.group(1)] = {"genre": m.group(2), "feels": re.findall(r'"([^"]+)"', m.group(3))}
+    rail = {}
+    for m in re.finditer(r'\{href:"([^"]+)",\s*(?:rail:(\d+),\s*)?take:"((?:[^"\\]|\\.)*)"\}',
+                         _js_array(src, "CURATION")):
+        rail[m.group(1)] = {"rail": int(m.group(2)) if m.group(2) else None,
+                            "take": re.sub(r"\\u([0-9a-fA-F]{4})",
+                                           lambda x: chr(int(x.group(1), 16)), m.group(3))}
+    shelf = json.loads(GAMES_MANIFEST.read_text(encoding="utf-8"))["games"]
+    by_href = {g["href"]: g for g in shelf}
+
+    if not order:
+        raise SystemExit("GENRE_ORDER is empty — refusing to render a pupil page with no genres")
+    missing = [h for h in tax if h not in by_href]
+    if missing:
+        raise SystemExit("taxonomy names hrefs that are not on the shelf: %s" % missing)
+    ungenred = [g["href"] for g in shelf if g["href"] not in tax]
+    if ungenred:
+        raise SystemExit("shelf games with no genre: %s" % ungenred)
+    return {"order": order, "tax": tax, "rail": rail, "shelf": shelf, "by_href": by_href}
+
+
+def _game_card(game: dict[str, Any], take: str = "") -> str:
+    href = game["href"]
+    art = game.get("art") or ""
+    desc = (game.get("desc") or "").replace("NEW · ", "")
+    title = (game.get("title") or "").replace("NEW · ", "")
+    track = recent_attrs(None, href)
+    if art:
+        media = ('<img data-mbm-real-visual src="%s" alt="%s — a moment from play" '
+                 'width="640" height="360" loading="lazy" decoding="async">'
+                 % (esc(art), esc(title)))
+    else:
+        media = ('<span class="mf-pupil-emoji" aria-hidden="true">%s</span>'
+                 % esc(game.get("icon") or "\U0001F3AE"))
+    quote = ('<p class="mf-pupil-take"><b>Matt’s take:</b> %s</p>' % esc(take)) if take else ""
+    return ('<article class="mf-pupil-game"><a class="mf-media" href="%s" aria-label="Play %s"%s>%s</a>'
+            '<div class="mf-feature-copy"><h3>%s</h3><p>%s</p>%s'
+            '<a class="mf-text-link" href="%s"%s>Play %s<span aria-hidden="true">→</span></a>'
+            '</div></article>'
+            % (esc(href), esc(title), track, media, esc(title), esc(desc), quote,
+               esc(href), track, esc(title)))
+
+
+def toppicks_body(section: dict[str, Any]) -> str:
+    """The Top Picks rail, from the SAME rail slots /games/ paints."""
+    rec = games_record()
+    picks = sorted([(v["rail"], h, v["take"]) for h, v in rec["rail"].items() if v["rail"]])
+    cards = "".join(_game_card(rec["by_href"][h], take) for _, h, take in picks)
+    return ('%s<div class="mf-pupil-rail" data-mbm-pupil-rail>%s</div>'
+            % (section_head(section), cards))
+
+
+def genres_body(section: dict[str, Any]) -> str:
+    """Every game on the shelf, grouped by its one declared genre.
+
+    Accordions, first open, matching /games/. The counts are computed here from
+    the record and never written into the JSON — a number in the data is a
+    number that goes stale without telling anyone.
+    """
+    rec = games_record()
+    blocks = []
+    for i, gname in enumerate(rec["order"]):
+        members = [g for g in rec["shelf"] if rec["tax"][g["href"]]["genre"] == gname]
+        if not members:
+            continue
+        members.sort(key=lambda g: (g.get("title") or "").lower())
+        cards = "".join(_game_card(g) for g in members)
+        n = len(members)
+        blocks.append('<details class="mf-pupil-genre"%s>'
+                      '<summary><span class="mf-pupil-gname">%s</span>'
+                      '<span class="mf-pupil-gnum">%d game%s</span></summary>'
+                      '<div class="mf-pupil-grid">%s</div></details>'
+                      % (" open" if i == 0 else "", esc(gname), n, "" if n == 1 else "s", cards))
+    head = dict(section)
+    head["lead"] = ("All %d games, grouped by what they are. Open a group and pick one."
+                    % len(rec["shelf"]))
+    return '%s<div class="mf-pupil-genres">%s</div>' % (section_head(head), "".join(blocks))
+
+
 def find_feature_route(audience: dict[str, Any], search_id: str) -> str | None:
     for section in audience.get("sections", []):
         for item in section.get("features", []):
@@ -275,12 +393,22 @@ def recent_body(section: dict[str, Any]) -> str:
 
 
 def surprise_set(audience: dict[str, Any]) -> str:
-    """The pupil-safe shuffle set, derived from the page's own game cards.
+    """The shuffle set: every game the page itself promotes.
 
-    Deriving it here means the button can never offer something the page does
-    not itself promote.
+    It used to walk the page's `features` cards, which was right when the page
+    hand-listed ten games — and it quietly meant "ten" while the copy claimed a
+    pupil-safe set. The page now shows the whole shelf, so the set is the whole
+    shelf, read from the same record the sections are built from. Deriving it
+    here still means the button can never offer something the page does not
+    show; it just no longer means something far smaller than the page claims.
     """
     entries = []
+    if any(sec.get("type") in ("genres", "toppicks") for sec in audience.get("sections", [])):
+        rec = games_record()
+        for game in rec["shelf"]:
+            entries.append({"id": game["href"], "route": game["href"],
+                            "title": (game.get("title") or "").replace("NEW \u00b7 ", "")})
+        return json.dumps(entries, ensure_ascii=False, separators=(",", ":"))
     for section in audience.get("sections", []):
         if section.get("type") != "features":
             continue
@@ -319,6 +447,10 @@ def content_section(audience: dict[str, Any], section: dict[str, Any], index: in
         body = tasks_body(section)
     elif kind == "video":
         body = video_body(section)
+    elif kind == "toppicks":
+        body = toppicks_body(section)
+    elif kind == "genres":
+        body = genres_body(section)
     elif kind == "surprise":
         body = surprise_body(audience, section)
         attrs = f' data-mbm-surprise-set="{esc(surprise_set(audience))}"'
@@ -640,6 +772,11 @@ SECTION_REQUIRED = {
     "video": ["poster", "videoId", "titleText"],
     "tasks": [],
     "surprise": [],
+    # Both derive their content from the games record rather than carrying it,
+    # so neither requires a key naming games — requiring one would be requiring
+    # the hand-list this pass removed.
+    "toppicks": [],
+    "genres": [],
     "recent": []
 }
 

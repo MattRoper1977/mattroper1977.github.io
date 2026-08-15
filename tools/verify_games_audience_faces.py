@@ -461,8 +461,21 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
             errors.append(f"pupil primary navigation exposes adult destination: {forbidden}")
     if "/account/" in pupil or "/members/" in pupil or "/mailing-list/" in pupil or "mailto:" in pupil:
         errors.append("pupil homepage contains a prominent adult account, Members, mailing or email route")
-    if pupil.count('data-feature-id="apex-kick"') < 1 or pupil.count('data-feature-id="voxel-frontier"') < 1 or pupil.count('data-feature-id="lesson-hub"') < 1:
-        errors.append("pupil page lacks the required real game and learning features")
+    # This used to name apex-kick and voxel-frontier by feature id. That was a
+    # hand-list in a gate, checking a hand-list in the data — and it was
+    # satisfied while 42 of the 52 games were invisible to pupils. The
+    # requirement it stood for is "the pupil page promotes REAL games, not
+    # placeholders", so it is now counted against the shelf: every game on the
+    # canonical manifest must be reachable from the page. A future game is
+    # covered without editing this line, and a page that quietly shows ten
+    # again fails immediately.
+    shelf = json.loads((root / "data" / "source-manifests" / "games.json").read_text(encoding="utf-8"))["games"]
+    unreachable = [g["href"] for g in shelf if f'href="{g["href"]}"' not in pupil]
+    if unreachable:
+        errors.append(f"pupil page does not reach {len(unreachable)} of {len(shelf)} shelf games, "
+                      f"e.g. {unreachable[:3]}")
+    if pupil.count('data-feature-id="lesson-hub"') < 1:
+        errors.append("pupil page lacks the learning route out of play")
 
     for key in ["teachers", "parents", "schools", "trusts", "councils", "partners"]:
         page = read(root, FACES[key], overrides)
