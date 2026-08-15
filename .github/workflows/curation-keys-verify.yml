@@ -29,15 +29,19 @@ on:
   pull_request:
     paths:
       - 'games/index.html'
+      - 'for/pupils/index.html'
       - 'data/source-manifests/games.json'
       - 'tools/verify_curation_keys.mjs'
+      - 'tools/verify_genre_participants.mjs'
       - '.github/workflows/curation-keys-verify.yml'
   push:
     branches: [main]
     paths:
       - 'games/index.html'
+      - 'for/pupils/index.html'
       - 'data/source-manifests/games.json'
       - 'tools/verify_curation_keys.mjs'
+      - 'tools/verify_genre_participants.mjs'
       - '.github/workflows/curation-keys-verify.yml'
   # A path filter fires only on a change to a file this repository owns, and an
   # orphan can arrive from the canonical side without any file here moving.
@@ -92,6 +96,14 @@ jobs:
 
       - name: Keys resolve against the mirror, with controls
         run: node tools/verify_curation_keys.mjs
+
+      - name: The genre record still has exactly two participants
+        # Bounding the COUNT, which nothing else did. verify_pupil_genres.mjs
+        # proves the two pages read one record by changing it and requiring both
+        # to move; it cannot notice a third page starting to paint genres from a
+        # copied list. Three sources where the page reads two is the exact defect
+        # the taxonomy collapse existed to end, so the number is now asserted.
+        run: node tools/verify_genre_participants.mjs
 
       - name: Keys resolve against the CANONICAL shelf too
         # The gate reads data/source-manifests/games.json. If the mirror were
