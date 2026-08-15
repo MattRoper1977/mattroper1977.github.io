@@ -160,17 +160,27 @@ g('arcade renders the new entries');
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await ctx.newPage();
   await page.goto(`${ORIGIN}/games/`, { waitUntil: 'domcontentloaded', timeout: 45000 }).catch(() => {});
+  /* The arcade's browse structure moved from one A-Z grid (#allGrid) to genre
+     accordions (#genreSections). This job reads the SERVED page, so during a
+     deploy window it is genuinely either — and reading only the old one
+     returned -1, "the selector matched nothing", which is indistinguishable
+     from a shelf that failed to render. Both are accepted, and the accordions
+     are opened first: a card inside a shut <details> is not painted, so a
+     folded shelf would otherwise read as a missing one. */
+  const BROWSE = '#allGrid, #genreSections';
+  await page.evaluate(() => document.querySelectorAll('details.gsec').forEach((d) => { d.open = true; })).catch(() => {});
   const expected = servedShelf ? servedShelf.games.length : 0;
   let rendered = -1;
   for (let i = 0; i < 60; i++) {              // poll, never single-sample
-    rendered = await page.evaluate(() => {
-      const grid = document.getElementById('allGrid');
-      if (!grid) return -1;
-      return [...grid.querySelectorAll('a.gcard')].filter((el) => {
+    rendered = await page.evaluate((sel) => {
+      const roots = [...document.querySelectorAll(sel)];
+      if (!roots.length) return -1;
+      document.querySelectorAll('details.gsec').forEach((d) => { d.open = true; });
+      return roots.flatMap((g) => [...g.querySelectorAll('a.gcard')]).filter((el) => {
         const r = el.getBoundingClientRect();
         return r.width > 0 && r.height > 0;
       }).length;
-    }).catch(() => -1);
+    }, BROWSE).catch(() => -1);
     if (rendered >= expected) break;
     await page.waitForTimeout(250);
   }
@@ -179,14 +189,14 @@ g('arcade renders the new entries');
 
   /* One predicate, used by the assertions and by the control below, so the
      control cannot drift from the thing it is certifying. */
-  const cardFor = (href) => page.evaluate((h) => {
-    const grid = document.getElementById('allGrid');
-    if (!grid) return false;
-    return [...grid.querySelectorAll('a.gcard')].some((a) => {
+  const cardFor = (href) => page.evaluate(([h, sel]) => {
+    const roots = [...document.querySelectorAll(sel)];
+    if (!roots.length) return false;
+    return roots.flatMap((g) => [...g.querySelectorAll('a.gcard')]).some((a) => {
       const r = a.getBoundingClientRect();
       return a.getAttribute('href') && a.getAttribute('href').includes(h) && r.width > 0 && r.height > 0;
     });
-  }, href).catch(() => false);
+  }, [href, BROWSE]).catch(() => false);
 
   for (const p of GAME_PATHS) {
     const found = await cardFor(p);
@@ -225,21 +235,27 @@ g('arcade renders the new entries');
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     const page = await ctx.newPage();
     await page.goto(`${ORIGIN}/games/`, { waitUntil: 'domcontentloaded', timeout: 45000 }).catch(() => {});
-    const cardFor = (href) => page.evaluate((h) => {
-      const grid = document.getElementById('allGrid');
+    /* Open the genre accordions before certifying the control: a card inside a
+       shut <details> occupies no space, so the control would report "not found"
+       for a game that is present and call itself always-red. */
+    const openAll = () => page.evaluate(() => document.querySelectorAll('details.gsec').forEach((d) => { d.open = true; })).catch(() => {});
+    await openAll();
+    const cardFor = async (href) => { await openAll(); return page.evaluate((h) => {
+      const grid = document.querySelector('#allGrid') || document.querySelector('#genreSections');
       if (!grid) return false;
       return [...grid.querySelectorAll('a.gcard')].some((a) => {
         const r = a.getBoundingClientRect();
         return a.getAttribute('href') && a.getAttribute('href').includes(h) && r.width > 0 && r.height > 0;
       });
-    }, href).catch(() => false);
+    }, href).catch(() => false); };
 
     for (let i = 0; i < 60; i++) { if (await cardFor(sample.href)) break; await page.waitForTimeout(250); }
     check(`CONTROL: a real game (${sample.href}) IS found before removal`,
       await cardFor(sample.href), 'the check is not always-red');
 
+    await openAll();
     const removed = await page.evaluate((h) => {
-      const grid = document.getElementById('allGrid');
+      const grid = document.querySelector('#allGrid') || document.querySelector('#genreSections');
       if (!grid) return 0;
       const hits = [...grid.querySelectorAll('a.gcard')]
         .filter((a) => a.getAttribute('href') && a.getAttribute('href').includes(h));
