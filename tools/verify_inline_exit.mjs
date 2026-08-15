@@ -217,14 +217,43 @@ async function tabReach(page, ids) {
     //
     // /relicforge/ read 8 here until it was re-measured, and the difference is
     // not a typo worth silently fixing: the number is TOUCH-CAPABILITY
-    // dependent, not viewport dependent. At 390x844 with hasTouch true it is
-    // 12; with hasTouch false, and at 1440x900, it is 8. Four .touch-button
-    // controls - #touch-fire, #touch-utility, #touch-dash, #touch-pause - sit
-    // in the DOM either way but only enter the tab order under touch, at
-    // presses 8-11. Every context below is created with hasTouch: true, so 12
-    // is the number this file actually asserts. /apexpool/ and
-    // /rallyvector3d/ measure 14 and 27 with touch on or off, which is why
-    // only relicforge's row was ever wrong.
+    // dependent, and NOT viewport dependent.
+    //
+    //     hasTouch: false  ->   8 presses, at 390x844 AND at 1440x900
+    //     hasTouch: true   ->  12 presses, at 390x844 AND at 1440x900
+    //
+    // Viewport does not move the number at all; only touch capability does.
+    // Four .touch-button controls - #touch-fire, #touch-utility, #touch-dash,
+    // #touch-pause - sit in the DOM either way, but only enter the tab order
+    // under touch, where they take presses 8-11:
+    //
+    //     touch on    chassis x3 · start · how · journal · settings ·
+    //                 touch-fire · touch-utility · touch-dash · touch-pause ·
+    //                 mbmexit-back
+    //     touch off   chassis x3 · start · how · journal · settings ·
+    //                 mbmexit-back
+    //
+    // The rendered leg begins at the header "rendered: the only evidence about
+    // rendered geometry" (:326 as this is written), and EVERY browser context
+    // opened below it pins hasTouch: true - :336, :391 and :457, which is all
+    // three of them. Grep newContext if those numbers have drifted; the claim is
+    // that no context in this file omits hasTouch, not that it lives on a line.
+    // So 12 is the number this file asserts, and it asserts it identically at
+    // 390, 768 and 1440. The 8 belongs to a non-touch context, which this file
+    // never creates.
+    //
+    // /apexpool/ and /rallyvector3d/ measure 14 and 27 with touch on or off,
+    // which is why only relicforge's row was ever wrong.
+    //
+    // The sentence this replaced read "with hasTouch false, and at 1440x900, it
+    // is 8", which parses as though 1440x900 produced 8 on its own. It does not.
+    // The heading above it was already correct; only the sentence was loose -
+    // the third time this week a true claim has sat over a sentence implying a
+    // false one. The other two: #141's F1 table kept a stale press count of 8
+    // beside a correct 12 in the same body, and the /neonmeridian/ flash census
+    // recorded 59.5 fps in a column read as sample quality when it was the
+    // sampler idling over a canvas that never rendered. Prose ages while the
+    // assertion beside it stays green, and nothing goes red when it does.
     const where = await page.evaluate(() => {
       const a = document.activeElement;
       if (!a || a === document.body) return { id: null, repeat: false };
