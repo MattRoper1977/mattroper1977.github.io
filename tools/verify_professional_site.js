@@ -122,6 +122,34 @@ const HOME_TRUTH_REGIONS = Object.freeze([
   }
 ]);
 
+/*
+ * tools/index.html — ONE authorised region, and deliberately a narrow one.
+ *
+ * The hub's tool inventory changes when a tool ships; its authored prose does
+ * not. Before this, adding a card tripped "authored body wording changed" and
+ * there were only two ways out, both bad: leave the red standing, or declare
+ * the page in copy-authorisation.json WITHOUT region-comparison, which
+ * replaces strict preservation with a sentinel-presence check and switches the
+ * guard off for the whole page. Routing main/index.html that way once did
+ * exactly that, and this file's own comment records it.
+ *
+ * So the guard is NARROWED rather than lifted. Only the run of accreditation
+ * cards inside <div class="tgrid" data-sec="acc"> is canonicalised away. The
+ * bridge panel that sits in the same grid is NOT in the region and stays under
+ * strict comparison, as does every heading, section and promise on the page.
+ *
+ * The pattern must match EXACTLY ONCE - canonicalRegions asserts that - so a
+ * loose pattern that swallowed the whole grid, or matched nothing after a
+ * refactor, fails loudly instead of quietly widening what may change.
+ */
+const TOOLS_TRUTH_REGIONS = Object.freeze([
+  {
+    name: 'accreditation-tool-cards',
+    pattern: /(<div\b(?=[^>]*\bclass=["']tgrid["'])(?=[^>]*\bdata-sec=["']acc["'])[^>]*>)\s*(?:<article\b(?=[^>]*\bclass=["']tcard["'])(?=[^>]*\bdata-cat=["']acc["'])[^>]*>[\s\S]*?<\/article>\s*)+/i,
+    replacement: '$1__MBM_AUTHORISED_TOOLS_ACC_CARDS__\n'
+  }
+]);
+
 function parseArgs(argv) {
   const out = { base: 'origin/main', selfTest: false };
   for (let i = 0; i < argv.length; i += 1) {
@@ -190,6 +218,22 @@ function captureExactly(source, region, failures, label) {
   const count = matchCount(source, region.pattern);
   assert(count === 1, `${label}: authorised homepage region ${region.name} matched ${count} times (expected 1)`, failures);
   return count === 1 ? source.match(region.pattern)[0] : '';
+}
+/*
+ * Replace each declared region with its token, asserting it matched EXACTLY
+ * once. The count assertion is the load-bearing half: a pattern that matched
+ * nothing would silently leave the region under strict comparison (a false
+ * red), and one that matched twice would silently canonicalise away more of
+ * the page than was authorised (a false green). Both are failures here.
+ */
+function canonicalRegions(html, regions, failures, label) {
+  let s = html;
+  for (const region of regions) {
+    const count = matchCount(s, region.pattern);
+    assert(count === 1, `${label}: authorised region ${region.name} matched ${count} times (expected 1)`, failures);
+    if (count === 1) s = s.replace(region.pattern, region.replacement);
+  }
+  return s;
 }
 function canonicalHomeTruthCopy(html, failures, label) {
   let s = html;
@@ -391,8 +435,13 @@ function verify(base, overrides = null) {
         const problem = sentinelIsAuthorised(rel, current);
         if (problem) failures.push(problem);
       } else {
-        const beforeSource = rel === 'main/index.html' ? canonicalHomeTruthCopy(baseline, failures, `${rel} baseline`) : baseline;
-        const afterSource = rel === 'main/index.html' ? canonicalHomeTruthCopy(current, failures, `${rel} current`) : current;
+        const canonicalise = (html, label) => {
+          if (rel === 'main/index.html') return canonicalHomeTruthCopy(html, failures, label);
+          if (rel === 'tools/index.html') return canonicalRegions(html, TOOLS_TRUTH_REGIONS, failures, label);
+          return html;
+        };
+        const beforeSource = canonicalise(baseline, `${rel} baseline`);
+        const afterSource = canonicalise(current, `${rel} current`);
         const before = visibleAuthoredText(beforeSource);
         const after = visibleAuthoredText(afterSource);
         assert(before === after, `${rel}: authored body wording changed outside permitted chrome/audience/auth/counter regions`, failures);
@@ -434,6 +483,36 @@ const SELF_TEST_CONTROLS = Object.freeze([
     ),
     expect: 'no-new-findings'
   },
+  /*
+   * The tools-hub region, exercised in BOTH directions. One alone would be
+   * worthless: a control that only proves the region accepts a new card cannot
+   * tell a narrow authorisation from a switched-off guard, and a control that
+   * only proves prose is still caught cannot tell a working region from a
+   * pattern that matched nothing.
+   */
+  {
+    name: 'tools hub: a new accreditation card inside the authorised region is accepted',
+    page: 'tools/index.html',
+    mutate: (html) => requireMutation(
+      html,
+      '<div class="bridge">',
+      '<article class="tcard" data-cat="acc" data-s="control probe"><span class="ci" aria-hidden="true">\u2705</span><h3>Control Probe</h3><p>Inserted by the self-test.</p><a class="go" href="../tools/">OPEN →</a></article>\n<div class="bridge">',
+      'tools accreditation-card mutation'
+    ),
+    expect: 'no-new-findings'
+  },
+  {
+    name: 'tools hub: authored prose OUTSIDE the region is still rejected',
+    page: 'tools/index.html',
+    mutate: (html) => requireMutation(
+      html,
+      'THE PROGRAMMES THE REGISTERS TRACK',
+      'THE PROGRAMMES THESE REGISTERS TRACK',
+      'tools out-of-region prose mutation'
+    ),
+    expect: 'new-finding-matching',
+    needle: 'authored body wording changed'
+  },
   {
     name: 'unrelated authored-copy mutation rejected',
     mutate: (home) => requireMutation(home, 'Browse the Arcade', 'Browse every Arcade', 'unrelated authored-copy mutation'),
@@ -459,16 +538,20 @@ const SELF_TEST_CONTROLS = Object.freeze([
 ]);
 
 function runControl(control, base, home, baseline) {
+  // A control may target any key page. Default stays main/index.html so every
+  // existing control is untouched; tools/index.html needs its own because the
+  // region it exercises only exists there.
+  const page = control.page || 'main/index.html';
   let mutated;
   try {
-    mutated = control.mutate(home);
+    mutated = control.mutate(page === 'main/index.html' ? home : relRead(page));
   } catch (error) {
     // A fixture that cannot be built means the control never reached the gate
     // it tests. That is a reported state, not a silent absence.
     return { state: 'ERROR', detail: error.message };
   }
 
-  const added = verify(base, { 'main/index.html': mutated }).filter((failure) => !baseline.has(failure));
+  const added = verify(base, { [page]: mutated }).filter((failure) => !baseline.has(failure));
 
   if (control.expect === 'no-new-findings') {
     return added.length === 0
