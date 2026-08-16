@@ -301,6 +301,24 @@ jobs:
           fi
           git checkout -- tools/render_audience_homepages.py index.html
 
+      - name: The hasTouch claim in verify_inline_exit.mjs is asserted, not just written
+        # That note is load-bearing: it is why /relicforge/ asserts 12 presses
+        # and not 8. Until this gate it was only a sentence, and prose is not
+        # asserted - it ages while the code beside it stays green. Three times
+        # this week: #141's stale F1 table, the /neonmeridian/ 59.5 fps column
+        # read as sample quality, and the sentence this note replaced.
+        #
+        # Parsed, never grepped. The note names hasTouch eleven times in prose;
+        # a regex would count its own documentation and call the claim
+        # satisfied. The gate's third control proves that specifically - a
+        # comment naming hasTouch above a context that omits it still counts as
+        # omitting, where a grep would have passed.
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm i --no-save acorn@8.18.0 >/dev/null
+          node tools/verify_hastouch_claim.mjs
+
       - name: Design gate notices a missing hero mark
         run: |
           set -euo pipefail
