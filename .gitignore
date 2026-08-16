@@ -6,3 +6,9 @@ node_modules/
 package-lock.json
 reports/proofs/*.evidence.json
 artifacts/
+
+# Transient browser-audit output: screenshots and JSON rewritten on every run.
+# Ignoring is not untracking - the seven files below were tracked, so they are
+# removed from the index in the same commit as this rule. See
+# tools/verify_audit_output_guard.sh for the assertion this displaced.
+audit-output/
