@@ -222,6 +222,9 @@ jobs:
       - name: Browser proof controls
         run: python3 tools/verify_audience_discovery_browser.py --self-test
 
+      - name: The audit-output guard can fire, and the one it replaced could not
+        run: bash tools/verify_audit_output_guard.sh
+
       - name: A re-introduced off-origin boot fetch goes red
         run: |
           set -euo pipefail
@@ -238,6 +241,17 @@ jobs:
           # --artifacts keeps this deliberate failure out of the committed
           # artifact. It landed there once and had to be reverted by hand; a
           # hazard the harness can remove is better than one it has to police.
+          #
+          # The assertion at the end of this step used to be
+          # `git diff --quiet audit-output/`, which only worked while those
+          # files were tracked. They are not tracked any more, and git diff says
+          # nothing whatever about an untracked path - so that check would have
+          # gone on passing for ever, on a hazard it had quietly stopped
+          # watching. Hash the directory instead: the same claim, made without
+          # depending on what git tracks, and it also catches a file the control
+          # CREATES, which the diff never did.
+          manifest() { find audit-output -type f -exec sha256sum {} + 2>/dev/null | sort || true; }
+          before=$(manifest)
           out=$(MBM_BASE_URL=http://127.0.0.1:4174/ python3 tools/verify_audience_discovery_browser.py \
                   --artifacts "${RUNNER_TEMP:-/tmp}/boot-control" 2>&1 || true)
           git checkout -- assets/mbm-account.js
@@ -253,9 +267,13 @@ jobs:
           fi
           # The point of --artifacts is that this can no longer happen; assert
           # it, so a future edit that drops the flag is caught here.
-          if ! git diff --quiet audit-output/; then
-            echo "a control run modified the committed artifact"; git diff --stat audit-output/; exit 1
+          after=$(manifest)
+          if [ "$before" != "$after" ]; then
+            echo "a control run wrote into audit-output/ - the --artifacts redirect is not holding"
+            diff <(printf '%s\n' "$before") <(printf '%s\n' "$after") || true
+            exit 1
           fi
+          echo "audit-output/ unchanged across the control run ($(printf '%s' "$before" | grep -c . || true) file(s) hashed)"
 
       - name: Browser proof against the checked-out estate
         run: |
