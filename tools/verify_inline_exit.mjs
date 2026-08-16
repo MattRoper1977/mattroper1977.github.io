@@ -83,8 +83,20 @@ function targets() {
   const add = (root, prefix) => {
     const f = path.join(root, 'data', 'hud-coverage.json');
     if (!fs.existsSync(f)) return false;
-    for (const e of JSON.parse(fs.readFileSync(f, 'utf8')).excluded) {
-      const route = e.route;
+    const cov = JSON.parse(fs.readFileSync(f, 'utf8'));
+    /* TWO GROUPS REST ON THIS REGION, AND ONLY ONE WAS BEING JUDGED.
+       .excluded is a game that ships no /hud.js and carries the region instead.
+       .inlineExitRegion.regionOnly is a game that is NOT excluded and still has
+       no /hud.js, because adding one was tried and did not help - /emberwild/,
+       issue #149. Both depend on this region for the player's way out, and only
+       the first was in this list: /emberwild/ was covered by 0 of the 13 routes
+       this gate checked. It was not unwatched - verify_hud_on_games.py's
+       three-way classify holds its region to reaching and navigating - but the
+       gate that measures 44x44, on-top and reachable-by-Tab was not measuring
+       the one route whose numbers #149 turned on. Derived from both keys now. */
+    const routes = [...(cov.excluded || []).map(e => e.route),
+                    ...((cov.inlineExitRegion || {}).regionOnly || [])];
+    for (const route of routes) {
       const rel = route.endsWith('.html')
         ? (route.startsWith('/Lessons/') ? route.slice('/Lessons/'.length) : route.replace(/^\//, ''))
         : route.replace(/^\/|\/$/g, '') + '/index.html';
