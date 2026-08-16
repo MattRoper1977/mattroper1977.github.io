@@ -1,0 +1,135 @@
+name: The way out of every declared game
+
+# WHY THIS WORKFLOW EXISTS AT ALL
+#
+# tools/verify_inline_exit.mjs judges the thing a child on a locked-down device
+# actually gets: the way OUT of thirteen single-file games that carry a stamped
+# inline exit region instead of <script src="/hud.js">, because their own
+# verifiers forbid the external script. It checks the control is in the DOM, is
+# at least 44 px AS RENDERED, resolves a real href, is reachable by keyboard and
+# sits on top where a finger lands.
+#
+# It ran under NO WORKFLOW AT ALL until 2026-08-16. It only ever executed when
+# somebody typed its name.
+#
+# That is the fourth instance of one species in this estate, and the species is
+# not "hand-lists" — it is GATES WHOSE COVERAGE IS ASSERTED RATHER THAN
+# EXERCISED:
+#   1. agx1-live-verify.yml named six games while the shelf named fifty-two
+#   2. verify_games_audience_faces.py was green the whole time 42 games were
+#      hidden from the pupil homepage
+#   3. the olympics control whose selector stopped matching and silently became
+#      a no-op
+#   4. this one — the most complete gate in the estate, invoked by nothing
+#
+# BOTH ESTATES, OR NOTHING
+#
+# Three of the thirteen declared games live in Lessons, and the Lessons games'
+# exit resolves to /games/ on the SITE origin — so the gate assembles both
+# repositories onto one origin and refuses to run without both. Judging the ten
+# it could reach and reporting a green would be a coverage figure that quietly
+# means "the ones it could see", which is the same species again.
+#
+# THE SCHEDULE IS NOT DECORATION
+#
+# A path filter fires only on a change to a file THIS repository owns. Three of
+# the targets, and the entire Lessons half of the ledger, live in another
+# repository — so the change most likely to break a child's way out is precisely
+# the one that moves no file here. Same reasoning as theme-parity.yml and the
+# cross-estate workflows. Offset off :17, :53 and 07:09 so it does not queue
+# with them.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'data/hud-coverage.json'
+      - 'tools/verify_inline_exit.mjs'
+      - 'tools/verify_inline_exit_control.sh'
+      - 'tools/render_inline_exit.py'
+      - '.github/workflows/inline-exit-verify.yml'
+      # the declared games themselves
+      - 'apexpool/index.html'
+      - 'apexrally/index.html'
+      - 'biopunkhive/index.html'
+      - 'echovault/index.html'
+      - 'neonmeridian/index.html'
+      - 'neonsync/index.html'
+      - 'novasiege/index.html'
+      - 'ouroboros/index.html'
+      - 'rallyvector3d/index.html'
+      - 'relicforge/index.html'
+  push:
+    branches: [main]
+    paths:
+      - 'data/hud-coverage.json'
+      - 'tools/verify_inline_exit.mjs'
+      - 'tools/verify_inline_exit_control.sh'
+      - 'tools/render_inline_exit.py'
+      - '.github/workflows/inline-exit-verify.yml'
+      - 'apexpool/index.html'
+      - 'apexrally/index.html'
+      - 'biopunkhive/index.html'
+      - 'echovault/index.html'
+      - 'neonmeridian/index.html'
+      - 'neonsync/index.html'
+      - 'novasiege/index.html'
+      - 'ouroboros/index.html'
+      - 'rallyvector3d/index.html'
+      - 'relicforge/index.html'
+  schedule:
+    - cron: '31 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: inline-exit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  exits:
+    name: Every declared game still has a way out
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - name: Check out the Lessons estate
+        # Not optional. Three of the thirteen live here, and the gate exits 3
+        # INCONCLUSIVE rather than judging a partial set.
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: main
+          path: _lessons
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install the browser this gate drives
+        run: |
+          npm i --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Record what is under test
+        run: |
+          echo "site    : $(git rev-parse HEAD)"
+          echo "lessons : $(git -C _lessons rev-parse HEAD)"
+          echo "declared: $(python3 -c "import json;print(len(json.load(open('data/hud-coverage.json'))['excluded']))") site-side"
+
+      - name: Every declared game's exit renders, is 44px, and is keyboard-reachable
+        run: node tools/verify_inline_exit.mjs --lessons "$GITHUB_WORKSPACE/_lessons"
+
+      - name: CONTROL — break one real game's exit region and require a RED
+        # R0.1's first limb. A gate nobody has seen fail is a gate nobody knows
+        # can fail, and this one had never been driven red on its own subject.
+        # Doing so found two defects in the gate's own control block: with a
+        # region-less sample it removed a region that was already gone and
+        # PASSED, and it then threw a TypeError that ended the run INCONCLUSIVE,
+        # burying ten genuine findings it had already made. Both are fixed; this
+        # step is what stops them coming back.
+        run: bash tools/verify_inline_exit_control.sh --lessons "$GITHUB_WORKSPACE/_lessons"

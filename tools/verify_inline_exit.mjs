@@ -386,8 +386,27 @@ async function main() {
 
     /* -------- controls: the gate must be able to go red -------- */
     console.log('\n  --- controls (each must report a problem) ---');
-    const sample = T[0];
+    /* The sample must be a file that ACTUALLY CARRIES the region, not merely
+       the first declared target.
+
+       This was `T[0]`, and it produced two failures of its own the moment the
+       first declared game legitimately lost its region — which is exactly the
+       state this gate exists to detect:
+         · control 1 removed a region that was already absent and then PASSED,
+           proving that removing nothing removes nothing. Vacuous.
+         · control 2 hashed `...match(REGION_RE)[0]` on a file with no region,
+           threw a TypeError, and took the whole run to INCONCLUSIVE — masking
+           ten genuine FAILs the gate had already correctly reported.
+       So the gate could not report the very defect it had found. Found by
+       tools/verify_inline_exit_control.sh, which breaks a real declared game. */
+    const sample = T.find(t => REGION_RE.test(fs.readFileSync(t.file, 'utf8')));
+    if (!sample) {
+      inconclusive('no declared game still carries the stamped exit region, so the controls below ' +
+        'have nothing to exercise. The findings above stand; the controls did not run.');
+    }
     const clean = fs.readFileSync(sample.file, 'utf8');
+    check(REGION_RE.test(clean),
+      `control precondition: the sample ${sample.route} carries a region to remove`);
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
     const page = await ctx.newPage();
     const url = origin + sample.route.split('/').map(encodeURIComponent).join('/');
@@ -402,9 +421,17 @@ async function main() {
     // 2. region mutated -> byte-equality reports it
     const mutated = clean.replace('Back to the Arcade', 'Back to the Arcadex');
     fs.writeFileSync(sample.file, mutated);
-    const mSha = crypto.createHash('sha256').update(fs.readFileSync(sample.file, 'utf8').match(REGION_RE)[0])
-      .digest('hex');
-    check(mSha !== [...distinct][0], 'control: mutating one copy breaks byte-equality');
+    const mMatch = fs.readFileSync(sample.file, 'utf8').match(REGION_RE);
+    if (!mMatch) {
+      // Guarded rather than indexed. `[0]` on a null match threw a TypeError and
+      // ended the run INCONCLUSIVE, which reported nothing about the mutation
+      // and buried every real finding above it. A control that cannot run is a
+      // FAIL that names itself, not a crash.
+      check(false, 'control: mutating one copy breaks byte-equality (the mutated sample lost its region entirely)');
+    } else {
+      const mSha = crypto.createHash('sha256').update(mMatch[0]).digest('hex');
+      check(mSha !== [...distinct][0], 'control: mutating one copy breaks byte-equality');
+    }
 
     fs.writeFileSync(sample.file, clean);
 
