@@ -39,6 +39,34 @@ jobs:
           ref: main
           fetch-depth: 1
 
+      - name: Check out the INSTRUMENTS from the ref under review
+        # Step 1 deliberately checks out `ref: main` — the deployed tree is the
+        # SUBJECT of this gate and must not be the branch. But the tools that do
+        # the measuring are the INSTRUMENT, and on a pull request the instrument
+        # under review is the branch's, not main's.
+        #
+        # Conflating the two broke this gate on its first run: the derive step
+        # below calls tools/derive_live_routes.mjs, which does not exist on main
+        # until this PR merges, so the step died MODULE_NOT_FOUND and took every
+        # later step with it. Subject from main, instrument from here.
+        uses: actions/checkout@v4
+        with:
+          path: _tools
+          fetch-depth: 1
+
+      - name: Check out the canonical shelf
+        # The route set below is DERIVED from this file. It is checked out
+        # rather than read from data/source-manifests/games.json because the
+        # mirror is a copy: shelf-mirror-guard.yml owns whether the copy is
+        # current, and a live gate should be held to what the estate actually
+        # sells, not to a mirror that may be mid-drift.
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: _shelf
+          fetch-depth: 1
+
       - name: Record the SHA and derive the full-home route under test
         id: sha
         shell: bash
@@ -69,23 +97,44 @@ jobs:
             | python3 -c 'import json,sys; d=json.load(sys.stdin); print("status ",d.get("status")); print("commit ",d.get("commit")); print("updated",d.get("updated_at")); print("error  ",d.get("error"))' \
             || echo "Pages API unavailable to this token — recorded, not faked."
 
+      - name: Derive the route set from the canonical shelf, with controls
+        # The hand-list this replaced named six games. The shelf names
+        # fifty-two, twenty-three of them served from this repository, and
+        # /emberwild/ - which moved twice in one day - was not among the six.
+        # Same species as verify_games_audience_faces.py: a list kept by hand
+        # beside a record kept by machine never goes red when the record grows.
+        #
+        # This step also runs the tool's own controls, so the derivation is
+        # proven able to fail in the same run that relies on it. It exits 2
+        # INCONCLUSIVE if the shelf cannot be read, because a derivation that
+        # silently yields zero routes would turn this whole gate green by
+        # checking nothing.
+        shell: bash
+        run: |
+          set -euo pipefail
+          node _tools/tools/derive_live_routes.mjs --canonical _shelf/games.json --root .
+          node _tools/tools/derive_live_routes.mjs --canonical _shelf/games.json --root . --emit routes > /tmp/live-routes.txt
+          echo "derived $(wc -l < /tmp/live-routes.txt) game route(s) for the live checks below"
+
       - name: Custom-domain HTTP status for every surface
         shell: bash
         run: |
           set -o pipefail
           fail=0
-          for u in \
-            https://madebymatt.uk/neonsync/ \
-            https://madebymatt.uk/apexgolf/ \
-            https://madebymatt.uk/apextennis/ \
-            https://madebymatt.uk/biopunkhive/ \
-            https://madebymatt.uk/apexpool/ \
-            https://madebymatt.uk/apexkick/ \
-            https://madebymatt.uk/ \
-            "https://madebymatt.uk${FULL_HOME_ROUTE}" \
-            https://madebymatt.uk/games/ \
-            https://madebymatt.uk/site.json \
-            https://madebymatt.uk/Games/games.json ; do
+          # Games come from the derivation. The five that follow are the
+          # declared RESIDUE - infrastructure no manifest lists, kept because
+          # dropping coverage to make the list purely derived would be a worse
+          # gate, and named here rather than blended into the game count.
+          mapfile -t derived < /tmp/live-routes.txt
+          urls=()
+          for r in "${derived[@]}"; do urls+=("https://madebymatt.uk$r"); done
+          urls+=( https://madebymatt.uk/ \
+                  "https://madebymatt.uk${FULL_HOME_ROUTE}" \
+                  https://madebymatt.uk/games/ \
+                  https://madebymatt.uk/site.json \
+                  https://madebymatt.uk/Games/games.json )
+          echo "checking ${#derived[@]} derived game route(s) + 5 residue route(s)"
+          for u in "${urls[@]}" ; do
             code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
             printf '%-46s %s\n' "$u" "$code"
             [ "$code" = "200" ] || fail=1
@@ -98,7 +147,11 @@ jobs:
           set -euo pipefail
           echo "game                 live_bytes  repo_bytes  live_sha256                                                       match"
           status=0
-          for g in neonsync apexgolf apextennis apexpool apexkick biopunkhive; do
+          # Derived, not named. The six this used to list were the six that
+          # happened to have been built when it was written.
+          mapfile -t derived < /tmp/live-routes.txt
+          for r in "${derived[@]}"; do
+            g="${r#/}"; g="${g%/}"
             curl -sS --max-time 60 "https://madebymatt.uk/$g/" -o "/tmp/$g.live"
             lb=$(wc -c < "/tmp/$g.live"); rb=$(wc -c < "$g/index.html")
             ls=$(sha256sum "/tmp/$g.live" | cut -d' ' -f1)
