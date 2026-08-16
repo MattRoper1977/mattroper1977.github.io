@@ -206,6 +206,19 @@ jobs:
           python3 -m pip install --quiet playwright
           python3 -m playwright install --with-deps chromium
 
+      # This job carries no `paths:` filter, which is why the hud scriptLine
+      # check is run from here rather than from verify-games-audience-faces.yml.
+      # That workflow filters on a path list, and neither the tool nor
+      # data/hud-coverage.json is on it - a gate added there would have matched
+      # nothing and run zero times, which is exactly how Lessons PR #114 ran no
+      # checks at all. A filter that has to be remembered is a filter that will
+      # be forgotten.
+      - name: hud-coverage.json's scriptLine is asserted, not merely recorded
+        run: python3 tools/verify_hud_script_line.py
+
+      - name: ...and every route in that set is individually asserted
+        run: python3 tools/verify_hud_script_line.py --self-test
+
       - name: Browser proof controls
         run: python3 tools/verify_audience_discovery_browser.py --self-test
 
