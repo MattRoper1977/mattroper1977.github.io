@@ -114,7 +114,7 @@ jobs:
           set -euo pipefail
           node _tools/tools/derive_live_routes.mjs --canonical _shelf/games.json --root .
           node _tools/tools/derive_live_routes.mjs --canonical _shelf/games.json --root . --emit routes > /tmp/live-routes.txt
-          echo "derived $(wc -l < /tmp/live-routes.txt) game route(s) for the live checks below"
+          echo "derived $(wc -l < /tmp/live-routes.txt) route(s) for the live check — games plus the covered infrastructure routes"
 
       - name: Custom-domain HTTP status for every surface
         shell: bash
@@ -128,12 +128,14 @@ jobs:
           mapfile -t derived < /tmp/live-routes.txt
           urls=()
           for r in "${derived[@]}"; do urls+=("https://madebymatt.uk$r"); done
-          urls+=( https://madebymatt.uk/ \
-                  "https://madebymatt.uk${FULL_HOME_ROUTE}" \
-                  https://madebymatt.uk/games/ \
-                  https://madebymatt.uk/site.json \
+          # Three of the five former residue routes — / , /games/ and /site.json —
+          # are now EMITTED BY THE DERIVATION and arrive in "${derived[@]}".
+          # Listing them here as well would check them twice and, worse, print a
+          # count that no longer describes what ran. Only the two that stay
+          # EXEMPT are still named by hand.
+          urls+=( "https://madebymatt.uk${FULL_HOME_ROUTE}" \
                   https://madebymatt.uk/Games/games.json )
-          echo "checking ${#derived[@]} derived game route(s) + 5 residue route(s)"
+          echo "checking ${#derived[@]} derived route(s) + 2 exempt route(s) named by hand"
           for u in "${urls[@]}" ; do
             code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
             printf '%-46s %s\n' "$u" "$code"
@@ -150,14 +152,27 @@ jobs:
           # Derived, not named. The six this used to list were the six that
           # happened to have been built when it was written.
           mapfile -t derived < /tmp/live-routes.txt
+          # A ROUTE IS NOT ALWAYS <slug>/index.html, AND THIS LOOP USED TO ASSUME IT WAS.
+          # The derivation now emits infrastructure routes as well as games, so
+          # "/" resolves to index.html and "/site.json" resolves to itself. The
+          # old form produced `g=""` for "/" and then read the ABSOLUTE path
+          # /index.html, which does not exist — the failure that caught this.
           for r in "${derived[@]}"; do
             g="${r#/}"; g="${g%/}"
-            curl -sS --max-time 60 "https://madebymatt.uk/$g/" -o "/tmp/$g.live"
-            lb=$(wc -c < "/tmp/$g.live"); rb=$(wc -c < "$g/index.html")
-            ls=$(sha256sum "/tmp/$g.live" | cut -d' ' -f1)
-            rs=$(sha256sum "$g/index.html" | cut -d' ' -f1)
+            if [ -z "$g" ]; then
+              file="index.html"; url="https://madebymatt.uk/"; label="/"
+            elif [ "$g" != "${g%.*}" ]; then
+              file="$g"; url="https://madebymatt.uk/$g"; label="$g"
+            else
+              file="$g/index.html"; url="https://madebymatt.uk/$g/"; label="$g"
+            fi
+            tmp="/tmp/live-$(printf '%s' "$label" | tr -c 'A-Za-z0-9._-' '_')"
+            curl -sS --max-time 60 "$url" -o "$tmp"
+            lb=$(wc -c < "$tmp"); rb=$(wc -c < "$file")
+            ls=$(sha256sum "$tmp" | cut -d' ' -f1)
+            rs=$(sha256sum "$file" | cut -d' ' -f1)
             if [ "$ls" = "$rs" ]; then m=IDENTICAL; else m="*** DIFFERS ***"; status=1; fi
-            printf '%-20s %10s %11s  %s  %s\n' "$g" "$lb" "$rb" "$ls" "$m"
+            printf '%-20s %10s %11s  %s  %s\n' "$label" "$lb" "$rb" "$ls" "$m"
           done
           echo
           # NINTH INSTANCE, in the live gate itself. This line printed a literal
