@@ -68,13 +68,37 @@ const EMIT = arg('--emit');
    high enough that a collapse cannot pass as a derivation. */
 const MIN_ROUTES = 15;
 
-const RESIDUE = [
-  { route: '/', why: 'the chooser — the root every audience lands on first' },
-  { route: '__FULL_HOME__', why: 'the full homepage, /main/ or legacy /, resolved by the workflow at run time' },
-  { route: '/games/', why: 'the arcade hub — the page that paints the shelf this list is derived from' },
-  { route: '/site.json', why: 'the site record itself' },
-  { route: '/Games/games.json', why: 'the shelf mirror as served, the input to this derivation' },
+/* THE INFRASTRUCTURE ROUTES, NOW DISPOSED ONE BY ONE.
+   These five were declared-not-derived and inherited by the serve gate as
+   UNCHECKED — named in a residue line and fetched by nothing, because
+   `--emit routes` emits the derived set and the serve gate calls exactly that.
+   Being named is not being checked. Each now carries a verdict.
+
+   COVERED: emitted with the derived routes, so the serve gate fetches them and
+   compares bytes like any other. Each names the file behind it, and a COVERED
+   route whose file is missing is a finding on the same exit code as a dead
+   derived route — an infrastructure route nobody can serve is exactly the
+   failure this whole tool exists to catch. */
+const COVERED = [
+  { route: '/',          file: 'index.html',       kind: 'page',
+    why: 'the chooser — the root every audience lands on first' },
+  { route: '/games/',    file: 'games/index.html', kind: 'page',
+    why: 'the arcade hub — the page that paints the shelf this list is derived from' },
+  { route: '/site.json', file: 'site.json',        kind: 'data',
+    why: 'the site record itself. Data, not a page: the serve gate compares it to the committed blob and must not expect an index.html behind it' },
 ];
+
+/* EXEMPT: named, with the reason IN THE REPOSITORY rather than in a transcript,
+   and deliberately not emitted. Neither is left unchecked by accident. */
+const EXEMPT = [
+  { route: '__FULL_HOME__',
+    why: 'NOT A ROUTE. A build-time token the workflow resolves at run time to /main/ or legacy /. There is no URL to fetch, so no serve assertion can exist for it — it is the only one of the five that can never be covered, and it is kept here so it stops reading as an unchecked route.' },
+  { route: '/Games/games.json',
+    why: 'The CANONICAL shelf, which lives in the Games repository, not this one. There is no committed blob here to compare a served copy against — data/source-manifests/games.json is a MIRROR of it, not its source. It is already asserted by the shelf-mirror-guard pair (this repo + the Games repo, plus a weekly run), which compares mirror to canonical using the generator own --check. Adding a byte assertion here would be a second implementation of "are these the same", which that guard own comment names as a second thing to drift. Exempt because it is already checked by the right instrument, not because it is unchecked.' },
+];
+
+/* --emit residue keeps its meaning: what is declared and NOT derived. */
+const RESIDUE = EXEMPT;
 
 function inconclusive(why, ...more) {
   console.error(`INCONCLUSIVE: ${why}`);
@@ -150,8 +174,12 @@ if (EMIT === 'routes') {
      written. */
   if (!site.length) inconclusive('the derivation yielded zero site-served routes',
     'emitting an empty route set would let the live gate pass by checking nothing');
-  console.log(site.filter(Boolean).join('\n'));
-  process.exit(dead.length || contested.length ? 1 : 0);
+  /* A COVERED route with no file behind it must not be emitted as if it were
+     servable. Same exit code as a dead derived route, and NAMED. */
+  const missing = COVERED.filter(c => !fs.existsSync(path.join(ROOT, c.file)));
+  for (const m of missing) console.error(`COVERED route has no file behind it: ${m.route} -> ${m.file}`);
+  console.log([...site, ...COVERED.filter(c => !missing.includes(c)).map(c => c.route)].filter(Boolean).join('\n'));
+  process.exit(dead.length || contested.length || missing.length ? 1 : 0);
 }
 if (EMIT === 'residue') { console.log(RESIDUE.map(r => r.route).join('\n')); process.exit(0); }
 
@@ -166,8 +194,10 @@ console.log(`derived, site-served      : ${site.length}`);
 console.log(`  ${site.join(' ')}`);
 console.log(`left to the Lessons estate: ${lessons.length}`);
 console.log(`  ${lessons.join(' ')}`);          // named, never a bare count again
-console.log(`residue, declared not derived: ${RESIDUE.length}`);
-for (const r of RESIDUE) console.log(`  ${r.route.padEnd(20)} ${r.why}`);
+console.log(`infrastructure, now COVERED  : ${COVERED.length}`);
+for (const c of COVERED) console.log(`  ${c.route.padEnd(20)} [${c.kind}] ${c.file}`);
+console.log(`declared EXEMPT, not derived  : ${EXEMPT.length}`);
+for (const r of EXEMPT) console.log(`  ${r.route.padEnd(20)} ${r.why}`);
 console.log();
 
 /* The accounting check used to be `site + lessons + dead === games.length`.
