@@ -85,6 +85,15 @@
       "gates": [
         "G1 single file, single script, no dependency"
       ]
+    },
+    {
+      "route": "/townlife/",
+      "verifier": "_passtl2/partb_gates.mjs (TL-2 Part B suite, Lessons repo — this game has no site-repo verifier of its own)",
+      "gates": [
+        "B1 byte identity with the Part A artefact",
+        "B5 /townlife/ no page errors and no failed same-origin requests"
+      ],
+      "note": "Measured 2026-08-18, not assumed: the canonical line was inserted before </head> in a scratch copy and the copy loaded in Chromium. The runtime went from exactly one same-origin request (its own document) to two, with /hud.js failing ERR_ABORTED wherever hud.js is not served beside it, and the file went from sha256 3605124fda9387c71fc1a7c02091d1110f5d82363ec7788de4ea90757d6e38da to d50a24831e01ebcf2d884fbea1ebc49bd351808f81203f9eb6511d4c96ca8bce, which is the identity the Part A artefact is pinned by."
     }
   ],
   "inlineExitRegion": {
