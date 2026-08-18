@@ -6,11 +6,11 @@ Sentinel: `mbm-site-professional-design-upgrade-2026-08-07`
 
 **CLOSED — merged, deployed and live-verified.**
 
-The professional presentation upgrade was merged through PR #92 on **7 August 2026 at 23:23 UTC**.
+The professional presentation upgrade was merged through PR #92 on **7 August 2026 at 23:29 UTC**.
 
 - Implementation merge commit: `4291cc7ba706fd66f3b76f6d4eeb87eac88d8f0b`
-- Final implementation head: `43086183556d4b7dbbd227c6e011259763a6289e`
-- PR audit run: `31229651053` — **SUCCESS**, first attempt
+- Final implementation head: `43086183556d78043f64652c22f7d643f87f18d3`
+- PR audit run: `31229298544` — **SUCCESS**, first attempt
 - Permanent live-verification PR: #93
 - Live-verification merge commit: `a1ca8093c64e519f2e17dce643401a04d31b8b07`
 - Production proof run: `31229845015` — **SUCCESS**, first attempt
