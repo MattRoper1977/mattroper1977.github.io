@@ -300,7 +300,7 @@ TEACH_SECTIONS = [
         "assessment-evidence",
         "Assessment and evidence",
         "Quick checks, feedback and the evidence workflow.",
-        ["app-exit-ticket-and-quick-marks", "app-rubric-and-feedback-studio", "app-evidence-binder"],
+        ["app-exit-ticket-and-quick-marks", "app-rubric-and-feedback-studio", "app-evidence-binder", "app-lundyloop-professional-os"],
     ),
     (
         "data-organisation",
@@ -318,7 +318,7 @@ TEACH_SECTIONS = [
         "creative-tools",
         "Creative classroom tools",
         "Studios for making documents, visuals and activities.",
-        ["app-choreostudio", "page-apps-hub"],
+        ["app-choreostudio", "app-teesside-cross-curricular-maker-lab-pro", "page-apps-hub"],
     ),
     (
         "interactive-learning",
