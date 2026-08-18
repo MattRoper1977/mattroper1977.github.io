@@ -1,0 +1,57 @@
+name: Disposable production account deletion proof
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/qa-delete-account-production.yml'
+      - 'tools/qa_delete_account_production.mjs'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: mbm-delete-account-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  production-delete-account:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install production browser runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+          node --check tools/qa_delete_account_production.mjs
+
+      - name: Register, verify, populate and delete through madebymatt.uk
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node tools/qa_delete_account_production.mjs
+
+      - name: Print safe lifecycle summary
+        if: always()
+        shell: bash
+        run: |
+          test ! -f audit-output/delete-account/summary.md || cat audit-output/delete-account/summary.md
+
+      - name: Upload safe deletion evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: disposable-production-delete-account-${{ github.run_id }}
+          path: audit-output/delete-account/
+          if-no-files-found: error
+          retention-days: 7

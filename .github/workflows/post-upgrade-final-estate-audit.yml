@@ -1,0 +1,102 @@
+name: Post-upgrade final estate closeout audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/post-upgrade-final-estate-audit.yml'
+      - 'tools/verify_post_upgrade_estate.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mbm-post-upgrade-final-estate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full-estate-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Check out primary site estate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check out Lessons source of truth
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: main
+          path: _estate/Lessons
+          fetch-depth: 0
+
+      - name: Check out Games source of truth
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: _estate/Games
+          fetch-depth: 0
+
+      - name: Check out Apps source of truth
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Matt-s-Apps-
+          ref: main
+          path: _estate/Apps
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Chromium audit runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+
+      - name: Re-run permanent release gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          base="$(git merge-base origin/main HEAD)"
+          node tools/verify_professional_site.js --base "$base" --self-test
+          node tools/verify_accounts_members_mailing.js
+          node tools/test_member_merge.js
+          node --check assets/mbm-account.js
+          node --check assets/mbm-mailing.js
+          node --check assets/mbm-platform.js
+          python tools/verify_games_audience_faces.py --self-test
+          node --check tools/verify_post_upgrade_estate.mjs
+          git diff --check "$base"...HEAD
+
+      - name: Crawl, render and audit the integrated production estate
+        shell: bash
+        env:
+          MBM_BASE_URL: https://madebymatt.uk/
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          export MBM_EXPECTED_SHA="$(git merge-base origin/main HEAD)"
+          node tools/verify_post_upgrade_estate.mjs
+
+      - name: Print closeout summary
+        if: always()
+        shell: bash
+        run: |
+          test ! -f audit-output/post-upgrade-final-estate/summary.md || cat audit-output/post-upgrade-final-estate/summary.md
+
+      - name: Upload closeout evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-upgrade-final-estate-${{ github.run_id }}
+          path: audit-output/post-upgrade-final-estate/
+          if-no-files-found: error
+          retention-days: 30
