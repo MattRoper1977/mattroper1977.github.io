@@ -1,0 +1,163 @@
+name: Verification-only homepage production readback v2
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize]
+    paths:
+      - '.github/workflows/mbm-production-readback-proof-v2.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mbm-homepage-production-readback-v2-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  EXPECTED_SHA: d96d18acf45e30395b64c273f170fea50c9eb3fe
+
+jobs:
+  live-readback:
+    name: Exact production DOM and full browser proof
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - name: Check out exact merged production source
+        uses: actions/checkout@v4
+        with:
+          ref: d96d18acf45e30395b64c273f170fea50c9eb3fe
+          fetch-depth: 1
+
+      - name: Install Chromium browser runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+
+      - name: Wait for exact architecture and configuration deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          declare -A pages=(
+            [index.html]="/"
+            [main/index.html]="/main/"
+            [start/index.html]="/start/"
+            [for/pupils/index.html]="/for/pupils/"
+            [for/teachers/index.html]="/for/teachers/"
+            [for/parents-carers/index.html]="/for/parents-carers/"
+            [for/schools-semh/index.html]="/for/schools-semh/"
+            [for/trusts/index.html]="/for/trusts/"
+            [for/councils-organisations/index.html]="/for/councils-organisations/"
+            [for/partners/index.html]="/for/partners/"
+            [site.json]="/site.json"
+            [assets/mbm-platform.js]="/assets/mbm-platform.js"
+          )
+          mkdir -p /tmp/mbm-live audit-output
+          ready=0
+          for attempt in $(seq 1 90); do
+            failed=0
+            for file in "${!pages[@]}"; do
+              route=${pages[$file]}
+              out="/tmp/mbm-live/${file//\//__}"
+              curl -fsS --retry 2 -H 'Cache-Control: no-cache, no-store, max-age=0' "https://madebymatt.uk${route}?mbm=${EXPECTED_SHA}-v2" -o "$out" || { failed=1; break; }
+              cmp -s "$file" "$out" || { failed=1; break; }
+            done
+            if [ "$failed" -eq 0 ]; then
+              printf 'expected_sha=%s\nattempts=%s\nverified_utc=%s\n' "$EXPECTED_SHA" "$attempt" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee audit-output/deployment-proof.txt
+              ready=1
+              break
+            fi
+            sleep 10
+          done
+          test "$ready" -eq 1
+
+      - name: Inspect production main navigation and account shell
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/inspect-live-account.mjs <<'JS'
+          import fs from 'node:fs';
+          import { chromium } from 'playwright';
+          const sha=process.env.EXPECTED_SHA;
+          const target=`https://madebymatt.uk/main/?mbm=${sha}-v2`;
+          const browser=await chromium.launch({headless:true});
+          const context=await browser.newContext({viewport:{width:1024,height:900},reducedMotion:'reduce'});
+          const page=await context.newPage();
+          const evidence={target,responses:[],failed:[],console:[],pageErrors:[],timeline:[]};
+          page.on('response',r=>{const u=r.url();if(u.includes('site.json')||u.includes('mbm-platform.js')||u.includes('mbm-account.js'))evidence.responses.push({url:u,status:r.status(),contentType:r.headers()['content-type']||''});});
+          page.on('requestfailed',r=>evidence.failed.push({url:r.url(),failure:r.failure()?.errorText||''}));
+          page.on('console',m=>{if(m.type()==='error'||m.type()==='warning')evidence.console.push({type:m.type(),text:m.text(),location:m.location()});});
+          page.on('pageerror',e=>evidence.pageErrors.push(String(e)));
+          const response=await page.goto(target,{waitUntil:'domcontentloaded',timeout:45000});
+          evidence.documentStatus=response?.status()||0;
+          await page.waitForLoadState('networkidle',{timeout:12000}).catch(()=>{});
+          for(const delay of [0,250,1000,3000,8000,15000]){
+            if(delay)await page.waitForTimeout(delay-evidence.timeline.reduce((m,x)=>Math.max(m,x.at),0));
+            evidence.timeline.push(await page.evaluate(at=>({
+              at,
+              readyState:document.readyState,
+              platformFlag:window.__mbmPlatform||0,
+              bodyClass:document.body.className,
+              bodyAdultFeatures:document.body.getAttribute('data-mbm-adult-features'),
+              navCount:document.querySelectorAll('header.header nav').length,
+              panelCount:document.querySelectorAll('header.header nav .mbm-nav-panel').length,
+              accountCount:document.querySelectorAll('#nav a[href="/account/"],#nav a[href="https://madebymatt.uk/account/"]').length,
+              accountLabels:Array.from(document.querySelectorAll('[data-mbm-account-nav]')).map(a=>({text:a.textContent.trim(),href:a.getAttribute('href'),aria:a.getAttribute('aria-label')})),
+              navHrefs:Array.from(document.querySelectorAll('#nav a[href]')).map(a=>({text:a.textContent.trim(),href:a.getAttribute('href'),visible:!!(a.offsetWidth||a.offsetHeight||a.getClientRects().length)})),
+              scripts:Array.from(document.scripts).map(s=>s.src).filter(Boolean)
+            }),delay));
+            if(evidence.timeline.at(-1).accountCount>0)break;
+          }
+          evidence.finalUrl=page.url();
+          evidence.title=await page.title();
+          evidence.navHtml=await page.locator('#nav').innerHTML().catch(()=>null);
+          evidence.accountRouteStatus=(await context.request.get(`https://madebymatt.uk/account/?mbm=${sha}-v2`,{timeout:45000})).status();
+          fs.writeFileSync('audit-output/live-account-navigation.json',JSON.stringify(evidence,null,2)+'\n');
+          console.log(JSON.stringify(evidence,null,2));
+          const last=evidence.timeline.at(-1)||{};
+          if(evidence.documentStatus!==200)throw new Error(`main document status ${evidence.documentStatus}`);
+          if(last.platformFlag!==1)throw new Error('platform shell did not initialise');
+          if(last.panelCount<1)throw new Error('main navigation More panel is missing');
+          if(last.accountCount<1)throw new Error('Account link did not appear within 15 seconds');
+          if(evidence.accountRouteStatus!==200)throw new Error(`account route status ${evidence.accountRouteStatus}`);
+          if(evidence.failed.length||evidence.pageErrors.length)throw new Error('first-party runtime errors found');
+          await browser.close();
+          JS
+          EXPECTED_SHA="$EXPECTED_SHA" node /tmp/inspect-live-account.mjs
+
+      - name: Run full production browser matrix with explicit dynamic-link wait
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp tools/verify_games_audience_faces.mjs /tmp/verify-live.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/verify-live.mjs')
+          text=p.read_text(encoding='utf-8')
+          old='''  let link = page.locator(`#nav a[href="${href}"]`);\n  if (text) link = link.filter({ hasText: text });\n  ensure(await link.count() >= 1, `${label}: navigation link ${href} is missing`);'''
+          new='''  let link = page.locator(`#nav a[href="${href}"]`);\n  if (text) link = link.filter({ hasText: text });\n  await link.first().waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});\n  ensure(await link.count() >= 1, `${label}: navigation link ${href} is missing after waiting for progressive shell enhancement`);'''
+          if text.count(old)!=1: raise SystemExit('live-wait patch target not found exactly once')
+          p.write_text(text.replace(old,new,1),encoding='utf-8')
+          PY
+          cp /tmp/verify-live.mjs tools/verify-live.mjs
+          trap 'rm -f tools/verify-live.mjs' EXIT
+          MBM_BASE_URL=https://madebymatt.uk/ MBM_CACHE_BUST="$EXPECTED_SHA-v2" MBM_FULL_ESTATE=1 node tools/verify-live.mjs
+
+      - name: Print production evidence
+        if: always()
+        shell: bash
+        run: |
+          test ! -f audit-output/deployment-proof.txt || cat audit-output/deployment-proof.txt
+          test ! -f audit-output/live-account-navigation.json || cat audit-output/live-account-navigation.json
+          test ! -f audit-output/browser-results.json || cat audit-output/browser-results.json
+
+      - name: Upload production proof v2
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mbm-homepage-production-readback-v2-${{ github.event.pull_request.number }}-${{ github.run_id }}
+          path: audit-output/
+          if-no-files-found: error
+          retention-days: 45
