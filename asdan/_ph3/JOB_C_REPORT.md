@@ -57,3 +57,26 @@ this repo or in Lessons (searched both). Binaries were **not** hand-edited. pdfp
   `#bk-file` change handler (pupils, progs, saved settings restored).
 - Deployment: verified from git truth + local checks only — the Pages API and madebymatt.uk
   are proxy-blocked from this session; **Matt phone-eyeballs after merge.**
+
+
+---
+
+## PH-3 close order — Job C merged (2026-08-18)
+
+**Step 1 independent verify, re-derived from the diff:** scope confined to `asdan/app.html` +
+this report; `asdan/index.html` untouched (it displays no version token — measured); both public
+PDFs **byte-identical** to base; `DB_VER=1`, the object stores, the kv keys, the localStorage keys
+and the whole `onupgradeneeded` block all byte-identical. Proven in the unambiguous direction:
+**BASE + exactly the authorised C1–C4 edits == the shipped file, byte-for-byte** (reverse-direction
+proof is not usable here because two distinct source strings both map to "Your centre", so a naive
+reversal cannot know which one to restore — the forward proof settles it).
+
+**MERGE (`--no-ff`):** rollback SHA (pre-merge site main) **`8af7bbc2560515d2af114f1df5ca89053aceb2ec`**
+→ merged main **`a2572a05cce9fb5d7915486682935167c2f324f4`**. Re-proved at the merged tip: `node --check` 2 inline blocks / 0
+failures · jsdom + fake-indexeddb boot with all three presets rendering the new wording · a
+v2.5-format backup importing through the real `#bk-file` handler with saved settings winning over
+the new fallback · both PDFs byte-identical.
+
+**Live rendering stays UNPROVEN by design** — the Pages API and madebymatt.uk are proxy-blocked
+from the pass environment. Matt phone-checks the BUILD ceiling label. **Branch not deleted.**
+The stale-PDF item is recorded as `_close/OPEN_ITEMS.md` **51** in the Lessons repo.
