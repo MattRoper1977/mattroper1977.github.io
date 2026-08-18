@@ -318,7 +318,7 @@ TEACH_SECTIONS = [
         "creative-tools",
         "Creative classroom tools",
         "Studios for making documents, visuals and activities.",
-        ["app-choreostudio", "page-apps-hub"],
+        ["app-choreostudio", "app-teesside-cross-curricular-maker-lab-pro", "page-apps-hub"],
     ),
     (
         "interactive-learning",
