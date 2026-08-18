@@ -300,7 +300,7 @@ TEACH_SECTIONS = [
         "assessment-evidence",
         "Assessment and evidence",
         "Quick checks, feedback and the evidence workflow.",
-        ["app-exit-ticket-and-quick-marks", "app-rubric-and-feedback-studio", "app-evidence-binder"],
+        ["app-exit-ticket-and-quick-marks", "app-rubric-and-feedback-studio", "app-evidence-binder", "app-lundyloop-professional-os"],
     ),
     (
         "data-organisation",
