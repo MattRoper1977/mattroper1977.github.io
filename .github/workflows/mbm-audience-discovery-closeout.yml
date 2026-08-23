@@ -226,10 +226,18 @@ jobs:
           python3 tools/check_workflow_paths.py
 
       - name: Install the browser the proof drives
+        # TWO runtimes, deliberately. verify_audience_discovery_browser.py is
+        # Python and needs the pip package; the count and prominence controls
+        # below are Node and need the npm one. Installing only the first is
+        # what made the prominence control fail with ERR_MODULE_NOT_FOUND —
+        # and, before it was hardened, what would have made that read as a
+        # passing red control on a machine where the gate never ran at all.
         run: |
           set -euo pipefail
           python3 -m pip install --quiet playwright
           python3 -m playwright install --with-deps chromium
+          npm i --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
 
       # This job carries no `paths:` filter, which is why the hud scriptLine
       # check is run from here rather than from verify-games-audience-faces.yml.
