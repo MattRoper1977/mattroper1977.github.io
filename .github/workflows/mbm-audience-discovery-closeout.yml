@@ -22,6 +22,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install Playwright Chromium
+        # The copy gate is static, but the search-prominence gate is not and
+        # cannot be: whether a control is above the fold at 390px, whether
+        # anything covers it, and whether typing reaches the network are
+        # runtime facts. A source grep for the search script called all seven
+        # of these pages covered while none of them rendered a box.
+        run: |
+          npm i --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+
       - name: Generated audience HTML is byte-for-byte reproducible
         run: python3 tools/render_audience_homepages.py --check
 
@@ -40,6 +53,9 @@ jobs:
       - name: Audience architecture, labels and privacy contract hold
         run: python3 tools/verify_games_audience_faces.py
 
+      - name: Search is findable, lazy, and fenced on the pupil page
+        run: node tools/verify_search_prominence.mjs
+
       - name: Design inheritance holds across audience surfaces
         run: python3 tools/verify_design_inheritance.py
 
@@ -52,6 +68,25 @@ jobs:
 
       # A gate that has never failed is not evidence. Each control perturbs the
       # tree and asserts the matching verifier notices, then restores it.
+      - name: Prominence gate notices a missing entry point
+        run: |
+          set -e
+          cp for/trusts/index.html /tmp/sp.bak
+          python3 - <<'PY'
+          import io, re
+          p = 'for/trusts/index.html'
+          s = io.open(p, encoding='utf-8').read()
+          s = re.sub(r'<div class="mf-hero-search">.*?</form></div>', '', s, count=1, flags=re.S)
+          io.open(p, 'w', encoding='utf-8').write(s)
+          PY
+          if node tools/verify_search_prominence.mjs; then
+            echo "::error::prominence gate stayed green with the entry point removed from /for/trusts/"
+            cp /tmp/sp.bak for/trusts/index.html
+            exit 1
+          fi
+          cp /tmp/sp.bak for/trusts/index.html
+          node tools/verify_search_prominence.mjs
+
       - name: Renderer notices a hand-edited generated page
         run: |
           set -euo pipefail

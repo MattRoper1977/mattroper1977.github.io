@@ -73,6 +73,21 @@
   function renderAll(){
     var roots=Array.prototype.slice.call(doc.querySelectorAll('[data-mbm-recent]'));
     if(!roots.length)return;
+    /* Nothing stored means nothing to resolve, so there is nothing to fetch.
+       This used to load the whole 754 KB search index on every page carrying a
+       recent-items block, on every device, including the ones that have never
+       opened a discovery card and would render the empty state either way. The
+       index is only needed to turn a STORED id into a title and a route. */
+    if(!read().length){
+      roots.forEach(function(root){
+        var list=root.querySelector('[data-mbm-recent-items]')||root;
+        var empty=root.querySelector('[data-mbm-recent-empty]');
+        list.textContent='';
+        if(empty)empty.hidden=false;
+        root.hidden=false;
+      });
+      return;
+    }
     loadIndex().then(function(index){roots.forEach(function(root){renderOne(root,index);});}).catch(function(){roots.forEach(function(root){root.hidden=true;});});
   }
 

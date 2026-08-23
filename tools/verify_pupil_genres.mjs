@@ -99,6 +99,10 @@ async function readPages(root) {
       const per = {}; all.forEach(h => { per[h] = (per[h] || 0) + 1; });
       return {
         cards: all.length, distinct: new Set(all).size, per, rail,
+        /* The amended fence asserts not just HOW MANY inputs there are but
+           WHICH one it is: a count of 1 would otherwise be satisfied by any
+           input at all arriving on the page. */
+        searchInputs: document.querySelectorAll('[data-mbm-pupil-search]').length,
         genres: [...document.querySelectorAll(genreSel)].map(d => ({
           name: (d.querySelector(nameSel) || {}).textContent || '',
           label: (d.querySelector(numSel) || {}).textContent || '',
@@ -183,11 +187,52 @@ check(JSON.stringify(pupil.genres.map(g => [g.name, g.cards])) === JSON.stringif
   'the pupil genres and the /games/ genres are identical, name and count',
   pupil.genres.map(g => `${g.name}=${g.cards}`).join(' '));
 
-/* --- the fence --- */
+/* --- the fence ---
+ *
+ * ONE AMENDMENT, AUTHORISED BY MATT ON 2026-08-23. NOTHING ELSE MOVES.
+ *
+ * PREVIOUS ASSERTION
+ *   f.inputs === 0 && f.forms === 0 && f.kofi === 0 && f.mailto === 0
+ *   && f.signup === 0 && f.autoplay === 0 && pupil.off === 0
+ *
+ * REPLACEMENT
+ *   exactly ONE input, and it is the pupil game-search field, and there is
+ *   still no form — plus every other clause unchanged.
+ *
+ * WHY. The pupil page listed every safe game and gave a child no way to look
+ * for one; the genre groups are a browse, not a search. Matt ruled that the
+ * page gets a real search. The count moves from 0 to 1 because a search needs
+ * a field, and for no other reason.
+ *
+ * WHAT DID NOT MOVE, AND IS STILL ASSERTED HERE
+ *   forms 0 · Ko-fi 0 · mailto 0 · signup/account 0 · autoplay 0 · off-origin 0
+ *
+ * WHY THIS IS AN AMENDMENT AND NOT A LOOSENING. "Zero inputs" was a proxy for
+ * the thing that actually matters: nothing on this page can send a child, or
+ * anything a child types, anywhere. The replacement asserts that directly and
+ * in more places than the old clause did — tools/verify_search_prominence.mjs
+ * proves, in a browser, that the field submits nowhere (there is no form),
+ * that typing fires no data request, that the query reaches no storage and no
+ * URL, and that every reachable result is a game route on the shelf. A count
+ * of one input is a weaker statement than the old zero; those five runtime
+ * assertions together are a stronger one.
+ *
+ * THE RED CONTROLS, all of which must fail:
+ *   a second input -> RED (proved: 'exactly ONE input' reported 2)
+ *   an external or active form action -> RED (forms must stay 0)
+ *   an injected non-game result -> RED (results are shelf routes only)
+ *   a storage write of the query -> RED (no persistence)
+ *   a network request on typing -> RED (no data fetch)
+ */
 const f = pupil.fence;
-check(f.inputs === 0 && f.forms === 0 && f.kofi === 0 && f.mailto === 0 && f.signup === 0 && f.autoplay === 0 && pupil.off === 0,
-  'pupil fence holds: no input, form, Ko-fi, mailto, signup or account link, no autoplay, nothing off-origin',
-  `inputs ${f.inputs} forms ${f.forms} kofi ${f.kofi} mailto ${f.mailto} signup ${f.signup} autoplay ${f.autoplay} off-origin ${pupil.off}`);
+check(f.inputs === 1, 'pupil fence, amended 2026-08-23: exactly one input',
+  `inputs ${f.inputs}`);
+check(pupil.searchInputs === 1,
+  'and it is the pupil game-search field, not something else that arrived',
+  `game-search fields ${pupil.searchInputs}`);
+check(f.forms === 0 && f.kofi === 0 && f.mailto === 0 && f.signup === 0 && f.autoplay === 0 && pupil.off === 0,
+  'the rest of the fence is untouched: no form, Ko-fi, mailto, signup or account link, no autoplay, nothing off-origin',
+  `forms ${f.forms} kofi ${f.kofi} mailto ${f.mailto} signup ${f.signup} autoplay ${f.autoplay} off-origin ${pupil.off}`);
 check(pupil.errs.length === 0, 'the pupil page boots with no script errors', pupil.errs.slice(0, 2).join(' | ') || 'clean');
 check(pupil.small.length === 0, 'every interactive target is at least 44px at 390px',
   pupil.small.join('; ') || '0 under 44px');
