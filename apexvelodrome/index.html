@@ -51,6 +51,20 @@
   .fill{transition:none}
   *{scroll-behavior:auto}
 }
+
+/* C3 — THE WORDMARK CLEARS THE PLATFORM EXIT CHIP.
+   Measured at 390, 768 and 1440 px: the stamped inline exit control is
+   position:fixed at 8,8 and 44x44, and the game's own .brand starts at the
+   same corner, so the chip landed on top of the first two letters at EVERY
+   width. The exit region is generated and byte-identical across thirteen
+   games, so it does not move; the game's own branding does.
+   The chip then sits inside the brand bar rather than on it. 104px clears
+   both slots — #mbmexit-back at 8px and #mbmexit-home at 58px — so the inset
+   is correct whether or not a homepage has been chosen on the device. */
+.brand{padding-left:calc(104px + env(safe-area-inset-left,0px))}
+@media(max-width:420px){
+  .brand{padding-left:calc(102px + env(safe-area-inset-left,0px));min-width:0}
+}
 </style>
 </head>
 <body>

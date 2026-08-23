@@ -101,6 +101,41 @@ TARGETS = ["apexcurl", "apexvelodrome", "biopunkhive", "echovault", "fracture", 
 # two byte for byte.
 HELD_UNTIL_DONOR_STOPS_SKIP_LEAK = False
 
+# ------------------------------------------------------- DECLARED EXCEPTIONS
+# Routes that carry a splash this generator does NOT own, and must not stamp.
+# Declared 2026-08-23, so the next sweep finds a decision here rather than
+# re-deriving the same question from the drift.
+#
+# /olympics/ — BESPOKE, KEEP.
+#   It inlines a splash that is not this donor and is not stale: measured
+#   6,469 B against the donor's 6,248 B, 72 lines present that the donor does
+#   not have. The differences are DESIGN, not decay — an Olympic rings mark
+#   (.marc arcs on staggered .a1/.a2/.a3 delays) and a torch flame (.mflame)
+#   in place of the donor's M-path and star, on a deep-blue #0b2141/#050816
+#   ground with a gold #ffd75e kicker instead of the house #222B55 and #F2A24A.
+#   Stamping the donor over it would destroy a deliberate variant, so the
+#   exception is the right call and adopting the generated block is not.
+#
+#   RECORDED HONESTLY, BECAUSE THE EXCEPTION IS NOT A CLEAN BILL OF HEALTH:
+#   this variant still leaks its own dismissal, measured 2026-08-23 with the
+#   same bubble-phase probe used on the donor —
+#       Space  -> keyup 1     Escape -> keyup 1
+#       skip tap -> pointerdown 1, pointerup 1
+#   It is partially hardened already (it takes keydown on capture, which is why
+#   keydown does not leak) but does not stop keyup or the pointer pair. That is
+#   a smaller defect than the donor's was and it is a change to a live game with
+#   its own pinned SHAs, so it is its own sitting rather than the tail of this
+#   one. It is on the books now instead of being rediscovered.
+#
+# /novasiege/ is NOT an exception: it inlines this donor VERBATIM, and
+# tools/verify_novasiege.mjs byte-compares the two. It was re-inlined with the
+# fixed donor in the same pass that lifted the hold.
+DECLARED_EXCEPTIONS = {
+    "olympics": "bespoke Olympic rings/torch variant, declared 2026-08-23; "
+                "still leaks keyup and the pointer pair — its own sitting",
+}
+
+
 DONOR_REL = os.path.join("assets", "brand", "mbm-splash.js")
 
 # The bootstrap. Deliberately tiny, and it derives the title AT RUNTIME from
