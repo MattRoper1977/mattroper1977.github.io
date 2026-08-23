@@ -7,6 +7,17 @@
   "scriptLine": "<script defer src=\"/hud.js\"></script>",
   "excluded": [
     {
+      "route": "/apexcurl/",
+      "verifier": "tools/verify_apexcurl.mjs",
+      "gates": [
+        "single-file: the game loads no external script",
+        "determinism: the game's own __rcSelfTest, 1000 steps, twice"
+      ],
+      "note": "An RC-generation Apex sport. Zero external scripts on delivery, like /apexpool/ and /apexrally/, so <script src=\"/hud.js\"> would retract the single-file promise rather than merely trip a check.",
+      "determinismSelfTestHash": "3.133529679428|27.637487899714|-0.039256400697|2.110931831678|1.182491398074|0.180000000000|-4.972305440354|0.316000000000",
+      "_determinismWhy": "The game's own __rcSelfTest() state hash after 1000 fixed steps, pinned at declaration. Asserting only that the two in-page runs agree proves the game is repeatable, not that it is still THE SAME game: a changed physics constant stays perfectly repeatable and slips through. This is the value that moves when the model moves, so it is the one recorded."
+    },
+    {
       "route": "/apexpool/",
       "verifier": "tools/verify_apexpool.js",
       "gates": [
@@ -21,6 +32,17 @@
         "G9 every gate family is non-vacuous (positive controls)"
       ],
       "note": "A byte ledger: reversing the permitted edits must reproduce the delivered file exactly. The inserted line makes it 38 bytes short, and G9 then reports the provenance validator already false on the clean file."
+    },
+    {
+      "route": "/apexvelodrome/",
+      "verifier": "tools/verify_apexvelodrome.mjs",
+      "gates": [
+        "single-file: the game loads no external script",
+        "determinism: the game's own __rcSelfTest, 1000 steps, twice"
+      ],
+      "note": "An RC-generation Apex sport. Zero external scripts on delivery, like /apexpool/ and /apexrally/, so <script src=\"/hud.js\"> would retract the single-file promise rather than merely trip a check.",
+      "determinismSelfTestHash": "107.284190184529|0.862000000000|13.281690762082|19666.666666667879|1.204118316375|1.533440665893|100.250957230911",
+      "_determinismWhy": "The game's own __rcSelfTest() state hash after 1000 fixed steps, pinned at declaration. Asserting only that the two in-page runs agree proves the game is repeatable, not that it is still THE SAME game: a changed physics constant stays perfectly repeatable and slips through. This is the value that moves when the model moves, so it is the one recorded."
     },
     {
       "route": "/biopunkhive/",

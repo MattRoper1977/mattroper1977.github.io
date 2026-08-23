@@ -590,8 +590,14 @@ if (!chromium) {
     'and they are the declared hrefs, in the declared order', live.picks.map(p => p.href).join(' · '));
   check(live.picks.every(p => p.painted && p.take), 'every painted card occupies space and carries a take',
     `${live.picks.filter(p => p.painted).length} painted, ${live.picks.filter(p => p.take).length} with takes`);
-  check(live.cards === 60 && live.distinct === 52,
-    'the hub paints 60 cards for 52 distinct games — down from 82 for 52',
+  /* DERIVED, never pinned. This read `=== 60 && === 52`, which was true for
+     exactly as long as the shelf held 52 games — it reds on the next game
+     shipped rather than on a defect, and that is what it did. The invariant is
+     the RELATIONSHIP the sentence was really about: one card per shelf game,
+     plus a second for each game in TOP, and no third from anywhere. */
+  const wantCards = games.length + wantTop.length;
+  check(live.cards === wantCards && live.distinct === games.length,
+    `the hub paints one card per shelf game plus one per TOP game (${games.length}+${wantTop.length}=${wantCards}) and no more`,
     `${live.cards} cards, ${live.distinct} distinct`);
   const twice = Object.entries(live.per).filter(([, n]) => n > 1);
   check(twice.every(([, n]) => n === 2), 'no game is painted more than twice',

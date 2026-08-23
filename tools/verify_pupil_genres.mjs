@@ -156,7 +156,16 @@ console.log();
 
 check(pupil.distinct === shelf.length, 'distinct games painted on the pupil page == the shelf',
   `${pupil.distinct} painted, ${shelf.length} on the shelf`);
-check(pupil.cards === 60, 'the pupil page paints 60 cards', `${pupil.cards}`);
+/* DERIVED, never pinned. This read `=== 60` and was true for exactly as long
+   as the shelf held 52 games and the rail held 8. A total written down here is
+   a second copy of a number this repository already owns, and it reds on the
+   next game shipped rather than on a defect — which is what it did. The
+   relationship is the invariant: every shelf game is painted once, and a game
+   on the rail is painted a second time. */
+const expectedCards = shelf.length + pupil.rail.length;
+check(pupil.cards === expectedCards,
+  `the pupil page paints one card per shelf game plus one per rail game (${shelf.length}+${pupil.rail.length}=${expectedCards})`,
+  `${pupil.cards}`);
 const twice = Object.entries(pupil.per).filter(([, n]) => n > 1);
 check(twice.every(([, n]) => n === 2), 'no game is painted more than twice',
   twice.map(([h, n]) => `${h}x${n}`).join(' ') || 'none twice');
