@@ -26,7 +26,20 @@ const require = createRequire(import.meta.url);
 const { probeShelf, taxonomyFromHtml, expectedInGenre, assertRendered } = require('./lib/shelf-probe.js');
 
 const ROOT = new URL('..', import.meta.url).pathname;
-const GAMES = process.env.GAMES_DIR || '/home/user/games';
+/* The shelf manifest. data/source-manifests/games.json is this repo's mirror of
+   the canonical shelf and is asserted byte-identical to it by its own gate, so
+   it is the right source AND it is already here — no second checkout, no path
+   that only exists on one machine. GAMES_DIR remains an override for anyone
+   running this beside a Games clone.
+
+   This defaulted to '/home/user/games' when it was written, which is a sandbox
+   path. CI has no such directory and the control died with ENOENT before its
+   first scenario — the same defect as the pinned Chromium in apex_rc_gate.mjs,
+   committed an hour after fixing that one. A default that only resolves on the
+   machine it was written on is not a default. */
+const MIRROR = join(ROOT, 'data/source-manifests/games.json');
+const GAMES = process.env.GAMES_DIR || null;
+const manifestPath = () => (GAMES ? join(GAMES, 'games.json') : MIRROR);
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
   '.json': 'application/json', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.png': 'image/png' };
 
@@ -34,10 +47,10 @@ let manifestOverride = null;
 const server = createServer((req, res) => {
   let p = decodeURIComponent(req.url.split('?')[0]);
   if (p === '/Games/games.json') {
-    const body = manifestOverride ?? readFileSync(join(GAMES, 'games.json'), 'utf8');
+    const body = manifestOverride ?? readFileSync(manifestPath(), 'utf8');
     res.writeHead(200, { 'content-type': 'application/json' }); return res.end(body);
   }
-  if (p.startsWith('/Games/')) p = join(GAMES, p.slice(7));
+  if (p.startsWith('/Games/')) p = GAMES ? join(GAMES, p.slice(7)) : join(ROOT, 'data/source-manifests', p.slice(7));
   else p = join(ROOT, p);
   if (p.endsWith('/')) p = join(p, 'index.html');
   if (!existsSync(p)) { res.writeHead(404); return res.end('nope'); }
@@ -63,7 +76,7 @@ console.log('\n=== 1. a healthy page: the guard passes and every count agrees ==
 {
   const page = await load();
   const shelf = await probeShelf(page);
-  const manifest = JSON.parse(readFileSync(join(GAMES, 'games.json'), 'utf8')).games;
+  const manifest = JSON.parse(readFileSync(manifestPath(), 'utf8')).games;
   const tax = taxonomyFromHtml(await page.content());
   const sports = expectedInGenre(manifest, tax, 'Sports');
   ok('the browse container exists', shelf.hasGenreHost);
@@ -85,7 +98,7 @@ console.log('\n=== 2. the drifted selector: must fail as DRIFT, naming the conta
     hasHost: !!document.querySelector('#allGrid'),
     cards: [...document.querySelectorAll('#allGrid .gcard')].map(a => a.getAttribute('href')),
   }));
-  const manifest = JSON.parse(readFileSync(join(GAMES, 'games.json'), 'utf8')).games;
+  const manifest = JSON.parse(readFileSync(manifestPath(), 'utf8')).games;
   let msg = null; try { assertRendered(assert, 'browse structure', drifted.hasHost, drifted.cards, manifest.length); } catch (e) { msg = e.message; }
   ok('#allGrid really matches nothing on this page', drifted.cards.length === 0 && !drifted.hasHost);
   ok('the guard fires', msg !== null);
@@ -112,7 +125,7 @@ console.log('\n=== 3. an empty manifest: `rendered === expected` alone would rea
 
 console.log('\n=== 4. one entry dropped: the count still bites ===\n');
 {
-  const full = JSON.parse(readFileSync(join(GAMES, 'games.json'), 'utf8'));
+  const full = JSON.parse(readFileSync(manifestPath(), 'utf8'));
   const short = { ...full, games: full.games.slice(1) };
   manifestOverride = JSON.stringify(short);
   const page = await load();
