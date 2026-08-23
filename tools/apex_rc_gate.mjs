@@ -21,7 +21,15 @@ import { chromium } from 'playwright';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const ROOT = join(HERE, '..');
-const CHROME = process.env.MBM_CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+/* Use an explicitly pinned Chromium when one is actually present (the local
+   sandbox has one at this path), and otherwise let Playwright launch the browser
+   it just installed. Passing an executablePath that does not exist fails harder
+   than passing none at all: on a GitHub runner this threw
+   "Failed to launch chromium because executable doesn't exist" before a single
+   runtime gate ran, so the whole job read as a contract failure. The pattern is
+   the one tools/verify_emberwild.js already documents. */
+const PINNED = process.env.MBM_CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+const CHROME = PINNED && existsSync(PINNED) ? PINNED : undefined;
 
 /* The declared regions, read from the ledger rather than pasted here. */
 const LEDGER = JSON.parse(readFileSync(join(ROOT, 'data/hud-coverage.json'), 'utf8'));
