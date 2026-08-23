@@ -254,6 +254,28 @@ jobs:
       # Pages serves, because there is no build step. Scenario 3 is the one that
       # matters — it shows the old `rendered === expected` passing on 0 === 0,
       # and the new guard refusing it.
+      - name: A published game is in the sitemap
+        run: node tools/verify_sitemap_covers_games.mjs
+
+      - name: ...and the coverage gate notices a game dropped from it
+        run: |
+          set -e
+          cp sitemap.xml /tmp/sm.bak
+          python3 - <<'PY'
+          import re
+          s = open('sitemap.xml').read()
+          s = re.sub(r'  <url>\n    <loc>https://madebymatt.uk/apexcurl/</loc>.*?</url>\n', '', s, flags=re.S)
+          open('sitemap.xml', 'w').write(s)
+          PY
+          if node tools/verify_sitemap_covers_games.mjs > /tmp/sm.log 2>&1; then
+            cp /tmp/sm.bak sitemap.xml
+            echo "the gate passed with a game missing from the sitemap"; exit 1
+          fi
+          cp /tmp/sm.bak sitemap.xml
+          grep -q 'every game this repo serves has a sitemap entry' /tmp/sm.log \
+            || { echo "it failed, but not on the assertion it names"; cat /tmp/sm.log; exit 1; }
+          node tools/verify_sitemap_covers_games.mjs
+
       - name: The shelf probe cannot pass on an empty page
         run: node tools/prove_shelf_probe.mjs
 
