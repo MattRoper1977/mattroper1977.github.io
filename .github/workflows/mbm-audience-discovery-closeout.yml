@@ -246,6 +246,28 @@ jobs:
       # nothing and run zero times, which is exactly how Lessons PR #114 ran no
       # checks at all. A filter that has to be remembered is a filter that will
       # be forgotten.
+      # F2. The two *_surfaces.js gates queried '#allGrid' and '#sportsRail',
+      # ids that have never existed on /games/. They failed every run — loudly,
+      # not blind — but on a selector rather than on the shelf, which is the
+      # same as not testing it. The repair lives in tools/lib/shelf-probe.js and
+      # these controls prove it on a page served from this repo: the same bytes
+      # Pages serves, because there is no build step. Scenario 3 is the one that
+      # matters — it shows the old `rendered === expected` passing on 0 === 0,
+      # and the new guard refusing it.
+      - name: The shelf probe cannot pass on an empty page
+        run: node tools/prove_shelf_probe.mjs
+
+      - name: ...and the repaired gates still parse and still name their guard
+        run: |
+          set -e
+          node --check tools/verify_echovault_surfaces.js
+          node --check tools/verify_relicforge_surfaces.js
+          for f in tools/verify_echovault_surfaces.js tools/verify_relicforge_surfaces.js; do
+            grep -q 'assertRendered' "$f" || { echo "$f no longer routes its counts through the guard"; exit 1; }
+            grep -q '#allGrid' "$f" && { echo "$f still queries the id that does not exist"; exit 1; }
+          done
+          grep -q 'never a pass' tools/lib/shelf-probe.js
+
       - name: hud-coverage.json's scriptLine is asserted, not merely recorded
         run: python3 tools/verify_hud_script_line.py
 

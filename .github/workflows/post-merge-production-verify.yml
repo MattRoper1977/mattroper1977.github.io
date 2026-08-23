@@ -103,6 +103,47 @@ jobs:
           set -o pipefail
           node tools/verify_production_after_merge.mjs 2>&1 | tee production.log
 
+      # F2/F3. These five read LIVE production, so on a PR they can only ever
+      # report the pre-merge world — which is why they are red on the PR and why
+      # that red is not evidence about the merge. Here, after Pages has
+      # published, they are being asked the question they were written to ask.
+      # `continue-on-error` is deliberate and bounded: the step above is the
+      # gate that decides the job, and these run to completion so the summary
+      # names EVERY one that is still red rather than stopping at the first.
+      - name: Re-run the production-driven gates against the published site
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          : > production-driven.log
+          for g in tools/verify_echovault_surfaces.js \
+                   tools/verify_relicforge_surfaces.js \
+                   tools/verify_curation_keys.mjs \
+                   tools/verify_published_live.mjs \
+                   tools/verify_surfaces.js; do
+            echo "=== $g" | tee -a production-driven.log
+            node "$g" 2>&1 | tee -a production-driven.log
+            echo "--- exit $? for $g" | tee -a production-driven.log
+          done
+          # A zero match must never read as a pass here either.
+          if grep -q 'matched nothing' production-driven.log; then
+            echo "SELECTOR DRIFT reported against production — see the log" | tee -a production-driven.log
+          fi
+
+      - name: Publish which production-driven gates cleared
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### Production-driven gates, re-run after the merge"
+            echo ""
+            echo '```'
+            grep -E '^(=== |--- exit |PASS |FAIL |SELECTOR DRIFT)' production-driven.log 2>/dev/null \
+              || echo "(no log - the step did not run)"
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Publish the attempt log
         if: always()
         shell: bash

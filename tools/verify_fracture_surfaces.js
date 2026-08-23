@@ -119,6 +119,11 @@ function serve() {
       const cards = [...document.querySelectorAll('#browseAll .gcard, .cards .gcard')];
       const all = [...document.querySelectorAll('.gcard')];
       const rpgSec = document.getElementById('rpg');
+      /* NOTE: #rpgRail no longer exists anywhere in the estate — the genre
+         rails were replaced by the per-genre <details> sections. This limb is
+         therefore asserting a feature that was removed, not a regression. It is
+         left red deliberately and recorded in the backlog rather than quietly
+         deleted, because deleting it would be weakening a gate to reach green. */
       const rpgCards = [...document.querySelectorAll('#rpgRail .gcard')];
       const imgs = [...document.querySelectorAll('.gcard img')];
       return {
@@ -159,7 +164,10 @@ function serve() {
     const page = await ctx.newPage();
     const bad = [];
     page.on('response', r => { if (r.status() >= 400) bad.push(`${r.status()} ${r.url()}`); });
-    await page.goto(`${base}/`, { waitUntil: 'networkidle' });
+    /* The New Release stack lives on /main/, not on /. The root is the audience
+       chooser and has never carried a #newrelease box, so these four gates were
+       measuring an empty document — red every run, and not about Fracture. */
+    await page.goto(`${base}/main/`, { waitUntil: 'networkidle' });
     const home = await page.evaluate(() => {
       const boxes = [...document.querySelectorAll('#newrelease [data-release]')];
       const mine = document.querySelector('#newrelease [data-release="Relicforge: Fracture Engine"]');
