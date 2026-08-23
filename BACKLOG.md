@@ -558,6 +558,135 @@ swept in, because widening a pass's claim is how a diff stops being checkable.
 
 ---
 
+## 5a. Four gates still query selectors for features that were removed
+
+**instrument · ruling-pending** — recorded 23 August 2026.
+
+**What.** The F2 sweep found ten dead selector ids across six gates that target
+`/games/`. Two were repaired in that pass (`verify_echovault_surfaces.js`,
+`verify_relicforge_surfaces.js`) and one partly (`verify_fracture_surfaces.js` —
+its `#newrelease` limbs were loading `/` when the New Release stack is on
+`/main/`). These are what is left:
+
+```
+verify_fracture_surfaces.js      #rpgRail      the RPG rail was removed; the
+                                               genre <details> sections replaced
+                                               it. 2 limbs, both red.
+verify_arcade_sports_browser.js  #allGrid      asserts an entire removed UI: a
+                                 #sportsRail   Sports rail, its own `.sub` copy,
+                                 #chips        and SPORT/PHYSICS tag chips. The
+                                               shelf now has genre sections and
+                                               CALM/FAST feel chips instead.
+verify_olympics_arcade.mjs       #sportsRail   same rail, same removal.
+```
+
+**Why not now.** None of these is a rename. Each needs a decision about what the
+assertion should become against the current design — and inventing a selector
+for a feature that no longer exists is precisely how the original drift got in.
+Deleting the limbs would be weakening a gate to reach green, so they are left
+red and annotated in place.
+
+**Evidence to start from.** `tools/lib/shelf-probe.js` documents the page's real
+structure and `tools/prove_shelf_probe.mjs` shows how to prove a repair without
+production. The page's genre truth is the `TAXONOMY` literal in
+`games/index.html`, **not** the `collection` field in `games.json` — those
+disagree today (`/neonturf/`).
+
+---
+
+## 5b. `/olympics/` still leaks `keyup` and the pointer pair
+
+**instrument · work-pending** — recorded 23 August 2026.
+
+**What.** Every other stamped game routes through the shared splash region and
+stops leaking input during the splash. `/olympics/` carries a bespoke Olympic
+rings/torch variant and is declared as an exception in `tools/render_splash.py`
+(`DECLARED_EXCEPTIONS`), so the donor fix did not reach it. It still leaks a
+`keyup` and the pointer pair through the splash.
+
+**Why not now.** Stamping it would replace the bespoke Olympic artwork with the
+standard splash, which is a visible design change to a game that was deliberately
+given its own. That is a decision, not a fix, and it needs its own sitting.
+
+---
+
+## 5c. The in-scene scoreboard sits behind the HUD panels
+
+**content · ruling-pending** — recorded 23 August 2026.
+
+**What.** In the Apex titles the in-scene scoreboard renders behind the HUD
+panels at some viewports, so part of it is occluded.
+
+**Why not now.** The obvious fix is a z-order or layout change, and the standing
+rule on these games is that no HUD number, physics constant or timestep moves
+for a visual reason. Establishing that a fix is purely presentational — and
+proving it against the pinned determinism hashes in `data/hud-coverage.json` —
+is more work than the symptom suggests, and it was not what this pass was for.
+
+---
+
+## 5d. Three counts still typed into prose on `/main/`, `/tools/` and `/asdan/`
+
+**content · work-pending** — recorded 23 August 2026.
+
+**What.** The C2 sweep deleted a drifting "511" and derived the counts that the
+audience record owns. Three typed totals remain, in prose on `/main/`, `/tools/`
+and `/asdan/`. They are the same defect: a number copied out of a catalogue into
+a sentence, which goes stale silently.
+
+**Why not now.** Each sits in authored prose rather than in a generated region,
+so each needs either a rewrite that does not carry a number or a new derived
+insertion point. That is three separate editorial decisions, and C2's declared
+scope was the count that was already wrong.
+
+---
+
+## 5e. One of the five audience closings has no anchor
+
+**content · ruling-pending** — recorded 23 August 2026.
+
+**What.** The F1 anchor test asked, for each of the ten rewritten blocks, which
+noun phrase is factually false or meaningless for the other four audiences.
+Nine could be named and each is unique to its own block. The **parents closing**
+could not:
+
+> If you are not sure where to start, pick one thing and let it lead. Nothing
+> here needs planning, and you can stop whenever it stops being useful.
+
+Nothing in it is false for a teacher, a trust lead, an officer or a provider. It
+survives on register — permission-giving, domestic — rather than on an anchor.
+The 20-pair swap test agreed independently and unprompted: on both pairs where
+that block is the A side, the judges said the A-on-B direction alone would score
+FALSE and the pair is carried by the other block.
+
+Related: three of the five closings open with "If", and parents and partners
+both open "If you ⟨verb⟩".
+
+**Why not now.** The replacement would have to be authored, and the standing
+rule is that audience copy is not invented here — the three closings that were
+replaced in this pass were each supplied verbatim. This needs one more
+authorised line, not a rewrite.
+
+---
+
+## 5f. Sitemap coverage is now gated for games, not for pages
+
+**instrument · work-pending** — recorded 23 August 2026.
+
+**What.** `tools/verify_sitemap_covers_games.mjs` now asserts that every shelf
+game this repo serves has a `<loc>`. It found two of mine and `/hyperdraft/`,
+all three now added. It does **not** cover non-game pages, which is the scope of
+item 5 above — and note that item 5's scan of "19 public HTML pages" missed
+`/hyperdraft/` entirely, so the two checks find different things and neither
+subsumes the other.
+
+**Why not now.** Extending the derivation to every public page means settling
+what "public page" means — 404s, partials and superseded pages all have to be
+excluded deliberately rather than by pattern, which is exactly the decision item
+5 is waiting on.
+
+---
+
 ## 6. Featured curation
 
 There is no way to say "these six things first" — the homepage strips are
