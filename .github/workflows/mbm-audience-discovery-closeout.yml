@@ -53,6 +53,15 @@ jobs:
       - name: Audience architecture, labels and privacy contract hold
         run: python3 tools/verify_games_audience_faces.py
 
+      - name: No served surface states a catalogue count its source disagrees with
+        # The third species of the second-literal trap already in this estate's
+        # register: a gate holding its own copy of a value · a control retyping
+        # a token · now a catalogue count copied into prose.
+        # /for/schools-semh/ served "511 canonical internal destinations" against
+        # an index of 715. The rule is DELETE the numeral, not update it: 715
+        # buys accuracy until the 716th entry lands.
+        run: node tools/verify_catalogue_counts.mjs
+
       - name: Search is findable, lazy, and fenced on the pupil page
         run: node tools/verify_search_prominence.mjs
 
@@ -68,6 +77,37 @@ jobs:
 
       # A gate that has never failed is not evidence. Each control perturbs the
       # tree and asserts the matching verifier notices, then restores it.
+      - name: Count gate notices a stale number, typed or derived
+        run: |
+          set -e
+          cp data/audience-homepages.json /tmp/cc.bak
+          cp for/pupils/index.html /tmp/cc2.bak
+          python3 - <<'PY'
+          import io
+          p = 'data/audience-homepages.json'
+          s = io.open(p, encoding='utf-8').read()
+          s = s.replace('Search all canonical internal destinations.',
+                        'Search all 511 canonical internal destinations.', 1)
+          io.open(p, 'w', encoding='utf-8').write(s)
+          PY
+          if node tools/verify_catalogue_counts.mjs; then
+            echo "::error::count gate stayed green with the stale 511 reintroduced"
+            cp /tmp/cc.bak data/audience-homepages.json; exit 1
+          fi
+          cp /tmp/cc.bak data/audience-homepages.json
+          python3 - <<'PY'
+          import io
+          p = 'for/pupils/index.html'
+          s = io.open(p, encoding='utf-8').read()
+          io.open(p, 'w', encoding='utf-8').write(s.replace('All 54 games', 'All 52 games', 1))
+          PY
+          if node tools/verify_catalogue_counts.mjs; then
+            echo "::error::count gate stayed green with a DERIVED figure drifting from its source"
+            cp /tmp/cc2.bak for/pupils/index.html; exit 1
+          fi
+          cp /tmp/cc2.bak for/pupils/index.html
+          node tools/verify_catalogue_counts.mjs
+
       - name: Prominence gate notices a missing entry point
         run: |
           set -e

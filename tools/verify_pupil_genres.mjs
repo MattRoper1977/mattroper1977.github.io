@@ -28,6 +28,7 @@ const ROOT = process.argv[2] || path.join(HERE, '..');
 const PUPIL = path.join(ROOT, 'for', 'pupils', 'index.html');
 const GAMES = path.join(ROOT, 'games', 'index.html');
 const MANIFEST = path.join(ROOT, 'data', 'source-manifests', 'games.json');
+const INDEX_PATH = path.join(ROOT, 'data', 'mbm-search-index.json');
 const AUDIENCES = path.join(ROOT, 'data', 'audience-homepages.json');
 
 let chromium;
@@ -269,9 +270,15 @@ check(stillThere.length === 0, 'and none of the retired ten survives as a litera
    the removal, which quotes the phrase — a scanner counting its own
    documentation, which this estate has been bitten by before. */
 const pupilHtml = fs.readFileSync(PUPIL, 'utf8');
+/* Derived, not typed. This message said "62 game routes" and the shelf now
+   carries 64 — a count retyped into prose inside a gate is the same species of
+   drift the gate exists to describe. */
+const indexEntries = JSON.parse(fs.readFileSync(INDEX_PATH, 'utf8')).entries;
+const gameEntries = indexEntries.filter(e => e.category === 'game');
+const safeGames = gameEntries.filter(e => e.safeForPupils === true).length;
 check(!pupilHtml.includes('pupil-safe set'),
   'the "pupil-safe set" claim is gone from the page a child reads',
-  'all 62 game routes carry safeForPupils:true, so the phrase implied a filter the data does not support');
+  `all ${gameEntries.length} game routes carry safeForPupils:true (${safeGames} of them), so the phrase implied a filter the data does not support`);
 const surpriseCopy = (pupilHtml.match(/<span>([^<]*random[^<]*)<\/span>/) || [])[1] || '';
 check(surpriseCopy.includes('every game on this page'),
   'and the Surprise me copy now claims only what is true',

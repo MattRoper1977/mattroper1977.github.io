@@ -199,6 +199,29 @@ try {
     check(unknown.length === 0, `${PUPIL}: and every one resolves to a game on the shelf`,
       unknown.slice(0, 3).join(', '));
 
+    /* §C5.2 — safeForPupils made LOAD-BEARING.
+       The field is written on all 717 index entries and, until this assertion,
+       was read by nothing that ships and nothing that gates. A safety-shaped
+       field that nothing consumes is worse than no field: it invites the next
+       reader to assume a filter is being enforced somewhere. The route check
+       above is the real boundary today; this makes the FLAG agree with it, so
+       the two can no longer disagree silently. Either surface drifting is now
+       a failure — a route the pupil page can reach whose index entry says it is
+       not pupil-safe, or a flag flipped without the page changing. */
+    const idx = JSON.parse(readFileSync(join(ROOT, 'data/mbm-search-index.json'), 'utf8')).entries;
+    const byRoute = new Map(idx.map(e => [e.route, e]));
+    const notSafe = [...new Set(dests)].filter(h => {
+      const e = byRoute.get(h);
+      return e && e.safeForPupils !== true;
+    });
+    check(notSafe.length === 0,
+      `${PUPIL}: and every one is marked safeForPupils:true in the index`,
+      notSafe.slice(0, 3).join(', '));
+    const unindexed = [...new Set(dests)].filter(h => !byRoute.has(h));
+    check(unindexed.length === 0,
+      `${PUPIL}: and every one has an index entry to carry that flag`,
+      unindexed.slice(0, 3).join(', '));
+
     /* the calm empty state */
     await page.type('[data-mbm-pupil-search]', 'zzzzqqq', { delay: 10 });
     await page.waitForTimeout(400);
