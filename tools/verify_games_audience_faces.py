@@ -65,9 +65,9 @@ MAJOR_MAIN_ANCHORS = [
     'id="improved"', 'id="mbmStats"', 'id="standard"', 'id="contact"', 'id="about"'
 ]
 GAMES_COPY = [
-    "A Made by Matt collection", "MATT'S <span>CURATED FAVS</span> HUB",
+    "A Made by Matt collection", "Made by Matt's <span>Arcade</span>",
     "A personally selected showcase of the challenges that are truly infinite fun — skill, strategy and pure enjoyment, direct to you. Every game plays free in the browser: no installs, no accounts, no ads.",
-    "Matt's personal top picks", "The eight I'd put in front of anyone first — and one line each on why.",
+    "Made by Matt's Top Picks", "Hand-picked games that earn their place by being played, not by being new.",
     "Watch them played", "Real gameplay — no scripted demo reel — captured on a phone or straight from the browser and hosted right here. Nothing loads until you press play, and nothing plays sound.",
     # The themed grids, the classroom rail and "The whole shelf" were ABSORBED
     # into genre sections and feel tags: the hub painted 82 cards for 52 games

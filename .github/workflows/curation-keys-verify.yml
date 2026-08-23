@@ -33,6 +33,8 @@ on:
       - 'data/source-manifests/games.json'
       - 'tools/verify_curation_keys.mjs'
       - 'tools/verify_genre_participants.mjs'
+      - 'tools/verify_curation_vocabulary.mjs'
+      - 'data/audience-homepages.json'
       - '.github/workflows/curation-keys-verify.yml'
   push:
     branches: [main]
@@ -42,6 +44,8 @@ on:
       - 'data/source-manifests/games.json'
       - 'tools/verify_curation_keys.mjs'
       - 'tools/verify_genre_participants.mjs'
+      - 'tools/verify_curation_vocabulary.mjs'
+      - 'data/audience-homepages.json'
       - '.github/workflows/curation-keys-verify.yml'
   # A path filter fires only on a change to a file this repository owns, and an
   # orphan can arrive from the canonical side without any file here moving.
@@ -104,6 +108,16 @@ jobs:
         # copied list. Three sources where the page reads two is the exact defect
         # the taxonomy collapse existed to end, so the number is now asserted.
         run: node tools/verify_genre_participants.mjs
+
+      - name: One name for the rail, on every surface that shows it
+        # /games/ alone carried seven spellings of one idea, with tests pinning
+        # four of them. This gate holds none: it DERIVES the canonical heading,
+        # blurb and badge from games/index.html and requires every other
+        # surface to agree, asserts the apostrophe by codepoint because a page
+        # and a gate disagreeing on an invisible character fails silently, and
+        # refuses to accept a derived name that is itself one of the retired
+        # ones — otherwise renaming the rail back would simply be re-derived.
+        run: node tools/verify_curation_vocabulary.mjs
 
       - name: Keys resolve against the CANONICAL shelf too
         # The gate reads data/source-manifests/games.json. If the mirror were

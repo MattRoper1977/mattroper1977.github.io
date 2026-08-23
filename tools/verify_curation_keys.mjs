@@ -620,7 +620,7 @@ if (!chromium) {
     labelDrift.map(g => `${g.name} shows "${g.label}" for ${g.cards}`).join('; ')
       || live.genres.map(g => `${g.name}=${g.cards}`).join(' '));
   check(live.badges === record.curation.length,
-    'one MATT\'S PICK badge per curated game in the genre sections',
+    'one TOP PICK badge per curated game in the genre sections',
     `${live.badges} badges, ${record.curation.length} curated entries`);
   check(live.picks.every(p => p.label && record.genreOrder.includes(p.label)),
     'each pick card labels itself with its GENRE, not the manifest tag',
