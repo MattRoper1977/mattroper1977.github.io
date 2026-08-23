@@ -73,7 +73,11 @@ textarea{width:100%;min-height:150px;margin-top:10px;padding:10px;border:1px sol
     "line-height:.95;letter-spacing:.04em;text-transform:uppercase;font-weight:700}" +
     ".mbm-tagline{animation-delay:1.65s;color:#B9E6CD;letter-spacing:.18em;text-transform:uppercase;font-weight:700}" +
     ".mbm-skip{position:absolute;right:22px;bottom:20px;border:1px solid #b9e6cd70;border-radius:99px;" +
-    "background:#0a1026aa;color:#E8E2D4;padding:.65rem 1rem;cursor:pointer;font:inherit}" +
+    "background:#0a1026aa;color:#E8E2D4;padding:.65rem 1rem;cursor:pointer;font:inherit;" +
+    /* 44px floor. .65rem padding on an inherited font measured 110x42 — two pixels
+       under, on every stamped game, on phone and desktop alike. inline-flex keeps
+       the label centred once the box stops being content-sized. */
+    "min-height:44px;display:inline-flex;align-items:center;justify-content:center}" +
     ".mbm-skip:focus-visible{outline:3px solid #F2A24A;outline-offset:3px}" +
     "@keyframes mbmDraw{to{stroke-dashoffset:0}}@keyframes mbmPop{to{transform:scale(1);opacity:1}}" +
     "@keyframes mbmRise{to{opacity:1;transform:translateY(0)}}" +
@@ -171,6 +175,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
 }catch(e){}})();
 </script>
 <!-- MBM-SPLASH:END -->
+
 
 <noscript><div style="min-height:100vh;padding:2rem;background:#020805;color:#e8ffe9;font-family:system-ui"><h1>Biopunk Hive needs JavaScript</h1><p>This containment lab runs entirely in your browser and cannot start without JavaScript.</p></div></noscript>
 <div id="app">
