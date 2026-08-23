@@ -544,6 +544,27 @@ def utility_section(audience: dict[str, Any]) -> str:
     return f'''<section class="mf-section mf-utility-section"><div class="mf-wrap"><div class="mf-section-head"><p>More to explore</p><h2>Useful routes from this homepage</h2><span>Every destination remains public unless the destination itself clearly explains an optional adult account feature.</span></div><div class="mf-utility-grid">{cards}</div></div></section>'''
 
 
+def closing_section(audience: dict[str, Any]) -> str:
+    """The line that hands the reader somewhere, above the boundaries note.
+
+    These pages ended on a guard. A page that states its limits and then stops
+    has told the reader what it is not, and nothing about what to do next — so
+    the closing region ran boundaries -> homepage switcher, with no editorial
+    step between the last card and the disclaimer.
+
+    This block is EDITORIAL and it is deliberately NOT the note. It carries no
+    bounded claim, no account or privacy statement and no relationship
+    disclaimer; those stay in note_section() where they already are, stated
+    once. It is optional: an audience without a `closing` renders exactly as
+    before, which is how the pupil page keeps its own shape.
+    """
+    text = audience.get("closing")
+    if not text:
+        return ""
+    return (f'<section class="mf-section mf-closing-section"><div class="mf-wrap">'
+            f'<p class="mf-closing">{esc(text)}</p></div></section>')
+
+
 def note_section(audience: dict[str, Any]) -> str:
     # An adult page offers the optional adult routes; a pupil page states in
     # words that they are excluded, so the boundary is declared rather than
@@ -586,7 +607,7 @@ def audience_page(data: dict[str, Any], aid: str, audience: dict[str, Any]) -> s
     return f'''<!doctype html>
 <!-- {SENTINEL} -->
 <html lang="en-GB">{head(f"{audience['label']} · Made by Matt", description, audience['route'])}<body class="mbm-face-page" {body_attrs} style="--face-accent:{esc(audience['accent'])};--face-accent-visual:{esc(audience.get('accentVisual') or audience['accent'])};--face-soft:{esc(audience['soft'])}">
-<a class="skip" href="#main">Skip to content</a>{general_header(current=audience['route'], audience=audience)}<main id="main">{hero(audience)}{sections}{utility_section(audience)}{note_section(audience)}{switcher(data, aid)}</main>{footer(audience['label'], quiet=not audience.get('adultFeatures'), support=bool(audience.get('adultFeatures')))}{scripts(audience)}</body></html>
+<a class="skip" href="#main">Skip to content</a>{general_header(current=audience['route'], audience=audience)}<main id="main">{hero(audience)}{sections}{utility_section(audience)}{closing_section(audience)}{note_section(audience)}{switcher(data, aid)}</main>{footer(audience['label'], quiet=not audience.get('adultFeatures'), support=bool(audience.get('adultFeatures')))}{scripts(audience)}</body></html>
 '''
 
 
