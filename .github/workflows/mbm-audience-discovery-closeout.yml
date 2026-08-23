@@ -77,56 +77,6 @@ jobs:
 
       # A gate that has never failed is not evidence. Each control perturbs the
       # tree and asserts the matching verifier notices, then restores it.
-      - name: Count gate notices a stale number, typed or derived
-        run: |
-          set -e
-          cp data/audience-homepages.json /tmp/cc.bak
-          cp for/pupils/index.html /tmp/cc2.bak
-          python3 - <<'PY'
-          import io
-          p = 'data/audience-homepages.json'
-          s = io.open(p, encoding='utf-8').read()
-          s = s.replace('Search all canonical internal destinations.',
-                        'Search all 511 canonical internal destinations.', 1)
-          io.open(p, 'w', encoding='utf-8').write(s)
-          PY
-          if node tools/verify_catalogue_counts.mjs; then
-            echo "::error::count gate stayed green with the stale 511 reintroduced"
-            cp /tmp/cc.bak data/audience-homepages.json; exit 1
-          fi
-          cp /tmp/cc.bak data/audience-homepages.json
-          python3 - <<'PY'
-          import io
-          p = 'for/pupils/index.html'
-          s = io.open(p, encoding='utf-8').read()
-          io.open(p, 'w', encoding='utf-8').write(s.replace('All 54 games', 'All 52 games', 1))
-          PY
-          if node tools/verify_catalogue_counts.mjs; then
-            echo "::error::count gate stayed green with a DERIVED figure drifting from its source"
-            cp /tmp/cc2.bak for/pupils/index.html; exit 1
-          fi
-          cp /tmp/cc2.bak for/pupils/index.html
-          node tools/verify_catalogue_counts.mjs
-
-      - name: Prominence gate notices a missing entry point
-        run: |
-          set -e
-          cp for/trusts/index.html /tmp/sp.bak
-          python3 - <<'PY'
-          import io, re
-          p = 'for/trusts/index.html'
-          s = io.open(p, encoding='utf-8').read()
-          s = re.sub(r'<div class="mf-hero-search">.*?</form></div>', '', s, count=1, flags=re.S)
-          io.open(p, 'w', encoding='utf-8').write(s)
-          PY
-          if node tools/verify_search_prominence.mjs; then
-            echo "::error::prominence gate stayed green with the entry point removed from /for/trusts/"
-            cp /tmp/sp.bak for/trusts/index.html
-            exit 1
-          fi
-          cp /tmp/sp.bak for/trusts/index.html
-          node tools/verify_search_prominence.mjs
-
       - name: Renderer notices a hand-edited generated page
         run: |
           set -euo pipefail
@@ -293,6 +243,70 @@ jobs:
 
       - name: ...and every route in that set is individually asserted
         run: python3 tools/verify_hud_script_line.py --self-test
+
+      - name: Count gate notices a stale number, typed or derived
+        run: |
+          set -e
+          cp data/audience-homepages.json /tmp/cc.bak
+          cp for/pupils/index.html /tmp/cc2.bak
+          python3 - <<'PY'
+          import io
+          p = 'data/audience-homepages.json'
+          s = io.open(p, encoding='utf-8').read()
+          s = s.replace('Search all canonical internal destinations.',
+                        'Search all 511 canonical internal destinations.', 1)
+          io.open(p, 'w', encoding='utf-8').write(s)
+          PY
+          if node tools/verify_catalogue_counts.mjs > /tmp/cc1.log 2>&1; then
+            echo "::error::count gate stayed green with the stale 511 reintroduced"
+            cp /tmp/cc.bak data/audience-homepages.json; exit 1
+          fi
+          # It must go red FOR THE RIGHT REASON. A control that accepts any
+          # non-zero exit also accepts a missing dependency, and then it is
+          # asserting nothing at all.
+          grep -q 'no audience-homepage copy states a hardcoded catalogue count' /tmp/cc1.log || {
+            echo "::error::count gate failed, but not on the assertion this control names"
+            cat /tmp/cc1.log; cp /tmp/cc.bak data/audience-homepages.json; exit 1; }
+          cp /tmp/cc.bak data/audience-homepages.json
+          python3 - <<'PY'
+          import io
+          p = 'for/pupils/index.html'
+          s = io.open(p, encoding='utf-8').read()
+          io.open(p, 'w', encoding='utf-8').write(s.replace('All 54 games', 'All 52 games', 1))
+          PY
+          if node tools/verify_catalogue_counts.mjs > /tmp/cc2.log 2>&1; then
+            echo "::error::count gate stayed green with a DERIVED figure drifting from its source"
+            cp /tmp/cc2.bak for/pupils/index.html; exit 1
+          fi
+          grep -q 'states the derived shelf total' /tmp/cc2.log || {
+            echo "::error::count gate failed, but not on the derived-total assertion"
+            cat /tmp/cc2.log; cp /tmp/cc2.bak for/pupils/index.html; exit 1; }
+          cp /tmp/cc2.bak for/pupils/index.html
+          node tools/verify_catalogue_counts.mjs
+
+      - name: Prominence gate notices a missing entry point
+        run: |
+          set -e
+          cp for/trusts/index.html /tmp/sp.bak
+          python3 - <<'PY'
+          import io, re
+          p = 'for/trusts/index.html'
+          s = io.open(p, encoding='utf-8').read()
+          s = re.sub(r'<div class="mf-hero-search">.*?</form></div>', '', s, count=1, flags=re.S)
+          io.open(p, 'w', encoding='utf-8').write(s)
+          PY
+          if node tools/verify_search_prominence.mjs > /tmp/sp.log 2>&1; then
+            echo "::error::prominence gate stayed green with the entry point removed from /for/trusts/"
+            cp /tmp/sp.bak for/trusts/index.html
+            exit 1
+          fi
+          # The control must fail on the MISSING ENTRY POINT, not on a missing
+          # browser. Without this, an uninstalled Playwright reads as a pass.
+          grep -q '/for/trusts/: has a visible search entry point' /tmp/sp.log || {
+            echo "::error::prominence gate failed, but not on the entry-point assertion"
+            cat /tmp/sp.log; cp /tmp/sp.bak for/trusts/index.html; exit 1; }
+          cp /tmp/sp.bak for/trusts/index.html
+          node tools/verify_search_prominence.mjs
 
       - name: Browser proof controls
         run: python3 tools/verify_audience_discovery_browser.py --self-test
