@@ -794,37 +794,35 @@ in-game surfaces, which is where these accents carry text, all improved.
 
 ---
 
-## 5j. Three more gates are referenced by no workflow, and one of them is red
+## 5j. Two gates are still referenced by no workflow
 
-**instrument · work-pending** — recorded 24 August 2026.
+**instrument · work-pending** — recorded 24 August 2026, reduced from three the
+same day.
 
-**What.** Closing 5h prompted a full census rather than a spot fix. Of the **118
-executables in `tools/`**, four were referenced by no workflow *and* by no other
-tool. One was `verify_audience_copy.mjs`, which this branch itself had shipped
-unwired — now wired, with a control. The other three are pre-existing on `main`:
+**What.** Of the 118 executables in `tools/`, four were referenced by no workflow
+and by no other tool. Two are now wired: `verify_audience_copy.mjs` (this
+branch's own, guarding the five rewritten audience pages) and
+`verify_highlumen_behaviour.mjs`. These two remain:
 
 ```
-verify_driving_games.mjs        117 lines   passes today (rc=0)
-verify_hud_targets.mjs          238 lines   passes today (45 passed, 0 failed)
-verify_highlumen_behaviour.mjs  210 lines   RED today (rc=1)
+verify_driving_games.mjs   117 lines   passes today (rc=0)
+verify_hud_targets.mjs     238 lines   passes today (45 passed, 0 failed)
 ```
 
-**The red one matters.** Run by hand against the current tree it reports:
+**The red one is closed.** `verify_highlumen_behaviour.mjs` was the reason this
+entry mattered. Its "cream swatch is 0x0, under 44px" was **not a page defect** —
+at that gate's viewport the swatch measures 44x44 in every state. It was a layout
+race inside the gate: it opened the `<details>` and measured in the same breath.
+Settled, given a fail-closed assertion that tells "never reached layout" apart
+from "too small", red-proved both ways, and wired.
 
-> `- tools (site /theme.js): the cream swatch is 0x0, under 44px`
+**Why the other two are not now.** Both pass, so wiring is mechanical rather than
+diagnostic — but neither has been exercised, and "it passes" from a gate that has
+never run is a claim, not a result. Each needs what the other two got: a red proof
+on the assertion it names, and a CI control. That is the work, and it is not this
+pass's.
 
-A control rendering at 0x0 is not a near-miss on the 44px touch target; it is a
-control that is not there. Nothing reports it, because nothing runs the gate.
-
-**Why not now.** The order that found it says: record something genuinely serious
-and stop, do not start it. Wiring `verify_highlumen_behaviour.mjs` would turn a
-currently-green PR red — which by this estate's own rule is *a finding about the
-estate, not a problem with the wiring*, and so must not be resolved by quietly
-leaving it unwired. It needs its own pass: confirm the 0x0 swatch on `/tools/`,
-fix it, then wire all three with red proofs.
-
-**Size.** One focused pass. The wiring is ten lines per gate plus a control; the
-work is owning what the red one reports.
+**Size.** An hour. Ten lines of wiring per gate; the time goes on the red proofs.
 
 ---
 

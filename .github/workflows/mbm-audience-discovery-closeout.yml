@@ -65,6 +65,15 @@ jobs:
       - name: /stats/ privacy claim is bound to the config that can falsify it
         run: node tools/verify_stats_claim.mjs
 
+      # H6. This gate had never run. Run by hand it reported a 0x0 swatch on
+      # /tools/ — a layout race in the gate, not a defect in the page: at this
+      # gate's viewport the swatch measures 44x44 in every state. Settled, given
+      # a fail-closed assertion that distinguishes "never reached layout" from
+      # "too small", and wired, because a fixed gate left unwired is the same
+      # defect it was recorded under.
+      - name: Six reading swatches on every engine, each a real 44px target
+        run: node tools/verify_highlumen_behaviour.mjs
+
       # G2, second instance, and this one is this branch's own. P2 shipped
       # verify_audience_copy.mjs — the gate that asserts each rewritten audience
       # page serves its own opening and closing block, that no two share one, and
@@ -428,6 +437,25 @@ jobs:
             || { echo "it failed, but not on the region it names"; echo "$out" | tail -20; exit 1; }
           echo "control detected — red on chooserPromise, exit $rc"
           node tools/verify_takes_pin.mjs > /dev/null
+
+      - name: The swatch gate refuses a control that never reached layout
+        run: |
+          set -euo pipefail
+          cp tools/index.html /tmp/tools.bak
+          python3 - <<'PY2'
+          s = open('tools/index.html', encoding='utf-8').read()
+          s = s.replace('</head>', '<style>.mbm-sw{display:none!important}</style></head>', 1)
+          open('tools/index.html', 'w', encoding='utf-8').write(s)
+          PY2
+          out=$(node tools/verify_highlumen_behaviour.mjs 2>&1) && rc=0 || rc=$?
+          cp /tmp/tools.bak tools/index.html
+          if [ "$rc" = "0" ]; then
+            echo "every swatch was display:none and the gate passed"; echo "$out" | tail -20; exit 1
+          fi
+          grep -q 'the control never reached layout' <<<"$out" \
+            || { echo "it failed, but not on the fail-closed assertion it names"; echo "$out" | tail -20; exit 1; }
+          echo "control detected — red on not-in-layout, exit $rc"
+          node tools/verify_highlumen_behaviour.mjs > /dev/null
 
       - name: A published game is in the sitemap
         run: node tools/verify_sitemap_covers_games.mjs

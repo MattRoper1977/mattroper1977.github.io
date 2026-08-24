@@ -191,3 +191,68 @@ own file location and runs `git show HEAD:` there, so it read the main tree's
 HEAD, saw an unmutated blob, and returned rc=0 on a mutation it existed to catch.
 Caught by testing the control rather than by trusting it. It runs the worktree's
 own copy now, with the reason written beside it.
+
+---
+
+## The H pass — 24 August 2026
+
+Neither PR merged when this ran. The pass was built on a ruling — *backstopped is
+not closed* — and on a census finding that four gates self-satisfy. The order
+required a contribution test **before** any fixing. That test disproved the
+premise.
+
+### Seven of nine gates contribute; none self-satisfies
+
+Mutate the value the gate names, in the subject only, run the gate alone:
+
+```
+verify_arcade_sports.js         green -> RED   CONTRIBUTES
+verify_curation_keys.mjs        green -> RED   CONTRIBUTES
+verify_games_audience_faces.py  green -> RED   CONTRIBUTES
+verify_neonbreach.js            green -> RED   CONTRIBUTES
+verify_pupil_genres.mjs         green -> RED   CONTRIBUTES
+verify_apexrally_browser.js     green -> RED   CONTRIBUTES
+verify_biopunkhive_browser.js   green -> RED   CONTRIBUTES
+verify_apextennis_home.py       red   -> red   inconclusive, baseline already red
+verify_production_after_merge   -             untestable here, reads production
+```
+
+So nothing was deleted. The instruction to strip duplicated prose assertions from
+"the four that self-satisfy" had no subject, and acting on it would have removed
+working detection — which is why the test comes first.
+
+The gates hold copies AND fire. Both are true. The pin is a second line, not the
+only one.
+
+### Three real defects, found because the premise was tested rather than assumed
+
+1. **A fused assertion that could not catch its own failure.** The Top Picks
+   sub-line asserts prose (which contributes) *and* the number word "eight"
+   (which nothing derived). The rail could have gone to seven or nine with the
+   sentence unchanged and every check passing. Counted from the `rail:N` slots
+   now, with the `--self-test` case it never had.
+2. **A failure message that taught the wrong fix.** `verify_curation_keys.mjs`
+   printed `authored "<old>" vs painted "<new>"`, handing over the replacement
+   string. Paste it into `AUTHORED` and the gate goes green having adopted the
+   rewrite it exists to catch. Rewritten to name the value, the owner and the
+   pin, and never to print the painted text. It was the only gate in the estate
+   where that species could exist.
+3. **A gate that blamed the page.** `verify_highlumen_behaviour.mjs` reported a
+   0x0 swatch on `/tools/`. The page is fine — 44x44 at that gate's viewport in
+   every state. A layout race in the gate. Settled, fail-closed, wired.
+
+### Two things I got wrong, kept in the record
+
+`verify_games_audience_faces.py` first read SELF-SATISFIES. The literal occurs
+twice in `main/index.html` and my mutation replaced one; the gate was right and my
+control was under-powered.
+
+On the 0x0 swatch I blamed a collapsed mobile nav — true at 390px, irrelevant to a
+gate that runs at 1280x720. Sabotaging the toggle does not make it fail, which is
+the proof. The correction is written beside the code rather than tidied away.
+
+### Definition of done
+
+Still **6 of 6**. BACKLOG 5j is reduced from three gates to two, and the red one —
+the only user-facing defect it named — turned out to be a gate defect and is
+fixed.

@@ -645,7 +645,22 @@ if (!chromium) {
   const drift = AUTHORED.filter(([h, t]) => painted.get(h) !== t);
   check(drift.length === 0, 'each of the five new takes is on the page character-for-character as authored',
     drift.length
-      ? drift.map(([h, t]) => `${h}: authored ${Buffer.byteLength(t)}B "${t}" vs painted ${Buffer.byteLength(painted.get(h) || '')}B "${painted.get(h)}"`).join(' | ')
+      /* H4. This message used to print BOTH sides — authored "<old>" vs painted
+         "<new>" — which handed the reader the exact replacement string. The
+         obvious next move is to paste the painted text into AUTHORED above, at
+         which point this limb goes green having adopted the very rewrite it
+         exists to catch. That is the defect this estate has now hit five times,
+         and a failure message that teaches the wrong fix is its own species of
+         it. So: name the value, name who owns it, say where a deliberate change
+         belongs, and DO NOT print the painted text. If you want to see what is
+         on the page, open the page. */
+      ? drift.map(([h]) => `${h}: the take painted on the card is not the authored one` +
+          ` (differs by ${Math.abs(Buffer.byteLength(painted.get(h) || '') - Buffer.byteLength(AUTHORED.find(a => a[0] === h)[1]))}B).` +
+          ` That take is Matt's, and games/index.html's CURATION block owns it —` +
+          ` data/takes-pin.json is the reference, not this file. If the wording changed ON PURPOSE,` +
+          ` edit the take in games/index.html and re-pin with` +
+          ` \`node tools/verify_takes_pin.mjs --print\`, in the same commit.` +
+          ` Do not edit the AUTHORED list to match the page.`).join(' | ')
       : AUTHORED.map(([h, t]) => `${h}=${Buffer.byteLength(t)}B`).join(' '));
 
   /* …and that comparison must be able to fail, or it is a no-op that says
