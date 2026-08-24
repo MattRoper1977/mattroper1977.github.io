@@ -863,6 +863,60 @@ path, pass or fail; the control still fails when the comparison is loosened; and
 the H4 inventory is re-run with the wider query across all 94 gates, with the
 count of new candidates stated.
 
+## 5l. LIVE RED ON MAIN — the swatch gate fails in CI, and my H6 diagnosis was half wrong
+
+**instrument · LIVE RED** — recorded 24 August 2026, immediately after the merge
+of bb1e3cc. This is not a backlog item to schedule. `main` is red now.
+
+**What.** `verify_highlumen_behaviour.mjs` was wired into the closeout in this
+arc. On main it fails:
+
+```
+[FAIL] High-Lumen behaviour — 1 finding(s):
+  - tools (site /theme.js): the cream swatch is 0x0, under 44px
+```
+
+run 32774157030 · job 97581221345 · step 12 "Six reading swatches on every
+engine, each a real 44px target".
+
+**Why this is mine, and where my reasoning failed.** H6 met exactly this message
+when the gate was first run by hand. I diagnosed it as a LAYOUT RACE INSIDE THE
+GATE, not a page defect, on the evidence that at 1280x720 in the dev container
+the swatch measures 44x44 before opening the details, immediately after, and
+after a settle — and that adding a settle made it pass. That evidence was real
+but it was not sufficient: it established the race exists, not that the settle
+cures it everywhere. In GitHub Actions it still fails. I generalised from one
+environment and called the defect closed.
+
+**And the fail-closed assertion I added does not catch it.** H6 added
+
+```js
+assert(!sw.every((s) => s.w === 0 && s.h === 0), ...)
+```
+
+which fires only when EVERY swatch is 0x0. Here exactly one is — the first,
+cream. So the run reports the misleading "under 44px" that H6 exists to prevent,
+which is the very confusion it was written to stop. `every` should be `some`, or
+better, each zero-sized swatch should be named and reported as "never reached
+layout" individually.
+
+**The blast radius is larger than one gate.** Both closeout jobs abort on it:
+
+```
+Static gates            step 12 FAIL -> steps 13-16 SKIPPED   (4 gates never ran)
+Gates are proven red    step 22 FAIL -> steps 23-39 SKIPPED  (17 controls never ran)
+                        step 36 "Upload browser proof artifacts" FAIL
+```
+
+SKIPPED IS NOT PASSED. Twenty-one further checks currently report nothing on
+every push to main.
+
+**Done when.** The gate passes on a GitHub runner, or is proved to be reporting a
+real page defect there and the page is fixed; the zero-size assertion names each
+collapsed swatch rather than requiring all of them; and the two closeout jobs run
+to completion so the 21 downstream checks report again. Do not fix this by
+skipping, disabling or quarantining the gate.
+
 ## 6. Featured curation
 
 There is no way to say "these six things first" — the homepage strips are

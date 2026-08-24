@@ -256,3 +256,68 @@ the proof. The correction is written beside the code rather than tidied away.
 Still **6 of 6**. BACKLOG 5j is reduced from three gates to two, and the red one —
 the only user-facing defect it named — turned out to be a gate defect and is
 fixed.
+
+---
+
+## The MB pass — the merges, 24 August 2026
+
+Both halves merged, in the ruled order, as merge commits.
+
+```
+site  #172  ->  bb1e3cc   parents b912ad0 cd4fc85
+games #39   ->  28e36f9   parents 52fa624 ad55d48
+```
+
+### What the merge order bought, measured
+
+Site first, then the shelf. Production was reached on the **first attempt** with
+no deploy lag at all — the bounded-404 policy never engaged:
+
+```
+attempt 1/8  ALL 200  /apexcurl/ 200 · /apexvelodrome/ 200
+deployment observed on attempt 1.
+```
+
+Between the two merges production served both routes but did not list them, which
+is exactly the state the ordering chose over an advertised 404. The two listing
+assertions failed in that window and cleared once the manifest deployed:
+
+```
+before games merged   19/21   /games/ lists /apexcurl/ exactly once — 0 link(s)
+after                 21/21   run 32774157075 attempt 2, step 6 success
+```
+
+### Every red, and what it turned out to be
+
+| red | verdict | evidence |
+|---|---|---|
+| Curation keys resolve (step 10, canonical shelf) | **CLEARED** | job 97582398553 step 10 success |
+| Shelf mirror is not stale (step 4, byte-identical) | **CLEARED** | run 32774156924 attempt 2 success |
+| Site shelf mirror is not stale (games side) | **CLEARED** | run 32774419792 success |
+| Driving games live verification | window — ran at 20:29:27, before the deploy completed at 20:29:52 | run 32774157151 |
+| **MBM audience discovery closeout** | **STILL RED — see BACKLOG 5l** | run 32774157030 job 97581221345 step 12 |
+
+Both checks that were skipped on the pull request ran after the merge and passed,
+as required: `Routes serve 200 and removed paths 404` (job 97581221593) and
+`Exact production deployment and live browser proof` (job 97581221223).
+
+### Rules earned here
+
+- **A pull request body is a claim about a head that can move underneath it.**
+  Merging a head the body does not describe merges an undocumented change,
+  however benign the diff. Reconciling body against head is a standing pre-merge
+  step, not a one-off.
+- **When a change edits both a pinned reference and its verifier, fires-on-mutation
+  must be re-proved at the new head.** A control that passed at an earlier head
+  proves nothing about the pair after both sides have moved. Re-proved here: a
+  committed take mutation still fails the pin on its named assertion, and still
+  fails it when a sibling gate is taught to accept the mutation.
+- **Skipped is not passed, and a declared skip is only better than a silent one.**
+  Neither is evidence.
+- **A gate proved in one environment is proved in one environment.** Curing a
+  race in the dev container is not curing it on a runner; until it has run green
+  where it will actually run, the diagnosis is a hypothesis. BACKLOG 5l is what
+  that mistake looks like.
+- **A fail-closed assertion must fire on the first instance, not only on all of
+  them.** `!sw.every(zero)` passes while one swatch is collapsed; the report then
+  blames size, which is the confusion the assertion existed to prevent.
