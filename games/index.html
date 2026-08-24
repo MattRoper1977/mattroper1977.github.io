@@ -462,6 +462,35 @@ var TAXONOMY=[
 ];
 var state={q:"",feel:null,sort:"curated",games:[]};
 var $=function(id){return document.getElementById(id)};
+/* Shareable filter state. SLUGS in the URL, never labels: `?feel=quick-go`
+   survives a rename of the QUICK GO chip, where `?feel=QUICK%20GO` would break
+   the moment the display text moved. That separation is the whole point — the
+   label is a presentation detail, the slug is the identifier.
+   replaceState, not push: typing in the search box must not fill the back
+   button with one history entry per keystroke. Params this page does not own
+   are preserved rather than dropped. */
+function feelLabel(slug){
+ for(var i=0;i<FEEL_ORDER.length;i++)if(FEEL_ORDER[i][0]===slug)return FEEL_ORDER[i][1];
+ return slug;
+}
+function syncURL(){
+ if(!window.history||!history.replaceState||!window.URLSearchParams)return;
+ var p=new URLSearchParams(location.search);
+ if(state.q.trim())p.set("q",state.q.trim());else p.delete("q");
+ if(state.feel)p.set("feel",state.feel);else p.delete("feel");
+ var s=p.toString();
+ history.replaceState(null,"",location.pathname+(s?"?"+s:"")+location.hash);
+}
+function readURL(){
+ if(!window.URLSearchParams)return;
+ var p=new URLSearchParams(location.search);
+ state.q=p.get("q")||"";
+ /* A feel slug is validated against FEEL_ORDER before it is trusted. An
+    unknown one filters to nothing, which reads as an empty shelf rather than
+    as a bad link, so it is dropped — never guessed at, never fuzzy-matched. */
+ var f=p.get("feel");
+ state.feel=(f&&FEEL_ORDER.some(function(x){return x[0]===f}))?f:null;
+}
 function tint(hue){return hue+"26"}
 function localHref(h){/* keep every game on the madebymatt.uk origin so the HUD's saved names and reading theme carry across */
  return String(h||"").replace(/^https?:\/\/[^\/]*(?:mattroper1977\.github\.io|madebymatt\.uk)/i,"");}
@@ -531,10 +560,16 @@ function gCard(g,withTake){
 }
 function render(){
  var gs=state.games;
- /* top picks — the ONE deliberate duplication on this page. Eight of the 52
-    appear twice: once here as a pick, once in their genre. Everything else
-    appears exactly once. That is why the page paints 60 cards for 52 games
-    rather than the 82 it used to. */
+ /* top picks — the ONE deliberate duplication on this page. The railed picks
+    appear twice: once here, once in their genre; everything else appears
+    exactly once, which is what took the paint down from the near-double it
+    used to be.
+    No count is written in this comment any more. It said "eight of the 52" and
+    "60 cards", and it was two games stale within a week: Apex Curl and Apex
+    Velodrome took the shelf to 54 on 23 Aug 2026. Nothing in the code needed
+    editing, because every total on this page is counted at run time — which is
+    exactly why a total typed into a comment is the same stale-number trap in
+    slower motion. State the rule, count the number. */
  var rail=$("topRail");rail.textContent="";
  /* No `if(g)`: a TOP href that resolves to nothing is a defect, and the old
     silent skip is exactly what let a rename shrink this rail unnoticed.
@@ -549,7 +584,7 @@ function render(){
   b.textContent=f[1]+" "+n;
   b.setAttribute("aria-pressed",state.feel===key?"true":"false");
   b.setAttribute("aria-label",f[1]+", "+n+" game"+(n===1?"":"s"));
-  b.addEventListener("click",function(){state.feel=(state.feel===key?null:key);render()});
+  b.addEventListener("click",function(){state.feel=(state.feel===key?null:key);syncURL();render()});
   fh.appendChild(b);
  });
  drawGrid();
@@ -620,11 +655,17 @@ function drawGrid(){
   ? ("Filtered — showing "+hits.length+" of "+n+" games as one list.")
   : (n+" games across "+genreCount+" genres. Open a genre, or filter by feel above.");
  $("countline").textContent=filtering
-  ? ("Showing "+hits.length+" of "+n+" games."+(state.feel?" Feel: "+state.feel+".":""))
+  ? ("Showing "+hits.length+" of "+n+" games."+(state.feel?" Feel: "+feelLabel(state.feel)+".":""))
   : (CURATED.length+" top picks of "+n+" games \u2014 every one free, single-file and offline-friendly.");
 }
-$("q").addEventListener("input",function(){state.q=this.value;drawGrid()});
+$("q").addEventListener("input",function(){state.q=this.value;syncURL();drawGrid()});
 $("sort").addEventListener("change",function(){state.sort=this.value;drawGrid()});
+/* Seed from the URL before the shelf lands. render() runs off state, so the
+   only thing that has to be pushed back the other way is the search box, which
+   holds its own value. Placed here rather than inside the fetch callback: a
+   shelf that fails to load should still show the search term it was asked for. */
+readURL();
+if(state.q)$("q").value=state.q;
 /* /Games/games.json lives in another repo, so this repo cannot content-hash it.
    Forced revalidation rather than an invented version — see tools/stamp-data.py. */
 var gjs=window.MBM_STAMP?window.MBM_STAMP("/Games/games.json"):{url:"/Games/games.json",opts:{cache:"no-cache"}};
