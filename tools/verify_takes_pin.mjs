@@ -75,6 +75,17 @@ const REGIONS = [
     what: "the per-game takes and rail slots" },
   { key: 'picksVoice', file: 'games/index.html', start: '<section class="sec" id="picks">', end: '</section>',
     what: "the Top Picks heading and the line under it" },
+  /* LOCKED CHOOSER COPY. Not Matt's voice — the platform's promises about what
+     choosing a homepage does and does not do. verify_games_audience_faces.py
+     asserts these sentences by holding literal copies of them, and the control
+     that guards it deletes a DIFFERENT sentence: it proves the guard can fire,
+     not that the guard's expectation is immune to being co-updated. So the same
+     class applies, and the same defence: the reference is a hash of the
+     committed blob, not a copy of the words. */
+  { key: 'chooserPromise', file: 'index.html', start: '<div class="mf-choice-intro">', end: '</nav>',
+    what: "what choosing a homepage does and does not do" },
+  { key: 'devicePreference', file: 'index.html', start: '<b>Last used on this device</b>', end: '</small>',
+    what: "the on-device preference privacy sentence" },
 ];
 
 const printing = process.argv.includes('--print');

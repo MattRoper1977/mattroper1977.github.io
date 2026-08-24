@@ -724,19 +724,24 @@ never fall back to the working tree, and fail closed if the blob is unreadable.
 
 ---
 
-## 5h. `verify_stats_claim.mjs` is not wired to anything
+## 5h. ~~`verify_stats_claim.mjs` is not wired to anything~~ — **DONE 24 August 2026**
 
-**instrument · work-pending** — recorded 23 August 2026.
+Wired into the `gates` job of `mbm-audience-discovery-closeout.yml`, with a
+control in `gate-controls` that requires it to fail on **the assertion it names**
+and explicitly rejects an INCONCLUSIVE exit 2 from a missing browser.
 
-**What.** The gate exists, is written, and is referenced by no workflow in
-`.github/workflows`. It asserts that `/stats/` makes no remote-counter request
-and that its privacy sentence and the goatcounter config cannot disagree. Nobody
-runs it.
+The hypothesis under which it was recorded was wrong, and the truth is worse than
+the guess. It is not the guard for a stale count. It binds `/stats/`'s privacy
+sentence — *"no IP address is looked up, and no counter request or audience
+preference is sent to a remote counter service"* — to `site.json`'s
+`features.analytics.goatcounter`, which is `""` and is the **only** reason that
+sentence is true. Set the key and `mbm-features.js` appends
+`//gc.zgo.at/count.js`, whose country resolution is done from the IP
+server-side. A gate guarding a privacy claim on a public page had never run.
 
-**Why not now.** Wiring it means finding out whether it currently passes and
-owning whatever it reports, which is not this order's subject. It is recorded
-because a gate that never runs is worse than no gate: it reads, in the tree, like
-a thing that is covered.
+Green on the shipped tree, 7/7. Red-proved externally against a tree with the key
+set: exit 1, failing on `THE RULE`, with the behavioural half independently
+observing the counter request.
 
 ---
 
@@ -755,6 +760,40 @@ band is a decorative identity accent, and every card carries title, description
 and art, so colour is never the only cue. Deciding whether it should meet 3:1
 anyway is a design ruling across the whole shelf, not a fix to two entries. The
 in-game surfaces, which is where these accents carry text, all improved.
+
+---
+
+## 5j. Three more gates are referenced by no workflow, and one of them is red
+
+**instrument · work-pending** — recorded 24 August 2026.
+
+**What.** Closing 5h prompted a full census rather than a spot fix. Of the **118
+executables in `tools/`**, four were referenced by no workflow *and* by no other
+tool. One was `verify_audience_copy.mjs`, which this branch itself had shipped
+unwired — now wired, with a control. The other three are pre-existing on `main`:
+
+```
+verify_driving_games.mjs        117 lines   passes today (rc=0)
+verify_hud_targets.mjs          238 lines   passes today (45 passed, 0 failed)
+verify_highlumen_behaviour.mjs  210 lines   RED today (rc=1)
+```
+
+**The red one matters.** Run by hand against the current tree it reports:
+
+> `- tools (site /theme.js): the cream swatch is 0x0, under 44px`
+
+A control rendering at 0x0 is not a near-miss on the 44px touch target; it is a
+control that is not there. Nothing reports it, because nothing runs the gate.
+
+**Why not now.** The order that found it says: record something genuinely serious
+and stop, do not start it. Wiring `verify_highlumen_behaviour.mjs` would turn a
+currently-green PR red — which by this estate's own rule is *a finding about the
+estate, not a problem with the wiring*, and so must not be resolved by quietly
+leaving it unwired. It needs its own pass: confirm the 0x0 swatch on `/tools/`,
+fix it, then wire all three with red proofs.
+
+**Size.** One focused pass. The wiring is ten lines per gate plus a control; the
+work is owning what the red one reports.
 
 ---
 

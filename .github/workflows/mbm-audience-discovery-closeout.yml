@@ -393,6 +393,42 @@ jobs:
           echo "$out" | grep -q '\[FAIL\]' || { echo "the pin accepted a changed take"; exit 1; }
           node tools/verify_takes_pin.mjs
 
+      # G3. The pin now also covers the LOCKED CHOOSER COPY. The control that
+      # already guarded that copy deletes a different sentence — it proves the
+      # guard can fire, not that the guard's expectation is immune to being
+      # co-updated. This one mutates the promise and requires the pin to name the
+      # region that moved, in a scratch worktree so the real tree is never at risk.
+      - name: The pin notices the locked chooser promise moving by one comma
+        run: |
+          set -euo pipefail
+          W=$(mktemp -d)
+          git worktree add -q --detach "$W" HEAD
+          cleanup() { git worktree remove --force "$W" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          python3 - "$W" <<'PY2'
+          import sys
+          p = sys.argv[1] + '/index.html'
+          s = open(p, encoding='utf-8').read()
+          o = "Choosing one does not create an account, change permissions or hide public content."
+          n = "Choosing one does not create an account, change permissions, or hide public content."
+          assert s.count(o) == 1, f"locked promise not found exactly once ({s.count(o)})"
+          open(p, 'w', encoding='utf-8').write(s.replace(o, n, 1))
+          PY2
+          git -C "$W" add -A
+          git -C "$W" -c user.email=ci@local -c user.name=ci commit -q -m scratch
+          # Run the WORKTREE'S OWN copy. verify_takes_pin.mjs derives ROOT from its
+          # own file location and runs `git show HEAD:` there, so invoking the main
+          # tree's copy would read the main tree's HEAD and pass on an unmutated
+          # blob — a vacuous control. This was caught by testing the control.
+          out=$(cd "$W" && node tools/verify_takes_pin.mjs 2>&1) && rc=0 || rc=$?
+          if [ "$rc" = "0" ]; then
+            echo "the locked promise moved and the pin passed"; echo "$out" | tail -20; exit 1
+          fi
+          grep -q 'FAIL.*chooserPromise' <<<"$out" \
+            || { echo "it failed, but not on the region it names"; echo "$out" | tail -20; exit 1; }
+          echo "control detected — red on chooserPromise, exit $rc"
+          node tools/verify_takes_pin.mjs > /dev/null
+
       - name: A published game is in the sitemap
         run: node tools/verify_sitemap_covers_games.mjs
 
