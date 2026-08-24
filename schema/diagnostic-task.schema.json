@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://madebymatt.uk/schema/diagnostic-task.schema.json",
+  "title": "EducationalDiagnosticTask",
+  "$comment": "Order S §S2 / R6. THE object form. The flat-string curriculumCode variant is deleted, not kept for reference. Three design rules are enforced structurally rather than by convention: (1) every tag dimension stores a SLUG, never display text, so a label rename never touches a task file or a shared URL - display text lives in data/tag-labels.json; (2) additionalProperties is false at every level, which is what prevents a learnerName field appearing here later (S6.3: the printed record may carry a name, localStorage never does); (3) supportGiven has no free-text field, because a note box on a shared device is the same risk as persisted search history.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "pathway",
+    "classroomRole",
+    "curriculum",
+    "interactionModel",
+    "estimatedMinutes"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Stable slug. Never renamed once published; shared links depend on it."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 80
+    },
+    "pathway": {
+      "type": "string",
+      "enum": [
+        "build",
+        "grow",
+        "launch"
+      ],
+      "description": "Selects which microcopy register renders by default."
+    },
+    "classroomRole": {
+      "type": "string",
+      "enum": [
+        "starter",
+        "retrieval-drill",
+        "core-investigation",
+        "guided-practice",
+        "independent-practice",
+        "assessment",
+        "plenary",
+        "extension"
+      ],
+      "$comment": "PROVISIONAL. Tag dimension 1. Reconcile against measured content at S2.2 and print every value added or removed with the content that justified it. Duration is NOT baked in here - the card sample's '15-Min Investigation' was drift; estimatedMinutes is a separate field."
+    },
+    "interactionModel": {
+      "type": "string",
+      "enum": [
+        "simulation",
+        "sorting",
+        "multiple-choice",
+        "calculation",
+        "free-response",
+        "drawing",
+        "reading",
+        "printed-offline"
+      ],
+      "$comment": "PROVISIONAL. Tag dimension 3. Same reconciliation rule as classroomRole."
+    },
+    "curriculum": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "specification",
+        "topic"
+      ],
+      "$comment": "Tag dimension 2 renders from topic. The object form exists because unitAwardRef is needed for UAS mapping and topic is needed for filtering - neither survives a flat string.",
+      "properties": {
+        "specification": {
+          "type": "string",
+          "enum": [
+            "edexcel-igcse-single-science",
+            "aqa-uas",
+            "asdan-peq",
+            "national-curriculum",
+            "none"
+          ],
+          "$comment": "RECONCILED at S2.2 against measured estate vocabulary, not against task files - there are none yet (0 files carry classroomRole). Evidence: 'Edexcel IGCSE Single Science' 29 lesson entries; 'ASDAN PEQ' 36; 'AQA Unit Award Scheme' named on its own hub. REMOVED 'edexcel-igcse-4ss0' -> 'edexcel-igcse-single-science': the code 4SS0 appears 0 times in this estate, and a slug carrying an unverified awarding-body code is an invented claim inside a contract. The per-task 'code' field still carries the real reference where someone has the document. NOT ADDED: asdan-living-independently and asdan-hospitality - both are present as lessons (12 each) but no diagnostic task maps to them yet, and the rule is extend only against real mapped content."
+        },
+        "code": {
+          "type": "string",
+          "description": "Spec reference as printed in the awarding body's own document, e.g. '4.2.3'. Omit rather than invent."
+        },
+        "topic": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "unitAwardRef": {
+          "type": "string",
+          "description": "AQA Unit Award Scheme unit reference. Present only where the task genuinely maps to a unit."
+        }
+      }
+    },
+    "estimatedMinutes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 120
+    },
+    "feedback": {
+      "type": "array",
+      "description": "Dignity-first microcopy. Diagnostic, never evaluative: name the fault and its consequence, never the pupil.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "register"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+          },
+          "trigger": {
+            "type": "string",
+            "description": "Machine-checkable condition this response fires on."
+          },
+          "register": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "build",
+              "launch"
+            ],
+            "$comment": "Both are required so no task can ship LAUNCH-only prose to a BUILD pupil. The reading-age audit found lessons running +2.39 grades above target; this field is the fix.",
+            "properties": {
+              "build": {
+                "type": "string",
+                "maxLength": 120,
+                "description": "Plain. One clause of fault, one of consequence."
+              },
+              "grow": {
+                "type": "string",
+                "maxLength": 160,
+                "description": "Optional. Falls back to build."
+              },
+              "launch": {
+                "type": "string",
+                "maxLength": 200,
+                "description": "Full technical register."
+              }
+            }
+          },
+          "actionLabel": {
+            "type": "string",
+            "maxLength": 32,
+            "description": "Replaces 'Try Again'. Describes the next physical or cognitive move, e.g. 'Isolate fault & retry'."
+          },
+          "tier1Hint": {
+            "type": "string",
+            "description": "Pupil-accessible, unlogged."
+          },
+          "tier2Prompt": {
+            "type": "string",
+            "description": "Pupil-accessible, unlogged."
+          },
+          "tier3StructuralBlueprint": {
+            "type": "string",
+            "$comment": "The complete worked answer. GATED: released by the Co-Pilot drawer only, never a button the pupil presses, and its release writes a supportGiven entry."
+          }
+        }
+      }
+    },
+    "supportGiven": {
+      "type": "array",
+      "default": [],
+      "$comment": "Written by the Co-Pilot drawer. Pre-populates the support line on every evidence sheet (S6.2). No free-text field, deliberately. An empty array means no support was recorded - it does NOT mean the work was independent, and no sheet may render it as such.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "at"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "tier3-blueprint",
+              "tier2-prompt",
+              "option-reduction",
+              "hint-revealed",
+              "read-aloud",
+              "adult-prompt",
+              "scribed"
+            ]
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "copilot-drawer",
+              "adult",
+              "pupil"
+            ]
+          }
+        }
+      }
+    },
+    "supportSummary": {
+      "type": "string",
+      "enum": [
+        "independent",
+        "prompted",
+        "substantially-assisted",
+        "not-recorded"
+      ],
+      "default": "not-recorded",
+      "$comment": "R5. Set by a human at export, never inferred from supportGiven being empty. 'not-recorded' is the only honest default and it must print as such on the sheet - an unticked line, never a pre-ticked independence claim."
+    }
+  }
+}
