@@ -162,7 +162,8 @@ jobs:
           for g in tools/verify_echovault_surfaces.js \
                    tools/verify_relicforge_surfaces.js \
                    tools/verify_curation_keys.mjs \
-                   tools/verify_surfaces.js; do
+                   tools/verify_surfaces.js \
+                   tools/verify_url_filter_state.mjs; do
             echo "=== $g" | tee -a production-driven.log
             rc=0
             out="$(node "$g" 2>&1)" || rc=$?
