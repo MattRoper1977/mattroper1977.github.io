@@ -380,3 +380,29 @@ mid-construction. No live zero-size tap target. This corrects H6, whose
 - **A control that matches on message text will catch your own rename** — and
   should, which is why each swatch control now also asserts the other's message
   is absent.
+
+### The repaired step caught my own regression, one commit later
+
+N1's acorn line was added as a SECOND `npm i --no-save`. That prunes what the
+first one installed, so playwright vanished and every browser-driving gate died
+with `Cannot find module 'playwright-core'`. Reproduced rather than assumed:
+
+```
+two installs   after playwright:  playwright-core yes   acorn NO
+               after acorn:       playwright-core NO    acorn yes
+one install                       playwright-core yes   acorn yes
+```
+
+The point worth keeping: the old `set +e` step would have printed those four
+crashes and reported SUCCESS. The repaired step reported
+
+```
+PRODUCTION-DRIVEN GATES DID NOT ALL PASS
+  NOT-RUN  verify_echovault_surfaces.js  - crashed
+  NOT-RUN  verify_relicforge_surfaces.js - crashed
+  NOT-RUN  verify_curation_keys.mjs      - inconclusive
+  NOT-RUN  verify_surfaces.js            - crashed
+```
+
+and failed. A prover is worth having exactly when it catches the person who
+repaired it.
