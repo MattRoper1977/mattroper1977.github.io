@@ -254,6 +254,42 @@ jobs:
       # Pages serves, because there is no build step. Scenario 3 is the one that
       # matters — it shows the old `rendered === expected` passing on 0 === 0,
       # and the new guard refusing it.
+      # Z2. A game's declared accent must equal its shelf card hue. Derived from
+      # the manifest, nothing pinned. The Velodrome split is asserted too, so it
+      # stays a decision rather than becoming drift somebody later "tidies".
+      - name: Each game's accent is its shelf card hue
+        run: node tools/verify_accent_parity.mjs
+
+      - name: ...and the parity gate notices a game drifting from its card
+        run: |
+          set -e
+          cp apexcurl/index.html /tmp/ac.bak
+          sed -i "s/const ACCENT='#00F0B4'/const ACCENT='#39C6EF'/" apexcurl/index.html
+          out=$(node tools/verify_accent_parity.mjs 2>&1 || true)
+          cp /tmp/ac.bak apexcurl/index.html
+          echo "$out" | grep -q 'accent parity:' || { echo "the gate did not run - this control proves nothing"; echo "$out"; exit 1; }
+          echo "$out" | grep -q 'script accent equals the shelf card hue' \
+            || { echo "it failed, but not on the assertion it names"; echo "$out"; exit 1; }
+          echo "$out" | grep -q '\[FAIL\]' || { echo "parity accepted a drifted accent"; exit 1; }
+          node tools/verify_accent_parity.mjs
+
+      - name: ...and it notices the deliberate split being tidied away
+        run: |
+          set -e
+          cp apexvelodrome/index.html /tmp/av.bak
+          python3 - <<'PY'
+          s = open('apexvelodrome/index.html', encoding='utf-8').read()
+          a = s.replace("'#5fb6ff'", 'ACCENT')
+          assert a != s, 'control did not mutate anything - it would prove nothing'
+          open('apexvelodrome/index.html', 'w', encoding='utf-8').write(a)
+          PY
+          out=$(node tools/verify_accent_parity.mjs 2>&1 || true)
+          cp /tmp/av.bak apexvelodrome/index.html
+          echo "$out" | grep -q 'accent parity:' || { echo "the gate did not run"; echo "$out"; exit 1; }
+          echo "$out" | grep -q 'the declared split survives' \
+            || { echo "it failed, but not on the assertion it names"; echo "$out"; exit 1; }
+          node tools/verify_accent_parity.mjs
+
       # Z1. The takes gate resolves its content from the COMMITTED BLOB and
       # compares it to a hash pinned in data/takes-pin.json. Fetch depth matters:
       # `git show HEAD:` needs the blob, which a depth-1 checkout still has.
