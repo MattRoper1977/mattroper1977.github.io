@@ -863,59 +863,99 @@ path, pass or fail; the control still fails when the comparison is loosened; and
 the H4 inventory is re-run with the wider query across all 94 gates, with the
 count of new candidates stated.
 
-## 5l. LIVE RED ON MAIN — the swatch gate fails in CI, and my H6 diagnosis was half wrong
-
-**instrument · LIVE RED** — recorded 24 August 2026, immediately after the merge
-of bb1e3cc. This is not a backlog item to schedule. `main` is red now.
-
-**What.** `verify_highlumen_behaviour.mjs` was wired into the closeout in this
-arc. On main it fails:
+**WIDENED 24 August 2026 by the behavioural sweep (§N5).** The corrected
+question is not "does a failure message print the canonical value" but *does any
+code path, on any exit code, print the expected or canonical value alongside or
+instead of the actual*. Run against a canonical corpus of 9 fragments — the
+regions the pin exists to protect — across all 94 gates:
 
 ```
-[FAIL] High-Lumen behaviour — 1 finding(s):
-  - tools (site /theme.js): the cream swatch is 0x0, under 44px
+population            94
+swept behaviourally   65   ran here and produced a verdict
+NOT swept             29   needs network, secrets, a browser, or timed out
+  of those, holding a canonical literal in source   1   (lexical only, NOT proof)
+LEAK on some path      3   every one of them on rc=0
 ```
 
-run 32774157030 · job 97581221345 · step 12 "Six reading swatches on every
-engine, each a real 44px target".
-
-**Why this is mine, and where my reasoning failed.** H6 met exactly this message
-when the gate was first run by hand. I diagnosed it as a LAYOUT RACE INSIDE THE
-GATE, not a page defect, on the evidence that at 1280x720 in the dev container
-the swatch measures 44x44 before opening the details, immediately after, and
-after a settle — and that adding a settle made it pass. That evidence was real
-but it was not sufficient: it established the race exists, not that the settle
-cures it everywhere. In GitHub Actions it still fails. I generalised from one
-environment and called the defect closed.
-
-**And the fail-closed assertion I added does not catch it.** H6 added
-
-```js
-assert(!sw.every((s) => s.w === 0 && s.h === 0), ...)
+```
+verify_audience_copy.mjs         "Made by Matt's Top Picks"
+verify_curation_keys.mjs         the /apexpool/ take            (the original 5k)
+verify_curation_vocabulary.mjs   the Top Picks line AND the rail heading
 ```
 
-which fires only when EVERY swatch is 0x0. Here exactly one is — the first,
-cream. So the run reports the misleading "under 44px" that H6 exists to prevent,
-which is the very confusion it was written to stop. `every` should be `some`, or
-better, each zero-sized swatch should be named and reported as "never reached
-layout" individually.
+**All three leak on the PASS path.** That is why a lexical query written against
+failure messages missed them twice. The lexical query is retired; it has now
+failed to find this defect on two separate passes and must not be run a third
+time. The three are open — fixing them is not this order's scope, and the split
+above is deliberately not netted into one number.
 
-**The blast radius is larger than one gate.** Both closeout jobs abort on it:
+## 5l. ~~LIVE RED ON MAIN — the swatch gate fails in CI~~ — **RESOLVED 24 August 2026**
+
+**instrument · done.** Harness, not page — established by measurement before
+either was touched, with a diagnostic that asserts nothing
+(`tools/diagnose_swatch_layout.mjs`). It measures at three moments: untouched
+after load, after the harness opens the panels, and after waiting on a
+condition.
 
 ```
-Static gates            step 12 FAIL -> steps 13-16 SKIPPED   (4 gates never ran)
-Gates are proven red    step 22 FAIL -> steps 23-39 SKIPPED  (17 controls never ran)
-                        step 36 "Upload browser proof artifacts" FAIL
+A untouched      zero-box 0:cream   4 runs of 6      <- the transient
+C condition met  zero-box none      6 runs of 6
 ```
 
-SKIPPED IS NOT PASSED. Twenty-one further checks currently report nothing on
-every push to main.
+Always index 0, always cream. The swatches are injected by `theme.js` at
+runtime, so the first can be measured mid-construction. Every swatch has its
+44x44 box long before any person could reach it, so there is no live zero-size
+tap target and no page defect.
 
-**Done when.** The gate passes on a GitHub runner, or is proved to be reporting a
-real page defect there and the page is fixed; the zero-size assertion names each
-collapsed swatch rather than requiring all of them; and the two closeout jobs run
-to completion so the 21 downstream checks report again. Do not fix this by
-skipping, disabling or quarantining the gate.
+**It also corrects H6.** H6 claimed the swatch measured 44x44 untouched. That
+reading was taken *after* the settle that hid the transient, which is why the
+container looked clean and the runner did not.
+
+**Two bugs were fixed, not one.**
+
+- The measurement: both `waitForTimeout` calls are gone. It waits on
+  `document.fonts.ready`, then on every swatch reporting a non-zero box, then a
+  double `requestAnimationFrame` — with a timeout that reports MEASUREMENT
+  INVALID rather than a size.
+- The assertion: `!sw.every(s => s.w===0 && s.h===0)` required EVERY swatch to
+  be collapsed. Exactly one ever is, so the guard never fired and the misleading
+  "under 44px" got through. `some`, not `every`, and a swatch with no box is
+  never re-reported as a size.
+
+Proved on a runner, not in the container: closeout runs 199 and 200 and 201.
+Both controls are permanent, and each asserts the other's message is ABSENT.
+
+## 5m. `Driving games live verification` has been red on main since 14 August
+
+**instrument · work-pending** — recorded 24 August 2026. **Not caused by the
+merge**, and I said otherwise once before correcting it.
+
+**What.** Run 12 attempt 2 on `bb1e3cc`, after both halves deployed:
+
+```
+FAIL  pupil page carries both mf-feature cards — ["lesson-hub","asdan-suite","studio-suite"]
+---- 1 FAILED
+```
+
+`Served bytes == committed bytes` passes, so this is not deploy lag.
+
+**Why it is not ours.** Runs 10 (`689a95a`) and 11 (`afba6d4`) also failed, on
+14 August, ten days before this merge. Run 9 on 13 August was the last green. I
+first classified this as the deployment window on timing evidence alone — the
+attempt had completed 25 seconds before Pages finished — and the order was right
+to demand it be closed properly rather than assumed.
+
+**Also visible in that run**, and worth a look while someone is in there: 36
+card images report `naturalWidth:0` with `loading="lazy"` and
+`inViewport:false` after a 3s ceiling. The gate counts them as "reported, not
+counted" and passes, which is the right call for lazy art below the fold, but it
+is the same family as 5l — an element with no measurement being handled as if it
+had one.
+
+**Done when.** Either `/for/pupils/` carries the two `mf-feature` cards the gate
+names, or the gate is re-pointed at what that page is now ruled to carry, with
+the ruling cited. It must not be left red-and-ignored: that is what teaches an
+estate to stop reading its own reds.
 
 ## 6. Featured curation
 

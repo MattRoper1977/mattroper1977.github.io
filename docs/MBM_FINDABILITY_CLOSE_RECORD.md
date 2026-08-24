@@ -321,3 +321,62 @@ as required: `Routes serve 200 and removed paths 404` (job 97581221593) and
 - **A fail-closed assertion must fire on the first instance, not only on all of
   them.** `!sw.every(zero)` passes while one swatch is collapsed; the report then
   blames size, which is the confusion the assertion existed to prevent.
+
+---
+
+## The N pass — main was red, 24 August 2026
+
+Twenty-one checks were reporting nothing on every push. Fixed in the ruled
+order: the prover first, then the signal, then the defect.
+
+### N1 — the prover could not report
+
+Step 7 of the post-merge verifier ran `set +e` under `continue-on-error: true`.
+The intent was right and is kept — run every gate to completion so the summary
+names all of them — but nothing they reported could fail anything. It had been
+hiding two findings for as long as it existed: `verify_published_live.mjs` was
+invoked with **no arguments at all** (it needs `--shelf` and explicit `--path`
+values plus two checkouts) and died on a Node TypeError, and
+`verify_curation_keys.mjs` reported INCONCLUSIVE because acorn was never
+installed there. Every invocation now resolves to PASS / FAIL / NOT-RUN and only
+PASS is green.
+
+### N2 — one failure cost twenty-one signals
+
+The suite was a sequential step chain. Each gate now carries `if: always()` and
+an aggregator makes the job red. Not `continue-on-error`, which hides reds
+rather than isolating them. Proved with the swatch gate still failing: 20 of the
+21 dark signals reported, and every one of them was green — so the cascade had
+been hiding nothing except itself.
+
+### N3 — harness, established before either side was touched
+
+```
+A untouched      zero-box 0:cream   4 runs of 6
+C condition met  zero-box none      6 runs of 6
+```
+
+The swatches are injected by `theme.js` at runtime; the first can be measured
+mid-construction. No live zero-size tap target. This corrects H6, whose
+"44x44 untouched" reading was taken after the settle that hid the transient.
+
+### Rules earned here
+
+- **A null measurement is not a failing measurement.** 0x0 means *not measured*.
+  Reporting it as a size sends the fixer to the CSS for a bug that is not there.
+- **`every` where `some` was meant makes a guard fire only in the case that
+  cannot happen.** A guard demanding total failure never catches the partial
+  kind, which is the only kind that occurs.
+- **A gate suite must not be a sequential step chain.** One failure must cost
+  one signal. Isolate with `if: always()` plus an aggregator, never with
+  `continue-on-error`.
+- **Evidence from one environment cannot establish that a timing fix works in
+  another.** A settle proves the race exists; it never proves it is cured.
+- **A crash is not a pass, INCONCLUSIVE is not a pass, and `set +e` turns both
+  green.**
+- **A value leaked on the PASS path is invisible to any query written against
+  failure messages.** Three gates leak canonical copy on rc=0; the lexical query
+  is retired.
+- **A control that matches on message text will catch your own rename** — and
+  should, which is why each swatch control now also asserts the other's message
+  is absent.
