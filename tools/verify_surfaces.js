@@ -175,6 +175,40 @@ function launchOpts() {
   }
   console.log(`       #flatResults ${rendered.__flatCards} cards - unfloored by design (search host, empty at rest)`);
 
+  /* ---- S2g: the CONDITIONAL floor for #flatResults (T6.1) -----------------
+     "0 at rest is correct" is a sound reason not to floor AT REST. It is not a
+     reason to leave the surface unguarded: 0 results for a term that certainly
+     matches is a real defect and nothing was catching it.
+
+     So drive a search for a term DERIVED from the served manifest - never a
+     literal - and require a non-zero result. The term is named in the
+     assertion, because a floor whose input is invisible cannot be argued with. */
+  if (floorExpected && cardsSettled) {
+    const probe = await page.evaluate(async (man) => {
+      const first = (man.games || man)[0] || {};
+      // a token from a real title: certain to match, and it moves with the shelf
+      const term = String(first.title || '').split(/\s+/).filter((w) => w.length > 3)[0] || '';
+      const box = document.querySelector('#q');
+      if (!box || !term) return { term, found: null, why: !box ? 'no #q search box' : 'no usable term in the first title' };
+      const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      set.call(box, term);
+      box.dispatchEvent(new Event('input', { bubbles: true }));
+      const deadline = Date.now() + 4000;
+      while (Date.now() < deadline) {
+        const n = document.querySelectorAll('#flatResults .gcard').length;
+        if (n > 0) return { term, found: n };
+        await new Promise((r) => requestAnimationFrame(r));
+      }
+      return { term, found: 0 };
+    }, floorManifest);
+    if (probe.found === null) {
+      ok('SEARCH FLOOR: #flatResults', false, `MEASUREMENT INVALID - ${probe.why}, so the search was never driven`);
+    } else {
+      ok('SEARCH FLOOR: #flatResults', probe.found > 0,
+         `searching "${probe.term}" (derived: first served manifest title) returned ${probe.found} card(s)`);
+    }
+  }
+
   /* ------------------- can-fail control for the rendered-DOM count -------- */
   // A count that cannot drop is not a measurement. Serve the same page against
   // a manifest with one ruled game REMOVED, and require the count to fall.

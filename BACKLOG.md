@@ -957,6 +957,54 @@ names, or the gate is re-pointed at what that page is now ruled to carry, with
 the ruling cited. It must not be left red-and-ignored: that is what teaches an
 estate to stop reading its own reds.
 
+## 5n. The three-tag card: what the estate can and cannot derive
+
+**content · work-pending** — recorded 24 August 2026 from Order S3 §T2. This is
+Matt's backfill worklist, and it is the deliverable that pass produced.
+
+**Coverage, measured over all 641 resources:**
+
+```
+interactionModel   461 classified (72%)  -> DISCARDED at spot-check, see below
+classroomRole        2 classified ( 0%)
+curriculum           0 classified ( 0%)
+```
+
+**interactionModel was derived and then discarded whole.** Twenty resources were
+spot-checked at random (seed 20260824) against the artefact itself: **12 of 20
+agreed, against a threshold of 18**. At 461 classified, 60% accuracy puts ~184
+wrong tags in front of teachers, and a wrong tag is worse than a missing one
+because someone acts on it. `tools/derive_resource_tags.py` is kept because the
+method is reproducible and the next pass should start from it, not from scratch.
+
+**The two failure modes to fix before re-running:**
+
+1. **One `<textarea>` inside a 30-60 button slideshow reads as `free-response`.**
+   Seven of the eight disagreements were this. The dominant interaction is
+   presentation; the textarea is one written prompt inside it. A rule needs to
+   weigh the textarea against the slide count, not fire on its presence.
+2. **A button-driven sort or classify activity reads as `reading`.**
+   `primary-y4-groupclassify-l5` has 11 buttons, no inputs, and is a
+   classification task. The `reading` residual fires whenever no `<input>`,
+   `<textarea>`, `<select>` or `<canvas>` is present, and button-driven
+   activities have none of those.
+
+**classroomRole cannot come from `type`.** All 641 carry it, and its values —
+`lesson` 489, `teacher` 55, `support` 38, `game` 31, `pupil` 18, `Hub` 8 —
+describe **what the artefact is**, not where it sits in a lesson arc. Only
+`revision` → `retrieval-drill` maps by definition, and there are two of those.
+This needs authoring against the resource, not deriving from the record.
+
+**curriculum has no licit source in this repo.** T1.2 permits it only where a
+scheme-of-work document already names the resource. No SoW workbook is present
+here, so the field stays empty. A spec code inferred from a title is exactly the
+invented claim R3 exists to prevent.
+
+**Done when.** Either the two interactionModel rules are repaired and re-pass the
+20-at-random spot-check at 18/20, or the dimension is authored. No coverage
+target: T1.3 forbids one, because pressure to reach a percentage is pressure to
+guess.
+
 ## 6. Featured curation
 
 There is no way to say "these six things first" — the homepage strips are
