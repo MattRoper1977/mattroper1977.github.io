@@ -687,6 +687,77 @@ excluded deliberately rather than by pattern, which is exactly the decision item
 
 ---
 
+## 5g. Ten more gates could still adopt the change they exist to catch
+
+**instrument · work-pending** — recorded 23 August 2026.
+
+**What.** The Z1 sweep examined 36 gates for one defect class: a gate whose
+expected value can be moved by the same ordinary act that changes the thing it
+checks. Ten are in the class. Three are already backstopped by
+`data/takes-pin.json`, because the prose they quote sits inside a pinned region:
+
+```
+BACKSTOPPED by the takes pin
+  verify_curation_keys.mjs        five of Matt's takes, typed as literals
+  verify_arcade_sports.js         the Top Picks blurb, as a prefix fragment
+  verify_production_after_merge.mjs   the rail name, twice
+
+NOT backstopped
+  verify_games_audience_faces.py  eight strings; /main/ and the chooser
+  verify_games_audience_faces.mjs the same two, in the .mjs sibling
+  verify_stats_claim.mjs          the /stats/ privacy sentence, as a regex
+  verify_apextennis_home.py       the Apex Tennis card blurb on /main/
+  verify_apexpool.js              landing copy
+  verify_biopunkhive_browser.js   title and description
+  .github/workflows/biopunkhive-verify.yml  the same, inline in the workflow
+```
+
+**Why not now.** Z1's ruling was about the takes and it has a mechanism. Pinning
+seven more regions is a different pass with its own decisions — what counts as a
+region, who owns each pin, and whether some of these should instead derive from a
+record rather than be pinned at all. Doing it inside a finish order would be new
+scope.
+
+**Evidence to start from.** `tools/verify_takes_pin.mjs` is the pattern:
+hash a structurally-delimited region, resolve it from `git show HEAD:<path>`,
+never fall back to the working tree, and fail closed if the blob is unreadable.
+
+---
+
+## 5h. `verify_stats_claim.mjs` is not wired to anything
+
+**instrument · work-pending** — recorded 23 August 2026.
+
+**What.** The gate exists, is written, and is referenced by no workflow in
+`.github/workflows`. It asserts that `/stats/` makes no remote-counter request
+and that its privacy sentence and the goatcounter config cannot disagree. Nobody
+runs it.
+
+**Why not now.** Wiring it means finding out whether it currently passes and
+owning whatever it reports, which is not this order's subject. It is recorded
+because a gate that never runs is worse than no gate: it reads, in the tree, like
+a thing that is covered.
+
+---
+
+## 5i. 42 of 54 shelf hues miss 3:1 on the light card
+
+**content · ruling-pending** — recorded 23 August 2026.
+
+**What.** Measured while correcting two card hues: the 6px left border on
+`.gcard` is below the 3:1 non-text bar for most of the shelf on `--card #FFFDF6`
+— worst 1.23 (Aurora Links 3D), best 6.67. The two corrected hues are in that
+population (Apex Curl 1.46, Apex Velodrome 1.80) and are slightly worse than the
+values they replaced (1.97, 2.14).
+
+**Why not now.** It is systemic and it is arguably out of scope for 1.4.11: the
+band is a decorative identity accent, and every card carries title, description
+and art, so colour is never the only cue. Deciding whether it should meet 3:1
+anyway is a design ruling across the whole shelf, not a fix to two entries. The
+in-game surfaces, which is where these accents carry text, all improved.
+
+---
+
 ## 6. Featured curation
 
 There is no way to say "these six things first" — the homepage strips are
