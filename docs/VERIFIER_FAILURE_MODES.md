@@ -1091,3 +1091,64 @@ both of the same family:
   long lines did not contain the match. Evidence that does not show the thing
   being reported has to be taken on trust, and evidence taken on trust is not
   evidence. The excerpt is now centred on the match.
+
+---
+
+## 47. `cmd | grep -q` under `pipefail` reports NO MATCH on output that contains the match
+
+This one turned main red, and the failing control's own output contained the
+string it reported as absent.
+
+```bash
+set -euo pipefail
+if python3 tools/verify_design_inheritance.py --report 2>&1 | grep -q "hero mark"; then
+```
+
+`grep -q` exits the instant it matches, and closes the pipe. The producer — still
+writing, because that report prints its failures one line at a time and has more
+to say afterwards — dies of `BrokenPipeError`. **`pipefail` then promotes the
+producer's death to the status of the whole pipeline**, so the `if` takes the
+`else` branch. The match succeeded and the check reported that it had not.
+
+Whether it fires depends on scheduling, not on the thing being measured: on an
+idle machine the producer finishes writing before `grep` exits and everything
+looks fine. This control passed on the pull request and failed four minutes
+later on the same content, on a runner forty steps in with two orphaned servers
+competing for the CPU.
+
+Measured, all four forms, same 1.3 MB of output with the match present:
+
+| form | verdict |
+|---|---|
+| `cmd \| grep -q PAT` | **reports NO MATCH** |
+| `printf '%s' "$out" \| grep -q PAT` | **reports NO MATCH** |
+| `grep -q PAT <<<"$out"` | matches |
+| `case "$out" in *PAT*)` | matches |
+
+`printf … \| grep -q` fails for the same reason and is not a fix — the herestring
+is, because it is a file rather than a live pipe.
+
+**Rule:** never pipe a live producer into a short-circuiting consumer (`grep -q`,
+`head`, `grep -m1`) under `pipefail`. Capture first, then match on a herestring:
+
+```bash
+rc=0
+out="$(cmd 2>&1)" || rc=$?
+if grep -q "PAT" <<<"$out"; then …
+```
+
+Capturing `rc` separately matters too: these controls run a gate that is
+*expected* to exit non-zero, and `set -e` would abort the step on the assignment
+otherwise.
+
+Two smaller things this cost, both worth fixing wherever they appear:
+
+- **The control failed without printing what it saw.** Diagnosing it meant
+  re-deriving the whole pipeline by hand. A control that says "the gate did not
+  notice X" must print the output in which it did not find X.
+- **The control never proved it had mutated anything.** `sed -i
+  's|<img class="mf-hero-mark"[^>]*>||'` matches only while `class` is the first
+  attribute. The day the renderer reorders them, the sed removes nothing, the
+  gate correctly reports no problem, and the control reads that as a failure of
+  the gate. It now counts the occurrences before and after and refuses to judge
+  anything if the count did not move.

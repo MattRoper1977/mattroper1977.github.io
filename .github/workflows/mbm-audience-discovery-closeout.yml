@@ -233,11 +233,22 @@ jobs:
               + markup[i:]
           )
           PY
-          if python3 tools/verify_design_inheritance.py --report 2>&1 \
-             | grep -q "small duplicate brand mark sits above the page heading"; then
-            echo "control detected"
+          # CAPTURE, then match on a herestring. Piping the gate straight into
+          # `grep -q` under `pipefail` is a race, not a check: grep exits on the
+          # first match and closes the pipe, the still-writing python dies of
+          # BrokenPipeError, and pipefail promotes that to the pipeline's
+          # status - so the control reports NO MATCH on output that contains
+          # the match. It cost this suite a red on main. Every other control in
+          # this file already reads `<<<"$out"`; these two were the hold-outs.
+          rc=0
+          out="$(python3 tools/verify_design_inheritance.py --report 2>&1)" || rc=$?
+          if grep -q "small duplicate brand mark sits above the page heading" <<<"$out"; then
+            echo "control detected (gate exit $rc)"
           else
-            echo "design gate did not notice a duplicate mark above the heading"; exit 1
+            echo "design gate did not notice a duplicate mark above the heading (gate exit $rc)"
+            printf '%s\n' "$out"
+            git checkout -- for/teachers/index.html
+            exit 1
           fi
           git checkout -- for/teachers/index.html
 
@@ -888,13 +899,29 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
+          # The sed must actually remove something. A control that mutates
+          # nothing proves nothing, and this one would have gone on passing if
+          # the attribute order in the rendered markup ever moved.
+          before="$(grep -c 'mf-hero-mark' for/teachers/index.html || true)"
           sed -i 's|<img class="mf-hero-mark"[^>]*>||' for/teachers/index.html
-          if python3 tools/verify_design_inheritance.py --report 2>&1 | grep -q "hero mark"; then
-            echo "control detected"
-          else
-            echo "design gate did not notice a missing hero mark"; exit 1
+          after="$(grep -c 'mf-hero-mark' for/teachers/index.html || true)"
+          if [ "$before" -le "$after" ]; then
+            git checkout -- for/teachers/index.html
+            echo "control mutated nothing: mf-hero-mark count $before -> $after"; exit 1
           fi
+          # CAPTURE, then match on a herestring - see the note on the duplicate
+          # mark control above. This is the step that went red on main with the
+          # match present in its own output.
+          rc=0
+          out="$(python3 tools/verify_design_inheritance.py --report 2>&1)" || rc=$?
           git checkout -- for/teachers/index.html
+          if grep -q "hero mark" <<<"$out"; then
+            echo "control detected (mf-hero-mark $before -> $after, gate exit $rc)"
+          else
+            echo "design gate did not notice a missing hero mark (gate exit $rc)"
+            printf '%s\n' "$out"
+            exit 1
+          fi
 
       # N2. This suite used to be a sequential step chain: one failing gate
       # skipped every gate after it, so a single red cost twenty-one signals and

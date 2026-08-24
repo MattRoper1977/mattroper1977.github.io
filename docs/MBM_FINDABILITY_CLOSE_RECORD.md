@@ -406,3 +406,152 @@ PRODUCTION-DRIVEN GATES DID NOT ALL PASS
 
 and failed. A prover is worth having exactly when it catches the person who
 repaired it.
+
+## The S3 pass — closing Order S, 24 August 2026
+
+Order S arrived as a batch of proposed code. Three of its four major sections
+died on the same fault, and the pattern is the finding: **the batch described
+the estate it imagined, not the estate that exists.** Every defect found in the
+pasted code was correctly found and almost entirely irrelevant, because none of
+that code was ever going to ship. What survived was exactly the set of ideas
+that needed no code — a metadata standard, a microcopy register, and a line on
+a form.
+
+### The sharpest single finding of the arc, in its own words
+
+**Adopting the proposed filter engine would have installed all three of its
+bugs into a filter that does not have them.**
+
+- `drawGrid()` **rebuilds the DOM** rather than hiding cards, so the
+  `[hidden]`-vs-`display` defect is structurally impossible here.
+- `state.feel` is **single-value**, so the AND-across-everything dead end is
+  structurally impossible here.
+- §4.5 already holds, because nothing persists `q` or `feel`.
+
+The engine is retired, not deferred. Two ideas from §S4 survived: slugs in the
+URL (shipped) and multi-value within a facet (declined — no dimension has
+enough classified values to select between).
+
+### §T2 — three derivations, and the discipline of discarding one
+
+| dimension | classified of 641 | collisions | outcome |
+|---|---|---|---|
+| `interactionModel` | 461 (71%) | 92 | **discarded whole** at 12/20 |
+| `classroomRole` | 2 (0%) | 0 | too sparse to render |
+| `curriculum` | 0 (0%) | 0 | no licit source in this repo |
+
+Twenty per dimension, chosen at random against seed `20260824`, judged against
+the artefact rather than against the rule that produced the value. The threshold
+was 18/20 and `interactionModel` returned **12/20**. At 461 classified, 60%
+accuracy puts roughly 184 wrong tags in front of teachers — and a wrong tag is
+worse than a missing one, because someone acts on it.
+
+So **no card component ships.** The three-tag card is a real idea rendering a
+record with nothing in it.
+
+**The ten most common unclassified reasons — Matt's backfill worklist:**
+
+```
+641  curriculum        no scheme-of-work document names this resource
+409  classroomRole     type='lesson' describes the artefact, not its place in a lesson arc
+ 85  interactionModel  no rule fired
+ 80  classroomRole     type='Lesson'   (same value, different case)
+ 55  classroomRole     type='teacher'
+ 38  interactionModel  collision: free-response + simulation
+ 38  classroomRole     type='support'
+ 37  interactionModel  collision: free-response + multiple-choice + sorting
+ 31  classroomRole     type='game'
+ 18  classroomRole     type='pupil'
+```
+
+Two things fall out of that table that were not the point of it. The `type`
+field carries `lesson` and `Lesson` as **separate values** — 489 records split
+across a case difference, which any consumer grouping by `type` will read as two
+categories. And the largest single reason across all three passes is a document
+that does not exist in this repo, which is a sourcing problem rather than a
+rules problem.
+
+### §T4 — a correction to the record
+
+"`/uas/app.html` has 0 persisted learner names" was carried forward from an
+earlier pass and **is not true of this app.** Measured:
+
+```
+localStorage  []     sessionStorage  []     cookies  ""
+IndexedDB     uas_register    holds { forename, surname, learnerNo }
+```
+
+UAS is a register. Persisting a roster locally is the entire point of it, the
+app says so on its own front page, and nothing leaves the device — 0 off-origin
+requests during load and during a full summary render. The thing that claim was
+protecting is intact; the claim itself was wrong, and a wrong claim on the
+record is worse than an open question because nobody re-checks it.
+
+§4.2's premise died too, and is reported rather than adapted around: **there is
+no Co-Pilot drawer in this app and nothing writes `supportGiven`.** "An empty
+`supportGiven` pre-populates nothing" therefore holds *vacuously* — which looks
+identical, in a green result, to holding.
+
+### §T5 — audit before authoring
+
+Seven routes, three columns. Six passed and were left alone.
+
+| route | R3 claims | R4 safety line | anchor test |
+|---|---|---|---|
+| `/for/pupils/` | pass | pass | pass |
+| `/for/teachers/` | pass | **FAIL** | pass |
+| `/for/parents-carers/` | pass | pass | pass |
+| `/for/schools-semh/` | pass | pass | pass |
+| `/for/trusts/` | pass | pass | pass |
+| `/for/councils-organisations/` | pass | pass | pass |
+| `/for/partners/` | pass | pass | pass |
+
+The column-A checks are the part worth keeping. `education-hub.json` carries
+**no `status` field on any of its 40 resources** — current / upcoming /
+evergreen / superseded are *derived* from `effectiveFrom` and `effectiveTo`. A
+check of the raw record would have called the trusts page's "date-aware
+publications" claim false. **Reading a field that isn't there is not the same as
+reading a claim that isn't true.**
+
+### §T6.3 — 52 against 54
+
+Not a phantom and not a defect: two measurements six days apart. The manifest
+held 52 entries from 14 August until 23 August, when **Apex Curl** and **Apex
+Velodrome** took it to 54. TAXONOMY is 54/54 with zero drift in either
+direction, and the floor derives from the **served manifest length at run time**
+— so it read 52 then and reads 54 now with nothing edited. The only stale thing
+was a comment in `render()` asserting "eight of the 52" and "60 cards".
+
+### §T6.2 — B2, both halves, both surfaces
+
+```
+/for/teachers/   boot 0  ->  after focus  1
+/for/pupils/     boot 0  ->  after typing 0
+```
+
+The pupil zero is the fence, not a missing feature: that search filters the
+cards already rendered, so the 717-entry index is not something it could fetch.
+Two zeroes are also what a dead listener prints, so a control fetches the index
+deliberately from the same page and requires the same counter to move.
+
+### Rules earned here
+
+- **A third-party pack describes the estate it imagines, not the one you have.**
+  Audit the estate against the *idea*; never audit the pack against itself. The
+  ideas that survived Order S were the three that required no code.
+- **Adopting a fix can install the bug.** All three of the proposed engine's
+  defects were structurally impossible in this estate.
+- **A line span is an inference; a marker is a measurement.** The pinned region
+  read as lines 302–643 and nearly turned §S3 into a hard stop. The end marker
+  and the byte count disagreed with the line count, and they were right.
+- **A coverage target invites invention.** Report the number; never gate on it.
+- **Two counts of different things, placed side by side, will be read as the
+  same thing.** 52 cards and 73 anchors were reported adjacent and an entire
+  section was built on the gap. Label the unit in the same breath as the number.
+- **A sweep that flags its own specification trains someone to ignore it** — and
+  the tidy fix ("exclude `tools/`") silently drops a served page out of the
+  sweep. Classify by *what loads the file*, never by which folder it sits in.
+- **A rule that holds vacuously looks identical to a rule that holds.** Say
+  which one you measured.
+- **A claim inherited from an earlier pass is a hypothesis, not a finding.**
+  "0 persisted learner names" survived three passes and was false.
