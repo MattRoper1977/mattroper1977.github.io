@@ -548,9 +548,51 @@ jobs:
           if [ "$rc" = "0" ]; then
             echo "every swatch was display:none and the gate passed"; echo "$out" | tail -20; exit 1
           fi
-          grep -q 'the control never reached layout' <<<"$out" \
-            || { echo "it failed, but not on the fail-closed assertion it names"; echo "$out" | tail -20; exit 1; }
-          echo "control detected — red on not-in-layout, exit $rc"
+          # N3/R5. The gate used to call this "the control never reached layout"
+          # inside an "under 44px" message. It now separates them, because a null
+          # measurement is not a failing measurement: 0x0 means NOT MEASURED and
+          # saying "under 44px" sends the reader to the CSS for a size bug that
+          # does not exist. This control tracks that rename AND pins the
+          # distinction, so the two can never be conflated again.
+          if ! grep -q 'MEASUREMENT INVALID' <<<"$out"; then
+            echo "it failed, but not on the fail-closed assertion it names"; echo "$out" | tail -20; exit 1
+          fi
+          if grep -q 'UNDER 44PX' <<<"$out"; then
+            echo "it reported a swatch with NO layout box as a SIZE — the conflation R5 forbids"
+            echo "$out" | tail -20; exit 1
+          fi
+          echo "control detected — MEASUREMENT INVALID on not-in-layout, and no size claimed, exit $rc"
+          node tools/verify_highlumen_behaviour.mjs > /dev/null
+
+      # N3.5. The companion control. The first proves a NULL box is reported as
+      # MEASUREMENT INVALID; this proves a REAL box that is merely too small is
+      # reported as a SIZE. Two causes, two messages, and each control asserts
+      # the other message is ABSENT — which is what stops them being conflated
+      # again the next time someone edits either branch.
+      - name: ...and it reports a too-small swatch as a size, not as unmeasurable
+        id: s22b-swatch-under-44-reports-a-size
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp tools/index.html /tmp/tools40.bak
+          python3 - <<'PY2'
+          s = open('tools/index.html', encoding='utf-8').read()
+          s = s.replace('</head>', '<style>.mbm-sw{width:40px!important;height:40px!important}</style></head>', 1)
+          open('tools/index.html', 'w', encoding='utf-8').write(s)
+          PY2
+          out=$(node tools/verify_highlumen_behaviour.mjs 2>&1) && rc=0 || rc=$?
+          cp /tmp/tools40.bak tools/index.html
+          if [ "$rc" = "0" ]; then
+            echo "every swatch was 40px and the gate passed"; echo "$out" | tail -20; exit 1
+          fi
+          if ! grep -q 'UNDER 44PX' <<<"$out"; then
+            echo "it failed, but not on the size assertion it names"; echo "$out" | tail -20; exit 1
+          fi
+          if grep -q 'MEASUREMENT INVALID' <<<"$out"; then
+            echo "a swatch with a real 40px box was reported as unmeasurable"; echo "$out" | tail -20; exit 1
+          fi
+          echo "control detected — UNDER 44PX on a real 40px box, not reported as invalid, exit $rc"
           node tools/verify_highlumen_behaviour.mjs > /dev/null
 
       - name: A published game is in the sitemap
