@@ -687,51 +687,71 @@ excluded deliberately rather than by pattern, which is exactly the decision item
 
 ---
 
-## 5g. Five gates can still adopt the change they exist to catch
+## 5g. Nine gates can still adopt the change they exist to catch
 
-**instrument · work-pending** — recorded 23 August 2026, census completed and
-this entry rewritten 24 August 2026.
+**instrument · work-pending** — recorded 23 August 2026; census **completed**
+24 August 2026 and this entry rewritten against the finished result.
 
-**What.** The population is now defined and reproducible: `tools/` files matching
+**What.** Population defined and reproducible: `tools/` files matching
 `^(verify|check|prove|audit)_.*\.(mjs|js|py)$` — **94 gates**, not the 36 the
-first sweep guessed at. Candidates were found mechanically (a gate holding a
-prose literal, outside its own comments, that also appears verbatim in an
-authored or served file): **24**. Adjudicated against the test *name the single
-ordinary edit that moves both sides*: **9 in the class, 13 not** — most of the 13
-quote a code identifier, which asserts implementation rather than copying
-authored content. **2 of the 24 were still being adjudicated when the pass
-closed and are not counted either way.**
+first sweep guessed at. Candidates found mechanically (a gate holding a prose
+literal, outside its own comments, that also appears verbatim in an authored or
+served file): **24**. All 24 adjudicated and adversarially re-checked against the
+test *name the single ordinary edit that moves both sides*: **9 in the class,
+15 not.** Most of the 15 quote a code identifier, which asserts implementation
+rather than copying authored content.
 
-**Closed.** Four of the nine are backstopped by `data/takes-pin.json`:
-
-```
-verify_arcade_sports.js            the Top Picks blurb        inside picksVoice
-verify_curation_keys.mjs           five of Matt's takes       inside curation
-verify_production_after_merge.mjs  the Top Picks heading      inside picksVoice
-verify_games_audience_faces.py     the locked chooser copy    pinned 24 Aug
-```
-
-**Open — these five.** Each needs PIN or DERIVE; none guards Matt's voice, locked
-copy or a published count, which is why DECLARE is legitimately available and why
-they were recorded rather than changed inside a finish order.
+**What the pin does and does not do.** `data/takes-pin.json` protects the
+CONTENT: since the takes were pinned, a dual edit — reword a take, teach a gate
+to expect it — goes red estate-wide, because the pin resolves the region from the
+committed blob and no copy edit can move it. That is proved by the class-level
+control. **It does not repair the gates.** Four of the nine still hold their own
+copies of prose that the pin already owns; on a mutation each one self-satisfies
+and contributes zero evidence, and the red comes entirely from the pin. They are
+dead weight that reads like coverage.
 
 ```
-verify_apextennis_home.py        a door blurb        owner site.json      -> DERIVE
-verify_games_audience_faces.mjs  og:description      owner main/index.html-> PIN
-verify_neonbreach.js             game description    owner the page       -> PIN
-verify_apexrally_browser.js      the page <title>    owner the page       -> PIN
-verify_biopunkhive_browser.js    the game name       owner the shelf      -> DERIVE
+tier                gate                              outcome
+curation-voice      verify_arcade_sports.js           DERIVE
+curation-voice      verify_curation_keys.mjs          PIN
+curation-voice      verify_games_audience_faces.py    PIN   (locked copy pinned 24 Aug)
+curation-voice      verify_neonbreach.js              PIN
+curation-voice      verify_production_after_merge.mjs PIN
+locked-copy-privacy verify_pupil_genres.mjs           PIN
+counts-identities   verify_apexrally_browser.js       PIN
+counts-identities   verify_biopunkhive_browser.js     DERIVE
+other               verify_apextennis_home.py         PIN
 ```
 
-**Why not now.** Two of the five quote metadata that changes on a normal
-cadence — an `og:description`, a `<title>`. A hash pin there fires on every
-legitimate edit, and a gate that cries wolf is its own failure mode; those want
-DERIVE from the manifest or a narrower region, which is design work rather than
-mechanical work. The order that found them forbids opening scope in a finish
-pass.
+**Two specifics worth not re-deriving.**
+
+`verify_arcade_sports.js:47` fuses two values with different owners: Matt's prose
+(already pinned as `picksVoice`, so restating it there is duplication) and the
+number word *"eight"*, whose real owner is the eight `rail:N` slots in
+`var CURATION=[`. The second half IS derivable without vacuity — count the slots,
+assert the sub-line names the matching number — so adding a ninth slot without
+rewording, or rewording without adding a slot, both go red. It also has **no
+`--self-test` mutation case** for that limb, so nothing proves it can fail;
+that wants adding in the same commit.
+
+`verify_curation_keys.mjs` holds five takes verbatim in a hardcoded `AUTHORED`
+array, and its failure message prints **both sides** — `authored "&lt;old&gt;" vs
+painted "&lt;new&gt;"` — handing the contributor the exact replacement string. The
+obvious "fix" is to paste it in, at which point the limb goes green having
+adopted the rewrite it exists to catch. A punctuation-normalisation sweep reaches
+both files at once for the same reason. (Note: the takes are *not* byte-identical
+in `for/pupils/index.html` — two of the five are HTML-entity-escaped there — so
+that third copy plays no part in the write path.)
+
+**Why not now.** Two of the nine quote metadata that changes on a normal cadence.
+A hash pin there fires on every legitimate edit, and a gate that cries wolf is its
+own failure mode; those want DERIVE from the manifest or a narrower region, which
+is design work rather than mechanical work. The order that completed the census
+forbids opening scope in a finish pass.
 
 **Size.** Half a day. The mechanism exists and is proven — adding a region to the
-pin is two lines and a hash, and the class-level control is already written.
+pin is two lines and a hash, the class-level control is already written, and the
+two DERIVE cases are each a single derivation plus a self-test case.
 
 ---
 
