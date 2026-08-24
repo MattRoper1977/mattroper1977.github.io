@@ -105,14 +105,42 @@ const assert = (c, m) => { if (!c) failures.push(m); return !!c; };
    The menu-open below is therefore not the fix; the settle is. It is kept
    because it costs one click and makes the helper correct if this gate is ever
    pointed at a narrow viewport, where the nav WOULD be the blocker. */
-const openPanels = async (page) => {
+const openPanels = async (page, sel) => {
   await page.evaluate(() => {
     const btn = document.querySelector('#menu, [aria-controls="nav"], button.menu');
     if (btn && btn.getAttribute('aria-expanded') === 'false') btn.click();
   });
-  await page.waitForTimeout(250);
   await page.evaluate(() => document.querySelectorAll('details').forEach((d) => { d.open = true; }));
-  await page.waitForTimeout(150);
+  return settle(page, sel);
+};
+
+/* N3.3. This used to be two waitForTimeout calls. A duration is not a fix: it
+   asserts nothing and it is flaky by construction, which is precisely how the
+   0x0 reached main. Measured with a diagnostic that touches nothing
+   (tools/diagnose_swatch_layout.mjs), the cream swatch has NO layout box
+   straight after load in 4 runs out of 6 in the dev container, and has its
+   44x44 box in 6 of 6 once this condition is satisfied. The swatches are
+   injected by theme.js at runtime, so the first one can be measured mid
+   construction.
+
+   So: wait on the CONDITION — fonts resolved, a frame rendered, and every
+   swatch reporting a non-zero box — never on a duration. Returns false on
+   timeout, which the caller reports as MEASUREMENT INVALID rather than as a
+   size. */
+const settle = async (page, sel) => {
+  try {
+    await page.evaluate(() => (document.fonts ? document.fonts.ready : null));
+    await page.waitForFunction((s) => {
+      const n = document.querySelectorAll(s);
+      if (!n.length) return false;
+      return Array.from(n).every((b) => {
+        const r = b.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+      });
+    }, sel, { timeout: 8000 });
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    return true;
+  } catch (_) { return false; }
 };
 /* The header nav can be off-canvas at some widths, so Playwright's actionability
    check refuses the click even though the control is present and 44x44 (asserted
@@ -140,7 +168,7 @@ async function run(sabotage) {
       const page = await ctx.newPage();
       await page.goto(base + p.url, { waitUntil: 'domcontentloaded' });
       await page.waitForTimeout(600);
-      await openPanels(page);
+      const settled = await openPanels(page, p.swatch);
 
       // 1. the control itself
       const sw = await page.evaluate((sel) => Array.from(document.querySelectorAll(sel)).map((b) => {
@@ -150,19 +178,29 @@ async function run(sabotage) {
                  w: Math.round(r.width), h: Math.round(r.height) };
       }), p.swatch);
       assert(sw.length === 6, `${p.label}: ${sw.length} swatches, expected 6`);
-      /* Fail closed, and say which failure it is. Every swatch measuring 0x0
-         means the control never reached layout — an unopened nav, a renamed
-         toggle, a changed aria-controls — and reporting that as "under 44px"
-         sent a previous reader looking for a CSS bug that was not there. A zero
-         SIZE, like a zero COUNT, must never read as a pass either, so this is an
-         assertion and not a skip. */
-      assert(!sw.every((s) => s.w === 0 && s.h === 0),
-        `${p.label}: all ${sw.length} swatches measured 0x0 — the control never reached layout, ` +
-        `so its size was never tested. Check the nav toggle (#menu / aria-controls="nav") still opens it.`);
+      /* N3.2 / R5. A NULL MEASUREMENT IS NOT A FAILING MEASUREMENT. 0x0 means
+         the element has no layout box — it was not measured — and reporting
+         that as "under 44px" sends the reader to the CSS for a size bug that
+         does not exist. It did exactly that on main.
+
+         The previous guard here required EVERY swatch to be 0x0. Exactly one
+         ever is, so it never fired and the misleading size message got through:
+         a guard demanding total failure cannot catch the partial kind, which is
+         the only kind that happens. `some`, not `every`. */
+      const nullBoxes = sw.filter((s) => s.w === 0 || s.h === 0);
+      assert(nullBoxes.length === 0,
+        `${p.label}: MEASUREMENT INVALID — ${nullBoxes.length} of ${sw.length} swatch(es) have no layout box ` +
+        `(${nullBoxes.map((s) => `${s.t} ${s.w}x${s.h}`).join(', ')}). They were NOT measured, so nothing is known ` +
+        `about their size. ${settled ? 'The settle condition was satisfied, so this is not a race — look for a hidden ancestor.' : 'The settle condition TIMED OUT: no frame arrived with every swatch boxed.'}`);
       assert(sw.map((s) => s.t).join(',') === ORDER.join(','),
         `${p.label}: swatch order is ${sw.map((s) => s.t).join(',')}`);
       for (const s of sw) {
-        assert(s.w >= 44 && s.h >= 44, `${p.label}: the ${s.t} swatch is ${s.w}x${s.h}, under 44px`);
+        /* Only a swatch that HAS a box is asked about its size; a null box is
+           reported above as MEASUREMENT INVALID and must never be restated here
+           as a size, which is the conflation R5 forbids. */
+        if (s.w !== 0 && s.h !== 0) {
+          assert(s.w >= 44 && s.h >= 44, `${p.label}: UNDER 44PX — the ${s.t} swatch measured ${s.w}x${s.h}`);
+        }
         assert(!!s.label, `${p.label}: the ${s.t} swatch has no aria-label`);
         assert(s.pressed === 'true' || s.pressed === 'false',
           `${p.label}: the ${s.t} swatch has no aria-pressed`);
@@ -184,7 +222,7 @@ async function run(sabotage) {
 
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.waitForTimeout(600);
-      await openPanels(page);
+      await openPanels(page, p.swatch);
       a = await attrs(page);
       assert(a.html === 'highlumen' && a.body === 'highlumen',
         `${p.label}: after reload, data-theme is html=${a.html} body=${a.body}`);

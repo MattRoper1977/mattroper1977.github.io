@@ -256,3 +256,127 @@ the proof. The correction is written beside the code rather than tidied away.
 Still **6 of 6**. BACKLOG 5j is reduced from three gates to two, and the red one —
 the only user-facing defect it named — turned out to be a gate defect and is
 fixed.
+
+---
+
+## The MB pass — the merges, 24 August 2026
+
+Both halves merged, in the ruled order, as merge commits.
+
+```
+site  #172  ->  bb1e3cc   parents b912ad0 cd4fc85
+games #39   ->  28e36f9   parents 52fa624 ad55d48
+```
+
+### What the merge order bought, measured
+
+Site first, then the shelf. Production was reached on the **first attempt** with
+no deploy lag at all — the bounded-404 policy never engaged:
+
+```
+attempt 1/8  ALL 200  /apexcurl/ 200 · /apexvelodrome/ 200
+deployment observed on attempt 1.
+```
+
+Between the two merges production served both routes but did not list them, which
+is exactly the state the ordering chose over an advertised 404. The two listing
+assertions failed in that window and cleared once the manifest deployed:
+
+```
+before games merged   19/21   /games/ lists /apexcurl/ exactly once — 0 link(s)
+after                 21/21   run 32774157075 attempt 2, step 6 success
+```
+
+### Every red, and what it turned out to be
+
+| red | verdict | evidence |
+|---|---|---|
+| Curation keys resolve (step 10, canonical shelf) | **CLEARED** | job 97582398553 step 10 success |
+| Shelf mirror is not stale (step 4, byte-identical) | **CLEARED** | run 32774156924 attempt 2 success |
+| Site shelf mirror is not stale (games side) | **CLEARED** | run 32774419792 success |
+| Driving games live verification | window — ran at 20:29:27, before the deploy completed at 20:29:52 | run 32774157151 |
+| **MBM audience discovery closeout** | **STILL RED — see BACKLOG 5l** | run 32774157030 job 97581221345 step 12 |
+
+Both checks that were skipped on the pull request ran after the merge and passed,
+as required: `Routes serve 200 and removed paths 404` (job 97581221593) and
+`Exact production deployment and live browser proof` (job 97581221223).
+
+### Rules earned here
+
+- **A pull request body is a claim about a head that can move underneath it.**
+  Merging a head the body does not describe merges an undocumented change,
+  however benign the diff. Reconciling body against head is a standing pre-merge
+  step, not a one-off.
+- **When a change edits both a pinned reference and its verifier, fires-on-mutation
+  must be re-proved at the new head.** A control that passed at an earlier head
+  proves nothing about the pair after both sides have moved. Re-proved here: a
+  committed take mutation still fails the pin on its named assertion, and still
+  fails it when a sibling gate is taught to accept the mutation.
+- **Skipped is not passed, and a declared skip is only better than a silent one.**
+  Neither is evidence.
+- **A gate proved in one environment is proved in one environment.** Curing a
+  race in the dev container is not curing it on a runner; until it has run green
+  where it will actually run, the diagnosis is a hypothesis. BACKLOG 5l is what
+  that mistake looks like.
+- **A fail-closed assertion must fire on the first instance, not only on all of
+  them.** `!sw.every(zero)` passes while one swatch is collapsed; the report then
+  blames size, which is the confusion the assertion existed to prevent.
+
+---
+
+## The N pass — main was red, 24 August 2026
+
+Twenty-one checks were reporting nothing on every push. Fixed in the ruled
+order: the prover first, then the signal, then the defect.
+
+### N1 — the prover could not report
+
+Step 7 of the post-merge verifier ran `set +e` under `continue-on-error: true`.
+The intent was right and is kept — run every gate to completion so the summary
+names all of them — but nothing they reported could fail anything. It had been
+hiding two findings for as long as it existed: `verify_published_live.mjs` was
+invoked with **no arguments at all** (it needs `--shelf` and explicit `--path`
+values plus two checkouts) and died on a Node TypeError, and
+`verify_curation_keys.mjs` reported INCONCLUSIVE because acorn was never
+installed there. Every invocation now resolves to PASS / FAIL / NOT-RUN and only
+PASS is green.
+
+### N2 — one failure cost twenty-one signals
+
+The suite was a sequential step chain. Each gate now carries `if: always()` and
+an aggregator makes the job red. Not `continue-on-error`, which hides reds
+rather than isolating them. Proved with the swatch gate still failing: 20 of the
+21 dark signals reported, and every one of them was green — so the cascade had
+been hiding nothing except itself.
+
+### N3 — harness, established before either side was touched
+
+```
+A untouched      zero-box 0:cream   4 runs of 6
+C condition met  zero-box none      6 runs of 6
+```
+
+The swatches are injected by `theme.js` at runtime; the first can be measured
+mid-construction. No live zero-size tap target. This corrects H6, whose
+"44x44 untouched" reading was taken after the settle that hid the transient.
+
+### Rules earned here
+
+- **A null measurement is not a failing measurement.** 0x0 means *not measured*.
+  Reporting it as a size sends the fixer to the CSS for a bug that is not there.
+- **`every` where `some` was meant makes a guard fire only in the case that
+  cannot happen.** A guard demanding total failure never catches the partial
+  kind, which is the only kind that occurs.
+- **A gate suite must not be a sequential step chain.** One failure must cost
+  one signal. Isolate with `if: always()` plus an aggregator, never with
+  `continue-on-error`.
+- **Evidence from one environment cannot establish that a timing fix works in
+  another.** A settle proves the race exists; it never proves it is cured.
+- **A crash is not a pass, INCONCLUSIVE is not a pass, and `set +e` turns both
+  green.**
+- **A value leaked on the PASS path is invisible to any query written against
+  failure messages.** Three gates leak canonical copy on rc=0; the lexical query
+  is retired.
+- **A control that matches on message text will catch your own rename** — and
+  should, which is why each swatch control now also asserts the other's message
+  is absent.

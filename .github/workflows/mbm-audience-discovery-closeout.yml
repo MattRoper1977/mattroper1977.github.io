@@ -36,21 +36,33 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Generated audience HTML is byte-for-byte reproducible
+        id: s01-generated-audience-html-is-byte-for-byte
+        if: always()
         run: python3 tools/render_audience_homepages.py --check
 
       - name: Generated discovery hubs are byte-for-byte reproducible
+        id: s02-generated-discovery-hubs-are-byte-for-by
+        if: always()
         run: python3 tools/render_discovery_hubs.py --check
 
       - name: Search index regenerates from its sources
+        id: s03-search-index-regenerates-from-its-source
+        if: always()
         run: python3 tools/build_mbm_search_index.py --check
 
       - name: Education hub metadata and derived status
+        id: s04-education-hub-metadata-and-derived-statu
+        if: always()
         run: python3 tools/verify_education_hub.py --as-of 2026-08-09 --self-test
 
       - name: Audience accents meet contrast
+        id: s05-audience-accents-meet-contrast
+        if: always()
         run: python3 tools/check_audience_accents.py
 
       - name: Audience architecture, labels and privacy contract hold
+        id: s06-audience-architecture-labels-and-privacy
+        if: always()
         run: python3 tools/verify_games_audience_faces.py
 
       # G2. This gate existed, was complete, and had never run — no workflow
@@ -63,6 +75,8 @@ jobs:
       # string-matching a config. Wired only after being red-proved end to end
       # against a tree with the key set: exit 1, failing on THE RULE by name.
       - name: /stats/ privacy claim is bound to the config that can falsify it
+        id: s07-stats-privacy-claim-is-bound-to-the-conf
+        if: always()
         run: node tools/verify_stats_claim.mjs
 
       # H6. This gate had never run. Run by hand it reported a 0x0 swatch on
@@ -72,6 +86,8 @@ jobs:
       # "too small", and wired, because a fixed gate left unwired is the same
       # defect it was recorded under.
       - name: Six reading swatches on every engine, each a real 44px target
+        id: s08-six-reading-swatches-on-every-engine-eac
+        if: always()
         run: node tools/verify_highlumen_behaviour.mjs
 
       # G2, second instance, and this one is this branch's own. P2 shipped
@@ -81,9 +97,13 @@ jobs:
       # and wired it to nothing. The headline content change of this branch had a
       # guard sitting unrun beside it, which is the exact defect G2 is about.
       - name: Each audience page serves its own copy, and no closing block restates a guard
+        id: s09-each-audience-page-serves-its-own-copy-a
+        if: always()
         run: node tools/verify_audience_copy.mjs
 
       - name: No served surface states a catalogue count its source disagrees with
+        id: s10-no-served-surface-states-a-catalogue-cou
+        if: always()
         # The third species of the second-literal trap already in this estate's
         # register: a gate holding its own copy of a value · a control retyping
         # a token · now a catalogue count copied into prose.
@@ -93,10 +113,46 @@ jobs:
         run: node tools/verify_catalogue_counts.mjs
 
       - name: Search is findable, lazy, and fenced on the pupil page
+        id: s11-search-is-findable-lazy-and-fenced-on-th
+        if: always()
         run: node tools/verify_search_prominence.mjs
 
       - name: Design inheritance holds across audience surfaces
+        id: s12-design-inheritance-holds-across-audience
+        if: always()
         run: python3 tools/verify_design_inheritance.py
+
+      # N2. This suite used to be a sequential step chain: one failing gate
+      # skipped every gate after it, so a single red cost twenty-one signals and
+      # the estate could not tell a new regression from the standing one. Each
+      # gate now runs under `if: always()`, and THIS step is what makes the job
+      # red. Deliberately not `continue-on-error`, which hides reds rather than
+      # isolating them.
+      - name: Aggregate - one failure costs one signal, not the suite
+        if: always()
+        shell: bash
+        env:
+          STEP_OUTCOMES: ${{ toJSON(steps) }}
+        run: |
+          printf '%s' "$STEP_OUTCOMES" > step-outcomes.json
+          python3 - <<'AGG'
+          import json
+          d = json.load(open('step-outcomes.json'))
+          rows = [(k, v.get('outcome')) for k, v in d.items()
+                  if isinstance(v, dict) and v.get('outcome')]
+          bad = [(k, o) for k, o in rows if o != 'success']
+          print(f"{len(rows)} gate step(s) reported")
+          for k, o in rows:
+              print(f"  {o.upper():<9} {k}")
+          if bad:
+              print("")
+              print(f"{len(bad)} of {len(rows)} did not pass - and skipped is not passed:")
+              for k, o in bad:
+                  print(f"  {o.upper():<9} {k}")
+              raise SystemExit(1)
+          print("")
+          print("every gate in this job reported PASS")
+          AGG
 
   gate-controls:
     name: Gates are proven red, not just green
@@ -108,6 +164,8 @@ jobs:
       # A gate that has never failed is not evidence. Each control perturbs the
       # tree and asserts the matching verifier notices, then restores it.
       - name: Renderer notices a hand-edited generated page
+        id: s01-renderer-notices-a-hand-edited-generated
+        if: always()
         run: |
           set -euo pipefail
           python3 tools/render_audience_homepages.py --check
@@ -118,6 +176,8 @@ jobs:
           git checkout -- for/teachers/index.html
 
       - name: Accent gate notices a contrast regression
+        id: s02-accent-gate-notices-a-contrast-regressio
+        if: always()
         run: |
           set -euo pipefail
           python3 tools/check_audience_accents.py
@@ -142,6 +202,8 @@ jobs:
           git checkout -- data/audience-homepages.json
 
       - name: Design gate notices a duplicate mark above the heading
+        id: s03-design-gate-notices-a-duplicate-mark-abo
+        if: always()
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -163,9 +225,13 @@ jobs:
           git checkout -- for/teachers/index.html
 
       - name: Audience verifier proves its own seven controls
+        id: s04-audience-verifier-proves-its-own-seven-c
+        if: always()
         run: python3 tools/verify_games_audience_faces.py --self-test
 
       - name: Search index check reads git, not the working tree
+        id: s05-search-index-check-reads-git-not-the-wor
+        if: always()
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -185,6 +251,8 @@ jobs:
           echo "control detected: reference is git"
 
       - name: An undeclared diff aborts the write
+        id: s06-an-undeclared-diff-aborts-the-write
+        if: always()
         run: |
           set -euo pipefail
           # Perturb only the editorial file's bytes, so every category still
@@ -208,6 +276,8 @@ jobs:
           git diff --quiet data/mbm-search-index.json || { echo "index was modified"; exit 1; }
 
       - name: A removed entry is the loudest failure, both ways
+        id: s07-a-removed-entry-is-the-loudest-failure-b
+        if: always()
         run: |
           set -euo pipefail
           # Sabotage the source: delete one unpinned game from the snapshot
@@ -244,18 +314,26 @@ jobs:
           echo "control detected: removal screams on check and only writes under --expect-removed"
 
       - name: External link classification controls
+        id: s08-external-link-classification-controls
+        if: always()
         run: python3 tools/check_education_hub_links.py --self-test
 
       - name: Skipped-job guard controls
+        id: s09-skipped-job-guard-controls
+        if: always()
         run: python3 tools/check_no_skipped_jobs.py --self-test
 
       - name: Workflows reference no path that does not exist
+        id: s10-workflows-reference-no-path-that-does-no
+        if: always()
         run: |
           set -euo pipefail
           python3 tools/check_workflow_paths.py --self-test
           python3 tools/check_workflow_paths.py
 
       - name: Install the browser the proof drives
+        id: s11-install-the-browser-the-proof-drives
+        if: always()
         # TWO runtimes, deliberately. verify_audience_discovery_browser.py is
         # Python and needs the pip package; the count and prominence controls
         # below are Node and need the npm one. Installing only the first is
@@ -288,9 +366,13 @@ jobs:
       # the manifest, nothing pinned. The Velodrome split is asserted too, so it
       # stays a decision rather than becoming drift somebody later "tidies".
       - name: Each game's accent is its shelf card hue
+        id: s12-each-game-s-accent-is-its-shelf-card-hue
+        if: always()
         run: node tools/verify_accent_parity.mjs
 
       - name: ...and the parity gate notices a game drifting from its card
+        id: s13-and-the-parity-gate-notices-a-game-drift
+        if: always()
         run: |
           set -e
           cp apexcurl/index.html /tmp/ac.bak
@@ -304,6 +386,8 @@ jobs:
           node tools/verify_accent_parity.mjs
 
       - name: ...and it notices the deliberate split being tidied away
+        id: s14-and-it-notices-the-deliberate-split-bein
+        if: always()
         run: |
           set -e
           cp apexvelodrome/index.html /tmp/av.bak
@@ -328,6 +412,8 @@ jobs:
       # set and the claim left standing must exit non-zero AND fail on THE RULE
       # by name — not merely fail, and not fail because playwright is missing.
       - name: The /stats/ privacy gate fails on the rule it names
+        id: s15-the-stats-privacy-gate-fails-on-the-rule
+        if: always()
         run: |
           set -euo pipefail
           S=$(mktemp -d)
@@ -352,6 +438,8 @@ jobs:
           node tools/verify_stats_claim.mjs > /dev/null
 
       - name: The audience-copy gate fails on the uniqueness assertion it names
+        id: s16-the-audience-copy-gate-fails-on-the-uniq
+        if: always()
         run: |
           set -euo pipefail
           cp data/audience-homepages.json /tmp/adh.bak
@@ -377,9 +465,13 @@ jobs:
           python3 tools/render_audience_homepages.py --check
 
       - name: Matt's takes are what the pin says they are
+        id: s17-matt-s-takes-are-what-the-pin-says-they
+        if: always()
         run: node tools/verify_takes_pin.mjs
 
       - name: ...and a changed take goes red even if another gate is taught to accept it
+        id: s18-and-a-changed-take-goes-red-even-if-anot
+        if: always()
         run: |
           set -e
           git config user.email ci@local; git config user.name ci
@@ -408,6 +500,8 @@ jobs:
       # co-updated. This one mutates the promise and requires the pin to name the
       # region that moved, in a scratch worktree so the real tree is never at risk.
       - name: The pin notices the locked chooser promise moving by one comma
+        id: s19-the-pin-notices-the-locked-chooser-promi
+        if: always()
         run: |
           set -euo pipefail
           W=$(mktemp -d)
@@ -439,6 +533,8 @@ jobs:
           node tools/verify_takes_pin.mjs > /dev/null
 
       - name: The swatch gate refuses a control that never reached layout
+        id: s20-the-swatch-gate-refuses-a-control-that-n
+        if: always()
         run: |
           set -euo pipefail
           cp tools/index.html /tmp/tools.bak
@@ -452,15 +548,61 @@ jobs:
           if [ "$rc" = "0" ]; then
             echo "every swatch was display:none and the gate passed"; echo "$out" | tail -20; exit 1
           fi
-          grep -q 'the control never reached layout' <<<"$out" \
-            || { echo "it failed, but not on the fail-closed assertion it names"; echo "$out" | tail -20; exit 1; }
-          echo "control detected — red on not-in-layout, exit $rc"
+          # N3/R5. The gate used to call this "the control never reached layout"
+          # inside an "under 44px" message. It now separates them, because a null
+          # measurement is not a failing measurement: 0x0 means NOT MEASURED and
+          # saying "under 44px" sends the reader to the CSS for a size bug that
+          # does not exist. This control tracks that rename AND pins the
+          # distinction, so the two can never be conflated again.
+          if ! grep -q 'MEASUREMENT INVALID' <<<"$out"; then
+            echo "it failed, but not on the fail-closed assertion it names"; echo "$out" | tail -20; exit 1
+          fi
+          if grep -q 'UNDER 44PX' <<<"$out"; then
+            echo "it reported a swatch with NO layout box as a SIZE — the conflation R5 forbids"
+            echo "$out" | tail -20; exit 1
+          fi
+          echo "control detected — MEASUREMENT INVALID on not-in-layout, and no size claimed, exit $rc"
+          node tools/verify_highlumen_behaviour.mjs > /dev/null
+
+      # N3.5. The companion control. The first proves a NULL box is reported as
+      # MEASUREMENT INVALID; this proves a REAL box that is merely too small is
+      # reported as a SIZE. Two causes, two messages, and each control asserts
+      # the other message is ABSENT — which is what stops them being conflated
+      # again the next time someone edits either branch.
+      - name: ...and it reports a too-small swatch as a size, not as unmeasurable
+        id: s22b-swatch-under-44-reports-a-size
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp tools/index.html /tmp/tools40.bak
+          python3 - <<'PY2'
+          s = open('tools/index.html', encoding='utf-8').read()
+          s = s.replace('</head>', '<style>.mbm-sw{width:40px!important;height:40px!important}</style></head>', 1)
+          open('tools/index.html', 'w', encoding='utf-8').write(s)
+          PY2
+          out=$(node tools/verify_highlumen_behaviour.mjs 2>&1) && rc=0 || rc=$?
+          cp /tmp/tools40.bak tools/index.html
+          if [ "$rc" = "0" ]; then
+            echo "every swatch was 40px and the gate passed"; echo "$out" | tail -20; exit 1
+          fi
+          if ! grep -q 'UNDER 44PX' <<<"$out"; then
+            echo "it failed, but not on the size assertion it names"; echo "$out" | tail -20; exit 1
+          fi
+          if grep -q 'MEASUREMENT INVALID' <<<"$out"; then
+            echo "a swatch with a real 40px box was reported as unmeasurable"; echo "$out" | tail -20; exit 1
+          fi
+          echo "control detected — UNDER 44PX on a real 40px box, not reported as invalid, exit $rc"
           node tools/verify_highlumen_behaviour.mjs > /dev/null
 
       - name: A published game is in the sitemap
+        id: s21-a-published-game-is-in-the-sitemap
+        if: always()
         run: node tools/verify_sitemap_covers_games.mjs
 
       - name: ...and the coverage gate notices a game dropped from it
+        id: s22-and-the-coverage-gate-notices-a-game-dro
+        if: always()
         run: |
           set -e
           cp sitemap.xml /tmp/sm.bak
@@ -480,9 +622,13 @@ jobs:
           node tools/verify_sitemap_covers_games.mjs
 
       - name: The shelf probe cannot pass on an empty page
+        id: s23-the-shelf-probe-cannot-pass-on-an-empty
+        if: always()
         run: node tools/prove_shelf_probe.mjs
 
       - name: ...and the repaired gates still parse and still name their guard
+        id: s24-and-the-repaired-gates-still-parse-and-s
+        if: always()
         run: |
           set -e
           node --check tools/verify_echovault_surfaces.js
@@ -494,12 +640,18 @@ jobs:
           grep -q 'never a pass' tools/lib/shelf-probe.js
 
       - name: hud-coverage.json's scriptLine is asserted, not merely recorded
+        id: s25-hud-coverage-json-s-scriptline-is-assert
+        if: always()
         run: python3 tools/verify_hud_script_line.py
 
       - name: ...and every route in that set is individually asserted
+        id: s26-and-every-route-in-that-set-is-individua
+        if: always()
         run: python3 tools/verify_hud_script_line.py --self-test
 
       - name: Count gate notices a stale number, typed or derived
+        id: s27-count-gate-notices-a-stale-number-typed
+        if: always()
         run: |
           set -e
           cp data/audience-homepages.json /tmp/cc.bak
@@ -540,6 +692,8 @@ jobs:
           node tools/verify_catalogue_counts.mjs
 
       - name: Prominence gate notices a missing entry point
+        id: s28-prominence-gate-notices-a-missing-entry
+        if: always()
         run: |
           set -e
           cp for/trusts/index.html /tmp/sp.bak
@@ -564,12 +718,18 @@ jobs:
           node tools/verify_search_prominence.mjs
 
       - name: Browser proof controls
+        id: s29-browser-proof-controls
+        if: always()
         run: python3 tools/verify_audience_discovery_browser.py --self-test
 
       - name: The audit-output guard can fire, and the one it replaced could not
+        id: s30-the-audit-output-guard-can-fire-and-the
+        if: always()
         run: bash tools/verify_audit_output_guard.sh
 
       - name: A re-introduced off-origin boot fetch goes red
+        id: s31-a-re-introduced-off-origin-boot-fetch-go
+        if: always()
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -620,6 +780,8 @@ jobs:
           echo "audit-output/ unchanged across the control run ($(printf '%s' "$before" | grep -c . || true) file(s) hashed)"
 
       - name: Browser proof against the checked-out estate
+        id: s32-browser-proof-against-the-checked-out-es
+        if: always()
         run: |
           set -euo pipefail
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/serve.log 2>&1 &
@@ -634,6 +796,8 @@ jobs:
       # success. Choosing between those two settings is treating the symptom -
       # so compare the two paths instead of trusting them to agree.
       - name: The upload path is the path the tool writes
+        id: s33-the-upload-path-is-the-path-the-tool-wri
+        if: always()
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -651,6 +815,7 @@ jobs:
           PY
 
       - name: Upload browser proof artifacts
+        id: s34-upload-browser-proof-artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -662,6 +827,8 @@ jobs:
           if-no-files-found: error
 
       - name: Locked chooser copy cannot silently disappear
+        id: s35-locked-chooser-copy-cannot-silently-disa
+        if: always()
         run: |
           set -euo pipefail
           sed -i 's/, and it is not sent to Supabase, Buttondown or analytics\.//' tools/render_audience_homepages.py
@@ -677,6 +844,8 @@ jobs:
           git checkout -- tools/render_audience_homepages.py index.html
 
       - name: The hasTouch claim in verify_inline_exit.mjs is asserted, not just written
+        id: s36-the-hastouch-claim-in-verify-inline-exit
+        if: always()
         # That note is load-bearing: it is why /relicforge/ asserts 12 presses
         # and not 8. Until this gate it was only a sentence, and prose is not
         # asserted - it ages while the code beside it stays green. Three times
@@ -695,6 +864,8 @@ jobs:
           node tools/verify_hastouch_claim.mjs
 
       - name: Design gate notices a missing hero mark
+        id: s37-design-gate-notices-a-missing-hero-mark
+        if: always()
         run: |
           set -euo pipefail
           sed -i 's|<img class="mf-hero-mark"[^>]*>||' for/teachers/index.html
@@ -704,6 +875,38 @@ jobs:
             echo "design gate did not notice a missing hero mark"; exit 1
           fi
           git checkout -- for/teachers/index.html
+
+      # N2. This suite used to be a sequential step chain: one failing gate
+      # skipped every gate after it, so a single red cost twenty-one signals and
+      # the estate could not tell a new regression from the standing one. Each
+      # gate now runs under `if: always()`, and THIS step is what makes the job
+      # red. Deliberately not `continue-on-error`, which hides reds rather than
+      # isolating them.
+      - name: Aggregate - one failure costs one signal, not the suite
+        if: always()
+        shell: bash
+        env:
+          STEP_OUTCOMES: ${{ toJSON(steps) }}
+        run: |
+          printf '%s' "$STEP_OUTCOMES" > step-outcomes.json
+          python3 - <<'AGG'
+          import json
+          d = json.load(open('step-outcomes.json'))
+          rows = [(k, v.get('outcome')) for k, v in d.items()
+                  if isinstance(v, dict) and v.get('outcome')]
+          bad = [(k, o) for k, o in rows if o != 'success']
+          print(f"{len(rows)} gate step(s) reported")
+          for k, o in rows:
+              print(f"  {o.upper():<9} {k}")
+          if bad:
+              print("")
+              print(f"{len(bad)} of {len(rows)} did not pass - and skipped is not passed:")
+              for k, o in bad:
+                  print(f"  {o.upper():<9} {k}")
+              raise SystemExit(1)
+          print("")
+          print("every gate in this job reported PASS")
+          AGG
 
   production:
     name: Routes serve 200 and removed paths 404 - reachability, not deployment
@@ -716,6 +919,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Read back the published routes (reachability only)
+        id: s01-read-back-the-published-routes-reachabil
+        if: always()
         run: |
           set -uo pipefail
           base="https://madebymatt.uk"
@@ -770,3 +975,35 @@ jobs:
           echo "all 13 routes 200; both removed paths 404; $attempt attempt(s)"
           echo "reachability only - this proves nothing about which commit is deployed;"
           echo "see mbm-deployment-provenance.yml for that."
+
+      # N2. This suite used to be a sequential step chain: one failing gate
+      # skipped every gate after it, so a single red cost twenty-one signals and
+      # the estate could not tell a new regression from the standing one. Each
+      # gate now runs under `if: always()`, and THIS step is what makes the job
+      # red. Deliberately not `continue-on-error`, which hides reds rather than
+      # isolating them.
+      - name: Aggregate - one failure costs one signal, not the suite
+        if: always()
+        shell: bash
+        env:
+          STEP_OUTCOMES: ${{ toJSON(steps) }}
+        run: |
+          printf '%s' "$STEP_OUTCOMES" > step-outcomes.json
+          python3 - <<'AGG'
+          import json
+          d = json.load(open('step-outcomes.json'))
+          rows = [(k, v.get('outcome')) for k, v in d.items()
+                  if isinstance(v, dict) and v.get('outcome')]
+          bad = [(k, o) for k, o in rows if o != 'success']
+          print(f"{len(rows)} gate step(s) reported")
+          for k, o in rows:
+              print(f"  {o.upper():<9} {k}")
+          if bad:
+              print("")
+              print(f"{len(bad)} of {len(rows)} did not pass - and skipped is not passed:")
+              for k, o in bad:
+                  print(f"  {o.upper():<9} {k}")
+              raise SystemExit(1)
+          print("")
+          print("every gate in this job reported PASS")
+          AGG

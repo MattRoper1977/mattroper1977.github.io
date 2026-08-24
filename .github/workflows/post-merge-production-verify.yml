@@ -63,6 +63,13 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          # N4. The revert target is derived from the merge commit's FIRST
+          # PARENT, and a default checkout is depth 1 - which has no parents at
+          # all. The emergency rollback path printed "unknown" on the live run
+          # and nobody noticed, because it printed something. Depth 2 is exactly
+          # what a first-parent lookup needs.
+          fetch-depth: 2
 
       - uses: actions/setup-node@v4
         with:
@@ -72,12 +79,25 @@ jobs:
         run: |
           npm i --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
+          # verify_curation_keys.mjs parses the record with acorn. Without it the
+          # gate reports INCONCLUSIVE and judges nothing — which the old step 7
+          # scored as green. Install it so the gate can actually answer.
+          npm i --no-save acorn@8.18.0
 
       - name: Record what was merged, and derive the revert target
         shell: bash
         run: |
           set -euo pipefail
-          PARENT="$(git rev-parse "${GITHUB_SHA}^1" 2>/dev/null || echo 'unknown')"
+          # `git rev-parse <missing>` prints its ARGUMENT to stdout and exits
+          # non-zero, so the old `|| echo unknown` appended to it rather than
+          # replacing it - the run printed the literal "<sha>^1" and "unknown"
+          # on two lines. --verify -q prints nothing unless it resolves.
+          PARENT="$(git rev-parse --verify -q "${GITHUB_SHA}^1" || true)"
+          if [ -z "$PARENT" ]; then
+            echo "::error::cannot resolve ${GITHUB_SHA}^1 - the revert target cannot be derived."
+            echo "A rollback instruction that names no parent is worse than none. Check fetch-depth."
+            exit 1
+          fi
           echo "merge commit : ${GITHUB_SHA}"
           echo "first parent : ${PARENT}"
           {
@@ -110,26 +130,65 @@ jobs:
       # `continue-on-error` is deliberate and bounded: the step above is the
       # gate that decides the job, and these run to completion so the summary
       # names EVERY one that is still red rather than stopping at the first.
+      # N1/N2. This step ran `set +e` under `continue-on-error: true`. The
+      # INTENT was right and is kept: run every gate to completion so the
+      # summary names all of them rather than stopping at the first. The
+      # IMPLEMENTATION made them decorative — nothing they reported could fail
+      # anything — and it swallowed two real findings for as long as it existed:
+      # verify_published_live.mjs was invoked with no arguments and died on a
+      # Node TypeError, and verify_curation_keys.mjs reported INCONCLUSIVE
+      # because acorn was never installed here. Both read as green.
+      #
+      # Same intent, implemented honestly. Every gate still runs. Each resolves
+      # to exactly one of PASS / FAIL / NOT-RUN, and the aggregation at the end
+      # fails the step unless every one is PASS. `continue-on-error` is gone:
+      # it hides reds rather than isolating them.
       - name: Re-run the production-driven gates against the published site
         if: always()
-        continue-on-error: true
         shell: bash
         run: |
-          set +e
           : > production-driven.log
+          declare -a failed=() notrun=()
+          # verify_published_live.mjs is NOT in this list. It needs --shelf and
+          # explicit --path arguments plus two extra checkouts, none of which
+          # exist here, so the bare invocation never judged anything. It is
+          # properly wired, with its arguments, in published-live-verify.yml —
+          # which passes on this same commit. A broken duplicate invocation is
+          # removed; the gate itself is untouched and still runs there.
           for g in tools/verify_echovault_surfaces.js \
                    tools/verify_relicforge_surfaces.js \
                    tools/verify_curation_keys.mjs \
-                   tools/verify_published_live.mjs \
                    tools/verify_surfaces.js; do
             echo "=== $g" | tee -a production-driven.log
-            node "$g" 2>&1 | tee -a production-driven.log
-            echo "--- exit $? for $g" | tee -a production-driven.log
+            rc=0
+            out="$(node "$g" 2>&1)" || rc=$?
+            printf '%s\n' "$out" | tee -a production-driven.log
+            if printf '%s' "$out" | grep -qE 'INCONCLUSIVE|did not judge anything|^NOT RUN'; then
+              verdict='NOT-RUN'; notrun+=("$g — inconclusive (exit $rc)")
+            elif printf '%s' "$out" | grep -qE 'ERR_[A-Z_]+|^[A-Za-z]*Error: |^ +at .*\(node:'; then
+              verdict='NOT-RUN'; notrun+=("$g — crashed (exit $rc)")
+            elif [ "$rc" -eq 0 ]; then
+              verdict='PASS'
+            else
+              verdict='FAIL'; failed+=("$g — exit $rc")
+            fi
+            echo "--- $verdict (exit $rc) for $g" | tee -a production-driven.log
           done
           # A zero match must never read as a pass here either.
           if grep -q 'matched nothing' production-driven.log; then
             echo "SELECTOR DRIFT reported against production — see the log" | tee -a production-driven.log
+            failed+=("selector drift against production")
           fi
+          # A crash is not a pass, and INCONCLUSIVE is not a pass.
+          if [ "${#failed[@]}" -ne 0 ] || [ "${#notrun[@]}" -ne 0 ]; then
+            echo ""
+            echo "PRODUCTION-DRIVEN GATES DID NOT ALL PASS"
+            for f in "${failed[@]}"; do echo "  FAIL     $f"; done
+            for n in "${notrun[@]}"; do echo "  NOT-RUN  $n"; done
+            exit 1
+          fi
+          echo ""
+          echo "all production-driven gates PASSED"
 
       - name: Publish which production-driven gates cleared
         if: always()

@@ -58,6 +58,23 @@ const PATHS = [
 ];
 const CONTROL = val('--expect-404');
 
+/* N1.2. SHELF and the path lists come from argv. Invoked with NO arguments —
+   which is exactly how post-merge-production-verify.yml was invoking it — this
+   reached readFileSync(null) and died with ERR_INVALID_ARG_TYPE at line 92.
+   That reads as a broken tool. It is not: the gate was never handed what it
+   needs, so it never judged anything, and `set +e` upstream turned that into a
+   green step. Refuse in the estate's own words, and exit 2 (NOT RUN), so a
+   caller cannot mistake absence of a verdict for a passing one. This is
+   argument validation, not a try/catch around the symptom — the crash site
+   itself is left exactly as it was. */
+if (!SHELF || PATHS.length === 0) {
+  console.error('NOT RUN: verify_published_live.mjs needs --shelf <games.json> and at least one --path/--tool-path.');
+  console.error(`  --shelf: ${SHELF ? SHELF : '(missing)'}   paths given: ${PATHS.length}`);
+  console.error('  The canonical invocation is in .github/workflows/published-live-verify.yml.');
+  console.error('This gate did not judge anything. That is not a pass.');
+  process.exit(2);
+}
+
 const sha = (b) => createHash('sha256').update(b).digest('hex');
 const results = [];
 let group = '';
