@@ -344,7 +344,11 @@ jobs:
           set -euo pipefail
           python3 -m pip install --quiet playwright
           python3 -m playwright install --with-deps chromium
-          npm i --no-save playwright@1.56.1
+          # R10: ONE install line for this job. acorn used to be installed again
+          # at the hasTouch step, which PRUNES playwright - harmless only while
+          # nothing after that step drove a browser. The surface-floor control now
+          # does, so both packages are installed once, here.
+          npm i --no-save playwright@1.56.1 acorn@8.18.0
           npx playwright install --with-deps chromium
 
       # This job carries no `paths:` filter, which is why the hud scriptLine
@@ -860,7 +864,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm i --no-save acorn@8.18.0 >/dev/null
           node tools/verify_hastouch_claim.mjs
 
       - name: Design gate notices a missing hero mark
@@ -882,6 +885,18 @@ jobs:
       # gate now runs under `if: always()`, and THIS step is what makes the job
       # red. Deliberately not `continue-on-error`, which hides reds rather than
       # isolating them.
+      # S1'.3 / A1. verify_surfaces.js S2 asserted only NAMED games: a render that
+      # dropped fifty cards while keeping Neon Sync, Biopunk Hive and Neon Breach
+      # passed every assertion it had. S2f adds a floor DERIVED from the served
+      # manifest, per selector. This control proves that floor reds on its own
+      # message - the existing S2c control fires on the named-games assertion, and
+      # a control that proves a different assertion proves nothing about this one.
+      - name: The surface floor reds on a collapsed render, and a null is not a zero
+        id: s39-surface-floor-control
+        if: always()
+        shell: bash
+        run: node tools/verify_surface_floor_control.mjs
+
       - name: Aggregate - one failure costs one signal, not the suite
         if: always()
         shell: bash
