@@ -826,6 +826,43 @@ pass's.
 
 ---
 
+## 5k. The H4 fix is defeated two lines below itself
+
+**instrument · work-pending** — recorded 24 August 2026, found while re-running
+the gates against the *pushed* state rather than the local one.
+
+**What.** `verify_curation_keys.mjs`'s drift check was rewritten this pass so it
+no longer prints the painted text: printing it handed the reader a paste-ready
+replacement, and pasting it into `AUTHORED` turns the limb green having adopted
+the exact rewrite it exists to catch. That part works. But the CONTROL check
+immediately below it prints
+
+```
+painted "<the drifted text>" !== tidied "<authored + a full stop>"
+```
+
+and that control runs in the same execution. So on a real drift the log still
+carries the painted string verbatim, two lines under the message that
+deliberately withheld it. Observed, not reasoned — drifting `/apexpool/`'s take
+on the page produced exactly that pair in one run.
+
+**Why it was missed.** The H4 inventory searched for *failure* messages that
+print authored copy. This line is a **passing** control's detail string, so it
+never matched the query. The species is wider than the query was: any line that
+prints both sides of a copy comparison can hand over the replacement, whichever
+side it is reporting from and whether it passes or fails.
+
+**Why it is not fixed here.** The rescue order that surfaced it was explicitly
+scoped to landing stranded files, and said to record anything new rather than
+chase it. Fixing it means re-deriving what the control needs to prove — that the
+comparison rejects a tidy-up — without printing either string; probably byte
+lengths and a boolean, as the drift message now does.
+
+**Done when.** No line in `verify_curation_keys.mjs` prints painted copy on any
+path, pass or fail; the control still fails when the comparison is loosened; and
+the H4 inventory is re-run with the wider query across all 94 gates, with the
+count of new candidates stated.
+
 ## 6. Featured curation
 
 There is no way to say "these six things first" — the homepage strips are
