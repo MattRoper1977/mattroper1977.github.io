@@ -63,6 +63,13 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          # N4. The revert target is derived from the merge commit's FIRST
+          # PARENT, and a default checkout is depth 1 - which has no parents at
+          # all. The emergency rollback path printed "unknown" on the live run
+          # and nobody noticed, because it printed something. Depth 2 is exactly
+          # what a first-parent lookup needs.
+          fetch-depth: 2
 
       - uses: actions/setup-node@v4
         with:
@@ -81,7 +88,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          PARENT="$(git rev-parse "${GITHUB_SHA}^1" 2>/dev/null || echo 'unknown')"
+          # `git rev-parse <missing>` prints its ARGUMENT to stdout and exits
+          # non-zero, so the old `|| echo unknown` appended to it rather than
+          # replacing it - the run printed the literal "<sha>^1" and "unknown"
+          # on two lines. --verify -q prints nothing unless it resolves.
+          PARENT="$(git rev-parse --verify -q "${GITHUB_SHA}^1" || true)"
+          if [ -z "$PARENT" ]; then
+            echo "::error::cannot resolve ${GITHUB_SHA}^1 - the revert target cannot be derived."
+            echo "A rollback instruction that names no parent is worse than none. Check fetch-depth."
+            exit 1
+          fi
           echo "merge commit : ${GITHUB_SHA}"
           echo "first parent : ${PARENT}"
           {
