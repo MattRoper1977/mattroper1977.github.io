@@ -53,6 +53,27 @@ jobs:
       - name: Audience architecture, labels and privacy contract hold
         run: python3 tools/verify_games_audience_faces.py
 
+      # G2. This gate existed, was complete, and had never run — no workflow
+      # referenced it. It binds /stats/'s privacy sentence to the one config key
+      # that can falsify it: set features.analytics.goatcounter and
+      # mbm-features.js appends a remote counter script whose country resolution
+      # is done from the IP server-side, at which point the page is lying. The
+      # claim is matched by its own text rather than by a line number, and the
+      # behavioural half loads the page and watches for the request, so it is not
+      # string-matching a config. Wired only after being red-proved end to end
+      # against a tree with the key set: exit 1, failing on THE RULE by name.
+      - name: /stats/ privacy claim is bound to the config that can falsify it
+        run: node tools/verify_stats_claim.mjs
+
+      # G2, second instance, and this one is this branch's own. P2 shipped
+      # verify_audience_copy.mjs — the gate that asserts each rewritten audience
+      # page serves its own opening and closing block, that no two share one, and
+      # that no closing block restates a guard belonging in the boundaries note —
+      # and wired it to nothing. The headline content change of this branch had a
+      # guard sitting unrun beside it, which is the exact defect G2 is about.
+      - name: Each audience page serves its own copy, and no closing block restates a guard
+        run: node tools/verify_audience_copy.mjs
+
       - name: No served surface states a catalogue count its source disagrees with
         # The third species of the second-literal trap already in this estate's
         # register: a gate holding its own copy of a value · a control retyping
@@ -293,6 +314,59 @@ jobs:
       # Z1. The takes gate resolves its content from the COMMITTED BLOB and
       # compares it to a hash pinned in data/takes-pin.json. Fetch depth matters:
       # `git show HEAD:` needs the blob, which a depth-1 checkout still has.
+      # G2. The gate above had never run, so "it passes" was a claim and not a
+      # result. This is its external control: a scratch tree with the counter key
+      # set and the claim left standing must exit non-zero AND fail on THE RULE
+      # by name — not merely fail, and not fail because playwright is missing.
+      - name: The /stats/ privacy gate fails on the rule it names
+        run: |
+          set -euo pipefail
+          S=$(mktemp -d)
+          for d in stats assets data; do [ -d "$d" ] && cp -r "$d" "$S/"; done
+          python3 - "$S" <<'PY2'
+          import json, sys
+          c = json.load(open('site.json'))
+          c.setdefault('features', {}).setdefault('analytics', {})['goatcounter'] = 'madebymatt'
+          json.dump(c, open(sys.argv[1] + '/site.json', 'w'), indent=2)
+          PY2
+          out=$(node tools/verify_stats_claim.mjs "$S" 2>&1) && rc=0 || rc=$?
+          rm -rf "$S"
+          if [ "$rc" = "2" ]; then
+            echo "the gate was INCONCLUSIVE (playwright missing) — that is not a red"; echo "$out" | tail -5; exit 1
+          fi
+          if [ "$rc" = "0" ]; then
+            echo "the gate passed with the counter key set — it cannot fail"; echo "$out" | tail -20; exit 1
+          fi
+          grep -q 'FAIL.*THE RULE: a non-empty goatcounter key may not coexist with the claim' <<<"$out" \
+            || { echo "it failed, but not on the assertion it names"; echo "$out" | tail -20; exit 1; }
+          echo "control detected — red on THE RULE, exit $rc"
+          node tools/verify_stats_claim.mjs > /dev/null
+
+      - name: The audience-copy gate fails on the uniqueness assertion it names
+        run: |
+          set -euo pipefail
+          cp data/audience-homepages.json /tmp/adh.bak
+          python3 - <<'PY2'
+          import json, collections
+          p = 'data/audience-homepages.json'
+          d = json.load(open(p), object_pairs_hook=collections.OrderedDict)
+          d['audiences']['partners']['closing'] = d['audiences']['councils']['closing']
+          json.dump(d, open(p, 'w'), ensure_ascii=False, indent=2)
+          open(p, 'a').write('\n')
+          PY2
+          python3 tools/render_audience_homepages.py > /dev/null
+          out=$(node tools/verify_audience_copy.mjs 2>&1) && rc=0 || rc=$?
+          cp /tmp/adh.bak data/audience-homepages.json
+          python3 tools/render_audience_homepages.py > /dev/null
+          if [ "$rc" = "0" ]; then
+            echo "two pages shared a closing block and the gate passed"; echo "$out" | tail -20; exit 1
+          fi
+          grep -q 'FAIL.*every rewritten page has its own closing' <<<"$out" \
+            || { echo "it failed, but not on the assertion it names"; echo "$out" | tail -20; exit 1; }
+          echo "control detected — red on the uniqueness limb, exit $rc"
+          node tools/verify_audience_copy.mjs > /dev/null
+          python3 tools/render_audience_homepages.py --check
+
       - name: Matt's takes are what the pin says they are
         run: node tools/verify_takes_pin.mjs
 
