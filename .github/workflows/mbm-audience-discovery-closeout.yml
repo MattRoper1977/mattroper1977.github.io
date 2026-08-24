@@ -139,6 +139,12 @@ jobs:
         shell: bash
         run: node tools/verify_diagnostic_task_schema.mjs
 
+      - name: The register sweep looks in the right places, and says which
+        id: s14-register-sweep-scope
+        if: always()
+        shell: bash
+        run: node tools/verify_register_sweep_scope.mjs
+
       - name: Aggregate - one failure costs one signal, not the suite
         if: always()
         shell: bash

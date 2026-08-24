@@ -1051,3 +1051,43 @@ saying so. So the standing discipline is not "write more checks" — it is:
 - **assert on evidence, not on proxies**: a canvas at its default 300×150 has a
   width greater than zero; a music pad that ticks without oscillators reports as
   playing; a verifier comparing a file against itself always agrees.
+
+---
+
+## 46. A sweep that flags its own specification
+
+The microcopy register bans `Try Again` as a feedback action label. The sweep
+for it reported a hit in `schema/diagnostic-task.schema.json`:
+
+    "description": "Replaces 'Try Again'. Describes the next physical or
+                    cognitive move, e.g. 'Isolate fault & retry'."
+
+That is the rule, reported as a breach of itself. Nothing about the output was
+wrong — the phrase is genuinely on that line — and that is what makes it
+expensive. The reader learns that some fraction of this sweep's hits are noise,
+and the only way to tell which is to open each one. A sweep whose output has to
+be triaged by hand every time is a sweep that gets skimmed, and a skimmed sweep
+has stopped working while still going green.
+
+The obvious fix is worse than the fault. "Exclude `tools/`" reads as tidy and
+would have silently dropped `tools/index.html` — the visitor-facing Tools Hub,
+sitting in a directory otherwise full of gate scripts — out of the sweep
+entirely. The sweep would have got quieter and looked healthier.
+
+**Rule:** classify every hit before counting it, by **what loads the file**, not
+by which folder it sits in. `ship` is anything a visitor can load; `spec` is
+anything that describes copy — a schema, a doc, a proof, a gate. Print both
+lists, so the exclusion is visible rather than silent. And derive the swept
+terms from the artefact that states them (#1), never from a list retyped inside
+the sweep.
+
+Two smaller traps found while building `tools/verify_register_sweep_scope.mjs`,
+both of the same family:
+
+- The control asserting "a phrase nobody uses returns nothing" spelled its
+  sentinel out as a literal — in a file the sweep reads. It failed, correctly,
+  on itself. The sentinel is now assembled at run time.
+- The hit excerpt printed the first 90 bytes of the matching line, which for
+  long lines did not contain the match. Evidence that does not show the thing
+  being reported has to be taken on trust, and evidence taken on trust is not
+  evidence. The excerpt is now centred on the match.

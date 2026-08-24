@@ -99,7 +99,13 @@ try {
 
     /* §2.2 SEARCH_EAGER=no — nothing may be fetched merely because the entry
        point is on the page. Measured at load, then again after a real focus. */
-    check(bootFetches === 0, `${route}: no index fetch at page boot`, indexHits.join(', '));
+    /* Detail reads the two COUNTS, not indexHits.join(). This line used to
+       print the index URL underneath an assertion that nothing was fetched,
+       because indexHits is read here — after the focus above filled it. A
+       label that contradicts the measurement it is labelling trains a reader
+       to stop believing the gate. */
+    check(bootFetches === 0, `${route}: no index fetch at page boot`,
+      `boot ${bootFetches}, after focus ${indexHits.length}`);
     await page.close();
   }
 
@@ -157,6 +163,31 @@ try {
       nonImage.slice(0, 3).join(', ') || `${nu.length} card image(s), 0 data requests`);
     const leaked = nu.filter(u => /apex|curl/i.test(u.split('/assets/cards/')[1] ? '' : u));
     check(leaked.length === 0, `${PUPIL}: no request carries the query`, leaked.slice(0, 2).join(', '));
+
+    /* B2's pupil half, DRIVEN rather than recorded as not-driven. The adult
+       block above prints boot 0 -> after focus 1. This prints boot 0 -> after
+       typing 0, and that second zero is the fence itself, not a missing
+       feature: the pupil search filters the cards already rendered on the page,
+       so the 717-entry index is not something it could fetch. Stated as two
+       numbers so that the day one of them moves, it is visible rather than
+       absorbed into the broader no-data-requests assertion above. */
+    const IDX = /mbm-search-index\.json/;
+    const idxBoot = requests.slice(0, before).filter(u => IDX.test(u)).length;
+    const idxAfter = nu.filter(u => IDX.test(u)).length;
+    check(idxBoot === 0 && idxAfter === 0,
+      `${PUPIL}: the index is not fetched before interaction — and not after it either`,
+      `boot ${idxBoot}, after typing ${idxAfter}; the pupil search reads the rendered cards, never the index`);
+
+    /* CONTROL for the line above. Two zeroes are also what a dead listener
+       prints, and "the instrument reported nothing" is not "nothing happened".
+       So fetch the index deliberately, from this page, and require the SAME
+       counter to move. If it does not, the zeroes above meant nothing. */
+    await page.evaluate(() => fetch('/data/mbm-search-index.json').then(r => r.arrayBuffer()).catch(() => {}));
+    await page.waitForFunction(() => true);
+    const idxControl = requests.filter(u => IDX.test(u)).length;
+    check(idxControl > 0,
+      `${PUPIL}: CONTROL — the index counter moves when the index really is fetched`,
+      `deliberate fetch registered ${idxControl}`);
 
     const stored = await page.evaluate(() => {
       let ls = 0, ss = 0;
