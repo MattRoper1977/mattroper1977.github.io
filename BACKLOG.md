@@ -957,6 +957,13 @@ names, or the gate is re-pointed at what that page is now ruled to carry, with
 the ruling cited. It must not be left red-and-ignored: that is what teaches an
 estate to stop reading its own reds.
 
+**Bookend, 24 August 2026 (Order S3 §T6.5).** Two dispatches changed nothing:
+run 14 reported exactly what run 13 reported, so there is no new information to
+act on and nothing here is a finding waiting to be written up. It stays
+out of scope for this order and it stays **open**, not closed — a standing red
+with an owner and a "done when" is a backlog item; a standing red without one is
+how an estate learns to stop reading its own reds. It needs its own order.
+
 ## 5n. The three-tag card: what the estate can and cannot derive
 
 **content · work-pending** — recorded 24 August 2026 from Order S3 §T2. This is
