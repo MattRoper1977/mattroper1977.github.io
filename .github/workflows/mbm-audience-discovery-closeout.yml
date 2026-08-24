@@ -254,6 +254,35 @@ jobs:
       # Pages serves, because there is no build step. Scenario 3 is the one that
       # matters — it shows the old `rendered === expected` passing on 0 === 0,
       # and the new guard refusing it.
+      # Z1. The takes gate resolves its content from the COMMITTED BLOB and
+      # compares it to a hash pinned in data/takes-pin.json. Fetch depth matters:
+      # `git show HEAD:` needs the blob, which a depth-1 checkout still has.
+      - name: Matt's takes are what the pin says they are
+        run: node tools/verify_takes_pin.mjs
+
+      - name: ...and a changed take goes red even if another gate is taught to accept it
+        run: |
+          set -e
+          git config user.email ci@local; git config user.name ci
+          BASE=$(git rev-parse HEAD)
+          python3 - <<'PY'
+          s = open('games/index.html', encoding='utf-8').read()
+          a = s.replace("The eight I'd put in front of anyone first", 'Eight favourites, one line each', 1)
+          assert a != s, 'control did not mutate anything - it would prove nothing'
+          open('games/index.html', 'w', encoding='utf-8').write(a)
+          g = open('tools/verify_games_audience_faces.py').read()
+          b = g.replace("The eight I'd put in front of anyone first", 'Eight favourites, one line each', 1)
+          assert b != g, 'control did not update the other gate - it would prove nothing'
+          open('tools/verify_games_audience_faces.py', 'w').write(b)
+          PY
+          git commit -q -am "control: mutate a take and teach the other gate to accept it"
+          out=$(node tools/verify_takes_pin.mjs 2>&1 || true)
+          git reset -q --hard "$BASE"
+          echo "$out" | grep -q 'takes pin:' || { echo "the gate did not run at all - this control proves nothing"; echo "$out"; exit 1; }
+          echo "$out" | grep -q 'is unchanged from the pin' || { echo "it failed, but not on the assertion it names"; echo "$out"; exit 1; }
+          echo "$out" | grep -q '\[FAIL\]' || { echo "the pin accepted a changed take"; exit 1; }
+          node tools/verify_takes_pin.mjs
+
       - name: A published game is in the sitemap
         run: node tools/verify_sitemap_covers_games.mjs
 
