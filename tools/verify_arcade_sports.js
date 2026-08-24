@@ -14,7 +14,11 @@ if(self){
   ['copy','browse-copy-present',t=>t.replace('Browse by genre','Browse the shelf')],
   ['rail-returns','sports-declared-once-as-a-genre',t=>t.replace('<div id="genreSections"></div>','<div id="genreSections"></div><div class="rail" id="sportsRail"></div>')],
   ['baked-count','no-genre-count-is-written-into-the-markup',t=>t.replace('sm.querySelector(".gnum").textContent=members.length+" game"','sm.querySelector(".gnum").textContent="8 game"')],
-  ['bespoke-card','sports-uses-the-same-card-system-as-every-genre',t=>t.replace('members.forEach(function(g){c.appendChild(gCard(g,false))});','members.forEach(function(g){c.appendChild(document.createElement("a"))});')]
+  ['bespoke-card','sports-uses-the-same-card-system-as-every-genre',t=>t.replace('members.forEach(function(g){c.appendChild(gCard(g,false))});','members.forEach(function(g){c.appendChild(document.createElement("a"))});')],
+  /* H3.3. The number limb had no mutation case, so nothing proved it could fail.
+     Drop a rail slot and leave the sentence saying "eight": seven slots, eight
+     claimed. */
+  ['rail-count','top-copy-number-matches-the-rail',t=>t.replace('rail:8,','')]
  ];let missed=0;
  for(let i=0;i<cases.length;i++){const [family,expected,mut]=cases[i],changed=mut(html),p=path.join(root,i+'.html');fs.writeFileSync(p,changed);const r=spawnSync(process.execPath,[__filename,p],{encoding:'utf8'}),out=(r.stdout||'')+(r.stderr||'');if(changed!==html&&r.status!==0&&out.includes('FAIL  '+expected))console.log('  PASS  '+family+' tamper rejected');else{console.log('  FAIL  '+family+' tamper escaped');missed++;}}
  fs.rmSync(root,{recursive:true,force:true});console.log(missed?`${cases.length-missed} detected, ${missed} missed`:`ALL ${cases.length} PLANTED FAILURES WERE DETECTED`);process.exit(missed?1:0);
@@ -45,6 +49,22 @@ ok('sports-membership-comes-from-the-genre-record',
 ok('apex-kick-remains-in-top',/\{href:"\/apexkick\/",\s*rail:\d+/.test(html),
  'still a rail slot, now href-keyed');
 ok('top-copy-still-eight',html.includes("The eight I'd put in front of anyone first"));
+/* H3. The line above fuses two values with different owners: Matt's prose, which
+   data/takes-pin.json owns and which this limb still detects (proved by mutating
+   the page and watching it fire), and the NUMBER WORD, whose real owner is the
+   set of rail:N slots in CURATION. Nothing derived that number, so the rail could
+   go to seven or nine while the sentence still said "eight" and every check here
+   passed — the exact failure the limb is named for and could not catch. Counted
+   from the slots now, never read from the word. A zero count fails rather than
+   satisfying anything, so an empty rail cannot read as a pass. */
+const RAIL_SLOTS=(html.match(/\brail:\s*\d+/g)||[]).length;
+const NUMWORD=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
+const PICKS=(html.match(/<section class="sec" id="picks">[\s\S]*?<\/section>/)||[''])[0];
+const RAIL_WORD=NUMWORD[RAIL_SLOTS];
+ok('top-copy-number-matches-the-rail',
+ RAIL_SLOTS>0 && !!RAIL_WORD && PICKS.includes(RAIL_WORD),
+ RAIL_SLOTS===0?'no rail:N slots found — refusing to pass on nothing'
+  :`${RAIL_SLOTS} rail slots; the sub-line ${RAIL_WORD&&PICKS.includes(RAIL_WORD)?'says':'does NOT say'} "${RAIL_WORD||'?'}"`);
 ok('every-genre-draws-from-the-complete-manifest',
  /var members=sortGames\(all\.filter\(function\(g\)\{return genreOf\(g\)===gname\}\)\);/.test(html)
  && /var all=state\.games/.test(html)

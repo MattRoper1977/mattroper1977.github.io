@@ -1,0 +1,165 @@
+name: Production verification after merge
+
+# WHY THIS EXISTS, AND WHY IT IS A JOB AND NOT A CHECKLIST
+#
+# The branch that added /apexcurl/ and /apexvelodrome/ was built in a sandbox
+# that gets 403 on CONNECT to madebymatt.uk. Nothing built there could see
+# production, so every production statement made during that work was an
+# inference from the deployed ref rather than an observation. This job is the
+# observation, and it runs where egress is real. It is also not something Matt
+# should have to run: it fires on the merge.
+#
+# THE RETRY IS THE POINT
+#
+# GitHub Pages deploys AFTER the merge, not with it. A 404 in the first seconds
+# means "not yet", not "broken" - and that exact confusion has already been
+# mistaken for a broken build in this estate once. So the job attempts, waits,
+# retries, and REPORTS EVERY ATTEMPT including the ones that failed, naming the
+# attempt on which deployment was first observed. A pass on attempt 4 is a pass
+# with a visible deploy lag, not a silent pass.
+#
+# MERGE ORDER, RECORDED SO IT IS NOT RE-DERIVED
+#
+#   site #172 FIRST -> prove deployment (this job) -> games #39 SECOND
+#
+# /games/ fetches /Games/games.json at runtime. Merging the shelf first
+# advertises two routes that 404 until the site deploys; merging the site first
+# means two live routes are merely unlisted for a while. An advertised 404 is
+# the worse failure.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apexcurl/**'
+      - 'apexvelodrome/**'
+      - 'games/index.html'
+      - 'for/pupils/**'
+      - 'data/mbm-search-index.json'
+      - 'data/source-manifests/games.json'
+      - 'assets/brand/mbm-splash.js'
+      - '.github/workflows/post-merge-production-verify.yml'
+      - 'tools/verify_production_after_merge.mjs'
+  workflow_dispatch:
+    inputs:
+      attempts:
+        description: 'Deploy-lag attempts before giving up'
+        default: '8'
+      wait_seconds:
+        description: 'Seconds between attempts'
+        default: '30'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: post-merge-production-verify
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Production serves what was merged
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright Chromium
+        run: |
+          npm i --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Record what was merged, and derive the revert target
+        shell: bash
+        run: |
+          set -euo pipefail
+          PARENT="$(git rev-parse "${GITHUB_SHA}^1" 2>/dev/null || echo 'unknown')"
+          echo "merge commit : ${GITHUB_SHA}"
+          echo "first parent : ${PARENT}"
+          {
+            echo "### Revert target, derived from this merge"
+            echo ""
+            echo '```'
+            echo "merge commit : ${GITHUB_SHA}"
+            echo "first parent : ${PARENT}"
+            echo "revert       : git revert -m 1 ${GITHUB_SHA}"
+            echo '```'
+            echo ""
+            echo "Derived after the fact from the commit that actually exists."
+            echo "A SHA written down before the merge is a guess."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Verify production
+        env:
+          MBM_PROD_BASE: https://madebymatt.uk
+          MBM_ATTEMPTS: ${{ github.event.inputs.attempts || '8' }}
+          MBM_WAIT_MS: '30000'
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/verify_production_after_merge.mjs 2>&1 | tee production.log
+
+      # F2/F3. These five read LIVE production, so on a PR they can only ever
+      # report the pre-merge world — which is why they are red on the PR and why
+      # that red is not evidence about the merge. Here, after Pages has
+      # published, they are being asked the question they were written to ask.
+      # `continue-on-error` is deliberate and bounded: the step above is the
+      # gate that decides the job, and these run to completion so the summary
+      # names EVERY one that is still red rather than stopping at the first.
+      - name: Re-run the production-driven gates against the published site
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          : > production-driven.log
+          for g in tools/verify_echovault_surfaces.js \
+                   tools/verify_relicforge_surfaces.js \
+                   tools/verify_curation_keys.mjs \
+                   tools/verify_published_live.mjs \
+                   tools/verify_surfaces.js; do
+            echo "=== $g" | tee -a production-driven.log
+            node "$g" 2>&1 | tee -a production-driven.log
+            echo "--- exit $? for $g" | tee -a production-driven.log
+          done
+          # A zero match must never read as a pass here either.
+          if grep -q 'matched nothing' production-driven.log; then
+            echo "SELECTOR DRIFT reported against production — see the log" | tee -a production-driven.log
+          fi
+
+      - name: Publish which production-driven gates cleared
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### Production-driven gates, re-run after the merge"
+            echo ""
+            echo '```'
+            grep -E '^(=== |--- exit |PASS |FAIL |SELECTOR DRIFT)' production-driven.log 2>/dev/null \
+              || echo "(no log - the step did not run)"
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Publish the attempt log
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### Production verification"
+            echo ""
+            echo '```'
+            cat production.log 2>/dev/null || echo "(no log - the job failed before the script ran)"
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-verification
+          path: production.log
+          if-no-files-found: warn

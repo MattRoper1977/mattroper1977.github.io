@@ -182,8 +182,81 @@ def footer(label: str, *, quiet: bool = False, support: bool = False) -> str:
     return f'''<footer class="footer mf-footer"{quiet_attr}><div class="bar">{brand()}<span class="muted">{esc(label)} · <a href="/main/">Main homepage</a> · <a href="/">Choose homepage</a> · <a href="/privacy/">Privacy</a></span></div>{pill}</footer>'''
 
 
-def scripts() -> str:
-    return '<script defer src="/theme.js"></script><script defer src="/assets/mbm-audience.js"></script><script defer src="/assets/mbm-search.js"></script><script defer src="/assets/mbm-recent.js"></script><script defer src="/assets/mbm-platform.js"></script>'
+def scripts(audience: dict[str, Any] | None = None) -> str:
+    """The shared script set, plus the pupil page's own local game filter.
+
+    The pupil filter is NOT added to the adult pages: they carry the shared
+    suggest form, which is the estate's one search engine. And the shared
+    engine is not removed from the pupil page even though nothing on it now
+    binds — the page also uses that file's exports elsewhere, and taking a
+    script away is a separate decision from adding a control."""
+    base = ('<script defer src="/theme.js"></script>'
+            '<script defer src="/assets/mbm-audience.js"></script>'
+            '<script defer src="/assets/mbm-search.js"></script>'
+            '<script defer src="/assets/mbm-recent.js"></script>'
+            '<script defer src="/assets/mbm-platform.js"></script>')
+    if audience is not None and not audience.get("adultFeatures"):
+        base += '<script defer src="/assets/mbm-pupil-search.js"></script>'
+    return base
+
+
+def pupil_search() -> str:
+    """The pupil page's own search. It never leaves the page, and never asks
+    the network for anything.
+
+    THE SEARCH BOUNDARY IS A SAFETY BOUNDARY, so this is not the shared engine
+    with a filter bolted on:
+
+      · SOURCE. It reads the game cards ALREADY RENDERED on this page — the
+        safe set, painted from the same record /games/ uses. No index fetch, no
+        second catalogue, no endpoint. Typing fires zero requests.
+      · RESULTS. It can only ever show or hide an <article> that is already in
+        the DOM, so a result cannot resolve anywhere the page does not already
+        link. There is no code path that can inject a destination.
+      · NO FORM. There is no <form>, so there is no action, no submit and no
+        query string. Enter does nothing but keep the results where they are.
+      · NO PERSISTENCE. Nothing typed is written to localStorage,
+        sessionStorage, IndexedDB, a cookie or a URL. On a shared device the
+        query dies with the page.
+      · ONE INPUT. This is the only <input> on the page, and the fence gate
+        asserts exactly that.
+
+    The empty state names the genre GROUPS, which this page has, rather than
+    "filters", which it does not — a calm message that points at something real.
+    """
+    return (
+        '<div class="mf-pupil-search">'
+        '<label class="mf-pupil-search-label" for="pupil-game-search">Look for a game</label>'
+        '<div class="mf-pupil-search-field">'
+        '<input id="pupil-game-search" type="search" autocomplete="off" enterkeyhint="search" '
+        'placeholder="Type a name, or how you want it to feel" '
+        'aria-describedby="pupil-game-search-status" data-mbm-pupil-search>'
+        '</div>'
+        '<p class="mf-pupil-search-status" id="pupil-game-search-status" '
+        'data-mbm-pupil-search-status role="status" aria-live="polite"></p>'
+        '</div>'
+    )
+
+
+def hero_search(audience: dict[str, Any]) -> str:
+    """A visible way to search, in the hero, on every audience homepage.
+
+    All seven of these pages already LOADED assets/mbm-search.js and none of
+    them showed a search box — the script bound nothing, because nothing on the
+    page carried the attribute it looks for. Search existed and was invisible.
+
+    The pupil page gets a DIFFERENT control, deliberately. The shared suggest
+    form reads the whole 715-entry index, which includes 69 entries marked
+    safeForPupils:false and routes to /teach/, /account/ and the resources
+    catalogue; and it submits to /resources/. Neither belongs behind the pupil
+    fence, so that page filters the games already rendered on it instead and
+    never leaves the page. See pupil_search().
+    """
+    if audience.get("adultFeatures"):
+        sid = "hero-search-" + audience["route"].strip("/").replace("/", "-")
+        return suggest_search(sid, "Search Made by Matt",
+                              "Try a subject, game, pathway or tool", "mf-hero-search")
+    return pupil_search()
 
 
 def hero_copy(audience: dict[str, Any]) -> str:
@@ -191,7 +264,7 @@ def hero_copy(audience: dict[str, Any]) -> str:
         f'<a class="mf-btn {esc(item["style"])}" href="{esc(item["href"])}">{esc(item["label"])}</a>'
         for item in audience["primaryCtas"]
     )
-    return f'''<div class="mf-hero-copy"><p class="mf-kicker">A Made by Matt homepage</p><h1 id="page-title">{esc(audience['title'])}</h1><p class="mf-lead">{esc(audience['lead'])}</p><div class="mf-actions">{ctas}</div><div class="mf-home-links"><a href="/main/">Main homepage</a><a href="/">Choose another homepage</a></div></div>'''
+    return f'''<div class="mf-hero-copy"><p class="mf-kicker">A Made by Matt homepage</p><h1 id="page-title">{esc(audience['title'])}</h1><p class="mf-lead">{esc(audience['lead'])}</p>{hero_search(audience)}<div class="mf-actions">{ctas}</div><div class="mf-home-links"><a href="/main/">Main homepage</a><a href="/">Choose another homepage</a></div></div>'''
 
 
 # ---------------------------------------------------------------------------
@@ -471,6 +544,27 @@ def utility_section(audience: dict[str, Any]) -> str:
     return f'''<section class="mf-section mf-utility-section"><div class="mf-wrap"><div class="mf-section-head"><p>More to explore</p><h2>Useful routes from this homepage</h2><span>Every destination remains public unless the destination itself clearly explains an optional adult account feature.</span></div><div class="mf-utility-grid">{cards}</div></div></section>'''
 
 
+def closing_section(audience: dict[str, Any]) -> str:
+    """The line that hands the reader somewhere, above the boundaries note.
+
+    These pages ended on a guard. A page that states its limits and then stops
+    has told the reader what it is not, and nothing about what to do next — so
+    the closing region ran boundaries -> homepage switcher, with no editorial
+    step between the last card and the disclaimer.
+
+    This block is EDITORIAL and it is deliberately NOT the note. It carries no
+    bounded claim, no account or privacy statement and no relationship
+    disclaimer; those stay in note_section() where they already are, stated
+    once. It is optional: an audience without a `closing` renders exactly as
+    before, which is how the pupil page keeps its own shape.
+    """
+    text = audience.get("closing")
+    if not text:
+        return ""
+    return (f'<section class="mf-section mf-closing-section"><div class="mf-wrap">'
+            f'<p class="mf-closing">{esc(text)}</p></div></section>')
+
+
 def note_section(audience: dict[str, Any]) -> str:
     # An adult page offers the optional adult routes; a pupil page states in
     # words that they are excluded, so the boundary is declared rather than
@@ -513,7 +607,7 @@ def audience_page(data: dict[str, Any], aid: str, audience: dict[str, Any]) -> s
     return f'''<!doctype html>
 <!-- {SENTINEL} -->
 <html lang="en-GB">{head(f"{audience['label']} · Made by Matt", description, audience['route'])}<body class="mbm-face-page" {body_attrs} style="--face-accent:{esc(audience['accent'])};--face-accent-visual:{esc(audience.get('accentVisual') or audience['accent'])};--face-soft:{esc(audience['soft'])}">
-<a class="skip" href="#main">Skip to content</a>{general_header(current=audience['route'], audience=audience)}<main id="main">{hero(audience)}{sections}{utility_section(audience)}{note_section(audience)}{switcher(data, aid)}</main>{footer(audience['label'], quiet=not audience.get('adultFeatures'), support=bool(audience.get('adultFeatures')))}{scripts()}</body></html>
+<a class="skip" href="#main">Skip to content</a>{general_header(current=audience['route'], audience=audience)}<main id="main">{hero(audience)}{sections}{utility_section(audience)}{closing_section(audience)}{note_section(audience)}{switcher(data, aid)}</main>{footer(audience['label'], quiet=not audience.get('adultFeatures'), support=bool(audience.get('adultFeatures')))}{scripts(audience)}</body></html>
 '''
 
 
@@ -528,8 +622,25 @@ def chooser_card(aid: str, audience: dict[str, Any]) -> str:
     return f'''<a class="mf-choice" data-mbm-face-choice="{esc(aid)}" data-mbm-face-label="{esc(audience['label'])}" href="{esc(audience['route'])}" style="--choice-accent:{esc(audience['accent'])};--choice-soft:{esc(audience['soft'])}"><span class="mf-last">Last used on this device</span><span class="mf-choice-icon">{icon(audience['icon'])}</span><span class="mf-choice-copy"><strong>{esc(audience['label'])}</strong><small>{esc(audience['chooserDescription'])}</small></span><span class="mf-arrow" aria-hidden="true">→</span></a>'''
 
 
+def suggest_search(sid: str, label: str, placeholder: str, wrapper: str) -> str:
+    """The ONE shared search entry point, from the ONE shared engine.
+
+    assets/mbm-search.js binds `form[data-mbm-search="suggest"]` and fetches the
+    index on FIRST FOCUS, not at boot — so putting this on a page costs nothing
+    until somebody deliberately reaches for it. That is the whole reason the
+    suggest form is what gets copied outward and the search APP is not: the app
+    calls loadIndex() during init, which would put a 754 KB request on the
+    critical path of every discovery page.
+
+    Only the id and the two labels vary. Nothing about the engine, the markup or
+    the submit target is re-implemented per page.
+    """
+    return f'''<div class="{wrapper}"><form class="mbm-search-form" action="/resources/" method="get" role="search" data-mbm-search="suggest" data-mbm-limit="6"><label class="mbm-search-label" for="{sid}">{esc(label)}</label><div class="mbm-search-field">{SEARCH_ICON}<input id="{sid}" name="q" type="search" autocomplete="off" enterkeyhint="search" placeholder="{esc(placeholder)}" aria-describedby="{sid}-status"><div class="mbm-suggestions" id="{sid}-suggestions" data-mbm-suggestions hidden></div></div><button class="mbm-search-submit" type="submit">Search</button><span class="mbm-search-status" id="{sid}-status" data-mbm-search-status aria-live="polite"></span></form></div>'''
+
+
 def root_search() -> str:
-    return f'''<div class="mf-root-search"><form class="mbm-search-form" action="/resources/" method="get" role="search" data-mbm-search="suggest" data-mbm-limit="6"><label class="mbm-search-label" for="root-search">Search Made by Matt</label><div class="mbm-search-field">{SEARCH_ICON}<input id="root-search" name="q" type="search" autocomplete="off" enterkeyhint="search" placeholder="Try a subject, game, pathway or tool" aria-describedby="root-search-status"><div class="mbm-suggestions" id="root-search-suggestions" data-mbm-suggestions hidden></div></div><button class="mbm-search-submit" type="submit">Search</button><span class="mbm-search-status" id="root-search-status" data-mbm-search-status aria-live="polite"></span></form></div>'''
+    return suggest_search("root-search", "Search Made by Matt",
+                          "Try a subject, game, pathway or tool", "mf-root-search")
 
 
 def root_highlights() -> str:

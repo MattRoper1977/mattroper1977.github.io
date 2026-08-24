@@ -597,3 +597,29 @@ body[data-theme="dark"] .mf-band-link{color:#F2A24A}
 .mf-pupil-take{font-size:.86rem;color:#3b4166}
 .mf-pupil-game .mf-text-link{min-height:44px;display:inline-flex;align-items:center}
 .mf-masthead a.mf-brand,.mf-brand{min-height:44px;display:inline-flex;align-items:center}
+
+/* THE SEARCH ENTRY POINT, IN THE HERO
+   These pages all loaded the search engine and none of them showed a box.
+   The control sits under the hero actions so it is reachable without scrolling
+   on a 390px phone, and it never covers the hero — it is in normal flow, not
+   fixed or sticky, so nothing can occlude it and it cannot occlude anything. */
+.mf-hero-search,.mf-pupil-search{margin-top:clamp(.9rem,2.4vw,1.25rem);max-width:44rem}
+.mf-pupil-search-label,.mf-hero-search .mbm-search-label{display:block;font-weight:700;
+  font-size:.95rem;margin-bottom:.4rem}
+.mf-pupil-search-field{display:flex}
+.mf-pupil-search input{flex:1;min-height:48px;padding:.7rem .9rem;font:inherit;
+  border:2px solid var(--face-accent,#2f6b4d);border-radius:12px;background:#fff;color:inherit}
+.mf-pupil-search input:focus-visible{outline:3px solid var(--face-accent,#2f6b4d);outline-offset:2px}
+.mf-hero-search .mbm-search-field input{min-height:48px}
+.mf-hero-search .mbm-search-submit{min-height:48px;min-width:48px}
+.mf-pupil-search-status{margin:.55rem 0 0;font-size:.95rem;line-height:1.45}
+.mf-pupil-game[hidden],details.mf-pupil-genre[hidden]{display:none}
+@media (prefers-reduced-motion: reduce){
+  .mf-hero-search,.mf-pupil-search{transition:none}
+}
+
+/* The closing line. Editorial, and deliberately quieter than a card grid and
+   louder than the boundaries note it sits above: it is the last thing the page
+   says in its own voice before it states its limits. */
+.mf-closing-section{padding-block:clamp(1.1rem,3vw,1.9rem)}
+.mf-closing{max-width:62ch;margin:0;font-size:clamp(1rem,1.6vw,1.12rem);line-height:1.55;color:var(--mf-ink,inherit)}

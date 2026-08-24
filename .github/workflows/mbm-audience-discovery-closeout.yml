@@ -22,6 +22,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install Playwright Chromium
+        # The copy gate is static, but the search-prominence gate is not and
+        # cannot be: whether a control is above the fold at 390px, whether
+        # anything covers it, and whether typing reaches the network are
+        # runtime facts. A source grep for the search script called all seven
+        # of these pages covered while none of them rendered a box.
+        run: |
+          npm i --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+
       - name: Generated audience HTML is byte-for-byte reproducible
         run: python3 tools/render_audience_homepages.py --check
 
@@ -39,6 +52,48 @@ jobs:
 
       - name: Audience architecture, labels and privacy contract hold
         run: python3 tools/verify_games_audience_faces.py
+
+      # G2. This gate existed, was complete, and had never run — no workflow
+      # referenced it. It binds /stats/'s privacy sentence to the one config key
+      # that can falsify it: set features.analytics.goatcounter and
+      # mbm-features.js appends a remote counter script whose country resolution
+      # is done from the IP server-side, at which point the page is lying. The
+      # claim is matched by its own text rather than by a line number, and the
+      # behavioural half loads the page and watches for the request, so it is not
+      # string-matching a config. Wired only after being red-proved end to end
+      # against a tree with the key set: exit 1, failing on THE RULE by name.
+      - name: /stats/ privacy claim is bound to the config that can falsify it
+        run: node tools/verify_stats_claim.mjs
+
+      # H6. This gate had never run. Run by hand it reported a 0x0 swatch on
+      # /tools/ — a layout race in the gate, not a defect in the page: at this
+      # gate's viewport the swatch measures 44x44 in every state. Settled, given
+      # a fail-closed assertion that distinguishes "never reached layout" from
+      # "too small", and wired, because a fixed gate left unwired is the same
+      # defect it was recorded under.
+      - name: Six reading swatches on every engine, each a real 44px target
+        run: node tools/verify_highlumen_behaviour.mjs
+
+      # G2, second instance, and this one is this branch's own. P2 shipped
+      # verify_audience_copy.mjs — the gate that asserts each rewritten audience
+      # page serves its own opening and closing block, that no two share one, and
+      # that no closing block restates a guard belonging in the boundaries note —
+      # and wired it to nothing. The headline content change of this branch had a
+      # guard sitting unrun beside it, which is the exact defect G2 is about.
+      - name: Each audience page serves its own copy, and no closing block restates a guard
+        run: node tools/verify_audience_copy.mjs
+
+      - name: No served surface states a catalogue count its source disagrees with
+        # The third species of the second-literal trap already in this estate's
+        # register: a gate holding its own copy of a value · a control retyping
+        # a token · now a catalogue count copied into prose.
+        # /for/schools-semh/ served "511 canonical internal destinations" against
+        # an index of 715. The rule is DELETE the numeral, not update it: 715
+        # buys accuracy until the 716th entry lands.
+        run: node tools/verify_catalogue_counts.mjs
+
+      - name: Search is findable, lazy, and fenced on the pupil page
+        run: node tools/verify_search_prominence.mjs
 
       - name: Design inheritance holds across audience surfaces
         run: python3 tools/verify_design_inheritance.py
@@ -201,10 +256,18 @@ jobs:
           python3 tools/check_workflow_paths.py
 
       - name: Install the browser the proof drives
+        # TWO runtimes, deliberately. verify_audience_discovery_browser.py is
+        # Python and needs the pip package; the count and prominence controls
+        # below are Node and need the npm one. Installing only the first is
+        # what made the prominence control fail with ERR_MODULE_NOT_FOUND —
+        # and, before it was hardened, what would have made that read as a
+        # passing red control on a machine where the gate never ran at all.
         run: |
           set -euo pipefail
           python3 -m pip install --quiet playwright
           python3 -m playwright install --with-deps chromium
+          npm i --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
 
       # This job carries no `paths:` filter, which is why the hud scriptLine
       # check is run from here rather than from verify-games-audience-faces.yml.
@@ -213,11 +276,292 @@ jobs:
       # nothing and run zero times, which is exactly how Lessons PR #114 ran no
       # checks at all. A filter that has to be remembered is a filter that will
       # be forgotten.
+      # F2. The two *_surfaces.js gates queried '#allGrid' and '#sportsRail',
+      # ids that have never existed on /games/. They failed every run — loudly,
+      # not blind — but on a selector rather than on the shelf, which is the
+      # same as not testing it. The repair lives in tools/lib/shelf-probe.js and
+      # these controls prove it on a page served from this repo: the same bytes
+      # Pages serves, because there is no build step. Scenario 3 is the one that
+      # matters — it shows the old `rendered === expected` passing on 0 === 0,
+      # and the new guard refusing it.
+      # Z2. A game's declared accent must equal its shelf card hue. Derived from
+      # the manifest, nothing pinned. The Velodrome split is asserted too, so it
+      # stays a decision rather than becoming drift somebody later "tidies".
+      - name: Each game's accent is its shelf card hue
+        run: node tools/verify_accent_parity.mjs
+
+      - name: ...and the parity gate notices a game drifting from its card
+        run: |
+          set -e
+          cp apexcurl/index.html /tmp/ac.bak
+          sed -i "s/const ACCENT='#00F0B4'/const ACCENT='#39C6EF'/" apexcurl/index.html
+          out=$(node tools/verify_accent_parity.mjs 2>&1 || true)
+          cp /tmp/ac.bak apexcurl/index.html
+          echo "$out" | grep -q 'accent parity:' || { echo "the gate did not run - this control proves nothing"; echo "$out"; exit 1; }
+          echo "$out" | grep -q 'script accent equals the shelf card hue' \
+            || { echo "it failed, but not on the assertion it names"; echo "$out"; exit 1; }
+          echo "$out" | grep -q '\[FAIL\]' || { echo "parity accepted a drifted accent"; exit 1; }
+          node tools/verify_accent_parity.mjs
+
+      - name: ...and it notices the deliberate split being tidied away
+        run: |
+          set -e
+          cp apexvelodrome/index.html /tmp/av.bak
+          python3 - <<'PY'
+          s = open('apexvelodrome/index.html', encoding='utf-8').read()
+          a = s.replace("'#5fb6ff'", 'ACCENT')
+          assert a != s, 'control did not mutate anything - it would prove nothing'
+          open('apexvelodrome/index.html', 'w', encoding='utf-8').write(a)
+          PY
+          out=$(node tools/verify_accent_parity.mjs 2>&1 || true)
+          cp /tmp/av.bak apexvelodrome/index.html
+          echo "$out" | grep -q 'accent parity:' || { echo "the gate did not run"; echo "$out"; exit 1; }
+          echo "$out" | grep -q 'the declared split survives' \
+            || { echo "it failed, but not on the assertion it names"; echo "$out"; exit 1; }
+          node tools/verify_accent_parity.mjs
+
+      # Z1. The takes gate resolves its content from the COMMITTED BLOB and
+      # compares it to a hash pinned in data/takes-pin.json. Fetch depth matters:
+      # `git show HEAD:` needs the blob, which a depth-1 checkout still has.
+      # G2. The gate above had never run, so "it passes" was a claim and not a
+      # result. This is its external control: a scratch tree with the counter key
+      # set and the claim left standing must exit non-zero AND fail on THE RULE
+      # by name — not merely fail, and not fail because playwright is missing.
+      - name: The /stats/ privacy gate fails on the rule it names
+        run: |
+          set -euo pipefail
+          S=$(mktemp -d)
+          for d in stats assets data; do [ -d "$d" ] && cp -r "$d" "$S/"; done
+          python3 - "$S" <<'PY2'
+          import json, sys
+          c = json.load(open('site.json'))
+          c.setdefault('features', {}).setdefault('analytics', {})['goatcounter'] = 'madebymatt'
+          json.dump(c, open(sys.argv[1] + '/site.json', 'w'), indent=2)
+          PY2
+          out=$(node tools/verify_stats_claim.mjs "$S" 2>&1) && rc=0 || rc=$?
+          rm -rf "$S"
+          if [ "$rc" = "2" ]; then
+            echo "the gate was INCONCLUSIVE (playwright missing) — that is not a red"; echo "$out" | tail -5; exit 1
+          fi
+          if [ "$rc" = "0" ]; then
+            echo "the gate passed with the counter key set — it cannot fail"; echo "$out" | tail -20; exit 1
+          fi
+          grep -q 'FAIL.*THE RULE: a non-empty goatcounter key may not coexist with the claim' <<<"$out" \
+            || { echo "it failed, but not on the assertion it names"; echo "$out" | tail -20; exit 1; }
+          echo "control detected — red on THE RULE, exit $rc"
+          node tools/verify_stats_claim.mjs > /dev/null
+
+      - name: The audience-copy gate fails on the uniqueness assertion it names
+        run: |
+          set -euo pipefail
+          cp data/audience-homepages.json /tmp/adh.bak
+          python3 - <<'PY2'
+          import json, collections
+          p = 'data/audience-homepages.json'
+          d = json.load(open(p), object_pairs_hook=collections.OrderedDict)
+          d['audiences']['partners']['closing'] = d['audiences']['councils']['closing']
+          json.dump(d, open(p, 'w'), ensure_ascii=False, indent=2)
+          open(p, 'a').write('\n')
+          PY2
+          python3 tools/render_audience_homepages.py > /dev/null
+          out=$(node tools/verify_audience_copy.mjs 2>&1) && rc=0 || rc=$?
+          cp /tmp/adh.bak data/audience-homepages.json
+          python3 tools/render_audience_homepages.py > /dev/null
+          if [ "$rc" = "0" ]; then
+            echo "two pages shared a closing block and the gate passed"; echo "$out" | tail -20; exit 1
+          fi
+          grep -q 'FAIL.*every rewritten page has its own closing' <<<"$out" \
+            || { echo "it failed, but not on the assertion it names"; echo "$out" | tail -20; exit 1; }
+          echo "control detected — red on the uniqueness limb, exit $rc"
+          node tools/verify_audience_copy.mjs > /dev/null
+          python3 tools/render_audience_homepages.py --check
+
+      - name: Matt's takes are what the pin says they are
+        run: node tools/verify_takes_pin.mjs
+
+      - name: ...and a changed take goes red even if another gate is taught to accept it
+        run: |
+          set -e
+          git config user.email ci@local; git config user.name ci
+          BASE=$(git rev-parse HEAD)
+          python3 - <<'PY'
+          s = open('games/index.html', encoding='utf-8').read()
+          a = s.replace("The eight I'd put in front of anyone first", 'Eight favourites, one line each', 1)
+          assert a != s, 'control did not mutate anything - it would prove nothing'
+          open('games/index.html', 'w', encoding='utf-8').write(a)
+          g = open('tools/verify_games_audience_faces.py').read()
+          b = g.replace("The eight I'd put in front of anyone first", 'Eight favourites, one line each', 1)
+          assert b != g, 'control did not update the other gate - it would prove nothing'
+          open('tools/verify_games_audience_faces.py', 'w').write(b)
+          PY
+          git commit -q -am "control: mutate a take and teach the other gate to accept it"
+          out=$(node tools/verify_takes_pin.mjs 2>&1 || true)
+          git reset -q --hard "$BASE"
+          echo "$out" | grep -q 'takes pin:' || { echo "the gate did not run at all - this control proves nothing"; echo "$out"; exit 1; }
+          echo "$out" | grep -q 'is unchanged from the pin' || { echo "it failed, but not on the assertion it names"; echo "$out"; exit 1; }
+          echo "$out" | grep -q '\[FAIL\]' || { echo "the pin accepted a changed take"; exit 1; }
+          node tools/verify_takes_pin.mjs
+
+      # G3. The pin now also covers the LOCKED CHOOSER COPY. The control that
+      # already guarded that copy deletes a different sentence — it proves the
+      # guard can fire, not that the guard's expectation is immune to being
+      # co-updated. This one mutates the promise and requires the pin to name the
+      # region that moved, in a scratch worktree so the real tree is never at risk.
+      - name: The pin notices the locked chooser promise moving by one comma
+        run: |
+          set -euo pipefail
+          W=$(mktemp -d)
+          git worktree add -q --detach "$W" HEAD
+          cleanup() { git worktree remove --force "$W" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          python3 - "$W" <<'PY2'
+          import sys
+          p = sys.argv[1] + '/index.html'
+          s = open(p, encoding='utf-8').read()
+          o = "Choosing one does not create an account, change permissions or hide public content."
+          n = "Choosing one does not create an account, change permissions, or hide public content."
+          assert s.count(o) == 1, f"locked promise not found exactly once ({s.count(o)})"
+          open(p, 'w', encoding='utf-8').write(s.replace(o, n, 1))
+          PY2
+          git -C "$W" add -A
+          git -C "$W" -c user.email=ci@local -c user.name=ci commit -q -m scratch
+          # Run the WORKTREE'S OWN copy. verify_takes_pin.mjs derives ROOT from its
+          # own file location and runs `git show HEAD:` there, so invoking the main
+          # tree's copy would read the main tree's HEAD and pass on an unmutated
+          # blob — a vacuous control. This was caught by testing the control.
+          out=$(cd "$W" && node tools/verify_takes_pin.mjs 2>&1) && rc=0 || rc=$?
+          if [ "$rc" = "0" ]; then
+            echo "the locked promise moved and the pin passed"; echo "$out" | tail -20; exit 1
+          fi
+          grep -q 'FAIL.*chooserPromise' <<<"$out" \
+            || { echo "it failed, but not on the region it names"; echo "$out" | tail -20; exit 1; }
+          echo "control detected — red on chooserPromise, exit $rc"
+          node tools/verify_takes_pin.mjs > /dev/null
+
+      - name: The swatch gate refuses a control that never reached layout
+        run: |
+          set -euo pipefail
+          cp tools/index.html /tmp/tools.bak
+          python3 - <<'PY2'
+          s = open('tools/index.html', encoding='utf-8').read()
+          s = s.replace('</head>', '<style>.mbm-sw{display:none!important}</style></head>', 1)
+          open('tools/index.html', 'w', encoding='utf-8').write(s)
+          PY2
+          out=$(node tools/verify_highlumen_behaviour.mjs 2>&1) && rc=0 || rc=$?
+          cp /tmp/tools.bak tools/index.html
+          if [ "$rc" = "0" ]; then
+            echo "every swatch was display:none and the gate passed"; echo "$out" | tail -20; exit 1
+          fi
+          grep -q 'the control never reached layout' <<<"$out" \
+            || { echo "it failed, but not on the fail-closed assertion it names"; echo "$out" | tail -20; exit 1; }
+          echo "control detected — red on not-in-layout, exit $rc"
+          node tools/verify_highlumen_behaviour.mjs > /dev/null
+
+      - name: A published game is in the sitemap
+        run: node tools/verify_sitemap_covers_games.mjs
+
+      - name: ...and the coverage gate notices a game dropped from it
+        run: |
+          set -e
+          cp sitemap.xml /tmp/sm.bak
+          python3 - <<'PY'
+          import re
+          s = open('sitemap.xml').read()
+          s = re.sub(r'  <url>\n    <loc>https://madebymatt.uk/apexcurl/</loc>.*?</url>\n', '', s, flags=re.S)
+          open('sitemap.xml', 'w').write(s)
+          PY
+          if node tools/verify_sitemap_covers_games.mjs > /tmp/sm.log 2>&1; then
+            cp /tmp/sm.bak sitemap.xml
+            echo "the gate passed with a game missing from the sitemap"; exit 1
+          fi
+          cp /tmp/sm.bak sitemap.xml
+          grep -q 'every game this repo serves has a sitemap entry' /tmp/sm.log \
+            || { echo "it failed, but not on the assertion it names"; cat /tmp/sm.log; exit 1; }
+          node tools/verify_sitemap_covers_games.mjs
+
+      - name: The shelf probe cannot pass on an empty page
+        run: node tools/prove_shelf_probe.mjs
+
+      - name: ...and the repaired gates still parse and still name their guard
+        run: |
+          set -e
+          node --check tools/verify_echovault_surfaces.js
+          node --check tools/verify_relicforge_surfaces.js
+          for f in tools/verify_echovault_surfaces.js tools/verify_relicforge_surfaces.js; do
+            grep -q 'assertRendered' "$f" || { echo "$f no longer routes its counts through the guard"; exit 1; }
+            grep -q '#allGrid' "$f" && { echo "$f still queries the id that does not exist"; exit 1; }
+          done
+          grep -q 'never a pass' tools/lib/shelf-probe.js
+
       - name: hud-coverage.json's scriptLine is asserted, not merely recorded
         run: python3 tools/verify_hud_script_line.py
 
       - name: ...and every route in that set is individually asserted
         run: python3 tools/verify_hud_script_line.py --self-test
+
+      - name: Count gate notices a stale number, typed or derived
+        run: |
+          set -e
+          cp data/audience-homepages.json /tmp/cc.bak
+          cp for/pupils/index.html /tmp/cc2.bak
+          python3 - <<'PY'
+          import io
+          p = 'data/audience-homepages.json'
+          s = io.open(p, encoding='utf-8').read()
+          s = s.replace('Search all canonical internal destinations.',
+                        'Search all 511 canonical internal destinations.', 1)
+          io.open(p, 'w', encoding='utf-8').write(s)
+          PY
+          if node tools/verify_catalogue_counts.mjs > /tmp/cc1.log 2>&1; then
+            echo "::error::count gate stayed green with the stale 511 reintroduced"
+            cp /tmp/cc.bak data/audience-homepages.json; exit 1
+          fi
+          # It must go red FOR THE RIGHT REASON. A control that accepts any
+          # non-zero exit also accepts a missing dependency, and then it is
+          # asserting nothing at all.
+          grep -q 'no audience-homepage copy states a hardcoded catalogue count' /tmp/cc1.log || {
+            echo "::error::count gate failed, but not on the assertion this control names"
+            cat /tmp/cc1.log; cp /tmp/cc.bak data/audience-homepages.json; exit 1; }
+          cp /tmp/cc.bak data/audience-homepages.json
+          python3 - <<'PY'
+          import io
+          p = 'for/pupils/index.html'
+          s = io.open(p, encoding='utf-8').read()
+          io.open(p, 'w', encoding='utf-8').write(s.replace('All 54 games', 'All 52 games', 1))
+          PY
+          if node tools/verify_catalogue_counts.mjs > /tmp/cc2.log 2>&1; then
+            echo "::error::count gate stayed green with a DERIVED figure drifting from its source"
+            cp /tmp/cc2.bak for/pupils/index.html; exit 1
+          fi
+          grep -q 'states the derived shelf total' /tmp/cc2.log || {
+            echo "::error::count gate failed, but not on the derived-total assertion"
+            cat /tmp/cc2.log; cp /tmp/cc2.bak for/pupils/index.html; exit 1; }
+          cp /tmp/cc2.bak for/pupils/index.html
+          node tools/verify_catalogue_counts.mjs
+
+      - name: Prominence gate notices a missing entry point
+        run: |
+          set -e
+          cp for/trusts/index.html /tmp/sp.bak
+          python3 - <<'PY'
+          import io, re
+          p = 'for/trusts/index.html'
+          s = io.open(p, encoding='utf-8').read()
+          s = re.sub(r'<div class="mf-hero-search">.*?</form></div>', '', s, count=1, flags=re.S)
+          io.open(p, 'w', encoding='utf-8').write(s)
+          PY
+          if node tools/verify_search_prominence.mjs > /tmp/sp.log 2>&1; then
+            echo "::error::prominence gate stayed green with the entry point removed from /for/trusts/"
+            cp /tmp/sp.bak for/trusts/index.html
+            exit 1
+          fi
+          # The control must fail on the MISSING ENTRY POINT, not on a missing
+          # browser. Without this, an uninstalled Playwright reads as a pass.
+          grep -q '/for/trusts/: has a visible search entry point' /tmp/sp.log || {
+            echo "::error::prominence gate failed, but not on the entry-point assertion"
+            cat /tmp/sp.log; cp /tmp/sp.bak for/trusts/index.html; exit 1; }
+          cp /tmp/sp.bak for/trusts/index.html
+          node tools/verify_search_prominence.mjs
 
       - name: Browser proof controls
         run: python3 tools/verify_audience_discovery_browser.py --self-test

@@ -1,0 +1,97 @@
+name: Apex RC sports contract
+
+# WHY THIS EXISTS
+#
+# tools/verify_apexcurl.mjs and tools/verify_apexvelodrome.mjs are the gates
+# that data/hud-coverage.json cites for /apexcurl/ and /apexvelodrome/. A gate
+# that no workflow invokes is not protection — this estate has produced that
+# species four times already, and inline-exit-verify.yml records the tally. So
+# the gates arrive wired, in the same commit as the games.
+#
+# WHAT THEY JUDGE. The single-file promise (no external script, no off-origin
+# URL), the two stamped platform regions byte-identically, reduced motion, the
+# declared storage keys, zero off-origin requests at load, the exit control
+# RENDERED at least 44x44 at 390, 768 and 1440 px — a control that exists in
+# source and cannot be found on a phone has failed — and determinism against a
+# pinned baseline. The baseline matters: asserting only that two runs agree
+# proves the game is repeatable, not that it is still the same game.
+
+on:
+  pull_request:
+    paths:
+      - 'apexcurl/**'
+      - 'apexvelodrome/**'
+      - 'tools/apex_rc_gate.mjs'
+      - 'tools/verify_apexcurl.mjs'
+      - 'tools/verify_apexvelodrome.mjs'
+      - 'data/hud-coverage.json'
+      - 'assets/brand/mbm-splash.js'
+      - 'tools/render_splash.py'
+      - '.github/workflows/apex-rc-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apex-rc-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright and Chromium
+        run: npm i -D playwright@1.56.1 && npx playwright install --with-deps chromium
+
+      - name: Record identity and environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/apex-rc
+          {
+            node --version
+            sha256sum apexcurl/index.html apexvelodrome/index.html
+            wc -c apexcurl/index.html apexvelodrome/index.html
+          } | tee artifacts/apex-rc/identity.txt
+
+      - name: The stamped regions reproduce from their generators
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 tools/render_inline_exit.py --root . --check | tee artifacts/apex-rc/exit-region.log
+          python3 tools/render_splash.py --root . --check | tee artifacts/apex-rc/splash-region.log
+
+      - name: Apex Curl contract
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/verify_apexcurl.mjs | tee artifacts/apex-rc/apexcurl.log
+
+      - name: Apex Velodrome contract
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/verify_apexvelodrome.mjs | tee artifacts/apex-rc/apexvelodrome.log
+
+      - name: Neither new game is curated — no rail slot, no take, no badge
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/verify_new_games_uncurated.mjs | tee artifacts/apex-rc/uncurated.log
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apex-rc-evidence
+          path: artifacts/apex-rc/

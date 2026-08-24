@@ -558,6 +558,311 @@ swept in, because widening a pass's claim is how a diff stops being checkable.
 
 ---
 
+## 5a. Four gates still query selectors for features that were removed
+
+**instrument · ruling-pending** — recorded 23 August 2026.
+
+**What.** The F2 sweep found ten dead selector ids across six gates that target
+`/games/`. Two were repaired in that pass (`verify_echovault_surfaces.js`,
+`verify_relicforge_surfaces.js`) and one partly (`verify_fracture_surfaces.js` —
+its `#newrelease` limbs were loading `/` when the New Release stack is on
+`/main/`). These are what is left:
+
+```
+verify_fracture_surfaces.js      #rpgRail      the RPG rail was removed; the
+                                               genre <details> sections replaced
+                                               it. 2 limbs, both red.
+verify_arcade_sports_browser.js  #allGrid      asserts an entire removed UI: a
+                                 #sportsRail   Sports rail, its own `.sub` copy,
+                                 #chips        and SPORT/PHYSICS tag chips. The
+                                               shelf now has genre sections and
+                                               CALM/FAST feel chips instead.
+verify_olympics_arcade.mjs       #sportsRail   same rail, same removal.
+```
+
+**Why not now.** None of these is a rename. Each needs a decision about what the
+assertion should become against the current design — and inventing a selector
+for a feature that no longer exists is precisely how the original drift got in.
+Deleting the limbs would be weakening a gate to reach green, so they are left
+red and annotated in place.
+
+**Evidence to start from.** `tools/lib/shelf-probe.js` documents the page's real
+structure and `tools/prove_shelf_probe.mjs` shows how to prove a repair without
+production. The page's genre truth is the `TAXONOMY` literal in
+`games/index.html`, **not** the `collection` field in `games.json` — those
+disagree today (`/neonturf/`).
+
+---
+
+## 5b. `/olympics/` still leaks `keyup` and the pointer pair
+
+**instrument · work-pending** — recorded 23 August 2026.
+
+**What.** Every other stamped game routes through the shared splash region and
+stops leaking input during the splash. `/olympics/` carries a bespoke Olympic
+rings/torch variant and is declared as an exception in `tools/render_splash.py`
+(`DECLARED_EXCEPTIONS`), so the donor fix did not reach it. It still leaks a
+`keyup` and the pointer pair through the splash.
+
+**Why not now.** Stamping it would replace the bespoke Olympic artwork with the
+standard splash, which is a visible design change to a game that was deliberately
+given its own. That is a decision, not a fix, and it needs its own sitting.
+
+---
+
+## 5c. The in-scene scoreboard sits behind the HUD panels
+
+**content · ruling-pending** — recorded 23 August 2026.
+
+**What.** In the Apex titles the in-scene scoreboard renders behind the HUD
+panels at some viewports, so part of it is occluded.
+
+**Why not now.** The obvious fix is a z-order or layout change, and the standing
+rule on these games is that no HUD number, physics constant or timestep moves
+for a visual reason. Establishing that a fix is purely presentational — and
+proving it against the pinned determinism hashes in `data/hud-coverage.json` —
+is more work than the symptom suggests, and it was not what this pass was for.
+
+---
+
+## 5d. Three counts still typed into prose on `/main/`, `/tools/` and `/asdan/`
+
+**content · work-pending** — recorded 23 August 2026.
+
+**What.** The C2 sweep deleted a drifting "511" and derived the counts that the
+audience record owns. Three typed totals remain, in prose on `/main/`, `/tools/`
+and `/asdan/`. They are the same defect: a number copied out of a catalogue into
+a sentence, which goes stale silently.
+
+**Why not now.** Each sits in authored prose rather than in a generated region,
+so each needs either a rewrite that does not carry a number or a new derived
+insertion point. That is three separate editorial decisions, and C2's declared
+scope was the count that was already wrong.
+
+---
+
+## 5e. One of the five audience closings has no anchor
+
+**content · ruling-pending** — recorded 23 August 2026.
+
+**What.** The F1 anchor test asked, for each of the ten rewritten blocks, which
+noun phrase is factually false or meaningless for the other four audiences.
+Nine could be named and each is unique to its own block. The **parents closing**
+could not:
+
+> If you are not sure where to start, pick one thing and let it lead. Nothing
+> here needs planning, and you can stop whenever it stops being useful.
+
+Nothing in it is false for a teacher, a trust lead, an officer or a provider. It
+survives on register — permission-giving, domestic — rather than on an anchor.
+The 20-pair swap test agreed independently and unprompted: on both pairs where
+that block is the A side, the judges said the A-on-B direction alone would score
+FALSE and the pair is carried by the other block.
+
+Related: three of the five closings open with "If", and parents and partners
+both open "If you ⟨verb⟩".
+
+**Why not now.** The replacement would have to be authored, and the standing
+rule is that audience copy is not invented here — the three closings that were
+replaced in this pass were each supplied verbatim. This needs one more
+authorised line, not a rewrite.
+
+---
+
+## 5f. Sitemap coverage is now gated for games, not for pages
+
+**instrument · work-pending** — recorded 23 August 2026.
+
+**What.** `tools/verify_sitemap_covers_games.mjs` now asserts that every shelf
+game this repo serves has a `<loc>`. It found two of mine and `/hyperdraft/`,
+all three now added. It does **not** cover non-game pages, which is the scope of
+item 5 above — and note that item 5's scan of "19 public HTML pages" missed
+`/hyperdraft/` entirely, so the two checks find different things and neither
+subsumes the other.
+
+**Why not now.** Extending the derivation to every public page means settling
+what "public page" means — 404s, partials and superseded pages all have to be
+excluded deliberately rather than by pattern, which is exactly the decision item
+5 is waiting on.
+
+---
+
+## 5g. Nine gates can still adopt the change they exist to catch
+
+**instrument · work-pending** — recorded 23 August 2026; census **completed**
+24 August 2026 and this entry rewritten against the finished result.
+
+**What.** Population defined and reproducible: `tools/` files matching
+`^(verify|check|prove|audit)_.*\.(mjs|js|py)$` — **94 gates**, not the 36 the
+first sweep guessed at. Candidates found mechanically (a gate holding a prose
+literal, outside its own comments, that also appears verbatim in an authored or
+served file): **24**. All 24 adjudicated and adversarially re-checked against the
+test *name the single ordinary edit that moves both sides*: **9 in the class,
+15 not.** Most of the 15 quote a code identifier, which asserts implementation
+rather than copying authored content.
+
+**What the pin does and does not do.** `data/takes-pin.json` protects the
+CONTENT: since the takes were pinned, a dual edit — reword a take, teach a gate
+to expect it — goes red estate-wide, because the pin resolves the region from the
+committed blob and no copy edit can move it. That is proved by the class-level
+control. **It does not repair the gates.** Four of the nine still hold their own
+copies of prose that the pin already owns; on a mutation each one self-satisfies
+and contributes zero evidence, and the red comes entirely from the pin. They are
+dead weight that reads like coverage.
+
+```
+tier                gate                              outcome
+curation-voice      verify_arcade_sports.js           DERIVE
+curation-voice      verify_curation_keys.mjs          PIN
+curation-voice      verify_games_audience_faces.py    PIN   (locked copy pinned 24 Aug)
+curation-voice      verify_neonbreach.js              PIN
+curation-voice      verify_production_after_merge.mjs PIN
+locked-copy-privacy verify_pupil_genres.mjs           PIN
+counts-identities   verify_apexrally_browser.js       PIN
+counts-identities   verify_biopunkhive_browser.js     DERIVE
+other               verify_apextennis_home.py         PIN
+```
+
+**Two specifics worth not re-deriving.**
+
+`verify_arcade_sports.js:47` fuses two values with different owners: Matt's prose
+(already pinned as `picksVoice`, so restating it there is duplication) and the
+number word *"eight"*, whose real owner is the eight `rail:N` slots in
+`var CURATION=[`. The second half IS derivable without vacuity — count the slots,
+assert the sub-line names the matching number — so adding a ninth slot without
+rewording, or rewording without adding a slot, both go red. It also has **no
+`--self-test` mutation case** for that limb, so nothing proves it can fail;
+that wants adding in the same commit.
+
+`verify_curation_keys.mjs` holds five takes verbatim in a hardcoded `AUTHORED`
+array, and its failure message prints **both sides** — `authored "&lt;old&gt;" vs
+painted "&lt;new&gt;"` — handing the contributor the exact replacement string. The
+obvious "fix" is to paste it in, at which point the limb goes green having
+adopted the rewrite it exists to catch. A punctuation-normalisation sweep reaches
+both files at once for the same reason. (Note: the takes are *not* byte-identical
+in `for/pupils/index.html` — two of the five are HTML-entity-escaped there — so
+that third copy plays no part in the write path.)
+
+**Why not now.** Two of the nine quote metadata that changes on a normal cadence.
+A hash pin there fires on every legitimate edit, and a gate that cries wolf is its
+own failure mode; those want DERIVE from the manifest or a narrower region, which
+is design work rather than mechanical work. The order that completed the census
+forbids opening scope in a finish pass.
+
+**Size.** Half a day. The mechanism exists and is proven — adding a region to the
+pin is two lines and a hash, the class-level control is already written, and the
+two DERIVE cases are each a single derivation plus a self-test case.
+
+---
+
+## 5h. ~~`verify_stats_claim.mjs` is not wired to anything~~ — **DONE 24 August 2026**
+
+Wired into the `gates` job of `mbm-audience-discovery-closeout.yml`, with a
+control in `gate-controls` that requires it to fail on **the assertion it names**
+and explicitly rejects an INCONCLUSIVE exit 2 from a missing browser.
+
+The hypothesis under which it was recorded was wrong, and the truth is worse than
+the guess. It is not the guard for a stale count. It binds `/stats/`'s privacy
+sentence — *"no IP address is looked up, and no counter request or audience
+preference is sent to a remote counter service"* — to `site.json`'s
+`features.analytics.goatcounter`, which is `""` and is the **only** reason that
+sentence is true. Set the key and `mbm-features.js` appends
+`//gc.zgo.at/count.js`, whose country resolution is done from the IP
+server-side. A gate guarding a privacy claim on a public page had never run.
+
+Green on the shipped tree, 7/7. Red-proved externally against a tree with the key
+set: exit 1, failing on `THE RULE`, with the behavioural half independently
+observing the counter request.
+
+---
+
+## 5i. 42 of 54 shelf hues miss 3:1 on the light card
+
+**content · ruling-pending** — recorded 23 August 2026.
+
+**What.** Measured while correcting two card hues: the 6px left border on
+`.gcard` is below the 3:1 non-text bar for most of the shelf on `--card #FFFDF6`
+— worst 1.23 (Aurora Links 3D), best 6.67. The two corrected hues are in that
+population (Apex Curl 1.46, Apex Velodrome 1.80) and are slightly worse than the
+values they replaced (1.97, 2.14).
+
+**Why not now.** It is systemic and it is arguably out of scope for 1.4.11: the
+band is a decorative identity accent, and every card carries title, description
+and art, so colour is never the only cue. Deciding whether it should meet 3:1
+anyway is a design ruling across the whole shelf, not a fix to two entries. The
+in-game surfaces, which is where these accents carry text, all improved.
+
+---
+
+## 5j. Two gates are still referenced by no workflow
+
+**instrument · work-pending** — recorded 24 August 2026, reduced from three the
+same day.
+
+**What.** Of the 118 executables in `tools/`, four were referenced by no workflow
+and by no other tool. Two are now wired: `verify_audience_copy.mjs` (this
+branch's own, guarding the five rewritten audience pages) and
+`verify_highlumen_behaviour.mjs`. These two remain:
+
+```
+verify_driving_games.mjs   117 lines   passes today (rc=0)
+verify_hud_targets.mjs     238 lines   passes today (45 passed, 0 failed)
+```
+
+**The red one is closed.** `verify_highlumen_behaviour.mjs` was the reason this
+entry mattered. Its "cream swatch is 0x0, under 44px" was **not a page defect** —
+at that gate's viewport the swatch measures 44x44 in every state. It was a layout
+race inside the gate: it opened the `<details>` and measured in the same breath.
+Settled, given a fail-closed assertion that tells "never reached layout" apart
+from "too small", red-proved both ways, and wired.
+
+**Why the other two are not now.** Both pass, so wiring is mechanical rather than
+diagnostic — but neither has been exercised, and "it passes" from a gate that has
+never run is a claim, not a result. Each needs what the other two got: a red proof
+on the assertion it names, and a CI control. That is the work, and it is not this
+pass's.
+
+**Size.** An hour. Ten lines of wiring per gate; the time goes on the red proofs.
+
+---
+
+## 5k. The H4 fix is defeated two lines below itself
+
+**instrument · work-pending** — recorded 24 August 2026, found while re-running
+the gates against the *pushed* state rather than the local one.
+
+**What.** `verify_curation_keys.mjs`'s drift check was rewritten this pass so it
+no longer prints the painted text: printing it handed the reader a paste-ready
+replacement, and pasting it into `AUTHORED` turns the limb green having adopted
+the exact rewrite it exists to catch. That part works. But the CONTROL check
+immediately below it prints
+
+```
+painted "<the drifted text>" !== tidied "<authored + a full stop>"
+```
+
+and that control runs in the same execution. So on a real drift the log still
+carries the painted string verbatim, two lines under the message that
+deliberately withheld it. Observed, not reasoned — drifting `/apexpool/`'s take
+on the page produced exactly that pair in one run.
+
+**Why it was missed.** The H4 inventory searched for *failure* messages that
+print authored copy. This line is a **passing** control's detail string, so it
+never matched the query. The species is wider than the query was: any line that
+prints both sides of a copy comparison can hand over the replacement, whichever
+side it is reporting from and whether it passes or fails.
+
+**Why it is not fixed here.** The rescue order that surfaced it was explicitly
+scoped to landing stranded files, and said to record anything new rather than
+chase it. Fixing it means re-deriving what the control needs to prove — that the
+comparison rejects a tidy-up — without printing either string; probably byte
+lengths and a boolean, as the drift message now does.
+
+**Done when.** No line in `verify_curation_keys.mjs` prints painted copy on any
+path, pass or fail; the control still fails when the comparison is loosened; and
+the H4 inventory is re-run with the wider query across all 94 gates, with the
+count of new candidates stated.
+
 ## 6. Featured curation
 
 There is no way to say "these six things first" — the homepage strips are

@@ -85,8 +85,35 @@ const rows = [];
 const assert = (c, m) => { if (!c) failures.push(m); return !!c; };
 /* The swatches live inside the header's collapsed "Display" <details>, so a
    real click needs it open first — which is also how a person reaches them. */
-const openPanels = (page) => page.evaluate(() =>
-  document.querySelectorAll('details').forEach((d) => { d.open = true; }));
+/* H6. This used to open the <details> and measure in the same breath, with no
+   settle. Run by hand it reported "the cream swatch is 0x0, under 44px" on
+   /tools/ — a gate that had never been wired, so nothing had ever reported it.
+
+   WHAT THAT WAS, STATED HONESTLY. It is a LAYOUT RACE, not a page defect. The
+   page is fine: at this gate's viewport (browser.newContext() with no override,
+   so 1280x720) the swatch measures 44x44 before opening <details>, immediately
+   after, and after a settle — verified directly. With the settle added below the
+   gate passes, and I could not reproduce the 0x0 afterwards.
+
+   TWO THINGS I GOT WRONG ON THE WAY, RECORDED SO THE NEXT READER DOES NOT REPEAT
+   THEM. First I measured at 390px, found the whole <nav class="nav mbm-site-nav">
+   display:none behind its mobile toggle, and concluded the gate was measuring a
+   collapsed nav. That is true AT 390px and irrelevant here, because this gate
+   never runs at 390px. Second, sabotaging the toggle does NOT make this gate
+   fail, which is the proof that the nav was never the cause.
+
+   The menu-open below is therefore not the fix; the settle is. It is kept
+   because it costs one click and makes the helper correct if this gate is ever
+   pointed at a narrow viewport, where the nav WOULD be the blocker. */
+const openPanels = async (page) => {
+  await page.evaluate(() => {
+    const btn = document.querySelector('#menu, [aria-controls="nav"], button.menu');
+    if (btn && btn.getAttribute('aria-expanded') === 'false') btn.click();
+  });
+  await page.waitForTimeout(250);
+  await page.evaluate(() => document.querySelectorAll('details').forEach((d) => { d.open = true; }));
+  await page.waitForTimeout(150);
+};
 /* The header nav can be off-canvas at some widths, so Playwright's actionability
    check refuses the click even though the control is present and 44x44 (asserted
    separately above). Dispatch the click on the element itself: it is the same
@@ -123,6 +150,15 @@ async function run(sabotage) {
                  w: Math.round(r.width), h: Math.round(r.height) };
       }), p.swatch);
       assert(sw.length === 6, `${p.label}: ${sw.length} swatches, expected 6`);
+      /* Fail closed, and say which failure it is. Every swatch measuring 0x0
+         means the control never reached layout — an unopened nav, a renamed
+         toggle, a changed aria-controls — and reporting that as "under 44px"
+         sent a previous reader looking for a CSS bug that was not there. A zero
+         SIZE, like a zero COUNT, must never read as a pass either, so this is an
+         assertion and not a skip. */
+      assert(!sw.every((s) => s.w === 0 && s.h === 0),
+        `${p.label}: all ${sw.length} swatches measured 0x0 — the control never reached layout, ` +
+        `so its size was never tested. Check the nav toggle (#menu / aria-controls="nav") still opens it.`);
       assert(sw.map((s) => s.t).join(',') === ORDER.join(','),
         `${p.label}: swatch order is ${sw.map((s) => s.t).join(',')}`);
       for (const s of sw) {

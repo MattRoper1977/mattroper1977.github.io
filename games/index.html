@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mbm-platform-version" content="mbm-games-audience-faces-2026-08-08">
-<title>Matt's Curated Favs — The Arcade — Made by Matt</title>
+<title>The Arcade — Made by Matt</title>
 <link rel="canonical" href="https://madebymatt.uk/games/">
 <meta property="og:url" content="https://madebymatt.uk/games/">
 <meta name="description" content="A personally curated shelf of free single-file browser games built in a real classroom — no installs, no accounts, no ads.">
@@ -183,20 +183,20 @@ html[data-theme="highlumen"] .line1,html[data-theme="highlumen"] .line2{color:#3
 
 <section class="hero"><div class="hero-in">
 <p class="eyebrow">A Made by Matt collection</p>
-<h1>MATT'S <span>CURATED FAVS</span> HUB</h1>
+<h1>Made by Matt's <span>Arcade</span></h1>
 <p class="lead">A personally selected showcase of the challenges that are truly infinite fun — skill, strategy and pure enjoyment, direct to you. Every game plays free in the browser: no installs, no accounts, no ads.</p>
 <div class="promise">
 <div class="pv"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7.5" width="19" height="10" rx="5" fill="none" stroke="#E08A2E" stroke-width="1.9"/><path d="M8 10.2v4.6M5.7 12.5h4.6" stroke="#E08A2E" stroke-width="1.8" stroke-linecap="round"/><circle cx="15.6" cy="11" r="1.15" fill="#E08A2E"/><circle cx="18.2" cy="13.6" r="1.15" fill="#E08A2E"/></svg><b>PLAY</b><small>Picked for feel</small></div>
 <div class="pv"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6" fill="none" stroke="#2F6B4D" stroke-width="1.9"/><circle cx="12" cy="12" r="4.6" fill="none" stroke="#2F6B4D" stroke-width="1.8"/><circle cx="12" cy="12" r="1.5" fill="#2F6B4D"/></svg><b>FOCUS</b><small>Chosen for strategy</small></div>
 <div class="pv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3 5 13.5h5L10.5 21 19 10.5h-5L13 3Z" fill="none" stroke="#8F7311" stroke-width="1.9" stroke-linejoin="round"/></svg><b>FREE</b><small>Always — no ads</small></div>
 </div>
-<a class="explore" href="#picks" id="exploreBtn">EXPLORE MATT'S PICKS</a>
+<a class="explore" href="#picks" id="exploreBtn">EXPLORE TOP PICKS</a>
 </div></section>
 
 <section class="sec" id="picks"><div class="wrap">
-<h2>Matt's personal top picks</h2>
+<h2>Made by Matt's Top Picks</h2>
 <p class="sub">The eight I'd put in front of anyone first — and one line each on why.</p>
-<div class="rail" id="topRail" aria-label="Matt's top picks"></div>
+<div class="rail" id="topRail" aria-label="Made by Matt's Top Picks"></div>
 </div></section>
 
 <section class="sec gx-watch"><div class="wrap">
@@ -341,7 +341,7 @@ var CURATION=[
    Engine") - the two are indistinguishable by the name people use for them.
 
    Trail Runner leaves the rail and keeps its take, so it stays curated and
-   keeps its MATT'S PICK badge in browse-all, exactly as the five that left
+   keeps its TOP PICK badge in browse-all, exactly as the five that left
    before it did. Nothing was ever deleted from this record.
 
    Slipstream GP: Hyperdraft (/hyperdraft/) is deliberately absent: no take, no
@@ -373,7 +373,7 @@ var CURATION=[
    FEEL IS A TAG, NEVER A SECTION. The old page carried a Sports rail, an
    Action RPG rail, three themed grids and a classroom rail on top of the whole
    shelf, so it painted 82 cards for 52 games - a game appeared up to four
-   times and the MATT'S PICK badge count read 31 for 18 games. Feels filter the
+   times and the curation badge count read 31 for 18 games. Feels filter the
    one list; they never draw a second card. The three themed grids are not
    discarded, they are migrated: PHYSICS & GRAVITY -> gravity, REFLEX & SPEED
    -> fast, CALM & STRATEGY -> calm and thinky. Every former member still
@@ -420,6 +420,8 @@ var TAXONOMY=[
  {href:"/apexpool/",                                      genre:"Sports",           feels:["thinky","quick-go"]},
  {href:"/apexrally/",                                     genre:"Sports",           feels:["fast","quick-go"]},
  {href:"/apextennis/",                                    genre:"Sports",           feels:["thinky","quick-go"]},
+ {href:"/apexcurl/",                                      genre:"Sports",           feels:["thinky","calm"]},
+ {href:"/apexvelodrome/",                                 genre:"Sports",           feels:["fast","long-haul"]},
  {href:"/auroralinks/",                                   genre:"Sports",           feels:["calm","long-haul"]},
  {href:"/neonturf/",                                      genre:"Sports",           feels:["fast","together"]},
  {href:"/olympics/",                                      genre:"Sports",           feels:["together","long-haul"]},
@@ -494,7 +496,7 @@ function pickCard(g,lead){
  var art=g.art?'<div class="art"><img src="'+esc(g.art)+'" width="640" height="360" loading="eager" decoding="async" alt=""></div>'
               :'<div class="art" style="background:'+tint(g.hue)+'">'+(g.icon||"🎮")+'</div>';
  a.innerHTML=art+
- '<div class="bd"><span class="badge">MATT\u2019S PICK</span><h3></h3><span class="tagc"></span>'+
+ '<div class="bd"><span class="badge">TOP PICK</span><h3></h3><span class="tagc"></span>'+
  '<div class="take"><b>Matt\u2019s take:</b> <span></span></div></div>';
  a.querySelector("h3").textContent=g.title;
  /* The genre record, not the manifest `tag`. They disagree — Apex Kick is
@@ -508,7 +510,7 @@ function pickCard(g,lead){
 function esc(t){return String(t==null?"":t).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});}
 function gCard(g,withTake){
  var a=document.createElement("a");a.className="gcard";a.href=localHref(g.href);a.style.borderLeftColor=g.hue||"#C9C0AB";
- var badge=CURATED.indexOf(keyOf(g))>=0?'<span class="mini">MATT\u2019S PICK</span>':"";
+ var badge=CURATED.indexOf(keyOf(g))>=0?'<span class="mini">TOP PICK</span>':"";
  /* Card art. Every entry in games.json carries an `art` path — a real captured
     frame where the game could be driven to one, a generated card where it could
     not — so this never renders an empty slot. The emoji stays as the fallback
@@ -551,7 +553,7 @@ function render(){
   fh.appendChild(b);
  });
  drawGrid();
- $("exploreBtn").textContent="EXPLORE MATT\u2019S PICKS ("+CURATED.length+" of "+gs.length+" curated)";
+ $("exploreBtn").textContent="EXPLORE TOP PICKS ("+CURATED.length+" of "+gs.length+" curated)";
 }
 function sortGames(list){
  var out=list.slice();
@@ -619,7 +621,7 @@ function drawGrid(){
   : (n+" games across "+genreCount+" genres. Open a genre, or filter by feel above.");
  $("countline").textContent=filtering
   ? ("Showing "+hits.length+" of "+n+" games."+(state.feel?" Feel: "+state.feel+".":""))
-  : (CURATED.length+" curated favourites of "+n+" games \u2014 every one free, single-file and offline-friendly.");
+  : (CURATED.length+" top picks of "+n+" games \u2014 every one free, single-file and offline-friendly.");
 }
 $("q").addEventListener("input",function(){state.q=this.value;drawGrid()});
 $("sort").addEventListener("change",function(){state.sort=this.value;drawGrid()});

@@ -387,9 +387,34 @@ function verify(base, overrides = null) {
   assert(/IntersectionObserver/.test(js), 'progressive scroll reveal missing', failures);
   assert(/scrollBy\(\{left:/.test(js), 'keyboard shelf scrolling missing', failures);
 
+  /* assets/brand is immutable BY DEFAULT, and stays that way. A change there
+     is only permitted when it is declared here with its reason and its date,
+     so that the exemption is a record rather than a hole: everything NOT on
+     this list still fails exactly as before.
+
+     THE ONE DECLARED CHANGE
+     assets/brand/mbm-splash.js — authorised by Matt, 2026-08-23.
+     The donor let the splash's own dismissal through to the game underneath:
+     it listened for keydown on the splash element and click on .mbm-skip and
+     stopped neither, because preventDefault suppresses a default action and
+     does not stop propagation. tools/render_splash.py had been HELD on exactly
+     this, refusing to stamp, with 26 S2/S3 failures recorded against it. Measured
+     with a probe counting bubble-phase events on `window`, the way a game's own
+     listeners sit:
+         BEFORE  Space -> keydown 1, keyup 1 · Escape -> keydown 1, keyup 1
+                 skip tap -> click 1, pointerdown 1, pointerup 1
+         AFTER   all three dismissal paths -> 0, splash still dismisses
+     The fix takes keydown, keyup, click, pointerdown and pointerup on `document`
+     in the CAPTURE phase and releases them a short window after dismissal. The
+     hold was lifted in the same commit, as its own instructions required. */
+  const DECLARED_BRAND_CHANGES = new Set(['assets/brand/mbm-splash.js']);
   try {
     const brandChanges = gitChanged(base, 'assets/brand');
-    assert(!brandChanges, `immutable brand assets changed: ${brandChanges.replace(/\n/g, ', ')}`, failures);
+    const undeclared = brandChanges
+      .split('\n').map(l => l.trim()).filter(Boolean)
+      .filter(path => !DECLARED_BRAND_CHANGES.has(path));
+    assert(undeclared.length === 0,
+      `immutable brand assets changed without a declaration: ${undeclared.join(', ')}`, failures);
   } catch (error) { failures.push(`could not compare immutable brand assets with ${base}: ${error.message}`); }
 
   for (const rel of KEY_PAGES) {

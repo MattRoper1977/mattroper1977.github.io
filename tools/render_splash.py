@@ -61,38 +61,80 @@ REGION_RE = re.compile(re.escape(BEGIN) + r".*?" + re.escape(END) + r"\n?", re.D
 # to decide what to write is a generator nobody can run offline - and because
 # which games get a Made by Matt splash is a branding decision, not a fact about
 # the filesystem. The census that produced this list is recorded in the commit.
-TARGETS = ["biopunkhive", "echovault", "fracture", "relicforge"]
+TARGETS = ["apexcurl", "apexvelodrome", "biopunkhive", "echovault", "fracture", "relicforge"]
 
 
-# ---------------------------------------------------------------- HELD
-# THIS GENERATOR IS HELD, AND WILL REFUSE TO STAMP, UNTIL THE DONOR IS FIXED.
+# ------------------------------------------------------- HELD, THEN RESOLVED
+# THE HOLD IS LIFTED. It is kept here as history because the defect it names is
+# the reason this generator sat unused, and because the next person to touch the
+# donor needs to know what the assertion is actually for.
 #
-# Stamping the donor into four games and judging them with the estate's own
-# splash gate produced 478 passed and 26 FAILED, every failure the same
-# assertion: S2/S3 "<key> does not leak to the game (keydown 0->1)".
+# WHAT WAS WRONG. Stamping the donor into four games and judging them with the
+# estate's own splash gate produced 478 passed and 26 FAILED, every failure the
+# same assertion: S2/S3 "<key> does not leak to the game (keydown 0->1)". The
+# donor listened for keydown on the SPLASH ELEMENT and for click on .mbm-skip,
+# and stopped neither: e.preventDefault() suppresses a default action, it does
+# not stop propagation. So the Space that skipped the intro also reached the
+# game underneath, and on a phone the tap that dismissed the splash was the tap
+# that started the game.
 #
-# The donor listens for keydown on the SPLASH ELEMENT and for click on
-# .mbm-skip, and stops neither. The gate counts keydown/click on `window` in the
-# bubble phase, the way a game's own listeners do. So pressing Space to skip the
-# splash also presses Space in the game underneath: the intro is skipped and the
-# player has fired, jumped or started a run they never asked for. On a phone the
-# tap that dismisses the splash is the tap that starts the game.
+# WHAT FIXED IT. assets/brand/mbm-splash.js now takes keydown, keyup, click,
+# pointerdown and pointerup on `document` in the CAPTURE phase and stops them
+# there - before they can descend to a target or bubble back out to `window`,
+# where a game's own listeners sit - and removes those listeners a short window
+# after dismissal, so the trailing keyup / pointerup / click of the dismissing
+# gesture is swallowed too. Measured before and after with a probe that counts
+# bubble-phase events on `window`, the way a game's own listeners do:
+#     BEFORE  Space -> keydown 1, keyup 1 | Escape -> keydown 1, keyup 1
+#             skip tap -> click 1, pointerdown 1, pointerup 1
+#     AFTER   all three dismissal paths -> 0 across every counted event,
+#             and the splash still dismisses in every case.
+# The original note named keydown and click; the measurement also found keyup
+# and pointerup leaking, so the fix covers five event types rather than three.
 #
-# This is a defect in assets/brand/mbm-splash.js, not in the four games and not
-# in the gate. It is ALREADY SHIPPED in /novasiege/ and /olympics/, which inline
-# this donor verbatim and have never been held to that assertion because they
-# sit outside the gate's default scope. Fixing it means editing the donor,
-# re-inlining it into those two games, and moving their pinned SHAs and byte
-# ledgers - a change to two live games that deserves its own sitting rather than
-# the tail of a long pass.
+# STILL OUTSTANDING, DELIBERATELY. /olympics/ carries a DRIFTED copy of this
+# donor - not byte-identical to it and not stamped by this generator - so it is
+# a bespoke splash and is preserved as one. It keeps a partially-hardened
+# variant of the same code and has never been held to this assertion. That is
+# its own sitting. /novasiege/ inlined the donor verbatim and has been
+# re-inlined with the fixed one, because tools/verify_novasiege.mjs compares the
+# two byte for byte.
+HELD_UNTIL_DONOR_STOPS_SKIP_LEAK = False
+
+# ------------------------------------------------------- DECLARED EXCEPTIONS
+# Routes that carry a splash this generator does NOT own, and must not stamp.
+# Declared 2026-08-23, so the next sweep finds a decision here rather than
+# re-deriving the same question from the drift.
 #
-# The fix is small and known: while the splash is up, take keydown/keyup/click/
-# pointerdown on `document` in the CAPTURE phase, stopPropagation, and remove
-# the listeners in close(). tools/render_inline_exit.py's region does exactly
-# this and passes the same assertion.
+# /olympics/ — BESPOKE, KEEP.
+#   It inlines a splash that is not this donor and is not stale: measured
+#   6,469 B against the donor's 6,248 B, 72 lines present that the donor does
+#   not have. The differences are DESIGN, not decay — an Olympic rings mark
+#   (.marc arcs on staggered .a1/.a2/.a3 delays) and a torch flame (.mflame)
+#   in place of the donor's M-path and star, on a deep-blue #0b2141/#050816
+#   ground with a gold #ffd75e kicker instead of the house #222B55 and #F2A24A.
+#   Stamping the donor over it would destroy a deliberate variant, so the
+#   exception is the right call and adopting the generated block is not.
 #
-# Remove this guard in the same commit that fixes the donor, and not before.
-HELD_UNTIL_DONOR_STOPS_SKIP_LEAK = True
+#   RECORDED HONESTLY, BECAUSE THE EXCEPTION IS NOT A CLEAN BILL OF HEALTH:
+#   this variant still leaks its own dismissal, measured 2026-08-23 with the
+#   same bubble-phase probe used on the donor —
+#       Space  -> keyup 1     Escape -> keyup 1
+#       skip tap -> pointerdown 1, pointerup 1
+#   It is partially hardened already (it takes keydown on capture, which is why
+#   keydown does not leak) but does not stop keyup or the pointer pair. That is
+#   a smaller defect than the donor's was and it is a change to a live game with
+#   its own pinned SHAs, so it is its own sitting rather than the tail of this
+#   one. It is on the books now instead of being rediscovered.
+#
+# /novasiege/ is NOT an exception: it inlines this donor VERBATIM, and
+# tools/verify_novasiege.mjs byte-compares the two. It was re-inlined with the
+# fixed donor in the same pass that lifted the hold.
+DECLARED_EXCEPTIONS = {
+    "olympics": "bespoke Olympic rings/torch variant, declared 2026-08-23; "
+                "still leaks keyup and the pointer pair — its own sitting",
+}
+
 
 DONOR_REL = os.path.join("assets", "brand", "mbm-splash.js")
 

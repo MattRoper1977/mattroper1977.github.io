@@ -18,7 +18,11 @@
     "line-height:.95;letter-spacing:.04em;text-transform:uppercase;font-weight:700}" +
     ".mbm-tagline{animation-delay:1.65s;color:#B9E6CD;letter-spacing:.18em;text-transform:uppercase;font-weight:700}" +
     ".mbm-skip{position:absolute;right:22px;bottom:20px;border:1px solid #b9e6cd70;border-radius:99px;" +
-    "background:#0a1026aa;color:#E8E2D4;padding:.65rem 1rem;cursor:pointer;font:inherit}" +
+    "background:#0a1026aa;color:#E8E2D4;padding:.65rem 1rem;cursor:pointer;font:inherit;" +
+    /* 44px floor. .65rem padding on an inherited font measured 110x42 — two pixels
+       under, on every stamped game, on phone and desktop alike. inline-flex keeps
+       the label centred once the box stops being content-sized. */
+    "min-height:44px;display:inline-flex;align-items:center;justify-content:center}" +
     ".mbm-skip:focus-visible{outline:3px solid #F2A24A;outline-offset:3px}" +
     "@keyframes mbmDraw{to{stroke-dashoffset:0}}@keyframes mbmPop{to{transform:scale(1);opacity:1}}" +
     "@keyframes mbmRise{to{opacity:1;transform:translateY(0)}}" +
@@ -65,11 +69,35 @@
         if (prevFocus && prevFocus.focus) prevFocus.focus();
         if (typeof o.onComplete === "function") o.onComplete();
       }, reduced ? 0 : 600);
+      /* Never shorter than the dismissing gesture's own tail, even under
+         reduced motion, where the leave itself is instant. */
+      setTimeout(unguard, reduced ? 250 : 600);
     }
-    el.querySelector(".mbm-skip").addEventListener("click", close);
-    el.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" || e.key === "Enter" || e.key === " ") { e.preventDefault(); close(); }
-    });
+    /* The splash swallows its own dismissal.
+       Bubble-phase listeners on the splash element stopped nothing: the Space
+       that skipped the intro also reached the game underneath and fired, jumped
+       or started a run nobody asked for, and on a phone the tap that dismissed
+       the splash was the tap that started the game. So while the splash is up
+       every relevant event is taken on `document` in the CAPTURE phase and
+       stopped there, which is before it can descend to a target or bubble back
+       out to `window` where a game's own listeners sit. The guard outlives the
+       dismissal by a short window so the trailing keyup / pointerup / click of
+       the dismissing gesture is swallowed too, and is then removed. */
+    var GUARDED = ["keydown", "keyup", "click", "pointerdown", "pointerup"];
+    function guard(e) {
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+      if (done) return;
+      if (e.type === "keydown" && (e.key === "Escape" || e.key === "Enter" || e.key === " ")) {
+        e.preventDefault(); close();
+      } else if (e.type === "click" && e.target && e.target.closest && e.target.closest(".mbm-skip")) {
+        e.preventDefault(); close();
+      }
+    }
+    function unguard() {
+      GUARDED.forEach(function (t) { document.removeEventListener(t, guard, true); });
+    }
+    GUARDED.forEach(function (t) { document.addEventListener(t, guard, true); });
     el.tabIndex = -1;
     el.focus();
     timer = setTimeout(close, reduced ? Math.min(o.duration, 1200) : o.duration);

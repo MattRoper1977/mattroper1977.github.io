@@ -590,8 +590,14 @@ if (!chromium) {
     'and they are the declared hrefs, in the declared order', live.picks.map(p => p.href).join(' · '));
   check(live.picks.every(p => p.painted && p.take), 'every painted card occupies space and carries a take',
     `${live.picks.filter(p => p.painted).length} painted, ${live.picks.filter(p => p.take).length} with takes`);
-  check(live.cards === 60 && live.distinct === 52,
-    'the hub paints 60 cards for 52 distinct games — down from 82 for 52',
+  /* DERIVED, never pinned. This read `=== 60 && === 52`, which was true for
+     exactly as long as the shelf held 52 games — it reds on the next game
+     shipped rather than on a defect, and that is what it did. The invariant is
+     the RELATIONSHIP the sentence was really about: one card per shelf game,
+     plus a second for each game in TOP, and no third from anywhere. */
+  const wantCards = games.length + wantTop.length;
+  check(live.cards === wantCards && live.distinct === games.length,
+    `the hub paints one card per shelf game plus one per TOP game (${games.length}+${wantTop.length}=${wantCards}) and no more`,
     `${live.cards} cards, ${live.distinct} distinct`);
   const twice = Object.entries(live.per).filter(([, n]) => n > 1);
   check(twice.every(([, n]) => n === 2), 'no game is painted more than twice',
@@ -614,7 +620,7 @@ if (!chromium) {
     labelDrift.map(g => `${g.name} shows "${g.label}" for ${g.cards}`).join('; ')
       || live.genres.map(g => `${g.name}=${g.cards}`).join(' '));
   check(live.badges === record.curation.length,
-    'one MATT\'S PICK badge per curated game in the genre sections',
+    'one TOP PICK badge per curated game in the genre sections',
     `${live.badges} badges, ${record.curation.length} curated entries`);
   check(live.picks.every(p => p.label && record.genreOrder.includes(p.label)),
     'each pick card labels itself with its GENRE, not the manifest tag',
@@ -639,7 +645,22 @@ if (!chromium) {
   const drift = AUTHORED.filter(([h, t]) => painted.get(h) !== t);
   check(drift.length === 0, 'each of the five new takes is on the page character-for-character as authored',
     drift.length
-      ? drift.map(([h, t]) => `${h}: authored ${Buffer.byteLength(t)}B "${t}" vs painted ${Buffer.byteLength(painted.get(h) || '')}B "${painted.get(h)}"`).join(' | ')
+      /* H4. This message used to print BOTH sides — authored "<old>" vs painted
+         "<new>" — which handed the reader the exact replacement string. The
+         obvious next move is to paste the painted text into AUTHORED above, at
+         which point this limb goes green having adopted the very rewrite it
+         exists to catch. That is the defect this estate has now hit five times,
+         and a failure message that teaches the wrong fix is its own species of
+         it. So: name the value, name who owns it, say where a deliberate change
+         belongs, and DO NOT print the painted text. If you want to see what is
+         on the page, open the page. */
+      ? drift.map(([h]) => `${h}: the take painted on the card is not the authored one` +
+          ` (differs by ${Math.abs(Buffer.byteLength(painted.get(h) || '') - Buffer.byteLength(AUTHORED.find(a => a[0] === h)[1]))}B).` +
+          ` That take is Matt's, and games/index.html's CURATION block owns it —` +
+          ` data/takes-pin.json is the reference, not this file. If the wording changed ON PURPOSE,` +
+          ` edit the take in games/index.html and re-pin with` +
+          ` \`node tools/verify_takes_pin.mjs --print\`, in the same commit.` +
+          ` Do not edit the AUTHORED list to match the page.`).join(' | ')
       : AUTHORED.map(([h, t]) => `${h}=${Buffer.byteLength(t)}B`).join(' '));
 
   /* …and that comparison must be able to fail, or it is a no-op that says
