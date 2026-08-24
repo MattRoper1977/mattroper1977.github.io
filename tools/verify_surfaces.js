@@ -117,15 +117,63 @@ function launchOpts() {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   await page.goto(BASE + '/games/', { waitUntil: 'networkidle' });
-  await page.waitForTimeout(1500);
+  /* S1'/R9. This was `waitForTimeout(1500)`. A duration asserts nothing and is
+     flaky by construction — it is the species that put the swatch gate red on
+     main. Wait on the CONDITION: cards attached to the browse host. A timeout
+     here is MEASUREMENT INVALID, never a card count of zero dressed up as a
+     finding. */
+  let cardsSettled = true;
+  try {
+    await page.waitForFunction(
+      () => document.querySelectorAll('#genreSections .gcard').length > 0,
+      null, { timeout: 15000 });
+  } catch (_) { cardsSettled = false; }
   const rendered = await page.evaluate(hrefs => {
     const out = {};
     for (const h of hrefs) out[h] = document.querySelectorAll('a[href="' + h + '"], [data-href="' + h + '"]').length;
+    /* __total counts EVERY internal anchor — nav, footer, headings, the rail —
+       and is NOT a card count. It is logged for context only; nothing asserts
+       on it. Reporting it beside a card count is how "52 vs 73" became a
+       phantom finding. */
     out.__total = document.querySelectorAll('a[href^="/"], [data-href^="/"]').length;
+    out.__genreCards = document.querySelectorAll('#genreSections .gcard').length;
+    out.__flatCards  = document.querySelectorAll('#flatResults .gcard').length;
     return out;
   }, RULED_CARDS.map(c => c.href));
   console.log('       rendered anchors: ' + JSON.stringify(rendered));
   for (const c of RULED_CARDS) ok('card rendered for ' + c.title, (rendered[c.href] || 0) > 0, String(rendered[c.href] || 0));
+
+  /* ---- S2f: the surface FLOOR, derived per selector, never a literal --------
+     A2/S1'. Everything above asserts NAMED games. A render that dropped fifty
+     cards while keeping Neon Sync, Biopunk Hive and Neon Breach would pass every
+     one of them. That is the collapsed-render failure mode, and nothing was
+     watching for it.
+
+     The floor is DERIVED from the served manifest at run time. Never a literal:
+     the `511` incident is the precedent and 717 is the second literal already
+     loose in this estate.
+
+     Per selector, because one number cannot guard two surfaces:
+       #genreSections  every manifest entry gets a genre card -> floor = manifest length
+       #flatResults    the SEARCH results host. Empty until a query is typed, so
+                       0 is its correct at-rest value and a floor on it would red
+                       on correct behaviour. Deliberately unfloored; the rule is
+                       named here rather than left as an unexplained absence. */
+  let floorManifest = null;
+  try { floorManifest = JSON.parse(await get(BASE + '/Games/games.json')); } catch (_) { floorManifest = null; }
+  const floorExpected = floorManifest ? ((floorManifest.games || floorManifest).length) : 0;
+  if (!cardsSettled) {
+    ok('SURFACE FLOOR: #genreSections', false,
+       'MEASUREMENT INVALID - no frame arrived with a card attached, so the count was never taken');
+  } else if (!floorExpected) {
+    ok('SURFACE FLOOR: #genreSections', false,
+       'MEASUREMENT INVALID - the served manifest did not parse, so no floor could be derived');
+  } else {
+    const observed = rendered.__genreCards;
+    ok('SURFACE FLOOR: #genreSections', observed >= floorExpected,
+       `expected >=${floorExpected} (derived: served manifest length), observed ${observed}`);
+  }
+  console.log(`       #flatResults ${rendered.__flatCards} cards - unfloored by design (search host, empty at rest)`);
 
   /* ------------------- can-fail control for the rendered-DOM count -------- */
   // A count that cannot drop is not a measurement. Serve the same page against

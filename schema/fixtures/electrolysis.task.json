@@ -1,0 +1,28 @@
+{
+  "id": "electrolysis-copper-sulfate",
+  "title": "Electrolysis of copper sulfate solution",
+  "pathway": "build",
+  "classroomRole": "core-investigation",
+  "interactionModel": "simulation",
+  "estimatedMinutes": 25,
+  "curriculum": {
+    "specification": "edexcel-igcse-single-science",
+    "topic": "electrolysis",
+    "code": "4.2.3"
+  },
+  "feedback": [
+    {
+      "id": "electrode-swapped",
+      "trigger": "anode_product == copper",
+      "register": {
+        "build": "Copper is forming at the wrong electrode - it collects at the negative one.",
+        "launch": "Cation reduction is occurring at the anode; copper deposition belongs at the cathode."
+      },
+      "actionLabel": "Recheck polarity & retry",
+      "tier1Hint": "Which electrode attracts positive ions?",
+      "tier2Prompt": "Copper ions carry a 2+ charge. Opposite charges attract."
+    }
+  ],
+  "supportGiven": [],
+  "supportSummary": "not-recorded"
+}
