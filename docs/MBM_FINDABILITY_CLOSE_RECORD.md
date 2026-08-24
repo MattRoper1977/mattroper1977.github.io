@@ -124,5 +124,70 @@ accent carries its only text. Recorded as BACKLOG 5i rather than fixed.
 | Top Picks name canonical everywhere | **yes** | canonical on both surfaces that carry it; zero retired spellings in served HTML |
 | both games serve splash, exit, reduced motion | **yes** | one stamped splash and one stamped exit region each; `prefers-reduced-motion` honoured |
 | both findable in site search and pupil search | **yes** | one index entry each, `safeForPupils: true`, one pupil card each |
-| no gate reporting a vacuous green | **partly** | every gate added or repaired here refuses a zero match, proved four ways. But `verify_stats_claim.mjs` runs in no workflow at all — not a vacuous green, a gate that never reports. BACKLOG 5h. |
+| no gate reporting a vacuous green | **yes** | every gate added or repaired here refuses a zero match. The clause was held at *partly* because `verify_stats_claim.mjs` ran in no workflow; it is wired now, red-proved on the assertion it names, and 5h is closed. The census that closed it found three more gates that never run — **BACKLOG 5j**, recorded not started, and one of them is red today. |
 | nothing left in `/tmp` | **yes** | `/tmp/p2` removed after proving byte-identity with `.rescue/p2/` on the pushed rescue branch |
+
+---
+
+## The G pass — 24 August 2026
+
+Neither PR was merged when this pass ran, so the post-merge reds were not read
+off. Predicting them is not a result, and they stay unclaimed.
+
+### The gate that never ran was a privacy gate, not a count gate
+
+The hypothesis on record was that `verify_stats_claim.mjs` should have caught the
+stale "511 canonical internal destinations" and could not, because nothing
+invoked it. **That hypothesis is false.** It has nothing to do with counts. It
+binds `/stats/`'s privacy sentence — *"no IP address is looked up, and no counter
+request or audience preference is sent to a remote counter service"* — to
+`site.json`'s `features.analytics.goatcounter`, which is `""` and is the only
+reason the sentence is true. Set that key and `mbm-features.js` appends
+`//gc.zgo.at/count.js`, whose country resolution is done from the IP
+server-side, and the page starts lying.
+
+So the finding is worse than the guess: a gate guarding a **privacy claim on a
+public page** sat in `tools/` referenced by nothing, reading like coverage.
+Wired, after an external red proof — its own §3 control only shows `judge()`
+flipping, not that the gate exits non-zero.
+
+The sweep that followed found a second unwired gate that was **this estate's own
+recent work**: `verify_audience_copy.mjs`, shipped by P2, guarding the five
+rewritten audience pages — the headline content change — wired to nothing. Also
+now wired, with a control.
+
+### The class is closed at the top two tiers
+
+The census is reproducible now: **94 gates**, population defined as `tools/`
+files matching `^(verify|check|prove|audit)_.*\.(mjs|js|py)$`. 24 candidates by
+mechanical detection, 7 in the class after adjudication, 12 explicitly not
+(most quote a code identifier, which is an assertion about implementation and
+not a copy of authored content).
+
+- **Curation voice** — already backstopped by the pin, and now *proved* by the
+  class-level control rather than assumed.
+- **Locked copy** — newly pinned: the chooser's promises about accounts and
+  permissions, and the on-device preference privacy sentence. The control that
+  previously guarded that copy deletes a *different* sentence, so it proved the
+  guard could fire but not that its expectation could not be co-updated.
+- **Counts and identities** — a game `<title>`, a game name, and one gate whose
+  canonical owner is `site.json` and so is a DERIVE. Recorded with owners and
+  reasons; none guards voice, locked copy or a published count, so DECLARE is
+  legitimately available to them.
+
+The class-level control is the point of the whole exercise and it passes:
+
+```
+mutate the sentence AND teach the other gate to expect it
+  the co-updated gate : PASSES — it adopted the change
+  the pinned gate     : STAYS RED — the pin is the reference
+```
+
+### One control was vacuous on its first writing
+
+The CI control for the new pin regions mutated a scratch worktree but invoked the
+**main tree's** copy of `verify_takes_pin.mjs`. That gate derives ROOT from its
+own file location and runs `git show HEAD:` there, so it read the main tree's
+HEAD, saw an unmutated blob, and returned rc=0 on a mutation it existed to catch.
+Caught by testing the control rather than by trusting it. It runs the worktree's
+own copy now, with the reason written beside it.
