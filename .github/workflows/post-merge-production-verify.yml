@@ -77,12 +77,16 @@ jobs:
 
       - name: Install Playwright Chromium
         run: |
-          npm i --no-save playwright@1.56.1
+          # BOTH in ONE install. A second `npm i --no-save` PRUNES what the first
+          # one put there: adding acorn on its own line removed playwright, and
+          # every gate that drives a browser then died with
+          # "Cannot find module 'playwright-core'". The repaired step 7 caught
+          # that as four NOT-RUN gates rather than reporting it green, which is
+          # what it exists for - but the install has to be right.
+          # acorn is here because verify_curation_keys.mjs parses the record with
+          # it, and without it that gate reports INCONCLUSIVE and judges nothing.
+          npm i --no-save playwright@1.56.1 acorn@8.18.0
           npx playwright install --with-deps chromium
-          # verify_curation_keys.mjs parses the record with acorn. Without it the
-          # gate reports INCONCLUSIVE and judges nothing — which the old step 7
-          # scored as green. Install it so the gate can actually answer.
-          npm i --no-save acorn@8.18.0
 
       - name: Record what was merged, and derive the revert target
         shell: bash
