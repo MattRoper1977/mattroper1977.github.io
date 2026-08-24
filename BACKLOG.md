@@ -687,40 +687,51 @@ excluded deliberately rather than by pattern, which is exactly the decision item
 
 ---
 
-## 5g. Ten more gates could still adopt the change they exist to catch
+## 5g. Five gates can still adopt the change they exist to catch
 
-**instrument · work-pending** — recorded 23 August 2026.
+**instrument · work-pending** — recorded 23 August 2026, census completed and
+this entry rewritten 24 August 2026.
 
-**What.** The Z1 sweep examined 36 gates for one defect class: a gate whose
-expected value can be moved by the same ordinary act that changes the thing it
-checks. Ten are in the class. Three are already backstopped by
-`data/takes-pin.json`, because the prose they quote sits inside a pinned region:
+**What.** The population is now defined and reproducible: `tools/` files matching
+`^(verify|check|prove|audit)_.*\.(mjs|js|py)$` — **94 gates**, not the 36 the
+first sweep guessed at. Candidates were found mechanically (a gate holding a
+prose literal, outside its own comments, that also appears verbatim in an
+authored or served file): **24**. Adjudicated against the test *name the single
+ordinary edit that moves both sides*: **9 in the class, 13 not** — most of the 13
+quote a code identifier, which asserts implementation rather than copying
+authored content. **2 of the 24 were still being adjudicated when the pass
+closed and are not counted either way.**
+
+**Closed.** Four of the nine are backstopped by `data/takes-pin.json`:
 
 ```
-BACKSTOPPED by the takes pin
-  verify_curation_keys.mjs        five of Matt's takes, typed as literals
-  verify_arcade_sports.js         the Top Picks blurb, as a prefix fragment
-  verify_production_after_merge.mjs   the rail name, twice
-
-NOT backstopped
-  verify_games_audience_faces.py  eight strings; /main/ and the chooser
-  verify_games_audience_faces.mjs the same two, in the .mjs sibling
-  verify_stats_claim.mjs          the /stats/ privacy sentence, as a regex
-  verify_apextennis_home.py       the Apex Tennis card blurb on /main/
-  verify_apexpool.js              landing copy
-  verify_biopunkhive_browser.js   title and description
-  .github/workflows/biopunkhive-verify.yml  the same, inline in the workflow
+verify_arcade_sports.js            the Top Picks blurb        inside picksVoice
+verify_curation_keys.mjs           five of Matt's takes       inside curation
+verify_production_after_merge.mjs  the Top Picks heading      inside picksVoice
+verify_games_audience_faces.py     the locked chooser copy    pinned 24 Aug
 ```
 
-**Why not now.** Z1's ruling was about the takes and it has a mechanism. Pinning
-seven more regions is a different pass with its own decisions — what counts as a
-region, who owns each pin, and whether some of these should instead derive from a
-record rather than be pinned at all. Doing it inside a finish order would be new
-scope.
+**Open — these five.** Each needs PIN or DERIVE; none guards Matt's voice, locked
+copy or a published count, which is why DECLARE is legitimately available and why
+they were recorded rather than changed inside a finish order.
 
-**Evidence to start from.** `tools/verify_takes_pin.mjs` is the pattern:
-hash a structurally-delimited region, resolve it from `git show HEAD:<path>`,
-never fall back to the working tree, and fail closed if the blob is unreadable.
+```
+verify_apextennis_home.py        a door blurb        owner site.json      -> DERIVE
+verify_games_audience_faces.mjs  og:description      owner main/index.html-> PIN
+verify_neonbreach.js             game description    owner the page       -> PIN
+verify_apexrally_browser.js      the page <title>    owner the page       -> PIN
+verify_biopunkhive_browser.js    the game name       owner the shelf      -> DERIVE
+```
+
+**Why not now.** Two of the five quote metadata that changes on a normal
+cadence — an `og:description`, a `<title>`. A hash pin there fires on every
+legitimate edit, and a gate that cries wolf is its own failure mode; those want
+DERIVE from the manifest or a narrower region, which is design work rather than
+mechanical work. The order that found them forbids opening scope in a finish
+pass.
+
+**Size.** Half a day. The mechanism exists and is proven — adding a region to the
+pin is two lines and a hash, and the class-level control is already written.
 
 ---
 
