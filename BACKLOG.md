@@ -981,6 +981,37 @@ out of scope for this order and it stays **open**, not closed — a standing red
 with an owner and a "done when" is a backlog item; a standing red without one is
 how an estate learns to stop reading its own reds. It needs its own order.
 
+## 5o. A pull_request-only gate went red on the PR that broke it, and merged
+
+**instrument · closed 25 August 2026** — recorded because the *shape* will
+recur, not because this instance is still open.
+
+`tools/verify_apexpool_landing.js` pinned 88751 bytes / `4de1383f…`. Commit
+`8432492` on **10 August** — "Phase 1: the eleven get an inline exit" — added the
+generated `MBM-INLINE-EXIT` block to the game: **+29 lines, 0 deletions**,
+88751 → 91973 bytes. That commit re-pinned six sibling gates (apexrally,
+biopunkhive, echovault, neonsync, novasiege, ouroboros) and **missed this one**.
+
+`apexpool-verify.yml` is `pull_request`-only and filtered to `apexpool/**` plus
+its own tools. So it went red **on that very pull request** (run 17), was merged
+anyway, and then no diff touched those paths for fifteen days. It surfaced only
+because S5 added a *comment* to that file and fired the workflow.
+
+Two lessons, both already named elsewhere and both earned again here:
+
+- **A `pull_request`-only gate that is red at merge time is a decision, not a
+  warning.** Nothing re-runs it afterwards.
+- **A narrow `paths:` filter hides a red for as long as nobody touches those
+  paths** — the same fault as 5m, in a different workflow, found the same week.
+
+Fixed by moving the pin with provenance, verified rather than re-pinned on
+sight: `8432492^` hashes to the old pin exactly, and the whole delta is the
+generated exit block. `ALL 17 LANDING CHECKS PASSED`, and the file's own
+`--self-test` still detects all 7 planted failures.
+
+**Worth someone's afternoon, not this order's:** how many other
+`pull_request`-only gates are red at their last run? Nothing looks.
+
 ## 5n. The three-tag card: what the estate can and cannot derive
 
 **content · work-pending** — recorded 24 August 2026 from Order S3 §T2. This is
