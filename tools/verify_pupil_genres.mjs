@@ -389,8 +389,25 @@ async function tapTargets(root, route) {
         laid++;
         if (r.width < 44 || r.height < 44)
           under.push({ id: e.id, tag: e.tagName.toLowerCase(),
-                       txt: (e.textContent || '').trim().slice(0, 28),
-                       w: Math.round(r.width), h: Math.round(r.height) });
+                       txt: (e.textContent || '').trim().slice(0, 40),
+                       w: Math.round(r.width), h: Math.round(r.height),
+                       // "inside running prose" is the whole basis of the V5
+                       // exemption, so it is MEASURED - and measured as the
+                       // RULING words it, not as a tag list. The first version
+                       // tested closest('p,li,small') and failed the contact
+                       // address, which sits in <div class="contact"> and reads
+                       // "Questions, ideas or bug reports — <address>". That is
+                       // a link inside a sentence by any reading; the test was
+                       // wrong, not the copy. So: is there a sentence AROUND
+                       // it? Parent text minus the link's own text. A button, a
+                       // chip or a card has nothing left over and is rejected,
+                       // which is the boundary the ruling actually draws.
+                       inProse: (() => {
+                         const par = e.parentElement;
+                         if (!par) return false;
+                         const around = (par.textContent || '').replace(e.textContent || '', '');
+                         return around.replace(/\s+/g, ' ').trim().length >= 12;
+                       })() });
       }
       return { laid, under, nul };
     }, TAPSEL);
@@ -430,6 +447,53 @@ console.log('\n=== THE PUPIL FENCE, IN BOTH STATES ===\n');
   check(t.expanded.nul.every(n => !n.focusable),
     'and nothing that measures 0x0 is in the tab order',
     `${t.expanded.nul.length} null-box, ${t.expanded.nul.filter(n => n.focusable).length} focusable`);
+}
+
+/* V5. /games/ IS NOT THE PUPIL FENCE, and it carries two sub-44px targets in
+   both states. Ruled 2026-08-25: ACCEPTED, NOT FIXED.
+
+     47x16   <a> "tell me"                     inside a sentence
+     227x15  <a> contactmadebymatt@gmail.com   inside a sentence
+
+   The target-size requirement carries an inline exception precisely for a link
+   inside a line of prose, and inflating those two to 44px would damage the
+   reading line to satisfy a rule that does not ask for it.
+
+   The exemption is recorded HERE, in the gate, so the next reader does not
+   re-raise it as a finding - and it is ENUMERATED rather than a blanket, so it
+   cannot silently grow. A third undersized target reds even if it is also in a
+   sentence, because "two named links" is a fact somebody checked and "any
+   inline link" is a licence.
+
+   IT IS FOR LINKS INSIDE RUNNING PROSE ONLY. A control - a button, a chip, a
+   card, a form field - does not inherit it. That is asserted, not just written:
+   an exempt target that is not an <a> inside a <p>/<li>/<small> fails. */
+console.log('\n=== /games/ — AN ADULT SURFACE, WITH TWO NAMED PROSE EXEMPTIONS ===\n');
+{
+  const EXEMPT = [
+    { txt: 'tell me', why: 'inline link inside the shelf-failure sentence' },
+    { txt: 'contactmadebymatt@gmail.com', why: 'the contact address, inline in a sentence' },
+  ];
+  const t = await tapTargets(ROOT, '/games/');
+  for (const [state, r] of Object.entries(t)) {
+    console.log(`  ${state.padEnd(9)} laid out ${String(r.laid).padStart(3)}   under-44px: ${r.under.length}`);
+    for (const u of r.under) console.log(`             ${u.w}x${u.h} <${u.tag}> ${JSON.stringify(u.txt)}`);
+  }
+  for (const state of ['loaded', 'expanded']) {
+    const under = t[state].under;
+    const named = under.filter(u => EXEMPT.some(e => u.txt.includes(e.txt)));
+    const other = under.filter(u => !EXEMPT.some(e => u.txt.includes(e.txt)));
+    check(other.length === 0,
+      `${state}: /games/ carries no sub-44px target beyond the two named prose links`,
+      other.length ? other.map(u => `${u.w}x${u.h} ${JSON.stringify(u.txt)}`).join(' · ')
+                   : `${named.length} exempt, 0 unexplained`);
+    check(named.length === EXEMPT.length,
+      `${state}: and both named exemptions are still there — an exemption for a target that has gone is a licence nobody is using`,
+      `${named.length} of ${EXEMPT.length}`);
+    check(named.every(u => u.tag === 'a' && u.inProse),
+      `${state}: every exemption is a link INSIDE A SENTENCE — a control does not inherit it`,
+      named.map(u => `<${u.tag}> "${u.txt}" sentence-around=${u.inProse}`).join(' · ') || '(none)');
+  }
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

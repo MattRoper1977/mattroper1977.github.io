@@ -2,6 +2,11 @@
 'use strict';
 const fs=require('fs'),path=require('path');
 const ROOT=path.join(__dirname,'..'),MAIN=path.join(ROOT,'main','index.html'),INDEX=fs.existsSync(MAIN)?MAIN:path.join(ROOT,'index.html'),SITE=path.join(ROOT,'site.json');
+// The four ESTABLISHED sports, and deliberately not the shelf's current
+// membership: Sports is additive, and games.json now also carries Apex Curl,
+// Apex Rally and Apex Velodrome. Deriving this from the shelf would be wrong
+// rather than better - it would rewrite a homepage lede about four games every
+// time a fifth arrived. A fixed historical set, named as one. (S5 §V2)
 const CARD_NAMES=['Apex Kick','Apex Pool','Apex Golf','Apex Tennis'];
 const OLD_LEDE='Two games about reading a line, controlling the finish and making the next decision count.';
 const NEW_LEDE='Four games about reading the line, calling the plan and making the next decision count.';

@@ -11,6 +11,10 @@ const args = process.argv.slice(2);
 const selfTest = args.includes('--self-test');
 const supplied = args.find((arg) => arg !== '--self-test');
 const FILE = supplied || path.join(__dirname, '..', 'apexpool', 'index.html');
+// The DELIVERED apexpool artifact, pinned. A pin is a literal by design: the
+// whole claim is "these exact bytes shipped", and deriving it from the file it
+// checks would assert only that the file equals itself. It moves when the game
+// deliberately moves, in the same commit as the file. (named S5 §V2)
 const EXPECTED_BYTES = 88751;
 const EXPECTED_SHA256 = '4de1383f8ee029db438258bb239e4e7f3b7ffd9e603706a9fd145fd397af87ad';
 

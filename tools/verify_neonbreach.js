@@ -32,6 +32,10 @@ const { spawnSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const GAME = process.env.NB_GAME_FILE || path.join(ROOT, 'neonbreach', 'index.html');
+// The DELIVERED neonbreach artifact, pinned. A literal by design - see the note
+// in tools/verify_apexpool_landing.js: deriving a content pin from the file it
+// pins makes the check assert that the file equals itself. It moves only when
+// the game deliberately moves, in the same commit. (named S5 §V2)
 const PINNED_SHA = 'c69ada9231108b694ec3540d7eccdf7fa5ec1a43048cac167355c7c5933d30bb';
 const PINNED_BYTES = 124354;
 const CANON = 'https://madebymatt.uk/neonbreach/';

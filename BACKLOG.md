@@ -957,7 +957,24 @@ names, or the gate is re-pointed at what that page is now ruled to carry, with
 the ruling cited. It must not be left red-and-ignored: that is what teaches an
 estate to stop reading its own reds.
 
-**Bookend, 24 August 2026 (Order S3 §T6.5).** Two dispatches changed nothing:
+**CLOSED 25 August 2026 (Order S5 §V3) — and it was two faults, not one.**
+
+Run 10 (14 Aug 08:49), the day it went red, failed on something this entry never
+recorded: the served `games.json` had not caught up with the tree. The step
+printed PENDING, set `fail=1` and exited, and the install and the entire
+rendered leg had no `if:` — so they were skipped and the browser checks never
+ran at all. One Pages lag, eleven days of blindness.
+
+The `mf-feature` assertion this entry quoted is a *second, later* fault:
+`bc67b82` on **15 Aug** replaced per-game feature cards with the whole shelf by
+genre. The games never moved — they are on that page twice each — and the
+`paths:` filter meant the commit that changed the page could not fire the
+workflow that asserted on it.
+
+Fixed by re-pointing at reachability, waiting on a mismatch before judging it,
+and widening `paths:` from 4 to 9. Proved locally green and proved able to fail.
+
+**Superseded bookend, 24 August 2026 (Order S3 §T6.5).** Two dispatches changed nothing:
 run 14 reported exactly what run 13 reported, so there is no new information to
 act on and nothing here is a finding waiting to be written up. It stays
 out of scope for this order and it stays **open**, not closed — a standing red

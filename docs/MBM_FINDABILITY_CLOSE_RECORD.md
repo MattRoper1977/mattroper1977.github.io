@@ -734,3 +734,153 @@ tag cells pre-filled                                  0
 - **Excluding a case from a check is a claim, and it needs the same evidence as
   including one.** The two production steps were nearly filed "not applicable";
   checking them found a hand-typed route list.
+
+## The S5 pass — the close, 25 August 2026
+
+Four rulings carried out, the one red thing in the estate chased to its cause,
+and the arc closed.
+
+### §V1 — both review PRs merged
+
+**#178** merged after one amendment: `"Six practical routes"` → `"Practical routes"`.
+True today, and a literal in prose — the same family as `511`, `717` and the
+stale "eight of the 52 / 60 cards" comment. No gate can reach a sentence, so the
+sentence no longer carries the number. Six task cards still render. Sweeping the
+rest of the audience copy found eleven other number words, every one an article
+or a singularity claim, plus two counts in underscore-prefixed internal notes
+that appear in **0 served files**. That was the only live count.
+
+**#177** merged as built. And the premise correction that came with it:
+**"typed at print, never persisted" was written for an ad-hoc evidence sheet and
+applied to a register.** A register that forgets learner names is not a register.
+
+`uas_register` is now named on `/privacy/` — the estate's storage-keys record —
+with what it holds and how to reach it:
+
+```
+IndexedDB uas_register    forenames, surnames, learner numbers, units and
+                          outcomes, dated marks, session registers, evidence
+                          photographs
+Settings → Export backup (.json)   133x41   the whole register, photos included
+Settings → Delete all data          129x39   names what it deletes before it does
+off-origin requests at merged head          0
+```
+
+**A clear affordance exists**, so nothing was built here. It is two taps deep
+(open Settings) and 39–41 px rather than 44 — factual, and acceptable on a
+desktop panel in an adult tool.
+
+### §V2 — failure mode 1, and the distinction that actually matters
+
+Six instances in three weeks is a class, and nothing was looking for the
+seventh. The census is now `s16`.
+
+**The finding is not "a typed value".** It is *a typed value nothing binds*:
+
+```
+sites 19    live-and-unbound 0    bound 19    inert 0
+```
+
+`assets/mbm-audience.js` holds all seven audience routes as a literal and says
+why — "a static asset cannot read the JSON at build time" — and
+`verify_games_audience_faces.py` asserts equality with the data file. **That
+cannot drift silently, so it is not the failure mode.** Equally, "the four
+established sports" is a fixed historical set the shelf does not hold; deriving
+it from `games.json` would be *wrong*, not better, because Sports is additive.
+
+What was actually unbound, and is now derived: the seven audience routes typed
+into `verify-games-audience-faces.yml`'s page table and into
+`verify_audience_discovery_browser.py`. Four pins carried no line saying what
+they pinned; they do now.
+
+Both narrowings came from reading the sites. The first draft reported **54**
+live sites; almost all were correct code.
+
+### §V3 — 5m was two faults, and neither was the games
+
+Red since 14 August through three dispatches. The dates gave two answers.
+
+**Run 10, 14 Aug 08:49** — and *not* the assertion the backlog recorded:
+
+```
+PENDING /data/source-manifests/games.json — served does not match the tree
+##[error]Process completed with exit code 1
+progress log empty or absent — the leg did not reach its first check
+```
+
+A deployment that had not landed. The step printed PENDING, set `fail=1`, and
+the install and the **entire rendered leg** had no `if:` — so they were skipped.
+Eleven days of blindness on a shelf that was working, bought with one Pages lag.
+
+**Run 14, 24 Aug** — once the byte compare passed again, `---- 1 FAILED`, and
+only one. Both games boot, zero off-origin, splash plays and closes, inline exit
+44×44, arcade 62 cards, homepage boxes present. The single failure:
+
+```
+FAIL  pupil page carries both mf-feature cards — ["lesson-hub","asdan-suite","studio-suite"]
+```
+
+A *second, later* fault: `bc67b82` on **15 August** — "The pupil homepage shows
+all 52 by genre" — replaced per-game feature cards with the whole shelf. The
+games did not move; measured, they are on that page **twice each**. The page's
+shape moved, and the check held its own copy of it.
+
+**And the `paths:` filter is why nobody saw it.** It listed the two games, the
+manifest and itself, while the check also asserts on the arcade, the homepage
+and the pupil page. *The commit that broke the assertion could not fire the
+workflow it broke.* R8 in its purest form.
+
+Three fixes, no re-pinning: the assertion re-pointed at **reachability by href**
+measured with every genre group opened; a mismatch **waited on** for 180 s
+before it is called anything, with the install and rendered leg on
+`if: always()`; and `paths:` widened from 4 to 9 — every surface the run asserts
+on, plus the record each renders from.
+
+```
+PASS  pupil page reaches both driving games
+      /neonmeridian/ x2, /rallyvector3d/ x2, across 62 game card(s)
+---- all live checks passed                                        exit 0
+CONTROL, both games stripped from the pupil page:  x0, x0          exit 1
+```
+
+### §V4 — the census, tested against the blind spots that produced it
+
+All three planted permanently, re-proved on every run: a pipe inside
+`"$( … | … )"`, workflow YAML outside `.github/workflows`, and a bare
+`! pipeline` that must file **false-green**. 5/5.
+
+They live as **files**, not heredocs — because a fixture written inside a
+heredoc reads as live code to any scanner, which the census proved by flagging
+its own control file.
+
+### §V5 — `/games/`: accepted, and the exemption enumerated
+
+Two sub-44 px targets, both links inside a sentence, on an adult surface outside
+the pupil fence. Recorded **in the gate**, named, and enumerated so it cannot
+silently grow: a third undersized target reds even if it is also in a sentence.
+
+The strict form of that assertion caught my own §U4 characterisation. I had
+called both "inline links in running prose"; the contact address sits in
+`<div class="contact">`, not a `<p>`, and a `closest('p,li,small')` test failed
+it. The copy was right and the test was wrong: the ruling says *a link inside a
+line of prose*, so what is measured now is whether there is a **sentence around
+it** — parent text minus the link's own text. A button or a chip has nothing
+left over and does not inherit the exemption.
+
+### Rules earned here
+
+- **A dichotomy is a premise too.** An either/or narrows the search as
+  effectively as a wrong answer does.
+- **A rule written for one artefact will be misapplied to another.** Rules carry
+  their artefact in their pocket; state it.
+- **A count typed into prose is a literal with better manners.** No gate can
+  reach it and no record backs it.
+- **Recall is measured against a cruder instrument, never against yourself.**
+- **A red that never changes is a stale pin until proved otherwise** — and the
+  date it started is usually the diagnosis. Here it gave two.
+- **A typed value is only a defect when nothing binds it.** A literal a gate
+  asserts equal to its record cannot drift silently; a fixed historical set that
+  names itself as one is not a copy of anything. Deriving either would be worse.
+- **A fixture inside a heredoc reads as live code.** Park fixtures as files.
+- **The strict form of an assertion will catch the person who wrote the loose
+  description.** Measure the words of the ruling, not a convenient proxy for them.

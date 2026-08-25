@@ -10,6 +10,42 @@ the bug they let through — it is the months of false confidence afterwards.
 
 ---
 
+## Standing practice: how a census is validated here
+
+Three censuses now run as gates — short-circuiting pipelines (`s15`), typed
+literals (`s16`), and the microcopy register's scope. Each one found defects in
+*itself* before it found any in the estate, and each found them the same way.
+This is the method, and it is not optional:
+
+1. **Measure recall against a cruder instrument, never against yourself.**
+   Re-reading a census will not surface its blind spots, because the blind spot
+   is in the reading. Run a deliberately stupid `grep` beside it and reconcile
+   the two counts. 22 against 24 found a pipe hidden inside `"$( … | … )"` and a
+   whole directory of workflow YAML that was never walked. Neither gap was in
+   the grep. **If the two disagree, the census is wrong until proved otherwise.**
+2. **Read the sites, not the buckets.** A classifier that files the dangerous
+   case in the safe pile is worse than no classifier, because the pile now has a
+   name that says it was checked. A bare `! producer | grep -q` was filed
+   *false-red* when it is the shape that certifies an absence nobody looked for.
+3. **Narrow by reading, not by counting.** Both censuses first reported ~54 and
+   ~24 "live" sites, most of them correct code. An inflated census gets skimmed
+   exactly like an unscoped sweep does. Narrow it by looking at what it flagged
+   and asking what actually distinguishes a defect — *bound vs unbound*, *live
+   pipe vs herestring*, *explained vs unexplained* — never by raising a
+   threshold until the number looks tolerable.
+4. **Plant the blind spots as permanent fixtures.** A fix that has never been
+   tested against the case that produced it is a hypothesis.
+   `tools/fixtures/census-blind-spots/` holds one instance of each, and
+   `tools/verify_pipe_census_controls.sh` re-proves them on every run. They live
+   as files rather than heredocs because **a fixture written inside a heredoc
+   reads as live code to any scanner** — which the census proved by flagging its
+   own control file.
+5. **Park, never drop.** A site in a file that does not run is named and
+   labelled `NOT LIVE`, in the output. A census that quietly narrows its own
+   scope is the thing all three of these exist to catch.
+
+---
+
 ## 1. A check that holds its own copy of the value it checks cannot detect drift
 
 `verify_games_audience_faces.py` kept its own list of public audience labels.

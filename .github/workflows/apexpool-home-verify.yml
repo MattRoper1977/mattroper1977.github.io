@@ -208,6 +208,11 @@ jobs:
           set -euo pipefail
           curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" -H 'Accept: application/vnd.github+json' \
             https://api.github.com/repos/MattRoper1977/mattroper1977.github.io/pulls/25 > /tmp/pr25.json
+          # PR #25 is HELD - "AJAX safety net, do not merge until activation is
+          # settled" - and this asserts it has not moved while this homepage
+          # changed underneath it. The head SHA is a pin on a deliberately
+          # parked branch, not a copy of a record: nothing supplies it but the
+          # PR itself, and the point is that it must NOT change. (named S5 §V2)
           python3 - <<'PY' | tee artifacts/apextennis-home/pr25.log
           import json
           p=json.load(open('/tmp/pr25.json'))

@@ -1,0 +1,15 @@
+# FIXTURE (not run): the REPAIRED form. Capture, check the producer's status,
+# then match on a herestring. The census must not flag this.
+name: clean
+on: push
+jobs:
+  j:
+    runs-on: ubuntu-latest
+    steps:
+      - name: capture, then match on a herestring
+        shell: bash
+        run: |
+          rc=0; out="$(node tools/scan.mjs 2>&1)" || rc=$?
+          [ "$rc" -eq 0 ] || { echo "MEASUREMENT INVALID"; exit 1; }
+          grep -q 'FORBIDDEN' <<<"$out" && exit 1
+          exit 0
