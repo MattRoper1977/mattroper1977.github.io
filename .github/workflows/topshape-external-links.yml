@@ -1,0 +1,48 @@
+# External-link liveness measurement (Order TS §1.2, decision D3).
+#
+# An INSTRUMENT, not a gate: one run records one measurement of every external
+# URL the four served trees carry. "Dead" is decided only across two runs at
+# least an hour apart — this workflow never fails a build over a sad link,
+# and it fails for real when the measurement itself is invalid (empty census).
+#
+# Dispatch-only after its first registration run. No schedule: the estate's
+# curated external links are few and institutional; this is for orders and
+# sweeps, not for standing noise.
+name: External links measured
+on:
+  push:
+    branches: [claude/topshape-external-links]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    steps:
+      - id: checkout
+        if: always()
+        uses: actions/checkout@v4
+      - id: measure
+        if: always()
+        run: python3 tools/check_external_links.py /tmp/topshape-siblings
+      - id: artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: external-links-verdicts-${{ github.run_id }}
+          path: external-links-verdicts.json
+          if-no-files-found: error
+  aggregate:
+    needs: [measure]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - id: verdict
+        if: always()
+        run: |
+          set -euo pipefail
+          # SKIPPED is not passed: the measure job must have SUCCEEDED.
+          [ "${{ needs.measure.result }}" = "success" ] || { echo "measure job result: ${{ needs.measure.result }} — not a pass"; exit 1; }
+          echo "measurement recorded"
