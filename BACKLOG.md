@@ -1122,6 +1122,14 @@ Games                     (none)
 Matt-s-Apps-              (none)
 ```
 
+**And it is the JOB names that get required, not the files — with one exclusion
+the tool now makes for you.** A job carrying an `if:` that excludes pull
+requests deadlocks exactly like a filtered workflow: the job is skipped, and a
+skipped job never reports the context GitHub is waiting for. The closeout
+suite's `Routes serve 200 and removed paths 404` job is one
+(`if: github.event_name != 'pull_request'`), so the report prints it as **NOT
+this** with the reason. Require the other two jobs from that workflow, not it.
+
 **`Games` and `Matt-s-Apps-` have PR-firing checks but not one without a
 filter**, so no settings change helps them until each has a filter-free
 aggregate check. That is the work-pending half of this item, and it is a

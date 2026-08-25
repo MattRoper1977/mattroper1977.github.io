@@ -119,15 +119,32 @@ def main():
                 # must not print as nothing, or the click instruction is
                 # "type this: " and Matt is left guessing.
                 jobs_txt = text.split('\njobs:', 1)[-1]
-                names = []
+                names, pr_skipped = [], []
                 for m in _re.finditer(r'^  (\w[\w-]*):\s*$', jobs_txt, _re.M):
                     jid = m.group(1)
                     tail = jobs_txt[m.end():]
                     nxt = _re.search(r'^  \w[\w-]*:\s*$', tail, _re.M)
                     blk = tail[:nxt.start()] if nxt else tail
                     jn = _re.search(r'^    name:\s*(.+)$', blk, _re.M)
-                    names.append(jn.group(1).strip().strip('"\'') if jn else jid)
-                safe_to_require.append((fname, names))
+                    label = jn.group(1).strip().strip('"\'') if jn else jid
+                    # A JOB-LEVEL `if:` THAT EXCLUDES PULL REQUESTS DEADLOCKS
+                    # EXACTLY LIKE A paths FILTER. The workflow fires, the job
+                    # is skipped, and a skipped job never reports the context
+                    # GitHub is waiting for. mbm-audience-discovery-closeout's
+                    # production job carries
+                    # `if: github.event_name != 'pull_request'`, and the first
+                    # draft of this report handed that job's name to Matt as
+                    # SAFE TO REQUIRE. Naming a check that jams every PR is
+                    # worse than naming none.
+                    cond = _re.search(r'^    if:\s*(.+)$', blk, _re.M)
+                    if cond and 'pull_request' in cond.group(1):
+                        pr_skipped.append((label, cond.group(1).strip()))
+                    else:
+                        names.append(label)
+                if names:
+                    safe_to_require.append((fname, names, pr_skipped))
+                else:
+                    would_deadlock.append(fname + '  (every job is skipped on a pull request)')
 
         # THE BEHAVIOUR READ.
         merged, red_merges = 0, []
@@ -173,10 +190,14 @@ def main():
                 and c not in {os.path.basename(w['path']) for w in wfs}]
         print(f'    GAP  matters but is not required : {len(not_required)}')
         print(f'    of those, SAFE to require (no paths filter): {len(safe_to_require)}')
-        for fname, jobs in safe_to_require:
+        for fname, jobs, skipped in safe_to_require:
             print(f'                  {fname}')
             for j in jobs:
                 print(f'                      type this: {j}')
+            for j, cond in skipped:
+                print(f'                      NOT this:  {j}')
+                print(f'                          it is skipped on a pull request ({cond}), and a')
+                print(f'                          skipped job never reports — requiring it jams every PR.')
         print(f'    of those, would DEADLOCK a PR if required (has a paths filter): '
               f'{len(would_deadlock)}')
         for fname in would_deadlock:

@@ -1105,7 +1105,14 @@ The gap, both directions:
   is absent for the same reason nothing else is blocked.
 
 **One finding that is not a settings change, and it comes first.** Of the 43,
-only **4** could be required without jamming every PR: a required check carrying
+only **4** could be required without jamming every PR — and the first draft of
+the report said 5, because it checked for a `paths:` filter and not for a
+job-level `if:` that excludes pull requests. A job skipped on a PR never reports
+the context GitHub waits for, so requiring the closeout suite's
+`Routes serve 200 and removed paths 404` job (`if: github.event_name !=
+'pull_request'`) would have jammed every PR in the repo. **Handing Matt a check
+name that jams every PR is worse than handing him none**, so the report now
+prints those as `NOT this` with the reason: a required check carrying
 a `paths:` filter never *reports* on a PR outside those paths, and GitHub waits
 for a report it will never get. **`Games` and `Matt-s-Apps-` have PR-firing
 checks but not one without a filter** — those two need a filter-free aggregate
