@@ -1065,6 +1065,30 @@ parallel implementation proves nothing:
 [ok] and with only healthy rows the verdict is CLEAR
 ```
 
+**And the first real run in CI found two more, one of them a landmine in the
+instrument itself.** `t5-required-vs-existing` passed — so `github.token` reads
+all five public repos and no PAT is needed, which had been an open question —
+but `t4-health-report` failed:
+
+- **`ok_age is None` was being read as STALE.** That conflates *succeeded a long
+  time ago* with *has never succeeded because it is new*. An age comparison
+  needs an age. Nothing is let off: a check that has run and never gone green
+  has a failing latest run, so it is already RED, which is the louder signal.
+- **The report could not judge itself, and failed trying.** Its own row said
+  "never succeeded" on its first run, so the run failed — and the next run then
+  saw a failed previous run and failed again. **A self-sustaining red with no
+  path back to green**, which is exactly what this estate retired
+  `apexpool-sports-verify` for: *"a gate that cannot pass is not a gate, it is a
+  landmine, and it measures nothing."* I had written that ruling into
+  `data/retired-checks.json` in the same order and then built one.
+
+Its own row is now measured, printed in full and named under its own heading —
+not hidden, and a human reads it every week — but it does not decide the job's
+verdict. Every other check in the estate does. Proved: undeclare the retired
+check so it becomes a plain red, and the gate exits 1 naming it. A narrow,
+declared exemption for the one row where self-reference makes the verdict
+meaningless.
+
 The in-flight limb exists because the first real run of this report found the
 bug. An in-progress workflow reports `conclusion: null`, and the tool read that
 as **NEVER RUN** — so while PR #182's own checks were running the estate
