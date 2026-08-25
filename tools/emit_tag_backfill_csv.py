@@ -60,7 +60,10 @@ def main():
     rows = sorted(rows, key=lambda r: (tier(r), r.get('subject') or '',
                                        r.get('family') or '', r.get('title') or ''))
     with open(OUT, 'w', newline='', encoding='utf-8') as f:
-        w = csv.writer(f)
+        # lineterminator='\n' explicitly. Python's csv module defaults to
+        # '\r\n', and every row then ends in a CR that `git diff --check` reads
+        # as trailing whitespace - which is exactly what it did.
+        w = csv.writer(f, lineterminator='\n')
         w.writerow(FILLED + EMPTY)
         for r in rows:
             w.writerow([r.get(k, '') for k in FILLED] + [''] * len(EMPTY))
