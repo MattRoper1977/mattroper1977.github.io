@@ -25,6 +25,12 @@ on:
 
 permissions:
   contents: read
+  # Naming `permissions:` at all sets every scope NOT listed to `none`, and this
+  # job's whole purpose is reading /actions/workflows. All five repos are public
+  # so the data is readable unauthenticated, but an authenticated request with an
+  # insufficient scope is a 403, not a fallback - and a 403 here would report
+  # MEASUREMENT INVALID every week rather than the estate's health.
+  actions: read
 
 concurrency:
   group: estate-check-health
