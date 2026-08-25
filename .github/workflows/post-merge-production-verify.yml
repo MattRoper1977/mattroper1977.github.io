@@ -168,9 +168,16 @@ jobs:
             rc=0
             out="$(node "$g" 2>&1)" || rc=$?
             printf '%s\n' "$out" | tee -a production-driven.log
-            if printf '%s' "$out" | grep -qE 'INCONCLUSIVE|did not judge anything|^NOT RUN'; then
+            # FALSE-GREEN, fixed. `printf … | grep -q` under pipefail returns
+            # non-zero when the producer dies of a broken pipe, and non-zero
+            # here means "not inconclusive" and "did not crash" - so a gate that
+            # printed INCONCLUSIVE and exited 0 would have fallen through to the
+            # `rc -eq 0` arm and been reported PASS. That is precisely the
+            # failure this step was built to prevent, reintroduced through a
+            # pipe. Herestrings: a file, never a live pipe.
+            if grep -qE 'INCONCLUSIVE|did not judge anything|^NOT RUN' <<<"$out"; then
               verdict='NOT-RUN'; notrun+=("$g — inconclusive (exit $rc)")
-            elif printf '%s' "$out" | grep -qE 'ERR_[A-Z_]+|^[A-Za-z]*Error: |^ +at .*\(node:'; then
+            elif grep -qE 'ERR_[A-Z_]+|^[A-Za-z]*Error: |^ +at .*\(node:' <<<"$out"; then
               verdict='NOT-RUN'; notrun+=("$g — crashed (exit $rc)")
             elif [ "$rc" -eq 0 ]; then
               verdict='PASS'

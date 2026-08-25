@@ -1152,3 +1152,41 @@ Two smaller things this cost, both worth fixing wherever they appear:
   gate correctly reports no problem, and the control reads that as a failure of
   the gate. It now counts the occurrences before and after and refuses to judge
   anything if the count did not move.
+
+---
+
+## 48. A census that does not check its own recall is a sample
+
+Failure mode 47 was found in two places and fixed in two places. That is not the
+same as fixing it, and the difference is only visible if you go looking.
+
+The census written to find the rest of the class started by reporting **22
+sites**. A deliberately crude raw sweep — one `grep` for a short-circuiting
+consumer after a pipe — reported **24 candidate lines**. Reconciling the two
+found both gaps in the census, not in the grep:
+
+- **A pipe inside `$( … )` inside quotes was invisible.** The splitter tracked
+  quoting, so `AKV="$(ls "$OUT"/akvid/*.webm | head -1)"` read as one quoted
+  string and the site did not exist as far as the census was concerned.
+- **Workflow YAML outside `.github/workflows/` was never walked.** A pinned
+  fixture copy carried the same defect and was silently out of scope.
+
+Both were repaired, and the census now reports 24 to the sweep's 24.
+
+Then the classifications were wrong in a way that mattered more than the count.
+A bare `! producer | grep -q BAD` was filed as a **false red**. It is the
+opposite: a dead producer makes the pipeline non-zero, the `!` inverts that to
+zero, and the assertion "BAD is absent" passes **without having looked**. The
+census had put the single most dangerous site in the harmless bucket, and
+reading the sites rather than the buckets is what caught it.
+
+A third correction went the other way: bare pipelines were being filed as false
+reds regardless of whether `set -e` was in scope. Without `set -e` nothing acts
+on the status, so the output may truncate and no verdict moves. An inflated
+census gets skimmed exactly like an unscoped sweep does (#46).
+
+**Rule:** a census reports two numbers — what it found, and what a cruder
+instrument found. If they disagree, the census is wrong until proved otherwise;
+the crude instrument has no blind spots to hide in. Then read the sites, not the
+buckets: a classifier that puts the dangerous case in the safe pile is worse
+than no classifier, because the pile now has a name that says it was checked.

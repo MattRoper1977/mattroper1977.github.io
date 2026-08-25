@@ -178,6 +178,28 @@ try {
       `${PUPIL}: the index is not fetched before interaction — and not after it either`,
       `boot ${idxBoot}, after typing ${idxAfter}; the pupil search reads the rendered cards, never the index`);
 
+    /* THE TWO FACTS, TIED TOGETHER IN ONE ASSERTION, on purpose.
+       "0 index fetches" and "the search works" are each true and, read apart,
+       the first one looks exactly like a broken search: a child types and
+       nothing can ever match. It was read that way once. So this asserts BOTH
+       at once - matches returned, index untouched - and its message says which
+       is which, because that pairing IS the fence: the pupil surface can only
+       reach a game route, and it guarantees that by searching only the cards
+       already on the page rather than a 717-entry index of the whole estate. */
+    await page.fill('[data-mbm-pupil-search]', '');
+    await page.type('[data-mbm-pupil-search]', 'snake', { delay: 10 });
+    await page.waitForFunction(
+      () => [...document.querySelectorAll('.mf-pupil-game')].filter(c => !c.hidden).length > 0,
+      null, { timeout: 5000 }).catch(() => {});
+    const fenceHits = await page.evaluate(() =>
+      [...document.querySelectorAll('.mf-pupil-game')].filter(c => !c.hidden).length);
+    const fenceIdx = requests.filter(u => IDX.test(u)).length;
+    check(fenceHits > 0 && fenceIdx === 0,
+      `${PUPIL}: the search RETURNS MATCHES while fetching the index zero times`,
+      `"snake" -> ${fenceHits} card(s), index fetches ${fenceIdx}` +
+      (fenceHits === 0 ? ' — 0 matches is a BROKEN SEARCH, not a fence'
+                       : ' — matches from the rendered cards, which is the fence'));
+
     /* CONTROL for the line above. Two zeroes are also what a dead listener
        prints, and "the instrument reported nothing" is not "nothing happened".
        So fetch the index deliberately, from this page, and require the SAME

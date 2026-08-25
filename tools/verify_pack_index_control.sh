@@ -59,7 +59,10 @@ if [ $RC -eq 0 ]; then
 fi
 
 # The failure must be the RIGHT failure, not merely any failure.
-if ! echo "$OUT" | grep -q "INDEX POINTS AT THE RIGHT PLATE"; then
+# `! echo … | grep -q` under pipefail: a dead producer makes the pipeline
+# non-zero, `!` satisfies the `if`, and the control declares itself
+# INCONCLUSIVE on output that carried the assertion. Herestring.
+if ! grep -q "INDEX POINTS AT THE RIGHT PLATE" <<<"$OUT"; then
   echo "❌ CONTROL INCONCLUSIVE — the gate went red, but not on the plate assertion."
   exit 1
 fi

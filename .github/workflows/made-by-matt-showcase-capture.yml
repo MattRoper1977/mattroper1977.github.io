@@ -47,8 +47,12 @@ jobs:
           sudo apt-get install -y ffmpeg fonts-dejavu-core jq
           npm install --no-save --package-lock=false playwright
           npx playwright install --with-deps chromium
-          ffmpeg -version | head -1 | sed 's/^/ffmpeg=/' | tee -a showcase-output/environment-probe.txt
-          ffprobe -version | head -1 | sed 's/^/ffprobe=/' | tee -a showcase-output/environment-probe.txt
+          # `ffmpeg -version | head -1` under pipefail: head exits after one
+          # line, ffmpeg dies of a broken pipe on the next, and set -e kills the
+          # install step over a version probe. Capture first.
+          ffv=$(ffmpeg -version 2>&1 || true); ffpv=$(ffprobe -version 2>&1 || true)
+          sed 's/^/ffmpeg=/' <<<"$(head -1 <<<"$ffv")" | tee -a showcase-output/environment-probe.txt
+          sed 's/^/ffprobe=/' <<<"$(head -1 <<<"$ffpv")" | tee -a showcase-output/environment-probe.txt
           node -p '"playwright=" + require("playwright/package.json").version' | tee -a showcase-output/environment-probe.txt
 
       - name: Capture genuine production browser footage

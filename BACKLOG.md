@@ -1002,10 +1002,41 @@ describe **what the artefact is**, not where it sits in a lesson arc. Only
 `revision` → `retrieval-drill` maps by definition, and there are two of those.
 This needs authoring against the resource, not deriving from the record.
 
-**curriculum has no licit source in this repo.** T1.2 permits it only where a
-scheme-of-work document already names the resource. No SoW workbook is present
-here, so the field stays empty. A spec code inferred from a title is exactly the
-invented claim R3 exists to prevent.
+**curriculum has no licit source — and the reason is not the one first
+recorded.** This said "no SoW workbook is present here", which was true of the
+SITE repo, where the derivation looked, and imprecise about the estate. The
+2026-27 workbooks do exist, in the Lessons repo:
+
+```
+_passsg/inputs/GROW SOW 2026-27.xlsx
+_passsb/inputs/Build SOW 2026-2027.xlsx
+_passsl/inputs/LAUNCH KS4 - 2026-27.xlsx
+_sca1/tables/sow_alignment.csv
+```
+
+T1.2 permits the field only where a SoW row already NAMES the resource. Measured
+across all four artefacts: **zero occurrences of a resource file or id.** They
+plan terms, themes, weeks and pathway targets. So the condition still is not
+met, but for a better reason — the document is present and does not carry that
+mapping, rather than being absent. A spec code inferred from a title remains
+exactly the invented claim R3 exists to prevent.
+
+**The worklist is now a file.** `data/tag-backfill.csv`, emitted by
+`tools/emit_tag_backfill_csv.py`, one row per resource with `id, title, subject,
+type, family, year` filled from the record and all four tag columns deliberately
+EMPTY — seeding them with the discarded derivation would put a wrong value in a
+cell where it is harder to spot than a blank one, and it would be trusted.
+Ordered so the afternoon comes before the project:
+
+```
+tier 1  2026-27 on a pathway a SoW workbook plans   199   <- start here
+tier 2  2026-27, other subjects                     305
+tier 3  2025-26                                     137
+named by a SoW row                                    0
+```
+
+Tier 1 is derived from the pathway those workbooks cover, which the record does
+carry. No row is tiered because a SoW row named it, because none does.
 
 **Done when.** Either the two interactionModel rules are repaired and re-pass the
 20-at-random spot-check at 18/20, or the dimension is authored. No coverage

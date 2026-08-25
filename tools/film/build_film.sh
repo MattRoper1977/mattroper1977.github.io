@@ -44,7 +44,10 @@ node "$REPO/tools/film/cards.mjs" "$CARDS"
 # Playwright at 25 fps. NOT a canvas readback: this game's WebGL context is
 # preserveDrawingBuffer:false and drawImage() returns pure black — a trap
 # already recorded on this estate.
-AKV="$(ls "$OUT"/akvid/*.webm | head -1)"
+# ls | head under `set -euo pipefail`: head exits after one name, ls dies of a
+# broken pipe, and the assignment fails on a directory that HAD the file.
+AKVS="$(ls "$OUT"/akvid/*.webm)"
+AKV="$(head -1 <<<"$AKVS")"
 "$FF" -hide_banner -loglevel error -ss "${AK_SS:-30.20}" -t 7.5 -i "$AKV" \
   -vf "fps=30,scale=1920:1080:flags=lanczos,format=yuv420p" \
   -an -c:v libx264 -preset slow -crf 20 "$OUT/akmotion.mp4" -y
