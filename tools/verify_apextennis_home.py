@@ -3,7 +3,7 @@
 from __future__ import annotations
 import json,re,sys
 from pathlib import Path
-index_path=Path(sys.argv[1] if len(sys.argv)>1 else 'index.html')
+index_path=Path(sys.argv[1] if len(sys.argv)>1 else 'main/index.html')  # the homepage moved to /main/ in #107; the root is the chooser and has no rail
 site_path=Path(sys.argv[2] if len(sys.argv)>2 else 'site.json')
 golf_art=Path(sys.argv[3] if len(sys.argv)>3 else 'assets/cards/apex-golf-door.svg')
 tennis_art=Path(sys.argv[4] if len(sys.argv)>4 else 'assets/cards/apex-tennis-door.svg')

@@ -674,7 +674,7 @@ if (!chromium) {
       `${Buffer.byteLength(t)}B -> ${Buffer.byteLength(tidied)}B`);
     check(painted.get(h) !== tidied,
       'CONTROL: and the comparison rejects it, so a helpful tidy-up cannot pass',
-      `painted "${painted.get(h)}" !== tidied "${tidied}"`);
+      `painted ${Buffer.byteLength(painted.get(h) || '')}B differs from tidied ${Buffer.byteLength(tidied)}B — rejected`);
   }
 
   /* Rename a game that is ON the rail — renaming one that has left it would

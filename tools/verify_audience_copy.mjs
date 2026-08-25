@@ -60,7 +60,7 @@ for (const id of ALL) {
   for (const [field, value] of Object.entries(block)) {
     if (value == null) continue;
     check(html.includes(esc(value)),
-      `${a.route}: serves its own ${field}`, JSON.stringify(String(value).slice(0, 54) + '…'));
+      `${a.route}: serves its own ${field}`, `${Buffer.byteLength(String(value))}B, present`);
   }
 }
 
