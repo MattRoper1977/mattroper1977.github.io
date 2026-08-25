@@ -1,0 +1,109 @@
+name: Estate check health
+
+# T4. The one thing in this estate that does not depend on a `paths:` filter.
+#
+# In one week two checks were found red for a week or more, BOTH BY ACCIDENT -
+# 5m by a manual dispatch, 5o because a comment-only edit happened to touch the
+# right directory. Main reported green throughout, honestly: green means
+# "everything that fired, passed". A filter cannot reveal its own failures.
+#
+# This has no `paths:` and no branch condition on its schedule. It asks the API
+# about every workflow in every repo of the estate and reports one aggregate,
+# naming every red and every STALE check with its age. Age is the signal the
+# estate was missing: apexgolf-verify was red for fifteen days and nothing
+# anywhere said so.
+#
+# It is a REPORTING job, not a verification (T4.4). Re-running 57 workflows
+# weekly would cost more than it is worth, and last-run age answers the question
+# this exists to ask.
+
+on:
+  schedule:
+    # Monday 07:00 UTC - before a teaching week, not during one.
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: estate-check-health
+  cancel-in-progress: false
+
+jobs:
+  health:
+    name: Every check in the estate, named if red or stale
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # The classifier is proved on planted rows BEFORE it is trusted on real
+      # ones: a red, and a check that is green today but has not succeeded in
+      # months. Both must be named. If this step fails, the report below means
+      # nothing and the job says so rather than reporting a comfortable zero.
+      - name: The health classifier can still name a red and a stale
+        id: t4-health-self-test
+        if: always()
+        shell: bash
+        run: python3 tools/estate_check_health.py --self-test
+
+      - name: Report every red and every stale check, by name and age
+        id: t4-health-report
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          rc=0
+          out="$(python3 tools/estate_check_health.py --gate --stale-days 30 2>&1)" || rc=$?
+          printf '%s\n' "$out"
+          { echo '### Estate check health'; echo; echo '```'; printf '%s\n' "$out"; echo '```'; } \
+            >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
+
+      # T5. REPORTED, NEVER CHANGED - branch protection is Matt's, same standing
+      # precedent as the HTTPS item. This step fails only when it could not
+      # MEASURE; the finding itself never reds the job, because a finding Matt
+      # has read and decided against is not a defect.
+      - name: Required checks vs existing checks - a report, and Matt's clicks
+        id: t5-required-vs-existing
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          rc=0
+          out="$(python3 tools/report_required_checks.py 2>&1)" || rc=$?
+          printf '%s\n' "$out"
+          { echo '### Required checks vs existing checks'; echo; echo '```'; \
+            printf '%s\n' "$out"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
+
+      - name: Aggregate - one failure costs one signal, not the suite
+        if: always()
+        shell: bash
+        env:
+          STEP_OUTCOMES: ${{ toJSON(steps) }}
+        run: |
+          printf '%s' "$STEP_OUTCOMES" > step-outcomes.json
+          python3 - <<'AGG'
+          import json
+          d = json.load(open('step-outcomes.json'))
+          rows = [(k, v.get('outcome')) for k, v in d.items()
+                  if isinstance(v, dict) and v.get('outcome')]
+          bad = [(k, o) for k, o in rows if o != 'success']
+          print(f"{len(rows)} step(s) reported")
+          for k, o in rows:
+              print(f"  {o.upper():<9} {k}")
+          if bad:
+              print("")
+              print(f"{len(bad)} of {len(rows)} did not pass - and skipped is not passed:")
+              for k, o in bad:
+                  print(f"  {o.upper():<9} {k}")
+              raise SystemExit(1)
+          print("")
+          print("every check in the estate is green, and none has gone stale")
+          AGG

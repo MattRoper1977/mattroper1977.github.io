@@ -168,6 +168,59 @@ jobs:
         shell: bash
         run: python3 tools/census_typed_literals.py --gate .
 
+      # T2/T3. 5m's shape: a check whose `paths:` filter excludes the surface it
+      # judges. driving-games-live-verify watched two game files and asserted
+      # about the pupil homepage, so the commit that redesigned that page could
+      # not fire the workflow it broke. The test is not "has a filter" - plenty
+      # of filtered checks are fine and both that were not had filters that
+      # looked sensible. It is: every surface the run NAVIGATES TO must be in
+      # the set the filter watches.
+      - name: Every filtered check watches the surface it judges
+        id: s17-filter-blindness-census
+        if: always()
+        shell: bash
+        run: python3 tools/census_filter_blindness.py --gate .
+
+      # T6. The pin dependency map is derived by MEASUREMENT - every artefact is
+      # hashed and every hash literal is looked up in that table - so it cannot
+      # drift from what the gates actually pin.
+      - name: The pin dependency map is what the estate would derive
+        id: s18-pin-dependents-current
+        if: always()
+        shell: bash
+        run: python3 tools/derive_pin_dependents.py --check
+
+      # T6.3. 8432492 changed eleven game files, re-pinned six sibling gates and
+      # missed the seventh; apexpool-verify went red on that very PR, merged,
+      # and stayed red for fifteen days. Six of seven is what a hand-counted set
+      # looks like from the outside. Run against that commit, this step names
+      # the miss and exits 1.
+      - name: A changed pinned artefact re-pins every dependent, in the same commit
+        id: s19-pin-dependents-enforced
+        if: always()
+        shell: bash
+        run: |
+          set -uo pipefail
+          BASE='${{ github.event.pull_request.base.sha }}'
+          if [ -n "$BASE" ]; then RANGE="$BASE ${{ github.sha }}"; else RANGE='HEAD^ HEAD'; fi
+          echo "enforcing over: $RANGE"
+          python3 tools/derive_pin_dependents.py --enforce-diff "$RANGE"
+
+      # T7.2. THE `uas_register` CLEAR AFFORDANCE, RULED AND RECORDED. /privacy/
+      # names uas_register as a store this device holds - named pupil data - and
+      # names Settings -> Export backup (.json) and Settings -> Delete all data
+      # as the way to take it off. Both are under 44px and two taps deep. Ruled
+      # 2026-08-25 ACCEPTED, NOT FIXED: /uas/ is an adult desktop tool reached
+      # from /teach/, /for/teachers/ and /asdan/, never from the pupil homepage.
+      # The exemption is enumerated and its REASON is asserted rather than
+      # written down, so it cannot quietly widen and nobody re-raises it as a
+      # finding in three months.
+      - name: The uas_register clear affordance is a named exemption, and its reason still holds
+        id: s20-uas-register-exemption
+        if: always()
+        shell: bash
+        run: node tools/verify_uas_register_exemption.mjs .
+
       - name: Aggregate - one failure costs one signal, not the suite
         if: always()
         shell: bash
