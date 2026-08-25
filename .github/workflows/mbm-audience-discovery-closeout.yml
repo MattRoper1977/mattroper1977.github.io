@@ -1075,7 +1075,7 @@ jobs:
           if [ "$negatives" != "0" ]; then
             echo "a path that must be removed is still served"; exit 1
           fi
-          echo "all 13 routes 200; both removed paths 404; $attempt attempt(s)"
+          echo "all $(wc -w <<<"$routes") routes 200; both removed paths 404; $attempt attempt(s)"
           echo "reachability only - this proves nothing about which commit is deployed;"
           echo "see mbm-deployment-provenance.yml for that."
 
