@@ -1,0 +1,13 @@
+# FIXTURE (not run): workflow YAML outside .github/workflows. The census's
+# first draft walked only .github/workflows and never saw a file like this -
+# the second blind spot.
+name: parked
+on: push
+jobs:
+  j:
+    runs-on: ubuntu-latest
+    steps:
+      - name: a snapshot nobody runs
+        shell: bash
+        run: |
+          ! find estate -name '*.md' -print -quit | grep -q .

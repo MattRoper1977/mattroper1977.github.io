@@ -11,8 +11,26 @@ const args = process.argv.slice(2);
 const selfTest = args.includes('--self-test');
 const supplied = args.find((arg) => arg !== '--self-test');
 const FILE = supplied || path.join(__dirname, '..', 'apexpool', 'index.html');
-const EXPECTED_BYTES = 88751;
-const EXPECTED_SHA256 = '4de1383f8ee029db438258bb239e4e7f3b7ffd9e603706a9fd145fd397af87ad';
+/* The DELIVERED apexpool artifact, pinned. A pin is a literal by design: the
+ * whole claim is "these exact bytes shipped", and deriving it from the file it
+ * checks would assert only that the file equals itself. It moves when the game
+ * deliberately moves - and it must move IN THE SAME COMMIT, because a ledger
+ * updated later than the file it describes is a stale doc with a hash attached.
+ *
+ * MOVED 2026-08-25, and late. 8432492 on 10 August ("Phase 1: the eleven get an
+ * inline exit") added the MBM-INLINE-EXIT block to this game: +29 lines, 0
+ * deletions, 88751 -> 91973 bytes. That commit re-pinned six sibling gates -
+ * apexrally, biopunkhive, echovault, neonsync, novasiege, ouroboros - and missed
+ * this one. apexpool-verify.yml is pull_request-only and filtered to apexpool/**,
+ * so it went red on that very PR (run 17), was merged anyway, and then no diff
+ * touched those paths for fifteen days. It surfaced again only because S5 added
+ * a comment to this file and fired the workflow.
+ *
+ * Verified before moving rather than re-pinned on sight: 8432492^ hashes to the
+ * OLD pin exactly, and the whole delta is the generated exit block.
+ * Previous: 4de1383f8ee029db438258bb239e4e7f3b7ffd9e603706a9fd145fd397af87ad (88751 B) */
+const EXPECTED_BYTES = 91973;
+const EXPECTED_SHA256 = 'b71385d8dd97305e1bcb85b4754ddcee02f59feaccc3adc27c9f91c0e1bfd2bc';
 
 function plantedFailures() {
   const source = fs.readFileSync(FILE, 'utf8');

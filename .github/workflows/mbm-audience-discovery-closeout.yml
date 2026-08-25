@@ -156,6 +156,18 @@ jobs:
         shell: bash
         run: python3 tools/census_pipe_shortcircuit.py --gate .
 
+      # V2. Failure mode 1 - a check holding its own copy of the value it checks
+      # - has been found six times in three weeks, and nothing was looking for
+      # the seventh. A typed copy is only a defect when NOTHING BINDS IT: a
+      # literal a gate asserts equal to its record cannot drift silently, and a
+      # fixed historical set that names itself as one is not a copy of anything.
+      # So this gates on live-and-unbound, and prints the rest.
+      - name: No live value is typed where a record could supply it
+        id: s16-typed-literal-census
+        if: always()
+        shell: bash
+        run: python3 tools/census_typed_literals.py --gate .
+
       - name: Aggregate - one failure costs one signal, not the suite
         if: always()
         shell: bash
@@ -966,6 +978,17 @@ jobs:
         if: always()
         shell: bash
         run: bash tools/verify_pipe_shortcircuit_controls.sh
+
+      # V4. The census found two blind spots in itself, and a classification
+      # that was backwards. A fix never tested against the case that produced it
+      # is a hypothesis, so all three are planted on every run: a pipe inside a
+      # quoted command substitution, a workflow outside .github/workflows, and a
+      # bare `! pipeline` that must file FALSE-GREEN rather than false-red.
+      - name: The census still sees the blind spots that produced it
+        id: s40-pipe-census-blind-spots
+        if: always()
+        shell: bash
+        run: bash tools/verify_pipe_census_controls.sh
 
       - name: Aggregate - one failure costs one signal, not the suite
         if: always()

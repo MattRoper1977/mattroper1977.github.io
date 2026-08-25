@@ -67,10 +67,16 @@ CHROMIUM = _PREINSTALLED if Path(_PREINSTALLED).exists() else None
 def launch(pw):
     return pw.chromium.launch(executable_path=CHROMIUM) if CHROMIUM else pw.chromium.launch()
 
-AUDIENCE_ROUTES = [
-    "/for/pupils/", "/for/teachers/", "/for/parents-carers/", "/for/schools-semh/",
-    "/for/trusts/", "/for/councils-organisations/", "/for/partners/",
-]
+# DERIVED 2026-08-25 (S5 §V2). These seven were typed here. That is failure
+# mode 1 - a check holding its own copy of the value it checks - and an audience
+# added to the record would have left this list silently. An empty or short read
+# is refused rather than treated as "no audiences to check".
+_AUD = json.loads((Path(__file__).resolve().parent.parent
+                   / "data" / "audience-homepages.json").read_text(encoding="utf-8"))
+AUDIENCE_ROUTES = [a["route"] for a in _AUD["audiences"].values() if a.get("route")]
+if len(AUDIENCE_ROUTES) < 7:
+    raise SystemExit(f"MEASUREMENT INVALID: derived only {len(AUDIENCE_ROUTES)} audience route(s) "
+                     "from data/audience-homepages.json")
 SEARCH_ROUTES = ["/", "/teach/", "/education-hub/"]
 
 VIDEO_HOSTS = ("youtube.com", "youtu.be", "youtube-nocookie.com", "ytimg.com", "googlevideo.com")

@@ -350,6 +350,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # DERIVED 2026-08-25 (S5 §V2). The seven audience rows were typed
+          # here alongside the six platform rows. That is failure mode 1, and an
+          # audience added to the record would have left this table silently.
+          # The platform rows stay named - they have no record to derive from,
+          # and they are named rather than folded in with the derived ones.
           declare -A pages=(
             [index.html]="/"
             [main/index.html]="/main/"
@@ -357,14 +362,18 @@ jobs:
             [teach/index.html]="/teach/"
             [resources/index.html]="/resources/"
             [education-hub/index.html]="/education-hub/"
-            [for/pupils/index.html]="/for/pupils/"
-            [for/teachers/index.html]="/for/teachers/"
-            [for/parents-carers/index.html]="/for/parents-carers/"
-            [for/schools-semh/index.html]="/for/schools-semh/"
-            [for/trusts/index.html]="/for/trusts/"
-            [for/councils-organisations/index.html]="/for/councils-organisations/"
-            [for/partners/index.html]="/for/partners/"
           )
+          while read -r route; do
+            pages["for/${route#/for/}index.html"]="$route"
+          done < <(python3 -c "
+          import json
+          d = json.load(open('data/audience-homepages.json'))
+          for a in d['audiences'].values():
+              print(a['route'])
+          ")
+          n_aud=$(( ${#pages[@]} - 6 ))
+          [ "$n_aud" -ge 7 ] || { echo "MEASUREMENT INVALID: derived only $n_aud audience route(s)"; exit 1; }
+          echo "derived $n_aud audience route(s) from data/audience-homepages.json"
           mkdir -p /tmp/mbm-live
           ready=0
           for _ in $(seq 1 72); do

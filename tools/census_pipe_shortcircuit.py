@@ -233,8 +233,14 @@ def main(roots):
                     continue
                 p = os.path.join(dirpath, fn)
                 rel = os.path.relpath(p, root)
+                # A fixture SCRIPT is parked the same way a fixture workflow is.
+                # Both are text somebody will read and neither runs, and the
+                # blind-spot fixtures under tools/fixtures/census-blind-spots
+                # exist precisely to CONTAIN the defect. Labelled, never dropped.
+                label = rel + (' (NOT LIVE: a fixture, nothing runs it)'
+                               if f'{os.sep}fixtures{os.sep}' in f'{os.sep}{rel}' else '')
                 with open(p, encoding='utf-8', errors='replace') as f:
-                    scan_script(f.read(), f'{os.path.basename(root)}:{rel}', False, False, out)
+                    scan_script(f.read(), f'{os.path.basename(root)}:{label}', False, False, out)
     return out
 
 if __name__ == '__main__':
