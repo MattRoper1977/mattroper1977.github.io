@@ -37,6 +37,13 @@ jobs:
       - id: checkout
         if: always()
         uses: actions/checkout@v4
+      - id: browser
+        if: always()
+        # The tool exits 2 INCONCLUSIVE without playwright — caught on this
+        # workflow's own first run, the same way curation-keys caught it.
+        run: |
+          npm i --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
       - id: verify
         if: always()
         run: node tools/verify_stats_claim.mjs
