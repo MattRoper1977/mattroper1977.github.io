@@ -108,7 +108,10 @@ set +e
 OUT="$(node "$SCRATCH/site/tools/verify_inline_exit.mjs" --lessons "$LESSONS" 2>&1)"
 RC=$?
 set -e
-echo "$OUT" | grep -E '^\s*\[FAIL\]' | head -6
+# grep | head with `set -e` live (line 110): head short-circuits, grep dies on
+# the broken pipe, and the control aborts while PRINTING ITS OWN EVIDENCE.
+FAILS="$(grep -E '^\s*\[FAIL\]' <<<"$OUT" || true)"
+head -6 <<<"$FAILS"
 echo "    exit code: $RC"
 echo
 

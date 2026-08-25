@@ -555,3 +555,182 @@ deliberately from the same page and requires the same counter to move.
   which one you measured.
 - **A claim inherited from an earlier pass is a hypothesis, not a finding.**
   "0 persisted learner names" survived three passes and was false.
+
+## The S4 pass — the residue, 25 August 2026
+
+Four things the S3 close surfaced and did not chase, plus the formal retirement
+of the card build. Nothing here was new work; every item was a line in my own
+close that nobody followed.
+
+### §U1 — failure mode 47 was a class, and it runs in two directions
+
+Fixing the two instances I was standing on was not fixing it. The census across
+all three repos — 51 workflows, 17 shell scripts:
+
+```
+                 before   after
+sites               24       9
+  false-green        6       1   (a pinned fixture nothing reads)
+  false-red          9       0
+  safe               9       8
+```
+
+**The false green is the one that matters, and it is silent.** A negative
+assertion — `! producer | grep -q BAD` — passes when the producer dies, because
+non-zero means "absent". It certifies the absence of something it never looked
+for. The six:
+
+| site | what it was certifying |
+|---|---|
+| `glv3-verify.yml` | no stray markdown in the generated estate — passes if the trees cannot be walked |
+| `tools/glitchclash/run.sh` | **a Glitch Clash suite that FAILED reads as passing** |
+| `tools/verify_offbrand.sh` | a safeguarding check on a child's guide entry |
+| `post-merge-production-verify.yml` ×2 | an INCONCLUSIVE gate reported PASS — the exact failure that step was built to prevent |
+| `tools/fixtures/pr124/…` | parked: outside `.github/workflows`, nothing reads it |
+
+`run.sh` is the runner `CLAUDE.md` tells everyone to run before saying a change
+works. It also had a second vacuity of the same family: a suite whose process
+was **killed** prints nothing, matches neither `FAILED` nor `Error`, and took
+the else branch. The exit status was the only thing that knew, and nobody read
+it. It is read now.
+
+Both directions are proved by one control each rather than one per site, each
+measured against the old form failing on the same input:
+
+```
+1a  repaired negative still REDS on a present defect
+1b  …and passes on a genuinely clean producer
+1c  …and REFUSES to certify an absence when the producer died  [MEASUREMENT INVALID]
+2a  repaired positive still matches what is there
+2b  …and still reports a genuine absence
+    OLD form, both directions: reproduced, BrokenPipeError
+```
+
+The census is now a standing gate (`s15`), not a sweep somebody ran once, and it
+was proved able to fail by re-introducing the defect in a scratch workflow.
+
+### §U2 — the vacuity behind the five non-`always()` steps: none
+
+The claim was that checkout, setup-node and the browser install must not be
+`always()`. Correct, and untested: if checkout fails, the `always()` steps still
+run, on an empty workspace. Do they red, or pass having read nothing?
+
+Simulated exactly — empty workspace, and every step without `if: always()`
+skipped, so no repo and no `node_modules` either:
+
+```
+gates run   56
+vacuous pass on an empty workspace    0
+correctly red                        56     exits 1, 2, 127, 128
+AGGREGATE VERDICT                   RED
+```
+
+No sentinel needed; §U2.2 was conditional on a vacuous pass and there are none.
+
+**But the two `production` steps are a different subject**, and checking rather
+than excluding them found something: that job reads **no repo path at all** — it
+curled a route list **typed into the workflow**. Seven of those thirteen routes
+are the audience routes, which have a record. That is failure mode 1, the fifth
+time on this estate, in the one job whose sibling gate derives the same set from
+the same file for exactly this reason. Now derived, and the derivation is
+asserted: an unreadable record or a short read is MEASUREMENT INVALID, never
+"no audiences to check".
+
+### §U3 — the pupil search: neither (a) nor (b)
+
+The order offered two readings and only one was fine. Measured, it is a third:
+
+```
+control            [data-mbm-pupil-search]  input[type=search]
+label              "Look for a game"
+"apex curl"   ->   1 card    Apex Curl
+"snake"       ->   2 cards   Globe Snake, Neon Snake Overdrive
+"zzzz…"       ->   0 cards
+index fetches ->   0, at every point
+```
+
+**The control exists, it works, and it does not need the index.** It filters the
+62 game cards already rendered on the page — and that IS the fence: a pupil can
+only ever reach a game route because the search can only ever see game routes.
+The 717-entry index covers the whole estate, most of which is out of bounds.
+
+"0 fetches" and "the search works" are each true and, read apart, the first
+looks exactly like a broken search. It was read that way once. So the gate now
+asserts **both in one check**, and its message says which is which.
+
+### §U4 — the fence, re-measured in the state a child touches
+
+`under-44px: 0` had been read with eleven genre groups closed and the mobile nav
+at `display:none`. Re-measured by tapping the Menu control — never by forcing
+the CSS, because a state the page cannot enter is not worth measuring either:
+
+```
+/for/pupils/  as loaded   162 laid out   under-44px 0   null-box 21 (0 focusable)
+/for/pupils/  EXPANDED    179 laid out   under-44px 0   null-box  4 (0 focusable)
+```
+
+Seventeen targets that did not exist in the first measurement, and **none of
+them under 44px**. §U4.2 is moot: N = 0. The four remaining nulls are inside a
+footer bar that is `display:none` at 390px — an entire hidden footer, not
+zero-size targets, and none is focusable.
+
+An injected 20×20 control is measured in the same pass and must be counted, in
+both states, because two zeroes are also what a broken selector prints. Both
+states are in `verify_pupil_genres.mjs` now.
+
+`/games/` — an adult surface, not this fence — carries 2 under 44 px in both
+states: `"tell me"` and a contact email, both inline links inside running prose.
+Reported, not fixed: inflating an inline link to 44 px breaks the paragraph.
+
+### §U5 — the card build, retired
+
+The schema, the slug→label map and the degrading-card ruling are landed and
+correct. The resource record has no values to render and none can be honestly
+derived. **This is a closure, not a failure.**
+
+The numbers are the arc's best result: `interactionModel` reached **71%**
+coverage with 92 collisions and scored **12/20** against a threshold of 18 set
+*before* the number was known. At 461 classified that is ~184 wrong tags in
+front of teachers. A derivation that is nearly good enough is the dangerous
+kind — it is exactly persuasive enough to ship — and the only reason it did not
+is that the threshold was fixed in advance.
+
+One correction to the record, found while ordering the worklist. 5n said "no SoW
+workbook is present here." True of the site repo, imprecise about the estate:
+the 2026-27 workbooks exist in the Lessons repo. Measured across all four SoW
+artefacts: **zero occurrences of a resource file or id.** They plan terms,
+themes, weeks and pathway targets. So the condition still is not met, but for a
+better reason — the document is present and does not carry that mapping.
+
+`data/tag-backfill.csv`, 641 rows, six columns filled from the record and four
+deliberately empty:
+
+```
+tier 1  2026-27 on a pathway a SoW workbook plans   199   <- the afternoon
+tier 2  2026-27, other subjects                     305
+tier 3  2025-26                                     137
+named by a SoW row                                    0
+tag cells pre-filled                                  0
+```
+
+### Rules earned here
+
+- **`producer | grep -q` under `pipefail` can report a match as a failure — and
+  can report a negative assertion as satisfied when the producer died.**
+  Herestring, not pipe. A gate that certifies an absence it never looked for is
+  the R8 family arriving through a pipe.
+- **A derived field read as a raw field produces a false negative.**
+  `education-hub.json` carries no `status`; reading the raw record would have
+  called a true claim false and rewritten good copy.
+- **A measurement taken in the collapsed state measures the collapsed state.**
+  Twelve targets inside closed `<details>` are 0×0 until a child opens them.
+- **A derivation that is nearly good enough is the dangerous kind.** Set the
+  threshold before you know the number, always.
+- **"No fetch" is only good news if the thing was supposed to fetch.** A zero
+  meaning "working as designed" and a zero meaning "broken" look identical in a
+  counter. Assert both facts in one check.
+- **A census that does not check its own recall is a sample.** Two blind spots,
+  both in the census and neither in the crude grep it was measured against.
+- **Excluding a case from a check is a claim, and it needs the same evidence as
+  including one.** The two production steps were nearly filed "not applicable";
+  checking them found a hand-typed route list.

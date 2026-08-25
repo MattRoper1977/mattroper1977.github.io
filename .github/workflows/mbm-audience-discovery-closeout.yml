@@ -145,6 +145,17 @@ jobs:
         shell: bash
         run: node tools/verify_register_sweep_scope.mjs
 
+      # U1. Failure mode 47 as a STANDING check rather than a sweep somebody
+      # ran once. A pipeline feeding a short-circuiting consumer under pipefail
+      # can report a match as a miss (noisy) or certify an absence it never
+      # looked for (silent). Sites in files that do not run are named and
+      # parked, never dropped.
+      - name: No live pipeline can report a match as a miss
+        id: s15-pipe-shortcircuit-census
+        if: always()
+        shell: bash
+        run: python3 tools/census_pipe_shortcircuit.py --gate .
+
       - name: Aggregate - one failure costs one signal, not the suite
         if: always()
         shell: bash
@@ -299,7 +310,7 @@ jobs:
           if grep -q "write aborted" <<<"$out"; then
             echo "control detected: undeclared diff refused"
           else
-            echo "write was not refused"; echo "$out" | head -10; exit 1
+            echo "write was not refused"; head -10 <<<"$out"; exit 1
           fi
           git diff --quiet data/mbm-search-index.json || { echo "index was modified"; exit 1; }
 
@@ -328,7 +339,11 @@ jobs:
           if ! grep -q "REMOVED" <<<"$out"; then
             echo "check did not scream about a removed entry"; echo "$out" | tail -5; exit 1
           fi
-          key=$(grep -oP '(?<=- REMOVED )\S+' <<<"$out" | head -1)
+          # grep | head: head short-circuits and grep dies on the broken pipe,
+          # so under pipefail this assignment fails on output that contained the
+          # key. Capture the matches, then take the first from a herestring.
+          keys=$(grep -oP '(?<=- REMOVED )\S+' <<<"$out" || true)
+          key=$(head -1 <<<"$keys")
           out=$(python3 tools/build_mbm_search_index.py --write 2>&1 || true)
           if ! grep -q "write aborted" <<<"$out"; then
             echo "undeclared removal was not refused"; exit 1
@@ -871,7 +886,7 @@ jobs:
           if grep -q "locked chooser copy missing" <<<"$out"; then
             echo "control detected"
           else
-            echo "locked-copy guard did not fire"; echo "$out" | head -20; exit 1
+            echo "locked-copy guard did not fire"; head -20 <<<"$out"; exit 1
           fi
           git checkout -- tools/render_audience_homepages.py index.html
 
@@ -941,6 +956,17 @@ jobs:
         shell: bash
         run: node tools/verify_surface_floor_control.mjs
 
+      # U1.4. One control per DIRECTION, not per site: the repaired negative
+      # assertion still reds on a present defect and refuses to certify an
+      # absence when the producer died, and the repaired positive assertion
+      # still matches what is there. Each is measured against the old form
+      # failing on the same input, so the repair is proved rather than asserted.
+      - name: A short-circuiting pipe can no longer invert a verdict, either way
+        id: s38-pipe-shortcircuit-controls
+        if: always()
+        shell: bash
+        run: bash tools/verify_pipe_shortcircuit_controls.sh
+
       - name: Aggregate - one failure costs one signal, not the suite
         if: always()
         shell: bash
@@ -983,9 +1009,27 @@ jobs:
         run: |
           set -uo pipefail
           base="https://madebymatt.uk"
-          routes="/ /main/ /start/ /teach/ /resources/ /education-hub/ \
-                  /for/pupils/ /for/teachers/ /for/parents-carers/ /for/schools-semh/ \
-                  /for/trusts/ /for/councils-organisations/ /for/partners/"
+          # U2. The seven audience routes were TYPED HERE. That is failure mode
+          # 1 - a check holding its own copy of the value it checks - and this
+          # estate has it on the record four times; verify_search_prominence.mjs
+          # derives the same set from the same file for exactly this reason. An
+          # audience added to the record would have left this list silently, and
+          # nothing would have gone red. Derived now, and the derivation is
+          # asserted rather than assumed: an empty read is refused, not treated
+          # as "no audiences to check".
+          audience_routes=$(python3 -c "
+          import json
+          d = json.load(open('data/audience-homepages.json'))
+          print(' '.join(a['route'] for a in d['audiences'].values()))
+          ") || { echo "MEASUREMENT INVALID: could not read the audience record"; exit 1; }
+          n_aud=$(wc -w <<<"$audience_routes")
+          [ "$n_aud" -ge 7 ] || { echo "MEASUREMENT INVALID: derived only $n_aud audience route(s)"; exit 1; }
+          echo "derived $n_aud audience route(s) from data/audience-homepages.json"
+          # Platform routes have no single record to derive from, so they stay
+          # named here - and they are named, not silently folded in with the
+          # derived ones.
+          platform_routes="/ /main/ /start/ /teach/ /resources/ /education-hub/"
+          routes="$platform_routes $audience_routes"
           # WHAT THIS DOES AND DOES NOT PROVE.
           #
           # It proves the routes are reachable and that two removed paths are
@@ -1031,7 +1075,7 @@ jobs:
           if [ "$negatives" != "0" ]; then
             echo "a path that must be removed is still served"; exit 1
           fi
-          echo "all 13 routes 200; both removed paths 404; $attempt attempt(s)"
+          echo "all $(wc -w <<<"$routes") routes 200; both removed paths 404; $attempt attempt(s)"
           echo "reachability only - this proves nothing about which commit is deployed;"
           echo "see mbm-deployment-provenance.yml for that."
 

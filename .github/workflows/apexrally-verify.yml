@@ -91,7 +91,12 @@ jobs:
           test -f assets/cards/apex-rally.svg
           python3 -c "import xml.dom.minidom;xml.dom.minidom.parse('assets/cards/apex-rally.svg')"
           # derive the accent from the GAME's CSS token, never a typed-in hex
-          hue=$(grep -oE '\-\-red:#[0-9a-fA-F]{6}' apexrally/index.html | head -1 | cut -d'#' -f2)
+          # grep | head under pipefail: head exits on the first line and grep,
+          # still scanning a large single-file game, dies of a broken pipe - so
+          # the assignment goes non-zero and `set -e` kills the step on a token
+          # that was found. Capture, then take the first line from a herestring.
+          hues=$(grep -oE '\-\-red:#[0-9a-fA-F]{6}' apexrally/index.html || true)
+          hue=$(head -1 <<<"$hues" | cut -d'#' -f2)
           echo "game --red token: #$hue"
           test -n "$hue"
           grep -qi "#$hue" assets/cards/apex-rally.svg

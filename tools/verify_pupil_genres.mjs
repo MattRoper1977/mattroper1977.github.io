@@ -329,5 +329,108 @@ console.log('\n=== CONTROLS ===\n');
     `${bad.length} unresolved detected, shipped set has ${unresolved.length}`);
 }
 
+
+/* U4. THE FENCE, MEASURED IN THE STATE A CHILD TOUCHES.
+   `under-44px: 0` was reported from the page as it loads - with eleven genre
+   groups closed and the mobile nav stood down at `display:none`. Twelve targets
+   were inside those closed groups and measured 0x0, which is not a size: a
+   pupil taps them OPEN. Measuring only the collapsed state is measuring the
+   state nobody touches, and it is the same species as the swatch read
+   mid-construction.
+   Both states are measured now. The expanded one is reached the way a pupil
+   reaches it - by tapping the Menu control - never by forcing the CSS, because
+   a state the page cannot enter is not a state worth measuring either. */
+const TAPSEL = 'a[href],button,input,select,textarea,[role="button"],summary,[tabindex]:not([tabindex="-1"])';
+
+async function tapTargets(root, route) {
+  const s = serve(root);
+  await new Promise(r => s.listen(0, '127.0.0.1', r));
+  const origin = `http://127.0.0.1:${s.address().port}`;
+  const browser = await chromium.launch();
+  const out = {};
+  for (const expand of [false, true]) {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    await page.goto(origin + route, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    for (let i = 0; i < 60; i++) {
+      if (await page.evaluate(() => document.querySelectorAll('.mf-pupil-game').length).catch(() => 0)) break;
+      await page.waitForTimeout(250);
+    }
+    let menuTapped = false, detailsOpened = 0;
+    if (expand) {
+      const menu = await page.$('button.menu, header [aria-expanded]');
+      if (menu) { await menu.click().catch(() => {}); menuTapped = true; }
+      detailsOpened = await page.evaluate(() => {
+        const ds = [...document.querySelectorAll('details')];
+        ds.forEach(d => { if (!d.open) d.open = true; });
+        return ds.length;
+      });
+      await page.waitForTimeout(400);
+    }
+    /* INJECTED CONTROL, in the same pass. Two zeroes are also what a broken
+       selector prints, so one deliberately undersized control is planted and
+       must be COUNTED. It is excluded from the shipped tally by its own id. */
+    await page.evaluate(() => {
+      const b = document.createElement('button');
+      b.id = 'u4-control-target';
+      b.textContent = 'x';
+      b.style.cssText = 'width:20px;height:20px;position:fixed;left:0;top:0;z-index:9999';
+      document.body.appendChild(b);
+    });
+    const m = await page.evaluate((SEL) => {
+      let laid = 0; const under = [], nul = [];
+      for (const e of document.querySelectorAll(SEL)) {
+        const r = e.getBoundingClientRect(), cs = getComputedStyle(e);
+        if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) continue;
+        if (r.width === 0 || r.height === 0) {
+          e.focus();
+          nul.push({ id: e.id, tag: e.tagName.toLowerCase(), focusable: document.activeElement === e });
+          continue;
+        }
+        laid++;
+        if (r.width < 44 || r.height < 44)
+          under.push({ id: e.id, tag: e.tagName.toLowerCase(),
+                       txt: (e.textContent || '').trim().slice(0, 28),
+                       w: Math.round(r.width), h: Math.round(r.height) });
+      }
+      return { laid, under, nul };
+    }, TAPSEL);
+    out[expand ? 'expanded' : 'loaded'] = {
+      laid: m.laid,
+      control: m.under.some(u => u.id === 'u4-control-target'),
+      under: m.under.filter(u => u.id !== 'u4-control-target'),
+      nul: m.nul.filter(u => u.id !== 'u4-control-target'),
+      menuTapped, detailsOpened,
+    };
+    await page.close();
+  }
+  await browser.close(); s.close();
+  return out;
+}
+
+console.log('\n=== THE PUPIL FENCE, IN BOTH STATES ===\n');
+{
+  const t = await tapTargets(ROOT, '/for/pupils/');
+  for (const [state, r] of Object.entries(t)) {
+    console.log(`  ${state.padEnd(9)} laid out ${String(r.laid).padStart(3)}   under-44px: ${r.under.length}   ` +
+                `null-box ${r.nul.length} (focusable ${r.nul.filter(x => x.focusable).length})` +
+                (state === 'expanded' ? `   menu tapped ${r.menuTapped}, ${r.detailsOpened} details opened` : ''));
+    for (const u of r.under) console.log(`             ${u.w}x${u.h} <${u.tag}> ${JSON.stringify(u.txt)}`);
+  }
+  check(t.loaded.control && t.expanded.control,
+    'CONTROL: a deliberately 20x20 target IS counted, in both states',
+    `loaded ${t.loaded.control}, expanded ${t.expanded.control}`);
+  check(t.loaded.under.length === 0, 'as loaded: under-44px 0',
+    `${t.loaded.laid} laid out`);
+  check(t.expanded.laid > t.loaded.laid,
+    'expanding actually exposed more targets — otherwise the second measurement is the first one again',
+    `${t.loaded.laid} -> ${t.expanded.laid}`);
+  check(t.expanded.under.length === 0,
+    'EXPANDED — every genre group open and the nav tapped out: under-44px 0',
+    `${t.expanded.laid} laid out, ${t.expanded.under.length} under 44px`);
+  check(t.expanded.nul.every(n => !n.focusable),
+    'and nothing that measures 0x0 is in the tab order',
+    `${t.expanded.nul.length} null-box, ${t.expanded.nul.filter(n => n.focusable).length} focusable`);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
