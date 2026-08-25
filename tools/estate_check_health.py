@@ -69,6 +69,15 @@ def self_test():
         dict(repo='X', file='planted-red.yml',  conclusion='failure', red_age=9.1,  ok_age=12.0, retired=False),
         dict(repo='X', file='planted-stale.yml',conclusion='success', red_age=None, ok_age=91.0, retired=False),
         dict(repo='X', file='retired.yml',      conclusion='failure', red_age=40.0, ok_age=None, retired=True),
+        # A check whose LATEST run is still going. This report is dispatchable,
+        # so it will often be looking at an estate mid-run, and an in-flight
+        # check must not be counted as red, as stale, or as never-run. Its last
+        # COMPLETED run was a success 2 days ago, so it is simply healthy.
+        dict(repo='X', file='in-flight.yml',    conclusion='IN PROGRESS', red_age=None, ok_age=2.0, retired=False),
+        # And the real never-run: no completed run at all, so `ok_age` is None.
+        # It is STALE by age - it has never succeeded - which is the correct
+        # verdict and the loudest signal T1.2 asks for.
+        dict(repo='X', file='never-run.yml',    conclusion='NEVER RUN', red_age=None, ok_age=None, retired=False),
     ]
     red, stale, retired_red = classify(rows, {}, 30)
     ok = True
@@ -78,9 +87,12 @@ def self_test():
         print(f'  [{"ok" if cond else "FAIL"}] {what}' + (f'  — {detail}' if detail else ''))
     check([r['file'] for r in red] == ['planted-red.yml'],
           'a planted RED is named', ', '.join(r['file'] for r in red) or '(none)')
-    check([r['file'] for r in stale] == ['planted-stale.yml'],
-          'a planted STALE is named even though it is currently GREEN',
+    check([r['file'] for r in stale] == ['planted-stale.yml', 'never-run.yml'],
+          'a planted STALE and a NEVER-RUN check are both named, one of them currently GREEN',
           ', '.join(f"{r['file']} ok_age={r['ok_age']}" for r in stale) or '(none)')
+    check('in-flight.yml' not in [r['file'] for r in red + stale],
+          'a check whose latest run is still going is neither red nor stale — its last '
+          'COMPLETED run is what judges it')
     check([r['file'] for r in retired_red] == ['retired.yml'],
           'a declared-retired red is reported separately, not as a red')
     check('healthy.yml' not in [r['file'] for r in red + stale],
@@ -158,10 +170,20 @@ def main():
             # `active` for ever. It cannot run, so it is not a check.
             if not runs and w['state'] != 'active':
                 continue
-            last = runs[0] if runs else None
-            ok = next((r for r in runs if r['conclusion'] == 'success'), None)
+            # AN IN-PROGRESS RUN IS NOT A CHECK THAT HAS NEVER RUN. A queued or
+            # running workflow reports `conclusion: null`, and reading that as
+            # NEVER RUN corrupts the one signal T1.2 calls the loudest: this
+            # report is dispatchable, so it will often be looking at an estate
+            # mid-run. The verdict comes from the latest COMPLETED run; a
+            # workflow with no completed runs at all is the real NEVER RUN, and
+            # one currently in flight is labelled as such rather than counted
+            # against either.
+            done = [r for r in runs if r.get('conclusion')]
+            last = done[0] if done else None
+            ok = next((r for r in done if r['conclusion'] == 'success'), None)
+            running = bool(runs) and not done
             row = {'repo': repo, 'file': os.path.basename(w['path']), 'name': w['name'],
-                   'conclusion': (last or {}).get('conclusion') or 'NEVER RUN',
+                   'conclusion': (last or {}).get('conclusion') or ('IN PROGRESS' if running else 'NEVER RUN'),
                    'red_age': age((last or {}).get('created_at'), now) if last and last.get('conclusion') == 'failure' else None,
                    'ok_age': age((ok or {}).get('created_at'), now),
                    'retired': (repo, os.path.basename(w['path'])) in declared}
@@ -172,11 +194,20 @@ def main():
     red, stale, retired_red = classify(rows, declared, stale_days)
 
     exist = len(rows)
-    ran = sum(1 for r in rows if r['conclusion'] != 'NEVER RUN')
+    never = [r for r in rows if r['conclusion'] == 'NEVER RUN']
+    running = [r for r in rows if r['conclusion'] == 'IN PROGRESS']
+    ran = exist - len(never)
     green = sum(1 for r in rows if r['conclusion'] == 'success')
     print('ESTATE CHECK HEALTH')
     print(f'  repos      {len(REPOS) - len(unreadable)} read of {len(REPOS)}')
-    print(f'  checks     {exist} live · {ran} have ever run · {green} green')
+    print(f'  checks     {exist} live · {ran} have ever completed a run · {green} green'
+          + (f' · {len(running)} in flight right now' if running else ''))
+    if never:
+        # T1.2: a workflow with no completed run is the loudest possible signal
+        # and the easiest to overlook, so it is named rather than counted.
+        print(f'  NEVER RUN  {len(never)} — named, because a check that has never run has never judged anything:')
+        for r in never:
+            print(f'    {r["repo"]}/{r["file"]}')
     print(f'  orphaned   {orphans} registry entries whose file no longer exists — cannot run, not checks')
     print(f'  RED        {len(red)}')
     print(f'  STALE      {len(stale)}   (no success in {stale_days} days)')

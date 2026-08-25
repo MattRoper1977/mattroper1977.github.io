@@ -1058,11 +1058,20 @@ parallel implementation proves nothing:
 
 ```
 [ok] a planted RED is named  — planted-red.yml
-[ok] a planted STALE is named even though it is currently GREEN  — planted-stale.yml ok_age=91.0
+[ok] a planted STALE and a NEVER-RUN check are both named, one of them currently GREEN
+[ok] a check whose latest run is still going is neither red nor stale — its last COMPLETED run judges it
 [ok] a declared-retired red is reported separately, not as a red
 [ok] a healthy check is in neither list
 [ok] and with only healthy rows the verdict is CLEAR
 ```
+
+The in-flight limb exists because the first real run of this report found the
+bug. An in-progress workflow reports `conclusion: null`, and the tool read that
+as **NEVER RUN** — so while PR #182's own checks were running the estate
+appeared to lose six checks (`57 have ever run` → `51`). A dispatchable report
+will often be looking at an estate mid-run, so the verdict now comes from the
+latest **completed** run, `NEVER RUN` means no completed run at all, and those
+are **named** rather than counted, which is what §T1.2 asks for.
 
 ## §T5 — required checks vs existing checks: reported, not changed
 
