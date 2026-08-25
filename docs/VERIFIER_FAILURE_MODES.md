@@ -1226,3 +1226,116 @@ instrument found. If they disagree, the census is wrong until proved otherwise;
 the crude instrument has no blind spots to hide in. Then read the sites, not the
 buckets: a classifier that puts the dangerous case in the safe pile is worse
 than no classifier, because the pile now has a name that says it was checked.
+
+---
+
+## 49. A check is only as visible as the filter that decides when it runs
+
+In one week two checks were found red for a week or more, **both by accident**.
+
+`driving-games-live-verify` (5m) had a `paths:` filter listing two game files,
+the manifest and itself. Its assertion was about the pupil homepage. **The
+commit that redesigned that page could not fire the workflow it broke**, so it
+went red on 14 August and stayed red until a manual dispatch happened to run it
+as a bookend eleven days later.
+
+`apexpool-verify` (5o) had a filter that was fine. It went red on 10 August **on
+the very PR that broke it** — and that PR merged anyway, because nothing in the
+estate was required for merge. It was found fifteen days later because a
+comment-only edit happened to touch `apexpool/**`.
+
+Main reported green throughout, and it was not lying. **Green means "everything
+that fired, passed."** The filter decides what fires, so a filter that excludes
+the surface a check judges makes that check invisible rather than wrong.
+
+Three things follow, and all three are now instruments rather than intentions:
+
+- **The filter must cover the files whose behaviour the check asserts, not the
+  files it opens.** A check that reads `games.json` and asserts about
+  `/for/pupils/` must watch `/for/pupils/`. `census_filter_blindness.py` derives
+  the asserted surfaces from every navigation in the workflow *and in every tool
+  it invokes*, and compares that set to the filter.
+- **A census of filters cannot check itself.** Zero blind checks across five
+  repos is either a clean estate or a blind instrument, and the number does not
+  say which (#48). The recall control is the **real 5m workflow at `93168a1^`**,
+  filter and all, kept as a fixture — not an imitation of its shape.
+- **Something must run that does not depend on filters at all.** The weekly
+  `estate-check-health` run asks the API about every workflow in every repo and
+  names every red and every **stale** check with its age. Age is the signal the
+  estate was missing: nothing anywhere said "this has not succeeded in twenty
+  days".
+
+**Two found by accident in one week is a sampling estimate, not two incidents.**
+Accident is not a detection strategy.
+
+---
+
+## 50. A registry that never forgets makes every count a lie
+
+The Actions API keeps a workflow entry for **every workflow that has ever
+existed** and reports all of them `state: active`. Across this estate that is
+**197 entries for 57 live checks** — 140 files deleted months ago, still
+`active`, still answering with their last run.
+
+The first run of `estate_check_health.py` reported **60 red**. Fifty-nine of
+those could never run again. A report that names sixty reds gets skimmed exactly
+like one that names none, so the noise was not a cosmetic problem: it would have
+buried the one real red it existed to find.
+
+The liveness test is a second instrument — `/contents/.github/workflows` — and
+the entry is only a check if the file is still there. It is the same discipline
+as measuring recall against a cruder instrument, applied to the other direction:
+here the API is the *over*-reporting instrument and the directory listing is the
+honest one.
+
+**Rule:** before counting anything an API returns, ask what it does when the
+thing is gone. "Active" is a field, not a fact.
+
+---
+
+## 51. A noisy fault hides a real one, and fixing the noise is how you find it
+
+`apexgolf-verify` was red for fifteen days for **two** reasons, both landing on
+10 August 2026, and only one of them was visible.
+
+The visible one was mechanical: `grep … | wc -l` under `set -e -o pipefail`
+(#47), which killed the step before it printed a line. The run log jumps from
+`##[endgroup]` straight to `exit 1`.
+
+The one underneath it was real. `e65a190` "Stage 2B" deliberately wired
+`<script defer src="/hud.js">` into ten root games that same day, and
+`verify_apexgolf.js` G17 asserted **no `<script src>` at all**. The check was
+wrong — the page was fine and the promise had been retracted for it on purpose —
+but nothing could say so, because the step above it died first.
+
+**Repairing the noisy fault is what surfaced the real one.** Had the first been
+reported rather than fixed, the second would still be invisible: reporting a
+masking fault leaves the mask in place.
+
+Two rules follow.
+
+**A red must be diagnosed to a cause, and then diagnosed again.** "A pin that is
+wrong for two reasons must not be corrected as though it were wrong for one"
+applies to checks, not only to pins. After a repair, re-run and read what comes
+next — the first green line is not the end of the diagnosis.
+
+**A ledger of exclusions must cover the inclusions too.** Stage 2B measured the
+twelve games it *declined* to wire — verifier run green, line inserted, verifier
+run again, only genuinely-reddened gates recorded — and declared them in
+`data/hud-coverage.json`. It never asked whether any of the ten it *did* wire
+carried the same contract. apexgolf did. The ledger had two categories where it
+needed three, and the missing one — *wired, contract retained, verifier amended*
+— is where `/neonbreach/` had been living unrecorded all along.
+
+That is the same shape as `8432492` re-pinning six siblings and missing the
+seventh: **measured on one side, hand-assumed on the other.** A set someone
+counted by hand is visible from the outside as an off-by-one.
+
+**When the contract really has changed, narrow it — never delete it.**
+`verify_neonbreach.js` set the precedent: the amendment is not "allow external
+scripts", it is "the ONE permitted script is the estate's own deferred
+same-origin `/hud.js`, and every other src is still a dependency". That is
+stricter than a no-CDN rule. And a limb narrowed on the word of a regex is a
+limb nobody has tested, so the amendment carries its own controls — an
+off-origin script, a second same-origin script, and the HUD without `defer`,
+each of which must still be rejected.

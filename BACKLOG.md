@@ -1012,6 +1012,14 @@ generated exit block. `ALL 17 LANDING CHECKS PASSED`, and the file's own
 **Worth someone's afternoon, not this order's:** how many other
 `pull_request`-only gates are red at their last run? Nothing looks.
 
+**ANSWERED, Order T, 25 August 2026.** One: `apexgolf-verify.yml`, red 14.9
+days, last success 20.8 days ago — repaired in the same order. And "nothing
+looks" is no longer true: `.github/workflows/estate-check-health.yml` runs
+weekly with **no `paths:` filter at all** and names every red and every stale
+check with its age. The structural question behind this item — can a check's
+filter hide the surface it judges — is now `census_filter_blindness.py` (`s17`),
+0 across five repos, with the real 5m workflow kept as its recall control.
+
 ## 5n. The three-tag card: what the estate can and cannot derive
 
 **content · work-pending** — recorded 24 August 2026 from Order S3 §T2. This is
@@ -1090,6 +1098,46 @@ carry. No row is tiered because a SoW row named it, because none does.
 20-at-random spot-check at 18/20, or the dimension is authored. No coverage
 target: T1.3 forbids one, because pressure to reach a percentage is pressure to
 guess.
+
+## 5p. Nothing in the estate is required for merge — Matt's decision
+
+**instrument · ruling-pending** — reported by Order T §T5, **not changed**;
+branch protection is Matt's, same standing precedent as the HTTPS item.
+
+All five repos read `protected=False`, `enforcement=off`, `required contexts=0`,
+`rulesets=0`. The behaviour agrees: **11 of 101 sampled merged PRs merged over a
+red check**, in three of the five repos. 5o was one of eleven.
+
+**Read this before touching a setting.** A required check that carries a
+`paths:` filter never *reports* on a PR outside those paths, and GitHub waits
+for a report it will never get — the PR is blocked for ever on "Expected —
+Waiting for status to be reported". Of the 43 PR-firing checks in the estate,
+only **4** have no filter and could be required as they stand:
+
+```
+mattroper1977.github.io   agx1-live-verify.yml · mbm-audience-discovery-closeout.yml
+                          professional-site-design-audit.yml
+Lessons                   fieldops-p2-and-sweep.yml
+Games                     (none)
+Matt-s-Apps-              (none)
+```
+
+**And it is the JOB names that get required, not the files — with one exclusion
+the tool now makes for you.** A job carrying an `if:` that excludes pull
+requests deadlocks exactly like a filtered workflow: the job is skipped, and a
+skipped job never reports the context GitHub is waiting for. The closeout
+suite's `Routes serve 200 and removed paths 404` job is one
+(`if: github.event_name != 'pull_request'`), so the report prints it as **NOT
+this** with the reason. Require the other two jobs from that workflow, not it.
+
+**`Games` and `Matt-s-Apps-` have PR-firing checks but not one without a
+filter**, so no settings change helps them until each has a filter-free
+aggregate check. That is the work-pending half of this item, and it is a
+workflow change rather than a settings one.
+
+`python3 tools/report_required_checks.py` prints the current gap, the exact
+strings to type, and the clicks in order; the weekly health run prints the same
+thing into its step summary.
 
 ## 6. Featured curation
 

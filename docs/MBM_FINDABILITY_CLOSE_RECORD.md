@@ -884,3 +884,378 @@ left over and does not inherit the exemption.
 - **A fixture inside a heredoc reads as live code.** Park fixtures as files.
 - **The strict form of an assertion will catch the person who wrote the loose
   description.** Measure the words of the ruling, not a convenient proxy for them.
+
+---
+
+# Order T — estate check health
+
+**25 August 2026.** Order S closed with both mains green. This order exists
+because of what the close surfaced sideways: in one week, two checks were found
+red for a week or more, **both by accident**. Two found by accident is a
+sampling estimate, not two incidents.
+
+## §T1 — the census, and two instruments that had to be made to agree
+
+Every workflow in every repo that carries one — site, Lessons, Games,
+Matt-s-Apps-, Games- — read from the **API**, because a workflow's stated
+trigger and its actual run history are two different facts and the gap between
+them is the whole point.
+
+```
+instrument 1 (Actions API registry)   197 workflows, all reported active
+…of which the file no longer exists   140 ORPHANED — can never run again
+instrument 1, live                     57
+instrument 2 (plain directory walk)    57
+reconciled at 57
+```
+
+The 197-vs-57 gap is failure mode 50 and it is not cosmetic: the first run of
+the health tool reported **60 red**, 59 of which were registry ghosts. A report
+naming sixty reds is skimmed exactly like one naming none.
+
+The reconciliation now **names the file** when the two instruments disagree
+rather than only reporting that they do — a reconciliation that prints
+`57 != 58` and stops has told the reader the census is wrong and nothing about
+where to look. Proved on this order's own new workflow, which the disk walk saw
+and the registry had not: `ON DISK, NOT IN THE REGISTRY
+mattroper1977.github.io/estate-check-health.yml`.
+
+## §T2 — four buckets
+
+| bucket | count | |
+|---|---|---|
+| **A — healthy** | 55 | fires on realistic diffs, ran recently, green |
+| **B — red and silent** | **1** | `mattroper1977.github.io/apexgolf-verify.yml`, red **14.9 days**, last success **20.8 days** ago — and **two faults**, not one |
+| **C — structurally blind** | **0** | measured, not assumed — see below |
+| **D — dormant but correct** | 1 | `Games/apexpool-sports-verify.yml`, declared retired 5 Aug |
+
+Bucket C is the one that needed thought rather than an API call, and "has a
+filter" is not the test — 23 of the site repo's 26 PR-firing checks have one and
+they are fine. The test is: **compare what each check asserts against what its
+filter watches.** `census_filter_blindness.py` derives the asserted surfaces
+from every navigation in the workflow **and in every repo tool it invokes**, maps
+`/for/pupils/` → `for/pupils/index.html`, and reports a hit only when a rendered
+page of that repo is navigated to and not covered. Across all five repos: **0**.
+
+That zero is only worth anything with a recall control, so the gate carries one:
+the **real 5m workflow at `93168a1^`**, filter and all, kept as a fixture. The
+census names it. Delete the fixture and the gate reports `MEASUREMENT INVALID`
+and exits 1 rather than passing on an unmeasured zero.
+
+## §T3 — the repairs
+
+**Bucket B: `apexgolf-verify.yml`. The check was wrong, not the estate.** It
+went red at `def68e16` on 10 August and the run log jumps from `##[endgroup]`
+straight to `exit 1` — it failed before printing anything. Every count was
+`grep … | wc -l` under `set -e -o pipefail`: grep exits 1 on no match and 2 on a
+missing file, pipefail promotes either, `set -e` kills the step. So *"the donor
+emitted the wrong number"*, *"the log is missing"* and *"the pattern stopped
+matching"* were one indistinct red.
+
+Two faults, repaired as two:
+
+- counted with `|| true`, with the missing-log and no-summary cases separated
+  and named as `MEASUREMENT INVALID` rather than as a failing assertion;
+- `-eq 25` was **a count typed against another gate's output** — failure mode 1,
+  seventh instance. The donor prints `ALL <n> CONTRACT CHECKS PASSED`, so the
+  total is now read from the donor and the two are asserted equal.
+
+**And that repair uncovered a third fault, which is the point of making the
+repair rather than only reporting it.** With the masking step fixed, CI ran
+`verify_apexgolf.js` for the first time in fifteen days:
+
+```
+donor harness measured: 25 checks, 25 pass, 0 fail; donor declares 25     ← repaired step, green
+FAIL G17 single-file size, cold load and frame rate — runtime dependency found
+APEX GOLF GATE SUMMARY: 17 passed, 1 failed, 0 skipped, 18 total
+```
+
+**My first diagnosis was incomplete: apexgolf-verify was red for two reasons,
+both landing on 10 August, and the noisy one hid the real one.** §T3.2 says a
+pin that is wrong for two reasons must not be corrected as though it were wrong
+for one — and this is a check that was wrong for two.
+
+The second fault: `e65a190` "Stage 2B" deliberately wired `<script defer
+src="/hud.js">` into ten root games that day so a player has a way back out, and
+G17 asserted **no `<script src>` at all**. So the check was wrong, not the
+estate: the page is fine, and the promise it makes had been retracted for it on
+purpose.
+
+**What made it possible is in Stage 2B's own commit message.** It declared the
+*twelve games it declined* to wire — each measured, verifier run green, line
+inserted, verifier run again, only genuinely-reddened gates recorded — and
+listed them in `data/hud-coverage.json`. **It did not check whether any of the
+ten it wired carried the same contract.** apexgolf did. The ledger had two
+categories where it needed three, and that is the shape of `8432492` again:
+measured on one side, hand-assumed on the other.
+
+The amendment follows the precedent already in this repo — `verify_neonbreach.js`
+was deliberately amended when its script was added, with
+`only-same-origin-src-is-hud` — so G17 is **narrowed, not loosened**: the one
+permitted script is the estate's own deferred same-origin `/hud.js`, and any
+other script src, **off-origin or same-origin**, is still a runtime dependency.
+That is stricter than a no-CDN rule, not weaker than the promise it replaces.
+
+Verified before moving, never re-pinned on sight: 71,372 bytes against a 250 KiB
+ceiling, **exactly one `src=` in the whole file** and it is `/hud.js`, no
+external stylesheet, no `fetch`/`XMLHttpRequest`, and `/hud.js` is a real file in
+this repo. G17 failed for one reason and one only.
+
+G16 tampers the sentinel and proves nothing about this limb, so the amendment
+carries **its own controls, inside G17**, each of which must still be rejected:
+an off-origin CDN script, a second same-origin script that is not the HUD, and
+the HUD without `defer`. Planted into the shipped file for real, both foreign
+scripts are named and rejected. `ALL 18 APEX GOLF GATES PASSED`.
+
+`data/hud-coverage.json` now carries the third category — `amended`: wired,
+contract retained, verifier amended to say so — with `/neonbreach/` and
+`/apexgolf/` in it, so the next reader does not re-derive this.
+
+**And one slip of my own, recorded because it is the same error.** The first
+draft of the amendment compared the matched **opening tag** to a string carrying
+`</script>`, so it rejected `/hud.js` — the amendment reproduced the exact
+failure it was written to fix, and the run said so:
+`runtime dependency found: <script defer src="/hud.js">`. Reproducing the
+original failure before claiming the fix is what caught it.
+
+**Bucket C: nothing to widen.** 0 before, 0 after; the before/after is the
+census output above.
+
+**Bucket D:** retirement is now *declared* in `data/retired-checks.json` with a
+reason, a date and a record — so the health run reports "1 red, and it is the
+declared-retired one" instead of "1 red". A declaration that points at nothing
+is paperwork without the thing, so **the record is fetched over the API in the
+repo whose workflow was retired**, and a declaration naming a file that is not
+there stops excusing the check. Planted: `RED 2`, the retired one reported as a
+plain red.
+
+## §T4 — the one thing that does not depend on a filter
+
+`.github/workflows/estate-check-health.yml`. Weekly (`0 7 * * 1` — before a
+teaching week, not during one) plus dispatch, **no `paths:` filter and no branch
+condition**. It is a reporting job, not a re-verification (§T4.4): last-run age
+answers the question, and re-running 57 workflows weekly would cost more than it
+is worth.
+
+```
+ESTATE CHECK HEALTH
+  repos      5
+  checks     57 live · 57 have ever run · 55 green
+  orphaned   140 registry entries whose file no longer exists — cannot run, not checks
+  RED        1
+  STALE      0   (no success in 30 days)
+  retired    1 declared-retired and red, which is expected
+
+  RED — name and age:
+    mattroper1977.github.io/apexgolf-verify.yml   red for 14.9 days   (last success 20.8 days ago)
+
+ESTATE CHECK HEALTH: NOT CLEAR — 1 red, 0 stale        exit 1
+```
+
+**It fails on stale as well as on red** (§T4.2), and the plant proves both
+directions on the *same* classifier the report uses — a self-test that proves a
+parallel implementation proves nothing:
+
+```
+[ok] a planted RED is named  — planted-red.yml
+[ok] a planted STALE and a NEVER-RUN check are both named, one of them currently GREEN
+[ok] a check whose latest run is still going is neither red nor stale — its last COMPLETED run judges it
+[ok] a declared-retired red is reported separately, not as a red
+[ok] a healthy check is in neither list
+[ok] and with only healthy rows the verdict is CLEAR
+```
+
+The in-flight limb exists because the first real run of this report found the
+bug. An in-progress workflow reports `conclusion: null`, and the tool read that
+as **NEVER RUN** — so while PR #182's own checks were running the estate
+appeared to lose six checks (`57 have ever run` → `51`). A dispatchable report
+will often be looking at an estate mid-run, so the verdict now comes from the
+latest **completed** run, `NEVER RUN` means no completed run at all, and those
+are **named** rather than counted, which is what §T1.2 asks for.
+
+## §T5 — required checks vs existing checks: reported, not changed
+
+`/branches/{b}/protection` answers **403** for this token, so the finding rests
+on two readable instruments instead.
+
+**The setting**, readable without admin scope, on all five repos:
+
+```
+protected=False   enforcement=off   required contexts=0   rulesets=0
+```
+
+**The behaviour** — a required check *cannot* be red on the head commit of a PR
+that merged:
+
+```
+57 live checks · 43 fire on pull_request · 0 required for merge anywhere
+11 of 101 sampled merged PRs merged over a red check
+```
+
+Eleven, in three of the five repos. **5o was not an outlier; it was one of
+eleven.** The behaviour instrument only ever *falsifies*: a merge over red
+proves nothing was required, while zero red merges proves nothing at all, and
+the report says so rather than reading silence as corroboration.
+
+The gap, both directions:
+
+- **matters but is not required: 43.** Every PR-firing check in the estate.
+- **required but no longer exists: 0** — and only because the required set is
+  empty. The renamed-required-check trap (a check that blocks merges for ever)
+  is absent for the same reason nothing else is blocked.
+
+**One finding that is not a settings change, and it comes first.** Of the 43,
+only **4** could be required without jamming every PR — and the first draft of
+the report said 5, because it checked for a `paths:` filter and not for a
+job-level `if:` that excludes pull requests. A job skipped on a PR never reports
+the context GitHub waits for, so requiring the closeout suite's
+`Routes serve 200 and removed paths 404` job (`if: github.event_name !=
+'pull_request'`) would have jammed every PR in the repo. **Handing Matt a check
+name that jams every PR is worse than handing him none**, so the report now
+prints those as `NOT this` with the reason: a required check carrying
+a `paths:` filter never *reports* on a PR outside those paths, and GitHub waits
+for a report it will never get. **`Games` and `Matt-s-Apps-` have PR-firing
+checks but not one without a filter** — those two need a filter-free aggregate
+check before any settings change would help. Requiring a filtered check is not a
+stricter estate, it is a jammed one.
+
+Matt's clicks, and the exact strings to type, are printed by
+`tools/report_required_checks.py` and by the weekly run's step summary. **Nothing
+was changed.**
+
+## §T6 — when a change re-pins, the dependents are derived
+
+`8432492` re-pinned six sibling gates and missed the seventh. Six of seven is
+what a hand-counted set looks like from the outside.
+
+`tools/derive_pin_dependents.py` hashes every artefact — sha256 **and** git blob
+sha1 — and looks up every hex literal in the estate against that table, so the
+map is **derived by measurement** rather than authored. It classifies from the
+identifier's **use sites**, not a line window, which is what stopped it calling
+three legitimate pins stale: a *transform* pin (hashed after reverse-applying a
+copy) and two *negative* pins (asserted NOT served) both hold a hash that will
+never equal the current file, correctly. The last one a human read, recorded as
+`READER_RESOLVED` rather than tuned until the number came out zero.
+
+`data/pin-dependents.json`: **3 pinned artefacts, 13 unmatched literals**, gated
+as `s18`/`s19`. The ground-truth proof is the historical commit itself:
+
+```
+PIN DEPENDENTS, enforced against a diff
+  19 file(s) changed in 8432492^ 8432492
+  PINNED ARTEFACT CHANGED: apexpool/index.html
+      tools/verify_apexpool_landing.js:33   NOT UPDATED
+  PINNED ARTEFACT CHANGED: neonsync/index.html
+      tools/verify_neonsync.js:24   re-pinned in the same commit
+  1 dependent(s) of a changed pinned artefact were not updated:
+      tools/verify_apexpool_landing.js  still pins the old apexpool/index.html
+  exit=1
+```
+
+## §T7.1 — the pupil homepage duplicates: the premise did not hold
+
+The order's premise was that `bc67b82` had left games appearing on
+`/for/pupils/` **twice each**. Measured, in the rendered DOM with every
+accordion open, at 1280 and at 390:
+
+```
+54 game routes on the page
+   46 appear ONCE   (browse shelf only)
+    8 appear TWICE  (Top Picks + browse)
+    0 appear three times or more
+```
+
+The eight are exactly the curated rail — `/emberwild/ /olympics/ /apexkick/
+/apexpool/ /relicforge/ /voxel/ /auroralinks/ /Lessons/Games/Off_Brand.html` —
+and both the rail **and** the 54-card shelf are **identical, in the same order,
+to `/games/`**. That is the intended pattern, not drift. **Nothing was fixed,
+because nothing was broken.**
+
+Two corrections to my own measurement on the way, both worth recording. The
+first count said *29 of 54 render* — the selector matched only
+`/Lessons/Games/*.html` and missed every game that lives at a root route
+(`/apexcurl/`, `/medevac/`, `/novasiege/`…), which is most of them. The second
+disagreed with a crude grep, **57 cards to 54**: the crude cut ran to the end of
+the file and swept in three hub cards from `#learn-explore`. Both were
+instrument faults, and both were found by disagreeing with a cruder instrument
+rather than by re-reading the same one.
+
+`verify_pupil_genres.mjs` already pins all of this, and pins it **derived**:
+
+```
+[PASS] distinct games painted on the pupil page == the shelf  ·  54 painted, 54 on the shelf
+[PASS] the pupil page paints one card per shelf game plus one per rail game (54+8=62)  ·  62
+[PASS] no game is painted more than twice
+[PASS] and every game painted twice IS on the Top Picks rail  ·  8 twice, 8 on the rail
+[PASS] the pupil rail is the SAME rail /games/ paints, in the same order
+34 passed, 0 failed
+```
+
+## §T7.2 — the `uas_register` clear affordance, recorded as a named exemption
+
+`/privacy/` names `uas_register` — pupil forenames, surnames, learner numbers,
+marks, registers, evidence photographs — and names two controls as the way to
+take it off the device. Both are under 44 px and both are two taps deep:
+
+```
+Settings → Export backup (.json)   181x41   #bk-export
+Settings → Delete all data         129x39   #wipe
+```
+
+**Ruled 2026-08-25: ACCEPTED, NOT FIXED**, and now recorded the way the
+`/games/` prose links were — in a gate, `tools/verify_uas_register_exemption.mjs`
+(`s20`), enumerated so it cannot quietly widen, with the **reason asserted rather
+than written down**:
+
+- `/privacy/` still names the store **and both controls verbatim** — an
+  affordance the disclosure no longer points at is not the one that was ruled on;
+- both are still **two taps deep**: absent on the landing tab, present once
+  Settings is open. The moment one appears on the landing tab it is an
+  incidental target on a scanning surface and the exemption stops covering it;
+- **no pupil surface links to `/uas/`** — read from
+  `data/audience-homepages.json` and the served HTML, not from memory. The
+  surfaces that do reach it are named: `/asdan/`, `/for/teachers/`,
+  `/hub-highlight-card.html`, `/teach/`;
+- neither ruled control is **smaller than the panel around it** (floor 61×36) —
+  an exemption is not a licence to shrink what it covers. Derived, never pinned:
+  a written-down 39/41 would red on the next font change rather than on a defect.
+
+**What it deliberately does not claim.** It is not a 44 px pass for `/uas/`. The
+whole panel is a 36–41 px desktop tool — 14 targets under 44 px with Settings
+open, identical at 390 px — and the **full census is printed** at both viewports
+so nobody reads a green here as "everything else is 44". Two controls were
+raised and ruled; the rest of the panel is the same adult tool and has never
+been in front of a child.
+
+Five plants, each red on the limb it names: the label renamed on `/privacy/`;
+`#wipe` deleted from the app; the pupil homepage linking to `/uas/`; the control
+shrunk to 40×20; and the Settings view painted on the landing tab. The
+two-taps-deep plant took two attempts — the first set `position:fixed` on a
+descendant of a `display:none` section, so the box stayed 0×0 and **the gate
+passed because the plant had not happened**. A plant that changes nothing proves
+nothing about the gate.
+
+## The register, entries 30–34
+
+Carried from the order and recorded here so the repo holds them, not only the
+prompt that issued them.
+
+30. **A check's `paths:` filter must cover the files whose behaviour it asserts,
+    not the files it reads.** 5m watched the two games, the manifest and itself,
+    and asserted about the pupil homepage — so the commit that broke it could
+    not fire it. Now an instrument: `census_filter_blindness.py`, `s17`.
+31. **A red check that merges is worse than no check**, because it produces the
+    paperwork of protection without the protection. `apexpool-verify` went red
+    on the PR that broke it and stayed red for fifteen days. Measured across the
+    estate: **11 of 101 sampled merged PRs merged over a red check.**
+32. **When a change re-pins, the dependents are derived, never counted.** Six of
+    seven is what a hand-counted set looks like from the outside. Now an
+    instrument: `derive_pin_dependents.py`, `s18`/`s19`.
+33. **Two reds found by accident in one week is a sampling estimate, not two
+    incidents.** Accident is not a detection strategy, and a filter cannot
+    reveal its own failures. Now an instrument: the weekly `estate-check-health`
+    run, which has no filter at all.
+34. **Date evidence localises; it does not diagnose.** The stale-pin signature
+    identified the day exactly and the mechanism not at all — it was a
+    served-vs-tree mismatch, plus a second fault a day later. Use the date to
+    find the commit, then read the commit.
