@@ -81,9 +81,10 @@ const check = (ok, what, detail = '') => {
 };
 
 console.log(`derived from games/index.html:`);
-console.log(`  heading : ${JSON.stringify(railHeading)}`);
-console.log(`  blurb   : ${JSON.stringify(railBlurb)}`);
-console.log(`  badge   : ${JSON.stringify(badge)}\n`);
+const _len = (s) => `${Buffer.byteLength(String(s ?? ''))}B`;
+console.log(`  heading : ${_len(railHeading)} (text withheld — H4/5k: no path prints protected copy)`);
+console.log(`  blurb   : ${_len(railBlurb)}`);
+console.log(`  badge   : ${_len(badge)}\n`);
 
 /* The derived value must not itself be a retired name. Without this, renaming
    the rail on /games/ BACK to "Matt's personal top picks" would simply be
