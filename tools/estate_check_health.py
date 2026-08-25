@@ -121,11 +121,19 @@ def main():
 
     rows, red, stale, retired_red = [], [], [], []
     orphans = 0
+    # A REPO THIS RUN COULD NOT READ IS NOT A REPO WITH NOTHING WRONG.
+    # `github.token` in Actions is scoped to the repository it runs in, so a
+    # cross-repo read needs a PAT. Without one, four of the five repos answer
+    # 404 - and a report that skipped them and then printed CLEAR would be the
+    # exact failure this order exists to prevent: a comfortable green over
+    # something nobody looked at. Unreadable repos are collected and the run is
+    # MEASUREMENT INVALID, named repo by repo.
+    unreadable = []
     for repo in REPOS:
         try:
             wfs = api(f'/repos/MattRoper1977/{repo}/actions/workflows?per_page=100')['workflows']
         except Exception as e:
-            print(f'  !! {repo}: {e}')
+            unreadable.append((repo, str(e)))
             continue
         # THE LIVENESS TEST, and it is the whole difference between a report
         # somebody reads and one they skim. The Actions API keeps a registry
@@ -167,7 +175,7 @@ def main():
     ran = sum(1 for r in rows if r['conclusion'] != 'NEVER RUN')
     green = sum(1 for r in rows if r['conclusion'] == 'success')
     print('ESTATE CHECK HEALTH')
-    print(f'  repos      {len(REPOS)}')
+    print(f'  repos      {len(REPOS) - len(unreadable)} read of {len(REPOS)}')
     print(f'  checks     {exist} live · {ran} have ever run · {green} green')
     print(f'  orphaned   {orphans} registry entries whose file no longer exists — cannot run, not checks')
     print(f'  RED        {len(red)}')
@@ -190,8 +198,20 @@ def main():
         for r in retired_red:
             d = declared[(r['repo'], r['file'])]
             print(f"    {r['repo']}/{r['file']}   retired {d['retiredOn']} — {d['record']}")
+    if unreadable:
+        print(f'\n  MEASUREMENT INVALID — {len(unreadable)} of {len(REPOS)} repos could not be read:')
+        for repo, err in unreadable:
+            print(f'    {repo}: {err}')
+        print('    A repo this run could not read is not a repo with nothing wrong. In Actions,')
+        print('    `github.token` is scoped to the repository it runs in; a cross-repo read needs a')
+        print('    PAT with `repo` (or fine-grained Actions:read on all five). Set it as a secret')
+        print('    and pass it as GH_TOKEN, or this run is a report about one repo wearing the')
+        print('    title of a report about five.')
     if '--json' in sys.argv:
         json.dump(rows, open(sys.argv[sys.argv.index('--json') + 1], 'w'), indent=1)
+    if gate and unreadable:
+        print(f'\nESTATE CHECK HEALTH: MEASUREMENT INVALID — {len(unreadable)} repo(s) unread')
+        return 1
     if gate and (red or stale):
         print(f'\nESTATE CHECK HEALTH: NOT CLEAR — {len(red)} red, {len(stale)} stale')
         return 1

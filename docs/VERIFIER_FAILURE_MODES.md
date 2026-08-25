@@ -1290,3 +1290,52 @@ honest one.
 
 **Rule:** before counting anything an API returns, ask what it does when the
 thing is gone. "Active" is a field, not a fact.
+
+---
+
+## 51. A noisy fault hides a real one, and fixing the noise is how you find it
+
+`apexgolf-verify` was red for fifteen days for **two** reasons, both landing on
+10 August 2026, and only one of them was visible.
+
+The visible one was mechanical: `grep … | wc -l` under `set -e -o pipefail`
+(#47), which killed the step before it printed a line. The run log jumps from
+`##[endgroup]` straight to `exit 1`.
+
+The one underneath it was real. `e65a190` "Stage 2B" deliberately wired
+`<script defer src="/hud.js">` into ten root games that same day, and
+`verify_apexgolf.js` G17 asserted **no `<script src>` at all**. The check was
+wrong — the page was fine and the promise had been retracted for it on purpose —
+but nothing could say so, because the step above it died first.
+
+**Repairing the noisy fault is what surfaced the real one.** Had the first been
+reported rather than fixed, the second would still be invisible: reporting a
+masking fault leaves the mask in place.
+
+Two rules follow.
+
+**A red must be diagnosed to a cause, and then diagnosed again.** "A pin that is
+wrong for two reasons must not be corrected as though it were wrong for one"
+applies to checks, not only to pins. After a repair, re-run and read what comes
+next — the first green line is not the end of the diagnosis.
+
+**A ledger of exclusions must cover the inclusions too.** Stage 2B measured the
+twelve games it *declined* to wire — verifier run green, line inserted, verifier
+run again, only genuinely-reddened gates recorded — and declared them in
+`data/hud-coverage.json`. It never asked whether any of the ten it *did* wire
+carried the same contract. apexgolf did. The ledger had two categories where it
+needed three, and the missing one — *wired, contract retained, verifier amended*
+— is where `/neonbreach/` had been living unrecorded all along.
+
+That is the same shape as `8432492` re-pinning six siblings and missing the
+seventh: **measured on one side, hand-assumed on the other.** A set someone
+counted by hand is visible from the outside as an off-by-one.
+
+**When the contract really has changed, narrow it — never delete it.**
+`verify_neonbreach.js` set the precedent: the amendment is not "allow external
+scripts", it is "the ONE permitted script is the estate's own deferred
+same-origin `/hud.js`, and every other src is still a dependency". That is
+stricter than a no-CDN rule. And a limb narrowed on the word of a regex is a
+limb nobody has tested, so the amendment carries its own controls — an
+off-origin script, a second same-origin script, and the HUD without `defer`,
+each of which must still be rejected.

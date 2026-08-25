@@ -925,7 +925,7 @@ mattroper1977.github.io/estate-check-health.yml`.
 | bucket | count | |
 |---|---|---|
 | **A — healthy** | 55 | fires on realistic diffs, ran recently, green |
-| **B — red and silent** | **1** | `mattroper1977.github.io/apexgolf-verify.yml`, red **14.9 days**, last success **20.8 days** ago |
+| **B — red and silent** | **1** | `mattroper1977.github.io/apexgolf-verify.yml`, red **14.9 days**, last success **20.8 days** ago — and **two faults**, not one |
 | **C — structurally blind** | **0** | measured, not assumed — see below |
 | **D — dormant but correct** | 1 | `Games/apexpool-sports-verify.yml`, declared retired 5 Aug |
 
@@ -959,6 +959,64 @@ Two faults, repaired as two:
 - `-eq 25` was **a count typed against another gate's output** — failure mode 1,
   seventh instance. The donor prints `ALL <n> CONTRACT CHECKS PASSED`, so the
   total is now read from the donor and the two are asserted equal.
+
+**And that repair uncovered a third fault, which is the point of making the
+repair rather than only reporting it.** With the masking step fixed, CI ran
+`verify_apexgolf.js` for the first time in fifteen days:
+
+```
+donor harness measured: 25 checks, 25 pass, 0 fail; donor declares 25     ← repaired step, green
+FAIL G17 single-file size, cold load and frame rate — runtime dependency found
+APEX GOLF GATE SUMMARY: 17 passed, 1 failed, 0 skipped, 18 total
+```
+
+**My first diagnosis was incomplete: apexgolf-verify was red for two reasons,
+both landing on 10 August, and the noisy one hid the real one.** §T3.2 says a
+pin that is wrong for two reasons must not be corrected as though it were wrong
+for one — and this is a check that was wrong for two.
+
+The second fault: `e65a190` "Stage 2B" deliberately wired `<script defer
+src="/hud.js">` into ten root games that day so a player has a way back out, and
+G17 asserted **no `<script src>` at all**. So the check was wrong, not the
+estate: the page is fine, and the promise it makes had been retracted for it on
+purpose.
+
+**What made it possible is in Stage 2B's own commit message.** It declared the
+*twelve games it declined* to wire — each measured, verifier run green, line
+inserted, verifier run again, only genuinely-reddened gates recorded — and
+listed them in `data/hud-coverage.json`. **It did not check whether any of the
+ten it wired carried the same contract.** apexgolf did. The ledger had two
+categories where it needed three, and that is the shape of `8432492` again:
+measured on one side, hand-assumed on the other.
+
+The amendment follows the precedent already in this repo — `verify_neonbreach.js`
+was deliberately amended when its script was added, with
+`only-same-origin-src-is-hud` — so G17 is **narrowed, not loosened**: the one
+permitted script is the estate's own deferred same-origin `/hud.js`, and any
+other script src, **off-origin or same-origin**, is still a runtime dependency.
+That is stricter than a no-CDN rule, not weaker than the promise it replaces.
+
+Verified before moving, never re-pinned on sight: 71,372 bytes against a 250 KiB
+ceiling, **exactly one `src=` in the whole file** and it is `/hud.js`, no
+external stylesheet, no `fetch`/`XMLHttpRequest`, and `/hud.js` is a real file in
+this repo. G17 failed for one reason and one only.
+
+G16 tampers the sentinel and proves nothing about this limb, so the amendment
+carries **its own controls, inside G17**, each of which must still be rejected:
+an off-origin CDN script, a second same-origin script that is not the HUD, and
+the HUD without `defer`. Planted into the shipped file for real, both foreign
+scripts are named and rejected. `ALL 18 APEX GOLF GATES PASSED`.
+
+`data/hud-coverage.json` now carries the third category — `amended`: wired,
+contract retained, verifier amended to say so — with `/neonbreach/` and
+`/apexgolf/` in it, so the next reader does not re-derive this.
+
+**And one slip of my own, recorded because it is the same error.** The first
+draft of the amendment compared the matched **opening tag** to a string carrying
+`</script>`, so it rejected `/hud.js` — the amendment reproduced the exact
+failure it was written to fix, and the run said so:
+`runtime dependency found: <script defer src="/hud.js">`. Reproducing the
+original failure before claiming the fix is what caught it.
 
 **Bucket C: nothing to widen.** 0 before, 0 after; the before/after is the
 census output above.
