@@ -47,15 +47,52 @@ def age(ts, now):
     t = datetime.datetime.strptime(ts[:19], '%Y-%m-%dT%H:%M:%S')
     return round((now - t).total_seconds() / 86400, 1)
 
+SELF = 'estate-check-health.yml'
+
 def classify(rows, declared, stale_days):
     """The whole verdict, as a pure function of the rows — so it can be proved
     on planted rows without spending a single API call or waiting for something
-    in the estate to break."""
-    red = [r for r in rows if r['conclusion'] == 'failure' and not r['retired']]
-    retired_red = [r for r in rows if r['conclusion'] == 'failure' and r['retired']]
-    stale = [r for r in rows if not r['retired']
-             and (r['ok_age'] is None or r['ok_age'] > stale_days)]
+    in the estate to break.
+
+    TWO THINGS THE FIRST REAL RUN OF THIS REPORT GOT WRONG, both fixed here.
+
+    1. `ok_age is None` was read as STALE. It conflates two different facts: a
+       check that succeeded a long time ago, and a check that has never
+       succeeded because it is NEW. An age comparison needs an age. A check
+       that has run and never gone green is not let off — its latest run is a
+       failure, so it is already RED, which is the louder signal anyway.
+
+    2. THIS REPORT COULD NOT JUDGE ITSELF, and failed trying. Its own row said
+       "never succeeded" on its first run, so the run failed; the next run then
+       saw a failed previous run and failed again. A self-sustaining red with
+       no path back to green — which is precisely what this estate retired
+       `apexpool-sports-verify` for: "a gate that cannot pass is not a gate, it
+       is a landmine, and it measures nothing."
+
+       So this report's OWN row is measured, printed in full and named — it is
+       not hidden, and a human reads it every week — but it does not by itself
+       decide the job's verdict. Every other check in the estate does. That is
+       a narrow, declared exemption for the one row where self-reference makes
+       the verdict meaningless, not a hole: nothing else is excused, and the
+       row is on screen either way.
+    """
+    judged = [r for r in rows if r['file'] != SELF]
+    red = [r for r in judged if r['conclusion'] == 'failure' and not r['retired']]
+    retired_red = [r for r in judged if r['conclusion'] == 'failure' and r['retired']]
+    stale = [r for r in judged if not r['retired']
+             and r['ok_age'] is not None and r['ok_age'] > stale_days]
     return red, stale, retired_red
+
+def unjudged(rows, stale_days):
+    """Everything measured and printed but not folded into the verdict: this
+    report's own row, and every check with no completed run at all. Named,
+    because T1.2 calls a check that has never run the loudest possible signal
+    and the easiest to overlook."""
+    me = [r for r in rows if r['file'] == SELF]
+    never = [r for r in rows if r['file'] != SELF and r['conclusion'] == 'NEVER RUN']
+    never_green = [r for r in rows if r['file'] != SELF and r['ok_age'] is None
+                   and r['conclusion'] not in ('NEVER RUN', 'failure')]
+    return me, never, never_green
 
 def self_test():
     """T4.3 — prove it can fail, without waiting for the estate to break.
@@ -78,6 +115,15 @@ def self_test():
         # It is STALE by age - it has never succeeded - which is the correct
         # verdict and the loudest signal T1.2 asks for.
         dict(repo='X', file='never-run.yml',    conclusion='NEVER RUN', red_age=None, ok_age=None, retired=False),
+        # THE TWO ROWS THE FIRST REAL RUN GOT WRONG.
+        # A brand-new check has never succeeded because it is new. STALE is an
+        # age comparison and an age comparison needs an age; a check that has
+        # run and failed is caught by RED, which is the louder signal anyway.
+        dict(repo='X', file='brand-new.yml',    conclusion='success', red_age=None, ok_age=None, retired=False),
+        # And this report's own row. Judging it makes the verdict meaningless:
+        # the failed run becomes the evidence for the next failure, and there is
+        # no path back to green. Printed, never folded into the verdict.
+        dict(repo='X', file='estate-check-health.yml', conclusion='failure', red_age=1.0, ok_age=None, retired=False),
     ]
     red, stale, retired_red = classify(rows, {}, 30)
     ok = True
@@ -87,8 +133,8 @@ def self_test():
         print(f'  [{"ok" if cond else "FAIL"}] {what}' + (f'  — {detail}' if detail else ''))
     check([r['file'] for r in red] == ['planted-red.yml'],
           'a planted RED is named', ', '.join(r['file'] for r in red) or '(none)')
-    check([r['file'] for r in stale] == ['planted-stale.yml', 'never-run.yml'],
-          'a planted STALE and a NEVER-RUN check are both named, one of them currently GREEN',
+    check([r['file'] for r in stale] == ['planted-stale.yml'],
+          'a planted STALE is named even though it is currently GREEN',
           ', '.join(f"{r['file']} ok_age={r['ok_age']}" for r in stale) or '(none)')
     check('in-flight.yml' not in [r['file'] for r in red + stale],
           'a check whose latest run is still going is neither red nor stale — its last '
@@ -97,6 +143,17 @@ def self_test():
           'a declared-retired red is reported separately, not as a red')
     check('healthy.yml' not in [r['file'] for r in red + stale],
           'a healthy check is in neither list')
+    check('brand-new.yml' not in [r['file'] for r in red + stale],
+          'a check that has never succeeded because it is NEW is neither red nor stale — '
+          'STALE is an age comparison and needs an age')
+    check('estate-check-health.yml' not in [r['file'] for r in red + stale],
+          "THIS REPORT'S OWN red does not decide its own verdict — a monitor that fails on "
+          'its own red has no path back to green')
+    me, nev, ng = unjudged(rows, 30)
+    check([r['file'] for r in me] == ['estate-check-health.yml'] and
+          [r['file'] for r in nev] == ['never-run.yml'],
+          'but both ARE printed — excluded from the verdict is not hidden from the reader',
+          f"own={[r['file'] for r in me]} never-run={[r['file'] for r in nev]}")
     clean, _, _ = classify([rows[0]], {}, 30)
     check(clean == [], 'and with only healthy rows the verdict is CLEAR')
     print(f'\n  self-test {"passed" if ok else "FAILED"}')
@@ -229,6 +286,22 @@ def main():
         for r in retired_red:
             d = declared[(r['repo'], r['file'])]
             print(f"    {r['repo']}/{r['file']}   retired {d['retiredOn']} — {d['record']}")
+    me, never, never_green = unjudged(rows, stale_days)
+    if never:
+        print(f'\n  NEVER RUN — {len(never)}, named because a check that has never run has never judged anything:')
+        for r in never:
+            print(f"    {r['repo']}/{r['file']}")
+    if never_green:
+        print(f'\n  HAS RUN, NEVER GREEN — {len(never_green)}:')
+        for r in never_green:
+            print(f"    {r['repo']}/{r['file']}   latest run {r['conclusion']}")
+    if me:
+        r = me[0]
+        print('\n  THIS REPORT\'S OWN ROW — measured and printed, but it does not decide the verdict:')
+        print(f"    {r['repo']}/{r['file']}   latest {r['conclusion']}   last success "
+              f"{'never' if r['ok_age'] is None else str(r['ok_age']) + ' days ago'}")
+        print('    A monitor that fails on its own red has no path back to green: the failed run')
+        print('    becomes the evidence for the next failure. Every OTHER check decides the verdict.')
     if unreadable:
         print(f'\n  MEASUREMENT INVALID — {len(unreadable)} of {len(REPOS)} repos could not be read:')
         for repo, err in unreadable:
