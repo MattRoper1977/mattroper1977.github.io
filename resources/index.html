@@ -178,7 +178,7 @@ const ICONS=[[/chem/i,'beaker'],[/physic|intervention/i,'atom'],[/biolog/i,'leaf
 function iconFor(s){for(const[re,k]of ICONS)if(re.test(s))return k;return /interven/i.test(s)?'target':'star'}
 let ALL=[],SUB="",TYPE="",BROWSING=true,SORT="feat";
 function normLessons(l){return l.filter(r=>r.subject!=="Live Lessons").map(r=>({title:r.title||'Untitled',description:r.desc||'',subject:r.subject||'General',type:canonType(r.type),path:r.file?(/^https?:/.test(r.file)?r.file:'/Lessons/'+encodeURI(r.file)):null,tags:Array.isArray(r.keywords)?r.keywords:[],status:r.new?'New':'Published',popular:!!r.featured,year:r.year||'',added:r.added||'',accent:accentFor(r.subject||'General')}))}
-function normSite(l){return l.filter(r=>r.subject!=="Live Lessons").map(r=>({title:r.title||'Untitled',description:r.description||'',subject:r.subject||'General',type:canonType(r.type),path:r.path||null,tags:Array.isArray(r.tags)?r.tags:[],status:r.status||'Published',popular:!!r.featured,year:'',added:'',accent:r.accent||accentFor(r.subject||'General')}))}
+function normSite(l){return l.filter(r=>r.subject!=="Live Lessons").map(r=>({title:r.title||'Untitled',description:r.description||'',subject:r.subject||'General',type:canonType(r.type),path:r.path?(/^https?:/.test(r.path)?r.path:'/'+String(r.path).replace(/^\/+/,'')):null,tags:Array.isArray(r.tags)?r.tags:[],status:r.status||'Published',popular:!!r.featured,year:'',added:'',accent:r.accent||accentFor(r.subject||'General')}))}
 const SUITE="Art · Teesside Studio Suite";
 /* Teesside/latest first, legacy last — mirrors the Lesson Hub's browse order */
 const SUBJ_PRIORITY=[SUITE,"Humanities","BUILD Vocational & PfA","GROW Vocational & PfA","LAUNCH Vocational & PfA","Primary Science","Tutor Time · BV · BF · KCSIE"];
