@@ -23,10 +23,23 @@ on:
   push:
     branches:
       - main
+    # WIDENED 2026-08-25 (backlog 5m). This listed only the two games and the
+    # manifest - but the check also verifies the ARCADE at two viewports, the
+    # HOMEPAGE New-release boxes and the PUPIL page. So the 15 August commit
+    # that redesigned the pupil page could not fire the check it broke, and the
+    # red sat unseen for eleven days. A live-production check that never fires
+    # on the diff that changes its subject is R8 in its purest form.
+    # The rule for this list: every surface the run asserts on, plus the record
+    # each of those surfaces renders from.
     paths:
       - 'rallyvector3d/index.html'
       - 'neonmeridian/index.html'
       - 'data/source-manifests/games.json'
+      - 'games/index.html'
+      - 'for/pupils/index.html'
+      - 'main/index.html'
+      - 'data/audience-homepages.json'
+      - 'data/new-release-occupants.json'
       - '.github/workflows/driving-games-live-verify.yml'
 
 permissions:
@@ -88,12 +101,30 @@ jobs:
             if [ "$a" = "$b" ]; then
               echo "MATCH $url"
               echo "      sha256 $a"
-            else
-              echo "PENDING $url — served does not match the tree (Pages lag or drift)"
-              echo "      served    $a"
-              echo "      committed $b"
-              fail=1
+              return
             fi
+            # WAIT BEFORE JUDGING. Pages lag is a timing fact and this file's
+            # own header says so - but on 14 August the mismatch was printed as
+            # PENDING and then failed the step anyway, which SKIPPED the install
+            # and the entire rendered leg. Eleven days of blindness on a shelf
+            # that was working, bought with one deployment that had not landed
+            # yet. A mismatch is now waited on before it is called anything.
+            for delay in 30 60 90; do
+              echo "PENDING $url — served does not match the tree; waiting ${delay}s"
+              sleep "$delay"
+              code=$(curl -sS -L -o /tmp/served -w '%{http_code}' "$url" || echo 000)
+              [ "$code" = "200" ] || continue
+              a=$(sha256sum /tmp/served | cut -d' ' -f1)
+              if [ "$a" = "$b" ]; then
+                echo "MATCH $url (after waiting for the deployment to land)"
+                echo "      sha256 $a"
+                return
+              fi
+            done
+            echo "FAIL $url — served still does not match the tree after 180s"
+            echo "      served    $a"
+            echo "      committed $b"
+            fail=1
           }
           check https://madebymatt.uk/data/source-manifests/games.json data/source-manifests/games.json
           check https://madebymatt.uk/neonmeridian/index.html          neonmeridian/index.html
@@ -104,10 +135,15 @@ jobs:
       # `if: false` gate are removed together: a run must not announce a park
       # that is not in force. 1(a)'s park text stays in the git history and in
       # the register; if this fix does not hold, 1(a) is restored wholesale.
+      # N2, applied here. These two ran only if the byte comparison passed, so a
+      # deployment that had not landed yet skipped every rendered check. They
+      # run regardless now; the job still reds on the comparison itself.
       - name: Install Playwright
+        if: always()
         run: npm i -D playwright@1.56.1 && npx playwright install --with-deps chromium
 
       - name: Arcade, homepage, pupil page and both games — rendered on the origin
+        if: always()
         shell: bash
         env:
           LIVE_LOG: /tmp/driving-live.log
@@ -298,9 +334,35 @@ jobs:
             t('homepage carries both New-release boxes',
               rel.includes('Rally Vector 3D') && rel.includes('Neon Meridian'), JSON.stringify(rel));
             await p.goto(B+'/for/pupils/', {waitUntil:'networkidle', timeout:60000});
-            const ids = await p.evaluate(()=>[...document.querySelectorAll('[data-feature-id]')].map(e=>e.getAttribute('data-feature-id')));
-            t('pupil page carries both mf-feature cards',
-              ids.includes('rally-vector-3d') && ids.includes('neon-meridian'), JSON.stringify(ids.slice(0,8)));
+            // RE-POINTED 2026-08-25 (backlog 5m). This asserted two mf-feature
+            // cards BY THEIR TYPED IDS. The pupil page stopped having them on
+            // 15 August at bc67b82 - "The pupil homepage shows all 52 by genre"
+            // - which replaced per-game feature cards with the whole shelf. The
+            // games did not move; the page's shape did, and this check was
+            // holding its own copy of that shape. Failure mode 1, and the
+            // paths: filter meant the very commit that changed it could not
+            // fire this workflow.
+            //
+            // The ruled invariant is REACHABILITY - both driving games are
+            // reachable from the pupil surface - so that is what is asserted,
+            // by href, and measured in the state a child gets: every genre
+            // group opened, the way a tap opens it. A card class the page is
+            // free to redesign is not the invariant and never was.
+            await p.evaluate(() => document.querySelectorAll('details').forEach(d => { d.open = true; }));
+            await p.waitForTimeout(400);
+            const pupil = await p.evaluate(() => {
+              const laid = (a) => { const r = a.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+              const anchors = [...document.querySelectorAll('a[href]')];
+              const count = (slug) => anchors.filter(a => a.getAttribute('href') === slug && laid(a)).length;
+              return {
+                nm: count('/neonmeridian/'), rv: count('/rallyvector3d/'),
+                gameCards: document.querySelectorAll('.mf-pupil-game').length,
+                featureIds: [...document.querySelectorAll('[data-feature-id]')].map(e => e.getAttribute('data-feature-id')),
+              };
+            });
+            t('pupil page reaches both driving games', pupil.nm >= 1 && pupil.rv >= 1,
+              `/neonmeridian/ x${pupil.nm}, /rallyvector3d/ x${pupil.rv}, across ${pupil.gameCards} game card(s); `
+              + `feature cards now ${JSON.stringify(pupil.featureIds)}`);
             await c.close();
           }
 
