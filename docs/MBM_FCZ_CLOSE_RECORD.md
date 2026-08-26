@@ -294,6 +294,30 @@ real and it is not empty.
 
 Nothing in this record says "production verified" over a local render.
 
+> **Annotation 2026-08-26 — ORDER FC-X §X4. The first bullet above is now
+> SUPERSEDED, and the section is retained unaltered as the record of what could
+> be measured at the time.**
+>
+> FC-X treated "the live job never fetches the search index" as a coverage hole
+> rather than a reporting limit, and closed it: a report-only leg was added that
+> fetches `https://madebymatt.uk/data/mbm-search-index.json`. It has now run
+> against production (`workflow_dispatch`, run `32986126849`, step 12, success):
+>
+> ```
+>    control  cmp distinguishes a one-byte mutation — the comparisons below are live
+>    served   755918 B a62664db604073f3
+>    main     755918 B a62664db604073f3
+>    MATCH    the served index is byte-identical to the deployed tree
+>    census   717 records served · 64 in the game class
+>    census   game records carrying a teaching pathway (BUILD/GROW/LAUNCH): 0
+>    census   none — the class exclusion holds AS SERVED
+> ```
+>
+> **§Z2's change IS live-verified.** It rests on a real production fetch, not on
+> the committed tree plus a local reproduction. The inference this record was
+> careful to label as an inference turned out to be true — but it was right to
+> label it, and it is the fetch, not the guess, that settles it.
+
 ---
 
 ## §Z6.3 — Three things to tap, on the phone

@@ -246,3 +246,146 @@ after the patch was verified.
 If the patch is applied, `tools/render_games_manifest_mirror.py`'s docstring
 needs the matching amendment — it currently says the live leg compares against
 "the committed mirror", which would no longer be true.
+
+---
+
+# AMENDMENT — ORDER FC-X §X1, 2026-08-26
+
+The three options above were written before the patch had been adjudicated
+against acceptance criteria. FC-X supplied criteria and this section applies
+them. **Nothing here has been applied either.** The workflow file on main is
+byte-identical to before the experiment: `sha256 50702afefaff1497…`, 20,047 B,
+last touched by `4d355e8` (Order TS), confirmed by a zero-line diff.
+
+## The load-bearing fact, now measured rather than assumed
+
+The whole case for Option B rests on `_tools/` being "the tree the pull request
+would produce". That was asserted, not shown. It is now shown:
+
+```
+refs/pull/191/head    7d6f9e4edeffb7f2ab4f7c343aa30046a318c33b
+refs/pull/191/merge   20ac80b48af65f374b3a9f49cd63a3ed33440017
+  parents             cb435f4 (main)  +  7d6f9e4 (the PR head)
+
+mirror at the merge ref   f4aab9ab   <- the repair
+mirror at main            4b3787eb   <- the drift
+```
+
+The merge ref is literally main with this pull request applied. §X1's first
+ACCEPT bullet is satisfied by the ref's own parent list.
+
+**The consequence that defeats "quiet on main":** a pull request that does not
+touch the mirror produces a merge ref whose mirror IS main's. Drift is
+*inherited*, not escaped — so it still reds every pull request except the one
+that repairs it. This conclusion is robust even if the checkout resolved to the
+head ref instead: a branch-point mirror would not match a moved canonical
+either.
+
+## §X1.1 — the fifth case
+
+The four cases were re-run against the step reconstructed FROM THE PATCH AS
+RECORDED ABOVE, not from the scratch file left over from the experiment. §X1.1's
+case was added:
+
+```
+1 POSITIVE  main drifted, ref carries the catch-up ......... rc=0
+2 NEGATIVE  main drifted, ref drifted too ................... rc=1
+3 NEGATIVE  ref mirror absent ............................... rc=1  MEASUREMENT INVALID
+4 CONTROL   both clean .................................. .... rc=0
+5 NEGATIVE  SERVED bytes tampered, main+ref both correct ..... rc=1   <- §X1.1
+```
+
+Case 5 plants a genuinely wrong served byte. It still reds. The change is not an
+amnesty.
+
+## Three divergences in the TIGHTENING direction, not previously noticed
+
+Adjudication surfaced something the original write-up missed. The old step does
+not merely deadlock — it is **blind to the regression it is named for**:
+
+| case | old step | patched step |
+|---|---|---|
+| a PR corrupts the mirror | **PASS** | RED |
+| a PR deletes or sparse-checkouts the mirror away | **PASS** (fell through to main's copy) | RED, MEASUREMENT INVALID |
+| both operands empty after a silent fetch failure | passes vacuously | RED, negative control |
+
+Reading main made the old step structurally incapable of failing a pull request
+that broke the mirror. The patch closes that in the same stroke as the deadlock.
+There is exactly **one** divergence in the loosening direction, and it is §X1's
+sanctioned one.
+
+## Bullet 3, read honestly
+
+> *main itself still reds on inherited drift. If it goes quiet on main too, the
+> option is a demotion wearing a better name.*
+
+**Read literally against this workflow the bullet is unsatisfiable, and always
+was.** `agx1-live-verify.yml` has never run on push to main — its triggers are
+`pull_request`, one dead build branch, and `workflow_dispatch`. There is no
+main-triggered run for the patch to demote. Say that plainly rather than
+claiming a red that does not exist.
+
+Read as intent — drift stays visible and consequential — it holds three ways:
+inheritance into every non-repairing pull request (the load-bearing one, proof
+case 2); `workflow_dispatch` on main, where both operands are main's bytes; and
+the guard pair below.
+
+## The guard pair — and the thing that qualifies all of this
+
+`shelf-mirror-guard.yml` exists in BOTH repositories and compares against the
+Games repository rather than the served bytes:
+
+| | site half | Games half |
+|---|---|---|
+| push | `main`, filtered to the mirror paths | filtered to `games.json` |
+| schedule | `23 6 * * 1` | `24 6 * * 1` |
+
+The Games half fires **at the instant the canonical moves**. It is red on today's
+state by design. That is a main-surface signal `agx1` never had.
+
+**But it is advisory, and that matters.** The recorded ruleset strings, re-printed
+from `report_required_checks.py`, are:
+
+```
+site   "Fetch the live estate and compare to raw-at-SHA" / "Static gates" /
+       "Gates are proven red, not just green" / "verify"
+Games  "contract" / "aggregate"
+```
+
+`Mirror equals the canonical shelf` is **not a required context in either
+repository**. So the independence guarantee that answers the hardest objection —
+that a pull request cannot launder wrong served bytes into the mirror, because a
+second gate checks the mirror against the Games repo — is currently advisory
+too. **This does not sink Option B**, whose blocking assertion is unchanged in
+kind. It does mean one cheap companion click carries most of the remaining
+value.
+
+## The options, corrected
+
+| | verdict under §X1 |
+|---|---|
+| **Option B** — the patch | **QUALIFIES.** Blocking assertion moves to the tree the PR would produce; inherited drift is printed on its own named line and still reds every non-repairing PR; the served-bytes case still reds. What changed is the operand, not the matching rule — still `cmp -s`, byte for byte. The context stays required, estate-wide, untimed. |
+| **Option A** — merge #191 with a rules bypass | **ONLY as §X1's fallback, and only if recorded.** §X1 permits "a single-PR, dated, expiring exemption recorded in this doc — named PR, named date, expires on merge, never a standing change". An unrecorded admin merge is not that, and it repairs the instance while preserving the defect: the next Games merge reproduces it identically, and the two tightening cases above stay uncovered. |
+| **Option C** — do nothing | **DOES NOT QUALIFY.** Not neutral: every site pull request stays red for a reason unrelated to its contents, and the only file that can clear it is gated by the check it must change. |
+
+## Follow-ups worth recording, none blocking
+
+- **R1.** Step 12 never opens `_shelf/` — the canonical checkout sitting three
+  steps above it, in a job named "compare to raw-at-SHA". Comparing
+  `_tools`'s mirror against `_shelf/games.json` needs no network and cannot
+  false-red on deploy lag. That half is worth adding on its own.
+- **R2.** Make `Mirror equals the canonical shelf` required in both repositories.
+  Cheapest high-value item here, for the reason above.
+- **R3.** The mirror leg's `curl -sS` has no `--fail` and no
+  parses-as-JSON guard. A 404 or truncated body is written to
+  `/tmp/canonical.json` and compared as if it were the canonical — it fails
+  closed, but it reports a fetch failure as drift. Pre-existing on main,
+  unrelated to the patch. (The §X4 leg added in this pass does guard for this.)
+- **R4.** Emit the drift line to `$GITHUB_STEP_SUMMARY` / `::warning::`, not
+  step-log scrollback. A green check with a warning buried in raw logs is quiet;
+  inheritance is what makes that tolerable, not the echo.
+- **R5.** Step 2 is named "Check out the INSTRUMENTS…" and its comment discusses
+  only `derive_live_routes.mjs`, but the patch depends on it being a **full**
+  checkout. A future `sparse-checkout: tools/` would silently reinstate the
+  deadlock. The MEASUREMENT INVALID branch catches it, which is why that branch
+  earns its place — but the name should stop inviting the change.
