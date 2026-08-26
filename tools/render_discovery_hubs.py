@@ -384,7 +384,7 @@ def teach_body(index: dict) -> str:
     task_links = J(
         *[
             J(
-                f'<a class="mbm-task-card" href="/teach/?task={t["id"]}" data-mbm-task-query="{t["id"]}">',
+                f'<a class="mbm-task-card" href="/teach/?task={t["id"]}#teach-search-workspace" data-mbm-task-query="{t["id"]}">',
                 f'<strong>{t["label"]}</strong><span>{t["description"]}</span></a>',
             )
             for t in tasks

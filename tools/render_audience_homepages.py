@@ -447,7 +447,7 @@ def faq_body(section: dict[str, Any]) -> str:
 
 def tasks_body(section: dict[str, Any]) -> str:
     cards = "".join(
-        f'''<a class="mf-task-card" style="--task-accent:{accent}" href="/teach/?task={slug}"><span>{index + 1:02d}</span><strong>{title}</strong><small>{blurb}</small><b>Open this teacher route <i aria-hidden="true">→</i></b></a>'''
+        f'''<a class="mf-task-card" style="--task-accent:{accent}" href="/teach/?task={slug}#teach-search-workspace"><span>{index + 1:02d}</span><strong>{title}</strong><small>{blurb}</small><b>Open this teacher route <i aria-hidden="true">→</i></b></a>'''
         for index, (slug, accent, title, blurb) in enumerate(TEACHER_TASKS)
     )
     return f'{section_head(section)}<div class="mf-task-grid">{cards}</div>'
