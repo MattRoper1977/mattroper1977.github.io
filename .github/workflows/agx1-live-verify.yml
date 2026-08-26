@@ -242,6 +242,114 @@ jobs:
           print('Biopunk in manifest', any('biopunk' in e['href'].lower() for e in g))
           PY
 
+      # §X4 (ORDER FC-X, X-D4) — REPORT-ONLY. Added because the estate wrote
+      # "verified against the committed tree and a local reproduction" for a
+      # change it could have fetched: §Z2 altered the pathway facets in
+      # data/mbm-search-index.json, this job fetched every other live surface,
+      # and the search index appeared ZERO times in this file. A production
+      # check that never fetches the artefact that changed is not production
+      # verification.
+      #
+      # DELIBERATELY NON-BLOCKING, and placed BEFORE the mirror leg so it still
+      # reports while that leg is red. This job had just been wedged by a
+      # blocking leg aimed at the wrong tree; adding a second blocking leg in
+      # the same change is how that happens again. Promotion to blocking is a
+      # later pass, once it has been green across several merges, and it is on
+      # the appendix as its own item.
+      #
+      # Report-only is not the same as unable to detect. The negative control
+      # below means a leg that has stopped discriminating says MEASUREMENT
+      # INVALID out loud rather than printing a reassuring line about nothing,
+      # and a planted regression is named in the report — proven in four cases
+      # before this was proposed.
+      - name: Live search index, as served (REPORT-ONLY, never blocks)
+        shell: bash
+        run: |
+          # Every path ends 0 — this step never fails the job.
+          set -uo pipefail
+
+          URL=https://madebymatt.uk/data/mbm-search-index.json
+          echo "== live search index, as served =="
+          echo "   $URL"
+
+          if ! curl -sS --max-time 30 "$URL" -o /tmp/live-index.json; then
+            echo "   FETCH FAILED — reported, not asserted. This leg does not block."
+            exit 0
+          fi
+          if ! python3 -c 'import json,sys; json.load(open("/tmp/live-index.json"))' 2>/dev/null; then
+            echo "   SERVED BYTES ARE NOT VALID JSON — reported, not asserted."
+            echo "   $(wc -c < /tmp/live-index.json) B $(sha256sum /tmp/live-index.json | cut -c1-16)"
+            exit 0
+          fi
+
+          live_b=$(wc -c < /tmp/live-index.json); live_h=$(sha256sum /tmp/live-index.json | cut -c1-16)
+          main_f=data/mbm-search-index.json
+          ref_f=_tools/data/mbm-search-index.json
+
+          # NEGATIVE CONTROL — a comparison that cannot fail reports nothing worth having.
+          printf 'x' > /tmp/live-index.mutated; cat /tmp/live-index.json >> /tmp/live-index.mutated
+          if cmp -s /tmp/live-index.json /tmp/live-index.mutated; then
+            echo "   MEASUREMENT INVALID: cmp called a one-byte mutation identical to the original."
+            echo "   This leg cannot discriminate, so anything it reports below is worthless."
+            exit 0
+          fi
+          echo "   control  cmp distinguishes a one-byte mutation — the comparisons below are live"
+
+          echo "   served   ${live_b} B ${live_h}"
+          if test -f "$main_f"; then
+            m_b=$(wc -c < "$main_f"); m_h=$(sha256sum "$main_f" | cut -c1-16)
+            echo "   main     ${m_b} B ${m_h}"
+            if cmp -s /tmp/live-index.json "$main_f"; then
+              echo "   MATCH    the served index is byte-identical to the deployed tree"
+            else
+              echo "   DIFFERS  the served index is not the deployed tree's copy"
+              echo "            usually Pages lag; a persistent difference is a real finding"
+            fi
+          else
+            echo "   main     ABSENT — nothing to compare the served bytes against"
+          fi
+          if test -f "$ref_f"; then
+            r_b=$(wc -c < "$ref_f"); r_h=$(sha256sum "$ref_f" | cut -c1-16)
+            if [ "$r_h" != "${m_h:-}" ]; then
+              echo "   ref      ${r_b} B ${r_h}   (this pull request changes the index)"
+            else
+              echo "   ref      unchanged by this pull request"
+            fi
+          fi
+
+          # THE CENSUS THAT MATTERS: the facet the estate could not previously fetch.
+          python3 - <<'PY'
+          import json
+          d = json.load(open("/tmp/live-index.json"))
+          recs = d if isinstance(d, list) else next(
+              (d[k] for k in ("records", "entries", "items", "docs", "index") if isinstance(d.get(k), list)), None)
+          if recs is None:
+              print("   census   MEASUREMENT INVALID: no record list in the served index"); raise SystemExit(0)
+          if not recs:
+              print("   census   MEASUREMENT INVALID: zero records — a census over an empty set proves nothing")
+              raise SystemExit(0)
+          def cat(r): return r.get("category") or r.get("kind") or r.get("type")
+          def pw(r):
+              v = r.get("pathway")
+              return tuple(v) if isinstance(v, list) else ((v,) if v else ())
+          TEACHING = {"BUILD", "GROW", "LAUNCH"}
+          games = [r for r in recs if cat(r) == "game"]
+          bad = [r for r in games if TEACHING & set(pw(r))]
+          print(f"   census   {len(recs)} records served · {len(games)} in the game class")
+          print(f"   census   game records carrying a teaching pathway (BUILD/GROW/LAUNCH): {len(bad)}")
+          if not games:
+              print("   census   MEASUREMENT INVALID: no game-class records found, so the 0 above means nothing")
+          elif bad:
+              for r in bad[:10]:
+                  print(f"              {r.get('id') or r.get('href')}  {pw(r)}")
+              print("   census   ^ these are live and should not be. Reported, not asserted.")
+          else:
+              print("   census   none — the class exclusion holds AS SERVED")
+          PY
+
+          echo "   (report-only by ORDER FC-X X-D4; promotion to blocking is a later pass)"
+          exit 0
+
       # THE MIRROR LEG — ruled 2026-08-13, closing the two-shelves divergence.
       # The served /Games/games.json (the Games repository's file, which the
       # arcade fetches at runtime) is the canonical shelf; this repository's
@@ -253,18 +361,201 @@ jobs:
       # two hand-written shelves; the census report carries the account. This
       # leg is what makes that impossible to repeat silently.
       - name: Shelf mirror equals the served canonical, byte for byte
+        # THE TWO FACTS THIS STEP USED TO FUSE, NOW SEPARATED.
+        #
+        # Steps 8-11 verify LIVE SURFACES: is what production serves the same as
+        # what main committed? Their subject is necessarily main, because main is
+        # what was deployed. This step is not that. It asserts a REPOSITORY
+        # INVARIANT - the mirror is byte-identical to the canonical it mirrors -
+        # and on a pull request that is a statement about the tree being
+        # PROPOSED, not about the tree already deployed.
+        #
+        # Read against main alone, it collapsed two independent facts into one
+        # boolean:
+        #
+        #   FACT A  the served bytes are wrong. A real defect. Must always block.
+        #   FACT B  main sits behind the canonical. Inherited drift. Not a defect
+        #           of a pull request that touches nothing near the mirror.
+        #
+        # Fusing them made this step BOTH unfixable and blind.
+        #
+        # Unfixable, because the canonical lives in another repository: when
+        # Games merges a shelf change, main's mirror is stale THE INSTANT IT
+        # LANDS, only a site pull request can clear it, and this step redded
+        # every site pull request - including the catch-up that is the fix. It
+        # happened. Games #41 (43b29f7) moved the canonical to f4aab9ab and site
+        # #191, whose entire content was the catch-up, could not merge. A
+        # required context no change can turn green is not a gate, it is a stop.
+        #
+        # Blind, because reading main's copy meant a pull request that CORRUPTED
+        # the mirror passed the gate that exists to protect it, and one that
+        # DELETED the mirror passed by falling through to main's copy. That is
+        # the more serious half and it is closed below.
+        #
+        # THREE OPERANDS ARE REQUIRED, and two will not do: "the served bytes are
+        # wrong" and "main is behind" produce the identical observation, served
+        # != main's mirror. Only the canonical itself tells them apart, and it is
+        # already checked out from the Games repository three steps above.
+        #
+        #   _shelf/games.json                        the canonical, at the Games tip
+        #   /tmp/canonical.json                      the canonical, AS SERVED
+        #   data/source-manifests/games.json         the mirror in the DEPLOYED tree
+        #   _tools/data/source-manifests/games.json  the mirror in the tree THIS REF
+        #                                            would produce
+        #
+        # Nothing is loosened. The comparison is still cmp -s, byte for byte, and
+        # what a pull request may not do is unchanged and in three places wider:
+        # wrong served bytes block, a corrupted mirror blocks, an absent mirror
+        # blocks. The single case that changed is a pull request that does not
+        # touch the mirror on a drifted main - it is now told, loudly, rather
+        # than failed for a tree it did not write.
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
-          curl -sS --max-time 30 https://madebymatt.uk/Games/games.json -o /tmp/canonical.json
-          if cmp -s /tmp/canonical.json data/source-manifests/games.json; then
-            echo "  PASS mirror is byte-identical to the served canonical ($(wc -c < /tmp/canonical.json) bytes)"
-          else
-            echo "  FAIL data/source-manifests/games.json is not the served canonical:"
-            echo "       mirror    $(wc -c < data/source-manifests/games.json) B $(sha256sum data/source-manifests/games.json | cut -c1-16)"
-            echo "       canonical $(wc -c < /tmp/canonical.json) B $(sha256sum /tmp/canonical.json | cut -c1-16)"
-            echo "       regenerate with tools/render_games_manifest_mirror.py --write, never by hand"
+
+          served=/tmp/canonical.json
+          shelf=_shelf/games.json
+          deployed=data/source-manifests/games.json
+          proposed=_tools/data/source-manifests/games.json
+
+          # --fail matters here. Without it a 404 body or a truncated response is
+          # written to the file and compared as though it were the canonical. It
+          # fails closed either way, but it reports a fetch failure AS DRIFT, and
+          # that sends the next reader to the wrong repository entirely.
+          if ! curl -sS --fail --max-time 30 https://madebymatt.uk/Games/games.json -o "$served"; then
+            echo "  MEASUREMENT INVALID: the served canonical could not be fetched."
+            echo "  Nothing below would mean anything - neither a pass nor a drift report."
             exit 1
+          fi
+
+          # NEGATIVE CONTROL first: a comparison that cannot fail proves nothing.
+          printf 'x' > /tmp/canonical.mutated
+          cat "$served" >> /tmp/canonical.mutated
+          if cmp -s "$served" /tmp/canonical.mutated; then
+            echo "  MEASUREMENT INVALID: cmp called a one-byte mutation identical to the original."
+            echo "  This step cannot discriminate, so a PASS from it would mean nothing."
+            exit 1
+          fi
+          echo "  control  cmp distinguishes a one-byte mutation - the comparisons below are live"
+
+          h() { sha256sum "$1" | cut -c1-16; }
+          b() { wc -c < "$1" | tr -d ' '; }
+
+          # ------ FACT A: the served bytes. BLOCKING IN EVERY CONTEXT. ------
+          if ! test -f "$shelf"; then
+            echo "  MEASUREMENT INVALID: ${shelf} is absent, so the served bytes cannot be"
+            echo "  checked against the canonical they claim to be."
+            exit 1
+          fi
+          if cmp -s "$served" "$shelf"; then
+            echo "  served   is the canonical shelf at the Games repository tip ($(b "$served") B $(h "$served"))"
+          elif cmp -s "$served" "$deployed"; then
+            echo "  served   matches the DEPLOYED tree's mirror but not the Games tip: Games has"
+            echo "           moved and its deploy has not landed yet. Both operands are committed"
+            echo "           bytes, so this is deploy lag, not a wrong byte. Reported, not asserted."
+          else
+            echo "  FAIL     the SERVED bytes are not any committed canonical:"
+            echo "           served    $(b "$served") B $(h "$served")"
+            echo "           Games tip $(b "$shelf") B $(h "$shelf")"
+            echo "           deployed  $(b "$deployed") B $(h "$deployed")"
+            echo "           Production is serving a shelf that no repository authorises."
+            echo "           This is FACT A. It blocks on every ref, in every context."
+            exit 1
+          fi
+
+          # ------ The tree under review must be present. Fail closed. ------
+          if ! test -f "$proposed"; then
+            echo "  MEASUREMENT INVALID: ${proposed} is absent. The ref under review was not"
+            echo "  checked out, so this gate has nothing to assert on - and it will not fall"
+            echo "  through to the deployed tree's copy and call that a pass."
+            exit 1
+          fi
+
+          # ------ FACT B: does THIS ref move the mirror? ------
+          if cmp -s "$proposed" "$deployed"; then
+            moves=no
+          else
+            moves=yes
+          fi
+
+          if test "$moves" = yes; then
+            # THE ASSERTION: the served bytes against the tree this ref produces.
+            if cmp -s "$served" "$proposed"; then
+              echo "  PASS     this ref moves the mirror, and the result is the served canonical"
+              echo "           byte for byte ($(b "$served") B $(h "$served"))"
+            else
+              echo "  FAIL     this ref moves the mirror and the result is NOT the served canonical:"
+              echo "           proposed  $(b "$proposed") B $(h "$proposed")"
+              echo "           canonical $(b "$served") B $(h "$served")"
+              echo "           regenerate with tools/render_games_manifest_mirror.py --write, never by hand"
+              exit 1
+            fi
+          elif cmp -s "$served" "$deployed"; then
+            echo "  PASS     this ref does not touch the mirror, and the deployed tree's copy is"
+            echo "           the served canonical byte for byte ($(b "$served") B $(h "$served"))"
+          else
+            echo "  DRIFT    INHERITED - the deployed tree's mirror is not the served canonical,"
+            echo "           and this ref does not touch it:"
+            echo "           deployed  $(b "$deployed") B $(h "$deployed")"
+            echo "           canonical $(b "$served") B $(h "$served")"
+            # A drift line that says only THAT something drifted sends the reader
+            # to diff two 28 kB files by hand. Name the entries.
+            python3 - "$deployed" "$served" <<'PY'
+          import json, sys
+          def load(p):
+              try:
+                  return json.load(open(p, encoding="utf-8"))
+              except Exception as exc:
+                  print("           what drifted: cannot itemise (%s)" % exc)
+                  raise SystemExit(0)
+          a = load(sys.argv[1]); c = load(sys.argv[2])
+          ga = a.get("games") if isinstance(a, dict) else a
+          gc = c.get("games") if isinstance(c, dict) else c
+          if not isinstance(ga, list) or not isinstance(gc, list):
+              print("           what drifted: cannot itemise (no games list on one side)")
+              raise SystemExit(0)
+          def key(g): return g.get("href") or g.get("title") or json.dumps(g, sort_keys=True)[:60]
+          A = {key(g): g for g in ga}; C = {key(g): g for g in gc}
+          added = sorted(set(C) - set(A)); removed = sorted(set(A) - set(C))
+          changed = sorted(x for x in set(A) & set(C) if A[x] != C[x])
+          print("           what drifted: %d added, %d removed, %d changed"
+                % (len(added), len(removed), len(changed)))
+          for x in added[:10]:   print("             + %s" % x)
+          for x in removed[:10]: print("             - %s" % x)
+          for x in changed[:10]:
+              f = sorted(fl for fl in set(A[x]) | set(C[x]) if A[x].get(fl) != C[x].get(fl))
+              print("             ~ %s  (%s)" % (x, ", ".join(f)))
+          if not (added or removed or changed):
+              print("           the entry sets agree, so the difference is in the serialisation")
+              print("           itself - ordering, whitespace or encoding.")
+          PY
+            if test "${EVENT_NAME}" = "pull_request"; then
+              echo "           Reported, not asserted: inherited drift is not a defect of this"
+              echo "           pull request, which does not touch the mirror. It is asserted on"
+              echo "           every other ref - the same line on a workflow_dispatch run against"
+              echo "           main exits 1 - and shelf-mirror-guard.yml carries it in both repos."
+              echo "::warning title=Shelf mirror drift inherited from main::The deployed tree's mirror ($(h "$deployed")) is not the served canonical ($(h "$served")). This pull request does not touch the mirror, so the leg reports rather than asserts. Clear it with a mirror catch-up."
+              {
+                echo "### Shelf mirror: inherited drift"
+                echo ""
+                echo "The deployed tree's mirror is **not** the served canonical. This ref does not"
+                echo "touch it, so this leg reported rather than blocked."
+                echo ""
+                echo "| | bytes | sha256 |"
+                echo "|---|---|---|"
+                echo "| deployed (\`main\`) | $(b "$deployed") | \`$(h "$deployed")\` |"
+                echo "| served canonical | $(b "$served") | \`$(h "$served")\` |"
+                echo ""
+                echo "Clear it with \`tools/render_games_manifest_mirror.py --write\`, never by hand."
+              } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+            else
+              echo "  FAIL     this ref is not a pull request, so the drift above is not inherited"
+              echo "           from anywhere - it IS this ref's own state, and it blocks."
+              echo "           regenerate with tools/render_games_manifest_mirror.py --write, never by hand"
+              exit 1
+            fi
           fi
 
       - name: Homepage and arcade, as served
