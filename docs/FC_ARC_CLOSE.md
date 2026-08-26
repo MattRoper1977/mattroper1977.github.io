@@ -406,6 +406,50 @@ one inserted step is a consistency check on both readings.
 A dispatch run is a run, but it is not this pull request's reporting check. For
 merge purposes the pull request remains **unmeasured**, and therefore **HELD**.
 
+> **Annotation, same day, 17:2x — the section above is retained as written
+> because it was accurate when written, and because the resolution is worth more
+> read against it than in place of it.**
+>
+> `pull_request` run creation **resumed at `2026-08-26T17:19:47Z`**, and both
+> halves of the two-fact account above are now observed rather than argued.
+>
+> **Exactly three runs were created for this pull request** — precisely the three
+> the base/paths reasoning named, and no others:
+>
+> ```
+> head 085ed72 · event pull_request
+>   Professional site design audit    -> success
+>   MBM audience discovery closeout   -> success
+>   AGX-1 live verification           -> failure
+> ```
+>
+> So the reasoning was right about *which* workflows can apply (3 of 27), and the
+> stall was a separate, transient condition that has now cleared. Being wrong
+> about which of two true things was the operative cause is not the same as being
+> wrong about either.
+>
+> **The two instruments agree exactly.** The failing job and step on the pull
+> request are identical to what the `workflow_dispatch` found:
+>
+> ```
+> run 32993473399 · pull_request · head 085ed72
+>   job  Fetch the live estate and compare to raw-at-SHA        -> failure
+>   step #12  Shelf mirror equals the served canonical, byte for byte -> failure
+> ```
+>
+> **This pull request is therefore MEASURED, and still HELD.** Its hold is no
+> longer for want of measurement; it is `2 green · 1 red`, and the red is the
+> deadlocked required context. That is exactly the state §0.-1 predicted before
+> any work was done.
+>
+> Nothing else moved: #191 remains 7 runs / 6 success / 1 failure at `c707277`;
+> site main remains `cb435f4` with the workflow at `50702afefaff1497…`; and
+> `CLICK_EFFECTIVE` remains **NOT-DONE**.
+>
+> The commit carrying this annotation will re-trigger the same three workflows on
+> a new head. The expectation is the same two green and the same one red, for the
+> same reason, and it will stay so until the click in the handback is made.
+
 ## §1.6 — The register
 
 1. a relayed finding is a hypothesis — including your own handback list
