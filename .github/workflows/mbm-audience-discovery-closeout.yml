@@ -221,6 +221,27 @@ jobs:
         shell: bash
         run: node tools/verify_uas_register_exemption.mjs .
 
+      # The absolutes family. The list is declared in data/banned-claims.json and
+      # read from there - never typed into the gate, because a control holding
+      # its own copy of the thing it checks is the second-literal defect this
+      # estate has now seen seven times. Missing record = MEASUREMENT INVALID.
+      - name: No served /for/ page states an absolute it cannot hold
+        id: s21-claims-guard
+        if: always()
+        shell: bash
+        run: node tools/verify_claims_guard.mjs
+
+      # R4, closed on both halves. verify_audience_copy.mjs checks the note is
+      # served, but as `a.note ? includes(...) : true` - delete the note from the
+      # record and the ternary short-circuits to true and the page ships with no
+      # boundary statement. This asserts the clause EXISTS and that it reaches
+      # the page, so absence can no longer read as success.
+      - name: All seven pages carry their guard clause, and the record still has it
+        id: s22-guard-clause-present
+        if: always()
+        shell: bash
+        run: node tools/verify_guard_clause_present.mjs
+
       - name: Aggregate - one failure costs one signal, not the suite
         if: always()
         shell: bash
@@ -420,6 +441,65 @@ jobs:
           git checkout -- data/source-manifests/games.json
           git diff --quiet data/mbm-search-index.json || { echo "index was modified"; exit 1; }
           echo "control detected: removal screams on check and only writes under --expect-removed"
+
+      # s21 must fire on a planted absolute, and name the phrase. Herestring
+      # form throughout: `producer | grep -q` under pipefail kills the producer
+      # with SIGPIPE and the control then reports a failure that never happened
+      # (failure mode 47). A bare `! pipeline` is worse still (48).
+      - name: Claims guard notices a planted absolute
+        id: s21c-claims-guard-notices-a-planted-absolut
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp for/parents-carers/index.html /tmp/cg.bak
+          python3 - <<'PY'
+          import io
+          p='for/parents-carers/index.html'
+          s=io.open(p,encoding='utf-8').read()
+          io.open(p,'w',encoding='utf-8').write(s.replace('<main id="main">','<main id="main"><p>100% GDPR compliant.</p>',1))
+          PY
+          set +e
+          out="$(node tools/verify_claims_guard.mjs 2>&1)"; rc=$?
+          set -e
+          cp /tmp/cg.bak for/parents-carers/index.html
+          if [ "$rc" -eq 0 ]; then
+            echo "::error::claims guard stayed green with a banned absolute planted"; exit 1; fi
+          grep -q 'banned phrase(s) present' <<< "$out" || {
+            echo "::error::claims guard failed, but not on the assertion this control names"
+            printf '%s\n' "$out"; exit 1; }
+          if grep -q 'MEASUREMENT INVALID' <<< "$out"; then
+            echo "::error::claims guard aborted instead of measuring"; exit 1
+          fi
+          echo "claims guard fired, and named the phrase"
+
+      # s22 must fire when the clause is removed FROM THE RECORD - the case the
+      # pre-existing copy gate passes vacuously. That contrast is the whole
+      # reason this gate exists, so the control asserts it directly.
+      - name: Guard-clause gate notices a clause deleted from the record
+        id: s22c-guard-clause-gate-notices-a-clause-dele
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp data/audience-homepages.json /tmp/gc.bak
+          python3 - <<'PY'
+          import json, io, collections
+          P='data/audience-homepages.json'
+          d=json.load(open(P), object_pairs_hook=collections.OrderedDict)
+          d['audiences']['schools']['note']=''
+          io.open(P,'w',encoding='utf-8').write(json.dumps(d,indent=2,ensure_ascii=False)+'\n')
+          PY
+          set +e
+          out="$(node tools/verify_guard_clause_present.mjs 2>&1)"; rc=$?
+          set -e
+          cp /tmp/gc.bak data/audience-homepages.json
+          if [ "$rc" -eq 0 ]; then
+            echo "::error::guard-clause gate stayed green with a clause deleted from the record"; exit 1; fi
+          grep -q 'ABSENT from the record' <<< "$out" || {
+            echo "::error::guard-clause gate failed, but not on the assertion this control names"
+            printf '%s\n' "$out"; exit 1; }
+          echo "guard-clause gate fired, and named the audience"
 
       - name: External link classification controls
         id: s08-external-link-classification-controls
@@ -772,8 +852,8 @@ jobs:
           import io
           p = 'data/audience-homepages.json'
           s = io.open(p, encoding='utf-8').read()
-          s = s.replace('Search all canonical internal destinations.',
-                        'Search all 511 canonical internal destinations.', 1)
+          s = s.replace('Search every Made by Matt lesson, resource, tool and app in one place.',
+                        'Search every 511 Made by Matt lesson, resource, tool and app in one place.', 1)
           io.open(p, 'w', encoding='utf-8').write(s)
           PY
           if node tools/verify_catalogue_counts.mjs > /tmp/cc1.log 2>&1; then

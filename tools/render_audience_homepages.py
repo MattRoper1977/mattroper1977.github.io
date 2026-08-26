@@ -462,7 +462,7 @@ def surprise_body(audience: dict[str, Any], section: dict[str, Any]) -> str:
 
 
 def recent_body(section: dict[str, Any]) -> str:
-    return f'''<div class="mf-recent-head"><div><p>Local-only shortcut</p><h2>{esc(section['title'])}</h2><span>{esc(section['lead'])}</span></div><button type="button" data-mbm-recent-clear>Clear</button></div><p data-mbm-recent-empty>Nothing has been opened from a Made by Matt discovery card on this device yet.</p><div class="mbm-recent-grid" data-mbm-recent-items></div>'''
+    return f'''<div class="mf-recent-head"><div><p>Local-only shortcut</p><h2>{esc(section['title'])}</h2><span>{esc(section['lead'])}</span></div><button type="button" data-mbm-recent-clear>Clear</button></div><p data-mbm-recent-empty>You haven&rsquo;t opened anything on this device yet.</p><div class="mbm-recent-grid" data-mbm-recent-items></div>'''
 
 
 def surprise_set(audience: dict[str, Any]) -> str:
