@@ -347,6 +347,29 @@ is `DEFERRED-RED` pending the click.
 
 ---
 
+### What "measured" can mean for *this* pull request
+
+Recorded because a close record that reports its own CI status should say what
+its own CI status is capable of being.
+
+This change is docs-only. Of the 27 site workflows carrying a `pull_request`
+trigger, **24 are excluded by their `paths:` filters** — no path in this diff
+matches any of them. The three with no path filter
+(`agx1-live-verify.yml`, `mbm-audience-discovery-closeout.yml`,
+`professional-site-design-audit.yml`) all filter `branches: [main]`.
+
+So this pull request is measurable **only** while it targets `main`, and even
+then only by those three. It was first opened stacked on `claude/fcz-mirror-catchup`
+so that its diff would be one file rather than re-showing #191's commits; that
+base made it trigger **zero** workflows. Being unmeasured for a reason of one's
+own making is worse than an untidy diff, so it was rebased onto `main` as a
+standalone commit — the record references #191's documents by name and does not
+depend on their contents — and it is measurable again.
+
+Stated plainly because §5.1 turns on it: **a docs-only pull request with zero
+reporting checks is not green, it is unmeasured**, and the difference matters
+more here than anywhere else in this file.
+
 ## §1.6 — The register
 
 1. a relayed finding is a hypothesis — including your own handback list
