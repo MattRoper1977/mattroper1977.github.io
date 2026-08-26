@@ -59,29 +59,29 @@ Source of truth is `data/audience-homepages.json`, rendered by
 ### section [1] — kicker: 'Pathways and teaching'
 - heading: Move from curriculum to classroom
 - lead: Use canonical Made by Matt destinations rather than hunting through separate collections.
-  - **Lesson Hub** — Search classroom-ready lessons, schemes and teaching packs.  
+  - **Lesson Hub** — Search classroom-ready lessons, schemes and teaching packs.
     CTA: `Open the Lesson Hub` -> `/Lessons/`
-  - **BUILD** — BUILD is the pathway for building core skills. Find BUILD pathway hubs, sequences and resources.  
+  - **BUILD** — BUILD is the pathway for building core skills. Find BUILD pathway hubs, sequences and resources.
     CTA: `View BUILD material` -> `/teach/?pathway=BUILD`
-  - **GROW** — GROW is the pathway for growing confidence through guided iteration. Find GROW pathway hubs, sequences and resources.  
+  - **GROW** — GROW is the pathway for growing confidence through guided iteration. Find GROW pathway hubs, sequences and resources.
     CTA: `View GROW material` -> `/teach/?pathway=GROW`
-  - **LAUNCH** — LAUNCH is the pathway for independent mastery. Find LAUNCH pathway hubs, sequences and resources.  
+  - **LAUNCH** — LAUNCH is the pathway for independent mastery. Find LAUNCH pathway hubs, sequences and resources.
     CTA: `View LAUNCH material` -> `/teach/?pathway=LAUNCH`
 
 ### section [2] — kicker: 'Workflow tools'
 - heading: Evidence, assessment and learner information
 - lead: Direct routes to genuine Made by Matt browser tools.
-  - **Evidence Binder** — Capture and tag work for portfolios.  
+  - **Evidence Binder** — Capture and tag work for portfolios.
     CTA: `Open Evidence Binder` -> `/Matt-s-Apps-/Evidence_Binder.html`
-  - **Data Manager Studio** — Work with cohorts, learner IDs, evidence coverage and review queues locally.  
+  - **Data Manager Studio** — Work with cohorts, learner IDs, evidence coverage and review queues locally.
     CTA: `Open Data Manager Studio` -> `/Matt-s-Apps-/Data_Manager_Studio.html`
-  - **UAS Register** — Date-stamp outcomes, file evidence and export a summary.  
+  - **UAS Register** — Date-stamp outcomes, file evidence and export a summary.
     CTA: `Open UAS Register` -> `/uas/`
-  - **ASDAN Register** — Track PEQ and Short Course evidence and sign-off.  
+  - **ASDAN Register** — Track PEQ and Short Course evidence and sign-off.
     CTA: `Open ASDAN Register` -> `/asdan/`
-  - **Rubric & Feedback Studio** — Mark against a rubric and build feedback.  
+  - **Rubric & Feedback Studio** — Mark against a rubric and build feedback.
     CTA: `Open Rubric & Feedback Studio` -> `/Matt-s-Apps-/Rubric_Studio.html`
-  - **Exit Ticket & Quick Marks** — Run an immediate class understanding check.  
+  - **Exit Ticket & Quick Marks** — Run an immediate class understanding check.
     CTA: `Open Exit Ticket` -> `/Matt-s-Apps-/Exit_Ticket.html`
 
 ### section [3] — kicker: 'See the platform'
@@ -126,34 +126,34 @@ Source of truth is `data/audience-homepages.json`, rendered by
 ### section [1] — kicker: 'Helpful starting points'
 - heading: A few practical ways to use the platform
 - lead: General suggestions for exploring public content; they are not statutory, safeguarding or clinical advice.
-  - **Choose together** — Open the game or resource first and decide whether it suits the learner, device and moment.  
+  - **Choose together** — Open the game or resource first and decide whether it suits the learner, device and moment.
     CTA: `—` -> `—`
-  - **Use the audience homepage** — The pupil face keeps adult account and mailing actions out of the main learner journey.  
+  - **Use the audience homepage** — The pupil face keeps adult account and mailing actions out of the main learner journey.
     CTA: `—` -> `—`
-  - **Keep the route simple** — Use direct Play and Open actions rather than sending a learner through several hubs.  
+  - **Keep the route simple** — Use direct Play and Open actions rather than sending a learner through several hubs.
     CTA: `—` -> `—`
-  - **Check the source label** — The Education Hub clearly separates Made by Matt material from official external guidance.  
+  - **Check the source label** — The Education Hub clearly separates Made by Matt material from official external guidance.
     CTA: `—` -> `—`
 
 ### section [2] — kicker: 'Clearly labelled external help'
 - heading: Trusted education and online-safety sources
 - lead: These links open filtered views in the Professional Education Hub before any external navigation.
-  - **NSPCC resources** — Find NSPCC safeguarding and online-safety resources in the curated external collection.  
+  - **NSPCC resources** — Find NSPCC safeguarding and online-safety resources in the curated external collection.
     CTA: `View NSPCC sources` -> `/education-hub/?origin=external&source=NSPCC`
-  - **Childnet resources** — Find Childnet online-safety resources for families and education settings.  
+  - **Childnet resources** — Find Childnet online-safety resources for families and education settings.
     CTA: `View Childnet sources` -> `/education-hub/?origin=external&source=Childnet`
-  - **CEOP Safety Centre** — Reach the clearly labelled CEOP Safety Centre entries in the external collection.  
+  - **CEOP Safety Centre** — Reach the clearly labelled CEOP Safety Centre entries in the external collection.
     CTA: `View CEOP sources` -> `/education-hub/?origin=external&source=CEOP+Safety+Centre`
 
 ### section [3] — kicker: 'Questions families often ask'
 - heading: Parent and carer FAQ
-  - **** —   
+  - **** —
     CTA: `—` -> `—`
-  - **** —   
+  - **** —
     CTA: `—` -> `—`
-  - **** —   
+  - **** —
     CTA: `—` -> `—`
-  - **** —   
+  - **** —
     CTA: `—` -> `—`
 
 
@@ -179,25 +179,25 @@ Source of truth is `data/audience-homepages.json`, rendered by
 ### section [0] — kicker: 'In your setting'
 - heading: Start with what your setting is carrying
 - lead: Go straight to the lessons, tools and resources and judge them against the pupils, routines and pressures you already know. This was built inside an SEMH alternative provision, which tells you where it came from and nothing about whether it will fit your setting.
-  - **Find adaptable teaching material** — Search lessons, schemes and support resources by subject, pathway and format.  
+  - **Find adaptable teaching material** — Search lessons, schemes and support resources by subject, pathway and format.
     CTA: `—` -> `—`
-  - **Build evidence-aware workflows** — Reach registers, evidence tools and portfolio-oriented resources without invented approval claims.  
+  - **Build evidence-aware workflows** — Reach registers, evidence tools and portfolio-oriented resources without invented approval claims.
     CTA: `—` -> `—`
-  - **Support classroom routines** — Find practical browser tools for planning, quick checks and organisation.  
+  - **Support classroom routines** — Find practical browser tools for planning, quick checks and organisation.
     CTA: `—` -> `—`
-  - **Review professional guidance** — Use publisher-labelled official and sector sources in the Education Hub.  
+  - **Review professional guidance** — Use publisher-labelled official and sector sources in the Education Hub.
     CTA: `—` -> `—`
 
 ### section [1] — kicker: 'Platform map'
 - heading: Move to the right Made by Matt surface
 - lead: The same public platform, organised around common education workflows.
-  - **Teach Hub** — Task-first discovery for teachers and education staff.  
+  - **Teach Hub** — Task-first discovery for teachers and education staff.
     CTA: `Open the Teach Hub` -> `/teach/`
-  - **Lesson Hub** — Lessons, schemes and pathway material.  
+  - **Lesson Hub** — Lessons, schemes and pathway material.
     CTA: `Open the Lesson Hub` -> `/Lessons/`
-  - **Tools Hub** — Evidence, data, assessment and classroom tools.  
+  - **Tools Hub** — Evidence, data, assessment and classroom tools.
     CTA: `Open the Tools Hub` -> `/tools/`
-  - **Resource Catalogue** — Search all canonical internal destinations.  
+  - **Resource Catalogue** — Search all canonical internal destinations.
     CTA: `Search all internal material` -> `/resources/`
 
 ### section [2] — kicker: 'Genuine platform views'
@@ -210,9 +210,9 @@ Source of truth is `data/audience-homepages.json`, rendered by
 ### section [3] — kicker: 'Authoritative external material'
 - heading: Open the Professional Education Hub
 - lead: Made by Matt material and external publisher resources remain visibly separate.
-  - **Relevant official and sector material** — Use the local curated dataset and filters before deliberately leaving Made by Matt.  
+  - **Relevant official and sector material** — Use the local curated dataset and filters before deliberately leaving Made by Matt.
     CTA: `Search authoritative resources` -> `/education-hub/?origin=external&audience=schools-semh`
-  - **Made by Matt internal catalogue** — Search only the canonical Made by Matt index for lessons, resources, tools and apps.  
+  - **Made by Matt internal catalogue** — Search only the canonical Made by Matt index for lessons, resources, tools and apps.
     CTA: `Search internal material` -> `/resources/`
 
 
@@ -237,25 +237,25 @@ Source of truth is `data/audience-homepages.json`, rendered by
 ### section [0] — kicker: 'Across your schools'
 - heading: Start with what you need to compare across schools
 - lead: Open the live materials behind each route and judge the curriculum, tools and accessibility from the work itself, across more than one school context. Nothing here has been approved, adopted or measured for you — that judgement is yours.
-  - **Map teaching content** — Explore subject, pathway and format coverage across the canonical internal index.  
+  - **Map teaching content** — Explore subject, pathway and format coverage across the canonical internal index.
     CTA: `—` -> `—`
-  - **Review workflow tools** — See genuine evidence, register, data and feedback tools without assuming a procurement model.  
+  - **Review workflow tools** — See genuine evidence, register, data and feedback tools without assuming a procurement model.
     CTA: `—` -> `—`
-  - **Find date-aware guidance** — Distinguish current, upcoming and evergreen official publications by effective date.  
+  - **Find date-aware guidance** — Distinguish current, upcoming and evergreen official publications by effective date.
     CTA: `—` -> `—`
-  - **Understand boundaries** — No fabricated trust adoption, licensing package or accreditation claim is presented.  
+  - **Understand boundaries** — No fabricated trust adoption, licensing package or accreditation claim is presented.
     CTA: `—` -> `—`
 
 ### section [1] — kicker: 'Platform map'
 - heading: Move to the right Made by Matt surface
 - lead: The same public platform, organised around common education workflows.
-  - **Teach Hub** — Task-first routes across lessons, pathways and tools.  
+  - **Teach Hub** — Task-first routes across lessons, pathways and tools.
     CTA: `Open the Teach Hub` -> `/teach/`
-  - **Education Hub** — Made by Matt and authoritative external resources, clearly separated.  
+  - **Education Hub** — Made by Matt and authoritative external resources, clearly separated.
     CTA: `Open the Education Hub` -> `/education-hub/`
-  - **Resource Catalogue** — Search one deterministic internal index.  
+  - **Resource Catalogue** — Search one deterministic internal index.
     CTA: `Search the catalogue` -> `/resources/`
-  - **Tools Hub** — Browse genuine teacher and workflow tools.  
+  - **Tools Hub** — Browse genuine teacher and workflow tools.
     CTA: `Open the Tools Hub` -> `/tools/`
 
 ### section [2] — kicker: 'Genuine platform views'
@@ -268,9 +268,9 @@ Source of truth is `data/audience-homepages.json`, rendered by
 ### section [3] — kicker: 'Authoritative external material'
 - heading: Open the Professional Education Hub
 - lead: Made by Matt material and external publisher resources remain visibly separate.
-  - **Relevant official and sector material** — Use the local curated dataset and filters before deliberately leaving Made by Matt.  
+  - **Relevant official and sector material** — Use the local curated dataset and filters before deliberately leaving Made by Matt.
     CTA: `Search authoritative resources` -> `/education-hub/?origin=external&audience=trusts`
-  - **Made by Matt internal catalogue** — Search only the canonical Made by Matt index for lessons, resources, tools and apps.  
+  - **Made by Matt internal catalogue** — Search only the canonical Made by Matt index for lessons, resources, tools and apps.
     CTA: `Search internal material` -> `/resources/`
 
 
@@ -295,25 +295,25 @@ Source of truth is `data/audience-homepages.json`, rendered by
 ### section [0] — kicker: 'For the question in front of you'
 - heading: Start with the question you are being asked
 - lead: Open the live materials behind each route and see what is already available to schools and settings, without waiting for a brochure or a summary. Treat it as work to look at, not as commissioned provision, approval or a compliance position.
-  - **Explore public learning provision** — Map games, lessons, pathway resources and creative apps across the public platform.  
+  - **Explore public learning provision** — Map games, lessons, pathway resources and creative apps across the public platform.
     CTA: `—` -> `—`
-  - **Find professional resources** — Use audience, source and jurisdiction filters in the Education Hub.  
+  - **Find professional resources** — Use audience, source and jurisdiction filters in the Education Hub.
     CTA: `—` -> `—`
-  - **Review practical tools** — See genuine classroom, evidence and data tools without an invented service offer.  
+  - **Review practical tools** — See genuine classroom, evidence and data tools without an invented service offer.
     CTA: `—` -> `—`
-  - **Use direct contact** — Contact Made by Matt only through the established email route when a conversation is needed.  
+  - **Use direct contact** — Contact Made by Matt only through the established email route when a conversation is needed.
     CTA: `—` -> `—`
 
 ### section [1] — kicker: 'Platform map'
 - heading: Move to the right Made by Matt surface
 - lead: The same public platform, organised around common education workflows.
-  - **Complete platform** — See the broad Made by Matt platform composition.  
+  - **Complete platform** — See the broad Made by Matt platform composition.
     CTA: `Explore the live platform` -> `/main/`
-  - **Professional Education Hub** — Search internal and authoritative external resources.  
+  - **Professional Education Hub** — Search internal and authoritative external resources.
     CTA: `Open the Education Hub` -> `/education-hub/`
-  - **Resource Catalogue** — Search all canonical internal destinations.  
+  - **Resource Catalogue** — Search all canonical internal destinations.
     CTA: `Search the catalogue` -> `/resources/`
-  - **Games and creative apps** — Explore genuine public Made by Matt products.  
+  - **Games and creative apps** — Explore genuine public Made by Matt products.
     CTA: `Browse games` -> `/games/`
 
 ### section [2] — kicker: 'Genuine platform views'
@@ -326,9 +326,9 @@ Source of truth is `data/audience-homepages.json`, rendered by
 ### section [3] — kicker: 'Authoritative external material'
 - heading: Open the Professional Education Hub
 - lead: Made by Matt material and external publisher resources remain visibly separate.
-  - **Relevant official and sector material** — Use the local curated dataset and filters before deliberately leaving Made by Matt.  
+  - **Relevant official and sector material** — Use the local curated dataset and filters before deliberately leaving Made by Matt.
     CTA: `Search authoritative resources` -> `/education-hub/?origin=external&audience=councils-organisations`
-  - **Made by Matt internal catalogue** — Search only the canonical Made by Matt index for lessons, resources, tools and apps.  
+  - **Made by Matt internal catalogue** — Search only the canonical Made by Matt index for lessons, resources, tools and apps.
     CTA: `Search internal material` -> `/resources/`
 
 
@@ -354,25 +354,25 @@ Source of truth is `data/audience-homepages.json`, rendered by
 ### section [0] — kicker: 'Closest to your work'
 - heading: Start with the part of the work you know best
 - lead: Open the live games, apps, tools and resources and judge the work in the area closest to yours. Looking commits nobody to anything, and no relationship follows from reading it.
-  - **Explore the portfolio** — Search genuine public products by content type, source, subject and audience.  
+  - **Explore the portfolio** — Search genuine public products by content type, source, subject and audience.
     CTA: `—` -> `—`
-  - **See design breadth** — Move between games, lesson systems, creative apps and professional browser tools.  
+  - **See design breadth** — Move between games, lesson systems, creative apps and professional browser tools.
     CTA: `—` -> `—`
-  - **Review provenance** — Product imagery and source manifests are tied to real routes and pinned repository commits.  
+  - **Review provenance** — Product imagery and source manifests are tied to real routes and pinned repository commits.
     CTA: `—` -> `—`
-  - **Use the established contact** — Contact uses contactmadebymatt@gmail.com; no invented proposal or licensing action appears.  
+  - **Use the established contact** — Contact uses contactmadebymatt@gmail.com; no invented proposal or licensing action appears.
     CTA: `—` -> `—`
 
 ### section [1] — kicker: 'Platform map'
 - heading: Move to the right Made by Matt surface
 - lead: The same public platform, organised around common education workflows.
-  - **Games** — Browse genuine Made by Matt browser games and artwork.  
+  - **Games** — Browse genuine Made by Matt browser games and artwork.
     CTA: `Browse the games` -> `/games/`
-  - **Lesson Hub** — Explore the live lesson and resource estate.  
+  - **Lesson Hub** — Explore the live lesson and resource estate.
     CTA: `Open the Lesson Hub` -> `/Lessons/`
-  - **Apps and tools** — Browse creative, classroom and workflow applications.  
+  - **Apps and tools** — Browse creative, classroom and workflow applications.
     CTA: `Browse the apps` -> `/Matt-s-Apps-/`
-  - **Resource Catalogue** — Search the complete canonical internal portfolio.  
+  - **Resource Catalogue** — Search the complete canonical internal portfolio.
     CTA: `Search the portfolio` -> `/resources/`
 
 ### section [2] — kicker: 'Genuine platform views'
@@ -386,8 +386,8 @@ Source of truth is `data/audience-homepages.json`, rendered by
 ### section [3] — kicker: 'Authoritative external material'
 - heading: Open the Professional Education Hub
 - lead: Made by Matt material and external publisher resources remain visibly separate.
-  - **Relevant official and sector material** — Use the local curated dataset and filters before deliberately leaving Made by Matt.  
+  - **Relevant official and sector material** — Use the local curated dataset and filters before deliberately leaving Made by Matt.
     CTA: `Search authoritative resources` -> `/education-hub/?origin=external&audience=partners`
-  - **Made by Matt internal catalogue** — Search only the canonical Made by Matt index for lessons, resources, tools and apps.  
+  - **Made by Matt internal catalogue** — Search only the canonical Made by Matt index for lessons, resources, tools and apps.
     CTA: `Search internal material` -> `/resources/`
 
