@@ -772,8 +772,8 @@ jobs:
           import io
           p = 'data/audience-homepages.json'
           s = io.open(p, encoding='utf-8').read()
-          s = s.replace('Search all canonical internal destinations.',
-                        'Search all 511 canonical internal destinations.', 1)
+          s = s.replace('Search every Made by Matt lesson, resource, tool and app in one place.',
+                        'Search every 511 Made by Matt lesson, resource, tool and app in one place.', 1)
           io.open(p, 'w', encoding='utf-8').write(s)
           PY
           if node tools/verify_catalogue_counts.mjs > /tmp/cc1.log 2>&1; then
