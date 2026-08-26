@@ -21,10 +21,26 @@ checkout or downloaded copy rather than fetching anything itself:
 
 --check exits 1 naming the drift direction; --write copies the canonical bytes
 in. A missing --canonical is a hard error, never a skip: a mirror check that
-silently passes without its reference measures nothing. The LIVE leg of this
-invariant runs in agx1-live-verify.yml, which byte-compares the served
-canonical against the committed mirror on every pull request - so drift
-between the repositories is caught even though no local gate can see both.
+silently passes without its reference measures nothing.
+
+The LIVE leg of this invariant runs in agx1-live-verify.yml, so drift between
+the repositories is caught even though no local gate can see both. It reads
+THREE operands, not two, because two cannot tell "the served bytes are wrong"
+from "main is simply behind the canonical" - both produce served != mirror:
+
+  * the served bytes must be a canonical some repository authorises, checked
+    against the Games checkout. Wrong served bytes block on every ref.
+  * if a pull request MOVES the mirror, the mirror it proposes must be the
+    served canonical byte for byte. Corrupting or deleting it blocks.
+  * if a pull request does not touch the mirror, drift it merely inherited
+    from main is named, itemised and warned about, but not charged to that
+    pull request. On any other ref - main, a dispatch - the same drift blocks.
+
+Read against main's copy alone the leg was both unfixable and blind: a Games
+shelf change made main stale the instant it landed, and the only thing that
+could clear it was a site pull request that the leg then redded; meanwhile a
+pull request that broke the mirror passed. docs/MBM_LIVE_MIRROR_LEG_DEADLOCK.md
+carries the account.
 """
 from __future__ import annotations
 
