@@ -390,4 +390,3 @@ Source of truth is `data/audience-homepages.json`, rendered by
     CTA: `Search authoritative resources` -> `/education-hub/?origin=external&audience=partners`
   - **Made by Matt internal catalogue** — Search only the canonical Made by Matt index for lessons, resources, tools and apps.
     CTA: `Search internal material` -> `/resources/`
-

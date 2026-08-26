@@ -35,4 +35,3 @@ was reached by the sweep, looked at, and **left exactly as it was**. Each row sa
 | item | why |
 |---|---|
 | `Section 19` on `/for/councils-organisations/` | §FC4.3 names it as a sector-recognition term and I tried to use it. `verify_catalogue_counts.mjs` then went red: the numeral `19` sits in a node that also contains the word "route", and the gate flags any 2–6 digit numeral next to a catalogue noun. The gate is mechanically right and red line 7 forbids counts in prose. **I did not weaken the gate to admit my own sentence** — that is precisely the move this estate's register calls out. The duty is named in words instead: *"a duty to arrange suitable education"*, which is what Section 19 says. `PEP` and `Virtual School` are both present as written. If you want the statutory citation itself on the page, it needs a declared exemption for statutory references in the gate — a small, separate change, and yours to authorise rather than mine to slip in. |
-
