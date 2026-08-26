@@ -519,3 +519,66 @@ Landing the branch and the pull request is the deliverable.
 
 Every §1.2 provenance row is resolved. No row is UNRESOLVED, and no SHA in this
 file was written that was not produced by a command printed beside it.
+
+---
+
+## ANNOTATION — ORDER DL, 2026-08-26
+
+**Everything above stands. This section is appended, not applied over.** Two
+things happened after it was written: it was audited row by row, and the one
+item it records as open was closed.
+
+### The provenance audit
+
+Every SHA, PR number, run id and count above was re-derived in the DL session
+before this record was allowed to merge, per §D0.2(7) — a close record is the
+one artefact whose entire job is to be true.
+
+| class | count | result |
+|---|---|---|
+| resolvable hex tokens | 24 | every one resolves, and to the object it is named as |
+| tokens recorded as **not** resolving | 3 | `7e4a11b`, `a19f02c`, `d83e102` — correctly marked. They are quoted here as the *false* claims of an earlier record, and they genuinely do not resolve, which is the point being made |
+| run ids | 4 | all exist, each with the branch and conclusion stated |
+| PR references | 10 | nine site PRs merged as stated; `#41` is a **Games** PR, verified from the Games tip rather than the site API |
+| counts | — | `558 → 549`, `717`, `64`, `28,805 / 28,722`, `755,918` all reproduced |
+
+Two worth naming because they were checked against a different repository than
+the text might suggest:
+
+```
+Games tip 43b29f79231115740abc9ffc3c2bee64743aa8d8
+  subject Z3: apply the six verified descriptions to games.json … (#41)
+  committed 2026-08-26T15:30:41+01:00  ==  14:30:41Z   <- as recorded above
+
+pathway-carrying records, measured across the three landings
+  before #190  558
+  after  #190  549      <- the 558 -> 549 loss belongs HERE
+  after  #191  549      <- #191 moved it by zero, as its delta cap required
+```
+
+**No row failed. Nothing above is retracted.**
+
+### What is now superseded, and only this
+
+This record states that #191 is blocked on a click and that the mirror-leg patch
+is **not applied**. Both were true when written. Neither is true now.
+
+ORDER DL applied the repair onto #191's own branch, so the pull request carrying
+the fix was tested by the fix, and **#191 merged** — `f41a9e32a9cc82ac759367e111bf2266a14d6208`,
+with 14 checks green and no override. `docs/MBM_LIVE_MIRROR_LEG_DEADLOCK.md`
+carries the full account under its own `APPLIED` heading, including why what
+landed is not byte-for-byte the patch recorded there.
+
+Consequently these rows are stale, not wrong:
+
+- **#191 head `c707277`** — its head at the time of writing. It merged at
+  `95828d894f292783b476eb1e943418d81fe4d362`.
+- **merge ref `fabc2715`** — recomputed by GitHub on every push; the value here
+  was correct for `c707277`.
+- **"the workflow file on main is byte-identical to before the experiment,
+  `50702afefaff1497…`, 20,047 B"** — true until #191 landed. `main` now carries
+  the repaired leg.
+
+**`Mirror equals the canonical shelf` remains advisory in both repositories.**
+That has not changed, and making it required is still a branch-protection
+decision that belongs to Matt.
