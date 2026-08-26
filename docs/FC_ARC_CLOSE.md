@@ -370,6 +370,42 @@ Stated plainly because §5.1 turns on it: **a docs-only pull request with zero
 reporting checks is not green, it is unmeasured**, and the difference matters
 more here than anywhere else in this file.
 
+**And then the tidy explanation turned out not to be the operative one.** After
+the rebase onto `main`, a push produced no run either — and the wider query says
+why the base/paths reasoning is not the cause: **the newest `pull_request` run in
+the entire repository is `2026-08-26T16:13:42Z`**, on the other branch. Nothing
+PR-triggered has been created anywhere since, across two pushes on two branches.
+
+The single re-arm §2.5 allows was spent on a `workflow_dispatch` of the same
+workflow file on this branch. **It queued, ran and completed in under a minute.**
+So Actions is not down; `pull_request`-triggered run *creation* is the thing that
+has stopped. That is a narrower and better-supported finding than "Actions is
+unavailable", and it is the one recorded.
+
+The correct account is therefore two facts, not one: this diff is docs-only and
+so only three workflows could ever apply to it; and independently of that, no
+pull-request run is being created at present. The first was my reasoning; the
+second is what the measurement says. Register line 6 in its own image — the
+explanation that fitted was contaminated by being the one I had just constructed.
+
+**What the dispatch measured, since it ran.** On this branch — pure docs, off
+`main`, carrying main's mirror — the job failed at:
+
+```
+run 32993238604 · workflow_dispatch · head 2fc981c1572f
+  job  Fetch the live estate and compare to raw-at-SHA        -> failure
+  step #12  Shelf mirror equals the served canonical, byte for byte -> failure
+```
+
+That is §0.-1's prediction demonstrated rather than argued: **the deadlock reds a
+site branch that changes nothing but documentation.** Note the step number — **#12
+here, #13 on #191** — because this branch does not carry §X4's report-only leg,
+which sits before it. The two numbers agreeing in name and differing by exactly
+one inserted step is a consistency check on both readings.
+
+A dispatch run is a run, but it is not this pull request's reporting check. For
+merge purposes the pull request remains **unmeasured**, and therefore **HELD**.
+
 ## §1.6 — The register
 
 1. a relayed finding is a hypothesis — including your own handback list
