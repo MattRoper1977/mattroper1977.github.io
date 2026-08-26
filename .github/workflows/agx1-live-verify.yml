@@ -242,6 +242,114 @@ jobs:
           print('Biopunk in manifest', any('biopunk' in e['href'].lower() for e in g))
           PY
 
+      # §X4 (ORDER FC-X, X-D4) — REPORT-ONLY. Added because the estate wrote
+      # "verified against the committed tree and a local reproduction" for a
+      # change it could have fetched: §Z2 altered the pathway facets in
+      # data/mbm-search-index.json, this job fetched every other live surface,
+      # and the search index appeared ZERO times in this file. A production
+      # check that never fetches the artefact that changed is not production
+      # verification.
+      #
+      # DELIBERATELY NON-BLOCKING, and placed BEFORE the mirror leg so it still
+      # reports while that leg is red. This job had just been wedged by a
+      # blocking leg aimed at the wrong tree; adding a second blocking leg in
+      # the same change is how that happens again. Promotion to blocking is a
+      # later pass, once it has been green across several merges, and it is on
+      # the appendix as its own item.
+      #
+      # Report-only is not the same as unable to detect. The negative control
+      # below means a leg that has stopped discriminating says MEASUREMENT
+      # INVALID out loud rather than printing a reassuring line about nothing,
+      # and a planted regression is named in the report — proven in four cases
+      # before this was proposed.
+      - name: Live search index, as served (REPORT-ONLY, never blocks)
+        shell: bash
+        run: |
+          # Every path ends 0 — this step never fails the job.
+          set -uo pipefail
+
+          URL=https://madebymatt.uk/data/mbm-search-index.json
+          echo "== live search index, as served =="
+          echo "   $URL"
+
+          if ! curl -sS --max-time 30 "$URL" -o /tmp/live-index.json; then
+            echo "   FETCH FAILED — reported, not asserted. This leg does not block."
+            exit 0
+          fi
+          if ! python3 -c 'import json,sys; json.load(open("/tmp/live-index.json"))' 2>/dev/null; then
+            echo "   SERVED BYTES ARE NOT VALID JSON — reported, not asserted."
+            echo "   $(wc -c < /tmp/live-index.json) B $(sha256sum /tmp/live-index.json | cut -c1-16)"
+            exit 0
+          fi
+
+          live_b=$(wc -c < /tmp/live-index.json); live_h=$(sha256sum /tmp/live-index.json | cut -c1-16)
+          main_f=data/mbm-search-index.json
+          ref_f=_tools/data/mbm-search-index.json
+
+          # NEGATIVE CONTROL — a comparison that cannot fail reports nothing worth having.
+          printf 'x' > /tmp/live-index.mutated; cat /tmp/live-index.json >> /tmp/live-index.mutated
+          if cmp -s /tmp/live-index.json /tmp/live-index.mutated; then
+            echo "   MEASUREMENT INVALID: cmp called a one-byte mutation identical to the original."
+            echo "   This leg cannot discriminate, so anything it reports below is worthless."
+            exit 0
+          fi
+          echo "   control  cmp distinguishes a one-byte mutation — the comparisons below are live"
+
+          echo "   served   ${live_b} B ${live_h}"
+          if test -f "$main_f"; then
+            m_b=$(wc -c < "$main_f"); m_h=$(sha256sum "$main_f" | cut -c1-16)
+            echo "   main     ${m_b} B ${m_h}"
+            if cmp -s /tmp/live-index.json "$main_f"; then
+              echo "   MATCH    the served index is byte-identical to the deployed tree"
+            else
+              echo "   DIFFERS  the served index is not the deployed tree's copy"
+              echo "            usually Pages lag; a persistent difference is a real finding"
+            fi
+          else
+            echo "   main     ABSENT — nothing to compare the served bytes against"
+          fi
+          if test -f "$ref_f"; then
+            r_b=$(wc -c < "$ref_f"); r_h=$(sha256sum "$ref_f" | cut -c1-16)
+            if [ "$r_h" != "${m_h:-}" ]; then
+              echo "   ref      ${r_b} B ${r_h}   (this pull request changes the index)"
+            else
+              echo "   ref      unchanged by this pull request"
+            fi
+          fi
+
+          # THE CENSUS THAT MATTERS: the facet the estate could not previously fetch.
+          python3 - <<'PY'
+          import json
+          d = json.load(open("/tmp/live-index.json"))
+          recs = d if isinstance(d, list) else next(
+              (d[k] for k in ("records", "entries", "items", "docs", "index") if isinstance(d.get(k), list)), None)
+          if recs is None:
+              print("   census   MEASUREMENT INVALID: no record list in the served index"); raise SystemExit(0)
+          if not recs:
+              print("   census   MEASUREMENT INVALID: zero records — a census over an empty set proves nothing")
+              raise SystemExit(0)
+          def cat(r): return r.get("category") or r.get("kind") or r.get("type")
+          def pw(r):
+              v = r.get("pathway")
+              return tuple(v) if isinstance(v, list) else ((v,) if v else ())
+          TEACHING = {"BUILD", "GROW", "LAUNCH"}
+          games = [r for r in recs if cat(r) == "game"]
+          bad = [r for r in games if TEACHING & set(pw(r))]
+          print(f"   census   {len(recs)} records served · {len(games)} in the game class")
+          print(f"   census   game records carrying a teaching pathway (BUILD/GROW/LAUNCH): {len(bad)}")
+          if not games:
+              print("   census   MEASUREMENT INVALID: no game-class records found, so the 0 above means nothing")
+          elif bad:
+              for r in bad[:10]:
+                  print(f"              {r.get('id') or r.get('href')}  {pw(r)}")
+              print("   census   ^ these are live and should not be. Reported, not asserted.")
+          else:
+              print("   census   none — the class exclusion holds AS SERVED")
+          PY
+
+          echo "   (report-only by ORDER FC-X X-D4; promotion to blocking is a later pass)"
+          exit 0
+
       # THE MIRROR LEG — ruled 2026-08-13, closing the two-shelves divergence.
       # The served /Games/games.json (the Games repository's file, which the
       # arcade fetches at runtime) is the canonical shelf; this repository's
