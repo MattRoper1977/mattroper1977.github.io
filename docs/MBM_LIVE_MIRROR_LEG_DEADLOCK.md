@@ -389,3 +389,120 @@ value.
   checkout. A future `sparse-checkout: tools/` would silently reinstate the
   deadlock. The MEASUREMENT INVALID branch catches it, which is why that branch
   earns its place — but the name should stop inviting the change.
+
+---
+
+# APPLIED — ORDER DL, 2026-08-26
+
+**Everything above this line is the diagnosis and the adjudication. This section
+records what actually landed, because it is not byte-for-byte the patch recorded
+above and a doc that claims otherwise is the exact provenance failure this arc
+keeps finding.**
+
+Applied onto this branch (ORDER DL `PATCH_ROUTE=ONTO-191`), so that the pull
+request carrying the fix is tested by the fix — a `pull_request` workflow runs
+from the PR's own merge ref. A separate patch PR would have been redded by the
+unfixed check, turning one deadlock into two.
+
+## Where the recorded patch fell short, measured rather than argued
+
+The recorded patch asserts on `_tools/data/source-manifests/games.json` and
+nothing else. ORDER DL §D2.3 requires a control the recorded patch fails:
+
+> **C4** — unrelated docs-only PR on a drifted `main` → blocking leg **GREEN**,
+> drift line **present and named**.
+
+Under the recorded patch that control **reds**. A pull request that does not
+touch the mirror produces a merge ref whose mirror *is* main's, so it inherits
+the drift and fails on it. The recorded patch says so itself and treats it as a
+feature ("NEGATIVE 1 is the one that matters"). But §D2.1 rules the other way:
+
+> **Fact B** — `main` has moved ahead of the last deploy. Inherited drift. Not a
+> defect of any PR under test, and specifically not of a PR that touches nothing
+> near the mirror.
+
+So the recorded patch lifts the deadlock only for the one repairing pull
+request, and leaves every other pull request red for a tree it did not write.
+
+## Why two operands cannot do it, and the third one that can
+
+Gating the assertion on "did this ref move the mirror" satisfies C4 — and
+immediately fails **C1**, the planted wrong served byte, because a pull request
+that does not move the mirror would then be excused and the wrong byte excused
+with it. That is the amnesty §D2.3 forbids outright.
+
+The reason is structural: **"the served bytes are wrong" and "main is behind"
+produce the identical observation**, `served != mirror`. No pair of operands can
+separate them. The third operand is the canonical itself — and
+`agx1-live-verify.yml` has been checking it out into `_shelf/` for three steps
+above the whole time. This is follow-up **R1**, promoted from "worth adding on
+its own" to load-bearing.
+
+| operand | what it is |
+|---|---|
+| `_shelf/games.json` | the canonical, at the Games repository tip |
+| `/tmp/canonical.json` | the canonical, **as served** |
+| `data/source-manifests/games.json` | the mirror in the **deployed** tree |
+| `_tools/data/source-manifests/games.json` | the mirror in the tree **this ref** would produce |
+
+## What landed
+
+1. **Fact A — the served bytes.** Blocking on every ref, in every context. If
+   the served shelf matches neither the Games tip nor the deployed tree, it is a
+   shelf no repository authorises and the leg exits 1. Games having moved ahead
+   of its own deploy is named as **lag**, not reported as a wrong byte.
+2. **Fact B — the mirror.** If the ref **moves** the mirror it must move it to
+   the served canonical, byte for byte. Corrupt blocks. Absent is
+   `MEASUREMENT INVALID` and never falls through to main's copy. If the ref does
+   **not** touch the mirror, inherited drift is named, **itemised entry by
+   entry**, emitted as a `::warning` and written to the step summary — and not
+   charged to that pull request. On any non-`pull_request` ref the same drift
+   still exits 1.
+3. The negative control and the fail-closed branch from the recorded patch are
+   kept verbatim in intent. `curl` gains `--fail`, closing **R3**: a 404 body is
+   no longer compared as though it were the canonical and reported as drift.
+   **R4** is closed by the `::warning` and step summary.
+
+Still `cmp -s`, byte for byte. Nothing about how loosely it compares changed —
+only what it compares against, and in which context it is answerable.
+
+## The five controls, in CI, on real runs
+
+Each ran as a `DL-CONTROL/` scratch pull request against the patched leg and was
+closed unmerged the moment it was read. **Every one resolved at step 13, the
+mirror leg itself** — no earlier step failed, so each reached the instrument's
+real input.
+
+| control | run | step 13 | required | got |
+|---|---|---|---|---|
+| C1 planted wrong **served** byte | `33023137314` | `FAIL the SERVED bytes are not any committed canonical` | RED | RED |
+| C2 corrupt the mirror in the PR tree | `33023141124` | `FAIL this ref moves the mirror and the result is NOT the served canonical` | RED | RED |
+| C3 delete the mirror in the PR tree | `33023149700` | `MEASUREMENT INVALID … will not fall through to the deployed tree's copy and call that a pass` | RED | RED |
+| C4 unrelated PR on a drifted `main` | `33023153698` | `DRIFT INHERITED` + 6 entries named, leg **green** | GREEN + named | GREEN + named |
+| C5 the same drift off a pull request | `33023158094` | `FAIL … it IS this ref's own state, and it blocks` | RED | RED |
+
+C1 could not be planted in production, so the wrong bytes were committed to the
+scratch branch and served over real HTTPS by `raw.githubusercontent.com`, with
+the fetch URL as the single altered line. The comparison underneath is the
+shipped one.
+
+Sibling gates that fired because a fixture was deliberately corrupted or deleted
+(C2 and C3: `Static gates`, `Static architecture…`, `Every curated and rail key…`,
+`Mirror equals the canonical shelf`, `Gates are proven red…`) are **EXPECTED-RED**
+and are not findings. On C4, whose tree is main's own state plus a document, the
+only red is `Mirror equals the canonical shelf` — the advisory guard that *owns*
+drift, correctly reporting it while the live leg no longer punishes an unrelated
+pull request for it. That division of labour is the point.
+
+## The blindness, stated plainly
+
+Before this change, **a pull request that deleted the shelf mirror passed the
+check that exists to protect it**, by falling through to main's copy; one that
+corrupted it passed the same way. That is the more important half of this repair
+and it should not be filed under the deadlock story. C2 and C3 are its proof.
+
+## R2 still stands, and still is not this order's to take
+
+`Mirror equals the canonical shelf` remains **advisory in both repositories**.
+Making it required is a branch-protection change, which is Matt's by standing
+ruling and is not needed by this repair.
