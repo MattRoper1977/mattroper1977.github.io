@@ -153,7 +153,18 @@ in the two source manifests.
 ## Pupil surface — every visible string that moved
 
 The one surface where a wrong string reaches a child, so it is printed in full (§FC3.5).
-Exactly seven, and nothing else on that page moved.
+**Exactly one string ships in this PR**, and nothing else on that page moved:
+
+| before | after |
+|---|---|
+| Nothing has been opened from a Made by Matt discovery card on this device yet. | You haven't opened anything on this device yet. |
+
+The six game descriptions below were **written, verified against the artefacts, and then
+reverted** — see *The mirror ruling* immediately after this table. They are queued in
+`docs/FC_GAMES_DESCRIPTIONS_FOR_CANONICAL.md`, ready to apply in the repository that owns
+them.
+
+### The six, as verified (NOT applied here)
 
 | before | after |
 |---|---|
@@ -164,6 +175,26 @@ Exactly seven, and nothing else on that page moved.
 | Whole-class team quiz: pupils take on the staff across scored rounds. Class-vs-teacher framing — no individual leaderboard. | Whole-class team quiz: your class takes on the staff across scored rounds. Teams score, not individuals — no individual leaderboard. |
 | Teacher-driven end-of-term tournament: … | An end-of-term tournament your teacher runs: … |
 | Nothing has been opened from a Made by Matt discovery card on this device yet. | You haven't opened anything on this device yet. |
+
+### The mirror ruling — why the six are not in this PR
+
+`data/source-manifests/games.json` in this repository is **a mirror, not a source**. Matt
+ruled on 2026-08-13, closing the two-shelves divergence, that the canonical shelf is
+`games.json` in the **Games** repository — the file the served arcade actually fetches —
+and that this copy is produced by `render_games_manifest_mirror.py` and nothing else.
+`tools/render_games_manifest_mirror.py` states it in its own docstring: *"Hand edits to the
+mirror die at the next --check."*
+
+I edited the mirror. The next `--check` killed it: `Shelf mirror is not stale` went red on
+this PR's first CI run. **The gate did exactly what it exists to do.** The edits are
+reverted — `games.json`, `lessons-resources.json` and the derived `mbm-search-index.json`
+are byte-identical to `main` in this PR — and the six descriptions are handed off with
+their verification intact. The 2026-08-12 two-shelves incident cost the estate a day;
+honouring the single-writer ruling is worth more than landing a copy improvement sooner.
+
+Applying them means a change in `MattRoper1977/Games`, which is a third repository and
+outside this order's declared venue. Red line: *if you find yourself building something
+that is not on this list, stop and ledger it.*
 
 Every mechanic named was read out of the artefact first (`DESCRIPTIONS=verified-only`).
 Nothing was invented: the pack's pursuing drones, decoy pings, Focus meters, Leave Ratings,
@@ -247,7 +278,7 @@ changed strings: **0**. New CSS class tokens: **0** (107 before, 107 after).
 | # | adoption | state |
 |--:|---|---|
 | 1 | pupils identity split / bridge block | **closed on arrival** — already existed |
-| 2 | second-person voice on pupil copy | **done** — 6 descriptions + the renderer's empty state |
+| 2 | second-person voice on pupil copy | **partly done** — the renderer's empty state ships; the 6 game descriptions are written and verified but belong to the Games repository and are queued, not applied |
 | 3 | internal vocabulary cut, estate-wide | **done** — 31 record strings + 1 renderer string |
 | 4 | CTA labels name their destination | **closed on arrival** — TS §1.7 |
 | 5 | parents FAQ restructured truthfully | **done** — 4 questions added, 3 kept verbatim, accounts answer corrected |
@@ -255,6 +286,11 @@ changed strings: **0**. New CSS class tokens: **0** (107 before, 107 after).
 
 Gates: `s21` **built and proved red**, `s22` **built and proved red**, `s23` **ledgered PROPOSED**.
 That is **2 of 3**, named rather than rounded up.
+
+Adoption 2 is **partial and said so**: the renderer's empty-state string ships, the six game
+descriptions do not. They are verified and queued in
+`docs/FC_GAMES_DESCRIPTIONS_FOR_CANONICAL.md`. Counting that adoption as complete would have
+been rounding up.
 
 ## A contradiction, noted and not acted on (§FC0.9)
 
