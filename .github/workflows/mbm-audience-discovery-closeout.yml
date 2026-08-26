@@ -242,6 +242,19 @@ jobs:
         shell: bash
         run: node tools/verify_guard_clause_present.mjs
 
+      # BUILD, GROW and LAUNCH are pathways and also three of the most ordinary
+      # verbs in English. The index matches them against a record's own prose
+      # with the case already flattened, so it cannot tell "build your Keeper
+      # Record" from the BUILD pathway - nine arcade records were filed under a
+      # teaching pathway on exactly that. The exclusion is a CLASS rule, not an
+      # id list, so it also catches the tenth. Absence of the record fails in
+      # both the gate and the generator, never passes.
+      - name: No excluded class carries a teaching-pathway facet
+        id: s24-pathway-exclusions
+        if: always()
+        shell: bash
+        run: node tools/verify_pathway_exclusions.mjs
+
       - name: Aggregate - one failure costs one signal, not the suite
         if: always()
         shell: bash
@@ -500,6 +513,50 @@ jobs:
             echo "::error::guard-clause gate failed, but not on the assertion this control names"
             printf '%s\n' "$out"; exit 1; }
           echo "guard-clause gate fired, and named the audience"
+
+      # Three ways, because the interesting failure is the silent one: a record
+      # that vanishes restores the defect while every check stays green.
+      - name: Pathway exclusions notice absence, emptiness and a regained facet
+        id: s24c-pathway-exclusions-notice-absence-empt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp data/pathway-exclusions.json /tmp/px.bak
+          cp data/mbm-search-index.json /tmp/pidx.bak
+
+          mv data/pathway-exclusions.json /tmp/px.hidden
+          set +e; out="$(node tools/verify_pathway_exclusions.mjs 2>&1)"; rc=$?; set -e
+          mv /tmp/px.hidden data/pathway-exclusions.json
+          if [ "$rc" -eq 0 ]; then echo "::error::gate passed with the exclusion record absent"; exit 1; fi
+          if ! grep -q 'MEASUREMENT INVALID' <<< "$out"; then
+            echo "::error::gate failed on absence, but not as MEASUREMENT INVALID"; printf '%s\n' "$out"; exit 1
+          fi
+
+          echo '{"excludedCategories": []}' > data/pathway-exclusions.json
+          set +e; out="$(node tools/verify_pathway_exclusions.mjs 2>&1)"; rc=$?; set -e
+          cp /tmp/px.bak data/pathway-exclusions.json
+          if [ "$rc" -eq 0 ]; then echo "::error::gate passed with an empty exclusion list"; exit 1; fi
+          if ! grep -q 'MEASUREMENT INVALID' <<< "$out"; then
+            echo "::error::gate failed on emptiness, but not as MEASUREMENT INVALID"; printf '%s\n' "$out"; exit 1
+          fi
+
+          python3 - <<'PYEOF'
+          import json, pathlib
+          p = pathlib.Path('data/mbm-search-index.json')
+          d = json.loads(p.read_text(encoding='utf-8'))
+          e = d['entries']
+          rec = e['game-biopunkhive'] if isinstance(e, dict) else next(r for r in e if r['id'] == 'game-biopunkhive')
+          rec['pathway'] = ['GROW']
+          p.write_text(json.dumps(d, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PYEOF
+          set +e; out="$(node tools/verify_pathway_exclusions.mjs 2>&1)"; rc=$?; set -e
+          cp /tmp/pidx.bak data/mbm-search-index.json
+          if [ "$rc" -eq 0 ]; then echo "::error::gate passed with an excluded record carrying a pathway facet"; exit 1; fi
+          if ! grep -q 'carries a teaching-pathway facet' <<< "$out"; then
+            echo "::error::gate failed, but not on the assertion this control names"; printf '%s\n' "$out"; exit 1
+          fi
+          echo "pathway exclusions fired on all three: absence, emptiness, a regained facet"
 
       - name: External link classification controls
         id: s08-external-link-classification-controls
