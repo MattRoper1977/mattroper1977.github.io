@@ -176,6 +176,56 @@ def pathway_for(text: str) -> list[str] | None:
     return matched or None
 
 
+PATHWAY_EXCLUSIONS = ROOT / "data" / "pathway-exclusions.json"
+
+
+def load_pathway_exclusions() -> set[str]:
+    """Categories that never take a teaching-pathway facet.
+
+    BUILD, GROW and LAUNCH are pathways and also three of the most ordinary
+    verbs in English. pathway_for() matches words against a record's own prose
+    with the case already flattened, so it cannot tell "build your Keeper
+    Record" from the BUILD pathway. Nine arcade records were filed under a
+    teaching pathway on exactly that confusion.
+
+    Absence is a failure, never a pass. A vanished record would restore the
+    broken behaviour while every check stayed green, which is the false-green
+    species this estate has paid for before.
+    """
+    if not PATHWAY_EXCLUSIONS.exists():
+        raise SystemExit(
+            "MEASUREMENT INVALID: data/pathway-exclusions.json is absent. This "
+            "generator will not fall back to unguarded text matching."
+        )
+    record = json.loads(PATHWAY_EXCLUSIONS.read_text(encoding="utf-8"))
+    categories = {c for c in record.get("excludedCategories", []) if c}
+    if not categories:
+        raise SystemExit(
+            "MEASUREMENT INVALID: data/pathway-exclusions.json declares no "
+            "excluded categories. An empty rule would exclude nothing while "
+            "reading as a guard."
+        )
+    return categories
+
+
+def pathway_for_category(category: str | None, text: str,
+                         excluded: set[str]) -> list[str] | None:
+    """The exclusion is consulted BEFORE the matcher, never after.
+
+    Filtering afterwards would still let a new pathway value slip through on a
+    verb; refusing to match at all is the rule the class deserves.
+    """
+    if category in excluded:
+        return None
+    return pathway_for(text)
+
+
+# Loaded once, at import. If the record is missing or empty this raises before
+# a single entry is built - the generator refuses to produce an index rather
+# than produce a quietly wrong one.
+PATHWAY_EXCLUDED = load_pathway_exclusions()
+
+
 def keywords_for(*parts: Any) -> list[str]:
     collected: set[str] = set()
     for part in parts:
@@ -264,7 +314,7 @@ def build_lessons_and_resources(records, rules, reclassify: set[str], dropped: s
             "subject": record["subject"],
             "family": record.get("family"),
             "year": record.get("year"),
-            "pathway": pathway_for(route_text),
+            "pathway": pathway_for_category(category, route_text, PATHWAY_EXCLUDED),
             "format": "Game" if category == "game" else lessons_format(record),
             "audience": audience,
             "source": "Lesson Hub",
@@ -311,7 +361,7 @@ def build_games(games: list[dict[str, Any]], rules, overrides: dict[str, str]) -
             # Pathway does use the description: an Arcade blurb saying a game
             # was built for BUILD is a genuine pathway signal, where the same
             # blurb saying "design" is not a teaching task.
-            "pathway": pathway_for(" ".join([text, game.get("desc") or "", game["href"]]).lower()),
+            "pathway": pathway_for_category("game", " ".join([text, game.get("desc") or "", game["href"]]).lower(), PATHWAY_EXCLUDED),
             "tasks": tasks_for(text, rules),
             # The committed index keeps the empty slot when a game has no
             # collection, so these are not filtered for truthiness.
@@ -357,7 +407,7 @@ def build_apps(spaces, rules, aliases: dict[str, str], game_hrefs: set[str]) -> 
                 # Pathway reads the description and the filename; the app's
                 # display name is not a pathway signal ("Typing Tutor" is not
                 # Tutor Time).
-                "pathway": pathway_for(" ".join([item.get("d") or "", item["f"]]).lower()),
+                "pathway": pathway_for_category("tool" if teacher_space else "app", " ".join([item.get("d") or "", item["f"]]).lower(), PATHWAY_EXCLUDED),
                 # Everything in the teacher-tools space supports assessment by
                 # virtue of being there, whether or not its blurb says so - all
                 # ten carry the task in the committed index.
