@@ -424,7 +424,10 @@ jobs:
           # written to the file and compared as though it were the canonical. It
           # fails closed either way, but it reports a fetch failure AS DRIFT, and
           # that sends the next reader to the wrong repository entirely.
-          if ! curl -sS --fail --max-time 30 https://madebymatt.uk/Games/games.json -o "$served"; then
+          # DL-CONTROL C1 ONLY. The single line this control changes: the fetch is
+          # pointed at deliberately wrong bytes served over real HTTPS, because
+          # production cannot be tampered with. Everything below is untouched.
+          if ! curl -sS --fail --max-time 30 https://raw.githubusercontent.com/MattRoper1977/mattroper1977.github.io/c0a0270d199cdc5dcd318a241e4b414ee848d38b/docs/dl-control/served-tampered.json -o "$served"; then
             echo "  MEASUREMENT INVALID: the served canonical could not be fetched."
             echo "  Nothing below would mean anything - neither a pass nor a drift report."
             exit 1
