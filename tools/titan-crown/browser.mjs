@@ -114,6 +114,16 @@ function playwrightChromium() {
 
 function sha(buffer) { return createHash('sha256').update(buffer).digest('hex'); }
 function visible(box) { return !!box && box.width > 0 && box.height > 0; }
+async function stableElementScreenshot(page, selector, label) {
+  let previous = null;
+  for (let sample = 1; sample <= 8; sample += 1) {
+    const current = await page.locator(selector).screenshot();
+    if (previous && Buffer.compare(previous, current) === 0) return current;
+    previous = current;
+    await page.waitForTimeout(90);
+  }
+  throw new Error(`${label} did not produce two consecutive byte-identical frames`);
+}
 function maxRateHz(times) {
   if (times.length < 2) return times.length ? 1 : 0;
   let min = Infinity;
@@ -411,8 +421,8 @@ async function runCrown(browser, origin) {
     await startCrown(after, `FOLD-${width}`); await startCrown(before, `FOLD-${width}`);
     await Promise.all([after.addStyleTag({ content: MAP_COMPARE_FREEZE }), before.addStyleTag({ content: MAP_COMPARE_FREEZE })]);
     await after.waitForTimeout(60);
-    const a = await after.locator('#mapCard').screenshot();
-    const b = await before.locator('#mapCard').screenshot();
+    const a = await stableElementScreenshot(after, '#mapCard', `folded map ${width}px`);
+    const b = await stableElementScreenshot(before, '#mapCard', `pre-fold map ${width}px`);
     hashes[width] = { after: sha(a), before: sha(b) };
     check(Buffer.compare(a, b) === 0, `Crown map fold ${width}px: rendered pixels are byte-identical`, hashes[width].after.slice(0, 16));
     await context.close();
@@ -427,7 +437,8 @@ async function runCrown(browser, origin) {
   await startCrown(good, 'FOLD-CONTROL'); await startCrown(bad, 'FOLD-CONTROL');
   await Promise.all([good.addStyleTag({ content: MAP_COMPARE_FREEZE }), bad.addStyleTag({ content: MAP_COMPARE_FREEZE })]);
   await good.waitForTimeout(60);
-  const goodPixels = await good.locator('#mapCard').screenshot(); const badPixels = await bad.locator('#mapCard').screenshot();
+  const goodPixels = await stableElementScreenshot(good, '#mapCard', 'fold control good map');
+  const badPixels = await stableElementScreenshot(bad, '#mapCard', 'fold control mutated map');
   check(Buffer.compare(goodPixels, badPixels) !== 0, 'CONTROL: changing the restored trailing map width makes pixel identity red');
   await controlContext.close();
 }
