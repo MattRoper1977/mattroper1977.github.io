@@ -123,8 +123,17 @@ jobs:
             --lessons-root="$CONTROL/lessons" \
             --report=artifacts/maker-splash/controls.json | tee artifacts/maker-splash/controls.log
 
+      - name: Upload control evidence before the census
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maker-splash-controls-${{ github.run_id }}
+          path: artifacts/maker-splash/
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Pre-application browser census
-        if: ${{ !cancelled() }}
+        if: ${{ success() }}
         run: |
           set -o pipefail
           node tools/verify_maker_splash.mjs \
