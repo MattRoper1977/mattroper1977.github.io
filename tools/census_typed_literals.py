@@ -92,7 +92,15 @@ def vocabulary(root):
     return routes, titles, hrefs
 
 SCAN_EXT = ('.yml', '.yaml', '.mjs', '.js', '.py', '.sh')
-SKIP_DIRS = {'.git', 'node_modules', '__pycache__', '_shelf'}
+SKIP_DIRS = {'.git', 'node_modules', '__pycache__', '_shelf', 'vendor'}
+# 'vendor' holds third-party code this estate does not author. The census asks
+# "is this a live value typed where a record could supply it", and nobody is
+# going to derive a number inside a minified upstream bundle from games.json.
+# It was added the day the shelf reached 55 entries and the digits 55 turned up
+# inside Math.floor(255*Math.random()) in uas/vendor/pdfjs/pdf.worker.min.js —
+# a 1 MB single-line file, matched twice. A finding that appears because an
+# unrelated count changed to a number that happens to occur in vendored bytes
+# is noise, and noise in a gate is how a real finding gets waved through.
 # A file whose JOB is to hold the value is not holding a copy of it.
 OWNS_ITS_VALUES = re.compile(r'(^|/)(data|schema)/|takes-pin|visual-provenance|tag-backfill'
                              r'|census_typed_literals\.py')
