@@ -1,0 +1,189 @@
+name: Town Life release contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'townlife/**'
+      - 'assets/cards/town-life.svg'
+      - 'games/index.html'
+      - 'for/pupils/index.html'
+      - 'main/index.html'
+      - 'hud.js'
+      - 'data/source-manifests/games.json'
+      - 'data/mbm-search-index.json'
+      - 'data/hud-coverage.json'
+      - 'data/visual-provenance.json'
+      - 'sitemap.xml'
+      - 'tools/townlife/**'
+      - '.github/workflows/townlife-verify.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'townlife/**'
+      - 'assets/cards/town-life.svg'
+      - 'games/index.html'
+      - 'for/pupils/index.html'
+      - 'main/index.html'
+      - 'hud.js'
+      - 'data/source-manifests/games.json'
+      - 'data/mbm-search-index.json'
+      - 'data/hud-coverage.json'
+      - 'data/visual-provenance.json'
+      - 'sitemap.xml'
+      - 'tools/townlife/**'
+      - '.github/workflows/townlife-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: read
+  pages: read
+
+concurrency:
+  group: townlife-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    name: Comparative mobile performance (round ${{ matrix.round }}/3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        round: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install benchmark dependency and Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps --no-shell chromium
+
+      - name: Comparative mobile performance and non-vacuity controls
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/townlife
+          sha256sum tools/townlife/benchmark.mjs | tee artifacts/townlife/performance-harness.txt
+          node tools/townlife/benchmark.mjs --round=${{ matrix.round }} | tee artifacts/townlife/performance-round-${{ matrix.round }}.log
+
+      - name: Upload Town Life performance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: townlife-performance-round-${{ matrix.round }}
+          path: artifacts/townlife/
+
+  aggregate:
+    name: Aggregate comparative performance evidence
+    needs: benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - name: Download all measured rounds
+        uses: actions/download-artifact@v4
+        with:
+          pattern: townlife-performance-round-*
+          path: artifacts/townlife/rounds
+          merge-multiple: true
+
+      - name: Hash-lock and aggregate the median-of-three result
+        run: |
+          set -euo pipefail
+          sha256sum tools/townlife/benchmark.mjs | tee artifacts/townlife/performance-harness.txt
+          aggregate_control_dir=$(mktemp -d)
+          cp artifacts/townlife/rounds/performance-round-*.json "$aggregate_control_dir/"
+          python3 - "$aggregate_control_dir/performance-round-2.json" <<'PY'
+          import json
+          import pathlib
+          import sys
+          target = pathlib.Path(sys.argv[1])
+          report = json.loads(target.read_text(encoding='utf-8'))
+          report['protocol']['harnessSha256'] = '0' * 64
+          target.write_text(json.dumps(report) + '\n', encoding='utf-8')
+          PY
+          if node tools/townlife/benchmark.mjs --aggregate="$aggregate_control_dir" > artifacts/townlife/aggregate-negative-control.log 2>&1; then
+            echo 'aggregate negative control unexpectedly passed'
+            exit 1
+          fi
+          grep -F 'round 2 used another harness' artifacts/townlife/aggregate-negative-control.log
+          node tools/townlife/benchmark.mjs --aggregate=artifacts/townlife/rounds | tee artifacts/townlife/performance.log
+
+      - name: Upload aggregated Town Life performance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: townlife-performance-evidence
+          path: artifacts/townlife/
+
+  verify:
+    name: Final bytes in Chromium, Firefox and WebKit
+    needs: aggregate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install verifier dependencies and browser engines
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1 acorn@8.18.0
+          npx playwright install --with-deps chromium firefox webkit
+
+      - name: Record exact release subjects
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/townlife
+          {
+            git rev-parse HEAD
+            node --version
+            sha256sum townlife/index.html assets/cards/town-life.svg data/source-manifests/games.json
+            wc -c townlife/index.html assets/cards/town-life.svg data/source-manifests/games.json
+          } | tee artifacts/townlife/identity.txt
+
+      - name: Generated files reproduce
+        run: |
+          set -o pipefail
+          python3 tools/render_inline_exit.py --root . --check | tee artifacts/townlife/inline-exit-generator.log
+          python3 tools/render_audience_homepages.py --check | tee artifacts/townlife/audience-generator.log
+          python3 tools/build_mbm_search_index.py --check | tee artifacts/townlife/search-index.log
+
+      - name: Shelf and curation contracts
+        run: |
+          set -o pipefail
+          node tools/verify_new_games_uncurated.mjs | tee artifacts/townlife/uncurated.log
+          node tools/verify_curation_keys.mjs | tee artifacts/townlife/curation-keys.log
+          node tools/verify_pupil_genres.mjs | tee artifacts/townlife/pupil-genres.log
+          node tools/verify_genre_participants.mjs | tee artifacts/townlife/genre-participants.log
+          node tools/verify_sitemap_covers_games.mjs | tee artifacts/townlife/sitemap.log
+
+      - name: Town Life rendered contract and heading control
+        run: |
+          set -o pipefail
+          node tools/townlife/verify.mjs --engines=chromium,firefox,webkit | tee artifacts/townlife/rendered.log
+
+      - name: Exact deployment, live bytes, mobile shelf and cache readback
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -o pipefail
+          node tools/townlife/verify_live.mjs --expected-sha "$GITHUB_SHA" | tee artifacts/townlife/live.log
+
+      - name: Upload Town Life evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: townlife-release-evidence
+          path: artifacts/townlife/
