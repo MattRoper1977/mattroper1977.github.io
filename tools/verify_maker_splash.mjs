@@ -273,29 +273,30 @@ async function wayOutProbe(browser, origin, route, activation) {
 
 async function reducedMotionProbe(browser, origin, route) {
   const context = await newContext(browser, { reduced: true });
+  await context.addInitScript(() => {
+    window.__mbmReducedProbe = { attached: false, started: false, endElapsed: null, endAt: null };
+    new MutationObserver(records => {
+      for (const record of records) for (const node of record.addedNodes) {
+        const el = node.nodeType === 1 && node.matches?.('[data-mbm-maker-splash]') ? node : node.querySelector?.('[data-mbm-maker-splash]');
+        if (!el || window.__mbmReducedProbe.attached) continue;
+        const probe = window.__mbmReducedProbe; probe.attached = true;
+        el.addEventListener('animationstart', event => { if (event.animationName === 'mbmSplash') probe.started = true; });
+        el.addEventListener('animationend', event => { if (event.animationName === 'mbmSplash') { probe.endElapsed = event.elapsedTime * 1000; probe.endAt = performance.now(); } });
+      }
+    }).observe(document, { childList: true, subtree: true });
+  });
   const page = await context.newPage(), errors = [];
   page.on('pageerror', error => errors.push(`pageerror: ${error.message}`));
   page.on('console', msg => { if (msg.type() === 'error') errors.push(`console: ${msg.text()}`); });
   const wall = Date.now();
   await page.goto(origin + encodeURI(route), { waitUntil: 'commit', timeout: 30000 });
-  const maker = page.locator('[data-mbm-maker-splash]');
-  const attached = await maker.waitFor({ state: 'attached', timeout: 1000 }).then(() => true).catch(() => false);
-  const start = Date.now(), samples = [];
-  if (attached) {
-    while (Date.now() - start <= 550) {
-      const visible = await maker.isVisible().catch(() => false);
-      const elapsed = Date.now() - start; samples.push({ elapsed, visible });
-      if (!visible) break;
-      await page.waitForTimeout(25);
-    }
-  }
-  const final = await maker.evaluate(el => { const css = getComputedStyle(el); return { visibility: css.visibility, pointerEvents: css.pointerEvents }; }).catch(() => ({ visibility: 'detached', pointerEvents: 'none' }));
+  await page.waitForTimeout(850);
+  const probe = await page.evaluate(() => window.__mbmReducedProbe);
+  const final = await page.locator('[data-mbm-maker-splash]').evaluate(el => { const css = getComputedStyle(el); return { visibility: css.visibility, pointerEvents: css.pointerEvents }; }).catch(() => ({ visibility: 'detached', pointerEvents: 'none' }));
   await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(error => errors.push(`domcontentloaded: ${error.message}`));
   const local = await page.evaluate(key => { try { return localStorage.getItem(key); } catch { return null; } }, KEY);
   await context.close();
-  const visibleSamples = samples.filter(sample => sample.visible);
-  const cleared = samples.find(sample => !sample.visible)?.elapsed ?? null;
-  return { attached, wall, local, errors, samples, lastVisible: visibleSamples.at(-1)?.elapsed ?? null, cleared, final };
+  return { wall, local, errors, probe, final };
 }
 
 async function census(browser, origin) {
@@ -339,7 +340,7 @@ async function controls(browser, origin) {
   const siteRoutes = applied(SITE);
   const siteRoute = SCOPE === 'lessons' ? applied(LESSONS)[1] : siteRoutes[0];
   const lessonRoute = SCOPE === 'site' ? siteRoutes[1] : applied(LESSONS)[0];
-  const reducedRoute = SCOPE === 'lessons' ? applied(LESSONS).at(-1) : (siteRoutes.find(route => route === '/resources/') || siteRoute);
+  const reducedRoute = siteRoute;
   const assertions = [];
   const check = (condition, label, detail = '') => assertions.push({ pass: !!condition, label, detail });
   let ctx = await newContext(browser);
@@ -385,13 +386,13 @@ async function controls(browser, origin) {
   check(forced.probe?.focus?.t <= (forced.probe?.last ?? 0) + 350,
     'shown time-to-interactive does not extend beyond the visible splash', JSON.stringify({ interactiveMs: forced.probe?.focus?.t, splashLastMs: forced.probe?.last }));
   const reduced = await reducedMotionProbe(browser, origin, reducedRoute);
-  check(reduced.attached && reduced.lastVisible !== null && reduced.lastVisible >= 280 && reduced.cleared !== null && reduced.cleared <= 500 && reduced.final.pointerEvents === 'none', 'SS8 reduced motion paints and clears within 500 ms', JSON.stringify(reduced));
+  check(reduced.probe?.attached && reduced.probe?.started && reduced.probe?.endElapsed >= 300 && reduced.probe?.endElapsed <= 500 && reduced.final.pointerEvents === 'none', 'SS8 reduced motion paints and clears within 500 ms', JSON.stringify(reduced));
   check(reduced.local && Math.abs(Number(reduced.local) - reduced.wall) <= 5000, 'SS8 reduced motion still writes the daily timestamp', reduced.local);
   const slowServer = await makeServer({ slowReducedRoute: reducedRoute });
   const slowOrigin = `http://127.0.0.1:${slowServer.address().port}`;
   const slowReduced = await reducedMotionProbe(browser, slowOrigin, reducedRoute);
   await new Promise(resolve => slowServer.close(resolve));
-  check(slowReduced.cleared === null || slowReduced.cleared > 500, 'RL4 reduced-motion slow-animation control turns the clearance predicate red', JSON.stringify(slowReduced));
+  check(slowReduced.probe?.endElapsed > 500, 'RL4 reduced-motion slow-animation control turns the clearance predicate red', JSON.stringify(slowReduced));
   for (const viewport of VIEWPORTS) {
     for (const action of ['key', 'pointer', 'auto', 'timeout']) {
       ctx = await newContext(browser, { viewport });
