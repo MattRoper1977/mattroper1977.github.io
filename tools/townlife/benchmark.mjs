@@ -152,14 +152,14 @@ async function dismissAndStart(page) {
     for (let index = 0; index < elements.length; index += 1) {
       const element = elements[index];
       const rawText = (element.textContent || '').trim();
-      if (!/^(start|play|begin|enter|launch|continue|new game)|start game|play now/i.test(rawText)) continue;
+      if (!/^(start|play|begin|enter|launch|continue|new game)|start game|play now|click to play/i.test(rawText)) continue;
       if (/arcade|home|back/i.test(rawText)) continue;
       const style = getComputedStyle(element);
       const box = element.getBoundingClientRect();
       if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse'
           || box.width === 0 || box.height === 0) continue;
       const text = (element.innerText || '').trim();
-      if (!/^(start|play|begin|enter|launch|continue|new game)|start game|play now/i.test(text)) continue;
+      if (!/^(start|play|begin|enter|launch|continue|new game)|start game|play now|click to play/i.test(text)) continue;
       if (/arcade|home|back/i.test(text)) continue;
       return { index, text };
     }
@@ -219,22 +219,25 @@ async function measureRoute(browser, origin, game, round) {
   const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
   assert.equal(response?.status(), 200, `${game.title}: navigation returned ${response?.status()}`);
   await page.waitForTimeout(500);
-  let startControl = await dismissAndStart(page);
-  // Complete route setup at normal speed before applying the measurement
-  // instrument. The initial input is identical for every route; the measured
-  // window below performs the same script again under the 6x throttle.
-  await scriptedInput(page);
+  const startControl = await dismissAndStart(page);
   if (game.href === '/voxel/') {
+    assert.equal(startControl, 'Click to Play', 'Voxel setup control was not exercised');
     await page.waitForFunction(
       () => document.getElementById('start')?.textContent === 'Resume',
       null,
       { timeout: 120000 },
     );
-    startControl ||= 'scripted input (overlay)';
+    await page.waitForFunction(
+      () => document.getElementById('hud')?.textContent.includes('view 3'),
+      null,
+      { timeout: 10000 },
+    );
   }
   // Throttle the identical warm-up and measured window, not HTML/JS parsing or
-  // route setup. Voxel's terrain generation is startup work, not frame work.
+  // route setup. Voxel's terrain generation completes at its initial view 3;
+  // no unthrottled input window is allowed to tune that view upward first.
   await session.send('Emulation.setCPUThrottlingRate', { rate: CPU_THROTTLE });
+  await scriptedInput(page);
   await page.waitForTimeout(WARM_UP_MS);
   const measured = await frameWindow(page);
   await context.close();
