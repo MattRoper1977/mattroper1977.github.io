@@ -150,9 +150,27 @@ async function closeTracked(track, label) {
   await track.context.close();
 }
 
-async function waitTitan(page) {
-  await page.locator('.lift-button').waitFor({ state: 'visible', timeout: 20000 });
-  await page.locator('.avatar-placeholder img').waitFor({ state: 'visible', timeout: 10000 });
+async function waitTitan(track, label = 'Titan') {
+  const { page } = track;
+  try {
+    await page.locator('.lift-button').waitFor({ state: 'visible', timeout: 20000 });
+    await page.locator('.avatar-placeholder img').waitFor({ state: 'visible', timeout: 10000 });
+  } catch (error) {
+    const state = await page.evaluate(() => ({
+      title: document.title,
+      readyState: document.readyState,
+      rootPresent: !!document.querySelector('#game-root'),
+      rootChildren: document.querySelector('#game-root')?.childElementCount || 0,
+      liftCount: document.querySelectorAll('.lift-button').length,
+      bodyChildren: document.body?.childElementCount || 0,
+      bodyText: (document.body?.innerText || '').trim().slice(0, 240),
+    })).catch(evaluateError => ({ evaluateError: evaluateError.message }));
+    const shot = path.join(OUT, 'titan-boot-failure.png');
+    await page.screenshot({ path: shot, fullPage: false }).catch(() => {});
+    const detail = { state, offOrigin: track.offOrigin, failed: track.failed, errors: track.errors };
+    console.error(`[BOOT DIAGNOSTIC] ${label}: ${JSON.stringify(detail)}`);
+    throw new Error(`${label} did not reach a playable mount: ${error.message}`);
+  }
 }
 
 async function titanImageState(page) {
@@ -200,7 +218,7 @@ async function runTitan(browser, origin) {
   for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
     const mobile = viewport.width < 600;
     const t = await trackedPage(browser, origin, '/__game__/titanforge/', { viewport, touch: mobile, mobile });
-    await waitTitan(t.page);
+    await waitTitan(t, `Titan ${viewport.width}x${viewport.height}`);
     const images = await titanImageState(t.page);
     check(images.athlete.painted, `Titan ${viewport.width}×${viewport.height}: athlete WebP paints`, `${images.athlete.width}×${images.athlete.height}`);
     check(images.background.painted, `Titan ${viewport.width}×${viewport.height}: background WebP paints`, `${images.background.width}×${images.background.height}`);
@@ -219,20 +237,20 @@ async function runTitan(browser, origin) {
   }
 
   const corrupt = await trackedPage(browser, origin, '/__corrupt__/titanforge/');
-  await waitTitan(corrupt.page);
+  await waitTitan(corrupt, 'Titan corrupt-WebP control');
   const corruptState = await titanImageState(corrupt.page);
   check(Buffer.byteLength(corruptTitan) < 1_000_000, 'CONTROL: corrupt Titan remains below the size ceiling', `${Buffer.byteLength(corruptTitan)} B`);
   check(!corruptState.athlete.painted, 'CONTROL: corrupt athlete makes the render predicate red', `${corruptState.athlete.width}×${corruptState.athlete.height}`);
   await corrupt.context.close();
 
   const noTouch = await trackedPage(browser, origin, '/__no_touch__/titanforge/');
-  await waitTitan(noTouch.page);
+  await waitTitan(noTouch, 'Titan no-touch control');
   const noTouchValue = await noTouch.page.locator('.lift-button').evaluate(el => getComputedStyle(el).touchAction);
   check(noTouchValue !== 'manipulation', 'CONTROL: removing touch-action makes the computed-style predicate red', noTouchValue);
   await noTouch.context.close();
 
   const save = await trackedPage(browser, origin, '/__game__/titanforge/');
-  await waitTitan(save.page);
+  await waitTitan(save, 'Titan hostile-save path');
   const hostile = await save.page.evaluate(() => {
     const api = window.__MBM_TITAN_TEST__;
     const cases = [
@@ -258,14 +276,14 @@ async function runTitan(browser, origin) {
     return expected;
   });
   await save.page.reload({ waitUntil: 'domcontentloaded' });
-  await waitTitan(save.page);
+  await waitTitan(save, 'Titan save reload');
   await save.page.waitForTimeout(350);
   const titanActual = await save.page.evaluate(() => JSON.parse(localStorage.getItem('mbm_titanforge_save_v1') || 'null'));
   check(JSON.stringify(titanActual) === JSON.stringify(titanExpected), 'Titan: a shipped save reloads lossless');
   await closeTracked(save, 'Titan hostile-save and roundtrip path');
 
   const motion = await trackedPage(browser, origin, '/__game__/titanforge/');
-  await waitTitan(motion.page);
+  await waitTitan(motion, 'Titan full-motion path');
   const aura = await motion.page.locator('.power-aura').evaluate(el => ({ name: getComputedStyle(el).animationName, duration: getComputedStyle(el).animationDuration }));
   const seconds = Number.parseFloat(aura.duration) || 0;
   metrics.titanAuraHz = seconds ? 1 / seconds : 0;
@@ -273,7 +291,7 @@ async function runTitan(browser, origin) {
   await motion.context.close();
 
   const reduced = await trackedPage(browser, origin, '/__game__/titanforge/', { reduced: true });
-  await waitTitan(reduced.page);
+  await waitTitan(reduced, 'Titan reduced-motion path');
   const reducedState = await reduced.page.evaluate(async () => {
     const shell = document.querySelector('.game-shell');
     const aura = document.querySelector('.power-aura');
@@ -393,18 +411,23 @@ async function runCrown(browser, origin) {
 const instance = await createServer();
 const origin = `http://127.0.0.1:${instance.address().port}`;
 let browser;
+let fatal = null;
 try {
   const chromium = playwrightChromium();
   const executablePath = chromium.executablePath();
   browser = await chromium.launch({ headless: true, ...(executablePath && fs.existsSync(executablePath) ? { executablePath } : {}) });
   await runTitan(browser, origin);
   await runCrown(browser, origin);
+} catch (error) {
+  fatal = error instanceof Error ? `${error.name}: ${error.message}\n${error.stack || ''}` : String(error);
+  failures.push(`browser harness fatal: ${fatal}`);
+  console.error(fatal);
 } finally {
   if (browser) await browser.close();
   await new Promise(resolve => instance.close(resolve));
 }
 
-fs.writeFileSync(path.join(OUT, 'browser-metrics.json'), JSON.stringify({ pass, failures, metrics }, null, 2) + '\n');
+fs.writeFileSync(path.join(OUT, 'browser-metrics.json'), JSON.stringify({ pass, failures, metrics, fatal }, null, 2) + '\n');
 console.log(`\nbrowser launch contract: ${pass}/${pass + failures.length} passed`);
 if (failures.length) {
   console.error(`${failures.length} FAILED`);

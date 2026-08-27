@@ -140,17 +140,25 @@ jobs:
           python3 tools/render_audience_homepages.py --check | tee artifacts/titan-crown/audience-generator.log
           python3 tools/build_mbm_search_index.py --check | tee artifacts/titan-crown/search-index.log
 
+      - name: Titan and Crown rendered acceptance gate
+        run: |
+          set -euo pipefail
+          node tools/titan-crown/browser.mjs artifacts/titan-crown | tee artifacts/titan-crown/browser.log
+
       - name: Generated splash is observed by polling in both motion states
-        run: node tools/verify_games_splash.mjs | tee artifacts/titan-crown/splash-runtime.log
+        run: |
+          set -euo pipefail
+          node tools/verify_games_splash.mjs | tee artifacts/titan-crown/splash-runtime.log
 
       - name: Every declared game retains a rendered way out
-        run: node tools/verify_inline_exit.mjs --lessons "$GITHUB_WORKSPACE/_lessons" | tee artifacts/titan-crown/inline-exit.log
-
-      - name: Titan and Crown rendered acceptance gate
-        run: node tools/titan-crown/browser.mjs artifacts/titan-crown | tee artifacts/titan-crown/browser.log
+        run: |
+          set -euo pipefail
+          node tools/verify_inline_exit.mjs --lessons "$GITHUB_WORKSPACE/_lessons" | tee artifacts/titan-crown/inline-exit.log
 
       - name: Both shelf surfaces share one taxonomy and preserve the card invariant
-        run: node tools/verify_pupil_genres.mjs | tee artifacts/titan-crown/pupil-genres.log
+        run: |
+          set -euo pipefail
+          node tools/verify_pupil_genres.mjs | tee artifacts/titan-crown/pupil-genres.log
 
       - name: Upload launch evidence and viewport captures
         if: always()
