@@ -387,8 +387,12 @@ def self_test() -> int:
               f"wired ({len(wired)}), inline exit region ({len(by_exit)}), "
               f"declared ({len(declared)}) — nothing in between")
         if ahead:
+            # Scoped to THIS tool on purpose. Such an entry is not inert: it is
+            # already the membership source for render_inline_exit.py, which
+            # obliges the route to carry the stamped exit region today. It is
+            # only this walk that cannot see it yet.
             print(f"  [note] {len(ahead)} exclusion(s) recorded ahead of the inventory, "
-                  f"governing nothing yet: {', '.join(ahead)}")
+                  f"so not walked here yet: {', '.join(ahead)}")
 
     # The classification itself, run against a game that is bare and undeclared.
     # The first draft of this control compared a wired route against the
@@ -499,7 +503,7 @@ def main() -> None:
     print(f"  {len(wired)} route(s) wired · {len(by_exit)} by inline exit region · "
           f"{len(declared)} declared in data/hud-coverage.json"
           + (f" · {len(ahead)} declared ahead of the inventory "
-             f"({', '.join(ahead)}), governing nothing yet" if ahead else ""))
+             f"({', '.join(ahead)}), not walked here yet" if ahead else ""))
     # Scope, printed rather than implied. "every inventory game is wired or
     # declared" reads estate-wide and is true of this repository's share; the
     # rest are governed by the other repository's ledger, and no check here can

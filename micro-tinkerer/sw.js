@@ -20,7 +20,7 @@
  * are not cached here and their absence offline costs nothing.
  */
 
-const VERSION = 'micro-tinkerer-v1.2.0';
+const VERSION = 'micro-tinkerer-v1.2.1';
 const PRECACHE = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {
