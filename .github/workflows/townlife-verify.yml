@@ -46,9 +46,13 @@ concurrency:
 
 jobs:
   benchmark:
-    name: Comparative mobile performance
+    name: Comparative mobile performance (round ${{ matrix.round }}/3)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        round: [1, 2, 3]
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 1 }
@@ -59,16 +63,61 @@ jobs:
       - name: Install benchmark dependency and Chromium
         run: |
           npm install --no-save --no-package-lock playwright@1.56.1
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps --no-shell chromium
 
       - name: Comparative mobile performance and non-vacuity controls
         run: |
           set -euo pipefail
           mkdir -p artifacts/townlife
           sha256sum tools/townlife/benchmark.mjs | tee artifacts/townlife/performance-harness.txt
-          node tools/townlife/benchmark.mjs | tee artifacts/townlife/performance.log
+          node tools/townlife/benchmark.mjs --round=${{ matrix.round }} | tee artifacts/townlife/performance-round-${{ matrix.round }}.log
 
       - name: Upload Town Life performance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: townlife-performance-round-${{ matrix.round }}
+          path: artifacts/townlife/
+
+  aggregate:
+    name: Aggregate comparative performance evidence
+    needs: benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - name: Download all measured rounds
+        uses: actions/download-artifact@v4
+        with:
+          pattern: townlife-performance-round-*
+          path: artifacts/townlife/rounds
+          merge-multiple: true
+
+      - name: Hash-lock and aggregate the median-of-three result
+        run: |
+          set -euo pipefail
+          sha256sum tools/townlife/benchmark.mjs | tee artifacts/townlife/performance-harness.txt
+          aggregate_control_dir=$(mktemp -d)
+          cp artifacts/townlife/rounds/performance-round-*.json "$aggregate_control_dir/"
+          python3 - "$aggregate_control_dir/performance-round-2.json" <<'PY'
+          import json
+          import pathlib
+          import sys
+          target = pathlib.Path(sys.argv[1])
+          report = json.loads(target.read_text(encoding='utf-8'))
+          report['protocol']['harnessSha256'] = '0' * 64
+          target.write_text(json.dumps(report) + '\n', encoding='utf-8')
+          PY
+          if node tools/townlife/benchmark.mjs --aggregate="$aggregate_control_dir" > artifacts/townlife/aggregate-negative-control.log 2>&1; then
+            echo 'aggregate negative control unexpectedly passed'
+            exit 1
+          fi
+          grep -F 'round 2 used another harness' artifacts/townlife/aggregate-negative-control.log
+          node tools/townlife/benchmark.mjs --aggregate=artifacts/townlife/rounds | tee artifacts/townlife/performance.log
+
+      - name: Upload aggregated Town Life performance evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -77,7 +126,7 @@ jobs:
 
   verify:
     name: Final bytes in Chromium, Firefox and WebKit
-    needs: benchmark
+    needs: aggregate
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

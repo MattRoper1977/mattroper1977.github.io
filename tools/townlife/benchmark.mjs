@@ -6,7 +6,6 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const SEED = 20260827;
@@ -35,6 +34,9 @@ const INPUTS = [
   ['key', 'ArrowRight'],
   ['tap', 0.65, 0.68],
 ];
+const ROUND_ARGUMENT = process.argv.find(argument => argument.startsWith('--round='));
+const AGGREGATE_ARGUMENT = process.argv.find(argument => argument.startsWith('--aggregate='));
+assert(!(ROUND_ARGUMENT && AGGREGATE_ARGUMENT), 'choose either --round=N or --aggregate=DIR');
 
 function sha256(bytes) {
   return crypto.createHash('sha256').update(bytes).digest('hex');
@@ -277,24 +279,63 @@ const shipped = [
 assert.equal(shipped.length, 10);
 assert.equal(new Set(shipped.map(game => game.href)).size, 10);
 const town = { ...byHref.get(TOWN), category: 'candidate' };
-const identities = {};
-for (const game of [...shipped, town]) identities[game.href] = await routeIdentity(game);
-
 const harnessBytes = fs.readFileSync(fileURLToPath(import.meta.url));
-const { server, origin } = await startServer();
-const browser = await chromium.launch({ headless: true });
-const runs = Object.fromEntries([...shipped, town].map(game => [game.href, []]));
-try {
-  for (let round = 0; round < ROUNDS; round += 1) {
-    const order = seededShuffle([...shipped, town], SEED + round);
-    for (const game of order) {
-      const result = await measureRoute(browser, origin, game, round);
-      runs[game.href].push(result);
-      console.log(`ROUND ${round + 1} ${game.title}: ${result.fps.toFixed(2)} fps (${result.frames} frames/${result.elapsedMs.toFixed(0)} ms; start=${JSON.stringify(result.startControl)}; errors=${result.pageErrors.length})`);
+const harnessSha256 = sha256(harnessBytes);
+const derivation = {
+  newest: NEWEST,
+  heavyWebgl: heavy.map(game => ({ href: game.href, bytes: game.byteLength })),
+  seededRandom: random.map(game => game.href),
+};
+const expectedGames = [...shipped, town];
+const expectedByHref = new Map(expectedGames.map(game => [game.href, game]));
+
+function protocol(browserVersion) {
+  return {
+    seed: SEED,
+    viewport: VIEWPORT,
+    cpuThrottle: CPU_THROTTLE,
+    rounds: ROUNDS,
+    warmUpMs: WARM_UP_MS,
+    measuredWindowMs: MEASURE_MS,
+    scriptedInput: INPUTS,
+    randomAlgorithm: 'xorshift32 + descending Fisher-Yates',
+    percentileAlgorithm: 'linear interpolation at (N-1)*0.25',
+    harnessSha256,
+    browserChannel: 'chromium (new headless)',
+    chromiumVersion: browserVersion,
+  };
+}
+
+function writeFinalReport(roundReports) {
+  assert.equal(roundReports.length, ROUNDS, `expected ${ROUNDS} round artifacts`);
+  roundReports.sort((left, right) => left.round - right.round);
+  assert.deepEqual(roundReports.map(report => report.round), [1, 2, 3], 'round artifacts are incomplete or duplicated');
+  const reference = roundReports[0];
+  for (const report of roundReports) {
+    assert.equal(report.protocol.harnessSha256, harnessSha256, `round ${report.round} used another harness`);
+    assert.deepEqual({ ...report.protocol, chromiumVersion: reference.protocol.chromiumVersion }, reference.protocol,
+      `round ${report.round} changed the protocol or browser channel`);
+    assert.equal(report.protocol.chromiumVersion, reference.protocol.chromiumVersion,
+      `round ${report.round} used another Chromium version`);
+    assert.deepEqual(report.derivation, derivation, `round ${report.round} changed sample derivation`);
+    assert.deepEqual(report.identities, reference.identities, `round ${report.round} executable hashes changed`);
+    assert.equal(report.samples.length, expectedGames.length, `round ${report.round} sample is incomplete`);
+    assert.deepEqual(new Set(report.samples.map(sample => sample.href)), new Set(expectedGames.map(game => game.href)),
+      `round ${report.round} sampled another route set`);
+    for (const sample of report.samples) {
+      const expected = expectedByHref.get(sample.href);
+      assert(expected, `round ${report.round} has unexpected route ${sample.href}`);
+      assert.equal(sample.title, expected.title, `round ${report.round} changed title for ${sample.href}`);
+      assert.equal(sample.category, expected.category, `round ${report.round} changed category for ${sample.href}`);
     }
   }
-  const firstControl = await measureControl(browser, FIRST_CONTROL_BUSY_MS);
-  const recalibratedControl = await measureControl(browser, RECALIBRATED_CONTROL_BUSY_MS);
+  const controlsReport = roundReports.find(report => report.controls);
+  assert(controlsReport && controlsReport.round === ROUNDS, 'controls must run once, after round 3');
+  assert.equal(roundReports.filter(report => report.controls).length, 1, 'controls ran more than once');
+  const runs = Object.fromEntries(expectedGames.map(game => [game.href, []]));
+  for (const report of roundReports) {
+    for (const sample of report.samples) runs[sample.href].push(sample.result);
+  }
   const distribution = shipped.map(game => ({
     title: game.title,
     href: game.href,
@@ -308,27 +349,13 @@ try {
   const townRuns = runs[TOWN].map(run => run.fps);
   const townMedian = median(townRuns);
   const verdict = townMedian >= bar ? 'PUBLISH_COMPROMISE' : 'HOLD_PERFORMANCE_OUTLIER';
+  const firstControl = controlsReport.controls.firstFps;
+  const recalibratedControl = controlsReport.controls.recalibratedFps;
   assert(recalibratedControl < Math.min(...distribution.map(game => game.medianFps)), 'recalibrated control must land below the shipped band');
 
   const report = {
-    protocol: {
-      seed: SEED,
-      viewport: VIEWPORT,
-      cpuThrottle: CPU_THROTTLE,
-      rounds: ROUNDS,
-      warmUpMs: WARM_UP_MS,
-      measuredWindowMs: MEASURE_MS,
-      scriptedInput: INPUTS,
-      randomAlgorithm: 'xorshift32 + descending Fisher-Yates',
-      percentileAlgorithm: 'linear interpolation at (N-1)*0.25',
-      harnessSha256: sha256(harnessBytes),
-      chromiumVersion: browser.version(),
-    },
-    derivation: {
-      newest: NEWEST,
-      heavyWebgl: heavy.map(game => ({ href: game.href, bytes: game.byteLength })),
-      seededRandom: random.map(game => game.href),
-    },
+    protocol: { ...reference.protocol, execution: 'three hash-locked round jobs, aggregated after all complete' },
+    derivation,
     controls: {
       first: { busyMsPerFrame: FIRST_CONTROL_BUSY_MS, fps: Number(firstControl.toFixed(2)), disposition: 'rejected unless below the complete shipped band' },
       recalibrated: { busyMsPerFrame: RECALIBRATED_CONTROL_BUSY_MS, fps: Number(recalibratedControl.toFixed(2)), disposition: 'valid below-band non-vacuity control' },
@@ -349,7 +376,57 @@ try {
   console.log('PERFORMANCE_JSON ' + JSON.stringify(report));
   console.log(`PERFORMANCE VERDICT — ${verdict}; Town Life ${townMedian.toFixed(2)} fps; shipped p25 ${bar.toFixed(2)} fps; controls ${firstControl.toFixed(2)} / ${recalibratedControl.toFixed(2)} fps`);
   if (verdict !== 'PUBLISH_COMPROMISE') process.exitCode = 1;
-} finally {
-  await browser.close();
-  await new Promise(resolve => server.close(resolve));
+}
+
+async function runRound(roundNumber) {
+  assert(Number.isInteger(roundNumber) && roundNumber >= 1 && roundNumber <= ROUNDS,
+    `--round must be an integer from 1 to ${ROUNDS}`);
+  const roundIndex = roundNumber - 1;
+  const identities = {};
+  for (const game of expectedGames) identities[game.href] = await routeIdentity(game);
+  const { server, origin } = await startServer();
+  const { chromium } = await import('playwright');
+  const browser = await chromium.launch({ headless: true, channel: 'chromium' });
+  try {
+    const samples = [];
+    const order = seededShuffle(expectedGames, SEED + roundIndex);
+    for (const game of order) {
+      const result = await measureRoute(browser, origin, game, roundIndex);
+      samples.push({ title: game.title, href: game.href, category: game.category, result });
+      console.log(`ROUND ${roundNumber} ${game.title}: ${result.fps.toFixed(2)} fps (${result.frames} frames/${result.elapsedMs.toFixed(0)} ms; start=${JSON.stringify(result.startControl)}; errors=${result.pageErrors.length})`);
+    }
+    let controls = null;
+    if (roundNumber === ROUNDS) {
+      controls = {
+        firstFps: await measureControl(browser, FIRST_CONTROL_BUSY_MS),
+        recalibratedFps: await measureControl(browser, RECALIBRATED_CONTROL_BUSY_MS),
+      };
+    }
+    const report = {
+      protocol: protocol(browser.version()),
+      round: roundNumber,
+      derivation,
+      identities,
+      samples,
+      controls,
+    };
+    const artifactDir = path.join(ROOT, 'artifacts/townlife');
+    fs.mkdirSync(artifactDir, { recursive: true });
+    fs.writeFileSync(path.join(artifactDir, `performance-round-${roundNumber}.json`), JSON.stringify(report, null, 2) + '\n');
+    console.log('PERFORMANCE_ROUND_JSON ' + JSON.stringify(report));
+  } finally {
+    await browser.close();
+    await new Promise(resolve => server.close(resolve));
+  }
+}
+
+if (AGGREGATE_ARGUMENT) {
+  const directory = path.resolve(ROOT, AGGREGATE_ARGUMENT.slice('--aggregate='.length));
+  const files = fs.readdirSync(directory)
+    .filter(file => /^performance-round-[1-3]\.json$/.test(file))
+    .map(file => path.join(directory, file));
+  writeFinalReport(files.map(file => JSON.parse(fs.readFileSync(file, 'utf8'))));
+} else {
+  assert(ROUND_ARGUMENT, `run one measured round with --round=1..${ROUNDS}, or aggregate with --aggregate=DIR`);
+  await runRound(Number(ROUND_ARGUMENT.slice('--round='.length)));
 }
