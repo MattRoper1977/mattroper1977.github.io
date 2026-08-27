@@ -2639,6 +2639,20 @@ function closeModal(id){
 }
 function closeTopModal(){if(DialogueManager.active){DialogueManager.close();return}const open=[...document.querySelectorAll('.modalWrap')].reverse().find(modal=>modal.style.display==='grid');if(open)closeModal(open.id)}
 function trapModalFocus(event){if(event.key!=='Tab')return;const open=[...document.querySelectorAll('.modalWrap')].reverse().find(modal=>modal.style.display==='grid');if(!open)return;const visible=element=>element.offsetParent!==null;const modalControls=[...open.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(visible),exitControls=[...document.querySelectorAll('#mbmexit-back,#mbmexit-home')].filter(visible);if(!modalControls.length)return;const first=modalControls[0],modalLast=modalControls[modalControls.length-1],exitFirst=exitControls[0],last=exitControls[exitControls.length-1]||modalLast;if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(event.shiftKey&&exitFirst&&document.activeElement===exitFirst){event.preventDefault();modalLast.focus()}else if(!event.shiftKey&&exitFirst&&document.activeElement===modalLast){event.preventDefault();exitFirst.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}}
+function placePlatformExitsFirst(){
+  let observer;
+  const place=()=>{
+    const back=$('mbmexit-back'),home=$('mbmexit-home');
+    if(!back||!home)return;
+    observer?.disconnect();
+    const first=document.body.firstChild;
+    document.body.insertBefore(back,first);
+    document.body.insertBefore(home,back.nextSibling);
+  };
+  observer=new MutationObserver(place);
+  observer.observe(document.body,{childList:true});
+  place();
+}
 
 function updateCutaways(){
   const speed=state.reducedMotion?1:.14;
@@ -3202,7 +3216,7 @@ function installQAInterface(){
 function initialise(){
   window.__MBM_TOWN_LIFE_STATUS__={ready:false,stage:'initialising',version:VERSION};
   document.querySelectorAll('.modalWrap').forEach(modal=>{modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-hidden','true')});
-  initialiseVisualAssets();initialiseCatalogue();wireInterface();wireInput();installQAInterface();ensureColliders();
+  initialiseVisualAssets();initialiseCatalogue();wireInterface();wireInput();placePlatformExitsFirst();installQAInterface();ensureColliders();
   $('profileName').value=state.profile;$('settingsName').value=state.profile;$('audioToggle').checked=state.audio;$('motionToggle').checked=state.reducedMotion;$('contrastToggle').checked=state.highContrast;$('timeToggle').checked=state.freezeTime;$('cameraToggle').checked=state.cameraEffects;$('telemetryToggle').checked=state.telemetry;$('cctvToggle').checked=state.cctvPip;$('utilityToggle').checked=state.utilityTelemetry;$('visionToggle').checked=state.policeCones;$('weatherToggle').checked=state.weatherEffects;$('weatherSelect').value=state.weatherMode;
   if(QA_MODE){state.firstRun=false;$('welcome').style.display='none'}else $('welcome').style.display=state.firstRun?'grid':'none';$('welcome').setAttribute('aria-hidden',$('welcome').style.display==='grid'?'false':'true');
   if(state.bankAlarm){$('alert').style.display='block'}state.cctv.pipOpen=false;$('cctvPip').style.display='none';
