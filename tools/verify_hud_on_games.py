@@ -369,9 +369,30 @@ def self_test() -> int:
     else:
         by_exit = [r for r in inventory if r not in excluded
                    and not HUD_TAG.search(_src(r)) and EXIT_REGION.search(_src(r))]
+        # Count each state by membership, never by subtraction. An exclusion can
+        # be recorded before its route enters the inventory — /micro-tinkerer/
+        # was, deliberately, so the declination was on file before the shelf
+        # record made the route visible — and subtracting the whole exclusion
+        # list from the inventory then charges that difference to "wired". It
+        # read 12 the day before and 11 the day after, with nothing unwired.
+        # So: three states, each measured against the inventory rather than
+        # inferred from what is left over.
+        # The three sets partition by construction once undeclared is empty, so
+        # there is no arithmetic left to assert — asserting it would be a check
+        # that cannot fail, which is worse than none.
+        declared = [r for r in inventory if r in excluded]
+        wired = [r for r in inventory if r not in excluded and HUD_TAG.search(_src(r))]
+        ahead = sorted(set(excluded) - set(inventory))
         print(f"  [PASS] all {len(inventory)} inventory games give the player a way out: "
-              f"wired ({len(inventory) - len(excluded) - len(by_exit)}), "
-              f"inline exit region ({len(by_exit)}), declared ({len(excluded)}) — nothing in between")
+              f"wired ({len(wired)}), inline exit region ({len(by_exit)}), "
+              f"declared ({len(declared)}) — nothing in between")
+        if ahead:
+            # Scoped to THIS tool on purpose. Such an entry is not inert: it is
+            # already the membership source for render_inline_exit.py, which
+            # obliges the route to carry the stamped exit region today. It is
+            # only this walk that cannot see it yet.
+            print(f"  [note] {len(ahead)} exclusion(s) recorded ahead of the inventory, "
+                  f"so not walked here yet: {', '.join(ahead)}")
 
     # The classification itself, run against a game that is bare and undeclared.
     # The first draft of this control compared a wired route against the
@@ -469,8 +490,20 @@ def main() -> None:
           f"{len(findings.failures)} failed")
     print(f"  {len(routes)} root-level game route(s), one index.html file each, "
           f"x {len(VIEWPORTS)} viewport(s), from the search index")
-    print(f"  {len(routes) - len(excluded)} route(s) wired · {len(excluded)} declared in "
-          f"data/hud-coverage.json")
+    # Counted by membership, not by subtracting the exclusion list from the
+    # inventory. That subtraction was wrong in both directions at once: it
+    # charged the inline-exit game to "wired", and it deducted an exclusion
+    # recorded ahead of its route from "wired" too. Between them it printed the
+    # right number for the wrong reason, which is the reading that does not
+    # announce itself when one of the two errors goes away.
+    wired = [r for r in wired_games()[0] if r not in excluded]
+    declared = [r for r in routes if r in excluded]
+    by_exit = [r for r in routes if r not in excluded and r not in wired]
+    ahead = sorted(set(excluded) - set(routes))
+    print(f"  {len(wired)} route(s) wired · {len(by_exit)} by inline exit region · "
+          f"{len(declared)} declared in data/hud-coverage.json"
+          + (f" · {len(ahead)} declared ahead of the inventory "
+             f"({', '.join(ahead)}), not walked here yet" if ahead else ""))
     # Scope, printed rather than implied. "every inventory game is wired or
     # declared" reads estate-wide and is true of this repository's share; the
     # rest are governed by the other repository's ledger, and no check here can

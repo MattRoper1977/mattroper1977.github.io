@@ -96,19 +96,35 @@ def route_sets(root: Path) -> dict:
     # The floor is derived, not a constant. |A| is fixed by the three files;
     # if the arithmetic does not hold, the record disagrees with itself and
     # that is INCONCLUSIVE rather than a pass over whatever survived.
-    floor = len(inventory) - len(excluded) - len(region_only)
+    #
+    # Subtract only what is IN the inventory. The ledger legitimately carries
+    # exclusions the inventory cannot see yet: hud-coverage.json is also the
+    # membership source for render_inline_exit.py, so a game's exclusion has to
+    # be on file BEFORE its shelf record makes the route visible to the search
+    # index. /micro-tinkerer/ is exactly that case. Subtracting the raw counts
+    # charged such an entry to A, and this check then refused to run at all —
+    # the right refusal on the wrong arithmetic, which is why it is fixed here
+    # rather than relaxed.
+    excluded_in = set(excluded) & set(inventory)
+    region_in = set(region_only) & set(inventory)
+    ahead = sorted((set(excluded) | set(region_only)) - set(inventory))
+    floor = len(inventory) - len(excluded_in) - len(region_in)
     if floor <= 0:
         raise Inconclusive(
             f"the derived wired set is empty: {len(inventory)} inventory routes "
-            f"- {len(excluded)} excluded - {len(region_only)} region-only")
+            f"- {len(excluded_in)} excluded - {len(region_in)} region-only")
+    # This can still fire, and on a real contradiction: a route recorded as both
+    # excluded and region-only is counted once by the set difference and twice
+    # by the subtraction, and the ledger cannot mean both.
     if len(wired) != floor:
         raise Inconclusive(
             f"the coverage record does not add up: |A|={len(wired)} but "
-            f"{len(inventory)}-{len(excluded)}-{len(region_only)}={floor}. "
-            "An excluded or region-only route is not in the inventory.")
+            f"{len(inventory)}-{len(excluded_in)}-{len(region_in)}={floor}. "
+            "A route is recorded as both excluded and region-only.")
 
     return {"line": line, "inventory": inventory, "excluded": excluded,
-            "regionOnly": region_only, "declared": declared, "wired": wired, "floor": floor}
+            "regionOnly": region_only, "declared": declared, "wired": wired,
+            "floor": floor, "ahead": ahead}
 
 
 # -------------------------------------------------------------------- check
@@ -338,10 +354,18 @@ def main() -> int:
         return 2
     for b in bad:
         print(f"[FAIL] {b}")
+    # The three counts must add to the inventory, so they are the IN-inventory
+    # counts. Exclusions recorded ahead of their route are real and are stated,
+    # but they are not part of this partition and must not be added into it.
+    ex_in = len(set(s['excluded']) & set(s['inventory']))
+    ro_in = len(set(s['regionOnly']) & set(s['inventory']))
     print(f"hud scriptLine: {len(s['wired'])} wired route(s) held to the canonical string, "
-          f"{len(s['regionOnly'])} region-only, {len(s['excluded'])} excluded, "
+          f"{ro_in} region-only, {ex_in} excluded, "
           f"out of {len(s['inventory'])} root game routes derived from {INDEX}; "
           f"{len(ok)} claim(s) hold, {len(bad)} do not")
+    if s.get('ahead'):
+        print(f"  note: {len(s['ahead'])} route(s) declared in the ledger ahead of the "
+              f"inventory, so outside this partition: {', '.join(s['ahead'])}")
     return 1 if bad else 0
 
 

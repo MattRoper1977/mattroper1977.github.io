@@ -60,6 +60,18 @@
    ]
   },
   {
+   "route": "/micro-tinkerer/",
+   "verifier": "tools/microtinkerer/run.sh",
+   "gates": [
+    "single-file: the game loads no external script, and its only markup reference is its own manifest",
+    "pointer lock and an in-game HUD: measured from the game, not assumed",
+    "the way out: the generated inline exit region is present, and the detector notices when it is removed",
+    "offline: the service worker's scope is /micro-tinkerer/ and no wider, and a second load with the network off still boots"
+   ],
+   "note": "Declared-declined on two independent grounds, either of which alone would exclude it. First, the same single-file contract that excluded /apexpool/ and /apexrally/: the game carries zero external scripts, so <script src=\"/hud.js\"> would retract that promise rather than merely trip a check. Second, it is a full-screen WebGL game that takes pointer lock and draws its own HUD, so the estate HUD would fight both — an overlay a player cannot click because the pointer is locked is worse than no overlay. The way out is the generated inline exit region, which this entry is what obliges: it is inline, so it retracts nothing, and it is reachable by Tab, so it survives pointer lock where a click target would not. Its verifier is a suite rather than a single .mjs because the offline leg needs a served origin and a real browser; run.sh serves and drives it.",
+   "_scopeNote": "This entry governs two different things on two different clocks, and they must not be conflated. IMMEDIATELY: data/hud-coverage.json is the membership source for tools/render_inline_exit.py, so declaring the route here is what obliges micro-tinkerer/index.html to carry the generated exit region — CI went red on exactly that within minutes of this entry landing, which is the check working. NOT YET: verify_hud_on_games.py walks root_game_routes(), which derives from data/mbm-search-index.json, which derives from the shelf record, so that tool does not see this route until the Micro-Tinkerer record lands in games.json. An earlier draft of this note claimed the entry governed nothing at all until then. That was an inference from one downstream path, not a measurement of all of them."
+  },
+  {
    "route": "/neonmeridian/",
    "verifier": "tools/verify_driving_games.mjs",
    "gates": [
