@@ -35,6 +35,8 @@ on:
 
 permissions:
   contents: read
+  deployments: read
+  pages: read
 
 concurrency:
   group: townlife-${{ github.event.pull_request.number || github.ref }}
@@ -94,6 +96,14 @@ jobs:
         run: |
           set -o pipefail
           node tools/townlife/verify.mjs --engines=chromium,firefox,webkit | tee artifacts/townlife/rendered.log
+
+      - name: Exact deployment, live bytes, mobile shelf and cache readback
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -o pipefail
+          node tools/townlife/verify_live.mjs --expected-sha "$GITHUB_SHA" | tee artifacts/townlife/live.log
 
       - name: Upload Town Life evidence
         if: always()
