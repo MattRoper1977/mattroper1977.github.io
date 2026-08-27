@@ -147,7 +147,11 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
   if (appeared) {
     await page.waitForTimeout(20);
     if (action === 'key') await page.keyboard.press('a');
-    else if (action === 'pointer') await maker.click({ position: { x: 20, y: 20 } });
+    else if (action === 'pointer') {
+      const box = await maker.boundingBox();
+      if (box) await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      else errors.push('pointer: splash had no rendered box');
+    }
     else if (action === 'timeout') await maker.evaluate(el => { el.style.animation = 'none'; });
     if (action !== 'none') await maker.waitFor({ state: 'detached', timeout: 2800 }).catch(() => {});
   }
