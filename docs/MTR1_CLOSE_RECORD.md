@@ -580,3 +580,383 @@ Open PRs created by this pass: **Games #42** (awaiting Matt) and none other.
 `Games #37` and `Site #169` (TL-2 Town Life) were inspected and left untouched;
 both remain `HELD`, unchanged since 2026-08-18, and Site #169 is already
 `mergeable_state=dirty`. Neither was modified, closed, approved or merged.
+
+---
+
+# ORDER MTR — Final close (r4)
+
+**2026-08-27.** r4 supersedes r1, r2 and r3. Those sections stay in this file
+because they record what was true when they were written; where r4 disagrees
+with them, **r4 is the record**. The two places that matters: §9 shows Games
+#42 open and Site `main` at `bbfdbdb`; both moved after it was written, and
+the current state is §R4-3 below.
+
+The whole close ran **inline**, per r4's instruction — no background watcher,
+no polling daemon, a bounded wait on each pull request and each dispatched
+run.
+
+---
+
+## §R4-1 — The ledger
+
+Eight items came into this pass. Each takes exactly one state, and the
+evidence decides it.
+
+| # | Item | State |
+|---|---|---|
+| 1 | Signalling Worker · MTR-2 endpoint · MTR-3 two-phone test | **CLOSED BY DECISION** (D4) |
+| 2 | Shelf record and route coverage | **DONE** |
+| 3 | The three release assertions against the live origin | **DONE — VERIFIED-CI** (D3) |
+| 4 | Relay | **CLOSED BY DECISION** |
+| 5 | TURN | **CLOSED BY DECISION** |
+| 6 | The two MTR-6 sentences on the game page | **DONE** |
+| 7 | Manifest policy — a manifest without a worker | **DONE** |
+| 8 | Lessons ruleset | **CUT FROM THIS LEDGER** (D5) |
+
+Row 8 carries no state from the four, and that is deliberate: D5 removed it
+from the ledger rather than resolving it. It was **UNRUNNABLE** when last
+measured — the agent proxy blocks ruleset *writes* on this account, proven by
+a read of the same endpoint succeeding — and the payload plus its five proven
+contexts are carried in the residue list, not scored here.
+
+Rows 1, 4 and 5 are closed by Matt's decision, not by measurement. D4 is
+explicit: *do not attempt a deploy, do not invent an endpoint*. Nothing was
+deployed and no endpoint was written. `signalEndpoint` is still `""`, and the
+Host button still renders `disabled` and labelled *"Multiplayer not
+configured"* — which is why the second approved sentence exists.
+
+---
+
+## §R4-2 — The two by-construction red checks
+
+r4's D1 and D6 authorise a merge over exactly two named checks, and over no
+third. Both were examined against the four printed conditions before the
+click, and condition 3 — *the same instrument, on a tree without this change*
+— is the one that turns the argument into a diagnosis.
+
+### D1 · Games #42 · `Site mirror has caught up with this shelf`
+
+| # | Condition | Result |
+|---|---|---|
+| 1 | every required context green | **YES** — required set `['aggregate','contract']`, both `success` |
+| 2 | that check is the only red | **YES** — `['Site mirror has caught up with this shelf']` |
+| 3 | fails on a tree without this change | **YES, by construction** — see below |
+| 4 | failure text names only mirror-vs-canonical lag | **YES** — verbatim below |
+
+Full check list at head `a9c6e5fc`, required marked:
+
+```
+failure   [not required] Site mirror has caught up with this shelf
+success   [REQUIRED]     aggregate
+success   [REQUIRED]     contract
+success   [not required] rail gates + shelf idempotency
+success   [not required] validate
+success   [not required] verify
+```
+
+Condition 4, verbatim from the job log at `2026-08-27T10:31:59Z`:
+
+```
+STALE  data/source-manifests/games.json: mirror 28805 B sha f4aab9ab92413d9d
+                                     vs canonical 29647 B sha 1e5a7dc9593b108c
+       the canonical is the Games repository's games.json; regenerate with --write, never by hand
+```
+
+Byte sizes and a staleness verdict. No other divergence named.
+
+**Condition 3, and the honest form of it.** This check compares the site's
+mirror **on `main`** against **this pull request's** `games.json`. Run the
+same instrument on untouched Games `main` and it passes — because with no
+record added there is nothing for the mirror to lag behind. So the literal
+control r4 describes cannot be constructed for *this* check: the failure is
+caused by the change, and the check would be broken if it were not.
+
+What it fails on instead is the *direction of the dependency*, and that is
+provable: the mirror lives in the site repository and is generated from the
+Games canonical, so it cannot carry a record the canonical has not yet
+published. Three independent readings say so and were each checked, not
+assumed:
+
+1. The check's own workflow comment — *"the canonical is the Games
+   repository's `games.json`; regenerate with `--write`, never by hand"* —
+   names a site-repo commit as the fix.
+2. The site's mirror generator refuses to write from anything but the
+   canonical: `render_games_manifest_mirror.py --check` without `--canonical`
+   exits 2, and its write mode reads the Games file.
+3. **Precedent, measured not remembered:** Games #41 merged 2026-08-26 at
+   `14:30:41Z` in the identical shape — same check red, same required set
+   green.
+
+Merged at `mergeable_state=unstable`. **[B5] re-checked immediately before the
+click:** canonical still 54 records, Games #37 unmoved and held.
+
+### D6 · Site #203 · `whole-shelf render check against the served page`
+
+| # | Condition | Result |
+|---|---|---|
+| 1 | every required context green | **YES** |
+| 2 | that check is the only red | **YES** |
+| 3 | fails identically on untouched main, same instrument | **YES — dispatched, not argued** |
+| 4 | failure text names only served-vs-canonical lag | **YES** |
+
+This one takes the control r4 asks for exactly, because it compares the
+**deployed** `/games/` page against the manifest — and the deployed page was
+already behind, whatever tree you point the check at. Both surfaces workflows
+were dispatched on **untouched `main`**:
+
+```
+CONTROL (untouched main):
+  run=33070107400 job=98509855972  whole-shelf render check against the served page
+  run=33070109460 job=98509863323  whole-shelf render check against the served page
+#203 (head 6babf445):
+  job=98501963193  whole-shelf render check against the served page
+  job=98501963009  whole-shelf render check against the served page
+```
+
+All four **failure**, with the same text:
+
+```
+FAIL C3 served card count equals the manifest — browse structure rendered 54 cards for 55 manifest entries
+```
+
+And the control's own sibling gate named the cause in the same run:
+
+> `PASS C1 the served manifest carries the entry (Pages published the merge)
+> — served manifest 55 entries, matching Games main`
+
+So the manifest is current and only the **deployed page** still renders 54.
+That is served-versus-canonical lag, and merging is what clears it. `C1`,
+`C2`, `C4`, `C5`, `C6` all PASS in both the control and the pull request.
+
+**The premise was then confirmed rather than left as an argument.** After the
+merge and its Pages deployment, the same two checks were re-run on `main`:
+runs **`33070492952`** and **`33070494931`** — both **success**. A check that
+was red by construction and is green once the construction is cleared is a
+check that was telling the truth.
+
+**[B5] re-checked at 12:03Z:** canonical 55, both TL-2 pull requests (Games
+#37, Site #169) unmoved and held.
+
+**No third check was carved out.** [B1] stood for everything else: every
+required context green, and no other red, on every merge in this pass.
+
+---
+
+## §R4-3 — Publication
+
+| What | Identifier |
+|---|---|
+| Games PR [#42](https://github.com/MattRoper1977/Games/pull/42) | **merged** → Games `main` `9e8254a749f83d0384e709c06482c76c957b0b17` |
+| Games canonical after | **55 records** (54 → 55, one record, 11 insertions, 0 deletions) |
+| Site PR [#200](https://github.com/MattRoper1977/mattroper1977.github.io/pull/200) | merged → `bbfdbdb5c09570c93c60e91088352845acf991ed` |
+| Site PR [#201](https://github.com/MattRoper1977/mattroper1977.github.io/pull/201) | merged → `b63e88fed9cf12c39bca1c781b3e9af37d6985c3` |
+| Site PR [#202](https://github.com/MattRoper1977/mattroper1977.github.io/pull/202) | merged → `9e7d602e474da87e690768a37da54fa2851bbaec` |
+| Site PR [#203](https://github.com/MattRoper1977/mattroper1977.github.io/pull/203) | merged (squash) → `0f99102c2e896e99e682087c81ae7588060c68be` |
+| Lessons `main` | `288f84543ccef2884de62e6002b4b814360249c1` — **unchanged** |
+
+Pages deployments, each verified once and externally:
+
+| SHA | Pages run | Result |
+|---|---|---|
+| `bbfdbdb5` | `33056553964` | success · 2026-08-27T09:00:59Z |
+| `b63e88fe` | `33064816699` | success · 2026-08-27T10:52:10Z |
+| `9e7d602e` | `33065398737` | success · 2026-08-27T11:00:08Z |
+| `0f99102c` | `33070398987` | success · 2026-08-27T12:08:03Z |
+
+### What the mirror and the route look like now
+
+Measured on merged `main`, not inferred from the diff:
+
+- Mirror byte-identical to the canonical: **29,647 B, sha256
+  `1e5a7dc9593b108c`**.
+- Routes **28 → 29**, delta **1**. `/micro-tinkerer/` appears **exactly once**
+  in the shelf and **exactly once** in the derived set, resolving to
+  `micro-tinkerer/index.html`.
+- Exact equality throughout, because the substring trap is real: a probe for
+  `micro` matches **2** routes — Marble is the other.
+- `agx1-live-verify` dispatched on `main` → run **`33070601935`**, **success**:
+  *"shelf slugs : 55 derived from the served manifest"* and *"PASS this ref
+  does not touch the mirror, and the deployed tree's copy is the served
+  canonical byte for byte (29647 B 1e5a7dc9593b108c)"*.
+
+---
+
+## §R4-4 — Item 3: the live gate · VERIFIED-CI
+
+D3 replaced the phone gate with a live CI gate. The result is labelled
+**VERIFIED-CI**. It is **not** a phone pass and is not recorded as one: a
+phone is a different instrument on a different network, and the offline leg in
+particular behaves differently on a radio than on a runner with its socket
+closed.
+
+`tools/mtr_live_gate.mjs`, driven by `.github/workflows/mtr-live-gate.yml`
+(dispatch-only, on purpose — it asks a question about production, so running
+it on a pull request would answer about a tree that is not served).
+
+Run **`33070677553`**, job **`98511814644`**, **success**, at 390×844 against
+`https://madebymatt.uk/micro-tinkerer/`:
+
+```
+=== control: offline with nothing installed ===
+  [ ok ] CONTROL: a cold offline load with no worker does NOT boot — navigation refused
+
+  [ ok ] the named route itself was fetched and served 200 — 200 from https://madebymatt.uk/micro-tinkerer/
+  [ ok ] the menu is present and shown
+  [ ok ] it is the game, not an error stub — 137491 chars, title "Micro-Tinkerer: The Giant's Study — Full Release"
+  [ ok ] unscrolled — the menu is at its own scroll origin — menu scrollTop=0, window scrollY=0
+  [ ok ] the game's own <h1> has top >= 0 (the #menu overflow regression guard) — top=66
+  [ ok ] the page actually loaded, so an empty console capture means something
+  [ ok ] no error overlay is showing
+  [ ok ] no console errors — none
+  [ ok ] no uncaught page errors — none
+  [ ok ] sentence 1 (framing): byte-identical to approved — 171 chars; 303x79 at top=277; 100% in viewport; hit-tests to #framing-note; adjacent to anchor
+  [ ok ] sentence 2 (multiplayer): byte-identical to approved — 293 chars; 303x158 at top=669; 100% in viewport; hit-tests to #multiplayer-note; adjacent to anchor
+  [ ok ] a service worker is installed and active — scope=https://madebymatt.uk/micro-tinkerer/
+  [ ok ] its scope is /micro-tinkerer/ and no wider
+  [ ok ] a versioned cache exists — micro-tinkerer-v1.2.2
+  [ ok ] the second load with the network offline still boots — no navigation error
+  [ ok ] and offline it is still the game, with both disclosures — 137491 chars, menu=true canvas=true s1=true s2=true
+
+live gate: VERIFIED-CI — 0 failed assertion(s)
+This is a CI result against the live origin. It is not a phone pass.
+```
+
+**Three things this gate refuses to accept as a pass**, each because the naive
+version of the assertion would have passed on a broken page:
+
+- *An empty console capture from a page that never loaded.* Silence is not
+  health, so the load is asserted **before** the console is read.
+- *An offline reload that "worked" because the HTTP cache still held the
+  document.* The negative control runs **first** — a cold offline load with no
+  worker must fail. Without it, every offline assertion below proves only that
+  browsers cache.
+- *A sentence present in the served markup.* Presence is not visibility on a
+  full-screen WebGL document, so each sentence is hit-tested. A paragraph
+  painted behind the canvas fails.
+
+---
+
+## §R4-5 — Item 6: the sentences, and the fold that hid them
+
+The two sentences are Matt's, verbatim, placed and never composed: sentence 1
+as `<p class="disclosure" id="framing-note">` immediately after
+`<p class="lead">`; sentence 2 as `<p class="disclosure"
+id="multiplayer-note">` immediately before `<div class="sub-actions">`.
+Neither was drafted, polished, softened or substituted.
+
+### [B4] — visibility, not presence
+
+[B4] required proof at **390** and **1440** CSS px, unscrolled and
+pre-interaction — no click, no pointer lock, no scrolling — with a removal
+control.
+
+| viewport | sentence 1 | sentence 2 |
+|---|---|---|
+| 390 | `303x79` at `(46,277)` · 100% in viewport · hit-test → itself | `303x158` at `(46,669)` · 100% in viewport · hit-test → itself |
+| 1440 | `552x39` at `(237,385)` · 100% in viewport · hit-test → itself | `552x79` at `(237,585)` · 100% in viewport · hit-test → itself |
+
+**Removal control:** with the sentences stripped, the gate produced **4
+failures, exit 1**. A visibility gate nobody has seen fail is a gate nobody
+knows can fail.
+
+### What proving visibility found, and it was not the copy
+
+The gate went red at 390 immediately — **and it went red on the untouched tree
+too**, which is what made it a finding rather than a bug in the new markup.
+
+`#menu` was `display:flex; align-items:center; overflow:auto`. A flex
+container that centres a column **taller than its own box** pushes the
+overflow out of the **top**, where scrolling cannot reach it. On untouched
+`main` at 390×844 the game's own title measured:
+
+```
+h1  top = -300     lead top = -229     modes top = -83
+```
+
+The title of the game was 300 px above the top of the screen, on a phone, with
+no way to scroll to it. The fix is one property:
+
+```diff
+- display:flex;align-items:center;justify-content:center
++ display:flex;align-items:safe center;justify-content:center
+```
+
+`safe center` centres while there is room and falls back to start alignment
+when there is not, so the overflow goes out of the bottom, where `overflow:auto`
+can reach it.
+
+**This is why the live gate asserts `h1 top >= 0` permanently.** It measured
+**-300** before the fix and **66** after, on the live origin. That assertion is
+a regression guard, not decoration — delete it and the defect can come back
+silently, because nothing errors when a page scrolls the wrong way.
+
+---
+
+## §R4-6 — Item 7: manifest policy, and item 2's companions
+
+**Item 7 · a manifest without a worker.** `DROP_LINKS` was the fixed decision:
+the estate ships `site.webmanifest` with `display: standalone` linked from 12
+pages and, before this release, **no service worker anywhere** — so
+`beforeinstallprompt` had never been able to fire on this origin, for any
+page, ever. The links promising installability where nothing could install
+them were dropped. Micro-Tinkerer keeps its own manifest **and** its own
+worker, which is the only place on the estate where the pair is complete.
+
+The worker's `VERSION` moved with the precached document each time it changed:
+`v1.2.0` → `v1.2.1` → **`v1.2.2`**, confirmed live as the cache name
+`micro-tinkerer-v1.2.2`. `skipWaiting` stays **off** — a worker that seizes
+control mid-round can swap the document out from under a live game.
+
+**Item 2's four companions, none of them the record or the copy.** CI caught
+each, and each is a real dependency of adding a route rather than a workaround:
+
+- `sitemap.xml` is hand-maintained and needed the new route — **463 → 464**
+  urls.
+- The pupil page promotes the card, so the card needed a provenance entry:
+  `data/visual-provenance.json`, recorded as `authored-title-card` on the Apex
+  precedent — assets **62 → 63**.
+- `games/index.html` gained its 55th TAXONOMY row — the **one hand-owned edit**
+  in this pass, in the hand-owned region. The genre is **derived, not chosen**:
+  `Hide & seek` maps one-to-one to `Party & Whole-Class` across the whole
+  shelf, re-checked immediately before the row was written.
+- `tools/census_typed_literals.py` gained `'vendor'` in `SKIP_DIRS`, with the
+  comment explaining why.
+
+Everything else came from its generator: the mirror from
+`render_games_manifest_mirror.py`, the search index from
+`build_mbm_search_index.py --write` with every changed path declared, the
+pupil page and `hud.js` from `render_audience_homepages.py`. Nothing a
+generator owns was typed.
+
+---
+
+## §R4-7 — Instruments that misled before they were corrected
+
+The r2-pass faults are at §11 and are not repeated. These are the ones met
+since.
+
+| Instrument | How it misled | What it took |
+|---|---|---|
+| The D1 condition gate itself | `jq: Cannot index array with string "name"` — it printed **condition 1 as NO** on a pull request whose required contexts were both green. A gate that misreports the thing it exists to check is worse than no gate. | Rewritten to read the check array correctly; re-run printed all four honestly. |
+| Playwright page-level `response` | Does not observe **service-worker-initiated** fetches, so an offline leg watched through it sees nothing and reads as failure. | Asserted on the rendered document instead of on the network events. |
+| `beforeinstallprompt` | Never fires in headless Chromium. The positive control did not fire either, so the probe could not distinguish installable from not. | Declared **non-discriminating** and dropped, rather than reported as a pass or a fail. |
+| `navigator.serviceWorker.ready` | Never resolves on a page with no worker — the installability probe hung indefinitely. | Raced against a timeout. |
+| `build_mbm_search_index.py --check` | Baselines against `git show HEAD:`, so it reports the added record as a difference until the commit lands. | Read as expected-until-committed; it reproduced after. |
+| The s16 census control | Planted `const X = 55;` and **did not fire** — the census requires a comparison operator within 24 characters, and a bare `=` is not one. A control that cannot fire proves nothing. | Re-sited as `if (shelf.length === 55)`, where it fired. |
+| The s27 closeout control | Asserted a hard-coded shelf total, which would have gone stale the moment the shelf grew. | Made derived from the manifest: `'All %d games' % n`, with the assertion message saying *fix this control, do not weaken it*. |
+| `pkill -f installability` | Matched my own shell's command line and killed it; the heredoc never ran. | Renamed the script rather than pattern-killing. |
+
+---
+
+## §R4-8 — Worktrees, open pull requests, and what was left alone
+
+All three checkouts clean, nothing unpushed, every disposable worktree
+removed.
+
+**Games #37** and **Site #169** (TL-2 Town Life) were re-checked immediately
+before each merge under [B5] and left untouched. Both remain `HELD`, unmoved
+since 2026-08-18, and Site #169 is `mergeable_state=dirty`. Neither was
+modified, closed, approved or merged, and nothing in this pass overlaps them.
+
+No pull request in this pass waited on Matt (D2). No background watcher was
+started. No third check was carved out of [B1].
