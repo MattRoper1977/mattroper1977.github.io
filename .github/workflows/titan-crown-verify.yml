@@ -1,0 +1,168 @@
+name: Titan Forge and Crown Badge launch contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'titanforge/**'
+      - 'crownbadge/**'
+      - 'assets/cards/titan-forge.svg'
+      - 'assets/cards/crown-badge.svg'
+      - 'games/index.html'
+      - 'for/pupils/index.html'
+      - 'hud.js'
+      - 'data/source-manifests/games.json'
+      - 'data/mbm-search-index.json'
+      - 'data/new-release-occupants.json'
+      - 'data/hud-coverage.json'
+      - 'sitemap.xml'
+      - 'tools/titanforge/**'
+      - 'tools/crownbadge/**'
+      - 'tools/titan-crown/**'
+      - 'tools/verify_games_splash.mjs'
+      - 'tools/verify_new_games_uncurated.mjs'
+      - 'tools/render_splash.py'
+      - '.github/workflows/titan-crown-verify.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'titanforge/**'
+      - 'crownbadge/**'
+      - 'assets/cards/titan-forge.svg'
+      - 'assets/cards/crown-badge.svg'
+      - 'games/index.html'
+      - 'for/pupils/index.html'
+      - 'hud.js'
+      - 'data/source-manifests/games.json'
+      - 'data/mbm-search-index.json'
+      - 'data/new-release-occupants.json'
+      - 'data/hud-coverage.json'
+      - 'sitemap.xml'
+      - 'tools/titanforge/**'
+      - 'tools/crownbadge/**'
+      - 'tools/titan-crown/**'
+      - 'tools/verify_games_splash.mjs'
+      - 'tools/verify_new_games_uncurated.mjs'
+      - 'tools/render_splash.py'
+      - '.github/workflows/titan-crown-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: titan-crown-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  negative-controls-first:
+    name: Controls bite before greens count
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Models reproduce the legacy failures
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/titan-crown
+          node tools/titanforge/model.mjs | tee artifacts/titan-crown/titan-model-controls.log
+          grep -q '"legacyTrialControlRatio": 3.' artifacts/titan-crown/titan-model-controls.log
+          grep -q '"legacyMeterControlDelta": 0.672' artifacts/titan-crown/titan-model-controls.log
+          grep -q '"legacyHistoryDailyClaims": 3' artifacts/titan-crown/titan-model-controls.log
+          node tools/crownbadge/sim.mjs | tee artifacts/titan-crown/crown-sim-controls.log
+          grep -Eq 'legacy Hard control [0-9]+/120 \([0-9.]+%\)' artifacts/titan-crown/crown-sim-controls.log
+          grep -q '40-cap control truncated' artifacts/titan-crown/crown-sim-controls.log
+      - name: Upload control evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: titan-crown-negative-controls
+          path: artifacts/titan-crown/
+
+  verify:
+    name: Full static and rendered contract
+    needs: negative-controls-first
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - name: Check out the Lessons estate for the shared exit gate
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: main
+          path: _lessons
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install verifier dependencies and Chromium
+        run: |
+          npm i --no-save --no-package-lock playwright@1.56.1 acorn@8.18.0
+          npx playwright install --with-deps chromium
+
+      - name: Record the exact launch subjects
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/titan-crown
+          {
+            git rev-parse HEAD
+            node --version
+            sha256sum titanforge/index.html crownbadge/index.html assets/brand/mbm-splash.js
+            wc -c titanforge/index.html crownbadge/index.html
+          } | tee artifacts/titan-crown/identity.txt
+
+      - name: Generated chassis is reproducible
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 tools/render_splash.py --root . --check | tee artifacts/titan-crown/splash-generator.log
+          python3 tools/render_inline_exit.py --root . --check | tee artifacts/titan-crown/exit-generator.log
+
+      - name: Static, arithmetic, balance and shelf contracts
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/titan-crown/verify_launch.mjs | tee artifacts/titan-crown/static.log
+          node tools/titanforge/model.mjs | tee artifacts/titan-crown/titan-model.log
+          node tools/crownbadge/sim.mjs | tee artifacts/titan-crown/crown-sim.log
+          python3 tools/titan-crown/verify_hues.py | tee artifacts/titan-crown/hues.log
+          node tools/verify_new_games_uncurated.mjs | tee artifacts/titan-crown/uncurated.log
+          node tools/verify_curation_keys.mjs | tee artifacts/titan-crown/curation-keys.log
+          node tools/verify_sitemap_covers_games.mjs | tee artifacts/titan-crown/sitemap.log
+          python3 tools/render_audience_homepages.py --check | tee artifacts/titan-crown/audience-generator.log
+          python3 tools/build_mbm_search_index.py --check | tee artifacts/titan-crown/search-index.log
+
+      - name: Titan and Crown rendered acceptance gate
+        run: |
+          set -euo pipefail
+          node tools/titan-crown/browser.mjs artifacts/titan-crown | tee artifacts/titan-crown/browser.log
+
+      - name: Generated splash is observed by polling in both motion states
+        run: |
+          set -euo pipefail
+          node tools/verify_games_splash.mjs | tee artifacts/titan-crown/splash-runtime.log
+
+      - name: Every declared game retains a rendered way out
+        run: |
+          set -euo pipefail
+          node tools/verify_inline_exit.mjs --lessons "$GITHUB_WORKSPACE/_lessons" | tee artifacts/titan-crown/inline-exit.log
+
+      - name: Both shelf surfaces share one taxonomy and preserve the card invariant
+        run: |
+          set -euo pipefail
+          node tools/verify_pupil_genres.mjs | tee artifacts/titan-crown/pupil-genres.log
+
+      - name: Upload launch evidence and viewport captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: titan-crown-launch-evidence
+          path: artifacts/titan-crown/

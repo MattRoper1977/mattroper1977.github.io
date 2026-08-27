@@ -71,11 +71,30 @@ jobs:
       - uses: actions/checkout@v4
         with: { fetch-depth: 1 }
 
+      # Site-first launches stage the matching canonical shelf on a same-named
+      # public Games branch. Fall back to main for ordinary PRs; non-PR runs
+      # always use main. The mirror guard independently proves byte identity.
+      - name: Select the canonical shelf ref
+        id: shelf-ref
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          CANDIDATE_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          shelf_ref=main
+          if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$CANDIDATE_REF" ] && \
+             git ls-remote --exit-code --heads https://github.com/MattRoper1977/Games.git \
+               "refs/heads/$CANDIDATE_REF" >/dev/null; then
+            shelf_ref=$CANDIDATE_REF
+          fi
+          echo "ref=$shelf_ref" >> "$GITHUB_OUTPUT"
+          echo "canonical ref: $shelf_ref"
+
       - name: Check out the canonical shelf
         uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Games
-          ref: main
+          ref: ${{ steps.shelf-ref.outputs.ref }}
           path: _shelf
           fetch-depth: 1
 
@@ -94,7 +113,8 @@ jobs:
       - name: Record what is under test
         run: |
           echo "site ref   : $(git rev-parse HEAD)"
-          echo "shelf main : $(git -C _shelf rev-parse HEAD)"
+          echo "shelf ref  : ${{ steps.shelf-ref.outputs.ref }}"
+          echo "shelf SHA  : $(git -C _shelf rev-parse HEAD)"
           echo "mirror     : $(sha256sum data/source-manifests/games.json | cut -c1-12)"
           echo "canonical  : $(sha256sum _shelf/games.json | cut -c1-12)"
 

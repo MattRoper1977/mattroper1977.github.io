@@ -3,7 +3,7 @@ name: The way out of every declared game
 # WHY THIS WORKFLOW EXISTS AT ALL
 #
 # tools/verify_inline_exit.mjs judges the thing a child on a locked-down device
-# actually gets: the way OUT of thirteen single-file games that carry a stamped
+# actually gets: the way OUT of every declared single-file game that carries a stamped
 # inline exit region instead of <script src="/hud.js">, because their own
 # verifiers forbid the external script. It checks the control is in the DOM, is
 # at least 44 px AS RENDERED, resolves a real href, is reachable by keyboard and
@@ -24,7 +24,7 @@ name: The way out of every declared game
 #
 # BOTH ESTATES, OR NOTHING
 #
-# Three of the thirteen declared games live in Lessons, and the Lessons games'
+# Three of the fifteen declared games live in Lessons, and the Lessons games'
 # exit resolves to /games/ on the SITE origin — so the gate assembles both
 # repositories onto one origin and refuses to run without both. Judging the ten
 # it could reach and reporting a green would be a coverage figure that quietly
@@ -54,6 +54,7 @@ on:
       - 'apexrally/index.html'
       - 'apexvelodrome/index.html'
       - 'biopunkhive/index.html'
+      - 'crownbadge/index.html'
       - 'echovault/index.html'
       - 'neonmeridian/index.html'
       - 'neonsync/index.html'
@@ -61,6 +62,7 @@ on:
       - 'ouroboros/index.html'
       - 'rallyvector3d/index.html'
       - 'relicforge/index.html'
+      - 'titanforge/index.html'
   push:
     branches: [main]
     paths:
@@ -74,6 +76,7 @@ on:
       - 'apexrally/index.html'
       - 'apexvelodrome/index.html'
       - 'biopunkhive/index.html'
+      - 'crownbadge/index.html'
       - 'echovault/index.html'
       - 'neonmeridian/index.html'
       - 'neonsync/index.html'
@@ -81,6 +84,7 @@ on:
       - 'ouroboros/index.html'
       - 'rallyvector3d/index.html'
       - 'relicforge/index.html'
+      - 'titanforge/index.html'
   schedule:
     - cron: '31 7 * * *'
   workflow_dispatch:
@@ -102,7 +106,7 @@ jobs:
         with: { fetch-depth: 1 }
 
       - name: Check out the Lessons estate
-        # Not optional. Three of the thirteen live here, and the gate exits 3
+        # Not optional. Three of the fifteen live here, and the gate exits 3
         # INCONCLUSIVE rather than judging a partial set.
         uses: actions/checkout@v4
         with:

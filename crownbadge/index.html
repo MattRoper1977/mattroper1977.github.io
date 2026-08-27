@@ -1,0 +1,1665 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'none'">
+  <meta name="theme-color" content="#071523">
+  <meta name="description" content="A zero-dependency 30-day frontier strategy game.">
+  <title>Crown &amp; Badge: Frontier Watch v1.0 · Standalone</title>
+  <style>
+:root{--ink:#06131f;--ink2:#0b2133;--panel:#102d43;--panel2:#173d55;--line:rgba(184,220,241,.18);--cream:#fff4d5;--muted:#a8c3d4;--blue:#3aa7ff;--blue2:#186bb3;--gold:#ffc957;--gold2:#9f651d;--teal:#43dfc1;--good:#63e6a8;--danger:#ff6d72;--warn:#f2a84b;--shadow:0 18px 55px rgba(0,0,0,.48);font-family:Inter,ui-rounded,"Segoe UI",system-ui,sans-serif;color-scheme:dark}*{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--ink);color:#fff;overflow:hidden}button,input{font:inherit;color:inherit}button{touch-action:manipulation;min-width:44px;min-height:44px}button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:3px}.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}[hidden]{display:none!important}body.shake #app{animation:shake .28s linear}body.flash-good #app:after,body.flash-bad #app:after{content:"";position:fixed;inset:0;z-index:500;pointer-events:none;animation:flash .55s ease-out}body.flash-good #app:after{box-shadow:inset 0 0 60px var(--good)}body.flash-bad #app:after{box-shadow:inset 0 0 75px var(--danger)}@keyframes shake{0%,100%{transform:none}20%{transform:translate(-4px,2px)}40%{transform:translate(4px,-2px)}60%{transform:translate(-3px,-1px)}80%{transform:translate(3px,1px)}}@keyframes flash{to{opacity:0}}
+#app{height:100dvh;display:flex;flex-direction:column;isolation:isolate;background:radial-gradient(circle at 52% -20%,#204b65,#06131f 50%)}.topbar{height:76px;flex:0 0 auto;display:flex;align-items:center;gap:14px;padding:9px max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right));background:linear-gradient(180deg,rgba(5,19,31,.99),rgba(5,19,31,.91));border-bottom:1px solid var(--line);box-shadow:0 8px 30px rgba(0,0,0,.22);z-index:50}.brand{display:flex;align-items:center;gap:10px;min-width:205px}.brand-crest{width:48px;height:48px;display:grid;place-items:center;border:2px solid var(--gold);border-radius:15px;background:linear-gradient(145deg,#278fda,#0d3d67);font-size:25px;box-shadow:inset 0 0 0 4px rgba(255,255,255,.08)}.brand strong{display:block;font-family:Georgia,serif;color:var(--cream);font-size:20px;line-height:1}.brand span{display:block;color:#85cdf6;font-size:9px;font-weight:900;letter-spacing:.13em;margin-top:5px}.campaign-chip{padding:7px 11px;border-left:1px solid var(--line)}.campaign-chip span{display:block;font-size:8px;letter-spacing:.14em;color:var(--teal);font-weight:900}.campaign-chip b{font-size:13px}.campaign-chip em{display:block;margin-top:2px;color:var(--gold);font-size:9px;font-style:normal;font-weight:900}.resource-row{display:flex;gap:7px;margin-left:auto}.resource{height:48px;min-width:86px;padding:5px 10px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#173a51,#0c263a);box-shadow:inset 0 1px rgba(255,255,255,.07)}.resource>span{font-size:18px}.resource small{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.1em}.resource b{font-size:15px}.resource.gold>span,.resource.valor>span{color:var(--gold)}.resource.supplies>span{color:var(--teal)}.resource.authority>span{color:#8ed7ff}.top-actions{display:flex;gap:6px}.icon-btn{width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--line);border-radius:13px;background:#112d42;cursor:pointer;font-weight:900;font-size:18px}.icon-btn:hover{background:#1d4c67}.icon-btn[aria-pressed=true]{background:#2a6971;border-color:var(--teal)}
+main{position:relative;flex:1;min-height:0}.screen{display:none;position:absolute;inset:0}.screen.active{display:block;animation:screen-in .2s ease both}@keyframes screen-in{from{opacity:.45;transform:scale(.99)}to{opacity:1;transform:none}}.map-layout{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:12px;padding:12px 12px 88px}.map-card{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:22px;background:#071b29;box-shadow:var(--shadow);min-height:0}.map-card:after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 55px rgba(0,0,0,.42);border-radius:inherit}#mapArt,.frontier-svg,#weatherCanvas,.map-nodes,.float-layer{position:absolute;inset:0;width:100%;height:100%}.frontier-svg{display:block}.frontier-svg .contour{fill:none;stroke:#e5d29c;stroke-width:1.2;opacity:.18;stroke-dasharray:5 7}.frontier-svg .road-shadow{fill:none;stroke:#07151d;stroke-width:9;opacity:.42}.frontier-svg .road{fill:none;stroke:#d4b878;stroke-width:4;stroke-dasharray:2 5}.frontier-svg .patrol-route{fill:none;stroke:#70d9ff;stroke-width:4;stroke-dasharray:9 10;animation:route 2s linear infinite}.frontier-svg .territory>path:first-child{stroke:#d9c18e;stroke-width:2;stroke-opacity:.35;transition:filter .2s,opacity .2s}.frontier-svg .territory-critical>path:first-child{stroke:#ff7580;stroke-width:5;animation:critical 1s ease-in-out infinite alternate}.frontier-svg .territory-secured>path:first-child{stroke:#7df5cd;stroke-width:4}.frontier-svg .map-label{fill:#f5e9c7;font-size:13px;font-weight:900;paint-order:stroke;stroke:#061521;stroke-width:4}.frontier-svg .map-state{fill:#bcd5df;font-size:8px;font-weight:800;letter-spacing:.08em;paint-order:stroke;stroke:#071521;stroke-width:3}.frontier-svg .incident-beam{stroke:#ff6d72;stroke-width:2;stroke-dasharray:3 4}.frontier-svg .threat-ring{fill:#6b2430;stroke:#ffd48a;stroke-width:3;animation:critical .8s ease-in-out infinite alternate}.frontier-svg .threat-mark{font-size:17px}.frontier-svg .level-text{fill:#fff;font-size:10px;font-weight:1000}.frontier-svg .hq-label{fill:#ffe38a;font-size:9px;font-weight:900;letter-spacing:.1em;paint-order:stroke;stroke:#071521;stroke-width:3}.frontier-svg .map-seed{fill:#91b5c6;font-size:9px;font-weight:800;letter-spacing:.12em}.frontier-svg .compass text{fill:#e9cb77;font-size:12px;font-weight:900}@keyframes route{to{stroke-dashoffset:-38}}@keyframes critical{to{filter:drop-shadow(0 0 10px #ff6d72)}}#weatherCanvas{z-index:4;pointer-events:none}.map-nodes{z-index:8;pointer-events:none}.map-node{position:absolute;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;border:2px solid #f2cc69;background:radial-gradient(circle,#1d7db6 0 42%,#09253a 44% 62%,rgba(5,17,28,.8) 64%);box-shadow:0 0 0 6px rgba(60,178,243,.14),0 8px 18px rgba(0,0,0,.48);pointer-events:auto;cursor:pointer;font-size:20px;font-weight:900}.map-node:hover,.map-node.is-target{transform:translate(-50%,-50%) scale(1.1);filter:brightness(1.2)}.map-node.has-incident{border-color:#ffbd74;background:radial-gradient(circle,#b94453 0 42%,#4d1520 44% 62%,rgba(5,17,28,.85) 64%)}.map-node.critical{box-shadow:0 0 0 9px rgba(255,83,97,.25),0 0 25px #ff5f6c;animation:node-bob 1s ease-in-out infinite alternate}.map-node.secured{border-color:#78f0c5;background:radial-gradient(circle,#248d80 0 42%,#12483f 44% 62%,rgba(5,17,28,.85) 64%)}.map-node .node-level{position:absolute;right:-3px;bottom:-5px;min-width:26px;height:25px;padding:0 4px;display:grid;place-items:center;border-radius:9px;background:var(--gold);border:2px solid #fff0ad;color:#3c2602;font-size:10px}.map-node .node-call{position:absolute;left:50%;top:-19px;transform:translateX(-50%);padding:3px 6px;border-radius:8px;background:#681e2a;border:1px solid #ffc476;font-size:8px;white-space:nowrap}@keyframes node-bob{to{transform:translate(-50%,calc(-50% - 5px))}}.map-corner-tools{position:absolute;z-index:12;left:12px;top:12px;display:flex;gap:7px}.mini-btn,.text-btn{border:1px solid var(--line);border-radius:10px;background:rgba(5,25,39,.86);padding:7px 10px;color:#cbe0ea;cursor:pointer;font-size:10px;font-weight:800;backdrop-filter:blur(8px)}.mini-btn:hover,.text-btn:hover{background:#1a4a65}.mini-btn kbd{margin-left:4px}.officer-dock{position:absolute;z-index:14;left:12px;right:12px;bottom:12px;display:flex;gap:8px;align-items:end;pointer-events:none}.dock-officer{pointer-events:auto;width:72px;height:84px;border:1px solid var(--line);border-radius:14px;background:rgba(5,22,35,.9);padding:3px;cursor:grab;box-shadow:0 8px 20px rgba(0,0,0,.34);transition:.16s transform}.dock-officer:hover,.dock-officer.selected{transform:translateY(-5px);border-color:var(--gold)}.dock-officer[disabled]{filter:grayscale(.7);opacity:.48;cursor:not-allowed}.dock-officer .officer-svg{width:100%;height:100%}.dock-key{position:absolute;top:-5px;left:-4px;width:20px;height:20px;display:grid;place-items:center;border-radius:7px;background:#f1c75a;color:#3c2805;font-size:10px;font-weight:1000}.drag-ghost{position:fixed;z-index:300;width:82px;height:96px;pointer-events:none;transform:translate(-50%,-50%);filter:drop-shadow(0 14px 24px #000)}.float-layer{z-index:25;pointer-events:none}.float-text{position:absolute;left:50%;top:50%;font-weight:1000;font-size:17px;color:#fff;paint-order:stroke;filter:drop-shadow(0 2px 2px #000);animation:float-up 1.3s ease-out both}.float-text.good{color:#7df1c1}.float-text.bad{color:#ff8d91}.float-text.gold{color:#ffd46c}@keyframes float-up{to{transform:translateY(-80px) scale(1.15);opacity:0}}
+.command-panel{min-height:0;display:flex;flex-direction:column;gap:10px;overflow:hidden}.goal-card,.ledger-card,.calls-card{border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,#13364e,#0a2031);box-shadow:0 11px 24px rgba(0,0,0,.24)}.goal-card{padding:14px}.eyebrow{font-size:9px;letter-spacing:.17em;color:var(--gold);font-weight:1000}.goal-card h2{font-family:Georgia,serif;color:var(--cream);font-size:21px;margin:4px 0}.goal-card p{font-size:10px;line-height:1.45;color:var(--muted);margin:0}.goal-meter{height:8px;margin:11px 0 7px;border-radius:9px;background:#05141f;overflow:hidden}.goal-meter i{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--blue),var(--teal));transition:.35s width}.goal-stats{display:flex;justify-content:space-between;color:#bad0dc;font-size:9px}.panel-title{min-height:39px;padding:8px 11px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);font-size:11px;font-weight:900}.panel-title b{color:var(--gold);font-size:9px}.ledger-grid{padding:9px;display:grid;grid-template-columns:1fr 1fr;gap:6px}.ledger-item{padding:7px 8px;border-radius:9px;background:rgba(4,18,29,.45);font-size:9px;color:var(--muted)}.ledger-item b{display:block;color:#fff;font-size:12px}.ledger-item.net.good b{color:var(--good)}.ledger-item.net.bad b{color:var(--danger)}.calls-card{flex:1;min-height:150px;display:flex;flex-direction:column;overflow:hidden}.incident-list{overflow:auto;padding:8px;display:grid;gap:6px}.call-row{width:100%;padding:9px;display:grid;grid-template-columns:36px 1fr auto;gap:8px;align-items:center;text-align:left;border:1px solid var(--line);border-radius:11px;background:#102d42;cursor:pointer}.call-row:hover{background:#1c4963}.call-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#62202a;border:1px solid #df7d73}.call-row b{display:block;font-size:10px}.call-row small{display:block;color:var(--muted);font-size:8px;margin-top:2px}.deadline{padding:4px 6px;border-radius:7px;background:#071a28;color:#ffd27a;font-size:8px;font-weight:900}.deadline.critical{background:#6e202a;color:#fff}.empty-calls{padding:22px;text-align:center;color:var(--muted);font-size:11px}.end-day-btn{min-height:61px;flex:0 0 auto;padding:7px 11px;display:flex;align-items:center;justify-content:space-between;border:1px solid #70c5ed;border-radius:16px;background:linear-gradient(180deg,#258bd0,#145a97);cursor:pointer;box-shadow:inset 0 1px rgba(255,255,255,.25),0 8px 18px rgba(0,55,96,.28)}.end-day-btn:hover{filter:brightness(1.12)}.end-day-btn span{text-align:left}.end-day-btn b{display:block;font-size:13px}.end-day-btn small{display:block;font-size:8px;color:#d7effc;margin-top:2px}kbd{padding:2px 5px;border:1px solid rgba(255,255,255,.25);border-radius:5px;background:#071b29;box-shadow:inset 0 -1px rgba(255,255,255,.12);font:inherit;font-size:9px}
+.bottom-nav{position:absolute;z-index:60;left:50%;bottom:max(13px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:5px;padding:6px;border:1px solid var(--line);border-radius:18px;background:rgba(5,20,32,.93);box-shadow:var(--shadow);backdrop-filter:blur(15px)}.nav-btn{min-width:92px;height:51px;border:0;border-radius:13px;background:transparent;color:#91b3c6;cursor:pointer;font-size:10px;font-weight:900}.nav-btn span{display:block;font-size:18px;line-height:1.1}.nav-btn kbd{margin-left:4px}.nav-btn.active{color:#fff;background:linear-gradient(145deg,#2d96df,#145b99);box-shadow:inset 0 1px rgba(255,255,255,.24)}
+.scroll-screen{overflow:auto;padding:22px 22px 100px;background:radial-gradient(circle at 85% 0,#19465f,#071523 52%)}.page-head{max-width:1180px;margin:0 auto 17px;display:flex;justify-content:space-between;gap:20px;align-items:end}.page-head h1{font-family:Georgia,serif;color:var(--cream);font-size:clamp(29px,4vw,44px);margin:3px 0}.page-head p{color:var(--muted);font-size:12px;margin:0}.roster-key{display:flex;gap:10px;font-size:10px}.roster-key span{display:flex;align-items:center;gap:4px}.dot{width:9px;height:9px;border-radius:50%;background:var(--good)}.dot.spent{background:#9aaebb}.dot.injured{background:var(--danger)}.station-art{max-width:1180px;height:min(32vw,330px);min-height:190px;margin:0 auto 16px;border:1px solid var(--line);border-radius:20px;background:#071a2a;overflow:hidden;box-shadow:var(--shadow)}.station-svg{width:100%;height:100%;display:block}.officer-grid{max-width:1180px;margin:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.officer-card{position:relative;display:grid;grid-template-columns:112px 1fr;gap:9px;min-height:155px;padding:10px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,#15394f,#0a2132);box-shadow:0 10px 22px rgba(0,0,0,.2);cursor:pointer;text-align:left}.officer-card:hover{border-color:#5ba9d3;background:#1a445c}.officer-card.locked{filter:grayscale(.55);opacity:.72}.officer-card .officer-svg{width:108px;height:128px}.officer-copy h3{margin:3px 0;font-size:16px}.officer-role{font-size:9px;color:#89d3fa;text-transform:uppercase;letter-spacing:.1em;font-weight:900}.trait-row{display:flex;gap:4px;flex-wrap:wrap;margin:7px 0}.trait-pill{padding:3px 6px;border-radius:7px;background:#071b29;border:1px solid var(--line);font-size:8px;color:#c5d9e3}.officer-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.officer-stat{padding:5px;border-radius:8px;background:rgba(3,16,26,.48);font-size:8px;color:var(--muted)}.officer-stat b{display:block;color:#fff;font-size:12px}.officer-status{position:absolute;right:10px;top:10px;padding:4px 7px;border-radius:8px;background:#0b2030;border:1px solid var(--line);font-size:8px;font-weight:900}.vault-layout,.legacy-layout{max-width:1180px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:20px}.vault-layout h2,.legacy-layout h2{font-family:Georgia,serif;color:var(--cream);font-size:21px}.relic-grid,.decree-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.relic-card,.decree-card{position:relative;min-height:130px;padding:11px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,#153950,#0a2132)}.relic-card{display:grid;grid-template-columns:70px 1fr;gap:8px}.relic-svg{width:66px}.relic-card h3,.decree-card h3{margin:2px 0;font-size:14px}.relic-card p,.decree-card p{margin:5px 0;color:var(--muted);font-size:10px;line-height:1.4}.relic-card.stashed{border-color:rgba(255,201,87,.5)}.relic-owner{font-size:9px;color:var(--gold)}.chronicle{max-height:540px;overflow:auto;display:grid;gap:6px}.log-row{display:grid;grid-template-columns:45px 1fr;gap:7px;padding:9px;border-left:3px solid #477c99;border-radius:0 10px 10px 0;background:#0d293d;font-size:10px;color:#c2d6df}.log-row.good{border-color:var(--good)}.log-row.bad,.log-row.alert{border-color:var(--danger)}.log-row span{color:var(--gold);font-weight:900}.valor-large{padding:10px 15px;border-radius:14px;background:#102d43;border:1px solid rgba(255,201,87,.35);font-size:12px}.valor-large span{color:var(--gold);font-size:20px}.decree-card.owned{border-color:var(--good);background:linear-gradient(145deg,#194c47,#0a2a31)}.decree-path{position:absolute;right:10px;top:10px;font-size:20px;color:var(--gold)}.score-table{display:grid;gap:6px}.score-row{display:grid;grid-template-columns:28px 1fr auto;gap:8px;padding:9px;border-radius:11px;background:#0d293d;border:1px solid var(--line);font-size:10px}.score-rank{width:26px;height:26px;display:grid;place-items:center;border-radius:9px;background:#1c526d;color:var(--gold);font-weight:1000}.score-row b{display:block}.score-row small{color:var(--muted)}.score-points{color:var(--gold);font-size:14px;font-weight:1000}.skins-title{margin-top:22px}.skin-row{display:flex;gap:8px;flex-wrap:wrap}.skin-chip{padding:8px 10px;border:1px solid var(--line);border-radius:11px;background:#102d43;font-size:9px}.skin-chip.locked{opacity:.35;filter:grayscale(1)}
+.sheet{position:fixed;z-index:120;top:88px;right:16px;bottom:86px;width:min(445px,calc(100vw - 32px));padding:18px;overflow:auto;border:1px solid var(--line);border-radius:24px;background:linear-gradient(155deg,#153b52,#071c2c);box-shadow:0 25px 80px rgba(0,0,0,.68);transform:translateX(calc(100% + 36px));transition:.28s transform cubic-bezier(.2,.8,.2,1)}.sheet.open{transform:none}.sheet-close{position:absolute;right:10px;top:10px;z-index:3}.sheet h2{font-family:Georgia,serif;color:var(--cream);font-size:29px;margin:4px 42px 4px 0}.sheet p{color:var(--muted);font-size:11px;line-height:1.5}.incident-hero{margin:-18px -18px 14px;padding:22px 18px 15px;background:radial-gradient(circle at 85% 20%,rgba(255,116,100,.24),transparent 42%),linear-gradient(145deg,#163f58,#0c283e);border-bottom:1px solid var(--line)}.incident-meta{display:flex;gap:6px;flex-wrap:wrap}.meta-pill{padding:5px 7px;border-radius:8px;background:#071b29;border:1px solid var(--line);font-size:9px}.meta-pill.danger{border-color:rgba(255,109,114,.45);color:#ffb2b5}.modifier-card{padding:10px;border-radius:12px;background:#0b2538;border:1px dashed #58819a}.modifier-card.hidden{filter:blur(0)}.hidden-intel{font-family:monospace;letter-spacing:.12em;color:#7294a7}.sheet-section{margin-top:15px}.sheet-section h3{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#bed3df}.squad-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.squad-option{position:relative;min-height:112px;padding:3px;border:2px solid transparent;border-radius:13px;background:#0b2639;cursor:pointer}.squad-option .officer-svg{width:100%;height:102px}.squad-option.selected{border-color:var(--gold);box-shadow:0 0 0 4px rgba(255,201,87,.13)}.squad-option[disabled]{opacity:.35;filter:grayscale(.7)}.squad-option .slot-check{position:absolute;right:3px;top:3px;width:22px;height:22px;display:grid;place-items:center;border-radius:7px;background:#071a28;border:1px solid var(--line);font-size:10px}.squad-option.selected .slot-check{background:var(--gold);color:#332000}.doctrine-list{display:grid;gap:7px;border:0;padding:0;margin:0}.doctrine-card{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:13px;background:#0c293d;cursor:pointer}.doctrine-card:has(input:checked){border-color:var(--gold);background:#17435a}.doctrine-card input{accent-color:var(--gold)}.doctrine-icon{font-size:21px}.doctrine-card b{font-size:11px}.doctrine-card small{display:block;color:var(--muted);font-size:8px;margin-top:2px}.doctrine-cost{text-align:right;color:var(--gold);font-size:9px}.odds-card{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:14px;background:#071d2d}.odds-top{display:flex;justify-content:space-between;align-items:end}.odds-top strong{font-size:27px;color:var(--good)}.odds-top span{font-size:9px;color:var(--muted)}.odds-bar{height:10px;margin:7px 0;border-radius:8px;background:#03111b;overflow:hidden}.odds-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--danger),var(--warn) 45%,var(--good));border-radius:inherit}.odds-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.odds-grid div{padding:6px;border-radius:8px;background:#102d42;text-align:center;font-size:8px;color:var(--muted)}.odds-grid b{display:block;color:#fff;font-size:11px}.sheet-actions{display:flex;gap:7px;position:sticky;bottom:-18px;margin:18px -18px -18px;padding:11px 18px;background:rgba(6,22,34,.96);border-top:1px solid var(--line)}.primary-btn,.secondary-btn,.danger-btn{min-height:45px;padding:0 16px;border:0;border-radius:12px;cursor:pointer;font-weight:900}.primary-btn{background:linear-gradient(180deg,#4eb8f7,#1b70bc);box-shadow:inset 0 1px rgba(255,255,255,.3)}.primary-btn:hover{filter:brightness(1.1)}.secondary-btn{background:#173e56;border:1px solid var(--line)}.danger-btn{background:linear-gradient(180deg,#ff767b,#bd3748)}.primary-btn:disabled,.secondary-btn:disabled{opacity:.4;cursor:not-allowed}.full{width:100%}.officer-sheet .officer-detail-head{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:center}.officer-detail-head .officer-svg{width:150px}.officer-detail-head h2{margin-right:0}.detail-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:12px 0}.detail-stat{padding:8px;border-radius:10px;background:#0b2537;color:var(--muted);font-size:9px}.detail-stat b{display:block;color:#fff;font-size:14px}.xp-bar{height:8px;border-radius:8px;background:#061520;overflow:hidden}.xp-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--teal))}.trait-detail{padding:8px;margin:5px 0;border-radius:10px;background:#0d2b3f}.trait-detail b{font-size:11px}.trait-detail span{display:block;color:var(--muted);font-size:9px}.equip-list{display:grid;gap:6px}.equip-row{display:flex;align-items:center;gap:7px;padding:7px;border-radius:10px;background:#0c293c}.equip-row .relic-svg{width:45px}.equip-row div{flex:1}.equip-row b{font-size:10px}.equip-row small{display:block;color:var(--muted);font-size:8px}
+.modal-layer{position:fixed;z-index:200;inset:0;display:grid;place-items:center;padding:18px;background:rgba(2,9,15,.82);backdrop-filter:blur(12px);opacity:0;pointer-events:none;transition:.18s opacity}.modal-layer.open{opacity:1;pointer-events:auto}.modal-card{position:relative;width:min(720px,100%);max-height:calc(100dvh - 36px);overflow:auto;padding:24px;border:1px solid var(--line);border-radius:24px;background:radial-gradient(circle at 85% 0,#1a506a,#0b2335 50%,#071924);box-shadow:0 30px 90px #000}.modal-close{position:absolute;right:11px;top:11px}.modal-card h2{font-family:Georgia,serif;color:var(--cream);font-size:30px;margin:5px 40px 7px 0}.summary-events{display:grid;gap:7px;margin:14px 0}.summary-event{padding:10px;border-left:3px solid #5ca4c9;border-radius:0 11px 11px 0;background:#0d2a3e;font-size:11px}.summary-event.good{border-color:var(--good)}.summary-event.bad{border-color:var(--danger)}.summary-event strong{color:var(--gold)}.help-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.help-grid div{padding:11px;border-radius:12px;background:#0c2a3e}.help-grid b{color:var(--gold)}.help-grid p{margin:5px 0;color:var(--muted);font-size:10px;line-height:1.45}.volume-row{display:flex;align-items:center;gap:12px;margin-top:15px;color:var(--muted);font-size:11px}.volume-row input{flex:1;accent-color:var(--gold)}.end-card{text-align:center}.end-seal{width:105px;height:105px;margin:auto;display:grid;place-items:center;border-radius:50%;border:4px solid var(--gold);background:linear-gradient(145deg,#2589c8,#0b3558);font-size:51px;box-shadow:0 0 0 8px rgba(255,201,87,.12)}.end-card h2{margin-right:0;font-size:42px}.end-score{font-size:33px;color:var(--gold);font-weight:1000}.end-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:16px 0}.end-stats div{padding:9px;border-radius:11px;background:#0b2a3d;font-size:9px;color:var(--muted)}.end-stats b{display:block;color:#fff;font-size:17px}
+.intro{position:fixed;z-index:400;inset:0;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 50% 42%,rgba(31,105,137,.5),transparent 36%),linear-gradient(145deg,#0a2a3d,#03101a);overflow:auto}.intro-map-lines{position:absolute;inset:-20%;opacity:.16;background:repeating-radial-gradient(ellipse at 50% 50%,transparent 0 32px,#a9d9e3 33px 34px,transparent 35px 67px),repeating-linear-gradient(35deg,transparent 0 80px,#dfbd68 81px 82px)}.intro-card{position:relative;width:min(650px,100%);padding:clamp(22px,4vw,42px);border:1px solid rgba(255,210,101,.42);border-radius:29px;background:linear-gradient(145deg,rgba(8,35,52,.97),rgba(5,19,31,.96));box-shadow:0 40px 110px #000;text-align:center}.intro-crest{width:90px;height:90px;margin:auto;display:grid;place-items:center;border:3px solid var(--gold);border-radius:28px;background:linear-gradient(145deg,#2c96d9,#0e426d);font-size:45px;box-shadow:inset 0 0 0 6px rgba(255,255,255,.08)}.intro h1{font-family:Georgia,serif;color:var(--cream);font-size:clamp(39px,7vw,66px);line-height:.9;margin:14px 0}.intro h1 small{display:block;margin-top:12px;color:var(--gold);font-family:Inter,sans-serif;font-size:.25em;letter-spacing:.24em}.intro p{max-width:510px;margin:12px auto 17px;color:#b8d0dc;font-size:12px;line-height:1.55}.intro label{display:block;text-align:left;color:var(--muted);font-size:10px;font-weight:800}.intro input[type=text],#seedInput{width:100%;height:44px;margin-top:5px;padding:0 12px;border:1px solid var(--line);border-radius:11px;background:#061927;text-transform:uppercase;font-weight:900;letter-spacing:.13em}.difficulty-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;border:0;padding:0;margin:13px 0}.difficulty-pick legend{position:absolute;left:-9999px}.difficulty-pick label{position:relative;min-height:44px;text-align:center}.difficulty-pick input{position:absolute;inset:0;z-index:1;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}.difficulty-pick span{display:block;min-height:44px;padding:9px 5px;border:1px solid var(--line);border-radius:11px;background:#0c2b3f;color:#fff;font-size:11px}.difficulty-pick small{display:block;color:var(--muted);font-size:8px;margin-top:2px}.difficulty-pick input:checked+span{border-color:var(--gold);background:#17455c;box-shadow:0 0 0 3px rgba(255,201,87,.12)}.intro-actions{display:flex;gap:8px;justify-content:center}.intro-actions button{min-width:190px}.release-note{display:block;color:#7297aa;margin-top:13px;font-size:9px}.toast-layer{position:fixed;z-index:500;top:84px;left:50%;transform:translateX(-50%);display:grid;gap:7px;width:min(450px,calc(100% - 24px));pointer-events:none}.toast{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(8,34,51,.97);box-shadow:var(--shadow);font-size:11px;animation:toast-in .22s ease both}.toast.good{border-color:rgba(99,230,168,.55)}.toast.bad{border-color:rgba(255,109,114,.55)}@keyframes toast-in{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+.reduced .screen.active,.reduced .sheet,.reduced .toast,.reduced .float-text,.reduced .frontier-svg .patrol-route{animation:none!important;transition:none!important}.reduced .frontier-svg .patrol-route{stroke-dasharray:none;opacity:.8}.reduced .map-node.critical{box-shadow:0 0 0 8px #fff,0 0 0 12px var(--danger)}.reduced #weatherCanvas{display:none}.high-contrast{--line:rgba(255,255,255,.42);--muted:#d5e5ec}.high-contrast .frontier-svg .territory>path:first-child{stroke:#fff;stroke-opacity:.75}.high-contrast button{border-color:rgba(255,255,255,.65)}
+@media(max-width:980px){.brand{min-width:170px}.brand strong{font-size:17px}.resource{min-width:70px}.resource small{display:none}.campaign-chip{padding:6px 8px}.map-layout{grid-template-columns:1fr 285px}.officer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){html,body{overflow:hidden}.topbar{height:148px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-content:start;padding:7px 8px}.brand{grid-column:1;grid-row:1;min-width:0}.brand-crest{width:40px;height:40px;border-radius:12px}.brand strong{font-size:15px}.brand span{font-size:7px}.top-actions{grid-column:2;grid-row:1}.campaign-chip{grid-column:1/-1;grid-row:2;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:31px;padding:3px 6px;border:0;border-top:1px solid var(--line)}.campaign-chip span,.campaign-chip b,.campaign-chip em{display:inline;margin:0;white-space:nowrap}.resource-row{grid-column:1/-1;grid-row:3;width:100%;justify-content:stretch;margin:2px 0 0;gap:4px}.resource{flex:1;min-width:0;height:42px;padding:4px 7px}.resource>span{font-size:15px}.resource b{font-size:12px}.map-layout{display:block;padding:7px 7px 75px;overflow:auto}.map-card{height:62vh;min-height:430px}.command-panel{height:auto;overflow:visible;margin-top:8px}.goal-card,.ledger-card{display:none}.calls-card{max-height:250px}.end-day-btn{margin-bottom:6px}.bottom-nav{left:6px;right:6px;bottom:max(6px,env(safe-area-inset-bottom));transform:none;justify-content:stretch}.nav-btn{flex:1;min-width:0}.nav-btn kbd{display:none}.map-node{width:54px;height:54px}.map-card .frontier-svg{min-width:0;width:100%;left:0;transform:none}.map-card #mapArt{overflow:hidden}.map-nodes{min-width:0;width:100%;left:0;transform:none}.officer-dock{overflow-x:auto;right:5px}.dock-officer{width:62px;height:74px;flex:0 0 auto}.map-corner-tools{top:7px;left:7px}.mini-btn{padding:6px}.scroll-screen{padding:17px 10px 90px}.page-head{display:block}.roster-key{margin-top:9px}.station-art{height:220px}.officer-grid{grid-template-columns:1fr}.officer-card{grid-template-columns:100px 1fr}.officer-card .officer-svg{width:96px}.vault-layout,.legacy-layout{grid-template-columns:1fr}.relic-grid,.decree-grid{grid-template-columns:1fr 1fr}.sheet{top:auto;left:6px;right:6px;bottom:71px;width:auto;max-height:78dvh;transform:translateY(calc(100% + 90px))}.sheet.open{transform:none}.help-grid{grid-template-columns:1fr}.end-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:430px){.brand span{display:none}.top-actions .icon-btn{width:39px;height:39px}.resource.valor{display:flex}.resource-row{gap:3px}.map-card{height:58vh;min-height:390px}.map-card .frontier-svg,.map-nodes{min-width:0;width:100%}.officer-dock{bottom:7px}.dock-officer{width:57px;height:69px}.relic-grid,.decree-grid{grid-template-columns:1fr}.difficulty-pick{grid-template-columns:1fr}.intro-actions{display:grid}.intro-actions button{width:100%;min-width:0}.squad-pick{grid-template-columns:repeat(2,1fr)}.officer-detail-head{grid-template-columns:110px 1fr!important}.officer-detail-head .officer-svg{width:110px!important}}
+@media(prefers-reduced-motion:reduce){.screen.active,.sheet,.toast,.float-text,.frontier-svg .patrol-route{animation:none!important;transition:none!important}html{scroll-behavior:auto!important}}
+@media(forced-colors:active){button,.resource,.goal-card,.ledger-card,.calls-card,.officer-card,.relic-card,.decree-card{forced-color-adjust:auto}.frontier-svg .territory>path:first-child{fill:Canvas!important;stroke:CanvasText!important}.map-node{border:3px solid ButtonText}.map-node.has-incident:after{content:"!";position:absolute;color:CanvasText}}
+.officer-dock{pointer-events:auto;touch-action:pan-x}.dock-officer{touch-action:pan-x}
+#volumeSlider{min-height:44px}
+
+</style>
+</head>
+<body>
+<!-- MBM-SPLASH:BEGIN generated by tools/render_splash.py, do not edit by hand -->
+<!-- mbm-splash-inline: canonical Made by Matt splash, inlined from the games estate standard. -->
+<script>
+/* Made by Matt splash v2 — single file, no dependencies, self-styling.
+   Usage: MadeByMattSplash.start({title:"BOSS BATTLE", kicker:"A Made by Matt Simulation",
+          duration:3200, onComplete:function(){}});                                      */
+(function (g) {
+  var CSS = ".mbm-splash{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;" +
+    "background:radial-gradient(circle at 50% 38%,#222B55,#161D3D 68%);color:#E8E2D4;" +
+    "font-family:Poppins,'Segoe UI',system-ui,sans-serif;transition:opacity .55s ease,visibility .55s}" +
+    ".mbm-splash.is-leaving{opacity:0;visibility:hidden}" +
+    ".mbm-stage{text-align:center;padding:24px;max-width:860px}" +
+    ".mbm-mark{width:min(34vmin,200px);height:auto;filter:drop-shadow(0 18px 32px #0008)}" +
+    ".mbm-mark .mpath{stroke-dasharray:1;stroke-dashoffset:1;animation:mbmDraw 1s cubic-bezier(.6,0,.3,1) .2s forwards}" +
+    ".mbm-mark .mstar{transform-origin:50px 30px;transform:scale(0);opacity:0;" +
+    "animation:mbmPop .45s cubic-bezier(.34,1.56,.64,1) 1.1s forwards}" +
+    ".mbm-kicker,.mbm-title,.mbm-tagline{opacity:0;transform:translateY(12px);animation:mbmRise .6s ease forwards}" +
+    ".mbm-kicker{animation-delay:1.3s;margin-top:20px;color:#F2A24A;font-size:.78rem;" +
+    "letter-spacing:.32em;text-transform:uppercase}" +
+    ".mbm-title{animation-delay:1.45s;margin:.35rem 0 .2rem;font-size:clamp(2rem,7vw,5rem);" +
+    "line-height:.95;letter-spacing:.04em;text-transform:uppercase;font-weight:700}" +
+    ".mbm-tagline{animation-delay:1.65s;color:#B9E6CD;letter-spacing:.18em;text-transform:uppercase;font-weight:700}" +
+    ".mbm-skip{position:absolute;right:22px;bottom:20px;border:1px solid #b9e6cd70;border-radius:99px;" +
+    "background:#0a1026aa;color:#E8E2D4;padding:.65rem 1rem;cursor:pointer;font:inherit;" +
+    /* 44px floor. .65rem padding on an inherited font measured 110x42 — two pixels
+       under, on every stamped game, on phone and desktop alike. inline-flex keeps
+       the label centred once the box stops being content-sized. */
+    "min-height:44px;display:inline-flex;align-items:center;justify-content:center}" +
+    ".mbm-skip:focus-visible{outline:3px solid #F2A24A;outline-offset:3px}" +
+    "@keyframes mbmDraw{to{stroke-dashoffset:0}}@keyframes mbmPop{to{transform:scale(1);opacity:1}}" +
+    "@keyframes mbmRise{to{opacity:1;transform:translateY(0)}}" +
+    "@media(prefers-reduced-motion:reduce){.mbm-splash{transition:none}" +
+    ".mbm-mark .mpath{animation:none;stroke-dashoffset:0}.mbm-mark .mstar{animation:none;transform:scale(1);opacity:1}" +
+    ".mbm-kicker,.mbm-title,.mbm-tagline{animation:none;opacity:1;transform:none}}";
+  var MARK = '<svg class="mbm-mark" viewBox="0 0 100 100" role="img" aria-label="Made by Matt">' +
+    '<circle cx="50" cy="50" r="47" fill="none" stroke="#B9E6CD" stroke-width="3.4"/>' +
+    '<path class="mpath" pathLength="1" d="M28 71 L28 37 L50 59 L72 37 L72 71" fill="none" ' +
+    'stroke="#E8E2D4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<path class="mstar" d="M50 22.5 L51.48 28.52 L57.5 30 L51.48 31.48 L50 37.5 ' +
+    'L48.52 31.48 L42.5 30 L48.52 28.52 Z" fill="#F2A24A"/></svg>';
+
+  function start(o) {
+    o = Object.assign({ title: "", kicker: "A Made by Matt Experience",
+      duration: 3200, onComplete: null }, o || {});
+    if (!document.getElementById("mbm-splash-css")) {
+      var st = document.createElement("style");
+      st.id = "mbm-splash-css"; st.textContent = CSS;
+      document.head.appendChild(st);
+    }
+    var reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var prevFocus = document.activeElement;
+    var el = document.createElement("section");
+    el.className = "mbm-splash";
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-modal", "true");
+    el.setAttribute("aria-label", "Made by Matt introduction");
+    el.innerHTML = '<div class="mbm-stage">' + MARK +
+      '<p class="mbm-kicker"></p><h1 class="mbm-title"></h1>' +
+      '<p class="mbm-tagline">Learn \u2022 Build \u2022 Explore</p></div>' +
+      '<button class="mbm-skip" type="button">Skip intro</button>';
+    el.querySelector(".mbm-kicker").textContent = o.kicker;
+    el.querySelector(".mbm-title").textContent = o.title;
+    document.body.appendChild(el);
+    var done = false, timer;
+    function close() {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      el.classList.add("is-leaving");
+      setTimeout(function () {
+        el.remove();
+        if (prevFocus && prevFocus.focus) prevFocus.focus();
+        if (typeof o.onComplete === "function") o.onComplete();
+      }, reduced ? 0 : 600);
+      /* Never shorter than the dismissing gesture's own tail, even under
+         reduced motion, where the leave itself is instant. */
+      setTimeout(unguard, reduced ? 250 : 600);
+    }
+    /* The splash swallows its own dismissal.
+       Bubble-phase listeners on the splash element stopped nothing: the Space
+       that skipped the intro also reached the game underneath and fired, jumped
+       or started a run nobody asked for, and on a phone the tap that dismissed
+       the splash was the tap that started the game. So while the splash is up
+       every relevant event is taken on `document` in the CAPTURE phase and
+       stopped there, which is before it can descend to a target or bubble back
+       out to `window` where a game's own listeners sit. The guard outlives the
+       dismissal by a short window so the trailing keyup / pointerup / click of
+       the dismissing gesture is swallowed too, and is then removed. */
+    var GUARDED = ["keydown", "keyup", "click", "pointerdown", "pointerup"];
+    function guard(e) {
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+      if (done) return;
+      if (e.type === "keydown" && (e.key === "Escape" || e.key === "Enter" || e.key === " ")) {
+        e.preventDefault(); close();
+      } else if (e.type === "click" && e.target && e.target.closest && e.target.closest(".mbm-skip")) {
+        e.preventDefault(); close();
+      }
+    }
+    function unguard() {
+      GUARDED.forEach(function (t) { document.removeEventListener(t, guard, true); });
+    }
+    GUARDED.forEach(function (t) { document.addEventListener(t, guard, true); });
+    el.tabIndex = -1;
+    el.focus();
+    timer = setTimeout(close, reduced ? Math.min(o.duration, 1200) : o.duration);
+    return { close: close, element: el };
+  }
+  g.MadeByMattSplash = { start: start };
+})(window);
+
+(function(){try{
+if(!window.MadeByMattSplash||window.__mbmSplashStarted)return;window.__mbmSplashStarted=1;
+var t=(document.title||"").split(/\s+[\u2014\u2013-]\s+/)[0].trim();
+var slug=(location.pathname||"").replace(/index\.html$/,"").replace(/^\/|\/$/g,"").split("/").pop()||"mbm";
+function go(){
+  MadeByMattSplash.start({title:t,kicker:"A Made by Matt Game",duration:3000});
+  var el=document.querySelector(".mbm-splash");
+  if(el){el.setAttribute("data-mbm-splash",slug);el.setAttribute("data-mbm-splash-state","open");
+    var obs=setInterval(function(){if(!el.isConnected){el.setAttribute("data-mbm-splash-state","closed");clearInterval(obs);}},120);}
+}
+if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
+}catch(e){}})();
+</script>
+<!-- MBM-SPLASH:END -->
+
+<div id="app">
+  <header class="topbar">
+    <div class="brand"><div class="brand-crest" aria-hidden="true">♛</div><div><strong>Crown &amp; Badge</strong><span>FRONTIER WATCH · v1.0</span></div></div>
+    <div class="campaign-chip"><span id="stateLabel">PLANNING</span><b id="dayCounter">Day 1 / 30</b><em id="mobileGoalProgress">0/3 secured</em></div>
+    <div class="resource-row" aria-label="Campaign resources">
+      <div class="resource gold"><span>◆</span><div><small>Gold</small><b id="goldVal">0</b></div></div>
+      <div class="resource supplies"><span>▣</span><div><small>Supplies</small><b id="suppliesVal">0</b></div></div>
+      <div class="resource authority"><span>♛</span><div><small>Authority</small><b id="authVal">0%</b></div></div>
+      <div class="resource valor"><span>✦</span><div><small>Valor</small><b id="valorVal">0</b></div></div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="muteBtn" aria-label="Mute sound" title="Sound">🔊</button>
+      <button class="icon-btn" id="calmBtn" aria-pressed="false" aria-label="Reduced Stimulation" title="Reduced Stimulation">◐</button>
+      <button class="icon-btn" id="helpBtn" aria-label="Open controls and help" title="Help">?</button>
+    </div>
+  </header>
+
+  <main id="mainContent">
+    <section class="screen active" id="mapScreen" aria-labelledby="mapHeading">
+      <h1 class="sr-only" id="mapHeading">Frontier command map</h1>
+      <div class="map-layout">
+        <div class="map-card" id="mapCard">
+          <div id="mapArt" aria-hidden="true"></div>
+          <canvas id="weatherCanvas" aria-hidden="true"></canvas>
+          <div class="map-nodes" id="mapNodes" aria-label="Interactive frontier districts"></div>
+          <div class="float-layer" id="floatLayer" aria-hidden="true"></div>
+          <div class="drag-ghost" id="dragGhost" hidden></div>
+          <div class="map-corner-tools">
+            <button class="mini-btn" id="nextIncidentBtn">Next incident <kbd>I</kbd></button>
+            <button class="mini-btn" id="mapWeatherBtn" aria-label="Cycle map weather">Weather <span id="weatherLabel">Mixed</span></button>
+          </div>
+          <div class="officer-dock" id="officerDock" aria-label="Ready officer quick selection"></div>
+        </div>
+        <aside class="command-panel" aria-label="Campaign command panel">
+          <div class="goal-card"><div class="eyebrow">OPERATIONAL GOAL</div><h2>Secure the frontier</h2><p>Stabilise three Level 3 outposts, or retain Authority through Day 30.</p><div class="goal-meter"><i id="goalBar"></i></div><div class="goal-stats"><span><b id="securedVal">0</b>/3 secured</span><span><b id="daysLeftVal">30</b> days remain</span></div></div>
+          <div class="ledger-card"><div class="panel-title"><span>Tomorrow’s ledger</span><button class="text-btn" id="ledgerInfoBtn">Details</button></div><div class="ledger-grid" id="dailyPreview"></div></div>
+          <div class="calls-card"><div class="panel-title"><span>Dispatch wire</span><b id="callCount">0 calls</b></div><div class="incident-list" id="incidentList"></div></div>
+          <button class="end-day-btn" id="endDayBtn"><span><b>Advance the watch</b><small id="endDayLedger">Tomorrow: +0G · +0S</small></span><kbd>Space</kbd></button>
+        </aside>
+      </div>
+    </section>
+
+    <section class="screen scroll-screen" id="officersScreen" aria-labelledby="officersHeading">
+      <div class="page-head"><div><span class="eyebrow">THE PEOPLE BEHIND THE BADGE</span><h1 id="officersHeading">Frontier Roster</h1><p>Traits, relics and recovery make every campaign team different.</p></div><div class="roster-key"><span><i class="dot ready"></i>Ready</span><span><i class="dot spent"></i>Resting</span><span><i class="dot injured"></i>Recovering</span></div></div>
+      <div class="station-art" id="stationArt"></div>
+      <div class="officer-grid" id="officerGrid"></div>
+    </section>
+
+    <section class="screen scroll-screen" id="vaultScreen" aria-labelledby="vaultHeading">
+      <div class="page-head"><div><span class="eyebrow">RELICS, INTELLIGENCE &amp; RECORDS</span><h1 id="vaultHeading">Crown Vault</h1><p>Equip one relic per officer. Critical successes and nemesis victories uncover more.</p></div><button class="secondary-btn" id="exportBtn">Export save</button></div>
+      <div class="vault-layout"><div><h2>Relic stash</h2><div class="relic-grid" id="relicGrid"></div></div><div><h2>Campaign chronicle</h2><div class="chronicle" id="chronicle"></div></div></div>
+    </section>
+
+    <section class="screen scroll-screen" id="legacyScreen" aria-labelledby="legacyHeading">
+      <div class="page-head"><div><span class="eyebrow">ROGUELITE META-PROGRESSION</span><h1 id="legacyHeading">Crown Decrees</h1><p>Valor survives every campaign. Spend it on permanent advantages for future watches.</p></div><div class="valor-large"><span>✦</span><b id="legacyValor">0</b> Valor</div></div>
+      <div class="legacy-layout"><div><h2>Permanent decree tree</h2><div class="decree-grid" id="decreeGrid"></div></div><div><h2>Local high scores</h2><div class="score-table" id="scoreTable"></div><h2 class="skins-title">Unlocked liveries</h2><div class="skin-row" id="skinRow"></div></div></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Game sections">
+    <button class="nav-btn active" data-screen="map" aria-current="page"><span>⌖</span>Map <kbd>M</kbd></button>
+    <button class="nav-btn" data-screen="officers"><span>⬟</span>Officers <kbd>O</kbd></button>
+    <button class="nav-btn" data-screen="vault"><span>◆</span>Vault <kbd>V</kbd></button>
+    <button class="nav-btn" data-screen="legacy"><span>✦</span>Legacy <kbd>L</kbd></button>
+  </nav>
+</div>
+
+<aside class="sheet" id="incidentSheet" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="incidentTitle">
+  <button class="icon-btn sheet-close" id="incidentClose" aria-label="Close incident">×</button>
+  <div id="incidentSheetBody"></div>
+</aside>
+
+<aside class="sheet officer-sheet" id="officerSheet" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="officerTitle">
+  <button class="icon-btn sheet-close" id="officerClose" aria-label="Close officer details">×</button>
+  <div id="officerSheetBody"></div>
+</aside>
+
+<div class="modal-layer" id="summaryModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="summaryTitle"><div class="modal-card"><button class="icon-btn modal-close" data-close="summaryModal" aria-label="Close summary">×</button><div id="summaryBody"></div></div></div>
+<div class="modal-layer" id="helpModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="helpTitle"><div class="modal-card help-card"><button class="icon-btn modal-close" data-close="helpModal" aria-label="Close help">×</button><span class="eyebrow">FIELD MANUAL</span><h2 id="helpTitle">Controls &amp; accessibility</h2><div class="help-grid"><div><b>Pointer / touch</b><p>Tap an officer, then an incident. You can also drag a ready officer badge onto a district.</p></div><div><b>Keyboard</b><p><kbd>1</kbd>–<kbd>4</kbd> select ready officers · <kbd>I</kbd> focuses the next call · <kbd>Space</kbd> advances the day · <kbd>M/O/V/L</kbd> switch sections.</p></div><div><b>Reduced Stimulation</b><p>Stops weather animation, route motion, screen shake and decorative particles while keeping every status visible.</p></div><div><b>Local privacy</b><p>Saves and scores stay in this browser. There are no accounts, trackers, adverts or network requests.</p></div></div><label class="volume-row">Sound volume <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.28"></label></div></div>
+<div class="modal-layer" id="endModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="endTitle"><div class="modal-card end-card"><div id="endBody"></div></div></div>
+
+<div class="intro" id="intro"><div class="intro-map-lines" aria-hidden="true"></div><div class="intro-card"><div class="intro-crest">♛</div><span class="eyebrow">A COMPLETE 30-DAY STRATEGY CAMPAIGN</span><h1>Crown &amp; Badge<small>FRONTIER WATCH</small></h1><p>Command six border districts through raids, blizzards, unrest and hard choices. Every campaign is seeded, replayable and yours alone.</p><label>Campaign chart code<input id="seedInput" maxlength="24" value="SUNSPIRE" autocomplete="off" spellcheck="false"></label><fieldset class="difficulty-pick"><legend>Difficulty</legend><label><input type="radio" name="difficulty" value="calm"><span>Calm<small>Gentler pressure</small></span></label><label><input type="radio" name="difficulty" value="standard" checked><span>Standard<small>Balanced watch</small></span></label><label><input type="radio" name="difficulty" value="hard"><span>High Frontier<small>Greater Valor</small></span></label></fieldset><div class="intro-actions"><button class="primary-btn" id="newCampaignBtn">Begin new campaign</button><button class="secondary-btn" id="continueBtn" hidden>Continue saved watch</button></div><small class="release-note">Procedural SVG + Canvas · Zero dependencies · Offline-first · Made by Matt</small></div></div>
+
+<div id="liveRegion" class="sr-only" aria-live="polite"></div>
+<div id="toastLayer" class="toast-layer" aria-live="polite"></div>
+
+<script>
+(function (root) {
+  'use strict';
+
+  const SCHEMA_VERSION = 1;
+  const STATES = Object.freeze({ INIT:'INIT', PLANNING:'PLANNING', RESOLVING:'RESOLVING', DAILY_TICK:'DAILY_TICK', VICTORY:'VICTORY', DEFEAT:'DEFEAT' });
+  const clamp = (n,min,max) => Math.max(min,Math.min(max,n));
+  const copy = value => JSON.parse(JSON.stringify(value));
+
+  const DIFFICULTIES = Object.freeze({
+    calm:{id:'calm',name:'Calm Frontier',threat:.88,penalty:.8,spawn:.8,valor:.8},
+    standard:{id:'standard',name:'Standard Watch',threat:1,penalty:1,spawn:1,valor:1},
+    hard:{id:'hard',name:'High Frontier',threat:1.06,penalty:1.05,spawn:1.11,valor:1.45}
+  });
+
+  const SECTOR_BLUEPRINTS = Object.freeze([
+    {id:'frostmere',name:'Frostmere Pass',biome:'snow',x:23,y:24,gold:4,supplies:3,weather:'snow'},
+    {id:'pinewatch',name:'Pinewatch Reach',biome:'forest',x:50,y:15,gold:5,supplies:4,weather:'fog'},
+    {id:'redcliff',name:'Redcliff March',biome:'highland',x:78,y:25,gold:7,supplies:2,weather:'wind'},
+    {id:'lantern',name:'Lantern Vale',biome:'farms',x:22,y:69,gold:5,supplies:7,weather:'clear'},
+    {id:'bluebridge',name:'Bluebridge Gate',biome:'trade',x:50,y:81,gold:9,supplies:3,weather:'rain'},
+    {id:'eastmere',name:'Eastmere Quay',biome:'coast',x:79,y:68,gold:8,supplies:4,weather:'fog'}
+  ]);
+
+  const ARCHETYPES = Object.freeze({
+    marshal:{name:'High Marshal',icon:'♛',power:21,upkeep:4,passive:'Other squad members gain +3 Power.'},
+    investigator:{name:'Evidence Savant',icon:'⌕',power:16,upkeep:3,passive:'+6 Power against smuggling and mutiny.'},
+    warden:{name:'Garrison Warden',icon:'⬟',power:18,upkeep:3,passive:'+30% Power at upgraded outposts.'},
+    surgeon:{name:'Field Surgeon',icon:'✚',power:13,upkeep:3,passive:'Injuries heal one day faster.'},
+    scout:{name:'Frontier Scout',icon:'➶',power:15,upkeep:2,passive:'+5 Power in fog, snow and ravines.'},
+    quartermaster:{name:'Quartermaster',icon:'◇',power:14,upkeep:2,passive:'Reduces squad and daily supply use.'}
+  });
+
+  const TRAITS = Object.freeze({
+    swift:{name:'Mounted',description:'+4 Power when using Charge.',power:(ctx)=>ctx.doctrine==='charge'?4:0},
+    steady:{name:'Steady Hand',description:'25% lower injury risk.',injury:.75},
+    frugal:{name:'Light Eater',description:'Consumes 1 fewer Supply each day.',upkeep:-1},
+    pathfinder:{name:'Pathfinder',description:'+4 Power in fog or snow.',power:(ctx)=>['fog','snow'].includes(ctx.weather)?4:0},
+    diplomat:{name:'Mediator',description:'+15% Containment effectiveness.',modifier:(ctx)=>ctx.doctrine==='contain'?1.15:1},
+    resolute:{name:'Resolute',description:'Critical success restores +2 extra Authority.',criticalAuthority:2},
+    vigilant:{name:'Vigilant',description:'+3 Power when a deadline has one day left.',power:(ctx)=>ctx.deadline<=1?3:0},
+    mentor:{name:'Mentor',description:'Squad members earn +2 XP.',squadXp:2}
+  });
+
+  const RELICS = Object.freeze({
+    crown_seal:{id:'crown_seal',name:'Iron Crown Seal',icon:'♜',description:'+50% Gold from threats above 45.',modifiers:{highThreatGold:1.5}},
+    signal_mirror:{id:'signal_mirror',name:"Watchman's Mirror",icon:'◈',description:'Reveals hidden modifiers and grants +3 Scout Power.',modifiers:{reveal:true,scoutPower:3}},
+    tower_shield:{id:'tower_shield',name:'Garrison Shield',icon:'⬢',description:'Halves injury risk.',modifiers:{injury:.5}},
+    field_kit:{id:'field_kit',name:'Field Surgeon Kit',icon:'✚',description:'Prevents the first catastrophic injury each campaign.',modifiers:{preventCatastrophe:true}},
+    ancestral_badge:{id:'ancestral_badge',name:'Ancestral Badge',icon:'✦',description:'+6 Power and +8% critical threshold.',modifiers:{power:6,critical:.08}},
+    imperial_ledger:{id:'imperial_ledger',name:'Imperial Ledger',icon:'▤',description:'Outpost maintenance costs 25% less.',modifiers:{maintenance:.75}}
+  });
+
+  const DECREES = Object.freeze({
+    mint:{id:'mint',name:'Royal Mint',cost:12,description:'Begin each campaign with +50 Gold.'},
+    rations:{id:'rations',name:'Hardened Rations',cost:16,description:'Officer Supply upkeep is reduced by 20%.'},
+    telegraph:{id:'telegraph',name:'Telegraph Network',cost:14,description:'All hidden incident modifiers are revealed.'},
+    oath:{id:'oath',name:'Frontier Oath',cost:18,description:'Begin with +10 Authority.'},
+    cartography:{id:'cartography',name:'Crown Cartographers',cost:22,description:'All districts begin with +8 Stability.'}
+  });
+
+  const INCIDENT_TYPES = Object.freeze({
+    bandits:{name:'Bandit Incursion',icon:'⚑',baseThreat:19,deadline:2,gold:28,supplies:5,penalty:9,flavour:'Riders are testing the patrol line.'},
+    smugglers:{name:'Smuggler Caravan',icon:'◫',baseThreat:14,deadline:3,gold:32,supplies:6,penalty:6,flavour:'Unmarked wagons are avoiding the toll road.'},
+    mutiny:{name:'Outpost Mutiny',icon:'⚠',baseThreat:26,deadline:2,gold:26,supplies:5,penalty:13,flavour:'A tired garrison has refused its watch.'},
+    blizzard:{name:'Mountain Blizzard',icon:'❄',baseThreat:17,deadline:2,gold:20,supplies:10,penalty:9,flavour:'A supply column is stranded in whiteout.'},
+    dispute:{name:'Border Dispute',icon:'⚔',baseThreat:30,deadline:2,gold:40,supplies:5,penalty:13,flavour:'Two banners claim the same crossing.'},
+    convoy:{name:'Missing Courier',icon:'✉',baseThreat:21,deadline:3,gold:30,supplies:8,penalty:10,flavour:'The morning dispatch wagon never arrived.'}
+  });
+
+  const MODIFIERS = Object.freeze({
+    ravine:{name:'Ravine Route',description:'Scouts excel; other squads lose momentum.',power:.91,scoutBonus:7},
+    fortified:{name:'Fortified Position',description:'The threat is dug in behind fieldworks.',power:.86,wardenBonus:6},
+    local_help:{name:'Local Support',description:'Residents provide maps and safe passage.',power:1.12,careBonus:4},
+    false_intel:{name:'False Intelligence',description:'Evidence specialists can expose the decoy.',power:.9,investigatorBonus:8},
+    wounded:{name:'Civilians at Risk',description:'A surgeon reduces injury and Authority loss.',power:.95,surgeonBonus:6}
+  });
+
+  const DOCTRINES = Object.freeze({
+    charge:{id:'charge',name:'Decisive Charge',icon:'⚡',description:'+20% field power and +15% bounty; injury risk ×1.4.',power:1.2,reward:1.15,injury:1.4},
+    contain:{id:'contain',name:'Patient Containment',icon:'◉',description:'Two-day deployment; low injury risk and half bounty.',power:.98,reward:.55,injury:.34,turns:2},
+    infiltrate:{id:'infiltrate',name:'Bribe & Infiltrate',icon:'◆',description:'Spend Gold and Supplies for a guaranteed quiet resolution.',power:1,reward:.35,injury:0}
+  });
+
+  const OFFICER_BLUEPRINTS = Object.freeze([
+    {id:'amara',name:'Amara Vale',archetype:'marshal',skin:3,hair:1,palette:0,recruited:true},
+    {id:'theo',name:'Theo Quill',archetype:'investigator',skin:2,hair:3,palette:2,recruited:true},
+    {id:'rowan',name:'Rowan Flint',archetype:'warden',skin:1,hair:5,palette:0,recruited:true},
+    {id:'dev',name:'Dev Sen',archetype:'surgeon',skin:2,hair:2,palette:1,recruited:true},
+    {id:'malik',name:'Malik North',archetype:'scout',skin:3,hair:4,palette:3,recruited:false,recruitCost:110},
+    {id:'kit',name:'Kit Bell',archetype:'quartermaster',skin:0,hair:6,palette:2,recruited:false,recruitCost:125}
+  ]);
+
+  function hashSeed(input) {
+    let h=2166136261>>>0;
+    const text=String(input||'SUNSPIRE');
+    for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619)}
+    return h>>>0||0x9e3779b9;
+  }
+
+  function nextRandom(state) {
+    let x=state.rng>>>0||0x9e3779b9;
+    x^=x<<13;x^=x>>>17;x^=x<<5;
+    state.rng=x>>>0;
+    return (state.rng>>>0)/4294967296;
+  }
+  function randomInt(state,min,max){return Math.floor(nextRandom(state)*(max-min+1))+min}
+  function pick(state,list){return list[Math.floor(nextRandom(state)*list.length)]}
+  function shuffled(state,list){const a=list.slice();for(let i=a.length-1;i>0;i--){const j=randomInt(state,0,i);[a[i],a[j]]=[a[j],a[i]]}return a}
+
+  function normalizeMeta(meta) {
+    const out={valor:Math.max(0,Math.floor(meta&&meta.valor||0)),decrees:{},unlocks:{royal:false,frost:false,outlaw:false,gilded:false}};
+    Object.keys(DECREES).forEach(id=>out.decrees[id]=!!(meta&&meta.decrees&&meta.decrees[id]));
+    Object.assign(out.unlocks,meta&&meta.unlocks||{});
+    return out;
+  }
+
+  function makeOfficer(state,bp,index) {
+    const traitIds=shuffled(state,Object.keys(TRAITS)).slice(0,2);
+    const a=ARCHETYPES[bp.archetype];
+    return {...bp,avatarSeed:(state.seed+index*2654435761)>>>0,rank:1,xp:0,power:a.power,upkeep:a.upkeep,traits:traitIds,relic:null,status:bp.recruited?'ready':'locked',injuryDays:0,adrenalineDays:0,fieldKitUsed:false};
+  }
+
+  function createCampaign(seedInput='SUNSPIRE',metaInput={},difficultyId='standard') {
+    const seed=hashSeed(seedInput),meta=normalizeMeta(metaInput),difficulty=DIFFICULTIES[difficultyId]||DIFFICULTIES.standard;
+    const state={schema:SCHEMA_VERSION,gameState:STATES.INIT,seed,seedLabel:String(seedInput||'SUNSPIRE').slice(0,24),rng:seed,sequence:0,projectDay:0,day:1,maxDays:30,difficulty:difficulty.id,resources:{gold:160+(meta.decrees.mint?50:0),supplies:105,authority:clamp(86+(meta.decrees.oath?10:0),0,100)},crisis:{supplies:0,maintenance:0},meta,officers:[],sectors:[],incidents:[],nemeses:[],stash:['tower_shield','crown_seal'],stats:{resolved:0,critical:0,pyrrhic:0,defeats:0,breaches:0,injuries:0,goldEarned:0,sectorsSecured:0,blizzardsResolved:0},log:[],logGenerated:0,lastEvents:[],outcome:null,earnedValor:0,score:0};
+    state.sectors=SECTOR_BLUEPRINTS.map((bp,i)=>({...bp,stability:clamp(44+randomInt(state,-5,10)+(meta.decrees.cartography?8:0),0,100),outpost:i===4?2:1,control:'crown',secured:false,everSecured:false,critical:false}));
+    state.officers=OFFICER_BLUEPRINTS.map((bp,i)=>makeOfficer(state,bp,i));
+    state.gameState=STATES.PLANNING;
+    state.log.push({day:1,tone:'good',text:'Frontier command established. Secure three districts or hold through Day 30.'});state.logGenerated=1;
+    spawnDailyIncidents(state,true);
+    return state;
+  }
+
+  function incidentScale(state) {
+    const diff=DIFFICULTIES[state.difficulty]||DIFFICULTIES.standard;
+    // Standard rises from 1.00x to 1.55x. A steeper 2.25x curve made the
+    // closing week numerically unwinnable for a split roster.
+    return diff.threat*(1+(state.day-1)/29*.55);
+  }
+
+  function availableSectors(state){return state.sectors.filter(s=>!state.incidents.some(i=>i.sectorId===s.id))}
+  function createIncident(state,forcedType) {
+    const sectors=availableSectors(state);if(!sectors.length)return null;
+    const sector=pick(state,sectors),typeId=forcedType||pick(state,Object.keys(INCIDENT_TYPES)),type=INCIDENT_TYPES[typeId];
+    const scale=incidentScale(state),modifierId=pick(state,Object.keys(MODIFIERS));
+    let threat=Math.round(type.baseThreat*scale+randomInt(state,-2,3));
+    let nemesisId=null;
+    const returning=state.nemeses.filter(n=>!n.defeated);
+    if(returning.length&&nextRandom(state)<.24){const n=pick(state,returning);nemesisId=n.id;threat+=n.power}
+    const rewardScale=1+(state.day-1)/29*.25;
+    const incident={id:`i${state.day}_${++state.sequence}`,type:typeId,name:nemesisId?`${state.nemeses.find(n=>n.id===nemesisId).name}: ${type.name}`:type.name,icon:type.icon,sectorId:sector.id,threat:Math.max(8,threat),deadline:type.deadline,goldReward:Math.round(type.gold*rewardScale),supplyReward:Math.round(type.supplies*rewardScale),authorityPenalty:Math.round(type.penalty*(DIFFICULTIES[state.difficulty]||DIFFICULTIES.standard).penalty),modifierId,assignedOfficerIds:[],doctrine:null,containTurns:0,nemesisId,status:'active'};
+    state.incidents.push(incident);sector.critical=incident.deadline<=1;
+    return incident;
+  }
+
+  function spawnDailyIncidents(state,opening=false) {
+    const diff=DIFFICULTIES[state.difficulty]||DIFFICULTIES.standard;
+    const twoChance=clamp((.12+state.day*.017)*diff.spawn,0,.78);
+    const count=opening?2:(nextRandom(state)<twoChance?2:1),spawned=[];
+    for(let i=0;i<count;i++){const incident=createIncident(state,opening&&i===0?'smugglers':null);if(incident)spawned.push(incident)}
+    if(spawned.length)pushLog(state,'alert',`${spawned.length} new ${spawned.length===1?'call':'calls'} reached Dispatch.`);
+    return spawned;
+  }
+
+  function pushLog(state,tone,text){state.logGenerated=(Number.isInteger(state.logGenerated)?state.logGenerated:state.log.length)+1;state.log.unshift({day:state.day,tone,text});state.log=state.log.slice(0,200)}
+  function getSector(state,id){return state.sectors.find(s=>s.id===id)}
+  function getOfficer(state,id){return state.officers.find(o=>o.id===id)}
+  function getIncident(state,id){return state.incidents.find(i=>i.id===id)}
+  function isModifierRevealed(state,incident,officerIds=[]) {
+    if(state.meta.decrees.telegraph)return true;
+    return officerIds.some(id=>{const o=getOfficer(state,id);if(!o)return false;const relic=RELICS[o.relic];return o.archetype==='scout'||o.archetype==='investigator'||(relic&&relic.modifiers.reveal)});
+  }
+
+  function effectiveOfficerPower(state,officer,incident,doctrineId) {
+    const sector=getSector(state,incident.sectorId),ctx={doctrine:doctrineId,weather:sector.weather,deadline:incident.deadline};
+    let power=officer.power+(officer.rank-1)*2;
+    if(officer.adrenalineDays>0)power*=1.25;
+    if(officer.archetype==='warden'&&sector.outpost>=2)power*=1.3;
+    if(officer.archetype==='investigator'&&['smugglers','mutiny'].includes(incident.type))power+=6;
+    if(officer.archetype==='scout'&&['fog','snow'].includes(sector.weather))power+=5;
+    for(const id of officer.traits){const t=TRAITS[id];if(t&&t.power)power+=t.power(ctx)}
+    const relic=RELICS[officer.relic];if(relic){power+=relic.modifiers.power||0;if(officer.archetype==='scout')power+=relic.modifiers.scoutPower||0}
+    const mod=MODIFIERS[incident.modifierId];
+    if(mod){if(officer.archetype==='scout')power+=mod.scoutBonus||0;if(officer.archetype==='warden')power+=mod.wardenBonus||0;if(officer.archetype==='investigator')power+=mod.investigatorBonus||0;if(officer.archetype==='surgeon')power+=mod.surgeonBonus||0}
+    return Math.max(1,power);
+  }
+
+  function resolveIncident(squadPower,threatLevel,tacticalModifier=1,roll=.5) {
+    const winChance=clamp((squadPower/(squadPower+Math.max(1,threatLevel)))*tacticalModifier,.05,.95);
+    const success=roll<winChance;
+    const injuryRisk=clamp((threatLevel/Math.max(1,squadPower))* (success?.13:.28),.025,.68);
+    return {success,winChance:Math.round(winChance*100),winChanceRaw:winChance,injuryRisk};
+  }
+
+  function squadPreview(state,incidentId,officerIds,doctrineId='charge') {
+    const incident=getIncident(state,incidentId),doctrine=DOCTRINES[doctrineId];
+    if(!incident||!doctrine)return null;
+    const officers=(officerIds||[]).map(id=>getOfficer(state,id)).filter(Boolean),sector=getSector(state,incident.sectorId),mod=MODIFIERS[incident.modifierId];
+    let power=officers.reduce((sum,o)=>sum+effectiveOfficerPower(state,o,incident,doctrineId),0);
+    const marshals=officers.filter(o=>o.archetype==='marshal').length;power+=marshals*Math.max(0,officers.length-1)*3;
+    let tactical=doctrine.power;
+    for(const o of officers)for(const id of o.traits){const t=TRAITS[id];if(t&&t.modifier)tactical*=t.modifier({doctrine:doctrineId,weather:sector.weather,deadline:incident.deadline})}
+    tactical*=mod?mod.power:1;
+    const result=resolveIncident(power,incident.threat,tactical,.5);
+    let injury=result.injuryRisk*doctrine.injury;
+    if(officers.some(o=>o.archetype==='surgeon'))injury*=.62;
+    for(const o of officers){if(o.traits.includes('steady'))injury*=TRAITS.steady.injury;const r=RELICS[o.relic];if(r&&r.modifiers.injury)injury*=r.modifiers.injury}
+    const infiltrationCost={gold:Math.round(34+incident.threat*.72),supplies:Math.round(7+incident.threat*.15)};
+    return {power:Math.round(power),actualChance:result.winChance,winChanceRaw:result.winChanceRaw,displayChance:isModifierRevealed(state,incident,officerIds)?result.winChance:null,injuryPercent:Math.round(clamp(injury,0,.95)*100),rewardGold:Math.round(incident.goldReward*doctrine.reward),rewardSupplies:Math.round(incident.supplyReward*doctrine.reward),infiltrationCost,modifierRevealed:isModifierRevealed(state,incident,officerIds)};
+  }
+
+  function setOfficerStatus(state,ids,status){ids.forEach(id=>{const o=getOfficer(state,id);if(o)o.status=status})}
+  function validateSquad(state,ids){const unique=[...new Set(ids||[])];return unique.length>0&&unique.length<=3&&unique.every(id=>{const o=getOfficer(state,id);return o&&o.status==='ready'})}
+  function addOfficerXp(state,ids,base) {
+    const mentorBonus=ids.some(id=>{const o=getOfficer(state,id);return o&&o.traits.includes('mentor')})?2:0;
+    ids.forEach(id=>{const o=getOfficer(state,id);if(!o)return;o.xp+=base+mentorBonus;const needed=o.rank*28;if(o.xp>=needed&&o.rank<5){o.xp-=needed;o.rank++;o.power++;pushLog(state,'good',`${o.name} reached Rank ${o.rank}.`)}});
+  }
+
+  function maybeInjure(state,officerIds,incident,preview,outcome,events) {
+    if(!['pyrrhic','disaster'].includes(outcome))return;
+    const eligible=officerIds.map(id=>getOfficer(state,id)).filter(Boolean);if(!eligible.length)return;
+    const target=pick(state,eligible),relic=RELICS[target.relic];
+    if(outcome==='disaster'&&relic&&relic.modifiers.preventCatastrophe&&!target.fieldKitUsed){target.fieldKitUsed=true;events.push({type:'kit-save',officerId:target.id,text:`${target.name}'s Field Kit prevented a severe injury.`});return}
+    const surgeon=eligible.find(o=>o.archetype==='surgeon');
+    target.injuryDays=Math.max(1,(outcome==='disaster'?4:2)-(surgeon?1:0));target.status='injured';state.stats.injuries++;
+    events.push({type:'injury',officerId:target.id,value:target.injuryDays,text:`${target.name} is recovering for ${target.injuryDays} ${target.injuryDays===1?'day':'days'}.`});
+  }
+
+  function createNemesis(state,incident) {
+    if(incident.nemesisId)return getNemesis(state,incident.nemesisId);
+    const titles=['Ash','Morrow','Rook','Vesper','Flint','Gale'],names=['Captain','Warden','Baron','Rider'];
+    const nemesis={id:`n${++state.sequence}`,name:`${pick(state,names)} ${pick(state,titles)}`,power:5+Math.floor(state.day/7),defeated:false,sectorId:incident.sectorId};state.nemeses.push(nemesis);return nemesis;
+  }
+  function getNemesis(state,id){return state.nemeses.find(n=>n.id===id)}
+
+  function applySuccess(state,incident,officerIds,doctrineId,outcome,preview,events) {
+    const sector=getSector(state,incident.sectorId),doctrine=DOCTRINES[doctrineId];
+    let gold=preview.rewardGold,supplies=preview.rewardSupplies,authority=outcome==='critical'?5:3,stability=outcome==='critical'?10:outcome==='pyrrhic'?5:7;
+    if(outcome==='critical'){gold*=2;state.stats.critical++;officerIds.forEach(id=>{const o=getOfficer(state,id);if(o)o.adrenalineDays=2});for(const id of officerIds){const o=getOfficer(state,id);for(const tId of o.traits)authority+=TRAITS[tId]&&TRAITS[tId].criticalAuthority||0}}
+    if(outcome==='pyrrhic'){gold=Math.round(gold*.75);state.stats.pyrrhic++}
+    if(incident.threat>45&&officerIds.some(id=>{const o=getOfficer(state,id);return o&&o.relic==='crown_seal'}))gold=Math.round(gold*RELICS.crown_seal.modifiers.highThreatGold);
+    state.resources.gold+=gold;state.resources.supplies+=supplies;state.resources.authority=clamp(state.resources.authority+authority,0,100);sector.stability=clamp(sector.stability+stability,0,100);state.stats.resolved++;state.stats.goldEarned+=gold;if(incident.type==='blizzard')state.stats.blizzardsResolved=(state.stats.blizzardsResolved||0)+1;
+    if(incident.nemesisId){const n=getNemesis(state,incident.nemesisId);if(n){n.defeated=true;events.push({type:'nemesis-defeated',text:`Nemesis defeated: ${n.name}.`});awardRelic(state,events)}}
+    if(outcome==='critical'&&state.stats.critical%3===0)awardRelic(state,events);
+    setOfficerStatus(state,officerIds,'spent');addOfficerXp(state,officerIds,outcome==='critical'?14:outcome==='pyrrhic'?7:10);maybeInjure(state,officerIds,incident,preview,outcome,events);
+    events.push({type:outcome,sectorId:sector.id,gold,supplies,authority,text:`${outcome==='critical'?'Critical success':outcome==='pyrrhic'?'Hard-won victory':'Incident resolved'} at ${sector.name}.`});
+    pushLog(state,'good',`${incident.name} resolved at ${sector.name} (+${gold}G, +${authority} Authority).`);
+    state.incidents=state.incidents.filter(i=>i.id!==incident.id);updateSectorSecurity(state,sector,events);
+  }
+
+  function applyFailure(state,incident,officerIds,outcome,preview,events) {
+    const sector=getSector(state,incident.sectorId),loss=Math.round(incident.authorityPenalty*(outcome==='disaster'?1.1:.58));
+    state.resources.authority=clamp(state.resources.authority-loss,0,100);sector.stability=clamp(sector.stability-(outcome==='disaster'?12:6),0,100);incident.threat+=outcome==='disaster'?5:2;incident.deadline=Math.max(1,incident.deadline-1);state.stats.defeats++;
+    setOfficerStatus(state,officerIds,'spent');maybeInjure(state,officerIds,incident,preview,outcome,events);addOfficerXp(state,officerIds,4);
+    if(outcome==='disaster'){const nemesis=createNemesis(state,incident);events.push({type:'nemesis',sectorId:sector.id,text:`${nemesis.name} emerged as a recurring rival.`})}
+    events.push({type:outcome,sectorId:sector.id,authority:-loss,text:`${outcome==='disaster'?'Disastrous defeat':'Squad repelled'} at ${sector.name}.`});pushLog(state,'bad',`${incident.name} resisted the squad (-${loss} Authority).`);
+  }
+
+  function awardRelic(state,events) {
+    const available=Object.keys(RELICS).filter(id=>!state.stash.includes(id)&&!state.officers.some(o=>o.relic===id));if(!available.length)return;
+    const id=pick(state,available);state.stash.push(id);events.push({type:'relic',relicId:id,text:`Relic recovered: ${RELICS[id].name}.`});
+  }
+
+  function settleIncident(state,incident,officerIds,doctrineId,forced=false) {
+    const preview=squadPreview(state,incident.id,officerIds,doctrineId),events=[];if(!preview)return {ok:false,reason:'NO_PREVIEW',events};
+    const doctrine=DOCTRINES[doctrineId],roll=forced?0:nextRandom(state),chance=forced?1:preview.winChanceRaw,base={success:roll<chance,winChance:Math.round(chance*100),winChanceRaw:chance,injuryRisk:preview.injuryPercent/100};
+    let criticalBoost=0;for(const id of officerIds){const o=getOfficer(state,id),r=o&&RELICS[o.relic];if(r)criticalBoost+=r.modifiers.critical||0}
+    const injuryRoll=nextRandom(state),critical=!forced&&base.success&&roll<base.winChanceRaw*(.1+criticalBoost),pyrrhic=!forced&&base.success&&!critical&&injuryRoll<preview.injuryPercent/100;
+    const disaster=!base.success&&roll>Math.max(.82,base.winChanceRaw+.32),outcome=critical?'critical':pyrrhic?'pyrrhic':base.success?'success':disaster?'disaster':'failure';
+    if(base.success)applySuccess(state,incident,officerIds,doctrineId,outcome,preview,events);else applyFailure(state,incident,officerIds,outcome,preview,events);
+    checkCampaignEnd(state,events);state.lastEvents=events;return {ok:true,outcome,preview,roll,events};
+  }
+
+  function dispatchIncident(state,incidentId,officerIds=[],doctrineId='charge') {
+    if(state.gameState!==STATES.PLANNING)return {ok:false,reason:'NOT_PLANNING',events:[]};
+    const incident=getIncident(state,incidentId),doctrine=DOCTRINES[doctrineId];if(!incident||!doctrine)return {ok:false,reason:'INVALID_INCIDENT',events:[]};
+    if(doctrineId==='infiltrate'){
+      const preview=squadPreview(state,incidentId,[],doctrineId),cost=preview.infiltrationCost;
+      if(state.resources.gold<cost.gold||state.resources.supplies<cost.supplies)return {ok:false,reason:'INSUFFICIENT_RESOURCES',cost,events:[]};
+      state.resources.gold-=cost.gold;state.resources.supplies-=cost.supplies;const events=[{type:'cost',gold:-cost.gold,supplies:-cost.supplies,text:'The covert network has been funded.'}];
+      const forced=settleIncident(state,incident,[],doctrineId,true);forced.events.unshift(...events);state.lastEvents=forced.events;return forced;
+    }
+    if(!validateSquad(state,officerIds))return {ok:false,reason:'INVALID_SQUAD',events:[]};
+    if(doctrineId==='contain'){
+      setOfficerStatus(state,officerIds,'deployed');incident.assignedOfficerIds=[...new Set(officerIds)];incident.doctrine='contain';incident.containTurns=doctrine.turns;incident.status='contained';const events=[{type:'containment',sectorId:incident.sectorId,text:`Containment established for ${doctrine.turns} days.`}];state.lastEvents=events;pushLog(state,'info',`${incident.name} is under patient containment.`);return {ok:true,outcome:'scheduled',preview:squadPreview(state,incidentId,officerIds,'contain'),events};
+    }
+    state.gameState=STATES.RESOLVING;const result=settleIncident(state,incident,officerIds,doctrineId,false);if(![STATES.VICTORY,STATES.DEFEAT].includes(state.gameState))state.gameState=STATES.PLANNING;return result;
+  }
+
+  function resolveContainments(state,events) {
+    for(const incident of [...state.incidents].filter(i=>i.status==='contained')){
+      incident.containTurns--;state.resources.authority=clamp(state.resources.authority-1,0,100);events.push({type:'contain-tick',sectorId:incident.sectorId,authority:-1,text:`Containment continues at ${getSector(state,incident.sectorId).name}.`});
+      if(incident.containTurns<=0){const settled=settleIncident(state,incident,incident.assignedOfficerIds,'contain',false);events.push(...settled.events);if(state.incidents.some(i=>i.id===incident.id)){incident.status='active';incident.assignedOfficerIds=[];incident.doctrine=null;incident.containTurns=0}}
+    }
+  }
+
+  function dailyEconomy(state) {
+    const rationFactor=state.meta.decrees.rations?.8:1;
+    let upkeep=0;for(const o of state.officers.filter(o=>o.status!=='locked')){let u=o.upkeep;for(const id of o.traits)u+=TRAITS[id]&&TRAITS[id].upkeep||0;upkeep+=Math.max(1,u)}upkeep=Math.ceil(upkeep*rationFactor);
+    // Headquarters keeps the watch alive; frontier outposts become profitable
+    // only after stabilisation. This creates a deliberate expansion dip.
+    let goldIncome=4,supplyIncome=6,maintenance=0,outpostSupplies=0;
+    for(const s of state.sectors){const functional=s.stability>=25&&s.outpost>0;if(!functional)continue;goldIncome+=s.secured?7:3;supplyIncome+=2;let sectorMaint=5;if(state.officers.some(o=>o.relic==='imperial_ledger'))sectorMaint=Math.floor(sectorMaint*RELICS.imperial_ledger.modifiers.maintenance);maintenance+=sectorMaint;outpostSupplies+=1}
+    if(state.officers.some(o=>o.archetype==='quartermaster'&&o.status!=='locked'))upkeep=Math.max(1,upkeep-2);
+    return {goldIncome,supplyIncome,officerSupplies:upkeep,outpostSupplies,maintenance,netGold:goldIncome-maintenance,netSupplies:supplyIncome-upkeep-outpostSupplies};
+  }
+
+  function processBreaches(state,events) {
+    for(const incident of [...state.incidents]){
+      if(incident.status==='contained')continue;incident.deadline--;
+      const sector=getSector(state,incident.sectorId);sector.critical=incident.deadline<=1;
+      if(incident.deadline<=0){const loss=incident.authorityPenalty;state.resources.authority=clamp(state.resources.authority-loss,0,100);sector.stability=clamp(sector.stability-16,0,100);state.stats.breaches++;state.incidents=state.incidents.filter(i=>i.id!==incident.id);events.push({type:'breach',sectorId:sector.id,authority:-loss,text:`BREACH: ${incident.name} overran ${sector.name}.`});pushLog(state,'bad',`BREACH at ${sector.name} (-${loss} Authority).`)}
+    }
+  }
+
+  function healAndExpireBuffs(state,events) {
+    for(const o of state.officers){if(o.adrenalineDays>0)o.adrenalineDays--;if(o.status==='spent')o.status='ready';if(o.injuryDays>0){o.injuryDays--;if(o.injuryDays===0){o.status='ready';events.push({type:'recovered',officerId:o.id,text:`${o.name} returned to duty.`})}}}
+  }
+
+  function updateSectorSecurity(state,sector,events) {
+    const was=sector.secured;sector.secured=sector.stability>=90&&sector.outpost>=3;sector.control=sector.stability<25?'lost':sector.stability<55?'contested':'crown';sector.critical=state.incidents.some(i=>i.sectorId===sector.id&&i.deadline<=1);
+    if(sector.secured&&!was&&!sector.everSecured){sector.everSecured=true;state.stats.sectorsSecured++;events.push({type:'sector-secured',sectorId:sector.id,text:`${sector.name} is fully stabilised.`});pushLog(state,'good',`${sector.name} secured for the Crown.`)}
+  }
+
+  function checkCampaignEnd(state,events=[],includeDayVictory=false) {
+    state.sectors.forEach(s=>updateSectorSecurity(state,s,events));const secured=state.sectors.filter(s=>s.secured).length;
+    if(state.resources.authority<=0||state.sectors.every(s=>s.stability<=0)){state.resources.authority=Math.max(0,state.resources.authority);finishCampaign(state,'DEFEAT',events);return true}
+    if(secured>=3||(includeDayVictory&&state.day>=state.maxDays)){finishCampaign(state,'VICTORY',events);return true}
+    return false;
+  }
+
+  function finishCampaign(state,outcome,events) {
+    if(state.outcome)return;state.outcome=outcome;state.gameState=outcome==='VICTORY'?STATES.VICTORY:STATES.DEFEAT;
+    const secured=state.sectors.filter(s=>s.secured).length,base=Math.floor(state.day/5)+state.stats.critical+secured*2+(outcome==='VICTORY'?5:0);state.earnedValor=Math.max(1,Math.round(base*(DIFFICULTIES[state.difficulty]||DIFFICULTIES.standard).valor));
+    state.score=Math.max(0,state.day*120+state.stats.resolved*210+state.stats.critical*160+secured*900+state.resources.authority*10-state.stats.breaches*140);
+    if(outcome==='VICTORY'&&state.difficulty==='hard')state.meta.unlocks.royal=true;if(outcome==='VICTORY'&&state.resources.authority<25)state.meta.unlocks.outlaw=true;if((state.stats.blizzardsResolved||0)>=5)state.meta.unlocks.frost=true;
+    events.push({type:outcome.toLowerCase(),valor:state.earnedValor,score:state.score,text:outcome==='VICTORY'?'The frontier is secured.':'Frontier Authority has collapsed.'});pushLog(state,outcome==='VICTORY'?'good':'bad',`${outcome}: Campaign ended on Day ${state.day}.`);
+  }
+
+  function advanceDay(state) {
+    if(state.gameState!==STATES.PLANNING)return {ok:false,reason:'NOT_PLANNING',events:[]};state.crisis=state.crisis||{supplies:0,maintenance:0};state.gameState=STATES.DAILY_TICK;const events=[];
+    resolveContainments(state,events);if([STATES.VICTORY,STATES.DEFEAT].includes(state.gameState))return {ok:true,events,economy:null};
+    const economy=dailyEconomy(state);state.resources.gold+=economy.goldIncome;state.resources.supplies+=economy.supplyIncome;state.resources.gold-=economy.maintenance;state.resources.supplies-=economy.officerSupplies+economy.outpostSupplies;
+    events.push({type:'economy',...economy,text:`Daily ledger: ${economy.netGold>=0?'+':''}${economy.netGold} Gold, ${economy.netSupplies>=0?'+':''}${economy.netSupplies} Supplies.`});
+    if(state.resources.gold<0){const shortage=Math.abs(state.resources.gold);state.resources.gold=0;state.crisis.maintenance++;const loss=Math.min(8,2+Math.ceil(shortage/3));state.resources.authority=clamp(state.resources.authority-loss,0,100);events.push({type:'shortage',authority:-loss,text:`Maintenance shortfall cost ${loss} Authority.`})}else state.crisis.maintenance=0;
+    if(state.resources.supplies<0){const shortage=Math.abs(state.resources.supplies);state.resources.supplies=0;state.crisis.supplies++;const loss=Math.min(8,2+Math.ceil(shortage/2));state.resources.authority=clamp(state.resources.authority-loss,0,100);events.push({type:'starvation',authority:-loss,text:`Rations exhausted: -${loss} Authority (${state.crisis.supplies}/3 crisis days).`});pushLog(state,'bad','CRITICAL: Frontier rations are exhausted.')}else state.crisis.supplies=0;
+    if(state.crisis.supplies>=3){const remaining=state.resources.authority;state.resources.authority=0;events.push({type:'collapse',authority:-remaining,text:'Three days without rations shattered the frontier command.'})}
+    processBreaches(state,events);const lostCount=state.sectors.filter(sector=>sector.stability<25).length;if(lostCount){const loss=Math.min(8,lostCount*2);state.resources.authority=clamp(state.resources.authority-loss,0,100);events.push({type:'lost-sector',authority:-loss,text:`${lostCount} lost ${lostCount===1?'district drains':'districts drain'} ${loss} Authority.`})}healAndExpireBuffs(state,events);
+    for(const sector of state.sectors){if(!state.incidents.some(i=>i.sectorId===sector.id)&&sector.outpost>=2&&state.day%2===0)sector.stability=clamp(sector.stability+1,0,100);updateSectorSecurity(state,sector,events)}
+    if(checkCampaignEnd(state,events,true)){state.lastEvents=events;return {ok:true,events,economy}}
+    state.day++;spawnDailyIncidents(state,false);state.gameState=STATES.PLANNING;state.lastEvents=events;return {ok:true,events,economy};
+  }
+
+  function upgradeOutpost(state,sectorId) {
+    if(state.gameState!==STATES.PLANNING)return {ok:false,reason:'NOT_PLANNING',events:[]};const sector=getSector(state,sectorId);if(!sector||sector.outpost>=3)return {ok:false,reason:'MAX_LEVEL',events:[]};
+    if(state.projectDay===state.day)return {ok:false,reason:'PROJECT_USED',events:[]};if(state.incidents.some(i=>i.sectorId===sectorId))return {ok:false,reason:'ACTIVE_INCIDENT',events:[]};const requiredStability=sector.outpost===1?50:72;if(sector.stability<requiredStability)return {ok:false,reason:'LOW_STABILITY',requiredStability,events:[]};
+    const level=sector.outpost,cost={gold:level===1?68:118,supplies:level===1?16:28};if(state.resources.gold<cost.gold||state.resources.supplies<cost.supplies)return {ok:false,reason:'INSUFFICIENT_RESOURCES',cost,events:[]};
+    state.resources.gold-=cost.gold;state.resources.supplies-=cost.supplies;state.projectDay=state.day;sector.outpost++;sector.stability=clamp(sector.stability+10,0,100);const events=[{type:'upgrade',sectorId,gold:-cost.gold,supplies:-cost.supplies,text:`${sector.name} Outpost reached Level ${sector.outpost}.`}];updateSectorSecurity(state,sector,events);checkCampaignEnd(state,events);state.lastEvents=events;return {ok:true,cost,events};
+  }
+
+  function trainOfficer(state,officerId) {
+    if(state.gameState!==STATES.PLANNING)return {ok:false,reason:'NOT_PLANNING',events:[]};const officer=getOfficer(state,officerId);if(!officer||officer.status!=='ready')return {ok:false,reason:'INVALID_OFFICER',events:[]};const cost=45+officer.rank*28;if(state.resources.gold<cost)return {ok:false,reason:'INSUFFICIENT_RESOURCES',cost:{gold:cost},events:[]};state.resources.gold-=cost;officer.xp+=14;officer.power++;const events=[{type:'training',officerId,gold:-cost,text:`${officer.name} gained +1 base Power.`}];addOfficerXp(state,[officerId],0);state.lastEvents=events;return {ok:true,cost:{gold:cost},events};
+  }
+
+  function recruitOfficer(state,officerId) {
+    if(state.gameState!==STATES.PLANNING)return {ok:false,reason:'NOT_PLANNING',events:[]};const officer=getOfficer(state,officerId);if(!officer||officer.status!=='locked')return {ok:false,reason:'INVALID_OFFICER',events:[]};if(state.resources.gold<officer.recruitCost)return {ok:false,reason:'INSUFFICIENT_RESOURCES',cost:{gold:officer.recruitCost},events:[]};state.resources.gold-=officer.recruitCost;officer.status='ready';officer.recruited=true;const events=[{type:'recruit',officerId,gold:-officer.recruitCost,text:`${officer.name} joined the Frontier Watch.`}];state.lastEvents=events;return {ok:true,events};
+  }
+
+  function equipRelic(state,officerId,relicId) {
+    if(state.gameState!==STATES.PLANNING)return {ok:false,reason:'NOT_PLANNING',events:[]};const officer=getOfficer(state,officerId),index=state.stash.indexOf(relicId);if(!officer||officer.status!=='ready'||index<0||!RELICS[relicId])return {ok:false,reason:'INVALID_EQUIP',events:[]};if(officer.relic)state.stash.push(officer.relic);state.stash.splice(index,1);officer.relic=relicId;const events=[{type:'equip',officerId,relicId,text:`${officer.name} equipped ${RELICS[relicId].name}.`}];state.lastEvents=events;return {ok:true,events};
+  }
+
+  function unequipRelic(state,officerId) {if(state.gameState!==STATES.PLANNING)return {ok:false,reason:'NOT_PLANNING',events:[]};const officer=getOfficer(state,officerId);if(!officer||officer.status!=='ready'||!officer.relic)return {ok:false,reason:'INVALID_EQUIP',events:[]};state.stash.push(officer.relic);const id=officer.relic;officer.relic=null;return {ok:true,events:[{type:'unequip',officerId,relicId:id,text:'Relic returned to the vault.'}]}}
+
+  function purchaseDecree(metaInput,decreeId) {
+    const meta=normalizeMeta(metaInput),decree=DECREES[decreeId];if(!decree||meta.decrees[decreeId])return {ok:false,reason:'INVALID_DECREE',meta};if(meta.valor<decree.cost)return {ok:false,reason:'INSUFFICIENT_VALOR',meta};meta.valor-=decree.cost;meta.decrees[decreeId]=true;return {ok:true,meta};
+  }
+
+  function cancelContainment(state,incidentId) {
+    if(state.gameState!==STATES.PLANNING)return {ok:false,reason:'NOT_PLANNING',events:[]};const incident=getIncident(state,incidentId);if(!incident||incident.status!=='contained')return {ok:false,reason:'NOT_CONTAINED',events:[]};setOfficerStatus(state,incident.assignedOfficerIds,'ready');incident.assignedOfficerIds=[];incident.status='active';incident.doctrine=null;incident.containTurns=0;return {ok:true,events:[{type:'contain-cancelled',sectorId:incident.sectorId,text:'Containment team recalled.'}]};
+  }
+
+  function getDailyPreview(state){return dailyEconomy(state)}
+  function getSecuredCount(state){return state.sectors.filter(s=>s.secured).length}
+  function getVisibleModifier(state,incidentId,officerIds=[]){const i=getIncident(state,incidentId);return i&&isModifierRevealed(state,i,officerIds)?MODIFIERS[i.modifierId]:null}
+  function scoreEntry(state){return {score:state.score,outcome:state.outcome,day:state.day,difficulty:state.difficulty,seed:state.seedLabel,resolved:state.stats.resolved,secured:getSecuredCount(state),authority:Math.round(state.resources.authority),timestamp:Date.now()}}
+  function validateState(value){
+    if(!value||value.schema!==SCHEMA_VERSION||!Object.values(STATES).includes(value.gameState)||!DIFFICULTIES[value.difficulty]||!Number.isInteger(value.day)||value.day<1||value.day>30||!Number.isInteger(value.rng)||value.rng<0||value.rng>0xffffffff)return false;
+    if(typeof value.seedLabel!=='string'||value.seedLabel.length>24||!value.resources||!['gold','supplies','authority'].every(key=>Number.isInteger(value.resources[key])&&Number.isFinite(value.resources[key])&&value.resources[key]>=0))return false;
+    if(!value.meta||!value.meta.decrees||!value.meta.unlocks||!value.crisis||!Number.isInteger(value.crisis.supplies)||!Number.isInteger(value.crisis.maintenance)||!Number.isInteger(value.projectDay)||!value.stats)return false;
+    if(!['resolved','critical','pyrrhic','defeats','breaches','injuries','goldEarned','sectorsSecured','blizzardsResolved'].every(key=>Number.isInteger(value.stats[key])&&value.stats[key]>=0))return false;
+    if(!Array.isArray(value.officers)||value.officers.length!==OFFICER_BLUEPRINTS.length||!Array.isArray(value.sectors)||value.sectors.length!==SECTOR_BLUEPRINTS.length||!Array.isArray(value.incidents)||!Array.isArray(value.log)||value.log.length>200||!Number.isInteger(value.logGenerated)||value.logGenerated<value.log.length||value.logGenerated>1000||value.log.some(entry=>!entry||!Number.isInteger(entry.day)||entry.day<1||entry.day>30||!['good','bad','alert','info'].includes(entry.tone)||typeof entry.text!=='string'||entry.text.length>240)||!Array.isArray(value.stash)||!Array.isArray(value.nemeses)||value.stash.some(id=>!RELICS[id]))return false;
+    const sectorIds=new Set(SECTOR_BLUEPRINTS.map(s=>s.id)),officerIds=new Set(OFFICER_BLUEPRINTS.map(o=>o.id));
+    if(value.sectors.some(s=>!s||!sectorIds.has(s.id)||!Number.isFinite(s.stability)||s.stability<0||s.stability>100||!Number.isInteger(s.outpost)||s.outpost<1||s.outpost>3||!['crown','contested','lost'].includes(s.control)))return false;
+    if(value.officers.some(o=>!o||!officerIds.has(o.id)||!ARCHETYPES[o.archetype]||!['ready','spent','injured','deployed','locked'].includes(o.status)||!Number.isInteger(o.power)||o.power<1||!Number.isInteger(o.rank)||o.rank<1||o.rank>5||!Array.isArray(o.traits)))return false;
+    if(value.incidents.some(i=>!i||typeof i.id!=='string'||!INCIDENT_TYPES[i.type]||!sectorIds.has(i.sectorId)||!Number.isInteger(i.threat)||i.threat<1||!Number.isInteger(i.deadline)||i.deadline<1||!['active','contained'].includes(i.status)||!Array.isArray(i.assignedOfficerIds)||i.assignedOfficerIds.some(id=>!officerIds.has(id))))return false;
+    return true;
+  }
+  function migrateState(value){
+    if(!value||value.schema!==SCHEMA_VERSION)return null;if(validateState(value)&&value.crisis&&Number.isInteger(value.projectDay)&&Number.isInteger(value.stats&&value.stats.blizzardsResolved))return value;const out=copy(value);out.projectDay=Number.isInteger(out.projectDay)?out.projectDay:0;out.crisis=out.crisis||{supplies:0,maintenance:0};out.crisis.supplies=clamp(Math.floor(Number(out.crisis.supplies)||0),0,3);out.crisis.maintenance=Math.max(0,Math.floor(Number(out.crisis.maintenance)||0));out.meta=normalizeMeta(out.meta);out.log=Array.isArray(out.log)?out.log.slice(0,200):[];out.logGenerated=Math.max(out.log.length,Math.min(1000,Math.floor(Number(out.logGenerated)||out.log.length)));out.stats=Object.assign({resolved:0,critical:0,pyrrhic:0,defeats:0,breaches:0,injuries:0,goldEarned:0,sectorsSecured:0,blizzardsResolved:0},out.stats||{});out.sectors&&out.sectors.forEach(s=>{s.everSecured=!!s.everSecured;s.secured=!!s.secured;s.critical=!!s.critical});return validateState(out)?out:null;
+  }
+
+  root.FrontierCore=Object.freeze({SCHEMA_VERSION,STATES,DIFFICULTIES,SECTOR_BLUEPRINTS,ARCHETYPES,TRAITS,RELICS,DECREES,INCIDENT_TYPES,MODIFIERS,DOCTRINES,OFFICER_BLUEPRINTS,hashSeed,nextRandom,createCampaign,resolveIncident,squadPreview,dispatchIncident,advanceDay,upgradeOutpost,trainOfficer,recruitOfficer,equipRelic,unequipRelic,purchaseDecree,cancelContainment,getDailyPreview,getSecuredCount,getVisibleModifier,getSector,getOfficer,getIncident,scoreEntry,validateState,migrateState,normalizeMeta,copy});
+})(typeof globalThis!=='undefined'?globalThis:this);
+
+</script>
+<script>
+(function(root){
+  'use strict';
+  let ctx=null,master=null,muted=false,volume=.28;
+  function init(){if(!ctx){const AC=root.AudioContext||root.webkitAudioContext;if(!AC)return false;ctx=new AC();master=ctx.createGain();master.gain.setValueAtTime(muted?0:volume,ctx.currentTime);master.connect(ctx.destination)}if(ctx.state==='suspended')ctx.resume();return true}
+  function gainAt(value,t,duration){const g=ctx.createGain();g.gain.setValueAtTime(Math.max(.001,value),t);g.gain.exponentialRampToValueAtTime(.001,t+duration);g.connect(master);return g}
+  function osc(type,freq,t,duration,toFreq=freq,level=.18){const o=ctx.createOscillator(),g=gainAt(level,t,duration);o.type=type;o.frequency.setValueAtTime(freq,t);if(toFreq!==freq)o.frequency.exponentialRampToValueAtTime(Math.max(1,toFreq),t+duration);o.connect(g);o.start(t);o.stop(t+duration+.02)}
+  function noiseBuffer(duration=.2){const n=Math.ceil(ctx.sampleRate*duration),b=ctx.createBuffer(1,n,ctx.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;return b}
+  function noise(t,duration,frequency=280,level=.16){const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),g=gainAt(level,t,duration);src.buffer=noiseBuffer(duration);filter.type='bandpass';filter.frequency.setValueAtTime(frequency,t);filter.Q.setValueAtTime(3.5,t);src.connect(filter);filter.connect(g);src.start(t);src.stop(t+duration)}
+  function ready(){return init()&&!muted}
+  function vibrate(pattern){if(!muted&&navigator.vibrate)navigator.vibrate(pattern)}
+  const api={
+    init,
+    setVolume(v){volume=Math.max(0,Math.min(1,Number(v)||0));if(master&&!muted)master.gain.setTargetAtTime(volume,ctx.currentTime,.02);return volume},
+    toggleMute(){muted=!muted;if(master)master.gain.setTargetAtTime(muted?0:volume,ctx.currentTime,.02);return muted},
+    get isMuted(){return muted},get volume(){return volume},
+    playClick(){if(!ready())return;const t=ctx.currentTime;osc('triangle',420,t,.045,820,.14)},
+    playTelegraph(){if(!ready())return;const t=ctx.currentTime;[0,.085,.16].forEach((d,i)=>osc('square',i===1?930:1180,t+d,.035,1180,.09));vibrate(8)},
+    playResource(){if(!ready())return;const t=ctx.currentTime;[784,1047,1319].forEach((f,i)=>osc('sine',f,t+i*.07,.22,f,.15));vibrate(10)},
+    playDispatch(){if(!ready())return;const t=ctx.currentTime;[0,.08,.2,.28].forEach((d,i)=>noise(t+d,.07,235+(i%2)*105,.22));osc('triangle',220,t,.34,330,.09);vibrate([12,35,12])},
+    playAlarm(){if(!ready())return;const t=ctx.currentTime;osc('sawtooth',320,t,.18,540,.13);osc('sawtooth',540,t+.18,.18,320,.12);vibrate([20,40,20])},
+    playImpact(){if(!ready())return;const t=ctx.currentTime;osc('triangle',145,t,.34,36,.34);noise(t,.22,190,.24);vibrate([35,25,50])},
+    playDayTick(){if(!ready())return;const t=ctx.currentTime;osc('sine',523,t,.2,262,.13);setTimeout(()=>api.playTelegraph(),120)},
+    playVictory(){if(!ready())return;const t=ctx.currentTime;[262,330,392,523,659].forEach((f,i)=>osc('triangle',f,t+i*.1,.48,f,.18));vibrate([30,50,30,50,80])},
+    playDefeat(){if(!ready())return;const t=ctx.currentTime;osc('sawtooth',185,t,.85,54,.25);osc('sine',92,t+.12,.7,42,.2);vibrate([80,55,120])},
+    playUpgrade(){if(!ready())return;const t=ctx.currentTime;[392,494,659].forEach((f,i)=>osc(i===2?'sine':'triangle',f,t+i*.08,.3,f,.16))},
+    playCritical(){if(!ready())return;const t=ctx.currentTime;[523,784,1047,1568].forEach((f,i)=>osc('sine',f,t+i*.055,.28,f,.13));vibrate([15,25,15])}
+  };
+  root.FrontierAudio=Object.freeze(api);
+})(typeof window!=='undefined'?window:globalThis);
+
+</script>
+<script>
+(function(root){
+  'use strict';
+  const C=()=>root.FrontierCore;
+  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function rng(seed){let x=seed>>>0||1;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return(x>>>0)/4294967296}}
+  function islandPath(seed){const r=rng(seed^0x51f15e),pts=[];for(let i=0;i<30;i++){const a=Math.PI*2*i/30,rough=.9+r()*.18+Math.sin(i*1.9)*.025;pts.push([500+Math.cos(a)*430*rough,325+Math.sin(a)*270*rough])}let d=`M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;for(let i=0;i<pts.length;i++){const p=pts[i],n=pts[(i+1)%pts.length],mx=(p[0]+n[0])/2,my=(p[1]+n[1])/2;d+=` Q${p[0].toFixed(1)} ${p[1].toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)}`}return d+'Z'}
+  function wedgePath(i){const bounds=[-167,-115,-65,0,65,115,167],a=bounds[i]*Math.PI/180,b=bounds[i+1]*Math.PI/180,p=(t)=>[500+Math.cos(t)*520,325+Math.sin(t)*350],p1=p(a),p2=p(b);return`M500 325 L${p1[0].toFixed(1)} ${p1[1].toFixed(1)} A520 350 0 0 1 ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}Z`}
+  function colourFor(sector){if(sector.secured)return'#2d8c87';if(sector.control==='lost')return'#8c3e46';if(sector.control==='contested')return'#8c6a35';return['#496f58','#466b6b','#645d58','#56714e','#536b78','#4b6672'][C().SECTOR_BLUEPRINTS.findIndex(s=>s.id===sector.id)]}
+  function weatherGlyph(kind){return kind==='snow'?'❄':kind==='rain'?'⌁':kind==='fog'?'≋':kind==='wind'?'↝':'·'}
+  function mapSVG(state){
+    state={...state,seedLabel:String(state.seedLabel||'SUNSPIRE').replace(/[^A-Za-z0-9 _-]/g,'?')};
+    const land=islandPath(state.seed),sectors=state.sectors.map((s,i)=>{const incident=state.incidents.find(n=>n.sectorId===s.id),fill=colourFor(s),status=s.secured?'SECURED':s.control==='lost'?'LOST':s.control==='contested'?'CONTESTED':'CROWN';return`<g class="territory territory-${s.control}${s.secured?' territory-secured':''}${s.critical?' territory-critical':''}" data-sector-art="${s.id}"><path d="${wedgePath(i)}" fill="${fill}" clip-path="url(#landClip)"/><path class="sector-hatch" d="${wedgePath(i)}" clip-path="url(#landClip)" fill="${s.control==='lost'?'url(#lostHatch)':s.control==='contested'?'url(#contestHatch)':'transparent'}"/><text x="${s.x*10}" y="${s.y*6.5+44}" text-anchor="middle" class="map-label">${esc(s.name)}</text><text x="${s.x*10}" y="${s.y*6.5+60}" text-anchor="middle" class="map-state">${status} · ${Math.round(s.stability)}%</text>${incident?`<path class="incident-beam" d="M${s.x*10} ${s.y*6.5-18}v-35"/><circle class="threat-ring" cx="${s.x*10}" cy="${s.y*6.5-64}" r="20"/><text class="threat-mark" x="${s.x*10}" y="${s.y*6.5-58}" text-anchor="middle">${esc(incident.icon)}</text>`:''}</g>`}).join('');
+    const contours=[.9,.75,.58].map((scale,i)=>`<path d="${land}" class="contour c${i}" transform="translate(${500*(1-scale)} ${325*(1-scale)}) scale(${scale})"/>`).join('');
+    const roads=state.sectors.map(s=>`<path class="road-shadow" d="M500 332 Q${(500+s.x*10)/2+(s.y>50?28:-18)} ${(332+s.y*6.5)/2} ${s.x*10} ${s.y*6.5}"/><path class="road" d="M500 332 Q${(500+s.x*10)/2+(s.y>50?28:-18)} ${(332+s.y*6.5)/2} ${s.x*10} ${s.y*6.5}"/>`).join('');
+    const routes=state.incidents.filter(i=>i.status==='contained').map(i=>{const s=C().getSector(state,i.sectorId);return`<path class="patrol-route" d="M500 332 Q${(500+s.x*10)/2} ${(332+s.y*6.5)/2-35} ${s.x*10} ${s.y*6.5}"/>`}).join('');
+    const landmarks=state.sectors.slice().sort((a,b)=>a.y-b.y).map(s=>outpostSymbol(s.x*10,s.y*6.5,s.outpost,s.control,s.critical)).join('');
+    const decor=proceduralDecor(state.seed,land);
+    return`<svg viewBox="0 0 1000 650" class="frontier-svg" role="img" aria-label="Procedural map of the six frontier districts"><defs><linearGradient id="sea" x2="0" y2="1"><stop stop-color="#163c50"/><stop offset="1" stop-color="#061b2b"/></linearGradient><linearGradient id="land" x2="0" y2="1"><stop stop-color="#6f8a65"/><stop offset="1" stop-color="#394f48"/></linearGradient><linearGradient id="gold" x2="0" y2="1"><stop stop-color="#ffe58b"/><stop offset="1" stop-color="#bd7720"/></linearGradient><clipPath id="landClip"><path d="${land}"/></clipPath><pattern id="waves" width="42" height="24" patternUnits="userSpaceOnUse"><path d="M0 12q10-8 20 0t22 0" fill="none" stroke="#7fc7d0" stroke-opacity=".12" stroke-width="2"/></pattern><pattern id="lostHatch" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="12" fill="#1c0c12" opacity=".32"/></pattern><pattern id="contestHatch" width="16" height="16" patternUnits="userSpaceOnUse"><path d="M0 8h16M8 0v16" stroke="#ffd36a" stroke-opacity=".18"/></pattern><filter id="softShadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#02080d" flood-opacity=".58"/></filter><symbol id="tree" viewBox="0 0 30 44"><path d="M15 2L3 22h8L1 36h28L19 22h8z" fill="var(--tree,#173f38)" stroke="#93ad76" stroke-width="1"/><path d="M13 34h4v9h-4z" fill="#68462c"/></symbol><symbol id="house" viewBox="0 0 44 44"><path d="M7 19h30v22H7z" fill="#dbc695"/><path d="M3 21L22 5l19 16z" fill="var(--roof,#294f76)" stroke="#f1c75b"/><path d="M18 27h9v14h-9z" fill="#18354b"/></symbol><symbol id="banner" viewBox="0 0 20 38"><path d="M5 2v34" stroke="#e5b84b" stroke-width="2"/><path d="M6 4h12l-3 7 3 7H6z" fill="var(--flag,#2b80bd)"/></symbol></defs><rect width="1000" height="650" fill="url(#sea)"/><rect width="1000" height="650" fill="url(#waves)"/><circle cx="80" cy="75" r="48" fill="#d7b55d" opacity=".08"/><path d="${land}" transform="translate(0 13)" fill="#142e32" stroke="#10222b" stroke-width="18"/><path d="${land}" fill="url(#land)" stroke="#b8a271" stroke-width="5"/>${sectors}<g clip-path="url(#landClip)">${contours}${roads}${routes}${decor}</g><g filter="url(#softShadow)">${landmarks}${hqSymbol()}</g><g class="compass" transform="translate(925 82)"><circle r="37" fill="#071b2b" stroke="#d9b65b" stroke-width="2"/><path d="M0-28l7 22-7 7-7-7z" fill="#f3ca60"/><path d="M0 28l-6-21 6-7 6 7z" fill="#477ca1"/><text y="-41" text-anchor="middle">N</text></g><text x="27" y="622" class="map-seed">CHART ${state.seedLabel.toUpperCase()} · DAY ${state.day}</text></svg>`;
+  }
+  function proceduralDecor(seed){const r=rng(seed^0xa71c),items=[];for(let i=0;i<56;i++){const x=90+r()*820,y=95+r()*440;if(Math.hypot((x-500)/1.45,y-325)>275||Math.hypot(x-500,y-325)<115)continue;const scale=.48+r()*.45;items.push(`<use href="#${r()<.72?'tree':'house'}" x="${x.toFixed(0)}" y="${y.toFixed(0)}" width="${(38*scale).toFixed(0)}" height="${(48*scale).toFixed(0)}" opacity="${(.55+r()*.3).toFixed(2)}" style="--roof:${r()<.5?'#284d72':'#874a36'}"/>`)}return items.join('')}
+  function outpostSymbol(x,y,level,control,critical){const flag=control==='lost'?'#b8444b':control==='contested'?'#d18d39':'#2c8dc5';return`<g class="outpost-symbol${critical?' is-critical':''}" transform="translate(${x-27} ${y-34})" style="--flag:${flag}"><path d="M6 25h48v28H6z" fill="#c5ad80" stroke="#45372b" stroke-width="2"/><path d="M2 18h15v35H2zM43 18h15v35H43z" fill="#d6bd8d" stroke="#45372b" stroke-width="2"/><path d="M0 18l4-8 4 8 4-8 4 8M42 18l4-8 4 8 4-8 4 8" fill="#e2c890" stroke="#45372b" stroke-width="2"/><path d="M24 37h12v16H24z" fill="#102b40"/><use href="#banner" x="21" y="-11" width="20" height="38"/><circle cx="49" cy="6" r="10" fill="#071b2b" stroke="#f0c75e"/><text x="49" y="10" text-anchor="middle" class="level-text">${level}</text></g>`}
+  function hqSymbol(){return`<g transform="translate(445 255)" class="hq-symbol"><ellipse cx="55" cy="103" rx="75" ry="22" fill="#081923" opacity=".42"/><path d="M9 49h92v59H9z" fill="#e0c897" stroke="#5b4935" stroke-width="3"/><path d="M1 53L55 12l54 41z" fill="#245a91" stroke="#f2cd66" stroke-width="4"/><path d="M37 36L55 0l18 36z" fill="#2c73ad"/><circle cx="55" cy="4" r="6" fill="#f6d466"/><path d="M43 73h24v35H43z" fill="#0a2a42" stroke="#d5aa48" stroke-width="3"/><path d="M16 65h14v15H16zm64 0h14v15H80z" fill="#6ed1ec" stroke="#695138" stroke-width="2"/><use href="#banner" x="1" y="16" width="20" height="38"/><use href="#banner" x="89" y="16" width="20" height="38"/><text x="55" y="127" text-anchor="middle" class="hq-label">CROWN WATCH HQ</text></g>`}
+
+  function avatarSVG(officer,opts={}){
+    const r=rng(officer.avatarSeed),skins=['#f2c59b','#dfaa78','#bd7954','#815039'],skin=skins[officer.skin%skins.length],palettes=[['#153e6a','#e6b84f'],['#1d665e','#d8c590'],['#623d64','#e6b84f'],['#6a3a32','#e4c07b']],pal=palettes[officer.palette%palettes.length],hair=['#24170f','#432817','#8a4d28','#151b22'][Math.floor(r()*4)],faceVariant=Math.floor(r()*4),status=officer.status||'ready',veteran=officer.rank>=4;
+    const hairPaths=[`<path d="M31 38q3-23 19-23t20 23q-6-9-14-7-12-7-25 7" fill="${hair}"/>`,`<path d="M29 38q0-24 21-25 22 3 21 25-8-12-21-9-12-4-21 9" fill="${hair}"/><circle cx="25" cy="31" r="8" fill="${hair}"/><circle cx="75" cy="31" r="8" fill="${hair}"/>`,`<path d="M30 37q4-23 20-23 17 0 21 23l-9-8-7 5-8-6-9 7z" fill="${hair}"/>`,`<path d="M31 35q7-20 21-20 12 0 18 12-17-4-26 9z" fill="${hair}"/><path d="M66 24q11 8 3 25" fill="none" stroke="${hair}" stroke-width="7"/>`,`<path d="M31 36q2-20 19-22 17 2 20 22l-8-4-7 4-8-5-8 5z" fill="${hair}"/><path d="M31 24q-8 13 0 29" fill="none" stroke="${hair}" stroke-width="6"/>`,`<path d="M29 39q2-26 22-25 18 1 21 25l-12-7-9 4-9-5z" fill="${hair}"/><path d="M67 32q10 21-1 37" fill="none" stroke="${hair}" stroke-width="8"/>`,`<path d="M31 36q2-21 20-22 9 0 17 8l-22 3-12 15z" fill="#d9d9de"/><path d="M50 16q15-1 20 10l-15-3z" fill="${hair}"/>`];
+    const headwear=officer.archetype==='marshal'?`<path d="M26 29Q50 5 74 29l-7 8H33z" fill="${pal[1]}" stroke="#fff0ac"/><path d="M38 18l5-10 7 8 7-9 6 12" fill="none" stroke="#fff0ac" stroke-width="3"/>`:officer.archetype==='scout'?`<path d="M26 31q24-23 48 0l-7 5H33z" fill="${pal[0]}" stroke="${pal[1]}"/><circle cx="62" cy="24" r="7" fill="#1a2630" stroke="#d39c43"/><circle cx="62" cy="24" r="3" fill="#70d2e8"/>`:'';
+    const accessory=officer.archetype==='investigator'?`<circle cx="59" cy="47" r="9" fill="none" stroke="#dcb455" stroke-width="3"/><path d="M66 54l8 9" stroke="#dcb455" stroke-width="3"/>`:officer.archetype==='surgeon'?`<path d="M77 72h12v12H77z" fill="#e9efe2"/><path d="M83 74v8m-4-4h8" stroke="#3a9b88" stroke-width="2"/>`:'';
+    const statusText=status==='injured'?'RECOVERING':status==='deployed'?'CONTAINING':status==='spent'?'RESTING':status==='locked'?'LOCKED':'READY',ring=status==='injured'?'#ff6d72':status==='deployed'?'#43c7ff':status==='spent'?'#9aaebb':veteran?'#ffd65f':'#43dfc1';
+    return`<svg viewBox="0 0 100 118" class="officer-svg" role="img" aria-label="${esc(officer.name)}, ${esc(C().ARCHETYPES[officer.archetype].name)}, ${statusText}"><defs><linearGradient id="u${officer.id}" x2="0" y2="1"><stop stop-color="${pal[0]}"/><stop offset="1" stop-color="#091e30"/></linearGradient></defs><path class="avatar-crest" d="M50 3L91 23v55q0 24-41 37Q9 102 9 78V23z" fill="#0a2135" stroke="${ring}" stroke-width="${veteran?3.5:2.2}"/><circle class="beacon-ring" cx="50" cy="56" r="38" fill="none" stroke="${ring}" stroke-dasharray="3 7" opacity="${status==='deployed'?.8:.18}"/><path d="M20 101q5-31 30-31t30 31" fill="url(#u${officer.id})" stroke="${pal[1]}" stroke-width="2"/><path d="M38 72l12 14 12-14" fill="#eee4cf"/><ellipse class="officer-face" cx="50" cy="47" rx="20" ry="23" fill="${skin}"/>${hairPaths[officer.hair%hairPaths.length]}${headwear}<circle cx="43" cy="47" r="2" fill="#18202b"/><circle cx="58" cy="47" r="2" fill="#18202b"/><path d="M47 58q4 ${faceVariant%2?3:5} 9 0" fill="none" stroke="#6d3e34" stroke-width="1.5" stroke-linecap="round"/>${faceVariant===2?'<path d="M36 52l7 3" stroke="#8d4b44" stroke-width="1.4"/>':''}${accessory}<circle cx="50" cy="92" r="7" fill="${pal[1]}"/><text x="50" y="95" text-anchor="middle" font-size="8" fill="#172338" font-weight="900">${C().ARCHETYPES[officer.archetype].icon}</text><rect x="20" y="103" width="60" height="12" rx="6" fill="#061522" stroke="${ring}"/><text x="50" y="112" text-anchor="middle" fill="#fff" font-size="7" font-weight="900">${statusText}</text></svg>`;
+  }
+
+  function stationSVG(state){const ready=state.officers.filter(o=>o.status==='ready').length;return`<svg viewBox="0 0 840 330" class="station-svg" role="img" aria-label="Procedural cutaway of Crown Watch Headquarters"><defs><linearGradient id="wall" x2="0" y2="1"><stop stop-color="#e5d7b6"/><stop offset="1" stop-color="#9b825f"/></linearGradient><linearGradient id="room" x2="0" y2="1"><stop stop-color="#153b55"/><stop offset="1" stop-color="#081a29"/></linearGradient></defs><path d="M20 45h800v265H20z" fill="url(#wall)" stroke="#f0ca68" stroke-width="5"/><path d="M32 58h375v112H32zm401 0h375v112H433zM32 184h375v113H32zm401 0h375v113H433z" fill="url(#room)" stroke="#6f5d45" stroke-width="3"/><path d="M397 47h46v263h-46z" fill="#9f865f"/><path d="M388 300h64L420 171z" fill="#315f86" stroke="#e3b953" stroke-width="3"/><g class="room-props" fill="#d8ba73" stroke="#0a1b28" stroke-width="2"><rect x="75" y="112" width="120" height="35" rx="8"/><ellipse cx="135" cy="111" rx="43" ry="15" fill="#246f9a"/><path d="M94 107l24-18 27 12 25-22" fill="none" stroke="#9ae4ef"/><rect x="541" y="110" width="145" height="39"/><circle cx="579" cy="98" r="17" fill="#58a9be"/><path d="M651 75h94v69h-94z" fill="#d7c39a"/><path d="M662 87l18 14 16-9 20 19" fill="none" stroke="#a54d48"/><circle cx="116" cy="238" r="29" fill="#c99b3f"/><circle cx="116" cy="238" r="17" fill="#254b6a"/><path d="M205 205v72m42-72v72"/><path d="M179 218h95"/><rect x="500" y="222" width="97" height="48" rx="12" fill="#225b87"/><rect x="618" y="222" width="97" height="48" rx="12" fill="#225b87"/><circle cx="522" cy="274" r="13" fill="#101820"/><circle cx="576" cy="274" r="13" fill="#101820"/><circle cx="640" cy="274" r="13" fill="#101820"/><circle cx="694" cy="274" r="13" fill="#101820"/></g><g fill="#f2d173" font-size="13" font-weight="900"><text x="48" y="80">DISPATCH HALL</text><text x="449" y="80">EVIDENCE ATELIER</text><text x="48" y="206">TRAINING HALL</text><text x="449" y="206">PATROL GARAGE</text></g><g transform="translate(390 61)">${avatarSVG(state.officers[0]).replace('<svg viewBox="0 0 100 118"','<svg x="0" y="0" width="60" height="72" viewBox="0 0 100 118"')}</g><text x="420" y="322" text-anchor="middle" fill="#f4ce69" font-size="12" font-weight="900">${ready} OFFICERS READY · DAY ${state.day}</text></svg>`}
+
+  function relicSVG(id){const r=C().RELICS[id];if(!r)return'';return`<svg viewBox="0 0 64 64" class="relic-svg" aria-hidden="true"><path d="M32 3L57 16v31L32 61 7 47V16z" fill="#0d2a40" stroke="#e7bd55" stroke-width="3"/><circle cx="32" cy="31" r="17" fill="#173f58" stroke="#80672f"/><text x="32" y="39" text-anchor="middle" font-size="25" fill="#ffd66d">${r.icon}</text></svg>`}
+
+  class WeatherFX{
+    constructor(canvas){this.canvas=canvas;this.ctx=canvas.getContext('2d');this.kind='clear';this.reduced=false;this.raf=0;this.particles=[];this.seed=1;this.resize=()=>this.doResize();addEventListener('resize',this.resize,{passive:true});document.addEventListener('visibilitychange',()=>this.sync())}
+    set(kind,reduced,seed=1){this.kind=kind||'clear';this.reduced=!!reduced;this.seed=seed>>>0;this.particles=[];this.sync()}
+    doResize(){const box=this.canvas.getBoundingClientRect(),d=Math.min(1.5,devicePixelRatio||1);this.canvas.width=Math.max(1,Math.round(box.width*d));this.canvas.height=Math.max(1,Math.round(box.height*d));this.ctx.setTransform(d,0,0,d,0,0);this.w=box.width;this.h=box.height}
+    sync(){cancelAnimationFrame(this.raf);this.raf=0;if(this.reduced||document.hidden||!['rain','snow','fog'].includes(this.kind)){this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);return}this.doResize();const r=rng(this.seed^0x45ca);this.particles=Array.from({length:this.kind==='fog'?12:54},()=>({x:r()*this.w,y:r()*this.h,v:20+r()*55,s:1+r()*3,a:.12+r()*.3}));this.tick()}
+    tick(){const c=this.ctx;c.clearRect(0,0,this.w,this.h);for(const p of this.particles){if(this.kind==='rain'){c.strokeStyle=`rgba(170,224,249,${p.a})`;c.lineWidth=p.s*.5;c.beginPath();c.moveTo(p.x,p.y);c.lineTo(p.x-6,p.y+15);c.stroke();p.y+=p.v*.12;p.x-=2}else if(this.kind==='snow'){c.fillStyle=`rgba(240,248,255,${p.a+.2})`;c.beginPath();c.arc(p.x,p.y,p.s,0,7);c.fill();p.y+=p.v*.035;p.x+=Math.sin(p.y*.02)}else{c.fillStyle=`rgba(190,215,215,${p.a*.12})`;c.beginPath();c.ellipse(p.x,p.y,80+p.s*20,18+p.s*5,0,0,7);c.fill();p.x+=p.v*.012}if(p.y>this.h+20){p.y=-20;p.x=(p.x*1.73)%this.w}if(p.x>this.w+100)p.x=-100;if(p.x<-100)p.x=this.w+100}this.raf=requestAnimationFrame(()=>this.tick())}
+    stop(){cancelAnimationFrame(this.raf);this.raf=0;this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height)}
+  }
+
+  root.FrontierVisuals=Object.freeze({mapSVG,avatarSVG,stationSVG,relicSVG,weatherGlyph,WeatherFX});
+})(typeof globalThis!=='undefined'?globalThis:this);
+
+</script>
+<script>window.CBFW_STANDALONE=true;</script>
+<script>
+(function (root) {
+  'use strict';
+
+  const Core = root.FrontierCore;
+  const Visuals = root.FrontierVisuals;
+  const Audio = root.FrontierAudio;
+  if (!Core || !Visuals || !Audio) return;
+
+  const STORAGE = Object.freeze({
+    campaign: 'mbm_crownbadge_campaign_v1',
+    meta: 'mbm_crownbadge_meta_v1',
+    scores: 'mbm_crownbadge_scores_v1',
+    settings: 'mbm_crownbadge_settings_v1'
+  });
+  const WEATHER_MODES = ['mixed', 'clear', 'rain', 'snow', 'fog'];
+  const SCREEN_IDS = { map: 'mapScreen', officers: 'officersScreen', vault: 'vaultScreen', legacy: 'legacyScreen' };
+  const SKINS = [
+    { id: 'watch', name: 'Frontier Watch', description: 'Crown blue and brass', unlocked: () => true },
+    { id: 'royal', name: 'Royal Vanguard', description: 'Victory on High Frontier', unlocked: m => m.unlocks.royal },
+    { id: 'frost', name: 'Frost Watch', description: 'Master the mountain calls', unlocked: m => m.unlocks.frost },
+    { id: 'outlaw', name: 'Outlaw Irregulars', description: 'Win below 25 Authority', unlocked: m => m.unlocks.outlaw },
+    { id: 'gilded', name: 'Gilded Sovereign', description: 'Own every Crown Decree', unlocked: m => m.unlocks.gilded }
+  ];
+
+  const $ = id => document.getElementById(id);
+  const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[char]));
+  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+  const signed = n => `${n >= 0 ? '+' : ''}${n}`;
+  const isEnded = () => state && [Core.STATES.VICTORY, Core.STATES.DEFEAT].includes(state.gameState);
+
+  const osReduced = !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  let state = null;
+  let meta = Core.normalizeMeta(loadJSON(STORAGE.meta, {}));
+  let scores = normaliseScores(loadJSON(STORAGE.scores, []));
+  let settings = normaliseSettings(loadJSON(STORAGE.settings, null));
+  let currentScreen = 'map';
+  let activeIncidentId = null;
+  let activeSectorId = null;
+  let activeOfficerId = null;
+  let selectedOfficerIds = [];
+  let activeDoctrine = 'charge';
+  let quickOfficerId = null;
+  let lastDialogFocus = null;
+  let incidentCursor = -1;
+  let touchDrag = null;
+  let suppressClickUntil = 0;
+  let weatherFx = null;
+  let turnLocked = false;
+  let lastFullFlashAt = -Infinity;
+
+  function loadJSON(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw && raw.length > 1048576) return fallback;
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function storeJSON(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (_) {
+      toast('The browser could not update the local save.', 'bad');
+      return false;
+    }
+  }
+
+  function normaliseScores(value) {
+    if (!Array.isArray(value)) return [];
+    return value.filter(entry => entry && Number.isFinite(Number(entry.score)))
+      .map(entry => ({
+        score: Math.max(0, Math.round(Number(entry.score) || 0)),
+        outcome: entry.outcome === 'VICTORY' ? 'VICTORY' : 'DEFEAT',
+        day: clamp(Math.round(Number(entry.day) || 1), 1, 30),
+        difficulty: Core.DIFFICULTIES[entry.difficulty] ? entry.difficulty : 'standard',
+        seed: String(entry.seed || 'UNKNOWN').slice(0, 24),
+        resolved: Math.max(0, Math.round(Number(entry.resolved) || 0)),
+        secured: clamp(Math.round(Number(entry.secured) || 0), 0, 6),
+        authority: clamp(Math.round(Number(entry.authority) || 0), 0, 100),
+        timestamp: Number(entry.timestamp) || 0
+      })).sort((a, b) => b.score - a.score).slice(0, 10);
+  }
+
+  function normaliseSettings(value) {
+    return {
+      muted: !!(value && value.muted),
+      volume: clamp(Number(value && value.volume != null ? value.volume : .28), 0, 1),
+      reduced: osReduced || !!(value && value.reduced),
+      weather: WEATHER_MODES.includes(value && value.weather) ? value.weather : 'mixed'
+    };
+  }
+
+  function saveAll() {
+    if (state) storeJSON(STORAGE.campaign, state);
+    storeJSON(STORAGE.meta, meta);
+    storeJSON(STORAGE.scores, scores);
+    storeJSON(STORAGE.settings, settings);
+  }
+
+  function announce(text) {
+    const region = $('liveRegion');
+    if (!region) return;
+    region.textContent = '';
+    root.setTimeout(() => { region.textContent = text; }, 20);
+  }
+
+  function toast(message, tone = '') {
+    const layer = $('toastLayer');
+    if (!layer) return;
+    const node = document.createElement('div');
+    node.className = `toast ${tone}`.trim();
+    node.textContent = message;
+    layer.appendChild(node);
+    announce(message);
+    root.setTimeout(() => node.remove(), settings.reduced ? 2400 : 3300);
+  }
+
+  function showIntro() {
+    const intro = $('intro');
+    if (!intro) return;
+    closeAllDialogs();
+    if (weatherFx) weatherFx.stop();
+    intro.hidden = false;
+    syncBackgroundInert();
+    $('continueBtn').hidden = !state;
+    root.setTimeout(() => $('seedInput') && $('seedInput').focus(), 0);
+  }
+
+  function hideIntro() {
+    if ($('intro')) $('intro').hidden = true;
+    syncBackgroundInert();
+  }
+
+  function startCampaign() {
+    const seed = (($('seedInput').value || 'SUNSPIRE').trim().toUpperCase().replace(/[^A-Z0-9 _-]/g, '').replace(/\s+/g, ' ').slice(0, 24) || 'SUNSPIRE');
+    const picked = document.querySelector('input[name="difficulty"]:checked');
+    state = Core.createCampaign(seed, meta, picked ? picked.value : 'standard');
+    quickOfficerId = null;
+    activeIncidentId = null;
+    activeOfficerId = null;
+    currentScreen = 'map';
+    saveAll();
+    hideIntro();
+    switchScreen('map', false);
+    renderAll();
+    Audio.playTelegraph();
+    toast('Frontier command established. Two calls are waiting.', 'good');
+  }
+
+  function continueCampaign() {
+    if (!state) return;
+    hideIntro();
+    renderAll();
+    if (isEnded()) {
+      finaliseCampaign();
+      openEndModal();
+    } else {
+      switchScreen(currentScreen, false);
+      announce(`Campaign continued on Day ${state.day}.`);
+    }
+  }
+
+  function finaliseCampaign() {
+    if (!state || !state.outcome || state.metaAwarded) return false;
+    const campaignMeta = Core.normalizeMeta(state.meta || {});
+    meta = Core.normalizeMeta(meta);
+    Object.keys(meta.unlocks).forEach(id => { meta.unlocks[id] = !!(meta.unlocks[id] || campaignMeta.unlocks[id]); });
+    meta.valor += Math.max(0, Math.round(state.earnedValor || 0));
+    meta.unlocks.gilded = Object.keys(Core.DECREES).every(id => meta.decrees[id]);
+    scores.push(Core.scoreEntry(state));
+    scores = normaliseScores(scores);
+    state.metaAwarded = true;
+    saveAll();
+    return true;
+  }
+
+  function renderAll() {
+    if (!state) return;
+    if (quickOfficerId) {
+      const officer = Core.getOfficer(state, quickOfficerId);
+      if (!officer || officer.status !== 'ready') quickOfficerId = null;
+    }
+    renderHeader();
+    renderMap();
+    renderOfficers();
+    renderVault();
+    renderLegacy();
+    applySettings();
+    if (activeIncidentId && $('incidentSheet').classList.contains('open')) renderIncidentSheet();
+    if (activeSectorId && $('incidentSheet').classList.contains('open')) renderSectorSheet(activeSectorId);
+    if (activeOfficerId && $('officerSheet').classList.contains('open')) renderOfficerSheet();
+  }
+
+  function renderHeader() {
+    $('stateLabel').textContent = state.gameState.replace('_', ' ');
+    $('dayCounter').textContent = `Day ${state.day} / ${state.maxDays}`;
+    $('goldVal').textContent = Math.round(state.resources.gold);
+    $('suppliesVal').textContent = Math.round(state.resources.supplies);
+    $('authVal').textContent = `${Math.round(state.resources.authority)}%`;
+    $('valorVal').textContent = meta.valor;
+    $('legacyValor').textContent = meta.valor;
+    $('endDayBtn').disabled = turnLocked || state.gameState !== Core.STATES.PLANNING;
+  }
+
+  function renderMap() {
+    $('mapArt').innerHTML = Visuals.mapSVG(state);
+    const incidentsBySector = new Map(state.incidents.map(incident => [incident.sectorId, incident]));
+    $('mapNodes').innerHTML = state.sectors.map(sector => {
+      const incident = incidentsBySector.get(sector.id);
+      const classes = ['map-node', incident ? 'has-incident' : '', sector.critical ? 'critical' : '', sector.secured ? 'secured' : ''].filter(Boolean).join(' ');
+      const icon = incident ? incident.icon : (sector.secured ? '✓' : '⬟');
+      const label = incident
+        ? `${sector.name}. ${incident.name}, threat ${incident.threat}, ${incident.deadline} days remaining. Outpost level ${sector.outpost}.`
+        : `${sector.name}. Stability ${Math.round(sector.stability)} percent. Outpost level ${sector.outpost}.`;
+      return `<button class="${classes}" data-sector-node="${esc(sector.id)}" style="left:${sector.x}%;top:${sector.y}%" aria-label="${esc(label)}"><span aria-hidden="true">${esc(icon)}</span>${incident ? `<span class="node-call">${incident.status === 'contained' ? `CONTAIN ${incident.containTurns}` : `D${incident.deadline}`}</span>` : ''}<span class="node-level">L${sector.outpost}</span></button>`;
+    }).join('');
+
+    const calls = state.incidents.slice().sort((a, b) => a.deadline - b.deadline || b.threat - a.threat);
+    $('callCount').textContent = `${calls.length} ${calls.length === 1 ? 'call' : 'calls'}`;
+    $('incidentList').innerHTML = calls.length ? calls.map(incident => {
+      const sector = Core.getSector(state, incident.sectorId);
+      return `<button class="call-row" data-incident="${esc(incident.id)}"><span class="call-icon" aria-hidden="true">${esc(incident.icon)}</span><span><b>${esc(incident.name)}</b><small>${esc(sector.name)} · Threat ${incident.threat}${incident.status === 'contained' ? ' · Contained' : ''}</small></span><span class="deadline ${incident.deadline <= 1 ? 'critical' : ''}">${incident.status === 'contained' ? `${incident.containTurns}T` : `${incident.deadline}D`}</span></button>`;
+    }).join('') : '<div class="empty-calls"><b>The wire is quiet.</b><br>Use the calm to upgrade outposts.</div>';
+
+    const recruited = state.officers.filter(officer => officer.status !== 'locked');
+    $('officerDock').innerHTML = recruited.map((officer, index) => `<button class="dock-officer ${quickOfficerId === officer.id ? 'selected' : ''}" style="position:relative" data-dock-officer="${esc(officer.id)}" draggable="${officer.status === 'ready'}" ${officer.status !== 'ready' ? 'disabled' : ''} aria-pressed="${quickOfficerId === officer.id}" aria-label="${esc(`${officer.name}, ${officer.status}${index < 4 ? `, shortcut ${index + 1}` : ''}`)}">${index < 4 ? `<span class="dock-key">${index + 1}</span>` : ''}${Visuals.avatarSVG(officer)}</button>`).join('');
+
+    const economy = Core.getDailyPreview(state);
+    const ledger = [
+      ['Gold income', `+${economy.goldIncome}`], ['Maintenance', `-${economy.maintenance}`],
+      ['Supply income', `+${economy.supplyIncome}`], ['Rations & outposts', `-${economy.officerSupplies + economy.outpostSupplies}`],
+      ['Net Gold', signed(economy.netGold), 'net'], ['Net Supplies', signed(economy.netSupplies), 'net'],
+      ['Ration crisis', `${state.crisis && state.crisis.supplies || 0}/3 days`]
+    ];
+    $('dailyPreview').innerHTML = ledger.map(([label, value, extra]) => `<div class="ledger-item ${extra || ''} ${extra ? (Number(value) >= 0 ? 'good' : 'bad') : ''}">${esc(label)}<b>${esc(value)}</b></div>`).join('');
+    $('endDayLedger').textContent = `Tomorrow: ${signed(economy.netGold)}G · ${signed(economy.netSupplies)}S`;
+    const secured = Core.getSecuredCount(state);
+    $('mobileGoalProgress').textContent = `${secured}/3 secured`;
+    $('securedVal').textContent = secured;
+    $('daysLeftVal').textContent = Math.max(0, state.maxDays - state.day + 1);
+    $('goalBar').style.width = `${clamp(secured / 3 * 100, 0, 100)}%`;
+    syncWeather();
+  }
+
+  function renderOfficers() {
+    $('stationArt').innerHTML = Visuals.stationSVG(state);
+    $('officerGrid').innerHTML = state.officers.map(officer => {
+      const archetype = Core.ARCHETYPES[officer.archetype];
+      const locked = officer.status === 'locked';
+      const traits = officer.traits.map(id => Core.TRAITS[id]).filter(Boolean);
+      return `<button class="officer-card ${locked ? 'locked' : ''}" data-officer-card="${esc(officer.id)}"><span>${Visuals.avatarSVG(officer)}</span><span class="officer-copy"><span class="officer-role">${esc(archetype.name)}</span><h3>${esc(officer.name)}</h3><span class="trait-row">${traits.map(trait => `<span class="trait-pill">${esc(trait.name)}</span>`).join('')}</span><span class="officer-stats"><span class="officer-stat">Power<b>${locked ? '—' : officer.power + (officer.rank - 1) * 2}</b></span><span class="officer-stat">Rank<b>${locked ? '—' : officer.rank}</b></span><span class="officer-stat">Upkeep<b>${locked ? '—' : officer.upkeep}</b></span></span></span><span class="officer-status">${locked ? `${officer.recruitCost}G` : esc(officer.status.toUpperCase())}</span></button>`;
+    }).join('');
+  }
+
+  function renderVault() {
+    const owners = new Map(state.officers.filter(o => o.relic).map(o => [o.relic, o.name]));
+    $('relicGrid').innerHTML = Object.values(Core.RELICS).map(relic => {
+      const inStash = state.stash.includes(relic.id);
+      const owner = owners.get(relic.id);
+      const found = inStash || owner;
+      return `<article class="relic-card ${inStash ? 'stashed' : ''}" style="${found ? '' : 'opacity:.38;filter:grayscale(1)'}">${Visuals.relicSVG(relic.id)}<div><h3>${found ? esc(relic.name) : 'Uncharted Relic'}</h3><p>${found ? esc(relic.description) : 'Defeat nemeses and earn critical successes to reveal this relic.'}</p><span class="relic-owner">${inStash ? 'Ready in stash' : owner ? `Equipped by ${esc(owner)}` : 'Not yet recovered'}</span></div></article>`;
+    }).join('');
+    $('chronicle').innerHTML = state.log.length ? state.log.map(entry => `<div class="log-row ${esc(entry.tone || '')}"><span>Day ${clamp(Number(entry.day) || 1, 1, 30)}</span><div>${esc(entry.text)}</div></div>`).join('') : '<div class="empty-calls">No reports have been filed.</div>';
+  }
+
+  function renderLegacy() {
+    meta.unlocks.gilded = Object.keys(Core.DECREES).every(id => meta.decrees[id]);
+    $('decreeGrid').innerHTML = Object.values(Core.DECREES).map(decree => {
+      const owned = !!meta.decrees[decree.id];
+      const canBuy = !owned && meta.valor >= decree.cost;
+      return `<article class="decree-card ${owned ? 'owned' : ''}"><span class="decree-path">${owned ? '✓' : '✦'}</span><h3>${esc(decree.name)}</h3><p>${esc(decree.description)}</p><button class="${owned ? 'secondary-btn' : 'primary-btn'}" data-buy-decree="${esc(decree.id)}" ${owned || !canBuy ? 'disabled' : ''}>${owned ? 'Decree owned' : `Spend ${decree.cost} Valor`}</button></article>`;
+    }).join('');
+    $('scoreTable').innerHTML = scores.length ? scores.slice(0, 5).map((entry, index) => `<div class="score-row"><span class="score-rank">${index + 1}</span><span><b>${esc(entry.seed)} · ${entry.outcome === 'VICTORY' ? 'Secured' : `Day ${entry.day}`}</b><small>${esc(Core.DIFFICULTIES[entry.difficulty].name)} · ${entry.resolved} calls · ${entry.secured} districts</small></span><span class="score-points">${entry.score.toLocaleString()}</span></div>`).join('') : '<div class="empty-calls">Complete a watch to establish the local roll of honour.</div>';
+    $('skinRow').innerHTML = SKINS.map(skin => {
+      const unlocked = !!skin.unlocked(meta);
+      return `<span class="skin-chip ${unlocked ? '' : 'locked'}" title="${esc(skin.description)}">${unlocked ? '✓' : '◇'} ${esc(skin.name)}</span>`;
+    }).join('');
+    $('legacyValor').textContent = meta.valor;
+  }
+
+  function switchScreen(name, playSound = true) {
+    if (!SCREEN_IDS[name]) return;
+    currentScreen = name;
+    Object.entries(SCREEN_IDS).forEach(([key, id]) => {
+      const active = key === name;
+      $(id).classList.toggle('active', active);
+      $(id).setAttribute('aria-hidden', String(!active));
+    });
+    document.querySelectorAll('.nav-btn').forEach(button => {
+      const active = button.dataset.screen === name;
+      button.classList.toggle('active', active);
+      if (active) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
+    });
+    if (state && weatherFx) syncWeather();
+    if (playSound) Audio.playClick();
+  }
+
+  function openIncident(incidentId, initialOfficerId) {
+    const incident = Core.getIncident(state, incidentId);
+    if (!incident) return;
+    activeIncidentId = incident.id;
+    activeSectorId = null;
+    activeDoctrine = incident.status === 'contained' ? 'contain' : 'charge';
+    selectedOfficerIds = [];
+    const officer = initialOfficerId && Core.getOfficer(state, initialOfficerId);
+    if (officer && officer.status === 'ready') selectedOfficerIds.push(officer.id);
+    renderIncidentSheet();
+    openDialog($('incidentSheet'), '#incidentClose');
+    Audio.playTelegraph();
+  }
+
+  function renderIncidentSheet() {
+    const incident = Core.getIncident(state, activeIncidentId);
+    if (!incident) { closeDialog($('incidentSheet')); return; }
+    const sector = Core.getSector(state, incident.sectorId);
+    if (incident.status === 'contained') {
+      const names = incident.assignedOfficerIds.map(id => Core.getOfficer(state, id)).filter(Boolean).map(o => o.name);
+      $('incidentSheetBody').innerHTML = `<div class="incident-hero"><span class="eyebrow">CONTAINMENT IN PROGRESS</span><h2 id="incidentTitle">${esc(incident.name)}</h2><p>${esc(sector.name)} is sealed while the team works the perimeter.</p><div class="incident-meta"><span class="meta-pill">Threat ${incident.threat}</span><span class="meta-pill">${incident.containTurns} ${incident.containTurns === 1 ? 'turn' : 'turns'} remaining</span></div></div><div class="sheet-section"><h3>Assigned watch</h3><div class="modifier-card"><b>${names.length ? esc(names.join(', ')) : 'No assigned officers'}</b><p>Containment costs 1 Authority per day, carries lower injury risk, and pays a reduced bounty when settled.</p></div></div><div class="odds-card"><div class="odds-top"><span>Resolution timing</span><strong>${incident.containTurns}D</strong></div><div class="odds-bar"><i style="width:${clamp((3 - incident.containTurns) / 2 * 100, 8, 100)}%"></i></div></div><div class="sheet-actions"><button class="danger-btn full" data-cancel-containment="${esc(incident.id)}">Recall containment team</button></div>`;
+      return;
+    }
+
+    selectedOfficerIds = selectedOfficerIds.filter(id => {
+      const officer = Core.getOfficer(state, id);
+      return officer && officer.status === 'ready';
+    }).slice(0, 3);
+    const preview = Core.squadPreview(state, incident.id, activeDoctrine === 'infiltrate' ? [] : selectedOfficerIds, activeDoctrine);
+    const modifier = Core.getVisibleModifier(state, incident.id, selectedOfficerIds);
+    const recruited = state.officers.filter(officer => officer.status !== 'locked');
+    const doctrine = Core.DOCTRINES[activeDoctrine];
+    const validSquad = activeDoctrine === 'infiltrate' || selectedOfficerIds.length > 0;
+    const afford = activeDoctrine !== 'infiltrate' || (state.resources.gold >= preview.infiltrationCost.gold && state.resources.supplies >= preview.infiltrationCost.supplies);
+    const chance = activeDoctrine === 'infiltrate' ? '100%' : preview.displayChance == null ? '??' : `${preview.displayChance}%`;
+    const bar = activeDoctrine === 'infiltrate' ? 100 : preview.displayChance == null ? 50 : preview.displayChance;
+    const dispatchLabel = activeDoctrine === 'contain' ? 'Establish containment' : activeDoctrine === 'infiltrate' ? 'Fund covert resolution' : 'Execute dispatch';
+    $('incidentSheetBody').innerHTML = `<div class="incident-hero"><span class="eyebrow">${esc(incident.type.toUpperCase().replace('_', ' '))}</span><h2 id="incidentTitle">${esc(incident.name)}</h2><p>${esc(Core.INCIDENT_TYPES[incident.type].flavour)}</p><div class="incident-meta"><span class="meta-pill">${esc(sector.name)}</span><span class="meta-pill">Threat ${incident.threat}</span><span class="meta-pill danger">${incident.deadline} ${incident.deadline === 1 ? 'day' : 'days'} to breach</span><span class="meta-pill">Reward ${incident.goldReward}G</span></div></div><div class="modifier-card ${modifier ? '' : 'hidden'}">${modifier ? `<b>${esc(modifier.name)}</b><p>${esc(modifier.description)}</p>` : '<b class="hidden-intel">MODIFIER ENCRYPTED</b><p>Assign a Scout, Investigator, Watchman\'s Mirror, or unlock the Telegraph Network to reveal the field condition.</p>'}</div><div class="sheet-section"><h3>Assemble squad · up to three</h3><div class="squad-pick">${recruited.map(officer => {
+      const selected = selectedOfficerIds.includes(officer.id);
+      return `<button class="squad-option ${selected ? 'selected' : ''}" data-squad-officer="${esc(officer.id)}" ${officer.status !== 'ready' || activeDoctrine === 'infiltrate' ? 'disabled' : ''} aria-pressed="${selected}">${Visuals.avatarSVG(officer)}<span class="slot-check">${selected ? '✓' : '+'}</span></button>`;
+    }).join('')}</div></div><div class="sheet-section"><h3>Tactical doctrine</h3><fieldset class="doctrine-list"><legend class="sr-only">Tactical doctrine</legend>${Object.values(Core.DOCTRINES).map(item => {
+      const itemPreview = Core.squadPreview(state, incident.id, item.id === 'infiltrate' ? [] : selectedOfficerIds, item.id);
+      const cost = item.id === 'infiltrate' ? `${itemPreview.infiltrationCost.gold}G · ${itemPreview.infiltrationCost.supplies}S` : item.id === 'contain' ? '2 turns' : '+15% bounty';
+      return `<label class="doctrine-card"><input type="radio" name="doctrine" data-doctrine="${esc(item.id)}" ${activeDoctrine === item.id ? 'checked' : ''}><span class="doctrine-icon" aria-hidden="true">${esc(item.icon)}</span><span><b>${esc(item.name)}</b><small>${esc(item.description)}</small></span><span class="doctrine-cost">${esc(cost)}</span></label>`;
+    }).join('')}</fieldset></div><div class="odds-card"><div class="odds-top"><span>${preview.modifierRevealed ? 'Projected success' : 'Field odds obscured'}</span><strong>${chance}</strong></div><div class="odds-bar"><i style="width:${bar}%"></i></div><div class="odds-grid"><div>Squad power<b>${activeDoctrine === 'infiltrate' ? 'COIN' : preview.power}</b></div><div>Injury risk<b>${activeDoctrine === 'infiltrate' ? '0%' : `${preview.injuryPercent}%`}</b></div><div>Projected reward<b>${preview.rewardGold}G · ${preview.rewardSupplies}S</b></div></div></div><div class="sheet-actions"><button class="primary-btn full" data-dispatch="${esc(incident.id)}" ${!validSquad || !afford ? 'disabled' : ''}>${esc(dispatchLabel)}</button></div>`;
+  }
+
+  function openSector(sectorId) {
+    activeIncidentId = null;
+    activeSectorId = sectorId;
+    renderSectorSheet(sectorId);
+    openDialog($('incidentSheet'), '#incidentClose');
+  }
+
+  function renderSectorSheet(sectorId) {
+    const sector = Core.getSector(state, sectorId);
+    if (!sector) { closeDialog($('incidentSheet')); return; }
+    const incident = state.incidents.find(item => item.sectorId === sector.id);
+    const maxed = sector.outpost >= 3;
+    const cost = sector.outpost === 1 ? { gold: 68, supplies: 16 } : { gold: 118, supplies: 28 };
+    const afford = maxed || (state.resources.gold >= cost.gold && state.resources.supplies >= cost.supplies);
+    const requiredStability = sector.outpost === 1 ? 50 : 72;
+    const projectUsed = state.projectDay === state.day;
+    const blocked = maxed || !afford || isEnded() || !!incident || projectUsed || sector.stability < requiredStability;
+    const projectNote = maxed ? 'Raise Stability to 90% to secure this district permanently for the campaign goal.' : incident ? 'Resolve the active call before construction can begin.' : projectUsed ? 'Command has already completed one construction project today.' : sector.stability < requiredStability ? `Local Stability must reach ${requiredStability}% before Level ${sector.outpost + 1} works can begin.` : !afford ? 'Command lacks the required Gold or Supplies.' : `Spend ${cost.gold} Gold and ${cost.supplies} Supplies. The works add 10 Stability; secured districts become profitable.`;
+    $('incidentSheetBody').innerHTML = `<div class="incident-hero"><span class="eyebrow">DISTRICT COMMAND</span><h2 id="incidentTitle">${esc(sector.name)}</h2><p>${esc(sector.biome)} district · ${esc(sector.weather)} conditions · ${esc(sector.control)} control</p><div class="incident-meta"><span class="meta-pill">Stability ${Math.round(sector.stability)}%</span><span class="meta-pill">Outpost Level ${sector.outpost}</span><span class="meta-pill">${sector.secured ? 'SECURED' : 'NOT YET SECURED'}</span></div></div><div class="sheet-section"><h3>Secured district income</h3><div class="detail-stats"><div class="detail-stat">Daily Gold<b>${sector.secured ? '+7' : '+3'}</b></div><div class="detail-stat">Daily Supplies<b>+2</b></div><div class="detail-stat">Weather<b>${esc(Visuals.weatherGlyph(sector.weather))}</b></div></div></div><div class="modifier-card"><b>${maxed ? 'Crown bastion complete' : `Level ${sector.outpost + 1} fieldworks`}</b><p>${esc(projectNote)}</p></div>${incident ? `<div class="sheet-section"><button class="danger-btn full" data-incident="${esc(incident.id)}">Open active call: ${esc(incident.name)}</button></div>` : ''}<div class="sheet-actions"><button class="primary-btn full" data-upgrade-sector="${esc(sector.id)}" ${blocked ? 'disabled' : ''}>${maxed ? 'Outpost at maximum level' : `Upgrade · ${cost.gold}G + ${cost.supplies}S`}</button></div>`;
+  }
+
+  function openOfficer(officerId) {
+    activeOfficerId = officerId;
+    renderOfficerSheet();
+    openDialog($('officerSheet'), '#officerClose');
+  }
+
+  function renderOfficerSheet() {
+    const officer = Core.getOfficer(state, activeOfficerId);
+    if (!officer) { closeDialog($('officerSheet')); return; }
+    const archetype = Core.ARCHETYPES[officer.archetype];
+    const locked = officer.status === 'locked';
+    if (locked) {
+      $('officerSheetBody').innerHTML = `<div class="officer-detail-head">${Visuals.avatarSVG(officer)}<div><span class="eyebrow">RECRUITMENT FILE</span><h2 id="officerTitle">${esc(officer.name)}</h2><p>${esc(archetype.name)}</p></div></div><div class="modifier-card"><b>${esc(archetype.passive)}</b><p>This officer brings two seeded traits to every watch. Recruit them for ${officer.recruitCost} Gold.</p></div><div class="sheet-actions"><button class="primary-btn full" data-recruit-officer="${esc(officer.id)}" ${state.resources.gold < officer.recruitCost || isEnded() ? 'disabled' : ''}>Recruit · ${officer.recruitCost}G</button></div>`;
+      return;
+    }
+    const xpNeed = officer.rank * 28;
+    const trainCost = 45 + officer.rank * 28;
+    const equipped = officer.relic && Core.RELICS[officer.relic];
+    const ready = officer.status === 'ready' && !isEnded();
+    $('officerSheetBody').innerHTML = `<div class="officer-detail-head">${Visuals.avatarSVG(officer)}<div><span class="eyebrow">${esc(archetype.name.toUpperCase())}</span><h2 id="officerTitle">${esc(officer.name)}</h2><p>${esc(archetype.passive)}</p></div></div><div class="detail-stats"><div class="detail-stat">Base Power<b>${officer.power}</b></div><div class="detail-stat">Rank<b>${officer.rank}</b></div><div class="detail-stat">Rations<b>${officer.upkeep}/day</b></div></div><span class="eyebrow">RANK PROGRESS · ${officer.xp}/${xpNeed} XP</span><div class="xp-bar"><i style="width:${clamp(officer.xp / xpNeed * 100, 0, 100)}%"></i></div><div class="sheet-section"><h3>Seeded traits</h3>${officer.traits.map(id => Core.TRAITS[id]).filter(Boolean).map(trait => `<div class="trait-detail"><b>${esc(trait.name)}</b><span>${esc(trait.description)}</span></div>`).join('')}</div><div class="sheet-section"><h3>Equipped relic</h3>${equipped ? `<div class="equip-row">${Visuals.relicSVG(equipped.id)}<div><b>${esc(equipped.name)}</b><small>${esc(equipped.description)}</small></div><button class="secondary-btn" data-unequip-officer="${esc(officer.id)}" ${ready ? '' : 'disabled'}>Unequip</button></div>` : '<div class="modifier-card"><b>Empty badge slot</b><p>Choose a recovered relic from the vault below.</p></div>'}<div class="equip-list">${state.stash.map(id => Core.RELICS[id]).filter(Boolean).map(relic => `<div class="equip-row">${Visuals.relicSVG(relic.id)}<div><b>${esc(relic.name)}</b><small>${esc(relic.description)}</small></div><button class="secondary-btn" data-equip-officer="${esc(officer.id)}" data-relic-id="${esc(relic.id)}" ${ready ? '' : 'disabled'}>Equip</button></div>`).join('')}</div></div><div class="sheet-actions"><button class="primary-btn full" data-train-officer="${esc(officer.id)}" ${!ready || state.resources.gold < trainCost ? 'disabled' : ''}>Train +1 Power · ${trainCost}G</button></div>`;
+  }
+
+  function dispatchActiveIncident() {
+    const incident = Core.getIncident(state, activeIncidentId);
+    if (!incident) return;
+    Audio.playDispatch();
+    const result = Core.dispatchIncident(state, incident.id, activeDoctrine === 'infiltrate' ? [] : selectedOfficerIds, activeDoctrine);
+    if (!result.ok) {
+      toast(reasonText(result), 'bad');
+      return;
+    }
+    closeDialog($('incidentSheet'));
+    activeIncidentId = null;
+    processEvents(result.events, result.outcome === 'scheduled' ? 'Containment ordered' : 'Dispatch report');
+    if (isEnded()) finaliseCampaign();
+    saveAll();
+    renderAll();
+    if (isEnded()) openEndModal();
+  }
+
+  function advanceWatch() {
+    if (turnLocked || !state || state.gameState !== Core.STATES.PLANNING) return;
+    turnLocked = true;
+    renderHeader();
+    const beforeCalls = new Set(state.incidents.map(incident => incident.id));
+    const result = Core.advanceDay(state);
+    if (!result.ok) { toast(reasonText(result), 'bad'); turnLocked = false; renderHeader(); return; }
+    Audio.playDayTick();
+    if (result.economy && (result.economy.goldIncome > 0 || result.economy.supplyIncome > 0)) root.setTimeout(() => Audio.playResource(), 180);
+    if (state.incidents.some(incident => !beforeCalls.has(incident.id)) && !isEnded()) root.setTimeout(() => Audio.playAlarm(), 390);
+    processEvents(result.events, isEnded() ? 'Final watch report' : `Day ${state.day} begins`);
+    if (isEnded()) finaliseCampaign();
+    saveAll();
+    renderAll();
+    if (isEnded()) openEndModal();
+    root.setTimeout(() => { turnLocked = false; if (state) renderHeader(); }, 320);
+  }
+
+  function processEvents(events, title) {
+    const list = Array.isArray(events) ? events : [];
+    for (const event of list) {
+      const bad = ['failure', 'disaster', 'breach', 'starvation', 'shortage', 'lost-sector', 'collapse', 'defeat', 'injury', 'nemesis'].includes(event.type);
+      const good = ['success', 'critical', 'pyrrhic', 'upgrade', 'training', 'recruit', 'relic', 'victory', 'sector-secured', 'nemesis-defeated'].includes(event.type);
+      if (event.type === 'critical') Audio.playCritical();
+      else if (event.type === 'upgrade' || event.type === 'training' || event.type === 'recruit') Audio.playUpgrade();
+      else if (event.type === 'success' || event.type === 'pyrrhic' || event.type === 'relic') Audio.playResource();
+      else if (bad) Audio.playImpact();
+      if (event.type === 'victory') Audio.playVictory();
+      if (event.type === 'defeat') Audio.playDefeat();
+      addFloatingFeedback(event, bad ? 'bad' : good ? 'good' : '');
+      if (bad && !settings.reduced) pulseBody('flash-bad', event.type === 'breach' || event.type === 'disaster');
+      else if (good && !settings.reduced) pulseBody('flash-good', false);
+    }
+    if (list.length) showSummary(title, list);
+  }
+
+  function addFloatingFeedback(event, tone) {
+    if (settings.reduced) return;
+    const layer = $('floatLayer');
+    if (!layer) return;
+    const sector = event.sectorId && Core.getSector(state, event.sectorId);
+    const values = [];
+    if (event.type === 'critical') values.push('CRITICAL!');
+    if (Number(event.gold)) values.push(`${signed(Math.round(event.gold))}G`);
+    if (Number(event.supplies)) values.push(`${signed(Math.round(event.supplies))}S`);
+    if (Number(event.authority)) values.push(`${signed(Math.round(event.authority))} AUTH`);
+    if (event.type === 'economy') {
+      if (Number(event.netGold)) values.push(`${signed(Math.round(event.netGold))}G`);
+      if (Number(event.netSupplies)) values.push(`${signed(Math.round(event.netSupplies))}S`);
+    }
+    if (!values.length && ['breach', 'disaster', 'sector-secured'].includes(event.type)) values.push(event.type.replace('-', ' ').toUpperCase());
+    values.forEach((text, index) => {
+      const node = document.createElement('span');
+      node.className = `float-text ${text.includes('G') ? 'gold' : tone}`;
+      node.textContent = text;
+      node.style.left = `${sector ? sector.x : 50}%`;
+      node.style.top = `${sector ? sector.y + index * 4 : 46 + index * 5}%`;
+      layer.appendChild(node);
+      root.setTimeout(() => node.remove(), 1450);
+    });
+  }
+
+  function pulseBody(flashClass, shake) {
+    const now = root.performance ? root.performance.now() : Date.now();
+    if (now - lastFullFlashAt < 500) return;
+    lastFullFlashAt = now;
+    document.body.classList.remove('flash-good', 'flash-bad', 'shake');
+    void document.body.offsetWidth;
+    document.body.classList.add(flashClass);
+    if (shake) document.body.classList.add('shake');
+    root.setTimeout(() => document.body.classList.remove('flash-good', 'flash-bad', 'shake'), 620);
+  }
+
+  root.__MBM_CROWN_TEST__ = Object.freeze({
+    pulse: () => { if (!settings.reduced) pulseBody('flash-good', false); },
+    snapshot: () => ({ state: state ? Core.copy(state) : null, settings: { ...settings } })
+  });
+
+  function showSummary(title, events) {
+    $('summaryBody').innerHTML = `<span class="eyebrow">COMMAND CHRONICLE</span><h2 id="summaryTitle">${esc(title)}</h2><div class="summary-events">${events.map(event => {
+      const tone = ['failure', 'disaster', 'breach', 'starvation', 'shortage', 'defeat', 'injury', 'nemesis'].includes(event.type) ? 'bad' : ['success', 'critical', 'pyrrhic', 'upgrade', 'training', 'recruit', 'relic', 'victory', 'sector-secured'].includes(event.type) ? 'good' : '';
+      const extras = [Number(event.gold) ? `${signed(Math.round(event.gold))} Gold` : '', Number(event.supplies) ? `${signed(Math.round(event.supplies))} Supplies` : '', Number(event.authority) ? `${signed(Math.round(event.authority))} Authority` : ''].filter(Boolean).join(' · ');
+      return `<div class="summary-event ${tone}">${esc(event.text || event.type)}${extras ? `<br><strong>${esc(extras)}</strong>` : ''}</div>`;
+    }).join('')}</div><button class="primary-btn full" data-close="summaryModal">Return to command</button>`;
+    openDialog($('summaryModal'), '[data-close="summaryModal"]');
+  }
+
+  function showLedgerDetails() {
+    const e = Core.getDailyPreview(state);
+    showSummary('Tomorrow’s ledger', [
+      { type: 'info', text: `Districts produce ${e.goldIncome} Gold and ${e.supplyIncome} Supplies.` },
+      { type: e.netGold < 0 ? 'shortage' : 'info', text: `Outpost maintenance costs ${e.maintenance} Gold. Net Gold: ${signed(e.netGold)}.` },
+      { type: e.netSupplies < 0 ? 'starvation' : 'info', text: `The roster consumes ${e.officerSupplies} Supplies and functional outposts use ${e.outpostSupplies}. Net Supplies: ${signed(e.netSupplies)}. Crisis streak: ${state.crisis && state.crisis.supplies || 0}/3.` },
+      { type: 'info', text: 'Ignored calls breach after their deadline and drain Authority. Containment costs 1 Authority per turn.' }
+    ]);
+  }
+
+  function openEndModal() {
+    if (!state || !state.outcome) return;
+    finaliseCampaign();
+    closeAllDialogs();
+    const victory = state.outcome === 'VICTORY';
+    $('endBody').innerHTML = `<div class="end-seal">${victory ? '♛' : '⚑'}</div><span class="eyebrow">${victory ? 'THE FRONTIER HOLDS' : 'COMMAND HAS FALLEN'}</span><h2 id="endTitle">${victory ? 'Frontier Secured' : 'Authority Broken'}</h2><p>${victory ? 'Your outposts and officers have restored the Crown road.' : 'The watch ends, but earned Valor and unlocked liveries remain.'}</p><div class="end-score">${state.score.toLocaleString()} points</div><div class="end-stats"><div>Day reached<b>${state.day}</b></div><div>Calls resolved<b>${state.stats.resolved}</b></div><div>Districts secured<b>${Core.getSecuredCount(state)}</b></div><div>Valor earned<b>+${state.earnedValor}</b></div></div><div class="intro-actions"><button class="primary-btn" data-end-new>Begin another watch</button><button class="secondary-btn" data-end-legacy>View Crown Legacy</button></div>`;
+    openDialog($('endModal'), '[data-end-new]');
+  }
+
+  function reasonText(result) {
+    const reasons = {
+      NOT_PLANNING: 'The watch is not accepting orders right now.',
+      INVALID_INCIDENT: 'That incident is no longer active.',
+      INVALID_SQUAD: 'Select one to three ready officers.',
+      INSUFFICIENT_RESOURCES: 'Command does not have the required Gold or Supplies.',
+      MAX_LEVEL: 'That outpost is already Level 3.',
+      PROJECT_USED: 'Only one outpost construction project can be completed each day.',
+      ACTIVE_INCIDENT: 'Resolve the district incident before beginning construction.',
+      LOW_STABILITY: `Local Stability must reach ${result && result.requiredStability || 'the required level'} first.`,
+      INVALID_OFFICER: 'That officer is unavailable.',
+      INVALID_EQUIP: 'That relic cannot be equipped.',
+      INVALID_DECREE: 'That decree is already owned or unavailable.',
+      INSUFFICIENT_VALOR: 'You need more Crown Valor.',
+      NOT_CONTAINED: 'That containment order is no longer active.'
+    };
+    return reasons[result && result.reason] || 'The order could not be completed.';
+  }
+
+  function applyResult(result, title, sound = 'click') {
+    if (!result || !result.ok) { toast(reasonText(result), 'bad'); return false; }
+    if (sound === 'click') Audio.playClick();
+    processEvents(result.events, title);
+    if (isEnded()) finaliseCampaign();
+    saveAll();
+    renderAll();
+    if (isEnded()) openEndModal();
+    return true;
+  }
+
+  function openDialog(element, focusSelector) {
+    if (!element) return;
+    if (!element.classList.contains('open')) lastDialogFocus = document.activeElement;
+    if (element.classList.contains('sheet')) {
+      document.querySelectorAll('.sheet.open').forEach(other => { if (other !== element) closeDialog(other, false); });
+    }
+    element.classList.add('open');
+    element.inert = false;
+    element.setAttribute('aria-hidden', 'false');
+    syncBackgroundInert();
+    root.setTimeout(() => {
+      const target = focusSelector && element.querySelector(focusSelector);
+      (target || element.querySelector('button, input, [tabindex]'))?.focus();
+    }, 20);
+  }
+
+  function closeDialog(element, restore = true) {
+    if (!element) return;
+    element.classList.remove('open');
+    element.inert = true;
+    element.setAttribute('aria-hidden', 'true');
+    if (element.id === 'incidentSheet') { activeIncidentId = null; activeSectorId = null; }
+    if (element.id === 'officerSheet') activeOfficerId = null;
+    syncBackgroundInert();
+    if (restore && lastDialogFocus && document.contains(lastDialogFocus)) root.setTimeout(() => lastDialogFocus.focus(), 0);
+  }
+
+  function syncBackgroundInert() {
+    const blocked = !($('intro') && $('intro').hidden) || !!document.querySelector('.sheet.open,.modal-layer.open');
+    if ($('app')) $('app').inert = blocked;
+  }
+
+  function closeAllDialogs() {
+    document.querySelectorAll('.sheet.open,.modal-layer.open').forEach(element => closeDialog(element, false));
+  }
+
+  function topDialog() {
+    return Array.from(document.querySelectorAll('.modal-layer.open,.sheet.open')).pop() || null;
+  }
+
+  function trapDialogFocus(event) {
+    const dialog = topDialog();
+    if (!dialog || event.key !== 'Tab') return;
+    const focusable = Array.from(dialog.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')).filter(node => node.offsetParent !== null);
+    if (!focusable.length) return;
+    const first = focusable[0], last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }
+
+  function applySettings() {
+    document.body.classList.toggle('reduced', settings.reduced);
+    $('calmBtn').setAttribute('aria-pressed', String(settings.reduced));
+    $('muteBtn').textContent = settings.muted ? '🔇' : '🔊';
+    $('muteBtn').setAttribute('aria-label', settings.muted ? 'Unmute sound' : 'Mute sound');
+    $('volumeSlider').value = String(settings.volume);
+    Audio.setVolume(settings.volume);
+    syncWeather();
+  }
+
+  function activeWeatherKind() {
+    if (settings.weather !== 'mixed') return settings.weather;
+    const urgent = state && state.incidents.slice().sort((a, b) => a.deadline - b.deadline)[0];
+    const sector = urgent && Core.getSector(state, urgent.sectorId);
+    const kind = sector ? sector.weather : 'clear';
+    return ['rain', 'snow', 'fog'].includes(kind) ? kind : 'clear';
+  }
+
+  function syncWeather() {
+    if (!state || !weatherFx) return;
+    if (currentScreen !== 'map' || !$('intro').hidden) {
+      weatherFx.stop();
+      return;
+    }
+    const kind = activeWeatherKind();
+    $('weatherLabel').textContent = settings.weather === 'mixed' ? `Mixed · ${kind}` : settings.weather;
+    weatherFx.set(kind, settings.reduced, state.seed ^ state.day);
+  }
+
+  function cycleWeather() {
+    const index = WEATHER_MODES.indexOf(settings.weather);
+    settings.weather = WEATHER_MODES[(index + 1) % WEATHER_MODES.length];
+    storeJSON(STORAGE.settings, settings);
+    syncWeather();
+    toast(`Map weather: ${settings.weather}.`);
+  }
+
+  function nextIncident() {
+    if (!state || !state.incidents.length) { toast('The dispatch wire is quiet.'); return; }
+    const calls = state.incidents.slice().sort((a, b) => a.deadline - b.deadline || b.threat - a.threat);
+    incidentCursor = (incidentCursor + 1) % calls.length;
+    switchScreen('map', false);
+    openIncident(calls[incidentCursor].id, quickOfficerId);
+  }
+
+  function selectQuickOfficer(id, announceChoice = true) {
+    const officer = Core.getOfficer(state, id);
+    if (!officer || officer.status !== 'ready') { toast('That officer is not ready for dispatch.', 'bad'); return; }
+    quickOfficerId = quickOfficerId === id ? null : id;
+    renderMap();
+    if (quickOfficerId && announceChoice) announce(`${officer.name} selected. Choose an incident district.`);
+    Audio.playClick();
+  }
+
+  function openNode(sectorId, officerId) {
+    const incident = state.incidents.find(item => item.sectorId === sectorId);
+    if (incident) openIncident(incident.id, officerId || quickOfficerId);
+    else openSector(sectorId);
+  }
+
+  function beginNativeDrag(event, button) {
+    const id = button.dataset.dockOfficer;
+    const officer = Core.getOfficer(state, id);
+    if (!officer || officer.status !== 'ready') { event.preventDefault(); return; }
+    quickOfficerId = id;
+    event.dataTransfer.effectAllowed = 'copy';
+    event.dataTransfer.setData('text/plain', id);
+    document.querySelectorAll('.map-node.has-incident').forEach(node => node.classList.add('is-target'));
+  }
+
+  function endNativeDrag() {
+    document.querySelectorAll('.map-node.is-target').forEach(node => node.classList.remove('is-target'));
+  }
+
+  function beginTouchDrag(event, button) {
+    if (event.pointerType === 'mouse') return;
+    const officer = Core.getOfficer(state, button.dataset.dockOfficer);
+    if (!officer || officer.status !== 'ready') return;
+    button.setPointerCapture?.(event.pointerId);
+    touchDrag = { id: officer.id, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, active: false, source: button };
+  }
+
+  function moveTouchDrag(event) {
+    if (!touchDrag || event.pointerId !== touchDrag.pointerId) return;
+    if (!touchDrag.active && Math.hypot(event.clientX - touchDrag.startX, event.clientY - touchDrag.startY) > 9) {
+      touchDrag.active = true;
+      const officer = Core.getOfficer(state, touchDrag.id);
+      $('dragGhost').innerHTML = Visuals.avatarSVG(officer);
+      $('dragGhost').hidden = false;
+      document.querySelectorAll('.map-node.has-incident').forEach(node => node.classList.add('is-target'));
+    }
+    if (touchDrag.active) {
+      event.preventDefault();
+      $('dragGhost').style.left = `${event.clientX}px`;
+      $('dragGhost').style.top = `${event.clientY}px`;
+    }
+  }
+
+  function endTouchDrag(event) {
+    if (!touchDrag || event.pointerId !== touchDrag.pointerId) return;
+    const drag = touchDrag;
+    touchDrag = null;
+    if (drag.active) {
+      suppressClickUntil = Date.now() + 450;
+      $('dragGhost').hidden = true;
+      const hit = document.elementFromPoint(event.clientX, event.clientY);
+      const node = hit && hit.closest('[data-sector-node]');
+      endNativeDrag();
+      if (node) openNode(node.dataset.sectorNode, drag.id);
+      else toast('Dispatch drag cancelled.');
+    }
+  }
+
+  function cancelTouchDrag(event) {
+    if (!touchDrag || event.pointerId !== touchDrag.pointerId) return;
+    const wasActive = touchDrag.active;
+    touchDrag = null;
+    $('dragGhost').hidden = true;
+    endNativeDrag();
+    if (wasActive) suppressClickUntil = Date.now() + 450;
+  }
+
+  function exportSave() {
+    const payload = {
+      app: 'Crown & Badge: Frontier Watch', version: '1.0', schema: Core.SCHEMA_VERSION,
+      exportedAt: new Date().toISOString(), campaign: state, meta, scores, settings
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `crown-badge-${String(state.seedLabel || 'watch').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-day-${state.day}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    root.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('Campaign save exported.', 'good');
+  }
+
+  function handleClick(event) {
+    if (Date.now() < suppressClickUntil) { event.preventDefault(); return; }
+    const target = event.target;
+    const close = target.closest('[data-close]');
+    if (close) { closeDialog($(close.dataset.close)); Audio.playClick(); return; }
+    const nav = target.closest('.nav-btn');
+    if (nav) { switchScreen(nav.dataset.screen); return; }
+    const dock = target.closest('[data-dock-officer]');
+    if (dock) { selectQuickOfficer(dock.dataset.dockOfficer); return; }
+    const node = target.closest('[data-sector-node]');
+    if (node) { openNode(node.dataset.sectorNode); return; }
+    const call = target.closest('[data-incident]');
+    if (call) { openIncident(call.dataset.incident, quickOfficerId); return; }
+    const officerCard = target.closest('[data-officer-card]');
+    if (officerCard) { openOfficer(officerCard.dataset.officerCard); return; }
+    const squad = target.closest('[data-squad-officer]');
+    if (squad) {
+      const id = squad.dataset.squadOfficer;
+      selectedOfficerIds = selectedOfficerIds.includes(id) ? selectedOfficerIds.filter(value => value !== id) : selectedOfficerIds.length < 3 ? [...selectedOfficerIds, id] : selectedOfficerIds;
+      if (selectedOfficerIds.length >= 3 && !squad.classList.contains('selected')) toast('A dispatch squad can contain at most three officers.');
+      Audio.playClick();
+      renderIncidentSheet();
+      root.setTimeout(() => document.querySelector(`[data-squad-officer="${id}"]`)?.focus(), 0);
+      return;
+    }
+    const dispatch = target.closest('[data-dispatch]');
+    if (dispatch) { dispatchActiveIncident(); return; }
+    const cancelContain = target.closest('[data-cancel-containment]');
+    if (cancelContain) {
+      const result = Core.cancelContainment(state, cancelContain.dataset.cancelContainment);
+      if (applyResult(result, 'Containment recalled')) closeDialog($('incidentSheet'));
+      return;
+    }
+    const upgrade = target.closest('[data-upgrade-sector]');
+    if (upgrade) { applyResult(Core.upgradeOutpost(state, upgrade.dataset.upgradeSector), 'Outpost works complete', 'upgrade'); return; }
+    const recruit = target.closest('[data-recruit-officer]');
+    if (recruit) { applyResult(Core.recruitOfficer(state, recruit.dataset.recruitOfficer), 'New officer sworn in', 'upgrade'); return; }
+    const train = target.closest('[data-train-officer]');
+    if (train) { applyResult(Core.trainOfficer(state, train.dataset.trainOfficer), 'Training report', 'upgrade'); return; }
+    const equip = target.closest('[data-equip-officer]');
+    if (equip) { applyResult(Core.equipRelic(state, equip.dataset.equipOfficer, equip.dataset.relicId), 'Vault transfer'); return; }
+    const unequip = target.closest('[data-unequip-officer]');
+    if (unequip) { applyResult(Core.unequipRelic(state, unequip.dataset.unequipOfficer), 'Vault transfer'); return; }
+    const decree = target.closest('[data-buy-decree]');
+    if (decree) {
+      const result = Core.purchaseDecree(meta, decree.dataset.buyDecree);
+      if (!result.ok) { toast(reasonText(result), 'bad'); return; }
+      meta = result.meta;
+      meta.unlocks.gilded = Object.keys(Core.DECREES).every(id => meta.decrees[id]);
+      saveAll(); renderHeader(); renderLegacy(); Audio.playUpgrade(); toast('Decree sealed. It applies to your next campaign.', 'good');
+      return;
+    }
+    if (target.closest('[data-end-new]')) { closeDialog($('endModal'), false); showIntro(); return; }
+    if (target.closest('[data-end-legacy]')) { closeDialog($('endModal'), false); switchScreen('legacy'); return; }
+  }
+
+  function handleKeydown(event) {
+    trapDialogFocus(event);
+    if (event.key === 'Escape') {
+      const dialog = topDialog();
+      if (dialog && dialog.id !== 'endModal') { event.preventDefault(); closeDialog(dialog); }
+      return;
+    }
+    if (!$('intro').hidden || topDialog()) return;
+    const active = document.activeElement;
+    const typing = active && (['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName) || active.isContentEditable);
+    if (typing || event.ctrlKey || event.metaKey || event.altKey) return;
+    const key = event.key.toLowerCase();
+    if (['m', 'o', 'v', 'l'].includes(key)) { event.preventDefault(); switchScreen({ m: 'map', o: 'officers', v: 'vault', l: 'legacy' }[key]); return; }
+    if (key === 'i') { event.preventDefault(); nextIncident(); return; }
+    if (/^[1-4]$/.test(key)) {
+      const recruited = state.officers.filter(officer => officer.status !== 'locked');
+      const officer = recruited[Number(key) - 1];
+      if (officer) { event.preventDefault(); selectQuickOfficer(officer.id); }
+      return;
+    }
+    if (event.code === 'Space') {
+      const unsafe = active && ['BUTTON', 'A', 'INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName);
+      if (!unsafe && currentScreen === 'map' && state.gameState === Core.STATES.PLANNING) { event.preventDefault(); advanceWatch(); }
+    }
+  }
+
+  function bindEvents() {
+    document.addEventListener('click', handleClick);
+    document.addEventListener('keydown', handleKeydown);
+    document.addEventListener('dragstart', event => {
+      const button = event.target.closest && event.target.closest('[data-dock-officer]');
+      if (button) beginNativeDrag(event, button);
+    });
+    document.addEventListener('dragend', endNativeDrag);
+    $('mapNodes').addEventListener('dragover', event => { if (event.target.closest('[data-sector-node]')) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; } });
+    $('mapNodes').addEventListener('drop', event => {
+      const node = event.target.closest('[data-sector-node]');
+      if (!node) return;
+      event.preventDefault();
+      const id = event.dataTransfer.getData('text/plain');
+      endNativeDrag();
+      openNode(node.dataset.sectorNode, id);
+    });
+    document.addEventListener('pointerdown', event => {
+      Audio.init();
+      const button = event.target.closest && event.target.closest('[data-dock-officer]');
+      if (button) beginTouchDrag(event, button);
+    }, { passive: true });
+    document.addEventListener('pointermove', moveTouchDrag, { passive: false });
+    document.addEventListener('pointerup', endTouchDrag, { passive: true });
+    document.addEventListener('pointercancel', cancelTouchDrag, { passive: true });
+    $('incidentClose').addEventListener('click', () => closeDialog($('incidentSheet')));
+    $('officerClose').addEventListener('click', () => closeDialog($('officerSheet')));
+    $('incidentSheetBody').addEventListener('change', event => {
+      if (event.target.matches('[data-doctrine]')) { const doctrineId = event.target.dataset.doctrine; activeDoctrine = doctrineId; Audio.playClick(); renderIncidentSheet(); root.setTimeout(() => document.querySelector(`[data-doctrine="${doctrineId}"]`)?.focus(), 0); }
+    });
+    $('newCampaignBtn').addEventListener('click', startCampaign);
+    $('continueBtn').addEventListener('click', continueCampaign);
+    $('endDayBtn').addEventListener('click', advanceWatch);
+    $('nextIncidentBtn').addEventListener('click', nextIncident);
+    $('mapWeatherBtn').addEventListener('click', cycleWeather);
+    $('ledgerInfoBtn').addEventListener('click', showLedgerDetails);
+    $('exportBtn').addEventListener('click', exportSave);
+    $('helpBtn').addEventListener('click', () => openDialog($('helpModal'), '.modal-close'));
+    $('muteBtn').addEventListener('click', () => {
+      settings.muted = Audio.toggleMute();
+      storeJSON(STORAGE.settings, settings);
+      applySettings();
+      if (!settings.muted) Audio.playClick();
+    });
+    $('calmBtn').addEventListener('click', () => {
+      if (osReduced) { settings.reduced = true; applySettings(); toast('Reduced Stimulation follows your device setting.'); return; }
+      settings.reduced = !settings.reduced;
+      storeJSON(STORAGE.settings, settings);
+      applySettings();
+      toast(settings.reduced ? 'Reduced Stimulation enabled.' : 'Full motion restored.');
+    });
+    $('volumeSlider').addEventListener('input', event => {
+      settings.volume = Audio.setVolume(event.target.value);
+      storeJSON(STORAGE.settings, settings);
+    });
+  }
+
+  function initialise() {
+    const saved = Core.migrateState(loadJSON(STORAGE.campaign, null));
+    state = saved ? Core.copy(saved) : null;
+    weatherFx = new Visuals.WeatherFX($('weatherCanvas'));
+    document.querySelectorAll('.sheet,.modal-layer').forEach(element => { element.inert = true; });
+    Audio.setVolume(settings.volume);
+    if (settings.muted !== Audio.isMuted) Audio.toggleMute();
+    bindEvents();
+    applySettings();
+    $('continueBtn').hidden = !state;
+    if (state) {
+      $('seedInput').value = state.seedLabel || 'SUNSPIRE';
+      const difficulty = document.querySelector(`input[name="difficulty"][value="${state.difficulty}"]`);
+      if (difficulty) difficulty.checked = true;
+      finaliseCampaign();
+      renderAll();
+    }
+    showIntro();
+    if (!root.CBFW_STANDALONE && 'serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
+  initialise();
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<!-- MBM-INLINE-EXIT:BEGIN generated by tools/render_inline_exit.py, do not edit by hand -->
+<script>(function(){"use strict";
+try{
+if(window.__mbmExit)return;window.__mbmExit=1;
+var HOMES={"pupils":{"r":"/for/pupils/","l":"Pupils & learners"},"teachers":{"r":"/for/teachers/","l":"Teachers & education staff"},"parents":{"r":"/for/parents-carers/","l":"Parents & carers"},"schools":{"r":"/for/schools-semh/","l":"Schools & specialist settings"},"trusts":{"r":"/for/trusts/","l":"Academy trusts & education groups"},"councils":{"r":"/for/councils-organisations/","l":"Local authorities & education partners"},"partners":{"r":"/for/partners/","l":"Education organisations & service providers"},"main":{"r":"/main/","l":"Main homepage"}};
+var KEY="mbm_audience_view";
+function lsGet(k){try{var v=localStorage.getItem(k);return v===null?"":v;}catch(e){return "";}}
+function el(t,a,h){var e=document.createElement(t);for(var k in a)e.setAttribute(k,a[k]);if(h!==undefined)e.innerHTML=h;return e;}
+function adultOff(){try{var d=document.documentElement,b=document.body;
+return (d&&d.getAttribute("data-mbm-adult-features")==="off")||(b&&b.getAttribute("data-mbm-adult-features")==="off");}catch(e){return false;}}
+function chosen(){var v=lsGet(KEY);
+if(!Object.prototype.hasOwnProperty.call(HOMES,v))return null;
+var h=HOMES[v];
+if(h.r==="/main/"&&adultOff())return null;
+return h;}
+function mount(){
+if(!document.body||document.getElementById("mbmexit-back"))return;
+var st=document.createElement("style");st.id="mbmexit-style";st.textContent="#mbmexit-back,#mbmexit-home{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));z-index:2147483000;width:44px;height:44px;min-width:44px;min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(22,29,61,.72);color:#B9E6CD;border:1.5px solid rgba(185,230,205,.45);font:700 16px/1 Poppins,'Segoe UI',system-ui,sans-serif;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:.55}#mbmexit-back{left:calc(8px + env(safe-area-inset-left,0px))}#mbmexit-home{left:calc(58px + env(safe-area-inset-left,0px))}#mbmexit-back:hover,#mbmexit-home:hover{opacity:1;border-color:#B9E6CD}#mbmexit-back:focus-visible,#mbmexit-home:focus-visible{opacity:1;outline:3px solid #F2A24A;outline-offset:2px;border-color:#B9E6CD}@media print{#mbmexit-back,#mbmexit-home{display:none!important}}";
+(document.head||document.documentElement).appendChild(st);
+var back=el("a",{id:"mbmexit-back",href:"/games/","aria-label":"Back: Arcade",title:"Back to the Arcade"},"\u2190");
+document.body.appendChild(back);
+var h=chosen();
+if(h){var home=el("a",{id:"mbmexit-home",href:h.r,"aria-label":"Your homepage: "+h.l,title:"Your homepage: "+h.l},"<svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 10.6 12 4.2l8 6.4\"/><path d=\"M6.2 9.6V19.8h11.6V9.6\"/></svg>");
+document.body.appendChild(home);}
+}
+if(document.body)mount();else document.addEventListener("DOMContentLoaded",mount);
+}catch(e){}
+})();</script>
+<!-- MBM-INLINE-EXIT:END -->
+</body>
+</html>

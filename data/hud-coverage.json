@@ -1,9 +1,10 @@
 {
- "_why": "Which of the estate's root-level games can carry /hud.js is not derivable from the games. Ten of the twenty-three ship under a contract their own verifier enforces: a single self-contained HTML file with no external script, no remote subresource, and in two cases a pinned byte ledger or source SHA. Adding <script src=\"/hud.js\"> to one of those is not a mechanical edit that happens to trip a check - it retracts a promise the game makes. So the exclusions are declared here, with the verifier and the gate that would go red, in the same class as gameIdOverrides, canonicalAliases, reclassifyAsGame and chooserLinkText.",
+ "_why": "Which of the estate's root-level games can carry /hud.js is not derivable from the games. Every route below ships under a contract its named verifier enforces: a single self-contained HTML file with no external script, no remote subresource, or a pinned byte/determinism ledger. Adding <script src=\"/hud.js\"> to one of them is not a mechanical edit that happens to trip a check - it retracts a promise the game makes. Membership is therefore declared here and its count is derived at run time.",
  "_measured": "2026-08-10. Each entry was measured, not assumed: the game's verifier was run on the unmodified tree (green), the script line was inserted, and the verifier was run again. Only gates that turned from green to red are listed. Nothing here is a guess about what a verifier might say.",
  "_precedent": "/neonbreach/ carries the script and passes, because tools/verify_neonbreach.js was deliberately amended when it was added: it asserts only-same-origin-src-is-hud, three-script-blocks and third-block-is-hud-loader. That is what admitting the HUD to a single-file game costs - a considered amendment to that game's contract, one game at a time. Doing it for eight more is a product decision about eight games' self-contained promise, and it is not this pass's to take.",
- "_consequence": "A visitor playing one of these eight has the browser Back button and the game's own navigation, and no HUD back control or chosen-homepage control. That is the status quo for all eight, not a regression introduced here.",
+ "_consequence": "The historical consequence was browser Back and nothing else. Every declared route is now obliged to carry the generated inline exit, giving a keyboard- and touch-reachable route home without adding a dependency.",
  "_scope": "THIS LEDGER GOVERNS 23 OF 62, AND NO CHECK IN THIS REPOSITORY CAN SEE THE OTHER 39. The canonical inventory - data/mbm-search-index.json - holds 62 game routes: 23 single-segment routes served from this repository, and 39 under /Lessons/ served from MattRoper1977/Lessons. The split is exact, with no route in neither group. verify_hud_on_games.py asserts that every inventory game is wired or declared and nothing in between; read without this note, that reads estate-wide, and it is not - it is true of the 23. The Lessons 39, and the 3 exclusions among them, are governed by that repository's own data/hud-coverage.json. Neither repository contains the other's files, so neither tool could judge the other half even if it wanted to. The only place a single check could see all 58 is the cross-estate job, which is the one job that checks out both estates and assembles them onto one origin; no such check exists today, and this note is here so the absence is stated rather than inferred from a number that looks complete. COUNTS RE-MEASURED 2026-08-15: the prose above previously read \"19 of 58\", \"nineteen\" and \"Eight\", which had gone stale as games shipped. data/mbm-search-index.json now holds 62 game routes - 23 single-segment served from this repository and 39 under /Lessons/ - and this ledger lists 10 exclusions. verify_hud_on_games.py reports the same split from the index at run time, so the numbers in this prose are the ones that rot; if they disagree with the tool, the tool is right.",
+ "_scopeCurrent": "All counts are derived from the current search inventory and the two repositories' ledgers by the verifiers. Numeric prose above is retained only as history; it is never an expectation.",
  "scriptLine": "<script defer src=\"/hud.js\"></script>",
  "excluded": [
   {
@@ -119,6 +120,24 @@
    "gates": [
     "G1 single file, single script, no dependency"
    ]
+  },
+  {
+   "route": "/titanforge/",
+   "verifier": "tools/titan-crown/verify_launch.mjs",
+   "gates": [
+    "single self-contained HTML file with no external script or remote subresource",
+    "offline boot, 44px tap targets and deterministic arithmetic model"
+   ],
+   "note": "Declared at launch. The game arrives as a self-contained HTML payload; adding /hud.js would retract that contract. Its generated inline exit preserves the way home without a runtime dependency."
+  },
+  {
+   "route": "/crownbadge/",
+   "verifier": "tools/titan-crown/verify_launch.mjs",
+   "gates": [
+    "CSP-preserved single self-contained HTML file with zero external requests",
+    "seeded FrontierCore determinism and browser-surface contract"
+   ],
+   "note": "Declared at launch. Frontier Watch's CSP, seeded core and zero-request boot are load-bearing; the generated inline exit adds no src and makes no request."
   }
  ],
  "_amendedWhy": "THE LEDGER HAD TWO CATEGORIES AND NEEDED THREE. It measured the games it DECLINED to wire and listed them under `excluded`. It did not check whether any of the ten it DID wire carried the same single-file contract. apexgolf did: verify_apexgolf.js G17 asserted `no <script src> at all`, so the Stage 2B line broke it on 10 August 2026 and it stayed red for fifteen days - invisible, because a `grep | wc -l` step under `pipefail` in apexgolf-verify.yml died before the verifier ever ran, and the workflow is pull_request-only and filtered. Two faults, one day, and the noisy one hid the real one. Found by Order T's estate census, 25 August 2026. This list is the third category: wired, contract retained, verifier amended to say so.",
