@@ -34,31 +34,17 @@ function check(ok, label, detail = '') {
   return ok;
 }
 
-function replaceOnce(source, before, after, label) {
-  const count = source.split(before).length - 1;
-  if (count !== 1) throw new Error(`${label}: expected one source match, found ${count}`);
-  return source.replace(before, after);
-}
-
-function preFoldSource(source, brokenControl = false) {
-  let out = source;
-  out = replaceOnce(out,
-    '.map-card .frontier-svg{min-width:0;width:100%;left:0;transform:none}',
-    '.map-card .frontier-svg{min-width:720px;width:720px;left:50%;transform:translateX(-50%)}',
-    'pre-fold 760 map');
-  out = replaceOnce(out,
-    '.map-nodes{min-width:0;width:100%;left:0;transform:none}',
-    '.map-nodes{min-width:720px;width:720px;left:50%;transform:translateX(-50%)}',
-    'pre-fold 760 nodes');
-  out = replaceOnce(out,
-    '.map-card .frontier-svg,.map-nodes{min-width:0;width:100%}',
-    '.map-card .frontier-svg,.map-nodes{min-width:660px;width:660px}',
-    'pre-fold 430 map');
+function preFoldRuntimeCss(brokenControl = false) {
   const width = brokenControl ? '97%' : '100%';
   const narrowWidth = brokenControl ? '96%' : '100%';
-  const trailing = `\n@media(max-width:760px){.map-card .frontier-svg,.map-nodes{min-width:0;width:${width};left:0;transform:none}}\n` +
-    `@media(max-width:430px){.map-card .frontier-svg,.map-nodes{min-width:0;width:${narrowWidth}}}\n`;
-  return replaceOnce(out, '</style>', `${trailing}</style>`, 'pre-fold trailing patch');
+  return `
+@media(max-width:760px){
+  .map-card .frontier-svg{min-width:720px;width:720px;left:50%;transform:translateX(-50%)}
+  .map-nodes{min-width:720px;width:720px;left:50%;transform:translateX(-50%)}
+}
+@media(max-width:430px){.map-card .frontier-svg,.map-nodes{min-width:660px;width:660px}}
+@media(max-width:760px){.map-card .frontier-svg,.map-nodes{min-width:0;width:${width};left:0;transform:none}}
+@media(max-width:430px){.map-card .frontier-svg,.map-nodes{min-width:0;width:${narrowWidth}}}`;
 }
 
 const titanSource = fs.readFileSync(path.join(ROOT, 'titanforge/index.html'), 'utf8');
@@ -75,8 +61,6 @@ function transformed(pathname, source) {
     return source.replace(SPLASH, '').replaceAll('touch-action:manipulation', 'touch-action:auto');
   }
   if (pathname.startsWith('/__corrupt__/')) return corruptTitan.replace(SPLASH, '');
-  if (pathname.startsWith('/__prefold_control__/')) return preFoldSource(source, true).replace(SPLASH, '');
-  if (pathname.startsWith('/__prefold__/')) return preFoldSource(source, false).replace(SPLASH, '');
   return source;
 }
 
@@ -84,7 +68,7 @@ function createServer() {
   return new Promise((resolve, reject) => {
     const instance = http.createServer((req, res) => {
       const raw = decodeURIComponent((req.url || '/').split('?')[0]);
-      const prefixes = ['/__game__', '/__no_touch__', '/__corrupt__', '/__prefold__', '/__prefold_control__'];
+      const prefixes = ['/__game__', '/__no_touch__', '/__corrupt__'];
       let pathname = raw;
       for (const prefix of prefixes) if (pathname.startsWith(`${prefix}/`)) pathname = pathname.slice(prefix.length);
       let file = path.resolve(ROOT, pathname.replace(/^\/+/, ''));
@@ -414,15 +398,13 @@ async function runCrown(browser, origin) {
   for (const width of [390, 430, 760, 980]) {
     const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: 'reduce' });
     await context.addInitScript(() => localStorage.setItem('mbm_crownbadge_settings_v1', JSON.stringify({ muted: true, volume: 0, reduced: true, weather: 'clear' })));
-    const after = await context.newPage();
-    const before = await context.newPage();
-    await after.goto(`${origin}/__game__/crownbadge/`, { waitUntil: 'domcontentloaded' });
-    await before.goto(`${origin}/__prefold__/crownbadge/`, { waitUntil: 'domcontentloaded' });
-    await startCrown(after, `FOLD-${width}`); await startCrown(before, `FOLD-${width}`);
-    await Promise.all([after.addStyleTag({ content: MAP_COMPARE_FREEZE }), before.addStyleTag({ content: MAP_COMPARE_FREEZE })]);
-    await after.waitForTimeout(60);
-    const a = await stableElementScreenshot(after, '#mapCard', `folded map ${width}px`);
-    const b = await stableElementScreenshot(before, '#mapCard', `pre-fold map ${width}px`);
+    const page = await context.newPage();
+    await page.goto(`${origin}/__game__/crownbadge/`, { waitUntil: 'domcontentloaded' });
+    await startCrown(page, `FOLD-${width}`);
+    await page.addStyleTag({ content: MAP_COMPARE_FREEZE });
+    const a = await stableElementScreenshot(page, '#mapCard', `folded map ${width}px`);
+    await page.addStyleTag({ content: preFoldRuntimeCss(false) });
+    const b = await stableElementScreenshot(page, '#mapCard', `pre-fold map ${width}px`);
     hashes[width] = { after: sha(a), before: sha(b) };
     check(Buffer.compare(a, b) === 0, `Crown map fold ${width}px: rendered pixels are byte-identical`, hashes[width].after.slice(0, 16));
     await context.close();
@@ -431,14 +413,13 @@ async function runCrown(browser, origin) {
 
   const controlContext = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
   await controlContext.addInitScript(() => localStorage.setItem('mbm_crownbadge_settings_v1', JSON.stringify({ muted: true, volume: 0, reduced: true, weather: 'clear' })));
-  const good = await controlContext.newPage(); const bad = await controlContext.newPage();
-  await good.goto(`${origin}/__game__/crownbadge/`, { waitUntil: 'domcontentloaded' });
-  await bad.goto(`${origin}/__prefold_control__/crownbadge/`, { waitUntil: 'domcontentloaded' });
-  await startCrown(good, 'FOLD-CONTROL'); await startCrown(bad, 'FOLD-CONTROL');
-  await Promise.all([good.addStyleTag({ content: MAP_COMPARE_FREEZE }), bad.addStyleTag({ content: MAP_COMPARE_FREEZE })]);
-  await good.waitForTimeout(60);
-  const goodPixels = await stableElementScreenshot(good, '#mapCard', 'fold control good map');
-  const badPixels = await stableElementScreenshot(bad, '#mapCard', 'fold control mutated map');
+  const control = await controlContext.newPage();
+  await control.goto(`${origin}/__game__/crownbadge/`, { waitUntil: 'domcontentloaded' });
+  await startCrown(control, 'FOLD-CONTROL');
+  await control.addStyleTag({ content: MAP_COMPARE_FREEZE });
+  const goodPixels = await stableElementScreenshot(control, '#mapCard', 'fold control good map');
+  await control.addStyleTag({ content: preFoldRuntimeCss(true) });
+  const badPixels = await stableElementScreenshot(control, '#mapCard', 'fold control mutated map');
   check(Buffer.compare(goodPixels, badPixels) !== 0, 'CONTROL: changing the restored trailing map width makes pixel identity red');
   await controlContext.close();
 }
