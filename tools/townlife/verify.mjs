@@ -195,6 +195,7 @@ async function verifyGame(browser, origin, engine) {
     }
 
     const tabsToStart = await focusByTab(page, '#startBtn', 30, 'Enter Town');
+    const tabsToWelcomeExit = await focusByTab(page, '#mbmexit-back', 30, 'way-out while welcome dialog is open');
     await page.locator('#profileName').fill(`Codex-${engine}`);
     const tapPoint = await unobstructedAtCentre(page, '#startBtn', 'Enter Town touch target');
     await page.touchscreen.tap(tapPoint.x, tapPoint.y);
@@ -229,7 +230,7 @@ async function verifyGame(browser, origin, engine) {
     assert.deepEqual(pageErrors, [], `page errors observed: ${JSON.stringify(pageErrors)}`);
     assert.deepEqual(consoleErrors, [], `console errors observed: ${JSON.stringify(consoleErrors)}`);
 
-    console.log(`${engine}: GAME GREEN — boot/input/save/restore; h1 top ${headingBox.y.toFixed(2)}; status top ${statusBox.y.toFixed(2)}; start ${startBox.width.toFixed(1)}×${startBox.height.toFixed(1)}; Tab start ${tabsToStart}; Tab exit ${tabsToExit}; 0 external requests; 0 console errors`);
+    console.log(`${engine}: GAME GREEN — boot/input/save/restore; h1 top ${headingBox.y.toFixed(2)}; status top ${statusBox.y.toFixed(2)}; start ${startBox.width.toFixed(1)}×${startBox.height.toFixed(1)}; Tab start ${tabsToStart}; Tab exit with welcome ${tabsToWelcomeExit}; Tab exit after boot ${tabsToExit}; 0 external requests; 0 console errors`);
   } finally {
     await context.close();
   }
@@ -271,7 +272,7 @@ async function verifyShelves(browser, origin, engine, expectedGames) {
     assert.ok(imageStats.naturalWidth > 0 && imageStats.naturalHeight > 0, 'Town Life card SVG did not decode');
     assert.ok(imageStats.colours >= 6 && imageStats.opaque > 100,
       `Town Life card rendered like a blank rectangle: ${JSON.stringify(imageStats)}`);
-    const arcadeCards = await page.locator('a.gcard').count();
+    const arcadeCards = await page.locator('a.pick, a.gcard').count();
     assert.equal(arcadeCards, expectedGames + 8, `arcade card count is not N + 8 (${expectedGames + 8})`);
 
     await page.goto(`${origin}/for/pupils/`, { waitUntil: 'load' });
