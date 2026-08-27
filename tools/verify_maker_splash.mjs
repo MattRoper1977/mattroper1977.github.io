@@ -5,6 +5,7 @@
  *   --mode=controls  SS1–SS8 plus the four dismissal paths and a removal control
  *   --mode=census    classify the canonical inventory before application
  *   --mode=verify    judge every applied route after application
+ *   --mode=lesson-timing prove shown/suppressed slide timing and cross-route suppression
  *
  * The runner is intentionally serial.  Every route gets a fresh browser
  * context (RL14), and both viewports are measured rather than inferred.
@@ -24,6 +25,8 @@ const arg = name => {
   return hit ? hit.slice(name.length + 3) : null;
 };
 const MODE = arg('mode') || 'controls';
+const SCOPE = arg('scope') || 'both';
+if (!['both', 'site', 'lessons'].includes(SCOPE)) throw new Error(`unknown scope: ${SCOPE}`);
 const SITE = path.resolve(arg('site-root') || DEFAULT_SITE);
 const LESSONS = path.resolve(arg('lessons-root') || path.join(SITE, '_lessons'));
 const REPORT = path.resolve(arg('report') || path.join(SITE, 'artifacts', `maker-splash-${MODE}.json`));
@@ -118,7 +121,8 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
     if (!url.startsWith(origin) && !url.startsWith('data:') && !url.startsWith('blob:')) external.push(url);
   });
   await page.addInitScript(() => {
-    window.__makerProbe = { seen: false, first: null, last: null, focus: null, geometry: null };
+    window.__makerProbe = { seen: false, first: null, last: null, focus: null, geometry: null, contentFirst: null, contentGeometry: null, domContentLoaded: null };
+    document.addEventListener('DOMContentLoaded', () => { window.__makerProbe.domContentLoaded = performance.now(); }, { once: true });
     addEventListener('focusin', event => {
       const p = window.__makerProbe;
       if (!p.focus && event.target && !event.target.closest?.('[data-mbm-maker-splash]')) p.focus = { t: performance.now(), id: event.target.id || '', tag: event.target.tagName || '' };
@@ -148,6 +152,18 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
         if (/made\s+by\s+matt/i.test(label) && rect.width > 0 && rect.height > 0 && css.display !== 'none' && css.visibility !== 'hidden') {
           p.seen = true; if (p.first === null) p.first = performance.now(); p.last = performance.now();
           p.geometry = { width: rect.width, height: rect.height, role: el.getAttribute('role'), modal: el.getAttribute('aria-modal'), z: css.zIndex };
+        }
+      }
+      if (p.contentFirst === null) {
+        const candidates = document.querySelectorAll('[data-slide].active,.slide.active,.slide.current,.slide:not([hidden]),main,[role="main"],canvas,h1');
+        for (const candidate of candidates) {
+          if (candidate.closest?.('[data-mbm-maker-splash]')) continue;
+          const rect = candidate.getBoundingClientRect(), css = getComputedStyle(candidate);
+          if (rect.width > 0 && rect.height > 0 && css.display !== 'none' && css.visibility !== 'hidden') {
+            p.contentFirst = performance.now();
+            p.contentGeometry = { x: rect.x, y: rect.y, width: rect.width, height: rect.height, id: candidate.id || '', tag: candidate.tagName };
+            break;
+          }
         }
       }
       requestAnimationFrame(sample);
@@ -276,8 +292,9 @@ async function census(browser, origin) {
 }
 
 async function controls(browser, origin) {
-  const siteRoute = applied(SITE)[0];
-  const lessonRoute = applied(LESSONS)[0];
+  const siteRoutes = applied(SITE);
+  const siteRoute = SCOPE === 'lessons' ? applied(LESSONS)[1] : siteRoutes[0];
+  const lessonRoute = SCOPE === 'site' ? siteRoutes[1] : applied(LESSONS)[0];
   const assertions = [];
   const check = (condition, label, detail = '') => assertions.push({ pass: !!condition, label, detail });
   let ctx = await newContext(browser);
@@ -295,7 +312,8 @@ async function controls(browser, origin) {
   check(first.local && Math.abs(Number(first.local) - first.wall) <= 5000, 'SS1 timestamp written within five seconds', first.local);
   const addedKeys = (first.keys || []).filter(key => !(forceBaseline.keys || []).includes(key));
   check(addedKeys.length === 1 && addedKeys[0] === KEY, 'SS1 splash adds exactly the declared storage key', JSON.stringify({ force: forceBaseline.keys, shown: first.keys, added: addedKeys }));
-  check(!second.probe?.seen && second.local === firstKey, 'SS2 second cross-repository route suppresses and leaves key unchanged');
+  check(!second.probe?.seen && second.local === firstKey,
+    SCOPE === 'both' ? 'SS2 second cross-repository route suppresses and leaves key unchanged' : 'SS2 second declared route suppresses and leaves key unchanged');
   check(JSON.stringify(second.primaryRect) === JSON.stringify(skippedControl.primaryRect), 'SS5 suppressed and skip-control first geometry match');
   check(second.active?.id === second.primaryRect?.id && second.active?.tag === second.primaryRect?.tag && skippedControl.active?.id === skippedControl.primaryRect?.id && skippedControl.active?.tag === skippedControl.primaryRect?.tag, 'SS6 suppressed and skip-control focus land on the primary control', JSON.stringify({ suppressed: second.active, skip: skippedControl.active }));
   for (const [name, seed] of [['expired', Date.now() - 86400001], ['future', Date.now() + 604800000], ['banana', 'banana']]) {
@@ -307,10 +325,16 @@ async function controls(browser, origin) {
   ctx = await newContext(browser, { throwWrite: true }); const failure = await pageProbe(ctx, origin, siteRoute, { waitAbsent: 700 }); await ctx.close();
   check(failure.probe?.seen && failure.session && failure.errors.length === 0, 'SS4 local write failure shows, boots and falls back to session', JSON.stringify({ session: failure.session, errors: failure.errors }));
   const fixed = Date.now() - 1000;
-  ctx = await newContext(browser, { seed: fixed }); const forced = await pageProbe(ctx, origin, `${siteRoute}?splash=force`, { waitAbsent: 700 }); await ctx.close();
+  ctx = await newContext(browser, { seed: fixed }); const forced = await pageProbe(ctx, origin, `${siteRoute}?splash=force`, { action: 'key', waitAbsent: 700 }); await ctx.close();
   check(forced.probe?.seen && forced.local === String(fixed), 'SS7 force shows without writing');
   ctx = await newContext(browser); const skipped = await pageProbe(ctx, origin, `${siteRoute}?splash=skip`, { waitAbsent: 700 }); await ctx.close();
   check(!skipped.probe?.seen && skipped.local === null, 'SS7 skip suppresses without writing');
+  check(JSON.stringify(forced.probe?.contentGeometry) === JSON.stringify(skippedControl.probe?.contentGeometry),
+    'SS5 shown and suppressed first-paint content geometry match', JSON.stringify({ shown: forced.probe?.contentGeometry, suppressed: skippedControl.probe?.contentGeometry }));
+  check(forced.probe?.focus?.t != null && skippedControl.probe?.focus?.t != null,
+    'time-to-interactive is measured with the splash shown and suppressed', JSON.stringify({ shownMs: forced.probe?.focus?.t, suppressedMs: skippedControl.probe?.focus?.t }));
+  check(forced.probe?.focus?.t <= (forced.probe?.last ?? 0) + 350,
+    'shown time-to-interactive does not extend beyond the visible splash', JSON.stringify({ interactiveMs: forced.probe?.focus?.t, splashLastMs: forced.probe?.last }));
   ctx = await newContext(browser, { reduced: true }); const reduced = await pageProbe(ctx, origin, siteRoute, { action: 'key', waitAbsent: 700 }); await ctx.close();
   check(reduced.probe?.seen && reduced.probe.last <= 500, 'SS8 reduced motion clears within 500 ms', String(reduced.probe?.last));
   check(reduced.local && Math.abs(Number(reduced.local) - reduced.wall) <= 5000, 'SS8 reduced motion still writes the daily timestamp', reduced.local);
@@ -341,8 +365,26 @@ async function controls(browser, origin) {
   return { siteRoute, lessonRoute, assertions, pass: assertions.every(a => a.pass) };
 }
 
+function addedFrom(candidate = [], baseline = []) {
+  const remaining = [...baseline];
+  return candidate.filter(value => {
+    const at = remaining.indexOf(value);
+    if (at < 0) return true;
+    remaining.splice(at, 1);
+    return false;
+  });
+}
+
+function sameGeometry(a, b) {
+  if (!a || !b || a.id !== b.id || a.tag !== b.tag) return false;
+  return ['x', 'y', 'width', 'height'].every(key => Math.abs(a[key] - b[key]) <= 1);
+}
+
 async function verify(browser, origin) {
-  const routes = [...applied(SITE), ...applied(LESSONS)];
+  const routes = [
+    ...(SCOPE === 'lessons' ? [] : applied(SITE)),
+    ...(SCOPE === 'site' ? [] : applied(LESSONS)),
+  ];
   const rows = [];
   for (let i = 0; i < routes.length; i += 1) {
     const route = routes[i], observations = [];
@@ -350,14 +392,84 @@ async function verify(browser, origin) {
       const ctx = await newContext(browser, { viewport });
       const result = await pageProbe(ctx, origin, `${route}${route.includes('?') ? '&' : '?'}splash=force`, { action: 'key', waitAbsent: 700 });
       await ctx.close();
+      const skipContext = await newContext(browser, { viewport });
+      const skipped = await pageProbe(skipContext, origin, `${route}${route.includes('?') ? '&' : '?'}splash=skip`, { waitAbsent: 700 });
+      await skipContext.close();
       const duration = result.probe?.first == null ? null : result.probe.last - result.probe.first;
-      observations.push({ viewport, seen: !!result.probe?.seen, duration, active: result.active, overflow: result.overflow, errors: result.errors, external: result.external });
+      const addedErrors = addedFrom(result.errors, skipped.errors);
+      const addedExternal = addedFrom(result.external, skipped.external);
+      observations.push({ viewport, seen: !!result.probe?.seen, duration, active: result.active, primary: result.primaryRect,
+        suppressedSeen: !!skipped.probe?.seen, suppressedActive: skipped.active, suppressedPrimary: skipped.primaryRect,
+        firstPaintGeometryMatch: sameGeometry(result.probe?.contentGeometry, skipped.probe?.contentGeometry),
+        overflowDelta: result.overflow - skipped.overflow, addedErrors, addedExternal,
+        baselineErrors: skipped.errors, baselineExternal: skipped.external });
     }
-    const pass = observations.every(o => o.seen && o.duration >= 280 && o.overflow <= 0 && o.errors.length === 0 && o.external.length === 0 && ['A', 'BUTTON', 'MAIN', 'H1'].includes(o.active.tag));
+    const pass = observations.every(o => o.seen && o.duration >= 280 && !o.suppressedSeen && o.firstPaintGeometryMatch && o.overflowDelta <= 0 &&
+      o.addedErrors.length === 0 && o.addedExternal.length === 0 && o.active.id === o.primary?.id && o.active.tag === o.primary?.tag &&
+      o.suppressedActive.id === o.suppressedPrimary?.id && o.suppressedActive.tag === o.suppressedPrimary?.tag);
     rows.push({ route, repository: routeRepo(route), class: pass ? 'SPLASH OK' : 'SPLASH BROKEN', observations });
     if ((i + 1) % 25 === 0) console.log(`verify ${i + 1}/${routes.length}`);
   }
   return rows;
+}
+
+function distribution(values) {
+  const clean = values.filter(Number.isFinite).sort((a, b) => a - b);
+  if (!clean.length) return { count: 0, median: null, min: null, max: null, spread: null };
+  const middle = Math.floor(clean.length / 2);
+  const median = clean.length % 2 ? clean[middle] : (clean[middle - 1] + clean[middle]) / 2;
+  return { count: clean.length, median, min: clean[0], max: clean.at(-1), spread: clean.at(-1) - clean[0] };
+}
+
+async function lessonTiming(browser, origin) {
+  const indexPath = path.join(SITE, 'data', 'mbm-search-index.json');
+  if (!fs.existsSync(indexPath)) throw new Error(`lesson timing requires the canonical inventory at ${indexPath}`);
+  const declared = new Set(applied(LESSONS));
+  const routes = (readJson(indexPath).entries || [])
+    .filter(entry => entry.category === 'lesson' && entry.route.startsWith('/Lessons/') && declared.has(entry.route))
+    .map(entry => entry.route);
+  if (!routes.length) throw new Error('lesson timing found no declared lesson routes');
+  const rows = [];
+  for (let i = 0; i < routes.length; i += 1) {
+    const route = routes[i], nextRoute = routes[(i + 1) % routes.length];
+    const context = await newContext(browser, { viewport: VIEWPORTS[0] });
+    const shown = await pageProbe(context, origin, route, { action: 'key', waitAbsent: 700 });
+    const written = shown.local;
+    const second = await pageProbe(context, origin, nextRoute, { waitAbsent: 700 });
+    await context.close();
+    const skipContext = await newContext(browser, { viewport: VIEWPORTS[0] });
+    const skipped = await pageProbe(skipContext, origin, `${route}?splash=skip`, { waitAbsent: 700 });
+    await skipContext.close();
+    const duration = shown.probe?.first == null ? null : shown.probe.last - shown.probe.first;
+    const shownSlide = shown.probe?.contentFirst;
+    const suppressedSlide = skipped.probe?.contentFirst;
+    const delay = Number.isFinite(shownSlide) && Number.isFinite(suppressedSlide) ? shownSlide - suppressedSlide : null;
+    const pass = !!shown.probe?.seen && duration >= 280 && Number.isFinite(shownSlide) && shownSlide <= shown.probe.last + 250 &&
+      !second.probe?.seen && second.local === written && !skipped.probe?.seen && skipped.local === null;
+    rows.push({ route, secondRoute: nextRoute, class: pass ? 'LESSON TIMING OK' : 'LESSON TIMING BROKEN',
+      shown: { slideMs: shownSlide, interactiveMs: shown.probe?.focus?.t ?? null, splashDurationMs: duration, splashLastMs: shown.probe?.last ?? null },
+      suppressed: { slideMs: suppressedSlide, interactiveMs: skipped.probe?.focus?.t ?? null },
+      delayMs: delay, secondRouteSuppressed: !second.probe?.seen, keyUnchanged: second.local === written });
+    if ((i + 1) % 25 === 0) console.log(`lesson timing ${i + 1}/${routes.length}`);
+  }
+  const controlServer = await makeServer({ stripRoute: routes[0] });
+  const controlOrigin = `http://127.0.0.1:${controlServer.address().port}`;
+  const controlContext = await newContext(browser, { viewport: VIEWPORTS[0] });
+  const removed = await pageProbe(controlContext, controlOrigin, `${routes[0]}?splash=force`, { waitAbsent: 700 });
+  await controlContext.close();
+  await new Promise(resolve => controlServer.close(resolve));
+  return {
+    rows,
+    removalControlRed: !removed.probe?.seen,
+    distributions: {
+      shownSlideMs: distribution(rows.map(row => row.shown.slideMs)),
+      suppressedSlideMs: distribution(rows.map(row => row.suppressed.slideMs)),
+      shownInteractiveMs: distribution(rows.map(row => row.shown.interactiveMs)),
+      suppressedInteractiveMs: distribution(rows.map(row => row.suppressed.interactiveMs)),
+      splashDurationMs: distribution(rows.map(row => row.shown.splashDurationMs)),
+      slideDelayMs: distribution(rows.map(row => row.delayMs)),
+    },
+  };
 }
 
 fs.mkdirSync(path.dirname(REPORT), { recursive: true });
@@ -369,7 +481,8 @@ try {
   browser = await chromium.launch({ headless: true });
   if (MODE === 'census') payload = { mode: MODE, site: SITE, lessons: LESSONS, rows: await census(browser, origin) };
   else if (MODE === 'controls') payload = { mode: MODE, site: SITE, lessons: LESSONS, controls: await controls(browser, origin) };
-  else if (MODE === 'verify') payload = { mode: MODE, site: SITE, lessons: LESSONS, rows: await verify(browser, origin) };
+  else if (MODE === 'verify') payload = { mode: MODE, scope: SCOPE, site: SITE, lessons: LESSONS, rows: await verify(browser, origin) };
+  else if (MODE === 'lesson-timing') payload = { mode: MODE, site: SITE, lessons: LESSONS, ...(await lessonTiming(browser, origin)) };
   else throw new Error(`unknown mode: ${MODE}`);
 } finally {
   if (browser) await browser.close();
@@ -386,6 +499,11 @@ if (MODE === 'controls') {
   for (const assertion of payload.controls.assertions) console.log(`${assertion.pass ? 'PASS' : 'FAIL'} ${assertion.label}${assertion.detail ? ` · ${assertion.detail}` : ''}`);
   console.log(`controls: ${payload.controls.assertions.filter(a => a.pass).length}/${payload.controls.assertions.length}`);
   process.exit(payload.controls.pass ? 0 : 1);
+}
+if (MODE === 'lesson-timing') {
+  const broken = payload.rows.filter(row => row.class !== 'LESSON TIMING OK');
+  console.log(JSON.stringify({ mode: MODE, routes: payload.rows.length, broken: broken.length, removalControlRed: payload.removalControlRed, distributions: payload.distributions, report: REPORT }, null, 2));
+  process.exit(broken.length || !payload.removalControlRed ? 1 : 0);
 }
 const rows = payload.rows;
 const totals = Object.fromEntries([...new Set(rows.map(row => row.class))].sort().map(key => [key, rows.filter(row => row.class === key).length]));

@@ -140,14 +140,14 @@ def ledger(root: Path) -> tuple[list[Entry], list[Entry], list[Entry]]:
     return applied, declined, variants
 
 
-def route_path(root: Path, route: str) -> Path:
+def route_path(root: Path, route: str, *, require_html: bool = True) -> Path:
     if not route.startswith("/") or route.startswith("//"):
         raise ValueError(f"invalid local route {route!r}")
     rel = route[len("/Lessons/") :] if route.startswith("/Lessons/") else route.lstrip("/")
     path = root / rel
     if route.endswith("/"):
         path = path / "index.html"
-    if path.suffix.lower() != ".html":
+    if require_html and path.suffix.lower() != ".html":
         raise ValueError(f"{route}: maker splash targets must resolve to HTML")
     resolved_root = root.resolve()
     resolved = path.resolve()
@@ -280,14 +280,34 @@ def main() -> int:
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             print(f"ERROR {exc}", file=sys.stderr)
             return 2
-        for entry in declined + variants:
+        for entry in declined:
+            try:
+                path = route_path(root, entry.route, require_html=False)
+            except ValueError as exc:
+                print(f"ERROR {exc}", file=sys.stderr)
+                return 2
+            has_region = path.suffix.lower() == ".html" and bool(
+                REGION_RE.search(path.read_text(encoding="utf-8"))
+            )
+            if has_region and args.write:
+                source = path.read_text(encoding="utf-8")
+                path.write_text(REGION_RE.sub("", source, count=1), encoding="utf-8")
+                has_region = False
+                changed += 1
+                status = "reverted"
+            else:
+                status = "drift" if has_region else "declined"
+            print(f"  {status:9} {entry.route}  {path.stat().st_size} B")
+            if has_region:
+                bad += 1
+        for entry in variants:
             try:
                 path = route_path(root, entry.route)
             except ValueError as exc:
                 print(f"ERROR {exc}", file=sys.stderr)
                 return 2
             has_region = bool(REGION_RE.search(path.read_text(encoding="utf-8")))
-            status = "drift" if has_region else ("declined" if entry in declined else "variant")
+            status = "drift" if has_region else "variant"
             print(f"  {status:9} {entry.route}  {path.stat().st_size} B")
             if has_region:
                 bad += 1
