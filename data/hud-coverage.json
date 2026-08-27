@@ -138,6 +138,16 @@
     "seeded FrontierCore determinism and browser-surface contract"
    ],
    "note": "Declared at launch. Frontier Watch's CSP, seeded core and zero-request boot are load-bearing; the generated inline exit adds no src and makes no request."
+  },
+  {
+   "route": "/townlife/",
+   "verifier": "tools/townlife/verify.mjs",
+   "gates": [
+    "single self-contained HTML file with zero external requests",
+    "visible release status, one semantic title heading and accessible start control",
+    "boot, input and local save/restore in Chromium, Firefox and WebKit"
+   ],
+   "note": "Declared at launch. Town Life is an authored local-first single-file game with no external runtime dependency. The generated inline exit supplies the estate way out without retracting that boundary; the named verifier checks the declaration and the rendered control."
   }
  ],
  "_amendedWhy": "THE LEDGER HAD TWO CATEGORIES AND NEEDED THREE. It measured the games it DECLINED to wire and listed them under `excluded`. It did not check whether any of the ten it DID wire carried the same single-file contract. apexgolf did: verify_apexgolf.js G17 asserted `no <script src> at all`, so the Stage 2B line broke it on 10 August 2026 and it stayed red for fifteen days - invisible, because a `grep | wc -l` step under `pipefail` in apexgolf-verify.yml died before the verifier ever ran, and the workflow is pull_request-only and filtered. Two faults, one day, and the noisy one hid the real one. Found by Order T's estate census, 25 August 2026. This list is the third category: wired, contract retained, verifier amended to say so.",
