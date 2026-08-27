@@ -68,7 +68,7 @@ function applied(root) {
   return list.map(item => typeof item === 'string' ? item : item.route);
 }
 
-function makeServer({ stripRoute = null } = {}) {
+function makeServer({ stripRoute = null, slowReducedRoute = null } = {}) {
   const server = http.createServer((req, res) => {
     let pathname;
     try { pathname = decodeURIComponent(new URL(req.url, 'http://127.0.0.1').pathname); }
@@ -84,8 +84,12 @@ function makeServer({ stripRoute = null } = {}) {
     }
     if (!file) { res.writeHead(404); return res.end('not found'); }
     const type = MIME[path.extname(file).toLowerCase()] || 'application/octet-stream';
-    if (type.startsWith('text/html') && stripRoute === pathname) {
-      const body = fs.readFileSync(file, 'utf8').replace(REGION, '');
+    if (type.startsWith('text/html') && (stripRoute === pathname || slowReducedRoute === pathname)) {
+      let body = fs.readFileSync(file, 'utf8');
+      if (stripRoute === pathname) body = body.replace(REGION, '');
+      if (slowReducedRoute === pathname) body = body
+        .replace('animation-duration:.35s', 'animation-duration:.7s')
+        .replace('reduced?450:2100', 'reduced?700:2100');
       res.writeHead(200, { 'content-type': type, 'cache-control': 'no-store' });
       return res.end(body);
     }
@@ -335,6 +339,7 @@ async function controls(browser, origin) {
   const siteRoutes = applied(SITE);
   const siteRoute = SCOPE === 'lessons' ? applied(LESSONS)[1] : siteRoutes[0];
   const lessonRoute = SCOPE === 'site' ? siteRoutes[1] : applied(LESSONS)[0];
+  const reducedRoute = SCOPE === 'lessons' ? applied(LESSONS).at(-1) : (siteRoutes.find(route => route === '/resources/') || siteRoute);
   const assertions = [];
   const check = (condition, label, detail = '') => assertions.push({ pass: !!condition, label, detail });
   let ctx = await newContext(browser);
@@ -379,9 +384,14 @@ async function controls(browser, origin) {
     'time-to-interactive is measured with the splash shown and suppressed', JSON.stringify({ shownMs: forced.probe?.focus?.t, suppressedMs: skippedControl.probe?.focus?.t }));
   check(forced.probe?.focus?.t <= (forced.probe?.last ?? 0) + 350,
     'shown time-to-interactive does not extend beyond the visible splash', JSON.stringify({ interactiveMs: forced.probe?.focus?.t, splashLastMs: forced.probe?.last }));
-  const reduced = await reducedMotionProbe(browser, origin, siteRoute);
+  const reduced = await reducedMotionProbe(browser, origin, reducedRoute);
   check(reduced.attached && reduced.lastVisible !== null && reduced.lastVisible >= 280 && reduced.cleared !== null && reduced.cleared <= 500 && reduced.final.pointerEvents === 'none', 'SS8 reduced motion paints and clears within 500 ms', JSON.stringify(reduced));
   check(reduced.local && Math.abs(Number(reduced.local) - reduced.wall) <= 5000, 'SS8 reduced motion still writes the daily timestamp', reduced.local);
+  const slowServer = await makeServer({ slowReducedRoute: reducedRoute });
+  const slowOrigin = `http://127.0.0.1:${slowServer.address().port}`;
+  const slowReduced = await reducedMotionProbe(browser, slowOrigin, reducedRoute);
+  await new Promise(resolve => slowServer.close(resolve));
+  check(slowReduced.cleared === null || slowReduced.cleared > 500, 'RL4 reduced-motion slow-animation control turns the clearance predicate red', JSON.stringify(slowReduced));
   for (const viewport of VIEWPORTS) {
     for (const action of ['key', 'pointer', 'auto', 'timeout']) {
       ctx = await newContext(browser, { viewport });
