@@ -763,6 +763,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   const signed = n => `${n >= 0 ? '+' : ''}${n}`;
   const isEnded = () => state && [Core.STATES.VICTORY, Core.STATES.DEFEAT].includes(state.gameState);
 
+  const osReduced = !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
   let state = null;
   let meta = Core.normalizeMeta(loadJSON(STORAGE.meta, {}));
   let scores = normaliseScores(loadJSON(STORAGE.scores, []));
@@ -817,8 +819,6 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
         timestamp: Number(entry.timestamp) || 0
       })).sort((a, b) => b.score - a.score).slice(0, 10);
   }
-
-  const osReduced = !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   function normaliseSettings(value) {
     return {
