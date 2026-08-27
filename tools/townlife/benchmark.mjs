@@ -16,6 +16,9 @@ const WARM_UP_MS = 2500;
 const MEASURE_MS = 5000;
 const ROUNDS = 3;
 const LIVE_ORIGIN = 'https://mattroper1977.github.io';
+// The three newest shipped routes at the 2026-08-27 C1 decision form a fixed
+// historical set. Town Life is the candidate measured against that set, not a
+// claim about whatever routes are newest in the current manifest.
 const NEWEST = ['/titanforge/', '/crownbadge/', '/micro-tinkerer/'];
 const TOWN = '/townlife/';
 const FIRST_CONTROL_BUSY_MS = 68;
