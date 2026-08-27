@@ -111,6 +111,8 @@ jobs:
             echo 'positive control unexpectedly passed'; exit 1
           fi
           grep -F 'missing   /townlife/' artifacts/maker-splash/generator-positive.log
+          python3 "$control/site/tools/render_maker_splash.py" --root "$control/site" --write >/dev/null
+          python3 "$control/site/tools/render_maker_splash.py" --root "$control/site" --check >/dev/null
           echo "$control" > artifacts/maker-splash/control-root.txt
           echo "CONTROL=$control" >> "$GITHUB_ENV"
 
