@@ -153,7 +153,7 @@ async function observeBrowser() {
       `live preview sentence is outside the initial 390×844 viewport: ${JSON.stringify(statusBox)}`);
 
     const games = await openShelf(page, '/games/', 'a.gcard[href="/townlife/"]', 'a.gcard[href="/townlife/"]');
-    const gamesCount = await page.locator('a.gcard').count();
+    const gamesCount = await page.locator('a.pick, a.gcard').count();
     const pupils = await openShelf(page, '/for/pupils/', 'a[href="/townlife/"]', 'article.mf-pupil-game');
     const pupilsCount = await page.locator('article.mf-pupil-game').count();
 
