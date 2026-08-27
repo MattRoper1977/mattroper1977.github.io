@@ -23,6 +23,7 @@ const MIME = {
   '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml', '.webp': 'image/webp', '.png': 'image/png',
 };
+const MAP_COMPARE_FREEZE = '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}';
 
 let pass = 0;
 const failures = [];
@@ -408,6 +409,8 @@ async function runCrown(browser, origin) {
     await after.goto(`${origin}/__game__/crownbadge/`, { waitUntil: 'domcontentloaded' });
     await before.goto(`${origin}/__prefold__/crownbadge/`, { waitUntil: 'domcontentloaded' });
     await startCrown(after, `FOLD-${width}`); await startCrown(before, `FOLD-${width}`);
+    await Promise.all([after.addStyleTag({ content: MAP_COMPARE_FREEZE }), before.addStyleTag({ content: MAP_COMPARE_FREEZE })]);
+    await after.waitForTimeout(60);
     const a = await after.locator('#mapCard').screenshot();
     const b = await before.locator('#mapCard').screenshot();
     hashes[width] = { after: sha(a), before: sha(b) };
@@ -422,6 +425,8 @@ async function runCrown(browser, origin) {
   await good.goto(`${origin}/__game__/crownbadge/`, { waitUntil: 'domcontentloaded' });
   await bad.goto(`${origin}/__prefold_control__/crownbadge/`, { waitUntil: 'domcontentloaded' });
   await startCrown(good, 'FOLD-CONTROL'); await startCrown(bad, 'FOLD-CONTROL');
+  await Promise.all([good.addStyleTag({ content: MAP_COMPARE_FREEZE }), bad.addStyleTag({ content: MAP_COMPARE_FREEZE })]);
+  await good.waitForTimeout(60);
   const goodPixels = await good.locator('#mapCard').screenshot(); const badPixels = await bad.locator('#mapCard').screenshot();
   check(Buffer.compare(goodPixels, badPixels) !== 0, 'CONTROL: changing the restored trailing map width makes pixel identity red');
   await controlContext.close();
