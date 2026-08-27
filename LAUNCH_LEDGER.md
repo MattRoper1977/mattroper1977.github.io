@@ -126,21 +126,21 @@ There are 55 taxonomy rows for 55 shelf entries at baseline.
 
 Site: `titanforge/index.html`, `crownbadge/index.html`, their generated chassis declarations, `games/index.html`, `data/source-manifests/games.json`, `data/new-release-occupants.json`, `sitemap.xml`, task-specific model/test tooling, workflow path coverage where required, and this ledger. Games: canonical `games.json`. Lessons: none unless a later derived gate proves otherwise.
 
-## P1 — Titan payload surgery — candidate complete; rendered proof pending CI
+## P1 — Titan payload surgery — PASS
 
 - Native quality-82/method-6 reproduction: background **239,360 B**; athlete **176,486 B** with alpha preserved.
 - The native q82 outputs did not clear the SSIM floor, so quality and dimensions were changed under the prompt's permitted measured fallback rather than accepting softness.
 - Shipped background: **1200 × 675**, WebP q90/method 6, **223,392 B**, SSIM **0.9876375198**.
 - Shipped athlete: **700 × 1050**, WebP q86/method 6, **123,880 B**, alpha preserved, SSIM **0.9869825840**.
 - Shipped `titanforge/index.html` after both generated chassis regions: **866,271 B**; two WebP data URLs; zero PNG data URLs.
-- The deliberately corrupt-athlete control and the 390 × 844 / 1280 × 800 paint screenshots are implemented in `tools/titan-crown/browser.mjs`; they remain unclaimed until the CI Chromium run completes.
+- CI Chromium painted the **700 × 1050** athlete and **1200 × 675** background at both **390 × 844** and **1280 × 800**. The deliberately corrupt athlete remained under the byte ceiling (**701,103 B**) while its render predicate went red at **0 × 0**.
 
-## P2 — Titan correctness and fairness — model/static green; rendered proof pending CI
+## P2 — Titan correctness and fairness — PASS
 
 - `touch-action: manipulation` is applied to every button and the lift control. The browser gate removes it in a served scratch variant and requires the computed-style predicate to turn red.
 - The timing meter now derives its position from `requestAnimationFrame` timestamps. Modelled 3× frame stretch changes sweep duration by **0.000%**; the fixed-increment control changes it by **67.200%** and is red against the ±3% band.
 - Ascension preserves `bestCombo`, lifetime `reps`, lifetime `perfects`, `lastDaily` and `claimedQuests`; only run state resets. The legacy control reclaims the daily three times across three ascensions.
-- The bounded sanitiser type-checks/clamps every save field and caps the raw load at 1 MiB. Seven hostile browser inputs are wired; their rendered result remains pending CI.
+- The bounded sanitiser type-checks/clamps every save field and caps the raw load at 1 MiB. All seven hostile browser inputs sanitised to playable state, and a shipped save reloaded losslessly in Chromium.
 - Final storage key: `mbm_titanforge_save_v1`; old key occurrences: zero.
 
 ## P3 — Titan balance — PASS
@@ -162,12 +162,13 @@ Site: `titanforge/index.html`, `crownbadge/index.html`, their generated chassis 
 
 Trial cost choice: **one attempt per rival per ascension**. It is legible, deterministic and closes repeat farming without adding another timer. Legacy trial control: **3.174603×**, red against the ≤3× gate. The permanent gem sinks are Heirloom Gear, Combo Anvil and Focus Window; the no-sink control spends zero and reds.
 
-## P4 — Crown & Badge balance and surfaces — model/static green; rendered proof pending CI
+## P4 — Crown & Badge balance and surfaces — PASS
 
 - Final Hard multipliers: threat **1.06**, penalty **1.05**, spawn **1.11**.
 - Chronicle cap: **200** with `logGenerated` validated and migrated; observed maximum **113**. The 40-entry control truncates **119/120** campaigns.
 - `mobileGoalProgress` and `endDayLedger` are in the canonical phone topbar/End Day surfaces; Valor is retained at ≤430 px.
-- The trailing map media patches were folded into the canonical 760/430 breakpoints. The four-width pixel-identity gate and its 97%/96% width control are implemented in the CI browser gate and remain unclaimed pending that run.
+- The trailing map media patches were folded into the canonical 760/430 breakpoints. Stable rendered pixels matched byte-for-byte before/after at **390** (`e742cca5934b2739`), **430** (`aee82abfaf7c1d95`), **760** (`0059a4864852a168`) and **980 px** (`cdcf7071fa25d4f6`); the 97%/96% width control went red.
+- At 390 px the objective (`0/3 secured`), daily net (`Tomorrow: -8G · +1S`) and Valor were visible and non-zero-sized, with **0** visible controls under 44 px. Both objective/ledger hiding controls went red. The campaign save reloaded losslessly.
 - Determinism: **20/20** seed pairs byte-identical. `Math.random`: **1 occurrence**, confined to audio noise.
 
 Greedy and idle harness results, 120 seeds each:
@@ -180,16 +181,17 @@ Greedy and idle harness results, 120 seeds each:
 
 Legacy Hard control: 4/120 (**3.3%**), median day 14 — red against the launch band.
 
-## P5 — house chassis — generated/static green; rendered proof pending CI
+## P5 — house chassis — PASS
 
 - Live donor and repository donor matched exactly before stamping: **6,573 B**, SHA-256 `0bb61e5606c1bf7bc223e38afdbfd56e6adb6bdba3e993f27ec7607f3c49d837`.
 - Generated splash region: **7,555 B**, SHA-256 `6ad6aea6dd76056e5ba1688c6ffff8002352ed658d4aab82cbb226b8371f4c6a`; both games joined the eight-target generator set.
 - Generated inline exit: **3,222 B**, SHA-256 `c87aaf664f86b83c871a898f0e56cd6540cbedd45a44fad0f223ec28013608d9`; both games joined the fifteen-target declared set and the existing workflow path coverage.
 - Crown keys are final: `mbm_crownbadge_campaign_v1`, `mbm_crownbadge_meta_v1`, `mbm_crownbadge_scores_v1`, `mbm_crownbadge_settings_v1`; old key occurrences: zero.
 - Static request surface is zero for Crown and zero request-capable subresources for Titan. Reduced-motion scope is decorative/chrome only; gameplay timing/map motion remains.
-- `tools/verify_games_splash.mjs` polls all generated targets in both motion states and includes a removed-region control. Offline, lossless-save, 44 px, exit, and flash-rate measurements are wired into CI and remain unclaimed pending Chromium.
+- `tools/verify_games_splash.mjs` observed all generated targets by polling in both motion states and its removed-region control went red. The rendered exit suite passed **714/714**, including keyboard reachability and 44 × 44 geometry.
+- The game browser contract passed **47/47** with zero off-origin or failed requests and clean consoles. Titan aura measured **0.3125 Hz**; Crown full-screen flash measured **2.0012 Hz**; Crown reduced-motion flash measured **0 Hz**. Gameplay timing and map-node motion remained active under reduced motion.
 
-## P6 — shelf landing — static/generator green; rendered invariant pending CI
+## P6 — shelf landing — PASS
 
 - Canonical result: **57 games = 28 site-served + 29 Lessons-served**. Site mirror is byte-identical to Games `games.json` at **30,765 B**, SHA-256 prefix `cc5b0fff2aed9f44`.
 - Exactly one `NEW ·` holder: `/crownbadge/`; Emberwild's marker was removed atomically. Titan has no marker.
@@ -198,8 +200,8 @@ Legacy Hard control: 4/120 (**3.3%**), median day 14 — red against the launch 
 - Crown hue `#194C47`; nearest Medevac Frontier `#1A8193`, ΔE00 **20.61**. Titan hue `#4630A8`; nearest Lumina Haven `#A83FBF`, ΔE00 **18.37**. New hues against each other: **32.04**.
 - Sitemap now carries **466** unique URLs and covers all **28** site-served shelf routes.
 - Curation remains untouched: both `featured: false`, `hero: false`, neither in the eight-game rail nor the eighteen takes.
-- Derived card invariant target is **57 shelf + 8 rail = 65 painted cards** on each surface. `tools/verify_pupil_genres.mjs` carries the shared-record mutation control; rendered proof remains pending CI.
+- The rendered card invariant is green: **57 shelf + 8 rail = 65 painted cards** on each surface. The shared-record mutation moved the same game on both pages without changing either count; its unresolved-route control went red.
 
 ## P7 — merge and live verify — pending
 
-No merge, deployment or live-byte claim is recorded before the CI browser evidence is green. The live workflow is ordered behind an exercised comparator control and anchors its wait loop on the previously-unpublished `/crownbadge/` route.
+Pre-merge evidence is green on GitHub Actions run **33079969068** for remote head `b1ace90b760ec13046ef20e17b0c77926c58c395`: the negative-control job passed first, followed by the full static/rendered job. Evidence artifact **9649717030** contains four viewport captures, metrics and all gate logs. No merge, deployment or live-byte claim is recorded yet. The live workflow is ordered behind an exercised comparator control and anchors its wait loop on the previously-unpublished `/crownbadge/` route.
