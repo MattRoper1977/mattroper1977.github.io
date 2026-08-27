@@ -151,6 +151,9 @@ async function dismissAndStart(page) {
   const match = await candidates.evaluateAll(elements => {
     for (let index = 0; index < elements.length; index += 1) {
       const element = elements[index];
+      const rawText = (element.textContent || '').trim();
+      if (!/^(start|play|begin|enter|launch|continue|new game)|start game|play now/i.test(rawText)) continue;
+      if (/arcade|home|back/i.test(rawText)) continue;
       const style = getComputedStyle(element);
       const box = element.getBoundingClientRect();
       if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse'
@@ -211,13 +214,16 @@ async function measureRoute(browser, origin, game, round) {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   const session = await context.newCDPSession(page);
-  await session.send('Emulation.setCPUThrottlingRate', { rate: CPU_THROTTLE });
   const local = Boolean(localFileForHref(game.href));
   const url = new URL(game.href, local ? origin : LIVE_ORIGIN).href;
   const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
   assert.equal(response?.status(), 200, `${game.title}: navigation returned ${response?.status()}`);
   await page.waitForTimeout(500);
   const startControl = await dismissAndStart(page);
+  // Throttle the identical scripted warm-up and measured window, not HTML/JS
+  // parsing. Voxel's large vendored engine made pre-navigation throttling test
+  // source parse time for minutes instead of the running frame workload.
+  await session.send('Emulation.setCPUThrottlingRate', { rate: CPU_THROTTLE });
   await scriptedInput(page);
   await page.waitForTimeout(WARM_UP_MS);
   const measured = await frameWindow(page);
