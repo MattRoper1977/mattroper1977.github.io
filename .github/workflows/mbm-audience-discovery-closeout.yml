@@ -35,6 +35,21 @@ jobs:
           npm i --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
 
+      - name: Teacher task deep-link gate parses
+        id: s00-teacher-task-deep-link-gate-parses
+        if: always()
+        run: node --check tools/verify_teach_task_filter.mjs
+
+      - name: Teacher task cards land on the visible filtered workspace
+        id: s00-teacher-task-deep-links-visible
+        if: always()
+        run: node tools/verify_teach_task_filter.mjs
+
+      - name: Teacher task visibility gate proves it can fail
+        id: s00-teacher-task-deep-links-negative-control
+        if: always()
+        run: node tools/verify_teach_task_filter.mjs --self-test
+
       - name: Generated audience HTML is byte-for-byte reproducible
         id: s01-generated-audience-html-is-byte-for-byte
         if: always()
