@@ -219,12 +219,22 @@ async function measureRoute(browser, origin, game, round) {
   const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
   assert.equal(response?.status(), 200, `${game.title}: navigation returned ${response?.status()}`);
   await page.waitForTimeout(500);
-  const startControl = await dismissAndStart(page);
-  // Throttle the identical scripted warm-up and measured window, not HTML/JS
-  // parsing. Voxel's large vendored engine made pre-navigation throttling test
-  // source parse time for minutes instead of the running frame workload.
-  await session.send('Emulation.setCPUThrottlingRate', { rate: CPU_THROTTLE });
+  let startControl = await dismissAndStart(page);
+  // Complete route setup at normal speed before applying the measurement
+  // instrument. The initial input is identical for every route; the measured
+  // window below performs the same script again under the 6x throttle.
   await scriptedInput(page);
+  if (game.href === '/voxel/') {
+    await page.waitForFunction(
+      () => document.getElementById('start')?.textContent === 'Resume',
+      null,
+      { timeout: 120000 },
+    );
+    startControl ||= 'scripted input (overlay)';
+  }
+  // Throttle the identical warm-up and measured window, not HTML/JS parsing or
+  // route setup. Voxel's terrain generation is startup work, not frame work.
+  await session.send('Emulation.setCPUThrottlingRate', { rate: CPU_THROTTLE });
   await page.waitForTimeout(WARM_UP_MS);
   const measured = await frameWindow(page);
   await context.close();

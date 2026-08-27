@@ -45,10 +45,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  benchmark:
+    name: Comparative mobile performance
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install benchmark dependency and Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Comparative mobile performance and non-vacuity controls
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/townlife
+          sha256sum tools/townlife/benchmark.mjs | tee artifacts/townlife/performance-harness.txt
+          node tools/townlife/benchmark.mjs | tee artifacts/townlife/performance.log
+
+      - name: Upload Town Life performance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: townlife-performance-evidence
+          path: artifacts/townlife/
+
   verify:
     name: Final bytes in Chromium, Firefox and WebKit
+    needs: benchmark
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 1 }
@@ -87,12 +118,6 @@ jobs:
           node tools/verify_pupil_genres.mjs | tee artifacts/townlife/pupil-genres.log
           node tools/verify_genre_participants.mjs | tee artifacts/townlife/genre-participants.log
           node tools/verify_sitemap_covers_games.mjs | tee artifacts/townlife/sitemap.log
-
-      - name: Comparative mobile performance and non-vacuity controls
-        run: |
-          set -o pipefail
-          sha256sum tools/townlife/benchmark.mjs | tee artifacts/townlife/performance-harness.txt
-          node tools/townlife/benchmark.mjs | tee artifacts/townlife/performance.log
 
       - name: Town Life rendered contract and heading control
         run: |
