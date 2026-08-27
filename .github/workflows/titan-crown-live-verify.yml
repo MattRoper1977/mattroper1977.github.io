@@ -1,0 +1,76 @@
+name: Titan and Crown served bytes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'titanforge/index.html'
+      - 'crownbadge/index.html'
+      - 'data/source-manifests/games.json'
+      - '.github/workflows/titan-crown-live-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  negative-control-first:
+    name: Live comparator proves it can go red
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch a stable live donor, prove equality, then require a mutated mismatch
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --compressed --max-time 30 \
+            https://madebymatt.uk/assets/brand/mbm-splash.js -o /tmp/live-donor.js
+          cmp --silent assets/brand/mbm-splash.js /tmp/live-donor.js
+          cp assets/brand/mbm-splash.js /tmp/mutated-donor.js
+          printf '\n/* comparator control */\n' >> /tmp/mutated-donor.js
+          if cmp --silent /tmp/mutated-donor.js /tmp/live-donor.js; then
+            echo 'CONTROL FAILED: mutated committed bytes compared equal to live'; exit 1
+          fi
+          echo 'CONTROL PASS: live comparator is green for truth and red for a real mutation'
+
+  live-byte-identity:
+    name: New routes and canonical shelf are served byte-identically
+    needs: negative-control-first
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - name: Wait on the previously-unpublished Crown route and final shelf, then compare every byte
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/titan-crown-live
+          ready=0
+          for attempt in $(seq 1 60); do
+            crown_status=$(curl --silent --show-error --location --compressed --max-time 30 \
+              -o /tmp/live-crown.html -w '%{http_code}' https://madebymatt.uk/crownbadge/ || true)
+            titan_status=$(curl --silent --show-error --location --compressed --max-time 30 \
+              -o /tmp/live-titan.html -w '%{http_code}' https://madebymatt.uk/titanforge/ || true)
+            shelf_status=$(curl --silent --show-error --location --compressed --max-time 30 \
+              -o /tmp/live-games.json -w '%{http_code}' https://madebymatt.uk/Games/games.json || true)
+            if [ "$crown_status" = 200 ] && [ "$titan_status" = 200 ] && [ "$shelf_status" = 200 ] \
+              && cmp --silent crownbadge/index.html /tmp/live-crown.html \
+              && cmp --silent titanforge/index.html /tmp/live-titan.html \
+              && cmp --silent data/source-manifests/games.json /tmp/live-games.json; then
+              echo "Crown, Titan, and final shelf observed on attempt $attempt" | tee artifacts/titan-crown-live/wait.log
+              ready=1; break
+            fi
+            echo "attempt $attempt: Crown=${crown_status:-ERR} Titan=${titan_status:-ERR} shelf=${shelf_status:-ERR}; final bytes not served yet" | tee -a artifacts/titan-crown-live/wait.log
+            sleep 15
+          done
+          [ "$ready" = 1 ]
+          sha256sum crownbadge/index.html /tmp/live-crown.html titanforge/index.html /tmp/live-titan.html \
+            data/source-manifests/games.json /tmp/live-games.json | tee artifacts/titan-crown-live/served-sha256.txt
+      - name: Upload live evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: titan-crown-live-evidence
+          path: artifacts/titan-crown-live/
