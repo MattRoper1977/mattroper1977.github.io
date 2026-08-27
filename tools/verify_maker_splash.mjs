@@ -150,8 +150,6 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
     else if (action === 'pointer') await maker.click({ position: { x: 20, y: 20 } });
     else if (action === 'timeout') await maker.evaluate(el => { el.style.animation = 'none'; });
     if (action !== 'none') await maker.waitFor({ state: 'detached', timeout: 2800 }).catch(() => {});
-  } else {
-    await page.waitForTimeout(waitAbsent);
   }
   const state = await page.evaluate(key => {
     const p = window.__makerProbe || {};
