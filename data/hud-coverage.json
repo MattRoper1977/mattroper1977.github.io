@@ -197,5 +197,16 @@
    "/relicforge/": "verify_relicforge.js: G1 counts script elements in the game, and asserts separately that the region is present and carries no src"
   }
  },
+ "makerSplash": {
+  "_what": "The estate-wide Made by Matt introduction and its rolling 24-hour suppression. tools/render_maker_splash.py is the only writer of the stamped block; the visual donor is the CyberPulse Made by / Matt / presents form and every applied block is byte-identical.",
+  "_state": "This seed target exists so the generator and its controls cannot pass over an empty declaration. Section 5 of the 2026-08-27 splash-canon release replaces this seed with the complete browser-censused applied, declined and variant-retained sets.",
+  "applied": [
+   {
+    "route": "/townlife/"
+   }
+  ],
+  "declined-with-reason": [],
+  "variant-retained-with-reason": []
+ },
  "_emberwild": "/emberwild/ is NOT excluded, and must not be added here. Issue #149 is RESOLVED, and not by declaring it. Measured 2026-08-15: the game carried the generated inline exit region all along - the same one /relicforge/ has, rendering at 44x44 - and a keyboard player still could not use it. Tab reached ZERO focusable elements in 60 presses, because the game bound Tab to its own menu and preventDefaulted it, and Enter was swallowed by the same handler so the control would not fire even once focused. Adding /hud.js was tried in a scratch copy and did NOT fix it: the chip rendered at 44x44 covering none of the game's controls, and was equally unreachable - 0 of 60 presses - which would have turned this gate green while leaving the player exactly as stuck. Both defects were repaired in the game instead: Tab is no longer a game key and the handler stands down when the focus is on a control. The exit is now reached in 13 presses and navigates to /games/, against /relicforge/'s 8. verify_hud_on_games.py now classifies a route three ways - wired, covered by a working inline exit region, or declared - and the region branch is held to reaching and navigating, not to the region existing, because the region existing is exactly what was true while it was broken."
 }
