@@ -340,7 +340,7 @@ function writeFinalReport(roundReports) {
     title: game.title,
     href: game.href,
     category: game.category,
-    identity: identities[game.href],
+    identity: reference.identities[game.href],
     runs: runs[game.href].map(run => Number(run.fps.toFixed(4))),
     medianFps: Number(median(runs[game.href].map(run => run.fps)).toFixed(2)),
     pageErrors: runs[game.href].flatMap(run => run.pageErrors),
@@ -364,7 +364,7 @@ function writeFinalReport(roundReports) {
     shippedPercentile25Fps: Number(bar.toFixed(2)),
     townLife: {
       href: TOWN,
-      identity: identities[TOWN],
+      identity: reference.identities[TOWN],
       runs: townRuns.map(value => Number(value.toFixed(4))),
       medianFps: Number(townMedian.toFixed(2)),
       position: distribution.filter(game => game.medianFps < townMedian).length + 1,
