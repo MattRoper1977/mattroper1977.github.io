@@ -2645,24 +2645,13 @@ function placePlatformExits(){
     const back=$('mbmexit-back'),home=$('mbmexit-home');
     if(!back||!home)return;
     observer?.disconnect();
-    if($('welcome').style.display==='grid'){
-      $('welcome').querySelector('.actions').append(back,home);
-    }else{
-      const first=document.body.firstChild;
-      document.body.insertBefore(back,first);
-      document.body.insertBefore(home,back.nextSibling);
-    }
+    const first=document.body.firstChild;
+    document.body.insertBefore(back,first);
+    document.body.insertBefore(home,back.nextSibling);
   };
   observer=new MutationObserver(place);
   observer.observe(document.body,{childList:true});
   place();
-}
-function releasePlatformExits(){
-  const back=$('mbmexit-back'),home=$('mbmexit-home');
-  if(!back||!home)return;
-  const first=document.body.firstChild;
-  document.body.insertBefore(back,first);
-  document.body.insertBefore(home,back.nextSibling);
 }
 
 function updateCutaways(){
@@ -3026,7 +3015,12 @@ function setRole(role){
 
 function wireInterface(){
   document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>closeModal(button.dataset.close)));
-  $('startBtn').onclick=()=>{state.profile=($('profileName').value.trim()||'Player').slice(0,18);$('welcome').style.display='none';$('welcome').setAttribute('aria-hidden','true');releasePlatformExits();state.firstRun=false;saveSoon();updateUI(true);wakeAudio();notify(`Welcome to Town Life, ${state.profile}`)};
+  $('startBtn').onclick=()=>{state.profile=($('profileName').value.trim()||'Player').slice(0,18);$('welcome').style.display='none';$('welcome').setAttribute('aria-hidden','true');state.firstRun=false;saveSoon();updateUI(true);wakeAudio();notify(`Welcome to Town Life, ${state.profile}`)};
+  $('openHelpFromWelcome').addEventListener('keydown',event=>{
+    if(event.key!=='Tab'||event.shiftKey||$('welcome').style.display!=='grid')return;
+    const exit=$('mbmexit-back');
+    if(exit){event.preventDefault();exit.focus()}
+  });
   $('openHelpFromWelcome').onclick=()=>openModal('helpModal');
   $('roleSelect').onchange=event=>setRole(event.target.value);
   $('vehicleBtn').onclick=toggleVehicleSpawn;
