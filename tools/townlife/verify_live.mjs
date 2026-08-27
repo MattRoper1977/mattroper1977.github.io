@@ -91,10 +91,25 @@ async function fetchRoute(route) {
   };
 }
 
+function assertRouteMarker(served, marker) {
+  assert(served.bytes.includes(Buffer.from(marker)), `${served.route} is missing marker ${JSON.stringify(marker)}`);
+}
+
+function proveRouteMarkerControl(localRelative, marker) {
+  const local = fs.readFileSync(path.join(ROOT, localRelative));
+  assert(local.includes(Buffer.from(marker)), `${localRelative} does not contain its declared live marker`);
+  const withoutMarker = Buffer.from(local.toString('utf8').replace(marker, 'data-live-marker-control-removed="true"'));
+  assert.throws(
+    () => assertRouteMarker({ route: `${localRelative} CONTROL`, bytes: withoutMarker }, marker),
+    /is missing marker/,
+  );
+  console.log(`LIVE MARKER NEGATIVE CONTROL RED — removed ${JSON.stringify(marker)} from ${localRelative}`);
+}
+
 function assertExactRoute(served, localRelative, marker) {
   const local = fs.readFileSync(path.join(ROOT, localRelative));
   assert.equal(served.status, 200, `${served.route} returned ${served.status}`);
-  assert(served.bytes.includes(Buffer.from(marker)), `${served.route} is missing marker ${JSON.stringify(marker)}`);
+  assertRouteMarker(served, marker);
   assert.deepEqual(served.bytes, local, `${served.route} differs from committed ${localRelative}`);
   return { localRelative, bytes: local.length, sha256: sha256(local), match: true };
 }
@@ -184,6 +199,7 @@ async function observeBrowser() {
 
 const deployment = await waitForDeployment();
 const canonical = await waitForCanonicalTown();
+proveRouteMarkerControl('games/index.html', 'id="genreSections"');
 const [gamesRoute, pupilsRoute, manifestRoute, mirrorRoute, townRoute] = await Promise.all([
   fetchRoute('/games/'),
   fetchRoute('/for/pupils/'),
@@ -194,7 +210,7 @@ const [gamesRoute, pupilsRoute, manifestRoute, mirrorRoute, townRoute] = await P
 
 const provenance = {
   townlife: assertExactRoute(townRoute, 'townlife/index.html', STATUS),
-  games: assertExactRoute(gamesRoute, 'games/index.html', 'id="browse"'),
+  games: assertExactRoute(gamesRoute, 'games/index.html', 'id="genreSections"'),
   pupils: assertExactRoute(pupilsRoute, 'for/pupils/index.html', STATUS),
   siteMirror: assertExactRoute(mirrorRoute, 'data/source-manifests/games.json', STATUS),
 };
