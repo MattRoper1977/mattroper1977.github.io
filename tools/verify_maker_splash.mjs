@@ -140,7 +140,7 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
   });
   const wall = Date.now();
   let response = null;
-  try { response = await page.goto(origin + encodeURI(route), { waitUntil: 'domcontentloaded', timeout: 30000 }); }
+  try { response = await page.goto(origin + encodeURI(route), { waitUntil: 'commit', timeout: 30000 }); }
   catch (error) { errors.push(`navigation: ${error.message}`); }
   const maker = page.locator('[data-mbm-maker-splash]');
   const appeared = await maker.waitFor({ state: 'attached', timeout: waitAbsent }).then(() => true).catch(() => false);
@@ -151,6 +151,7 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
     else if (action === 'timeout') await maker.evaluate(el => { el.style.animation = 'none'; });
     if (action !== 'none') await maker.waitFor({ state: 'detached', timeout: 2800 }).catch(() => {});
   }
+  await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(error => errors.push(`domcontentloaded: ${error.message}`));
   const state = await page.evaluate(key => {
     const p = window.__makerProbe || {};
     const legacy = document.querySelector('#mbmSplash,.mbm-splash,[data-mbm-splash]');
@@ -186,11 +187,16 @@ async function wayOutProbe(browser, origin, route, activation) {
     const url = request.url();
     if (!url.startsWith(origin) && !url.startsWith('data:') && !url.startsWith('blob:')) external.push(url);
   });
-  await page.goto(origin + encodeURI(`${route}?splash=force`), { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await page.goto(origin + encodeURI(`${route}?splash=force`), { waitUntil: 'commit', timeout: 30000 });
   const maker = page.locator('[data-mbm-maker-splash]');
-  await maker.waitFor({ state: 'attached', timeout: 1000 });
+  const attached = await maker.waitFor({ state: 'attached', timeout: 1000 }).then(() => true).catch(() => false);
+  if (!attached) {
+    await context.close();
+    return { activation, tabs: 31, reached: false, before: page.url(), after: page.url(), navigated: false, errors: errors.concat('maker splash was not observed before DOMContentLoaded'), external };
+  }
   await page.keyboard.press('Tab');
   await maker.waitFor({ state: 'detached', timeout: 2800 });
+  await page.waitForLoadState('domcontentloaded', { timeout: 30000 });
   let tabs = 0;
   for (; tabs <= 30; tabs += 1) {
     if (await page.evaluate(() => document.activeElement?.id === 'mbmexit-back')) break;
