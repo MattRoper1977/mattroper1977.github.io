@@ -60,23 +60,23 @@ jobs:
           after=$(git status --porcelain)
           test "$before" = "$after"
           control=$(mktemp -d)
-          mkdir -p "$control/tools" "$control/data" "$control/townlife" "$control/apexgolf"
+          mkdir -p "$control/tools" "$control/data" "$control/townlife" "$control/apexpool"
           cp tools/render_maker_splash.py "$control/tools/"
           cp data/hud-coverage.json "$control/data/"
           cp townlife/index.html "$control/townlife/"
-          cp apexgolf/index.html "$control/apexgolf/"
+          cp apexpool/index.html "$control/apexpool/"
           python3 - "$control/data/hud-coverage.json" <<'PY'
           import json,sys
           p=sys.argv[1]; d=json.load(open(p)); d['makerSplash']={
             '_what':'temporary real-route removal and non-invention controls',
             'applied':[{'route':'/townlife/'}],
             'declined-with-reason':[],
-            'variant-retained-with-reason':[{'route':'/apexgolf/','reason':'non-invention byte control'}]}
+            'variant-retained-with-reason':[{'route':'/apexpool/','reason':'non-invention byte control'}]}
           open(p,'w').write(json.dumps(d,indent=1)+'\n')
           PY
-          before_variant=$(sha256sum "$control/apexgolf/index.html" | cut -d' ' -f1)
+          before_variant=$(sha256sum "$control/apexpool/index.html" | cut -d' ' -f1)
           python3 "$control/tools/render_maker_splash.py" --root "$control" --write >/dev/null
-          after_variant=$(sha256sum "$control/apexgolf/index.html" | cut -d' ' -f1)
+          after_variant=$(sha256sum "$control/apexpool/index.html" | cut -d' ' -f1)
           test "$before_variant" = "$after_variant"
           python3 - "$control/townlife/index.html" <<'PY'
           import re,sys
