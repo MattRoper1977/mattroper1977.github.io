@@ -84,6 +84,12 @@ jobs:
           node tools/verify_genre_participants.mjs | tee artifacts/townlife/genre-participants.log
           node tools/verify_sitemap_covers_games.mjs | tee artifacts/townlife/sitemap.log
 
+      - name: Comparative mobile performance and non-vacuity controls
+        run: |
+          set -o pipefail
+          sha256sum tools/townlife/benchmark.mjs | tee artifacts/townlife/performance-harness.txt
+          node tools/townlife/benchmark.mjs | tee artifacts/townlife/performance.log
+
       - name: Town Life rendered contract and heading control
         run: |
           set -o pipefail
