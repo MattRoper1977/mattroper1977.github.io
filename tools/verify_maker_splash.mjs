@@ -89,7 +89,7 @@ function makeServer({ stripRoute = null, slowReducedRoute = null } = {}) {
       if (stripRoute === pathname) body = body.replace(REGION, '');
       if (slowReducedRoute === pathname) body = body
         .replace('animation-duration:.35s', 'animation-duration:.7s')
-        .replace('reduced?450:2100', 'reduced?700:2100');
+        .replace('reduced?450:2100', 'reduced?900:2100');
       res.writeHead(200, { 'content-type': type, 'cache-control': 'no-store' });
       return res.end(body);
     }
