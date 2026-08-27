@@ -1,0 +1,169 @@
+/**
+ * Micro-Tinkerer — the verifier its hud.js exclusion cites.
+ *
+ * WHY THIS EXISTS AT ALL. data/hud-coverage.json will not accept a declination
+ * without one: verify_hud_on_games.py reads entry["verifier"] unconditionally
+ * and asserts the cited file is on disk, then asserts the entry names the gates
+ * that stopped it. So "record the hud.js declination" entails writing the thing
+ * the register is going to point at. This is that thing.
+ *
+ * WHAT IT ASSERTS. The single-file contract this game shares with the twelve
+ * already excluded — /apexpool/ and /apexrally/ among them — plus the PWA
+ * facts, because a service worker is the one external file the game does load
+ * and it had better do what it claims.
+ *
+ * EVERY GATE CARRIES A CONTROL PAIR. A proof with no negative control proves
+ * nothing: the offline-boot gate below would pass on a page that simply had not
+ * been evicted from the HTTP cache, so it is preceded by the same navigation
+ * with no worker registered, which must fail.
+ *
+ *   tools/microtinkerer/run.sh                     # the game in this repo
+ *   tools/microtinkerer/run.sh path/to/copy.html   # any other copy
+ */
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const ROOT = process.env.MT_ROOT || path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
+const GAME = process.env.MT_GAME || path.join(ROOT, 'micro-tinkerer/index.html');
+const PORT = Number(process.env.MT_PORT || 8749);
+
+const chromium = (await import(process.env.MT_PLAYWRIGHT || 'playwright')).chromium;
+
+const TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
+  '.png': 'image/png',
+  '.svg': 'image/svg+xml',
+};
+
+let fails = 0;
+const results = [];
+function gate(name, pass, detail = '') {
+  results.push([pass, name, detail]);
+  if (!pass) fails++;
+  console.log(`  ${pass ? '[ ok ]' : '[FAIL]'} ${name}${detail ? '  — ' + detail : ''}`);
+}
+
+/* ── Gate 1: the single-file contract, read from the file itself ─────────── */
+console.log('\n=== the single-file contract — the same one that excluded the other twelve ===');
+const html = fs.readFileSync(GAME, 'utf8');
+const externalScripts = [...html.matchAll(/<script[^>]*\ssrc\s*=/gi)];
+gate('the game loads no external script', externalScripts.length === 0,
+     externalScripts.length ? externalScripts.map((m) => m[0]).join(' ') : '0 <script src>');
+
+// The manifest link is the ONE external reference the game is allowed, and it
+// is same-origin and same-directory. Anything else retracts the promise.
+const refs = [...html.matchAll(/(?:src|href)\s*=\s*"([^"]+)"/gi)]
+  .map((m) => m[1])
+  .filter((u) => !u.startsWith('#') && !u.startsWith('data:'));
+const disallowed = refs.filter((u) => u !== './manifest.webmanifest');
+gate('its only markup reference is its own manifest', disallowed.length === 0,
+     disallowed.length ? disallowed.join(' ') : `1 allowed ref, ${refs.length} total`);
+
+// NEGATIVE CONTROL for gate 1: the same detector, pointed at a planted script.
+// Assert the detector finds ONE MORE after planting, not exactly one: run
+// against a copy that already carries an external script — which is precisely
+// what the red-proof does — "exactly one" is false while the detector is
+// working perfectly.
+const planted = html.replace('<head>', '<head>\n<script src="/hud.js"></script>');
+const plantedCount = [...planted.matchAll(/<script[^>]*\ssrc\s*=/gi)].length;
+gate('CONTROL: the detector sees one more <script src> after planting one',
+     plantedCount === externalScripts.length + 1,
+     `${externalScripts.length} -> ${plantedCount}; a gate that cannot see hud.js could not have excluded this game`);
+
+/* ── Gate 2: the declination premise, measured not asserted ──────────────── */
+console.log('\n=== why hud.js is declined here, measured from the game ===');
+gate('the game takes pointer lock', /requestPointerLock/.test(html));
+gate('the game draws WebGL', /webgl/i.test(html));
+gate('the game carries its own HUD', /\bhud\b/i.test(html));
+gate('CONTROL: the same probes are false for a string that has none of them',
+     !/requestPointerLock/.test('<html></html>'),
+     'so the three above are reading the game, not always-true');
+
+/* ── serve it, the way Pages does ────────────────────────────────────────── */
+const served = [];
+const server = http.createServer((req, res) => {
+  let p = decodeURIComponent(req.url.split('?')[0]);
+  if (p.endsWith('/')) p += 'index.html';
+  const file = path.join(ROOT, p);
+  if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+    served.push([p, 404]);
+    res.writeHead(404); return res.end('not found');
+  }
+  served.push([p, 200]);
+  res.writeHead(200, { 'content-type': TYPES[path.extname(file)] || 'application/octet-stream' });
+  res.end(fs.readFileSync(file));
+});
+await new Promise((r) => server.listen(PORT, r));
+const URL_ = `http://127.0.0.1:${PORT}/micro-tinkerer/`;
+
+const browser = await chromium.launch();
+
+/* ── Gate 3: NEGATIVE CONTROL FIRST — offline with no worker must fail ───── */
+console.log('\n=== offline behaviour ===');
+{
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  await ctx.setOffline(true);
+  let booted = true;
+  try { await page.goto(URL_, { waitUntil: 'domcontentloaded', timeout: 8000 }); }
+  catch { booted = false; }
+  gate('CONTROL: a cold offline load with no worker does NOT boot', !booted,
+       booted ? 'it booted — the offline gate below would be vacuous' : 'navigation refused');
+  await ctx.close();
+}
+
+const ctx = await browser.newContext();
+const page = await ctx.newPage();
+await page.goto(URL_, { waitUntil: 'load' });
+
+const reg = await page.evaluate(async () => {
+  const r = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+  await navigator.serviceWorker.ready;
+  return { scope: r.scope, active: !!r.active };
+});
+gate('the service worker registers and activates', reg.active);
+gate('its scope is /micro-tinkerer/ and no wider', reg.scope.endsWith('/micro-tinkerer/'), reg.scope);
+
+// Asserted from the SERVER's log. Playwright's page-level response event does
+// not observe service-worker-initiated fetches — it once reported sw.js as
+// never fetched in the same run that showed the worker active and the cache
+// full. The server sees every request that crossed the wire.
+const log = served.filter(([p]) => /\/(sw\.js|manifest\.webmanifest)$/.test(p));
+gate('sw.js resolved 200 on the served path', log.some(([p, s]) => p.endsWith('/sw.js') && s === 200));
+gate('manifest.webmanifest resolved 200', log.some(([p, s]) => p.endsWith('/manifest.webmanifest') && s === 200));
+gate('nothing 404ed across the run', !served.some(([, s]) => s === 404),
+     served.filter(([, s]) => s === 404).map(([p]) => p).join(' ') || 'no 404s');
+
+const cache = await page.evaluate(async () => {
+  const names = await caches.keys();
+  return { names, entries: (await (await caches.open(names[0])).keys()).map((r) => new URL(r.url).pathname) };
+});
+gate('the cache name carries a version', cache.names.length === 1 && /v\d+\.\d+\.\d+/.test(cache.names[0]),
+     cache.names.join(','));
+gate('the game document is precached', cache.entries.some((e) => e.endsWith('/index.html')));
+
+await ctx.setOffline(true);
+let offErr = null;
+try { await page.goto(URL_, { waitUntil: 'domcontentloaded', timeout: 15000 }); }
+catch (e) { offErr = e.message.split('\n')[0]; }
+gate('a second load with the network offline still boots', !offErr, offErr || 'no error');
+
+const state = await page.evaluate(() => ({
+  title: document.title,
+  canvas: !!document.querySelector('canvas'),
+  controls: !!document.getElementById('btn-host'),
+  len: document.body ? document.body.innerHTML.length : 0,
+}));
+gate('and it is the game, not an error stub', state.title.includes('Micro-Tinkerer') && state.canvas && state.controls && state.len > 2000,
+     `${state.len} chars, canvas=${state.canvas}, controls=${state.controls}`);
+
+await browser.close();
+server.close();
+
+const passed = results.length - fails;
+console.log(`\nmicro-tinkerer: ${passed}/${results.length} passed`);
+if (fails) console.log(`${fails} FAILED`);
+process.exit(fails ? 1 : 0);
