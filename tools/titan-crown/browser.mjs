@@ -205,12 +205,31 @@ async function interactiveSizes(page) {
     }).filter(item => item.visible && (item.width < 44 || item.height < 44)));
 }
 
-async function startCrown(page, seed = 'QA-FRONTIER') {
-  await page.locator('#seedInput').waitFor({ state: 'visible', timeout: 15000 });
-  await page.locator('#seedInput').fill(seed);
-  await page.locator('#newCampaignBtn').click();
-  await page.waitForFunction(() => document.querySelector('#intro')?.hidden === true, null, { timeout: 10000 });
-  await page.locator('#mapCard').waitFor({ state: 'visible', timeout: 10000 });
+async function startCrown(subject, seed = 'QA-FRONTIER') {
+  const track = subject.page ? subject : null;
+  const page = track ? track.page : subject;
+  try {
+    await page.locator('#seedInput').waitFor({ state: 'visible', timeout: 15000 });
+    await page.locator('#seedInput').fill(seed);
+    await page.locator('#newCampaignBtn').click();
+    await page.waitForFunction(() => document.querySelector('#intro')?.hidden === true, null, { timeout: 10000 });
+    await page.locator('#mapCard').waitFor({ state: 'visible', timeout: 10000 });
+  } catch (error) {
+    const state = await page.evaluate(() => ({
+      title: document.title,
+      readyState: document.readyState,
+      introHidden: document.querySelector('#intro')?.hidden,
+      mapVisible: (() => { const node = document.querySelector('#mapCard'); const rect = node?.getBoundingClientRect(); return !!rect && rect.width > 0 && rect.height > 0; })(),
+      seed: document.querySelector('#seedInput')?.value,
+      campaignSaved: !!localStorage.getItem('mbm_crownbadge_campaign_v1'),
+      testApi: !!window.__MBM_CROWN_TEST__,
+      bodyText: (document.body?.innerText || '').trim().slice(0, 240),
+    })).catch(evaluateError => ({ evaluateError: evaluateError.message }));
+    await page.screenshot({ path: path.join(OUT, 'crown-start-failure.png'), fullPage: false }).catch(() => {});
+    const detail = { state, offOrigin: track?.offOrigin || [], failed: track?.failed || [], errors: track?.errors || [] };
+    console.error(`[BOOT DIAGNOSTIC] Crown ${seed}: ${JSON.stringify(detail)}`);
+    throw new Error(`Crown ${seed} did not start a campaign: ${error.message}`);
+  }
 }
 
 async function runTitan(browser, origin) {
@@ -311,7 +330,7 @@ async function runCrown(browser, origin) {
   for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
     const mobile = viewport.width < 600;
     const t = await trackedPage(browser, origin, '/__game__/crownbadge/', { viewport, touch: mobile, mobile });
-    await startCrown(t.page, `QA-${viewport.width}`);
+    await startCrown(t, `QA-${viewport.width}`);
     const shot = path.join(OUT, `crown-${viewport.width}x${viewport.height}.png`);
     await t.page.screenshot({ path: shot, fullPage: false });
     if (mobile) {
@@ -336,7 +355,7 @@ async function runCrown(browser, origin) {
   }
 
   const save = await trackedPage(browser, origin, '/__game__/crownbadge/');
-  await startCrown(save.page, 'LOSSLESS-CROWN');
+  await startCrown(save, 'LOSSLESS-CROWN');
   const crownWritten = await save.page.evaluate(() => {
     const key = 'mbm_crownbadge_campaign_v1';
     return JSON.parse(localStorage.getItem(key) || 'null');
@@ -349,7 +368,7 @@ async function runCrown(browser, origin) {
   await closeTracked(save, 'Crown save roundtrip path');
 
   const flash = await trackedPage(browser, origin, '/__game__/crownbadge/');
-  await startCrown(flash.page, 'FLASH-RATE');
+  await startCrown(flash, 'FLASH-RATE');
   const times = await flash.page.evaluate(async () => {
     const times = [];
     const observer = new MutationObserver(() => {
@@ -367,7 +386,7 @@ async function runCrown(browser, origin) {
   await flash.context.close();
 
   const reduced = await trackedPage(browser, origin, '/__game__/crownbadge/', { reduced: true });
-  await startCrown(reduced.page, 'REDUCED-FLOOR');
+  await startCrown(reduced, 'REDUCED-FLOOR');
   const reducedMotion = await reduced.page.evaluate(async () => {
     const before = document.body.className;
     for (let i = 0; i < 20; i++) window.__MBM_CROWN_TEST__.pulse();
