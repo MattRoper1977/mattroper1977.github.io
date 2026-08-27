@@ -562,5 +562,6 @@ if (MODE === 'lesson-timing') {
 }
 const rows = payload.rows;
 const totals = Object.fromEntries([...new Set(rows.map(row => row.class))].sort().map(key => [key, rows.filter(row => row.class === key).length]));
-console.log(JSON.stringify({ mode: MODE, routes: rows.length, totals, report: REPORT }, null, 2));
+const broken = rows.filter(row => row.class !== 'SPLASH OK');
+console.log(JSON.stringify({ mode: MODE, routes: rows.length, totals, broken, report: REPORT }, null, 2));
 process.exit(MODE === 'verify' && rows.some(row => row.class !== 'SPLASH OK') ? 1 : 0);
