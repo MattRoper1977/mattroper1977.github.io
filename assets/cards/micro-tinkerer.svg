@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 96" role="img" aria-labelledby="title desc">
+  <title id="title">Micro-Tinkerer: The Giant's Study</title>
+  <desc id="desc">A dark study seen from thumb height on a desktop. An angled lamp throws a warm cone of light from the upper right across the desk surface. Three AA batteries lie in the light, one near the front edge, one mid-desk and one further back by a line of hardcover books stood on end. A tiny figure crouches in the shadow of a glue tub in the foreground. Across the back wall falls the long shadow of a seated giant, one hand reaching in from the right.</desc>
+  <defs>
+    <linearGradient id="mtroom" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#17151c"/>
+      <stop offset=".58" stop-color="#221d2c"/>
+      <stop offset="1" stop-color="#2b2334"/>
+    </linearGradient>
+    <linearGradient id="mtdesk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6b4a30"/>
+      <stop offset="1" stop-color="#3d2a1c"/>
+    </linearGradient>
+    <linearGradient id="mtcone" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd45b" stop-opacity=".62"/>
+      <stop offset=".55" stop-color="#ffd45b" stop-opacity=".2"/>
+      <stop offset="1" stop-color="#ffd45b" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="mtbulb" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fff2d2"/>
+      <stop offset=".45" stop-color="#ffd45b"/>
+      <stop offset="1" stop-color="#ffd45b" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="120" height="96" fill="url(#mtroom)"/>
+
+  <!-- the giant's shadow across the back wall -->
+  <path d="M62 0h34l-6 16 10 9-8 13-30-4-8-17 8-9z" fill="#000" opacity=".34"/>
+  <path d="M96 22c7 1 13 5 17 11l7 12-9 4-9-11-9-5z" fill="#000" opacity=".3"/>
+
+  <!-- hardcover books stood on end, back of desk -->
+  <g opacity=".92">
+    <rect x="70" y="34" width="6" height="21" rx="1" fill="#4a3357"/>
+    <rect x="77" y="31" width="6" height="24" rx="1" fill="#5b3f42"/>
+    <rect x="84" y="36" width="5" height="19" rx="1" fill="#3f4a5e"/>
+  </g>
+
+  <!-- lamp: arm, head, and the cone it throws -->
+  <path d="M112 12l-9 12" stroke="#8a7f93" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <path d="M107 20l-11 8 9 7z" fill="#8a7f93"/>
+  <circle cx="101" cy="27" r="7" fill="url(#mtbulb)"/>
+  <path d="M104 30 L38 78 L14 62 L96 24Z" fill="url(#mtcone)"/>
+
+  <!-- the desktop -->
+  <path d="M0 55h120v41H0z" fill="url(#mtdesk)"/>
+  <path d="M0 55h120v2H0z" fill="#8a5f3c" opacity=".7"/>
+
+  <!-- three AA batteries, in the light -->
+  <g stroke="#17151c" stroke-width=".7">
+    <g transform="translate(30 74) rotate(-9)">
+      <rect x="0" y="0" width="15" height="6" rx="1.4" fill="#73e5b2"/>
+      <rect x="15" y="1.8" width="2" height="2.4" rx=".6" fill="#fff2d2"/>
+    </g>
+    <g transform="translate(56 66) rotate(6)">
+      <rect x="0" y="0" width="13" height="5.2" rx="1.2" fill="#73e5b2"/>
+      <rect x="13" y="1.5" width="1.8" height="2.2" rx=".5" fill="#fff2d2"/>
+    </g>
+    <g transform="translate(78 58) rotate(-3)">
+      <rect x="0" y="0" width="11" height="4.4" rx="1" fill="#73e5b2"/>
+      <rect x="11" y="1.2" width="1.6" height="2" rx=".5" fill="#fff2d2"/>
+    </g>
+  </g>
+
+  <!-- PVA tub, foreground left -->
+  <path d="M10 62h13v18a3 3 0 0 1-3 3h-7a3 3 0 0 1-3-3z" fill="#e8e4f0"/>
+  <path d="M13 58h7v4h-7z" fill="#75bfff"/>
+  <path d="M10 68h13v5H10z" fill="#75bfff" opacity=".55"/>
+
+  <!-- the tinkerer, crouched in the tub's shadow -->
+  <g fill="#fff2d2">
+    <circle cx="28" cy="83" r="3"/>
+    <path d="M25 87c0-2 1.4-3 3-3s3 1 3 3l-.6 5h-4.8z"/>
+    <path d="M31 88l4.5 2-.8 2-4.4-2z"/>
+  </g>
+  <ellipse cx="28" cy="93" rx="6" ry="1.6" fill="#000" opacity=".35"/>
+</svg>
