@@ -21,7 +21,7 @@ const LIVE_ORIGIN = 'https://mattroper1977.github.io';
 const NEWEST = ['/titanforge/', '/crownbadge/', '/micro-tinkerer/'];
 const TOWN = '/townlife/';
 const FIRST_CONTROL_BUSY_MS = 68;
-const RECALIBRATED_CONTROL_BUSY_MS = 220;
+const RECALIBRATED_CONTROL_BUSY_MS = 1200;
 const INPUTS = [
   ['key', 'ArrowUp'],
   ['key', 'ArrowRight'],
