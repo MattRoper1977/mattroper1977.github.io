@@ -412,6 +412,7 @@ jobs:
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
+          CANDIDATE_REF: ${{ github.head_ref }}
         run: |
           set -euo pipefail
 
@@ -485,10 +486,35 @@ jobs:
             if cmp -s "$served" "$proposed"; then
               echo "  PASS     this ref moves the mirror, and the result is the served canonical"
               echo "           byte for byte ($(b "$served") B $(h "$served"))"
+            elif test "$EVENT_NAME" = "pull_request" && test -n "$CANDIDATE_REF" && \
+                 git ls-remote --exit-code --heads https://github.com/MattRoper1977/Games.git \
+                   "refs/heads/$CANDIDATE_REF" >/dev/null; then
+              # COORDINATED SITE-FIRST STAGING. The live facts above still
+              # require production to be authorised by Games/main. A proposed
+              # mirror may be ahead of production only when another repository
+              # already carries those exact bytes on the matching public
+              # branch. This is the safe launch interval: routes exist on the
+              # Site before the shelf advertises them. No branch, wrong bytes,
+              # or a broken production canonical still fails closed.
+              git clone --quiet --depth 1 --branch "$CANDIDATE_REF" \
+                https://github.com/MattRoper1977/Games.git /tmp/agx-staged-shelf
+              staged=/tmp/agx-staged-shelf/games.json
+              if cmp -s "$proposed" "$staged"; then
+                echo "  PASS     coordinated Site-first staging: this ref's mirror exactly matches"
+                echo "           Games/$CANDIDATE_REF ($(b "$staged") B $(h "$staged"))"
+                echo "           Production remains authorised by Games/main until the Site merge lands."
+              else
+                echo "  FAIL     a matching Games branch exists, but its canonical bytes disagree:"
+                echo "           proposed  $(b "$proposed") B $(h "$proposed")"
+                echo "           staged    $(b "$staged") B $(h "$staged")"
+                echo "           coordinated staging is exact-byte only"
+                exit 1
+              fi
             else
               echo "  FAIL     this ref moves the mirror and the result is NOT the served canonical:"
               echo "           proposed  $(b "$proposed") B $(h "$proposed")"
               echo "           canonical $(b "$served") B $(h "$served")"
+              echo "           no same-named Games branch supplied matching staged bytes"
               echo "           regenerate with tools/render_games_manifest_mirror.py --write, never by hand"
               exit 1
             fi
