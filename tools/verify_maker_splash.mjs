@@ -176,8 +176,19 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
   catch (error) { errors.push(`navigation: ${error.message}`); }
   const maker = page.locator('[data-mbm-maker-splash]');
   const appeared = await maker.waitFor({ state: 'attached', timeout: waitAbsent }).then(() => true).catch(() => false);
+  let shownUnderlayRect = null, visibleWallMs = null;
   if (appeared) {
+    const visibleWallStart = Date.now();
     await page.waitForTimeout(20);
+    await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(error => errors.push(`shown-domcontentloaded: ${error.message}`));
+    shownUnderlayRect = await page.evaluate(() => {
+      const selectors = ['[data-mbm-primary-start]','#startBtn','#playBtn','#beginBtn','#launchBtn','#openBtn','#start','a.skip','main button:not([disabled])','button:not([disabled])','main a[href]','a[href]'];
+      const visible = el => { const css = getComputedStyle(el), box = el.getBoundingClientRect(); return !el.disabled && css.display !== 'none' && css.visibility !== 'hidden' && box.width > 0 && box.height > 0; };
+      let primary = null;
+      for (const selector of selectors) { primary = [...document.querySelectorAll(selector)].find(el => visible(el) && !el.closest('[data-mbm-maker-splash]')) || null; if (primary) break; }
+      const rect = primary?.getBoundingClientRect();
+      return rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height, id: primary.id || '', tag: primary.tagName } : null;
+    });
     if (action === 'key') await page.keyboard.press('a');
     else if (action === 'pointer') {
       const box = await maker.boundingBox();
@@ -185,7 +196,7 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
       else errors.push('pointer: splash had no rendered box');
     }
     else if (action === 'timeout') await maker.evaluate(el => { el.style.animation = 'none'; });
-    if (action !== 'none') await maker.waitFor({ state: 'detached', timeout: 2800 }).catch(() => {});
+    if (action !== 'none') { await maker.waitFor({ state: 'detached', timeout: 2800 }).catch(() => {}); visibleWallMs = Date.now() - visibleWallStart; }
   }
   await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(error => errors.push(`domcontentloaded: ${error.message}`));
   const state = await page.evaluate(key => {
@@ -214,7 +225,7 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
       ready: document.readyState,
     };
   }, KEY).catch(error => ({ probe: {}, error: error.message }));
-  const result = { ...state, appeared, wall, status: response?.status() ?? null, finalUrl: page.url(), errors, external };
+  const result = { ...state, appeared, wall, shownUnderlayRect, visibleWallMs, status: response?.status() ?? null, finalUrl: page.url(), errors, external };
   await page.close();
   return result;
 }
@@ -241,17 +252,18 @@ async function wayOutProbe(browser, origin, route, activation) {
   await page.waitForLoadState('domcontentloaded', { timeout: 30000 });
   let tabs = 0;
   for (; tabs <= 30; tabs += 1) {
-    if (await page.evaluate(() => document.activeElement?.id === 'mbmexit-back')) break;
+    if (await page.evaluate(() => document.activeElement?.matches?.('#mbmexit-back,#mbmhud-back'))) break;
     await page.keyboard.press('Tab');
   }
-  const reached = tabs <= 30 && await page.evaluate(() => document.activeElement?.id === 'mbmexit-back');
+  const activeId = await page.evaluate(() => document.activeElement?.id || '');
+  const reached = tabs <= 30 && await page.evaluate(() => document.activeElement?.matches?.('#mbmexit-back,#mbmhud-back'));
   const before = page.url();
   const preActivationErrors = errors.slice(), preActivationExternal = external.slice();
   if (reached) await page.keyboard.press(activation);
   await page.waitForTimeout(300);
   const after = page.url();
   await context.close();
-  return { activation, tabs, reached, before, after, navigated: after !== before, errors: preActivationErrors, external: preActivationExternal };
+  return { activation, tabs, reached, activeId, before, after, navigated: after !== before, errors: preActivationErrors, external: preActivationExternal };
 }
 
 async function census(browser, origin) {
@@ -329,14 +341,22 @@ async function controls(browser, origin) {
   check(forced.probe?.seen && forced.local === String(fixed), 'SS7 force shows without writing');
   ctx = await newContext(browser); const skipped = await pageProbe(ctx, origin, `${siteRoute}?splash=skip`, { waitAbsent: 700 }); await ctx.close();
   check(!skipped.probe?.seen && skipped.local === null, 'SS7 skip suppresses without writing');
-  check(JSON.stringify(forced.probe?.contentGeometry) === JSON.stringify(skippedControl.probe?.contentGeometry),
-    'SS5 shown and suppressed first-paint content geometry match', JSON.stringify({ shown: forced.probe?.contentGeometry, suppressed: skippedControl.probe?.contentGeometry }));
+  check(JSON.stringify(forced.shownUnderlayRect) === JSON.stringify(skippedControl.primaryRect),
+    'SS5 shown and suppressed first-paint primary geometry match', JSON.stringify({ shown: forced.shownUnderlayRect, suppressed: skippedControl.primaryRect }));
+  ctx = await newContext(browser);
+  await ctx.addInitScript(() => document.addEventListener('DOMContentLoaded', () => {
+    const primary = document.querySelector('[data-mbm-primary-start],#startBtn,#playBtn,#beginBtn,#launchBtn,#openBtn,#start,a.skip,main button:not([disabled]),button:not([disabled]),main a[href],a[href]');
+    if (primary) primary.style.transform = 'translateX(7px)';
+  }, { once: true }));
+  const shifted = await pageProbe(ctx, origin, `${siteRoute}?splash=force`, { action: 'key', waitAbsent: 700 }); await ctx.close();
+  check(JSON.stringify(shifted.shownUnderlayRect) !== JSON.stringify(skippedControl.primaryRect),
+    'RL4 first-paint geometry mutation control turns the equality predicate red', JSON.stringify({ shifted: shifted.shownUnderlayRect, control: skippedControl.primaryRect }));
   check(forced.probe?.focus?.t != null && skippedControl.probe?.focus?.t != null,
     'time-to-interactive is measured with the splash shown and suppressed', JSON.stringify({ shownMs: forced.probe?.focus?.t, suppressedMs: skippedControl.probe?.focus?.t }));
   check(forced.probe?.focus?.t <= (forced.probe?.last ?? 0) + 350,
     'shown time-to-interactive does not extend beyond the visible splash', JSON.stringify({ interactiveMs: forced.probe?.focus?.t, splashLastMs: forced.probe?.last }));
   ctx = await newContext(browser, { reduced: true }); const reduced = await pageProbe(ctx, origin, siteRoute, { action: 'key', waitAbsent: 700 }); await ctx.close();
-  check(reduced.probe?.seen && reduced.probe.last <= 500, 'SS8 reduced motion clears within 500 ms', String(reduced.probe?.last));
+  check(reduced.probe?.seen && reduced.visibleWallMs !== null && reduced.visibleWallMs >= 300 && reduced.visibleWallMs <= 500, 'SS8 reduced motion paints and clears within 300–500 ms', String(reduced.visibleWallMs));
   check(reduced.local && Math.abs(Number(reduced.local) - reduced.wall) <= 5000, 'SS8 reduced motion still writes the daily timestamp', reduced.local);
   for (const viewport of VIEWPORTS) {
     for (const action of ['key', 'pointer', 'auto', 'timeout']) {
