@@ -240,8 +240,9 @@ html[data-theme="highlumen"] .line1,html[data-theme="highlumen"] .line2{color:#3
 <section class="sec whole-shelf"><div class="wrap">
 <h2>Browse by genre</h2>
 <p class="sub" id="shelfSub">Loading the shelf…</p>
-<!-- Genre sections are <details> accordions: the first opens, the rest stay
-     shut. Native disclosure rather than a scripted one, so keyboard and screen
+<!-- Genre sections are <details> accordions: the genre carrying the current
+     NEW · holder opens (or the first genre when there is no holder), and the
+     rest stay shut. Native disclosure rather than a scripted one, so keyboard and screen
      reader behaviour is the browser's and the summary is a real 44px target.
      When a search or feel filter is active the accordions are replaced by ONE
      flat result list - filtering inside nine sections makes a visitor hunt
@@ -628,10 +629,16 @@ function drawGrid(){
   sortGames(hits).forEach(function(g){flat.appendChild(gCard(g,false))});
  }else{
   host.hidden=false;flat.hidden=true;
-  GENRE_ORDER.forEach(function(gname,i){
+  /* The NEW marker is ephemeral shelf metadata, so derive its genre rather
+     than pinning a route. Opening that one section makes the declared marker
+     genuinely visible on arrival; with no holder, preserve the first-section
+     fallback. */
+  var newHolder=all.find(function(g){return /^NEW\s*·/.test(String(g.title||""))});
+  var openGenre=newHolder?genreOf(newHolder):GENRE_ORDER[0];
+  GENRE_ORDER.forEach(function(gname){
    var members=sortGames(all.filter(function(g){return genreOf(g)===gname}));
    if(!members.length)return;
-   var d=document.createElement("details");d.className="gsec";if(i===0)d.open=true;
+   var d=document.createElement("details");d.className="gsec";if(gname===openGenre)d.open=true;
    var sm=document.createElement("summary");
    sm.innerHTML='<span class="gname"></span><span class="gnum"></span>';
    sm.querySelector(".gname").textContent=gname;

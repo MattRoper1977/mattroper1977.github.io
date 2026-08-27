@@ -568,6 +568,9 @@ if (!chromium) {
           cards: [...d.querySelectorAll('a.gcard')].filter(vis).length,
           open: d.open
         })),
+        newMarkers: [...document.querySelectorAll('#genreSections a.gcard')]
+          .filter(a => /NEW\s*·/.test(a.innerText))
+          .map(a => n(a.getAttribute('href'))),
         badges: [...document.querySelectorAll('#genreSections .gcard .mini')].filter(vis).length,
         shelfSub: (document.getElementById('shelfSub') || {}).textContent || '',
         countline: (document.getElementById('countline') || {}).textContent || '',
@@ -608,10 +611,20 @@ if (!chromium) {
   check(live.distinct === record.taxonomy.length,
     'distinct games painted == distinct games in the record',
     `${live.distinct} painted, ${record.taxonomy.length} in record`);
-  check(live.genres.length === record.genreOrder.length && live.genres[0] && live.genres[0].open
-        && live.genres.slice(1).every(g => !g.open),
-    'nine genre accordions, the first open and the rest shut',
-    `${live.genres.length} sections, ${live.genres.filter(g => g.open).length} open`);
+  const declaredNew = games.filter(g => /^NEW\s*·/.test(String(g.title || '')));
+  const newHref = declaredNew.length === 1 ? declaredNew[0].href : null;
+  const newTax = newHref ? record.taxonomy.find(t => t.href === newHref) : null;
+  const expectedOpen = newTax ? newTax.genre : record.genreOrder[0];
+  const newSurfaceHolds = view => view.genres.length === record.genreOrder.length
+    && view.genres.filter(g => g.open).length === 1
+    && view.genres.some(g => g.open && g.name === expectedOpen)
+    && (newHref === null || (view.newMarkers.length === 1 && view.newMarkers[0] === newHref));
+  check(newSurfaceHolds(live),
+    'nine genre accordions, the NEW holder genre open and its marker genuinely rendered',
+    `${live.genres.length} sections; open=${live.genres.filter(g => g.open).map(g => g.name).join(', ') || 'none'}; markers=${live.newMarkers.join(', ') || 'none'}`);
+  check(!newSurfaceHolds({ ...live, newMarkers: [], genres: live.genres.map(g => ({ ...g, open: false })) }),
+    'CONTROL: hiding the declared NEW marker makes the same surface assertion go red',
+    `${newHref || '(no holder)'} removed from the measured marker set`);
   const labelDrift = live.genres.filter(g => {
     const want = record.taxonomy.filter(t => t.genre === g.name).length;
     return g.cards !== want || g.label !== `${want} game${want === 1 ? '' : 's'}`;
