@@ -145,17 +145,26 @@ async function routeIdentity(game) {
 
 async function dismissAndStart(page) {
   const candidates = page.locator('button, [role="button"], a');
-  const count = await candidates.count();
-  for (let index = 0; index < count; index += 1) {
-    const candidate = candidates.nth(index);
-    if (!await candidate.isVisible().catch(() => false)) continue;
-    const text = (await candidate.innerText().catch(() => '')).trim();
-    if (!/^(start|play|begin|enter|launch|continue|new game)|start game|play now/i.test(text)) continue;
-    if (/arcade|home|back/i.test(text)) continue;
-    await candidate.click({ timeout: 1000 }).catch(() => {});
-    return text;
-  }
-  return null;
+  // Resolve the same first visible start-like control in one browser pass.
+  // Per-element Playwright round trips made control-dense games spend minutes
+  // in this helper before their identical five-second measured window began.
+  const match = await candidates.evaluateAll(elements => {
+    for (let index = 0; index < elements.length; index += 1) {
+      const element = elements[index];
+      const style = getComputedStyle(element);
+      const box = element.getBoundingClientRect();
+      if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse'
+          || box.width === 0 || box.height === 0) continue;
+      const text = (element.innerText || '').trim();
+      if (!/^(start|play|begin|enter|launch|continue|new game)|start game|play now/i.test(text)) continue;
+      if (/arcade|home|back/i.test(text)) continue;
+      return { index, text };
+    }
+    return null;
+  });
+  if (!match) return null;
+  await candidates.nth(match.index).click({ timeout: 1000 }).catch(() => {});
+  return match.text;
 }
 
 async function scriptedInput(page) {
