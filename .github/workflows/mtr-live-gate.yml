@@ -1,0 +1,54 @@
+name: Micro-Tinkerer live gate
+
+# The three release assertions, run against the DEPLOYED origin rather than a
+# local serve. A local server proves the tree; only this proves what a visitor
+# is handed. It is dispatch-only on purpose: it asks a question about
+# production, so running it on a pull request would answer about a tree that is
+# not yet served, and running it on every push would ask the same question of
+# an unchanged deployment.
+#
+# The result of a green run is VERIFIED-CI. It is not a phone pass, and must
+# not be recorded as one: a phone is a different instrument on a different
+# network, and the offline leg in particular behaves differently on a real
+# radio than on a runner with its socket closed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Live URL to gate'
+        required: false
+        default: 'https://madebymatt.uk/micro-tinkerer/'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mtr-live-gate
+  cancel-in-progress: false
+
+jobs:
+  live:
+    name: Micro-Tinkerer boots, discloses and survives offline - against the live origin
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install the browser this gate drives
+        run: |
+          npm i --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Record what is under test
+        run: |
+          echo "url    : ${{ inputs.url }}"
+          echo "site   : $(git rev-parse HEAD)"
+          echo "served : $(curl -sS -o /dev/null -w '%{http_code}' '${{ inputs.url }}')"
+
+      - name: Boots, discloses, survives offline
+        run: node tools/mtr_live_gate.mjs "${{ inputs.url }}"

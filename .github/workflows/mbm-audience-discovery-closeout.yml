@@ -940,10 +940,21 @@ jobs:
             cat /tmp/cc1.log; cp /tmp/cc.bak data/audience-homepages.json; exit 1; }
           cp /tmp/cc.bak data/audience-homepages.json
           python3 - <<'PY'
-          import io
+          # DERIVED, not typed. This control used to hardcode 'All 54 games' and
+          # rewrite it to 52. The day the shelf reached 55 that replace became a
+          # silent no-op: the file was left untouched, the count gate correctly
+          # stayed green, and the control reported that the gate had missed a
+          # drifting figure. A control whose mutation can quietly fail to happen
+          # asserts nothing, and it accuses the gate it is testing. So the number
+          # comes from the record the page derives from, and the assert makes a
+          # phrasing change loud instead of silent.
+          import io, json
           p = 'for/pupils/index.html'
           s = io.open(p, encoding='utf-8').read()
-          io.open(p, 'w', encoding='utf-8').write(s.replace('All 54 games', 'All 52 games', 1))
+          n = len(json.load(io.open('data/source-manifests/games.json', encoding='utf-8'))['games'])
+          live = 'All %d games' % n
+          assert live in s, 'the pupil page no longer states the derived shelf total as "All N games" - fix this control, do not weaken it'
+          io.open(p, 'w', encoding='utf-8').write(s.replace(live, 'All %d games' % (n - 2), 1))
           PY
           if node tools/verify_catalogue_counts.mjs > /tmp/cc2.log 2>&1; then
             echo "::error::count gate stayed green with a DERIVED figure drifting from its source"
