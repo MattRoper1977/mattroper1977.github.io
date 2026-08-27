@@ -123,6 +123,22 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
       const p = window.__makerProbe;
       if (!p.focus && event.target && !event.target.closest?.('[data-mbm-maker-splash]')) p.focus = { t: performance.now(), id: event.target.id || '', tag: event.target.tagName || '' };
     });
+    function observeAdded(root) {
+      const candidates = [];
+      if (root.nodeType === 1 && root.matches?.('[data-mbm-maker-splash],#mbmSplash,.mbm-splash,[data-mbm-splash]')) candidates.push(root);
+      if (root.querySelectorAll) candidates.push(...root.querySelectorAll('[data-mbm-maker-splash],#mbmSplash,.mbm-splash,[data-mbm-splash]'));
+      for (const el of candidates) {
+        const label = `${el.getAttribute('aria-label') || ''} ${el.textContent || ''}`;
+        if (/made\s+by\s+matt/i.test(label)) {
+          const p = window.__makerProbe;
+          p.seen = true;
+          if (p.first === null) p.first = performance.now();
+        }
+      }
+    }
+    new MutationObserver(records => {
+      for (const record of records) for (const node of record.addedNodes) observeAdded(node);
+    }).observe(document, { childList: true, subtree: true });
     function sample() {
       const p = window.__makerProbe;
       const el = document.querySelector('[data-mbm-maker-splash],#mbmSplash,.mbm-splash,[data-mbm-splash]');
@@ -159,7 +175,13 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
   const state = await page.evaluate(key => {
     const p = window.__makerProbe || {};
     const legacy = document.querySelector('#mbmSplash,.mbm-splash,[data-mbm-splash]');
-    const primary = document.querySelector('#startBtn,#playBtn,#beginBtn,#launchBtn,#openBtn,#start,a.skip,main button:not([disabled]),button:not([disabled]),main a[href],a[href]');
+    const selectors = ['[data-mbm-primary-start]','#startBtn','#playBtn','#beginBtn','#launchBtn','#openBtn','#start','a.skip','main button:not([disabled])','button:not([disabled])','main a[href]','a[href]'];
+    const visible = el => { const css = getComputedStyle(el), box = el.getBoundingClientRect(); return !el.disabled && css.display !== 'none' && css.visibility !== 'hidden' && box.width > 0 && box.height > 0; };
+    let primary = null;
+    for (const selector of selectors) {
+      primary = [...document.querySelectorAll(selector)].find(el => visible(el) && !el.closest('[data-mbm-maker-splash]')) || null;
+      if (primary) break;
+    }
     const rect = primary?.getBoundingClientRect();
     let local = null, session = null, keys = [];
     try { local = localStorage.getItem(key); keys = Object.keys(localStorage); } catch {}
@@ -208,11 +230,12 @@ async function wayOutProbe(browser, origin, route, activation) {
   }
   const reached = tabs <= 30 && await page.evaluate(() => document.activeElement?.id === 'mbmexit-back');
   const before = page.url();
+  const preActivationErrors = errors.slice(), preActivationExternal = external.slice();
   if (reached) await page.keyboard.press(activation);
   await page.waitForTimeout(300);
   const after = page.url();
   await context.close();
-  return { activation, tabs, reached, before, after, navigated: after !== before, errors, external };
+  return { activation, tabs, reached, before, after, navigated: after !== before, errors: preActivationErrors, external: preActivationExternal };
 }
 
 async function census(browser, origin) {
