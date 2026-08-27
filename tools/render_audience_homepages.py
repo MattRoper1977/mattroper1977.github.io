@@ -100,7 +100,7 @@ def head(title: str, description: str, route: str) -> str:
 <meta name="mbm-platform-version" content="{SENTINEL}"><title>{esc(title)}</title>
 <meta name="description" content="{esc(description)}">
 <meta name="theme-color" content="#161D3D"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(description)}"><meta property="og:url" content="{canonical(route)}"><meta property="og:type" content="website"><meta property="og:site_name" content="Made by Matt"><meta property="og:image" content="https://madebymatt.uk/assets/og-cover.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://madebymatt.uk/assets/og-cover.png">
-<link rel="canonical" href="{canonical(route)}"><link rel="icon" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
+<link rel="canonical" href="{canonical(route)}"><link rel="icon" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/assets/mbm-platform.css"><link rel="stylesheet" href="/assets/mbm-audience.css"><link rel="stylesheet" href="/assets/mbm-search.css">
 <script type="application/ld+json">{json_ld(title, description, route)}</script></head>'''
 

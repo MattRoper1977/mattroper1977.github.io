@@ -90,7 +90,6 @@ def head_lines(*, title: str, description: str, path: str) -> list[str]:
         J(
             '<link rel="icon" href="/favicon.svg">',
             '<link rel="apple-touch-icon" href="/apple-touch-icon.png">',
-            '<link rel="manifest" href="/site.webmanifest">',
             '<link rel="stylesheet" href="/styles.css">',
             '<link rel="stylesheet" href="/assets/mbm-platform.css">',
             '<link rel="stylesheet" href="/assets/mbm-search.css">',
