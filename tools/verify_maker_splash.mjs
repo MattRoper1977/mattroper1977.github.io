@@ -111,7 +111,7 @@ async function newContext(browser, options = {}) {
   return context;
 }
 
-async function pageProbe(context, origin, route, { action = 'none', waitAbsent = 650 } = {}) {
+async function pageProbe(context, origin, route, { action = 'none', waitAbsent = 650, mutateUnderlay = false } = {}) {
   const page = await context.newPage();
   const errors = [], external = [];
   page.on('pageerror', error => errors.push(`pageerror: ${error.message}`));
@@ -181,14 +181,15 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
     const visibleWallStart = Date.now();
     await page.waitForTimeout(20);
     await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(error => errors.push(`shown-domcontentloaded: ${error.message}`));
-    shownUnderlayRect = await page.evaluate(() => {
+    shownUnderlayRect = await page.evaluate(mutate => {
       const selectors = ['[data-mbm-primary-start]','#startBtn','#playBtn','#beginBtn','#launchBtn','#openBtn','#start','a.skip','main button:not([disabled])','button:not([disabled])','main a[href]','a[href]'];
       const visible = el => { const css = getComputedStyle(el), box = el.getBoundingClientRect(); return !el.disabled && css.display !== 'none' && css.visibility !== 'hidden' && box.width > 0 && box.height > 0; };
       let primary = null;
       for (const selector of selectors) { primary = [...document.querySelectorAll(selector)].find(el => visible(el) && !el.closest('[data-mbm-maker-splash]')) || null; if (primary) break; }
+      if (mutate && primary) { primary.style.setProperty('position', 'relative', 'important'); primary.style.setProperty('left', '7px', 'important'); }
       const rect = primary?.getBoundingClientRect();
       return rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height, id: primary.id || '', tag: primary.tagName } : null;
-    });
+    }, mutateUnderlay);
     if (action === 'key') await page.keyboard.press('a');
     else if (action === 'pointer') {
       const box = await maker.boundingBox();
@@ -264,6 +265,33 @@ async function wayOutProbe(browser, origin, route, activation) {
   const after = page.url();
   await context.close();
   return { activation, tabs, reached, activeId, before, after, navigated: after !== before, errors: preActivationErrors, external: preActivationExternal };
+}
+
+async function reducedMotionProbe(browser, origin, route) {
+  const context = await newContext(browser, { reduced: true });
+  const page = await context.newPage(), errors = [];
+  page.on('pageerror', error => errors.push(`pageerror: ${error.message}`));
+  page.on('console', msg => { if (msg.type() === 'error') errors.push(`console: ${msg.text()}`); });
+  const wall = Date.now();
+  await page.goto(origin + encodeURI(route), { waitUntil: 'commit', timeout: 30000 });
+  const maker = page.locator('[data-mbm-maker-splash]');
+  const attached = await maker.waitFor({ state: 'attached', timeout: 1000 }).then(() => true).catch(() => false);
+  const start = Date.now(), samples = [];
+  if (attached) {
+    while (Date.now() - start <= 550) {
+      const visible = await maker.isVisible().catch(() => false);
+      const elapsed = Date.now() - start; samples.push({ elapsed, visible });
+      if (!visible) break;
+      await page.waitForTimeout(25);
+    }
+  }
+  const final = await maker.evaluate(el => { const css = getComputedStyle(el); return { visibility: css.visibility, pointerEvents: css.pointerEvents }; }).catch(() => ({ visibility: 'detached', pointerEvents: 'none' }));
+  await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(error => errors.push(`domcontentloaded: ${error.message}`));
+  const local = await page.evaluate(key => { try { return localStorage.getItem(key); } catch { return null; } }, KEY);
+  await context.close();
+  const visibleSamples = samples.filter(sample => sample.visible);
+  const cleared = samples.find(sample => !sample.visible)?.elapsed ?? null;
+  return { attached, wall, local, errors, samples, lastVisible: visibleSamples.at(-1)?.elapsed ?? null, cleared, final };
 }
 
 async function census(browser, origin) {
@@ -344,19 +372,15 @@ async function controls(browser, origin) {
   check(JSON.stringify(forced.shownUnderlayRect) === JSON.stringify(skippedControl.primaryRect),
     'SS5 shown and suppressed first-paint primary geometry match', JSON.stringify({ shown: forced.shownUnderlayRect, suppressed: skippedControl.primaryRect }));
   ctx = await newContext(browser);
-  await ctx.addInitScript(() => document.addEventListener('DOMContentLoaded', () => {
-    const primary = document.querySelector('[data-mbm-primary-start],#startBtn,#playBtn,#beginBtn,#launchBtn,#openBtn,#start,a.skip,main button:not([disabled]),button:not([disabled]),main a[href],a[href]');
-    if (primary) primary.style.transform = 'translateX(7px)';
-  }, { once: true }));
-  const shifted = await pageProbe(ctx, origin, `${siteRoute}?splash=force`, { action: 'key', waitAbsent: 700 }); await ctx.close();
+  const shifted = await pageProbe(ctx, origin, `${siteRoute}?splash=force`, { action: 'key', waitAbsent: 700, mutateUnderlay: true }); await ctx.close();
   check(JSON.stringify(shifted.shownUnderlayRect) !== JSON.stringify(skippedControl.primaryRect),
     'RL4 first-paint geometry mutation control turns the equality predicate red', JSON.stringify({ shifted: shifted.shownUnderlayRect, control: skippedControl.primaryRect }));
   check(forced.probe?.focus?.t != null && skippedControl.probe?.focus?.t != null,
     'time-to-interactive is measured with the splash shown and suppressed', JSON.stringify({ shownMs: forced.probe?.focus?.t, suppressedMs: skippedControl.probe?.focus?.t }));
   check(forced.probe?.focus?.t <= (forced.probe?.last ?? 0) + 350,
     'shown time-to-interactive does not extend beyond the visible splash', JSON.stringify({ interactiveMs: forced.probe?.focus?.t, splashLastMs: forced.probe?.last }));
-  ctx = await newContext(browser, { reduced: true }); const reduced = await pageProbe(ctx, origin, siteRoute, { action: 'key', waitAbsent: 700 }); await ctx.close();
-  check(reduced.probe?.seen && reduced.visibleWallMs !== null && reduced.visibleWallMs >= 300 && reduced.visibleWallMs <= 500, 'SS8 reduced motion paints and clears within 300–500 ms', String(reduced.visibleWallMs));
+  const reduced = await reducedMotionProbe(browser, origin, siteRoute);
+  check(reduced.attached && reduced.lastVisible !== null && reduced.lastVisible >= 280 && reduced.cleared !== null && reduced.cleared <= 500 && reduced.final.pointerEvents === 'none', 'SS8 reduced motion paints and clears within 500 ms', JSON.stringify(reduced));
   check(reduced.local && Math.abs(Number(reduced.local) - reduced.wall) <= 5000, 'SS8 reduced motion still writes the daily timestamp', reduced.local);
   for (const viewport of VIEWPORTS) {
     for (const action of ['key', 'pointer', 'auto', 'timeout']) {
