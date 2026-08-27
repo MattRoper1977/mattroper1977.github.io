@@ -132,7 +132,7 @@ Site: `titanforge/index.html`, `crownbadge/index.html`, their generated chassis 
 - The native q82 outputs did not clear the SSIM floor, so quality and dimensions were changed under the prompt's permitted measured fallback rather than accepting softness.
 - Shipped background: **1200 × 675**, WebP q90/method 6, **223,392 B**, SSIM **0.9876375198**.
 - Shipped athlete: **700 × 1050**, WebP q86/method 6, **123,880 B**, alpha preserved, SSIM **0.9869825840**.
-- Shipped `titanforge/index.html` after both generated chassis regions: **866,163 B**; two WebP data URLs; zero PNG data URLs.
+- Shipped `titanforge/index.html` after both generated chassis regions: **866,271 B**; two WebP data URLs; zero PNG data URLs.
 - The deliberately corrupt-athlete control and the 390 × 844 / 1280 × 800 paint screenshots are implemented in `tools/titan-crown/browser.mjs`; they remain unclaimed until the CI Chromium run completes.
 
 ## P2 — Titan correctness and fairness — model/static green; rendered proof pending CI
