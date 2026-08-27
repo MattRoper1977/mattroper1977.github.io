@@ -114,7 +114,21 @@ check(genreLabels.length > 0 && genreDrift.length === 0,
 
 /* ---- 3. the index is not described by a figure anywhere in owned copy ----- */
 const total = index.counts.total;
-const idxClaims = JSON.stringify(audience.audiences).match(new RegExp(`\\b${total}\\b`, 'g')) || [];
+/* Copy means authored strings, not numeric layout metadata. The index reached
+   720 on the same commit that added two 720px image-height fields; scanning
+   JSON.stringify() treated those dimensions as thirteen prose claims. Walk
+   strings only so the gate keeps judging what a visitor can actually read. */
+const idxClaims = [];
+const findIndexClaims = (node, path) => {
+  if (typeof node === 'string') {
+    for (const match of node.matchAll(new RegExp(`\\b${total}\\b`, 'g')))
+      idxClaims.push({ path, text: node.slice(0, 110), at: match.index });
+  } else if (node && typeof node === 'object') {
+    for (const key of Object.keys(node))
+      findIndexClaims(node[key], path ? `${path}.${key}` : key);
+  }
+};
+findIndexClaims(audience.audiences, 'audiences');
 check(idxClaims.length === 0,
   `no page hardcodes the index total (${total}) — deleting beats updating`,
   `${idxClaims.length} occurrence(s)`);

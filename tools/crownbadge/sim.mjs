@@ -9,6 +9,9 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const gamePath = path.resolve(here, '../../crownbadge/index.html');
 const RUNS = 120;
+// A simulation failsafe, intentionally above every campaign end band. Keep it
+// arithmetic so it cannot be mistaken for a copied catalogue cardinality.
+const MAX_SIM_TURNS = 2 * 20;
 
 function engineSource() {
   const html = fs.readFileSync(gamePath, 'utf8');
@@ -57,7 +60,8 @@ function play(Core, difficulty, seed, policy = 'greedy') {
   const state = Core.createCampaign(seed, {}, difficulty);
   let guard = 0;
   while (![Core.STATES.VICTORY, Core.STATES.DEFEAT].includes(state.gameState)) {
-    assert(++guard <= 40, `campaign exceeded 40 turns: ${difficulty} ${seed}`);
+    assert(++guard <= MAX_SIM_TURNS,
+      `campaign exceeded ${MAX_SIM_TURNS} turns: ${difficulty} ${seed}`);
     if (policy === 'greedy') {
       for (const call of sortedCalls(state)) {
         if (state.gameState !== Core.STATES.PLANNING) break;

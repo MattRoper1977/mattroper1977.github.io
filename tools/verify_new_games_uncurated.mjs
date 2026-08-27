@@ -14,7 +14,10 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const NEW = ['/apexcurl/', '/apexvelodrome/', '/crownbadge/', '/titanforge/'];
+// This launch's subjects. Earlier shelf arrivals retain their own landed gates;
+// keeping them here would turn a launch contract into a hand-maintained copy of
+// the catalogue's history.
+const NEW = ['/crownbadge/', '/titanforge/'];
 
 const src = readFileSync(join(ROOT, 'games/index.html'), 'utf8');
 const shelf = JSON.parse(readFileSync(join(ROOT, 'data/source-manifests/games.json'), 'utf8')).games;

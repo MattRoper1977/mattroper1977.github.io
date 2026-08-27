@@ -62,12 +62,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The canonical is in another repository. Clone it anonymously — it is
-      # public, so this needs no token and no secret, and it works unchanged
-      # on forks and in local runs. This is the estate's established
-      # cross-repo pattern (see Games/.github/workflows/validate-games-json.yml).
+      # A coordinated launch must land the site before the canonical shelf so
+      # it never advertises a route that still 404s. On a PR, use a same-named
+      # public Games branch when one exists; otherwise compare with main. This
+      # keeps the guard fail-closed while allowing that safe two-repo staging
+      # order. Pushes, schedules and manual runs always judge Games/main.
       - name: Fetch the canonical shelf (public, no token)
-        run: git clone --depth 1 https://github.com/MattRoper1977/Games.git _games
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          CANDIDATE_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          shelf_ref=main
+          if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$CANDIDATE_REF" ] && \
+             git ls-remote --exit-code --heads https://github.com/MattRoper1977/Games.git \
+               "refs/heads/$CANDIDATE_REF" >/dev/null; then
+            shelf_ref=$CANDIDATE_REF
+          fi
+          echo "canonical ref: $shelf_ref"
+          git clone --depth 1 --branch "$shelf_ref" \
+            https://github.com/MattRoper1977/Games.git _games
 
       - name: Mirror is byte-identical to the canonical
         run: |
