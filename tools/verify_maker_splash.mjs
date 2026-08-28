@@ -26,6 +26,8 @@ const arg = name => {
 };
 const MODE = arg('mode') || 'controls';
 const SCOPE = arg('scope') || 'both';
+const SITE_ROUTE = arg('site-route');
+const SECOND_ROUTE = arg('second-route');
 if (!['both', 'site', 'lessons'].includes(SCOPE)) throw new Error(`unknown scope: ${SCOPE}`);
 const SITE = path.resolve(arg('site-root') || DEFAULT_SITE);
 const LESSONS = path.resolve(arg('lessons-root') || path.join(SITE, '_lessons'));
@@ -343,8 +345,15 @@ async function census(browser, origin) {
 async function controls(browser, origin) {
   const siteRoutes = applied(SITE);
   const lessonRoutes = SCOPE === 'site' ? [] : applied(LESSONS);
-  const siteRoute = siteRoutes[0];
-  const lessonRoute = SCOPE === 'site' ? siteRoutes[1] : lessonRoutes[0];
+  if (SITE_ROUTE && !siteRoutes.includes(SITE_ROUTE)) throw new Error(`--site-route is not declared applied: ${SITE_ROUTE}`);
+  const siteRoute = SITE_ROUTE || siteRoutes[0];
+  const defaultSecond = SCOPE === 'site' ? siteRoutes.find(route => route !== siteRoute) : lessonRoutes[0];
+  if (SECOND_ROUTE) {
+    const declared = SCOPE === 'site' ? siteRoutes : [...siteRoutes, ...lessonRoutes];
+    if (!declared.includes(SECOND_ROUTE)) throw new Error(`--second-route is not declared applied: ${SECOND_ROUTE}`);
+  }
+  const lessonRoute = SECOND_ROUTE || defaultSecond;
+  if (!siteRoute || !lessonRoute || siteRoute === lessonRoute) throw new Error('controls require two distinct declared applied routes');
   const reducedRoute = siteRoute;
   const assertions = [];
   const check = (condition, label, detail = '') => assertions.push({ pass: !!condition, label, detail });
