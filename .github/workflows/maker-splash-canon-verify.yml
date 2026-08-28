@@ -37,6 +37,14 @@ jobs:
       - uses: actions/checkout@v4
         with: { fetch-depth: 1 }
 
+      - name: Check out the in-flight Lessons application
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: codex/splash-suppression-lessons-20260828-1
+          path: _lessons
+          fetch-depth: 1
+
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
 
@@ -94,6 +102,7 @@ jobs:
           node tools/verify_maker_splash.mjs \
             --mode=controls --scope=site \
             --site-root="$GITHUB_WORKSPACE" \
+            --lessons-root="$GITHUB_WORKSPACE/_lessons" \
             --report=artifacts/maker-splash/controls.json | tee artifacts/maker-splash/controls.log
 
       - name: Every applied Site route behaves at both viewports
@@ -102,6 +111,7 @@ jobs:
           node tools/verify_maker_splash.mjs \
             --mode=verify --scope=site \
             --site-root="$GITHUB_WORKSPACE" \
+            --lessons-root="$GITHUB_WORKSPACE/_lessons" \
             --report=artifacts/maker-splash/routes.json | tee artifacts/maker-splash/routes.log
 
       - name: Upload evidence
