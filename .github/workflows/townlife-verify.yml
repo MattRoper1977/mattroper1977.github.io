@@ -66,6 +66,9 @@ jobs:
           npx playwright install --with-deps --no-shell chromium
 
       - name: Resolve the exact pre-splash Town Life bytes
+        # Immutable release-evidence pins taken on 2026-08-28:
+        # PRE_SPLASH_SHA is the Site main commit immediately before the splash landed;
+        # PRE_SPLASH_SHA256 pins its exact townlife/index.html comparison bytes.
         env:
           PRE_SPLASH_SHA: 7041e767c5eed08b05bb01a2b1cd90356cb378fa
           PRE_SPLASH_SHA256: 4e0b718217bc95932e3e7fc9ca87c3965b56b9d62a3325ca2cee76388d9be125
