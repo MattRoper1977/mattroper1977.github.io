@@ -345,8 +345,12 @@ function reducedMotionClearanceElapsed(result) {
   return Number.isFinite(attachedAt) && Number.isFinite(clearedAt) ? clearedAt - attachedAt : null;
 }
 
+function reducedMotionObservedElapsed(result) {
+  return Number.isFinite(result.probe?.endElapsed) ? result.probe.endElapsed : reducedMotionClearanceElapsed(result);
+}
+
 function reducedMotionClearsWithinDeadline(result) {
-  const elapsed = reducedMotionClearanceElapsed(result);
+  const elapsed = reducedMotionObservedElapsed(result);
   return result.probe?.attached === true && elapsed >= 300 && elapsed <= 500 && result.final.pointerEvents === 'none';
 }
 
@@ -456,9 +460,9 @@ async function controls(browser, origin) {
   const slowOrigin = `http://127.0.0.1:${slowServer.address().port}`;
   const slowReduced = await reducedMotionProbe(browser, slowOrigin, reducedRoute);
   await new Promise(resolve => slowServer.close(resolve));
-  const slowClearanceElapsed = reducedMotionClearanceElapsed(slowReduced);
-  const slowMissedDeadline = Number.isFinite(slowClearanceElapsed)
-    ? slowClearanceElapsed > 500
+  const slowObservedElapsed = reducedMotionObservedElapsed(slowReduced);
+  const slowMissedDeadline = Number.isFinite(slowObservedElapsed)
+    ? slowObservedElapsed > 500
     : slowReduced.final.pointerEvents !== 'none';
   check(slowReduced.probe?.attached && slowMissedDeadline && !reducedMotionClearsWithinDeadline(slowReduced),
     'RL4 reduced-motion slow-animation control turns the clearance predicate red', JSON.stringify(slowReduced));
