@@ -17,7 +17,7 @@ const VIEWPORT = { width: 390, height: 844 };
 const CPU_THROTTLE = 6;
 const WARM_UP_MS = 2500;
 const MEASURE_MS = 5000;
-const RUNS = 3;
+const RUNS = 9;
 const CONTROL_BUSY_MS = 1200;
 const INPUTS = [
   ['key', 'ArrowUp'],
@@ -179,9 +179,14 @@ const controlFps = control.map(value => value.fps);
 const beforeMedian = median(beforeFps);
 const afterMedian = median(afterFps);
 const controlMedian = median(controlFps);
+const pairedDeltas = after.map((value, index) => value.fps - before[index].fps);
+const pairedMedianDelta = median(pairedDeltas);
+const pairedSpreadDelta = spread(pairedDeltas);
+const busyPairedDeltas = control.map((value, index) => value.fps - before[index].fps);
+const busyPairedMedianDelta = median(busyPairedDeltas);
 const noRegression = afterMedian >= beforeMedian;
 const aboveShippedFloor = afterMedian >= shippedP25;
-const controlRed = controlMedian < beforeMedian && controlMedian < shippedP25;
+const controlRed = controlMedian < beforeMedian && controlMedian < shippedP25 && busyPairedMedianDelta < 0;
 const report = {
   protocol: { seed: SEED, viewport: VIEWPORT, cpuThrottle: CPU_THROTTLE, warmUpMs: WARM_UP_MS, measuredWindowMs: MEASURE_MS, runs: RUNS, scriptedInput: INPUTS, order: 'alternating AB/BA', chromiumVersion },
   identities: {
@@ -190,13 +195,14 @@ const report = {
   },
   before: { fps: beforeFps, medianFps: beforeMedian, spreadFps: spread(beforeFps), bootMs: before.map(value => value.bootMs), pageErrors: before.flatMap(value => value.pageErrors) },
   after: { fps: afterFps, medianFps: afterMedian, spreadFps: spread(afterFps), bootMs: after.map(value => value.bootMs), pageErrors: after.flatMap(value => value.pageErrors) },
+  paired: { deltasFps: pairedDeltas, medianDeltaFps: pairedMedianDelta, spreadDeltaFps: pairedSpreadDelta, thresholdFps: 0 },
   shippedPercentile25Fps: shippedP25,
-  controls: { busyMsPerFrame: CONTROL_BUSY_MS, fps: controlFps, medianFps: controlMedian, spreadFps: spread(controlFps), observedRed: controlRed },
+  controls: { busyMsPerFrame: CONTROL_BUSY_MS, fps: controlFps, medianFps: controlMedian, spreadFps: spread(controlFps), pairedDeltasFps: busyPairedDeltas, pairedMedianDeltaFps: busyPairedMedianDelta, observedRed: controlRed },
   gates: { noRegression, aboveShippedFloor, zeroPageErrors: before.concat(after).every(value => value.pageErrors.length === 0), controlRed },
 };
 fs.mkdirSync(path.join(ROOT, 'artifacts', 'townlife'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'artifacts', 'townlife', 'splash-performance.json'), `${JSON.stringify(report, null, 2)}\n`);
-console.log(`SPLASH PERFORMANCE — before ${beforeMedian.toFixed(4)} fps (spread ${spread(beforeFps).toFixed(4)}); after ${afterMedian.toFixed(4)} fps (spread ${spread(afterFps).toFixed(4)}); shipped p25 ${shippedP25.toFixed(4)}; control ${controlMedian.toFixed(4)} fps (spread ${spread(controlFps).toFixed(4)}) RED=${controlRed}`);
+console.log(`SPLASH PERFORMANCE — before ${beforeMedian.toFixed(4)} fps (spread ${spread(beforeFps).toFixed(4)}); after ${afterMedian.toFixed(4)} fps (spread ${spread(afterFps).toFixed(4)}); paired delta ${pairedMedianDelta.toFixed(4)} fps (spread ${pairedSpreadDelta.toFixed(4)}, threshold 0.0000); shipped p25 ${shippedP25.toFixed(4)}; control ${controlMedian.toFixed(4)} fps (spread ${spread(controlFps).toFixed(4)}, paired delta ${busyPairedMedianDelta.toFixed(4)}) RED=${controlRed}`);
 assert(controlRed, 'RL4 busy-frame positive control did not turn the real performance gate red');
 assert(report.gates.zeroPageErrors, `performance run emitted page errors: ${JSON.stringify(before.concat(after).flatMap(value => value.pageErrors))}`);
 assert(noRegression, `Town Life median regressed: ${beforeMedian.toFixed(4)} -> ${afterMedian.toFixed(4)} fps`);

@@ -66,29 +66,58 @@ jobs:
           npx playwright install --with-deps --no-shell chromium
 
       - name: Resolve the exact pre-splash Town Life bytes
+        # Immutable release-evidence pins taken on 2026-08-28:
+        # PRE_SPLASH_SHA is the Site main commit immediately before the splash landed;
+        # PRE_SPLASH_SHA256 pins its exact townlife/index.html comparison bytes.
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          PRE_SPLASH_SHA: 7041e767c5eed08b05bb01a2b1cd90356cb378fa
+          PRE_SPLASH_SHA256: 4e0b718217bc95932e3e7fc9ca87c3965b56b9d62a3325ca2cee76388d9be125
         run: |
           set -euo pipefail
           mkdir -p artifacts/townlife
-          if [ -z "$BASE_SHA" ] || [ "${BASE_SHA//0/}" = "" ]; then
-            BASE_SHA=$(git rev-parse HEAD^1)
-          fi
-          git fetch --depth=1 origin "$BASE_SHA"
-          git show "$BASE_SHA:townlife/index.html" > "$RUNNER_TEMP/townlife-before.html"
-          python3 - "$RUNNER_TEMP/townlife-before.html" townlife/index.html <<'PY'
+          git fetch --depth=1 origin "$PRE_SPLASH_SHA"
+          git show "$PRE_SPLASH_SHA:townlife/index.html" > "$RUNNER_TEMP/townlife-before.html"
+          python3 - "$RUNNER_TEMP/townlife-before.html" townlife/index.html "$PRE_SPLASH_SHA256" <<'PY'
+          import hashlib
           import pathlib
           import sys
           marker = b'MBM-MAKER-SPLASH:BEGIN'
-          before, after = (pathlib.Path(value).read_bytes() for value in sys.argv[1:])
-          if marker in before:
-              raise SystemExit('resolved baseline already contains the maker splash')
-          if marker not in after:
-              raise SystemExit('candidate does not contain the maker splash')
-          print('baseline/candidate marker control green')
+          before, after = (pathlib.Path(value).read_bytes() for value in sys.argv[1:3])
+          expected_sha256 = sys.argv[3]
+
+          def validate(baseline, candidate):
+              problems = []
+              actual_sha256 = hashlib.sha256(baseline).hexdigest()
+              if actual_sha256 != expected_sha256:
+                  problems.append(f'resolved baseline SHA-256 mismatch: {actual_sha256}')
+              if marker in baseline:
+                  problems.append('resolved baseline already contains the maker splash')
+              if marker not in candidate:
+                  problems.append('candidate does not contain the maker splash')
+              return problems
+
+          problems = validate(before, after)
+          if problems:
+              raise SystemExit('; '.join(problems))
+          print('baseline identity and baseline/candidate marker controls green')
+
+          baseline_control = validate(marker + before, after)
+          if (len(baseline_control) != 2
+                  or not baseline_control[0].startswith('resolved baseline SHA-256 mismatch: ')
+                  or baseline_control[1] != 'resolved baseline already contains the maker splash'):
+              raise SystemExit(f'baseline marker negative control did not red exactly: {baseline_control}')
+          candidate_control = validate(before, before)
+          if candidate_control != ['candidate does not contain the maker splash']:
+              raise SystemExit(f'candidate marker negative control did not red exactly: {candidate_control}')
+          identity_control = validate(before + b'\n', after)
+          if (len(identity_control) != 1
+                  or not identity_control[0].startswith('resolved baseline SHA-256 mismatch: ')):
+              raise SystemExit(f'baseline identity negative control did not red exactly: {identity_control}')
+          print('baseline identity and baseline/candidate marker negative controls red exactly')
           PY
           {
-            echo "base_sha=$BASE_SHA"
+            echo "base_sha=$PRE_SPLASH_SHA"
+            echo "expected_baseline_sha256=$PRE_SPLASH_SHA256"
             sha256sum "$RUNNER_TEMP/townlife-before.html" townlife/index.html
             wc -c "$RUNNER_TEMP/townlife-before.html" townlife/index.html
           } | tee artifacts/townlife/splash-subjects.txt
