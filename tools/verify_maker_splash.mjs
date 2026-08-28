@@ -354,16 +354,18 @@ async function controls(browser, origin) {
   }
   const lessonRoute = SECOND_ROUTE || defaultSecond;
   if (!siteRoute || !lessonRoute || siteRoute === lessonRoute) throw new Error('controls require two distinct declared applied routes');
+  const firstRoute = SCOPE === 'site' ? siteRoute : lessonRoute;
+  const secondRoute = SCOPE === 'site' ? lessonRoute : siteRoute;
   const reducedRoute = siteRoute;
   const assertions = [];
   const check = (condition, label, detail = '') => assertions.push({ pass: !!condition, label, detail });
   let ctx = await newContext(browser);
-  const forceBaseline = await pageProbe(ctx, origin, `${lessonRoute}?splash=force`, { action: 'key', waitAbsent: 700 });
+  const forceBaseline = await pageProbe(ctx, origin, `${firstRoute}?splash=force`, { action: 'key', waitAbsent: 700 });
   await ctx.close();
   ctx = await newContext(browser);
-  const first = await pageProbe(ctx, origin, lessonRoute, { action: 'none', waitAbsent: 700 });
+  const first = await pageProbe(ctx, origin, firstRoute, { action: 'none', waitAbsent: 700 });
   const firstKey = first.local;
-  const second = await pageProbe(ctx, origin, siteRoute, { action: 'none', waitAbsent: 700 });
+  const second = await pageProbe(ctx, origin, secondRoute, { action: 'none', waitAbsent: 700 });
   await ctx.close();
   ctx = await newContext(browser);
   const skippedControl = await pageProbe(ctx, origin, `${siteRoute}?splash=skip`, { waitAbsent: 700 });
