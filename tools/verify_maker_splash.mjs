@@ -366,6 +366,9 @@ async function controls(browser, origin) {
   const first = await pageProbe(ctx, origin, firstRoute, { action: 'none', waitAbsent: 700 });
   const firstKey = first.local;
   const second = await pageProbe(ctx, origin, secondRoute, { action: 'none', waitAbsent: 700 });
+  const suppressedSite = SCOPE === 'site'
+    ? await pageProbe(ctx, origin, siteRoute, { action: 'none', waitAbsent: 700 })
+    : second;
   await ctx.close();
   ctx = await newContext(browser);
   const skippedControl = await pageProbe(ctx, origin, `${siteRoute}?splash=skip`, { waitAbsent: 700 });
@@ -376,8 +379,8 @@ async function controls(browser, origin) {
   check(addedKeys.length === 1 && addedKeys[0] === KEY, 'SS1 splash adds exactly the declared storage key', JSON.stringify({ force: forceBaseline.keys, shown: first.keys, added: addedKeys }));
   check(!second.probe?.seen && second.local === firstKey,
     SCOPE === 'both' ? 'SS2 second cross-repository route suppresses and leaves key unchanged' : 'SS2 second declared route suppresses and leaves key unchanged');
-  check(JSON.stringify(second.primaryRect) === JSON.stringify(skippedControl.primaryRect), 'SS5 suppressed and skip-control first geometry match');
-  check(second.active?.id === second.primaryRect?.id && second.active?.tag === second.primaryRect?.tag && skippedControl.active?.id === skippedControl.primaryRect?.id && skippedControl.active?.tag === skippedControl.primaryRect?.tag, 'SS6 suppressed and skip-control focus land on the primary control', JSON.stringify({ suppressed: second.active, skip: skippedControl.active }));
+  check(JSON.stringify(suppressedSite.primaryRect) === JSON.stringify(skippedControl.primaryRect), 'SS5 suppressed and skip-control first geometry match');
+  check(suppressedSite.active?.id === suppressedSite.primaryRect?.id && suppressedSite.active?.tag === suppressedSite.primaryRect?.tag && skippedControl.active?.id === skippedControl.primaryRect?.id && skippedControl.active?.tag === skippedControl.primaryRect?.tag, 'SS6 suppressed and skip-control focus land on the primary control', JSON.stringify({ suppressed: suppressedSite.active, skip: skippedControl.active }));
   for (const [name, seed] of [['expired', Date.now() - 86400001], ['future', Date.now() + 604800000], ['banana', 'banana']]) {
     ctx = await newContext(browser, { seed }); const value = await pageProbe(ctx, origin, siteRoute, { waitAbsent: 700 }); await ctx.close();
     check(value.probe?.seen, `SS3 ${name} opens the window`);

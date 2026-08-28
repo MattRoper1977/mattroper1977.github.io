@@ -71,7 +71,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts/townlife
-          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+          if [ -z "$BASE_SHA" ] || [ "${BASE_SHA//0/}" = "" ]; then
             BASE_SHA=$(git rev-parse HEAD^1)
           fi
           git fetch --depth=1 origin "$BASE_SHA"
