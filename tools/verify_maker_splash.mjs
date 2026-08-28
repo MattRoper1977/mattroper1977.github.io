@@ -281,13 +281,20 @@ async function reducedMotionProbe(browser, origin, route) {
   const context = await newContext(browser, { reduced: true });
   await context.addInitScript(() => {
     window.__mbmReducedProbe = { attached: false, started: false, endElapsed: null, endAt: null };
+    document.addEventListener('animationstart', event => {
+      if (event.animationName !== 'mbmSplash' || !event.target?.matches?.('[data-mbm-maker-splash]')) return;
+      window.__mbmReducedProbe.started = true;
+    }, true);
+    document.addEventListener('animationend', event => {
+      if (event.animationName !== 'mbmSplash' || !event.target?.matches?.('[data-mbm-maker-splash]')) return;
+      window.__mbmReducedProbe.endElapsed = event.elapsedTime * 1000;
+      window.__mbmReducedProbe.endAt = performance.now();
+    }, true);
     new MutationObserver(records => {
       for (const record of records) for (const node of record.addedNodes) {
         const el = node.nodeType === 1 && node.matches?.('[data-mbm-maker-splash]') ? node : node.querySelector?.('[data-mbm-maker-splash]');
         if (!el || window.__mbmReducedProbe.attached) continue;
-        const probe = window.__mbmReducedProbe; probe.attached = true;
-        el.addEventListener('animationstart', event => { if (event.animationName === 'mbmSplash') probe.started = true; });
-        el.addEventListener('animationend', event => { if (event.animationName === 'mbmSplash') { probe.endElapsed = event.elapsedTime * 1000; probe.endAt = performance.now(); } });
+        window.__mbmReducedProbe.attached = true;
       }
     }).observe(document, { childList: true, subtree: true });
   });
