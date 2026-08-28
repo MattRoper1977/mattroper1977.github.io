@@ -227,11 +227,11 @@ var CSS="#mbmSplash[data-mbm-maker-splash]{position:fixed;inset:0;z-index:214748
 CSS=CSS.replace("animation-duration:.28s","animation-duration:.35s!important");
 var st=document.createElement("style");st.id="mbm-maker-splash-css";st.textContent=CSS;(document.head||document.documentElement).appendChild(st);
 var el=document.createElement("section");el.id="mbmSplash";el.setAttribute("data-mbm-maker-splash","");el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");el.setAttribute("aria-label","Made by Matt introduction");el.tabIndex=-1;el.innerHTML='<div class="mbm-splash-mark"><span>Made by</span><strong>Matt</strong><em>presents</em><div class="mbm-splash-line"></div></div><span class="mbm-splash-sr">Tap or press any key to continue.</span>';
-(document.body||document.documentElement).appendChild(el);if(MODE!=="force")writeNow();
+(document.body||document.documentElement).appendChild(el);
 var reduced=false;try{reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(_){}
 var shown=performance.now(),requested=false,closed=false,hard=0,GUARDED=["keydown","keyup","pointerdown","pointerup","click"];
 function unguard(){for(var i=0;i<GUARDED.length;i++)document.removeEventListener(GUARDED[i],guard,true);}
-function finish(){if(closed)return;closed=true;clearTimeout(hard);el.classList.add("mbm-splash-skip");el.style.pointerEvents="none";el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}focusPrimary();setTimeout(function(){unguard();if(el.parentNode)el.parentNode.removeChild(el);},reduced?0:150);}
+function finish(){if(closed)return;closed=true;clearTimeout(hard);el.classList.add("mbm-splash-skip");el.style.pointerEvents="none";el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}if(MODE!=="force")writeNow();focusPrimary();setTimeout(function(){unguard();if(el.parentNode)el.parentNode.removeChild(el);},reduced?0:150);}
 function dismiss(){if(requested||closed)return;requested=true;var wait=Math.max(0,450-(performance.now()-shown));setTimeout(finish,wait);}
 function guard(e){e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();if(closed)return;if(e.type==="keydown"||(e.type==="pointerdown"&&el.contains(e.target))||(e.type==="click"&&el.contains(e.target))){e.preventDefault();dismiss();}}
 for(var i=0;i<GUARDED.length;i++)document.addEventListener(GUARDED[i],guard,true);

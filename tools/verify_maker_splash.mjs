@@ -70,7 +70,7 @@ function applied(root) {
   return list.map(item => typeof item === 'string' ? item : item.route);
 }
 
-function makeServer({ stripRoute = null, slowReducedRoute = null } = {}) {
+function makeServer({ stripRoute = null, slowReducedRoute = null, prematureWriteRoute = null } = {}) {
   const server = http.createServer((req, res) => {
     let pathname;
     try { pathname = decodeURIComponent(new URL(req.url, 'http://127.0.0.1').pathname); }
@@ -86,12 +86,16 @@ function makeServer({ stripRoute = null, slowReducedRoute = null } = {}) {
     }
     if (!file) { res.writeHead(404); return res.end('not found'); }
     const type = MIME[path.extname(file).toLowerCase()] || 'application/octet-stream';
-    if (type.startsWith('text/html') && (stripRoute === pathname || slowReducedRoute === pathname)) {
+    if (type.startsWith('text/html') && (stripRoute === pathname || slowReducedRoute === pathname || prematureWriteRoute === pathname)) {
       let body = fs.readFileSync(file, 'utf8');
       if (stripRoute === pathname) body = body.replace(REGION, '');
       if (slowReducedRoute === pathname) body = body
         .replace('animation-duration:.35s', 'animation-duration:.7s')
         .replace('reduced?450:2100', 'reduced?900:2100');
+      if (prematureWriteRoute === pathname) body = body.replace(
+        '(document.body||document.documentElement).appendChild(el);',
+        '(document.body||document.documentElement).appendChild(el);if(MODE!=="force")writeNow();',
+      );
       res.writeHead(200, { 'content-type': type, 'cache-control': 'no-store' });
       return res.end(body);
     }
@@ -127,7 +131,23 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
     if (!url.startsWith(origin) && !url.startsWith('data:') && !url.startsWith('blob:')) external.push(url);
   });
   await page.addInitScript(() => {
-    window.__makerProbe = { seen: false, first: null, last: null, focus: null, geometry: null, contentFirst: null, contentGeometry: null, domContentLoaded: null };
+    window.__makerProbe = { seen: false, first: null, last: null, focus: null, geometry: null, contentFirst: null, contentGeometry: null, domContentLoaded: null, writeEvents: [] };
+    try {
+      const originalSetItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (key, value) {
+        if (key === 'mbm_splash_last') {
+          const el = document.querySelector('[data-mbm-maker-splash]');
+          window.__makerProbe.writeEvents.push({
+            t: performance.now(),
+            value: String(value),
+            makerPresent: !!el,
+            ariaHidden: el?.getAttribute('aria-hidden') || null,
+            pointerEvents: el ? getComputedStyle(el).pointerEvents : null,
+          });
+        }
+        return originalSetItem.call(this, key, value);
+      };
+    } catch {}
     document.addEventListener('DOMContentLoaded', () => { window.__makerProbe.domContentLoaded = performance.now(); }, { once: true });
     addEventListener('focusin', event => {
       const p = window.__makerProbe;
@@ -235,6 +255,11 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
   const result = { ...state, appeared, wall, shownUnderlayRect, visibleWallMs, status: response?.status() ?? null, finalUrl: page.url(), errors, external };
   await page.close();
   return result;
+}
+
+function writesOnlyAfterDismissal(result) {
+  const writes = result.probe?.writeEvents || [];
+  return writes.length > 0 && writes.every(write => write.ariaHidden === 'true' && write.pointerEvents === 'none');
 }
 
 async function wayOutProbe(browser, origin, route, activation, { disableWayOut = false } = {}) {
@@ -412,7 +437,7 @@ async function controls(browser, origin) {
   const forceBaseline = await pageProbe(ctx, origin, `${firstRoute}?splash=force`, { action: 'key', waitAbsent: 700 });
   await ctx.close();
   ctx = await newContext(browser);
-  const first = await pageProbe(ctx, origin, firstRoute, { action: 'none', waitAbsent: 700 });
+  const first = await pageProbe(ctx, origin, firstRoute, { action: 'key', waitAbsent: 700 });
   const firstKey = first.local;
   const second = await pageProbe(ctx, origin, secondRoute, { action: 'none', waitAbsent: 700 });
   const suppressedSite = SCOPE === 'site'
@@ -423,7 +448,8 @@ async function controls(browser, origin) {
   const skippedControl = await pageProbe(ctx, origin, `${siteRoute}?splash=skip`, { waitAbsent: 700 });
   await ctx.close();
   check(first.probe?.seen, 'SS1 fresh context shows');
-  check(first.local && Math.abs(Number(first.local) - first.wall) <= 5000, 'SS1 timestamp written within five seconds', first.local);
+  check(first.local && Math.abs(Number(first.local) - first.wall) <= 5000, 'SS1 timestamp written within five seconds of a valid dismissal', first.local);
+  check(writesOnlyAfterDismissal(first), 'SS1 suppression is written only after the splash becomes inert and hidden', JSON.stringify(first.probe?.writeEvents || []));
   const addedKeys = (first.keys || []).filter(key => !(forceBaseline.keys || []).includes(key));
   check(addedKeys.length === 1 && addedKeys[0] === KEY, 'SS1 splash adds exactly the declared storage key', JSON.stringify({ force: forceBaseline.keys, shown: first.keys, added: addedKeys }));
   check(!second.probe?.seen && second.local === firstKey,
@@ -431,12 +457,13 @@ async function controls(browser, origin) {
   check(JSON.stringify(suppressedSite.primaryRect) === JSON.stringify(skippedControl.primaryRect), 'SS5 suppressed and skip-control first geometry match');
   check(suppressedSite.active?.id === suppressedSite.primaryRect?.id && suppressedSite.active?.tag === suppressedSite.primaryRect?.tag && skippedControl.active?.id === skippedControl.primaryRect?.id && skippedControl.active?.tag === skippedControl.primaryRect?.tag, 'SS6 suppressed and skip-control focus land on the primary control', JSON.stringify({ suppressed: suppressedSite.active, skip: skippedControl.active }));
   for (const [name, seed] of [['expired', Date.now() - 86400001], ['future', Date.now() + 604800000], ['banana', 'banana']]) {
-    ctx = await newContext(browser, { seed }); const value = await pageProbe(ctx, origin, siteRoute, { waitAbsent: 700 }); await ctx.close();
+    ctx = await newContext(browser, { seed }); const value = await pageProbe(ctx, origin, siteRoute, { action: 'key', waitAbsent: 700 }); await ctx.close();
     check(value.probe?.seen, `SS3 ${name} opens the window`);
+    check(writesOnlyAfterDismissal(value), `SS3 ${name} is corrected only after a valid dismissal`, JSON.stringify(value.probe?.writeEvents || []));
     if (name === 'future') check(Number(value.local) <= Date.now() && Number(value.local) >= value.wall - 1000, 'SS3 future value is corrected', value.local);
     if (name === 'banana') check(value.errors.length === 0, 'SS3 invalid value has no console error', value.errors.join(' | '));
   }
-  ctx = await newContext(browser, { throwWrite: true }); const failure = await pageProbe(ctx, origin, siteRoute, { waitAbsent: 700 }); await ctx.close();
+  ctx = await newContext(browser, { throwWrite: true }); const failure = await pageProbe(ctx, origin, siteRoute, { action: 'key', waitAbsent: 700 }); await ctx.close();
   check(failure.probe?.seen && failure.session && failure.errors.length === 0, 'SS4 local write failure shows, boots and falls back to session', JSON.stringify({ session: failure.session, errors: failure.errors }));
   const fixed = Date.now() - 1000;
   ctx = await newContext(browser, { seed: fixed }); const forced = await pageProbe(ctx, origin, `${siteRoute}?splash=force`, { action: 'key', waitAbsent: 700 }); await ctx.close();
@@ -492,6 +519,11 @@ async function controls(browser, origin) {
   ctx = await newContext(browser); const removed = await pageProbe(ctx, controlOrigin, `${siteRoute}?splash=force`, { waitAbsent: 700 }); await ctx.close();
   await new Promise(resolve => controlServer.close(resolve));
   check(!removed.probe?.seen, 'RL4 removal control turns the presence predicate red');
+  const prematureServer = await makeServer({ prematureWriteRoute: siteRoute });
+  const prematureOrigin = `http://127.0.0.1:${prematureServer.address().port}`;
+  ctx = await newContext(browser); const premature = await pageProbe(ctx, prematureOrigin, siteRoute, { action: 'key', waitAbsent: 700 }); await ctx.close();
+  await new Promise(resolve => prematureServer.close(resolve));
+  check(!writesOnlyAfterDismissal(premature), 'RL4 premature-write control turns the dismissal-only predicate red', JSON.stringify(premature.probe?.writeEvents || []));
   return { siteRoute, lessonRoute, assertions, pass: assertions.every(a => a.pass) };
 }
 
