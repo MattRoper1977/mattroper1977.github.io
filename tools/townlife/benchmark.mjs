@@ -21,7 +21,7 @@ const LIVE_ORIGIN = 'https://mattroper1977.github.io';
 const NEWEST = ['/titanforge/', '/crownbadge/', '/micro-tinkerer/'];
 const TOWN = '/townlife/';
 const FIRST_CONTROL_BUSY_MS = 68;
-const RECALIBRATED_CONTROL_BUSY_MS = 220;
+const RECALIBRATED_CONTROL_BUSY_MS = 1200;
 const INPUTS = [
   ['key', 'ArrowUp'],
   ['key', 'ArrowRight'],
@@ -217,7 +217,9 @@ async function measureRoute(browser, origin, game, round) {
   page.on('pageerror', error => errors.push(error.message));
   const session = await context.newCDPSession(page);
   const local = Boolean(localFileForHref(game.href));
-  const url = new URL(game.href, local ? origin : LIVE_ORIGIN).href;
+  const subjectUrl = new URL(game.href, local ? origin : LIVE_ORIGIN);
+  subjectUrl.searchParams.set('splash', 'skip');
+  const url = subjectUrl.href;
   const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
   assert.equal(response?.status(), 200, `${game.title}: navigation returned ${response?.status()}`);
   await page.waitForTimeout(500);

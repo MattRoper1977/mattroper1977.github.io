@@ -168,7 +168,7 @@ async function verifyGame(browser, origin, engine) {
   });
 
   try {
-    const response = await page.goto(`${origin}/townlife/`, { waitUntil: 'load' });
+    const response = await page.goto(`${origin}/townlife/?splash=skip`, { waitUntil: 'load' });
     assert.equal(response?.status(), 200, 'Town Life did not return HTTP 200');
     await page.waitForFunction(() => window.__MBM_TOWN_LIFE_READY__ === true, null, { timeout: 30_000 });
     const headingBox = await assertHeading(page);
@@ -211,7 +211,7 @@ async function verifyGame(browser, origin, engine) {
     const restored = await page.evaluate(key => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
     assert.equal(restored.profile, `Codex-${engine}`, 'saved profile did not restore');
 
-    await page.goto(`${origin}/townlife/?qa=1`, { waitUntil: 'load' });
+    await page.goto(`${origin}/townlife/?qa=1&splash=skip`, { waitUntil: 'load' });
     await page.waitForFunction(() => window.MBMTownLifeQA?.ready() === true, null, { timeout: 30_000 });
     await page.evaluate(() => window.MBMTownLifeQA.teleport(1200, 900));
     const before = await page.evaluate(() => window.MBMTownLifeQA.getEntities().player);
