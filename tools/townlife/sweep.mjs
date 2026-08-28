@@ -6,6 +6,8 @@ import http from 'node:http';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { performance } from 'node:perf_hooks';
+import { setTimeout as delay } from 'node:timers/promises';
 
 const require = createRequire(import.meta.url);
 const playwright = require('playwright');
@@ -144,6 +146,21 @@ async function assertHealthy(page, label) {
   return health;
 }
 
+function assertIdleWall(elapsed) {
+  assert(elapsed >= IDLE_MS, `idle wall time ${elapsed} ms is shorter than ${IDLE_MS} ms`);
+}
+
+async function waitForIdle(page) {
+  const started = performance.now();
+  await page.waitForTimeout(IDLE_MS);
+  let elapsed = performance.now() - started;
+  while (elapsed < IDLE_MS) {
+    await delay(Math.max(1, Math.ceil(IDLE_MS - elapsed)));
+    elapsed = performance.now() - started;
+  }
+  return elapsed;
+}
+
 async function sweepCombination(browser, origin, engine, viewport) {
   const context = await browser.newContext({ viewport, hasTouch: true, serviceWorkers: 'block' });
   const page = await context.newPage();
@@ -238,10 +255,8 @@ async function sweepCombination(browser, origin, engine, viewport) {
     }
     await page.waitForFunction(({ key, value }) => JSON.parse(localStorage.getItem(key)).profile === value, { key: SAVE_KEY, value: renamed }, { timeout: 5000 });
 
-    const idleStarted = Date.now();
-    await page.waitForTimeout(IDLE_MS);
-    evidence.idleWallMs = Date.now() - idleStarted;
-    assert(evidence.idleWallMs >= IDLE_MS, `idle wall time ${evidence.idleWallMs} ms is shorter than ${IDLE_MS} ms`);
+    evidence.idleWallMs = await waitForIdle(page);
+    assertIdleWall(evidence.idleWallMs);
     await assertHealthy(page, 'after idle');
     const idleBefore = await page.evaluate(() => window.MBMTownLifeQA.getEntities().player.x);
     await page.keyboard.down('d');
@@ -311,6 +326,7 @@ async function positiveControls(browser, origin) {
     await red('rename state mutation', async () => assert.equal((await qa.evaluate(() => window.MBMTownLifeQA.getState().profile)), '__impossible_profile__', 'profile mutation control'));
     await qa.evaluate(() => { window.__MBM_TOWN_LIFE_READY__ = false; });
     await red('idle health mutation', () => assertHealthy(qa, 'idle control'));
+    await red('idle wall-time short measurement', async () => assertIdleWall(IDLE_MS - 1));
   } finally {
     await qaContext.close();
   }

@@ -28,6 +28,7 @@ const MODE = arg('mode') || 'controls';
 const SCOPE = arg('scope') || 'both';
 const SITE_ROUTE = arg('site-route');
 const SECOND_ROUTE = arg('second-route');
+const EXTERNAL_ORIGIN = arg('origin')?.replace(/\/+$/, '') || null;
 if (!['both', 'site', 'lessons'].includes(SCOPE)) throw new Error(`unknown scope: ${SCOPE}`);
 const SITE = path.resolve(arg('site-root') || DEFAULT_SITE);
 const LESSONS = path.resolve(arg('lessons-root') || path.join(SITE, '_lessons'));
@@ -637,8 +638,8 @@ async function lessonTiming(browser, origin) {
 }
 
 fs.mkdirSync(path.dirname(REPORT), { recursive: true });
-const server = await makeServer();
-const origin = `http://127.0.0.1:${server.address().port}`;
+const server = EXTERNAL_ORIGIN ? null : await makeServer();
+const origin = EXTERNAL_ORIGIN || `http://127.0.0.1:${server.address().port}`;
 let browser;
 let payload;
 try {
@@ -650,7 +651,7 @@ try {
   else throw new Error(`unknown mode: ${MODE}`);
 } finally {
   if (browser) await browser.close();
-  await new Promise(resolve => server.close(resolve));
+  if (server) await new Promise(resolve => server.close(resolve));
 }
 payload.generatedAt = new Date().toISOString();
 payload.generatorRegionSha256 = (() => {
