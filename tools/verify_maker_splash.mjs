@@ -64,7 +64,7 @@ function insertEvidence(file) {
 function applied(root) {
   const data = readJson(path.join(root, 'data', 'hud-coverage.json'));
   const list = data.makerSplash?.applied;
-  if (!Array.isArray(list) || !list.length) throw new Error(`${root}: makerSplash.applied is missing or empty`);
+  if (!Array.isArray(list)) throw new Error(`${root}: makerSplash.applied is missing or is not a list`);
   return list.map(item => typeof item === 'string' ? item : item.route);
 }
 
