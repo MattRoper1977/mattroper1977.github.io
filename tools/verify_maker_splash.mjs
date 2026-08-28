@@ -122,7 +122,7 @@ async function newContext(browser, options = {}) {
   return context;
 }
 
-async function pageProbe(context, origin, route, { action = 'none', waitAbsent = 650, mutateUnderlay = false } = {}) {
+async function pageProbe(context, origin, route, { action = 'none', waitAbsent = 650, mutateUnderlay = false, mutateContent = false } = {}) {
   const page = await context.newPage();
   const errors = [], external = [];
   page.on('pageerror', error => errors.push(`pageerror: ${error.message}`));
@@ -131,7 +131,7 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
     const url = request.url();
     if (!url.startsWith(origin) && !url.startsWith('data:') && !url.startsWith('blob:')) external.push(url);
   });
-  await page.addInitScript(() => {
+  await page.addInitScript(({ mutateContent }) => {
     window.__makerProbe = { seen: false, first: null, last: null, focus: null, geometry: null, contentFirst: null, contentGeometry: null, domContentLoaded: null, writeEvents: [] };
     try {
       const originalSetItem = Storage.prototype.setItem;
@@ -149,7 +149,23 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
         return originalSetItem.call(this, key, value);
       };
     } catch {}
-    document.addEventListener('DOMContentLoaded', () => { window.__makerProbe.domContentLoaded = performance.now(); }, { once: true });
+    document.addEventListener('DOMContentLoaded', () => {
+      const p = window.__makerProbe;
+      p.domContentLoaded = performance.now();
+      requestAnimationFrame(() => {
+        const candidates = document.querySelectorAll('[data-slide].active,.slide.active,.slide.current,.slide:not([hidden]),main,[role="main"],canvas,h1');
+        for (const candidate of candidates) {
+          if (candidate.closest?.('[data-mbm-maker-splash]')) continue;
+          const before = candidate.getBoundingClientRect(), css = getComputedStyle(candidate);
+          if (before.width <= 0 || before.height <= 0 || css.display === 'none' || css.visibility === 'hidden') continue;
+          if (mutateContent) candidate.style.setProperty('translate', '7px 0', 'important');
+          const rect = candidate.getBoundingClientRect();
+          p.contentFirst = performance.now();
+          p.contentGeometry = { x: rect.x, y: rect.y, width: rect.width, height: rect.height, id: candidate.id || '', tag: candidate.tagName };
+          break;
+        }
+      });
+    }, { once: true });
     addEventListener('focusin', event => {
       const p = window.__makerProbe;
       if (!p.focus && event.target && !event.target.closest?.('[data-mbm-maker-splash]')) p.focus = { t: performance.now(), id: event.target.id || '', tag: event.target.tagName || '' };
@@ -181,22 +197,10 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
           p.geometry = { width: rect.width, height: rect.height, role: el.getAttribute('role'), modal: el.getAttribute('aria-modal'), z: css.zIndex };
         }
       }
-      if (p.contentFirst === null) {
-        const candidates = document.querySelectorAll('[data-slide].active,.slide.active,.slide.current,.slide:not([hidden]),main,[role="main"],canvas,h1');
-        for (const candidate of candidates) {
-          if (candidate.closest?.('[data-mbm-maker-splash]')) continue;
-          const rect = candidate.getBoundingClientRect(), css = getComputedStyle(candidate);
-          if (rect.width > 0 && rect.height > 0 && css.display !== 'none' && css.visibility !== 'hidden') {
-            p.contentFirst = performance.now();
-            p.contentGeometry = { x: rect.x, y: rect.y, width: rect.width, height: rect.height, id: candidate.id || '', tag: candidate.tagName };
-            break;
-          }
-        }
-      }
       requestAnimationFrame(sample);
     }
     requestAnimationFrame(sample);
-  });
+  }, { mutateContent });
   const wall = Date.now();
   let response = null;
   try { response = await page.goto(origin + encodeURI(route), { waitUntil: 'commit', timeout: 30000 }); }
@@ -473,10 +477,14 @@ async function controls(browser, origin) {
   check(!skipped.probe?.seen && skipped.local === null, 'SS7 skip suppresses without writing');
   check(JSON.stringify(forced.shownUnderlayRect) === JSON.stringify(skippedControl.primaryRect),
     'SS5 shown and suppressed first-paint primary geometry match', JSON.stringify({ shown: forced.shownUnderlayRect, suppressed: skippedControl.primaryRect }));
+  check(sameGeometry(forced.probe?.contentGeometry, skippedControl.probe?.contentGeometry),
+    'SS5 shown and suppressed stable content geometry match', JSON.stringify({ shown: forced.probe?.contentGeometry, suppressed: skippedControl.probe?.contentGeometry }));
   ctx = await newContext(browser);
-  const shifted = await pageProbe(ctx, origin, `${siteRoute}?splash=force`, { action: 'key', waitAbsent: 700, mutateUnderlay: true }); await ctx.close();
+  const shifted = await pageProbe(ctx, origin, `${siteRoute}?splash=force`, { action: 'key', waitAbsent: 700, mutateUnderlay: true, mutateContent: true }); await ctx.close();
   check(JSON.stringify(shifted.shownUnderlayRect) !== JSON.stringify(skippedControl.primaryRect),
     'RL4 first-paint geometry mutation control turns the equality predicate red', JSON.stringify({ shifted: shifted.shownUnderlayRect, control: skippedControl.primaryRect }));
+  check(!sameGeometry(shifted.probe?.contentGeometry, skippedControl.probe?.contentGeometry),
+    'RL4 stable-content geometry mutation control turns the equality predicate red', JSON.stringify({ shifted: shifted.probe?.contentGeometry, control: skippedControl.probe?.contentGeometry }));
   check(forced.probe?.focus?.t != null && skippedControl.probe?.focus?.t != null,
     'time-to-interactive is measured with the splash shown and suppressed', JSON.stringify({ shownMs: forced.probe?.focus?.t, suppressedMs: skippedControl.probe?.focus?.t }));
   check(forced.probe?.focus?.t <= (forced.probe?.last ?? 0) + 350,
@@ -563,6 +571,8 @@ async function verify(browser, origin) {
       const addedExternal = addedFrom(result.external, skipped.external);
       observations.push({ viewport, seen: !!result.probe?.seen, duration, active: result.active, primary: result.primaryRect,
         suppressedSeen: !!skipped.probe?.seen, suppressedActive: skipped.active, suppressedPrimary: skipped.primaryRect,
+        shownContentGeometry: result.probe?.contentGeometry ?? null,
+        suppressedContentGeometry: skipped.probe?.contentGeometry ?? null,
         firstPaintGeometryMatch: sameGeometry(result.probe?.contentGeometry, skipped.probe?.contentGeometry),
         overflowDelta: result.overflow - skipped.overflow, addedErrors, addedExternal,
         baselineErrors: skipped.errors, baselineExternal: skipped.external });
