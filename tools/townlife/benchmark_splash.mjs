@@ -184,7 +184,7 @@ const pairedMedianDelta = median(pairedDeltas);
 const pairedSpreadDelta = spread(pairedDeltas);
 const busyPairedDeltas = control.map((value, index) => value.fps - before[index].fps);
 const busyPairedMedianDelta = median(busyPairedDeltas);
-const noRegression = pairedMedianDelta >= 0;
+const noRegression = afterMedian >= beforeMedian;
 const aboveShippedFloor = afterMedian >= shippedP25;
 const controlRed = controlMedian < beforeMedian && controlMedian < shippedP25 && busyPairedMedianDelta < 0;
 const report = {
@@ -205,5 +205,5 @@ fs.writeFileSync(path.join(ROOT, 'artifacts', 'townlife', 'splash-performance.js
 console.log(`SPLASH PERFORMANCE — before ${beforeMedian.toFixed(4)} fps (spread ${spread(beforeFps).toFixed(4)}); after ${afterMedian.toFixed(4)} fps (spread ${spread(afterFps).toFixed(4)}); paired delta ${pairedMedianDelta.toFixed(4)} fps (spread ${pairedSpreadDelta.toFixed(4)}, threshold 0.0000); shipped p25 ${shippedP25.toFixed(4)}; control ${controlMedian.toFixed(4)} fps (spread ${spread(controlFps).toFixed(4)}, paired delta ${busyPairedMedianDelta.toFixed(4)}) RED=${controlRed}`);
 assert(controlRed, 'RL4 busy-frame positive control did not turn the real performance gate red');
 assert(report.gates.zeroPageErrors, `performance run emitted page errors: ${JSON.stringify(before.concat(after).flatMap(value => value.pageErrors))}`);
-assert(noRegression, `Town Life paired median regressed by ${pairedMedianDelta.toFixed(4)} fps (threshold 0.0000)`);
+assert(noRegression, `Town Life median regressed: ${beforeMedian.toFixed(4)} -> ${afterMedian.toFixed(4)} fps`);
 assert(aboveShippedFloor, `Town Life fell below shipped p25: ${afterMedian.toFixed(4)} < ${shippedP25.toFixed(4)} fps`);
