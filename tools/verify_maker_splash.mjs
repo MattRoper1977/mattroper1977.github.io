@@ -342,9 +342,9 @@ async function census(browser, origin) {
 
 async function controls(browser, origin) {
   const siteRoutes = applied(SITE);
-  const lessonRoutes = applied(LESSONS);
+  const lessonRoutes = SCOPE === 'site' ? [] : applied(LESSONS);
   const siteRoute = siteRoutes[0];
-  const lessonRoute = lessonRoutes[0];
+  const lessonRoute = SCOPE === 'site' ? siteRoutes[1] : lessonRoutes[0];
   const reducedRoute = siteRoute;
   const assertions = [];
   const check = (condition, label, detail = '') => assertions.push({ pass: !!condition, label, detail });

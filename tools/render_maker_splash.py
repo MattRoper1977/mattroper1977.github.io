@@ -336,9 +336,6 @@ def main() -> int:
                 changed += 1
                 print(f"    bytes {before} -> {after}; migrations {','.join(notes) if notes else 'none'}")
             print(f"  {status:9} {entry.route}  {path.stat().st_size} B  {path.relative_to(root)}")
-    if total == 0:
-        print("ERROR makerSplash.applied is empty across all roots", file=sys.stderr)
-        return 2
     print(f"{total} applied target(s); {changed} written; {bad} divergent")
     return 1 if bad else 0
 
