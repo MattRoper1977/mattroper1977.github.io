@@ -280,7 +280,14 @@ async function wayOutProbe(browser, origin, route, activation, { disableWayOut =
 async function reducedMotionProbe(browser, origin, route) {
   const context = await newContext(browser, { reduced: true });
   await context.addInitScript(() => {
-    window.__mbmReducedProbe = { attached: false, started: false, endElapsed: null, endAt: null };
+    window.__mbmReducedProbe = {
+      attached: false,
+      attachedAt: null,
+      detachedAt: null,
+      started: false,
+      endElapsed: null,
+      endAt: null,
+    };
     document.addEventListener('animationstart', event => {
       if (event.animationName !== 'mbmSplash' || !event.target?.matches?.('[data-mbm-maker-splash]')) return;
       window.__mbmReducedProbe.started = true;
@@ -291,10 +298,19 @@ async function reducedMotionProbe(browser, origin, route) {
       window.__mbmReducedProbe.endAt = performance.now();
     }, true);
     new MutationObserver(records => {
-      for (const record of records) for (const node of record.addedNodes) {
-        const el = node.nodeType === 1 && node.matches?.('[data-mbm-maker-splash]') ? node : node.querySelector?.('[data-mbm-maker-splash]');
-        if (!el || window.__mbmReducedProbe.attached) continue;
-        window.__mbmReducedProbe.attached = true;
+      const probe = window.__mbmReducedProbe;
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          const el = node.nodeType === 1 && node.matches?.('[data-mbm-maker-splash]') ? node : node.querySelector?.('[data-mbm-maker-splash]');
+          if (!el || probe.attached) continue;
+          probe.attached = true;
+          probe.attachedAt = performance.now();
+        }
+        for (const node of record.removedNodes) {
+          const removed = node.nodeType === 1 && node.matches?.('[data-mbm-maker-splash]') ? node : node.querySelector?.('[data-mbm-maker-splash]');
+          if (!removed || !probe.attached || probe.detachedAt !== null) continue;
+          probe.detachedAt = performance.now();
+        }
       }
     }).observe(document, { childList: true, subtree: true });
   });
@@ -310,6 +326,13 @@ async function reducedMotionProbe(browser, origin, route) {
   const local = await page.evaluate(key => { try { return localStorage.getItem(key); } catch { return null; } }, KEY);
   await context.close();
   return { wall, local, errors, probe, final };
+}
+
+function reducedMotionClearsWithinDeadline(result) {
+  const attachedAt = result.probe?.attachedAt;
+  const detachedAt = result.probe?.detachedAt;
+  const elapsed = Number.isFinite(attachedAt) && Number.isFinite(detachedAt) ? detachedAt - attachedAt : null;
+  return result.probe?.attached === true && elapsed >= 300 && elapsed <= 500 && result.final.pointerEvents === 'none';
 }
 
 async function census(browser, origin) {
@@ -412,13 +435,14 @@ async function controls(browser, origin) {
   check(forced.probe?.focus?.t <= (forced.probe?.last ?? 0) + 350,
     'shown time-to-interactive does not extend beyond the visible splash', JSON.stringify({ interactiveMs: forced.probe?.focus?.t, splashLastMs: forced.probe?.last }));
   const reduced = await reducedMotionProbe(browser, origin, reducedRoute);
-  check(reduced.probe?.attached && reduced.probe?.started && reduced.probe?.endElapsed >= 300 && reduced.probe?.endElapsed <= 500 && reduced.final.pointerEvents === 'none', 'SS8 reduced motion paints and clears within 500 ms', JSON.stringify(reduced));
+  check(reducedMotionClearsWithinDeadline(reduced), 'SS8 reduced motion paints and clears within 500 ms', JSON.stringify(reduced));
   check(reduced.local && Math.abs(Number(reduced.local) - reduced.wall) <= 5000, 'SS8 reduced motion still writes the daily timestamp', reduced.local);
   const slowServer = await makeServer({ slowReducedRoute: reducedRoute });
   const slowOrigin = `http://127.0.0.1:${slowServer.address().port}`;
   const slowReduced = await reducedMotionProbe(browser, slowOrigin, reducedRoute);
   await new Promise(resolve => slowServer.close(resolve));
-  check(slowReduced.probe?.endElapsed > 500, 'RL4 reduced-motion slow-animation control turns the clearance predicate red', JSON.stringify(slowReduced));
+  check(slowReduced.probe?.attached && !reducedMotionClearsWithinDeadline(slowReduced) && slowReduced.final.pointerEvents !== 'none',
+    'RL4 reduced-motion slow-animation control turns the clearance predicate red', JSON.stringify(slowReduced));
   for (const viewport of VIEWPORTS) {
     for (const action of ['key', 'pointer', 'auto', 'timeout']) {
       ctx = await newContext(browser, { viewport });
