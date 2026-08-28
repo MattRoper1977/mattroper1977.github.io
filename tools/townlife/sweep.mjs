@@ -13,7 +13,7 @@ const require = createRequire(import.meta.url);
 const playwright = require('playwright');
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const SAVE_KEY = 'mbm_town_life_v10';
-const STATUS = 'Gold Master v1.0 preview — verified in Chromium. Firefox, Safari and physical-device checks are still pending.';
+const STATUS = 'Gold Master v1.0 preview — verified in Chromium, Firefox and WebKit. Physical device checks (Chromebook, phone) are still pending.';
 const VIEWPORTS = [{ width: 390, height: 844 }, { width: 1280, height: 800 }];
 const ENGINE_ARGUMENT = process.argv.find(value => value.startsWith('--engines='));
 const ENGINES = (ENGINE_ARGUMENT ? ENGINE_ARGUMENT.slice('--engines='.length) : 'chromium,firefox,webkit').split(',').filter(Boolean);
