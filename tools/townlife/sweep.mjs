@@ -311,7 +311,13 @@ async function positiveControls(browser, origin) {
     await qa.goto(`${origin}/townlife/?qa=1&splash=skip`, { waitUntil: 'load' });
     await qa.waitForFunction(() => window.MBMTownLifeQA?.ready() === true);
     await qa.evaluate(() => window.MBMTownLifeQA.setRole('Officer'));
-    await qa.locator('#roleLabel').evaluate(element => { element.textContent = 'Resident'; });
+    await qa.locator('#roleLabel').evaluate(element => {
+      const forceMutation = () => {
+        if (element.textContent !== 'Resident') element.textContent = 'Resident';
+      };
+      new MutationObserver(forceMutation).observe(element, { childList: true, subtree: true, characterData: true });
+      forceMutation();
+    });
     await red('role label mutation', () => assertRole(qa, 'Officer'));
     await qa.evaluate(() => window.MBMTownLifeQA.setCar({ active: true, inCar: false }));
     await red('vehicle mount mutation', () => assertMounted(qa, true));
