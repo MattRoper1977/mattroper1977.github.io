@@ -17,8 +17,8 @@
            carve a banked storm corridor, build Momentum and race a ghost.
            ============================================================ */
         /* --- ENVIRONMENT --- */
-        body { 
-            margin: 0; overflow: hidden; background-color: #000; 
+        body {
+            margin: 0; overflow: hidden; background-color: #000;
             font-family: 'Rajdhani', 'Segoe UI', sans-serif; user-select: none;
             touch-action: none; /* Critical for mobile */
         }
@@ -28,14 +28,14 @@
 
         /* UI LAYERS */
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-        
+
         /* CINEMATIC VIGNETTE */
         #vignette {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle, transparent 60%, rgba(0,0,0,0.8) 100%);
             pointer-events: none; z-index: 5;
         }
-        
+
         /* RETRO SCANLINES */
         #scanlines {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -47,7 +47,7 @@
         /* NEW CENTER HUD */
         #center-hud {
             position: absolute; top: calc(10px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
-            display: flex; flex-direction: column; align-items: center; 
+            display: flex; flex-direction: column; align-items: center;
             text-shadow: 0 0 10px rgba(0,0,0,0.8);
         }
         #level-display {
@@ -55,8 +55,8 @@
             text-shadow: 0 0 10px #00d4ff; letter-spacing: 2px;
             font-style: italic; margin-bottom: 2px;
         }
-        #progress-container { 
-            width: 300px; height: 6px; background: rgba(0,0,0,0.5); 
+        #progress-container {
+            width: 300px; height: 6px; background: rgba(0,0,0,0.5);
             border: 1px solid #555; transform: skew(-20deg); overflow: hidden;
         }
         #progress-fill { height: 100%; width: 0%; background: #00ff00; box-shadow: 0 0 10px #00ff00; transition: width 0.1s; }
@@ -78,16 +78,16 @@
         .stat-content { transform: skew(15deg); /* Unskew text */ }
 
         #lives-container { color: #ff0055; text-shadow: 0 0 10px red; font-size: 16px; }
-        
+
         /* COMBO UI */
         #combo-box {
             position: absolute; top: calc(80px + env(safe-area-inset-top)); right: calc(20px + env(safe-area-inset-right));
             text-align: right; display: none;
             transform: skew(-10deg);
         }
-        #combo-mult { 
-            font-size: 70px; color: #ffd700; font-weight: 900; 
-            text-shadow: 0 0 20px #ffaa00; font-style: italic; 
+        #combo-mult {
+            font-size: 70px; color: #ffd700; font-weight: 900;
+            text-shadow: 0 0 20px #ffaa00; font-style: italic;
             line-height: 0.8; transition: transform 0.1s;
         }
         #combo-label { font-size: 16px; color: #fff; letter-spacing: 4px; opacity: 0.8; }
@@ -131,7 +131,7 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             pointer-events: auto; z-index: 100; transition: opacity 0.3s;
         }
-        
+
         #pause-screen { background: rgba(0, 0, 0, 0.85); z-index: 90; }
         #game-over-screen { z-index: 110; }
         #start-screen { overflow-y:auto; justify-content:flex-start; box-sizing:border-box; padding:clamp(34px,7vh,72px) 0 44px; }
@@ -153,7 +153,7 @@
             opacity: 0; pointer-events: none; transition: opacity 0.1s; z-index: 20;
             mix-blend-mode: overlay;
         }
-        
+
         #shield-overlay {
             position: absolute; top:0; left:0; width:100%; height:100%;
             background: radial-gradient(circle, transparent 60%, rgba(0, 212, 255, 0.3) 100%);
@@ -192,17 +192,17 @@
             transform: skew(-20deg); overflow: hidden;
         }
         #boss-hp-fill { height: 100%; width: 100%; background: #ff3333; box-shadow: 0 0 15px #ff0000; transition: width 0.2s; }
-        
+
         #boss-warning {
             position: absolute; top: 120px; left: 50%; transform: translate(-50%, -50%);
             font-size: 50px; color: #ff0000; font-weight: 900; border-top: 3px solid red; border-bottom: 3px solid red; padding: 5px 30px;
             text-shadow: 0 0 20px red; display: none; animation: flash 0.2s infinite; z-index: 40;
             background: rgba(0,0,0,0.8); white-space: nowrap; letter-spacing: 3px;
         }
-        
+
         #level-up-overlay {
             position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 80px; color: #00ff00; font-weight: 900; 
+            font-size: 80px; color: #00ff00; font-weight: 900;
             text-shadow: 0 0 30px #00ff00; display: none; z-index: 45; pointer-events: none;
             font-style: italic; letter-spacing: -2px;
         }
@@ -214,7 +214,7 @@
         }
 
         .btn {
-            background: linear-gradient(90deg, rgba(0, 212, 255, 0.1), rgba(0, 212, 255, 0.3)); 
+            background: linear-gradient(90deg, rgba(0, 212, 255, 0.1), rgba(0, 212, 255, 0.3));
             color: #fff; border: 1px solid #00d4ff;
             padding: 12px 40px; font-size: 18px; font-weight: 800;
             cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
@@ -225,8 +225,8 @@
         .btn:hover { background: #00d4ff; color: #000; transform: scale(1.02); box-shadow: 0 0 30px rgba(0, 212, 255, 0.6); }
 
         /* SETTINGS UI */
-        #settings-screen { 
-            z-index: 101; overflow-y: auto; padding-top: 20px; 
+        #settings-screen {
+            z-index: 101; overflow-y: auto; padding-top: 20px;
             /* Make transparent to see garage */
             background: rgba(0,0,0,0.6);
         }
@@ -246,8 +246,8 @@
         #leaderboard-screen { z-index: 102; }
         #leaderboard-list {
             list-style: none; padding: 0; width: 500px; max-width: 95%;
-            background: rgba(0,0,0,0.8); border: 1px solid #333; 
-            margin-bottom: 20px; 
+            background: rgba(0,0,0,0.8); border: 1px solid #333;
+            margin-bottom: 20px;
         }
         .score-entry {
             display: flex; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid #222; color: white; font-size: 16px; font-weight: bold;
@@ -299,7 +299,7 @@
         /* AUDIO TOGGLE */
         #audio-toggle {
             position: fixed; top: calc(20px + env(safe-area-inset-top)); right: calc(20px + env(safe-area-inset-right)); z-index: 103;
-            background: rgba(0,0,0,0.6); border: 1px solid #555; color: #888; 
+            background: rgba(0,0,0,0.6); border: 1px solid #555; color: #888;
             font-size: 20px; cursor: pointer; padding: 8px 12px; border-radius: 4px;
             min-width:44px; min-height:44px; box-sizing:border-box;
             pointer-events: auto; transition: all 0.2s; backdrop-filter: blur(5px);
@@ -640,7 +640,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});set
                 <div class="stat-content">DISTANCE <span id="score-el" style="margin-left: 10px; color: #00d4ff;">0</span></div>
             </div>
         </div>
-        
+
         <div id="combo-box">
             <div id="combo-mult">x1</div>
             <div id="combo-label">PACE STREAK</div>
@@ -753,7 +753,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});set
         <br>
         <button class="btn" id="close-board-btn">BACK</button>
     </div>
-    
+
     <div id="pause-screen" class="screen hidden">
         <h1 class="neon-text">PAUSED</h1>
         <button class="btn" id="resume-btn">RESUME</button>
@@ -1031,10 +1031,10 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});set
 #endif`,km=`#ifdef USE_AOMAP
 	float ambientOcclusion = ( texture2D( aoMap, vAoMapUv ).r - 1.0 ) * aoMapIntensity + 1.0;
 	reflectedLight.indirectDiffuse *= ambientOcclusion;
-	#if defined( USE_CLEARCOAT ) 
+	#if defined( USE_CLEARCOAT )
 		clearcoatSpecularIndirect *= ambientOcclusion;
 	#endif
-	#if defined( USE_SHEEN ) 
+	#if defined( USE_SHEEN )
 		sheenSpecularIndirect *= ambientOcclusion;
 	#endif
 	#if defined( USE_ENVMAP ) && defined( STANDARD )
@@ -1487,7 +1487,7 @@ vec4 LinearTosRGB( in vec4 value ) {
 	#else
 		uniform sampler2D envMap;
 	#endif
-	
+
 #endif`,fg=`#ifdef USE_ENVMAP
 	uniform float reflectivity;
 	#if defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( PHONG ) || defined( LAMBERT )
@@ -1504,7 +1504,7 @@ vec4 LinearTosRGB( in vec4 value ) {
 		#define ENV_WORLDPOS
 	#endif
 	#ifdef ENV_WORLDPOS
-		
+
 		varying vec3 vWorldPosition;
 	#else
 		varying vec3 vReflect;
@@ -2321,7 +2321,7 @@ IncidentLight directLight;
 	vec4 sampledDiffuseColor = texture2D( map, vMapUv );
 	#ifdef DECODE_VIDEO_TEXTURE
 		sampledDiffuseColor = vec4( mix( pow( sampledDiffuseColor.rgb * 0.9478672986 + vec3( 0.0521327014 ), vec3( 2.4 ) ), sampledDiffuseColor.rgb * 0.0773993808, vec3( lessThanEqual( sampledDiffuseColor.rgb, vec3( 0.04045 ) ) ) ), sampledDiffuseColor.w );
-	
+
 	#endif
 	diffuseColor *= sampledDiffuseColor;
 #endif`,Hg=`#ifdef USE_MAP

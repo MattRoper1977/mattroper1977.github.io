@@ -53,9 +53,6 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
 
-      - name: Install the AST parser used by curation gates
-        run: npm install --no-save --no-package-lock acorn@8.18.0
-
       - name: Resolve the coordinated Games shelf
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -94,7 +91,6 @@ jobs:
           python3 tools/build_mbm_search_index.py --check
           python3 tools/render_games_manifest_mirror.py --canonical "$V4_GAMES_MANIFEST" --check
           node tools/verify_new_games_uncurated.mjs
-          node tools/verify_curation_keys.mjs
           node tools/verify_pupil_genres.mjs
           node tools/verify_genre_participants.mjs
           node tools/verify_sitemap_covers_games.mjs
@@ -120,8 +116,11 @@ jobs:
       - name: Install pinned Playwright and all required engines
         run: |
           set -euo pipefail
-          npm install --no-save --no-package-lock playwright@1.62.1
+          npm install --no-save --no-package-lock playwright@1.62.1 acorn@8.18.0
           npx playwright install --with-deps chromium firefox webkit
+
+      - name: Rendered curation contract
+        run: node tools/verify_curation_keys.mjs
 
       - name: Exact browser matrix
         env:
