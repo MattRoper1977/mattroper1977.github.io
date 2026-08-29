@@ -25,12 +25,32 @@
  *     verdict, because a sign test at this n cannot see a single large outlier.
  */
 'use strict';
-import { chromium } from '/home/user/Lessons/node_modules/playwright/index.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+
+const __dirnameEarly = path.dirname(fileURLToPath(import.meta.url));
+
+/* Playwright is resolved, never hard-coded. An absolute sandbox path works on
+ * exactly one machine and fails everywhere else, including CI — which is the
+ * only place that can prove the served route. Node does not search a global
+ * root unless NODE_PATH says so, so the candidates are named explicitly, the
+ * same way tools/verify_emberwild.js does it. */
+function loadChromium() {
+  const req = createRequire(import.meta.url);
+  const repoRoot = path.resolve(__dirnameEarly, '..');
+  const globalRoot = path.resolve(path.dirname(process.execPath), '..', 'lib', 'node_modules');
+  const paths = [
+    path.join(repoRoot, 'node_modules'),
+    globalRoot,
+    ...(process.env.NODE_PATH || '').split(path.delimiter).filter(Boolean),
+    '/home/user/Lessons/node_modules',
+  ].filter(p => { try { return fs.existsSync(p); } catch (_) { return false; } });
+  return req(req.resolve('playwright', { paths })).chromium;
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const argPath = process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : null;
@@ -489,15 +509,19 @@ async function selftest(html, browser, origin, serveOne) {
 
   const { server, port } = await serve(GAME);
   const origin = `http://127.0.0.1:${port}`;
-  let browser;
-  try { browser = await chromium.launch(CHROME ? { executablePath: CHROME } : {}); }
+  let browser, chromium;
+  try { chromium = loadChromium(); browser = await chromium.launch(CHROME ? { executablePath: CHROME } : {}); }
   catch (e) { gate('TGB', 'browser gates', false, 'chromium unavailable: ' + e.message); }
   if (browser) {
     say('');
     try { await browserGates(browser, origin); }
     finally { await browser.close(); }
   }
-  if (SELFTEST) { const b2 = await chromium.launch(CHROME ? { executablePath: CHROME } : {}); try { await selftest(html, b2, origin); } finally { await b2.close(); } }
+  if (SELFTEST) {
+    const cr = chromium || loadChromium();
+    const b2 = await cr.launch(CHROME ? { executablePath: CHROME } : {});
+    try { await selftest(html, b2, origin); } finally { await b2.close(); }
+  }
   server.close();
 
   const bad = results.filter(r => !r.ok);
