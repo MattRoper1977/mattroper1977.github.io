@@ -54,6 +54,7 @@ function serve(file) {
   const root = path.resolve(dir, '..');
   const server = http.createServer((req, res) => {
     const url = req.url.split('?')[0];
+    if (url === '/favicon.ico') { res.writeHead(204); res.end(); return; }
     let p = url === '/touchline/' || url === '/' ? file : path.join(root, url.replace(/^\//, ''));
     if (p.endsWith('/')) p = path.join(p, 'index.html');
     fs.readFile(p, (err, buf) => {
@@ -106,9 +107,13 @@ async function boot(browser, origin, opts = {}) {
   const errors = [], external = [];
   const page = await ctx.newPage();
   page.on('pageerror', e => errors.push(String(e.message)));
-  page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+  page.on('console', m => { const t = m.text();
+    if (m.type() === 'error' && !/favicon\.ico/.test(t)) errors.push('console: ' + t); });
   page.on('requestfailed', r => errors.push('requestfailed: ' + r.url()));
-  page.on('response', r => { if (r.status() >= 400) errors.push(`http ${r.status()}: ${r.url().replace(origin, '')}`); });
+  // The harness's own static server carries no favicon; a 404 for one is the
+  // server's, not the game's. Everything else counts.
+  page.on('response', r => { const u = r.url().replace(origin, '');
+    if (r.status() >= 400 && u !== '/favicon.ico') errors.push('http ' + r.status() + ': ' + u); });
   page.on('request', r => { const u = r.url(); if (!u.startsWith(origin) && !u.startsWith('data:') && !u.startsWith('blob:')) external.push(u); });
   if (opts.killWebGL) {
     await page.addInitScript(() => {
@@ -127,14 +132,23 @@ async function boot(browser, origin, opts = {}) {
 
 // Distinct-colour census of a canvas. A canvas at its default size with one
 // colour is an uninitialised canvas, not a rendered scene.
-const CANVAS_CENSUS = `(id)=>{const c=document.getElementById(id);if(!c)return null;
-  const r=c.getBoundingClientRect();let colours=0,sampled=0;
-  try{const g=c.getContext('2d');
-    if(g){const d=g.getImageData(0,0,Math.min(c.width,300),Math.min(c.height,300)).data;
-      const s=new Set();for(let i=0;i<d.length;i+=4)s.add(d[i]+','+d[i+1]+','+d[i+2]);colours=s.size;sampled=1;}
-  }catch(_){}
-  return {w:c.width,h:c.height,cw:Math.round(r.width),ch:Math.round(r.height),
-    shown:getComputedStyle(c).display!=='none',colours,sampled};}`;
+// A string arrow function handed to page.evaluate does NOT receive the extra
+// argument - it evaluates to undefined, and the caller reads that as "no such
+// canvas". Passing a real function is the difference between measuring the game
+// and measuring the harness.
+const canvasCensus = (id) => {
+  const c = document.getElementById(id); if (!c) return null;
+  const r = c.getBoundingClientRect();
+  let colours = 0, sampled = 0;
+  try { const g = c.getContext('2d');
+    if (g) { const d = g.getImageData(0, 0, Math.min(c.width, 300), Math.min(c.height, 300)).data;
+      const set = new Set();
+      for (let k = 0; k < d.length; k += 4) set.add(d[k] + ',' + d[k+1] + ',' + d[k+2]);
+      colours = set.size; sampled = 1; }
+  } catch (_) {}
+  return { w: c.width, h: c.height, cw: Math.round(r.width), ch: Math.round(r.height),
+    shown: getComputedStyle(c).display !== 'none', colours, sampled };
+};
 
 async function staticGates(html) {
   // Only LOADABLE references count. rel=canonical and og:url are declarations
@@ -189,7 +203,7 @@ async function browserGates(browser, origin) {
     const { ctx, page, errors, external } = await boot(browser, origin);
     const drive = await intoMatch(page);
     say(`      TG1 drive: ${drive.steps.join(' > ') || '(no controls found)'} | match-app hidden=${drive.mounted.hidden}, #scene3d=${drive.mounted.scene3d}, #scene2d=${drive.mounted.scene2d}`);
-    const three = await page.evaluate(CANVAS_CENSUS, 'scene3d');
+    const three = await page.evaluate(canvasCensus, 'scene3d');
     const chip = await page.evaluate(() => (document.getElementById('renderer-chip') || {}).textContent || '');
     gate('TG1a', 'positive control: WebGL renderer paints #scene3d',
       !!three && three.cw > 0 && three.shown, three ? `#scene3d ${three.cw}x${three.ch} css, shown=${three.shown}, chip="${chip.trim()}"` : 'no #scene3d');
@@ -205,7 +219,7 @@ async function browserGates(browser, origin) {
     const { ctx, page, errors } = await boot(browser, origin, { killWebGL: true });
     await intoMatch(page);
     const chip = await page.evaluate(() => (document.getElementById('renderer-chip') || {}).textContent || '');
-    const two = await page.evaluate(CANVAS_CENSUS, 'scene2d');
+    const two = await page.evaluate(canvasCensus, 'scene2d');
     const alive = await page.evaluate(() => typeof window.__TDV2_CAREER_TEST__ === 'object');
     gate('TG1b', 'WebGL refused: game boots on the named fallback canvas #scene2d',
       alive && !!two && two.shown, two ? `#scene2d shown=${two.shown} ${two.cw}x${two.ch}, chip="${chip.trim()}", hook=${alive}` : 'no #scene2d');
@@ -215,12 +229,16 @@ async function browserGates(browser, origin) {
       try {
         const c = T.create(4242); T.hydrate(c);
         const fx = T.nextFixture();
+        // simCareerScore returns {hg, ag, pens, aet, winner}; home/away are the
+        // INPUTS. Asserting the input names measured nothing about the result.
         const r = T.simulate(fx.home, fx.away, fx);
-        return { ok: !!r && typeof r.home === 'number' && typeof r.away === 'number', score: r && (r.home + '-' + r.away), mode: T.storageMode() };
+        return { ok: !!r && typeof r.hg === 'number' && typeof r.ag === 'number',
+          score: r && (r.hg + '-' + r.ag), shape: r && Object.keys(r).join(','), mode: T.storageMode() };
       } catch (e) { return { ok: false, err: e.message }; }
     });
     gate('TG1c', 'WebGL refused: a fixture still plays to a score',
-      played.ok, played.ok ? `score ${played.score}, storage ${played.mode}` : 'ERR ' + played.err);
+      played.ok, played.ok ? `score ${played.score} (fields ${played.shape}), storage ${played.mode}`
+        : 'ERR ' + (played.err || JSON.stringify(played)));
 
     const saved = await page.evaluate(async () => {
       const T = window.__TDV2_CAREER_TEST__;
@@ -263,22 +281,30 @@ async function browserGates(browser, origin) {
       const made = T.create(20260829); T.hydrate(made);
       await new Promise(r => setTimeout(r, 800));
       const before = T.getState();
+      // The career state is flat: squad/schedule/leagueTable are top level.
+      // An earlier signature read s.clubs[0].squad and s.fixtures — neither
+      // exists, so every field came back empty and the comparison was two empty
+      // objects agreeing. A round trip that compares nothing always passes.
       const sig = s => JSON.stringify({
-        club: s.clubs ? s.clubs.length : null,
-        squad: (s.clubs && s.clubs[0] && s.clubs[0].squad || []).map(p => [p.id, p.name, p.pos]).slice(0, 30),
-        fixtures: (s.fixtures || []).length, season: s.season, week: s.week,
-        board: s.board ? JSON.stringify(s.board) : null });
+        squad: (s.squad || []).map(p => [p.id, p.name, p.pos, p.ability]),
+        schedule: (s.schedule || []).map(f => [f.id, f.home, f.away, f.played, f.hg, f.ag]),
+        leagueTable: (s.leagueTable || []).map(t => [t.id, t.pts, t.gd]),
+        season: s.season, year: s.year, week: s.week, leagueRound: s.leagueRound,
+        cash: s.cash, board: s.board, reputation: s.reputation, morale: s.morale,
+        tactics: s.tactics, objectives: s.objectives, finance: s.finance });
       const a = sig(before);
       T.hydrate(JSON.parse(JSON.stringify(before)));
       await new Promise(r => setTimeout(r, 500));
       const b = sig(T.getState());
       return { mode: T.storageMode(), equal: a === b, valid: !!T.validate(T.getState()),
-        squadN: (before.clubs && before.clubs[0] && before.clubs[0].squad || []).length,
-        fixtures: (before.fixtures || []).length,
-        aLen: a.length, bLen: b.length };
+        squadN: (before.squad || []).length, fixtures: (before.schedule || []).length,
+        table: (before.leagueTable || []).length, sigLen: a.length };
     });
+    // Non-vacuity is part of the assertion, not a note beside it: a signature
+    // over an empty squad and an empty schedule would match trivially.
     gate(killIDB ? 'TG3b' : 'TG3a', `career round trip by value — ${label}`,
-      rt.equal && rt.valid, `mode=${rt.mode}, squad=${rt.squadN}, fixtures=${rt.fixtures}, signature match=${rt.equal}, validate=${rt.valid}`);
+      rt.equal && rt.valid && rt.squadN > 0 && rt.fixtures > 0 && rt.sigLen > 200,
+      `mode=${rt.mode}, squad=${rt.squadN}, schedule=${rt.fixtures}, table=${rt.table}, signature ${rt.sigLen} chars, match=${rt.equal}, validate=${rt.valid}`);
     if (!killIDB) {
       const mig = await page.evaluate(() => {
         const T = window.__TDV2_CAREER_TEST__;
