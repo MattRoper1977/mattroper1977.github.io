@@ -61,12 +61,23 @@ function staticGates(html) {
     externals.length ? externals.join(' | ') : 'no external src/href');
 
   // G3 storage namespace: no bare key literal outside the one helper.
-  // The pinned exit-control block reads an estate-wide homepage key and is
-  // byte-identical furniture across ten games — excluded by marker, not by name.
-  const withoutExit = html.replace(
-    /<!-- MBM-INLINE-EXIT:BEGIN[\s\S]*?MBM-INLINE-EXIT:END -->/, '');
-  const lsCalls = (withoutExit.match(/localStorage\.(getItem|setItem|removeItem)/g) || []).length;
-  const helperCalls = (withoutExit.match(
+  //
+  // Two generated regions read estate-wide keys and are byte-identical
+  // furniture across the games that carry them. Both are excluded BY MARKER,
+  // never by key name: a marker carve-out exempts a region whose bytes are
+  // pinned two lines below, so nothing can be smuggled into it without HF1 or
+  // HF2 reding. Exempting a key NAME instead would exempt it everywhere,
+  // including in hand-written game code, which is the thing this gate exists
+  // to stop.
+  //
+  // The splash was the reason /emberwild/ sat in makerSplash's
+  // declined-with-reason list: "observed after-application failure: stray key
+  // mbm_splash_last". The key is not the defect — an unpinned region would be.
+  const generated = html
+    .replace(/<!-- MBM-INLINE-EXIT:BEGIN[\s\S]*?MBM-INLINE-EXIT:END -->/, '')
+    .replace(/<!-- MBM-MAKER-SPLASH:BEGIN[\s\S]*?MBM-MAKER-SPLASH:END -->/, '');
+  const lsCalls = (generated.match(/localStorage\.(getItem|setItem|removeItem)/g) || []).length;
+  const helperCalls = (generated.match(
     /localStorage\.(getItem|setItem|removeItem)\(EWStore\.key\(name\)\)|localStorage\.(setItem)\(EWStore\.key\(name\), value\)/g) || []).length;
   gate('G3s', 'storage: all key building inside EWStore', lsCalls === helperCalls && lsCalls > 0,
     `${helperCalls}/${lsCalls} localStorage calls go through EWStore.key`);
@@ -113,7 +124,15 @@ function staticGates(html) {
   const exitBytes = exitMatch ? Buffer.byteLength(exitMatch[0], 'utf8') : 0;
   gate('HF1', 'inline exit control present at pinned size', exitBytes === 3222,
     `${exitBytes} bytes (estate pin 3222)`);
-  gate('HF2', 'MBM splash present', /id="mbmSplash"/.test(html), '');
+  // HF2 is what makes G3s's marker carve-out safe. An exempted region has to
+  // be a region nobody can edit, so this pins its bytes rather than merely
+  // asking whether it is there. The pin is the estate value, measured across
+  // every route that carries the block, not a number chosen here.
+  const splashMatch = html.match(/<!-- MBM-MAKER-SPLASH:BEGIN[\s\S]*?MBM-MAKER-SPLASH:END -->/);
+  const splashBytes = splashMatch ? Buffer.byteLength(splashMatch[0], 'utf8') : 0;
+  gate('HF2', 'MBM splash present at the estate pin, byte for byte',
+    splashBytes === 8356 && /id="mbmSplash"/.test(html),
+    `${splashBytes} bytes (estate pin 8356)`);
   gate('HF3', 'canonical + og:url point at /emberwild/',
     /rel="canonical" href="https:\/\/madebymatt\.uk\/emberwild\/"/.test(html)
     && /property="og:url" content="https:\/\/madebymatt\.uk\/emberwild\/"/.test(html), '');
@@ -356,10 +375,33 @@ async function browserGates(gamePath) {
       /true odds were [\d.]+ per cent/i.test(reveal.sr) && reveal.history.length === 1,
       reveal.sr.slice(0, 70));
 
+    // The estate splash writes ONE key, and it is deliberately shared across
+    // every route that carries the block — a 24-hour suppression that follows
+    // the visitor around the estate rather than making them sit through it
+    // once per game. Namespacing it per game would defeat the feature it
+    // implements, so it is allowed HERE, by exact name, and by nothing wider:
+    // an allowlist of one, not a prefix and not a pattern. Any other key that
+    // is not mbm_emberwild_* is still stray.
+    const ESTATE_KEYS = ['mbm_splash_last'];
     const keys = await page.evaluate(() => Object.keys(localStorage));
-    const stray = keys.filter(k => k.indexOf('mbm_emberwild_') !== 0);
-    gate('G3', 'every storage key is mbm_emberwild_*', stray.length === 0,
+    const stray = keys.filter(k => k.indexOf('mbm_emberwild_') !== 0 && !ESTATE_KEYS.includes(k));
+    gate('G3', 'every storage key is mbm_emberwild_*, or the one estate splash key',
+      stray.length === 0,
       stray.length ? 'stray: ' + stray.join(', ') : keys.join(', '));
+
+    // And the allowlist has to be shown to be an allowlist rather than a hole:
+    // a key one character away from the permitted one must still be caught.
+    const g3Control = await page.evaluate((allowed) => {
+      const near = allowed[0] + '_x';
+      localStorage.setItem(near, '1');
+      const seen = Object.keys(localStorage)
+        .filter(k => k.indexOf('mbm_emberwild_') !== 0 && !allowed.includes(k));
+      localStorage.removeItem(near);
+      return seen;
+    }, ESTATE_KEYS);
+    gate('G3c', 'CONTROL: a key beside the allowed one is still stray',
+      g3Control.length === 1 && g3Control[0] === ESTATE_KEYS[0] + '_x',
+      g3Control.join(', ') || 'the allowlist swallowed it — it is a hole, not a list');
 
     // G9 hostile saves — reproduced, not asserted.
     const hostile = await page.evaluate(() => {
@@ -389,26 +431,64 @@ async function browserGates(gamePath) {
     const alive = await page.evaluate(() => !!(window.__EMBERWILD__ && window.__EMBERWILD__.running));
     gate('G9b', 'game still running after hostile-save probing', alive, '');
 
-    // G6 reduced motion — boot a second page under the OS preference.
-    const rmPage = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
-    const rmErrors = [];
-    rmPage.on('pageerror', e => rmErrors.push(String(e.message)));
-    await rmPage.goto('file://' + gamePath);
-    await rmPage.waitForTimeout(2200);
-    const rm = await rmPage.evaluate(() => {
-      const rule = getComputedStyle(document.querySelector('.mbmRule'));
-      return {
-        splash: document.getElementById('mbmSplash').getAttribute('data-mbm-splash-state'),
-        ruleWidth: parseFloat(rule.width) || 0,
-        matches: matchMedia('(prefers-reduced-motion: reduce)').matches
-      };
-    });
-    // The splash rule is an animation; under RM it must still have reached its
-    // painted state rather than being frozen at zero width (static != blank).
-    gate('G6', 'reduced motion: honoured and static state still reads',
-      rm.matches && rm.ruleWidth > 0 && rmErrors.length === 0,
-      `rule width ${rm.ruleWidth}px, splash ${rm.splash}, ${rmErrors.length} errors`);
-    await rmPage.close();
+    // G6 reduced motion.
+    //
+    // This gate used to read Emberwild's OWN splash — `.mbmRule` width and
+    // data-mbm-splash-state — and assert the rule had reached its painted
+    // width rather than sitting frozen at zero. That splash is gone: adopting
+    // the estate block ran render_maker_splash.py's strip_legacy branch over
+    // it, which is the point of adopting it. Left as it was, this gate threw
+    // getComputedStyle on null and took the whole run down with a harness
+    // error rather than a red, which is the worse of the two failures.
+    //
+    // So it is rewritten against the contract the estate block actually
+    // carries, measured rather than assumed:
+    //
+    //   @media(prefers-reduced-motion:reduce){
+    //     #mbmSplash[data-mbm-maker-splash]{animation-duration:.28s}
+    //     #mbmSplash[data-mbm-maker-splash]::before,.mbm-splash-line{animation:none}
+    //   }
+    //
+    // Reduced motion does not remove the introduction; it shortens it from
+    // 1.9s to 0.28s and stops the sweep and the rule animating. Measured at
+    // 700ms on /townlife/, /echovault/ and here: without the preference the
+    // splash is still up at opacity 1; with it, it has already stood down.
+    // That DIFFERENTIAL is the contract, and it is what this asserts — it is
+    // also non-racy, unlike sampling inside a 280ms window.
+    //
+    // Recorded while measuring, and NOT fixed here: the estate block sets
+    // `.mbm-splash-line{animation:none}` under RM without restoring the width
+    // its keyframe would have reached, so for those 0.28s the rule is
+    // zero-width. Emberwild's own splash did restore it
+    // (`.mbmRule{animation:none;width:min(58vw,300px)}`), so this adoption
+    // trades that away. The wordmark itself still reads, the rule is ornament,
+    // and changing it means changing the byte-pinned block on all eight
+    // applied routes at once — a separate decision, stated here rather than
+    // taken quietly.
+    const splashUpAt = async (reduce) => {
+      const p = await browser.newPage({ viewport: { width: 390, height: 844 },
+        reducedMotion: reduce ? 'reduce' : 'no-preference' });
+      const errs = [];
+      p.on('pageerror', e => errs.push(String(e.message)));
+      await p.goto('file://' + gamePath);
+      await p.waitForTimeout(700);
+      const r = await p.evaluate(() => {
+        const el = document.getElementById('mbmSplash');
+        if (!el) return { up: false, how: 'removed from the document' };
+        const cs = getComputedStyle(el);
+        const up = cs.display !== 'none' && cs.visibility !== 'hidden' && parseFloat(cs.opacity) > 0;
+        return { up, how: `display=${cs.display} visibility=${cs.visibility} opacity=${cs.opacity}` };
+      });
+      const matches = await p.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
+      await p.close();
+      return { ...r, matches, errors: errs };
+    };
+    const rmOn = await splashUpAt(true);
+    const rmOff = await splashUpAt(false);
+    gate('G6', 'reduced motion: the splash is shortened, not merely honoured in name',
+      rmOn.matches && !rmOff.matches && !rmOn.up && rmOff.up && rmOn.errors.length === 0,
+      `at 700ms — reduced: ${rmOn.up ? 'still up' : 'stood down'} (${rmOn.how}); ` +
+      `normal: ${rmOff.up ? 'still up' : 'stood down'} (${rmOff.how}); ${rmOn.errors.length} errors`);
 
     // G2 — determinism. Two FRESH generations from one seed must agree, for
     // every mode. Run inside the page against the shipped generator.
@@ -546,7 +626,16 @@ async function selftest(html) {
     { gate: 'G13s', why: 'stop reading the Den registry stamp back',
       mutate: s => s.replace(/if\(EWDen\.checkRegistry\(d\.denRegistry\)==='drift'\)[^\n]*\n/, '') },
     { gate: 'G13s', why: 'go back to the write-only fingerprint',
-      mutate: s => s.replace('denRegistry:EWDen.registryStamp()', 'denFingerprint:EWDen.codec.registryFingerprint') }
+      mutate: s => s.replace('denRegistry:EWDen.registryStamp()', 'denFingerprint:EWDen.codec.registryFingerprint') },
+    // G3s exempts the splash region by marker, so the region's bytes are the
+    // only thing standing between that exemption and a place to hide a stray
+    // key. These two mutations are that guarantee, and they are a pair:
+    // editing inside the region must red, and so must moving the closing
+    // marker to swallow code that was never in it.
+    { gate: 'HF2', why: 'edit the generated splash region by hand',
+      mutate: s => s.replace('MBM-MAKER-SPLASH:END -->', '<!--x--> MBM-MAKER-SPLASH:END -->') },
+    { gate: 'HF2', why: 'stretch the splash marker over code outside it',
+      mutate: s => s.replace('<!-- MBM-MAKER-SPLASH:END -->', '') }
   ];
 
   let proven = 0;
