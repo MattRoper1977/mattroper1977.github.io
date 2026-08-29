@@ -207,7 +207,7 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
   catch (error) { errors.push(`navigation: ${error.message}`); }
   const maker = page.locator('[data-mbm-maker-splash]');
   const appeared = await maker.waitFor({ state: 'attached', timeout: waitAbsent }).then(() => true).catch(() => false);
-  let shownUnderlayRect = null, visibleWallMs = null;
+  let shownUnderlayRect = null, visibleWallMs = null, detached = !appeared;
   if (appeared) {
     const visibleWallStart = Date.now();
     await page.waitForTimeout(20);
@@ -232,7 +232,7 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
     // dismissal key. Keep the check strict, but allow the queued close/focus
     // task to run before evaluating the hand-off.
     if (action !== 'none') {
-      await maker.waitFor({ state: 'detached', timeout: 30000 }).catch(() => {});
+      detached = await maker.waitFor({ state: 'detached', timeout: 30000 }).then(() => true).catch(() => false);
       visibleWallMs = Date.now() - visibleWallStart;
     }
   }
@@ -266,7 +266,7 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
       ready: document.readyState,
     };
   }, KEY).catch(error => ({ probe: {}, error: error.message }));
-  const result = { ...state, appeared, wall, shownUnderlayRect, visibleWallMs, status: response?.status() ?? null, finalUrl: page.url(), errors, external };
+  const result = { ...state, appeared, detached, wall, shownUnderlayRect, visibleWallMs, status: response?.status() ?? null, finalUrl: page.url(), errors, external };
   await page.close();
   return result;
 }
@@ -581,7 +581,7 @@ async function verify(browser, origin) {
       const duration = result.probe?.first == null ? null : result.probe.last - result.probe.first;
       const addedErrors = addedFrom(result.errors, skipped.errors);
       const addedExternal = addedFrom(result.external, skipped.external);
-      observations.push({ viewport, seen: !!result.probe?.seen, duration, active: result.active, primary: result.primaryRect,
+      observations.push({ viewport, seen: !!result.probe?.seen, duration, detached: result.detached, makerPresent: result.makerPresent, active: result.active, primary: result.primaryRect,
         suppressedSeen: !!skipped.probe?.seen, suppressedActive: skipped.active, suppressedPrimary: skipped.primaryRect,
         shownContentGeometry: result.probe?.contentGeometry ?? null,
         suppressedContentGeometry: skipped.probe?.contentGeometry ?? null,
@@ -591,7 +591,7 @@ async function verify(browser, origin) {
         baselineErrors: skipped.errors, baselineExternal: skipped.external });
     }
     const wayOut = await wayOutProbe(browser, origin, route, 'Enter');
-    const pass = observations.every(o => o.seen && o.duration >= 280 && !o.suppressedSeen && o.firstPaintGeometryMatch && o.overflowDelta <= 0 &&
+    const pass = observations.every(o => o.seen && o.duration >= 280 && o.detached && !o.makerPresent && !o.suppressedSeen && o.firstPaintGeometryMatch && o.overflowDelta <= 0 &&
       o.addedErrors.length === 0 && o.addedExternal.length === 0 && o.active.id === o.primary?.id && o.active.tag === o.primary?.tag &&
       o.suppressedActive.id === o.suppressedPrimary?.id && o.suppressedActive.tag === o.suppressedPrimary?.tag) &&
       wayOut.reached && wayOut.tabs <= 30 && wayOut.navigated && wayOut.errors.length === 0 && wayOut.external.length === 0;

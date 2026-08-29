@@ -204,7 +204,7 @@ var el=document.createElement("section");el.id="mbmSplash";el.setAttribute("data
 var reduced=false;try{reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(_){}
 var shown=performance.now(),requested=false,closed=false,hard=0,GUARDED=["keydown","keyup","pointerdown","pointerup","click"];
 function unguard(){for(var i=0;i<GUARDED.length;i++)document.removeEventListener(GUARDED[i],guard,true);}
-function finish(){if(closed)return;closed=true;clearTimeout(hard);el.classList.add("mbm-splash-skip");el.style.pointerEvents="none";el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}if(MODE!=="force")writeNow();focusReady();setTimeout(function(){unguard();if(el.parentNode)el.parentNode.removeChild(el);focusReady();},reduced?0:150);}
+function finish(){if(closed)return;closed=true;clearTimeout(hard);el.classList.add("mbm-splash-skip");el.style.pointerEvents="none";el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}if(MODE!=="force")writeNow();unguard();if(el.parentNode)el.parentNode.removeChild(el);focusReady();}
 function dismiss(){if(requested||closed)return;requested=true;var wait=Math.max(0,450-(performance.now()-shown));setTimeout(finish,wait);}
 function guard(e){e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();if(closed)return;if(e.type==="keydown"||(e.type==="pointerdown"&&el.contains(e.target))||(e.type==="click"&&el.contains(e.target))){e.preventDefault();dismiss();}}
 for(var i=0;i<GUARDED.length;i++)document.addEventListener(GUARDED[i],guard,true);
@@ -3098,7 +3098,7 @@ class GlobalGamesV4{
   a.showTitle=()=>{this.director.reset();this.ghostLegend.classList.add('hidden');baseTitle();this.enhanceTitle();this.replaceV3Labels()};
   a.showSetup=()=>{baseSetup();this.replaceV3Labels()};a.showHub=()=>{baseHub();this.enhanceHub();this.replaceV3Labels()};a.showEventIntro=()=>{baseIntro();this.enhanceIntro();this.replaceV3Labels()};
   a.startActiveEvent=()=>{if(a.tournament&&a.tournament.config.mode==='weekly'){a.tournament.seed=weeklySeedV4(a.tournament.currentId);a.tournament.rng=mulberry32(a.tournament.seed)}baseStart();this.ghostLegend.classList.toggle('hidden',!['sprint','swimming'].includes(a.activeEvent&&a.activeEvent.id))};
-  a.showEventResult=()=>{baseResult();this.enhanceResult(a.lastEntry);this.ghostLegend.classList.add('hidden');this.replaceV3Labels()};a.showRecords=()=>{baseRecords();this.enhanceRecords();this.replaceV3Labels()};
+  a.showEventResult=entry=>{baseResult(entry);this.enhanceResult(entry||a.lastEntry);this.ghostLegend.classList.add('hidden');this.replaceV3Labels()};a.showRecords=()=>{baseRecords();this.enhanceRecords();this.replaceV3Labels()};
   a.updateHUD=()=>{baseHUD();this.updateBioHUD()};a.beginTournament=()=>{const weekly=a.setupDraft&&a.setupDraft.mode==='weekly';baseBegin();if(weekly&&a.tournament){a.tournament.config.weekId=weeklyIdV4();a.tournament.config.weekly=true;a.tournament.seed=weeklySeedV4(a.tournament.currentId);a.tournament.rng=mulberry32(a.tournament.seed);a.showHub()}};
   this.apex.showData=()=>{baseData();this.bindDataV4()};
   this.v3.showPassport=()=>{basePassport();this.enhancePassport();this.replaceV3Labels()};this.v3.showDaily=()=>{baseDaily();this.replaceV3Labels()}
