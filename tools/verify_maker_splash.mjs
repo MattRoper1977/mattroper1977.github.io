@@ -231,7 +231,11 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
     // Shader-heavy games can monopolise a throttled CI main thread after the
     // dismissal key. Keep the check strict, but allow the queued close/focus
     // task to run before evaluating the hand-off.
-    if (action !== 'none') { await maker.waitFor({ state: 'detached', timeout: 30000 }).catch(() => {}); visibleWallMs = Date.now() - visibleWallStart; }
+    if (action !== 'none') {
+      await maker.waitFor({ state: 'detached', timeout: 30000 }).catch(() => {});
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))).catch(() => {});
+      visibleWallMs = Date.now() - visibleWallStart;
+    }
   }
   await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(error => errors.push(`domcontentloaded: ${error.message}`));
   const state = await page.evaluate(key => {

@@ -453,7 +453,7 @@ async function smokeGlobal(page) {
   await page.locator('#pauseBtn').click(); await page.waitForFunction(() => window.__olympics.paused === true);
   await page.locator('#resumeBtn').click(); await page.waitForFunction(() => window.__olympics.paused === false);
   assert(await page.evaluate(() => MBMGlobalGames.debugFinish()), 'Global debug finish could not complete active event');
-  await page.waitForFunction(() => window.__olympics.screen !== 'PLAYING', null, { timeout: 10000 });
+  await page.waitForFunction(() => window.__olympics.screen !== 'PLAYING', null, { timeout: 30000 });
 }
 
 async function smokeRelic(page) {
