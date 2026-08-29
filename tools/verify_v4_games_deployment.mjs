@@ -469,7 +469,8 @@ async function smokeRelic(page) {
   await page.waitForTimeout(900);
   const after = await page.evaluate(() => window.__relicforge.snapshot());
   assert(after.time > before.time && after.playerPosition && (after.playerPosition.x !== before.playerPosition.x || after.projectiles !== before.projectiles || after.enemies <= before.enemies), 'Relic movement/combat did not progress');
-  await page.keyboard.press('Escape'); await page.waitForFunction(() => __relicforge.snapshot().mode === 'paused');
+  if (after.mode !== 'paused') await page.keyboard.press('Escape');
+  await page.waitForFunction(() => __relicforge.snapshot().mode === 'paused');
   await page.locator('#resume-btn').click(); await page.waitForFunction(() => __relicforge.snapshot().mode === 'playing');
 }
 
@@ -491,7 +492,8 @@ async function smokeVoxel(page, mobile) {
   await page.waitForTimeout(900);
   const after = await page.locator('#hud').innerText();
   assert(after.includes('FRONTIER') && (after !== before || (await page.locator('#contract-objectives').innerText()).length > 10), 'Voxel world/input/objective did not progress');
-  await page.keyboard.press('Escape');
+  const overlayVisible = await page.locator('#overlay').evaluate(element => getComputedStyle(element).display !== 'none');
+  if (!overlayVisible) await page.keyboard.press('Escape');
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#overlay')).display !== 'none');
   const save = await page.evaluate(() => {
     const key = localStorage.getItem('voxelfrontier.lastseed.v1');
