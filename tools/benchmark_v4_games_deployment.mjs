@@ -122,10 +122,11 @@ async function sample(browser, url, id, label) {
   await context.close();
   assert.deepEqual(errors, [], `${label}/${id}: page errors: ${errors.join(' | ')}`);
   const result = { label, frames: data.frames, elapsedMs: data.elapsed, medianFrameMs: percentile(data.deltas, .5), p95FrameMs: percentile(data.deltas, .95), worstFrameMs: data.worst };
-  // Rollback subjects are immutable evidence, not release candidates. Require
-  // enough baseline frames for a meaningful comparison, while reserving the
-  // stricter usability floor for the deployable candidate.
-  const minimumFrames = label === 'candidate' ? 300 : 120;
+  // Existing-route candidates are judged against their immutable rollback
+  // subject below; this floor only proves that either sample is measurable.
+  // The new route, which has no baseline, receives its absolute launch floor
+  // after the paired sampling loop.
+  const minimumFrames = 120;
   assert(result.frames >= minimumFrames, `${label}/${id}: unusable stall (${result.frames} frames in 30 seconds; minimum ${minimumFrames})`);
   assert(result.p95FrameMs < 500, `${label}/${id}: repeated half-second stalls (p95 ${result.p95FrameMs} ms)`);
   console.log(`${label.padEnd(9)} ${id.padEnd(14)} ${result.frames} frames · median ${result.medianFrameMs.toFixed(2)} ms · p95 ${result.p95FrameMs.toFixed(2)} ms · worst ${result.worstFrameMs.toFixed(2)} ms`);
@@ -145,7 +146,8 @@ try {
       p95Ratio: candidate.p95FrameMs / baseline.p95FrameMs,
       frameRatio: candidate.frames / baseline.frames
     } : null;
-    if (comparison && comparison.medianRatio > 3 && comparison.p95Ratio > 3) throw new Error(`${subject.id}: severe deployment regression (median ×${comparison.medianRatio.toFixed(2)}, p95 ×${comparison.p95Ratio.toFixed(2)})`);
+    if (!baseline) assert(candidate.frames >= 300, `${subject.id}: new-route launch floor missed (${candidate.frames} frames in 30 seconds; minimum 300)`);
+    if (comparison && (comparison.frameRatio < .34 || (comparison.medianRatio > 3 && comparison.p95Ratio > 3))) throw new Error(`${subject.id}: severe deployment regression (frames ×${comparison.frameRatio.toFixed(2)}, median ×${comparison.medianRatio.toFixed(2)}, p95 ×${comparison.p95Ratio.toFixed(2)})`);
     report.subjects.push({ id: subject.id, baseline, candidate, comparison });
   }
 } finally {
