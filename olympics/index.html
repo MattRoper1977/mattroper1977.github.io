@@ -204,7 +204,7 @@ var el=document.createElement("section");el.id="mbmSplash";el.setAttribute("data
 var reduced=false;try{reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(_){}
 var shown=performance.now(),requested=false,closed=false,hard=0,GUARDED=["keydown","keyup","pointerdown","pointerup","click"];
 function unguard(){for(var i=0;i<GUARDED.length;i++)document.removeEventListener(GUARDED[i],guard,true);}
-function finish(){if(closed)return;closed=true;clearTimeout(hard);el.classList.add("mbm-splash-skip");el.style.pointerEvents="none";el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}if(MODE!=="force")writeNow();focusPrimary();setTimeout(function(){unguard();if(el.parentNode)el.parentNode.removeChild(el);requestAnimationFrame(focusPrimary);},reduced?0:150);}
+function finish(){if(closed)return;closed=true;clearTimeout(hard);el.classList.add("mbm-splash-skip");el.style.pointerEvents="none";el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}if(MODE!=="force")writeNow();focusReady();setTimeout(function(){unguard();if(el.parentNode)el.parentNode.removeChild(el);focusReady();},reduced?0:150);}
 function dismiss(){if(requested||closed)return;requested=true;var wait=Math.max(0,450-(performance.now()-shown));setTimeout(finish,wait);}
 function guard(e){e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();if(closed)return;if(e.type==="keydown"||(e.type==="pointerdown"&&el.contains(e.target))||(e.type==="click"&&el.contains(e.target))){e.preventDefault();dismiss();}}
 for(var i=0;i<GUARDED.length;i++)document.addEventListener(GUARDED[i],guard,true);
@@ -2812,7 +2812,7 @@ class GlobalGamesApp{
   try{if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(text);else{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}this.toast('Championship summary copied','good')}catch{this.toast('Could not copy the summary','warn')}
  }
  debugFinishCurrent(score){
-  if(this.state!=='PLAYING'||!this.activeEvent)return false;const m=EVENT_META[this.activeEvent.id],v=Number.isFinite(Number(score))?Number(score):m.arcadeRecord;this.activeEvent.result={score:v,extra:{debug:true}};this.activeEvent.done=true;this.activeEvent.finishDelay=0;return true;
+  if(this.state!=='PLAYING'||!this.activeEvent)return false;const ev=this.activeEvent,m=EVENT_META[ev.id],v=Number.isFinite(Number(score))?Number(score):m.arcadeRecord;ev.result={score:v,extra:{debug:true}};ev.done=true;ev.finishDelay=0;this.finishActiveEvent(ev);return this.state!=='PLAYING';
  }
 }
 

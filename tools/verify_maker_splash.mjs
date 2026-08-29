@@ -233,11 +233,13 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
     // task to run before evaluating the hand-off.
     if (action !== 'none') {
       await maker.waitFor({ state: 'detached', timeout: 30000 }).catch(() => {});
-      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))).catch(() => {});
       visibleWallMs = Date.now() - visibleWallStart;
     }
   }
   await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(error => errors.push(`domcontentloaded: ${error.message}`));
+  if (action !== 'none') {
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))).catch(() => {});
+  }
   const state = await page.evaluate(key => {
     const p = window.__makerProbe || {};
     const legacy = document.querySelector('#mbmSplash,.mbm-splash,[data-mbm-splash]');
