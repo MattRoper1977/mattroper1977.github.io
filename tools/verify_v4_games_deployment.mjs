@@ -396,8 +396,9 @@ async function smokeApex(page) {
   await page.waitForFunction(() => MadeByMattV4QA.snapshot().game.state === 'aim', null, { timeout: 15000 });
   const before = await page.evaluate(() => MadeByMattV4QA.snapshot());
   await page.keyboard.press('ArrowRight'); await page.keyboard.press('Enter');
-  await page.waitForFunction(() => ['flight', 'resolve', 'aim'].includes(MadeByMattV4QA.snapshot().game.state) && MadeByMattV4QA.snapshot().game.state !== 'intro');
-  await page.waitForTimeout(900);
+  // Pause while the kick is genuinely in flight. Waiting a fixed interval can
+  // land in the intentionally non-pausable resolve presentation on fast CI.
+  await page.waitForFunction(() => MadeByMattV4QA.snapshot().game.state === 'flight', null, { timeout: 15000 });
   const after = await page.evaluate(() => MadeByMattV4QA.snapshot());
   assert(after.game.state !== 'intro' && (after.game.state !== before.game.state || after.game.momentIdx !== before.game.momentIdx), 'Apex kick did not enter simulation');
   await page.keyboard.press('Escape');
