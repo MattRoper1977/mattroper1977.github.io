@@ -53,6 +53,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
 
+      - name: Install the AST parser used by curation gates
+        run: npm install --no-save --no-package-lock acorn@8.18.0
+
       - name: Resolve the coordinated Games shelf
         env:
           EVENT_NAME: ${{ github.event_name }}
