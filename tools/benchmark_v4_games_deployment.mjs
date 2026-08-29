@@ -21,6 +21,8 @@ assert(fs.existsSync(BASE_SITE), 'V4_BASE_SITE must point to the pinned pre-rele
 assert(fs.existsSync(BASE_LESSONS), 'V4_BASE_LESSONS must point to the pinned Lessons checkout');
 assert.equal(SAMPLE_MS, 30000, 'the release protocol requires an exact 30-second sample');
 
+// The eight games below are the fixed historical 2026-08-29 release cohort;
+// this benchmark must not expand when another shelf route is added later.
 const SUBJECTS = [
   { id: 'offbrand', candidate: '/offbrand/', baselineRoot: 'lessons', baseline: '/Games/Off_Brand.html' },
   { id: 'trailrunner', candidate: '/trailrunner/', baselineRoot: 'lessons', baseline: '/Games/Trail_Runner.html' },
@@ -72,7 +74,7 @@ async function startSubject(page, id) {
     else await clickVisible(page, ['#bPlay']);
     await page.waitForTimeout(3500); return;
   }
-  if (id === 'auroralinks') { await page.waitForFunction(() => !!document.querySelector('#quickBtn,#enterBtn')); await clickVisible(page, ['#quickBtn', '#enterBtn']); return; }
+  if (id === 'auroralinks') { await page.waitForFunction(() => !!document.querySelector('#quickBtn,#enterBtn,#startBtn')); await clickVisible(page, ['#quickBtn', '#enterBtn', '#startBtn']); return; }
   if (id === 'houseolympiad') {
     await page.waitForFunction(() => !!window.MadeByMattOlympiadV4QA);
     await page.evaluate(() => { const result = MadeByMattOlympiadV4QA.selfTest(); if (!result.ok) throw new Error('House self-test failed'); }); return;

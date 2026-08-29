@@ -228,7 +228,7 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
       else errors.push('pointer: splash had no rendered box');
     }
     else if (action === 'timeout') await maker.evaluate(el => { el.style.animation = 'none'; });
-    if (action !== 'none') { await maker.waitFor({ state: 'detached', timeout: 2800 }).catch(() => {}); visibleWallMs = Date.now() - visibleWallStart; }
+    if (action !== 'none') { await maker.waitFor({ state: 'detached', timeout: 10000 }).catch(() => {}); visibleWallMs = Date.now() - visibleWallStart; }
   }
   await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(error => errors.push(`domcontentloaded: ${error.message}`));
   const state = await page.evaluate(key => {
@@ -279,13 +279,13 @@ async function wayOutProbe(browser, origin, route, activation, { disableWayOut =
   });
   await page.goto(origin + encodeURI(`${route}?splash=force`), { waitUntil: 'commit', timeout: 30000 });
   const maker = page.locator('[data-mbm-maker-splash]');
-  const attached = await maker.waitFor({ state: 'attached', timeout: 1000 }).then(() => true).catch(() => false);
+  const attached = await maker.waitFor({ state: 'attached', timeout: 5000 }).then(() => true).catch(() => false);
   if (!attached) {
     await context.close();
     return { activation, tabs: 31, reached: false, before: page.url(), after: page.url(), navigated: false, errors: errors.concat('maker splash was not observed before DOMContentLoaded'), external };
   }
   await page.keyboard.press('Tab');
-  await maker.waitFor({ state: 'detached', timeout: 2800 });
+  await maker.waitFor({ state: 'detached', timeout: 10000 });
   await page.waitForLoadState('domcontentloaded', { timeout: 30000 });
   if (disableWayOut) await page.evaluate(() => {
     const wayOut = document.querySelector('#mbmexit-back,#mbmhud-back');

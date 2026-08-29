@@ -3348,7 +3348,7 @@ try{
   function boot() {
     /* S10: the splash plays ABOVE the game's own title screen and fades to
        reveal it. It creates no second start state and calls nothing on close. */
-    start({});
+    /* The estate's canonical generated maker splash now owns this introduction. */
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();

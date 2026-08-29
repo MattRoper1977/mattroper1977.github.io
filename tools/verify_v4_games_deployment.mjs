@@ -25,6 +25,8 @@ const INPUTS_DIR = INPUTS_ARG >= 0 ? path.resolve(process.argv[INPUTS_ARG + 1] |
 const RUN_BROWSER = process.argv.includes('--browser');
 const LIVE_ORIGIN = process.env.V4_LIVE_ORIGIN || '';
 
+// The eight games below are the fixed historical 2026-08-29 release cohort;
+// the extra linked route assertions belong to this exact deployment contract.
 const GAMES = Object.freeze([
   {
     id: 'offbrand', name: 'Off-Brand: After Hours', route: '/offbrand/',
@@ -526,7 +528,7 @@ async function runOne(browser, profile, game, origin) {
   const base = LIVE_ORIGIN || origin;
   const query = new URLSearchParams({ splash: 'skip', debug: '1', seed: '424242', v4gate: `${Date.now()}-${profile.name}` });
   await page.goto(`${base}${game.route}?${query}`, { waitUntil: 'load', timeout: 90000 });
-  await page.locator('body').waitFor({ state: 'visible' });
+  await page.waitForFunction(() => !!document.body && document.readyState === 'complete');
   const geometry = await page.evaluate(() => ({ text: document.body.innerText.trim().length, width: document.documentElement.scrollWidth, client: document.documentElement.clientWidth, height: document.documentElement.scrollHeight }));
   assert(geometry.text > 20 && geometry.height > 80, `${game.id}: blank route`);
   assert(geometry.width <= geometry.client + 6, `${game.id}: horizontal clipping ${geometry.width}/${geometry.client}`);
