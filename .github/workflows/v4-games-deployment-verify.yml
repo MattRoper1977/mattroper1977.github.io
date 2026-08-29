@@ -26,6 +26,31 @@ on:
       - 'tools/verify_v4_games_deployment.mjs'
       - 'tools/benchmark_v4_games_deployment.mjs'
       - '.github/workflows/v4-games-deployment-verify.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'offbrand/**'
+      - 'trailrunner/**'
+      - 'apexkick/**'
+      - 'auroralinks/**'
+      - 'houseolympiad/**'
+      - 'olympics/**'
+      - 'relicforge/**'
+      - 'voxel/**'
+      - 'assets/cards/house-olympiad.svg'
+      - 'data/hud-coverage.json'
+      - 'data/mbm-search-editorial.json'
+      - 'data/mbm-search-index.json'
+      - 'data/source-manifests/games.json'
+      - 'for/pupils/index.html'
+      - 'games/index.html'
+      - 'hud.js'
+      - 'sitemap.xml'
+      - 'tools/build_mbm_search_index.py'
+      - 'tools/verify_curation_keys.mjs'
+      - 'tools/verify_v4_games_deployment.mjs'
+      - 'tools/benchmark_v4_games_deployment.mjs'
+      - '.github/workflows/v4-games-deployment-verify.yml'
   workflow_dispatch:
     inputs:
       live:
@@ -62,6 +87,12 @@ jobs:
           CANDIDATE_REF: ${{ github.head_ref }}
         run: |
           set -euo pipefail
+          if [ "$EVENT_NAME" = "push" ]; then
+            mkdir -p _games
+            cp data/source-manifests/games.json _games/games.json
+            echo "Main-push static gate uses the release's exact mirrored shelf; the live gate checks the separately deployed Games bytes."
+            exit 0
+          fi
           shelf_ref=main
           if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$CANDIDATE_REF" ] && \
              git ls-remote --exit-code --heads https://github.com/MattRoper1977/Games.git \
@@ -128,7 +159,7 @@ jobs:
 
       - name: Exact browser matrix
         env:
-          V4_LIVE_ORIGIN: ${{ inputs.live == true && 'https://madebymatt.uk' || '' }}
+          V4_LIVE_ORIGIN: ${{ (github.event_name == 'push' || inputs.live == true) && 'https://madebymatt.uk' || '' }}
         run: |
           set -euo pipefail
           mkdir -p artifacts/v4-games
@@ -137,12 +168,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: v4-games-browser-evidence-${{ inputs.live == true && 'live' || 'candidate' }}
+          name: v4-games-browser-evidence-${{ (github.event_name == 'push' || inputs.live == true) && 'live' || 'candidate' }}
           path: artifacts/v4-games/
 
   performance:
     name: Pinned 30-second before and after samples
-    if: ${{ inputs.live != true }}
+    if: ${{ github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.live != true) }}
     needs: static
     runs-on: ubuntu-latest
     timeout-minutes: 40

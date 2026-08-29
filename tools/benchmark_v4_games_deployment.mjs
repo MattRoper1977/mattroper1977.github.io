@@ -59,6 +59,7 @@ async function startSubject(page, id) {
     await clickVisible(page, ['#scrSplash']);
     await page.locator('#btnCrew').waitFor({ state: 'visible', timeout: 20000 }); await page.locator('#btnCrew').click();
     await page.locator('#btnCnBegin,#btnCnSkip').first().waitFor({ state: 'visible' }); await clickVisible(page, ['#btnCnBegin', '#btnCnSkip']);
+    await page.locator('#btnHowOk').waitFor({ state: 'visible', timeout: 5000 }); await page.locator('#btnHowOk').click();
     await page.waitForFunction(() => !!window.OB?.S && window.OB.S.paused === false); return;
   }
   if (id === 'trailrunner') {
@@ -83,13 +84,15 @@ async function startSubject(page, id) {
   }
   if (id === 'relicforge') {
     await page.waitForFunction(() => !!window.__relicforge, null, { timeout: 30000 });
-    await page.evaluate(() => { __relicforge.start(); __relicforge.skipStory(); });
+    await page.evaluate(() => __relicforge.start());
+    await page.waitForTimeout(100);
+    await page.evaluate(() => __relicforge.skipStory());
     await page.waitForFunction(() => __relicforge.snapshot().mode === 'playing'); return;
   }
   if (id === 'voxel') {
     await page.waitForFunction(() => !!document.querySelector('#start'), null, { timeout: 30000 });
     await clickVisible(page, ['[data-mode="frontier"]']); await page.locator('#start').click();
-    await page.waitForFunction(() => document.querySelector('#hud')?.textContent.includes('Beaconfall'), null, { timeout: 60000 }); return;
+    await page.waitForFunction(() => document.querySelector('#start')?.textContent.includes('Resume') && document.querySelector('#hud')?.textContent.trim().length > 20, null, { timeout: 60000 }); return;
   }
 }
 
@@ -103,6 +106,7 @@ async function sample(browser, url, id, label) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2.75, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
   const page = await context.newPage(); const errors = [];
   page.on('pageerror', error => errors.push(error.message || String(error)));
+  console.log(`START ${label}/${id}`);
   await page.goto(`${url}${url.includes('?') ? '&' : '?'}splash=skip&debug=1&seed=424242&perf=${Date.now()}`, { waitUntil: 'load', timeout: 90000 });
   await startSubject(page, id);
   const data = await page.evaluate(duration => new Promise(resolve => {

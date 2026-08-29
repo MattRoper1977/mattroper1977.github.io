@@ -297,7 +297,8 @@ async function loadPlaywright() {
 
 async function fetchPublishedBytes(origin, pathname, expected, label, round) {
   let last = '';
-  for (let attempt = 1; attempt <= 6; attempt++) {
+  const maxAttempts = 60;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const separator = pathname.includes('?') ? '&' : '?';
     const url = `${origin}${pathname}${separator}mbmv4=${Date.now()}-${round}-${attempt}`;
     try {
@@ -306,7 +307,7 @@ async function fetchPublishedBytes(origin, pathname, expected, label, round) {
       if (response.ok && actual.equals(expected)) return;
       last = `${response.status} · ${actual.length} B · sha256 ${sha256(actual)}`;
     } catch (error) { last = error.message || String(error); }
-    if (attempt < 6) await new Promise(resolve => setTimeout(resolve, 5000));
+    if (attempt < maxAttempts) await new Promise(resolve => setTimeout(resolve, 10000));
   }
   assert.fail(`${label}: published bytes did not converge (${last})`);
 }
@@ -345,6 +346,8 @@ async function smokeOffbrand(page) {
   await page.locator('#btnCrew').click();
   await page.locator('#btnCnBegin').waitFor({ state: 'visible' });
   await page.locator('#btnCnBegin').click();
+  await page.locator('#btnHowOk').waitFor({ state: 'visible', timeout: 5000 });
+  await page.locator('#btnHowOk').click();
   await page.waitForFunction(() => !!window.OB?.S && window.OB.S.paused === false);
   const before = await page.evaluate(() => ({ t: OB.S.t, x: OB.S.player.x }));
   await page.keyboard.down('ArrowRight'); await page.waitForTimeout(500); await page.keyboard.up('ArrowRight');
