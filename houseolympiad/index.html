@@ -1,0 +1,1147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>House Olympiad · Made by Matt Sports V4</title>
+<link rel="canonical" href="https://madebymatt.uk/houseolympiad/">
+<style>
+:root{--ink:#f6fbff;--muted:#a9b9ca;--line:#ffffff1e;--glass:#07111ed9;--cyan:#4de9ff;--mint:#63f0b1;--gold:#ffd166;--bad:#ff7891;--house:#63f0b1;--radius:20px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:#02060e}
+*{box-sizing:border-box}html,body{min-height:100%;margin:0}body{overflow-x:hidden;background:radial-gradient(circle at 20% -10%,#123a55 0,#071522 34%,#02060e 72%);line-height:1.45}button,a,input,select,textarea{font:inherit}button,a.btn{min-height:46px;border:1px solid var(--line);border-radius:12px;padding:10px 15px;color:var(--ink);background:#ffffff0c;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .18s,border-color .18s,background .18s}button:hover,a.btn:hover{transform:translateY(-1px);border-color:#ffffff45;background:#ffffff16}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:3px}.primary{background:linear-gradient(135deg,#147f89,#188b65)!important;border-color:#65fbd2!important}.danger{color:#ffd8df;border-color:#ff789166}.ghost{background:transparent!important}.small{min-height:38px;padding:7px 11px;font-size:.86rem}.skip{position:fixed;left:12px;top:-80px;z-index:20}.skip:focus{top:12px}#sky{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;opacity:.78}.shell{position:relative;z-index:1;width:min(1240px,calc(100% - 28px));margin:auto;padding:20px 0 54px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.brand{display:flex;align-items:center;gap:12px}.crest{width:50px;height:50px;border-radius:16px;background:conic-gradient(from 160deg,#49e9ff,#6cf2b2,#ffd166,#a878ff,#49e9ff);box-shadow:0 0 34px #4de9ff33;position:relative}.crest:after{content:"IV";position:absolute;inset:4px;display:grid;place-items:center;border-radius:12px;background:#06111d;color:#fff;font:950 17px/1 ui-sans-serif}.eyebrow{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;font-weight:900;color:var(--mint)}h1,h2,h3,p{margin-top:0}h1{font-size:clamp(1.45rem,4vw,2.25rem);line-height:1;margin-bottom:5px;letter-spacing:-.04em}.sub{color:var(--muted);font-size:.92rem;margin:0}.actions{display:flex;gap:9px;flex-wrap:wrap}.hero,.panel,.station,.gameLink{border:1px solid var(--line);background:linear-gradient(145deg,#0b1927e8,#07101ce8);box-shadow:0 18px 70px #0007,inset 0 1px #ffffff0b;border-radius:var(--radius)}.hero{position:relative;overflow:hidden;padding:clamp(20px,4vw,38px);display:grid;grid-template-columns:1.3fr .7fr;gap:24px}.hero:before{content:"";position:absolute;width:440px;height:240px;right:-110px;top:-110px;background:radial-gradient(circle,#54f2d044,transparent 68%);filter:blur(10px);pointer-events:none}.hero h2{font-size:clamp(2rem,7vw,4.4rem);line-height:.92;letter-spacing:-.065em;margin:12px 0 16px}.heroCopy{max-width:65ch;color:#c6d6e5}.passportCard{position:relative;align-self:stretch;padding:20px;border:1px solid #ffffff29;border-radius:17px;background:linear-gradient(160deg,#10263a,#071321);display:flex;flex-direction:column;justify-content:space-between;min-height:230px}.passportCard:after{content:"LOCAL · OFFLINE";position:absolute;right:16px;top:14px;font:900 10px/1 ui-monospace;letter-spacing:.12em;color:#ffffff75}.player{font-size:1.6rem;font-weight:950;margin:25px 0 2px}.classline{color:var(--muted);min-height:24px}.passportStats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.passportStats div{border-top:1px solid var(--line);padding-top:10px}.passportStats small{display:block;color:var(--muted);font-weight:700}.passportStats strong{font-size:1.15rem}.weekbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:18px 0;padding:13px 16px;border:1px solid #ffffff1b;border-radius:14px;background:#02071199}.weekbar code{color:var(--cyan);font-weight:900}.grid2{display:grid;grid-template-columns:1.4fr .6fr;gap:18px}.panel{padding:20px}.panelHead{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:15px}.panelHead h2{margin:0;font-size:1.25rem}.scoreRing{width:92px;height:92px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--house) calc(var(--score)*1%),#ffffff13 0);position:relative;flex:0 0 auto}.scoreRing:after{content:"";position:absolute;inset:7px;border-radius:50%;background:#07121f}.scoreRing strong{z-index:1;font-size:1.15rem}.stations{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.station{padding:15px;box-shadow:none;background:#ffffff06;border-radius:15px;position:relative;overflow:hidden}.station:after{content:"";position:absolute;left:0;bottom:0;height:3px;width:var(--fill);background:linear-gradient(90deg,var(--cyan),var(--mint))}.stationTitle{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:900}.stationTitle span:first-child{font-size:.92rem}.points{color:var(--gold);white-space:nowrap}.station small{display:block;color:var(--muted);margin-top:8px}.houses{display:grid;gap:10px}.houseRow{padding:12px;border-radius:13px;background:#ffffff07}.houseTop{display:flex;justify-content:space-between;font-weight:900}.meter{height:7px;border-radius:9px;background:#ffffff12;margin-top:9px;overflow:hidden}.meter i{display:block;height:100%;width:var(--fill);border-radius:inherit;background:var(--colour)}.gameGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}.gameLink{padding:18px;min-height:155px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;color:inherit;text-decoration:none;transition:transform .2s,border-color .2s}.gameLink:hover{transform:translateY(-3px);border-color:#ffffff4a}.gameIcon{font-size:1.6rem}.gameLink h3{margin:7px 0 4px}.gameLink p{color:var(--muted);font-size:.84rem;margin:0}.gameLink b{font-size:.78rem;color:var(--mint)}.honesty{margin-top:18px;padding:14px 16px;border-left:3px solid var(--gold);background:#ffd1660c;border-radius:0 12px 12px 0;color:#d9e5ef;font-size:.88rem}.empty{color:var(--muted);font-style:italic}.toast{position:fixed;z-index:40;left:50%;bottom:22px;transform:translate(-50%,130px);max-width:min(560px,calc(100% - 28px));padding:12px 17px;border:1px solid #ffffff30;border-radius:13px;background:#07121ff2;box-shadow:0 15px 50px #0009;font-weight:800;transition:transform .25s}.toast.show{transform:translate(-50%,0)}dialog{width:min(720px,calc(100% - 24px));max-height:min(88vh,820px);overflow:auto;border:1px solid #ffffff2c;border-radius:20px;background:#07121ff8;color:var(--ink);box-shadow:0 30px 100px #000c;padding:0}dialog::backdrop{background:#000b;backdrop-filter:blur(5px)}.dialogBody{padding:23px}.dialogHead{display:flex;justify-content:space-between;align-items:start;gap:14px;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:16px}.dialogHead h2{margin:0}.close{min-width:44px;padding:8px}label{display:block;font-weight:850;margin:12px 0 6px}.help{font-weight:500;color:var(--muted);font-size:.84rem}.formGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}input,select,textarea{width:100%;color:var(--ink);background:#020812;border:1px solid #ffffff24;border-radius:11px;padding:11px}textarea{min-height:160px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.78rem}.preview{padding:13px;border:1px solid #63f0b155;background:#63f0b10d;border-radius:12px;margin:12px 0}.dialogActions{display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}.statusDot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 14px var(--mint);margin-right:6px}@media(max-width:900px){.hero,.grid2{grid-template-columns:1fr}.gameGrid{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.shell{width:min(100% - 18px,1240px)}.topbar{align-items:flex-start}.topbar>.actions{justify-content:flex-end}.topbar .btn span{display:none}.hero{padding:20px}.stations,.formGrid{grid-template-columns:1fr}.gameGrid{grid-template-columns:1fr}.weekbar{align-items:flex-start;flex-direction:column}.passportStats{grid-template-columns:repeat(3,1fr)}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}#sky{display:none}}
+.small{min-height:44px}.rosterTable{width:100%;border-collapse:collapse;font-size:.86rem}.rosterTable th,.rosterTable td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}.rosterTable th:last-child,.rosterTable td:last-child{text-align:right}.calm #sky{display:none}.calm *{transition:none!important}.calm .hero:before{display:none}
+</style>
+</head>
+<body>
+<!-- MBM-MAKER-SPLASH:BEGIN generated by tools/render_maker_splash.py, do not edit by hand -->
+<script>(function(){"use strict";
+if(window.__mbmMakerSplash)return;window.__mbmMakerSplash=1;
+var KEY="mbm_splash_last",DAY=86400000,MODE="";
+try{MODE=new URLSearchParams(location.search).get("splash")||"";}catch(_){MODE="";}
+var NOW=Date.now(),PAGE_LAST;
+function probe(name){try{var s=window[name],v=s.getItem(KEY);return{ok:true,has:v!==null,raw:v};}catch(_){return{ok:false,has:false,raw:null};}}
+function stored(){var a=probe("localStorage");if(a.has)return a.raw;var b=probe("sessionStorage");if(b.has)return b.raw;return PAGE_LAST===undefined?null:String(PAGE_LAST);}
+function valid(raw){if(raw===null||String(raw).trim()==="")return null;var n=Number(raw);return Number.isFinite(n)&&Math.floor(n)===n&&n>=0&&n<=NOW?n:null;}
+function windowOpen(){var raw=stored(),n=valid(raw);return n===null||NOW-n>=DAY;}
+function writeNow(){try{localStorage.setItem(KEY,String(NOW));return;}catch(_){}try{sessionStorage.setItem(KEY,String(NOW));return;}catch(_){}try{PAGE_LAST=NOW;}catch(_){}}
+var LEGACY={start:function(){return{close:function(){},element:null};}};
+try{var d=Object.getOwnPropertyDescriptor(window,"MadeByMattSplash");if(!d||d.configurable)Object.defineProperty(window,"MadeByMattSplash",{configurable:false,get:function(){return LEGACY;},set:function(){}});}catch(_){}
+function visible(e){if(!e||!e.isConnected||e.disabled)return false;var c=getComputedStyle(e),r=e.getBoundingClientRect();return c.display!=="none"&&c.visibility!=="hidden"&&r.width>0&&r.height>0;}
+function primary(){var q=["[data-mbm-primary-start]","#startBtn","#playBtn","#beginBtn","#launchBtn","#openBtn","#start","a.skip","main button:not([disabled])","button:not([disabled])","main a[href]","a[href]"];for(var i=0;i<q.length;i++){var all=document.querySelectorAll(q[i]);for(var j=0;j<all.length;j++)if(visible(all[j])&&!all[j].closest("[data-mbm-maker-splash]"))return all[j];}var m=document.querySelector("main,h1,[role=main]");if(m){if(!m.hasAttribute("tabindex"))m.setAttribute("tabindex","-1");return m;}return null;}
+function armWayOut(e){var w=document.querySelector("#mbmexit-back,#mbmhud-back"),timer=0;if(!e||!w||!w.focus)return;function off(){window.removeEventListener("keydown",next,true);clearTimeout(timer);}function next(k){if(k.key!=="Tab"||k.shiftKey||document.activeElement!==e)return;k.preventDefault();k.stopPropagation();if(k.stopImmediatePropagation)k.stopImmediatePropagation();off();try{w.focus({preventScroll:true});}catch(_){try{w.focus();}catch(__){}}}window.addEventListener("keydown",next,true);timer=setTimeout(off,5000);}
+function focusPrimary(){var e=primary();if(e&&e.focus){try{e.focus({preventScroll:true});}catch(_){try{e.focus();}catch(__){}}armWayOut(e);}}
+function focusReady(){if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){requestAnimationFrame(focusPrimary);},{once:true});else requestAnimationFrame(focusPrimary);}
+if(MODE==="skip"){focusReady();return;}
+var SHOW=MODE==="force"||windowOpen();if(!SHOW){focusReady();return;}
+requestAnimationFrame(function(){
+var CSS="#mbmSplash[data-mbm-maker-splash]{position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;overflow:hidden;pointer-events:auto;background:radial-gradient(circle at 52% 44%,rgba(17,42,82,.72),transparent 44%),linear-gradient(135deg,#010207 0%,#071023 52%,#13030c 100%);animation:mbmSplash 1.9s cubic-bezier(.2,.8,.2,1) both}#mbmSplash[data-mbm-maker-splash]::before{content:\"\";position:absolute;inset:-20%;background:repeating-linear-gradient(112deg,transparent 0 9%,rgba(37,244,255,.045) 9.2% 9.35%,transparent 9.55% 18%);transform:translateX(-18%);animation:mbmSweep 1.55s ease-out both}.mbm-splash-mark{position:relative;width:min(82vw,560px);text-align:center;text-transform:uppercase;filter:drop-shadow(0 0 28px rgba(37,244,255,.22))}.mbm-splash-mark span,.mbm-splash-mark em{display:block;color:#7e9aad;font-size:clamp(9px,2.4vmin,13px);font-style:normal;font-weight:900;letter-spacing:.48em;text-indent:.48em}.mbm-splash-mark strong{display:block;margin:.07em 0 .02em;color:#f5feff;font-size:clamp(54px,17vmin,132px);font-style:italic;font-weight:1000;letter-spacing:-.07em;line-height:.82;text-shadow:-2px 0 #25f4ff,2px 0 #ff2d78,0 0 34px rgba(37,244,255,.35);transform:skewX(-7deg)}.mbm-splash-mark em{margin-top:15px;color:#ff5b92;letter-spacing:.62em;text-indent:.62em}.mbm-splash-line{width:0;height:2px;margin:18px auto 0;background:linear-gradient(90deg,transparent,#25f4ff 30%,#fff 50%,#ff2d78 70%,transparent);box-shadow:0 0 18px #25f4ff;animation:mbmLine 1.15s .18s ease-out both}.mbm-splash-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}@keyframes mbmSplash{0%{opacity:0;visibility:visible;pointer-events:auto}12%,70%{opacity:1;visibility:visible;pointer-events:auto}100%{opacity:0;visibility:hidden;pointer-events:none}}@keyframes mbmSweep{from{transform:translateX(-28%)}to{transform:translateX(24%)}}@keyframes mbmLine{to{width:76%}}#mbmSplash.mbm-splash-skip{opacity:0!important;visibility:hidden!important;pointer-events:none!important;animation:none!important;transition:opacity .12s ease}@media(prefers-reduced-motion:reduce){#mbmSplash[data-mbm-maker-splash]{animation-duration:.28s}#mbmSplash[data-mbm-maker-splash]::before,.mbm-splash-line{animation:none}}";
+CSS=CSS.replace("animation-duration:.28s","animation-duration:.35s!important");
+var st=document.createElement("style");st.id="mbm-maker-splash-css";st.textContent=CSS;(document.head||document.documentElement).appendChild(st);
+var el=document.createElement("section");el.id="mbmSplash";el.setAttribute("data-mbm-maker-splash","");el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");el.setAttribute("aria-label","Made by Matt introduction");el.tabIndex=-1;el.innerHTML='<div class="mbm-splash-mark"><span>Made by</span><strong>Matt</strong><em>presents</em><div class="mbm-splash-line"></div></div><span class="mbm-splash-sr">Tap or press any key to continue.</span>';
+(document.body||document.documentElement).appendChild(el);
+var reduced=false;try{reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(_){}
+var shown=performance.now(),requested=false,closed=false,hard=0,GUARDED=["keydown","keyup","pointerdown","pointerup","click"];
+function unguard(){for(var i=0;i<GUARDED.length;i++)document.removeEventListener(GUARDED[i],guard,true);}
+function finish(){if(closed)return;closed=true;clearTimeout(hard);el.classList.add("mbm-splash-skip");el.style.pointerEvents="none";el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}if(MODE!=="force")writeNow();focusPrimary();setTimeout(function(){unguard();if(el.parentNode)el.parentNode.removeChild(el);},reduced?0:150);}
+function dismiss(){if(requested||closed)return;requested=true;var wait=Math.max(0,450-(performance.now()-shown));setTimeout(finish,wait);}
+function guard(e){e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();if(closed)return;if(e.type==="keydown"||(e.type==="pointerdown"&&el.contains(e.target))||(e.type==="click"&&el.contains(e.target))){e.preventDefault();dismiss();}}
+for(var i=0;i<GUARDED.length;i++)document.addEventListener(GUARDED[i],guard,true);
+el.addEventListener("animationend",function(e){if(e.target===el&&e.animationName==="mbmSplash")dismiss();});
+try{el.focus({preventScroll:true});}catch(_){try{el.focus();}catch(__){}}
+hard=setTimeout(dismiss,reduced?450:2100);
+var observer=new MutationObserver(function(list){for(var i=0;i<list.length;i++)for(var j=0;j<list[i].addedNodes.length;j++){var n=list[i].addedNodes[j];if(n.nodeType!==1)continue;var old=n.matches&&n.matches("#mbmSplash:not([data-mbm-maker-splash]),.mbm-splash:not([data-mbm-maker-splash])")?n:n.querySelector&&n.querySelector("#mbmSplash:not([data-mbm-maker-splash]),.mbm-splash:not([data-mbm-maker-splash])");if(old)try{old.style.setProperty("display","none","important");old.setAttribute("aria-hidden","true");}catch(_){}}});
+try{observer.observe(document.documentElement,{childList:true,subtree:true});setTimeout(function(){observer.disconnect();},2600);}catch(_){}
+});
+})();</script>
+<!-- MBM-MAKER-SPLASH:END -->
+
+<a class="btn skip" href="#main">Skip to dashboard</a>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand"><div class="crest" aria-hidden="true"></div><div><div class="eyebrow">Made by Matt Sports</div><h1>House Olympiad</h1><p class="sub">V4 local championship dashboard</p></div></div>
+    <div class="actions"><button id="calmBtn" class="small" aria-pressed="false">Calm</button><button id="rosterBtn" class="small">Teacher board</button><button id="profileBtn" class="small"><span>Sports </span>Passport</button><button id="syncBtn" class="small primary"><span>Sync & </span>Export</button></div>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="heroTitle">
+      <div><div class="eyebrow"><span class="statusDot"></span>Four games · one local season</div><h2 id="heroTitle">Five disciplines.<br>One House Cup.</h2><p class="heroCopy">Play the linked V4 games, collect a normalized station score in each discipline and bring the results back through your Sports Passport. Everything stays on this device unless you deliberately export a Sync Code or collection file.</p><div class="actions"><a class="btn primary" href="#games">Choose a discipline</a><button id="refreshBtn" class="ghost">Refresh results</button></div></div>
+      <div class="passportCard"><div><div class="eyebrow">Sports Passport V4</div><div class="player" id="playerName">Player</div><div class="classline" id="className">No class set · Aurora House</div></div><div class="passportStats"><div><small>Level</small><strong id="levelValue">1</strong></div><div><small>XP</small><strong id="xpValue">0</strong></div><div><small>Badges</small><strong id="badgeValue">0</strong></div></div></div>
+    </section>
+    <div class="weekbar"><div><div class="eyebrow">Weekly World Cup seed</div><b id="weekLabel">Loading…</b></div><div>Comparable local challenge · <code id="seedLabel">—</code></div></div>
+    <div class="grid2">
+      <section class="panel" aria-labelledby="stationHeading"><div class="panelHead"><div><div class="eyebrow">Composite score</div><h2 id="stationHeading">House Olympiad stations</h2></div><div class="scoreRing" id="scoreRing"><strong id="compositeValue">0 / 5000</strong></div></div><div class="stations" id="stationGrid"></div></section>
+      <section class="panel" aria-labelledby="houseHeading"><div class="panelHead"><div><div class="eyebrow">Passport counters</div><h2 id="houseHeading">House points</h2></div></div><div class="houses" id="houseGrid"></div><p class="sub" style="margin-top:14px">This is the merged local Passport view, not an online leaderboard.</p></section>
+    </div>
+    <section id="games" class="gameGrid" aria-label="V4 games">
+      <a class="gameLink" href="/auroralinks/"><div><div class="gameIcon" aria-hidden="true">⛳</div><h3>Aurora Links</h3><p>Three-hole precision, shaped shots and northern-light golf.</p></div><b>OPEN GOLF →</b></a>
+      <a class="gameLink" href="/apexpool/"><div><div class="gameIcon" aria-hidden="true">◉</div><h3>Apex Pool</h3><p>Quick runout, leave control and tactical table craft.</p></div><b>OPEN POOL →</b></a>
+      <a class="gameLink" href="/apexkick/"><div><div class="gameIcon" aria-hidden="true">⚽</div><h3>Apex Kick</h3><p>Five-shot Target Matrix with curl, pressure and precision.</p></div><b>OPEN KICK →</b></a>
+      <a class="gameLink" href="/olympics/"><div><div class="gameIcon" aria-hidden="true">🏟</div><h3>Global Games</h3><p>100 m and archery stations inside the world-stage championship.</p></div><b>OPEN GAMES →</b></a>
+    </section>
+    <div class="honesty"><b>Delivered LAN capacity:</b> Global Games, Apex Kick and Aurora Links use a paired two-device session in V4.0.0. Apex Pool has two active table seats and can add up to two passive Jumbotron views. This pack does not claim a four-player mesh. The 120-frame kernel supports deterministic reconstruction/self-test; each game labels whether it is post-run/shot replay or live late-input rollback.</div>
+    <div class="honesty"><b>Storage note:</b> downloaded <code>file:</code> pages do not share localStorage consistently in every browser. If a result does not appear after returning, export its <b>MBM4 Sync Code</b> and merge it here. The shipped Sync Code is QR-ready text; this dashboard does not pretend to include a camera scanner or a standards-tested QR renderer.</div>
+  </main>
+</div>
+
+<dialog id="profileDialog"><div class="dialogBody"><div class="dialogHead"><div><div class="eyebrow">Local identity</div><h2>Edit Sports Passport</h2></div><button class="close" data-close="profileDialog" aria-label="Close">×</button></div><div class="formGrid"><div><label for="profileName">Player name</label><input id="profileName" maxlength="24" autocomplete="off"></div><div><label for="profileClass">Class name</label><input id="profileClass" maxlength="28" autocomplete="off"></div></div><label for="profileHouse">House</label><select id="profileHouse"><option>Aurora</option><option>Ember</option><option>Tide</option><option>Forge</option></select><p class="help">Identity is stored locally and appears in manual exports/pairing codes only when you choose to use them.</p><div class="dialogActions"><button data-close="profileDialog">Cancel</button><button id="saveProfile" class="primary">Save identity</button></div></div></dialog>
+
+<dialog id="syncDialog"><div class="dialogBody"><div class="dialogHead"><div><div class="eyebrow">Portable local state</div><h2>Sync & collection</h2></div><button class="close" data-close="syncDialog" aria-label="Close">×</button></div><div class="actions"><button id="copySync" class="primary">Copy MBM4 Sync Code</button><button id="downloadPassport">Download Passport</button><button id="downloadCollection">Download V4 Collection</button></div><label for="syncInput">Paste a Sync Code, Passport JSON, or V3/V4 collection JSON</label><textarea id="syncInput" maxlength="4000000" spellcheck="false" placeholder="MBM4.… or { … }"></textarea><div class="actions"><label class="btn small" for="fileInput">Choose JSON file</label><input id="fileInput" type="file" accept="application/json,.json,text/plain" hidden><button id="previewImport">Check import</button></div><div id="importPreview" class="preview" hidden></div><p class="help">The hub merges the Passport only. It never writes imported game-save sections because each game owns its own title-specific sanitizer. Import the same collection inside a game when you want that game's career moved too.</p><div class="dialogActions"><button data-close="syncDialog">Done</button><button id="confirmImport" class="primary" disabled>Confirm Passport merge</button></div></div></dialog>
+
+<dialog id="rosterDialog"><div class="dialogBody"><div class="dialogHead"><div><div class="eyebrow">Teacher-local view</div><h2>Temporary House roster</h2></div><button class="close" data-close="rosterDialog" aria-label="Close">×</button></div><p class="help">Paste one pupil-approved <b>MBM4 Sync Code</b> per line. The board de-duplicates source nodes, totals station scores by House and stays in memory only. It is never saved, networked or included in an export.</p><label for="rosterInput">Sync Codes</label><textarea id="rosterInput" maxlength="2000000" spellcheck="false" placeholder="MBM4.…&#10;MBM4.…"></textarea><div class="actions"><button id="buildRoster" class="primary">Build temporary board</button><button id="clearRoster">Clear</button></div><div id="rosterPreview" class="preview" hidden></div><div class="dialogActions"><button data-close="rosterDialog">Done</button></div></div></dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+/*
+ * Made by Matt Sports V4 shared runtime reference
+ * Contract 4.0.0 · browser classic-script compatible · no dependencies
+ *
+ * This file is the executable oracle used by release QA. Each shipping game
+ * embeds the relevant routines inside its standalone HTML file.
+ */
+(function installMadeByMattV4Runtime(root) {
+  'use strict';
+
+  var VERSION = '4.0.0';
+  var PASSPORT_KEY = 'mbm_sports_passport_v4';
+  var PASSPORT_KIND = 'MadeByMatt.SportsPassport.V4';
+  var PASSPORT_SCHEMA = 4;
+  var PASSPORT_SEASON = 'v4-season-one';
+  var PASSPORT_PREFIX = 'MBM4.';
+  var PASSPORT_BYTES_MAX = 500000;
+  var COLLECTION_KIND = 'MadeByMatt.SportsCollection.V4';
+  var COLLECTION_VERSION = 4;
+  var COLLECTION_BACKUP_KEY = 'mbm_sports_v4_import_backup';
+  var COLLECTION_BYTES_MAX = 4000000;
+  var COLLECTION_SAVE_BYTES_MAX = 1000000;
+  var LAN_PROTOCOL = 'MBM-LAN-CLASSROOM/4';
+  var LAN_TRANSPORT = 'manual-webrtc-host-star';
+  var ROLLBACK_FRAMES = 120;
+  var HOUSES = ['Aurora', 'Ember', 'Tide', 'Forge'];
+  var GAME_IDS = ['global-games', 'apex-kick', 'apex-pool', 'aurora-links'];
+  var STATIONS = [
+    'aurora-links:precision-3',
+    'apex-pool:quick-runout-3',
+    'apex-kick:target-5',
+    'global-games:100m',
+    'global-games:archery'
+  ];
+  var SAVE_KEYS = [
+    'mbm_global_games_world_stage_v4',
+    'apexkick.aaa.v4',
+    'mbm_apexpool_v4_progress',
+    'mbm_apexpool_v4_settings',
+    'mbm_aurora_links_aaa_v4'
+  ];
+  var V3_SAVE_KEYS = [
+    'mbm_global_games_world_stage_v3',
+    'apexkick.aaa.v3',
+    'mbm_apexpool_v3_progress',
+    'mbm_apexpool_v3_settings',
+    'mbm_aurora_links_aaa_v3'
+  ];
+  var GAME = {
+    'global-games': {
+      saveKeys: ['mbm_global_games_world_stage_v4'],
+      v3Keys: ['mbm_global_games_world_stage_v3'],
+      build: 'global-games-aaa-v4.0.0', simulation: 'GG120-BIO4-20260829', tickHz: 120,
+      mode: 'house-100m', inputSchema: 'gg-v4-intent-trace', maxPlayers: 2, maxDevices: 2,
+      spectator: true, liveRollback: false, rollbackMode: 'post-run-host-replay'
+    },
+    'apex-kick': {
+      saveKeys: ['apexkick.aaa.v4'], v3Keys: ['apexkick.aaa.v3'],
+      build: 'apex-kick-aaa-v4.0.0', simulation: 'AK120-RK4-20260829', tickHz: 120,
+      mode: 'house-shootout', inputSchema: 'ak-v4-shot-intent', maxPlayers: 2, maxDevices: 2,
+      spectator: false, liveRollback: false, rollbackMode: 'host-shot-reconstruction'
+    },
+    'apex-pool': {
+      saveKeys: ['mbm_apexpool_v4_progress', 'mbm_apexpool_v4_settings'],
+      v3Keys: ['mbm_apexpool_v3_progress', 'mbm_apexpool_v3_settings'],
+      build: 'apex-pool-aaa-v4.0.0', simulation: 'AP240-SO3-20260829', tickHz: 240,
+      mode: 'house-eight-ball', inputSchema: 'ap-v4-cue-intent', maxPlayers: 2, maxDevices: 4,
+      spectator: true, liveRollback: false, rollbackMode: 'authoritative-snapshot-verification'
+    },
+    'aurora-links': {
+      saveKeys: ['mbm_aurora_links_aaa_v4'], v3Keys: ['mbm_aurora_links_aaa_v3'],
+      build: 'aurora-links-aaa-v4.0.0', simulation: 'AL120-RK4-20260829', tickHz: 120,
+      mode: 'house-ghost-golf', inputSchema: 'al-v4-shot-intent', maxPlayers: 2, maxDevices: 2,
+      spectator: true, liveRollback: true, rollbackMode: 'late-shot-rewind-fast-forward'
+    }
+  };
+  var LIMITS = {
+    nodes: 64, receipts: 2048, badgeOps: 512, cosmeticOps: 512,
+    games: 4, olympiad: 64, awardXP: 5000, id: 96,
+    name: 24, className: 28, jsonDepth: 7, jsonItems: 512
+  };
+  var FORBIDDEN_KEYS = { '__proto__': 1, prototype: 1, constructor: 1 };
+
+  function isPlain(value) {
+    if (!value || Object.prototype.toString.call(value) !== '[object Object]') return false;
+    var proto = Object.getPrototypeOf(value);
+    return proto === Object.prototype || proto === null;
+  }
+
+  function clampInt(value, minimum, maximum, fallback) {
+    var number = Number(value);
+    if (!Number.isFinite(number)) return fallback;
+    number = Math.floor(number);
+    return Math.max(minimum, Math.min(maximum, number));
+  }
+
+  function cleanText(value, limit, fallback) {
+    var output = typeof value === 'string' ? value : (value == null ? '' : String(value));
+    output = output.replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, limit);
+    return output || (fallback == null ? '' : fallback);
+  }
+
+  function validDate(value) {
+    if (typeof value !== 'string' || value.length > 40 || !Number.isFinite(Date.parse(value))) return null;
+    return new Date(Date.parse(value)).toISOString();
+  }
+
+  function validNode(value) {
+    return value === 'legacy-v3' || (typeof value === 'string' && /^mbm-[A-Za-z0-9_-]{8,80}$/.test(value));
+  }
+
+  function nodeOr(value, fallback) {
+    return validNode(value) ? value : (validNode(fallback) ? fallback : 'mbm-default00000000');
+  }
+
+  function canonicalize(value) {
+    if (Array.isArray(value)) return value.map(canonicalize);
+    if (isPlain(value)) {
+      var out = {};
+      Object.keys(value).sort().forEach(function (key) { out[key] = canonicalize(value[key]); });
+      return out;
+    }
+    return value;
+  }
+
+  function stableStringify(value) {
+    return JSON.stringify(canonicalize(value));
+  }
+
+  function utf8Encode(text) {
+    if (typeof TextEncoder === 'function') return new TextEncoder().encode(text);
+    if (root.Buffer) return new Uint8Array(root.Buffer.from(text, 'utf8'));
+    var encoded = unescape(encodeURIComponent(text));
+    var bytes = new Uint8Array(encoded.length);
+    for (var i = 0; i < encoded.length; i += 1) bytes[i] = encoded.charCodeAt(i);
+    return bytes;
+  }
+
+  function utf8Decode(bytes) {
+    if (typeof TextDecoder === 'function') return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    if (root.Buffer) return root.Buffer.from(bytes).toString('utf8');
+    var binary = '';
+    for (var i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]);
+    return decodeURIComponent(escape(binary));
+  }
+
+  function utf8Length(value) {
+    return utf8Encode(typeof value === 'string' ? value : stableStringify(value)).length;
+  }
+
+  function toBase64Url(bytes) {
+    var binary = '';
+    for (var offset = 0; offset < bytes.length; offset += 0x8000) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(offset, Math.min(offset + 0x8000, bytes.length)));
+    }
+    var base64 = typeof btoa === 'function' ? btoa(binary) : root.Buffer.from(bytes).toString('base64');
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  }
+
+  function fromBase64Url(value) {
+    if (typeof value !== 'string' || !/^[A-Za-z0-9_-]*$/.test(value)) throw new Error('Sync code contains invalid base64url characters.');
+    var padded = value.replace(/-/g, '+').replace(/_/g, '/');
+    while (padded.length % 4) padded += '=';
+    var binary = typeof atob === 'function' ? atob(padded) : root.Buffer.from(padded, 'base64').toString('binary');
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  }
+
+  function fnv1a32(text) {
+    var hash = 0x811c9dc5;
+    var bytes = utf8Encode(String(text));
+    for (var i = 0; i < bytes.length; i += 1) {
+      hash ^= bytes[i];
+      hash = Math.imul(hash, 0x01000193) >>> 0;
+    }
+    return hash >>> 0;
+  }
+
+  function boundedJson(value, depth, budget) {
+    depth = depth || 0;
+    budget = budget || { items: LIMITS.jsonItems };
+    if (depth > LIMITS.jsonDepth || --budget.items < 0) throw new Error('Bounded JSON limit exceeded.');
+    if (value === null || typeof value === 'boolean') return value;
+    if (typeof value === 'number') {
+      if (!Number.isFinite(value)) throw new Error('Non-finite JSON number rejected.');
+      return value;
+    }
+    if (typeof value === 'string') return value.slice(0, 512);
+    if (Array.isArray(value)) {
+      if (value.length > 128) throw new Error('Bounded JSON array is too long.');
+      return value.map(function (item) { return boundedJson(item, depth + 1, budget); });
+    }
+    if (!isPlain(value)) throw new Error('Only plain JSON objects are accepted.');
+    var keys = Object.keys(value);
+    if (keys.length > 128) throw new Error('Bounded JSON object has too many keys.');
+    var out = {};
+    keys.sort().forEach(function (key) {
+      if (FORBIDDEN_KEYS[key]) throw new Error('Unsafe JSON key rejected.');
+      var safeKey = cleanText(key, 64, '');
+      if (!safeKey) throw new Error('Empty JSON key rejected.');
+      out[safeKey] = boundedJson(value[key], depth + 1, budget);
+    });
+    return out;
+  }
+
+  function safeSaveJson(value, depth, budget) {
+    depth = depth || 0;
+    budget = budget || { items: 50000 };
+    if (depth > 20 || --budget.items < 0) throw new Error('Save JSON structure limit exceeded.');
+    if (value === null || typeof value === 'boolean') return value;
+    if (typeof value === 'number') {
+      if (!Number.isFinite(value)) throw new Error('Non-finite save number rejected.');
+      return value;
+    }
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) {
+      if (value.length > 20000) throw new Error('Save JSON array is too long.');
+      return value.map(function (item) { return safeSaveJson(item, depth + 1, budget); });
+    }
+    if (!isPlain(value)) throw new Error('Only plain save JSON objects are accepted.');
+    var keys = Object.keys(value);
+    if (keys.length > 20000) throw new Error('Save JSON object has too many keys.');
+    var out = {};
+    keys.forEach(function (key) {
+      if (FORBIDDEN_KEYS[key]) throw new Error('Unsafe save JSON key rejected.');
+      out[key] = safeSaveJson(value[key], depth + 1, budget);
+    });
+    return out;
+  }
+
+  function lwwCompare(a, b) {
+    if (a.clock !== b.clock) return a.clock > b.clock ? 1 : -1;
+    if (a.node !== b.node) return a.node > b.node ? 1 : -1;
+    var left = stableStringify(a.value === undefined ? a : a.value);
+    var right = stableStringify(b.value === undefined ? b : b.value);
+    return left === right ? 0 : (left > right ? 1 : -1);
+  }
+
+  function chooseLww(a, b) {
+    return lwwCompare(a, b) >= 0 ? a : b;
+  }
+
+  function normalizeRegister(raw, fallbackValue, cleaner, fallbackNode) {
+    var source = isPlain(raw) ? raw : {};
+    return {
+      value: cleaner(source.value === undefined ? fallbackValue : source.value),
+      clock: clampInt(source.clock, 0, Number.MAX_SAFE_INTEGER, 0),
+      node: nodeOr(source.node, fallbackNode)
+    };
+  }
+
+  function normalizeCounter(raw, fallbackNode) {
+    if (raw == null) raw = [];
+    if (!Array.isArray(raw)) throw new Error('G-counter must be a pair array.');
+    var map = new Map();
+    raw.forEach(function (pair) {
+      if (!Array.isArray(pair) || pair.length !== 2 || !validNode(pair[0])) throw new Error('Invalid G-counter component.');
+      var count = clampInt(pair[1], 0, 100000000, -1);
+      if (count < 0) throw new Error('Invalid G-counter value.');
+      map.set(pair[0], Math.max(map.get(pair[0]) || 0, count));
+    });
+    if (!map.size) map.set(nodeOr(fallbackNode), 0);
+    if (map.size > LIMITS.nodes) throw new Error('G-counter node cap exceeded.');
+    return Array.from(map.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+  }
+
+  function joinCounter(a, b) {
+    var map = new Map(a);
+    b.forEach(function (pair) { map.set(pair[0], Math.max(map.get(pair[0]) || 0, pair[1])); });
+    if (map.size > LIMITS.nodes) throw new Error('Joined G-counter node cap exceeded.');
+    return Array.from(map.entries()).sort(function (x, y) { return x[0].localeCompare(y[0]); });
+  }
+
+  function normalizeSetRecord(raw, removal, fallbackNode) {
+    if (!isPlain(raw)) throw new Error('Invalid OR-set record.');
+    var record = {
+      clock: clampInt(raw.clock, 0, Number.MAX_SAFE_INTEGER, 0),
+      node: nodeOr(raw.node, fallbackNode)
+    };
+    if (!removal) {
+      record.id = cleanText(raw.id, LIMITS.id, '');
+      if (!record.id) throw new Error('OR-set item id missing.');
+      record.earnedAt = validDate(raw.earnedAt);
+    }
+    return record;
+  }
+
+  function normalizePairMap(raw, recordNormalizer, maximum, label) {
+    if (raw == null) raw = [];
+    if (!Array.isArray(raw)) throw new Error(label + ' must be a pair array.');
+    var map = new Map();
+    raw.forEach(function (pair) {
+      if (!Array.isArray(pair) || pair.length !== 2) throw new Error('Invalid ' + label + ' pair.');
+      var key = cleanText(pair[0], LIMITS.id, '');
+      if (!key) throw new Error(label + ' key missing.');
+      var item = recordNormalizer(pair[1]);
+      if (map.has(key) && stableStringify(map.get(key)) !== stableStringify(item)) throw new Error('Conflicting duplicate ' + label + ' key.');
+      map.set(key, item);
+    });
+    if (map.size > maximum) throw new Error(label + ' cap exceeded.');
+    return Array.from(map.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+  }
+
+  function normalizeOrSet(raw, operationCap, fallbackNode) {
+    var source = isPlain(raw) ? raw : {};
+    var adds = normalizePairMap(source.adds || [], function (record) {
+      return normalizeSetRecord(record, false, fallbackNode);
+    }, operationCap, 'OR-set additions');
+    var removes = normalizePairMap(source.removes || [], function (record) {
+      return normalizeSetRecord(record, true, fallbackNode);
+    }, operationCap, 'OR-set removals');
+    if (adds.length + removes.length > operationCap) throw new Error('OR-set total operation cap exceeded.');
+    return { adds: adds, removes: removes };
+  }
+
+  function joinExactPairMaps(a, b, maximum, label) {
+    var map = new Map(a);
+    b.forEach(function (pair) {
+      if (map.has(pair[0]) && stableStringify(map.get(pair[0])) !== stableStringify(pair[1])) throw new Error('Conflicting ' + label + ' operation.');
+      map.set(pair[0], pair[1]);
+    });
+    if (map.size > maximum) throw new Error('Joined ' + label + ' cap exceeded.');
+    return Array.from(map.entries()).sort(function (x, y) { return x[0].localeCompare(y[0]); });
+  }
+
+  function joinOrSet(a, b, maximum) {
+    var adds = joinExactPairMaps(a.adds, b.adds, maximum, 'OR-set addition');
+    var removes = joinExactPairMaps(a.removes, b.removes, maximum, 'OR-set removal');
+    if (adds.length + removes.length > maximum) throw new Error('Joined OR-set total operation cap exceeded.');
+    return { adds: adds, removes: removes };
+  }
+
+  function normalizeReceipt(raw, id, fallbackNode) {
+    if (!isPlain(raw)) throw new Error('Invalid receipt record.');
+    var game = cleanText(raw.game, 32, 'legacy');
+    if (game !== 'legacy' && GAME_IDS.indexOf(game) < 0) game = 'legacy';
+    return {
+      id: id,
+      game: game,
+      xp: clampInt(raw.xp, 0, LIMITS.awardXP, 0),
+      housePoints: clampInt(raw.housePoints, 0, LIMITS.awardXP, 0),
+      badge: cleanText(raw.badge, 48, ''),
+      clock: clampInt(raw.clock, 0, Number.MAX_SAFE_INTEGER, 0),
+      node: nodeOr(raw.node, fallbackNode),
+      earnedAt: validDate(raw.earnedAt),
+      legacy: raw.legacy === true
+    };
+  }
+
+  function normalizeReceipts(raw, fallbackNode) {
+    return normalizePairMap(raw || [], function (record) {
+      var id = cleanText(record && record.id, LIMITS.id, '');
+      return normalizeReceipt(record, id, fallbackNode);
+    }, LIMITS.receipts, 'receipts').map(function (pair) {
+      if (!pair[1].id || pair[1].id !== pair[0]) pair[1] = normalizeReceipt(pair[1], pair[0], fallbackNode);
+      return pair;
+    });
+  }
+
+  function normalizeGames(raw, fallbackNode) {
+    if (raw == null) raw = [];
+    if (!Array.isArray(raw)) throw new Error('Games must be a pair array.');
+    var map = new Map();
+    raw.forEach(function (pair) {
+      if (!Array.isArray(pair) || pair.length !== 2 || GAME_IDS.indexOf(pair[0]) < 0 || !isPlain(pair[1])) throw new Error('Invalid game register.');
+      var register = {
+        value: boundedJson(pair[1].value == null ? {} : pair[1].value),
+        clock: clampInt(pair[1].clock, 0, Number.MAX_SAFE_INTEGER, 0),
+        node: nodeOr(pair[1].node, fallbackNode)
+      };
+      if (utf8Length(register.value) > 32000) throw new Error('Game summary is too large.');
+      map.set(pair[0], map.has(pair[0]) ? chooseLww(map.get(pair[0]), register) : register);
+    });
+    if (map.size > LIMITS.games) throw new Error('Game register cap exceeded.');
+    return Array.from(map.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+  }
+
+  function stationBase(id) {
+    return String(id).split('@')[0];
+  }
+
+  function normalizeOlympiad(raw, fallbackNode) {
+    if (raw == null) raw = [];
+    if (!Array.isArray(raw)) throw new Error('Olympiad entries must be a pair array.');
+    var map = new Map();
+    raw.forEach(function (pair) {
+      if (!Array.isArray(pair) || pair.length !== 2 || !isPlain(pair[1])) throw new Error('Invalid Olympiad entry.');
+      var id = cleanText(pair[0], LIMITS.id, '');
+      if (STATIONS.indexOf(stationBase(id)) < 0) throw new Error('Unknown Olympiad station.');
+      var item = {
+        points: clampInt(pair[1].points, 0, 1000, 0),
+        raw: boundedJson(pair[1].raw == null ? {} : pair[1].raw),
+        unit: cleanText(pair[1].unit, 16, ''),
+        weekId: /^\d{4}-W\d{2}$/.test(String(pair[1].weekId || '')) ? String(pair[1].weekId) : '',
+        achievedAt: validDate(pair[1].achievedAt),
+        clock: clampInt(pair[1].clock, 0, Number.MAX_SAFE_INTEGER, 0),
+        node: nodeOr(pair[1].node, fallbackNode)
+      };
+      if (utf8Length(item.raw) > 4096) throw new Error('Olympiad raw evidence is too large.');
+      if (map.has(id)) map.set(id, chooseOlympiad(map.get(id), item)); else map.set(id, item);
+    });
+    if (map.size > LIMITS.olympiad) throw new Error('Olympiad entry cap exceeded.');
+    return Array.from(map.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+  }
+
+  function chooseOlympiad(a, b) {
+    if (a.points !== b.points) return a.points > b.points ? a : b;
+    var registerA = { value: a, clock: a.clock, node: a.node };
+    var registerB = { value: b, clock: b.clock, node: b.node };
+    return chooseLww(registerA, registerB).value;
+  }
+
+  function defaultPassport(nodeId) {
+    var node = nodeOr(nodeId);
+    var housePoints = {};
+    HOUSES.forEach(function (house) { housePoints[house] = [[node, 0]]; });
+    return {
+      kind: PASSPORT_KIND,
+      schemaVersion: PASSPORT_SCHEMA,
+      nodeId: node,
+      lamport: 0,
+      seasonId: PASSPORT_SEASON,
+      profile: {
+        name: { value: 'Player', clock: 0, node: node },
+        className: { value: '', clock: 0, node: node },
+        house: { value: 'Aurora', clock: 0, node: node }
+      },
+      counters: { xp: [[node, 0]], housePoints: housePoints },
+      sets: { badges: { adds: [], removes: [] }, cosmetics: { adds: [], removes: [] } },
+      receipts: [], games: [], olympiad: [],
+      migration: { source: null, fingerprint: '', migratedAt: null }
+    };
+  }
+
+  function normalizePassport(raw, preferredNode) {
+    if (raw == null) return defaultPassport(preferredNode);
+    if (!isPlain(raw) || raw.kind !== PASSPORT_KIND || Number(raw.schemaVersion) !== PASSPORT_SCHEMA) throw new Error('Incompatible Sports Passport V4 state.');
+    var rawJson = safeSaveJson(raw);
+    if (utf8Length(rawJson) > PASSPORT_BYTES_MAX) throw new Error('Raw Sports Passport V4 exceeds its 500,000-byte limit.');
+    var node = nodeOr(preferredNode, raw.nodeId);
+    if (!validNode(preferredNode)) node = nodeOr(raw.nodeId, node);
+    var profile = isPlain(raw.profile) ? raw.profile : {};
+    var counters = isPlain(raw.counters) ? raw.counters : {};
+    var points = isPlain(counters.housePoints) ? counters.housePoints : {};
+    var sets = isPlain(raw.sets) ? raw.sets : {};
+    var housePoints = {};
+    HOUSES.forEach(function (house) { housePoints[house] = normalizeCounter(points[house], node); });
+    var output = {
+      kind: PASSPORT_KIND,
+      schemaVersion: PASSPORT_SCHEMA,
+      nodeId: node,
+      lamport: clampInt(raw.lamport, 0, Number.MAX_SAFE_INTEGER, 0),
+      seasonId: PASSPORT_SEASON,
+      profile: {
+        name: normalizeRegister(profile.name, 'Player', function (v) { return cleanText(v, LIMITS.name, 'Player'); }, node),
+        className: normalizeRegister(profile.className, '', function (v) { return cleanText(v, LIMITS.className, ''); }, node),
+        house: normalizeRegister(profile.house, 'Aurora', function (v) { return HOUSES.indexOf(v) >= 0 ? v : 'Aurora'; }, node)
+      },
+      counters: { xp: normalizeCounter(counters.xp, node), housePoints: housePoints },
+      sets: {
+        badges: normalizeOrSet(sets.badges, LIMITS.badgeOps, node),
+        cosmetics: normalizeOrSet(sets.cosmetics, LIMITS.cosmeticOps, node)
+      },
+      receipts: normalizeReceipts(raw.receipts, node),
+      games: normalizeGames(raw.games, node),
+      olympiad: normalizeOlympiad(raw.olympiad, node),
+      migration: {
+        source: raw.migration && raw.migration.source === 'v3' ? 'v3' : null,
+        fingerprint: cleanText(raw.migration && raw.migration.fingerprint, 64, ''),
+        migratedAt: validDate(raw.migration && raw.migration.migratedAt)
+      }
+    };
+    var clocks = [output.lamport];
+    Object.keys(output.profile).forEach(function (key) { clocks.push(output.profile[key].clock); });
+    output.sets.badges.adds.concat(output.sets.badges.removes, output.sets.cosmetics.adds, output.sets.cosmetics.removes).forEach(function (pair) { clocks.push(pair[1].clock); });
+    output.receipts.concat(output.games, output.olympiad).forEach(function (pair) { clocks.push(pair[1].clock); });
+    output.lamport = Math.max.apply(Math, clocks);
+    if (utf8Length(output) > PASSPORT_BYTES_MAX) throw new Error('Sports Passport V4 exceeds its 500,000-byte limit.');
+    return output;
+  }
+
+  function joinLwwPairs(a, b, olympiadMode) {
+    var map = new Map(a);
+    b.forEach(function (pair) {
+      if (!map.has(pair[0])) map.set(pair[0], pair[1]);
+      else map.set(pair[0], olympiadMode ? chooseOlympiad(map.get(pair[0]), pair[1]) : chooseLww(map.get(pair[0]), pair[1]));
+    });
+    return Array.from(map.entries()).sort(function (x, y) { return x[0].localeCompare(y[0]); });
+  }
+
+  function mergePassport(left, right, localNodeId) {
+    var a = normalizePassport(left);
+    var b = normalizePassport(right);
+    var receiverNode = nodeOr(localNodeId, a.nodeId);
+    var housePoints = {};
+    HOUSES.forEach(function (house) { housePoints[house] = joinCounter(a.counters.housePoints[house], b.counters.housePoints[house]); });
+    var migrationA = stableStringify(a.migration);
+    var migrationB = stableStringify(b.migration);
+    var merged = {
+      kind: PASSPORT_KIND,
+      schemaVersion: PASSPORT_SCHEMA,
+      nodeId: receiverNode,
+      lamport: Math.max(a.lamport, b.lamport),
+      seasonId: PASSPORT_SEASON,
+      profile: {
+        name: chooseLww(a.profile.name, b.profile.name),
+        className: chooseLww(a.profile.className, b.profile.className),
+        house: chooseLww(a.profile.house, b.profile.house)
+      },
+      counters: { xp: joinCounter(a.counters.xp, b.counters.xp), housePoints: housePoints },
+      sets: {
+        badges: joinOrSet(a.sets.badges, b.sets.badges, LIMITS.badgeOps),
+        cosmetics: joinOrSet(a.sets.cosmetics, b.sets.cosmetics, LIMITS.cosmeticOps)
+      },
+      receipts: joinExactPairMaps(a.receipts, b.receipts, LIMITS.receipts, 'receipt'),
+      games: joinLwwPairs(a.games, b.games, false),
+      olympiad: joinLwwPairs(a.olympiad, b.olympiad, true),
+      migration: migrationA >= migrationB ? a.migration : b.migration
+    };
+    return normalizePassport(merged, receiverNode);
+  }
+
+  function normalizeLegacyHouse(value) {
+    var aliases = { Verdant: 'Tide', Nova: 'Forge', Grove: 'Forge', Summit: 'Forge' };
+    var house = aliases[value] || value;
+    return HOUSES.indexOf(house) >= 0 ? house : 'Aurora';
+  }
+
+  function migrateV3(raw, localNodeId) {
+    var source = isPlain(raw) ? raw : {};
+    var fingerprintSource;
+    try { fingerprintSource = boundedJson(source); } catch (_) { fingerprintSource = {}; }
+    var fingerprint = ('00000000' + fnv1a32(stableStringify(fingerprintSource)).toString(16)).slice(-8);
+    var node = nodeOr(localNodeId, 'mbm-migrate-' + fingerprint);
+    var output = defaultPassport(node);
+    var profile = isPlain(source.profile) ? source.profile : {};
+    var season = isPlain(source.season) ? source.season : {};
+    var clock = 0;
+    function legacyRegister(value) { clock += 1; return { value: value, clock: clock, node: 'legacy-v3' }; }
+    output.profile.name = legacyRegister(cleanText(profile.name, LIMITS.name, 'Player'));
+    output.profile.className = legacyRegister(cleanText(profile.className, LIMITS.className, ''));
+    output.profile.house = legacyRegister(normalizeLegacyHouse(profile.house));
+    var xp = clampInt(season.xp, 0, 100000000, 0);
+    output.counters.xp = [['legacy-v3', xp]];
+    HOUSES.forEach(function (house) { output.counters.housePoints[house] = [['legacy-v3', 0]]; });
+
+    var badges = Array.isArray(season.badges) ? season.badges : [];
+    var seenBadge = new Set();
+    badges.slice(-80).forEach(function (rawBadge, index) {
+      var badge = cleanText(rawBadge, 48, '');
+      if (!badge || seenBadge.has(badge)) return;
+      seenBadge.add(badge); clock += 1;
+      var tag = 'v3-badge-' + ('00000000' + fnv1a32(badge + '|' + index).toString(16)).slice(-8);
+      output.sets.badges.adds.push([tag, { id: badge, clock: clock, node: 'legacy-v3', earnedAt: validDate(season.lastPlayed) }]);
+    });
+
+    var receiptMap = new Map();
+    (Array.isArray(source.receipts) ? source.receipts : []).slice(-100).forEach(function (rawReceipt) {
+      var record = typeof rawReceipt === 'string' ? { id: rawReceipt } : rawReceipt;
+      if (!isPlain(record)) return;
+      var id = cleanText(record.id, LIMITS.id, '');
+      if (!id || receiptMap.has(id)) return;
+      clock += 1;
+      receiptMap.set(id, normalizeReceipt({
+        game: record.game, xp: record.xp, housePoints: 0, badge: record.badge,
+        clock: clock, node: 'legacy-v3', earnedAt: record.earnedAt, legacy: true
+      }, id, 'legacy-v3'));
+    });
+    output.receipts = Array.from(receiptMap.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+
+    var games = isPlain(source.games) ? source.games : {};
+    GAME_IDS.forEach(function (gameId) {
+      if (!isPlain(games[gameId])) return;
+      clock += 1;
+      var value;
+      try { value = boundedJson(games[gameId]); } catch (_) { value = {}; }
+      output.games.push([gameId, { value: value, clock: clock, node: 'legacy-v3' }]);
+    });
+    output.games.sort(function (a, b) { return a[0].localeCompare(b[0]); });
+    output.lamport = clock;
+    output.migration = { source: 'v3', fingerprint: 'fnv1a32-' + fingerprint, migratedAt: new Date(0).toISOString() };
+    return normalizePassport(output, node);
+  }
+
+  function totalXP(value) {
+    return normalizePassport(value).counters.xp.reduce(function (sum, pair) { return sum + pair[1]; }, 0);
+  }
+
+  function activeSetIds(rawSet) {
+    var set = normalizeOrSet(rawSet, Math.max(LIMITS.badgeOps, LIMITS.cosmeticOps), 'mbm-default00000000');
+    var removed = new Set(set.removes.map(function (pair) { return pair[0]; }));
+    var ids = new Set();
+    set.adds.forEach(function (pair) { if (!removed.has(pair[0])) ids.add(pair[1].id); });
+    return Array.from(ids).sort();
+  }
+
+  function encodePassport(value) {
+    var normalized = normalizePassport(value);
+    var json = stableStringify(normalized);
+    var bytes = utf8Encode(json);
+    if (bytes.length > PASSPORT_BYTES_MAX) throw new Error('Sports Passport V4 exceeds its sync-code limit.');
+    return PASSPORT_PREFIX + toBase64Url(bytes);
+  }
+
+  function decodePassport(code, localNodeId) {
+    if (typeof code !== 'string' || code.slice(0, PASSPORT_PREFIX.length) !== PASSPORT_PREFIX) throw new Error('Sports Passport V4 sync-code prefix is missing.');
+    var payload = code.slice(PASSPORT_PREFIX.length).trim();
+    if (payload.length > Math.ceil(PASSPORT_BYTES_MAX * 4 / 3) + 8) throw new Error('Sports Passport V4 sync code is too large.');
+    var bytes = fromBase64Url(payload);
+    if (bytes.length > PASSPORT_BYTES_MAX) throw new Error('Decoded Sports Passport V4 is too large.');
+    var parsed = JSON.parse(utf8Decode(bytes));
+    return normalizePassport(parsed, localNodeId || parsed.nodeId);
+  }
+
+  function validateCollection(raw, options) {
+    options = options || {};
+    if (!isPlain(raw)) throw new Error('Collection must be one plain JSON object.');
+    if (utf8Length(raw) > COLLECTION_BYTES_MAX) throw new Error('Collection exceeds its 4,000,000-byte limit.');
+    if (raw.kind === 'MadeByMatt.SportsCollection.V3' && Number(raw.bundleVersion) === 3) {
+      if (!validDate(raw.exportedAt)) throw new Error('V3 migration bundle timestamp is invalid.');
+      var v3Saves = isPlain(raw.saves) ? raw.saves : {};
+      Object.keys(v3Saves).forEach(function (key) {
+        if (V3_SAVE_KEYS.indexOf(key) < 0) return;
+        if (!isPlain(v3Saves[key]) || utf8Length(v3Saves[key]) > COLLECTION_SAVE_BYTES_MAX) throw new Error('V3 migration section is invalid or too large.');
+      });
+      var gameId = GAME_IDS.indexOf(options.gameId) >= 0 ? options.gameId : '';
+      var own = [];
+      if (gameId) GAME[gameId].v3Keys.forEach(function (key) { if (v3Saves[key]) own.push([key, safeSaveJson(v3Saves[key])]); });
+      return {
+        sourceVersion: 3,
+        exportedAt: validDate(raw.exportedAt),
+        passport: migrateV3(raw.passport, options.localNodeId),
+        saves: {},
+        legacyOwnSections: own,
+        note: 'Only the current title may sanitize and write its own V3 section to a V4 key.'
+      };
+    }
+    if (raw.kind !== COLLECTION_KIND || Number(raw.bundleVersion) !== COLLECTION_VERSION || !validDate(raw.exportedAt)) throw new Error('Incompatible Sports Collection V4 bundle.');
+    var saves = isPlain(raw.saves) ? raw.saves : null;
+    if (!saves) throw new Error('Collection saves map is missing.');
+    Object.keys(saves).forEach(function (key) { if (SAVE_KEYS.indexOf(key) < 0) throw new Error('Collection contains a non-allow-listed save key.'); });
+    var normalizedSaves = {};
+    SAVE_KEYS.forEach(function (key) {
+      if (saves[key] === undefined) return;
+      if (!isPlain(saves[key]) || utf8Length(saves[key]) > COLLECTION_SAVE_BYTES_MAX) throw new Error('Collection save section is invalid or too large.');
+      normalizedSaves[key] = safeSaveJson(saves[key]);
+    });
+    var output = {
+      sourceVersion: 4,
+      kind: COLLECTION_KIND,
+      bundleVersion: COLLECTION_VERSION,
+      exportedAt: validDate(raw.exportedAt),
+      passport: normalizePassport(raw.passport, options.localNodeId),
+      saves: normalizedSaves
+    };
+    if (utf8Length(output.passport) > PASSPORT_BYTES_MAX) throw new Error('Collection Passport section is too large.');
+    return output;
+  }
+
+  function parseCollectionText(text, options) {
+    if (typeof text !== 'string' || utf8Length(text) > COLLECTION_BYTES_MAX) throw new Error('Collection text is missing or too large.');
+    return validateCollection(JSON.parse(text), options);
+  }
+
+  function weeklyId(dateLike) {
+    var source = dateLike === undefined ? new Date() : new Date(dateLike);
+    if (!Number.isFinite(source.getTime())) throw new Error('Weekly seed date is invalid.');
+    var date = new Date(Date.UTC(source.getUTCFullYear(), source.getUTCMonth(), source.getUTCDate()));
+    var day = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - day);
+    var year = date.getUTCFullYear();
+    var first = new Date(Date.UTC(year, 0, 1));
+    var week = Math.ceil((((date - first) / 86400000) + 1) / 7);
+    return year + '-W' + String(week).padStart(2, '0');
+  }
+
+  function weeklySeed(week, gameId, eventId) {
+    if (!/^\d{4}-W\d{2}$/.test(String(week)) || GAME_IDS.indexOf(gameId) < 0) throw new Error('Weekly seed identity is invalid.');
+    var event = cleanText(eventId, 64, '');
+    if (!event) throw new Error('Weekly event id is missing.');
+    return fnv1a32('MBM-WEEKLY-V4|' + week + '|' + gameId + '|' + event);
+  }
+
+  function createRollbackRing(capacity) {
+    capacity = clampInt(capacity, ROLLBACK_FRAMES, ROLLBACK_FRAMES, ROLLBACK_FRAMES);
+    var frames = new Array(capacity);
+    return {
+      capacity: capacity,
+      push: function (tick, state) {
+        if (!Number.isInteger(tick) || tick < 0) throw new Error('Rollback tick must be a non-negative integer.');
+        frames[tick % capacity] = { tick: tick, state: boundedJson(state) };
+      },
+      get: function (tick) {
+        var entry = frames[tick % capacity];
+        return entry && entry.tick === tick ? boundedJson(entry.state) : null;
+      },
+      accepts: function (currentTick, inputTick) {
+        return Number.isInteger(currentTick) && Number.isInteger(inputTick) && inputTick >= currentTick - 119 && inputTick <= currentTick + 8;
+      }
+    };
+  }
+
+  function rollbackSelfTest() {
+    var currentTick = 160;
+    var rollbackFrame = 72;
+    var baseInputs = new Map();
+    for (var tick = 0; tick < currentTick; tick += 11) baseInputs.set(tick, tick % 22 ? -1 : 1);
+    function step(state, axis) { return { tick: state.tick + 1, position: state.position + state.velocity + axis, velocity: state.velocity + axis }; }
+    function run(extra, ring) {
+      var state = { tick: 0, position: 0, velocity: 0 };
+      for (var t = 0; t < currentTick; t += 1) {
+        if (ring) ring.push(t, state);
+        var axis = (baseInputs.get(t) || 0) + (t === rollbackFrame ? extra : 0);
+        state = step(state, axis);
+      }
+      return state;
+    }
+    function hash(state) { return ('00000000' + fnv1a32(stableStringify(state)).toString(16)).slice(-8); }
+    var ring = createRollbackRing(ROLLBACK_FRAMES);
+    var before = run(0, ring);
+    var expected = run(2, null);
+    var restored = ring.get(rollbackFrame);
+    var replayed = restored;
+    for (var t = rollbackFrame; t < currentTick; t += 1) replayed = step(replayed, (baseInputs.get(t) || 0) + (t === rollbackFrame ? 2 : 0));
+    var result = {
+      ok: !!restored && ring.accepts(currentTick, rollbackFrame) && hash(expected) === hash(replayed) && hash(before) !== hash(replayed),
+      window: ROLLBACK_FRAMES,
+      rollbackFrame: rollbackFrame,
+      beforeHash: hash(before),
+      lateHash: hash(expected),
+      replayedHash: hash(replayed)
+    };
+    return result;
+  }
+
+  function physicsSelfTest() {
+    var dt = 1 / 120;
+    var state = { x: 0, y: 1, z: 0, vx: 31, vy: 13, vz: 3.5 };
+    function derivative(s) {
+      var speed = Math.hypot(s.vx, s.vy, s.vz) || 0;
+      var drag = 0.0042 * speed;
+      return { x: s.vx, y: s.vy, z: s.vz, vx: -drag * s.vx + 0.0015 * s.vz, vy: -9.81 - drag * s.vy, vz: -drag * s.vz - 0.0015 * s.vx };
+    }
+    function add(s, k, scale) {
+      return { x: s.x + k.x * scale, y: s.y + k.y * scale, z: s.z + k.z * scale, vx: s.vx + k.vx * scale, vy: s.vy + k.vy * scale, vz: s.vz + k.vz * scale };
+    }
+    for (var tick = 0; tick < 240; tick += 1) {
+      var k1 = derivative(state), k2 = derivative(add(state, k1, dt / 2)), k3 = derivative(add(state, k2, dt / 2)), k4 = derivative(add(state, k3, dt));
+      ['x', 'y', 'z', 'vx', 'vy', 'vz'].forEach(function (key) { state[key] += dt / 6 * (k1[key] + 2 * k2[key] + 2 * k3[key] + k4[key]); });
+    }
+    var sample = {};
+    Object.keys(state).forEach(function (key) { sample[key] = Number(state[key].toFixed(8)); });
+    var finite = Object.keys(sample).every(function (key) { return Number.isFinite(sample[key]); });
+    return { ok: finite, finite: finite, tickHz: 120, model: 'reference-rk4-drag-magnus', hash: ('00000000' + fnv1a32(stableStringify(sample)).toString(16)).slice(-8), sample: sample };
+  }
+
+  function olympiadPoints(stationId, raw) {
+    raw = isPlain(raw) ? raw : {};
+    var clamp = function (n) { return clampInt(n, 0, 1000, 0); };
+    if (stationId === 'aurora-links:precision-3') {
+      var distances = Array.isArray(raw.distances) ? raw.distances.slice(0, 3) : [];
+      while (distances.length < 3) distances.push(20);
+      var total = 25 + distances.reduce(function (sum, distance) {
+        var numericDistance = Number(distance);
+        var d = Number.isFinite(numericDistance) ? Math.max(0, Math.min(20, numericDistance)) : 20;
+        return sum + Math.round(300 * (1 - d / 20));
+      }, 0) + 25 * clampInt(raw.birdies, 0, 3, 0);
+      return clamp(total);
+    }
+    if (stationId === 'apex-pool:quick-runout-3') return clamp(200 * clampInt(raw.pots, 0, 3, 0) + Math.round(3 * Math.max(0, Math.min(100, Number(raw.leave) || 0))) + Math.max(0, 100 - Math.floor(2 * Math.max(0, Number(raw.seconds) || 0))));
+    if (stationId === 'apex-kick:target-5') return clamp(Math.round(2 * (Array.isArray(raw.accuracy) ? raw.accuracy.slice(0, 5).reduce(function (sum, value) { return sum + Math.max(0, Math.min(100, Number(value) || 0)); }, 0) : 0)));
+    if (stationId === 'global-games:100m') {
+      var time = Number(raw.seconds);
+      return clamp(Number.isFinite(time) && time < 18 ? Math.floor(25.4347 * Math.pow(Math.max(0, 18 - time), 1.81)) : 0);
+    }
+    if (stationId === 'global-games:archery') {
+      var score = Math.max(0, Number(raw.score) || 0), maximum = Math.max(0, Number(raw.maximum) || 0);
+      return clamp(maximum ? Math.round(1000 * score / maximum) : 0);
+    }
+    throw new Error('Unknown House Olympiad station.');
+  }
+
+  function incrementLocalCounter(pairs, node, amount) {
+    var map = new Map(pairs);
+    var next = (map.get(node) || 0) + amount;
+    if (!Number.isSafeInteger(next) || next < 0 || next > 100000000) throw new Error('Local G-counter increment is out of range.');
+    map.set(node, next);
+    if (map.size > LIMITS.nodes) throw new Error('G-counter node cap exceeded.');
+    return Array.from(map.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+  }
+
+  function mutateProfile(state, patch) {
+    if (!isPlain(patch)) throw new Error('Profile patch must be a plain object.');
+    var current = normalizePassport(state);
+    var values = {
+      name: current.profile.name.value,
+      className: current.profile.className.value,
+      house: current.profile.house.value
+    };
+    if (Object.prototype.hasOwnProperty.call(patch, 'name')) values.name = cleanText(patch.name, LIMITS.name, 'Player');
+    if (Object.prototype.hasOwnProperty.call(patch, 'className')) values.className = cleanText(patch.className, LIMITS.className, '');
+    if (Object.prototype.hasOwnProperty.call(patch, 'house')) values.house = HOUSES.indexOf(patch.house) >= 0 ? patch.house : 'Aurora';
+    var changed = Object.keys(values).filter(function (key) { return values[key] !== current.profile[key].value; });
+    if (!changed.length) return current;
+    var clock = current.lamport + 1;
+    changed.forEach(function (key) { current.profile[key] = { value: values[key], clock: clock, node: current.nodeId }; });
+    current.lamport = clock;
+    return normalizePassport(current, current.nodeId);
+  }
+
+  function grantAward(state, operation) {
+    if (!isPlain(operation)) throw new Error('Award operation must be a plain object.');
+    var current = normalizePassport(state);
+    var id = cleanText(operation.receiptId, LIMITS.id, '');
+    if (!id || id !== String(operation.receiptId || '').trim()) throw new Error('Award receipt id is missing or invalid.');
+    var game = cleanText(operation.game, 32, '');
+    if (GAME_IDS.indexOf(game) < 0) throw new Error('Award game id is invalid.');
+    var xp = clampInt(operation.xp, 0, LIMITS.awardXP, -1);
+    var housePoints = clampInt(operation.housePoints, 0, LIMITS.awardXP, -1);
+    if (xp < 0 || housePoints < 0) throw new Error('Award amount is invalid.');
+    var badge = cleanText(operation.badge, 48, '');
+    var earnedAt = operation.earnedAt == null ? null : validDate(operation.earnedAt);
+    if (operation.earnedAt != null && !earnedAt) throw new Error('Award timestamp is invalid.');
+    var receiptMap = new Map(current.receipts);
+    if (receiptMap.has(id)) {
+      var old = receiptMap.get(id);
+      var same = old.game === game && old.xp === xp && old.housePoints === housePoints && old.badge === badge && (earnedAt == null || old.earnedAt === earnedAt);
+      if (!same) throw new Error('Conflicting award receipt id.');
+      return current;
+    }
+    if (receiptMap.size >= LIMITS.receipts) throw new Error('Receipt cap reached; award was not applied.');
+    var clock = current.lamport + 1;
+    current.counters.xp = incrementLocalCounter(current.counters.xp, current.nodeId, xp);
+    var house = current.profile.house.value;
+    current.counters.housePoints[house] = incrementLocalCounter(current.counters.housePoints[house], current.nodeId, housePoints);
+    receiptMap.set(id, { id: id, game: game, xp: xp, housePoints: housePoints, badge: badge, clock: clock, node: current.nodeId, earnedAt: earnedAt, legacy: false });
+    current.receipts = Array.from(receiptMap.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+    if (badge && RUNTIME_ACTIVE_SET_IDS(current.sets.badges).indexOf(badge) < 0) {
+      var tag = 'badge-' + current.nodeId.slice(-20) + '-' + clock + '-' + ('00000000' + fnv1a32(current.nodeId + '|' + id).toString(16)).slice(-8);
+      if (current.sets.badges.adds.length + current.sets.badges.removes.length >= LIMITS.badgeOps) throw new Error('Badge operation cap reached; award was not applied.');
+      current.sets.badges.adds.push([tag, { id: badge, clock: clock, node: current.nodeId, earnedAt: earnedAt }]);
+      current.sets.badges.adds.sort(function (a, b) { return a[0].localeCompare(b[0]); });
+    }
+    current.lamport = clock;
+    return normalizePassport(current, current.nodeId);
+  }
+
+  function RUNTIME_ACTIVE_SET_IDS(rawSet) {
+    var removed = new Set(rawSet.removes.map(function (pair) { return pair[0]; }));
+    var ids = new Set();
+    rawSet.adds.forEach(function (pair) { if (!removed.has(pair[0])) ids.add(pair[1].id); });
+    return Array.from(ids).sort();
+  }
+
+  function setGameSummary(state, gameId, value) {
+    if (GAME_IDS.indexOf(gameId) < 0) throw new Error('Game summary id is invalid.');
+    var current = normalizePassport(state);
+    var safeValue = boundedJson(value == null ? {} : value);
+    if (utf8Length(safeValue) > 32000) throw new Error('Game summary is too large.');
+    var map = new Map(current.games);
+    var existing = map.get(gameId);
+    if (existing && stableStringify(existing.value) === stableStringify(safeValue)) return current;
+    var clock = current.lamport + 1;
+    map.set(gameId, { value: safeValue, clock: clock, node: current.nodeId });
+    current.games = Array.from(map.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+    current.lamport = clock;
+    return normalizePassport(current, current.nodeId);
+  }
+
+  function recordOlympiad(state, stationId, raw, unit, week, achievedAt) {
+    if (STATIONS.indexOf(stationId) < 0) throw new Error('Olympiad station id is invalid.');
+    var current = normalizePassport(state);
+    var safeRaw = boundedJson(raw == null ? {} : raw);
+    var points = olympiadPoints(stationId, safeRaw);
+    var safeWeek = week == null || week === '' ? '' : String(week);
+    if (safeWeek && !/^\d{4}-W\d{2}$/.test(safeWeek)) throw new Error('Olympiad week id is invalid.');
+    var safeAt = achievedAt == null ? null : validDate(achievedAt);
+    if (achievedAt != null && !safeAt) throw new Error('Olympiad timestamp is invalid.');
+    var key = stationId + (safeWeek ? '@' + safeWeek : '');
+    var map = new Map(current.olympiad);
+    var existing = map.get(key);
+    var material = { points: points, raw: safeRaw, unit: cleanText(unit, 16, ''), weekId: safeWeek, achievedAt: safeAt };
+    if (existing) {
+      if (existing.points > points) return current;
+      if (existing.points === points && stableStringify({ points: existing.points, raw: existing.raw, unit: existing.unit, weekId: existing.weekId, achievedAt: existing.achievedAt }) === stableStringify(material)) return current;
+    }
+    if (!existing && map.size >= LIMITS.olympiad) throw new Error('Olympiad entry cap reached; result was not recorded.');
+    var clock = current.lamport + 1;
+    map.set(key, { points: points, raw: safeRaw, unit: material.unit, weekId: safeWeek, achievedAt: safeAt, clock: clock, node: current.nodeId });
+    current.olympiad = Array.from(map.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+    current.lamport = clock;
+    return normalizePassport(current, current.nodeId);
+  }
+
+  function contractForGame(gameId, spectator) {
+    var config = GAME[gameId];
+    if (!config) throw new Error('Unknown V4 game id.');
+    var capabilities = {
+      protocol: LAN_PROTOCOL,
+      game: gameId,
+      build: config.build,
+      simulation: config.simulation,
+      tickHz: config.tickHz,
+      transport: LAN_TRANSPORT,
+      maxDevices: config.maxDevices,
+      maxPlayers: config.maxPlayers,
+      spectator: spectator === undefined ? config.spectator === true : spectator === true,
+      deterministicModes: [config.mode],
+      rollbackFrames: ROLLBACK_FRAMES,
+      liveRollback: config.liveRollback === true,
+      rollbackMode: config.rollbackMode || 'deterministic-replay-kernel',
+      authority: 'host',
+      inputSchema: config.inputSchema
+    };
+    return {
+      gameId: gameId, version: VERSION, build: config.build, simulation: config.simulation,
+      passportKey: PASSPORT_KEY, passportKind: PASSPORT_KIND, seasonId: PASSPORT_SEASON,
+      saveKeys: config.saveKeys.slice(), capabilities: capabilities
+    };
+  }
+
+  function deepFreeze(value) {
+    if (value && (Array.isArray(value) || isPlain(value)) && !Object.isFrozen(value)) {
+      Object.keys(value).forEach(function (key) { deepFreeze(value[key]); });
+      Object.freeze(value);
+    }
+    return value;
+  }
+
+  var constants = deepFreeze({
+    VERSION: VERSION, PASSPORT_KEY: PASSPORT_KEY, PASSPORT_KIND: PASSPORT_KIND,
+    PASSPORT_SCHEMA: PASSPORT_SCHEMA, PASSPORT_SEASON: PASSPORT_SEASON,
+    PASSPORT_PREFIX: PASSPORT_PREFIX, PASSPORT_BYTES_MAX: PASSPORT_BYTES_MAX,
+    COLLECTION_KIND: COLLECTION_KIND, COLLECTION_VERSION: COLLECTION_VERSION,
+    COLLECTION_BACKUP_KEY: COLLECTION_BACKUP_KEY,
+    COLLECTION_BYTES_MAX: COLLECTION_BYTES_MAX, COLLECTION_SAVE_BYTES_MAX: COLLECTION_SAVE_BYTES_MAX,
+    LAN_PROTOCOL: LAN_PROTOCOL, LAN_TRANSPORT: LAN_TRANSPORT, ROLLBACK_FRAMES: ROLLBACK_FRAMES,
+    HOUSES: HOUSES.slice(), GAME_IDS: GAME_IDS.slice(), STATIONS: STATIONS.slice(),
+    SAVE_KEYS: SAVE_KEYS.slice(), V3_SAVE_KEYS: V3_SAVE_KEYS.slice(), LIMITS: Object.assign({}, LIMITS)
+  });
+
+  var api = {
+    constants: constants,
+    stableStringify: stableStringify,
+    utf8Length: utf8Length,
+    fnv1a32: fnv1a32,
+    defaultPassport: defaultPassport,
+    normalizePassport: normalizePassport,
+    mergePassport: mergePassport,
+    migrateV3: migrateV3,
+    totalXP: totalXP,
+    activeSetIds: activeSetIds,
+    encodePassport: encodePassport,
+    decodePassport: decodePassport,
+    validateCollection: validateCollection,
+    parseCollectionText: parseCollectionText,
+    weeklyId: weeklyId,
+    weeklySeed: weeklySeed,
+    createRollbackRing: createRollbackRing,
+    rollbackSelfTest: rollbackSelfTest,
+    physicsSelfTest: physicsSelfTest,
+    olympiadPoints: olympiadPoints,
+    contractForGame: contractForGame,
+    mutations: Object.freeze({
+      mutateProfile: mutateProfile,
+      grantAward: grantAward,
+      setGameSummary: setGameSummary,
+      recordOlympiad: recordOlympiad
+    })
+  };
+
+  root.MadeByMattV4Runtime = Object.freeze(api);
+  if (typeof module === 'object' && module && module.exports) module.exports = root.MadeByMattV4Runtime;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script>
+(function(){
+'use strict';
+var R=globalThis.MadeByMattV4Runtime,C=R.constants,$=function(s){return document.querySelector(s)},PASSPORT_KEY=C.PASSPORT_KEY,V3_KEY='mbm_sports_passport_v3',pending=null,passport=null;
+var COLLECTION_SAVE_KEYS=Object.freeze([
+'mbm_global_games_world_stage_v4',
+'apexkick.aaa.v4',
+'mbm_apexpool_v4_progress',
+'mbm_apexpool_v4_settings',
+'mbm_aurora_links_aaa_v4'
+]);
+function newNode(){var bytes=new Uint8Array(12);if(globalThis.crypto&&crypto.getRandomValues)crypto.getRandomValues(bytes);else for(var i=0;i<bytes.length;i++)bytes[i]=Math.floor(Math.random()*256);return'mbm-'+Array.from(bytes,function(b){return b.toString(16).padStart(2,'0')}).join('')}
+function rawGet(key){try{return localStorage.getItem(key)}catch(_){return null}}
+function rawSet(key,value){localStorage.setItem(key,value)}
+function loadPassport(){var raw=rawGet(PASSPORT_KEY),parsed;if(raw){try{parsed=R.normalizePassport(JSON.parse(raw));return parsed}catch(e){try{if(raw.length<=C.PASSPORT_BYTES_MAX)rawSet('mbm_sports_passport_v4_corrupt_backup',raw)}catch(_){}}}var node=newNode(),legacy=rawGet(V3_KEY);if(legacy)try{parsed=R.migrateV3(JSON.parse(legacy),node)}catch(_){parsed=R.defaultPassport(node)}else parsed=R.defaultPassport(node);try{rawSet(PASSPORT_KEY,R.stableStringify(parsed))}catch(_){}return parsed}
+function persist(){passport=R.normalizePassport(passport,passport.nodeId);rawSet(PASSPORT_KEY,R.stableStringify(passport));render()}
+function totalCounter(pairs){return pairs.reduce(function(sum,p){return sum+p[1]},0)}
+function currentProfile(){return{name:passport.profile.name.value,className:passport.profile.className.value,house:passport.profile.house.value}}
+function stationBest(id){var list=passport.olympiad.filter(function(pair){return pair[0].split('@')[0]===id}).map(function(pair){return pair[1]});if(!list.length)return null;return list.sort(function(a,b){return b.points-a.points||b.clock-a.clock||String(b.node).localeCompare(String(a.node))})[0]}
+function toast(message){var el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(function(){el.classList.remove('show')},2600)}
+var stationMeta={
+'aurora-links:precision-3':['Aurora Links','3-hole precision','Closest-to-pin + birdie bonus'],
+'apex-pool:quick-runout-3':['Apex Pool','3-ball quick runout','Pots + leave quality + time'],
+'apex-kick:target-5':['Apex Kick','Five-shot Target Matrix','Five accuracy marks'],
+'global-games:100m':['Global Games','100 m Dash','Decathlon-form 100 m points'],
+'global-games:archery':['Global Games','Archery round','Proportional target score']};
+function render(){var p=currentProfile(),xp=R.totalXP(passport),level=1+Math.floor(Math.sqrt(xp/250)),badges=R.activeSetIds(passport.sets.badges);$('#playerName').textContent=p.name;$('#className').textContent=(p.className||'No class set')+' · '+p.house+' House';$('#xpValue').textContent=xp.toLocaleString();$('#levelValue').textContent=level;$('#badgeValue').textContent=badges.length;document.documentElement.style.setProperty('--house',{Aurora:'#63f0b1',Ember:'#ff8e72',Tide:'#4de9ff',Forge:'#b998ff'}[p.house]);var composite=0;$('#stationGrid').innerHTML=C.STATIONS.map(function(id){var best=stationBest(id),points=best?best.points:0;composite+=points;var meta=stationMeta[id];return'<article class="station" style="--fill:'+points/10+'%"><div class="stationTitle"><span>'+meta[0]+' · '+meta[1]+'</span><span class="points">'+points+' / 1000</span></div><small>'+(best?(meta[2]+' · '+(best.weekId||'all-time')):'No result merged yet · '+meta[2])+'</small></article>'}).join('');$('#compositeValue').textContent=composite+' / 5000';$('#scoreRing').style.setProperty('--score',composite/50);var houseTotals={};C.HOUSES.forEach(function(h){houseTotals[h]=totalCounter(passport.counters.housePoints[h])});var max=Math.max.apply(null,[1].concat(C.HOUSES.map(function(h){return houseTotals[h]})));var colours={Aurora:'#63f0b1',Ember:'#ff8e72',Tide:'#4de9ff',Forge:'#b998ff'};$('#houseGrid').innerHTML=C.HOUSES.map(function(h){return'<div class="houseRow"><div class="houseTop"><span>'+h+'</span><span>'+houseTotals[h].toLocaleString()+'</span></div><div class="meter"><i style="--fill:'+(100*houseTotals[h]/max)+'%;--colour:'+colours[h]+'"></i></div></div>'}).join('');var week=R.weeklyId(new Date());$('#weekLabel').textContent=week+' · same local challenge on every V4 copy';$('#seedLabel').textContent=C.GAME_IDS.map(function(game){return R.weeklySeed(week,game,'house-olympiad').toString(16).padStart(8,'0')}).join(' · ')}
+function openProfile(){var p=currentProfile();$('#profileName').value=p.name;$('#profileClass').value=p.className;$('#profileHouse').value=p.house;$('#profileDialog').showModal()}
+function saveProfile(){passport=R.mutations.mutateProfile(passport,{name:$('#profileName').value,className:$('#profileClass').value,house:$('#profileHouse').value});persist();$('#profileDialog').close();toast('Sports Passport identity saved locally')}
+function download(text,name,type){var url=URL.createObjectURL(new Blob([text],{type:type||'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(function(){URL.revokeObjectURL(url)},500)}
+async function copySync(){var code=R.encodePassport(passport);try{await navigator.clipboard.writeText(code);toast('MBM4 Sync Code copied')}catch(_){$('#syncInput').value=code;$('#syncInput').select();toast('Sync Code placed in the text box') }}
+function exportCollection(){var saves={};COLLECTION_SAVE_KEYS.forEach(function(key){var raw=rawGet(key);if(!raw)return;try{var value=JSON.parse(raw);if(value&&typeof value==='object'&&!Array.isArray(value)&&R.utf8Length(value)<=C.COLLECTION_SAVE_BYTES_MAX)saves[key]=value}catch(_){}});var bundle={kind:C.COLLECTION_KIND,bundleVersion:C.COLLECTION_VERSION,exportedAt:new Date().toISOString(),passport:passport,saves:saves};R.validateCollection(bundle,{localNodeId:passport.nodeId});var text=R.stableStringify(bundle);if(R.utf8Length(text)>C.COLLECTION_BYTES_MAX)throw Error('Collection is above the 4 MB safety cap');download(JSON.stringify(bundle,null,2),'Made_by_Matt_Sports_Collection_V4.json');toast('V4 collection downloaded · '+Object.keys(saves).length+' save section'+(Object.keys(saves).length===1?'':'s'))}
+function parseImport(text){text=String(text||'').trim();if(!text)throw Error('Paste or choose a Sync Code/JSON file first');if(text.startsWith(C.PASSPORT_PREFIX))return{source:'MBM4 Sync Code',remote:R.decodePassport(text,passport.nodeId),saveCount:0};var raw=JSON.parse(text);if(raw&&raw.kind===C.PASSPORT_KIND)return{source:'Passport V4 JSON',remote:R.normalizePassport(raw,passport.nodeId),saveCount:0};if(raw&&(/^MadeByMatt\.SportsCollection\.V[34]$/.test(raw.kind))){var checked=R.validateCollection(raw,{localNodeId:passport.nodeId});return{source:'Sports Collection V'+checked.sourceVersion,remote:checked.passport,saveCount:checked.sourceVersion===4?Object.keys(checked.saves).length:checked.legacyOwnSections.length}}if(raw&&Number(raw.version)===3)return{source:'Sports Passport V3 JSON',remote:R.migrateV3(raw,passport.nodeId),saveCount:0};throw Error('This is not a compatible V3/V4 Passport or collection')}
+function previewImport(){try{var parsed=parseImport($('#syncInput').value),merged=R.mergePassport(passport,parsed.remote,passport.nodeId);pending={parsed:parsed,merged:merged,input:$('#syncInput').value};var before=R.totalXP(passport),after=R.totalXP(merged),badgeCount=R.activeSetIds(merged.sets.badges).length;$('#importPreview').hidden=false;$('#importPreview').innerHTML='<b>Checked '+parsed.source+'</b><br>Passport XP: '+before.toLocaleString()+' → '+after.toLocaleString()+'<br>Active badges after merge: '+badgeCount+'<br>Embedded game-save sections: '+parsed.saveCount+' (not written by this hub)';$('#confirmImport').disabled=false;toast('Import checked · nothing changed yet')}catch(e){pending=null;$('#confirmImport').disabled=true;$('#importPreview').hidden=false;$('#importPreview').textContent=e.message||'Import could not be checked';toast('Import rejected') }}
+function confirmImport(){if(!pending||pending.input!==$('#syncInput').value)return toast('The import text changed · check it again');try{var backup={kind:'MadeByMatt.SportsPassport.V4.Backup',createdAt:new Date().toISOString(),values:{}};backup.values[PASSPORT_KEY]=rawGet(PASSPORT_KEY);rawSet(C.COLLECTION_BACKUP_KEY,JSON.stringify(backup));passport=pending.merged;persist();pending=null;$('#confirmImport').disabled=true;$('#importPreview').hidden=true;$('#syncDialog').close();toast('Passport merged · exact local backup retained')}catch(e){toast(e.message||'Passport merge could not be saved')}}
+function escapeHTML(value){return String(value==null?'':value).replace(/[&<>"']/g,function(ch){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]})}
+function rosterComposite(state){return C.STATIONS.reduce(function(total,id){var best=state.olympiad.filter(function(pair){return pair[0].split('@')[0]===id}).map(function(pair){return pair[1].points}).sort(function(a,b){return b-a})[0]||0;return total+best},0)}
+function buildRoster(){var lines=$('#rosterInput').value.split(/\s+/).map(function(x){return x.trim()}).filter(Boolean);if(!lines.length){$('#rosterPreview').hidden=false;$('#rosterPreview').textContent='Paste at least one MBM4 Sync Code.';return}if(lines.length>64){$('#rosterPreview').hidden=false;$('#rosterPreview').textContent='This temporary board accepts at most 64 Sync Codes.';return}var byNode=new Map,invalid=0;lines.forEach(function(code){try{var state=R.decodePassport(code);var old=byNode.get(state.nodeId);if(!old||state.lamport>old.lamport)byNode.set(state.nodeId,state)}catch(_){invalid++}});var rows=Array.from(byNode.values()).map(function(state){return{name:state.profile.name.value,className:state.profile.className.value,house:state.profile.house.value,xp:R.totalXP(state),score:rosterComposite(state)}}).sort(function(a,b){return b.score-a.score||b.xp-a.xp||a.name.localeCompare(b.name)}),houses={};C.HOUSES.forEach(function(h){houses[h]={players:0,xp:0,score:0}});rows.forEach(function(row){var box=houses[row.house];box.players++;box.xp+=row.xp;box.score+=row.score});var summary='<div class="houses">'+C.HOUSES.map(function(h){var x=houses[h];return'<div class="houseRow"><div class="houseTop"><span>'+h+' · '+x.players+' player'+(x.players===1?'':'s')+'</span><span>'+x.score.toLocaleString()+' pts · '+x.xp.toLocaleString()+' XP</span></div></div>'}).join('')+'</div>';var table=rows.length?'<table class="rosterTable"><thead><tr><th>Player / class</th><th>House</th><th>XP</th><th>Olympiad</th></tr></thead><tbody>'+rows.map(function(row){return'<tr><td>'+escapeHTML(row.name)+'<br><small>'+escapeHTML(row.className||'No class')+'</small></td><td>'+escapeHTML(row.house)+'</td><td>'+row.xp.toLocaleString()+'</td><td>'+row.score+' / 5000</td></tr>'}).join('')+'</tbody></table>':'<p>No valid Sync Codes were found.</p>';$('#rosterPreview').hidden=false;$('#rosterPreview').innerHTML='<b>'+rows.length+' unique local Passport'+(rows.length===1?'':'s')+'</b>'+(invalid?'<p class="help">'+invalid+' invalid code'+(invalid===1?' was':'s were')+' ignored.</p>':'')+summary+table;toast('Temporary House board built · not saved')}
+function setCalm(value){document.body.classList.toggle('calm',!!value);$('#calmBtn').setAttribute('aria-pressed',value?'true':'false');$('#calmBtn').textContent=value?'Calm on':'Calm';try{rawSet('mbm_house_olympiad_v4_settings',JSON.stringify({version:4,calm:!!value}))}catch(_){}}
+function installHubControls(){var calm=matchMedia('(prefers-reduced-motion: reduce)').matches;try{var settings=JSON.parse(rawGet('mbm_house_olympiad_v4_settings')||'null');if(settings&&settings.version===4)calm=!!settings.calm}catch(_){}setCalm(calm);$('#calmBtn').onclick=function(){setCalm(!document.body.classList.contains('calm'));toast(document.body.classList.contains('calm')?'Calm presentation enabled':'Full presentation enabled')};$('#rosterBtn').onclick=function(){$('#rosterDialog').showModal()};$('#buildRoster').onclick=buildRoster;$('#clearRoster').onclick=function(){$('#rosterInput').value='';$('#rosterPreview').hidden=true;$('#rosterPreview').textContent='';toast('Temporary roster cleared')}}
+function installSky(){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;var c=$('#sky'),x=c.getContext('2d'),w=0,h=0,t=0;function size(){w=c.width=Math.floor(innerWidth*devicePixelRatio);h=c.height=Math.floor(innerHeight*devicePixelRatio)}function draw(){t+=.006;x.clearRect(0,0,w,h);var scale=devicePixelRatio;for(var i=0;i<48;i++){var px=(i*92821%997)/997*w,py=(i*337%991)/991*h*.72,a=.12+.14*Math.sin(t*2+i);x.fillStyle='rgba(190,235,255,'+Math.max(.03,a)+')';x.fillRect(px,py,Math.max(1,scale),Math.max(1,scale))}for(var band=0;band<3;band++){var g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,'rgba(50,240,184,0)');g.addColorStop(.45,'rgba('+(band===1?'80,220,255':'75,245,177')+',.10)');g.addColorStop(1,'rgba(100,80,255,0)');x.strokeStyle=g;x.lineWidth=(28+band*14)*scale;x.beginPath();for(var j=0;j<=12;j++){var xx=j/12*w,yy=(.11+band*.06)*h+Math.sin(j*.8+t*(1+band*.2)+band)*20*scale;j?x.lineTo(xx,yy):x.moveTo(xx,yy)}x.stroke()}requestAnimationFrame(draw)}addEventListener('resize',size);size();draw()}
+$('#profileBtn').onclick=openProfile;$('#syncBtn').onclick=function(){$('#syncDialog').showModal()};$('#refreshBtn').onclick=function(){passport=loadPassport();render();toast('Local Passport refreshed')};$('#saveProfile').onclick=saveProfile;$('#copySync').onclick=copySync;$('#downloadPassport').onclick=function(){download(JSON.stringify(passport,null,2),'Made_by_Matt_Sports_Passport_V4.json');toast('Passport JSON downloaded')};$('#downloadCollection').onclick=function(){try{exportCollection()}catch(e){toast(e.message||'Collection export failed')}};$('#previewImport').onclick=previewImport;$('#confirmImport').onclick=confirmImport;$('#fileInput').onchange=function(e){var file=e.target.files&&e.target.files[0];if(!file)return;if(file.size>C.COLLECTION_BYTES_MAX)return toast('File is above the 4 MB safety cap');var reader=new FileReader;reader.onload=function(){$('#syncInput').value=String(reader.result||'');pending=null;$('#confirmImport').disabled=true;$('#importPreview').hidden=true;toast('File loaded · press Check import')};reader.readAsText(file)};document.querySelectorAll('[data-close]').forEach(function(button){button.onclick=function(){document.getElementById(button.dataset.close).close()}});[...document.querySelectorAll('dialog')].forEach(function(dialog){dialog.addEventListener('click',function(e){if(e.target===dialog)dialog.close()})});passport=loadPassport();render();installHubControls();installSky();
+globalThis.MadeByMattOlympiadV4QA=Object.freeze({contract:Object.freeze({version:'4.0.0',kind:'MadeByMatt.HouseOlympiad.V4',passportKey:PASSPORT_KEY,storageKeys:Object.freeze([PASSPORT_KEY,'mbm_house_olympiad_v4_settings',C.COLLECTION_BACKUP_KEY,'mbm_sports_passport_v4_corrupt_backup'])}),selfTest:function(){var sample=R.defaultPassport('mbm-hubtest0000000'),code=R.encodePassport(sample),decoded=R.decodePassport(code,'mbm-hubtest0000000'),rollback=R.rollbackSelfTest(),physics=R.physicsSelfTest();return{ok:R.stableStringify(sample)===R.stableStringify(decoded)&&rollback.ok&&physics.ok,week:R.weeklyId('2026-08-29T00:00:00Z'),seed:R.weeklySeed('2026-W35','global-games','house-olympiad'),rollback:rollback,physics:physics}},snapshot:function(){return R.normalizePassport(passport,passport.nodeId)}});
+})();
+</script>
+<!-- MBM-INLINE-EXIT:BEGIN generated by tools/render_inline_exit.py, do not edit by hand -->
+<script>(function(){"use strict";
+try{
+if(window.__mbmExit)return;window.__mbmExit=1;
+var HOMES={"pupils":{"r":"/for/pupils/","l":"Pupils & learners"},"teachers":{"r":"/for/teachers/","l":"Teachers & education staff"},"parents":{"r":"/for/parents-carers/","l":"Parents & carers"},"schools":{"r":"/for/schools-semh/","l":"Schools & specialist settings"},"trusts":{"r":"/for/trusts/","l":"Academy trusts & education groups"},"councils":{"r":"/for/councils-organisations/","l":"Local authorities & education partners"},"partners":{"r":"/for/partners/","l":"Education organisations & service providers"},"main":{"r":"/main/","l":"Main homepage"}};
+var KEY="mbm_audience_view";
+function lsGet(k){try{var v=localStorage.getItem(k);return v===null?"":v;}catch(e){return "";}}
+function el(t,a,h){var e=document.createElement(t);for(var k in a)e.setAttribute(k,a[k]);if(h!==undefined)e.innerHTML=h;return e;}
+function adultOff(){try{var d=document.documentElement,b=document.body;
+return (d&&d.getAttribute("data-mbm-adult-features")==="off")||(b&&b.getAttribute("data-mbm-adult-features")==="off");}catch(e){return false;}}
+function chosen(){var v=lsGet(KEY);
+if(!Object.prototype.hasOwnProperty.call(HOMES,v))return null;
+var h=HOMES[v];
+if(h.r==="/main/"&&adultOff())return null;
+return h;}
+function mount(){
+if(!document.body||document.getElementById("mbmexit-back"))return;
+var st=document.createElement("style");st.id="mbmexit-style";st.textContent="#mbmexit-back,#mbmexit-home{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));z-index:2147483000;width:44px;height:44px;min-width:44px;min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(22,29,61,.72);color:#B9E6CD;border:1.5px solid rgba(185,230,205,.45);font:700 16px/1 Poppins,'Segoe UI',system-ui,sans-serif;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:.55}#mbmexit-back{left:calc(8px + env(safe-area-inset-left,0px))}#mbmexit-home{left:calc(58px + env(safe-area-inset-left,0px))}#mbmexit-back:hover,#mbmexit-home:hover{opacity:1;border-color:#B9E6CD}#mbmexit-back:focus-visible,#mbmexit-home:focus-visible{opacity:1;outline:3px solid #F2A24A;outline-offset:2px;border-color:#B9E6CD}@media print{#mbmexit-back,#mbmexit-home{display:none!important}}";
+(document.head||document.documentElement).appendChild(st);
+var back=el("a",{id:"mbmexit-back",href:"/games/","aria-label":"Back: Arcade",title:"Back to the Arcade"},"\u2190");
+document.body.appendChild(back);
+var h=chosen();
+if(h){var home=el("a",{id:"mbmexit-home",href:h.r,"aria-label":"Your homepage: "+h.l,title:"Your homepage: "+h.l},"<svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 10.6 12 4.2l8 6.4\"/><path d=\"M6.2 9.6V19.8h11.6V9.6\"/></svg>");
+document.body.appendChild(home);}
+}
+if(document.body)mount();else document.addEventListener("DOMContentLoaded",mount);
+}catch(e){}
+})();</script>
+<!-- MBM-INLINE-EXIT:END -->
+</body>
+</html>

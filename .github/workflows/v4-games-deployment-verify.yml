@@ -1,0 +1,186 @@
+name: Eight-game V4 deployment gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'offbrand/**'
+      - 'trailrunner/**'
+      - 'apexkick/**'
+      - 'auroralinks/**'
+      - 'houseolympiad/**'
+      - 'olympics/**'
+      - 'relicforge/**'
+      - 'voxel/**'
+      - 'assets/cards/house-olympiad.svg'
+      - 'data/hud-coverage.json'
+      - 'data/mbm-search-editorial.json'
+      - 'data/mbm-search-index.json'
+      - 'data/source-manifests/games.json'
+      - 'for/pupils/index.html'
+      - 'games/index.html'
+      - 'hud.js'
+      - 'sitemap.xml'
+      - 'tools/build_mbm_search_index.py'
+      - 'tools/verify_curation_keys.mjs'
+      - 'tools/verify_v4_games_deployment.mjs'
+      - 'tools/benchmark_v4_games_deployment.mjs'
+      - '.github/workflows/v4-games-deployment-verify.yml'
+  workflow_dispatch:
+    inputs:
+      live:
+        description: Run the browser matrix against madebymatt.uk
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v4-games-${{ github.event.pull_request.number || github.ref }}-${{ inputs.live || false }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    name: Exact payload and discovery contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Resolve the coordinated Games shelf
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          CANDIDATE_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          shelf_ref=main
+          if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$CANDIDATE_REF" ] && \
+             git ls-remote --exit-code --heads https://github.com/MattRoper1977/Games.git \
+               "refs/heads/$CANDIDATE_REF" >/dev/null; then
+            shelf_ref=$CANDIDATE_REF
+          fi
+          git clone --depth 1 --branch "$shelf_ref" https://github.com/MattRoper1977/Games.git _games
+          echo "Games shelf ref: $shelf_ref ($(git -C _games rev-parse HEAD))"
+
+      - name: Static source, payload and discovery gate
+        env:
+          V4_GAMES_MANIFEST: ${{ github.workspace }}/_games/games.json
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/v4-games
+          node --check tools/verify_v4_games_deployment.mjs
+          node --check tools/benchmark_v4_games_deployment.mjs
+          node tools/verify_v4_games_deployment.mjs | tee artifacts/v4-games/static.log
+          sha256sum offbrand/index.html trailrunner/index.html apexkick/index.html auroralinks/index.html houseolympiad/index.html olympics/index.html relicforge/index.html voxel/index.html | tee artifacts/v4-games/deployed-sha256.txt
+          wc -c offbrand/index.html trailrunner/index.html apexkick/index.html auroralinks/index.html houseolympiad/index.html olympics/index.html relicforge/index.html voxel/index.html | tee artifacts/v4-games/deployed-bytes.txt
+
+      - name: Canonical generators and discovery gates
+        env:
+          V4_GAMES_MANIFEST: ${{ github.workspace }}/_games/games.json
+        run: |
+          set -euo pipefail
+          python3 tools/render_inline_exit.py --root . --check
+          python3 tools/render_maker_splash.py --root . --check
+          python3 tools/render_audience_homepages.py --check
+          python3 tools/build_mbm_search_index.py --check
+          python3 tools/render_games_manifest_mirror.py --canonical "$V4_GAMES_MANIFEST" --check
+          node tools/verify_new_games_uncurated.mjs
+          node tools/verify_curation_keys.mjs
+          node tools/verify_pupil_genres.mjs
+          node tools/verify_genre_participants.mjs
+          node tools/verify_sitemap_covers_games.mjs
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v4-games-static-evidence
+          path: artifacts/v4-games/
+
+  browser:
+    name: Chromium, Android, Firefox and WebKit
+    needs: static
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install pinned Playwright and all required engines
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install --with-deps chromium firefox webkit
+
+      - name: Exact browser matrix
+        env:
+          V4_LIVE_ORIGIN: ${{ inputs.live == true && 'https://madebymatt.uk' || '' }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/v4-games
+          node tools/verify_v4_games_deployment.mjs --browser | tee artifacts/v4-games/browser.log
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v4-games-browser-evidence-${{ inputs.live == true && 'live' || 'candidate' }}
+          path: artifacts/v4-games/
+
+  performance:
+    name: Pinned 30-second before and after samples
+    if: ${{ inputs.live != true }}
+    needs: static
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install pinned Chromium
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install --with-deps chromium
+
+      - name: Resolve immutable rollback subjects
+        env:
+          SITE_BEFORE_SHA: 4f57a1a36e38811740ca4d931095df8f25da61f5
+          LESSONS_BEFORE_SHA: 88de82bc30c4f90af33ee94472b01968792b5e8f
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none --no-checkout https://github.com/MattRoper1977/mattroper1977.github.io.git "$RUNNER_TEMP/site-before"
+          git -C "$RUNNER_TEMP/site-before" fetch --depth 1 origin "$SITE_BEFORE_SHA"
+          git -C "$RUNNER_TEMP/site-before" checkout --detach "$SITE_BEFORE_SHA"
+          git clone --filter=blob:none --no-checkout https://github.com/MattRoper1977/Lessons.git "$RUNNER_TEMP/lessons-before"
+          git -C "$RUNNER_TEMP/lessons-before" fetch --depth 1 origin "$LESSONS_BEFORE_SHA"
+          git -C "$RUNNER_TEMP/lessons-before" checkout --detach "$LESSONS_BEFORE_SHA"
+          test "$(git -C "$RUNNER_TEMP/site-before" rev-parse HEAD)" = "$SITE_BEFORE_SHA"
+          test "$(git -C "$RUNNER_TEMP/lessons-before" rev-parse HEAD)" = "$LESSONS_BEFORE_SHA"
+
+      - name: Same-machine 30-second samples
+        env:
+          V4_BASE_SITE: ${{ runner.temp }}/site-before
+          V4_BASE_LESSONS: ${{ runner.temp }}/lessons-before
+          V4_SAMPLE_MS: 30000
+          V4_PERF_REPORT: ${{ github.workspace }}/artifacts/v4-games/performance.json
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/v4-games
+          node tools/benchmark_v4_games_deployment.mjs | tee artifacts/v4-games/performance.log
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v4-games-performance-evidence
+          path: artifacts/v4-games/

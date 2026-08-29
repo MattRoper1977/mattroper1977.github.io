@@ -115,11 +115,67 @@
    "note": "Added at launch, 2026-08-11, on the same basis as /neonmeridian/. Its only off-origin string is <link rel=canonical>, which is metadata and never fetched."
   },
   {
-   "route": "/relicforge/",
-   "verifier": "tools/verify_relicforge.js",
+   "route": "/offbrand/",
+   "verifier": "tools/verify_v4_games_deployment.mjs",
    "gates": [
-    "G1 single file, single script, no dependency"
-   ]
+    "single self-contained V4 payload with zero script src dependencies",
+    "generated inline way out is keyboard- and touch-reachable"
+   ],
+   "note": "The authoritative After Hours V4 Milestone 2 payload is a self-contained offline game. The generated inline exit preserves that contract without adding a runtime dependency."
+  },
+  {
+   "route": "/trailrunner/",
+   "verifier": "tools/verify_v4_games_deployment.mjs",
+   "gates": [
+    "single self-contained V4 payload with zero script src dependencies",
+    "generated inline way out is keyboard- and touch-reachable"
+   ],
+   "note": "Stormbreak V4 embeds its renderer and assets. The generated inline exit keeps the route offline-first and adds no request."
+  },
+  {
+   "route": "/apexkick/",
+   "verifier": "tools/verify_v4_games_deployment.mjs",
+   "gates": [
+    "single self-contained AAA V4 payload with zero script src dependencies",
+    "generated inline way out is keyboard- and touch-reachable"
+   ],
+   "note": "World Stage AAA V4 is delivered as a standalone one-file game; its way out remains inline rather than introducing /hud.js."
+  },
+  {
+   "route": "/auroralinks/",
+   "verifier": "tools/verify_v4_games_deployment.mjs",
+   "gates": [
+    "zero-dependency standalone AAA V4 payload",
+    "generated inline way out and non-destructive legacy round migration"
+   ],
+   "note": "Northern Lights Tour AAA V4 embeds both runtime and renderer. The inline exit adds no request, and the focused verifier also exercises the legacy round-save upgrade."
+  },
+  {
+   "route": "/houseolympiad/",
+   "verifier": "tools/verify_v4_games_deployment.mjs",
+   "gates": [
+    "single self-contained Sports V4 dashboard with canonical route links",
+    "generated inline way out is keyboard- and touch-reachable"
+   ],
+   "note": "House Olympiad is a self-contained local dashboard. Its canonical discipline links and inline exit need no runtime shell dependency."
+  },
+  {
+   "route": "/olympics/",
+   "verifier": "tools/verify_v4_games_deployment.mjs",
+   "gates": [
+    "single self-contained World Stage V4 payload with zero script src dependencies",
+    "generated inline way out is keyboard- and touch-reachable"
+   ],
+   "note": "Global Games World Stage V4 remains a one-file offline release; the inline exit retains that boundary."
+  },
+  {
+   "route": "/relicforge/",
+   "verifier": "tools/verify_v4_games_deployment.mjs",
+   "gates": [
+    "single self-contained Crownfall V4 Milestone 2 payload with zero script src dependencies",
+    "generated inline way out is keyboard- and touch-reachable"
+   ],
+   "note": "Crownfall V4 Milestone 2 retains Relic Forge's existing inline-exit contract under the focused eight-game verifier."
   },
   {
    "route": "/titanforge/",
@@ -221,6 +277,30 @@
    },
    {
     "route": "/novasiege/"
+   },
+   {
+    "route": "/offbrand/"
+   },
+   {
+    "route": "/trailrunner/"
+   },
+   {
+    "route": "/apexkick/"
+   },
+   {
+    "route": "/auroralinks/"
+   },
+   {
+    "route": "/houseolympiad/"
+   },
+   {
+    "route": "/olympics/"
+   },
+   {
+    "route": "/relicforge/"
+   },
+   {
+    "route": "/voxel/"
    }
   ],
   "declined-with-reason": [
@@ -235,10 +315,6 @@
    {
     "route": "/apexgolf/",
     "reason": "tools/verify_maker_splash.mjs — exact runtime assertion SS5: forced and suppressed first-paint content geometry match at 1280×800 (observed after-application failure: false)"
-   },
-   {
-    "route": "/apexkick/",
-    "reason": "tools/verify_maker_splash.mjs via titan-crown launch contract — exact runtime assertion: after forced dismissal focus equals the primary start control at both viewports (observed at 390×844: active #mbmSplash SECTION; expected #bPlay BUTTON)"
    },
    {
     "route": "/apexpool/",
@@ -259,10 +335,6 @@
    {
     "route": "/asdan/",
     "reason": "tools/verify_maker_splash.mjs — exact runtime assertion: the way-out control is reachable within 30 Tab presses and Enter leaves the route (observed 31 presses, not reached, URL unchanged)"
-   },
-   {
-    "route": "/auroralinks/",
-    "reason": "tools/verify_maker_splash.mjs — exact runtime assertion: Enter activates the focused way-out control and leaves the game route (observed after one Tab: #mbmhud-back focused, URL unchanged)"
    },
    {
     "route": "/biopunkhive/",
@@ -317,14 +389,6 @@
     "reason": "tools/verify_inline_exit.mjs — exact runtime assertion: the stored-homepage control is reachable by a real Tab walk at 390px, 768px and 1440px (observed after-application failure: presses null at all three viewports after the required splash focus handoff)"
    },
    {
-    "route": "/olympics/",
-    "reason": "tools/verify_maker_splash.mjs — exact runtime assertion SS7: ?splash=skip never paints a Made by Matt layer (observed after-application failure: suppressedSeen true at 390×844 and 1280×800)"
-   },
-   {
-    "route": "/relicforge/",
-    "reason": "tools/verify_maker_splash.mjs — exact runtime assertion: a forced key-dismissed splash remains visible for at least 280 ms in the two-frame-tolerant route matrix (observed 261.2 ms at 1280×800)"
-   },
-   {
     "route": "/resources/",
     "reason": "tools/verify_maker_splash.mjs — exact runtime assertions: the way-out is reachable within 30 Tab presses, Enter leaves the route, and the path has zero console errors (observed 31 presses, URL unchanged, same-origin 404 console error)"
    },
@@ -343,10 +407,6 @@
    {
     "route": "/uas/",
     "reason": "tools/verify_maker_splash.mjs — exact runtime assertion: the way-out control is reachable within 30 Tab presses and Enter leaves the route (observed 31 presses, not reached, URL unchanged)"
-   },
-   {
-    "route": "/voxel/",
-    "reason": "tools/townlife/benchmark.mjs — exact runtime assertions: the Click to Play control starts Voxel, #start becomes Resume, and the HUD reaches view 3 (observed after-application failure: page.waitForFunction timed out at the start-state assertion in all three rounds)"
    }
   ],
   "variant-retained-with-reason": []

@@ -1,0 +1,634 @@
+#!/usr/bin/env node
+/**
+ * Focused release gate for the 2026-08-29 eight-game V4 deployment.
+ *
+ * Static mode (default) proves source identity, deployed structure and every
+ * affected discovery surface. Browser mode drives the exact files at HEAD in
+ * Chromium desktop, two Chromium mobile sizes, Firefox and WebKit.
+ *
+ *   node tools/verify_v4_games_deployment.mjs
+ *   node tools/verify_v4_games_deployment.mjs --inputs-dir ../../upload
+ *   node tools/verify_v4_games_deployment.mjs --browser
+ */
+
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import http from 'node:http';
+import path from 'node:path';
+import vm from 'node:vm';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const INPUTS_ARG = process.argv.indexOf('--inputs-dir');
+const INPUTS_DIR = INPUTS_ARG >= 0 ? path.resolve(process.argv[INPUTS_ARG + 1] || '') : null;
+const RUN_BROWSER = process.argv.includes('--browser');
+const LIVE_ORIGIN = process.env.V4_LIVE_ORIGIN || '';
+
+const GAMES = Object.freeze([
+  {
+    id: 'offbrand', name: 'Off-Brand: After Hours', route: '/offbrand/',
+    file: 'offbrand/index.html', canonical: 'https://madebymatt.uk/offbrand/',
+    input: 'Off_Brand_After_Hours_V4_M2-2.html', inputBytes: 186835,
+    inputSha256: 'fc932e5f04601117f44c1b19ae7342e5564a19cc8cc7537a25a0ef7239540a5d',
+    identity: /V4[^<\n]*Milestone 2|V4 Roadmap Milestone 2/i,
+    saveKeys: ['mbm_offbrand']
+  },
+  {
+    id: 'trailrunner', name: 'Trail Runner: Stormbreak', route: '/trailrunner/',
+    file: 'trailrunner/index.html', canonical: 'https://madebymatt.uk/trailrunner/',
+    input: 'Trail_Runner_Stormbreak_V4_M2_bootfix-1.html', inputBytes: 670787,
+    inputSha256: '9b2aa90535b7b34dd89fc6d6f99db9ac2377d7a46168285260c52ec28762ec83',
+    identity: /V4[^<\n]*Portable Milestone 2|V4[^<\n]*Milestone 2/i,
+    saveKeys: ['trekTrailRunner_v1', 'trekTrailSettings_v1']
+  },
+  {
+    id: 'apexkick', name: 'Apex Kick: World Stage', route: '/apexkick/',
+    file: 'apexkick/index.html', canonical: 'https://madebymatt.uk/apexkick/',
+    input: 'Apex_Kick_AAA_v4.html', alternateInputs: ['Apex_Kick_AAA_v4(2).html'], inputBytes: 954540,
+    inputSha256: '3730c4ec586d96c16f7fa5aa433690a00fe16fcf0bde2e38a7f0c9f6ea2d3f15',
+    identity: /AAA V4|Final Edition build 4\.0\.0/i,
+    saveKeys: ['apexkick.aaa.v4', 'apexkick.aaa.v3']
+  },
+  {
+    id: 'auroralinks', name: 'Aurora Links: Northern Lights Tour', route: '/auroralinks/',
+    file: 'auroralinks/index.html', canonical: 'https://madebymatt.uk/auroralinks/',
+    input: 'Aurora_Links_AAA_v4.html', inputBytes: 204011,
+    inputSha256: '6f9332bcc1c3f0dc8e0fe39e792842116452d02177ddcec8e8e27ef1f7a58f15',
+    identity: /AAA\s*v4|AAA V4/i,
+    saveKeys: ['mbm_aurora_links_aaa_v4', 'mbm_aurora_links_round_v1']
+  },
+  {
+    id: 'houseolympiad', name: 'House Olympiad', route: '/houseolympiad/',
+    file: 'houseolympiad/index.html', canonical: 'https://madebymatt.uk/houseolympiad/',
+    input: 'House_Olympiad_V4.html', inputBytes: 80076,
+    inputSha256: '7de6b4c736a1df6e92f316b33d032b22d7d824dc2125378c3e55efdd485abe03',
+    identity: /Made by Matt Sports V4|V4 local championship/i,
+    saveKeys: ['mbm_sports_passport_v4', 'mbm_sports_passport_v3']
+  },
+  {
+    id: 'olympics', name: 'Global Games: World Stage', route: '/olympics/',
+    file: 'olympics/index.html', canonical: 'https://madebymatt.uk/olympics/',
+    input: 'Global_Games_AAA_v4.html', inputBytes: 388585,
+    inputSha256: '88c35645f833c3a82541fc2e590ef3a7f7bda551cfb5d5418e22e8400b6f74d6',
+    identity: /World Stage V4|Version 4\.0\.0/i,
+    saveKeys: ['mbm_global_games_world_stage_v4', 'mbm_global_games_world_stage_v3']
+  },
+  {
+    id: 'relicforge', name: 'Relic Forge: Crownfall', route: '/relicforge/',
+    file: 'relicforge/index.html', canonical: 'https://madebymatt.uk/relicforge/',
+    input: 'Relic_Forge_Crownfall_V4_M2-2.html', inputBytes: 328204,
+    inputSha256: '7fe1566fca8a8c98cebdaaddec52c45f3b7d08e1acbc1d31a77569d63c26d6c8',
+    identity: /V4 Roadmap Milestone 2|v4\.2\.0/i,
+    saveKeys: ['mbm_relicforge_v1']
+  },
+  {
+    id: 'voxel', name: 'Voxel Frontier: Beaconfall', route: '/voxel/',
+    file: 'voxel/index.html', canonical: 'https://madebymatt.uk/voxel/',
+    input: 'Voxel_Frontier_Beaconfall_V4_M2-2.html', inputBytes: 97188,
+    inputSha256: 'b4a7ec326339a4c29281f40e555b0797c691cab216d0d7337e5f391d180df37f',
+    identity: /V4 Roadmap Milestone 2|V4 M2/i,
+    saveKeys: ['voxelfrontier.save.v1', 'voxelfrontier.world.v2.']
+  }
+]);
+
+const INLINE_EXIT_IDS = new Set(GAMES.filter(game => game.id !== 'voxel').map(game => game.id));
+const sha256 = value => crypto.createHash('sha256').update(value).digest('hex');
+const read = relative => fs.readFileSync(path.join(ROOT, relative));
+const text = relative => read(relative).toString('utf8');
+const count = (source, pattern) => (source.match(pattern) || []).length;
+const gate = (name, detail = '') => console.log(`PASS ${name}${detail ? ` — ${detail}` : ''}`);
+
+function verifyInputs() {
+  if (!INPUTS_DIR) {
+    gate('authoritative input identities recorded', `${GAMES.length} byte counts and SHA-256 digests`);
+    return;
+  }
+  assert(fs.statSync(INPUTS_DIR).isDirectory(), `input directory does not exist: ${INPUTS_DIR}`);
+  for (const game of GAMES) {
+    const names = [game.input, ...(game.alternateInputs || [])];
+    const chosen = names.map(name => path.join(INPUTS_DIR, name)).find(file => fs.existsSync(file));
+    assert(chosen, `${game.name}: authoritative input missing (${names.join(' or ')})`);
+    const bytes = fs.readFileSync(chosen);
+    assert.equal(bytes.length, game.inputBytes, `${game.name}: input byte count`);
+    assert.equal(sha256(bytes), game.inputSha256, `${game.name}: input SHA-256`);
+    gate(`${game.id} input`, `${bytes.length} B · ${game.inputSha256}`);
+  }
+}
+
+function inlineScriptsAreValid(game, html) {
+  const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
+  assert(scripts.length > 0, `${game.id}: no scripts found`);
+  let parsed = 0;
+  for (const match of scripts) {
+    const attrs = match[1] || '';
+    if (/\bsrc\s*=/i.test(attrs) || /\btype\s*=\s*["'](?:application\/json|importmap)["']/i.test(attrs)) continue;
+    new vm.Script(match[2], { filename: `${game.file}#inline-${parsed + 1}` });
+    parsed++;
+  }
+  assert(parsed > 0, `${game.id}: no executable inline scripts parsed`);
+  return parsed;
+}
+
+function fetchedReferences(html) {
+  const refs = [];
+  for (const match of html.matchAll(/<(script|img|iframe|audio|video|source|track|embed|object)\b[^>]*?\s(?:src|srcset|poster|data)\s*=\s*["']([^"']+)["']/gi)) {
+    for (const part of match[2].split(',')) refs.push(part.trim().split(/\s+/)[0]);
+  }
+  for (const match of html.matchAll(/<link\b[^>]*>/gi)) {
+    const tag = match[0];
+    const rel = (tag.match(/\brel\s*=\s*["']([^"']+)["']/i) || [])[1] || '';
+    const href = (tag.match(/\bhref\s*=\s*["']([^"']+)["']/i) || [])[1] || '';
+    if (/\b(stylesheet|preload|prefetch|icon|manifest|modulepreload)\b/i.test(rel)) refs.push(href);
+  }
+  const cssSurface = html.replace(/<script\b[\s\S]*?<\/script>/gi, ' ');
+  for (const match of cssSurface.matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)/gi)) refs.push(match[1]);
+  return refs.filter(Boolean);
+}
+
+function verifyPayloads() {
+  for (const game of GAMES) {
+    const bytes = read(game.file);
+    const html = bytes.toString('utf8');
+    assert(!/(^|\n)(<{7}|={7}|>{7})(\n|$)/m.test(html), `${game.id}: merge marker`);
+    assert(/<!doctype html>/i.test(html) && /<\/html>\s*$/i.test(html), `${game.id}: truncated HTML`);
+    assert.equal(count(html, /<link\s+rel=["']canonical["']/gi), 1, `${game.id}: canonical count`);
+    assert(html.includes(`href="${game.canonical}"`) || html.includes(`href='${game.canonical}'`), `${game.id}: canonical mismatch`);
+    const title = (html.match(/<title>([\s\S]*?)<\/title>/i) || [])[1] || '';
+    const visible = html.replace(/<script\b[\s\S]*?<\/script>/gi, ' ').replace(/<style\b[\s\S]*?<\/style>/gi, ' ');
+    assert(game.identity.test(`${title}\n${visible.slice(0, 30000)}`), `${game.id}: V4 identity missing`);
+    assert(!/user-scalable\s*=\s*no|maximum-scale\s*=\s*1(?:\.0)?(?:[,"'])/i.test(html), `${game.id}: browser zoom is blocked`);
+    assert.equal(count(html, /MBM-MAKER-SPLASH:BEGIN/g), 1, `${game.id}: maker splash count`);
+    if (INLINE_EXIT_IDS.has(game.id)) {
+      assert.equal(count(html, /MBM-INLINE-EXIT:BEGIN/g), 1, `${game.id}: inline exit count`);
+      assert(!/<script\b[^>]*\bsrc=["']\/hud\.js["']/i.test(html), `${game.id}: duplicate HUD integration`);
+    } else {
+      assert.equal(count(html, /<script\b[^>]*\bsrc=["']\/hud\.js["']/gi), 1, 'voxel: HUD integration count');
+      assert.equal(count(html, /MBM-INLINE-EXIT:BEGIN/g), 0, 'voxel: inline exit must not duplicate HUD');
+    }
+    const refs = fetchedReferences(html);
+    const remote = refs.filter(ref => /^https?:\/\//i.test(ref));
+    assert.deepEqual(remote, [], `${game.id}: remote runtime references: ${remote.join(', ')}`);
+    for (const ref of refs.filter(ref => !/^(?:data:|blob:|#|https?:\/\/)/i.test(ref))) {
+      const pathname = ref.startsWith('/') ? ref.slice(1) : path.join(path.dirname(game.file), ref);
+      assert(fs.existsSync(path.join(ROOT, pathname)), `${game.id}: missing local runtime asset ${ref}`);
+    }
+    const parsed = inlineScriptsAreValid(game, html);
+    gate(`${game.id} payload`, `${bytes.length} B · sha256 ${sha256(bytes)} · ${parsed} inline scripts parsed`);
+  }
+  const voxel = text('voxel/index.html');
+  assert(!voxel.includes('../shared/mbm-v4-runtime.js'), 'voxel: missing shared runtime reference returned');
+  assert(!/if\(legacy&&Number\.isFinite\(legacy\.seed\)\)[\s\S]{0,500}lsDel\(SAVE_BASE\)/.test(voxel), 'voxel: legacy save is deleted');
+  const house = text('houseolympiad/index.html');
+  for (const route of ['/auroralinks/', '/apexpool/', '/apexkick/', '/olympics/']) assert(house.includes(`href="${route}"`), `house: broken discipline link ${route}`);
+}
+
+function resolveGamesManifest() {
+  const candidates = [process.env.V4_GAMES_MANIFEST, path.resolve(ROOT, '../Games/games.json'), path.join(ROOT, '_games/games.json')].filter(Boolean);
+  return candidates.find(file => fs.existsSync(file)) || path.join(ROOT, 'data/source-manifests/games.json');
+}
+
+function flattenRecords(value, out = []) {
+  if (Array.isArray(value)) for (const item of value) flattenRecords(item, out);
+  else if (value && typeof value === 'object') {
+    if (typeof value.action === 'string' || typeof value.href === 'string' || typeof value.url === 'string') out.push(value);
+    for (const item of Object.values(value)) flattenRecords(item, out);
+  }
+  return out;
+}
+
+function verifyDiscovery() {
+  const manifestFile = resolveGamesManifest();
+  const canonicalBytes = fs.readFileSync(manifestFile);
+  const mirrorBytes = read('data/source-manifests/games.json');
+  assert.deepEqual(mirrorBytes, canonicalBytes, `shelf mirror differs from ${manifestFile}`);
+  const manifest = JSON.parse(canonicalBytes.toString('utf8'));
+  assert(Array.isArray(manifest.games), 'manifest games array missing');
+  assert.equal(new Set(manifest.games.map(game => game.href)).size, manifest.games.length, 'manifest duplicate hrefs');
+  assert.equal(new Set(manifest.games.map(game => game.title)).size, manifest.games.length, 'manifest duplicate titles');
+  assert.equal(manifest.games.filter(game => game.hero).length, 1, 'manifest hero count');
+  assert.equal(manifest.games.filter(game => String(game.title).startsWith('NEW · ')).length, 1, 'manifest NEW holder count');
+  for (const game of GAMES) {
+    const entries = manifest.games.filter(entry => entry.href === game.route);
+    assert.equal(entries.length, 1, `${game.id}: manifest record count`);
+    assert(/V4|v4/.test(`${entries[0].title} ${entries[0].desc}`), `${game.id}: manifest lacks V4 identity`);
+  }
+  assert.equal(manifest.games.filter(entry => /relic[- ]rush|relic-rush-v2/i.test(JSON.stringify(entry))).length, 0, 'forbidden Relic Rush release record');
+
+  const search = JSON.parse(text('data/mbm-search-index.json'));
+  const records = flattenRecords(search);
+  for (const game of GAMES) {
+    const hits = records.filter(record => [record.route, record.href, record.url].some(value => typeof value === 'string' && new URL(value, 'https://madebymatt.uk').pathname === game.route));
+    assert.equal(hits.length, 1, `${game.id}: global search record count`);
+  }
+  for (const legacy of ['/Lessons/Games/Off_Brand.html', '/Lessons/Games/Trail_Runner.html']) {
+    const hits = records.filter(record => [record.route, record.href, record.url].some(value => typeof value === 'string' && new URL(value, 'https://madebymatt.uk').pathname === legacy));
+    assert.equal(hits.length, 0, `${legacy}: superseded search record remains active`);
+  }
+
+  const sitemap = text('sitemap.xml');
+  for (const game of GAMES) assert.equal(count(sitemap, new RegExp(`<loc>${game.canonical.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}</loc>`, 'g')), 1, `${game.id}: sitemap record count`);
+  gate('discovery surfaces', `${GAMES.length} unique shelf, search and sitemap records · mirror sha256 ${sha256(mirrorBytes)}`);
+}
+
+function verifyLedger() {
+  const ledger = JSON.parse(text('data/hud-coverage.json'));
+  const applied = new Set((ledger.makerSplash?.applied || []).map(item => typeof item === 'string' ? item : item.route));
+  const declined = new Set((ledger.makerSplash?.['declined-with-reason'] || []).map(item => typeof item === 'string' ? item : item.route));
+  const excluded = new Map((ledger.excluded || []).map(item => [item.route, item]));
+  for (const game of GAMES) {
+    assert(applied.has(game.route), `${game.id}: maker splash ledger missing`);
+    assert(!declined.has(game.route), `${game.id}: maker splash is also declined`);
+    if (INLINE_EXIT_IDS.has(game.id)) {
+      assert(excluded.has(game.route), `${game.id}: inline-exit ledger missing`);
+      assert.equal(excluded.get(game.route).verifier, 'tools/verify_v4_games_deployment.mjs', `${game.id}: verifier ownership`);
+    } else assert(!excluded.has(game.route), 'voxel: HUD route incorrectly excluded');
+  }
+  gate('route shell ledger', '8 maker splashes · 7 inline exits · 1 canonical HUD route');
+}
+
+function staticMain() {
+  verifyInputs();
+  verifyPayloads();
+  verifyDiscovery();
+  verifyLedger();
+  gate('forbidden payload exclusion', 'Relic Rush and all non-authoritative release inputs absent');
+  console.log(`\nV4 STATIC GREEN — ${GAMES.length}/${GAMES.length} exact deployed routes passed`);
+}
+
+const MIME = new Map([
+  ['.html', 'text/html; charset=utf-8'], ['.js', 'text/javascript; charset=utf-8'],
+  ['.mjs', 'text/javascript; charset=utf-8'], ['.json', 'application/json; charset=utf-8'],
+  ['.svg', 'image/svg+xml'], ['.webp', 'image/webp'], ['.png', 'image/png'],
+  ['.jpg', 'image/jpeg'], ['.woff2', 'font/woff2'], ['.xml', 'application/xml; charset=utf-8']
+]);
+
+async function startServer() {
+  const server = http.createServer((request, response) => {
+    try {
+      const url = new URL(request.url, 'http://127.0.0.1');
+      let pathname = decodeURIComponent(url.pathname);
+      if (pathname === '/Games/games.json') {
+        const bytes = fs.readFileSync(resolveGamesManifest());
+        response.writeHead(200, { 'Content-Type': MIME.get('.json'), 'Cache-Control': 'no-store' });
+        response.end(bytes); return;
+      }
+      if (pathname.endsWith('/')) pathname += 'index.html';
+      const file = path.resolve(ROOT, `.${pathname}`);
+      if (!(file === ROOT || file.startsWith(`${ROOT}${path.sep}`))) throw new Error('path traversal');
+      if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
+        response.writeHead(404, { 'Content-Type': 'text/plain' }); response.end('not found'); return;
+      }
+      response.writeHead(200, { 'Content-Type': MIME.get(path.extname(file).toLowerCase()) || 'application/octet-stream', 'Cache-Control': 'no-store' });
+      fs.createReadStream(file).pipe(response);
+    } catch (error) {
+      response.writeHead(400, { 'Content-Type': 'text/plain' }); response.end(String(error.message || error));
+    }
+  });
+  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
+  const address = server.address();
+  return { server, origin: `http://127.0.0.1:${address.port}` };
+}
+
+async function loadPlaywright() {
+  try { return await import('playwright'); }
+  catch (error) { throw new Error(`playwright is required for --browser: ${error.message}`); }
+}
+
+async function fetchPublishedBytes(origin, pathname, expected, label, round) {
+  let last = '';
+  for (let attempt = 1; attempt <= 6; attempt++) {
+    const separator = pathname.includes('?') ? '&' : '?';
+    const url = `${origin}${pathname}${separator}mbmv4=${Date.now()}-${round}-${attempt}`;
+    try {
+      const response = await fetch(url, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
+      const actual = Buffer.from(await response.arrayBuffer());
+      if (response.ok && actual.equals(expected)) return;
+      last = `${response.status} · ${actual.length} B · sha256 ${sha256(actual)}`;
+    } catch (error) { last = error.message || String(error); }
+    if (attempt < 6) await new Promise(resolve => setTimeout(resolve, 5000));
+  }
+  assert.fail(`${label}: published bytes did not converge (${last})`);
+}
+
+async function verifyLivePublication() {
+  const origin = new URL(LIVE_ORIGIN).origin;
+  const subjects = [
+    ...GAMES.map(game => ({ label: game.id, pathname: game.route, bytes: read(game.file) })),
+    { label: 'Games shelf manifest', pathname: '/Games/games.json', bytes: read('data/source-manifests/games.json') },
+    { label: 'global search index', pathname: '/data/mbm-search-index.json', bytes: read('data/mbm-search-index.json') },
+    { label: 'sitemap', pathname: '/sitemap.xml', bytes: read('sitemap.xml') }
+  ];
+  for (let round = 1; round <= 2; round++) {
+    for (const subject of subjects) await fetchPublishedBytes(origin, subject.pathname, subject.bytes, subject.label, round);
+    gate(`live-byte-round-${round}`, `${subjects.length} published subjects match HEAD exactly`);
+    if (round === 1) await new Promise(resolve => setTimeout(resolve, 10000));
+  }
+}
+
+const PROFILES = Object.freeze([
+  { name: 'chromium-desktop-1366', engine: 'chromium', viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 },
+  { name: 'chromium-android-390', engine: 'chromium', viewport: { width: 390, height: 844 }, deviceScaleFactor: 2.75, isMobile: true, hasTouch: true, userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 Chrome/124 Mobile Safari/537.36' },
+  { name: 'chromium-android-412-reduced', engine: 'chromium', viewport: { width: 412, height: 915 }, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true, colorScheme: 'dark', reducedMotion: 'reduce', userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/124 Mobile Safari/537.36' },
+  { name: 'firefox-desktop-1366', engine: 'firefox', viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 },
+  { name: 'webkit-desktop-1366', engine: 'webkit', viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 }
+]);
+
+async function clickIfVisible(page, selector, options = {}) {
+  const locator = page.locator(selector).first();
+  if (await locator.isVisible().catch(() => false)) { await locator.click(options); return true; }
+  return false;
+}
+
+async function smokeOffbrand(page) {
+  await page.waitForFunction(() => !!window.OB);
+  await page.locator('#btnCrew').click();
+  await page.locator('#btnCnBegin').waitFor({ state: 'visible' });
+  await page.locator('#btnCnBegin').click();
+  await page.waitForFunction(() => !!window.OB?.S && window.OB.S.paused === false);
+  const before = await page.evaluate(() => ({ t: OB.S.t, x: OB.S.player.x }));
+  await page.keyboard.down('ArrowRight'); await page.waitForTimeout(500); await page.keyboard.up('ArrowRight');
+  await page.locator('#btnFocus').click();
+  await page.waitForFunction(() => OB.S.focus.active === true);
+  await page.locator('#btnFocusClose').click();
+  await page.locator('#btnPause').click();
+  await page.waitForFunction(() => OB.S.paused === true);
+  await page.locator('#btnResume').click();
+  await page.waitForTimeout(700);
+  const after = await page.evaluate(() => ({ t: OB.S.t, x: OB.S.player.x, paused: OB.S.paused }));
+  assert(after.t > before.t && after.x !== before.x && !after.paused, 'Off-Brand simulation/input/pause did not progress');
+}
+
+async function smokeTrail(page, mobile) {
+  await page.waitForFunction(() => window.__trailBootReady === true && !!window.__TR, null, { timeout: 60000 });
+  assert(!(await page.locator('body').innerText()).includes("TRAIL COULDN'T START"), 'Trail boot fallback appeared');
+  await page.locator('#start-btn').click();
+  await page.waitForFunction(() => ['RUNNING', 'WARNING', 'BOSS'].includes(window.__TR.gameState), null, { timeout: 20000 });
+  const before = await page.evaluate(() => ({ lane: __TR.currentLane, x: __TR.player.position.x, speed: __TR.speed }));
+  if (mobile) {
+    await page.locator('#btn-left').dispatchEvent('pointerdown', { pointerId: 1, pointerType: 'touch' });
+    await page.waitForTimeout(180);
+    await page.locator('#btn-left').dispatchEvent('pointerup', { pointerId: 1, pointerType: 'touch' });
+    await page.locator('#btn-shoot').dispatchEvent('pointerdown', { pointerId: 2, pointerType: 'touch' });
+    await page.locator('#btn-shoot').dispatchEvent('pointerup', { pointerId: 2, pointerType: 'touch' });
+  } else {
+    await page.keyboard.press('ArrowLeft'); await page.keyboard.press('KeyX');
+  }
+  await page.waitForTimeout(1200);
+  const after = await page.evaluate(() => ({ lane: __TR.currentLane, x: __TR.player.position.x, speed: __TR.speed }));
+  assert(after.speed > 0 && (after.lane !== before.lane || after.x !== before.x), 'Trail steering/simulation did not progress');
+  if (mobile) await page.locator('#touch-pause').click(); else await page.keyboard.press('KeyP');
+  await page.waitForFunction(() => window.__TR.gameState === 'PAUSED');
+  await page.locator('#resume-btn').click();
+  await page.waitForFunction(() => window.__TR.gameState !== 'PAUSED');
+}
+
+async function smokeApex(page) {
+  await page.waitForFunction(() => !!window.MadeByMattV4QA && !!window.__AK_DEBUG && !!document.querySelector('#bModes'), null, { timeout: 30000 });
+  const selfTests = await page.evaluate(() => ({ rollback: MadeByMattV4QA.rollback.selfTest(), physics: MadeByMattV4QA.physics.selfTest() }));
+  assert(selfTests.rollback.ok && selfTests.physics.ok, 'Apex V4 self-tests failed');
+  await page.locator('#bModes').click(); await page.locator('#mPractice').click();
+  await page.waitForFunction(() => MadeByMattV4QA.snapshot().game.state === 'aim', null, { timeout: 15000 });
+  const before = await page.evaluate(() => MadeByMattV4QA.snapshot());
+  await page.keyboard.press('ArrowRight'); await page.keyboard.press('Enter');
+  await page.waitForFunction(() => ['flight', 'resolve', 'aim'].includes(MadeByMattV4QA.snapshot().game.state) && MadeByMattV4QA.snapshot().game.state !== 'intro');
+  await page.waitForTimeout(900);
+  const after = await page.evaluate(() => MadeByMattV4QA.snapshot());
+  assert(after.game.state !== 'intro' && (after.game.state !== before.game.state || after.game.momentIdx !== before.game.momentIdx), 'Apex kick did not enter simulation');
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => MadeByMattV4QA.snapshot().game.paused === true);
+  await page.locator('#pauseResume').click();
+  await page.waitForFunction(() => MadeByMattV4QA.snapshot().game.paused === false);
+}
+
+async function smokeAurora(page) {
+  await page.waitForFunction(() => !!window.MadeByMattV4QA && !!document.querySelector('#quickBtn'));
+  const selfTests = await page.evaluate(() => ({ rollback: MadeByMattV4QA.rollback.selfTest(), physics: MadeByMattV4QA.physics.selfTest() }));
+  assert(selfTests.rollback.ok && selfTests.physics.ok, 'Aurora V4 self-tests failed');
+  await page.locator('#quickBtn').click();
+  const before = await page.evaluate(() => MadeByMattV4QA.snapshot().physics.frame);
+  for (let index = 0; index < 4; index++) { await page.locator('#swingBtn').click(); await page.waitForTimeout(140); }
+  await page.waitForFunction(frame => MadeByMattV4QA.snapshot().physics.frame > frame + 30, before, { timeout: 15000 });
+  await page.locator('#pauseBtn').click();
+  await page.waitForFunction(() => document.querySelector('#pause').classList.contains('open'));
+  await page.locator('#resumeBtn').click();
+  await page.waitForFunction(() => !document.querySelector('#pause').classList.contains('open'));
+}
+
+async function smokeHouse(page) {
+  await page.waitForFunction(() => !!window.MadeByMattOlympiadV4QA && !!window.MadeByMattV4Runtime);
+  const result = await page.evaluate(() => MadeByMattOlympiadV4QA.selfTest());
+  assert(result.ok && result.rollback.ok && result.physics.ok, 'House Olympiad V4 self-test failed');
+  const points = await page.evaluate(() => {
+    const runtime = MadeByMattV4Runtime;
+    let state = MadeByMattOlympiadV4QA.snapshot();
+    state = runtime.mutations.recordOlympiad(state, 'global-games:100m', { seconds: 12 }, 's', runtime.weeklyId(), new Date().toISOString());
+    localStorage.setItem(runtime.constants.PASSPORT_KEY, runtime.stableStringify(state));
+    return runtime.olympiadPoints('global-games:100m', { seconds: 12 });
+  });
+  await page.locator('#refreshBtn').click();
+  await page.waitForFunction(expected => Number.parseInt(document.querySelector('#compositeValue').textContent, 10) >= expected, points);
+  await page.locator('a[href="#games"]').click();
+  assert.equal(new URL(page.url()).hash, '#games', 'House discipline selection did not reach event grid');
+  assert.equal(await page.locator('.gameLink').count(), 4, 'House discipline count');
+}
+
+async function smokeGlobal(page) {
+  await page.waitForFunction(() => !!window.MBMGlobalGames && !!window.MadeByMattV4QA && !!window.__olympics, null, { timeout: 30000 });
+  const tests = await page.evaluate(() => ({ rollback: MadeByMattV4QA.rollback.selfTest(), physics: MadeByMattV4QA.physics.selfTest() }));
+  assert(tests.rollback.ok && tests.physics.ok, 'Global Games V4 self-tests failed');
+  await page.locator('#recordsBtn').click(); await page.locator('#recordsBack').click();
+  await page.locator('#quickGamesBtn').click(); await page.locator('#autoAttrs').click();
+  await page.locator('#beginTournament:not([disabled])').click();
+  await page.locator('#eventBriefing').click(); await page.locator('#startEvent').click();
+  await page.waitForFunction(() => window.__olympics.screen === 'PLAYING' && !!window.__olympics.eventId);
+  await page.keyboard.down('KeyD'); await page.waitForTimeout(450); await page.keyboard.up('KeyD');
+  await page.waitForTimeout(900);
+  await page.locator('#pauseBtn').click(); await page.waitForFunction(() => window.__olympics.paused === true);
+  await page.locator('#resumeBtn').click(); await page.waitForFunction(() => window.__olympics.paused === false);
+  assert(await page.evaluate(() => MBMGlobalGames.debugFinish()), 'Global debug finish could not complete active event');
+  await page.waitForFunction(() => window.__olympics.screen !== 'PLAYING', null, { timeout: 10000 });
+}
+
+async function smokeRelic(page) {
+  await page.waitForFunction(() => !!window.__relicforge && !!window.RF, null, { timeout: 30000 });
+  await page.evaluate(() => window.__relicforge.start());
+  await page.waitForTimeout(100);
+  await page.evaluate(() => window.__relicforge.skipStory());
+  await page.waitForFunction(() => window.__relicforge.snapshot().mode === 'playing');
+  const before = await page.evaluate(() => window.__relicforge.snapshot());
+  await page.keyboard.down('KeyD'); await page.waitForTimeout(500); await page.keyboard.up('KeyD');
+  await page.locator('#game').click({ position: { x: 220, y: 180 } }).catch(() => {});
+  await page.evaluate(() => { const target = __relicforge.targets()[0]; if (target) __relicforge.strike(target.id, 'core', 12); });
+  await page.waitForTimeout(900);
+  const after = await page.evaluate(() => window.__relicforge.snapshot());
+  assert(after.time > before.time && after.playerPosition && (after.playerPosition.x !== before.playerPosition.x || after.projectiles !== before.projectiles || after.enemies <= before.enemies), 'Relic movement/combat did not progress');
+  await page.keyboard.press('Escape'); await page.waitForFunction(() => __relicforge.snapshot().mode === 'paused');
+  await page.locator('#resume-btn').click(); await page.waitForFunction(() => __relicforge.snapshot().mode === 'playing');
+}
+
+async function smokeVoxel(page, mobile) {
+  await page.waitForFunction(() => !!window.__BEACONFALL_GREEDY__ && !!document.querySelector('#start'), null, { timeout: 30000 });
+  await page.locator('[data-mode="frontier"]').click(); await page.locator('#start').click();
+  await page.waitForFunction(() => document.querySelector('#hud').textContent.includes('Beaconfall · V4 M2'), null, { timeout: 60000 });
+  const before = await page.locator('#hud').innerText();
+  if (mobile) {
+    await page.locator('#d-up').dispatchEvent('pointerdown', { pointerId: 4, pointerType: 'touch' });
+    await page.waitForTimeout(600);
+    await page.locator('#d-up').dispatchEvent('pointerup', { pointerId: 4, pointerType: 'touch' });
+    await page.locator('#b-break').dispatchEvent('pointerdown', { pointerId: 5, pointerType: 'touch' });
+    await page.locator('#b-break').dispatchEvent('pointerup', { pointerId: 5, pointerType: 'touch' });
+  } else {
+    await page.keyboard.down('KeyW'); await page.waitForTimeout(600); await page.keyboard.up('KeyW');
+    await page.locator('canvas').last().click({ button: 'left', position: { x: 200, y: 180 } }).catch(() => {});
+  }
+  await page.waitForTimeout(900);
+  const after = await page.locator('#hud').innerText();
+  assert(after.includes('FRONTIER') && (after !== before || (await page.locator('#contract-objectives').innerText()).length > 10), 'Voxel world/input/objective did not progress');
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('#overlay')).display !== 'none');
+  const save = await page.evaluate(() => {
+    const key = localStorage.getItem('voxelfrontier.lastseed.v1');
+    return key && localStorage.getItem(`voxelfrontier.world.v2.${key}`);
+  });
+  assert(save && JSON.parse(save).v === 4, 'Voxel V4 world was not persisted');
+}
+
+const SMOKES = { offbrand: smokeOffbrand, trailrunner: smokeTrail, apexkick: smokeApex, auroralinks: smokeAurora, houseolympiad: smokeHouse, olympics: smokeGlobal, relicforge: smokeRelic, voxel: smokeVoxel };
+
+async function verifyWayOut(page, origin) {
+  const exit = page.locator('#mbmexit-back,#mbmhud-back').first();
+  await exit.waitFor({ state: 'visible', timeout: 10000 });
+  const box = await exit.boundingBox();
+  assert(box && box.width >= 44 && box.height >= 44, `way-out target is ${box ? `${box.width}x${box.height}` : 'missing'}`);
+  assert.equal(new URL(await exit.getAttribute('href'), origin).pathname, '/games/', 'way-out href');
+  await exit.focus(); await page.keyboard.press('Enter');
+  await page.waitForURL(url => url.pathname === '/games/', { timeout: 10000 });
+}
+
+async function runOne(browser, profile, game, origin) {
+  const context = await browser.newContext({
+    viewport: profile.viewport, deviceScaleFactor: profile.deviceScaleFactor,
+    isMobile: profile.isMobile || false, hasTouch: profile.hasTouch || false,
+    reducedMotion: profile.reducedMotion || 'no-preference', colorScheme: profile.colorScheme || 'dark',
+    userAgent: profile.userAgent
+  });
+  const page = await context.newPage();
+  const errors = [], remote = [], failed = [];
+  page.on('pageerror', error => errors.push(`pageerror: ${error.message || error}`));
+  page.on('console', message => { if (message.type() === 'error') errors.push(`console: ${message.text()}`); });
+  page.on('request', request => { const url = new URL(request.url()); if (/^https?:$/.test(url.protocol) && url.origin !== origin && (!LIVE_ORIGIN || url.origin !== new URL(LIVE_ORIGIN).origin)) remote.push(request.url()); });
+  page.on('requestfailed', request => { if (/^https?:/.test(request.url())) failed.push(`${request.url()} (${request.failure()?.errorText || 'failed'})`); });
+  page.on('response', response => { const url = new URL(response.url()); if (response.status() >= 400 && url.pathname !== '/favicon.ico') failed.push(`${response.status()} ${response.url()}`); });
+  const base = LIVE_ORIGIN || origin;
+  const query = new URLSearchParams({ splash: 'skip', debug: '1', seed: '424242', v4gate: `${Date.now()}-${profile.name}` });
+  await page.goto(`${base}${game.route}?${query}`, { waitUntil: 'load', timeout: 90000 });
+  await page.locator('body').waitFor({ state: 'visible' });
+  const geometry = await page.evaluate(() => ({ text: document.body.innerText.trim().length, width: document.documentElement.scrollWidth, client: document.documentElement.clientWidth, height: document.documentElement.scrollHeight }));
+  assert(geometry.text > 20 && geometry.height > 80, `${game.id}: blank route`);
+  assert(geometry.width <= geometry.client + 6, `${game.id}: horizontal clipping ${geometry.width}/${geometry.client}`);
+  await SMOKES[game.id](page, !!profile.hasTouch);
+  await page.waitForTimeout(250);
+  assert.deepEqual(remote, [], `${game.id}: unexpected remote requests: ${remote.join(', ')}`);
+  assert.deepEqual(failed, [], `${game.id}: failed required requests: ${failed.join(', ')}`);
+  assert.deepEqual(errors, [], `${game.id}: fatal browser errors: ${errors.join(' | ')}`);
+  await verifyWayOut(page, origin);
+  await context.close();
+  gate(`${profile.name}/${game.id}`, 'boot · input · progression · pause/resume · accessible exit');
+}
+
+async function migrationFixture(browser, origin, game, setup, verify) {
+  const context = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+  const page = await context.newPage();
+  await page.goto(`${origin}/games/?fixture=${game.id}`, { waitUntil: 'load' });
+  await page.evaluate(values => { localStorage.clear(); for (const [key, value] of Object.entries(values)) localStorage.setItem(key, JSON.stringify(value)); }, setup);
+  await page.goto(`${origin}${game.route}?splash=skip&seed=424242&fixture=legacy`, { waitUntil: 'load', timeout: 90000 });
+  await verify(page);
+  await context.close();
+  gate(`legacy-upgrade/${game.id}`, 'progress retained and source slot preserved');
+}
+
+async function runMigrationFixtures(browser, origin) {
+  await migrationFixture(browser, origin, GAMES[0], { mbm_offbrand: { v: 1, xp: 321, hat: 'none', crewStars: [1, 0, 0], glitchStars: [0, 0, 0] } }, async page => {
+    await page.waitForFunction(() => !!window.OB);
+    const save = await page.evaluate(() => { store(); return JSON.parse(localStorage.getItem('mbm_offbrand')); });
+    assert.equal(save.xp, 321); assert.equal(save.v, 3);
+  });
+  await migrationFixture(browser, origin, GAMES[1], { trekTrailRunner_v1: { best: 4321, runs: 7, legs: 3, badges: { first: true } } }, async page => {
+    await page.waitForFunction(() => window.__trailBootReady === true, null, { timeout: 60000 });
+    const save = await page.evaluate(() => JSON.parse(localStorage.getItem('trekTrailRunner_v1')));
+    assert.equal(save.best, 4321); assert.equal(save.runs, 7);
+  });
+  await migrationFixture(browser, origin, GAMES[2], { 'apexkick.aaa.v3': { version: 3, credits: 777, goals: 3, shots: 9, division: 6 } }, async page => {
+    await page.waitForFunction(() => !!window.__AK_DEBUG);
+    const saves = await page.evaluate(() => ({ old: JSON.parse(localStorage.getItem('apexkick.aaa.v3')), current: JSON.parse(localStorage.getItem('apexkick.aaa.v4')) }));
+    assert.equal(saves.old.credits, 777); assert.equal(saves.current.credits, 777);
+  });
+  await migrationFixture(browser, origin, GAMES[3], { mbm_aurora_links_round_v1: { scores: [3, 3, 4, 4, 4, 2, 5, 4, 4] } }, async page => {
+    await page.waitForFunction(() => !!window.MadeByMattV4QA);
+    const saves = await page.evaluate(() => ({ old: JSON.parse(localStorage.getItem('mbm_aurora_links_round_v1')), current: JSON.parse(localStorage.getItem('mbm_aurora_links_aaa_v4')) }));
+    assert.equal(saves.old.scores.length, 9); assert.equal(saves.current.totalHoles, 9); assert(Number.isFinite(saves.current.best.tour));
+  });
+  await migrationFixture(browser, origin, GAMES[4], { mbm_sports_passport_v3: { version: 3, profile: { name: 'Legacy Player', className: 'Class 4', house: 'Ember' }, xp: 900, badges: ['starter'] } }, async page => {
+    await page.waitForFunction(() => !!window.MadeByMattOlympiadV4QA);
+    const values = await page.evaluate(() => ({ old: localStorage.getItem('mbm_sports_passport_v3'), current: localStorage.getItem('mbm_sports_passport_v4') }));
+    assert(values.old && values.current, 'House Passport migration slots missing');
+  });
+  await migrationFixture(browser, origin, GAMES[5], { mbm_global_games_world_stage_v3: { version: 3, credits: 777, records: { sprint: 12.34 }, profile: { name: 'Legacy Athlete', nation: 'GBR' } } }, async page => {
+    await page.waitForFunction(() => !!window.MBMGlobalGames);
+    const saves = await page.evaluate(() => ({ old: JSON.parse(localStorage.getItem('mbm_global_games_world_stage_v3')), current: JSON.parse(localStorage.getItem('mbm_global_games_world_stage_v4')) }));
+    assert.equal(saves.old.credits, 777); assert.equal(saves.current.credits, 777); assert.equal(saves.current.records.sprint, 12.34);
+  });
+  await migrationFixture(browser, origin, GAMES[6], { mbm_relicforge_v1: { version: 1, highScore: 4567, credits: 222, bestChamber: 4 } }, async page => {
+    await page.waitForFunction(() => !!window.__relicforge);
+    await page.evaluate(() => __relicforge.start());
+    await page.waitForTimeout(100);
+    await page.evaluate(() => __relicforge.skipStory());
+    const save = await page.evaluate(() => JSON.parse(localStorage.getItem('mbm_relicforge_v1')));
+    assert.equal(save.highScore, 4567); assert.equal(save.credits, 222);
+  });
+  await migrationFixture(browser, origin, GAMES[7], { 'voxelfrontier.save.v1': { v: 1, seed: 424242, px: 2, py: 32, pz: 3, mode: 'creative', edits: '' } }, async page => {
+    await page.waitForFunction(() => !!window.__BEACONFALL_GREEDY__);
+    const saves = await page.evaluate(() => ({ old: localStorage.getItem('voxelfrontier.save.v1'), current: localStorage.getItem('voxelfrontier.world.v2.424242') }));
+    assert(saves.old, 'Voxel removed its legacy source save'); assert(saves.current, 'Voxel did not create its V4 world slot'); assert.equal(JSON.parse(saves.current).v, 4);
+  });
+}
+
+async function runStandaloneOffline(playwright) {
+  const browser = await playwright.chromium.launch({ headless: true, args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
+  try {
+    for (const game of GAMES.filter(item => item.id !== 'voxel')) {
+      const context = await browser.newContext({ viewport: { width: 1366, height: 768 }, offline: true });
+      const page = await context.newPage(); const errors = [];
+      page.on('pageerror', error => errors.push(error.message));
+      await page.goto(`${pathToFileURL(path.join(ROOT, game.file)).href}?splash=skip`, { waitUntil: 'load', timeout: 90000 });
+      await page.waitForTimeout(800);
+      assert((await page.locator('body').innerText()).trim().length > 20, `${game.id}: offline file boot blank`);
+      assert.deepEqual(errors, [], `${game.id}: offline errors ${errors.join(' | ')}`);
+      await context.close(); gate(`offline-standalone/${game.id}`, 'file URL booted with network disabled');
+    }
+  } finally { await browser.close(); }
+}
+
+async function browserMain() {
+  staticMain();
+  if (LIVE_ORIGIN) await verifyLivePublication();
+  const playwright = await loadPlaywright();
+  const local = LIVE_ORIGIN ? null : await startServer();
+  const origin = local?.origin || new URL(LIVE_ORIGIN).origin;
+  try {
+    for (const profile of PROFILES) {
+      const launchOptions = profile.engine === 'chromium' ? { headless: true, args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] } : { headless: true };
+      const browser = await playwright[profile.engine].launch(launchOptions);
+      try {
+        for (const game of GAMES) await runOne(browser, profile, game, origin);
+        if (!LIVE_ORIGIN && profile.name === 'chromium-desktop-1366') await runMigrationFixtures(browser, origin);
+      } finally { await browser.close(); }
+    }
+    if (!LIVE_ORIGIN) await runStandaloneOffline(playwright);
+  } finally { if (local) await new Promise(resolve => local.server.close(resolve)); }
+  const extras = LIVE_ORIGIN ? 'live canonical exits' : '8 upgrade fixtures + 7 offline standalone boots';
+  console.log(`\nV4 BROWSER GREEN — ${GAMES.length} games × ${PROFILES.length} profiles + ${extras}`);
+}
+
+if (RUN_BROWSER) await browserMain(); else staticMain();
