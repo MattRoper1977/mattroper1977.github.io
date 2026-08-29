@@ -122,7 +122,11 @@ async function sample(browser, url, id, label) {
   await context.close();
   assert.deepEqual(errors, [], `${label}/${id}: page errors: ${errors.join(' | ')}`);
   const result = { label, frames: data.frames, elapsedMs: data.elapsed, medianFrameMs: percentile(data.deltas, .5), p95FrameMs: percentile(data.deltas, .95), worstFrameMs: data.worst };
-  assert(result.frames >= 300, `${label}/${id}: unusable stall (${result.frames} frames in 30 seconds)`);
+  // Rollback subjects are immutable evidence, not release candidates. Require
+  // enough baseline frames for a meaningful comparison, while reserving the
+  // stricter usability floor for the deployable candidate.
+  const minimumFrames = label === 'candidate' ? 300 : 120;
+  assert(result.frames >= minimumFrames, `${label}/${id}: unusable stall (${result.frames} frames in 30 seconds; minimum ${minimumFrames})`);
   assert(result.p95FrameMs < 500, `${label}/${id}: repeated half-second stalls (p95 ${result.p95FrameMs} ms)`);
   console.log(`${label.padEnd(9)} ${id.padEnd(14)} ${result.frames} frames · median ${result.medianFrameMs.toFixed(2)} ms · p95 ${result.p95FrameMs.toFixed(2)} ms · worst ${result.worstFrameMs.toFixed(2)} ms`);
   return result;

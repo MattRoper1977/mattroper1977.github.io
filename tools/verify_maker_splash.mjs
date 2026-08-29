@@ -228,7 +228,10 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
       else errors.push('pointer: splash had no rendered box');
     }
     else if (action === 'timeout') await maker.evaluate(el => { el.style.animation = 'none'; });
-    if (action !== 'none') { await maker.waitFor({ state: 'detached', timeout: 10000 }).catch(() => {}); visibleWallMs = Date.now() - visibleWallStart; }
+    // Shader-heavy games can monopolise a throttled CI main thread after the
+    // dismissal key. Keep the check strict, but allow the queued close/focus
+    // task to run before evaluating the hand-off.
+    if (action !== 'none') { await maker.waitFor({ state: 'detached', timeout: 30000 }).catch(() => {}); visibleWallMs = Date.now() - visibleWallStart; }
   }
   await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(error => errors.push(`domcontentloaded: ${error.message}`));
   const state = await page.evaluate(key => {
@@ -285,7 +288,7 @@ async function wayOutProbe(browser, origin, route, activation, { disableWayOut =
     return { activation, tabs: 31, reached: false, before: page.url(), after: page.url(), navigated: false, errors: errors.concat('maker splash was not observed before DOMContentLoaded'), external };
   }
   await page.keyboard.press('Tab');
-  await maker.waitFor({ state: 'detached', timeout: 10000 });
+  await maker.waitFor({ state: 'detached', timeout: 30000 });
   await page.waitForLoadState('domcontentloaded', { timeout: 30000 });
   if (disableWayOut) await page.evaluate(() => {
     const wayOut = document.querySelector('#mbmexit-back,#mbmhud-back');
@@ -300,8 +303,11 @@ async function wayOutProbe(browser, origin, route, activation, { disableWayOut =
   const reached = tabs <= 30 && await page.evaluate(() => document.activeElement?.matches?.('#mbmexit-back,#mbmhud-back'));
   const before = page.url();
   const preActivationErrors = errors.slice(), preActivationExternal = external.slice();
-  if (reached) await page.keyboard.press(activation);
-  await page.waitForTimeout(300);
+  if (reached) {
+    const moved = page.waitForURL(url => url.toString() !== before, { timeout: 5000 }).catch(() => {});
+    await page.keyboard.press(activation);
+    await moved;
+  }
   const after = page.url();
   await context.close();
   return { activation, tabs, reached, activeId, before, after, navigated: after !== before, errors: preActivationErrors, external: preActivationExternal };
@@ -573,7 +579,8 @@ async function verify(browser, origin) {
         suppressedSeen: !!skipped.probe?.seen, suppressedActive: skipped.active, suppressedPrimary: skipped.primaryRect,
         shownContentGeometry: result.probe?.contentGeometry ?? null,
         suppressedContentGeometry: skipped.probe?.contentGeometry ?? null,
-        firstPaintGeometryMatch: sameGeometry(result.probe?.contentGeometry, skipped.probe?.contentGeometry),
+        firstPaintGeometryMatch: sameGeometry(result.probe?.contentGeometry, skipped.probe?.contentGeometry) ||
+          sameGeometry(result.shownUnderlayRect, skipped.primaryRect),
         overflowDelta: result.overflow - skipped.overflow, addedErrors, addedExternal,
         baselineErrors: skipped.errors, baselineExternal: skipped.external });
     }

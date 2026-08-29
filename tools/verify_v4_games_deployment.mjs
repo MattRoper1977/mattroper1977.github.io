@@ -395,16 +395,16 @@ async function smokeApex(page) {
   await page.locator('#bModes').click(); await page.locator('#mPractice').click();
   await page.waitForFunction(() => MadeByMattV4QA.snapshot().game.state === 'aim', null, { timeout: 15000 });
   const before = await page.evaluate(() => MadeByMattV4QA.snapshot());
-  await page.keyboard.press('ArrowRight'); await page.keyboard.press('Enter');
-  // Pause while the kick is genuinely in flight. Waiting a fixed interval can
-  // land in the intentionally non-pausable resolve presentation on fast CI.
-  await page.waitForFunction(() => MadeByMattV4QA.snapshot().game.state === 'flight', null, { timeout: 15000 });
-  const after = await page.evaluate(() => MadeByMattV4QA.snapshot());
-  assert(after.game.state !== 'intro' && (after.game.state !== before.game.state || after.game.momentIdx !== before.game.momentIdx), 'Apex kick did not enter simulation');
+  // Exercise pause in the stable aiming state. The flight-to-resolve handoff
+  // is deliberately non-pausable and can happen between two CI protocol turns.
   await page.keyboard.press('Escape');
   await page.waitForFunction(() => MadeByMattV4QA.snapshot().game.paused === true);
   await page.locator('#pauseResume').click();
   await page.waitForFunction(() => MadeByMattV4QA.snapshot().game.paused === false);
+  await page.keyboard.press('ArrowRight'); await page.keyboard.press('Enter');
+  await page.waitForFunction(() => MadeByMattV4QA.snapshot().game.state === 'flight', null, { timeout: 15000 });
+  const after = await page.evaluate(() => MadeByMattV4QA.snapshot());
+  assert(after.game.state !== 'intro' && (after.game.state !== before.game.state || after.game.momentIdx !== before.game.momentIdx), 'Apex kick did not enter simulation');
 }
 
 async function smokeAurora(page) {
