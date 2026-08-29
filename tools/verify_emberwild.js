@@ -131,6 +131,21 @@ function staticGates(html) {
     } catch (e) { syntaxOK = false; say(`      block ${i}: ${String(e.stderr).split('\n')[2] || 'parse error'}`); }
   });
   gate('G12s', 'every script block parses', syntaxOK, `${blocks.length} block(s)`);
+
+  // G13 the Den's registry stamp is written AND read back.
+  // The codec stores registry INDICES, so a save only decodes correctly while
+  // the registries it was written against remain a prefix of today's. That was
+  // once fingerprinted into every save and compared by nothing — a belt that
+  // was stored and never buckled, which is worse than none because everyone
+  // downstream believes it is fastened. This gate is here so it cannot go
+  // back to being write-only: the write, the read, and the absence of the
+  // old dead field are all required.
+  const writesStamp = /denRegistry:\s*EWDen\.registryStamp\(\)/.test(html);
+  const readsStamp = /EWDen\.checkRegistry\(\s*d\.denRegistry\s*\)/.test(html);
+  const noDeadField = !/denFingerprint/.test(html);
+  gate('G13s', 'Den registry stamp is written and read back',
+    writesStamp && readsStamp && noDeadField,
+    `write=${writesStamp} read=${readsStamp} dead-field-gone=${noDeadField}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -458,6 +473,48 @@ async function browserGates(gamePath) {
     gate('G8r', 'failure panel raises and is a single site', g8.open && g8.copies === 1,
       `display shown=${g8.open}, copies=${g8.copies}`);
 
+    // G13 runtime — the registry drift check does what it says.
+    //
+    // The interesting assertion is D13.append: hashing the WHOLE registry, the
+    // obvious way to write this, changes on every legitimate content addition
+    // and so would reject correct saves. Carrying the lengths makes the PREFIX
+    // the thing compared, which is the property append-only actually gives us.
+    // D13.naive records that the obvious form really would have fired, so this
+    // gate keeps proving why it is written the way it is.
+    const d13 = await page.evaluate(() => {
+      const D = window.__EMBERWILD_DEN__;
+      if (!D || typeof D.checkRegistry !== 'function' || typeof D.registryStamp !== 'function') {
+        return { absent: true };
+      }
+      const c = D.codec, L = c.registryLengths;
+      const shorter = { ...L, species: Math.max(0, L.species - 1) };
+      const g = window.__EMBERWILD__;
+      return {
+        absent: false,
+        identity: c.fingerprintAt(L) === c.registryFingerprint,
+        stamp:    D.checkRegistry(D.registryStamp()),
+        append:   D.checkRegistry({ lengths: shorter, fingerprint: c.fingerprintAt(shorter) }),
+        naive:    c.fingerprintAt(shorter) !== c.registryFingerprint,
+        drift:    D.checkRegistry({ lengths: L, fingerprint: c.fingerprintAt(shorter) }),
+        removed:  D.checkRegistry({ lengths: { ...L, moves: L.moves + 1 }, fingerprint: c.registryFingerprint }),
+        junk:     D.checkRegistry({ lengths: { ...L, items: -3 }, fingerprint: c.registryFingerprint }),
+        legacy:   D.checkRegistry(undefined),
+        roundTrip: g ? D.checkRegistry(g.serialize().denRegistry) : 'no-game'
+      };
+    });
+    if (d13.absent) {
+      gate('G13', 'Den registry drift check', false,
+        'EWDen.checkRegistry / registryStamp absent — the gate has nothing to test');
+    } else {
+      const reds = d13.drift === 'drift' && d13.removed === 'drift' && d13.junk === 'drift';
+      gate('G13', 'Den registry drift check: prefix holds, drift fires',
+        d13.identity && d13.stamp === 'ok' && d13.append === 'ok' && d13.naive &&
+        reds && d13.legacy === 'unknown' && d13.roundTrip === 'ok',
+        `append=${d13.append} (a whole-registry assert would have fired: ${d13.naive}), ` +
+        `drift/removed/junk=${d13.drift}/${d13.removed}/${d13.junk}, ` +
+        `no-stamp=${d13.legacy}, real save=${d13.roundTrip}`);
+    }
+
   } finally {
     await browser.close();
   }
@@ -485,7 +542,11 @@ async function selftest(html) {
     { gate: 'G3s', why: 'write a key outside the helper',
       mutate: s => s.replace('this.callHistory=[];', "this.callHistory=[];localStorage.setItem('emberwild_sneaky','1');") },
     { gate: 'G12s', why: 'introduce a syntax error',
-      mutate: s => s.replace('const EWStore = Object.freeze({', 'const EWStore = Object.freeze({{') }
+      mutate: s => s.replace('const EWStore = Object.freeze({', 'const EWStore = Object.freeze({{') },
+    { gate: 'G13s', why: 'stop reading the Den registry stamp back',
+      mutate: s => s.replace(/if\(EWDen\.checkRegistry\(d\.denRegistry\)==='drift'\)[^\n]*\n/, '') },
+    { gate: 'G13s', why: 'go back to the write-only fingerprint',
+      mutate: s => s.replace('denRegistry:EWDen.registryStamp()', 'denFingerprint:EWDen.codec.registryFingerprint') }
   ];
 
   let proven = 0;
