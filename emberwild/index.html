@@ -6026,7 +6026,6 @@ var hold=rm?650:1500,fade=rm?20:420,done=false,timer=0;
 var params=new URLSearchParams(location.search),store=window.EW&&window.EW.store;
 var force=params.get('splash')==='force',skip=params.get('splash')==='skip';
 var last=0;try{last=Number(store&&store.get('splash_last')||0)}catch(_){}
-function focusStart(){setTimeout(function(){var c=document.getElementById('start-continue'),n=document.getElementById('start-new');(c&&!c.disabled?c:n)?.focus()},0)}
 function onKey(){close()}
 function onTap(e){e.preventDefault();e.stopPropagation();close()}
 function close(){if(done)return;done=true;clearTimeout(timer);
@@ -6035,8 +6034,8 @@ function close(){if(done)return;done=true;clearTimeout(timer);
   try{store&&store.set('splash_last',String(Date.now()))}catch(_){}
   sp.classList.add('out');
   setTimeout(function(){sp.classList.add('hidden');
-    sp.setAttribute('data-mbm-splash-state','closed');focusStart()},fade);}
-if(skip||(!force&&last&&Date.now()-last<86400000)){done=true;sp.classList.add('hidden');sp.setAttribute('data-mbm-splash-state','closed');focusStart();window.__mbmSplashClose=close;return;}
+    sp.setAttribute('data-mbm-splash-state','closed')},fade);}
+if(skip||(!force&&last&&Date.now()-last<86400000)){done=true;sp.classList.add('hidden');sp.setAttribute('data-mbm-splash-state','closed');window.__mbmSplashClose=close;return;}
 window.addEventListener('keydown',onKey,true);
 sp.addEventListener('pointerdown',onTap,true);
 timer=setTimeout(close,hold);
