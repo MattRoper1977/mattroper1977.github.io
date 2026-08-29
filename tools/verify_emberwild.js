@@ -19,6 +19,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const crypto = require('crypto');
 
 const GAME = process.argv[2] && !process.argv[2].startsWith('--')
   ? path.resolve(process.argv[2])
@@ -124,15 +125,17 @@ function staticGates(html) {
   const exitBytes = exitMatch ? Buffer.byteLength(exitMatch[0], 'utf8') : 0;
   gate('HF1', 'inline exit control present at pinned size', exitBytes === 3222,
     `${exitBytes} bytes (estate pin 3222)`);
-  // HF2 is what makes G3s's marker carve-out safe. An exempted region has to
-  // be a region nobody can edit, so this pins its bytes rather than merely
-  // asking whether it is there. The pin is the estate value, measured across
-  // every route that carries the block, not a number chosen here.
-  const splashMatch = html.match(/<!-- MBM-MAKER-SPLASH:BEGIN[\s\S]*?MBM-MAKER-SPLASH:END -->/);
-  const splashBytes = splashMatch ? Buffer.byteLength(splashMatch[0], 'utf8') : 0;
-  gate('HF2', 'MBM splash present at the estate pin, byte for byte',
-    splashBytes === 8356 && /id="mbmSplash"/.test(html),
-    `${splashBytes} bytes (estate pin 8356)`);
+  // HF2 makes G3s's marker carve-out safe by pinning the complete generated
+  // region, including its trailing newline, to the current generator output.
+  // Presence or length alone cannot detect a same-length hand edit.
+  const splashMatch = html.match(/<!-- MBM-MAKER-SPLASH:BEGIN[\s\S]*?MBM-MAKER-SPLASH:END -->\n/);
+  const splashRegion = splashMatch ? splashMatch[0] : '';
+  const splashBytes = Buffer.byteLength(splashRegion, 'utf8');
+  const splashSha = crypto.createHash('sha256').update(splashRegion).digest('hex');
+  const splashPin = 'f9a1b638be9d4fd4903b572687220020b3088ab63464bf10109aa63ab8dbf797';
+  gate('HF2', 'maker-splash region matches the canonical byte pin',
+    splashBytes === 8357 && splashSha === splashPin,
+    `${splashBytes} bytes, sha256 ${splashSha}`);
   gate('HF3', 'canonical + og:url point at /emberwild/',
     /rel="canonical" href="https:\/\/madebymatt\.uk\/emberwild\/"/.test(html)
     && /property="og:url" content="https:\/\/madebymatt\.uk\/emberwild\/"/.test(html), '');
@@ -632,8 +635,8 @@ async function selftest(html) {
     // key. These two mutations are that guarantee, and they are a pair:
     // editing inside the region must red, and so must moving the closing
     // marker to swallow code that was never in it.
-    { gate: 'HF2', why: 'edit the generated splash region by hand',
-      mutate: s => s.replace('MBM-MAKER-SPLASH:END -->', '<!--x--> MBM-MAKER-SPLASH:END -->') },
+    { gate: 'HF2', why: 'same-length edit inside the generated splash region',
+      mutate: s => s.replace('Made by Matt introduction', 'Made by Mutt introduction') },
     { gate: 'HF2', why: 'stretch the splash marker over code outside it',
       mutate: s => s.replace('<!-- MBM-MAKER-SPLASH:END -->', '') }
   ];
