@@ -577,7 +577,27 @@ async function smokeRelic(page, mobile) {
 async function smokeVoxel(page, mobile) {
   await page.waitForFunction(() => !!window.__BEACONFALL_GREEDY__ && !!document.querySelector('#start'), null, { timeout: 30000 });
   await page.locator('[data-mode="frontier"]').click(); await page.locator('#start').click();
-  await page.waitForFunction(() => document.querySelector('#hud').textContent.includes('Beaconfall · V4 M2'), null, { timeout: 60000 });
+  try {
+    await page.waitForFunction(() => document.querySelector('#hud').textContent.includes('Beaconfall · V4 M2'), null, { timeout: 60000 });
+  } catch (error) {
+    // Same budget, same assertion. A missing #hud makes the predicate THROW,
+    // which waitForFunction swallows and retries, so the timeout looks
+    // identical to a world that simply never generated. Say which it was.
+    const gl = await glReport(page);
+    const state = await page.evaluate(() => {
+      const hud = document.querySelector('#hud');
+      const overlay = document.querySelector('#overlay');
+      return {
+        hudPresent: !!hud,
+        hudText: hud ? hud.textContent.trim().replace(/\s+/g, ' ').slice(0, 200) : null,
+        overlayDisplay: overlay ? getComputedStyle(overlay).display : null,
+        startPresent: !!document.querySelector('#start'),
+        greedy: !!window.__BEACONFALL_GREEDY__,
+        canvases: document.querySelectorAll('canvas').length
+      };
+    }).catch(evalError => ({ unreadable: evalError.message }));
+    throw new Error(`Voxel HUD never reported the world — engine webgl2: ${gl.webgl2}; page ${JSON.stringify(state)}`);
+  }
   const before = await page.locator('#hud').innerText();
   if (mobile) {
     await holdChromiumTouch(page, '#d-up', 600);
