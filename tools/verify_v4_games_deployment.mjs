@@ -355,6 +355,36 @@ function launchOptionsFor(engine) {
   return { headless: true };
 }
 
+// A boot wait that times out says `log: []` and nothing else, which cannot tell a
+// game that is broken from an engine that was never given the graphics it needs.
+// This reports what the engine actually has, so the distinction is on the record.
+async function glReport(page) {
+  return page.evaluate(() => {
+    const probe = (kind) => {
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext(kind);
+        if (!gl) return 'none';
+        const info = gl.getExtension('WEBGL_debug_renderer_info');
+        return info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : 'available';
+      } catch (error) { return `threw: ${error.message}`; }
+    };
+    return { webgl2: probe('webgl2'), webgl: probe('webgl') };
+  }).catch(error => ({ webgl2: `unreadable: ${error.message}`, webgl: 'unreadable' }));
+}
+
+async function reportEngineGraphics(browser, profile, origin) {
+  const context = await browser.newContext({ viewport: profile.viewport });
+  const page = await context.newPage();
+  try {
+    await page.goto(`${origin}/`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    const gl = await glReport(page);
+    console.log(`INFO ${profile.name} graphics — webgl2: ${gl.webgl2} · webgl: ${gl.webgl}`);
+  } catch (error) {
+    console.log(`INFO ${profile.name} graphics — unreadable: ${error.message}`);
+  } finally { await context.close(); }
+}
+
 async function clickIfVisible(page, selector, options = {}) {
   const locator = page.locator(selector).first();
   if (await locator.isVisible().catch(() => false)) { await locator.click(options); return true; }
@@ -398,7 +428,22 @@ async function smokeOffbrand(page) {
 }
 
 async function smokeTrail(page, mobile) {
-  await page.waitForFunction(() => window.__trailBootReady === true && !!window.__TR, null, { timeout: 60000 });
+  try {
+    await page.waitForFunction(() => window.__trailBootReady === true && !!window.__TR, null, { timeout: 60000 });
+  } catch (error) {
+    // Same 60s budget, same assertion — but it now reports whether the engine
+    // could make a WebGL context and what the game itself said before giving up.
+    const gl = await glReport(page);
+    const state = await page.evaluate(() => ({
+      bootReady: window.__trailBootReady === true,
+      tr: !!window.__TR,
+      bundleStarted: !!window.__trailBundleStarted,
+      compat: !!window.__trailCompat,
+      storageOK: !!window.__trailStorageOK,
+      body: (document.body ? document.body.innerText : '').trim().replace(/\s+/g, ' ').slice(0, 320)
+    })).catch(evalError => ({ unreadable: evalError.message }));
+    throw new Error(`Trail boot never completed — engine webgl2: ${gl.webgl2}, webgl: ${gl.webgl}; page ${JSON.stringify(state)}`);
+  }
   assert(!(await page.locator('body').innerText()).includes("TRAIL COULDN'T START"), 'Trail boot fallback appeared');
   await page.locator('#start-btn').click();
   await page.waitForFunction(() => ['RUNNING', 'WARNING', 'BOSS'].includes(window.__TR.gameState), null, { timeout: 20000 });
@@ -683,6 +728,7 @@ async function browserMain() {
       const launchOptions = launchOptionsFor(profile.engine);
       const browser = await playwright[profile.engine].launch(launchOptions);
       try {
+        await reportEngineGraphics(browser, profile, origin);
         for (const game of GAMES) await runOne(browser, profile, game, origin);
         if (!LIVE_ORIGIN && profile.name === 'chromium-desktop-1366') await runMigrationFixtures(browser, origin);
       } finally { await browser.close(); }
