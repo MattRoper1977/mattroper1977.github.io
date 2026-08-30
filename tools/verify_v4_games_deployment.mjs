@@ -588,8 +588,64 @@ async function smokeRelic(page, mobile) {
 async function smokeVoxel(page, mobile) {
   await page.waitForFunction(() => !!window.__BEACONFALL_GREEDY__ && !!document.querySelector('#start'), null, { timeout: 30000 });
   await page.locator('[data-mode="frontier"]').click(); await page.locator('#start').click();
+  // Voxel builds 37 chunks, yielding on requestAnimationFrame, and only THEN asks
+  // for pointer lock. On a slow runner the click's user activation has expired by
+  // then, so the lock is refused — and the game says so itself where it asks:
+  //
+  //   // Some browsers reject the request without firing pointerlockerror, because
+  //   // the click gesture expired during terrain generation. Verify, and offer a
+  //   // way back.
+  //   setTimeout(()=>{ if(!locked&&started)showPause('Click Resume to grab the mouse
+  //     and play.'); },700);
+  //
+  // showPause() sets running=false and puts the overlay back, and the render loop
+  // gates on `running && (locked||isTouch)`, so the HUD is never written. The world
+  // is built and fine — the loader reads 37/37 at 100%. A player clicks Resume. So
+  // does this, once, with a fresh trusted gesture. Measured: the same commit passes
+  // webkit/voxel on a fast runner and fails on a slow one (webkit's preceding leg
+  // took 46s when it passed, 56-58s when it failed), which is what makes waiting
+  // longer the wrong instrument and a second gesture the right one.
+  const hudReports = () => {
+    const hud = document.querySelector('#hud');
+    return !!hud && hud.textContent.includes('Beaconfall · V4 M2');
+  };
+  // Either the world reports, or the game has offered the way back. The tell is
+  // #start: startGame() hides it for the whole build and only restores it, reading
+  // "Resume", once the terrain is done — so a VISIBLE Resume button with the overlay
+  // up is the refused-lock state and cannot be confused with mid-build, where the
+  // loader is also on screen and #loadfill also reaches 100% on the last chunk.
+  await page.waitForFunction(() => {
+    const hud = document.querySelector('#hud');
+    if (hud && hud.textContent.includes('Beaconfall · V4 M2')) return true;
+    const overlay = document.querySelector('#overlay');
+    const start = document.querySelector('#start');
+    if (!overlay || !start) return false;
+    const shown = el => { const c = getComputedStyle(el); const r = el.getBoundingClientRect();
+      return c.display !== 'none' && c.visibility !== 'hidden' && r.width > 0 && r.height > 0; };
+    return shown(overlay) && shown(start) && /resume/i.test(start.textContent || '');
+  }, null, { timeout: 60000 });
+  // Take the way back whenever it is on offer — not merely when the HUD is silent.
+  // A fast engine can write the HUD in the window between running=true and the
+  // 700ms guard, so the world reports AND THEN pauses; leaving that unresumed
+  // fails later, at the save, with the pause menu still up.
+  const resumeOffered = () => {
+    const overlay = document.querySelector('#overlay');
+    const start = document.querySelector('#start');
+    if (!overlay || !start) return false;
+    const shown = el => { const c = getComputedStyle(el); const r = el.getBoundingClientRect();
+      return c.display !== 'none' && c.visibility !== 'hidden' && r.width > 0 && r.height > 0; };
+    return shown(overlay) && shown(start) && /resume/i.test(start.textContent || '');
+  };
+  // Settle past the game's own 700ms lock guard before deciding: on a fast engine
+  // the HUD is written first and the pause arrives after, so checking immediately
+  // sees a running game and misses the offer.
+  await page.waitForTimeout(900);
+  if (await page.evaluate(resumeOffered)) {
+    await page.locator('#start').click({ timeout: 10000 });
+    await page.waitForFunction(hudReports, null, { timeout: 30000 });
+  }
   try {
-    await page.waitForFunction(() => document.querySelector('#hud').textContent.includes('Beaconfall · V4 M2'), null, { timeout: 60000 });
+    await page.waitForFunction(hudReports, null, { timeout: 60000 });
   } catch (error) {
     // Same budget, same assertion. A missing #hud makes the predicate THROW,
     // which waitForFunction swallows and retries, so the timeout looks
