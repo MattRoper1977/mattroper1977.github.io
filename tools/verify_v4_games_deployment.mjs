@@ -403,6 +403,47 @@ async function reportEngineGraphics(browser, profile, origin) {
   } finally { await context.close(); }
 }
 
+// R6-A. The pointer-lock return shape is a per-engine CONTRACT, not a constant.
+// Chromium returns a Promise; Firefox and WebKit return undefined. Both are
+// correct, so neither may red — but a shape this table does not predict is news,
+// in either direction, and the day an engine gains a promise return the gate says
+// so rather than ossifying around a 2026 assumption.
+//
+// Promise.resolve(r).catch(h) in the game is unaffected by any of this:
+// Promise.resolve(undefined) is inert, so the fix holds on all three engines.
+const EXPECTED_LOCK_SHAPE = Object.freeze({ chromium: 'thenable', firefox: 'undefined', webkit: 'undefined' });
+
+function lockShapeVerdict(engine, observed) {
+  const expected = EXPECTED_LOCK_SHAPE[engine];
+  if (observed === 'other') {
+    return { ok: false, label: 'RETURN_SHAPE_INVALID', detail: `${engine}: requestPointerLock returned neither a thenable nor undefined (observed '${observed}')` };
+  }
+  if (expected && observed !== expected) {
+    return { ok: false, label: 'RETURN_SHAPE_DRIFT', detail: `${engine}: expected '${expected}', observed '${observed}'` };
+  }
+  return { ok: true, label: 'ok', detail: `${engine}: '${observed}'` };
+}
+
+async function checkPointerLockShape(page, engine) {
+  const observed = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    document.body.appendChild(canvas);
+    let value;
+    try { value = canvas.requestPointerLock ? canvas.requestPointerLock() : undefined; }
+    catch (error) { canvas.remove(); return 'other'; }
+    canvas.remove();
+    if (value && typeof value.then === 'function') {
+      if (typeof value.catch === 'function') value.catch(() => {});
+      return 'thenable';
+    }
+    return value === undefined ? 'undefined' : 'other';
+  });
+  const verdict = lockShapeVerdict(engine, observed);
+  console.log(`INFO ${engine} pointer-lock return shape — ${verdict.detail}`);
+  assert(verdict.ok, `${verdict.label}: ${verdict.detail}`);
+  return observed;
+}
+
 async function clickIfVisible(page, selector, options = {}) {
   const locator = page.locator(selector).first();
   if (await locator.isVisible().catch(() => false)) { await locator.click(options); return true; }
@@ -761,6 +802,7 @@ async function runOne(browser, profile, game, origin) {
   const geometry = await page.evaluate(() => ({ text: document.body.innerText.trim().length, width: document.documentElement.scrollWidth, client: document.documentElement.clientWidth, height: document.documentElement.scrollHeight }));
   assert(geometry.text > 20 && geometry.height > 80, `${game.id}: blank route`);
   assert(geometry.width <= geometry.client + 6, `${game.id}: horizontal clipping ${geometry.width}/${geometry.client}`);
+  if (game.id === 'voxel') await checkPointerLockShape(page, profile.engine);
   await SMOKES[game.id](page, !!profile.hasTouch);
   await page.waitForTimeout(250);
   assert.deepEqual(remote, [], `${game.id}: unexpected remote requests: ${remote.join(', ')}`);
