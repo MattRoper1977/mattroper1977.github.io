@@ -1632,7 +1632,7 @@ function requestLock(){
   audioInit();
   if(!started){startGame();return;}
   if(isTouch){running=true;overlay.style.display='none';return;}
-  if(canvas.requestPointerLock)canvas.requestPointerLock();
+  if(canvas.requestPointerLock){var __pl=canvas.requestPointerLock();if(__pl&&__pl.catch)__pl.catch(function(){});}
 }
 startBtn.addEventListener('click',e=>{e.stopPropagation();requestLock();});
 overlay.addEventListener('click',e=>{
@@ -1825,7 +1825,7 @@ async function startGame(){
   syncPassport(false);refreshPrismBuild(false);renderContract();
   if(restore)toast('World restored · '+editCount+' blocks changed',2.5);
   if(!isTouch){
-    if(canvas.requestPointerLock)canvas.requestPointerLock();
+    if(canvas.requestPointerLock){var __pl=canvas.requestPointerLock();if(__pl&&__pl.catch)__pl.catch(function(){});}
     // Some browsers reject the request without firing pointerlockerror, because the
     // click gesture expired during terrain generation. Verify, and offer a way back.
     setTimeout(()=>{ if(!locked&&started)showPause('Click Resume to grab the mouse and play.'); },700);
