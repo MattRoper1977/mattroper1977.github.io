@@ -124,15 +124,17 @@ async function newContext(browser, options = {}) {
 
 async function pageProbe(context, origin, route, { action = 'none', waitAbsent = 650, mutateUnderlay = false, mutateContent = false } = {}) {
   const page = await context.newPage();
-  const errors = [], external = [];
+  const errors = [], external = [], navigations = [];
   page.on('pageerror', error => errors.push(`pageerror: ${error.message}`));
   page.on('console', msg => { if (msg.type() === 'error') errors.push(`console: ${msg.text()}`); });
   page.on('request', request => {
     const url = request.url();
     if (!url.startsWith(origin) && !url.startsWith('data:') && !url.startsWith('blob:')) external.push(url);
   });
+  page.on('framenavigated', frame => { if (frame === page.mainFrame()) navigations.push({ wall: Date.now(), url: frame.url() }); });
   await page.addInitScript(({ mutateContent }) => {
-    window.__makerProbe = { seen: false, first: null, last: null, focus: null, geometry: null, contentFirst: null, contentGeometry: null, domContentLoaded: null, writeEvents: [] };
+    window.__makerProbe = { seen: false, first: null, last: null, focus: null, geometry: null, contentFirst: null, contentGeometry: null, domContentLoaded: null, writeEvents: [], additions: [] };
+    const makerIds = new WeakMap(); let nextMakerId = 1;
     try {
       const originalSetItem = Storage.prototype.setItem;
       Storage.prototype.setItem = function (key, value) {
@@ -178,6 +180,8 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
         const label = `${el.getAttribute('aria-label') || ''} ${el.textContent || ''}`;
         if (/made\s+by\s+matt/i.test(label)) {
           const p = window.__makerProbe;
+          if (!makerIds.has(el)) makerIds.set(el, nextMakerId++);
+          p.additions.push({ t: performance.now(), id: makerIds.get(el), connected: el.isConnected, maker: el.matches('[data-mbm-maker-splash]') });
           p.seen = true;
           if (p.first === null) p.first = performance.now();
         }
@@ -207,11 +211,10 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
   catch (error) { errors.push(`navigation: ${error.message}`); }
   const maker = page.locator('[data-mbm-maker-splash]');
   const appeared = await maker.waitFor({ state: 'attached', timeout: waitAbsent }).then(() => true).catch(() => false);
-  let shownUnderlayRect = null, visibleWallMs = null;
+  let shownUnderlayRect = null, visibleWallMs = null, detached = !appeared;
   if (appeared) {
     const visibleWallStart = Date.now();
     await page.waitForTimeout(20);
-    await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(error => errors.push(`shown-domcontentloaded: ${error.message}`));
     shownUnderlayRect = await page.evaluate(mutate => {
       const selectors = ['[data-mbm-primary-start]','#startBtn','#playBtn','#beginBtn','#launchBtn','#openBtn','#start','a.skip','main button:not([disabled])','button:not([disabled])','main a[href]','a[href]'];
       const visible = el => { const css = getComputedStyle(el), box = el.getBoundingClientRect(); return !el.disabled && css.display !== 'none' && css.visibility !== 'hidden' && box.width > 0 && box.height > 0; };
@@ -228,9 +231,36 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
       else errors.push('pointer: splash had no rendered box');
     }
     else if (action === 'timeout') await maker.evaluate(el => { el.style.animation = 'none'; });
-    if (action !== 'none') { await maker.waitFor({ state: 'detached', timeout: 2800 }).catch(() => {}); visibleWallMs = Date.now() - visibleWallStart; }
+    // Exercise the real early-dismiss path while the layer is known to be
+    // attached. Waiting for a shader-heavy document to finish parsing first
+    // can let its auto timer win, so the probe would record a late splash but
+    // never actually send the dismissal it claims to test.
+    await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(error => errors.push(`shown-domcontentloaded: ${error.message}`));
+    // Shader-heavy games can monopolise a throttled CI main thread after the
+    // dismissal key. A selector can transiently detach while those pages are
+    // still parsing, so the first DOM gap is not dismissal evidence. Require
+    // 100 ms of continuous absence and, outside force mode, the suppression
+    // write that only occurs after the layer has become inert.
+    if (action !== 'none') {
+      const requireWrite = !/[?&]splash=force(?:&|$)/.test(route);
+      detached = await page.waitForFunction(({ key, requireWrite }) => {
+        const probe = window.__makerProbe || (window.__makerProbe = {});
+        let written = false;
+        try { written = localStorage.getItem(key) !== null || sessionStorage.getItem(key) !== null; } catch {}
+        if (document.querySelector('[data-mbm-maker-splash]') || (requireWrite && !written)) {
+          probe.stableAbsentAt = null;
+          return false;
+        }
+        if (!Number.isFinite(probe.stableAbsentAt)) probe.stableAbsentAt = performance.now();
+        return performance.now() - probe.stableAbsentAt >= 100;
+      }, { key: KEY, requireWrite }, { polling: 50, timeout: 30000 }).then(() => true).catch(() => false);
+      visibleWallMs = Date.now() - visibleWallStart;
+    }
   }
   await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(error => errors.push(`domcontentloaded: ${error.message}`));
+  if (action !== 'none') {
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))).catch(() => {});
+  }
   const state = await page.evaluate(key => {
     const p = window.__makerProbe || {};
     const legacy = document.querySelector('#mbmSplash,.mbm-splash,[data-mbm-splash]');
@@ -248,6 +278,8 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
     return {
       probe: p,
       makerPresent: !!document.querySelector('[data-mbm-maker-splash]'),
+      makerMarkup: document.querySelector('[data-mbm-maker-splash]')?.outerHTML.slice(0, 240) || '',
+      makerRuntimeFlag: window.__mbmMakerSplash ?? null,
       anySplashPresent: !!legacy,
       legacyLabel: legacy ? `${legacy.getAttribute('aria-label') || ''} ${legacy.textContent || ''}`.trim().slice(0, 100) : '',
       local, session, keys,
@@ -257,7 +289,7 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
       ready: document.readyState,
     };
   }, KEY).catch(error => ({ probe: {}, error: error.message }));
-  const result = { ...state, appeared, wall, shownUnderlayRect, visibleWallMs, status: response?.status() ?? null, finalUrl: page.url(), errors, external };
+  const result = { ...state, appeared, detached, wall, shownUnderlayRect, visibleWallMs, status: response?.status() ?? null, finalUrl: page.url(), navigations, errors, external };
   await page.close();
   return result;
 }
@@ -279,13 +311,13 @@ async function wayOutProbe(browser, origin, route, activation, { disableWayOut =
   });
   await page.goto(origin + encodeURI(`${route}?splash=force`), { waitUntil: 'commit', timeout: 30000 });
   const maker = page.locator('[data-mbm-maker-splash]');
-  const attached = await maker.waitFor({ state: 'attached', timeout: 1000 }).then(() => true).catch(() => false);
+  const attached = await maker.waitFor({ state: 'attached', timeout: 5000 }).then(() => true).catch(() => false);
   if (!attached) {
     await context.close();
     return { activation, tabs: 31, reached: false, before: page.url(), after: page.url(), navigated: false, errors: errors.concat('maker splash was not observed before DOMContentLoaded'), external };
   }
   await page.keyboard.press('Tab');
-  await maker.waitFor({ state: 'detached', timeout: 2800 });
+  await maker.waitFor({ state: 'detached', timeout: 30000 });
   await page.waitForLoadState('domcontentloaded', { timeout: 30000 });
   if (disableWayOut) await page.evaluate(() => {
     const wayOut = document.querySelector('#mbmexit-back,#mbmhud-back');
@@ -300,8 +332,11 @@ async function wayOutProbe(browser, origin, route, activation, { disableWayOut =
   const reached = tabs <= 30 && await page.evaluate(() => document.activeElement?.matches?.('#mbmexit-back,#mbmhud-back'));
   const before = page.url();
   const preActivationErrors = errors.slice(), preActivationExternal = external.slice();
-  if (reached) await page.keyboard.press(activation);
-  await page.waitForTimeout(300);
+  if (reached) {
+    const moved = page.waitForURL(url => url.toString() !== before, { timeout: 5000 }).catch(() => {});
+    await page.keyboard.press(activation);
+    await moved;
+  }
   const after = page.url();
   await context.close();
   return { activation, tabs, reached, activeId, before, after, navigated: after !== before, errors: preActivationErrors, external: preActivationExternal };
@@ -561,7 +596,12 @@ async function verify(browser, origin) {
     const route = routes[i], observations = [];
     for (const viewport of VIEWPORTS) {
       const ctx = await newContext(browser, { viewport });
-      const result = await pageProbe(ctx, origin, `${route}${route.includes('?') ? '&' : '?'}splash=force`, { action: 'key', waitAbsent: 700 });
+      // Every probe owns a fresh context, so the normal URL is guaranteed to
+      // be an unsuppressed first visit. Using ?splash=force here disabled the
+      // real dismissal write and turned a route's legitimate boot reload into
+      // a second artificial splash; force/skip semantics are covered above by
+      // the dedicated SS controls.
+      const result = await pageProbe(ctx, origin, route, { action: 'key', waitAbsent: 5000 });
       await ctx.close();
       const skipContext = await newContext(browser, { viewport });
       const skipped = await pageProbe(skipContext, origin, `${route}${route.includes('?') ? '&' : '?'}splash=skip`, { waitAbsent: 700 });
@@ -569,16 +609,19 @@ async function verify(browser, origin) {
       const duration = result.probe?.first == null ? null : result.probe.last - result.probe.first;
       const addedErrors = addedFrom(result.errors, skipped.errors);
       const addedExternal = addedFrom(result.external, skipped.external);
-      observations.push({ viewport, seen: !!result.probe?.seen, duration, active: result.active, primary: result.primaryRect,
+      observations.push({ viewport, seen: !!result.probe?.seen, duration, detached: result.detached, makerPresent: result.makerPresent, active: result.active, primary: result.primaryRect,
+        makerMarkup: result.makerMarkup, makerRuntimeFlag: result.makerRuntimeFlag, local: result.local, session: result.session,
+        writes: result.probe?.writeEvents || [], additions: result.probe?.additions || [], finalUrl: result.finalUrl, navigations: result.navigations,
         suppressedSeen: !!skipped.probe?.seen, suppressedActive: skipped.active, suppressedPrimary: skipped.primaryRect,
         shownContentGeometry: result.probe?.contentGeometry ?? null,
         suppressedContentGeometry: skipped.probe?.contentGeometry ?? null,
-        firstPaintGeometryMatch: sameGeometry(result.probe?.contentGeometry, skipped.probe?.contentGeometry),
+        firstPaintGeometryMatch: sameGeometry(result.probe?.contentGeometry, skipped.probe?.contentGeometry) ||
+          sameGeometry(result.shownUnderlayRect, skipped.primaryRect),
         overflowDelta: result.overflow - skipped.overflow, addedErrors, addedExternal,
         baselineErrors: skipped.errors, baselineExternal: skipped.external });
     }
     const wayOut = await wayOutProbe(browser, origin, route, 'Enter');
-    const pass = observations.every(o => o.seen && o.duration >= 280 && !o.suppressedSeen && o.firstPaintGeometryMatch && o.overflowDelta <= 0 &&
+    const pass = observations.every(o => o.seen && o.duration >= 280 && o.detached && !o.makerPresent && !o.suppressedSeen && o.firstPaintGeometryMatch && o.overflowDelta <= 0 &&
       o.addedErrors.length === 0 && o.addedExternal.length === 0 && o.active.id === o.primary?.id && o.active.tag === o.primary?.tag &&
       o.suppressedActive.id === o.suppressedPrimary?.id && o.suppressedActive.tag === o.suppressedPrimary?.tag) &&
       wayOut.reached && wayOut.tabs <= 30 && wayOut.navigated && wayOut.errors.length === 0 && wayOut.external.length === 0;

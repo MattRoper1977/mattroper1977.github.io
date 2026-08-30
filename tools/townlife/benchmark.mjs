@@ -172,15 +172,18 @@ async function dismissAndStart(page) {
   return match.text;
 }
 
-async function scriptedInput(page) {
-  for (const input of INPUTS) {
+async function scriptedInput(page, navigationSafe = false) {
+  const inputs = navigationSafe
+    ? INPUTS.filter(input => input[0] === 'key' && input[1] !== 'Space')
+    : INPUTS;
+  for (const input of inputs) {
     if (input[0] === 'key') await page.keyboard.press(input[1]).catch(() => {});
     else await page.mouse.click(Math.round(VIEWPORT.width * input[1]), Math.round(VIEWPORT.height * input[2])).catch(() => {});
     await page.waitForTimeout(350);
   }
 }
 
-async function frameWindow(page, busyMs = 0) {
+async function frameWindow(page, busyMs = 0, navigationSafe = false) {
   const measurement = page.evaluate(({ duration, busy }) => new Promise(resolve => {
     let frames = 0;
     let first = null;
@@ -197,7 +200,7 @@ async function frameWindow(page, busyMs = 0) {
     };
     requestAnimationFrame(tick);
   }), { duration: MEASURE_MS, busy: busyMs });
-  await scriptedInput(page);
+  await scriptedInput(page, navigationSafe);
   return measurement;
 }
 
@@ -224,6 +227,8 @@ async function measureRoute(browser, origin, game, round) {
   assert.equal(response?.status(), 200, `${game.title}: navigation returned ${response?.status()}`);
   await page.waitForTimeout(500);
   const startControl = await dismissAndStart(page);
+  const navigationSafe = game.href === '/houseolympiad/';
+  if (navigationSafe) await page.locator('#refreshBtn').click();
   if (game.href === '/voxel/') {
     assert.equal(startControl, 'Click to Play', 'Voxel setup control was not exercised');
     await page.waitForFunction(
@@ -241,9 +246,9 @@ async function measureRoute(browser, origin, game, round) {
   // route setup. Voxel's terrain generation completes at its initial view 3;
   // no unthrottled input window is allowed to tune that view upward first.
   await session.send('Emulation.setCPUThrottlingRate', { rate: CPU_THROTTLE });
-  await scriptedInput(page);
+  await scriptedInput(page, navigationSafe);
   await page.waitForTimeout(WARM_UP_MS);
-  const measured = await frameWindow(page);
+  const measured = await frameWindow(page, 0, navigationSafe);
   await context.close();
   return { fps: measured.fps, frames: measured.frames, elapsedMs: measured.elapsedMs, startControl, pageErrors: errors };
 }

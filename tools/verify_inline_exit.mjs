@@ -348,7 +348,11 @@ async function main() {
       const ctx = await browser.newContext({ viewport: { width, height }, hasTouch: true });
       const page = await ctx.newPage();
       for (const t of T) {
-        const url = origin + t.route.split('/').map(encodeURIComponent).join('/');
+        // This gate measures the persistent exit after boot, not whether Tab
+        // can tunnel through the canonical modal introduction.  The previous
+        // 700 ms settle raced the splash's deliberate 2.1 s lifetime and made
+        // fast-loading routes fail while slower routes passed by accident.
+        const url = origin + t.route.split('/').map(encodeURIComponent).join('/') + '?splash=skip';
         try {
           await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_MS });
           await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, CHOICE]);

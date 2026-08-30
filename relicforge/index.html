@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#08090d">
-  <meta name="description" content="MadeByMatt Relicforge — a zero-dependency modular action RPG in one HTML file.">
+  <meta name="description" content="Relic Forge: Crownfall — V4 Roadmap Milestone 2, a kinetic modular action roguelite by MadeByMatt.">
   <link rel="canonical" href="https://madebymatt.uk/relicforge/">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://madebymatt.uk/relicforge/">
-  <meta property="og:title" content="MadeByMatt — Relicforge">
-  <meta property="og:description" content="MadeByMatt Relicforge — a zero-dependency modular action RPG in one HTML file.">
-  <title>MadeByMatt — Relicforge</title>
+  <meta property="og:title" content="Relic Forge: Crownfall — V4 Roadmap Milestone 2">
+  <meta property="og:description" content="Relic Forge: Crownfall — a standalone modular action roguelite by MadeByMatt.">
+  <title>Relic Forge: Crownfall — V4 Roadmap Milestone 2</title>
   <style>
     :root {
       --ink: #08090d;
@@ -31,6 +31,7 @@
       --safe-right: env(safe-area-inset-right, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-left: env(safe-area-inset-left, 0px);
+      --ui-scale: 1;
     }
 
     * {
@@ -54,6 +55,24 @@
 
     button, canvas, #touch-layer { touch-action: none; }
     button { font: inherit; color: inherit; }
+
+    :focus-visible {
+      outline: 3px solid #ffffff;
+      outline-offset: 3px;
+    }
+
+    body.ui-large .brand-title,
+    body.ui-large .hud-stat,
+    body.ui-large .label-row,
+    body.ui-large #objective,
+    body.ui-large .equip-slot,
+    body.ui-large .equip-name { font-size: 112%; }
+    body.ui-large .panel { font-size: 112%; }
+    body.ui-large .lead,
+    body.ui-large .control-row,
+    body.ui-large .toggle-copy span,
+    body.ui-large .chassis-card p,
+    body.ui-large .forge-card p { font-size: 112%; }
 
     #gameCanvas {
       position: fixed;
@@ -172,6 +191,24 @@
       letter-spacing: .9px;
       text-transform: uppercase;
     }
+
+    .version-chip,
+    .seed-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      margin-top: 8px;
+      padding: 5px 8px;
+      border: 1px solid rgba(81,231,255,.35);
+      border-radius: 999px;
+      background: rgba(81,231,255,.075);
+      color: var(--cyan);
+      font: 850 8px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+    }
+
+    .seed-chip { border-color: rgba(255,176,0,.42); color: var(--ochre); }
 
     .hud-stats {
       display: flex;
@@ -348,6 +385,34 @@
     }
 
     #objective strong { color: var(--cyan); }
+
+    .resonance-strip {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 5px;
+      min-height: 20px;
+      margin-top: 7px;
+    }
+
+    .resonance-chip {
+      padding: 4px 7px;
+      border: 1px solid var(--resonance-colour, #9b78ff);
+      border-radius: 999px;
+      background: rgba(155,120,255,.09);
+      color: var(--resonance-colour, #c8b7ff);
+      font: 900 7px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .55px;
+      text-transform: uppercase;
+      box-shadow: 0 0 13px rgba(155,120,255,.13);
+    }
+
+    .resonance-empty {
+      color: var(--muted);
+      font: 800 7px/1.4 ui-monospace, monospace;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
 
     #boss-wrap {
       position: absolute;
@@ -578,6 +643,38 @@
       background: rgba(255,255,255,.028);
     }
 
+    .mode-card {
+      margin-top: 10px;
+      padding: 12px;
+      border: 1px solid rgba(81,231,255,.18);
+      border-radius: 9px;
+      background: linear-gradient(145deg, rgba(81,231,255,.055), rgba(155,120,255,.035));
+    }
+
+    .mode-card b { color: var(--cyan); font-size: 10px; text-transform: uppercase; }
+    .mode-card p { margin-top: 5px; color: var(--muted); font-size: 9px; line-height: 1.45; }
+    .mode-card[hidden] { display: none; }
+
+    .passport-card {
+      border-color: rgba(155,120,255,.32);
+      background: linear-gradient(135deg, rgba(155,120,255,.09), rgba(81,231,255,.035));
+    }
+    .passport-card b { color: #c8b7ff; }
+    .passport-status { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+    .passport-status span,
+    #kinetic-status {
+      padding: 4px 7px;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 999px;
+      color: var(--muted);
+      font: 800 7px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .45px;
+      text-transform: uppercase;
+    }
+    .passport-status span.online,
+    #kinetic-status.online { border-color: rgba(81,231,255,.48); color: var(--cyan); box-shadow: 0 0 12px rgba(81,231,255,.1); }
+    #kinetic-status { display: block; margin-top: 6px; text-align: center; }
+
     .side-card h3,
     .section-title {
       margin-bottom: 10px;
@@ -637,6 +734,29 @@
       border-color: var(--ochre);
       background: linear-gradient(180deg, rgba(255,176,0,.11), rgba(0,0,0,.11));
       transform: translateY(-2px);
+    }
+
+    .forge-card::after {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: 8px;
+      pointer-events: none;
+      background: radial-gradient(circle at 18% 0%, rgba(255,255,255,.08), transparent 42%);
+      opacity: .65;
+    }
+
+    .forge-card.selected {
+      box-shadow: 0 0 0 1px rgba(255,176,0,.35), 0 12px 42px rgba(255,176,0,.13), inset 0 1px rgba(255,255,255,.08);
+    }
+
+    .edition-title {
+      display: block;
+      margin-top: 8px;
+      color: var(--cyan);
+      font: 950 clamp(13px, 2.4vw, 21px)/1 ui-monospace, monospace;
+      letter-spacing: .18em;
+      text-shadow: 0 0 20px rgba(81,231,255,.28);
     }
 
     .chassis-icon {
@@ -792,6 +912,25 @@
 
     .toggle.on { border-color: rgba(255,176,0,.55); background: var(--ochre-soft); }
     .toggle.on i { transform: translateX(32px); background: var(--ochre); }
+
+    .setting-select {
+      min-width: 152px;
+      min-height: 44px;
+      padding: 8px 34px 8px 10px;
+      border: 1px solid rgba(255,176,0,.45);
+      border-radius: 7px;
+      background: #151720;
+      color: var(--text);
+      font: 850 9px/1 ui-monospace, monospace;
+      text-transform: uppercase;
+    }
+
+    .quality-readout {
+      display: block;
+      margin-top: 4px;
+      color: var(--cyan);
+      font: 800 8px/1.35 ui-monospace, monospace;
+    }
 
     .forge-head {
       display: flex;
@@ -977,6 +1116,32 @@
     #touch-dash { right: 112px; bottom: calc(24px + var(--safe-bottom)); }
     #touch-pause { right: 20px; top: calc(78px + var(--safe-top)); width: 48px; height: 48px; }
 
+    #aim-stick {
+      position: absolute;
+      display: none;
+      width: 86px;
+      height: 86px;
+      transform: translate(calc(-50% + var(--aim-x, 0px)), calc(-50% + var(--aim-y, 0px)));
+      border: 2px solid rgba(81,231,255,.38);
+      border-radius: 50%;
+      background: rgba(81,231,255,.05);
+      box-shadow: inset 0 0 20px rgba(81,231,255,.08), 0 0 18px rgba(81,231,255,.08);
+      pointer-events: none;
+    }
+
+    #aim-stick::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 30px;
+      height: 30px;
+      transform: translate(-50%, -50%);
+      border: 2px solid rgba(255,255,255,.55);
+      border-radius: 50%;
+      background: rgba(81,231,255,.45);
+    }
+
     #rotate-note {
       position: fixed;
       inset: 0;
@@ -1062,134 +1227,64 @@
   </style>
 </head>
 <body>
-<!-- MBM-SPLASH:BEGIN generated by tools/render_splash.py, do not edit by hand -->
-<!-- mbm-splash-inline: canonical Made by Matt splash, inlined from the games estate standard. -->
-<script>
-/* Made by Matt splash v2 — single file, no dependencies, self-styling.
-   Usage: MadeByMattSplash.start({title:"BOSS BATTLE", kicker:"A Made by Matt Simulation",
-          duration:3200, onComplete:function(){}});                                      */
-(function (g) {
-  var CSS = ".mbm-splash{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;" +
-    "background:radial-gradient(circle at 50% 38%,#222B55,#161D3D 68%);color:#E8E2D4;" +
-    "font-family:Poppins,'Segoe UI',system-ui,sans-serif;transition:opacity .55s ease,visibility .55s}" +
-    ".mbm-splash.is-leaving{opacity:0;visibility:hidden}" +
-    ".mbm-stage{text-align:center;padding:24px;max-width:860px}" +
-    ".mbm-mark{width:min(34vmin,200px);height:auto;filter:drop-shadow(0 18px 32px #0008)}" +
-    ".mbm-mark .mpath{stroke-dasharray:1;stroke-dashoffset:1;animation:mbmDraw 1s cubic-bezier(.6,0,.3,1) .2s forwards}" +
-    ".mbm-mark .mstar{transform-origin:50px 30px;transform:scale(0);opacity:0;" +
-    "animation:mbmPop .45s cubic-bezier(.34,1.56,.64,1) 1.1s forwards}" +
-    ".mbm-kicker,.mbm-title,.mbm-tagline{opacity:0;transform:translateY(12px);animation:mbmRise .6s ease forwards}" +
-    ".mbm-kicker{animation-delay:1.3s;margin-top:20px;color:#F2A24A;font-size:.78rem;" +
-    "letter-spacing:.32em;text-transform:uppercase}" +
-    ".mbm-title{animation-delay:1.45s;margin:.35rem 0 .2rem;font-size:clamp(2rem,7vw,5rem);" +
-    "line-height:.95;letter-spacing:.04em;text-transform:uppercase;font-weight:700}" +
-    ".mbm-tagline{animation-delay:1.65s;color:#B9E6CD;letter-spacing:.18em;text-transform:uppercase;font-weight:700}" +
-    ".mbm-skip{position:absolute;right:22px;bottom:20px;border:1px solid #b9e6cd70;border-radius:99px;" +
-    "background:#0a1026aa;color:#E8E2D4;padding:.65rem 1rem;cursor:pointer;font:inherit;" +
-    /* 44px floor. .65rem padding on an inherited font measured 110x42 — two pixels
-       under, on every stamped game, on phone and desktop alike. inline-flex keeps
-       the label centred once the box stops being content-sized. */
-    "min-height:44px;display:inline-flex;align-items:center;justify-content:center}" +
-    ".mbm-skip:focus-visible{outline:3px solid #F2A24A;outline-offset:3px}" +
-    "@keyframes mbmDraw{to{stroke-dashoffset:0}}@keyframes mbmPop{to{transform:scale(1);opacity:1}}" +
-    "@keyframes mbmRise{to{opacity:1;transform:translateY(0)}}" +
-    "@media(prefers-reduced-motion:reduce){.mbm-splash{transition:none}" +
-    ".mbm-mark .mpath{animation:none;stroke-dashoffset:0}.mbm-mark .mstar{animation:none;transform:scale(1);opacity:1}" +
-    ".mbm-kicker,.mbm-title,.mbm-tagline{animation:none;opacity:1;transform:none}}";
-  var MARK = '<svg class="mbm-mark" viewBox="0 0 100 100" role="img" aria-label="Made by Matt">' +
-    '<circle cx="50" cy="50" r="47" fill="none" stroke="#B9E6CD" stroke-width="3.4"/>' +
-    '<path class="mpath" pathLength="1" d="M28 71 L28 37 L50 59 L72 37 L72 71" fill="none" ' +
-    'stroke="#E8E2D4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>' +
-    '<path class="mstar" d="M50 22.5 L51.48 28.52 L57.5 30 L51.48 31.48 L50 37.5 ' +
-    'L48.52 31.48 L42.5 30 L48.52 28.52 Z" fill="#F2A24A"/></svg>';
-
-  function start(o) {
-    o = Object.assign({ title: "", kicker: "A Made by Matt Experience",
-      duration: 3200, onComplete: null }, o || {});
-    if (!document.getElementById("mbm-splash-css")) {
-      var st = document.createElement("style");
-      st.id = "mbm-splash-css"; st.textContent = CSS;
-      document.head.appendChild(st);
-    }
-    var reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    var prevFocus = document.activeElement;
-    var el = document.createElement("section");
-    el.className = "mbm-splash";
-    el.setAttribute("role", "dialog");
-    el.setAttribute("aria-modal", "true");
-    el.setAttribute("aria-label", "Made by Matt introduction");
-    el.innerHTML = '<div class="mbm-stage">' + MARK +
-      '<p class="mbm-kicker"></p><h1 class="mbm-title"></h1>' +
-      '<p class="mbm-tagline">Learn \u2022 Build \u2022 Explore</p></div>' +
-      '<button class="mbm-skip" type="button">Skip intro</button>';
-    el.querySelector(".mbm-kicker").textContent = o.kicker;
-    el.querySelector(".mbm-title").textContent = o.title;
-    document.body.appendChild(el);
-    var done = false, timer;
-    function close() {
-      if (done) return;
-      done = true;
-      clearTimeout(timer);
-      el.classList.add("is-leaving");
-      setTimeout(function () {
-        el.remove();
-        if (prevFocus && prevFocus.focus) prevFocus.focus();
-        if (typeof o.onComplete === "function") o.onComplete();
-      }, reduced ? 0 : 600);
-      /* Never shorter than the dismissing gesture's own tail, even under
-         reduced motion, where the leave itself is instant. */
-      setTimeout(unguard, reduced ? 250 : 600);
-    }
-    /* The splash swallows its own dismissal.
-       Bubble-phase listeners on the splash element stopped nothing: the Space
-       that skipped the intro also reached the game underneath and fired, jumped
-       or started a run nobody asked for, and on a phone the tap that dismissed
-       the splash was the tap that started the game. So while the splash is up
-       every relevant event is taken on `document` in the CAPTURE phase and
-       stopped there, which is before it can descend to a target or bubble back
-       out to `window` where a game's own listeners sit. The guard outlives the
-       dismissal by a short window so the trailing keyup / pointerup / click of
-       the dismissing gesture is swallowed too, and is then removed. */
-    var GUARDED = ["keydown", "keyup", "click", "pointerdown", "pointerup"];
-    function guard(e) {
-      e.stopPropagation();
-      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
-      if (done) return;
-      if (e.type === "keydown" && (e.key === "Escape" || e.key === "Enter" || e.key === " ")) {
-        e.preventDefault(); close();
-      } else if (e.type === "click" && e.target && e.target.closest && e.target.closest(".mbm-skip")) {
-        e.preventDefault(); close();
-      }
-    }
-    function unguard() {
-      GUARDED.forEach(function (t) { document.removeEventListener(t, guard, true); });
-    }
-    GUARDED.forEach(function (t) { document.addEventListener(t, guard, true); });
-    el.tabIndex = -1;
-    el.focus();
-    timer = setTimeout(close, reduced ? Math.min(o.duration, 1200) : o.duration);
-    return { close: close, element: el };
-  }
-  g.MadeByMattSplash = { start: start };
-})(window);
-
-(function(){try{
-if(!window.MadeByMattSplash||window.__mbmSplashStarted)return;window.__mbmSplashStarted=1;
-var t=(document.title||"").split(/\s+[\u2014\u2013-]\s+/)[0].trim();
-var slug=(location.pathname||"").replace(/index\.html$/,"").replace(/^\/|\/$/g,"").split("/").pop()||"mbm";
-function go(){
-  MadeByMattSplash.start({title:t,kicker:"A Made by Matt Game",duration:3000});
-  var el=document.querySelector(".mbm-splash");
-  if(el){el.setAttribute("data-mbm-splash",slug);el.setAttribute("data-mbm-splash-state","open");
-    var obs=setInterval(function(){if(!el.isConnected){el.setAttribute("data-mbm-splash-state","closed");clearInterval(obs);}},120);}
-}
-if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
-}catch(e){}})();
-</script>
-<!-- MBM-SPLASH:END -->
+<!-- MBM-MAKER-SPLASH:BEGIN generated by tools/render_maker_splash.py, do not edit by hand -->
+<script>(function(){"use strict";
+if(window.__mbmMakerSplash)return;window.__mbmMakerSplash=1;
+var KEY="mbm_splash_last",DAY=86400000,MODE="";
+try{MODE=new URLSearchParams(location.search).get("splash")||"";}catch(_){MODE="";}
+var NOW=Date.now(),PAGE_LAST;
+function probe(name){try{var s=window[name],v=s.getItem(KEY);return{ok:true,has:v!==null,raw:v};}catch(_){return{ok:false,has:false,raw:null};}}
+function stored(){var a=probe("localStorage");if(a.has)return a.raw;var b=probe("sessionStorage");if(b.has)return b.raw;return PAGE_LAST===undefined?null:String(PAGE_LAST);}
+function valid(raw){if(raw===null||String(raw).trim()==="")return null;var n=Number(raw);return Number.isFinite(n)&&Math.floor(n)===n&&n>=0&&n<=NOW?n:null;}
+function windowOpen(){var raw=stored(),n=valid(raw);return n===null||NOW-n>=DAY;}
+function writeNow(){var wrote=false;try{localStorage.setItem(KEY,String(NOW));wrote=true;}catch(_){}try{sessionStorage.setItem(KEY,String(NOW));wrote=true;}catch(_){}if(!wrote)try{PAGE_LAST=NOW;}catch(_){} }
+var LEGACY={start:function(){return{close:function(){},element:null};}};
+try{var d=Object.getOwnPropertyDescriptor(window,"MadeByMattSplash");if(!d||d.configurable)Object.defineProperty(window,"MadeByMattSplash",{configurable:false,get:function(){return LEGACY;},set:function(){}});}catch(_){}
+function visible(e){if(!e||!e.isConnected||e.disabled)return false;var c=getComputedStyle(e),r=e.getBoundingClientRect();return c.display!=="none"&&c.visibility!=="hidden"&&r.width>0&&r.height>0;}
+function primary(){var q=["[data-mbm-primary-start]","#startBtn","#playBtn","#beginBtn","#launchBtn","#openBtn","#start","a.skip","main button:not([disabled])","button:not([disabled])","main a[href]","a[href]"];for(var i=0;i<q.length;i++){var all=document.querySelectorAll(q[i]);for(var j=0;j<all.length;j++)if(visible(all[j])&&!all[j].closest("[data-mbm-maker-splash]"))return all[j];}var m=document.querySelector("main,h1,[role=main]");if(m){if(!m.hasAttribute("tabindex"))m.setAttribute("tabindex","-1");return m;}return null;}
+function armWayOut(e){var w=document.querySelector("#mbmexit-back,#mbmhud-back"),timer=0;if(!e||!w||!w.focus)return;function off(){window.removeEventListener("keydown",next,true);window.removeEventListener("keydown",activate,true);clearTimeout(timer);}function activate(k){if(document.activeElement!==w){off();return;}if(k.key!=="Enter"&&k.key!==" "){if(k.key==="Tab"||k.key==="Escape")off();return;}k.preventDefault();k.stopPropagation();if(k.stopImmediatePropagation)k.stopImmediatePropagation();var href=w.href;off();if(href)location.assign(href);}function next(k){if(k.key!=="Tab"||k.shiftKey||document.activeElement!==e)return;k.preventDefault();k.stopPropagation();if(k.stopImmediatePropagation)k.stopImmediatePropagation();off();if(typeof endHandoff==="function")endHandoff();try{w.focus({preventScroll:true});}catch(_){try{w.focus();}catch(__){}}window.addEventListener("keydown",activate,true);timer=setTimeout(off,5000);}window.addEventListener("keydown",next,true);timer=setTimeout(off,5000);}
+function focusPrimary(){var e=primary();if(e&&e.focus){try{e.focus({preventScroll:true});}catch(_){try{e.focus();}catch(__){}}armWayOut(e);}}
+var CLOSED=false,FOCUS_UNTIL=0,FOCUS_TIMER=0,HANDOFF_USER=false,HANDOFF_ARMED=false;
+function needsFocus(){var a=document.activeElement;return !a||a===document.body||a===document.documentElement||!a.isConnected||!!(a.closest&&a.closest("[data-mbm-maker-splash]"));}
+function settlePrimary(force){if(CLOSED){var ghosts=document.querySelectorAll("[data-mbm-maker-splash]");for(var i=0;i<ghosts.length;i++){try{ghosts[i].setAttribute("aria-hidden","true");ghosts[i].inert=true;ghosts[i].remove();}catch(_){}}}var target=primary();if(target&&((force&&document.activeElement!==target)||(!force&&needsFocus())))focusPrimary();}
+function endHandoff(){HANDOFF_USER=true;clearTimeout(FOCUS_TIMER);if(HANDOFF_ARMED){HANDOFF_ARMED=false;document.removeEventListener("keydown",endHandoff,true);document.removeEventListener("pointerdown",endHandoff,true);document.removeEventListener("touchstart",endHandoff,true);document.removeEventListener("focusin",keepHandoff,true);}}
+function keepHandoff(e){if(HANDOFF_USER)return;var target=primary();if(target&&e.target!==target)requestAnimationFrame(function(){if(!HANDOFF_USER)settlePrimary(true);});}
+function armHandoff(){if(!HANDOFF_ARMED){HANDOFF_ARMED=true;document.addEventListener("keydown",endHandoff,true);document.addEventListener("pointerdown",endHandoff,true);document.addEventListener("touchstart",endHandoff,true);document.addEventListener("focusin",keepHandoff,true);}FOCUS_UNTIL=Math.max(FOCUS_UNTIL,performance.now()+4000);}
+function maintainPrimary(){clearTimeout(FOCUS_TIMER);if(HANDOFF_USER)return;settlePrimary(true);if(CLOSED&&performance.now()<FOCUS_UNTIL)FOCUS_TIMER=setTimeout(maintainPrimary,100);else endHandoff();}
+function focusReady(){function ready(){if(CLOSED){armHandoff();maintainPrimary();}else settlePrimary(false);}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){requestAnimationFrame(ready);},{once:true});else requestAnimationFrame(ready);}
+function focusWithoutSplash(){CLOSED=true;focusReady();}
+if(MODE==="skip"){focusWithoutSplash();return;}
+var SHOW=MODE==="force"||windowOpen();if(!SHOW){focusWithoutSplash();return;}
+var SPLASH_EL=null,DISMISS=null,EARLY_DISMISS=false,GUARDED=["keydown","keyup","pointerdown","pointerup","click"];
+function unguard(){for(var i=0;i<GUARDED.length;i++)window.removeEventListener(GUARDED[i],guard,true);}
+function guard(e){e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();if(CLOSED)return;var hit=e.type==="keydown"||(e.type==="pointerdown"&&SPLASH_EL&&SPLASH_EL.contains(e.target))||(e.type==="click"&&SPLASH_EL&&SPLASH_EL.contains(e.target));if(hit){e.preventDefault();if(DISMISS)DISMISS();else EARLY_DISMISS=true;}}
+for(var i=0;i<GUARDED.length;i++)window.addEventListener(GUARDED[i],guard,true);
+requestAnimationFrame(function(){
+var CSS="#mbmSplash[data-mbm-maker-splash]{position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;overflow:hidden;pointer-events:auto;background:radial-gradient(circle at 52% 44%,rgba(17,42,82,.72),transparent 44%),linear-gradient(135deg,#010207 0%,#071023 52%,#13030c 100%);animation:mbmSplash 1.9s cubic-bezier(.2,.8,.2,1) both}#mbmSplash[data-mbm-maker-splash]::before{content:\"\";position:absolute;inset:-20%;background:repeating-linear-gradient(112deg,transparent 0 9%,rgba(37,244,255,.045) 9.2% 9.35%,transparent 9.55% 18%);transform:translateX(-18%);animation:mbmSweep 1.55s ease-out both}.mbm-splash-mark{position:relative;width:min(82vw,560px);text-align:center;text-transform:uppercase;filter:drop-shadow(0 0 28px rgba(37,244,255,.22))}.mbm-splash-mark span,.mbm-splash-mark em{display:block;color:#7e9aad;font-size:clamp(9px,2.4vmin,13px);font-style:normal;font-weight:900;letter-spacing:.48em;text-indent:.48em}.mbm-splash-mark strong{display:block;margin:.07em 0 .02em;color:#f5feff;font-size:clamp(54px,17vmin,132px);font-style:italic;font-weight:1000;letter-spacing:-.07em;line-height:.82;text-shadow:-2px 0 #25f4ff,2px 0 #ff2d78,0 0 34px rgba(37,244,255,.35);transform:skewX(-7deg)}.mbm-splash-mark em{margin-top:15px;color:#ff5b92;letter-spacing:.62em;text-indent:.62em}.mbm-splash-line{width:0;height:2px;margin:18px auto 0;background:linear-gradient(90deg,transparent,#25f4ff 30%,#fff 50%,#ff2d78 70%,transparent);box-shadow:0 0 18px #25f4ff;animation:mbmLine 1.15s .18s ease-out both}.mbm-splash-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}@keyframes mbmSplash{0%{opacity:0;visibility:visible;pointer-events:auto}12%,70%{opacity:1;visibility:visible;pointer-events:auto}100%{opacity:0;visibility:hidden;pointer-events:none}}@keyframes mbmSweep{from{transform:translateX(-28%)}to{transform:translateX(24%)}}@keyframes mbmLine{to{width:76%}}#mbmSplash.mbm-splash-skip{opacity:0!important;visibility:hidden!important;pointer-events:none!important;animation:none!important;transition:opacity .12s ease}@media(prefers-reduced-motion:reduce){#mbmSplash[data-mbm-maker-splash]{animation-duration:.28s}#mbmSplash[data-mbm-maker-splash]::before,.mbm-splash-line{animation:none}}";
+CSS=CSS.replace("animation-duration:.28s","animation-duration:.35s!important");
+var st=document.createElement("style");st.id="mbm-maker-splash-css";st.textContent=CSS;(document.head||document.documentElement).appendChild(st);
+var el=document.createElement("section");el.id="mbmSplash";el.setAttribute("data-mbm-maker-splash","");el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");el.setAttribute("aria-label","Made by Matt introduction");el.tabIndex=-1;el.innerHTML='<div class="mbm-splash-mark"><span>Made by</span><strong>Matt</strong><em>presents</em><div class="mbm-splash-line"></div></div><span class="mbm-splash-sr">Tap or press any key to continue.</span>';
+(document.body||document.documentElement).appendChild(el);SPLASH_EL=el;
+var reduced=false;try{reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(_){}
+var shown=0,requested=false,closed=false,hard=0,finishTimer=0;
+requestAnimationFrame(function(){shown=performance.now();if(requested)scheduleFinish();});
+function finish(){if(closed)return;closed=true;CLOSED=true;clearTimeout(hard);clearTimeout(finishTimer);el.classList.add("mbm-splash-skip");el.style.setProperty("pointer-events","none","important");el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}unguard();if(el.parentNode)el.parentNode.removeChild(el);focusReady();}
+function scheduleFinish(){if(!shown)return;clearTimeout(finishTimer);var wait=Math.max(0,450-(performance.now()-shown));finishTimer=setTimeout(finish,wait);}
+function dismiss(){if(requested||closed)return;requested=true;el.style.setProperty("pointer-events","none","important");el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}if(MODE!=="force")writeNow();scheduleFinish();}
+DISMISS=dismiss;if(EARLY_DISMISS)dismiss();
+el.addEventListener("animationend",function(e){if(e.target===el&&e.animationName==="mbmSplash")dismiss();});
+window.addEventListener("pagehide",function(){if(requested&&!closed)finish();},{once:true});
+try{el.focus({preventScroll:true});}catch(_){try{el.focus();}catch(__){}}
+hard=setTimeout(dismiss,reduced?450:2100);
+var observer=new MutationObserver(function(list){for(var i=0;i<list.length;i++)for(var j=0;j<list[i].addedNodes.length;j++){var n=list[i].addedNodes[j];if(n.nodeType!==1)continue;var maker=n.matches&&n.matches("[data-mbm-maker-splash]")?n:n.querySelector&&n.querySelector("[data-mbm-maker-splash]");if(closed&&maker){try{maker.setAttribute("aria-hidden","true");maker.inert=true;maker.remove();settlePrimary();}catch(_){}continue;}var old=n.matches&&n.matches("#mbmSplash:not([data-mbm-maker-splash]),.mbm-splash:not([data-mbm-maker-splash])")?n:n.querySelector&&n.querySelector("#mbmSplash:not([data-mbm-maker-splash]),.mbm-splash:not([data-mbm-maker-splash])");if(old)try{old.style.setProperty("display","none","important");old.setAttribute("aria-hidden","true");}catch(_){}}});
+try{observer.observe(document.documentElement,{childList:true,subtree:true});var stopObserver=function(){try{observer.disconnect();}catch(_){}};setTimeout(stopObserver,12000);var stopAfterLoad=function(){setTimeout(stopObserver,4000);};if(document.readyState==="complete")stopAfterLoad();else window.addEventListener("load",stopAfterLoad,{once:true});}catch(_){}
+});
+})();</script>
+<!-- MBM-MAKER-SPLASH:END -->
 
 
-  <canvas id="gameCanvas" aria-label="MadeByMatt Relicforge game world"></canvas>
+
+  <canvas id="gameCanvas" tabindex="0" aria-label="Relic Forge: Crownfall game world">Relic Forge: Crownfall requires Canvas support. Keyboard, gamepad and touch controls are documented in How to play.</canvas>
   <div id="vignette"></div>
   <div id="scanlines"></div>
   <div id="damage-flash"></div>
@@ -1199,8 +1294,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       <div class="brand-wrap">
         <div class="brand-mark" aria-hidden="true"></div>
         <div>
-          <div class="brand-title">MadeByMatt // Relicforge</div>
-          <div class="brand-sub">Crown of the Machine Gods · Modular Action RPG</div>
+          <div class="brand-title">MadeByMatt // Relic Forge: Crownfall</div>
+          <div class="brand-sub">V4 Roadmap Milestone 2 · v4.2.0 · Kinetic Modular Roguelite</div>
         </div>
       </div>
       <div class="hud-stats">
@@ -1208,6 +1303,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
         <div class="hud-stat">Score<strong id="hud-score">0</strong></div>
         <div class="hud-stat accent">Scrap<strong id="hud-scrap">0</strong></div>
         <div class="hud-stat">Level<strong id="hud-level">1</strong></div>
+        <div class="hud-stat" id="hud-seed-stat" hidden>Daily seed<strong id="hud-seed">—</strong></div>
       </div>
     </div>
 
@@ -1230,6 +1326,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
 
       <div class="hud-card">
         <div class="loadout-strip" id="hud-loadout"></div>
+        <div class="resonance-strip" id="hud-resonance" aria-label="Active Machine Spirit resonances"></div>
         <div id="objective">Destroy the vault guard and preserve valuable components for salvage.</div>
       </div>
 
@@ -1242,6 +1339,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
           <div class="equip-copy"><div class="equip-slot">Left arm</div><div class="equip-name" id="utility-name">Aegis Shield</div></div>
           <span class="keycap">Q</span>
         </div>
+        <span id="kinetic-status">Kinetic rig offline</span>
         <div class="label-row"><span>Combo multiplier</span><b id="combo-text">×1.00</b></div>
         <div class="meter combo"><i id="combo-fill"></i></div>
       </div>
@@ -1253,8 +1351,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
 
   <div id="menu-overlay" class="overlay open">
     <div class="panel">
-      <div class="eyebrow">MadeByMatt presents</div>
-      <h1>Relic<em>Forge</em></h1>
+      <div class="eyebrow">MadeByMatt presents · V4 Roadmap Milestone 2 · v4.2.0</div>
+      <h1>Relic<em>Forge</em><span class="edition-title">Crownfall</span></h1>
       <p class="lead">Enter a buried machine kingdom, dismantle its guardians component by component, and rebuild your own combat chassis from the relics you recover. Every installed part changes your statistics, abilities, appearance and the machine spirits speaking inside your head.</p>
 
       <div class="menu-layout">
@@ -1283,9 +1381,25 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
 
           <div class="button-row">
             <button class="btn" id="start-btn">Enter the first vault</button>
+            <button class="btn secondary" id="daily-btn">Daily Vault</button>
+            <button class="btn secondary" id="checkpoint-btn" hidden>Resume checkpoint</button>
             <button class="btn secondary" id="how-btn">How to play</button>
             <button class="btn ghost" id="journal-btn">Relic journal</button>
             <button class="btn ghost" id="settings-btn">Settings</button>
+            <button class="btn ghost" id="changelog-btn">What's new</button>
+          </div>
+          <div class="mode-card">
+            <b>Daily Vault · <span id="daily-date">—</span></b>
+            <p>One UTC seed, isolated from frame rate and visual effects. The selected chassis and permanent workshop remain active; the seed is shown throughout the run.</p>
+          </div>
+          <div class="mode-card" id="checkpoint-card" hidden>
+            <b>Boundary checkpoint ready</b>
+            <p id="checkpoint-copy">Resume safely from the last chamber boundary.</p>
+          </div>
+          <div class="mode-card passport-card" id="passport-card">
+            <b>Arcade Passport V4 · local only</b>
+            <p>Preserve the Machine God core in Chamber 10 to unlock the Crown Core Shifter. A recovered Geometric Optic reveals component break seams in this vault.</p>
+            <div class="passport-status"><span id="passport-crown">Crown Core Shifter · locked</span><span id="passport-optic">Geometric Optic · absent</span></div>
           </div>
         </div>
 
@@ -1319,8 +1433,14 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
         <div class="control-row"><b>Aim</b><span>Mouse / right stick</span></div>
         <div class="control-row"><b>Primary weapon</b><span>Left mouse / RT</span></div>
         <div class="control-row"><b>Relic ability</b><span>Q or right mouse / X</span></div>
+        <div class="control-row"><b>Magnet catch</b><span>With Magnet Claw, press Q / X / Relic to attract and catch up to three sheared components</span></div>
+        <div class="control-row"><b>Debris launch</b><span>Aim, then press the same control again; mass and launch speed determine impact damage</span></div>
         <div class="control-row"><b>Phase dash</b><span>Space / A</span></div>
         <div class="control-row"><b>Pause</b><span>Escape / Start</span></div>
+        <div class="control-row"><b>Touch move</b><span>Drag on the left half</span></div>
+        <div class="control-row"><b>Touch aim</b><span>Drag on the right; auto-fire is optional</span></div>
+        <div class="control-row"><b>Touch actions</b><span>Fire, Catch/Launch, Dash and Pause buttons</span></div>
+        <div class="control-row"><b>Aim assistance</b><span>Gentle magnetism preserves component targeting</span></div>
       </div>
       <div class="divider"></div>
       <p class="lead" style="margin-top:0">Clear ten chambers and defeat two fragments of the Machine Gods to reconstruct the Cog Crown. Between chambers, install one recovered relic and dismantle the remainder into persistent forge credits.</p>
@@ -1333,6 +1453,14 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       <div class="eyebrow">System calibration</div>
       <h2>Settings</h2>
       <div class="toggle-row">
+        <div class="toggle-copy"><b>Render quality</b><span>Adaptive resolution preserves sharpness without changing simulation.</span><span class="quality-readout" id="quality-readout">Balanced</span></div>
+        <select class="setting-select" id="quality-select" aria-label="Render quality">
+          <option value="performance">Performance</option>
+          <option value="balanced">Balanced</option>
+          <option value="sharp">Sharp</option>
+        </select>
+      </div>
+      <div class="toggle-row">
         <div class="toggle-copy"><b>Procedural audio</b><span>Weapon, impact, machine and interface synthesis.</span></div>
         <button class="toggle on" id="toggle-audio" aria-label="Toggle audio"><i></i></button>
       </div>
@@ -1343,6 +1471,26 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       <div class="toggle-row">
         <div class="toggle-copy"><b>Reduced motion</b><span>Minimises camera drift, flashes and particle density.</span></div>
         <button class="toggle" id="toggle-motion" aria-label="Toggle reduced motion"><i></i></button>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-copy"><b>Reduce flashes</b><span>Softens damage pulses, hit flashes and animated glow.</span></div>
+        <button class="toggle" id="toggle-flashes" aria-label="Toggle reduced flashes"><i></i></button>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-copy"><b>High-contrast reticle</b><span>Uses a white target ring with a dark outline.</span></div>
+        <button class="toggle" id="toggle-reticle" aria-label="Toggle high contrast reticle"><i></i></button>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-copy"><b>Larger interface</b><span>Increases essential menu and HUD text.</span></div>
+        <button class="toggle" id="toggle-ui-scale" aria-label="Toggle larger interface"><i></i></button>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-copy"><b>Touch auto-fire</b><span>Fires only after the right aim drag passes its activation threshold.</span></div>
+        <button class="toggle on" id="toggle-auto-fire" aria-label="Toggle touch auto fire"><i></i></button>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-copy"><b>Touch aim assist</b><span>Gently guides the reticle without removing component precision.</span></div>
+        <button class="toggle on" id="toggle-aim-assist" aria-label="Toggle touch aim assist"><i></i></button>
       </div>
       <div class="button-row">
         <button class="btn" data-close="settings-overlay">Apply and return</button>
@@ -1364,6 +1512,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       <div id="forge-grid"></div>
       <div class="section-title" style="margin-top:18px">Current chassis</div>
       <div id="forge-loadout"></div>
+      <div class="section-title" style="margin-top:14px">Machine Spirit resonance</div>
+      <div class="resonance-strip" id="forge-resonance" aria-label="Active Machine Spirit resonances"></div>
       <div class="button-row">
         <button class="btn" id="forge-continue" disabled>Install selected relic</button>
         <button class="btn secondary" id="forge-dismantle">Dismantle all for credits</button>
@@ -1457,19 +1607,40 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     </div>
   </div>
 
+  <div id="changelog-overlay" class="overlay">
+    <div class="panel small">
+      <div class="eyebrow">Relic Forge: Crownfall · v4.2.0</div>
+      <h2>V4 Roadmap Milestone 2</h2>
+      <p class="lead">A kinetic systems milestone built on the complete M1 combat, salvage, story, forge, accessibility and safe-resume foundation.</p>
+      <div class="control-grid">
+        <div class="control-row"><b>Kinetic salvage</b><span>Mass, velocity, angular momentum, bounces and capped debris pooling</span></div>
+        <div class="control-row"><b>Magnet Claw sandbox</b><span>Attract, catch, orbit and aim-launch up to three enemy components</span></div>
+        <div class="control-row"><b>System cascades</b><span>Back-module rupture telegraphs a coolant thermal bloom that can chain damage</span></div>
+        <div class="control-row"><b>Persistent battle scars</b><span>Bounded scorch, oil and molten decals accumulate for the chamber</span></div>
+        <div class="control-row"><b>Procedural bracing</b><span>Analytical two-bone IK adds planted chassis struts in Canvas2D</span></div>
+        <div class="control-row"><b>Passport V4</b><span>Crown Core Shifter unlock plus Geometric Optic seam highlighting</span></div>
+        <div class="control-row"><b>Visual governor</b><span>Frame-time hysteresis adjusts only DPR and rendering budgets, never simulation</span></div>
+      </div>
+      <div class="divider"></div>
+      <p class="lead" style="margin-top:0">This remains a standalone Canvas2D build: no WebGL2 G-buffer, networking, telemetry or external dependencies. Boundary resume still restarts interrupted combat from its safe chamber entrance.</p>
+      <div class="button-row"><button class="btn" data-close="changelog-overlay">Return</button></div>
+    </div>
+  </div>
+
   <div id="touch-layer">
     <div id="move-zone"></div>
     <div id="aim-zone"></div>
     <div id="stick-base"></div>
     <div id="stick-knob"></div>
+    <div id="aim-stick"></div>
     <button id="touch-fire" class="touch-button">Fire</button>
     <button id="touch-utility" class="touch-button">Relic</button>
     <button id="touch-dash" class="touch-button">Dash</button>
-    <button id="touch-pause" class="touch-button">II</button>
+    <button id="touch-pause" class="touch-button" aria-label="Pause game">II</button>
   </div>
 
   <div id="rotate-note">
-    <div><b>Rotate to landscape</b><span>Relicforge is fully touch-enabled. Landscape orientation provides the clearest combat view and control spacing.</span></div>
+    <div><b>Rotate to landscape</b><span>Relic Forge: Crownfall is fully touch-enabled. Drag left to move and right to aim; optional auto-fire begins only after a deliberate aim drag.</span></div>
   </div>
 
 <script>
@@ -1481,6 +1652,9 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   // ---------------------------------------------------------------------------
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+  const BUILD_NAME = 'Relic Forge: Crownfall';
+  const BUILD_VERSION = '4.2.0';
+  const BUILD_MILESTONE = 'V4 Roadmap Milestone 2';
   const TAU = Math.PI * 2;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -1501,6 +1675,49 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     }
     return hash >>> 0;
   }
+
+  // Daily content has its own stream. Visual effects, audio, camera shake and
+  // frame-rate-dependent work continue to use Math.random(), so accessibility or
+  // performance settings can never perturb the shared vault seed.
+  const contentRoute = { active: false, baseSeed: 0, state: 0, label: '' };
+
+  function dailySeedDescriptor(date = new Date()) {
+    const label = date.toISOString().slice(0, 10);
+    return { label, seed: hashString(`RF-CROWNFALL|V4-M2|${label}`) || 1 };
+  }
+
+  function setNormalContentRoute() {
+    contentRoute.active = false;
+    contentRoute.baseSeed = 0;
+    contentRoute.state = 0;
+    contentRoute.label = '';
+  }
+
+  function setDailyContentRoute(seed, label) {
+    contentRoute.active = true;
+    contentRoute.baseSeed = Number(seed) >>> 0 || 1;
+    contentRoute.state = contentRoute.baseSeed;
+    contentRoute.label = String(label || 'DAILY');
+  }
+
+  function setContentDomain(domain, cycle = 1, chamber = 1) {
+    if (!contentRoute.active) return;
+    contentRoute.state = hashString(`${contentRoute.baseSeed}|${cycle}|${chamber}|${domain}`) || 1;
+  }
+
+  function contentRandom() {
+    if (!contentRoute.active) return Math.random();
+    let t = contentRoute.state += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    contentRoute.state >>>= 0;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+
+  const contentRand = (min, max) => min + contentRandom() * (max - min);
+  const contentRandi = (min, max) => Math.floor(contentRand(min, max + 1));
+  const contentChoose = (array) => array[Math.floor(contentRandom() * array.length)];
+  const contentChance = (probability) => contentRandom() < probability;
 
   // ---------------------------------------------------------------------------
   // Salvage Rating — how surgically did you win.
@@ -1580,18 +1797,106 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   let viewWidth = window.innerWidth;
   let viewHeight = window.innerHeight;
   let dpr = 1;
+  let renderQuality = 'balanced';
+  let adaptiveRenderScale = 1;
+  let qualitySampleTime = 0;
+  let qualitySampleFrames = 0;
+  let qualityCooldown = 0;
+
+  // Visual-only frame governor, API-compatible with the V4 shared reference.
+  // It never changes the fixed step, AI, collisions, damage, spawn counts or RNG.
+  class PerformanceGovernor {
+    constructor({ onTierChange = () => {}, targetMs = 1000 / 60, windowSize = 60, cooldownMs = 2500 } = {}) {
+      this.onTierChange = onTierChange;
+      this.targetMs = targetMs;
+      this.samples = new Float32Array(Math.max(20, windowSize));
+      this.cursor = 0;
+      this.count = 0;
+      this.cooldownMs = cooldownMs;
+      this.lastAdjustment = -Infinity;
+      this.tier = 0;
+      this.tiers = Object.freeze([
+        Object.freeze({ name: 'ultra', scale: 1, particles: 1, post: true, decalBudget: 160 }),
+        Object.freeze({ name: 'balanced', scale: 0.86, particles: 0.72, post: true, decalBudget: 100 }),
+        Object.freeze({ name: 'battery', scale: 0.72, particles: 0.42, post: false, decalBudget: 56 })
+      ]);
+    }
+    measureFrame(deltaMs, now = performance.now()) {
+      if (!Number.isFinite(deltaMs) || deltaMs <= 0 || deltaMs > 250) return this.current();
+      this.samples[this.cursor] = deltaMs;
+      this.cursor = (this.cursor + 1) % this.samples.length;
+      this.count = Math.min(this.count + 1, this.samples.length);
+      if (this.count < this.samples.length || now - this.lastAdjustment < this.cooldownMs) return this.current();
+      let total = 0;
+      for (let index = 0; index < this.count; index++) total += this.samples[index];
+      const average = total / this.count;
+      let next = this.tier;
+      if (average > this.targetMs * 1.25) next = Math.min(this.tiers.length - 1, this.tier + 1);
+      else if (average < this.targetMs * 0.91) next = Math.max(0, this.tier - 1);
+      if (next !== this.tier) {
+        this.tier = next;
+        this.lastAdjustment = now;
+        this.onTierChange(this.current(), average);
+      }
+      return this.current();
+    }
+    current() { return this.tiers[this.tier]; }
+    setTier(index) {
+      const next = clamp(Math.floor(Number(index) || 0), 0, this.tiers.length - 1);
+      if (next !== this.tier) {
+        this.tier = next;
+        this.lastAdjustment = performance.now();
+        this.onTierChange(this.current(), null);
+      }
+      return this.current();
+    }
+  }
+
+  const visualGovernor = new PerformanceGovernor({
+    onTierChange: () => resizeCanvas()
+  });
 
   function resizeCanvas() {
     viewWidth = window.innerWidth;
     viewHeight = window.innerHeight;
     const coarse = matchMedia('(pointer: coarse)').matches;
-    const budget = coarse ? 1.25 : 1.75;
-    dpr = Math.min(window.devicePixelRatio || 1, budget);
+    const profiles = {
+      performance: { cap: coarse ? 1.45 : 1.65, pixels: 2200000 },
+      balanced: { cap: coarse ? 1.8 : 2.05, pixels: 3400000 },
+      sharp: { cap: coarse ? 2.2 : 2.5, pixels: 4700000 }
+    };
+    const profile = profiles[renderQuality] || profiles.balanced;
+    const pixelCap = Math.sqrt(profile.pixels / Math.max(1, viewWidth * viewHeight));
+    const visualTier = visualGovernor.current();
+    dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, profile.cap, pixelCap) * adaptiveRenderScale * visualTier.scale);
     canvas.width = Math.max(1, Math.floor(viewWidth * dpr));
     canvas.height = Math.max(1, Math.floor(viewHeight * dpr));
     canvas.style.width = `${viewWidth}px`;
     canvas.style.height = `${viewHeight}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const readout = $('#quality-readout');
+    if (readout) readout.textContent = `${renderQuality} · ${dpr.toFixed(2)}× · ${visualTier.name}`;
+  }
+
+  function sampleAdaptiveQuality(frameDelta) {
+    visualGovernor.measureFrame(frameDelta * 1000);
+    if (renderQuality === 'sharp' || game.mode !== 'playing') return;
+    qualitySampleTime += frameDelta;
+    qualitySampleFrames += 1;
+    qualityCooldown = Math.max(0, qualityCooldown - frameDelta);
+    if (qualitySampleTime < 2.4 || qualityCooldown > 0) return;
+    const averageMs = qualitySampleTime / Math.max(1, qualitySampleFrames) * 1000;
+    const floor = renderQuality === 'performance' ? 0.72 : 0.82;
+    let next = adaptiveRenderScale;
+    if (averageMs > 24) next = Math.max(floor, next - 0.1);
+    else if (averageMs < 17.2) next = Math.min(1, next + 0.05);
+    qualitySampleTime = 0;
+    qualitySampleFrames = 0;
+    if (Math.abs(next - adaptiveRenderScale) >= 0.045) {
+      adaptiveRenderScale = next;
+      qualityCooldown = 4;
+      resizeCanvas();
+    }
   }
 
   window.addEventListener('resize', resizeCanvas, { passive: true });
@@ -1600,7 +1905,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
 
   const SAVE_KEY = 'mbm_relicforge_v1';
   const DEFAULT_SAVE = {
-    version: 1,
+    version: 2,
     highScore: 0,
     bestChamber: 0,
     bestCycle: 0,
@@ -1609,10 +1914,18 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     schematics: [],
     records: { salvage: 0, cleanestChamber: 0, streak: 0, cycle: 0, cleanStrips: 0 },
     upgrades: { hull: 0, power: 0, salvage: 0 },
+    checkpoint: null,
+    daily: { date: '', bestScore: 0, bestChamber: 0 },
     settings: {
       audio: true,
       shake: true,
-      reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches
+      reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+      reduceFlashes: false,
+      highContrastReticle: false,
+      largeUi: false,
+      touchAutoFire: true,
+      touchAimAssist: true,
+      quality: 'balanced'
     },
     stats: {
       runs: 0,
@@ -1628,7 +1941,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   function sanitiseSave(raw) {
     const data = raw && typeof raw === 'object' ? raw : {};
     return {
-      version: 1,
+      version: 2,
       highScore: Math.max(0, Number(data.highScore) || 0),
       bestChamber: Math.max(0, Number(data.bestChamber) || 0),
       bestCycle: Math.max(0, Number(data.bestCycle) || 0),
@@ -1647,10 +1960,22 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
         power: clamp(Number(data.upgrades?.power) || 0, 0, 5),
         salvage: clamp(Number(data.upgrades?.salvage) || 0, 0, 5)
       },
+      checkpoint: data.checkpoint && typeof data.checkpoint === 'object' ? data.checkpoint : null,
+      daily: {
+        date: typeof data.daily?.date === 'string' ? data.daily.date.slice(0, 10) : '',
+        bestScore: Math.max(0, Number(data.daily?.bestScore) || 0),
+        bestChamber: Math.max(0, Number(data.daily?.bestChamber) || 0)
+      },
       settings: {
         audio: data.settings?.audio !== false,
         shake: data.settings?.shake !== false,
-        reducedMotion: data.settings?.reducedMotion === true || matchMedia('(prefers-reduced-motion: reduce)').matches
+        reducedMotion: data.settings?.reducedMotion === true || matchMedia('(prefers-reduced-motion: reduce)').matches,
+        reduceFlashes: data.settings?.reduceFlashes === true,
+        highContrastReticle: data.settings?.highContrastReticle === true,
+        largeUi: data.settings?.largeUi === true,
+        touchAutoFire: data.settings?.touchAutoFire !== false,
+        touchAimAssist: data.settings?.touchAimAssist !== false,
+        quality: ['performance', 'balanced', 'sharp'].includes(data.settings?.quality) ? data.settings.quality : 'balanced'
       },
       stats: {
         runs: Math.max(0, Number(data.stats?.runs) || 0),
@@ -1675,6 +2000,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   }
 
   let save = loadSave();
+  renderQuality = save.settings.quality;
+  resizeCanvas();
 
   function persistSave() {
     try {
@@ -1683,6 +2010,130 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       console.warn('Relicforge save write failed:', error);
     }
   }
+
+  // Passport V4 mirrors the shared reference contract while remaining fully
+  // standalone: local-only, merge-safe artefact records and no account/network.
+  const PASSPORT_KEY = 'mbm_arcade_passport_v4';
+  const PASSPORT_ARTEFACTS = Object.freeze({
+    crown_core_shifter: Object.freeze({ source: 'relicforge', label: 'Crown Core Shifter' }),
+    stormbreak_capacitor: Object.freeze({ source: 'trail-runner', label: 'Stormbreak Capacitor' }),
+    beacon_prism: Object.freeze({ source: 'voxel', label: 'Beacon Prism' }),
+    geometric_optic: Object.freeze({ source: 'off-brand', label: 'Geometric Optic' })
+  });
+
+  function freshPassport() {
+    return { version: 4, revision: 0, updatedAt: new Date().toISOString(), artefacts: {} };
+  }
+
+  function normalisePassport(raw) {
+    const result = freshPassport();
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return result;
+    result.revision = Math.max(0, Math.floor(Number(raw.revision) || 0));
+    if (typeof raw.updatedAt === 'string') result.updatedAt = raw.updatedAt.slice(0, 160);
+    const source = raw.artefacts && typeof raw.artefacts === 'object' && !Array.isArray(raw.artefacts)
+      ? raw.artefacts
+      : (raw.artifacts && typeof raw.artifacts === 'object' && !Array.isArray(raw.artifacts)
+          ? raw.artifacts
+          : (Array.isArray(raw.unlocks) ? Object.fromEntries(raw.unlocks.map(id => [id, { id }])) : {}));
+    for (const [id, definition] of Object.entries(PASSPORT_ARTEFACTS)) {
+      const item = source[id];
+      if (!item || typeof item !== 'object') continue;
+      const meta = item.meta && typeof item.meta === 'object' && !Array.isArray(item.meta) ? item.meta : {};
+      result.artefacts[id] = {
+        id,
+        label: definition.label,
+        source: typeof item.source === 'string' ? item.source.slice(0, 160) : definition.source,
+        unlockedAt: typeof item.unlockedAt === 'string' ? item.unlockedAt.slice(0, 160) : result.updatedAt,
+        meta: Object.fromEntries(Object.entries(meta).slice(0, 12).filter(([key, value]) =>
+          /^[a-zA-Z0-9_-]{1,32}$/.test(key) && ['string', 'number', 'boolean'].includes(typeof value)
+        ).map(([key, value]) => [key, typeof value === 'string' ? value.slice(0, 96) : value]))
+      };
+    }
+    return result;
+  }
+
+  function mergePassports(left, right) {
+    const a = normalisePassport(left);
+    const b = normalisePassport(right);
+    const merged = freshPassport();
+    merged.revision = Math.max(a.revision, b.revision);
+    merged.updatedAt = [a.updatedAt, b.updatedAt].sort().at(-1) || merged.updatedAt;
+    for (const id of Object.keys(PASSPORT_ARTEFACTS)) {
+      const candidates = [a.artefacts[id], b.artefacts[id]].filter(Boolean)
+        .sort((x, y) => String(x.unlockedAt).localeCompare(String(y.unlockedAt)));
+      if (!candidates.length) continue;
+      merged.artefacts[id] = {
+        ...candidates[0],
+        meta: { ...candidates[0].meta, ...candidates[candidates.length - 1].meta }
+      };
+    }
+    return merged;
+  }
+
+  function readPassport() {
+    try { return normalisePassport(JSON.parse(localStorage.getItem(PASSPORT_KEY) || 'null')); }
+    catch (_) { return freshPassport(); }
+  }
+
+  let passport = readPassport();
+
+  function persistPassport() {
+    passport = mergePassports(passport, readPassport());
+    try { localStorage.setItem(PASSPORT_KEY, JSON.stringify(passport)); }
+    catch (_) { /* private/quota mode keeps the in-memory passport active */ }
+  }
+
+  function passportHas(id) { return Boolean(passport.artefacts[id]); }
+
+  function unlockPassportArtefact(id, meta = {}) {
+    const definition = PASSPORT_ARTEFACTS[id];
+    passport = mergePassports(passport, readPassport());
+    if (!definition || passportHas(id)) return false;
+    const stamp = new Date().toISOString();
+    passport.artefacts[id] = { id, label: definition.label, source: definition.source, unlockedAt: stamp, meta: { ...meta } };
+    passport.revision += 1;
+    passport.updatedAt = stamp;
+    persistPassport();
+    refreshPassportUi();
+    return true;
+  }
+
+  // "Consume" means link the cross-game artefact to this game's effect while
+  // retaining the passport's permanent unlock record, matching the V4 contract.
+  function consumeGeometricOptic() {
+    passport = mergePassports(passport, readPassport());
+    const optic = passport.artefacts.geometric_optic;
+    if (!optic) return false;
+    if (optic.meta?.usedByRelicForge === true) return true;
+    const stamp = new Date().toISOString();
+    optic.meta = { ...optic.meta, usedByRelicForge: true, effect: 'component-break-seams', usedAt: stamp };
+    passport.revision += 1;
+    passport.updatedAt = stamp;
+    persistPassport();
+    return true;
+  }
+
+  function refreshPassportUi() {
+    const crown = $('#passport-crown');
+    const optic = $('#passport-optic');
+    if (crown) {
+      crown.classList.toggle('online', passportHas('crown_core_shifter'));
+      crown.textContent = passportHas('crown_core_shifter') ? 'Crown Core Shifter · unlocked' : 'Crown Core Shifter · locked';
+    }
+    const opticOnline = consumeGeometricOptic();
+    if (optic) {
+      optic.classList.toggle('online', opticOnline);
+      optic.textContent = opticOnline ? 'Geometric Optic · seams online' : 'Geometric Optic · absent';
+    }
+  }
+
+  window.addEventListener('storage', event => {
+    if (event.key !== PASSPORT_KEY) return;
+    passport = readPassport();
+    refreshPassportUi();
+  });
+
+  persistPassport();
 
   // ---------------------------------------------------------------------------
   // Procedural audio — all sounds are synthesised after a user gesture
@@ -2126,7 +2577,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
 
   function rollRarity(chamber = 1, boss = false) {
     const odds = rarityOdds(chamber, boss);
-    const roll = Math.random();
+    const roll = contentRandom();
     if (roll < odds.legendary) return RARITIES[3];
     if (roll < odds.legendary + odds.epic) return RARITIES[2];
     if (roll < odds.legendary + odds.epic + odds.rare) return RARITIES[1];
@@ -2143,7 +2594,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     const definition = PARTS[definitionId];
     const rarity = forcedRarity ? rarityById(forcedRarity) : rollRarity(chamber, chamber % 5 === 0);
     const depthScale = 1 + Math.max(0, chamber - 1) * 0.034;
-    const quality = rarity.multiplier * depthScale * rand(0.96, 1.07);
+    const quality = rarity.multiplier * depthScale * contentRand(0.96, 1.07);
     return {
       uid: partUid++,
       definitionId,
@@ -2151,7 +2602,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       rarity: rarity.id,
       quality,
       chamber,
-      discovered: performance.now()
+      discovered: contentRoute.active ? contentRoute.state : performance.now()
     };
   }
 
@@ -2218,7 +2669,14 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     lastBankedScore: 0,
     objective: '',
     activeBoss: null,
-    gamepadConnected: false
+    gamepadConnected: false,
+    runMode: 'normal',
+    seedLabel: '',
+    seedValue: 0,
+    statsCommitted: false,
+    kineticHits: 0,
+    kineticDamage: 0,
+    cascadeTriggers: 0
   };
 
   let player = null;
@@ -2231,11 +2689,21 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   const turrets = [];
   const popups = [];
   const slashes = [];
-  // V1: torn-off components in flight, then the litter they settle into. Litter is the
-  // memory of the fight — it is a plain list of transforms, so it costs a draw and no update.
+  // V4 M2: bounded kinetic debris is real combat state. Objects are recycled from
+  // a small pool; decals/cascade zones are independently bounded per chamber.
   const debris = [];
+  const debrisPool = [];
   const litter = [];
   const hitRings = [];
+  const battleDecals = [];
+  const thermalZones = [];
+  const DEBRIS_CAP = 72;
+  const DEBRIS_POOL_CAP = 80;
+  const LITTER_CAP = 96;
+  const DECAL_CAP = 160;
+  const THERMAL_ZONE_CAP = 12;
+  let debrisUid = 1;
+  let thermalZoneUid = 1;
 
   const camera = { x: 0, y: 0, shakeX: 0, shakeY: 0, trauma: 0 };
 
@@ -2245,6 +2713,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     mouseY: viewHeight * 0.5,
     mouseDown: false,
     mobileFire: false,
+    touchAimFire: false,
     moveX: 0,
     moveY: 0,
     aimAngle: -Math.PI / 2,
@@ -2284,6 +2753,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     input.keys.clear();
     input.mouseDown = false;
     input.mobileFire = false;
+    input.touchAimFire = false;
+    input.aimActive = false;
     input.moveX = input.moveY = 0;
     if (game.mode === 'playing') pauseGame();
   });
@@ -2322,6 +2793,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   let aimOriginY = 0;
   const stickBase = $('#stick-base');
   const stickKnob = $('#stick-knob');
+  const aimStick = $('#aim-stick');
 
   function resetMovePointer() {
     movePointerId = null;
@@ -2370,22 +2842,38 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   function resetAimPointer() {
     aimPointerId = null;
     input.aimActive = false;
+    input.touchAimFire = false;
+    aimStick.style.display = 'none';
   }
 
   $('#aim-zone').addEventListener('pointerdown', (event) => {
     if (aimPointerId !== null || game.mode !== 'playing') return;
+    audio.init();
     aimPointerId = event.pointerId;
     aimOriginX = event.clientX;
     aimOriginY = event.clientY;
     input.aimActive = true;
+    input.touchAimFire = false;
     event.currentTarget.setPointerCapture(event.pointerId);
+    aimStick.style.display = 'block';
+    aimStick.style.left = `${aimOriginX}px`;
+    aimStick.style.top = `${aimOriginY}px`;
+    aimStick.style.setProperty('--aim-x', '0px');
+    aimStick.style.setProperty('--aim-y', '0px');
   });
 
   $('#aim-zone').addEventListener('pointermove', (event) => {
     if (event.pointerId !== aimPointerId) return;
     const dx = event.clientX - aimOriginX;
     const dy = event.clientY - aimOriginY;
-    if (Math.hypot(dx, dy) > 12) input.aimAngle = Math.atan2(dy, dx);
+    const magnitude = Math.hypot(dx, dy);
+    if (magnitude > 12) {
+      input.aimAngle = Math.atan2(dy, dx);
+      input.touchAimFire = save.settings.touchAutoFire === true;
+      const travel = Math.min(28, magnitude * 0.32);
+      aimStick.style.setProperty('--aim-x', `${Math.cos(input.aimAngle) * travel}px`);
+      aimStick.style.setProperty('--aim-y', `${Math.sin(input.aimAngle) * travel}px`);
+    }
   });
 
   $('#aim-zone').addEventListener('pointerup', (event) => {
@@ -2428,11 +2916,12 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     resetMovePointer();
     resetAimPointer();
     input.mobileFire = false;
+    input.touchAimFire = false;
   }, { passive: true });
 
   window.addEventListener('gamepadconnected', () => {
     game.gamepadConnected = true;
-    toast('<b>Gamepad linked.</b> Left stick moves, right stick aims, RT fires, X uses relic and A dashes.', 'good');
+    toast('<b>Gamepad linked.</b> Left stick moves, right stick aims, RT fires, X catches/launches with Magnet Claw, and A dashes.', 'good');
   });
   window.addEventListener('gamepaddisconnected', () => { game.gamepadConnected = false; });
 
@@ -2552,7 +3041,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   // settled, so it survives reduced motion — it is information, not animation.
   // ---------------------------------------------------------------------------
   function spawnHitRing(enemy, componentKey, critical) {
-    if (save.settings.reducedMotion && !critical) return;
+    if ((save.settings.reducedMotion || save.settings.reduceFlashes) && !critical) return;
     if (hitRings.length > 40) hitRings.shift();
     const positions = enemyComponentPositions(enemy);
     const point = positions[componentKey];
@@ -2569,20 +3058,145 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     });
   }
 
+  function debrisMassForComponent(componentKey, size, scale = 1) {
+    const classMass = { head: 0.9, armR: 1.25, armL: 1.35, legs: 1.8, back: 1.65, core: 2.5 }[componentKey] || 1;
+    return Number((classMass * Math.max(0.7, scale) * clamp(size / 15, 0.72, 2.2)).toFixed(4));
+  }
+
+  function debrisImpactDamage(mass, speed) {
+    const kineticEnergy = 0.5 * Math.max(0, mass) * Math.max(0, speed) ** 2;
+    return Number(clamp(kineticEnergy / 4500, 7, 220).toFixed(4));
+  }
+
+  function magnetLaunchSpeed(mass, quality = 1) {
+    return Number(clamp((880 + Math.max(0.5, quality) * 135) / Math.sqrt(0.66 + Math.max(0.2, mass) * 0.18), 650, 1120).toFixed(4));
+  }
+
+  function magnetAttractionVector(dx, dy, mass, quality = 1) {
+    const length = Math.hypot(dx, dy) || 1;
+    const acceleration = clamp(1320 * Math.max(0.6, quality) / Math.sqrt(Math.max(0.35, mass)), 720, 2050);
+    return { x: dx / length * acceleration, y: dy / length * acceleration };
+  }
+
+  function cascadeEnvelope(age, telegraph = 0.72, duration = 4.6) {
+    const safeAge = Math.max(0, Number(age) || 0);
+    if (safeAge < telegraph) {
+      const progress = safeAge / telegraph;
+      return { active: false, progress, radius: lerp(24, 74, progress), intensity: 0.25 + progress * 0.55 };
+    }
+    const progress = clamp((safeAge - telegraph) / Math.max(0.01, duration - telegraph), 0, 1);
+    return { active: progress < 1, progress, radius: lerp(82, 168, Math.min(1, progress * 2.2)), intensity: 1 - progress * 0.72 };
+  }
+
+  function addBattleDecal(type, x, y, radius = 18, intensity = 0.5, colour = '#111217') {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    const existing = battleDecals.find(decal => decal.type === type && distance(x, y, decal.x, decal.y) < Math.max(radius, decal.radius) * 0.72);
+    if (existing) {
+      const total = existing.intensity + intensity;
+      existing.x = (existing.x * existing.intensity + x * intensity) / total;
+      existing.y = (existing.y * existing.intensity + y * intensity) / total;
+      existing.radius = clamp(Math.max(existing.radius, radius) + intensity * 2.4, 5, 58);
+      existing.intensity = clamp(total, 0.12, 1.65);
+      existing.colour = colour || existing.colour;
+      return existing;
+    }
+    if (battleDecals.length >= DECAL_CAP) battleDecals.shift();
+    const decal = {
+      type, x, y, radius: clamp(radius, 4, 58), intensity: clamp(intensity, 0.08, 1.65), colour,
+      angle: ((Math.abs(x * 0.019 + y * 0.031) % 1) * TAU)
+    };
+    battleDecals.push(decal);
+    return decal;
+  }
+
+  function spawnThermalZone(x, y, sourceId, colour = '#51e7ff') {
+    if (thermalZones.length >= THERMAL_ZONE_CAP) return null;
+    const zone = { id: thermalZoneUid++, x, y, sourceId, colour, age: 0, duration: 4.6, telegraph: 0.72, tick: 0, playerTick: 0 };
+    thermalZones.push(zone);
+    game.cascadeTriggers = (game.cascadeTriggers || 0) + 1;
+    addBattleDecal('coolant', x, y, 24, 0.7, '#51e7ff');
+    return zone;
+  }
+
+  function acquireDebrisObject() {
+    // Never splice the live physics array to make room: component destruction can
+    // happen from a debris collision while this array is being stepped.
+    if (debris.length >= DEBRIS_CAP) return null;
+    return debrisPool.pop() || {};
+  }
+
+  function releaseDebrisAt(index, settle = false) {
+    const piece = debris[index];
+    if (!piece) return;
+    if (settle) settleLitter(piece);
+    if (player?.heldDebris) player.heldDebris = player.heldDebris.filter(candidate => candidate !== piece);
+    debris.splice(index, 1);
+    piece.hitIds?.clear?.();
+    if (debrisPool.length < DEBRIS_POOL_CAP) debrisPool.push(piece);
+  }
+
+  function clearKineticDebris() {
+    for (let index = debris.length - 1; index >= 0; index--) releaseDebrisAt(index, false);
+    if (player) {
+      player.heldDebris = [];
+      player.magnetFieldTimer = 0;
+      player.magnetRecovery = 0;
+    }
+  }
+
+  function reactivateLitterForMagnet(range = 480, limit = 8) {
+    if (!player) return 0;
+    const candidates = litter
+      .map((piece, index) => ({ piece, index, d: distance(piece.x, piece.y, player.x, player.y) }))
+      .filter(entry => entry.d <= range)
+      .sort((a, b) => a.d - b.d)
+      .slice(0, Math.min(limit, Math.max(0, DEBRIS_CAP - debris.length)))
+      .sort((a, b) => b.index - a.index);
+    for (const entry of candidates) {
+      const source = entry.piece;
+      const piece = acquireDebrisObject();
+      if (!piece) break;
+      Object.assign(piece, {
+        id: debrisUid++, key: source.key, colour: source.colour, size: source.size,
+        radius: Math.max(6, source.size * 0.52), mass: source.mass || debrisMassForComponent(source.key, source.size, 1),
+        x: source.x, y: source.y, vx: 0, vy: 0, angularVelocity: 0, angle: source.angle,
+        life: 13, state: 'free', bouncesRemaining: 0, impactCooldown: 0, restTimer: 0,
+        heldIndex: -1, hitIds: new Set(), launchedAt: 0
+      });
+      litter.splice(entry.index, 1);
+      debris.push(piece);
+    }
+    return candidates.length;
+  }
+
+  function spawnKineticDebris(enemy, componentKey, point, size, colour, away) {
+    const piece = acquireDebrisObject();
+    if (!piece) return null;
+    const scale = enemy.scale || 1;
+    const impulse = rand(150, 270) / Math.sqrt(scale);
+    Object.assign(piece, {
+      id: debrisUid++, key: componentKey, colour, size,
+      radius: Math.max(6, size * 0.52), mass: debrisMassForComponent(componentKey, size, scale),
+      x: point.x, y: point.y,
+      vx: enemy.vx * 0.35 + Math.cos(away) * impulse,
+      vy: enemy.vy * 0.35 + Math.sin(away) * impulse,
+      angularVelocity: rand(-10, 10), angle: rand(0, TAU), life: 13,
+      state: 'free', bouncesRemaining: 0, impactCooldown: 0, restTimer: 0,
+      heldIndex: -1, hitIds: new Set(), launchedAt: 0
+    });
+    debris.push(piece);
+    return piece;
+  }
+
   function shearComponent(enemy, componentKey, point) {
     const colour = enemy.definition.colour;
     const scale = enemy.scale || 1;
-    const size = (enemy.components[componentKey].radius || 10) * 1.35;
+    const size = (enemy.components[componentKey].radius || 10) * 1.42;
     const reduced = save.settings.reducedMotion;
-
-    if (debris.length > 60) debris.shift();
-    const away = angleTo(enemy.x, enemy.y, point.x, point.y) + rand(-0.5, 0.5);
-    debris.push({
-      x: point.x, y: point.y,
-      vx: Math.cos(away) * rand(90, 210), vy: Math.sin(away) * rand(90, 210),
-      spin: rand(-7, 7), angle: rand(0, TAU),
-      size, colour, life: 0.85, key: componentKey
-    });
+    const away = angleTo(enemy.x, enemy.y, point.x, point.y) + rand(-0.42, 0.42);
+    const piece = spawnKineticDebris(enemy, componentKey, point, size, colour, away);
+    const debrisRadius = piece?.radius || size * 0.5;
+    addBattleDecal(componentKey === 'core' ? 'molten' : 'oil', point.x, point.y, debrisRadius * 1.25, componentKey === 'core' ? 0.9 : 0.48, colour);
 
     burstParticles(point.x, point.y, colour, reduced ? 8 : 15, 205);
     for (let i = 0; i < (reduced ? 2 : 5); i++) {
@@ -2592,14 +3206,14 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
         life: rand(0.4, 0.9), size: rand(1, 2.4), colour: '#ffb000', drag: 2.2
       });
     }
+    return piece;
   }
 
   function settleLitter(piece) {
-    // Cap the floor so a long chamber cannot accumulate unbounded draw work.
-    if (litter.length > 90) litter.shift();
+    if (litter.length >= LITTER_CAP) litter.shift();
     litter.push({
       x: piece.x, y: piece.y, angle: piece.angle,
-      size: piece.size, colour: piece.colour, key: piece.key
+      size: piece.size, colour: piece.colour, key: piece.key, mass: piece.mass
     });
   }
 
@@ -2611,7 +3225,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   }
 
   function burstParticles(x, y, colour, count = 12, speed = 180) {
-    const actual = save.settings.reducedMotion ? Math.ceil(count * 0.42) : count;
+    const motionFactor = save.settings.reducedMotion ? 0.42 : 1;
+    const actual = Math.max(1, Math.ceil(count * motionFactor * visualGovernor.current().particles));
     for (let i = 0; i < actual; i++) {
       const angle = rand(0, TAU);
       const velocity = rand(speed * 0.35, speed);
@@ -2654,6 +3269,42 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     return SLOT_ORDER.some(slot => partDefinition(player.equipment[slot]).special === name);
   }
 
+  const RESONANCE_RECIPES = [
+    { id: 'bastion', spirit: 'BASTION', name: 'Bulwark Matrix', colour: '#51e7ff', description: '+4% armour; a third BASTION part adds 10 hull.' },
+    { id: 'volta', spirit: 'VOLTA-7', name: 'Targeting Chorus', colour: '#ffb000', description: '+5% critical chance and +7% fire rate.' },
+    { id: 'saint', spirit: 'SAINT-0', name: 'Restoration Choir', colour: '#56f7a8', description: '+0.75 hull regeneration and +8% energy regeneration.' },
+    { id: 'mira', spirit: 'MIRA', name: 'Archive Concord', colour: '#9b78ff', description: '+10% salvage quality and +10% experience.' }
+  ];
+
+  function resolveResonances(equipment) {
+    if (!equipment) return [];
+    const counts = {};
+    for (const slot of SLOT_ORDER) {
+      const part = equipment[slot];
+      const definition = part && PARTS[part.definitionId];
+      if (definition?.spirit) counts[definition.spirit] = (counts[definition.spirit] || 0) + 1;
+    }
+    return RESONANCE_RECIPES
+      .filter(recipe => (counts[recipe.spirit] || 0) >= 2)
+      .map(recipe => ({ ...recipe, count: counts[recipe.spirit] }));
+  }
+
+  function renderResonances(container, equipment = player?.equipment) {
+    if (!container) return;
+    const resonances = resolveResonances(equipment);
+    container.innerHTML = resonances.length
+      ? resonances.map(resonance => `<span class="resonance-chip" style="--resonance-colour:${resonance.colour}" title="${resonance.description}">${resonance.name} · ${resonance.count}</span>`).join('')
+      : '<span class="resonance-empty">No paired Machine Spirits</span>';
+  }
+
+  function candidateResonanceText(candidate) {
+    if (!player || !candidate) return '';
+    const before = new Set(resolveResonances(player.equipment).map(item => item.id));
+    const nextEquipment = { ...player.equipment, [candidate.slot]: candidate };
+    const activated = resolveResonances(nextEquipment).filter(item => !before.has(item.id));
+    return activated.length ? `<br><strong>Resonance online:</strong> ${activated.map(item => item.name).join(', ')}.` : '';
+  }
+
   function createPlayer(chassisId) {
     const chassis = CHASSIS[chassisId] || CHASSIS.vanguard;
     const equipment = {};
@@ -2690,6 +3341,9 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       droneTimer: 0.25,
       missileTimer: 2.6,
       trailTimer: 0,
+      heldDebris: [],
+      magnetFieldTimer: 0,
+      magnetRecovery: 0,
       lastMoveMagnitude: 0,
       equipment,
       stats: {},
@@ -2753,6 +3407,23 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
           case 'bossDamage': stats.bossDamage += value; break;
           case 'dodge': stats.dodge += value; break;
         }
+      }
+    }
+
+    player.resonances = resolveResonances(player.equipment);
+    for (const resonance of player.resonances) {
+      if (resonance.id === 'bastion') {
+        stats.armour += 0.04;
+        if (resonance.count >= 3) stats.maxHp += 10;
+      } else if (resonance.id === 'volta') {
+        stats.crit += 0.05;
+        stats.fireRateMultiplier *= 1.07;
+      } else if (resonance.id === 'saint') {
+        stats.regen += 0.75;
+        stats.energyRegen *= 1.08;
+      } else if (resonance.id === 'mira') {
+        stats.salvage += 0.10;
+        stats.xpBonus += 0.10;
       }
     }
 
@@ -2824,19 +3495,64 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     requestAnimationFrame(() => { ariaStatus.textContent = text; });
   }
 
+  const overlayReturnFocus = new WeakMap();
+
   function openOverlay(id) {
     const overlay = document.getElementById(id);
-    if (overlay) overlay.classList.add('open');
+    if (!overlay) return;
+    overlayReturnFocus.set(overlay, document.activeElement);
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(() => {
+      const target = overlay.querySelector('button:not([disabled]), select, [tabindex="0"]');
+      if (target) target.focus({ preventScroll: true });
+    });
   }
 
   function closeOverlay(id) {
     const overlay = document.getElementById(id);
-    if (overlay) overlay.classList.remove('open');
+    if (!overlay) return;
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+    const previous = overlayReturnFocus.get(overlay);
+    if (previous?.isConnected) previous.focus({ preventScroll: true });
   }
 
   function closeAllOverlays() {
-    $$('.overlay').forEach(overlay => overlay.classList.remove('open'));
+    $$('.overlay').forEach(overlay => {
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden', 'true');
+    });
   }
+
+  $$('.overlay').forEach(overlay => {
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-hidden', overlay.classList.contains('open') ? 'false' : 'true');
+    const heading = overlay.querySelector('h1, h2');
+    if (heading) {
+      if (!heading.id) heading.id = `${overlay.id}-title`;
+      overlay.setAttribute('aria-labelledby', heading.id);
+    }
+  });
+
+  document.addEventListener('keydown', event => {
+    const overlay = $$('.overlay.open').at(-1);
+    if (event.key === 'Escape' && overlay?.querySelector(`[data-close="${overlay.id}"]`)) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeOverlay(overlay.id);
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    if (!overlay || game.mode === 'story') return;
+    const focusable = Array.from(overlay.querySelectorAll('button:not([disabled]):not([hidden]), select:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'));
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  });
 
   function updateToggle(element, enabled) {
     element.classList.toggle('on', enabled);
@@ -2847,6 +3563,13 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     updateToggle($('#toggle-audio'), save.settings.audio);
     updateToggle($('#toggle-shake'), save.settings.shake);
     updateToggle($('#toggle-motion'), save.settings.reducedMotion);
+    updateToggle($('#toggle-flashes'), save.settings.reduceFlashes);
+    updateToggle($('#toggle-reticle'), save.settings.highContrastReticle);
+    updateToggle($('#toggle-ui-scale'), save.settings.largeUi);
+    updateToggle($('#toggle-auto-fire'), save.settings.touchAutoFire);
+    updateToggle($('#toggle-aim-assist'), save.settings.touchAimAssist);
+    $('#quality-select').value = save.settings.quality;
+    document.body.classList.toggle('ui-large', save.settings.largeUi);
   }
 
   function workshopCost(key) {
@@ -2907,8 +3630,22 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     $('#menu-score').textContent = formatNumber(save.highScore);
     $('#menu-credits').textContent = formatNumber(save.credits);
     $('#menu-schematics').textContent = save.schematics.length;
+    const daily = dailySeedDescriptor();
+    $('#daily-date').textContent = `${daily.label} · ${daily.seed.toString(16).padStart(8, '0').toUpperCase()}`;
+    const checkpoint = validatedCheckpoint();
+    if (save.checkpoint && !checkpoint) {
+      save.checkpoint = null;
+      persistSave();
+    }
+    $('#checkpoint-btn').hidden = !checkpoint;
+    $('#checkpoint-card').hidden = !checkpoint;
+    if (checkpoint) {
+      const mode = checkpoint.runMode === 'daily' ? `Daily ${checkpoint.seedLabel.slice(0, 10)} · ` : '';
+      $('#checkpoint-copy').textContent = `${mode}${checkpoint.phase === 'forge' ? 'Forge draft' : 'Vault entrance'} · cycle ${checkpoint.game.cycle}, chamber ${checkpoint.game.chamber}.`;
+    }
     renderWorkshop();
     refreshSettingsUi();
+    refreshPassportUi();
   }
 
   $$('.chassis-card').forEach(card => {
@@ -2923,6 +3660,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   $('#how-btn').addEventListener('click', () => openOverlay('how-overlay'));
   $('#settings-btn').addEventListener('click', () => openOverlay('settings-overlay'));
   $('#pause-settings-btn').addEventListener('click', () => openOverlay('settings-overlay'));
+  $('#changelog-btn').addEventListener('click', () => openOverlay('changelog-overlay'));
   $$('[data-close]').forEach(button => button.addEventListener('click', () => closeOverlay(button.dataset.close)));
 
   $('#toggle-audio').addEventListener('click', () => {
@@ -2941,9 +3679,45 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     persistSave();
     refreshSettingsUi();
   });
+  $('#toggle-flashes').addEventListener('click', () => {
+    save.settings.reduceFlashes = !save.settings.reduceFlashes;
+    persistSave();
+    refreshSettingsUi();
+  });
+  $('#toggle-reticle').addEventListener('click', () => {
+    save.settings.highContrastReticle = !save.settings.highContrastReticle;
+    persistSave();
+    refreshSettingsUi();
+  });
+  $('#toggle-ui-scale').addEventListener('click', () => {
+    save.settings.largeUi = !save.settings.largeUi;
+    persistSave();
+    refreshSettingsUi();
+  });
+  $('#toggle-auto-fire').addEventListener('click', () => {
+    save.settings.touchAutoFire = !save.settings.touchAutoFire;
+    input.touchAimFire = false;
+    persistSave();
+    refreshSettingsUi();
+  });
+  $('#toggle-aim-assist').addEventListener('click', () => {
+    save.settings.touchAimAssist = !save.settings.touchAimAssist;
+    persistSave();
+    refreshSettingsUi();
+  });
+  $('#quality-select').addEventListener('change', event => {
+    const quality = ['performance', 'balanced', 'sharp'].includes(event.target.value) ? event.target.value : 'balanced';
+    save.settings.quality = quality;
+    renderQuality = quality;
+    adaptiveRenderScale = 1;
+    qualitySampleTime = qualitySampleFrames = qualityCooldown = 0;
+    persistSave();
+    resizeCanvas();
+    refreshSettingsUi();
+  });
 
   $('#reset-save-btn').addEventListener('click', () => {
-    if (!confirm('Reset all Relicforge scores, upgrades, credits and schematics?')) return;
+    if (!confirm('Reset all Relic Forge: Crownfall scores, upgrades, credits and schematics?')) return;
     save = sanitiseSave(DEFAULT_SAVE);
     persistSave();
     refreshMenu();
@@ -2965,14 +3739,14 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
 
   function randomFreePosition(minX = 360, maxX = 1550, minY = 120, maxY = 980, radius = 28, avoidPlayer = 280) {
     for (let attempt = 0; attempt < 90; attempt++) {
-      const x = rand(minX, maxX);
-      const y = rand(minY, maxY);
+      const x = contentRand(minX, maxX);
+      const y = contentRand(minY, maxY);
       if (player && distance(x, y, player.x, player.y) < avoidPlayer) continue;
       if (world.obstacles.some(rect => circleRectOverlap(x, y, radius + 14, rect))) continue;
       if (world.hazards.some(hazard => distance(x, y, hazard.x, hazard.y) < hazard.radius + radius + 22)) continue;
       return { x, y };
     }
-    return { x: rand(minX, maxX), y: rand(minY, maxY) };
+    return { x: contentRand(minX, maxX), y: contentRand(minY, maxY) };
   }
 
   function generateVault() {
@@ -2991,22 +3765,22 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       hazards: [],
       decorations: [],
       gate: { x: width - 72, y: height * 0.5 - 92, w: 44, h: 184, open: false },
-      seed: Math.random(),
+      seed: contentRandom(),
       titleTimer: 3.2
     };
 
-    const obstacleTarget = 7 + Math.min(5, game.chamber) + randi(0, 3);
+    const obstacleTarget = 7 + Math.min(5, game.chamber) + contentRandi(0, 3);
     for (let i = 0; i < obstacleTarget; i++) {
-      const wide = chance(0.52);
-      const w = wide ? rand(110, 240) : rand(70, 120);
-      const h = wide ? rand(62, 115) : rand(120, 220);
+      const wide = contentChance(0.52);
+      const w = wide ? contentRand(110, 240) : contentRand(70, 120);
+      const h = wide ? contentRand(62, 115) : contentRand(120, 220);
       const rect = {
-        x: rand(365, width - 330 - w),
-        y: rand(100, height - 100 - h),
+        x: contentRand(365, width - 330 - w),
+        y: contentRand(100, height - 100 - h),
         w,
         h,
-        bevel: rand(6, 16),
-        stripe: chance(0.4)
+        bevel: contentRand(6, 16),
+        stripe: contentChance(0.4)
       };
       const blocksStart = circleRectOverlap(180, height * 0.5, 170, rect);
       const blocksGate = circleRectOverlap(width - 110, height * 0.5, 180, rect);
@@ -3024,19 +3798,19 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       world.hazards.push({
         x: position.x,
         y: position.y,
-        radius: rand(42, 72),
-        phase: rand(0, TAU),
-        type: chance(0.55) ? 'arc' : 'smelter'
+        radius: contentRand(42, 72),
+        phase: contentRand(0, TAU),
+        type: contentChance(0.55) ? 'arc' : 'smelter'
       });
     }
 
     for (let i = 0; i < 46; i++) {
       world.decorations.push({
-        x: rand(70, width - 70),
-        y: rand(70, height - 70),
-        size: rand(4, 16),
-        rotation: rand(0, TAU),
-        kind: randi(0, 2)
+        x: contentRand(70, width - 70),
+        y: contentRand(70, height - 70),
+        size: contentRand(4, 16),
+        rotation: contentRand(0, TAU),
+        kind: contentRandi(0, 2)
       });
     }
 
@@ -3304,8 +4078,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       // Salvage ledger — everything the rating needs, accumulated as the fight happens
       // so the score at death is a record of the fight rather than a guess about it.
       salvage: { coreStray: 0, coreMax: core, overkill: 0, total: 0, melee: 0, stripped: 0 },
-      attackCooldown: rand(0.4, 1.4),
-      specialCooldown: rand(2.5, 5),
+      attackCooldown: contentRand(0.4, 1.4),
+      specialCooldown: contentRand(2.5, 5),
       chargeTimer: 0,
       chargeTargetAngle: 0,
       stunTimer: 0,
@@ -3313,12 +4087,12 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       hurtTimer: 0,
       dead: false,
       deathTimer: 0,
-      phase: rand(0, TAU),
-      strafeDirection: chance(0.5) ? -1 : 1,
+      phase: contentRand(0, TAU),
+      strafeDirection: contentChance(0.5) ? -1 : 1,
       contactCooldown: 0,
       spawnTimer: 0.45,
       lastHitComponent: 'core',
-      elite: !definition.boss && chance(Math.min(0.28, game.chamber * 0.025 + (game.cycle - 1) * 0.06)),
+      elite: !definition.boss && contentChance(Math.min(0.28, game.chamber * 0.025 + (game.cycle - 1) * 0.06)),
       shield: typeId === 'heavy' ? core * 0.24 : 0,
       maxShield: typeId === 'heavy' ? core * 0.24 : 0
     };
@@ -3342,7 +4116,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
 
   function chooseEnemyType(index, count) {
     const depth = game.chamber + (game.cycle - 1) * 4;
-    const roll = Math.random();
+    const roll = contentRandom();
     if (depth >= 7 && roll < 0.16) return 'sniper';
     if (depth >= 4 && roll < 0.37) return 'heavy';
     if (depth >= 2 && roll < 0.72) return 'gunner';
@@ -3413,12 +4187,173 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   // ---------------------------------------------------------------------------
   // Run flow, forge drafting, banking and HUD
   // ---------------------------------------------------------------------------
-  function startRun(chassisId) {
+  const CHECKPOINT_GAME_FIELDS = [
+    'chamber', 'cycle', 'score', 'scrap', 'runCredits', 'bankedCredits', 'runXp',
+    'totalXpEarned', 'bankedXp', 'runLevel', 'nextXp', 'kills', 'bosses',
+    'componentsDestroyed', 'relicsInstalled', 'salvageStreak', 'cleanStrips',
+    'ratedKills', 'salvageTotal', 'bestSalvage', 'cleanestChamber', 'bestStreak',
+    'time', 'pendingVictory', 'lastBankedScore', 'comboCount', 'comboTimer',
+    'kineticHits', 'kineticDamage', 'cascadeTriggers'
+  ];
+
+  function checkpointPart(part) {
+    return {
+      uid: Math.max(1, Math.floor(Number(part.uid) || 1)),
+      definitionId: part.definitionId,
+      slot: part.slot,
+      rarity: part.rarity,
+      quality: Number(part.quality),
+      chamber: Math.max(1, Math.floor(Number(part.chamber) || 1)),
+      discovered: Number(part.discovered) || 0
+    };
+  }
+
+  function validatedCheckpointPart(raw, expectedSlot = null) {
+    if (!raw || typeof raw !== 'object') return null;
+    const definition = PARTS[raw.definitionId];
+    const quality = Number(raw.quality);
+    if (!definition || (expectedSlot && definition.slot !== expectedSlot) || raw.slot !== definition.slot) return null;
+    if (!RARITIES.some(rarity => rarity.id === raw.rarity) || !Number.isFinite(quality) || quality < 0.5 || quality > 12) return null;
+    return checkpointPart({ ...raw, quality });
+  }
+
+  function validatedCheckpoint(raw = save.checkpoint) {
+    if (!raw || typeof raw !== 'object' || raw.schema !== 1 || !['nextChamber', 'forge'].includes(raw.phase)) return null;
+    if (!CHASSIS[raw.chassisId] || !raw.game || !raw.player) return null;
+    const chamber = Math.floor(Number(raw.game.chamber));
+    const cycle = Math.floor(Number(raw.game.cycle));
+    if (!Number.isFinite(chamber) || chamber < 1 || chamber > 10 || !Number.isFinite(cycle) || cycle < 1 || cycle > 999) return null;
+    const equipment = {};
+    for (const slot of SLOT_ORDER) {
+      equipment[slot] = validatedCheckpointPart(raw.player.equipment?.[slot], slot);
+      if (!equipment[slot]) return null;
+    }
+    const forgeChoices = raw.phase === 'forge'
+      ? (Array.isArray(raw.forgeChoices) ? raw.forgeChoices.slice(0, 3).map(part => validatedCheckpointPart(part)) : [])
+      : [];
+    if (raw.phase === 'forge' && (forgeChoices.length !== 3 || forgeChoices.some(part => !part))) return null;
+    const runMode = raw.runMode === 'daily' ? 'daily' : 'normal';
+    const seedValue = Number(raw.seedValue) >>> 0;
+    if (runMode === 'daily' && (!seedValue || typeof raw.seedLabel !== 'string')) return null;
+    return {
+      ...raw,
+      phase: raw.phase,
+      chassisId: raw.chassisId,
+      runMode,
+      seedValue,
+      seedLabel: runMode === 'daily' ? raw.seedLabel.slice(0, 40) : '',
+      game: { ...raw.game, chamber, cycle },
+      player: { ...raw.player, equipment },
+      forgeChoices
+    };
+  }
+
+  function writeCheckpoint(phase) {
+    if (!player || !['nextChamber', 'forge'].includes(phase)) return;
+    const gameState = {};
+    for (const field of CHECKPOINT_GAME_FIELDS) gameState[field] = game[field];
+    save.checkpoint = {
+      schema: 1,
+      build: BUILD_VERSION,
+      savedAt: Date.now(),
+      phase,
+      chassisId: player.chassisId,
+      runMode: game.runMode,
+      seedLabel: game.seedLabel,
+      seedValue: game.seedValue,
+      game: gameState,
+      player: {
+        hp: player.hp,
+        energy: player.energy,
+        heat: player.heat,
+        fireCooldown: player.fireCooldown,
+        utilityCooldown: player.utilityCooldown,
+        dashCooldown: player.dashCooldown,
+        overheatTimer: player.overheatTimer,
+        equipment: Object.fromEntries(SLOT_ORDER.map(slot => [slot, checkpointPart(player.equipment[slot])]))
+      },
+      forgeChoices: phase === 'forge' ? game.forgeChoices.map(checkpointPart) : []
+    };
+    persistSave();
+  }
+
+  function applyCheckpointPlayer(checkpoint) {
+    player.equipment = checkpoint.player.equipment;
+    recalculatePlayerStats(false);
+    player.hp = clamp(Number(checkpoint.player.hp) || 1, 1, player.maxHp);
+    player.energy = clamp(Number(checkpoint.player.energy) || 0, 0, player.maxEnergy);
+    player.heat = clamp(Number(checkpoint.player.heat) || 0, 0, 100);
+    for (const field of ['fireCooldown', 'utilityCooldown', 'dashCooldown', 'overheatTimer']) {
+      player[field] = Math.max(0, Number(checkpoint.player[field]) || 0);
+    }
+    const usedIds = [...Object.values(player.equipment), ...checkpoint.forgeChoices].map(part => part.uid);
+    partUid = Math.max(partUid, ...usedIds, 0) + 1;
+  }
+
+  function resetRunTransients() {
+    enemies.length = projectiles.length = enemyProjectiles.length = particles.length = drops.length = turrets.length = popups.length = slashes.length = 0;
+    clearKineticDebris();
+    litter.length = hitRings.length = battleDecals.length = thermalZones.length = 0;
+    input.mouseDown = input.mobileFire = input.touchAimFire = false;
+    game.activeBoss = null;
+    $('#boss-wrap').style.display = 'none';
+  }
+
+  function resumeCheckpoint() {
+    const checkpoint = validatedCheckpoint();
+    if (!checkpoint) {
+      save.checkpoint = null;
+      persistSave();
+      refreshMenu();
+      toast('<b>Checkpoint recovered safely.</b> The damaged boundary record was discarded.', 'bad');
+      return;
+    }
+    audio.init();
+    closeAllOverlays();
+    resetRunTransients();
+    selectedChassis = checkpoint.chassisId;
+    Object.assign(game, checkpoint.game, {
+      runMode: checkpoint.runMode,
+      seedLabel: checkpoint.seedLabel,
+      seedValue: checkpoint.seedValue,
+      statsCommitted: false,
+      salvagePool: [],
+      selectedForgeIndex: -1,
+      forgeChoices: [],
+      announcedClear: false,
+      kineticHits: Math.max(0, Number(checkpoint.game.kineticHits) || 0),
+      kineticDamage: Math.max(0, Number(checkpoint.game.kineticDamage) || 0),
+      cascadeTriggers: Math.max(0, Number(checkpoint.game.cascadeTriggers) || 0)
+    });
+    setNormalContentRoute();
+    createPlayer(selectedChassis);
+    applyCheckpointPlayer(checkpoint);
+    if (game.runMode === 'daily') setDailyContentRoute(game.seedValue, game.seedLabel.slice(0, 10));
+    else setNormalContentRoute();
+    enemyUid = 1;
+
+    if (checkpoint.phase === 'forge') {
+      game.mode = 'forge';
+      renderForge(checkpoint.forgeChoices);
+      openOverlay('forge-overlay');
+      audio.forge();
+      updateHud(true);
+      announce(`Forge checkpoint restored at chamber ${game.chamber}.`);
+    } else {
+      game.mode = 'playing';
+      writeCheckpoint('nextChamber');
+      beginChamber();
+      announce(`Checkpoint restored at the entrance to chamber ${game.chamber}.`);
+    }
+  }
+
+  function startRun(chassisId, options = {}) {
     if (chassisId && CHASSIS[chassisId]) selectedChassis = chassisId;
     audio.init();
     closeAllOverlays();
+    resetRunTransients();
     save.stats.runs += 1;
-    persistSave();
+    save.checkpoint = null;
 
     game.mode = 'playing';
     game.chamber = 1;
@@ -3454,13 +4389,36 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     game.announcedClear = false;
     game.comboCount = 0;
     game.comboTimer = 0;
+    game.kineticHits = 0;
+    game.kineticDamage = 0;
+    game.cascadeTriggers = 0;
+    game.statsCommitted = false;
+    const daily = options.mode === 'daily';
+    const descriptor = dailySeedDescriptor();
+    game.runMode = daily ? 'daily' : 'normal';
+    game.seedValue = daily ? descriptor.seed : 0;
+    game.seedLabel = daily ? `${descriptor.label} · ${descriptor.seed.toString(16).padStart(8, '0').toUpperCase()}` : '';
+    partUid = 1;
+    enemyUid = 1;
+    if (daily) {
+      setDailyContentRoute(descriptor.seed, descriptor.label);
+      setContentDomain('starter', 1, 1);
+    } else {
+      setNormalContentRoute();
+    }
 
     createPlayer(selectedChassis);
+    writeCheckpoint('nextChamber');
     beginChamber();
     // S4 — this run is THIS chassis, and says so.
     const chassisVoice = STORY.chassis[selectedChassis];
     toast(`<b>${CHASSIS[selectedChassis].name} chassis awakened.</b> ${chassisVoice ? chassisVoice.open : partDefinition(player.equipment.core).voice}`, 'good', 5200);
-    announce(`Relicforge run started with the ${CHASSIS[selectedChassis].name} chassis. ${chassisVoice ? chassisVoice.open : ''}`);
+    if (isTouchDevice) toast(`<b>Touch combat online.</b> Drag left to move and right to aim. ${selectedChassis === 'wraith' ? 'Tap Catch to seize sheared parts, then aim and tap Launch.' : 'Relic and Dash remain manual.'}`, 'good', 6200);
+    announce(`${BUILD_NAME} run started with the ${CHASSIS[selectedChassis].name} chassis. ${chassisVoice ? chassisVoice.open : ''}`);
+  }
+
+  function startDailyRun() {
+    startRun(selectedChassis, { mode: 'daily' });
   }
 
   function beginChamber() {
@@ -3482,9 +4440,9 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     game.chamberRated = 0;
     game.chamberClean = 0;
     // Litter is the memory of one fight — a new chamber starts with a clean floor.
-    debris.length = 0;
-    litter.length = 0;
-    hitRings.length = 0;
+    clearKineticDebris();
+    litter.length = hitRings.length = battleDecals.length = thermalZones.length = 0;
+    setContentDomain('vault', game.cycle, game.chamber);
     generateVault();
     populateVault();
     player.hp = clamp(player.hp + player.maxHp * 0.08, 1, player.maxHp);
@@ -3508,6 +4466,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     game.mode = 'paused';
     input.mouseDown = false;
     input.mobileFire = false;
+    resetMovePointer();
+    resetAimPointer();
     openOverlay('pause-overlay');
   }
 
@@ -3537,6 +4497,12 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     save.highScore = Math.max(save.highScore, Math.floor(game.score));
     save.bestChamber = Math.max(save.bestChamber, absoluteChamber());
     save.bestCycle = Math.max(save.bestCycle, game.cycle);
+    if (game.runMode === 'daily') {
+      const date = game.seedLabel.slice(0, 10);
+      if (save.daily.date !== date) save.daily = { date, bestScore: 0, bestChamber: 0 };
+      save.daily.bestScore = Math.max(save.daily.bestScore, Math.floor(game.score));
+      save.daily.bestChamber = Math.max(save.daily.bestChamber, absoluteChamber());
+    }
     persistSave();
   }
 
@@ -3573,6 +4539,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   }
 
   function finishRunStats(victory = false) {
+    if (game.statsCommitted) return;
+    game.statsCommitted = true;
     bankRunProgress();
     save.stats.kills += game.kills;
     save.stats.bosses += game.bosses;
@@ -3580,6 +4548,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     save.stats.relicsInstalled += game.relicsInstalled;
     save.stats.totalScore += Math.floor(game.score);
     if (victory) save.stats.victories += 1;
+    save.checkpoint = null;
     persistSave();
   }
 
@@ -3596,6 +4565,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     input.mouseDown = false;
     input.mobileFire = false;
     enemies.length = projectiles.length = enemyProjectiles.length = particles.length = drops.length = turrets.length = popups.length = slashes.length = 0;
+    clearKineticDebris();
+    litter.length = hitRings.length = battleDecals.length = thermalZones.length = 0;
     $('#boss-wrap').style.display = 'none';
     refreshMenu();
     openOverlay('menu-overlay');
@@ -3614,6 +4585,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     $('#over-kills').textContent = game.kills;
     $('#over-credits').textContent = formatNumber(game.runCredits);
     const card = renderReportCard('over');
+    persistSave();
     openOverlay('gameover-overlay');
     announce(`Chassis destroyed in chamber ${absoluteChamber()}. Final score ${Math.floor(game.score)}. ` +
       `Best salvage rating ${game.bestSalvage}, mean ${card.mean}, ${game.cleanStrips} clean strips of ${game.ratedKills}, longest streak ${game.bestStreak}.` +
@@ -3624,7 +4596,6 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     game.mode = 'victory';
     bankRunProgress();
     save.stats.victories += 1;
-    persistSave();
     const scene = $('#win-scene');
     if (scene) {
       const closing = STORY.closings[Math.min(game.cycle - 1, STORY.closings.length - 1)];
@@ -3637,6 +4608,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     $('#win-bosses').textContent = game.bosses;
     $('#win-schematics').textContent = save.schematics.length;
     renderReportCard('win');
+    save.checkpoint = null;
+    persistSave();
     openOverlay('victory-overlay');
     audio.clear();
     const closingLine = STORY.closings[Math.min(game.cycle - 1, STORY.closings.length - 1)];
@@ -3652,6 +4625,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     recalculatePlayerStats(true);
     player.hp = player.maxHp;
     player.energy = player.maxEnergy;
+    writeCheckpoint('nextChamber');
     beginChamber();
     toast(`<b>Cycle ${game.cycle} initiated.</b> Enemy systems have evolved. Your installed relics remain active.`, 'bad', 4500);
   }
@@ -3675,17 +4649,18 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   function comparePart(candidate) {
     const current = player.equipment[candidate.slot];
     const delta = partRating(candidate) - partRating(current);
-    if (Math.abs(delta) < 4) return '<strong>Sidegrade:</strong> changes your build rather than raw power.';
-    if (delta > 0) return `<strong>Estimated upgrade:</strong> +${Math.round(delta)} forge rating.`;
-    return `<strong>Specialised trade-off:</strong> ${Math.round(Math.abs(delta))} lower raw rating with a different effect.`;
+    const resonance = candidateResonanceText(candidate);
+    if (Math.abs(delta) < 4) return `<strong>Sidegrade:</strong> changes your build rather than raw power.${resonance}`;
+    if (delta > 0) return `<strong>Estimated upgrade:</strong> +${Math.round(delta)} forge rating.${resonance}`;
+    return `<strong>Specialised trade-off:</strong> ${Math.round(Math.abs(delta))} lower raw rating with a different effect.${resonance}`;
   }
 
   function generateForgeChoices() {
     const candidates = [...game.salvagePool];
     const boss = game.chamber % 5 === 0;
     while (candidates.length < 5) {
-      const slot = choose(SLOT_ORDER);
-      const id = choose(PART_IDS_BY_SLOT[slot]);
+      const slot = contentChoose(SLOT_ORDER);
+      const id = contentChoose(PART_IDS_BY_SLOT[slot]);
       candidates.push(createPart(id, game.chamber + (game.cycle - 1) * 3, boss && candidates.length === 0 ? 'epic' : null));
     }
     candidates.sort((a, b) => partRating(b) - partRating(a));
@@ -3700,8 +4675,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       }
     }
     while (choices.length < 3) {
-      const slot = choose(SLOT_ORDER);
-      choices.push(createPart(choose(PART_IDS_BY_SLOT[slot]), game.chamber + (game.cycle - 1) * 3));
+      const slot = contentChoose(SLOT_ORDER);
+      choices.push(createPart(contentChoose(PART_IDS_BY_SLOT[slot]), game.chamber + (game.cycle - 1) * 3));
     }
     return choices;
   }
@@ -3720,8 +4695,12 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     }
   }
 
-  function renderForge() {
-    game.forgeChoices = generateForgeChoices();
+  function renderForge(restoredChoices = null) {
+    if (restoredChoices) game.forgeChoices = restoredChoices.map(checkpointPart);
+    else {
+      setContentDomain('forge', game.cycle, game.chamber);
+      game.forgeChoices = generateForgeChoices();
+    }
     game.selectedForgeIndex = -1;
     $('#forge-continue').disabled = true;
     const grid = $('#forge-grid');
@@ -3746,6 +4725,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       grid.appendChild(card);
     });
     renderLoadout($('#forge-loadout'));
+    renderResonances($('#forge-resonance'));
   }
 
   function openForge() {
@@ -3757,8 +4737,9 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     player.energy = player.maxEnergy;
     player.heat = 0;
     renderForge();
-    openOverlay('forge-overlay');
     bankRunProgress();
+    writeCheckpoint('forge');
+    openOverlay('forge-overlay');
     audio.forge();
     announce('Forge opened. Choose one recovered component to install.');
   }
@@ -3821,6 +4802,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       return;
     }
     game.chamber += 1;
+    writeCheckpoint('nextChamber');
     beginChamber();
   }
 
@@ -3842,20 +4824,48 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
 
     const weapon = currentWeapon();
     const utility = currentUtility();
+    const magnet = utility.type === 'magnet';
+    const heldCount = player.heldDebris?.length || 0;
     $('#weapon-name').textContent = weapon.name;
-    $('#utility-name').textContent = player.utilityCooldown > 0 ? `${utility.name} · ${player.utilityCooldown.toFixed(1)}s` : utility.name;
-    $('#touch-utility').textContent = player.utilityCooldown > 0 ? Math.ceil(player.utilityCooldown) : 'Relic';
+    if (magnet && heldCount) {
+      $('#utility-name').textContent = `${utility.name} · LAUNCH ${heldCount}`;
+      $('#touch-utility').textContent = 'Launch';
+    } else if (magnet && player.magnetFieldTimer > 0) {
+      $('#utility-name').textContent = `${utility.name} · CATCH ${player.magnetFieldTimer.toFixed(1)}s`;
+      $('#touch-utility').textContent = 'Catch';
+    } else {
+      $('#utility-name').textContent = player.utilityCooldown > 0 ? `${utility.name} · ${player.utilityCooldown.toFixed(1)}s` : utility.name;
+      $('#touch-utility').textContent = player.utilityCooldown > 0 ? Math.ceil(player.utilityCooldown) : (magnet ? 'Catch' : 'Relic');
+    }
+    const kineticStatus = $('#kinetic-status');
+    if (magnet && heldCount) {
+      kineticStatus.textContent = `${heldCount}/3 caught · aim + Q / X / Launch`;
+      kineticStatus.classList.add('online');
+    } else if (magnet && player.magnetFieldTimer > 0) {
+      kineticStatus.textContent = `Magnet field ${player.magnetFieldTimer.toFixed(1)}s · ${heldCount}/3 caught`;
+      kineticStatus.classList.add('online');
+    } else {
+      const looseCount = debris.filter(piece => piece.state !== 'held').length;
+      kineticStatus.textContent = magnet ? `${looseCount} kinetic pieces · Q / X / Catch` : `${looseCount} kinetic pieces in vault`;
+      kineticStatus.classList.toggle('online', magnet && player.utilityCooldown <= 0);
+    }
 
     if (force) {
       renderLoadout($('#hud-loadout'));
       renderLoadout($('#forge-loadout'));
+      renderResonances($('#hud-resonance'));
+      renderResonances($('#forge-resonance'));
     }
+
+    const daily = game.runMode === 'daily';
+    $('#hud-seed-stat').hidden = !daily;
+    if (daily) $('#hud-seed').textContent = game.seedLabel || contentRoute.label;
 
     const remaining = remainingEnemyCount();
     if (game.mode === 'playing' || game.mode === 'transition') {
       $('#objective').innerHTML = remaining > 0
         ? `<strong>${remaining} guardian${remaining === 1 ? '' : 's'} remain.</strong> Target arms, legs and heads to disable systems.`
-        : '<strong>Vault secured.</strong> The Relicforge is preparing recovered components.';
+        : '<strong>Vault secured.</strong> The Relic Forge is preparing recovered components.';
     }
 
     if (game.activeBoss && !game.activeBoss.dead) {
@@ -3863,10 +4873,12 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     }
   }
 
-  $('#start-btn').addEventListener('click', startRun);
+  $('#start-btn').addEventListener('click', () => startRun(selectedChassis));
+  $('#daily-btn').addEventListener('click', startDailyRun);
+  $('#checkpoint-btn').addEventListener('click', resumeCheckpoint);
   $('#resume-btn').addEventListener('click', resumeGame);
   $('#abandon-btn').addEventListener('click', abandonRun);
-  $('#retry-btn').addEventListener('click', startRun);
+  $('#retry-btn').addEventListener('click', () => startRun(selectedChassis));
 
   $('#story-continue-btn').addEventListener('click', () => dismissChamberStory());
   $('#journal-btn').addEventListener('click', () => { renderJournal(); openOverlay('journal-overlay'); });
@@ -3900,18 +4912,75 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     burstParticles(player.x, player.y, partDefinition(player.equipment.core).colour, 16, 230);
   }
 
+  function catchDebrisPiece(piece) {
+    if (!player || !piece || piece.state === 'held' || player.heldDebris.length >= 3) return false;
+    piece.state = 'held';
+    piece.vx = piece.vy = 0;
+    piece.impactCooldown = 0;
+    piece.hitIds.clear();
+    player.heldDebris.push(piece);
+    player.heldDebris.forEach((held, index) => { held.heldIndex = index; });
+    addPopup(`CAUGHT · ${piece.mass.toFixed(1)} MASS`, piece.x, piece.y - 18, '#51e7ff', 10);
+    audio.pickup();
+    return true;
+  }
+
+  function launchHeldDebris() {
+    if (!player?.heldDebris?.length) return false;
+    const utilityPart = player.equipment.utility;
+    const definition = partDefinition(utilityPart);
+    if (definition.utility?.type !== 'magnet') return false;
+    const held = player.heldDebris.slice();
+    player.heldDebris.length = 0;
+    player.magnetFieldTimer = 0;
+    held.forEach((piece, index) => {
+      const offset = (index - (held.length - 1) * 0.5) * 0.075;
+      const angle = player.angle + offset;
+      const speed = magnetLaunchSpeed(piece.mass, utilityPart.quality);
+      piece.state = 'launched';
+      piece.heldIndex = -1;
+      piece.x = player.x + Math.cos(angle) * (38 + index * 4);
+      piece.y = player.y + Math.sin(angle) * (38 + index * 4);
+      piece.vx = Math.cos(angle) * speed + player.vx * 0.22;
+      piece.vy = Math.sin(angle) * speed + player.vy * 0.22;
+      piece.angularVelocity = (index % 2 ? -1 : 1) * (10 + speed * 0.006);
+      piece.bouncesRemaining = 2;
+      piece.impactCooldown = 0.045;
+      piece.restTimer = 0;
+      piece.life = Math.max(piece.life, 7);
+      piece.launchedAt = game.time;
+      piece.hitIds.clear();
+    });
+    player.utilityCooldown = currentUtility().cooldown;
+    player.magnetRecovery = 0;
+    const totalMass = held.reduce((sum, piece) => sum + piece.mass, 0);
+    slashes.push({ x: player.x, y: player.y, angle: player.angle, arc: 0.38, radius: 110, colour: '#51e7ff', life: 0.32, maxLife: 0.32 });
+    addTrauma(Math.min(0.24, 0.08 + totalMass * 0.018));
+    audio.ability();
+    toast(`<b>${definition.spirit}: Kinetic release.</b> ${held.length} component${held.length === 1 ? '' : 's'} · ${totalMass.toFixed(1)} mass.`, 'good', 2200);
+    announce(`${held.length} caught component${held.length === 1 ? '' : 's'} launched.`);
+    return true;
+  }
+
   function activateUtility() {
-    if (!player || game.mode !== 'playing' || player.utilityCooldown > 0) return;
+    if (!player || game.mode !== 'playing') return;
     const utilityPart = player.equipment.utility;
     const definition = partDefinition(utilityPart);
     const utility = currentUtility();
+    // Catch/launch is a two-stage action. A loaded claw always launches before the
+    // generic cooldown gate, so keyboard, gamepad and touch all behave identically.
+    if (utility.type === 'magnet' && player.heldDebris.length) {
+      launchHeldDebris();
+      return;
+    }
+    if (player.utilityCooldown > 0) return;
     if (player.energy < utility.energy) {
       toast('<b>Relic energy depleted.</b> Allow the core to recharge.', 'bad', 1800);
       return;
     }
 
     player.energy -= utility.energy;
-    player.utilityCooldown = utility.cooldown;
+    player.utilityCooldown = utility.type === 'magnet' ? 0.32 : utility.cooldown;
     audio.ability();
     addTrauma(0.14);
 
@@ -3925,6 +4994,9 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       });
       toast(`<b>${definition.spirit}: Aegis field active.</b> Incoming damage reduced.`, 'good', 2200);
     } else if (utility.type === 'magnet') {
+      player.magnetFieldTimer = 2.65 + utilityPart.quality * 0.35;
+      player.magnetRecovery = utility.cooldown;
+      const reactivated = reactivateLitterForMagnet(480, 8);
       let affected = 0;
       for (const enemy of enemies) {
         if (enemy.dead) continue;
@@ -3939,8 +5011,9 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
         damageEnemyComponent(enemy, targetKey, 13 * utilityPart.quality, { ability: true, canCrit: false, knockback: 0 });
         affected++;
       }
-      slashes.push({ x: player.x, y: player.y, angle: 0, arc: TAU, radius: 340, colour: '#ffb000', life: 0.45, maxLife: 0.45, ring: true });
-      toast(`<b>${definition.spirit}: ${affected} target${affected === 1 ? '' : 's'} seized.</b>`, 'good', 1800);
+      const loose = debris.filter(piece => piece.state !== 'held' && distance(piece.x, piece.y, player.x, player.y) <= 470).length;
+      slashes.push({ x: player.x, y: player.y, angle: 0, arc: TAU, radius: 470, colour: '#51e7ff', life: 0.58, maxLife: 0.58, ring: true });
+      toast(`<b>${definition.spirit}: Magnet field armed.</b> ${loose} loose component${loose === 1 ? '' : 's'} in range${reactivated ? `, including ${reactivated} lifted from the floor` : ''}; press again after capture to launch. ${affected} hostile rig${affected === 1 ? '' : 's'} disrupted.`, 'good', 3100);
     } else if (utility.type === 'repair') {
       const heal = 30 + 18 * utilityPart.quality;
       player.hp = clamp(player.hp + heal, 0, player.maxHp);
@@ -4085,13 +5158,13 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
 
   function showHitmarker(critical = false) {
     hitmarker.classList.toggle('critical', critical);
-    hitmarker.style.opacity = '1';
+    hitmarker.style.opacity = save.settings.reduceFlashes ? '0.55' : '1';
     hitmarker.style.transform = 'translate(-50%, -50%) scale(1)';
     clearTimeout(showHitmarker.timer);
     showHitmarker.timer = setTimeout(() => {
       hitmarker.style.opacity = '0';
       hitmarker.style.transform = 'translate(-50%, -50%) scale(.8)';
-    }, 85);
+    }, save.settings.reduceFlashes ? 125 : 85);
   }
 
   function damageEnemyComponent(enemy, componentKey, rawDamage, options = {}) {
@@ -4141,7 +5214,9 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     spawnHitRing(enemy, componentKey, critical);
     const knockback = options.knockback ?? 65;
     if (knockback > 0) {
-      const angle = angleTo(player.x, player.y, enemy.x, enemy.y);
+      const angle = Number.isFinite(options.knockbackAngle)
+        ? options.knockbackAngle
+        : angleTo(player.x, player.y, enemy.x, enemy.y);
       enemy.vx += Math.cos(angle) * knockback / Math.max(0.8, enemy.scale);
       enemy.vy += Math.sin(angle) * knockback / Math.max(0.8, enemy.scale);
     }
@@ -4187,6 +5262,12 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       enemy.components.core.hp -= enemy.components.core.maxHp * 0.035;
     } else if (componentKey === 'back') {
       enemy.specialCooldown = 999;
+      const zone = spawnThermalZone(point.x, point.y, enemy.id, enemy.definition.colour);
+      if (zone) {
+        addPopup('COOLANT CASCADE · CLEAR THE RING', point.x, point.y - 38, '#51e7ff', 12);
+        slashes.push({ x: point.x, y: point.y, angle: 0, arc: TAU, radius: 74, colour: '#51e7ff', life: zone.telegraph, maxLife: zone.telegraph, ring: true });
+        if (enemy.definition.boss) announce('Boss coolant cascade armed. Clear the expanding thermal ring.');
+      }
     } else if (componentKey === 'legs') {
       enemy.vx *= 0.35;
       enemy.vy *= 0.35;
@@ -4285,6 +5366,16 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     // --- Salvage Rating: how surgically did you win -------------------------
     const rating = scoreSalvage(enemy, corePreserved);
 
+    if (enemy.typeId === 'god' && game.chamber % 10 === 0 && corePreserved) {
+      const unlocked = unlockPassportArtefact('crown_core_shifter', {
+        chamber: absoluteChamber(), cycle: game.cycle, salvage: rating, feat: 'machine-god-core-preserved'
+      });
+      if (unlocked) {
+        toast('<b>Passport V4 artefact unlocked: Crown Core Shifter.</b><br>The Machine God fell with its core preserved.', 'good', 6200);
+        announce('Arcade Passport V4 unlocked Crown Core Shifter for preserving the Machine God core.');
+      }
+    }
+
     const multiplier = 1 + Math.min(2.5, game.comboCount * 0.12);
     const scoreGain = enemy.definition.score * multiplier * (corePreserved ? 1.45 : 1);
     game.score += scoreGain;
@@ -4300,10 +5391,10 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     const slots = intactSalvageSlots(enemy, corePreserved);
     const dropChance = clamp(0.14 + player.stats.salvage * 0.32 + slots.length * 0.045 + (enemy.elite ? 0.16 : 0), 0.12, 0.82);
     const guaranteed = enemy.definition.boss || corePreserved;
-    if (slots.length > 0 && (guaranteed || chance(dropChance))) {
-      const slot = corePreserved ? 'core' : choose(slots);
-      const definitionId = choose(PART_IDS_BY_SLOT[slot]);
-      const part = createPart(definitionId, game.chamber + (game.cycle - 1) * 3, enemy.definition.boss && chance(0.55) ? 'legendary' : null);
+    if (slots.length > 0 && (guaranteed || contentChance(dropChance))) {
+      const slot = corePreserved ? 'core' : contentChoose(slots);
+      const definitionId = contentChoose(PART_IDS_BY_SLOT[slot]);
+      const part = createPart(definitionId, game.chamber + (game.cycle - 1) * 3, enemy.definition.boss && contentChance(0.55) ? 'legendary' : null);
       drops.push({
         kind: 'part', part, x: enemy.x, y: enemy.y,
         vx: rand(-70, 70), vy: rand(-70, 70), radius: 12,
@@ -4311,10 +5402,10 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       });
     }
 
-    const shardCount = enemy.definition.boss ? 8 : randi(1, 3);
+    const shardCount = enemy.definition.boss ? 8 : contentRandi(1, 3);
     for (let i = 0; i < shardCount; i++) {
       drops.push({
-        kind: 'scrap', value: enemy.definition.boss ? randi(8, 15) : randi(2, 6),
+        kind: 'scrap', value: enemy.definition.boss ? contentRandi(8, 15) : contentRandi(2, 6),
         x: enemy.x, y: enemy.y,
         vx: rand(-130, 130), vy: rand(-130, 130), radius: 5,
         colour: '#ffb000', life: 18, collected: false
@@ -4357,7 +5448,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     player.hp -= damage;
     player.hurtTimer = 0;
     player.invulnerability = 0.18;
-    damageFlash.style.opacity = save.settings.reducedMotion ? '0.28' : '0.75';
+    damageFlash.style.opacity = save.settings.reduceFlashes ? '0.16' : (save.settings.reducedMotion ? '0.28' : '0.75');
     clearTimeout(damagePlayer.flashTimer);
     damagePlayer.flashTimer = setTimeout(() => { damageFlash.style.opacity = '0'; }, 100);
     addPopup(`-${Math.round(damage)} HULL`, player.x, player.y - 42, '#ff496c', 13);
@@ -4411,6 +5502,15 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   // ---------------------------------------------------------------------------
   // Simulation updates: player, enemy AI, projectiles, drops and chamber gates
   // ---------------------------------------------------------------------------
+  function assistedTouchAim(angle) {
+    if (!isTouchDevice || !save.settings.touchAimAssist || !player) return angle;
+    const target = nearestEnemy(player.x, player.y, 680, true);
+    if (!target) return angle;
+    const targetAngle = angleTo(player.x, player.y, target.x, target.y);
+    const delta = shortestAngle(angle, targetAngle);
+    return Math.abs(delta) <= 0.22 ? angle + delta * 0.32 : angle;
+  }
+
   function moveEntityWithCollisions(entity, dx, dy) {
     entity.x += dx;
     entity.x = clamp(entity.x, entity.radius + 28, world.width - entity.radius - 28);
@@ -4431,6 +5531,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     player.overdriveTimer = Math.max(0, player.overdriveTimer - dt);
     player.swingTimer = Math.max(0, player.swingTimer - dt);
     player.hazardCooldown = Math.max(0, (player.hazardCooldown || 0) - dt);
+    player.magnetFieldTimer = Math.max(0, (player.magnetFieldTimer || 0) - dt);
 
     if (player.overheatTimer > 0) {
       player.overheatTimer = Math.max(0, player.overheatTimer - dt);
@@ -4464,7 +5565,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       player.angle = angleTo(player.x, player.y, mouseWorldX, mouseWorldY);
       input.aimAngle = player.angle;
     } else {
-      player.angle = input.aimAngle;
+      player.angle = assistedTouchAim(input.aimAngle);
     }
 
     let movementSpeed = player.speed;
@@ -4525,7 +5626,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       }
     }
 
-    if ((input.mouseDown || input.mobileFire || input.gamepadFire) && game.mode === 'playing') tryFireWeapon();
+    if ((input.mouseDown || input.mobileFire || input.touchAimFire || input.gamepadFire) && game.mode === 'playing') tryFireWeapon();
 
     updateBackModule(dt);
     const follow = save.settings.reducedMotion ? 1 : 1 - Math.exp(-dt * 7.5);
@@ -4953,6 +6054,204 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     }
   }
 
+  function closestDebrisComponent(enemy, x, y) {
+    const positions = enemyComponentPositions(enemy);
+    let bestKey = enemy.components.core.destroyed ? null : 'core';
+    let bestDistance = bestKey ? distance(x, y, positions.core.x, positions.core.y) : Infinity;
+    for (const [key, point] of Object.entries(positions)) {
+      if (point.component.destroyed) continue;
+      const d = distance(x, y, point.x, point.y);
+      if (d < bestDistance) { bestDistance = d; bestKey = key; }
+    }
+    return bestKey;
+  }
+
+  function reflectDebris(piece, normalX, normalY, restitution = 0.62) {
+    const dot = piece.vx * normalX + piece.vy * normalY;
+    if (dot >= 0) return;
+    piece.vx = (piece.vx - 2 * dot * normalX) * restitution;
+    piece.vy = (piece.vy - 2 * dot * normalY) * restitution;
+    piece.angularVelocity *= -0.72;
+  }
+
+  function collideDebrisWithWorld(piece) {
+    let collided = false;
+    const minimum = 30 + piece.radius;
+    if (piece.x < minimum) { piece.x = minimum; reflectDebris(piece, 1, 0); collided = true; }
+    else if (piece.x > world.width - minimum) { piece.x = world.width - minimum; reflectDebris(piece, -1, 0); collided = true; }
+    if (piece.y < minimum) { piece.y = minimum; reflectDebris(piece, 0, 1); collided = true; }
+    else if (piece.y > world.height - minimum) { piece.y = world.height - minimum; reflectDebris(piece, 0, -1); collided = true; }
+
+    for (const rect of world.obstacles) {
+      if (!circleRectOverlap(piece.x, piece.y, piece.radius, rect)) continue;
+      const closestX = clamp(piece.x, rect.x, rect.x + rect.w);
+      const closestY = clamp(piece.y, rect.y, rect.y + rect.h);
+      let dx = piece.x - closestX;
+      let dy = piece.y - closestY;
+      let length = Math.hypot(dx, dy);
+      if (length < 0.001) {
+        const edges = [
+          { distance: Math.abs(piece.x - rect.x), x: -1, y: 0, px: rect.x - piece.radius },
+          { distance: Math.abs(rect.x + rect.w - piece.x), x: 1, y: 0, px: rect.x + rect.w + piece.radius },
+          { distance: Math.abs(piece.y - rect.y), x: 0, y: -1, py: rect.y - piece.radius },
+          { distance: Math.abs(rect.y + rect.h - piece.y), x: 0, y: 1, py: rect.y + rect.h + piece.radius }
+        ].sort((a, b) => a.distance - b.distance);
+        const edge = edges[0];
+        dx = edge.x; dy = edge.y; length = 1;
+        if (edge.px !== undefined) piece.x = edge.px;
+        if (edge.py !== undefined) piece.y = edge.py;
+      } else {
+        piece.x = closestX + dx / length * (piece.radius + 0.8);
+        piece.y = closestY + dy / length * (piece.radius + 0.8);
+      }
+      reflectDebris(piece, dx / length, dy / length, clamp(0.7 - piece.mass * 0.035, 0.48, 0.68));
+      collided = true;
+      break;
+    }
+    return collided;
+  }
+
+  function updateKineticDebris(dt) {
+    if (!player || !world) return;
+    const magnetDefinition = partDefinition(player.equipment.utility);
+    const magnetQuality = magnetDefinition.utility?.type === 'magnet' ? player.equipment.utility.quality : 0;
+    const fieldActive = magnetQuality > 0 && player.magnetFieldTimer > 0;
+
+    if (!fieldActive && player.magnetRecovery > 0) {
+      if (!player.heldDebris.length) player.utilityCooldown = Math.max(player.utilityCooldown, player.magnetRecovery);
+      player.magnetRecovery = 0;
+    }
+
+    for (let index = debris.length - 1; index >= 0; index--) {
+      const piece = debris[index];
+      piece.impactCooldown = Math.max(0, piece.impactCooldown - dt);
+
+      if (piece.state === 'held') {
+        const count = Math.max(1, player.heldDebris.length);
+        const orbit = game.time * 2.45 + piece.heldIndex / count * TAU;
+        const radius = 48 + piece.heldIndex * 9 + piece.mass * 1.6;
+        const targetX = player.x + Math.cos(orbit) * radius;
+        const targetY = player.y + Math.sin(orbit) * radius;
+        piece.vx = (targetX - piece.x) / Math.max(dt, 1 / 120);
+        piece.vy = (targetY - piece.y) / Math.max(dt, 1 / 120);
+        piece.x = targetX;
+        piece.y = targetY;
+        piece.angle += (3.5 + piece.mass) * dt;
+        piece.life = Math.max(piece.life, 6);
+        continue;
+      }
+
+      if (fieldActive && piece.state !== 'launched') {
+        const dx = player.x - piece.x;
+        const dy = player.y - piece.y;
+        const d = Math.hypot(dx, dy);
+        if (d <= 480) {
+          piece.state = 'attracted';
+          const pull = magnetAttractionVector(dx, dy, piece.mass, magnetQuality);
+          piece.vx += pull.x * dt;
+          piece.vy += pull.y * dt;
+          if (d <= 44 + piece.radius && player.heldDebris.length < 3 && catchDebrisPiece(piece)) continue;
+        } else if (piece.state === 'attracted') piece.state = 'free';
+      } else if (piece.state === 'attracted') piece.state = 'free';
+
+      const speedBefore = Math.hypot(piece.vx, piece.vy);
+      const drag = piece.state === 'launched' ? 0.18 : (piece.state === 'attracted' ? 0.42 : 1.35);
+      piece.vx *= Math.exp(-drag * dt);
+      piece.vy *= Math.exp(-drag * dt);
+      piece.angularVelocity *= Math.exp(-(piece.state === 'launched' ? 0.16 : 1.05) * dt);
+      const steps = Math.max(1, Math.ceil(speedBefore * dt / 18));
+      let worldHit = false;
+
+      for (let step = 0; step < steps; step++) {
+        piece.x += piece.vx * dt / steps;
+        piece.y += piece.vy * dt / steps;
+        piece.angle += piece.angularVelocity * dt / steps;
+        if (collideDebrisWithWorld(piece)) {
+          worldHit = true;
+          if (piece.state === 'launched') {
+            piece.bouncesRemaining -= 1;
+            piece.impactCooldown = Math.max(piece.impactCooldown, 0.08);
+            if (piece.bouncesRemaining < 0) piece.state = 'free';
+          }
+        }
+
+        if (piece.state !== 'launched' || piece.impactCooldown > 0) continue;
+        for (const enemy of enemies) {
+          if (enemy.dead || piece.hitIds.has(enemy.id)) continue;
+          if (distance(piece.x, piece.y, enemy.x, enemy.y) > enemy.radius * 2.5 + piece.radius) continue;
+          const key = closestDebrisComponent(enemy, piece.x, piece.y);
+          if (!key) continue;
+          const point = enemyComponentPositions(enemy)[key];
+          if (distance(piece.x, piece.y, point.x, point.y) > piece.radius + point.component.radius) continue;
+          const impactSpeed = Math.hypot(piece.vx, piece.vy);
+          const damage = debrisImpactDamage(piece.mass, impactSpeed);
+          piece.hitIds.add(enemy.id);
+          game.kineticHits += 1;
+          game.kineticDamage += damage;
+          const impactAngle = angleTo(piece.x, piece.y, enemy.x, enemy.y);
+          damageEnemyComponent(enemy, key, damage, {
+            ability: true, canCrit: false, knockback: clamp(damage * 2.4, 45, 360),
+            knockbackAngle: impactAngle, debrisImpact: true
+          });
+          addPopup(`${Math.round(damage)} KINETIC · ${piece.mass.toFixed(1)}M`, point.x, point.y - 22, '#51e7ff', 11);
+          addBattleDecal('scorch', piece.x, piece.y, clamp(piece.radius + impactSpeed * 0.012, 10, 32), clamp(damage / 120, 0.25, 1), piece.colour);
+          burstParticles(piece.x, piece.y, piece.colour, 12, clamp(impactSpeed * 0.34, 120, 330));
+          addHitStop(clamp(0.018 + piece.mass * 0.006, 0.02, 0.055));
+          const normalX = (piece.x - enemy.x) / (distance(piece.x, piece.y, enemy.x, enemy.y) || 1);
+          const normalY = (piece.y - enemy.y) / (distance(piece.x, piece.y, enemy.x, enemy.y) || 1);
+          reflectDebris(piece, normalX, normalY, 0.46);
+          piece.bouncesRemaining -= 1;
+          piece.impactCooldown = 0.11;
+          if (piece.bouncesRemaining < 0) piece.state = 'free';
+          break;
+        }
+      }
+
+      if (worldHit && speedBefore > 390) {
+        addBattleDecal('scorch', piece.x, piece.y, clamp(piece.radius * 1.25, 9, 26), 0.3, piece.colour);
+        audio.tone(clamp(230 - piece.mass * 28, 90, 210), 0.075, 'square', 0.035, 60, 0, piece.x, piece.y);
+      }
+
+      const speedAfter = Math.hypot(piece.vx, piece.vy);
+      piece.restTimer = speedAfter < 34 && piece.state === 'free' ? piece.restTimer + dt : 0;
+      piece.life -= dt;
+      if (piece.restTimer > 1.15 || piece.life <= 0) releaseDebrisAt(index, true);
+    }
+  }
+
+  function updateThermalZones(dt) {
+    for (let index = thermalZones.length - 1; index >= 0; index--) {
+      const zone = thermalZones[index];
+      zone.age += dt;
+      zone.tick -= dt;
+      zone.playerTick -= dt;
+      const envelope = cascadeEnvelope(zone.age, zone.telegraph, zone.duration);
+      if (zone.age >= zone.duration) {
+        addBattleDecal('scorch', zone.x, zone.y, 42, 0.72, '#ff654a');
+        thermalZones.splice(index, 1);
+        continue;
+      }
+      if (!envelope.active) continue;
+      if (zone.tick <= 0) {
+        zone.tick = 0.32;
+        addBattleDecal('molten', zone.x, zone.y, envelope.radius * 0.3, 0.08, '#ff654a');
+        const targets = enemies.slice();
+        for (const enemy of targets) {
+          if (enemy.dead || distance(zone.x, zone.y, enemy.x, enemy.y) > envelope.radius + enemy.radius) continue;
+          const key = enemy.id === zone.sourceId ? 'core' : (enemy.components.back.destroyed ? 'core' : 'back');
+          damageEnemyComponent(enemy, key, (7.5 + game.cycle * 1.4) * envelope.intensity, {
+            ability: true, canCrit: false, knockback: 18,
+            knockbackAngle: angleTo(zone.x, zone.y, enemy.x, enemy.y), cascade: true
+          });
+        }
+      }
+      if (zone.playerTick <= 0 && distance(zone.x, zone.y, player.x, player.y) < envelope.radius + player.radius * 0.4) {
+        zone.playerTick = 0.5;
+        damagePlayer(4.2 * envelope.intensity, { hazard: true });
+      }
+    }
+  }
+
   function updateParticles(dt) {
     for (let index = particles.length - 1; index >= 0; index--) {
       const particle = particles[index];
@@ -4972,18 +6271,6 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     for (let index = slashes.length - 1; index >= 0; index--) {
       slashes[index].life -= dt;
       if (slashes[index].life <= 0) slashes.splice(index, 1);
-    }
-    // Sheared components tumble, slow, and become permanent floor litter.
-    for (let index = debris.length - 1; index >= 0; index--) {
-      const piece = debris[index];
-      piece.life -= dt;
-      piece.vx *= Math.exp(-2.6 * dt);
-      piece.vy *= Math.exp(-2.6 * dt);
-      piece.x += piece.vx * dt;
-      piece.y += piece.vy * dt;
-      piece.angle += piece.spin * dt;
-      piece.spin *= Math.exp(-2.2 * dt);
-      if (piece.life <= 0) { settleLitter(piece); debris.splice(index, 1); }
     }
     for (let index = hitRings.length - 1; index >= 0; index--) {
       hitRings[index].life -= dt;
@@ -5017,8 +6304,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       game.clearTimer -= dt;
       if (game.clearTimer <= 0 && drops.length === 0) {
         if (game.salvagePool.length === 0) {
-          const slot = choose(SLOT_ORDER);
-          game.salvagePool.push(createPart(choose(PART_IDS_BY_SLOT[slot]), game.chamber + (game.cycle - 1) * 3));
+          const slot = contentChoose(SLOT_ORDER);
+          game.salvagePool.push(createPart(contentChoose(PART_IDS_BY_SLOT[slot]), game.chamber + (game.cycle - 1) * 3));
         }
         openForge();
       }
@@ -5410,6 +6697,78 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     ctx.restore();
   }
 
+  function drawBattleDecals() {
+    const tier = visualGovernor.current();
+    const start = Math.max(0, battleDecals.length - tier.decalBudget);
+    for (let index = start; index < battleDecals.length; index++) {
+      const decal = battleDecals[index];
+      if (!inView(decal.x, decal.y, decal.radius + 20)) continue;
+      ctx.save();
+      ctx.translate(decal.x, decal.y);
+      ctx.rotate(decal.angle);
+      const rx = decal.radius;
+      const ry = decal.radius * (decal.type === 'oil' ? 0.48 : 0.62);
+      if (tier.post) {
+        const gradient = ctx.createRadialGradient(0, 0, 1, 0, 0, rx);
+        if (decal.type === 'molten') {
+          gradient.addColorStop(0, `rgba(255,176,0,${0.22 * decal.intensity})`);
+          gradient.addColorStop(0.55, `rgba(255,73,40,${0.13 * decal.intensity})`);
+          gradient.addColorStop(1, 'rgba(30,5,2,0)');
+        } else if (decal.type === 'coolant') {
+          gradient.addColorStop(0, `rgba(81,231,255,${0.2 * decal.intensity})`);
+          gradient.addColorStop(1, 'rgba(20,90,110,0)');
+        } else {
+          gradient.addColorStop(0, `rgba(4,5,7,${0.58 * decal.intensity})`);
+          gradient.addColorStop(0.75, `rgba(12,12,14,${0.26 * decal.intensity})`);
+          gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        }
+        ctx.fillStyle = gradient;
+      } else {
+        ctx.globalAlpha = 0.13 + decal.intensity * 0.12;
+        ctx.fillStyle = decal.type === 'coolant' ? '#153840' : (decal.type === 'molten' ? '#421811' : '#050609');
+      }
+      ctx.beginPath();
+      ctx.ellipse(0, 0, rx, ry, 0, 0, TAU);
+      ctx.fill();
+      ctx.globalAlpha = clamp(0.1 + decal.intensity * 0.13, 0.1, 0.34);
+      ctx.strokeStyle = decal.type === 'molten' ? '#ff654a' : (decal.type === 'coolant' ? '#51e7ff' : '#444853');
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(-rx * 0.18, 0, rx * 0.48, 0.2, Math.PI * 1.22);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawThermalZones() {
+    for (const zone of thermalZones) {
+      const envelope = cascadeEnvelope(zone.age, zone.telegraph, zone.duration);
+      if (!inView(zone.x, zone.y, envelope.radius + 30)) continue;
+      ctx.save();
+      const still = save.settings.reduceFlashes || save.settings.reducedMotion;
+      const pulse = still ? 0.55 : 0.5 + Math.sin(game.time * 9 + zone.id) * 0.5;
+      ctx.globalAlpha = envelope.active ? 0.14 + envelope.intensity * 0.13 : 0.34 + pulse * 0.16;
+      ctx.fillStyle = envelope.active ? '#ff654a' : '#51e7ff';
+      ctx.beginPath();
+      ctx.arc(zone.x, zone.y, envelope.radius, 0, TAU);
+      ctx.fill();
+      ctx.globalAlpha = envelope.active ? 0.62 : 0.85;
+      ctx.strokeStyle = envelope.active ? '#ffb000' : '#51e7ff';
+      ctx.lineWidth = envelope.active ? 3 : 2;
+      ctx.setLineDash(envelope.active ? [13, 8] : [4, 5]);
+      ctx.beginPath();
+      ctx.arc(zone.x, zone.y, envelope.radius, -Math.PI / 2, -Math.PI / 2 + TAU * (envelope.active ? envelope.intensity : envelope.progress));
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 0.78;
+      ctx.fillStyle = envelope.active ? '#ffb000' : '#b9f6ff';
+      ctx.font = '900 9px ui-monospace, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(envelope.active ? 'THERMAL BLOOM' : 'COOLANT CASCADE', zone.x, zone.y - envelope.radius - 9);
+      ctx.restore();
+    }
+  }
+
   // Floor litter: what is left of everything you have torn off this chamber.
   function drawLitterAndDebris() {
     for (const piece of litter) {
@@ -5428,17 +6787,64 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       ctx.restore();
     }
     for (const piece of debris) {
+      if (piece.state === 'held') continue;
       if (!inView(piece.x, piece.y, 60)) continue;
-      const fade = clamp(piece.life / 0.85, 0, 1);
+      const fade = clamp(piece.life / 3, 0.32, 1);
       ctx.save();
-      ctx.globalAlpha = 0.35 + fade * 0.55;
+      ctx.globalAlpha = piece.state === 'held' ? 1 : 0.45 + fade * 0.5;
+      if (piece.state === 'launched' && visualGovernor.current().post) {
+        const speed = Math.hypot(piece.vx, piece.vy);
+        ctx.strokeStyle = `${piece.colour}88`;
+        ctx.lineWidth = clamp(piece.mass * 1.4, 2, 5);
+        ctx.beginPath();
+        ctx.moveTo(piece.x, piece.y);
+        ctx.lineTo(piece.x - piece.vx / Math.max(1, speed) * clamp(speed * 0.07, 18, 72), piece.y - piece.vy / Math.max(1, speed) * clamp(speed * 0.07, 18, 72));
+        ctx.stroke();
+      }
       ctx.translate(piece.x, piece.y);
       ctx.rotate(piece.angle);
-      ctx.fillStyle = '#15171d';
+      ctx.fillStyle = piece.state === 'held' ? '#25313a' : '#15171d';
+      if (visualGovernor.current().post && (piece.state === 'held' || piece.state === 'launched' || piece.state === 'attracted')) {
+        ctx.shadowColor = piece.state === 'held' ? '#51e7ff' : piece.colour;
+        ctx.shadowBlur = piece.state === 'held' ? 18 : 10;
+      }
       roundedRectPath(ctx, -piece.size * 0.5, -piece.size * 0.34, piece.size, piece.size * 0.68, 3);
       ctx.fill();
-      ctx.strokeStyle = piece.colour;
-      ctx.lineWidth = 1.8;
+      ctx.strokeStyle = piece.state === 'held' ? '#51e7ff' : piece.colour;
+      ctx.lineWidth = piece.state === 'launched' ? 2.6 : 1.8;
+      ctx.stroke();
+      ctx.globalAlpha = 0.65;
+      ctx.fillStyle = '#f7f8fb';
+      ctx.beginPath();
+      ctx.arc(-piece.size * 0.22, 0, 1.3, 0, TAU);
+      ctx.arc(piece.size * 0.22, 0, 1.3, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawHeldDebrisOverlay() {
+    if (!player?.heldDebris?.length) return;
+    for (const piece of player.heldDebris) {
+      ctx.save();
+      ctx.globalAlpha = 0.42;
+      ctx.strokeStyle = '#51e7ff';
+      ctx.lineWidth = 1.4;
+      ctx.setLineDash([4, 6]);
+      ctx.beginPath();
+      ctx.moveTo(player.x, player.y);
+      ctx.lineTo(piece.x, piece.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+      ctx.translate(piece.x, piece.y);
+      ctx.rotate(piece.angle);
+      ctx.fillStyle = '#25313a';
+      ctx.strokeStyle = '#51e7ff';
+      ctx.lineWidth = 2.4;
+      if (visualGovernor.current().post) { ctx.shadowColor = '#51e7ff'; ctx.shadowBlur = 18; }
+      roundedRectPath(ctx, -piece.size * 0.5, -piece.size * 0.34, piece.size, piece.size * 0.68, 3);
+      ctx.fill();
       ctx.stroke();
       ctx.restore();
     }
@@ -5464,6 +6870,65 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     }
   }
 
+  function drawComponentCorona(enemy, positions) {
+    if (enemy.dead) return;
+    for (const [key, point] of Object.entries(positions)) {
+      const component = enemy.components[key];
+      const wear = componentWear(component);
+      if (component.destroyed || wear < 0.58) continue;
+      const pulse = save.settings.reduceFlashes || save.settings.reducedMotion
+        ? 0.45
+        : 0.35 + Math.sin(game.time * 7 + enemy.phase + key.length) * 0.18;
+      const radius = (component.radius || 10) * (1.7 + wear * 0.7);
+      const glow = ctx.createRadialGradient(point.x, point.y, 1, point.x, point.y, radius);
+      glow.addColorStop(0, wear >= WEAR_SPARKING ? `rgba(255,176,0,${0.13 + pulse * 0.1})` : `rgba(255,255,255,${0.08 + pulse * 0.05})`);
+      glow.addColorStop(1, 'rgba(255,73,108,0)');
+      ctx.save();
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, radius, 0, TAU);
+      ctx.fill();
+      if (wear >= WEAR_SPARKING) {
+        ctx.globalAlpha = 0.25 + pulse * 0.2;
+        ctx.strokeStyle = '#ffb000';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([2, 5]);
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, radius * 0.72, enemy.phase, enemy.phase + TAU * 0.72);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawGeometricBreakSeams(enemy, positions) {
+    if (!passportHas('geometric_optic') || passport.artefacts.geometric_optic?.meta?.usedByRelicForge !== true || enemy.dead) return;
+    ctx.save();
+    ctx.lineWidth = 1.15;
+    for (const [key, point] of Object.entries(positions)) {
+      const component = enemy.components[key];
+      if (!component || component.destroyed) continue;
+      const wear = componentWear(component);
+      const radius = component.radius * (1.06 + wear * 0.12);
+      ctx.globalAlpha = 0.24 + wear * 0.5;
+      ctx.strokeStyle = wear >= WEAR_SPARKING ? '#ffffff' : '#51e7ff';
+      ctx.setLineDash(wear >= WEAR_DAMAGED ? [2, 3] : [1, 6]);
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, radius, -0.72, 0.72);
+      ctx.arc(point.x, point.y, radius, Math.PI - 0.72, Math.PI + 0.72);
+      ctx.stroke();
+      if (key !== 'core') {
+        ctx.globalAlpha *= 0.42;
+        ctx.beginPath();
+        ctx.moveTo(lerp(enemy.x, point.x, 0.38), lerp(enemy.y, point.y, 0.38));
+        ctx.lineTo(lerp(enemy.x, point.x, 0.76), lerp(enemy.y, point.y, 0.76));
+        ctx.stroke();
+      }
+    }
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
   function drawEnemy(enemy) {
     if (!inView(enemy.x, enemy.y, enemy.radius * 3)) return;
     const positions = enemyComponentPositions(enemy);
@@ -5480,6 +6945,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     ctx.arc(0, 0, enemy.radius * 1.5, 0, TAU);
     ctx.fill();
     ctx.restore();
+
+    drawComponentCorona(enemy, positions);
 
     if (enemy.typeId === 'sniper' && enemy.chargeTimer > 0 && !enemy.components.armR.destroyed) {
       const length = 1050;
@@ -5498,7 +6965,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     }
 
     if (enemy.definition.boss) {
-      const aura = 0.5 + Math.sin(game.time * 2.2 + enemy.phase) * 0.5;
+      const aura = save.settings.reduceFlashes ? 0.45 : 0.5 + Math.sin(game.time * 2.2 + enemy.phase) * 0.5;
       ctx.save();
       ctx.globalAlpha = 0.23 + aura * 0.16;
       ctx.strokeStyle = colour;
@@ -5639,6 +7106,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
 
     ctx.restore();
 
+    drawGeometricBreakSeams(enemy, positions);
+
     if (enemy.shield > 0 && !enemy.components.armL.destroyed) {
       const ratio = enemy.shield / enemy.maxShield;
       ctx.save();
@@ -5705,6 +7174,62 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     ctx.restore();
   }
 
+  function solveTwoBoneIK(rootX, rootY, targetX, targetY, upperLength, lowerLength, bend = 1) {
+    const dx = targetX - rootX;
+    const dy = targetY - rootY;
+    const rawDistance = Math.hypot(dx, dy);
+    const reach = clamp(rawDistance, Math.abs(upperLength - lowerLength) + 0.001, upperLength + lowerLength - 0.001);
+    const baseAngle = Math.atan2(dy, dx);
+    const shoulder = Math.acos(clamp((upperLength ** 2 + reach ** 2 - lowerLength ** 2) / (2 * upperLength * reach), -1, 1));
+    const upperAngle = baseAngle + Math.sign(bend || 1) * shoulder;
+    return {
+      root: { x: rootX, y: rootY },
+      joint: { x: rootX + Math.cos(upperAngle) * upperLength, y: rootY + Math.sin(upperAngle) * upperLength },
+      end: { x: rootX + dx / (rawDistance || 1) * reach, y: rootY + dy / (rawDistance || 1) * reach },
+      reach
+    };
+  }
+
+  function drawPlayerIKBraces(legsDef) {
+    const forwardX = Math.cos(player.angle);
+    const forwardY = Math.sin(player.angle);
+    const rightX = Math.cos(player.angle + Math.PI / 2);
+    const rightY = Math.sin(player.angle + Math.PI / 2);
+    const motion = save.settings.reducedMotion ? 0 : Math.min(1, player.lastMoveMagnitude);
+    for (const side of [-1, 1]) {
+      const stride = Math.sin(game.time * 10.5 + (side > 0 ? Math.PI : 0)) * motion * 11;
+      const rootX = player.x - forwardX * 7 + rightX * side * 10;
+      const rootY = player.y - forwardY * 7 + rightY * side * 10;
+      const targetX = player.x - forwardX * (22 - stride) + rightX * side * 18;
+      const targetY = player.y - forwardY * (22 - stride) + rightY * side * 18;
+      const chain = solveTwoBoneIK(rootX, rootY, targetX, targetY, 19, 21, side);
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#0a0b0f';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(chain.root.x, chain.root.y);
+      ctx.lineTo(chain.joint.x, chain.joint.y);
+      ctx.lineTo(chain.end.x, chain.end.y);
+      ctx.stroke();
+      ctx.strokeStyle = legsDef.colour;
+      ctx.globalAlpha = 0.72;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = '#252832';
+      ctx.strokeStyle = legsDef.colour;
+      ctx.lineWidth = 1.5;
+      for (const point of [chain.joint, chain.end]) {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, point === chain.end ? 4.5 : 3.8, 0, TAU);
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
   function drawPlayer() {
     const chassis = CHASSIS[player.chassisId];
     const coreDef = partDefinition(player.equipment.core);
@@ -5724,8 +7249,26 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     ctx.fill();
     ctx.restore();
 
+    drawPlayerIKBraces(legsDef);
+
+    if (player.resonances?.length) {
+      const still = save.settings.reduceFlashes || save.settings.reducedMotion;
+      player.resonances.slice(0, 3).forEach((resonance, index) => {
+        const pulse = still ? 0.5 : 0.5 + Math.sin(game.time * (1.5 + index * 0.16) + index) * 0.5;
+        ctx.save();
+        ctx.globalAlpha = 0.1 + pulse * 0.08;
+        ctx.strokeStyle = resonance.colour;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5 + index * 2, 8]);
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, 39 + index * 6 + pulse * 2, game.time * 0.12 * (index % 2 ? -1 : 1), TAU + game.time * 0.12 * (index % 2 ? -1 : 1));
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
     if (player.shieldTimer > 0) {
-      const pulse = 0.5 + Math.sin(game.time * 8) * 0.5;
+      const pulse = save.settings.reduceFlashes ? 0.45 : 0.5 + Math.sin(game.time * 8) * 0.5;
       ctx.save();
       ctx.globalAlpha = 0.34 + pulse * 0.16;
       ctx.strokeStyle = utilityDef.colour;
@@ -5838,7 +7381,16 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     const aimX = player.x + Math.cos(player.angle) * aimDistance;
     const aimY = player.y + Math.sin(player.angle) * aimDistance;
     ctx.save();
-    ctx.strokeStyle = `${weaponDef.colour}88`;
+    const reticleColour = save.settings.highContrastReticle ? '#ffffff' : weaponDef.colour;
+    if (save.settings.highContrastReticle) {
+      ctx.strokeStyle = 'rgba(0,0,0,.9)';
+      ctx.lineWidth = 4.5;
+      ctx.beginPath();
+      ctx.moveTo(player.x + Math.cos(player.angle) * 38, player.y + Math.sin(player.angle) * 38);
+      ctx.lineTo(aimX, aimY);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = save.settings.highContrastReticle ? '#ffffff' : `${weaponDef.colour}88`;
     ctx.lineWidth = 1.5;
     ctx.setLineDash([6, 7]);
     ctx.beginPath();
@@ -5846,8 +7398,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     ctx.lineTo(aimX, aimY);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.strokeStyle = weaponDef.colour;
-    ctx.shadowColor = weaponDef.colour;
+    ctx.strokeStyle = reticleColour;
+    ctx.shadowColor = save.settings.highContrastReticle ? '#000000' : weaponDef.colour;
     ctx.shadowBlur = 8;
     ctx.beginPath();
     ctx.arc(aimX, aimY, 8, 0, TAU);
@@ -6048,9 +7600,11 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     ctx.save();
     ctx.translate(viewWidth * 0.5 - camera.x + camera.shakeX, viewHeight * 0.5 - camera.y + camera.shakeY);
     drawVaultFloor();
+    drawBattleDecals();
     drawHazards();
     drawGate();
     drawObstacles();
+    drawThermalZones();
     drawLitterAndDebris();
     drawDrops();
     drawTurrets();
@@ -6059,6 +7613,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     for (const enemy of enemies) drawEnemy(enemy);
     drawHitRings();
     drawPlayer();
+    drawHeldDebrisOverlay();
     drawSlashes();
     drawParticlesAndPopups();
     ctx.restore();
@@ -6086,9 +7641,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       if (game.comboTimer <= 0) game.comboCount = 0;
     }
 
-    // V2 — hit-stop. Held inside the fixed step so it is the same whole number of
-    // simulated steps everywhere; debris, rings and camera keep moving underneath it
-    // so the frame reads as impact rather than as a stall.
+    // Hit-stop freezes gameplay physics, including lethal kinetic debris/cascades;
+    // purely visual particles and rings may continue to settle underneath it.
     if (game.hitStop > 0) {
       game.hitStop = Math.max(0, game.hitStop - dt);
       updateParticles(dt);
@@ -6100,6 +7654,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
     updateEnemies(dt);
     updateProjectiles(dt);
     updateEnemyProjectiles(dt);
+    updateKineticDebris(dt);
+    updateThermalZones(dt);
     updateTurrets(dt);
     updateDrops(dt);
     updateParticles(dt);
@@ -6130,6 +7686,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   function frame(now) {
     const frameDelta = Math.min(0.05, Math.max(0, (now - lastFrameTime) / 1000));
     lastFrameTime = now;
+    sampleAdaptiveQuality(frameDelta);
     updateGamepad();
 
     if (game.mode === 'playing' || game.mode === 'transition') {
@@ -6164,14 +7721,19 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
   // The scoring contract, exported for the fixtures. One truth: the gate tests the
   // function the game actually scores with, never a copy of it.
   window.RF = {
+    version: BUILD_VERSION,
     salvageRating,
     salvageBand,
-    constants: SALVAGE
+    constants: SALVAGE,
+    passportKey: PASSPORT_KEY,
+    physics: { debrisMassForComponent, debrisImpactDamage, magnetLaunchSpeed, magnetAttractionVector, cascadeEnvelope, solveTwoBoneIK }
   };
 
   window.__relicforge = {
-    version: '1.1.0',
+    version: BUILD_VERSION,
     start: startRun,
+    startDaily: startDailyRun,
+    resumeCheckpoint,
     salvageRating,
     snapshot() {
       return {
@@ -6197,6 +7759,19 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
         hitStop: game.hitStop,
         litter: litter.length,
         debris: debris.length,
+        kinetic: {
+          loose: debris.filter(piece => piece.state === 'free' || piece.state === 'attracted').length,
+          held: player?.heldDebris?.length || 0,
+          launched: debris.filter(piece => piece.state === 'launched').length,
+          hits: game.kineticHits,
+          damage: Number(game.kineticDamage.toFixed(2)),
+          cascades: game.cascadeTriggers,
+          zones: thermalZones.length,
+          decals: battleDecals.length,
+          pool: debrisPool.length
+        },
+        passport: normalisePassport(passport),
+        visualTier: visualGovernor.current().name,
         canvas: { width: canvas.width, height: canvas.height, dpr, alpha: ctx.globalAlpha, transform: Array.from(ctx.getTransform ? [ctx.getTransform().a, ctx.getTransform().b, ctx.getTransform().c, ctx.getTransform().d, ctx.getTransform().e, ctx.getTransform().f] : []) }
       };
     },
@@ -6210,6 +7785,9 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
         openForge();
       }
     },
+    useUtility: activateUtility,
+    launchHeldDebris,
+    passport: () => normalisePassport(passport),
     // Lets a harness run a ten-chamber campaign without sitting through ten
     // interstitials. Players get the story; the rig gets past it.
     skipStory() { return dismissChamberStory(); },

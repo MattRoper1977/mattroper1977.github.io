@@ -309,7 +309,7 @@ check(noFeel.length === 0, 'every game carries at least one feel', noFeel.map(t 
 const MIGRATED = [
   ['PHYSICS & GRAVITY', '/Lessons/Games/Orbital.html', 'gravity'],
   ['PHYSICS & GRAVITY', '/Lessons/Games/Marble.html', 'gravity'],
-  ['REFLEX & SPEED', '/Lessons/Games/Trail_Runner.html', 'fast'],
+  ['REFLEX & SPEED', '/trailrunner/', 'fast'],
   ['REFLEX & SPEED', '/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html', 'fast'],
   ['REFLEX & SPEED', '/Lessons/Games/Grid_Chase.html', 'fast'],
   ['CALM & STRATEGY', '/Lessons/Games/Neon_Garden.html', 'calm'],
@@ -389,7 +389,7 @@ const scratchManifest = (mutate) => {
      /apexkick/ is curated + railed; Trail Runner is curated + themed. Between
      them every kind the orphan rule emits is driven red at least once, and
      that is asserted rather than assumed. */
-  const MOVE = ['/apexkick/', '/Lessons/Games/Trail_Runner.html'];
+  const MOVE = ['/apexkick/', '/trailrunner/'];
   const found = MOVE.flatMap(href => {
     const f = scratchManifest(gs => { gs.find(g => g.href === href).href = href.replace(/\/?$/, '') + '_MOVED/'; });
     return orphans(record, manifestFrom(f)).filter(x => x.key === href);
@@ -413,7 +413,7 @@ const scratchManifest = (mutate) => {
 /* Direction three: the thing the whole re-keying was for. A pure TITLE rename
    must now be a non-event. If this ever reds, href-keying has been undone. */
 {
-  const f = scratchManifest(gs => { gs.find(g => g.href === '/Lessons/Games/Trail_Runner.html').title = 'Trail Runner RENAMED'; });
+  const f = scratchManifest(gs => { gs.find(g => g.href === '/trailrunner/').title = 'Trail Runner RENAMED'; });
   const o = orphans(record, manifestFrom(f));
   check(o.length === 0,
     'CONTROL: renaming a game\'s TITLE is now a non-event — the defect this replaced',
