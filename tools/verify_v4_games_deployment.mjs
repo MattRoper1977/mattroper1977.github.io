@@ -337,11 +337,18 @@ const PROFILES = Object.freeze([
   { name: 'webkit-desktop-1366', engine: 'webkit', viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 }
 ]);
 
-// Chromium is handed SwiftShader so WebGL games render on a GPU-less runner. Firefox needs the
-// same capability spelled its own way: headless on a machine with no GPU it blocklists WebGL
-// outright, so a WebGL game never finishes booting and the wait for it times out with nothing
-// to say. WebKit already software-renders. This grants capability only — every assertion below
-// is unchanged, and each engine still has to boot, take input, progress, pause and exit.
+// Chromium is handed SwiftShader so WebGL games render on a GPU-less runner. Firefox cannot be
+// given the same thing by a flag: headless Firefox on Linux has no GL context at all, measured
+// rather than assumed —
+//
+//   INFO firefox-desktop-1366 graphics — webgl2: none · webgl: none
+//   Trail boot never completed ... "THIS VIEWER HAS NO 3D — This browser refused to give the
+//   page any WebGL graphics context"
+//
+// so it runs headed against the virtual display the workflow provides through xvfb-run, and the
+// prefs below lift the blocklist that would otherwise refuse the software renderer behind it.
+// Capability only: every assertion is unchanged, and each engine still has to boot, take input,
+// progress, pause/resume and exit accessibly.
 const FIREFOX_SOFTWARE_WEBGL = Object.freeze({
   'webgl.force-enabled': true,
   'webgl.disabled': false,
@@ -351,7 +358,7 @@ const FIREFOX_SOFTWARE_WEBGL = Object.freeze({
 
 function launchOptionsFor(engine) {
   if (engine === 'chromium') return { headless: true, args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] };
-  if (engine === 'firefox') return { headless: true, firefoxUserPrefs: { ...FIREFOX_SOFTWARE_WEBGL } };
+  if (engine === 'firefox') return { headless: false, firefoxUserPrefs: { ...FIREFOX_SOFTWARE_WEBGL } };
   return { headless: true };
 }
 

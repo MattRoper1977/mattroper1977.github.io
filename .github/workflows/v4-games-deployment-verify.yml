@@ -163,7 +163,11 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts/v4-games
-          node tools/verify_v4_games_deployment.mjs --browser | tee artifacts/v4-games/browser.log
+          # Firefox is launched headed (see launchOptionsFor) because headless
+          # Firefox on Linux has no GL context at all, so a WebGL game cannot
+          # boot in it. xvfb-run supplies the virtual display that headed mode
+          # needs; Chromium and WebKit are unaffected and stay headless.
+          xvfb-run -a node tools/verify_v4_games_deployment.mjs --browser | tee artifacts/v4-games/browser.log
 
       - uses: actions/upload-artifact@v4
         if: always()
