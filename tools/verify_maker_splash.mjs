@@ -124,15 +124,17 @@ async function newContext(browser, options = {}) {
 
 async function pageProbe(context, origin, route, { action = 'none', waitAbsent = 650, mutateUnderlay = false, mutateContent = false } = {}) {
   const page = await context.newPage();
-  const errors = [], external = [];
+  const errors = [], external = [], navigations = [];
   page.on('pageerror', error => errors.push(`pageerror: ${error.message}`));
   page.on('console', msg => { if (msg.type() === 'error') errors.push(`console: ${msg.text()}`); });
   page.on('request', request => {
     const url = request.url();
     if (!url.startsWith(origin) && !url.startsWith('data:') && !url.startsWith('blob:')) external.push(url);
   });
+  page.on('framenavigated', frame => { if (frame === page.mainFrame()) navigations.push({ wall: Date.now(), url: frame.url() }); });
   await page.addInitScript(({ mutateContent }) => {
-    window.__makerProbe = { seen: false, first: null, last: null, focus: null, geometry: null, contentFirst: null, contentGeometry: null, domContentLoaded: null, writeEvents: [] };
+    window.__makerProbe = { seen: false, first: null, last: null, focus: null, geometry: null, contentFirst: null, contentGeometry: null, domContentLoaded: null, writeEvents: [], additions: [] };
+    const makerIds = new WeakMap(); let nextMakerId = 1;
     try {
       const originalSetItem = Storage.prototype.setItem;
       Storage.prototype.setItem = function (key, value) {
@@ -178,6 +180,8 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
         const label = `${el.getAttribute('aria-label') || ''} ${el.textContent || ''}`;
         if (/made\s+by\s+matt/i.test(label)) {
           const p = window.__makerProbe;
+          if (!makerIds.has(el)) makerIds.set(el, nextMakerId++);
+          p.additions.push({ t: performance.now(), id: makerIds.get(el), connected: el.isConnected, maker: el.matches('[data-mbm-maker-splash]') });
           p.seen = true;
           if (p.first === null) p.first = performance.now();
         }
@@ -257,6 +261,8 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
     return {
       probe: p,
       makerPresent: !!document.querySelector('[data-mbm-maker-splash]'),
+      makerMarkup: document.querySelector('[data-mbm-maker-splash]')?.outerHTML.slice(0, 240) || '',
+      makerRuntimeFlag: window.__mbmMakerSplash ?? null,
       anySplashPresent: !!legacy,
       legacyLabel: legacy ? `${legacy.getAttribute('aria-label') || ''} ${legacy.textContent || ''}`.trim().slice(0, 100) : '',
       local, session, keys,
@@ -266,7 +272,7 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
       ready: document.readyState,
     };
   }, KEY).catch(error => ({ probe: {}, error: error.message }));
-  const result = { ...state, appeared, detached, wall, shownUnderlayRect, visibleWallMs, status: response?.status() ?? null, finalUrl: page.url(), errors, external };
+  const result = { ...state, appeared, detached, wall, shownUnderlayRect, visibleWallMs, status: response?.status() ?? null, finalUrl: page.url(), navigations, errors, external };
   await page.close();
   return result;
 }
@@ -587,6 +593,8 @@ async function verify(browser, origin) {
       const addedErrors = addedFrom(result.errors, skipped.errors);
       const addedExternal = addedFrom(result.external, skipped.external);
       observations.push({ viewport, seen: !!result.probe?.seen, duration, detached: result.detached, makerPresent: result.makerPresent, active: result.active, primary: result.primaryRect,
+        makerMarkup: result.makerMarkup, makerRuntimeFlag: result.makerRuntimeFlag, local: result.local, session: result.session,
+        writes: result.probe?.writeEvents || [], additions: result.probe?.additions || [], finalUrl: result.finalUrl, navigations: result.navigations,
         suppressedSeen: !!skipped.probe?.seen, suppressedActive: skipped.active, suppressedPrimary: skipped.primaryRect,
         shownContentGeometry: result.probe?.contentGeometry ?? null,
         suppressedContentGeometry: skipped.probe?.contentGeometry ?? null,
