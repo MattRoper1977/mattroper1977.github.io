@@ -337,6 +337,24 @@ const PROFILES = Object.freeze([
   { name: 'webkit-desktop-1366', engine: 'webkit', viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 }
 ]);
 
+// Chromium is handed SwiftShader so WebGL games render on a GPU-less runner. Firefox needs the
+// same capability spelled its own way: headless on a machine with no GPU it blocklists WebGL
+// outright, so a WebGL game never finishes booting and the wait for it times out with nothing
+// to say. WebKit already software-renders. This grants capability only — every assertion below
+// is unchanged, and each engine still has to boot, take input, progress, pause and exit.
+const FIREFOX_SOFTWARE_WEBGL = Object.freeze({
+  'webgl.force-enabled': true,
+  'webgl.disabled': false,
+  'webgl.out-of-process': false,
+  'gfx.webrender.software': true
+});
+
+function launchOptionsFor(engine) {
+  if (engine === 'chromium') return { headless: true, args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] };
+  if (engine === 'firefox') return { headless: true, firefoxUserPrefs: { ...FIREFOX_SOFTWARE_WEBGL } };
+  return { headless: true };
+}
+
 async function clickIfVisible(page, selector, options = {}) {
   const locator = page.locator(selector).first();
   if (await locator.isVisible().catch(() => false)) { await locator.click(options); return true; }
@@ -662,7 +680,7 @@ async function browserMain() {
   const origin = local?.origin || new URL(LIVE_ORIGIN).origin;
   try {
     for (const profile of PROFILES) {
-      const launchOptions = profile.engine === 'chromium' ? { headless: true, args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] } : { headless: true };
+      const launchOptions = launchOptionsFor(profile.engine);
       const browser = await playwright[profile.engine].launch(launchOptions);
       try {
         for (const game of GAMES) await runOne(browser, profile, game, origin);
