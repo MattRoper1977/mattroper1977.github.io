@@ -464,7 +464,7 @@ async function smokeRelic(page, mobile) {
   await page.waitForFunction(() => window.__relicforge.snapshot().mode === 'playing');
   const before = await page.evaluate(() => window.__relicforge.snapshot());
   await page.keyboard.down('KeyD'); await page.waitForTimeout(500); await page.keyboard.up('KeyD');
-  await page.locator('#game').click({ position: { x: 220, y: 180 } }).catch(() => {});
+  await page.locator('#gameCanvas').click({ position: { x: 220, y: 180 } });
   await page.evaluate(() => { const target = __relicforge.targets()[0]; if (target) __relicforge.strike(target.id, 'core', 12); });
   await page.waitForTimeout(900);
   const after = await page.evaluate(() => window.__relicforge.snapshot());
