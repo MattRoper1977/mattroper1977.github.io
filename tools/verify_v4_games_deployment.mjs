@@ -571,7 +571,11 @@ async function migrationFixture(browser, origin, game, setup, verify) {
 async function runMigrationFixtures(browser, origin) {
   await migrationFixture(browser, origin, GAMES[0], { mbm_offbrand: { v: 1, xp: 321, hat: 'none', crewStars: [1, 0, 0], glitchStars: [0, 0, 0] } }, async page => {
     await page.waitForFunction(() => !!window.OB);
-    const save = await page.evaluate(() => { store(); return JSON.parse(localStorage.getItem('mbm_offbrand')); });
+    // Persist through the real title-screen setting. `store` is intentionally
+    // closure-private, so invoking it as a page global never exercised the UI
+    // and failed before the migration assertion could run.
+    await page.locator('#chipMotion').click();
+    const save = await page.evaluate(() => JSON.parse(localStorage.getItem('mbm_offbrand')));
     assert.equal(save.xp, 321); assert.equal(save.v, 3);
   });
   await migrationFixture(browser, origin, GAMES[1], { trekTrailRunner_v1: { best: 4321, runs: 7, legs: 3, badges: { first: true } } }, async page => {

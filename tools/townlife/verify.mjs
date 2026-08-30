@@ -213,11 +213,20 @@ async function verifyGame(browser, origin, engine) {
 
     await page.goto(`${origin}/townlife/?qa=1&splash=skip`, { waitUntil: 'load' });
     await page.waitForFunction(() => window.MBMTownLifeQA?.ready() === true, null, { timeout: 30_000 });
-    await page.evaluate(() => window.MBMTownLifeQA.teleport(1200, 900));
+    // Use the open central road rather than the Police building's right wall;
+    // engine timing must not decide whether the first fixed step is blocked.
+    await page.evaluate(() => window.MBMTownLifeQA.teleport(1400, 1420));
     const before = await page.evaluate(() => window.MBMTownLifeQA.getEntities().player);
     await page.keyboard.down('d');
-    await page.waitForTimeout(350);
-    await page.keyboard.up('d');
+    try {
+      await page.waitForFunction(
+        startX => window.MBMTownLifeQA.getEntities().player.x > startX + 0.1,
+        before.x,
+        { timeout: 3_000 }
+      );
+    } finally {
+      await page.keyboard.up('d');
+    }
     const after = await page.evaluate(() => window.MBMTownLifeQA.getEntities().player);
     assert.ok(after.x > before.x + 0.1, `keyboard input did not move player: ${before.x} → ${after.x}`);
 
