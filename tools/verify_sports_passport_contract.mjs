@@ -243,21 +243,35 @@ function clauses(main, corruptArm, freshArm) {
    * red, and the first version of this did exactly that to Neon Turf, which
    * carries the key as a constant and never touches it. So the corrupt record
    * still being in place makes the clause inapplicable, not passed. */
-  /* Applicability is whether the build READ the passport, not whether it wrote
-   * one back. The previous version tested "is the corrupt record still there",
-   * which conflated two different builds: one that never looks at the passport
-   * (Neon Turf, which C2 must not bind) and one that reads it, throws, defaults
-   * IN MEMORY and simply does not write back — which is Apex Curl, the reference
-   * implementation, and exactly the build C2 exists for. Its own firing control
-   * caught this: removing Apex Curl's backup left the gate green. */
+  /* C2 is measured twice, because the clause admits two readings and they
+   * disagree on two named builds. Reporting one and hiding the other would be
+   * choosing for Matt, which is the same thing the C1/C1' split refuses to do.
+   *
+   *   C2a  DATA LOSS. Did the build REPLACE the child's stored record with
+   *        something else and keep no copy? This is the only reading under
+   *        which a child actually loses data. Neon Turf reads the passport at
+   *        renderMenuStats to label a menu chip and falls back to a caption on
+   *        failure — the corrupt record is still in storage afterwards, so
+   *        nothing was lost and C2a does not bind.
+   *
+   *   C2b  CAUTION. Did the build READ a corrupt record, proceed without it,
+   *        and keep no copy? Apex Curl defaults IN MEMORY and does not write,
+   *        so C2a cannot see it either way — yet it takes the backup, which is
+   *        the behaviour the contract cites as its reference.
+   *
+   * The first version of this gate asserted C2a and was given a firing control
+   * shaped for C2b; the control greened, which is how the split was found. */
   const readIt = corruptArm.invalid ? null : corruptArm.after.reads > 0;
-  out.C2 = corruptArm.invalid ? { ok: null, detail: 'arm invalid: ' + corruptArm.invalid }
-    : !readIt ? { ok: null, detail: 'never reads the passport, so it discards nothing' }
-    : corruptArm.after.backup === '{not json'
-      ? { ok: true, detail: 'the discarded raw string was preserved' }
-      : corruptArm.after.backup
-        ? { ok: false, detail: 'a backup exists but is not the discarded raw string' }
-        : { ok: false, detail: 'a corrupt record was discarded with no backup' };
+  const replaced = corruptArm.invalid ? null : corruptArm.after.raw !== '{not json';
+  const kept = corruptArm.invalid ? null : corruptArm.after.backup === '{not json';
+  out.C2a = corruptArm.invalid ? { ok: null, detail: 'arm invalid: ' + corruptArm.invalid }
+    : !replaced ? { ok: null, detail: 'the corrupt record is still in storage — nothing was lost' }
+    : kept ? { ok: true, detail: 'replaced the record and kept the raw string' }
+    : { ok: false, detail: 'REPLACED the corrupt record and kept no copy' };
+  out.C2b = corruptArm.invalid ? { ok: null, detail: 'arm invalid: ' + corruptArm.invalid }
+    : !readIt ? { ok: null, detail: 'never reads the passport' }
+    : kept ? { ok: true, detail: 'read a corrupt record and preserved it' }
+    : { ok: false, detail: 'read a corrupt record and kept no copy' };
 
   /* C3: reported, never failed — no sibling implements it (contract C3). */
   out.C3 = { ok: null, detail: 'reported only: the frozen GAME_IDS list is a schema proposal, not a graft' };
@@ -288,7 +302,7 @@ function clauses(main, corruptArm, freshArm) {
   return out;
 }
 
-const ORDER = ['C1', "C1'", 'C2', 'C3', 'C4', 'C5', 'C6'];
+const ORDER = ['C1', "C1'", 'C2a', 'C2b', 'C3', 'C4', 'C5', 'C6'];
 const cell = v => v.ok === true ? ' ok ' : v.ok === false ? 'FAIL' : ' -- ';
 
 async function verify(fix, candidate, label) {
@@ -329,7 +343,7 @@ async function selftest(fix) {
 
   let reds = 0;
   for (const [name, file, clause] of [['unconditional boot write', A, "C1'"],
-                                      ['defaulting path with the backup removed', B, 'C2'],
+                                      ['defaulting path with the backup removed', B, 'C2b'],
                                       ['the banned placeholder node id', C, 'C5']]) {
     const r = await verify(fix, file, name);
     const red = !r.invalid && r.clauses[clause].ok === false;
