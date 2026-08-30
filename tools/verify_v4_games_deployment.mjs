@@ -415,16 +415,21 @@ async function reportEngineGraphics(browser, profile, origin) {
 // author. Firefox has returned a promise since 137. The entry below is that
 // observation, not the claim.
 //
-// webkit is deliberately null: UNPINNED. That run aborted at Firefox before
-// WebKit's leg, so no measurement of WebKit exists to pin, and inventing one
-// would be the same mistake again. Null does not mean "anything goes" — 'other'
-// still reds as RETURN_SHAPE_INVALID — and it never reports as a pass: it
-// reports as UNPINNED, naming the shape it saw, so the first WebKit leg that
-// completes hands over the value to pin here.
+// webkit was carried as null — UNPINNED — for exactly one run, because the run
+// that would have measured it aborted at Firefox's assert. That run completed:
+//
+//   INFO webkit pointer-lock return shape — webkit: 'thenable' — UNPINNED
+//   PASS webkit-desktop-1366/voxel
+//
+// so the entry below is that observation. All three engines return a promise;
+// the "only Chromium does" claim was wrong about both of the other two. The
+// UNPINNED path stays in lockShapeVerdict for the next engine or profile added
+// here: a new engine starts unpinned rather than silently green, and 'other'
+// reds as RETURN_SHAPE_INVALID whether an engine is pinned or not.
 //
 // Promise.resolve(r).catch(h) in the game is unaffected by any of this:
 // Promise.resolve(undefined) is inert, so the fix holds on all three engines.
-const EXPECTED_LOCK_SHAPE = Object.freeze({ chromium: 'thenable', firefox: 'thenable', webkit: null });
+const EXPECTED_LOCK_SHAPE = Object.freeze({ chromium: 'thenable', firefox: 'thenable', webkit: 'thenable' });
 
 function lockShapeVerdict(engine, observed) {
   const expected = EXPECTED_LOCK_SHAPE[engine];
