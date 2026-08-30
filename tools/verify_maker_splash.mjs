@@ -215,7 +215,6 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
   if (appeared) {
     const visibleWallStart = Date.now();
     await page.waitForTimeout(20);
-    await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(error => errors.push(`shown-domcontentloaded: ${error.message}`));
     shownUnderlayRect = await page.evaluate(mutate => {
       const selectors = ['[data-mbm-primary-start]','#startBtn','#playBtn','#beginBtn','#launchBtn','#openBtn','#start','a.skip','main button:not([disabled])','button:not([disabled])','main a[href]','a[href]'];
       const visible = el => { const css = getComputedStyle(el), box = el.getBoundingClientRect(); return !el.disabled && css.display !== 'none' && css.visibility !== 'hidden' && box.width > 0 && box.height > 0; };
@@ -232,6 +231,11 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
       else errors.push('pointer: splash had no rendered box');
     }
     else if (action === 'timeout') await maker.evaluate(el => { el.style.animation = 'none'; });
+    // Exercise the real early-dismiss path while the layer is known to be
+    // attached. Waiting for a shader-heavy document to finish parsing first
+    // can let its auto timer win, so the probe would record a late splash but
+    // never actually send the dismissal it claims to test.
+    await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(error => errors.push(`shown-domcontentloaded: ${error.message}`));
     // Shader-heavy games can monopolise a throttled CI main thread after the
     // dismissal key. A selector can transiently detach while those pages are
     // still parsing, so the first DOM gap is not dismissal evidence. Require
@@ -597,7 +601,7 @@ async function verify(browser, origin) {
       // real dismissal write and turned a route's legitimate boot reload into
       // a second artificial splash; force/skip semantics are covered above by
       // the dedicated SS controls.
-      const result = await pageProbe(ctx, origin, route, { action: 'key', waitAbsent: 700 });
+      const result = await pageProbe(ctx, origin, route, { action: 'key', waitAbsent: 5000 });
       await ctx.close();
       const skipContext = await newContext(browser, { viewport });
       const skipped = await pageProbe(skipContext, origin, `${route}${route.includes('?') ? '&' : '?'}splash=skip`, { waitAbsent: 700 });

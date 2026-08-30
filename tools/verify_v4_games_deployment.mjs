@@ -456,7 +456,7 @@ async function smokeGlobal(page) {
   await page.waitForFunction(() => window.__olympics.screen !== 'PLAYING', null, { timeout: 30000 });
 }
 
-async function smokeRelic(page) {
+async function smokeRelic(page, mobile) {
   await page.waitForFunction(() => !!window.__relicforge && !!window.RF, null, { timeout: 30000 });
   await page.evaluate(() => window.__relicforge.start());
   await page.waitForTimeout(100);
@@ -470,8 +470,12 @@ async function smokeRelic(page) {
   const after = await page.evaluate(() => window.__relicforge.snapshot());
   assert(after.time > before.time && after.playerPosition && (after.playerPosition.x !== before.playerPosition.x || after.projectiles !== before.projectiles || after.enemies <= before.enemies), 'Relic movement/combat did not progress');
   if (after.mode !== 'paused') {
-    await page.locator('#touch-pause').dispatchEvent('pointerdown', { pointerId: 91, pointerType: 'touch' });
-    await page.locator('#touch-pause').dispatchEvent('pointerup', { pointerId: 91, pointerType: 'touch' });
+    // bindHoldButton calls setPointerCapture before its pause callback. A
+    // synthetic dispatchEvent has no active pointer and can throw there,
+    // leaving the game running. Use Playwright's trusted pointer sequence so
+    // this exercises the real desktop/touch control path.
+    if (mobile) await page.locator('#touch-pause').tap();
+    else await page.locator('#touch-pause').click();
   }
   await page.waitForFunction(() => __relicforge.snapshot().mode === 'paused');
   await page.locator('#resume-btn').click(); await page.waitForFunction(() => __relicforge.snapshot().mode === 'playing');

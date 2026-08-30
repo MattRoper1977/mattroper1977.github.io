@@ -145,7 +145,8 @@ jobs:
             echo 'aggregate negative control unexpectedly passed'
             exit 1
           fi
-          grep -F 'round 2 used another harness' artifacts/townlife/aggregate-negative-control.log
+          grep -Fq 'round 2 used another harness' artifacts/townlife/aggregate-negative-control.log
+          echo 'PASS aggregate negative control — tampered round 2 harness was rejected'
           node tools/townlife/benchmark.mjs --aggregate=artifacts/townlife | tee artifacts/townlife/performance.log
 
       - name: Before and after splash performance with positive control
