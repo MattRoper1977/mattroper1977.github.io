@@ -462,9 +462,17 @@ async function smokeRelic(page, mobile) {
   await page.waitForTimeout(100);
   await page.evaluate(() => window.__relicforge.skipStory());
   await page.waitForFunction(() => window.__relicforge.snapshot().mode === 'playing');
+  if (mobile) {
+    const portrait = page.viewportSize();
+    assert(portrait && portrait.height > portrait.width, 'Relic mobile profile did not begin in portrait');
+    await page.locator('#rotate-note').waitFor({ state: 'visible' });
+    await page.setViewportSize({ width: portrait.height, height: portrait.width });
+    await page.locator('#rotate-note').waitFor({ state: 'hidden' });
+  }
   const before = await page.evaluate(() => window.__relicforge.snapshot());
   await page.keyboard.down('KeyD'); await page.waitForTimeout(500); await page.keyboard.up('KeyD');
-  await page.locator('#gameCanvas').click({ position: { x: 220, y: 180 } });
+  if (mobile) await page.locator('#touch-fire').tap();
+  else await page.locator('#gameCanvas').click({ position: { x: 220, y: 180 } });
   await page.evaluate(() => { const target = __relicforge.targets()[0]; if (target) __relicforge.strike(target.id, 'core', 12); });
   await page.waitForTimeout(900);
   const after = await page.evaluate(() => window.__relicforge.snapshot());
