@@ -343,6 +343,21 @@ async function clickIfVisible(page, selector, options = {}) {
   return false;
 }
 
+async function holdChromiumTouch(page, selector, durationMs) {
+  const target = page.locator(selector);
+  const box = await target.boundingBox();
+  assert(box, `${selector}: touch target has no rendered box`);
+  const session = await page.context().newCDPSession(page);
+  const point = { x: box.x + box.width / 2, y: box.y + box.height / 2, id: 1, radiusX: 1, radiusY: 1, force: 1 };
+  try {
+    await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
+    await page.waitForTimeout(durationMs);
+    await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  } finally {
+    await session.detach();
+  }
+}
+
 async function smokeOffbrand(page) {
   await page.waitForFunction(() => !!window.OB);
   await page.locator('#btnCrew').click();
@@ -495,11 +510,8 @@ async function smokeVoxel(page, mobile) {
   await page.waitForFunction(() => document.querySelector('#hud').textContent.includes('Beaconfall · V4 M2'), null, { timeout: 60000 });
   const before = await page.locator('#hud').innerText();
   if (mobile) {
-    await page.locator('#d-up').dispatchEvent('pointerdown', { pointerId: 4, pointerType: 'touch' });
-    await page.waitForTimeout(600);
-    await page.locator('#d-up').dispatchEvent('pointerup', { pointerId: 4, pointerType: 'touch' });
-    await page.locator('#b-break').dispatchEvent('pointerdown', { pointerId: 5, pointerType: 'touch' });
-    await page.locator('#b-break').dispatchEvent('pointerup', { pointerId: 5, pointerType: 'touch' });
+    await holdChromiumTouch(page, '#d-up', 600);
+    await page.locator('#b-break').tap();
   } else {
     await page.keyboard.down('KeyW'); await page.waitForTimeout(600); await page.keyboard.up('KeyW');
     await page.locator('canvas').last().click({ button: 'left', position: { x: 200, y: 180 } }).catch(() => {});
@@ -509,7 +521,7 @@ async function smokeVoxel(page, mobile) {
   assert(after.includes('FRONTIER') && (after !== before || (await page.locator('#contract-objectives').innerText()).length > 10), 'Voxel world/input/objective did not progress');
   const overlayVisible = await page.locator('#overlay').evaluate(element => getComputedStyle(element).display !== 'none');
   if (!overlayVisible) {
-    if (mobile) await page.locator('#b-pause').click();
+    if (mobile) await page.locator('#b-pause').tap();
     else await page.evaluate(() => document.exitPointerLock());
   }
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#overlay')).display !== 'none');
