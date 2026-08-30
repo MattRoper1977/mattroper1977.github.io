@@ -636,10 +636,33 @@ async function smokeVoxel(page, mobile) {
       return c.display !== 'none' && c.visibility !== 'hidden' && r.width > 0 && r.height > 0; };
     return shown(overlay) && shown(start) && /resume/i.test(start.textContent || '');
   };
-  // Settle past the game's own 700ms lock guard before deciding: on a fast engine
-  // the HUD is written first and the pause arrives after, so checking immediately
-  // sees a running game and misses the offer.
-  await page.waitForTimeout(900);
+  // R2. Wait for the pointer-lock OUTCOME to be DECIDED, not for a fixed interval.
+  // A sleep elapses just as happily on a build that reaches neither state, which is
+  // how it could green something that never settled. The decided states are exact:
+  //   desktop  document.pointerLockElement is set        -> granted
+  //            the Resume offer is up                    -> refused
+  //   touch    the game never asks for a lock, so the HUD reporting IS the outcome
+  // The transient that defeated the earlier attempt — HUD written, pause not yet
+  // arrived — is excluded because neither decided state holds during it.
+  try {
+    await page.waitForFunction((isTouch) => {
+      const hud = document.querySelector('#hud');
+      const reporting = !!hud && hud.textContent.includes('Beaconfall · V4 M2');
+      if (isTouch) return reporting;
+      if (document.pointerLockElement) return true;
+      const overlay = document.querySelector('#overlay');
+      const start = document.querySelector('#start');
+      if (!overlay || !start) return false;
+      const shown = el => { const c = getComputedStyle(el); const r = el.getBoundingClientRect();
+        return c.display !== 'none' && c.visibility !== 'hidden' && r.width > 0 && r.height > 0; };
+      return shown(overlay) && shown(start) && /resume/i.test(start.textContent || '');
+    }, mobile, { timeout: 60000 });
+  } catch (error) {
+    throw new Error('Voxel pointer-lock outcome never decided — waited for '
+      + (mobile ? 'the HUD to report (touch takes no lock)'
+                : 'document.pointerLockElement to be set (granted) OR the Resume offer to be shown (refused)')
+      + '; neither within 60000ms');
+  }
   if (await page.evaluate(resumeOffered)) {
     await page.locator('#start').click({ timeout: 10000 });
     await page.waitForFunction(hudReports, null, { timeout: 30000 });
@@ -825,6 +848,55 @@ async function runStandaloneOffline(playwright) {
   } finally { await browser.close(); }
 }
 
+// R1. The pointer-lock refusal case, owned by the verifier rather than by a
+// throwaway harness. Voxel asks for a lock after building 37 chunks, by which
+// point a slow runner has expired the click's user activation; the refusal
+// rejects, and an unhandled rejection is a page error. The build cannot drop
+// this trigger because the build does not supply it — this does, on every run,
+// with no flag and no catch around the injection to swallow a miss.
+//
+// STUB_ABSENT is the guard on the guard: if the injection did not take, the case
+// would pass for the wrong reason, so a missing marker is a named RED.
+async function runPointerLockRefusal(browser, origin) {
+  const game = GAMES.find(item => item.id === 'voxel');
+  const context = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(`pageerror: ${error.message || error}`));
+  await page.addInitScript(() => {
+    const real = Element.prototype.requestPointerLock;
+    let first = true;
+    Element.prototype.requestPointerLock = function (...args) {
+      if (first) {
+        first = false;
+        return Promise.reject(new DOMException('Pointer lock requires a user gesture.', 'NotAllowedError'));
+      }
+      return real.apply(this, args);
+    };
+    window.__mbmPointerLockStub = true;
+  });
+  try {
+    await page.goto(`${origin}${game.route}?splash=skip&debug=1&seed=424242`, { waitUntil: 'load', timeout: 90000 });
+    const installed = await page.evaluate(() => window.__mbmPointerLockStub === true);
+    assert(installed, 'STUB_ABSENT: the pointer-lock refusal stub did not install, so this case would have passed for the wrong reason');
+    await page.waitForFunction(() => !!window.__BEACONFALL_GREEDY__ && !!document.querySelector('#start'), null, { timeout: 30000 });
+    await page.locator('[data-mode="frontier"]').click();
+    await page.locator('#start').click();
+    await page.waitForFunction(() => {
+      const hud = document.querySelector('#hud');
+      if (hud && hud.textContent.includes('Beaconfall \u00b7 V4 M2')) return true;
+      const overlay = document.querySelector('#overlay');
+      const start = document.querySelector('#start');
+      if (!overlay || !start) return false;
+      const shown = el => { const c = getComputedStyle(el); const r = el.getBoundingClientRect();
+        return c.display !== 'none' && c.visibility !== 'hidden' && r.width > 0 && r.height > 0; };
+      return shown(overlay) && shown(start) && /resume/i.test(start.textContent || '');
+    }, null, { timeout: 60000 });
+    assert.deepEqual(errors, [], `voxel refused-lock: the rejection was not handled: ${errors.join(' | ')}`);
+    gate('pointerlock-refused/voxel', 'a refused pointer lock is handled, not thrown');
+  } finally { await context.close(); }
+}
+
 async function browserMain() {
   staticMain();
   if (LIVE_ORIGIN) await verifyLivePublication();
@@ -840,6 +912,10 @@ async function browserMain() {
         for (const game of GAMES) await runOne(browser, profile, game, origin);
         if (!LIVE_ORIGIN && profile.name === 'chromium-desktop-1366') await runMigrationFixtures(browser, origin);
       } finally { await browser.close(); }
+    }
+    {
+      const refusalBrowser = await playwright.chromium.launch(launchOptionsFor('chromium'));
+      try { await runPointerLockRefusal(refusalBrowser, origin); } finally { await refusalBrowser.close(); }
     }
     if (!LIVE_ORIGIN) await runStandaloneOffline(playwright);
   } finally { if (local) await new Promise(resolve => local.server.close(resolve)); }
