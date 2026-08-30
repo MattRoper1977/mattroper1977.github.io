@@ -403,6 +403,68 @@ async function reportEngineGraphics(browser, profile, origin) {
   } finally { await context.close(); }
 }
 
+// R6-A. The pointer-lock return shape is a per-engine CONTRACT, not a constant.
+// A shape this table does not predict is news in either direction, so the day
+// an engine changes its return the gate says so rather than ossifying around
+// an assumption.
+//
+// Every entry here is MEASURED, not assumed. The first version of this table
+// carried firefox:'undefined' on the widely-repeated claim that only Chromium
+// returns a promise. CI refuted it on the first run — RETURN_SHAPE_DRIFT,
+// firefox observed 'thenable' — which is the gate doing its job on its own
+// author. Firefox has returned a promise since 137. The entry below is that
+// observation, not the claim.
+//
+// webkit was carried as null — UNPINNED — for exactly one run, because the run
+// that would have measured it aborted at Firefox's assert. That run completed:
+//
+//   INFO webkit pointer-lock return shape — webkit: 'thenable' — UNPINNED
+//   PASS webkit-desktop-1366/voxel
+//
+// so the entry below is that observation. All three engines return a promise;
+// the "only Chromium does" claim was wrong about both of the other two. The
+// UNPINNED path stays in lockShapeVerdict for the next engine or profile added
+// here: a new engine starts unpinned rather than silently green, and 'other'
+// reds as RETURN_SHAPE_INVALID whether an engine is pinned or not.
+//
+// Promise.resolve(r).catch(h) in the game is unaffected by any of this:
+// Promise.resolve(undefined) is inert, so the fix holds on all three engines.
+const EXPECTED_LOCK_SHAPE = Object.freeze({ chromium: 'thenable', firefox: 'thenable', webkit: 'thenable' });
+
+function lockShapeVerdict(engine, observed) {
+  const expected = EXPECTED_LOCK_SHAPE[engine];
+  if (observed === 'other') {
+    return { ok: false, label: 'RETURN_SHAPE_INVALID', detail: `${engine}: requestPointerLock returned neither a thenable nor undefined (observed '${observed}')` };
+  }
+  if (!expected) {
+    return { ok: true, label: 'UNPINNED', detail: `${engine}: '${observed}' — UNPINNED, no measured shape to compare against; pin this value once a ${engine} leg completes` };
+  }
+  if (observed !== expected) {
+    return { ok: false, label: 'RETURN_SHAPE_DRIFT', detail: `${engine}: expected '${expected}', observed '${observed}'` };
+  }
+  return { ok: true, label: 'ok', detail: `${engine}: '${observed}'` };
+}
+
+async function checkPointerLockShape(page, engine) {
+  const observed = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    document.body.appendChild(canvas);
+    let value;
+    try { value = canvas.requestPointerLock ? canvas.requestPointerLock() : undefined; }
+    catch (error) { canvas.remove(); return 'other'; }
+    canvas.remove();
+    if (value && typeof value.then === 'function') {
+      if (typeof value.catch === 'function') value.catch(() => {});
+      return 'thenable';
+    }
+    return value === undefined ? 'undefined' : 'other';
+  });
+  const verdict = lockShapeVerdict(engine, observed);
+  console.log(`INFO ${engine} pointer-lock return shape — ${verdict.detail}`);
+  assert(verdict.ok, `${verdict.label}: ${verdict.detail}`);
+  return observed;
+}
+
 async function clickIfVisible(page, selector, options = {}) {
   const locator = page.locator(selector).first();
   if (await locator.isVisible().catch(() => false)) { await locator.click(options); return true; }
@@ -588,8 +650,87 @@ async function smokeRelic(page, mobile) {
 async function smokeVoxel(page, mobile) {
   await page.waitForFunction(() => !!window.__BEACONFALL_GREEDY__ && !!document.querySelector('#start'), null, { timeout: 30000 });
   await page.locator('[data-mode="frontier"]').click(); await page.locator('#start').click();
+  // Voxel builds 37 chunks, yielding on requestAnimationFrame, and only THEN asks
+  // for pointer lock. On a slow runner the click's user activation has expired by
+  // then, so the lock is refused — and the game says so itself where it asks:
+  //
+  //   // Some browsers reject the request without firing pointerlockerror, because
+  //   // the click gesture expired during terrain generation. Verify, and offer a
+  //   // way back.
+  //   setTimeout(()=>{ if(!locked&&started)showPause('Click Resume to grab the mouse
+  //     and play.'); },700);
+  //
+  // showPause() sets running=false and puts the overlay back, and the render loop
+  // gates on `running && (locked||isTouch)`, so the HUD is never written. The world
+  // is built and fine — the loader reads 37/37 at 100%. A player clicks Resume. So
+  // does this, once, with a fresh trusted gesture. Measured: the same commit passes
+  // webkit/voxel on a fast runner and fails on a slow one (webkit's preceding leg
+  // took 46s when it passed, 56-58s when it failed), which is what makes waiting
+  // longer the wrong instrument and a second gesture the right one.
+  const hudReports = () => {
+    const hud = document.querySelector('#hud');
+    return !!hud && hud.textContent.includes('Beaconfall · V4 M2');
+  };
+  // Either the world reports, or the game has offered the way back. The tell is
+  // #start: startGame() hides it for the whole build and only restores it, reading
+  // "Resume", once the terrain is done — so a VISIBLE Resume button with the overlay
+  // up is the refused-lock state and cannot be confused with mid-build, where the
+  // loader is also on screen and #loadfill also reaches 100% on the last chunk.
+  await page.waitForFunction(() => {
+    const hud = document.querySelector('#hud');
+    if (hud && hud.textContent.includes('Beaconfall · V4 M2')) return true;
+    const overlay = document.querySelector('#overlay');
+    const start = document.querySelector('#start');
+    if (!overlay || !start) return false;
+    const shown = el => { const c = getComputedStyle(el); const r = el.getBoundingClientRect();
+      return c.display !== 'none' && c.visibility !== 'hidden' && r.width > 0 && r.height > 0; };
+    return shown(overlay) && shown(start) && /resume/i.test(start.textContent || '');
+  }, null, { timeout: 60000 });
+  // Take the way back whenever it is on offer — not merely when the HUD is silent.
+  // A fast engine can write the HUD in the window between running=true and the
+  // 700ms guard, so the world reports AND THEN pauses; leaving that unresumed
+  // fails later, at the save, with the pause menu still up.
+  const resumeOffered = () => {
+    const overlay = document.querySelector('#overlay');
+    const start = document.querySelector('#start');
+    if (!overlay || !start) return false;
+    const shown = el => { const c = getComputedStyle(el); const r = el.getBoundingClientRect();
+      return c.display !== 'none' && c.visibility !== 'hidden' && r.width > 0 && r.height > 0; };
+    return shown(overlay) && shown(start) && /resume/i.test(start.textContent || '');
+  };
+  // R2. Wait for the pointer-lock OUTCOME to be DECIDED, not for a fixed interval.
+  // A sleep elapses just as happily on a build that reaches neither state, which is
+  // how it could green something that never settled. The decided states are exact:
+  //   desktop  document.pointerLockElement is set        -> granted
+  //            the Resume offer is up                    -> refused
+  //   touch    the game never asks for a lock, so the HUD reporting IS the outcome
+  // The transient that defeated the earlier attempt — HUD written, pause not yet
+  // arrived — is excluded because neither decided state holds during it.
   try {
-    await page.waitForFunction(() => document.querySelector('#hud').textContent.includes('Beaconfall · V4 M2'), null, { timeout: 60000 });
+    await page.waitForFunction((isTouch) => {
+      const hud = document.querySelector('#hud');
+      const reporting = !!hud && hud.textContent.includes('Beaconfall · V4 M2');
+      if (isTouch) return reporting;
+      if (document.pointerLockElement) return true;
+      const overlay = document.querySelector('#overlay');
+      const start = document.querySelector('#start');
+      if (!overlay || !start) return false;
+      const shown = el => { const c = getComputedStyle(el); const r = el.getBoundingClientRect();
+        return c.display !== 'none' && c.visibility !== 'hidden' && r.width > 0 && r.height > 0; };
+      return shown(overlay) && shown(start) && /resume/i.test(start.textContent || '');
+    }, mobile, { timeout: 60000 });
+  } catch (error) {
+    throw new Error('Voxel pointer-lock outcome never decided — waited for '
+      + (mobile ? 'the HUD to report (touch takes no lock)'
+                : 'document.pointerLockElement to be set (granted) OR the Resume offer to be shown (refused)')
+      + '; neither within 60000ms');
+  }
+  if (await page.evaluate(resumeOffered)) {
+    await page.locator('#start').click({ timeout: 10000 });
+    await page.waitForFunction(hudReports, null, { timeout: 30000 });
+  }
+  try {
+    await page.waitForFunction(hudReports, null, { timeout: 60000 });
   } catch (error) {
     // Same budget, same assertion. A missing #hud makes the predicate THROW,
     // which waitForFunction swallows and retries, so the timeout looks
@@ -682,6 +823,7 @@ async function runOne(browser, profile, game, origin) {
   const geometry = await page.evaluate(() => ({ text: document.body.innerText.trim().length, width: document.documentElement.scrollWidth, client: document.documentElement.clientWidth, height: document.documentElement.scrollHeight }));
   assert(geometry.text > 20 && geometry.height > 80, `${game.id}: blank route`);
   assert(geometry.width <= geometry.client + 6, `${game.id}: horizontal clipping ${geometry.width}/${geometry.client}`);
+  if (game.id === 'voxel') await checkPointerLockShape(page, profile.engine);
   await SMOKES[game.id](page, !!profile.hasTouch);
   await page.waitForTimeout(250);
   assert.deepEqual(remote, [], `${game.id}: unexpected remote requests: ${remote.join(', ')}`);
@@ -769,6 +911,55 @@ async function runStandaloneOffline(playwright) {
   } finally { await browser.close(); }
 }
 
+// R1. The pointer-lock refusal case, owned by the verifier rather than by a
+// throwaway harness. Voxel asks for a lock after building 37 chunks, by which
+// point a slow runner has expired the click's user activation; the refusal
+// rejects, and an unhandled rejection is a page error. The build cannot drop
+// this trigger because the build does not supply it — this does, on every run,
+// with no flag and no catch around the injection to swallow a miss.
+//
+// STUB_ABSENT is the guard on the guard: if the injection did not take, the case
+// would pass for the wrong reason, so a missing marker is a named RED.
+async function runPointerLockRefusal(browser, origin) {
+  const game = GAMES.find(item => item.id === 'voxel');
+  const context = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(`pageerror: ${error.message || error}`));
+  await page.addInitScript(() => {
+    const real = Element.prototype.requestPointerLock;
+    let first = true;
+    Element.prototype.requestPointerLock = function (...args) {
+      if (first) {
+        first = false;
+        return Promise.reject(new DOMException('Pointer lock requires a user gesture.', 'NotAllowedError'));
+      }
+      return real.apply(this, args);
+    };
+    window.__mbmPointerLockStub = true;
+  });
+  try {
+    await page.goto(`${origin}${game.route}?splash=skip&debug=1&seed=424242`, { waitUntil: 'load', timeout: 90000 });
+    const installed = await page.evaluate(() => window.__mbmPointerLockStub === true);
+    assert(installed, 'STUB_ABSENT: the pointer-lock refusal stub did not install, so this case would have passed for the wrong reason');
+    await page.waitForFunction(() => !!window.__BEACONFALL_GREEDY__ && !!document.querySelector('#start'), null, { timeout: 30000 });
+    await page.locator('[data-mode="frontier"]').click();
+    await page.locator('#start').click();
+    await page.waitForFunction(() => {
+      const hud = document.querySelector('#hud');
+      if (hud && hud.textContent.includes('Beaconfall \u00b7 V4 M2')) return true;
+      const overlay = document.querySelector('#overlay');
+      const start = document.querySelector('#start');
+      if (!overlay || !start) return false;
+      const shown = el => { const c = getComputedStyle(el); const r = el.getBoundingClientRect();
+        return c.display !== 'none' && c.visibility !== 'hidden' && r.width > 0 && r.height > 0; };
+      return shown(overlay) && shown(start) && /resume/i.test(start.textContent || '');
+    }, null, { timeout: 60000 });
+    assert.deepEqual(errors, [], `voxel refused-lock: the rejection was not handled: ${errors.join(' | ')}`);
+    gate('pointerlock-refused/voxel', 'a refused pointer lock is handled, not thrown');
+  } finally { await context.close(); }
+}
+
 async function browserMain() {
   staticMain();
   if (LIVE_ORIGIN) await verifyLivePublication();
@@ -784,6 +975,10 @@ async function browserMain() {
         for (const game of GAMES) await runOne(browser, profile, game, origin);
         if (!LIVE_ORIGIN && profile.name === 'chromium-desktop-1366') await runMigrationFixtures(browser, origin);
       } finally { await browser.close(); }
+    }
+    {
+      const refusalBrowser = await playwright.chromium.launch(launchOptionsFor('chromium'));
+      try { await runPointerLockRefusal(refusalBrowser, origin); } finally { await refusalBrowser.close(); }
     }
     if (!LIVE_ORIGIN) await runStandaloneOffline(playwright);
   } finally { if (local) await new Promise(resolve => local.server.close(resolve)); }
