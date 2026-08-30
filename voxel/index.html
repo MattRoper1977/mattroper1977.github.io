@@ -186,6 +186,7 @@
   #act{position:absolute;right:var(--safe-right);bottom:var(--safe-bottom);width:150px;height:150px}
   #act .btn{width:64px;height:64px;position:absolute}
   #b-jump{right:0;bottom:60px}#b-break{left:0;bottom:0}#b-place{right:0;bottom:0;background:rgba(56,189,248,.35)}
+  #b-pause{right:var(--safe-right);top:var(--safe-top);width:48px;height:48px;font-size:17px}
   #dpad #b-fly{left:0;top:0;width:46px;height:46px;font-size:13px}
   body.mobile #touch{display:block}
   @media(max-width:520px){
@@ -248,9 +249,11 @@ var st=document.createElement("style");st.id="mbm-maker-splash-css";st.textConte
 var el=document.createElement("section");el.id="mbmSplash";el.setAttribute("data-mbm-maker-splash","");el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");el.setAttribute("aria-label","Made by Matt introduction");el.tabIndex=-1;el.innerHTML='<div class="mbm-splash-mark"><span>Made by</span><strong>Matt</strong><em>presents</em><div class="mbm-splash-line"></div></div><span class="mbm-splash-sr">Tap or press any key to continue.</span>';
 (document.body||document.documentElement).appendChild(el);SPLASH_EL=el;
 var reduced=false;try{reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(_){}
-var shown=performance.now(),requested=false,closed=false,hard=0;
-function finish(){if(closed)return;closed=true;CLOSED=true;clearTimeout(hard);el.classList.add("mbm-splash-skip");el.style.setProperty("pointer-events","none","important");el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}unguard();if(el.parentNode)el.parentNode.removeChild(el);focusReady();}
-function dismiss(){if(requested||closed)return;requested=true;el.style.setProperty("pointer-events","none","important");el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}if(MODE!=="force")writeNow();var wait=Math.max(0,450-(performance.now()-shown));setTimeout(finish,wait);}
+var shown=0,requested=false,closed=false,hard=0,finishTimer=0;
+requestAnimationFrame(function(){shown=performance.now();if(requested)scheduleFinish();});
+function finish(){if(closed)return;closed=true;CLOSED=true;clearTimeout(hard);clearTimeout(finishTimer);el.classList.add("mbm-splash-skip");el.style.setProperty("pointer-events","none","important");el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}unguard();if(el.parentNode)el.parentNode.removeChild(el);focusReady();}
+function scheduleFinish(){if(!shown)return;clearTimeout(finishTimer);var wait=Math.max(0,450-(performance.now()-shown));finishTimer=setTimeout(finish,wait);}
+function dismiss(){if(requested||closed)return;requested=true;el.style.setProperty("pointer-events","none","important");el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}if(MODE!=="force")writeNow();scheduleFinish();}
 DISMISS=dismiss;if(EARLY_DISMISS)dismiss();
 el.addEventListener("animationend",function(e){if(e.target===el&&e.animationName==="mbmSplash")dismiss();});
 window.addEventListener("pagehide",function(){if(requested&&!closed)finish();},{once:true});
@@ -281,6 +284,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 <div id="hotbar" role="toolbar" aria-label="Block palette"></div>
 
 <div id="touch">
+  <button type="button" class="btn" id="b-pause" aria-label="Pause game">Ⅱ</button>
   <div id="dpad">
     <button type="button" class="btn" id="d-up" aria-label="Move forward">▲</button><button type="button" class="btn" id="d-down" aria-label="Move backward">▼</button>
     <button type="button" class="btn" id="d-left" aria-label="Move left">◀</button><button type="button" class="btn" id="d-right" aria-label="Move right">▶</button>
@@ -1627,6 +1631,7 @@ applyUISettings();updateModeUI();
 function requestLock(){
   audioInit();
   if(!started){startGame();return;}
+  if(isTouch){running=true;overlay.style.display='none';return;}
   if(canvas.requestPointerLock)canvas.requestPointerLock();
 }
 startBtn.addEventListener('click',e=>{e.stopPropagation();requestLock();});
@@ -1639,13 +1644,14 @@ overlay.addEventListener('click',e=>{
 
 function showPause(msg){
   if(!started)return;
+  running=false;
   tagEl.textContent=msg||'Paused — your world is saved automatically.';
   startBtn.textContent='Resume';
   overlay.style.display='flex';
 }
 document.addEventListener('pointerlockchange',()=>{
   locked=(document.pointerLockElement===canvas);
-  if(locked){ overlay.style.display='none'; }
+  if(locked){ running=true;overlay.style.display='none'; }
   else if(started){ showPause(); saveWorld(true); }
 });
 // If the browser refuses the lock (e.g. too soon after Esc) the player would
@@ -1738,6 +1744,9 @@ if(isTouch){
   bind('b-break',()=>breakBlock());
   bind('b-place',()=>placeBlock());
   bind('b-fly',()=>toggleFly());
+  document.getElementById('b-pause').addEventListener('click',event=>{
+    event.preventDefault();showPause();saveWorld(true);
+  });
   let lookId=null,lastT=null;
   canvas.addEventListener('touchstart',ev=>{
     if(lookId!==null)return;

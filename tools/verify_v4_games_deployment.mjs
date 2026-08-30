@@ -500,13 +500,18 @@ async function smokeVoxel(page, mobile) {
   const after = await page.locator('#hud').innerText();
   assert(after.includes('FRONTIER') && (after !== before || (await page.locator('#contract-objectives').innerText()).length > 10), 'Voxel world/input/objective did not progress');
   const overlayVisible = await page.locator('#overlay').evaluate(element => getComputedStyle(element).display !== 'none');
-  if (!overlayVisible) await page.keyboard.press('Escape');
+  if (!overlayVisible) {
+    if (mobile) await page.locator('#b-pause').click();
+    else await page.evaluate(() => document.exitPointerLock());
+  }
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#overlay')).display !== 'none');
   const save = await page.evaluate(() => {
     const key = localStorage.getItem('voxelfrontier.lastseed.v1');
     return key && localStorage.getItem(`voxelfrontier.world.v2.${key}`);
   });
   assert(save && JSON.parse(save).v === 4, 'Voxel V4 world was not persisted');
+  await page.locator('#start').click();
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('#overlay')).display === 'none');
 }
 
 const SMOKES = { offbrand: smokeOffbrand, trailrunner: smokeTrail, apexkick: smokeApex, auroralinks: smokeAurora, houseolympiad: smokeHouse, olympics: smokeGlobal, relicforge: smokeRelic, voxel: smokeVoxel };
