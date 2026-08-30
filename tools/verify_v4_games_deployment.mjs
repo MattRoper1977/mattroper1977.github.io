@@ -584,19 +584,33 @@ async function smokeVoxel(page, mobile) {
     // which waitForFunction swallows and retries, so the timeout looks
     // identical to a world that simply never generated. Say which it was.
     const gl = await glReport(page);
-    const state = await page.evaluate(() => {
+    // startGame() builds the chunk list and yields with requestAnimationFrame
+    // every fourth chunk. So a stall here is one of two different faults: the
+    // loader frozen (rAF never firing) or the loader still crawling (software
+    // rasterisation too slow for the budget). Sampling it twice tells them
+    // apart, and they do not have the same repair.
+    const read = () => page.evaluate(() => {
       const hud = document.querySelector('#hud');
       const overlay = document.querySelector('#overlay');
+      const loadtxt = document.querySelector('#loadtxt');
+      const loadfill = document.querySelector('#loadfill');
       return {
         hudPresent: !!hud,
-        hudText: hud ? hud.textContent.trim().replace(/\s+/g, ' ').slice(0, 200) : null,
+        hudText: hud ? hud.textContent.trim().replace(/\s+/g, ' ').slice(0, 160) : null,
         overlayDisplay: overlay ? getComputedStyle(overlay).display : null,
-        startPresent: !!document.querySelector('#start'),
+        loadText: loadtxt ? loadtxt.textContent.trim() : null,
+        loadWidth: loadfill ? loadfill.style.width : null,
         greedy: !!window.__BEACONFALL_GREEDY__,
         canvases: document.querySelectorAll('canvas').length
       };
     }).catch(evalError => ({ unreadable: evalError.message }));
-    throw new Error(`Voxel HUD never reported the world — engine webgl2: ${gl.webgl2}; page ${JSON.stringify(state)}`);
+    const first = await read();
+    await page.waitForTimeout(6000);
+    const second = await read();
+    const moved = first.loadText !== second.loadText || first.loadWidth !== second.loadWidth;
+    throw new Error(`Voxel HUD never reported the world — engine webgl2: ${gl.webgl2}; ` +
+      `loader ${moved ? 'STILL ADVANCING (too slow for the budget)' : 'FROZEN (not advancing at all)'} ` +
+      `over 6s: ${JSON.stringify(first)} then ${JSON.stringify(second)}`);
   }
   const before = await page.locator('#hud').innerText();
   if (mobile) {
