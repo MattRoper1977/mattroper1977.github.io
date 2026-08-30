@@ -404,21 +404,37 @@ async function reportEngineGraphics(browser, profile, origin) {
 }
 
 // R6-A. The pointer-lock return shape is a per-engine CONTRACT, not a constant.
-// Chromium returns a Promise; Firefox and WebKit return undefined. Both are
-// correct, so neither may red — but a shape this table does not predict is news,
-// in either direction, and the day an engine gains a promise return the gate says
-// so rather than ossifying around a 2026 assumption.
+// A shape this table does not predict is news in either direction, so the day
+// an engine changes its return the gate says so rather than ossifying around
+// an assumption.
+//
+// Every entry here is MEASURED, not assumed. The first version of this table
+// carried firefox:'undefined' on the widely-repeated claim that only Chromium
+// returns a promise. CI refuted it on the first run — RETURN_SHAPE_DRIFT,
+// firefox observed 'thenable' — which is the gate doing its job on its own
+// author. Firefox has returned a promise since 137. The entry below is that
+// observation, not the claim.
+//
+// webkit is deliberately null: UNPINNED. That run aborted at Firefox before
+// WebKit's leg, so no measurement of WebKit exists to pin, and inventing one
+// would be the same mistake again. Null does not mean "anything goes" — 'other'
+// still reds as RETURN_SHAPE_INVALID — and it never reports as a pass: it
+// reports as UNPINNED, naming the shape it saw, so the first WebKit leg that
+// completes hands over the value to pin here.
 //
 // Promise.resolve(r).catch(h) in the game is unaffected by any of this:
 // Promise.resolve(undefined) is inert, so the fix holds on all three engines.
-const EXPECTED_LOCK_SHAPE = Object.freeze({ chromium: 'thenable', firefox: 'undefined', webkit: 'undefined' });
+const EXPECTED_LOCK_SHAPE = Object.freeze({ chromium: 'thenable', firefox: 'thenable', webkit: null });
 
 function lockShapeVerdict(engine, observed) {
   const expected = EXPECTED_LOCK_SHAPE[engine];
   if (observed === 'other') {
     return { ok: false, label: 'RETURN_SHAPE_INVALID', detail: `${engine}: requestPointerLock returned neither a thenable nor undefined (observed '${observed}')` };
   }
-  if (expected && observed !== expected) {
+  if (!expected) {
+    return { ok: true, label: 'UNPINNED', detail: `${engine}: '${observed}' — UNPINNED, no measured shape to compare against; pin this value once a ${engine} leg completes` };
+  }
+  if (observed !== expected) {
     return { ok: false, label: 'RETURN_SHAPE_DRIFT', detail: `${engine}: expected '${expected}', observed '${observed}'` };
   }
   return { ok: true, label: 'ok', detail: `${engine}: '${observed}'` };
