@@ -472,10 +472,10 @@ async function smokeRelic(page, mobile) {
   if (after.mode !== 'paused') {
     // bindHoldButton calls setPointerCapture before its pause callback. A
     // synthetic dispatchEvent has no active pointer and can throw there,
-    // leaving the game running. Use Playwright's trusted pointer sequence so
-    // this exercises the real desktop/touch control path.
+    // leaving the game running. Exercise the real trusted input for each
+    // layout: Escape on desktop and the visible touch control on mobile.
     if (mobile) await page.locator('#touch-pause').tap();
-    else await page.locator('#touch-pause').click();
+    else await page.keyboard.press('Escape');
   }
   await page.waitForFunction(() => __relicforge.snapshot().mode === 'paused');
   await page.locator('#resume-btn').click(); await page.waitForFunction(() => __relicforge.snapshot().mode === 'playing');
