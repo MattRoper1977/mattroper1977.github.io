@@ -233,10 +233,23 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
     }
     else if (action === 'timeout') await maker.evaluate(el => { el.style.animation = 'none'; });
     // Shader-heavy games can monopolise a throttled CI main thread after the
-    // dismissal key. Keep the check strict, but allow the queued close/focus
-    // task to run before evaluating the hand-off.
+    // dismissal key. A selector can transiently detach while those pages are
+    // still parsing, so the first DOM gap is not dismissal evidence. Require
+    // 100 ms of continuous absence and, outside force mode, the suppression
+    // write that only occurs after the layer has become inert.
     if (action !== 'none') {
-      detached = await maker.waitFor({ state: 'detached', timeout: 30000 }).then(() => true).catch(() => false);
+      const requireWrite = !/[?&]splash=force(?:&|$)/.test(route);
+      detached = await page.waitForFunction(({ key, requireWrite }) => {
+        const probe = window.__makerProbe || (window.__makerProbe = {});
+        let written = false;
+        try { written = localStorage.getItem(key) !== null || sessionStorage.getItem(key) !== null; } catch {}
+        if (document.querySelector('[data-mbm-maker-splash]') || (requireWrite && !written)) {
+          probe.stableAbsentAt = null;
+          return false;
+        }
+        if (!Number.isFinite(probe.stableAbsentAt)) probe.stableAbsentAt = performance.now();
+        return performance.now() - probe.stableAbsentAt >= 100;
+      }, { key: KEY, requireWrite }, { polling: 50, timeout: 30000 }).then(() => true).catch(() => false);
       visibleWallMs = Date.now() - visibleWallStart;
     }
   }
