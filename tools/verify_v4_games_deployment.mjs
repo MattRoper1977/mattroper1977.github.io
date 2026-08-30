@@ -469,7 +469,10 @@ async function smokeRelic(page) {
   await page.waitForTimeout(900);
   const after = await page.evaluate(() => window.__relicforge.snapshot());
   assert(after.time > before.time && after.playerPosition && (after.playerPosition.x !== before.playerPosition.x || after.projectiles !== before.projectiles || after.enemies <= before.enemies), 'Relic movement/combat did not progress');
-  if (after.mode !== 'paused') await page.keyboard.press('Escape');
+  if (after.mode !== 'paused') {
+    await page.locator('#touch-pause').dispatchEvent('pointerdown', { pointerId: 91, pointerType: 'touch' });
+    await page.locator('#touch-pause').dispatchEvent('pointerup', { pointerId: 91, pointerType: 'touch' });
+  }
   await page.waitForFunction(() => __relicforge.snapshot().mode === 'paused');
   await page.locator('#resume-btn').click(); await page.waitForFunction(() => __relicforge.snapshot().mode === 'playing');
 }

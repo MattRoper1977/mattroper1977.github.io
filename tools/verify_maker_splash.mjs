@@ -573,7 +573,12 @@ async function verify(browser, origin) {
     const route = routes[i], observations = [];
     for (const viewport of VIEWPORTS) {
       const ctx = await newContext(browser, { viewport });
-      const result = await pageProbe(ctx, origin, `${route}${route.includes('?') ? '&' : '?'}splash=force`, { action: 'key', waitAbsent: 700 });
+      // Every probe owns a fresh context, so the normal URL is guaranteed to
+      // be an unsuppressed first visit. Using ?splash=force here disabled the
+      // real dismissal write and turned a route's legitimate boot reload into
+      // a second artificial splash; force/skip semantics are covered above by
+      // the dedicated SS controls.
+      const result = await pageProbe(ctx, origin, route, { action: 'key', waitAbsent: 700 });
       await ctx.close();
       const skipContext = await newContext(browser, { viewport });
       const skipped = await pageProbe(skipContext, origin, `${route}${route.includes('?') ? '&' : '?'}splash=skip`, { waitAbsent: 700 });
