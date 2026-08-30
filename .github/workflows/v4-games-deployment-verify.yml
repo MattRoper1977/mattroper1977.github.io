@@ -163,10 +163,10 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts/v4-games
-          # Firefox is launched headed (see launchOptionsFor) because headless
-          # Firefox on Linux has no GL context at all, so a WebGL game cannot
-          # boot in it. xvfb-run supplies the virtual display that headed mode
-          # needs; Chromium and WebKit are unaffected and stay headless.
+          # Firefox and WebKit are launched headed (see launchOptionsFor):
+          # headless Firefox on Linux has no GL context at all, and headless
+          # WebKit cannot grant pointer lock, which Voxel needs to enter play.
+          # xvfb-run supplies the display both need. Chromium stays headless.
           xvfb-run -a node tools/verify_v4_games_deployment.mjs --browser | tee artifacts/v4-games/browser.log
 
       - uses: actions/upload-artifact@v4

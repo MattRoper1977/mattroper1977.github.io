@@ -337,18 +337,29 @@ const PROFILES = Object.freeze([
   { name: 'webkit-desktop-1366', engine: 'webkit', viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 }
 ]);
 
-// Chromium is handed SwiftShader so WebGL games render on a GPU-less runner. Firefox cannot be
-// given the same thing by a flag: headless Firefox on Linux has no GL context at all, measured
-// rather than assumed —
+// Each engine needs the same two capabilities — a GL context and pointer lock — and each takes
+// them a different way. Chromium has both headless once it is handed SwiftShader. Firefox and
+// WebKit need a real display, and the workflow gives them one through xvfb-run.
+//
+// Both were measured rather than assumed. Headless Firefox has no GL context at all:
 //
 //   INFO firefox-desktop-1366 graphics — webgl2: none · webgl: none
 //   Trail boot never completed ... "THIS VIEWER HAS NO 3D — This browser refused to give the
 //   page any WebGL graphics context"
 //
-// so it runs headed against the virtual display the workflow provides through xvfb-run, and the
-// prefs below lift the blocklist that would otherwise refuse the software renderer behind it.
-// Capability only: every assertion is unchanged, and each engine still has to boot, take input,
-// progress, pause/resume and exit accessibly.
+// Headless WebKit has GL but cannot grant pointer lock, which Voxel needs to enter play:
+//
+//   INFO webkit-desktop-1366 graphics — webgl2: Apple GPU
+//   Voxel HUD never reported the world ... loader "Building terrain 37 / 37" at 100%,
+//   overlayDisplay "flex"
+//
+// That second one is the game behaving correctly: the world finishes building, requestPointerLock
+// is refused, and its own 700ms guard shows "Click Resume to grab the mouse and play." The
+// harness was asking a desktop pointer-lock game to play without a pointer to lock.
+//
+// The prefs below are for Firefox only, and lift the blocklist that would otherwise refuse the
+// software renderer once a display exists. Capability only: every assertion is unchanged, and
+// each engine still has to boot, take input, progress, pause/resume and exit accessibly.
 const FIREFOX_SOFTWARE_WEBGL = Object.freeze({
   'webgl.force-enabled': true,
   'webgl.disabled': false,
@@ -359,7 +370,7 @@ const FIREFOX_SOFTWARE_WEBGL = Object.freeze({
 function launchOptionsFor(engine) {
   if (engine === 'chromium') return { headless: true, args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] };
   if (engine === 'firefox') return { headless: false, firefoxUserPrefs: { ...FIREFOX_SOFTWARE_WEBGL } };
-  return { headless: true };
+  return { headless: false };
 }
 
 // A boot wait that times out says `log: []` and nothing else, which cannot tell a
