@@ -645,52 +645,22 @@ async function finish() {
     gate('G17', 'single-file size, cold load and frame rate', () => {
       assert(!browserRuns.error, browserRuns.error && browserRuns.error.message);
       assert(byteCount <= 250 * 1024, `${byteCount} bytes exceeds 250 KiB`);
-      /* AMENDED 2026-08-25 (Order T §T3), and NARROWED rather than loosened.
-       *
-       * `e65a190` "Stage 2B" deliberately wired the estate's shared HUD into ten
-       * root games on 10 August, apexgolf among them, so that a player has a way
-       * back out of the game. This limb said "no <script src> at all" and became
-       * false the same day. It has been red ever since — invisible, because the
-       * `grep … | wc -l` step above it died first under `pipefail` and the job
-       * never reached this file. Two faults, one day, and the noisy one hid the
-       * real one for fifteen days.
-       *
-       * Stage 2B's own commit message names the rule: admitting the HUD to a
-       * single-file game RETRACTS A PROMISE THE GAME MAKES, so eight games that
-       * ship under that promise were declared and left alone. It measured the
-       * eight it declined and assumed the ten it wired — apexgolf was the one
-       * that carried the promise anyway.
-       *
-       * The precedent for the amendment is already in this repo:
-       * verify_neonbreach.js was amended when /hud.js was added, with
-       * `only-same-origin-src-is-hud`. So the promise is not withdrawn, it is
-       * made specific: the ONE permitted script is the estate's own deferred
-       * same-origin /hud.js, and any other script src — off-origin or not — is
-       * still a runtime dependency. That is stricter than "no CDN", not looser.
-       */
-      /* The OPENING TAG only — that is what the match returns, and comparing it
-         to a string carrying `</script>` is how the first draft of this
-         amendment reproduced the very failure it was fixing. */
-      const HUD = '<script defer src="/hud.js">';
+      /* V6 restores the exact zero-runtime-dependency promise. The exit control
+         is inline, so every script `src` is again forbidden. Two planted
+         controls prove the census rejects both remote and same-origin loads. */
       const scriptTags = t => t.match(/<script\b[^>]*\bsrc\s*=\s*["'][^"']*["'][^>]*>/gi) || [];
-      const foreign = t => scriptTags(t).filter(tag => tag.replace(/\s+/g, ' ').trim() !== HUD);
-      assert(foreign(html).length === 0,
-        `runtime dependency found: ${foreign(html).join(', ')}`);
+      assert(scriptTags(html).length === 0,
+        `runtime dependency found: ${scriptTags(html).join(', ')}`);
       assert(!/<link\s+[^>]*rel=["']stylesheet/.test(html), 'external stylesheet found');
-      /* CONTROL, because a limb that was narrowed on the word of a regex is a
-         limb nobody has tested. G16 tampers the sentinel and proves nothing
-         about this one. Three mutations, each of which MUST still be rejected:
-         an off-origin CDN script, a second same-origin script that is not the
-         HUD, and the HUD loaded without `defer`. If any survives, the promise
-         has been withdrawn rather than made specific, and this gate says so. */
+      /* G16 tampers the sentinel and proves nothing about this dependency limb,
+         so both dependency families are armed independently here. */
       const controls = [
         ['off-origin CDN', html.replace('</head>', '<script src="https://cdn.example.invalid/a.js"></script></head>')],
         ['a second same-origin script', html.replace('</head>', '<script src="/analytics.js"></script></head>')],
-        ['the HUD without defer', html.replace(HUD, '<script src="/hud.js">')],
       ];
       for (const [label, mutated] of controls) {
         assert(mutated !== html, `CONTROL "${label}" changed nothing — it proves nothing`);
-        assert(foreign(mutated).length > 0, `CONTROL: ${label} was NOT rejected`);
+        assert(scriptTags(mutated).length > 0, `CONTROL: ${label} was NOT rejected`);
       }
       assert(!/\b(?:fetch|XMLHttpRequest)\s*\(/.test(html), 'runtime network request found');
       requireRows(['performance-floor','real-canvas-pixels']);
