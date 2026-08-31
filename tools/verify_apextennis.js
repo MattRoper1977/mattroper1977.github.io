@@ -8,7 +8,7 @@ const html=fs.readFileSync(FILE,'utf8');
 const bytes=Buffer.byteLength(html);
 const sha=crypto.createHash('sha256').update(html).digest('hex');
 // Pinned release identity for the complete delivered Apex Tennis V6 file.
-const EXPECTED_V6_SHA256='fd45a8f6c594ff09b11d80d408eed8b38fe8f7252e337bdcea21a9824e089f17';
+const EXPECTED_V6_SHA256='06791f86106d6ba79a9b697446511ddedf21a769c20db19dcb6400991e6f5f8f';
 const results=[];
 function assert(x,m){if(!x)throw new Error(m)}
 function gate(id,name,fn){try{const d=fn()||'';results.push({id,name,status:'PASS',detail:d});console.log(`PASS ${id} ${name}${d?' — '+d:''}`)}catch(e){results.push({id,name,status:'FAIL',detail:e.message});console.error(`FAIL ${id} ${name} — ${e.message}`)}}
@@ -53,7 +53,7 @@ gate('G8','share payload validation and save isolation',()=>{const valid=AT.enco
 
 gate('G9','mobile and touch source contract',()=>{assert(/min-height:44px/.test(html),'44px target floor missing');assert(/canvas\.getBoundingClientRect\(\)/.test(html),'pointer rect scaling missing');assert(/\(ev\.clientX-r\.left\)\*\(G\.view\.w\/r\.width\)/.test(html),'pointer x scale missing');assert(/touch-action:none/.test(html),'canvas touch action missing');return `44px source floor; scaled Pointer Events`});
 
-gate('G10','accessibility and reduced motion',()=>{assert((html.match(/@media\(prefers-reduced-motion:reduce\)/g)||[]).length>=2,'two reduced-motion blocks required');assert(/id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"/.test(html),'live region mismatch');assert(/:focus-visible/.test(html),'focus-visible ring missing');assert(/<noscript id="noScript">/.test(html),'noscript missing');assert(/id="noCanvas"/.test(html),'noCanvas missing');assert(/✓/.test(html)&&/×/.test(html),'state lacks non-colour symbols');return `2 reduced-motion blocks; live region; focus; no-JS and Canvas guards`});
+gate('G10','accessibility and reduced motion',()=>{assert((html.match(/@media\(prefers-reduced-motion:reduce\)/g)||[]).length>=2,'two reduced-motion blocks required');assert(/id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"/.test(html),'live region mismatch');assert(/:focus-visible/.test(html),'focus-visible ring missing');assert(/<noscript id="noScript">/.test(html),'noscript missing');assert(/id="noCanvas"/.test(html),'noCanvas missing');assert(/querySelectorAll\('#mbmexit-back,#mbmexit-home'\)/.test(html),'modal focus path omits the platform exits');assert(/✓/.test(html)&&/×/.test(html),'state lacks non-colour symbols');return `2 reduced-motion blocks; live region; focus; no-JS and Canvas guards; platform exits remain tabbable`});
 
 gate('G11','zero external runtime requests in source',()=>{const tags=html.match(/<(?:script|img|audio|video|source)\b[^>]*>/gi)||[],remote=tags.filter(t=>/(?:src|href)=["']https?:/i.test(t));assert(remote.length===0,`remote runtime tags: ${remote.join(' ')}`);assert(!/\bfetch\s*\(|XMLHttpRequest|WebSocket|sendBeacon|new\s+Image\s*\(/.test(html),'network API present');return `external request count 0`});
 

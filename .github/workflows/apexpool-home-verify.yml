@@ -77,7 +77,7 @@ jobs:
           # Each hash below is a pinned release identity for the game on its
           # line. Updating either game without updating this gate must go red on
           # that same commit.
-          test "$(sha256sum apextennis/index.html | awk '{print $1}')" = "fd45a8f6c594ff09b11d80d408eed8b38fe8f7252e337bdcea21a9824e089f17"
+          test "$(sha256sum apextennis/index.html | awk '{print $1}')" = "06791f86106d6ba79a9b697446511ddedf21a769c20db19dcb6400991e6f5f8f"
           test "$(sha256sum apexgolf/index.html | awk '{print $1}')" = "4411ff5b9a22e21acbeb91fb75863c6452e1e484bb6d963383f2343916a6ba6a"
 
       - name: Capture the measured 12-door main baseline
