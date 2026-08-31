@@ -4,8 +4,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Apex Golf — Made by Matt</title>
-<meta name="description" content="A top-down golf game about reading the hole and knowing your own game. Call your stroke count, play nine seeded holes with honest wind and slope, then earn a Call Rating. Works offline.">
+<title>Apex Golf V6 · Ascension Edition — Made by Matt</title>
+<meta name="description" content="Apex Golf V6 Ascension Edition — nine deterministic seeded holes with honest wind and slope, advisory landing dispersion, terrain roll and Call Rating. Works offline.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Apex Golf">
 <meta property="og:description" content="A top-down golf game about reading the hole and knowing your own game. Call your stroke count, play nine seeded holes with honest wind and slope, then earn a Call Rating. Works offline.">
@@ -69,6 +69,36 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 @media (max-width:680px){#topHud{min-height:50px}.hudChip:nth-of-type(3){display:none}.brand{font-size:13px}.hudGroup{gap:4px}.hudChip{padding:5px 7px;font-size:10px}#playControls{grid-template-columns:1fr}#aimReadout{text-align:center;min-width:0}.screen--read .readGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.screen{padding:18px}.legendItem{font-size:9px}}
 .screen--read{margin-top:auto;max-height:min(52vh,var(--readCap,52vh))}@media (min-width:700px) and (min-aspect-ratio:6/5){.screen--read{margin-top:0;margin-left:auto;max-height:min(94vh,var(--readCap,94vh))}}
 @media (max-height:520px){#topHud{display:none}#legend{display:none}.screen{max-height:94vh;padding:14px}.screen p{margin:.5em 0}.screen--title h1{font-size:3rem}.screen--read .readGrid{margin:7px 0}.screen--read .fact{padding:7px}}
+
+/* ===== V6 ASCENSION PRESENTATION LAYER — AG physics remains sealed ===== */
+body.v6-calm *,body.v6-calm *::before,body.v6-calm *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+#v6GolfAdvisory{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
+#v6GolfBrand{position:absolute;z-index:11;left:calc(70px + env(safe-area-inset-left,0px));top:calc(9px + env(safe-area-inset-top,0px));padding:5px 9px;border:1px solid #85f0d655;border-radius:999px;background:#071326dc;color:#85f0d6;font:900 9px/1.15 system-ui;letter-spacing:.12em;pointer-events:none;box-shadow:0 4px 16px #0008}
+#v6GolfBrand b{color:#ffd36b}
+#v6LieStatus{position:absolute;z-index:9;left:calc(10px + env(safe-area-inset-left,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));max-width:min(78vw,340px);padding:7px 10px;border:1px solid #d8f6ee42;border-radius:10px;background:#071326df;color:#d8f6ee;font:800 10px/1.3 system-ui;pointer-events:none;opacity:0;transition:opacity .15s}
+#v6LieStatus.on{opacity:1}
+#v6GolfClutch{position:absolute;z-index:12;left:50%;top:calc(66px + env(safe-area-inset-top,0px));transform:translateX(-50%);display:none;padding:7px 13px;border:1px solid #ffd36b;border-radius:999px;background:#13223ff0;color:#fff4be;font:900 10px/1 system-ui;letter-spacing:.14em;pointer-events:none;box-shadow:0 0 24px #ffd36b66}
+#v6GolfClutch.on{display:block;animation:v6PuttPulse .5s ease-in-out infinite alternate}
+@keyframes v6PuttPulse{to{transform:translateX(-50%) scale(1.05);box-shadow:0 0 34px #ffd36b99}}
+#v6GolfFly{position:absolute;inset:0;z-index:40;display:none;overflow:hidden;background:#03100bd4;isolation:isolate}
+#v6GolfFly.on{display:block}
+#v6GolfFly::before{content:"";position:absolute;inset:-15%;background:radial-gradient(circle at 78% 35%,#fff7bd 0 1.5%,#85f0d655 2%,transparent 24%),linear-gradient(112deg,transparent 20%,#e8fff625 48%,transparent 72%);animation:v6PinFly 2.05s cubic-bezier(.18,.72,.15,1) both}
+#v6GolfFly::after{content:"";position:absolute;right:20%;top:28%;width:2px;height:95px;background:linear-gradient(#fff,#ffd36b);box-shadow:0 0 18px #85f0d6;transform-origin:bottom;animation:v6Flag 1s ease-in-out infinite alternate}
+@keyframes v6PinFly{0%{transform:scale(2.2) translate(-18%,10%);filter:blur(5px)}60%{filter:blur(0)}100%{transform:scale(1)}}@keyframes v6Flag{to{transform:rotate(2deg)}}
+.v6GolfFlyCopy{position:absolute;inset:auto 0 12%;padding:20px;text-align:center;color:white;text-shadow:0 4px 20px #000}.v6GolfFlyCopy small{display:block;color:#85f0d6;font-weight:900;letter-spacing:.27em}.v6GolfFlyCopy strong{display:block;margin-top:8px;font-size:clamp(24px,7vw,50px)}.v6GolfFlyCopy span{display:block;color:#e2f3ed;margin-top:5px}
+#v6GolfSkip{position:absolute;right:calc(12px + env(safe-area-inset-right,0px));top:calc(12px + env(safe-area-inset-top,0px));z-index:3;min-width:92px;min-height:44px;padding:8px 13px;border:1px solid #85f0d688;border-radius:12px;background:#071326e8;color:white;font-weight:850}
+#v6GolfAscent{position:absolute;inset:0;z-index:35;pointer-events:none;overflow:hidden}.v6GolfStar{position:absolute;width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 8px #fff,0 0 22px #85f0d6;animation:v6GolfRise 1.2s cubic-bezier(.15,.8,.25,1) forwards}.v6GolfStar::after{content:"";position:absolute;left:2px;top:4px;width:2px;height:75px;background:linear-gradient(#85f0d6,transparent)}
+@keyframes v6GolfRise{from{transform:translateY(0);opacity:0}12%{opacity:1}to{transform:translate(var(--dx),calc(-80vh - var(--dy))) scale(1.5);opacity:0}}
+.v6-putt-clutch #stage{animation:v6GolfShake .34s ease-out}@keyframes v6GolfShake{0%,100%{transform:none}30%{transform:translate(3px,-2px) scale(1.006)}60%{transform:translate(-2px,1px) scale(1.008)}}
+.screen[role="dialog"]:focus{outline:none}
+@media (orientation:portrait){
+  #stage{padding-bottom:calc(118px + env(safe-area-inset-bottom,0px))}
+  #playControls{position:fixed;left:0;right:0;bottom:0;width:100%;min-height:110px;padding:8px calc(10px + env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) calc(10px + env(safe-area-inset-left,0px));background:linear-gradient(180deg,#07132655,#050d18fa 24%);border-top:1px solid #85f0d63b;border-radius:18px 18px 0 0;box-shadow:0 -12px 34px #0008;z-index:20}
+  #v6LieStatus{bottom:calc(120px + env(safe-area-inset-bottom,0px))}#v6GolfBrand{left:calc(10px + env(safe-area-inset-left,0px));top:calc(61px + env(safe-area-inset-top,0px))}
+}
+@media (orientation:landscape){#playControls{max-width:620px;margin:0 auto}#v6GolfBrand{left:calc(118px + env(safe-area-inset-left,0px))}}
+@media (pointer:coarse){button,input,select{min-width:44px;min-height:44px}.club{min-height:48px}}
+@media (prefers-reduced-motion:reduce){#v6GolfFly::before,#v6GolfFly::after,.v6GolfStar,#v6GolfClutch.on,.v6-putt-clutch #stage{animation:none!important}.v6GolfStar{display:none}}
 </style>
 </head>
 <body>
@@ -88,7 +118,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
     </div>
   </header>
   <main id="stage">
-    <canvas id="courseCanvas" width="1200" height="700" tabindex="0" aria-label="Top-down golf hole. Drag backwards from the ball and release to play.">Apex Golf needs Canvas 2D. Your browser can still use the menus and return to the games arcade.</canvas>
+    <canvas id="courseCanvas" width="1200" height="700" tabindex="0" aria-label="Apex Golf V6 course. Drag backwards from the ball, inspect the advisory landing and terrain-roll preview, then release to play the authoritative shot.">Apex Golf needs Canvas 2D. Your browser can still use the menus and return to the games arcade.</canvas>
+    <canvas id="v6GolfAdvisory" aria-hidden="true"></canvas>
+    <div id="v6GolfBrand" aria-hidden="true">APEX GOLF · <b>AAA V6</b> · ASCENSION</div>
+    <div id="v6LieStatus" role="status" aria-live="polite"></div>
+    <div id="v6GolfClutch" role="status" aria-live="polite">◆ CLUTCH PUTT · TRUST THE READ</div>
+    <div id="v6GolfAscent" aria-hidden="true"></div>
+    <section id="v6GolfFly" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Apex Golf pin flyover" tabindex="-1"><button id="v6GolfSkip" type="button">Skip intro</button><div class="v6GolfFlyCopy"><small>MADE BY MATT · PIN CAMERA</small><strong>READ THE LANDING</strong><span>Wind. Elevation. Lie. Then commit to the call.</span></div></section>
     <div id="legend" aria-hidden="true">
       <span class="legendItem" data-terrain="rough">Rough</span><span class="legendItem" data-terrain="fairway">Fairway</span><span class="legendItem" data-terrain="green">Green</span><span class="legendItem" data-terrain="sand">Sand</span><span class="legendItem" data-terrain="water">Water</span>
     </div>
@@ -482,7 +518,7 @@ AG.App = (function(){
 'use strict';
 var $=function(id){return document.getElementById(id);};
 var STORAGE_KEYS={settings:'mbm_apexgolf_settings',progress:'mbm_apexgolf_progress'};
-var state={seed:AG.DEFAULT_SEED,course:null,holeIndex:0,hole:null,ball:null,phase:'boot',called:3,strokes:0,penalties:0,rows:[],club:1,aim:{angle:0,power:.58},drag:null,warning:'',roundToPar:0,accumulator:0,lastFrame:0,paused:false,renderEvidence:null,shared:false};
+var state={seed:AG.DEFAULT_SEED,course:null,holeIndex:0,hole:null,ball:null,prevBall:null,phase:'boot',called:3,strokes:0,penalties:0,rows:[],club:1,aim:{angle:0,power:.58},drag:null,warning:'',roundToPar:0,accumulator:0,lastFrame:0,paused:false,renderEvidence:null,shared:false};
 var patternsReady=false,toastTimer=null;
 function safeParse(s,d){try{return JSON.parse(s);}catch(e){return d;}}
 var Store={
@@ -503,13 +539,13 @@ function beginAim(){state.phase='aim';$('screenHost').innerHTML='';AG.Render.set
 function finishHole(){var actual=state.strokes+state.penalties,rating=AG.callRating(state.called,actual,state.hole.par),toPar=actual-state.hole.par;state.rows.push({hole:state.holeIndex+1,name:state.hole.name,par:state.hole.par,called:state.called,strokes:state.strokes,penalties:state.penalties,actual:actual,toPar:toPar,rating:rating});state.roundToPar+=toPar;state.phase='hole-result';$('playControls').classList.add('hidden');var msg=AG.ratingAnnouncement(state.called,actual,state.hole.par);announce(msg);$('screenHost').innerHTML='<section class="screen screen--result"><div class="eyebrow">Hole complete · '+AG.signedScore(toPar)+'</div><div class="ratingBig">'+rating+'</div><div class="ratingName">'+AG.RATING_NAME+'</div><p>You called <b>'+state.called+'</b> and took <b>'+actual+'</b> including '+state.penalties+' '+(state.penalties===1?'penalty':'penalties')+'.</p><div class="actions"><button type="button" id="nextHoleBtn">'+(state.holeIndex===8?'View scorecard':'Read next hole')+'</button></div></section>';$('nextHoleBtn').onclick=function(){if(state.holeIndex===8)showScorecard();else{state.holeIndex++;startHole();}};updateHud();}
 function showScorecard(){state.phase='scorecard';var rr=AG.roundCallRating(state.rows),total=0,par=0,body='';for(var i=0;i<state.rows.length;i++){var r=state.rows[i];total+=r.actual;par+=r.par;body+='<tr><td>'+r.hole+'. '+esc(r.name)+'</td><td>'+r.par+'</td><td>'+r.called+'</td><td>'+r.actual+'</td><td>'+AG.signedScore(r.toPar)+'</td><td>'+r.rating+'</td></tr>';}saveProgress(rr);$('screenHost').innerHTML='<section class="screen screen--scorecard"><div class="eyebrow">Nine-hole scorecard</div><h2>Round '+AG.signedScore(total-par)+'</h2><p>Round '+AG.RATING_NAME+': <b>'+rr+' / 100</b></p><table><thead><tr><th>Hole</th><th>Par</th><th>Call</th><th>Took</th><th>±</th><th>Read</th></tr></thead><tbody>'+body+'</tbody><tfoot><tr><td>Total</td><td>'+par+'</td><td>—</td><td>'+total+'</td><td>'+AG.signedScore(total-par)+'</td><td>'+rr+'</td></tr></tfoot></table><div class="actions"><button type="button" id="againBtn">New seeded round</button><button type="button" id="homeBtn" class="secondary">Home</button></div></section>';$('againBtn').onclick=function(){state.seed=(Math.imul(state.seed,1664525)+1013904223)>>>0;history.replaceState(null,'',AG.formatHash(state.seed));startRound();};$('homeBtn').onclick=showTitle;announce('Round complete. '+AG.RATING_NAME+' '+rr+' out of 100.');}
 function startRound(){state.course=AG.generateCourse(state.seed);state.holeIndex=0;state.rows=[];state.roundToPar=0;startHole();}
-function startHole(){state.hole=state.course.holes[state.holeIndex];state.ball=AG.makeBall(state.hole);state.strokes=0;state.penalties=0;state.called=state.hole.par;state.club=state.hole.length<90?0:(state.hole.length<145?1:(state.hole.length<190?2:3));state.aim={angle:Math.atan2(state.hole.cup.y-state.ball.y,state.hole.cup.x-state.ball.x),power:.64};setClub(state.club);showRead(true);updateHud();}
+function startHole(){state.hole=state.course.holes[state.holeIndex];state.ball=AG.makeBall(state.hole);state.prevBall=null;state.strokes=0;state.penalties=0;state.called=state.hole.par;state.club=state.hole.length<90?0:(state.hole.length<145?1:(state.hole.length<190?2:3));state.aim={angle:Math.atan2(state.hole.cup.y-state.ball.y,state.hole.cup.x-state.ball.x),power:.64};setClub(state.club);showRead(true);updateHud();}
 function setClub(i){state.club=AG.clamp(Math.round(i),0,3);Array.prototype.forEach.call(document.querySelectorAll('.club'),function(b){b.setAttribute('aria-pressed',Number(b.dataset.club)===state.club?'true':'false');});updateAimReadout();}
 function updateAimReadout(){var c=AG.CLUBS[state.club],p=Math.round(state.aim.power*100);$('aimReadout').innerHTML='<span class="aimStrong">'+c.label+' · '+p+'%</span><span>Keys 1–4 · arrows · Enter</span>';}
 function playKeyboardStroke(){if(state.phase!=='aim'||state.ball.moving)return;strike(state.aim.angle,state.aim.power);}
-function strike(angle,power){if(state.phase!=='aim'||state.ball.moving)return;state.strokes++;AG.launch(state.ball,state.hole,angle,power,state.club);state.phase='moving';$('playControls').classList.add('hidden');announce('Stroke '+state.strokes+' played.');updateHud();}
+function strike(angle,power){if(state.phase!=='aim'||state.ball.moving)return;state.strokes++;state.prevBall=AG.cloneBall(state.ball);AG.launch(state.ball,state.hole,angle,power,state.club);state.phase='moving';$('playControls').classList.add('hidden');announce('Stroke '+state.strokes+' played.');updateHud();}
 function afterRest(){if(state.ball.penaltyEvent){state.penalties++;toast('Water: one penalty stroke. Ball dropped at the last safe position.');state.ball.penaltyEvent=false;}if(state.ball.sunk){finishHole();return;}if(state.ball.cupRejected){toast('Too quick for the cup — lip-out.');state.ball.cupRejected=false;}showRead(false);updateHud();}
-function update(dt){if(state.paused||!state.ball||state.phase!=='moving')return;var was=state.ball.moving;AG.stepBall(state.ball,state.hole,dt);if(was&&!state.ball.moving)afterRest();}
+function update(dt){if(state.paused||!state.ball||state.phase!=='moving')return;var was=state.ball.moving;state.prevBall=AG.cloneBall(state.ball);AG.stepBall(state.ball,state.hole,dt);if(was&&!state.ball.moving)afterRest();}
 function updateHud(){if(!$('hudHole'))return;$('hudHole').textContent=(state.holeIndex+1)+' / 9';$('hudStrokes').textContent=String((state.strokes||0)+(state.penalties||0));$('hudPar').textContent=AG.signedScore(state.roundToPar||0);}
 /* AGX-1 A-3: keep the renderer's bottom inset equal to the height the docked
    read panel actually occupies, so the hole is fit above it. Measured, not
@@ -533,7 +569,7 @@ function syncReadInset(){
  if(side){AG.Render.setRightInset(Math.max(0,stage.right-pr.left)+10);AG.Render.setBottomInset(0);}
  else{AG.Render.setBottomInset(Math.max(0,stage.bottom-pr.top)+10);AG.Render.setRightInset(0);}
 }
-function renderNow(){if(state.hole)state.renderEvidence=AG.Render.render(state.hole,state.ball,state.aim,state.phase);}
+function renderNow(){if(!state.hole)return;var shown=state.ball;if(state.phase==='moving'&&state.ball&&state.prevBall){var a=AG.clamp(state.accumulator/AG.DT,0,1);shown=AG.cloneBall(state.ball);shown.x=AG.lerp(state.prevBall.x,state.ball.x,a);shown.y=AG.lerp(state.prevBall.y,state.ball.y,a);shown.z=AG.lerp(state.prevBall.z,state.ball.z,a);}state.renderEvidence=AG.Render.render(state.hole,shown,state.aim,state.phase);}
 function loop(now){var sec=now/1000;if(!state.lastFrame)state.lastFrame=sec;var frame=Math.min(AG.MAX_FRAME_DELTA,Math.max(0,sec-state.lastFrame));state.lastFrame=sec;state.accumulator+=frame;var n=0;while(state.accumulator>=AG.DT&&n<AG.MAX_SUBSTEPS){update(AG.DT);state.accumulator-=AG.DT;n++;}renderNow();requestAnimationFrame(loop);}
 function announce(msg){var el=$('live');el.textContent='';setTimeout(function(){el.textContent=msg;},20);}
 function toast(msg){var el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove('show');},2200);}
@@ -602,8 +638,8 @@ function canvasPixelCount(){var c=AG.Render.getCanvas(),d=AG.Render.getContext()
 function nextFrame(){return new Promise(function(resolve){requestAnimationFrame(function(t){resolve(t);});});}
 async function fpsSample(){var times=[];for(var i=0;i<72;i++)times.push(await nextFrame());var ds=[];for(var j=1;j<times.length;j++)ds.push(times[j]-times[j-1]);var sum=0;for(var k=0;k<ds.length;k++)sum+=ds[k];var avg=sum/ds.length;return{fps:1000/avg,avg:avg,max:Math.max.apply(Math,ds)};}
 async function run(){var rows=[],app=AG.App,state=app.state,load=(performance.getEntriesByType('navigation')[0]||{}).loadEventEnd||performance.now();
-  app.startRound();app.renderNow();await nextFrame();var ev=AG.Render.getEvidence(),pix=canvasPixelCount();var splashClear=await awaitSplashGone(4000);var hv=holePointsVisible();
-  rows.push(result('read-view-hole-unoccluded',splashClear&&hv.total>0&&hv.visible===hv.total&&hv.usable,hv.visible+'/'+hv.total+' hole points visible at '+innerWidth+'px, hole '+Math.round(hv.wFrac*100)+'%x'+Math.round(hv.hFrac*100)+'% of canvas'+(hv.usable?'':' [DEGENERATE SIZE]')+(splashClear?'':' [SPLASH STILL PRESENT - measurement unsafe]')+(hv.occluded.length?'; occluded '+hv.occluded.slice(0,4).join(','):'')));
+  app.startRound();app.renderNow();await nextFrame();var ev=AG.Render.getEvidence(),pix=canvasPixelCount();var splashClear=await awaitSplashGone(4000),fly=document.getElementById('v6GolfFly'),flyWait=performance.now();while(fly&&fly.classList.contains('on')&&performance.now()-flyWait<4000)await nextFrame();var flyClear=!fly||!fly.classList.contains('on'),hv=holePointsVisible();
+  rows.push(result('read-view-hole-unoccluded',splashClear&&flyClear&&hv.total>0&&hv.visible===hv.total&&hv.usable,hv.visible+'/'+hv.total+' hole points visible at '+innerWidth+'px, hole '+Math.round(hv.wFrac*100)+'%x'+Math.round(hv.hFrac*100)+'% of canvas'+(hv.usable?'':' [DEGENERATE SIZE]')+(splashClear?'':' [SPLASH STILL PRESENT - measurement unsafe]')+(flyClear?'':' [PIN FLYOVER STILL PRESENT - measurement unsafe]')+(hv.occluded.length?'; occluded '+hv.occluded.slice(0,4).join(','):'')));
   rows.push(result('read-view-real-geometry',state.phase==='read-call'&&ev.geometry.fairway>=6&&pix>10000,'phase '+state.phase+', pixels '+pix));
   var allForces=AG.PHYSICS_FORCES.every(function(f){return !!AG.FORCE_RENDERERS[f];});var courseForces={};for(var hi=0;hi<state.course.holes.length;hi++){state.hole=state.course.holes[hi];state.ball=AG.makeBall(state.hole);app.renderNow();var e=AG.Render.getEvidence();e.forces.forEach(function(f){courseForces[f]=1;});}state.holeIndex=0;state.hole=state.course.holes[0];state.ball=AG.makeBall(state.hole);app.showRead(true);rows.push(result('force-renderer-coverage',allForces&&AG.PHYSICS_FORCES.every(function(f){return courseForces[f];}),JSON.stringify(courseForces)));
   var sig=AG.Render.terrainGreyscaleSignatures();rows.push(result('greyscale-terrain-patterns',uniqueSignatures(sig)&&ev.terrainLabels.indexOf('ROUGH')>=0&&ev.terrainLabels.indexOf('FAIRWAY')>=0&&ev.terrainLabels.indexOf('GREEN')>=0,JSON.stringify(sig)));
@@ -622,7 +658,56 @@ return{run:run};
 })();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',AG.App.boot);else AG.App.boot();
 </script>
-<script defer src="/hud.js"></script>
+<script>
+/* ========================================================================
+   APEX GOLF V6 · ASCENSION EDITION
+   Broadcast, advisory and accessibility layer. AG:CORE outcomes are sealed.
+   ======================================================================== */
+(function(){
+'use strict';
+var GAME_ID='apex-golf',VERSION='6.0.0',PROFILE_KEY='madebymatt_v6_profile';
+var legacyKeys=['mbm_apexgolf_settings','mbm_apexgolf_progress'],migration={legacyUntouched:true,profileReady:false};
+function raw(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function json(s,d){try{var v=JSON.parse(s);return v&&typeof v==='object'?v:d;}catch(e){return d;}}
+function migrate(){var before=legacyKeys.map(raw),p=json(raw(PROFILE_KEY),{version:6,best:{},daily:{},hall:[],totalRescued:0,settings:{},games:{}});if(!p.games||typeof p.games!=='object')p.games={};if(!p.settings||typeof p.settings!=='object')p.settings={};p.version=6;p.games[GAME_ID]={schema:6,migratedAt:p.games[GAME_ID]&&p.games[GAME_ID].migratedAt||Date.now(),legacy:{settings:json(before[0],null),progress:json(before[1],null)}};try{localStorage.setItem(PROFILE_KEY,JSON.stringify(p));migration.profileReady=true;}catch(e){}var after=legacyKeys.map(raw);migration.legacyUntouched=before.every(function(v,i){return v===after[i];});}
+migrate();
+
+var MasterBus={ctx:null,compressor:null,gain:null};
+function getAudio(){if(!MasterBus.ctx){try{var A=window.AudioContext||window.webkitAudioContext;if(!A)return MasterBus;var c=MasterBus.ctx=new A(),comp=MasterBus.compressor=c.createDynamicsCompressor(),gain=MasterBus.gain=c.createGain();comp.threshold.setValueAtTime(-18,c.currentTime);comp.knee.setValueAtTime(12,c.currentTime);comp.ratio.setValueAtTime(8,c.currentTime);comp.attack.setValueAtTime(.003,c.currentTime);comp.release.setValueAtTime(.15,c.currentTime);gain.gain.value=.78;comp.connect(gain);gain.connect(c.destination);}catch(e){}}if(MasterBus.ctx&&MasterBus.ctx.state==='suspended')MasterBus.ctx.resume().catch(function(){});return MasterBus;}
+function tone(f,d,v,delay){var b=getAudio();if(!b.ctx||!b.compressor)return;try{var t=b.ctx.currentTime+(delay||0),o=b.ctx.createOscillator(),g=b.ctx.createGain();o.type='triangle';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(v||.024,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(b.compressor);o.start(t);o.stop(t+d+.03);}catch(e){}}
+['pointerdown','keydown','touchstart'].forEach(function(n){addEventListener(n,getAudio,{passive:true});});
+
+var course=document.getElementById('courseCanvas'),overlay=document.getElementById('v6GolfAdvisory'),ox=overlay.getContext('2d'),stage=document.getElementById('stage');
+var lieStatus=document.getElementById('v6LieStatus'),clutchBadge=document.getElementById('v6GolfClutch'),fly=document.getElementById('v6GolfFly'),skip=document.getElementById('v6GolfSkip'),ascent=document.getElementById('v6GolfAscent');
+var reduce=!!(matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches),calm=reduce||!!json(raw('mbm_apexgolf_settings'),{}).calm;
+document.body.classList.toggle('v6-calm',calm);var flyShown=reduce,lastFocus=null,flyTimer=0,lastPhase='',lastClutchAim=false,scorecardSeen=false;
+function syncOverlay(){var cr=course.getBoundingClientRect(),sr=stage.getBoundingClientRect();overlay.style.left=(cr.left-sr.left)+'px';overlay.style.top=(cr.top-sr.top)+'px';overlay.style.width=cr.width+'px';overlay.style.height=cr.height+'px';if(overlay.width!==course.width||overlay.height!==course.height){overlay.width=course.width;overlay.height=course.height;}}
+function world(p){return AG.Render.W(p);}
+function intent(state){var ball=state.ball,h=state.hole,club=AG.CLUBS[state.club],lieKey=AG.terrainAt(h,ball),lie=AG.TERRAIN[lieKey]||AG.TERRAIN.rough,dx=h.cup.x-ball.x,dy=h.cup.y-ball.y,remaining=Math.hypot(dx,dy),best=0,err=1e9;AG.CLUBS.forEach(function(c,i){var e=Math.abs(c.carry*lie.launch-remaining);if(e<err){err=e;best=i;}});return{lie:lie,lieKey:lieKey,club:club,best:best,remaining:remaining};}
+function forecast(state){var h=state.hole,b=state.ball,a=state.aim.angle,p=state.aim.power,I=intent(state),carry=I.club.carry*p*I.lie.launch,air=I.club.air,wx=h.wind.x*air*(1.3+carry/95),wy=h.wind.y*air*(1.3+carry/95),land={x:AG.clamp(b.x+Math.cos(a)*carry+wx,2,h.world.w-2),y:AG.clamp(b.y+Math.sin(a)*carry+wy,2,h.world.h-2)},slope=(Math.hypot(land.x-h.slope.cx,land.y-h.slope.cy)<=h.slope.radius)?h.slope:{x:0,y:0,strength:0},roll=I.club.roll*(6+carry*.08)/Math.max(.45,I.lie.drag||1),end={x:AG.clamp(land.x+Math.cos(a)*roll+slope.x*slope.strength*4,1,h.world.w-1),y:AG.clamp(land.y+Math.sin(a)*roll+slope.y*slope.strength*4,1,h.world.h-1)},spread=2.2+h.wind.speed*.82+(1-p)*3.5+(I.lie.label==='Rough'?1.7:0);return{intent:I,carry:carry,land:land,end:end,spread:spread,windAngle:Math.atan2(h.wind.y,h.wind.x),slope:slope};}
+function arrow(a,b,col,dash){ox.save();ox.strokeStyle=col;ox.fillStyle=col;ox.lineWidth=2;if(dash)ox.setLineDash([7,6]);ox.beginPath();ox.moveTo(a.x,a.y);ox.lineTo(b.x,b.y);ox.stroke();ox.setLineDash([]);var an=Math.atan2(b.y-a.y,b.x-a.x);ox.beginPath();ox.moveTo(b.x,b.y);ox.lineTo(b.x-Math.cos(an-.55)*10,b.y-Math.sin(an-.55)*10);ox.lineTo(b.x-Math.cos(an+.55)*10,b.y-Math.sin(an+.55)*10);ox.closePath();ox.fill();ox.restore();}
+function drawPreview(){syncOverlay();ox.clearRect(0,0,overlay.width,overlay.height);var state=AG.App&&AG.App.state;if(state&&lastPhase==='aim'&&state.phase==='moving'&&lastClutchAim)clutch();if(!state||state.phase!=='aim'||!state.ball||!state.hole){lieStatus.classList.remove('on');clutchBadge.classList.remove('on');lastPhase=state&&state.phase||'';requestAnimationFrame(drawPreview);return;}var f=forecast(state),bs=world(state.ball),ls=world(f.land),es=world(f.end),scale=Math.max(1,Math.hypot(world({x:1,y:0}).x-world({x:0,y:0}).x,world({x:1,y:0}).y-world({x:0,y:0}).y));arrow(bs,ls,'#f7f4e8cc',true);arrow(ls,es,'#85f0d6dd',false);ox.save();ox.translate(ls.x,ls.y);ox.rotate(f.windAngle);ox.strokeStyle='#ffd36bdd';ox.lineWidth=2;ox.setLineDash([5,4]);ox.beginPath();ox.ellipse(0,0,f.spread*scale*1.55,f.spread*scale*.82,0,0,Math.PI*2);ox.stroke();ox.setLineDash([]);ox.fillStyle='#111629dd';ox.fillRect(-61,-35,122,18);ox.fillStyle='#fff4be';ox.font='900 10px system-ui';ox.textAlign='center';ox.fillText('LANDING ±'+f.spread.toFixed(1)+' m',0,-22);ox.restore();var rec=AG.CLUBS[f.intent.best],lie=f.intent.lie.label||f.intent.lieKey||'Lie';lieStatus.textContent=lie.toUpperCase()+' · '+f.intent.club.label+' SELECTED · '+(f.intent.best===state.club?'GOOD FIT':'CONSIDER '+rec.label)+' · advisory carry '+Math.round(f.carry)+' m';lieStatus.classList.add('on');var putt=f.intent.remaining<18&&state.club===0;clutchBadge.classList.toggle('on',putt);lastClutchAim=putt;lastPhase=state.phase;requestAnimationFrame(drawPreview);}
+function clutch(){if(calm)return;document.body.classList.remove('v6-putt-clutch');void document.body.offsetWidth;document.body.classList.add('v6-putt-clutch');tone(120,.34,.05);tone(880,.46,.019,.05);if(navigator.vibrate)try{navigator.vibrate([22,30,14]);}catch(e){}setTimeout(function(){document.body.classList.remove('v6-putt-clutch');},450);}
+
+function inertBackground(on){[document.getElementById('topHud'),course,document.getElementById('screenHost'),document.getElementById('playControls')].forEach(function(el){if(!el)return;if(on)el.setAttribute('inert','');else el.removeAttribute('inert');});}
+function closeFly(){if(!fly.classList.contains('on'))return;clearTimeout(flyTimer);fly.classList.remove('on');fly.setAttribute('aria-hidden','true');inertBackground(false);if(lastFocus&&lastFocus.focus)lastFocus.focus();else course.focus();tone(660,.15,.02);}
+function openFly(){if(flyShown)return;flyShown=true;lastFocus=document.activeElement;fly.removeAttribute('aria-hidden');fly.classList.add('on');inertBackground(true);skip.focus();tone(164,.44,.035);tone(329.6,.55,.018,.07);tone(493.9,.55,.013,.13);flyTimer=setTimeout(closeFly,2150);}
+skip.addEventListener('click',closeFly);fly.addEventListener('keydown',function(e){if(e.key==='Escape'||e.key==='Enter'||e.key===' '){e.preventDefault();closeFly();}});
+function launchAscent(){if(calm)return;ascent.innerHTML='';for(var i=0;i<13;i++){var s=document.createElement('i');s.className='v6GolfStar';s.style.left=(46+Math.random()*8)+'%';s.style.top=(66+Math.random()*12)+'%';s.style.setProperty('--dx',(-210+Math.random()*420)+'px');s.style.setProperty('--dy',(Math.random()*110)+'px');s.style.animationDelay=(i*65)+'ms';ascent.appendChild(s);}tone(523,.28,.025);tone(659,.34,.02,.08);tone(784,.4,.016,.16);setTimeout(function(){ascent.innerHTML='';},2050);}
+function upgradeScreen(){var host=document.getElementById('screenHost'),screen=host.querySelector('.screen'),state=AG.App&&AG.App.state;if(!screen){if(!fly.classList.contains('on'))[course,document.getElementById('topHud'),document.getElementById('playControls')].forEach(function(x){if(x)x.removeAttribute('inert');});return;}var modal=!!(state&&state.paused);screen.setAttribute('role',modal?'dialog':'region');if(modal){screen.setAttribute('aria-modal','true');screen.setAttribute('aria-label','Apex Golf paused');screen.tabIndex=-1;[course,document.getElementById('topHud'),document.getElementById('playControls')].forEach(function(x){if(x)x.setAttribute('inert','');});setTimeout(function(){var f=screen.querySelector('button,input,select,[href]');(f||screen).focus();},0);}else{screen.removeAttribute('aria-modal');[course,document.getElementById('topHud'),document.getElementById('playControls')].forEach(function(x){if(x)x.removeAttribute('inert');});}if(screen.classList.contains('screen--scorecard')&&!scorecardSeen){scorecardSeen=true;launchAscent();}}
+new MutationObserver(upgradeScreen).observe(document.getElementById('screenHost'),{childList:true,subtree:true});
+document.addEventListener('visibilitychange',function(){var s=AG.App&&AG.App.state;if(!s)return;if(document.hidden&&!s.paused){s.v6VisibilityPaused=true;s.paused=true;}else if(!document.hidden&&s.v6VisibilityPaused){s.v6VisibilityPaused=false;s.paused=false;s.lastFrame=performance.now()/1000;}});
+setInterval(function(){var s=AG.App&&AG.App.state;if(s&&s.phase==='read-call'&&s.holeIndex===0&&!flyShown)openFly();},120);
+addEventListener('resize',syncOverlay,{passive:true});
+
+window.__MBM_V6_RELEASE__={version:VERSION,gameId:GAME_ID,edition:'AAA Ascension',madeBy:'Made by Matt',offline:true,
+  features:['viewport-first','portrait-dead-zone-sports-tray','240hz-fixed-authority','sub-frame-interpolation','wind-elevation-dispersion','terrain-roll-preview','club-lie-intent','pin-flyover','clutch-putt','leaderboard-ascent','master-audio-bus','schema-6-profile','modal-isolation','visibility-pause','reduced-motion'],
+  authority:{tickHz:240,source:'AG.DT',advisoryOnly:true,legacyStorage:legacyKeys.slice()},profile:{key:PROFILE_KEY,schema:6,migration:migration},audio:MasterBus,
+  selfTest:function(){var s=AG.App&&AG.App.state,checks={marker:VERSION==='6.0.0',core:!!(window.AG&&AG.DT===1/240),interpolation:!!(s&&Object.prototype.hasOwnProperty.call(s,'prevBall')),legacyUntouched:migration.legacyUntouched,profile:migration.profileReady,offline:document.querySelectorAll('script[src],link[rel="stylesheet"]').length===0,advisory:!!overlay,targets:Array.prototype.every.call(document.querySelectorAll('#v6GolfFly button'),function(b){var r=b.getBoundingClientRect();return !fly.classList.contains('on')||(r.width>=44&&r.height>=44);})};return{ok:Object.keys(checks).every(function(k){return checks[k];}),gameId:GAME_ID,version:VERSION,checks:checks};}
+};
+syncOverlay();requestAnimationFrame(drawPreview);
+})();
+</script>
 </body>
 </html>
 <!-- apexgolf-build-2026-08-04 -->

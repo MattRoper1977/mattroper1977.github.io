@@ -72,7 +72,9 @@ ok('calling-is-optional',/id="skipCall"/.test(html)&&/Leave Rating skipped/.test
 
 head('G7 — storage isolation and prefix contract');
 ok('storage-prefix-exact',/var PREFIX='mbm_apexpool_';/.test(html));
-const writeCalls=[...html.matchAll(/localStorage\.(?:setItem|removeItem)\(([^\n;]+)/g)].map(m=>m[1]);ok('all-writes-route-through-prefixed-key',writeCalls.length===2&&writeCalls.every(s=>/this\.key\(k\)/.test(s)),writeCalls.join(' | '));
+const writeCalls=[...html.matchAll(/localStorage\.(?:setItem|removeItem)\(([^\n;]+)/g)].map(m=>m[1]);
+const legacyWrites=writeCalls.filter(s=>/this\.key\(k\)/.test(s)),profileWrites=writeCalls.filter(s=>/^PROFILE_KEY\b/.test(s));
+ok('all-writes-route-through-owned-keys',writeCalls.length===3&&legacyWrites.length===2&&profileWrites.length===1&&/var GAME_ID='apex-pool',VERSION='6\.0\.0',PROFILE_KEY='madebymatt_v6_profile';/.test(html),writeCalls.join(' | '));
 ok('no-sibling-storage-literals',!/(?:apexkick\.|mbm_apexgolf_|voxel\.)/.test(html));
 ok('progress-and-settings-are-separated',/Store\.get\('progress'/.test(html)&&/Store\.get\('settings'/.test(html));
 ok('shop-never-changes-physics',/Coins unlock visual finishes only/.test(html)&&!/(SHOP|feltPalette)[\s\S]{0,180}(SLIDE_DECEL|ROLL_DECEL|BALL_REST)/.test(html));
@@ -103,7 +105,8 @@ ok('single-file-under-250kb',Buffer.byteLength(html)<250*1024,`${Buffer.byteLeng
 ok('zero-external-script-dependencies',!/<script\s+[^>]*src=/i.test(html));
 ok('zero-external-style-dependencies',!/<link\s+[^>]*rel="stylesheet"/i.test(html));
 ok('no-network-calls',!/\bfetch\s*\(|XMLHttpRequest|WebSocket/.test(html));
-ok('single-canvas',[...html.matchAll(/<canvas\b/g)].length===1);
+const canvases=[...html.matchAll(/<canvas\b[^>]*>/g)].map(m=>m[0]);
+ok('authoritative-plus-advisory-canvases',canvases.length===2&&canvases.some(x=>/id="table"/.test(x))&&canvases.some(x=>/id="v6Advisory"[^>]*aria-hidden="true"/.test(x))&&/#v6Advisory\{[^}]*pointer-events:none/.test(html),canvases.join(' | '));
 ok('canvas-guard-present',/id="noCanvas"/.test(html)&&/if\(!ctx\)/.test(html));
 ok('splash-has-unconditional-timer',/timer=setTimeout\(dismiss,1200\)/.test(html));
 ok('splash-removes-listeners-and-node',/removeEventListener\(ev\[i\],dismiss,true\)/.test(html)&&/parentNode\.removeChild\(el\)/.test(html));

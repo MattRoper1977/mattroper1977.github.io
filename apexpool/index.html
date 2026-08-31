@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Apex Pool — Made by Matt</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Apex Pool V6 · Ascension Edition — Made by Matt</title>
 <link rel="canonical" href="https://madebymatt.uk/apexpool/">
-<meta name="description" content="Call the cue ball's leave, then prove you can read the table. A complete offline 8-ball pool game with spin, AI, trick shots and an honest Leave Rating.">
+<meta name="description" content="Apex Pool V6 Ascension Edition — deterministic offline 8-ball with genuine spin, multi-cushion aim rails, collision-order previews and an honest Leave Rating.">
 <meta name="theme-color" content="#07161C">
 <meta property="og:type" content="website"><meta property="og:title" content="Apex Pool"><meta property="og:url" content="https://madebymatt.uk/apexpool/">
 <meta property="og:description" content="Call the cue ball's leave, then prove you can read the table. Offline 8-ball pool with genuine spin and position play.">
@@ -44,6 +44,35 @@ button,input,select{font:inherit}button{color:inherit;border:0;background:none;c
 @media (max-height:520px) and (orientation:landscape){#controls{grid-template-columns:260px 260px;left:auto;width:530px}#callStatus{bottom:10px;left:10px}.chip b{font-size:12px}.controlbox{padding:7px}.panel-body{padding-top:10px}.title-wrap{justify-content:flex-start}.rackmark{display:none}.wordmark{font-size:52px}.thesis{margin-top:10px}.mode-grid{margin-top:12px;grid-template-columns:repeat(4,1fr)}.mode-card{min-height:82px}.credit{margin-top:8px}}
 @media (max-width:350px){#controls{grid-template-columns:1fr}.controlbox:first-child{display:none}#callStatus{bottom:150px}.mode-grid{grid-template-columns:1fr}.mode-card{min-height:76px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}#mbmSplash{transition:none}#mbmSplash .mbm-rule{animation:none;transform:scaleX(1)}}
+
+/* ===== V6 ASCENSION PRESENTATION LAYER — authority remains AP.C.DT ===== */
+body.v6-calm *,body.v6-calm *::before,body.v6-calm *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+#v6Advisory{position:absolute;inset:0;width:100%;height:100%;z-index:12;pointer-events:none}
+.rangeRow input[type="range"]{min-height:44px}
+#v6Brand{position:absolute;z-index:17;left:calc(62px + var(--safeL));top:calc(10px + var(--safeT));padding:5px 9px;border:1px solid #b9e6cd55;border-radius:999px;background:#07121ed9;color:var(--mint);font:900 9px/1.15 "Segoe UI",system-ui,sans-serif;letter-spacing:.12em;pointer-events:none;box-shadow:0 4px 16px #0008}
+#v6Brand b{color:var(--amber)}
+#v6Pressure{position:absolute;z-index:18;left:50%;top:calc(66px + var(--safeT));transform:translateX(-50%);display:none;padding:7px 13px;border-radius:999px;background:#180d1ee8;border:1px solid #ffcf72;color:#ffedb5;font:900 10px/1 system-ui;letter-spacing:.14em;pointer-events:none;box-shadow:0 0 24px #f2a24a66}
+#v6Pressure.on{display:block;animation:v6Pressure .55s ease-in-out infinite alternate}
+@keyframes v6Pressure{to{transform:translateX(-50%) scale(1.045);box-shadow:0 0 34px #f2a24a99}}
+#v6Flyin{position:absolute;inset:0;z-index:70;display:none;overflow:hidden;background:#02080bc2;isolation:isolate}
+#v6Flyin.on{display:block}
+#v6Flyin::before{content:"";position:absolute;inset:-20%;background:radial-gradient(circle at var(--flyX,78%) var(--flyY,32%),#f2a24a55 0 5%,transparent 30%),linear-gradient(115deg,transparent 25%,#b9e6cd1d 48%,transparent 70%);transform:scale(1.25);animation:v6Broadcast 1.9s cubic-bezier(.2,.7,.15,1) both}
+.v6FlyCopy{position:absolute;inset:auto 0 13%;text-align:center;padding:20px;color:white;text-shadow:0 4px 18px #000}.v6FlyCopy small{display:block;color:var(--mint);font-weight:900;letter-spacing:.28em}.v6FlyCopy strong{display:block;margin-top:8px;font-size:clamp(25px,8vw,52px);letter-spacing:-.03em}.v6FlyCopy span{display:block;color:#d6e5ef;margin-top:5px}
+#v6Skip{position:absolute;right:calc(12px + var(--safeR));top:calc(12px + var(--safeT));z-index:2;min-width:92px;min-height:44px;padding:8px 13px;border:1px solid #b9e6cd88;border-radius:12px;background:#07121ee8;color:white;font-weight:850}
+@keyframes v6Broadcast{0%{transform:scale(1.65) translate3d(-14%,8%,0);filter:blur(4px)}55%{filter:blur(0)}100%{transform:scale(1) translate3d(0,0,0)}}
+#v6Ascent{position:absolute;inset:0;z-index:65;pointer-events:none;overflow:hidden}.v6Star{position:absolute;width:6px;height:6px;border-radius:50%;background:white;box-shadow:0 0 8px #fff,0 0 20px var(--mint);animation:v6Rise 1.15s cubic-bezier(.15,.8,.25,1) forwards}.v6Star::after{content:"";position:absolute;left:2px;top:4px;width:2px;height:70px;background:linear-gradient(#b9e6cd,transparent)}
+@keyframes v6Rise{from{transform:translateY(0) scale(.7);opacity:0}12%{opacity:1}to{transform:translate(var(--dx),calc(-78vh - var(--dy))) scale(1.45);opacity:0}}
+.panel[role="dialog"]{isolation:isolate}.panel[role="dialog"]:focus{outline:none}
+.v6-clutch #app:not(.v6-no-shake){animation:v6Clutch .32s ease-out}
+@keyframes v6Clutch{0%,100%{transform:none}25%{transform:translate(3px,-2px) scale(1.006)}55%{transform:translate(-2px,1px) scale(1.009)}}
+@media (orientation:portrait){
+  #controls{left:0;right:0;bottom:0;grid-template-columns:1fr 1fr;gap:7px;padding:8px calc(9px + var(--safeR)) calc(8px + var(--safeB)) calc(9px + var(--safeL));background:linear-gradient(180deg,#07121e22,#06101cf8 20%);border-top:1px solid #b9e6cd38;border-radius:18px 18px 0 0;box-shadow:0 -12px 34px #0008}
+  #callStatus{bottom:calc(204px + var(--safeB))}#pocketChooser{bottom:calc(208px + var(--safeB))}
+  #rotateHint{display:none!important}#v6Brand{left:calc(10px + var(--safeL));top:calc(61px + var(--safeT))}
+}
+@media (orientation:landscape){#controls{max-width:560px;margin-left:auto;background:transparent}#v6Brand{left:calc(112px + var(--safeL))}}
+@media (pointer:coarse){button,.iconbtn,input,select{min-height:44px}.rangeRow input{min-height:44px}}
+@media (prefers-reduced-motion:reduce){#v6Flyin::before,.v6Star,#v6Pressure.on,.v6-clutch #app{animation:none!important}.v6Star{display:none}}
 </style>
 </head>
 <body>
@@ -57,7 +86,14 @@ for(var i=0;i<ev.length;i++)document.addEventListener(ev[i],dismiss,true);timer=
 </script>
 <!-- mbm-splash apexpool-build-2026-08-04 END -->
 <div id="app">
-<canvas id="table" aria-label="Interactive pool table. Use the on-screen controls or keyboard to aim, call a leave and take a shot." tabindex="0"></canvas>
+<canvas id="table" aria-label="Apex Pool V6 interactive table. Aim, inspect the advisory rail and collision order, call a leave, then take the authoritative shot." tabindex="0"></canvas>
+<canvas id="v6Advisory" aria-hidden="true"></canvas>
+<div id="v6Brand" aria-hidden="true">APEX POOL · <b>AAA V6</b> · ASCENSION</div>
+<div id="v6Pressure" role="status" aria-live="polite">◆ PRESSURE SHOT · HOLD YOUR LINE</div>
+<div id="v6Ascent" aria-hidden="true"></div>
+<section id="v6Flyin" aria-label="Apex Pool broadcast introduction" aria-modal="true" role="dialog" tabindex="-1">
+  <button id="v6Skip" type="button">Skip intro</button><div class="v6FlyCopy"><small>MADE BY MATT · LIVE TABLE</small><strong>THE LEAVE DEFINES THE SHOT</strong><span>Read the rails. See the collision order. Commit.</span></div>
+</section>
 <div id="noCanvas"><div class="guard"><h1>Canvas is unavailable</h1><p>Apex Pool needs a browser with Canvas 2D support. No progress has been lost.</p></div></div>
 <div id="hud" class="hidden" aria-hidden="true">
   <div id="topHud">
@@ -409,6 +445,85 @@ window.AP=AP;window.__AP_DEBUG={
  sentinel:'apexpool-build-2026-08-04',prefix:PREFIX,state:function(){return G},start:function(mode){startMatch(mode||'classic')},title:showTitle,store:Store,progress:function(){return P},settings:function(){return S},setCall:setCall,takeShot:function(){takeShot(true)},finishMatch:function(win,reason){finishMatch(!!win,reason||'Debug match complete.')},computePrediction:function(){G.predDirty=true;computePrediction();return G.prediction},hazards:AP.HAZARDS
 };
 showTitle();resize();
+})();
+</script>
+<script>
+/* ========================================================================
+   APEX POOL V6 · ASCENSION EDITION
+   Presentation, accessibility and advisory systems only. AP:CORE is sealed.
+   ======================================================================== */
+(function(){
+'use strict';
+var GAME_ID='apex-pool',VERSION='6.0.0',PROFILE_KEY='madebymatt_v6_profile';
+var legacyKeys=['mbm_apexpool_progress','mbm_apexpool_settings'];
+var migration={legacyUntouched:true,profileReady:false};
+function readRaw(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function safeJSON(s,d){try{var v=JSON.parse(s);return v&&typeof v==='object'?v:d;}catch(e){return d;}}
+function migrateProfile(){
+  var before=legacyKeys.map(readRaw),profile=safeJSON(readRaw(PROFILE_KEY),{version:6,best:{},daily:{},hall:[],totalRescued:0,settings:{},games:{}});
+  if(!profile.games||typeof profile.games!=='object')profile.games={};
+  if(!profile.settings||typeof profile.settings!=='object')profile.settings={};
+  profile.version=6;
+  profile.games[GAME_ID]={schema:6,migratedAt:profile.games[GAME_ID]&&profile.games[GAME_ID].migratedAt||Date.now(),legacy:{progress:safeJSON(before[0],null),settings:safeJSON(before[1],null)}};
+  try{localStorage.setItem(PROFILE_KEY,JSON.stringify(profile));migration.profileReady=true;}catch(e){}
+  var after=legacyKeys.map(readRaw);migration.legacyUntouched=before.every(function(v,i){return v===after[i];});
+}
+migrateProfile();
+
+var MasterBus={ctx:null,compressor:null,gain:null};
+function getAudio(){
+  if(!MasterBus.ctx){try{var A=window.AudioContext||window.webkitAudioContext;if(!A)return MasterBus;var c=MasterBus.ctx=new A(),comp=MasterBus.compressor=c.createDynamicsCompressor(),gain=MasterBus.gain=c.createGain();comp.threshold.setValueAtTime(-18,c.currentTime);comp.knee.setValueAtTime(12,c.currentTime);comp.ratio.setValueAtTime(8,c.currentTime);comp.attack.setValueAtTime(.003,c.currentTime);comp.release.setValueAtTime(.15,c.currentTime);gain.gain.value=.78;comp.connect(gain);gain.connect(c.destination);}catch(e){}}
+  if(MasterBus.ctx&&MasterBus.ctx.state==='suspended')MasterBus.ctx.resume().catch(function(){});return MasterBus;
+}
+function tone(f,d,v,delay){var bus=getAudio();if(!bus.ctx||!bus.compressor)return;try{var t=bus.ctx.currentTime+(delay||0),o=bus.ctx.createOscillator(),g=bus.ctx.createGain();o.type='triangle';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(v||.025,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(bus.compressor);o.start(t);o.stop(t+d+.03);}catch(e){}}
+['pointerdown','keydown','touchstart'].forEach(function(n){addEventListener(n,getAudio,{passive:true});});
+
+var reduce=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches),calm=reduce;
+document.body.classList.toggle('v6-calm',calm);
+var table=document.getElementById('table'),advisory=document.getElementById('v6Advisory'),ax=advisory.getContext('2d');
+var fly=document.getElementById('v6Flyin'),skip=document.getElementById('v6Skip'),pressure=document.getElementById('v6Pressure'),ascent=document.getElementById('v6Ascent');
+var debug=function(){return window.__AP_DEBUG||null;},lastPointer=null,lastPhase='',lastPressureAim=false,flyShown=reduce,flyTimer=0,lastFocus=null,finishSeen='';
+function sizeAdvisory(){if(!ax)return;var d=Math.min(2,devicePixelRatio||1),w=Math.max(1,innerWidth),h=Math.max(1,innerHeight);if(advisory.width!==Math.round(w*d)||advisory.height!==Math.round(h*d)){advisory.width=Math.round(w*d);advisory.height=Math.round(h*d);advisory.style.width=w+'px';advisory.style.height=h+'px';}ax.setTransform(d,0,0,d,0,0);}
+function toScreen(G,p){return{x:G.view.ox+p.x*G.view.scale,y:G.view.oy+p.y*G.view.scale};}
+function activeBalls(G){return G.world?G.world.balls.filter(function(b){return b.active;}):[];}
+function pickBallIntent(G,p){
+  if(!p||!G.world)return null;var best=null,score=-1e9,q=AP.cue(G.world);
+  activeBalls(G).forEach(function(b){var s=toScreen(G,b),d=Math.hypot(s.x-p.x,s.y-p.y);if(d>Math.max(54,AP.C.R*G.view.scale*3.4))return;var sc=100-d*2;if(b.id!==0&&q){var lead=(b.x-q.x)*Math.cos(G.aimAngle)+(b.y-q.y)*Math.sin(G.aimAngle);if(lead>0)sc+=50;}if(b.id===8)sc+=40;var pocketDanger=AP.POCKETS.some(function(pk){return Math.hypot(pk.x-b.x,pk.y-b.y)<85;});if(pocketDanger)sc+=100;if(sc>score){score=sc;best=b;}});return best;
+}
+function railPath(G,q){
+  var min=AP.C.CUSH+AP.C.R,maxX=AP.C.W-min,maxY=AP.C.H-min,x=q.x,y=q.y,dx=Math.cos(G.aimAngle),dy=Math.sin(G.aimAngle),out=[{x:x,y:y}];
+  for(var i=0;i<3;i++){var tx=dx>0?(maxX-x)/dx:(dx<0?(min-x)/dx:1e9),ty=dy>0?(maxY-y)/dy:(dy<0?(min-y)/dy:1e9),t=Math.min(tx>1e-6?tx:1e9,ty>1e-6?ty:1e9);if(!isFinite(t)||t===1e9)break;x+=dx*t;y+=dy*t;out.push({x:x,y:y,n:i+1});if(Math.abs(t-tx)<1e-5)dx*=-1;if(Math.abs(t-ty)<1e-5)dy*=-1;}return out;
+}
+function drawRail(G,q){var pts=railPath(G,q);if(pts.length<2)return;ax.save();ax.strokeStyle='#73f2bdc7';ax.lineWidth=1.4;ax.setLineDash([6,6]);ax.beginPath();pts.forEach(function(p,i){var s=toScreen(G,p);if(!i)ax.moveTo(s.x,s.y);else ax.lineTo(s.x,s.y);});ax.stroke();ax.setLineDash([]);ax.font='900 10px system-ui';ax.textAlign='center';pts.slice(1).forEach(function(p){var s=toScreen(G,p);ax.fillStyle='#07161ddd';ax.beginPath();ax.arc(s.x,s.y,10,0,Math.PI*2);ax.fill();ax.strokeStyle='#73f2bd';ax.stroke();ax.fillStyle='#eafff5';ax.fillText('R'+p.n,s.x,s.y+3.5);});ax.restore();}
+function drawCollisionOrder(G){var pr=G.prediction;if(!pr||pr.contactAt<0||!pr.cue||!pr.cue[pr.contactAt])return;var p=toScreen(G,pr.cue[pr.contactAt]);ax.save();ax.fillStyle='#f2a24a';ax.strokeStyle='#fff0c7';ax.lineWidth=1.5;ax.beginPath();ax.arc(p.x,p.y,12,0,Math.PI*2);ax.fill();ax.stroke();ax.fillStyle='#101722';ax.font='900 10px system-ui';ax.textAlign='center';ax.fillText('1',p.x,p.y+3.5);ax.fillStyle='#fff';ax.font='800 9px system-ui';ax.fillText('FIRST CONTACT · BALL '+pr.first,p.x,p.y-18);ax.restore();}
+function drawIntent(G){var b=pickBallIntent(G,lastPointer);if(!b)return;var s=toScreen(G,b),r=Math.max(18,AP.C.R*G.view.scale*1.6);ax.save();ax.strokeStyle=b.id===8?'#f2c14a':'#b9e6cd';ax.lineWidth=2;ax.setLineDash([4,4]);ax.beginPath();ax.arc(s.x,s.y,r,0,Math.PI*2);ax.stroke();ax.fillStyle='#07121edc';ax.fillRect(s.x-34,s.y-r-22,68,16);ax.fillStyle='#fff';ax.font='800 9px system-ui';ax.textAlign='center';ax.fillText(b.id===0?'CUE INTENT':'BALL '+b.id+' INTENT',s.x,s.y-r-10);ax.restore();}
+function isPressure(G){if(!G||G.phase!=='aim'||!G.world)return false;var live=activeBalls(G),eight=live.some(function(b){return b.id===8;});return G.power>=.9||(eight&&live.length<=4)||(G.mode==='trick'&&G.trickShots>=Math.max(1,(G.trick&&G.trick.par||1)-1));}
+function drawAdvisory(){
+  if(!ax)return;sizeAdvisory();ax.clearRect(0,0,innerWidth,innerHeight);var d=debug(),G=d&&d.state();if(G&&lastPhase==='aim'&&G.phase==='moving'&&lastPressureAim)clutch();if(!G||!G.running||G.phase!=='aim'||!G.world){pressure.classList.remove('on');lastPhase=G&&G.phase||'';requestAnimationFrame(drawAdvisory);return;}
+  if(G.predDirty||!G.prediction)d.computePrediction();var q=AP.cue(G.world);if(q){drawRail(G,q);drawCollisionOrder(G);drawIntent(G);}var hot=isPressure(G);pressure.classList.toggle('on',hot);
+  lastPressureAim=hot;lastPhase=G.phase;requestAnimationFrame(drawAdvisory);
+}
+table.addEventListener('pointermove',function(e){lastPointer={x:e.clientX,y:e.clientY};},{passive:true});table.addEventListener('pointerleave',function(){lastPointer=null;},{passive:true});
+function clutch(){if(calm)return;document.body.classList.remove('v6-clutch');void document.body.offsetWidth;document.body.classList.add('v6-clutch');tone(110,.32,.055);tone(880,.4,.018,.04);if(navigator.vibrate)try{navigator.vibrate([20,28,16]);}catch(e){}setTimeout(function(){document.body.classList.remove('v6-clutch');},430);}
+function setBackgroundInert(on){[table,document.getElementById('hud'),document.getElementById('screens')].forEach(function(el){if(!el)return;if(on)el.setAttribute('inert','');else el.removeAttribute('inert');});}
+function closeFly(){if(!fly.classList.contains('on'))return;clearTimeout(flyTimer);fly.classList.remove('on');fly.setAttribute('aria-hidden','true');setBackgroundInert(false);if(lastFocus&&lastFocus.focus)lastFocus.focus();else table.focus();tone(660,.14,.02);}
+function openFly(){if(flyShown||reduce)return;flyShown=true;lastFocus=document.activeElement;fly.removeAttribute('aria-hidden');fly.classList.add('on');setBackgroundInert(true);skip.focus();tone(196,.42,.035);tone(392,.5,.018,.06);flyTimer=setTimeout(closeFly,2050);}
+skip.addEventListener('click',closeFly);fly.addEventListener('keydown',function(e){if(e.key==='Escape'||e.key==='Enter'||e.key===' '){e.preventDefault();closeFly();}});
+function launchAscent(){if(calm)return;ascent.innerHTML='';for(var i=0;i<11;i++){var s=document.createElement('i');s.className='v6Star';s.style.left=(45+Math.random()*10)+'%';s.style.top=(62+Math.random()*14)+'%';s.style.setProperty('--dx',(-180+Math.random()*360)+'px');s.style.setProperty('--dy',(Math.random()*100)+'px');s.style.animationDelay=(i*70)+'ms';ascent.appendChild(s);}tone(523,.3,.025);tone(784,.42,.018,.1);setTimeout(function(){ascent.innerHTML='';},1900);}
+function upgradePanel(){var box=document.getElementById('screens'),panel=box&&box.querySelector('.panel'),d=debug(),G=d&&d.state();if(!panel){if(!fly.classList.contains('on'))[table,document.getElementById('hud')].forEach(function(x){if(x)x.removeAttribute('inert');});return;}var title=(panel.querySelector('h2')||{}).textContent||'';var modal=G&&G.phase==='paused';panel.setAttribute('role',modal?'dialog':'region');if(modal){panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label',title||'Apex Pool dialog');panel.tabIndex=-1;[table,document.getElementById('hud')].forEach(function(x){if(x)x.setAttribute('inert','');});setTimeout(function(){var f=panel.querySelector('button,[href],input,select');(f||panel).focus();},0);}else{panel.removeAttribute('aria-modal');[table,document.getElementById('hud')].forEach(function(x){if(x)x.removeAttribute('inert');});}var text=panel.textContent||'';if((/Table won|Puzzle cleared/.test(text))&&finishSeen!==text){finishSeen=text;launchAscent();}}
+new MutationObserver(upgradePanel).observe(document.getElementById('screens'),{childList:true,subtree:true});
+document.addEventListener('visibilitychange',function(){var d=debug(),G=d&&d.state();if(!G||!G.running)return;if(document.hidden&&G.phase!=='paused'){G.v6ResumePhase=G.phase;G.phase='paused';}else if(!document.hidden&&G.v6ResumePhase){G.phase=G.v6ResumePhase;G.v6ResumePhase=null;G.lastTime=performance.now();}});
+setInterval(function(){var d=debug(),G=d&&d.state();if(G&&G.running&&!flyShown)openFly();},120);
+addEventListener('resize',sizeAdvisory,{passive:true});
+
+window.__MBM_V6_RELEASE__={
+  version:VERSION,gameId:GAME_ID,edition:'AAA Ascension',madeBy:'Made by Matt',offline:true,
+  features:['viewport-first','portrait-dead-zone-tray','240hz-fixed-authority','sub-frame-interpolation','multi-cushion-aim-rail','collision-order-preview','clustered-ball-intent','pressure-shot-clutch','broadcast-fly-in','finish-ascent','master-audio-bus','schema-6-profile','modal-isolation','visibility-pause','reduced-motion'],
+  authority:{tickHz:240,source:'AP.C.DT',advisoryOnly:true,legacyStorage:legacyKeys.slice()},
+  profile:{key:PROFILE_KEY,schema:6,migration:migration},audio:MasterBus,
+  selfTest:function(){var d=debug(),G=d&&d.state(),checks={marker:VERSION==='6.0.0',core:!!(window.AP&&AP.C&&AP.C.DT===1/240),interpolation:!!(G&&Object.prototype.hasOwnProperty.call(G,'prev')),legacyUntouched:migration.legacyUntouched,profile:migration.profileReady,offline:document.querySelectorAll('script[src],link[rel="stylesheet"]').length===0,advisory:!!advisory,targets:Array.prototype.every.call(document.querySelectorAll('#v6Flyin button'),function(b){var r=b.getBoundingClientRect();return !fly.classList.contains('on')||(r.width>=44&&r.height>=44);})};return{ok:Object.keys(checks).every(function(k){return checks[k];}),gameId:GAME_ID,version:VERSION,checks:checks};}
+};
+sizeAdvisory();requestAnimationFrame(drawAdvisory);
 })();
 </script>
 <!-- MBM-INLINE-EXIT:BEGIN generated by tools/render_inline_exit.py, do not edit by hand -->

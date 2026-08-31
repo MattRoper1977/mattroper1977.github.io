@@ -7,6 +7,7 @@ const SENTINEL='apextennis-build-2026-08-04';
 const html=fs.readFileSync(FILE,'utf8');
 const bytes=Buffer.byteLength(html);
 const sha=crypto.createHash('sha256').update(html).digest('hex');
+const EXPECTED_V6_SHA256='8edc53112c95051feea4dd90a1dd7dc69aa9032c6fc44742ae1e7834a332778a';
 const results=[];
 function assert(x,m){if(!x)throw new Error(m)}
 function gate(id,name,fn){try{const d=fn()||'';results.push({id,name,status:'PASS',detail:d});console.log(`PASS ${id} ${name}${d?' — '+d:''}`)}catch(e){results.push({id,name,status:'FAIL',detail:e.message});console.error(`FAIL ${id} ${name} — ${e.message}`)}}
@@ -17,14 +18,14 @@ function fullLog(){return{serveWide:true,serveWideMargin:1,shotCountAfterServe:2
 function upsert(manifest,entry){const m=JSON.parse(JSON.stringify(manifest));m.games=Array.isArray(m.games)?m.games:[];const ix=m.games.findIndex(g=>g.href===entry.href||g.title===entry.title);if(ix<0)m.games.push(entry);else{m.games=m.games.filter((g,i)=>i===ix||(g.href!==entry.href&&g.title!==entry.title));m.games[ix]=Object.assign({},m.games[ix],entry)}return m}
 function sourceValidators(s){return{
  sentinel:(s.match(new RegExp(SENTINEL,'g'))||[]).length===2&&s.trimStart().startsWith('<!-- '+SENTINEL+' -->')&&s.trimEnd().endsWith('<!-- '+SENTINEL+' -->'),
- storage:(s.match(/mbm_apextennis_/g)||[]).length===1&&!/mbm_apex(?:kick|pool|golf)_/.test(s),
+ storage:/var PREFIX='mbm_apextennis_';/.test(s)&&/var V6_PROFILE_KEY='madebymatt_v6_profile',V6_GAME_ID='apex-tennis';/.test(s)&&!/mbm_apex(?:kick|pool|golf)_/.test(s),
  plan:/id="clauseList"/.test(s)&&/function planRating\(/.test(s),
  motion:(s.match(/@media\(prefers-reduced-motion:reduce\)/g)||[]).length>=2,
  external:!/<(?:script|link|img|audio|video|source)\b[^>]+(?:src|href)=["']https?:/i.test(s),
  forbidden:!/(apex_coins|loot\s*box|gacha|crate\s*reel|RANK_TIERS|rarity\s*table)/i.test(s)
 }}
 
-gate('G1','identity, sentinel and metadata',()=>{const lines=html.trimEnd().split('\n'),n=(html.match(new RegExp(SENTINEL,'g'))||[]).length;assert(lines[0].includes(SENTINEL),'sentinel not first line');assert(lines.at(-1).includes(SENTINEL),'sentinel not last line');assert(n===2,`sentinel count ${n}`);assert(/<title>Apex Tennis — Made by Matt<\/title>/.test(html),'title mismatch');assert(/rel="canonical" href="https:\/\/madebymatt\.uk\/apextennis\/"/.test(html),'canonical mismatch');assert(/property="og:url" content="https:\/\/madebymatt\.uk\/apextennis\/"/.test(html),'og:url mismatch');return `${bytes} bytes; sha256 ${sha}; sentinel ${n}`});
+gate('G1','identity, sentinel and metadata',()=>{const lines=html.trimEnd().split('\n'),n=(html.match(new RegExp(SENTINEL,'g'))||[]).length;assert(lines[0].includes(SENTINEL),'sentinel not first line');assert(lines.at(-1).includes(SENTINEL),'sentinel not last line');assert(n===2,`sentinel count ${n}`);assert(/<title>Apex Tennis V6 — Ascension Edition · Made by Matt<\/title>/.test(html),'title mismatch');assert(sha===EXPECTED_V6_SHA256,`V6 payload hash ${sha}`);assert(/rel="canonical" href="https:\/\/madebymatt\.uk\/apextennis\/"/.test(html),'canonical mismatch');assert(/property="og:url" content="https:\/\/madebymatt\.uk\/apextennis\/"/.test(html),'og:url mismatch');return `${bytes} bytes; sha256 ${sha}; sentinel ${n}`});
 
 gate('G2','fixed-step determinism',()=>{assert(AT.C.DT===1/120,'DT mismatch');const rates=[30,60,120,144],states=rates.map(hz=>{const w=AT.makeWorld({surface:'hard',ball:{x:13,y:AT.C.PLAYER_Y,z:31}});AT.launch(w,{speed:788,angle:.22,loft:326,spinX:.41,spinY:.63});return AT.drive(w,16,hz)}),d=maxPair(states);assert(d===0,`state delta ${d}`);assert(/while\(G\.acc>=AT\.C\.DT/.test(html),'browser accumulator missing');return `30/60/120/144 Hz; max state delta ${d}`});
 
@@ -45,7 +46,7 @@ gate('G5','Plan Rating fixtures, fuzz and monotonicity',()=>{const base={serveWi
 
 gate('G6','every plan has three visible clauses',()=>{assert(AT.PLANS.length>=8,`only ${AT.PLANS.length} plans`);AT.PLANS.forEach(p=>assert(p.clauses.length===3,`${p.id} has ${p.clauses.length} clauses`));assert(/renderClauses\(\)/.test(html)&&/id="clauseList"/.test(html),'live clause renderer missing');assert(/class=\\"clause|class="clause/.test(html),'clause state markup missing');return `${AT.PLANS.length} plans × exactly 3 clauses; live tick renderer present`});
 
-gate('G7','storage isolation',()=>{const n=(html.match(/mbm_apextennis_/g)||[]).length;assert(n===1,`prefix literal count ${n}`);assert(!/mbm_apex(?:kick|pool|golf)_/.test(html),'sibling storage prefix present');assert((html.match(/localStorage\.(?:getItem|setItem|removeItem)/g)||[]).length===3,'storage access is not confined to helper');return `one prefix literal; zero sibling key literals`});
+gate('G7','storage isolation',()=>{assert(/var PREFIX='mbm_apextennis_';/.test(html),'legacy prefix declaration missing');assert(/var V6_PROFILE_KEY='madebymatt_v6_profile',V6_GAME_ID='apex-tennis';/.test(html),'V6 profile namespace mismatch');assert(!/mbm_apex(?:kick|pool|golf)_/.test(html),'sibling storage prefix present');const writes=[...html.matchAll(/localStorage\.(?:setItem|removeItem)\(([^\n;]+)/g)].map(m=>m[1]),legacy=writes.filter(x=>/this\.key\(k\)/.test(x)),profile=writes.filter(x=>/^V6_PROFILE_KEY\b/.test(x));assert(writes.length===4&&legacy.length===2&&profile.length===2,`owned write paths ${writes.join(' | ')}`);assert(!/localStorage\.setItem\(PREFIX\s*\+/.test(html),'legacy bytes are written directly');return `two legacy helper paths; two namespaced V6 profile paths; zero sibling key literals`});
 
 gate('G8','share payload validation and save isolation',()=>{const valid=AT.encodeShare({venue:2,surface:'grass',ai:'angle',plan:'grind-deep'}),d=AT.decodeShare(valid);assert(d.ok&&d.data.venue===2&&d.writes===false,'valid share failed');['#','v2.aaa','v1.!!!','v1.'+'A'.repeat(401)].forEach(x=>assert(!AT.decodeShare(x).ok,`hostile payload accepted: ${x.slice(0,12)}`));const raw=Buffer.from(JSON.stringify({v:1,venue:99,surface:'lava',ai:'god',plan:'hack'})).toString('base64url');assert(!AT.decodeShare('v1.'+raw).ok,'out-of-range payload accepted');assert(/storageWritesOnShare:0/.test(html),'browser share-write contract missing');return `valid v1 round-trip; malformed/out-of-range/hostile rejected; writes=false`});
 

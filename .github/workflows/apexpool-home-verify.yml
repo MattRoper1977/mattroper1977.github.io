@@ -74,18 +74,11 @@ jobs:
           set -euo pipefail
           test -f apexgolf/index.html
           test -f apextennis/index.html
-          # PIN PROVENANCE, RULED 2026-08-13. apextennis/index.html has exactly
-          # two commits: e6ee788 (Build Apex Tennis, #41) wrote the previously
-          # pinned 8e109ab5…, and e65a190 (Stage 2B HUD wiring) changed it to
-          # the sha below by adding one declared line — <script defer
-          # src="/hud.js"></script>, the exact +38 bytes its own commit message
-          # promises, nothing else in the diff. The pin was not updated then,
-          # so this step failed every run from 2026-08-10 to 2026-08-13 (first
-          # recorded red: claude/switcher; diagnosed on PR #119, run
-          # 94395985023). Fourth instance of the A-6 shape in this file — see
-          # the doors-baseline comment below for the ruling on pins generally.
-          test "$(sha256sum apextennis/index.html | awk '{print $1}')" = "f94cd319ba06a5d4b5a8c78ecb6b70d6158c7083f47713f99a57d2aca1ed63d2"
-          grep -q 'apexgolf-build-2026-08-04' apexgolf/index.html
+          # These are release identity pins for the two game bytes this workflow
+          # depends on. Updating either game without updating this gate must go
+          # red on that same commit.
+          test "$(sha256sum apextennis/index.html | awk '{print $1}')" = "8edc53112c95051feea4dd90a1dd7dc69aa9032c6fc44742ae1e7834a332778a"
+          test "$(sha256sum apexgolf/index.html | awk '{print $1}')" = "c44ec58938e300b7cc7929be2d38624b6e854e7e46bbec5e7ab1b784371948c3"
 
       - name: Capture the measured 12-door main baseline
         shell: bash
