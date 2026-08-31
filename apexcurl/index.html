@@ -1656,11 +1656,16 @@ drawVTGraph(force=false){if(!this.graphOpen)return;if(!force&&this.time-this.gra
     safeSet(SAVE_KEY,JSON.stringify(State));
   }
 
+  function newPassportNode(){var bytes=new Uint8Array(12);if(globalThis.crypto&&crypto.getRandomValues)crypto.getRandomValues(bytes);else for(var i=0;i<bytes.length;i++)bytes[i]=Math.floor(Math.random()*256);return'mbm-'+Array.from(bytes,function(b){return b.toString(16).padStart(2,'0')}).join('')}
   function loadPassport(){
-    var raw=safeGet(PASSPORT_KEY);
-    if(!raw)return Runtime.defaultPassport();
-    try{return Runtime.normalizePassport(JSON.parse(raw));}
-    catch(error){safeSet(PASSPORT_KEY+'_corrupt_backup',raw);return Runtime.defaultPassport();}
+    var raw=safeGet(PASSPORT_KEY),parsed;
+    if(raw){
+      try{return Runtime.normalizePassport(JSON.parse(raw));}
+      catch(error){safeSet(PASSPORT_KEY+'_corrupt_backup',raw);}
+    }
+    parsed=Runtime.defaultPassport(newPassportNode());
+    safeSet(PASSPORT_KEY,Runtime.stableStringify(parsed));
+    return parsed;
   }
   var Passport=loadPassport();
   function savePassport(){safeSet(PASSPORT_KEY,JSON.stringify(Runtime.normalizePassport(Passport)));}

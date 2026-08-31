@@ -1,17 +1,21 @@
 <!DOCTYPE html>
+<!-- MBM-V6-RELEASE: build 6.0.0 | profile-schema 6 | MV120 scored-simulation unchanged -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>MEDEVAC FRONTIER v2 — madebymatt.uk</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mbm-game-id" content="medevac-frontier">
+<meta name="mbm-build" content="medevac-frontier-aaa-v6.0.0">
+<meta name="mbm-simulation" content="MV120-FLIGHT-20260830">
+<title>MEDEVAC FRONTIER — AAA V6 ASCENSION</title>
 <link rel="canonical" href="https://madebymatt.uk/medevac/">
 <meta property="og:url" content="https://madebymatt.uk/medevac/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://madebymatt.uk/medevac/medevac_frontier_banner.png">
-<meta name="description" content="MEDEVAC FRONTIER v2: train with Unit 734, fly Twilight and Night Canyon medevac missions, and build a persistent service record. Free, offline-ready browser flight game.">
+<meta name="description" content="MEDEVAC FRONTIER V6 Ascension: an offline canyon rescue flight game with deterministic flight authority, cinematic rescue presentation, Frontier Tour, crew mastery and telemetry replay.">
 <meta name="theme-color" content="#161d3d">
-<meta property="og:title" content="MEDEVAC FRONTIER">
-<meta property="og:description" content="Train. Land. Extract. Escape. Two canyon missions, guided first flight and a persistent service record.">
+<meta property="og:title" content="MEDEVAC FRONTIER V6 · ASCENSION">
+<meta property="og:description" content="Train, land, extract and return safely across a rescue campaign with weekly seeded operations and persistent crew mastery.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://madebymatt.uk/medevac/medevac_frontier_banner.png">
 <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABmJLR0QA/wD/AP+gvaeTAAADtklEQVR4nO2bW0gUURjH/zOzq3uZ8rLuer+kli+FXRShxBJJskIxqcgMRYpIEszMyIgM6iXoQvTSm4RhqOVbD4IQ1UNQaPaWvSmW7abrZdX1Mjs9LOKOu153zhxi5g/7cuZ83/z2z3f2zPl2l9mdvVOEisXSBqAtzQDaALSlGUAbgLZ0ew5k0GagKq0Cfg3aJQOjDqffJIs1QkEk+bSR96L6CtAMoA1AW5oBtAFoS/UG6IIJftP6Tj6SIFRWcXzLsaqvAM0A2gC0pRlA+gai2w2Py7XpOI/LBdHtJsLkq6B2gbW0MDQIx/PHcPf3Q/QI0FltMOfmIfxMOXSWqIAxi6MOjLe3YfrTByw67GBYDobMTFiv1kOfmESEk0gFCM4xDNfVYLavF6JHAAAsOuyY6OrEYOU5iAM/YImwSF7izwEMVpZjoqsTiw7vCVX0CJjt68VwXQ0E5xgJVDIGjLe3QZiaDHhNnJ+Dq6fbb9zV0w1xfi5gjDA1ifH2Ntk5QcqA2b6vsuecIZATxJbAxITsOT2TgSsqWBExgNHJ/9nKcJzsOUFqF9AnpWDhzwgAIKaiCrHnqyTXWYPBLyax9jriL9VIxn6/asFIa4s3Z3IKCVQyBoRmZGDmy2cAAGcyQx9lXTeG43lwPC8dM5mXc+4i070msgT4Q4dlz2nOlT8nSBkQkpaOkNQ0WfOFpqbLls9XxJ4Ew0vKYH/yEMLMNBZG/0qusQYDOLO03IVpFzwrHn2FmWlvruJTpDDJGcAXFsHZ8RojrcsfZEuylZ5GSlOzZGzo2SPY37b75dHHJ4A/eowUJrnDEMNxiKyo2sDMtRV5oZrItrokoqdBPr8Apv3ZW4437t0HPr9AVqaVInscZhhEXWsAazRuPtRggK3uJsAwRNCWRLwfoI+ORWT15U3HWS5egS4ujgiTr8gtLh+FFZfC/f0bXB/fAwDsXR2wd3WsOt98MBdhJ0uUQFOoJcYwsDbcQkjyjnWn6hOSYLvRBLDKoCnWE2SNRsQ03we74nFXOseEmOYHYM2rz5GdS7E7AdDHJyK66W7AbY3R6RB95x5CkpKVRFK+K2zKykF0UzMY1ud4y7KwNd6GKStHaRw6bXFzbh6s9Y3eLY5hYK2tB3+E7H6/mhTZBQJpW2ERBKf3JyzbTxTTwqBnAACEny2neXtA+2YoyAro7vZvb/9vUn0FqN6AoJbAi5dP5SOhJNVXgGYAbQDa0gygDUBbmgG0AWhL9QYw2j9HVS7NANoAtKUZQBuAtv4BujLXJG1llPUAAAAASUVORK5CYII=">
@@ -108,14 +112,14 @@ canvas{position:absolute;inset:0;display:block}
 #objective{margin-top:auto;margin-bottom:4vh;font-family:ui-monospace,monospace;font-size:clamp(11px,2.8vw,13px);
   letter-spacing:.08em;color:#d8cfb8;line-height:1.7;text-shadow:0 1px 3px #000;max-width:340px}
 #objective b{color:var(--ember);letter-spacing:.2em}
-#tempoLine{margin-top:8px;font-size:10px;letter-spacing:.2em;color:var(--mintdim);cursor:pointer}
+#tempoLine{display:block;width:100%;margin-top:8px;padding:8px 10px;border:1px solid rgba(143,201,168,.26);border-radius:8px;background:rgba(7,17,13,.58);font:700 10px/1.35 ui-monospace,monospace;letter-spacing:.16em;color:var(--mintdim);cursor:pointer;text-align:center}
 #tempoLine b{color:var(--amber);letter-spacing:.2em}
-#menuFooter{position:absolute;bottom:8px;right:12px;font-size:10px;letter-spacing:.12em;color:#5b647a;font-family:ui-monospace,monospace}
+#menuFooter{position:absolute;bottom:8px;right:12px;min-height:44px;padding:7px 10px;border:1px solid transparent;border-radius:8px;background:rgba(3,8,16,.34);font:700 10px/1.35 ui-monospace,monospace;letter-spacing:.1em;color:#778198;cursor:pointer}
 #menuFooter span{color:var(--ember)}
 
 .sheet{background:rgba(6,10,9,.93);z-index:20}
 .sheetCard{background:var(--panel);border:1.5px solid var(--panelline);border-radius:12px;padding:22px 22px 18px;
-  max-width:430px;width:92%;text-align:left;max-height:82vh;overflow-y:auto}
+  max-width:430px;width:92%;text-align:left;max-height:82vh;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
 .sheetCard h2{font-family:ui-monospace,monospace;letter-spacing:.2em;font-size:16px;color:var(--mint);margin-bottom:12px}
 .sheetCard p{font-size:14px;line-height:1.65;color:#d9d3c4;margin-bottom:10px}
 .sheetCard p b{color:var(--mint)} .sheetCard p i{color:var(--amber);font-style:normal}
@@ -183,7 +187,7 @@ body.detail-performance #btnQuality{color:#92a89c;border-color:#4d6156}
 #tcR{right:calc(16px + var(--safe-r));bottom:calc(18px + var(--safe-b))}
 #exUI{padding-bottom:calc(20px + var(--safe-b))}
 #menuFooter{right:calc(12px + var(--safe-r));bottom:calc(8px + var(--safe-b))}
-.missionStrip{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;width:min(520px,94vw);margin-top:2.2vh}
+.missionStrip{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;width:min(650px,96vw);margin-top:2.2vh}
 .missionBtn{padding:10px 6px;font-size:10px;letter-spacing:.08em;min-height:58px;position:relative}
 .missionBtn small{display:block;margin-top:5px;color:var(--mintdim);font-size:8px;letter-spacing:.08em}
 .missionBtn.selected{border-color:var(--amber);color:#fff;box-shadow:0 0 16px rgba(255,207,94,.17)}
@@ -198,10 +202,65 @@ body.detail-performance #btnQuality{color:#92a89c;border-color:#4d6156}
 #exZone:before{left:2px;border-left:3px solid #fff} #exZone:after{right:2px;border-right:3px solid #fff}
 body.night-mission canvas{filter:saturate(.88) brightness(.76) contrast(1.12)}
 body.night-mission .panel{background:rgba(4,12,20,.9);border-color:#7fa7bd}
+body.storm-mission canvas{filter:saturate(.72) brightness(.74) contrast(1.18)}body.storm-mission .panel{background:rgba(5,13,18,.92);border-color:#80cad8}
 @media(max-height:700px){#menuUI{padding-top:3vh}.menuBtns{gap:7px;margin-top:2vh}.missionStrip{margin-top:1vh}.mbtn{padding:10px}.missionBtn{min-height:48px}}
+/* ---------- V4 rescue operations layer ---------- */
+#ghostBench{position:absolute;z-index:8;top:calc(112px + var(--safe-t));right:calc(14px + var(--safe-r));max-width:250px;padding:7px 9px;border:1px solid #72c9e5;border-radius:6px;background:rgba(4,18,27,.86);color:#c8f5ff;font:700 9px ui-monospace,monospace;letter-spacing:.08em;pointer-events:none}#tourHUD{position:absolute;z-index:9;top:calc(112px + var(--safe-t));left:calc(14px + var(--safe-l));max-width:min(310px,44vw);padding:8px 10px;border:1px solid #ffcf5e;border-radius:6px;background:rgba(18,14,4,.88);color:#fff1bd;font:800 9px/1.45 ui-monospace,monospace;letter-spacing:.08em;pointer-events:none;box-shadow:0 8px 26px #0008}
+#v4Summary{margin:9px 0;padding:8px;border-left:3px solid var(--amber);background:#17180f;color:#d9e4dc;font:10px ui-monospace,monospace}.v4Wallet{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 11px;margin:8px 0;border:1px solid #587167;border-radius:7px;background:#09150f}.v4Wallet strong{color:var(--amber);font-size:17px}.v4Grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:9px 0}.v4Card{padding:10px;border:1px solid #405448;border-radius:7px;background:#0c1812;text-align:left}.v4Card b{display:block;color:var(--amber);font:700 9px ui-monospace,monospace}.v4Card small{display:block;color:#aebdb4;line-height:1.4;margin:5px 0}.v4Card button{width:100%;min-height:44px;padding:7px;background:#07110d;color:#dff3e8;border:1px solid #607b6c;border-radius:6px;font:700 8px ui-monospace,monospace}.v4Card button:disabled{opacity:.45}.v4Caps{padding:9px;border-left:3px solid #72c9e5;background:#081720;text-align:left;color:#bdd7df;font:10px ui-monospace,monospace;line-height:1.5}.v4Swatches{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}.v4Swatches button{min-height:44px;padding:8px 10px;border:1px solid #4b6256;border-radius:6px;background:#09140f;color:#d9e7df}.v4Swatches button.on{border-color:var(--amber);color:var(--amber)}.v4Replay{margin:8px 0;padding:9px;border:1px solid #4d6671;border-radius:7px;background:#07131a}.v4Replay input{width:100%}.v4ReplayData{font:10px ui-monospace,monospace;color:#c7e9f3;line-height:1.55}button:focus-visible,input:focus-visible,[role="button"]:focus-visible{outline:3px solid #fff!important;outline-offset:3px}body.mv-large .panel,body.mv-large .mbtn{font-size:14px}body.mv-contrast{filter:contrast(1.17)}body.mv-contrast .panel,body.mv-contrast .sheetCard{border:2px solid #fff}body.mv-reduced canvas{filter:saturate(.72)}body.mv-calm #critWarn{animation:none}body.livery-sky{--amber:#78d7f3}body.livery-dawn{--amber:#ff9f77}body.livery-rescue{--amber:#ffcf5e}
+@media(max-width:700px){.missionStrip{grid-template-columns:repeat(2,1fr);width:min(460px,95vw)}.v4Grid{grid-template-columns:1fr}#ghostBench{top:auto;bottom:calc(155px + var(--safe-b));left:50%;right:auto;transform:translateX(-50%);max-width:86vw}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+/* ---------- V6 world-first shell + portrait dead-zone inversion ---------- */
+button,.mbtn,.tbtn,input{min-height:44px}
+#cv{width:100%;height:100%;max-width:100%;max-height:100%;outline:none}
+#cv:focus-visible{outline:3px solid #fff;outline-offset:-4px;box-shadow:inset 0 0 0 2px #27e0ff}
+#v6Version{position:fixed;z-index:18;left:max(8px,var(--safe-l));bottom:max(8px,var(--safe-b));min-height:44px;padding:0 13px;border:1px solid rgba(121,239,255,.58);border-radius:999px;background:rgba(3,10,18,.86);color:#c9fbff;font:800 10px ui-monospace,monospace;letter-spacing:.12em;box-shadow:0 8px 28px #0009,0 0 18px rgba(39,224,255,.12);backdrop-filter:blur(9px);cursor:pointer}
+#v6Pause{position:fixed;display:none;z-index:18;right:max(8px,var(--safe-r));top:calc(76px + var(--safe-t));min-width:54px;min-height:44px;border:1px solid rgba(159,207,179,.65);border-radius:12px;background:rgba(5,17,14,.88);color:#eafff2;font:800 11px ui-monospace,monospace;box-shadow:0 8px 25px #0009;cursor:pointer}
+#v6Pause[aria-pressed="true"]{border-color:var(--amber);color:var(--amber)}
+body[data-v6-phase="approach"] #v6Pause,body[data-v6-phase="rollout"] #v6Pause,body[data-v6-phase="extract"] #v6Pause,body[data-v6-phase="takeoff"] #v6Pause,body[data-v6-phase="climbout"] #v6Pause{display:block}
+#v6Urgency{position:fixed;z-index:17;left:50%;top:max(8px,var(--safe-t));transform:translateX(-50%);max-width:min(620px,calc(100vw - 24px));padding:7px 12px;border:1px solid rgba(159,207,179,.52);border-radius:999px;background:rgba(4,14,12,.76);color:#dff8e9;font:800 10px ui-monospace,monospace;letter-spacing:.09em;text-align:center;pointer-events:none;opacity:0;transition:opacity .18s}
+#v6Urgency.show{opacity:1}#v6Urgency.urgent{border-color:#ffb95f;color:#ffe3ac;background:rgba(45,21,6,.86)}
+#v6CinemaModal{position:fixed;inset:0;z-index:51;pointer-events:auto;touch-action:none;background:transparent}
+#v6CinemaModal[hidden]{display:none}
+#v6CinemaSkip{position:fixed;z-index:52;left:50%;bottom:max(20px,var(--safe-b));transform:translateX(-50%);min-width:172px;min-height:48px;padding:0 18px;border:1px solid #dffcff;border-radius:999px;background:rgba(3,10,18,.9);color:#fff;font:800 11px ui-monospace,monospace;letter-spacing:.13em;box-shadow:0 10px 32px #000b;cursor:pointer}
+#v6CinemaSkip[hidden]{display:none}
+.v6-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+#v6Clutch{position:fixed;z-index:50;inset:0;display:grid;place-items:center;pointer-events:none;opacity:0;background:radial-gradient(circle,rgba(39,224,255,.02) 0 23%,rgba(39,224,255,.12) 24%,transparent 43%);color:#fff;font:900 clamp(17px,4vw,34px) ui-monospace,monospace;letter-spacing:.2em;text-shadow:0 0 18px #27e0ff,0 2px 6px #000;transition:opacity .1s}
+#v6Clutch.show{opacity:1}
+#v6PortraitTray{display:none}
+body[data-v6-phase="approach"] #v6Version,body[data-v6-phase="rollout"] #v6Version,body[data-v6-phase="extract"] #v6Version,body[data-v6-phase="takeoff"] #v6Version,body[data-v6-phase="climbout"] #v6Version{display:none}
+#v6Instrument{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;width:100%}
+.v6Gauge{min-width:0;padding:7px 5px;border:1px solid rgba(143,201,168,.38);border-radius:8px;background:rgba(5,15,12,.74);text-align:center}
+.v6Gauge small{display:block;color:var(--mintdim);font:700 8px ui-monospace,monospace;letter-spacing:.08em}.v6Gauge b{display:block;overflow:hidden;text-overflow:ellipsis;color:#fff;font:900 clamp(12px,3.5vw,18px) ui-monospace,monospace;white-space:nowrap}
+@media (orientation:portrait){
+  :root{--v6-tray-h:clamp(178px,25dvh,244px)}
+  #menuUI{overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding:calc(18px + var(--safe-t)) max(12px,var(--safe-r)) calc(20px + var(--safe-b)) max(12px,var(--safe-l));scrollbar-gutter:stable both-edges}
+  #menuUI .menuBtns{flex:0 0 auto;width:min(94vw,460px);margin-top:18px;gap:8px}
+  #menuUI .missionStrip{width:100%;max-width:100%;align-self:center}
+  #menuUI #objective{flex:0 0 auto;margin:18px auto 0}
+  #menuFooter{position:static;flex:0 0 auto;align-self:center;margin:14px auto 0;max-width:min(94vw,520px)}
+  #v6PortraitTray{position:fixed;display:flex;visibility:hidden;pointer-events:none;z-index:7;left:0;right:0;bottom:0;height:var(--v6-tray-h);padding:10px max(12px,var(--safe-r)) max(10px,var(--safe-b)) max(12px,var(--safe-l));align-items:flex-start;background:linear-gradient(180deg,rgba(7,16,27,.72),rgba(3,8,16,.98) 34%);border-top:1px solid rgba(121,239,255,.36);box-shadow:0 -14px 42px #0009}
+  body[data-v6-phase="approach"] #v6PortraitTray,body[data-v6-phase="rollout"] #v6PortraitTray,body[data-v6-phase="extract"] #v6PortraitTray,body[data-v6-phase="takeoff"] #v6PortraitTray,body[data-v6-phase="climbout"] #v6PortraitTray{visibility:visible}
+  #v6Instrument{position:relative;z-index:2;padding-right:64px}
+  #tcL,#tcR{position:fixed;z-index:12;bottom:max(14px,var(--safe-b));gap:10px}
+  body[data-v6-phase="approach"] #tcL,body[data-v6-phase="approach"] #tcR,body[data-v6-phase="takeoff"] #tcL,body[data-v6-phase="takeoff"] #tcR{display:flex!important}
+  #tcL{left:max(12px,var(--safe-l))}#tcR{right:max(12px,var(--safe-r));flex-direction:row}
+  .tbtn{width:clamp(54px,15vw,70px);height:clamp(54px,15vw,70px);background:rgba(10,29,24,.94);box-shadow:0 6px 18px #0009}
+  #exUI{position:fixed;z-index:13;left:0;right:0;bottom:0;height:var(--v6-tray-h);justify-content:center;gap:6px;padding:8px max(78px,calc(var(--safe-r) + 70px)) max(8px,var(--safe-b)) max(12px,var(--safe-l));background:linear-gradient(180deg,rgba(7,16,27,.75),rgba(3,8,16,.98) 30%)}
+  #exBarWrap,#btnGuide,#btnLaunch,#btnCrateLoad{width:100%;max-width:560px}
+  #btnGuide,#btnLaunch,#btnCrateLoad{min-height:44px;padding:8px 10px;line-height:1.1}
+  #panelFlight,#panelStress,#panelTimer,#panelZone{display:none!important}
+  #caption{top:16%;font-size:clamp(12px,3.2vw,17px)}
+  #v6Version{bottom:calc(var(--v6-tray-h) + 8px)}#v6Pause{top:auto;right:max(10px,var(--safe-r));bottom:calc(var(--v6-tray-h) - 54px)}
+  #v6Urgency{top:max(6px,var(--safe-t));font-size:9px}
+  #ghostBench{bottom:calc(var(--v6-tray-h) + 10px)}
+}
+@media (orientation:portrait) and (max-height:700px){:root{--v6-tray-h:164px}.v6Gauge{padding:4px}.tbtn{width:52px;height:52px}#menuUI{padding-top:calc(10px + var(--safe-t))}#menuUI .menuBtns{margin-top:10px;gap:6px}#exHint{font-size:9px;margin-bottom:3px}#exBar{height:22px}}
+@media(prefers-reduced-motion:reduce){#v6Clutch{transition:none;background:rgba(3,10,18,.42)}#v6Urgency{transition:none}}
 </style>
+<meta name="mbm-release" content="6.0.0">
+<meta name="mbm-save-schema" content="6">
 </head>
-<body>
+<body data-mbm-release="6.0.0">
 <!-- MBM-MAKER-SPLASH:BEGIN generated by tools/render_maker_splash.py, do not edit by hand -->
 <script>(function(){"use strict";
 if(window.__mbmMakerSplash)return;window.__mbmMakerSplash=1;
@@ -257,25 +316,26 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 })();</script>
 <!-- MBM-MAKER-SPLASH:END -->
 
-<canvas id="cv"></canvas>
+<canvas id="cv" role="application" tabindex="0" aria-label="Medevac Frontier rescue flight. Use arrow keys or W A S D to fly, Space to guide the extraction team, and P to pause."></canvas>
 
 <!-- HUD -->
-<div id="panelFlight" class="panel hidden">ALTITUDE: <span id="hudAlt">300</span> FT<br>SPEED: <span id="hudSpd">68</span> KTS<br><span id="hudLbl3">STRIP</span>: <span id="hudAux">—</span> M</div>
-<div id="panelZone" class="panel hidden">ZONE STATUS:<br>CONFLICT IMMINENT</div>
+<div id="panelFlight" class="panel hidden">ALTITUDE: <span id="hudAlt">300</span> FT<br>SPEED: <span id="hudSpd">68</span> KTS<br><span id="hudLbl3">STRIP</span>: <span id="hudAux">—</span> M<br>ENERGY RESERVE: <span id="hudEnergy">100</span>%</div>
+<div id="panelZone" class="panel hidden">ZONE STATUS:<br>WEATHER WINDOW CLOSING</div>
 <div id="panelStress" class="panel hidden"><div class="lbl">STRESS LEVEL</div><div class="barTrack"><div id="stressFill"></div></div></div>
-<div id="panelTimer" class="panel hidden"><div id="timerTxt">02:14 REMAINING</div><div id="loadLbl">LOADING STATUS: <span id="loadTxt">0/3 CASUALTIES</span></div><div class="barTrack"><div id="loadFill"></div></div></div>
+<div id="panelTimer" class="panel hidden"><div id="timerTxt">02:14 REMAINING</div><div id="loadLbl">LOADING STATUS: <span id="loadTxt">0/3 PATIENTS</span></div><div class="barTrack"><div id="loadFill"></div></div></div>
 <div id="trainingBadge" class="hidden">TRAINING FLIGHT · NO-FAIL ASSIST ACTIVE</div>
-<div id="critWarn" class="critical-warning"></div>
-<div id="caption"><img id="capChip" alt=""><span id="capBody"><span id="capName"></span><span id="capText"></span></span></div>
+<div id="ghostBench" class="hidden">PERSONAL GHOST BENCHMARK</div><div id="tourHUD" class="hidden" role="status" aria-live="polite">FRONTIER TOUR 1/3</div>
+<div id="critWarn" class="critical-warning" role="alert" aria-live="assertive"></div>
+<div id="caption" role="status" aria-live="polite"><img id="capChip" alt=""><span id="capBody"><span id="capName"></span><span id="capText"></span></span></div>
 
 <!-- Touch controls -->
 <div id="tcL" class="tcluster hidden">
-  <button class="tbtn" data-k="left">◀</button>
-  <button class="tbtn" data-k="right">▶</button>
+  <button class="tbtn" data-k="left" aria-label="Steer left">◀</button>
+  <button class="tbtn" data-k="right" aria-label="Steer right">▶</button>
 </div>
 <div id="tcR" class="tcluster hidden">
-  <button class="tbtn" data-k="up">▲</button>
-  <button class="tbtn" data-k="down">▼</button>
+  <button class="tbtn" data-k="up" aria-label="Raise the nose">▲</button>
+  <button class="tbtn" data-k="down" aria-label="Lower the nose">▼</button>
 </div>
 
 <!-- Extraction UI -->
@@ -287,9 +347,21 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   <button id="btnCrateLoad" class="mbtn hidden">LOAD SUPPLY CRATE (+60 · HEAVIER TAKEOFF)</button>
 </div>
 <div id="flash"></div>
+<div id="v6PortraitTray" role="group" aria-label="Portrait flight instrument tray"><div id="v6Instrument">
+  <div class="v6Gauge"><small>ALT FT</small><b id="v6Alt">—</b></div><div class="v6Gauge"><small>SPEED</small><b id="v6Spd">—</b></div>
+  <div class="v6Gauge"><small>ROUTE</small><b id="v6Route">—</b></div><div class="v6Gauge"><small>STRESS</small><b id="v6Stress">—</b></div>
+  <div class="v6Gauge"><small>PATIENTS</small><b id="v6Patients">0/3</b></div>
+</div></div>
+<button id="v6Version" type="button" aria-label="Open V6 release details">V6 · ASCENSION</button>
+<button id="v6Pause" type="button" aria-pressed="false" aria-label="Pause rescue">Ⅱ</button>
+<div id="v6CinemaModal" role="dialog" aria-modal="true" aria-labelledby="v6CinemaLabel" aria-hidden="true" data-v6-cinematic="true" tabindex="-1" hidden>
+  <span id="v6CinemaLabel" class="v6-sr">Mission approach cinematic</span>
+  <button id="v6CinemaSkip" type="button" hidden>SKIP CINEMATIC</button>
+</div>
+<div id="v6Urgency" role="status" aria-live="polite"></div><div id="v6Clutch" aria-hidden="true">CLUTCH RESCUE</div>
 
 <!-- Splash -->
-<div id="splash" class="overlay">
+<div id="splash" class="overlay" role="button" tabindex="0" aria-label="Skip the Medevac Frontier introduction">
   <div class="mbmWord">madebymatt<span class="dotuk">.uk</span></div>
   <div class="mbmRule"></div>
   <div class="mbmSub">presents</div>
@@ -298,32 +370,36 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 
 <!-- Menu -->
 <div id="menuUI" class="overlay hidden">
-  <h1 id="title"><small>MADE BY MATT · FLIGHT OPS</small>MEDEVAC FRONTIER</h1>
+  <h1 id="title"><small>MADE BY MATT · V6 ASCENSION</small>MEDEVAC FRONTIER</h1>
   <div class="menuBtns">
     <div class="missionStrip" role="group" aria-label="Select mission">
       <button id="missionTraining" class="mbtn missionBtn">TRAINING<small>GUIDED · TEMPO 0</small></button>
       <button id="missionTwilight" class="mbtn missionBtn selected">TWILIGHT<small>STANDARD OP</small></button>
       <button id="missionNight" class="mbtn missionBtn">NIGHT CANYON<small>LAMPS · ROUGH WIND</small></button>
+      <button id="missionStorm" class="mbtn missionBtn">STORM RELIEF<small>HEAVY RAIN · MAX WIND</small></button>
+      <button id="missionWeekly" class="mbtn missionBtn">WEEKLY RESCUE<small id="weeklyMissionLabel">SEEDED OPERATION</small></button>
+      <button id="missionTour" class="mbtn missionBtn">FRONTIER TOUR<small>3 OPS · CUMULATIVE SCORE</small></button>
     </div>
-    <button id="btnStart" class="mbtn primary">DEPLOY — TWILIGHT CANYON</button>
+    <button id="btnStart" class="mbtn primary" data-mbm-primary-start>DEPLOY — TWILIGHT CANYON</button>
     <button id="btnHow" class="mbtn">HOW TO FLY</button>
     <button id="btnCrew" class="mbtn">CREW</button>
     <button id="btnRecord" class="mbtn">SERVICE RECORD</button>
+    <button id="btnV4" class="mbtn">V6 CREW, UPGRADES &amp; REPLAY</button>
     <button id="btnSound" class="mbtn">SOUND: ON</button>
     <button id="btnVisual" class="mbtn">VISUALS: CINEMATIC</button>
     <button id="btnQuality" class="mbtn">DETAIL: HIGH</button>
   </div>
-  <div id="objective"><b>MISSION OBJECTIVE:</b><br>Land, extract casualties, and take off before the canyon is overrun.
-    <div id="tempoLine"></div></div>
-  <div id="menuFooter" style="cursor:pointer">v2.0 • <span>madebymatt.uk</span></div>
+  <div id="objective"><b>MISSION OBJECTIVE:</b><br>Land, extract the waiting patients, and return safely before the weather window closes.
+    <button id="tempoLine" type="button" aria-label="Operations tempo status and reset"></button></div>
+  <button id="menuFooter" type="button" aria-label="V6 release footer and diagnostics access">AAA V6 ASCENSION • OFFLINE RESCUE SIM • <span>madebymatt.uk</span></button>
 </div>
 
 <!-- How to fly -->
-<div id="howto" class="overlay sheet hidden">
+<div id="howto" class="overlay sheet hidden" role="dialog" aria-modal="true" aria-labelledby="howtoTitle" aria-hidden="true" data-v6-close="btnHowClose" tabindex="-1">
   <div class="sheetCard">
-    <h2>FLIGHT BRIEFING</h2>
+    <h2 id="howtoTitle">FLIGHT BRIEFING</h2>
     <p><b>Phase 1 — Landing.</b> ▲▼ set your pitch, ◀▶ hold the centreline. Nose down builds speed; nose up bleeds it — below <i>55 KTS</i> you stall. Follow the green trajectory line onto the strip and touch down gently, wings level, between <i>50–75 KTS</i>.</p>
-    <p><b>Phase 2 — Extraction.</b> The clock is running. Tap <i>GUIDE TEAM</i> when the marker crosses the green zone to move each casualty fast. Mistime it and the team is exposed. Load cap: 3 litter max — three runs, make them count. Once all litters are aboard, Jace can load up to three supply crates: each is worth 60 points, but the aircraft rotates later and climbs heavier. If the call is <i>HEADS DOWN</i> — don't tap.</p>
+    <p><b>Phase 2 — Extraction.</b> The clock is running. Tap <i>GUIDE TEAM</i> when the marker crosses the green zone to move each patient quickly. Mistime it and the team loses time. Load cap: 3 litters — three runs, make them count. Once everyone is aboard, Jace can load up to three relief-supply crates: each is worth 60 points, but the aircraft rotates later and climbs heavier. If the call is <i>HEADS DOWN</i> — don't tap.</p>
     <p><b>Phase 3 — Takeoff.</b> Full power is set for you. Hold ▲ to rotate once you pass <i>62 KTS</i>, lift before the strip runs out, and clear the canyon rim. Rotate too early and you'll sink back on.</p>
     <p>Keyboard: arrow keys or WASD. Watch the walls — proximity feeds the stress meter.</p>
     <p><b>Ops tempo.</b> Every completed mission raises the tempo: the canyon narrows, the extraction window shrinks, and the wind gets rougher. Tap the tempo line on the menu to reset to routine conditions.</p>
@@ -332,15 +408,15 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 </div>
 
 <!-- Crew -->
-<div id="crewOv" class="overlay sheet hidden">
+<div id="crewOv" class="overlay sheet hidden" role="dialog" aria-modal="true" aria-labelledby="crewTitle" aria-hidden="true" data-v6-close="btnCrewClose" tabindex="-1">
   <div class="sheetCard">
-    <h2>UNIT 734 — FLIGHT CREW</h2>
+    <h2 id="crewTitle">UNIT 734 — FLIGHT CREW</h2>
     <div class="crewGrid">
       <div class="crewCard"><img id="crewImgA" alt="Captain Al-Fayed">
         <div class="crewName">CAPT AL-FAYED</div><div class="crewRole">LEAD PILOT</div>
         <div class="crewBio">Precision and command. She'll call your glidepath all the way down the canyon.</div></div>
       <div class="crewCard"><img id="crewImgR" alt="Corporal Rostova">
-        <div class="crewName">CPL ROSTOVA</div><div class="crewRole">COMBAT MEDIC</div>
+        <div class="crewName">CPL ROSTOVA</div><div class="crewRole">FLIGHT MEDIC</div>
         <div class="crewBio">Runs the litter teams at the strip. When he says heads down — heads down.</div></div>
       <div class="crewCard"><img id="crewImgJ" alt="Chief Petty Officer Jace">
         <div class="crewName">CPO "JACE"</div><div class="crewRole">LOADMASTER / ENGINEER</div>
@@ -349,11 +425,16 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     <button id="btnCrewClose" class="mbtn primary">CLOSE</button>
   </div>
 </div>
+<!-- V6 career / settings / telemetry replay -->
+<div id="v4Ov" class="overlay sheet hidden" role="dialog" aria-modal="true" aria-labelledby="v4Title" aria-hidden="true" data-v6-close="btnV4Close" tabindex="-1"><div class="sheetCard">
+  <h2 id="v4Title">MEDEVAC FRONTIER · V6 OPERATIONS</h2><div id="v4Body"><p>Earn-only Credits fund local upgrades. No live LAN or network transport; replay and ghost benchmarks remain on this device.</p></div>
+  <button id="btnV4Close" class="mbtn primary">CLOSE OPERATIONS</button>
+</div></div>
 
 <!-- Service record -->
-<div id="recordOv" class="overlay sheet hidden">
+<div id="recordOv" class="overlay sheet hidden" role="dialog" aria-modal="true" aria-labelledby="recordTitle" aria-hidden="true" data-v6-close="btnRecordClose" tabindex="-1">
   <div class="sheetCard">
-    <h2>UNIT 734 — SERVICE RECORD</h2>
+    <h2 id="recordTitle">UNIT 734 — SERVICE RECORD</h2>
     <label for="callsign" style="font:10px ui-monospace,monospace;color:var(--mintdim);letter-spacing:.16em">PILOT CALLSIGN</label>
     <input id="callsign" maxlength="12" autocomplete="off" placeholder="ROOK" aria-label="Pilot callsign">
     <div id="recordRows"></div>
@@ -361,20 +442,20 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   </div>
 </div>
 <!-- Fail -->
-<div id="failOv" class="overlay sheet hidden">
+<div id="failOv" class="overlay sheet hidden" role="dialog" aria-modal="true" aria-labelledby="failTitle" aria-hidden="true" data-v6-close="btnFailMenu" tabindex="-1">
   <div class="sheetCard">
-    <h2>MISSION FAILED</h2>
+    <h2 id="failTitle">MISSION FAILED</h2>
     <div id="failReason">HARD LANDING</div>
-    <div id="failSub">The casualties are still waiting. Reset and fly it again.</div>
+    <div id="failSub">The patients are still waiting. Reset safely and fly it again.</div>
     <button id="btnRetry" class="mbtn primary">RETRY PHASE</button>
     <button id="btnFailMenu" class="mbtn">RETURN TO MENU</button>
   </div>
 </div>
 
 <!-- Debrief -->
-<div id="debrief" class="overlay sheet hidden">
+<div id="debrief" class="overlay sheet hidden" role="dialog" aria-modal="true" aria-labelledby="debriefTitle" aria-hidden="true" data-v6-close="btnMenu2" tabindex="-1">
   <div class="sheetCard">
-    <h2>MISSION DEBRIEF — TWILIGHT CANYON</h2>
+    <h2 id="debriefTitle">MISSION DEBRIEF — TWILIGHT CANYON</h2>
     <div id="dbMedal" class="gold">★ GOLD STANDARD ★</div>
     <div id="dbVerdict"></div>
     <div class="stat"><span>LANDING · <span id="dbGrade">—</span></span><b id="dbLand">0</b></div>
@@ -388,6 +469,8 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     <div class="stat"><span>STRESS PENALTY</span><b id="dbStress">-0</b></div>
     <div class="stat" id="dbTotal"><span>TOTAL SCORE</span><b id="dbScore">0</b></div>
     <div id="dbBest">BEST: —</div>
+    <div id="v4Summary" aria-live="polite">V6 CAREER AWARD: —</div>
+    <button id="btnReplayTrace" class="mbtn">REVIEW TELEMETRY REPLAY</button>
     <button id="btnAgain" class="mbtn primary">FLY AGAIN</button>
     <button id="btnMenu2" class="mbtn">RETURN TO MENU</button>
   </div>
@@ -400,18 +483,1050 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   <button id="dbgClose" class="mbtn primary">CLOSE</button>
 </div>
 <div id="fade"></div>
+<script>
+(function installMadeByMattV4Runtime(root) {
+  'use strict';
+
+  var VERSION = '4.2.0';
+  var PASSPORT_KEY = 'mbm_sports_passport_v4';
+  var PASSPORT_KIND = 'MadeByMatt.SportsPassport.V4';
+  var PASSPORT_SCHEMA = 4;
+  var PASSPORT_SEASON = 'v4-season-one';
+  var PASSPORT_PREFIX = 'MBM4.';
+  var PASSPORT_BYTES_MAX = 500000;
+  var COLLECTION_KIND = 'MadeByMatt.SportsCollection.V4';
+  var COLLECTION_VERSION = 4;
+  var COLLECTION_BACKUP_KEY = 'mbm_sports_v4_import_backup';
+  var COLLECTION_BYTES_MAX = 4000000;
+  var COLLECTION_SAVE_BYTES_MAX = 1000000;
+  var LAN_PROTOCOL = 'MBM-LAN-CLASSROOM/4';
+  var LAN_TRANSPORT = 'manual-webrtc-host-star';
+  var ROLLBACK_FRAMES = 120;
+  var HOUSES = ['Aurora', 'Ember', 'Tide', 'Forge'];
+  var GAME_IDS = [
+    'global-games', 'apex-kick', 'apex-pool', 'aurora-links',
+    'apex-curl', 'apex-velodrome', 'neon-turf', 'marble', 'grapple',
+    'wrecking-crew', 'medevac'
+  ];
+  var STATIONS = [
+    'aurora-links:precision-3',
+    'apex-pool:quick-runout-3',
+    'apex-kick:target-5',
+    'global-games:100m',
+    'global-games:archery'
+  ];
+  var SAVE_KEYS = [
+    'mbm_global_games_world_stage_v4',
+    'apexkick.aaa.v4',
+    'mbm_apexpool_v4_progress',
+    'mbm_apexpool_v4_settings',
+    'mbm_aurora_links_aaa_v4',
+    'mbm_apex_curl_v4',
+    'mbm_apex_velodrome_v4',
+    'mbm_neon_turf_v4',
+    'mbm_marble_v4',
+    'mbm_grapple_v4',
+    'mbm_wrecking_crew_v4',
+    'mbm_medevac_v4'
+  ];
+  var V3_SAVE_KEYS = [
+    'mbm_global_games_world_stage_v3',
+    'apexkick.aaa.v3',
+    'mbm_apexpool_v3_progress',
+    'mbm_apexpool_v3_settings',
+    'mbm_aurora_links_aaa_v3'
+  ];
+  var GAME = {
+    'global-games': {
+      saveKeys: ['mbm_global_games_world_stage_v4'],
+      v3Keys: ['mbm_global_games_world_stage_v3'],
+      build: 'global-games-aaa-v4.2.0', simulation: 'GG120-BIO4-20260829', tickHz: 120,
+      mode: 'house-100m', inputSchema: 'gg-v4-intent-trace', maxPlayers: 2, maxDevices: 2,
+      spectator: true, liveRollback: false, rollbackMode: 'post-run-host-replay'
+    },
+    'apex-kick': {
+      saveKeys: ['apexkick.aaa.v4'], v3Keys: ['apexkick.aaa.v3'],
+      build: 'apex-kick-aaa-v4.2.0', simulation: 'AK120-RK4-20260829', tickHz: 120,
+      mode: 'house-shootout', inputSchema: 'ak-v4-shot-intent', maxPlayers: 2, maxDevices: 2,
+      spectator: false, liveRollback: false, rollbackMode: 'host-shot-reconstruction'
+    },
+    'apex-pool': {
+      saveKeys: ['mbm_apexpool_v4_progress', 'mbm_apexpool_v4_settings'],
+      v3Keys: ['mbm_apexpool_v3_progress', 'mbm_apexpool_v3_settings'],
+      build: 'apex-pool-aaa-v4.2.0', simulation: 'AP240-SO3-20260829', tickHz: 240,
+      mode: 'house-eight-ball', inputSchema: 'ap-v4-cue-intent', maxPlayers: 2, maxDevices: 4,
+      spectator: true, liveRollback: false, rollbackMode: 'authoritative-snapshot-verification'
+    },
+    'aurora-links': {
+      saveKeys: ['mbm_aurora_links_aaa_v4'], v3Keys: ['mbm_aurora_links_aaa_v3'],
+      build: 'aurora-links-aaa-v4.2.0', simulation: 'AL120-RK4-20260829', tickHz: 120,
+      mode: 'house-ghost-golf', inputSchema: 'al-v4-shot-intent', maxPlayers: 2, maxDevices: 2,
+      spectator: true, liveRollback: true, rollbackMode: 'late-shot-rewind-fast-forward'
+    },
+    'apex-curl': {
+      saveKeys: ['mbm_apex_curl_v4'], v3Keys: [],
+      build: 'apex-curl-aaa-v4.2.0', simulation: 'AC120-ICE-20260830', tickHz: 120,
+      mode: 'weekly-house-curl', inputSchema: 'ac-v4-shot-intent', maxPlayers: 0, maxDevices: 0,
+      spectator: false, liveRollback: false, rollbackFrames: 0,
+      rollbackMode: 'none', transport: 'none', authority: 'local'
+    },
+    'apex-velodrome': {
+      saveKeys: ['mbm_apex_velodrome_v4'], v3Keys: [],
+      build: 'apex-velodrome-aaa-v4.2.0', simulation: 'AV120-RACE-20260830', tickHz: 120,
+      mode: 'weekly-time-trial', inputSchema: 'av-v4-cadence-intent', maxPlayers: 0, maxDevices: 0,
+      spectator: false, liveRollback: false, rollbackFrames: 0,
+      rollbackMode: 'none', transport: 'none', authority: 'local'
+    },
+    'neon-turf': {
+      saveKeys: ['mbm_neon_turf_v4'], v3Keys: [],
+      build: 'neon-turf-aaa-v4.2.0', simulation: 'NT120-HOVER-20260830', tickHz: 120,
+      mode: 'house-overdrive', inputSchema: 'nt-v4-car-intent', maxPlayers: 2, maxDevices: 2,
+      spectator: false, liveRollback: false, rollbackFrames: 0,
+      rollbackMode: 'host-authoritative-snapshot', transport: LAN_TRANSPORT, authority: 'host'
+    },
+    'marble': {
+      saveKeys: ['mbm_marble_v4'], v3Keys: [],
+      build: 'marble-aaa-v4.2.0', simulation: 'MB120-MAZE-20260830', tickHz: 120,
+      mode: 'weekly-maze', inputSchema: 'mb-v4-tilt-intent', maxPlayers: 0, maxDevices: 0,
+      spectator: false, liveRollback: false, rollbackFrames: 0,
+      rollbackMode: 'none', transport: 'none', authority: 'local'
+    },
+    'grapple': {
+      saveKeys: ['mbm_grapple_v4'], v3Keys: [],
+      build: 'grapple-aaa-v4.2.0', simulation: 'GP120-SWING-20260830', tickHz: 120,
+      mode: 'weekly-course', inputSchema: 'gp-v4-move-intent', maxPlayers: 0, maxDevices: 0,
+      spectator: false, liveRollback: false, rollbackFrames: 0,
+      rollbackMode: 'none', transport: 'none', authority: 'local'
+    },
+    'wrecking-crew': {
+      saveKeys: ['mbm_wrecking_crew_v4'], v3Keys: [],
+      build: 'wrecking-crew-aaa-v4.2.0', simulation: 'WC120-RIGID-20260830', tickHz: 120,
+      mode: 'weekly-contract', inputSchema: 'wc-v4-operation-intent', maxPlayers: 0, maxDevices: 0,
+      spectator: false, liveRollback: false, rollbackFrames: 0,
+      rollbackMode: 'none', transport: 'none', authority: 'local'
+    },
+    'medevac': {
+      saveKeys: ['mbm_medevac_v4'], v3Keys: [],
+      build: 'medevac-frontier-aaa-v4.2.0', simulation: 'MV120-FLIGHT-20260830', tickHz: 120,
+      mode: 'weekly-rescue', inputSchema: 'mv-v4-flight-intent', maxPlayers: 0, maxDevices: 0,
+      spectator: false, liveRollback: false, rollbackFrames: 0,
+      rollbackMode: 'none', transport: 'none', authority: 'local'
+    }
+  };
+  var LIMITS = {
+    nodes: 64, receipts: 2048, badgeOps: 512, cosmeticOps: 512,
+    games: 11, olympiad: 64, awardXP: 5000, id: 96,
+    name: 24, className: 28, jsonDepth: 7, jsonItems: 512
+  };
+  var FORBIDDEN_KEYS = { '__proto__': 1, prototype: 1, constructor: 1 };
+
+  function isPlain(value) {
+    if (!value || Object.prototype.toString.call(value) !== '[object Object]') return false;
+    var proto = Object.getPrototypeOf(value);
+    return proto === Object.prototype || proto === null;
+  }
+
+  function clampInt(value, minimum, maximum, fallback) {
+    var number = Number(value);
+    if (!Number.isFinite(number)) return fallback;
+    number = Math.floor(number);
+    return Math.max(minimum, Math.min(maximum, number));
+  }
+
+  function cleanText(value, limit, fallback) {
+    var output = typeof value === 'string' ? value : (value == null ? '' : String(value));
+    output = output.replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, limit);
+    return output || (fallback == null ? '' : fallback);
+  }
+
+  function validDate(value) {
+    if (typeof value !== 'string' || value.length > 40 || !Number.isFinite(Date.parse(value))) return null;
+    return new Date(Date.parse(value)).toISOString();
+  }
+
+  function validNode(value) {
+    return value === 'legacy-v3' || (typeof value === 'string' && /^mbm-[A-Za-z0-9_-]{8,80}$/.test(value));
+  }
+
+  function nodeOr(value, fallback) {
+    return validNode(value) ? value : (validNode(fallback) ? fallback : 'mbm-default00000000');
+  }
+
+  function canonicalize(value) {
+    if (Array.isArray(value)) return value.map(canonicalize);
+    if (isPlain(value)) {
+      var out = {};
+      Object.keys(value).sort().forEach(function (key) { out[key] = canonicalize(value[key]); });
+      return out;
+    }
+    return value;
+  }
+
+  function stableStringify(value) {
+    return JSON.stringify(canonicalize(value));
+  }
+
+  function utf8Encode(text) {
+    if (typeof TextEncoder === 'function') return new TextEncoder().encode(text);
+    if (root.Buffer) return new Uint8Array(root.Buffer.from(text, 'utf8'));
+    var encoded = unescape(encodeURIComponent(text));
+    var bytes = new Uint8Array(encoded.length);
+    for (var i = 0; i < encoded.length; i += 1) bytes[i] = encoded.charCodeAt(i);
+    return bytes;
+  }
+
+  function utf8Decode(bytes) {
+    if (typeof TextDecoder === 'function') return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    if (root.Buffer) return root.Buffer.from(bytes).toString('utf8');
+    var binary = '';
+    for (var i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]);
+    return decodeURIComponent(escape(binary));
+  }
+
+  function utf8Length(value) {
+    return utf8Encode(typeof value === 'string' ? value : stableStringify(value)).length;
+  }
+
+  function toBase64Url(bytes) {
+    var binary = '';
+    for (var offset = 0; offset < bytes.length; offset += 0x8000) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(offset, Math.min(offset + 0x8000, bytes.length)));
+    }
+    var base64 = typeof btoa === 'function' ? btoa(binary) : root.Buffer.from(bytes).toString('base64');
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  }
+
+  function fromBase64Url(value) {
+    if (typeof value !== 'string' || !/^[A-Za-z0-9_-]*$/.test(value)) throw new Error('Sync code contains invalid base64url characters.');
+    var padded = value.replace(/-/g, '+').replace(/_/g, '/');
+    while (padded.length % 4) padded += '=';
+    var binary = typeof atob === 'function' ? atob(padded) : root.Buffer.from(padded, 'base64').toString('binary');
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  }
+
+  function fnv1a32(text) {
+    var hash = 0x811c9dc5;
+    var bytes = utf8Encode(String(text));
+    for (var i = 0; i < bytes.length; i += 1) {
+      hash ^= bytes[i];
+      hash = Math.imul(hash, 0x01000193) >>> 0;
+    }
+    return hash >>> 0;
+  }
+
+  function boundedJson(value, depth, budget) {
+    depth = depth || 0;
+    budget = budget || { items: LIMITS.jsonItems };
+    if (depth > LIMITS.jsonDepth || --budget.items < 0) throw new Error('Bounded JSON limit exceeded.');
+    if (value === null || typeof value === 'boolean') return value;
+    if (typeof value === 'number') {
+      if (!Number.isFinite(value)) throw new Error('Non-finite JSON number rejected.');
+      return value;
+    }
+    if (typeof value === 'string') return value.slice(0, 512);
+    if (Array.isArray(value)) {
+      if (value.length > 128) throw new Error('Bounded JSON array is too long.');
+      return value.map(function (item) { return boundedJson(item, depth + 1, budget); });
+    }
+    if (!isPlain(value)) throw new Error('Only plain JSON objects are accepted.');
+    var keys = Object.keys(value);
+    if (keys.length > 128) throw new Error('Bounded JSON object has too many keys.');
+    var out = {};
+    keys.sort().forEach(function (key) {
+      if (FORBIDDEN_KEYS[key]) throw new Error('Unsafe JSON key rejected.');
+      var safeKey = cleanText(key, 64, '');
+      if (!safeKey) throw new Error('Empty JSON key rejected.');
+      out[safeKey] = boundedJson(value[key], depth + 1, budget);
+    });
+    return out;
+  }
+
+  function safeSaveJson(value, depth, budget) {
+    depth = depth || 0;
+    budget = budget || { items: 50000 };
+    if (depth > 20 || --budget.items < 0) throw new Error('Save JSON structure limit exceeded.');
+    if (value === null || typeof value === 'boolean') return value;
+    if (typeof value === 'number') {
+      if (!Number.isFinite(value)) throw new Error('Non-finite save number rejected.');
+      return value;
+    }
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) {
+      if (value.length > 20000) throw new Error('Save JSON array is too long.');
+      return value.map(function (item) { return safeSaveJson(item, depth + 1, budget); });
+    }
+    if (!isPlain(value)) throw new Error('Only plain save JSON objects are accepted.');
+    var keys = Object.keys(value);
+    if (keys.length > 20000) throw new Error('Save JSON object has too many keys.');
+    var out = {};
+    keys.forEach(function (key) {
+      if (FORBIDDEN_KEYS[key]) throw new Error('Unsafe save JSON key rejected.');
+      out[key] = safeSaveJson(value[key], depth + 1, budget);
+    });
+    return out;
+  }
+
+  function lwwCompare(a, b) {
+    if (a.clock !== b.clock) return a.clock > b.clock ? 1 : -1;
+    if (a.node !== b.node) return a.node > b.node ? 1 : -1;
+    var left = stableStringify(a.value === undefined ? a : a.value);
+    var right = stableStringify(b.value === undefined ? b : b.value);
+    return left === right ? 0 : (left > right ? 1 : -1);
+  }
+
+  function chooseLww(a, b) {
+    return lwwCompare(a, b) >= 0 ? a : b;
+  }
+
+  function normalizeRegister(raw, fallbackValue, cleaner, fallbackNode) {
+    var source = isPlain(raw) ? raw : {};
+    return {
+      value: cleaner(source.value === undefined ? fallbackValue : source.value),
+      clock: clampInt(source.clock, 0, Number.MAX_SAFE_INTEGER, 0),
+      node: nodeOr(source.node, fallbackNode)
+    };
+  }
+
+  function normalizeCounter(raw, fallbackNode) {
+    if (raw == null) raw = [];
+    if (!Array.isArray(raw)) throw new Error('G-counter must be a pair array.');
+    var map = new Map();
+    raw.forEach(function (pair) {
+      if (!Array.isArray(pair) || pair.length !== 2 || !validNode(pair[0])) throw new Error('Invalid G-counter component.');
+      var count = clampInt(pair[1], 0, 100000000, -1);
+      if (count < 0) throw new Error('Invalid G-counter value.');
+      map.set(pair[0], Math.max(map.get(pair[0]) || 0, count));
+    });
+    if (!map.size) map.set(nodeOr(fallbackNode), 0);
+    if (map.size > LIMITS.nodes) throw new Error('G-counter node cap exceeded.');
+    return Array.from(map.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+  }
+
+  function joinCounter(a, b) {
+    var map = new Map(a);
+    b.forEach(function (pair) { map.set(pair[0], Math.max(map.get(pair[0]) || 0, pair[1])); });
+    if (map.size > LIMITS.nodes) throw new Error('Joined G-counter node cap exceeded.');
+    return Array.from(map.entries()).sort(function (x, y) { return x[0].localeCompare(y[0]); });
+  }
+
+  function normalizeSetRecord(raw, removal, fallbackNode) {
+    if (!isPlain(raw)) throw new Error('Invalid OR-set record.');
+    var record = {
+      clock: clampInt(raw.clock, 0, Number.MAX_SAFE_INTEGER, 0),
+      node: nodeOr(raw.node, fallbackNode)
+    };
+    if (!removal) {
+      record.id = cleanText(raw.id, LIMITS.id, '');
+      if (!record.id) throw new Error('OR-set item id missing.');
+      record.earnedAt = validDate(raw.earnedAt);
+    }
+    return record;
+  }
+
+  function normalizePairMap(raw, recordNormalizer, maximum, label) {
+    if (raw == null) raw = [];
+    if (!Array.isArray(raw)) throw new Error(label + ' must be a pair array.');
+    var map = new Map();
+    raw.forEach(function (pair) {
+      if (!Array.isArray(pair) || pair.length !== 2) throw new Error('Invalid ' + label + ' pair.');
+      var key = cleanText(pair[0], LIMITS.id, '');
+      if (!key) throw new Error(label + ' key missing.');
+      var item = recordNormalizer(pair[1]);
+      if (map.has(key) && stableStringify(map.get(key)) !== stableStringify(item)) throw new Error('Conflicting duplicate ' + label + ' key.');
+      map.set(key, item);
+    });
+    if (map.size > maximum) throw new Error(label + ' cap exceeded.');
+    return Array.from(map.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+  }
+
+  function normalizeOrSet(raw, operationCap, fallbackNode) {
+    var source = isPlain(raw) ? raw : {};
+    var adds = normalizePairMap(source.adds || [], function (record) {
+      return normalizeSetRecord(record, false, fallbackNode);
+    }, operationCap, 'OR-set additions');
+    var removes = normalizePairMap(source.removes || [], function (record) {
+      return normalizeSetRecord(record, true, fallbackNode);
+    }, operationCap, 'OR-set removals');
+    if (adds.length + removes.length > operationCap) throw new Error('OR-set total operation cap exceeded.');
+    return { adds: adds, removes: removes };
+  }
+
+  function joinExactPairMaps(a, b, maximum, label) {
+    var map = new Map(a);
+    b.forEach(function (pair) {
+      if (map.has(pair[0]) && stableStringify(map.get(pair[0])) !== stableStringify(pair[1])) throw new Error('Conflicting ' + label + ' operation.');
+      map.set(pair[0], pair[1]);
+    });
+    if (map.size > maximum) throw new Error('Joined ' + label + ' cap exceeded.');
+    return Array.from(map.entries()).sort(function (x, y) { return x[0].localeCompare(y[0]); });
+  }
+
+  function joinOrSet(a, b, maximum) {
+    var adds = joinExactPairMaps(a.adds, b.adds, maximum, 'OR-set addition');
+    var removes = joinExactPairMaps(a.removes, b.removes, maximum, 'OR-set removal');
+    if (adds.length + removes.length > maximum) throw new Error('Joined OR-set total operation cap exceeded.');
+    return { adds: adds, removes: removes };
+  }
+
+  function normalizeReceipt(raw, id, fallbackNode) {
+    if (!isPlain(raw)) throw new Error('Invalid receipt record.');
+    var game = cleanText(raw.game, 32, 'legacy');
+    if (game !== 'legacy' && GAME_IDS.indexOf(game) < 0) game = 'legacy';
+    return {
+      id: id,
+      game: game,
+      xp: clampInt(raw.xp, 0, LIMITS.awardXP, 0),
+      housePoints: clampInt(raw.housePoints, 0, LIMITS.awardXP, 0),
+      badge: cleanText(raw.badge, 48, ''),
+      clock: clampInt(raw.clock, 0, Number.MAX_SAFE_INTEGER, 0),
+      node: nodeOr(raw.node, fallbackNode),
+      earnedAt: validDate(raw.earnedAt),
+      legacy: raw.legacy === true
+    };
+  }
+
+  function normalizeReceipts(raw, fallbackNode) {
+    return normalizePairMap(raw || [], function (record) {
+      var id = cleanText(record && record.id, LIMITS.id, '');
+      return normalizeReceipt(record, id, fallbackNode);
+    }, LIMITS.receipts, 'receipts').map(function (pair) {
+      if (!pair[1].id || pair[1].id !== pair[0]) pair[1] = normalizeReceipt(pair[1], pair[0], fallbackNode);
+      return pair;
+    });
+  }
+
+  function normalizeGames(raw, fallbackNode) {
+    if (raw == null) raw = [];
+    if (!Array.isArray(raw)) throw new Error('Games must be a pair array.');
+    var map = new Map();
+    raw.forEach(function (pair) {
+      if (!Array.isArray(pair) || pair.length !== 2 || GAME_IDS.indexOf(pair[0]) < 0 || !isPlain(pair[1])) throw new Error('Invalid game register.');
+      var register = {
+        value: boundedJson(pair[1].value == null ? {} : pair[1].value),
+        clock: clampInt(pair[1].clock, 0, Number.MAX_SAFE_INTEGER, 0),
+        node: nodeOr(pair[1].node, fallbackNode)
+      };
+      if (utf8Length(register.value) > 32000) throw new Error('Game summary is too large.');
+      map.set(pair[0], map.has(pair[0]) ? chooseLww(map.get(pair[0]), register) : register);
+    });
+    if (map.size > LIMITS.games) throw new Error('Game register cap exceeded.');
+    return Array.from(map.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+  }
+
+  function stationBase(id) {
+    return String(id).split('@')[0];
+  }
+
+  function normalizeOlympiad(raw, fallbackNode) {
+    if (raw == null) raw = [];
+    if (!Array.isArray(raw)) throw new Error('Olympiad entries must be a pair array.');
+    var map = new Map();
+    raw.forEach(function (pair) {
+      if (!Array.isArray(pair) || pair.length !== 2 || !isPlain(pair[1])) throw new Error('Invalid Olympiad entry.');
+      var id = cleanText(pair[0], LIMITS.id, '');
+      if (STATIONS.indexOf(stationBase(id)) < 0) throw new Error('Unknown Olympiad station.');
+      var item = {
+        points: clampInt(pair[1].points, 0, 1000, 0),
+        raw: boundedJson(pair[1].raw == null ? {} : pair[1].raw),
+        unit: cleanText(pair[1].unit, 16, ''),
+        weekId: /^\d{4}-W\d{2}$/.test(String(pair[1].weekId || '')) ? String(pair[1].weekId) : '',
+        achievedAt: validDate(pair[1].achievedAt),
+        clock: clampInt(pair[1].clock, 0, Number.MAX_SAFE_INTEGER, 0),
+        node: nodeOr(pair[1].node, fallbackNode)
+      };
+      if (utf8Length(item.raw) > 4096) throw new Error('Olympiad raw evidence is too large.');
+      if (map.has(id)) map.set(id, chooseOlympiad(map.get(id), item)); else map.set(id, item);
+    });
+    if (map.size > LIMITS.olympiad) throw new Error('Olympiad entry cap exceeded.');
+    return Array.from(map.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+  }
+
+  function chooseOlympiad(a, b) {
+    if (a.points !== b.points) return a.points > b.points ? a : b;
+    var registerA = { value: a, clock: a.clock, node: a.node };
+    var registerB = { value: b, clock: b.clock, node: b.node };
+    return chooseLww(registerA, registerB).value;
+  }
+
+  function defaultPassport(nodeId) {
+    var node = nodeOr(nodeId);
+    var housePoints = {};
+    HOUSES.forEach(function (house) { housePoints[house] = [[node, 0]]; });
+    return {
+      kind: PASSPORT_KIND,
+      schemaVersion: PASSPORT_SCHEMA,
+      nodeId: node,
+      lamport: 0,
+      seasonId: PASSPORT_SEASON,
+      profile: {
+        name: { value: 'Player', clock: 0, node: node },
+        className: { value: '', clock: 0, node: node },
+        house: { value: 'Aurora', clock: 0, node: node }
+      },
+      counters: { xp: [[node, 0]], housePoints: housePoints },
+      sets: { badges: { adds: [], removes: [] }, cosmetics: { adds: [], removes: [] } },
+      receipts: [], games: [], olympiad: [],
+      migration: { source: null, fingerprint: '', migratedAt: null }
+    };
+  }
+
+  function normalizePassport(raw, preferredNode) {
+    if (raw == null) return defaultPassport(preferredNode);
+    if (!isPlain(raw) || raw.kind !== PASSPORT_KIND || Number(raw.schemaVersion) !== PASSPORT_SCHEMA) throw new Error('Incompatible Sports Passport V4 state.');
+    var rawJson = safeSaveJson(raw);
+    if (utf8Length(rawJson) > PASSPORT_BYTES_MAX) throw new Error('Raw Sports Passport V4 exceeds its 500,000-byte limit.');
+    var node = nodeOr(preferredNode, raw.nodeId);
+    if (!validNode(preferredNode)) node = nodeOr(raw.nodeId, node);
+    var profile = isPlain(raw.profile) ? raw.profile : {};
+    var counters = isPlain(raw.counters) ? raw.counters : {};
+    var points = isPlain(counters.housePoints) ? counters.housePoints : {};
+    var sets = isPlain(raw.sets) ? raw.sets : {};
+    var housePoints = {};
+    HOUSES.forEach(function (house) { housePoints[house] = normalizeCounter(points[house], node); });
+    var output = {
+      kind: PASSPORT_KIND,
+      schemaVersion: PASSPORT_SCHEMA,
+      nodeId: node,
+      lamport: clampInt(raw.lamport, 0, Number.MAX_SAFE_INTEGER, 0),
+      seasonId: PASSPORT_SEASON,
+      profile: {
+        name: normalizeRegister(profile.name, 'Player', function (v) { return cleanText(v, LIMITS.name, 'Player'); }, node),
+        className: normalizeRegister(profile.className, '', function (v) { return cleanText(v, LIMITS.className, ''); }, node),
+        house: normalizeRegister(profile.house, 'Aurora', function (v) { return HOUSES.indexOf(v) >= 0 ? v : 'Aurora'; }, node)
+      },
+      counters: { xp: normalizeCounter(counters.xp, node), housePoints: housePoints },
+      sets: {
+        badges: normalizeOrSet(sets.badges, LIMITS.badgeOps, node),
+        cosmetics: normalizeOrSet(sets.cosmetics, LIMITS.cosmeticOps, node)
+      },
+      receipts: normalizeReceipts(raw.receipts, node),
+      games: normalizeGames(raw.games, node),
+      olympiad: normalizeOlympiad(raw.olympiad, node),
+      migration: {
+        source: raw.migration && raw.migration.source === 'v3' ? 'v3' : null,
+        fingerprint: cleanText(raw.migration && raw.migration.fingerprint, 64, ''),
+        migratedAt: validDate(raw.migration && raw.migration.migratedAt)
+      }
+    };
+    var clocks = [output.lamport];
+    Object.keys(output.profile).forEach(function (key) { clocks.push(output.profile[key].clock); });
+    output.sets.badges.adds.concat(output.sets.badges.removes, output.sets.cosmetics.adds, output.sets.cosmetics.removes).forEach(function (pair) { clocks.push(pair[1].clock); });
+    output.receipts.concat(output.games, output.olympiad).forEach(function (pair) { clocks.push(pair[1].clock); });
+    output.lamport = Math.max.apply(Math, clocks);
+    if (utf8Length(output) > PASSPORT_BYTES_MAX) throw new Error('Sports Passport V4 exceeds its 500,000-byte limit.');
+    return output;
+  }
+
+  function joinLwwPairs(a, b, olympiadMode) {
+    var map = new Map(a);
+    b.forEach(function (pair) {
+      if (!map.has(pair[0])) map.set(pair[0], pair[1]);
+      else map.set(pair[0], olympiadMode ? chooseOlympiad(map.get(pair[0]), pair[1]) : chooseLww(map.get(pair[0]), pair[1]));
+    });
+    return Array.from(map.entries()).sort(function (x, y) { return x[0].localeCompare(y[0]); });
+  }
+
+  function mergePassport(left, right, localNodeId) {
+    var a = normalizePassport(left);
+    var b = normalizePassport(right);
+    var receiverNode = nodeOr(localNodeId, a.nodeId);
+    var housePoints = {};
+    HOUSES.forEach(function (house) { housePoints[house] = joinCounter(a.counters.housePoints[house], b.counters.housePoints[house]); });
+    var migrationA = stableStringify(a.migration);
+    var migrationB = stableStringify(b.migration);
+    var merged = {
+      kind: PASSPORT_KIND,
+      schemaVersion: PASSPORT_SCHEMA,
+      nodeId: receiverNode,
+      lamport: Math.max(a.lamport, b.lamport),
+      seasonId: PASSPORT_SEASON,
+      profile: {
+        name: chooseLww(a.profile.name, b.profile.name),
+        className: chooseLww(a.profile.className, b.profile.className),
+        house: chooseLww(a.profile.house, b.profile.house)
+      },
+      counters: { xp: joinCounter(a.counters.xp, b.counters.xp), housePoints: housePoints },
+      sets: {
+        badges: joinOrSet(a.sets.badges, b.sets.badges, LIMITS.badgeOps),
+        cosmetics: joinOrSet(a.sets.cosmetics, b.sets.cosmetics, LIMITS.cosmeticOps)
+      },
+      receipts: joinExactPairMaps(a.receipts, b.receipts, LIMITS.receipts, 'receipt'),
+      games: joinLwwPairs(a.games, b.games, false),
+      olympiad: joinLwwPairs(a.olympiad, b.olympiad, true),
+      migration: migrationA >= migrationB ? a.migration : b.migration
+    };
+    return normalizePassport(merged, receiverNode);
+  }
+
+  function normalizeLegacyHouse(value) {
+    var aliases = { Verdant: 'Tide', Nova: 'Forge', Grove: 'Forge', Summit: 'Forge' };
+    var house = aliases[value] || value;
+    return HOUSES.indexOf(house) >= 0 ? house : 'Aurora';
+  }
+
+  function migrateV3(raw, localNodeId) {
+    var source = isPlain(raw) ? raw : {};
+    var fingerprintSource;
+    try { fingerprintSource = boundedJson(source); } catch (_) { fingerprintSource = {}; }
+    var fingerprint = ('00000000' + fnv1a32(stableStringify(fingerprintSource)).toString(16)).slice(-8);
+    var node = nodeOr(localNodeId, 'mbm-migrate-' + fingerprint);
+    var output = defaultPassport(node);
+    var profile = isPlain(source.profile) ? source.profile : {};
+    var season = isPlain(source.season) ? source.season : {};
+    var clock = 0;
+    function legacyRegister(value) { clock += 1; return { value: value, clock: clock, node: 'legacy-v3' }; }
+    output.profile.name = legacyRegister(cleanText(profile.name, LIMITS.name, 'Player'));
+    output.profile.className = legacyRegister(cleanText(profile.className, LIMITS.className, ''));
+    output.profile.house = legacyRegister(normalizeLegacyHouse(profile.house));
+    var xp = clampInt(season.xp, 0, 100000000, 0);
+    output.counters.xp = [['legacy-v3', xp]];
+    HOUSES.forEach(function (house) { output.counters.housePoints[house] = [['legacy-v3', 0]]; });
+
+    var badges = Array.isArray(season.badges) ? season.badges : [];
+    var seenBadge = new Set();
+    badges.slice(-80).forEach(function (rawBadge, index) {
+      var badge = cleanText(rawBadge, 48, '');
+      if (!badge || seenBadge.has(badge)) return;
+      seenBadge.add(badge); clock += 1;
+      var tag = 'v3-badge-' + ('00000000' + fnv1a32(badge + '|' + index).toString(16)).slice(-8);
+      output.sets.badges.adds.push([tag, { id: badge, clock: clock, node: 'legacy-v3', earnedAt: validDate(season.lastPlayed) }]);
+    });
+
+    var receiptMap = new Map();
+    (Array.isArray(source.receipts) ? source.receipts : []).slice(-100).forEach(function (rawReceipt) {
+      var record = typeof rawReceipt === 'string' ? { id: rawReceipt } : rawReceipt;
+      if (!isPlain(record)) return;
+      var id = cleanText(record.id, LIMITS.id, '');
+      if (!id || receiptMap.has(id)) return;
+      clock += 1;
+      receiptMap.set(id, normalizeReceipt({
+        game: record.game, xp: record.xp, housePoints: 0, badge: record.badge,
+        clock: clock, node: 'legacy-v3', earnedAt: record.earnedAt, legacy: true
+      }, id, 'legacy-v3'));
+    });
+    output.receipts = Array.from(receiptMap.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+
+    var games = isPlain(source.games) ? source.games : {};
+    GAME_IDS.forEach(function (gameId) {
+      if (!isPlain(games[gameId])) return;
+      clock += 1;
+      var value;
+      try { value = boundedJson(games[gameId]); } catch (_) { value = {}; }
+      output.games.push([gameId, { value: value, clock: clock, node: 'legacy-v3' }]);
+    });
+    output.games.sort(function (a, b) { return a[0].localeCompare(b[0]); });
+    output.lamport = clock;
+    output.migration = { source: 'v3', fingerprint: 'fnv1a32-' + fingerprint, migratedAt: new Date(0).toISOString() };
+    return normalizePassport(output, node);
+  }
+
+  function totalXP(value) {
+    return normalizePassport(value).counters.xp.reduce(function (sum, pair) { return sum + pair[1]; }, 0);
+  }
+
+  function activeSetIds(rawSet) {
+    var set = normalizeOrSet(rawSet, Math.max(LIMITS.badgeOps, LIMITS.cosmeticOps), 'mbm-default00000000');
+    var removed = new Set(set.removes.map(function (pair) { return pair[0]; }));
+    var ids = new Set();
+    set.adds.forEach(function (pair) { if (!removed.has(pair[0])) ids.add(pair[1].id); });
+    return Array.from(ids).sort();
+  }
+
+  function encodePassport(value) {
+    var normalized = normalizePassport(value);
+    var json = stableStringify(normalized);
+    var bytes = utf8Encode(json);
+    if (bytes.length > PASSPORT_BYTES_MAX) throw new Error('Sports Passport V4 exceeds its sync-code limit.');
+    return PASSPORT_PREFIX + toBase64Url(bytes);
+  }
+
+  function decodePassport(code, localNodeId) {
+    if (typeof code !== 'string' || code.slice(0, PASSPORT_PREFIX.length) !== PASSPORT_PREFIX) throw new Error('Sports Passport V4 sync-code prefix is missing.');
+    var payload = code.slice(PASSPORT_PREFIX.length).trim();
+    if (payload.length > Math.ceil(PASSPORT_BYTES_MAX * 4 / 3) + 8) throw new Error('Sports Passport V4 sync code is too large.');
+    var bytes = fromBase64Url(payload);
+    if (bytes.length > PASSPORT_BYTES_MAX) throw new Error('Decoded Sports Passport V4 is too large.');
+    var parsed = JSON.parse(utf8Decode(bytes));
+    return normalizePassport(parsed, localNodeId || parsed.nodeId);
+  }
+
+  function validateCollection(raw, options) {
+    options = options || {};
+    if (!isPlain(raw)) throw new Error('Collection must be one plain JSON object.');
+    if (utf8Length(raw) > COLLECTION_BYTES_MAX) throw new Error('Collection exceeds its 4,000,000-byte limit.');
+    if (raw.kind === 'MadeByMatt.SportsCollection.V3' && Number(raw.bundleVersion) === 3) {
+      if (!validDate(raw.exportedAt)) throw new Error('V3 migration bundle timestamp is invalid.');
+      var v3Saves = isPlain(raw.saves) ? raw.saves : {};
+      Object.keys(v3Saves).forEach(function (key) {
+        if (V3_SAVE_KEYS.indexOf(key) < 0) return;
+        if (!isPlain(v3Saves[key]) || utf8Length(v3Saves[key]) > COLLECTION_SAVE_BYTES_MAX) throw new Error('V3 migration section is invalid or too large.');
+      });
+      var gameId = GAME_IDS.indexOf(options.gameId) >= 0 ? options.gameId : '';
+      var own = [];
+      if (gameId) GAME[gameId].v3Keys.forEach(function (key) { if (v3Saves[key]) own.push([key, safeSaveJson(v3Saves[key])]); });
+      return {
+        sourceVersion: 3,
+        exportedAt: validDate(raw.exportedAt),
+        passport: migrateV3(raw.passport, options.localNodeId),
+        saves: {},
+        legacyOwnSections: own,
+        note: 'Only the current title may sanitize and write its own V3 section to a V4 key.'
+      };
+    }
+    if (raw.kind !== COLLECTION_KIND || Number(raw.bundleVersion) !== COLLECTION_VERSION || !validDate(raw.exportedAt)) throw new Error('Incompatible Sports Collection V4 bundle.');
+    var saves = isPlain(raw.saves) ? raw.saves : null;
+    if (!saves) throw new Error('Collection saves map is missing.');
+    Object.keys(saves).forEach(function (key) { if (SAVE_KEYS.indexOf(key) < 0) throw new Error('Collection contains a non-allow-listed save key.'); });
+    var normalizedSaves = {};
+    SAVE_KEYS.forEach(function (key) {
+      if (saves[key] === undefined) return;
+      if (!isPlain(saves[key]) || utf8Length(saves[key]) > COLLECTION_SAVE_BYTES_MAX) throw new Error('Collection save section is invalid or too large.');
+      normalizedSaves[key] = safeSaveJson(saves[key]);
+    });
+    var output = {
+      sourceVersion: 4,
+      kind: COLLECTION_KIND,
+      bundleVersion: COLLECTION_VERSION,
+      exportedAt: validDate(raw.exportedAt),
+      passport: normalizePassport(raw.passport, options.localNodeId),
+      saves: normalizedSaves
+    };
+    if (utf8Length(output.passport) > PASSPORT_BYTES_MAX) throw new Error('Collection Passport section is too large.');
+    return output;
+  }
+
+  function parseCollectionText(text, options) {
+    if (typeof text !== 'string' || utf8Length(text) > COLLECTION_BYTES_MAX) throw new Error('Collection text is missing or too large.');
+    return validateCollection(JSON.parse(text), options);
+  }
+
+  function weeklyId(dateLike) {
+    var source = dateLike === undefined ? new Date() : new Date(dateLike);
+    if (!Number.isFinite(source.getTime())) throw new Error('Weekly seed date is invalid.');
+    var date = new Date(Date.UTC(source.getUTCFullYear(), source.getUTCMonth(), source.getUTCDate()));
+    var day = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - day);
+    var year = date.getUTCFullYear();
+    var first = new Date(Date.UTC(year, 0, 1));
+    var week = Math.ceil((((date - first) / 86400000) + 1) / 7);
+    return year + '-W' + String(week).padStart(2, '0');
+  }
+
+  function weeklySeed(week, gameId, eventId) {
+    if (!/^\d{4}-W\d{2}$/.test(String(week)) || GAME_IDS.indexOf(gameId) < 0) throw new Error('Weekly seed identity is invalid.');
+    var event = cleanText(eventId, 64, '');
+    if (!event) throw new Error('Weekly event id is missing.');
+    return fnv1a32('MBM-WEEKLY-V4|' + week + '|' + gameId + '|' + event);
+  }
+
+  function createRollbackRing(capacity) {
+    capacity = clampInt(capacity, ROLLBACK_FRAMES, ROLLBACK_FRAMES, ROLLBACK_FRAMES);
+    var frames = new Array(capacity);
+    return {
+      capacity: capacity,
+      push: function (tick, state) {
+        if (!Number.isInteger(tick) || tick < 0) throw new Error('Rollback tick must be a non-negative integer.');
+        frames[tick % capacity] = { tick: tick, state: boundedJson(state) };
+      },
+      get: function (tick) {
+        var entry = frames[tick % capacity];
+        return entry && entry.tick === tick ? boundedJson(entry.state) : null;
+      },
+      accepts: function (currentTick, inputTick) {
+        return Number.isInteger(currentTick) && Number.isInteger(inputTick) && inputTick >= currentTick - 119 && inputTick <= currentTick + 8;
+      }
+    };
+  }
+
+  function rollbackSelfTest() {
+    var currentTick = 160;
+    var rollbackFrame = 72;
+    var baseInputs = new Map();
+    for (var tick = 0; tick < currentTick; tick += 11) baseInputs.set(tick, tick % 22 ? -1 : 1);
+    function step(state, axis) { return { tick: state.tick + 1, position: state.position + state.velocity + axis, velocity: state.velocity + axis }; }
+    function run(extra, ring) {
+      var state = { tick: 0, position: 0, velocity: 0 };
+      for (var t = 0; t < currentTick; t += 1) {
+        if (ring) ring.push(t, state);
+        var axis = (baseInputs.get(t) || 0) + (t === rollbackFrame ? extra : 0);
+        state = step(state, axis);
+      }
+      return state;
+    }
+    function hash(state) { return ('00000000' + fnv1a32(stableStringify(state)).toString(16)).slice(-8); }
+    var ring = createRollbackRing(ROLLBACK_FRAMES);
+    var before = run(0, ring);
+    var expected = run(2, null);
+    var restored = ring.get(rollbackFrame);
+    var replayed = restored;
+    for (var t = rollbackFrame; t < currentTick; t += 1) replayed = step(replayed, (baseInputs.get(t) || 0) + (t === rollbackFrame ? 2 : 0));
+    var result = {
+      ok: !!restored && ring.accepts(currentTick, rollbackFrame) && hash(expected) === hash(replayed) && hash(before) !== hash(replayed),
+      window: ROLLBACK_FRAMES,
+      rollbackFrame: rollbackFrame,
+      beforeHash: hash(before),
+      lateHash: hash(expected),
+      replayedHash: hash(replayed)
+    };
+    return result;
+  }
+
+  function physicsSelfTest() {
+    var dt = 1 / 120;
+    var state = { x: 0, y: 1, z: 0, vx: 31, vy: 13, vz: 3.5 };
+    function derivative(s) {
+      var speed = Math.hypot(s.vx, s.vy, s.vz) || 0;
+      var drag = 0.0042 * speed;
+      return { x: s.vx, y: s.vy, z: s.vz, vx: -drag * s.vx + 0.0015 * s.vz, vy: -9.81 - drag * s.vy, vz: -drag * s.vz - 0.0015 * s.vx };
+    }
+    function add(s, k, scale) {
+      return { x: s.x + k.x * scale, y: s.y + k.y * scale, z: s.z + k.z * scale, vx: s.vx + k.vx * scale, vy: s.vy + k.vy * scale, vz: s.vz + k.vz * scale };
+    }
+    for (var tick = 0; tick < 240; tick += 1) {
+      var k1 = derivative(state), k2 = derivative(add(state, k1, dt / 2)), k3 = derivative(add(state, k2, dt / 2)), k4 = derivative(add(state, k3, dt));
+      ['x', 'y', 'z', 'vx', 'vy', 'vz'].forEach(function (key) { state[key] += dt / 6 * (k1[key] + 2 * k2[key] + 2 * k3[key] + k4[key]); });
+    }
+    var sample = {};
+    Object.keys(state).forEach(function (key) { sample[key] = Number(state[key].toFixed(8)); });
+    var finite = Object.keys(sample).every(function (key) { return Number.isFinite(sample[key]); });
+    return { ok: finite, finite: finite, tickHz: 120, model: 'reference-rk4-drag-magnus', hash: ('00000000' + fnv1a32(stableStringify(sample)).toString(16)).slice(-8), sample: sample };
+  }
+
+  function olympiadPoints(stationId, raw) {
+    raw = isPlain(raw) ? raw : {};
+    var clamp = function (n) { return clampInt(n, 0, 1000, 0); };
+    if (stationId === 'aurora-links:precision-3') {
+      var distances = Array.isArray(raw.distances) ? raw.distances.slice(0, 3) : [];
+      while (distances.length < 3) distances.push(20);
+      var total = 25 + distances.reduce(function (sum, distance) {
+        var numericDistance = Number(distance);
+        var d = Number.isFinite(numericDistance) ? Math.max(0, Math.min(20, numericDistance)) : 20;
+        return sum + Math.round(300 * (1 - d / 20));
+      }, 0) + 25 * clampInt(raw.birdies, 0, 3, 0);
+      return clamp(total);
+    }
+    if (stationId === 'apex-pool:quick-runout-3') return clamp(200 * clampInt(raw.pots, 0, 3, 0) + Math.round(3 * Math.max(0, Math.min(100, Number(raw.leave) || 0))) + Math.max(0, 100 - Math.floor(2 * Math.max(0, Number(raw.seconds) || 0))));
+    if (stationId === 'apex-kick:target-5') return clamp(Math.round(2 * (Array.isArray(raw.accuracy) ? raw.accuracy.slice(0, 5).reduce(function (sum, value) { return sum + Math.max(0, Math.min(100, Number(value) || 0)); }, 0) : 0)));
+    if (stationId === 'global-games:100m') {
+      var time = Number(raw.seconds);
+      return clamp(Number.isFinite(time) && time < 18 ? Math.floor(25.4347 * Math.pow(Math.max(0, 18 - time), 1.81)) : 0);
+    }
+    if (stationId === 'global-games:archery') {
+      var score = Math.max(0, Number(raw.score) || 0), maximum = Math.max(0, Number(raw.maximum) || 0);
+      return clamp(maximum ? Math.round(1000 * score / maximum) : 0);
+    }
+    throw new Error('Unknown House Olympiad station.');
+  }
+
+  function incrementLocalCounter(pairs, node, amount) {
+    var map = new Map(pairs);
+    var next = (map.get(node) || 0) + amount;
+    if (!Number.isSafeInteger(next) || next < 0 || next > 100000000) throw new Error('Local G-counter increment is out of range.');
+    map.set(node, next);
+    if (map.size > LIMITS.nodes) throw new Error('G-counter node cap exceeded.');
+    return Array.from(map.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+  }
+
+  function mutateProfile(state, patch) {
+    if (!isPlain(patch)) throw new Error('Profile patch must be a plain object.');
+    var current = normalizePassport(state);
+    var values = {
+      name: current.profile.name.value,
+      className: current.profile.className.value,
+      house: current.profile.house.value
+    };
+    if (Object.prototype.hasOwnProperty.call(patch, 'name')) values.name = cleanText(patch.name, LIMITS.name, 'Player');
+    if (Object.prototype.hasOwnProperty.call(patch, 'className')) values.className = cleanText(patch.className, LIMITS.className, '');
+    if (Object.prototype.hasOwnProperty.call(patch, 'house')) values.house = HOUSES.indexOf(patch.house) >= 0 ? patch.house : 'Aurora';
+    var changed = Object.keys(values).filter(function (key) { return values[key] !== current.profile[key].value; });
+    if (!changed.length) return current;
+    var clock = current.lamport + 1;
+    changed.forEach(function (key) { current.profile[key] = { value: values[key], clock: clock, node: current.nodeId }; });
+    current.lamport = clock;
+    return normalizePassport(current, current.nodeId);
+  }
+
+  function grantAward(state, operation) {
+    if (!isPlain(operation)) throw new Error('Award operation must be a plain object.');
+    var current = normalizePassport(state);
+    var id = cleanText(operation.receiptId, LIMITS.id, '');
+    if (!id || id !== String(operation.receiptId || '').trim()) throw new Error('Award receipt id is missing or invalid.');
+    var game = cleanText(operation.game, 32, '');
+    if (GAME_IDS.indexOf(game) < 0) throw new Error('Award game id is invalid.');
+    var xp = clampInt(operation.xp, 0, LIMITS.awardXP, -1);
+    var housePoints = clampInt(operation.housePoints, 0, LIMITS.awardXP, -1);
+    if (xp < 0 || housePoints < 0) throw new Error('Award amount is invalid.');
+    var badge = cleanText(operation.badge, 48, '');
+    var earnedAt = operation.earnedAt == null ? null : validDate(operation.earnedAt);
+    if (operation.earnedAt != null && !earnedAt) throw new Error('Award timestamp is invalid.');
+    var receiptMap = new Map(current.receipts);
+    if (receiptMap.has(id)) {
+      var old = receiptMap.get(id);
+      var same = old.game === game && old.xp === xp && old.housePoints === housePoints && old.badge === badge && (earnedAt == null || old.earnedAt === earnedAt);
+      if (!same) throw new Error('Conflicting award receipt id.');
+      return current;
+    }
+    if (receiptMap.size >= LIMITS.receipts) throw new Error('Receipt cap reached; award was not applied.');
+    var clock = current.lamport + 1;
+    current.counters.xp = incrementLocalCounter(current.counters.xp, current.nodeId, xp);
+    var house = current.profile.house.value;
+    current.counters.housePoints[house] = incrementLocalCounter(current.counters.housePoints[house], current.nodeId, housePoints);
+    receiptMap.set(id, { id: id, game: game, xp: xp, housePoints: housePoints, badge: badge, clock: clock, node: current.nodeId, earnedAt: earnedAt, legacy: false });
+    current.receipts = Array.from(receiptMap.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+    if (badge && RUNTIME_ACTIVE_SET_IDS(current.sets.badges).indexOf(badge) < 0) {
+      var tag = 'badge-' + current.nodeId.slice(-20) + '-' + clock + '-' + ('00000000' + fnv1a32(current.nodeId + '|' + id).toString(16)).slice(-8);
+      if (current.sets.badges.adds.length + current.sets.badges.removes.length >= LIMITS.badgeOps) throw new Error('Badge operation cap reached; award was not applied.');
+      current.sets.badges.adds.push([tag, { id: badge, clock: clock, node: current.nodeId, earnedAt: earnedAt }]);
+      current.sets.badges.adds.sort(function (a, b) { return a[0].localeCompare(b[0]); });
+    }
+    current.lamport = clock;
+    return normalizePassport(current, current.nodeId);
+  }
+
+  function RUNTIME_ACTIVE_SET_IDS(rawSet) {
+    var removed = new Set(rawSet.removes.map(function (pair) { return pair[0]; }));
+    var ids = new Set();
+    rawSet.adds.forEach(function (pair) { if (!removed.has(pair[0])) ids.add(pair[1].id); });
+    return Array.from(ids).sort();
+  }
+
+  function setGameSummary(state, gameId, value) {
+    if (GAME_IDS.indexOf(gameId) < 0) throw new Error('Game summary id is invalid.');
+    var current = normalizePassport(state);
+    var safeValue = boundedJson(value == null ? {} : value);
+    if (utf8Length(safeValue) > 32000) throw new Error('Game summary is too large.');
+    var map = new Map(current.games);
+    var existing = map.get(gameId);
+    if (existing && stableStringify(existing.value) === stableStringify(safeValue)) return current;
+    var clock = current.lamport + 1;
+    map.set(gameId, { value: safeValue, clock: clock, node: current.nodeId });
+    current.games = Array.from(map.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+    current.lamport = clock;
+    return normalizePassport(current, current.nodeId);
+  }
+
+  function recordOlympiad(state, stationId, raw, unit, week, achievedAt) {
+    if (STATIONS.indexOf(stationId) < 0) throw new Error('Olympiad station id is invalid.');
+    var current = normalizePassport(state);
+    var safeRaw = boundedJson(raw == null ? {} : raw);
+    var points = olympiadPoints(stationId, safeRaw);
+    var safeWeek = week == null || week === '' ? '' : String(week);
+    if (safeWeek && !/^\d{4}-W\d{2}$/.test(safeWeek)) throw new Error('Olympiad week id is invalid.');
+    var safeAt = achievedAt == null ? null : validDate(achievedAt);
+    if (achievedAt != null && !safeAt) throw new Error('Olympiad timestamp is invalid.');
+    var key = stationId + (safeWeek ? '@' + safeWeek : '');
+    var map = new Map(current.olympiad);
+    var existing = map.get(key);
+    var material = { points: points, raw: safeRaw, unit: cleanText(unit, 16, ''), weekId: safeWeek, achievedAt: safeAt };
+    if (existing) {
+      if (existing.points > points) return current;
+      if (existing.points === points && stableStringify({ points: existing.points, raw: existing.raw, unit: existing.unit, weekId: existing.weekId, achievedAt: existing.achievedAt }) === stableStringify(material)) return current;
+    }
+    if (!existing && map.size >= LIMITS.olympiad) throw new Error('Olympiad entry cap reached; result was not recorded.');
+    var clock = current.lamport + 1;
+    map.set(key, { points: points, raw: safeRaw, unit: material.unit, weekId: safeWeek, achievedAt: safeAt, clock: clock, node: current.nodeId });
+    current.olympiad = Array.from(map.entries()).sort(function (a, b) { return a[0].localeCompare(b[0]); });
+    current.lamport = clock;
+    return normalizePassport(current, current.nodeId);
+  }
+
+  function contractForGame(gameId, spectator) {
+    var config = GAME[gameId];
+    if (!config) throw new Error('Unknown V4 game id.');
+    var capabilities = {
+      protocol: LAN_PROTOCOL,
+      game: gameId,
+      build: config.build,
+      simulation: config.simulation,
+      tickHz: config.tickHz,
+      transport: config.transport || LAN_TRANSPORT,
+      maxDevices: config.maxDevices,
+      maxPlayers: config.maxPlayers,
+      spectator: spectator === undefined ? config.spectator === true : spectator === true,
+      deterministicModes: [config.mode],
+      rollbackFrames: config.rollbackFrames === 0 ? 0 : ROLLBACK_FRAMES,
+      liveRollback: config.liveRollback === true,
+      rollbackMode: config.rollbackMode || 'deterministic-replay-kernel',
+      authority: config.authority || 'host',
+      inputSchema: config.inputSchema
+    };
+    return {
+      gameId: gameId, version: VERSION, build: config.build, simulation: config.simulation,
+      passportKey: PASSPORT_KEY, passportKind: PASSPORT_KIND, seasonId: PASSPORT_SEASON,
+      saveKeys: config.saveKeys.slice(), capabilities: capabilities
+    };
+  }
+
+  function deepFreeze(value) {
+    if (value && (Array.isArray(value) || isPlain(value)) && !Object.isFrozen(value)) {
+      Object.keys(value).forEach(function (key) { deepFreeze(value[key]); });
+      Object.freeze(value);
+    }
+    return value;
+  }
+
+  var constants = deepFreeze({
+    VERSION: VERSION, PASSPORT_KEY: PASSPORT_KEY, PASSPORT_KIND: PASSPORT_KIND,
+    PASSPORT_SCHEMA: PASSPORT_SCHEMA, PASSPORT_SEASON: PASSPORT_SEASON,
+    PASSPORT_PREFIX: PASSPORT_PREFIX, PASSPORT_BYTES_MAX: PASSPORT_BYTES_MAX,
+    COLLECTION_KIND: COLLECTION_KIND, COLLECTION_VERSION: COLLECTION_VERSION,
+    COLLECTION_BACKUP_KEY: COLLECTION_BACKUP_KEY,
+    COLLECTION_BYTES_MAX: COLLECTION_BYTES_MAX, COLLECTION_SAVE_BYTES_MAX: COLLECTION_SAVE_BYTES_MAX,
+    LAN_PROTOCOL: LAN_PROTOCOL, LAN_TRANSPORT: LAN_TRANSPORT, ROLLBACK_FRAMES: ROLLBACK_FRAMES,
+    HOUSES: HOUSES.slice(), GAME_IDS: GAME_IDS.slice(), STATIONS: STATIONS.slice(),
+    SAVE_KEYS: SAVE_KEYS.slice(), V3_SAVE_KEYS: V3_SAVE_KEYS.slice(), LIMITS: Object.assign({}, LIMITS)
+  });
+
+  var api = {
+    constants: constants,
+    stableStringify: stableStringify,
+    utf8Length: utf8Length,
+    fnv1a32: fnv1a32,
+    defaultPassport: defaultPassport,
+    normalizePassport: normalizePassport,
+    mergePassport: mergePassport,
+    migrateV3: migrateV3,
+    totalXP: totalXP,
+    activeSetIds: activeSetIds,
+    encodePassport: encodePassport,
+    decodePassport: decodePassport,
+    validateCollection: validateCollection,
+    parseCollectionText: parseCollectionText,
+    weeklyId: weeklyId,
+    weeklySeed: weeklySeed,
+    createRollbackRing: createRollbackRing,
+    rollbackSelfTest: rollbackSelfTest,
+    physicsSelfTest: physicsSelfTest,
+    olympiadPoints: olympiadPoints,
+    contractForGame: contractForGame,
+    mutations: Object.freeze({
+      mutateProfile: mutateProfile,
+      grantAward: grantAward,
+      setGameSummary: setGameSummary,
+      recordOlympiad: recordOlympiad
+    })
+  };
+
+  root.MadeByMattV4Runtime = Object.freeze(api);
+  if (typeof module === 'object' && module && module.exports) module.exports = root.MadeByMattV4Runtime;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+</script>
 
 <script>
 "use strict";
 /* =====================================================================
-   MEDEVAC FRONTIER v1.0 — madebymatt.uk
+   MEDEVAC FRONTIER V6 ASCENSION — madebymatt.uk
    Single-file, offline-first. Canvas world + DOM HUD.
    Loop: SPLASH → MENU → APPROACH → ROLLOUT → EXTRACT → TAKEOFF → CLIMB → DEBRIEF
    ===================================================================== */
 
 /* ---------------- Data consts ---------------- */
-const VERSION = '2.0';
-const SAVE_KEY = 'mbm_medevac_v2';
+const VERSION = '6.0.0';
+const SAVE_KEY = 'mbm_medevac_v6_profile', LEGACY_SAVE_KEY = 'mbm_medevac_v4';
+const V6_GAME_ID='medevac-frontier', MV_GAME_ID=V6_GAME_ID, MV_LEGACY_GAME_ID='medevac';
+const V6_PROFILE_SCHEMA = 6;
 const KT2MS = 0.5144, FT2M = 0.3048;
 const STALL_KTS = 55;
 const APPROACH = { startZ:950, startAlt:220, startSpd:68, stripLen:320, stripHalfW:13, tdzEnd:150 };
@@ -482,9 +1597,12 @@ function patFill(name, alpha, scale, ox, oy){
 let cv, ctx, W = 0, H = 0, DPR = 1, horizonY = 0, FOV = 0;
 let state = 'boot';
 let lastT = 0, elapsed = 0, rafId = 0;
-let reducedMotion = false;
-let save = { best:0, bestMedal:'', sound:true, callsign:'ROOK', records:[], trainingDone:false };
+let reducedMotion = false, v6PagePaused = false, v6ManualPaused = false;
+const MV_V4_DEFAULT={credits:0,xp:0,runCount:0,instance:'',upgrades:{stability:0,extraction:0,energy:0},mastery:{flight:0,medical:0,load:0,safety:0},access:{large:false,contrast:false,reduced:false,calm:false,ghost:true},livery:'rescue',unlockedLiveries:['rescue'],weeklyBest:{},tour:{completions:0,bestTotal:0,lastTotal:0},lastReplay:[],bestGhost:null,lastEarned:0};
+let save = { best:0, bestMedal:'', sound:true, callsign:'ROOK', records:[], trainingDone:false, v4:MV_V4_DEFAULT, v6:{cinematics:true,detail:'high',profileRevision:0} };
 let currentMission = 'twilight';
+const V42_TOUR=['twilight','night','storm'];let tourActive=false,tourStage=0,tourScores=[];
+function resetFrontierTour(){tourActive=false;tourStage=0;tourScores=[];currentMission='twilight';if(el.missionTour){['training','twilight','night','storm','weekly','tour'].forEach(n=>el['mission'+n.charAt(0).toUpperCase()+n.slice(1)]?.classList.toggle('selected',n==='twilight'));el.btnStart.textContent='DEPLOY — TWILIGHT CANYON';refreshTempoLine()}}
 const TRAIN = { active:false, step:0, elapsed:0, lastPrompt:0 };
 const keys = { left:false, right:false, up:false, down:false };
 let segs = [];            // canyon segments
@@ -505,8 +1623,9 @@ const P = {               // plane / mission state
   xwDir:0, xwV:0, xwWarned:false, profChecked:false,
   exNeed:0, exReact:0, exReactGood:false,
   toDist:0, toStrip:0, toAirborne:false, toAltFt:0, toSpd:0, toPitch:0, toGateAlt:0,
-  climbT:0, score:{land:0, ext:0, tko:0, stressPen:0, total:0}
+  climbT:0, energy:100, energyUsed:0, missionSeed:0, score:{land:0, ext:0, tko:0, stressPen:0, total:0}
 };
+let fixedAccumulator=0,traceTick=0,missionTrace=[],tracePhase='';
 let capTimer = 0, capText = '', coachCd = 0, critNow = '';
 function setCrit(text){
   if(text === critNow) return;
@@ -521,41 +1640,117 @@ const el = {};
 const clamp = (v,a,b)=> v<a?a : v>b?b : v;
 const lerp = (a,b,t)=> a+(b-a)*t;
 const rnd = (a,b)=> a + Math.random()*(b-a);
+function mulberry(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+let simRandom=mulberry(734);const simRnd=(a,b)=>a+simRandom()*(b-a);
 function hash(n){ const s = Math.sin(n*127.1)*43758.5453; return s - Math.floor(s); }
 function fmtTime(s){ s = Math.max(0, Math.ceil(s)); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
 function $(id){ return document.getElementById(id); }
-function show(e){ e.classList.remove('hidden'); }
-function hide(e){ e.classList.add('hidden'); }
+let v6ActiveModal = null;
+function v6ModalFocusables(root){
+  return Array.from(root.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])')).filter(n=>{
+    if(n.hidden || n.closest('[hidden],.hidden,[inert]')) return false;
+    const cs=getComputedStyle(n);return cs.display!=='none'&&cs.visibility!=='hidden';
+  });
+}
+function v6OpenModal(root,preferred){
+  if(!root || root.dataset.v6ModalOpen==='true') return;
+  root.dataset.v6ModalOpen='true';root.setAttribute('aria-hidden','false');root.inert=false;
+  root.__v6ReturnFocus=document.activeElement;
+  root.__v6Inerted=[];
+  Array.from(document.body.children).forEach(n=>{
+    if(n===root || n.contains(root) || n.tagName==='SCRIPT' || n.tagName==='STYLE') return;
+    if(!n.inert){n.inert=true;root.__v6Inerted.push(n);}
+  });
+  v6ActiveModal=root;
+  requestAnimationFrame(()=>{
+    const target=preferred&&root.contains(preferred)?preferred:(v6ModalFocusables(root)[0]||root);
+    try{target.focus({preventScroll:true})}catch(_){try{target.focus()}catch(__){}}
+  });
+}
+function v6CloseModal(root,restore=true){
+  if(!root || root.dataset.v6ModalOpen!=='true') return;
+  root.dataset.v6ModalOpen='false';
+  (root.__v6Inerted||[]).forEach(n=>{n.inert=false});root.__v6Inerted=[];
+  if(v6ActiveModal===root)v6ActiveModal=null;
+  const target=root.__v6ReturnFocus;root.__v6ReturnFocus=null;
+  if(restore){
+    let next=target;
+    if(!next||!next.isConnected||next.hidden||(next.closest&&next.closest('.hidden,[hidden],[inert]')))next=$('cv');
+    if(next&&next.focus)try{next.focus({preventScroll:true})}catch(_){try{next.focus()}catch(__){}}
+  }
+  root.setAttribute('aria-hidden','true');
+}
+function v6TrapModalTab(event,root){
+  const items=v6ModalFocusables(root);if(!items.length){event.preventDefault();root.focus();return}
+  const first=items[0],last=items[items.length-1],active=document.activeElement;
+  if(event.shiftKey&&(active===first||!root.contains(active))){event.preventDefault();last.focus()}
+  else if(!event.shiftKey&&(active===last||!root.contains(active))){event.preventDefault();first.focus()}
+}
+function v6RequestModalClose(root){
+  if(!root)return;if(root.dataset.v6Cinematic==='true'){v6SkipCinema();return}
+  const closeId=root.dataset.v6Close,button=closeId&&$(closeId);if(button&&!button.disabled){button.click();return}hide(root);
+}
+function show(e){ e.classList.remove('hidden'); if(e.matches&&e.matches('[role="dialog"][aria-modal="true"]'))v6OpenModal(e); }
+function hide(e){ const modal=e.matches&&e.matches('[role="dialog"][aria-modal="true"]'),open=!e.classList.contains('hidden');e.classList.add('hidden');if(modal&&open)v6CloseModal(e); }
 
 /* ---------------- Persistence ---------------- */
 const TEMPO_NAMES = ['ROUTINE','ELEVATED','SERIOUS','CRITICAL','MAXIMUM'];
-function opsTempo(){ if(currentMission === 'training') return 0; return Math.min(save.streak || 0, 4); }
+function opsTempo(){ if(currentMission === 'training') return 0;if(currentMission==='weekly')return 2;if(currentMission==='storm')return 3;return Math.min(save.streak || 0, 4); }
+function missionLabel(m=currentMission){return m==='training'?'TRAINING':m==='night'?'NIGHT':m==='storm'?'STORM RELIEF':m==='weekly'?'WEEKLY RESCUE':'TWILIGHT'}
 function loadSave(){
+  let migrated = false;
   try{
-    const raw = localStorage.getItem(SAVE_KEY);
-    if(raw){ const d = JSON.parse(raw); if(d && typeof d==='object') save = Object.assign(save, d); }
-    else {
+    let raw = localStorage.getItem(SAVE_KEY);
+    if(raw){
+      const profile = JSON.parse(raw);
+      const d = profile && profile.version >= V6_PROFILE_SCHEMA && (profile.gameId === V6_GAME_ID || profile.gameId === MV_LEGACY_GAME_ID) ? profile.game : profile;
+      if(d && typeof d==='object') save = Object.assign(save, d);
+    } else {
+      raw=localStorage.getItem(LEGACY_SAVE_KEY)||localStorage.getItem('mbm_medevac_v2');
+      if(raw){ const d=JSON.parse(raw); if(d&&typeof d==='object'){save=Object.assign(save,d);migrated=true;} }
       const old = localStorage.getItem('mbm_medevac_v1');           // carry v1 progress forward
-      if(old){ const d = JSON.parse(old);
+      if(!raw && old){ const d = JSON.parse(old);
         if(d && typeof d==='object'){ save.best = d.best||0; save.bestMedal = d.bestMedal||''; 
-          save.sound = d.sound!==false; save.streak = d.streak||0; writeSave(); } }
+          save.sound = d.sound!==false; save.streak = d.streak||0;migrated=true; } }
+      let legacyCinema=null,legacyDetail=null;try{legacyCinema=localStorage.getItem('mbm_cinematic');legacyDetail=localStorage.getItem('mbm_detail')}catch(_){ }
+      save.v6=Object.assign({},save.v6||{},legacyCinema===null?{}:{cinematics:legacyCinema!=='0'},legacyDetail?{detail:legacyDetail}:{});
     }
   }catch(e){}
+  save.v4=Object.assign({},MV_V4_DEFAULT,save.v4||{});save.v4.upgrades=Object.assign({},MV_V4_DEFAULT.upgrades,save.v4.upgrades||{});save.v4.mastery=Object.assign({},MV_V4_DEFAULT.mastery,save.v4.mastery||{});save.v4.access=Object.assign({},MV_V4_DEFAULT.access,save.v4.access||{});save.v4.tour=Object.assign({},MV_V4_DEFAULT.tour,save.v4.tour||{});save.v4.unlockedLiveries=Array.from(new Set(['rescue'].concat(save.v4.unlockedLiveries||[])));save.v4.weeklyBest=save.v4.weeklyBest||{};if(!save.v4.instance)save.v4.instance='mv'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);save.v6=Object.assign({cinematics:true,detail:'high',profileRevision:0},save.v6||{});
+  if(migrated) writeSave();
 }
-function writeSave(){ try{ save.v = 2; localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} }
+function writeSave(){
+  try{
+    save.v = 6;save.v6=Object.assign({cinematics:true,detail:'high',profileRevision:0},save.v6||{});save.v6.profileRevision=(save.v6.profileRevision|0)+1;
+    const profile={version:V6_PROFILE_SCHEMA,gameId:V6_GAME_ID,revision:save.v6.profileRevision,updatedAt:new Date().toISOString(),game:save};
+    localStorage.setItem(SAVE_KEY,JSON.stringify(profile));
+  }catch(e){}
+}
+
+const MV_RT=globalThis.MadeByMattV4Runtime;let mvPassport=null;
+function mvNode(){return'mbm-mv-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12)}
+function loadMVPassport(){if(!MV_RT)return null;let raw=null;try{raw=localStorage.getItem(MV_RT.constants.PASSPORT_KEY);if(raw){mvPassport=MV_RT.normalizePassport(JSON.parse(raw));return mvPassport}}catch(e){if(raw!==null)try{localStorage.setItem(MV_RT.constants.PASSPORT_KEY+'_corrupt_backup',raw)}catch(_){}}mvPassport=MV_RT.defaultPassport(mvNode());saveMVPassport();return mvPassport}
+function saveMVPassport(){if(!MV_RT||!mvPassport)return;try{localStorage.setItem(MV_RT.constants.PASSPORT_KEY,MV_RT.stableStringify(mvPassport))}catch(e){}}
+function weeklyInfo(){const week=MV_RT?MV_RT.weeklyId(new Date()):new Date().getUTCFullYear()+'-W01',seed=MV_RT?MV_RT.weeklySeed(week,MV_LEGACY_GAME_ID,'weekly-rescue'):Math.abs(Math.floor(hash(Date.parse(week))*4294967295));return{week,seed}}
 
 /* ---------------- Audio ---------------- */
 const Snd = {
-  ctx:null, master:null, eng:null, engGain:null, warnTimer:0,
+  ctx:null, master:null, limiter:null, eng:null, engGain:null, warnTimer:0,
   ensure(){
-    if(this.ctx || !save.sound) return;
+    if(this.ctx && this.ctx.state!=='closed') return this;
+    if(!save.sound) return null;
     try{
       const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
       this.ctx = new AC();
-      this.master = this.ctx.createGain(); this.master.gain.value = 0.5; this.master.connect(this.ctx.destination);
+      this.limiter=this.ctx.createDynamicsCompressor();this.limiter.threshold.setValueAtTime(-18,this.ctx.currentTime);this.limiter.knee.setValueAtTime(12,this.ctx.currentTime);this.limiter.ratio.setValueAtTime(8,this.ctx.currentTime);this.limiter.attack.setValueAtTime(.003,this.ctx.currentTime);this.limiter.release.setValueAtTime(.15,this.ctx.currentTime);
+      this.master = this.ctx.createGain(); this.master.gain.value = save.v4&&save.v4.access.calm ? 0.34 : 0.78;
+      this.limiter.connect(this.master);this.master.connect(this.ctx.destination);return this;
     }catch(e){ this.ctx = null; }
   },
-  resume(){ if(this.ctx && this.ctx.state === 'suspended'){ this.ctx.resume().catch(()=>{}); } },
+  resume(){
+    if(!save.sound)return;if(!this.ctx||this.ctx.state==='closed')this.ensure();
+    if(this.ctx&&(this.ctx.state==='suspended'||this.ctx.state==='interrupted'))this.ctx.resume().catch(()=>{});
+  },
   startEngine(){
     if(!this.ctx || this.eng) return;
     try{
@@ -564,7 +1759,7 @@ const Snd = {
       o1.frequency.value = 55; o2.frequency.value = 57; o3.frequency.value = 27;   // o3: sub-octave weight
       const lp = this.ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value = 260;
       this.engGain = this.ctx.createGain(); this.engGain.gain.value = 0.0;
-      o1.connect(lp); o2.connect(lp); o3.connect(lp); lp.connect(this.engGain); this.engGain.connect(this.master);
+      o1.connect(lp); o2.connect(lp); o3.connect(lp); lp.connect(this.engGain); this.engGain.connect(this.limiter);
       o1.start(); o2.start(); o3.start(); this.eng = [o1,o2,o3];
       this.startWind();
     }catch(e){}
@@ -596,7 +1791,7 @@ const Snd = {
       const src = this.ctx.createBufferSource(); src.buffer = buf; src.loop = true;
       const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 420; bp.Q.value = 0.7;
       const g = this.ctx.createGain(); g.gain.value = 0;
-      src.connect(bp); bp.connect(g); g.connect(this.master); src.start();
+      src.connect(bp); bp.connect(g); g.connect(this.limiter); src.start();
       this.wind = { src, g };
     }catch(e){}
   },
@@ -619,15 +1814,77 @@ const Snd = {
       o.type = type || 'square'; o.frequency.value = freq;
       g.gain.setValueAtTime(vol || 0.12, this.ctx.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
-      o.connect(g); g.connect(this.master); o.start(); o.stop(this.ctx.currentTime + dur);
+      o.connect(g); g.connect(this.limiter); o.start(); o.stop(this.ctx.currentTime + dur);
     }catch(e){}
   },
   sting(kind){
     if(!this.ctx || !save.sound) return;
     const seq = kind==='win' ? [392,523,659,784] : kind==='fail' ? [220,164,110] : [523,659];
     seq.forEach((f,i)=> setTimeout(()=> this.beep(f, 0.28, 'triangle', 0.14), i*130));
+  },
+  cinematicRotor(){
+    this.ensure();this.resume();if(!this.ctx||!save.sound)return;const now=this.ctx.currentTime;
+    try{
+      const sub=this.ctx.createOscillator(),sg=this.ctx.createGain();sub.type='sine';sub.frequency.setValueAtTime(92,now);sub.frequency.exponentialRampToValueAtTime(31,now+1.7);sg.gain.setValueAtTime(.07,now);sg.gain.exponentialRampToValueAtTime(.0001,now+1.8);sub.connect(sg);sg.connect(this.limiter);sub.start(now);sub.stop(now+1.85);
+      [196,293.66,440,554.37].forEach((f,i)=>{const o=this.ctx.createOscillator(),g=this.ctx.createGain();o.type=i<2?'triangle':'sine';o.frequency.setValueAtTime(f,now);o.detune.value=(i-1.5)*4;g.gain.setValueAtTime(.0001,now);g.gain.linearRampToValueAtTime(.018,now+.45+i*.07);g.gain.exponentialRampToValueAtTime(.0001,now+2.15);o.connect(g);g.connect(this.limiter);o.start(now);o.stop(now+2.2);});
+    }catch(e){}
+  },
+  medicalLift(good=true){
+    if(!this.ctx||!save.sound)return;const base=good?586:246;this.beep(base,.12,good?'sine':'square',good?.09:.07);setTimeout(()=>this.beep(good?879:196,.2,'triangle',.06),70);
   }
 };
+
+/* ---------------- V6 cinematic presentation (authoritative physics untouched) ---------------- */
+const V6Ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const V6Cinema={active:''};
+function v6CinematicsAllowed(){return !reducedMotion&&!(save.v4&&save.v4.access&&save.v4.access.calm)&&(!save.v6||save.v6.cinematics!==false)}
+function v6ShowCinemaControl(label){const modal=$('v6CinemaModal'),b=$('v6CinemaSkip'),title=$('v6CinemaLabel');if(!modal||!b)return;b.textContent=label||'SKIP CINEMATIC';if(title)title.textContent=label==='SKIP EXTRACTION'?'Rescue extraction constellation cinematic':'Mission approach cinematic';modal.hidden=false;b.hidden=false;v6OpenModal(modal,b)}
+function v6HideCinemaControl(){const modal=$('v6CinemaModal'),b=$('v6CinemaSkip');if(!modal)return;v6CloseModal(modal);if(b)b.hidden=true;modal.hidden=true}
+const V6Director={
+  active:false,start:0,duration:2200,
+  play(){if(!v6CinematicsAllowed())return false;this.active=true;this.start=performance.now();V6Cinema.active='approach';v6ShowCinemaControl('SKIP APPROACH');Snd.cinematicRotor();return true},
+  progress(now=performance.now()){if(!this.active)return 1;const p=clamp((now-this.start)/this.duration,0,1);if(p>=1)this.finish();return p},
+  finish(){if(!this.active)return;this.active=false;V6Cinema.active='';v6HideCinemaControl();lastT=performance.now()},
+  skip(){this.finish()}
+};
+const V6Clutch={
+  active:false,start:0,duration:520,label:'CLUTCH RESCUE',
+  trigger(label){if(this.active||reducedMotion||(save.v4&&save.v4.access&&save.v4.access.calm))return;this.active=true;this.start=performance.now();this.label=label||'CLUTCH RESCUE';const n=$('v6Clutch');if(n){n.textContent='⚕ '+this.label;n.classList.add('show')}shake=Math.max(shake,4);Snd.ensure();Snd.resume();Snd.beep(118,.38,'sine',.09);setTimeout(()=>Snd.beep(880,.46,'triangle',.045),45);try{navigator.vibrate&&navigator.vibrate([24,36,18])}catch(_){ }},
+  progress(now=performance.now()){if(!this.active)return 1;const p=(now-this.start)/this.duration;if(p>=1){this.active=false;const n=$('v6Clutch');if(n)n.classList.remove('show');return 1}return clamp(p,0,1)}
+};
+const V6Ascent={
+  active:false,start:0,duration:1900,onDone:null,sparks:[],
+  play(done){if(!v6CinematicsAllowed()){done&&done();return false}this.active=true;this.start=performance.now();this.onDone=done;this.sparks=Array.from({length:6},(_,i)=>({delay:i*105,x:W*(.34+i*.064),tx:W*(.18+i*.128),ty:H*(.12+Math.sin(i*1.8)*.035),lit:false}));V6Cinema.active='ascent';v6ShowCinemaControl('SKIP EXTRACTION');Snd.cinematicRotor();return true},
+  finish(){if(!this.active)return;this.active=false;V6Cinema.active='';v6HideCinemaControl();const fn=this.onDone;this.onDone=null;lastT=performance.now();fn&&fn()},
+  skip(){this.finish()},
+  draw(){if(!this.active)return;const age=performance.now()-this.start;if(age>=this.duration){this.finish();return}ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);ctx.globalCompositeOperation='lighter';for(let i=0;i<this.sparks.length;i++){const s=this.sparks[i],p=clamp((age-s.delay)/620,0,1);if(p<=0)continue;const x=lerp(W*.5,s.tx,V6Ease(p)),y=lerp(H*.68,s.ty,p*p)-Math.sin(p*Math.PI)*H*.12;ctx.strokeStyle='rgba(57,255,158,'+(.22*(1-p))+')';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(W*.5,H*.72);ctx.quadraticCurveTo(lerp(W*.5,x,.5),H*.35,x,y);ctx.stroke();ctx.fillStyle='#fff';ctx.shadowColor=i%2?'#27e0ff':'#39ff9e';ctx.shadowBlur=15;ctx.beginPath();ctx.arc(x,y,2.4+(1-p)*2,0,7);ctx.fill();if(p>=1&&!s.lit){s.lit=true;Snd.beep(523+i*42,.22,'sine',.045);shake=Math.max(shake,1.4)}}ctx.restore();}
+};
+const V6Camera={
+  apply(dt){let zoom=1,panX=0,panY=0;const now=performance.now();if(V6Director.active){const p=V6Ease(V6Director.progress(now));zoom=lerp(1.20,1,p);panX=Math.sin(p*Math.PI)*W*.055;panY=lerp(H*.055,0,p)}else if(V6Clutch.active){const p=V6Clutch.progress(now);zoom=1+Math.sin(p*Math.PI)*.105}
+    const calm=!!(save.v4&&save.v4.access&&save.v4.access.calm);let sx=0,sy=0;if(shake>.2&&!reducedMotion&&!calm){const q=now*.037;sx=Math.sin(q*1.13)*shake;sy=Math.cos(q*.91)*shake*.7}shake=Math.max(0,shake-14*dt);ctx.translate(W/2+sx+panX,H/2+sy+panY);ctx.scale(zoom,zoom);ctx.translate(-W/2,-H/2);
+  }
+};
+function v6TouchIntent(control){
+  const criticalLanding=state==='approach'&&P.altFt<75,criticalPatient=state==='extract'&&!P.exDone&&(P.exTime<30||P.exLoaded<EXTRACT.casualties);let score=0;if(criticalPatient&&control==='guide')score+=100;if(criticalLanding&&/left|right|up|down/.test(control))score+=80;if(state==='takeoff'&&P.toStrip<90)score+=70;return score;
+}
+function v6SetTouchControl(k,on){if(on){const opposite=k==='left'?'right':k==='right'?'left':k==='up'?'down':k==='down'?'up':'';if(opposite){keys[opposite]=false;const old=document.querySelector('.tbtn[data-k="'+opposite+'"]');if(old)old.classList.remove('on')}}keys[k]=on}
+function v6DrawTrajectoryPreview(){
+  if(reducedMotion)return;ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);ctx.setLineDash([5,6]);ctx.lineWidth=1.6;
+  if(state==='approach'&&P.vsFpm<-.1){const t=clamp(P.altFt/Math.max(.1,-P.vsFpm/60),0,16),lz=P.z-P.spdKts*KT2MS*t,lx=P.x+(P.latVel+P.gustVel)*t*.24,a=proj(P.x,P.altFt*FT2M,P.z),b=proj(lx,0,lz);if(a&&b){ctx.strokeStyle=lz<=-2&&lz>=-APPROACH.stripLen&&Math.abs(lx)<=APPROACH.stripHalfW?'rgba(57,255,158,.9)':'rgba(255,193,77,.9)';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.quadraticCurveTo(lerp(a.x,b.x,.5),Math.min(a.y,b.y)-26,b.x,b.y);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(b.x,b.y,7,0,7);ctx.stroke()}}
+  else if(state==='extract'&&P.exBusy>0){const p=1-P.exBusy/Math.max(.01,P.exBusyTotal),sx=W*.865,sy=H*.63,tx=W*.46+Math.min(W,900)/620*140,ty=H*.63;ctx.strokeStyle='rgba(114,225,255,.88)';ctx.beginPath();ctx.moveTo(sx,sy);ctx.quadraticCurveTo(W*.66,H*(.48-.08*Math.sin(p*Math.PI)),tx,ty);ctx.stroke()}
+  ctx.restore();
+}
+function v6UpdatePresentation(){
+  const alt=state==='takeoff'||state==='climbout'?P.toAltFt:P.altFt,spd=state==='takeoff'||state==='climbout'?P.toSpd:P.spdKts,route=state==='takeoff'||state==='climbout'?P.toDist:P.z;
+  const vals={v6Alt:Math.max(0,Math.round(alt||0)),v6Spd:Math.round(spd||0),v6Route:Math.max(0,Math.round(route||0)),v6Stress:Math.round(P.stress||0)+'%',v6Patients:(P.exLoaded||0)+'/'+EXTRACT.casualties};for(const id in vals){const n=$(id);if(n)n.textContent=vals[id]}const guide=$('btnGuide');if(guide&&state==='extract'){const waiting=Math.max(0,EXTRACT.casualties-(P.exLoaded||0));guide.setAttribute('aria-label','Guide extraction team. '+waiting+' emergency patient'+(waiting===1?'':'s')+' waiting.')}
+  const u=$('v6Urgency');if(!u)return;let text='',urgent=false;if(v6ManualPaused||v6PagePaused)text='RESCUE PAUSED — CONTROLS SAFE';else if(state==='approach'){const eta=P.vsFpm<0?Math.max(0,P.altFt/Math.max(.1,-P.vsFpm/60)):99;text=(P.altFt<80?'FINAL '+eta.toFixed(1)+' S · ':'')+'ALIGN '+Math.abs(P.x).toFixed(1)+' M · '+Math.round(P.spdKts)+' KTS';urgent=P.altFt<55&&(P.vsFpm<-300||Math.abs(P.x)>10)}else if(state==='extract'){text=P.exDone?'ALL PATIENTS ABOARD · LAUNCH WHEN READY':(EXTRACT.casualties-P.exLoaded)+' PATIENT'+(EXTRACT.casualties-P.exLoaded===1?'':'S')+' WAITING · '+fmtTime(P.exTime);urgent=!P.exDone&&P.exTime<30}else if(state==='takeoff'){text=P.toAirborne?'CLIMB '+Math.round(P.toAltFt)+' FT · RIM '+Math.round(P.toDist)+' M':'ROTATE '+Math.round(P.vrEff)+' KTS · STRIP '+Math.round(P.toStrip)+' M';urgent=!P.toAirborne&&P.toStrip<90}else if(state==='climbout')text='PATIENTS CLEAR · CLINIC INBOUND';u.textContent=text;u.classList.toggle('show',!!text);u.classList.toggle('urgent',urgent);
+}
+function v6DrawPresentation(){v6DrawTrajectoryPreview();V6Ascent.draw();v6UpdatePresentation()}
+function v6SkipCinema(){if(V6Director.active)V6Director.skip();else if(V6Ascent.active)V6Ascent.skip()}
+function v6TogglePause(force){
+  const playable=['approach','rollout','extract','takeoff','climbout'].includes(state);if(!playable&&force===undefined)return;
+  v6ManualPaused=typeof force==='boolean'?force:!v6ManualPaused;const b=$('v6Pause');if(b){b.setAttribute('aria-pressed',String(v6ManualPaused));b.textContent=v6ManualPaused?'▶':'Ⅱ';b.setAttribute('aria-label',v6ManualPaused?'Resume rescue':'Pause rescue')}keys.left=keys.right=keys.up=keys.down=false;document.querySelectorAll('.tbtn.on').forEach(n=>n.classList.remove('on'));lastT=performance.now();if(v6ManualPaused){Snd.setWind(0);if(Snd.ctx&&Snd.ctx.state==='running')Snd.ctx.suspend().catch(()=>{});showCap('RESCUE PAUSED — FLIGHT CONTROLS SAFE.',1.5,'good','alfayed')}else{Snd.resume()}
+}
 
 /* ---------------- Canyon geometry ---------------- */
 function buildCanyon(){
@@ -644,10 +1901,10 @@ function buildCanyon(){
     segs.push({ z, hw, hL, hR, jL: hash(z*3.1)*8, jR: hash(z*4.7)*8 });
   }
   for(let i = 0; i < 90; i++){
-    const z = rnd(SEG_MIN, SEG_MAX);
-    scrub.push({ z, x: rnd(-1,1) * (hwAt(z) - 8), r: rnd(0.5,1.6), c: hash(i)>0.5 ? '#3d3222' : '#2e2618' });
+    const z = simRnd(SEG_MIN, SEG_MAX);
+    scrub.push({ z, x: simRnd(-1,1) * (hwAt(z) - 8), r: simRnd(0.5,1.6), c: hash(i)>0.5 ? '#3d3222' : '#2e2618' });
   }
-  stars = []; for(let i = 0; i < 60; i++) stars.push({ x: Math.random(), y: Math.random()*0.32, a: rnd(0.15,0.8), tw: rnd(1,4) });
+  stars = []; for(let i = 0; i < 60; i++) stars.push({ x: simRandom(), y: simRandom()*0.32, a: simRnd(0.15,0.8), tw: simRnd(1,4) });
 }
 function hwAt(z){
   const i = clamp(Math.floor((z - SEG_MIN)/SEG_STEP), 0, segs.length-2);
@@ -1503,18 +2760,19 @@ function coach(dt){
 }
 
 /* ---------------- Phase logic ---------------- */
-function startApproach(){
+function startApproach(withIntro=false){
   TRAIN.active = currentMission === 'training'; TRAIN.step = 0; TRAIN.elapsed = 0; TRAIN.lastPrompt = 0;
-  document.body.classList.toggle('night-mission', currentMission === 'night' && !perfLite());
+  const wk=weeklyInfo();P.missionSeed=currentMission==='weekly'?wk.seed:(currentMission==='training'?734:(MV_RT?MV_RT.fnv1a32(currentMission+'|'+(save.v4.runCount||0)+'|'+(save.callsign||'ROOK')):((Date.now()^(save.v4.runCount||0))>>>0)));simRandom=mulberry(P.missionSeed);missionTrace=[];traceTick=0;tracePhase='';fixedAccumulator=0;
+  document.body.classList.toggle('night-mission', currentMission === 'night' && !perfLite());document.body.classList.toggle('storm-mission', currentMission === 'storm' && !perfLite());
   el.trainingBadge.classList.toggle('hidden', !TRAIN.active);
   buildCanyon();                      // regenerate at current ops tempo
   P.z = APPROACH.startZ; P.x = 0; P.altFt = APPROACH.startAlt; P.spdKts = APPROACH.startSpd;
   P.vsFpm = -380; P.pitch = 0; P.bank = 0; P.latVel = 0; P.gustVel = 0; P.gustTimer = 2.5;
   P.stress = 8; P.maxStress = 8; particles.length = 0; sweepers.length = 0; shake = 0;
-  P.airframe = 100; P.susp = 0; P.suspV = 0; P.rotT = 0; P.transT = 0; P.landGrade = ''; P.halfCalled = false;
+  P.airframe = 100; P.energy = 100; P.energyUsed = 0; P.susp = 0; P.suspV = 0; P.rotT = 0; P.transT = 0; P.landGrade = ''; P.halfCalled = false;
   P.flex = 0; P.touchZ = 0; P.skids = []; P.hopVs = 0; P.bounced = false; P.stopZ = -200; P.carryF = 1;
-  P.xwDir = Math.random() < 0.5 ? -1 : 1;
-  P.xwV = 4.2 + opsTempo()*0.9 + (currentMission === 'night' ? 1.2 : 0);
+  P.xwDir = simRandom() < 0.5 ? -1 : 1;
+  P.xwV = (4.2 + opsTempo()*0.9 + (currentMission === 'night' ? 1.2 : currentMission === 'storm' ? 2.8 : 0))*(1-(save.v4.upgrades.stability||0)*.07);
   P.xwWarned = false; P.profChecked = false;
   if(TRAIN.active){ P.z = 1250; P.altFt = 280; }      // guided flight keeps room for the lessons
   // Thermal updrafts — invisible columns off the canyon floor; count rises with ops tempo
@@ -1522,13 +2780,15 @@ function startApproach(){
   const nTh = 1 + Math.min(opsTempo(), 3);
   const thSpan = (TRAIN.active ? 1250 : APPROACH.startZ) - 320;
   for(let i = 0; i < nTh; i++){
-    const tz = 240 + (i + rnd(0.15, 0.85)) * (thSpan / nTh);
-    P.thermals.push({ z: tz, x: rnd(-1, 1) * Math.max(6, hwAt(tz) - 24),
-      r: 17, zr: 72, str: 270 + opsTempo()*40 + rnd(0, 90) });
+    const tz = 240 + (i + simRnd(0.15, 0.85)) * (thSpan / nTh);
+    P.thermals.push({ z: tz, x: simRnd(-1, 1) * Math.max(6, hwAt(tz) - 24),
+      r: 17, zr: 72, str: 270 + opsTempo()*40 + simRnd(0, 90) });
   }
+  v41Capture();
   setState('approach');
-  showCap(TRAIN.active ? 'TRAINING FLIGHT. I HAVE YOU — FOLLOW MY CALLS.' : ('FINAL APPROACH — ' + (currentMission === 'night' ? 'NIGHT CANYON' : 'TWILIGHT CANYON')), 2.8, 'good', 'alfayed');
+  showCap(TRAIN.active ? 'TRAINING FLIGHT. I HAVE YOU — FOLLOW MY CALLS.' : ('FINAL APPROACH — ' + (currentMission === 'night' ? 'NIGHT CANYON' : currentMission === 'storm' ? 'STORM RELIEF' : currentMission === 'weekly' ? 'WEEKLY RESCUE' : 'TWILIGHT CANYON')), 2.8, 'good', 'alfayed');
   Snd.startEngine(); Snd.setEngine(0.45);
+  const introStarted=withIntro&&V6Director.play();if(!introStarted)requestAnimationFrame(()=>{if(!v6ActiveModal&&cv&&cv.focus)try{cv.focus({preventScroll:true})}catch(_){cv.focus()}});
 }
 
 function updateTraining(dt){
@@ -1543,6 +2803,7 @@ function updateTraining(dt){
 
 function updateApproach(dt){
   updateTraining(dt);
+  const energyUse=(.11+Math.abs(P.pitch)*.004+((keys.left||keys.right) ? 0.018 : 0))*(1-(save.v4.upgrades.energy||0)*.08);P.energy=Math.max(0,P.energy-energyUse*dt);P.energyUsed=100-P.energy;
   // Pitch control
   const pTarget = keys.up ? 9 : keys.down ? -8 : 0;
   P.pitch = lerp(P.pitch, pTarget, clamp(dt*3.2, 0, 1));
@@ -1572,7 +2833,7 @@ function updateApproach(dt){
   const latTarget = keys.left ? -9 : keys.right ? 9 : 0;
   P.latVel = lerp(P.latVel, latTarget, clamp(dt*2.4, 0, 1));
   P.gustTimer -= dt;
-  if(P.gustTimer <= 0){ P.gustVel += rnd(-3.4, 3.4)*(1 + opsTempo()*0.12)*(currentMission==='night' ? 1.35 : 1); P.gustTimer = rnd(2.4, 4.6); }
+  if(P.gustTimer <= 0){ P.gustVel += simRnd(-3.4, 3.4)*(1 + opsTempo()*0.12)*(currentMission==='storm' ? 1.7 : currentMission==='night' ? 1.35 : 1)*(1-(save.v4.upgrades.stability||0)*.07); P.gustTimer = simRnd(2.4, 4.6); }
   P.gustVel = lerp(P.gustVel, Math.sin(elapsed*0.6)*1.2, clamp(dt*0.5, 0, 1));
   // Crosswind band through the pinch — called in advance, must be crabbed against
   let xv = 0;
@@ -1636,6 +2897,7 @@ function updateApproach(dt){
     } else {
       showCap(P.vsFpm > -170 ? 'GREASED IT. BEAUTIFUL.' : 'FIRM AND DOWN. GOOD.', 2.2, 'good', 'alfayed');
     }
+    if(P.vsFpm < -350 || Math.abs(P.x)>APPROACH.stripHalfW-2.2 || P.z>-15 || P.z<-APPROACH.stripLen+22)V6Clutch.trigger('CLUTCH LANDING');
     Snd.beep(330, .2, 'triangle', .12);
     shake = Math.max(shake, reducedMotion ? 0 : clamp(-P.vsFpm/60, 2, 7));
     puffDust(W/2, H*0.8, P.vsFpm < -260 ? 14 : 6, 70);
@@ -1662,7 +2924,7 @@ function updateRollout(dt){
   P.rollSpd = Math.max(0, P.rollSpd - 16*dt);
   P.z -= P.rollSpd * KT2MS * dt;
   P.spdKts = P.rollSpd;
-  if(P.rollSpd > 8) P.suspV += (Math.random() - 0.5) * P.rollSpd * 0.014;   // rut chatter
+  if(P.rollSpd > 8) P.suspV += (simRandom() - 0.5) * P.rollSpd * 0.014;   // seeded rut chatter
   Snd.setEngine(clamp(P.rollSpd/140, 0.08, 0.4));
   Snd.setWind(clamp(P.rollSpd/200, 0, 0.3));
   if(Math.random() < 0.5 && P.rollSpd > 6) puffDust(W/2 + rnd(-40,40), H*0.8, 1, 30);
@@ -1697,13 +2959,13 @@ function rollGreenZone(){
   // Three distinct patterns: 1 standard sweep · 2 double-lift · 3 narrow-and-fast
   const pat = clamp(P.exLoaded, 0, 2);
   const wZone = [0.17, 0.15, 0.11][pat];
-  P.exZoneA = rnd(0.30, 0.80 - wZone); P.exZoneB = P.exZoneA + wZone;
+  P.exZoneA = simRnd(0.30, 0.80 - wZone); P.exZoneB = P.exZoneA + wZone;
   el.exZone.style.left = (P.exZoneA*100)+'%';
   el.exZone.style.width = ((P.exZoneB-P.exZoneA)*100)+'%';
 }
 function updateExtract(dt){
   P.exTime -= dt;
-  if(P.exTime <= 0) return failMission('ZONE OVERRUN — EXTRACTION FAILED', 'extract');
+  if(P.exTime <= 0) return failMission('WEATHER WINDOW CLOSED — EXTRACTION PAUSED', 'extract');
   // Stress builds as the clock drains
   P.stress = clamp(P.stress + (P.exTime < 40 ? 5.5 : 1.6)*dt, 0, 100);
   P.maxStress = Math.max(P.maxStress, P.stress);
@@ -1729,7 +2991,7 @@ function updateExtract(dt){
     P.exBusy -= dt;
     if(P.exBusy <= 0){
       P.exLoaded++;
-      Snd.beep(520, .16, 'triangle', .12);
+      Snd.beep(520, .16, 'triangle', .12);Snd.medicalLift(true);
       if(P.exLoaded >= EXTRACT.casualties){
         P.exDone = true;
         hide(el.btnGuide); hide(el.exBarWrap);
@@ -1738,7 +3000,7 @@ function updateExtract(dt){
       } else {
         if(P.exLoaded === EXTRACT.headsDownAfter && P.exHeadsDown <= 0){
           P.exHeadsDown = 3.0;
-          showCap('INCOMING — HEADS DOWN!', 2.6, 'bad', 'rostova');
+          showCap('ROCKFALL — HEADS DOWN!', 2.6, 'bad', 'rostova');
           el.flash.style.opacity = '0.65';
           setTimeout(()=>{ el.flash.style.opacity = '0'; }, 160);
           Snd.beep(180, .5, 'sawtooth', .16);
@@ -1779,11 +3041,11 @@ function guideTap(){
     return;
   }
   P.exNeed = 0;
-  P.exBusyTotal = (inZone ? EXTRACT.goodLoad : EXTRACT.badLoad) * P.carryF;
+  P.exBusyTotal = (inZone ? EXTRACT.goodLoad : EXTRACT.badLoad) * P.carryF * (1-(save.v4.upgrades.extraction||0)*.06);
   P.exBusy = P.exBusyTotal;
   P.exReact = 0.8; P.exReactGood = inZone;
-  if(inZone){ showCap('GO GO GO — CLEAN RUN.', 1.5, 'good', 'rostova'); Snd.beep(660, .1, 'triangle', .12); }
-  else { P.stress = clamp(P.stress + 12, 0, 100); showCap('MISTIMED — TEAM EXPOSED.', 1.8, 'bad', 'rostova'); Snd.beep(220, .25, 'square', .13); }
+  if(inZone){ showCap('GO GO GO — CLEAN RUN.', 1.5, 'good', 'rostova'); Snd.beep(660, .1, 'triangle', .12);Snd.medicalLift(true);if(P.exTime<22||Math.min(P.exMarker-P.exZoneA,P.exZoneB-P.exMarker)<.012)V6Clutch.trigger('CLUTCH HOIST'); }
+  else { P.stress = clamp(P.stress + 12, 0, 100); showCap('MISTIMED — TEAM LOSES TIME.', 1.8, 'bad', 'rostova'); Snd.beep(220, .25, 'square', .13); }
 }
 
 function startTakeoff(){
@@ -1801,6 +3063,7 @@ function startTakeoff(){
   Snd.setEngine(0.95);
 }
 function updateTakeoff(dt){
+  const energyUse=(.18+P.crates*.025+(keys.up ? 0.025 : 0))*(1-(save.v4.upgrades.energy||0)*.08);P.energy=Math.max(0,P.energy-energyUse*dt);P.energyUsed=100-P.energy;
   // Speed builds on full power (~10 kts/s from rest); heavy pitch bleeds it
   const drag = P.toAirborne && P.toPitch > 6 ? 3.5 : 0;
   P.toSpd = clamp(P.toSpd + ((10.5 - drag - P.toSpd*0.035)/P.wgt)*dt, 0, 96);
@@ -1812,7 +3075,7 @@ function updateTakeoff(dt){
   P.toPitch = lerp(P.toPitch, pT, clamp(dt*3, 0, 1));
   // Rotate / lift
   if(!P.toAirborne){
-    if(P.toSpd > 12) P.suspV += (Math.random() - 0.5) * P.toSpd * 0.012;   // rut chatter
+    if(P.toSpd > 12) P.suspV += (simRandom() - 0.5) * P.toSpd * 0.012;   // seeded rut chatter
     if(!P.halfCalled && P.toStrip < TAKEOFF.stripRoll*0.5){
       P.halfCalled = true;
       if(P.toSpd < P.vrEff - 8) showCap('HALF THE STRIP GONE.', 1.4, 'warn', 'jace');
@@ -1842,7 +3105,7 @@ function updateTakeoff(dt){
     // Lateral in the corridor
     const latTarget = keys.left ? -8 : keys.right ? 8 : 0;
     P.latVel = lerp(P.latVel, latTarget, clamp(dt*2.4,0,1));
-    P.gustTimer -= dt; if(P.gustTimer <= 0){ P.gustVel += rnd(-3,3)*(1 + opsTempo()*0.12)*(currentMission==='night' ? 1.35 : 1); P.gustTimer = rnd(2.5,4.5); }
+    P.gustTimer -= dt; if(P.gustTimer <= 0){ P.gustVel += simRnd(-3,3)*(1 + opsTempo()*0.12)*(currentMission==='storm' ? 1.7 : currentMission==='night' ? 1.35 : 1)*(1-(save.v4.upgrades.stability||0)*.07); P.gustTimer = simRnd(2.5,4.5); }
     P.gustVel = lerp(P.gustVel, 0, clamp(dt*0.5,0,1));
     P.x += (P.latVel + P.gustVel)*dt;
     P.bank = lerp(P.bank, (P.latVel+P.gustVel)*0.035, clamp(dt*4,0,1));
@@ -1865,10 +3128,11 @@ function updateTakeoff(dt){
       showCap('RIM BY ' + margin + ' FT — TOO CLOSE. WE ARE CLEAR.', 3.2, 'warn', 'alfayed');
       if(!reducedMotion) shake = Math.max(shake, 4);
       Snd.beep(190, .3, 'sawtooth', .12);
+      V6Clutch.trigger('RIM CLEARANCE');
     } else if(P.crates >= 2){
-      showCap('HEAVY SHIP AND YOU STILL CLEARED BY ' + margin + ' FT. CASUALTIES INBOUND.', 3.2, 'good', 'jace');
+      showCap('HEAVY SHIP AND YOU STILL CLEARED BY ' + margin + ' FT. PATIENTS SAFE.', 3.2, 'good', 'jace');
     } else {
-      showCap('CLEAR OF THE RIM BY ' + margin + ' FT. CASUALTIES INBOUND TO FIELD HOSPITAL.', 3.2, 'good', 'alfayed');
+      showCap('CLEAR OF THE RIM BY ' + margin + ' FT. PATIENTS INBOUND TO THE CLINIC.', 3.2, 'good', 'alfayed');
     }
     Snd.sting('win');
   }
@@ -1879,7 +3143,7 @@ function updateClimbout(dt){
   P.toDist -= P.toSpd*KT2MS*dt;
   if(P.climbT > 3.0){
     setState('transition');
-    fadeTo(()=> showDebrief());
+    V6Ascent.play(()=>fadeTo(()=>showDebrief()));
   }
 }
 
@@ -1912,6 +3176,13 @@ function retryPhase(){
   if(failPhase === 'approach') startApproach();
   else if(failPhase === 'extract'){ Snd.startEngine(); startExtract(); }
   else { Snd.startEngine(); startTakeoff(); }
+}
+function finishV4Career(total,medal,land,ext,tko,airPen){
+  const v=save.v4;v.runCount=(v.runCount||0)+1;const quality=Math.round(clamp(total/18,0,55)),earned=18+quality+(medal[1]==='gold'?24:medal[1]==='silver'?14:8);v.credits=Math.max(0,Math.floor(v.credits||0))+earned;v.xp=(v.xp||0)+20+quality;v.lastEarned=earned;
+  const blend=(old,n)=>Math.round((old*3+n)/4);v.mastery.flight=blend(v.mastery.flight,clamp(land/4,0,100));v.mastery.medical=blend(v.mastery.medical,clamp(ext/3,0,100));v.mastery.load=blend(v.mastery.load,clamp(tko/2,0,100));v.mastery.safety=blend(v.mastery.safety,clamp(100-airPen-P.maxStress*.25,0,100));
+  v.lastReplay=missionTrace.slice(0,2200);const summary={score:total,mission:missionLabel(),seed:P.missionSeed,energy:Math.round(P.energy),date:new Date().toISOString(),samples:v.lastReplay.length};if(!v.bestGhost||total>v.bestGhost.score)v.bestGhost=Object.assign({},summary,{trace:v.lastReplay});if(currentMission==='weekly'){const wk=weeklyInfo();v.weeklyBest[wk.week]=Math.max(v.weeklyBest[wk.week]||0,total)}
+  if(MV_RT){try{mvPassport=mvPassport||loadMVPassport();const receipt='mv-'+v.instance+'-'+v.runCount.toString(36);mvPassport=MV_RT.mutations.grantAward(mvPassport,{receiptId:receipt,game:MV_LEGACY_GAME_ID,xp:Math.min(5000,20+quality),housePoints:0,badge:medal[1]==='gold'?'medevac:safe-return':'',earnedAt:new Date().toISOString()});mvPassport=MV_RT.mutations.setGameSummary(mvPassport,MV_LEGACY_GAME_ID,{best:Math.max(save.best||0,total),careerXP:v.xp,credits:v.credits,missions:v.runCount,mastery:v.mastery,weekly:currentMission==='weekly'?weeklyInfo().week:'',energyReserve:Math.round(P.energy)});saveMVPassport()}catch(e){console.warn('Passport award skipped:',e.message)}}
+  return earned;
 }
 function showDebrief(){
   Snd.stopEngine();
@@ -1949,13 +3220,14 @@ function showDebrief(){
   if(!TRAIN.active) save.streak = (save.streak || 0) + 1;
   const bestLine = total > save.best ? 'NEW PERSONAL BEST — ' + total : 'BEST: ' + (save.best || '—');
   if(total > save.best){ save.best = total; save.bestMedal = medal[1]; }
-  const missionName = currentMission === 'training' ? 'TRAINING' : currentMission === 'night' ? 'NIGHT' : 'TWILIGHT';
+  const missionName = missionLabel();
   save.records = Array.isArray(save.records) ? save.records : [];
   save.records.unshift({date:new Date().toISOString(), mission:missionName, score:total, medal:medal[1], grade:P.landGrade || gradeFor(P.touchVs), tempo:opsTempo()});
   save.records = save.records.slice(0,10);
   if(TRAIN.active) save.trainingDone = true;
+  let v4Earned=finishV4Career(total,medal,land,ext,tko,airPen),tourLine='';if(tourActive){tourScores[tourStage]=total;const cumulative=tourScores.reduce((a,b)=>a+(b||0),0);if(tourStage<V42_TOUR.length-1){const next=missionLabel(V42_TOUR[tourStage+1]);tourLine='FRONTIER TOUR '+(tourStage+1)+'/3 COMPLETE · '+cumulative+' PTS · NEXT '+next;el.btnAgain.textContent='CONTINUE — '+next;el.btnMenu2.textContent='ABANDON TOUR'}else{const t=save.v4.tour;t.completions=(t.completions||0)+1;t.lastTotal=cumulative;t.bestTotal=Math.max(t.bestTotal||0,cumulative);save.v4.credits+=90;save.v4.xp+=100;v4Earned+=90;tourLine='FRONTIER TOUR COMPLETE · '+cumulative+' PTS · BEST '+t.bestTotal+' · +90 CR';el.btnAgain.textContent='TOUR COMPLETE — RETURN TO OPS';el.btnMenu2.textContent='RETURN TO OPS'}}else{el.btnAgain.textContent='FLY AGAIN';el.btnMenu2.textContent='RETURN TO OPS'}el.v4Summary.textContent='V6 CAREER AWARD: +'+v4Earned+' CR · '+save.v4.credits+' TOTAL · ENERGY '+Math.round(P.energy)+'% · REPLAY '+missionTrace.length+' SAMPLES';
   writeSave();
-  el.dbBest.textContent = bestLine + ' • OPS TEMPO RISES: ' + TEMPO_NAMES[opsTempo()];
+  el.dbBest.textContent = tourLine || (bestLine + ' • OPS TEMPO RISES: ' + TEMPO_NAMES[opsTempo()]);
   setState('debrief');
   show(el.debrief);
 }
@@ -1963,6 +3235,7 @@ function showDebrief(){
 /* ---------------- State plumbing ---------------- */
 function setState(s){
   state = s;
+  if(document.body)document.body.dataset.v6Phase=s;
   if(s==='menu' || s==='debrief' || s==='fail') el.trainingBadge && el.trainingBadge.classList.add('hidden');
   setCrit('');
   const flight = (s==='approach' || s==='rollout' || s==='takeoff' || s==='climbout');
@@ -1982,25 +3255,36 @@ function fadeTo(fn){
 }
 function refreshTempoLine(){
   const t = opsTempo();
-  el.tempoLine.innerHTML = 'OPS TEMPO: <b>' + TEMPO_NAMES[t] + '</b>' +
-    (t > 0 ? ' — canyon tighter, window shorter, wind rougher · tap to reset' : '');
+  el.tempoLine.innerHTML = tourActive?('FRONTIER TOUR: <b>OP '+(tourStage+1)+'/3</b> — '+missionLabel(currentMission)+' · cumulative mastery deployment'):currentMission==='weekly'?('WEEKLY SEED: <b>'+weeklyInfo().week+'</b> — fixed canyon and wind profile'):('OPS TEMPO: <b>' + TEMPO_NAMES[t] + '</b>' +(t > 0 ? ' — canyon tighter, window shorter, wind rougher · tap to reset' : ''));
+  el.tempoLine.setAttribute('aria-label',el.tempoLine.textContent.trim()+(tourActive||currentMission==='weekly'?'':t>0?' Activate to reset operations tempo.':' Operations tempo is already routine.'));
 }
 function goMenu(){
   if(document.body && document.body.classList) document.body.classList.remove('night-mission');
+  v6ManualPaused=false;const pb=$('v6Pause');if(pb){pb.setAttribute('aria-pressed','false');pb.textContent='Ⅱ';pb.setAttribute('aria-label','Pause rescue')}
   hide(el.failOv); hide(el.debrief); hide(el.howto); hide(el.crewOv); hide(el.recordOv);
   Snd.stopEngine();
   setState('menu');
   refreshTempoLine();
   show(el.menuUI);
+  requestAnimationFrame(()=>{const maker=document.querySelector('[data-mbm-maker-splash]:not([aria-hidden="true"])');if(!maker&&!v6ActiveModal&&el.btnStart&&el.btnStart.focus)try{el.btnStart.focus({preventScroll:true})}catch(_){el.btnStart.focus()}});
 }
+const MV_UPGRADES={stability:{name:'STABILITY TRIM',desc:'Reduces seeded gust and crosswind authority by 7% per level.',cost:[90,180,290]},extraction:{name:'EXTRACTION RIG',desc:'Cuts patient loading time by 6% per level after each timing input.',cost:[80,170,270]},energy:{name:'ENERGY MANAGEMENT',desc:'Reduces flight energy use by 8% per level.',cost:[85,175,285]}};
+function applyV4Access(){const a=save.v4.access||MV_V4_DEFAULT.access;document.body.classList.toggle('mv-large',!!a.large);document.body.classList.toggle('mv-contrast',!!a.contrast);document.body.classList.toggle('mv-reduced',!!a.reduced);document.body.classList.toggle('mv-calm',!!a.calm);reducedMotion=!!a.reduced||((typeof matchMedia==='function')&&matchMedia('(prefers-reduced-motion: reduce)').matches);document.body.classList.remove('livery-rescue','livery-sky','livery-dawn');document.body.classList.add('livery-'+(save.v4.livery||'rescue'));if(Snd.master)Snd.master.gain.setTargetAtTime(a.calm ? .34 : .78,Snd.ctx.currentTime,.15);if(a.calm)shake=0;if(reducedMotion||a.calm){V6Director.finish();V6Ascent.finish();V6Clutch.active=false;const c=$('v6Clutch');if(c)c.classList.remove('show')}}
+function buyMVUpgrade(k){const u=MV_UPGRADES[k],lv=save.v4.upgrades[k]||0;if(!u||lv>=3)return;const cost=u.cost[lv];if(save.v4.credits<cost){showCap('COMPLETE RESCUE OPERATIONS TO EARN '+(cost-save.v4.credits)+' MORE CREDITS.',2.2,'warn','jace');return}save.v4.credits-=cost;save.v4.upgrades[k]=lv+1;writeSave();renderV4Body('main')}
+function chooseLivery(k){const price={rescue:0,sky:55,dawn:80}[k]||0;if(!save.v4.unlockedLiveries.includes(k)){if(save.v4.credits<price){showCap('EARN '+(price-save.v4.credits)+' MORE CREDITS FOR THAT LIVERY.',2,'warn','jace');return}save.v4.credits-=price;save.v4.unlockedLiveries.push(k)}save.v4.livery=k;applyV4Access();writeSave();renderV4Body('main')}
+function renderReplayData(i){const trace=save.v4.lastReplay||[],row=trace[clamp(i|0,0,Math.max(0,trace.length-1))],out=$('v4ReplayData');if(!out)return;if(!row){out.textContent='No telemetry replay yet. Complete a rescue operation first.';return}const phase=['APPROACH','ROLLOUT','EXTRACTION','TAKEOFF','CLIMBOUT'][row[1]]||'FLIGHT';out.textContent='T+'+row[0].toFixed(2)+'s · '+phase+' · ROUTE '+row[2]+' m · OFFSET '+row[3]+' m · ALT '+row[4]+' ft · '+row[5]+' kt · STRESS '+row[6]+'% · ENERGY '+row[7]+'% · PATIENTS '+row[8]+'/3 · CRATES '+row[9]}
+function renderV4Body(view='main'){
+  const body=el.v4Body||$('v4Body'),wk=weeklyInfo(),caps=MV_RT?MV_RT.contractForGame(MV_LEGACY_GAME_ID).capabilities:null;if(!body)return;
+  if(view==='replay'){const t=save.v4.lastReplay||[];body.innerHTML=`<div class="v4Replay"><b>LOCAL TELEMETRY REPLAY</b><p>This is a recorded instrument trace, not a rendered video or live network ghost.</p><input id="v4ReplayRange" type="range" min="0" max="${Math.max(0,t.length-1)}" value="0" aria-label="Telemetry replay time"><div id="v4ReplayData" class="v4ReplayData"></div></div><button id="v4ReplayBack" class="mbtn">BACK TO V6 OPERATIONS</button>`;const r=$('v4ReplayRange');r.oninput=()=>renderReplayData(+r.value);$('v4ReplayBack').onclick=()=>renderV4Body('main');renderReplayData(0);return}
+  body.innerHTML=`<div class="v4Wallet"><span>CREW LEVEL ${1+Math.floor((save.v4.xp||0)/250)} · ${save.v4.xp||0} XP</span><strong>${save.v4.credits||0} CR</strong></div><p>Credits are earned only through completed rescue operations. No payments, loot boxes, trading, streak loss or expiring offers.</p><div class="v4Grid">${Object.entries(MV_UPGRADES).map(([k,u])=>{const lv=save.v4.upgrades[k]||0;return `<div class="v4Card"><b>${u.name} · LV ${lv}/3</b><small>${u.desc}</small><button data-mv-up="${k}" ${lv>=3?'disabled':''}>${lv>=3?'MAXIMUM':'UPGRADE · '+u.cost[lv]+' CR'}</button></div>`}).join('')}</div><h3>CREW MASTERY</h3><div class="v4Grid">${Object.entries(save.v4.mastery).map(([k,v])=>`<div class="v4Card"><b>${k.toUpperCase()}</b><strong>${v}</strong><small>Rolling skill assessment from completed operations.</small></div>`).join('')}</div><h3>RESCUE LIVERY</h3><div class="v4Swatches">${[['rescue','RESCUE AMBER',0],['sky','SKY BLUE',55],['dawn','DAWN CORAL',80]].map(([k,n,p])=>`<button data-livery="${k}" class="${save.v4.livery===k?'on':''}">${n}${save.v4.unlockedLiveries.includes(k)?'':' · '+p+' CR'}</button>`).join('')}</div><h3>ACCESSIBILITY &amp; LOW-PRESSURE OPTIONS</h3><div class="v4Swatches">${[['large','LARGE HUD'],['contrast','HIGH CONTRAST'],['reduced','REDUCED EFFECTS'],['calm','CALM AUDIO'],['ghost','GHOST BENCHMARK']].map(([k,n])=>`<button data-access="${k}" class="${save.v4.access[k]?'on':''}">${n}: ${save.v4.access[k]?'ON':'OFF'}</button>`).join('')}</div><h3>WEEKLY SEEDED RESCUE</h3><div class="v4Replay">${wk.week} · seed ${wk.seed} · local best ${save.v4.weeklyBest[wk.week]||'—'}<br>Every V6 copy receives the same canyon seed for the UTC week. Results remain local.</div><h3>FRONTIER TOUR</h3><div class="v4Replay">${save.v4.tour.completions||0} tours complete · best aggregate ${save.v4.tour.bestTotal||'—'} · last ${save.v4.tour.lastTotal||'—'}<br>Three consecutive operations. Progress only advances after a completed rescue.</div><button id="v4ReviewReplay" class="mbtn">REVIEW LAST TELEMETRY REPLAY (${(save.v4.lastReplay||[]).length} SAMPLES)</button><div class="v4Caps"><b>HONEST PLAY CAPABILITY</b><br>${caps?'Network transport: '+caps.transport+' · max network players '+caps.maxPlayers+'. ':''}This file supports solo rescue play, local telemetry replay and a personal benchmark. It does not provide live LAN, online matchmaking, combat simulation or a remote leaderboard.</div><p>SPORTS PASSPORT V4 COMPATIBILITY · ${mvPassport?'LOCAL SLOT READY':'UNAVAILABLE'} · LEGACY PASSPORT SLOT medevac</p>`;
+  body.querySelectorAll('[data-mv-up]').forEach(b=>b.onclick=()=>buyMVUpgrade(b.dataset.mvUp));body.querySelectorAll('[data-livery]').forEach(b=>b.onclick=()=>chooseLivery(b.dataset.livery));body.querySelectorAll('[data-access]').forEach(b=>b.onclick=()=>{const k=b.dataset.access;save.v4.access[k]=!save.v4.access[k];applyV4Access();writeSave();renderV4Body('main')});$('v4ReviewReplay').onclick=()=>renderV4Body('replay');
+}
+function showV4Operations(view='main'){renderV4Body(view);show(el.v4Ov)}
 
 /* ---------------- Render dispatch ---------------- */
 function render(dt){
   ctx.save();
-  if(shake > 0.2 && !reducedMotion){
-    ctx.translate(rnd(-shake,shake), rnd(-shake,shake));
-    shake = Math.max(0, shake - 14*dt);
-  } else shake = Math.max(0, shake - 14*dt);
+  V6Camera.apply(dt);
 
   if(state==='menu' || state==='howto'){
     paintGroundScene('menu');
@@ -2204,6 +3488,7 @@ function paintStripAhead(wz){
 
 /* ---------------- HUD refresh ---------------- */
 function refreshHUD(){
+  if(el.hudEnergy)el.hudEnergy.textContent=Math.max(0,Math.round(P.energy));
   if(state==='approach' || state==='rollout'){
     el.hudAlt.textContent = Math.max(0, Math.round(P.altFt));
     el.hudSpd.textContent = Math.round(P.spdKts);
@@ -2221,13 +3506,38 @@ function refreshHUD(){
   el.panelStress.classList.toggle('pulse', P.stress > 78);
   if(state==='extract'){
     el.timerTxt.textContent = fmtTime(P.exTime) + ' REMAINING';
-    el.loadTxt.textContent = P.exLoaded + '/' + EXTRACT.casualties + ' CASUALTIES';
+    el.loadTxt.textContent = P.exLoaded + '/' + EXTRACT.casualties + ' PATIENTS';
     el.loadFill.style.width = (P.exLoaded/EXTRACT.casualties*100)+'%';
     el.exMarker.style.left = 'calc('+(P.exMarker*100)+'% - 2px)';
   }
+  if(el.ghostBench){const g=save.v4.bestGhost,active=!!(save.v4.access.ghost&&g&&['approach','rollout','extract','takeoff','climbout'].includes(state));el.ghostBench.classList.toggle('hidden',!active);if(active)el.ghostBench.textContent='PERSONAL GHOST · '+g.score+' PTS · '+g.mission+' · '+g.energy+'% RESERVE';}
+  if(el.tourHUD){const active=tourActive&&['approach','rollout','extract','takeoff','climbout'].includes(state),cumulative=tourScores.reduce((a,b)=>a+(b||0),0);el.tourHUD.classList.toggle('hidden',!active);if(active)el.tourHUD.textContent='FRONTIER TOUR '+(tourStage+1)+'/3 · '+missionLabel(currentMission)+' · BANKED '+cumulative+' PTS';}
 }
 
 /* ---------------- Main loop ---------------- */
+const FIXED_H=1/120;
+const V41_RENDER_KEYS=['x','z','altFt','spdKts','vsFpm','pitch','roll','toDist','toAltFt','toSpd','toPitch','toStrip','exMarker','flex','susp','rot'];let V41Prev={};
+function v41Capture(){for(const k of V41_RENDER_KEYS)if(Number.isFinite(P[k]))V41Prev[k]=P[k]}
+function v41Render(dt,a){const current={};a=clamp(a,0,1);for(const k of V41_RENDER_KEYS)if(Number.isFinite(P[k])){current[k]=P[k];P[k]=lerp(Number.isFinite(V41Prev[k])?V41Prev[k]:P[k],P[k],a)}try{render(dt)}finally{for(const k in current)P[k]=current[k]}}
+function v41StormFx(){if(currentMission!=='storm'||!['approach','rollout','extract','takeoff','climbout'].includes(state)||perfLite())return;ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);ctx.globalCompositeOperation='screen';ctx.strokeStyle='rgba(170,226,255,.22)';ctx.lineWidth=1.2;const drift=(elapsed*720)%38;for(let i=-20;i<W+60;i+=38){const x=i+drift,y=(i*17+elapsed*560)%(H+120)-60;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-18,y+46);ctx.stroke()}const flash=Math.max(0,Math.sin(elapsed*.43)-.997)*180;flash>0&&(ctx.fillStyle='rgba(210,235,255,'+Math.min(.28,flash)+')',ctx.fillRect(0,0,W,H));ctx.restore()}
+function recordTraceSample(){
+  if(!['approach','rollout','extract','takeoff','climbout'].includes(state))return;
+  traceTick++;if(state===tracePhase&&traceTick%30!==0)return;tracePhase=state;
+  const phase={approach:0,rollout:1,extract:2,takeoff:3,climbout:4}[state],z=state==='takeoff'||state==='climbout'?P.toDist:P.z,alt=state==='takeoff'||state==='climbout'?P.toAltFt:P.altFt,spd=state==='takeoff'||state==='climbout'?P.toSpd:P.spdKts;
+  if(missionTrace.length<2200)missionTrace.push([Math.round(traceTick/1.2)/100,phase,Math.round(z*10)/10,Math.round(P.x*10)/10,Math.round(alt),Math.round(spd*10)/10,Math.round(P.stress),Math.round(P.energy*10)/10,P.exLoaded||0,P.crates||0]);
+}
+function simulateFixed(h){
+  if(V6Director.active||v6PagePaused||v6ManualPaused)return;
+  elapsed+=h;
+  if(state==='splash'){splashTimer-=h;if(splashTimer<=0){hide(el.splash);goMenu()}}
+  else if(state==='approach')updateApproach(h);
+  else if(state==='rollout')updateRollout(h);
+  else if(state==='extract')updateExtract(h);
+  else if(state==='takeoff')updateTakeoff(h);
+  else if(state==='climbout')updateClimbout(h);
+  let flexT=.25;if(state==='approach')flexT=clamp((P.vsFpm+430)/360,-.3,2.2);else if((state==='takeoff'||state==='climbout')&&P.toAirborne)flexT=clamp((P.toSpd-54)/26,.3,2.2);else if(state==='rollout'||(state==='takeoff'&&!P.toAirborne))flexT=-.25;P.flex=lerp(P.flex,flexT,clamp(h*4,0,1));
+  const sag=(state==='takeoff'&&!P.toAirborne)?-P.crates*.55:0;P.suspV+=(-90*(P.susp-sag)-9*P.suspV)*h;P.susp+=P.suspV*h;if(P.rotT>0)P.rotT-=h;recordTraceSample();
+}
 function frame(ts){
   rafId = requestAnimationFrame(frame);
   if(!lastT) lastT = ts;
@@ -2235,7 +3545,6 @@ function frame(ts){
   // Auto performance governor: watch true frame cost, step down once if the machine is struggling
   PERF.avg = PERF.avg*0.93 + Math.min(dt*1000, 80)*0.07;
   if(dt > 0.05) dt = 0.05;
-  elapsed += dt;
   PERF.warm += dt;
   if(!PERF.auto && PERF.warm > 5 && PERF.avg > 26){
     PERF.auto = true;
@@ -2243,29 +3552,7 @@ function frame(ts){
     showCap('PERFORMANCE MODE ENGAGED — SMOOTH FLIGHT FIRST.', 2.4, 'good');
   }
 
-  if(state==='splash'){
-    splashTimer -= dt;
-    if(splashTimer <= 0){ hide(el.splash); goMenu(); }
-  }
-  else if(state==='approach') updateApproach(dt);
-  else if(state==='rollout') updateRollout(dt);
-  else if(state==='extract') updateExtract(dt);
-  else if(state==='takeoff') updateTakeoff(dt);
-  else if(state==='climbout') updateClimbout(dt);
-
-  // Wing flex follows lift state
-  {
-    let flexT = 0.25;
-    if(state === 'approach') flexT = clamp((P.vsFpm + 430)/360, -0.3, 2.2);
-    else if((state === 'takeoff' || state === 'climbout') && P.toAirborne) flexT = clamp((P.toSpd - 54)/26, 0.3, 2.2);
-    else if(state === 'rollout' || (state === 'takeoff' && !P.toAirborne)) flexT = -0.25;
-    P.flex = lerp(P.flex, flexT, clamp(dt*4, 0, 1));
-  }
-  // Suspension: spring-damper toward the cargo-sag rest point
-  const sag = (state === 'takeoff' && !P.toAirborne) ? -P.crates*0.55 : 0;
-  P.suspV += (-90*(P.susp - sag) - 9*P.suspV) * dt;
-  P.susp += P.suspV * dt;
-  if(P.rotT > 0) P.rotT -= dt;
+  if(v6PagePaused||v6ManualPaused||V6Director.active)fixedAccumulator=0;else fixedAccumulator=Math.min(.25,fixedAccumulator+dt);let fixedSteps=0;while(fixedAccumulator>=FIXED_H&&fixedSteps<30){v41Capture();simulateFixed(FIXED_H);fixedAccumulator-=FIXED_H;fixedSteps++}
   // Engine roughness follows airframe condition and load
   if(state === 'approach' || state === 'rollout' || state === 'takeoff' || state === 'climbout'){
     const rough = clamp((100 - P.airframe)/70, 0, 1)*0.8 + (state === 'takeoff' ? P.crates*0.07 : 0);
@@ -2286,7 +3573,7 @@ function frame(ts){
   Snd.tickKlaxon(dt, !!crit && crit !== 'ZONE CRITICAL');
 
   tickCaption(dt);
-  render(dt);
+  v41Render(dt,fixedAccumulator/FIXED_H);v41StormFx();
   refreshHUD();
 }
 
@@ -2295,6 +3582,10 @@ function bindInputs(){
   const KEYMAP = { ArrowLeft:'left', a:'left', A:'left', ArrowRight:'right', d:'right', D:'right',
                    ArrowUp:'up', w:'up', W:'up', ArrowDown:'down', s:'down', S:'down' };
   window.addEventListener('keydown', e=>{
+    if(e.key==='Escape'&&v6ActiveModal){v6RequestModalClose(v6ActiveModal);e.preventDefault();return}
+    if(e.key==='Tab'&&v6ActiveModal){v6TrapModalTab(e,v6ActiveModal);return}
+    if(v6ActiveModal){const nativeCinemaAction=v6ActiveModal.dataset.v6Cinematic==='true'&&(e.key==='Enter'||e.key===' ')&&e.target===$('v6CinemaSkip');if(!nativeCinemaAction&&v6ActiveModal.dataset.v6Cinematic==='true')e.preventDefault();return}
+    if((e.key==='p'||e.key==='P')&&!/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||'')){v6TogglePause();e.preventDefault();return}
     const k = KEYMAP[e.key];
     if(k){ keys[k] = true; e.preventDefault(); }
     if(e.key===' ' && state==='extract'){ guideTap(); e.preventDefault(); }
@@ -2305,8 +3596,8 @@ function bindInputs(){
 
   document.querySelectorAll('.tbtn').forEach(b=>{
     const k = b.dataset.k;
-    const on = e=>{ e.preventDefault(); keys[k] = true; b.classList.add('on'); Snd.ensure(); Snd.resume(); };
-    const off = e=>{ e.preventDefault(); keys[k] = false; b.classList.remove('on'); };
+    const on = e=>{ e.preventDefault();try{b.setPointerCapture(e.pointerId)}catch(_){ }v6SetTouchControl(k,true); b.classList.add('on');b.dataset.intent=String(v6TouchIntent(k)); Snd.ensure(); Snd.resume(); };
+    const off = e=>{ e.preventDefault(); v6SetTouchControl(k,false); b.classList.remove('on'); };
     b.addEventListener('pointerdown', on);
     b.addEventListener('pointerup', off);
     b.addEventListener('pointercancel', off);
@@ -2315,14 +3606,20 @@ function bindInputs(){
   });
 
   el.splash.addEventListener('pointerdown', ()=>{ splashTimer = 0; Snd.ensure(); Snd.resume(); });
+  $('v6CinemaSkip').addEventListener('click',v6SkipCinema);
+  $('v6Pause').addEventListener('click',v6TogglePause);
+  $('v6Version').addEventListener('click',()=>{const badge=$('mbm-v42-badge');if(badge)badge.click();else showCap('V6 ASCENSION · MV120 FLIGHT AUTHORITY',2,'good','jace')});
   const selectMission = (m)=>{
-    currentMission=m;
-    ['training','twilight','night'].forEach(n=>el['mission'+n.charAt(0).toUpperCase()+n.slice(1)].classList.toggle('selected',n===m));
-    el.btnStart.textContent = m==='training' ? 'BEGIN GUIDED FIRST FLIGHT' : 'DEPLOY — ' + (m==='night' ? 'NIGHT CANYON' : 'TWILIGHT CANYON');
+    tourActive=m==='tour';if(tourActive){tourStage=0;tourScores=[];currentMission=V42_TOUR[0]}else{tourStage=0;tourScores=[];currentMission=m}
+    ['training','twilight','night','storm','weekly','tour'].forEach(n=>el['mission'+n.charAt(0).toUpperCase()+n.slice(1)].classList.toggle('selected',n===m));
+    el.btnStart.textContent = m==='tour' ? 'DEPLOY — FRONTIER TOUR 1/3' : m==='training' ? 'BEGIN GUIDED FIRST FLIGHT' : 'DEPLOY — ' + (m==='night' ? 'NIGHT CANYON' : m==='storm' ? 'STORM RELIEF' : m==='weekly' ? 'WEEKLY SEEDED RESCUE' : 'TWILIGHT CANYON');refreshTempoLine();
   };
   el.missionTraining.addEventListener('click',()=>selectMission('training'));
   el.missionTwilight.addEventListener('click',()=>selectMission('twilight'));
   el.missionNight.addEventListener('click',()=>selectMission('night'));
+  el.missionStorm.addEventListener('click',()=>selectMission('storm'));
+  el.missionWeekly.addEventListener('click',()=>selectMission('weekly'));
+  el.missionTour.addEventListener('click',()=>selectMission('tour'));
   if(!save.trainingDone) selectMission('training');
   const renderRecord=()=>{
     el.callsign.value=save.callsign||'ROOK';
@@ -2330,8 +3627,11 @@ function bindInputs(){
     el.recordRows.innerHTML=rows.length?rows.map(r=>'<div class="recordRow"><span><b>'+r.mission+'</b><br>'+new Date(r.date).toLocaleDateString()+'</span><span>'+r.grade+'</span><span>'+String(r.medal||'').toUpperCase()+'</span><span>'+r.score+'<br>T'+r.tempo+'</span></div>').join(''):'<div class="recordEmpty">NO SORTIES LOGGED YET.<br>YOUR NEXT DEBRIEF STARTS THE RECORD.</div>';
   };
   el.btnRecord.addEventListener('click',()=>{renderRecord();show(el.recordOv)});
+  el.btnV4.addEventListener('click',()=>showV4Operations('main'));
+  el.btnV4Close.addEventListener('click',()=>hide(el.v4Ov));
+  el.btnReplayTrace.addEventListener('click',()=>showV4Operations('replay'));
   el.btnRecordClose.addEventListener('click',()=>{save.callsign=(el.callsign.value.trim().toUpperCase().replace(/[^A-Z0-9 -]/g,'').slice(0,12)||'ROOK');writeSave();hide(el.recordOv)});
-  el.btnStart.addEventListener('click', ()=>{ Snd.ensure(); Snd.resume(); fadeTo(()=> startApproach()); });
+  el.btnStart.addEventListener('click', ()=>{ Snd.ensure(); Snd.resume(); fadeTo(()=> startApproach(true)); });
   el.btnHow.addEventListener('click', ()=> show(el.howto));
   el.btnCrew.addEventListener('click', ()=> show(el.crewOv));
   let dbgTaps = 0, dbgLast = 0;
@@ -2339,6 +3639,7 @@ function bindInputs(){
     const now = Date.now();
     dbgTaps = (now - dbgLast < 3000) ? dbgTaps + 1 : 1; dbgLast = now;
     if(dbgTaps >= 5){ dbgTaps = 0; el.dbgPanel.classList.toggle('hidden'); }
+    else showCap('DIAGNOSTICS ACCESS '+dbgTaps+'/5',.75,'good','jace');
   });
   const dbgSeed = ()=>{ P.touchVs = -150; P.touchX = 2; P.touchSpd = 63; P.touchZ = -70; P.stopZ = -200; P.landGrade = 'GREASED'; };
   el.dbgExtract.addEventListener('click', ()=>{ dbgSeed(); hide(el.dbgPanel); hide(el.menuUI); Snd.ensure(); Snd.startEngine(); startExtract(); });
@@ -2347,8 +3648,11 @@ function bindInputs(){
   el.dbgTempo.addEventListener('click', ()=>{ save.streak = (save.streak||0) + 1; writeSave(); refreshTempoLine(); });
   el.dbgClose.addEventListener('click', ()=> hide(el.dbgPanel));
   el.tempoLine.addEventListener('click', ()=>{
+    if(tourActive){showCap('FRONTIER TOUR TEMPO BUILDS ACROSS ALL THREE OPERATIONS.',1.8,'good');return}
+    if(currentMission==='weekly'){showCap('WEEKLY CONDITIONS ARE LOCKED TO THE SHARED SEED.',1.8,'good');return}
     if(opsTempo() > 0){ save.streak = 0; writeSave(); refreshTempoLine();
       showCap('OPS TEMPO RESET — ROUTINE CONDITIONS.', 1.8, 'good'); }
+    else showCap('OPS TEMPO IS ALREADY ROUTINE.',1.4,'good');
   });
   el.btnCrewClose.addEventListener('click', ()=> hide(el.crewOv));
   el.btnHowClose.addEventListener('click', ()=> hide(el.howto));
@@ -2358,6 +3662,7 @@ function bindInputs(){
     if(!save.sound) Snd.stopEngine();
     else { Snd.ensure(); Snd.resume(); }
   });
+  el.btnGuide.addEventListener('pointerdown',()=>{el.btnGuide.dataset.intent=String(v6TouchIntent('guide'))});
   el.btnGuide.addEventListener('click', ()=>{ Snd.ensure(); Snd.resume(); guideTap(); });
   el.btnLaunch.addEventListener('click', ()=>{
     if(!P.exDone) return;
@@ -2367,15 +3672,17 @@ function bindInputs(){
   });
   el.btnCrateLoad.addEventListener('click', ()=>{ Snd.ensure(); Snd.resume(); loadCrate(); });
   el.btnRetry.addEventListener('click', ()=> retryPhase());
-  el.btnFailMenu.addEventListener('click', ()=> goMenu());
-  el.btnAgain.addEventListener('click', ()=>{ hide(el.debrief); fadeTo(()=> startApproach()); });
-  el.btnMenu2.addEventListener('click', ()=> goMenu());
+  el.btnFailMenu.addEventListener('click', ()=>{if(tourActive)resetFrontierTour();goMenu()});
+  el.btnAgain.addEventListener('click', ()=>{if(tourActive&&tourStage<V42_TOUR.length-1){tourStage++;currentMission=V42_TOUR[tourStage];hide(el.debrief);fadeTo(()=>startApproach(true))}else if(tourActive){resetFrontierTour();goMenu()}else{hide(el.debrief);fadeTo(()=>startApproach(true))}});
+  el.btnMenu2.addEventListener('click', ()=>{if(tourActive)resetFrontierTour();goMenu()});
 }
 
 /* ---------------- Resize ---------------- */
 function resize(){
   DPR = perfLite() ? 1 : Math.min(window.devicePixelRatio || 1, 1.75);
-  W = window.innerWidth; H = window.innerHeight;
+  const vv=window.visualViewport,fullW=vv?vv.width:window.innerWidth,fullH=vv?vv.height:window.innerHeight,portrait=fullH>fullW,tray=$('v6PortraitTray');
+  const trayH=portrait&&tray?Math.max(0,Math.round(tray.getBoundingClientRect().height)):0;
+  W = Math.max(320,Math.round(fullW)); H = Math.max(280,Math.round(fullH-trayH));
   cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR);
   cv.style.width = W+'px'; cv.style.height = H+'px';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -2387,19 +3694,20 @@ function resize(){
 /* ---------------- Init ---------------- */
 function init(){
   cv = $('cv'); ctx = cv.getContext('2d');
-  ['panelFlight','panelZone','panelStress','panelTimer','stressFill','timerTxt','loadTxt','loadFill',
+  ['panelFlight','panelZone','panelStress','panelTimer','stressFill','timerTxt','loadTxt','loadFill','hudEnergy','ghostBench','tourHUD',
    'caption','tcL','tcR','exUI','exBarWrap','exBar','exZone','exMarker','btnGuide','btnLaunch','flash',
-   'splash','menuUI','btnStart','btnHow','btnSound','howto','btnHowClose','missionTraining','missionTwilight','missionNight','btnRecord','recordOv','recordRows','callsign','btnRecordClose','trainingBadge',
+   'splash','menuUI','btnStart','btnHow','btnSound','howto','btnHowClose','missionTraining','missionTwilight','missionNight','missionStorm','missionWeekly','missionTour','weeklyMissionLabel','btnRecord','recordOv','recordRows','callsign','btnRecordClose','trainingBadge','btnV4','v4Ov','v4Body','btnV4Close',
    'failOv','failReason','btnRetry','btnFailMenu',
    'debrief','dbMedal','dbLand','dbExt','dbTko','dbStress','dbScore','dbBest','btnAgain','btnMenu2',
    'hudAlt','hudSpd','fade','capChip','capName','capText','crewOv','btnCrew','btnCrewClose',
    'crewImgA','crewImgR','crewImgJ','btnCrateLoad','dbSup','tempoLine','critWarn',
-   'hudAux','hudLbl3','dbAir','dbGrade','dbLandData','dbRoute','dbWeightCall','dbVerdict',
+   'hudAux','hudLbl3','dbAir','dbGrade','dbLandData','dbRoute','dbWeightCall','dbVerdict','v4Summary','btnReplayTrace',
    'dbgPanel','dbgExtract','dbgTakeoff','dbgTempo','dbgClose','menuFooter'
   ].forEach(id=>{ el[id] = $(id); });
 
   try{ reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
   loadSave();
+  loadMVPassport();applyV4Access();const wk=weeklyInfo();el.weeklyMissionLabel.textContent=wk.week+' · SAME SEED';
   el.btnSound.textContent = 'SOUND: ' + (save.sound ? 'ON' : 'OFF');
   try{ el.crewImgA.setAttribute('src', CREW.alfayed.src);
        el.crewImgR.setAttribute('src', CREW.rostova.src);
@@ -2408,8 +3716,13 @@ function init(){
   initTextures();
   resize();
   window.addEventListener('resize', resize);
+  try{const rm=window.matchMedia('(prefers-reduced-motion: reduce)');const onRM=()=>applyV4Access();rm.addEventListener?rm.addEventListener('change',onRM):rm.addListener&&rm.addListener(onRM)}catch(e){}
+  if(window.visualViewport)window.visualViewport.addEventListener('resize',resize);
   bindInputs();
-  state = 'splash'; splashTimer = 3.0;
+  const releaseControls=()=>{keys.left=keys.right=keys.up=keys.down=false;document.querySelectorAll('.tbtn.on').forEach(b=>b.classList.remove('on'));Snd.setWind(0)};
+  window.addEventListener('blur',releaseControls);document.addEventListener('visibilitychange',()=>{if(document.hidden){v6PagePaused=true;releaseControls();if(Snd.ctx&&Snd.ctx.state==='running')Snd.ctx.suspend().catch(()=>{})}else{v6PagePaused=false;lastT=performance.now();if(!v6ManualPaused)Snd.resume()}});
+  const recoverAudio=()=>{if(save.sound&&!v6ManualPaused&&!document.hidden)Snd.resume()};window.addEventListener('pageshow',recoverAudio);window.addEventListener('pointerdown',recoverAudio,{capture:true,passive:true});window.addEventListener('touchend',recoverAudio,{capture:true,passive:true});
+  setState('splash'); splashTimer = 1.25;
   rafId = requestAnimationFrame(frame);
 }
 
@@ -2419,7 +3732,7 @@ function init(){
    physics and collision geometry remain unchanged.
    ===================================================================== */
 const CIN = {
-  enabled: (function(){ try{ return localStorage.getItem('mbm_cinematic') !== '0'; }catch(e){ return true; } })(),
+  enabled: true,
   quality: Math.min(2, window.devicePixelRatio || 1),
   grain: null, grainPat: null,
   assetSlots: {
@@ -2516,7 +3829,8 @@ function cinApplyUI(){
 }
 function cinBind(){
   const b=document.getElementById('btnVisual');if(!b)return;
-  b.addEventListener('click',()=>{CIN.enabled=!CIN.enabled;try{localStorage.setItem('mbm_cinematic',CIN.enabled?'1':'0');}catch(e){}cinApplyUI();});
+  CIN.enabled=save.v6.cinematics!==false;
+  b.addEventListener('click',()=>{CIN.enabled=!CIN.enabled;save.v6.cinematics=CIN.enabled;writeSave();cinApplyUI();});
   cinApplyUI();
 }
 const _cinBindInputs=bindInputs;
@@ -2529,7 +3843,7 @@ bindInputs=function(){_cinBindInputs();cinBind();};
    on the existing painters without changing physics or collision.
    ===================================================================== */
 const PROC = {
-  quality:(function(){try{return localStorage.getItem('mbm_detail')||'high';}catch(e){return'high';}})(),
+  quality:'high',
   seed:734, mats:{}, ready:false
 };
 function procRand(seed){let s=seed>>>0;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
@@ -2545,7 +3859,7 @@ function procMakeMaterials(){
 }
 function procQualityHigh(){return PROC.quality==='high';}
 function procApplyQuality(){document.body.classList.toggle('detail-high',procQualityHigh());document.body.classList.toggle('detail-performance',!procQualityHigh());const b=document.getElementById('btnQuality');if(b)b.textContent='DETAIL: '+(procQualityHigh()?'HIGH':'PERFORMANCE');}
-function procBindQuality(){const b=document.getElementById('btnQuality');if(!b)return;b.addEventListener('click',()=>{PROC.quality=procQualityHigh()?'performance':'high';try{localStorage.setItem('mbm_detail',PROC.quality);}catch(e){}procApplyQuality();});procApplyQuality();}
+function procBindQuality(){const b=document.getElementById('btnQuality');if(!b)return;PROC.quality=save.v6.detail||'high';b.addEventListener('click',()=>{PROC.quality=procQualityHigh()?'performance':'high';save.v6.detail=PROC.quality;writeSave();procApplyQuality();});procApplyQuality();}
 function procRock(x,y,s,lit){ctx.save();ctx.translate(x,y);ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(s*.18,s*.32,s*1.1,s*.42,-.12,0,6.3);ctx.fill();const g=ctx.createLinearGradient(-s,-s,s,s);g.addColorStop(0,lit?'#a06f43':'#67492f');g.addColorStop(.55,'#4c3524');g.addColorStop(1,'#241a13');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(-s,0);ctx.lineTo(-s*.55,-s*.72);ctx.lineTo(s*.12,-s);ctx.lineTo(s*.92,-s*.18);ctx.lineTo(s*.62,s*.36);ctx.closePath();ctx.fill();ctx.strokeStyle='rgba(232,178,112,.16)';ctx.lineWidth=Math.max(1,s*.05);ctx.beginPath();ctx.moveTo(-s*.53,-s*.68);ctx.lineTo(s*.1,-s*.94);ctx.lineTo(s*.45,-s*.35);ctx.stroke();ctx.restore();}
 function procWindsock(x,y,s,t){ctx.save();ctx.translate(x,y);ctx.strokeStyle='#20221f';ctx.lineWidth=2*s;ctx.beginPath();ctx.moveTo(0,16*s);ctx.lineTo(0,-20*s);ctx.stroke();const wave=Math.sin(t*2.3)*2*s;ctx.fillStyle='#d66e42';ctx.beginPath();ctx.moveTo(0,-19*s);ctx.lineTo(25*s,-16*s+wave);ctx.lineTo(24*s,-9*s+wave);ctx.lineTo(0,-11*s);ctx.closePath();ctx.fill();ctx.fillStyle='#e8d8b9';ctx.fillRect(8*s,-16*s+wave*.32,5*s,6*s);ctx.restore();}
 function procFloodlight(x,y,s,t){ctx.save();ctx.globalCompositeOperation='screen';const g=ctx.createRadialGradient(x,y,0,x,y,55*s);g.addColorStop(0,'rgba(255,218,158,.34)');g.addColorStop(.22,'rgba(255,190,112,.12)');g.addColorStop(1,'rgba(255,170,90,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,55*s,0,6.3);ctx.fill();ctx.restore();ctx.save();ctx.strokeStyle='#343735';ctx.lineWidth=2*s;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-9*s,y+30*s);ctx.moveTo(x,y);ctx.lineTo(x+9*s,y+30*s);ctx.stroke();ctx.fillStyle='#d5c6a9';ctx.fillRect(x-7*s,y-5*s,14*s,8*s);ctx.restore();}
@@ -2587,14 +3901,37 @@ paintPlaneSide=function(cx0,cy0,u,mode){_p14PlaneSide(cx0,cy0,u,mode);if(!CIN.en
 const _p14Medics=paintMedics;
 paintMedics=function(prog,carrying,kind){_p14Medics(prog,carrying,kind);if(!CIN.enabled)return;const u=Math.min(W,900)/620,y=H*.63+40*u,x=lerp(W*.86,W*.46+132*u,clamp(prog,0,1));ctx.save();ctx.globalAlpha=.2;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(x,y+13*u,30*u,7*u,0,0,6.3);ctx.fill();ctx.restore();};
 const _p14Render=render;
-render=function(dt){_p14Render(dt);procWorldDetails();};
+render=function(dt){_p14Render(dt);procWorldDetails();v6DrawPresentation();};
 const _p14Bind=bindInputs;
 bindInputs=function(){_p14Bind();procBindQuality();};
 
 init();
 </script>
-<footer><p class="mbm-contact" style="text-align:center;font-size:.85rem;opacity:.85;margin:16px auto 10px;max-width:90%">Questions, ideas or bug reports — <a href="mailto:contactmadebymatt@gmail.com" style="color:inherit;font-weight:600">contactmadebymatt@gmail.com</a></p>
+<footer hidden inert aria-hidden="true"><p class="mbm-contact" style="text-align:center;font-size:.85rem;opacity:.85;margin:16px auto 10px;max-width:90%">Questions, ideas or bug reports — <a href="mailto:contactmadebymatt@gmail.com" tabindex="-1" style="color:inherit;font-weight:600">contactmadebymatt@gmail.com</a></p>
 </footer>
+
+<style id="mbm-v42-shell-style">
+#mbm-v42-badge{display:none;position:fixed;left:max(6px,env(safe-area-inset-left));bottom:max(6px,env(safe-area-inset-bottom));z-index:2147483000;border:1px solid rgba(115,238,255,.52);border-radius:999px;background:rgba(3,10,18,.78);color:#bff7ff;padding:5px 8px;font:700 9px/1.1 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.08em;cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 0 14px rgba(43,220,255,.12);opacity:.78}
+#mbm-v42-badge:hover,#mbm-v42-badge:focus-visible{opacity:1;outline:2px solid #fff;outline-offset:2px}
+#mbm-v42-panel{position:fixed;left:max(8px,env(safe-area-inset-left));bottom:40px;z-index:2147483000;width:min(340px,calc(100vw - 16px));padding:12px;border:1px solid rgba(115,238,255,.48);border-radius:12px;background:rgba(3,9,17,.96);color:#eafcff;font:12px/1.45 system-ui,sans-serif;box-shadow:0 12px 40px #000a;backdrop-filter:blur(14px)}
+#mbm-v42-panel[hidden]{display:none}#mbm-v42-panel b{color:#79efff;letter-spacing:.08em}#mbm-v42-panel small{display:block;color:#a9bec8;margin-top:6px}
+#mbm-context-recovery{position:fixed;inset:0;z-index:2147483500;display:none;place-items:center;padding:24px;background:rgba(2,5,10,.94);color:#fff;text-align:center;font:600 16px/1.55 system-ui,sans-serif}#mbm-context-recovery.show{display:grid}#mbm-context-recovery b{display:block;color:#79efff;font-size:22px;margin-bottom:8px}
+@media (prefers-reduced-motion:reduce){#mbm-v42-badge,#mbm-v42-panel{backdrop-filter:none}}
+@media (orientation:portrait){#mbm-v42-panel{bottom:calc(var(--v6-tray-h) + 58px)}}
+</style>
+<script id="mbm-v42-shell">
+(()=>{'use strict';
+  const features=Object.freeze(['world-first portrait cockpit','120 Hz interpolated presentation','touch-intent rescue controls','landing and hoist trajectories','skippable approach director','clutch rescue focus','extraction ascension','compressed WebAudio master bus','schema-6 atomic profile','Frontier Tour authority']);
+  const selfTest=()=>{const meta=document.querySelector('meta[name="mbm-game-id"]'),checks={identity:document.title.includes('V6')&&V6_GAME_ID==='medevac-frontier'&&MV_GAME_ID===V6_GAME_ID&&!!meta&&meta.content===V6_GAME_ID,legacyAuthority:MV_LEGACY_GAME_ID==='medevac',canvas:!!document.getElementById('cv'),portraitTray:!!document.getElementById('v6PortraitTray'),cinemaModal:!!document.querySelector('#v6CinemaModal[role="dialog"][aria-modal="true"]'),skip:!!document.getElementById('v6CinemaSkip'),interpolation:typeof v41Render==='function'&&FIXED_H===1/120,audio:!!Snd&&typeof Snd.ensure==='function',profile:SAVE_KEY==='mbm_medevac_v6_profile'&&V6_PROFILE_SCHEMA===6,tour:Array.isArray(V42_TOUR)&&V42_TOUR.length===3};return{ok:Object.values(checks).every(Boolean),version:'6.0.0',gameId:V6_GAME_ID,checks}};
+  const release=Object.freeze({game:V6_GAME_ID,gameId:V6_GAME_ID,version:'6.0.0',release:'6.0.0',saveSchema:6,physicsHz:120,features,selfTest,feature:'Frontier Tour now flies inside a V6 world-first cinematic rescue shell without changing scored MV120 authority.',simulationCompatibility:'V4/V4.1 mission physics, deterministic seeds, scores, records and Frontier Tour rules remain authoritative'});
+  window.__MBM_RELEASE__=release;window.__MBM_V6_RELEASE__=release;document.documentElement.dataset.mbmRelease='6.0.0';
+  const badge=document.createElement('button');badge.id='mbm-v42-badge';badge.type='button';badge.textContent='V6 · ASCENSION';badge.setAttribute('aria-expanded','false');badge.setAttribute('aria-controls','mbm-v42-panel');
+  const panel=document.createElement('aside');panel.id='mbm-v42-panel';panel.hidden=true;panel.innerHTML='<b>V6 ASCENSION RELEASE</b><div></div><small>120 Hz deterministic authority · high-refresh interpolation · schema-6 profile · V4 Sports Passport compatibility.</small>';panel.querySelector('div').textContent=release.feature;
+  badge.addEventListener('click',()=>{panel.hidden=!panel.hidden;badge.setAttribute('aria-expanded',String(!panel.hidden))});document.body.append(panel,badge);
+  const recovery=document.createElement('div');recovery.id='mbm-context-recovery';recovery.setAttribute('role','status');recovery.setAttribute('aria-live','assertive');recovery.innerHTML='<div><b>GRAPHICS DEVICE RECOVERING</b>The game is paused while the browser restores WebGL.<br>Your local save and V4 Passport are safe.</div>';document.body.appendChild(recovery);
+  document.querySelectorAll('canvas').forEach(canvas=>{canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();recovery.classList.add('show')});canvas.addEventListener('webglcontextrestored',()=>recovery.classList.remove('show'))});
+})();
+</script>
 <script defer src="/hud.js"></script>
 </body>
 </html>
