@@ -377,8 +377,8 @@ async function selftest(fixture) {
     ));
     const noBackup = make('control-c2-no-backup.html', mutateOnce(
       curl,
-      "catch(error){safeSet(PASSPORT_KEY+'_corrupt_backup',raw);return Runtime.defaultPassport();}",
-      'catch(error){return Runtime.defaultPassport();}',
+      "catch(error){safeSet(PASSPORT_KEY+'_corrupt_backup',raw);}",
+      'catch(error){}',
       'C2 backup removal',
     ));
     const bannedNode = make('control-c5-banned-node.html', mutateOnce(
