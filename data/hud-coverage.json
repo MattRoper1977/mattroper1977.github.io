@@ -26,6 +26,24 @@
    ]
   },
   {
+   "route": "/apexgolf/",
+   "verifier": "tools/verify_apexgolf.js",
+   "gates": [
+    "single-file: zero script-src dependencies",
+    "zero runtime network requests"
+   ],
+   "note": "Apex Golf V6 is a self-contained one-file game. The generated inline exit preserves that contract while restoring the platform way out omitted by the received payload."
+  },
+  {
+   "route": "/apextennis/",
+   "verifier": "tools/verify_apextennis.js",
+   "gates": [
+    "zero external runtime requests",
+    "single-file size and source identity"
+   ],
+   "note": "Apex Tennis V6 is a self-contained one-file game. The generated inline exit adds no dependency and restores the platform way out omitted by the received payload."
+  },
+  {
    "route": "/apexrally/",
    "verifier": "tools/verify_apexrally.js",
    "gates": [

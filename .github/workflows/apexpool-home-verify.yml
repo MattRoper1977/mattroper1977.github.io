@@ -74,11 +74,11 @@ jobs:
           set -euo pipefail
           test -f apexgolf/index.html
           test -f apextennis/index.html
-          # These are release identity pins for the two game bytes this workflow
-          # depends on. Updating either game without updating this gate must go
-          # red on that same commit.
-          test "$(sha256sum apextennis/index.html | awk '{print $1}')" = "8edc53112c95051feea4dd90a1dd7dc69aa9032c6fc44742ae1e7834a332778a"
-          test "$(sha256sum apexgolf/index.html | awk '{print $1}')" = "c44ec58938e300b7cc7929be2d38624b6e854e7e46bbec5e7ab1b784371948c3"
+          # Each hash below is a pinned release identity for the game on its
+          # line. Updating either game without updating this gate must go red on
+          # that same commit.
+          test "$(sha256sum apextennis/index.html | awk '{print $1}')" = "fd45a8f6c594ff09b11d80d408eed8b38fe8f7252e337bdcea21a9824e089f17"
+          test "$(sha256sum apexgolf/index.html | awk '{print $1}')" = "4411ff5b9a22e21acbeb91fb75863c6452e1e484bb6d963383f2343916a6ba6a"
 
       - name: Capture the measured 12-door main baseline
         shell: bash
@@ -147,6 +147,8 @@ jobs:
             fi
             echo "PASS mutation ${family} rejected" | tee -a artifacts/apextennis-home/nonvacuity.log
           }
+          # This is the three established Apex launch games used by the
+          # mutation controls below, not the shelf's current title inventory.
           cp main/index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
           python3 - <<'PY'
           from pathlib import Path

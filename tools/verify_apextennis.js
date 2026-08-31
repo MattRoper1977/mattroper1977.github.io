@@ -7,7 +7,8 @@ const SENTINEL='apextennis-build-2026-08-04';
 const html=fs.readFileSync(FILE,'utf8');
 const bytes=Buffer.byteLength(html);
 const sha=crypto.createHash('sha256').update(html).digest('hex');
-const EXPECTED_V6_SHA256='8edc53112c95051feea4dd90a1dd7dc69aa9032c6fc44742ae1e7834a332778a';
+// Pinned release identity for the complete delivered Apex Tennis V6 file.
+const EXPECTED_V6_SHA256='fd45a8f6c594ff09b11d80d408eed8b38fe8f7252e337bdcea21a9824e089f17';
 const results=[];
 function assert(x,m){if(!x)throw new Error(m)}
 function gate(id,name,fn){try{const d=fn()||'';results.push({id,name,status:'PASS',detail:d});console.log(`PASS ${id} ${name}${d?' — '+d:''}`)}catch(e){results.push({id,name,status:'FAIL',detail:e.message});console.error(`FAIL ${id} ${name} — ${e.message}`)}}
