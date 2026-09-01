@@ -10,7 +10,7 @@ const {server,base}=await serve(dir);const browser=await launch();
 const ctx=await phoneContext(browser,{width:412,height:915,coarse:true,reducedMotion:reduced});
 const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e.message||e)));
 const cdp=await coarsePointer(page);const url=`${base}/${name}`;const failed=await lockNetwork(page,url);
-await page.goto(url);await waitForGame(page);await page.waitForTimeout(500);const css=arg('--css','');if(css)await page.addStyleTag({content:css});const js=arg('--js','');if(js)await page.evaluate(js);
+await page.goto(url);await waitForGame(page);await page.waitForTimeout(500);await page.evaluate(()=>{const b=document.querySelector('.mbm-v5-coach-skip');if(b)b.click();});const css=arg('--css','');if(css)await page.addStyleTag({content:css});const js=arg('--js','');if(js)await page.evaluate(js);
 await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
 const res=await page.evaluate(async (seconds)=>{
   const A=window.__MBM_TITAN_AAA__,ctl=A.getController(),V2=window.__MBM_TITAN_MOBILE_V2__;

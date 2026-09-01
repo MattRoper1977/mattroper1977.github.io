@@ -96,6 +96,39 @@ rep('P4','V4 announcer seam (one live region for every announcement)',
  'API.saveKey=SAVE_KEY;API.dnaSaveKey=DNA_KEY;API.getState=function(){return JSON.parse(JSON.stringify(state));};',
  'API.saveKey=SAVE_KEY;API.dnaSaveKey=DNA_KEY;API.announce=announce;API.getState=function(){return JSON.parse(JSON.stringify(state));};')
 
+# ---------------- P5 ----------------
+rep('P5','A3 core hook __MBM_TITAN_GEM_GRANT__ consumed on the next lift',
+ 'gems:je.gems+(D0?1:0),reps:je.reps+1,',
+ 'gems:je.gems+(D0?1:0)+(window.__MBM_TITAN_GEM_GRANT__>0?(window.__MBM_TITAN_GEM_GRANT__=0,1):0),reps:je.reps+1,')
+rep('P5','A1/A6 V3 fresh state carries music + coachSeen',
+ 'function fresh(){return {schema:1,build:"mobile-v3",owned:["ember"],aura:"ember",setIndex:-1,setGrades:[],nextMult:1,nextLabel:"",lastDay:"",streak:0,cleanSets:0,flawlessSets:0,hintSeen:false,auraOpen:false,updatedAt:Date.now()};}',
+ 'function fresh(){return {schema:1,build:"mobile-v3",owned:["ember"],aura:"ember",setIndex:-1,setGrades:[],nextMult:1,nextLabel:"",lastDay:"",streak:0,cleanSets:0,flawlessSets:0,hintSeen:false,auraOpen:false,music:false,coachSeen:false,updatedAt:Date.now()};}')
+rep('P5','A1/A6 V3 load keeps music + coachSeen',
+ 'b.hintSeen=!!r.hintSeen;b.auraOpen=!!r.auraOpen;return b;}',
+ 'b.hintSeen=!!r.hintSeen;b.auraOpen=!!r.auraOpen;b.music=!!r.music;b.coachSeen=!!r.coachSeen;return b;}')
+rep('P5','A6 V3 one-time hint retired (coach overlay replaces it)',
+ 'if(!state.hintSeen){var hint=node("div","mbm-v3-hint",',
+ 'if(false){var hint=node("div","mbm-v3-hint",')
+rep('P5','A1/A6 V3 flag setter seam',
+ 'API.saveKey=V3_KEY;API.toast=toast;',
+ 'API.saveKey=V3_KEY;API.toast=toast;API.setFlag=function(k,v){if(k==="music"||k==="coachSeen"||k==="hintSeen"){state[k]=!!v;persist();return true;}return false;};')
+rep('P5','A9 V3 toast forwards to the one announcer',
+ 'function toast(title,sub,gold){if(!refs.toast)return;',
+ 'function toast(title,sub,gold){var v4=window.__MBM_TITAN_V4__;if(v4&&v4.announce)v4.announce(title+(sub?" · "+sub:""));if(!refs.toast)return;')
+rep('P5','A3 AAA brace hook __MBM_TITAN_BRACE_MS__',
+ 'if(elapsed>=(this.bossRep?1400:750))this.beginEccentric();',
+ 'if(elapsed>=(this.bossRep?1400:(window.__MBM_TITAN_BRACE_MS__>0?window.__MBM_TITAN_BRACE_MS__:750)))this.beginEccentric();')
+rep('P5','A9 AAA prompt announcements go to the one announcer',
+ 'PhaseController.prototype.setPrompt=function(text,announce){if(refs.phasePrompt)refs.phasePrompt.textContent=text;if(announce&&refs.live)refs.live.textContent=text;};',
+ 'PhaseController.prototype.setPrompt=function(text,announce){if(refs.phasePrompt)refs.phasePrompt.textContent=text;if(announce){var v4=window.__MBM_TITAN_V4__;if(v4&&v4.announce)v4.announce(text);else if(refs.live)refs.live.textContent=text;}};')
+rep('P5','A9 AAA trial announcements go to the one announcer',
+ 'if(refs.live)refs.live.textContent=live?"Trial started: rapid single-tap lifts on the gold timing meter":"Trial finished";',
+ 'var v4a=window.__MBM_TITAN_V4__,trialText=live?"Trial started: rapid single-tap lifts on the gold timing meter":"Trial finished";if(v4a&&v4a.announce)v4a.announce(trialText);else if(refs.live)refs.live.textContent=trialText;')
+
+rep('P5','A9 V4 announcer keeps a lift line on screen for 1.5 s; later prompts append instead of replacing',
+ 'function announce(text){if(refs.live)refs.live.textContent=text;}',
+ 'function announce(text){if(!refs.live)return;var hold=window.__MBM_TITAN_ANNOUNCE_HOLD__;if(hold&&Date.now()<hold.until&&text!==hold.text){refs.live.textContent=hold.text+" · "+text;return;}refs.live.textContent=text;}')
+
 # ---------------- V5 layer assembly ----------------
 blocks=[]
 def block(phase,name,kind):
@@ -114,6 +147,7 @@ block('P2','v5-core.js','js')
 block('P3','v5-graphics.js','js')
 block('P4','v5-qr.js','js')
 block('P4','v5-duel.js','js')
+block('P5','v5-music.js','js')
 block('P5','v5-polish.js','js')
 marker='<!-- MBM TITAN FORGE RELEASE V4: END -->\n'
 assert text.count(marker)==1
