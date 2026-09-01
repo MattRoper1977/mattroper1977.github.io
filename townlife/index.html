@@ -3414,7 +3414,7 @@ function applyCalm(){
   var button=document.getElementById('v6TownCalm');
   if(button){button.setAttribute('aria-pressed',profile.settings.calm?'true':'false');button.textContent=profile.settings.calm?'Calm presentation: on':'Calm presentation: off';}
 }
-if(reduceQuery){var reduceChanged=function(event){reduced=!!event.matches;applyCalm();};if(reduceQuery.addEventListener)reduceQuery.addEventListener('change',reduceChanged);else if(reduceQuery.addListener)reduceQuery.addListener(reduceChanged);}
+if(reduceQuery){var reduceChanged=function(event){reduced=!!event.matches;applyCalm();requestAdvisory();};if(reduceQuery.addEventListener)reduceQuery.addEventListener('change',reduceChanged);else if(reduceQuery.addListener)reduceQuery.addListener(reduceChanged);}
 
 var canvas=document.getElementById('game'),advisory=document.getElementById('v6TownAdvisory'),ax=advisory.getContext('2d');
 var intro=document.getElementById('v6TownIntro'),skip=document.getElementById('v6TownSkip'),director=document.getElementById('v6TownDirector');
@@ -3428,7 +3428,7 @@ mobile.setAttribute('role','group');mobile.setAttribute('aria-label','Town Life 
 var comfort=null;
 Array.prototype.forEach.call(document.querySelectorAll('#settingsModal .card'),function(card){var heading=card.querySelector('h3');if(heading&&/Comfort/i.test(heading.textContent))comfort=card;});
 if(comfort&&!document.getElementById('v6TownCalm')){
-  var calmButton=document.createElement('button');calmButton.id='v6TownCalm';calmButton.type='button';calmButton.className='btn';calmButton.addEventListener('click',function(){profile.settings.calm=!profile.settings.calm;saveProfile();applyCalm();tone(profile.settings.calm?330:660,.1,.018);});comfort.appendChild(calmButton);
+  var calmButton=document.createElement('button');calmButton.id='v6TownCalm';calmButton.type='button';calmButton.className='btn';calmButton.addEventListener('click',function(){profile.settings.calm=!profile.settings.calm;saveProfile();applyCalm();requestAdvisory();tone(profile.settings.calm?330:660,.1,.018);});comfort.appendChild(calmButton);
 }
 applyCalm();
 
@@ -3437,12 +3437,12 @@ var introOpen=false,introTimer=0,lastFocus=null;
 function isolateIntro(on){backgroundNodes.forEach(function(node){if(!node)return;if(on)node.setAttribute('inert','');else node.removeAttribute('inert');});}
 function closeIntro(){
   if(!introOpen)return;introOpen=false;clearTimeout(introTimer);intro.hidden=true;intro.setAttribute('aria-hidden','true');isolateIntro(false);tone(660,.14,.02);
-  var target=lastFocus&&lastFocus.isConnected?lastFocus:(welcome.style.display==='none'?canvas:document.getElementById('startBtn'));if(target&&target.focus)target.focus({preventScroll:true});
+  var target=lastFocus&&lastFocus.isConnected?lastFocus:(welcome.style.display==='none'?canvas:document.getElementById('startBtn'));if(target&&target.focus)target.focus({preventScroll:true});requestAdvisory();
 }
 function openIntro(){
   if(introOpen||calm())return;introOpen=true;lastFocus=document.activeElement;intro.hidden=false;intro.setAttribute('aria-hidden','false');isolateIntro(true);
   try{document.dispatchEvent(new Event('pointerdown',{bubbles:true}));}catch(e){}
-  skip.focus({preventScroll:true});tone(196,.35,.02);tone(392,.45,.013,.08);introTimer=setTimeout(closeIntro,2450);
+  skip.focus({preventScroll:true});requestAdvisory();tone(196,.35,.02);tone(392,.45,.013,.08);introTimer=setTimeout(closeIntro,2450);
 }
 skip.addEventListener('click',closeIntro);
 intro.addEventListener('keydown',function(event){if(event.key==='Escape'||event.key==='Enter'||event.key===' '){event.preventDefault();closeIntro();}else if(event.key==='Tab'){event.preventDefault();skip.focus();}});
@@ -3459,31 +3459,31 @@ function direct(text){
 }
 document.getElementById('startBtn').addEventListener('click',function(){setTimeout(function(){direct('NORTHSTAR CAMERA · ON FOOT');tone(440,.12,.016);canvas.focus({preventScroll:true});},0);});
 var lastVehicle=(document.getElementById('vehicleLabel').textContent||'').trim();
-new MutationObserver(function(){var value=(document.getElementById('vehicleLabel').textContent||'').trim();if(value!==lastVehicle){lastVehicle=value;direct(value==='Driving'?'ROAD CAMERA · DRIVING':'STREET CAMERA · '+value.toUpperCase());}}).observe(document.getElementById('vehicleLabel'),{childList:true,subtree:true});
+new MutationObserver(function(){var value=(document.getElementById('vehicleLabel').textContent||'').trim();if(value!==lastVehicle){lastVehicle=value;direct(value==='Driving'?'ROAD CAMERA · DRIVING':'STREET CAMERA · '+value.toUpperCase());requestAdvisory();}}).observe(document.getElementById('vehicleLabel'),{childList:true,subtree:true});
 
 var visibilityOpen=false;
 function townStarted(){return welcome.style.display==='none'&&window.__MBM_TOWN_LIFE_READY__===true;}
 function openVisibility(){
-  if(visibilityOpen||!townStarted()||introOpen)return;visibilityOpen=true;visibility.style.display='grid';visibility.setAttribute('aria-hidden','false');setTimeout(function(){if(!document.hidden)resume.focus({preventScroll:true});},0);
+  if(visibilityOpen||!townStarted()||introOpen)return;visibilityOpen=true;visibility.style.display='grid';visibility.setAttribute('aria-hidden','false');requestAdvisory();setTimeout(function(){if(!document.hidden)resume.focus({preventScroll:true});},0);
 }
 function closeVisibility(){
-  if(!visibilityOpen)return;visibilityOpen=false;visibility.style.display='none';visibility.setAttribute('aria-hidden','true');lastFrameTime=performance.now();tone(520,.11,.018);canvas.focus({preventScroll:true});direct('NORTHSTAR CAMERA · RESUMED');
+  if(!visibilityOpen)return;visibilityOpen=false;visibility.style.display='none';visibility.setAttribute('aria-hidden','true');lastFrameTime=performance.now();requestAdvisory();tone(520,.11,.018);canvas.focus({preventScroll:true});direct('NORTHSTAR CAMERA · RESUMED');
 }
 resume.addEventListener('click',closeVisibility);
 visibility.addEventListener('keydown',function(event){if(event.key==='Escape'||event.key==='Enter'){event.preventDefault();closeVisibility();}else if(event.key==='Tab'){event.preventDefault();resume.focus();}});
 document.addEventListener('visibilitychange',function(){
-  held={};if(document.hidden){openVisibility();if(MasterBus.ctx&&MasterBus.ctx.state==='running')MasterBus.ctx.suspend().catch(function(){});}else if(visibilityOpen)setTimeout(function(){resume.focus({preventScroll:true});},0);
+  held={};if(document.hidden){openVisibility();if(MasterBus.ctx&&MasterBus.ctx.state==='running')MasterBus.ctx.suspend().catch(function(){});}else if(visibilityOpen)setTimeout(function(){resume.focus({preventScroll:true});},0);requestAdvisory();
 });
 
 var held={},lastIntent='';
 function setIntent(text){if(text===lastIntent)return;lastIntent=text;intent.textContent=text;}
 function keyName(event){var key=(event.key||'').toLowerCase();return key==='arrowup'?'w':key==='arrowdown'?'s':key==='arrowleft'?'a':key==='arrowright'?'d':key;}
-addEventListener('keydown',function(event){var key=keyName(event);if(['w','a','s','d',' '].indexOf(key)>=0)held[key]=true;},{passive:true});
-addEventListener('keyup',function(event){delete held[keyName(event)];},{passive:true});
+addEventListener('keydown',function(event){var key=keyName(event);if(['w','a','s','d',' '].indexOf(key)>=0){held[key]=true;requestAdvisory();}},{passive:true});
+addEventListener('keyup',function(event){delete held[keyName(event)];requestAdvisory();},{passive:true});
 Array.prototype.forEach.call(mobile.querySelectorAll('[data-key],[data-tap]'),function(button){
   var key=button.getAttribute('data-key'),tap=button.getAttribute('data-tap');
-  button.addEventListener('pointerdown',function(){if(key)held[key]=true;setIntent(tap==='interact'?'INTERACT':tap==='vehicle'?'ENTER / EXIT':tap==='horn'?'HORN':tap==='nitro'?'NITRO':key===' '?'DRIFT':key==='w'?'MOVE NORTH':key==='s'?'MOVE SOUTH':key==='a'?'STEER LEFT':'STEER RIGHT');},{passive:true});
-  ['pointerup','pointercancel','pointerleave'].forEach(function(type){button.addEventListener(type,function(){if(key)delete held[key];},{passive:true});});
+  button.addEventListener('pointerdown',function(){if(key)held[key]=true;setIntent(tap==='interact'?'INTERACT':tap==='vehicle'?'ENTER / EXIT':tap==='horn'?'HORN':tap==='nitro'?'NITRO':key===' '?'DRIFT':key==='w'?'MOVE NORTH':key==='s'?'MOVE SOUTH':key==='a'?'STEER LEFT':'STEER RIGHT');requestAdvisory();},{passive:true});
+  ['pointerup','pointercancel','pointerleave'].forEach(function(type){button.addEventListener(type,function(){if(key)delete held[key];requestAdvisory();},{passive:true});});
   button.addEventListener('click',function(event){if(event.detail!==0)return;var map=tap==='interact'?'e':tap==='vehicle'?'f':tap==='horn'?'x':tap==='nitro'?'n':key;if(!map)return;window.dispatchEvent(new KeyboardEvent('keydown',{key:map,bubbles:true}));setTimeout(function(){window.dispatchEvent(new KeyboardEvent('keyup',{key:map,bubbles:true}));},90);});
 });
 
@@ -3522,7 +3522,19 @@ function drawAdvisory(now){
     else if(up||down||left||right)setIntent('WALK INTENT');else setIntent(heat?'THREAT · '+police:'ROUTE READY');
   }
 }
-addEventListener('resize',sizeAdvisory,{passive:true});
+// Grafted from Nova Siege's MutationObserver-driven presentation cues: only
+// changed gameplay state requests a full-viewport advisory repaint. Requests
+// are coalesced to the declared 10 Hz presentation ceiling.
+var advisoryTimer=0,lastAdvisoryPaint=-Infinity;
+function requestAdvisory(){
+  if(advisoryTimer)return;
+  var delay=Math.max(0,100-(performance.now()-lastAdvisoryPaint));
+  advisoryTimer=setTimeout(function(){advisoryTimer=0;lastAdvisoryPaint=performance.now();drawAdvisory(lastAdvisoryPaint);},delay);
+}
+var advisoryObserved={};
+['heatLabel','jobsLabel','slipLabel','policeStateLabel'].forEach(function(id){var node=document.getElementById(id);if(!node)return;advisoryObserved[id]=node.textContent;new MutationObserver(function(){var value=node.textContent;if(value===advisoryObserved[id])return;advisoryObserved[id]=value;requestAdvisory();}).observe(node,{childList:true,subtree:true,characterData:true});});
+new MutationObserver(requestAdvisory).observe(welcome,{attributes:true,attributeFilter:['style']});
+addEventListener('resize',function(){sizeAdvisory();requestAdvisory();},{passive:true});
 
 function hashNoiseFixture(x,y){var n=(x*374761393+y*668265263)>>>0;n=(n^(n>>13))*1274126177>>>0;return((n^(n>>16))>>>0)/4294967295;}
 window.__MBM_V6_RELEASE__={
@@ -3551,7 +3563,7 @@ window.__MBM_V6_RELEASE__={
     return{ok:Object.keys(checks).every(function(key){return checks[key];}),pass:Object.keys(checks).every(function(key){return checks[key];}),version:VERSION,gameId:GAME_ID,checks:checks,authority:this.authority,profileVersion:profile.version,legacyPresent:migration.sourcePresent,fixture:fixture,duplicates:duplicates};
   }
 };
-sizeAdvisory();setInterval(drawAdvisory,100);drawAdvisory();
+sizeAdvisory();lastAdvisoryPaint=performance.now();drawAdvisory(lastAdvisoryPaint);
 })();
 </script>
 <!-- MBM-V6-TOWN:END -->
