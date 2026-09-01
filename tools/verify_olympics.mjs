@@ -127,14 +127,16 @@ async function startChampionship(page, mode = 'ultimate') {
      separate page tasks left a race where the timer could remove the node
      between the two, producing a null.click() crash instead of a judgement.
      Sight and activation are one atomic predicate here, and it only resolves
-     after a genuinely visible skip control has received the click. */
+     after a genuinely visible skip control has received the click AND the
+     product has synchronously removed the intro. A delivered synthetic click
+     is not itself evidence that the product handled it. */
   await page.waitForFunction(() => {
     const button = document.querySelector('#v6-intro .v6-skip');
     if (!button) return false;
     const style = getComputedStyle(button), rect = button.getBoundingClientRect();
     if (style.display === 'none' || style.visibility === 'hidden' || rect.width === 0 || rect.height === 0) return false;
     button.click();
-    return true;
+    return !document.getElementById('v6-intro');
   }, null, { timeout: 3000 });
   await page.waitForSelector('#v6-intro', { state: 'detached', timeout: 3000 });
   await page.waitForSelector('[data-mode]', { timeout: 12000 });
