@@ -158,7 +158,7 @@
     var dhud=el("div","mbm-v5-duelhud mbm-v5-dailyhud",'<div class="mbm-v5-clock"><b class="mbm-v5-hud-clock">—</b><span class="mbm-v5-hud-label">DAILY</span></div><div class="mbm-v5-bar mbm-v5-me"><span class="mbm-v5-hud-me-name">POWER</span><i><b></b></i><em class="mbm-v5-hud-me">0</em></div><div class="mbm-v5-bar mbm-v5-them"><span class="mbm-v5-hud-them-name">TARGET</span><i><b></b></i><em class="mbm-v5-hud-them">0</em></div>');dhud.hidden=true;dhud.setAttribute("aria-hidden","true");arena.appendChild(dhud);refs.dhud=dhud;
     window.addEventListener("mbm:titan-lift",onLift);window.addEventListener("mbm:titan-lift",liftLine);window.addEventListener("mbm:titan-form-result",onForm);window.addEventListener("mbm:titan-ascend",onAscend);
     buildRecordsTab();soundHonesty();oneAnnouncer();dailyToday();
-    if(window.MutationObserver)new MutationObserver(function(){setTimeout(function(){injectDaily();injectSettings();oneAnnouncer();},0);}).observe(document.body,{childList:true});
+    if(window.MutationObserver){new MutationObserver(function(){setTimeout(function(){injectDaily();injectSettings();oneAnnouncer();},0);}).observe(document.body,{childList:true});new MutationObserver(function(){if(arena.querySelector(".trial-result"))pollStates();}).observe(arena,{childList:true});}
     setInterval(pollStates,1000);pollStates();buildCoach();
     try{var done=sessionStorage.getItem("mbm_titanforge_reset_done");if(done){sessionStorage.removeItem("mbm_titanforge_reset_done");announce("PROGRESS RESET · "+done+" SAVES CLEARED");}}catch(e){}
     built=true;G.polishReady=true;return true;}

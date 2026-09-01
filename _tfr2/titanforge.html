@@ -1247,6 +1247,7 @@ lucide-react/dist/esm/lucide-react.mjs:
   .mbm-v5-rim{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;background-color:var(--mbm-key);-webkit-mask-image:var(--mbm-rim-mask),radial-gradient(ellipse at 74% 16%,#000 0,rgba(0,0,0,.45) 34%,transparent 64%);mask-image:var(--mbm-rim-mask),radial-gradient(ellipse at 74% 16%,#000 0,rgba(0,0,0,.45) 34%,transparent 64%);-webkit-mask-composite:source-in;mask-composite:intersect;-webkit-mask-size:contain,100% 100%;mask-size:contain,100% 100%;-webkit-mask-position:center bottom,center;mask-position:center bottom,center;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;transition:background-color .6s ease,opacity .6s ease}
   .mbm-v5-rim.mbm-v5-on{opacity:.3}
   .fighter-stage.mbm-webgl-ready .mbm-v5-rim{display:none}
+  #mbm-titan-fallback-fx{will-change:transform}
   /* G4 squash-and-stretch + 4 % camera push (replaces .mbm-v3-punch). The push is a keyframe on the stage
      itself so nothing outside the stage recomputes. */
   .arena.mbm-v3-punch{animation:none!important}
@@ -1941,7 +1942,7 @@ lucide-react/dist/esm/lucide-react.mjs:
     var dhud=el("div","mbm-v5-duelhud mbm-v5-dailyhud",'<div class="mbm-v5-clock"><b class="mbm-v5-hud-clock">—</b><span class="mbm-v5-hud-label">DAILY</span></div><div class="mbm-v5-bar mbm-v5-me"><span class="mbm-v5-hud-me-name">POWER</span><i><b></b></i><em class="mbm-v5-hud-me">0</em></div><div class="mbm-v5-bar mbm-v5-them"><span class="mbm-v5-hud-them-name">TARGET</span><i><b></b></i><em class="mbm-v5-hud-them">0</em></div>');dhud.hidden=true;dhud.setAttribute("aria-hidden","true");arena.appendChild(dhud);refs.dhud=dhud;
     window.addEventListener("mbm:titan-lift",onLift);window.addEventListener("mbm:titan-lift",liftLine);window.addEventListener("mbm:titan-form-result",onForm);window.addEventListener("mbm:titan-ascend",onAscend);
     buildRecordsTab();soundHonesty();oneAnnouncer();dailyToday();
-    if(window.MutationObserver)new MutationObserver(function(){setTimeout(function(){injectDaily();injectSettings();oneAnnouncer();},0);}).observe(document.body,{childList:true});
+    if(window.MutationObserver){new MutationObserver(function(){setTimeout(function(){injectDaily();injectSettings();oneAnnouncer();},0);}).observe(document.body,{childList:true});new MutationObserver(function(){if(arena.querySelector(".trial-result"))pollStates();}).observe(arena,{childList:true});}
     setInterval(pollStates,1000);pollStates();buildCoach();
     try{var done=sessionStorage.getItem("mbm_titanforge_reset_done");if(done){sessionStorage.removeItem("mbm_titanforge_reset_done");announce("PROGRESS RESET · "+done+" SAVES CLEARED");}}catch(e){}
     built=true;G.polishReady=true;return true;}
