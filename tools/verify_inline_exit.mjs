@@ -358,6 +358,15 @@ async function main() {
           await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, CHOICE]);
           await page.reload({ waitUntil: 'domcontentloaded', timeout: NAV_MS });
           await page.waitForTimeout(SETTLE_MS);
+          /* Drain product autofocus before resetting focus for the real Tab
+             walk.  Olympics showScreen() queues its initial focus in rAF; on
+             a slow renderer that callback can otherwise land mid-walk and
+             make the identity-based cycle detector stop before the exits.
+             Two actual frames are a readiness condition, not extra settling
+             time: the first runs callbacks already queued by the product and
+             the second proves that queue has yielded back to the verifier. */
+          await page.evaluate(() => new Promise(resolve =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve))));
         } catch (e) {
           check(false, `${vp}px ${t.route}: loads within ${NAV_MS} ms`, String(e).slice(0, 100));
           continue;
