@@ -224,11 +224,26 @@ async function sweepCombination(browser, origin, engine, viewport) {
     assert(await page.evaluate(() => document.hasFocus()),
       `${engine} ${viewport.width}x${viewport.height}: the page never took focus (on arrival: ${focusOnArrival}), so a window-level keydown could not arrive — the harness's setup, not Town Life's input`);
 
-    await page.evaluate(() => window.MBMTownLifeQA.teleport(1200, 900));
+    // Graft the condition-wait movement probe from verify.mjs. The full sweep
+    // proved the old 1200,900 + 350 ms hold still returned 1200 -> 1200 in
+    // focused WebKit after four other surfaces completed their ten-minute
+    // idles. The open central road removes wall geometry from the decision.
+    await page.evaluate(() => window.MBMTownLifeQA.teleport(1400, 1420));
     const beforeInput = await page.evaluate(() => window.MBMTownLifeQA.getEntities().player.x);
     await page.keyboard.down('d');
-    await page.waitForTimeout(350);
-    await page.keyboard.up('d');
+    try {
+      try {
+        await page.waitForFunction(
+          startX => window.MBMTownLifeQA.getEntities().player.x > startX + 0.1,
+          beforeInput,
+          { timeout: 3_000 }
+        );
+      } catch (error) {
+        if (error?.name !== 'TimeoutError') throw error;
+      }
+    } finally {
+      await page.keyboard.up('d');
+    }
     const afterInput = await page.evaluate(() => window.MBMTownLifeQA.getEntities().player.x);
     assert(afterInput > beforeInput + 0.1,
       `${engine} ${viewport.width}x${viewport.height}: first input did not move player WITH THE PAGE FOCUSED (focus on arrival: ${focusOnArrival}): ${beforeInput} -> ${afterInput}`);
