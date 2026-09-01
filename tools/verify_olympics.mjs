@@ -117,6 +117,11 @@ const screen = page => page.evaluate(() => window.__olympics.screen);
    named mode. Every step is a control the player has. */
 async function startChampionship(page, mode = 'ultimate') {
   await pastSplash(page);
+  /* A reload can suppress the already-seen maker splash, removing the real
+     delay that normally lets the trailing V6 layer finish booting. Wait for
+     boot's own mounted badge before clicking the one-shot start listener; the
+     intro's existing visibility and 3-second detach gates remain unchanged. */
+  await page.waitForSelector('#v6-release-badge', { timeout: 12000 });
   await click(page, '#newGamesBtn');
   /* The V6 ceremony auto-closes. Waiting for the button and clicking it in
      separate page tasks left a race where the timer could remove the node
@@ -303,15 +308,38 @@ async function playDay(page, { resolve = true } = {}) {
         `${c.probe} ${idleBefore.probe} -> ${idleAfter.probe} across an equal idle wait after the gun`);
 
       const before = await read();
+      const focusOnArrival = await page.evaluate(() => document.hasFocus());
+      if (!focusOnArrival) {
+        await page.bringToFront();
+        await page.evaluate(() => window.focus());
+        await page.waitForFunction(() => document.hasFocus(), null, { timeout: 5000 }).catch(() => {});
+      }
+      const focused = await page.evaluate(() => document.hasFocus());
+      t(`O3 the ${c.event} page took focus before real input`, focused,
+        focused ? `focus on arrival: ${focusOnArrival}` : 'the page never took focus');
       await page.focus('#game');
       for (let i = 0; i < 40; i++) {
-        await page.keyboard.press(c.keys[i % c.keys.length]);
-        await page.waitForTimeout(24);
+        const key = c.keys[i % c.keys.length];
+        await page.keyboard.down(key);
+        try {
+          /* Grafted from tools/townlife/verify.mjs:251-263: keep the real key
+             held until the shipped fixed-step loop has had an opportunity to
+             consume it, and release it in finally. A press/release pair can
+             otherwise land entirely between two steps on a software-canvas
+             runner, making the harness measure its own scheduling race. */
+          const tickAtDown = await page.evaluate(() =>
+            window.MBMGlobalGames.app.activeEvent.simTick);
+          await page.waitForFunction(tick =>
+            window.MBMGlobalGames.app.activeEvent.simTick > tick,
+            tickAtDown, { timeout: 30000 });
+        } finally {
+          await page.keyboard.up(key);
+        }
       }
       const after = await read();
       t(`O3 real keystrokes move the ${c.event} simulation`,
         after.probe !== null && after.probe > before.probe,
-        `${c.probe} ${before.probe} -> ${after.probe} over ${(after.elapsed || 0).toFixed(2)}s of play`);
+        `${c.probe} ${before.probe} -> ${after.probe} over ${(after.elapsed || 0).toFixed(2)}s of play WITH THE PAGE FOCUSED (focus on arrival: ${focusOnArrival})`);
       await ctx.close();
     }
   }
@@ -504,6 +532,30 @@ async function playDay(page, { resolve = true } = {}) {
     };
     window.__virtualNow = () => now;
   })();`;
+  function o10Url(url) {
+    /* O2 already exercises the generated splash on both real viewports. O10's
+       clock is virtual while the splash's detach timer is deliberately real,
+       so use the contract's canonical override here, as
+       tools/townlife/benchmark_splash.mjs does for its simulation subject. */
+    const target = new URL(url);
+    target.searchParams.set('splash', 'skip');
+    return target.href;
+  }
+  async function waitForVirtualBoot(page) {
+    /* Grafted from open() above: the core script publishes __olympics
+       synchronously while parsing, before its first rAF. Advancing hundreds of
+       virtual frames before that condition races the parser and is unnecessary.
+       Wait for the product condition, then assert that boot consumed no virtual
+       time. The 15-second ceiling is unchanged. */
+    await page.waitForFunction(() => !!window.__olympics && window.__olympics.screen !== null &&
+      document.readyState === 'complete' && !!document.getElementById('newGamesBtn'),
+      null, { polling: 100, timeout: 15000 });
+    const boot = await page.evaluate(() => ({ screen: window.__olympics.screen, virtualNow: window.__virtualNow() }));
+    if (boot.screen !== 'TITLE' || boot.virtualNow !== 0) {
+      throw new Error(`O10 virtual boot precondition failed: ${JSON.stringify(boot)}`);
+    }
+    return boot;
+  }
   {
     const engines = [
       { id: 'sprint', probe: 'speed', keys: ['KeyA', 'KeyD'], why: 'tap-alternation accumulation' },
@@ -512,24 +564,33 @@ async function playDay(page, { resolve = true } = {}) {
     for (const eng of engines) {
       const runs = {};
       for (const fps of [30, 144]) {
-        const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-        const page = await ctx.newPage();
-        await page.addInitScript(clockDriver(fps));
-        await page.goto(BASE, { waitUntil: 'commit' });
-        /* The virtual clock means nothing advances until we drive it, so boot
-           has to be pumped rather than waited for. */
-        await page.waitForFunction(() => typeof window.__drive === 'function', null, { timeout: 15000 });
-        for (let i = 0; i < 40; i++) { await page.evaluate(() => window.__drive(8)); }
-        await page.waitForFunction(() => !!window.__olympics, null, { timeout: 15000 });
-        /* Skip the menus entirely for this gate: it is about the engine, and
-           the menus are not on a virtual clock. */
-        const state = await page.evaluate(async (id) => {
+        /* Grafted from tools/driving-games/harness_gap.mjs:112-123: each
+           timing sample owns a fresh browser process. O1-O9 leave a shared
+           process healthy for ordinary UI journeys, but O10 deliberately
+           drains hundreds of virtual render frames per subject; isolating the
+           samples prevents one subject's renderer state from disarming the
+           next subject's init script. The measured clock and assertions below
+           are unchanged. */
+        const clockBrowser = await chromium.launch();
+        let state, trace;
+        try {
+          console.log(`  O10 [${eng.id}] ${fps}fps fresh-process subject`);
+          const ctx = await clockBrowser.newContext({ viewport: { width: 1280, height: 900 } });
+          const page = await ctx.newPage();
+          await page.addInitScript(clockDriver(fps));
+          await page.goto(o10Url(BASE), { waitUntil: 'commit' });
+          await page.waitForFunction(() => typeof window.__drive === 'function', null, { timeout: 15000 });
+          const boot = await waitForVirtualBoot(page);
+          console.log(`  O10 [${eng.id}] ${fps}fps boot ${boot.screen} at virtual ${boot.virtualNow}ms`);
+          /* Skip the menus entirely for this gate: it is about the engine, and
+             the menus are not on a virtual clock. */
+          state = await page.evaluate(async (id) => {
           const app = window.MBMGlobalGames.app;
           const drive = window.__drive;
           /* build a tournament directly, the same way the setup screen does */
-          document.querySelector('.mbm-skip') && document.querySelector('.mbm-skip').click();
           drive(60);
-          document.getElementById('newGamesBtn').click(); drive(10);
+          document.getElementById('newGamesBtn').click(); drive(1);
+          document.querySelector('.v6-skip') && document.querySelector('.v6-skip').click(); drive(9);
           document.querySelector('[data-mode="ultimate"]').click(); drive(10);
           document.getElementById('autoAttrs').click(); drive(10);
           document.getElementById('beginTournament').click(); drive(20);
@@ -539,9 +600,9 @@ async function playDay(page, { resolve = true } = {}) {
           document.getElementById('eventBriefing').click(); drive(20);
           document.getElementById('startEvent').click(); drive(20);
           return { started: window.__olympics.screen, id: window.__olympics.eventId };
-        }, eng.id);
-        /* Identical scripted input at identical VIRTUAL times. */
-        const trace = await page.evaluate(({ keys, probe, fps }) => {
+          }, eng.id);
+          /* Identical scripted input at identical VIRTUAL times. */
+          trace = await page.evaluate(({ keys, probe, fps }) => {
           const app = window.MBMGlobalGames.app;
           const drive = window.__drive;
           const samples = [];
@@ -587,9 +648,12 @@ async function playDay(page, { resolve = true } = {}) {
           return { samples: samples.slice(-5),
                    elapsed: ev ? Number((ev.elapsed - elapsed0).toFixed(4)) : null,
                    probe: ev ? Number(Number(ev[probe] || 0).toFixed(4)) : null };
-        }, { keys: eng.keys, probe: eng.probe, fps });
+          }, { keys: eng.keys, probe: eng.probe, fps });
+          await ctx.close();
+        } finally {
+          await clockBrowser.close();
+        }
         runs[fps] = { ...state, ...trace };
-        await ctx.close();
       }
       const a = runs[30], b = runs[144];
       t(`O10 [${eng.id}] the engine actually started under the virtual clock`,
@@ -611,17 +675,22 @@ async function playDay(page, { resolve = true } = {}) {
     if (varStep.path) {
       const got = {};
       for (const fps of [30, 144]) {
-        const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-        const page = await ctx.newPage();
-        await page.addInitScript(clockDriver(fps));
-        await page.goto('file://' + varStep.path, { waitUntil: 'commit' });
-        await page.waitForFunction(() => typeof window.__drive === 'function', null, { timeout: 15000 });
-        for (let i = 0; i < 40; i++) await page.evaluate(() => window.__drive(8));
-        await page.waitForFunction(() => !!window.__olympics, null, { timeout: 15000 });
-        const el = await page.evaluate((fps) => {
+        const clockBrowser = await chromium.launch();
+        let el;
+        try {
+          console.log(`  O10 [control] ${fps}fps fresh-process subject`);
+          const ctx = await clockBrowser.newContext({ viewport: { width: 1280, height: 900 } });
+          const page = await ctx.newPage();
+          await page.addInitScript(clockDriver(fps));
+          await page.goto(o10Url('file://' + varStep.path), { waitUntil: 'commit' });
+          await page.waitForFunction(() => typeof window.__drive === 'function', null, { timeout: 15000 });
+          const boot = await waitForVirtualBoot(page);
+          console.log(`  O10 [control] ${fps}fps boot ${boot.screen} at virtual ${boot.virtualNow}ms`);
+          el = await page.evaluate((fps) => {
           const app = window.MBMGlobalGames.app, drive = window.__drive;
-          document.querySelector('.mbm-skip') && document.querySelector('.mbm-skip').click(); drive(60);
-          document.getElementById('newGamesBtn').click(); drive(10);
+          drive(60);
+          document.getElementById('newGamesBtn').click(); drive(1);
+          document.querySelector('.v6-skip') && document.querySelector('.v6-skip').click(); drive(9);
           document.querySelector('[data-mode="ultimate"]').click(); drive(10);
           document.getElementById('autoAttrs').click(); drive(10);
           document.getElementById('beginTournament').click(); drive(20);
@@ -635,9 +704,12 @@ async function playDay(page, { resolve = true } = {}) {
           const totalFrames = Math.round(3000 / (1000 / fps));
           for (let f = 0; f < totalFrames; f++) drive(1);
           return app.activeEvent ? Number((app.activeEvent.elapsed - elapsed0).toFixed(4)) : null;
-        }, fps);
+          }, fps);
+          await ctx.close();
+        } finally {
+          await clockBrowser.close();
+        }
         got[fps] = el;
-        await ctx.close();
       }
       const d = (got[30] !== null && got[144] !== null) ? Math.abs(got[30] - got[144]) : Infinity;
       t('O10 [control] a variable-timestep build IS caught by the same comparison',
@@ -711,7 +783,14 @@ async function playDay(page, { resolve = true } = {}) {
       const before = await page.evaluate(() => window.__olympics.motion.osReduced);
       /* emulateMedia lives on the PAGE, not the context. */
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      await page.waitForTimeout(250);
+      /* The media query changes synchronously, but its `change` event is a
+         queued browser task. Poll the product condition instead of sampling
+         after a guessed delay; a missing listener still falls through to the
+         unchanged assertion below and goes red. */
+      await page.waitForFunction(() => window.__olympics.motion.osReduced === true,
+        null, { timeout: 5000 }).catch(error => {
+          if (error?.name !== 'TimeoutError') throw error;
+        });
       const after = await page.evaluate(() => window.__olympics.motion.osReduced);
       t('O12 the live listener applies a mid-session change without a reload',
         before === false && after === true, `osReduced ${before} -> ${after}`);

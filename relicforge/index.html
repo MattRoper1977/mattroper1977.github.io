@@ -7918,8 +7918,8 @@ if(document.body)mount();else document.addEventListener("DOMContentLoaded",mount
   @keyframes mbm-v6-forge-in { from { opacity: 0; transform: scale(1.025); } to { opacity: 1; transform: scale(1); } }
   @keyframes mbm-v6-cue { from { opacity: 0; transform: translate(-50%,-10px); } to { opacity: 1; transform: translate(-50%,0); } }
   @media (orientation: portrait) {
-    #mbm-v6-intel { top: calc(62px + var(--mbm-v6-safe-top)); max-height: min(31dvh, 300px); width: min(350px, calc(100vw - 16px)); right: calc(8px + var(--mbm-v6-safe-right)); }
-    #mbm-v6-toggle { top: calc(62px + var(--mbm-v6-safe-top)); right: calc(8px + var(--mbm-v6-safe-right)); }
+    #mbm-v6-intel { top: calc(78px + 48px + 8px + var(--mbm-v6-safe-top)); max-height: min(31dvh, 300px); width: min(350px, calc(100vw - 16px)); right: calc(8px + var(--mbm-v6-safe-right)); }
+    #mbm-v6-toggle { top: calc(78px + 48px + 8px + var(--mbm-v6-safe-top)); right: calc(8px + var(--mbm-v6-safe-right)); }
     #mbm-v6-cue { top: auto; bottom: calc(116px + var(--mbm-v6-safe-bottom)); }
   }
   @media (orientation: landscape) and (max-height: 560px) {
@@ -8146,7 +8146,7 @@ if(document.body)mount();else document.addEventListener("DOMContentLoaded",mount
   setIntelOpen(profile.settings.forecastOpen, false);
   setInterval(updateRead, 100);
   updateRead();
-  setTimeout(showIntro, 1950);
+  byId('start-btn').addEventListener('click', () => requestAnimationFrame(showIntro), { once: true });
 
   const releaseApi = {
     release: RELEASE,

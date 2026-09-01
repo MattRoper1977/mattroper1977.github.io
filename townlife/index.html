@@ -3500,6 +3500,7 @@ function sizeAdvisory(){
   ax.setTransform(ratio,0,0,ratio,0,0);
 }
 function drawAdvisory(now){
+  if(!Number.isFinite(now))now=performance.now();
   sizeAdvisory();ax.clearRect(0,0,innerWidth,innerHeight);
   var running=townStarted()&&!visibilityOpen&&!introOpen;document.body.classList.toggle('v6-town-running',running);
   var coarse=window.matchMedia&&window.matchMedia('(pointer:coarse)').matches;mobile.setAttribute('aria-hidden',coarse&&running?'false':'true');
@@ -3520,15 +3521,14 @@ function drawAdvisory(now){
     if(driving)setIntent(held[' ']?'DRIFT COMMIT':targetSteer<0?'ROUTE · LEFT':targetSteer>0?'ROUTE · RIGHT':held.w?'ROUTE · ACCELERATE':'ROAD HOLD');
     else if(up||down||left||right)setIntent('WALK INTENT');else setIntent(heat?'THREAT · '+police:'ROUTE READY');
   }
-  requestAnimationFrame(drawAdvisory);
 }
 addEventListener('resize',sizeAdvisory,{passive:true});
 
 function hashNoiseFixture(x,y){var n=(x*374761393+y*668265263)>>>0;n=(n^(n>>13))*1274126177>>>0;return((n^(n>>16))>>>0)/4294967295;}
 window.__MBM_V6_RELEASE__={
   version:VERSION,gameId:GAME_ID,title:'Made by Matt: Town Life AAA V6',edition:'AAA V6',madeBy:'Made by Matt',offline:true,
-  features:['viewport-first','safe-area-layout','portrait-dead-zone-tray','no-landscape-bottom-bar','60hz-fixed-authority','high-refresh-advisory-interpolation','touch-route-intent','trajectory-preview','heat-police-threat-preview','skippable-intro','camera-direction','response-clutch','role-job-finish','compressed-master-bus','audio-resume','schema-6-profile','legacy-byte-preservation','explicit-visibility-resume','calm-mode','reduced-motion','keyboard-focus-aria'],
-  authority:{tickHz:60,stepMs:1000/60,source:'FIXED_STEP=1000/60',canonicalEngineSha256:AUTHORITY_SHA,advisoryOnly:true,legacyStorage:LEGACY_KEYS.slice()},
+  features:['viewport-first','safe-area-layout','portrait-dead-zone-tray','no-landscape-bottom-bar','60hz-fixed-authority','10hz-advisory-sampling','touch-route-intent','trajectory-preview','heat-police-threat-preview','skippable-intro','camera-direction','response-clutch','role-job-finish','compressed-master-bus','audio-resume','schema-6-profile','legacy-byte-preservation','explicit-visibility-resume','calm-mode','reduced-motion','keyboard-focus-aria'],
+  authority:{tickHz:60,stepMs:1000/60,presentationSampleHz:10,source:'FIXED_STEP=1000/60',canonicalEngineSha256:AUTHORITY_SHA,advisoryOnly:true,legacyStorage:LEGACY_KEYS.slice()},
   profile:{key:PROFILE_KEY,schema:6,migration:migration},audio:MasterBus,
   selfTest:function(){
     var ids={},duplicates=[];Array.prototype.forEach.call(document.querySelectorAll('[id]'),function(node){if(ids[node.id])duplicates.push(node.id);ids[node.id]=true;});
@@ -3551,7 +3551,7 @@ window.__MBM_V6_RELEASE__={
     return{ok:Object.keys(checks).every(function(key){return checks[key];}),pass:Object.keys(checks).every(function(key){return checks[key];}),version:VERSION,gameId:GAME_ID,checks:checks,authority:this.authority,profileVersion:profile.version,legacyPresent:migration.sourcePresent,fixture:fixture,duplicates:duplicates};
   }
 };
-sizeAdvisory();requestAnimationFrame(drawAdvisory);
+sizeAdvisory();setInterval(drawAdvisory,100);drawAdvisory();
 })();
 </script>
 <!-- MBM-V6-TOWN:END -->
