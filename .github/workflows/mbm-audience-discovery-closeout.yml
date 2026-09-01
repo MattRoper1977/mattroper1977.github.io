@@ -68,7 +68,7 @@ jobs:
       - name: Education hub metadata and derived status
         id: s04-education-hub-metadata-and-derived-statu
         if: always()
-        run: python3 tools/verify_education_hub.py --as-of 2026-08-09 --self-test
+        run: python3 tools/verify_education_hub.py --self-test
 
       - name: Audience accents meet contrast
         id: s05-audience-accents-meet-contrast
