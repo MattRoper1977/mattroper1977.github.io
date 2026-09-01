@@ -117,7 +117,7 @@ builds must recognise — that is a schema change and a separate proposal.
 
 ## C5 — Per-install node identity
 
-The node id MUST be generated once per install and persisted. The literal `mbm-default00000000` is banned anywhere in shipped source. A shared node identity defeats the per-node clocks the passport counters are built on, and is only observable on a fresh-install arm — so the fresh-install arm is mandatory in the verifier (§3).
+The node id MUST be generated once per install and persisted. The banned condition is that a fresh install's shipped node id equals the shared placeholder value `mbm-default00000000`; the verifier tests that condition by value on two independent fresh installs (§3). The literal may appear in shipped source as a defensive fallback inside the node-id generator, and C5 MUST NOT be implemented as a source grep. A shared node identity defeats the per-node clocks the passport counters are built on.
 
 ---
 
