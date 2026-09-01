@@ -13,6 +13,8 @@ ORDER=['P2','P3','P4','P5','P6','P7']
 def active(phase):return ORDER.index(phase)<=ORDER.index(THROUGH)
 
 text=(HERE/'input_v4.html').read_text(encoding='utf-8')
+# Pinned input: sha256 of Titan_Forge_AAA_Release_V4.html as delivered with order TFR2 on 2026-09-01
+# (2,121,261 B). The build refuses any other input, so every patch below is asserted against one text.
 assert hashlib.sha256(text.encode('utf-8')).hexdigest()=='fc9699b5c1a1e02f694b31b20cb918796d02cc8269385b3f2ba3f6bf93418f8f','input hash mismatch'
 log=[]
 def rep(phase,label,old,new):

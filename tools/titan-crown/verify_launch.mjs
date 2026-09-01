@@ -24,7 +24,8 @@ const TITAN_STORAGE_KEYS = ['mbm_titanforge_save_v1', 'mbm_titanforge_aaa_v1', '
   'mbm_titanforge_records_v1', 'mbm_titanforge_daily_v1', 'mbm_titanforge_reset_done'];
 /* The vendored Three.js r128 block is a library: its loaders name fetch()/XMLHttpRequest but the rig builds
  * geometry only and never calls them. The request-surface gate therefore judges the file with that block
- * excised, and pins the block itself so a modified library cannot hide behind the exemption. */
+ * excised, and the block itself is pinned (sha256 of the <script id="mbm-three-r128"> block as shipped in
+ * the V5 release, taken 2026-09-01, order TFR2) so a modified library cannot hide behind the exemption. */
 const THREE_SHA256 = 'e07c85c1b4417abc7b13eacf3a7bc8f4ad84d30a715a2da59af3ad8845ad97cf';
 function withoutThree(source) {
   const start = source.indexOf('<script id="mbm-three-r128">');
