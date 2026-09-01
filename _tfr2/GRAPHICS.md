@@ -34,7 +34,16 @@ G3 lives inside `mbm-titan-mobile-v2-script` via 11 anchored single-match patche
 | build | median fps | min | lifts | FX draws in the idle window (3 s→4 s after last lift) |
 |---|---|---|---|---|
 | before (P2 build = input FX) | **53** | 37 | 9 | **6** (input already violates the idle rule) |
-| after (P3) | **53** | 27 | 9 | **0** |
+| after (P3 first cut, inherited-var transitions) | 48–50 | 27 | 9 | 0 |
+| after (final: keyframe kick + camera push) | **54 / 53** (two runs) | 34–35 | 9 | **0** |
+
+Where the frames went, and the fix: `--mbm-cam`, `--mbm-px` and `--mbm-py` were registered *inherited*
+custom properties transitioned on `.arena`. Every frame of such a transition recomputes style for every
+descendant of the arena (the whole console UI), which the long-frame tracer (`tools/diag_frames.mjs`) showed
+as 33 frames over 40 ms in the 100–700 ms window after each lift versus 13 on the input. The sky kick and the
+camera push are now keyframe animations on `.arena` (background-position) and on `.fighter-stage` (transform,
+`will-change` while pushing); band offsets live on the band container only. Long frames in that window: 18,
+back to the input's level.
 
 Earlier non-deterministic runs (energy-gated retries, 7–10 lifts) spread 49–57 before and 46–57 after; the
 deterministic cadence removes that variance. Harness: `tools/perf_budget.mjs`.

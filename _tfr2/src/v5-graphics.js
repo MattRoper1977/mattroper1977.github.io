@@ -19,12 +19,13 @@
   function scheduleIdle(){clearTimeout(idleTimer);if(!refs.bg)return;refs.bg.classList.remove("mbm-v5-idle");if(reduced())return;idleTimer=setTimeout(function(){if(reduced())return;refs.bg.classList.add("mbm-v5-idle");fx.idleDrifts++;},2600);}
   function kick(power){
     if(!refs.bg||reduced())return;fx.parallaxKicks++;var bg=refs.bg,arena=refs.arena;clearTimeout(settleTimer);
-    bg.classList.remove("mbm-v5-idle");bg.classList.add("mbm-v5-hit");arena.classList.remove("mbm-v5-settle");arena.style.setProperty("--mbm-px",(-7*power).toFixed(1)+"px");arena.style.setProperty("--mbm-py",(5*power).toFixed(1)+"px");
-    settleTimer=setTimeout(function(){arena.classList.add("mbm-v5-settle");bg.classList.remove("mbm-v5-hit");arena.style.setProperty("--mbm-px","0px");arena.style.setProperty("--mbm-py","0px");scheduleIdle();},95);
+    bg.classList.remove("mbm-v5-idle","mbm-v5-settle");bg.classList.add("mbm-v5-hit");bg.style.setProperty("--mbm-px",(-7*power).toFixed(1)+"px");bg.style.setProperty("--mbm-py",(5*power).toFixed(1)+"px");
+    var kickCls=power>=.9?"mbm-v5-kick-hard":"mbm-v5-kick-soft";arena.classList.remove("mbm-v5-kick-hard","mbm-v5-kick-soft");void arena.offsetWidth;arena.classList.add(kickCls);
+    settleTimer=setTimeout(function(){bg.classList.add("mbm-v5-settle");bg.classList.remove("mbm-v5-hit");bg.style.setProperty("--mbm-px","0px");bg.style.setProperty("--mbm-py","0px");scheduleIdle();},95);
   }
   /* G4 — squash-and-stretch + camera push */
   function squash(){if(!refs.avatar||reduced())return;fx.squashes++;refs.avatar.classList.remove("mbm-v5-squash");void refs.avatar.offsetWidth;refs.avatar.classList.add("mbm-v5-squash");setTimeout(function(){refs.avatar.classList.remove("mbm-v5-squash");},260);}
-  function camPush(){if(!refs.arena||reduced())return;fx.camPushes++;clearTimeout(camTimer);refs.arena.classList.add("mbm-v5-cam-on");refs.arena.style.setProperty("--mbm-cam","1.04");camTimer=setTimeout(function(){refs.arena.style.setProperty("--mbm-cam","1");setTimeout(function(){refs.arena.classList.remove("mbm-v5-cam-on");},220);},180);}
+  function camPush(){if(!refs.arena||reduced())return;fx.camPushes++;clearTimeout(camTimer);refs.arena.classList.remove("mbm-v5-cam-on");void refs.arena.offsetWidth;refs.arena.classList.add("mbm-v5-cam-on");camTimer=setTimeout(function(){refs.arena.classList.remove("mbm-v5-cam-on");},400);}
   /* G2 — zone lighting */
   function syncZone(){
     var span=refs.arena.querySelector(".zone-banner span"),name=span?span.textContent.trim().toUpperCase():"",key=ZONES[name]||"beach";

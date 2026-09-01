@@ -21,7 +21,7 @@ const out=await page.evaluate(async()=>{
   // any running animations on V5-owned nodes?
   const v5Nodes=Array.from(document.querySelectorAll('[class*="mbm-v5-"],.arena.mbm-v5-parallax,.avatar-placeholder,.avatar-placeholder img'));
   const running=document.getAnimations().filter(a=>{const t=a.effect&&a.effect.target;return t&&v5Nodes.includes(t)&&a.playState==='running';}).map(a=>(a.animationName||a.transitionProperty||'?')+'@'+(a.effect.target.className||a.effect.target.tagName));
-  const cam=getComputedStyle(document.querySelector('.arena')).getPropertyValue('--mbm-cam').trim();
+  const cam=document.querySelector('.arena').classList.contains('mbm-v5-cam-on')?'push-on':'off';
   return {shellReduced,mq,fx:G.fxCounters,draws:V2.metrics.draws-d0,spawned:(V2.metrics.spawned||0)-sp0,glowPasses:(V2.metrics.glowPasses||0)-gl0,running,cam,formPlate:!!document.querySelector('.mbm-v5-plate'),cineImgs:document.querySelectorAll('.mbm-v5-cine img').length,rankShown:!!document.querySelector('.mbm-v5-rank.mbm-v5-show'),rankText:(document.querySelector('.mbm-v5-rank strong')||{}).textContent};
 });
 await page.screenshot({path:path.join(path.dirname(file),'shots','p3','reduced-412x915.png')});
@@ -30,7 +30,7 @@ const zero=Object.entries(out.fx).filter(([k,v])=>['parallaxKicks','camPushes','
 console.log(`reduced-motion: shell.reduced-motion=${out.shellReduced} prefers-reduced-motion=${out.mq}`);
 console.log(`V5 counters ${JSON.stringify(out.fx)} — motion counters non-zero: ${zero.length?zero.join(','):'none'}`);
 console.log(`G3 particles spawned ${out.spawned}, glow passes ${out.glowPasses}, FX canvas draws during the rep ${out.draws} (pre-existing V2 muscle overlay redraw; no particles)`);
-console.log(`V5 running animations/transitions after the lift: ${out.running.length?out.running.join(', '):'none'}; --mbm-cam=${out.cam||'1'}`);
+console.log(`V5 running animations/transitions after the lift: ${out.running.length?out.running.join(', '):'none'}; camera push=${out.cam}`);
 console.log(`G5 instant swap + name plate: plate=${out.formPlate} wipe images=${out.cineImgs}; G7 rank card static: shown=${out.rankShown} ${out.rankText}`);
 console.log(`page errors ${errors.length}`);
 const ok=zero.length===0&&out.spawned===0&&out.glowPasses===0&&out.running.length===0&&out.cineImgs===0&&errors.length===0;

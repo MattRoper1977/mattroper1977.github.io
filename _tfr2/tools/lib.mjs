@@ -25,6 +25,7 @@ export function serve(dir){
 export async function launch(opts={}){
   const args=['--use-gl=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist'];
   if(opts.noWebGL)args.push('--disable-3d-apis');
+  if(opts.webrtc)args.push('--disable-features=WebRtcHideLocalIpsWithMdns','--allow-loopback-in-peer-connection');
   return chromium.launch({headless:true,args});
 }
 

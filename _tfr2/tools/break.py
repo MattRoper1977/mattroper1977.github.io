@@ -9,6 +9,7 @@ variants={
  'lift-inflow': ('.game-shell .arena>.lift-console .lift-button{position:fixed!important;','.game-shell .arena>.lift-console .lift-button{position:relative!important;'),
  'network-leak': ('<div id="game-root"></div>','<div id="game-root"></div><img src="https://example.invalid/pixel.gif" alt="">'),
  'graphics-on': ('graphics:{enabled:false}','graphics:{enabled:true}'),
+ 'duel-fingerprint': ('"a=fingerprint:sha-256 "+fp,','"a=fingerprint:sha-256 "+fp.slice(3),'),
 }
 v=sys.argv[1];old,new=variants[v]
 assert src.count(old)==1,(v,src.count(old))
