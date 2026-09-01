@@ -482,7 +482,7 @@ gate('G8', 'Call Rating fixtures, bands, symmetry and fuzz', () => {
       const missActual = called + 2 <= 30 ? called + 2 : called - 2;
       const miss = AG.callRating(called, missActual, par);
       assert(exact > near && near >= miss, `bands overlap for call ${called}, par ${par}`);
-      if (called > par + 3) assert(exact <= 60, `safe-call ceiling exceeded for ${called} on par ${par}`);
+      if (called > par + 3) assert(exact <= 60, `safe-call ceiling exceeded for ${called} on par ${par}`); // NOT LIVE: 60 is the Call Rating safe-call ceiling, not a shelf count.
     }
   }
   const rng = AG.mulberry32(0x51a7c0de);
