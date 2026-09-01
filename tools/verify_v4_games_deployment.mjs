@@ -158,7 +158,14 @@ function verifyPayloads() {
     assert(html.includes(`href="${game.canonical}"`) || html.includes(`href='${game.canonical}'`), `${game.id}: canonical mismatch`);
     const title = (html.match(/<title>([\s\S]*?)<\/title>/i) || [])[1] || '';
     const visible = html.replace(/<script\b[\s\S]*?<\/script>/gi, ' ').replace(/<style\b[\s\S]*?<\/style>/gi, ' ');
-    assert(game.identity.test(`${title}\n${visible.slice(0, 30000)}`), `${game.id}: V4 identity missing`);
+    const visibleIdentity = `${title}\n${visible.slice(0, 30000)}`;
+    const v6Assignments = count(html, /(?:window|globalThis)\.__MBM_V6_RELEASE__\s*=/g);
+    if (v6Assignments) {
+      assert.equal(v6Assignments, 1, `${game.id}: V6 identity assignment count`);
+      assert(/AAA\s*V6|V6\.0\.0/i.test(visibleIdentity), `${game.id}: visible V6 identity missing`);
+    } else {
+      assert(game.identity.test(visibleIdentity), `${game.id}: V4 identity missing`);
+    }
     assert(!/user-scalable\s*=\s*no|maximum-scale\s*=\s*1(?:\.0)?(?:[,"'])/i.test(html), `${game.id}: browser zoom is blocked`);
     assert.equal(count(html, /MBM-MAKER-SPLASH:BEGIN/g), 1, `${game.id}: maker splash count`);
     if (INLINE_EXIT_IDS.has(game.id)) {
@@ -494,6 +501,11 @@ async function smokeOffbrand(page) {
   await page.locator('#btnHowOk').waitFor({ state: 'visible', timeout: 5000 });
   await page.locator('#btnHowOk').click();
   await page.waitForFunction(() => !!window.OB?.S && window.OB.S.paused === false);
+  const tutorial = page.locator('#tut');
+  if (await tutorial.isVisible()) {
+    await page.locator('#tutSkip').click();
+    await page.waitForFunction(() => !document.getElementById('tut')?.classList.contains('on'));
+  }
   const before = await page.evaluate(() => ({ t: OB.S.t, x: OB.S.player.x }));
   await page.keyboard.down('ArrowRight'); await page.waitForTimeout(500); await page.keyboard.up('ArrowRight');
   await page.locator('#btnFocus').click();

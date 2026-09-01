@@ -83,15 +83,17 @@ const loreIds = (src) => {
  * amending a single-file game's verifier to admit a script, and that script
  * then rendered nothing for months because no gate ever looked. Here the
  * rendering is proven in a browser by tools/verify_inline_exit.mjs. */
-gate('G1', 'single file, single game script, plus the stamped exit region', () => {
+gate('G1', 'single file, one authority script, one V6 shell, plus the stamped exit region', () => {
   const game = stripExitRegion(html);
   const open = (game.match(/<script/g) || []).length;
   const close = (game.match(/<\/script>/g) || []).length;
-  assert(open === 1 && close === 1, `expected exactly one script element in the game itself, saw ${open}/${close}`);
+  assert(open === 2 && close === 2, `expected authority + V6 shell script elements, saw ${open}/${close}`);
+  assert((game.match(/id="mbm-v6-release-script"/g) || []).length === 1, 'the one named V6 release shell is absent or duplicated');
+  assert((game.match(/window\.__MBM_V6_RELEASE__/g) || []).length === 1, 'the V6 release API is absent or duplicated');
   assert(!/\brequire\(|\bimport\s+.*\sfrom\s/.test(game), 'module syntax present in a standalone file');
   assert(hasExitRegion(html), 'the stamped inline exit region is missing \u2014 this game has no way out');
   assert(!/\bsrc\s*=/i.test(exitRegion(html)), 'the exit region fetches something; it must stay inline');
-  return `${bytes} bytes, sha256 ${sha.slice(0, 12)}\u2026 \u00b7 1 game script + exit region (${Buffer.byteLength(exitRegion(html))} B)`;
+  return `${bytes} bytes, sha256 ${sha.slice(0, 12)}\u2026 \u00b7 1 authority script + 1 V6 shell + exit region (${Buffer.byteLength(exitRegion(html))} B)`;
 });
 
 gate('G2', 'no remote runtime resources (corrected form)', () => {
@@ -187,6 +189,10 @@ gate('G9', 'positive controls — every gate family proven sighted', () => {
   check('remote script injected',
     s => s.replace('<title>', '<script src="https://cdn.example.com/x.js"></script><title>'),
     s => { const r = remoteRefs(s); if (r.length) throw new Error('caught'); });
+
+  check('V6 shell duplicated',
+    s => s.replace('</body>', '<script id="mbm-v6-release-script">window.__MBM_V6_RELEASE__={};</script></body>'),
+    s => { const game = stripExitRegion(s), open = (game.match(/<script/g) || []).length, named = (game.match(/id="mbm-v6-release-script"/g) || []).length; if (open !== 2 || named !== 1) throw new Error('caught'); });
 
   check('canonical points elsewhere',
     s => s.replace(CANON, 'https://example.com/elsewhere/'),

@@ -1042,6 +1042,232 @@ window.__vector=Object.freeze({
   g.MadeByMattSplash = { start: start };
 })(window);
 </script>
+
+<!-- MBM-V6-NOVA:BEGIN · additive presentation/input boundary; canonical engine above is unchanged -->
+<style id="mbm-v6-nova-style">
+:root{--v6-safe-t:env(safe-area-inset-top,0px);--v6-safe-r:env(safe-area-inset-right,0px);--v6-safe-b:env(safe-area-inset-bottom,0px);--v6-safe-l:env(safe-area-inset-left,0px)}
+html,body{min-width:320px;min-height:100%;min-height:100dvh}
+.screen{min-height:100%;min-height:100dvh}
+#v6NovaAdvisory{position:fixed;inset:0;width:100%;height:100%;z-index:10;pointer-events:none}
+#v6NovaTray{display:none;position:fixed;z-index:9;left:0;right:0;bottom:0;height:calc(176px + var(--v6-safe-b));pointer-events:none;background:linear-gradient(180deg,transparent,rgba(4,8,24,.80) 23%,rgba(6,12,31,.95));border-top:1px solid rgba(111,247,255,.18)}
+#v6NovaTray::before{content:"DEAD ZONE";position:absolute;left:50%;top:44px;transform:translateX(-50%);color:rgba(145,162,200,.62);font:900 9px/1 "Courier New",monospace;letter-spacing:.2em}
+#v6NovaIntent{display:none;position:fixed;z-index:12;left:50%;bottom:calc(20px + var(--v6-safe-b));transform:translateX(-50%);min-height:44px;min-width:112px;padding:10px 12px;border:1px solid rgba(111,247,255,.3);border-radius:999px;background:rgba(6,13,32,.88);color:#dffcff;text-align:center;font:900 10px/1.25 "Courier New",monospace;letter-spacing:.1em;pointer-events:none}
+#v6NovaDirector{position:fixed;z-index:13;left:50%;top:calc(96px + var(--v6-safe-t));transform:translate(-50%,-12px);opacity:0;pointer-events:none;padding:8px 13px;border:1px solid rgba(111,247,255,.3);background:rgba(4,9,24,.9);color:var(--cyan);font:900 10px/1.3 "Courier New",monospace;letter-spacing:.16em;transition:opacity .18s,transform .18s}
+#v6NovaDirector.on{opacity:1;transform:translate(-50%,0)}
+#v6NovaClutch{position:fixed;z-index:14;inset:0;pointer-events:none;opacity:0;border:0 solid rgba(255,66,106,0)}
+#v6NovaClutch.on{animation:v6NovaClutch .44s ease-out}
+#v6NovaFinish{position:fixed;z-index:19;inset:0;display:grid;place-items:center;pointer-events:none;opacity:0;overflow:hidden}
+#v6NovaFinish::before,#v6NovaFinish::after{content:"";position:absolute;left:50%;top:66%;width:6px;height:62vh;transform-origin:50% 100%;background:linear-gradient(0deg,rgba(111,247,255,.74),transparent);box-shadow:0 0 22px rgba(111,247,255,.42)}
+#v6NovaFinish::after{transform:rotate(26deg)}
+#v6NovaFinish span{position:relative;padding:10px 16px;border:1px solid rgba(111,247,255,.4);background:rgba(4,9,24,.92);color:#fff;font:950 clamp(18px,4vw,34px)/1 "Courier New",monospace;letter-spacing:.12em;text-shadow:0 0 18px var(--cyan)}
+#v6NovaFinish.on{animation:v6NovaFinish 1.25s ease-out}
+#v6NovaIntro[hidden]{display:none}
+#v6NovaIntro{position:fixed;z-index:2147481500;inset:0;display:grid;place-items:center;padding:calc(22px + var(--v6-safe-t)) calc(18px + var(--v6-safe-r)) calc(22px + var(--v6-safe-b)) calc(18px + var(--v6-safe-l));background:radial-gradient(circle at 50% 52%,rgba(22,54,100,.72),transparent 42%),linear-gradient(145deg,#020510 0%,#07152b 55%,#17051e 100%);color:#fff}
+.v6-nova-intro-card{width:min(760px,94vw);text-align:center}
+.v6-nova-intro-kicker{color:var(--amber);font:900 11px/1.4 "Courier New",monospace;letter-spacing:.28em}
+.v6-nova-intro-title{margin:10px 0 7px;font:950 clamp(34px,9vw,78px)/.88 "Courier New",monospace;color:var(--cyan);text-shadow:-2px 0 var(--magenta),0 0 34px rgba(111,247,255,.45)}
+.v6-nova-intro-copy{margin:14px auto 22px;max-width:610px;color:#c8d4ed;font-size:14px;line-height:1.6}
+#v6NovaSkip{min-width:150px;min-height:48px;border:1px solid var(--cyan);border-radius:999px;background:#0a2440;color:#fff;font-weight:900;letter-spacing:.12em;cursor:pointer}
+#v6NovaSkip:focus-visible,#v6NovaCalm:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.settings-row.v6-four{grid-template-columns:repeat(4,1fr)}
+#v6NovaCalm[aria-pressed="true"]{border-color:var(--green);color:var(--green)}
+.v6-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+@keyframes v6NovaClutch{0%{opacity:0;border-width:0}20%{opacity:1;border-width:14px;border-color:rgba(255,66,106,.64)}100%{opacity:0;border-width:2px;border-color:rgba(255,66,106,0)}}
+@keyframes v6NovaFinish{0%{opacity:0;transform:scale(.96)}18%,72%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.04)}}
+@media (orientation:portrait) and (pointer:coarse){
+  body.touch.v6-playing #v6NovaTray,body.touch.v6-playing #v6NovaIntent{display:block}
+  body.touch.v6-playing #pause-button{bottom:auto}
+  body.touch.v6-playing #toast{bottom:calc(184px + var(--v6-safe-b))}
+}
+@media (max-width:720px){.settings-row.v6-four{grid-template-columns:1fr 1fr}#v6NovaDirector{top:calc(150px + var(--v6-safe-t))}}
+@media (prefers-reduced-motion:reduce){
+  #v6NovaClutch.on,#v6NovaFinish.on{animation:none;opacity:0}
+  #v6NovaDirector{transition:none}
+}
+body.v6-calm #v6NovaClutch,body.v6-calm #v6NovaFinish{display:none}
+body.v6-calm #v6NovaDirector{transition:none}
+</style>
+<canvas id="v6NovaAdvisory" aria-hidden="true"></canvas>
+<div id="v6NovaTray" aria-hidden="true"></div>
+<div id="v6NovaIntent" role="status" aria-live="polite">VECTOR READY</div>
+<div id="v6NovaDirector" role="status" aria-live="polite"></div>
+<div id="v6NovaClutch" aria-hidden="true"></div>
+<div id="v6NovaFinish" aria-hidden="true"><span>RUN ARCHIVED</span></div>
+<section id="v6NovaIntro" role="dialog" aria-modal="true" aria-labelledby="v6NovaIntroTitle" aria-describedby="v6NovaIntroCopy" hidden>
+  <div class="v6-nova-intro-card">
+    <div class="v6-nova-intro-kicker">VECTOR OVERDRIVE · NOVA SIEGE · AAA V6</div>
+    <h2 class="v6-nova-intro-title" id="v6NovaIntroTitle">BREAK THE BUDGET</h2>
+    <p class="v6-nova-intro-copy" id="v6NovaIntroCopy">Read the warm threat ring, commit along the cyan vector, and dash through the opening. The simulation, seed, collisions, score and rewards remain the original Nova Siege rules.</p>
+    <button id="v6NovaSkip" type="button">SKIP INTRO</button>
+  </div>
+</section>
+<script>
+(function(){
+'use strict';
+var GAME_ID='nova-siege',VERSION='6.0.0',PROFILE_KEY='mbm_v6_nova_siege_profile';
+var AUTHORITY_SHA='5077eac4eb83b9dacf209f10138c5fa06d2ded2dd7171289c3fd6a1935de5f82';
+var LEGACY_KEYS=['mbm_vector_overdrive_rewards_v1','mbm_vector_overdrive_leaderboard_v1','mbm_vector_overdrive_settings_v1','mbm_vector_overdrive_pilot'];
+var migration={legacyUntouched:true,profileReady:false,sourcePresent:[]};
+function raw(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function objectJSON(text,fallback){try{var value=JSON.parse(text);return value&&typeof value==='object'&&!Array.isArray(value)?value:fallback;}catch(e){return fallback;}}
+var legacyBefore=LEGACY_KEYS.map(raw);
+var profile=objectJSON(raw(PROFILE_KEY),{});
+if(profile.version!==6){profile.version=6;profile.gameId=GAME_ID;profile.createdAt=profile.createdAt||new Date().toISOString();}
+profile.settings=profile.settings&&typeof profile.settings==='object'?profile.settings:{};
+profile.migration=profile.migration&&typeof profile.migration==='object'?profile.migration:{};
+profile.migration.schema=6;profile.migration.legacyKeys=LEGACY_KEYS.slice();profile.migration.copied=false;profile.migration.nonDestructive=true;
+migration.sourcePresent=legacyBefore.map(function(value,index){return value===null?null:LEGACY_KEYS[index];}).filter(Boolean);
+try{localStorage.setItem(PROFILE_KEY,JSON.stringify(profile));migration.profileReady=!!localStorage.getItem(PROFILE_KEY);}catch(e){}
+var legacyAfter=LEGACY_KEYS.map(raw);
+migration.legacyUntouched=legacyBefore.every(function(value,index){return value===legacyAfter[index];});
+
+var MasterBus={ctx:null,compressor:null,gain:null};
+function resumeBus(){
+  if(!MasterBus.ctx){try{var AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return MasterBus;var ac=MasterBus.ctx=new AudioCtx(),comp=MasterBus.compressor=ac.createDynamicsCompressor(),gain=MasterBus.gain=ac.createGain();comp.threshold.setValueAtTime(-18,ac.currentTime);comp.knee.setValueAtTime(12,ac.currentTime);comp.ratio.setValueAtTime(8,ac.currentTime);comp.attack.setValueAtTime(.003,ac.currentTime);comp.release.setValueAtTime(.16,ac.currentTime);gain.gain.value=.62;comp.connect(gain);gain.connect(ac.destination);}catch(e){}}
+  if(MasterBus.ctx&&MasterBus.ctx.state==='suspended')MasterBus.ctx.resume().catch(function(){});
+  return MasterBus;
+}
+function presentationAudioOn(){var button=document.getElementById('audio-toggle');return profile.settings.presentationSound!==false&&(!button||/ON/.test(button.textContent||''));}
+function tone(freq,duration,volume,delay){if(!presentationAudioOn())return;var bus=resumeBus();if(!bus.ctx||!bus.compressor)return;try{var start=bus.ctx.currentTime+(delay||0),osc=bus.ctx.createOscillator(),gain=bus.ctx.createGain();osc.type='triangle';osc.frequency.setValueAtTime(freq,start);gain.gain.setValueAtTime(volume||.02,start);gain.gain.exponentialRampToValueAtTime(.0001,start+duration);osc.connect(gain);gain.connect(bus.compressor);osc.start(start);osc.stop(start+duration+.03);}catch(e){}}
+['pointerdown','keydown','touchstart'].forEach(function(type){addEventListener(type,resumeBus,{passive:true});});
+
+var reduceQuery=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)'):null;
+var reduced=!!(reduceQuery&&reduceQuery.matches);
+function calm(){return reduced||profile.settings.calm===true;}
+function applyCalm(){
+  document.body.classList.toggle('v6-calm',calm());
+  var button=document.getElementById('v6NovaCalm');
+  if(button){button.setAttribute('aria-pressed',profile.settings.calm?'true':'false');button.textContent=profile.settings.calm?'CALM: ON':'CALM: OFF';}
+}
+function saveProfile(){try{profile.version=6;localStorage.setItem(PROFILE_KEY,JSON.stringify(profile));migration.profileReady=true;}catch(e){}}
+if(reduceQuery){var onReduce=function(event){reduced=!!event.matches;applyCalm();};if(reduceQuery.addEventListener)reduceQuery.addEventListener('change',onReduce);else if(reduceQuery.addListener)reduceQuery.addListener(onReduce);}
+
+var canvas=document.getElementById('game'),advisory=document.getElementById('v6NovaAdvisory'),ax=advisory.getContext('2d');
+var intro=document.getElementById('v6NovaIntro'),skip=document.getElementById('v6NovaSkip'),director=document.getElementById('v6NovaDirector');
+var clutch=document.getElementById('v6NovaClutch'),finish=document.getElementById('v6NovaFinish'),intent=document.getElementById('v6NovaIntent');
+canvas.tabIndex=0;canvas.setAttribute('role','application');canvas.setAttribute('aria-label','Nova Siege arena. Move with WASD or arrow keys, aim with the pointer, fire with Space or primary pointer, and dash with Shift.');
+canvas.setAttribute('aria-describedby','v6NovaIntent');
+var touchControls=document.getElementById('touch-controls');touchControls.setAttribute('role','group');touchControls.setAttribute('aria-label','Nova Siege touch controls');
+document.getElementById('joy-left').setAttribute('aria-label','Movement stick');
+document.getElementById('joy-right').setAttribute('aria-label','Aim and fire stick');
+
+var settingsRow=document.querySelector('.settings-row');
+if(settingsRow&&!document.getElementById('v6NovaCalm')){
+  settingsRow.classList.add('v6-four');
+  var calmButton=document.createElement('button');calmButton.id='v6NovaCalm';calmButton.type='button';calmButton.className='btn small';calmButton.addEventListener('click',function(){profile.settings.calm=!profile.settings.calm;saveProfile();applyCalm();tone(profile.settings.calm?330:660,.1,.018);});
+  settingsRow.appendChild(calmButton);
+}
+applyCalm();
+
+var introOpen=false,introTimer=0,lastFocus=null;
+var screens=Array.prototype.slice.call(document.querySelectorAll('.screen'));
+function syncScreens(){
+  screens.forEach(function(screen){var active=!screen.classList.contains('hidden');screen.setAttribute('aria-hidden',active?'false':'true');if(introOpen||!active)screen.setAttribute('inert','');else screen.removeAttribute('inert');});
+  [canvas,document.getElementById('hud'),touchControls].forEach(function(node){if(!node)return;if(introOpen)node.setAttribute('inert','');else node.removeAttribute('inert');});
+}
+new MutationObserver(syncScreens).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
+function closeIntro(){
+  if(!introOpen)return;introOpen=false;clearTimeout(introTimer);intro.hidden=true;intro.setAttribute('aria-hidden','true');syncScreens();tone(660,.13,.02);var target=lastFocus&&lastFocus.isConnected?lastFocus:document.getElementById('start-run');if(target&&target.focus)target.focus({preventScroll:true});
+}
+function openIntro(){
+  if(introOpen||calm())return;introOpen=true;lastFocus=document.activeElement;intro.hidden=false;intro.setAttribute('aria-hidden','false');syncScreens();
+  try{document.dispatchEvent(new Event('pointerdown',{bubbles:true}));}catch(e){}
+  skip.focus({preventScroll:true});tone(196,.34,.022);tone(392,.42,.014,.07);introTimer=setTimeout(closeIntro,2300);
+}
+skip.addEventListener('click',closeIntro);
+intro.addEventListener('keydown',function(event){if(event.key==='Escape'||event.key==='Enter'||event.key===' '){event.preventDefault();closeIntro();}else if(event.key==='Tab'){event.preventDefault();skip.focus();}});
+function scheduleIntro(){
+  var start=document.getElementById('start-run');
+  if(start)start.addEventListener('click',function(){requestAnimationFrame(openIntro);},{once:true});
+}
+scheduleIntro();
+
+var directorTimer=0;
+function direct(text){
+  clearTimeout(directorTimer);director.textContent=text;director.classList.add('on');
+  directorTimer=setTimeout(function(){director.classList.remove('on');},calm()?900:1550);
+}
+document.getElementById('start-run').addEventListener('click',function(){setTimeout(function(){var snap=window.VectorOverdrive&&window.VectorOverdrive.getSnapshot();direct('SECTOR '+(snap?Number(snap.seed).toString(16).toUpperCase():'LOCK')+' · CAMERA LOCK');tone(440,.11,.016);},0);});
+var boss=document.getElementById('boss-hud'),bossWas=false;
+new MutationObserver(function(){var active=!boss.classList.contains('hidden');if(active&&!bossWas){direct('DREADNOUGHT · THREAT CAMERA');tone(110,.32,.034);tone(880,.3,.014,.05);}bossWas=active;}).observe(boss,{attributes:true,attributeFilter:['class']});
+
+var aim={x:innerWidth/2,y:innerHeight*.3,seen:false},visual={x:null,y:null},lastNow=performance.now(),lastShield=null,lastState='',finishSeen=false,lastIntent='';
+function setIntent(text){if(text===lastIntent)return;lastIntent=text;intent.textContent=text;}
+canvas.addEventListener('pointermove',function(event){aim.x=event.clientX;aim.y=event.clientY;aim.seen=true;},{passive:true});
+var right=document.getElementById('joy-right'),left=document.getElementById('joy-left');
+[right,left].forEach(function(stick){stick.addEventListener('pointerdown',function(event){if(stick===right){aim.x=event.clientX;aim.y=event.clientY;aim.seen=true;setIntent('AIM + FIRE');}else setIntent('MOVE VECTOR');},{passive:true});});
+right.addEventListener('pointermove',function(event){aim.x=event.clientX;aim.y=event.clientY;aim.seen=true;},{passive:true});
+document.getElementById('dash-button').addEventListener('pointerdown',function(){setIntent('DASH VECTOR');},{passive:true});
+document.getElementById('dash-button').addEventListener('click',function(event){if(event.detail===0&&typeof PointerEvent==='function')this.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:0,clientX:0,clientY:0}));});
+function sizeAdvisory(){
+  var ratio=Math.min(2,Math.max(1,devicePixelRatio||1)),w=Math.max(1,innerWidth),h=Math.max(1,innerHeight);
+  if(advisory.width!==Math.round(w*ratio)||advisory.height!==Math.round(h*ratio)){advisory.width=Math.round(w*ratio);advisory.height=Math.round(h*ratio);advisory.style.width=w+'px';advisory.style.height=h+'px';}
+  ax.setTransform(ratio,0,0,ratio,0,0);
+}
+function triggerClutch(){
+  if(calm())return;clutch.classList.remove('on');void clutch.offsetWidth;clutch.classList.add('on');tone(118,.3,.04);tone(760,.24,.012,.04);
+}
+function triggerFinish(){
+  if(calm())return;finish.classList.remove('on');void finish.offsetWidth;finish.classList.add('on');tone(523,.22,.025);tone(784,.34,.018,.1);
+}
+function drawAdvisory(now){
+  sizeAdvisory();ax.clearRect(0,0,innerWidth,innerHeight);
+  var api=window.VectorOverdrive,snap=api&&api.getSnapshot?api.getSnapshot():null,playing=!!(snap&&snap.state==='PLAYING'&&snap.player);
+  document.body.classList.toggle('v6-playing',playing);
+  var dt=Math.min(.05,Math.max(0,(now-lastNow)/1000||0));lastNow=now;
+  if(snap&&snap.player){
+    if(lastShield!==null&&snap.player.shields<lastShield)triggerClutch();
+    lastShield=snap.player.shields;
+  }else lastShield=null;
+  if(snap&&snap.state==='GAMEOVER'&&!finishSeen){finishSeen=true;triggerFinish();direct('SIGNAL LOST · RUN ARCHIVED');}
+  if(snap&&snap.state==='PLAYING')finishSeen=false;
+  if(playing&&!document.hidden){
+    var p=snap.player;if(visual.x===null){visual.x=p.x;visual.y=p.y;}
+    var smoothing=1-Math.exp(-Math.max(1,24)*dt);visual.x+=(p.x-visual.x)*smoothing;visual.y+=(p.y-visual.y)*smoothing;
+    var tx=aim.seen?aim.x:visual.x,ty=aim.seen?aim.y:visual.y-220,dx=tx-visual.x,dy=ty-visual.y,length=Math.hypot(dx,dy)||1,nx=dx/length,ny=dy/length,range=Math.min(320,Math.max(150,length));
+    ax.save();ax.globalCompositeOperation='lighter';ax.strokeStyle='rgba(111,247,255,.70)';ax.lineWidth=1.5;ax.setLineDash([6,7]);ax.beginPath();ax.moveTo(visual.x,visual.y);ax.lineTo(visual.x+nx*range,visual.y+ny*range);ax.stroke();ax.setLineDash([]);
+    for(var i=1;i<=4;i++){var t=i/4,gx=visual.x+nx*range*t,gy=visual.y+ny*range*t;ax.globalAlpha=.85-t*.38;ax.strokeStyle='#64f5a5';ax.beginPath();ax.arc(gx,gy,3+i*.8,0,Math.PI*2);ax.stroke();}
+    var enemies=Math.max(0,Number(snap.enemies)||0),danger=enemies>=18?'CRITICAL':enemies>=8?'ELEVATED':enemies?'TRACKING':'CLEAR',radius=48+Math.min(54,enemies*2.3);
+    ax.globalAlpha=enemies?.82:.32;ax.strokeStyle=enemies>=18?'#ff426a':enemies>=8?'#ff8a3d':'#f2a24a';ax.lineWidth=2;ax.setLineDash([4,Math.max(6,16-enemies*.2)]);ax.beginPath();ax.arc(visual.x,visual.y,radius,-Math.PI*.9,Math.PI*.2);ax.stroke();ax.setLineDash([]);ax.globalAlpha=.9;ax.fillStyle='rgba(5,7,19,.84)';ax.fillRect(visual.x-42,visual.y-radius-25,84,17);ax.fillStyle=enemies>=18?'#ff7c98':'#ffd28b';ax.font='900 9px "Courier New",monospace';ax.textAlign='center';ax.fillText(danger+' · '+enemies,visual.x,visual.y-radius-13);ax.restore();
+    setIntent(aim.seen?'VECTOR LOCKED':'THREAT '+danger);
+  }
+  lastState=snap?snap.state:'';
+  requestAnimationFrame(drawAdvisory);
+}
+addEventListener('resize',sizeAdvisory,{passive:true});
+document.addEventListener('visibilitychange',function(){if(document.hidden&&MasterBus.ctx&&MasterBus.ctx.state==='running')MasterBus.ctx.suspend().catch(function(){});lastNow=performance.now();});
+syncScreens();
+
+window.__MBM_V6_RELEASE__={
+  version:VERSION,gameId:GAME_ID,title:'Vector Overdrive: Nova Siege AAA V6',edition:'AAA V6',madeBy:'Made by Matt',offline:true,
+  features:['viewport-first','safe-area-layout','portrait-dead-zone-tray','no-landscape-bottom-bar','120hz-fixed-authority','high-refresh-advisory-interpolation','touch-vector-intent','trajectory-preview','threat-ring-preview','skippable-intro','camera-direction','damage-clutch','finish-direction','compressed-master-bus','audio-resume','schema-6-profile','legacy-byte-preservation','visibility-pause','calm-mode','reduced-motion','keyboard-focus-aria'],
+  authority:{tickHz:120,source:'FIXED_DT=1/120',canonicalEngineSha256:AUTHORITY_SHA,advisoryOnly:true,legacyStorage:LEGACY_KEYS.slice()},
+  profile:{key:PROFILE_KEY,schema:6,migration:migration},audio:MasterBus,
+  selfTest:function(){
+    var canonical=window.VectorOverdrive&&window.VectorOverdrive.selfTest?window.VectorOverdrive.selfTest():{pass:false,tests:[]};
+    var ids={},duplicates=[];Array.prototype.forEach.call(document.querySelectorAll('[id]'),function(node){if(ids[node.id])duplicates.push(node.id);ids[node.id]=true;});
+    var meta=(document.querySelector('meta[name="viewport"]')||{}).content||'';
+    var checks={
+      marker:VERSION==='6.0.0'&&GAME_ID==='nova-siege',
+      canonicalFixture:!!canonical.pass,
+      fixedAuthority:this.authority.tickHz===120&&this.authority.canonicalEngineSha256===AUTHORITY_SHA,
+      profile:migration.profileReady&&profile.version===6,
+      legacyUntouched:migration.legacyUntouched,
+      offline:document.querySelectorAll('script[src],link[rel="stylesheet"],img[src^="http"],audio[src],video[src],source[src]').length===0,
+      uniqueIds:duplicates.length===0,
+      zoomEnabled:!/user-scalable\s*=\s*no|maximum-scale\s*=\s*1/i.test(meta),
+      aria:intro.getAttribute('role')==='dialog'&&canvas.getAttribute('role')==='application'&&!!intent.getAttribute('aria-live'),
+      targets:[skip,document.getElementById('v6NovaCalm')].every(function(button){var style=getComputedStyle(button),rect=button.getBoundingClientRect();return style.display==='none'||button.getClientRects().length===0||(rect.width>=44&&rect.height>=44);}),
+      audioBus:!!(MasterBus.compressor&&MasterBus.gain)||!MasterBus.ctx
+    };
+    return{ok:Object.keys(checks).every(function(key){return checks[key];}),pass:Object.keys(checks).every(function(key){return checks[key];}),version:VERSION,gameId:GAME_ID,checks:checks,canonical:canonical,authority:this.authority,profileVersion:profile.version,duplicates:duplicates};
+  }
+};
+sizeAdvisory();requestAnimationFrame(drawAdvisory);
+})();
+</script>
+<!-- MBM-V6-NOVA:END -->
+
 <!-- MBM-INLINE-EXIT:BEGIN generated by tools/render_inline_exit.py, do not edit by hand -->
 <script>(function(){"use strict";
 try{

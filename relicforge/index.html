@@ -4,13 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#08090d">
-  <meta name="description" content="Relic Forge: Crownfall — V4 Roadmap Milestone 2, a kinetic modular action roguelite by MadeByMatt.">
+  <meta name="description" content="Relic Forge: Crownfall V6 — a standalone, accessible kinetic modular action roguelite by MadeByMatt.">
+  <meta name="mbm-v6-release" content="Relic Forge AAA V6; schema=6; standalone=1">
   <link rel="canonical" href="https://madebymatt.uk/relicforge/">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://madebymatt.uk/relicforge/">
-  <meta property="og:title" content="Relic Forge: Crownfall — V4 Roadmap Milestone 2">
+  <meta property="og:title" content="Relic Forge: Crownfall — AAA V6">
   <meta property="og:description" content="Relic Forge: Crownfall — a standalone modular action roguelite by MadeByMatt.">
-  <title>Relic Forge: Crownfall — V4 Roadmap Milestone 2</title>
+  <title>Relic Forge: Crownfall — AAA V6</title>
   <style>
     :root {
       --ink: #08090d;
@@ -7856,5 +7857,328 @@ if(document.body)mount();else document.addEventListener("DOMContentLoaded",mount
 }catch(e){}
 })();</script>
 <!-- MBM-INLINE-EXIT:END -->
+<!-- MBM-V6:BEGIN — additive presentation/input layer; source authority remains above. -->
+<style id="mbm-v6-style">
+  :root { --mbm-v6-safe-top: env(safe-area-inset-top, 0px); --mbm-v6-safe-right: env(safe-area-inset-right, 0px); --mbm-v6-safe-bottom: env(safe-area-inset-bottom, 0px); --mbm-v6-safe-left: env(safe-area-inset-left, 0px); }
+  html, body { width: 100%; min-height: 100%; min-height: 100dvh; }
+  body { min-width: 0; }
+  #rotate-note { display: none !important; }
+  :where(button, select, input, [role="button"]) { min-height: 44px; }
+  :where(button, select, input, a, [tabindex]):focus-visible { outline: 3px solid #fff3b0 !important; outline-offset: 3px !important; }
+  #mbm-v6-intro {
+    position: fixed; inset: 0; z-index: 2147481000; display: none; place-items: center;
+    padding: calc(20px + var(--mbm-v6-safe-top)) calc(20px + var(--mbm-v6-safe-right)) calc(20px + var(--mbm-v6-safe-bottom)) calc(20px + var(--mbm-v6-safe-left));
+    background: radial-gradient(circle at 50% 45%, rgba(255,176,0,.18), transparent 42%), rgba(4,5,8,.94);
+    color: #f6f3ea; text-align: center; box-sizing: border-box;
+  }
+  #mbm-v6-intro.open { display: grid; animation: mbm-v6-forge-in .42s ease-out both; }
+  #mbm-v6-intro .mbm-v6-intro-card { width: min(620px, 92vw); }
+  #mbm-v6-intro .mbm-v6-kicker { color: #ffca51; font: 900 11px/1.2 system-ui,sans-serif; letter-spacing: .22em; text-transform: uppercase; }
+  #mbm-v6-intro h1 { margin: 10px 0 8px; font: 950 clamp(30px,8vw,72px)/.9 system-ui,sans-serif; letter-spacing: -.05em; text-transform: uppercase; }
+  #mbm-v6-intro p { margin: 0 auto 18px; max-width: 48ch; color: #c9c4b7; font: 600 14px/1.55 system-ui,sans-serif; }
+  .mbm-v6-button {
+    min-width: 44px; min-height: 44px; border: 1px solid rgba(255,202,81,.72); border-radius: 9px;
+    background: rgba(14,15,20,.92); color: #fff7db; padding: 10px 14px; cursor: pointer;
+    font: 850 12px/1.1 system-ui,sans-serif; letter-spacing: .04em;
+  }
+  #mbm-v6-intel {
+    position: fixed; z-index: 140; top: calc(68px + var(--mbm-v6-safe-top)); right: calc(10px + var(--mbm-v6-safe-right));
+    width: min(330px, calc(100vw - 20px - var(--mbm-v6-safe-left) - var(--mbm-v6-safe-right)));
+    max-height: min(54dvh, 430px); overflow: auto; overscroll-behavior: contain; box-sizing: border-box;
+    border: 1px solid rgba(255,176,0,.48); border-radius: 12px; padding: 10px;
+    background: linear-gradient(150deg, rgba(11,12,17,.96), rgba(21,18,12,.93)); color: #f4f1e8;
+    box-shadow: 0 12px 40px rgba(0,0,0,.42), inset 0 0 30px rgba(255,176,0,.035);
+    font: 650 12px/1.35 system-ui,sans-serif; backdrop-filter: blur(8px); pointer-events: auto;
+  }
+  #mbm-v6-intel[hidden] { display: none !important; }
+  .mbm-v6-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .mbm-v6-head strong { color: #ffca51; font-size: 12px; letter-spacing: .13em; text-transform: uppercase; }
+  #mbm-v6-mode { color: #a9a397; font-size: 10px; text-transform: uppercase; }
+  .mbm-v6-read { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; margin-top: 9px; }
+  .mbm-v6-read span { color: #aaa496; }
+  .mbm-v6-read b { color: #fff; text-align: right; }
+  #mbm-v6-material { margin-top: 9px; padding: 9px; border-left: 3px solid #ffb000; background: rgba(255,176,0,.07); }
+  #mbm-v6-material strong { display: block; color: #fff3c2; }
+  #mbm-v6-outcome { display: block; margin-top: 4px; color: #c8c3b7; }
+  .mbm-v6-meter { height: 6px; margin-top: 8px; border-radius: 999px; background: rgba(255,255,255,.09); overflow: hidden; }
+  #mbm-v6-power { display: block; width: 0; height: 100%; background: linear-gradient(90deg,#ffb000,#56f7a8); transition: width .2s linear; }
+  .mbm-v6-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  #mbm-v6-toggle { position: fixed; z-index: 141; top: calc(68px + var(--mbm-v6-safe-top)); right: calc(10px + var(--mbm-v6-safe-right)); }
+  #mbm-v6-cue {
+    position: fixed; z-index: 142; left: 50%; top: calc(64px + var(--mbm-v6-safe-top)); transform: translateX(-50%);
+    display: none; align-items: center; gap: 10px; max-width: min(620px, 92vw); min-height: 44px; box-sizing: border-box;
+    padding: 7px 8px 7px 13px; border: 1px solid rgba(81,231,255,.5); border-radius: 999px;
+    background: rgba(7,10,14,.92); color: #e9fdff; box-shadow: 0 9px 30px rgba(0,0,0,.35); font: 750 12px/1.25 system-ui,sans-serif;
+  }
+  #mbm-v6-cue.show { display: flex; animation: mbm-v6-cue .24s ease-out both; }
+  #mbm-v6-cue button { flex: none; border-radius: 999px; }
+  body.mbm-v6-calm #scanlines { display: none !important; }
+  body.mbm-v6-calm #mbm-v6-intro.open, body.mbm-v6-calm #mbm-v6-cue.show { animation: none; }
+  body.mbm-v6-calm #mbm-v6-power { transition: none; }
+  @keyframes mbm-v6-forge-in { from { opacity: 0; transform: scale(1.025); } to { opacity: 1; transform: scale(1); } }
+  @keyframes mbm-v6-cue { from { opacity: 0; transform: translate(-50%,-10px); } to { opacity: 1; transform: translate(-50%,0); } }
+  @media (orientation: portrait) {
+    #mbm-v6-intel { top: calc(62px + var(--mbm-v6-safe-top)); max-height: min(31dvh, 300px); width: min(350px, calc(100vw - 16px)); right: calc(8px + var(--mbm-v6-safe-right)); }
+    #mbm-v6-toggle { top: calc(62px + var(--mbm-v6-safe-top)); right: calc(8px + var(--mbm-v6-safe-right)); }
+    #mbm-v6-cue { top: auto; bottom: calc(116px + var(--mbm-v6-safe-bottom)); }
+  }
+  @media (orientation: landscape) and (max-height: 560px) {
+    #mbm-v6-intel { top: calc(58px + var(--mbm-v6-safe-top)); max-height: calc(100dvh - 70px - var(--mbm-v6-safe-top) - var(--mbm-v6-safe-bottom)); width: min(310px, 32vw); }
+    #mbm-v6-toggle { top: calc(58px + var(--mbm-v6-safe-top)); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #mbm-v6-intro.open, #mbm-v6-cue.show { animation: none !important; }
+    #mbm-v6-power { transition: none !important; }
+  }
+</style>
+<section id="mbm-v6-intro" role="dialog" aria-modal="false" aria-labelledby="mbm-v6-intro-title" aria-describedby="mbm-v6-intro-copy">
+  <div class="mbm-v6-intro-card">
+    <div class="mbm-v6-kicker">Made by Matt · V6 forge interface</div>
+    <h1 id="mbm-v6-intro-title">Crownfall</h1>
+    <p id="mbm-v6-intro-copy">The original 120 Hz vault simulation is intact. V6 adds an optional material and outcome read without touching the forge roll.</p>
+    <button class="mbm-v6-button" id="mbm-v6-intro-skip" type="button">Skip fly-in</button>
+  </div>
+</section>
+<button class="mbm-v6-button" id="mbm-v6-toggle" type="button" aria-controls="mbm-v6-intel" aria-expanded="true" aria-label="Show V6 forge forecast" hidden>Forge read</button>
+<aside id="mbm-v6-intel" role="region" aria-label="V6 forge outcome and material forecast">
+  <div class="mbm-v6-head"><strong>V6 Forge Read</strong><span id="mbm-v6-mode">Boot</span></div>
+  <div class="mbm-v6-read" aria-live="off">
+    <span>Threats</span><b id="mbm-v6-threats">—</b>
+    <span>Hull / energy</span><b id="mbm-v6-reserve">—</b>
+    <span>Salvage read</span><b id="mbm-v6-salvage">—</b>
+  </div>
+  <div id="mbm-v6-material">
+    <strong id="mbm-v6-material-name">Forge forecast armed</strong>
+    <span id="mbm-v6-outcome">Clear a chamber to compare recovered material.</span>
+    <div class="mbm-v6-meter" aria-hidden="true"><i id="mbm-v6-power"></i></div>
+  </div>
+  <div class="mbm-v6-actions">
+    <button class="mbm-v6-button" id="mbm-v6-calm" type="button" aria-pressed="false">Calm: off</button>
+    <button class="mbm-v6-button" id="mbm-v6-hide" type="button">Hide read</button>
+  </div>
+</aside>
+<div id="mbm-v6-cue" role="status" aria-live="polite"><span id="mbm-v6-cue-copy">V6 scene cue</span><button class="mbm-v6-button" id="mbm-v6-cue-skip" type="button">Skip V6 cue</button></div>
+<script id="mbm-v6-release-script">
+(() => {
+  'use strict';
+  const RELEASE = 'Relic Forge AAA V6';
+  const PROFILE_KEY = 'mbm_v6_relicforge_profile';
+  const LEGACY_KEYS = ['mbm_relicforge_v1', 'mbm_arcade_passport_v4'];
+  const sourceSha256 = 'dd2b0ef9030ffc0b6f468e9326b87cfc798b6c8a701c1f124c2eb542e76bb0f7';
+  const byId = (id) => document.getElementById(id);
+  const safeGet = (key) => { try { return localStorage.getItem(key); } catch (_) { return null; } };
+  const safeSet = (key, value) => { try { localStorage.setItem(key, value); return true; } catch (_) { return false; } };
+  const fingerprint = (value) => {
+    let hash = 2166136261; const text = String(value == null ? '' : value);
+    for (let i = 0; i < text.length; i++) { hash ^= text.charCodeAt(i); hash = Math.imul(hash, 16777619); }
+    return (hash >>> 0).toString(16).padStart(8, '0');
+  };
+  const legacyBefore = Object.fromEntries(LEGACY_KEYS.map((key) => [key, safeGet(key)]));
+  function bootProfile() {
+    let prior = null;
+    try { prior = JSON.parse(safeGet(PROFILE_KEY) || 'null'); } catch (_) {}
+    const now = new Date().toISOString();
+    const profile = prior && typeof prior === 'object' ? { ...prior } : {};
+    profile.schema = 6;
+    profile.game = 'relicforge';
+    profile.createdAt = profile.createdAt || now;
+    profile.updatedAt = now;
+    profile.settings = {
+      calm: Boolean(profile.settings && profile.settings.calm),
+      forecastOpen: profile.settings && profile.settings.forecastOpen !== false,
+      audio: !profile.settings || profile.settings.audio !== false
+    };
+    profile.migration = profile.migration && profile.migration.schema === 6 ? profile.migration : {
+      schema: 6,
+      importedAt: now,
+      mode: 'read-only-snapshot',
+      legacy: LEGACY_KEYS.filter((key) => legacyBefore[key] !== null).map((key) => ({ key, fingerprint: fingerprint(legacyBefore[key]) }))
+    };
+    safeSet(PROFILE_KEY, JSON.stringify(profile));
+    return profile;
+  }
+  const profile = bootProfile();
+  const legacyAfterMigration = Object.fromEntries(LEGACY_KEYS.map((key) => [key, safeGet(key)]));
+  const migrationNonDestructive = LEGACY_KEYS.every((key) => legacyBefore[key] === legacyAfterMigration[key]);
+  function saveProfile() { profile.updatedAt = new Date().toISOString(); safeSet(PROFILE_KEY, JSON.stringify(profile)); }
+
+  const intro = byId('mbm-v6-intro');
+  const intel = byId('mbm-v6-intel');
+  const toggle = byId('mbm-v6-toggle');
+  const cue = byId('mbm-v6-cue');
+  let introTimer = 0;
+  let cueTimer = 0;
+  let lastMode = '';
+  let lastForecast = '';
+  let audioContext = null;
+  let compressor = null;
+  let masterGain = null;
+
+  function applyCalm() {
+    const reduced = matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.body.classList.toggle('mbm-v6-calm', profile.settings.calm || reduced);
+    const button = byId('mbm-v6-calm');
+    button.setAttribute('aria-pressed', String(profile.settings.calm));
+    button.textContent = `Calm: ${profile.settings.calm ? 'on' : 'off'}`;
+  }
+  function setIntelOpen(open, persist = true) {
+    profile.settings.forecastOpen = Boolean(open);
+    intel.hidden = !open;
+    toggle.hidden = open;
+    toggle.setAttribute('aria-expanded', String(open));
+    if (persist) saveProfile();
+  }
+  function dismissIntro() {
+    clearTimeout(introTimer);
+    intro.classList.remove('open');
+    intro.setAttribute('aria-hidden', 'true');
+  }
+  function showIntro() {
+    if (matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    intro.removeAttribute('aria-hidden');
+    intro.classList.add('open');
+    byId('mbm-v6-intro-skip').focus({ preventScroll: true });
+    introTimer = setTimeout(dismissIntro, 2400);
+  }
+  function showCue(text) {
+    clearTimeout(cueTimer);
+    byId('mbm-v6-cue-copy').textContent = text;
+    cue.classList.add('show');
+    cueTimer = setTimeout(() => cue.classList.remove('show'), profile.settings.calm ? 900 : 2200);
+  }
+  function dismissCue() { clearTimeout(cueTimer); cue.classList.remove('show'); }
+
+  function ensureAudio() {
+    if (!profile.settings.audio) return null;
+    const AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtor) return null;
+    if (!audioContext) {
+      audioContext = new AudioCtor();
+      compressor = audioContext.createDynamicsCompressor();
+      compressor.threshold.value = -22; compressor.knee.value = 18; compressor.ratio.value = 7;
+      compressor.attack.value = .004; compressor.release.value = .24;
+      masterGain = audioContext.createGain(); masterGain.gain.value = .035;
+      compressor.connect(masterGain); masterGain.connect(audioContext.destination);
+    }
+    if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
+    return audioContext;
+  }
+  function tone(frequency = 420) {
+    if (profile.settings.calm || document.hidden) return;
+    const ctx = ensureAudio(); if (!ctx || !compressor) return;
+    const oscillator = ctx.createOscillator(); const gain = ctx.createGain(); const now = ctx.currentTime;
+    oscillator.type = 'triangle'; oscillator.frequency.setValueAtTime(frequency, now);
+    oscillator.frequency.exponentialRampToValueAtTime(Math.max(90, frequency * .72), now + .09);
+    gain.gain.setValueAtTime(.0001, now); gain.gain.exponentialRampToValueAtTime(.12, now + .012); gain.gain.exponentialRampToValueAtTime(.0001, now + .11);
+    oscillator.connect(gain); gain.connect(compressor); oscillator.start(now); oscillator.stop(now + .12);
+  }
+
+  function snapshot() {
+    try { return window.__relicforge && window.__relicforge.snapshot ? window.__relicforge.snapshot() : null; } catch (_) { return null; }
+  }
+  function forgeRead() {
+    const cards = Array.from(document.querySelectorAll('#forge-grid .forge-card'));
+    if (!cards.length) return null;
+    const selected = cards.find((card) => card.classList.contains('selected')) || cards[0];
+    const powerValues = cards.map((card) => Number(card.querySelector('.part-power b')?.textContent) || 0);
+    const power = Number(selected.querySelector('.part-power b')?.textContent) || 0;
+    const name = selected.querySelector('h4')?.textContent?.trim() || 'Recovered relic';
+    const slot = selected.querySelector('.part-slot')?.textContent?.trim() || 'Material';
+    const outcome = selected.querySelector('.compare')?.textContent?.replace(/\s+/g, ' ').trim() || 'Outcome available after selection.';
+    return { name, slot, power, max: Math.max(100, ...powerValues), outcome, choices: cards.length };
+  }
+  function updateRead() {
+    const snap = snapshot();
+    const mode = String(snap?.mode || 'boot');
+    byId('mbm-v6-mode').textContent = mode;
+    byId('mbm-v6-threats').textContent = snap ? String(snap.enemies) : 'Booting';
+    byId('mbm-v6-reserve').textContent = snap && snap.hp != null ? `${snap.hp}/${snap.maxHp} · ${snap.energy}` : '—';
+    byId('mbm-v6-salvage').textContent = snap ? `${snap.salvageRun?.mean || 0} mean · ${snap.salvage} held` : '—';
+    const forge = forgeRead();
+    if (forge) {
+      byId('mbm-v6-material-name').textContent = `${forge.slot}: ${forge.name}`;
+      byId('mbm-v6-outcome').textContent = `${forge.outcome} Unselected material follows the original dismantle-credit rule.`;
+      byId('mbm-v6-power').style.width = `${Math.min(100, forge.power / forge.max * 100)}%`;
+      const signature = `${forge.name}|${forge.power}`;
+      if (signature !== lastForecast) { lastForecast = signature; tone(520 + Math.min(220, forge.power)); }
+    } else {
+      byId('mbm-v6-material-name').textContent = mode === 'playing' ? 'Material scan in progress' : 'Forge forecast armed';
+      byId('mbm-v6-outcome').textContent = mode === 'playing' ? 'Destroy external components cleanly to improve the authoritative salvage result.' : 'Clear a chamber to compare recovered material.';
+      byId('mbm-v6-power').style.width = '0%';
+      lastForecast = '';
+    }
+    if (lastMode && mode !== lastMode) {
+      const labels = { story: 'Descent camera cue', forge: 'Forge clutch cue', victory: 'Crown secured finish cue', gameover: 'Vault finish cue', playing: 'Vault camera released' };
+      if (labels[mode]) showCue(labels[mode]);
+    }
+    lastMode = mode;
+  }
+
+  function deterministicFixture() {
+    const scorer = window.RF && window.RF.salvageRating;
+    if (typeof scorer !== 'function') return { ok: false, reason: 'RF scorer unavailable' };
+    const clean = scorer({ externals: 5, stripped: 5, coreDamage: 0, overkill: 0, threat: .8, meleeShare: 0 });
+    const dirty = scorer({ externals: 5, stripped: 4, coreDamage: 1, overkill: 0, threat: .8, meleeShare: 0 });
+    const wasteful = scorer({ externals: 5, stripped: 4, coreDamage: 1, overkill: 1, threat: .8, meleeShare: 0 });
+    const repeat = scorer({ externals: 5, stripped: 5, coreDamage: 0, overkill: 0, threat: .8, meleeShare: 0 });
+    return { ok: clean === repeat && clean >= 60 && dirty <= 59 && dirty >= wasteful && clean > dirty, clean, dirty, wasteful };
+  }
+
+  byId('mbm-v6-intro-skip').addEventListener('click', dismissIntro);
+  byId('mbm-v6-cue-skip').addEventListener('click', dismissCue);
+  byId('mbm-v6-hide').addEventListener('click', () => setIntelOpen(false));
+  toggle.addEventListener('click', () => setIntelOpen(true));
+  byId('mbm-v6-calm').addEventListener('click', () => { profile.settings.calm = !profile.settings.calm; saveProfile(); applyCalm(); tone(330); });
+  addEventListener('pointerdown', ensureAudio, { passive: true });
+  addEventListener('keydown', (event) => {
+    if (!event.metaKey && !event.ctrlKey && !event.altKey && !/INPUT|TEXTAREA|SELECT/.test(event.target?.tagName || '')) {
+      if (event.key.toLowerCase() === 'f') { event.preventDefault(); setIntelOpen(intel.hidden); }
+      if (event.key.toLowerCase() === 'c') { event.preventDefault(); byId('mbm-v6-calm').click(); }
+      if (event.key === 'Escape' && intro.classList.contains('open')) { event.preventDefault(); dismissIntro(); }
+    }
+    ensureAudio();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { dismissCue(); if (audioContext && audioContext.state === 'running') audioContext.suspend().catch(() => {}); }
+  });
+
+  applyCalm();
+  setIntelOpen(profile.settings.forecastOpen, false);
+  setInterval(updateRead, 100);
+  updateRead();
+  setTimeout(showIntro, 1950);
+
+  const releaseApi = {
+    release: RELEASE,
+    version: '6.0.0',
+    schema: 6,
+    source: { path: 'Site/relicforge/index.html', sha256: sourceSha256 },
+    profileKey: PROFILE_KEY,
+    timing: { authority: 'original fixed 120 Hz', presentationSampleHz: 10, interpolation: 'visual-only' },
+    migration: { nonDestructive: migrationNonDestructive, legacyKeys: LEGACY_KEYS.slice() },
+    deterministicFixture,
+    profile: () => JSON.parse(JSON.stringify(profile)),
+    selfTest() {
+      const ids = Array.from(document.querySelectorAll('[id]'), (node) => node.id);
+      const v6Buttons = Array.from(document.querySelectorAll('.mbm-v6-button'));
+      const fixture = deterministicFixture();
+      const checks = {
+        schema6: profile.schema === 6,
+        migrationNonDestructive,
+        uniqueIds: ids.length === new Set(ids).size,
+        ariaNames: v6Buttons.every((button) => Boolean(button.getAttribute('aria-label') || button.textContent.trim())),
+        targets44: v6Buttons.every((button) => parseFloat(getComputedStyle(button).minHeight) >= 44),
+        zoomEnabled: !/maximum-scale|user-scalable\s*=\s*no/i.test(document.querySelector('meta[name="viewport"]')?.content || ''),
+        offline: !document.querySelector('script[src],link[rel="manifest"],link[rel="stylesheet"]'),
+        releaseObject: window.__MBM_V6_RELEASE__ === releaseApi,
+        deterministicAuthority: fixture.ok
+      };
+      return { ok: Object.values(checks).every(Boolean), checks, fixture };
+    }
+  };
+  Object.defineProperty(window, '__MBM_V6_RELEASE__', { configurable: true, enumerable: true, value: releaseApi });
+})();
+</script>
+<!-- MBM-V6:END -->
 </body>
 </html>

@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'none'">
   <meta name="theme-color" content="#071523">
-  <meta name="description" content="A zero-dependency 30-day frontier strategy game.">
-  <title>Crown &amp; Badge: Frontier Watch v1.0 · Standalone</title>
+  <meta name="description" content="Crown &amp; Badge AAA V6 — the complete offline 30-day frontier strategy game by Made by Matt.">
+  <title>Crown &amp; Badge · AAA V6 · Made by Matt</title>
   <style>
 :root{--ink:#06131f;--ink2:#0b2133;--panel:#102d43;--panel2:#173d55;--line:rgba(184,220,241,.18);--cream:#fff4d5;--muted:#a8c3d4;--blue:#3aa7ff;--blue2:#186bb3;--gold:#ffc957;--gold2:#9f651d;--teal:#43dfc1;--good:#63e6a8;--danger:#ff6d72;--warn:#f2a84b;--shadow:0 18px 55px rgba(0,0,0,.48);font-family:Inter,ui-rounded,"Segoe UI",system-ui,sans-serif;color-scheme:dark}*{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--ink);color:#fff;overflow:hidden}button,input{font:inherit;color:inherit}button{touch-action:manipulation;min-width:44px;min-height:45px}button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:3px}.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}[hidden]{display:none!important}body.shake #app{animation:shake .28s linear}body.flash-good #app:after,body.flash-bad #app:after{content:"";position:fixed;inset:0;z-index:500;pointer-events:none;animation:flash .55s ease-out}body.flash-good #app:after{box-shadow:inset 0 0 60px var(--good)}body.flash-bad #app:after{box-shadow:inset 0 0 75px var(--danger)}@keyframes shake{0%,100%{transform:none}20%{transform:translate(-4px,2px)}40%{transform:translate(4px,-2px)}60%{transform:translate(-3px,-1px)}80%{transform:translate(3px,1px)}}@keyframes flash{to{opacity:0}}
 #app{height:100dvh;display:flex;flex-direction:column;isolation:isolate;background:radial-gradient(circle at 52% -20%,#204b65,#06131f 50%)}.topbar{height:76px;flex:0 0 auto;display:flex;align-items:center;gap:14px;padding:9px max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right));background:linear-gradient(180deg,rgba(5,19,31,.99),rgba(5,19,31,.91));border-bottom:1px solid var(--line);box-shadow:0 8px 30px rgba(0,0,0,.22);z-index:50}.brand{display:flex;align-items:center;gap:10px;min-width:205px}.brand-crest{width:48px;height:48px;display:grid;place-items:center;border:2px solid var(--gold);border-radius:15px;background:linear-gradient(145deg,#278fda,#0d3d67);font-size:25px;box-shadow:inset 0 0 0 4px rgba(255,255,255,.08)}.brand strong{display:block;font-family:Georgia,serif;color:var(--cream);font-size:20px;line-height:1}.brand span{display:block;color:#85cdf6;font-size:9px;font-weight:900;letter-spacing:.13em;margin-top:5px}.campaign-chip{padding:7px 11px;border-left:1px solid var(--line)}.campaign-chip span{display:block;font-size:8px;letter-spacing:.14em;color:var(--teal);font-weight:900}.campaign-chip b{font-size:13px}.campaign-chip em{display:block;margin-top:2px;color:var(--gold);font-size:9px;font-style:normal;font-weight:900}.resource-row{display:flex;gap:7px;margin-left:auto}.resource{height:48px;min-width:86px;padding:5px 10px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#173a51,#0c263a);box-shadow:inset 0 1px rgba(255,255,255,.07)}.resource>span{font-size:18px}.resource small{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.1em}.resource b{font-size:15px}.resource.gold>span,.resource.valor>span{color:var(--gold)}.resource.supplies>span{color:var(--teal)}.resource.authority>span{color:#8ed7ff}.top-actions{display:flex;gap:6px}.icon-btn{width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--line);border-radius:13px;background:#112d42;cursor:pointer;font-weight:900;font-size:18px}.icon-btn:hover{background:#1d4c67}.icon-btn[aria-pressed=true]{background:#2a6971;border-color:var(--teal)}
@@ -25,6 +25,16 @@ main{position:relative;flex:1;min-height:0}.screen{display:none;position:absolut
 @media(forced-colors:active){button,.resource,.goal-card,.ledger-card,.calls-card,.officer-card,.relic-card,.decree-card{forced-color-adjust:auto}.frontier-svg .territory>path:first-child{fill:Canvas!important;stroke:CanvasText!important}.map-node{border:3px solid ButtonText}.map-node.has-incident:after{content:"!";position:absolute;color:CanvasText}}
 .officer-dock{pointer-events:auto;touch-action:pan-x}.dock-officer{touch-action:pan-x}
 #volumeSlider{min-height:44px}
+
+/* ===== AAA V6 presentation layer (authority-neutral) ===== */
+.v6-badge{display:inline-grid;place-items:center;min-height:24px;padding:3px 8px;border:1px solid rgba(255,201,87,.58);border-radius:999px;background:linear-gradient(145deg,#ffd978,#9f651d);color:#241600;font:1000 8px/1 ui-monospace,monospace;letter-spacing:.12em;white-space:nowrap;box-shadow:0 0 18px rgba(255,201,87,.2)}
+.v6-outcome{margin:-6px 0 14px;padding:10px;border:1px solid rgba(67,223,193,.3);border-radius:12px;background:linear-gradient(145deg,rgba(30,91,104,.5),rgba(4,24,37,.72))}.v6-outcome>strong{display:block;color:var(--teal);font-size:9px;letter-spacing:.13em}.v6-outcome-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:7px}.v6-outcome-grid span{padding:6px;border-radius:8px;background:#071a28;color:var(--muted);font-size:8px;text-align:center}.v6-outcome-grid b{display:block;margin-top:2px;color:#fff;font-size:11px}.v6-outcome small{display:block;margin-top:7px;color:#8fb7c8;font-size:8px;line-height:1.4}
+#v6CrownFx{position:fixed;inset:0;z-index:190;display:block;width:100%;height:100%;pointer-events:none}
+body.v6-fly #app{animation:v6Fly 1.05s cubic-bezier(.18,.8,.22,1) both}body.v6-clutch #app{animation:v6Clutch .42s ease-out both}
+@keyframes v6Fly{0%{opacity:.15;transform:scale(1.07);filter:brightness(.55)}70%{opacity:1;filter:brightness(1.08)}100%{transform:none;filter:none}}
+@keyframes v6Clutch{0%,100%{transform:none}24%{transform:scale(1.012) translate(-2px,1px);filter:brightness(1.16)}55%{transform:scale(1.006) translate(2px,-1px)}}
+@media(orientation:portrait){.bottom-nav{left:0;right:0;bottom:0;padding:7px max(7px,env(safe-area-inset-right)) max(7px,env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-left));border-width:1px 0 0;border-radius:18px 18px 0 0;background:linear-gradient(180deg,rgba(8,30,45,.88),rgba(3,14,24,.99));transform:none}.map-layout{padding-bottom:82px}.scroll-screen{padding-bottom:94px}}
+@media(prefers-reduced-motion:reduce){body.v6-fly #app,body.v6-clutch #app{animation:none!important}#v6CrownFx{display:none}}
 
 </style>
 </head>
@@ -145,7 +155,7 @@ if(!window.MadeByMattSplash||window.__mbmSplashStarted)return;window.__mbmSplash
 var t=(document.title||"").split(/\s+[\u2014\u2013-]\s+/)[0].trim();
 var slug=(location.pathname||"").replace(/index\.html$/,"").replace(/^\/|\/$/g,"").split("/").pop()||"mbm";
 function go(){
-  MadeByMattSplash.start({title:t,kicker:"A Made by Matt Game",duration:3000});
+  MadeByMattSplash.start({title:t,kicker:"A Made by Matt Game · AAA V6",duration:1600});
   var el=document.querySelector(".mbm-splash");
   if(el){el.setAttribute("data-mbm-splash",slug);el.setAttribute("data-mbm-splash-state","open");
     var obs=setInterval(function(){if(!el.isConnected){el.setAttribute("data-mbm-splash-state","closed");clearInterval(obs);}},120);}
@@ -157,7 +167,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
 
 <div id="app">
   <header class="topbar">
-    <div class="brand"><div class="brand-crest" aria-hidden="true">♛</div><div><strong>Crown &amp; Badge</strong><span>FRONTIER WATCH · v1.0</span></div></div>
+    <div class="brand"><div class="brand-crest" aria-hidden="true">♛</div><div><strong>Crown &amp; Badge</strong><span>FRONTIER WATCH · MADE BY MATT</span></div><span class="v6-badge" aria-label="AAA version 6.0.0">AAA V6</span></div>
     <div class="campaign-chip"><span id="stateLabel">PLANNING</span><b id="dayCounter">Day 1 / 30</b><em id="mobileGoalProgress">0/3 secured</em></div>
     <div class="resource-row" aria-label="Campaign resources">
       <div class="resource gold"><span>◆</span><div><small>Gold</small><b id="goldVal">0</b></div></div>
@@ -651,8 +661,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
 <script>
 (function(root){
   'use strict';
-  let ctx=null,master=null,muted=false,volume=.28;
-  function init(){if(!ctx){const AC=root.AudioContext||root.webkitAudioContext;if(!AC)return false;ctx=new AC();master=ctx.createGain();master.gain.setValueAtTime(muted?0:volume,ctx.currentTime);master.connect(ctx.destination)}if(ctx.state==='suspended')ctx.resume();return true}
+  let ctx=null,master=null,compressor=null,muted=false,volume=.28;
+  function init(){if(!ctx){const AC=root.AudioContext||root.webkitAudioContext;if(!AC)return false;ctx=new AC();master=ctx.createGain();compressor=ctx.createDynamicsCompressor();compressor.threshold.setValueAtTime(-18,ctx.currentTime);compressor.knee.setValueAtTime(12,ctx.currentTime);compressor.ratio.setValueAtTime(8,ctx.currentTime);compressor.attack.setValueAtTime(.003,ctx.currentTime);compressor.release.setValueAtTime(.15,ctx.currentTime);master.gain.setValueAtTime(muted?0:volume,ctx.currentTime);master.connect(compressor);compressor.connect(ctx.destination)}if(ctx.state==='suspended')ctx.resume();return true}
   function gainAt(value,t,duration){const g=ctx.createGain();g.gain.setValueAtTime(Math.max(.001,value),t);g.gain.exponentialRampToValueAtTime(.001,t+duration);g.connect(master);return g}
   function osc(type,freq,t,duration,toFreq=freq,level=.18){const o=ctx.createOscillator(),g=gainAt(level,t,duration);o.type=type;o.frequency.setValueAtTime(freq,t);if(toFreq!==freq)o.frequency.exponentialRampToValueAtTime(Math.max(1,toFreq),t+duration);o.connect(g);o.start(t);o.stop(t+duration+.02)}
   function noiseBuffer(duration=.2){const n=Math.ceil(ctx.sampleRate*duration),b=ctx.createBuffer(1,n,ctx.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;return b}
@@ -1625,12 +1635,71 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       renderAll();
     }
     showIntro();
-    if (!root.CBFW_STANDALONE && 'serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
   initialise();
 })(typeof window !== 'undefined' ? window : globalThis);
 
+</script>
+<script>
+/* AAA V6 isolated shell: presentation, accessibility and profile migration only. */
+(function(){
+  'use strict';
+  const VERSION='6.0.0',GAME_ID='crown-and-badge',PROFILE_KEY='mbm_crownbadge_v6_profile';
+  const LEGACY_KEYS=['mbm_crownbadge_campaign_v1','mbm_crownbadge_meta_v1','mbm_crownbadge_scores_v1','mbm_crownbadge_settings_v1'];
+  const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.classList.contains('reduced');
+  const safeGet=(key)=>{try{return localStorage.getItem(key)}catch(e){return null}};
+  const safeSet=(key,value)=>{try{localStorage.setItem(key,value);return true}catch(e){return false}};
+  function migrate(read,write){
+    let current=null;try{current=JSON.parse(read(PROFILE_KEY)||'null')}catch(e){}
+    if(current&&current.version===6&&current.gameId===GAME_ID)return current;
+    const legacy={};LEGACY_KEYS.forEach(key=>{const raw=read(key);if(raw!==null)legacy[key]=raw});
+    const profile={version:6,gameId:GAME_ID,migratedFrom:'Frontier Watch v1',legacy:legacy,preferences:{calm:false},createdAt:new Date().toISOString()};
+    write(PROFILE_KEY,JSON.stringify(profile));return profile;
+  }
+  const profile=migrate(safeGet,safeSet);
+
+  const fx=document.createElement('canvas');fx.id='v6CrownFx';fx.setAttribute('aria-hidden','true');document.body.appendChild(fx);
+  let stars=[],fxStart=0,raf=0;
+  function sizeFx(){const d=Math.min(2,devicePixelRatio||1);fx.width=Math.round(innerWidth*d);fx.height=Math.round(innerHeight*d);fx.style.width=innerWidth+'px';fx.style.height=innerHeight+'px';fx._d=d}
+  function finishConstellation(){
+    if(reduced())return;sizeFx();fxStart=performance.now();stars=Array.from({length:14},(_,i)=>({x:innerWidth*(.16+(i%7)*.112),y:innerHeight*(.17+(i%2)*.09),delay:i*55}));cancelAnimationFrame(raf);raf=requestAnimationFrame(drawFx);
+  }
+  function drawFx(now){const c=fx.getContext('2d'),d=fx._d||1,t=now-fxStart;c.setTransform(d,0,0,d,0,0);c.clearRect(0,0,innerWidth,innerHeight);c.save();c.globalCompositeOperation='lighter';let alive=false;stars.forEach((s,i)=>{const p=Math.max(0,Math.min(1,(t-s.delay)/420));if(p<1)alive=true;if(p<=0)return;const sy=innerHeight*.8,x=innerWidth*.5+(s.x-innerWidth*.5)*p,y=sy+(s.y-sy)*p*p-Math.sin(p*Math.PI)*50;c.strokeStyle='rgba(255,215,110,'+(1-p*.35)+')';c.lineWidth=1.5;c.beginPath();c.moveTo(innerWidth*.5,sy);c.lineTo(x,y);c.stroke();c.fillStyle=i%3?'#fff4d5':'#63e6a8';c.shadowColor='#ffc957';c.shadowBlur=12;c.beginPath();c.arc(x,y,2.2+p*1.4,0,Math.PI*2);c.fill()});c.restore();if(alive||t<1300)raf=requestAnimationFrame(drawFx);else c.clearRect(0,0,innerWidth,innerHeight)}
+
+  function forecast(){
+    const body=document.getElementById('incidentSheetBody');if(!body)return;const odds=body.querySelector('.odds-card');if(!odds||odds.nextElementSibling&&odds.nextElementSibling.classList.contains('v6-outcome'))return;
+    const raw=(odds.querySelector('.odds-top strong')||{}).textContent||'';const chance=parseInt(raw,10);if(!Number.isFinite(chance))return;
+    const riskText=(odds.querySelector('.odds-grid div:nth-child(2) b')||{}).textContent||'—';const selected=body.querySelectorAll('.squad-option.selected').length;const wrap=document.createElement('section');wrap.className='v6-outcome';wrap.setAttribute('aria-label','Advisory incident outcome forecast');
+    wrap.innerHTML='<strong>V6 COMMAND FORECAST · '+selected+' OFFICER'+(selected===1?'':'S')+'</strong><div class="v6-outcome-grid"><span>Hard turn<b>'+Math.max(0,chance-12)+'%</b></span><span>Likely line<b>'+chance+'%</b></span><span>Clear field<b>'+Math.min(100,chance+8)+'%</b></span></div><small>Advisory range only · canonical success, injury ('+riskText+') and reward rolls remain unchanged.</small>';
+    odds.insertAdjacentElement('afterend',wrap);
+  }
+  const incidentBody=document.getElementById('incidentSheetBody');if(incidentBody)new MutationObserver(forecast).observe(incidentBody,{childList:true,subtree:true});forecast();
+
+  let endWasOpen=false,summaryStamp='';
+  const watcher=new MutationObserver(()=>{
+    const splash=document.querySelector('.mbm-splash');if(!splash&&!document.body.dataset.v6Arrived){document.body.dataset.v6Arrived='1';document.body.classList.add('v6-fly');setTimeout(()=>document.body.classList.remove('v6-fly'),1100)}
+    const end=document.getElementById('endModal'),open=!!end&&end.classList.contains('open');if(open&&!endWasOpen)finishConstellation();endWasOpen=open;
+    const summary=document.getElementById('summaryBody'),stamp=summary?summary.textContent:'';if(stamp&&stamp!==summaryStamp&&summary.querySelector('.summary-event.good')&&summary.querySelector('.summary-event.bad')){summaryStamp=stamp;if(!reduced()){document.body.classList.add('v6-clutch');setTimeout(()=>document.body.classList.remove('v6-clutch'),440);try{navigator.vibrate&&navigator.vibrate([18,24,12])}catch(e){}}}
+  });watcher.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+  addEventListener('resize',sizeFx,{passive:true});document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);document.body.classList.remove('v6-fly','v6-clutch')}},{passive:true});
+  addEventListener('pageshow',()=>{try{window.FrontierAudio&&FrontierAudio.init()}catch(e){}},{passive:true});
+
+  function selfTest(){
+    const checks={};
+    checks.version=VERSION==='6.0.0';checks.offline=document.querySelectorAll('script[src],link[rel="stylesheet"][href]').length===0;
+    checks.viewport=(document.querySelector('meta[name="viewport"]')||{}).content?.includes('viewport-fit=cover')===true;
+    checks.zoom=!((document.querySelector('meta[name="viewport"]')||{}).content||'').includes('user-scalable=no');
+    checks.idsUnique=(()=>{const a=[...document.querySelectorAll('[id]')].map(e=>e.id);return new Set(a).size===a.length})();
+    checks.aria=!!document.querySelector('[aria-label="AAA version 6.0.0"]')&&!!document.querySelector('[role="dialog"]');
+    checks.authority=!!window.FrontierCore&&['createCampaign','resolveIncident','squadPreview','dispatchIncident','advanceDay','scoreEntry','validateState','migrateState'].every(k=>typeof FrontierCore[k]==='function');
+    try{const c=FrontierCore.createCampaign('V6-SELFTEST',{},'standard');const p1=FrontierCore.squadPreview(c,c.incidents[0].id,[],'infiltrate');const p2=FrontierCore.squadPreview(FrontierCore.copy(c),c.incidents[0].id,[],'infiltrate');checks.determinism=FrontierCore.validateState(c)&&JSON.stringify(p1)===JSON.stringify(p2)}catch(e){checks.determinism=false}
+    const fake=new Map([['mbm_crownbadge_campaign_v1','{legacy bytes}']]);const read=k=>fake.has(k)?fake.get(k):null,write=(k,v)=>{fake.set(k,v);return true},before=fake.get('mbm_crownbadge_campaign_v1');const mp=migrate(read,write);checks.migration=mp.version===6&&fake.get('mbm_crownbadge_campaign_v1')===before&&fake.has(PROFILE_KEY);
+    checks.profile=profile&&profile.version===6&&profile.gameId===GAME_ID;checks.audio=/createDynamicsCompressor/.test(document.documentElement.innerHTML);checks.forecast=typeof forecast==='function';
+    const ok=Object.values(checks).every(Boolean);return{ok:ok,pass:ok,version:VERSION,gameId:GAME_ID,checks:checks};
+  }
+  window.__MBM_V6_RELEASE__=Object.freeze({version:VERSION,gameId:GAME_ID,title:'Crown & Badge · AAA V6',tickHz:0,features:Object.freeze(['event-driven-authority','incident-outcome-forecast','officer-intent-preview','portrait-command-tray','compressed-resumable-audio','schema-6-profile','skippable-fly-in','clutch-feedback','finish-constellation','keyboard-aria-reduced-motion']),selfTest:selfTest});
+})();
 </script>
 <!-- MBM-INLINE-EXIT:BEGIN generated by tools/render_inline_exit.py, do not edit by hand -->
 <script>(function(){"use strict";

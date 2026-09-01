@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#060916">
-<meta name="description" content="Slipstream GP: Hyperdraft — draft into the vacuum pocket, slingshot out sideways and hold the lead. Four circuits, four rival personalities, a storm that fights back. Offline, single file, no account.">
-<title>Slipstream GP: Hyperdraft</title>
+<meta name="description" content="Hyperdraft AAA V6 by Made by Matt — fixed-step slipstream racing with tactical draft forecasting, accessible controls and offline progression in one file.">
+<title>Hyperdraft AAA V6 · Made by Matt</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23060916'/%3E%3Cpath d='M18 65 C36 28 64 28 82 65' fill='none' stroke='%2300e5ff' stroke-width='11' stroke-linecap='round'/%3E%3Cpath d='M28 67h44' stroke='%23ff356f' stroke-width='10' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
 :root{
@@ -144,6 +144,34 @@ repeating-linear-gradient(0deg,transparent 0 62px,rgba(0,229,255,.24) 62px 68px)
   #radio{bottom:210px}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}#scanlines{display:none}}
+
+/* ===== Made by Matt · private AAA V6 presentation layer ===== */
+:root{--v6-safe-b:max(8px,env(safe-area-inset-bottom));--v6-tray-h:132px}
+button,.btn,.touch-btn,input[type="checkbox"],input[type="range"],.swatch{min-width:44px;min-height:44px}
+#game{max-width:100vw;max-height:100dvh}
+#v6Badge{position:fixed;right:max(10px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top));z-index:96;padding:6px 9px;border-radius:999px;background:rgba(4,9,24,.8);border:1px solid rgba(125,249,255,.48);color:#dffcff;font:800 10px ui-sans-serif,system-ui;letter-spacing:1.2px;pointer-events:none;box-shadow:0 0 18px rgba(0,229,255,.18)}
+#v6Assist{position:fixed;inset:0;width:100%;height:100%;z-index:7;pointer-events:none}
+#v6Forecast{position:fixed;left:50%;top:max(66px,calc(env(safe-area-inset-top) + 54px));z-index:12;transform:translateX(-50%);padding:7px 12px;border:1px solid rgba(125,249,255,.35);border-radius:999px;background:rgba(3,8,22,.78);color:#dffcff;font:800 11px ui-sans-serif,system-ui;letter-spacing:1px;opacity:0;transition:opacity .16s;pointer-events:none;white-space:nowrap}
+#v6Forecast.show{opacity:1}
+#v6Tray{display:none;position:fixed;left:0;right:0;bottom:0;z-index:30;min-height:calc(var(--v6-tray-h) + env(safe-area-inset-bottom));padding:8px 10px var(--v6-safe-b);background:linear-gradient(180deg,rgba(7,12,29,.72),rgba(3,7,18,.98));border-top:1px solid rgba(125,249,255,.28);box-shadow:0 -12px 32px rgba(0,0,0,.45);grid-template-columns:repeat(6,minmax(44px,1fr));gap:7px;align-items:center}
+.v6-drive{min-width:44px;min-height:58px;border-radius:14px;border:1px solid rgba(125,249,255,.38);background:linear-gradient(180deg,rgba(15,30,60,.95),rgba(5,11,28,.98));color:#eefaff;font:900 12px ui-sans-serif,system-ui;touch-action:none;box-shadow:inset 0 1px rgba(255,255,255,.12)}
+.v6-drive[data-v6="boost"]{border-color:#ffd166;color:#fff0a8}.v6-drive[data-v6="brake"]{border-color:#ff7d6f;color:#ffd0ca}.v6-drive:active,.v6-drive.on{transform:translateY(2px);filter:brightness(1.25)}
+#v6Fly{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 55%,#13244a 0,#060916 53%,#01030a 100%);color:#effaff;transition:opacity .35s ease;cursor:pointer}
+#v6Fly.done{opacity:0;pointer-events:none}
+#v6Fly .v6-flight{text-align:center;padding:28px;position:relative}
+#v6Fly .v6-track{width:min(520px,76vw);height:160px;margin:auto;border:2px solid rgba(0,229,255,.3);border-radius:50%;transform:perspective(420px) rotateX(67deg);box-shadow:0 0 38px rgba(0,229,255,.24),inset 0 0 28px rgba(255,53,111,.14)}
+#v6Fly .v6-car{position:absolute;left:50%;top:42%;width:44px;height:20px;border-radius:12px 4px 4px 12px;background:linear-gradient(90deg,#ff356f,#00e5ff);box-shadow:0 0 22px #00e5ff;animation:v6Orbit 1.8s cubic-bezier(.4,0,.2,1) both}
+#v6Fly h1{font-size:clamp(32px,8vw,72px);margin:12px 0 3px}#v6Fly p{margin:0;color:#9adce9;letter-spacing:3px;font-size:11px;text-transform:uppercase}
+#v6Skip{position:absolute;right:max(14px,env(safe-area-inset-right));top:max(14px,env(safe-area-inset-top));z-index:2;min-width:44px;min-height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.35);background:rgba(2,5,14,.64);color:#fff}
+#v6Ascend{position:fixed;inset:0;z-index:80;pointer-events:none;overflow:hidden;display:none}#v6Ascend.show{display:block}.v6-star{position:absolute;left:50%;top:68%;width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 14px #00e5ff;animation:v6Ascend 1.15s cubic-bezier(.18,.72,.28,1) forwards}
+body.v6-clutch #screenFx{filter:saturate(1.2) brightness(1.08)}body.v6-clutch #v6Forecast{border-color:#ffd166;color:#fff0ae;box-shadow:0 0 28px rgba(255,209,102,.35)}
+@keyframes v6Orbit{0%{transform:translate(-260px,66px) scale(.55) rotate(-10deg);opacity:.2}55%{transform:translate(90px,-28px) scale(.85) rotate(7deg);opacity:1}100%{transform:translate(-22px,30px) scale(1.25);opacity:1}}
+@keyframes v6Ascend{0%{transform:translate(0,0) scale(.5);opacity:0}18%{opacity:1}100%{transform:translate(var(--x),-72vh) scale(1.8);opacity:0}}
+@media (orientation:portrait) and (pointer:coarse){
+  #v6Tray{display:grid}#touch{display:none!important}#hudBottom{bottom:calc(var(--v6-tray-h) + env(safe-area-inset-bottom) + 8px)!important;left:8px!important;transform:none!important;width:calc(100vw - 16px)!important;grid-template-columns:82px 1fr!important}#radio{bottom:calc(var(--v6-tray-h) + env(safe-area-inset-bottom) + 124px)!important}#draftCallout{bottom:calc(var(--v6-tray-h) + env(safe-area-inset-bottom) + 100px)!important}#buildBadge{bottom:calc(var(--v6-tray-h) + env(safe-area-inset-bottom) + 6px)}
+}
+@media (orientation:landscape){#v6Tray{display:none!important}}
+@media(prefers-reduced-motion:reduce){#v6Fly .v6-car,.v6-star{animation:none!important}#v6Fly{transition:none}#v6Assist{display:none}}
 </style>
 </head>
 <body>
@@ -202,11 +230,26 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 })();</script>
 <!-- MBM-MAKER-SPLASH:END -->
 
-<canvas id="game" aria-label="Slipstream GP racing game"></canvas>
+<div id="v6Fly" role="dialog" aria-modal="true" aria-label="Hyperdraft V6 mission fly-in">
+  <button id="v6Skip" type="button" aria-label="Skip intro">Skip</button>
+  <div class="v6-flight"><div class="v6-track" aria-hidden="true"></div><i class="v6-car" aria-hidden="true"></i><h1>HYPER<span>DRAFT</span></h1><p>AAA V6 · Made by Matt</p></div>
+</div>
+<div id="v6Badge" aria-hidden="true">AAA V6 · MADE BY MATT</div>
+<canvas id="v6Assist" aria-hidden="true"></canvas><div id="v6Forecast" role="status" aria-live="polite"></div><div id="v6Ascend" aria-hidden="true"></div>
+<div id="v6Tray" role="group" aria-label="Portrait race controls">
+  <button class="v6-drive" type="button" data-v6="left" aria-label="Steer left">◀</button>
+  <button class="v6-drive" type="button" data-v6="right" aria-label="Steer right">▶</button>
+  <button class="v6-drive" type="button" data-v6="boost" aria-label="Boost">BOOST</button>
+  <button class="v6-drive" type="button" data-v6="brake" aria-label="Brake">BRAKE</button>
+  <button class="v6-drive" type="button" data-v6="horn" aria-label="Horn">📣</button>
+  <button class="v6-drive" type="button" data-v6="pause" aria-label="Pause or resume">❚❚</button>
+</div>
+<script>window.__mbmMakerSplash=1;</script>
+<canvas id="game" tabindex="0" role="application" aria-label="Hyperdraft racing field. Use W or Up to accelerate, A and D or arrow keys to steer, Space to boost, S or Down to brake, H to sound the horn, and P or Escape to pause."></canvas>
 <div id="screenFx" aria-hidden="true"><div id="vignette"></div><div id="speedTunnel"></div><div id="flash"></div><div id="scanlines"></div></div>
 <div id="debug"></div>
 <div id="ui">
-  <section id="splash" class="screen" tabindex="0" aria-label="Start Slipstream GP">
+  <section id="splash" class="screen" tabindex="0" role="dialog" aria-modal="true" aria-label="Start Hyperdraft AAA V6">
     <div class="road"></div>
     <div class="hero">
       <div class="eyebrow">Made by Matt presents</div>
@@ -217,7 +260,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     </div>
   </section>
 
-  <section id="menu" class="screen hidden">
+  <section id="menu" class="screen hidden" role="dialog" aria-modal="true" aria-label="Hyperdraft main menu">
     <div class="panel">
       <div class="eyebrow">Hyperdraft</div>
       <h2>Slipstream GP</h2>
@@ -233,7 +276,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     </div>
   </section>
 
-  <section id="raceSelect" class="screen hidden">
+  <section id="raceSelect" class="screen hidden" role="dialog" aria-modal="true" aria-label="Circuit selection">
     <div class="panel wide">
       <div class="eyebrow">Choose a circuit</div><h2>Exhibition Race</h2>
       <div id="trackCards" class="cards"></div>
@@ -241,7 +284,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     </div>
   </section>
 
-  <section id="ladder" class="screen hidden">
+  <section id="ladder" class="screen hidden" role="dialog" aria-modal="true" aria-label="Rival ladder">
     <div class="panel wide">
       <div class="eyebrow">Four rivals · Four grudges</div><h2>The Ladder</h2>
       <p>Each boss has a real counter-strategy. Win their home circuit to unlock the next rung.</p>
@@ -250,7 +293,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     </div>
   </section>
 
-  <section id="garage" class="screen hidden">
+  <section id="garage" class="screen hidden" role="dialog" aria-modal="true" aria-label="Hyperdraft garage">
     <div class="panel wide">
       <div class="row" style="justify-content:space-between"><div><div class="eyebrow">Performance with consequences</div><h2>Garage</h2></div><div class="pill">Balance <span id="garageScrap" class="scrap">0 🔩</span></div></div>
       <div id="garageRows"></div>
@@ -258,7 +301,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     </div>
   </section>
 
-  <section id="settings" class="screen hidden">
+  <section id="settings" class="screen hidden" role="dialog" aria-modal="true" aria-label="Hyperdraft settings">
     <div class="panel">
       <div class="eyebrow">Tune the experience</div><h2>Settings</h2>
       <div id="settingsRows"></div>
@@ -266,11 +309,11 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     </div>
   </section>
 
-  <section id="pause" class="screen hidden">
+  <section id="pause" class="screen hidden" role="dialog" aria-modal="true" aria-label="Race paused">
     <div class="panel" style="width:min(500px,94vw);text-align:center"><div class="eyebrow">Race control</div><h2>Paused</h2><div class="stack"><button id="resumeBtn" class="btn primary">Resume</button><button id="restartBtn" class="btn">Restart race</button><button id="quitBtn" class="btn ghost">Quit to lobby</button></div></div>
   </section>
 
-  <section id="results" class="screen hidden">
+  <section id="results" class="screen hidden" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
     <div class="panel">
       <div class="eyebrow">Race complete</div><h2 id="resultTitle">Finish</h2><p id="resultSubtitle"></p>
       <div id="resultStats" class="results-grid"></div>
@@ -291,8 +334,8 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     <div id="raceBanner">3</div><div id="radio"></div><canvas id="miniMap" width="320" height="220"></canvas><div id="pauseHint">P / ESC pause · H horn · F2 telemetry</div>
   </div>
 
-  <div id="touch" aria-hidden="true"><div id="stickZone"><div id="stickBase"></div><div id="stickKnob"></div></div><button id="boostTouch" class="touch-btn">BOOST</button><button id="brakeTouch" class="touch-btn">BRAKE</button><button id="hornTouch" class="touch-btn">📣</button><button id="pauseTouch" class="touch-btn" aria-label="Pause">❚❚</button></div>
-  <div id="toast"></div>
+  <div id="touch" role="group" aria-label="Landscape touch controls"><div id="stickZone" role="group" aria-label="Steering pad"><div id="stickBase"></div><div id="stickKnob"></div></div><button id="boostTouch" class="touch-btn" aria-label="Boost">BOOST</button><button id="brakeTouch" class="touch-btn" aria-label="Brake">BRAKE</button><button id="hornTouch" class="touch-btn" aria-label="Horn">📣</button><button id="pauseTouch" class="touch-btn" aria-label="Pause">❚❚</button></div>
+  <div id="toast" role="status" aria-live="polite"></div>
 </div>
 <script>
 "use strict";
@@ -659,17 +702,17 @@ class PuddleManager {
 }
 
 class Camera2D {
-  constructor(w,h){this.w=w;this.h=h;this.x=0;this.y=0;this.zoom=.82;this.targetZoom=.82;this.trauma=0;this.time=0;}
+  constructor(w,h){this.w=w;this.h=h;this.x=0;this.y=0;this.prevX=0;this.prevY=0;this.zoom=.82;this.prevZoom=.82;this.targetZoom=.82;this.trauma=0;this.time=0;}
   resize(w,h){this.w=w;this.h=h;}
-  snap(target){this.x=target.x;this.y=target.y;}
+  snap(target){this.x=this.prevX=target.x;this.y=this.prevY=target.y;this.prevZoom=this.zoom;}
   addTrauma(v){if(!save.settings.calm)this.trauma=clamp(this.trauma+v,0,1);}
   update(dt,target){
-    this.time+=dt;const ratio=clamp(target.speed/Math.max(1,target.tunedMaxSpeed||300),0,1.45);const look=45+ratio*135;const tx=target.x+Math.cos(target.angle)*look,ty=target.y+Math.sin(target.angle)*look;
+    this.prevX=this.x;this.prevY=this.y;this.prevZoom=this.zoom;this.time+=dt;const ratio=clamp(target.speed/Math.max(1,target.tunedMaxSpeed||300),0,1.45);const look=45+ratio*135;const tx=target.x+Math.cos(target.angle)*look,ty=target.y+Math.sin(target.angle)*look;
     this.x=smooth(this.x,tx,7.4,dt);this.y=smooth(this.y,ty,7.4,dt);
     const mobileBase=Math.min(this.w/900,this.h/650);const base=clamp(mobileBase,.56,.93);this.targetZoom=clamp(base-ratio*.12+(target.draftZone==="pocket"?.035:0)-(target.boosting?.035:0),.5,.98);this.zoom=smooth(this.zoom,this.targetZoom,3.2,dt);
     this.trauma=Math.max(0,this.trauma-dt*1.25);
   }
-  begin(g){g.save();g.translate(this.w/2,this.h/2);if(this.trauma>0&&!save.settings.calm){const f=this.trauma*this.trauma,n1=Math.sin(this.time*79.3),n2=Math.sin(this.time*113.7+1.8);g.translate(n1*14*f,n2*11*f);g.rotate(Math.sin(this.time*91.1)*.025*f);}g.scale(this.zoom,this.zoom);g.translate(-this.x,-this.y);}
+  begin(g){const a=clamp(game.renderAlpha||0,0,1),ix=lerp(this.prevX,this.x,a),iy=lerp(this.prevY,this.y,a),iz=lerp(this.prevZoom,this.zoom,a);g.save();g.translate(this.w/2,this.h/2);if(this.trauma>0&&!save.settings.calm){const f=this.trauma*this.trauma,n1=Math.sin(this.time*79.3),n2=Math.sin(this.time*113.7+1.8);g.translate(n1*14*f,n2*11*f);g.rotate(Math.sin(this.time*91.1)*.025*f);}g.scale(iz,iz);g.translate(-ix,-iy);}
   end(g){g.restore();}
   visible(){const hw=this.w/(2*this.zoom)+120,hh=this.h/(2*this.zoom)+120;return {minX:this.x-hw,maxX:this.x+hw,minY:this.y-hh,maxY:this.y+hh};}
 }
@@ -1057,9 +1100,10 @@ function renderMenuBackdrop(time){
   ctx.save();ctx.translate(viewportW/2,viewportH*.68);ctx.strokeStyle="rgba(0,229,255,.1)";ctx.lineWidth=1;for(let i=-12;i<=12;i++){ctx.beginPath();ctx.moveTo(i*28,0);ctx.lineTo(i*95,viewportH*.6);ctx.stroke();}for(let y=0;y<viewportH*.55;y+=32){const yy=mod(y+time*.08,viewportH*.55);ctx.beginPath();ctx.moveTo(-viewportW,yy);ctx.lineTo(viewportW,yy);ctx.stroke();}ctx.restore();
 }
 function drawDraftCone(g){const p=game.player,t=p?.draftTarget;if(!p||!t||p.draftAmount<=.02)return;const len=clamp(t.distance-p.distance,40,230),half=18+len*.19,a=t.angle,backX=-Math.cos(a),backY=-Math.sin(a),nx=-Math.sin(a),ny=Math.cos(a),rearX=t.x+backX*20,rearY=t.y+backY*20,endX=rearX+backX*len,endY=rearY+backY*len;const grad=g.createLinearGradient(rearX,rearY,endX,endY);const col=p.draftZone==="dirty"?"255,86,45":p.draftZone==="pocket"?"255,209,102":"0,229,255";grad.addColorStop(0,`rgba(${col},.22)`);grad.addColorStop(1,`rgba(${col},0)`);g.save();g.fillStyle=grad;g.beginPath();g.moveTo(rearX+nx*13,rearY+ny*13);g.lineTo(endX+nx*half,endY+ny*half);g.lineTo(endX-nx*half,endY-ny*half);g.lineTo(rearX-nx*13,rearY-ny*13);g.closePath();g.fill();g.strokeStyle=`rgba(${col},${.14+p.draftAmount*.28})`;g.lineWidth=1.5;g.setLineDash([9,11]);g.stroke();g.restore();}
-function drawReflection(g,car){g.save();g.globalAlpha=.18;g.filter=save.settings.lite?"none":"blur(2px)";g.translate(car.x+7,car.y+9);g.rotate(car.angle);g.scale(1,-.72);g.fillStyle=car.color;g.beginPath();g.roundRect(-car.length*.5,-car.width*.5,car.length,car.width,6);g.fill();g.restore();}
+function drawReflection(g,car){const a=clamp(game.renderAlpha||0,0,1),ix=lerp(car.prevX,car.x,a),iy=lerp(car.prevY,car.y,a);g.save();g.globalAlpha=.18;g.filter=save.settings.lite?"none":"blur(2px)";g.translate(ix+7,iy+9);g.rotate(car.angle);g.scale(1,-.72);g.fillStyle=car.color;g.beginPath();g.roundRect(-car.length*.5,-car.width*.5,car.length,car.width,6);g.fill();g.restore();}
 function drawCar(g,car){
-  g.save();g.translate(car.x,car.y);g.rotate(car.angle);
+  const a=clamp(game.renderAlpha||0,0,1),drawX=lerp(car.prevX,car.x,a),drawY=lerp(car.prevY,car.y,a);
+  g.save();g.translate(drawX,drawY);g.rotate(car.angle);
   const grudge=car.grudge>.25;if(grudge){g.shadowColor="#ff4a24";g.shadowBlur=18+car.grudge*14;g.fillStyle=`rgba(255,70,25,${.12+car.grudge*.13})`;g.beginPath();g.ellipse(0,0,car.length*.65,car.width*.9,0,0,TAU);g.fill();g.shadowBlur=0;}
   g.fillStyle="rgba(0,0,0,.48)";g.beginPath();g.roundRect(-car.length*.48+4,-car.width*.5+5,car.length,car.width,6);g.fill();
   g.fillStyle="#070a10";g.fillRect(-car.length*.31,-car.width*.65,11,4);g.fillRect(car.length*.14,-car.width*.65,11,4);g.fillRect(-car.length*.31,car.width*.45,11,4);g.fillRect(car.length*.14,car.width*.45,11,4);
@@ -1069,7 +1113,7 @@ function drawCar(g,car){
   g.fillStyle=grudge?"#ffdfb8":"#e9fbff";g.fillRect(car.length*.34,-car.width*.33,4,4);g.fillRect(car.length*.34,car.width*.2,4,4);
   if(car.isPlayer){g.strokeStyle="rgba(255,255,255,.78)";g.lineWidth=1.3;g.strokeRect(-car.length*.18,-car.width*.43,8,car.width*.86);}
   g.restore();
-  if((car===game.boss||car.isPlayer)&&!save.settings.lite){g.save();g.font="700 10px system-ui";g.textAlign="center";g.fillStyle=car.isPlayer?"#dffbff":grudge?"#ffb08e":"#d8e7f2";g.shadowColor="#000";g.shadowBlur=5;g.fillText(car.isPlayer?"YOU":car.title.toUpperCase(),car.x,car.y-24);g.restore();}
+  if((car===game.boss||car.isPlayer)&&!save.settings.lite){g.save();g.font="700 10px system-ui";g.textAlign="center";g.fillStyle=car.isPlayer?"#dffbff":grudge?"#ffb08e":"#d8e7f2";g.shadowColor="#000";g.shadowBlur=5;g.fillText(car.isPlayer?"YOU":car.title.toUpperCase(),drawX,drawY-24);g.restore();}
 }
 function drawDynamicSpeedlines(g,intensity,time){if(intensity<=.02||save.settings.calm)return;g.save();g.globalCompositeOperation="screen";const count=save.settings.lite?12:26,cx=viewportW/2,cy=viewportH/2;for(let i=0;i<count;i++){const seed=(i*91.77+time*.14)%997,ang=(seed*.031)%TAU,r=.28*Math.min(viewportW,viewportH)+((seed*13)%170),x=cx+Math.cos(ang)*r,y=cy+Math.sin(ang)*r,len=20+intensity*65;g.strokeStyle=`rgba(210,245,255,${.035+intensity*.16})`;g.lineWidth=1+intensity;g.beginPath();g.moveTo(x,y);g.lineTo(x+Math.cos(ang)*len,y+Math.sin(ang)*len);g.stroke();}g.restore();}
 function renderMiniMap(){if(!game.track||dom.miniMap.offsetParent===null)return;const g=miniCtx,w=dom.miniMap.width,h=dom.miniMap.height;g.clearRect(0,0,w,h);g.fillStyle="rgba(3,7,18,.7)";g.fillRect(0,0,w,h);const sx=(w-28)/game.track.worldW,sy=(h-28)/game.track.worldH,s=Math.min(sx,sy),ox=(w-game.track.worldW*s)/2,oy=(h-game.track.worldH*s)/2;g.strokeStyle="rgba(190,218,235,.42)";g.lineWidth=7;g.lineJoin="round";g.beginPath();game.track.samples.forEach((p,i)=>i?g.lineTo(ox+p.x*s,oy+p.y*s):g.moveTo(ox+p.x*s,oy+p.y*s));g.closePath();g.stroke();g.strokeStyle="rgba(0,229,255,.32)";g.lineWidth=2;g.stroke();for(const c of game.cars){g.fillStyle=c.isPlayer?"#fff":c.color;g.beginPath();g.arc(ox+c.x*s,oy+c.y*s,c.isPlayer?5:3.5,0,TAU);g.fill();}}
@@ -1124,14 +1168,14 @@ function renderGarage(){
 function renderSettings(){
   const s=save.settings;
   dom.settingsRows.innerHTML=`
-    <div class="form-row"><label><b>Sound</b><small>Procedural engine, draft, boost, impacts, rain and thunder.</small></label><div class="toggle"><input id="setSound" type="checkbox" ${s.sound?"checked":""}></div></div>
-    <div class="form-row"><label><b>Master volume</b><small>${Math.round(s.volume*100)}%</small></label><div class="toggle"><input id="setVolume" type="range" min="0" max="1" step="0.05" value="${s.volume}"></div></div>
-    <div class="form-row"><label><b>Calm mode</b><small>Removes camera shake, haptics and intense visor movement.</small></label><div class="toggle"><input id="setCalm" type="checkbox" ${s.calm?"checked":""}></div></div>
-    <div class="form-row"><label><b>Lite graphics</b><small>Smaller particle, rain and droplet pools for phones.</small></label><div class="toggle"><input id="setLite" type="checkbox" ${s.lite?"checked":""}></div></div>
-    <div class="form-row"><label><b>Close racing</b><small>Gentle rubber-banding keeps the field competitive without teleporting.</small></label><div class="toggle"><input id="setClose" type="checkbox" ${s.closeRacing?"checked":""}></div></div>
-    <div class="form-row"><label><b>Storm optics</b><small>Visor droplets and stronger wet-weather overlays.</small></label><div class="toggle"><input id="setStorm" type="checkbox" ${s.stormOptics?"checked":""}></div></div>
-    <div class="form-row"><label><b>Haptic feedback</b><small>Draft entry, impacts and boost vibration where supported.</small></label><div class="toggle"><input id="setHaptics" type="checkbox" ${s.haptics?"checked":""}></div></div>
-    <div class="form-row"><label><b>School mode</b><small>Labels the post-race speed trace as velocity–time evidence.</small></label><div class="toggle"><input id="setSchool" type="checkbox" ${s.schoolMode?"checked":""}></div></div>
+    <div class="form-row"><label><b>Sound</b><small>Procedural engine, draft, boost, impacts, rain and thunder.</small></label><div class="toggle"><input id="setSound" type="checkbox" aria-label="Sound" ${s.sound?"checked":""}></div></div>
+    <div class="form-row"><label><b>Master volume</b><small>${Math.round(s.volume*100)}%</small></label><div class="toggle"><input id="setVolume" type="range" aria-label="Master volume" min="0" max="1" step="0.05" value="${s.volume}"></div></div>
+    <div class="form-row"><label><b>Calm mode</b><small>Removes camera shake, haptics and intense visor movement.</small></label><div class="toggle"><input id="setCalm" type="checkbox" aria-label="Calm mode" ${s.calm?"checked":""}></div></div>
+    <div class="form-row"><label><b>Lite graphics</b><small>Smaller particle, rain and droplet pools for phones.</small></label><div class="toggle"><input id="setLite" type="checkbox" aria-label="Lite graphics" ${s.lite?"checked":""}></div></div>
+    <div class="form-row"><label><b>Close racing</b><small>Gentle rubber-banding keeps the field competitive without teleporting.</small></label><div class="toggle"><input id="setClose" type="checkbox" aria-label="Close racing" ${s.closeRacing?"checked":""}></div></div>
+    <div class="form-row"><label><b>Storm optics</b><small>Visor droplets and stronger wet-weather overlays.</small></label><div class="toggle"><input id="setStorm" type="checkbox" aria-label="Storm optics" ${s.stormOptics?"checked":""}></div></div>
+    <div class="form-row"><label><b>Haptic feedback</b><small>Draft entry, impacts and boost vibration where supported.</small></label><div class="toggle"><input id="setHaptics" type="checkbox" aria-label="Haptic feedback" ${s.haptics?"checked":""}></div></div>
+    <div class="form-row"><label><b>School mode</b><small>Labels the post-race speed trace as velocity–time evidence.</small></label><div class="toggle"><input id="setSchool" type="checkbox" aria-label="School mode" ${s.schoolMode?"checked":""}></div></div>
     <div class="form-row"><label><b>Speed units</b><small>HUD display only; physics remains unchanged.</small></label><div class="choice"><button data-unit="mph" class="${s.units==="mph"?"active":""}">MPH</button><button data-unit="kmh" class="${s.units==="kmh"?"active":""}">KM/H</button></div></div>`;
   const bind=(id,key)=>document.getElementById(id)?.addEventListener("change",e=>{save.settings[key]=e.target.checked;persist();if(key==="sound"){unlockAudio();audio.setMuted(!save.settings.sound);}renderSettings();});
   bind("setSound","sound");bind("setCalm","calm");bind("setLite","lite");bind("setClose","closeRacing");bind("setStorm","stormOptics");bind("setHaptics","haptics");bind("setSchool","schoolMode");
@@ -1195,9 +1239,61 @@ window.__SLIPSTREAM_GP_TEST__={
       checks.push({name:"input:interrupt-clears-everything",pass:cleared});}catch(err){checks.push({name:"exception",pass:false,error:String(err)});}return {pass:checks.every(c=>c.pass),checks};},
   startExhibition:(trackIndex=0)=>startRace({mode:"quick",trackIndex:clamp(trackIndex|0,0,TRACK_DEFS.length-1),bossIndex:0})
 };
-window.__HD={game,controls,keyMap,touchState,clearHeldInput,gapToLeaderSeconds,stickToControls,flashOpacity,mulberry32,save,GAP_CHECKPOINTS,FLASH_CAP,FLASH_CAP_CALM,pauseRace,resumeRace,onInterrupt};
+window.__HD={game,controls,keyMap,touchState,clearHeldInput,gapToLeaderSeconds,stickToControls,flashOpacity,mulberry32,save,audio,GAP_CHECKPOINTS,FLASH_CAP,FLASH_CAP_CALM,pauseRace,resumeRace,onInterrupt};
 document.documentElement.dataset.boot="ok";
 renderTrackCards();renderLadder();renderGarage();renderSettings();requestAnimationFrame(frame);
+})();
+</script>
+<script>
+(function(){"use strict";
+  var RELEASE_VERSION="6.0.0",PROFILE_KEY="mbm_hyperdraft_v6_profile",LEGACY_KEY="mbm_slipstream_hyperdraft_v1";
+  var reduced=!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches),hd=window.__HD||null;
+  var fly=document.getElementById("v6Fly"),skip=document.getElementById("v6Skip"),assist=document.getElementById("v6Assist"),forecast=document.getElementById("v6Forecast"),ascend=document.getElementById("v6Ascend"),tray=document.getElementById("v6Tray");
+  var actx=assist.getContext("2d"),assistW=0,assistH=0,dpr=1,flyDone=false,profile=null,lastState="",lastDraft="none",lastSlingshot=0,lastForecast="",clutchTimer=0,activeDrive={left:false,right:false,boost:false,brake:false};
+
+  function safeParse(raw,fallback){try{var x=JSON.parse(raw);return x&&typeof x==="object"?x:fallback}catch(e){return fallback}}
+  function buildProfile(){
+    var legacyRaw=null,stored=null;try{legacyRaw=localStorage.getItem(LEGACY_KEY);stored=safeParse(localStorage.getItem(PROFILE_KEY),null)}catch(e){}
+    var base={version:6,gameId:"hyperdraft",createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),legacyKey:LEGACY_KEY,legacyAtMigration:legacyRaw,progress:safeParse(legacyRaw,{}),presentation:{forecast:true}};
+    profile=stored&&stored.version===6?Object.assign(base,stored):base;profile.version=6;profile.gameId="hyperdraft";return profile;
+  }
+  function syncProfile(reason){
+    if(!profile)buildProfile();var raw=null;try{raw=localStorage.getItem(LEGACY_KEY)}catch(e){}
+    profile.updatedAt=new Date().toISOString();profile.lastReason=reason||"sync";profile.progress=safeParse(raw,profile.progress||{});
+    profile.presentation={forecast:true,reducedMotion:reduced,calm:!!(hd&&hd.save&&hd.save.settings&&hd.save.settings.calm)};
+    try{localStorage.setItem(PROFILE_KEY,JSON.stringify(profile));return true}catch(e){return false}
+  }
+  buildProfile();syncProfile("migration");window.__MBM_HYPERDRAFT_V6_STORE__={key:PROFILE_KEY,legacyKey:LEGACY_KEY,get profile(){return profile},sync:syncProfile};
+
+  function dismissFly(){if(flyDone)return;flyDone=true;fly.classList.add("done");fly.setAttribute("aria-hidden","true");fly.inert=true;document.getElementById("ui").inert=false;setTimeout(function(){fly.remove()},reduced?0:380);var target=document.getElementById("splash");target&&target.focus({preventScroll:true});}
+  document.getElementById("ui").inert=true;skip.addEventListener("click",function(e){e.stopPropagation();dismissFly()});fly.addEventListener("click",dismissFly);fly.addEventListener("keydown",function(e){if(e.key==="Escape"||e.key==="Enter"||e.key===" "){e.preventDefault();dismissFly()}});setTimeout(dismissFly,reduced?450:1950);skip.focus({preventScroll:true});
+
+  function resizeAssist(){dpr=Math.min(2,Math.max(1,window.devicePixelRatio||1));assistW=innerWidth;assistH=innerHeight;assist.width=Math.round(assistW*dpr);assist.height=Math.round(assistH*dpr);actx.setTransform(dpr,0,0,dpr,0,0)}
+  addEventListener("resize",resizeAssist,{passive:true});resizeAssist();
+
+  function audioResume(){try{if(hd&&hd.audio){hd.audio.init();if(hd.audio.ctx&&hd.audio.ctx.state==="suspended")hd.audio.ctx.resume()}}catch(e){}}
+  addEventListener("pointerdown",audioResume,{passive:true});addEventListener("keydown",audioResume,{passive:true});document.addEventListener("visibilitychange",function(){if(document.hidden){hd&&hd.onInterrupt&&hd.onInterrupt()}else audioResume()});
+
+  function applyDrive(){if(!hd)return;var c=hd.controls,keys=hd.keyMap,touch=hd.touchState,kbSteer=(keys.has("ArrowLeft")||keys.has("KeyA")?-1:0)+(keys.has("ArrowRight")||keys.has("KeyD")?1:0),traySteer=(activeDrive.left?-1:0)+(activeDrive.right?1:0);c.steer=traySteer||kbSteer;if(activeDrive.left||activeDrive.right)c.throttleAxis=1;else if(!touch.active)c.throttleAxis=(keys.has("ArrowUp")||keys.has("KeyW"))?1:0;c.boost=!!activeDrive.boost||keys.has("Space")||!!touch.boost;c.brake=!!activeDrive.brake||keys.has("ArrowDown")||keys.has("KeyS")||!!touch.brake;tray.querySelectorAll(".v6-drive").forEach(function(b){b.classList.toggle("on",!!activeDrive[b.dataset.v6])})}
+  function setDrive(action,on){if(!(action in activeDrive))return;activeDrive[action]=on;applyDrive()}
+  tray.querySelectorAll(".v6-drive").forEach(function(b){var a=b.dataset.v6;if(a==="horn"){b.addEventListener("click",function(){audioResume();if(hd&&hd.audio)hd.audio.horn(hd.save.horn)});return}if(a==="pause"){b.addEventListener("click",function(){if(!hd)return;if(hd.game.state==="race")hd.pauseRace();else if(hd.game.state==="paused")hd.resumeRace()});return}function down(e){e.preventDefault();audioResume();setDrive(a,true);try{b.setPointerCapture(e.pointerId)}catch(_){}}function up(e){e.preventDefault();setDrive(a,false)}b.addEventListener("pointerdown",down);b.addEventListener("pointerup",up);b.addEventListener("pointercancel",up);b.addEventListener("lostpointercapture",up);b.addEventListener("keydown",function(e){if((e.key==="Enter"||e.key===" ")&&!e.repeat){e.preventDefault();setDrive(a,true)}});b.addEventListener("keyup",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();setDrive(a,false)}})});
+
+  function nearestRisk(game,p){var best=null,score=-1e9;for(var i=0;i<game.cars.length;i++){var r=game.cars[i];if(r===p||r.finished)continue;var longitudinal=r.distance-p.distance,lateral=Math.abs(r.offset-p.offset);if(longitudinal<-35||longitudinal>260)continue;var collision=longitudinal<72&&longitudinal>-14&&lateral<38,blocking=r.aiState==="BLOCKING",s=(collision?170:0)+(blocking?85:0)+(260-longitudinal)*.22-lateral*.75;if(s>score){score=s;best={car:r,gap:longitudinal,lat:lateral,collision:collision,blocking:blocking}}}return best}
+  function recommendation(game,p,risk){if(p.draftZone==="pocket"&&p.draftTarget){var roomL=p.offset+game.track.roadWidth*.38,roomR=game.track.roadWidth*.38-p.offset;return roomL>roomR?{side:-1,text:"SLINGSHOT · BREAK LEFT"}:{side:1,text:"SLINGSHOT · BREAK RIGHT"}}if(risk&&risk.collision){var side=risk.car.offset>=p.offset?-1:1;return{side:side,text:"COLLISION FORECAST · EVADE "+(side<0?"LEFT":"RIGHT")}}if(risk&&risk.blocking)return{side:risk.car.offset>=p.offset?-1:1,text:"BLOCKER AHEAD · FEINT THEN SWITCH"};if(p.draftZone==="dirty")return{side:p.offset>=0?-1:1,text:"DIRTY AIR · EXIT THE WAKE"};if(p.draftZone==="fringe")return{side:p.draftTarget&&p.draftTarget.offset<p.offset?-1:1,text:"DRAFT EDGE · CENTRE THE FUNNEL"};return null}
+  function drawAssist(){
+    actx.clearRect(0,0,assistW,assistH);if(!hd||!hd.game||hd.game.state!=="race"||hd.game.paused)return;var g=hd.game,p=g.player;if(!p)return;var risk=nearestRisk(g,p),rec=recommendation(g,p,risk),calm=!!(hd.save.settings.calm||reduced);if(!rec){forecast.classList.remove("show");lastForecast="";return}
+    if(rec.text!==lastForecast){forecast.textContent=rec.text;lastForecast=rec.text}forecast.classList.add("show");var cx=assistW*.5,sy=assistH*.7,tx=cx+rec.side*Math.min(assistW*.23,150),ty=assistH*.42;actx.save();actx.strokeStyle=risk&&risk.collision?"rgba(255,107,70,.9)":"rgba(0,229,255,.82)";actx.fillStyle=actx.strokeStyle;actx.lineWidth=2;actx.setLineDash([7,7]);actx.beginPath();actx.moveTo(cx,sy);actx.quadraticCurveTo(cx+rec.side*28,(sy+ty)*.5,tx,ty);actx.stroke();actx.setLineDash([]);actx.beginPath();actx.moveTo(tx,ty);actx.lineTo(tx-rec.side*13,ty-7);actx.lineTo(tx-rec.side*13,ty+7);actx.closePath();actx.fill();if(risk&&risk.collision){actx.globalAlpha=calm?.55:.45+.2*Math.sin(performance.now()/90);actx.beginPath();actx.arc(cx,sy-28,32,0,Math.PI*2);actx.stroke()}actx.restore();
+  }
+  function clutch(){if(clutchTimer)return;document.body.classList.add("v6-clutch");forecast.textContent="⚡ PERFECT VACUUM RELEASE";forecast.classList.add("show");if(hd&&hd.game.camera)hd.game.camera.addTrauma(.12);clutchTimer=setTimeout(function(){document.body.classList.remove("v6-clutch");clutchTimer=0},520)}
+  function finishAscent(victory){ascend.innerHTML="";ascend.classList.add("show");var count=victory?12:7;for(var i=0;i<count;i++){var s=document.createElement("i");s.className="v6-star";s.style.setProperty("--x",((i-(count-1)/2)*Math.min(34,innerWidth/(count+2)))+"px");s.style.animationDelay=(i*55)+"ms";s.style.background=victory?(i%2?"#ffd166":"#7df9ff"):"#b7d5e6";ascend.appendChild(s)}setTimeout(function(){ascend.classList.remove("show");ascend.innerHTML=""},1500)}
+
+  function syncPanels(){document.querySelectorAll(".screen").forEach(function(s){var hidden=s.classList.contains("hidden");s.setAttribute("aria-hidden",hidden?"true":"false");s.inert=hidden});if(flyDone){var active=document.querySelector(".screen:not(.hidden)");if(active&&active.dataset.v6Focus!=="1"){document.querySelectorAll(".screen").forEach(function(s){delete s.dataset.v6Focus});active.dataset.v6Focus="1";var f=active.querySelector("button:not([disabled]),input:not([disabled])");f&&setTimeout(function(){f.focus({preventScroll:true})},0)}}}
+  new MutationObserver(syncPanels).observe(document.getElementById("ui"),{subtree:true,attributes:true,attributeFilter:["class"]});syncPanels();
+
+  function monitor(){if(hd&&hd.game){var g=hd.game,p=g.player;if(p&&p.slingshotTimer>0&&lastSlingshot<=0)clutch();lastSlingshot=p?p.slingshotTimer:0;if(g.state!==lastState){if(g.state==="results"){finishAscent(!!(p&&p.finishOrder===1));syncProfile("race-finish")}else if(lastState)syncProfile("state:"+g.state);lastState=g.state}if(p)lastDraft=p.draftZone}drawAssist();requestAnimationFrame(monitor)}requestAnimationFrame(monitor);
+
+  function profilePreservationCheck(){var before=null,after=null;try{before=localStorage.getItem(LEGACY_KEY);syncProfile("self-test");after=localStorage.getItem(LEGACY_KEY);return before===after}catch(e){return false}}
+  window.__MBM_V6_RELEASE__={version:RELEASE_VERSION,gameId:"hyperdraft",tickHz:60,features:["standalone-offline","viewport-first","safe-area-layout","portrait-dead-zone-tray","zoom-enabled","44px-touch-targets","keyboard-aria-focus","reduced-motion-calm","visibility-pause","fixed-step-60hz-authority","high-refresh-render-interpolation","draft-intent-forecast","collision-danger-preview","compressed-resumable-master-bus","schema-6-profile","non-destructive-migration","skippable-fly-in","camera-clutch-feedback","finish-ascension"],selfTest:function(){var base=null;try{base=window.__SLIPSTREAM_GP_TEST__.selfTest()}catch(e){base={pass:false,checks:[{name:"base-exception",pass:false,error:String(e)}]}}var a=window.__HD&&window.__HD.audio;try{if(a&&!a.unlocked)a.init()}catch(e){}var checks={version:RELEASE_VERSION==="6.0.0",engine:!!window.__HD&&!!window.__SLIPSTREAM_GP_TEST__,baseAuthority:!!base&&base.pass===true,fixedStep:window.__SLIPSTREAM_GP_TEST__.storageKey===LEGACY_KEY&&window.__HD.game&&typeof window.__HD.game.renderAlpha==="number",profile:!!profile&&profile.version===6&&profile.gameId==="hyperdraft",legacyPreserved:profilePreservationCheck(),masterBus:!!a&&!!a.ctx&&!!a.comp&&!!a.master&&a.comp.numberOfOutputs===1&&a.master.numberOfOutputs===1,controls:["game","v6Tray","v6Assist"].every(function(id){return!!document.getElementById(id)})&&(flyDone||!!document.getElementById("v6Skip")),aria:document.querySelectorAll(".screen[role=dialog]").length===8&&document.getElementById("game").tabIndex===0,offline:document.querySelectorAll('script[src],link[href^="http"],img[src^="http"]').length===0};var ok=Object.keys(checks).every(function(k){return!!checks[k]});return{ok:ok,pass:ok,version:RELEASE_VERSION,gameId:"hyperdraft",checks:checks,base:base}}};
 })();
 </script>
 <script defer src="/hud.js"></script>

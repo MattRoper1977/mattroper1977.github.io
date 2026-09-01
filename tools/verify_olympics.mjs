@@ -95,8 +95,16 @@ async function open(browser, opts = {}) {
    Every journey goes through this, so the splash is exercised on every run
    rather than only by the splash gate. */
 async function pastSplash(page) {
-  await page.evaluate(() => { const b = document.querySelector('.mbm-skip'); if (b) b.click(); });
-  await page.waitForSelector('.mbm-splash', { state: 'detached', timeout: 8000 }).catch(() => {});
+  const maker = page.locator('[data-mbm-maker-splash]').first();
+  if (await maker.count()) {
+    await page.evaluate(() => document.querySelector('[data-mbm-maker-splash]')?.click());
+    await maker.waitFor({ state: 'detached', timeout: 8000 });
+  }
+  const legacy = page.locator('.mbm-splash').first();
+  if (await legacy.count()) {
+    await page.evaluate(() => document.querySelector('.mbm-skip')?.click());
+    await legacy.waitFor({ state: 'detached', timeout: 8000 });
+  }
 }
 
 const click = async (page, sel) => {
@@ -110,6 +118,9 @@ const screen = page => page.evaluate(() => window.__olympics.screen);
 async function startChampionship(page, mode = 'ultimate') {
   await pastSplash(page);
   await click(page, '#newGamesBtn');
+  await page.waitForSelector('#v6-intro', { state: 'visible', timeout: 3000 });
+  await click(page, '#v6-intro .v6-skip');
+  await page.waitForSelector('#v6-intro', { state: 'detached', timeout: 3000 });
   await page.waitForSelector('[data-mode]', { timeout: 12000 });
   await page.evaluate(m => document.querySelector(`[data-mode="${m}"]`).click(), mode);
   /* "Enter Games Village" is DISABLED until all 25 development points are
@@ -163,7 +174,7 @@ async function playDay(page, { resolve = true } = {}) {
     const missing = REQUIRED.filter(k => !boot.keys.includes(k));
     t('O1 the diagnostic surface exposes every field the audit needs',
       missing.length === 0, missing.length ? `missing: ${missing.join(', ')}` : boot.keys.join(', '));
-    t('O1 it names the real save key', boot.save.save === 'mbm_global_games_v1', `key ${boot.save.save}`);
+    t('O1 it names the real save key', boot.save.save === 'mbm_global_games_world_stage_v4', `key ${boot.save.save}`);
     t('O1 it reports the fixed timestep the loop actually uses',
       Math.abs(boot.fixedDt - 1 / 120) < 1e-9, `${boot.fixedDt} (1/${Math.round(1 / boot.fixedDt)})`);
     /* LIVE, not a boot snapshot: drive the game and require the surface to move
@@ -332,7 +343,7 @@ async function playDay(page, { resolve = true } = {}) {
     let survived = 0; const dead = [];
     for (const [label, blob] of hostiles) {
       const { ctx, page, errors } = await open(browser, {
-        initFn: b => { try { localStorage.setItem('mbm_global_games_v1', b); } catch (e) {} },
+        initFn: b => { try { localStorage.setItem('mbm_global_games_world_stage_v4', b); } catch (e) {} },
         initArg: blob
       }).catch(e => ({ ctx: null, why: String(e.message).slice(0, 50) }));
       if (!ctx) { dead.push(`${label} (never booted)`); continue; }

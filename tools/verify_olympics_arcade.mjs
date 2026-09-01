@@ -22,6 +22,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 const require = createRequire(import.meta.url);
 
 import fsSync from 'node:fs';
@@ -90,8 +91,8 @@ async function readArcade(base, viewport) {
   await page.waitForFunction(() => document.querySelectorAll('.gcard').length > 10, null, { timeout: 20000 }).catch(() => {});
   const out = await page.evaluate((href) => {
     const txt = n => (n.textContent || '').trim();
-    const sportsRail = document.getElementById('sportsRail');
-    const rail = [...(sportsRail ? sportsRail.querySelectorAll('a') : [])];
+    const topRail = document.getElementById('topRail');
+    const rail = [...(topRail ? topRail.querySelectorAll('a.pick') : [])];
     const all = [...document.querySelectorAll('.gcard')];
     const card = all.find(a => (a.getAttribute('href') || '').includes(href.replace(/\//g, '')));
     /* COUNT DISTINCT GAMES, NOT DOM NODES. This page deliberately surfaces the
@@ -110,12 +111,13 @@ async function readArcade(base, viewport) {
       markerHref: [...markerGames][0] || null,
       railCount: rail.length,
       railTitles: rail.map(a => txt(a.querySelector('h3, .t, strong') || a).split('\n')[0].slice(0, 42)),
+      railHrefs: rail.map(hrefOf),
       railArt: rail.map(a => { const i = a.querySelector('img'); return i ? i.getAttribute('src') : (a.querySelector('.ic,.art') || {}).textContent || '?'; }),
       railHasOlympics: rail.some(a => (a.getAttribute('href') || '').includes('olympics')),
       olympicsOnShelf: !!card,
       olympicsTitle: card ? txt(card).slice(0, 60) : null,
+      markerInOpenGenre: all.filter(a => txt(a).includes('NEW ·')).every(a => !!a.closest('details[open]')),
       overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-      sportsHidden: sportsRail ? sportsRail.closest('section, div[id]').hidden : null
     };
   }, HREF);
   await ctx.close(); await browser.close();
@@ -125,11 +127,20 @@ async function readArcade(base, viewport) {
 const manifest = JSON.parse(fs.readFileSync(path.join(GAMES, 'games.json'), 'utf8'));
 /* DERIVED expectations — read from the manifest, never typed here. */
 const expectTotal = manifest.games.length;
-const expectRail = manifest.games.filter(g => g.collection === 'Sports').length;
 const expectNewHolder = manifest.games.find(g => String(g.title).startsWith('NEW · '));
+/* The current shelf's top rail is owned by Site curation, not by the Games
+   manifest's `collection` field. Reuse the estate's AST-backed curation
+   extractor rather than maintaining a second parser or pinning a count here. */
+const curationRecord = JSON.parse(execFileSync(process.execPath,
+  [path.join(HERE, 'verify_curation_keys.mjs'), '--emit'], { encoding: 'utf8' }));
+const expectRailHrefs = curationRecord.curation
+  .filter(c => Number.isInteger(c.rail))
+  .sort((a, b) => a.rail - b.rail)
+  .map(c => c.href);
+const expectRail = expectRailHrefs.length;
 
 console.log('Global Games — arcade render\n');
-console.log(`  derived from the manifest: ${expectTotal} entries · Sports ${expectRail} · marker "${expectNewHolder ? expectNewHolder.title : 'none'}"\n`);
+console.log(`  derived records: ${expectTotal} manifest entries · ${expectRail} Site top picks · marker "${expectNewHolder ? expectNewHolder.title : 'none'}"\n`);
 
 const srv = await serve(null);
 const base = `http://127.0.0.1:${srv.address().port}`;
@@ -139,33 +150,35 @@ for (const vp of [{ name: 'desktop', width: 1280, height: 900 }, { name: 'phone'
   t(`A1 [${vp.name}] every manifest entry reaches the page`,
     r.distinctGames === expectTotal,
     `${r.distinctGames} distinct games rendered across ${r.totalCards} cards, ${expectTotal} in the manifest`);
-  t(`A2 [${vp.name}] the Sports rail renders every member`,
-    r.railCount === expectRail, `${r.railCount} rail cards, ${expectRail} members`);
-  t(`A2 [${vp.name}] Global Games is ON the rendered rail`, r.railHasOlympics === true,
+  t(`A2 [${vp.name}] the Top Picks rail renders the AST-derived curation in order`,
+    JSON.stringify(r.railHrefs) === JSON.stringify(expectRailHrefs),
+    `${r.railCount} rail cards; ${r.railHrefs.join(' · ')}`);
+  t(`A2 [${vp.name}] Global Games is ON the rendered Top Picks rail`, r.railHasOlympics === true,
     r.railTitles.join(' · ').slice(0, 110));
   t(`A3 [${vp.name}] rail cards are visually distinct`,
     new Set(r.railTitles).size === r.railTitles.length && new Set(r.railArt).size === r.railArt.length,
     `${new Set(r.railTitles).size} distinct titles, ${new Set(r.railArt).size} distinct art of ${r.railCount}`);
   t(`A4 [${vp.name}] Global Games is on the browse-all shelf too`,
     r.olympicsOnShelf === true, r.olympicsTitle || 'not found');
-  t(`A5 [${vp.name}] exactly one GAME renders the NEW marker, and it is Global Games`,
-    r.markerGames === 1 && String(r.markerHref).includes('olympics'),
-    `${r.markerGames} marker-holding game(s), href ${r.markerHref}`);
+  t(`A5 [${vp.name}] exactly one GAME renders the manifest's derived NEW marker`,
+    r.markerGames === 1 && r.markerHref === expectNewHolder?.href,
+    `${r.markerGames} marker-holding game(s), href ${r.markerHref}, expected ${expectNewHolder?.href || 'none'}`);
+  t(`A5 [${vp.name}] the NEW holder's genre is open on arrival`,
+    r.markerInOpenGenre === true, `marker href ${r.markerHref}`);
   t(`A6 [${vp.name}] no horizontal overflow`, r.overflow <= 0, `${r.overflow}px`);
   t(`A7 [${vp.name}] no page errors`, r.errors.length === 0, r.errors[0] || 'none');
 }
 
 /* CONTROL — the gate must be shown able to fail, or its greens are opinions.
-   Serve a manifest with Global Games' rail membership removed and require A2
-   to go red. This exercises the whole path: fetch, render, count. */
+   Remove Global Games from the manifest. The renderer's Site-owned curation
+   then loses that card, and the exact same A2 href comparison must go red. */
 srv.close();
 const tampered = JSON.parse(JSON.stringify(manifest));
-const victim = tampered.games.find(g => g.href === HREF);
-if (victim) delete victim.collection;
+tampered.games = tampered.games.filter(g => g.href !== HREF);
 const srv2 = await serve(tampered);
 const base2 = `http://127.0.0.1:${srv2.address().port}`;
 const c = await readArcade(base2, { width: 1280, height: 900 });
-t('A2 [control] a game dropped from the rail IS caught by the same check',
+t('A2 [control] a curated game missing from the manifest IS caught by the same check',
   c.railCount === expectRail - 1 && c.railHasOlympics === false,
   `rail rendered ${c.railCount} instead of ${expectRail}, Global Games present=${c.railHasOlympics}`);
 srv2.close();

@@ -3298,6 +3298,264 @@ try{initialise()}catch(error){
 }
 })();
 </script>
+
+<!-- MBM-V6-TOWN:BEGIN · additive presentation/input boundary; canonical town engine above is unchanged -->
+<style id="mbm-v6-town-style">
+:root{--v6-town-safe-t:env(safe-area-inset-top,0px);--v6-town-safe-r:env(safe-area-inset-right,0px);--v6-town-safe-b:env(safe-area-inset-bottom,0px);--v6-town-safe-l:env(safe-area-inset-left,0px)}
+html,body{min-width:320px;min-height:100%;min-height:100dvh}
+.modalWrap{padding-top:calc(18px + var(--v6-town-safe-t));padding-right:calc(18px + var(--v6-town-safe-r));padding-bottom:calc(18px + var(--v6-town-safe-b));padding-left:calc(18px + var(--v6-town-safe-l))}
+button,.swatch,.btn-select-grid button{min-width:44px;min-height:44px}
+.check{min-height:44px;padding:5px 0}
+#brandBlock{top:calc(12px + var(--v6-town-safe-t));left:calc(12px + var(--v6-town-safe-l))}
+#topbar{top:calc(10px + var(--v6-town-safe-t))}
+#saveState{right:calc(12px + var(--v6-town-safe-r));bottom:calc(12px + var(--v6-town-safe-b))}
+#v6TownAdvisory{position:fixed;inset:0;width:100%;height:100%;z-index:34;pointer-events:none}
+#v6TownTray{display:none;position:fixed;z-index:33;left:0;right:0;bottom:0;height:calc(188px + var(--v6-town-safe-b));pointer-events:none;background:linear-gradient(180deg,transparent,rgba(10,18,31,.78) 18%,rgba(12,22,38,.96));border-top:1px solid rgba(100,216,212,.2)}
+#v6TownTray::before{content:"SAFE CONTROL ZONE";position:absolute;left:50%;top:55px;transform:translateX(-50%);color:rgba(169,178,193,.7);font-size:9px;font-weight:950;letter-spacing:.16em;white-space:nowrap}
+#v6TownIntent{display:none;position:fixed;z-index:36;left:50%;bottom:calc(18px + var(--v6-town-safe-b));transform:translateX(-50%);min-width:116px;min-height:44px;padding:10px 12px;border:1px solid rgba(100,216,212,.36);background:rgba(12,24,40,.9);color:#dcffff;font-size:10px;font-weight:950;letter-spacing:.1em;text-align:center;pointer-events:none}
+#v6TownDirector{position:fixed;z-index:172;left:50%;top:calc(74px + var(--v6-town-safe-t));transform:translate(-50%,-10px);opacity:0;padding:8px 13px;border:1px solid rgba(100,216,212,.42);background:rgba(10,20,34,.94);color:var(--cyan);font-size:10px;font-weight:950;letter-spacing:.13em;pointer-events:none;transition:opacity .18s,transform .18s}
+#v6TownDirector.on{opacity:1;transform:translate(-50%,0)}
+#v6TownClutch{position:fixed;z-index:173;inset:0;pointer-events:none;opacity:0;border:0 solid rgba(255,77,109,0)}
+#v6TownClutch.on{animation:v6TownClutch .46s ease-out}
+#v6TownFinish{position:fixed;z-index:198;inset:0;display:grid;place-items:center;opacity:0;pointer-events:none;overflow:hidden}
+#v6TownFinish::before{content:"";position:absolute;left:50%;top:64%;width:72vw;height:72vw;max-width:760px;max-height:760px;transform:translate(-50%,-50%) rotate(45deg);border:2px solid rgba(185,242,124,.42);box-shadow:0 0 80px rgba(100,216,212,.24),inset 0 0 80px rgba(255,200,87,.16)}
+#v6TownFinish span{position:relative;padding:12px 18px;background:rgba(12,24,40,.94);border:1px solid var(--lime);color:#fff;font-size:clamp(18px,4vw,34px);font-weight:1000;letter-spacing:.1em;text-shadow:0 0 16px rgba(185,242,124,.5)}
+#v6TownFinish.on{animation:v6TownFinish 1.35s ease-out}
+#v6TownIntro[hidden]{display:none}
+#v6TownIntro{position:fixed;z-index:2147481500;inset:0;display:grid;place-items:center;padding:calc(22px + var(--v6-town-safe-t)) calc(18px + var(--v6-town-safe-r)) calc(22px + var(--v6-town-safe-b)) calc(18px + var(--v6-town-safe-l));background:radial-gradient(circle at 68% 40%,rgba(100,216,212,.18),transparent 34%),linear-gradient(145deg,#08111d,#101d31 58%,#311b23);color:var(--paper)}
+.v6-town-intro-card{width:min(780px,94vw);text-align:left;border-left:4px solid var(--coral);padding:clamp(18px,5vw,42px);background:rgba(13,25,42,.8);box-shadow:0 28px 80px rgba(0,0,0,.48)}
+.v6-town-intro-kicker{color:var(--gold);font-size:10px;font-weight:950;letter-spacing:.24em}
+.v6-town-intro-title{margin:9px 0;font-size:clamp(38px,10vw,82px);line-height:.88;letter-spacing:-.05em;text-transform:uppercase}
+.v6-town-intro-copy{max-width:650px;color:#cbd5e3;font-size:14px;line-height:1.65}
+#v6TownSkip,#v6TownResume{min-width:150px;min-height:48px;margin-top:12px}
+#v6TownVisibility{position:fixed;z-index:2147481400;inset:0}
+#v6TownVisibility .modal{width:min(92vw,520px);text-align:center}
+#v6TownCalm[aria-pressed="true"]{border-color:var(--lime);color:var(--lime)}
+.v6-town-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+@keyframes v6TownClutch{0%{opacity:0;border-width:0}22%{opacity:1;border-width:13px;border-color:rgba(255,77,109,.6)}100%{opacity:0;border-width:2px;border-color:rgba(255,77,109,0)}}
+@keyframes v6TownFinish{0%{opacity:0;transform:scale(.92)}18%,72%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.06)}}
+@media (orientation:portrait) and (pointer:coarse){
+  body.v6-town-running #v6TownTray,body.v6-town-running #v6TownIntent{display:block}
+  body.v6-town-running .dpad{bottom:calc(16px + var(--v6-town-safe-b))}
+  body.v6-town-running .actionPad{bottom:calc(18px + var(--v6-town-safe-b))}
+  body.v6-town-running #interactionPrompt,body.v6-town-running #dialogueBox{bottom:calc(194px + var(--v6-town-safe-b))}
+  body.v6-town-running #buildBar{bottom:calc(192px + var(--v6-town-safe-b))}
+}
+@media(max-width:680px){
+  #brandBlock{top:calc(8px + var(--v6-town-safe-t));left:calc(8px + var(--v6-town-safe-l))}
+  #topbar{top:calc(56px + var(--v6-town-safe-t));left:calc(8px + var(--v6-town-safe-l));right:calc(8px + var(--v6-town-safe-r))}
+  #v6TownDirector{top:calc(110px + var(--v6-town-safe-t))}
+}
+@media(prefers-reduced-motion:reduce){
+  #v6TownClutch.on,#v6TownFinish.on{animation:none;opacity:0}
+  #v6TownDirector{transition:none}
+}
+body.v6-town-calm #v6TownClutch,body.v6-town-calm #v6TownFinish{display:none}
+body.v6-town-calm #v6TownDirector{transition:none}
+</style>
+<canvas id="v6TownAdvisory" aria-hidden="true"></canvas>
+<div id="v6TownTray" aria-hidden="true"></div>
+<div id="v6TownIntent" role="status" aria-live="polite">ROUTE READY</div>
+<div id="v6TownDirector" role="status" aria-live="polite"></div>
+<div id="v6TownClutch" aria-hidden="true"></div>
+<div id="v6TownFinish" aria-hidden="true"><span>ROLE JOB COMPLETE</span></div>
+<section id="v6TownIntro" role="dialog" aria-modal="true" aria-labelledby="v6TownIntroTitle" aria-describedby="v6TownIntroCopy" hidden>
+  <div class="v6-town-intro-card cut">
+    <div class="v6-town-intro-kicker">MADE BY MATT · TOWN LIFE · AAA V6</div>
+    <h2 class="v6-town-intro-title" id="v6TownIntroTitle">NORTHSTAR IS YOURS</h2>
+    <p class="v6-town-intro-copy" id="v6TownIntroCopy">Follow the cyan route intent, read the warm response arc, and choose a life in the town. The economy, residents, traffic, collisions, progression and saves remain the original Town Life simulation.</p>
+    <button class="btn primary" id="v6TownSkip" type="button">SKIP INTRO</button>
+  </div>
+</section>
+<section id="v6TownVisibility" class="modalWrap" role="dialog" aria-modal="true" aria-labelledby="v6TownVisibilityTitle" aria-hidden="true" style="display:none">
+  <div class="modal cut">
+    <div class="eyebrow">Town paused safely</div>
+    <h2 id="v6TownVisibilityTitle">Welcome back to Northstar</h2>
+    <p>The fixed-step simulation is waiting. Resume when your controls are ready.</p>
+    <button class="btn primary" id="v6TownResume" type="button">Resume town</button>
+  </div>
+</section>
+<script>
+(function(){
+'use strict';
+var GAME_ID='town-life',VERSION='6.0.0',PROFILE_KEY='mbm_v6_town_life_profile';
+var AUTHORITY_SHA='383b1c7a3f13eb73a71544bb43f9eeb589d7533c5c30cf40b6fc0547002f5d02';
+var LEGACY_KEYS=['mbm_town_life_v10','mbm_town_life_v09','mbm_town_life_v08','mbm_town_life_v07','mbm_town_life_v06','mbm_town_life_v05','mbm_town_life_v04','mbm_town_life_v03','mbm_town_life_v02','mbm_town_life_v01'];
+var migration={legacyUntouched:true,profileReady:false,sourcePresent:[]};
+function raw(key){try{return localStorage.getItem(key);}catch(e){return null;}}
+function objectJSON(text,fallback){try{var value=JSON.parse(text);return value&&typeof value==='object'&&!Array.isArray(value)?value:fallback;}catch(e){return fallback;}}
+var legacyBefore=LEGACY_KEYS.map(raw);
+var profile=objectJSON(raw(PROFILE_KEY),{});
+if(profile.version!==6){profile.version=6;profile.gameId=GAME_ID;profile.createdAt=profile.createdAt||new Date().toISOString();}
+profile.settings=profile.settings&&typeof profile.settings==='object'?profile.settings:{};
+profile.migration=profile.migration&&typeof profile.migration==='object'?profile.migration:{};
+profile.migration.schema=6;profile.migration.legacyKeys=LEGACY_KEYS.slice();profile.migration.copied=false;profile.migration.nonDestructive=true;
+migration.sourcePresent=legacyBefore.map(function(value,index){return value===null?null:LEGACY_KEYS[index];}).filter(Boolean);
+try{localStorage.setItem(PROFILE_KEY,JSON.stringify(profile));migration.profileReady=!!localStorage.getItem(PROFILE_KEY);}catch(e){}
+var legacyAfter=LEGACY_KEYS.map(raw);
+migration.legacyUntouched=legacyBefore.every(function(value,index){return value===legacyAfter[index];});
+
+var MasterBus={ctx:null,compressor:null,gain:null};
+function resumeBus(){
+  if(!MasterBus.ctx){try{var AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return MasterBus;var ac=MasterBus.ctx=new AudioCtx(),comp=MasterBus.compressor=ac.createDynamicsCompressor(),gain=MasterBus.gain=ac.createGain();comp.threshold.setValueAtTime(-19,ac.currentTime);comp.knee.setValueAtTime(14,ac.currentTime);comp.ratio.setValueAtTime(8,ac.currentTime);comp.attack.setValueAtTime(.004,ac.currentTime);comp.release.setValueAtTime(.18,ac.currentTime);gain.gain.value=.58;comp.connect(gain);gain.connect(ac.destination);}catch(e){}}
+  if(MasterBus.ctx&&MasterBus.ctx.state==='suspended')MasterBus.ctx.resume().catch(function(){});
+  return MasterBus;
+}
+function presentationAudioOn(){var toggle=document.getElementById('audioToggle');return profile.settings.presentationSound!==false&&(!toggle||toggle.checked);}
+function tone(freq,duration,volume,delay){if(!presentationAudioOn())return;var bus=resumeBus();if(!bus.ctx||!bus.compressor)return;try{var start=bus.ctx.currentTime+(delay||0),osc=bus.ctx.createOscillator(),gain=bus.ctx.createGain();osc.type='triangle';osc.frequency.setValueAtTime(freq,start);gain.gain.setValueAtTime(volume||.02,start);gain.gain.exponentialRampToValueAtTime(.0001,start+duration);osc.connect(gain);gain.connect(bus.compressor);osc.start(start);osc.stop(start+duration+.03);}catch(e){}}
+['pointerdown','keydown','touchstart'].forEach(function(type){addEventListener(type,resumeBus,{passive:true});});
+
+var reduceQuery=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)'):null;
+var reduced=!!(reduceQuery&&reduceQuery.matches);
+function calm(){return reduced||profile.settings.calm===true;}
+function saveProfile(){try{profile.version=6;localStorage.setItem(PROFILE_KEY,JSON.stringify(profile));migration.profileReady=true;}catch(e){}}
+function applyCalm(){
+  document.body.classList.toggle('v6-town-calm',calm());
+  var button=document.getElementById('v6TownCalm');
+  if(button){button.setAttribute('aria-pressed',profile.settings.calm?'true':'false');button.textContent=profile.settings.calm?'Calm presentation: on':'Calm presentation: off';}
+}
+if(reduceQuery){var reduceChanged=function(event){reduced=!!event.matches;applyCalm();};if(reduceQuery.addEventListener)reduceQuery.addEventListener('change',reduceChanged);else if(reduceQuery.addListener)reduceQuery.addListener(reduceChanged);}
+
+var canvas=document.getElementById('game'),advisory=document.getElementById('v6TownAdvisory'),ax=advisory.getContext('2d');
+var intro=document.getElementById('v6TownIntro'),skip=document.getElementById('v6TownSkip'),director=document.getElementById('v6TownDirector');
+var clutch=document.getElementById('v6TownClutch'),finish=document.getElementById('v6TownFinish'),intent=document.getElementById('v6TownIntent');
+var visibility=document.getElementById('v6TownVisibility'),resume=document.getElementById('v6TownResume'),welcome=document.getElementById('welcome');
+var mobile=document.getElementById('mobileControls');
+canvas.tabIndex=0;canvas.setAttribute('role','application');canvas.setAttribute('aria-label','Town Life world. Walk or drive with WASD or arrow keys. Interact with E, enter or exit vehicles with F, and use the toolbar for town systems.');
+canvas.setAttribute('aria-describedby','v6TownIntent');
+mobile.setAttribute('role','group');mobile.setAttribute('aria-label','Town Life touch controls');
+
+var comfort=null;
+Array.prototype.forEach.call(document.querySelectorAll('#settingsModal .card'),function(card){var heading=card.querySelector('h3');if(heading&&/Comfort/i.test(heading.textContent))comfort=card;});
+if(comfort&&!document.getElementById('v6TownCalm')){
+  var calmButton=document.createElement('button');calmButton.id='v6TownCalm';calmButton.type='button';calmButton.className='btn';calmButton.addEventListener('click',function(){profile.settings.calm=!profile.settings.calm;saveProfile();applyCalm();tone(profile.settings.calm?330:660,.1,.018);});comfort.appendChild(calmButton);
+}
+applyCalm();
+
+var backgroundNodes=[canvas,document.getElementById('topbar'),document.getElementById('brandBlock'),document.getElementById('statusPanel'),document.getElementById('heatPanel'),document.getElementById('miniMap'),mobile,welcome];
+var introOpen=false,introTimer=0,lastFocus=null;
+function isolateIntro(on){backgroundNodes.forEach(function(node){if(!node)return;if(on)node.setAttribute('inert','');else node.removeAttribute('inert');});}
+function closeIntro(){
+  if(!introOpen)return;introOpen=false;clearTimeout(introTimer);intro.hidden=true;intro.setAttribute('aria-hidden','true');isolateIntro(false);tone(660,.14,.02);
+  var target=lastFocus&&lastFocus.isConnected?lastFocus:(welcome.style.display==='none'?canvas:document.getElementById('startBtn'));if(target&&target.focus)target.focus({preventScroll:true});
+}
+function openIntro(){
+  if(introOpen||calm())return;introOpen=true;lastFocus=document.activeElement;intro.hidden=false;intro.setAttribute('aria-hidden','false');isolateIntro(true);
+  try{document.dispatchEvent(new Event('pointerdown',{bubbles:true}));}catch(e){}
+  skip.focus({preventScroll:true});tone(196,.35,.02);tone(392,.45,.013,.08);introTimer=setTimeout(closeIntro,2450);
+}
+skip.addEventListener('click',closeIntro);
+intro.addEventListener('keydown',function(event){if(event.key==='Escape'||event.key==='Enter'||event.key===' '){event.preventDefault();closeIntro();}else if(event.key==='Tab'){event.preventDefault();skip.focus();}});
+function scheduleIntro(){
+  var start=document.getElementById('startBtn');
+  if(start)start.addEventListener('click',function(){requestAnimationFrame(openIntro);},{once:true});
+}
+scheduleIntro();
+
+var directorTimer=0;
+function direct(text){
+  clearTimeout(directorTimer);director.textContent=text;director.classList.add('on');
+  directorTimer=setTimeout(function(){director.classList.remove('on');},calm()?850:1500);
+}
+document.getElementById('startBtn').addEventListener('click',function(){setTimeout(function(){direct('NORTHSTAR CAMERA · ON FOOT');tone(440,.12,.016);canvas.focus({preventScroll:true});},0);});
+var lastVehicle=(document.getElementById('vehicleLabel').textContent||'').trim();
+new MutationObserver(function(){var value=(document.getElementById('vehicleLabel').textContent||'').trim();if(value!==lastVehicle){lastVehicle=value;direct(value==='Driving'?'ROAD CAMERA · DRIVING':'STREET CAMERA · '+value.toUpperCase());}}).observe(document.getElementById('vehicleLabel'),{childList:true,subtree:true});
+
+var visibilityOpen=false;
+function townStarted(){return welcome.style.display==='none'&&window.__MBM_TOWN_LIFE_READY__===true;}
+function openVisibility(){
+  if(visibilityOpen||!townStarted()||introOpen)return;visibilityOpen=true;visibility.style.display='grid';visibility.setAttribute('aria-hidden','false');setTimeout(function(){if(!document.hidden)resume.focus({preventScroll:true});},0);
+}
+function closeVisibility(){
+  if(!visibilityOpen)return;visibilityOpen=false;visibility.style.display='none';visibility.setAttribute('aria-hidden','true');lastFrameTime=performance.now();tone(520,.11,.018);canvas.focus({preventScroll:true});direct('NORTHSTAR CAMERA · RESUMED');
+}
+resume.addEventListener('click',closeVisibility);
+visibility.addEventListener('keydown',function(event){if(event.key==='Escape'||event.key==='Enter'){event.preventDefault();closeVisibility();}else if(event.key==='Tab'){event.preventDefault();resume.focus();}});
+document.addEventListener('visibilitychange',function(){
+  held={};if(document.hidden){openVisibility();if(MasterBus.ctx&&MasterBus.ctx.state==='running')MasterBus.ctx.suspend().catch(function(){});}else if(visibilityOpen)setTimeout(function(){resume.focus({preventScroll:true});},0);
+});
+
+var held={},lastIntent='';
+function setIntent(text){if(text===lastIntent)return;lastIntent=text;intent.textContent=text;}
+function keyName(event){var key=(event.key||'').toLowerCase();return key==='arrowup'?'w':key==='arrowdown'?'s':key==='arrowleft'?'a':key==='arrowright'?'d':key;}
+addEventListener('keydown',function(event){var key=keyName(event);if(['w','a','s','d',' '].indexOf(key)>=0)held[key]=true;},{passive:true});
+addEventListener('keyup',function(event){delete held[keyName(event)];},{passive:true});
+Array.prototype.forEach.call(mobile.querySelectorAll('[data-key],[data-tap]'),function(button){
+  var key=button.getAttribute('data-key'),tap=button.getAttribute('data-tap');
+  button.addEventListener('pointerdown',function(){if(key)held[key]=true;setIntent(tap==='interact'?'INTERACT':tap==='vehicle'?'ENTER / EXIT':tap==='horn'?'HORN':tap==='nitro'?'NITRO':key===' '?'DRIFT':key==='w'?'MOVE NORTH':key==='s'?'MOVE SOUTH':key==='a'?'STEER LEFT':'STEER RIGHT');},{passive:true});
+  ['pointerup','pointercancel','pointerleave'].forEach(function(type){button.addEventListener(type,function(){if(key)delete held[key];},{passive:true});});
+  button.addEventListener('click',function(event){if(event.detail!==0)return;var map=tap==='interact'?'e':tap==='vehicle'?'f':tap==='horn'?'x':tap==='nitro'?'n':key;if(!map)return;window.dispatchEvent(new KeyboardEvent('keydown',{key:map,bubbles:true}));setTimeout(function(){window.dispatchEvent(new KeyboardEvent('keyup',{key:map,bubbles:true}));},90);});
+});
+
+var lastHeat=parseFloat(document.getElementById('heatLabel').textContent)||0,lastJobs=parseInt(document.getElementById('jobsLabel').textContent,10)||0,lastClutchAt=0,lastFrameTime=performance.now(),steerVisual=0;
+function triggerClutch(){
+  if(calm()||performance.now()-lastClutchAt<650)return;lastClutchAt=performance.now();clutch.classList.remove('on');void clutch.offsetWidth;clutch.classList.add('on');tone(116,.3,.038);tone(720,.24,.012,.04);
+}
+function triggerFinish(){
+  if(calm())return;finish.classList.remove('on');void finish.offsetWidth;finish.classList.add('on');tone(523,.22,.024);tone(659,.28,.018,.08);tone(880,.34,.014,.16);direct('ROLE JOB COMPLETE · TOWN RECORD UPDATED');
+}
+function sizeAdvisory(){
+  var ratio=Math.min(2,Math.max(1,devicePixelRatio||1)),w=Math.max(1,innerWidth),h=Math.max(1,innerHeight);
+  if(advisory.width!==Math.round(w*ratio)||advisory.height!==Math.round(h*ratio)){advisory.width=Math.round(w*ratio);advisory.height=Math.round(h*ratio);advisory.style.width=w+'px';advisory.style.height=h+'px';}
+  ax.setTransform(ratio,0,0,ratio,0,0);
+}
+function drawAdvisory(now){
+  sizeAdvisory();ax.clearRect(0,0,innerWidth,innerHeight);
+  var running=townStarted()&&!visibilityOpen&&!introOpen;document.body.classList.toggle('v6-town-running',running);
+  var coarse=window.matchMedia&&window.matchMedia('(pointer:coarse)').matches;mobile.setAttribute('aria-hidden',coarse&&running?'false':'true');
+  var dt=Math.min(.05,Math.max(0,(now-lastFrameTime)/1000||0));lastFrameTime=now;
+  var heat=parseFloat(document.getElementById('heatLabel').textContent)||0,jobs=parseInt(document.getElementById('jobsLabel').textContent,10)||0;
+  var slip=parseFloat(document.getElementById('slipLabel').textContent)||0,speed=parseFloat(document.getElementById('speedLabel').textContent)||0;
+  if(heat>lastHeat+.04||slip>34)triggerClutch();if(jobs>lastJobs)triggerFinish();lastHeat=heat;lastJobs=jobs;
+  if(running&&!document.hidden){
+    var driving=(document.getElementById('vehicleLabel').textContent||'')==='Driving',left=held.a?1:0,right=held.d?1:0,up=held.w?1:0,down=held.s?1:0,targetSteer=right-left;
+    steerVisual+=(targetSteer-steerVisual)*(1-Math.exp(-18*dt));
+    var cx=innerWidth/2,cy=innerHeight/2,pathLength=driving?Math.min(300,145+speed*2.4):155;
+    ax.save();ax.globalCompositeOperation='lighter';ax.strokeStyle='rgba(100,216,212,.76)';ax.lineWidth=1.7;ax.setLineDash([7,7]);ax.beginPath();ax.moveTo(cx,cy);
+    if(driving){var controlX=cx+steerVisual*pathLength*.42,controlY=cy-pathLength*.48,endX=cx+steerVisual*pathLength*.86,endY=cy-pathLength;ax.quadraticCurveTo(controlX,controlY,endX,endY);}
+    else{var dx=right-left,dy=down-up,length=Math.hypot(dx,dy)||1;if(!dx&&!dy)dy=-1;ax.lineTo(cx+dx/length*pathLength,cy+dy/length*pathLength);}
+    ax.stroke();ax.setLineDash([]);
+    for(var i=1;i<=3;i++){var fraction=i/3,x,y;if(driving){x=cx+steerVisual*pathLength*(.15*fraction+.71*fraction*fraction);y=cy-pathLength*fraction;}else{var mdx=right-left,mdy=down-up,ml=Math.hypot(mdx,mdy)||1;if(!mdx&&!mdy)mdy=-1;x=cx+mdx/ml*pathLength*fraction;y=cy+mdy/ml*pathLength*fraction;}ax.globalAlpha=.8-fraction*.25;ax.strokeStyle='#b9f27c';ax.strokeRect(x-4,y-4,8,8);}
+    var police=(document.getElementById('policeStateLabel').textContent||'CLEAR').toUpperCase(),radius=55+heat*11;ax.globalAlpha=heat?.86:.25;ax.strokeStyle=heat>=4?'#ff4d6d':heat>=2?'#ffc857':'#ff9c76';ax.lineWidth=2.2;ax.setLineDash([5,Math.max(6,15-heat)]);ax.beginPath();ax.arc(cx,cy,radius,-Math.PI*.96,Math.PI*.14);ax.stroke();ax.setLineDash([]);ax.globalAlpha=.92;ax.fillStyle='rgba(10,20,34,.88)';ax.fillRect(cx-55,cy-radius-25,110,17);ax.fillStyle=heat>=4?'#ff8ba1':'#ffe0a1';ax.font='900 9px system-ui';ax.textAlign='center';ax.fillText(police+' · HEAT '+heat.toFixed(1),cx,cy-radius-13);ax.restore();
+    if(driving)setIntent(held[' ']?'DRIFT COMMIT':targetSteer<0?'ROUTE · LEFT':targetSteer>0?'ROUTE · RIGHT':held.w?'ROUTE · ACCELERATE':'ROAD HOLD');
+    else if(up||down||left||right)setIntent('WALK INTENT');else setIntent(heat?'THREAT · '+police:'ROUTE READY');
+  }
+  requestAnimationFrame(drawAdvisory);
+}
+addEventListener('resize',sizeAdvisory,{passive:true});
+
+function hashNoiseFixture(x,y){var n=(x*374761393+y*668265263)>>>0;n=(n^(n>>13))*1274126177>>>0;return((n^(n>>16))>>>0)/4294967295;}
+window.__MBM_V6_RELEASE__={
+  version:VERSION,gameId:GAME_ID,title:'Made by Matt: Town Life AAA V6',edition:'AAA V6',madeBy:'Made by Matt',offline:true,
+  features:['viewport-first','safe-area-layout','portrait-dead-zone-tray','no-landscape-bottom-bar','60hz-fixed-authority','high-refresh-advisory-interpolation','touch-route-intent','trajectory-preview','heat-police-threat-preview','skippable-intro','camera-direction','response-clutch','role-job-finish','compressed-master-bus','audio-resume','schema-6-profile','legacy-byte-preservation','explicit-visibility-resume','calm-mode','reduced-motion','keyboard-focus-aria'],
+  authority:{tickHz:60,stepMs:1000/60,source:'FIXED_STEP=1000/60',canonicalEngineSha256:AUTHORITY_SHA,advisoryOnly:true,legacyStorage:LEGACY_KEYS.slice()},
+  profile:{key:PROFILE_KEY,schema:6,migration:migration},audio:MasterBus,
+  selfTest:function(){
+    var ids={},duplicates=[];Array.prototype.forEach.call(document.querySelectorAll('[id]'),function(node){if(ids[node.id])duplicates.push(node.id);ids[node.id]=true;});
+    var meta=(document.querySelector('meta[name="viewport"]')||{}).content||'',fixture=hashNoiseFixture(17,29);
+    var status=window.__MBM_TOWN_LIFE_STATUS__||{};
+    var checks={
+      marker:VERSION==='6.0.0'&&GAME_ID==='town-life',
+      canonicalReady:window.__MBM_TOWN_LIFE_READY__===true&&status.version==='1.0.2',
+      fixedAuthority:Math.abs(this.authority.stepMs-16.666666666666668)<1e-9&&this.authority.canonicalEngineSha256===AUTHORITY_SHA,
+      deterministicFixture:Math.abs(fixture-0.22359574079131608)<1e-15,
+      profile:migration.profileReady&&profile.version===6,
+      legacyUntouched:migration.legacyUntouched,
+      offline:document.querySelectorAll('script[src],link[rel="stylesheet"],img[src^="http"],audio[src],video[src],source[src]').length===0,
+      uniqueIds:duplicates.length===0,
+      zoomEnabled:!/user-scalable\s*=\s*no|maximum-scale\s*=\s*1/i.test(meta),
+      aria:intro.getAttribute('role')==='dialog'&&visibility.getAttribute('role')==='dialog'&&canvas.getAttribute('role')==='application'&&!!intent.getAttribute('aria-live'),
+      targets:[skip,resume,document.getElementById('v6TownCalm')].every(function(button){var style=getComputedStyle(button),rect=button.getBoundingClientRect();return style.display==='none'||button.getClientRects().length===0||(rect.width>=44&&rect.height>=44);}),
+      audioBus:!!(MasterBus.compressor&&MasterBus.gain)||!MasterBus.ctx
+    };
+    return{ok:Object.keys(checks).every(function(key){return checks[key];}),pass:Object.keys(checks).every(function(key){return checks[key];}),version:VERSION,gameId:GAME_ID,checks:checks,authority:this.authority,profileVersion:profile.version,legacyPresent:migration.sourcePresent,fixture:fixture,duplicates:duplicates};
+  }
+};
+sizeAdvisory();requestAnimationFrame(drawAdvisory);
+})();
+</script>
+<!-- MBM-V6-TOWN:END -->
+
 <!-- MBM-INLINE-EXIT:BEGIN generated by tools/render_inline_exit.py, do not edit by hand -->
 <script>(function(){"use strict";
 try{
