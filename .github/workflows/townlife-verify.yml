@@ -153,6 +153,13 @@ jobs:
         run: |
           set -euo pipefail
           sha256sum tools/townlife/benchmark_splash.mjs | tee artifacts/townlife/splash-performance-harness.txt
+          # RL23. The regression gate's decision rule is a sign test, and a
+          # decision rule nobody exercises is the next thing to rot. This runs
+          # it over three fixtures - the measured noise that used to red the
+          # build, the busy-frame control, and a real one-sided regression -
+          # and reds if any of them lands on the wrong side.
+          node tools/townlife/benchmark_splash.mjs --selftest \
+            | tee artifacts/townlife/splash-performance-gate-selftest.log
           node tools/townlife/benchmark_splash.mjs \
             --baseline-html="$RUNNER_TEMP/townlife-before.html" \
             --shipped-report=artifacts/townlife/performance.json \
