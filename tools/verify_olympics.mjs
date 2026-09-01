@@ -258,9 +258,33 @@ async function playDay(page, { resolve = true } = {}) {
         const ev = window.MBMGlobalGames.app.activeEvent;
         return { probe: ev ? Number(ev[p] || 0) : null, elapsed: ev ? ev.elapsed : null };
       }, c.probe);
-      /* Wait for the gun. POLLED, not slept: the countdown runs on real dt and
-         this container renders at 6-12fps, so any fixed sleep is either a race
-         or a waste. */
+      /* Reach the gun through the shipped fixed-step authority, not through
+         wall-clock rendering. Hosted software-canvas runners can render below
+         1fps; the app deliberately caps one rendered frame to 50ms, so a real
+         3.2s countdown can then need more than a minute without saying
+         anything about input. This pumps the SAME event.tick(FIXED_DT) path
+         used by the app loop. It is bounded, proves it started from a real
+         countdown, and records that setup itself did not raise the movement
+         probe. The keyboard leg below remains real Playwright input. */
+      const gun = await page.evaluate(probe => {
+        const app = window.MBMGlobalGames.app;
+        const ev = app && app.activeEvent;
+        const dt = window.__olympics.fixedDt;
+        const before = ev ? { started: ev.started, countdown: ev.countdown,
+          probe: Number(ev[probe] || 0), elapsed: ev.elapsed } : null;
+        let ticks = 0;
+        while (ev && ev.started !== true && ticks < 1000) { ev.tick(dt); ticks++; }
+        return { sameEvent: !!ev && ev === app.activeEvent, dt, ticks, before,
+          after: ev ? { started: ev.started, countdown: ev.countdown,
+            probe: Number(ev[probe] || 0), elapsed: ev.elapsed } : null };
+      }, c.probe);
+      t(`O3 [control] the ${c.event} starter uses the shipped fixed-step authority`,
+        gun.sameEvent && gun.dt === 1 / 120 && gun.before?.started === false &&
+          gun.after?.started === true && gun.ticks > 0 && gun.ticks < 1000,
+        JSON.stringify(gun));
+      t(`O3 [control] reaching the ${c.event} gun cannot create a movement pass`,
+        gun.after?.probe === gun.before?.probe,
+        `${c.probe} ${gun.before?.probe} -> ${gun.after?.probe} across ${gun.ticks} authority ticks`);
       await page.waitForFunction(() => {
         const ev = window.MBMGlobalGames.app.activeEvent;
         return !!ev && ev.started === true;

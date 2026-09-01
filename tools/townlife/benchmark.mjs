@@ -163,13 +163,13 @@ async function dismissAndStart(page) {
       const text = (element.innerText || '').trim();
       if (!/^(start|play|begin|enter|launch|continue|new game)|start game|play now|click to play/i.test(text)) continue;
       if (/arcade|home|back/i.test(text)) continue;
-      return { index, text };
+      return { index, text, id: element.id || null };
     }
     return null;
   });
   if (!match) return null;
   await candidates.nth(match.index).click({ timeout: 1000 }).catch(() => {});
-  return match.text;
+  return match;
 }
 
 async function scriptedInput(page, navigationSafe = false) {
@@ -226,11 +226,16 @@ async function measureRoute(browser, origin, game, round) {
   const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
   assert.equal(response?.status(), 200, `${game.title}: navigation returned ${response?.status()}`);
   await page.waitForTimeout(500);
-  const startControl = await dismissAndStart(page);
+  const startMatch = await dismissAndStart(page);
+  const startControl = startMatch?.text ?? null;
   const navigationSafe = game.href === '/houseolympiad/';
   if (navigationSafe) await page.locator('#refreshBtn').click();
   if (game.href === '/voxel/') {
-    assert.equal(startControl, 'Click to Play', 'Voxel setup control was not exercised');
+    /* Voxel initialises its mode record before this probe and changes the
+       button's copy from "Click to Play" to the derived mode action (currently
+       "Launch Creative"). The control's stable identity is #start; the Resume
+       and view-3 waits below prove that activating it really began setup. */
+    assert.equal(startMatch?.id, 'start', 'Voxel setup control was not exercised');
     await page.waitForFunction(
       () => document.getElementById('start')?.textContent === 'Resume',
       null,
