@@ -2092,8 +2092,12 @@ html.v4-reduced .v6CinemaCard::before,html.v4-reduced .v6Star{animation:none!imp
  var release=Object.freeze({version:VERSION,gameId:GAME_ID,simulation:SIMULATION,profileSchema:6,physics:Object.freeze({id:SIMULATION,tickHz:120,mutated:false}),features:Object.freeze(['viewport-first','portrait-dead-zone-tray','120hz-interpolation-retained','accessible-fly-in','camera-zoom-shake','sprint-clutch','podium-constellation','compressed-master-bus','ios-audio-recovery','schema-6-atomic-profile','visibility-recovery','reduced-motion-calm-contrast','intent-touch','draft-sector-trajectory','ghost-sector-mastery','offline-single-file']),profile:function(){return clone(Profile,{});},save:atomicSave,getAudio:getAudio,selfTest:selfTest});
  window.__MBM_V6_RELEASE__=release;window.__MBM_RELEASE__=Object.freeze({game:GAME_ID,release:VERSION,saveSchema:6,physicsHz:120,simulationCompatibility:'AV120-RACE-20260830 and V4 ghosts preserved'});window.ApexVelodromeV6=release;
  try{window.dispatchEvent(new CustomEvent('mbm-v6-ready',{detail:selfTest()}));}catch(_){ }
- /* Hold the first race behind the maker splash, then hand control to the skippable fly-in. */
- if(g){var initialFinished=g.raceFinished;g.raceFinished=true;var waited=0,waiter=setInterval(function(){waited+=100;if(!document.querySelector('.mbm-splash')||waited>=5200){clearInterval(waiter);Director.start(initialFinished);}},100);}
+ /* Hold the first race behind the maker splash, then hand control to the
+    skippable fly-in. The focus predicate is grafted from the canonical maker
+    splash (tools/render_maker_splash.py:74): once a player has moved focus into
+    the game, a later presentation handoff must not steal it back into a modal. */
+ function handoffNeedsFocus(){var a=document.activeElement;return !a||a===document.body||a===document.documentElement||!a.isConnected||!!(a.closest&&a.closest('.mbm-splash'));}
+ if(g){var initialFinished=g.raceFinished;g.raceFinished=true;var waited=0,waiter=setInterval(function(){waited+=100;if(!document.querySelector('.mbm-splash')||waited>=5200){clearInterval(waiter);if(!handoffNeedsFocus()){g.raceFinished=initialFinished;g.last=performance.now();return;}Director.start(initialFinished);}},100);}
 })();
 </script>
 </body>
