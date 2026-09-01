@@ -319,6 +319,16 @@ async function wayOutProbe(browser, origin, route, activation, { disableWayOut =
   await page.keyboard.press('Tab');
   await maker.waitFor({ state: 'detached', timeout: 30000 });
   await page.waitForLoadState('domcontentloaded', { timeout: 30000 });
+  /* Grafted from pageProbe above: drain the product's queued focus handoff
+     before the first user Tab. Sending that Tab while the rAF handoff is still
+     pending cancels the handoff and tests a verifier-created state. */
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const handoff = await page.evaluate(() => {
+    const active = document.activeElement;
+    return { ready: !!active && active !== document.body && active !== document.documentElement &&
+      active.isConnected && !active.closest?.('[data-mbm-maker-splash]'),
+      id: active?.id || '', tag: active?.tagName || '' };
+  });
   if (disableWayOut) await page.evaluate(() => {
     const wayOut = document.querySelector('#mbmexit-back,#mbmhud-back');
     if (wayOut) { wayOut.id = 'mbm-way-out-disabled-control'; wayOut.tabIndex = -1; }
@@ -339,7 +349,7 @@ async function wayOutProbe(browser, origin, route, activation, { disableWayOut =
   }
   const after = page.url();
   await context.close();
-  return { activation, tabs, reached, activeId, before, after, navigated: after !== before, errors: preActivationErrors, external: preActivationExternal };
+  return { activation, handoff, tabs, reached, activeId, before, after, navigated: after !== before, errors: preActivationErrors, external: preActivationExternal };
 }
 
 async function reducedMotionProbe(browser, origin, route) {
@@ -551,7 +561,7 @@ async function controls(browser, origin) {
     }
   }
   const wayOut = await wayOutProbe(browser, origin, siteRoute, 'Enter');
-  check(wayOut.reached && wayOut.tabs <= 30, 'focus way out is reachable within 30 Tab presses', JSON.stringify(wayOut));
+  check(wayOut.handoff?.ready && wayOut.reached && wayOut.tabs <= 30, 'focused handoff is ready and the way out is reachable within 30 Tab presses', JSON.stringify(wayOut));
   check(wayOut.navigated, 'Enter activates the focused way-out control', JSON.stringify(wayOut));
   check(wayOut.errors.length === 0 && wayOut.external.length === 0, 'way-out path has zero error/external request', wayOut.errors.concat(wayOut.external).join(' | '));
   const disabledWayOut = await wayOutProbe(browser, origin, siteRoute, 'Enter', { disableWayOut: true });
@@ -624,7 +634,7 @@ async function verify(browser, origin) {
     const pass = observations.every(o => o.seen && o.duration >= 280 && o.detached && !o.makerPresent && !o.suppressedSeen && o.firstPaintGeometryMatch && o.overflowDelta <= 0 &&
       o.addedErrors.length === 0 && o.addedExternal.length === 0 && o.active.id === o.primary?.id && o.active.tag === o.primary?.tag &&
       o.suppressedActive.id === o.suppressedPrimary?.id && o.suppressedActive.tag === o.suppressedPrimary?.tag) &&
-      wayOut.reached && wayOut.tabs <= 30 && wayOut.navigated && wayOut.errors.length === 0 && wayOut.external.length === 0;
+      wayOut.handoff?.ready && wayOut.reached && wayOut.tabs <= 30 && wayOut.navigated && wayOut.errors.length === 0 && wayOut.external.length === 0;
     rows.push({ route, repository: routeRepo(route), class: pass ? 'SPLASH OK' : 'SPLASH BROKEN', observations, wayOut });
     if ((i + 1) % 25 === 0) console.log(`verify ${i + 1}/${routes.length}`);
   }
