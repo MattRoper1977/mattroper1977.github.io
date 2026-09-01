@@ -153,6 +153,13 @@ jobs:
         run: |
           set -euo pipefail
           sha256sum tools/townlife/benchmark_splash.mjs | tee artifacts/townlife/splash-performance-harness.txt
+          # RL23. The regression gate's decision rule is a sign test, and a
+          # decision rule nobody exercises is the next thing to rot. This runs
+          # it over three fixtures - the measured noise that used to red the
+          # build, the busy-frame control, and a real one-sided regression -
+          # and reds if any of them lands on the wrong side.
+          node tools/townlife/benchmark_splash.mjs --selftest \
+            | tee artifacts/townlife/splash-performance-gate-selftest.log
           node tools/townlife/benchmark_splash.mjs \
             --baseline-html="$RUNNER_TEMP/townlife-before.html" \
             --shipped-report=artifacts/townlife/performance.json \
@@ -168,6 +175,18 @@ jobs:
   verify:
     name: Final bytes in Chromium, Firefox and WebKit
     needs: benchmark
+    # RL23. `needs:` keeps the ordering these job names advertise, but on its own it
+    # also SKIPS this job whenever benchmark reds - and a skipped gate renders as
+    # absence, not as red, so it reads like coverage. Measured on main 5435b6ad:
+    # benchmark failed and took `verify` and `sweep` down with it, so the three-engine
+    # byte check and the six-surface sweep did not run on the default branch at all.
+    # Nothing here consumes benchmark: needs.benchmark is referenced 0 times, there
+    # are 0 `outputs:` blocks and 0 download-artifact steps in this file (control:
+    # upload-artifact appears 3 times, so that probe fires). The dependency is pure
+    # sequencing, and each job gets its own fresh runner, so it buys no measurement
+    # isolation either. `!cancelled()` keeps the order and runs anyway on an upstream
+    # red, while still standing down on a real cancellation.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -243,6 +262,9 @@ jobs:
   sweep:
     name: Serial six-surface defect sweep and ten-minute idles
     needs: verify
+    # Same reasoning as `verify` above. This is the gate that costs most when it
+    # silently does not run: six surfaces, three engines, ten-minute idles.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:

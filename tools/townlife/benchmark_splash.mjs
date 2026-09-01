@@ -18,6 +18,8 @@ const CPU_THROTTLE = 6;
 const WARM_UP_MS = 2500;
 const MEASURE_MS = 5000;
 const RUNS = 9;
+// One-tailed alpha=0.05 sensitivity: RUNS 3 -> no significant count;
+// RUNS 5 -> 5/5; RUNS 7 -> 7/7; RUNS 9 -> 8/9; RUNS 11 -> 9/11.
 const CONTROL_BUSY_MS = 1200;
 // A five-second rAF window is quantised in whole frames and shared CI runners
 // add scheduling noise. Requiring byte-identical code paths to differ by
@@ -26,6 +28,119 @@ const CONTROL_BUSY_MS = 1200;
 // regression budget (about five frames in this window), and the busy-frame
 // control below must still fail this exact predicate.
 const MAX_MEDIAN_REGRESSION_RATIO = 0.05;
+
+// RL20. `afterMedian >= beforeMedian` is not a regression test on this
+// measurement, it is a coin flip.
+//
+// Measured on run 33251470362 (Site main + PR #215), the nine paired deltas were
+//
+//   [+0.3671, -0.3992, -2.0723, +1.4383, -0.4814, -0.2793, +1.5847, -5.2818, -4.2589]
+//
+// - six negative, three positive, straddling zero, with a full spread of 6.8665
+// fps against a median of -0.3991. The noise is seventeen times the effect, and
+// the harness printed both numbers next to `threshold 0.0000` while failing the
+// build. A gate that reds on about half of all runs whatever the code does
+// teaches everyone to re-run it, and re-running is exactly how a real
+// regression gets through.
+//
+// The runs are already paired and alternated AB/BA, so the honest question is
+// whether the deltas are SHIFTED, not whether their median lands a hair below
+// zero. A sign test asks that and needs no tuning constant: under "the splash
+// changed nothing" each paired delta is negative with probability 1/2, so the
+// count of negatives is Binomial(RUNS, 1/2). Red only when that count is too
+// extreme to be chance at one-tailed alpha.
+//
+// This keeps the gate's teeth. The busy-frame control drives every delta to
+// about -24 fps of 25, so it reds at RUNS-of-RUNS; and `aboveShippedFloor`
+// below is untouched, so a regression large enough to matter still reds on its
+// absolute size no matter what pattern the signs make.
+const SIGN_TEST_ALPHA = 0.05;
+function binomialUpperTail(k, n) {            // P(X >= k) for X ~ Binomial(n, 1/2)
+  let coefficient = 1, total = 0;
+  for (let i = 0; i <= n; i += 1) {
+    if (i >= k) total += coefficient;
+    coefficient = (coefficient * (n - i)) / (i + 1);
+  }
+  return total / 2 ** n;
+}
+// The smallest negative-count significant at alpha for this many runs. If the
+// run count is ever cut so low that no count is significant, this lands at
+// RUNS + 1 and the sign gate can never red - which is honest (too few samples
+// to conclude) rather than silently lenient, because the absolute floor and the
+// positive control both still apply, and the control asserts below that the
+// gate CAN red.
+function regressionSignThresholdFor(runs) {
+  for (let k = 1; k <= runs; k += 1) if (binomialUpperTail(k, runs) <= SIGN_TEST_ALPHA) return k;
+  return runs + 1;
+}
+function assertSignGateArmed(runs, threshold) {
+  assert(threshold <= runs, `RL20 sign gate disarmed: RUNS=${runs} has no significant negative-count threshold at alpha ${SIGN_TEST_ALPHA}`);
+}
+const regressionSignThreshold = regressionSignThresholdFor(RUNS);
+assertSignGateArmed(RUNS, regressionSignThreshold);
+function regressed(deltas) {
+  return deltas.filter(delta => delta < 0).length >= regressionSignThreshold;
+}
+
+// The gate has to be shown able to red, and shown NOT to red on the noise that
+// used to red it. Both fixtures are real: the nine deltas above are the ones
+// this harness measured and failed on, and the control pattern is what the
+// busy-frame runs produce. `--selftest` runs the shipped gate over both and
+// needs no browser, so it can be a cheap standing check rather than a comment.
+if (process.argv.includes('--selftest')) {
+  const measuredDeltas = [0.3671, -0.3992, -2.0723, 1.4383, -0.4814, -0.2793, 1.5847, -5.2818, -4.2589];
+  const busyDeltas = Array.from({ length: RUNS }, () => -24.3);
+  const oldGate = (deltas) => {
+    // what shipped before: median-of-after >= median-of-before, which on paired
+    // data is the same as requiring the median paired delta not to be negative.
+    const sorted = [...deltas].sort((a, b) => a - b);
+    return sorted[Math.floor(deltas.length / 2)] >= 0;
+  };
+  const rows = [
+    ['measured noise (run 33251470362)', measuredDeltas, false],
+    ['busy-frame positive control', busyDeltas, true],
+    ['a real one-sided regression', Array.from({ length: RUNS }, (_, i) => -1.5 - i * 0.1), true],
+  ];
+  let bad = 0;
+  for (const [name, deltas, expectRed] of rows) {
+    const got = regressed(deltas);
+    const negatives = deltas.filter(d => d < 0).length;
+    const ok = got === expectRed;
+    if (!ok) bad += 1;
+    console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}: ${negatives}/${RUNS} negative -> ${got ? 'RED' : 'green'} (expected ${expectRed ? 'RED' : 'green'})`);
+  }
+  // And the point of the change: the gate that shipped DID red on that noise.
+  const oldWouldRed = !oldGate(measuredDeltas);
+  console.log(`${oldWouldRed ? 'PASS' : 'FAIL'}  control: the previous zero-threshold gate reds on the same measured noise`);
+  if (!oldWouldRed) bad += 1;
+  console.log(`sign test at alpha ${SIGN_TEST_ALPHA} over ${RUNS} runs reds at ${regressionSignThreshold} negatives (p=${binomialUpperTail(regressionSignThreshold, RUNS).toFixed(4)})`);
+
+  const selftestBaselineFps = 17.8;
+  const magnitudeGreen = deltas => selftestBaselineFps + median(deltas) >= selftestBaselineFps - selftestBaselineFps * MAX_MEDIAN_REGRESSION_RATIO;
+  const measuredSignGreen = !regressed(measuredDeltas);
+  const measuredMagnitudeGreen = magnitudeGreen(measuredDeltas);
+  const measuredBothGreen = measuredSignGreen && measuredMagnitudeGreen;
+  console.log(`${measuredBothGreen ? 'PASS' : 'FAIL'}  measured-noise combined gate: sign=${measuredSignGreen ? 'green' : 'RED'}, magnitude=${measuredMagnitudeGreen ? 'green' : 'RED'} -> ${measuredBothGreen ? 'green' : 'RED'}`);
+  if (!measuredBothGreen) bad += 1;
+
+  const busySignRed = regressed(busyDeltas);
+  const busyMagnitudeRed = !magnitudeGreen(busyDeltas);
+  const busyBothRed = busySignRed && busyMagnitudeRed;
+  console.log(`${busyBothRed ? 'PASS' : 'FAIL'}  busy-frame combined control: sign=${busySignRed ? 'RED' : 'green'}, magnitude=${busyMagnitudeRed ? 'RED' : 'green'} -> both RED`);
+  if (!busyBothRed) bad += 1;
+
+  let disarmControlFired = false;
+  try {
+    const controlRuns = 3;
+    assertSignGateArmed(controlRuns, regressionSignThresholdFor(controlRuns));
+  } catch (error) {
+    disarmControlFired = String(error?.message).includes('RL20 sign gate disarmed: RUNS=3');
+  }
+  console.log(`${disarmControlFired ? 'PASS' : 'FAIL'}  control: RUNS=3 fires the named sign-gate-disarmed assertion`);
+  if (!disarmControlFired) bad += 1;
+  process.exit(bad ? 1 : 0);
+}
+
 const INPUTS = [
   ['key', 'ArrowUp'],
   ['key', 'ArrowRight'],
@@ -194,8 +309,17 @@ const busyPairedMedianDelta = median(busyPairedDeltas);
 const regressionThresholdFps = beforeMedian * MAX_MEDIAN_REGRESSION_RATIO;
 const minimumAcceptableFps = beforeMedian - regressionThresholdFps;
 const noMeaningfulRegression = afterMedian >= minimumAcceptableFps;
+const negativeDeltas = pairedDeltas.filter(delta => delta < 0).length;
+const noSignificantRegression = !regressed(pairedDeltas);
+const noRegression = noMeaningfulRegression && noSignificantRegression;
 const aboveShippedFloor = afterMedian >= shippedP25;
-const controlRed = controlMedian < minimumAcceptableFps && controlMedian < shippedP25 && busyPairedMedianDelta < 0;
+// The control now runs THE GATE ITSELF on the busy-frame deltas rather than
+// re-deriving a lookalike condition beside it. A control that does not invoke
+// the thing it controls proves only that two similar expressions agree.
+const controlSignRegression = regressed(busyPairedDeltas);
+const controlMeaningfulRegression = controlMedian < minimumAcceptableFps;
+const controlRed = controlSignRegression && controlMeaningfulRegression
+  && controlMedian < beforeMedian && controlMedian < shippedP25 && busyPairedMedianDelta < 0;
 const report = {
   protocol: { seed: SEED, viewport: VIEWPORT, cpuThrottle: CPU_THROTTLE, warmUpMs: WARM_UP_MS, measuredWindowMs: MEASURE_MS, runs: RUNS, scriptedInput: INPUTS, order: 'alternating AB/BA', chromiumVersion },
   identities: {
@@ -205,15 +329,17 @@ const report = {
   before: { fps: beforeFps, medianFps: beforeMedian, spreadFps: spread(beforeFps), bootMs: before.map(value => value.bootMs), pageErrors: before.flatMap(value => value.pageErrors) },
   after: { fps: afterFps, medianFps: afterMedian, spreadFps: spread(afterFps), bootMs: after.map(value => value.bootMs), pageErrors: after.flatMap(value => value.pageErrors) },
   paired: { deltasFps: pairedDeltas, medianDeltaFps: pairedMedianDelta, spreadDeltaFps: pairedSpreadDelta,
-    thresholdFps: -regressionThresholdFps, maximumMedianRegressionRatio: MAX_MEDIAN_REGRESSION_RATIO },
+    negativeDeltas, runs: RUNS, signThreshold: regressionSignThreshold, alpha: SIGN_TEST_ALPHA,
+    pValue: binomialUpperTail(negativeDeltas, RUNS), thresholdFps: -regressionThresholdFps,
+    maximumMedianRegressionRatio: MAX_MEDIAN_REGRESSION_RATIO },
   shippedPercentile25Fps: shippedP25,
-  controls: { busyMsPerFrame: CONTROL_BUSY_MS, fps: controlFps, medianFps: controlMedian, spreadFps: spread(controlFps), pairedDeltasFps: busyPairedDeltas, pairedMedianDeltaFps: busyPairedMedianDelta, observedRed: controlRed },
-  gates: { noMeaningfulRegression, aboveShippedFloor, zeroPageErrors: before.concat(after).every(value => value.pageErrors.length === 0), controlRed },
+  controls: { busyMsPerFrame: CONTROL_BUSY_MS, fps: controlFps, medianFps: controlMedian, spreadFps: spread(controlFps), pairedDeltasFps: busyPairedDeltas, pairedMedianDeltaFps: busyPairedMedianDelta, signRegression: controlSignRegression, meaningfulRegression: controlMeaningfulRegression, observedRed: controlRed },
+  gates: { noMeaningfulRegression, noSignificantRegression, noRegression, aboveShippedFloor, zeroPageErrors: before.concat(after).every(value => value.pageErrors.length === 0), controlRed },
 };
 fs.mkdirSync(path.join(ROOT, 'artifacts', 'townlife'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'artifacts', 'townlife', 'splash-performance.json'), `${JSON.stringify(report, null, 2)}\n`);
-console.log(`SPLASH PERFORMANCE — before ${beforeMedian.toFixed(4)} fps (spread ${spread(beforeFps).toFixed(4)}); after ${afterMedian.toFixed(4)} fps (spread ${spread(afterFps).toFixed(4)}); paired delta ${pairedMedianDelta.toFixed(4)} fps (spread ${pairedSpreadDelta.toFixed(4)}, fixed median guard -${(MAX_MEDIAN_REGRESSION_RATIO * 100).toFixed(1)}% / -${regressionThresholdFps.toFixed(4)} fps); shipped p25 ${shippedP25.toFixed(4)}; control ${controlMedian.toFixed(4)} fps (spread ${spread(controlFps).toFixed(4)}, paired delta ${busyPairedMedianDelta.toFixed(4)}) RED=${controlRed}`);
+console.log(`SPLASH PERFORMANCE — before ${beforeMedian.toFixed(4)} fps (spread ${spread(beforeFps).toFixed(4)}); after ${afterMedian.toFixed(4)} fps (spread ${spread(afterFps).toFixed(4)}); paired delta ${pairedMedianDelta.toFixed(4)} fps (spread ${pairedSpreadDelta.toFixed(4)}; ${negativeDeltas}/${RUNS} negative, sign test reds at ${regressionSignThreshold}, p=${binomialUpperTail(negativeDeltas, RUNS).toFixed(4)}; fixed median guard -${(MAX_MEDIAN_REGRESSION_RATIO * 100).toFixed(1)}% / -${regressionThresholdFps.toFixed(4)} fps); shipped p25 ${shippedP25.toFixed(4)}; control ${controlMedian.toFixed(4)} fps (spread ${spread(controlFps).toFixed(4)}, paired delta ${busyPairedMedianDelta.toFixed(4)}, sign RED=${controlSignRegression}, magnitude RED=${controlMeaningfulRegression}) RED=${controlRed}`);
 assert(controlRed, 'RL4 busy-frame positive control did not turn the real performance gate red');
 assert(report.gates.zeroPageErrors, `performance run emitted page errors: ${JSON.stringify(before.concat(after).flatMap(value => value.pageErrors))}`);
-assert(noMeaningfulRegression, `Town Life median regressed beyond the fixed ${(MAX_MEDIAN_REGRESSION_RATIO * 100).toFixed(1)}% guard: ${beforeMedian.toFixed(4)} -> ${afterMedian.toFixed(4)} fps (minimum ${minimumAcceptableFps.toFixed(4)})`);
+assert(noRegression, `Town Life regressed: magnitude green=${noMeaningfulRegression}, sign green=${noSignificantRegression}; ${negativeDeltas}/${RUNS} paired deltas negative (reds at ${regressionSignThreshold}, p=${binomialUpperTail(negativeDeltas, RUNS).toFixed(4)}); medians ${beforeMedian.toFixed(4)} -> ${afterMedian.toFixed(4)} fps (minimum ${minimumAcceptableFps.toFixed(4)})`);
 assert(aboveShippedFloor, `Town Life fell below shipped p25: ${afterMedian.toFixed(4)} < ${shippedP25.toFixed(4)} fps`);

@@ -213,22 +213,58 @@ async function verifyGame(browser, origin, engine) {
 
     await page.goto(`${origin}/townlife/?qa=1&splash=skip`, { waitUntil: 'load' });
     await page.waitForFunction(() => window.MBMTownLifeQA?.ready() === true, null, { timeout: 30_000 });
+    // Town Life binds movement with a bare addEventListener('keydown', ...),
+    // which is window-level, so the key only arrives if the page HAS FOCUS.
+    // This step navigates to a fresh URL and presses a key without ever
+    // interacting with the page - a state no player is ever in, since everyone
+    // has tapped "Enter Town" before they press a movement key. Chromium and
+    // Firefox hand focus to a freshly navigated page anyway; nothing says
+    // WebKit must.
+    //
+    // So establish it explicitly and, when it cannot be established, SAY THAT
+    // rather than letting it surface three lines later as "keyboard input did
+    // not move player". Those are two different defects and only the second is
+    // Town Life's: one is a harness measuring from a state it never set up,
+    // the other is a game that is deaf to the keyboard. The old assertion
+    // could not tell them apart, and this red has been unreadable for exactly
+    // as long as it has been unreachable behind a skipped job.
+    //
+    // No click is used to force it: the way out control sits at the top-left
+    // corner of every estate game, so a click there would navigate away, and a
+    // click in the middle is a tap on the world. Focus is requested by the
+    // means that carry no game-visible side effect, and the teleport that sets
+    // the measurement's starting point runs afterwards either way.
+    const focusOnArrival = await page.evaluate(() => document.hasFocus());
+    if (!focusOnArrival) {
+      await page.bringToFront();
+      await page.evaluate(() => window.focus());
+      await page.waitForFunction(() => document.hasFocus(), null, { timeout: 5_000 }).catch(() => {});
+    }
+    const focused = await page.evaluate(() => document.hasFocus());
+    assert.ok(focused,
+      `${engine}: the page never took focus (on arrival: ${focusOnArrival}), so a window-level keydown could not arrive — this is the harness's setup, not Town Life's input`);
+
     // Use the open central road rather than the Police building's right wall;
     // engine timing must not decide whether the first fixed step is blocked.
     await page.evaluate(() => window.MBMTownLifeQA.teleport(1400, 1420));
     const before = await page.evaluate(() => window.MBMTownLifeQA.getEntities().player);
     await page.keyboard.down('d');
     try {
-      await page.waitForFunction(
-        startX => window.MBMTownLifeQA.getEntities().player.x > startX + 0.1,
-        before.x,
-        { timeout: 3_000 }
-      );
+      try {
+        await page.waitForFunction(
+          startX => window.MBMTownLifeQA.getEntities().player.x > startX + 0.1,
+          before.x,
+          { timeout: 3_000 }
+        );
+      } catch (error) {
+        if (error?.name !== 'TimeoutError') throw error;
+      }
     } finally {
       await page.keyboard.up('d');
     }
     const after = await page.evaluate(() => window.MBMTownLifeQA.getEntities().player);
-    assert.ok(after.x > before.x + 0.1, `keyboard input did not move player: ${before.x} → ${after.x}`);
+    assert.ok(after.x > before.x + 0.1,
+      `${engine}: keyboard input did not move player WITH THE PAGE FOCUSED (focus on arrival: ${focusOnArrival}): ${before.x} → ${after.x}`);
 
     const wayOut = await visibleBox(page.locator('#mbmexit-back'), 'way-out after boot');
     assert.ok(wayOut.width >= 44 && wayOut.height >= 44, 'way-out target fell below 44 CSS px');
