@@ -201,13 +201,37 @@ async function sweepCombination(browser, origin, engine, viewport) {
 
     await page.goto(`${origin}/townlife/?qa=1&splash=skip`, { waitUntil: 'load', timeout: 30_000 });
     await page.waitForFunction(() => window.MBMTownLifeQA?.ready() === true, null, { timeout: 30_000 });
+    // Same setup gap as tools/townlife/verify.mjs, and it bites here too:
+    // Town Life binds movement with a bare addEventListener('keydown', ...),
+    // which is window-level, so the key only arrives if the page HAS FOCUS.
+    // This step navigates to a fresh URL and presses a key having never
+    // interacted with the page — a state no player is in, since everyone has
+    // tapped "Enter Town" first. Chromium and Firefox hand focus to a freshly
+    // navigated page; nothing says WebKit must, and this run is the evidence:
+    // chromium 390x844, chromium 1280x800, firefox 390x844 and firefox
+    // 1280x800 all SWEEP GREEN, and the fifth combination failed here with
+    // "first input did not move player: 1200 -> 1200".
+    //
+    // Establish focus, and when it cannot be established say THAT instead of
+    // letting it surface three lines later as a movement failure. Those are
+    // two different defects and only the second is Town Life's.
+    const focusOnArrival = await page.evaluate(() => document.hasFocus());
+    if (!focusOnArrival) {
+      await page.bringToFront();
+      await page.evaluate(() => window.focus());
+      await page.waitForFunction(() => document.hasFocus(), null, { timeout: 5000 }).catch(() => {});
+    }
+    assert(await page.evaluate(() => document.hasFocus()),
+      `${engine} ${viewport.width}x${viewport.height}: the page never took focus (on arrival: ${focusOnArrival}), so a window-level keydown could not arrive — the harness's setup, not Town Life's input`);
+
     await page.evaluate(() => window.MBMTownLifeQA.teleport(1200, 900));
     const beforeInput = await page.evaluate(() => window.MBMTownLifeQA.getEntities().player.x);
     await page.keyboard.down('d');
     await page.waitForTimeout(350);
     await page.keyboard.up('d');
     const afterInput = await page.evaluate(() => window.MBMTownLifeQA.getEntities().player.x);
-    assert(afterInput > beforeInput + 0.1, `first input did not move player: ${beforeInput} -> ${afterInput}`);
+    assert(afterInput > beforeInput + 0.1,
+      `${engine} ${viewport.width}x${viewport.height}: first input did not move player WITH THE PAGE FOCUSED (focus on arrival: ${focusOnArrival}): ${beforeInput} -> ${afterInput}`);
 
     await page.locator('#roleSelect').selectOption('Officer');
     await assertRole(page, 'Officer');
@@ -260,8 +284,19 @@ async function sweepCombination(browser, origin, engine, viewport) {
     await assertHealthy(page, 'after idle');
     const idleBefore = await page.evaluate(() => window.MBMTownLifeQA.getEntities().player.x);
     await page.keyboard.down('d');
-    await page.waitForTimeout(200);
-    await page.keyboard.up('d');
+    try {
+      try {
+        await page.waitForFunction(
+          startX => window.MBMTownLifeQA.getEntities().player.x > startX + 0.1,
+          idleBefore,
+          { timeout: 3000 }
+        );
+      } catch (error) {
+        if (error?.name !== 'TimeoutError') throw error;
+      }
+    } finally {
+      await page.keyboard.up('d');
+    }
     const idleAfter = await page.evaluate(() => window.MBMTownLifeQA.getEntities().player.x);
     assert(idleAfter > idleBefore + 0.1, 'first input after idle did not move player');
 
