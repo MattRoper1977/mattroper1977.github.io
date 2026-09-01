@@ -635,9 +635,25 @@ async function smokeRelic(page, mobile) {
   if (mobile) {
     const portrait = page.viewportSize();
     assert(portrait && portrait.height > portrait.width, 'Relic mobile profile did not begin in portrait');
-    await page.locator('#rotate-note').waitFor({ state: 'visible' });
-    await page.setViewportSize({ width: portrait.height, height: portrait.width });
-    await page.locator('#rotate-note').waitFor({ state: 'hidden' });
+    const rotate = page.locator('#rotate-note');
+    await rotate.waitFor({ state: 'hidden' });
+    // Relic V6 deliberately replaces the legacy landscape blockade with a
+    // portrait-capable HUD (relicforge/index.html:7865, 7920-7924). Prove the
+    // hidden assertion bites by disabling that product-owned stylesheet: the
+    // original coarse-pointer media rule must expose the same notice.
+    const controlInstalled = await page.evaluate(() => {
+      const style = document.querySelector('#mbm-v6-style');
+      if (!style || !style.sheet) return false;
+      style.sheet.disabled = true;
+      return true;
+    });
+    assert(controlInstalled, 'Relic portrait control could not disable the V6 style');
+    try {
+      await rotate.waitFor({ state: 'visible' });
+    } finally {
+      await page.evaluate(() => { document.querySelector('#mbm-v6-style').sheet.disabled = false; });
+    }
+    await rotate.waitFor({ state: 'hidden' });
   }
   const before = await page.evaluate(() => window.__relicforge.snapshot());
   await page.keyboard.down('KeyD'); await page.waitForTimeout(500); await page.keyboard.up('KeyD');

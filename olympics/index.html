@@ -3462,9 +3462,10 @@ function playIntro(){
  var el=document.createElement("section");el.id="v6-intro";el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");el.setAttribute("aria-label","Made by Matt Global Games V6 introduction");
  el.innerHTML='<div class="v6-intro-camera" aria-hidden="true"></div><div class="v6-intro-card"><div class="v6-intro-mark">MBM</div><small>Made by Matt presents</small><h1>Global Games</h1><p>World Stage · AAA V6.0.0</p></div><button class="v6-skip" type="button">Skip ceremony</button>';
  document.body.appendChild(el);if(app)app.inert=true;var done=false,timer=0,skip=el.querySelector(".v6-skip");
- function close(){if(done)return;done=true;clearTimeout(timer);removeEventListener("keydown",key,true);el.classList.add("out");setTimeout(function(){el.remove();if(app)app.inert=false;var target=document.querySelector("#screen button:not([disabled]),#game");try{(target||oldFocus).focus({preventScroll:true})}catch(e){}},reduced?0:250)}
- function key(e){if(e.key==="Escape"||e.key==="Enter"||e.key===" "){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();close()}}
- skip.addEventListener("click",close);el.addEventListener("pointerdown",function(e){if(e.target===el)close()});addEventListener("keydown",key,true);skip.focus({preventScroll:true});timer=setTimeout(close,reduced?900:1950);
+ function finishClose(){el.remove();if(app)app.inert=false;var target=document.querySelector("#screen button:not([disabled]),#game");try{(target||oldFocus).focus({preventScroll:true})}catch(e){}}
+ function close(instant){if(done)return;done=true;clearTimeout(timer);removeEventListener("keydown",key,true);el.classList.add("out");if(instant)finishClose();else setTimeout(finishClose,reduced?0:250)}
+ function key(e){if(e.key==="Escape"||e.key==="Enter"||e.key===" "){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();close(true)}}
+ skip.addEventListener("click",function(){close(true)});el.addEventListener("pointerdown",function(e){if(e.target===el)close(true)});addEventListener("keydown",key,true);skip.focus({preventScroll:true});timer=setTimeout(function(){close(false)},reduced?900:1950);
 }
 
 var forecastCanvas=null,forecastCtx=null,forecastEl=null,lastDpr=0,lastState="",lastEvent=null,lastPerfect=-1,lastArrow=-1,lastShot=-1,clutchUntil=0,medalPlayed=false;

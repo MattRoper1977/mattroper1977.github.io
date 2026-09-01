@@ -222,6 +222,11 @@ async function measureRoute(browser, origin, game, round) {
   const local = Boolean(localFileForHref(game.href));
   const subjectUrl = new URL(game.href, local ? origin : LIVE_ORIGIN);
   subjectUrl.searchParams.set('splash', 'skip');
+  // Voxel's terrain-ready evidence is deliberately exposed only by its
+  // existing `?debug=1` diagnostic (voxel/index.html:606, 2007).  Without
+  // enabling that product-owned surface, the `view 3` assertion below can
+  // never observe the state it is intended to require.
+  if (game.href === '/voxel/') subjectUrl.searchParams.set('debug', '1');
   const url = subjectUrl.href;
   const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
   assert.equal(response?.status(), 200, `${game.title}: navigation returned ${response?.status()}`);

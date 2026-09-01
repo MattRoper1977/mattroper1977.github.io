@@ -329,16 +329,34 @@ async function playDay(page, { resolve = true } = {}) {
       `paused=${paused} then resumed=${!resumed}`);
 
     /* Restart must genuinely restart: a fresh event object with the clock back
-       to zero, not merely a toast. Elapsed is read from the live engine. */
-    await page.waitForTimeout(400);
-    const beforeRestart = await page.evaluate(() => window.MBMGlobalGames.app.activeEvent.elapsed);
+       to zero, not merely a toast. Hosted software-canvas frames can advance
+       less than 0.1 game-seconds during a 400ms wall-clock sleep, so establish
+       the same >0.1 precondition through the event's shipped fixed-step
+       authority, exactly as the O3 starter control does. */
+    const beforeRestart = await page.evaluate(() => {
+      const app = window.MBMGlobalGames.app;
+      const event = app.activeEvent;
+      const dt = window.__olympics.fixedDt;
+      let ticks = 0;
+      while (event && event.elapsed <= 0.1 && ticks < 120) { event.tick(dt); ticks++; }
+      window.__mbmOlympicsRestartBefore = event;
+      return { elapsed: event ? event.elapsed : null, ticks, dt, sameEvent: event === app.activeEvent };
+    });
+    t('O4 [control] restart setup uses the shipped fixed-step authority',
+      beforeRestart.sameEvent && beforeRestart.dt === 1 / 120 && beforeRestart.ticks > 0 &&
+        beforeRestart.ticks < 120 && beforeRestart.elapsed > 0.1,
+      JSON.stringify(beforeRestart));
     await click(page, '#pauseBtn');
     await click(page, '#restartBtn');
-    await page.waitForTimeout(120);
-    const afterRestart = await page.evaluate(() => ({ elapsed: window.MBMGlobalGames.app.activeEvent.elapsed, screen: window.__olympics.screen, paused: window.__olympics.paused }));
+    const afterRestart = await page.evaluate(() => ({
+      elapsed: window.MBMGlobalGames.app.activeEvent.elapsed,
+      fresh: window.MBMGlobalGames.app.activeEvent !== window.__mbmOlympicsRestartBefore,
+      screen: window.__olympics.screen,
+      paused: window.__olympics.paused
+    }));
     t('O4 restart rewinds the event rather than just announcing it',
-      beforeRestart > 0.1 && afterRestart.elapsed < beforeRestart,
-      `elapsed ${beforeRestart.toFixed(2)}s -> ${afterRestart.elapsed.toFixed(2)}s`);
+      beforeRestart.elapsed > 0.1 && afterRestart.fresh && afterRestart.elapsed < beforeRestart.elapsed,
+      `fresh=${afterRestart.fresh}; elapsed ${beforeRestart.elapsed.toFixed(2)}s -> ${afterRestart.elapsed.toFixed(2)}s`);
     t('O4 restart leaves the game playing and unpaused',
       afterRestart.screen === 'PLAYING' && afterRestart.paused === false, `screen ${afterRestart.screen}`);
     t('O4 no errors through pause, resume and restart', errors.length === 0, errors[0] || 'none');
