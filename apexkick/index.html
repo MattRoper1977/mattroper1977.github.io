@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Apex Kick: World Stage — AAA V4 Final Edition</title>
-<meta name="description" content="A standalone championship free-kick game with broadcast presentation, a World Tour, ethical progression, accessibility and same-network class-versus-class play.">
+<title>Apex Kick: World Stage — AAA V6 Release</title>
+<meta name="description" content="Drag the marker onto the goal, then flick to strike in a standalone championship free-kick game with accessible offline and same-network play.">
 <meta name="theme-color" content="#0B1220">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Apex Kick: World Stage — AAA V4 Final Edition">
-<meta property="og:description" content="AAA V4 Final Edition. Offline-first, earn-only and made for fair classroom play.">
+<meta property="og:title" content="Apex Kick: World Stage — AAA V6 Release">
+<meta property="og:description" content="Drag the marker onto the goal, then flick to strike in a standalone championship free-kick game with accessible offline and same-network play.">
 <meta property="og:url" content="https://madebymatt.uk/apexkick/">
 <link rel="canonical" href="https://madebymatt.uk/apexkick/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%230B1220'/%3E%3Ccircle cx='32' cy='34' r='15' fill='%23F6F1E4'/%3E%3Cpath d='M32 24l5 4-2 6h-6l-2-6z' fill='%23161D3D'/%3E%3Cpath d='M12 20q20-12 40 0' stroke='%23E08A2E' stroke-width='4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
@@ -5052,6 +5052,120 @@ else window.addEventListener('DOMContentLoaded', boot);
 </script>
 
 
+
+<!-- MBM:V6:BEGIN — additive presentation/input layer; V4 football authority above is unchanged -->
+<style id="mbm-v6-apex-kick-style">
+  html,body,#app{min-height:100%;min-height:100dvh}
+  .mbm-v6-kick-control{box-sizing:border-box;min-width:44px;min-height:44px}
+  .mbm-v6-kick-control:focus-visible{outline:3px solid #f2c14a;outline-offset:3px}
+  #v6KickAdvisory{position:fixed;inset:0;width:100%;height:100%;z-index:13;pointer-events:none}
+  #v6KickForecastToggle{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));top:calc(70px + env(safe-area-inset-top,0px));z-index:20;display:none;width:46px;height:46px;border-radius:50%;border:1.5px solid rgba(185,230,205,.72);background:rgba(8,15,34,.82);color:#eaf8f1;font:800 12px/1 system-ui,sans-serif;box-shadow:0 7px 24px rgba(0,0,0,.28);touch-action:manipulation}
+  body.v6-kick-active #v6KickForecastToggle{display:block}
+  #v6KickIntent{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:14;max-width:min(86vw,620px);transform:translateX(-50%);padding:8px 13px;border:1px solid rgba(185,230,205,.48);border-radius:999px;background:rgba(5,11,28,.76);color:#f5fbf8;font:750 12px/1.25 system-ui,sans-serif;letter-spacing:.035em;text-align:center;pointer-events:none;opacity:0;transition:opacity .16s ease}
+  body.v6-kick-active #v6KickIntent{opacity:1}
+  #v6KickTray{display:none;position:fixed;left:0;right:0;bottom:0;z-index:18;min-height:calc(76px + env(safe-area-inset-bottom,0px));padding:14px 18px calc(10px + env(safe-area-inset-bottom,0px));box-sizing:border-box;border-top:1px solid rgba(185,230,205,.35);background:linear-gradient(180deg,rgba(6,13,31,.72),rgba(4,9,23,.94));color:#d8e9e1;font:800 11px/1.35 system-ui,sans-serif;letter-spacing:.13em;text-align:center;text-transform:uppercase;touch-action:none;user-select:none}
+  #v6KickDirection{position:fixed;left:50%;top:calc(18px + env(safe-area-inset-top,0px));z-index:2147482000;display:none;align-items:center;gap:10px;max-width:min(88vw,700px);transform:translateX(-50%);padding:8px 9px 8px 15px;border:1px solid rgba(242,193,74,.68);border-radius:999px;background:rgba(5,10,26,.9);color:#fff;box-shadow:0 12px 38px rgba(0,0,0,.36);font:800 12px/1.25 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+  #v6KickDirection.on{display:flex}
+  #v6KickDirectionText{min-width:0}
+  #v6KickSkipDirection{padding:0 14px;border:1px solid rgba(255,255,255,.34);border-radius:999px;background:#f2c14a;color:#11182b;font:900 12px/1 system-ui,sans-serif;touch-action:manipulation}
+  body.v6-skip-canonical #matchIntro{opacity:0!important;visibility:hidden!important;pointer-events:none!important;animation:none!important;transition:none!important}
+  @media (orientation:portrait) and (pointer:coarse){
+    body.v6-kick-aim #v6KickTray{display:block}
+    body.v6-kick-aim #v6KickIntent{bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+  }
+  @media (orientation:landscape){#v6KickTray{display:none!important}}
+  @media (prefers-reduced-motion:reduce){#v6KickIntent{transition:none}#v6KickDirection{transition:none}}
+  body.v6-kick-calm #v6KickAdvisory{opacity:.82}
+  @media print{#v6KickAdvisory,#v6KickForecastToggle,#v6KickIntent,#v6KickTray,#v6KickDirection{display:none!important}}
+</style>
+<canvas id="v6KickAdvisory" aria-hidden="true"></canvas>
+<button id="v6KickForecastToggle" class="mbm-v6-kick-control" type="button" aria-label="Toggle ball, receiver and pressure forecasts" aria-pressed="true" title="Forecasts (F)">V6</button>
+<div id="v6KickIntent" role="status" aria-live="polite" aria-atomic="true">Forecast ready</div>
+<div id="v6KickTray" aria-label="Portrait touch control dead zone">Control dead zone · begin the swipe above this tray</div>
+<div id="v6KickDirection" role="group" aria-label="Skippable stadium direction">
+  <span id="v6KickDirectionText" role="status" aria-live="polite" aria-atomic="true">Stadium fly-in</span>
+  <button id="v6KickSkipDirection" class="mbm-v6-kick-control" type="button" aria-label="Skip current stadium, camera, clutch or finish direction">Skip</button>
+</div>
+<script id="mbm-v6-apex-kick-release">
+(function installApexKickV6(){
+"use strict";
+var GAME_ID="apex-kick",VERSION="6.0.0",PROFILE_KEY="mbm_v6_apex_kick_profile";
+var SOURCE_SHA256="ad25a8ecd58dad729e9685c071b188f7baab776a8e2a24348a00197da1c9f547";
+var GAME_AUTHORITY_SHA256="da8ef278635a65baf6915a6216d51176e2ef26bfa75717d14012b967184e991e";
+var RUNTIME_AUTHORITY_SHA256="4bb0a55274fef66d4bed4583ecd687714e8a9dbe23317db3b72d3d13f7d70366";
+var LEGACY_KEYS=["apexkick.aaa.v4","apexkick.aaa.v3","apexkick.aaa.v2","apexkick.v1","mbm_sports_passport_v4","mbm_sports_passport_v3","apexkick.v4.calm","apexkick.v3.calm","apexkick.v2.calm","apexkick.v4.muted","apexkick.v3.muted","apexkick.muted"];
+function safeGet(store,key){try{return store.getItem(key)}catch(_){return null}}
+function snapshot(store){var out={};LEGACY_KEYS.forEach(function(k){out[k]=safeGet(store,k)});return out}
+function sameBytes(a,b){return LEGACY_KEYS.every(function(k){return a[k]===b[k]})}
+function legacyBool(store,keys){for(var i=0;i<keys.length;i++){var v=safeGet(store,keys[i]);if(v!==null)return v==="1"||v==="true"}return false}
+function migrate(store){
+  var before=snapshot(store),raw=safeGet(store,PROFILE_KEY),profile=null,wrote=false,blocked=false;
+  try{profile=raw?JSON.parse(raw):null}catch(_){profile=null}
+  if(!profile||profile.schema!==6||profile.gameId!==GAME_ID){
+    profile={schema:6,gameId:GAME_ID,settings:{forecasts:true,calm:legacyBool(store,["apexkick.v4.calm","apexkick.v3.calm","apexkick.v2.calm"]),audio:!legacyBool(store,["apexkick.v4.muted","apexkick.v3.muted","apexkick.muted"])},migration:{schema:6,nonDestructive:true,sourceKeys:LEGACY_KEYS.slice(),legacyBytesPreserved:false,copiedPresentationPreferences:true}};
+    try{store.setItem(PROFILE_KEY,JSON.stringify(profile));wrote=true}catch(_){blocked=true}
+  }else{
+    profile.settings=profile.settings&&typeof profile.settings==="object"?profile.settings:{};
+    if(typeof profile.settings.forecasts!=="boolean")profile.settings.forecasts=true;
+    if(typeof profile.settings.calm!=="boolean")profile.settings.calm=false;
+    if(typeof profile.settings.audio!=="boolean")profile.settings.audio=true;
+  }
+  var after=snapshot(store),preserved=sameBytes(before,after);
+  if(profile.migration&&typeof profile.migration==="object")profile.migration.legacyBytesPreserved=preserved;
+  return{profile:profile,evidence:{schema:6,wroteNewKey:wrote,storageBlocked:blocked,legacyBytesPreserved:preserved,legacyKeyCount:LEGACY_KEYS.length}};
+}
+var migrationResult=migrate(window.localStorage),profile=migrationResult.profile;
+function persistProfile(){try{localStorage.setItem(PROFILE_KEY,JSON.stringify(profile));return true}catch(_){return false}}
+function fixtureMigration(){
+  var data={"apexkick.aaa.v3":" {\"credits\":17,\"name\":\"exact bytes\"} ","mbm_sports_passport_v3":"passport::legacy::bytes","apexkick.v3.calm":"1","apexkick.v3.muted":"0"};
+  var mem={getItem:function(k){return Object.prototype.hasOwnProperty.call(data,k)?data[k]:null},setItem:function(k,v){data[k]=String(v)},removeItem:function(k){delete data[k]}};
+  var before=snapshot(mem),result=migrate(mem),after=snapshot(mem),saved=null;try{saved=JSON.parse(data[PROFILE_KEY])}catch(_){}
+  return{ok:sameBytes(before,after)&&result.evidence.legacyBytesPreserved&&saved&&saved.schema===6&&saved.gameId===GAME_ID,legacyBytesPreserved:sameBytes(before,after),schema:saved&&saved.schema};
+}
+
+var audio={ctx:null,master:null,compressor:null,state:"lazy",resume:function(){
+  try{
+    if(!this.ctx){var C=window.AudioContext||window.webkitAudioContext;if(!C)return Promise.resolve(false);this.ctx=new C();this.compressor=this.ctx.createDynamicsCompressor();this.master=this.ctx.createGain();this.compressor.threshold.value=-18;this.compressor.knee.value=18;this.compressor.ratio.value=8;this.compressor.attack.value=.003;this.compressor.release.value=.25;this.master.gain.value=.11;this.master.connect(this.compressor);this.compressor.connect(this.ctx.destination);this.state="compressed"}
+    var p=this.ctx.state==="suspended"?this.ctx.resume():Promise.resolve();return Promise.resolve(p).then(function(){audio.state="running";return true},function(){return false});
+  }catch(_){this.state="blocked";return Promise.resolve(false)}
+},suspend:function(){try{if(this.ctx&&this.ctx.state==="running")this.ctx.suspend()}catch(_){}},tone:function(freq,dur,gain){
+  if(profile.settings.audio===false)return;try{if(window.AK&&AK.Audio&&AK.Audio.isMuted&&AK.Audio.isMuted())return}catch(_){}
+  this.resume().then(function(ok){if(!ok||!audio.ctx||!audio.master)return;var o=audio.ctx.createOscillator(),g=audio.ctx.createGain(),t=audio.ctx.currentTime;o.type="sine";o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(gain||.025,t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+(dur||.12));o.connect(g);g.connect(audio.master);o.start(t);o.stop(t+(dur||.12)+.02)})
+}};
+
+var cv=document.getElementById("v6KickAdvisory"),cx=cv.getContext("2d"),intent=document.getElementById("v6KickIntent"),toggle=document.getElementById("v6KickForecastToggle"),tray=document.getElementById("v6KickTray"),direction=document.getElementById("v6KickDirection"),directionText=document.getElementById("v6KickDirectionText"),skipButton=document.getElementById("v6KickSkipDirection");
+var lastState="",lastOutcome="",lastIntroToken=-1,directionTimer=0,suppressed="",lastIntentText="",forecastOn=profile.settings.forecasts!==false;
+function calm(){var os=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches,game=false;try{game=!!(window.AK&&AK.FX&&AK.FX.isCalm&&AK.FX.isCalm())}catch(_){}return!!(os||profile.settings.calm||game)}
+function setIntent(s){if(s!==lastIntentText){lastIntentText=s;intent.textContent=s}}
+function setForecast(on){forecastOn=!!on;profile.settings.forecasts=forecastOn;toggle.setAttribute("aria-pressed",String(forecastOn));toggle.textContent=forecastOn?"V6":"OFF";persistProfile();setIntent(forecastOn?"Ball, receiver and pressure forecasts on":"Forecasts off");if(!forecastOn)cx.clearRect(0,0,cv.width,cv.height)}
+function showDirection(key,text,duration,tone){if(suppressed===key)return;clearTimeout(directionTimer);directionText.textContent=text;direction.classList.add("on");if(tone)audio.tone(tone,.1,.02);directionTimer=setTimeout(function(){direction.classList.remove("on")},calm()?Math.min(700,duration):duration)}
+function skipDirection(){var d=window.__AK_DEBUG&&window.__AK_DEBUG.G,state=d&&d.state||"";suppressed=state+(state==="resolve"&&d.flight?":"+d.flight.outcome:"");direction.classList.remove("on");clearTimeout(directionTimer);if(state==="intro"){document.body.classList.add("v6-skip-canonical");try{d.camMode="wide"}catch(_){}}else if(state==="flight"){try{d.camMode="wide"}catch(_){}}audio.tone(310,.07,.015)}
+function resize(){var d=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,innerWidth),h=Math.max(1,innerHeight),nw=Math.floor(w*d),nh=Math.floor(h*d);if(cv.width!==nw||cv.height!==nh){cv.width=nw;cv.height=nh;cv.style.width=w+"px";cv.style.height=h+"px"}cx.setTransform(d,0,0,d,0,0);return{w:w,h:h}}
+function project(p,wh){try{var scene=window.AK&&AK.Scene&&AK.Scene.S,cam=scene&&scene.camera,T=window.THREE;if(!cam||!T)return null;cam.updateMatrixWorld(true);var q=new T.Vector3(p.x,p.y,p.z).project(cam);return{x:(q.x*.5+.5)*wh.w,y:(-q.y*.5+.5)*wh.h,z:q.z}}catch(_){return null}}
+function line(points,colour,width,dash){if(points.length<2)return;cx.save();cx.lineCap="round";cx.lineJoin="round";cx.setLineDash(dash||[]);cx.strokeStyle="rgba(3,7,18,.88)";cx.lineWidth=(width||2)+4;cx.beginPath();points.forEach(function(p,i){i?cx.lineTo(p.x,p.y):cx.moveTo(p.x,p.y)});cx.stroke();cx.strokeStyle=colour;cx.lineWidth=width||2;cx.stroke();cx.restore()}
+function label(x,y,text,colour){cx.save();cx.font="800 11px system-ui,sans-serif";var w=cx.measureText(text).width+14;cx.fillStyle="rgba(4,9,23,.84)";cx.fillRect(x-w/2,y-25,w,20);cx.fillStyle=colour||"#eaf8f1";cx.textAlign="center";cx.fillText(text,x,y-11);cx.restore()}
+function pressureName(v){return v>=.58?"HIGH":v>=.3?"MEDIUM":"LOW"}
+function drawAimIntent(G,wh){var I=window.AK&&AK.Input&&AK.Input.state;if(!I||!I.active||!I.samples||I.samples.length<2){setIntent("Forecast ready · pressure "+pressureName(G.moment&&G.moment.pressure||0));return}var sw=null;try{sw=AK.Input.parse(false,I.ctx)}catch(_){}if(!sw)return;var pts=I.samples.map(function(p){return{x:p.x,y:p.y}});line(pts,"rgba(103,246,203,.96)",3,[7,5]);var end=pts[pts.length-1];cx.save();cx.strokeStyle="#f2c14a";cx.lineWidth=2;cx.beginPath();cx.moveTo(end.x,end.y);cx.lineTo(sw.reticle.x,sw.reticle.y);cx.stroke();cx.restore();label(sw.reticle.x,sw.reticle.y,"TOUCH INTENT","#f2c14a");var bend=Math.abs(sw.curvature)<.12?"straight":(sw.curvature>0?"right bend":"left bend"),p=G.moment&&G.moment.pressure||0;setIntent("Power "+Math.round(sw.intensity*100)+"% · "+bend+" · pressure "+pressureName(p));if(G.moment){var nx=Math.max(-1.35,Math.min(1.35,(sw.reticle.x-wh.w*.5)/(wh.w*.42))),ny=Math.max(-1.35,Math.min(1.35,(sw.reticle.y-wh.h*.46)/(wh.h*.26))),goal={x:Math.max(-5,Math.min(5,-nx*4.4)),y:Math.max(.18,Math.min(3.2,1.45-ny*1.45)),z:G.moment.distance},gp=project(goal,wh);if(gp&&gp.z<1){cx.save();cx.strokeStyle=p>=.58?"#ffb957":"#67f6cb";cx.lineWidth=2;cx.setLineDash([4,4]);cx.beginPath();cx.arc(gp.x,gp.y,12+18*p,0,Math.PI*2);cx.stroke();cx.restore();label(gp.x,gp.y,"RECEIVER WINDOW",p>=.58?"#ffb957":"#67f6cb")}}}
+function drawFlight(G,wh){var s=G.flight&&G.flight.samples;if(!s||!s.length)return;var f=Math.max(0,G.playT*60),i=Math.min(s.length-1,Math.floor(f)),a=Math.max(0,Math.min(1,f-i)),next=s[Math.min(s.length-1,i+1)],cur=s[i],pos={x:cur.pos.x+(next.pos.x-cur.pos.x)*a,y:cur.pos.y+(next.pos.y-cur.pos.y)*a,z:cur.pos.z+(next.pos.z-cur.pos.z)*a},pp=project(pos,wh);var start=calm()?i:Math.max(0,i-10),end=Math.min(s.length-1,i+26),pts=[];for(var n=start;n<=end;n+=2){var q=project(s[n].pos,wh);if(q&&q.z<1)pts.push(q)}line(pts,"rgba(242,193,74,.88)",2,[5,7]);if(pp&&pp.z<1){cx.save();cx.fillStyle="#fff";cx.shadowColor="#67f6cb";cx.shadowBlur=16;cx.beginPath();cx.arc(pp.x,pp.y,5.5,0,Math.PI*2);cx.fill();cx.restore()}var keeper=G.flight.keeper,pressure=0;if(keeper&&keeper.commit){var kp=project({x:keeper.commit.x,y:keeper.commit.y,z:G.moment.distance},wh);pressure=keeper.tAvail>0?Math.max(0,Math.min(1,keeper.tNeed/keeper.tAvail)):1;if(kp&&kp.z<1){cx.save();cx.strokeStyle=pressure>.7?"#ffb957":"#9aa9ff";cx.lineWidth=2;cx.setLineDash([3,4]);cx.beginPath();cx.arc(kp.x,kp.y,18+12*pressure,0,Math.PI*2);cx.stroke();cx.restore();label(kp.x,kp.y,"RECEIVER FORECAST",pressure>.7?"#ffb957":"#9aa9ff")}}setIntent("High-refresh ball view · receiver pressure "+pressureName(pressure))}
+function enhanceScreens(){var root=document.getElementById("screens");if(!root)return;root.querySelectorAll(".screen").forEach(function(s){if(!s.hasAttribute("role"))s.setAttribute("role","region");if(!s.hasAttribute("aria-label")){var h=s.querySelector("h1,h2");if(h)s.setAttribute("aria-label",h.textContent.trim())}})}
+function frame(){var D=window.__AK_DEBUG,G=D&&D.G,state=G&&G.state||"menu",active=!!G&&(state==="aim"||state==="flight")&&!G.paused;document.body.classList.toggle("v6-kick-active",active);document.body.classList.toggle("v6-kick-aim",!!G&&state==="aim"&&!G.paused);document.body.classList.toggle("v6-kick-calm",calm());if(G&&G.introToken!==lastIntroToken){lastIntroToken=G.introToken;document.body.classList.remove("v6-skip-canonical");suppressed=""}if(state!==lastState){suppressed="";lastState=state;if(state==="intro")showDirection("intro","Stadium fly-in · "+(G.moment&&G.moment.label||"world stage"),3200,390);else if(state==="aim")showDirection("aim","Set piece camera · read wall, receiver and pressure",1600,440);else if(state==="flight")showDirection("flight","Ball camera · canonical 120 Hz flight",1300,520);else if(state==="resolve"){var o=G.flight&&G.flight.outcome||"finish";lastOutcome=o;showDirection("resolve:"+o,"Finish direction · "+o,1800,o==="GOAL"?690:260)}}if(G&&state==="flight"&&G.flight&&G.flight.tFlight&&G.playT>G.flight.tFlight*.68&&suppressed!=="clutch"&&direction.classList.contains("on")===false){showDirection("clutch","Clutch window · keeper commitment locked",900,610);suppressed="clutch"}var wh=resize();cx.clearRect(0,0,wh.w,wh.h);if(active&&forecastOn){if(state==="aim")drawAimIntent(G,wh);else drawFlight(G,wh)}requestAnimationFrame(frame)}
+
+toggle.addEventListener("click",function(){setForecast(!forecastOn);audio.resume()});skipButton.addEventListener("click",skipDirection);tray.addEventListener("pointerdown",function(e){e.preventDefault();setIntent("Dead zone · begin the swipe above the tray")},{passive:false});
+document.addEventListener("pointerdown",function(){audio.resume()},{passive:true});
+document.addEventListener("keydown",function(e){if(e.key.toLowerCase()==="f"&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!(e.target&&e.target.closest&&e.target.closest("input,textarea,select"))){var G=window.__AK_DEBUG&&window.__AK_DEBUG.G;if(G&&(G.state==="aim"||G.state==="flight")){e.preventDefault();setForecast(!forecastOn)}}else if((e.key==="Escape"||e.key==="Enter"||e.key===" ")&&window.__AK_DEBUG&&window.__AK_DEBUG.G&&window.__AK_DEBUG.G.state==="intro"&&direction.classList.contains("on")){e.preventDefault();e.stopImmediatePropagation();skipDirection()}audio.resume()},true);
+document.addEventListener("visibilitychange",function(){if(document.hidden){audio.suspend();direction.classList.remove("on");cx.clearRect(0,0,cv.width,cv.height)}});
+window.addEventListener("resize",resize,{passive:true});
+var observer=new MutationObserver(enhanceScreens);if(document.getElementById("screens"))observer.observe(document.getElementById("screens"),{childList:true,subtree:true});enhanceScreens();setForecast(forecastOn);requestAnimationFrame(frame);
+
+function duplicateIds(){var seen=Object.create(null),dupes=[];document.querySelectorAll("[id]").forEach(function(el){if(seen[el.id])dupes.push(el.id);seen[el.id]=1});return dupes}
+function brokenAria(){var bad=[];document.querySelectorAll("[aria-labelledby],[aria-describedby],[aria-controls]").forEach(function(el){["aria-labelledby","aria-describedby","aria-controls"].forEach(function(a){var v=el.getAttribute(a);if(v)v.split(/\s+/).forEach(function(id){if(id&&!document.getElementById(id))bad.push(a+":"+id)})})});return bad}
+function externalAssets(){var bad=[];document.querySelectorAll("script[src],link[rel~='stylesheet'][href],img[src],audio[src],video[src],source[src],iframe[src]").forEach(function(el){var u=el.getAttribute("src")||el.getAttribute("href")||"";if(u&&!/^(data:|blob:|#)/i.test(u))bad.push(u)});return bad}
+function selfTest(){var qa=window.MadeByMattV4QA||{},rollback={ok:false},physics={ok:false};try{rollback=qa.rollback.selfTest()}catch(e){rollback={ok:false,error:String(e)}}try{physics=qa.physics.selfTest()}catch(e){physics={ok:false,error:String(e)}}var fixture=fixtureMigration(),ids=duplicateIds(),aria=brokenAria(),assets=externalAssets(),viewport=(document.querySelector("meta[name='viewport']")||{}).content||"",targets=[toggle,skipButton].every(function(b){var s=getComputedStyle(b);return parseFloat(s.minHeight)>=44&&parseFloat(s.minWidth)>=44}),audioOK=!audio.ctx||(audio.master&&audio.compressor&&audio.master.context===audio.ctx);var tests={marker:VERSION==="6.0.0",canonicalIdentity:/Apex Kick/i.test(document.title),profileSchema:profile.schema===6&&profile.gameId===GAME_ID,migrationFixture:fixture.ok,bootMigrationNonDestructive:migrationResult.evidence.legacyBytesPreserved,duplicateIds:ids.length===0,ariaReferences:aria.length===0,offlineAssets:assets.length===0,zoomEnabled:!/maximum-scale\s*=\s*1|user-scalable\s*=\s*no/i.test(viewport),targets44:targets,audioBus:!!audioOK,fixedTiming:physics.ok&&physics.tickHz===120,footballFixture:!!physics.ok,rollbackFixture:!!rollback.ok};return{ok:Object.keys(tests).every(function(k){return!!tests[k]}),tests:tests,details:{ids:ids,aria:aria,externalAssets:assets,viewport:viewport,migration:migrationResult.evidence,migrationFixture:fixture,audioState:audio.state,physics:physics,rollback:rollback,authority:{sourceSha256:SOURCE_SHA256,gameBlockSha256:GAME_AUTHORITY_SHA256,runtimeBlockSha256:RUNTIME_AUTHORITY_SHA256,simulation:"AK120-RK4-20260829",tickHz:120}}}}
+function deepFreeze(v){if(v&&typeof v==="object"&&!Object.isFrozen(v)){Object.keys(v).forEach(function(k){deepFreeze(v[k])});Object.freeze(v)}return v}
+window.__MBM_V6_RELEASE__=deepFreeze({version:VERSION,gameId:GAME_ID,profileKey:PROFILE_KEY,authority:{sourceSha256:SOURCE_SHA256,gameBlockSha256:GAME_AUTHORITY_SHA256,runtimeBlockSha256:RUNTIME_AUTHORITY_SHA256,simulation:"AK120-RK4-20260829",tickHz:120,preservedDomains:["football physics","keeper AI","timing","set pieces","career and economy","Passport","scoring","rewards","records","unlocks","V4 save writers"]},presentation:{isolated:true,readsAuthority:true,writesAuthority:false,highRefreshInterpolation:"sample lerp only",touchIntent:true,ballTrajectory:true,receiverForecast:true,pressureForecast:true,portraitDeadZone:true,landscapeBottomBar:false,reducedMotion:true,visibilitySafety:true,skippableDirection:true},audio:{lazy:true,compressed:true,resumable:true,independentOfCanonicalBus:true},migration:migrationResult.evidence,network:{addedRuntimeRequests:0,externalAssets:0,canonicalManualPrivateLanPreserved:true},selfTest:selfTest});
+})();
+</script>
+<!-- MBM:V6:END -->
 
 <!-- MBM-INLINE-EXIT:BEGIN generated by tools/render_inline_exit.py, do not edit by hand -->
 <script>(function(){"use strict";

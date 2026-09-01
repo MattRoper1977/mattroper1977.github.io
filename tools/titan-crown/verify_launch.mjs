@@ -103,9 +103,16 @@ gate('Crown preserves its exact launch CSP and has no external runtime surface',
 
 gate('Crown storage keys are final and the bounded validator remains in the load path', () => {
   for (const old of ['cbfw_v1_campaign', 'cbfw_v1_meta', 'cbfw_v1_scores', 'cbfw_v1_settings']) assert.equal(count(crown, old), 0, `${old} survives`);
-  for (const current of ['mbm_crownbadge_campaign_v1', 'mbm_crownbadge_meta_v1', 'mbm_crownbadge_scores_v1', 'mbm_crownbadge_settings_v1']) assert.equal(count(crown, current), 1, `${current} count`);
+  const current = ['mbm_crownbadge_campaign_v1', 'mbm_crownbadge_meta_v1', 'mbm_crownbadge_scores_v1', 'mbm_crownbadge_settings_v1'];
+  const storageBlock = crown.match(/const STORAGE = Object\.freeze\(\{([\s\S]*?)\n  \}\);/)?.[1] || '';
+  const legacyBlock = crown.match(/const LEGACY_KEYS=\[([^\]]+)\]/)?.[1] || '';
+  for (const key of current) {
+    assert.equal(count(storageBlock, key), 1, `${key} missing or duplicated in authority STORAGE`);
+    assert.equal(count(legacyBlock, key), 1, `${key} missing or duplicated in V6 migration LEGACY_KEYS`);
+  }
   assert(crown.includes('raw.length > 1048576'), '1 MiB read bound missing');
   assert(crown.includes('Core.migrateState(loadJSON(STORAGE.campaign, null))'), 'validated campaign load path missing');
+  assert(crown.includes("checks.migration=mp.version===6&&fake.get('mbm_crownbadge_campaign_v1')===before&&fake.has(PROFILE_KEY)"), 'non-destructive V6 migration control missing');
 });
 
 gate('Crown Hard, Chronicle and determinism constants are the tested ones', () => {

@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#17101f">
-<meta name="description" content="Lumina Haven is a cozy room-and-garden atelier with decorating, plant care, botanical fusion, soundscapes and photo mode.">
-<title>Lumina Haven — Made by Matt</title>
+<meta name="description" content="Lumina Haven AAA V6 is a full-screen cozy room-and-garden atelier with decorating, plant care, botanical fusion, spatial forecasts, soundscapes and photo mode.">
+<title>Lumina Haven AAA V6 — Made by Matt</title>
 <link rel="canonical" href="https://madebymatt.uk/luminahaven/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Made by Matt">
@@ -16,7 +16,6 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Lumina Haven">
 <meta name="twitter:description" content="A low-pressure sanctuary game about arranging a beautiful room, nurturing unusual plants, collecting gems and crafting luminous new décor.">
-<meta name="twitter:image" content="https://madebymatt.uk/luminahaven/banner.png">
 <style>
 :root{
   --ink:#fffaf7;--muted:#d9cfe3;--panel:rgba(21,14,30,.78);--panel2:rgba(31,20,43,.92);
@@ -85,14 +84,45 @@ button:disabled{opacity:.42;cursor:not-allowed;transform:none}
   #toast{top:70px;max-width:90vw;text-align:center}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+
+/* ===== AAA V6 presentation and ergonomic shell ===== */
+html,body{min-height:100%;min-height:100dvh;overscroll-behavior:none}
+body{padding:0 env(safe-area-inset-right) 0 env(safe-area-inset-left)}
+#game{will-change:transform;transform-origin:var(--v6-cam-x,50%) var(--v6-cam-y,50%)}
+.v6Badge{display:inline-flex;align-items:center;min-height:28px;padding:0 9px;border-radius:999px;background:linear-gradient(135deg,#fff0fa,#cbb8ff 48%,#8ce7db);color:#211329;font-size:9px;font-weight:1000;letter-spacing:.12em;white-space:nowrap;box-shadow:0 0 18px rgba(215,167,255,.32)}
+#v6Tray{display:none;position:fixed;z-index:48;left:0;right:0;bottom:0;min-height:74px;padding:8px max(10px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));gap:7px;grid-auto-flow:column;grid-auto-columns:minmax(54px,1fr);overflow-x:auto;background:linear-gradient(180deg,rgba(21,14,30,.72),rgba(13,8,20,.98));border-top:1px solid rgba(255,255,255,.2);box-shadow:0 -14px 42px rgba(0,0,0,.38);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);scrollbar-width:none}
+#v6Tray::-webkit-scrollbar{display:none}.v6TrayBtn{min-width:54px;min-height:52px;padding:4px 7px;border-radius:15px;display:grid;place-items:center;font-size:19px}.v6TrayBtn small{display:block;font-size:8px;letter-spacing:.05em;color:var(--muted)}.v6TrayBtn.active small{color:#24122b}
+#v6ForecastLabel{position:fixed;z-index:16;left:max(10px,env(safe-area-inset-left));top:max(76px,calc(env(safe-area-inset-top) + 66px));max-width:min(280px,calc(100vw - 80px));padding:7px 10px;border-radius:13px;pointer-events:none;color:#f9efff;font-size:10px;font-weight:800;letter-spacing:.025em;opacity:0;transform:translateY(-5px);transition:opacity .2s ease,transform .2s ease}
+#v6ForecastLabel.show{opacity:1;transform:none}
+#v6Director{position:fixed;z-index:110;inset:0;display:none;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 55%,rgba(215,167,255,.1),rgba(8,5,13,.72));cursor:pointer;touch-action:manipulation}
+#v6Director.active{display:grid}.v6DirectorCard{text-align:center;padding:28px}.v6DirectorKicker{font-size:10px;font-weight:900;letter-spacing:.32em;color:#bfaeff}.v6DirectorTitle{font-size:clamp(34px,10vw,76px);font-weight:1000;letter-spacing:-.045em;background:linear-gradient(135deg,#fff4fa,#d5baff,#8ce7db);-webkit-background-clip:text;color:transparent;filter:drop-shadow(0 12px 34px rgba(215,167,255,.32))}.v6DirectorRoute{width:min(64vw,360px);height:2px;margin:18px auto;background:linear-gradient(90deg,transparent,#8ce7db,transparent);position:relative}.v6DirectorRoute::after{content:'✦';position:absolute;left:0;top:50%;transform:translate(-50%,-50%);color:#fff;filter:drop-shadow(0 0 9px #8ce7db);animation:v6Route 1.75s cubic-bezier(.4,0,.2,1) both}.v6DirectorSkip{font-size:9px;letter-spacing:.18em;color:#bdaec5}
+#v6Fx{position:fixed;z-index:105;inset:0;width:100%;height:100%;pointer-events:none}
+body.v6Fly #game{animation:v6Camera 1.8s cubic-bezier(.4,0,.2,1) both}
+body.v6Clutch #game{animation:v6Clutch .44s cubic-bezier(.2,.8,.2,1)}
+body.v6Calm #v6ForecastLabel{transition:none}body.v6Calm #game{animation:none!important}
+.srOnly{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+@keyframes v6Route{0%{left:0;opacity:0}12%{opacity:1}88%{opacity:1}100%{left:100%;opacity:0}}
+@keyframes v6Camera{0%{transform:scale(1.12) translate3d(3%,-2%,0);filter:saturate(.78) brightness(.7)}55%{transform:scale(1.055) translate3d(-2%,1%,0);filter:saturate(1.12) brightness(.9)}100%{transform:none;filter:none}}
+@keyframes v6Clutch{0%,100%{transform:none;filter:none}32%{transform:scale(1.035);filter:brightness(1.12) saturate(1.18)}48%{transform:scale(1.025) translateX(-2px)}62%{transform:scale(1.02) translateX(2px)}}
+@media (orientation:portrait) and (pointer:coarse){
+  #v6Tray{display:grid}
+  #rightTools{display:none}
+  #catalog{bottom:calc(74px + env(safe-area-inset-bottom));max-width:calc(100vw - 12px);padding-right:9px}
+  #inspector{bottom:calc(151px + env(safe-area-inset-bottom))}
+  #leftPanel{bottom:calc(151px + env(safe-area-inset-bottom))}
+  #status{bottom:calc(151px + env(safe-area-inset-bottom))}
+}
+@media (orientation:landscape){#v6Tray{display:none!important}}
+@media(prefers-reduced-motion:reduce){#v6Director .v6DirectorRoute::after{animation:none;left:50%}body.v6Fly #game,body.v6Clutch #game{animation:none!important}}
 </style>
 </head>
 <body>
-<canvas id="game" aria-label="Lumina Haven room and garden canvas"></canvas>
+<canvas id="game" tabindex="0" role="application" aria-label="Lumina Haven room and garden. Use the atelier controls to decorate, water and prune. Keyboard shortcuts: H hand, W water, P prune, R rotate, arrow keys move a selected object, Delete returns it to storage."></canvas>
 <div id="noCanvas"><h1>Lumina Haven</h1><p>Your browser needs Canvas support to play this game.</p></div>
 
 <div id="topBar" class="glass" aria-label="Lighting and game status">
   <div class="brand"><div class="brandMark">✦</div><div class="brandText">LUMINA HAVEN<small>MADE BY MATT</small></div></div>
+  <span class="v6Badge" aria-label="AAA version 6.0.0">AAA V6</span>
   <button class="chipBtn paletteBtn active" data-palette="sunset">🌅 Sunset</button>
   <button class="chipBtn paletteBtn" data-palette="twilight">🌙 Twilight</button>
   <button class="chipBtn paletteBtn" data-palette="cottage">🌿 Cottage</button>
@@ -113,7 +143,7 @@ button:disabled{opacity:.42;cursor:not-allowed;transform:none}
     <button class="roomBtn" data-size="8">8×8</button><button class="roomBtn active" data-size="10">10×10</button><button class="roomBtn" data-size="12">12×12</button>
   </div></section>
   <section><div class="panelTitle">Placement</div><div class="row"><button id="snapBtn" class="active">🧲 Snap</button><button id="clearBtn" class="danger">Reset</button></div></section>
-  <section><div class="panelTitle">Motion</div><div class="row"><button id="motionBtn" aria-pressed="false" style="width:100%;min-height:44px">🌙 Reduced motion off</button></div></section>
+  <section><div class="panelTitle">Motion</div><div class="row"><button id="motionBtn" aria-pressed="false" style="width:100%;min-height:44px">🌙 Reduced motion off</button><button id="v6CalmBtn" aria-pressed="false" style="width:100%;min-height:44px">🫧 Calm presentation off</button></div></section>
 </aside>
 
 <nav id="rightTools" class="glass" aria-label="Atelier tools">
@@ -139,6 +169,18 @@ button:disabled{opacity:.42;cursor:not-allowed;transform:none}
 </div>
 <div id="status" class="glass">Drag objects freely. Glowing forage appears around the room—tap it to collect fusion materials.</div>
 <div id="toast" role="status" aria-live="polite"></div>
+<div id="v6ForecastLabel" class="glass" role="status" aria-live="polite"></div>
+
+<nav id="v6Tray" aria-label="Portrait atelier control tray">
+  <button class="v6TrayBtn active" id="v6Hand" data-v6-target=".tool[data-tool='hand']" aria-label="Move and inspect"><span>✋<small>HAND</small></span></button>
+  <button class="v6TrayBtn" id="v6Water" data-v6-target=".tool[data-tool='water']" aria-label="Water plants"><span>🚿<small>WATER</small></span></button>
+  <button class="v6TrayBtn" id="v6Prune" data-v6-target=".tool[data-tool='prune']" aria-label="Prune overgrowth"><span>✂️<small>PRUNE</small></span></button>
+  <button class="v6TrayBtn" id="v6Fusion" data-v6-target="#fusionBtn" aria-label="Open fusion laboratory"><span>🧪<small>FUSION</small></span></button>
+  <button class="v6TrayBtn" id="v6Photo" data-v6-target="#photoBtn" aria-label="Open photo mode"><span>📸<small>PHOTO</small></span></button>
+  <button class="v6TrayBtn" id="v6Settings" data-v6-target="#settingsBtn" aria-label="Open room settings"><span>⚙️<small>ROOM</small></span></button>
+  <button class="v6TrayBtn" id="v6Sound" data-v6-target="#soundBtn" aria-label="Open soundscape mixer"><span>🎛️<small>SOUND</small></span></button>
+  <button class="v6TrayBtn" id="v6Save" data-v6-target="#saveBtn" aria-label="Save and share"><span>💾<small>SAVE</small></span></button>
+</nav>
 
 <div id="fusionModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="fusionTitle">
   <div class="modalCard"><h2 id="fusionTitle">Botanical & Gem Fusion</h2><p>Choose two materials. Known pairings unlock rare living décor, dyes and lights; experimental pairings still create essence.</p>
@@ -151,9 +193,9 @@ button:disabled{opacity:.42;cursor:not-allowed;transform:none}
 
 <div id="soundModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="soundTitle">
   <div class="modalCard"><h2 id="soundTitle">Soundscape Mixer</h2><p>Every layer is generated live by Web Audio—no sound files are used.</p>
-    <div class="mixerRow"><label>🌧️ Rain on glass <input type="checkbox" id="rainToggle"></label><input id="rainVolume" type="range" min="0" max="1" step=".05" value=".30"></div>
-    <div class="mixerRow"><label>🔥 Cozy hearth <input type="checkbox" id="fireToggle"></label><input id="fireVolume" type="range" min="0" max="1" step=".05" value=".35"></div>
-    <div class="mixerRow"><label>📻 Lofi vinyl <input type="checkbox" id="vinylToggle"></label><input id="vinylVolume" type="range" min="0" max="1" step=".05" value=".38"></div>
+    <div class="mixerRow"><label>🌧️ Rain on glass <input type="checkbox" id="rainToggle" aria-label="Toggle rain on glass"></label><input id="rainVolume" aria-label="Rain volume" type="range" min="0" max="1" step=".05" value=".30"></div>
+    <div class="mixerRow"><label>🔥 Cozy hearth <input type="checkbox" id="fireToggle" aria-label="Toggle cozy hearth"></label><input id="fireVolume" aria-label="Hearth volume" type="range" min="0" max="1" step=".05" value=".35"></div>
+    <div class="mixerRow"><label>📻 Lofi vinyl <input type="checkbox" id="vinylToggle" aria-label="Toggle lofi vinyl"></label><input id="vinylVolume" aria-label="Lofi vinyl volume" type="range" min="0" max="1" step=".05" value=".38"></div>
     <div class="modalActions"><button data-close="soundModal">Close</button></div>
   </div>
 </div>
@@ -168,7 +210,7 @@ button:disabled{opacity:.42;cursor:not-allowed;transform:none}
 
 <div id="saveModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="saveTitle">
   <div class="modalCard"><h2 id="saveTitle">Save & Share</h2><p>Your haven auto-saves on this device. Export creates a small JSON layout that can be shared and imported later.</p>
-    <input type="file" id="importInput" accept="application/json,.json" hidden>
+    <input type="file" id="importInput" aria-label="Import Lumina Haven layout file" accept="application/json,.json" hidden>
     <div class="modalActions"><button data-close="saveModal">Close</button><button id="importBtn">Import layout</button><button id="exportBtn">Export JSON</button><button class="primary" id="manualSaveBtn">Save now</button></div>
   </div>
 </div>
@@ -186,8 +228,13 @@ button:disabled{opacity:.42;cursor:not-allowed;transform:none}
 <div id="confirmModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle"><div class="modalCard"><h2 id="confirmTitle">Reset the haven?</h2><p>This restores the starter room and collection. Your exported JSON files are not affected.</p><div class="modalActions"><button data-close="confirmModal">Cancel</button><button class="danger" id="confirmResetBtn">Reset everything</button></div></div></div>
 
 <div id="splash">
-  <div class="splashCard"><div class="made">Made by Matt presents</div><div class="splashLogo">LUMINA<br>HAVEN</div><div class="splashSub">A low-pressure sanctuary game about arranging a beautiful room, nurturing unusual plants, collecting gems and crafting luminous new décor.</div><button id="startBtn" class="startBtn">Enter the Haven</button><div class="splashHints"><span>drag & decorate</span><span>grow & prune</span><span>fuse rare items</span><span>photo mode</span><span>mobile + desktop</span></div></div>
+  <div class="splashCard"><div class="made">Made by Matt presents · AAA V6</div><div class="splashLogo">LUMINA<br>HAVEN</div><div class="splashSub">A low-pressure sanctuary game about arranging a beautiful room, nurturing unusual plants, collecting gems and crafting luminous new décor.</div><button id="startBtn" class="startBtn">Enter the Haven</button><div class="splashHints"><span>drag & decorate</span><span>grow & prune</span><span>fuse rare items</span><span>spatial forecast</span><span>mobile + desktop</span></div></div>
 </div>
+<div id="v6Director" role="dialog" aria-modal="true" aria-labelledby="v6DirectorTitle" tabindex="-1">
+  <div class="v6DirectorCard"><div class="v6DirectorKicker">MADE BY MATT · AAA V6</div><div class="v6DirectorTitle" id="v6DirectorTitle">WELCOME HOME</div><div class="v6DirectorRoute"></div><div class="v6DirectorSkip">TAP, ENTER OR ESC TO SKIP</div></div>
+</div>
+<canvas id="v6Fx" aria-hidden="true"></canvas>
+<div id="v6A11y" class="srOnly" role="status" aria-live="polite"></div>
 
 <script>
 (()=>{
@@ -559,8 +606,29 @@ function drawWeather(){
  else if(state.weather==='mist'){ctx.save();for(let i=0;i<8;i++){const x=(Math.sin(time*.08+i*2.2)*.2+.5)*W,y=H*(.15+i*.1);const g=ctx.createRadialGradient(x,y,1,x,y,W*.28);g.addColorStop(0,'rgba(205,240,220,.07)');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}ctx.restore();}
 }
 function drawGuides(){if(!drag)return;ctx.save();ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=1;ctx.setLineDash([5,5]);if(guide.x!=null){ctx.beginPath();ctx.moveTo(guide.x,roomGeom().backY);ctx.lineTo(guide.x,roomGeom().frontY);ctx.stroke();}if(guide.y!=null){ctx.beginPath();ctx.moveTo(roomGeom().frontL,guide.y);ctx.lineTo(roomGeom().frontR,guide.y);ctx.stroke();}ctx.restore();}
-function drawSparkles(){for(const s of sparkles){ctx.save();ctx.globalAlpha=s.life;ctx.fillStyle=s.color;ctx.translate(s.x,s.y);ctx.rotate(time+s.a);ctx.fillRect(-s.size*.5,-1,s.size,2);ctx.fillRect(-1,-s.size*.5,2,s.size);ctx.restore();}}
-function render(){ctx.setTransform(DPR,0,0,DPR,0,0);drawRoom();drawNodes();const objs=[...state.objects].sort((a,b)=>a.v-b.v);for(const o of objs)drawObject(o);drawGuides();drawWeather();drawSparkles();}
+/* V6 composition forecast: a render-only reading of existing positions and
+   hydration. It never feeds placement, growth, scoring, rewards or saves. */
+let v6ForecastText='';
+function drawV6Forecast(){
+ const o=selected();ctx.save();ctx.lineCap='round';
+ for(const plant of state.objects){
+   if(!isPlant(plant)||!plant.plant||plant.plant.water>=22)continue;
+   const p=worldToScreen(plant.u,plant.v),r=objectRadius(plant,p.scale)*(.82+(motionReduced()?0:.05*Math.sin(time*3+plant.id)));
+   ctx.strokeStyle='rgba(118,220,255,.82)';ctx.lineWidth=2;ctx.setLineDash([4,5]);ctx.beginPath();ctx.arc(p.x,p.y-r*.12,r,0,Math.PI*2);ctx.stroke();
+ }
+ if(o){
+   const p=worldToScreen(o.u,o.v),near=state.objects.filter(x=>x!==o).map(x=>({o:x,d:Math.hypot(x.u-o.u,x.v-o.v)})).sort((a,b)=>a.d-b.d).slice(0,3);
+   ctx.strokeStyle='rgba(215,167,255,.5)';ctx.fillStyle='rgba(215,167,255,.08)';ctx.lineWidth=1.5;ctx.setLineDash([4,5]);ctx.beginPath();ctx.arc(p.x,p.y,objectRadius(o,p.scale)*1.2,0,Math.PI*2);ctx.fill();ctx.stroke();
+   ctx.beginPath();for(const n of near){if(n.d>.34)continue;const np=worldToScreen(n.o.u,n.o.v);ctx.moveTo(p.x,p.y);ctx.lineTo(np.x,np.y);}ctx.stroke();ctx.setLineDash([]);
+   if(isPlant(o)&&o.plant&&o.plant.water<22)v6ForecastText=`${o.name}: hydration low · Water forecast ready`;
+   else if(near.length&&near[0].d<.095)v6ForecastText=`${o.name}: close cluster · drag toward open floor for breathing room`;
+   else v6ForecastText=`${o.name}: ${near.filter(n=>n.d<.34).length} nearby harmony link${near.filter(n=>n.d<.34).length===1?'':'s'}`;
+ }else v6ForecastText=state.objects.some(x=>isPlant(x)&&x.plant&&x.plant.water<22)?'Gentle forecast: a blue halo marks a thirsty plant':'';
+ if(window.__MBM_V6_FORECAST__)window.__MBM_V6_FORECAST__(v6ForecastText);
+ ctx.restore();
+}
+function drawSparkles(){const alpha=Math.max(0,Math.min(1,acc/FIXED));for(const s of sparkles){ctx.save();ctx.globalAlpha=s.life;ctx.fillStyle=s.color;ctx.translate(lerp(s.px==null?s.x:s.px,s.x,alpha),lerp(s.py==null?s.y:s.py,s.y,alpha));ctx.rotate(time+s.a);ctx.fillRect(-s.size*.5,-1,s.size,2);ctx.fillRect(-1,-s.size*.5,2,s.size);ctx.restore();}}
+function render(){ctx.setTransform(DPR,0,0,DPR,0,0);drawRoom();drawNodes();const objs=[...state.objects].sort((a,b)=>a.v-b.v);for(const o of objs)drawObject(o);drawGuides();drawV6Forecast();drawWeather();drawSparkles();}
 
 function spawnNode(force=false){if(state.nodes.length>=5&&!force)return;const kinds=Object.keys(ingredients),kind=kinds[Math.floor(Math.random()*kinds.length)];state.nodes.push({id:'n'+Date.now()+Math.random(),kind,u:.12+Math.random()*.76,v:.28+Math.random()*.63,phase:Math.random()*6.2});}
 if(!state.nodes.length){spawnNode(true);spawnNode(true);spawnNode(true);}
@@ -584,7 +652,7 @@ function update(dt){const mo=motionReduced();
  // weather hydrates or dries plants
  for(const o of state.objects){if(!isPlant(o))continue;o.plant=o.plant||{water:62,growth:35,bloom:false};let waterDelta=state.weather==='rain'?2.0:state.weather==='mist'?.55:-.23;o.plant.water=clamp(o.plant.water+waterDelta*dt,0,100);if(o.plant.water>30&&o.plant.water<96&&!o.plant.bloom)o.plant.growth=clamp(o.plant.growth+1.9*dt,0,100);else if(o.plant.water<12)o.plant.growth=clamp(o.plant.growth-.35*dt,0,100);}
  spawnClock+=dt;if(spawnClock>10){spawnClock=0;spawnNode();}
- if(!mo)for(const s of sparkles){s.x+=s.vx*dt;s.y+=s.vy*dt;s.vy+=55*dt;s.life-=dt*.9;s.a+=dt;}sparkles=sparkles.filter(s=>s.life>0);
+ if(!mo)for(const s of sparkles){s.px=s.x;s.py=s.y;s.x+=s.vx*dt;s.y+=s.vy*dt;s.vy+=55*dt;s.life-=dt*.9;s.a+=dt;}sparkles=sparkles.filter(s=>s.life>0);
  autoSaveClock+=dt;if(autoSaveClock>7){autoSaveClock=0;saveGame();}
  updateInspector();
 }
@@ -615,22 +683,41 @@ function loop(now){
  const dt=Math.min(.25,(now-last)/1000); last=now;
  acc+=dt; let steps=0;
  while(acc>=FIXED&&steps<8){update(FIXED);acc-=FIXED;steps++}
+ const fixedTime=time;if(!motionReduced())time=fixedTime+acc;
  try{render()}
  catch(err){if(drawFaults++===0){console.error('render fault, loop kept alive',err);toast('A frame failed to draw — your haven is still here')}}
+ finally{time=fixedTime}
 }
 requestAnimationFrame(loop);
 
+/* Backgrounding must never create a catch-up burst or leave mobile audio in a
+   suspended route. Plant and record authority remains in update()/saveGame(). */
+document.addEventListener('visibilitychange',()=>{last=performance.now();acc=0;if(!document.hidden&&audioCtx&&audioCtx.state==='suspended')audioCtx.resume();});
+addEventListener('pageshow',()=>{last=performance.now();acc=0;if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();});
+
 function hitObject(x,y){const sorted=[...state.objects].sort((a,b)=>b.v-a.v);for(const o of sorted){const p=worldToScreen(o.u,o.v),r=objectRadius(o,p.scale);if(((x-p.x)/r)**2+((y-p.y)/(r*.72))**2<1)return o;}return null;}
+function hitObjectIntent(x,y){
+ const candidates=[];
+ for(const o of state.objects){const p=worldToScreen(o.u,o.v),r=objectRadius(o,p.scale),nx=(x-p.x)/r,ny=(y-p.y)/(r*.72);if(nx*nx+ny*ny>=1)continue;
+   let score=100-Math.hypot(x-p.x,y-p.y)*1.7+o.v*22;
+   if((state.tool==='water'||state.tool==='prune')&&isPlant(o))score+=120;
+   if(state.tool==='water'&&isPlant(o)&&o.plant)score+=(100-o.plant.water)*.55;
+   if(state.tool==='prune'&&isPlant(o)&&o.plant&&o.plant.growth>=99)score+=70;
+   if(o.id===state.selectedId)score+=8;candidates.push({o,score});
+ }
+ candidates.sort((a,b)=>b.score-a.score||b.o.v-a.o.v||a.o.id-b.o.id);
+ return candidates.length?candidates[0].o:null;
+}
 function hitNode(x,y){for(const n of state.nodes){const p=worldToScreen(n.u,n.v);if(Math.hypot(x-p.x,y-(p.y-15*p.scale))<32*p.scale)return n;}return null;}
 function pointerPos(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
-canvas.addEventListener('pointerdown',e=>{initAudio();const p=pointerPos(e),node=hitNode(p.x,p.y);if(node){collectNode(node);return;}const o=hitObject(p.x,p.y);state.selectedId=o?o.id:null;updateUI();if(!o)return;if(o.type==='cat'){playPurr();burstAt(worldToScreen(o.u,o.v),'#ffd8ec',10);toast('Miso purrs happily');}
+canvas.addEventListener('pointerdown',e=>{initAudio();const p=pointerPos(e),node=hitNode(p.x,p.y);if(node){collectNode(node);return;}const o=hitObjectIntent(p.x,p.y);state.selectedId=o?o.id:null;updateUI();if(window.__MBM_V6_ANNOUNCE__)window.__MBM_V6_ANNOUNCE__(o?`${o.name} selected`:'Selection cleared');if(!o)return;if(o.type==='cat'){playPurr();burstAt(worldToScreen(o.u,o.v),'#ffd8ec',10);toast('Miso purrs happily');}
  if(state.tool==='water'&&isPlant(o)){waterPlant(o);return;}if(state.tool==='prune'&&isPlant(o)){prunePlant(o);return;}if(state.tool!=='hand')return;drag={id:o.id,offset:screenToWorld(p.x,p.y)};canvas.setPointerCapture(e.pointerId);});
 canvas.addEventListener('pointermove',e=>{if(!drag)return;const p=pointerPos(e),w=screenToWorld(p.x,p.y),o=state.objects.find(x=>x.id===drag.id);if(!o)return;guide.x=guide.y=null;let u=w.u,v=w.v;if(state.snap){u=Math.round(u*40)/40;v=Math.round(v*40)/40;for(const other of state.objects){if(other===o)continue;if(Math.abs(other.u-u)<.025){u=other.u;guide.x=worldToScreen(u,v).x;}if(Math.abs(other.v-v)<.025){v=other.v;guide.y=worldToScreen(u,v).y;}}}o.u=clamp(u,.04,.96);o.v=clamp(v,.05,.96);});
 canvas.addEventListener('pointerup',e=>{if(drag){drag=null;guide.x=guide.y=null;saveGame();try{canvas.releasePointerCapture(e.pointerId)}catch(_){}}});
 canvas.addEventListener('pointercancel',()=>{drag=null;guide.x=guide.y=null});
 
-function waterPlant(o){o.plant.water=clamp(o.plant.water+30,0,100);o.plant.growth=clamp(o.plant.growth+3,0,100);playWater();burstAt(worldToScreen(o.u,o.v),'#76dcff',16);toast(`${o.name} watered`);updateInspector();saveGame();}
-function prunePlant(o){if(o.plant.growth<99){toast(`${o.name} is not overgrown yet`);playSnip();return;}o.plant.growth=72;o.plant.bloom=true;o.plant.water=clamp(o.plant.water-8,0,100);state.essence+=25;playSnip();playChime();burstAt(worldToScreen(o.u,o.v),'#ffe16b',26);toast('Golden Bloom harvested — +25 Essence');updateUI();saveGame();}
+function waterPlant(o){const wasCritical=o.plant.water<12;o.plant.water=clamp(o.plant.water+30,0,100);o.plant.growth=clamp(o.plant.growth+3,0,100);playWater();burstAt(worldToScreen(o.u,o.v),'#76dcff',16);toast(`${o.name} watered`);if(wasCritical&&window.__MBM_V6_CLUTCH__)window.__MBM_V6_CLUTCH__(worldToScreen(o.u,o.v),`${o.name} revived just in time`);updateInspector();saveGame();}
+function prunePlant(o){if(o.plant.growth<99){toast(`${o.name} is not overgrown yet`);playSnip();return;}o.plant.growth=72;o.plant.bloom=true;o.plant.water=clamp(o.plant.water-8,0,100);state.essence+=25;playSnip();playChime();burstAt(worldToScreen(o.u,o.v),'#ffe16b',26);toast('Golden Bloom harvested — +25 Essence');if(window.__MBM_V6_FINISH__)window.__MBM_V6_FINISH__(worldToScreen(o.u,o.v),'Golden Bloom');updateUI();saveGame();}
 function addFromCatalog(item){initAudio();const unlocked=item.base||state.unlocks.includes(item.key);if(!unlocked){toast('Discover this item in the Fusion Lab');return;}if(item.cost>state.essence){toast(`You need ${item.cost-state.essence} more Essence`);return;}if(item.cost)state.essence-=item.cost;const id=state.nextId++;const obj={id,type:item.type,name:item.name,u:.46+Math.random()*.08,v:.52+Math.random()*.08,rot:0,tint:item.tint};if(isPlant(obj))obj.plant={water:70,growth:28,bloom:false};state.objects.push(obj);state.selectedId=id;state.newUnlocks=state.newUnlocks.filter(k=>k!==item.key);playChime();burstAt(worldToScreen(obj.u,obj.v),item.tint,14);updateUI();saveGame();}
 function deleteSelected(){const o=selected();if(!o)return toast('Select an object first');state.objects=state.objects.filter(x=>x!==o);state.selectedId=null;toast(`${o.name} returned to storage`);updateUI();saveGame();}
 function rotateSelected(){const o=selected();if(!o)return toast('Select an object first');o.rot=(o.rot||0)+Math.PI/4;playTick();saveGame();}
@@ -673,23 +760,33 @@ function buildControls(){
 }
 
 function renderIngredients(){const grid=q('ingredientGrid');grid.innerHTML='';for(const [key,m] of Object.entries(ingredients)){const b=document.createElement('button');b.className='ingredient'+(fusionPick.includes(key)?' selected':'');b.innerHTML=`<span class="big">${m.icon}</span><span>${m.name}</span><span>× ${state.inventory[key]||0}</span>`;b.disabled=(state.inventory[key]||0)<1;b.addEventListener('click',()=>{const i=fusionPick.indexOf(key);if(i>=0)fusionPick.splice(i,1);else{if(fusionPick.length>=2)fusionPick.shift();fusionPick.push(key);}renderIngredients();});grid.appendChild(b);}q('slotA').textContent=fusionPick[0]?ingredients[fusionPick[0]].icon:'?';q('slotB').textContent=fusionPick[1]?ingredients[fusionPick[1]].icon:'?';}
-q('fuseNowBtn').addEventListener('click',()=>{if(fusionPick.length!==2)return toast('Choose two materials');const[a,b]=fusionPick;if((state.inventory[a]||0)<1||(state.inventory[b]||0)<1)return toast('Not enough materials');state.inventory[a]--;state.inventory[b]--;const key=[a,b].sort().join('|'),recipe=recipes[key];if(recipe){const isNew=!state.unlocks.includes(recipe.key);if(isNew){state.unlocks.push(recipe.key);state.newUnlocks.push(recipe.key);}q('fusionResult').textContent=`${recipe.icon} ${recipe.name} ${isNew?'unlocked!':'refined into +12 Essence'}`;if(isNew){const id=state.nextId++;const obj={id,type:recipe.type,name:recipe.name,u:.5,v:.47,rot:0,tint:recipe.tint};if(isPlant(obj))obj.plant={water:82,growth:45,bloom:false};state.objects.push(obj);state.selectedId=id;}else state.essence+=12;playMagic();burstAt(worldToScreen(.5,.47),recipe.tint,34);}
+q('fuseNowBtn').addEventListener('click',()=>{if(fusionPick.length!==2)return toast('Choose two materials');const[a,b]=fusionPick;if((state.inventory[a]||0)<1||(state.inventory[b]||0)<1)return toast('Not enough materials');state.inventory[a]--;state.inventory[b]--;const key=[a,b].sort().join('|'),recipe=recipes[key];if(recipe){const isNew=!state.unlocks.includes(recipe.key);if(isNew){state.unlocks.push(recipe.key);state.newUnlocks.push(recipe.key);}q('fusionResult').textContent=`${recipe.icon} ${recipe.name} ${isNew?'unlocked!':'refined into +12 Essence'}`;if(isNew){const id=state.nextId++;const obj={id,type:recipe.type,name:recipe.name,u:.5,v:.47,rot:0,tint:recipe.tint};if(isPlant(obj))obj.plant={water:82,growth:45,bloom:false};state.objects.push(obj);state.selectedId=id;if(window.__MBM_V6_FINISH__)window.__MBM_V6_FINISH__(worldToScreen(.5,.47),recipe.name);}else state.essence+=12;playMagic();burstAt(worldToScreen(.5,.47),recipe.tint,34);}
  else{const reward=8+Math.floor(Math.random()*7);state.essence+=reward;q('fusionResult').textContent=`Experimental essence created: +${reward} ✨`;playChime();}
  fusionPick=[];renderIngredients();updateUI();saveGame();});
 
-// Audio engine
-let audioCtx=null,rainGain=null,fireGain=null,vinylGain=null,lofiGain=null,lofiTimer=null,fireTimer=null;
+// Audio engine — V6 routes every voice through one compressed, resumable bus.
+let audioCtx=null,rainGain=null,fireGain=null,vinylGain=null,lofiGain=null,lofiTimer=null,fireTimer=null,audioMaster=null;
+function audioOut(){
+ if(!audioCtx)return null;
+ if(!audioMaster){
+   const compressor=audioCtx.createDynamicsCompressor(),masterGain=audioCtx.createGain(),now=audioCtx.currentTime;
+   compressor.threshold.setValueAtTime(-18,now);compressor.knee.setValueAtTime(12,now);compressor.ratio.setValueAtTime(8,now);compressor.attack.setValueAtTime(.003,now);compressor.release.setValueAtTime(.15,now);
+   masterGain.gain.setValueAtTime(.82,now);compressor.connect(masterGain);masterGain.connect(audioCtx.destination);
+   audioMaster={input:compressor,gain:masterGain,compressor};
+ }
+ return audioMaster.input;
+}
 function initAudio(){if(audioCtx){if(audioCtx.state==='suspended')audioCtx.resume();return;}const A=window.AudioContext||window.webkitAudioContext;if(!A)return;audioCtx=new A();const length=audioCtx.sampleRate*2,buf=audioCtx.createBuffer(1,length,audioCtx.sampleRate),d=buf.getChannelData(0);for(let i=0;i<length;i++)d[i]=Math.random()*2-1;
- const makeNoise=(type,freq)=>{const s=audioCtx.createBufferSource(),f=audioCtx.createBiquadFilter(),g=audioCtx.createGain();s.buffer=buf;s.loop=true;f.type=type;f.frequency.value=freq;g.gain.value=0;s.connect(f);f.connect(g);g.connect(audioCtx.destination);s.start();return g;};rainGain=makeNoise('lowpass',900);fireGain=makeNoise('lowpass',150);vinylGain=makeNoise('highpass',2300);lofiGain=audioCtx.createGain();lofiGain.gain.value=0;lofiGain.connect(audioCtx.destination);fireTimer=setInterval(()=>{if(!state.audio.fire||!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='triangle';o.frequency.setValueAtTime(230+Math.random()*440,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(45,audioCtx.currentTime+.045);g.gain.setValueAtTime((.025+Math.random()*.06)*state.audio.fireVol,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.045);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.05);},170);applyAudio();}
+ const makeNoise=(type,freq)=>{const s=audioCtx.createBufferSource(),f=audioCtx.createBiquadFilter(),g=audioCtx.createGain();s.buffer=buf;s.loop=true;f.type=type;f.frequency.value=freq;g.gain.value=0;s.connect(f);f.connect(g);g.connect(audioOut());s.start();return g;};rainGain=makeNoise('lowpass',900);fireGain=makeNoise('lowpass',150);vinylGain=makeNoise('highpass',2300);lofiGain=audioCtx.createGain();lofiGain.gain.value=0;lofiGain.connect(audioOut());fireTimer=setInterval(()=>{if(!state.audio.fire||!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='triangle';o.frequency.setValueAtTime(230+Math.random()*440,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(45,audioCtx.currentTime+.045);g.gain.setValueAtTime((.025+Math.random()*.06)*state.audio.fireVol,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.045);o.connect(g);g.connect(audioOut());o.start();o.stop(audioCtx.currentTime+.05);},170);applyAudio();}
 function applyAudio(){if(!audioCtx)return;rainGain.gain.setTargetAtTime(state.audio.rain?state.audio.rainVol*.25:0,audioCtx.currentTime,.25);fireGain.gain.setTargetAtTime(state.audio.fire?state.audio.fireVol*.32:0,audioCtx.currentTime,.25);vinylGain.gain.setTargetAtTime(state.audio.vinyl?state.audio.vinylVol*.045:0,audioCtx.currentTime,.25);lofiGain.gain.setTargetAtTime(state.audio.vinyl?state.audio.vinylVol*.42:0,audioCtx.currentTime,.25);if(state.audio.vinyl&&!lofiTimer){playChord();lofiTimer=setInterval(playChord,3100);}else if(!state.audio.vinyl&&lofiTimer){clearInterval(lofiTimer);lofiTimer=null;}}
 function playChord(){if(!state.audio.vinyl||!audioCtx)return;const progressions=[[261.63,329.63,392,493.88],[220,261.63,329.63,392],[293.66,349.23,440,523.25],[196,246.94,293.66,349.23]],notes=progressions[Math.floor(time/3)%progressions.length],filter=audioCtx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=760;filter.connect(lofiGain);for(const f of notes){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.001,audioCtx.currentTime);g.gain.linearRampToValueAtTime(.045,audioCtx.currentTime+.25);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+2.8);o.connect(g);g.connect(filter);o.start();o.stop(audioCtx.currentTime+2.9);}}
-function tone(freq=520,dur=.12,type='sine',gain=.18){initAudio();if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.setValueAtTime(freq,audioCtx.currentTime);g.gain.setValueAtTime(gain,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur);}
+function tone(freq=520,dur=.12,type='sine',gain=.18){initAudio();if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.setValueAtTime(freq,audioCtx.currentTime);g.gain.setValueAtTime(gain,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);o.connect(g);g.connect(audioOut());o.start();o.stop(audioCtx.currentTime+dur);}
 function playTick(){tone(620,.08,'sine',.1)}
 function playChime(){[523,659,784].forEach((f,i)=>setTimeout(()=>tone(f,.28,'sine',.16),i*70))}
 function playMagic(){[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>tone(f,.34,'triangle',.17),i*75))}
 function playSnip(){tone(860,.09,'triangle',.2)}
-function playWater(){initAudio();if(!audioCtx)return;const len=audioCtx.sampleRate*.18,b=audioCtx.createBuffer(1,len,audioCtx.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;const s=audioCtx.createBufferSource(),f=audioCtx.createBiquadFilter(),g=audioCtx.createGain();s.buffer=b;f.type='bandpass';f.frequency.value=1300;f.Q.value=5;g.gain.setValueAtTime(.22,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.18);s.connect(f);f.connect(g);g.connect(audioCtx.destination);s.start();}
-function playPurr(){initAudio();if(!audioCtx)return;const o1=audioCtx.createOscillator(),o2=audioCtx.createOscillator(),g=audioCtx.createGain();o1.type='sawtooth';o2.type='sine';o1.frequency.value=29;o2.frequency.value=58;g.gain.setValueAtTime(.18,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.9);o1.connect(g);o2.connect(g);g.connect(audioCtx.destination);o1.start();o2.start();o1.stop(audioCtx.currentTime+.9);o2.stop(audioCtx.currentTime+.9);}
+function playWater(){initAudio();if(!audioCtx)return;const len=audioCtx.sampleRate*.18,b=audioCtx.createBuffer(1,len,audioCtx.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;const s=audioCtx.createBufferSource(),f=audioCtx.createBiquadFilter(),g=audioCtx.createGain();s.buffer=b;f.type='bandpass';f.frequency.value=1300;f.Q.value=5;g.gain.setValueAtTime(.22,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.18);s.connect(f);f.connect(g);g.connect(audioOut());s.start();}
+function playPurr(){initAudio();if(!audioCtx)return;const o1=audioCtx.createOscillator(),o2=audioCtx.createOscillator(),g=audioCtx.createGain();o1.type='sawtooth';o2.type='sine';o1.frequency.value=29;o2.frequency.value=58;g.gain.setValueAtTime(.18,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.9);o1.connect(g);o2.connect(g);g.connect(audioOut());o1.start();o2.start();o1.stop(audioCtx.currentTime+.9);o2.stop(audioCtx.currentTime+.9);}
 q('rainToggle').checked=state.audio.rain;q('fireToggle').checked=state.audio.fire;q('vinylToggle').checked=state.audio.vinyl;q('rainVolume').value=state.audio.rainVol;q('fireVolume').value=state.audio.fireVol;q('vinylVolume').value=state.audio.vinylVol;
 for(const [toggle,key] of [['rainToggle','rain'],['fireToggle','fire'],['vinylToggle','vinyl']])q(toggle).addEventListener('change',e=>{initAudio();state.audio[key]=e.target.checked;applyAudio();saveGame();});for(const [id,key] of [['rainVolume','rainVol'],['fireVolume','fireVol'],['vinylVolume','vinylVol']])q(id).addEventListener('input',e=>{state.audio[key]=Number(e.target.value);applyAudio();saveGame();});
 
@@ -756,6 +853,7 @@ function closeSplash(){
  initAudio(); q('splash').style.display='none'; updateUI(); toast('Welcome home ✦');
  const target=q('settingsBtn')&&q('settingsBtn').offsetParent!==null?q('settingsBtn'):document.querySelector('#rightTools .tool');
  if(target){try{target.focus({preventScroll:true})}catch(_){target.focus()}}
+ if(window.__MBM_V6_DIRECTOR_START__)window.__MBM_V6_DIRECTOR_START__();
  return true;
 }
 function splashKeyHandler(e){
@@ -790,9 +888,135 @@ addEventListener('keydown',e=>{
  else if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();deleteSelected();}
  else if(e.key==='w'||e.key==='W')setTool('water');
  else if(e.key==='p'||e.key==='P')setTool('prune');
+ else if(e.key==='h'||e.key==='H')setTool('hand');
+ else if(e.key==='f'||e.key==='F'){renderIngredients();openModal('fusionModal');}
+ else if(e.key==='s'||e.key==='S')openModal('saveModal');
+ else if(document.activeElement===canvas&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){
+   const o=selected();if(!o)return;e.preventDefault();const step=e.shiftKey ? .01 : .025;
+   if(e.key==='ArrowLeft')o.u=clamp(o.u-step,.04,.96);else if(e.key==='ArrowRight')o.u=clamp(o.u+step,.04,.96);else if(e.key==='ArrowUp')o.v=clamp(o.v-step,.05,.96);else o.v=clamp(o.v+step,.05,.96);
+   saveGame();if(window.__MBM_V6_ANNOUNCE__)window.__MBM_V6_ANNOUNCE__(`${o.name} moved to ${Math.round(o.u*100)}, ${Math.round(o.v*100)}`);
+ }
+ else if(document.activeElement===canvas&&e.key==='Enter'){
+   e.preventDefault();if(!selected()&&state.objects.length){state.selectedId=[...state.objects].sort((a,b)=>b.v-a.v)[0].id;updateUI();if(window.__MBM_V6_ANNOUNCE__)window.__MBM_V6_ANNOUNCE__(`${selected().name} selected`);}
+ }
 });
 
 buildControls();updateUI();renderIngredients();
+})();
+</script>
+<script>
+/* Lumina Haven AAA V6 shell. Gameplay authority remains in the original IIFE
+   above; this layer observes canonical saves and adds presentation/input only. */
+(()=>{
+'use strict';
+const VERSION='6.0.0',GAME_ID='lumina-haven',TICK_HZ=60;
+const LEGACY_KEY='mbm_lumina_haven_state_v1',PROFILE_KEY='mbm_lumina_haven_v6_profile';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const legacyBefore=(()=>{try{return localStorage.getItem(LEGACY_KEY)}catch(_){return null}})();
+let storageReady=true,profile;
+function blankProfile(){return{version:6,gameId:GAME_ID,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),settings:{calm:false},stats:{milestones:0,essence:0,objects:0,unlocks:0,materials:0},migration:{sourceKey:LEGACY_KEY,captured:legacyBefore!==null,legacyBytes:legacyBefore?legacyBefore.length:0,nonDestructive:false}}}
+function sanitiseProfile(raw){
+ const p=blankProfile();if(!raw||typeof raw!=='object'||Array.isArray(raw)||Number(raw.version)!==6)return p;
+ p.createdAt=typeof raw.createdAt==='string'?raw.createdAt:p.createdAt;
+ p.updatedAt=typeof raw.updatedAt==='string'?raw.updatedAt:p.updatedAt;
+ p.settings.calm=!!(raw.settings&&raw.settings.calm);
+ if(raw.stats&&typeof raw.stats==='object')for(const k of Object.keys(p.stats)){const n=Number(raw.stats[k]);if(Number.isFinite(n))p.stats[k]=Math.max(0,Math.floor(n));}
+ p.migration=Object.assign(p.migration,raw.migration&&typeof raw.migration==='object'?raw.migration:{});
+ p.version=6;p.gameId=GAME_ID;return p;
+}
+try{profile=sanitiseProfile(JSON.parse(localStorage.getItem(PROFILE_KEY)||'null'));}catch(_){profile=blankProfile();storageReady=false}
+function summariseLegacy(raw){
+ if(!raw)return;try{const s=JSON.parse(raw);if(!s||typeof s!=='object')return;
+   profile.stats.essence=Math.max(0,Math.floor(Number(s.essence)||0));
+   profile.stats.objects=Array.isArray(s.objects)?s.objects.length:0;
+   profile.stats.unlocks=Array.isArray(s.unlocks)?s.unlocks.length:0;
+   profile.stats.materials=s.inventory&&typeof s.inventory==='object'?Object.values(s.inventory).reduce((a,n)=>a+(Number(n)||0),0):0;
+ }catch(_){}
+}
+function saveProfile(){profile.updatedAt=new Date().toISOString();try{localStorage.setItem(PROFILE_KEY,JSON.stringify(profile));storageReady=true;return true}catch(_){storageReady=false;return false}}
+summariseLegacy(legacyBefore);saveProfile();
+const legacyAfterMigration=(()=>{try{return localStorage.getItem(LEGACY_KEY)}catch(_){return null}})();
+const migrationVerified=legacyBefore===legacyAfterMigration;
+profile.migration.nonDestructive=migrationVerified;saveProfile();
+let lastLegacy=legacyAfterMigration;
+setInterval(()=>{let raw=null;try{raw=localStorage.getItem(LEGACY_KEY)}catch(_){}if(raw!==lastLegacy){lastLegacy=raw;summariseLegacy(raw);saveProfile()}},4000);
+
+function announce(message){const el=$('#v6A11y');if(el)el.textContent=message||''}
+window.__MBM_V6_ANNOUNCE__=announce;
+let lastForecast='';
+window.__MBM_V6_FORECAST__=message=>{if(message===lastForecast)return;lastForecast=message;const el=$('#v6ForecastLabel');if(!el)return;el.textContent=message||'';el.classList.toggle('show',!!message)};
+
+/* Portrait tray forwards deliberate taps to canonical controls, retaining the
+   original writers and action handlers as the only authority. */
+function syncTray(){
+ const tool=$('#rightTools .tool[data-tool].active');
+ $$('#v6Tray .v6TrayBtn').forEach(b=>b.classList.toggle('active',!!tool&&b.dataset.v6Target===`.tool[data-tool='${tool.dataset.tool}']`));
+}
+$$('#v6Tray [data-v6-target]').forEach(b=>b.addEventListener('click',()=>{const target=$(b.dataset.v6Target);if(target){target.click();syncTray();target.setAttribute('data-v6-forwarded','true')}}));
+new MutationObserver(syncTray).observe($('#rightTools'),{subtree:true,attributes:true,attributeFilter:['class']});syncTray();
+
+/* V6-only calm preference never rewrites the canonical haven state. */
+const calmBtn=$('#v6CalmBtn');
+function applyCalm(){document.body.classList.toggle('v6Calm',profile.settings.calm);if(calmBtn){calmBtn.classList.toggle('active',profile.settings.calm);calmBtn.setAttribute('aria-pressed',String(profile.settings.calm));calmBtn.textContent=profile.settings.calm?'🫧 Calm presentation on':'🫧 Calm presentation off'}}
+if(calmBtn)calmBtn.addEventListener('click',()=>{profile.settings.calm=!profile.settings.calm;applyCalm();saveProfile();announce(profile.settings.calm?'Calm presentation on':'Calm presentation off')});applyCalm();
+
+/* True modal isolation augments the original focus trap. */
+const inertRoots=['#game','#topBar','#leftPanel','#rightTools','#catalog','#inspector','#status','#v6Tray'];
+function syncInert(){const open=$('.modal.open'),director=$('#v6Director.active');for(const sel of inertRoots){const el=$(sel);if(el)el.inert=!!(open||director)}}
+$$('.modal').forEach(m=>new MutationObserver(syncInert).observe(m,{attributes:true,attributeFilter:['class']}));
+
+/* 1.8-second skippable fly-in. It is presentation-only and does not pause or
+   alter the fixed-step haven simulation. */
+const director=$('#v6Director');let directorTimer=0,directorActive=false;
+function endDirector(){if(!directorActive)return;directorActive=false;clearTimeout(directorTimer);director.classList.remove('active');document.body.classList.remove('v6Fly');director.setAttribute('aria-hidden','true');syncInert();const canvas=$('#game');if(canvas)canvas.focus({preventScroll:true})}
+function startDirector(){
+ if(directorActive)return;directorActive=true;director.classList.add('active');director.setAttribute('aria-hidden','false');document.body.classList.add('v6Fly');syncInert();director.focus({preventScroll:true});
+ directorTimer=setTimeout(endDirector,profile.settings.calm||matchMedia('(prefers-reduced-motion: reduce)').matches?320:1800);
+}
+window.__MBM_V6_DIRECTOR_START__=startDirector;
+director.addEventListener('pointerdown',e=>{e.preventDefault();endDirector()});
+document.addEventListener('keydown',e=>{if(!directorActive||!['Escape','Enter',' ','Spacebar'].includes(e.key))return;e.preventDefault();e.stopPropagation();endDirector()},true);
+
+/* Critical hydration feedback: camera emphasis and haptics only. */
+let clutchTimer=0;
+window.__MBM_V6_CLUTCH__=(point,label)=>{
+ if(profile.settings.calm||matchMedia('(prefers-reduced-motion: reduce)').matches)return announce(label);
+ clearTimeout(clutchTimer);const x=Math.max(0,Math.min(100,(point.x/innerWidth)*100)),y=Math.max(0,Math.min(100,(point.y/innerHeight)*100));
+ document.body.style.setProperty('--v6-cam-x',x+'%');document.body.style.setProperty('--v6-cam-y',y+'%');document.body.classList.remove('v6Clutch');void document.body.offsetWidth;document.body.classList.add('v6Clutch');
+ try{if(navigator.vibrate)navigator.vibrate([24,28,18])}catch(_){}announce('Clutch care. '+label);clutchTimer=setTimeout(()=>document.body.classList.remove('v6Clutch'),460);
+};
+
+/* Milestone ascension celebrates a Golden Bloom or first-time fusion unlock.
+   Its particles are isolated from forage, inventory, reward and save seeds. */
+const fx=$('#v6Fx'),fxCtx=fx.getContext&&fx.getContext('2d');let ascent=null;
+function resizeFx(){const d=Math.min(devicePixelRatio||1,2);fx.width=Math.round(innerWidth*d);fx.height=Math.round(innerHeight*d);fx.style.width=innerWidth+'px';fx.style.height=innerHeight+'px';if(fxCtx)fxCtx.setTransform(d,0,0,d,0,0)}
+addEventListener('resize',resizeFx);resizeFx();
+function drawAscent(now){if(!ascent||!fxCtx)return;fxCtx.clearRect(0,0,innerWidth,innerHeight);const elapsed=now-ascent.started;fxCtx.save();fxCtx.globalCompositeOperation='lighter';
+ for(let i=0;i<ascent.sparks.length;i++){const s=ascent.sparks[i],local=elapsed-s.delay;if(local<0)continue;const p=Math.min(1,local/620),u=1-p,x=u*u*s.x+2*u*p*s.cx+p*p*s.tx,y=u*u*s.y+2*u*p*s.cy+p*p*s.ty;fxCtx.globalAlpha=Math.max(.18,1-p*.45);fxCtx.fillStyle=i%3?'#fff4cf':'#8ce7db';fxCtx.shadowColor=i%2?'#d7a7ff':'#8ce7db';fxCtx.shadowBlur=13;fxCtx.beginPath();fxCtx.arc(x,y,p>=1?2.6:2.1,0,Math.PI*2);fxCtx.fill();if(p>=1){fxCtx.globalAlpha=.42+.25*Math.sin(now/150+i);fxCtx.fillRect(x-7,y-.7,14,1.4);fxCtx.fillRect(x-.7,y-7,1.4,14)}}
+ fxCtx.restore();if(elapsed<1500)requestAnimationFrame(drawAscent);else{fxCtx.clearRect(0,0,innerWidth,innerHeight);ascent=null}}
+window.__MBM_V6_FINISH__=(point,label)=>{if(!fxCtx)return;profile.stats.milestones++;saveProfile();announce(label+' milestone complete. Constellation ascension.');if(profile.settings.calm||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ const n=10,sparks=[];for(let i=0;i<n;i++){const tx=innerWidth*(.18+i/(n-1)*.64),ty=48+Math.sin(i*1.35)*28;sparks.push({x:point.x,y:point.y,cx:(point.x+tx)/2+(i%2?-34:34),cy:Math.min(point.y,ty)-80,tx,ty,delay:i*62})}ascent={started:performance.now(),sparks};requestAnimationFrame(drawAscent)};
+
+document.addEventListener('visibilitychange',()=>{if(document.hidden){endDirector();document.body.classList.remove('v6Clutch')}});
+addEventListener('pageshow',()=>syncTray());
+
+function runSelfTest(){
+ const ids=$$('[id]').map(el=>el.id),mainText=$$('script:not([src])').map(s=>s.textContent).join('\n');
+ const checks={
+   exactVersion:VERSION==='6.0.0',gameIdentity:GAME_ID==='lumina-haven',fixedAuthority:mainText.includes('const FIXED=1/60')&&mainText.includes('while(acc>=FIXED&&steps<8)'),
+   renderInterpolation:mainText.includes('const fixedTime=time')&&mainText.includes('acc/FIXED'),intentSelection:mainText.includes('function hitObjectIntent('),
+   compressedMaster:mainText.includes('createDynamicsCompressor()')&&mainText.includes('function audioOut()'),schema6:profile.version===6&&profile.gameId===GAME_ID,
+   newProfileKey:PROFILE_KEY!==LEGACY_KEY&&profile.migration.sourceKey===LEGACY_KEY,nonDestructiveMigration:migrationVerified&&profile.migration.nonDestructive===true,
+   canonicalWriter:mainText.includes('localStorage.setItem(SAVE_KEY,JSON.stringify(state))'),uniqueIds:new Set(ids).size===ids.length,
+   accessibleCanvas:$('#game').getAttribute('tabindex')==='0'&&$('#game').getAttribute('role')==='application',modalLabels:$$('.modal[role="dialog"][aria-modal="true"]').every(m=>!!m.getAttribute('aria-labelledby')),
+   zoomEnabled:!$('meta[name="viewport"]').content.includes('user-scalable=no')&&!$('meta[name="viewport"]').content.includes('maximum-scale'),
+   standalone:$$('script[src]').length===0,profileWritable:storageReady&&(()=>{try{return JSON.parse(localStorage.getItem(PROFILE_KEY)||'{}').version===6}catch(_){return false}})(),
+   portraitTray:!!$('#v6Tray')&&$$('#v6Tray button').every(b=>b.getAttribute('aria-label')&&b.tagName==='BUTTON'),visibilitySafety:mainText.includes("document.addEventListener('visibilitychange'")
+ };
+ const ok=Object.values(checks).every(Boolean);return{ok,pass:ok,version:VERSION,gameId:GAME_ID,tickHz:TICK_HZ,checks};
+}
+window.__MBM_V6_RELEASE__={version:VERSION,gameId:GAME_ID,tickHz:TICK_HZ,features:['full-viewport-safe-area-shell','portrait-dead-zone-control-tray','zoom-enabled','44px-touch-controls','keyboard-aria-focus-inert','reduced-motion-and-calm','visibility-and-audio-route-safety','fixed-60hz-authority','sub-frame-render-interpolation','intent-priority-selection','composition-and-hydration-forecast','compressed-resumable-webaudio-master','schema-6-nondestructive-profile-migration','skippable-orbital-fly-in','clutch-care-camera','constellation-milestone-ascension','offline-single-file'],selfTest:runSelfTest};
+syncInert();
 })();
 </script>
 <noscript><div style="position:fixed;inset:0;background:#120d18;color:#fff;padding:30px;z-index:300"><h1>Lumina Haven</h1><p>This game needs JavaScript enabled.</p></div></noscript>

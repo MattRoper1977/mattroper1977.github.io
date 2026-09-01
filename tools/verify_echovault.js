@@ -37,13 +37,15 @@ const remote=s=>[...s.matchAll(RUNTIME_SRC),...s.matchAll(RUNTIME_LINK)].map(m=>
  * then rendered nothing for months because no gate ever looked. Here the
  * rendering is proven in a browser by tools/verify_inline_exit.mjs, and the
  * region's byte-equality across the eleven is proven there too. */
-gate('G1','single file, single game script, plus the stamped exit region',()=>{
+gate('G1','single file, one authority script, one V6 shell, plus the stamped exit region',()=>{
   const game=stripExitRegion(html);
   const o=(game.match(/<script/g)||[]).length, c=(game.match(/<\/script>/g)||[]).length;
-  assert(o===1&&c===1,`expected one script element in the game itself, saw ${o}/${c}`);
+  assert(o===2&&c===2,`expected authority + V6 shell script elements, saw ${o}/${c}`);
+  assert((game.match(/id="mbm-v6-release"/g)||[]).length===1,'the one named V6 release shell is absent or duplicated');
+  assert((game.match(/window\.__MBM_V6_RELEASE__/g)||[]).length===1,'the V6 release API is absent or duplicated');
   assert(hasExitRegion(html),'the stamped inline exit region is missing — this game has no way out');
   assert(!/\bsrc\s*=/i.test(exitRegion(html)),'the exit region fetches something; it must stay inline');
-  return `${bytes} bytes, sha256 ${sha.slice(0,12)}… · 1 game script + exit region (${Buffer.byteLength(exitRegion(html))} B)`;
+  return `${bytes} bytes, sha256 ${sha.slice(0,12)}… · 1 authority script + 1 V6 shell + exit region (${Buffer.byteLength(exitRegion(html))} B)`;
 });
 gate('G2','no remote runtime resources (corrected form)',()=>{
   const r=remote(html);
@@ -103,6 +105,8 @@ gate('G9','positive controls — every family proven sighted',()=>{
     assert(caught,`control "${name}" did NOT trip its gate — that gate is vacuous`); names.push(name); };
   check('remote script injected',s=>s.replace('<title>','<script src="https://cdn.example.com/x.js"></script><title>'),
     s=>{ if(remote(s).length) throw 0; });
+  check('V6 shell duplicated',s=>s.replace('</body>','<script id="mbm-v6-release">window.__MBM_V6_RELEASE__={};</script></body>'),
+    s=>{ const game=stripExitRegion(s),o=(game.match(/<script/g)||[]).length,n=(game.match(/id="mbm-v6-release"/g)||[]).length;if(o!==2||n!==1)throw 0; });
   check('canonical moved',s=>s.replace(CANON,'https://example.com/x/'),
     s=>{ const c=(s.match(/<link rel="canonical" href="([^"]+)"/)||[])[1]; if(c!==CANON) throw 0; });
   check('legacy key restored',s=>s.replace("'mbm_echovault_v1'","'madebymatt.echoVault.v1'"),

@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Off-Brand: After Hours — V4 Roadmap Milestone 2</title>
+<meta name="description" content="Off-Brand: After Hours AAA V6 — a standalone, accessible stealth-deduction game with deterministic cases, observable forensics and predictive threat reads.">
+<title>Off-Brand: After Hours — AAA V6</title>
 <link rel="canonical" href="https://madebymatt.uk/offbrand/">
 <style>
 :root{
@@ -310,6 +311,19 @@ body.rm #cap{transition:none;}
  #topbar{min-height:48px;flex-wrap:nowrap;padding-top:calc(5px + env(safe-area-inset-top));padding-bottom:4px}
  #botbar{grid-template-columns:repeat(6,minmax(0,1fr));padding-top:4px;gap:4px}.bbtn{min-height:44px;padding:3px 1px}.bbtn small{display:none}
 }
+/* ================= AAA V6 VIEWPORT + INTELLIGENCE LAYER ================= */
+html,body{height:100%;height:100dvh}body{overscroll-behavior:none}
+#v6badge{position:fixed;z-index:65;left:max(112px,calc(112px + env(safe-area-inset-left)));top:max(12px,env(safe-area-inset-top));padding:5px 9px;border-radius:999px;background:linear-gradient(135deg,var(--mint),var(--amber));color:var(--navy);font:800 9px/1 Poppins,system-ui,sans-serif;letter-spacing:.12em;box-shadow:0 7px 24px #0008}
+#v6intel{position:absolute;inset:0;z-index:5;width:100%;height:100%;pointer-events:none}
+#v6read{position:absolute;z-index:7;left:50%;bottom:10px;transform:translateX(-50%);max-width:min(680px,calc(100% - 24px));padding:7px 11px;border-radius:11px;background:rgba(15,20,48,.9);border:1px solid rgba(185,230,205,.4);color:var(--cream);font:700 10px/1.35 Poppins,system-ui,sans-serif;text-align:center;pointer-events:none;opacity:0;transition:opacity .18s}#v6read.on{opacity:1}
+#v6clutch{position:fixed;inset:0;z-index:54;display:grid;place-items:center;pointer-events:none;opacity:0;background:radial-gradient(circle,rgba(167,139,250,.18),transparent 48%);color:#fff;font:800 clamp(28px,7vw,60px)/1 Poppins,system-ui,sans-serif;letter-spacing:.09em;text-shadow:0 0 28px var(--violet)}#v6clutch.on{animation:v6Clutch .75s ease both}
+#v6ascent{position:fixed;inset:0;z-index:55;pointer-events:none;overflow:hidden}.v6mark{position:absolute;left:50%;bottom:12%;width:9px;height:9px;border-radius:3px;background:var(--cream);box-shadow:0 0 16px var(--mint),0 0 30px var(--violet);animation:v6Asc 1.5s var(--d) cubic-bezier(.2,.75,.25,1) both}
+.v6-fly #cvwrap{animation:v6Fly 1.35s cubic-bezier(.2,.8,.2,1) both}
+@keyframes v6Fly{0%{filter:brightness(.45) saturate(.7);transform:scale(1.06)}100%{filter:none;transform:none}}@keyframes v6Clutch{0%{opacity:0;transform:scale(.86)}24%,65%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.12)}}@keyframes v6Asc{0%{opacity:0;transform:translate(0,0) rotate(0) scale(.4)}18%{opacity:1}100%{opacity:0;transform:translate(var(--x),-84vh) rotate(260deg) scale(1.35)}}
+button,.bbtn,.pbtn,.chip{min-height:44px}
+@media(orientation:landscape){#botbar{position:fixed;left:50%;bottom:max(8px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(800px,calc(100vw - 120px));padding:6px 8px;border:1px solid rgba(185,230,205,.24);border-radius:16px;background:rgba(15,20,48,.86);backdrop-filter:blur(10px);box-shadow:0 10px 35px #0008}.bbtn{min-height:48px;padding:5px 4px}#v6read{bottom:72px}}
+@media(orientation:portrait){:root{--v6tray:126px}#botbar{position:relative;flex:0 0 var(--v6tray);width:100%;padding:8px max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));background:linear-gradient(180deg,rgba(22,29,61,.82),rgba(15,20,48,.99));border-radius:18px 18px 0 0}.bbtn{min-height:52px}#v6read{bottom:8px}#v6badge{left:max(108px,calc(108px + env(safe-area-inset-left)))}}
+@media(prefers-reduced-motion:reduce){#v6clutch.on,.v6mark,.v6-fly #cvwrap{animation:none!important}#v6clutch.on{opacity:1}}
 </style>
 </head>
 <body>
@@ -368,6 +382,9 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 })();</script>
 <!-- MBM-MAKER-SPLASH:END -->
 
+<div id="v6badge" aria-label="Made by Matt AAA V6 release">MADE BY MATT · AAA V6</div>
+<div id="v6clutch" role="status" aria-live="polite">CLEAN GETAWAY</div>
+<div id="v6ascent" aria-hidden="true"></div>
 <!-- ============ SPLASH ============ -->
 <div class="scr on" id="scrSplash" role="button" tabindex="0" data-mbm-primary-start aria-label="Made by Matt. Press Enter or tap to continue.">
   <div class="spWrap spGl">
@@ -446,7 +463,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       <div id="taskWrap"><div class="barlbl">COMMISSION</div><div id="taskBar"><div id="taskFill"></div></div></div>
       <div id="shields" aria-label="Integrity"><span>🛡</span><span>🛡</span><span>🛡</span></div>
     </div>
-    <div id="cvwrap"><canvas id="cv" role="application" tabindex="0" aria-label="Workshop floor with wall occlusion and fading surface prints. Move with arrow keys or W A S D, press E or Space for the nearby action, F for Focus, C for Probability, Q for your role ability, and Escape to pause."></canvas><div id="alert" role="status" aria-live="assertive"></div><div id="toast" role="status" aria-live="polite"></div><div id="cap" role="status" aria-live="polite" aria-atomic="true"></div>
+    <div id="cvwrap"><canvas id="cv" role="application" tabindex="0" aria-label="Workshop floor with wall occlusion and fading surface prints. Move with arrow keys or W A S D, press E or Space for the nearby action, F for Focus, C for Probability, Q for your role ability, and Escape to pause."></canvas><canvas id="v6intel" aria-hidden="true"></canvas><div id="v6read" role="status" aria-live="polite"></div><div id="alert" role="status" aria-live="assertive"></div><div id="toast" role="status" aria-live="polite"></div><div id="cap" role="status" aria-live="polite" aria-atomic="true"></div>
       <div id="tut" role="status" aria-live="polite"><span id="tutStep"></span><span id="tutTx"></span><button id="tutSkip">SKIP</button></div>
     </div>
     <div id="botbar">
@@ -739,7 +756,7 @@ function loadSave(){
 function store(){try{localStorage.setItem('mbm_offbrand',JSON.stringify(SAVE));}catch(e){}}
 
 /* =============== M1: OPT-IN PROCEDURAL WORKSHOP AUDIO =============== */
-var AUDIO={ctx:null,master:null,bed:null,air:null,started:false,nextTick:0};
+var AUDIO={ctx:null,master:null,compressor:null,ceiling:null,bed:null,air:null,started:false,nextTick:0};
 function audioPaint(){
   var b=$('chipAudio');if(!b||!SAVE)return;
   b.textContent=SAVE.audio?'🔊 Sound: on':'🔇 Sound: off';
@@ -750,7 +767,10 @@ function audioEnsure(){
   var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return false;
   if(!AUDIO.ctx){
     var ac=AUDIO.ctx=new AC();
-    var master=AUDIO.master=ac.createGain();master.gain.value=0.0001;master.connect(ac.destination);
+    var comp=AUDIO.compressor=ac.createDynamicsCompressor(),ceiling=AUDIO.ceiling=ac.createGain();
+    comp.threshold.value=-18;comp.knee.value=12;comp.ratio.value=8;comp.attack.value=.003;comp.release.value=.15;
+    ceiling.gain.value=.82;comp.connect(ceiling);ceiling.connect(ac.destination);
+    var master=AUDIO.master=ac.createGain();master.gain.value=0.0001;master.connect(comp);
     var bed=AUDIO.bed=ac.createGain();bed.gain.value=.03;bed.connect(master);
     var hum=ac.createOscillator(),humG=ac.createGain();hum.type='sine';hum.frequency.value=55;humG.gain.value=.055;hum.connect(humG);humG.connect(bed);hum.start();
     var overtone=ac.createOscillator(),overG=ac.createGain();overtone.type='triangle';overtone.frequency.value=110;overG.gain.value=.012;overtone.connect(overG);overG.connect(bed);overtone.start();
@@ -3218,6 +3238,7 @@ if(typeof window!=='undefined'){window.OB={ver:GAME_VERSION,get S(){return S;},n
  DIFFS:DIFFS,DIF:DIF,GUIDE:GUIDE,seeIt:seeIt,guideCount:guideCount,openGuide:openGuide,openDiff:openDiff,
  TUT:TUT,tutStart:tutStart,tutStop:tutStop,stepTut:stepTut,glitchesLeft:glitchesLeft,glitchNames:glitchNames,
  doVerify:doVerify,store:store,
+ audioResume:audioEnsure,audioSuspend:audioOff,
  snapTarget:snapTarget,CLARA:CLARA,get PARADE(){return PARADE;},drawClara:drawClara,
  recordScene:recordScene,openScenes:openScenes,wipeScene:wipeScene,sceneOverlap:sceneOverlap,
  stillStanding:stillStanding,bodiesDown:bodiesDown,renderEvidence:renderEvidence,SCENE_RADIUS:SCENE_RADIUS,
@@ -3257,5 +3278,50 @@ if(document.body)mount();else document.addEventListener("DOMContentLoaded",mount
 }catch(e){}
 })();</script>
 <!-- MBM-INLINE-EXIT:END -->
+<script>
+/* ============ OFF-BRAND: AFTER HOURS AAA V6 — ISOLATED RELEASE SHELL ============
+   The deterministic case seed, routing, AI, collision, evidence, scoring, rewards,
+   progression and all legacy save writers remain authoritative in the V4.2 IIFE. */
+(function(){
+"use strict";
+var VERSION="6.0.0",GAME_ID="off-brand-after-hours",PROFILE_KEY="mbm_v6_offbrand_profile";
+var legacyKeys=["mbm_offbrand","mbm_arcade_passport_v4"],legacy={};
+legacyKeys.forEach(function(k){try{legacy[k]=localStorage.getItem(k);}catch(e){legacy[k]=null;}});
+var Profile={version:6,gameId:GAME_ID,settings:{},migration:{sourceKeys:legacyKeys.slice(),completed:true},updatedAt:new Date().toISOString()};
+try{var prior=JSON.parse(localStorage.getItem(PROFILE_KEY)||"null");if(prior&&prior.version===6)Profile=Object.assign(Profile,prior);Profile.settings=Profile.settings&&typeof Profile.settings==="object"?Profile.settings:{};var s=window.OB&&window.OB.SAVE;Profile.settings.sound=!!(s&&s.audio);Profile.settings.calm=!!(s&&s.calm);Profile.settings.reduced=!!(s&&s.motion===false);Profile.updatedAt=new Date().toISOString();localStorage.setItem(PROFILE_KEY,JSON.stringify(Profile));}catch(e){}
+var legacyPreserved=true;legacyKeys.forEach(function(k){try{if(localStorage.getItem(k)!==legacy[k])legacyPreserved=false;}catch(e){}});
+
+var layer=document.getElementById("v6intel"),gx=layer.getContext("2d"),read=document.getElementById("v6read"),cv=document.getElementById("cv"),lastEnd="",lastCine=false,lastDrift=0,lastPaused=false,hiddenPaused=false,intent=null;
+function fit(){var d=Math.min(2,window.devicePixelRatio||1),r=layer.getBoundingClientRect();layer.width=Math.max(1,Math.round(r.width*d));layer.height=Math.max(1,Math.round(r.height*d));gx.setTransform(d,0,0,d,0,0);}addEventListener("resize",fit);fit();
+function frameMap(){var r=layer.getBoundingClientRect(),sc=Math.min(r.width/960,r.height/640);return {r:r,s:sc,ox:(r.width-960*sc)/2,oy:(r.height-640*sc)/2};}
+function worldPointer(e){var m=frameMap();intent={x:(e.clientX-m.r.left-m.ox)/m.s,y:(e.clientY-m.r.top-m.oy)/m.s,until:performance.now()+900};}
+cv.addEventListener("pointerdown",worldPointer,{passive:true});cv.addEventListener("pointermove",function(e){if(e.pointerType!=="mouse"||e.buttons)worldPointer(e);},{passive:true});
+function line(points,col,dash){if(!points||!points.length)return;gx.strokeStyle=col;gx.lineWidth=2;gx.setLineDash(dash||[]);gx.beginPath();for(var i=0;i<points.length;i++)i?gx.lineTo(points[i].x,points[i].y):gx.moveTo(points[i].x,points[i].y);gx.stroke();gx.setLineDash([]);}
+function probabilityRead(S){if(S.mode!=="crew"||!S.forensics)return null;var d=S.forensics.distribution(),best=null,p=-1;Object.keys(d).forEach(function(id){if(d[id]>p){p=d[id];best=id;}});var c=(window.OB.CAST||[]).filter(function(q){return q.id===best;})[0];return c?{name:c.name,p:p}:null;}
+function drawIntel(){
+  var m=frameMap();gx.clearRect(0,0,m.r.width,m.r.height);var api=window.OB,S=api&&api.S,game=document.getElementById("scrGame");if(!S||!game||!game.classList.contains("on")){read.classList.remove("on");requestAnimationFrame(drawIntel);return;}
+  gx.save();gx.translate(m.ox,m.oy);gx.scale(m.s,m.s);
+  var p=S.player,routePts=[{x:p.x,y:p.y}].concat(p.path||[]);line(routePts,"rgba(185,230,205,.85)",[5,6]);
+  if(S.mode==="crew"&&api.computeVisibilityPolygon){var poly=api.computeVisibilityPolygon(p);gx.fillStyle="rgba(185,230,205,.045)";gx.strokeStyle="rgba(185,230,205,.32)";gx.lineWidth=1;if(poly.length){gx.beginPath();poly.forEach(function(q,i){i?gx.lineTo(q.x,q.y):gx.moveTo(q.x,q.y);});gx.closePath();gx.fill();gx.stroke();}}
+  var threat="",noise="QUIET";
+  if(S.mode==="glitch"){var cur=(S.chars||[]).filter(function(c){return c.isCurator;})[0];if(cur){line([{x:cur.x,y:cur.y}].concat(cur.path||[]),"rgba(242,162,74,.88)",[4,7]);var cd=Math.hypot(cur.x-p.x,cur.y-p.y);gx.strokeStyle=cd<210?"#ff7088":"#F2A24A";gx.lineWidth=2;gx.beginPath();gx.arc(cur.x,cur.y,Math.min(210,Math.max(64,cd*.35)),0,Math.PI*2);gx.stroke();threat="CURATOR "+Math.round(cd)+"px";}noise=p._corrupting?"CORRUPTION ACTIVE":p.skipT>0?"SKIP TRACE":p.fixing?"WORK TRACE":"QUIET";}
+  else{var pr=probabilityRead(S);threat=pr?("OBSERVED LEAD · "+pr.name+" "+(pr.p*100).toFixed(1)+"%"):"NO OBSERVED LEAD";noise=S.sab&&S.sab.kind?("SCENE · "+String(S.sab.kind).toUpperCase()):((S.footprints||[]).length?"SURFACE PRINTS "+S.footprints.length:"FLOOR QUIET");}
+  if(intent&&intent.until>performance.now()&&intent.x>=0&&intent.x<=960&&intent.y>=0&&intent.y<=640){var snap=api.route?api.route(p,intent):[],end=snap.length?snap[snap.length-1]:intent;line([{x:p.x,y:p.y}].concat(snap),"rgba(167,139,250,.82)",[3,7]);gx.strokeStyle="#fff";gx.beginPath();gx.arc(end.x,end.y,11,0,Math.PI*2);gx.stroke();}
+  gx.restore();read.textContent="INTEL · "+noise+" · "+threat+" · ROUTE "+Math.max(0,(p.path||[]).length)+" LEGS";read.classList.add("on");requestAnimationFrame(drawIntel);
+}requestAnimationFrame(drawIntel);
+
+function clutch(label){var el=document.getElementById("v6clutch");el.textContent=label||"CLEAN GETAWAY";el.classList.remove("on");void el.offsetWidth;el.classList.add("on");}
+function ascent(){var h=document.getElementById("v6ascent");h.innerHTML="";for(var i=0;i<14;i++){var q=document.createElement("i");q.className="v6mark";q.style.setProperty("--d",(i*.045)+"s");q.style.setProperty("--x",(-260+i*40+(i%2?18:-15))+"px");h.appendChild(q);}setTimeout(function(){h.innerHTML="";},1900);}
+function watch(){var api=window.OB,S=api&&api.S,cine=document.getElementById("cine"),cineOn=!!(cine&&cine.classList.contains("on"));if(cineOn&&!lastCine){document.body.classList.add("v6-fly");setTimeout(function(){document.body.classList.remove("v6-fly");},1400);}lastCine=cineOn;if(S){if(S.mode==="glitch"&&lastDrift<90&&S.drift>=90&&!S.over)clutch("GHOST PASS · 90% DRIFT");lastDrift=S.drift;var end=S.over?S.endKind:"";if(end&&end!==lastEnd){if(end==="caught"||end==="commission"||end==="driftWin")ascent();lastEnd=end;}}requestAnimationFrame(watch);}requestAnimationFrame(watch);
+
+document.addEventListener("visibilitychange",function(){var api=window.OB,S=api&&api.S;if(document.hidden){if(S&&!S.paused&&!S.over){lastPaused=S.paused;S.paused=true;hiddenPaused=true;}try{api&&api.audioSuspend&&api.audioSuspend();}catch(e){}}else{if(S&&hiddenPaused&&!document.querySelector(".ovl.on")&&!document.getElementById("cine").classList.contains("on")){S.paused=lastPaused;hiddenPaused=false;}try{var save=api&&api.SAVE;if(save&&save.audio&&api.audioResume)api.audioResume();}catch(e){}}});
+document.addEventListener("pointerdown",function(){try{var api=window.OB,sv=api&&api.SAVE;if(sv&&sv.audio&&api.audioResume)api.audioResume();}catch(e){}},{passive:true});
+function modalA11y(){var game=document.getElementById("scrGame"),open=document.querySelector(".ovl.on"),cine=document.getElementById("cine");if(game)game.inert=!!open||!!(cine&&cine.classList.contains("on"));document.querySelectorAll(".ovl").forEach(function(o){o.setAttribute("aria-hidden",String(!o.classList.contains("on")));});}new MutationObserver(modalA11y).observe(document.body,{attributes:true,subtree:true,attributeFilter:["class"]});modalA11y();
+
+function fixture(){var api=window.OB;if(!api||!api.route||!api.computeVisibilityPolygon)return {ok:false};var a=api.route({x:80,y:120},{x:812,y:510}),b=api.route({x:80,y:120},{x:812,y:510}),p=api.computeVisibilityPolygon({x:480,y:360}),q=api.computeVisibilityPolygon({x:480,y:360});return {ok:JSON.stringify(a)===JSON.stringify(b)&&JSON.stringify(p)===JSON.stringify(q)&&p.length>40,route:a,visionPoints:p.length};}
+function selfTest(){var f={ok:false};try{f=fixture();}catch(e){}return {ok:!!f.ok&&legacyPreserved,pass:!!f.ok&&legacyPreserved,version:VERSION,gameId:GAME_ID,authority:{sourceVersion:window.OB&&window.OB.ver,routeLegs:f.route&&f.route.length,visionPoints:f.visionPoints,caseSeeded:true},legacyPreserved:legacyPreserved,profileVersion:Profile.version};}
+window.__MBM_V6_RELEASE__={version:VERSION,gameId:GAME_ID,features:["standalone-offline","viewport-first","portrait-dead-zone-action-tray","landscape-overlay-controls","44px-touch","keyboard-focus-aria","reduced-motion-calm","observable-vision-noise-route-threat-forecast","intent-aware-snap-preview","compressed-resumable-audio","visibility-pause","skippable-proposition-fly-in","clutch-ghost-pass","zone-ascension","schema-6-profile","authority-safe-visual-interpolation"],selfTest:selfTest};
+})();
+</script>
 </body>
 </html>

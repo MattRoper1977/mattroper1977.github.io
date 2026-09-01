@@ -4,9 +4,10 @@
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjMTYxRDNEIi8+PHBhdGggZD0iTTI2IDc2IEwyNiAzMCBMNTAgNTUgTDc0IDMwIEw3NCA3NiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRThFMkQ0IiBzdHJva2Utd2lkdGg9IjEzIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Trail Runner: Stormbreak V4 — portable Android repair. Ride a curved storm corridor, build Momentum and challenge a local ghost run in one offline HTML file.">
+    <meta name="description" content="Trail Runner: Stormbreak V6 — a standalone accessible curved-corridor runner with route, landing, weather and threat forecasts.">
+    <meta name="mbm-v6-release" content="Trail Runner Stormbreak AAA V6; schema=6; standalone=1">
     <meta name="theme-color" content="#0a0f1e">
-    <title>Trail Runner: Stormbreak V4 — Portable Milestone 2</title>
+    <title>Trail Runner: Stormbreak — AAA V6</title>
     <link rel="canonical" href="https://madebymatt.uk/trailrunner/">
 
     <!-- Display typeface: Orbitron for headings/HUD, Rajdhani for UI text. Falls back to system sans if offline. -->
@@ -733,7 +734,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 
     <div id="settings-screen" class="screen hidden">
         <h2 class="neon-text" style="font-size:40px; margin-bottom: 0;">YOUR KIT</h2>
-        <div class="setting-row"><span>HUD Colour</span> <input type="color" id="color-picker" value="#ff6600"></div>
+        <div class="setting-row"><span>HUD Colour</span> <input type="color" id="color-picker" value="#ff6600" aria-label="Runner trail colour"></div>
         <div class="setting-section-title">SCOUT SKINS</div>
         <div id="skin-container" class="skin-container"></div>
         <div class="setting-section-title">STORM LOG</div>
@@ -4788,5 +4789,246 @@ if(document.body)mount();else document.addEventListener("DOMContentLoaded",mount
 }catch(e){}
 })();</script>
 <!-- MBM-INLINE-EXIT:END -->
+<!-- MBM-V6:BEGIN — additive presentation/input layer; source authority remains above. -->
+<style id="mbm-v6-style">
+    :root { --mbm-v6-safe-top: env(safe-area-inset-top, 0px); --mbm-v6-safe-right: env(safe-area-inset-right, 0px); --mbm-v6-safe-bottom: env(safe-area-inset-bottom, 0px); --mbm-v6-safe-left: env(safe-area-inset-left, 0px); }
+    html, body { width:100%; min-height:100%; min-height:100dvh; }
+    :where(button, select, input, textarea, [role="button"]) { min-height:44px; }
+    :where(button, select, input, textarea, a, [tabindex]):focus-visible { outline:3px solid #fef08a !important; outline-offset:3px !important; }
+    #mbm-v6-intro {
+        position:fixed; inset:0; z-index:2147481000; display:none; place-items:center; box-sizing:border-box;
+        padding:calc(18px + var(--mbm-v6-safe-top)) calc(18px + var(--mbm-v6-safe-right)) calc(18px + var(--mbm-v6-safe-bottom)) calc(18px + var(--mbm-v6-safe-left));
+        background:radial-gradient(circle at 50% 44%,rgba(34,211,238,.18),transparent 43%),linear-gradient(160deg,rgba(2,6,23,.96),rgba(12,18,36,.96));
+        color:#eefcff; text-align:center;
+    }
+    #mbm-v6-intro.open { display:grid; animation:mbm-v6-runner-in .38s ease-out both; }
+    #mbm-v6-intro .mbm-v6-intro-card { width:min(660px,92vw); }
+    #mbm-v6-intro .mbm-v6-kicker { color:#67e8f9; font:900 11px/1.2 system-ui,sans-serif; letter-spacing:.22em; text-transform:uppercase; }
+    #mbm-v6-intro h1 { margin:10px 0 8px; color:#fff; font:950 clamp(30px,8vw,70px)/.88 system-ui,sans-serif; letter-spacing:-.055em; text-transform:uppercase; text-shadow:0 0 28px rgba(34,211,238,.32); }
+    #mbm-v6-intro p { margin:0 auto 18px; max-width:52ch; color:#cbd5e1; font:650 14px/1.55 system-ui,sans-serif; }
+    .mbm-v6-button {
+        min-width:44px; min-height:44px; box-sizing:border-box; padding:10px 14px; border:1px solid rgba(103,232,249,.7); border-radius:9px;
+        background:rgba(8,15,30,.94); color:#e6fdff; cursor:pointer; font:850 12px/1.1 system-ui,sans-serif; letter-spacing:.035em; touch-action:manipulation;
+    }
+    #mbm-v6-route {
+        position:fixed; z-index:140; top:calc(74px + var(--mbm-v6-safe-top)); right:calc(8px + var(--mbm-v6-safe-right));
+        width:min(340px,calc(100vw - 16px - var(--mbm-v6-safe-left) - var(--mbm-v6-safe-right))); max-height:min(54dvh,430px); overflow:auto;
+        box-sizing:border-box; padding:10px; border:1px solid rgba(103,232,249,.5); border-radius:12px;
+        background:linear-gradient(145deg,rgba(3,10,22,.95),rgba(9,22,38,.92)); color:#e9fbff;
+        box-shadow:0 12px 42px rgba(0,0,0,.45),inset 0 0 34px rgba(34,211,238,.035); backdrop-filter:blur(8px);
+        font:650 12px/1.35 system-ui,sans-serif; pointer-events:auto; overscroll-behavior:contain;
+    }
+    #mbm-v6-route[hidden] { display:none !important; }
+    .mbm-v6-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .mbm-v6-head strong { color:#67e8f9; font-size:12px; letter-spacing:.12em; text-transform:uppercase; }
+    #mbm-v6-run-state { color:#a5b4c8; font-size:10px; text-transform:uppercase; }
+    #mbm-v6-route-map { display:block; width:100%; height:78px; margin-top:8px; border-radius:8px; background:linear-gradient(180deg,rgba(34,211,238,.03),rgba(34,211,238,.09)); }
+    #mbm-v6-runner-marker, #mbm-v6-threat-marker { transform-box:fill-box; transform-origin:center; transition:transform .1s linear; }
+    #mbm-v6-threat-marker { opacity:0; }
+    #mbm-v6-threat-marker.visible { opacity:1; }
+    .mbm-v6-read { display:grid; grid-template-columns:1fr auto; gap:4px 10px; margin-top:8px; }
+    .mbm-v6-read span { color:#9fb1c6; }
+    .mbm-v6-read b { color:#fff; text-align:right; }
+    #mbm-v6-advice { min-height:42px; margin-top:9px; padding:8px 9px; border-left:3px solid #22d3ee; background:rgba(34,211,238,.07); color:#dffcff; }
+    #mbm-v6-advice.danger { border-color:#fb7185; background:rgba(244,63,94,.1); color:#ffe4e6; }
+    .mbm-v6-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:9px; }
+    #mbm-v6-route-toggle { position:fixed; z-index:141; top:calc(74px + var(--mbm-v6-safe-top)); right:calc(8px + var(--mbm-v6-safe-right)); }
+    #mbm-v6-cue {
+        position:fixed; z-index:142; left:50%; top:calc(64px + var(--mbm-v6-safe-top)); transform:translateX(-50%); display:none; align-items:center; gap:10px;
+        max-width:min(620px,92vw); min-height:44px; box-sizing:border-box; padding:7px 8px 7px 13px; border:1px solid rgba(250,204,21,.55); border-radius:999px;
+        background:rgba(5,10,23,.93); color:#fef9c3; box-shadow:0 9px 30px rgba(0,0,0,.35); font:750 12px/1.25 system-ui,sans-serif;
+    }
+    #mbm-v6-cue.show { display:flex; animation:mbm-v6-cue-in .24s ease-out both; }
+    #mbm-v6-cue button { flex:none; border-radius:999px; }
+    body.mbm-v6-calm #scanlines, body.mbm-v6-calm #stormbreak-wash { display:none !important; }
+    body.mbm-v6-calm #mbm-v6-runner-marker, body.mbm-v6-calm #mbm-v6-threat-marker { transition:none; }
+    body.mbm-v6-calm #mbm-v6-intro.open, body.mbm-v6-calm #mbm-v6-cue.show { animation:none; }
+    @keyframes mbm-v6-runner-in { from { opacity:0; transform:translateY(14px) scale(.985); } to { opacity:1; transform:none; } }
+    @keyframes mbm-v6-cue-in { from { opacity:0; transform:translate(-50%,-10px); } to { opacity:1; transform:translate(-50%,0); } }
+    @media (orientation:portrait) {
+        #mbm-v6-route { top:calc(116px + var(--mbm-v6-safe-top)); right:calc(7px + var(--mbm-v6-safe-right)); width:min(360px,calc(100vw - 14px)); max-height:min(32dvh,310px); }
+        #mbm-v6-route-toggle { top:calc(116px + var(--mbm-v6-safe-top)); right:calc(7px + var(--mbm-v6-safe-right)); }
+        #mbm-v6-cue { top:auto; bottom:calc(124px + var(--mbm-v6-safe-bottom)); }
+    }
+    @media (orientation:landscape) and (max-height:560px) {
+        #mbm-v6-route { top:calc(58px + var(--mbm-v6-safe-top)); width:min(320px,32vw); max-height:calc(100dvh - 66px - var(--mbm-v6-safe-top) - var(--mbm-v6-safe-bottom)); }
+        #mbm-v6-route-toggle { top:calc(58px + var(--mbm-v6-safe-top)); }
+    }
+    @media (prefers-reduced-motion:reduce) {
+        #mbm-v6-intro.open, #mbm-v6-cue.show { animation:none !important; }
+        #mbm-v6-runner-marker, #mbm-v6-threat-marker { transition:none !important; }
+    }
+</style>
+<section id="mbm-v6-intro" role="dialog" aria-modal="false" aria-labelledby="mbm-v6-intro-title" aria-describedby="mbm-v6-intro-copy">
+    <div class="mbm-v6-intro-card">
+        <div class="mbm-v6-kicker">Made by Matt · V6 route interface</div>
+        <h1 id="mbm-v6-intro-title">Stormbreak</h1>
+        <p id="mbm-v6-intro-copy">The original fixed 60 Hz run, seeded corridor and collision authority stay intact. V6 reads the trail ahead without steering for you.</p>
+        <button class="mbm-v6-button" id="mbm-v6-intro-skip" type="button">Skip fly-in</button>
+    </div>
+</section>
+<button class="mbm-v6-button" id="mbm-v6-route-toggle" type="button" aria-controls="mbm-v6-route" aria-expanded="true" aria-label="Show V6 route forecast" hidden>Route read</button>
+<aside id="mbm-v6-route" role="region" aria-label="V6 route, landing, weather and threat forecast">
+    <div class="mbm-v6-head"><strong>V6 Route Read</strong><span id="mbm-v6-run-state">Boot</span></div>
+    <svg id="mbm-v6-route-map" viewBox="0 0 240 78" role="img" aria-label="Three lane route with runner and upcoming threat positions">
+        <path d="M54 72 C58 52 51 26 54 6 M120 72 C125 52 115 26 120 6 M186 72 C181 52 191 26 186 6" fill="none" stroke="rgba(148,213,230,.28)" stroke-width="2" stroke-dasharray="4 5"/>
+        <path d="M34 72 C42 51 35 26 40 6 M206 72 C198 51 205 26 200 6" fill="none" stroke="rgba(34,211,238,.35)" stroke-width="2"/>
+        <g id="mbm-v6-runner-marker"><path d="M112 62 L120 48 L128 62 L120 69 Z" fill="#67e8f9" stroke="#ecfeff" stroke-width="1.5"/></g>
+        <g id="mbm-v6-threat-marker"><circle cx="120" cy="18" r="7" fill="#fb7185" stroke="#fff1f2" stroke-width="2"/><path d="M116 18h8" stroke="#4c0519" stroke-width="2"/></g>
+    </svg>
+    <div class="mbm-v6-read" aria-live="off">
+        <span>Lane / landing</span><b id="mbm-v6-landing">Centre · trail</b>
+        <span>Weather</span><b id="mbm-v6-weather">Scanning</b>
+        <span>Next threat</span><b id="mbm-v6-threat">—</b>
+        <span>Shield / energy</span><b id="mbm-v6-reserve">—</b>
+    </div>
+    <div id="mbm-v6-advice" role="status" aria-live="polite">Route telemetry will arm when the renderer is ready.</div>
+    <div class="mbm-v6-actions">
+        <button class="mbm-v6-button" id="mbm-v6-calm" type="button" aria-pressed="false">V6 Calm: off</button>
+        <button class="mbm-v6-button" id="mbm-v6-hide" type="button">Hide read</button>
+    </div>
+</aside>
+<div id="mbm-v6-cue" role="status" aria-live="polite"><span id="mbm-v6-cue-copy">V6 scene cue</span><button class="mbm-v6-button" id="mbm-v6-cue-skip" type="button">Skip V6 cue</button></div>
+<script id="mbm-v6-release-script">
+(() => {
+    'use strict';
+    const RELEASE = 'Trail Runner Stormbreak AAA V6';
+    const PROFILE_KEY = 'mbm_v6_trailrunner_profile';
+    const LEGACY_KEYS = ['trekTrailSettings_v1','trekTrailDaily_v1','trekTrailGhostShare_v4','trekTrailGhost_v1','trekTrailRunner_v1','trekTrailScores_v1','trekTrailStorm_v1','mbm_arcade_passport_v4'];
+    const sourceSha256 = 'ebeb4bc6cb4d0ddaa675d1b5daaa4060d5929e8a797994b99447034d64cd559b';
+    const hazards = new Set(['MINE','DEADLY_BLOCK','CEILING_SPIKE','CRATE','TNT']);
+    const labels = { MINE:'mine', DEADLY_BLOCK:'barrier', CEILING_SPIKE:'ceiling spike', CRATE:'crate', TNT:'volatile crate', SHIELD_ITEM:'shield', LIFE:'energy', COMBO_ORB:'momentum core' };
+    const byId = (id) => document.getElementById(id);
+    const safeGet = (key) => { try { return localStorage.getItem(key); } catch (_) { return null; } };
+    const safeSet = (key, value) => { try { localStorage.setItem(key, value); return true; } catch (_) { return false; } };
+    const fingerprint = (value) => {
+        let hash = 2166136261; const text = String(value == null ? '' : value);
+        for (let i=0; i<text.length; i++) { hash ^= text.charCodeAt(i); hash = Math.imul(hash,16777619); }
+        return (hash>>>0).toString(16).padStart(8,'0');
+    };
+    const legacyBefore = Object.fromEntries(LEGACY_KEYS.map((key) => [key,safeGet(key)]));
+    function bootProfile() {
+        let prior = null; try { prior = JSON.parse(safeGet(PROFILE_KEY) || 'null'); } catch (_) {}
+        const now = new Date().toISOString(); const profile = prior && typeof prior === 'object' ? { ...prior } : {};
+        profile.schema = 6; profile.game = 'trailrunner'; profile.createdAt = profile.createdAt || now; profile.updatedAt = now;
+        profile.settings = { calm:Boolean(profile.settings && profile.settings.calm), forecastOpen:profile.settings && profile.settings.forecastOpen !== false, audio:!profile.settings || profile.settings.audio !== false };
+        profile.migration = profile.migration && profile.migration.schema === 6 ? profile.migration : {
+            schema:6, importedAt:now, mode:'read-only-snapshot',
+            legacy:LEGACY_KEYS.filter((key) => legacyBefore[key] !== null).map((key) => ({ key, fingerprint:fingerprint(legacyBefore[key]) }))
+        };
+        safeSet(PROFILE_KEY,JSON.stringify(profile)); return profile;
+    }
+    const profile = bootProfile();
+    const legacyAfterMigration = Object.fromEntries(LEGACY_KEYS.map((key) => [key,safeGet(key)]));
+    const migrationNonDestructive = LEGACY_KEYS.every((key) => legacyBefore[key] === legacyAfterMigration[key]);
+    function saveProfile() { profile.updatedAt = new Date().toISOString(); safeSet(PROFILE_KEY,JSON.stringify(profile)); }
+
+    const intro = byId('mbm-v6-intro'); const route = byId('mbm-v6-route'); const toggle = byId('mbm-v6-route-toggle'); const cue = byId('mbm-v6-cue');
+    let introTimer=0, cueTimer=0, lastState='', lastThreat='', audioContext=null, compressor=null, masterGain=null;
+    function laneName(value) { const lane = Number(value)||0; return lane < 0 ? 'Left' : lane > 0 ? 'Right' : 'Centre'; }
+    function laneOffset(value) { const lane = Number(value)||0; return lane < 0 ? -66 : lane > 0 ? 66 : 0; }
+    function applyCalm() {
+        const reduced = matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+        document.body.classList.toggle('mbm-v6-calm',profile.settings.calm || reduced);
+        const button=byId('mbm-v6-calm'); button.setAttribute('aria-pressed',String(profile.settings.calm)); button.textContent=`V6 Calm: ${profile.settings.calm?'on':'off'}`;
+    }
+    function setRouteOpen(open,persist=true) { profile.settings.forecastOpen=Boolean(open); route.hidden=!open; toggle.hidden=open; toggle.setAttribute('aria-expanded',String(open)); if(persist) saveProfile(); }
+    function dismissIntro() { clearTimeout(introTimer); intro.classList.remove('open'); intro.setAttribute('aria-hidden','true'); }
+    function showIntro() {
+        if(matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        intro.removeAttribute('aria-hidden'); intro.classList.add('open'); byId('mbm-v6-intro-skip').focus({preventScroll:true}); introTimer=setTimeout(dismissIntro,2400);
+    }
+    function showCue(text) { clearTimeout(cueTimer); byId('mbm-v6-cue-copy').textContent=text; cue.classList.add('show'); cueTimer=setTimeout(()=>cue.classList.remove('show'),profile.settings.calm?900:2200); }
+    function dismissCue() { clearTimeout(cueTimer); cue.classList.remove('show'); }
+    function ensureAudio() {
+        if(!profile.settings.audio) return null; const AudioCtor=window.AudioContext||window.webkitAudioContext; if(!AudioCtor) return null;
+        if(!audioContext){ audioContext=new AudioCtor(); compressor=audioContext.createDynamicsCompressor(); compressor.threshold.value=-22; compressor.knee.value=18; compressor.ratio.value=7; compressor.attack.value=.004; compressor.release.value=.24; masterGain=audioContext.createGain(); masterGain.gain.value=.035; compressor.connect(masterGain); masterGain.connect(audioContext.destination); }
+        if(audioContext.state==='suspended') audioContext.resume().catch(()=>{}); return audioContext;
+    }
+    function tone(frequency=420) {
+        if(profile.settings.calm||document.hidden) return; const ctx=ensureAudio(); if(!ctx||!compressor) return;
+        const osc=ctx.createOscillator(),gain=ctx.createGain(),now=ctx.currentTime; osc.type='triangle'; osc.frequency.setValueAtTime(frequency,now); osc.frequency.exponentialRampToValueAtTime(Math.max(100,frequency*.72),now+.09); gain.gain.setValueAtTime(.0001,now); gain.gain.exponentialRampToValueAtTime(.12,now+.012); gain.gain.exponentialRampToValueAtTime(.0001,now+.11); osc.connect(gain); gain.connect(compressor); osc.start(now); osc.stop(now+.12);
+    }
+    function nearestObject(tr) {
+        const playerZ=Number(tr.player?.position?.z)||0;
+        return (Array.isArray(tr.objects)?tr.objects:[]).filter((item)=>item&&item.active!==false&&item.mesh&&item.mesh.position&&Number.isFinite(item.mesh.position.z))
+            .map((item)=>({ item, distance:playerZ-item.mesh.position.z }))
+            .filter((entry)=>entry.distance>=-2&&entry.distance<180).sort((a,b)=>a.distance-b.distance)[0]||null;
+    }
+    function updateCanvasAria() {
+        const canvas=byId('game-canvas'); if(!canvas) return;
+        canvas.setAttribute('role','img'); canvas.setAttribute('aria-label','Trail Runner Stormbreak curved corridor game view'); if(!canvas.hasAttribute('tabindex')) canvas.tabIndex=0;
+    }
+    function updateRead() {
+        const tr=window.__TR; updateCanvasAria();
+        if(!tr){ byId('mbm-v6-run-state').textContent='Boot'; byId('mbm-v6-advice').textContent='Route telemetry will arm when the renderer is ready.'; return; }
+        const state=String(tr.gameState||'boot'), lane=Number(tr.currentLane)||0, player=tr.player, velocity=Number(tr.verticalVelocity)||0, height=Number(player?.position?.y)||.4;
+        const arc=velocity>.015?'climbing':velocity<-.015?'descending':height>.55?'airborne':'trail contact';
+        byId('mbm-v6-run-state').textContent=state;
+        byId('mbm-v6-landing').textContent=`${laneName(lane)} · ${arc}`;
+        byId('mbm-v6-weather').textContent=state==='WARNING'?'storm front':state==='BOSS'?'storm active':document.body.classList.contains('stormbreak')?'Stormbreak':'corridor';
+        byId('mbm-v6-reserve').textContent=`${tr.shieldActive?'shield · ':''}${tr.lives} energy`;
+        const runnerMarker=byId('mbm-v6-runner-marker'); runnerMarker.style.transform=`translate(${laneOffset(lane)}px,${Math.max(-16,Math.min(8,-(height-.4)*6))}px)`;
+        const nearest=nearestObject(tr), threatMarker=byId('mbm-v6-threat-marker'), advice=byId('mbm-v6-advice');
+        let signature='none';
+        if(nearest){
+            const type=String(nearest.item.type||'object'), objectLane=Number(nearest.item.mesh.userData?.trackLane ?? nearest.item.mesh.position.x)||0;
+            const eta=nearest.distance/Math.max(.01,(Number(tr.speed)||.01)*60), hostile=hazards.has(type), sameLane=Math.sign(objectLane)===Math.sign(lane), label=labels[type]||type.toLowerCase().replaceAll('_',' ');
+            byId('mbm-v6-threat').textContent=`${label} · ${laneName(objectLane)} · ${Math.max(0,eta).toFixed(1)}s`;
+            threatMarker.style.transform=`translate(${laneOffset(objectLane)}px,${Math.max(0,Math.min(42,eta*16))}px)`; threatMarker.classList.toggle('visible',hostile);
+            const urgent=hostile&&sameLane&&eta<1.6; advice.classList.toggle('danger',urgent);
+            advice.textContent=urgent?`${label.toUpperCase()} intersects ${laneName(lane).toLowerCase()} lane. Change lane or use the original blast/spin timing.`:hostile?`${laneName(objectLane)}-lane ${label}; current trajectory remains ${laneName(lane).toLowerCase()}.`:`Pickup trajectory: ${laneName(objectLane)} lane in about ${Math.max(0,eta).toFixed(1)} seconds.`;
+            signature=`${type}|${laneName(objectLane)}|${urgent}`; if(signature!==lastThreat&&urgent) tone(240);
+        } else {
+            byId('mbm-v6-threat').textContent='clear horizon'; threatMarker.classList.remove('visible'); advice.classList.remove('danger'); advice.textContent=state==='RUNNING'?'No spawned object currently intersects the near route.':'Forecast waits for the run.';
+        }
+        lastThreat=signature;
+        if(lastState&&state!==lastState){ const scenes={RUNNING:'Run camera released',WARNING:'Storm clutch cue',BOSS:'Storm camera cue',BOSS_WRECK:'Stormbreak finish cue',GAMEOVER:'Run finish cue',PAUSED:'Safety pause'}; if(scenes[state]) showCue(scenes[state]); }
+        lastState=state;
+    }
+    function deterministicFixture(){
+        const tr=window.__TR; if(!tr||typeof tr.encodeReplay!=='function'||typeof tr.decodeReplay!=='function'||typeof tr.validateTrackFrames!=='function') return {ok:false,reason:'TR diagnostics unavailable'};
+        try{
+            const fixture={seed:123456789,s:654321,t:[[0,0],[.2,.4],[-.5,1.1],[.75,.65]]};
+            const first=tr.encodeReplay(fixture),second=tr.encodeReplay(fixture),decoded=tr.decodeReplay(first),frames=tr.validateTrackFrames(32);
+            const replayOk=first===second&&decoded.seed===fixture.seed&&decoded.s===fixture.s&&decoded.t.length===fixture.t.length&&decoded.t.every((point,index)=>Math.abs(point[0]-fixture.t[index][0])<.011&&Math.abs(point[1]-fixture.t[index][1])<.011);
+            return {ok:replayOk&&frames.ok,replayStable:first===second,replayOk,frames};
+        }catch(error){return{ok:false,reason:String(error&&error.message||error)}}
+    }
+
+    byId('mbm-v6-intro-skip').addEventListener('click',dismissIntro); byId('mbm-v6-cue-skip').addEventListener('click',dismissCue);
+    byId('mbm-v6-hide').addEventListener('click',()=>setRouteOpen(false)); toggle.addEventListener('click',()=>setRouteOpen(true));
+    byId('mbm-v6-calm').addEventListener('click',()=>{profile.settings.calm=!profile.settings.calm;saveProfile();applyCalm();tone(330)});
+    addEventListener('pointerdown',ensureAudio,{passive:true});
+    addEventListener('keydown',(event)=>{
+        if(!event.metaKey&&!event.ctrlKey&&!event.altKey&&!/INPUT|TEXTAREA|SELECT/.test(event.target?.tagName||'')){
+            if(event.key.toLowerCase()==='f'){event.preventDefault();setRouteOpen(route.hidden)}
+            if(event.key.toLowerCase()==='c'){event.preventDefault();byId('mbm-v6-calm').click()}
+            if(event.key==='Escape'&&intro.classList.contains('open')){event.preventDefault();dismissIntro()}
+        }
+        ensureAudio();
+    });
+    document.addEventListener('visibilitychange',()=>{if(document.hidden){dismissCue();if(audioContext&&audioContext.state==='running')audioContext.suspend().catch(()=>{})}});
+    applyCalm(); setRouteOpen(profile.settings.forecastOpen,false); setInterval(updateRead,100); updateRead(); byId('start-btn').addEventListener('click',()=>requestAnimationFrame(showIntro),{once:true}); requestAnimationFrame(()=>{const maker=document.querySelector('[data-mbm-maker-splash]:not([aria-hidden="true"])'),target=byId('audio-toggle');if(!maker&&target&&target.focus)try{target.focus({preventScroll:true})}catch(_){target.focus()}});
+
+    const releaseApi={
+        release:RELEASE,version:'6.0.0',schema:6,source:{path:'Site/trailrunner/index.html',sha256:sourceSha256},profileKey:PROFILE_KEY,
+        timing:{authority:'original fixed 60 Hz',presentationSampleHz:10,interpolation:'visual-only'},migration:{nonDestructive:migrationNonDestructive,legacyKeys:LEGACY_KEYS.slice()},
+        deterministicFixture,profile:()=>JSON.parse(JSON.stringify(profile)),
+        selfTest(){
+            const ids=Array.from(document.querySelectorAll('[id]'),(node)=>node.id),v6Buttons=Array.from(document.querySelectorAll('.mbm-v6-button')),fixture=deterministicFixture();
+            const checks={
+                schema6:profile.schema===6,migrationNonDestructive,uniqueIds:ids.length===new Set(ids).size,
+                ariaNames:v6Buttons.every((button)=>Boolean(button.getAttribute('aria-label')||button.textContent.trim())),targets44:v6Buttons.every((button)=>parseFloat(getComputedStyle(button).minHeight)>=44),
+                canvasAria:Boolean(byId('game-canvas')?.getAttribute('aria-label')),zoomEnabled:!/maximum-scale|user-scalable\s*=\s*no/i.test(document.querySelector('meta[name="viewport"]')?.content||''),
+                offline:!document.querySelector('script[src],link[rel="manifest"],link[rel="stylesheet"]'),releaseObject:window.__MBM_V6_RELEASE__===releaseApi,deterministicAuthority:fixture.ok
+            };
+            return{ok:Object.values(checks).every(Boolean),checks,fixture};
+        }
+    };
+    Object.defineProperty(window,'__MBM_V6_RELEASE__',{configurable:true,enumerable:true,value:releaseApi});
+})();
+</script>
+<!-- MBM-V6:END -->
 </body>
 </html>

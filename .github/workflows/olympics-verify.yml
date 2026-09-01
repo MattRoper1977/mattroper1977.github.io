@@ -1,0 +1,81 @@
+name: Global Games local contracts
+
+# Grafted from relicforge-verify.yml's source + rendered contract shape. The
+# Global Games harness existed without a PR runner, so its exact browser gate
+# could not adjudicate a candidate when a managed local renderer was too slow.
+on:
+  pull_request:
+    paths:
+      - 'olympics/**'
+      - 'games/index.html'
+      - 'data/source-manifests/games.json'
+      - 'tools/verify_olympics.mjs'
+      - 'tools/verify_olympics_arcade.mjs'
+      - 'tools/verify_curation_keys.mjs'
+      - '.github/workflows/olympics-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: global-games-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: source + rendered contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out Site
+        uses: actions/checkout@v4
+
+      - name: Check out the authoritative shelf
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: _shelf
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pinned real browser and parser
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1 acorn@8.18.0
+          npx playwright install --with-deps chromium
+
+      - name: Source contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/global-games
+          node --check tools/verify_olympics.mjs
+          node --check tools/verify_olympics_arcade.mjs
+          node tools/verify_curation_keys.mjs | tee artifacts/global-games/curation.log
+
+      - name: Exact game and rendered-shelf contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > artifacts/global-games/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:4173/olympics/index.html >/dev/null && break
+            sleep 1
+          done
+          node tools/verify_olympics.mjs | tee artifacts/global-games/game.log
+          GAMES_DIR="$GITHUB_WORKSPACE/_shelf" node tools/verify_olympics_arcade.mjs | tee artifacts/global-games/arcade.log
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: global-games-${{ github.run_id }}
+          path: artifacts/global-games/
+          if-no-files-found: error
+          retention-days: 30
