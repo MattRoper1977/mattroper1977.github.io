@@ -123,22 +123,30 @@ async function startChampionship(page, mode = 'ultimate') {
      intro's existing visibility and 3-second detach gates remain unchanged. */
   await page.waitForSelector('#v6-release-badge', { timeout: 12000 });
   await click(page, '#newGamesBtn');
-  /* The V6 ceremony auto-closes. Waiting for the button and clicking it in
-     separate page tasks left a race where the timer could remove the node
-     between the two, producing a null.click() crash instead of a judgement.
-     Sight and activation are one atomic predicate here, and it only resolves
-     after a genuinely visible skip control has received the click AND the
-     product has synchronously removed the intro. A delivered synthetic click
-     is not itself evidence that the product handled it. */
-  await page.waitForFunction(() => {
+  /* A locator click waits for two rendered frames of geometric stability. On
+     a software renderer the short ceremony can auto-close before those two
+     frames exist, even though its 44px control is stationary and usable. Sight
+     the rendered target, arm a trusted-pointer witness on that exact node, and
+     send a real coordinate click. The witness prevents an auto-close followed
+     by a click on the underlying setup from masquerading as success. */
+  const skipBoxHandle = await page.waitForFunction(() => {
     const button = document.querySelector('#v6-intro .v6-skip');
     if (!button) return false;
     const style = getComputedStyle(button), rect = button.getBoundingClientRect();
-    if (style.display === 'none' || style.visibility === 'hidden' || rect.width === 0 || rect.height === 0) return false;
-    button.click();
-    return !document.getElementById('v6-intro');
+    if (style.display === 'none' || style.visibility === 'hidden' ||
+        rect.width < 44 || rect.height < 44) return false;
+    window.__mbmV6SkipPointer = false;
+    button.addEventListener('pointerdown', event => {
+      window.__mbmV6SkipPointer = event.isTrusted && event.button === 0;
+    }, { once: true, capture: true });
+    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
   }, null, { timeout: 3000 });
+  const skipBox = await skipBoxHandle.jsonValue();
+  await skipBoxHandle.dispose();
+  await page.mouse.click(skipBox.x + skipBox.width / 2, skipBox.y + skipBox.height / 2);
   await page.waitForSelector('#v6-intro', { state: 'detached', timeout: 3000 });
+  const trustedSkip = await page.evaluate(() => window.__mbmV6SkipPointer === true);
+  if (!trustedSkip) throw new Error('V6 intro detached without its visible skip control receiving the trusted pointer click');
   await page.waitForSelector('[data-mode]', { timeout: 12000 });
   await page.evaluate(m => document.querySelector(`[data-mode="${m}"]`).click(), mode);
   /* "Enter Games Village" is DISABLED until all 25 development points are
