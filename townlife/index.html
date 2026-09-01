@@ -3459,7 +3459,6 @@ function direct(text){
 }
 document.getElementById('startBtn').addEventListener('click',function(){setTimeout(function(){direct('NORTHSTAR CAMERA · ON FOOT');tone(440,.12,.016);canvas.focus({preventScroll:true});},0);});
 var lastVehicle=(document.getElementById('vehicleLabel').textContent||'').trim();
-new MutationObserver(function(){var value=(document.getElementById('vehicleLabel').textContent||'').trim();if(value!==lastVehicle){lastVehicle=value;direct(value==='Driving'?'ROAD CAMERA · DRIVING':'STREET CAMERA · '+value.toUpperCase());requestAdvisory();}}).observe(document.getElementById('vehicleLabel'),{childList:true,subtree:true});
 
 var visibilityOpen=false;
 function townStarted(){return welcome.style.display==='none'&&window.__MBM_TOWN_LIFE_READY__===true;}
@@ -3508,8 +3507,14 @@ function drawAdvisory(now){
   var heat=parseFloat(document.getElementById('heatLabel').textContent)||0,jobs=parseInt(document.getElementById('jobsLabel').textContent,10)||0;
   var slip=parseFloat(document.getElementById('slipLabel').textContent)||0,speed=parseFloat(document.getElementById('speedLabel').textContent)||0;
   if(heat>lastHeat+.04||slip>34)triggerClutch();if(jobs>lastJobs)triggerFinish();lastHeat=heat;lastJobs=jobs;
-  if(running&&!document.hidden){
-    var driving=(document.getElementById('vehicleLabel').textContent||'')==='Driving',left=held.a?1:0,right=held.d?1:0,up=held.w?1:0,down=held.s?1:0,targetSteer=right-left;
+  var driving=(document.getElementById('vehicleLabel').textContent||'')==='Driving',left=held.a?1:0,right=held.d?1:0,up=held.w?1:0,down=held.s?1:0;
+  // Trail Runner hides its independent route layer when that forecast is not
+  // active (trailrunner/index.html:4821,4935). Keep Town's full-screen layer
+  // out of the compositor while idle; driving, movement or heat reveals it.
+  var advisoryActive=running&&!document.hidden&&(driving||left||right||up||down||held[' ']||heat>0);
+  advisory.style.display=advisoryActive?'block':'none';
+  if(advisoryActive){
+    var targetSteer=right-left;
     steerVisual+=(targetSteer-steerVisual)*(1-Math.exp(-18*dt));
     var cx=innerWidth/2,cy=innerHeight/2,pathLength=driving?Math.min(300,145+speed*2.4):155;
     ax.save();ax.globalCompositeOperation='lighter';ax.strokeStyle='rgba(100,216,212,.76)';ax.lineWidth=1.7;ax.setLineDash([7,7]);ax.beginPath();ax.moveTo(cx,cy);
@@ -3520,7 +3525,7 @@ function drawAdvisory(now){
     var police=(document.getElementById('policeStateLabel').textContent||'CLEAR').toUpperCase(),radius=55+heat*11;ax.globalAlpha=heat?.86:.25;ax.strokeStyle=heat>=4?'#ff4d6d':heat>=2?'#ffc857':'#ff9c76';ax.lineWidth=2.2;ax.setLineDash([5,Math.max(6,15-heat)]);ax.beginPath();ax.arc(cx,cy,radius,-Math.PI*.96,Math.PI*.14);ax.stroke();ax.setLineDash([]);ax.globalAlpha=.92;ax.fillStyle='rgba(10,20,34,.88)';ax.fillRect(cx-55,cy-radius-25,110,17);ax.fillStyle=heat>=4?'#ff8ba1':'#ffe0a1';ax.font='900 9px system-ui';ax.textAlign='center';ax.fillText(police+' · HEAT '+heat.toFixed(1),cx,cy-radius-13);ax.restore();
     if(driving)setIntent(held[' ']?'DRIFT COMMIT':targetSteer<0?'ROUTE · LEFT':targetSteer>0?'ROUTE · RIGHT':held.w?'ROUTE · ACCELERATE':'ROAD HOLD');
     else if(up||down||left||right)setIntent('WALK INTENT');else setIntent(heat?'THREAT · '+police:'ROUTE READY');
-  }
+  }else if(running)setIntent('ROUTE READY');
 }
 // Grafted from Nova Siege's MutationObserver-driven presentation cues: only
 // changed gameplay state requests a full-viewport advisory repaint. Requests
@@ -3531,8 +3536,12 @@ function requestAdvisory(){
   var delay=Math.max(0,100-(performance.now()-lastAdvisoryPaint));
   advisoryTimer=setTimeout(function(){advisoryTimer=0;lastAdvisoryPaint=performance.now();drawAdvisory(lastAdvisoryPaint);},delay);
 }
-var advisoryObserved={};
-['heatLabel','jobsLabel','slipLabel','policeStateLabel'].forEach(function(id){var node=document.getElementById(id);if(!node)return;advisoryObserved[id]=node.textContent;new MutationObserver(function(){var value=node.textContent;if(value===advisoryObserved[id])return;advisoryObserved[id]=value;requestAdvisory();}).observe(node,{childList:true,subtree:true,characterData:true});});
+// One observer handles the related HUD subjects, matching Nova Siege's
+// single-observer presentation cue architecture. The unchanged engine writes
+// these labels in the same frame; separate observers multiplied callbacks.
+var advisoryObserved={},advisoryNodes=['vehicleLabel','heatLabel','jobsLabel','slipLabel','policeStateLabel'].map(function(id){var node=document.getElementById(id);if(node)advisoryObserved[id]=node.textContent;return node;}).filter(Boolean);
+var advisoryObserver=new MutationObserver(function(){var changed=false;advisoryNodes.forEach(function(node){var value=node.textContent;if(value===advisoryObserved[node.id])return;advisoryObserved[node.id]=value;changed=true;if(node.id==='vehicleLabel'){lastVehicle=(value||'').trim();direct(lastVehicle==='Driving'?'ROAD CAMERA · DRIVING':'STREET CAMERA · '+lastVehicle.toUpperCase());}});if(changed)requestAdvisory();});
+advisoryNodes.forEach(function(node){advisoryObserver.observe(node,{childList:true,subtree:true,characterData:true});});
 new MutationObserver(requestAdvisory).observe(welcome,{attributes:true,attributeFilter:['style']});
 addEventListener('resize',function(){sizeAdvisory();requestAdvisory();},{passive:true});
 
