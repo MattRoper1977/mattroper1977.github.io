@@ -447,17 +447,21 @@ const scratchManifest = (mutate) => {
     c.none.join(', ') || 'not caught — the zero-genre limb is a no-op');
 }
 {
-  /* Action & Survival holds exactly 2, so removing one puts it under the floor.
-     Picking the genre with the least headroom is deliberate: a control that
-     removes a game from a genre of ten proves the arithmetic, not the floor. */
+  /* Picking the genre with the least headroom is deliberate: a control that
+     removes a game from a genre of ten proves the arithmetic, not the floor.
+     How many to remove is derived, not remembered. A pinned count in a
+     control is the same defect as a pinned count in a gate: adding a third
+     Action & Survival route must not silently disarm this firing control. */
   const victimGenre = [...byGenre].sort((a, b) => a[1] - b[1])[0][0];
-  const victim = record.taxonomy.find(t => t.genre === victimGenre);
-  const reduced = record.taxonomy.filter(t => t !== victim);
+  const victimCount = byGenre.get(victimGenre);
+  const toRemove = victimCount - FLOOR + 1;
+  const victims = new Set(record.taxonomy.filter(t => t.genre === victimGenre).slice(0, toRemove));
+  const reduced = record.taxonomy.filter(t => !victims.has(t));
   const counts = new Map();
   for (const t of reduced) counts.set(t.genre, (counts.get(t.genre) || 0) + 1);
   const nowThin = [...counts].filter(([, n]) => n < FLOOR);
-  check(nowThin.some(([g]) => g === victimGenre),
-    `CONTROL: deleting a game from the smallest genre (${victimGenre}, ${byGenre.get(victimGenre)}) drops it under the floor and reds`,
+  check(victims.size === toRemove && nowThin.some(([g]) => g === victimGenre),
+    `CONTROL: removing ${toRemove} of ${victimCount} from the smallest genre (${victimGenre}) drops it under the floor of ${FLOOR} and reds`,
     nowThin.map(([g, n]) => `${g}=${n}`).join(', ') || 'floor did not fire');
 }
 {

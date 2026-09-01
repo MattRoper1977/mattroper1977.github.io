@@ -72,6 +72,18 @@
    ]
   },
   {
+   "route": "/cyberpulse/",
+   "verifier": "tools/cyberpulse/verify.mjs",
+   "gates": [
+    "single self-contained HTML file with zero http(s) runtime references, checked in source and in the network log at boot",
+    "one canonical V6 identity across title, kicker, VERSION and the release record",
+    "browser zoom enabled and exactly one visible semantic h1",
+    "the WebGL2 renderer and Canvas fallback are both proved at runtime, including the explicit ?renderer=2d hatch",
+    "the generated inline exit region remains above the maker splash and keyboard reachable"
+   ],
+   "note": "CYBERPULSE: BLACKOUT is an authored local-first single-file game carrying no external script, so <script src=\"/hud.js\"> would retract the single-file promise rather than merely trip a check. It is also the visual donor of the estate maker splash; tools/render_maker_splash.py carries a named strip_legacy branch for its original in-file handlers. The generated inline exit supplies the estate way out without retracting that boundary; the named verifier checks the declaration, both renderers, the rendered control and the fallback."
+  },
+  {
    "route": "/echovault/",
    "verifier": "tools/verify_echovault.js",
    "gates": [
@@ -275,6 +287,9 @@
   "_what": "The estate-wide Made by Matt introduction and its rolling 24-hour suppression. tools/render_maker_splash.py is the only writer of the stamped block; the visual donor is the CyberPulse Made by / Matt / presents form and every applied block is byte-identical.",
   "_state": "Application census resolved against route-owned before/after verifiers: thirty-one Site routes are declined on unchanged exact assertions; every remaining applied route is generator-owned pending browser-matrix confirmation.",
   "applied": [
+   {
+    "route": "/cyberpulse/"
+   },
    {
     "route": "/echovault/"
    },

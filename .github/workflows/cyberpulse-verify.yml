@@ -1,0 +1,112 @@
+name: CyberPulse gate contract
+
+# /cyberpulse/ is declared in data/hud-coverage.json as excluded from the HUD
+# script requirement, and that declaration names five gates and a verifier.
+# tools/verify_hud_on_games.py already fails the build when an exclusion cites a
+# verifier that does not exist — this workflow is the other half, so the gates
+# it names are RUN rather than merely declared. A gate that never runs is not a
+# gate that passes.
+
+on:
+  pull_request:
+    paths:
+      - 'cyberpulse/**'
+      - 'assets/cards/cyberpulse.svg'
+      - 'tools/cyberpulse/**'
+      - 'data/hud-coverage.json'
+      - 'data/source-manifests/games.json'
+      - 'sitemap.xml'
+      - '.github/workflows/cyberpulse-verify.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'cyberpulse/**'
+      - 'assets/cards/cyberpulse.svg'
+      - 'tools/cyberpulse/**'
+      - 'data/hud-coverage.json'
+      - 'data/source-manifests/games.json'
+      - 'sitemap.xml'
+      - '.github/workflows/cyberpulse-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cyberpulse-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Gates, and each one proven able to red
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Record measured identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/cyberpulse
+          {
+            node --version
+            wc -c cyberpulse/index.html assets/cards/cyberpulse.svg
+            sha256sum cyberpulse/index.html assets/cards/cyberpulse.svg
+            printf 'http(s) references in source='
+            grep -coE 'https?://' cyberpulse/index.html || true
+            printf 'inline script blocks='
+            grep -coE '<script[^>]*>' cyberpulse/index.html || true
+          } | tee artifacts/cyberpulse/identity.txt
+
+      # Two harnesses, two languages. tools/cyberpulse/verify.mjs is Node and
+      # tools/verify_hud_on_games.py is Python, and the Python one imports
+      # playwright itself — installing only the npm package leaves it with an
+      # ImportError, which it reports as INCONCLUSIVE rather than as a pass.
+      # That is the right behaviour and it still fails the job, so both get
+      # installed. The Chromium binary is shared.
+      - name: Install pinned Chromium harnesses, Node and Python
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+          python3 -m pip install --disable-pip-version-check playwright==1.54.0
+          # And the Python package's OWN browser. It pins a different build to
+          # the npm one (chromium_headless_shell-1181 vs the npm download), so
+          # `npx playwright install` does not satisfy it and the job dies at
+          # BrowserType.launch with "Executable doesn't exist".
+          python3 -m playwright install --with-deps chromium
+
+      # --selftest mutates a throwaway copy to violate each static gate in turn
+      # and asserts the harness catches it, so the run reports not only that the
+      # gates are green but that they are capable of being red. A mutation that
+      # changes nothing is reported and refuses to count, so a probe that cannot
+      # fire cannot be mistaken for a gate that passed.
+      - name: CyberPulse gates and non-vacuity controls
+        run: |
+          set -euo pipefail
+          node tools/cyberpulse/verify.mjs --selftest \
+            | tee artifacts/cyberpulse/gates.log
+
+      # The exclusion is only affordable because the route supplies the estate
+      # way out another way. This is the check that says so estate-wide, and it
+      # is also the one that fails if the verifier named above ever stops
+      # existing.
+      - name: The exclusion ledger still holds
+        run: |
+          set -euo pipefail
+          python3 tools/verify_hud_on_games.py --self-test \
+            | tee artifacts/cyberpulse/hud-coverage-controls.log
+
+      - name: Upload CyberPulse evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cyberpulse-gate-evidence
+          path: artifacts/cyberpulse/
