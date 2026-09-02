@@ -360,7 +360,7 @@
    },
    {
     "route": "/emberwild/",
-    "reason": "tools/verify_emberwild.js — exact assertions G3s storage access is confined to the game helper and G3 permits no stray storage key (observed after-application failure: stray key mbm_splash_last)"
+    "reason": "Emberwild carries its own in-file introduction on the shared mbm_splash_last key (tools/verify_emberwild.js admits that key alone since #235, merged 2026-09-02 as 9966c91b), but not the canon-stamped region: render_maker_splash.py --check reports it missing. The earlier reason here, a G3 stray-key failure, stopped being true at #235. Stamping the region is the #219 carve-out, closed as superseded and deferred to the Emberwild upgrade; until then this route stays declined so the canon cannot report a block it never wrote."
    },
    {
     "route": "/crownbadge/",
