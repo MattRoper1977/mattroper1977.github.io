@@ -34,18 +34,22 @@
       "sha256": "76f3928f2ace6532db4e59711fdd3022ac9ad2966058a6fdf59a0c446ba298d9"
     },
     "P7": {
-      "status": "in_progress",
-      "note": "Site PR #237 (branch tfr2/titanforge-v5), Games PR #49 (canonical row, land first). Merge, Pages wait and served-bytes assertion pending.",
+      "status": "done",
+      "note": "Site #237 merged to main as d40fef306edaa64472eb610b1bd8372d2b72a1c8 (merge commit by claude[bot] auto-merge at head f10c2ca, not a squash); Games #49 squash-merged as dbe5af0ad404f924f3da893814253d4eea54825c. Pages run 33578405918 success; raw main blob 2,242,893 B sha256 76f3928f… equals the build; titan-crown-live-verify run 33578407695 success. Standing-down comment on #237 for the DfE KCSIE 410s (external link rot, red on main run 33572864417 too).",
       "site_pr": 237,
+      "site_merge": "d40fef306edaa64472eb610b1bd8372d2b72a1c8",
+      "site_head": "f10c2cab45a25ec4ffaaf002afe31e75a11b9d5c",
       "games_pr": 49,
-      "games_head": "6121d1444676d88345fa5cddba9012a07dd31815"
+      "games_merge": "dbe5af0ad404f924f3da893814253d4eea54825c",
+      "pages_run": 33578405918,
+      "live_verify_run": 33578407695
     }
   },
   "matt_decides": [
-    "L5 fatigue cap: order says min(1.25,\u2026) but that gives 95 ms dwell at max fatigue (<110 floor); shipped 1.05 (110.3 ms).",
+    "L5 fatigue cap: order says min(1.25,…) but that gives 95 ms dwell at max fatigue (<110 floor); shipped 1.05 (110.3 ms).",
     "G8 Three.js: kept (no THREE=drop flag). 603,485 B block; 2,150,997 B with, 1,547,512 B without.",
-    "G1 sky layer is the arena background itself (impact offset only, no idle drift) \u2014 a copied full-screen layer cost ~10 fps under the 4x budget.",
+    "G1 sky layer is the arena background itself (impact offset only, no idle drift) — a copied full-screen layer cost ~10 fps under the 4x budget.",
     "Site launch contract ceiling raised 1,000,000 -> 2,400,000 B (tools/titan-crown/verify_launch.mjs) to admit the 2,242,893 B V5; keep, or shrink the payload (drop Three.js -> ~1.64 MB)?"
   ],
-  "updated": "2026-09-01T23:41:18.907872Z"
+  "updated": "2026-09-02T01:13:27.712066Z"
 }
