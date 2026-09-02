@@ -14,7 +14,18 @@ const CPU_THROTTLE = 6;
 const WARM_UP_MS = 2500;
 const MEASURE_MS = 5000;
 const ROUNDS = 3;
-const LIVE_ORIGIN = 'https://mattroper1977.github.io';
+// Every comparator's bytes are read from a checkout, never fetched from the
+// live origin. A network fetch inside the ceiling-timed measured window makes
+// ordinary transport variance indistinguishable from a route-round failure:
+// run 33613996318 spent 89 s and died on `net::ERR_CONNECTION_RESET` at
+// /Lessons/Games/Grid_Chase.html, which reads exactly like a subject that
+// cannot keep up. Twenty-seven of this manifest's fifty-nine routes live in
+// the MattRoper1977/Lessons repository; LESSONS_ROOT is where CI checked that
+// repository out. Its absence is a hard, named failure, not a fall back to the
+// network - see resolveHref. This changes no threshold, no matcher and no
+// assertion; it changes only where the identical bytes come from.
+const LESSONS_ROOT = process.env.LESSONS_ROOT ? path.resolve(process.env.LESSONS_ROOT) : null;
+const LESSONS_PREFIX = '/Lessons/';
 // The three newest shipped routes at the 2026-08-27 C1 decision form a fixed
 // historical set. Town Life is the candidate measured against that set, not a
 // claim about whatever routes are newest in the current manifest.
@@ -169,19 +180,40 @@ function seededShuffle(values, seed) {
   return shuffled;
 }
 
-function localFileForHref(href) {
-  if (!href.startsWith('/') || href.startsWith('/Lessons/')) return null;
+function fileUnder(root, href) {
   const relative = decodeURIComponent(href).replace(/^\/+/, '');
   const candidate = href.endsWith('/')
-    ? path.join(ROOT, relative, 'index.html')
-    : path.join(ROOT, relative);
+    ? path.join(root, relative, 'index.html')
+    : path.join(root, relative);
   return fs.existsSync(candidate) && fs.statSync(candidate).isFile() ? candidate : null;
+}
+
+// Site-repository routes only. deriveHeavyWebgl reads this and nothing else:
+// the two heavy-WebGL comparators are derived from the routes this repository
+// ships, and letting the Lessons mirror into that derivation would silently
+// re-pick the comparator set (voxelcraft.html is larger than either current
+// pick) and break comparability with every recorded green run.
+function siteFileForHref(href) {
+  if (!href.startsWith('/') || href.startsWith(LESSONS_PREFIX)) return null;
+  return fileUnder(ROOT, href);
+}
+
+// Every manifest route, wherever its bytes live. Returns null only for an
+// href this harness has no checkout for; callers assert on that rather than
+// reaching the network.
+function localFileForHref(href) {
+  if (!href.startsWith('/')) return null;
+  if (href.startsWith(LESSONS_PREFIX)) {
+    if (!LESSONS_ROOT) return null;
+    return fileUnder(LESSONS_ROOT, '/' + href.slice(LESSONS_PREFIX.length));
+  }
+  return fileUnder(ROOT, href);
 }
 
 function deriveHeavyWebgl(games, excluded) {
   return games
     .filter(game => !excluded.has(game.href))
-    .map(game => ({ ...game, file: localFileForHref(game.href) }))
+    .map(game => ({ ...game, file: siteFileForHref(game.href) }))
     .filter(game => game.file)
     .map(game => ({ ...game, bytes: fs.readFileSync(game.file) }))
     .filter(game => /webgl|THREE\./i.test(game.bytes.toString('utf8')))
@@ -209,9 +241,13 @@ async function startServer() {
   const server = http.createServer((request, response) => {
     try {
       const pathname = decodeURIComponent(new URL(request.url, 'http://127.0.0.1').pathname);
-      const relative = pathname.replace(/^\/+/, '');
-      const candidate = path.resolve(ROOT, pathname.endsWith('/') ? relative + 'index.html' : relative);
-      if (candidate !== ROOT && !candidate.startsWith(ROOT + path.sep)) throw new Error('path escapes root');
+      const lessons = pathname.startsWith(LESSONS_PREFIX);
+      if (lessons && !LESSONS_ROOT) throw new Error('LESSONS_ROOT is not set');
+      const root = lessons ? LESSONS_ROOT : ROOT;
+      const within = lessons ? '/' + pathname.slice(LESSONS_PREFIX.length) : pathname;
+      const relative = within.replace(/^\/+/, '');
+      const candidate = path.resolve(root, within.endsWith('/') ? relative + 'index.html' : relative);
+      if (candidate !== root && !candidate.startsWith(root + path.sep)) throw new Error('path escapes root');
       const bytes = fs.readFileSync(candidate);
       response.writeHead(200, { 'content-type': contentType(candidate), 'cache-control': 'no-store' });
       response.end(bytes);
@@ -228,15 +264,12 @@ async function startServer() {
 
 async function routeIdentity(game) {
   const local = localFileForHref(game.href);
-  if (local) {
-    const bytes = fs.readFileSync(local);
-    return { source: path.relative(ROOT, local), byteLength: bytes.length, sha256: sha256(bytes) };
-  }
-  const url = new URL(game.href, LIVE_ORIGIN);
-  const response = await fetch(url, { redirect: 'follow' });
-  assert.equal(response.status, 200, `${game.title}: live executable returned ${response.status}`);
-  const bytes = Buffer.from(await response.arrayBuffer());
-  return { source: response.url, byteLength: bytes.length, sha256: sha256(bytes) };
+  assert(local, `${game.title}: no checkout provides ${game.href}`
+    + (game.href.startsWith(LESSONS_PREFIX) && !LESSONS_ROOT
+      ? ' - set LESSONS_ROOT to a checkout of MattRoper1977/Lessons' : ''));
+  const bytes = fs.readFileSync(local);
+  const base = game.href.startsWith(LESSONS_PREFIX) ? LESSONS_ROOT : ROOT;
+  return { source: path.relative(base, local), byteLength: bytes.length, sha256: sha256(bytes) };
 }
 
 async function dismissAndStart(page) {
@@ -316,8 +349,7 @@ async function measureRoute(browser, origin, game, round, options = {}) {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     const session = await context.newCDPSession(page);
-    const local = Boolean(localFileForHref(game.href));
-    const subjectUrl = new URL(game.href, options.subjectOrigin || (local ? origin : LIVE_ORIGIN));
+    const subjectUrl = new URL(game.href, options.subjectOrigin || origin);
     subjectUrl.searchParams.set('splash', 'skip');
     // Voxel's terrain-ready evidence is deliberately exposed only by its
     // existing `?debug=1` diagnostic (voxel/index.html:606, 2007).  Without
