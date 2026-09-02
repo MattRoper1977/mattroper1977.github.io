@@ -352,7 +352,12 @@ async function main() {
         // can tunnel through the canonical modal introduction.  The previous
         // 700 ms settle raced the splash's deliberate 2.1 s lifetime and made
         // fast-loading routes fail while slower routes passed by accident.
-        const url = origin + t.route.split('/').map(encodeURIComponent).join('/') + '?splash=skip';
+        /* CyberPulse's own CP4c gate proves renderer=2d reaches its Canvas
+           fallback. This verifier judges DOM furniture, not the renderer; using
+           that authored hatch avoids spending the whole job budget in WebGL
+           while preserving every geometry, stacking and keyboard assertion. */
+        const renderer = t.route === '/cyberpulse/' ? '&renderer=2d' : '';
+        const url = origin + t.route.split('/').map(encodeURIComponent).join('/') + '?splash=skip' + renderer;
         try {
           await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_MS });
           await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, CHOICE]);

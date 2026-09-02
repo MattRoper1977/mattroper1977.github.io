@@ -67,10 +67,19 @@ function manifestSports() {
   for (const c of candidates) {
     if (fs.existsSync(c)) {
       const g = JSON.parse(fs.readFileSync(c, 'utf8')).games;
-      return { path: c, titles: g.filter(x => x.collection === 'Sports').map(x => x.title) };
+      const sports = g.filter(x => x.collection === 'Sports');
+      return { path: c, titles: sports.map(x => x.title), hrefs: sports.map(x => x.href) };
     }
   }
   return null;
+}
+
+/* Grafted from tools/verify_curation_keys.mjs: catalogue identity is the
+ * canonical href, never presentation text. A V6 title may change while the
+ * game and route stay the same. Keep this as a function so the shipping limb
+ * and its firing control invoke the identical predicate. */
+function outsideSports(cards, sportsHrefs) {
+  return cards.filter(card => !sportsHrefs.includes(card.href));
 }
 
 (async () => {
@@ -107,16 +116,24 @@ function manifestSports() {
       const ctx = await browser.newContext({ javaScriptEnabled: false, viewport: VIEWPORTS[2] });
       const page = await ctx.newPage();
       await page.goto(origin + HOME_ROUTE, { waitUntil: 'load' });
-      const names = await page.$$eval('.dx-sports-grid a.dx-sport', els => els.map(e => e.getAttribute('data-sport-game')));
+      const cards = await page.$$eval('.dx-sports-grid a.dx-sport', els => els.map(e => ({
+        name: e.getAttribute('data-sport-game'), href: e.getAttribute('href')
+      })));
+      const names = cards.map(card => card.name);
       const SIBLINGS = ['Apex Kick', 'Apex Pool', 'Apex Golf', 'Apex Tennis'];
       SIBLINGS.forEach(s => assert(names.includes(s), `${s} was displaced from the homepage`));
       assert(names.filter(n => n === 'Apex Rally').length === 1, 'Apex Rally must appear exactly once on the homepage Sports strip');
       assert(new Set(names).size === names.length, 'a card appears twice: ' + names.join(', '));
       let derived = 'no manifest available';
       if (manifest) {
-        const outside = names.filter(t => !manifest.titles.includes(t));
-        assert(outside.length === 0, `homepage Sports card(s) are not in the manifest Sports collection: ${outside.join(', ')}`);
-        derived = `${names.length}/${names.length} homepage cards are members of the broader ${manifest.titles.length}-game manifest Sports collection`;
+        const outside = outsideSports(cards, manifest.hrefs);
+        assert(outside.length === 0, `homepage Sports card(s) are not in the manifest Sports collection: ${outside.map(card => `${card.name} (${card.href})`).join(', ')}`);
+        const planted = cards.map(card => ({ ...card }));
+        planted[0].href = '/not-a-sports-route/';
+        const controlOutside = outsideSports(planted, manifest.hrefs);
+        assert(controlOutside.length === 1 && controlOutside[0].href === '/not-a-sports-route/',
+          `C2 CONTROL DID NOT FIRE: ${JSON.stringify(controlOutside)}`);
+        derived = `${names.length}/${names.length} homepage cards are members of the broader ${manifest.titles.length}-game manifest Sports collection by canonical href; planted off-collection href RED`;
       }
       const lede = await page.textContent('.dx-sports-lede');
       assert(!/\bfour\b/i.test(lede), `the lede still reads "${lede.trim()}"`);
