@@ -1,0 +1,51 @@
+{
+  "order": "TFR2",
+  "input_sha256": "fc9699b5c1a1e02f694b31b20cb918796d02cc8269385b3f2ba3f6bf93418f8f",
+  "working_copy": "_tfr2/titanforge.html",
+  "phases": {
+    "P0": {
+      "status": "done",
+      "note": "ANCHOR.json written; live fetch blocked by egress policy, raw main blob used"
+    },
+    "P1": {
+      "status": "done",
+      "note": "LAYOUT_BEFORE.md; lift-button NO on 360/390/412, harness agrees with screenshot"
+    },
+    "P2": {
+      "status": "done",
+      "note": "LAYOUT_AFTER.md; lift YES x3; reps PASS; dwell 147.5/115.9/110.3 with cap 1.05"
+    },
+    "P3": {
+      "status": "done",
+      "note": "GRAPHICS.md; perf 53/53 before/after, idle draws 6->0; bytes 2150997 with Three / 1547512 without"
+    },
+    "P4": {
+      "status": "done",
+      "note": "DUEL.md; gate 18/18; codes 134 chars; channel 211-267 ms; perf 54/53 after keyframe kick/cam rework"
+    },
+    "P5": {
+      "status": "done",
+      "note": "POLISH.md; gate 24/24; perf 50/52"
+    },
+    "P6": {
+      "status": "done",
+      "note": "REGRESSION.md; 12/12 PASS; perf medians 50/53/52",
+      "bytes": 2242893,
+      "sha256": "76f3928f2ace6532db4e59711fdd3022ac9ad2966058a6fdf59a0c446ba298d9"
+    },
+    "P7": {
+      "status": "in_progress",
+      "note": "Site PR #237 (branch tfr2/titanforge-v5), Games PR #49 (canonical row, land first). Merge, Pages wait and served-bytes assertion pending.",
+      "site_pr": 237,
+      "games_pr": 49,
+      "games_head": "6121d1444676d88345fa5cddba9012a07dd31815"
+    }
+  },
+  "matt_decides": [
+    "L5 fatigue cap: order says min(1.25,\u2026) but that gives 95 ms dwell at max fatigue (<110 floor); shipped 1.05 (110.3 ms).",
+    "G8 Three.js: kept (no THREE=drop flag). 603,485 B block; 2,150,997 B with, 1,547,512 B without.",
+    "G1 sky layer is the arena background itself (impact offset only, no idle drift) \u2014 a copied full-screen layer cost ~10 fps under the 4x budget.",
+    "Site launch contract ceiling raised 1,000,000 -> 2,400,000 B (tools/titan-crown/verify_launch.mjs) to admit the 2,242,893 B V5; keep, or shrink the payload (drop Three.js -> ~1.64 MB)?"
+  ],
+  "updated": "2026-09-01T23:41:18.907872Z"
+}

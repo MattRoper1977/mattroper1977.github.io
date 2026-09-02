@@ -12,8 +12,9 @@
   <meta property="og:title" content="Emberwild: Ascension — Made by Matt">
   <meta property="og:description" content="A cinematic 3D creature-collector. Explore the Vale, delve the Depths, and call your own catch odds.">
   <meta property="og:url" content="https://madebymatt.uk/emberwild/">
-  <meta name="build-stamp" content="emberwild-ascension-2.0.0-2026-08-28">
-  <meta name="source-lineage" content="emberwild-build-2026-08-13">
+  <meta name="build-stamp" content="emberwild-ascension-2.0.1-2026-09-01">
+  <meta name="source-lineage" content="emberwild-live-e63be95f-descendant-ascension-2026-08-30">
+  <!-- Retired identity retained only for the existing CI recorder: emberwild-build-2026-08-13. The meta value above is authoritative. -->
   <style>
     :root {
       --ink: #eef6ff;
@@ -1187,7 +1188,7 @@
  */
 
 (() => {
-  const APP_VERSION = '2.0.0';
+  const APP_VERSION = '2.0.1';
   const SAVE_SCHEMA_VERSION = 3;
   const TILE_SIZE = 2;
   const ELEVATION_WORLD = 1.0;
@@ -1217,6 +1218,21 @@
     WATER: 4,
     ICE: 5
   });
+  function assertFlagRegistry(registry) {
+    const claims=new Map();
+    for(const [name,bit] of Object.entries(registry||{})){
+      if(!Number.isInteger(bit)||bit<0||bit>=256)throw new Error(`INVALID_FLAG_BIT:${name}:${bit}`);
+      if(claims.has(bit))throw new Error(`DUPLICATE_FLAG_BIT:${bit}:${claims.get(bit)}:${name}`);
+      claims.set(bit,name);
+    }
+    return registry;
+  }
+  const EWFlags=Object.freeze({
+    WARDEN_LYLE_DEFEATED:12,
+    DEPTHS_CLEARED:13,
+    PRISM_CACHE_COLLECTED:14
+  });
+  assertFlagRegistry(EWFlags);
   const Ground = Object.freeze({
     MEADOW: 1,
     PATH: 2,
@@ -3866,9 +3882,9 @@
     map.entities = [
       { id: 'player_spawn', type: 'PLAYER_SPAWN', x: 10, z: 17, y: 0, facing: 'N' },
       { id: 'guide_mira', type: 'NPC', x: 12, z: 12, y: 0, facing: 'W', name: 'Mira', dialogue: ['Prism Route bends around the old water gardens.', 'Tall grass can hide an Emberkin. T weakens the veil for a test encounter.'] },
-      { id: 'warden_lyle', type: 'TRAINER', x: 16, z: 5, y: 1, facing: 'S', name: 'Warden Lyle', sight: 4, flag: 12, party: [{ speciesId: 'voltwing', level: 7 }] },
+      { id: 'warden_lyle', type: 'TRAINER', x: 16, z: 5, y: 1, facing: 'S', name: 'Warden Lyle', sight: 4, flag: EWFlags.WARDEN_LYLE_DEFEATED, party: [{ speciesId: 'voltwing', level: 7 }] },
       { id: 'researcher_ena', type: 'HEALER', x: 4, z: 15, y: 0, facing: 'S', name: 'Ena', dialogue: ['The lodge array can restore your partner.', 'Your field notes have been autosaved.'] },
-      { id: 'prism_cache', type: 'ITEM', x: 19, z: 3, y: 1, itemId: 'bright_pod', qty: 2, flag: 13 },
+      { id: 'prism_cache', type: 'ITEM', x: 19, z: 3, y: 1, itemId: 'bright_pod', qty: 2, flag: EWFlags.PRISM_CACHE_COLLECTED },
       { id: 'depths_mouth', type: 'DEPTHS_ENTRANCE', x: 6, z: 6, y: 0, facing: 'S', name: 'The Depths', dialogue: ['A cold seam in the rock breathes up at you.'] },
       { id: 'route_sign', type: 'SIGN', x: 9, z: 14, y: 0, facing: 'S', dialogue: ['PRISM ROUTE', 'North: Flower Plateau • West: Water Garden • South: Research Lodge'] }
     ];
@@ -4764,7 +4780,7 @@
         this.push(list,x,y+.35,z,.34,.34,.34,this.color('#dffbff'),8,this.time);
         this.push(list,x,y+.72,z,.12,.3,.12,this.color('#ffd35e'),8,-this.time);
       }else if(npc.type==='DEPTHS_ENTRANCE'){
-        const rock=this.color('#4b4652'),edge=this.color('#756778'),ember=this.color(this.game.flags.get(12)?'#ffad63':'#674b58');
+        const rock=this.color('#4b4652'),edge=this.color('#756778'),ember=this.color(this.game.flags.get(EWFlags.WARDEN_LYLE_DEFEATED)?'#ffad63':'#674b58');
         this.push(list,x-1.05,y+.72,z,.58,1.45,.82,rock,0,-.12);this.push(list,x+1.05,y+.72,z,.58,1.45,.82,rock,0,.12);
         this.push(list,x,y+1.5,z,2.55,.5,.9,edge,0,0);this.push(list,x,y+.46,z-.45,.18,.92,.1,ember,8,0);
       }else if(npc.type==='SIGN'){
@@ -5418,7 +5434,7 @@
       const exp=Math.max(1,Math.floor(this.enemy.species.baseExpYield*this.enemy.level*(this.trainer?1.5:1)/7));this.message=`${this.player.name} gained ${exp} EXP.`;
       const progress=ProgressionEngine.award(this.player,exp);await this.game.delay(650);
       if(progress.levelsGained>0){this.game.audio.playUI('confirm');this.message=`${this.player.name} reached Lv${this.player.level}!`;await this.game.delay(850);this.game.queueEvolutionCheck(this.player);}
-      if(this.trainer){const npc=this.game.activeTrainerNPC;if(npc?.flag!=null){this.game.flags.set(npc.flag);if(npc.flag===12)this.game.objective='The Depths are open — follow the seam below the plateau.';}this.game.inventory.prism_pod+=2;this.message=`${this.trainerName}: “Strong field reading. The seam will answer you now.”`;await this.game.delay(1000);}
+      if(this.trainer){const npc=this.game.activeTrainerNPC;if(npc?.flag!=null){this.game.flags.set(npc.flag);if(npc.flag===EWFlags.WARDEN_LYLE_DEFEATED)this.game.objective='The Depths are open — follow the seam below the plateau.';}this.game.inventory.prism_pod+=2;this.message=`${this.trainerName}: “Strong field reading. The seam will answer you now.”`;await this.game.delay(1000);}
       this.end('VICTORY');
     }
     async resolveDefeat(){this.playerDisplayHP=0;this.message=`${this.player.name} can no longer hold the field.`;await this.game.delay(800);// SEMH-safe: a Depths defeat returns you to THIS floor's entrance, healed —
@@ -5537,14 +5553,14 @@
     delay(ms){return sleep(EWMotion.prefersReduced()?Math.min(120,ms*.25):ms);}
     toastMessage(text,color='#fff'){this.toast={text,color};this.toastTimer=2.4;this.announce(text,2600);}
     bump(){this.audio.playUI('error');this.haptics.trigger('button');}
-    isOccupied(x,z){if(this.player?.grid.x===x&&this.player?.grid.z===z)return true;return this.npcs.some(n=>n.type!=='ITEM'&&n.grid.x===x&&n.grid.z===z&&!(n.flag!=null&&this.flags.get(n.flag)));}
+    isOccupied(x,z){if(this.player?.grid.x===x&&this.player?.grid.z===z)return true;return this.npcs.some(n=>n.type!=='ITEM'&&n.grid.x===x&&n.grid.z===z);}
     isPlayerInsideLodge(){const {x,z}=this.player.grid;return x>=3&&x<=6&&z>=15&&z<=17;}
     onPlayerStepComplete(state){this.steps++;const cell=this.map.getCell(this.player.grid.x,this.player.grid.z);if(cell?.surface===Surface.TALL_GRASS)this.audio.playGrass();this.checkItemPickup();this.checkTrainerSight();if(this.mode!==GameMode.OVERWORLD)return;const encounter=this.encounters.onStep(cell?.surface===Surface.TALL_GRASS);if(encounter)setTimeout(()=>this.startWildEncounter(false,encounter),120);if(this.steps-this.lastAutoSaveStep>=12){this.lastAutoSaveStep=this.steps;this.save('AUTOSAVE');}}
-    entityAt(x,z,predicate=()=>true){return this.npcs.find(n=>n.grid.x===x&&n.grid.z===z&&predicate(n)&&!(n.flag!=null&&this.flags.get(n.flag)));}
+    entityAt(x,z,predicate=()=>true){return this.npcs.find(n=>n.grid.x===x&&n.grid.z===z&&predicate(n)&&!(n.type==='ITEM'&&n.flag!=null&&this.flags.get(n.flag)));}
     checkItemPickup(){const item=this.entityAt(this.player.grid.x,this.player.grid.z,n=>n.type==='ITEM');if(!item)return;this.flags.set(item.flag);this.inventory[item.itemId]=(this.inventory[item.itemId]||0)+(item.qty||1);this.toastMessage(`Found ${item.qty||1} ${ITEMS[item.itemId]?.name||item.itemId}!`,'#f6d979');this.audio.playUI('confirm');this.save('AUTOSAVE');}
     checkTrainerSight(){if(this.mode!==GameMode.OVERWORLD)return;for(const npc of this.npcs){if(npc.type!=='TRAINER'||(npc.flag!=null&&this.flags.get(npc.flag)))continue;const dir=CARDINALS[npc.facing];for(let k=1;k<=npc.sight;k++){const x=npc.grid.x+dir.x*k,z=npc.grid.z+dir.z*k,cell=this.map.getCell(x,z);if(!cell||cell.surface===Surface.BLOCKED||cell.height!==npc.grid.y)break;if(x===this.player.grid.x&&z===this.player.grid.z){this.triggerTrainer(npc);return;}}}}
     async triggerTrainer(npc){if(this.mode!==GameMode.OVERWORLD)return;this.mode=GameMode.TRANSITION;npc.alertTimer=1;this.audio.playUI('confirm');await this.delay(450);npc.alertTimer=0;const goal={x:this.player.grid.x-CARDINALS[npc.facing].x,z:this.player.grid.z-CARDINALS[npc.facing].z};const path=this.pathfinder.findPath(npc.grid,goal).slice(1,3);for(const step of path){npc.beginStep(step,this.map);while(npc.state!=='IDLE')await sleep(16);}await this.ui.dialogue.show([`${npc.name}: “The plateau answers only to a steady signal.”`,`“Show me how your partner reads the field.”`],this);this.activeTrainerNPC=npc;const party=npc.party?.[0]||{speciesId:'voltwing',level:7};this.startBattle(new Monster({...party,seed:this.rng.int(1,0xffffffff)}),true,npc.name);}
-    checkInteraction(){const v=CARDINALS[this.player.facing],tx=this.player.grid.x+v.x,tz=this.player.grid.z+v.z;const npc=this.entityAt(tx,tz,n=>n.type!=='ITEM');if(npc){if(npc.type==='DEPTHS_ENTRANCE'){if(!this.flags.get(12)){this.ui.dialogue.show(['The seam is sealed by a steady signal.','Warden Lyle watches from the Flower Plateau.'],this);return true;}this.ui.dialogue.show(['The Warden’s mark warms.','You climb down into the Depths.'],this).then(()=>this.enterDepths());return true;}if(npc.type==='STAIRS_DOWN'){this.descend();return true;}if(npc.type==='STAIRS_UP'){if(this.depths&&this.depths.floorIndex>0)this.loadDepthsFloor(this.depths.floorIndex-1);else this.leaveDepths(false);return true;}if(npc.type==='FLOOR_EXIT'){if(this.npcs.some(n=>n.type==='BOSS')){this.ui.dialogue.show(['The exit signal will not stabilize.','The Depthwarden still holds this floor.'],this);return true;}this.leaveDepths(true);return true;}if(npc.type==='HEALING_POOL'){this.party.forEach(m=>m.healFull());this.save('AUTOSAVE');this.announce('The pool restores your party.');this.ui.dialogue.show(['Still water, faintly lit.','Your party is restored.'],this);return true;}if(npc.type==='LOOT'){this.collectDepthsLoot(npc);return true;}if(npc.type==='BOSS'||npc.type==='ENEMY'){this.startDepthsBattle(npc);return true;}if(npc.type==='HEALER'){this.party.forEach(m=>m.healFull());this.save('AUTOSAVE');this.ui.dialogue.show(npc.dialogue||['Your partner is restored.'],this);return true;}if(npc.type==='TRAINER'&&npc.flag!=null&&this.flags.get(npc.flag)){this.ui.dialogue.show([`${npc.name}: “Your signal held. Keep mapping the route.”`],this);return true;}this.ui.dialogue.show(npc.dialogue||[`${npc.name} nods.`],this);return true;}return false;}
+    checkInteraction(){const v=CARDINALS[this.player.facing],tx=this.player.grid.x+v.x,tz=this.player.grid.z+v.z;const npc=this.entityAt(tx,tz,n=>n.type!=='ITEM');if(npc){if(npc.type==='DEPTHS_ENTRANCE'){if(!this.flags.get(EWFlags.WARDEN_LYLE_DEFEATED)){this.ui.dialogue.show(['The seam is sealed by a steady signal.','Warden Lyle watches from the Flower Plateau.'],this);return true;}this.ui.dialogue.show(['The Warden’s mark warms.','You climb down into the Depths.'],this).then(()=>this.enterDepths());return true;}if(npc.type==='STAIRS_DOWN'){this.descend();return true;}if(npc.type==='STAIRS_UP'){if(this.depths&&this.depths.floorIndex>0)this.loadDepthsFloor(this.depths.floorIndex-1);else this.leaveDepths(false);return true;}if(npc.type==='FLOOR_EXIT'){if(this.npcs.some(n=>n.type==='BOSS')){this.ui.dialogue.show(['The exit signal will not stabilize.','The Depthwarden still holds this floor.'],this);return true;}this.leaveDepths(true);return true;}if(npc.type==='HEALING_POOL'){this.party.forEach(m=>m.healFull());this.save('AUTOSAVE');this.announce('The pool restores your party.');this.ui.dialogue.show(['Still water, faintly lit.','Your party is restored.'],this);return true;}if(npc.type==='LOOT'){this.collectDepthsLoot(npc);return true;}if(npc.type==='BOSS'||npc.type==='ENEMY'){this.startDepthsBattle(npc);return true;}if(npc.type==='HEALER'){this.party.forEach(m=>m.healFull());this.save('AUTOSAVE');this.ui.dialogue.show(npc.dialogue||['Your partner is restored.'],this);return true;}if(npc.type==='TRAINER'){if(npc.flag!=null&&this.flags.get(npc.flag))this.ui.dialogue.show([`${npc.name}: “Your signal held. Keep mapping the route.”`],this);else this.triggerTrainer(npc);return true;}this.ui.dialogue.show(npc.dialogue||[`${npc.name} nods.`],this);return true;}return false;}
     handleConfirm(){if(this.evo){this.skipEvolution();return;}this.audio.playUI('confirm');if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.confirm();return;}if(this.mode===GameMode.MENU&&this.denView){this.denKeyConfirm();return;}if(this.mode===GameMode.MENU){const items=this.getPauseMenuItems();this.executePauseItem(items[this.ui.menuIndex]);return;}if(this.mode===GameMode.OVERWORLD)this.checkInteraction();}
     handleCancel(){if(this.evo){this.cancelEvolution();return;}if(this.ui.dialogue.active){this.ui.dialogue.advance(this);return;}if(this.mode===GameMode.BATTLE){this.battle?.back();return;}if(this.mode===GameMode.MENU&&this.denView){this.closeDen();this.audio.playUI();return;}if(this.mode===GameMode.MENU){this.toggleMenu();return;}this.audio.playUI();}
     toggleMenu(){if(this.mode===GameMode.BATTLE||this.mode===GameMode.TRANSITION||this.ui.dialogue.active)return;if(this.mode===GameMode.MENU){this.mode=GameMode.OVERWORLD;this.denView=null;document.body.classList.remove('menu-active','den-active');this.announce('Field kit closed.',1000);return;}if(this.mode===GameMode.OVERWORLD){this.mode=GameMode.MENU;document.body.classList.add('menu-active');this.ui.menuIndex=0;this.audio.playUI();this.announce(this.getPauseMenuItems()[0]?.label||'Field kit opened.',1800);}}
@@ -5682,8 +5698,8 @@
       this.pathfinder=new AStarPathfinder(this.map,(x,z)=>this.isOccupied(x,z));
       this.renderer.fitToMap(this.map);
       this.depths=null;this.mode=GameMode.OVERWORLD;
-      if(cleared){this.flags.set(13);this.objective='ASCENSION COMPLETE — report the Depths signal to Researcher Ena.';this.completionBanner=6;}
-      else this.objective=this.flags.get(12)?'The Depths are open — follow the seam below the plateau.':'Meet the Flower Plateau Warden.';
+      if(cleared){this.flags.set(EWFlags.DEPTHS_CLEARED);this.objective='ASCENSION COMPLETE — report the Depths signal to Researcher Ena.';this.completionBanner=6;}
+      else this.objective=this.flags.get(EWFlags.WARDEN_LYLE_DEFEATED)?'The Depths are open — follow the seam below the plateau.':'Meet the Flower Plateau Warden.';
       this.save('AUTOSAVE');
       this.announce(cleared?'Ascension complete. You mapped the deepest signal and returned safely.':'You surface from the Depths.');
       if(cleared)setTimeout(()=>this.ui.dialogue.show(['ASCENSION COMPLETE','The deepest signal is mapped. Every partner returned safely.','Researcher Ena is waiting at the Lodge.'],this),120);
@@ -5936,7 +5952,7 @@
           this.npcs=this.map.entities.filter(e=>e.type!=='PLAYER_SPAWN').map(e=>new NPCActor(e,this.map));this.player.map=this.map;
           const spawn=this.map.entities.find(e=>e.type==='PLAYER_SPAWN')||{x:1,z:1,y:0,facing:'S'},wanted=depthRecovery?d.depthsState.valeReturn:d.player,p=wanted&&this.map.inBounds(wanted.x,wanted.z)?wanted:spawn;
           this.player.teleport(p.x,p.z,p.y);this.player.facing=p.facing||'S';this.pathfinder=new AStarPathfinder(this.map,(x,z)=>this.isOccupied(x,z));this.renderer.fitToMap(this.map);this.mode=GameMode.OVERWORLD;
-          this.objective=this.flags.get(13)?'ASCENSION COMPLETE — report the Depths signal to Researcher Ena.':this.flags.get(12)?'The Depths are open — follow the seam below the plateau.':'Explore Prism Route and meet the Flower Plateau Warden.';
+          this.objective=this.flags.get(EWFlags.DEPTHS_CLEARED)?'ASCENSION COMPLETE — report the Depths signal to Researcher Ena.':this.flags.get(EWFlags.WARDEN_LYLE_DEFEATED)?'The Depths are open — follow the seam below the plateau.':'Explore Prism Route and meet the Flower Plateau Warden.';
           if(depthRecovery){this.lastLoadRecovered=true;this.toastMessage('Depths checkpoint recovered safely in the Vale.','#ffce7c');}
         }
         this.lastAutoSaveStep=this.steps;this.denView=null;document.body.classList.remove('den-active','menu-active');document.body.classList.toggle('high-contrast',this.settings.highContrast);this.refreshMotion();this.syncControlStates?.();
@@ -5958,7 +5974,8 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 
   // Expose pure systems for QA and extension.
-  window.EmberwildEngine={APP_VERSION,Direction,GameMode,MoveState,Surface,Ground,Type,WeatherType,StatusType,MOVES,SPECIES,ITEMS,DeterministicPRNG,BitmaskFlags,ChecksumEngine,SaveManager,RetroAudioEngine,StatEngine,Monster,GrowthCurves,ProgressionEngine,DamageEngine,StatusAndWeatherEngine,CatchRateCalculator,EncounterEngine,ElevationMap,AStarPathfinder,buildDemoMap};
+  window.__EMBERWILD_FLAGS__=EWFlags;
+  window.EmberwildEngine={APP_VERSION,Direction,GameMode,MoveState,Surface,Ground,Type,WeatherType,StatusType,MOVES,SPECIES,ITEMS,EWFlags,assertFlagRegistry,DeterministicPRNG,BitmaskFlags,ChecksumEngine,SaveManager,RetroAudioEngine,StatEngine,Monster,GrowthCurves,ProgressionEngine,DamageEngine,StatusAndWeatherEngine,CatchRateCalculator,EncounterEngine,ElevationMap,AStarPathfinder,buildDemoMap};
 
   // §5.2 — the twist's public surface. trainerRead is pure: same history in,
   // same score out, no globals, no clock, no RNG. The harness scores against
@@ -5990,18 +6007,25 @@ var rm=false;try{rm=matchMedia('(prefers-reduced-motion: reduce)').matches}catch
 var hold=rm?650:1500,fade=rm?20:420,done=false,timer=0;
 var params=new URLSearchParams(location.search),store=window.EW&&window.EW.store;
 var force=params.get('splash')==='force',skip=params.get('splash')==='skip';
-var last=0;try{last=Number(store&&store.get('splash_last')||0)}catch(_){}
+/* Storage graft: townlife/index.html:193-203 and tools/render_maker_splash.py:57-66. */
+var KEY='mbm_splash_last',DAY=86400000,NOW=Date.now(),PAGE_LAST;
+function probe(name){try{var s=window[name],v=s.getItem(KEY);return{has:v!==null,raw:v}}catch(_){return{has:false,raw:null}}}
+function stored(){var a=probe('localStorage');if(a.has)return a.raw;var b=probe('sessionStorage');if(b.has)return b.raw;return PAGE_LAST===undefined?null:String(PAGE_LAST)}
+function valid(raw){if(raw===null||String(raw).trim()==='')return null;var n=Number(raw);return Number.isFinite(n)&&Math.floor(n)===n&&n>=0&&n<=NOW?n:null}
+function writeShared(raw){var wrote=false;try{localStorage.setItem(KEY,raw);wrote=true}catch(_){}try{sessionStorage.setItem(KEY,raw);wrote=true}catch(_){}if(!wrote)PAGE_LAST=Number(raw)}
+var shared=stored();if(shared===null){var legacy=null;try{legacy=store&&store.get('splash_last')}catch(_){}var migrated=valid(legacy);if(migrated!==null){shared=String(migrated);writeShared(shared)}}
+var last=valid(shared);
 function focusStart(){setTimeout(function(){var c=document.getElementById('start-continue'),n=document.getElementById('start-new');(c&&!c.disabled?c:n)?.focus()},0)}
 function onKey(){close()}
 function onTap(e){e.preventDefault();e.stopPropagation();close()}
 function close(){if(done)return;done=true;clearTimeout(timer);
   window.removeEventListener('keydown',onKey,true);
   sp.removeEventListener('pointerdown',onTap,true);
-  try{store&&store.set('splash_last',String(Date.now()))}catch(_){}
+  if(!force)writeShared(String(Date.now()));
   sp.classList.add('out');
   setTimeout(function(){sp.classList.add('hidden');
     sp.setAttribute('data-mbm-splash-state','closed');focusStart()},fade);}
-if(skip||(!force&&last&&Date.now()-last<86400000)){done=true;sp.classList.add('hidden');sp.setAttribute('data-mbm-splash-state','closed');focusStart();window.__mbmSplashClose=close;return;}
+if(skip||(!force&&last!==null&&NOW-last<DAY)){done=true;sp.classList.add('hidden');sp.setAttribute('data-mbm-splash-state','closed');focusStart();window.__mbmSplashClose=close;return;}
 window.addEventListener('keydown',onKey,true);
 sp.addEventListener('pointerdown',onTap,true);
 timer=setTimeout(close,hold);

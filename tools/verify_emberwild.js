@@ -19,6 +19,33 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const childProcess = require('child_process');
+const crypto = require('crypto');
+
+const ROOT = path.resolve(__dirname, '..');
+
+// Consume the generator itself rather than keeping a second copy of its
+// 3,222-byte result here. Graft source: tools/render_inline_exit.py:113-127.
+const INLINE_EXIT_EXPECTED = (() => {
+  const generator = path.join(__dirname, 'render_inline_exit.py');
+  const program = [
+    'import importlib.util, sys',
+    'spec = importlib.util.spec_from_file_location("render_inline_exit", sys.argv[1])',
+    'module = importlib.util.module_from_spec(spec)',
+    'spec.loader.exec_module(module)',
+    'sys.stdout.write(module.build_region(module.read_homes(sys.argv[2])))',
+  ].join('\n');
+  try {
+    return {
+      region: childProcess.execFileSync('python3', ['-c', program, generator, ROOT], {
+        encoding: 'utf8', maxBuffer: 1024 * 1024,
+      }),
+      error: null,
+    };
+  } catch (error) {
+    return { region: null, error: String(error?.stderr || error?.message || error) };
+  }
+})();
 
 const GAME = process.argv[2] && !process.argv[2].startsWith('--')
   ? path.resolve(process.argv[2])
@@ -68,8 +95,10 @@ function staticGates(html) {
   const lsCalls = (withoutExit.match(/localStorage\.(getItem|setItem|removeItem)/g) || []).length;
   const helperCalls = (withoutExit.match(
     /localStorage\.(getItem|setItem|removeItem)\(EWStore\.key\(name\)\)|localStorage\.(setItem)\(EWStore\.key\(name\), value\)/g) || []).length;
-  gate('G3s', 'storage: all key building inside EWStore', lsCalls === helperCalls && lsCalls > 0,
-    `${helperCalls}/${lsCalls} localStorage calls go through EWStore.key`);
+  const sharedSplashCalls = (withoutExit.match(/localStorage\.setItem\(KEY,raw\)/g) || []).length;
+  gate('G3s', 'storage: game keys use EWStore; splash uses the one shared estate key',
+    lsCalls === helperCalls + sharedSplashCalls && helperCalls > 0 && sharedSplashCalls === 1,
+    `${helperCalls} EWStore call(s) + ${sharedSplashCalls} shared-splash call(s) / ${lsCalls} localStorage call(s)`);
 
   // G5 touch floor, static half — every px size on an interactive rule,
   // INCLUDING inside media queries (recorded trap x2).
@@ -106,18 +135,28 @@ function staticGates(html) {
   gate('G11s', 'a11y furniture present', missing.length === 0,
     missing.length ? 'missing ' + missing.join(', ') : 'noscript, aria-live, sr-only, focus-visible');
 
-  // House furniture: the exit control must be byte-identical to the estate copy.
-  // The estate pin is the block as a whole line range (trailing newline
-  // included), which is how it is extracted from the ten live games.
+  // House furniture: compare with the generator's current output, including
+  // the trailing newline. A size-only check admitted same-length corruption.
   const exitMatch = html.match(/<!-- MBM-INLINE-EXIT:BEGIN[\s\S]*?MBM-INLINE-EXIT:END -->\n/);
-  const exitBytes = exitMatch ? Buffer.byteLength(exitMatch[0], 'utf8') : 0;
-  gate('HF1', 'inline exit control present at pinned size', exitBytes === 3222,
-    `${exitBytes} bytes (estate pin 3222)`);
+  const actualExit = exitMatch?.[0] || null;
+  const exitBytes = actualExit ? Buffer.byteLength(actualExit, 'utf8') : 0;
+  const expectedBytes = INLINE_EXIT_EXPECTED.region
+    ? Buffer.byteLength(INLINE_EXIT_EXPECTED.region, 'utf8') : 0;
+  const exitExact = Boolean(actualExit && INLINE_EXIT_EXPECTED.region
+    && actualExit === INLINE_EXIT_EXPECTED.region);
+  const exitSha = actualExit ? crypto.createHash('sha256').update(actualExit).digest('hex') : 'absent';
+  gate('HF1', 'inline exit control byte-identical to current generator output', exitExact,
+    INLINE_EXIT_EXPECTED.error
+      ? `generator failed: ${INLINE_EXIT_EXPECTED.error}`
+      : `${exitBytes}/${expectedBytes} bytes sha256=${exitSha}`);
   gate('HF2', 'MBM splash present', /id="mbmSplash"/.test(html), '');
   gate('HF3', 'canonical + og:url point at /emberwild/',
     /rel="canonical" href="https:\/\/madebymatt\.uk\/emberwild\/"/.test(html)
     && /property="og:url" content="https:\/\/madebymatt\.uk\/emberwild\/"/.test(html), '');
-  gate('HF4', 'build stamped', /emberwild-build-2026-08-13/.test(html), '');
+  const buildStamp = /emberwild-ascension-2\.0\.1-2026-09-01/.test(html);
+  const lineage = /emberwild-live-e63be95f-descendant-ascension-2026-08-30/.test(html);
+  gate('HF4', '2.0.1 build and corrected served-ancestor lineage stamped',
+    buildStamp && lineage, `build=${buildStamp} lineage=${lineage}`);
 
   // G12 syntax: every script block parses.
   const blocks = [...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(x => x[1]);
@@ -357,8 +396,8 @@ async function browserGates(gamePath) {
       reveal.sr.slice(0, 70));
 
     const keys = await page.evaluate(() => Object.keys(localStorage));
-    const stray = keys.filter(k => k.indexOf('mbm_emberwild_') !== 0);
-    gate('G3', 'every storage key is mbm_emberwild_*', stray.length === 0,
+    const stray = keys.filter(k => k.indexOf('mbm_emberwild_') !== 0 && k !== 'mbm_splash_last');
+    gate('G3', 'every storage key is Emberwild-namespaced or the shared splash key', stray.length === 0,
       stray.length ? 'stray: ' + stray.join(', ') : keys.join(', '));
 
     // G9 hostile saves — reproduced, not asserted.
@@ -535,12 +574,19 @@ async function selftest(html) {
       mutate: s => s.replace('#touch-dpad { width: 140px; height: 140px; }', '#touch-dpad { transform: scale(.9); }') },
     { gate: 'G8', why: 'add a second failure panel',
       mutate: s => s.replace('<main id="app"', '<div id="renderer-failure"></div><main id="app"') },
-    { gate: 'HF1', why: 'tamper with the pinned exit control',
-      mutate: s => s.replace('MBM-INLINE-EXIT:END -->', 'MBM-INLINE-EXIT:END --><!--x-->').replace('var back=el("a"', 'var back=el("span"') },
+    { gate: 'HF1', why: 'same-length corruption inside the generated exit control',
+      mutate: s => s.replace('Back: Arcade', 'Bock: Arcade') },
+    { gate: 'HF2', why: 'remove the maker splash identity',
+      mutate: s => s.replace('id="mbmSplash"', 'id="mbmSplash-broken"') },
+    { gate: 'HF3', why: 'repoint the canonical away from Emberwild',
+      mutate: s => s.replace('rel="canonical" href="https://madebymatt.uk/emberwild/"',
+        'rel="canonical" href="https://madebymatt.uk/not-emberwild/"') },
     { gate: 'G11s', why: 'drop the noscript block',
       mutate: s => s.replace(/<noscript>[\s\S]*?<\/noscript>/, '') },
     { gate: 'G3s', why: 'write a key outside the helper',
       mutate: s => s.replace('this.callHistory=[];', "this.callHistory=[];localStorage.setItem('emberwild_sneaky','1');") },
+    { gate: 'HF4', why: 'restore the false pre-repair lineage claim',
+      mutate: s => s.replace('emberwild-live-e63be95f-descendant-ascension-2026-08-30', 'emberwild-build-2026-08-13') },
     { gate: 'G12s', why: 'introduce a syntax error',
       mutate: s => s.replace('const EWStore = Object.freeze({', 'const EWStore = Object.freeze({{') },
     { gate: 'G13s', why: 'stop reading the Den registry stamp back',
