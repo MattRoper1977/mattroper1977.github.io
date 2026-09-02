@@ -75,3 +75,59 @@ Measured 2026-09-02 03:05Z on main's bytes served locally (hud.js and inline exi
 - h1 count / visible: /trailrunner/ 9/1, /crownbadge/ 5/2, /titanforge/ 0/0 (Titan Forge V5 has no h1 at rest), /luminahaven/ 1/0, and eight routes at 2/1 where the second is the generated maker-splash h1 (apexgolf, apexpool, apextennis, biopunkhive, neonsync, novasiege, rallyvector3d, relicforge). Tier 2 §3.1: Trail Runner, Crown & Badge and Titan Forge are the real repairs.
 - Idle paint while nothing changes (canvas ops per second over five idle seconds): /apexvelodrome/ 66,568 at 142 rAF/s, /apexcurl/ 32,381, /townlife/ 26,368 (the intro scene; its advisory layer was fixed in Site #234), /novasiege/ 13,680, /hyperdraft/ 11,520, /medevac/ 10,800, /ouroboros/ 5,940, /relicforge/ 5,781, /luminahaven/ 5,497, /apexrally/ 4,140, /olympics/ 3,424, /houseolympiad/ 3,120, /offbrand/ 2,534 at 234 rAF/s, /neonturf/ 2,100, /neonbreach/ 1,501, /auroralinks/ 1,172, /biopunkhive/ 1,020. Zero-paint idles: apextennis, crownbadge, emberwild, fracture, neonmeridian, neonsync, titanforge, trailrunner. Tier 1 §2.6: each needs the code read (animated title vs. waste) before a repair; the V6-overlay class fixed in Lessons C7/C8 is the first thing to look for.
 - V6 release markers: 24 of the 32 served Site routes carry __MBM_V6_RELEASE__ (25 of 33 with CyberPulse); with Lessons' 15 of 27 that is 39 V6 routes of 60.
+
+## SC2 — 2026-09-02, second session (measurements only; prior sections untouched)
+
+### The red SC1 reported green
+`watch-main` on Lessons had been red since Lessons #213. Lessons batch C3 gave Axiom Shift the estate-standard `<link rel="canonical" href="https://madebymatt.uk/...">`, and `tools/verify_axiomshift.js`'s `no-offorigin-src` assertion tested every `src|href` rather than every **subresource** href, so the canonical — the file's only off-origin string — turned it red at 68 pass / 1 fail. SC1 reported the estate green without this. Repaired in Lessons #219 by narrowing the assertion to subresources: the exemption requires `rel="canonical"` **and** `https://madebymatt.uk/`, so a canonical to any other host still reds and every off-origin `src` still reds. Firing controls through `tools/verify_axiomshift.sh`: shipped file 70/0 exit 0; a planted off-origin `<script src>` exit 1 naming `no-offorigin-src`; the canonical removed, exit 0; a new in-file `offorigin-check-self-test` requires five probes (script src, stylesheet link, image src, iframe src, canonical to another host) all still caught. No other Lessons verifier uses that broad pattern.
+
+### Served SHA, stated exactly
+`08cdd50e962063b7cadc1304a116491de04b9760` — github-pages deployment 6215319432, state success 2026-09-02T04:13:35Z, environment_url https://madebymatt.uk/. The deployment chain 9966c91b → 19ba3994 → 4c9c34f1 → 7226c5c0 → 08cdd50e is complete and in order, so #238 (KCSIE), #239, #240 and #241 are all live. The origin is unreachable from the session workspace, so this is the deployment record plus the runner-side "The origin is serving the commit we think it is", green at that head.
+
+### Site head, job by job
+34 check-runs at 08cdd50e: 21 success, 13 skipped, 0 failure. Four distinct names appear skipped; three of them also have a green instance at the same head (duplicate runs cancelled by concurrency). One is skipped-only — **Pinned 30-second before and after samples** — and it is skipped by declaration: `if: github.event_name == 'pull_request' || (workflow_dispatch && inputs.live != true)`. On a push to main there is no before/after pair to sample.
+
+### Tier 1 §2.5, World Cup trio — HOLD re-ruled on measurement
+The recorded reason was "whiteboard tool", a design judgement rather than an ownership fence or a known regression. Measured at 390x844: touch targets are the only Tier 1 finding on any of the three (zoom not blocked, zero runtime duplicate ids, zero idle repaint, exit reachable by a real Tab walk in 32, 36 and 37 presses).
+- **Three Lions: HOLD lifted, repaired (Lessons #221).** It already ships `#chunkyToggle` "Whiteboard Mode" with twelve `.chunky` rules, so the design intent is not density for its own sake — the mode just stopped short. With it ON, fifteen controls were still under 44 px (timer chips 43x31, three formation buttons 104x34 untouched by `.chunky`, ceremony control 43 px tall). Four rules inside the existing block: **15 under 44 px → 0**. Default mode unchanged at 18, first screen 0.70% different against a 0.65% same-build floor.
+- **v3 and v5: HOLD stands, truer reason.** Neither has a Whiteboard Mode at all (zero `.chunky` rules, no toggle). Their smallest controls are `powbadge` and formation chips at 72-85 x 17-19 px — status readouts given `role="button"`. A 44 px hit area means enlarging a dense teacher panel (the reflow that clipped Neon Siege in SC1) or inventing a mode they do not have, which is a feature, not a Tier 1 repair.
+
+### Tier 2 §3.3 aria-live — the residue closed out
+- **Lumins wired (Lessons #220).** `showResult()`, the single call site that ends a level, speaks the outcome once, derived from `win`, `saved`, `total` and `target` by value. Forced outcome through the game's own controls (BEGIN, then the shipped END control): exactly one utterance, byte-equal to the string computed independently from `__LUMINS.G`. Controls: BEGIN-only 0 utterances, no-input 0 utterances.
+- **Declined by construction, with hook lines:** Trekkers (`takeDamage()` writes `#final-score`; game over needs lives exhausted by adversarial play, not a forced outcome), voxelcraft (`endArcade()` on its own 60 s clock; the arcade START control inside `#arcade-confirm` never accepted a click within budget), Neon Siege and Slipstream (results panels written by minified functions; no seam, no seed; 100 s probes reached no terminal panel). Each has state a blind player should hear; none could be proven on a forced outcome without patching a hook into the game, which §3.1(c) forbids.
+
+### §6 housekeeping
+`delete_branch_on_merge` is **false** on all three repositories and cannot be changed from here: `PATCH /repos/{owner}/{repo}` returns **403 — "Repository settings writes are not permitted through this proxy"** on Site, Games and Lessons alike. Recorded, not retried.
+Correction to the SC1 close: **`claude/a3-cyberpulse-trailer-workflow` does not exist** — the branch endpoint returns "Branch not found". SC1 asked for the deletion of a branch that was never there.
+
+### §2 CyberPulse 6.0.2 (#242) measured by rate — verdict: not provable at n=3, PR left draft
+The gate under test is the step `Comparative mobile performance and non-vacuity controls` (`tools/townlife/benchmark.mjs`), **not** the job's conclusion: the same job also runs `benchmark_splash.mjs`, a separate sign-test gate. Reading the job conclusion as the ceiling's verdict would have scored main's first sample as a ceiling red and merged #242 on it.
+
+Six interleaved samples, same runner class (`ubuntu-latest`):
+
+| arm | run | ceiling | ceiling s | splash |
+|---|---|---|---|---|
+| main | 33611373968 | success | 499 | failure |
+| #242 | 33611377138 | success | 475 | success |
+| main | 33613490338 | success | 503 | cancelled |
+| #242 | 33613492667 | success | 481 | cancelled |
+| main | 33614607460 | success | 479 | — |
+| #242 | 33614610485 | *invalid* | 89 | skipped |
+| #242 | 33614997273 | success | 465 | — |
+
+main 3 valid samples 0 reds (median 499 s, 479–503); #242 3 valid samples 0 reds (median 475 s, 465–481). #242 is ~4.8% faster at the median in the same direction every pair — a duration difference, not a pass/fail signal. **§2.3 row 2: the stall is rarer than n=3 resolves; RL18 forbids merging on an absence, so #242 stays a draft with the samples recorded in it.**
+
+Two samples that are not what they look like: #242's 89 s failure is **INVALID, not a red** — `page.goto: net::ERR_CONNECTION_RESET` fetching `/Lessons/Games/Grid_Chase.html` from the live origin, before the ceiling judged anything; and both round-2 splash cells were cancelled by my own next dispatch on the same ref (`concurrency: cancel-in-progress`), symmetrically on both arms.
+
+**Hardware reach: UNKNOWN.** `townlife-verify.yml` runs `ubuntu-latest` only — software rasterisation throughout, no GPU-backed runner and no real-device leg. Not inferred.
+
+Separately, main's first sample failed `benchmark_splash.mjs`: `8/9 paired deltas negative (reds at 8, p=0.0195); medians 19.6047 -> 18.7385 fps`. Magnitude green, sign test red. That gate compares pre-splash Town Life bytes against the shipped route, so it measures the splash's own cost; it passed on the other arm with identical Town Life bytes, and the harness alternates the before/after order every run, so ordering drift cannot manufacture it. One valid sample is not a rate — reported, not pronounced on.
+
+### §4 Tier 3: `tools/verify_playable.mjs`, the first gate here that asks whether a game can be finished
+Landed in Lessons #221, corrected in #222. It carries the §4.1 record — win, loss and first gate of progress — for all 27 Lessons routes, derived from each game's own source, and drives six of them through their real input paths: every step is a control a player can see, a key they can press, or the game's own clock. Where a game exports a read seam (`__LUMINS`, `__GCsave`, `__SLIP`, `__WC`) it is used only to read state; progress is asserted by value from that state or the game's own localStorage record, never from a rendered string. First gate and completion are separate columns, because Emberwild reached its first gate and could not be finished.
+
+The three firing controls **refused two of the harness's own greens** on the first full run: Slipstream GP's "left LOBBY" was reached by the no-input control (the lobby auto-advances) and Wrecking Crew's "left TITLE" was reached with its BEGIN control removed from the DOM (the title hands over by itself). Both were replaced with player-caused state.
+
+Measured after correction: **1 of 6 planned games reaches its first gate with all three controls biting (Lumins, 2 real inputs, 4.9 s); 0 of 6 reach the game's own win.** Hold the Mark (3 inputs, 173 s, save never banks), Glitch Clash (past its cutscene, no stage cleared), Slipstream GP (lap 1 only after 45 s of held throttle), Wrecking Crew (mode reaches BOARD, never BOOM) and voxelcraft (`#arcade-start` inside `#arcade-confirm` never accepts a click) did not reach their first gate by any planned approach within budget. None is claimed as a defect: §4.4's Tier 1 escalation needs *provably unreachable*, which this does not establish. 21 of the 27 routes carry the record but no driveable plan in this build.
+
+The §4.2 allocation sweep found no declared numbered flag registry anywhere in the estate, so there is nothing yet to collide — reported as measured, not claimed clean.
