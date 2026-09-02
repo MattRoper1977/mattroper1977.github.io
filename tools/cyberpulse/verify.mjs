@@ -66,8 +66,13 @@ const EXIT_BYTES = 3222;      // block plus its trailing newline
 // carrying the block, /cyberpulse/ included, after regeneration.
 const SPLASH_BYTES = 11780;
 const ENGINE_VERSION = 'v1.5';
-const RELEASE_VERSION = '6.0.0';
-const AUTHORITY_SHA = '465669d94e596644f0fe51e5bd97f9e3c136ae15189f565488b345e754ff5ec9';
+const RELEASE_VERSION = '6.0.1';
+// Re-pinned 2026-09-02 for build 6.0.1: the authority block gained the
+// software-rasterizer detection (softwareRasterizerVerdict, the once-only call
+// in ensureRenderer, and the ?renderer=webgl2 override). Previous pin
+// 465669d94e596644f0fe51e5bd97f9e3c136ae15189f565488b345e754ff5ec9 (161141 bytes)
+// = build 6.0.0 at Site PR #218 head 6be2ac56. Nothing else in the block moved.
+const AUTHORITY_SHA = '8578c76cf86b876545bbaa93c29baa7cbe5445bbd72ea410bb68af4a1e65f607';
 const FROZEN_SOURCE_BYTES = 208310;
 
 // ---------------------------------------------------------------------------
@@ -161,6 +166,23 @@ function staticGates(html, manifestRaw) {
     try { execFileSync(process.execPath, ['--check', f], { stdio: 'pipe' }); }
     catch (e) { syntaxOK = false; say(`      block ${i}: ${String(e.stderr).split('\n')[2] || 'parse error'}`); }
   });
+  // CP4e — software-rasterizer detection is present and wired (SC1 §3.6). A
+  // WebGL2 context served by SwiftShader/llvmpipe is "available" and then stalls
+  // the main thread for minutes in the run (Site run 33557287187, twice). The
+  // detection must (a) read WEBGL_debug_renderer_info, (b) fall back to one
+  // timed PLAY-frame probe when the extension is absent, feed the renderer's own
+  // _fail() (no second fallback mechanism), run ONCE in ensureRenderer, and be
+  // skippable by ?renderer=webgl2 which persists nothing.
+  const detDefined = /function softwareRasterizerVerdict\(r\)\{/.test(html);
+  const detSniff = /getExtension\('WEBGL_debug_renderer_info'\)[\s\S]{0,400}UNMASKED_RENDERER_WEBGL[\s\S]{0,200}\/swiftshader\|llvmpipe\|software\/i/.test(html);
+  const detProbe = /mode:'PLAY',cinematic:0[\s\S]{0,300}readPixels\(0,0,1,1[\s\S]{0,200}SOFTWARE_PROBE_BUDGET_MS/.test(html);
+  const detWired = /if\(renderer3D\.active&&!FORCE_WEBGL2\)\{const why=softwareRasterizerVerdict\(renderer3D\);if\(why\)\{renderer3D\._disposeGL\(\);renderer3D\._fail\('SOFTWARE_RASTERIZER',why\);\}\}/.test(html);
+  const detOnce = (html.match(/softwareRasterizerVerdict\(renderer3D\)/g) || []).length === 1;
+  const detOptIn = /const FORCE_WEBGL2=rendererQuery==='webgl2';/.test(html) && /rendererQuery==='3d'\|\|FORCE_WEBGL2/.test(html);
+  gate('CP4e', 'software-rasterizer detection: sniff, timed probe, single fallback path, once, webgl2 opt-in',
+    detDefined && detSniff && detProbe && detWired && detOnce && detOptIn,
+    `defined=${detDefined} sniff=${detSniff} probe=${detProbe} wired=${detWired} once=${detOnce} optIn=${detOptIn}`);
+
   gate('CP8s', 'every inline script block parses', syntaxOK && blocks.length > 0,
     `${blocks.length} block(s)`);
 
@@ -175,7 +197,7 @@ function staticGates(html, manifestRaw) {
     ['C01', 'Candidate exists', bytes > 0, `${bytes} bytes`],
     ['C02', 'Immutable source hash', authoritySha === AUTHORITY_SHA, `${authoritySha} (${Buffer.byteLength(authority)} bytes)`],
     ['C03', 'Expanded candidate retains source payload scale', bytes >= FROZEN_SOURCE_BYTES, `${bytes} >= ${FROZEN_SOURCE_BYTES}`],
-    ['C04', 'V6 identity and release API', /MBM-V6-RELEASE: build 6\.0\.0/.test(html) && /__MBM_V6_RELEASE__/.test(html) && /GAME_ID='cyberpulse-blackout'/.test(html) && /gameId:GAME_ID/.test(html), 'marker + release API + game id'],
+    ['C04', 'V6 identity and release API', /MBM-V6-RELEASE: build 6\.0\.1/.test(html) && /__MBM_V6_RELEASE__/.test(html) && /GAME_ID='cyberpulse-blackout'/.test(html) && /gameId:GAME_ID/.test(html), 'marker + release API + game id'],
     ['C05', 'Schema-6 isolated profile', /PROFILE_KEY='mbm_v6_profile'/.test(html) && /schema:6/.test(html) && /migration:\{mode:'read-only'/.test(html), 'shared profile, isolated game record, read-only migration'],
     ['C06', 'Viewport zoom remains enabled', !/user-scalable\s*=\s*(?:no|0)|maximum-scale\s*=\s*1/i.test(viewportTag), viewportTag],
     ['C07', 'Portrait dead-zone and safe areas', /safe-area-inset-(?:top|right|bottom|left)/.test(html) && /@media\(orientation:portrait\)/.test(html), 'four safe-area variables + portrait placement'],
@@ -447,6 +469,56 @@ async function browserGates(gameDir) {
       hatch.badge === 'CANVAS // SAFE' && hatch.announced && Number(hatch.colours) > 1,
       `badge "${hatch.badge}" announced=${hatch.announced}, #game colours ${hatch.colours}`);
 
+    // CP4f — the browser reports a software rasterizer: the game must take the
+    // same announced Canvas path WITHOUT the hatch. The renderer string is
+    // mocked so the gate does not depend on which GPU the runner has, and
+    // localStorage is compared before and after so the selection is proven to
+    // write nothing. CP4g — ?renderer=webgl2 under the same mock keeps WebGL2
+    // (the opt-in for a falsely-sniffed real GPU), also writing nothing.
+    const mockSoftware = () => {
+      const realGetParameter = WebGL2RenderingContext.prototype.getParameter;
+      WebGL2RenderingContext.prototype.getParameter = function (name) {
+        const ext = this.getExtension('WEBGL_debug_renderer_info');
+        if (ext && name === ext.UNMASKED_RENDERER_WEBGL) return 'Google SwiftShader';
+        return realGetParameter.call(this, name);
+      };
+    };
+    const readRenderer = (pg) => pg.evaluate(() => {
+      const badge = document.getElementById('rendererStatus');
+      return { badge: badge ? badge.textContent.trim() : null,
+        announced: badge ? badge.classList.contains('fallback') : false,
+        keys: Object.keys(localStorage).sort() };
+    });
+    const swPage = await context.newPage();
+    const swErrors = [];
+    swPage.on('pageerror', (e) => swErrors.push(String(e.message)));
+    await swPage.addInitScript(mockSoftware);
+    await swPage.goto(origin + '/cyberpulse/?splash=skip');
+    await swPage.waitForTimeout(1500);
+    const sw = await readRenderer(swPage);
+    await swPage.close();
+    const ctrlPage = await context.newPage();
+    await ctrlPage.goto(origin + '/cyberpulse/?splash=skip&renderer=2d');
+    await ctrlPage.waitForTimeout(800);
+    const ctrlKeys = (await readRenderer(ctrlPage)).keys;
+    await ctrlPage.close();
+    gate('CP4f', 'a reported software rasterizer selects the announced Canvas path with no hatch and writes nothing',
+      sw.badge === 'CANVAS // SAFE' && sw.announced && swErrors.length === 0 && JSON.stringify(sw.keys) === JSON.stringify(ctrlKeys),
+      `badge "${sw.badge}" announced=${sw.announced}; storage keys ${sw.keys.length} (control ${ctrlKeys.length})`
+      + (swErrors.length ? ' | errors: ' + swErrors.slice(0, 2).join(' | ') : ''));
+    const optPage = await context.newPage();
+    const optErrors = [];
+    optPage.on('pageerror', (e) => optErrors.push(String(e.message)));
+    await optPage.addInitScript(mockSoftware);
+    await optPage.goto(origin + '/cyberpulse/?splash=skip&renderer=webgl2');
+    await optPage.waitForTimeout(1500);
+    const opt = await readRenderer(optPage);
+    await optPage.close();
+    gate('CP4g', '?renderer=webgl2 keeps WebGL2 under a reported software rasterizer and writes nothing',
+      /^WEBGL2 \/\/ /.test(String(opt.badge)) && !opt.announced && optErrors.length === 0 && JSON.stringify(opt.keys) === JSON.stringify(ctrlKeys),
+      `badge "${opt.badge}" announced=${opt.announced}; storage keys ${opt.keys.length} (control ${ctrlKeys.length})`
+      + (optErrors.length ? ' | errors: ' + optErrors.slice(0, 2).join(' | ') : ''));
+
     // CP4d is the real renderer leg. A V6 identity object on a filename does
     // not prove that the frozen WebGL authority can create a context and draw.
     const glPage = await context.newPage();
@@ -454,7 +526,10 @@ async function browserGates(gameDir) {
     glPage.on('pageerror', (error) => glErrors.push(String(error.message)));
     let glReport;
     try {
-      await glPage.goto(origin + '/cyberpulse/?renderer=3d&splash=skip');
+      // ?renderer=webgl2 is the opt-in that skips the software-rasterizer
+      // detection (CP4e/CP4f). On a GPU-less runner the detection would route
+      // this leg to Canvas, so the real-renderer proof must use the opt-in.
+      await glPage.goto(origin + '/cyberpulse/?renderer=webgl2&splash=skip');
       await glPage.waitForFunction(() => /^WEBGL2/.test(document.getElementById('rendererStatus')?.textContent || ''), null, { timeout: 15000 });
       await glPage.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       glReport = await glPage.evaluate(() => {
@@ -546,7 +621,7 @@ function selftest(html, manifestRaw) {
     { gate: 'C03', why: 'truncate below the measured source-payload floor',
       mutate: (s) => [s.slice(0, FROZEN_SOURCE_BYTES - 5000), manifestRaw] },
     { gate: 'C04', why: 'remove the V6 release marker',
-      mutate: (s) => [s.replace('MBM-V6-RELEASE: build 6.0.0', 'MBM-RELEASE-MISSING'), manifestRaw] },
+      mutate: (s) => [s.replace('MBM-V6-RELEASE: build 6.0.1', 'MBM-RELEASE-MISSING'), manifestRaw] },
     { gate: 'C05', why: 'change the isolated profile schema',
       mutate: (s) => [s.replace("PROFILE_KEY='mbm_v6_profile'", "PROFILE_KEY='mbm_v5_profile'").replace("migration:{mode:'read-only'", "migration:{mode:'copying'"), manifestRaw] },
     { gate: 'C06', why: 'disable viewport zoom',
@@ -570,7 +645,11 @@ function selftest(html, manifestRaw) {
     { gate: 'C15', why: 'add an external runtime dependency tag',
       mutate: (s) => [s.replace('</head>', '<script src="https://example.invalid/runtime.js"></script></head>'), manifestRaw] },
     { gate: 'C16', why: 'break one inline V6 script',
-      mutate: (s) => [s.replace("var VERSION='6.0.0'", "var VERSION=='6.0.0'"), manifestRaw] }
+      mutate: (s) => [s.replace("var VERSION='6.0.1'", "var VERSION=='6.0.1'"), manifestRaw] },
+    { gate: 'CP4e', why: 'remove the software-rasterizer detection block',
+      mutate: (s) => [s.replace(/const why=softwareRasterizerVerdict\(renderer3D\);if\(why\)\{[^}]*\}/, 'const why=null;'), manifestRaw] },
+    { gate: 'CP4e', why: 'remove the ?renderer=webgl2 opt-in',
+      mutate: (s) => [s.replace("const FORCE_WEBGL2=rendererQuery==='webgl2';", "const FORCE_WEBGL2=false;"), manifestRaw] }
   ];
 
   let proven = 0, inert = 0;

@@ -1,4 +1,4 @@
-<!-- MBM-V6-RELEASE: build 6.0.0 | profile-schema 6 | CP120 authority preserved -->
+<!-- MBM-V6-RELEASE: build 6.0.1 | profile-schema 6 | CP120 authority preserved -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -1567,6 +1567,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   const STEP=1/120, MAX_STEPS=7;
   const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const rendererQuery=new URLSearchParams(location.search).get('renderer');
+  const FORCE_WEBGL2=rendererQuery==='webgl2';
 
   const VERSION='v1.5';
   const STORE='cyberpulse_blackout_v1';
@@ -1914,13 +1915,35 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 
   const projA={x:0,y:0,w:1},projB={x:0,y:0,w:1},projC={x:0,y:0,w:1},renderState={},renderCamera={blend:0,targetX:0,targetY:0};let rendererBadge='';
   function rendererDpr(){const budget=prefs.quality==='LOW'?760000:prefs.quality==='HIGH'?2300000:1450000;return clamp(Math.min(DPR,Math.sqrt(budget/Math.max(1,W*H))),.75,2);}
-  function wants3D(){if(rendererQuery==='2d')return false;if(rendererQuery==='3d')return true;return prefs.renderMode!=='2D';}
+  function wants3D(){if(rendererQuery==='2d')return false;if(rendererQuery==='3d'||FORCE_WEBGL2)return true;return prefs.renderMode!=='2D';}
   function setRendererBadge(textValue,fallback=false){if(rendererBadge===textValue)return;rendererBadge=textValue;const badge=$('rendererStatus');badge.textContent=textValue;badge.classList.toggle('fallback',fallback);}
+  /* SC1 §3.6 — software-rasterizer detection, run ONCE at context acquisition (see ensureRenderer).
+     A WebGL2 context that a software rasterizer serves (SwiftShader, llvmpipe) is technically
+     "available" but the in-run pipeline stalls the main thread on it for minutes (Site run
+     33557287187, both attempts). Two detectors, both feeding the renderer's own _fail() →
+     onFallback → the existing announced 'CANVAS // SAFE' path; there is no second fallback:
+     (a) the browser's own renderer string via WEBGL_debug_renderer_info (UNMASKED_RENDERER_WEBGL);
+     (b) where that extension is absent (Firefox restricts it), exactly one PLAY-mode probe frame
+         through the real pipeline, bounded by a 1×1 readPixels, timed against SOFTWARE_PROBE_BUDGET_MS.
+     Budget derivation (2026-09-02, this build, headless Chromium 141 on SwiftShader/Subzero, unthrottled):
+     probe frame 186.7 / 196.3 / 205.8 ms over three fresh contexts (min 186.7). A real-GPU sample could
+     not be taken in that environment (MEASUREMENT INVALID for that arm), so the budget is set below the
+     software floor with a 1.5× guard (186.7 / 1.5 = 124 → 120 ms) rather than derived from hardware.
+     ?renderer=webgl2 skips both detectors so a falsely-sniffed real GPU can opt back in; it persists nothing. */
+  const SOFTWARE_PROBE_BUDGET_MS=120;
+  function softwareRasterizerVerdict(r){const gl=r&&r.gl;if(!gl)return null;
+    let ext=null;try{ext=gl.getExtension('WEBGL_debug_renderer_info');}catch(_){ext=null;}
+    if(ext){let name='';try{name=String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||'');}catch(_){name='';}
+      return /swiftshader|llvmpipe|software/i.test(name)?'software rasterizer reported by the browser: '+name:null;}
+    try{const snap=rendererSnapshot();const probe=Object.assign({},snap,{game:Object.assign({},snap.game,{mode:'PLAY',cinematic:0})});
+      const t0=performance.now();r.render(probe,t0);const px=new Uint8Array(4);gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);const ms=performance.now()-t0;
+      return ms>SOFTWARE_PROBE_BUDGET_MS?'first WebGL2 play frame took '+Math.round(ms)+'ms (budget '+SOFTWARE_PROBE_BUDGET_MS+'ms)':null;}catch(_){return null;}}
   function rendererLabel(){return renderer3D?._targets?.scene?.hdr?'WEBGL2 // HDR':renderer3D?._post?'WEBGL2 // BLOOM':'WEBGL2 // LITE';}
   function rendererSnapshot(){renderCamera.blend=game.cinematic;renderCamera.targetX=game.boss?.x??player.x;renderCamera.targetY=game.boss?.y??player.y;renderState.width=W;renderState.height=H;renderState.dpr=rendererDpr();renderState.time=game.time;renderState.game=game;renderState.player=player;renderState.boss=game.boss;renderState.camera=renderCamera;renderState.paint=selectedPaint;renderState.weapon=selectedWeapon;renderState.chassis=selectedChassis;renderState.menu=menuPreview;renderState.fullFx=prefs.fullFx&&prefs.quality!=='LOW';renderState.enemies=enemies.items;renderState.shots=shots.items;renderState.hostileShots=hostileShots.items;renderState.missiles=missiles.items;renderState.drops=drops.items;renderState.particles=particles.items;renderState.beams=beams.items;renderState.gates=gates.items;renderState.hazards=hazards.items;renderState.debris=debris.items;renderState.roadRipples=roadRipples.items;return renderState;}
   function ensureRenderer(){
     if(!wants3D()){setRendererBadge('CANVAS // SAFE',true);return false;}if(renderer3D)return renderer3D.active;
     try{const highFx=prefs.fullFx&&prefs.quality!=='LOW';renderer3D=new CyberpulseWebGLRenderer({canvas:sceneCanvas,width:W,height:H,dpr:rendererDpr(),maxDpr:2,bloomStrength:highFx?1.25:.82,rayStrength:highFx?.16:0,onFallback:()=>{input.down=false;document.body.classList.remove('webgl3d');setRendererBadge('CANVAS // SAFE',true);},onDegraded:()=>setRendererBadge('WEBGL2 // LITE')});}catch(_){renderer3D=null;setRendererBadge('CANVAS // SAFE',true);return false;}
+    if(renderer3D.active&&!FORCE_WEBGL2){const why=softwareRasterizerVerdict(renderer3D);if(why){renderer3D._disposeGL();renderer3D._fail('SOFTWARE_RASTERIZER',why);}}
     if(renderer3D.active){renderer3D.render(rendererSnapshot(),performance.now());setRendererBadge(rendererLabel());return renderer3D.active;}setRendererBadge('CANVAS // SAFE',true);return false;
   }
   function render3DOverlay(){
@@ -2031,7 +2054,7 @@ body.v6-cyber-calm #scan,body.v6-cyber-calm #flash,body.v6-cyber-calm #grade{dis
 <div id="v6CyberLive" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 <script id="mbm-v6-cyberpulse-release">
 (function(){'use strict';
-var VERSION='6.0.0',GAME_ID='cyberpulse-blackout',PROFILE_KEY='mbm_v6_profile';
+var VERSION='6.0.1',GAME_ID='cyberpulse-blackout',PROFILE_KEY='mbm_v6_profile';
 var SOURCE_SHA='8c13452f9ac32eb546f6dbe5a70bfd75910be7517186b68bf489afcc50a51c62';
 var AUTHORITY_SHA='465669d94e596644f0fe51e5bd97f9e3c136ae15189f565488b345e754ff5ec9';
 var LEGACY_KEYS=['cyberpulse_blackout_v1'];
@@ -2056,7 +2079,7 @@ function text(id,fallback){var node=document.getElementById(id);return node&&nod
 function sample(){var playing=!document.getElementById('menuScreen').classList.contains('show');intel.hidden=!playing;if(playing){var shield=text('shieldText','SHIELD 100'),combo=text('comboSub','0 CHAIN'),value=Number((shield.match(/\d+(?:\.\d+)?/)||[100])[0]);mission.textContent=text('objective','Break the blockade');threat.textContent=value<30?'Core exposed · '+combo:value<65?'Shield pressured · '+combo:'Shield stable · '+combo;risk.textContent=value<30?'critical':value<65?'elevated':'clear';renderer.textContent=text('rendererStatus','3D INIT')}setTimeout(sample,100)}sample();
 var canvas=document.getElementById('game');canvas.tabIndex=0;canvas.setAttribute('role','application');canvas.setAttribute('aria-label','CyberPulse Blackout combat arena. Arrow keys or WASD steer, Space phase-dashes, Q launches the swarm, E activates overdrive, and Escape pauses.');canvas.setAttribute('aria-describedby','v6CyberIntel');
 document.addEventListener('visibilitychange',function(){if(!document.hidden){document.getElementById('v6CyberLive').textContent='CyberPulse remains paused if it was hidden. Choose Resume when ready.'}});
-window.__MBM_V6_RELEASE__={version:VERSION,gameId:GAME_ID,title:'CYBERPULSE: BLACKOUT · AAA V6',edition:'AAA V6',madeBy:'Made by Matt',offline:true,sourceSha256:SOURCE_SHA,authority:{tickHz:120,dt:1/120,sourceCore:'preserved',canonicalEngineSha256:AUTHORITY_SHA,renderer:'CyberpulseWebGLRenderer'},profile:{key:PROFILE_KEY,schema:6,migration:'read-only'},features:['viewport-first','safe-area-layout','120hz-fixed-authority','webgl2-primary-renderer','canvas-safe-fallback','keyboard-input','touch-input','aria-forecast','live-reduced-motion','calm-mode','visibility-pause','10hz-v6-telemetry','threat-intent-forecast','schema-6-profile','legacy-byte-preservation','skippable-intro','offline-single-file'],selfTest:function(){var ids={},duplicates=[];Array.prototype.forEach.call(document.querySelectorAll('[id]'),function(node){if(ids[node.id])duplicates.push(node.id);ids[node.id]=true});var html=document.documentElement.innerHTML,meta=(document.querySelector('meta[name="viewport"]')||{}).content||'',legacyNow=legacyBytes(),checks={version:VERSION==='6.0.0',gameId:GAME_ID==='cyberpulse-blackout',sourceSha:SOURCE_SHA.length===64,authority:AUTHORITY_SHA.length===64&&html.indexOf('const STEP=1/120')>=0,renderer:typeof window.CyberpulseWebGLRenderer==='function',schema:gameProfile&&gameProfile.schema===6,migration:gameProfile&&gameProfile.migration&&gameProfile.migration.mode==='read-only',legacyUntouched:LEGACY_KEYS.every(function(key){return legacyNow[key]===legacyAtV6Boot[key]}),standalone:document.querySelectorAll('script[src],link[rel="stylesheet"],img[src^="http"],audio[src],video[src],source[src]').length===0,noServiceWorker:html.indexOf('serviceWorker'+'.register')<0,uniqueIds:duplicates.length===0,zoom:!/user-scalable\s*=\s*no|maximum-scale\s*=\s*1/i.test(meta),primary:document.getElementById('startBtn').hasAttribute('data-mbm-primary-start'),aria:intro.getAttribute('role')==='dialog'&&canvas.getAttribute('role')==='application'&&intel.getAttribute('aria-live')==='polite',targets:[skip,calmButton].every(function(button){var rect=button.getBoundingClientRect();return rect.height===0||rect.height>=44})};var pass=Object.keys(checks).every(function(key){return !!checks[key]});return{ok:pass,pass:pass,version:VERSION,gameId:GAME_ID,schema:6,checks:checks,authority:this.authority,profileVersion:profile.version,legacyAtV6Boot:legacyAtV6Boot,duplicates:duplicates}}};
+window.__MBM_V6_RELEASE__={version:VERSION,gameId:GAME_ID,title:'CYBERPULSE: BLACKOUT · AAA V6',edition:'AAA V6',madeBy:'Made by Matt',offline:true,sourceSha256:SOURCE_SHA,authority:{tickHz:120,dt:1/120,sourceCore:'preserved',canonicalEngineSha256:AUTHORITY_SHA,renderer:'CyberpulseWebGLRenderer'},profile:{key:PROFILE_KEY,schema:6,migration:'read-only'},features:['viewport-first','safe-area-layout','120hz-fixed-authority','webgl2-primary-renderer','canvas-safe-fallback','keyboard-input','touch-input','aria-forecast','live-reduced-motion','calm-mode','visibility-pause','10hz-v6-telemetry','threat-intent-forecast','schema-6-profile','legacy-byte-preservation','skippable-intro','offline-single-file'],selfTest:function(){var ids={},duplicates=[];Array.prototype.forEach.call(document.querySelectorAll('[id]'),function(node){if(ids[node.id])duplicates.push(node.id);ids[node.id]=true});var html=document.documentElement.innerHTML,meta=(document.querySelector('meta[name="viewport"]')||{}).content||'',legacyNow=legacyBytes(),checks={version:VERSION==='6.0.1',gameId:GAME_ID==='cyberpulse-blackout',sourceSha:SOURCE_SHA.length===64,authority:AUTHORITY_SHA.length===64&&html.indexOf('const STEP=1/120')>=0,renderer:typeof window.CyberpulseWebGLRenderer==='function',schema:gameProfile&&gameProfile.schema===6,migration:gameProfile&&gameProfile.migration&&gameProfile.migration.mode==='read-only',legacyUntouched:LEGACY_KEYS.every(function(key){return legacyNow[key]===legacyAtV6Boot[key]}),standalone:document.querySelectorAll('script[src],link[rel="stylesheet"],img[src^="http"],audio[src],video[src],source[src]').length===0,noServiceWorker:html.indexOf('serviceWorker'+'.register')<0,uniqueIds:duplicates.length===0,zoom:!/user-scalable\s*=\s*no|maximum-scale\s*=\s*1/i.test(meta),primary:document.getElementById('startBtn').hasAttribute('data-mbm-primary-start'),aria:intro.getAttribute('role')==='dialog'&&canvas.getAttribute('role')==='application'&&intel.getAttribute('aria-live')==='polite',targets:[skip,calmButton].every(function(button){var rect=button.getBoundingClientRect();return rect.height===0||rect.height>=44})};var pass=Object.keys(checks).every(function(key){return !!checks[key]});return{ok:pass,pass:pass,version:VERSION,gameId:GAME_ID,schema:6,checks:checks,authority:this.authority,profileVersion:profile.version,legacyAtV6Boot:legacyAtV6Boot,duplicates:duplicates}}};
 })();
 </script>
 <!-- MBM-V6-CYBERPULSE:END -->
