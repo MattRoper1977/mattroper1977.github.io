@@ -38,6 +38,15 @@ on:
       - 'tools/render_maker_splash.py'
       - '.github/workflows/townlife-verify.yml'
   workflow_dispatch:
+    inputs:
+      block_live_origin:
+        description: >-
+          Point mattroper1977.github.io at 127.0.0.1 before the comparative
+          gate runs. Every comparator is read from a checkout, so the gate must
+          be green either way; a run with this on is the control that proves
+          the live origin is no longer load-bearing.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -56,6 +65,44 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 1 }
+
+      # Twenty-seven of the sixty manifest routes are executables of the
+      # Lessons repository. The comparative gate used to fetch those over the
+      # network, inside its own ceiling-timed measured window, where a reset
+      # connection is indistinguishable from a subject that cannot keep up.
+      # They are checked out here instead, and the resolved commit is recorded
+      # as evidence.
+      - name: Check out the Lessons comparators
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          path: lessons-mirror
+          fetch-depth: 1
+
+      - name: Record the comparator checkout
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/townlife
+          {
+            echo "lessons_repository=MattRoper1977/Lessons"
+            echo "lessons_sha=$(git -C lessons-mirror rev-parse HEAD)"
+            echo "lessons_executables=$(find lessons-mirror/Games -name '*.html' | wc -l)"
+          } | tee artifacts/townlife/comparator-checkout.txt
+
+      # Negative control for the change above, not a fault-injection knob for
+      # normal runs: with the live origin resolvable only to a dead local port,
+      # a gate that still reached for it could not be green.
+      - name: Make the live origin unreachable (control)
+        if: inputs.block_live_origin
+        run: |
+          set -euo pipefail
+          echo '127.0.0.1 mattroper1977.github.io' | sudo tee -a /etc/hosts
+          if curl -sS --max-time 15 -o /dev/null \
+              https://mattroper1977.github.io/Lessons/Games/Grid_Chase.html; then
+            echo 'live origin is still reachable - this control did not arm'
+            exit 1
+          fi
+          echo 'PASS control armed - the live origin is unreachable from this runner'
 
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
@@ -123,6 +170,8 @@ jobs:
           } | tee artifacts/townlife/splash-subjects.txt
 
       - name: Comparative mobile performance and non-vacuity controls
+        env:
+          LESSONS_ROOT: ${{ github.workspace }}/lessons-mirror
         run: |
           set -euo pipefail
           mkdir -p artifacts/townlife
