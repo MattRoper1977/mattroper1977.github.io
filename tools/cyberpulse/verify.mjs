@@ -66,13 +66,17 @@ const EXIT_BYTES = 3222;      // block plus its trailing newline
 // carrying the block, /cyberpulse/ included, after regeneration.
 const SPLASH_BYTES = 11780;
 const ENGINE_VERSION = 'v1.5';
-const RELEASE_VERSION = '6.0.1';
+const RELEASE_VERSION = '6.0.2';
 // Re-pinned 2026-09-02 for build 6.0.1: the authority block gained the
 // software-rasterizer detection (softwareRasterizerVerdict, the once-only call
 // in ensureRenderer, and the ?renderer=webgl2 override). Previous pin
 // 465669d94e596644f0fe51e5bd97f9e3c136ae15189f565488b345e754ff5ec9 (161141 bytes)
 // = build 6.0.0 at Site PR #218 head 6be2ac56. Nothing else in the block moved.
-const AUTHORITY_SHA = '8578c76cf86b876545bbaa93c29baa7cbe5445bbd72ea410bb68af4a1e65f607';
+// Re-pinned 2026-09-02 for build 6.0.2: the Canvas path now routes every
+// shadowBlur through glow(), which the software-rasterizer verdict zeroes
+// (SC1 finding: shadow blur under software raster blocked the main thread
+// 10.7 s then >60 s at 6x throttle; 52 fps with it zeroed; shadowColor made transparent as well, since the shadow pass still ran at blur 0). 164785 bytes.
+const AUTHORITY_SHA = '8b3f6b7731923a832488aaf5e18535c7997da48fc44ed6470007ec13df1b0fe9';
 const FROZEN_SOURCE_BYTES = 208310;
 
 // ---------------------------------------------------------------------------
@@ -183,6 +187,21 @@ function staticGates(html, manifestRaw) {
     detDefined && detSniff && detProbe && detWired && detOnce && detOptIn,
     `defined=${detDefined} sniff=${detSniff} probe=${detProbe} wired=${detWired} once=${detOnce} optIn=${detOptIn}`);
 
+  // CP4i — the Canvas glow guard, statically: glow() exists, the renderer's
+  // SOFTWARE_RASTERIZER fallback notice turns it on, and no ctx.shadowBlur
+  // assignment bypasses it (0 or glow(...) only). CP4h below is the same
+  // guard proven in a browser; this leg is the one --selftest can mutate.
+  const glowDefined = /function glow\(px\)\{return softRaster\?0:px;\}/.test(html);
+  const glowArmed = /if\(info&&info\.code==='SOFTWARE_RASTERIZER'\)softRaster=true;/.test(html);
+  const blurSets = [...html.matchAll(/ctx\.shadowBlur=([^;]+);/g)].map((m) => m[1].trim());
+  const blurBypass = blurSets.filter((expr) => expr !== '0' && !/^glow\(.*\)$/.test(expr));
+  const colourDefined = /function glowColor\(c\)\{return softRaster\?'rgba\(0,0,0,0\)':c;\}/.test(html);
+  const colourSets = [...html.matchAll(/ctx\.shadowColor=([^;]+);/g)].map((m) => m[1].trim());
+  const colourBypass = colourSets.filter((expr) => !/^glowColor\(.*\)$/.test(expr));
+  gate('CP4i', 'Canvas glow guard: glow()/glowColor() defined, armed by the software fallback notice, every shadowBlur assignment 0 or glow() and every shadowColor assignment glowColor()',
+    glowDefined && colourDefined && glowArmed && blurSets.length > 0 && blurBypass.length === 0 && colourSets.length > 0 && colourBypass.length === 0,
+    `defined=${glowDefined}/${colourDefined} armed=${glowArmed} blur=${blurSets.length} (bypass ${blurBypass.length}) colour=${colourSets.length} (bypass ${colourBypass.length})${(blurBypass.length || colourBypass.length) ? ' [' + [...blurBypass, ...colourBypass].slice(0, 3).join(' | ') + ']' : ''}`);
+
   gate('CP8s', 'every inline script block parses', syntaxOK && blocks.length > 0,
     `${blocks.length} block(s)`);
 
@@ -197,7 +216,7 @@ function staticGates(html, manifestRaw) {
     ['C01', 'Candidate exists', bytes > 0, `${bytes} bytes`],
     ['C02', 'Immutable source hash', authoritySha === AUTHORITY_SHA, `${authoritySha} (${Buffer.byteLength(authority)} bytes)`],
     ['C03', 'Expanded candidate retains source payload scale', bytes >= FROZEN_SOURCE_BYTES, `${bytes} >= ${FROZEN_SOURCE_BYTES}`],
-    ['C04', 'V6 identity and release API', /MBM-V6-RELEASE: build 6\.0\.1/.test(html) && /__MBM_V6_RELEASE__/.test(html) && /GAME_ID='cyberpulse-blackout'/.test(html) && /gameId:GAME_ID/.test(html), 'marker + release API + game id'],
+    ['C04', 'V6 identity and release API', /MBM-V6-RELEASE: build 6\.0\.2/.test(html) && /__MBM_V6_RELEASE__/.test(html) && /GAME_ID='cyberpulse-blackout'/.test(html) && /gameId:GAME_ID/.test(html), 'marker + release API + game id'],
     ['C05', 'Schema-6 isolated profile', /PROFILE_KEY='mbm_v6_profile'/.test(html) && /schema:6/.test(html) && /migration:\{mode:'read-only'/.test(html), 'shared profile, isolated game record, read-only migration'],
     ['C06', 'Viewport zoom remains enabled', !/user-scalable\s*=\s*(?:no|0)|maximum-scale\s*=\s*1/i.test(viewportTag), viewportTag],
     ['C07', 'Portrait dead-zone and safe areas', /safe-area-inset-(?:top|right|bottom|left)/.test(html) && /@media\(orientation:portrait\)/.test(html), 'four safe-area variables + portrait placement'],
@@ -519,6 +538,54 @@ async function browserGates(gameDir) {
       `badge "${opt.badge}" announced=${opt.announced}; storage keys ${opt.keys.length} (control ${ctrlKeys.length})`
       + (optErrors.length ? ' | errors: ' + optErrors.slice(0, 2).join(' | ') : ''));
 
+    // CP4h — under the same software mock, entering PLAY never asks the 2D
+    // context for shadow blur (the SC1 stall: shadowBlur under software raster
+    // blocked the main thread 10.7 s then >60 s at 6x throttle). The unmocked
+    // ?renderer=2d control must still set non-zero blur, so a guard that
+    // simply deleted the glow would not pass this gate by accident.
+    const countBlur = () => {
+      const proto = CanvasRenderingContext2D.prototype;
+      const desc = Object.getOwnPropertyDescriptor(proto, 'shadowBlur');
+      window.__blur = { zero: 0, nonZero: 0, colour: 0 };
+      Object.defineProperty(proto, 'shadowBlur', {
+        configurable: true,
+        get() { return desc.get.call(this); },
+        set(v) { if (Number(v) > 0) window.__blur.nonZero += 1; else window.__blur.zero += 1; desc.set.call(this, v); },
+      });
+      const cdesc = Object.getOwnPropertyDescriptor(proto, 'shadowColor');
+      Object.defineProperty(proto, 'shadowColor', {
+        configurable: true,
+        get() { return cdesc.get.call(this); },
+        set(v) { if (String(v) !== 'rgba(0,0,0,0)' && String(v) !== 'transparent') window.__blur.colour += 1; cdesc.set.call(this, v); },
+      });
+    };
+    const playFrames = async (pg) => {
+      await pg.evaluate(() => { const b = document.getElementById('startBtn'); if (b) b.click(); });
+      await pg.evaluate(() => new Promise((resolve) => { let n = 0; const tick = () => { n += 1; if (n >= 90) resolve(); else requestAnimationFrame(tick); }; requestAnimationFrame(tick); }));
+      return pg.evaluate(() => ({ ...window.__blur, badge: (document.getElementById('rendererStatus') || {}).textContent, mode: document.body.className }));
+    };
+    const blurPage = await context.newPage();
+    const blurErrors = [];
+    blurPage.on('pageerror', (e) => blurErrors.push(String(e.message)));
+    await blurPage.addInitScript(mockSoftware);
+    await blurPage.addInitScript(countBlur);
+    await blurPage.goto(origin + '/cyberpulse/?splash=skip');
+    await blurPage.waitForTimeout(1200);
+    const swBlur = await playFrames(blurPage);
+    await blurPage.evaluate(() => localStorage.clear());
+    await blurPage.close();
+    const blurCtrl = await context.newPage();
+    await blurCtrl.addInitScript(countBlur);
+    await blurCtrl.goto(origin + '/cyberpulse/?splash=skip&renderer=2d');
+    await blurCtrl.waitForTimeout(1200);
+    const ctrlBlur = await playFrames(blurCtrl);
+    await blurCtrl.evaluate(() => localStorage.clear());
+    await blurCtrl.close();
+    gate('CP4h', 'under a reported software rasterizer, 90 PLAY frames never set a non-zero shadowBlur or a visible shadowColor; the unmocked Canvas control still does both',
+      swBlur.nonZero === 0 && swBlur.colour === 0 && swBlur.zero > 0 && ctrlBlur.nonZero > 0 && ctrlBlur.colour > 0 && blurErrors.length === 0,
+      `software: ${swBlur.nonZero} non-zero blur / ${swBlur.colour} visible colour / ${swBlur.zero} zero sets (badge "${(swBlur.badge || '').trim()}"); control: ${ctrlBlur.nonZero} non-zero blur, ${ctrlBlur.colour} visible colour`
+      + (blurErrors.length ? ' | errors: ' + blurErrors.slice(0, 2).join(' | ') : ''));
+
     // CP4d is the real renderer leg. A V6 identity object on a filename does
     // not prove that the frozen WebGL authority can create a context and draw.
     const glPage = await context.newPage();
@@ -621,7 +688,7 @@ function selftest(html, manifestRaw) {
     { gate: 'C03', why: 'truncate below the measured source-payload floor',
       mutate: (s) => [s.slice(0, FROZEN_SOURCE_BYTES - 5000), manifestRaw] },
     { gate: 'C04', why: 'remove the V6 release marker',
-      mutate: (s) => [s.replace('MBM-V6-RELEASE: build 6.0.1', 'MBM-RELEASE-MISSING'), manifestRaw] },
+      mutate: (s) => [s.replace('MBM-V6-RELEASE: build 6.0.2', 'MBM-RELEASE-MISSING'), manifestRaw] },
     { gate: 'C05', why: 'change the isolated profile schema',
       mutate: (s) => [s.replace("PROFILE_KEY='mbm_v6_profile'", "PROFILE_KEY='mbm_v5_profile'").replace("migration:{mode:'read-only'", "migration:{mode:'copying'"), manifestRaw] },
     { gate: 'C06', why: 'disable viewport zoom',
@@ -645,11 +712,17 @@ function selftest(html, manifestRaw) {
     { gate: 'C15', why: 'add an external runtime dependency tag',
       mutate: (s) => [s.replace('</head>', '<script src="https://example.invalid/runtime.js"></script></head>'), manifestRaw] },
     { gate: 'C16', why: 'break one inline V6 script',
-      mutate: (s) => [s.replace("var VERSION='6.0.1'", "var VERSION=='6.0.1'"), manifestRaw] },
+      mutate: (s) => [s.replace("var VERSION='6.0.2'", "var VERSION=='6.0.2'"), manifestRaw] },
     { gate: 'CP4e', why: 'remove the software-rasterizer detection block',
       mutate: (s) => [s.replace(/const why=softwareRasterizerVerdict\(renderer3D\);if\(why\)\{[^}]*\}/, 'const why=null;'), manifestRaw] },
     { gate: 'CP4e', why: 'remove the ?renderer=webgl2 opt-in',
-      mutate: (s) => [s.replace("const FORCE_WEBGL2=rendererQuery==='webgl2';", "const FORCE_WEBGL2=false;"), manifestRaw] }
+      mutate: (s) => [s.replace("const FORCE_WEBGL2=rendererQuery==='webgl2';", "const FORCE_WEBGL2=false;"), manifestRaw] },
+    { gate: 'CP4i', why: 'the software fallback notice no longer arms the Canvas glow guard',
+      mutate: (s) => [s.replace("if(info&&info.code==='SOFTWARE_RASTERIZER')softRaster=true;", ''), manifestRaw] },
+    { gate: 'CP4i', why: 'one shadowBlur assignment bypasses glow()',
+      mutate: (s) => [s.replace('ctx.shadowBlur=glow(prefs.fullFx?12:3);', 'ctx.shadowBlur=prefs.fullFx?12:3;'), manifestRaw] },
+    { gate: 'CP4i', why: 'one shadowColor assignment bypasses glowColor()',
+      mutate: (s) => [s.replace(/ctx\.shadowColor=glowColor\(([^;]+)\);/, 'ctx.shadowColor=$1;'), manifestRaw] }
   ];
 
   let proven = 0, inert = 0;
