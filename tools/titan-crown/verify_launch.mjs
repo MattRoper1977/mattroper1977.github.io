@@ -29,9 +29,9 @@ const TITAN_STORAGE_KEYS = ['mbm_titanforge_save_v1', 'mbm_titanforge_aaa_v1', '
 /* The vendored Three.js r128 file is a library: its loaders name fetch()/XMLHttpRequest but the rig builds
  * geometry only and never calls them. The request-surface gate therefore judges the core file alone, and the
  * vendor file is pinned (sha256 of titanforge/vendor/three-r128.js as shipped in V5.1, taken 2026-09-02, order
- * TFR3 — byte-identical to the inner text of the V5 inline block, sha e07c85c1… with its tags) so a modified
+ * TFR3 — the inner text of the V5 inline block, sha e07c85c1… with its tags, minus the newline that closed it, which git diff --check refuses at EOF) so a modified
  * library cannot hide behind the exemption. */
-const THREE_VENDOR_SHA256 = 'ba0c6cb529517d7e286dadcd68d37ff5220aa638e4ac2cd7fcb316aae580924d';
+const THREE_VENDOR_SHA256 = 'aa740bba2df28062c5528f6007f4959ad2a392fe5e0b98de1b13dfa30adbac98';
 function vendorThree(coreSource, vendorBytes) {
   assert.equal(count(coreSource, '<script id="mbm-three-r128">'), 0, 'V5 inline Three.js block is back in the core');
   assert.equal(count(coreSource, 's.src="vendor/three-r128.js"'), 1, 'the rig loader must reference the vendor file exactly once');
