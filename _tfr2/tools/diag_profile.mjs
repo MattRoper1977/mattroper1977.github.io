@@ -1,0 +1,11 @@
+import path from 'node:path';import { serve, launch, phoneContext, lockNetwork, coarsePointer, waitForGame } from './lib.mjs';
+const file=process.argv[2];const dir=path.dirname(path.resolve(file)),name=path.basename(file);const {server,base}=await serve(dir);const browser=await launch();
+const ctx=await phoneContext(browser,{width:412,height:915,coarse:true});const page=await ctx.newPage();const cdp=await coarsePointer(page);const url=`${base}/${name}`;await lockNetwork(page,url);await page.goto(url);await waitForGame(page);await page.waitForTimeout(500);
+await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
+await cdp.send('Profiler.enable');await cdp.send('Profiler.setSamplingInterval',{interval:500});await cdp.send('Profiler.start');
+await page.evaluate(async()=>{const ctl=window.__MBM_TITAN_AAA__.getController();const raf=()=>new Promise(r=>requestAnimationFrame(r));const end=performance.now()+12000;while(performance.now()<end){while((ctl.phase!=='concentric'||ctl.committing)&&performance.now()<end)await raf();let prev=ctl.position;while(!(Math.abs(ctl.position-.72)<=.05&&ctl.position>=prev)&&performance.now()<end){prev=ctl.position;await raf();}if(performance.now()>=end)break;ctl.action();let lastTap=0;while(ctl.phase==='isometric'){const t=performance.now();if(Math.abs(ctl.balance-.5)>.035&&t-lastTap>=112){ctl.action();lastTap=t;}await raf();}while(ctl.phase==='eccentric'&&ctl.position<.665)await raf();if(ctl.phase==='eccentric')ctl.action();await new Promise(r=>setTimeout(r,350));}});
+const {profile}=await cdp.send('Profiler.stop');await browser.close();server.close();
+const nodes=new Map(profile.nodes.map(n=>[n.id,n]));const self=new Map();const dt=profile.timeDeltas;let total=0;
+profile.samples.forEach((id,i)=>{const d=dt[i]||0;total+=d;self.set(id,(self.get(id)||0)+d);});
+const rows=[...self.entries()].map(([id,t])=>{const n=nodes.get(id);const cf=n.callFrame;return {t,name:cf.functionName||'(anon)',line:cf.lineNumber+1,col:cf.columnNumber,url:cf.url.split('/').pop()};}).sort((a,b)=>b.t-a.t).slice(0,28);
+console.log(`total sampled ${(total/1000).toFixed(0)} ms`);rows.forEach(r=>console.log(`${(r.t/1000).toFixed(0).padStart(6)} ms  ${(100*r.t/total).toFixed(1).padStart(5)}%  ${r.name} @${r.url}:${r.line}:${r.col}`));

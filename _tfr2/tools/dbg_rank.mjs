@@ -1,0 +1,5 @@
+import path from 'node:path';import { serve, launch, phoneContext, lockNetwork, coarsePointer, waitForGame } from './lib.mjs';
+const file=process.argv[2];const dir=path.dirname(path.resolve(file)),name=path.basename(file);const {server,base}=await serve(dir);const browser=await launch();
+const ctx=await phoneContext(browser,{width:412,height:915,coarse:true});const page=await ctx.newPage();await coarsePointer(page);const url=`${base}/${name}`;await lockNetwork(page,url);await page.goto(url);await waitForGame(page);await page.waitForTimeout(500);
+const r=await page.evaluate(async()=>{window.__MBM_TITAN_V5__.simulateRankForTest('CONTENDER');await new Promise(r=>setTimeout(r,400));const el=document.querySelector('.mbm-v5-rank');const b=el.getBoundingClientRect();const cs=getComputedStyle(el);return {box:[b.x,b.y,b.width,b.height],opacity:cs.opacity,display:cs.display,anim:cs.animationName,z:cs.zIndex,text:el.textContent,arenaOverflow:getComputedStyle(document.querySelector('.arena')).overflow,parent:el.parentElement.className};});
+await page.screenshot({path:'shots/p3/dbg-rank.png'});console.log(JSON.stringify(r));await browser.close();server.close();
