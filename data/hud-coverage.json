@@ -248,7 +248,21 @@
     "TG7 every gate above shown failing on a tampered copy"
    ],
    "note": "A single-file football management and match simulation: one inline script block, zero external references of any kind, so a <script src=\"/hud.js\"> tag would retract the promise the file makes and the generated inline exit region carries the way out instead. Tab is not bound as a game key - proven by a real Tab walk reaching eight distinct focus targets in twelve presses and the exit control in one, not by reading the handler, because reading the handler is exactly what missed the /emberwild/ case."
-  }
+  },
+  {
+   "route": "/skybreak/",
+   "verifier": "tools/verify_skybreak.mjs",
+   "gates": [
+    "SG1 WebGL2 path renders; the WebGL 2 needed panel appears under a forced-null context",
+    "SG2 menu idle: zero animation frames after the menu paint; the loop resumes on Launch and on Resume; a resize repaints once",
+    "SG3 runSelfTests() clean and window.__SKYBREAK_TEST__ retained",
+    "SG4 generated splash: first load, 24 h suppression, reduced motion",
+    "SG5 exit reachable by keyboard, one rendered h1, 44 px targets, aria-live, zero duplicate ids, zoom enabled",
+    "SG6 zero non-same-origin requests including the Local Link fold and QR (iceServers:[])",
+    "SG7 real-input playability: launch, one air target destroyed, mission ends with a rank, profile persists"
+   ],
+   "note": "Declared at launch. Skybreak Vector is a single-file WebGL 2 flight-combat game with an optional phone HOTAS over local WebRTC (iceServers:[], no relay). The generated inline exit supplies the estate way out without retracting that boundary; the named verifier checks the declaration and the rendered control."
+   }
  ],
  "_amendedWhy": "THE LEDGER HAD TWO CATEGORIES AND NEEDED THREE. It measured the games it DECLINED to wire and listed them under `excluded`. It did not check whether any of the ten it DID wire carried the same single-file contract. apexgolf did: verify_apexgolf.js G17 asserted `no <script src> at all`, so the Stage 2B line broke it on 10 August 2026 and it stayed red for fifteen days - invisible, because a `grep | wc -l` step under `pipefail` in apexgolf-verify.yml died before the verifier ever ran, and the workflow is pull_request-only and filtered. Two faults, one day, and the noisy one hid the real one. Found by Order T's estate census, 25 August 2026. This list is the third category: wired, contract retained, verifier amended to say so.",
  "amended": [
@@ -351,6 +365,9 @@
     },
     {
      "route": "/touchline/"
+   },
+    {
+     "route": "/skybreak/"
    }
   ],
   "declined-with-reason": [
