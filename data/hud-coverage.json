@@ -234,6 +234,20 @@
     "boot, input and local save/restore in Chromium, Firefox and WebKit"
    ],
    "note": "Declared at launch. Town Life is an authored local-first single-file game with no external runtime dependency. The generated inline exit supplies the estate way out without retracting that boundary; the named verifier checks the declaration and the rendered control."
+  },
+  {
+   "route": "/touchline/",
+   "verifier": "tools/verify_touchline.mjs",
+   "gates": [
+    "TG1 WebGL2 refused: the game boots, plays a fixture and saves on the named canvas fallback",
+    "TG2 worker clock: no scheduler depends on the snapshot tick modulo",
+    "TG3 career round trip by value, in both IndexedDB and the localStorage fallback",
+    "TG4 reduced motion changes rendered output, proven against a negative control",
+    "TG5 paired AB/BA performance deltas, reported with spread and the power of the test",
+    "TG6 one announcement per event, 44px targets in portrait, exit clear of game controls",
+    "TG7 every gate above shown failing on a tampered copy"
+   ],
+   "note": "A single-file football management and match simulation: one inline script block, zero external references of any kind, so a <script src=\"/hud.js\"> tag would retract the promise the file makes and the generated inline exit region carries the way out instead. Tab is not bound as a game key - proven by a real Tab walk reaching eight distinct focus targets in twelve presses and the exit control in one, not by reading the handler, because reading the handler is exactly what missed the /emberwild/ case."
   }
  ],
  "_amendedWhy": "THE LEDGER HAD TWO CATEGORIES AND NEEDED THREE. It measured the games it DECLINED to wire and listed them under `excluded`. It did not check whether any of the ten it DID wire carried the same single-file contract. apexgolf did: verify_apexgolf.js G17 asserted `no <script src> at all`, so the Stage 2B line broke it on 10 August 2026 and it stayed red for fifteen days - invisible, because a `grep | wc -l` step under `pipefail` in apexgolf-verify.yml died before the verifier ever ran, and the workflow is pull_request-only and filtered. Two faults, one day, and the noisy one hid the real one. Found by Order T's estate census, 25 August 2026. This list is the third category: wired, contract retained, verifier amended to say so.",
@@ -334,6 +348,9 @@
    },
    {
     "route": "/voxel/"
+    },
+    {
+     "route": "/touchline/"
    }
   ],
   "declined-with-reason": [
