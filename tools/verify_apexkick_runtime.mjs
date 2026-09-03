@@ -66,7 +66,14 @@ function serve(file) {
   })));
 }
 
-function initHarness({ mode, suppressSplash }) {
+function initHarness({ mode, suppressSplash, hardwareConcurrency }) {
+  let hardwareOverrideApplied = !hardwareConcurrency;
+  if (hardwareConcurrency) {
+    try {
+      Object.defineProperty(navigator, 'hardwareConcurrency', { configurable: true, get: () => hardwareConcurrency });
+      hardwareOverrideApplied = navigator.hardwareConcurrency === hardwareConcurrency;
+    } catch (_) { hardwareOverrideApplied = false; }
+  }
   const observed = new Set([
     'pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'keydown',
     'resize', 'orientationchange', 'visibilitychange', 'pagehide',
@@ -133,7 +140,7 @@ function initHarness({ mode, suppressSplash }) {
   const unhandledRejections = [];
   window.addEventListener('unhandledrejection', (event) => unhandledRejections.push(String(event.reason?.stack || event.reason || 'unhandled rejection')));
   window.__AKFIX_RUNTIME = {
-    mode, listeners, raf, contextCalls, unhandledRejections,
+    mode, listeners, raf, contextCalls, unhandledRejections, hardwareOverrideApplied, requestedHardwareConcurrency: hardwareConcurrency,
     setHidden(value) { hidden = !!value; document.dispatchEvent(new Event('visibilitychange')); },
     focus(value) { window.dispatchEvent(new Event(value ? 'focus' : 'blur')); },
     replayBoot() { for (const callback of bootCallbacks) callback.call(document, new Event('DOMContentLoaded')); }
@@ -206,7 +213,12 @@ async function pageState(page) {
       brokenAria,
       h1Count: document.querySelectorAll('h1').length,
       h1Texts: [...document.querySelectorAll('h1')].map((el) => el.textContent.trim()),
-      viewport: document.querySelector('meta[name="viewport"]')?.content || ''
+      viewport: document.querySelector('meta[name="viewport"]')?.content || '',
+      devicePixelRatio: window.devicePixelRatio || 1,
+      hardwareConcurrency: navigator.hardwareConcurrency || 4,
+      rendererPixelRatio: window.AK?.Scene?.S?.renderer?.getPixelRatio?.() ?? null,
+      hardwareOverrideApplied: window.__AKFIX_RUNTIME?.hardwareOverrideApplied ?? false,
+      requestedHardwareConcurrency: window.__AKFIX_RUNTIME?.requestedHardwareConcurrency ?? null
     };
   });
 }
@@ -324,10 +336,25 @@ const CASES = [
   { id: 'duplicate-boot', viewport: { width: 412, height: 892 }, mode: 'double-boot', mobile: true, touch: true, input: 'touch', path: /^webgl2/ }
 ];
 
-function canvasMatches(state, viewport, dpr) {
+function expectedCanvasScale(state) {
+  const devicePixelRatio = Number(state?.devicePixelRatio) || 1;
+  const hardwareConcurrency = Number(state?.hardwareConcurrency) || 4;
+  const webgl = /^webgl/.test(state?.renderPath || '');
+  const expectedScale = webgl
+    ? Math.min(devicePixelRatio, hardwareConcurrency <= 4 ? 1.5 : 2)
+    : Math.min(devicePixelRatio, 2);
+  const rendererScale = state?.rendererPixelRatio == null ? null : Number(state.rendererPixelRatio);
+  return { devicePixelRatio, hardwareConcurrency, expectedScale, rendererScale, webgl };
+}
+
+function canvasMatches(state, viewport) {
   const canvas = state?.canvas;
+  const scale = expectedCanvasScale(state);
   return !!canvas && canvas.cssWidth === viewport.width && canvas.cssHeight === viewport.height &&
-    canvas.width === Math.floor(viewport.width * dpr) && canvas.height === Math.floor(viewport.height * dpr);
+    Number.isFinite(scale.expectedScale) && scale.expectedScale > 0 &&
+    canvas.width === Math.floor(viewport.width * scale.expectedScale) &&
+    canvas.height === Math.floor(viewport.height * scale.expectedScale) &&
+    (!scale.webgl || (Number.isFinite(scale.rendererScale) && Math.abs(scale.rendererScale - scale.expectedScale) < 0.001));
 }
 
 async function runCase(browser, origin, spec, artifactPrefix = '') {
@@ -335,7 +362,7 @@ async function runCase(browser, origin, spec, artifactPrefix = '') {
     viewport: spec.viewport, isMobile: !!spec.mobile, hasTouch: !!spec.touch,
     deviceScaleFactor: spec.mobile ? 2 : 1, colorScheme: 'dark'
   });
-  await context.addInitScript(initHarness, { mode: spec.mode, suppressSplash: true });
+  await context.addInitScript(initHarness, { mode: spec.mode, suppressSplash: true, hardwareConcurrency: spec.mobile ? 2 : 8 });
   const page = await context.newPage();
   const pageErrors = [], consoleErrors = [], requestFailures = [], externalRequests = [];
   page.on('pageerror', (error) => pageErrors.push(String(error.stack || error)));
@@ -409,11 +436,17 @@ async function runCase(browser, origin, spec, artifactPrefix = '') {
       const moving = result.frame1.hash !== result.frame2.hash;
       const gestureClear = spec.input === 'keyboard' || result.input.endY < (result.input.trayTop ?? Infinity);
       result.canvasSizing = {
-        expected: { ...spec.viewport, dpr: spec.mobile ? 2 : 1 }, actual: result.aim.canvas,
-        matched: canvasMatches(result.aim, spec.viewport, spec.mobile ? 2 : 1)
+        expected: { ...spec.viewport, ...expectedCanvasScale(result.aim) }, actual: result.aim.canvas,
+        matched: canvasMatches(result.aim, spec.viewport)
+      };
+      result.hardwareClass = {
+        expected: spec.mobile ? 2 : 8,
+        actual: result.aim.hardwareConcurrency,
+        overrideApplied: result.aim.hardwareOverrideApplied,
+        matched: result.aim.hardwareOverrideApplied && result.aim.hardwareConcurrency === (spec.mobile ? 2 : 8)
       };
       result.pass = result.frame1.ok && result.frame2.ok && moving && gestureClear && result.canvasSizing.matched && spec.path.test(result.aim.renderPath) &&
-        ['flight', 'resolve'].includes(result.afterInput.gameState) && result.resolved.gameState === 'resolve';
+        result.hardwareClass.matched && ['flight', 'resolve'].includes(result.afterInput.gameState) && result.resolved.gameState === 'resolve';
       if (spec.mode === 'lifecycle') {
         const before = result.aim.listenerCounts, after = result.resumed.listenerCounts;
         result.lifecycleInvariant = {
@@ -423,9 +456,9 @@ async function runCase(browser, origin, spec, artifactPrefix = '') {
           rafPending: [result.aim.raf.pending, result.resumed.raf.pending]
         };
         result.pass = result.pass && result.background.pauseVisible && !result.resumed.pauseVisible &&
-          canvasMatches(result.landscape, { width: 892, height: 412 }, 2) &&
-          canvasMatches(result.portrait, { width: 412, height: 892 }, 2) &&
-          canvasMatches(result.resumed, { width: 412, height: 892 }, 2) &&
+          canvasMatches(result.landscape, { width: 892, height: 412 }) &&
+          canvasMatches(result.portrait, { width: 412, height: 892 }) &&
+          canvasMatches(result.resumed, { width: 412, height: 892 }) &&
           result.resumed.inputEnabled && Object.values(result.lifecycleInvariant).every(([a, b]) => a === b);
       }
       if (spec.mode === 'double-boot') {
@@ -672,6 +705,9 @@ async function main() {
       controls.push(await runControl(browser, html, 'missing-retry', 'all-renderers-unavailable',
         [['<button class="btn" id="bootRetry" type="button" data-mbm-primary-start>Reload and retry</button>', '<button class="btn" id="bootRetry" type="button" data-mbm-primary-start disabled>Reload and retry</button>']],
         (result) => result.boot?.active !== 'bootRetry' || /Timeout/.test(result.harnessError || '')));
+      controls.push(await runControl(browser, html, 'canvas-sizing', 'desktop-webgl-keyboard',
+        [['S.renderer.setSize(w, h, false);', 'S.renderer.setSize(1, 1, false);']],
+        (result) => result.canvasSizing?.matched === false));
       for (const control of controls) {
         gate(`AKR${String(gates.length + 1).padStart(2, '0')}`, `${control.name} negative control fires`, control.fired,
           `fixture ${control.fixtureSha256.slice(0, 12)}; candidate predicate pass=${control.result.pass}`);
