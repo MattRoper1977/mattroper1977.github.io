@@ -1,0 +1,96 @@
+name: Apex Kick targeted runtime gate
+
+on:
+  pull_request:
+    paths:
+      - 'apexkick/index.html'
+      - 'tools/verify_apexkick.js'
+      - 'tools/verify_apexkick_runtime.mjs'
+      - '.github/workflows/apexkick-runtime-verify.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apexkick/index.html'
+      - 'tools/verify_apexkick.js'
+      - 'tools/verify_apexkick_runtime.mjs'
+      - '.github/workflows/apexkick-runtime-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apexkick-runtime-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Shipped-byte renderer and recovery matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out proposed tree
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Record measured identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/apexkick-runtime
+          {
+            node --version
+            wc -c apexkick/index.html
+            sha256sum apexkick/index.html tools/verify_apexkick.js tools/verify_apexkick_runtime.mjs
+            printf 'inline script blocks='; grep -c '<script' apexkick/index.html || true
+            printf 'external script tags='; grep -c '<script[^>]*src=' apexkick/index.html || true
+          } | tee artifacts/apexkick-runtime/identity.txt
+
+      - name: Install pinned Chromium harness
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install --with-deps chromium
+
+      - name: Run existing Apex Kick contract verifier
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/verify_apexkick.js | tee artifacts/apexkick-runtime/static.log
+
+      - name: Run shipped-byte runtime matrix and firing controls
+        shell: bash
+        env:
+          APEXKICK_ARTIFACT_DIR: artifacts/apexkick-runtime
+        run: |
+          set -o pipefail
+          node tools/verify_apexkick_runtime.mjs | tee artifacts/apexkick-runtime/runtime.log
+
+      - name: Validate measured gate populations
+        shell: bash
+        run: |
+          set -euo pipefail
+          static_log=artifacts/apexkick-runtime/static.log
+          runtime_log=artifacts/apexkick-runtime/runtime.log
+          static_checks=$(grep -cE '^[[:space:]]+(PASS|FAIL)[[:space:]]' "$static_log" || true)
+          static_declared=$(sed -nE 's/.*ALL ([0-9]+) CONTRACT CHECKS PASSED.*/\1/p' "$static_log" | sed -n 1p)
+          runtime_checks=$(grep -cE '^(PASS|FAIL)[[:space:]]+AKR' "$runtime_log" || true)
+          runtime_declared=$(sed -nE 's/^AKRUNTIME [0-9]+\/([0-9]+) gates passed; [0-9]+ failed$/\1/p' "$runtime_log" | sed -n 1p)
+          printf 'existing verifier: %s emitted, %s declared\n' "$static_checks" "${static_declared:-none}"
+          printf 'runtime verifier: %s emitted, %s declared\n' "$runtime_checks" "${runtime_declared:-none}"
+          test -n "$static_declared" && test "$static_declared" -gt 0 && test "$static_checks" -eq "$static_declared"
+          test -n "$runtime_declared" && test "$runtime_declared" -gt 0 && test "$runtime_checks" -eq "$runtime_declared"
+          grep -q '^ALL APEX KICK RUNTIME GATES PASSED$' "$runtime_log"
+
+      - name: Upload exact-run evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apexkick-runtime-verification
+          path: artifacts/apexkick-runtime
+          if-no-files-found: error
+          retention-days: 14
