@@ -6,6 +6,7 @@ on:
       - 'apexkick/index.html'
       - 'tools/verify_apexkick.js'
       - 'tools/verify_apexkick_runtime.mjs'
+      - 'tools/verify_apexkick_controls.cjs'
       - '.github/workflows/apexkick-runtime-verify.yml'
   push:
     branches: [main]
@@ -13,6 +14,7 @@ on:
       - 'apexkick/index.html'
       - 'tools/verify_apexkick.js'
       - 'tools/verify_apexkick_runtime.mjs'
+      - 'tools/verify_apexkick_controls.cjs'
       - '.github/workflows/apexkick-runtime-verify.yml'
   workflow_dispatch:
 
@@ -61,6 +63,12 @@ jobs:
         run: |
           set -o pipefail
           node tools/verify_apexkick.js | tee artifacts/apexkick-runtime/static.log
+
+      - name: Verify control routing, pause timing and canvas sizing
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/verify_apexkick_controls.cjs | tee artifacts/apexkick-runtime/controls.log
 
       - name: Run shipped-byte runtime matrix and firing controls
         shell: bash
