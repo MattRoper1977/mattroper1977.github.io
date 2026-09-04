@@ -332,8 +332,9 @@ async function skySignature(page) {
 
 async function controlsAndWeather(page, spec, artifactPrefix) {
   const result = {};
-  // The sky strip excludes players and the moving camera: only weather can
-  // change these pixels in this Canvas fixture.
+  // Record motion, then isolate rain with a paused before/after comparison.
+  // An unsettled camera can project a foreground player into the sky strip,
+  // so unpaused pixel changes alone cannot prove precipitation exists.
   result.rain = [await skySignature(page)];
   await page.waitForTimeout(260); result.rain.push(await skySignature(page));
   if (spec.touch) await page.locator('#pauseBtn').tap(); else await page.locator('#pauseBtn').click();
@@ -341,6 +342,11 @@ async function controlsAndWeather(page, spec, artifactPrefix) {
   await page.waitForTimeout(80);
   result.clock = [await page.locator('#broadcastClock').textContent()];
   await page.waitForTimeout(1_200); result.clock.push(await page.locator('#broadcastClock').textContent());
+  result.pausedWeather = { rain: await skySignature(page) };
+  await page.locator('#pauseMotion').click(); await page.waitForTimeout(80);
+  result.pausedWeather.calm = await skySignature(page);
+  await page.locator('#pauseMotion').click(); await page.waitForTimeout(80);
+  result.pausedWeather.restored = await skySignature(page);
   await page.screenshot({ path: path.join(ART, `${artifactPrefix}${spec.id}-paused.png`) });
   await page.keyboard.press('Escape');
   await page.waitForFunction(() => !window.__AK_DEBUG.G.paused, null, { timeout: 2_000 });
@@ -388,6 +394,7 @@ async function controlsAndWeather(page, spec, artifactPrefix) {
   });
   await page.setViewportSize(spec.viewport); await page.keyboard.press('ArrowLeft');
   result.pass = result.rain[0] !== result.rain[1] && result.clock[0] === result.clock[1] && result.escapeResumed &&
+    result.pausedWeather.rain !== result.pausedWeather.calm && result.pausedWeather.rain === result.pausedWeather.restored &&
     result.drag.active && result.drag.id !== null && result.drag.captured && result.drag.valid &&
     result.cancel.paused && !result.cancel.active && !result.cancel.captured && result.cancel.gameState === 'aim' &&
     result.cancel.outcomes === result.drag.outcomes &&
@@ -795,7 +802,8 @@ async function main() {
         (result) => result.canvasSizing?.matched === false));
       controls.push(await runControl(browser, html, 'canvas-rain-absent', 'controls-weather-desktop',
         [['    renderWeather(w,h);', '    /* negative control: weather omitted */']],
-        (result) => result.controlsWeather?.rain[0] === result.controlsWeather?.rain[1]));
+        (result) => !!result.controlsWeather?.pausedWeather &&
+          result.controlsWeather.pausedWeather.rain === result.controlsWeather.pausedWeather.calm));
       controls.push(await runControl(browser, html, 'pause-pointer-capture', 'controls-weather-desktop',
         [["    if (target && target.closest('a,button,input,select,textarea,summary,[role=\"button\"],[contenteditable]:not([contenteditable=\"false\"])')) return;", '']],
         (result) => result.failureState?.paused === false && /Timeout/.test(result.harnessError || '')));
