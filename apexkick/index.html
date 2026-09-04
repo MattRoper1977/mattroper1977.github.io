@@ -2813,23 +2813,37 @@ var SKIES = {
   day:   ['#2f6fb5', '#63a2d8', '#a9cbe6', '#d8e8f2', '#eaf2f7'],
   dusk:  ['#141d3f', '#3c2a63', '#8a4a6a', '#d97a52', '#f0b070'],
   night: ['#05070f', '#0a1030', '#141d45', '#22305c', '#3a4a78'],
+  overcast: ['#243140', '#354554', '#526575', '#718591', '#95a9b2'],
   storm: ['#10141f', '#1c2434', '#333d4f', '#4a5566', '#616c7c']
 };
+var SKY_LIGHTING = {
+  day:      { c: 0xfff3dd, i: 0.95, amb: 0.85, fog: 0x9fc4e8 },
+  dusk:     { c: 0xffb27a, i: 0.72, amb: 0.62, fog: 0x6a4a70 },
+  night:    { c: 0xbcd0ff, i: 0.40, amb: 0.42, fog: 0x18203c },
+  overcast: { c: 0xd6e3ed, i: 0.65, amb: 0.82, fog: 0x718591 },
+  storm:    { c: 0xc8d2e0, i: 0.48, amb: 0.55, fog: 0x2b3340 }
+};
 function applySky(kind) {
+  // Rain uses overcast. Resolve both colour and lighting from one valid key;
+  // an unknown atmosphere must never put undefined values in the light uniforms.
+  var own = Object.prototype.hasOwnProperty;
+  var lit = typeof kind === 'string' && own.call(SKIES, kind) && own.call(SKY_LIGHTING, kind) ? SKY_LIGHTING[kind] : null;
+  if (!lit || ![lit.c, lit.i, lit.amb, lit.fog].every(Number.isFinite) || lit.i <= 0 || lit.amb <= 0) kind = 'day';
+  lit = SKY_LIGHTING[kind];
   F.sky = kind;
-  var stops = SKIES[kind] || SKIES.day;
+  var stops = SKIES[kind];
   var c = document.createElement('canvas'); c.width = 8; c.height = 256;
   var g = c.getContext('2d'), grd = g.createLinearGradient(0, 0, 0, 256);
   stops.forEach(function (s, i) { grd.addColorStop(i / (stops.length - 1), s); });
   g.fillStyle = grd; g.fillRect(0, 0, 8, 256);
   var t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding;
-  if (Sc.S.sky) { Sc.S.sky.material.map = t; Sc.S.sky.material.needsUpdate = true; }
+  if (Sc.S.sky) {
+    var previousMap = Sc.S.sky.material.map;
+    Sc.S.sky.material.map = t; Sc.S.sky.material.needsUpdate = true;
+    if (previousMap) previousMap.dispose();
+  } else t.dispose();
 
   var sun = Sc.S.sun;
-  var lit = { day:   { c: 0xfff3dd, i: 0.95, amb: 0.85, fog: 0x9fc4e8 },
-              dusk:  { c: 0xffb27a, i: 0.72, amb: 0.62, fog: 0x6a4a70 },
-              night: { c: 0xbcd0ff, i: 0.40, amb: 0.42, fog: 0x18203c },
-              storm: { c: 0xc8d2e0, i: 0.48, amb: 0.55, fog: 0x2b3340 } }[kind] || {};
   if (sun) { sun.color.copy(SRGB(lit.c)); sun.intensity = lit.i; }
   Sc.S.scene.traverse(function (o) {
     if (o.isHemisphereLight) o.intensity = lit.amb;

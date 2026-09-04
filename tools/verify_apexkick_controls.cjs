@@ -143,5 +143,64 @@ test('fallback observes changes from the original motion preference authority', 
   assert.equal(ctx.AK.FX.isCalm(), true); assert.equal(canvasCalm, true);
   ctx.AK.FX.setCalm(false); assert.equal(preference, false); assert.equal(canvasCalm, false);
 });
+function skyHarness(source = html) {
+  const start = source.indexOf('var SKIES = {'), end = source.indexOf('function applyWeather(kind)', start);
+  assert(start >= 0 && end > start, 'actual sky implementation found');
+  const textures = [], colour = () => ({value: null, copy(value) { this.value = value; }});
+  const sun = {color: colour(), intensity: 1}, hemi = {isHemisphereLight: true, intensity: 1};
+  const sky = {material: {map: {dispose() {this.disposed = true}}}};
+  const scene = {fog: {color: colour()}, traverse(visit) {visit(hemi)}};
+  const ctx = vm.createContext({F: {floods: []}, Sc: {S: {sun, sky, scene}}, SRGB: value => value,
+    document: {createElement: () => ({getContext: () => ({
+      createLinearGradient: () => ({addColorStop(offset, value) {assert(/^#[0-9a-f]{6}$/i.test(value))}}), fillRect() {}
+    })})}, T: {sRGBEncoding: 3001, CanvasTexture: function () {this.disposed = false; this.dispose = () => {this.disposed = true}; textures.push(this)}}});
+  vm.runInContext(source.slice(start, end), ctx);
+  return {ctx, sun, hemi, sky, scene, textures};
+}
+function assertLit(h, wanted) {
+  assert.equal(h.ctx.F.sky, wanted, 'requested supported sky remains selected');
+  for (const value of [h.sun.intensity, h.hemi.intensity, h.sun.color.value, h.scene.fog.color.value]) assert(Number.isFinite(value), 'light and fog values are finite');
+  assert(h.sun.intensity > 0 && h.hemi.intensity > 0, 'the pitch has direct and ambient light');
+}
+test('all supported skies keep finite positive direct and ambient lighting', () => {
+  const h = skyHarness();
+  for (const kind of ['day', 'dusk', 'night', 'overcast', 'storm']) {h.ctx.applySky(kind); assertLit(h, kind)}
+});
+test('actual rain atmosphere selects explicit overcast lighting', () => {
+  const h = skyHarness(); h.ctx.P = {atmosphere: 'rain'}; h.ctx.G = {};
+  vm.runInContext(fn('selectMatchAtmos'), h.ctx); h.ctx.selectMatchAtmos();
+  assert.equal(h.ctx.G.matchAtmos.weather, 'rain');
+  h.ctx.applySky(h.ctx.G.matchAtmos.sky); assertLit(h, 'overcast');
+  assert(h.sun.intensity < .95 && h.hemi.intensity > .55, 'overcast is diffused and brighter than a storm');
+});
+test('unknown and prototype sky names use coherent daylight', () => {
+  const h = skyHarness();
+  for (const kind of ['missing-sky', '__proto__', 'constructor', null, undefined, {}]) {
+    h.ctx.applySky(kind); assertLit(h, 'day'); assert.equal(h.sun.intensity, .95); assert.equal(h.hemi.intensity, .85);
+  }
+});
+test('sky changes dispose replaced textures without disposing the active texture', () => {
+  const h = skyHarness(), initial = h.sky.material.map;
+  h.ctx.applySky('overcast'); const rain = h.sky.material.map;
+  assert(initial.disposed); assert.equal(rain.disposed, false);
+  h.ctx.applySky('night'); assert(rain.disposed); assert.equal(h.sky.material.map.disposed, false);
+});
+test('an invalid numeric sky preset resolves to complete daylight', () => {
+  const h = skyHarness(); h.ctx.SKY_LIGHTING.overcast.i = NaN;
+  h.ctx.applySky('overcast'); assertLit(h, 'day');
+  assert.equal(h.sun.intensity, .95); assert.equal(h.hemi.intensity, .85);
+});
+test('a missing overcast lighting entry fires the real rain assertion', () => {
+  const broken = html.replace(/^  overcast: \{ c: 0xd6e3ed, i: 0.65, amb: 0.82, fog: 0x718591 \},\n/m, '');
+  assert.notEqual(broken, html, 'control actually removes the entry');
+  const h = skyHarness(broken); h.ctx.applySky('overcast');
+  assert.throws(() => assertLit(h, 'overcast'), /requested supported sky/);
+});
+test('non-finite direct light fires the same finite-light assertion', () => {
+  const broken = html.replace('sun.intensity = lit.i;', 'sun.intensity = undefined;');
+  assert.notEqual(broken, html, 'control actually corrupts direct light');
+  const h = skyHarness(broken); h.ctx.applySky('overcast');
+  assert.throws(() => assertLit(h, 'overcast'), /light and fog/);
+});
 console.log(JSON.stringify({source: sourceFile, passed, failed}));
 process.exitCode = failed ? 1 : 0;

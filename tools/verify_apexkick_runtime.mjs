@@ -187,6 +187,12 @@ async function pageState(page) {
         }
       }
     });
+    const sceneState = window.AK?.Scene?.S, hemispheres = [];
+    sceneState?.scene?.traverse((object) => {
+      if (object.isHemisphereLight) hemispheres.push({ intensity: object.intensity,
+        colour: [object.color.r, object.color.g, object.color.b] });
+    });
+    const sun = sceneState?.sun, fog = sceneState?.scene?.fog;
     return {
       title: document.title,
       active: document.activeElement?.id || document.activeElement?.tagName || null,
@@ -194,6 +200,9 @@ async function pageState(page) {
       paused: window.__AK_DEBUG?.G?.paused ?? null,
       inputEnabled: window.AK?.Input?.state?.enabled ?? null,
       renderPath: window.AK?.Scene?.S?.renderPath || 'uninitialised',
+      lighting: { sky: window.AK?.FX?.state?.sky ?? null, atmosphere: window.__AK_DEBUG?.G?.matchAtmos ?? null,
+        sun: sun ? { intensity: sun.intensity, colour: [sun.color.r, sun.color.g, sun.color.b] } : null,
+        hemispheres, fog: fog ? [fog.color.r, fog.color.g, fog.color.b] : null },
       qualityTier: window.AK?.Scene?.S?.qualityTier || 'uninitialised',
       loadingVisible: isVisible(document.getElementById('loading')),
       pauseVisible: isVisible(document.getElementById('pauseLayer')) && document.getElementById('pauseLayer').classList.contains('on'),
@@ -406,6 +415,7 @@ async function controlsAndWeather(page, spec, artifactPrefix) {
 const CASES = [
   { id: 'controls-weather-desktop', viewport: { width: 1280, height: 800 }, mode: 'no-webgl', input: 'mouse', path: /^canvas2d$/, controlsWeather: true },
   { id: 'controls-weather-touch', viewport: { width: 892, height: 412 }, mode: 'no-webgl', mobile: true, touch: true, input: 'touch', path: /^canvas2d$/, controlsWeather: true },
+  { id: 'webgl-rain-lighting', viewport: { width: 1280, height: 800 }, mode: 'normal', input: 'keyboard', path: /^webgl2/, rainLighting: true },
   { id: 'desktop-webgl-keyboard', viewport: { width: 1280, height: 800 }, mode: 'normal', input: 'keyboard', path: /^webgl2/ },
   { id: 'desktop-webgl-mouse', viewport: { width: 1280, height: 800 }, mode: 'normal', input: 'mouse', path: /^webgl2/ },
   { id: 'android-portrait', viewport: { width: 412, height: 892 }, mode: 'normal', mobile: true, touch: true, input: 'touch', path: /^webgl2/ },
@@ -420,6 +430,14 @@ const CASES = [
   { id: 'lifecycle-resize-focus', viewport: { width: 412, height: 892 }, mode: 'lifecycle', mobile: true, touch: true, input: 'touch', path: /^webgl2/ },
   { id: 'duplicate-boot', viewport: { width: 412, height: 892 }, mode: 'double-boot', mobile: true, touch: true, input: 'touch', path: /^webgl2/ }
 ];
+
+function finiteLighting(state) {
+  const lighting = state?.lighting;
+  const finiteColour = values => Array.isArray(values) && values.length === 3 && values.every(value => Number.isFinite(value) && value >= 0);
+  const finiteLight = light => !!light && Number.isFinite(light.intensity) && light.intensity > 0 && finiteColour(light.colour);
+  return !!lighting && finiteLight(lighting.sun) && lighting.hemispheres.length > 0 &&
+    lighting.hemispheres.every(finiteLight) && finiteColour(lighting.fog);
+}
 
 function expectedCanvasScale(state) {
   const devicePixelRatio = Number(state?.devicePixelRatio) || 1;
@@ -481,13 +499,22 @@ async function runCase(browser, origin, spec, artifactPrefix = '') {
         await page.waitForTimeout(650);
         result.afterDuplicate = await pageState(page);
       }
-      if (spec.controlsWeather) {
+      if (spec.controlsWeather || spec.rainLighting) {
         await page.locator('#bSettings').click();
         for (let i = 0; i < 4 && (await page.locator('#setAtmos').textContent()) !== 'rain'; i++) await page.locator('#setAtmos').click();
         await page.locator('#bSettingsDone').click();
       }
       await startMatch(page);
       result.aim = await pageState(page);
+      if (spec.rainLighting) {
+        result.unknownSkies = [];
+        for (const kind of ['unrecognised-atmosphere', '__proto__']) {
+          await page.evaluate(value => AK.FX.applySky(value), kind);
+          result.unknownSkies.push(await pageState(page));
+        }
+        await page.evaluate(() => AK.FX.applySky(window.__AK_DEBUG.G.matchAtmos.sky));
+        result.restoredSky = await pageState(page);
+      }
       if (spec.controlsWeather) result.controlsWeather = await controlsAndWeather(page, spec, artifactPrefix);
       if (spec.mode === 'lifecycle') {
         await page.evaluate(() => { window.__AKFIX_RUNTIME.setHidden(true); window.__AKFIX_RUNTIME.focus(false); });
@@ -538,6 +565,16 @@ async function runCase(browser, origin, spec, artifactPrefix = '') {
       };
       result.pass = result.frame1.ok && result.frame2.ok && moving && gestureClear && result.canvasSizing.matched && spec.path.test(result.aim.renderPath) &&
         result.hardwareClass.matched && ['flight', 'resolve'].includes(result.afterInput.gameState) && result.resolved.gameState === 'resolve';
+      if (/^webgl/.test(result.aim.renderPath)) {
+        result.webglLighting = { pass: [result.boot, result.aim, result.afterInput, result.resolved].every(finiteLighting) };
+        result.pass = result.pass && result.webglLighting.pass;
+      }
+      if (spec.rainLighting) {
+        result.rainLighting = { pass: result.aim.lighting.sky === 'overcast' && result.aim.lighting.atmosphere?.weather === 'rain' &&
+          result.unknownSkies.length === 2 && result.unknownSkies.every(state => state.lighting.sky === 'day' && finiteLighting(state)) &&
+          result.restoredSky.lighting.sky === 'overcast' && finiteLighting(result.restoredSky) };
+        result.pass = result.pass && result.rainLighting.pass;
+      }
       if (spec.controlsWeather) result.pass = result.pass && result.controlsWeather.pass;
       if (spec.mode === 'lifecycle') {
         const before = result.aim.listenerCounts, after = result.resumed.listenerCounts;
@@ -812,6 +849,13 @@ async function main() {
          ['setCalm:function(v){fallbackMotion.setCalm(v);Sc.setCalm(fallbackMotion.isCalm())}', 'setCalm:function(v){fallbackMotion.setCalm(v)}']],
         (result) => result.controlsWeather?.calmEnabled && result.controlsWeather?.calmUnpaused &&
           result.controlsWeather.calm[0] !== result.controlsWeather.calm[1]));
+      controls.push(await runControl(browser, html, 'overcast-lighting-missing', 'webgl-rain-lighting',
+        [['  overcast: { c: 0xd6e3ed, i: 0.65, amb: 0.82, fog: 0x718591 },\n', '']],
+        (result) => result.aim?.lighting?.sky !== 'overcast' && result.rainLighting?.pass === false));
+      controls.push(await runControl(browser, html, 'nonfinite-sun-light', 'webgl-rain-lighting',
+        [['sun.intensity = lit.i;', 'sun.intensity = undefined;']],
+        (result) => !!result.aim?.lighting?.sun && !Number.isFinite(result.aim.lighting.sun.intensity) &&
+          result.webglLighting?.pass === false));
       for (const control of controls) {
         gate(`AKR${String(gates.length + 1).padStart(2, '0')}`, `${control.name} negative control fires`, control.fired,
           `fixture ${control.fixtureSha256.slice(0, 12)}; candidate predicate pass=${control.result.pass}`);
