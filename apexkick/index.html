@@ -2503,7 +2503,8 @@ AK.CanvasScene = (function () {
   "use strict";
   var T = window.THREE, GOAL_HW = 3.66, GOAL_H = 2.44, cx = null, canvas = null;
   var S = { ready:false, fallback:true, webgl2:false, renderPath:'canvas2d', qualityTier:'canvas-compatibility', camera:null, ballGroup:null, keeper:null,
-    kicker:null, wall:[], trailPts:[], dist:24, ballColour:'#ffffff', trailColour:'#ffd27a' };
+    kicker:null, wall:[], trailPts:[], dist:24, ballColour:'#ffffff', trailColour:'#ffd27a',
+    sky:'day', weather:'clear', weatherTime:0, calm:false };
   function build(c) {
     canvas = c; cx = c.getContext('2d', { alpha:false });
     if (!cx) throw new Error('Canvas 2D context unavailable');
@@ -2522,8 +2523,28 @@ AK.CanvasScene = (function () {
   function sp(v){S.camera.updateMatrixWorld(true);var q=new T.Vector3(v.x,v.y,v.z).project(S.camera),w=canvas.clientWidth,h=canvas.clientHeight;return{x:(q.x*.5+.5)*w,y:(-q.y*.5+.5)*h,z:q.z};}
   function poly(points,fill,stroke,lw){cx.beginPath();points.forEach(function(p,i){i?cx.lineTo(p.x,p.y):cx.moveTo(p.x,p.y)});cx.closePath();if(fill){cx.fillStyle=fill;cx.fill()}if(stroke){cx.strokeStyle=stroke;cx.lineWidth=lw||1;cx.stroke()}}
   function person(obj,shirt,scale){if(obj.visible===false)return;var f=sp(obj.position),head=sp(new T.Vector3(obj.position.x,obj.position.y+1.8*scale,obj.position.z)),h=Math.max(10,f.y-head.y),w=h*.25;cx.save();cx.translate(head.x,head.y);cx.rotate(obj.rotation.z||0);cx.fillStyle=shirt;cx.fillRect(-w,-2,w*2,h*.55);cx.strokeStyle='#17233f';cx.lineWidth=Math.max(2,w*.16);cx.beginPath();cx.moveTo(-w*.45,h*.5);cx.lineTo(-w*.7,h);cx.moveTo(w*.45,h*.5);cx.lineTo(w*.7,h);cx.moveTo(-w,h*.12);cx.lineTo(-w*1.7,h*.43);cx.moveTo(w,h*.12);cx.lineTo(w*1.7,h*.43);cx.stroke();cx.fillStyle='#d9a77f';cx.beginPath();cx.arc(0,-h*.12,w*.58,0,6.29);cx.fill();cx.restore()}
+  function applySky(sky){S.sky=sky==='night'?'night':sky==='overcast'?'overcast':'day'}
+  function applyWeather(weather){S.weather=weather==='storm'?'storm':weather==='rain'?'rain':'clear'}
+  function updateWeather(dt){if(!S.calm)S.weatherTime+=Math.max(0,Math.min(.1,dt||0))}
+  function setCalm(calm){S.calm=!!calm}
+  function renderWeather(w,h){
+    if(S.calm||(S.weather!=='rain'&&S.weather!=='storm'))return;
+    // Bounded, allocation-free rain; the simulation clock also freezes this
+    // layer while paused. Calm and low-distraction modes keep a still sky.
+    var count=Math.max(28,Math.min(90,Math.floor(w*h/12000))),storm=S.weather==='storm';
+    cx.save();cx.strokeStyle=storm?'rgba(201,224,245,.48)':'rgba(195,220,245,.34)';cx.lineWidth=1;
+    cx.beginPath();
+    for(var i=0;i<count;i++){
+      var speed=storm?560:390,drop=(S.weatherTime*speed+i*113)%(h+32)-16;
+      var x=(i*179+S.weatherTime*(storm?86:42))%(w+24)-12;
+      cx.moveTo(x,drop);cx.lineTo(x+(storm?7:4),drop+(storm?19:13));
+    }
+    cx.stroke();cx.restore();
+  }
   function render(){
-    if(!S.ready)return;var w=canvas.clientWidth,h=canvas.clientHeight,g=cx.createLinearGradient(0,0,0,h);g.addColorStop(0,'#07112b');g.addColorStop(.46,'#315b8a');g.addColorStop(.47,'#172640');g.addColorStop(1,'#143c25');cx.fillStyle=g;cx.fillRect(0,0,w,h);
+    if(!S.ready)return;var w=canvas.clientWidth,h=canvas.clientHeight,g=cx.createLinearGradient(0,0,0,h);
+    var sky=S.sky==='night'?['#030815','#182541']:S.sky==='overcast'?['#243140','#657482']:['#07112b','#315b8a'];
+    g.addColorStop(0,sky[0]);g.addColorStop(.46,sky[1]);g.addColorStop(.47,'#172640');g.addColorStop(1,'#143c25');cx.fillStyle=g;cx.fillRect(0,0,w,h);
     /* floodlit bowl */cx.fillStyle='#111a33';cx.fillRect(0,h*.25,w,h*.23);for(var i=0;i<130;i++){var x=(i*83%997)/997*w,y=h*.29+((i*47)%130)/130*h*.15;cx.fillStyle=['#67f6cb','#ffb957','#8d6cff','#e9f2ff'][i%4];cx.fillRect(x,y,2,2)}
     var farL=sp(new T.Vector3(-22,0,S.dist+4)),farR=sp(new T.Vector3(22,0,S.dist+4)),nearR=sp(new T.Vector3(18,0,-4)),nearL=sp(new T.Vector3(-18,0,-4));poly([farL,farR,nearR,nearL],'#287747','#dcefe4',1.4);
     for(var z=0;z<S.dist;z+=4){var a=sp(new T.Vector3(-18,0,z)),b=sp(new T.Vector3(18,0,z));cx.strokeStyle=z%8?'rgba(255,255,255,.08)':'rgba(0,0,0,.08)';cx.lineWidth=5;cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(b.x,b.y);cx.stroke()}
@@ -2531,6 +2552,7 @@ AK.CanvasScene = (function () {
     S.wall.forEach(function(o){person(o,'#326fda',.78)});person(S.keeper,'#45dc91',1);person(S.kicker,'#e84f68',1);
     if(S.trailPts.length>1){cx.strokeStyle=S.trailColour;cx.lineWidth=4;cx.shadowBlur=14;cx.shadowColor=S.trailColour;cx.beginPath();S.trailPts.forEach(function(p,i){var q=sp(p);i?cx.lineTo(q.x,q.y):cx.moveTo(q.x,q.y)});cx.stroke();cx.shadowBlur=0}
     var b=sp(S.ballGroup.position),e=sp(new T.Vector3(S.ballGroup.position.x+.11,S.ballGroup.position.y,S.ballGroup.position.z)),r=Math.max(4,Math.abs(e.x-b.x));cx.shadowBlur=18;cx.shadowColor=S.ballColour;cx.fillStyle=S.ballColour;cx.beginPath();cx.arc(b.x,b.y,r,0,6.29);cx.fill();cx.shadowBlur=0;cx.strokeStyle='#111a30';cx.lineWidth=1.5;cx.stroke();
+    renderWeather(w,h);
   }
   function setBall(p){S.ballGroup.position.set(p.x,p.y,p.z)}
   function pushTrail(p){S.trailPts.push({x:p.x,y:p.y,z:p.z});if(S.trailPts.length>45)S.trailPts.shift()}
@@ -2538,7 +2560,7 @@ AK.CanvasScene = (function () {
   function resetKeeper(){S.keeper.position.set(0,0,S.dist-.25);S.keeper.rotation.set(0,Math.PI,0)}
   function poseKeeper(frac,target){S.keeper.position.x=AK.clamp(target.x,-GOAL_HW,GOAL_HW)*frac*.85;S.keeper.position.y=Math.max(0,AK.clamp(target.y-.95,-.9,1.5)*frac*.55);S.keeper.rotation.z=-AK.clamp(S.keeper.position.x,-3.5,3.5)*.34}
   function setCosmetics(b,t){S.ballColour='#'+(b||0xffffff).toString(16).padStart(6,'0');S.trailColour='#'+(t||0xffd27a).toString(16).padStart(6,'0')}
-  return{S:S,build:build,layout:layout,resize:resize,render:render,setBall:setBall,pushTrail:pushTrail,clearTrail:clearTrail,resetKeeper:resetKeeper,poseKeeper:poseKeeper,setCosmetics:setCosmetics,rippleNet:function(){},updateNet:function(){},GOAL_HW:GOAL_HW,GOAL_H:GOAL_H};
+  return{S:S,build:build,layout:layout,resize:resize,render:render,applySky:applySky,applyWeather:applyWeather,updateWeather:updateWeather,setCalm:setCalm,setBall:setBall,pushTrail:pushTrail,clearTrail:clearTrail,resetKeeper:resetKeeper,poseKeeper:poseKeeper,setCosmetics:setCosmetics,rippleNet:function(){},updateNet:function(){},GOAL_HW:GOAL_HW,GOAL_H:GOAL_H};
 })();
 </script>
 
@@ -2791,23 +2813,37 @@ var SKIES = {
   day:   ['#2f6fb5', '#63a2d8', '#a9cbe6', '#d8e8f2', '#eaf2f7'],
   dusk:  ['#141d3f', '#3c2a63', '#8a4a6a', '#d97a52', '#f0b070'],
   night: ['#05070f', '#0a1030', '#141d45', '#22305c', '#3a4a78'],
+  overcast: ['#243140', '#354554', '#526575', '#718591', '#95a9b2'],
   storm: ['#10141f', '#1c2434', '#333d4f', '#4a5566', '#616c7c']
 };
+var SKY_LIGHTING = {
+  day:      { c: 0xfff3dd, i: 0.95, amb: 0.85, fog: 0x9fc4e8 },
+  dusk:     { c: 0xffb27a, i: 0.72, amb: 0.62, fog: 0x6a4a70 },
+  night:    { c: 0xbcd0ff, i: 0.40, amb: 0.42, fog: 0x18203c },
+  overcast: { c: 0xd6e3ed, i: 0.65, amb: 0.82, fog: 0x718591 },
+  storm:    { c: 0xc8d2e0, i: 0.48, amb: 0.55, fog: 0x2b3340 }
+};
 function applySky(kind) {
+  // Rain uses overcast. Resolve both colour and lighting from one valid key;
+  // an unknown atmosphere must never put undefined values in the light uniforms.
+  var own = Object.prototype.hasOwnProperty;
+  var lit = typeof kind === 'string' && own.call(SKIES, kind) && own.call(SKY_LIGHTING, kind) ? SKY_LIGHTING[kind] : null;
+  if (!lit || ![lit.c, lit.i, lit.amb, lit.fog].every(Number.isFinite) || lit.i <= 0 || lit.amb <= 0) kind = 'day';
+  lit = SKY_LIGHTING[kind];
   F.sky = kind;
-  var stops = SKIES[kind] || SKIES.day;
+  var stops = SKIES[kind];
   var c = document.createElement('canvas'); c.width = 8; c.height = 256;
   var g = c.getContext('2d'), grd = g.createLinearGradient(0, 0, 0, 256);
   stops.forEach(function (s, i) { grd.addColorStop(i / (stops.length - 1), s); });
   g.fillStyle = grd; g.fillRect(0, 0, 8, 256);
   var t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding;
-  if (Sc.S.sky) { Sc.S.sky.material.map = t; Sc.S.sky.material.needsUpdate = true; }
+  if (Sc.S.sky) {
+    var previousMap = Sc.S.sky.material.map;
+    Sc.S.sky.material.map = t; Sc.S.sky.material.needsUpdate = true;
+    if (previousMap) previousMap.dispose();
+  } else t.dispose();
 
   var sun = Sc.S.sun;
-  var lit = { day:   { c: 0xfff3dd, i: 0.95, amb: 0.85, fog: 0x9fc4e8 },
-              dusk:  { c: 0xffb27a, i: 0.72, amb: 0.62, fog: 0x6a4a70 },
-              night: { c: 0xbcd0ff, i: 0.40, amb: 0.42, fog: 0x18203c },
-              storm: { c: 0xc8d2e0, i: 0.48, amb: 0.55, fog: 0x2b3340 } }[kind] || {};
   if (sun) { sun.color.copy(SRGB(lit.c)); sun.intensity = lit.i; }
   Sc.S.scene.traverse(function (o) {
     if (o.isHemisphereLight) o.intensity = lit.amb;
@@ -3142,7 +3178,11 @@ function parse(final, opts) {
 
 function end(commit) {
   if (!st.active) return;
+  var pointerId = st.id;
   st.active = false; st.id = null;
+  if (st.el && st.el.hasPointerCapture && st.el.hasPointerCapture(pointerId)) {
+    st.el.releasePointerCapture(pointerId);
+  }
   var r = commit ? parse(true, st.ctx) : null;
   if (r && r.valid) { if (st.onCommit) st.onCommit(r); }
   else if (st.onCancel) st.onCancel(r ? 'too short' : 'cancelled');
@@ -3153,6 +3193,10 @@ function attach(el) {
   st.el = el;
   function pd(e) {
     if (!st.enabled || st.active) return;
+    // HUD controls retain their native click/touch behaviour, including icons
+    // nested inside a button. Only the play surface starts an aiming gesture.
+    var target = e.target && (e.target.nodeType === 1 ? e.target : e.target.parentElement);
+    if (target && target.closest('a,button,input,select,textarea,summary,[role="button"],[contenteditable]:not([contenteditable="false"])')) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     el.setPointerCapture && el.setPointerCapture(e.pointerId);
     begin(e.clientX, e.clientY, e.pointerId);
@@ -3171,6 +3215,7 @@ function attach(el) {
   el.addEventListener('pointermove', pm, { passive: false });
   el.addEventListener('pointerup', pu, { passive: false });
   el.addEventListener('pointercancel', pc, { passive: false });
+  el.addEventListener('lostpointercapture', pc, { passive: false });
   el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 }
 
@@ -3471,7 +3516,7 @@ var G = {
   state: 'boot', mode: 'rivals', moment: null, momentIdx: 0, momentsPerRound: 5,
   results: [], flight: null, playT: 0, outcome: null, timeScale: 1,
   camMode: 'aim', replay: null, lastShot: null, aimPreview: null, hintShown: 0,
-  paused:false, lan:null, keyboardAim:null, introToken:0, startedAt:0, skillType:'targets',
+  paused:false, pauseStartedAt:null, lan:null, keyboardAim:null, introToken:0, startedAt:0, skillType:'targets',
   opponentGoals:0, matchAtmos:null, targetGoals:0
 };
 
@@ -3791,7 +3836,8 @@ function aimFromSwipe(sw, eff) {
 function drawAim(sw) {
   if (!aimCv || !aimCx) return;
   var dpr = Math.min(window.devicePixelRatio || 1, 2);
-  if (aimCv.width !== Math.floor(aimCv.clientWidth * dpr)) {
+  if (aimCv.width !== Math.floor(aimCv.clientWidth * dpr) ||
+      aimCv.height !== Math.floor(aimCv.clientHeight * dpr)) {
     aimCv.width = Math.floor(aimCv.clientWidth * dpr);
     aimCv.height = Math.floor(aimCv.clientHeight * dpr);
   }
@@ -3976,7 +4022,8 @@ function setBroadcast(on){
 }
 function updateBroadcast(){
   if(!$('broadcastBar').classList.contains('on'))return;
-  var sec=Math.max(0,Math.floor((performance.now()-(G.startedAt||performance.now()))/1000));
+  var clockNow=G.paused&&G.pauseStartedAt!==null?G.pauseStartedAt:performance.now();
+  var sec=Math.max(0,Math.floor((clockNow-(G.startedAt||clockNow))/1000));
   $('broadcastClock').textContent=String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');
   if(G.mode==='first5')$('broadcastFixture').textContent=identityLabel()+' '+G.results.filter(function(r){return r.outcome==='GOAL'}).length+' — '+G.opponentGoals+' RIVAL · FIRST TO 5';
   else if(G.mode==='lan')$('broadcastFixture').textContent=safeName(LAN.localName)+' '+lanGoals(LAN.role==='host'?LAN.hostResults:LAN.guestResults)+' — '+lanGoals(LAN.role==='host'?LAN.guestResults:LAN.hostResults)+' '+safeName(LAN.remoteName);
@@ -4597,7 +4644,7 @@ function cardHtml(c, opts) {
 }
 
 function showTitle() {
-  G.state = 'menu';G.paused=false;G.introToken++;$('matchIntro').classList.remove('on');$('replayBug').classList.remove('on');setBroadcast(false);$('pauseLayer').classList.remove('on');$('lanScore').classList.remove('on'); $('hud').classList.add('hidden'); AK.Input.enable(false);
+  G.state = 'menu';G.paused=false;G.pauseStartedAt=null;G.introToken++;$('matchIntro').classList.remove('on');$('replayBug').classList.remove('on');setBroadcast(false);$('pauseLayer').classList.remove('on');$('lanScore').classList.remove('on'); $('hud').classList.add('hidden'); AK.Input.enable(false);
   var acc = P.shots ? Math.round(P.goals / P.shots * 100) : 0;
   var pp=passportView(Passport),nextXP=Math.pow(pp.season.level,2)*250;
   screen('Apex Kick',
@@ -4924,7 +4971,12 @@ function showResult(goals, par, coins, promoted, avg, mult, earned) {
 
 function togglePause(force){
   if(['aim','flight','lanwait'].indexOf(G.state)<0&&force!==false)return;
-  var on=force===undefined?!G.paused:!!force;G.paused=on;$('pauseLayer').classList.toggle('on',on);
+  var on=force===undefined?!G.paused:!!force;
+  if(on&&!G.paused)G.pauseStartedAt=performance.now();
+  else if(!on&&G.paused&&G.pauseStartedAt!==null){
+    G.startedAt+=performance.now()-G.pauseStartedAt;G.pauseStartedAt=null;
+  }
+  G.paused=on;$('pauseLayer').classList.toggle('on',on);
   if(on){AK.Input.enable(false);$('pauseResume').focus()}else{if(G.state==='aim')AK.Input.enable(true);$('gl').focus()}
   $('pauseSound').textContent=AK.Audio.isMuted()?'Sound · off':'Sound · on';$('pauseMotion').textContent=AK.FX.isCalm()?'Reduced motion · on':'Reduced motion · off';
 }
@@ -4933,9 +4985,13 @@ function keyboardSwipe(){
   return{intensity:k.power,curvature:k.curve,reticle:{x:k.x,y:k.y},end:{x:k.x,y:k.y+92},offsetY:92,valid:true};
 }
 function keyboardControl(e){
-  if(e.target&&e.target.closest&&e.target.closest('a,button,input,select,textarea,[role="button"]'))return;
+  var target=e.target&&e.target.closest?e.target:null;
+  if(target&&target.closest('input,select,textarea,[contenteditable]:not([contenteditable="false"])'))return;
   var key=e.key.toLowerCase();
-  if(key==='p'||key==='escape'){if(G.state!=='menu'){e.preventDefault();togglePause();}return}
+  // Pause moves focus onto Resume. Escape/P must still work from that button,
+  // while Space/Enter retain normal button activation and never shoot through it.
+  if(key==='p'||key==='escape'){if(G.state!=='menu'){e.preventDefault();if(!e.repeat)togglePause();}return}
+  if(target&&target.closest('a,button,[role="button"]'))return;
   if(G.paused||G.state!=='aim')return;
   var sw=keyboardSwipe(),k=G.keyboardAim,used=true,step=e.shiftKey?22:10;
   if(key==='arrowleft')k.x-=step;else if(key==='arrowright')k.x+=step;else if(key==='arrowup')k.y-=step;else if(key==='arrowdown')k.y+=step;else if(key==='q')k.curve=AK.clamp(k.curve-.08,-1,1);else if(key==='e')k.curve=AK.clamp(k.curve+.08,-1,1);else if(key==='-'||key==='_')k.power=AK.clamp(k.power-.06,.08,1);else if(key==='+'||key==='=')k.power=AK.clamp(k.power+.06,.08,1);else if(key===' '||key==='enter'){e.preventDefault();shoot(keyboardSwipe());return}else used=false;
@@ -5023,7 +5079,12 @@ function boot() {
     try{
       var old=$('gl'),fresh=document.createElement('canvas');fresh.id='gl';fresh.setAttribute('role','img');fresh.setAttribute('aria-label','Apex Kick Canvas compatibility stadium view');fresh.tabIndex=0;old.parentNode.replaceChild(fresh,old);
       Sc=AK.CanvasScene;AK.Scene=Sc;Sc.build(fresh);usedFallback=true;
-      var calm=false;try{var v4Calm=localStorage.getItem('apexkick.v4.calm');calm=v4Calm==='1'||(v4Calm===null&&(localStorage.getItem('apexkick.v3.calm')==='1'||localStorage.getItem('apexkick.v2.calm')==='1'))}catch(e){}AK.FX={install:function(){},update:function(){},burst:function(){},shake:function(){},applyShake:function(){return{x:0,y:0}},applySky:function(){},applyWeather:function(){},surge:function(){},isCalm:function(){return calm},setCalm:function(v){calm=!!v;try{localStorage.setItem('apexkick.v4.calm',calm?'1':'0')}catch(e){}document.body.classList.toggle('calm',calm)}};
+      // Keep the original preference authority: its media-query listener must
+      // still reach the fallback when the OS changes motion settings mid-game.
+      var fallbackMotion=AK.FX;Sc.setCalm(fallbackMotion.isCalm());document.body.classList.toggle('calm',fallbackMotion.isCalm());
+      AK.FX={install:function(){},update:function(dt){Sc.setCalm(fallbackMotion.isCalm());Sc.updateWeather(dt)},burst:function(){},shake:function(){},applyShake:function(){return{x:0,y:0}},
+        applySky:Sc.applySky,applyWeather:Sc.applyWeather,surge:function(){},isCalm:fallbackMotion.isCalm,
+        setCalm:function(v){fallbackMotion.setCalm(v);Sc.setCalm(fallbackMotion.isCalm())}};
     }catch(canvasError){
       $('loading').classList.add('hidden');
       $('bootErrorMsg').textContent='3D error: '+webglError.message+' Canvas error: '+canvasError.message;
@@ -5034,8 +5095,15 @@ function boot() {
     }
   }
   Sc.resize();
-  window.addEventListener('resize', function () { Sc.resize(); });
-  window.addEventListener('orientationchange', function () { setTimeout(Sc.resize, 250); });
+  function resizePresentation(){
+    Sc.resize();
+    // A gesture/preview in the old viewport cannot describe the new camera.
+    // Clear it now, before the next input, without committing a stale shot.
+    AK.Input.enable(false);G.keyboardAim=null;drawAim(null);
+    if(G.state==='aim'&&!G.paused)AK.Input.enable(true);
+  }
+  window.addEventListener('resize', resizePresentation);
+  window.addEventListener('orientationchange', function () { setTimeout(resizePresentation, 250); });
 
   AK.Input.attach($('app'));
   AK.Input.set(function (sw) { drawAim(sw); }, function (sw) { drawAim(null); shoot(sw); },
