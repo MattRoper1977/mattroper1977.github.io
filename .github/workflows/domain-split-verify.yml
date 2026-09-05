@@ -1,0 +1,60 @@
+name: Domain split publication
+on:
+  pull_request:
+    branches: [main]
+    paths: ['domain-split/**', '.github/workflows/domain-split-verify.yml']
+  push:
+    branches: [main]
+    paths: ['domain-split/**', '.github/workflows/domain-split-verify.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: domain-split-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  publications:
+    name: Complete separated publications
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: ccbe7a8bd70692fbf5a6c5352c7bf823c54f463f
+          path: .sources/Lessons
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Matt-s-Apps-
+          ref: e1e4b8f6d2d1c919f81f9a2023d5fdf1ad027ed6
+          path: .sources/Apps
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install publication HTML parser
+        run: python -m pip install lxml==6.0.1
+      - name: Build all games with local dependencies
+        run: python domain-split/build_publications.py --lessons .sources/Lessons
+      - name: Verify preview and save-transfer boundaries
+        run: |
+          python domain-split/check_preview.py
+          node --check domain-split/site-runtime.js
+          node --check domain-split/game-saves.js
+          node domain-split/check_game_saves.cjs
+      - name: Build education trees from complete source checkouts
+        run: python domain-split/build_education.py --lessons .sources/Lessons --apps .sources/Apps
+      - name: Verify publication separation and retained education
+        run: python domain-split/check_publications.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: domain-split-publications
+          path: domain-split/output
+          include-hidden-files: true
+          retention-days: 30

@@ -13,6 +13,11 @@ from urllib.parse import urlparse
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
+EDUCATION_OVERRIDES = {
+    '/Lessons/5 Intervention 10/Lesson_VIR_Intervention.html': 'teacher',
+    '/Lessons/5 Intervention 10/Lesson_VIR_Pupil_App.html': 'pupil',
+    '/Lessons/LundyLoop/5_staff_training/R_Gate_Calibration_Game.html': 'teacher',
+}
 
 
 def digest(path: Path) -> str:
@@ -61,7 +66,15 @@ def build() -> dict:
     decisions = []
     learning = []
     for entry in entries:
-        if entry["category"] == "game" or is_game(entry["route"]):
+        from urllib.parse import unquote
+        role = EDUCATION_OVERRIDES.get(unquote(urlparse(entry['route']).path))
+        if role:
+            destination, reason = 'education-candidate', 'authored teaching or staff resource'
+            item = compact(entry)
+            item['category'] = 'resource'
+            item['safeForPupils'] = role == 'pupil'
+            learning.append(item)
+        elif entry["category"] == "game" or is_game(entry["route"]):
             destination, reason = "games", "game category or game-owned route"
         elif entry["id"] in mixed_pages:
             destination, reason = "review", "mixed hub requires reconstruction or content review"
