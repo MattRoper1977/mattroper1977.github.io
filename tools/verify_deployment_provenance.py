@@ -74,6 +74,7 @@ DEFAULT_REPO = "MattRoper1977/mattroper1977.github.io"
 # it against the origin proves nothing.
 NOT_SERVED = (
     "tools/", ".github/", "docs/", "reports/", "audit-output/", "supabase/",
+    "domain-split/",
     "BACKLOG.md", "README.md", "CLAUDE.md", ".gitignore",
 )
 
@@ -148,6 +149,10 @@ def served_url(rel: str) -> str:
 
 
 def is_served(rel: str) -> bool:
+    # Pages omits dotfiles at any depth. The publication builder is also
+    # development-only, so neither is evidence of what visitors can download.
+    if any(part.startswith(".") for part in Path(rel).parts):
+        return False
     return not any(rel == prefix or rel.startswith(prefix) for prefix in NOT_SERVED)
 
 
@@ -389,6 +394,27 @@ def self_test() -> int:
 
     problems = 0
     results: list[tuple[str, str, str]] = []
+
+    # The domain-split release picked domain-split/.gitignore as its third
+    # witness and failed on the expected 404. Keep the real save-transfer
+    # assets eligible while rejecting builder files and nested dotfiles.
+    candidates = {
+        "domain-split/.gitignore": False,
+        "domain-split/README.md": False,
+        "domain-split/build_education.py": False,
+        "assets/.gitignore": False,
+        "assets/.cache/index.html": False,
+        "assets/game-saves.js": True,
+        "data/game-storage-allowlist.json": True,
+        "game-saves/index.html": True,
+    }
+    wrong = [rel for rel, expected in candidates.items() if is_served(rel) != expected]
+    if wrong:
+        results.append(("witness selection uses public content", FAIL, ", ".join(wrong)))
+        problems += 1
+    else:
+        results.append(("witness selection uses public content", PASS,
+                        "save-transfer files eligible; builder and hidden files excluded"))
 
     def control(name: str, transport: Transport, expected: str, want_state: str, needle: str):
         nonlocal problems
