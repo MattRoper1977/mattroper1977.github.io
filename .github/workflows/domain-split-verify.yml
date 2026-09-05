@@ -88,12 +88,20 @@ jobs:
             sleep 1
           done
           node .sources/Lessons/tools/catalogue/verify_education_navigation.cjs
+          node domain-split/check_resource_discovery.cjs
       - name: Save navigation and print evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: education-navigation-${{ github.run_id }}
           path: audit-output/education-navigation/
+          retention-days: 30
+      - name: Save resource and app discovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resource-discovery-${{ github.run_id }}
+          path: audit-output/resource-discovery/
           retention-days: 30
       - uses: actions/upload-artifact@v4
         with:

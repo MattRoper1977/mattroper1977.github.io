@@ -29,3 +29,123 @@ body[data-site-kind="education"] .hero{border-bottom:5px solid var(--learn-amber
 [data-theme="dark"]{--learn-bg:#101a2b;--learn-card:#1b2b3e;--learn-ink:#e6eff4;--learn-muted:#b9cbda}
 [data-theme="pink"]{--learn-bg:#f9e8ec;--learn-card:#fff9fa}[data-theme="blue"]{--learn-bg:#e7f0fa;--learn-card:#f8fbff}[data-theme="highlumen"]{--learn-bg:#fff;--learn-card:#fff;--learn-ink:#0b1020;--learn-muted:#18223b}
 @media(prefers-reduced-motion:reduce){body[data-site-kind="education"] .route-card:hover{transform:none}}
+
+/* Shared collection routes and practical tools, on education surfaces only. */
+:root{--learn-line:#aebfc8;--learn-soft:#e5eeec;--learn-focus:#a65200}
+[data-theme="dark"]{--learn-line:#607a8d;--learn-soft:#22394a;--learn-focus:#ffc27b}
+[data-theme="pink"]{--learn-soft:#f3dce2}
+[data-theme="blue"]{--learn-soft:#dce9f6}
+[data-theme="highlumen"]{--learn-line:#48576b;--learn-soft:#fff;--learn-focus:#0b1020}
+:is(body[data-site-kind="education"],body.mbm-education-hub) :is(.collection-nav,.discovery-collections,.collection-grid,.collection-card,.discovery-feature){box-sizing:border-box;min-width:0}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .collection-nav{position:relative;background:var(--learn-card);border-bottom:1px solid var(--learn-line);color:var(--learn-ink)}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .collection-nav>div{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;max-width:1180px;margin:0 auto;padding:.65rem 1rem}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .collection-nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:0;max-width:100%;padding:.6rem .85rem;border:1px solid var(--learn-line);border-radius:7px;background:var(--learn-card);color:var(--learn-ink);font-size:.9375rem;font-weight:650;line-height:1.4;text-align:center;text-decoration:none;white-space:normal;overflow-wrap:anywhere;touch-action:manipulation}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .collection-nav a[aria-current="page"]{background:var(--learn-navy);border-color:var(--learn-navy);color:var(--learn-mint)}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .collection-nav a:hover{text-decoration:underline;text-underline-offset:.2em;text-decoration-thickness:2px}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .discovery-collections{padding:1.5rem 0;color:var(--learn-ink)}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .discovery-collections :is(h2,h3){color:var(--learn-ink);line-height:1.3;overflow-wrap:anywhere}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .discovery-collections h2{margin:0 0 .55rem;font-size:clamp(1.5rem,3.5vw,2rem);letter-spacing:-.025em}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .discovery-collections>p{max-width:70ch;margin:.5rem 0 1rem;color:var(--learn-muted);font-size:1rem;line-height:1.6}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .discovery-collections>.wrap>p{max-width:70ch;margin:.5rem 0 1rem;color:var(--learn-muted);font-size:1rem;line-height:1.6}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .discovery-collections>.wrap>.eyebrow{font-size:.875rem;font-weight:700;letter-spacing:.04em}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .collection-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;gap:1rem;margin-top:1rem}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .collection-card{display:flex;flex-direction:column;align-items:flex-start;gap:.6rem;padding:1.1rem;border:1px solid var(--learn-line);border-top:4px solid #26776c;border-radius:10px;background:var(--learn-card);color:var(--learn-ink)}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .collection-card:nth-child(2){border-top-color:var(--learn-amber)}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .collection-card:nth-child(3){border-top-color:#547fa7}
+:is(body[data-site-kind="education"],body.mbm-education-hub) :is(.collection-card,.discovery-feature) :is(h2,h3){margin:0;color:var(--learn-ink);font-size:1.25rem;font-weight:750;line-height:1.35;overflow-wrap:anywhere}
+:is(body[data-site-kind="education"],body.mbm-education-hub) :is(.collection-card,.discovery-feature) p{margin:0;color:var(--learn-muted);font-size:1rem;line-height:1.65;overflow-wrap:anywhere}
+:is(body[data-site-kind="education"],body.mbm-education-hub) :is(.collection-card,.discovery-feature) a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;max-width:100%;padding:.6rem .85rem;border:1px solid var(--learn-navy);border-radius:7px;background:var(--learn-navy);color:#fff;font-size:.9375rem;font-weight:650;line-height:1.45;text-align:center;text-decoration:none;white-space:normal;overflow-wrap:anywhere;touch-action:manipulation}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .collection-card>a:last-child{margin-top:auto}
+:is(body[data-site-kind="education"],body.mbm-education-hub) :is(.collection-card,.discovery-feature) a:hover{text-decoration:underline;text-underline-offset:.2em}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .discovery-feature{display:flex;align-items:center;flex-wrap:wrap;gap:1rem;margin:1rem 0;padding:1.25rem;border:1px solid var(--learn-line);border-left:5px solid var(--learn-amber);border-radius:10px;background:var(--learn-card);color:var(--learn-ink)}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .discovery-feature>div{flex:1 1 24rem;min-width:0}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .discovery-feature :is(h2,h3)+p{margin-top:.5rem}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .discovery-feature>.wrap>a{margin-top:1rem}
+:is(body[data-site-kind="education"],body.mbm-education-hub) .discovery-feature :is(.eyebrow,.feature-label){margin-bottom:.45rem;color:var(--learn-muted);font-size:.875rem;font-weight:700;letter-spacing:.04em}
+:is(body[data-site-kind="education"],body.mbm-education-hub) :is(#pdf-studio-feature,#asdan-learning){scroll-margin-top:8rem}
+:is(body[data-site-kind="education"],body.mbm-education-hub) :is(.collection-nav,.collection-card,.discovery-feature) :is(a,button):focus-visible{outline:3px solid var(--learn-focus);outline-offset:3px}
+.mbm-education-hub #collections{color:var(--learn-ink);padding-bottom:1.5rem}
+.mbm-education-hub #collections :is(h2,.eyebrow){color:var(--learn-ink);line-height:1.35}
+.mbm-education-hub #collections .eyebrow{font-size:.875rem;letter-spacing:.04em}
+.mbm-education-hub #collections .standards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem}
+.mbm-education-hub #collections .standard-card{box-sizing:border-box;min-width:0;min-height:44px;padding:1.1rem;border:1px solid var(--learn-line);border-top:4px solid #26776c;border-radius:9px;background:var(--learn-card);box-shadow:none;overflow-wrap:anywhere}
+.mbm-education-hub #collections .standard-card:nth-child(even){border-top-color:var(--learn-amber)}
+.mbm-education-hub #collections .standard-card b{display:block;color:var(--learn-ink);font-size:1.125rem;font-weight:750;line-height:1.4}
+.mbm-education-hub #collections .standard-card p{margin:.6rem 0 0;color:var(--learn-muted);font-size:1rem;line-height:1.6}
+.mbm-education-hub #collections .standard-card:hover b{text-decoration:underline;text-underline-offset:.2em}
+.mbm-education-hub #collections .standard-card:focus-visible{outline:3px solid var(--learn-focus);outline-offset:3px}
+
+/* The existing Apps catalogue keeps its controls, categories and native cards. */
+body.mbm-hub.mbm-hub-apps.mbm-education-hub{--cream:var(--learn-bg);--card:var(--learn-card);--ink:var(--learn-ink);--mut:var(--learn-muted);--mbm-hub-accent:#26776c;--mbm-line:var(--learn-line);background:var(--learn-bg);color:var(--learn-ink)}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .wrap{box-sizing:border-box;width:100%;max-width:1180px;margin-inline:auto;padding-inline:1rem}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub main::before,body.mbm-hub.mbm-hub-apps.mbm-education-hub .hero::after{display:none}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .brand{min-width:0;gap:.65rem}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .brand .mono{width:44px;height:44px;flex:0 0 44px}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .brand strong{font-size:1rem;letter-spacing:.05em}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .brand small{font-size:.8125rem;letter-spacing:.07em}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .hero{background:linear-gradient(115deg,#161d3d,#194a52);border-bottom:5px solid var(--learn-amber);text-align:left;color:#fff}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .hero-in{max-width:1180px;padding:1.5rem 1rem}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .hero .eyebrow{color:#f4c38a;font-size:.875rem;line-height:1.5;letter-spacing:.08em}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .hero h1{max-width:22ch;margin:.5rem 0 .75rem;color:#fff;font-size:clamp(2rem,5.5vw,3.25rem);line-height:1.12;letter-spacing:-.04em;overflow-wrap:anywhere}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .hero h1 span{color:var(--learn-mint)}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .hero .lead{max-width:65ch;margin:0;color:#e1eaf1;font-size:1rem;line-height:1.65}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .hero .count{max-width:100%;min-height:44px;margin-top:1rem;padding:.55rem .85rem;border:1px solid var(--learn-mint);border-radius:7px;background:var(--learn-mint);color:#142939;box-shadow:none;font-size:.9375rem;letter-spacing:0;line-height:1.45;white-space:normal;overflow-wrap:anywhere}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .trio{gap:.75rem;padding:1rem 1rem .5rem}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .trio .t{padding:.85rem;border:1px solid var(--learn-line);border-radius:9px;background:var(--learn-card);box-shadow:none}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .trio .tn{color:var(--learn-ink);font-size:1rem;letter-spacing:.06em;line-height:1.4}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .trio .td{color:var(--learn-muted);font-size:.9375rem;line-height:1.55}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .toolbar{width:calc(100% - 2rem);max-width:1148px;margin:1rem auto .65rem;padding:1rem;gap:.75rem;border:1px solid var(--learn-line);border-radius:9px;background:var(--learn-card);box-shadow:none}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .toolbar label{flex:1 1 200px;min-width:0;max-width:100%;gap:.45rem;color:var(--learn-ink);font-size:.875rem;font-weight:650;line-height:1.5;letter-spacing:.02em;text-transform:none}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .toolbar :is(input,select){box-sizing:border-box;width:100%;min-width:0;max-width:100%;min-height:48px;padding:.65rem .8rem;border:1px solid var(--learn-line);border-radius:7px;background:var(--learn-bg);color:var(--learn-ink);font-family:inherit;font-size:1rem;line-height:1.45;letter-spacing:0;text-transform:none}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .toolbar input::placeholder{color:var(--learn-muted);opacity:1}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub :is(.chiprow,.segrow){display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;max-width:1180px;margin:.5rem auto;padding:.3rem 1rem;overflow:visible}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .segrow .lbl{color:var(--learn-muted);font-size:.875rem;letter-spacing:.02em;line-height:1.5}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub :is(.chip,.seg,.mbm-clear){box-sizing:border-box;min-width:0;max-width:100%;min-height:44px;margin:0;padding:.55rem .8rem;border:1px solid var(--learn-line);border-radius:7px;background:var(--learn-card);color:var(--learn-ink);box-shadow:none;font-size:.9375rem;font-weight:650;letter-spacing:0;line-height:1.45;white-space:normal;overflow-wrap:anywhere}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub :is(.chip,.seg)[aria-pressed="true"]{background:var(--learn-navy);border-color:var(--learn-navy);color:var(--learn-mint)}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .status{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;color:var(--learn-muted);font-size:.9375rem;line-height:1.55}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr));gap:1rem}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .card{min-width:0;padding:1.1rem;border:1px solid var(--learn-line);border-top:4px solid var(--ac,#26776c);border-radius:9px;background:var(--learn-card);box-shadow:none;gap:.6rem}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub :is(.card h3,.cat h2,details.acc .aname,.feature h2,.bridge h3){color:var(--learn-ink);font-size:1.125rem;line-height:1.4;letter-spacing:0;overflow-wrap:anywhere}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub :is(.card p,.feature p,.bridge p){color:var(--learn-muted);font-size:1rem;line-height:1.6;overflow-wrap:anywhere}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub :is(.card .open,.feature .go,.bridge .acts a,.linkchip){display:inline-flex;align-items:center;justify-content:center;min-height:44px;max-width:100%;padding:.6rem .85rem;border:1px solid var(--learn-navy);border-radius:7px;background:var(--learn-navy);color:#fff;font-size:.9375rem;font-weight:650;line-height:1.45;letter-spacing:0;text-align:center;white-space:normal;overflow-wrap:anywhere}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub :is(.aud,.pill,.cat .tot,details.acc .apill,.spec,.bridge .stamp){font-size:.8125rem;line-height:1.5;letter-spacing:.01em;white-space:normal;overflow-wrap:anywhere}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub :is(.spec,.cat .spec){background:var(--learn-amber);color:#142939;border-radius:5px;padding:.2rem .45rem}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub details.acc{border:1px solid var(--learn-line);border-radius:10px;background:var(--learn-card);box-shadow:none;overflow:visible}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub details.acc>summary{min-height:52px;gap:.6rem;padding:.85rem 1rem;border-radius:9px;background:var(--learn-soft);color:var(--learn-ink);line-height:1.5}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub details.acc[open]>summary{border-bottom:1px solid var(--learn-line);border-radius:9px 9px 0 0;margin-bottom:1rem}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub details.acc .chev{color:var(--learn-ink)}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .specband{min-width:0;background:var(--learn-soft);border-radius:8px;box-shadow:none}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub :is(.feature>div,.bridge){min-width:0;padding:1.1rem;border:1px solid var(--learn-line);border-left:4px solid var(--learn-amber);border-radius:10px;background:var(--learn-card);box-shadow:none}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .feature p:not(.fk){display:block}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub .feature .fk{color:var(--learn-muted);font-size:.875rem;letter-spacing:.04em;line-height:1.5}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub :is(a,button,input,select,summary):focus-visible{outline:3px solid var(--learn-focus);outline-offset:3px}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub details.acc>summary:focus-visible{outline-offset:-3px}
+html[data-theme="highlumen"] body.mbm-hub.mbm-hub-apps.mbm-education-hub .bridge .acts a{background:#fff;border-color:#0b1020}
+
+@media(max-width:850px){
+  :is(body[data-site-kind="education"],body.mbm-education-hub) .collection-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mbm-education-hub #collections .standards{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px){
+  :is(body[data-site-kind="education"],body.mbm-education-hub) .collection-nav>div{gap:.45rem;padding:.6rem 1rem}
+  :is(body[data-site-kind="education"],body.mbm-education-hub) .collection-nav a{flex:1 1 calc(50% - .45rem);padding:.6rem .5rem}
+  :is(body[data-site-kind="education"],body.mbm-education-hub) .collection-grid{grid-template-columns:minmax(0,1fr)}
+  .mbm-education-hub #collections .standards{grid-template-columns:minmax(0,1fr)}
+  :is(body[data-site-kind="education"],body.mbm-education-hub) .discovery-feature{align-items:flex-start;padding:1rem}
+  :is(body[data-site-kind="education"],body.mbm-education-hub) .discovery-feature>div{flex-basis:100%}
+  body.mbm-hub.mbm-hub-apps.mbm-education-hub .hero-in{padding:1.35rem 1rem}
+  body.mbm-hub.mbm-hub-apps.mbm-education-hub .toolbar{padding:.85rem}
+  body.mbm-hub.mbm-hub-apps.mbm-education-hub .toolbar label{flex-basis:100%}
+  body.mbm-hub.mbm-hub-apps.mbm-education-hub .grid{grid-template-columns:minmax(0,1fr);padding-inline:0}
+  body.mbm-hub.mbm-hub-apps.mbm-education-hub details.acc>.grid{margin-inline:.75rem}
+  body.mbm-hub.mbm-hub-apps.mbm-education-hub :is(.chiprow,.segrow){padding-inline:1rem}
+  body.mbm-hub.mbm-hub-apps.mbm-education-hub .segrow .lbl{flex-basis:100%}
+  body.mbm-hub.mbm-hub-apps.mbm-education-hub details.acc>summary{padding:.8rem .75rem}
+}
+@media(prefers-reduced-motion:reduce){
+  body.mbm-hub.mbm-hub-apps.mbm-education-hub :is(.card,.chip,.seg){transition:none;transform:none}
+}
+@media print{
+  :is(body[data-site-kind="education"],body.mbm-education-hub) .collection-nav{display:none}
+  :is(body[data-site-kind="education"],body.mbm-education-hub) :is(.collection-card,.discovery-feature){break-inside:avoid}
+}
