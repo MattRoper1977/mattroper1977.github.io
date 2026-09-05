@@ -54,6 +54,7 @@ jobs:
           set -euo pipefail
           python tools/verify_professional_site_live.py \
             --base https://madebymatt.uk/ \
+            --publication education \
             --attempts 36 \
             --delay 10 \
             --timeout 20 \
@@ -64,6 +65,7 @@ jobs:
           set -euo pipefail
           if python tools/verify_professional_site_live.py \
             --base https://madebymatt.uk/ \
+            --publication education \
             --attempts 1 \
             --delay 0 \
             --timeout 20 \
