@@ -70,6 +70,15 @@ def exact(actual, expected, label):
             f"{label}: bytes differ; served={len(actual)}B/{sha(actual)}, expected={len(expected)}B/{sha(expected)}")
 
 
+def publication_url(requested, resolved):
+    # GitHub Pages currently selects www for the games custom domain. Accept
+    # only that HTTPS hostname alias, with the entire path/query unchanged.
+    allowed = {requested}
+    if requested.startswith(PLAY + "/"):
+        allowed.add(requested.replace(PLAY, "https://www.madebymatt-play.uk", 1))
+    require(resolved in allowed, f"{requested}: unexpected redirect to {resolved}")
+
+
 def expect_failure(action, label):
     try:
         action()
@@ -89,6 +98,10 @@ def controls():
     expect_failure(lambda: members(["a", "a", "b"], ["a", "b"], "duplicate"), "duplicate payload")
     expect_failure(lambda: members(["a", "ghost"], ["a", "b"], "substitution"), "same-count substituted payload")
     expect_failure(lambda: normal("/a/%2e%2e/b/"), "encoded traversal")
+    publication_url(PLAY + "/apexkick/", "https://www.madebymatt-play.uk/apexkick/")
+    expect_failure(lambda: publication_url(PLAY + "/apexkick/", "http://www.madebymatt-play.uk/apexkick/"), "HTTPS downgrade")
+    expect_failure(lambda: publication_url(PLAY + "/apexkick/", "https://www.madebymatt-play.uk/"), "redirect to another path")
+    expect_failure(lambda: publication_url(PLAY + "/apexkick/", "https://example.com/apexkick/"), "redirect to another host")
 
 
 def sources(args):
@@ -205,7 +218,7 @@ def fetch_exact(url, expected):
     with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "MadeByMatt-AGX-ReadOnly"}), timeout=35) as response:
         # Default HTTPS certificate/hostname verification remains mandatory.
         require(response.status == 200, f"{url}: HTTP {response.status}")
-        require(response.geturl() == url, f"{url}: unexpected redirect to {response.geturl()}")
+        publication_url(url, response.geturl())
         data = response.read()
     exact(data, expected, url)
     return f"IDENTICAL {url} {len(data)} B {sha(data)}"
