@@ -37,6 +37,7 @@ def tracked(root):
 
 def public_file(path):
     p = Path(path)
+    if path == 'tools/index.html': return True  # public teacher-tools hub
     return (not any(x.startswith(('.', '_')) for x in p.parts)
             and p.parts[0] not in SKIP
             and (p.suffix.lower() in PUBLIC or p.name in {'CNAME', 'LICENSE'}))
@@ -165,9 +166,17 @@ def build(output, lessons, apps=None, allow_sparse=False):
             index=json.loads((dest/'data/mbm-search-index.json').read_text())
             if 'counts' in index:
                 from collections import Counter
-                index['counts']={'entries':len(index['entries']),'categories':dict(Counter(x['category'] for x in index['entries']))}
+                index['counts']={'total':len(index['entries']),**dict(Counter(x['category'] for x in index['entries']))}
             write(dest,'data/mbm-search-index.json',json.dumps(index,ensure_ascii=False)+'\n')
             write(dest,'CNAME','madebymatt.uk\n')
+            sitemap=dest/'sitemap.xml'
+            if sitemap.exists():
+                from lxml import etree
+                tree=etree.fromstring(sitemap.read_bytes())
+                for item in list(tree):
+                    loc=item.find('{*}loc')
+                    if loc is not None and is_game(loc.text or ''):tree.remove(item)
+                sitemap.write_bytes(etree.tostring(tree,xml_declaration=True,encoding='utf-8'))
         if name=='apps':
             for p in dest.glob('*.json'):
                 p.write_text(p.read_text().replace('Play & explore','Science investigations'))
