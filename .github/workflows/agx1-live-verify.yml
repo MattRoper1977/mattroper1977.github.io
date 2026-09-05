@@ -70,6 +70,58 @@ jobs:
           path: _shelf
           fetch-depth: 1
 
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: python -m pip install lxml==6.0.1 PyYAML==6.0.2
+
+      - name: Read publication subject pins from the committed main trees
+        id: publication-sources
+        run: python _tools/tools/verify_split_live_publication.py sources --site . --shelf _shelf
+
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: ${{ steps.publication-sources.outputs.education_lessons }}
+          path: _education-lessons
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Matt-s-Apps-
+          ref: ${{ steps.publication-sources.outputs.education_apps }}
+          path: _education-apps
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/mattroper1977.github.io
+          ref: ${{ steps.publication-sources.outputs.games_site }}
+          path: _play-site
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: ${{ steps.publication-sources.outputs.games_lessons }}
+          path: _play-lessons
+          persist-credentials: false
+
+      - name: Reproduce the actual committed education and games publications
+        # Main's builder makes the education SUBJECT. Games/main's pinned
+        # builder makes its independently deployed SUBJECT. The PR supplies
+        # only the instruments. Using _tools/domain-split here would confuse
+        # proposed pages with pages already authorised and deployed.
+        shell: bash
+        run: |
+          set -euo pipefail
+          python domain-split/build_publications.py --lessons _education-lessons
+          python domain-split/build_education.py --lessons _education-lessons --apps _education-apps
+          python domain-split/check_publications.py
+          node domain-split/check_game_saves.cjs
+          python _play-site/domain-split/build_publications.py --lessons _play-lessons
+          node _play-site/domain-split/check_game_saves.cjs
+          echo "PUBLICATION_ROOT=$GITHUB_WORKSPACE/domain-split/output/education-site" >> "$GITHUB_ENV"
+          echo "PUBLICATION_KIND=education" >> "$GITHUB_ENV"
+
       - name: Record the SHA and derive the full-home route under test
         id: sha
         shell: bash
@@ -77,7 +129,7 @@ jobs:
           set -euo pipefail
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "main is $(git rev-parse HEAD)"
-          if test -f main/index.html; then
+          if test -f "$PUBLICATION_ROOT/main/index.html"; then
             echo "FULL_HOME_ROUTE=/main/" >> "$GITHUB_ENV"
             echo "FULL_HOME_FILE=main/index.html" >> "$GITHUB_ENV"
             echo "full homepage is /main/"
@@ -117,6 +169,13 @@ jobs:
           set -euo pipefail
           node _tools/tools/derive_live_routes.mjs --canonical _shelf/games.json --root .
           node _tools/tools/derive_live_routes.mjs --canonical _shelf/games.json --root . --emit routes > /tmp/live-routes.txt
+          # Keep every previous route and every derivation negative control.
+          # On education, game URLs are exact recovery pages, not engines;
+          # the separate games leg below now measures every engine itself.
+          # Add generated audience pages, full home and their data/runtime.
+          printf '%s\n' "$FULL_HOME_ROUTE" >> /tmp/live-routes.txt
+          python _tools/tools/verify_split_live_publication.py education-routes >> /tmp/live-routes.txt
+          sort -u /tmp/live-routes.txt -o /tmp/live-routes.txt
           echo "derived $(wc -l < /tmp/live-routes.txt) route(s) for the live check — games plus the covered infrastructure routes"
 
       - name: Games domain DNS and verified TLS diagnostics (report only)
@@ -202,8 +261,9 @@ jobs:
           # Listing them here as well would check them twice and, worse, print a
           # count that no longer describes what ran. Only the two that stay
           # EXEMPT are still named by hand.
-          urls+=( "https://madebymatt.uk${FULL_HOME_ROUTE}" "$SHELF_URL" )
-          echo "checking ${#derived[@]} derived route(s) + 2 exempt route(s) named by hand"
+          # Full home is included above for exact-byte coverage; add the separate canonical once.
+          urls+=( "$SHELF_URL" )
+          echo "checking ${#derived[@]} derived/declared education route(s) + 1 separate canonical"
           for u in "${urls[@]}" ; do
             code=$(curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 \
               -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
@@ -229,7 +289,7 @@ jobs:
           # The target is fetched separately over HTTPS above and its bytes
           # must match the committed canonical in the mirror check below.
 
-      - name: Live bytes must equal the committed tree, byte for byte
+      - name: Live education bytes must equal the committed publication, byte for byte
         shell: bash
         run: |
           set -euo pipefail
@@ -252,8 +312,9 @@ jobs:
             else
               file="$g/index.html"; url="https://madebymatt.uk/$g/"; label="$g"
             fi
+            file="$PUBLICATION_ROOT/$file"
             tmp="/tmp/live-$(printf '%s' "$label" | tr -c 'A-Za-z0-9._-' '_')"
-            curl -sS --max-time 60 "$url" -o "$tmp"
+            curl -fsS --proto '=https' --max-time 60 "$url" -o "$tmp"
             lb=$(wc -c < "$tmp"); rb=$(wc -c < "$file")
             ls=$(sha256sum "$tmp" | cut -d' ' -f1)
             rs=$(sha256sum "$file" | cut -d' ' -f1)
@@ -267,10 +328,10 @@ jobs:
           # comparison above already DERIVES the repo side; only the caption was
           # frozen. Derive the caption too, so it can never disagree with the
           # thing it captions.
-          printf 'Apex Golf in the tree under test: %s bytes, sha256 %s\n' \
-            "$(wc -c < apexgolf/index.html)" "$(sha256sum apexgolf/index.html | cut -d' ' -f1)"
-          printf 'Neon Sync in the tree under test: %s bytes, sha256 %s\n' \
-            "$(wc -c < neonsync/index.html)" "$(sha256sum neonsync/index.html | cut -d' ' -f1)"
+          printf 'Apex Golf recovery page in the publication: %s bytes, sha256 %s\n' \
+            "$(wc -c < "$PUBLICATION_ROOT/apexgolf/index.html")" "$(sha256sum "$PUBLICATION_ROOT/apexgolf/index.html" | cut -d' ' -f1)"
+          printf 'Neon Sync recovery page in the publication: %s bytes, sha256 %s\n' \
+            "$(wc -c < "$PUBLICATION_ROOT/neonsync/index.html")" "$(sha256sum "$PUBLICATION_ROOT/neonsync/index.html" | cut -d' ' -f1)"
           exit $status
 
       - name: Live site.json door census — the C1 ruling, as served
@@ -283,9 +344,9 @@ jobs:
           # counted, so count it and compare it to the committed tree.
           curl -sS --max-time 30 https://madebymatt.uk/site.json -o /tmp/site.live.json
           python3 - <<'PY'
-          import json,sys
+          import json,sys,os
           live=json.load(open('/tmp/site.live.json'))
-          repo=json.load(open('site.json'))
+          repo=json.load(open(os.path.join(os.environ['PUBLICATION_ROOT'],'site.json')))
           def census(d):
               doors=d.get('doors',[])
               return (len(doors),
@@ -297,8 +358,8 @@ jobs:
           if not l[0]:
               print('  FAIL served site.json has no doors[] — an empty census would pass vacuously'); sys.exit(1)
           if l!=r:
-              print('  PENDING served site.json has not caught up with the tree (Pages lag).')
-              sys.exit(0)
+              print('  FAIL served site.json differs from the committed education publication.')
+              sys.exit(1)
           if l[2]==0 and l[0]==r[0]:
               print(f'  PASS C1 holds as served: Apex Golf takes NO door, {l[0]} doors, {l[1]} in the games zone')
           else:
@@ -369,7 +430,8 @@ jobs:
           fi
 
           live_b=$(wc -c < /tmp/live-index.json); live_h=$(sha256sum /tmp/live-index.json | cut -c1-16)
-          main_f=data/mbm-search-index.json
+          main_f="$PUBLICATION_ROOT/data/mbm-search-index.json"
+          # The ref index remains a SOURCE-only report; it is not the expected filtered output.
           ref_f=_tools/data/mbm-search-index.json
 
           # NEGATIVE CONTROL — a comparison that cannot fail reports nothing worth having.
@@ -397,7 +459,7 @@ jobs:
           if test -f "$ref_f"; then
             r_b=$(wc -c < "$ref_f"); r_h=$(sha256sum "$ref_f" | cut -c1-16)
             if [ "$r_h" != "${m_h:-}" ]; then
-              echo "   ref      ${r_b} B ${r_h}   (this pull request changes the index)"
+              echo "   ref      ${r_b} B ${r_h}   (raw candidate source; not an expected deployed byte comparison)"
             else
               echo "   ref      unchanged by this pull request"
             fi
@@ -405,7 +467,7 @@ jobs:
 
           # THE CENSUS THAT MATTERS: the facet the estate could not previously fetch.
           python3 - <<'PY'
-          import json
+          import json,os
           d = json.load(open("/tmp/live-index.json"))
           recs = d if isinstance(d, list) else next(
               (d[k] for k in ("records", "entries", "items", "docs", "index") if isinstance(d.get(k), list)), None)
@@ -423,7 +485,14 @@ jobs:
           bad = [r for r in games if TEACHING & set(pw(r))]
           print(f"   census   {len(recs)} records served · {len(games)} in the game class")
           print(f"   census   game records carrying a teaching pathway (BUILD/GROW/LAUNCH): {len(bad)}")
-          if not games:
+          if os.environ.get('PUBLICATION_KIND') == 'education':
+              if games:
+                  print("   census   FINDING: education search contains games; exclusion is broken")
+              elif any(TEACHING & set(pw(r)) for r in recs):
+                  print("   census   PASS: nonempty teaching search excludes every game-class record")
+              else:
+                  print("   census   MEASUREMENT INVALID: no teaching pathways in education search")
+          elif not games:
               print("   census   MEASUREMENT INVALID: no game-class records found, so the 0 above means nothing")
           elif bad:
               for r in bad[:10]:
@@ -670,11 +739,14 @@ jobs:
             fi
           fi
 
+      - name: Every games payload and publication surface equals its committed pinned output
+        run: python _tools/tools/verify_split_live_publication.py games --site _play-site --lessons _play-lessons --shelf _shelf
+
       - name: Homepage and arcade, as served
         shell: bash
         run: |
           set -euo pipefail
-          curl -sS --max-time 30 "https://madebymatt.uk${FULL_HOME_ROUTE}" -o /tmp/home.html
+          curl -fsS --proto '=https' --max-time 30 "https://madebymatt.uk${FULL_HOME_ROUTE}" -o /tmp/home.html
           echo "== full homepage at ${FULL_HOME_ROUTE} (served bytes, no JS executed) =="
           for n in "Apex Kick" "Apex Pool" "Apex Golf" "Apex Tennis" "New release"; do
             printf '  %-14s %s\n' "$n" "$(grep -oic "$n" /tmp/home.html || true)"
@@ -757,7 +829,22 @@ jobs:
           if dupes:
               print('  FAIL a game holds more than one homepage surface:',dupes); sys.exit(1)
           print('  PASS every occupant maps to a live shelf slug; no game holds two boxes')
-          if s==r:
+          if os.environ.get('PUBLICATION_KIND') == 'education':
+              # Legacy source editorial invariants above remain checked and
+              # AGX1_SELFTEST=occupant still fails. The source stack is not a
+              # publication requirement for the new education homepage.
+              from pathlib import Path
+              published=Path(os.environ['PUBLICATION_ROOT'])/os.environ['FULL_HOME_FILE']
+              expected=published.read_bytes()
+              actual=Path('/tmp/home.html').read_bytes()
+              if re.findall(rb'data-release="([^"]+)"',expected) or s:
+                  print('  FAIL education homepage carries a games New Release stack'); sys.exit(1)
+              if actual != expected:
+                  print('  FAIL live education homepage differs from its committed generated output'); sys.exit(1)
+              if b'data-site-kind="education"' not in actual:
+                  print('  FAIL live homepage has no education publication marker'); sys.exit(1)
+              print('  PASS legacy source occupants validated separately; education serves exact generated bytes with no games stack')
+          elif s==r:
               print('  PASS live JS-off full homepage serves',r,'as New Release, matching the tree and the ruling')
           else:
               print('  PENDING live homepage has not caught up with the tree yet.')

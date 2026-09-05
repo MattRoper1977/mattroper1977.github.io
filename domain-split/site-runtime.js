@@ -24,6 +24,18 @@
     const p = document.createElement('p'); p.textContent = item.description || '';
     const action = document.createElement('span'); action.className = 'text-link';
     action.textContent = kind === 'games' ? (activity ? 'Open activity' : 'Play game') : 'Open resource';
+    if (kind === 'games' && !activity && item.image) {
+      const src = validURL(item.image);
+      if (src && new URL(src).origin === location.origin) {
+        const img = document.createElement('img');
+        img.src = src; img.alt = ''; img.loading = 'lazy';
+        img.width = 450; img.height = 280;
+        img.addEventListener('error', () => img.remove(), { once: true });
+        a.classList.add('game-result'); a.append(img);
+        const copy = document.createElement('div'); copy.className = 'result-copy';
+        copy.append(label, h, p, action); a.append(copy); return a;
+      }
+    }
     a.append(label, h, p, action); return a;
   }
   function render() {
@@ -37,11 +49,11 @@
     });
     const results = document.getElementById(page + '-results');
     results.replaceChildren(...rows.slice(0, limit).map(item => card(item, false)));
-    status.textContent = rows.length ? 'Showing ' + results.children.length + ' of ' + rows.length + ' results.' : 'No matches. Try a shorter topic or choose all pathways.';
+    status.textContent = rows.length ? 'Showing ' + results.children.length + ' of ' + rows.length + (kind === 'games' ? ' games.' : ' results.') : (kind === 'games' ? 'No matches yet. Try a game name, football or adventure.' : 'No matches. Try a shorter topic or choose all pathways.');
     document.getElementById(page + '-more').hidden = rows.length <= limit;
   }
   if (!form && kind !== 'games') return;
-  if (status) status.textContent = 'Loading resources…';
+  if (status) status.textContent = kind === 'games' ? 'Loading games…' : 'Loading resources…';
   fetch('/data/domain-catalogue.json', { cache: 'no-cache' }).then(response => {
     if (!response.ok) throw new Error('Catalogue unavailable');
     return response.json();

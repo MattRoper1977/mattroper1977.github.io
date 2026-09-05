@@ -78,7 +78,7 @@ def render_page(preview, kind, origin, config):
     body = re.sub(r'href="#[^"]*" data-search-link="(teachers|pupils)" data-query="([^"]*)"',
                   lambda m: 'href="' + views[m[1]] + '?q=' + m[2] + '#' + ('teacher-search' if m[1] == 'teachers' else 'pupil-search') + '"', body)
     body = re.sub(r' data-jump="[^"]*"', '', body)
-    science_cards = ''.join('<a class="route-card" href="' + p["route"] + '"><h3>' + p["name"] + ' Science</h3><p>Choose a term, week and lesson.</p><span class="text-link">Open the lesson menu</span></a>' for p in config["science_pathways"])
+    science_cards = ''.join('<a class="route-card pathway-' + p["name"].lower() + '" href="' + p["route"] + '"><span class="pathway-number">' + p["name"] + '</span><h3>' + p["name"] + ' Science</h3><p>Choose a term, week and lesson.</p><span class="text-link">Open the lesson menu</span></a>' for p in config["science_pathways"])
     science_links = ''.join('<a href="' + p["route"] + '">' + p["name"] + ' Science</a>' for p in config["science_pathways"])
     body = body.replace('<div class="cards-3" data-science-cards></div>', '<div class="cards-3">' + science_cards + '</div>')
     body = body.replace('<div class="pathways" data-science-links></div>', '<div class="pathways">' + science_links + '</div>')
@@ -91,8 +91,6 @@ def render_page(preview, kind, origin, config):
         body = body.replace('<footer class="footer">', '<div class="section"><div class="wrap"><h2>Classroom activities</h2><div class="results" id="classroom-activities"></div><h2>For staff</h2><p class="game-note">Professional development activities for teachers and education staff.</p><div class="results" id="staff-activities"></div></div></div><footer class="footer">')
     else:
         body = body.replace('</footer>', '<div class="wrap"><a href="/privacy/">Privacy</a></div></footer>')
-        if kind == "teachers":
-            body = body.replace('<a href="#teacher-search"', '<a href="/tools/">Teacher tools</a><a href="/account/">Account</a><a href="#teacher-search"', 1)
     for old, new in [("Learning homepage preview", "Learning homepage"), ("Teacher homepage preview", "Teacher homepage"), ("Pupil homepage preview", "Pupil homepage"), ("Games homepage preview", "Games homepage")]:
         body = body.replace(old, new)
     titles = {"home": "Find your next lesson · Made by Matt", "teachers": "Teachers · Made by Matt Learning", "pupils": "Pupils · Made by Matt Learning", "games": "Made by Matt Games"}
