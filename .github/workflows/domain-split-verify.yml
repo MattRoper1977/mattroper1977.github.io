@@ -16,7 +16,7 @@ jobs:
   publications:
     name: Complete separated publications
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,16 +25,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          # Pinned 2026-09-05: last published Lessons source after PR326;
-          # David's paused PR327 is deliberately outside this snapshot.
-          ref: ccbe7a8bd70692fbf5a6c5352c7bf823c54f463f
+          # Exact reviewed discovery and David Humanities candidate;
+          # preserve the original lesson routes and paired catalogue contract.
+          ref: de245fcb51f0a2dfd7e2bfcb87f6e72238ea5081
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Matt-s-Apps-
-          # Pinned 2026-09-05: published Apps source, including FieldOps Studio.
-          ref: e1e4b8f6d2d1c919f81f9a2023d5fdf1ad027ed6
+          # Exact paired catalogue contract; Apps resources are unchanged.
+          ref: 643130a36fef1045b201475f23b6eddc75742658
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -58,6 +58,43 @@ jobs:
         run: python domain-split/build_education.py --lessons .sources/Lessons --apps .sources/Apps
       - name: Verify publication separation and retained education
         run: python domain-split/check_publications.py
+      - name: Verify current-source lesson discovery and audience preservation
+        run: python domain-split/check_lesson_discovery.py --lessons .sources/Lessons
+      - name: Install the established education browser test runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.54.2 linkedom@0.18.12
+          npx playwright install --with-deps chromium
+      - name: Check lesson catalogue and its preservation controls
+        run: |
+          python .sources/Lessons/tools/catalogue/check_catalogue_static.py
+          node .sources/Lessons/tools/catalogue/check_catalogue_dom.cjs
+          python .sources/Lessons/tools/catalogue/verify_catalogue_contract_controls.py --lessons .sources/Lessons --apps .sources/Apps --canonical .
+      - name: Mount and exercise the actual education publication
+        shell: bash
+        env:
+          MBM_EDUCATION_ORIGIN: http://127.0.0.1:4173
+          MBM_NAVIGATION_OUTPUT: audit-output/education-navigation
+        run: |
+          set -euo pipefail
+          mkdir -p _navigation-served/Lessons _navigation-served/Matt-s-Apps-
+          rsync -a domain-split/output/education-site/ _navigation-served/
+          rsync -a domain-split/output/education-lessons/ _navigation-served/Lessons/
+          rsync -a domain-split/output/education-apps/ _navigation-served/Matt-s-Apps-/
+          python -m http.server 4173 --bind 127.0.0.1 --directory _navigation-served > /tmp/navigation-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/Lessons/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node .sources/Lessons/tools/catalogue/verify_education_navigation.cjs
+      - name: Save navigation and print evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: education-navigation-${{ github.run_id }}
+          path: audit-output/education-navigation/
+          retention-days: 30
       - uses: actions/upload-artifact@v4
         with:
           name: domain-split-publications

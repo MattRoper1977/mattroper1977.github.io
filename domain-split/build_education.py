@@ -155,8 +155,22 @@ def build(output, lessons, apps=None, allow_sparse=False):
                 except (ValueError,UnicodeError):continue
                 filtered=filter_data(data,is_game,prefix)
                 if filtered != data:write(dest,relative,json.dumps(filtered,ensure_ascii=False,indent=2)+'\n');changed.append(relative)
-            shell=(name=='site' and (relative.startswith(('for/','resources/','education-hub/','teach/','start/','next/')) or relative=='index.html')) or (name in {'lessons','apps'} and relative=='index.html')
+            shell=(name=='site' and (relative.startswith(('for/','resources/','education-hub/','teach/','start/','next/')) or relative in {'index.html','tools/index.html'})) or (name in {'lessons','apps'} and relative=='index.html')
             if shell and p.suffix=='.html':write(dest,relative,clean_shell(p.read_text(),is_game,prefix));changed.append(relative)
+            if name=='site' and relative in {'resources/index.html','tools/index.html'}:
+                text=target.read_text()
+                text=text.replace('</head>','<link rel="stylesheet" href="/assets/education-navigation.css"></head>',1)
+                write(dest,relative,text)
+            # One education-only navigation adapter for the published lesson
+            # experience. Games were excluded above; raw teaching files and
+            # offline archives remain unchanged.
+            if name=='lessons' and p.suffix=='.html' and (lessons/'assets/catalogue/lesson-navigation.js').is_file():
+                text=target.read_text()
+                script='<script defer src="/Lessons/assets/catalogue/lesson-navigation.js"></script>'
+                if not re.search(r'<script\b[^>]*\bsrc=["\'][^"\']*assets/catalogue/lesson-navigation\.js',text,re.I):
+                    text,n=re.subn(r'</body\s*>',script+'</body>',text,count=1,flags=re.I)
+                    if not n:text+='\n'+script+'\n'
+                    write(dest,relative,text);changed.append(relative)
         if name=='site':
             overlay=output/'education-overlay'
             for p in overlay.rglob('*'):

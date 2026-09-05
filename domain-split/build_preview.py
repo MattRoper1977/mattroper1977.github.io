@@ -46,12 +46,72 @@ def compact(entry: dict) -> dict:
     }
 
 
-def build() -> dict:
+def current_lesson_entries(entries: list, lessons: Path) -> list:
+    """Refresh lesson discovery while retaining reviewed audience decisions."""
+    from urllib.parse import quote, unquote
+
+    def identity(route):
+        return unquote(urlparse(route).path).removesuffix('index.html').rstrip('/') or '/'
+
+    rows = json.loads((lessons / 'resources.json').read_text())
+    existing = {identity(e['route']): e for e in entries}
+    # Only already reviewed external Planning destinations are admitted.
+    planning = {e['route']: e for e in entries
+                if re.fullmatch(r'https://github\.com/mattroper1977/Lessons/tree/main/Planning/(?:BUILD|GROW|LAUNCH)', e['route'])}
+    result = [e for e in entries if not identity(e['route']).startswith('/Lessons/')
+              or e.get('category') == 'game']
+    seen = set()
+    for row in rows:
+        file = row.get('file', '')
+        kind = str(row.get('type', '')).lower()
+        if not file or kind == 'game':
+            continue
+        if urlparse(file).scheme:
+            if file not in planning or kind != 'teacher':
+                raise ValueError('Unreviewed external lesson discovery route: ' + file)
+            if file in seen:
+                raise ValueError('Duplicate lesson discovery route: ' + file)
+            seen.add(file)
+            result = [{**e, 'safeForPupils': False} if e['route'] == file else e for e in result]
+            continue
+        path = Path(file)
+        if path.is_absolute() or '..' in path.parts or '\\' in file:
+            raise ValueError('Invalid lesson discovery route: ' + file)
+        route = '/Lessons/' + quote(file, safe='/')
+        key = identity(route)
+        if key in seen:
+            raise ValueError('Duplicate lesson discovery route: ' + file)
+        seen.add(key)
+        old = existing.get(key, {})
+        title = row.get('title', old.get('title', path.stem))
+        text = ' '.join([file, title, row.get('subject', '')])
+        pathways = [p for p in ['BUILD', 'GROW', 'LAUNCH']
+                    if re.search(r'(?i)(?<![a-z])' + p + r'(?![a-z])', text)]
+        # A reviewed teacher-only resource never enters pupil search. Otherwise
+        # preserve the existing route's permission, including / and /index.html
+        # aliases; new routes require an explicit source opt-in.
+        safe = kind != 'teacher' and row.get('safeForPupils') is not False and (
+            old.get('safeForPupils') is True or row.get('safeForPupils') is True)
+        # Replace an old game-labelled education override rather than retaining
+        # it alongside the corrected canonical resource (for example staff CPD).
+        result = [e for e in result if identity(e['route']) != key]
+        result.append({**old, 'id': old.get('id', 'lesson-' + hashlib.sha256(file.encode()).hexdigest()[:16]),
+                       'route': route, 'title': title,
+                       'description': row.get('description', row.get('desc', old.get('description', ''))),
+                       'subject': row.get('subject', old.get('subject', '')), 'pathway': pathways,
+                       'category': 'lesson' if kind in {'lesson', 'interactive lesson'} else 'resource',
+                       'safeForPupils': safe})
+    return result
+
+
+def build(lessons: Path | None = None) -> dict:
     config = json.loads((HERE / "config.json").read_text())
     catalogue_path = ROOT / "data/mbm-search-index.json"
     games_path = ROOT / "data/source-manifests/games.json"
     catalogue = json.loads(catalogue_path.read_text())
     entries = catalogue["entries"]
+    if lessons is not None:
+        entries=current_lesson_entries(entries,lessons)
     shelf = json.loads(games_path.read_text())["games"]
     game_paths = {route_path(e["route"]) for e in entries if e["category"] == "game"}
     game_paths.update(route_path(e["href"]) for e in shelf)
