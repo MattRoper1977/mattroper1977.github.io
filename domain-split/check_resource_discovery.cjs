@@ -111,16 +111,20 @@ async function hitTarget(locator) {
 async function pdfSearch(page, route, width) {
   const input = route.startsWith('/resources') ? '#rxSearch' : '#search';
   const cards = route.startsWith('/resources') ? '#rxOut .rx-cardx' : '#groups .card';
+  const promotion = route.startsWith('/resources') ? '#resource-collections' : '#pdf-studio-feature';
   const evidence = [];
   for (const query of ['PDF', 'PDF generator', 'PDF Studio', 'merge PDF']) {
     await page.locator(input).fill(query);
     await page.waitForFunction(({ cards, target }) => [...document.querySelectorAll(cards + ' a[href]')].some(a => a.getClientRects().length && new URL(a.href).pathname === target), { cards, target: PDF });
+    assert.equal(await page.locator(promotion).isVisible(), false, `${promotion} must hide while a search query is active`);
     const pdfCard = page.locator(cards).filter({ has: page.locator('a[href*="PDF_Studio.html"]') }).first();
     assert.match(await pdfCard.innerText(), /PDF Studio/i);
     await hitTarget(pdfCard.locator('a[href*="PDF_Studio.html"]').first());
     await page.locator(input).scrollIntoViewIfNeeded();
     evidence.push({ query, count: await page.locator(cards + ':visible').count(), screenshot: await shot(page, `${width}-${route.includes('resources') ? 'resources' : 'apps'}-${query}`) });
   }
+  await page.locator(input).fill(''); await settle(page);
+  assert(await page.locator(promotion).isVisible(), `${promotion} should return when search is cleared`);
   return evidence;
 }
 async function responsiveChecks(browser) {
@@ -148,7 +152,10 @@ async function responsiveChecks(browser) {
         await goto(page, route);
         const collection = page.locator('#resource-collections');
         assert(await collection.isVisible(), 'Collections are missing from Resources');
-        assert(await page.evaluate(() => !!(document.querySelector('#resource-collections').compareDocumentPosition(document.querySelector('#rxSearch')) & Node.DOCUMENT_POSITION_FOLLOWING)), 'Collections must precede the long searchable resource list');
+        assert(await page.evaluate(() => {
+          const follows = (before, after) => !!(document.querySelector(before).compareDocumentPosition(document.querySelector(after)) & Node.DOCUMENT_POSITION_FOLLOWING);
+          return follows('#rxSearch', '#resource-collections') && follows('#resource-collections', '#rxOut');
+        }), 'Resources must put search first, then collections, then the long resource list');
         const links = await visibleLinks(page, '#resource-collections a[href]');
         assert(links.some(a => routeOf(a.href) === PDF), 'PDF Studio is missing from prominent collection cards');
         const image = await collection.screenshot({ path: path.join(out, `${width}-resource-collections.png`), animations: 'disabled' });
@@ -157,9 +164,16 @@ async function responsiveChecks(browser) {
       });
       if (route === '/Matt-s-Apps-/') await check(`${width}-apps-visible-pdf-feature-and-search-aliases`, page, async () => {
         await goto(page, route);
+        assert(await page.evaluate(() => !!(document.querySelector('#search').compareDocumentPosition(document.querySelector('#pdf-studio-feature')) & Node.DOCUMENT_POSITION_FOLLOWING)), 'Apps search must precede its PDF promotional feature');
         const links = await visibleLinks(page, 'a[href*="PDF_Studio.html"]');
         assert(links.length > 0, 'PDF Studio must be visible without opening Documents first');
-        return { searches: await pdfSearch(page, route, width) };
+        const searches = await pdfSearch(page, route, width);
+        await page.locator('#chips [data-cat="Documents"]').click(); await settle(page);
+        assert.equal(await page.locator('#pdf-studio-feature').isVisible(), false, 'Apps PDF promotion must hide for an active category filter');
+        assert((await visibleLinks(page, appsCards)).some(a => routeOf(a.href) === PDF), 'Documents category must still show the real PDF Studio card');
+        await page.locator('#chips [data-cat=""]').click(); await settle(page);
+        assert(await page.locator('#pdf-studio-feature').isVisible(), 'Apps PDF promotion must return after clearing filters');
+        return { searches, documentCategory: true };
       });
       if (route === '/tools/') await check(`${width}-teacher-tools-pdf-and-asdan-learning`, page, async () => {
         await goto(page, route);
@@ -272,6 +286,7 @@ async function catalogueChecks(browser, expected) {
     for (const [key, value] of [['q', 'PDF generator'], ['subject', subject], ['type', 'Teacher']]) {
       await goto(page, '/resources/?' + new URLSearchParams({ [key]: value }));
       assert(await page.locator('#rxOut .rx-cardx').count() > 0, `${key} deep link produces no rendered results`);
+      assert.equal(await page.locator('#resource-collections').isVisible(), false, `Resources collections must hide for active ${key} filtering`);
       if (key === 'q') assert.equal(await page.locator('#rxSearch').inputValue(), value);
       if (key === 'subject') assert.equal(await page.locator(`#rxSubs [data-sub="${subject}"]`).getAttribute('aria-pressed'), 'true');
       if (key === 'type') assert.equal(await page.locator('#rxTypes [data-type="Teacher tool"]').getAttribute('aria-pressed'), 'true');

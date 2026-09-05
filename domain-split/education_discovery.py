@@ -113,7 +113,7 @@ def refresh(output, lessons, apps, site_source):
     old = read(site/'data/mbm-search-index.json')['entries']
     known = {identity(e['path']) for e in extras}
     for entry in old:
-        if entry.get('category') not in {'lesson', 'resource', 'app', 'tool'} or identity(entry['route']) in known:
+        if entry.get('category') not in {'lesson', 'resource', 'app', 'tool', 'page'} or identity(entry['route']) in known:
             continue
         extras.append({'title': entry['title'], 'description': entry.get('description', ''),
                        'subject': entry.get('subject') or 'Other collections',
@@ -131,7 +131,7 @@ def refresh(output, lessons, apps, site_source):
 
     resource_path = site/'resources/index.html'
     text = resource_path.read_text()
-    text = replace_once(text, '<div class="rx-chipzone"', collections()+'<div class="rx-chipzone"')
+    text = replace_once(text, '<div class="rx-body">', collections()+'<div class="rx-body">')
     text = replace_once(text, "Promise.all([grab('/Lessons/resources.json'),grab('/data/resources.json')]).then(([les,site])=>{",
                         "Promise.all([grab('/Lessons/resources.json'),grab('/data/resources.json'),grab('/data/resource-collections.json')]).then(([les,site,collections])=>{")
     before = "ALL=[...normLessons(Array.isArray(les)?les:[]),...normSite(Array.isArray(site)?site:[])];"
@@ -139,9 +139,15 @@ def refresh(output, lessons, apps, site_source):
 const byRoute=new Map(ALL.filter(r=>r.path).map(r=>[routeKey(r.path),r]));
 for(const row of normSite(Array.isArray(collections)?collections:[])){const key=routeKey(row.path);const existing=byRoute.get(key);if(existing){existing.tags=[...new Set([...existing.tags,...row.tags,row.title])]}else{ALL.push(row);byRoute.set(key,row)}}"""
     text = replace_once(text, before, after)
+    text = replace_once(text, 'const q=$("#rxSearch").value.toLowerCase();',
+                        'const q=$("#rxSearch").value.toLowerCase().trim();\n$("#resource-collections").hidden=!!(q||SUB||TYPE);')
     text = replace_once(text, "[r.title,r.description,r.subject,r.type,...(r.tags||[])].join(' ').toLowerCase().includes(q)",
                         "q.trim().split(/\\s+/).every(word=>[r.title,r.description,r.subject,r.type,...(r.tags||[])].join(' ').toLowerCase().includes(word))")
     text = text.replace('Search science, humanities, evidence…', 'Try ASDAN, worksheet, PDF generator…')
+    text = replace_once(text, '<a href="/Lessons/">Open the lesson finder</a>',
+                        '<a href="/Lessons/">Open the lesson finder</a><a href="#resource-collections">Browse collections</a><a href="'+PDF+'">PDF Studio</a>')
+    text = replace_once(text, 'function stickTop(){',
+                        'document.querySelector(\'a[href="#resource-collections"]\').addEventListener("click",()=>{$("#rxSearch").value="";SUB="";TYPE="";chips();render()});\nfunction stickTop(){')
     resource_path.write_text(text)
 
     app_path = app_root/'index.html'
@@ -161,6 +167,14 @@ for(const row of normSite(Array.isArray(collections)?collections:[])){const key=
     promotions = text[start:end]
     text = text[:start]+text[end:]
     text = replace_once(text, '<div id="groups"></div>', '<div id="groups"></div>'+promotions)
+    start = text.index('<div class="toolbar"')
+    end = text.index('</div>', start)+len('</div>')
+    finder = text[start:end]
+    text = text[:start]+text[end:]
+    text = replace_once(text, '<section class="discovery-feature" id="pdf-studio-feature">',
+                        finder+'<section class="discovery-feature" id="pdf-studio-feature">')
+    text = replace_once(text, 'const spaces=DATA.spaces.map',
+                        '$("#pdf-studio-feature").hidden=!!(Q||CAT||AUD);\nconst spaces=DATA.spaces.map')
     app_path.write_text(text)
 
     tools_path = site/'tools/index.html'
@@ -175,6 +189,7 @@ for(const row of normSite(Array.isArray(collections)?collections:[])){const key=
                 '<a class="go" href="/Lessons/'+pathway+'_ASDAN/'+pathway+'_ASDAN_Hub.html">OPEN LEARNING COLLECTION →</a></article>')
         text = replace_once(text, '<div class="tgrid" data-sec="browse">', '<div class="tgrid" data-sec="browse">'+card)
     text = replace_once(text, '<a href="#drawer">Find a tool</a>', '<a href="#drawer">Find a tool</a><a href="'+PDF+'">PDF Studio</a><a href="/Matt-s-Apps-/">All apps &amp; studios</a>')
+    text = text.replace('href="../asdan/app.html"', 'href="/asdan/"')
     tools_path.write_text(text)
 
     for path in [site/'index.html', site/'main/index.html', site/'for/teachers/index.html', resource_path, tools_path, app_path]:
