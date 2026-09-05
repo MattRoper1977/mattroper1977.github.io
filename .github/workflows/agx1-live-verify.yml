@@ -119,6 +119,72 @@ jobs:
           node _tools/tools/derive_live_routes.mjs --canonical _shelf/games.json --root . --emit routes > /tmp/live-routes.txt
           echo "derived $(wc -l < /tmp/live-routes.txt) route(s) for the live check — games plus the covered infrastructure routes"
 
+      - name: Games domain DNS and verified TLS diagnostics (report only)
+        # Keep certificate and hostname verification enabled. These probes
+        # explain resolver or Pages edge differences; the existing gates below
+        # still decide whether the live publication passes.
+        continue-on-error: true
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import signal
+          import socket
+          import ssl
+
+          hosts = ('madebymatt-play.uk', 'www.madebymatt-play.uk')
+          pages_ips = ('185.199.108.153', '185.199.109.153',
+                       '185.199.110.153', '185.199.111.153')
+          context = ssl.create_default_context()
+
+          def deadline(signum, frame):
+              raise TimeoutError('diagnostic exceeded its 5-second deadline')
+
+          signal.signal(signal.SIGALRM, deadline)
+
+          def probe(host, address=None):
+              peer = None
+              target = address or 'normal DNS resolution'
+              signal.alarm(5)
+              try:
+                  with socket.create_connection((address or host, 443), timeout=5) as raw:
+                      peer = raw.getpeername()[0]
+                      with context.wrap_socket(raw, server_hostname=host) as tls:
+                          cert = tls.getpeercert()
+                          print(json.dumps({'host': host, 'target': target,
+                              'peer_ip': peer, 'verified_tls': tls.version(),
+                              'issuer': cert.get('issuer'), 'subject': cert.get('subject'),
+                              'subjectAltName': cert.get('subjectAltName')}, sort_keys=True))
+                          tls.sendall(('HEAD / HTTP/1.1\r\nHost: ' + host +
+                                       '\r\nConnection: close\r\n\r\n').encode('ascii'))
+                          status = tls.recv(4096).split(b'\r\n', 1)[0].decode('ascii', 'replace')
+                          print(json.dumps({'host': host, 'target': target,
+                              'peer_ip': peer, 'http_status_line': status}, sort_keys=True))
+                  return True
+              except Exception as exc:
+                  print(json.dumps({'host': host, 'target': target, 'peer_ip': peer,
+                      'error_type': type(exc).__name__, 'error': str(exc)}, sort_keys=True))
+                  return False
+              finally:
+                  signal.alarm(0)
+
+          for host in hosts:
+              signal.alarm(5)
+              try:
+                  addresses = sorted({item[4][0] for item in
+                                      socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)})
+                  print(json.dumps({'host': host, 'public_dns_addresses': addresses}, sort_keys=True))
+              except Exception as exc:
+                  print(json.dumps({'host': host, 'dns_error_type': type(exc).__name__,
+                                    'dns_error': str(exc)}, sort_keys=True))
+              finally:
+                  signal.alarm(0)
+              if not probe(host):
+                  for address in pages_ips:
+                      probe(host, address)
+          print('Diagnostics only: the existing HTTP and byte checks remain authoritative.')
+          PY
+
       - name: Custom-domain HTTP status for every surface
         shell: bash
         run: |
