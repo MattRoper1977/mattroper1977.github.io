@@ -95,18 +95,10 @@ def build() -> dict:
                       "category": "game", "pathways": [], "image": item.get("art", "")})
 
     # Homepage copy is concise; the canonical shelf and game payloads stay intact.
-    short_copy = {
-        '/apexkick/': ('Apex Kick', 'Football', 'Pick your shot. Beat the keeper. Find the winning finish.'),
-        '/emberwild/': ('Emberwild', 'Adventure', 'Meet Emberkin and explore the Vale, one discovery at a time.'),
-        '/voxel/': ('Voxel Frontier', 'Build & explore', 'Build, explore and find your next adventure in a world of blocks.'),
-        '/Lessons/Games/Axiom_Shift.html': ('Axiom Shift', 'Rhythm & reflexes', 'Follow the visible beat through a one-button challenge. A mistake takes you back to your checkpoint.'),
-        '/cyberpulse/': ('CyberPulse: Blackout', 'Action', 'Race through a neon city, dodge danger and take on the Null Warden.'),
-        '/Lessons/Games/Glitch_Clash.html': ('Glitch Clash', 'Card battles', 'Collect Keepers, choose your trio and take on the next challenge.'),
-        '/Lessons/Games/Hold_the_Mark.html': ('Hold the Mark', 'Strategy', 'Choose your towers and defend the Made by Matt mark.'),
-        '/offbrand/': ('Off-Brand: After Hours', 'Mystery', 'Follow the clues around the workshop and work out who is the Glitch.'),
-        '/trailrunner/': ('Trail Runner: Stormbreak', 'Reflexes', 'Dodge hazards, build momentum and take on your ghost run.'),
-        '/olympics/': ('Global Games: World Stage', 'Sports', 'Choose a sporting event and work towards your next personal best.'),
-    }
+    short_copy = json.loads((HERE / "game-home-copy.json").read_text())["games"]
+    shelf_routes = {urlparse(game["route"]).path for game in games}
+    if not set(short_copy).issubset(shelf_routes):
+        raise ValueError("Homepage copy references a game outside the canonical shelf")
     for game in games:
         route = urlparse(game['route']).path
         if route in short_copy:
