@@ -92,11 +92,38 @@ def build() -> dict:
         games.append({"id": match.get("id", f"shelf-{i}"), "title": item["title"],
                       "description": item.get("desc", ""), "route": item["href"],
                       "subject": item.get("tag", ""), "keywords": match.get("keywords", []),
-                      "category": "game", "pathways": []})
+                      "category": "game", "pathways": [], "image": item.get("art", "")})
+
+    # Homepage copy is concise; the canonical shelf and game payloads stay intact.
+    short_copy = {
+        '/apexkick/': ('Apex Kick', 'Football', 'Pick your shot. Beat the keeper. Find the winning finish.'),
+        '/emberwild/': ('Emberwild', 'Adventure', 'Meet Emberkin and explore the Vale, one discovery at a time.'),
+        '/voxel/': ('Voxel Frontier', 'Build & explore', 'Build, explore and find your next adventure in a world of blocks.'),
+        '/Lessons/Games/Axiom_Shift.html': ('Axiom Shift', 'Rhythm & reflexes', 'Follow the visible beat through a one-button challenge. A mistake takes you back to your checkpoint.'),
+        '/cyberpulse/': ('CyberPulse: Blackout', 'Action', 'Race through a neon city, dodge danger and take on the Null Warden.'),
+        '/Lessons/Games/Glitch_Clash.html': ('Glitch Clash', 'Card battles', 'Collect Keepers, choose your trio and take on the next challenge.'),
+        '/Lessons/Games/Hold_the_Mark.html': ('Hold the Mark', 'Strategy', 'Choose your towers and defend the Made by Matt mark.'),
+        '/offbrand/': ('Off-Brand: After Hours', 'Mystery', 'Follow the clues around the workshop and work out who is the Glitch.'),
+        '/trailrunner/': ('Trail Runner: Stormbreak', 'Reflexes', 'Dodge hazards, build momentum and take on your ghost run.'),
+        '/olympics/': ('Global Games: World Stage', 'Sports', 'Choose a sporting event and work towards your next personal best.'),
+    }
+    for game in games:
+        route = urlparse(game['route']).path
+        if route in short_copy:
+            game['title'], game['subject'], game['description'] = short_copy[route]
+        else:
+            game['title'] = re.sub(r'^(?:NEW[ ·—:]+)', '', game['title'])
+            game['title'] = re.sub(r'\s*[—·]\s*V[456].*$', '', game['title'])
+            description = game['description'].split('. ')[0].strip()
+            if len(description) > 190:
+                description = description[:187].rsplit(' ', 1)[0].rstrip(',;— ') + '…'
+            elif description and description[-1] not in '.!?…':
+                description += '.'
+            game['description'] = description
 
     # The three established editorial features from the 2026-09-05 preview;
     # this is a design selection, not a copy of the current games population.
-    featured_routes = ["/apexkick/", "/emberwild/", "/voxel/"]
+    featured_routes = ["/apexkick/", "/voxel/", "/Lessons/Games/Axiom_Shift.html"]
     featured = []
     for route in featured_routes:
         match = next((e for e in games if route_path(e["route"]) == route_path(route)), None)
@@ -113,6 +140,8 @@ def build() -> dict:
     substitutions = {
         "@@CATALOGUE@@": json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c"),
         "@@MARK@@": image_data("/assets/brand/micro_mark.svg"),
+        "@@HERO_MARK@@": image_data("/assets/brand/hero_mark.svg"),
+        "@@EMBER_ART@@": image_data("/assets/cards/emberwild.svg"),
         "@@LESSON_ART@@": image_data("/images/lesson-hub-card.webp"),
         "@@ART_STUDIO@@": image_data("/assets/video/poster-art.webp"),
         "@@ASDAN_ART@@": image_data("/assets/video/poster-asdan.webp"),
@@ -121,7 +150,7 @@ def build() -> dict:
             + '" target="_blank" rel="noopener"><img src="' + item["image"]
             + '" width="450" height="280" alt="" loading="lazy"><div><p class="eyebrow">'
             + html.escape(item["subject"]) + '</p><h3>' + html.escape(item["title"])
-            + '</h3><span class="text-link">Play on the current site ↗</span></div></a>' for item in featured
+            + '</h3><p>' + html.escape(item['description']) + '</p><span class="text-link">Play on the current site ↗</span></div></a>' for item in featured
         ),
         "@@SHELF_COUNT@@": str(len(games)),
     }
