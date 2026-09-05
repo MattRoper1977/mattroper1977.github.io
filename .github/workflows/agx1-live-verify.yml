@@ -32,6 +32,9 @@ jobs:
     name: Fetch the live estate and compare to raw-at-SHA
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      # Games #54 publishes the unchanged canonical shelf at its own domain.
+      SHELF_URL: https://madebymatt-play.uk/games.json
     steps:
       - name: Check out main (the deployed tree)
         uses: actions/checkout@v4
@@ -116,6 +119,72 @@ jobs:
           node _tools/tools/derive_live_routes.mjs --canonical _shelf/games.json --root . --emit routes > /tmp/live-routes.txt
           echo "derived $(wc -l < /tmp/live-routes.txt) route(s) for the live check — games plus the covered infrastructure routes"
 
+      - name: Games domain DNS and verified TLS diagnostics (report only)
+        # Keep certificate and hostname verification enabled. These probes
+        # explain resolver or Pages edge differences; the existing gates below
+        # still decide whether the live publication passes.
+        continue-on-error: true
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import signal
+          import socket
+          import ssl
+
+          hosts = ('madebymatt-play.uk', 'www.madebymatt-play.uk')
+          pages_ips = ('185.199.108.153', '185.199.109.153',
+                       '185.199.110.153', '185.199.111.153')
+          context = ssl.create_default_context()
+
+          def deadline(signum, frame):
+              raise TimeoutError('diagnostic exceeded its 5-second deadline')
+
+          signal.signal(signal.SIGALRM, deadline)
+
+          def probe(host, address=None):
+              peer = None
+              target = address or 'normal DNS resolution'
+              signal.alarm(5)
+              try:
+                  with socket.create_connection((address or host, 443), timeout=5) as raw:
+                      peer = raw.getpeername()[0]
+                      with context.wrap_socket(raw, server_hostname=host) as tls:
+                          cert = tls.getpeercert()
+                          print(json.dumps({'host': host, 'target': target,
+                              'peer_ip': peer, 'verified_tls': tls.version(),
+                              'issuer': cert.get('issuer'), 'subject': cert.get('subject'),
+                              'subjectAltName': cert.get('subjectAltName')}, sort_keys=True))
+                          tls.sendall(('HEAD / HTTP/1.1\r\nHost: ' + host +
+                                       '\r\nConnection: close\r\n\r\n').encode('ascii'))
+                          status = tls.recv(4096).split(b'\r\n', 1)[0].decode('ascii', 'replace')
+                          print(json.dumps({'host': host, 'target': target,
+                              'peer_ip': peer, 'http_status_line': status}, sort_keys=True))
+                  return True
+              except Exception as exc:
+                  print(json.dumps({'host': host, 'target': target, 'peer_ip': peer,
+                      'error_type': type(exc).__name__, 'error': str(exc)}, sort_keys=True))
+                  return False
+              finally:
+                  signal.alarm(0)
+
+          for host in hosts:
+              signal.alarm(5)
+              try:
+                  addresses = sorted({item[4][0] for item in
+                                      socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)})
+                  print(json.dumps({'host': host, 'public_dns_addresses': addresses}, sort_keys=True))
+              except Exception as exc:
+                  print(json.dumps({'host': host, 'dns_error_type': type(exc).__name__,
+                                    'dns_error': str(exc)}, sort_keys=True))
+              finally:
+                  signal.alarm(0)
+              if not probe(host):
+                  for address in pages_ips:
+                      probe(host, address)
+          print('Diagnostics only: the existing HTTP and byte checks remain authoritative.')
+          PY
+
       - name: Custom-domain HTTP status for every surface
         shell: bash
         run: |
@@ -133,15 +202,32 @@ jobs:
           # Listing them here as well would check them twice and, worse, print a
           # count that no longer describes what ran. Only the two that stay
           # EXEMPT are still named by hand.
-          urls+=( "https://madebymatt.uk${FULL_HOME_ROUTE}" \
-                  https://madebymatt.uk/Games/games.json )
+          urls+=( "https://madebymatt.uk${FULL_HOME_ROUTE}" "$SHELF_URL" )
           echo "checking ${#derived[@]} derived route(s) + 2 exempt route(s) named by hand"
           for u in "${urls[@]}" ; do
-            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
+            code=$(curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 \
+              -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
             printf '%-46s %s\n' "$u" "$code"
             [ "$code" = "200" ] || fail=1
           done
           exit $fail
+
+      - name: The former shelf address redirects to the games publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          result=$(curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' \
+            --max-time 30 https://madebymatt.uk/Games/games.json)
+          code=${result%% *}; target=${result#* }
+          [[ "$code" = 301 || "$code" = 308 ]]
+          case "$target" in
+            http://madebymatt-play.uk/games.json|https://madebymatt-play.uk/games.json|\
+            http://www.madebymatt-play.uk/games.json|https://www.madebymatt-play.uk/games.json)
+              echo "The former shelf address redirects to $target ($code)." ;;
+            *) echo "Unexpected shelf redirect: $target ($code)"; exit 1 ;;
+          esac
+          # The target is fetched separately over HTTPS above and its bytes
+          # must match the committed canonical in the mirror check below.
 
       - name: Live bytes must equal the committed tree, byte for byte
         shell: bash
@@ -223,7 +309,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl -sS --max-time 30 https://madebymatt.uk/Games/games.json -o /tmp/games.json
+          curl -fsSL --proto '=https' --proto-redir '=https' --max-redirs 3 --max-time 30 "$SHELF_URL" -o /tmp/games.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/games.json'))
@@ -351,8 +437,8 @@ jobs:
           exit 0
 
       # THE MIRROR LEG — ruled 2026-08-13, closing the two-shelves divergence.
-      # The served /Games/games.json (the Games repository's file, which the
-      # arcade fetches at runtime) is the canonical shelf; this repository's
+      # The Games repository's file, now served from its separate domain,
+      # is the canonical shelf; this repository's
       # data/source-manifests/games.json is a generated mirror of it, written
       # only by tools/render_games_manifest_mirror.py. No local gate can see
       # both repositories, so the byte comparison runs HERE, against the
@@ -425,7 +511,7 @@ jobs:
           # written to the file and compared as though it were the canonical. It
           # fails closed either way, but it reports a fetch failure AS DRIFT, and
           # that sends the next reader to the wrong repository entirely.
-          if ! curl -sS --fail --max-time 30 https://madebymatt.uk/Games/games.json -o "$served"; then
+          if ! curl -fsSL --proto '=https' --proto-redir '=https' --max-redirs 3 --max-time 30 "$SHELF_URL" -o "$served"; then
             echo "  MEASUREMENT INVALID: the served canonical could not be fetched."
             echo "  Nothing below would mean anything - neither a pass nor a drift report."
             exit 1
@@ -601,7 +687,7 @@ jobs:
           # The shelf is fetched here rather than inherited from the census
           # step's /tmp/games.json: a gate that depends on a previous step's
           # leftovers passes for the wrong reason the day that step is moved.
-          curl -sS --max-time 30 https://madebymatt.uk/Games/games.json -o /tmp/shelf.json || true
+          curl -fsSL --proto '=https' --proto-redir '=https' --max-redirs 3 --max-time 30 "$SHELF_URL" -o /tmp/shelf.json
           python3 - <<'PY'
           import re,sys,os,json
           served=open('/tmp/home.html',encoding='utf-8',errors='replace').read()

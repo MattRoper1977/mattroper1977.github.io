@@ -93,6 +93,31 @@ PAGE_MARKERS: dict[str, tuple[str, ...]] = {
     "/stats/": ("mbm-platform.css", "mbm-platform.js", "mbm-site-header"),
 }
 
+# The education publication replaces these front doors after source generation.
+# Historical/manual callers retain the legacy contract unless they opt in.
+EDUCATION_PAGE_MARKERS = {
+    **PAGE_MARKERS,
+    "/": ('<title>Find your next lesson · Made by Matt</title>',
+          '<h1 tabindex="-1">Find your next lesson.</h1>',
+          'data-site-kind="education" data-page="home"',
+          'src="/assets/domain-site.js"'),
+    "/main/": ('<title>Find your next lesson · Made by Matt</title>',
+              '<h1 tabindex="-1">Find your next lesson.</h1>',
+              'data-site-kind="education" data-page="home"',
+              'src="/assets/domain-site.js"'),
+    "/for/teachers/": ('<title>Teachers · Made by Matt Learning</title>',
+                      '<h1 tabindex="-1">What are you teaching today?</h1>',
+                      'data-site-kind="education" data-page="teachers"',
+                      'src="/assets/domain-site.js"', 'id="teacher-search"'),
+    "/for/pupils/": ('<title>Pupils · Made by Matt Learning</title>',
+                    '<h1 tabindex="-1">What are you learning today?</h1>',
+                    'data-site-kind="education" data-page="pupils"',
+                    'src="/assets/domain-site.js"', 'id="pupil-search"'),
+    "/games/": ('<title>This game has moved · Made by Matt</title>',
+               'data-game-moved', '<h1>This game has moved</h1>',
+               '<a id="play-game" href="https://madebymatt-play.uk/">'),
+}
+
 ASSETS: dict[str, Path] = {
     "/assets/mbm-platform.css": Path("assets/mbm-platform.css"),
     "/assets/mbm-platform.js": Path("assets/mbm-platform.js"),
@@ -105,6 +130,11 @@ ASSETS: dict[str, Path] = {
 
 JSON_SURFACES = (
     "/Games/games.json",
+    "/Lessons/resources.json",
+    "/data/resources.json",
+)
+EDUCATION_JSON_SURFACES = (
+    "https://madebymatt-play.uk/games.json",
     "/Lessons/resources.json",
     "/data/resources.json",
 )
@@ -146,14 +176,17 @@ def verify_once(
     timeout: float,
     attempt: int,
     extra_home_marker: str | None,
+    publication: str = "legacy",
 ) -> dict[str, Any]:
     nonce = f"{int(time.time())}-{attempt}"
     errors: list[str] = []
     pages: dict[str, Any] = {}
     assets: dict[str, Any] = {}
     json_surfaces: dict[str, Any] = {}
+    page_markers = EDUCATION_PAGE_MARKERS if publication == "education" else PAGE_MARKERS
+    json_paths = EDUCATION_JSON_SURFACES if publication == "education" else JSON_SURFACES
 
-    for path, required in PAGE_MARKERS.items():
+    for path, required in page_markers.items():
         try:
             status, headers, body, final_url = fetch(base, path, nonce, timeout)
             text = body.decode("utf-8", errors="replace")
@@ -210,7 +243,7 @@ def verify_once(
             errors.append(f"{path}: request failed: {exc}")
             assets[path] = {"error": str(exc)}
 
-    for path in JSON_SURFACES:
+    for path in json_paths:
         try:
             status, headers, body, final_url = fetch(base, path, nonce, timeout)
             parsed: Any = None
@@ -261,6 +294,7 @@ def verify_once(
     return {
         "sentinel": "mbm-site-professional-design-upgrade-2026-08-07",
         "base": base,
+        "publication": publication,
         "attempt": attempt,
         "checked_at_unix": int(time.time()),
         "pages": pages,
@@ -275,6 +309,8 @@ def verify_once(
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base", default=DEFAULT_BASE)
+    parser.add_argument("--publication", choices=("legacy", "education"), default="legacy",
+                        help="Verify legacy source pages or the separated education publication")
     parser.add_argument("--attempts", type=int, default=36)
     parser.add_argument("--delay", type=float, default=10.0)
     parser.add_argument("--timeout", type=float, default=20.0)
@@ -287,12 +323,12 @@ def main() -> int:
 
     result: dict[str, Any] = {}
     for attempt in range(1, args.attempts + 1):
-        result = verify_once(args.base, args.timeout, attempt, args.expect_home_marker)
+        result = verify_once(args.base, args.timeout, attempt, args.expect_home_marker, args.publication)
         if result["passed"]:
             print(
                 f"Made by Matt live verification: PASS on attempt {attempt}; "
-                f"{len(PAGE_MARKERS)} pages, {len(ASSETS)} exact assets, "
-                f"{len(JSON_SURFACES)} JSON surfaces, positive control detected."
+                f"{len(result['pages'])} pages, {len(result['assets'])} exact assets, "
+                f"{len(result['json_surfaces'])} JSON surfaces, positive control detected."
             )
             break
         print(
