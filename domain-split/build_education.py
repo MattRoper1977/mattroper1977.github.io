@@ -19,6 +19,8 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 PLAY = 'https://madebymatt-play.uk'
 LEARN = 'https://madebymatt.uk'
+# Fixed historical redirects: the superseded Lessons game addresses as at
+# 2026-09-05. This map is deliberately not the current shelf's membership.
 LEGACY = {
     '/Lessons/Games/Off_Brand.html': '/offbrand/',
     '/Lessons/Games/Trail_Runner.html': '/trailrunner/',

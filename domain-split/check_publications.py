@@ -46,7 +46,10 @@ def main():
     index=json.loads((site/'data/mbm-search-index.json').read_text())
     assert not any(e['category']=='game' for e in index['entries'])
     game_data=json.loads((games/'data/domain-catalogue.json').read_text())
-    assert len(game_data['games'])==62 and len(game_data['activities'])==6 and len(game_data['staff'])==1
+    shelf=json.loads((HERE.parent/'data/source-manifests/games.json').read_text())['games']
+    assert len(game_data['games'])==len(shelf)
+    assert len(game_data['activities'])+len(game_data['staff'])==len(report['payloads'])-len(shelf)
+    assert len(game_data['staff'])==1
     for item in game_data['games']+game_data['activities']+game_data['staff']:
         assert exists(games,unquote(urlparse(item['route']).path).lstrip('/')),item['route']
     tested=0

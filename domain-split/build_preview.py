@@ -94,6 +94,8 @@ def build() -> dict:
                       "subject": item.get("tag", ""), "keywords": match.get("keywords", []),
                       "category": "game", "pathways": []})
 
+    # The three established editorial features from the 2026-09-05 preview;
+    # this is a design selection, not a copy of the current games population.
     featured_routes = ["/apexkick/", "/emberwild/", "/voxel/"]
     featured = []
     for route in featured_routes:
