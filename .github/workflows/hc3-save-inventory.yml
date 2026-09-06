@@ -1,0 +1,42 @@
+name: HC3 route-keyed save inventory
+on:
+  pull_request:
+    paths: ['tools/hc3_save_inventory.py', 'tools/hc3-inventory/**', 'docs/HC3_SAVE_*', '.github/workflows/hc3-save-inventory.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: 82d10d28bce4e864ed4bda6200708c3582112882
+          path: .sources/Lessons
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Parse source without executing games; prove planted defects
+        run: |
+          npm ci --prefix tools/hc3-inventory --ignore-scripts --no-audit --no-fund
+          python tools/hc3_save_inventory.py --self-test
+          python domain-split/build_publications.py --lessons .sources/Lessons
+          python tools/hc3_save_inventory.py --lessons .sources/Lessons --built domain-split/output/games --output audit-output/hc3-save-inventory.json
+      - name: Preserve inventory and exact publication provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hc3-save-inventory-${{ github.run_id }}
+          path: |
+            audit-output/hc3-save-inventory.json
+            domain-split/output/build-report.json
+          if-no-files-found: error
+          retention-days: 30
