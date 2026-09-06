@@ -19,7 +19,7 @@ const routes = [
 (async () => {
   fs.mkdirSync(output, {recursive:true});
   const browser = await chromium.launch({headless:true});
-  const rows=[];
+  const rows=[], printRows=[];
   try {
     for (const width of [390,1280]) for (const [index,route] of routes.entries()) {
       const context=await browser.newContext({viewport:{width,height:900}});
@@ -66,9 +66,27 @@ const routes = [
       } catch(error) {rows.push({route,width,status:'FAIL',error:error.message,pageErrors:errors});}
       finally {await context.close();}
     }
+    // Exercise the browser's real print media and PDF renderer as well as
+    // the screen navigation controls above. PDFs are retained for visual QA.
+    for (const [index,route] of ['/', '/for/governors-trustees/',
+      '/Lessons/Science_Teesside/Build/v4_fieldops/01_Newport_Bridge_Lift_Permit_Lab.html'].entries()) {
+      const context=await browser.newContext({viewport:{width:1280,height:900},reducedMotion:'reduce'});
+      await context.route('**/*', req=>new URL(req.request().url()).origin===new URL(origin).origin ? req.continue() : req.abort());
+      const page=await context.newPage();
+      try {
+        assert.equal((await page.goto(origin+route)).status(),200);
+        await page.emulateMedia({media:'print'});
+        assert.equal(await page.locator('header.mbm-unified-header:visible,#mbm-lesson-tools:visible').count(),0,'Navigation is omitted from print');
+        assert(await page.locator('h1:visible').count()>0,'Printed content retains a heading');
+        const filename='print-template-'+index+'.pdf';
+        const pdf=await page.pdf({path:path.join(output,filename),format:'A4',printBackground:true,margin:{top:'12mm',bottom:'12mm',left:'12mm',right:'12mm'}});
+        assert(pdf.length>5000,'Print contains substantive content');
+        printRows.push({route,status:'PASS',filename,bytes:pdf.length,media:'print'});
+      } finally {await context.close();}
+    }
   } finally {
     await browser.close();
-    fs.writeFileSync(path.join(output,'results.json'),JSON.stringify({cases:rows},null,2));
+    fs.writeFileSync(path.join(output,'results.json'),JSON.stringify({cases:rows,printCases:printRows},null,2));
   }
   console.log(JSON.stringify({cases:rows.length,passed:rows.filter(r=>r.status==='PASS').length,failures:rows.filter(r=>r.status==='FAIL')},null,2));
   assert(rows.length===18 && rows.every(r=>r.status==='PASS'));
