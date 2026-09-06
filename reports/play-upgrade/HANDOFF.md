@@ -41,7 +41,7 @@ Every accepted clip must contain source/build commit, route/payload SHA-256, UTC
 ## Exact known holds
 
 1. The original circular metallic silver M badge remains unresolved. Current repository square/cream and mint-ring marks are not accepted substitutes. The review displays text branding while preserving all existing in-game splash marks unchanged. Supply the actual asset; record its source and SHA-256 in `domain-split/play/brand.json` as `verified-original` with a relative `file` path. Do not redraw, recolour or crop it from a concept.
-2. Fresh media and browser/visual acceptance are in progress. Draft footage is not published automatically.
+2. All six fresh recordings and posters are now visually accepted in the local work following 8a2fa06. Their capture transfers finished; do not recapture unchanged games merely because a review job is still running. Final media playback and browser acceptance remain in progress. Draft footage is not published automatically.
 3. The coordinator has not accepted or applied this integration. No new live Play release exists. Final source pins and combined Education boundary require its review before the existing authorised publication workflow can run.
 
 Use `https://www.madebymatt-play.uk/` as the existing user-facing origin. Bare-host values in legacy build configuration do not authorize an origin change. Do not alter DNS/Pages settings or assume saves move between origins. The existing game-save migration implementation and its tests remain intact.

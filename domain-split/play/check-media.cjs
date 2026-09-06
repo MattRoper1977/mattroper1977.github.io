@@ -16,11 +16,11 @@ const report={date:new Date().toISOString(),expectedClips:games.length,proofs:[]
    const duration=await video.evaluate(v=>v.duration);assert(duration>=12&&duration<=25);
    await video.evaluate(v=>{v.currentTime=v.duration*.55;});await page.waitForFunction(()=>{const v=document.querySelector('video');return v&&!v.seeking&&v.currentTime>=v.duration*.54;});
    await video.evaluate(v=>v.pause());const time=await video.evaluate(v=>v.currentTime);await page.waitForTimeout(300);assert.equal(await video.evaluate(v=>v.currentTime),time);
-   if(width===390){await page.setViewportSize({width:844,height:390});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await video.evaluate(v=>v.play());await page.waitForFunction(()=>!document.querySelector('video').paused);await page.setViewportSize({width:390,height:844});}
+   if(width===390){await page.setViewportSize({width:844,height:390});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await video.evaluate(v=>{v.play().catch(()=>{});});await page.waitForFunction(()=>{const v=document.querySelector('video');return v&&!v.paused;},null,{timeout:10000});await page.setViewportSize({width:390,height:844});}
    await page.screenshot({path:path.join(out,engine+'-'+width+'-'+g.id+'.png')});
    await page.keyboard.press('Escape');assert.equal(await page.locator('video').count(),0);assert(await trigger.evaluate(e=>e===document.activeElement));
    report.proofs.push({engine,version:browser.version(),width,title:g.title,duration,decoded:frames,seek:true,pause:true,closeStops:true,escapeReturnsFocus:true,landscape:width===390});
-  }catch(e){report.failures.push({engine,width,title:g.title,error:e.stack});await page.screenshot({path:path.join(out,engine+'-'+width+'-'+g.id+'-failure.png')}).catch(()=>{});await page.goto(base);}fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));}
+  }catch(e){const player=await page.locator('video').evaluateAll(vs=>vs.map(v=>({src:v.currentSrc,ready:v.readyState,network:v.networkState,paused:v.paused,time:v.currentTime,error:v.error?.message,mp4:v.canPlayType('video/mp4')})));report.failures.push({engine,width,title:g.title,error:e.stack,player,status:await page.locator('#media-status').textContent().catch(()=>null)});await page.screenshot({path:path.join(out,engine+'-'+width+'-'+g.id+'-failure.png')}).catch(()=>{});await page.goto(base);}fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));}
   await context.close();
  }
  await browser.close();

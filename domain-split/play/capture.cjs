@@ -87,7 +87,7 @@ async function action(page,id){
   return 'Strafe and dash through the opening arena wave while firing at the drones with the standard keyboard aim support.';
  }
 }
-(async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--enable-webgl','--use-angle=swiftshader','--enable-unsafe-swiftshader']});manifest.browser=browser.version();
+(async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--enable-webgl','--use-angle=swiftshader','--enable-unsafe-swiftshader']});manifest.browser=browser.version();fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify(manifest,null,2));
 for(const[id,title,route]of titles.filter(t=>requested.includes(t[0]))){const viewport={width:960,height:540};const dir=path.join(out,id);fs.mkdirSync(dir,{recursive:true});const context=await browser.newContext({viewport,recordVideo:{dir,size:viewport},acceptDownloads:true});const page=await context.newPage();page.setDefaultTimeout(10000);const began=Date.now();let clipStart=0;const errors=[];page.on('pageerror',e=>errors.push(e.message));const item={id,title,route,status:'needs-visual-review',viewport,device:'Desktop Chrome in CI; fresh isolated context',captured_at:new Date().toISOString(),source_commit:manifest.source_commit,lessons_commit:manifest.lessons_commit,published_sha256:hash(path.join(root,decodeURIComponent(route.replace(/^\//,'')),route.endsWith('/')?'index.html':''))};
 try{
  await page.goto(base+'/404.html');if(await page.evaluate(()=>localStorage.length)!==0)throw Error('Capture profile was not empty');
