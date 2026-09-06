@@ -56,12 +56,14 @@ WRAPPED_LESSONS = {
     'Tutor_Time/Week2_Fri_Values_MutualRespect_Respectful.html',
 }
 WRAPPED_NAVIGATION = '<style id="mbm-wrapped-lesson-navigation">' + """
+@media screen{
 body{display:block!important}
-body>#mbm-lesson-tools{width:100%;min-height:59px;max-height:none}
-body>.wrap{margin-inline:auto;min-height:calc(100dvh - 59px);padding-top:18px;justify-content:flex-start}
+body>#mbm-lesson-tools{width:100%;min-height:59px;max-height:none;flex:none}
+body>.wrap{margin-inline:auto;min-height:0;padding-top:18px;padding-bottom:24px;justify-content:flex-start}
 body>.wrap>.toprail{position:static!important;inset:auto!important;justify-content:flex-end;flex-wrap:wrap;margin-bottom:18px}
 body>.wrap>.toprail button{min-width:44px;min-height:44px}
-@media print{body>.wrap{min-height:0;padding-top:0}}
+body>.nav{position:relative!important;inset:auto!important;flex-wrap:wrap}
+}
 """ + '</style>'
 
 def with_lesson_navigation(text, relative=None):
