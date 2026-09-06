@@ -67,7 +67,7 @@ def header(route, starting, adult=False, pupil=False, theme=False, primary=False
                                ''.join(link(x, primary and i == 0) for i, x in enumerate(learning)) + '</nav>')
     return ('<header class="' + classes + '" data-mbm-navigation="education">'
             '<div class="mbm-unified-bar"><a class="mbm-unified-brand" href="/">'
-            '<img src="/assets/brand/micro_mark.svg" width="44" height="44" alt="">'
+            '<img src="/assets/brand/approved-mark.jpg" width="44" height="44" alt="">'
             '<span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a>'
             + quick +
             '<details class="mbm-unified-menu"><summary aria-controls="mbm-navigation-panel">'

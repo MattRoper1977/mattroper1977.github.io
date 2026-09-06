@@ -191,8 +191,8 @@ def build(lessons: Path | None = None) -> dict:
     template = (HERE / "preview-template.html").read_text()
     substitutions = {
         "@@CATALOGUE@@": json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c"),
-        "@@MARK@@": image_data("/assets/brand/micro_mark.svg"),
-        "@@HERO_MARK@@": image_data("/assets/brand/hero_mark.svg"),
+        "@@MARK@@": image_data("/assets/brand/approved-mark.jpg"),
+        "@@HERO_MARK@@": image_data("/assets/brand/approved-mark.jpg"),
         "@@EMBER_ART@@": image_data("/assets/cards/emberwild.svg"),
         "@@LESSON_ART@@": image_data("/images/lesson-hub-card.webp"),
         "@@ART_STUDIO@@": image_data("/assets/video/poster-art.webp"),

@@ -247,6 +247,11 @@ class ProfessionalStatsControls(unittest.TestCase):
             '<link rel="stylesheet" href="/assets/shared-navigation.css">'
             '<script defer src="/assets/shared-navigation.js"></script></head>', 1)
         cls.legacy_stats = (professional.ROOT / 'stats/index.html').read_text()
+        cls.published_legacy_stats = re.sub(r'<header\b[^>]*>.*?</header>',
+            lambda _: navigation.header('/stats/on-this-device/', [('/', 'Homepage')]),
+            cls.legacy_stats, count=1, flags=re.S).replace('</head>',
+            '<link rel="stylesheet" href="/assets/shared-navigation.css">'
+            '<script defer src="/assets/shared-navigation.js"></script></head>', 1)
 
     def evaluate_stats(self, markup, *, publication='education', broken_asset=None):
         from unittest.mock import patch
@@ -265,7 +270,7 @@ class ProfessionalStatsControls(unittest.TestCase):
             if path == '/stats/':
                 body = markup.encode()
             elif path == '/stats/on-this-device/':
-                body = self.legacy_stats.encode()
+                body = self.published_legacy_stats.encode()
             elif path in pages:
                 body = '\n'.join(pages[path]).encode()
             elif path in assets:
@@ -292,6 +297,16 @@ class ProfessionalStatsControls(unittest.TestCase):
         self.assertTrue(result['passed'], result['errors'])
         self.assertIn('/stats/on-this-device/', result['pages'])
         self.assertTrue(result['assets']['/assets/usage-client.js']['identical'])
+
+    def test_legacy_device_page_must_keep_shared_navigation(self):
+        original = self.published_legacy_stats
+        try:
+            self.published_legacy_stats = original.replace('data-mbm-navigation="education"', '', 1)
+            result = self.evaluate_stats(self.shared_stats)
+            self.assertFalse(result['passed'])
+            self.assertIn('data-mbm-navigation="education"', result['pages']['/stats/on-this-device/']['missing_markers'])
+        finally:
+            self.published_legacy_stats = original
 
     def test_missing_stats_runtime_lists_or_measurement_status_fail(self):
         for marker in ['<script defer src="/assets/usage-client.js"></script>',

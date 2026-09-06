@@ -22,6 +22,7 @@ from education_expansion import refresh as refresh_education_expansion
 from primary_discovery import refresh as refresh_primary
 from usage_discovery import refresh as refresh_usage
 from shared_navigation import refresh as refresh_navigation
+from education_support import refresh as refresh_support
 from education_policy import PLAY, MIGRATIONS, classifier, excluded_asset, filter_catalogue
 
 HERE = Path(__file__).resolve().parent
@@ -272,6 +273,7 @@ def build(output, lessons, apps=None, allow_sparse=False):
         report['education_expansion'] = refresh_education_expansion(output, lessons, apps, ROOT)
         report['usage'] = refresh_usage(output, lessons, apps, ROOT)
         report['navigation'] = refresh_navigation(output, ROOT)
+        report['support'] = refresh_support(output, lessons, ROOT)
     # Enrichment must never reintroduce excluded discovery records. Run after
     # every generator, including overlays, Apps, audiences and usage metadata.
     for name, (_, prefix) in roots.items():

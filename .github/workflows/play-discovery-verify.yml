@@ -1,0 +1,90 @@
+name: Play discovery review and fresh capture
+on:
+  pull_request:
+    paths: ['domain-split/play/**', '.github/workflows/play-discovery-verify.yml']
+  workflow_dispatch:
+    inputs:
+      capture_new:
+        description: Explicitly capture replacement footage after a gameplay change
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: play-discovery-${{ github.event.pull_request.number || github.ref }}-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: false
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          # Accepted Education companion source, 2026-09-06. Media acceptance
+          # independently checks all six captured game payload hashes.
+          ref: b37a5b25e456f95b533ac8ca03345856e2a734cd
+          path: .sources/Lessons
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install review dependencies
+        run: |
+          python -m pip install lxml==6.0.1
+          npm install --no-save --package-lock=false playwright@1.55.0
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          npx playwright install --with-deps chrome webkit
+      - name: Assemble isolated Play review and verify existing save logic
+        run: |
+          python domain-split/play/prepare.py --lessons .sources/Lessons --output .play-review/output
+          node domain-split/check_game_saves.cjs
+          node --check domain-split/play/play.js
+          node domain-split/play/serve.cjs .play-review/output/games 4173 > .play-review/server.log 2>&1 &
+      - name: Capture fresh gameplay through ordinary player inputs
+        if: github.event_name == 'workflow_dispatch' && inputs.capture_new
+        run: node domain-split/play/capture.cjs
+      - name: Preserve capture checkpoint before browser acceptance
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.capture_new
+        uses: actions/upload-artifact@v4
+        with:
+          name: play-captures-${{ github.run_id }}
+          path: .play-review/capture
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+      - name: Exercise Play discovery and every initial game surface
+        if: always()
+        run: node domain-split/play/check.cjs
+      - name: Exercise the existing save-transfer browser journey
+        if: always()
+        run: node domain-split/play/check-save-ui.cjs
+      - name: Preserve UI acceptance checkpoint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: play-ui-checkpoint-${{ github.run_id }}
+          path: |
+            .play-review/qa
+            .play-review/save-ui
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+      - name: Decode and operate accepted previews in Chromium and WebKit
+        if: always()
+        run: timeout 300 node domain-split/play/check-media.cjs
+      - name: Preserve review and source recordings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: play-discovery-review-${{ github.run_id }}
+          path: .play-review
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
