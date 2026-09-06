@@ -6,7 +6,7 @@ Sentinel: `mbm-site-professional-design-upgrade-2026-08-07`
 
 **CLOSED — merged, deployed and live-verified.**
 
-The professional presentation upgrade was merged through PR #92 on **7 August 2026 at 23:29 UTC**.
+The professional presentation upgrade was merged through PR #92 on **8 August 2026 at 00:16 UTC** (GitHub `merged_at` 2026-08-08T00:16:00Z; merge commit committer date 2026-08-08T00:15:59Z).
 
 - Implementation merge commit: `4291cc7ba706fd66f3b76f6d4eeb87eac88d8f0b`
 - Final implementation head: `43086183556d78043f64652c22f7d643f87f18d3`
