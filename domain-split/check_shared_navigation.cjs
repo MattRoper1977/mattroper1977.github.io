@@ -26,8 +26,7 @@ const restricted = ['/for/pupils/', '/resources/', '/Lessons/', '/Lessons/primar
         assert.equal(await page.locator(header).count(), 1, 'One header: ' + route);
         const skip = page.locator('body > a[href^="#"]').first();
         if (await skip.count()) {
-          await skip.press('Tab');
-          await skip.press('Shift+Tab');
+          await skip.focus();
           assert(await skip.evaluate(el => {
             const r = el.getBoundingClientRect();
             const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
@@ -54,6 +53,7 @@ const restricted = ['/for/pupils/', '/resources/', '/Lessons/', '/Lessons/primar
         await page.goto(origin + '/');
         await page.locator(menu + ' > summary').click();
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'No horizontal overflow');
+        if (javaScriptEnabled) await page.screenshot({ path: 'audit-output/home-play-discovery/shared-menu-' + viewport.width + '.png', animations: 'disabled' });
         const finalLink = page.locator(panel + ' a').last();
         await finalLink.scrollIntoViewIfNeeded();
         const box = await finalLink.boundingBox();

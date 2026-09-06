@@ -13,21 +13,17 @@ HERE = Path(__file__).resolve().parent
 PLAY = 'https://www.madebymatt-play.uk/'
 LEARNING = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'),
             ('/Matt-s-Apps-/', 'Apps & tools'), ('/tools/', 'Teacher tools')]
-STARTING = [('/', 'Homepage'), ('/for/teachers/', 'Teachers'),
-            ('/for/pupils/', 'Pupils'), ('/for/parents-carers/', 'Parents & carers'),
-            ('/for/schools-semh/', 'Schools & specialist settings'),
-            ('/for/trusts/', 'Academy trusts'),
-            ('/for/councils-organisations/', 'Local authorities'),
-            ('/for/partners/', 'Education partners'),
-            ('/for/governors-trustees/', 'Governors & trustees')]
+AUDIENCE_LABELS = [('teachers', 'Teachers'), ('pupils', 'Pupils'),
+                   ('parents', 'Parents & carers'), ('schools', 'Schools & specialist settings'),
+                   ('trusts', 'Academy trusts'), ('councils', 'Local authorities'),
+                   ('partners', 'Education partners')]
 SITE_PAGES = ['index.html', 'main/index.html', 'account/index.html',
               'members/index.html', 'mailing-list/index.html', 'privacy/index.html',
               'stats/index.html', 'owner/stats/index.html', 'tools/index.html',
-              'resources/index.html', 'teach/index.html', 'education-hub/index.html',
-              *[route.strip('/') + '/index.html' for route, _ in STARTING[1:]]]
+              'resources/index.html', 'teach/index.html', 'education-hub/index.html']
 
 
-def header(route, adult=False, pupil=False, theme=False, primary=False):
+def header(route, starting, adult=False, pupil=False, theme=False, primary=False, compact=False):
     def link(item, remember=False):
         href, label = item
         current = ' aria-current="page"' if href == route and '?' not in href else ''
@@ -47,18 +43,19 @@ def header(route, adult=False, pupil=False, theme=False, primary=False):
                       ('/Lessons/?subject=ASDAN%20%26%20life%20skills&year=all', 'ASDAN learning resources'),
                       ('/teach/', 'Teaching hub'), ('/education-hub/', 'Education Hub')]
     groups = group('Learning', learning + shortcuts)
-    groups += group('Starting points', STARTING if not pupil else [STARTING[0], STARTING[2]])
+    groups += group('Starting points', starting if not pupil else [starting[0], next(x for x in starting if x[0] == route)])
     personal = [('/account/', 'Account'), ('/members/', 'Members'), ('/mailing-list/', 'Teacher updates')] if adult else []
     groups += group('More from Matt', personal + [('/stats/', 'Shared activity'), ('/privacy/', 'Privacy & statistics choices'), (PLAY, 'Made by Matt Play ↗')])
     if theme:
         groups += '<details class="mbm-menu-display"><summary>Display options</summary><div data-mbm-theme-slot></div></details>'
     classes = 'mbm-unified-header'
+    quick = '' if compact else ('<nav class="mbm-unified-quick" aria-label="Quick navigation">' +
+                               ''.join(link(x, primary and i == 0) for i, x in enumerate(learning)) + '</nav>')
     return ('<header class="' + classes + '" data-mbm-navigation="education">'
             '<div class="mbm-unified-bar"><a class="mbm-unified-brand" href="/">'
             '<img src="/assets/brand/micro_mark.svg" width="44" height="44" alt="">'
             '<span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a>'
-            '<nav class="mbm-unified-quick" aria-label="Quick navigation">' +
-            ''.join(link(x, primary and i == 0) for i, x in enumerate(learning)) + '</nav>'
+            + quick +
             '<details class="mbm-unified-menu"><summary aria-controls="mbm-navigation-panel">'
             '<span class="mbm-menu-icon" aria-hidden="true"></span>Menu</summary>'
             '<nav class="mbm-unified-panel" id="mbm-navigation-panel" aria-label="Site menu">' +
@@ -67,11 +64,15 @@ def header(route, adult=False, pupil=False, theme=False, primary=False):
 
 def refresh(output, site_source):
     site = output / 'education-site'
+    audiences = json.loads((site_source / 'data/audience-homepages.json').read_text())['audiences']
+    starting = [('/', 'Homepage')] + [(audiences[key]['route'], label) for key, label in AUDIENCE_LABELS]
+    starting.append(('/for/governors-trustees/', 'Governors & trustees'))
     adult_pages = {x['page'] for x in json.loads((site_source / 'data/adult-surfaces.json').read_text())['adultSurfaces']}
     # The published learning homepage supersedes the old source chooser. These
     # generated adult front doors already expose their account links explicitly.
     adult_pages.update({'index.html', 'for/governors-trustees/index.html', 'owner/stats/index.html'})
-    pages = [(site / p, '/' + p.removesuffix('index.html'), p in adult_pages) for p in SITE_PAGES]
+    site_pages = SITE_PAGES + [route.strip('/') + '/index.html' for route, _ in starting[1:]]
+    pages = [(site / p, '/' + p.removesuffix('index.html'), p in adult_pages) for p in site_pages]
     pages += [(output / 'education-lessons/index.html', '/Lessons/', False),
               (output / 'education-lessons/primary/index.html', '/Lessons/primary/', False),
               (output / 'education-apps/index.html', '/Matt-s-Apps-/', False)]
@@ -81,7 +82,11 @@ def refresh(output, site_source):
             raise ValueError('Missing navigation surface: ' + str(path))
         text = path.read_text()
         theme = bool(re.search(r'<script\b[^>]*\bsrc=["\'][^"\']*(?:^|/)theme\.js', text))
-        replacement = header(route, adult, route == '/for/pupils/', theme, route == '/Lessons/primary/')
+        # Keep the existing visible learning-area row without duplicating it
+        # inside the desktop masthead. All destinations remain in the Menu.
+        compact = bool(re.search(r'class="[^"\n]*\b(?:collection-nav|ad-nav)\b', text))
+        replacement = header(route, starting, adult, route == audiences['pupils']['route'], theme,
+                             route == '/Lessons/primary/', compact)
         text, count = re.subn(r'<header\b[^>]*>.*?</header>', lambda _: replacement, text, count=1, flags=re.S)
         if count != 1:
             raise ValueError('Missing page header: ' + str(path))
