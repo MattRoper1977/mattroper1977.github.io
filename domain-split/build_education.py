@@ -126,11 +126,14 @@ def with_lesson_navigation(text, relative=None):
     return text[:position]+extra+script+text[position:]
 
 def moved_page(route):
-    destination = PLAY + LEGACY.get(route, route)
+    # HC3 §2.4: a stub is ≤2 KB of text, noindex, canonical → the play URL, one
+    # "Open the game" link and nothing else. No game code, no third-party bytes.
     from html import escape
+    destination = PLAY + LEGACY.get(route, route)
     return ('<!doctype html><html lang="en-GB"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width,initial-scale=1">'
             '<meta name="robots" content="noindex"><title>This game has moved · Made by Matt</title>'
+            '<link rel="canonical" href="'+escape(destination, quote=True)+'">'
             '<style>body{font:1.1rem/1.65 system-ui;max-width:42rem;margin:4rem auto;padding:0 1.25rem;color:#161d3d}a{color:#174e45}li{margin:1rem 0}a:focus-visible{outline:3px solid #e39129;outline-offset:4px}</style>'
             '</head><body data-game-moved><main><h1>This game has moved</h1>'
             '<p>Made by Matt games now have their own website.</p>'

@@ -37,14 +37,32 @@ def key(value):
     return unquote(urlparse(value).path).removesuffix('index.html').rstrip('/') or '/'
 
 
+# <link> relations a browser never fetches: they annotate the document (HC3
+# section 2.4 gives every moved page a canonical to its Play route). Every other
+# non-anchor reference — stylesheet, preload, icon, script, img, iframe — is a
+# request the page makes by itself, which a school filter on Play would break.
+DOCUMENT_LINK_RELS = {'canonical', 'alternate'}
+
+
+def automatic_request(tag, attrs):
+    """True when the browser fetches this reference without a user action."""
+    if tag == 'a': return False
+    if tag == 'link':
+        rels = set((attrs.get('rel') or '').lower().split())
+        return not rels or not rels <= DOCUMENT_LINK_RELS
+    return True
+
+
 class Refs(HTMLParser):
     def __init__(self):
-        super().__init__(); self.refs=[]; self.engines=[]; self.tags=[]; self.play_destination=None
+        super().__init__(); self.refs=[]; self.engines=[]; self.tags=[]; self.play_destination=None; self.automatic=set()
     def handle_starttag(self, tag, attrs):
         attrs=dict(attrs); self.tags.append(tag)
         if tag=='a' and attrs.get('id')=='play-game': self.play_destination=attrs.get('href')
         for attr in ['href','src','poster','data-src']:
-            if attrs.get(attr): self.refs.append((tag,attr,attrs[attr]))
+            if attrs.get(attr):
+                self.refs.append((tag,attr,attrs[attr]))
+                if automatic_request(tag, attrs): self.automatic.add((tag,attr,attrs[attr]))
         if tag in {'canvas','iframe','embed','object','video','audio'}: self.engines.append(tag)
 
 
@@ -140,7 +158,7 @@ def check(output):
                     counts['references']+=1
                     if asset(value,route): fail(route,'Recreational media reference: '+value)
                     if game(value,route) and not moved: fail(route,'Recreational navigation/embed: '+value)
-                    if tag!='a' and 'madebymatt-play.uk' in value: fail(route,'Automatic Play request: '+value)
+                    if (tag,attr,value) in parser.automatic and 'madebymatt-play.uk' in value: fail(route,'Automatic Play request: '+value)
                 if re.search(r'(?:serviceWorker\s*\.\s*register|caches\s*\.\s*open)\s*\(',text): fail(route,'New offline cache requires boundary review')
             elif path.suffix=='.js':
                 if re.search(r'(?:serviceWorker\s*\.\s*register|caches\s*\.\s*open)\s*\(',path.read_text(errors='replace')): fail(route,'New offline cache requires boundary review')
@@ -160,6 +178,31 @@ def check(output):
     return not failures
 
 
+def self_test():
+    """The automatic-request rule, proved on planted references before it judges a tree."""
+    play='https://www.madebymatt-play.uk/apexkick/'
+    cases=[  # (markup, must be named as an automatic Play request)
+        ('<link rel="stylesheet" href="%s">'%play, True),
+        ('<link rel="preload" as="script" href="%s">'%play, True),
+        ('<link href="%s">'%play, True),
+        ('<script src="%s"></script>'%play, True),
+        ('<img src="%s">'%play, True),
+        ('<iframe src="%s"></iframe>'%play, True),
+        ('<link rel="canonical" href="%s">'%play, False),
+        ('<link rel="alternate" href="%s">'%play, False),
+        ('<a id="play-game" href="%s">Play</a>'%play, False),
+    ]
+    ok=True
+    for markup,expected in cases:
+        p=Refs(); p.feed(markup)
+        named=any('madebymatt-play.uk' in v for (t,a,v) in p.automatic)
+        passed=named==expected; ok=ok and passed
+        print(f"  [{'ok' if passed else 'FAIL'}] {'named' if named else 'not named'}: {markup}")
+    print('self-test','PASS' if ok else 'FAIL')
+    return ok
+
+
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path,default=HERE/'output');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path,default=HERE/'output');parser.add_argument('--self-test',action='store_true');args=parser.parse_args()
+    if args.self_test: raise SystemExit(0 if self_test() else 1)
     raise SystemExit(0 if check(args.output) else 1)

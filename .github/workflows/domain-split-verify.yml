@@ -59,7 +59,10 @@ jobs:
       - name: Verify publication separation and retained education
         run: |
           python domain-split/check_publications.py
+          python domain-split/check_education_separation.py --self-test
           python domain-split/check_education_separation.py
+          python domain-split/verify_education_tree_has_no_games.py --self-test
+          python domain-split/verify_education_tree_has_no_games.py --output domain-split/output
           python domain-split/check_education_support.py
           python domain-split/check_navigation_injection.py
           python domain-split/check_usage_build.py --output domain-split/output
