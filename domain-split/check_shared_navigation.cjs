@@ -30,7 +30,7 @@ const restricted = ['/for/pupils/', '/resources/', '/Lessons/', '/Lessons/primar
           assert(await skip.evaluate(el => {
             const r = el.getBoundingClientRect();
             const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-            return hit === el || el.contains(hit);
+            return document.activeElement === el && (hit === el || el.contains(hit));
           }), 'Skip link stays above the header: ' + route);
         }
         const summary = page.locator(menu + ' > summary');
