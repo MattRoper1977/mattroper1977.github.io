@@ -121,6 +121,25 @@ def external_requests(urls: list[str], base: str) -> list[str]:
     return [u for u in urls if not u.startswith(origin) and not u.startswith("data:")]
 
 
+def check_education_pupil_brand(page: Any, findings: Findings) -> None:
+    """Require the published pupil header's single, visible learning-home link."""
+    brand = page.locator(
+        'header[data-mbm-navigation="education"] a.mbm-unified-brand'
+    )
+    count = brand.count()
+    findings.check(count == 1, "pupil page has exactly one Education brand link",
+                   f"found {count}")
+    if count != 1:
+        return
+    findings.check(brand.is_visible(), "pupil Education brand link is visible")
+    href = brand.get_attribute("href")
+    # An absent href also fails. A blacklist alone accepted None and could
+    # miss an adult audience route or an external destination.
+    findings.check(href == "/",
+                   "stored homepage preference keeps the pupil brand at learning home",
+                   f"brand {href!r}")
+
+
 def run(base: str, findings: Findings, artifacts: Path, publication="legacy") -> None:
     from playwright.sync_api import sync_playwright
 
@@ -315,10 +334,7 @@ def run(base: str, findings: Findings, artifacts: Path, publication="legacy") ->
                                f"landing on {route} preserves the existing homepage preference",
                                f"stored {stored!r}")
             page.goto(base.rstrip("/") + "/for/pupils/", wait_until="networkidle")
-            pupil_brand = page.get_attribute("a.brand", "href")
-            findings.check(pupil_brand not in ADULT_CTA and pupil_brand != "/main/",
-                           "stored homepage preference cannot put an adult destination behind the pupil brand",
-                           f"brand {pupil_brand!r}")
+            check_education_pupil_brand(page, findings)
             context.close()
         else:
             # H: the write asymmetry. /main/ is a homepage a visitor can choose,
@@ -380,7 +396,7 @@ def run(base: str, findings: Findings, artifacts: Path, publication="legacy") ->
 
 
 def self_test() -> None:
-    """Prove the two assertions that carry the most weight can actually fail,
+    """Prove the privacy, navigation and layout assertions can actually fail,
     using local fixtures rather than the real site."""
     from playwright.sync_api import sync_playwright
 
@@ -457,6 +473,32 @@ def self_test() -> None:
         else:
             print("  [FAIL] landing-write control did not fire", file=sys.stderr)
             failures += 1
+        context.close()
+
+        # Control 5: exercise the published header contract, including the
+        # obsolete source selector that caused the production-only timeout.
+        context = browser.new_context()
+        page = context.new_page()
+        cases = [
+            ("approved learning home", '<a class="mbm-unified-brand" href="/">Home</a>', True),
+            ("legacy brand only", '<a class="brand" href="/">Home</a>', False),
+            ("missing href", '<a class="mbm-unified-brand">Home</a>', False),
+            ("hidden brand", '<a class="mbm-unified-brand" href="/" style="display:none">Home</a>', False),
+            ("duplicate brands", '<a class="mbm-unified-brand" href="/">Home</a>' * 2, False),
+        ]
+        for href in [*ADULT_CTA, "/main/", "/for/teachers/", "https://example.invalid/"]:
+            cases.append((f"unsafe destination {href}",
+                          f'<a class="mbm-unified-brand" href="{href}">Home</a>', False))
+        for label, markup, should_pass in cases:
+            page.set_content('<header data-mbm-navigation="education">' + markup + '</header>')
+            probe = Findings()
+            check_education_pupil_brand(page, probe)
+            if (not probe.failures) == should_pass:
+                print(f"  [PASS] Education pupil brand control: {label}")
+            else:
+                print(f"  [FAIL] Education pupil brand control: {label}: {probe.failures}",
+                      file=sys.stderr)
+                failures += 1
         context.close()
 
         browser.close()

@@ -271,6 +271,17 @@ jobs:
           python3 -m pip install --disable-pip-version-check playwright==1.54.0
           python3 -m playwright install --with-deps chromium
 
+      - name: Prove browser privacy, layout and published pupil-brand controls
+        run: python3 tools/verify_audience_discovery_browser.py --self-test
+
+      - name: Check the published Education audience pages before merge
+        if: github.event_name == 'pull_request'
+        run: |
+          MBM_BASE_URL=https://madebymatt.uk/ \
+          python3 tools/verify_audience_discovery_browser.py --publication education \
+            --artifacts audit-output/published-education \
+            --report audit-output/published-education/browser-results.json
+
       - name: Browser proof at 390px and 1440px, 320px reflow, no-JS and no third party at load
         shell: bash
         run: |
