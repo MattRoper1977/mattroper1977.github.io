@@ -216,4 +216,93 @@ class PublishedWitnessControls(unittest.TestCase):
                 handler.redirect_request(request, None, 302, 'Found', {}, destination)
 
 
+
+class ProfessionalStatsControls(unittest.TestCase):
+    """Exercise the real live verifier against builder-rendered shared stats."""
+    @classmethod
+    def setUpClass(cls):
+        import importlib.util
+        import verify_professional_site_live as professional
+        spec = importlib.util.spec_from_file_location(
+            'stats_fixture_builder', professional.ROOT / 'domain-split/usage_discovery.py')
+        builder = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(builder)
+        # The fixture comes from the publication renderer, not from the markers
+        # under test; otherwise deleting a required marker could pass itself.
+        cls.shared_stats = builder.shell('Shared usage statistics',
+            builder.popularity() + builder.preferences() +
+            '<p class="mbm-usage"><a href="/stats/on-this-device/">'
+            'View legacy counts stored on this device</a></p>')
+        cls.legacy_stats = (professional.ROOT / 'stats/index.html').read_text()
+
+    def evaluate_stats(self, markup, *, publication='education', broken_asset=None):
+        from unittest.mock import patch
+        import verify_professional_site_live as professional
+        pages = (professional.EDUCATION_PAGE_MARKERS if publication == 'education'
+                 else professional.PAGE_MARKERS)
+        assets = (professional.EDUCATION_ASSETS if publication == 'education'
+                  else professional.ASSETS)
+        json_paths = (professional.EDUCATION_JSON_SURFACES if publication == 'education'
+                      else professional.JSON_SURFACES)
+        requested = []
+        def fixture_fetch(base, path, nonce, timeout):
+            requested.append(path)
+            content_type = 'text/html'
+            status = 200
+            if path == '/stats/':
+                body = markup.encode()
+            elif path == '/stats/on-this-device/':
+                body = self.legacy_stats.encode()
+            elif path in pages:
+                body = '\n'.join(pages[path]).encode()
+            elif path in assets:
+                body = assets[path].read_bytes()
+                if path == broken_asset:
+                    body = b'// Missing published usage runtime'
+                content_type = 'application/octet-stream'
+            elif path in json_paths:
+                body = b'{"fixture": true}'
+                content_type = 'application/json'
+            elif path == '/__mbm_professional_live_verify_deliberate_404__':
+                status, body = 404, b'Not found'
+            else:
+                raise AssertionError('Unexpected live-proof route: ' + path)
+            return status, {'Content-Type': content_type}, body, base.rstrip('/') + path
+        with patch.object(professional, 'fetch', fixture_fetch):
+            result = professional.verify_once(professional.DEFAULT_BASE, 1, 1, None, publication)
+        self.assertEqual(set(requested), set(pages) | set(assets) | set(json_paths) |
+                         {'/__mbm_professional_live_verify_deliberate_404__'})
+        return result
+
+    def test_current_shared_stats_and_explicit_legacy_destination_pass(self):
+        result = self.evaluate_stats(self.shared_stats)
+        self.assertTrue(result['passed'], result['errors'])
+        self.assertIn('/stats/on-this-device/', result['pages'])
+        self.assertTrue(result['assets']['/assets/usage-client.js']['identical'])
+
+    def test_missing_stats_runtime_lists_or_measurement_status_fail(self):
+        for marker in ['<script defer src="/assets/usage-client.js"></script>',
+                       'data-usage-list="lessons"', 'data-usage-list="packs"',
+                       'data-usage-list="games"', 'data-usage-measured-since']:
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.shared_stats)
+                result = self.evaluate_stats(self.shared_stats.replace(marker, '', 1))
+                self.assertFalse(result['passed'])
+                self.assertIn(marker, result['pages']['/stats/']['missing_markers'])
+                self.assertTrue(all(error.startswith('/stats/:') for error in result['errors']))
+
+    def test_correct_stats_markup_cannot_hide_broken_served_runtime(self):
+        result = self.evaluate_stats(self.shared_stats, broken_asset='/assets/usage-client.js')
+        self.assertFalse(result['passed'])
+        self.assertFalse(result['assets']['/assets/usage-client.js']['identical'])
+        self.assertEqual(result['pages']['/stats/']['missing_markers'], [])
+
+    def test_legacy_mode_keeps_its_original_stats_contract(self):
+        result = self.evaluate_stats(self.legacy_stats, publication='legacy')
+        self.assertTrue(result['passed'], result['errors'])
+        self.assertNotIn('/stats/on-this-device/', result['pages'])
+        self.assertNotIn('/assets/usage-client.js', result['assets'])
+        self.assertFalse(self.evaluate_stats(self.shared_stats, publication='legacy')['passed'])
+
+
 if __name__ == '__main__': unittest.main(verbosity=2)
