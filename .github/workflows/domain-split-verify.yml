@@ -25,16 +25,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          # Exact reviewed discovery and David Humanities candidate;
+          # Pinned reviewed original Science packs and public discovery;
           # preserve the original lesson routes and paired catalogue contract.
-          ref: b37a5b25e456f95b533ac8ca03345856e2a734cd
+          ref: c629e508e2058b7c8e7dd3c20d6c191acecafdf0
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Matt-s-Apps-
           # Exact paired catalogue contract; Apps resources are unchanged.
-          ref: b83cdec212c0b902cdb8ecc33b7c01bf618bf8dd
+          ref: 2db4a9cf99c99b8cd9e7034cf42adbad9691ae1c
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -84,6 +84,7 @@ jobs:
       - name: Mount and exercise the actual education publication
         shell: bash
         env:
+          MBM_REQUIRE_TEACHING_PACKS: 'true'
           MBM_EDUCATION_ORIGIN: http://127.0.0.1:4173
           MBM_NAVIGATION_OUTPUT: audit-output/education-navigation
           MBM_PLAY_ORIGIN: http://127.0.0.1:4174

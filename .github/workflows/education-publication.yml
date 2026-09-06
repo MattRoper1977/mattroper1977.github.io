@@ -44,7 +44,7 @@ jobs:
           repository: MattRoper1977/Lessons
           # Pinned reviewed companion source, 2026-09-06. The Lessons caller
           # uses its own current commit, so subsequent lesson work stays live.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || 'b37a5b25e456f95b533ac8ca03345856e2a734cd' }}
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || 'c629e508e2058b7c8e7dd3c20d6c191acecafdf0' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
           repository: MattRoper1977/Matt-s-Apps-
           # Pinned reviewed companion source, 2026-09-06. The Apps caller
           # instead builds its own current source commit.
-          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || 'b83cdec212c0b902cdb8ecc33b7c01bf618bf8dd' }}
+          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || '2db4a9cf99c99b8cd9e7034cf42adbad9691ae1c' }}
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5

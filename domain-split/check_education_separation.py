@@ -48,6 +48,28 @@ class Refs(HTMLParser):
         if tag in {'canvas','iframe','embed','object','video','audio'}: self.engines.append(tag)
 
 
+def registry_errors(output):
+    # Frozen installed records remain byte-equivalent, accepted 6 September.
+    # Matt's new teaching downloads add only reviewed download metadata. No
+    # historical events, counters, configuration or backend data are replayed.
+    baseline_sha = '9fafffbe3b08c43ec10fa17c410bd54719cc90edffc0db46fdda0c8edbf0f0d4'
+    additions_path = HERE/'science-download-usage-additions.json'
+    if sha256(additions_path.read_bytes()).hexdigest() != '32742423b04a5f477f8f97a2a087845c60a45f0d71c2a73caa5cb9f1bf9c9762':
+        return ['Unreviewed Science download registration metadata']
+    approved = json.loads(additions_path.read_text())
+    rows = json.loads((output/'usage-registry.json').read_text())
+    prefix = '/Lessons/Science_Teesside/Teaching_Packs/'
+    extensions = [r for r in rows if r['route'].startswith(prefix)]
+    retained = [r for r in rows if not r['route'].startswith(prefix)]
+    errors = []
+    installed = (output/'education-lessons/Science_Teesside/Teaching_Packs/index.html').is_file()
+    if extensions != (approved if installed else []):
+        errors.append('Science download additions differ from the reviewed installed pack')
+    if sha256((json.dumps(retained,ensure_ascii=False,indent=2)+'\n').encode()).hexdigest() != baseline_sha:
+        errors.append('Installed combined registry records changed')
+    return errors
+
+
 def check(output):
     census=json.loads((HERE.parent/'reports/v6fin/V6FIN_W7_69_ROUTE_CENSUS_2026-09-03.json').read_text())['rows']
     excluded={key(row['normalizedDecodedRoute']) for row in census} - {key(route) for route in RETAINED}
@@ -131,9 +153,7 @@ def check(output):
         part='education-lessons' if route.startswith('/Lessons/') else 'education-apps'
         relative=route.split('/',2)[2]; path=output/part/relative
         if not path.is_file() or 'data-game-moved' in path.read_text(): fail(route,'Reviewed educational activity missing or migrated')
-    # Frozen installed combined registry, accepted 6 September 2026; no replay.
-    registry=output/'usage-registry.json'
-    if sha256(registry.read_bytes()).hexdigest()!='9fafffbe3b08c43ec10fa17c410bd54719cc90edffc0db46fdda0c8edbf0f0d4': fail('usage-registry.json','Installed combined registry changed')
+    for message in registry_errors(output): fail('usage-registry.json',message)
     report={'status':'FAIL' if failures else 'PASS','coverage':counts,'intentionally_retained_activities':len(RETAINED),'failures':failures,'scope':'Complete static emitted Education walk; does not guarantee school-filter acceptance.'}
     (output/'education-separation-check.json').write_text(json.dumps(report,indent=2)+'\n')
     print(json.dumps(report,indent=2))

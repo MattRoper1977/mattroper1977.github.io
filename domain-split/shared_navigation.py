@@ -52,7 +52,7 @@ def header(route, starting, adult=False, pupil=False, theme=False, primary=False
                  ('/Lessons/?view=saved', 'Saved lessons'),
                  ('/Lessons/?view=recommended', 'Recommended versions')]
     if adult:
-        shortcuts += [('/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/index.html', 'David’s cover packs'),
+        shortcuts += [('/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/index.html', 'Cover teaching packs'),
                       ('/Matt-s-Apps-/PDF_Studio.html', 'PDF Studio'),
                       ('/Lessons/?subject=ASDAN%20%26%20life%20skills&year=all', 'ASDAN learning resources'),
                       ('/teach/', 'Teaching hub'), ('/education-hub/', 'Education Hub')]

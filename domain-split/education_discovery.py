@@ -79,7 +79,7 @@ def collections():
             '<a href="/asdan/">ASDAN Register</a>.</p></article>'
             '<article class="collection-card"><h3>Worksheets, packs &amp; downloads</h3>'
             '<p>Open a subject collection for its existing teaching sheets and downloads.</p>'
-            '<a href="/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/index.html">David’s Humanities &amp; RE cover packs</a>'
+            '<a href="/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/index.html">Humanities &amp; RE teaching packs</a>'
             '<a href="/Lessons/Science_Teesside/index.html">Science resources &amp; packs</a>'
             '<a href="/resources/?q=worksheet">Find worksheets</a>'
             '<a href="/resources/?type=Support">Browse support packs</a>'
