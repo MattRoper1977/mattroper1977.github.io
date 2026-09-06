@@ -29,8 +29,20 @@ const routes = [
         const response=await page.goto(new URL('/Lessons/'+route,origin).href,{waitUntil:'networkidle'});
         assert.equal(response.status(),200);
         assert.equal(await page.locator('script[src$="/assets/catalogue/lesson-navigation.js"]').count(),1);
-        await page.locator('#mbm-lesson-tools').waitFor({state:'visible'});
-        assert.equal(await page.locator('#mbm-lesson-tools').count(),1);
+        if (route.startsWith('Science_Teesside/Build/v4_fieldops/')) {
+          // These lessons deliberately retain their native toolbar; the adapter updates its return link.
+          const home = page.locator('a.mbmhome');
+          await home.waitFor({state:'visible'});
+          assert.equal(await home.count(),1);
+          assert.equal(new URL(await home.getAttribute('href'),page.url()).pathname,'/Lessons/');
+          await page.locator('#themeToggle').click();
+          assert(await page.locator('body').evaluate(node=>node.classList.contains('light')));
+          await page.locator('#themeToggle').click();
+          assert.equal(await page.locator('#mbm-lesson-tools').count(),0);
+        } else {
+          await page.locator('#mbm-lesson-tools').waitFor({state:'visible'});
+          assert.equal(await page.locator('#mbm-lesson-tools').count(),1);
+        }
         assert.deepEqual(errors,[],route+' must keep its actual scripts intact');
         const screenshot=`${width}-${String(index+1).padStart(2,'0')}.png`;
         await page.screenshot({path:path.join(output,screenshot)});
