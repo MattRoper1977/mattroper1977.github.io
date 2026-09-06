@@ -102,7 +102,7 @@ def render_page(preview, kind, origin, config):
             '<meta name="theme-color" content="#161d3d"><title>' + titles[kind] + '</title>'
             '<meta name="description" content="' + titles[kind] + '">'
             '<link rel="canonical" href="' + origin + path + '"><link rel="icon" href="/favicon.svg">'
-            '<style>' + css + '</style></head><body data-site-kind="' + dataset + '" data-page="' + kind + '">'
+            '<style>' + css + '</style>' + ('<link rel="stylesheet" href="/assets/education-navigation.css">' if kind != 'games' else '') + '</head><body data-site-kind="' + dataset + '" data-page="' + kind + '">'
             '<a class="skip" href="#content">Skip to content</a><main id="content">' + body + '</main>'
             '<noscript><p class="wrap">Search needs JavaScript. The subject, pathway and navigation links still work.</p></noscript>'
             '<script defer src="/assets/domain-site.js"></script></body></html>')
@@ -188,7 +188,7 @@ def main():
     hud, n = re.subn(r'var HOMES = \{[^\n]*\};', 'var HOMES = {"games":{r:"/games/",l:"Games homepage"}};', hud)
     assert n == 1, 'HUD menu anchor changed'
     (games / 'hud.js').write_text(hud)
-    build_preview.build()
+    build_preview.build(args.lessons.resolve())
     preview = (HERE / 'preview.html').read_text()
     preview_data = json.loads(re.search(r'<script type="application/json" id="preview-data">(.*?)</script>', preview, re.S)[1])
     extra = [build_preview.compact(search_by_route[normal(r['normalizedDecodedRoute'])]) for r in rows if r['populationClass'] != 'canonical-shelf']
@@ -209,6 +209,7 @@ def main():
     put(games, 'privacy/index.html', games_privacy(config['games_origin']))
     for kind, path in [('home','index.html'), ('home','main/index.html'), ('teachers','for/teachers/index.html'), ('pupils','for/pupils/index.html')]:
         put(education, path, render_page(preview, kind, config['education_origin'], config))
+    copy_file(HERE / 'education-navigation.css', education, 'assets/education-navigation.css')
     for target in [games, education]:
         copy_file(HERE / 'site-runtime.js', target, 'assets/domain-site.js')
         copy_file(ROOT / 'favicon.svg', target, 'favicon.svg')
