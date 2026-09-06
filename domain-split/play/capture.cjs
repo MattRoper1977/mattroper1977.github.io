@@ -45,10 +45,10 @@ async function action(page,id){
   const rest=page.getByRole('button',{name:'Interact: Rest & restore',exact:true});
   if(await rest.isVisible()){await rest.press('Enter');await wait(1400);}
   for(let i=0;i<8;i++){const next=page.getByRole('button',{name:'Continue dialogue',exact:true});if(!await next.isVisible())break;await next.press('Enter');await wait(300);}
-  const canvas=page.locator('#ui-canvas');await canvas.focus();const observed=[];
+  const canvas=page.locator('#ui-canvas');await wait(350);await canvas.focus();const observed=[];
   // Normal focused keyboard taps; wait for the real walking animation, which
   // can run slower than wall time in the software renderer. Observations only.
-  for(const [key,n] of [['ArrowUp',3],['ArrowRight',4],['ArrowUp',3],['ArrowLeft',2]]){for(let i=0;i<n;i++){await page.waitForFunction(()=>window.__EMBERWILD__.player.motionState==='IDLE');await canvas.press(key);await page.waitForFunction(()=>window.__EMBERWILD__.player.motionState==='IDLE');await wait(150);observed.push(await page.evaluate(()=>({grid:window.__EMBERWILD__.player.grid,steps:window.__EMBERWILD__.steps,focus:document.activeElement.id})));}}
+  for(const [key,n] of [['ArrowUp',3],['ArrowRight',4],['ArrowUp',3],['ArrowLeft',2]]){for(let i=0;i<n;i++){await page.waitForFunction(()=>window.__EMBERWILD__.player.motionState===window.EmberwildEngine.MoveState.IDLE);await canvas.press(key);await page.waitForFunction(()=>window.__EMBERWILD__.player.motionState===window.EmberwildEngine.MoveState.IDLE);await wait(150);observed.push(await page.evaluate(()=>({grid:window.__EMBERWILD__.player.grid,steps:window.__EMBERWILD__.steps,focus:document.activeElement.id})));fs.writeFileSync(path.join(out,'emberwild-walk-observations.json'),JSON.stringify(observed,null,2));}}
   fs.writeFileSync(path.join(out,'emberwild-walk-observations.json'),JSON.stringify(observed,null,2));
   return 'Restore a companion at the hearth, then walk from Wayfinder’s Rest into the village.';
  }

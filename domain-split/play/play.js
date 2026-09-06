@@ -70,6 +70,7 @@
     const p=browseSnapshot(),back=event?.persisted||performance.getEntriesByType('navigation')[0]?.type==='back_forward';if(p&&p.search===location.search&&(cameFromGame||back))requestAnimationFrame(()=>scrollTo(0,p.y));
   }
   function reset() {form.reset();render();}
+  document.getElementById('hero-search').addEventListener('submit',e=>{e.preventDefault();form.elements.q.value=document.getElementById('hero-query').value;render();document.getElementById('browse').scrollIntoView();form.elements.q.focus({preventScroll:true});});
   form.addEventListener('submit',e=>{e.preventDefault();render();});
   form.addEventListener('input',()=>render());
   form.addEventListener('change',e=>{if(e.target.tagName==='SELECT')render();});
@@ -116,7 +117,7 @@
     const g=activeGame;if(!g||!g.media.video)return;stopMedia();
     const figure=document.createElement('figure'),video=document.createElement('video'),caption=document.createElement('figcaption');
     video.controls=true;video.preload='none';video.playsInline=true;video.poster=g.media.poster;video.src=g.media.video;video.setAttribute('aria-label',g.title+' gameplay preview, silent');
-    caption.textContent=g.media.duration_seconds+'-second silent gameplay. '+g.media.description;figure.append(video,caption);document.getElementById('dialog-media').append(figure);
+    caption.textContent=Math.round(g.media.duration_seconds)+'-second silent gameplay. '+g.media.description;figure.append(video,caption);document.getElementById('dialog-media').append(figure);
     video.addEventListener('error',()=>{if(!video.isConnected||activeGame!==g)return;document.getElementById('media-status').textContent='This preview could not play. You can still open the game.';stopFailedVideo(video,g);},{once:true});
     video.play().catch(()=>{if(!video.isConnected||activeGame!==g)return;document.getElementById('media-status').textContent='Use the video Play control to start this preview.';});
   }
