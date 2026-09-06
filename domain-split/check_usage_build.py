@@ -27,10 +27,12 @@ def check(output, baseline=None):
         if baseline and ('download_request' in row['event_types'] or 'game_launch' in row['event_types']):
             old=usage.local_file(baseline,row['route'],row['source']);assert old.read_bytes()==path.read_bytes(),row['route'];checked+=1
     for part,source in [('education-site','education'),('games','play')]:
+        assert usage.read(output/part/'data/usage-registry.json') == [row for row in rows if row['source']==source], 'Public registry must match its own source only'
         config=usage.read(output/part/'data/usage-config.json');assert config['source']==source;assert config['geography_enabled'] is False
         assert set(config)=={'schema','enabled','source','service_origin','allowed_origins','geography_enabled','default_choice'}
         assert config['default_choice']=='off'
         privacy=(output/part/'privacy/index.html').read_text();assert 'id="shared-usage"' in privacy and 'data-usage-choice="deny"' in privacy
+    if baseline: assert (output/'usage-registry.json').read_bytes()==(baseline/'usage-registry.json').read_bytes(), 'Installed combined registry changed; review before any backend action'
     account=(output/'education-site/assets/mbm-account.js').read_text();assert account.count('    readUsageDashboard: readUsageDashboard,')==1
     assert "sb.functions.invoke('owner-usage?source=' + source, { method: 'GET' })" in account
     assert (output/'education-site/stats/on-this-device/index.html').is_file()

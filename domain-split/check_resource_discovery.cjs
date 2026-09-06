@@ -59,6 +59,7 @@ function expectedDestinations() {
   // builder or sharing its catalogue-rendering/reachability implementation.
   const overrides = JSON.parse(execFileSync('python', ['-c', 'import ast,json,sys; t=ast.parse(open(sys.argv[1]).read()); print(json.dumps(next(ast.literal_eval(n.value) for n in t.body if isinstance(n,ast.Assign) and any(isinstance(x,ast.Name) and x.id=="EDUCATION_OVERRIDES" for x in n.targets))))', path.join(siteRoot, 'domain-split/build_preview.py')], { encoding: 'utf8' }));
   for (const route of Object.keys(overrides)) educationOverrides.add(routeOf(route));
+  for (const route of ['/experiences/medevac-frontier/','/resources/medevac-frontier/']) excludedGameRoutes.add(routeOf(route));
   const old = sourceJSON(siteRoot, 'data/mbm-search-index.json').entries;
   for (const row of old) if (row.category === 'game' && !educationOverrides.has(routeOf(row.route))) excludedGameRoutes.add(routeOf(row.route));
   for (const row of old) {
@@ -252,6 +253,7 @@ async function catalogueChecks(browser, expected) {
       }
       for (const item of await visibleLinks(page, 'a[href]')) { const key = routeOf(item.href); if (key !== null) navigation.add(key); }
     }
+    assert.deepEqual([...cards.keys()].filter(route=>excludedGameRoutes.has(route)), [], 'Recreational resources must not appear in Education discovery');
     const missing = [];
     for (const entry of expected.values()) {
       entry.rendered = cards.get(entry.route) || (entry.hub && navigation.has(entry.route) ? { navigation: true } : null);

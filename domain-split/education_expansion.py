@@ -75,20 +75,6 @@ def play_showcase(featured, section_id='made-by-matt-play'):
 
 def refresh(output, lessons, apps, site_source):
     site = output/'education-site'
-    games = output/'games'
-    media = []
-    source_index = json.loads((site_source/'data/mbm-search-index.json').read_text())['entries']
-    by_id = {entry['id']: entry for entry in source_index}
-    # Editorial IDs, short labels and footage are chosen here; destinations
-    # come from the preserved resource records and must exist in the publication.
-    featured = [{**game, 'route': by_id[game['id']]['route']} for game in GAMES]
-    for game in featured:
-        assert (games/game['route'].strip('/')/'index.html').is_file(), 'Game destination missing'
-        for name in (game['poster'], game['clip']):
-            source = site_source/'assets/video'/name
-            target = site/'assets/video'/name
-            assert source.is_file() and target.read_bytes() == source.read_bytes(), name
-            media.append('/assets/video/'+name)
     shutil.copyfile(site_source/'domain-split/education-expansion.css', site/'assets/education-expansion.css')
     for relative in ('index.html', 'main/index.html', 'for/teachers/index.html', 'for/pupils/index.html'):
         path = site/relative
@@ -101,7 +87,6 @@ def refresh(output, lessons, apps, site_source):
         if relative in ('index.html', 'main/index.html'):
             footer = doc.xpath('//footer')[0]
             footer.addprevious(fragment(audience_directory()))
-            footer.addprevious(fragment(play_showcase(featured)))
         footer = doc.xpath('//footer')[0]
         menus = footer.xpath('.//nav')
         if menus:
@@ -119,7 +104,7 @@ def refresh(output, lessons, apps, site_source):
     slots = doc.xpath('//*[@id="audience-play-showcase"]')
     if len(slots) != 1:
         raise ValueError('Parents page must expose one Play showcase slot')
-    slots[0].getparent().replace(slots[0], fragment(play_showcase(featured, 'audience-play-showcase')))
+    slots[0].getparent().replace(slots[0], fragment('<p class="wrap mbm-external-play">Looking for recreational games? <a href="'+PLAY+'/">Made by Matt Play — separate games website</a>.</p>'))
     save_doc(parent_path, doc)
     # Keep the new audience destination discoverable alongside the old ones.
     for slug, _, _ in AUDIENCES:
@@ -151,8 +136,8 @@ def refresh(output, lessons, apps, site_source):
     discovery['supplemental_discovery_records'] = len(extra)
     discovery_path.write_text(json.dumps(discovery,ensure_ascii=False,indent=2)+'\n')
     report = {'audience_routes': ['/for/'+slug+'/' for slug, _, _ in AUDIENCES],
-              'primary': '/Lessons/primary/', 'play_origin': PLAY, 'featured_game_ids': [g['id'] for g in GAMES],
-              'existing_media': media, 'new_game_payloads': 0, 'autoplay': False}
+              'primary': '/Lessons/primary/', 'play_origin': PLAY, 'featured_game_ids': [],
+              'existing_media': [], 'new_game_payloads': 0, 'autoplay': False}
     (site/'data/education-expansion.json').write_text(json.dumps(report, indent=2)+'\n')
     return report
 

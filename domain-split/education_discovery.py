@@ -97,7 +97,7 @@ def refresh(output, lessons, apps, site_source):
         raise ValueError('Complete Apps source is required for resource discovery')
     site = output/'education-site'
     app_root = output/'education-apps'
-    catalogue = read(apps/'apps.json')
+    catalogue = read(app_root/'apps.json')
     extras = []
     for space in catalogue['spaces']:
         for item in space['items']:

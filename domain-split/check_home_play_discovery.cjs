@@ -74,38 +74,13 @@ function watch(page) {
   page.on('pageerror', error => report.pageErrors.push({ url: page.url(), message: error.message }));
   return requests;
 }
-async function showcase(page, selector, requests, start) {
-  const root = page.locator(selector);
-  await root.scrollIntoViewIfNeeded();
-  assert(await root.isVisible(), 'Play showcase is hidden');
-  assert.equal(await root.locator('.mbm-play-card').count(), 3);
-  assert.equal(await root.locator('video').count(), 3);
-  const cards = [];
-  for (const game of featured) {
-    const card = root.locator('.mbm-play-card').filter({ has: page.getByRole('heading', { name: game.title, exact: true }) });
-    assert.equal(await card.count(), 1, 'Missing featured game ' + game.title);
-    const video = card.locator('video');
-    await video.scrollIntoViewIfNeeded(); await settle(page);
-    const state = await video.evaluate(el => ({ controls: el.controls, paused: el.paused, autoplay: el.autoplay, loop: el.loop, preload: el.preload, playsInline: el.playsInline, poster: el.getAttribute('poster'), name: el.getAttribute('aria-label'), time: el.currentTime }));
-    assert(state.controls && state.paused && !state.autoplay && !state.loop && state.preload === 'none' && state.playsInline && state.time === 0, JSON.stringify(state));
-    assert.equal(state.poster, '/assets/video/' + game.poster);
-    assert.match(state.name, /gameplay preview, silent$/);
-    assert.equal(await video.locator('source').getAttribute('src'), '/assets/video/' + game.clip);
-    assert.match(await card.locator('figcaption').innerText(), new RegExp('^' + game.seconds + '-second silent preview\\.'));
-    const button = card.getByRole('link', { name: 'Play ' + game.title, exact: true });
-    assert.equal(await button.getAttribute('href'), canonicalPlay + game.route);
-    await target(button);
-    cards.push({ game: game.title, route: canonicalPlay + game.route, manualPreview: state });
-  }
-  const explorer = root.getByRole('link', { name: 'Explore Made by Matt Play', exact: true });
-  assert.equal(await explorer.getAttribute('href'), canonicalPlay + '/'); await target(explorer);
-  await page.waitForTimeout(250);
-  const beforeSelection = requests.slice(start);
-  assert(!beforeSelection.some(r => new URL(r.url).hostname.endsWith('madebymatt-play.uk')), 'Education automatically requested the games domain');
-  assert(!beforeSelection.some(r => featured.some(g => new URL(r.url).pathname === '/assets/video/' + g.clip)), 'Preview fetched before selection despite preload=none');
-  assert.equal(await root.locator('iframe').count(), 0, 'Showcase embeds a live game');
+async function educationOnly(page, requests, start) {
+  assert.equal(await page.locator('.mbm-play-showcase, .mbm-play-card, [data-play-resource]').count(), 0);
+  assert.equal(await page.locator('video, iframe').count(), 0);
+  assert(!/Apex Kick|Voxel Frontier|Off-Brand|Medevac Frontier/i.test(await page.locator('main').innerText()));
+  assert(!requests.slice(start).some(r => new URL(r.url).hostname.endsWith('madebymatt-play.uk')), 'Education automatically requested Play');
   await noOverflow(page);
-  return { cards, requestsBeforeSelection: beforeSelection.length, automaticGameRequests: 0, automaticClipRequests: 0 };
+  return { recreationalPromotions: 0, recreationalMedia: 0, automaticPlayRequests: 0 };
 }
 
 (async () => {
@@ -125,7 +100,7 @@ async function showcase(page, selector, requests, start) {
       for (const game of featured) {
         assert.equal((await api.request.get(url(game.route, play))).status(), 200, game.route);
         for (const name of [game.poster, game.clip]) {
-          const response = await api.request.get(url('/assets/video/' + name));
+          const response = await api.request.get(url('/assets/video/' + name, play));
           assert.equal(response.status(), 200, name);
           const published = await response.body(), source = fs.readFileSync(path.join(siteRoot, 'assets/video', name));
           assert.equal(sha(published), sha(source), 'Showcase media differs from the real existing asset: ' + name);
@@ -136,7 +111,7 @@ async function showcase(page, selector, requests, start) {
       return { media, featuredDestinations: 3, audienceDestinations: 6, primaryDestination: true };
     });
     await api.close();
-    for (const width of [390, 1280]) {
+    for (const width of [320, 390, 1280]) {
       const context = await mappedContext(browser, width), page = await context.newPage();
       page.setDefaultTimeout(15000); const requests = watch(page);
       for (const home of ['/', '/main/']) await check(`${width}-${home === '/' ? 'home' : 'main'}-audiences-primary-and-play`, async () => {
@@ -152,19 +127,36 @@ async function showcase(page, selector, requests, start) {
         assert.equal(await page.locator('#audiences .mbm-audience-card').count(), 6);
         for (const route of audienceRoutes) await target(page.locator(`#audiences a[href="${route}"]`));
         const audiences = await shot(page, prefix + '-audiences', page.locator('#audiences'));
-        const details = await showcase(page, '#made-by-matt-play', requests, start);
-        const preview = await shot(page, prefix + '-showcase', page.locator('#made-by-matt-play'));
+        const details = await educationOnly(page, requests, start);
         // Inspect each assembled home before the /#audiences shortcut leaves
         // /main/. Then exercise the actual shared-navigation destination.
         await nav.getByRole('link', { name: 'Families & organisations', exact: true }).click();
         await page.waitForURL(url('/#audiences'));
         assert(await page.locator('#audiences').isVisible());
-        return { inspectedRoute: home, audienceShortcut: page.url(), audiences: audienceRoutes, primary: '/Lessons/primary/', ...details, screenshots: [entry, audiences, preview] };
+        return { inspectedRoute: home, audienceShortcut: page.url(), audiences: audienceRoutes, primary: '/Lessons/primary/', ...details, screenshots: [entry, audiences] };
       }, page);
-      await check(`${width}-parents-showcase`, async () => {
+      await check(`${width}-parents-education-only`, async () => {
         const start = requests.length; await goto(page, '/for/parents-carers/');
-        const result = await showcase(page, '#audience-play-showcase', requests, start);
-        return { ...result, screenshot: await shot(page, `${width}-parents-showcase`, page.locator('#audience-play-showcase')) };
+        const result = await educationOnly(page, requests, start);
+        const external = page.locator('.mbm-external-play a'); assert.equal(await external.getAttribute('href'), canonicalPlay+'/');
+        return { ...result, screenshot: await shot(page, `${width}-parents-education-only`) };
+      }, page);
+      await check(`${width}-education-search-excludes-recreational-games`, async () => {
+        const evidence=[];
+        for(const [route,input,cards] of [['/resources/','#rxSearch','#rxOut .rx-cardx'],['/Matt-s-Apps-/','#search','#groups .card']]){
+          await goto(page,route);
+          await page.locator(cards).first().waitFor({state:'visible'});
+          for(const query of ['Apex Kick','Voxel','Off-Brand','Medevac']){
+            await page.locator(input).fill(query);
+            await page.waitForFunction(selector=>[...document.querySelectorAll(selector)].every(el=>!el.getClientRects().length),cards);
+            assert.equal(await page.locator(cards+':visible').count(),0);
+            evidence.push({route,query,results:0});
+          }
+          await page.locator(input).fill('PDF');
+          await page.locator(cards+':visible').first().waitFor({state:'visible'});
+          assert((await page.locator(cards+':visible').first().innerText()).includes('PDF'),'Positive educational search control missing');
+        }
+        return evidence;
       }, page);
       await check(`${width}-teacher-and-pupil-explore-links`, async () => {
         for (const route of ['/for/teachers/', '/for/pupils/']) {
@@ -177,29 +169,24 @@ async function showcase(page, selector, requests, start) {
         }
         return { routes: ['/for/teachers/', '/for/pupils/'], visibleEntrances: ['Primary', 'Families & organisations', 'Made by Matt Play'] };
       }, page);
-      await check(`${width}-native-preview-control`, async () => {
-        await goto(page, '/');
-        const video = page.locator('#made-by-matt-play video').first();
-        await video.scrollIntoViewIfNeeded(); assert(await video.evaluate(el => el.paused && el.currentTime === 0));
-        const codec = await video.evaluate(el => el.canPlayType('video/mp4; codecs="avc1.64001f"'));
-        assert(codec, 'Playback acceptance requires a browser with the original H.264 codec');
-        const start = requests.length, box = await video.boundingBox();
-        assert(box && box.width > 100 && box.height > 100);
-        // The native play button sits above the seek track.
-        // Select the visible control; do not substitute a synthetic play() call.
-        await video.click({ position: { x: 24, y: box.height - 48 } });
-        await page.waitForFunction(() => { const v = document.querySelector('#made-by-matt-play video'); return !!v && !v.paused && v.currentTime > 0; }, null, { timeout: 15000 });
-        const media = await video.evaluate(el => ({ seconds: el.duration, currentTime: el.currentTime, paused: el.paused, controls: el.controls }));
-        assert(Math.abs(media.seconds - featured[0].seconds) <= 1.5, 'Unexpected real preview duration');
-        assert(requests.slice(start).some(r => new URL(r.url).pathname === '/assets/video/' + featured[0].clip), 'Selecting play did not load the real clip');
-        assert(!requests.slice(start).some(r => new URL(r.url).hostname.endsWith('madebymatt-play.uk')), 'Preview started a game');
-        const screenshot = await shot(page, `${width}-selected-preview`, page.locator('#made-by-matt-play .mbm-play-card').first());
-        await goto(page, '/'); // stop playback by leaving the page
-        return { nativeControl: true, codec, media, screenshot };
+      await check(`${width}-preserved-play-media-native-control-fixture`, async () => {
+        // The former Education preview UI is intentionally absent. Preserve
+        // independent codec/manual-control coverage against unchanged Play bytes.
+        // This temporary browser fixture is not a published page or gameplay.
+        await page.route(url('/__media-acceptance/', play), route => route.fulfill({contentType:'text/html',body:'<!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Media regression fixture</title><video controls playsinline preload="none" style="width:100%" poster="/assets/video/poster-apexkick.webp"><source src="/assets/video/clip-apexkick.mp4" type="video/mp4"></video></html>'}));
+        await goto(page, '/__media-acceptance/', play);
+        const video=page.locator('video');
+        assert(await video.evaluate(el=>el.paused && el.currentTime===0 && !el.autoplay && el.preload==='none'));
+        const codec=await video.evaluate(el=>el.canPlayType('video/mp4; codecs="avc1.64001f"'));assert(codec);
+        const box=await video.boundingBox();assert(box && box.width>100);
+        await video.click({position:{x:24,y:box.height-48}});
+        await page.waitForFunction(()=>{const v=document.querySelector('video');return v && !v.paused && v.currentTime>0;});
+        const media=await video.evaluate(el=>({seconds:el.duration,currentTime:el.currentTime}));assert(Math.abs(media.seconds-featured[0].seconds)<=1.5);
+        await goto(page,'/');return {fixtureOnly:true,publishedPlayMedia:true,codec,media};
       }, page);
       await check(`${width}-canonical-play-roundtrip`, async () => {
         await goto(page, '/');
-        const link = page.locator('#made-by-matt-play').getByRole('link', { name: 'Explore Made by Matt Play', exact: true });
+        const link = page.getByRole('navigation', {name:'Explore Made by Matt',exact:true}).getByRole('link', {name:'Made by Matt Play',exact:true});
         await target(link);
         await Promise.all([page.waitForURL(canonicalPlay + '/'), link.click()]); await settle(page);
         assert.equal(page.url(), canonicalPlay + '/');
@@ -222,7 +209,7 @@ async function showcase(page, selector, requests, start) {
     await check('no-browser-errors', async () => { assert.deepEqual(report.pageErrors, []); return { pageErrors: 0 }; });
   } finally {
     report.completedAt = new Date().toISOString();
-    report.ok = report.cases.length === 14 && report.cases.every(row => row.ok) && report.pageErrors.length === 0;
+    report.ok = report.cases.length === 23 && report.cases.every(row => row.ok) && report.pageErrors.length === 0;
     fs.writeFileSync(path.join(out, 'home-play-discovery.json'), JSON.stringify(report, null, 2) + '\n');
     await browser.close(); if (!report.ok) process.exitCode = 1;
   }
