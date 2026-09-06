@@ -15,12 +15,12 @@ async function optional(page,selector){const l=page.locator(selector);if(await l
 async function start(page,id){
  if(id==='emberwild'){
   await page.locator('#start-new').click();await wait(500);
-  const vigil=page.getByRole('button',{name:'Continue to the Hearthside Vigil',exact:true});if(await vigil.isVisible())await vigil.click();
+  const vigil=page.getByRole('button',{name:'Continue to the Hearthside Vigil',exact:true});if(await vigil.isVisible())await vigil.press('Enter');
   for(let i=0;i<65;i++){
    const dialogue=page.getByRole('button',{name:'Continue dialogue',exact:true});
-   if(await dialogue.isVisible()){await dialogue.click();await wait(120);continue;}
-   const sit=page.getByRole('button',{name:/^Sit with Spriglet/});if(await sit.isVisible()){await sit.click();await wait(300);continue;}
-   const harmonize=page.getByRole('button',{name:/^Harmonize with/});if(await harmonize.isVisible()){await harmonize.click();await wait(380);continue;}
+   if(await dialogue.isVisible()){await dialogue.press('Enter');await wait(120);continue;}
+   const sit=page.getByRole('button',{name:/^Sit with Spriglet/});if(await sit.isVisible()){await sit.press('Enter');await wait(300);continue;}
+   const harmonize=page.getByRole('button',{name:/^Harmonize with/});if(await harmonize.isVisible()){await harmonize.press('Enter');await wait(380);continue;}
    const labels=await page.locator('#semantic-actions button').allTextContents();
    if(labels.some(t=>/bond is being secured/.test(t))){await wait(600);continue;}
    if(i>3)break;await wait(500);
@@ -42,7 +42,7 @@ async function start(page,id){
 }
 async function action(page,id){
  if(id==='emberwild'){
-  await page.locator('canvas').first().click({position:{x:160,y:160}});
+  await page.locator('#ui-canvas').click({position:{x:160,y:160}});
   for(let i=0;i<3;i++){await press(page,'ArrowRight',1700);await press(page,'ArrowDown',1300);await page.keyboard.press('z');await wait(500);await press(page,'ArrowLeft',1600);await page.keyboard.press('z');}
   return 'Walk through the opening area and interact using the game’s ordinary controls.';
  }

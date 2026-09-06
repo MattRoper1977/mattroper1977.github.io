@@ -42,10 +42,15 @@ jobs:
           node domain-split/play/serve.cjs .play-review/output/games 4173 > .play-review/server.log 2>&1 &
       - name: Capture fresh gameplay through ordinary player inputs
         run: node domain-split/play/capture.cjs
+      - name: Exercise Play discovery and every initial game surface
+        if: always()
+        run: node domain-split/play/check.cjs
       - name: Preserve review and source recordings
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: play-discovery-review-${{ github.run_id }}
           path: .play-review
+          include-hidden-files: true
+          if-no-files-found: error
           retention-days: 30

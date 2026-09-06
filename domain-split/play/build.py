@@ -47,6 +47,13 @@ def refresh(output):
             if not path.startswith('/') or path.startswith('//'):
                 raise ValueError('Unexpected game route: '+entry['route'])
             extra = evidence.get(key(path), {})
+            source = extra.get('source', {})
+            # Bind source-inspected labels to the exact copied payload, including
+            # the existing builder's documented literal host replacements.
+            payload = target / unquote(path).lstrip('/')
+            if path.endswith('/'): payload /= 'index.html'
+            if source and hashlib.sha256(payload.read_bytes()).hexdigest() != source['published_sha256']:
+                raise ValueError('Review stale control/content evidence: '+entry['title'])
             row = {**entry, 'description':extra.get('description') or entry['description'], 'route':quote(unquote(path),safe='/()'), 'group':group, 'groupLabel':labels[group],
                    'genre':extra.get('genre') or entry.get('subject') or 'Other',
                    'controls':extra.get('controls', []), 'modes':extra.get('modes', []),
@@ -71,8 +78,16 @@ def refresh(output):
     assets.mkdir(parents=True, exist_ok=True)
     for name in ['play.css','play.js']:
         shutil.copyfile(HERE/name, assets/name)
-    if (HERE/'media').exists():
-        shutil.copytree(HERE/'media',assets/'media',dirs_exist_ok=True)
+    for clip in clips.values():
+        for field in ['video','poster']:
+            name = Path(clip[field]).name
+            assert clip[field] == '/assets/play/media/'+name
+            source = HERE/'media'/name
+            assert source.suffix in {'.mp4','.webm','.webp','.jpg','.png'}
+            expected=clip[field+'_sha256']
+            assert hashlib.sha256(source.read_bytes()).hexdigest()==expected
+            (assets/'media').mkdir(exist_ok=True)
+            shutil.copyfile(source,assets/'media'/name)
     (target/'data/play-discovery.json').write_text(json.dumps({'counts':counts,'games':rows},ensure_ascii=False))
     genres = sorted({r['genre'] for r in rows})
     template = (HERE/'index.html').read_text()
