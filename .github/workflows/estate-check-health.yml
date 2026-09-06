@@ -63,7 +63,7 @@ jobs:
         run: |
           set -uo pipefail
           rc=0
-          out="$(python3 tools/estate_check_health.py --gate --stale-days 30 2>&1)" || rc=$?
+          out="$(python3 tools/estate_check_health.py --gate --stale-days 30 --pin-stale-days 2 2>&1)" || rc=$?
           printf '%s\n' "$out"
           { echo '### Estate check health'; echo; echo '```'; printf '%s\n' "$out"; echo '```'; } \
             >> "$GITHUB_STEP_SUMMARY"
