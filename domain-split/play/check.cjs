@@ -5,7 +5,10 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const base=process.env.PLAY_REVIEW_URL||'http://127.0.0.1:4173',out=path.resolve('.play-review/qa'),root=path.resolve('.play-review/output');fs.mkdirSync(out,{recursive:true});
 const data=JSON.parse(fs.readFileSync(path.join(root,'games/data/play-discovery.json'))),build=JSON.parse(fs.readFileSync(path.join(root,'build-report.json')));
 const preserved=JSON.parse(fs.readFileSync('reports/play-upgrade/preservation.json')),baselineHashes=new Map(preserved.payloads.map(p=>[p.path,p.published_sha256]));
-const report={date:new Date().toISOString(),checks:[],routes:[],limitations:['Route coverage proves initial rendered state and available input surface, not completion of every game.','Source-supported control labels do not certify physical gamepad, real-device performance or two-device local pairing.'],errors:[]};
+// Re-derive approved source revisions from the actual checkouts before accepting HTTP bytes.
+const selectedRevisions=JSON.parse(require('node:child_process').execFileSync('python3',['domain-split/play/source_revisions.py','--output',root],{encoding:'utf8'}));
+for(const [route,revision] of Object.entries(selectedRevisions))baselineHashes.set(route,revision.published_sha256);
+const report={date:new Date().toISOString(),checks:[],sourceRevisions:selectedRevisions,routes:[],limitations:['Route coverage proves initial rendered state and available input surface, not completion of every game.','Source-supported control labels do not certify physical gamepad, real-device performance or two-device local pairing.'],errors:[]};
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 let currentPage=null;
 const pause=ms=>new Promise(r=>setTimeout(r,ms));

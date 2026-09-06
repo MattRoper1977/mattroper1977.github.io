@@ -45,6 +45,19 @@ jobs:
         run: python -m pip install lxml==6.0.1
       - name: Build all games with local dependencies
         run: python domain-split/build_publications.py --lessons .sources/Lessons
+      - name: Check out the previously released Lessons pin for independent-release controls
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: 1a8e3b29ee4c5d306b9ce0fe0f601dacf3443a98
+          path: .sources/Previous-Lessons
+          persist-credentials: false
+      - name: Prove both reviewed Orbital revisions and reject planted bytes
+        run: |
+          mkdir -p audit-output/source-revisions
+          python domain-split/play/check_source_revision_controls.py --lessons .sources/Lessons --output domain-split/output > audit-output/source-revisions/current.json
+          python domain-split/build_publications.py --lessons .sources/Previous-Lessons --output .previous-play-output
+          python domain-split/play/check_source_revision_controls.py --lessons .sources/Previous-Lessons --output .previous-play-output > audit-output/source-revisions/previous.json
       - name: Verify preview and save-transfer boundaries
         run: |
           python domain-split/check_preview.py
@@ -170,6 +183,7 @@ jobs:
             audit-output/usage-discovery/
             audit-output/print-navigation/
             audit-output/completion/
+            audit-output/source-revisions/
           retention-days: 30
       - uses: actions/upload-artifact@v4
         with:

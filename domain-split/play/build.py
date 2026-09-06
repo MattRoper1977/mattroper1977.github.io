@@ -11,6 +11,10 @@ import json
 from pathlib import Path
 import shutil
 from urllib.parse import unquote, urlparse, quote
+if __package__:
+    from .source_revisions import registry, validate_report
+else:
+    from source_revisions import registry, validate_report
 
 HERE = Path(__file__).resolve().parent
 ALIASES = ('index.html', 'games/index.html', 'main/index.html', 'for/pupils/index.html', 'Games/index.html', 'Lessons/index.html')
@@ -32,11 +36,16 @@ def card(row, feature=False):
     watch = '<button type="button" data-watch="'+esc(row['id'])+'" hidden>Watch gameplay</button>' if media.get('video') else ''
     return '<article class="game-card'+(' featured-card' if feature else '')+'" data-card="'+esc(row['id'])+'">'+picture+'<div class="card-body"><div class="chips">'+chips+'</div><h3>'+esc(row['title'])+'</h3><p>'+esc(row['description'])+'</p><div class="card-actions"><a class="button primary" data-play="'+esc(row['id'])+'" href="'+esc(row['route'])+'">Play game<span class="sr-only">: '+esc(row['title'])+'</span></a><button type="button" data-info="'+esc(row['id'])+'" hidden>Game info<span class="sr-only">: '+esc(row['title'])+'</span></button>'+watch+'<button class="favourite" type="button" data-favourite="'+esc(row['id'])+'" aria-label="Favourite '+esc(row['title'])+'" aria-pressed="false" hidden>♡</button></div></div></article>'
 
-def refresh(output, review=False):
+def refresh(output, review=False, source_revisions=None):
     target = Path(output) / 'games'
     original = (target/'data/domain-catalogue.json').read_bytes()
     catalogue = json.loads(original)
     evidence = read('evidence.json', {'games':{}}).get('games', {})
+    approved_revisions = registry()
+    if source_revisions is None:
+        site = HERE.parents[1]
+        lessons = site/'.sources/Lessons' if (site/'.sources/Lessons').is_dir() else site.parent/'Lessons'
+        source_revisions = validate_report(json.loads((Path(output)/'build-report.json').read_text()), output, {'Site':site,'Lessons':lessons})
     media = read('media/manifest.json', {'clips':[]})
     clips = {key(x['route']): x for x in media.get('clips', []) if x.get('status') == 'accepted'}
     rows = []
@@ -52,7 +61,16 @@ def refresh(output, review=False):
             # the existing builder's documented literal host replacements.
             payload = target / unquote(path).lstrip('/')
             if path.endswith('/'): payload /= 'index.html'
-            if source and hashlib.sha256(payload.read_bytes()).hexdigest() != source['published_sha256']:
+            output_path = str(payload.relative_to(target))
+            expected_hash = source.get('published_sha256')
+            if output_path in approved_revisions:
+                revision = source_revisions.get(output_path)
+                if not revision: raise ValueError('Missing reviewed source context: '+entry['title'])
+                fields = ('id','reviewed_commit','git_blob','source_sha256','published_sha256')
+                if sum(all(r[field] == revision.get(field) for field in fields) for r in approved_revisions[output_path]['revisions']) != 1:
+                    raise ValueError('Unreviewed source context: '+entry['title'])
+                expected_hash = revision['published_sha256']
+            if source and hashlib.sha256(payload.read_bytes()).hexdigest() != expected_hash:
                 raise ValueError('Review stale control/content evidence: '+entry['title'])
             row = {**entry, 'description':extra.get('description') or entry['description'], 'route':quote(unquote(path),safe='/()'), 'group':group, 'groupLabel':('Catalogue classroom game' if group=='games' and extra.get('audience')=='classroom' else labels[group]),
                    'genre':extra.get('genre') or entry.get('subject') or 'Other',
