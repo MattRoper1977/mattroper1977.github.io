@@ -64,6 +64,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # N4. The revert target is derived from the merge commit's FIRST
+          # PARENT, and a default checkout is depth 1 - which has no parents at
+          # all. The emergency rollback path printed "unknown" on the live run
+          # and nobody noticed, because it printed something. Depth 2 is exactly
+          # what a first-parent lookup needs.
+          fetch-depth: 2
+
       # HC3 §1.1. Origins are DERIVED (shelf + 69-route census + split policy),
       # never typed here, and the derivation proves its own controls first.
       - name: Derive the origin table and prove its controls (HC3 §1.1)
@@ -74,12 +81,6 @@ jobs:
           python3 tools/verify_education_stubs.py --self-test
           echo "PLAY=$(python3 tools/route_origins.py --origin play)" >> "$GITHUB_ENV"
           echo "EDU=$(python3 tools/route_origins.py --origin education)" >> "$GITHUB_ENV"
-          # N4. The revert target is derived from the merge commit's FIRST
-          # PARENT, and a default checkout is depth 1 - which has no parents at
-          # all. The emergency rollback path printed "unknown" on the live run
-          # and nobody noticed, because it printed something. Depth 2 is exactly
-          # what a first-parent lookup needs.
-          fetch-depth: 2
 
       - uses: actions/setup-node@v4
         with:
