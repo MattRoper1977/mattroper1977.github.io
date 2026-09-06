@@ -199,8 +199,8 @@ def popularity(source='education'):
 <p>Separate Top 10 lists, built only from real shared activity. No editorial selections or old device-local counts are included.</p>
 <div class="usage-filter"><label for="usage-period">Ranking period</label><select id="usage-period" data-usage-period><option value="last30days">Last 30 UTC calendar days, including today</option><option value="alltime">All time since collection began</option></select></div>
 <p class="usage-status" data-usage-measured-since>Collection is not active. Verified shared rankings are unavailable in this release.</p>
-<div class="usage-grid">'''+''.join('<article class="usage-card"><h3>'+title+'</h3><div data-usage-list="'+kind+'"><p class="usage-empty">Collection is not active. Verified shared rankings are unavailable in this release.</p></div></article>' for kind,title in ([('games','Top 10 games')] if source=='play' else [('lessons','Top 10 lessons'),('packs','Top 10 lesson packs'),('games','Top 10 games')]))+'''
-</div><p>Lesson opens are recorded when a registered lesson page opens. Download requests count clicks on links to existing files, including worksheets and packs. Game launches count selected game links on the Play shelf or education showcase. Direct game bookmarks are outside this measure. None proves a completed lesson, download or game. Repeat requests for the same item on one page are limited.</p>
+<div class="usage-grid">'''+''.join('<article class="usage-card"><h3>'+title+'</h3><div data-usage-list="'+kind+'"><p class="usage-empty">Collection is not active. Verified shared rankings are unavailable in this release.</p></div></article>' for kind,title in ([('games','Top 10 games')] if source=='play' else [('lessons','Top 10 lessons'),('packs','Top 10 lesson packs')]))+'''
+</div><p>Lesson opens are recorded when a registered lesson page opens. Download requests count clicks on links to existing files, including worksheets and packs. Game launches count selected game links on the separate Play shelf. Direct game bookmarks are outside this measure. None proves a completed lesson, download or game. Repeat requests for the same item on one page are limited.</p>
 <p>Only visitors who allow optional statistics contribute. These are event totals, not unique visitor counts. Public totals may be delayed or unavailable; resources continue to work.</p><p><a href="/privacy/#usage-statistics">Choose whether to contribute</a> · <a href="/stats/">About these statistics</a></p></section>'''
 
 
@@ -335,14 +335,18 @@ def refresh_play(output, lessons, site_source):
 
 def refresh(output, lessons, apps, site_source):
     output=Path(output);lessons=Path(lessons);site_source=Path(site_source);site=output/'education-site'
-    rows=registry(output,lessons,site_source);assets(site,site_source,'education',rows)
+    rows=registry(output,lessons,site_source);assets(site,site_source,'education',[row for row in rows if row['source']=='education'])
     # Stop painting legacy local counters as if they were shared activity. Their
     # stored data remains in place, and the old device view stays reachable.
     site_config=read(site/'site.json');site_config['features']['stats'].update({'enabled':False,'remote':False,'geo':False});site_config['features']['downloads']['enabled']=False
+    site_config['strap']='Lessons, resources and teaching tools — built in Teesside.'
+    game_keys={row.get('countKey') for row in read(site_source/'site.json')['doors'] if row.get('zone')=='games'}
+    site_config['features']['downloads']['catalog']=[row for row in site_config['features']['downloads'].get('catalog',[]) if row.get('key') not in game_keys]
     site_config['features']['analytics']['goatcounter']='';save(site/'site.json',site_config)
     old=site/'stats/index.html'
     if old.is_file():
         legacy=old.read_text();legacy=replace_once(legacy,'</head>','<base href="/stats/"></head>')
+        legacy=legacy.replace('<a href="/games/">Games</a>', '<a href="'+PLAY+'/">Made by Matt Play</a>').replace('Interactive lessons, simulations and games', 'Lessons, learning resources and teaching tools').replace('Opens & plays here', 'Learning resources opened here')
         legacy=legacy.replace('Countries seen here','Time-zone country estimates here').replace('Country activity on this device','Legacy time-zone estimates on this device')
         legacy=replace_once(legacy,'<main id="main">','<main id="main"><p class="usage-note">Legacy device-only counts. These are not shared site statistics. Time-zone estimates are not measured locations. <a href="/stats/">Open shared usage statistics</a>.</p>')
         destination=site/'stats/on-this-device/index.html';destination.parent.mkdir(parents=True,exist_ok=True);destination.write_text(legacy)
@@ -374,7 +378,7 @@ def refresh(output, lessons, apps, site_source):
             inject(path);additional_download_pages.append(entry)
     # Add one small entrance to real popularity from both education homepages.
     for path in [site/'index.html',site/'main/index.html']:
-        text=path.read_text();text=replace_once(text,'</body>','<p class="mbm-usage"><a href="/stats/">Shared activity · Top 10 lessons, packs and games</a></p></body>');path.write_text(text)
+        text=path.read_text();text=replace_once(text,'</body>','<p class="mbm-usage"><a href="/stats/">Shared activity · Top 10 lessons and packs</a></p></body>');path.write_text(text)
     save(output/'usage-registry.json',rows)
     report={'schema':1,'collection_enabled':config(site_source,'education')['enabled'],'registered_resources':len(rows),'lesson_adapters':len(lesson_pages),
             'events':{kind:sum(kind in row['event_types'] for row in rows) for kind in ['lesson_open','download_request','game_launch']},

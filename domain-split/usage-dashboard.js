@@ -9,6 +9,22 @@
   function clear(message){approved=null;generation++;content.replaceChildren();content.hidden=true;exportButton.disabled=true;status.textContent=message;}
   function node(tag,text,cls){var el=d.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el;}
   function numeric(value){return Number.isSafeInteger(value)&&value>=0;}
+  function ownerRanks(mount, data, kind, windowData){
+    var items=windowData.top && windowData.top[kind];
+    if(!Array.isArray(items))throw new Error('unavailable');
+    var list=node('ol');
+    items.slice(0,10).forEach(function(item){
+      // The authenticated owner response supplies its own resource metadata.
+      // It is never copied into a public, cross-site resource catalogue.
+      if(!item || !/^[a-f0-9]{64}$/.test(item.resource_id) || !numeric(item.count) || item.count===0 || typeof item.title!=='string' || !item.title.trim() || typeof item.route!=='string')throw new Error('unavailable');
+      var route=decodeURIComponent(item.route);
+      if(!/^\/(?!\/)/.test(route) || /[\\?#\x00-\x1f]/.test(route) || route.split('/').some(function(part){return part==='.' || part==='..';}))throw new Error('unavailable');
+      var li=node('li'),link=node('a',item.title.slice(0,200));
+      link.href=(data.source==='play'?'https://www.madebymatt-play.uk':'https://madebymatt.uk')+item.route;
+      li.append(link,node('span',item.count.toLocaleString('en-GB')+' '+({lessons:'lesson opens',packs:'download requests',games:'game launches'}[kind]),'usage-count'));list.appendChild(li);
+    });
+    mount.appendChild(items.length?list:node('p','No recorded activity for this period yet.','usage-empty'));
+  }
   function show(data){
     if(!data||data.schema!==1||data.source!==source.value||!data.windows)throw new Error('unavailable');
     var windowData=data.windows[period.value];if(!windowData||!windowData.totals)throw new Error('unavailable');
@@ -23,9 +39,8 @@
     content.appendChild(node('p','Totals count events across visitors who opted in, not unique people or completed activities. Education and Play are separate sources; no visitor identity joins them.'));
     var rankingGrid=node('div',undefined,'usage-grid');
     [['lessons','Top 10 lessons'],['packs','Top 10 lesson packs'],['games','Top 10 games']].forEach(function(pair){
-      var card=node('article',undefined,'usage-card'),list=node('div');list.dataset.usageList=pair[0];card.append(node('h3',pair[1]),list);rankingGrid.appendChild(card);
+      var card=node('article',undefined,'usage-card'),list=node('div');list.dataset.usageList=pair[0];ownerRanks(list,data,pair[0],windowData);card.append(node('h3',pair[1]),list);rankingGrid.appendChild(card);
     });content.appendChild(rankingGrid);
-    ['lessons','packs','games'].forEach(function(kind){w.MBMUsage.paintRanks(content,data,kind,period.value);});
     content.appendChild(node('h2','Approximate geography'));
     // No map or country value is fabricated when trusted geography is unavailable.
     var geo=data.geography;

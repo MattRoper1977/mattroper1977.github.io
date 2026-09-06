@@ -22,14 +22,15 @@ from education_expansion import refresh as refresh_education_expansion
 from primary_discovery import refresh as refresh_primary
 from usage_discovery import refresh as refresh_usage
 from shared_navigation import refresh as refresh_navigation
+from education_policy import PLAY, MIGRATIONS, classifier, excluded_asset, filter_catalogue
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
-PLAY = 'https://madebymatt-play.uk'
 LEARN = 'https://madebymatt.uk'
 # Fixed historical redirects: the superseded Lessons game addresses as at
 # 2026-09-05. This map is deliberately not the current shelf's membership.
 LEGACY = {
+    **MIGRATIONS,  # Historical aliases, fixed as at 6 September 2026.
     '/Lessons/Games/Off_Brand.html': '/offbrand/',
     '/Lessons/Games/Trail_Runner.html': '/trailrunner/',
     '/Lessons/Games/Voxel_Frontier.html': '/voxel/',
@@ -123,43 +124,25 @@ def moved_page(route):
             '</body></html>')
 
 def make_classifier(lessons):
-    census = json.loads((ROOT/'reports/v6fin/V6FIN_W7_69_ROUTE_CENSUS_2026-09-03.json').read_text())['rows']
-    rows = json.loads((ROOT/'data/mbm-search-index.json').read_text())['entries']
-    games = {normal(r['normalizedDecodedRoute']) for r in census}
-    games.update(normal(e['route']) for e in rows if e['category'] == 'game')
-    games.update(normal(p) for p in LEGACY)
-    games.difference_update(normal(p) for p in EDUCATION_OVERRIDES)
-    lesson_manifest = json.loads((lessons/'resources.json').read_text())
-    games.update(normal('/Lessons/'+e['file']) for e in lesson_manifest if e.get('type') == 'game')
-    site_dirs = {r['source']['path'].split('/')[0] for r in census if r['source']['repository'] == 'Site'}
-    site_dirs.update(urlparse(e['route']).path.strip('/').split('/')[0] for e in rows
-                     if e['category'] == 'game' and not e['route'].startswith(('/Lessons/', '/Games/')))
-    games.update({'/games', '/Games'})
-    def is_game(value, prefix=''):
-        p = normal(value if value.startswith(('/', 'http')) else prefix + value)
-        if p in {normal(x) for x in EDUCATION_OVERRIDES}: return False
-        return p in games or p.startswith('/Lessons/Games/') or p.strip('/').split('/')[0] in site_dirs
-    return games, site_dirs, is_game
+    games, directories, is_game = classifier(ROOT, lessons)
+    games.update(normal(route) for route in LEGACY)
+    return games, directories, is_game
 
 def filter_data(obj, is_game, prefix):
-    if isinstance(obj, list):
-        out=[]
-        for item in obj:
-            if isinstance(item, dict):
-                dest = next((item.get(k) for k in ['route','href','file','url'] if isinstance(item.get(k), str)), '')
-                if dest and is_game(dest, prefix): continue
-            out.append(filter_data(item, is_game, prefix))
-        return out
-    if isinstance(obj, dict):
-        out={k:filter_data(v,is_game,prefix) for k,v in obj.items()}
-        dest=next((out.get(k) for k in ['route','href','file','url'] if isinstance(out.get(k),str)), '')
-        role=EDUCATION_OVERRIDES.get(unquote(urlparse(dest if dest.startswith(('/', 'http')) else prefix+dest).path))
+    filtered = filter_catalogue(obj, is_game, prefix)
+    # Preserve the established teacher/pupil roles for reviewed activities.
+    def roles(value):
+        if isinstance(value, list): return [roles(row) for row in value]
+        if not isinstance(value, dict): return value
+        out = {key: roles(item) for key, item in value.items()}
+        dest = next((out[key] for key in ('route','href','file','url','path','f') if isinstance(out.get(key), str)), '')
+        role = EDUCATION_OVERRIDES.get(unquote(urlparse(urljoin(LEARN+(prefix or '/'), dest)).path))
         if role:
-            if 'category' in out: out['category']='resource'
-            if 'type' in out: out['type']=role
-            if 'safeForPupils' in out: out['safeForPupils']=role=='pupil'
+            if 'category' in out: out['category'] = 'resource'
+            if 'type' in out: out['type'] = role
+            if 'safeForPupils' in out: out['safeForPupils'] = role == 'pupil'
         return out
-    return obj
+    return roles(filtered)
 
 def clean_shell(text, is_game, prefix):
     # Restrict DOM rewriting to site navigation/catalogue surfaces. Actual
@@ -194,7 +177,7 @@ def build(output, lessons, apps=None, allow_sparse=False):
         report['sources'][name]=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()
         migrated=[]; copied=[]; changed=[]
         for relative in tracked(root):
-            if not public_file(relative):continue
+            if not public_file(relative) or excluded_asset((prefix or '/')+relative):continue
             p=root/relative
             if not p.is_file():
                 report['missing_source_files'].append(name+':'+relative)
@@ -206,10 +189,11 @@ def build(output, lessons, apps=None, allow_sparse=False):
                     write(dest,relative,moved_page(target));migrated.append(relative)
                 continue
             target=dest/relative;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,target);copied.append(relative)
-            if p.suffix=='.json':
+            if p.suffix in {'.json', '.webmanifest'} and relative != 'data/game-storage-allowlist.json':
                 try:data=json.loads(p.read_text())
                 except (ValueError,UnicodeError):continue
                 filtered=filter_data(data,is_game,prefix)
+                if relative=='site.webmanifest': filtered['description']='Lessons, learning resources and teaching tools.'
                 if filtered != data:write(dest,relative,json.dumps(filtered,ensure_ascii=False,indent=2)+'\n');changed.append(relative)
             shell=(name=='site' and (relative.startswith(('for/','resources/','education-hub/','teach/','start/','next/')) or relative in {'index.html','tools/index.html'})) or (name in {'lessons','apps'} and relative=='index.html')
             if shell and p.suffix=='.html':write(dest,relative,clean_shell(p.read_text(),is_game,prefix));changed.append(relative)
@@ -226,6 +210,9 @@ def build(output, lessons, apps=None, allow_sparse=False):
                 if updated != text:
                     write(dest,relative,updated);changed.append(relative)
         if name=='site':
+            for relative, route in {'next/index.html':'/', 'next/teachers.html':'/for/teachers/', 'next/pupils.html':'/for/pupils/', 'next/apps.html':'/Matt-s-Apps-/', 'next/lessons.html':'/Lessons/', 'next/resources.html':'/resources/', 'next/tools.html':'/tools/'}.items():
+                if (dest/relative).exists():
+                    write(dest,relative,'<!doctype html><html lang="en-GB"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Continue to Made by Matt Education</title><main><h1>Continue to Made by Matt Education</h1><p>This earlier design preview has been replaced by the published learning website.</p><p><a href="'+route+'">Open the current learning page</a></p></main></html>')
             overlay=output/'education-overlay'
             for p in overlay.rglob('*'):
                 if p.is_file():
@@ -265,6 +252,20 @@ def build(output, lessons, apps=None, allow_sparse=False):
         report['education_expansion'] = refresh_education_expansion(output, lessons, apps, ROOT)
         report['usage'] = refresh_usage(output, lessons, apps, ROOT)
         report['navigation'] = refresh_navigation(output, ROOT)
+    # Enrichment must never reintroduce excluded discovery records. Run after
+    # every generator, including overlays, Apps, audiences and usage metadata.
+    for name, (_, prefix) in roots.items():
+        dest = output/('education-'+name)
+        for path in list(dest.rglob('*.json')) + list(dest.rglob('*.webmanifest')):
+            # Migration provenance paths identify stores to export; they are
+            # not search results. Preserve the exact accepted save rules.
+            if path.relative_to(dest).as_posix() == 'data/game-storage-allowlist.json': continue
+            try: data = json.loads(path.read_text())
+            except (ValueError, UnicodeError): continue
+            filtered = filter_data(data, is_game, prefix)
+            if filtered != data: path.write_text(json.dumps(filtered, ensure_ascii=False, indent=2)+'\n')
+    report['education_policy'] = {'recreational_output': 'excluded', 'source_files_removed': 0,
+                                  'play_payloads_modified': 0, 'final_catalogue_filter': True}
     for item in report['publications'].values():
         item['output_files'] = sum(p.is_file() for p in Path(item['root']).rglob('*'))
     write(output,'education-build-report.json',json.dumps(report,indent=2)+'\n')

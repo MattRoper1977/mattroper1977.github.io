@@ -51,3 +51,43 @@ David's lesson packs and Lessons PR #327 belong to the paused Lessons lane and a
 
 - [GitHub: custom domains across repositories](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages#using-a-custom-domain-across-multiple-repositories)
 - [GitHub: managing a custom domain](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site)
+
+## Education-only publication contract (6 September 2026)
+
+`education_policy.py` classifies destinations by actual activity. The final
+Education build filters Site, Lessons and Apps catalogues after every enrichment
+stage and excludes recreational media from the emitted tree. Source game files,
+Play output and reviewed teaching downloads stay preserved. Legacy recreational
+URLs serve lightweight migration pages with canonical HTTPS Play destinations
+and the existing save-export/import guidance. The exact save-storage allowlist
+is migration support, not discovery metadata: it must remain byte-identical.
+
+Intentionally retained activities and their learning purpose are documented in
+`EDUCATIONAL_ACTIVITIES`: voltage/current/resistance teaching and pupil practice;
+Lundy participation decision calibration for staff; gravity/trajectory modelling;
+enzyme variables and simplified kinetics; wave interference; circuit diagnosis;
+and the scientific-model master hub. Existing lesson simulations, creative
+studios, registers and evidence tools remain educational. A canvas, game-like
+interaction or STEM label alone does not decide classification.
+
+`check_education_separation.py` independently walks every emitted Education file,
+HTML reference, catalogue/manifest record and sitemap URL. It checks known game
+routes, aliases, media families, lightweight migrations, retained learning apps,
+exact save rules and the installed combined usage-registry hash. The existing
+publication and download checks additionally preserve the accepted 69 payloads
+and teaching download bytes. Run it after `build_education.py`; both PR verification
+and the deployment workflow require it. New caches require explicit boundary
+review. Practical separation does not guarantee acceptance by every school filter.
+
+Public usage registries and rankings belong to their own website. Education
+consent cannot emit a Play event or request its public ranking. The combined
+installation registry remains unchanged; the private owner dashboard renders
+validated resource metadata from its authenticated response. Collection and
+geography remain inactive pending the existing hosted acceptance requirements.
+
+The Education coordinator owns shared builders/templates/runtime, catalogues,
+authentication/statistics, publication pins and release integration. The separate
+Play redesign session prepares an isolated branch and supplies any shared-file
+patch to that coordinator. Integrate accepted Play changes in sequence; neither
+session independently updates shared files or publication pins. Cross-chat
+handover is explicit, not automatic.

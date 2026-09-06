@@ -43,7 +43,7 @@
     return byRoute.get(origin + '\n' + key.path) || null;
   }
   function emit(row, eventType) {
-    if (!allowed() || !row || row.event_types.indexOf(eventType) === -1) return Promise.resolve(false);
+    if (!allowed() || !row || row.source !== config.source || row.event_types.indexOf(eventType) === -1) return Promise.resolve(false);
     var eventKey = row.source + ':' + row.resource_id + ':' + eventType;
     if (once.has(eventKey) || !w.crypto || typeof w.crypto.randomUUID !== 'function') return Promise.resolve(false);
     once.add(eventKey); // one event per resource/type in this page; no cross-visit identifier
@@ -74,7 +74,7 @@
   }
   function safeCount(value) { return Number.isSafeInteger(value) && value >= 0 ? value : null; }
   function publicSummary(source, ids) {
-    if (!config || !config.enabled || ['education','play'].indexOf(source) < 0) return Promise.resolve(null);
+    if (!config || !config.enabled || source !== config.source || ['education','play'].indexOf(source) < 0) return Promise.resolve(null);
     var idList = (ids || []).filter(function (id) { return /^[a-f0-9]{64}$/.test(id); }).slice(0,50);
     var key = source + ':' + idList.join(',');
     if (summaries.has(key)) return summaries.get(key);
@@ -114,7 +114,7 @@
       function refresh() {
         var period = select ? select.value : 'last30days';
         if (period !== 'alltime') period='last30days';
-        Promise.allSettled([root.dataset.usagePopularity==='play'?Promise.resolve(null):publicSummary('education'),publicSummary('play')]).then(function (results) {
+        Promise.allSettled([root.dataset.usagePopularity==='play'?Promise.resolve(null):publicSummary('education'),root.dataset.usagePopularity==='play'?publicSummary('play'):Promise.resolve(null)]).then(function (results) {
           var education = results[0].status==='fulfilled'?results[0].value:null, play=results[1].status==='fulfilled'?results[1].value:null;
           paintRanks(root, education, 'lessons', period);paintRanks(root, education, 'packs', period);paintRanks(root, play, 'games', period);
           var status=root.querySelector('[data-usage-measured-since]');
@@ -162,7 +162,7 @@
       return fetch('/data/usage-registry.json',{credentials:'omit',referrerPolicy:'no-referrer'}).then(function (r) {if(!r.ok)throw new Error('registry');return r.json();});
     }).then(function (registry) {
       if (!Array.isArray(registry)) throw new Error('registry');
-      rows=registry.filter(function (row) {return row && ['education','play'].indexOf(row.source)>=0 && /^[a-f0-9]{64}$/.test(row.resource_id) && typeof row.title==='string' && /^\/(?!\/)/.test(row.route) && !/[?#]/.test(row.route) && Array.isArray(row.event_types) && row.event_types.every(function (type) {return !!labels[type];});});
+      rows=registry.filter(function (row) {return row && row.source===config.source && /^[a-f0-9]{64}$/.test(row.resource_id) && typeof row.title==='string' && /^\/(?!\/)/.test(row.route) && !/[?#]/.test(row.route) && Array.isArray(row.event_types) && row.event_types.every(function (type) {return !!labels[type];});});
       rows.forEach(function (row) {[row.route].concat(row.aliases||[]).forEach(function (route) {var key=pathKey(route);if(key)byRoute.set(row.source+'\n'+key.path,row);});});
       paintChoice();bindActivity();initPopularity();initDownloadCounts();
       var scanTimer;

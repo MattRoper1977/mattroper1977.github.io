@@ -65,6 +65,7 @@ jobs:
           python .sources/Site/domain-split/build_publications.py --lessons .sources/Lessons
           python .sources/Site/domain-split/build_education.py --lessons .sources/Lessons --apps .sources/Apps
           python .sources/Site/domain-split/check_publications.py
+          python .sources/Site/domain-split/check_education_separation.py
           node .sources/Site/domain-split/check_game_saves.cjs
       - name: Save the reviewed education output
         uses: actions/upload-artifact@v4
