@@ -69,6 +69,8 @@ def pupil_protected(route, document):
 
 def refresh(output, lessons, site_source):
     adult = {route: 'reviewed adult destination' for route in SITE_ADULT | LESSON_ADULT | APP_ADULT}
+    for row in json.loads((HERE/'education-support-adult-routes.json').read_text())['pages']:
+        adult[canonical(row['route'])] = row['reason']
     for row in json.loads((lessons/'resources.json').read_text()):
         value = row.get('file', '')
         if str(row.get('type', '')).lower() == 'teacher' and not urlsplit(value).scheme:

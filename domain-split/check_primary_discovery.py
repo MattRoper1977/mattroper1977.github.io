@@ -84,7 +84,16 @@ def main():
                 assert text.count(usage_fragment) == int(expected_adapter), 'Unexpected usage adapter: '+str(relative)
                 assert Links(text).scripts.count('/assets/usage-client.js') == int(expected_adapter)
                 text = text.replace(usage_fragment, '', 1)
-            assert text == p.read_text(), 'Primary lesson/plan content changed beyond exact navigation/usage adapters: '+str(relative)
+            # Matt's 6 September request adds the exact optional support footer
+            # to adult unit plans. Classroom lessons must contain neither part.
+            if (output/'education-support-report.json').is_file():
+                teacher_plan = any(row.get('type') == 'teacher' and row['file'] == relative.as_posix() for row in expected_rows)
+                support = '<aside class="mbm-support-footer" data-mbm-support-footer aria-label="Support Made by Matt"><p>Help keep classroom resources growing. <a href="https://ko-fi.com/madebymattuk" target="_blank" rel="noopener noreferrer">Donate to Made by Matt on Ko-fi</a></p></aside>'
+                support_css = '<link rel="stylesheet" href="/assets/education-support.css">'
+                assert text.count(support) == int(teacher_plan), 'Unexpected Primary support footer: '+str(relative)
+                assert text.count(support_css) == int(teacher_plan), 'Unexpected Primary support styling: '+str(relative)
+                text = text.replace(support, '', 1).replace(support_css, '', 1)
+            assert text == p.read_text(), 'Primary lesson/plan content changed beyond exact navigation/usage/support adapters: '+str(relative)
             navigation_only.append('/Lessons/'+relative.as_posix())
     assert len(navigation_only) == 52 and len(downloads) == 6
     for unit in data['units']:

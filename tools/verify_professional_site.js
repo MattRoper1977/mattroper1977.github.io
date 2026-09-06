@@ -450,7 +450,18 @@ function verify(base, overrides = null) {
      The fix takes keydown, keyup, click, pointerdown and pointerup on `document`
      in the CAPTURE phase and releases them a short window after dismissal. The
      hold was lifted in the same commit, as its own instructions required. */
-  const DECLARED_BRAND_CHANGES = new Set(['assets/brand/mbm-splash.js']);
+  // Owner-authorised supplied logo, 2026-09-06: additive assets only.
+  // The exact uploaded JPEG and its provenance are pinned below; no existing
+  // splash, legacy logo or game branding receives a new exemption.
+  const DECLARED_BRAND_CHANGES = new Set(['assets/brand/mbm-splash.js', 'assets/brand/approved-mark.jpg', 'assets/brand/approved-mark-provenance.json']);
+  const APPROVED_BRAND_BYTES = {
+    'assets/brand/approved-mark.jpg': 'f1095531d88d17f20c7464c62887703321a0872f108d3fb78a4afc0226dac2a7',
+    'assets/brand/approved-mark-provenance.json': '28e6eb0b45ed9cea2acd736e1289dd6e7eea599d124a30af14f169f7da4fd697'
+  };
+  for (const [rel, expected] of Object.entries(APPROVED_BRAND_BYTES)) {
+    try { assert(require('crypto').createHash('sha256').update(fs.readFileSync(path.join(ROOT, rel))).digest('hex') === expected, `approved brand bytes changed: ${rel}`, failures); }
+    catch (error) { failures.push(`approved brand asset missing: ${rel}`); }
+  }
   try {
     const brandChanges = gitChanged(base, 'assets/brand');
     const undeclared = brandChanges
