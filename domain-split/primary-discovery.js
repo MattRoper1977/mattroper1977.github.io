@@ -76,7 +76,8 @@
         block.hidden = !matches;
         if (matches) { unitCount++; lessonCount += matches; }
       }
-      count.textContent = unitCount + ' units · ' + lessonCount + ' lessons · ' + unitCount + ' Word downloads';
+      const plural = (number, noun) => number + ' ' + noun + (number === 1 ? '' : 's');
+      count.textContent = plural(unitCount, 'unit') + ' · ' + plural(lessonCount, words.length ? 'matching lesson' : 'lesson') + ' · ' + plural(unitCount, 'Word download');
       empty.hidden = unitCount > 0;
       const params = new URLSearchParams();
       for (const key of keys) if (inputs[key].value.trim()) params.set(key, inputs[key].value.trim());

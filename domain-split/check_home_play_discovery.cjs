@@ -175,8 +175,9 @@ async function showcase(page, selector, requests, start) {
         await video.scrollIntoViewIfNeeded(); assert(await video.evaluate(el => el.paused && el.currentTime === 0));
         const start = requests.length, box = await video.boundingBox();
         assert(box && box.width > 100 && box.height > 100);
-        // Native Chromium play/pause control; no synthetic play() call.
-        await video.click({ position: { x: 24, y: box.height - 23 } });
+        // The native play button sits above the seek track in this pinned Chromium.
+        // Select the visible control; do not substitute a synthetic play() call.
+        await video.click({ position: { x: 24, y: box.height - 48 } });
         await page.waitForFunction(() => { const v = document.querySelector('#made-by-matt-play video'); return !!v && !v.paused && v.currentTime > 0; }, null, { timeout: 15000 });
         const media = await video.evaluate(el => ({ seconds: el.duration, currentTime: el.currentTime, paused: el.paused, controls: el.controls }));
         assert(Math.abs(media.seconds - featured[0].seconds) <= 1.5, 'Unexpected real preview duration');

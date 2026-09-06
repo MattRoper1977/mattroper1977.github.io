@@ -3,7 +3,7 @@
   'use strict';
   if (w.MBMUsage) return;
   var KEY = 'mbm_usage_choice_v1', config = null, rows = [], byRoute = new Map();
-  var once = new Set(), pending = new Set(), summaries = new Map(), started = false;
+  var once = new Set(), pending = new Set(), summaries = new Map(), labelledDownloads = new WeakSet(), started = false;
   var labels = {lesson_open: 'lesson opens', download_request: 'download requests', game_launch: 'game launches'};
   var readyResolve, ready = new Promise(function (resolve) { readyResolve = resolve; });
   function choice() { try { return w.localStorage.getItem(KEY) || 'unset'; } catch (_) { return 'unset'; } }
@@ -129,15 +129,19 @@
     });
   }
   function initDownloadCounts() {
+    // An inactive service must not make the download itself appear inactive.
+    // The statistics page carries the shared-service status in that release.
+    if (!config || !config.enabled) return;
     var groups=new Map();
     d.querySelectorAll('a[href]').forEach(function (link) {
       var row=resolveRoute(link.getAttribute('href'));
-      if (!row || row.event_types.indexOf('download_request')<0 || link.querySelector('.usage-resource-count')) return;
+      if (!row || row.event_types.indexOf('download_request')<0 || labelledDownloads.has(link)) return;
       var label=d.createElement('span');label.className='usage-resource-count';
-      label.textContent=config.enabled?'Shared download requests: loading…':'Shared download requests: collection not active';
-      link.appendChild(label); if (!groups.has(row.resource_id)) groups.set(row.resource_id,[]);groups.get(row.resource_id).push(label);
+      label.textContent='Shared download requests: loading…';
+      // Keep status outside the action: no changed link text, hit area or native styling.
+      link.insertAdjacentElement('afterend',label); labelledDownloads.add(link); if (!groups.has(row.resource_id)) groups.set(row.resource_id,[]);groups.get(row.resource_id).push(label);
     });
-    if (!config.enabled || !groups.size) return;
+    if (!groups.size) return;
     var ids=Array.from(groups.keys());
     for (var i=0;i<ids.length;i+=50) (function (batch) {
       publicSummary('education',batch).then(function (summary) {

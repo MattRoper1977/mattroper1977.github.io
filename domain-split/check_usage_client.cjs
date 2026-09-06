@@ -3,20 +3,21 @@ const assert=require('node:assert/strict');const fs=require('node:fs');const vm=
 const source=fs.readFileSync(path.join(__dirname,'usage-client.js'),'utf8');
 const lessonId='a'.repeat(64),downloadId='b'.repeat(64),gameId='c'.repeat(64);
 const registry=[{source:'education',resource_id:lessonId,route:'/Lessons/test.html',title:'Test lesson',kind:'lesson',event_types:['lesson_open']},{source:'education',resource_id:downloadId,route:'/Lessons/pack.zip',title:'Test pack',kind:'pack',event_types:['download_request']},{source:'play',resource_id:gameId,route:'/game/',title:'Test game',kind:'game',event_types:['game_launch']}];
-function make({enabled=true,choice='unset',privacy=false,webdriver=false,locationHref='https://madebymatt.uk/Lessons/test.html?q=pupil-name&email=private#work',failPublic=false}={}){
+function make({enabled=true,choice='unset',privacy=false,webdriver=false,locationHref='https://madebymatt.uk/Lessons/test.html?q=pupil-name&email=private#work',failPublic=false,showDownloadLink=false,resourceCount=null}={}){
   const local=new Map(choice==='unset'?[]:[['mbm_usage_choice_v1',choice]]),calls=[],listeners={};
-  const location=new URL(locationHref),document={body:{},querySelectorAll:()=>[],addEventListener:(name,fn)=>{(listeners[name]??=[]).push(fn);}};
+  const downloadLink={textContent:'Download real pack',siblings:[],getAttribute:()=>'/Lessons/pack.zip',insertAdjacentElement:(_position,label)=>downloadLink.siblings.push(label)};
+  const location=new URL(locationHref),document={body:{},createElement:()=>({textContent:''}),querySelectorAll:selector=>showDownloadLink&&selector==='a[href]'?[downloadLink]:[],addEventListener:(name,fn)=>{(listeners[name]??=[]).push(fn);}};
   const window={location,crypto,localStorage:{getItem:k=>local.get(k)||null,setItem:(k,v)=>local.set(k,v)},addEventListener:()=>{}};
   const config={schema:1,enabled,source:'education',service_origin:'https://example.supabase.co',allowed_origins:['https://madebymatt.uk']};
   function fetch(url,options={}){
     calls.push({url,options});if(url==='/data/usage-config.json')return Promise.resolve({ok:true,json:()=>Promise.resolve(config)});
     if(url==='/data/usage-registry.json')return Promise.resolve({ok:true,json:()=>Promise.resolve(registry)});
-    if(url.includes('usage-public'))return failPublic?Promise.reject(new Error('offline')):Promise.resolve({ok:true,json:()=>Promise.resolve({schema:1,source:'education',enabled:true,windows:{last30days:{top:{lessons:[],packs:[],games:[]}},alltime:{top:{lessons:[],packs:[],games:[]}}}})});
+    if(url.includes('usage-public'))return failPublic?Promise.reject(new Error('offline')):Promise.resolve({ok:true,json:()=>Promise.resolve({schema:1,source:'education',enabled:true,resources:resourceCount===null?[]:[{resource_id:downloadId,event_type:'download_request',alltime:resourceCount,last30days:resourceCount}],windows:{last30days:{top:{lessons:[],packs:[],games:[]}},alltime:{top:{lessons:[],packs:[],games:[]}}}})});
     return Promise.resolve({ok:true,json:()=>Promise.resolve({ok:true,counted:true})});
   }
   vm.runInNewContext(source,{window,document,location,navigator:{globalPrivacyControl:privacy,webdriver,onLine:true},fetch,URL,Promise,Map,Set,Array,JSON,Number,Date,AbortController,setTimeout,clearTimeout,MutationObserver:class{observe(){}}});
   function click(href){const link={getAttribute:()=>href};const target={closest:selector=>selector==='a[href]'?link:null};(listeners.click||[]).forEach(fn=>fn({target,button:0,defaultPrevented:false}));}
-  return {window,calls,local,click,posts:()=>calls.filter(c=>c.url.includes('usage-ingest'))};
+  return {window,calls,local,click,downloadLink,posts:()=>calls.filter(c=>c.url.includes('usage-ingest'))};
 }
 (async()=>{
  let cases=0;async function run(name,fn){await fn();cases++;process.stdout.write('PASS '+name+'\n');}
@@ -31,6 +32,8 @@ function make({enabled=true,choice='unset',privacy=false,webdriver=false,locatio
  await run('privacy signal overrides an earlier opt-in',async()=>{const x=make({choice:'allow',privacy:true});await x.window.MBMUsage.ready;x.click('/Lessons/pack.zip');assert.equal(x.posts().length,0);});
  await run('automation and unapproved origins cannot write',async()=>{for(const options of [{webdriver:true},{locationHref:'https://preview.invalid/Lessons/test.html'}]){const x=make({choice:'allow',...options});await x.window.MBMUsage.ready;x.click('/Lessons/pack.zip');assert.equal(x.posts().length,0);}});
  await run('provider failure has no local-count fallback',async()=>{const x=make({failPublic:true});await x.window.MBMUsage.ready;await assert.rejects(x.window.MBMUsage.publicSummary('education'),/offline/);assert(![...x.local.keys()].some(k=>k.startsWith('mbm_c_')));});
+ await run('inactive counters preserve the existing download action and add no badge',async()=>{const x=make({enabled:false,choice:'allow',showDownloadLink:true});await x.window.MBMUsage.ready;assert.equal(x.downloadLink.textContent,'Download real pack');assert.equal(x.downloadLink.siblings.length,0);assert.equal(x.calls.filter(c=>c.url.startsWith('https:')).length,0);});
+ await run('active shared count appears beside the unchanged download action',async()=>{const x=make({showDownloadLink:true,resourceCount:7});await x.window.MBMUsage.ready;await new Promise(resolve=>setImmediate(resolve));assert.equal(x.downloadLink.textContent,'Download real pack');assert.equal(x.downloadLink.siblings.length,1);assert.equal(x.downloadLink.siblings[0].textContent,'Shared download requests: 7 all time');assert.equal(x.posts().length,0);});
  const assembly=process.argv[2]||fs.readFileSync(path.join(__dirname,'ASSEMBLY_PATH'),'utf8').trim();
  const account=fs.readFileSync(path.join(assembly,'education-site/assets/mbm-account.js'),'utf8');
  const method=account.slice(account.indexOf('  function readUsageDashboard(source)'),account.indexOf('  function unsubscribeMailing()'));
