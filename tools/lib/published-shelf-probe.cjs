@@ -1,7 +1,6 @@
 'use strict';
-// The accepted standalone Play publication uses a paginated catalogue, not the
-// retired education-domain TAXONOMY/genreSections/Top Picks DOM. Derive the
-// complete membership independently from Games main and the accepted W7 census.
+// The accepted Play discovery grid includes games, classroom and staff rows.
+// Derive complete membership independently from Games main and the accepted W7 census.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -54,6 +53,16 @@ function selectedGame(catalogue, href) {
   assert(typeof matches[0].title === 'string' && matches[0].title.trim(), 'The selected game has no searchable title');
   return matches[0];
 }
+function cardIdentities(actual, expected, label) {
+  members(actual.map(card => route(card.href)), expected.map(card => route(card.route)), label);
+  for (const card of actual) {
+    const entry = expected.find(item => route(item.route) === route(card.href));
+    assert.equal(card.links, 1, `${label}: missing or duplicate play link`);
+    assert.equal(card.id, entry.id, `${label}: substituted card identity`);
+    assert.equal(card.playId, entry.id, `${label}: substituted play identity`);
+    assert.equal(card.title, entry.title, `${label}: substituted game title`);
+  }
+}
 async function json(url) {
   const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(30000) });
   assert.equal(response.status, 200, `${url}: HTTP status`);
@@ -88,33 +97,44 @@ async function verify({ href }) {
       try {
         const response = await page.goto(ORIGIN + '/', { waitUntil: 'networkidle', timeout: 60000 });
         assert.equal(response.status(), 200); assert.equal(page.url(), ORIGIN + '/');
-        for (const selector of ['#games-results', '#games-status', '#games-q', '#games-more', '#classroom-activities', '#staff-activities']) {
+        for (const selector of ['#game-grid', '#result-count', '#query', '#group', '#empty-state', '#discovery-form']) {
           assert.equal(await page.locator(selector).count(), 1, `Missing current shelf control ${selector}`);
         }
-        await page.waitForFunction(() => document.querySelectorAll('#games-results a.result').length > 0);
-        const count = async () => page.locator('#games-results a.result').count();
-        let clicks = 0;
-        while (await page.locator('#games-more').isVisible()) {
-          assert(clicks++ < expectedGames.length, 'Show more made no bounded progress');
-          const before = await count();
-          await page.locator('#games-more').click();
-          assert(await count() > before, 'Show more did not expose additional games');
+        const allRows = [...catalogue.games, ...catalogue.activities, ...catalogue.staff];
+        const total = expectedGames.length + additional.length;
+        const gridCards = '#game-grid > .game-card:visible';
+        const readCards = () => page.locator(gridCards).evaluateAll(nodes => nodes.map(card => {
+          const links = card.querySelectorAll('a[data-play]');
+          return { id: card.dataset.card, links: links.length, href: links[0]?.href || '',
+                   playId: links[0]?.dataset.play, title: card.querySelector('h3')?.textContent || '',
+                   genre: card.querySelector('.chips span')?.textContent || '',
+                   group: card.querySelector('.chips span:nth-child(2)')?.textContent || '' };
+        }));
+        const count = () => page.locator(gridCards).count();
+        const checkCount = async n => assert.equal(await page.locator('#result-count').innerText(),
+          `${n} of ${total} games and activities`, 'Visible count does not match the independent population');
+        await page.waitForFunction(n => document.getElementById('result-count')?.textContent ===
+          `${n} of ${n} games and activities`, total);
+        cardIdentities(await readCards(), allRows, 'Complete rendered Play collection');
+        await checkCount(total);
+        for (const [group, rows] of Object.entries({ games: catalogue.games, activities: catalogue.activities, staff: catalogue.staff })) {
+          await page.locator('#group').selectOption(group);
+          const cards = await readCards();
+          cardIdentities(cards, rows, `Rendered ${group} filter`);
+          await checkCount(rows.length);
+          if (group === 'games') {
+            const targetCards = cards.filter(card => route(card.href) === target);
+            assert.equal(targetCards.length, 1, `${title} must render exactly once`);
+            assert(!/sports/i.test(targetCards[0].genre), `${title} has been reclassified as Sports`);
+          } else {
+            const label = group === 'staff' ? 'Staff activity' : 'Classroom activity';
+            assert(cards.every(card => card.group === label), `${group} cards lost their audience labels`);
+          }
         }
+        await page.locator('#group').selectOption('');
+        cardIdentities(await readCards(), allRows, 'Clearing collection restores every entry');
         const hrefs = selector => page.locator(selector).evaluateAll(nodes => nodes.map(a => a.href));
-        const rendered = (await hrefs('#games-results a.result')).map(route);
-        members(rendered, expectedGames, 'Complete rendered games shelf');
-        assert.equal(rendered.filter(r => r === target).length, 1, `${title} must render exactly once`);
-        assert((await page.locator('#games-status').innerText()).includes(`of ${expectedGames.length} games`), 'Visible count does not report the canonical total');
-        const cards = await page.locator('#games-results a.result').evaluateAll(nodes => nodes.map(a => ({
-          href: a.href, title: a.querySelector('h3')?.textContent || '', subject: a.querySelector('small')?.textContent || ''
-        })));
-        const targetCards = cards.filter(card => route(card.href) === target);
-        assert.equal(targetCards.length, 1, 'Specific game route is missing/duplicated');
-        assert.equal(targetCards[0].title, title, 'The preserved route carries another game title');
-        assert(!/sports/i.test(targetCards[0].subject), `${title} has been reclassified as Sports`);
-        members((await hrefs('#classroom-activities a.result')).map(route), catalogue.activities.map(g => route(g.route)), 'Rendered classroom area');
-        members((await hrefs('#staff-activities a.result')).map(route), catalogue.staff.map(g => route(g.route)), 'Rendered staff area');
-        const features = (await hrefs('a.game-spotlight, a.feature-card')).map(route);
+        const features = (await hrefs('.showcase .featured-card a[data-play]')).map(route);
         assert(features.length > 0, 'The game showcase is missing');
         assert.equal(new Set(features).size, features.length, 'Duplicate featured game');
         assert(features.every(r => [...expectedGames, ...additional].includes(r)), 'A featured game points outside the real collection');
@@ -123,20 +143,22 @@ async function verify({ href }) {
           try { return [...expectedGames, ...additional].includes(route(u)); } catch { return false; }
         });
         assert.equal(earlyLaunches.length, 0, 'The shelf automatically loaded a game payload');
-        await page.locator('#games-q').fill(title);
-        await page.waitForFunction(targetRoute => [...document.querySelectorAll('#games-results a.result')].some(a =>
-          (decodeURIComponent(new URL(a.href).pathname).replace(/index\.html$/, '').replace(/\/$/, '') || '/') === targetRoute), target);
-        const matches = (await hrefs('#games-results a.result')).map(route);
+        await page.locator('#query').fill(title);
+        const matches = (await readCards()).map(card => route(card.href));
         assert.equal(matches.filter(r => r === target).length, 1, 'Searching does not find the existing game exactly once');
-        await page.locator('#games-q').fill('mbm-no-such-game-verification');
+        await checkCount(matches.length);
+        await page.locator('#query').fill('mbm-no-such-game-verification');
         assert.equal(await count(), 0, 'A nonmatching search is not empty');
-        assert.match(await page.locator('#games-status').innerText(), /No matches/i);
-        await page.locator('#games-q').fill('');
-        assert(await count() > 0, 'Clearing search does not restore games');
+        assert(await page.locator('#empty-state').isVisible(), 'A nonmatching search has no visible empty state');
+        await checkCount(0);
+        await page.locator('#query').fill('');
+        cardIdentities(await readCards(), allRows, 'Clearing search restores every entry');
+        assert(!(await page.locator('#empty-state').isVisible()), 'Clearing search leaves a false empty state');
+        await checkCount(total);
         await page.screenshot({ path: path.join(out, `shelf-${width}.png`), animations: 'disabled' });
-        report.cases.push({ width, games: rendered.length, activities: catalogue.activities.length,
+        report.cases.push({ width, games: expectedGames.length, activities: catalogue.activities.length,
                             staff: catalogue.staff.length, featured: features.length, search: 'PASS', status: 'PASS' });
-        console.log(`PASS ${width}px: ${rendered.length} games + ${additional.length} activities; ${title} once, search/clear/empty/count/HTTPS/reflow/no-auto-launch`);
+        console.log(`PASS ${width}px: ${expectedGames.length} games + ${additional.length} activities; ${title} once, collection filters/search/clear/empty/count/HTTPS/reflow/no-auto-launch`);
       } finally { await context.close(); }
     }
     assert.equal(report.pageErrors.length, 0, 'The published shelf raised a script error');
@@ -149,6 +171,13 @@ async function verify({ href }) {
 
 function controls() {
   members(['a', 'b'], ['a', 'b'], 'working member control');
+  const entry = { id: 'control', route: '/control/', title: 'Control' };
+  const card = { id: entry.id, playId: entry.id, href: entry.route, title: entry.title, links: 1 };
+  cardIdentities([card], [entry], 'working card control');
+  for (const mutation of [{ id: 'other' }, { playId: 'other' }, { title: 'Another game' }, { links: 0 }, { links: 2 }]) {
+    assert.throws(() => cardIdentities([{ ...card, ...mutation }], [entry], 'mutated card'),
+      'A card with a substituted identity/title or missing/duplicate play link was accepted');
+  }
   const similarNames = { games: [
     { route: '/fracture/', title: 'Relicforge: Fracture Engine' },
     { route: '/relicforge/', title: 'Relic Forge: Crownfall' },
@@ -174,7 +203,7 @@ function controls() {
   const reducedManifest = { games: games.slice(1) };
   const reducedCatalogue = { ...catalogue, games: catalogue.games.slice(1) };
   assert.throws(() => catalogueContract(reducedManifest, census, reducedCatalogue), /preserves every accepted canonical game/, 'A paired deletion from both feeds escaped preservation coverage');
-  console.log('PASS published shelf controls: positive membership, empty/missing/duplicate/substitution, zero equality, HTTPS downgrade, foreign host, URL parameters, and paired deletion from both main and live feeds');
+  console.log('PASS published shelf controls: card identity/title/link mutations, positive membership, empty/missing/duplicate/substitution, zero equality, HTTPS downgrade, foreign host, URL parameters, and paired deletion from both main and live feeds');
 }
 
 module.exports = { verify, controls, catalogueContract, selectedGame, members, route };
