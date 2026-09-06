@@ -36,8 +36,12 @@ const GAME = process.env.NB_GAME_FILE || path.join(ROOT, 'neonbreach', 'index.ht
 // in tools/verify_apexpool_landing.js: deriving a content pin from the file it
 // pins makes the check assert that the file equals itself. It moves only when
 // the game deliberately moves, in the same commit. (named S5 §V2)
-const PINNED_SHA = 'c69ada9231108b694ec3540d7eccdf7fa5ec1a43048cac167355c7c5933d30bb';
-const PINNED_BYTES = 124354;
+// Moved 2026-09-06 (HC3 §7): the viewport meta no longer carries maximum-scale=1
+// and user-scalable=no, so a pupil can pinch-zoom the page. The game deliberately
+// moved, so the pin moves in the same commit. Previous:
+//   c69ada9231108b694ec3540d7eccdf7fa5ec1a43048cac167355c7c5933d30bb / 124354 B
+const PINNED_SHA = '37674566d5632b42b1af397e85c1aa72fec19b1db2dff94b1c91f6285c7c2674';
+const PINNED_BYTES = 124319;
 // HC3 §1.1: the served copy on the play origin carries the rewritten host in
 // its canonical/og:url lines; the workflow passes NB_CANON for that run.
 const CANON = process.env.NB_CANON || 'https://madebymatt.uk/neonbreach/';

@@ -48,6 +48,14 @@ const DELIVERED_BYTES = 50832;
 
 /* The two permitted edits, as reversible rules. */
 const E1 = { name: 'storage key rename', from: "'mbm_apexrally_v1'", to: "'apexRally.v1'", expect: 2 };
+/* E4 - the pinch-zoom unblock, 2026-09-06 (HC3 §7). The delivered viewport meta
+ * carried maximum-scale=1 and user-scalable=no, which stops a pupil zooming the
+ * page. Reversible like E1-E3, so DELIVERED_SHA256 stays the historical fact. */
+const E4 = {
+  from: '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">',
+  to: '<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">',
+  expect: 1
+};
 const E2_LINES = [
   '<link rel="canonical" href="https://madebymatt.uk/apexrally/">\n',
   '<meta property="og:url" content="https://madebymatt.uk/apexrally/">\n',
@@ -72,6 +80,7 @@ function reverseEdits(src) {
    * has always been: an immutable historical fact about the artifact that was
    * handed over, not a number that drifts every time the platform adds a control. */
   s = stripExitRegion(s);
+  s = s.split(E4.from).join(E4.to);
   for (const line of E2_LINES) s = s.replace(line, '');
   s = s.split(E1.from).join(E1.to);
   return s;
@@ -195,7 +204,7 @@ gate('G1', 'identity, provenance and byte accountability', () => {
   assert(Buffer.byteLength(rebuilt) === DELIVERED_BYTES,
     `reversing the permitted edits gives ${Buffer.byteLength(rebuilt)} bytes, delivered is ${DELIVERED_BYTES}`);
   assert(rsha === DELIVERED_SHA256, `reversed hash ${rsha} != delivered ${DELIVERED_SHA256}`);
-  return `${bytes} bytes; sha256 ${sha}; reverses to delivered ${DELIVERED_SHA256.slice(0, 8)}… (+${bytes - DELIVERED_BYTES} bytes = E1+E2+E3 only)`;
+  return `${bytes} bytes; sha256 ${sha}; reverses to delivered ${DELIVERED_SHA256.slice(0, 8)}… (+${bytes - DELIVERED_BYTES} bytes = E1+E2+E3+E4 only)`;
 });
 
 gate('G2', 'zero runtime network requests (metadata is not a resource)', () => {
