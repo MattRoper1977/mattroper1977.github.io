@@ -50,7 +50,7 @@
       card.hidden=!match;if(match)shown++;
     }
     const ordered=s.list==='recent'?[...cards].sort((a,b)=>recent.indexOf(a.dataset.card)-recent.indexOf(b.dataset.card)):cards;
-    ordered.forEach(card=>grid.append(card));
+    ordered.forEach((card,index)=>{if(grid.children[index]!==card)grid.insertBefore(card,grid.children[index]||null);});
     document.getElementById('empty-state').hidden=shown!==0;
     document.getElementById('empty-description').textContent=selected&&selected.length===0?(s.list==='favourites'?'Tap a heart on a game to start your favourites.':'Games appear here when you open them from this collection.'):'Try a different word or clear a filter.';
     status.textContent=shown+' of '+games.length+' games and activities'+(s.list==='favourites'?' · Favourites':s.list==='recent'?' · Recently opened':'');
@@ -72,7 +72,7 @@
   function reset() {form.reset();render();}
   form.addEventListener('submit',e=>{e.preventDefault();render();});
   form.addEventListener('input',()=>render());
-  form.addEventListener('change',()=>render());
+  form.addEventListener('change',e=>{if(e.target.tagName==='SELECT')render();});
   form.addEventListener('reset',()=>queueMicrotask(()=>render()));
   document.getElementById('empty-reset').addEventListener('click',reset);
   document.addEventListener('click',e=>{
@@ -117,13 +117,14 @@
     const figure=document.createElement('figure'),video=document.createElement('video'),caption=document.createElement('figcaption');
     video.controls=true;video.preload='none';video.playsInline=true;video.poster=g.media.poster;video.src=g.media.video;video.setAttribute('aria-label',g.title+' gameplay preview, silent');
     caption.textContent=g.media.duration_seconds+'-second silent gameplay. '+g.media.description;figure.append(video,caption);document.getElementById('dialog-media').append(figure);
-    video.addEventListener('error',()=>{document.getElementById('media-status').textContent='This preview could not play. You can still open the game.';stopFailedVideo(video,g);});
-    video.play().catch(()=>{document.getElementById('media-status').textContent='Use the video Play control to start this preview.';});
+    video.addEventListener('error',()=>{if(!video.isConnected||activeGame!==g)return;document.getElementById('media-status').textContent='This preview could not play. You can still open the game.';stopFailedVideo(video,g);},{once:true});
+    video.play().catch(()=>{if(!video.isConnected||activeGame!==g)return;document.getElementById('media-status').textContent='Use the video Play control to start this preview.';});
   }
-  function stopFailedVideo(video,g){video.pause();video.removeAttribute('src');video.load();video.closest('figure').remove();poster(g);}
+  function stopFailedVideo(video,g){if(!video.isConnected||activeGame!==g)return;video.pause();video.removeAttribute('src');video.load();video.closest('figure').remove();poster(g);}
   function closeInfo(){if(!dialog.open)return;stopMedia();dialog.close();activeGame=null;returnFocus?.focus();}
   document.getElementById('dialog-watch').addEventListener('click',playPreview);
   document.getElementById('dialog-close').addEventListener('click',()=>closeInfo());
+  dialog.addEventListener('keydown',e=>{if(e.key!=='Tab')return;const stops=[...dialog.querySelectorAll('a[href],button,input,select,textarea,[tabindex],video[controls]')].filter(el=>!el.disabled&&el.tabIndex>=0&&el.getClientRects().length);const first=stops[0],last=stops[stops.length-1];if(!first){e.preventDefault();dialog.focus();return;}if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}});
   dialog.addEventListener('cancel',e=>{e.preventDefault();closeInfo();});
   dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeInfo();}});
   document.querySelector('.menu').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.currentTarget.open=false;e.currentTarget.querySelector('summary').focus();}});

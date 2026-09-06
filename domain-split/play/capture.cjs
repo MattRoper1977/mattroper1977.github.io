@@ -37,7 +37,7 @@ async function start(page,id){
   if(!await optional(page,'#go')){
    const first=page.getByText(/First Steps/).first();if(await first.isVisible())await first.click();await page.locator('#go').click();
   }
- }else if(id==='novasiege'){await page.locator('#start-run').press('Enter');await optional(page,'#v6NovaSkip');await page.waitForFunction(()=>window.VectorOverdrive.getSnapshot().enemies>=3);}
+ }else if(id==='novasiege'){await page.locator('#start-run').press('Enter');const intro=page.locator('#v6NovaIntro');await intro.waitFor({state:'visible'});await page.locator('#v6NovaSkip').press('Enter');await intro.waitFor({state:'hidden'});await page.waitForFunction(()=>{const s=window.VectorOverdrive.getSnapshot();return s.state==='PLAYING'&&s.enemies>=3;},null,{timeout:30000});}
  await wait(600);
 }
 async function action(page,id){
@@ -45,9 +45,11 @@ async function action(page,id){
   const rest=page.getByRole('button',{name:'Interact: Rest & restore',exact:true});
   if(await rest.isVisible()){await rest.press('Enter');await wait(1400);}
   for(let i=0;i<8;i++){const next=page.getByRole('button',{name:'Continue dialogue',exact:true});if(!await next.isVisible())break;await next.press('Enter');await wait(300);}
-  await page.locator('#ui-canvas').click({position:{x:160,y:160}});
-  // This tile-based game moves per keydown: deliberate steps, as a player taps.
-  for(const [key,n] of [['ArrowUp',3],['ArrowRight',5],['ArrowUp',3],['ArrowRight',4],['ArrowDown',3],['ArrowLeft',4]]){for(let i=0;i<n;i++){await page.keyboard.press(key);await wait(300);}}
+  const canvas=page.locator('#ui-canvas');await canvas.focus();const observed=[];
+  // Normal focused keyboard taps; wait for the real walking animation, which
+  // can run slower than wall time in the software renderer. Observations only.
+  for(const [key,n] of [['ArrowUp',3],['ArrowRight',4],['ArrowUp',3],['ArrowLeft',2]]){for(let i=0;i<n;i++){await page.waitForFunction(()=>window.__EMBERWILD__.player.motionState==='IDLE');await canvas.press(key);await page.waitForFunction(()=>window.__EMBERWILD__.player.motionState==='IDLE');await wait(150);observed.push(await page.evaluate(()=>({grid:window.__EMBERWILD__.player.grid,steps:window.__EMBERWILD__.steps,focus:document.activeElement.id})));}}
+  fs.writeFileSync(path.join(out,'emberwild-walk-observations.json'),JSON.stringify(observed,null,2));
   return 'Restore a companion at the hearth, then walk from Wayfinder’s Rest into the village.';
  }
  if(id==='apexkick'){
@@ -90,7 +92,7 @@ for(const[id,title,route]of titles.filter(t=>requested.includes(t[0]))){const vi
 try{
  await page.goto(base+'/404.html');if(await page.evaluate(()=>localStorage.length)!==0)throw Error('Capture profile was not empty');
  await page.goto(base+route,{waitUntil:'load'});await wait(2800);await shot(page,id+'-start');await start(page,id);await shot(page,id+'-ready');clipStart=(Date.now()-began)/1000;
- item.description=await action(page,id);await wait(Math.max(0,21000-(Date.now()-began-clipStart*1000)));await shot(page,id+'-after');
+ item.trim_start_seconds=clipStart;item.description=await action(page,id);await wait(Math.max(0,21000-(Date.now()-began-clipStart*1000)));await shot(page,id+'-after');
  const storage=await page.evaluate(()=>Object.keys(localStorage));if(storage.some(k=>/mbm_cc_v1|hud_names|uas_register|asdan_register|pupil|marks/i.test(k)))throw Error('Disallowed capture storage key');item.storage_keys=storage;item.errors=errors;
 }catch(e){item.status='capture-blocked';item.error=e.message;await shot(page,id+'-failure').catch(()=>{});}
 const video=page.video();await context.close();item.source_recording=path.relative(out,await video.path());
