@@ -133,7 +133,16 @@ async function newContext(browser, options = {}) {
   return context;
 }
 
-async function pageProbe(context, origin, route, { action = 'none', waitAbsent = 650, mutateUnderlay = false, mutateContent = false } = {}) {
+async function settleProbeFrames(page) {
+  await page.evaluate(() => {
+    const probe = window.__makerProbe || (window.__makerProbe = {});
+    probe.readyAfterFrames = false;
+    requestAnimationFrame(() => requestAnimationFrame(() => { probe.readyAfterFrames = true; }));
+  });
+  await page.waitForFunction(() => window.__makerProbe?.readyAfterFrames === true, null, { polling: 50, timeout: 5000 });
+}
+
+async function pageProbe(context, origin, route, { action = 'none', waitAbsent = 650, mutateUnderlay = false, mutateContent = false, mutateFocus = false } = {}) {
   const page = await context.newPage();
   const errors = [], external = [], navigations = [];
   page.on('pageerror', error => errors.push(`pageerror: ${error.message}`));
@@ -143,7 +152,8 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
     if (!url.startsWith(origin) && !url.startsWith('data:') && !url.startsWith('blob:')) external.push(url);
   });
   page.on('framenavigated', frame => { if (frame === page.mainFrame()) navigations.push({ wall: Date.now(), url: frame.url() }); });
-  await page.addInitScript(({ mutateContent }) => {
+  await page.addInitScript(({ mutateContent, mutateFocus }) => {
+    if (mutateFocus) HTMLElement.prototype.focus = function () {};
     window.__makerProbe = { seen: false, first: null, last: null, focus: null, geometry: null, contentFirst: null, contentGeometry: null, domContentLoaded: null, writeEvents: [], additions: [] };
     const makerIds = new WeakMap(); let nextMakerId = 1;
     try {
@@ -215,7 +225,7 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
       requestAnimationFrame(sample);
     }
     requestAnimationFrame(sample);
-  }, { mutateContent });
+  }, { mutateContent, mutateFocus });
   const wall = Date.now();
   let response = null;
   try { response = await page.goto(origin + encodeURI(splashProbeRoute(route)), { waitUntil: 'commit', timeout: 30000 }); }
@@ -269,9 +279,10 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
     }
   }
   await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(error => errors.push(`domcontentloaded: ${error.message}`));
-  if (action !== 'none') {
-    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))).catch(() => {});
-  }
+  // Both the app's suppressed focus handoff and our first-content sample run
+  // after DOMContentLoaded in rAF. Measure both paths at the same frame boundary;
+  // never wait for a correct focus value, and never swallow a readiness timeout.
+  await settleProbeFrames(page).catch(error => errors.push(`render-readiness: ${error.message}`));
   const state = await page.evaluate(key => {
     const p = window.__makerProbe || {};
     const legacy = document.querySelector('#mbmSplash,.mbm-splash,[data-mbm-splash]');
@@ -494,6 +505,14 @@ async function controls(browser, origin) {
   const reducedRoute = siteRoute;
   const assertions = [];
   const check = (condition, label, detail = '') => assertions.push({ pass: !!condition, label, detail });
+  const suppressedReady = value => value.probe?.readyAfterFrames === true &&
+    value.active.tag !== 'BODY' && value.active.id === value.primaryRect?.id && value.active.tag === value.primaryRect?.tag;
+  for (const [label, mutateFocus, expected] of [['real', false, true], ['planted focus failure', true, false], ['restored', false, true]]) {
+    const controlContext = await newContext(browser, { viewport: VIEWPORTS[0] });
+    const value = await pageProbe(controlContext, origin, `${siteRoute}?splash=skip`, { mutateFocus, waitAbsent: 700 });
+    await controlContext.close();
+    check(suppressedReady(value) === expected, `HC3 suppressed readiness ${label}`, JSON.stringify({ ready: value.probe?.readyAfterFrames, active: value.active, primary: value.primaryRect }));
+  }
   let ctx = await newContext(browser);
   const forceBaseline = await pageProbe(ctx, origin, `${firstRoute}?splash=force`, { action: 'key', waitAbsent: 700 });
   await ctx.close();
@@ -631,6 +650,7 @@ async function verify(browser, origin) {
       const addedErrors = addedFrom(result.errors, skipped.errors);
       const addedExternal = addedFrom(result.external, skipped.external);
       observations.push({ viewport, seen: !!result.probe?.seen, duration, detached: result.detached, makerPresent: result.makerPresent, active: result.active, primary: result.primaryRect,
+        shownReadyAfterFrames: result.probe?.readyAfterFrames === true, suppressedReadyAfterFrames: skipped.probe?.readyAfterFrames === true,
         makerMarkup: result.makerMarkup, makerRuntimeFlag: result.makerRuntimeFlag, local: result.local, session: result.session,
         writes: result.probe?.writeEvents || [], additions: result.probe?.additions || [], finalUrl: result.finalUrl, navigations: result.navigations,
         suppressedSeen: !!skipped.probe?.seen, suppressedActive: skipped.active, suppressedPrimary: skipped.primaryRect,
@@ -642,7 +662,7 @@ async function verify(browser, origin) {
         baselineErrors: skipped.errors, baselineExternal: skipped.external });
     }
     const wayOut = await wayOutProbe(browser, origin, route, 'Enter');
-    const pass = observations.every(o => o.seen && o.duration >= 280 && o.detached && !o.makerPresent && !o.suppressedSeen && o.firstPaintGeometryMatch && o.overflowDelta <= 0 &&
+    const pass = observations.every(o => o.shownReadyAfterFrames && o.suppressedReadyAfterFrames && o.seen && o.duration >= 280 && o.detached && !o.makerPresent && !o.suppressedSeen && o.firstPaintGeometryMatch && o.overflowDelta <= 0 &&
       o.addedErrors.length === 0 && o.addedExternal.length === 0 && o.active.id === o.primary?.id && o.active.tag === o.primary?.tag &&
       o.suppressedActive.id === o.suppressedPrimary?.id && o.suppressedActive.tag === o.suppressedPrimary?.tag) &&
       wayOut.handoff?.ready && wayOut.reached && wayOut.tabs <= 30 && wayOut.navigated && wayOut.errors.length === 0 && wayOut.external.length === 0;
