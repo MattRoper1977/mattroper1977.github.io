@@ -19,13 +19,13 @@ AUDIENCES = [
     ('governors-trustees', 'Governors & trustees', 'Governance guidance, induction, training and curriculum oversight.'),
 ]
 GAMES = [
-    {'id': 'game-apex-kick', 'title': 'Apex Kick', 'route': '/apexkick/', 'poster': 'poster-apexkick.webp',
+    {'id': 'game-apex-kick', 'title': 'Apex Kick', 'poster': 'poster-apexkick.webp',
      'clip': 'clip-apexkick.mp4', 'seconds': 18, 'description': 'Aim a free kick, judge the power and curl the ball towards goal.',
      'preview': 'A player positions the target and takes free kicks past a defensive wall.'},
-    {'id': 'game-voxel-frontier', 'title': 'Voxel Frontier', 'route': '/voxel/', 'poster': 'poster-voxelfrontier-play.webp',
+    {'id': 'game-voxel-frontier', 'title': 'Voxel Frontier', 'poster': 'poster-voxelfrontier-play.webp',
      'clip': 'clip-voxelfrontier-play.mp4', 'seconds': 13, 'description': 'Explore a block world and try building in Creative mode.',
      'preview': 'A first-person view moves above a landscape of blocks, trees and water.'},
-    {'id': 'game-offbrand', 'title': 'Off-Brand', 'route': '/offbrand/', 'poster': 'poster-offbrand.webp',
+    {'id': 'game-offbrand', 'title': 'Off-Brand', 'poster': 'poster-offbrand.webp',
      'clip': 'clip-offbrand.mp4', 'seconds': 17, 'description': 'Read clues in the workshop and work out who is the Glitch.',
      'preview': 'The workshop game introduces its crew and Glitch modes and shows the play interface.'},
 ]
@@ -52,9 +52,9 @@ def audience_directory():
                 for slug, title, description in AUDIENCES)+'</div></div></section>')
 
 
-def play_showcase(section_id='made-by-matt-play'):
+def play_showcase(featured, section_id='made-by-matt-play'):
     cards = []
-    for game in GAMES:
+    for game in featured:
         title = escape(game['title'])
         cards.append('<article class="mbm-play-card"><div class="mbm-play-card-copy"><h3>'+title+'</h3><p>'+game['description']+'</p></div>'
                      '<figure><video controls playsinline preload="none" width="854" height="480" '
@@ -79,8 +79,10 @@ def refresh(output, lessons, apps, site_source):
     media = []
     source_index = json.loads((site_source/'data/mbm-search-index.json').read_text())['entries']
     by_id = {entry['id']: entry for entry in source_index}
-    for game in GAMES:
-        assert by_id[game['id']]['route'] == game['route'], 'Game catalogue route changed'
+    # Editorial IDs, short labels and footage are chosen here; destinations
+    # come from the preserved resource records and must exist in the publication.
+    featured = [{**game, 'route': by_id[game['id']]['route']} for game in GAMES]
+    for game in featured:
         assert (games/game['route'].strip('/')/'index.html').is_file(), 'Game destination missing'
         for name in (game['poster'], game['clip']):
             source = site_source/'assets/video'/name
@@ -99,7 +101,7 @@ def refresh(output, lessons, apps, site_source):
         if relative in ('index.html', 'main/index.html'):
             footer = doc.xpath('//footer')[0]
             footer.addprevious(fragment(audience_directory()))
-            footer.addprevious(fragment(play_showcase()))
+            footer.addprevious(fragment(play_showcase(featured)))
         footer = doc.xpath('//footer')[0]
         menus = footer.xpath('.//nav')
         if menus:
@@ -117,7 +119,7 @@ def refresh(output, lessons, apps, site_source):
     slots = doc.xpath('//*[@id="audience-play-showcase"]')
     if len(slots) != 1:
         raise ValueError('Parents page must expose one Play showcase slot')
-    slots[0].getparent().replace(slots[0], fragment(play_showcase('audience-play-showcase')))
+    slots[0].getparent().replace(slots[0], fragment(play_showcase(featured, 'audience-play-showcase')))
     save_doc(parent_path, doc)
     # Keep the new audience destination discoverable alongside the old ones.
     for slug, _, _ in AUDIENCES:

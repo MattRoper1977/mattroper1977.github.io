@@ -22,4 +22,3 @@ begin
 end;
 $$;
 select source,enabled,measured_since from usage_private.sources order by source;
-

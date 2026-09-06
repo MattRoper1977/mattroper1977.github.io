@@ -68,4 +68,3 @@ test("owner requires existing Auth verification and database allowlist; no user-
   const r=await f.fn(request("owner",{headers:{authorization:"Bearer owner-token"}}));assert.equal(r.status,200);assert.equal(r.headers.get("cache-control"),"no-store");
   assert.equal((await r.json()).geography.status,"not_collected");
 });
-

@@ -6,4 +6,3 @@ select cron.schedule('mbm-usage-expiry','*/5 * * * *','select usage_private.purg
 commit;
 -- Inspect this exact job and its successful runs before activation.
 select jobid,jobname,schedule,command,active from cron.job where jobname='mbm-usage-expiry';
-

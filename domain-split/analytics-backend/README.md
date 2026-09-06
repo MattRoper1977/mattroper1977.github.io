@@ -51,4 +51,3 @@ Use Node 22.18+ (tested Node 24) and npm ci, then npm test in this directory. Th
 Tests cover zero state/start dates, private RLS/grants, transactional replay/conflicts, invalid source/event/IDs, owner/non-owner/anonymous access, rate rollback, submitted-write counts, UTC boundaries, all-time retention, expiry, deterministic top ten, stable-ID metadata changes, exact HTTP input/privacy boundaries, payload limits and unavailable backend behavior. HTTP unit tests inject a transport; they do not claim provider acceptance.
 
 Provider transport still sees the network requests and may keep IP/header logs independently of these application tables. Current Supabase Free API/database log retention is one day, and function/CDN details must be checked against actual deployment. This code does not claim to remove provider logs or establish blanket legal compliance. See the separately prepared ICO/provider audit.
-

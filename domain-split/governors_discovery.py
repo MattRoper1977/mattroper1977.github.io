@@ -80,8 +80,11 @@ def card(row):
             f'<a class="gv-open" href="{e(row["url"])}">{action}<span class="gv-sr">: {e(row["title"])}</span><span aria-hidden="true"> →</span></a></article>')
 
 
-def page(rows, checked_date):
+def page(rows, checked_date, audiences):
     topics = sorted({r['topic'] for r in rows})
+    related = ''.join('<a href="'+escape(audiences[key]['route'], quote=True)+'">'+
+                      escape(audiences[key]['label'])+'</a>'
+                      for key in ('trusts', 'schools', 'parents'))
     groups = ''.join('<section class="gv-group" data-governance-group aria-labelledby="gv-'+key+'"><div class="gv-section-head">'
                      '<h2 id="gv-'+key+'">'+escape(title)+'</h2><p>'+escape(description)+'</p></div><div class="gv-grid">'+
                      ''.join(card(r) for r in rows if r['origin'] == key)+'</div></section>' for key, title, description in GROUPS)
@@ -108,12 +111,12 @@ def page(rows, checked_date):
 </div><p class="gv-small">These conversation prompts are Made by Matt’s own suggestions. Use them alongside your board’s agreed role and the linked guidance.</p></section>
 <section id="governance-resources" class="gv-finder" aria-labelledby="gv-finder-title"><h2 id="gv-finder-title">Find the support you need</h2>
 <form id="gv-search-form" role="search"><div class="gv-search-field"><label for="gv-search">Search governance resources</label><input id="gv-search" type="search" placeholder="Try safeguarding, SEND or induction" autocomplete="off"></div>
-<div><label for="gv-origin">Publisher group</label><select id="gv-origin"><option value="">All resources</option value="official">Official guidance</option><option value="sector">Training &amp; sector support</option><option value="made-by-matt">Made by Matt</option></select></div>
+<div><label for="gv-origin">Publisher group</label><select id="gv-origin"><option value="">All resources</option><option value="official">Official guidance</option><option value="sector">Training &amp; sector support</option><option value="made-by-matt">Made by Matt</option></select></div>
 <div><label for="gv-topic">Topic</label><select id="gv-topic"><option value="">All topics</option>'''+''.join('<option>'+escape(t)+'</option>' for t in topics)+'''</select></div><button type="reset">Clear filters</button></form>
 <p id="gv-result-count" role="status" aria-live="polite">'''+str(len(rows))+''' resources</p><p class="gv-small">Publisher content and booking terms can change. Links and access information checked '''+escape(checked_date)+'''. External links take you to the named publisher.</p>
 <noscript><p>All resources are listed below. Search and filters need JavaScript; the links work without it.</p></noscript></section>
 <p id="gv-empty" hidden>No matching resources. Try a broader search or clear the filters.</p>'''+groups+'''
-<section class="gv-next"><h2>More from Made by Matt</h2><div class="gv-actions"><a href="/education-hub/">Professional Education Hub</a><a href="/for/trusts/">Academy trusts</a><a href="/for/schools-semh/">Schools &amp; specialist settings</a><a href="/for/parents-carers/">Parents &amp; carers</a></div></section>
+<section class="gv-next"><h2>More from Made by Matt</h2><div class="gv-actions"><a href="/education-hub/">Professional Education Hub</a>'''+related+'''</div></section>
 </main><footer class="gv-footer gv-wrap"><a href="/">Made by Matt Education</a><a href="/resources/">All resources</a><a href="/privacy/">Privacy</a><a href="mailto:contactmadebymatt@gmail.com">Contact Matt</a></footer></body></html>
 '''
 
@@ -124,7 +127,8 @@ def refresh(output, lessons, apps, site_source):
     site = output/'education-site'
     target = site/ROUTE.lstrip('/')/'index.html'
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(page(rows, config['checkedDate']))
+    audiences = read(site_source/'data/audience-homepages.json')['audiences']
+    target.write_text(page(rows, config['checkedDate'], audiences))
     (site/'assets').mkdir(parents=True, exist_ok=True)
     for name in ['governors-discovery.css', 'governors-discovery.js']:
         shutil.copyfile(HERE/name, site/'assets'/name)

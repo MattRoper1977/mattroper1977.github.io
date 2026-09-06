@@ -14,4 +14,3 @@ end;
 $$;
 -- Do not emit user rows or identity details as deployment proof.
 select count(*) as enabled_owner_count from usage_private.owners where enabled;
-

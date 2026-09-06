@@ -47,6 +47,13 @@ function catalogueContract(manifest, census, catalogue) {
   assert.equal(new Set(ids).size, ids.length, 'Duplicate catalogue identity');
   return { expectedGames, additional };
 }
+function selectedGame(catalogue, href) {
+  const target = route(href);
+  const matches = catalogue.games.filter(game => route(game.route) === target);
+  assert.equal(matches.length, 1, 'The selected game route is missing or duplicated');
+  assert(typeof matches[0].title === 'string' && matches[0].title.trim(), 'The selected game has no searchable title');
+  return matches[0];
+}
 async function json(url) {
   const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(30000) });
   assert.equal(response.status, 200, `${url}: HTTP status`);
@@ -54,7 +61,7 @@ async function json(url) {
   return response.json();
 }
 
-async function verify({ href, title }) {
+async function verify({ href }) {
   const manifest = await json(RAW);
   const census = JSON.parse(fs.readFileSync(path.resolve(CENSUS), 'utf8'));
   const servedManifest = await json(ORIGIN + '/games.json');
@@ -63,6 +70,8 @@ async function verify({ href, title }) {
   const { expectedGames, additional } = catalogueContract(manifest, census, catalogue);
   const target = route(href);
   assert(expectedGames.includes(target), 'The specific game is absent from the canonical shelf');
+  const selected = selectedGame(catalogue, href);
+  const title = selected.title;
   const report = { origin: ORIGIN, measurement: 'Standalone published shelf', cases: [], pageErrors: [] };
   const out = path.resolve('audit-output/published-shelf-' + target.replaceAll('/', ''));
   fs.mkdirSync(out, { recursive: true });
@@ -96,9 +105,13 @@ async function verify({ href, title }) {
         members(rendered, expectedGames, 'Complete rendered games shelf');
         assert.equal(rendered.filter(r => r === target).length, 1, `${title} must render exactly once`);
         assert((await page.locator('#games-status').innerText()).includes(`of ${expectedGames.length} games`), 'Visible count does not report the canonical total');
-        const targetCard = page.locator('#games-results a.result').filter({ has: page.locator('h3', { hasText: title }) });
-        assert.equal(await targetCard.count(), 1, 'Specific game title is missing/duplicated');
-        assert(!/sports/i.test(await targetCard.locator('small').innerText()), `${title} has been reclassified as Sports`);
+        const cards = await page.locator('#games-results a.result').evaluateAll(nodes => nodes.map(a => ({
+          href: a.href, title: a.querySelector('h3')?.textContent || '', subject: a.querySelector('small')?.textContent || ''
+        })));
+        const targetCards = cards.filter(card => route(card.href) === target);
+        assert.equal(targetCards.length, 1, 'Specific game route is missing/duplicated');
+        assert.equal(targetCards[0].title, title, 'The preserved route carries another game title');
+        assert(!/sports/i.test(targetCards[0].subject), `${title} has been reclassified as Sports`);
         members((await hrefs('#classroom-activities a.result')).map(route), catalogue.activities.map(g => route(g.route)), 'Rendered classroom area');
         members((await hrefs('#staff-activities a.result')).map(route), catalogue.staff.map(g => route(g.route)), 'Rendered staff area');
         const features = (await hrefs('a.game-spotlight, a.feature-card')).map(route);
@@ -111,7 +124,8 @@ async function verify({ href, title }) {
         });
         assert.equal(earlyLaunches.length, 0, 'The shelf automatically loaded a game payload');
         await page.locator('#games-q').fill(title);
-        await page.waitForFunction(name => [...document.querySelectorAll('#games-results h3')].some(n => n.textContent.includes(name)), title);
+        await page.waitForFunction(targetRoute => [...document.querySelectorAll('#games-results a.result')].some(a =>
+          (decodeURIComponent(new URL(a.href).pathname).replace(/index\.html$/, '').replace(/\/$/, '') || '/') === targetRoute), target);
         const matches = (await hrefs('#games-results a.result')).map(route);
         assert.equal(matches.filter(r => r === target).length, 1, 'Searching does not find the existing game exactly once');
         await page.locator('#games-q').fill('mbm-no-such-game-verification');
@@ -135,6 +149,12 @@ async function verify({ href, title }) {
 
 function controls() {
   members(['a', 'b'], ['a', 'b'], 'working member control');
+  const similarNames = { games: [
+    { route: '/fracture/', title: 'Relicforge: Fracture Engine' },
+    { route: '/relicforge/', title: 'Relic Forge: Crownfall' },
+  ] };
+  assert.equal(selectedGame(similarNames, '/relicforge/').title, 'Relic Forge: Crownfall', 'Similar game names must not replace the requested route');
+  assert.throws(() => selectedGame(similarNames, '/missing/'), 'A missing selected game was accepted');
   for (const actual of [[], ['a'], ['a', 'a'], ['a', 'ghost']]) {
     assert.throws(() => members(actual, ['a', 'b'], 'mutation'), 'Broken membership was accepted');
   }
@@ -157,5 +177,5 @@ function controls() {
   console.log('PASS published shelf controls: positive membership, empty/missing/duplicate/substitution, zero equality, HTTPS downgrade, foreign host, URL parameters, and paired deletion from both main and live feeds');
 }
 
-module.exports = { verify, controls, catalogueContract, members, route };
+module.exports = { verify, controls, catalogueContract, selectedGame, members, route };
 if (require.main === module) controls();

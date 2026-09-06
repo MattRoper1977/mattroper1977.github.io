@@ -28,4 +28,3 @@ try{
   assert.deepEqual(traffic,{daily:0,totals:0,nonces:0});
   console.log(JSON.stringify({status:"PASS",runtime:"PGlite 0.5.8 / PostgreSQL18.3",migration:name,registry_sql_sha256:createHash("sha256").update(sql).digest("hex"),kinds,states,traffic},null,2));
 }finally{await db.close();}
-

@@ -79,7 +79,13 @@ async function check(name, run) {
               assert.equal(await page.locator(`#asdan-learning a[href="/Lessons/${name}_ASDAN/${name}_ASDAN_Hub.html"]`).count(),1);
             assert.equal(await page.locator('#asdan-learning a[href*="year=all"]').count(),1);
           }
-          return {route:audience.route,preservedDestinations:expected.length,screenshot:await shot(page,`${width}-${key}-entry`),fullPage:await shot(page,`${width}-${key}-full`,true)};
+          const entryShot=await shot(page,`${width}-${key}-entry`);
+          for(const picture of await page.locator('.ad-main img').all()) {
+            await picture.scrollIntoViewIfNeeded();
+            await picture.evaluate(image=>image.decode());
+            assert(await picture.evaluate(image=>image.naturalWidth>0),'Audience image must load when selected into view');
+          }
+          return {route:audience.route,preservedDestinations:expected.length,screenshot:entryShot,fullPage:await shot(page,`${width}-${key}-full`,true)};
         });
       }
       await check(`${width}-family-disclosures-and-search`,async()=>{

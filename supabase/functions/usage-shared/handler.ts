@@ -137,4 +137,3 @@ export function createHandler(mode: Mode, deps: Dependencies) {
     } catch { return send(503, { ok: false, error: "service_unavailable" }); }
   };
 }
-

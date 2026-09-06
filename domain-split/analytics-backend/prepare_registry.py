@@ -73,4 +73,3 @@ if __name__ == "__main__":
     args.output.parent.mkdir(parents=True,exist_ok=True)
     args.output.write_text(sql)
     print(json.dumps({"rows":len(rows),"registry_sha256":hashlib.sha256(args.registry.read_bytes()).hexdigest(),"output":str(args.output)}))
-
