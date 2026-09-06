@@ -35,8 +35,26 @@ import { chromium } from 'playwright';
 const URL_ = process.argv[2] || process.env.MTR_LIVE_URL || 'https://madebymatt-play.uk/micro-tinkerer/';
 const VIEWPORT = { width: 390, height: 844 };
 
-const S1 = 'This is a playful, fictional hide-and-seek fantasy: tiny players hide from a larger-than-life "Mega Teacher"; it is not a depiction of real pupils, staff or SEMH practice.';
-const S2 = 'When available, online multiplayer connects players through the Made by Matt signalling server plus Cloudflare (stun.cloudflare.com:3478) and Google (stun.l.google.com:19302) STUN services; there is no TURN relay fallback, so a minority of home or restricted-network connections will not work.';
+// The two disclosures are pinned to the COMMITTED source at the instrument ref,
+// not typed here: the first honest run of the retargeted gate redded on a
+// sentence this file had typed in an earlier state of the game ("When
+// available, online multiplayer connects ... STUN services"), while the shipped
+// standalone build says multiplayer is disabled and contacts nothing. The
+// served page must equal the reviewed source, raw-at-SHA, which is the estate's
+// rule everywhere else.
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+const SOURCE = readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'micro-tinkerer', 'index.html'), 'utf8');
+const unescape = (t) => t.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+const disclosure = (id) => {
+  const m = SOURCE.match(new RegExp('<p class="disclosure" id="' + id + '">([\\s\\S]*?)</p>'));
+  if (!m) { console.log(`MEASUREMENT INVALID: the committed source has no #${id} disclosure`); process.exit(2); }
+  return unescape(m[1]).trim();
+};
+const S1 = disclosure('framing-note');
+const S2 = disclosure('multiplayer-note');
+const RECORD = (() => { const m = SOURCE.match(/<script id="standalone-build-record" type="application\/json">([\s\S]*?)<\/script>/); return m ? JSON.parse(m[1]) : null; })();
 
 let fails = 0;
 const gate = (name, ok, detail = '') => {
@@ -162,9 +180,19 @@ const sw = await page.evaluate(async () => {
     return { ...r, caches: names };
   } catch (e) { return { ok: false, scope: null, caches: [], err: e.message }; }
 });
-gate('a service worker is installed and active on the live origin', sw.ok, `scope=${sw.scope}`);
-gate('its scope is /micro-tinkerer/ and no wider', !!sw.scope && sw.scope.endsWith('/micro-tinkerer/'), `${sw.scope}`);
-gate('a versioned cache exists', sw.caches.some((n) => /v\d+\.\d+\.\d+/.test(n)), sw.caches.join(',') || 'none');
+// What the served page may install is DECLARED by the committed build record,
+// not assumed: the shipped standalone build ("standalone-direct-file") registers
+// no worker and states so in its own self-check; a packaged PWA build would.
+const standalone = !!RECORD && RECORD.distribution === 'standalone-direct-file';
+gate('the committed build record names the distribution', !!RECORD && !!RECORD.distribution, RECORD ? RECORD.distribution : 'no record');
+if (standalone) {
+  gate('no service worker is registered on the live origin (the standalone contract)', !sw.ok, `scope=${sw.scope}`);
+  gate('no cache is left behind on the live origin', sw.caches.length === 0, sw.caches.join(',') || 'none');
+} else {
+  gate('a service worker is installed and active on the live origin', sw.ok, `scope=${sw.scope}`);
+  gate('its scope is /micro-tinkerer/ and no wider', !!sw.scope && sw.scope.endsWith('/micro-tinkerer/'), `${sw.scope}`);
+  gate('a versioned cache exists', sw.caches.some((n) => /v\d+\.\d+\.\d+/.test(n)), sw.caches.join(',') || 'none');
+}
 
 await ctx.setOffline(true);
 let offErr = null;

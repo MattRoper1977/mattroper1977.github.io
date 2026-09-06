@@ -67,7 +67,7 @@ try {
     const offOrigin = [];
     page.on('request', r => {
       const u = new URL(r.url());
-      if (u.origin !== new URL(BASE).origin) offOrigin.push(r.url());
+      if (!PLAY_HOSTS.includes(u.hostname)) offOrigin.push(r.url());   // apex and www are one site
     });
     await page.goto(BASE + route, { waitUntil: 'load', timeout: 60000 });
     await page.waitForTimeout(2500);
