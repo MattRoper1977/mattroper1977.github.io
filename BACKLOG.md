@@ -3,6 +3,452 @@
 Named, ordered, and each one carries the evidence needed to start it without
 re-deriving anything. Last re-ordered 2 August 2026.
 
+**Every item declares its kind**, because a backlog that does not distinguish
+*waiting on a ruling* from *waiting on someone to do it* quietly turns the
+second into the first:
+
+- **ruling-pending** — the work is understood; someone has to decide.
+- **work-pending** — the decision is made; someone has to do it.
+
+And its class, because they are not equally urgent:
+
+- **instrument** — something that reports on the estate. Fix these first: every
+  future report depends on them, and a false green is invisible by definition.
+- **content** — something the estate serves. A missing page is at least visible.
+
+---
+
+## 0a. `verify_professional_site.js` — 8 findings, cause identified, two one-line fixes not yet authorised
+
+**instrument · ruling-pending** — and more urgent than it looks: see the note at
+the end of this item about steps 6–8.
+
+`verify-games-audience-faces.yml` fails on `main` at *Verify professional shell
+preservation against the target*. Eight findings: five "authorised homepage
+region … matched 0 times (expected 1)", a logo visual change, authored body
+wording outside permitted regions, and privacy copy changed without an account
+sentinel.
+
+**Do not "fix" these by adjusting the expectations.** Nothing below changes an
+expectation; it identifies what the check was comparing.
+
+### What `base` is — printed at run time, not inferred
+
+Instrumented copy of the verifier, run exactly as CI runs it:
+
+```
+base argument      : "origin/main"
+base rev-parse     : d0f9c2ae965d66a76af90595a08fb8cdfc27fd01
+base full name     : refs/remotes/origin/main
+base is a live URL : false
+overrides          : null
+```
+
+So `base` is an ordinary **git ref** — not a live URL, not a pinned snapshot
+artefact — and `overrides` is `null` on the failing run. The findings are about
+what is committed, not about what is served. Call sites agree:
+`professional-site-design-audit.yml` passes `--base origin/main`;
+`verify-games-audience-faces.yml` passes `origin/main` on a pull request and
+`HEAD^` on a push.
+
+### The mechanism
+
+`verify()` maps the baseline path for the homepage and only the homepage:
+
+```js
+const baselineRel = rel === 'main/index.html' ? 'index.html' : rel;
+```
+
+Printed at run time, that is what the two sides actually are:
+
+| side | read from | bytes | `<title>` |
+|---|---|---|---|
+| baseline | `origin/main:index.html` | 14,780 | Learning and creation, made simple. · Made by Matt |
+| current | worktree `main/index.html` | 69,047 | Made by Matt — Learn • Build • Explore |
+
+The baseline is **the audience chooser**. The other six key pages read
+`base:<same path>` and are byte-identical to the worktree. The five regions do
+not appear in the chooser because they never did — note the failing labels say
+`main/index.html *baseline*`, which is the side being read, not the page.
+
+### Why it was once right, and when it went stale
+
+The remap and `main/index.html` arrived in the same commit, `50817f0` (#110),
+which moved the professional homepage from `/` to `/main/` and gave `/` to the
+chooser. Against a base that predates that move, comparing the new
+`main/index.html` against the old `index.html` was the correct preservation
+comparison. It is a **one-shot mapping**: every base since #110 merged already
+contains `main/index.html`, so the comparison has been reading the chooser ever
+since.
+
+### What each finding costs
+
+- **7 of the 8** come from the remap. Same verifier, remap disabled as a
+  measurement only: **1 issue remains**.
+- **The 8th is independent.** `b11b449` ("Recover the PR #110 audience
+  discovery implementation from `.mbm-closeout`") *replaced* the privacy page's
+  sentinel line rather than adding to it —
+  `mbm-accounts-members-mailing-2026-08-08` became
+  `mbm-audience-discovery-teach-professional-hubs-closeout-2026-08-09`. The
+  account/mailing copy that sentinel authorises is still on the page (the
+  Supabase and Buttondown rows, the deletion contact). `members/index.html`
+  kept its sentinel; `privacy/index.html` lost it.
+
+### The cost that is not in the finding count — now fixed
+
+`main()` exited on the first failure, before `--self-test`. So the **four
+positive controls had not run on `main` since #110 merged** — the step that
+proves this gate can fail had itself been failing before it reached them.
+
+`--self-test` now runs every control and aggregates. Doing that exposed a
+second defect the old shape hid: the control *unrelated authored-copy mutation
+rejected* looks for the message "authored body wording changed", **which is
+already finding 7 of the baseline**. Compared against zero it would have
+reported PASS without its mutation doing anything. Controls are now evaluated
+as a delta against the unmutated run, and a signal already present in the
+baseline reports INCONCLUSIVE. Recorded as species 6 and 7 in
+`docs/VERIFIER_FAILURE_MODES.md`.
+
+Swept for the same shape: 66 tools, 19 with a control suite, **3 with the
+defect** — this file plus `verify_games_audience_faces.py` and
+`verify_education_hub.py`, both of which returned before dispatching their
+controls. All three now aggregate; all three proved on a red subject.
+
+### Sentinel sweep (0a-B context)
+
+59 HTML files scanned, 16 carry a sentinel, and **none carries more than one** —
+so the additive model does not exist anywhere in the estate yet. Pages carrying
+prose authored by a pass whose sentinel is absent:
+
+- **`privacy/index.html`** — 20 accounts/mailing prose markers, sentinel
+  displaced by the closeout pass. The known finding.
+- **`main/index.html`** — 6 accounts/mailing and 4 device-local-counter prose
+  markers, and **no sentinel at all**. Two authorising passes, nothing recorded.
+  It escapes the check because the verifier governs `main/` by region
+  comparison rather than by sentinel, but under an additive rule it is the
+  clearest multi-pass page in the estate.
+
+Eleven further apparent hits are false positives and are named here so nobody
+re-derives them: generic English ("auto-saves on this device" in two game
+pages), or one pass writing *about* another's feature — the locked chooser copy
+names Supabase and Buttondown in order to promise it does *not* use them, and
+that sentence is authored by the audience pass, which is the sentinel it
+carries. **Writing about a feature is not being authorised by that pass**, and
+any additive rule needs to say so or it will flag half the estate.
+
+### Measured, not applied
+
+With `baselineRel = rel` and the account sentinel restored alongside the
+closeout one, the verifier passes **and all four controls fire**, including
+*unrelated authored-copy mutation rejected* — so the corrected baseline path
+still catches drift and this is not a vacuous green.
+
+Neither change was made. Both await a ruling.
+
+**0a-A · the remap.** Remove it, and add an explicit precondition in its place:
+if `base` does not contain `main/index.html`, **fail with a message naming the
+reason**. Not a conditional — a conditional silently substitutes a different
+file and is indistinguishable from correct behaviour until it isn't, which is
+how this defect survived. A pre-#110 base should be an explicit, deliberate
+invocation, not a hidden branch.
+
+**0a-B · APPLIED 2026-08-09** — `data/copy-authorisation.json`. The additive
+proposal was withdrawn; the declared map replaced it.
+Three objections defeated it:
+
+- No page in the estate carries two sentinels (59 HTML files, 16 sentinels), so
+  additive sentinels would be **inventing a convention, not restoring one**.
+- Name-matching cannot decide authorship. The locked chooser copy names
+  Supabase and Buttondown *in order to promise it does not use them* — that
+  sentence is authored by the audience pass. A rule keyed on names would flag
+  half the estate.
+- The real gap is `main/index.html`, which carries accounts/mailing prose and
+  counter prose with **no sentinel at all**, escaping only because the verifier
+  governs `/main/` by region comparison.
+
+So: **one sentinel per page stays**, meaning the pass that last authored the
+file, and authorisation becomes a **declared input** — a map of page →
+authorising passes, in the same class as `gameIdOverrides`, `canonicalAliases`
+and `reclassifyAsGame`. A relation that cannot be derived from the page gets
+written down where it can be reviewed.
+
+The boundary, written once and applied consistently: **copy is authorised by the
+pass whose feature's behaviour it describes**, not by every pass whose systems
+it names. The privacy page's accounts/mailing copy describes the accounts
+feature's behaviour. The chooser's sentence describes the *audience-preference*
+feature's behaviour and names the others only as things it does not touch.
+
+`main/index.html` gets an explicit entry either way, so it is governed on
+purpose rather than by accident. If region comparison is judged sufficient
+governance for `/main/`, record that in the map rather than leaving it implicit.
+
+These findings predate the audience-discovery sequence. One of the original
+nine was a stale label list and is fixed.
+
+### This is not a cosmetic red — three CI steps are dark behind it
+
+Measured on `main` at `a8bfa2a`, `verify-games-audience-faces.yml`:
+
+```
+ 3. ok    Verify generated pages and canonical search data
+ 4. ok    Verify Revision 3 architecture and all positive controls
+ 5. FAIL  Verify professional shell preservation against the target branch
+ 6. skip  Verify accounts, Members, Supabase and mailing regressions
+ 7. skip  Verify JavaScript, Python and embedded-script syntax
+ 8. skip  Check patch hygiene and remove temporary bootstrap machinery
+```
+
+Steps after a failing step do not run. So **`verify_accounts_members_mailing.js`
+has not run in CI since #110** — the suite PR #114's own brief named "the gate to
+watch, since vendoring touches the auth path" — across the pass that changed the
+auth path. It is green locally on the merged tree at 21 passed · 0 failed, which
+is why nothing burned. Local green is not the estate's gate.
+
+**And it darks an entire downstream job.** `live-proof` — *"Exact production
+deployment and live browser proof"* — declares
+`needs: [static-contract, external-links, browser-matrix]`. `static-contract` is
+the job failing at step 5, so `live-proof` has been **skipped on every push
+since #110**. It is the job that waits for the deployment and **byte-compares all
+13 deployed pages against the committed tree**.
+
+So the estate already had a correct deployment proof, and 0a-A switched it off.
+Nobody noticed because a skipped job reads as *not applicable* rather than as
+*we lost our deployment proof* — which is how this morning's route matrix came
+to be the only thing anyone was reading.
+
+**Fixing 0a-A un-skips three steps and that whole job, for free.** That makes it
+the highest-value change available here by a distance: not a red verifier, but
+the accounts regression suite and the byte-level deployment proof both dark on a
+live site.
+
+---
+
+## 0b. Deployment provenance — the production matrix could not fail
+
+**instrument · work-pending** — built in this pass; the live legs cannot run
+until it is on `main`.
+
+On 9 August the production route matrix printed
+
+```
+all 13 routes 200; both removed paths 404; 1 attempt(s)
+```
+
+**31 seconds before the deployment it was reporting on existed** (19:45:43Z; the
+Pages deployment for `a8bfa2a` completed 19:46:14Z), and printed the identical
+line again 8m46s after it completed. Same output, same `1 attempt(s)`, either
+side of the event.
+
+The cause is retry-on-failure semantics: it re-checked only routes that were not
+200. A route that served 200 before a merge serves 200 after it, so `pending`
+emptied on the first attempt and the ladder never engaged. It was measuring that
+the site exists.
+
+**Built:** `tools/verify_deployment_provenance.py` and
+`.github/workflows/mbm-deployment-provenance.yml`, in three layers — trigger on
+the deployment event and take the SHA from the payload; assert GitHub's own
+deployed SHA equals the expected one; fetch a *witness* file from the origin and
+compare sha256 against the committed bytes. Retry now waits on provenance
+mismatch, not on a status code.
+
+**The trap found while building it, worth keeping:** the obvious witness is the
+data stamp, and it is the wrong one. `tools/stamp-data.py` only moves when
+`site.json` or `data/resources.json` move, and #114 changed neither — a Layer 3
+built on the stamp alone would have passed vacuously on the exact deployment
+that motivated it. So the witness is chosen per deployment from the files that
+actually changed, and where no served file changed the origin genuinely cannot
+tell two commits apart and the check reports INCONCLUSIVE rather than a pass.
+
+**To close:** merge, then confirm the workflow fires on a real deployment and
+its live negative control goes red. A `workflow_dispatch` cannot be used to
+pre-prove it, because GitHub only offers dispatch for workflows already on the
+default branch.
+
+---
+
+## 0c. The live gate has been red since #110
+
+**instrument · work-pending** — fixed in this pass; unproven against the origin
+until merged.
+
+`professional-site-live-verify.yml` has failed on `main` on every run from
+`50817f0` (#110) onward, and passed on the two before it. `PAGE_MARKERS["/"]`
+still described the pre-#110 professional homepage:
+
+| required on `/` | reality |
+|---|---|
+| `id="audiences"` | absent — it moved to `/main/` in #110 |
+| `Schools &amp; organisations` | absent — retired by D1 |
+| `Partners` | absent — retired by D1 |
+
+So the estate's only live gate was dark for the entire recovery sequence, and
+`/main/` — the actual professional homepage — was not checked live **at all**.
+
+The private-copy sweep predicted this: `verify_professional_site_live.py` was
+one of two files recorded as holding labels as literals and deliberately left
+alone as the riskier live-production class. That call was right at the time; a
+gate dark for a fortnight is what changes it.
+
+**Fixed** by deriving the chooser's markers from `data/audience-homepages.json`,
+the same file the renderer reads, rather than re-typing a corrected list — which
+would only reset the clock on the same trap. Structural literals that genuinely
+cannot be derived (`mbm-platform.css`, `mbm-site-header`) say so beside
+themselves. `/main/` gained its own entry.
+
+Proven red three ways before green: a label relabelled in the data file only, the
+chooser losing a group container, and `/main/` losing `id="audiences"`.
+
+**To close:** merge, then confirm the workflow passes against the real origin.
+
+---
+
+## 0d. `verify_games_audience_faces.mjs` is syntax-checked and never run
+
+**instrument · ruling-pending** — found by the `/` versus `/main/` sweep, which
+it passed: its route model is entirely post-#110. The defect is that nothing
+evaluates it.
+
+`verify-games-audience-faces.yml` mentions the file three times: twice in a
+`paths:` filter, and once as
+
+```
+node --check tools/verify_games_audience_faces.mjs
+```
+
+which parses it. Nothing in the repository executes it. It is 550 lines of
+Playwright assertions — eight viewports, menu and focus behaviour, `/main/`
+preservation, all seven audience homepages, pupil adult-feature suppression,
+local preference, journeys, first-party requests, overflow — and none of it has
+run.
+
+Two documents describe it as though it does:
+`docs/MBM_GAMES_AUDIENCE_FACES.md:60` and
+`docs/MBM_HOMEPAGE_AUDIENCE_ARCHITECTURE.md:58`. That is species 10 in prose —
+a capability advertised and not delivered — and it is why the file reads as
+covered rather than dormant.
+
+It also still holds audience labels as literals (recorded in the #114
+private-copy sweep). They happen to be current, but **nothing can tell you
+whether they stay that way**, because nothing evaluates them. An unrun check is
+worse than a stale one: a stale check eventually goes red.
+
+### The docs are corrected; that part needed no ruling
+
+Both documents now say what actually runs. They previously described the `.mjs`
+as active coverage, which made the estate's own record of what is protected
+wrong — and a stale doc, unlike a stale check, never goes red.
+
+### "Just run it" is not available
+
+Spot-checking 8 of its 78 assertions against the committed tree, **at least
+three are definitively stale**:
+
+| assertion | reality |
+|---|---|
+| root `<h1>` is *"Choose your own homepage type"* | that text is an `<h2>`; the `<h1>` is *"Learning and creation, made simple."* |
+| `.mf-main-card` href is `/main/` | the selector matches nothing anywhere in the estate — the chooser uses `.mf-btn primary`, which the static verifier accepts as the alternative |
+| `/start/` destination `<h1>` | same as the first |
+
+Two more could not be settled statically because they are rendered at runtime
+(the Continue wording, the theme swatches — `theme.js` does inject five, so that
+one probably passes). Three of the eight would pass. So switching it on means
+repairing it first, and the repairs are in the hard-coded-literal class that
+species 14 is about.
+
+### Triage against what runs today
+
+78 assertions, against `verify_audience_discovery_browser.py`'s 49 and the
+static verifiers that do run:
+
+**Already covered** — route reachability, sentinel identity, 320px overflow,
+root labels/routes/grouping/canonical, `/main/` canonical, og:url, identity
+heading, preserved sections, per-audience canonical and H1 and visual floors,
+promoted destinations being first-party, pupil adult-CTA suppression, `/start/`
+reaching the chooser, `loading="lazy"` at source level.
+
+**Genuinely additive**, roughly 43 assertion kinds in six clusters:
+
+| cluster | kinds | note |
+|---|---|---|
+| local preference lifecycle | 8 | store, no forced redirect, root marks last choice, Continue panel exposure/href/wording, Forget clears, panel hidden after | nothing behavioural covers this; only the key *name* is asserted statically |
+| responsive menu and focus | 8 | visible/hidden by width, ≥43px touch target, starts closed, expands, Escape closes, focus returns to the menu | the CSS rules are asserted at source; the behaviour is not |
+| runtime error collection | 4 | page errors, console errors, failed first-party requests, first-party HTTP errors |
+| account surfaces, live | 6 | login/register forms, Members loads, tabs, forgot/reset, callback status |
+| journeys through the real UI | 5 | opening Menu and the collapsed More disclosure before activating a hidden route |
+| theme behaviour | 3 | five controls, applied to `html` *and* `body`, `aria-pressed` |
+
+Plus singles: exactly one `<h1>` per route, image presence and decode failure,
+`aria-current` on the audience page, below-fold lazy-loading measured rather
+than asserted at source, games top-picks count, promoted destination live status.
+
+**Rough port size:** the additive subset is six coherent blocks, and B7 already
+owns the browser scaffolding — contexts, viewports, request capture, the
+`Findings` reporter. So this is on the order of 150–200 lines added to the
+Python harness, not 550 ported. The preference lifecycle and the menu/focus
+block are the two worth doing first; they are the largest genuinely-uncovered
+behaviour on the estate.
+
+**Matt's call is the cost, not whether the coverage matters.** Values must be
+derived, not re-typed, or this recreates the class the sweep just closed.
+
+---
+
+## 0e. `/main/` disagrees with itself about offline and uploading
+
+**content · ruling-pending** — authored wording on a live site. Recorded, not
+edited: it is Matt's copy and his call.
+
+`/main/` says, in one place:
+
+> Single-file and offline-first like everything else here — nothing to install,
+> and nothing uploaded
+
+and in another, the carve-out:
+
+> lessons, registers and pupil records stay in your browser on your device — they
+> are not uploaded into your account. **Some optional services do use the
+> internet:** the anonymous visit counter, the contact form, videos you choose to
+> play, adult/teacher account identity and saved hub shortcuts, and the separate
+> teacher mailing list.
+
+Both are on the same page. The first reads as a blanket promise; the second is
+the accurate one. There is no service worker anywhere in the estate, so
+"offline-first" is true of standalone lessons and apps and not of the site.
+
+Found while checking a proposed About line for the studio band, which contained
+the same two claims. That line was not shipped — see `studioBand._aboutProvenance`
+in `data/audience-homepages.json` for what was shipped and why.
+
+**To start:** decide whether the blanket sentence should be narrowed to match the
+carve-out, or the carve-out promoted. Either is a copy edit; neither is
+derivable, so it needs an author.
+
+---
+
+## 0. `/resources/` — the closeout rewrite is unrecoverable, page never rebuilt
+
+**content · ruling-pending** — the only item here that is genuinely waiting on a
+decision rather than on work, and the one that stays printed longest.
+
+The PR #110 closeout replaced `resources/index.html` with a 12-line page. That
+replacement fell inside the corrupted tail of the `.mbm-closeout` blob and is
+gone. Checked against all 108 remote branches: no 12-line version exists
+anywhere, so it cannot be ported the way `/teach/` was.
+
+`/resources/` is therefore still the pre-closeout 244-line catalogue. That is a
+deliberate hold, not an oversight — approximating a page nobody can diff against
+the original is how you end up with a rewrite that only looks finished.
+
+No verifier assumes the rewrite landed. The only check touching the page is the
+generic chrome assertion in `verify_games_audience_faces.py` (header brand leads
+to `/main/`, general navigation offers Choose homepage), which the current page
+satisfies on its own terms. Nothing is going green on work that was never done.
+
+To start: decide whether the catalogue should be rebuilt against
+`data/mbm-search-index.json` the way `/teach/` and `/education-hub/` are, in
+which case it belongs in `tools/render_discovery_hubs.py` alongside them. The
+current page predates that renderer and is hand-maintained.
+
 ---
 
 ## 1. ~~`/uas/app.html` — vendor the four cdnjs scripts~~ — **DONE 2 August 2026**
@@ -111,6 +557,587 @@ teacher-facing page and is the one worth a decision.** Left alone rather than
 swept in, because widening a pass's claim is how a diff stops being checkable.
 
 ---
+
+## 5a. Four gates still query selectors for features that were removed
+
+**instrument · ruling-pending** — recorded 23 August 2026.
+
+**What.** The F2 sweep found ten dead selector ids across six gates that target
+`/games/`. Two were repaired in that pass (`verify_echovault_surfaces.js`,
+`verify_relicforge_surfaces.js`) and one partly (`verify_fracture_surfaces.js` —
+its `#newrelease` limbs were loading `/` when the New Release stack is on
+`/main/`). These are what is left:
+
+```
+verify_fracture_surfaces.js      #rpgRail      the RPG rail was removed; the
+                                               genre <details> sections replaced
+                                               it. 2 limbs, both red.
+verify_arcade_sports_browser.js  #allGrid      asserts an entire removed UI: a
+                                 #sportsRail   Sports rail, its own `.sub` copy,
+                                 #chips        and SPORT/PHYSICS tag chips. The
+                                               shelf now has genre sections and
+                                               CALM/FAST feel chips instead.
+verify_olympics_arcade.mjs       #sportsRail   same rail, same removal.
+```
+
+**Why not now.** None of these is a rename. Each needs a decision about what the
+assertion should become against the current design — and inventing a selector
+for a feature that no longer exists is precisely how the original drift got in.
+Deleting the limbs would be weakening a gate to reach green, so they are left
+red and annotated in place.
+
+**Evidence to start from.** `tools/lib/shelf-probe.js` documents the page's real
+structure and `tools/prove_shelf_probe.mjs` shows how to prove a repair without
+production. The page's genre truth is the `TAXONOMY` literal in
+`games/index.html`, **not** the `collection` field in `games.json` — those
+disagree today (`/neonturf/`).
+
+---
+
+## 5b. `/olympics/` still leaks `keyup` and the pointer pair
+
+**instrument · work-pending** — recorded 23 August 2026.
+
+**What.** Every other stamped game routes through the shared splash region and
+stops leaking input during the splash. `/olympics/` carries a bespoke Olympic
+rings/torch variant and is declared as an exception in `tools/render_splash.py`
+(`DECLARED_EXCEPTIONS`), so the donor fix did not reach it. It still leaks a
+`keyup` and the pointer pair through the splash.
+
+**Why not now.** Stamping it would replace the bespoke Olympic artwork with the
+standard splash, which is a visible design change to a game that was deliberately
+given its own. That is a decision, not a fix, and it needs its own sitting.
+
+---
+
+## 5c. The in-scene scoreboard sits behind the HUD panels
+
+**content · ruling-pending** — recorded 23 August 2026.
+
+**What.** In the Apex titles the in-scene scoreboard renders behind the HUD
+panels at some viewports, so part of it is occluded.
+
+**Why not now.** The obvious fix is a z-order or layout change, and the standing
+rule on these games is that no HUD number, physics constant or timestep moves
+for a visual reason. Establishing that a fix is purely presentational — and
+proving it against the pinned determinism hashes in `data/hud-coverage.json` —
+is more work than the symptom suggests, and it was not what this pass was for.
+
+---
+
+## 5d. Three counts still typed into prose on `/main/`, `/tools/` and `/asdan/`
+
+**content · work-pending** — recorded 23 August 2026.
+
+**What.** The C2 sweep deleted a drifting "511" and derived the counts that the
+audience record owns. Three typed totals remain, in prose on `/main/`, `/tools/`
+and `/asdan/`. They are the same defect: a number copied out of a catalogue into
+a sentence, which goes stale silently.
+
+**Why not now.** Each sits in authored prose rather than in a generated region,
+so each needs either a rewrite that does not carry a number or a new derived
+insertion point. That is three separate editorial decisions, and C2's declared
+scope was the count that was already wrong.
+
+---
+
+## 5e. One of the five audience closings has no anchor
+
+**content · ruling-pending** — recorded 23 August 2026.
+
+**What.** The F1 anchor test asked, for each of the ten rewritten blocks, which
+noun phrase is factually false or meaningless for the other four audiences.
+Nine could be named and each is unique to its own block. The **parents closing**
+could not:
+
+> If you are not sure where to start, pick one thing and let it lead. Nothing
+> here needs planning, and you can stop whenever it stops being useful.
+
+Nothing in it is false for a teacher, a trust lead, an officer or a provider. It
+survives on register — permission-giving, domestic — rather than on an anchor.
+The 20-pair swap test agreed independently and unprompted: on both pairs where
+that block is the A side, the judges said the A-on-B direction alone would score
+FALSE and the pair is carried by the other block.
+
+Related: three of the five closings open with "If", and parents and partners
+both open "If you ⟨verb⟩".
+
+**Why not now.** The replacement would have to be authored, and the standing
+rule is that audience copy is not invented here — the three closings that were
+replaced in this pass were each supplied verbatim. This needs one more
+authorised line, not a rewrite.
+
+---
+
+## 5f. Sitemap coverage is now gated for games, not for pages
+
+**instrument · work-pending** — recorded 23 August 2026.
+
+**What.** `tools/verify_sitemap_covers_games.mjs` now asserts that every shelf
+game this repo serves has a `<loc>`. It found two of mine and `/hyperdraft/`,
+all three now added. It does **not** cover non-game pages, which is the scope of
+item 5 above — and note that item 5's scan of "19 public HTML pages" missed
+`/hyperdraft/` entirely, so the two checks find different things and neither
+subsumes the other.
+
+**Why not now.** Extending the derivation to every public page means settling
+what "public page" means — 404s, partials and superseded pages all have to be
+excluded deliberately rather than by pattern, which is exactly the decision item
+5 is waiting on.
+
+---
+
+## 5g. Nine gates can still adopt the change they exist to catch
+
+**instrument · work-pending** — recorded 23 August 2026; census **completed**
+24 August 2026 and this entry rewritten against the finished result.
+
+**What.** Population defined and reproducible: `tools/` files matching
+`^(verify|check|prove|audit)_.*\.(mjs|js|py)$` — **94 gates**, not the 36 the
+first sweep guessed at. Candidates found mechanically (a gate holding a prose
+literal, outside its own comments, that also appears verbatim in an authored or
+served file): **24**. All 24 adjudicated and adversarially re-checked against the
+test *name the single ordinary edit that moves both sides*: **9 in the class,
+15 not.** Most of the 15 quote a code identifier, which asserts implementation
+rather than copying authored content.
+
+**What the pin does and does not do.** `data/takes-pin.json` protects the
+CONTENT: since the takes were pinned, a dual edit — reword a take, teach a gate
+to expect it — goes red estate-wide, because the pin resolves the region from the
+committed blob and no copy edit can move it. That is proved by the class-level
+control. **It does not repair the gates.** Four of the nine still hold their own
+copies of prose that the pin already owns; on a mutation each one self-satisfies
+and contributes zero evidence, and the red comes entirely from the pin. They are
+dead weight that reads like coverage.
+
+```
+tier                gate                              outcome
+curation-voice      verify_arcade_sports.js           DERIVE
+curation-voice      verify_curation_keys.mjs          PIN
+curation-voice      verify_games_audience_faces.py    PIN   (locked copy pinned 24 Aug)
+curation-voice      verify_neonbreach.js              PIN
+curation-voice      verify_production_after_merge.mjs PIN
+locked-copy-privacy verify_pupil_genres.mjs           PIN
+counts-identities   verify_apexrally_browser.js       PIN
+counts-identities   verify_biopunkhive_browser.js     DERIVE
+other               verify_apextennis_home.py         PIN
+```
+
+**Two specifics worth not re-deriving.**
+
+`verify_arcade_sports.js:47` fuses two values with different owners: Matt's prose
+(already pinned as `picksVoice`, so restating it there is duplication) and the
+number word *"eight"*, whose real owner is the eight `rail:N` slots in
+`var CURATION=[`. The second half IS derivable without vacuity — count the slots,
+assert the sub-line names the matching number — so adding a ninth slot without
+rewording, or rewording without adding a slot, both go red. It also has **no
+`--self-test` mutation case** for that limb, so nothing proves it can fail;
+that wants adding in the same commit.
+
+`verify_curation_keys.mjs` holds five takes verbatim in a hardcoded `AUTHORED`
+array, and its failure message prints **both sides** — `authored "&lt;old&gt;" vs
+painted "&lt;new&gt;"` — handing the contributor the exact replacement string. The
+obvious "fix" is to paste it in, at which point the limb goes green having
+adopted the rewrite it exists to catch. A punctuation-normalisation sweep reaches
+both files at once for the same reason. (Note: the takes are *not* byte-identical
+in `for/pupils/index.html` — two of the five are HTML-entity-escaped there — so
+that third copy plays no part in the write path.)
+
+**Why not now.** Two of the nine quote metadata that changes on a normal cadence.
+A hash pin there fires on every legitimate edit, and a gate that cries wolf is its
+own failure mode; those want DERIVE from the manifest or a narrower region, which
+is design work rather than mechanical work. The order that completed the census
+forbids opening scope in a finish pass.
+
+**Size.** Half a day. The mechanism exists and is proven — adding a region to the
+pin is two lines and a hash, the class-level control is already written, and the
+two DERIVE cases are each a single derivation plus a self-test case.
+
+---
+
+## 5h. ~~`verify_stats_claim.mjs` is not wired to anything~~ — **DONE 24 August 2026**
+
+Wired into the `gates` job of `mbm-audience-discovery-closeout.yml`, with a
+control in `gate-controls` that requires it to fail on **the assertion it names**
+and explicitly rejects an INCONCLUSIVE exit 2 from a missing browser.
+
+The hypothesis under which it was recorded was wrong, and the truth is worse than
+the guess. It is not the guard for a stale count. It binds `/stats/`'s privacy
+sentence — *"no IP address is looked up, and no counter request or audience
+preference is sent to a remote counter service"* — to `site.json`'s
+`features.analytics.goatcounter`, which is `""` and is the **only** reason that
+sentence is true. Set the key and `mbm-features.js` appends
+`//gc.zgo.at/count.js`, whose country resolution is done from the IP
+server-side. A gate guarding a privacy claim on a public page had never run.
+
+Green on the shipped tree, 7/7. Red-proved externally against a tree with the key
+set: exit 1, failing on `THE RULE`, with the behavioural half independently
+observing the counter request.
+
+---
+
+## 5i. 42 of 54 shelf hues miss 3:1 on the light card
+
+**content · ruling-pending** — recorded 23 August 2026.
+
+**What.** Measured while correcting two card hues: the 6px left border on
+`.gcard` is below the 3:1 non-text bar for most of the shelf on `--card #FFFDF6`
+— worst 1.23 (Aurora Links 3D), best 6.67. The two corrected hues are in that
+population (Apex Curl 1.46, Apex Velodrome 1.80) and are slightly worse than the
+values they replaced (1.97, 2.14).
+
+**Why not now.** It is systemic and it is arguably out of scope for 1.4.11: the
+band is a decorative identity accent, and every card carries title, description
+and art, so colour is never the only cue. Deciding whether it should meet 3:1
+anyway is a design ruling across the whole shelf, not a fix to two entries. The
+in-game surfaces, which is where these accents carry text, all improved.
+
+---
+
+## 5j. Two gates are still referenced by no workflow
+
+**instrument · work-pending** — recorded 24 August 2026, reduced from three the
+same day.
+
+**What.** Of the 118 executables in `tools/`, four were referenced by no workflow
+and by no other tool. Two are now wired: `verify_audience_copy.mjs` (this
+branch's own, guarding the five rewritten audience pages) and
+`verify_highlumen_behaviour.mjs`. These two remain:
+
+```
+verify_driving_games.mjs   117 lines   passes today (rc=0)
+verify_hud_targets.mjs     238 lines   passes today (45 passed, 0 failed)
+```
+
+**The red one is closed.** `verify_highlumen_behaviour.mjs` was the reason this
+entry mattered. Its "cream swatch is 0x0, under 44px" was **not a page defect** —
+at that gate's viewport the swatch measures 44x44 in every state. It was a layout
+race inside the gate: it opened the `<details>` and measured in the same breath.
+Settled, given a fail-closed assertion that tells "never reached layout" apart
+from "too small", red-proved both ways, and wired.
+
+**Why the other two are not now.** Both pass, so wiring is mechanical rather than
+diagnostic — but neither has been exercised, and "it passes" from a gate that has
+never run is a claim, not a result. Each needs what the other two got: a red proof
+on the assertion it names, and a CI control. That is the work, and it is not this
+pass's.
+
+**Size.** An hour. Ten lines of wiring per gate; the time goes on the red proofs.
+
+---
+
+## 5k. The H4 fix is defeated two lines below itself
+
+**instrument · work-pending** — recorded 24 August 2026, found while re-running
+the gates against the *pushed* state rather than the local one.
+
+**What.** `verify_curation_keys.mjs`'s drift check was rewritten this pass so it
+no longer prints the painted text: printing it handed the reader a paste-ready
+replacement, and pasting it into `AUTHORED` turns the limb green having adopted
+the exact rewrite it exists to catch. That part works. But the CONTROL check
+immediately below it prints
+
+```
+painted "<the drifted text>" !== tidied "<authored + a full stop>"
+```
+
+and that control runs in the same execution. So on a real drift the log still
+carries the painted string verbatim, two lines under the message that
+deliberately withheld it. Observed, not reasoned — drifting `/apexpool/`'s take
+on the page produced exactly that pair in one run.
+
+**Why it was missed.** The H4 inventory searched for *failure* messages that
+print authored copy. This line is a **passing** control's detail string, so it
+never matched the query. The species is wider than the query was: any line that
+prints both sides of a copy comparison can hand over the replacement, whichever
+side it is reporting from and whether it passes or fails.
+
+**Why it is not fixed here.** The rescue order that surfaced it was explicitly
+scoped to landing stranded files, and said to record anything new rather than
+chase it. Fixing it means re-deriving what the control needs to prove — that the
+comparison rejects a tidy-up — without printing either string; probably byte
+lengths and a boolean, as the drift message now does.
+
+**Done when.** No line in `verify_curation_keys.mjs` prints painted copy on any
+path, pass or fail; the control still fails when the comparison is loosened; and
+the H4 inventory is re-run with the wider query across all 94 gates, with the
+count of new candidates stated.
+
+**WIDENED 24 August 2026 by the behavioural sweep (§N5).** The corrected
+question is not "does a failure message print the canonical value" but *does any
+code path, on any exit code, print the expected or canonical value alongside or
+instead of the actual*. Run against a canonical corpus of 9 fragments — the
+regions the pin exists to protect — across all 94 gates:
+
+```
+population            94
+swept behaviourally   65   ran here and produced a verdict
+NOT swept             29   needs network, secrets, a browser, or timed out
+  of those, holding a canonical literal in source   1   (lexical only, NOT proof)
+LEAK on some path      3   every one of them on rc=0
+```
+
+```
+verify_audience_copy.mjs         "Made by Matt's Top Picks"
+verify_curation_keys.mjs         the /apexpool/ take            (the original 5k)
+verify_curation_vocabulary.mjs   the Top Picks line AND the rail heading
+```
+
+**All three leak on the PASS path.** That is why a lexical query written against
+failure messages missed them twice. The lexical query is retired; it has now
+failed to find this defect on two separate passes and must not be run a third
+time. The three are open — fixing them is not this order's scope, and the split
+above is deliberately not netted into one number.
+
+## 5l. ~~LIVE RED ON MAIN — the swatch gate fails in CI~~ — **RESOLVED 24 August 2026**
+
+**instrument · done.** Harness, not page — established by measurement before
+either was touched, with a diagnostic that asserts nothing
+(`tools/diagnose_swatch_layout.mjs`). It measures at three moments: untouched
+after load, after the harness opens the panels, and after waiting on a
+condition.
+
+```
+A untouched      zero-box 0:cream   4 runs of 6      <- the transient
+C condition met  zero-box none      6 runs of 6
+```
+
+Always index 0, always cream. The swatches are injected by `theme.js` at
+runtime, so the first can be measured mid-construction. Every swatch has its
+44x44 box long before any person could reach it, so there is no live zero-size
+tap target and no page defect.
+
+**It also corrects H6.** H6 claimed the swatch measured 44x44 untouched. That
+reading was taken *after* the settle that hid the transient, which is why the
+container looked clean and the runner did not.
+
+**Two bugs were fixed, not one.**
+
+- The measurement: both `waitForTimeout` calls are gone. It waits on
+  `document.fonts.ready`, then on every swatch reporting a non-zero box, then a
+  double `requestAnimationFrame` — with a timeout that reports MEASUREMENT
+  INVALID rather than a size.
+- The assertion: `!sw.every(s => s.w===0 && s.h===0)` required EVERY swatch to
+  be collapsed. Exactly one ever is, so the guard never fired and the misleading
+  "under 44px" got through. `some`, not `every`, and a swatch with no box is
+  never re-reported as a size.
+
+Proved on a runner, not in the container: closeout runs 199 and 200 and 201.
+Both controls are permanent, and each asserts the other's message is ABSENT.
+
+## 5m. `Driving games live verification` has been red on main since 14 August
+
+**instrument · work-pending** — recorded 24 August 2026. **Not caused by the
+merge**, and I said otherwise once before correcting it.
+
+**What.** Run 12 attempt 2 on `bb1e3cc`, after both halves deployed:
+
+```
+FAIL  pupil page carries both mf-feature cards — ["lesson-hub","asdan-suite","studio-suite"]
+---- 1 FAILED
+```
+
+`Served bytes == committed bytes` passes, so this is not deploy lag.
+
+**Why it is not ours.** Runs 10 (`689a95a`) and 11 (`afba6d4`) also failed, on
+14 August, ten days before this merge. Run 9 on 13 August was the last green. I
+first classified this as the deployment window on timing evidence alone — the
+attempt had completed 25 seconds before Pages finished — and the order was right
+to demand it be closed properly rather than assumed.
+
+**Also visible in that run**, and worth a look while someone is in there: 36
+card images report `naturalWidth:0` with `loading="lazy"` and
+`inViewport:false` after a 3s ceiling. The gate counts them as "reported, not
+counted" and passes, which is the right call for lazy art below the fold, but it
+is the same family as 5l — an element with no measurement being handled as if it
+had one.
+
+**Done when.** Either `/for/pupils/` carries the two `mf-feature` cards the gate
+names, or the gate is re-pointed at what that page is now ruled to carry, with
+the ruling cited. It must not be left red-and-ignored: that is what teaches an
+estate to stop reading its own reds.
+
+**CLOSED 25 August 2026 (Order S5 §V3) — and it was two faults, not one.**
+
+Run 10 (14 Aug 08:49), the day it went red, failed on something this entry never
+recorded: the served `games.json` had not caught up with the tree. The step
+printed PENDING, set `fail=1` and exited, and the install and the entire
+rendered leg had no `if:` — so they were skipped and the browser checks never
+ran at all. One Pages lag, eleven days of blindness.
+
+The `mf-feature` assertion this entry quoted is a *second, later* fault:
+`bc67b82` on **15 Aug** replaced per-game feature cards with the whole shelf by
+genre. The games never moved — they are on that page twice each — and the
+`paths:` filter meant the commit that changed the page could not fire the
+workflow that asserted on it.
+
+Fixed by re-pointing at reachability, waiting on a mismatch before judging it,
+and widening `paths:` from 4 to 9. Proved locally green and proved able to fail.
+
+**Superseded bookend, 24 August 2026 (Order S3 §T6.5).** Two dispatches changed nothing:
+run 14 reported exactly what run 13 reported, so there is no new information to
+act on and nothing here is a finding waiting to be written up. It stays
+out of scope for this order and it stays **open**, not closed — a standing red
+with an owner and a "done when" is a backlog item; a standing red without one is
+how an estate learns to stop reading its own reds. It needs its own order.
+
+## 5o. A pull_request-only gate went red on the PR that broke it, and merged
+
+**instrument · closed 25 August 2026** — recorded because the *shape* will
+recur, not because this instance is still open.
+
+`tools/verify_apexpool_landing.js` pinned 88751 bytes / `4de1383f…`. Commit
+`8432492` on **10 August** — "Phase 1: the eleven get an inline exit" — added the
+generated `MBM-INLINE-EXIT` block to the game: **+29 lines, 0 deletions**,
+88751 → 91973 bytes. That commit re-pinned six sibling gates (apexrally,
+biopunkhive, echovault, neonsync, novasiege, ouroboros) and **missed this one**.
+
+`apexpool-verify.yml` is `pull_request`-only and filtered to `apexpool/**` plus
+its own tools. So it went red **on that very pull request** (run 17), was merged
+anyway, and then no diff touched those paths for fifteen days. It surfaced only
+because S5 added a *comment* to that file and fired the workflow.
+
+Two lessons, both already named elsewhere and both earned again here:
+
+- **A `pull_request`-only gate that is red at merge time is a decision, not a
+  warning.** Nothing re-runs it afterwards.
+- **A narrow `paths:` filter hides a red for as long as nobody touches those
+  paths** — the same fault as 5m, in a different workflow, found the same week.
+
+Fixed by moving the pin with provenance, verified rather than re-pinned on
+sight: `8432492^` hashes to the old pin exactly, and the whole delta is the
+generated exit block. `ALL 17 LANDING CHECKS PASSED`, and the file's own
+`--self-test` still detects all 7 planted failures.
+
+**Worth someone's afternoon, not this order's:** how many other
+`pull_request`-only gates are red at their last run? Nothing looks.
+
+**ANSWERED, Order T, 25 August 2026.** One: `apexgolf-verify.yml`, red 14.9
+days, last success 20.8 days ago — repaired in the same order. And "nothing
+looks" is no longer true: `.github/workflows/estate-check-health.yml` runs
+weekly with **no `paths:` filter at all** and names every red and every stale
+check with its age. The structural question behind this item — can a check's
+filter hide the surface it judges — is now `census_filter_blindness.py` (`s17`),
+0 across five repos, with the real 5m workflow kept as its recall control.
+
+## 5n. The three-tag card: what the estate can and cannot derive
+
+**content · work-pending** — recorded 24 August 2026 from Order S3 §T2. This is
+Matt's backfill worklist, and it is the deliverable that pass produced.
+
+**Coverage, measured over all 641 resources:**
+
+```
+interactionModel   461 classified (72%)  -> DISCARDED at spot-check, see below
+classroomRole        2 classified ( 0%)
+curriculum           0 classified ( 0%)
+```
+
+**interactionModel was derived and then discarded whole.** Twenty resources were
+spot-checked at random (seed 20260824) against the artefact itself: **12 of 20
+agreed, against a threshold of 18**. At 461 classified, 60% accuracy puts ~184
+wrong tags in front of teachers, and a wrong tag is worse than a missing one
+because someone acts on it. `tools/derive_resource_tags.py` is kept because the
+method is reproducible and the next pass should start from it, not from scratch.
+
+**The two failure modes to fix before re-running:**
+
+1. **One `<textarea>` inside a 30-60 button slideshow reads as `free-response`.**
+   Seven of the eight disagreements were this. The dominant interaction is
+   presentation; the textarea is one written prompt inside it. A rule needs to
+   weigh the textarea against the slide count, not fire on its presence.
+2. **A button-driven sort or classify activity reads as `reading`.**
+   `primary-y4-groupclassify-l5` has 11 buttons, no inputs, and is a
+   classification task. The `reading` residual fires whenever no `<input>`,
+   `<textarea>`, `<select>` or `<canvas>` is present, and button-driven
+   activities have none of those.
+
+**classroomRole cannot come from `type`.** All 641 carry it, and its values —
+`lesson` 489, `teacher` 55, `support` 38, `game` 31, `pupil` 18, `Hub` 8 —
+describe **what the artefact is**, not where it sits in a lesson arc. Only
+`revision` → `retrieval-drill` maps by definition, and there are two of those.
+This needs authoring against the resource, not deriving from the record.
+
+**curriculum has no licit source — and the reason is not the one first
+recorded.** This said "no SoW workbook is present here", which was true of the
+SITE repo, where the derivation looked, and imprecise about the estate. The
+2026-27 workbooks do exist, in the Lessons repo:
+
+```
+_passsg/inputs/GROW SOW 2026-27.xlsx
+_passsb/inputs/Build SOW 2026-2027.xlsx
+_passsl/inputs/LAUNCH KS4 - 2026-27.xlsx
+_sca1/tables/sow_alignment.csv
+```
+
+T1.2 permits the field only where a SoW row already NAMES the resource. Measured
+across all four artefacts: **zero occurrences of a resource file or id.** They
+plan terms, themes, weeks and pathway targets. So the condition still is not
+met, but for a better reason — the document is present and does not carry that
+mapping, rather than being absent. A spec code inferred from a title remains
+exactly the invented claim R3 exists to prevent.
+
+**The worklist is now a file.** `data/tag-backfill.csv`, emitted by
+`tools/emit_tag_backfill_csv.py`, one row per resource with `id, title, subject,
+type, family, year` filled from the record and all four tag columns deliberately
+EMPTY — seeding them with the discarded derivation would put a wrong value in a
+cell where it is harder to spot than a blank one, and it would be trusted.
+Ordered so the afternoon comes before the project:
+
+```
+tier 1  2026-27 on a pathway a SoW workbook plans   199   <- start here
+tier 2  2026-27, other subjects                     305
+tier 3  2025-26                                     137
+named by a SoW row                                    0
+```
+
+Tier 1 is derived from the pathway those workbooks cover, which the record does
+carry. No row is tiered because a SoW row named it, because none does.
+
+**Done when.** Either the two interactionModel rules are repaired and re-pass the
+20-at-random spot-check at 18/20, or the dimension is authored. No coverage
+target: T1.3 forbids one, because pressure to reach a percentage is pressure to
+guess.
+
+## 5p. Nothing in the estate is required for merge — Matt's decision
+
+**instrument · ruling-pending** — reported by Order T §T5, **not changed**;
+branch protection is Matt's, same standing precedent as the HTTPS item.
+
+All five repos read `protected=False`, `enforcement=off`, `required contexts=0`,
+`rulesets=0`. The behaviour agrees: **11 of 101 sampled merged PRs merged over a
+red check**, in three of the five repos. 5o was one of eleven.
+
+**Read this before touching a setting.** A required check that carries a
+`paths:` filter never *reports* on a PR outside those paths, and GitHub waits
+for a report it will never get — the PR is blocked for ever on "Expected —
+Waiting for status to be reported". Of the 43 PR-firing checks in the estate,
+only **4** have no filter and could be required as they stand:
+
+```
+mattroper1977.github.io   agx1-live-verify.yml · mbm-audience-discovery-closeout.yml
+                          professional-site-design-audit.yml
+Lessons                   fieldops-p2-and-sweep.yml
+Games                     (none)
+Matt-s-Apps-              (none)
+```
+
+**And it is the JOB names that get required, not the files — with one exclusion
+the tool now makes for you.** A job carrying an `if:` that excludes pull
+requests deadlocks exactly like a filtered workflow: the job is skipped, and a
+skipped job never reports the context GitHub is waiting for. The closeout
+suite's `Routes serve 200 and removed paths 404` job is one
+(`if: github.event_name != 'pull_request'`), so the report prints it as **NOT
+this** with the reason. Require the other two jobs from that workflow, not it.
+
+**`Games` and `Matt-s-Apps-` have PR-firing checks but not one without a
+filter**, so no settings change helps them until each has a filter-free
+aggregate check. That is the work-pending half of this item, and it is a
+workflow change rather than a settings one.
+
+`python3 tools/report_required_checks.py` prints the current gap, the exact
+strings to type, and the clicks in order; the weekly health run prints the same
+thing into its step summary.
 
 ## 6. Featured curation
 

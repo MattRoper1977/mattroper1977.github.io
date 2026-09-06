@@ -3,21 +3,15 @@
  * verify_apexrally_surfaces.js — the two Apex Rally surfaces, measured.
  *
  * Apex Rally gets exactly ONE homepage surface: the Sports card. This harness
- * proves that card exists, that it survives with JavaScript disabled, that the
- * rail counts moved 4 -> 5 without losing a sibling, and — the part a source
- * grep cannot do — that five cards actually reflow at 360/768/1200 without
- * overflowing and without any card collapsing to an unusable size.
+ * proves that card exists, that it survives with JavaScript disabled, that no
+ * established Apex sibling is displaced, and — the part a source grep cannot
+ * do — that the cards actually reflow at 360/768/1200 without overflowing or
+ * collapsing to an unusable size.
  *
- * The usable-rendered-size clause matters here specifically. An element can be
- * present in the DOM, pass a visibility probe, and still render as a 2x1 speck
- * that no one can tap. Every card is measured by its real bounding box and
- * checked against a usable floor, not merely against "is it visible".
- *
- * Counts are DERIVED, never pinned: the expected Sports count comes from the
- * manifest the arcade actually fetches, and the homepage is compared against
- * that same number. Adding a sixth sports game should not make this go red.
- *
- *   node tools/verify_apexrally_surfaces.js
+ * The homepage Sports strip is a curated Apex surface. The Games manifest's
+ * `collection: Sports` rail is broader and may contain non-Apex sports games.
+ * Therefore the homepage must be a valid subset of the manifest Sports rail;
+ * it must not be forced to equal the whole collection.
  */
 'use strict';
 const fs = require('fs');
@@ -26,13 +20,15 @@ const http = require('http');
 const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
+const HOME_PATH = fs.existsSync(path.join(ROOT, 'main', 'index.html'))
+  ? path.join(ROOT, 'main', 'index.html')
+  : path.join(ROOT, 'index.html');
+const HOME_ROUTE = HOME_PATH.endsWith(path.join('main', 'index.html')) ? '/main/' : '/';
 const VIEWPORTS = [
   { name: '360', width: 360, height: 720 },
   { name: '768', width: 768, height: 1024 },
   { name: '1200', width: 1200, height: 900 }
 ];
-/* A card smaller than this in either axis is not a usable target, whatever the
- * visibility probe says. */
 const USABLE_MIN_H = 44;
 const USABLE_MIN_W = 120;
 
@@ -62,9 +58,6 @@ function serve(dir) {
   return new Promise(r => server.listen(0, '127.0.0.1', () => r(server)));
 }
 
-/* The expected Sports count is derived from the manifest the arcade fetches,
- * not typed in here. The manifest lives in the Games repo, so accept an
- * explicit path and fall back to a sibling checkout. */
 function manifestSports() {
   const candidates = [
     process.env.GAMES_MANIFEST,
@@ -74,10 +67,19 @@ function manifestSports() {
   for (const c of candidates) {
     if (fs.existsSync(c)) {
       const g = JSON.parse(fs.readFileSync(c, 'utf8')).games;
-      return { path: c, titles: g.filter(x => x.collection === 'Sports').map(x => x.title) };
+      const sports = g.filter(x => x.collection === 'Sports');
+      return { path: c, titles: sports.map(x => x.title), hrefs: sports.map(x => x.href) };
     }
   }
   return null;
+}
+
+/* Grafted from tools/verify_curation_keys.mjs: catalogue identity is the
+ * canonical href, never presentation text. A V6 title may change while the
+ * game and route stay the same. Keep this as a function so the shipping limb
+ * and its firing control invoke the identical predicate. */
+function outsideSports(cards, sportsHrefs) {
+  return cards.filter(card => !sportsHrefs.includes(card.href));
 }
 
 (async () => {
@@ -88,74 +90,73 @@ function manifestSports() {
   const manifest = manifestSports();
 
   try {
-    /* ---- C1: the homepage card exists with JAVASCRIPT DISABLED ----------- */
     await gate('C1', 'homepage Sports cards render with JS disabled', async () => {
       const ctx = await browser.newContext({ javaScriptEnabled: false, viewport: VIEWPORTS[2] });
       const page = await ctx.newPage();
-      await page.goto(origin + '/index.html', { waitUntil: 'load' });
+      await page.goto(origin + HOME_ROUTE, { waitUntil: 'load' });
       const cards = await page.locator('.dx-sports-grid a.dx-sport').all();
       const names = [];
       for (const c of cards) names.push((await c.getAttribute('data-sport-game')) || '');
       assert(names.includes('Apex Rally'), 'the Apex Rally card is absent without JS');
       const rally = page.locator('a.dx-sport[data-sport-game="Apex Rally"]');
       assert(await rally.getAttribute('href') === '/apexrally/', 'Rally card href is wrong');
-      /* prove JS really was off, so "it rendered" means "the markup carries it"
-       * rather than "a script quietly filled it in" */
-      const scriptRan = await page.evaluate(() => typeof window.MBM_STAMP !== 'undefined')
-        .catch(() => false);
+      const scriptRan = await page.evaluate(() => typeof window.MBM_STAMP !== 'undefined').catch(() => false);
       assert(scriptRan === false, 'scripts executed; this run does not prove the no-JS baseline');
-      /* and the card must be a real link, not a button waiting on a handler */
       assert(await rally.evaluate(e => e.tagName) === 'A', 'the Rally card is not an anchor');
       await ctx.close();
       return `JS off: ${names.length} cards rendered from markup — ${names.join(', ')}`;
     });
 
-    /* ---- C2: 4 -> 5, no sibling lost, counts derived from the manifest --- */
-    await gate('C2', 'Sports surfaces moved 4 → 5 with no sibling displaced', async () => {
+    /* Homepage curation and the full manifest collection are different
+     * populations. Protect the established Apex strip, require Rally once, and
+     * prove every homepage Sports title is actually classified Sports in the
+     * manifest when the manifest is available. New non-homepage Sports games
+     * may be added to the catalogue without making this gate stale. */
+    await gate('C2', 'homepage Apex Sports curation remains valid without sibling displacement', async () => {
       const ctx = await browser.newContext({ javaScriptEnabled: false, viewport: VIEWPORTS[2] });
       const page = await ctx.newPage();
-      await page.goto(origin + '/index.html', { waitUntil: 'load' });
-      const names = await page.$$eval('.dx-sports-grid a.dx-sport',
-        els => els.map(e => e.getAttribute('data-sport-game')));
+      await page.goto(origin + HOME_ROUTE, { waitUntil: 'load' });
+      const cards = await page.$$eval('.dx-sports-grid a.dx-sport', els => els.map(e => ({
+        name: e.getAttribute('data-sport-game'), href: e.getAttribute('href')
+      })));
+      const names = cards.map(card => card.name);
       const SIBLINGS = ['Apex Kick', 'Apex Pool', 'Apex Golf', 'Apex Tennis'];
       SIBLINGS.forEach(s => assert(names.includes(s), `${s} was displaced from the homepage`));
-      assert(names.includes('Apex Rally'), 'Apex Rally is not on the homepage');
+      assert(names.filter(n => n === 'Apex Rally').length === 1, 'Apex Rally must appear exactly once on the homepage Sports strip');
       assert(new Set(names).size === names.length, 'a card appears twice: ' + names.join(', '));
-      let derived = 'no manifest available to derive from';
+      let derived = 'no manifest available';
       if (manifest) {
-        assert(names.length === manifest.titles.length,
-          `homepage shows ${names.length} cards, the manifest's Sports collection has ${manifest.titles.length}`);
-        manifest.titles.forEach(t => assert(names.includes(t), `${t} is in the manifest rail but not on the homepage`));
-        derived = `matches the manifest rail (${manifest.titles.length}) from ${path.relative(ROOT, manifest.path)}`;
+        const outside = outsideSports(cards, manifest.hrefs);
+        assert(outside.length === 0, `homepage Sports card(s) are not in the manifest Sports collection: ${outside.map(card => `${card.name} (${card.href})`).join(', ')}`);
+        const planted = cards.map(card => ({ ...card }));
+        planted[0].href = '/not-a-sports-route/';
+        const controlOutside = outsideSports(planted, manifest.hrefs);
+        assert(controlOutside.length === 1 && controlOutside[0].href === '/not-a-sports-route/',
+          `C2 CONTROL DID NOT FIRE: ${JSON.stringify(controlOutside)}`);
+        derived = `${names.length}/${names.length} homepage cards are members of the broader ${manifest.titles.length}-game manifest Sports collection by canonical href; planted off-collection href RED`;
       }
-      /* the lede must not still say "Four" */
       const lede = await page.textContent('.dx-sports-lede');
       assert(!/\bfour\b/i.test(lede), `the lede still reads "${lede.trim()}"`);
       await ctx.close();
-      return `${names.length} cards, 0 duplicates, 4 siblings intact; ${derived}`;
+      return `${names.length} cards, 0 duplicates, 4 established siblings intact; ${derived}`;
     });
 
-    /* ---- C3: reflow at 360/768/1200, usable rendered size --------------- */
-    await gate('C3', 'five cards reflow at 360/768/1200 with usable size', async () => {
+    await gate('C3', 'homepage Sports cards reflow at 360/768/1200 with usable size', async () => {
       const report = [];
       for (const vp of VIEWPORTS) {
         const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, javaScriptEnabled: false });
         const page = await ctx.newPage();
-        await page.goto(origin + '/index.html', { waitUntil: 'load' });
-        const overflow = await page.evaluate(() =>
-          document.documentElement.scrollWidth - document.documentElement.clientWidth);
+        await page.goto(origin + HOME_ROUTE, { waitUntil: 'load' });
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
         assert(overflow <= 0, `${vp.name}: page overflows horizontally by ${overflow}px`);
         const boxes = await page.$$eval('.dx-sports-grid a.dx-sport', els => els.map(e => {
           const r = e.getBoundingClientRect();
-          return { name: e.getAttribute('data-sport-game'), w: Math.round(r.width), h: Math.round(r.height),
-                   right: Math.round(r.right) };
+          return { name: e.getAttribute('data-sport-game'), w: Math.round(r.width), h: Math.round(r.height), right: Math.round(r.right) };
         }));
         assert(boxes.length > 0, `${vp.name}: no cards rendered at all`);
         boxes.forEach(b => {
-          assert(b.h >= USABLE_MIN_H && b.w >= USABLE_MIN_W,
-            `${vp.name}: "${b.name}" renders ${b.w}x${b.h}, below the usable floor ${USABLE_MIN_W}x${USABLE_MIN_H}`);
-          assert(b.right <= vp.width + 1,
-            `${vp.name}: "${b.name}" extends to ${b.right}px, past the ${vp.width}px viewport`);
+          assert(b.h >= USABLE_MIN_H && b.w >= USABLE_MIN_W, `${vp.name}: "${b.name}" renders ${b.w}x${b.h}, below the usable floor ${USABLE_MIN_W}x${USABLE_MIN_H}`);
+          assert(b.right <= vp.width + 1, `${vp.name}: "${b.name}" extends to ${b.right}px, past the ${vp.width}px viewport`);
         });
         const min = boxes.reduce((a, b) => Math.min(a, b.h), Infinity);
         report.push(`${vp.name}px ${boxes.length} cards, smallest ${min}px tall, no overflow`);
@@ -164,58 +165,91 @@ function manifestSports() {
       return report.join('; ');
     });
 
-    /* ---- C4: the arcade rail is manifest-driven and reaches 5 ----------- */
-    await gate('C4', 'arcade Sports rail renders 5 from the manifest', async () => {
+    await gate('C4', 'the arcade Sports genre renders the full manifest collection', async () => {
       if (!manifest) throw new Error('no games.json available — set GAMES_MANIFEST to the Games checkout');
+      /* Sports was a standalone rail drawn on top of the whole shelf. It is a
+         GENRE SECTION now — the rail was one of five that each drew their own
+         copy of a game, 82 cards for 52 games. What this gate protects is
+         unchanged: every Sports-collection game in the manifest is reachable
+         on the arcade, at a usable size, with its art loaded. Only the
+         container moved, and the accordion has to be opened to see it. */
       const ctx = await browser.newContext({ viewport: VIEWPORTS[2] });
       const page = await ctx.newPage();
-      /* the arcade fetches /Games/games.json; serve the manifest under test there */
-      await page.route('**/Games/games.json', route =>
-        route.fulfill({ status: 200, contentType: 'application/json', body: fs.readFileSync(manifest.path) }));
+      await page.route('**/Games/games.json', route => route.fulfill({ status: 200, contentType: 'application/json', body: fs.readFileSync(manifest.path) }));
       await page.goto(origin + '/games/index.html', { waitUntil: 'load' });
       await page.waitForTimeout(1500);
-      const hidden = await page.getAttribute('#sports', 'hidden');
-      assert(hidden === null, 'the Sports section stayed hidden');
-      /* one title per CARD — h4 also carries a "Matt's pick" badge span, so
-       * selecting every span in the heading counts curated cards twice */
-      const titles = await page.$$eval('#sportsRail .gcard',
-        els => els.map(e => e.querySelector('h4 > span').textContent));
-      assert(titles.length === manifest.titles.length,
-        `rail rendered ${titles.length} cards, manifest has ${manifest.titles.length}`);
-      assert(titles.includes('Apex Rally'), 'Apex Rally is not on the arcade rail');
-      /* the section copy must not still say "Four" */
-      const sub = await page.textContent('#sports .sub');
-      assert(!/\bfour\b/i.test(sub), `the rail copy still reads "${sub.trim().slice(0, 60)}…"`);
-      /* and no card may render as a speck */
-      const boxes = await page.$$eval('#sportsRail .gcard', els => els.map(e => {
-        const r = e.getBoundingClientRect();
-        return { w: Math.round(r.width), h: Math.round(r.height) };
-      }));
-      boxes.forEach((b, i) => assert(b.w >= USABLE_MIN_W && b.h >= USABLE_MIN_H,
-        `rail card ${i} renders ${b.w}x${b.h}, below the usable floor`));
-      /* Card art must actually load. A manifest pointing at an asset that is not
-       * in the tree renders a broken-image glyph, which no count-based check
-       * sees. This is why the game PR merges before the surfaces PR: the art
-       * ships with the game. */
-      const art = await page.$$eval('#sportsRail .gcard img.ga', els => els.map(e => ({
-        src: e.getAttribute('src'), loaded: e.complete && e.naturalWidth > 0
-      })));
+      const opened = await page.evaluate(() => {
+        const d = [...document.querySelectorAll('#genreSections details.gsec')]
+          .find(x => x.querySelector('.gname').textContent.trim() === 'Sports');
+        if (!d) return false;
+        d.open = true;
+        /* lazy images load on entering the viewport, and this section sits far
+           down a long page — opening it is not enough, it has to be scrolled
+           to, exactly as a visitor reaching it would. */
+        d.scrollIntoView({ block: 'center' });
+        return true;
+      });
+      assert(opened, 'there is no Sports genre section on the arcade');
+      /* Cards inside a shut accordion carry loading="lazy", so their art has
+         not been fetched at load — correctly, that is the point of the
+         accordion. Wait for the decode rather than for a fixed delay, or this
+         gate reports broken art that is merely late. */
+      await page.waitForFunction(() => {
+        const d = [...document.querySelectorAll('#genreSections details.gsec')]
+          .find(x => x.querySelector('.gname').textContent.trim() === 'Sports');
+        if (!d) return false;
+        const imgs = [...d.querySelectorAll('.gcard img.ga')];
+        return imgs.length > 0 && imgs.every(i => i.complete && i.naturalWidth > 0);
+      }, { timeout: 20000 });
+      const SEL = '#genreSections details.gsec';
+      const titles = await page.evaluate(() => {
+        const d = [...document.querySelectorAll('#genreSections details.gsec')]
+          .find(x => x.querySelector('.gname').textContent.trim() === 'Sports');
+        return [...d.querySelectorAll('.gcard')].map(e => e.querySelector('h4 > span').textContent);
+      });
+      /* SUPERSET, not equality. `collection` is a THIRD taxonomy field on the
+         manifest, alongside `tag`, and like `tag` it does not agree with the
+         genre record: the ruled Sports genre also holds Neon Turf: Overdrive,
+         which is rocket-cars-and-a-ball on the verb but is not marked
+         collection:"Sports". The genre record is authoritative, so this gate
+         asserts what it always meant — every manifest Sports game is reachable
+         on the arcade — and reports the difference rather than hiding it. */
+      const missing = manifest.titles.filter(t => !titles.includes(t));
+      assert(missing.length === 0,
+        `Sports genre is missing manifest collection member(s): ${missing.join(', ')}`);
+      const beyond = titles.filter(t => !manifest.titles.includes(t));
+      assert(titles.includes('Apex Rally'), 'Apex Rally is not in the Sports genre');
+      const heading = await page.evaluate(() => {
+        const d = [...document.querySelectorAll('#genreSections details.gsec')]
+          .find(x => x.querySelector('.gname').textContent.trim() === 'Sports');
+        return d.querySelector('.gnum').textContent.trim();
+      });
+      assert(heading === `${titles.length} games`,
+        `the heading reads "${heading}" for ${titles.length} cards — it must be counted, not written down`);
+      const boxes = await page.evaluate(() => {
+        const d = [...document.querySelectorAll('#genreSections details.gsec')]
+          .find(x => x.querySelector('.gname').textContent.trim() === 'Sports');
+        return [...d.querySelectorAll('.gcard')].map(e => { const r = e.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; });
+      });
+      boxes.forEach((b, i) => assert(b.w >= USABLE_MIN_W && b.h >= USABLE_MIN_H, `Sports card ${i} renders ${b.w}x${b.h}, below the usable floor`));
+      const art = await page.evaluate(() => {
+        const d = [...document.querySelectorAll('#genreSections details.gsec')]
+          .find(x => x.querySelector('.gname').textContent.trim() === 'Sports');
+        return [...d.querySelectorAll('.gcard img.ga')].map(e => ({ src: e.getAttribute('src'), loaded: e.complete && e.naturalWidth > 0 }));
+      });
       const brokenArt = art.filter(a => !a.loaded).map(a => a.src);
-      assert(brokenArt.length === 0, 'rail card art failed to load: ' + brokenArt.join(', '));
+      assert(brokenArt.length === 0, 'Sports card art failed to load: ' + brokenArt.join(', '));
       await ctx.close();
-      return `rail 4 → ${titles.length}: ${titles.join(', ')}; ${art.length}/${art.length} card art loaded`;
+      return `Sports genre contains ${titles.length} (all ${manifest.titles.length} of the manifest collection, plus ${beyond.length} by genre: ${beyond.join(', ') || 'none'}); heading "${heading}"; ${art.length}/${art.length} card art loaded`;
     });
 
-    /* ---- C5: exactly one homepage surface, no New Release takeover ------ */
     await gate('C5', 'one homepage surface, New Release untouched, no doors entry', async () => {
-      const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+      const home = fs.readFileSync(HOME_PATH, 'utf8');
       const occurrences = (home.match(/\/apexrally\//g) || []).length;
       assert(occurrences === 1, `Apex Rally appears ${occurrences} times on the homepage; it gets exactly one surface`);
-      /* New Release boxes are held by ruling and must not have moved */
       const releases = [...home.matchAll(/data-release="([^"]+)"/g)].map(m => m[1]);
       assert(!releases.includes('Apex Rally'), 'Apex Rally took a New Release box without a ruling');
       assert(releases.length >= 2, `expected the New Release boxes to still be occupied, found ${releases.length}`);
-      /* no doors[] entry */
       const site = JSON.parse(fs.readFileSync(path.join(ROOT, 'site.json'), 'utf8'));
       const doorHit = (site.doors || []).filter(d => JSON.stringify(d).includes('apexrally'));
       assert(doorHit.length === 0, `Apex Rally has ${doorHit.length} doors[] entry/entries; it gets one surface only`);

@@ -20,11 +20,49 @@ name: Olympics live leg (Stage L1)
 # it passes. A gate that has never been seen to fail is not evidence, and this
 # estate has already paid for that lesson twice.
 
+# RETARGETED 2026-08-13 (census ruling). The old push branch was the launch
+# branch — valid when written, dead the day its PR merged. Now fires on pushes
+# to main touching its subjects, including this file: the retargeting merge is
+# the firing proof. The serve leg already retries on a bounded loop.
+# WIDENED 2026-08-14. The retargeting above fixed WHICH BRANCH this fires on and
+# left WHAT IT WATCHES too narrow — register species 37: a workflow's path filter
+# must include every file its assertions read. #127 rewrote this workflow's own
+# instrument and gave it a declared input, and the merge fired nothing at all.
+#
+# Full read set of this workflow, audited rather than guessed:
+#   READ DIRECTLY
+#     tools/verify_olympics_live.mjs          the instrument itself
+#     tools/verify_olympics_live_selftest.sh  the negative control that gates the
+#                                             live job — if it cannot run, nothing
+#                                             downstream of it means anything
+#     data/new-release-occupants.json         the declared NEW· holder, read by the
+#                                             instrument and now copied into the
+#                                             self-test's scratch tree with it
+#     olympics/index.html                     hashed against the served copy
+#     games/index.html                        the self-test serves this tree and the
+#                                             arcade limbs render it
+#   NOT FILTERABLE FROM HERE, and stated rather than left implied
+#     MattRoper1977/Games games.json          checked out as _shelf and served at
+#                                             /Games/games.json. A cross-repository
+#                                             checkout cannot appear in a path
+#                                             filter, so a shelf move in the Games
+#                                             repo will never fire this workflow —
+#                                             the marker moving to Emberwild in
+#                                             Games ca9a8c6 is exactly that case.
+#                                             It is caught here only when something
+#                                             in THIS repo moves, or on dispatch.
 on:
   workflow_dispatch:
   push:
     branches:
-      - 'claude/estate-finish-two-games-us1b19'
+      - main
+    paths:
+      - 'olympics/index.html'
+      - 'games/index.html'
+      - 'tools/verify_olympics_live.mjs'
+      - 'tools/verify_olympics_live_selftest.sh'
+      - 'data/new-release-occupants.json'
+      - '.github/workflows/olympics-live-verify.yml'
 
 permissions:
   contents: read
@@ -102,16 +140,27 @@ jobs:
           echo "site  main is $(git -C _main rev-parse HEAD)"
           echo "shelf main is $(git -C _shelf rev-parse HEAD)"
 
-      - name: Every surface must answer 200
+      # HC3 §1.1. Origins are DERIVED (shelf + 69-route census + split policy),
+      # never typed here, and the derivation proves its own controls first.
+      - name: Derive the origin table and prove its controls (HC3 §1.1)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/route_origins.py --self-test
+          python3 tools/verify_education_stubs.py --self-test
+          echo "PLAY=$(python3 tools/route_origins.py --origin play)" >> "$GITHUB_ENV"
+          echo "EDU=$(python3 tools/route_origins.py --origin education)" >> "$GITHUB_ENV"
+
+      - name: Every surface must answer 200, on the play origin
         run: |
           set -o pipefail
           fail=0
           for u in \
-            https://madebymatt.uk/ \
-            https://madebymatt.uk/games/ \
-            https://madebymatt.uk/olympics/ \
-            https://madebymatt.uk/Games/games.json ; do
-            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
+            "$PLAY/" \
+            "$PLAY/games/" \
+            "$PLAY/olympics/" \
+            "$PLAY/Games/games.json" ; do
+            code=$(curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
             printf '%-46s %s\n' "$u" "$code"
             [ "$code" = "200" ] || fail=1
           done
@@ -129,9 +178,9 @@ jobs:
           set -o pipefail
           fail=0
           for u in \
-            https://madebymatt.uk/_staging/ \
-            https://madebymatt.uk/_staging/novasiege/ \
-            https://madebymatt.uk/_staging/novasiege/index.html ; do
+            "$EDU/_staging/" \
+            "$EDU/_staging/novasiege/" \
+            "$EDU/_staging/novasiege/index.html" ; do
             code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
             printf '%-52s %s\n' "$u" "$code"
             case "$code" in
@@ -149,13 +198,16 @@ jobs:
           # for a few seconds after a deploy, and a single sample taken inside
           # that window is how this estate previously recorded two branded
           # splashes as unbranded.
+          # HC3 §1.1: expected play bytes = committed bytes with the education host
+          # literal rewritten (derived by tools/route_origins.py from _main).
+          (cd _main && python3 "$GITHUB_WORKSPACE/tools/route_origins.py" --expected /olympics/ --out /tmp/expected-olympics.html)
           for i in $(seq 1 10); do
-            curl -sS --max-time 60 https://madebymatt.uk/Games/games.json -o /tmp/served-games.json
-            curl -sS --max-time 60 https://madebymatt.uk/olympics/        -o /tmp/served-olympics.html
+            curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 --max-time 60 "$PLAY/Games/games.json" -o /tmp/served-games.json
+            curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 --max-time 60 "$PLAY/olympics/"        -o /tmp/served-olympics.html
             a=$(sha256sum /tmp/served-games.json    | cut -d' ' -f1)
             b=$(sha256sum _shelf/games.json         | cut -d' ' -f1)
             c=$(sha256sum /tmp/served-olympics.html | cut -d' ' -f1)
-            d=$(sha256sum _main/olympics/index.html | cut -d' ' -f1)
+            d=$(sha256sum /tmp/expected-olympics.html | cut -d' ' -f1)
             echo "attempt $i: shelf $( [ "$a" = "$b" ] && echo match || echo differs ), olympics $( [ "$c" = "$d" ] && echo match || echo differs )"
             [ "$a" = "$b" ] && [ "$c" = "$d" ] && break
             sleep 15
@@ -168,5 +220,8 @@ jobs:
             --served-games    /tmp/served-games.json \
             --repo-games      "$GITHUB_WORKSPACE/_shelf/games.json" \
             --served-olympics /tmp/served-olympics.html \
-            --repo-olympics   "$GITHUB_WORKSPACE/_main/olympics/index.html" \
-            --arcade-url      https://madebymatt.uk/games/
+            --repo-olympics   /tmp/expected-olympics.html \
+            --arcade-url      "$PLAY/games/" \
+            --catalogue-url   "$PLAY/data/domain-catalogue.json"
+          echo "-- and the old address on the education origin is a stub --"
+          python3 "$GITHUB_WORKSPACE/tools/verify_education_stubs.py" --origin "$EDU" --routes /olympics/

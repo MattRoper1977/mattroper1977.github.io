@@ -1,0 +1,61 @@
+# The gate that should have caught the stale 511 and never ran (Order TS §6.4).
+#
+# tools/verify_stats_claim.mjs binds the /stats/ privacy sentence to the one
+# config key that can falsify it (site.json features.analytics.goatcounter) and
+# carries its OWN can-fail control: it sets the key in a scratch copy, proves
+# the page would then reach the remote counter, and reverse-applies. This
+# workflow makes somebody actually run it — on every change to the four files
+# that could falsify the claim, and on dispatch.
+#
+# Paths-filtered by design and NOT a candidate for a ruleset: requiring a
+# filtered check jams every PR outside its paths (the §T5 rule).
+name: Stats privacy claim verified
+on:
+  push:
+    paths:
+      - 'site.json'
+      - 'stats/index.html'
+      - 'assets/mbm-features.js'
+      - 'tools/verify_stats_claim.mjs'
+      - '.github/workflows/stats-claim-verify.yml'
+  pull_request:
+    paths:
+      - 'site.json'
+      - 'stats/index.html'
+      - 'assets/mbm-features.js'
+      - 'tools/verify_stats_claim.mjs'
+      - '.github/workflows/stats-claim-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  claim:
+    runs-on: ubuntu-latest
+    steps:
+      - id: checkout
+        if: always()
+        uses: actions/checkout@v4
+      - id: browser
+        if: always()
+        # The tool exits 2 INCONCLUSIVE without playwright — caught on this
+        # workflow's own first run, the same way curation-keys caught it.
+        run: |
+          npm i --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - id: verify
+        if: always()
+        run: node tools/verify_stats_claim.mjs
+  aggregate:
+    needs: [claim]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - id: verdict
+        if: always()
+        run: |
+          set -euo pipefail
+          # Skipped is not passed.
+          [ "${{ needs.claim.result }}" = "success" ] || { echo "claim job result: ${{ needs.claim.result }} — not a pass"; exit 1; }
+          echo "the privacy sentence is still bound to the config that can falsify it"

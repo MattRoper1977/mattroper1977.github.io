@@ -1,0 +1,343 @@
+name: Town Life release contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'townlife/**'
+      - 'assets/cards/town-life.svg'
+      - 'games/index.html'
+      - 'for/pupils/index.html'
+      - 'main/index.html'
+      - 'hud.js'
+      - 'data/source-manifests/games.json'
+      - 'data/mbm-search-index.json'
+      - 'data/hud-coverage.json'
+      - 'data/visual-provenance.json'
+      - 'sitemap.xml'
+      - 'tools/townlife/**'
+      - 'tools/verify_maker_splash.mjs'
+      - 'tools/render_maker_splash.py'
+      - '.github/workflows/townlife-verify.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'townlife/**'
+      - 'assets/cards/town-life.svg'
+      - 'games/index.html'
+      - 'for/pupils/index.html'
+      - 'main/index.html'
+      - 'hud.js'
+      - 'data/source-manifests/games.json'
+      - 'data/mbm-search-index.json'
+      - 'data/hud-coverage.json'
+      - 'data/visual-provenance.json'
+      - 'sitemap.xml'
+      - 'tools/townlife/**'
+      - 'tools/verify_maker_splash.mjs'
+      - 'tools/render_maker_splash.py'
+      - '.github/workflows/townlife-verify.yml'
+  workflow_dispatch:
+    inputs:
+      block_live_origin:
+        description: >-
+          Point mattroper1977.github.io at 127.0.0.1 before the comparative
+          gate runs. Every comparator is read from a checkout, so the gate must
+          be green either way; a run with this on is the control that proves
+          the live origin is no longer load-bearing.
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  deployments: read
+  pages: read
+
+concurrency:
+  group: townlife-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    name: Serial comparative and splash performance
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      # Twenty-seven of the sixty manifest routes are executables of the
+      # Lessons repository. The comparative gate used to fetch those over the
+      # network, inside its own ceiling-timed measured window, where a reset
+      # connection is indistinguishable from a subject that cannot keep up.
+      # They are checked out here instead, and the resolved commit is recorded
+      # as evidence.
+      - name: Check out the Lessons comparators
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          path: lessons-mirror
+          fetch-depth: 1
+
+      - name: Record the comparator checkout
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/townlife
+          {
+            echo "lessons_repository=MattRoper1977/Lessons"
+            echo "lessons_sha=$(git -C lessons-mirror rev-parse HEAD)"
+            echo "lessons_executables=$(find lessons-mirror/Games -name '*.html' | wc -l)"
+          } | tee artifacts/townlife/comparator-checkout.txt
+
+      # Negative control for the change above, not a fault-injection knob for
+      # normal runs: with the live origin resolvable only to a dead local port,
+      # a gate that still reached for it could not be green.
+      - name: Make the live origin unreachable (control)
+        if: inputs.block_live_origin
+        run: |
+          set -euo pipefail
+          echo '127.0.0.1 mattroper1977.github.io' | sudo tee -a /etc/hosts
+          if curl -sS --max-time 15 -o /dev/null \
+              https://mattroper1977.github.io/Lessons/Games/Grid_Chase.html; then
+            echo 'live origin is still reachable - this control did not arm'
+            exit 1
+          fi
+          echo 'PASS control armed - the live origin is unreachable from this runner'
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install benchmark dependency and Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps --no-shell chromium
+
+      - name: Resolve the exact pre-splash Town Life bytes
+        # Immutable release-evidence pins taken on 2026-08-28:
+        # PRE_SPLASH_SHA is the Site main commit immediately before the splash landed;
+        # PRE_SPLASH_SHA256 pins its exact townlife/index.html comparison bytes.
+        env:
+          PRE_SPLASH_SHA: 7041e767c5eed08b05bb01a2b1cd90356cb378fa
+          PRE_SPLASH_SHA256: 4e0b718217bc95932e3e7fc9ca87c3965b56b9d62a3325ca2cee76388d9be125
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/townlife
+          git fetch --depth=1 origin "$PRE_SPLASH_SHA"
+          git show "$PRE_SPLASH_SHA:townlife/index.html" > "$RUNNER_TEMP/townlife-before.html"
+          python3 - "$RUNNER_TEMP/townlife-before.html" townlife/index.html "$PRE_SPLASH_SHA256" <<'PY'
+          import hashlib
+          import pathlib
+          import sys
+          marker = b'MBM-MAKER-SPLASH:BEGIN'
+          before, after = (pathlib.Path(value).read_bytes() for value in sys.argv[1:3])
+          expected_sha256 = sys.argv[3]
+
+          def validate(baseline, candidate):
+              problems = []
+              actual_sha256 = hashlib.sha256(baseline).hexdigest()
+              if actual_sha256 != expected_sha256:
+                  problems.append(f'resolved baseline SHA-256 mismatch: {actual_sha256}')
+              if marker in baseline:
+                  problems.append('resolved baseline already contains the maker splash')
+              if marker not in candidate:
+                  problems.append('candidate does not contain the maker splash')
+              return problems
+
+          problems = validate(before, after)
+          if problems:
+              raise SystemExit('; '.join(problems))
+          print('baseline identity and baseline/candidate marker controls green')
+
+          baseline_control = validate(marker + before, after)
+          if (len(baseline_control) != 2
+                  or not baseline_control[0].startswith('resolved baseline SHA-256 mismatch: ')
+                  or baseline_control[1] != 'resolved baseline already contains the maker splash'):
+              raise SystemExit(f'baseline marker negative control did not red exactly: {baseline_control}')
+          candidate_control = validate(before, before)
+          if candidate_control != ['candidate does not contain the maker splash']:
+              raise SystemExit(f'candidate marker negative control did not red exactly: {candidate_control}')
+          identity_control = validate(before + b'\n', after)
+          if (len(identity_control) != 1
+                  or not identity_control[0].startswith('resolved baseline SHA-256 mismatch: ')):
+              raise SystemExit(f'baseline identity negative control did not red exactly: {identity_control}')
+          print('baseline identity and baseline/candidate marker negative controls red exactly')
+          PY
+          {
+            echo "base_sha=$PRE_SPLASH_SHA"
+            echo "expected_baseline_sha256=$PRE_SPLASH_SHA256"
+            sha256sum "$RUNNER_TEMP/townlife-before.html" townlife/index.html
+            wc -c "$RUNNER_TEMP/townlife-before.html" townlife/index.html
+          } | tee artifacts/townlife/splash-subjects.txt
+
+      - name: Comparative mobile performance and non-vacuity controls
+        env:
+          LESSONS_ROOT: ${{ github.workspace }}/lessons-mirror
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/townlife
+          sha256sum tools/townlife/benchmark.mjs | tee artifacts/townlife/performance-harness.txt
+          for round in 1 2 3; do
+            node tools/townlife/benchmark.mjs --round="$round" | tee "artifacts/townlife/performance-round-$round.log"
+          done
+          aggregate_control_dir=$(mktemp -d)
+          cp artifacts/townlife/performance-round-*.json "$aggregate_control_dir/"
+          python3 - "$aggregate_control_dir/performance-round-2.json" <<'PY'
+          import json
+          import pathlib
+          import sys
+          target = pathlib.Path(sys.argv[1])
+          report = json.loads(target.read_text(encoding='utf-8'))
+          report['protocol']['harnessSha256'] = '0' * 64
+          target.write_text(json.dumps(report) + '\n', encoding='utf-8')
+          PY
+          if node tools/townlife/benchmark.mjs --aggregate="$aggregate_control_dir" > artifacts/townlife/aggregate-negative-control.log 2>&1; then
+            echo 'aggregate negative control unexpectedly passed'
+            exit 1
+          fi
+          grep -Fq 'round 2 used another harness' artifacts/townlife/aggregate-negative-control.log
+          echo 'PASS aggregate negative control — tampered round 2 harness was rejected'
+          node tools/townlife/benchmark.mjs --aggregate=artifacts/townlife | tee artifacts/townlife/performance.log
+
+      - name: Before and after splash performance with positive control
+        run: |
+          set -euo pipefail
+          sha256sum tools/townlife/benchmark_splash.mjs | tee artifacts/townlife/splash-performance-harness.txt
+          # RL23. The regression gate's decision rule is a sign test, and a
+          # decision rule nobody exercises is the next thing to rot. This runs
+          # it over three fixtures - the measured noise that used to red the
+          # build, the busy-frame control, and a real one-sided regression -
+          # and reds if any of them lands on the wrong side.
+          node tools/townlife/benchmark_splash.mjs --selftest \
+            | tee artifacts/townlife/splash-performance-gate-selftest.log
+          node tools/townlife/benchmark_splash.mjs \
+            --baseline-html="$RUNNER_TEMP/townlife-before.html" \
+            --shipped-report=artifacts/townlife/performance.json \
+            | tee artifacts/townlife/splash-performance.log
+
+      - name: Upload aggregated Town Life performance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: townlife-performance-evidence
+          path: artifacts/townlife/
+
+  verify:
+    name: Final bytes in Chromium, Firefox and WebKit
+    needs: benchmark
+    # RL23. `needs:` keeps the ordering these job names advertise, but on its own it
+    # also SKIPS this job whenever benchmark reds - and a skipped gate renders as
+    # absence, not as red, so it reads like coverage. Measured on main 5435b6ad:
+    # benchmark failed and took `verify` and `sweep` down with it, so the three-engine
+    # byte check and the six-surface sweep did not run on the default branch at all.
+    # Nothing here consumes benchmark: needs.benchmark is referenced 0 times, there
+    # are 0 `outputs:` blocks and 0 download-artifact steps in this file (control:
+    # upload-artifact appears 3 times, so that probe fires). The dependency is pure
+    # sequencing, and each job gets its own fresh runner, so it buys no measurement
+    # isolation either. `!cancelled()` keeps the order and runs anyway on an upstream
+    # red, while still standing down on a real cancellation.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install verifier dependencies and browser engines
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1 acorn@8.18.0
+          npx playwright install --with-deps chromium firefox webkit
+
+      - name: Record exact release subjects
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/townlife
+          {
+            git rev-parse HEAD
+            node --version
+            sha256sum townlife/index.html assets/cards/town-life.svg data/source-manifests/games.json
+            wc -c townlife/index.html assets/cards/town-life.svg data/source-manifests/games.json
+          } | tee artifacts/townlife/identity.txt
+
+      - name: Generated files reproduce
+        run: |
+          set -euo pipefail
+          python3 tools/render_inline_exit.py --root . --check | tee artifacts/townlife/inline-exit-generator.log
+          python3 tools/render_maker_splash.py --root . --check | tee artifacts/townlife/maker-splash-generator.log
+          python3 tools/render_audience_homepages.py --check | tee artifacts/townlife/audience-generator.log
+          python3 tools/build_mbm_search_index.py --check | tee artifacts/townlife/search-index.log
+
+      - name: Shelf and curation contracts
+        run: |
+          set -euo pipefail
+          node tools/verify_new_games_uncurated.mjs | tee artifacts/townlife/uncurated.log
+          node tools/verify_curation_keys.mjs | tee artifacts/townlife/curation-keys.log
+          node tools/verify_pupil_genres.mjs | tee artifacts/townlife/pupil-genres.log
+          node tools/verify_genre_participants.mjs | tee artifacts/townlife/genre-participants.log
+          node tools/verify_sitemap_covers_games.mjs | tee artifacts/townlife/sitemap.log
+
+      - name: Town Life rendered contract and heading control
+        run: |
+          set -euo pipefail
+          node tools/townlife/verify.mjs --engines=chromium,firefox,webkit | tee artifacts/townlife/rendered.log
+
+      - name: Town Life splash SS1-SS8 and behavioural controls
+        run: |
+          set -euo pipefail
+          node tools/verify_maker_splash.mjs \
+            --mode=controls \
+            --scope=site \
+            --site-route=/townlife/ \
+            --report=artifacts/townlife/maker-splash-controls.json \
+            | tee artifacts/townlife/maker-splash-controls.log
+
+      - name: Exact deployment, live bytes, mobile shelf and cache readback
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          node tools/townlife/verify_live.mjs --expected-sha "$GITHUB_SHA" | tee artifacts/townlife/live.log
+
+      - name: Upload Town Life evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: townlife-release-evidence
+          path: artifacts/townlife/
+
+  sweep:
+    name: Serial six-surface defect sweep and ten-minute idles
+    needs: verify
+    # Same reasoning as `verify` above. This is the gate that costs most when it
+    # silently does not run: six surfaces, three engines, ten-minute idles.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install all three browser engines
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium firefox webkit
+
+      - name: Full Town Life defect sweep and positive controls
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/townlife
+          sha256sum tools/townlife/sweep.mjs | tee artifacts/townlife/sweep-harness.txt
+          node tools/townlife/sweep.mjs | tee artifacts/townlife/sweep.log
+
+      - name: Upload full-sweep evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: townlife-full-sweep-evidence
+          path: artifacts/townlife/

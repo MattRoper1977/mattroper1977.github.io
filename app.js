@@ -19,7 +19,7 @@ function normSite(list){return list.map(r=>({
   description:r.description||'',
   subject:r.subject||'General',
   type:r.type||'Resource',
-  path:r.path||null,
+  path:r.path?(/^https?:/.test(r.path)?r.path:'/'+String(r.path).replace(/^\/+/,'')):null,
   tags:Array.isArray(r.tags)?r.tags:[],
   status:r.status||'Published',
   featured:r.featured!==false,

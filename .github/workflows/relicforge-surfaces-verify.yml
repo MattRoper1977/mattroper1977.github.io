@@ -6,24 +6,60 @@ name: Relicforge surfaces
 # would report a confident zero. Counts are derived from the live manifest at
 # Games main; nothing is pinned (A-6 register).
 
+
+# POST-DEPLOY TRIGGER (added 2026-08-27).
+#
+# This job asks "does the SERVED page match the canonical shelf". Until now it
+# fired only on pull_request and on dispatch, so the post-merge green that D6's
+# carve-out rested on had nothing scheduled to produce it. The gate was sound;
+# the schedule was missing.
+#
+# It fires on the DEPLOYMENT, not on the push. A push trigger races the Pages
+# build: the run reads the previous served page and goes red for a reason that
+# is not a defect. In an estate that has learned to reclassify reds away, a
+# manufactured flaky red is worse than a silent gate.
+#
+# Pages here is the built-in branch builder (dynamic/pages/pages-build-deployment),
+# not actions/deploy-pages, so GitHub's GITHUB_TOKEN recursion prevention does
+# not apply and deployment_status does fire. That is not an assumption:
+# mbm-deployment-provenance.yml has consumed this exact event for 400 runs.
+#
+# deployment_status carries no event-level filters, so the environment/state
+# filter lives in the job `if:` below, the same shape provenance uses. No paths
+# filter, deliberately: the drift this catches - a failed or skipped deploy -
+# happens with no file change at all.
+
 on:
   pull_request:
     paths:
       - 'games/index.html'
+      - 'tools/lib/published-shelf-probe.cjs'
       - 'tools/verify_relicforge_surfaces.js'
       - '.github/workflows/relicforge-surfaces-verify.yml'
   workflow_dispatch:
+  deployment_status:
 
 permissions:
   contents: read
 
+env:
+  RF_PUBLICATION: games
+
 concurrency:
-  group: relicforge-surfaces-${{ github.event.pull_request.number || github.ref }}
+  group: relicforge-surfaces-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   surfaces:
     name: whole-shelf render check against the served page
+    # A deployment_status fires for every state (queued, in_progress, failure)
+    # and for every environment. Only a successful github-pages deployment
+    # means there is a new served page to ask about. pull_request and
+    # workflow_dispatch are untouched by this condition.
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' &&
+       github.event.deployment.environment == 'github-pages')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -38,7 +74,7 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in $(seq 1 30); do
-            if curl --fail --silent --show-error --location https://madebymatt.uk/Games/games.json -o /tmp/served.json 2>/dev/null; then
+            if curl --fail --silent --show-error --location --max-redirs 0 --proto '=https' --proto-redir '=https' https://www.madebymatt-play.uk/games.json -o /tmp/served.json 2>/dev/null; then
               n=$(python3 -c 'import json;print(len(json.load(open("/tmp/served.json"))["games"]))')
               hit=$(python3 -c 'import json;print(sum(1 for g in json.load(open("/tmp/served.json"))["games"] if g.get("href")=="/relicforge/"))')
               echo "attempt $attempt: served manifest $n entries, relicforge $hit"
@@ -54,7 +90,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --location \
+          curl --fail --silent --show-error --location --max-redirs 0 --proto '=https' --proto-redir '=https' \
             https://raw.githubusercontent.com/MattRoper1977/Games/main/games.json -o /tmp/main.json
           python3 - <<'PY'
           import json
@@ -83,5 +119,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: relicforge-surfaces
-          path: /tmp/relicforge_surfaces.log
+          path: |
+            /tmp/relicforge_surfaces.log
+            audit-output/published-shelf-relicforge/
           if-no-files-found: warn

@@ -1,0 +1,107 @@
+name: Made by Matt live showcase capture
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'marketing/capture/run-requests/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: made-by-matt-showcase-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  capture-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out capture source
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Probe production toolchain
+        run: |
+          set -euo pipefail
+          mkdir -p showcase-output
+          {
+            echo "sentinel=mbm-live-showcase-video-2026-08-08"
+            echo "captured_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "runner=$(uname -a)"
+            echo "node=$(node --version)"
+            echo "npm=$(npm --version)"
+            echo "disk=$(df -h . | tail -1)"
+          } | tee showcase-output/environment-probe.txt
+
+      - name: Install capture dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core jq
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps chromium
+          # `ffmpeg -version | head -1` under pipefail: head exits after one
+          # line, ffmpeg dies of a broken pipe on the next, and set -e kills the
+          # install step over a version probe. Capture first.
+          ffv=$(ffmpeg -version 2>&1 || true); ffpv=$(ffprobe -version 2>&1 || true)
+          sed 's/^/ffmpeg=/' <<<"$(head -1 <<<"$ffv")" | tee -a showcase-output/environment-probe.txt
+          sed 's/^/ffprobe=/' <<<"$(head -1 <<<"$ffpv")" | tee -a showcase-output/environment-probe.txt
+          node -p '"playwright=" + require("playwright/package.json").version' | tee -a showcase-output/environment-probe.txt
+
+      - name: Capture genuine production browser footage
+        env:
+          SHOWCASE_OUT: showcase-output
+        run: |
+          set -euo pipefail
+          node marketing/capture/capture_showcase.mjs
+          jq -e '(.sentinel == "mbm-live-showcase-video-2026-08-08") and (all(.scenes[]; .ok == true)) and (all(.productionChecks[]; (.status >= 200 and .status < 400)))' showcase-output/capture-report.json
+
+      - name: Build landscape, social, teaser and clean edits
+        env:
+          SHOWCASE_OUT: showcase-output
+        run: |
+          set -euo pipefail
+          bash marketing/capture/build_showcase.sh showcase-output
+
+      - name: Retain reusable production system
+        run: |
+          set -euo pipefail
+          mkdir -p showcase-output/reusable-production-system
+          cp marketing/capture/capture_showcase.mjs showcase-output/reusable-production-system/
+          cp marketing/capture/shots.json showcase-output/reusable-production-system/
+          cp marketing/capture/build_showcase.sh showcase-output/reusable-production-system/
+          cp .github/workflows/made-by-matt-showcase-capture.yml showcase-output/reusable-production-system/
+          cat > showcase-output/reusable-production-system/README.md <<'EOF'
+          # Made by Matt showcase regeneration
+
+          1. Keep `capture_showcase.mjs`, `shots.json` and `build_showcase.sh` together under `marketing/capture/`.
+          2. Keep `made-by-matt-showcase-capture.yml` under `.github/workflows/`.
+          3. Trigger the workflow manually, or create a disposable file under `marketing/capture/run-requests/` in a pull request.
+          4. The workflow records the live production estate, builds landscape/mobile outputs, validates them with ffprobe, and uploads the media package as a workflow artifact.
+          5. Do not commit generated MP4 binaries to the normal website source tree unless a deliberate media-storage decision is made later.
+          EOF
+
+      - name: Final readback
+        run: |
+          set -euo pipefail
+          ls -lh showcase-output/*.mp4 showcase-output/*.md showcase-output/*.srt
+          for f in showcase-output/*.mp4; do
+            echo "--- $f"
+            ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt -show_entries format=duration,size -of default=nw=1 "$f"
+          done
+
+      - name: Upload showcase media package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: made-by-matt-showcase-${{ github.run_id }}
+          path: showcase-output/
+          if-no-files-found: error
+          retention-days: 14

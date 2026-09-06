@@ -1,0 +1,30 @@
+name: V6 outbound-signalling gate
+
+on:
+  pull_request:
+    paths:
+      - '*/index.html'
+      - 'data/mbm-search-index.json'
+      - 'tools/verify_v6_egress.mjs'
+      - '.github/workflows/v6-egress.yml'
+  push:
+    branches: [main]
+    paths:
+      - '*/index.html'
+      - 'data/mbm-search-index.json'
+      - 'tools/verify_v6_egress.mjs'
+      - '.github/workflows/v6-egress.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  egress:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: The gate is proven red, not just green
+        run: node tools/verify_v6_egress.mjs --self-test
+      - name: Every canonical root game payload is free of signalling URLs
+        run: node tools/verify_v6_egress.mjs

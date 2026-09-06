@@ -18,7 +18,11 @@
  *      the served copy reflects the Games repo. Never assume a repo merge
  *      reached the origin.
  *
- * Usage:  node tools/verify_surfaces.js [--base https://madebymatt.uk]
+ * Usage:  node tools/verify_surfaces.js [--base https://madebymatt-play.uk]
+ *
+ * HC3 §1.1: games serve on the play origin. The play home renders the shelf as
+ * static .game-card articles in #game-grid (no New Release boxes, no genre
+ * accordions), so each limb below accepts the play structure beside the old one.
  */
 const path = require('path');
 const http = require('http');
@@ -28,12 +32,21 @@ let chromium;
 try { ({ chromium } = require('playwright')); }
 catch (_) { ({ chromium } = require('playwright-core')); }
 
-const BASE = (process.argv.find(a => a.startsWith('--base=')) || '--base=https://madebymatt.uk').split('=').slice(1).join('=');
+const BASE = (process.argv.find(a => a.startsWith('--base=')) || '--base=https://madebymatt-play.uk').split('=').slice(1).join('=');
 
 // The ruling, restated where it is enforced.
-// Matt, 5 Aug 2026: New Release is a stack; each game holds at most ONE box;
-// ruled occupants = Neon Sync (top, amended for v1.1) + Neon Breach.
-const RULED_OCCUPANTS = ['Neon Sync', 'Neon Breach'];
+// Matt, 5 Aug 2026: New Release is a stack; each game holds at most ONE box.
+//
+// WHO occupies it is NOT restated here any more. This file froze
+// ['Neon Sync', 'Neon Breach'] on 5 Aug and went stale the moment the boxes
+// moved — by site commits 69c1d57 and 3e6deb0 (the 2026-08-12 driving-games
+// launch: Neon Meridian, then Rally Vector 3D) — and nothing noticed, because
+// this workflow could fire only on a launch branch that had already merged.
+// The occupant set is a declared shelf fact with exactly one writer, so it is
+// read from that writer. A frozen copy here was the defect, not the ruling.
+const OCCUPANT_RECORD = path.join(__dirname, '..', 'data', 'new-release-occupants.json');
+const RECORD = JSON.parse(fs.readFileSync(OCCUPANT_RECORD, 'utf8'));
+const RULED_OCCUPANTS = Object.keys(RECORD.occupants);
 // Games ruled onto the arcade shelf this programme.
 const RULED_CARDS = [
   { title: 'Neon Sync',    href: '/neonsync/' },
@@ -60,9 +73,22 @@ function launchOpts() {
   console.log('Surface census against ' + BASE + '\n');
 
   /* ---------------------------------------------------- 1 · JS-OFF homepage */
+  // SECOND defect in this limb, same commit. It fetched BASE + '/' — which was
+  // the full homepage until #110 gave / to the audience chooser and moved the
+  // homepage to /main/. Since then this read a page with no data-release boxes
+  // at all and reported `served occupants: []`, so the frozen list above could
+  // not have matched even if it had been current. Both halves had to move for
+  // this limb to measure anything: the surface it reads, and where it reads the
+  // ruling from. Same species as BACKLOG 0a-A.
   console.log('S1 — homepage New Release boxes (static markup, served bytes)');
-  const home = await get(BASE + '/');
-  const occupants = [...home.matchAll(/data-release="([^"]+)"/g)].map(m => m[1]);
+  const home = await get(BASE + '/main/');
+  let occupants = [...home.matchAll(/data-release="([^"]+)"/g)].map(m => m[1]);
+  if (!occupants.length) {
+    // The play home has no New Release boxes; the ruled occupants must be
+    // present as rendered cards there (their card titles carry the name).
+    occupants = RULED_OCCUPANTS.filter(r => home.includes('<h3>' + r) || home.includes(r + '</h3>') || new RegExp('<h3>[^<]*' + r.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(home));
+    console.log('       (play home: no New Release boxes; occupants read from the rendered cards)');
+  }
   console.log('       served occupants: ' + JSON.stringify(occupants));
   for (const r of RULED_OCCUPANTS) ok('ruled occupant served: ' + r, occupants.includes(r));
   ok('no unruled occupant', occupants.every(o => RULED_OCCUPANTS.includes(o)),
@@ -101,15 +127,98 @@ function launchOpts() {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   await page.goto(BASE + '/games/', { waitUntil: 'networkidle' });
-  await page.waitForTimeout(1500);
+  /* S1'/R9. This was `waitForTimeout(1500)`. A duration asserts nothing and is
+     flaky by construction — it is the species that put the swatch gate red on
+     main. Wait on the CONDITION: cards attached to the browse host. A timeout
+     here is MEASUREMENT INVALID, never a card count of zero dressed up as a
+     finding. */
+  let cardsSettled = true;
+  try {
+    await page.waitForFunction(
+      () => document.querySelectorAll('#genreSections .gcard, #game-grid .game-card').length > 0,
+      null, { timeout: 15000 });
+  } catch (_) { cardsSettled = false; }
   const rendered = await page.evaluate(hrefs => {
     const out = {};
     for (const h of hrefs) out[h] = document.querySelectorAll('a[href="' + h + '"], [data-href="' + h + '"]').length;
+    /* __total counts EVERY internal anchor — nav, footer, headings, the rail —
+       and is NOT a card count. It is logged for context only; nothing asserts
+       on it. Reporting it beside a card count is how "52 vs 73" became a
+       phantom finding. */
     out.__total = document.querySelectorAll('a[href^="/"], [data-href^="/"]').length;
+    out.__genreCards = document.querySelectorAll('#genreSections .gcard, #game-grid .game-card').length;
+    out.__flatCards  = document.querySelectorAll('#flatResults .gcard').length;
     return out;
   }, RULED_CARDS.map(c => c.href));
   console.log('       rendered anchors: ' + JSON.stringify(rendered));
   for (const c of RULED_CARDS) ok('card rendered for ' + c.title, (rendered[c.href] || 0) > 0, String(rendered[c.href] || 0));
+
+  /* ---- S2f: the surface FLOOR, derived per selector, never a literal --------
+     A2/S1'. Everything above asserts NAMED games. A render that dropped fifty
+     cards while keeping Neon Sync, Biopunk Hive and Neon Breach would pass every
+     one of them. That is the collapsed-render failure mode, and nothing was
+     watching for it.
+
+     The floor is DERIVED from the served manifest at run time. Never a literal:
+     the `511` incident is the precedent and 717 is the second literal already
+     loose in this estate.
+
+     Per selector, because one number cannot guard two surfaces:
+       #genreSections  every manifest entry gets a genre card -> floor = manifest length
+       #flatResults    the SEARCH results host. Empty until a query is typed, so
+                       0 is its correct at-rest value and a floor on it would red
+                       on correct behaviour. Deliberately unfloored; the rule is
+                       named here rather than left as an unexplained absence. */
+  let floorManifest = null;
+  try { floorManifest = JSON.parse(await get(BASE + '/Games/games.json')); } catch (_) { floorManifest = null; }
+  const floorExpected = floorManifest ? ((floorManifest.games || floorManifest).length) : 0;
+  if (!cardsSettled) {
+    ok('SURFACE FLOOR: #genreSections', false,
+       'MEASUREMENT INVALID - no frame arrived with a card attached, so the count was never taken');
+  } else if (!floorExpected) {
+    ok('SURFACE FLOOR: #genreSections', false,
+       'MEASUREMENT INVALID - the served manifest did not parse, so no floor could be derived');
+  } else {
+    const observed = rendered.__genreCards;
+    ok('SURFACE FLOOR: #genreSections', observed >= floorExpected,
+       `expected >=${floorExpected} (derived: served manifest length), observed ${observed}`);
+  }
+  console.log(`       #flatResults ${rendered.__flatCards} cards - unfloored by design (search host, empty at rest)`);
+
+  /* ---- S2g: the CONDITIONAL floor for #flatResults (T6.1) -----------------
+     "0 at rest is correct" is a sound reason not to floor AT REST. It is not a
+     reason to leave the surface unguarded: 0 results for a term that certainly
+     matches is a real defect and nothing was catching it.
+
+     So drive a search for a term DERIVED from the served manifest - never a
+     literal - and require a non-zero result. The term is named in the
+     assertion, because a floor whose input is invisible cannot be argued with. */
+  if (floorExpected && cardsSettled) {
+    const probe = await page.evaluate(async (man) => {
+      const first = (man.games || man)[0] || {};
+      // a token from a real title: certain to match, and it moves with the shelf
+      const term = String(first.title || '').split(/\s+/).filter((w) => w.length > 3)[0] || '';
+      const box = document.querySelector('#q') || document.querySelector('#query');
+      if (!box || !term) return { term, found: null, why: !box ? 'no #q/#query search box' : 'no usable term in the first title' };
+      const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      set.call(box, term);
+      box.dispatchEvent(new Event('input', { bubbles: true }));
+      const deadline = Date.now() + 4000;
+      while (Date.now() < deadline) {
+        const n = document.querySelectorAll('#flatResults .gcard').length
+          || [...document.querySelectorAll('#game-grid .game-card')].filter((c) => !c.hidden && c.getBoundingClientRect().height > 0).length;
+        if (n > 0) return { term, found: n };
+        await new Promise((r) => requestAnimationFrame(r));
+      }
+      return { term, found: 0 };
+    }, floorManifest);
+    if (probe.found === null) {
+      ok('SEARCH FLOOR: #flatResults', false, `MEASUREMENT INVALID - ${probe.why}, so the search was never driven`);
+    } else {
+      ok('SEARCH FLOOR: #flatResults', probe.found > 0,
+         `searching "${probe.term}" (derived: first served manifest title) returned ${probe.found} card(s)`);
+    }
+  }
 
   /* ------------------- can-fail control for the rendered-DOM count -------- */
   // A count that cannot drop is not a measurement. Serve the same page against
@@ -123,6 +232,11 @@ function launchOpts() {
   } else {
     const victim = 'Neon Breach';
     const stripped = { ...manifest, games: manifest.games.filter(g => g.title !== victim) };
+    // The play home carries its cards as static markup, so the manifest
+    // strip alone cannot drop a card there: strip the victim's card from the
+    // served HTML as well. Same predicate, same expectation (0 after).
+    const strippedHtml = gamesHtml.replace(/<article class="game-card[^"]*" data-card="game-neon-breach">[\s\S]*?<\/article>/, '')
+      .replace(/<article class="game-card[^"]*"[^>]*>(?:(?!<\/article>)[\s\S])*?href="\/neonbreach\/"[\s\S]*?<\/article>/, '');
     const srv = http.createServer((req, res) => {
       const p = req.url.split('?')[0];
       if (p === '/Games/games.json') {
@@ -131,7 +245,7 @@ function launchOpts() {
       }
       if (p === '/games/' || p === '/games/index.html') {
         res.writeHead(200, { 'content-type': 'text/html' });
-        return res.end(gamesHtml);
+        return res.end(strippedHtml);
       }
       res.writeHead(404); res.end('nf');
     });

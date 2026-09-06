@@ -48,7 +48,7 @@ let pass=0,fail=0;const results=[];function ok(n,c,d=''){results.push({name:n,ok
     ok(vp.name+'-copy-names-every-member',s.copy.includes(want+' Apex games')&&sportsManifest.every(t=>s.copy.includes(t)),
        'expected "'+want+' Apex games" + all '+sportsManifest.length+' names :: '+s.copy.slice(0,90));}
   ok(vp.name+'-tag-vocabulary',!s.chips.includes('SPORT')&&s.chips.includes('PHYSICS'),s.chips.join(' | '));
-  {const m=/(\d+) curated favourites of (\d+) games/.exec(s.count);
+  {const m=/(\d+) top picks of (\d+) games/.exec(s.count);
    ok(vp.name+'-derived-total',!!m&&Number(m[2])===N,s.count+'  (manifest N='+N+')');}
   ok(vp.name+'-reduced-no-overflow',s.reduced&&s.scrollW===s.innerW,`${s.scrollW}/${s.innerW}`);
   ok(vp.name+'-zero-errors',errors.length===0&&bad.length===0,[...errors,...bad].join(' | ')||'none');

@@ -1,0 +1,36 @@
+{
+  "id": "calorimetry-energy-transfer",
+  "title": "Energy transfer measured by calorimetry",
+  "pathway": "launch",
+  "classroomRole": "guided-practice",
+  "interactionModel": "calculation",
+  "estimatedMinutes": 40,
+  "curriculum": {
+    "specification": "aqa-uas",
+    "topic": "energy-transfer",
+    "unitAwardRef": "UAS-SCI-114"
+  },
+  "feedback": [
+    {
+      "id": "mass-in-grams",
+      "trigger": "units(mass) == 'g' && formula == 'mcT'",
+      "register": {
+        "build": "The mass is in grams - this formula needs kilograms.",
+        "grow": "Mass is in grams; the specific heat capacity value assumes kilograms.",
+        "launch": "Unit mismatch: m expressed in g against c in J/kg/K yields a result out by 10^3."
+      },
+      "actionLabel": "Convert units & recalculate",
+      "tier1Hint": "Check every unit against the formula before substituting.",
+      "tier2Prompt": "c is given in J/kg/K. What must m be in?",
+      "tier3StructuralBlueprint": "m = 0.150 kg; c = 4180 J/kg/K; dT = 12 K; E = mcdT = 7524 J."
+    }
+  ],
+  "supportGiven": [
+    {
+      "kind": "hint-revealed",
+      "at": "2026-08-24T10:15:00Z",
+      "source": "pupil"
+    }
+  ],
+  "supportSummary": "not-recorded"
+}

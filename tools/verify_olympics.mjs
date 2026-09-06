@@ -95,8 +95,16 @@ async function open(browser, opts = {}) {
    Every journey goes through this, so the splash is exercised on every run
    rather than only by the splash gate. */
 async function pastSplash(page) {
-  await page.evaluate(() => { const b = document.querySelector('.mbm-skip'); if (b) b.click(); });
-  await page.waitForSelector('.mbm-splash', { state: 'detached', timeout: 8000 }).catch(() => {});
+  const maker = page.locator('[data-mbm-maker-splash]').first();
+  if (await maker.count()) {
+    await page.evaluate(() => document.querySelector('[data-mbm-maker-splash]')?.click());
+    await maker.waitFor({ state: 'detached', timeout: 8000 });
+  }
+  const legacy = page.locator('.mbm-splash').first();
+  if (await legacy.count()) {
+    await page.evaluate(() => document.querySelector('.mbm-skip')?.click());
+    await legacy.waitFor({ state: 'detached', timeout: 8000 });
+  }
 }
 
 const click = async (page, sel) => {
@@ -109,7 +117,36 @@ const screen = page => page.evaluate(() => window.__olympics.screen);
    named mode. Every step is a control the player has. */
 async function startChampionship(page, mode = 'ultimate') {
   await pastSplash(page);
+  /* A reload can suppress the already-seen maker splash, removing the real
+     delay that normally lets the trailing V6 layer finish booting. Wait for
+     boot's own mounted badge before clicking the one-shot start listener; the
+     intro's existing visibility and 3-second detach gates remain unchanged. */
+  await page.waitForSelector('#v6-release-badge', { timeout: 12000 });
   await click(page, '#newGamesBtn');
+  /* A locator click waits for two rendered frames of geometric stability. On
+     a software renderer the short ceremony can auto-close before those two
+     frames exist, even though its 44px control is stationary and usable. Sight
+     the rendered target, arm a trusted-pointer witness on that exact node, and
+     send a real coordinate click. The witness prevents an auto-close followed
+     by a click on the underlying setup from masquerading as success. */
+  const skipBoxHandle = await page.waitForFunction(() => {
+    const button = document.querySelector('#v6-intro .v6-skip');
+    if (!button) return false;
+    const style = getComputedStyle(button), rect = button.getBoundingClientRect();
+    if (style.display === 'none' || style.visibility === 'hidden' ||
+        rect.width < 44 || rect.height < 44) return false;
+    window.__mbmV6SkipPointer = false;
+    button.addEventListener('pointerdown', event => {
+      window.__mbmV6SkipPointer = event.isTrusted && event.button === 0;
+    }, { once: true, capture: true });
+    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+  }, null, { timeout: 3000 });
+  const skipBox = await skipBoxHandle.jsonValue();
+  await skipBoxHandle.dispose();
+  await page.mouse.click(skipBox.x + skipBox.width / 2, skipBox.y + skipBox.height / 2);
+  await page.waitForSelector('#v6-intro', { state: 'detached', timeout: 3000 });
+  const trustedSkip = await page.evaluate(() => window.__mbmV6SkipPointer === true);
+  if (!trustedSkip) throw new Error('V6 intro detached without its visible skip control receiving the trusted pointer click');
   await page.waitForSelector('[data-mode]', { timeout: 12000 });
   await page.evaluate(m => document.querySelector(`[data-mode="${m}"]`).click(), mode);
   /* "Enter Games Village" is DISABLED until all 25 development points are
@@ -163,7 +200,7 @@ async function playDay(page, { resolve = true } = {}) {
     const missing = REQUIRED.filter(k => !boot.keys.includes(k));
     t('O1 the diagnostic surface exposes every field the audit needs',
       missing.length === 0, missing.length ? `missing: ${missing.join(', ')}` : boot.keys.join(', '));
-    t('O1 it names the real save key', boot.save.save === 'mbm_global_games_v1', `key ${boot.save.save}`);
+    t('O1 it names the real save key', boot.save.save === 'mbm_global_games_world_stage_v4', `key ${boot.save.save}`);
     t('O1 it reports the fixed timestep the loop actually uses',
       Math.abs(boot.fixedDt - 1 / 120) < 1e-9, `${boot.fixedDt} (1/${Math.round(1 / boot.fixedDt)})`);
     /* LIVE, not a boot snapshot: drive the game and require the surface to move
@@ -236,9 +273,33 @@ async function playDay(page, { resolve = true } = {}) {
         const ev = window.MBMGlobalGames.app.activeEvent;
         return { probe: ev ? Number(ev[p] || 0) : null, elapsed: ev ? ev.elapsed : null };
       }, c.probe);
-      /* Wait for the gun. POLLED, not slept: the countdown runs on real dt and
-         this container renders at 6-12fps, so any fixed sleep is either a race
-         or a waste. */
+      /* Reach the gun through the shipped fixed-step authority, not through
+         wall-clock rendering. Hosted software-canvas runners can render below
+         1fps; the app deliberately caps one rendered frame to 50ms, so a real
+         3.2s countdown can then need more than a minute without saying
+         anything about input. This pumps the SAME event.tick(FIXED_DT) path
+         used by the app loop. It is bounded, proves it started from a real
+         countdown, and records that setup itself did not raise the movement
+         probe. The keyboard leg below remains real Playwright input. */
+      const gun = await page.evaluate(probe => {
+        const app = window.MBMGlobalGames.app;
+        const ev = app && app.activeEvent;
+        const dt = window.__olympics.fixedDt;
+        const before = ev ? { started: ev.started, countdown: ev.countdown,
+          probe: Number(ev[probe] || 0), elapsed: ev.elapsed } : null;
+        let ticks = 0;
+        while (ev && ev.started !== true && ticks < 1000) { ev.tick(dt); ticks++; }
+        return { sameEvent: !!ev && ev === app.activeEvent, dt, ticks, before,
+          after: ev ? { started: ev.started, countdown: ev.countdown,
+            probe: Number(ev[probe] || 0), elapsed: ev.elapsed } : null };
+      }, c.probe);
+      t(`O3 [control] the ${c.event} starter uses the shipped fixed-step authority`,
+        gun.sameEvent && gun.dt === 1 / 120 && gun.before?.started === false &&
+          gun.after?.started === true && gun.ticks > 0 && gun.ticks < 1000,
+        JSON.stringify(gun));
+      t(`O3 [control] reaching the ${c.event} gun cannot create a movement pass`,
+        gun.after?.probe === gun.before?.probe,
+        `${c.probe} ${gun.before?.probe} -> ${gun.after?.probe} across ${gun.ticks} authority ticks`);
       await page.waitForFunction(() => {
         const ev = window.MBMGlobalGames.app.activeEvent;
         return !!ev && ev.started === true;
@@ -257,15 +318,38 @@ async function playDay(page, { resolve = true } = {}) {
         `${c.probe} ${idleBefore.probe} -> ${idleAfter.probe} across an equal idle wait after the gun`);
 
       const before = await read();
+      const focusOnArrival = await page.evaluate(() => document.hasFocus());
+      if (!focusOnArrival) {
+        await page.bringToFront();
+        await page.evaluate(() => window.focus());
+        await page.waitForFunction(() => document.hasFocus(), null, { timeout: 5000 }).catch(() => {});
+      }
+      const focused = await page.evaluate(() => document.hasFocus());
+      t(`O3 the ${c.event} page took focus before real input`, focused,
+        focused ? `focus on arrival: ${focusOnArrival}` : 'the page never took focus');
       await page.focus('#game');
       for (let i = 0; i < 40; i++) {
-        await page.keyboard.press(c.keys[i % c.keys.length]);
-        await page.waitForTimeout(24);
+        const key = c.keys[i % c.keys.length];
+        await page.keyboard.down(key);
+        try {
+          /* Grafted from tools/townlife/verify.mjs:251-263: keep the real key
+             held until the shipped fixed-step loop has had an opportunity to
+             consume it, and release it in finally. A press/release pair can
+             otherwise land entirely between two steps on a software-canvas
+             runner, making the harness measure its own scheduling race. */
+          const tickAtDown = await page.evaluate(() =>
+            window.MBMGlobalGames.app.activeEvent.simTick);
+          await page.waitForFunction(tick =>
+            window.MBMGlobalGames.app.activeEvent.simTick > tick,
+            tickAtDown, { timeout: 30000 });
+        } finally {
+          await page.keyboard.up(key);
+        }
       }
       const after = await read();
       t(`O3 real keystrokes move the ${c.event} simulation`,
         after.probe !== null && after.probe > before.probe,
-        `${c.probe} ${before.probe} -> ${after.probe} over ${(after.elapsed || 0).toFixed(2)}s of play`);
+        `${c.probe} ${before.probe} -> ${after.probe} over ${(after.elapsed || 0).toFixed(2)}s of play WITH THE PAGE FOCUSED (focus on arrival: ${focusOnArrival})`);
       await ctx.close();
     }
   }
@@ -283,16 +367,34 @@ async function playDay(page, { resolve = true } = {}) {
       `paused=${paused} then resumed=${!resumed}`);
 
     /* Restart must genuinely restart: a fresh event object with the clock back
-       to zero, not merely a toast. Elapsed is read from the live engine. */
-    await page.waitForTimeout(400);
-    const beforeRestart = await page.evaluate(() => window.MBMGlobalGames.app.activeEvent.elapsed);
+       to zero, not merely a toast. Hosted software-canvas frames can advance
+       less than 0.1 game-seconds during a 400ms wall-clock sleep, so establish
+       the same >0.1 precondition through the event's shipped fixed-step
+       authority, exactly as the O3 starter control does. */
+    const beforeRestart = await page.evaluate(() => {
+      const app = window.MBMGlobalGames.app;
+      const event = app.activeEvent;
+      const dt = window.__olympics.fixedDt;
+      let ticks = 0;
+      while (event && event.elapsed <= 0.1 && ticks < 120) { event.tick(dt); ticks++; }
+      window.__mbmOlympicsRestartBefore = event;
+      return { elapsed: event ? event.elapsed : null, ticks, dt, sameEvent: event === app.activeEvent };
+    });
+    t('O4 [control] restart setup uses the shipped fixed-step authority',
+      beforeRestart.sameEvent && beforeRestart.dt === 1 / 120 && beforeRestart.ticks > 0 &&
+        beforeRestart.ticks < 120 && beforeRestart.elapsed > 0.1,
+      JSON.stringify(beforeRestart));
     await click(page, '#pauseBtn');
     await click(page, '#restartBtn');
-    await page.waitForTimeout(120);
-    const afterRestart = await page.evaluate(() => ({ elapsed: window.MBMGlobalGames.app.activeEvent.elapsed, screen: window.__olympics.screen, paused: window.__olympics.paused }));
+    const afterRestart = await page.evaluate(() => ({
+      elapsed: window.MBMGlobalGames.app.activeEvent.elapsed,
+      fresh: window.MBMGlobalGames.app.activeEvent !== window.__mbmOlympicsRestartBefore,
+      screen: window.__olympics.screen,
+      paused: window.__olympics.paused
+    }));
     t('O4 restart rewinds the event rather than just announcing it',
-      beforeRestart > 0.1 && afterRestart.elapsed < beforeRestart,
-      `elapsed ${beforeRestart.toFixed(2)}s -> ${afterRestart.elapsed.toFixed(2)}s`);
+      beforeRestart.elapsed > 0.1 && afterRestart.fresh && afterRestart.elapsed < beforeRestart.elapsed,
+      `fresh=${afterRestart.fresh}; elapsed ${beforeRestart.elapsed.toFixed(2)}s -> ${afterRestart.elapsed.toFixed(2)}s`);
     t('O4 restart leaves the game playing and unpaused',
       afterRestart.screen === 'PLAYING' && afterRestart.paused === false, `screen ${afterRestart.screen}`);
     t('O4 no errors through pause, resume and restart', errors.length === 0, errors[0] || 'none');
@@ -332,7 +434,7 @@ async function playDay(page, { resolve = true } = {}) {
     let survived = 0; const dead = [];
     for (const [label, blob] of hostiles) {
       const { ctx, page, errors } = await open(browser, {
-        initFn: b => { try { localStorage.setItem('mbm_global_games_v1', b); } catch (e) {} },
+        initFn: b => { try { localStorage.setItem('mbm_global_games_world_stage_v4', b); } catch (e) {} },
         initArg: blob
       }).catch(e => ({ ctx: null, why: String(e.message).slice(0, 50) }));
       if (!ctx) { dead.push(`${label} (never booted)`); continue; }
@@ -440,6 +542,30 @@ async function playDay(page, { resolve = true } = {}) {
     };
     window.__virtualNow = () => now;
   })();`;
+  function o10Url(url) {
+    /* O2 already exercises the generated splash on both real viewports. O10's
+       clock is virtual while the splash's detach timer is deliberately real,
+       so use the contract's canonical override here, as
+       tools/townlife/benchmark_splash.mjs does for its simulation subject. */
+    const target = new URL(url);
+    target.searchParams.set('splash', 'skip');
+    return target.href;
+  }
+  async function waitForVirtualBoot(page) {
+    /* Grafted from open() above: the core script publishes __olympics
+       synchronously while parsing, before its first rAF. Advancing hundreds of
+       virtual frames before that condition races the parser and is unnecessary.
+       Wait for the product condition, then assert that boot consumed no virtual
+       time. The 15-second ceiling is unchanged. */
+    await page.waitForFunction(() => !!window.__olympics && window.__olympics.screen !== null &&
+      document.readyState === 'complete' && !!document.getElementById('newGamesBtn'),
+      null, { polling: 100, timeout: 15000 });
+    const boot = await page.evaluate(() => ({ screen: window.__olympics.screen, virtualNow: window.__virtualNow() }));
+    if (boot.screen !== 'TITLE' || boot.virtualNow !== 0) {
+      throw new Error(`O10 virtual boot precondition failed: ${JSON.stringify(boot)}`);
+    }
+    return boot;
+  }
   {
     const engines = [
       { id: 'sprint', probe: 'speed', keys: ['KeyA', 'KeyD'], why: 'tap-alternation accumulation' },
@@ -448,24 +574,33 @@ async function playDay(page, { resolve = true } = {}) {
     for (const eng of engines) {
       const runs = {};
       for (const fps of [30, 144]) {
-        const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-        const page = await ctx.newPage();
-        await page.addInitScript(clockDriver(fps));
-        await page.goto(BASE, { waitUntil: 'commit' });
-        /* The virtual clock means nothing advances until we drive it, so boot
-           has to be pumped rather than waited for. */
-        await page.waitForFunction(() => typeof window.__drive === 'function', null, { timeout: 15000 });
-        for (let i = 0; i < 40; i++) { await page.evaluate(() => window.__drive(8)); }
-        await page.waitForFunction(() => !!window.__olympics, null, { timeout: 15000 });
-        /* Skip the menus entirely for this gate: it is about the engine, and
-           the menus are not on a virtual clock. */
-        const state = await page.evaluate(async (id) => {
+        /* Grafted from tools/driving-games/harness_gap.mjs:112-123: each
+           timing sample owns a fresh browser process. O1-O9 leave a shared
+           process healthy for ordinary UI journeys, but O10 deliberately
+           drains hundreds of virtual render frames per subject; isolating the
+           samples prevents one subject's renderer state from disarming the
+           next subject's init script. The measured clock and assertions below
+           are unchanged. */
+        const clockBrowser = await chromium.launch();
+        let state, trace;
+        try {
+          console.log(`  O10 [${eng.id}] ${fps}fps fresh-process subject`);
+          const ctx = await clockBrowser.newContext({ viewport: { width: 1280, height: 900 } });
+          const page = await ctx.newPage();
+          await page.addInitScript(clockDriver(fps));
+          await page.goto(o10Url(BASE), { waitUntil: 'commit' });
+          await page.waitForFunction(() => typeof window.__drive === 'function', null, { timeout: 15000 });
+          const boot = await waitForVirtualBoot(page);
+          console.log(`  O10 [${eng.id}] ${fps}fps boot ${boot.screen} at virtual ${boot.virtualNow}ms`);
+          /* Skip the menus entirely for this gate: it is about the engine, and
+             the menus are not on a virtual clock. */
+          state = await page.evaluate(async (id) => {
           const app = window.MBMGlobalGames.app;
           const drive = window.__drive;
           /* build a tournament directly, the same way the setup screen does */
-          document.querySelector('.mbm-skip') && document.querySelector('.mbm-skip').click();
           drive(60);
-          document.getElementById('newGamesBtn').click(); drive(10);
+          document.getElementById('newGamesBtn').click(); drive(1);
+          document.querySelector('.v6-skip') && document.querySelector('.v6-skip').click(); drive(9);
           document.querySelector('[data-mode="ultimate"]').click(); drive(10);
           document.getElementById('autoAttrs').click(); drive(10);
           document.getElementById('beginTournament').click(); drive(20);
@@ -475,9 +610,9 @@ async function playDay(page, { resolve = true } = {}) {
           document.getElementById('eventBriefing').click(); drive(20);
           document.getElementById('startEvent').click(); drive(20);
           return { started: window.__olympics.screen, id: window.__olympics.eventId };
-        }, eng.id);
-        /* Identical scripted input at identical VIRTUAL times. */
-        const trace = await page.evaluate(({ keys, probe, fps }) => {
+          }, eng.id);
+          /* Identical scripted input at identical VIRTUAL times. */
+          trace = await page.evaluate(({ keys, probe, fps }) => {
           const app = window.MBMGlobalGames.app;
           const drive = window.__drive;
           const samples = [];
@@ -523,9 +658,12 @@ async function playDay(page, { resolve = true } = {}) {
           return { samples: samples.slice(-5),
                    elapsed: ev ? Number((ev.elapsed - elapsed0).toFixed(4)) : null,
                    probe: ev ? Number(Number(ev[probe] || 0).toFixed(4)) : null };
-        }, { keys: eng.keys, probe: eng.probe, fps });
+          }, { keys: eng.keys, probe: eng.probe, fps });
+          await ctx.close();
+        } finally {
+          await clockBrowser.close();
+        }
         runs[fps] = { ...state, ...trace };
-        await ctx.close();
       }
       const a = runs[30], b = runs[144];
       t(`O10 [${eng.id}] the engine actually started under the virtual clock`,
@@ -547,17 +685,22 @@ async function playDay(page, { resolve = true } = {}) {
     if (varStep.path) {
       const got = {};
       for (const fps of [30, 144]) {
-        const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-        const page = await ctx.newPage();
-        await page.addInitScript(clockDriver(fps));
-        await page.goto('file://' + varStep.path, { waitUntil: 'commit' });
-        await page.waitForFunction(() => typeof window.__drive === 'function', null, { timeout: 15000 });
-        for (let i = 0; i < 40; i++) await page.evaluate(() => window.__drive(8));
-        await page.waitForFunction(() => !!window.__olympics, null, { timeout: 15000 });
-        const el = await page.evaluate((fps) => {
+        const clockBrowser = await chromium.launch();
+        let el;
+        try {
+          console.log(`  O10 [control] ${fps}fps fresh-process subject`);
+          const ctx = await clockBrowser.newContext({ viewport: { width: 1280, height: 900 } });
+          const page = await ctx.newPage();
+          await page.addInitScript(clockDriver(fps));
+          await page.goto(o10Url('file://' + varStep.path), { waitUntil: 'commit' });
+          await page.waitForFunction(() => typeof window.__drive === 'function', null, { timeout: 15000 });
+          const boot = await waitForVirtualBoot(page);
+          console.log(`  O10 [control] ${fps}fps boot ${boot.screen} at virtual ${boot.virtualNow}ms`);
+          el = await page.evaluate((fps) => {
           const app = window.MBMGlobalGames.app, drive = window.__drive;
-          document.querySelector('.mbm-skip') && document.querySelector('.mbm-skip').click(); drive(60);
-          document.getElementById('newGamesBtn').click(); drive(10);
+          drive(60);
+          document.getElementById('newGamesBtn').click(); drive(1);
+          document.querySelector('.v6-skip') && document.querySelector('.v6-skip').click(); drive(9);
           document.querySelector('[data-mode="ultimate"]').click(); drive(10);
           document.getElementById('autoAttrs').click(); drive(10);
           document.getElementById('beginTournament').click(); drive(20);
@@ -571,9 +714,12 @@ async function playDay(page, { resolve = true } = {}) {
           const totalFrames = Math.round(3000 / (1000 / fps));
           for (let f = 0; f < totalFrames; f++) drive(1);
           return app.activeEvent ? Number((app.activeEvent.elapsed - elapsed0).toFixed(4)) : null;
-        }, fps);
+          }, fps);
+          await ctx.close();
+        } finally {
+          await clockBrowser.close();
+        }
         got[fps] = el;
-        await ctx.close();
       }
       const d = (got[30] !== null && got[144] !== null) ? Math.abs(got[30] - got[144]) : Infinity;
       t('O10 [control] a variable-timestep build IS caught by the same comparison',
@@ -647,7 +793,14 @@ async function playDay(page, { resolve = true } = {}) {
       const before = await page.evaluate(() => window.__olympics.motion.osReduced);
       /* emulateMedia lives on the PAGE, not the context. */
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      await page.waitForTimeout(250);
+      /* The media query changes synchronously, but its `change` event is a
+         queued browser task. Poll the product condition instead of sampling
+         after a guessed delay; a missing listener still falls through to the
+         unchanged assertion below and goes red. */
+      await page.waitForFunction(() => window.__olympics.motion.osReduced === true,
+        null, { timeout: 5000 }).catch(error => {
+          if (error?.name !== 'TimeoutError') throw error;
+        });
       const after = await page.evaluate(() => window.__olympics.motion.osReduced);
       t('O12 the live listener applies a mid-session change without a reload',
         before === false && after === true, `osReduced ${before} -> ${after}`);

@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Apex Velodrome card artwork</title>
+  <desc id="desc">A banked wooden velodrome track curving away, with three riders strung out along the black line and a readout showing a target power of four hundred and ten watts.</desc>
+  <defs>
+    <linearGradient id="hall" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#05090e"/><stop offset="1" stop-color="#0b1520"/>
+    </linearGradient>
+    <linearGradient id="boards" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#b98a4e"/><stop offset=".55" stop-color="#e0b578"/><stop offset="1" stop-color="#a4763f"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#0a1622"/><stop offset="1" stop-color="#123047"/>
+    </linearGradient>
+    <pattern id="plank" width="1200" height="13" patternUnits="userSpaceOnUse">
+      <rect width="1200" height="13" fill="none"/>
+      <path d="M0 12.5H1200" stroke="#8a6234" stroke-width="1" opacity=".45"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#hall)"/>
+
+  <!-- roof trusses -->
+  <g stroke="#1b2b3c" stroke-width="3" opacity=".8">
+    <path d="M0 92 L1200 44"/><path d="M0 150 L1200 96"/>
+    <path d="M150 0 V120"/><path d="M470 0 V104"/><path d="M790 0 V88"/><path d="M1090 0 V74"/>
+  </g>
+
+  <!-- the banking -->
+  <path d="M0 496 C 300 396, 760 300, 1200 256 L1200 400 C 760 448, 300 540, 0 630 Z" fill="url(#boards)"/>
+  <path d="M0 496 C 300 396, 760 300, 1200 256 L1200 400 C 760 448, 300 540, 0 630 Z" fill="url(#plank)"/>
+
+  <!-- côte d'azur and the lines that matter -->
+  <path d="M0 630 C 300 540, 760 448, 1200 400 L1200 434 C 760 484, 300 578, 0 630 Z" fill="#2f78b5"/>
+  <path d="M0 552 C 300 460, 760 366, 1200 318" fill="none" stroke="#1a1a1a" stroke-width="6"/>
+  <path d="M0 520 C 300 424, 760 332, 1200 288" fill="none" stroke="#cf3b3b" stroke-width="4" opacity=".95"/>
+  <path d="M0 470 C 300 372, 760 282, 1200 240" fill="none" stroke="#e8eef4" stroke-width="2"
+        stroke-dasharray="16 14" opacity=".55"/>
+
+  <!-- three riders on the black line, strung out -->
+  <g stroke-linecap="round">
+    <g transform="translate(300 452) rotate(-17)">
+      <ellipse cy="26" rx="34" ry="8" fill="#000" opacity=".38"/>
+      <circle cx="-22" cy="12" r="13" fill="none" stroke="#11161c" stroke-width="3.5"/>
+      <circle cx="22" cy="12" r="13" fill="none" stroke="#11161c" stroke-width="3.5"/>
+      <path d="M-22 12 L-2 -6 L22 12 M-2 -6 L8 -22" stroke="#5fb6ff" stroke-width="4" fill="none"/>
+      <path d="M8 -22 L-4 -34 L14 -40" stroke="#e8eef4" stroke-width="7" fill="none"/>
+      <circle cx="18" cy="-44" r="8" fill="#e0b64a"/>
+    </g>
+    <g transform="translate(620 366) rotate(-14)" opacity=".96">
+      <ellipse cy="24" rx="31" ry="7" fill="#000" opacity=".34"/>
+      <circle cx="-20" cy="11" r="12" fill="none" stroke="#11161c" stroke-width="3.2"/>
+      <circle cx="20" cy="11" r="12" fill="none" stroke="#11161c" stroke-width="3.2"/>
+      <path d="M-20 11 L-2 -5 L20 11 M-2 -5 L7 -20" stroke="#cf3b3b" stroke-width="3.8" fill="none"/>
+      <path d="M7 -20 L-4 -31 L13 -37" stroke="#e8eef4" stroke-width="6.5" fill="none"/>
+      <circle cx="16" cy="-40" r="7.4" fill="#b9e6cd"/>
+    </g>
+    <g transform="translate(900 306) rotate(-11)" opacity=".92">
+      <ellipse cy="22" rx="28" ry="6.5" fill="#000" opacity=".3"/>
+      <circle cx="-18" cy="10" r="11" fill="none" stroke="#11161c" stroke-width="3"/>
+      <circle cx="18" cy="10" r="11" fill="none" stroke="#11161c" stroke-width="3"/>
+      <path d="M-18 10 L-2 -4 L18 10 M-2 -4 L6 -18" stroke="#b9e6cd" stroke-width="3.5" fill="none"/>
+      <path d="M6 -18 L-4 -28 L12 -34" stroke="#e8eef4" stroke-width="6" fill="none"/>
+      <circle cx="15" cy="-37" r="6.8" fill="#5fb6ff"/>
+    </g>
+  </g>
+
+  <!-- readout -->
+  <g transform="translate(56 56)">
+    <rect width="330" height="118" rx="16" fill="url(#panel)" stroke="#2a5570"/>
+    <text x="22" y="40" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="20"
+          fill="#8fd4ef" letter-spacing="2">TARGET POWER</text>
+    <text x="22" y="76" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="34"
+          font-weight="700" fill="#e0b64a">410 W</text>
+    <text x="22" y="103" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="17"
+          fill="#b9e6cd">W&#8242; ANAEROBIC 96% &#183; 120 Hz</text>
+  </g>
+
+  <text x="56" y="586" font-family="Poppins,Segoe UI,system-ui,sans-serif" font-size="44"
+        font-weight="700" fill="#eaf4fa" letter-spacing="1">Apex Velodrome</text>
+  <text x="56" y="614" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="17"
+        fill="#7fb6cf" letter-spacing="3">SPEND THE MATCH YOU HAVE</text>
+</svg>

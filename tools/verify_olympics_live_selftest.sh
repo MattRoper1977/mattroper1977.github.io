@@ -39,12 +39,27 @@ cleanup() { for p in "${PIDS[@]:-}"; do [ -n "$p" ] && kill "$p" 2>/dev/null; do
 trap cleanup EXIT
 
 # ---- baseline fixture -------------------------------------------------------
-mkdir -p "$WORK/root/Games" "$WORK/served" "$WORK/run"
+mkdir -p "$WORK/root/Games" "$WORK/served" "$WORK/run" "$WORK/data"
 cp -r "$SITE/games" "$WORK/root/"
 cp "$GAMES_JSON" "$WORK/root/Games/games.json"
 cp "$GAMES_JSON" "$WORK/served/games.json"
 cp "$SITE/olympics/index.html" "$WORK/served/olympics.html"
 cp "$HERE/verify_olympics_live.mjs" "$WORK/run/"
+
+# THE VERIFIER'S DECLARED INPUTS TRAVEL WITH IT.
+# #127 stopped the verifier restating the NEW· holder and had it read that
+# declared fact from data/new-release-occupants.json, resolved beside itself as
+# `new URL('../data/…', import.meta.url)`. This harness copies the verifier
+# ALONE into $WORK/run, so the record resolved to $WORK/data — which did not
+# exist. The record was unreadable, holder-record-readable went red exactly as
+# designed, marker-matches-record cascaded on a null declared holder, and the
+# baseline check killed the self-test before a single control ran.
+#
+# The cure is the harness carrying what the verifier READS, never the verifier
+# loosening how it resolves it: a verifier that shrugged at a missing record
+# would pass on a record nobody could read, which is the failure this limb
+# exists to make loud. Control 9 below proves that loudness survived the fix.
+cp "$SITE/data/new-release-occupants.json" "$WORK/data/"
 
 # The script is copied to a scratch dir, so playwright has to be findable from
 # there. Resolve where it ACTUALLY lives rather than guessing a path: CI
@@ -120,17 +135,29 @@ json.dump(d,open(sys.argv[2],'w'))
 PY
 expect_red "two games wear NEW·" "marker-sole-holder" "$(run "$WORK/nc4.json" "$WORK/served/olympics.html" "")"
 
-# 5 marker-is-olympics
-python3 - "$WORK/served/games.json" "$WORK/nc5.json" <<'PY'
+# 5 marker-matches-record
+# This control was written against marker-is-olympics and was never retargeted
+# when #127 replaced that limb with holder-record-readable + marker-matches-
+# record. It had been asking for a limb name the verifier no longer emits, so it
+# could only ever report BROKEN — a control gone stale against the thing it
+# controls. Nothing is weakened by the move: the same mutation, the limb that
+# replaced the one it named.
+#
+# The game to mis-mark is DERIVED from the record, never frozen here. A second
+# frozen copy of the holder inside a harness is precisely the defect the record
+# exists to prevent, and it would go stale the next time the marker moves —
+# which is how this whole sequence started.
+python3 - "$WORK/served/games.json" "$WORK/nc5.json" "$WORK/data/new-release-occupants.json" <<'PY'
 import json,re,sys
 d=json.load(open(sys.argv[1]))
+held='/'+json.load(open(sys.argv[3]))['newReleaseHolder']+'/'
 for e in d['games']:
     if e['title'].startswith('NEW'): e['title']=re.sub(r'^NEW\s*·\s*','',e['title'])
 for e in d['games']:
-    if e['href']!='/olympics/': e['title']='NEW · '+e['title']; break
+    if e['href']!=held: e['title']='NEW · '+e['title']; break
 json.dump(d,open(sys.argv[2],'w'))
 PY
-expect_red "marker on the wrong game" "marker-is-olympics" "$(run "$WORK/nc5.json" "$WORK/served/olympics.html" "")"
+expect_red "marker on a game the record does not declare" "marker-matches-record" "$(run "$WORK/nc5.json" "$WORK/served/olympics.html" "")"
 
 # 6 olympics-bytes
 cp "$WORK/served/olympics.html" "$WORK/nc6.html"; printf '<!-- drift -->' >> "$WORK/nc6.html"
@@ -144,7 +171,13 @@ cp "$GAMES_JSON" "$WORK/hidden/Games/games.json"
 python3 - "$WORK/hidden/games/index.html" <<'PY'
 import sys
 p=sys.argv[1]; s=open(p,encoding='utf-8').read()
-s=s.replace('</head>','<style>#allGrid a.gcard{display:none!important}</style></head>',1)
+# Both containers: the browse structure moved from #allGrid to #genreSections,
+# and this control's whole point is that the cards are PRESENT in the DOM and
+# given no box. Hiding a selector that no longer matches makes the mutation a
+# no-op — the cards kept rendering, the limb stayed green, and the self-test
+# correctly reported a limb it could not knock over. A control that stops
+# mutating is the most dangerous kind: it reports success about nothing.
+s=s.replace('</head>','<style>#allGrid a.gcard,#genreSections a.gcard{display:none!important}</style></head>',1)
 open(p,'w',encoding='utf-8').write(s)
 PY
 HIDDEN_URL="$(serve "$WORK/hidden")/games/"
@@ -166,6 +199,16 @@ open(p,'w',encoding='utf-8').write(s)
 PY
 THROW_URL="$(serve "$WORK/throw")/games/"
 expect_red "arcade throws" "arcade-no-script-error" "$(run "$WORK/served/games.json" "$WORK/served/olympics.html" "$THROW_URL")"
+
+# 9 holder-record-readable — the harness's own declared input, controlled.
+# The limb that caught this harness has to keep being able to catch it. Take the
+# record away and the verifier must still say so by name, loudly: an unreadable
+# record is a failure of the harness, never a silent pass and never counted as a
+# rejection. If a later change ever "fixed" the resolution by defaulting a
+# missing record to something plausible, this control is what refuses it.
+mv "$WORK/data/new-release-occupants.json" "$WORK/record.parked"
+expect_red "declared record absent" "holder-record-readable" "$(run "$WORK/served/games.json" "$WORK/served/olympics.html" "")"
+mv "$WORK/record.parked" "$WORK/data/new-release-occupants.json"
 
 echo
 if [ "$fails" -eq 0 ]; then

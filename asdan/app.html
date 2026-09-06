@@ -316,7 +316,7 @@ table.list tr:last-child td{border-bottom:none}
   <div class="panel">
     <h2>Centre details</h2>
     <div class="row">
-      <div class="field"><label for="set-centre">Centre name</label><input id="set-centre" placeholder="Progress Schools"></div>
+      <div class="field"><label for="set-centre">Centre name</label><input id="set-centre" placeholder="Your centre"></div>
       <div class="field"><label for="set-cno">ASDAN centre number</label><input id="set-cno" style="width:130px"></div>
       <div class="field"><label for="set-teacher">Tutor (signature)</label><input id="set-teacher" placeholder="Matt Roper"></div>
       <button class="btn" id="set-save">Save</button>
@@ -326,7 +326,7 @@ table.list tr:last-child td{border-bottom:none}
     <h2>Paperwork branding</h2>
     <div class="row">
       <label style="display:flex;gap:6px;align-items:center;font-size:.85rem;font-weight:600"><input type="checkbox" id="set-school-on"> Show school header on printed paperwork</label>
-      <div class="field"><label for="set-school-name">School name</label><input id="set-school-name" placeholder="Progress Schools Tees Valley" style="min-width:240px"></div>
+      <div class="field"><label for="set-school-name">School name</label><input id="set-school-name" placeholder="Your centre" style="min-width:240px"></div>
       <button class="btn" id="v25-save-brand">Save</button>
     </div>
     <p class="hint">When on, every claimed or printed document carries the school's name above the centre line — ready for the Progress file.</p>
@@ -438,7 +438,7 @@ function dbGet(st,k){return new Promise((res,rej)=>{const rq=db.transaction(st,"
 
 /* ---------- state ---------- */
 const S={pupils:[],progs:[],trio:[],stamps:[],hours:[],docs:[],evidence:[],
-  settings:{centre:"Progress Schools",centreNo:"",teacher:""},
+  settings:{centre:"Your centre",centreNo:"",teacher:""},
   trackProg:"",trackPupil:"",trackOutcome:"",selProg:""};
 window.S=S; /* debug/test handle */
 
@@ -791,7 +791,7 @@ function renderTrackShort(p,roster,body){
   h+='</div>';
   const pupil=roster.find(x=>x.id===S.trackPupil);
   const banked=bankedHours(p,pupil.id),credits=creditsFromHours(banked);
-  h+=`<div class="notice ok" style="margin:8px 0"><b>${esc(pupil.forename)}:</b> ${banked.toFixed(1)} hours banked → <b>${credits} credit${credits===1?"":"s"}</b> claimable${banked%10?` (${(10-banked%10).toFixed(1)}h to the next credit)`:""}. Challenges only bank when W, P and R are all ticked.</div>`;
+  h+=`<div class="notice ok" style="margin:8px 0"><b>${esc(pupil.forename)}:</b> ${banked.toFixed(1)} hours banked → <b>≈${credits} credit-equivalent${credits===1?"":"s"}</b>${banked%10?` (${(10-banked%10).toFixed(1)}h to the next credit-equivalent)`:""} — 10 h ≈ 1 credit, a planning estimate; PEQ credits are awarded per unit achieved, not per hour banked. Challenges only bank when W, P and R are all ticked.</div>`;
   h+='<table class="list"><tr><th>Sec</th><th>Challenge</th><th>Hours</th><th>W · P · R</th><th></th></tr>';
   for(const m of p.modules||[]){
     h+=`<tr><td colspan="5" style="background:var(--mint);font-weight:700;color:var(--asdan)">${esc(m.title)}</td></tr>`;
@@ -945,7 +945,7 @@ function readiness(p,pupilId){
     const banked=bankedHours(p,pupilId),credits=creditsFromHours(banked);
     const docsDone=CLOSING_DOCS.every(([f])=>dd[f]);
     const items=[
-      [`Hours banked (${banked.toFixed(1)}h → ${credits} credit${credits===1?"":"s"})`,credits>=1],
+      [`Hours banked (${banked.toFixed(1)}h → ≈${credits} credit-equivalent${credits===1?"":"s"})`,credits>=1],
       ...CLOSING_DOCS.map(([f,l])=>[l,!!dd[f]])
     ];
     const state=credits>=1&&docsDone?"g":credits>=1?"a":"r";
@@ -990,11 +990,11 @@ function fillPrPupils(){
 }
 $("#pr-print").addEventListener("click",()=>window.print());
 function printHeader(p,pu){
-  const band=(V25.school&&V25.school.on)?`<div style="border-bottom:3px solid #0e4f4a;margin-bottom:8px;padding-bottom:4px"><div style="font-size:1.05rem;font-weight:800;letter-spacing:.06em;color:#0e4f4a">${esc(V25.school.name||"Progress Schools Tees Valley")}</div></div>`:"";
+  const band=(V25.school&&V25.school.on)?`<div style="border-bottom:3px solid #0e4f4a;margin-bottom:8px;padding-bottom:4px"><div style="font-size:1.05rem;font-weight:800;letter-spacing:.06em;color:#0e4f4a">${esc(V25.school.name||"Your centre")}</div></div>`:"";
   const pw=curPathway();
   const ceil=pw?`<div style="font-size:.72rem;color:#555;margin-bottom:6px;font-style:italic">Working toward ${esc(pw.ceiling)} — provisional: unit and level attribution is the centre coordinator's decision, and nothing is promised to a learner until the ASDAN registration is confirmed.</div>`:"";
   return band+ceil+`<div class="phead"><h1>${esc(p.title)}${p.code?" · "+esc(p.code):""}${p.kind==="peq"?" · "+esc(p.level||""):""}</h1><div><b>${esc(pu.forename)} ${esc(pu.surname)}</b></div></div>
-  <div style="font-size:.8rem;color:#444;margin-bottom:8px">Centre: ${esc(S.settings.centre||"Progress Schools")}${S.settings.centreNo?" ("+esc(S.settings.centreNo)+")":""} · Tutor: ${esc(S.settings.teacher||"")} · Printed ${fmtDMY(todayISO())}</div>`;
+  <div style="font-size:.8rem;color:#444;margin-bottom:8px">Centre: ${esc(S.settings.centre||"Your centre")}${S.settings.centreNo?" ("+esc(S.settings.centreNo)+")":""} · Tutor: ${esc(S.settings.teacher||"")} · Printed ${fmtDMY(todayISO())}</div>`;
 }
 function showPrint(html){$("#print-zone").innerHTML=html;$("#pr-preview-panel").hidden=false;$("#pr-print").disabled=false}
 $("#pr-audit").addEventListener("click",()=>{
@@ -1015,7 +1015,7 @@ $("#pr-audit").addEventListener("click",()=>{
       }
     }
     const banked=bankedHours(p,pu.id);
-    h+=`</table><p style="margin-top:8px;font-size:.9rem"><b>Total banked: ${banked.toFixed(1)} hours → ${creditsFromHours(banked)} credit(s)</b> (credits claimed in multiples of 10 hours)</p>`;
+    h+=`</table><p style="margin-top:8px;font-size:.9rem"><b>Total banked: ${banked.toFixed(1)} hours → ≈ ${creditsFromHours(banked)} credit-equivalents</b> (10 h ≈ 1 credit — a planning estimate; PEQ credits are awarded per unit achieved, not per hour banked)</p>`;
   }else{
     h+=`<h1 style="font-size:1rem;margin:6px 0">Criteria coverage</h1><table><tr><th>Criterion</th><th>Detail</th><th>Date achieved</th></tr>`;
     for(const o of p.outcomes||[]){
@@ -1051,7 +1051,7 @@ $("#pr-hours").addEventListener("click",()=>{
       const t=getTrio(p.id,pu.id,c.id);
       if(trioComplete(t)){tot+=c.hours;h+=`<tr><td>${fmtDMY(t.date)}</td><td>${esc(c.moduleTitle)}: ${esc(c.title)}</td><td>${c.hours.toFixed(1)}</td></tr>`}
     }
-    h+=`</table><p style="margin-top:8px;font-size:.9rem"><b>Total completed challenge hours: ${tot.toFixed(1)} → ${creditsFromHours(tot)} credit(s)</b> (claimed in multiples of 10)</p>`;
+    h+=`</table><p style="margin-top:8px;font-size:.9rem"><b>Total completed challenge hours: ${tot.toFixed(1)} → ≈ ${creditsFromHours(tot)} credit-equivalents</b> (10 h ≈ 1 credit — a planning estimate; PEQ credits are awarded per unit achieved, not per hour banked)</p>`;
   }
   h+=`<div class="sig">Tutor <span class="ln">${esc(S.settings.teacher||"")}</span> Date <span class="ln" style="min-width:110px">${fmtDMY(todayISO())}</span></div></div>`;
   showPrint(h);
@@ -1067,7 +1067,7 @@ $("#pr-tutor").addEventListener("click",()=>{
     const banked=bankedHours(p,pu.id);
     const doneCh=progChallenges(p).filter(c=>trioComplete(getTrio(p.id,pu.id,c.id)));
     const missing=CLOSING_DOCS.filter(([f])=>!dd[f]).map(([,l])=>l);
-    body=`<p>I confirm that ${esc(pu.forename)} ${esc(pu.surname)} has completed ${doneCh.length} challenge(s) on ${esc(p.title)}, representing ${banked.toFixed(1)} hours of completed challenge work (${creditsFromHours(banked)} credit(s), claimed in multiples of 10 hours). Each completed challenge has work evidence, a planning record and a review record present in the portfolio.</p>
+    body=`<p>I confirm that ${esc(pu.forename)} ${esc(pu.surname)} has completed ${doneCh.length} challenge(s) on ${esc(p.title)}, representing ${banked.toFixed(1)} hours of completed challenge work (≈ ${creditsFromHours(banked)} credit-equivalents; 10 h ≈ 1 credit — a planning estimate; PEQ credits are awarded per unit achieved, not per hour banked). Each completed challenge has work evidence, a planning record and a review record present in the portfolio.</p>
     <p>${missing.length?`Outstanding at the time of this record: ${esc(missing.join(", "))}.`:"All closing documents (summary of achievement, personal statement, tutor record, sign-off) are complete."}</p>`;
   }else{
     const outs=(p.outcomes||[]);
@@ -1107,7 +1107,7 @@ $("#bk-export").addEventListener("click",async()=>{
   toast("Preparing backup…");
   const evOut=[];
   for(const ev of S.evidence){const{blob,...rest}=ev;evOut.push({...rest,dataURL:await blobToDataURL(blob)})}
-  const payload={app:"asdan_register",version:1,toolVersion:"2.6",exported:new Date().toISOString(),
+  const payload={app:"asdan_register",version:1,toolVersion:"2.7",exported:new Date().toISOString(),
     pupils:S.pupils,progs:S.progs,trio:S.trio,stamps:S.stamps,hours:S.hours,docs:S.docs,evidence:evOut,settings:S.settings,
     v25:V25,registers:(await dbAll("kv")).filter(x=>x.k&&String(x.k).startsWith("reg_"))};
   const blob=new Blob([JSON.stringify(payload)],{type:"application/json"});
@@ -1196,14 +1196,14 @@ window.loadStarterTemplate=loadStarterTemplate;
 const PROVISIONAL_LINE="Unit and level attribution is provisional and remains the centre coordinator's decision. Nothing is promised to a learner until the ASDAN registration is confirmed. This is a worked example from a real SEMH classroom, not an ASDAN-endorsed mapping.";
 const PATHWAY_MINS=53; /* v5 studio deck: I-Do → We-Do → Independent (15:00) phase timers sum to 53 min, identical across all 79 lessons */
 const PATHWAYS={
-  build:{key:"build",name:"BUILD ASDAN",lessons:31,ceiling:"Award",
+  build:{key:"build",name:"BUILD ASDAN",lessons:31,ceiling:"Short Course certificates + AQA UAS — no PEQ qualification",
     ceilingNote:"Foundational pathway — banks ASDAN Short Courses, AQA UAS and Capable Kids challenges; no PEQ registration.",
     strands:["Careers","Vocational · Community Upcycling","Living Independently","FoodWise","Community Project","Duke & Social Enterprise"]},
   grow:{key:"grow",name:"GROW ASDAN",lessons:18,ceiling:"Extended Award",
     ceilingNote:"PEQ Level 1 with an Entry 3 floor. Autumn 1 completes Communication skills (ComSk1).",
     strands:["Personal Effectiveness (PEQ Level 1)","Community Project","Community & Enterprise"]},
   launch:{key:"launch",name:"LAUNCH ASDAN",lessons:30,ceiling:"Level 1 Certificate",
-    ceilingNote:"Full-year scheme of work homes all six Level 1 PEQ units, so the year's ceiling is an L1 Certificate. Autumn 1 completes Communication skills (ComSk1).",
+    ceilingNote:"Full-year scheme of work homes all six Level 1 PEQ units, so the year's ceiling is an L1 Certificate. Autumn 1 completes Communication skills (ComSk1). Hospitality here is the ASDAN Hospitality Vocational Taster — withdrawal announced: register/buy books by 31 Dec 2026, final certification 31 Aug 2027.",
     strands:["Personal Effectiveness (PEQ Level 1)","Careers & Experiencing Work","Living Independently","Vocational Skills (Hospitality & Gardening)","Community Project & Enterprise"]}
 };
 window.PATHWAYS=PATHWAYS;window.PROVISIONAL_LINE=PROVISIONAL_LINE; /* test/debug handles */
@@ -1248,11 +1248,11 @@ async function init(){await openDB();await loadAll();await v25Load();renderPupil
 init();
 
 /* ===== v2.5 · Today / Lesson Mode / Terms / Branding ===== */
-let V25={school:{on:true,name:"Progress Schools Tees Valley"},terms:[],slots:[],privacy:false,pathway:""};
+let V25={school:{on:true,name:"Your centre"},terms:[],slots:[],privacy:false,pathway:""};
 let REG={};
 const wdName=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 async function v25Load(){
-  V25={school:{on:true,name:"Progress Schools Tees Valley"},terms:[],slots:[],privacy:false,pathway:""};
+  V25={school:{on:true,name:"Your centre"},terms:[],slots:[],privacy:false,pathway:""};
   try{const v=await dbGet("kv","v25");if(v&&v.v)V25=Object.assign(V25,v.v);}catch(e){}
   try{const r=await dbGet("kv","reg_"+todayISO());REG=(r&&r.v)||{};}catch(e){REG={}}
 }
@@ -1349,7 +1349,7 @@ function renderV25Settings(){
 }
 document.addEventListener("click",async e=>{
   if(!e.target)return;
-  if(e.target.id==="v25-save-brand"){V25.school={on:$("#set-school-on").checked,name:$("#set-school-name").value.trim()||"Progress Schools Tees Valley"};await v25Save();e.target.textContent="Saved ✓";setTimeout(()=>e.target.textContent="Save",1200);}
+  if(e.target.id==="v25-save-brand"){V25.school={on:$("#set-school-on").checked,name:$("#set-school-name").value.trim()||"Your centre"};await v25Save();e.target.textContent="Saved ✓";setTimeout(()=>e.target.textContent="Save",1200);}
   if(e.target.id==="term-add"){const nm=$("#term-name").value.trim();if(!nm)return;
     V25.terms.push({id:uid(),name:nm,start:$("#term-start").value,end:$("#term-end").value});
     V25.terms.sort((a,b)=>(a.start||"").localeCompare(b.start||""));

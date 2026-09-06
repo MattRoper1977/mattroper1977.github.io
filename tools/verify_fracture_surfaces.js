@@ -13,7 +13,6 @@
  *   SITE_DIR=... GAMES_DIR=... node tools/verify_fracture_surfaces.js
  */
 'use strict';
-const { chromium } = require('playwright');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -21,6 +20,34 @@ const path = require('path');
 const SITE = process.env.SITE_DIR || path.join(__dirname, '..');
 const GAMES = process.env.GAMES_DIR || '/home/user/Games';
 const LESSONS = process.env.LESSONS_DIR || '/workspace/lessons';
+/* A declared precondition, honoured rather than discovered.
+ *
+ * This gate serves the site repo at / and the Games repo at /Games/ exactly as
+ * production does, so it cannot be satisfied from one checkout. It used to
+ * default GAMES_DIR to one machine's path and then die on ENOENT the moment
+ * somebody ran it anywhere else - so "this instrument cannot run here" arrived
+ * as a stack trace at report time instead of as a state the tool knows about.
+ *
+ * Exit 3 is INCONCLUSIVE: the instrument did not judge. It is deliberately not
+ * FAIL, because an unmet precondition is a statement about the environment and
+ * never about the subject. Declared in data/instrument-preconditions.json. */
+function requirePrecondition(label, dir, variable, probe) {
+  if (dir && fs.existsSync(path.join(dir, probe))) return;
+  console.error(`INCONCLUSIVE: ${label} is not available, so this instrument did not judge.`);
+  console.error(`  looked for : ${path.join(String(dir), probe)}`);
+  console.error(`  supplied by: ${variable}=<path to that estate>`);
+  console.error('  declared in: data/instrument-preconditions.json');
+  process.exit(3);
+}
+requirePrecondition('the Games estate', GAMES, 'GAMES_DIR', 'games.json');
+requirePrecondition('the Lessons estate', LESSONS, 'LESSONS_DIR', 'README.md');
+
+/* Loaded only after the preconditions hold. Required at the top of the file,
+ * a machine without playwright crashed on module load - exit 1 and a stack
+ * trace - before the guard above could say INCONCLUSIVE and exit 3, so the
+ * tool could not honour the contract it declares. */
+const { chromium } = require('playwright');
+
 const NEW_PREFIX = 'NEW · ';
 const RPG = /\bRPG\b/;
 
@@ -92,6 +119,11 @@ function serve() {
       const cards = [...document.querySelectorAll('#browseAll .gcard, .cards .gcard')];
       const all = [...document.querySelectorAll('.gcard')];
       const rpgSec = document.getElementById('rpg');
+      /* NOTE: #rpgRail no longer exists anywhere in the estate — the genre
+         rails were replaced by the per-genre <details> sections. This limb is
+         therefore asserting a feature that was removed, not a regression. It is
+         left red deliberately and recorded in the backlog rather than quietly
+         deleted, because deleting it would be weakening a gate to reach green. */
       const rpgCards = [...document.querySelectorAll('#rpgRail .gcard')];
       const imgs = [...document.querySelectorAll('.gcard img')];
       return {
@@ -132,7 +164,10 @@ function serve() {
     const page = await ctx.newPage();
     const bad = [];
     page.on('response', r => { if (r.status() >= 400) bad.push(`${r.status()} ${r.url()}`); });
-    await page.goto(`${base}/`, { waitUntil: 'networkidle' });
+    /* The New Release stack lives on /main/, not on /. The root is the audience
+       chooser and has never carried a #newrelease box, so these four gates were
+       measuring an empty document — red every run, and not about Fracture. */
+    await page.goto(`${base}/main/`, { waitUntil: 'networkidle' });
     const home = await page.evaluate(() => {
       const boxes = [...document.querySelectorAll('#newrelease [data-release]')];
       const mine = document.querySelector('#newrelease [data-release="Relicforge: Fracture Engine"]');

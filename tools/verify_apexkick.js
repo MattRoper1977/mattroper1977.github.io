@@ -173,7 +173,15 @@ const netRefsFiltered = netRefs
 ok('no-remote-resources', netRefsFiltered.length === 0,
    netRefsFiltered.length ? 'found fetchable: ' + netRefsFiltered.slice(0, 3).join(', ')
                   : '(no fetchable remote assets; metadata URLs are not fetched and are not counted)');
-ok('no-network-calls', !/\bfetch\s*\(|XMLHttpRequest|WebSocket/.test(html));
+const embeddedThree = html.match(/<script id="three-embedded">[\s\S]*?<\/script>/);
+ok('embedded-three-block-is-singular', !!embeddedThree && (html.match(/id="three-embedded"/g) || []).length === 1);
+const authoredHtml = embeddedThree ? html.replace(embeddedThree[0], '') : html;
+const hasAuthoredNetworkCalls = source => /\bfetch\s*\(|XMLHttpRequest|WebSocket/.test(source);
+ok('no-authored-network-calls', !hasAuthoredNetworkCalls(authoredHtml),
+   '(frozen embedded Three.js loader definitions are judged by runtime-request interception)');
+const plantedAuthoredNetwork = authoredHtml.replace('<title>', '<script>fetch("https://control.invalid/")</script><title>');
+ok('authored-network-control-fires', hasAuthoredNetworkCalls(plantedAuthoredNetwork),
+   '(the same predicate catches a planted authored fetch)');
 
 /* ---- summary ------------------------------------------------------------ */
 console.log('\n' + '='.repeat(60));
