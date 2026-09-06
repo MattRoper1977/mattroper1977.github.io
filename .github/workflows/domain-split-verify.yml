@@ -66,6 +66,19 @@ jobs:
           python domain-split/verify_education_tree_has_no_games.py --self-test
           python domain-split/verify_education_tree_has_no_games.py --output domain-split/output
           python domain-split/check_education_support.py
+      # HC3 §8.2: the one Ko-fi URL the estate links must resolve. Measured from
+      # the runner (the pupil trees never fetch it); a control URL on the same
+      # host must NOT answer 200, or a 200 proves nothing about the real one.
+      - name: The configured Ko-fi URL resolves, and a control on the same host does not
+        shell: bash
+        run: |
+          set -uo pipefail
+          url="$(python3 -c "import sys; sys.path.insert(0,'domain-split'); from education_support import KOFI; print(KOFI)")"
+          real=$(curl -sS -o /dev/null -w '%{http_code}' -L --max-time 30 -A 'Mozilla/5.0 (X11; Linux x86_64) made-by-matt-estate-check' "$url" || echo 000)
+          control=$(curl -sS -o /dev/null -w '%{http_code}' -L --max-time 30 -A 'Mozilla/5.0 (X11; Linux x86_64) made-by-matt-estate-check' "https://ko-fi.com/this-page-does-not-exist-mbm-control-9f3a" || echo 000)
+          echo "configured $url -> $real   control -> $control"
+          if [ "$real" != "200" ]; then echo "::error::the configured Ko-fi URL did not answer 200 ($real)"; exit 1; fi
+          if [ "$control" = "200" ]; then echo "::error::the control URL answered 200 too - this measurement cannot tell a live page from a dead one"; exit 1; fi
           python domain-split/check_navigation_injection.py
           python domain-split/check_usage_build.py --output domain-split/output
           node domain-split/check_usage_client.cjs domain-split/output
