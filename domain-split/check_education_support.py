@@ -27,6 +27,9 @@ adult_only = {row['route'] for row in report['pages'] if row.get('adult_only')}
 assert expected['/for/teachers/'] and expected['/teach/'] and expected['/for/governors-trustees/'] and expected['/artsaward/']
 assert expected['/Lessons/liveteach/teacher.html'] and expected['/Matt-s-Apps-/Seating_Studio.html']
 assert expected['/Lessons/Tutor_Time/Lesson_Plans.html']   # a catalogue teacher resource no pupil path reaches
+# the two reviewed adult Lessons hubs keep it even though a pupil path reaches them
+assert expected['/Lessons/Science_Teesside/Teaching_Packs/'] and expected['/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/']
+assert '/Lessons/Science_Teesside/Teaching_Packs/' in adult_only
 # pupil entries and pupil-reachable shared surfaces do not
 for route in ['/', '/for/pupils/', '/Lessons/', '/Lessons/primary/', '/Lessons/Science_Teesside/', '/Lessons/Humanities_Teesside/',
               '/resources/', '/stats/on-this-device/', '/Matt-s-Apps-/',

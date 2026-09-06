@@ -119,7 +119,7 @@ def pupil_reachable(output, adult_only):
 
 def refresh(output, lessons, site_source):
     adult = {route: 'reviewed adult destination' for route in SITE_ADULT | LESSON_ADULT | APP_ADULT}
-    adult_only = set(SITE_ADULT - SHARED_WITH_PUPILS) | set(APP_ADULT)
+    adult_only = set(SITE_ADULT - SHARED_WITH_PUPILS) | set(LESSON_ADULT) | set(APP_ADULT)
     for row in json.loads((HERE/'education-support-adult-routes.json').read_text())['pages']:
         adult[canonical(row['route'])] = row['reason']; adult_only.add(canonical(row['route']))
     for row in json.loads((lessons/'resources.json').read_text()):
