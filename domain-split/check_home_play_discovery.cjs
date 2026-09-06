@@ -109,7 +109,15 @@ async function showcase(page, selector, requests, start) {
 }
 
 (async () => {
-  const browser = await chromium.launch({ headless: true });
+  // Preserve the original H.264 footage. The runner's Google Chrome includes
+  // its media codecs; record the bundled headless browser's capability too.
+  const bundled = await chromium.launch({ headless: true });
+  try {
+    const probe = await bundled.newPage();
+    report.bundledH264 = await probe.evaluate(() => document.createElement('video').canPlayType('video/mp4; codecs="avc1.64001f"'));
+  } finally { await bundled.close(); }
+  const browser = await chromium.launch({ headless: true, channel: 'chrome' });
+  report.browser = { channel: 'chrome', version: browser.version() };
   try {
     const api = await browser.newContext();
     await check('existing-media-bytes-and-working-destinations', async () => {
@@ -173,9 +181,11 @@ async function showcase(page, selector, requests, start) {
         await goto(page, '/');
         const video = page.locator('#made-by-matt-play video').first();
         await video.scrollIntoViewIfNeeded(); assert(await video.evaluate(el => el.paused && el.currentTime === 0));
+        const codec = await video.evaluate(el => el.canPlayType('video/mp4; codecs="avc1.64001f"'));
+        assert(codec, 'Playback acceptance requires a browser with the original H.264 codec');
         const start = requests.length, box = await video.boundingBox();
         assert(box && box.width > 100 && box.height > 100);
-        // The native play button sits above the seek track in this pinned Chromium.
+        // The native play button sits above the seek track.
         // Select the visible control; do not substitute a synthetic play() call.
         await video.click({ position: { x: 24, y: box.height - 48 } });
         await page.waitForFunction(() => { const v = document.querySelector('#made-by-matt-play video'); return !!v && !v.paused && v.currentTime > 0; }, null, { timeout: 15000 });
@@ -185,7 +195,7 @@ async function showcase(page, selector, requests, start) {
         assert(!requests.slice(start).some(r => new URL(r.url).hostname.endsWith('madebymatt-play.uk')), 'Preview started a game');
         const screenshot = await shot(page, `${width}-selected-preview`, page.locator('#made-by-matt-play .mbm-play-card').first());
         await goto(page, '/'); // stop playback by leaving the page
-        return { nativeControl: true, media, screenshot };
+        return { nativeControl: true, codec, media, screenshot };
       }, page);
       await check(`${width}-canonical-play-roundtrip`, async () => {
         await goto(page, '/');
