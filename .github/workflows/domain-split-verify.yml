@@ -115,6 +115,7 @@ jobs:
           node domain-split/check_home_play_discovery.cjs || browser_status=1
           node domain-split/check_usage_discovery.cjs || browser_status=1
           node domain-split/check_shared_navigation.cjs || browser_status=1
+          node domain-split/check_completion.cjs || browser_status=1
           exit "$browser_status"
       - name: Save navigation and print evidence
         if: always()
@@ -142,6 +143,7 @@ jobs:
             audit-output/home-play-discovery/
             audit-output/usage-discovery/
             audit-output/print-navigation/
+            audit-output/completion/
           retention-days: 30
       - uses: actions/upload-artifact@v4
         with:

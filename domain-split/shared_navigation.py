@@ -97,6 +97,11 @@ def refresh(output, site_source):
         pages.append((output/'education-lessons'/relative,'/Lessons/'+relative.removesuffix('index.html'),True))
     inserted = {'/asdan/','/uas/'}
     pages += [(site/route.strip('/')/'index.html',route,True) for route in sorted(inserted)]
+    pack_hub = output/'education-lessons/Science_Teesside/Teaching_Packs/index.html'
+    if pack_hub.is_file():
+        pack_route = '/Lessons/Science_Teesside/Teaching_Packs/'
+        pages.append((pack_hub, pack_route, True))
+        inserted.add(pack_route)
     changed = []
     for path, route, adult in pages:
         if not path.is_file():
