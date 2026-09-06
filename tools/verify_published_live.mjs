@@ -54,6 +54,13 @@ const ORIGIN = val('--origin') || 'https://madebymatt-play.uk';
    transformation) — so --transform-host is applied to the repo blob before it
    is hashed, and --education-origin is where the stub leg looks. */
 const EDU_ORIGIN = val('--education-origin') || 'https://madebymatt.uk';
+// The apex and its www twin are ONE site: the live apex answers 301 to www, so
+// a request to www.<host> from a page on <host> is the site talking to itself,
+// not an off-origin request. First honest colour of the retargeted run named
+// exactly that redirect as a foreign request on every game path.
+const sameSiteHosts = (origin) => { const h = new URL(origin).hostname.replace(/^www\./, ''); return new Set([h, 'www.' + h]); };
+const PLAY_SITE = sameSiteHosts(ORIGIN);
+const sameSite = (u) => { try { return PLAY_SITE.has(new URL(u).hostname); } catch { return false; } };
 const TRANSFORM = argv.includes('--transform-host');
 const EDU_LITERAL = val('--education-literal') || 'https://madebymatt.uk';
 const PLAY_LITERAL = val('--play-literal') || 'https://madebymatt-play.uk';
@@ -194,7 +201,7 @@ for (const { p, kind } of PATHS) {
   const offOrigin = [];
   page.on('request', (r) => {
     const u = r.url();
-    if (/^https?:/i.test(u) && !u.startsWith(ORIGIN)) offOrigin.push(u);
+    if (/^https?:/i.test(u) && !sameSite(u)) offOrigin.push(u);
   });
   const errs = [];
   page.on('pageerror', (e) => errs.push(String(e)));

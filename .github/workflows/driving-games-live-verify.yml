@@ -175,6 +175,7 @@ jobs:
           // HC3 §1.1: the games and their home serve on the play origin (derived
           // above and passed in); the education origin is where the pupil page lives.
           const B = process.env.LIVE_BASE || process.env.PLAY || 'https://madebymatt-play.uk';
+          const SITE = (()=>{ const h=new URL(B).hostname.replace(/^www\./,''); return new Set([h,'www.'+h]); })();
           const EDU = process.env.EDU || 'https://madebymatt.uk';
           const LOG = process.env.LIVE_LOG || '/tmp/driving-live.log';
           const T0 = Date.now();
@@ -389,7 +390,8 @@ jobs:
             const c = await br.newContext({viewport:{width:900,height:700}});
             const p = await c.newPage();
             const off = [], errs = [];
-            p.on('request', q => { const u=q.url(); if(!u.startsWith(B) && !u.startsWith('data:') && !u.startsWith('blob:')) off.push(u); });
+            // the apex and its www twin are one site (the live apex 301s to www)
+            p.on('request', q => { const u=q.url(); if(!u.startsWith('data:') && !u.startsWith('blob:')) { let h=''; try{h=new URL(u).hostname;}catch{} if(!SITE.has(h)) off.push(u); } });
             p.on('pageerror', e => errs.push(String(e)));
             await p.addInitScript(()=>{ window.__sp={seen:false,closed:false};
               setInterval(()=>{ const el=document.querySelector('#mbmSplash,.mbm-splash'); if(!el){ if(window.__sp.seen) window.__sp.closed=true; return; }
