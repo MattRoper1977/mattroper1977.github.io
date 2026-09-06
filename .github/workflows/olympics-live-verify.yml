@@ -140,16 +140,27 @@ jobs:
           echo "site  main is $(git -C _main rev-parse HEAD)"
           echo "shelf main is $(git -C _shelf rev-parse HEAD)"
 
-      - name: Every surface must answer 200
+      # HC3 §1.1. Origins are DERIVED (shelf + 69-route census + split policy),
+      # never typed here, and the derivation proves its own controls first.
+      - name: Derive the origin table and prove its controls (HC3 §1.1)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/route_origins.py --self-test
+          python3 tools/verify_education_stubs.py --self-test
+          echo "PLAY=$(python3 tools/route_origins.py --origin play)" >> "$GITHUB_ENV"
+          echo "EDU=$(python3 tools/route_origins.py --origin education)" >> "$GITHUB_ENV"
+
+      - name: Every surface must answer 200, on the play origin
         run: |
           set -o pipefail
           fail=0
           for u in \
-            https://madebymatt.uk/ \
-            https://madebymatt.uk/games/ \
-            https://madebymatt.uk/olympics/ \
-            https://madebymatt.uk/Games/games.json ; do
-            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
+            "$PLAY/" \
+            "$PLAY/games/" \
+            "$PLAY/olympics/" \
+            "$PLAY/Games/games.json" ; do
+            code=$(curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
             printf '%-46s %s\n' "$u" "$code"
             [ "$code" = "200" ] || fail=1
           done
@@ -167,9 +178,9 @@ jobs:
           set -o pipefail
           fail=0
           for u in \
-            https://madebymatt.uk/_staging/ \
-            https://madebymatt.uk/_staging/novasiege/ \
-            https://madebymatt.uk/_staging/novasiege/index.html ; do
+            "$EDU/_staging/" \
+            "$EDU/_staging/novasiege/" \
+            "$EDU/_staging/novasiege/index.html" ; do
             code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
             printf '%-52s %s\n' "$u" "$code"
             case "$code" in
@@ -187,13 +198,16 @@ jobs:
           # for a few seconds after a deploy, and a single sample taken inside
           # that window is how this estate previously recorded two branded
           # splashes as unbranded.
+          # HC3 §1.1: expected play bytes = committed bytes with the education host
+          # literal rewritten (derived by tools/route_origins.py from _main).
+          (cd _main && python3 "$GITHUB_WORKSPACE/tools/route_origins.py" --expected /olympics/ --out /tmp/expected-olympics.html)
           for i in $(seq 1 10); do
-            curl -sS --max-time 60 https://madebymatt.uk/Games/games.json -o /tmp/served-games.json
-            curl -sS --max-time 60 https://madebymatt.uk/olympics/        -o /tmp/served-olympics.html
+            curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 --max-time 60 "$PLAY/Games/games.json" -o /tmp/served-games.json
+            curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 --max-time 60 "$PLAY/olympics/"        -o /tmp/served-olympics.html
             a=$(sha256sum /tmp/served-games.json    | cut -d' ' -f1)
             b=$(sha256sum _shelf/games.json         | cut -d' ' -f1)
             c=$(sha256sum /tmp/served-olympics.html | cut -d' ' -f1)
-            d=$(sha256sum _main/olympics/index.html | cut -d' ' -f1)
+            d=$(sha256sum /tmp/expected-olympics.html | cut -d' ' -f1)
             echo "attempt $i: shelf $( [ "$a" = "$b" ] && echo match || echo differs ), olympics $( [ "$c" = "$d" ] && echo match || echo differs )"
             [ "$a" = "$b" ] && [ "$c" = "$d" ] && break
             sleep 15
@@ -206,5 +220,8 @@ jobs:
             --served-games    /tmp/served-games.json \
             --repo-games      "$GITHUB_WORKSPACE/_shelf/games.json" \
             --served-olympics /tmp/served-olympics.html \
-            --repo-olympics   "$GITHUB_WORKSPACE/_main/olympics/index.html" \
-            --arcade-url      https://madebymatt.uk/games/
+            --repo-olympics   /tmp/expected-olympics.html \
+            --arcade-url      "$PLAY/games/" \
+            --catalogue-url   "$PLAY/data/domain-catalogue.json"
+          echo "-- and the old address on the education origin is a stub --"
+          python3 "$GITHUB_WORKSPACE/tools/verify_education_stubs.py" --origin "$EDU" --routes /olympics/

@@ -45,6 +45,10 @@ const repoGames = arg('--repo-games');
 const servedOlympics = arg('--served-olympics');
 const repoOlympics = arg('--repo-olympics');
 const arcadeUrl = arg('--arcade-url');
+/* HC3 §1.1: the arcade is the play home. Its grid also carries the classroom
+   activities, so the rendered total is the play catalogue's total (fetched
+   from --catalogue-url), and every SHELF entry must have a rendered card. */
+const catalogueUrl = arg('--catalogue-url');
 
 // ---------------------------------------------------------------- A1 + A2
 const sg = readFileSync(servedGames);
@@ -153,9 +157,9 @@ if (arcadeUrl) {
     // <details> occupies no space, so a folded shelf would read as a short one.
     rendered = await page.evaluate(() => {
       document.querySelectorAll('details.gsec').forEach((d) => { d.open = true; });
-      const roots = [...document.querySelectorAll('#allGrid, #genreSections')];
+      const roots = [...document.querySelectorAll('#allGrid, #genreSections, #game-grid')];
       if (!roots.length) return -1;
-      return roots.flatMap((g) => [...g.querySelectorAll('a.gcard')]).filter((el) => {
+      return roots.flatMap((g) => [...g.querySelectorAll('a.gcard, .game-card')]).filter((el) => {
         const r = el.getBoundingClientRect();
         return r.width > 0 && r.height > 0 && el.offsetParent !== null;
       }).length;
@@ -164,12 +168,29 @@ if (arcadeUrl) {
     await page.waitForTimeout(250);
   }
 
-  check('arcade-renders-shelf', rendered === expected,
-    `${rendered} cards occupy real space in the browse structure, shelf is ${expected} (rendered, not node-counted)`);
+  let total = expected;
+  if (catalogueUrl) {
+    try {
+      const cat = await (await fetch(catalogueUrl, { cache: 'no-store' })).json();
+      total = (cat.games || []).length + (cat.activities || []).length + (cat.staff || []).length;
+      const catHrefs = new Set((cat.games || []).map((g) => g.href || g.route));
+      const missing = sEntries.map((e) => e.href).filter((h) => !catHrefs.has(h));
+      check('catalogue-carries-shelf', missing.length === 0,
+        missing.length ? `shelf entries absent from the play catalogue: ${missing.slice(0, 5).join(' ')}` : `${sEntries.length} shelf entries all in the play catalogue (${total} rows)`);
+    } catch (e) { check('catalogue-readable', false, String(e)); }
+  }
+  check('arcade-renders-shelf', rendered >= expected && rendered === total,
+    `${rendered} cards occupy real space in the browse structure, shelf is ${expected}, catalogue total ${total} (rendered, not node-counted)`);
+  const shelfMissing = await page.evaluate((hrefs) => hrefs.filter((h) => ![...document.querySelectorAll('a[href]')].some((a) => {
+    const raw = a.getAttribute('href') || ''; let dec = raw; try { dec = decodeURIComponent(raw); } catch (_) {}
+    return raw === h || dec === h; })), sEntries.map((e) => e.href));
+  check('arcade-every-shelf-entry', shelfMissing.length === 0,
+    shelfMissing.length ? `no rendered link for ${shelfMissing.slice(0, 5).join(' ')}` : 'every shelf entry has a rendered link');
 
-  const countline = (await page.textContent('#countline').catch(() => '')) || '';
-  check('arcade-countline', countline.includes(String(expected)),
-    `countline reads ${JSON.stringify(countline.trim().slice(0, 80))}`);
+  const countline = (await page.textContent('#countline').catch(() => null))
+    || (await page.textContent('[role="status"]').catch(() => '')) || '';
+  check('arcade-countline', countline.includes(String(total)),
+    `countline reads ${JSON.stringify(countline.trim().slice(0, 80))}, expected to name ${total}`);
 
   check('arcade-no-script-error', scriptErrors.length === 0,
     scriptErrors.length ? JSON.stringify(scriptErrors.slice(0, 3)) : 'no thrown exceptions or script console errors');

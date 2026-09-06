@@ -28,11 +28,11 @@
  * The game's own title measured top=-300 at 390x844. `align-items: safe center`
  * fixed it. This asserts it stays fixed.
  *
- *   node tools/mtr_live_gate.mjs [url]      default https://madebymatt.uk/micro-tinkerer/
+ *   node tools/mtr_live_gate.mjs [url]      default https://madebymatt-play.uk/micro-tinkerer/ (HC3 §1.1: games serve on play)
  */
 import { chromium } from 'playwright';
 
-const URL_ = process.argv[2] || process.env.MTR_LIVE_URL || 'https://madebymatt.uk/micro-tinkerer/';
+const URL_ = process.argv[2] || process.env.MTR_LIVE_URL || 'https://madebymatt-play.uk/micro-tinkerer/';
 const VIEWPORT = { width: 390, height: 844 };
 
 const S1 = 'This is a playful, fictional hide-and-seek fantasy: tiny players hide from a larger-than-life "Mega Teacher"; it is not a depiction of real pupils, staff or SEMH practice.';

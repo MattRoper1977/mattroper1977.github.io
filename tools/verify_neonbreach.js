@@ -38,7 +38,9 @@ const GAME = process.env.NB_GAME_FILE || path.join(ROOT, 'neonbreach', 'index.ht
 // the game deliberately moves, in the same commit. (named S5 §V2)
 const PINNED_SHA = 'c69ada9231108b694ec3540d7eccdf7fa5ec1a43048cac167355c7c5933d30bb';
 const PINNED_BYTES = 124354;
-const CANON = 'https://madebymatt.uk/neonbreach/';
+// HC3 §1.1: the served copy on the play origin carries the rewritten host in
+// its canonical/og:url lines; the workflow passes NB_CANON for that run.
+const CANON = process.env.NB_CANON || 'https://madebymatt.uk/neonbreach/';
 
 const html = fs.readFileSync(GAME, 'utf8');
 const bytes = Buffer.byteLength(html, 'utf8');
