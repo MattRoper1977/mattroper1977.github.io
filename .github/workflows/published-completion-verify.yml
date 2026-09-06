@@ -41,7 +41,7 @@ jobs:
           # while their already-reviewed Pages deployments finish.
           for attempt in $(seq 1 8); do
             export MBM_COMPLETION_OUTPUT="audit-output/published-completion/attempt-$attempt"
-            if node domain-split/check_completion.cjs; then exit 0; fi
+            if node domain-split/check_completion.cjs && node domain-split/check_device_stats.cjs; then exit 0; fi
             if [ "$attempt" -lt 8 ]; then sleep 30; fi
           done
           exit 1

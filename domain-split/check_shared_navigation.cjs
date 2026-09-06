@@ -16,18 +16,7 @@ const routes = ['/', '/main/', '/account/', '/members/', '/mailing-list/', '/pri
   '/Lessons/Humanities_Teesside/', '/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/'];
 const restricted = ['/for/pupils/', '/resources/', '/Lessons/primary/'];
 const themeRoutes = ['/Lessons/', '/Matt-s-Apps-/', '/Lessons/Science_Teesside/', '/Lessons/Humanities_Teesside/'];
-async function deviceStatsSkip(page) {
-  const route='/stats/on-this-device/';
-  await page.goto(origin+route);
-  assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'),'https://madebymatt.uk'+route);
-  assert.equal(await page.locator('meta[property="og:url"]').getAttribute('content'),'https://madebymatt.uk'+route);
-  await page.keyboard.press('Tab');
-  assert(await page.locator('body > a.skip').evaluate(el=>document.activeElement===el),'First real Tab reaches the device statistics skip link');
-  await page.keyboard.press('Enter');
-  assert.equal(new URL(page.url()).pathname,route,'Skip stays on device statistics');
-  assert.equal(new URL(page.url()).hash,'#main');
-  assert.equal(await page.locator('main#main').count(),1);
-}
+const {deviceStatsSkip}=require('./check_device_stats.cjs');
 (async () => {
   const browser = await chromium.launch({ headless: true });
   try {
@@ -81,19 +70,22 @@ async function deviceStatsSkip(page) {
       }
       // Each run uses actual Tab/Enter. Plant exactly the original base/fragment
       // regression, then remove it and prove the same check green again.
-      await deviceStatsSkip(page);
+      await deviceStatsSkip(page,origin);
+      let plantedResponses=0;
       const wrongSkip = async route => {
         const response=await route.fetch();const real=await response.text();
         const planted=real.replace('class="skip" href="/stats/on-this-device/#main"','class="skip" href="#main"');
         assert.notEqual(planted,real,'The wrong-destination control must be planted');
+        plantedResponses++;
         await route.fulfill({response,body:planted});
       };
       await page.route(origin+'/stats/on-this-device/',wrongSkip);
       let controlFailed=false;
-      try { await deviceStatsSkip(page); } catch(error) { if(error.code!=='ERR_ASSERTION') throw error; controlFailed=true; }
+      try { await deviceStatsSkip(page,origin); } catch(error) { if(error.code!=='ERR_ASSERTION'||!error.message.startsWith('Skip stays on device statistics')) throw error; controlFailed=true; }
       finally { await page.unroute(origin+'/stats/on-this-device/',wrongSkip); }
+      assert.equal(plantedResponses,1,'Exactly one planted statistics document was served');
       assert(controlFailed,'Planted wrong statistics skip destination must fail');
-      await deviceStatsSkip(page);
+      await deviceStatsSkip(page,origin);
       console.log('Device statistics real Tab control: real PASS / planted destination FAIL / restored PASS');
       if (javaScriptEnabled) {
         // Each distinct front-door template is exercised at narrow phone,
@@ -101,7 +93,7 @@ async function deviceStatsSkip(page) {
         for (const width of [320,768,1280]) for (const route of routes) {
           await page.setViewportSize({width,height:900});
           await page.goto(origin+route);
-          if(route==='/stats/on-this-device/')await deviceStatsSkip(page);
+          if(route==='/stats/on-this-device/')await deviceStatsSkip(page,origin);
           assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth+1), 'Page reflows: '+route+' at '+width);
           await page.locator(menu+' > summary').press('Enter');
           assert(await page.locator(panel).isVisible());
