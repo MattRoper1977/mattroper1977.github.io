@@ -39,7 +39,14 @@ function gate(id, name, fn) {
     .catch(e => { results.push({ id, status: 'FAIL' }); console.error(`FAIL ${id} ${name} — ${e.message}`); });
 }
 
-(async () => {
+if (process.env.RF_PUBLICATION === 'games') {
+  const published = require('./lib/published-shelf-probe.cjs');
+  published.controls();
+  published.verify({ href: HREF, title: 'Relicforge' }).catch(error => {
+    console.error('PUBLISHED SHELF ERROR', error);
+    process.exitCode = 1;
+  });
+} else (async () => {
   // The authority for "what should be on the shelf" is the manifest at main.
   const expected = await fetch(RAW_MANIFEST).then(r => {
     if (!r.ok) throw new Error(`manifest at main returned ${r.status}`);

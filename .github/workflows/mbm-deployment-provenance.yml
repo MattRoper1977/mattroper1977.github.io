@@ -21,9 +21,13 @@ on:
         default: ''
 
 permissions:
+  actions: read
   contents: read
   deployments: read
   pages: read
+
+env:
+  GITHUB_TOKEN: ${{ github.token }}
 
 concurrency:
   group: mbm-deployment-provenance
@@ -68,7 +72,9 @@ jobs:
           fetch-depth: 0
 
       - name: Controls - the check must be able to go red
-        run: python3 tools/verify_deployment_provenance.py --self-test
+        run: |
+          python3 tools/verify_deployment_provenance.py --self-test
+          python3 tools/test_published_site.py
 
       # The live negative control §3 requires. HEAD~1 is a real, resolvable
       # commit that is no longer the deployed one, so this exercises the real
@@ -86,4 +92,4 @@ jobs:
       - name: Prove the origin is serving this commit
         run: |
           python3 tools/verify_deployment_provenance.py \
-            --expected-sha "${{ steps.target.outputs.sha }}"
+            --publication education --expected-sha "${{ steps.target.outputs.sha }}"

@@ -90,6 +90,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
 
 concurrency:
@@ -346,50 +347,14 @@ jobs:
           python3 -m pip install --disable-pip-version-check playwright==1.54.0
           python3 -m playwright install --with-deps chromium
 
-      - name: Wait for and byte-compare the exact deployed static pages
-        shell: bash
+      - name: Wait for and byte-compare the exact deployed publication pages
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-          # DERIVED 2026-08-25 (S5 §V2). The seven audience rows were typed
-          # here alongside the six platform rows. That is failure mode 1, and an
-          # audience added to the record would have left this table silently.
-          # The platform rows stay named - they have no record to derive from,
-          # and they are named rather than folded in with the derived ones.
-          declare -A pages=(
-            [index.html]="/"
-            [main/index.html]="/main/"
-            [start/index.html]="/start/"
-            [teach/index.html]="/teach/"
-            [resources/index.html]="/resources/"
-            [education-hub/index.html]="/education-hub/"
-          )
-          while read -r route; do
-            pages["for/${route#/for/}index.html"]="$route"
-          done < <(python3 -c "
-          import json
-          d = json.load(open('data/audience-homepages.json'))
-          for a in d['audiences'].values():
-              print(a['route'])
-          ")
-          n_aud=$(( ${#pages[@]} - 6 ))
-          [ "$n_aud" -ge 7 ] || { echo "MEASUREMENT INVALID: derived only $n_aud audience route(s)"; exit 1; }
-          echo "derived $n_aud audience route(s) from data/audience-homepages.json"
-          mkdir -p /tmp/mbm-live
-          ready=0
-          for _ in $(seq 1 72); do
-            failed=0
-            for file in "${!pages[@]}"; do
-              route="${pages[$file]}"
-              target="/tmp/mbm-live/${file//\//-}"
-              curl -fsSL -H 'Cache-Control: no-cache' "https://madebymatt.uk${route}?mbm=${GITHUB_SHA}" -o "$target" || { failed=1; break; }
-              cmp -s "$file" "$target" || { failed=1; break; }
-            done
-            if [ "$failed" -eq 0 ]; then ready=1; break; fi
-            sleep 10
-          done
-          test "$ready" -eq 1
-          echo "deployed_sha=${GITHUB_SHA}" | tee production-deployment.txt
-          echo "verified_at=$(date -u +%FT%TZ)" | tee -a production-deployment.txt
+          python3 tools/prepare_published_site.py \
+            --expected-sha "${{ github.sha }}" \
+            --output audit-output/audience-publication \
+            --audience-record data/audience-homepages.json
 
       # MBM_FULL_ESTATE, MBM_LIVE and MBM_CACHE_BUST were all set here and read
       # by nothing: this tool reads MBM_BASE_URL and MBM_CHROMIUM only. The last
@@ -400,7 +365,7 @@ jobs:
       - name: Browser proof against the production origin
         run: |
           MBM_BASE_URL=https://madebymatt.uk/ \
-          python3 tools/verify_audience_discovery_browser.py
+          python3 tools/verify_audience_discovery_browser.py --publication education
 
       - name: Upload production browser and SHA proof
         if: always()

@@ -1,0 +1,12 @@
+# Owning repository integrator appends these exact sections to supabase/config.toml.
+# Public collection is deliberately anonymous: validation and restricted DB grants
+# protect the write path; origin checks are not proof against automated clients.
+[functions.usage-ingest]
+verify_jwt = false
+
+[functions.usage-public]
+verify_jwt = false
+
+[functions.owner-usage]
+verify_jwt = true
+

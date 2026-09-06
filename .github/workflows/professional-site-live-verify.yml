@@ -11,7 +11,11 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
+
+env:
+  GITHUB_TOKEN: ${{ github.token }}
 
 concurrency:
   group: professional-site-live-${{ github.ref }}
@@ -28,7 +32,9 @@ jobs:
           fetch-depth: 0
 
       - name: Validate verifier syntax
-        run: python -m py_compile tools/verify_professional_site_live.py
+        run: |
+          python -m py_compile tools/verify_professional_site_live.py tools/prepare_published_site.py
+          python tools/test_published_site.py
 
       # READINESS COMES FROM ONE PLACE NOW.
       #
@@ -47,7 +53,7 @@ jobs:
       - name: The origin is serving this commit, before anything is asserted about it
         run: |
           set -euo pipefail
-          python3 tools/verify_deployment_provenance.py --expected-sha "${{ github.sha }}"
+          python3 tools/verify_deployment_provenance.py --publication education --expected-sha "${{ github.sha }}"
 
       - name: Prove the served platform and cross-repository feeds
         run: |
