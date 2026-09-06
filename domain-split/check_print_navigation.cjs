@@ -81,6 +81,8 @@ const routes = [
         if (route.includes('/v4_fieldops/')) {
           assert(await page.locator('.top .title').isVisible(),'Native printed lab title remains visible');
           assert.match(await page.locator('.top .title').innerText(),/Newport Bridge/);
+          const printInk = await page.locator('.top .title').evaluate(el => getComputedStyle(el).color);
+          assert.notEqual(printInk, 'rgb(17, 17, 17)', 'Dark lab panels retain readable light print text');
           assert(await page.locator('h2:visible').count()>0,'Printed lab retains its evidence-section headings');
         } else assert(await page.locator('h1:visible').count()>0,'Printed page retains its heading: '+route);
         const filename='print-template-'+index+'.pdf';

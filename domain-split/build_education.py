@@ -116,6 +116,12 @@ def with_lesson_navigation(text, relative=None):
     position = document.body_ends[-1] if document.body_ends else len(text)
     script = '<script defer src="/Lessons/assets/catalogue/lesson-navigation.js"></script>'
     extra = WRAPPED_NAVIGATION if relative in WRAPPED_LESSONS else ''
+    if relative == 'Science_Teesside/Build/v4_fieldops/01_Newport_Bridge_Lift_Permit_Lab.html':
+        # The lab prints its dark simulation panels. Its original print rule
+        # changes only the body text to black, making inherited headings and
+        # readings illegible. Preserve the active theme's text colour; source
+        # files, simulation behaviour and saved/offline archives stay intact.
+        extra += '<style id="mbm-lab-print-contrast">@media print{body{color:var(--text)!important}}</style>'
     return text[:position]+extra+script+text[position:]
 
 def moved_page(route):
