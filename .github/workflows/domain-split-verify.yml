@@ -57,7 +57,9 @@ jobs:
       - name: Build education trees from complete source checkouts
         run: python domain-split/build_education.py --lessons .sources/Lessons --apps .sources/Apps
       - name: Verify publication separation and retained education
-        run: python domain-split/check_publications.py
+        run: |
+          python domain-split/check_publications.py
+          python domain-split/check_navigation_injection.py
       - name: Verify current-source lesson discovery and audience preservation
         run: python domain-split/check_lesson_discovery.py --lessons .sources/Lessons
       - name: Install the established education browser test runtime
@@ -89,6 +91,7 @@ jobs:
           done
           node .sources/Lessons/tools/catalogue/verify_education_navigation.cjs
           node domain-split/check_resource_discovery.cjs
+          node domain-split/check_print_navigation.cjs
       - name: Save navigation and print evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -102,6 +105,12 @@ jobs:
         with:
           name: resource-discovery-${{ github.run_id }}
           path: audit-output/resource-discovery/
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: print-navigation-${{ github.run_id }}
+          path: audit-output/print-navigation/
           retention-days: 30
       - uses: actions/upload-artifact@v4
         with:

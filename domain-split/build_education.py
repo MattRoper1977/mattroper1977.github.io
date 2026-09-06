@@ -5,6 +5,7 @@ Run after build_publications.py. Each output belongs to its existing repository:
 Site remains /, Lessons remains /Lessons/, Apps remains /Matt-s-Apps-/.
 """
 from pathlib import Path
+from html.parser import HTMLParser
 from urllib.parse import unquote, urlparse, urljoin
 import argparse
 import hashlib
@@ -49,6 +50,37 @@ def write(root, relative, text):
     p = root / relative
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(text, encoding='utf-8')
+
+def with_lesson_navigation(text):
+    """Inject into the real document, never an HTML string in a print script."""
+    class Document(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.body_ends = []
+            self.adapters = 0
+            self.offsets = [0]
+            for line in text.splitlines(keepends=True):
+                self.offsets.append(self.offsets[-1]+len(line))
+
+        def handle_starttag(self, tag, attributes):
+            src = dict(attributes).get('src', '')
+            if tag == 'script' and re.search(r'(?:^|/)assets/catalogue/lesson-navigation\.js(?:[?#]|$)', src):
+                self.adapters += 1
+
+        def handle_endtag(self, tag):
+            if tag == 'body':
+                line, column = self.getpos()
+                self.body_ends.append(self.offsets[line-1]+column)
+
+    document = Document()
+    document.feed(text)
+    if document.adapters > 1:
+        raise ValueError('Source already has duplicate lesson navigation adapters')
+    if document.adapters:
+        return text
+    position = document.body_ends[-1] if document.body_ends else len(text)
+    script = '<script defer src="/Lessons/assets/catalogue/lesson-navigation.js"></script>'
+    return text[:position]+script+text[position:]
 
 def moved_page(route):
     destination = PLAY + LEGACY.get(route, route)
@@ -167,11 +199,9 @@ def build(output, lessons, apps=None, allow_sparse=False):
             # offline archives remain unchanged.
             if name=='lessons' and p.suffix=='.html' and (lessons/'assets/catalogue/lesson-navigation.js').is_file():
                 text=target.read_text()
-                script='<script defer src="/Lessons/assets/catalogue/lesson-navigation.js"></script>'
-                if not re.search(r'<script\b[^>]*\bsrc=["\'][^"\']*assets/catalogue/lesson-navigation\.js',text,re.I):
-                    text,n=re.subn(r'</body\s*>',script+'</body>',text,count=1,flags=re.I)
-                    if not n:text+='\n'+script+'\n'
-                    write(dest,relative,text);changed.append(relative)
+                updated=with_lesson_navigation(text)
+                if updated != text:
+                    write(dest,relative,updated);changed.append(relative)
         if name=='site':
             overlay=output/'education-overlay'
             for p in overlay.rglob('*'):
