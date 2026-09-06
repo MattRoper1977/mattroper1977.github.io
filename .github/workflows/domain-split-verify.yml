@@ -2,10 +2,10 @@ name: Domain split publication
 on:
   pull_request:
     branches: [main]
-    paths: ['domain-split/**', '.github/workflows/domain-split-verify.yml']
+    paths: ['domain-split/**', 'supabase/**', '.github/workflows/domain-split-verify.yml']
   push:
     branches: [main]
-    paths: ['domain-split/**', '.github/workflows/domain-split-verify.yml']
+    paths: ['domain-split/**', 'supabase/**', '.github/workflows/domain-split-verify.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -60,6 +60,14 @@ jobs:
         run: |
           python domain-split/check_publications.py
           python domain-split/check_navigation_injection.py
+          python domain-split/check_usage_build.py --output domain-split/output
+          node domain-split/check_usage_client.cjs domain-split/output
+          python domain-split/check_primary_discovery.py --output domain-split/output --lessons-source .sources/Lessons
+      - name: Verify shared usage database and service controls without production traffic
+        working-directory: domain-split/analytics-backend
+        run: |
+          npm ci
+          npm test
       - name: Verify current-source lesson discovery and audience preservation
         run: python domain-split/check_lesson_discovery.py --lessons .sources/Lessons
       - name: Install the established education browser test runtime
@@ -76,6 +84,10 @@ jobs:
         env:
           MBM_EDUCATION_ORIGIN: http://127.0.0.1:4173
           MBM_NAVIGATION_OUTPUT: audit-output/education-navigation
+          MBM_PLAY_ORIGIN: http://127.0.0.1:4174
+          MBM_USAGE_LESSONS_SOURCE: .sources/Lessons
+          MBM_PRIMARY_ORIGIN: http://127.0.0.1:4173
+          MBM_PRIMARY_LESSONS_SOURCE: .sources/Lessons
         run: |
           set -euo pipefail
           mkdir -p _navigation-served/Lessons _navigation-served/Matt-s-Apps-
@@ -84,14 +96,23 @@ jobs:
           rsync -a domain-split/output/education-apps/ _navigation-served/Matt-s-Apps-/
           python -m http.server 4173 --bind 127.0.0.1 --directory _navigation-served > /tmp/navigation-http.log 2>&1 &
           server=$!
-          trap 'kill "$server" || true' EXIT
+          python -m http.server 4174 --bind 127.0.0.1 --directory domain-split/output/games > /tmp/play-http.log 2>&1 &
+          play_server=$!
+          trap 'kill "$server" "$play_server" || true' EXIT
           for attempt in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:4173/Lessons/ >/dev/null; then break; fi
             sleep 1
           done
-          node .sources/Lessons/tools/catalogue/verify_education_navigation.cjs
-          node domain-split/check_resource_discovery.cjs
-          node domain-split/check_print_navigation.cjs
+          browser_status=0
+          node .sources/Lessons/tools/catalogue/verify_education_navigation.cjs || browser_status=1
+          node domain-split/check_resource_discovery.cjs || browser_status=1
+          node domain-split/check_print_navigation.cjs || browser_status=1
+          node domain-split/check_audience_discovery.cjs || browser_status=1
+          node domain-split/check_governors_discovery.cjs || browser_status=1
+          node domain-split/check_primary_discovery.cjs || browser_status=1
+          node domain-split/check_home_play_discovery.cjs || browser_status=1
+          node domain-split/check_usage_discovery.cjs || browser_status=1
+          exit "$browser_status"
       - name: Save navigation and print evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -109,8 +130,15 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: print-navigation-${{ github.run_id }}
-          path: audit-output/print-navigation/
+          name: education-expansion-${{ github.run_id }}
+          path: |
+            audit-output/audience-discovery/
+            audit-output/governors-discovery/
+            audit-output/primary-discovery/
+            audit-output/education-expansion/
+            audit-output/home-play-discovery/
+            audit-output/usage-discovery/
+            audit-output/print-navigation/
           retention-days: 30
       - uses: actions/upload-artifact@v4
         with:

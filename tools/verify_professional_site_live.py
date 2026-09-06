@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urljoin
-from urllib.request import Request, urlopen
+from urllib.request import Request, urlopen, HTTPRedirectHandler, build_opener
 
 DEFAULT_BASE = "https://madebymatt.uk/"
 # Anchored to this file, not to the working directory. The ASSETS comparison
@@ -134,7 +134,7 @@ JSON_SURFACES = (
     "/data/resources.json",
 )
 EDUCATION_JSON_SURFACES = (
-    "https://madebymatt-play.uk/games.json",
+    "https://www.madebymatt-play.uk/games.json",
     "/Lessons/resources.json",
     "/data/resources.json",
 )
@@ -148,6 +148,11 @@ HOME_FORBIDDEN = (
 
 def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        raise URLError(f"Production proof redirected: {request.full_url} -> {newurl}")
 
 
 def fetch(base: str, path: str, nonce: str, timeout: float) -> tuple[int, dict[str, str], bytes, str]:
@@ -165,7 +170,7 @@ def fetch(base: str, path: str, nonce: str, timeout: float) -> tuple[int, dict[s
         },
     )
     try:
-        with urlopen(request, timeout=timeout) as response:
+        with build_opener(NoRedirect()).open(request, timeout=timeout) as response:
             return response.status, dict(response.headers.items()), response.read(), response.geturl()
     except HTTPError as exc:
         return exc.code, dict(exc.headers.items()) if exc.headers else {}, exc.read(), exc.geturl()

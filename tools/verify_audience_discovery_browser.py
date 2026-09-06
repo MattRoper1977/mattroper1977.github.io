@@ -121,11 +121,14 @@ def external_requests(urls: list[str], base: str) -> list[str]:
     return [u for u in urls if not u.startswith(origin) and not u.startswith("data:")]
 
 
-def run(base: str, findings: Findings, artifacts: Path) -> None:
+def run(base: str, findings: Findings, artifacts: Path, publication="legacy") -> None:
     from playwright.sync_api import sync_playwright
 
     artifacts.mkdir(parents=True, exist_ok=True)
     base = base.rstrip("/") + "/"
+    education = publication == "education"
+    audience_routes = list(dict.fromkeys(AUDIENCE_ROUTES + (["/for/governors-trustees/"] if education else [])))
+    surfaces = list(dict.fromkeys(ALL_SURFACES + audience_routes))
 
     with sync_playwright() as pw:
         browser = launch(pw)
@@ -138,17 +141,26 @@ def run(base: str, findings: Findings, artifacts: Path) -> None:
 
             # A: the discovery root loads and offers both audience groups.
             page.goto(base, wait_until="networkidle")
-            findings.check(page.locator("#audience-people").count() == 1,
-                           f"{label}: root exposes the people group")
-            findings.check(page.locator("#audience-organisations").count() == 1,
-                           f"{label}: root exposes the organisations group")
+            if education:
+                for route in audience_routes:
+                    links = page.locator(f'a[href="{route}"]:visible')
+                    findings.check(links.count() > 0,
+                                   f"{label}: education homepage exposes audience {route}")
+            else:
+                findings.check(page.locator("#audience-people").count() == 1,
+                               f"{label}: root exposes the people group")
+                findings.check(page.locator("#audience-organisations").count() == 1,
+                               f"{label}: root exposes the organisations group")
             page.screenshot(path=str(artifacts / f"root-{label}.png"), full_page=False)
 
             # B: typing must not send the query anywhere. The page loads its
             # own index from this origin, which is the design - what must never
             # happen is the keystrokes leaving the site.
+            if education:
+                page.goto(base.rstrip("/") + "/for/teachers/", wait_until="networkidle")
             before = len(seen)
-            field = page.locator('input[name="q"]').first
+            field = page.locator('#teachers-q' if education else 'input[name="q"]').first
+            findings.check(field.count() == 1, f"{label}: the measured search control exists")
             if field.count():
                 field.click()
                 field.type("safeguarding evidence", delay=25)
@@ -179,7 +191,7 @@ def run(base: str, findings: Findings, artifacts: Path) -> None:
             pupil_off = external_requests(seen, base)
             findings.check(not pupil_off, f"{label}: pupil page makes no off-origin request",
                            ", ".join(pupil_off[:3]))
-            main_html = page.locator("main#main").inner_html()
+            main_html = page.locator("main").inner_html()
             leaked = [c for c in ADULT_CTA if f'href="{c}"' in main_html]
             findings.check(not leaked, "pupil main content carries no adult CTA", ", ".join(leaked))
             page.screenshot(path=str(artifacts / f"pupils-{label}.png"), full_page=False)
@@ -235,7 +247,7 @@ def run(base: str, findings: Findings, artifacts: Path) -> None:
         # than a gap: mbm-account.js is never injected on a page carrying
         # data-mbm-adult-features="off", so there is nothing there to break.
         context = browser.new_context(viewport={"width": 1440, "height": 900})
-        for route in ALL_SURFACES:
+        for route in surfaces:
             # A fresh page per route, so one surface's requests cannot be
             # attributed to the next.
             page = context.new_page()
@@ -254,7 +266,7 @@ def run(base: str, findings: Findings, artifacts: Path) -> None:
         # F: 320px reflow - nothing may scroll horizontally.
         context = browser.new_context(viewport={"width": 320, "height": 720})
         page = context.new_page()
-        for route in ["/"] + AUDIENCE_ROUTES + ["/teach/", "/education-hub/"]:
+        for route in ["/"] + audience_routes + ["/teach/", "/education-hub/"]:
             page.goto(base.rstrip("/") + route, wait_until="domcontentloaded")
             overflow = page.evaluate(
                 "() => document.documentElement.scrollWidth - document.documentElement.clientWidth"
@@ -272,71 +284,97 @@ def run(base: str, findings: Findings, artifacts: Path) -> None:
         # Derived from the data, not typed. This said 7 when the chooser grew an
         # eighth homepage type, which would have failed here for a reason that
         # was never about JavaScript being off.
-        expected_choices = len(AUDIENCE_ROUTES) + 1
-        links = page.locator('a[data-mbm-face-choice]').count()
-        findings.check(links == expected_choices,
-                       f"no-JS: all {expected_choices} homepage choices are real links",
-                       f"found {links}")
-        for route in AUDIENCE_ROUTES:
+        if education:
+            for route in audience_routes:
+                findings.check(page.locator(f'a[href="{route}"]:visible').count() > 0,
+                               f"no-JS: audience {route} has a real homepage link")
+        else:
+            expected_choices = len(AUDIENCE_ROUTES) + 1
+            links = page.locator('a[data-mbm-face-choice]').count()
+            findings.check(links == expected_choices,
+                           f"no-JS: all {expected_choices} homepage choices are real links",
+                           f"found {links}")
+        for route in audience_routes:
             page.goto(base.rstrip("/") + route, wait_until="domcontentloaded")
             findings.check(page.locator("h1").count() >= 1, f"no-JS: {route} renders a heading")
         page.screenshot(path=str(artifacts / "nojs-root.png"), full_page=False)
         context.close()
 
-        # H: the write asymmetry. /main/ is a homepage a visitor can choose,
-        # and it is also the page the brand link, the footer, a nav item on
-        # every surface and the hero call to action all point at - so a visitor
-        # lands on it constantly without having chosen it. Choosing it must
-        # record the choice; arriving at it must not. Static checks can see the
-        # guard; only a browser can see whether the storage actually moved.
-        context = browser.new_context(viewport={"width": 1440, "height": 900})
-        page = context.new_page()
-        page.goto(base, wait_until="networkidle")
-        page.evaluate(f"() => localStorage.removeItem({KEY!r})")
+        if education:
+            # Arriving at a new education front door must preserve a previous
+            # explicit preference. The legacy chooser control below remains
+            # exercised by the unchanged source browser suite.
+            context = browser.new_context(viewport={"width": 1440, "height": 900})
+            page = context.new_page()
+            page.goto(base, wait_until="networkidle")
+            page.evaluate(f"() => localStorage.setItem({KEY!r}, 'teachers')")
+            for route in ["/", "/main/", "/for/teachers/"]:
+                page.goto(base.rstrip("/") + route, wait_until="networkidle")
+                stored = page.evaluate(f"() => localStorage.getItem({KEY!r})")
+                findings.check(stored == "teachers",
+                               f"landing on {route} preserves the existing homepage preference",
+                               f"stored {stored!r}")
+            page.goto(base.rstrip("/") + "/for/pupils/", wait_until="networkidle")
+            pupil_brand = page.get_attribute("a.brand", "href")
+            findings.check(pupil_brand not in ADULT_CTA and pupil_brand != "/main/",
+                           "stored homepage preference cannot put an adult destination behind the pupil brand",
+                           f"brand {pupil_brand!r}")
+            context.close()
+        else:
+            # H: the write asymmetry. /main/ is a homepage a visitor can choose,
+            # and it is also the page the brand link, the footer, a nav item on
+            # every surface and the hero call to action all point at - so a visitor
+            # lands on it constantly without having chosen it. Choosing it must
+            # record the choice; arriving at it must not. Static checks can see the
+            # guard; only a browser can see whether the storage actually moved.
+            context = browser.new_context(viewport={"width": 1440, "height": 900})
+            page = context.new_page()
+            page.goto(base, wait_until="networkidle")
+            page.evaluate(f"() => localStorage.removeItem({KEY!r})")
 
-        page.click('a[data-mbm-face-choice="main"]')
-        page.wait_for_load_state("domcontentloaded")
-        chose = page.evaluate(f"() => localStorage.getItem({KEY!r})")
-        findings.check(chose == "main", "choosing the platform homepage records the choice",
-                       f"stored {chose!r}")
-        findings.check(page.url.rstrip("/").endswith("/main"),
-                       "the platform card navigates to /main/", page.url)
+            page.click('a[data-mbm-face-choice="main"]')
+            page.wait_for_load_state("domcontentloaded")
+            chose = page.evaluate(f"() => localStorage.getItem({KEY!r})")
+            findings.check(chose == "main", "choosing the platform homepage records the choice",
+                           f"stored {chose!r}")
+            findings.check(page.url.rstrip("/").endswith("/main"),
+                           "the platform card navigates to /main/", page.url)
 
-        page.evaluate(f"() => localStorage.removeItem({KEY!r})")
-        page.goto(base.rstrip("/") + "/main/", wait_until="networkidle")
-        page.wait_for_timeout(400)
-        landed = page.evaluate(f"() => localStorage.getItem({KEY!r})")
-        findings.check(landed is None, "landing on /main/ records nothing",
-                       f"stored {landed!r}")
+            page.evaluate(f"() => localStorage.removeItem({KEY!r})")
+            page.goto(base.rstrip("/") + "/main/", wait_until="networkidle")
+            page.wait_for_timeout(400)
+            landed = page.evaluate(f"() => localStorage.getItem({KEY!r})")
+            findings.check(landed is None, "landing on /main/ records nothing",
+                           f"stored {landed!r}")
 
-        # And the consequence, stated as the journey it protects: a deliberate
-        # choice survives an accidental visit to the platform homepage.
-        page.goto(base, wait_until="networkidle")
-        page.click('a[data-mbm-face-choice="teachers"]')
-        page.wait_for_load_state("domcontentloaded")
-        page.goto(base.rstrip("/") + "/main/", wait_until="networkidle")
-        page.wait_for_timeout(400)
-        survived = page.evaluate(f"() => localStorage.getItem({KEY!r})")
-        findings.check(survived == "teachers",
-                       "a chosen homepage survives a visit to /main/", f"stored {survived!r}")
+            # And the consequence, stated as the journey it protects: a deliberate
+            # choice survives an accidental visit to the platform homepage.
+            page.goto(base, wait_until="networkidle")
+            page.click('a[data-mbm-face-choice="teachers"]')
+            page.wait_for_load_state("domcontentloaded")
+            page.goto(base.rstrip("/") + "/main/", wait_until="networkidle")
+            page.wait_for_timeout(400)
+            survived = page.evaluate(f"() => localStorage.getItem({KEY!r})")
+            findings.check(survived == "teachers",
+                           "a chosen homepage survives a visit to /main/", f"stored {survived!r}")
 
-        # The brand link honours a chosen /main/ ...
-        page.evaluate(f"() => localStorage.setItem({KEY!r}, 'main')")
-        page.goto(base.rstrip("/") + "/resources/", wait_until="networkidle")
-        brand = page.get_attribute("a.brand", "href")
-        findings.check(brand == "/main/", "a chosen /main/ resolves the brand link", f"brand {brand!r}")
+            # The brand link honours a chosen /main/ ...
+            page.evaluate(f"() => localStorage.setItem({KEY!r}, 'main')")
+            page.goto(base.rstrip("/") + "/resources/", wait_until="networkidle")
+            brand = page.get_attribute("a.brand", "href")
+            findings.check(brand == "/main/", "a chosen /main/ resolves the brand link", f"brand {brand!r}")
 
-        # ... and the pupil rule still outranks it. /for/pupils/ writes its own
-        # face on landing, so the value read here is 'pupils', not 'main'; what
-        # matters is that no stored value can put the adult platform homepage
-        # behind the brand on a page that suppresses adult features.
-        page.evaluate(f"() => localStorage.setItem({KEY!r}, 'main')")
-        page.goto(base.rstrip("/") + "/for/pupils/", wait_until="networkidle")
-        pupil_brand = page.get_attribute("a.brand", "href")
-        findings.check(pupil_brand != "/main/",
-                       "a chosen /main/ cannot reach the brand link on the pupil page",
-                       f"brand {pupil_brand!r}")
-        context.close()
+            # ... and the pupil rule still outranks it. /for/pupils/ writes its own
+            # face on landing, so the value read here is 'pupils', not 'main'; what
+            # matters is that no stored value can put the adult platform homepage
+            # behind the brand on a page that suppresses adult features.
+            page.evaluate(f"() => localStorage.setItem({KEY!r}, 'main')")
+            page.goto(base.rstrip("/") + "/for/pupils/", wait_until="networkidle")
+            pupil_brand = page.get_attribute("a.brand", "href")
+            findings.check(pupil_brand != "/main/",
+                           "a chosen /main/ cannot reach the brand link on the pupil page",
+                           f"brand {pupil_brand!r}")
+            context.close()
 
         browser.close()
 
@@ -429,6 +467,7 @@ def self_test() -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--publication", choices=("legacy", "education"), default="legacy")
     parser.add_argument("--self-test", action="store_true", help="prove the checks can fail")
     parser.add_argument("--artifacts", type=Path, default=ARTIFACTS,
                         help="where screenshots and the report are written; control runs must "
@@ -450,19 +489,19 @@ def main() -> None:
     report = args.report or args.artifacts / "results.json"
 
     findings = Findings()
-    run(base, findings, args.artifacts)
+    run(base, findings, args.artifacts, args.publication)
 
     report.parent.mkdir(parents=True, exist_ok=True)
     report.write_text(json.dumps({
-        "baseUrl": base,
-        "bootSurfaces": len(ALL_SURFACES),
+        "baseUrl": base, "publication": args.publication,
+        "bootSurfaces": len(set(ALL_SURFACES + (["/for/governors-trustees/"] if args.publication == "education" else []))),
         "redirectAssertions": len(REDIRECTS),
         "passed": findings.passes,
         "failed": findings.failures,
     }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     print(f"Browser proof against {base}: {len(findings.passes)} passed · {len(findings.failures)} failed")
-    print(f"  boot check: {len(ALL_SURFACES)} distinct surfaces + "
+    print(f"  boot check: {len(set(ALL_SURFACES + (['/for/governors-trustees/'] if args.publication == 'education' else [])))} distinct surfaces + "
           f"{len(REDIRECTS)} redirect assertion(s); /start/ redirects to / and is asserted, not visited twice")
     if args.artifacts != ARTIFACTS:
         print(f"  artifacts written to {args.artifacts} (not the committed location)")

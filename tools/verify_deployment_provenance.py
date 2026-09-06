@@ -63,11 +63,31 @@ import sys
 import time
 import urllib.error
 import urllib.request
+import urllib.parse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BASE = "https://madebymatt.uk/"
 DEFAULT_REPO = "MattRoper1977/mattroper1977.github.io"
+PUBLISHED_ROOT = None
+PUBLISHED_SHA = None
+EDUCATION_OUTPUT_WITNESSES = (
+    "index.html", "main/index.html", "resources/index.html", "tools/index.html",
+    "for/teachers/index.html", "for/pupils/index.html", "data/domain-catalogue.json",
+    "data/resource-collections.json", "data/resource-discovery.json",
+)
+
+
+def expected_bytes(sha, rel):
+    if PUBLISHED_ROOT is None:
+        return committed_bytes(sha, rel)
+    if sha != PUBLISHED_SHA:
+        raise ValueError("Publication artifact belongs to another expected SHA")
+    target = (PUBLISHED_ROOT / rel).resolve()
+    if not target.is_relative_to(PUBLISHED_ROOT.resolve()):
+        raise ValueError("Publication path escapes the artifact")
+    return target.read_bytes() if target.is_file() else None
+
 
 # Paths in this repository that GitHub Pages does not serve as site content.
 # A witness has to be something a visitor could actually download, or comparing
@@ -111,6 +131,34 @@ class Transport:
         except (urllib.error.URLError, OSError):
             # Unreachable is a reported state, not a traceback. Status 0 means
             # "no answer at all", which reads differently from a 404 and should.
+            return 0, b""
+
+
+class EducationTransport(Transport):
+    """The production byte proof cannot change origin, path or HTTPS scheme."""
+
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, request, fp, code, msg, headers, newurl):
+            return None  # urllib raises HTTPError for the original 3xx response
+
+    def get_bytes(self, url: str, timeout: float = 30.0) -> tuple[int, bytes]:
+        parsed = urllib.parse.urlsplit(url)
+        if parsed.scheme != "https" or parsed.netloc != "madebymatt.uk" or parsed.fragment:
+            raise ValueError("Education publication proof requires the canonical HTTPS origin")
+        request = urllib.request.Request(url, headers={
+            "User-Agent": "mbm-education-publication-provenance", "Cache-Control": "no-cache",
+        })
+        try:
+            opener = urllib.request.build_opener(self.NoRedirect())
+            with opener.open(request, timeout=timeout) as response:
+                if response.geturl() != url:
+                    raise urllib.error.URLError("Education publication response changed its destination")
+                return response.status, response.read()
+        except urllib.error.HTTPError as error:
+            code = error.code
+            error.close()
+            return code, b""
+        except (urllib.error.URLError, OSError):
             return 0, b""
 
 
@@ -255,17 +303,25 @@ def check_once(transport: Transport, expected: str, base_url: str, repo: str) ->
                          f"a shallow checkout will do this - the workflow needs fetch-depth: 0"))
         return findings
 
-    witnesses = changed_served_files(reference, expected)
+    source_witnesses = changed_served_files(reference, expected)
+    if PUBLISHED_ROOT is not None:
+        # Builder-only commits have no changed raw public-source path. Always
+        # inspect the real outputs named by the education publication contract,
+        # then include every public source path that changed. A passing deploy
+        # API result cannot replace these actual origin byte comparisons.
+        witnesses = list(dict.fromkeys(EDUCATION_OUTPUT_WITNESSES + tuple(source_witnesses)))
+    else:
+        witnesses = source_witnesses[:3]
     if not witnesses:
         findings.append(("3 origin witness", INCONCLUSIVE,
                          f"no served file differs between {short(reference)} and {short(expected)}, so the "
                          f"origin cannot tell them apart. Layer 2 carries the proof for this deployment"))
         return findings
 
-    # Up to three, so a single unlucky path cannot carry the whole claim, and
-    # every one of them must match.
-    for rel in witnesses[:3]:
-        want = committed_bytes(expected, rel)
+    # Legacy mode checks up to three changed-source witnesses. Education
+    # mode checks every mandatory published output and changed public path.
+    for rel in witnesses:
+        want = expected_bytes(expected, rel)
         if want is None:
             findings.append((f"3 origin witness {rel}", FAIL, "not present at the expected commit"))
             continue
@@ -277,11 +333,11 @@ def check_once(transport: Transport, expected: str, base_url: str, repo: str) ->
             findings.append((f"3 origin witness {rel}", FAIL, f"origin answered HTTP {status}"))
         elif sha256(body) != sha256(want):
             findings.append((f"3 origin witness {rel}", FAIL,
-                             f"served sha256 {sha256(body)[:12]} != committed {sha256(want)[:12]} "
+                             f"served sha256 {sha256(body)[:12]} != expected publication {sha256(want)[:12]} "
                              f"- the origin is serving other bytes for this path"))
         else:
             findings.append((f"3 origin witness {rel}", PASS,
-                             f"served bytes match the commit ({sha256(want)[:12]})"))
+                             f"served bytes match the source-bound publication ({sha256(want)[:12]})"))
 
     # The data stamp, reported only where it is a distinguishing signal. It is
     # the obvious witness and it is often the wrong one: it moves only when
@@ -299,6 +355,14 @@ def check_once(transport: Transport, expected: str, base_url: str, repo: str) ->
         want_first = stamp_expected.split(",")[0]
         if status != 200:
             findings.append(("3 data stamp", FAIL, f"origin answered HTTP {status} for /"))
+        elif PUBLISHED_ROOT is not None:
+            wanted_home = expected_bytes(expected, "index.html")
+            if wanted_home is not None and body == wanted_home:
+                findings.append(("3 published homepage", PASS,
+                                 "complete homepage bytes match the successful publication artifact"))
+            else:
+                findings.append(("3 published homepage", FAIL,
+                                 "homepage differs from the successful publication artifact"))
         elif want_first in text:
             findings.append(("3 data stamp", PASS, f"served stamp carries {want_first}"))
         else:
@@ -479,6 +543,9 @@ def main() -> int:
     parser.add_argument("--must-not-be-deployed", action="store_true",
                         help="live negative control: assert this SHA is NOT what is served")
     parser.add_argument("--self-test", action="store_true")
+    parser.add_argument("--publication", choices=("legacy", "education"), default="legacy")
+    parser.add_argument("--publication-output", type=Path,
+                        default=Path("audit-output/deployment-publication"))
     args = parser.parse_args()
 
     if args.self_test:
@@ -513,6 +580,16 @@ def main() -> int:
             return 1
         print(f"[PASS] control: an undeployed commit is rejected ({detail})")
         return 0
+
+    if args.publication == "education":
+        if args.repo != DEFAULT_REPO or args.base_url.rstrip("/") != DEFAULT_BASE.rstrip("/"):
+            raise SystemExit("Education artifact provenance requires the canonical Site repository and HTTPS origin")
+        from prepare_published_site import prepare
+        record = prepare(expected, args.publication_output)
+        global PUBLISHED_ROOT, PUBLISHED_SHA
+        PUBLISHED_ROOT, PUBLISHED_SHA = Path(record["root"]), expected
+        transport = EducationTransport()
+        print("SOURCE-BOUND PUBLICATION " + json.dumps(record, sort_keys=True))
 
     state, findings = run(transport, expected, args.base_url, args.repo,
                           delays=() if args.no_retry else RETRY_DELAYS)

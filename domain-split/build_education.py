@@ -16,6 +16,11 @@ import subprocess
 from lxml import html as lhtml
 from build_preview import EDUCATION_OVERRIDES
 from education_discovery import refresh as refresh_resource_discovery
+from audience_discovery import refresh as refresh_audiences
+from governors_discovery import refresh as refresh_governors
+from education_expansion import refresh as refresh_education_expansion
+from primary_discovery import refresh as refresh_primary
+from usage_discovery import refresh as refresh_usage
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -50,6 +55,7 @@ def write(root, relative, text):
     p = root / relative
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(text, encoding='utf-8')
+
 
 WRAPPED_LESSONS = {
     'Tutor_Time/Wk3_KCSIE_TRAP_Sextortion.html',
@@ -252,6 +258,13 @@ def build(output, lessons, apps=None, allow_sparse=False):
     if not apps:report['apps']='Not supplied; separate Apps output still required'
     if apps and not report['missing_source_files']:
         refresh_resource_discovery(output, lessons, apps, ROOT)
+        report['primary_discovery'] = refresh_primary(output, lessons, apps, ROOT)['counts']
+        report['audience_discovery'] = refresh_audiences(output, lessons, apps, ROOT)
+        report['governors_discovery'] = {'resources': len(refresh_governors(output, lessons, apps, ROOT)['resources'])}
+        report['education_expansion'] = refresh_education_expansion(output, lessons, apps, ROOT)
+        report['usage'] = refresh_usage(output, lessons, apps, ROOT)
+    for item in report['publications'].values():
+        item['output_files'] = sum(p.is_file() for p in Path(item['root']).rglob('*'))
     write(output,'education-build-report.json',json.dumps(report,indent=2)+'\n')
     return report
 
