@@ -1,6 +1,6 @@
 # Shared usage backend
 
-Prepared implementation; no production deployment or counter data has been created. The database connection audit found management SQL authentication failures for the existing Supabase project. Do not try alternate production credential paths or activate this code until the legitimate connection is repaired.
+The schema, resource registry, expiry job and three statistics functions are installed, with collection disabled. Hosted acceptance must finish before activation. The owner's separate setup package records installation history and acceptance evidence; inspect that history before applying migrations again. The checked-in function settings match the deployed anonymous ingest/public endpoints and authenticated owner endpoint.
 
 ## Contract
 
@@ -32,7 +32,7 @@ Event nonces expire logically after ten minutes. The owner-scheduled expiry job 
 
 ## Exact setup order
 
-1. Repair the legitimate Supabase management/database credential connection, then prove a harmless metadata SELECT. Do not reset production credentials blindly.
+1. Verify the legitimate Supabase management/database connection with a harmless metadata SELECT. The earlier connection failure was resolved; do not reset production credentials or replay installed migrations blindly.
 2. Run local tests below and have the owning agent copy only the prepared repo files. Review and apply the migration through the normal authorized Supabase migration path.
 3. Obtain the fresh reviewed registry from the actual assembled destinations. Run:
    python domain-split/analytics-backend/prepare_registry.py --registry <reviewed-registry.json> --output <reviewed-registry.sql>

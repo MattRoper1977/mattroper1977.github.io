@@ -159,13 +159,15 @@
 var $=function(s){return document.querySelector(s)};
 function setStatus(id,text,kind){var el=$(id);if(!el)return;el.textContent=text||'';el.className='ma-status'+(kind?' '+kind:'');}
 function busy(form,on){Array.prototype.forEach.call(form.querySelectorAll('button,input'),function(el){if(el.type!=='email'&&el.type!=='password'&&el.type!=='text'||on)el.disabled=!!on;});}
-function showMode(mode){
+function showMode(mode,focusField){
  var login=$('#loginForm'),reg=$('#registerForm'),reset=$('#resetForm');
  login.hidden=mode!=='login';reg.hidden=mode!=='register';reset.hidden=mode!=='reset';
  $('#loginTab').setAttribute('aria-selected',mode==='login'?'true':'false');
  $('#registerTab').setAttribute('aria-selected',mode==='register'?'true':'false');
- if(mode==='login')setTimeout(function(){$('#loginEmail').focus()},0);
- if(mode==='register')setTimeout(function(){$('#registerEmail').focus()},0);
+ // Initial service updates must not pull keyboard focus out of navigation.
+ // Selecting a form tab explicitly still focuses its email field.
+ if(focusField!==false&&mode==='login')setTimeout(function(){$('#loginEmail').focus()},0);
+ if(focusField!==false&&mode==='register')setTimeout(function(){$('#registerEmail').focus()},0);
 }
 function initialMode(){var m=new URLSearchParams(location.search).get('mode');return m==='register'?'register':m==='reset'?'reset':'login'}
 function linkErrorNotice(){var q=new URLSearchParams(location.search),h=new URLSearchParams((location.hash||'').replace(/^#/,''));var code=(q.get('error_code')||h.get('error_code')||q.get('error')||h.get('error')||'').toLowerCase();if(!code)return '';if(/otp_expired|expired/.test(code))return 'That verification or password-recovery link has expired. Request a new email below.';return 'That account link could not be used. Request a fresh verification or password-reset email below.'}
@@ -201,7 +203,7 @@ MBMAccount.subscribe(function(s){
  $('#recoveryPanel').hidden=!s.recovery;
  $('#signedOut').hidden=!!s.user||s.recovery;
  $('#signedIn').hidden=!s.user||s.recovery;
- if(!s.user){var notice=linkErrorNotice();if(notice)setStatus('#linkStatus',notice,'err');showMode(initialMode());return}
+ if(!s.user){var notice=linkErrorNotice();if(notice)setStatus('#linkStatus',notice,'err');showMode(initialMode(),false);return}
  var name=(s.profile&&(s.profile.display_name||s.profile.name))||s.user.name||'Made by Matt member';
  $('#accountName').textContent=name;$('#accountEmail').textContent=s.user.email||'';$('#avatar').textContent=(name.trim().charAt(0)||'M').toUpperCase();$('#profileName').value=name==='Made by Matt member'?'':name;
  $('#syncLabel').textContent=s.online?'Member data is connected to your account and can follow you to another device.':'You are offline. Public content and local saves still work; account sync will resume when the connection returns.';

@@ -68,7 +68,7 @@ async function check(name, run) {
             assert(!(await page.locator('.ad-main').innerText()).includes(forbidden),`Stale claim: ${forbidden}`);
           assert.equal(await page.locator('#audience-play-showcase').count(),1);
           if(key==='parents') {
-            assert(await page.locator('a[href="/Lessons/primary/"]').first().isVisible());
+            assert(await page.locator('.ad-main a[href="/Lessons/primary/"]').first().isVisible());
             assert.equal(await page.locator('.ad-faq').count(),7);
             for(const name of ['NSPCC','Childnet','CEOP+Safety+Centre'])
               assert.equal(await page.locator(`#trusted-resources a[href="/education-hub/?origin=external&source=${name}"]`).count(),1);

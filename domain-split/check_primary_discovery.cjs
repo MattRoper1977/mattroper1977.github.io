@@ -42,7 +42,7 @@ async function record(name, page, fn) {
         const links = await page.locator('.primary-lesson,.primary-scheme,.primary-download').evaluateAll(nodes => nodes.map(node => node.href));
         const rows = JSON.parse(fs.readFileSync(path.join(source, 'resources.json'), 'utf8')).filter(row => row.file?.startsWith('primary/'));
         assert(rows.every(row => links.some(href => normal(href) === normal('/Lessons/'+row.file))));
-        assert.equal(await page.locator('.primary-header a[data-primary-global]').getAttribute('href'), '/Lessons/');
+        assert.equal(await page.locator('.mbm-unified-panel a[data-primary-global]').getAttribute('href'), '/Lessons/');
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Horizontal overflow');
         const search = await page.locator('#primary-search').boundingBox();
         assert(search.y + search.height < 500, 'Primary search is below the first viewport');
