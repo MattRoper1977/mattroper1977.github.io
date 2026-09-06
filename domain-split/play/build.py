@@ -32,7 +32,7 @@ def card(row, feature=False):
     watch = '<button type="button" data-watch="'+esc(row['id'])+'" hidden>Watch gameplay</button>' if media.get('video') else ''
     return '<article class="game-card'+(' featured-card' if feature else '')+'" data-card="'+esc(row['id'])+'">'+picture+'<div class="card-body"><div class="chips">'+chips+'</div><h3>'+esc(row['title'])+'</h3><p>'+esc(row['description'])+'</p><div class="card-actions"><a class="button primary" data-play="'+esc(row['id'])+'" href="'+esc(row['route'])+'">Play game<span class="sr-only">: '+esc(row['title'])+'</span></a><button type="button" data-info="'+esc(row['id'])+'" hidden>Game info<span class="sr-only">: '+esc(row['title'])+'</span></button>'+watch+'<button class="favourite" type="button" data-favourite="'+esc(row['id'])+'" aria-label="Favourite '+esc(row['title'])+'" aria-pressed="false" hidden>♡</button></div></div></article>'
 
-def refresh(output):
+def refresh(output, review=False):
     target = Path(output) / 'games'
     original = (target/'data/domain-catalogue.json').read_bytes()
     catalogue = json.loads(original)
@@ -54,11 +54,11 @@ def refresh(output):
             if path.endswith('/'): payload /= 'index.html'
             if source and hashlib.sha256(payload.read_bytes()).hexdigest() != source['published_sha256']:
                 raise ValueError('Review stale control/content evidence: '+entry['title'])
-            row = {**entry, 'description':extra.get('description') or entry['description'], 'route':quote(unquote(path),safe='/()'), 'group':group, 'groupLabel':labels[group],
+            row = {**entry, 'description':extra.get('description') or entry['description'], 'route':quote(unquote(path),safe='/()'), 'group':group, 'groupLabel':('Catalogue classroom game' if group=='games' and extra.get('audience')=='classroom' else labels[group]),
                    'genre':extra.get('genre') or entry.get('subject') or 'Other',
                    'controls':extra.get('controls', []), 'modes':extra.get('modes', []),
                    'instructions':extra.get('instructions', 'Open the game and follow its own instructions. Controls and device support have not yet been independently verified.'),
-                   'evidence':extra.get('evidence', []), 'updated':extra.get('updated'),
+                   'evidence':[{'scope':'source-inspected'}] if extra.get('evidence') else [], 'updated':extra.get('updated'),
                    'media':clips.get(key(path), {})}
             rows.append(row)
     assert len(rows) == len({key(r['route']) for r in rows}) == 69
@@ -99,13 +99,17 @@ def refresh(output):
     updates = '' if not recent else '<section class="updates" aria-labelledby="updates-title"><h2 id="updates-title">Recently updated</h2><div class="update-grid">'+''.join('<article><time datetime="'+esc(r['updated']['date'])+'">'+esc(r['updated']['date'])+'</time><h3><a data-play="'+esc(r['id'])+'" href="'+esc(r['route'])+'">'+esc(r['title'])+'</a></h3><p>'+esc(r['updated']['description'])+'</p></article>' for r in recent)+'</div></section>'
     # Do not invent or substitute the unrecovered original logo.
     brand = read('brand.json', {})
+    if not review and (brand.get('status') != 'verified-original' or len(clips) != 6):
+        raise ValueError('Play release held: exact original logo and six accepted fresh clips are required. Use the isolated review entrypoint for unfinished work.')
     logo = ''
     if brand.get('status') == 'verified-original':
         source = HERE / brand['file']
         assert hashlib.sha256(source.read_bytes()).hexdigest() == brand['sha256']
         shutil.copyfile(source,assets/source.name)
         logo = '<img src="/assets/play/'+esc(source.name)+'" alt="" width="48" height="48">'
-    substitutions = {'@@LOGO@@':logo,'@@COUNTS@@':f"{counts['games']} catalogue games · {counts['activities']} classroom activities · {counts['staff']} staff activity",
+    classroom_in_catalogue = sum(r['groupLabel']=='Catalogue classroom game' for r in rows)
+    collection_note = f"The {counts['games']} catalogue entries include {classroom_in_catalogue} classroom games. The {counts['activities']} additional classroom activities have a learning purpose; the staff collection is for professional development."
+    substitutions = {'@@LOGO@@':logo,'@@COUNTS@@':f"{counts['games']} catalogue games · {counts['activities']} classroom activities · {counts['staff']} staff activity",'@@COLLECTION_NOTE@@':esc(collection_note),
         '@@TOTAL@@':str(len(rows)), '@@GENRES@@':''.join('<option>'+esc(g)+'</option>' for g in genres),
         '@@CARDS@@':''.join(card(r) for r in rows), '@@SHOWCASE@@':featured, '@@UPDATES@@':updates,
         '@@DATA@@':json.dumps({'counts':counts,'games':rows},ensure_ascii=False).replace('<','\\u003c')}
@@ -121,5 +125,5 @@ def refresh(output):
     return report
 
 if __name__ == '__main__':
-    ap=argparse.ArgumentParser();ap.add_argument('--output',required=True,type=Path);args=ap.parse_args()
-    print(json.dumps(refresh(args.output),indent=2))
+    ap=argparse.ArgumentParser();ap.add_argument('--output',required=True,type=Path);ap.add_argument('--review',action='store_true');args=ap.parse_args()
+    print(json.dumps(refresh(args.output,review=args.review),indent=2))

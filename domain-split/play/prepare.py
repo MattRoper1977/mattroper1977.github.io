@@ -13,5 +13,5 @@ from play.build import refresh, ALIASES
 from usage_discovery import inject
 ap=argparse.ArgumentParser();ap.add_argument('--lessons',required=True);ap.add_argument('--output',required=True);a=ap.parse_args()
 subprocess.run([sys.executable,str(HERE.parent/'build_publications.py'),'--lessons',a.lessons,'--output',a.output],check=True)
-refresh(Path(a.output))
+refresh(Path(a.output),review=True)
 for route in ALIASES:inject(Path(a.output)/'games'/route,choice=True)

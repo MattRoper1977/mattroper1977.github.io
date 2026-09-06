@@ -26,7 +26,7 @@
   const normalize = v => String(v).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const searchable = new Map(games.map(g => [g.id, normalize([g.title,g.description,g.genre,g.subject,g.groupLabel,...(g.keywords||[])].join(' '))]));
   const dialog=document.getElementById('game-dialog');
-  let activeGame=null, returnFocus=null;
+  let activeGame=null, returnFocus=null, cameFromGame=false;
   function state() { return Object.fromEntries(fields.map(k=>[k,String(form.elements[k].value).slice(0,k==='q'?160:80)])); }
   function syncUrl() {
     const url=new URL(location.href); fields.forEach(k=>url.searchParams.delete(k));
@@ -64,8 +64,10 @@
   function rememberPosition() {
     try {sessionStorage.setItem(keys.position,JSON.stringify({url:location.pathname+location.search,y:scrollY}));}catch(_){}
   }
-  function restorePosition() {
-    try {const p=JSON.parse(sessionStorage.getItem(keys.position)||'null');if(p&&p.url===location.pathname+location.search&&Number.isFinite(p.y))requestAnimationFrame(()=>scrollTo(0,p.y));}catch(_){}
+  const shelfPaths=new Set(['/','/games/','/Games/','/main/','/for/pupils/','/Lessons/']);
+  function browseSnapshot(){try{const p=JSON.parse(sessionStorage.getItem(keys.position)||'null');if(!p||typeof p.url!=='string'||!Number.isFinite(p.y)||p.y<0)return null;const u=new URL(p.url,location.origin),pathname=u.pathname.replace(/index\.html$/,'');if(u.origin!==location.origin||!shelfPaths.has(pathname)||u.search.length>700)return null;return{url:pathname+u.search,y:p.y,search:u.search};}catch(_){return null;}}
+  function restorePosition(event) {
+    const p=browseSnapshot(),back=event?.persisted||performance.getEntriesByType('navigation')[0]?.type==='back_forward';if(p&&p.search===location.search&&(cameFromGame||back))requestAnimationFrame(()=>scrollTo(0,p.y));
   }
   function reset() {form.reset();render();}
   form.addEventListener('submit',e=>{e.preventDefault();render();});
@@ -127,12 +129,18 @@
   document.querySelector('.menu').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.currentTarget.open=false;e.currentTarget.querySelector('summary').focus();}});
   document.querySelectorAll('.menu a').forEach(a=>a.addEventListener('click',()=>{document.querySelector('.menu').open=false;}));
   window.addEventListener('pagehide',()=>{rememberPosition();stopMedia();});
-  window.addEventListener('pageshow',()=>{favourites=readList('favourites');recent=readList('recent');render({url:false});restorePosition();});
+  window.addEventListener('pageshow',event=>{if(durable){favourites=readList('favourites');recent=readList('recent');}render({url:false});restorePosition(event);});
   window.addEventListener('popstate',()=>{if(dialog.open)closeInfo();applyUrl();render({url:false});});
   window.addEventListener('storage',e=>{if(e.key===keys.favourites||e.key===keys.recent){favourites=readList('favourites');recent=readList('recent');render({url:false});}});
   document.querySelectorAll('[data-favourite]').forEach(b=>b.hidden=false);
   if(typeof dialog.showModal==='function')document.querySelectorAll('[data-info],[data-watch]').forEach(b=>b.hidden=false);
   // Meaningful image failure without an unrelated invented picture.
   document.querySelectorAll('.game-card img').forEach(img=>{const failed=()=>{img.hidden=true;img.closest('figure').querySelector('figcaption').textContent='Image unavailable — game link still works';};img.addEventListener('error',failed);if(img.complete&&!img.naturalWidth)failed();});
+  const previous=browseSnapshot();
+  if(previous){
+    const link=document.getElementById('previous-results');link.href=previous.url+'#browse';link.hidden=false;
+    link.addEventListener('click',e=>{if(e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();history.pushState({},'',link.href);applyUrl();render({url:false});requestAnimationFrame(()=>scrollTo(0,previous.y));});
+    try{const from=new URL(document.referrer),path=u=>decodeURIComponent(u).replace(/index\.html$/,'').replace(/\/$/,'');cameFromGame=from.origin===location.origin&&games.some(g=>path(g.route)===path(from.pathname));const explicit=fields.some(k=>new URLSearchParams(location.search).has(k));if(cameFromGame&&!explicit)history.replaceState({},'',location.pathname+previous.search+'#browse');}catch(_){}
+  }
   applyUrl();render({url:false});storageNotice();
 })();

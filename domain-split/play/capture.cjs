@@ -6,7 +6,8 @@ const base=process.env.PLAY_REVIEW_URL||'http://127.0.0.1:4173';
 const root=path.resolve(process.env.PLAY_OUTPUT||'.play-review/output/games'),out=path.resolve(process.env.PLAY_CAPTURE||'.play-review/capture');
 fs.mkdirSync(out,{recursive:true});
 const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
-const manifest={schema:1,captured_at:new Date().toISOString(),source_commit:cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),clips:[]};
+const manifest={schema:1,captured_at:new Date().toISOString(),lessons_commit:cp.execFileSync('git',['-C','.sources/Lessons','rev-parse','HEAD'],{encoding:'utf8'}).trim(),source_commit:cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),clips:[]};
+const requested=JSON.parse(fs.readFileSync(path.join(__dirname,'capture-request.json')));
 const titles=[['emberwild','Emberwild','/emberwild/'],['apexkick','Apex Kick','/apexkick/'],['voxel','Voxel Frontier','/voxel/'],['offbrand','Off-Brand: After Hours','/offbrand/'],['lumins','Lumins','/Lessons/Games/Lumins.html'],['novasiege','Vector Overdrive: Nova Siege','/novasiege/']];
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 async function press(page,key,ms=400){await page.keyboard.down(key);await wait(ms);await page.keyboard.up(key);}
@@ -29,22 +30,25 @@ async function start(page,id){
   if(!await optional(page,'#bPractice')){await optional(page,'#bModes');await page.locator('#mPractice').click();}
   await wait(4000);await optional(page,'#v6SkipFlyin');
  }else if(id==='voxel'){
-  await page.locator('[data-mode="creative"]').click();await page.locator('#start').click();await wait(1000);
+  await page.locator('[data-mode="creative"]').click();const b=await page.locator('#start').boundingBox();page.capturePointer={x:b.x+b.width/2,y:b.y+b.height/2};await page.locator('#start').click();await wait(1800);if(!await page.evaluate(()=>!!document.pointerLockElement))await page.locator('#start').click();await page.waitForFunction(()=>!!document.pointerLockElement);
  }else if(id==='offbrand'){
-  await page.locator('#btnCrew').click();await wait(700);
-  await optional(page,'#howGo');await optional(page,'#btnHowGo');
+  await page.locator('#btnCrew').click();await page.locator('#btnCnBegin').click();await page.locator('#btnHowOk').click();await optional(page,'#tutSkip');
  }else if(id==='lumins'){
   if(!await optional(page,'#go')){
    const first=page.getByText(/First Steps/).first();if(await first.isVisible())await first.click();await page.locator('#go').click();
   }
- }else if(id==='novasiege'){await page.locator('#start-run').click();}
+ }else if(id==='novasiege'){await page.locator('#start-run').press('Enter');await optional(page,'#v6NovaSkip');await page.waitForFunction(()=>window.VectorOverdrive.getSnapshot().enemies>=3);}
  await wait(600);
 }
 async function action(page,id){
  if(id==='emberwild'){
+  const rest=page.getByRole('button',{name:'Interact: Rest & restore',exact:true});
+  if(await rest.isVisible()){await rest.press('Enter');await wait(1400);}
+  for(let i=0;i<8;i++){const next=page.getByRole('button',{name:'Continue dialogue',exact:true});if(!await next.isVisible())break;await next.press('Enter');await wait(300);}
   await page.locator('#ui-canvas').click({position:{x:160,y:160}});
-  for(let i=0;i<3;i++){await press(page,'ArrowRight',1700);await press(page,'ArrowDown',1300);await page.keyboard.press('z');await wait(500);await press(page,'ArrowLeft',1600);await page.keyboard.press('z');}
-  return 'Walk through the opening area and interact using the game’s ordinary controls.';
+  // This tile-based game moves per keydown: deliberate steps, as a player taps.
+  for(const [key,n] of [['ArrowUp',3],['ArrowRight',5],['ArrowUp',3],['ArrowRight',4],['ArrowDown',3],['ArrowLeft',4]]){for(let i=0;i<n;i++){await page.keyboard.press(key);await wait(300);}}
+  return 'Restore a companion at the hearth, then walk from Wayfinder’s Rest into the village.';
  }
  if(id==='apexkick'){
   await page.locator('canvas').first().click({position:{x:500,y:200}});
@@ -52,33 +56,37 @@ async function action(page,id){
   return 'Aim and take practice free kicks, showing the real ball flight and result.';
  }
  if(id==='voxel'){
-  await press(page,'w',900);await page.mouse.move(680,450);await page.keyboard.press('2');
-  for(let i=0;i<3;i++){await page.mouse.click(640,410,{button:'right'});await wait(700);await press(page,'a',250);}
-  await press(page,'s',700);await page.mouse.move(750,430);await wait(1200);await page.mouse.click(640,410);await press(page,'d',1200);await wait(6000);
-  return 'Explore a fresh creative world and use the normal place/break controls.';
+  const point=page.capturePointer;await page.mouse.move(point.x,point.y+380,{steps:12});await wait(700);await page.keyboard.press('7');
+  for(let i=0;i<3;i++){await page.mouse.down({button:'right'});await wait(90);await page.mouse.up({button:'right'});await wait(1600);await press(page,'a',200);}
+  await page.mouse.down();await wait(250);await page.mouse.up();await wait(1700);await press(page,'d',350);await page.mouse.move(point.x+100,point.y+300,{steps:10});await wait(2000);
+  return 'Look down at the shoreline and place, inspect and remove plank blocks in a fresh creative world.';
  }
  if(id==='offbrand'){
-  await press(page,'ArrowLeft',1300);await press(page,'ArrowUp',900);await page.keyboard.press('e');await wait(800);
-  await shot(page,'offbrand-task');
-  await press(page,'ArrowRight',2300);await press(page,'ArrowDown',900);await page.keyboard.press('e');await wait(700);
-  await page.keyboard.press('f');await wait(1200);await page.keyboard.press('Escape');await wait(800);await press(page,'ArrowLeft',2000);await wait(2000);
-  return 'Move around the workshop, inspect a task and use the visible investigation controls.';
+  const box=await page.locator('#cv').boundingBox(),scale=Math.min(box.width/960,box.height/640);
+  await page.mouse.click(box.x+(box.width-960*scale)/2+775*scale,box.y+(box.height-640*scale)/2+167*scale);
+  await page.locator('#actLbl').filter({hasText:/Do the work/}).waitFor();await page.locator('#btnAct').click();await wait(700);
+  for(const n of ['1','2','3','4','5']){await page.locator('#mgStage .tdot').filter({hasText:new RegExp('^'+n+'$')}).click();await wait(650);}
+  await wait(1800);await shot(page,'offbrand-work-banked');
+  await press(page,'ArrowLeft',2600);await press(page,'ArrowDown',1200);await wait(2000);
+  return 'Cross the workshop to the Ink Store, trace its five-point M commission and bank the completed work.';
  }
  if(id==='lumins'){
-  const bridge=page.locator('#tools button').filter({hasText:/Bridge/i}).first();if(await bridge.isVisible())await bridge.click();else await page.keyboard.press('2');
-  const canvas=page.locator('canvas').filter({visible:true}).first();const box=await canvas.boundingBox();
-  await page.mouse.click(box.x+box.width*.44,box.y+box.height*.64);await wait(1000);await page.mouse.click(box.x+box.width*.5,box.y+box.height*.64);await wait(12500);
-  return 'Place a bridge intervention in the opening rescue puzzle and follow the Lumins.';
+  await page.keyboard.press('4');
+  const box=await page.locator('#cv').boundingBox();
+  for(const [c,r] of [[15,13],[17,12]]){await page.mouse.click(box.x+(c+.5)*box.width/40,box.y+(r+.5)*box.height/24);await wait(300);}
+  await wait(17000);
+  return 'Build two bridge sections across the first gap and guide Lumins toward the rescue portal.';
  }
  if(id==='novasiege'){
-  await page.mouse.move(870,270);await page.mouse.down();
-  for(const key of ['d','s','a','w']){await press(page,key,3000);await page.keyboard.press('Shift');await page.mouse.move(key==='s'?440:850,key==='w'?230:450);}
-  await page.mouse.up();await wait(1500);
-  return 'Move, aim and fire at the first arena wave, using a dash during the fight.';
+  await page.keyboard.down('Space');
+  for(const key of ['a','d','w','s','a','d']){await press(page,key,800);await page.keyboard.press('Shift');await wait(1700);}
+  await page.keyboard.up('Space');await wait(1000);
+  const result=await page.evaluate(()=>window.VectorOverdrive.getSnapshot());fs.writeFileSync(path.join(out,'novasiege-score.json'),JSON.stringify(result,null,2));
+  return 'Strafe and dash through the opening arena wave while firing at the drones with the standard keyboard aim support.';
  }
 }
 (async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--enable-webgl','--use-angle=swiftshader','--enable-unsafe-swiftshader']});manifest.browser=browser.version();
-for(const[id,title,route]of titles){const dir=path.join(out,id);fs.mkdirSync(dir,{recursive:true});const context=await browser.newContext({viewport:{width:1280,height:720},recordVideo:{dir,size:{width:1280,height:720}},acceptDownloads:true});const page=await context.newPage();page.setDefaultTimeout(10000);const began=Date.now();let clipStart=0;const errors=[];page.on('pageerror',e=>errors.push(e.message));const item={id,title,route,status:'needs-visual-review',viewport:{width:1280,height:720},device:'Desktop Chrome in CI; fresh isolated context',captured_at:new Date().toISOString(),source_commit:manifest.source_commit,published_sha256:hash(path.join(root,decodeURIComponent(route.replace(/^\//,'')),route.endsWith('/')?'index.html':''))};
+for(const[id,title,route]of titles.filter(t=>requested.includes(t[0]))){const viewport={width:960,height:540};const dir=path.join(out,id);fs.mkdirSync(dir,{recursive:true});const context=await browser.newContext({viewport,recordVideo:{dir,size:viewport},acceptDownloads:true});const page=await context.newPage();page.setDefaultTimeout(10000);const began=Date.now();let clipStart=0;const errors=[];page.on('pageerror',e=>errors.push(e.message));const item={id,title,route,status:'needs-visual-review',viewport,device:'Desktop Chrome in CI; fresh isolated context',captured_at:new Date().toISOString(),source_commit:manifest.source_commit,lessons_commit:manifest.lessons_commit,published_sha256:hash(path.join(root,decodeURIComponent(route.replace(/^\//,'')),route.endsWith('/')?'index.html':''))};
 try{
  await page.goto(base+'/404.html');if(await page.evaluate(()=>localStorage.length)!==0)throw Error('Capture profile was not empty');
  await page.goto(base+route,{waitUntil:'load'});await wait(2800);await shot(page,id+'-start');await start(page,id);await shot(page,id+'-ready');clipStart=(Date.now()-began)/1000;
