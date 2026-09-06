@@ -42,6 +42,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 1 }
+      # HC3 §1.1. Origins are DERIVED (shelf + 69-route census + split policy),
+      # never typed here, and the derivation proves its own controls first.
+      - name: Derive the origin table and prove its controls (HC3 §1.1)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/route_origins.py --self-test
+          python3 tools/verify_education_stubs.py --self-test
+          echo "PLAY=$(python3 tools/route_origins.py --origin play)" >> "$GITHUB_ENV"
+          echo "EDU=$(python3 tools/route_origins.py --origin education)" >> "$GITHUB_ENV"
+
+      - name: Expected play bytes — the committed source with the education host literal rewritten
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/route_origins.py --expected /crownbadge/ --out /tmp/expected-crown.html
+          python3 tools/route_origins.py --expected /titanforge/ --out /tmp/expected-titan.html
+          sha256sum /tmp/expected-crown.html /tmp/expected-titan.html
       - name: Wait on the previously-unpublished Crown route and final shelf, then compare every byte
         shell: bash
         run: |
@@ -50,14 +68,14 @@ jobs:
           ready=0
           for attempt in $(seq 1 60); do
             crown_status=$(curl --silent --show-error --location --compressed --max-time 30 \
-              -o /tmp/live-crown.html -w '%{http_code}' https://madebymatt.uk/crownbadge/ || true)
+              -o /tmp/live-crown.html -w '%{http_code}' "$PLAY/crownbadge/" || true)
             titan_status=$(curl --silent --show-error --location --compressed --max-time 30 \
-              -o /tmp/live-titan.html -w '%{http_code}' https://madebymatt.uk/titanforge/ || true)
+              -o /tmp/live-titan.html -w '%{http_code}' "$PLAY/titanforge/" || true)
             shelf_status=$(curl --silent --show-error --location --compressed --max-time 30 \
-              -o /tmp/live-games.json -w '%{http_code}' https://madebymatt.uk/Games/games.json || true)
+              -o /tmp/live-games.json -w '%{http_code}' "$PLAY/Games/games.json" || true)
             if [ "$crown_status" = 200 ] && [ "$titan_status" = 200 ] && [ "$shelf_status" = 200 ] \
-              && cmp --silent crownbadge/index.html /tmp/live-crown.html \
-              && cmp --silent titanforge/index.html /tmp/live-titan.html \
+              && cmp --silent /tmp/expected-crown.html /tmp/live-crown.html \
+              && cmp --silent /tmp/expected-titan.html /tmp/live-titan.html \
               && cmp --silent data/source-manifests/games.json /tmp/live-games.json; then
               echo "Crown, Titan, and final shelf observed on attempt $attempt" | tee artifacts/titan-crown-live/wait.log
               ready=1; break
@@ -66,7 +84,7 @@ jobs:
             sleep 15
           done
           [ "$ready" = 1 ]
-          sha256sum crownbadge/index.html /tmp/live-crown.html titanforge/index.html /tmp/live-titan.html \
+          sha256sum /tmp/expected-crown.html /tmp/live-crown.html /tmp/expected-titan.html /tmp/live-titan.html \
             data/source-manifests/games.json /tmp/live-games.json | tee artifacts/titan-crown-live/served-sha256.txt
       - name: Upload live evidence
         if: always()

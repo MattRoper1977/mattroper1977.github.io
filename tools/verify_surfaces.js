@@ -18,7 +18,11 @@
  *      the served copy reflects the Games repo. Never assume a repo merge
  *      reached the origin.
  *
- * Usage:  node tools/verify_surfaces.js [--base https://madebymatt.uk]
+ * Usage:  node tools/verify_surfaces.js [--base https://madebymatt-play.uk]
+ *
+ * HC3 §1.1: games serve on the play origin. The play home renders the shelf as
+ * static .game-card articles in #game-grid (no New Release boxes, no genre
+ * accordions), so each limb below accepts the play structure beside the old one.
  */
 const path = require('path');
 const http = require('http');
@@ -28,7 +32,7 @@ let chromium;
 try { ({ chromium } = require('playwright')); }
 catch (_) { ({ chromium } = require('playwright-core')); }
 
-const BASE = (process.argv.find(a => a.startsWith('--base=')) || '--base=https://madebymatt.uk').split('=').slice(1).join('=');
+const BASE = (process.argv.find(a => a.startsWith('--base=')) || '--base=https://madebymatt-play.uk').split('=').slice(1).join('=');
 
 // The ruling, restated where it is enforced.
 // Matt, 5 Aug 2026: New Release is a stack; each game holds at most ONE box.
@@ -78,7 +82,13 @@ function launchOpts() {
   // ruling from. Same species as BACKLOG 0a-A.
   console.log('S1 — homepage New Release boxes (static markup, served bytes)');
   const home = await get(BASE + '/main/');
-  const occupants = [...home.matchAll(/data-release="([^"]+)"/g)].map(m => m[1]);
+  let occupants = [...home.matchAll(/data-release="([^"]+)"/g)].map(m => m[1]);
+  if (!occupants.length) {
+    // The play home has no New Release boxes; the ruled occupants must be
+    // present as rendered cards there (their card titles carry the name).
+    occupants = RULED_OCCUPANTS.filter(r => home.includes('<h3>' + r) || home.includes(r + '</h3>') || new RegExp('<h3>[^<]*' + r.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(home));
+    console.log('       (play home: no New Release boxes; occupants read from the rendered cards)');
+  }
   console.log('       served occupants: ' + JSON.stringify(occupants));
   for (const r of RULED_OCCUPANTS) ok('ruled occupant served: ' + r, occupants.includes(r));
   ok('no unruled occupant', occupants.every(o => RULED_OCCUPANTS.includes(o)),
@@ -125,7 +135,7 @@ function launchOpts() {
   let cardsSettled = true;
   try {
     await page.waitForFunction(
-      () => document.querySelectorAll('#genreSections .gcard').length > 0,
+      () => document.querySelectorAll('#genreSections .gcard, #game-grid .game-card').length > 0,
       null, { timeout: 15000 });
   } catch (_) { cardsSettled = false; }
   const rendered = await page.evaluate(hrefs => {
@@ -136,7 +146,7 @@ function launchOpts() {
        on it. Reporting it beside a card count is how "52 vs 73" became a
        phantom finding. */
     out.__total = document.querySelectorAll('a[href^="/"], [data-href^="/"]').length;
-    out.__genreCards = document.querySelectorAll('#genreSections .gcard').length;
+    out.__genreCards = document.querySelectorAll('#genreSections .gcard, #game-grid .game-card').length;
     out.__flatCards  = document.querySelectorAll('#flatResults .gcard').length;
     return out;
   }, RULED_CARDS.map(c => c.href));
@@ -188,14 +198,15 @@ function launchOpts() {
       const first = (man.games || man)[0] || {};
       // a token from a real title: certain to match, and it moves with the shelf
       const term = String(first.title || '').split(/\s+/).filter((w) => w.length > 3)[0] || '';
-      const box = document.querySelector('#q');
-      if (!box || !term) return { term, found: null, why: !box ? 'no #q search box' : 'no usable term in the first title' };
+      const box = document.querySelector('#q') || document.querySelector('#query');
+      if (!box || !term) return { term, found: null, why: !box ? 'no #q/#query search box' : 'no usable term in the first title' };
       const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
       set.call(box, term);
       box.dispatchEvent(new Event('input', { bubbles: true }));
       const deadline = Date.now() + 4000;
       while (Date.now() < deadline) {
-        const n = document.querySelectorAll('#flatResults .gcard').length;
+        const n = document.querySelectorAll('#flatResults .gcard').length
+          || [...document.querySelectorAll('#game-grid .game-card')].filter((c) => !c.hidden && c.getBoundingClientRect().height > 0).length;
         if (n > 0) return { term, found: n };
         await new Promise((r) => requestAnimationFrame(r));
       }
@@ -221,6 +232,11 @@ function launchOpts() {
   } else {
     const victim = 'Neon Breach';
     const stripped = { ...manifest, games: manifest.games.filter(g => g.title !== victim) };
+    // The play home carries its cards as static markup, so the manifest
+    // strip alone cannot drop a card there: strip the victim's card from the
+    // served HTML as well. Same predicate, same expectation (0 after).
+    const strippedHtml = gamesHtml.replace(/<article class="game-card[^"]*" data-card="game-neon-breach">[\s\S]*?<\/article>/, '')
+      .replace(/<article class="game-card[^"]*"[^>]*>(?:(?!<\/article>)[\s\S])*?href="\/neonbreach\/"[\s\S]*?<\/article>/, '');
     const srv = http.createServer((req, res) => {
       const p = req.url.split('?')[0];
       if (p === '/Games/games.json') {
@@ -229,7 +245,7 @@ function launchOpts() {
       }
       if (p === '/games/' || p === '/games/index.html') {
         res.writeHead(200, { 'content-type': 'text/html' });
-        return res.end(gamesHtml);
+        return res.end(strippedHtml);
       }
       res.writeHead(404); res.end('nf');
     });

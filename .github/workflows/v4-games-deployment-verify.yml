@@ -159,7 +159,9 @@ jobs:
 
       - name: Exact browser matrix
         env:
-          V4_LIVE_ORIGIN: ${{ (github.event_name == 'push' || inputs.live == true) && 'https://madebymatt.uk' || '' }}
+          # HC3 §1.1: the live publication of these games is the play origin.
+          V4_LIVE_ORIGIN: ${{ (github.event_name == 'push' || inputs.live == true) && 'https://madebymatt-play.uk' || '' }}
+          V4_EDU_ORIGIN: ${{ (github.event_name == 'push' || inputs.live == true) && 'https://madebymatt.uk' || '' }}
         run: |
           set -euo pipefail
           mkdir -p artifacts/v4-games

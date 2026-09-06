@@ -73,6 +73,17 @@ jobs:
             | python3 -c 'import json,sys; d=json.load(sys.stdin); print("status ",d.get("status")); print("commit ",d.get("commit")); print("updated",d.get("updated_at")); print("error  ",d.get("error"))' \
             || echo "Pages API unavailable to this token — recorded, not faked."
 
+      # HC3 §1.1. Origins are DERIVED (shelf + 69-route census + split policy),
+      # never typed here, and the derivation proves its own controls first.
+      - name: Derive the origin table and prove its controls (HC3 §1.1)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/route_origins.py --self-test
+          python3 tools/verify_education_stubs.py --self-test
+          echo "PLAY=$(python3 tools/route_origins.py --origin play)" >> "$GITHUB_ENV"
+          echo "EDU=$(python3 tools/route_origins.py --origin education)" >> "$GITHUB_ENV"
+
       - name: NEGATIVE CONTROL — a path that must NOT match
         shell: bash
         run: |
@@ -80,7 +91,7 @@ jobs:
           # does not exist must not hash-equal a committed blob.
           set -o pipefail
           got=$(curl -sS -L -o /tmp/nc.bin -w '%{http_code}' \
-            "https://madebymatt.uk/neonmeridian/definitely-not-here-$(date +%s).html" || true)
+            "$PLAY/neonmeridian/definitely-not-here-$(date +%s).html" || true)
           echo "control HTTP $got"
           if [ "$got" = "200" ]; then
             echo "CONTROL FAILED: a nonexistent path returned 200"; exit 1
@@ -126,9 +137,16 @@ jobs:
             echo "      committed $b"
             fail=1
           }
-          check https://madebymatt.uk/data/source-manifests/games.json data/source-manifests/games.json
-          check https://madebymatt.uk/neonmeridian/index.html          neonmeridian/index.html
-          check https://madebymatt.uk/rallyvector3d/index.html         rallyvector3d/index.html
+          # HC3 §1.1: games serve on the play origin; the served bytes are the
+          # committed bytes with the education host literal rewritten, so the
+          # expected blob is derived by tools/route_origins.py, never raw source.
+          python3 tools/route_origins.py --expected /neonmeridian/  --out /tmp/expected-neonmeridian.html
+          python3 tools/route_origins.py --expected /rallyvector3d/ --out /tmp/expected-rallyvector3d.html
+          check "$PLAY/Games/games.json"          data/source-manifests/games.json
+          check "$PLAY/neonmeridian/index.html"   /tmp/expected-neonmeridian.html
+          check "$PLAY/rallyvector3d/index.html"  /tmp/expected-rallyvector3d.html
+          echo "-- and the old addresses on the education origin are stubs --"
+          python3 tools/verify_education_stubs.py --origin "$EDU" --routes /neonmeridian/ /rallyvector3d/ || fail=1
           exit $fail
 
       # UN-PARKED 2026-08-13 by commission 1(b). The park step and its
@@ -154,7 +172,10 @@ jobs:
           // Overridable so this leg's OWN code — not a copy of it — can be
           // driven against a mutated shelf on a local origin. Defaults to
           // production, so CI behaviour is unchanged.
-          const B = process.env.LIVE_BASE || 'https://madebymatt.uk';
+          // HC3 §1.1: the games and their home serve on the play origin (derived
+          // above and passed in); the education origin is where the pupil page lives.
+          const B = process.env.LIVE_BASE || process.env.PLAY || 'https://madebymatt-play.uk';
+          const EDU = process.env.EDU || 'https://madebymatt.uk';
           const LOG = process.env.LIVE_LOG || '/tmp/driving-live.log';
           const T0 = Date.now();
           let fail = 0;
@@ -249,7 +270,10 @@ jobs:
               window.scrollTo(0, 0);
               await new Promise((r) => setTimeout(r, 120));
 
-              const cards = [...document.querySelectorAll('a[href^="/"]')].filter(a=>a.querySelector('img'));
+              // Education arcade cards were anchors wrapping an image; play cards
+              // are static .game-card articles. Both counted.
+              const cards = [...document.querySelectorAll('a[href^="/"]')].filter(a=>a.querySelector('img'))
+                .concat([...document.querySelectorAll('.game-card')]);
               const imgs = [...document.querySelectorAll('img')];
 
               // BOUNDED RACE PER IMAGE (ruling 1.1). Every not-yet-complete
@@ -320,8 +344,11 @@ jobs:
             t(`[${vp.name}] zero horizontal overflow`, r.overflow === 0, `${r.overflow}px`);
             t(`[${vp.name}] no broken card art`, r.broken.length === 0, r.broken.slice(0,3).join(' '));
             t(`[${vp.name}] both new games on the shelf`, r.hasNM && r.hasRV, JSON.stringify(r));
-            t(`[${vp.name}] the declared NEW· holder renders its marker`, r.holderRendered >= 1,
-              `${HOLDER}: ${r.holderRendered} marker(s) across ${r.holderAnchors} anchor(s)`);
+            // The play home is a reviewed design without the NEW· text marker;
+            // the shelf still declares the holder, so its CARD must render. The
+            // marker count is reported, not asserted, on that surface.
+            t(`[${vp.name}] the declared NEW· holder renders a card`, r.holderAnchors >= 1,
+              `${HOLDER}: ${r.holderAnchors} anchor(s), ${r.holderRendered} text marker(s)`);
             await c.close();
           }
 
@@ -329,40 +356,28 @@ jobs:
           // 2. Homepage New-release boxes and pupil-page cards, on the origin.
           {
             const c = await br.newContext(); const p = await c.newPage();
+            // HC3 §1.1. The education homepage and pupil page carry no games by
+            // ruling; the games home is the play origin's home, and the pupil
+            // page reaches the games through a labelled link to that origin.
             await p.goto(B+'/main/', {waitUntil:'networkidle', timeout:60000});
-            const rel = await p.evaluate(()=>[...document.querySelectorAll('[data-release]')].map(e=>e.getAttribute('data-release')));
-            t('homepage carries both New-release boxes',
-              rel.includes('Rally Vector 3D') && rel.includes('Neon Meridian'), JSON.stringify(rel));
-            await p.goto(B+'/for/pupils/', {waitUntil:'networkidle', timeout:60000});
-            // RE-POINTED 2026-08-25 (backlog 5m). This asserted two mf-feature
-            // cards BY THEIR TYPED IDS. The pupil page stopped having them on
-            // 15 August at bc67b82 - "The pupil homepage shows all 52 by genre"
-            // - which replaced per-game feature cards with the whole shelf. The
-            // games did not move; the page's shape did, and this check was
-            // holding its own copy of that shape. Failure mode 1, and the
-            // paths: filter meant the very commit that changed it could not
-            // fire this workflow.
-            //
-            // The ruled invariant is REACHABILITY - both driving games are
-            // reachable from the pupil surface - so that is what is asserted,
-            // by href, and measured in the state a child gets: every genre
-            // group opened, the way a tap opens it. A card class the page is
-            // free to redesign is not the invariant and never was.
+            const rel = await p.evaluate(()=>({
+              nm: !!document.querySelector('a[href="/neonmeridian/"]'), rv: !!document.querySelector('a[href="/rallyvector3d/"]'),
+              boxes: [...document.querySelectorAll('[data-release]')].map(e=>e.getAttribute('data-release')) }));
+            t('games home carries both driving games', rel.nm && rel.rv, JSON.stringify(rel));
+            await p.goto(EDU+'/for/pupils/', {waitUntil:'networkidle', timeout:60000});
             await p.evaluate(() => document.querySelectorAll('details').forEach(d => { d.open = true; }));
             await p.waitForTimeout(400);
             const pupil = await p.evaluate(() => {
               const laid = (a) => { const r = a.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
               const anchors = [...document.querySelectorAll('a[href]')];
-              const count = (slug) => anchors.filter(a => a.getAttribute('href') === slug && laid(a)).length;
+              const host = (u) => { try { return new URL(u, location.href).hostname; } catch (_) { return ''; } };
               return {
-                nm: count('/neonmeridian/'), rv: count('/rallyvector3d/'),
-                gameCards: document.querySelectorAll('.mf-pupil-game').length,
-                featureIds: [...document.querySelectorAll('[data-feature-id]')].map(e => e.getAttribute('data-feature-id')),
+                playLinks: anchors.filter(a => /madebymatt-play\.uk$/.test(host(a.href)) && laid(a)).length,
+                gameRoutes: anchors.filter(a => ['/neonmeridian/','/rallyvector3d/'].includes(a.getAttribute('href'))).length,
               };
             });
-            t('pupil page reaches both driving games', pupil.nm >= 1 && pupil.rv >= 1,
-              `/neonmeridian/ x${pupil.nm}, /rallyvector3d/ x${pupil.rv}, across ${pupil.gameCards} game card(s); `
-              + `feature cards now ${JSON.stringify(pupil.featureIds)}`);
+            t('pupil page links to the games origin and lists no game route itself',
+              pupil.playLinks >= 1 && pupil.gameRoutes === 0, JSON.stringify(pupil));
             await c.close();
           }
 
@@ -399,7 +414,7 @@ jobs:
           phase(fail ? `${fail} FAILED` : 'all live checks passed');
           process.exit(fail ? 1 : 0);
           EOF
-          cd "$GITHUB_WORKSPACE" && node live.mjs
+          cd "$GITHUB_WORKSPACE" && PLAY="$PLAY" EDU="$EDU" node live.mjs
 
       # The whole point of 1(b): the progress file survives a kill, so a run
       # that dies is diagnosable instead of silent. always(), so it prints on

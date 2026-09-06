@@ -24,6 +24,15 @@ const INPUTS_ARG = process.argv.indexOf('--inputs-dir');
 const INPUTS_DIR = INPUTS_ARG >= 0 ? path.resolve(process.argv[INPUTS_ARG + 1] || '') : null;
 const RUN_BROWSER = process.argv.includes('--browser');
 const LIVE_ORIGIN = process.env.V4_LIVE_ORIGIN || '';
+/* HC3 §1.1. The live publication is the play origin; its served bytes are the
+   committed bytes with the education host literal rewritten (the builder's one
+   transformation), so live comparisons go through liveBytes(). The education
+   origin serves a stub at each old address, checked in verifyLivePublication. */
+const EDU_ORIGIN = process.env.V4_EDU_ORIGIN || '';
+const EDU_LITERAL = 'https://madebymatt.uk';
+const PLAY_LITERAL = 'https://madebymatt-play.uk';
+const liveBytes = bytes => (LIVE_ORIGIN && new URL(LIVE_ORIGIN).hostname.includes('madebymatt-play'))
+  ? Buffer.from(bytes.toString('utf8').split(EDU_LITERAL).join(PLAY_LITERAL), 'utf8') : bytes;
 
 // The eight games below are the fixed historical 2026-08-29 release cohort;
 // the extra linked route assertions belong to this exact deployment contract.
@@ -324,15 +333,30 @@ async function fetchPublishedBytes(origin, pathname, expected, label, round) {
 async function verifyLivePublication() {
   const origin = new URL(LIVE_ORIGIN).origin;
   const subjects = [
-    ...GAMES.map(game => ({ label: game.id, pathname: game.route, bytes: read(game.file) })),
-    { label: 'Games shelf manifest', pathname: '/Games/games.json', bytes: read('data/source-manifests/games.json') },
-    { label: 'global search index', pathname: '/data/mbm-search-index.json', bytes: read('data/mbm-search-index.json') },
-    { label: 'sitemap', pathname: '/sitemap.xml', bytes: read('sitemap.xml') }
+    ...GAMES.map(game => ({ label: game.id, pathname: game.route, bytes: liveBytes(read(game.file)) })),
+    { label: 'Games shelf manifest', pathname: '/Games/games.json', bytes: read('data/source-manifests/games.json') }
   ];
+  // The search index and the sitemap are education-origin, builder-generated
+  // publications (filtered index, generated sitemap): they are not byte-equal
+  // to HEAD by design after the split. The play sitemap must carry each game.
   for (let round = 1; round <= 2; round++) {
     for (const subject of subjects) await fetchPublishedBytes(origin, subject.pathname, subject.bytes, subject.label, round);
-    gate(`live-byte-round-${round}`, `${subjects.length} published subjects match HEAD exactly`);
+    gate(`live-byte-round-${round}`, `${subjects.length} published subjects match HEAD (host literal rewritten) exactly`);
     if (round === 1) await new Promise(resolve => setTimeout(resolve, 10000));
+  }
+  const sitemap = await (await fetch(`${origin}/sitemap.xml`, { cache: 'no-store' })).text();
+  for (const game of GAMES) assert(sitemap.includes(`<loc>${liveBytes(Buffer.from(game.canonical)).toString('utf8')}</loc>`), `${game.id}: play sitemap loc`);
+  gate('live-sitemap', `${GAMES.length} game locs in the play sitemap`);
+  if (EDU_ORIGIN) {
+    for (const game of GAMES) {
+      const r = await fetch(`${EDU_ORIGIN}${game.route}`, { redirect: 'follow', cache: 'no-store' });
+      const body = await r.text();
+      const canon = body.match(/<link\s+rel="canonical"\s+href="([^"]+)"/);
+      assert(r.status === 200 && body.length <= 2048 && body.includes('data-game-moved') && /content="noindex"/.test(body) && !/<canvas\b/i.test(body),
+        `${game.id}: education origin does not serve a stub (HTTP ${r.status}, ${body.length} B)`);
+      assert(canon && /madebymatt-play\.uk$/.test(new URL(canon[1]).hostname), `${game.id}: education stub has no canonical to play`);
+    }
+    gate('live-education-stubs', `${GAMES.length} old addresses serve stubs with canonical → play`);
   }
 }
 

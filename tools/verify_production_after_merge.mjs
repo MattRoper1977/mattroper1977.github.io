@@ -15,7 +15,11 @@
  */
 import { chromium } from 'playwright';
 
-const BASE = process.env.MBM_PROD_BASE || 'https://madebymatt.uk';
+/* HC3 §1.1: games and the games home serve on the play origin; the pupil page
+   and the education stubs live on the education origin. Both are passed in. */
+const BASE = process.env.MBM_PROD_BASE || 'https://madebymatt-play.uk';
+const EDU = process.env.MBM_EDU_BASE || 'https://madebymatt.uk';
+const PLAY_HOSTS = ['madebymatt-play.uk', 'www.madebymatt-play.uk'];
 const ATTEMPTS = Number(process.env.MBM_ATTEMPTS || 8);
 const WAIT_MS = Number(process.env.MBM_WAIT_MS || 30000);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -102,68 +106,54 @@ try {
         [...document.querySelectorAll(`a[href="${h}"]`)].length, r);
       check(n === 1, `/games/ lists ${r} exactly once`, `${n} link(s)`);
     }
-    /* the canonical heading, asserted BY CODEPOINT */
-    const heading = await page.evaluate(() => {
-      const h = [...document.querySelectorAll('h1,h2,h3')]
-        .map(e => e.textContent.trim()).find(t => /top picks/i.test(t));
-      return h || null;
-    });
-    check(heading === "Made by Matt's Top Picks", `/games/ serves the canonical rail heading`,
-      JSON.stringify(heading));
-    const cps = [...(heading || '')].filter(c => c === "'" || c === '’')
-      .map(c => 'U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0'));
-    check(cps.length === 1 && cps[0] === 'U+0027',
-      `/games/ heading apostrophe is U+0027, by codepoint`, cps.join(',') || 'none');
+    /* HC3 §1.1. The "Top Picks" rail heading belonged to the education arcade,
+       which no longer carries games by ruling; the games home is the play home,
+       whose cards are static markup. Its heading must exist and be non-empty. */
+    const heading = await page.evaluate(() => (document.querySelector('h1') || {}).textContent?.trim() || null);
+    check(!!heading, `/games/ on the play origin serves a heading`, JSON.stringify(heading));
     await page.close();
   }
-
-  /* ---- the pupil page: heading, and its search finds both new games ------- */
+  /* ---- the education origin: stubs at the old addresses, pupil page links to play ---- */
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
-    await page.goto(BASE + '/for/pupils/', { waitUntil: 'networkidle', timeout: 60000 });
-    await page.waitForTimeout(1200);
-
-    const ph = await page.evaluate(() => {
-      const h = [...document.querySelectorAll('h1,h2,h3')]
-        .map(e => e.textContent.trim()).find(t => /top picks/i.test(t));
-      return h || null;
-    });
-    check(ph === "Made by Matt's Top Picks", `/for/pupils/ serves the canonical rail heading`,
-      JSON.stringify(ph));
-    const pcps = [...(ph || '')].filter(c => c === "'" || c === '’')
-      .map(c => 'U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0'));
-    check(pcps.length === 1 && pcps[0] === 'U+0027',
-      `/for/pupils/ heading apostrophe is U+0027, by codepoint`, pcps.join(',') || 'none');
-
-    for (const name of ['Apex Curl', 'Apex Velodrome']) {
-      await page.fill('[data-mbm-pupil-search]', '');
-      await page.type('[data-mbm-pupil-search]', name, { delay: 15 });
-      await page.waitForTimeout(400);
-      const found = await page.evaluate(t => {
-        const shown = [...document.querySelectorAll('.mf-pupil-game')].filter(c => !c.hidden);
-        const hit = shown.find(c => (c.querySelector('h3') || {}).textContent.trim() === t);
-        return { hit: !!hit, href: hit ? hit.querySelector('a[href]').getAttribute('href') : null };
-      }, name);
-      check(found.hit, `/for/pupils/ search finds "${name}" on production`, `route ${found.href}`);
-    }
-    await page.close();
-  }
-
-  /* ---- the two index entries resolve ------------------------------------- */
-  {
-    const r = await fetch(BASE + '/data/mbm-search-index.json');
-    const idx = await r.json();
     for (const route of NEW_ROUTES) {
-      const e = idx.entries.find(x => x.route === route);
-      check(!!e, `the search index carries an entry for ${route}`, e ? e.id : 'absent');
+      const r = await fetch(EDU + route, { redirect: 'follow' });
+      const body = await r.text();
+      const host = (u) => { try { return new URL(u).hostname; } catch (_) { return ''; } };
+      const canon = body.match(/<link\s+rel="canonical"\s+href="([^"]+)"/);
+      const link = [...body.matchAll(/<a\s+id="play-game"\s+href="([^"]+)"/g)];
+      const stub = r.status === 200 && body.length <= 2048 && body.includes('data-game-moved')
+        && /<meta\s+name="robots"\s+content="noindex"/.test(body) && !/<canvas\b/i.test(body)
+        && !!canon && PLAY_HOSTS.includes(host(canon[1])) && link.length === 1 && PLAY_HOSTS.includes(host(link[0][1]));
+      check(stub, `${route}: the education origin serves a stub (<=2 KB, noindex, canonical -> play)`,
+        `HTTP ${r.status}, ${body.length} B${canon ? '' : ', no canonical'}${link.length === 1 ? '' : ', link count ' + link.length}`);
+    }
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    await page.goto(EDU + '/for/pupils/', { waitUntil: 'networkidle', timeout: 60000 });
+    await page.waitForTimeout(800);
+    const pupil = await page.evaluate((hosts) => {
+      const anchors = [...document.querySelectorAll('a[href]')];
+      const host = (u) => { try { return new URL(u, location.href).hostname; } catch (_) { return ''; } };
+      return { play: anchors.filter(a => hosts.includes(host(a.href))).length,
+               games: anchors.filter(a => ['/apexcurl/', '/apexvelodrome/'].includes(a.getAttribute('href'))).length };
+    }, PLAY_HOSTS);
+    check(pupil.play >= 1 && pupil.games === 0, `/for/pupils/ links to the games origin and lists no game route`, JSON.stringify(pupil));
+    await page.close();
+  }
+  /* ---- the play catalogue carries both, and the education index carries neither ---- */
+  {
+    const cat = await (await fetch(BASE + '/data/domain-catalogue.json')).json();
+    for (const route of NEW_ROUTES) {
+      const e = (cat.games || []).find(x => (x.href || x.route) === route);
+      check(!!e, `the play catalogue carries ${route}`, e ? (e.title || e.id) : 'absent');
       if (e) {
-        const hit = await fetch(BASE + e.route, { method: 'GET' });
-        check(hit.status === 200, `and ${e.id} resolves to a live page`, `HTTP ${hit.status}`);
-        check(e.safeForPupils === true, `and ${e.id} is marked safeForPupils:true`);
+        const hit = await fetch(BASE + route, { method: 'GET', redirect: 'follow' });
+        check(hit.status === 200, `and ${route} resolves on the play origin`, `HTTP ${hit.status}`);
       }
     }
+    const idx = await (await fetch(EDU + '/data/mbm-search-index.json')).json();
+    const leaked = idx.entries.filter(x => NEW_ROUTES.includes(x.route) || x.category === 'game');
+    check(leaked.length === 0, `the education search index lists no game`, leaked.length ? leaked.slice(0, 3).map(x => x.route).join(' ') : `${idx.entries.length} entries, none a game`);
   }
-
   /* ---- P2: NOT ASSERTED, AND SAID SO -------------------------------------
      §C6.3 lists "the rewritten copy is live on all five audience pages". P2 is
      held RED under §3.9 — the 20-pair swap test returned 19/20 twice, and the
