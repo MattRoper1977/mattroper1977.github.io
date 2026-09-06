@@ -45,7 +45,7 @@
 'use strict';
 var $=function(s){return document.querySelector(s)};
 var hubs=[
- {href:'/games/',title:'Games',desc:'Browser games and simulations.'},
+ {href:'/games/',destination:'https://www.madebymatt-play.uk/',title:'Made by Matt Play',desc:'Open the Made by Matt games website.'},
  {href:'/Lessons/',title:'Lessons',desc:'BUILD, GROW and LAUNCH learning.'},
  {href:'/Matt-s-Apps-/',title:'Apps',desc:'Creative browser studios and apps.'},
  {href:'/tools/',title:'Tools',desc:'Practical Made by Matt utilities.'},
@@ -56,12 +56,12 @@ function map(){return MBMAccount.favouriteMap()||{}}
 function render(){
  var m=map(),grid=$('#favourites');grid.innerHTML='';
  hubs.forEach(function(h){var rec=m[h.href],saved=!!(rec&&rec.saved),card=document.createElement('article');card.className='ma-save-card';
-  var b=document.createElement('b');b.textContent=h.title;var span=document.createElement('span');span.textContent=h.desc;var a=document.createElement('a');a.href=h.href;a.textContent='Open '+h.title;var btn=document.createElement('button');btn.type='button';btn.className='ma-save';btn.setAttribute('aria-pressed',saved?'true':'false');btn.textContent=saved?'Saved ✓':'Save shortcut';
+  var b=document.createElement('b');b.textContent=h.title;var span=document.createElement('span');span.textContent=h.desc;var a=document.createElement('a');a.href=h.destination||h.href;a.textContent='Open '+h.title;var btn=document.createElement('button');btn.type='button';btn.className='ma-save';btn.setAttribute('aria-pressed',saved?'true':'false');btn.textContent=saved?'Saved ✓':'Save shortcut';
   btn.addEventListener('click',function(){var next=btn.getAttribute('aria-pressed')!=='true';btn.disabled=true;say(next?'Saving…':'Removing…');MBMAccount.setFavourite(h.href,h.title,next).then(function(){say(next?'Saved to your account.':'Removed from your account.','ok');render()}).catch(function(err){say(err.message,'err')}).finally(function(){btn.disabled=false})});
   card.append(b,span,a,btn);grid.appendChild(card);
  });
  var saved=MBMAccount.savedFavourites(),list=$('#savedList');list.innerHTML='';
- if(!saved.length){var p=document.createElement('p');p.textContent='No saved shortcuts yet.';list.appendChild(p)}else{var ul=document.createElement('ul');ul.className='ma-list';saved.forEach(function(x){var li=document.createElement('li'),a=document.createElement('a');a.href=x.href;a.textContent=x.title||x.href;li.appendChild(a);ul.appendChild(li)});list.appendChild(ul)}
+ if(!saved.length){var p=document.createElement('p');p.textContent='No saved shortcuts yet.';list.appendChild(p)}else{var ul=document.createElement('ul');ul.className='ma-list';saved.forEach(function(x){var li=document.createElement('li'),a=document.createElement('a');a.href=x.href==='/games/'?'https://www.madebymatt-play.uk/':x.href;a.textContent=x.href==='/games/'?'Made by Matt Play':(x.title||x.href);li.appendChild(a);ul.appendChild(li)});list.appendChild(ul)}
 }
 MBMAccount.subscribe(function(s){
  $('#membersLoading').hidden=s.ready;

@@ -112,6 +112,7 @@ jobs:
           node domain-split/check_primary_discovery.cjs || browser_status=1
           node domain-split/check_home_play_discovery.cjs || browser_status=1
           node domain-split/check_usage_discovery.cjs || browser_status=1
+          node domain-split/check_shared_navigation.cjs || browser_status=1
           exit "$browser_status"
       - name: Save navigation and print evidence
         if: always()

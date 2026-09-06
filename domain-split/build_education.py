@@ -21,6 +21,7 @@ from governors_discovery import refresh as refresh_governors
 from education_expansion import refresh as refresh_education_expansion
 from primary_discovery import refresh as refresh_primary
 from usage_discovery import refresh as refresh_usage
+from shared_navigation import refresh as refresh_navigation
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -263,6 +264,7 @@ def build(output, lessons, apps=None, allow_sparse=False):
         report['governors_discovery'] = {'resources': len(refresh_governors(output, lessons, apps, ROOT)['resources'])}
         report['education_expansion'] = refresh_education_expansion(output, lessons, apps, ROOT)
         report['usage'] = refresh_usage(output, lessons, apps, ROOT)
+        report['navigation'] = refresh_navigation(output, ROOT)
     for item in report['publications'].values():
         item['output_files'] = sum(p.is_file() for p in Path(item['root']).rglob('*'))
     write(output,'education-build-report.json',json.dumps(report,indent=2)+'\n')
