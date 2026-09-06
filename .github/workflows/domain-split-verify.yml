@@ -81,12 +81,11 @@ jobs:
           ua='Mozilla/5.0 (X11; Linux x86_64) made-by-matt-estate-check'
           real_code=$(curl -sS -o /tmp/kofi-real.html -w '%{http_code}' -L --max-time 30 -A "$ua" "$url" || echo 000)
           ctrl_code=$(curl -sS -o /tmp/kofi-control.html -w '%{http_code}' -L --max-time 30 -A "$ua" "https://ko-fi.com/this-page-does-not-exist-mbm-control-9f3a" || echo 000)
-          # grep exits 1 on no match; under pipefail that would abort the step before it
-          # reports, so the count is taken with the match status discarded.
-          real_hits=$({ grep -o -i -- "$handle" /tmp/kofi-real.html || true; } | wc -l)
-          ctrl_hits=$({ grep -o -i -- "$handle" /tmp/kofi-control.html || true; } | wc -l)
-          echo "real body $(wc -c < /tmp/kofi-real.html) bytes, title: $(grep -o -i '<title>[^<]*' /tmp/kofi-real.html | head -1 || true)"
-          echo "control body $(wc -c < /tmp/kofi-control.html) bytes, title: $(grep -o -i '<title>[^<]*' /tmp/kofi-control.html | head -1 || true)"
+          # Counted in Python, not with grep: grep exits 1 on no match, which under
+          # this shell's -e/pipefail ended the step silently before it could report.
+          real_hits=$(python3 tools/count_marker.py "$handle" /tmp/kofi-real.html)
+          ctrl_hits=$(python3 tools/count_marker.py "$handle" /tmp/kofi-control.html)
+          python3 tools/count_marker.py --describe /tmp/kofi-real.html /tmp/kofi-control.html
           echo "configured $url -> HTTP $real_code, handle '$handle' appears $real_hits time(s)"
           echo "control   -> HTTP $ctrl_code, handle appears $ctrl_hits time(s)"
           if [ "$real_code" != "200" ] || [ "$real_hits" -lt 1 ]; then echo "::error::the configured Ko-fi URL did not resolve to a page carrying the account handle"; exit 1; fi
