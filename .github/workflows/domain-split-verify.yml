@@ -55,7 +55,9 @@ jobs:
           cmp domain-split/game-saves.js assets/game-saves.js
           cmp domain-split/game-storage-allowlist.json data/game-storage-allowlist.json
       - name: Build education trees from complete source checkouts
-        run: python domain-split/build_education.py --lessons .sources/Lessons --apps .sources/Apps
+        run: |
+          python domain-split/build_education.py --self-test
+          python domain-split/build_education.py --lessons .sources/Lessons --apps .sources/Apps
       - name: Verify publication separation and retained education
         run: |
           python domain-split/check_publications.py

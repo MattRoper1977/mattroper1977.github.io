@@ -7,7 +7,7 @@ Site remains /, Lessons remains /Lessons/, Apps remains /Matt-s-Apps-/.
 from pathlib import Path
 from html.parser import HTMLParser
 from urllib.parse import unquote, urlparse, urljoin
-import argparse
+import argparse, sys
 import hashlib
 import json
 import re
@@ -58,13 +58,39 @@ def normal(value):
 def tracked(root):
     return subprocess.check_output(['git', '-C', str(root), 'ls-files', '-z'], text=True).split('\0')[:-1]
 
-def public_file(path):
+# The tools/ tree is excluded from every education publication (SKIP); these
+# are the ONLY files inside it that a published page fetches at runtime, named
+# one by one so a new tool never leaks by extension. HC3 §4.4: fourteen Art
+# Teesside decks fetch ../../tools/artsaward/SLOTS.json for the staff slot panel
+# and fell back to "Unconfirmed — preparation only" after the split.
+PUBLIC_TOOL_FILES = {'tools/index.html', 'tools/artsaward/SLOTS.json'}
+
+
+def public_file(path, public_tool_files=PUBLIC_TOOL_FILES):
     p = Path(path)
     if path in REVIEWED_ARCHIVE_DOCUMENTS: return True
-    if path == 'tools/index.html': return True  # public teacher-tools hub
+    if path in public_tool_files: return True  # the teacher-tools hub and the runtime data a deck fetches
     return (not any(x.startswith(('.', '_')) for x in p.parts)
             and p.parts[0] not in SKIP
             and (p.suffix.lower() in PUBLIC or p.name in {'CNAME', 'LICENSE'}))
+
+
+def self_test():
+    """§0.4: the allowlist admits exactly what it names, and can be seen to refuse."""
+    ok = True
+    def control(name, passed, detail=''):
+        nonlocal ok; ok = ok and passed
+        print(f"  [{'ok' if passed else 'FAIL'}] {name}{'  — ' + detail if detail else ''}")
+    control('run 1: tools/artsaward/SLOTS.json is public', public_file('tools/artsaward/SLOTS.json'))
+    control('run 1: the teacher-tools hub is public', public_file('tools/index.html'))
+    control('run 1: a lesson is public', public_file('Art_Teesside/Launch/START_HERE.html'))
+    control('run 2: a sibling tool file is NOT public by extension', not public_file('tools/artsaward/BRONZE_PLAN.json'))
+    control('run 2: a tool script is NOT public', not public_file('tools/artsaward/build.py'))
+    control('run 2: a tools directory index other than the hub is NOT public', not public_file('tools/artsaward/index.html'))
+    control('run 3: with SLOTS.json removed from the allowlist the same path is refused (the rule, not the extension, admits it)',
+            not public_file('tools/artsaward/SLOTS.json', public_tool_files={'tools/index.html'}))
+    print('self-test', 'PASS' if ok else 'FAIL')
+    return ok
 
 def write(root, relative, text):
     p = root / relative
@@ -297,6 +323,7 @@ def build(output, lessons, apps=None, allow_sparse=False):
     return report
 
 if __name__=='__main__':
+    if '--self-test' in sys.argv: raise SystemExit(0 if self_test() else 1)
     ap=argparse.ArgumentParser();ap.add_argument('--lessons',type=Path,required=True);ap.add_argument('--apps',type=Path);ap.add_argument('--output',type=Path,default=HERE/'output');ap.add_argument('--allow-sparse',action='store_true');a=ap.parse_args()
     r=build(a.output.resolve(),a.lessons.resolve(),a.apps.resolve() if a.apps else None,a.allow_sparse)
     print(json.dumps({'status':r['status'],'publications':{k:{a:b for a,b in v.items() if not isinstance(b,list)} for k,v in r['publications'].items()},'missing_source_files':len(r['missing_source_files'])},indent=2))
