@@ -19,7 +19,9 @@ fs.mkdirSync(output, { recursive: true });
       await page.locator('#custom-resources').waitFor();
       assert.match(await page.locator('#custom-resources').innerText(), /£5[\s\S]*£10/);
       assert.match(await page.locator('#about').innerText(), /Made by a teacher, for real classrooms/);
-      assert.equal(await page.locator('[data-mbm-support-footer]').count(), 1);
+      // HC3 §8: the home page is a pupil entry, so the injected support footer is
+      // gone from it; the £5/£10 commissioning copy above is Matt's own and held.
+      assert.equal(await page.locator('[data-mbm-support-footer]').count(), 0);
       const cover = page.locator('.learning-shortcuts a[href*="David_Cover_Autumn1_W3-W7"]');
       assert.equal(await cover.innerText(), 'Cover teaching packs');
       assert(await page.locator('[data-mbm-navigation="education"] img').first().evaluate(e => e.complete && e.naturalWidth > 0));
