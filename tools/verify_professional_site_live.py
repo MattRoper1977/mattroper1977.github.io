@@ -95,8 +95,26 @@ PAGE_MARKERS: dict[str, tuple[str, ...]] = {
 
 # The education publication replaces these front doors after source generation.
 # Historical/manual callers retain the legacy contract unless they opt in.
+# Shared statistics use the publication's own shell and runtime. These are
+# structural hooks owned by usage_discovery.py, not claims of recorded totals.
+# The original device-local page remains reachable at its explicit legacy route.
+EDUCATION_STATS_MARKERS = (
+    '<title>Shared usage statistics · Made by Matt</title>',
+    'class="usage-shell"', 'class="usage-shell-header"',
+    '<link rel="stylesheet" href="/assets/usage.css">',
+    '<script defer src="/assets/usage-client.js"></script>',
+    'data-usage-popularity="education"',
+    'data-usage-list="lessons"', 'data-usage-list="packs"', 'data-usage-list="games"',
+    'data-usage-period', 'value="last30days"', 'value="alltime"',
+    'data-usage-measured-since', 'data-usage-choice="deny"',
+    'data-usage-choice-status', 'href="/privacy/#shared-usage"',
+    'href="/stats/on-this-device/"',
+)
+
 EDUCATION_PAGE_MARKERS = {
     **PAGE_MARKERS,
+    "/stats/": EDUCATION_STATS_MARKERS,
+    "/stats/on-this-device/": PAGE_MARKERS["/stats/"],
     "/": ('<title>Find your next lesson · Made by Matt</title>',
           '<h1 tabindex="-1">Find your next lesson.</h1>',
           'data-site-kind="education" data-page="home"',
@@ -126,6 +144,14 @@ ASSETS: dict[str, Path] = {
     # which reaches for this file rather than the copy in its own repo. Compared
     # byte-for-byte with source, exactly as the platform assets are.
     "/theme.js": Path("theme.js"),
+}
+
+# These two generated-publication assets are copied byte-for-byte from the
+# builder sources. A correct script tag alone does not prove a working runtime.
+EDUCATION_ASSETS = {
+    **ASSETS,
+    "/assets/usage.css": Path("domain-split/usage.css"),
+    "/assets/usage-client.js": Path("domain-split/usage-client.js"),
 }
 
 JSON_SURFACES = (
@@ -222,7 +248,8 @@ def verify_once(
             errors.append(f"{path}: request failed: {exc}")
             pages[path] = {"error": str(exc)}
 
-    for path, local_path in ASSETS.items():
+    asset_paths = EDUCATION_ASSETS if publication == "education" else ASSETS
+    for path, local_path in asset_paths.items():
         expected = local_path.read_bytes()
         try:
             status, headers, body, final_url = fetch(base, path, nonce, timeout)
