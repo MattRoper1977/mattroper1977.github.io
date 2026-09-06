@@ -222,6 +222,7 @@ class ProfessionalStatsControls(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         import importlib.util
+        import re
         import verify_professional_site_live as professional
         spec = importlib.util.spec_from_file_location(
             'stats_fixture_builder', professional.ROOT / 'domain-split/usage_discovery.py')
@@ -233,6 +234,18 @@ class ProfessionalStatsControls(unittest.TestCase):
             builder.popularity() + builder.preferences() +
             '<p class="mbm-usage"><a href="/stats/on-this-device/">'
             'View legacy counts stored on this device</a></p>')
+        nav_spec = importlib.util.spec_from_file_location(
+            'stats_fixture_navigation', professional.ROOT / 'domain-split/shared_navigation.py')
+        navigation = importlib.util.module_from_spec(nav_spec)
+        nav_spec.loader.exec_module(navigation)
+        # The publication applies shared navigation after the stats renderer.
+        # Exercise that actual header too, rather than retaining its old shell.
+        cls.shared_stats = re.sub(r'<header\b[^>]*>.*?</header>',
+            lambda _: navigation.header('/stats/', [('/', 'Homepage')], adult=True),
+            cls.shared_stats, count=1, flags=re.S)
+        cls.shared_stats = cls.shared_stats.replace('</head>',
+            '<link rel="stylesheet" href="/assets/shared-navigation.css">'
+            '<script defer src="/assets/shared-navigation.js"></script></head>', 1)
         cls.legacy_stats = (professional.ROOT / 'stats/index.html').read_text()
 
     def evaluate_stats(self, markup, *, publication='education', broken_asset=None):
@@ -283,7 +296,8 @@ class ProfessionalStatsControls(unittest.TestCase):
     def test_missing_stats_runtime_lists_or_measurement_status_fail(self):
         for marker in ['<script defer src="/assets/usage-client.js"></script>',
                        'data-usage-list="lessons"', 'data-usage-list="packs"',
-                       'data-usage-list="games"', 'data-usage-measured-since']:
+                       'data-usage-measured-since', 'class="mbm-unified-header"',
+                       '<script defer src="/assets/shared-navigation.js"></script>']:
             with self.subTest(marker=marker):
                 self.assertIn(marker, self.shared_stats)
                 result = self.evaluate_stats(self.shared_stats.replace(marker, '', 1))
@@ -291,11 +305,36 @@ class ProfessionalStatsControls(unittest.TestCase):
                 self.assertIn(marker, result['pages']['/stats/']['missing_markers'])
                 self.assertTrue(all(error.startswith('/stats/:') for error in result['errors']))
 
+    def test_reintroduced_game_rankings_or_promotions_fail(self):
+        for markup, forbidden in [
+            ("<div data-usage-list='games'></div>", 'data-usage-list="games"'),
+            ('<section data-usage-popularity="play"></section>', 'data-usage-popularity="play"'),
+            ('<article class="featured mbm-play-card"></article>', 'mbm-play-card'),
+            ('<section class="mbm-play-showcase"></section>', 'mbm-play-showcase'),
+            ('<a data-play-resource="game-apex-kick" href="#">Play</a>', 'data-play-resource'),
+            ('<a href="https://www.madebymatt-play.uk/apexkick/">Apex Kick</a>',
+             'individual Play promotion: https://www.madebymatt-play.uk/apexkick/'),
+        ]:
+            with self.subTest(markup=markup):
+                result = self.evaluate_stats(self.shared_stats.replace('</main>', markup + '</main>', 1))
+                self.assertFalse(result['passed'])
+                self.assertEqual(result['pages']['/stats/']['missing_markers'], [])
+                self.assertIn(forbidden, result['pages']['/stats/']['forbidden_markers'])
+                self.assertTrue(all(error.startswith('/stats/:') for error in result['errors']))
+
+    def test_discreet_play_link_and_save_guidance_remain_allowed(self):
+        markup = ('<p><a href="https://www.madebymatt-play.uk/">Made by Matt Play</a>'
+                  '<a href="https://www.madebymatt-play.uk/game-saves/">Transfer saves</a></p>')
+        result = self.evaluate_stats(self.shared_stats.replace('</main>', markup + '</main>', 1))
+        self.assertTrue(result['passed'], result['errors'])
+
     def test_correct_stats_markup_cannot_hide_broken_served_runtime(self):
-        result = self.evaluate_stats(self.shared_stats, broken_asset='/assets/usage-client.js')
-        self.assertFalse(result['passed'])
-        self.assertFalse(result['assets']['/assets/usage-client.js']['identical'])
-        self.assertEqual(result['pages']['/stats/']['missing_markers'], [])
+        for asset in ['/assets/usage-client.js', '/assets/shared-navigation.js']:
+            with self.subTest(asset=asset):
+                result = self.evaluate_stats(self.shared_stats, broken_asset=asset)
+                self.assertFalse(result['passed'])
+                self.assertFalse(result['assets'][asset]['identical'])
+                self.assertEqual(result['pages']['/stats/']['missing_markers'], [])
 
     def test_legacy_mode_keeps_its_original_stats_contract(self):
         result = self.evaluate_stats(self.legacy_stats, publication='legacy')

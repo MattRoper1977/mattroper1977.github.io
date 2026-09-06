@@ -33,6 +33,11 @@ jobs:
           node --check theme.js
           git diff --check origin/main...HEAD
 
+      - name: Verify publication provenance and live-check contracts offline
+        run: |
+          python3 -m py_compile tools/verify_professional_site_live.py tools/prepare_published_site.py
+          python3 tools/test_published_site.py
+
       # theme.js is the canonical reading-theme engine for the whole estate, and
       # the homepage carries its own separate implementation of it. Scoped to
       # what this repository owns on purpose: Lessons and Apps gate their own

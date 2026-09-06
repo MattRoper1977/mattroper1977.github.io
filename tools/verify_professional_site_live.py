@@ -14,10 +14,11 @@ import html
 import json
 import sys
 import time
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urlencode, urljoin, urlparse
 from urllib.request import Request, urlopen, HTTPRedirectHandler, build_opener
 
 DEFAULT_BASE = "https://madebymatt.uk/"
@@ -98,18 +99,24 @@ PAGE_MARKERS: dict[str, tuple[str, ...]] = {
 # Shared statistics use the publication's own shell and runtime. These are
 # structural hooks owned by usage_discovery.py, not claims of recorded totals.
 # The original device-local page remains reachable at its explicit legacy route.
+EDUCATION_NAVIGATION_MARKERS = (
+    'class="mbm-unified-header"', 'data-mbm-navigation="education"',
+    'class="mbm-unified-menu"', 'id="mbm-navigation-panel"',
+    '<link rel="stylesheet" href="/assets/shared-navigation.css">',
+    '<script defer src="/assets/shared-navigation.js"></script>',
+)
 EDUCATION_STATS_MARKERS = (
     '<title>Shared usage statistics · Made by Matt</title>',
-    'class="usage-shell"', 'class="usage-shell-header"',
+    'class="usage-shell"',
     '<link rel="stylesheet" href="/assets/usage.css">',
     '<script defer src="/assets/usage-client.js"></script>',
     'data-usage-popularity="education"',
-    'data-usage-list="lessons"', 'data-usage-list="packs"', 'data-usage-list="games"',
+    'data-usage-list="lessons"', 'data-usage-list="packs"',
     'data-usage-period', 'value="last30days"', 'value="alltime"',
     'data-usage-measured-since', 'data-usage-choice="deny"',
     'data-usage-choice-status', 'href="/privacy/#shared-usage"',
     'href="/stats/on-this-device/"',
-)
+) + EDUCATION_NAVIGATION_MARKERS
 
 EDUCATION_PAGE_MARKERS = {
     **PAGE_MARKERS,
@@ -133,8 +140,17 @@ EDUCATION_PAGE_MARKERS = {
                     'src="/assets/domain-site.js"', 'id="pupil-search"'),
     "/games/": ('<title>This game has moved · Made by Matt</title>',
                'data-game-moved', '<h1>This game has moved</h1>',
-               '<a id="play-game" href="https://madebymatt-play.uk/">'),
+               '<a id="play-game" href="https://www.madebymatt-play.uk/">'),
 }
+# These publication headers supersede the legacy source header. Keep every
+# other page/runtime/theme assertion, and require the actual shared menu.
+for _route in ("/", "/main/", "/for/teachers/", "/for/pupils/", "/tools/",
+               "/resources/", "/members/", "/privacy/", "/Lessons/", "/Matt-s-Apps-/"):
+    EDUCATION_PAGE_MARKERS[_route] = tuple(
+        marker for marker in EDUCATION_PAGE_MARKERS[_route]
+        if marker not in {'mbm-site-header', 'aria-current="page">Tools'}
+    ) + EDUCATION_NAVIGATION_MARKERS
+EDUCATION_PAGE_MARKERS["/tools/"] += ('aria-current="page">Teacher tools',)
 
 ASSETS: dict[str, Path] = {
     "/assets/mbm-platform.css": Path("assets/mbm-platform.css"),
@@ -152,6 +168,8 @@ EDUCATION_ASSETS = {
     **ASSETS,
     "/assets/usage.css": Path("domain-split/usage.css"),
     "/assets/usage-client.js": Path("domain-split/usage-client.js"),
+    "/assets/shared-navigation.css": Path("domain-split/shared-navigation.css"),
+    "/assets/shared-navigation.js": Path("domain-split/shared-navigation.js"),
 }
 
 JSON_SURFACES = (
@@ -170,6 +188,34 @@ HOME_FORBIDDEN = (
     'id="mbmAccountBtn"',
     'type="password"',
 )
+
+
+def education_promotions(text: str, *, migration: bool = False) -> list[str]:
+    """Reject real promotional markup without matching explanatory copy/CSS."""
+    class Promotions(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.found: list[str] = []
+
+        def handle_starttag(self, tag, attributes):
+            attrs = dict(attributes)
+            for name, value in [('data-usage-list', 'games'),
+                                ('data-usage-popularity', 'play')]:
+                if attrs.get(name) == value:
+                    self.found.append(f'{name}="{value}"')
+            if 'data-play-resource' in attrs:
+                self.found.append('data-play-resource')
+            self.found.extend(sorted(set(attrs.get('class', '').split()) &
+                                     {'mbm-play-showcase', 'mbm-play-card'}))
+            if tag == 'a' and not migration:
+                url = urlparse(attrs.get('href', ''))
+                if (url.hostname in {'madebymatt-play.uk', 'www.madebymatt-play.uk'}
+                        and url.path.rstrip('/') not in {'', '/game-saves'}):
+                    self.found.append('individual Play promotion: ' + attrs['href'])
+
+    parser = Promotions()
+    parser.feed(text)
+    return list(dict.fromkeys(parser.found))
 
 
 def sha256(data: bytes) -> str:
@@ -226,6 +272,8 @@ def verify_once(
                 markers.append(extra_home_marker)
             missing = [marker for marker in markers if marker not in text]
             forbidden = [marker for marker in HOME_FORBIDDEN if path == "/" and marker in text]
+            if publication == "education":
+                forbidden += education_promotions(text, migration=path == "/games/")
             content_type = headers.get("Content-Type", headers.get("content-type", ""))
             if status != 200:
                 errors.append(f"{path}: expected HTTP 200, received {status}")
@@ -234,7 +282,7 @@ def verify_once(
             if missing:
                 errors.append(f"{path}: missing markers {missing}")
             if forbidden:
-                errors.append(f"{path}: forbidden obsolete authentication markers {forbidden}")
+                errors.append(f"{path}: forbidden page markers {forbidden}")
             pages[path] = {
                 "status": status,
                 "bytes": len(body),
