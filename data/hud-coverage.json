@@ -26,6 +26,24 @@
    ]
   },
   {
+   "route": "/apexgolf/",
+   "verifier": "tools/verify_apexgolf.js",
+   "gates": [
+    "single-file: zero script-src dependencies",
+    "zero runtime network requests"
+   ],
+   "note": "Apex Golf V6 is a self-contained one-file game. The generated inline exit preserves that contract while restoring the platform way out omitted by the received payload."
+  },
+  {
+   "route": "/apextennis/",
+   "verifier": "tools/verify_apextennis.js",
+   "gates": [
+    "zero external runtime requests",
+    "single-file size and source identity"
+   ],
+   "note": "Apex Tennis V6 is a self-contained one-file game. The generated inline exit adds no dependency and restores the platform way out omitted by the received payload."
+  },
+  {
    "route": "/apexrally/",
    "verifier": "tools/verify_apexrally.js",
    "gates": [
@@ -52,6 +70,18 @@
     "no-script-src",
     "sentinel-near-file-end"
    ]
+  },
+  {
+   "route": "/cyberpulse/",
+   "verifier": "tools/cyberpulse/verify.mjs",
+   "gates": [
+    "single self-contained HTML file with zero http(s) runtime references, checked in source and in the network log at boot",
+    "one canonical V6 identity across title, kicker, VERSION and the release record",
+    "browser zoom enabled and exactly one visible semantic h1",
+    "the WebGL2 renderer and Canvas fallback are both proved at runtime, including the explicit ?renderer=2d hatch",
+    "the generated inline exit region remains above the maker splash and keyboard reachable"
+   ],
+   "note": "CYBERPULSE: BLACKOUT is an authored local-first single-file game carrying no external script, so <script src=\"/hud.js\"> would retract the single-file promise rather than merely trip a check. It is also the visual donor of the estate maker splash; tools/render_maker_splash.py carries a named strip_legacy branch for its original in-file handlers. The generated inline exit supplies the estate way out without retracting that boundary; the named verifier checks the declaration, both renderers, the rendered control and the fallback."
   },
   {
    "route": "/echovault/",
@@ -115,11 +145,67 @@
    "note": "Added at launch, 2026-08-11, on the same basis as /neonmeridian/. Its only off-origin string is <link rel=canonical>, which is metadata and never fetched."
   },
   {
-   "route": "/relicforge/",
-   "verifier": "tools/verify_relicforge.js",
+   "route": "/offbrand/",
+   "verifier": "tools/verify_v4_games_deployment.mjs",
    "gates": [
-    "G1 single file, single script, no dependency"
-   ]
+    "single self-contained V4 payload with zero script src dependencies",
+    "generated inline way out is keyboard- and touch-reachable"
+   ],
+   "note": "The authoritative After Hours V4 Milestone 2 payload is a self-contained offline game. The generated inline exit preserves that contract without adding a runtime dependency."
+  },
+  {
+   "route": "/trailrunner/",
+   "verifier": "tools/verify_v4_games_deployment.mjs",
+   "gates": [
+    "single self-contained V4 payload with zero script src dependencies",
+    "generated inline way out is keyboard- and touch-reachable"
+   ],
+   "note": "Stormbreak V4 embeds its renderer and assets. The generated inline exit keeps the route offline-first and adds no request."
+  },
+  {
+   "route": "/apexkick/",
+   "verifier": "tools/verify_v4_games_deployment.mjs",
+   "gates": [
+    "single self-contained AAA V4 payload with zero script src dependencies",
+    "generated inline way out is keyboard- and touch-reachable"
+   ],
+   "note": "World Stage AAA V4 is delivered as a standalone one-file game; its way out remains inline rather than introducing /hud.js."
+  },
+  {
+   "route": "/auroralinks/",
+   "verifier": "tools/verify_v4_games_deployment.mjs",
+   "gates": [
+    "zero-dependency standalone AAA V4 payload",
+    "generated inline way out and non-destructive legacy round migration"
+   ],
+   "note": "Northern Lights Tour AAA V4 embeds both runtime and renderer. The inline exit adds no request, and the focused verifier also exercises the legacy round-save upgrade."
+  },
+  {
+   "route": "/houseolympiad/",
+   "verifier": "tools/verify_v4_games_deployment.mjs",
+   "gates": [
+    "single self-contained Sports V4 dashboard with canonical route links",
+    "generated inline way out is keyboard- and touch-reachable"
+   ],
+   "note": "House Olympiad is a self-contained local dashboard. Its canonical discipline links and inline exit need no runtime shell dependency."
+  },
+  {
+   "route": "/olympics/",
+   "verifier": "tools/verify_v4_games_deployment.mjs",
+   "gates": [
+    "single self-contained World Stage V4 payload with zero script src dependencies",
+    "generated inline way out is keyboard- and touch-reachable"
+   ],
+   "note": "Global Games World Stage V4 remains a one-file offline release; the inline exit retains that boundary."
+  },
+  {
+   "route": "/relicforge/",
+   "verifier": "tools/verify_v4_games_deployment.mjs",
+   "gates": [
+    "single self-contained Crownfall V4 Milestone 2 payload with zero script src dependencies",
+    "generated inline way out is keyboard- and touch-reachable"
+   ],
+   "note": "Crownfall V4 Milestone 2 retains Relic Forge's existing inline-exit contract under the focused eight-game verifier."
   },
   {
    "route": "/titanforge/",
@@ -148,7 +234,35 @@
     "boot, input and local save/restore in Chromium, Firefox and WebKit"
    ],
    "note": "Declared at launch. Town Life is an authored local-first single-file game with no external runtime dependency. The generated inline exit supplies the estate way out without retracting that boundary; the named verifier checks the declaration and the rendered control."
-  }
+  },
+  {
+   "route": "/touchline/",
+   "verifier": "tools/verify_touchline.mjs",
+   "gates": [
+    "TG1 WebGL2 refused: the game boots, plays a fixture and saves on the named canvas fallback",
+    "TG2 worker clock: no scheduler depends on the snapshot tick modulo",
+    "TG3 career round trip by value, in both IndexedDB and the localStorage fallback",
+    "TG4 reduced motion changes rendered output, proven against a negative control",
+    "TG5 paired AB/BA performance deltas, reported with spread and the power of the test",
+    "TG6 one announcement per event, 44px targets in portrait, exit clear of game controls",
+    "TG7 every gate above shown failing on a tampered copy"
+   ],
+   "note": "A single-file football management and match simulation: one inline script block, zero external references of any kind, so a <script src=\"/hud.js\"> tag would retract the promise the file makes and the generated inline exit region carries the way out instead. Tab is not bound as a game key - proven by a real Tab walk reaching eight distinct focus targets in twelve presses and the exit control in one, not by reading the handler, because reading the handler is exactly what missed the /emberwild/ case."
+  },
+  {
+   "route": "/skybreak/",
+   "verifier": "tools/verify_skybreak.mjs",
+   "gates": [
+    "SG1 WebGL2 path renders; the WebGL 2 needed panel appears under a forced-null context",
+    "SG2 menu idle: zero animation frames after the menu paint; the loop resumes on Launch and on Resume; a resize repaints once",
+    "SG3 runSelfTests() clean and window.__SKYBREAK_TEST__ retained",
+    "SG4 generated splash: first load, 24 h suppression, reduced motion",
+    "SG5 exit reachable by keyboard, one rendered h1, 44 px targets, aria-live, zero duplicate ids, zoom enabled",
+    "SG6 zero non-same-origin requests including the Local Link fold and QR (iceServers:[])",
+    "SG7 real-input playability: launch, one air target destroyed, mission ends with a rank, profile persists"
+   ],
+   "note": "Declared at launch. Skybreak Vector is a single-file WebGL 2 flight-combat game with an optional phone HOTAS over local WebRTC (iceServers:[], no relay). The generated inline exit supplies the estate way out without retracting that boundary; the named verifier checks the declaration and the rendered control."
+   }
  ],
  "_amendedWhy": "THE LEDGER HAD TWO CATEGORIES AND NEEDED THREE. It measured the games it DECLINED to wire and listed them under `excluded`. It did not check whether any of the ten it DID wire carried the same single-file contract. apexgolf did: verify_apexgolf.js G17 asserted `no <script src> at all`, so the Stage 2B line broke it on 10 August 2026 and it stayed red for fifteen days - invisible, because a `grep | wc -l` step under `pipefail` in apexgolf-verify.yml died before the verifier ever ran, and the workflow is pull_request-only and filtered. Two faults, one day, and the noisy one hid the real one. Found by Order T's estate census, 25 August 2026. This list is the third category: wired, contract retained, verifier amended to say so.",
  "amended": [
@@ -202,6 +316,9 @@
   "_state": "Application census resolved against route-owned before/after verifiers: thirty-one Site routes are declined on unchanged exact assertions; every remaining applied route is generator-owned pending browser-matrix confirmation.",
   "applied": [
    {
+    "route": "/cyberpulse/"
+   },
+   {
     "route": "/echovault/"
    },
    {
@@ -221,6 +338,36 @@
    },
    {
     "route": "/novasiege/"
+   },
+   {
+    "route": "/offbrand/"
+   },
+   {
+    "route": "/trailrunner/"
+   },
+   {
+    "route": "/apexkick/"
+   },
+   {
+    "route": "/auroralinks/"
+   },
+   {
+    "route": "/houseolympiad/"
+   },
+   {
+    "route": "/olympics/"
+   },
+   {
+    "route": "/relicforge/"
+   },
+   {
+    "route": "/voxel/"
+    },
+    {
+     "route": "/touchline/"
+   },
+    {
+     "route": "/skybreak/"
    }
   ],
   "declined-with-reason": [
@@ -235,10 +382,6 @@
    {
     "route": "/apexgolf/",
     "reason": "tools/verify_maker_splash.mjs — exact runtime assertion SS5: forced and suppressed first-paint content geometry match at 1280×800 (observed after-application failure: false)"
-   },
-   {
-    "route": "/apexkick/",
-    "reason": "tools/verify_maker_splash.mjs via titan-crown launch contract — exact runtime assertion: after forced dismissal focus equals the primary start control at both viewports (observed at 390×844: active #mbmSplash SECTION; expected #bPlay BUTTON)"
    },
    {
     "route": "/apexpool/",
@@ -261,16 +404,12 @@
     "reason": "tools/verify_maker_splash.mjs — exact runtime assertion: the way-out control is reachable within 30 Tab presses and Enter leaves the route (observed 31 presses, not reached, URL unchanged)"
    },
    {
-    "route": "/auroralinks/",
-    "reason": "tools/verify_maker_splash.mjs — exact runtime assertion: Enter activates the focused way-out control and leaves the game route (observed after one Tab: #mbmhud-back focused, URL unchanged)"
-   },
-   {
     "route": "/biopunkhive/",
     "reason": "tools/verify_biopunkhive.js plus tools/biopunkhive.sha256 — exact assertion: the shipped route remains byte-identical to its pinned provenance (observed after-application failure: biopunkhive/index.html: FAILED)"
    },
    {
     "route": "/emberwild/",
-    "reason": "tools/verify_emberwild.js — exact assertions G3s storage access is confined to the game helper and G3 permits no stray storage key (observed after-application failure: stray key mbm_splash_last)"
+    "reason": "Emberwild carries its own in-file introduction on the shared mbm_splash_last key (tools/verify_emberwild.js admits that key alone since #235, merged 2026-09-02 as 9966c91b), but not the canon-stamped region: render_maker_splash.py --check reports it missing. The earlier reason here, a G3 stray-key failure, stopped being true at #235. Stamping the region is the #219 carve-out, closed as superseded and deferred to the Emberwild upgrade; until then this route stays declined so the canon cannot report a block it never wrote."
    },
    {
     "route": "/crownbadge/",
@@ -317,14 +456,6 @@
     "reason": "tools/verify_inline_exit.mjs — exact runtime assertion: the stored-homepage control is reachable by a real Tab walk at 390px, 768px and 1440px (observed after-application failure: presses null at all three viewports after the required splash focus handoff)"
    },
    {
-    "route": "/olympics/",
-    "reason": "tools/verify_maker_splash.mjs — exact runtime assertion SS7: ?splash=skip never paints a Made by Matt layer (observed after-application failure: suppressedSeen true at 390×844 and 1280×800)"
-   },
-   {
-    "route": "/relicforge/",
-    "reason": "tools/verify_maker_splash.mjs — exact runtime assertion: a forced key-dismissed splash remains visible for at least 280 ms in the two-frame-tolerant route matrix (observed 261.2 ms at 1280×800)"
-   },
-   {
     "route": "/resources/",
     "reason": "tools/verify_maker_splash.mjs — exact runtime assertions: the way-out is reachable within 30 Tab presses, Enter leaves the route, and the path has zero console errors (observed 31 presses, URL unchanged, same-origin 404 console error)"
    },
@@ -343,10 +474,6 @@
    {
     "route": "/uas/",
     "reason": "tools/verify_maker_splash.mjs — exact runtime assertion: the way-out control is reachable within 30 Tab presses and Enter leaves the route (observed 31 presses, not reached, URL unchanged)"
-   },
-   {
-    "route": "/voxel/",
-    "reason": "tools/townlife/benchmark.mjs — exact runtime assertions: the Click to Play control starts Voxel, #start becomes Resume, and the HUD reaches view 3 (observed after-application failure: page.waitForFunction timed out at the start-state assertion in all three rounds)"
    }
   ],
   "variant-retained-with-reason": []

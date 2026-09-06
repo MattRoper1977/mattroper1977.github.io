@@ -60,7 +60,7 @@ function audit(html,quiet){
   let hb=BH.fresh(1000000);hb.state.stasisAnchor=1000;let b0=BH.condensateBanked(4000,hb.state.stasisAnchor,9999);hb=BH.heartbeat(hb,5000);hb=BH.heartbeat(hb,6000);hb=BH.heartbeat(hb,7000);let b1=BH.condensateBanked(7000,hb.state.stasisAnchor,9999);
   push('three-heartbeats-preserve-anchor',hb.state.stasisAnchor===1000,`${hb.state.stasisAnchor}`);
   push('banked-seconds-rise-through-heartbeats',b1>b0,`${b0} → ${b1}`);
-  push('manual-siphon-minimum-60s',BH.C.STASIS_MIN===60&&/secs<C\.STASIS_MIN/.test(html));
+  push('manual-siphon-minimum-60s',BH.C.STASIS_MIN===60&&/secs<C\.STASIS_MIN/.test(html)); // NOT LIVE: 60 is the game-design siphon minimum in seconds, not a shelf count.
   push('stasis-cap-8-to-24-hours',BH.stasisCapSeconds(0)===8*3600&&BH.stasisCapSeconds(4)===24*3600);
   push('stasis-efficiency-50-to-100-percent',BH.stasisEfficiency(0)===.5&&BH.stasisEfficiency(4)===1);
 

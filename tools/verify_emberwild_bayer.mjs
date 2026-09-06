@@ -106,9 +106,22 @@ try {
   const sha = createHash('sha256').update(fs.readFileSync(path.join(ROOT, 'emberwild/index.html'))).digest('hex');
   console.log(`      emberwild/index.html now ${sha.slice(0, 24)}… (${fs.statSync(path.join(ROOT, 'emberwild/index.html')).size} B)`);
   console.log('      started from the ordered pin 4a31c182738171b7…, 304,378 B');
+  // Order SC1 §4.4 (2026-09-02) retired the single 409,600 B raw ceiling for
+  // this title in favour of a per-title budget: what a child downloads is the
+  // gzipped wire size (GitHub Pages serves gzip), and the cost a large single
+  // file really carries is parse time on a low-end phone, which gzip does not
+  // relieve. Raw 512,000 B and wire 160,000 B are asserted here; the parse
+  // budget (at most 2x the estate median long-task total at 6x CPU throttle,
+  // 316 ms against a 842 ms line when ruled) is a browser measurement recorded
+  // in docs/EMBERWILD_BUDGET.md, not a static check.
+  const RAW_BUDGET = 512000, WIRE_BUDGET = 160000;
   const size = fs.statSync(path.join(ROOT, 'emberwild/index.html')).size;
-  check(size <= 409600, 'the file stays under the 409,600 B ceiling',
-    `${size} B, headroom ${409600 - size} B`);
+  const { gzipSync } = await import('node:zlib');
+  const wire = gzipSync(fs.readFileSync(path.join(ROOT, 'emberwild/index.html')), { level: 6 }).length;
+  check(size <= RAW_BUDGET, `raw bytes within the ${RAW_BUDGET.toLocaleString('en-GB')} B title budget`,
+    `${size} B, headroom ${RAW_BUDGET - size} B`);
+  check(wire <= WIRE_BUDGET, `gzip wire bytes within the ${WIRE_BUDGET.toLocaleString('en-GB')} B title budget`,
+    `${wire} B gzipped (${(100 * wire / size).toFixed(1)}% of raw), headroom ${WIRE_BUDGET - wire} B`);
   check(/clipPath\)/.test(src) && /ctx\.clip\(\)/.test(src),
     'R10: the dither is clipped to a path the caller supplies');
 

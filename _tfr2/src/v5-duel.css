@@ -1,0 +1,45 @@
+  /* TFR2 P4 — LAN duel (WebRTC DataChannel, manual signalling, no server). */
+  .mbm-v5-duel-dialog .mbm-v4-dna-panel{width:min(560px,100%)}
+  .mbm-v5-duel-dialog .mbm-v4-dna-head{padding-left:max(14px,calc(58px + env(safe-area-inset-left)))}
+  .mbm-v5-duel-dialog .mbm-v4-dna-scroll{padding:10px 10px 14px}
+  .mbm-v5-step{display:grid;gap:8px}.mbm-v5-step[hidden]{display:none!important}
+  .mbm-v5-step p{margin:0;color:#aab5c3;font:800 10px/1.4 system-ui,sans-serif;letter-spacing:.03em}
+  .mbm-v5-step label{display:grid;gap:4px;color:#75f3c4;font:900 9px/1 system-ui,sans-serif;letter-spacing:.14em}
+  .mbm-v5-step input,.mbm-v5-step textarea{box-sizing:border-box;width:100%;min-height:44px;padding:9px 10px;color:#eef7ff;background:#0a121d;border:1px solid rgba(255,255,255,.18);border-radius:3px;font:700 12px/1.3 ui-monospace,Menlo,monospace}
+  .mbm-v5-step textarea{min-height:72px;resize:vertical;word-break:break-all}
+  .mbm-v5-step input:focus-visible,.mbm-v5-step textarea:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .mbm-v5-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .mbm-v5-btn{min-width:44px;min-height:44px;padding:8px 12px;border:1px solid rgba(255,255,255,.18);border-radius:3px;background:#101a28;color:#fff;font:900 11px/1 system-ui,sans-serif;letter-spacing:.06em;cursor:pointer}
+  .mbm-v5-btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .mbm-v5-btn.mbm-v5-primary{color:#15100a;background:linear-gradient(100deg,#ff8b35,#ffd85c);border-color:#ffe69b}
+  .mbm-v5-btn[aria-pressed="true"]{color:#15100a;background:linear-gradient(100deg,#ff8b35,#ffd85c);border-color:#ffe69b}
+  .mbm-v5-btn:disabled{opacity:.45;cursor:not-allowed}
+  .mbm-v5-qr{display:block;margin:4px auto;max-width:100%;height:auto;image-rendering:pixelated;background:#fff;padding:0;border:4px solid #fff}
+  .mbm-v5-duel-status{min-height:18px;margin-top:8px;color:#ffd85c;font:900 10px/1.4 system-ui,sans-serif;letter-spacing:.06em}
+  .mbm-v5-duel-record{grid-column:1/3;color:#9ca9b8;font:750 10px/1.45 system-ui,sans-serif}
+  .mbm-v5-result{display:grid;gap:8px;padding:12px;text-align:center;background:linear-gradient(125deg,rgba(12,21,34,.97),rgba(93,39,19,.95));border:2px solid #ffe18a}
+  .mbm-v5-result small{color:#70e9ff;font:950 10px/1 system-ui,sans-serif;letter-spacing:.16em}
+  .mbm-v5-result strong{color:#fff0a9;font:1000 italic 26px/1 system-ui,sans-serif}
+  .mbm-v5-result .mbm-v5-totals{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;color:#fff;font:900 13px/1.2 system-ui,sans-serif}
+  .mbm-v5-result .mbm-v5-totals b{display:block;font-size:22px;color:#ffd85c}
+  .mbm-v5-result.mbm-v5-left{border-color:#ff6a6a}.mbm-v5-result.mbm-v5-left strong{color:#ffb3b3}
+  /* in-arena HUD */
+  .mbm-v5-duelhud{position:absolute;z-index:26;left:8px;right:8px;top:118px;display:grid;gap:5px;padding:8px 9px;pointer-events:none;color:#fff;background:linear-gradient(105deg,rgba(6,15,27,.94),rgba(30,14,10,.9));border:1px solid rgba(255,216,92,.5);border-left:3px solid #ffd85c;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  .mbm-v5-duelhud[hidden]{display:none!important}
+  .mbm-v5-duelhud .mbm-v5-clock{display:flex;justify-content:space-between;color:#ffd85c;font:1000 italic 15px/1 system-ui,sans-serif;letter-spacing:.06em}
+  .mbm-v5-duelhud .mbm-v5-clock span{color:#a7f1ff;font:900 9px/1 system-ui,sans-serif;letter-spacing:.14em}
+  .mbm-v5-bar{display:grid;grid-template-columns:76px 1fr 46px;gap:6px;align-items:center;font:900 9px/1 system-ui,sans-serif;letter-spacing:.06em}
+  .mbm-v5-bar i{position:relative;display:block;height:9px;overflow:hidden;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12)}
+  .mbm-v5-bar i b{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,#ff793f,#ffd85c);transition:width .18s ease}
+  .mbm-v5-bar.mbm-v5-them i b{background:linear-gradient(90deg,#6ee7ff,#a078ff)}
+  .mbm-v5-bar em{font-style:normal;color:#fff;text-align:right}
+  .mbm-v5-bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#d9e6f5}
+  .mbm-v5-pips{display:inline-flex;gap:4px}.mbm-v5-pips i{display:block;width:12px;height:7px;background:#263142;border:1px solid rgba(255,255,255,.12);transform:skewX(-15deg)}.mbm-v5-pips i.on{background:#ffd85c}
+  .mbm-v5-sent{padding:16px;text-align:center;color:#d9fff0;font:1000 italic 20px/1.2 system-ui,sans-serif}
+  .mbm-v5-sent small{display:block;margin-top:6px;color:#a7f1ff;font:900 10px/1.3 system-ui,sans-serif;letter-spacing:.1em;font-style:normal}
+  .mbm-v5-rival-btn{margin-top:8px;width:100%}
+  .rival-list .mbm-v5-duel-card{border-left:3px solid #6ee7ff}
+  @media(max-width:780px){.mbm-v5-duelhud{top:112px}}
+  @media(max-width:359px){.mbm-v5-bar{grid-template-columns:60px 1fr 40px}}
+  .game-shell.reduced-motion .mbm-v5-bar i b{transition:none!important}
+  @media(prefers-reduced-motion:reduce){.mbm-v5-bar i b{transition:none!important}}

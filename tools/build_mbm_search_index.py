@@ -26,9 +26,10 @@ Derivation, in one place so it is reviewable:
                 against title + description + keywords + family + subject
   pathway       matched on word boundaries against that text plus the file path,
                 so "growth" does not imply GROW and "Building" does not imply BUILD
-  drops         Lessons-repo games whose route the Games manifest already
-                publishes - matched on route, never on title, and asserted
-                by identity rather than by count
+  drops         Lessons-repo games whose exact route the Games manifest already
+                publishes, or whose exact legacy route is declared superseded
+                by a manifest route - never title-matched, and asserted by
+                identity rather than by count
 
 Comparison is by IDENTITY, not by position. The original compare aligned the
 committed and produced lists by zipping them after a title sort; one insertion
@@ -554,13 +555,27 @@ def main() -> None:
     records = load_json(MANIFESTS / "lessons-resources.json")
 
     # A Lessons-repo game is dropped when the Games manifest already publishes
-    # that exact route. Matching on route rather than title matters: the
-    # manifest hosts several games under /Lessons/Games/ itself, and two
-    # different games can share a name.
+    # that exact route, or when the editorial source explicitly maps its exact
+    # legacy route to a canonical manifest route. Matching on routes rather
+    # than titles matters: two different games can share a name.
     game_hrefs = {g["href"] for g in load_json(MANIFESTS / "games.json")["games"]}
+    superseded = editorial.get("supersededGameRoutes", {})
+    if not isinstance(superseded, dict) or any(not isinstance(k, str) or not isinstance(v, str)
+                                               for k, v in superseded.items()):
+        raise SystemExit("supersededGameRoutes must be an object of legacy-route: canonical-route strings")
+    bad_targets = sorted({target for target in superseded.values() if target not in game_hrefs})
+    if bad_targets:
+        raise SystemExit(f"supersededGameRoutes targets match no canonical game: {bad_targets}")
+    lesson_game_routes = {"/Lessons/" + r["file"] for r in records if r["type"] == "game"}
+    bad_sources = sorted(set(superseded) - lesson_game_routes)
+    if bad_sources:
+        raise SystemExit(f"supersededGameRoutes sources match no Lessons game: {bad_sources}")
+    if any(source == target for source, target in superseded.items()):
+        raise SystemExit("supersededGameRoutes cannot map a route to itself")
     dropped = {
         r["id"] for r in records
-        if r["type"] == "game" and "/Lessons/" + r["file"] in game_hrefs
+        if r["type"] == "game" and
+        ("/Lessons/" + r["file"] in game_hrefs or "/Lessons/" + r["file"] in superseded)
     }
 
     # The drop list is part of what this tool must justify - by identity, not
@@ -575,14 +590,15 @@ def main() -> None:
     # as an ADDED entry, and neither writes without being declared.
     by_id = {r["id"]: r for r in records}
     unjustified = [sid for sid in sorted(dropped)
-                   if "/Lessons/" + by_id[sid]["file"] not in game_hrefs]
+                   if "/Lessons/" + by_id[sid]["file"] not in game_hrefs and
+                   "/Lessons/" + by_id[sid]["file"] not in superseded]
     if unjustified:
         print("dropped records whose route the Games manifest does not publish:",
               file=sys.stderr)
         for sid in unjustified[:10]:
             print(f"  - {sid}", file=sys.stderr)
         raise SystemExit(1)
-    print(f"  drops      {len(dropped):>4} records  each justified by a published route")
+    print(f"  drops      {len(dropped):>4} records  each justified by a published or superseded route")
 
     produced: dict[str, list[dict[str, Any]]] = {c: [] for c in CATEGORY_ORDER}
     for entry in build_lessons_and_resources(records, rules, reclassify, dropped):

@@ -123,7 +123,8 @@ const HOME_TRUTH_REGIONS = Object.freeze([
 ]);
 
 /*
- * tools/index.html — ONE authorised region, and deliberately a narrow one.
+ * tools/index.html — one free-copy inventory region, kept deliberately narrow.
+ * The exact September hero/reorder authorization below preserves all other copy.
  *
  * The hub's tool inventory changes when a tool ships; its authored prose does
  * not. Before this, adding a card tripped "authored body wording changed" and
@@ -149,6 +150,48 @@ const TOOLS_TRUTH_REGIONS = Object.freeze([
     replacement: '$1__MBM_AUTHORISED_TOOLS_ACC_CARDS__\n'
   }
 ]);
+
+/* The September education refresh is an exact reversible copy change, not a
+ * new sentinel exemption. The declaration records both accepted wordings and
+ * the only two accepted section orders; all unchanged wording is retained. */
+function canonicalToolsCopy(html, failures, label) {
+  let s = canonicalRegions(html, TOOLS_TRUTH_REGIONS, failures, label);
+  const page = AUTHORISATION.pages['tools/index.html'];
+  const refresh = page && page.educationRefresh;
+  if (!refresh || page.governedBy !== 'region-comparison' ||
+      !page.authorisedBy.includes('education-navigation-refresh') ||
+      refresh.authority !== 'education-navigation-refresh' ||
+      !Array.isArray(refresh.exactReplacements) || !Array.isArray(refresh.sectionOrders)) {
+    failures.push(`${label}: approved tools refresh declaration is missing or invalid`);
+    return s;
+  }
+  for (const change of refresh.exactReplacements) {
+    if (!change.name || typeof change.before !== 'string' || !change.before ||
+        typeof change.after !== 'string' || !change.after || change.before === change.after) {
+      failures.push(`${label}: approved tools refresh has an invalid exact replacement`);
+      continue;
+    }
+    const occurrences = value => s.split(value).length - 1;
+    const before = occurrences(change.before), after = occurrences(change.after);
+    assert(before + after === 1,
+      `${label}: approved tools refresh ${change.name} matched ${before + after} exact versions (expected 1)`, failures);
+    if (before + after === 1 && after === 1) s = s.replace(change.after, change.before);
+  }
+  const order = [...s.matchAll(/<section\b[^>]*\bclass=["']([^"']+)["'][^>]*>/gi)]
+    .map(match => match[1]);
+  assert(refresh.sectionOrders.some(allowed => JSON.stringify(allowed) === JSON.stringify(order)),
+    `${label}: approved tools layout has an unreviewed section order`, failures);
+  const drawer = /<section\b(?=[^>]*\bclass=["']tx-tools["'])(?=[^>]*\bid=["']drawer["'])[^>]*>[\s\S]*?<\/section>/gi;
+  const matches = [...s.matchAll(drawer)];
+  assert(matches.length === 1 && matchCount(s, /<\/main>/gi) === 1,
+    `${label}: approved tools layout requires exactly one complete drawer and main`, failures);
+  if (matches.length === 1 && matchCount(s, /<\/main>/gi) === 1) {
+    // Move, rather than remove, its canonicalized contents. The bridge and
+    // utility cards therefore remain in the authored-text comparison.
+    s = s.replace(matches[0][0], '').replace(/<\/main>/i, matches[0][0] + '</main>');
+  }
+  return s;
+}
 
 function parseArgs(argv) {
   const out = { base: 'origin/main', selfTest: false };
@@ -407,7 +450,18 @@ function verify(base, overrides = null) {
      The fix takes keydown, keyup, click, pointerdown and pointerup on `document`
      in the CAPTURE phase and releases them a short window after dismissal. The
      hold was lifted in the same commit, as its own instructions required. */
-  const DECLARED_BRAND_CHANGES = new Set(['assets/brand/mbm-splash.js']);
+  // Owner-authorised supplied logo, 2026-09-06: additive assets only.
+  // The exact uploaded JPEG and its provenance are pinned below; no existing
+  // splash, legacy logo or game branding receives a new exemption.
+  const DECLARED_BRAND_CHANGES = new Set(['assets/brand/mbm-splash.js', 'assets/brand/approved-mark.jpg', 'assets/brand/approved-mark-provenance.json']);
+  const APPROVED_BRAND_BYTES = {
+    'assets/brand/approved-mark.jpg': 'f1095531d88d17f20c7464c62887703321a0872f108d3fb78a4afc0226dac2a7',
+    'assets/brand/approved-mark-provenance.json': '28e6eb0b45ed9cea2acd736e1289dd6e7eea599d124a30af14f169f7da4fd697'
+  };
+  for (const [rel, expected] of Object.entries(APPROVED_BRAND_BYTES)) {
+    try { assert(require('crypto').createHash('sha256').update(fs.readFileSync(path.join(ROOT, rel))).digest('hex') === expected, `approved brand bytes changed: ${rel}`, failures); }
+    catch (error) { failures.push(`approved brand asset missing: ${rel}`); }
+  }
   try {
     const brandChanges = gitChanged(base, 'assets/brand');
     const undeclared = brandChanges
@@ -462,7 +516,7 @@ function verify(base, overrides = null) {
       } else {
         const canonicalise = (html, label) => {
           if (rel === 'main/index.html') return canonicalHomeTruthCopy(html, failures, label);
-          if (rel === 'tools/index.html') return canonicalRegions(html, TOOLS_TRUTH_REGIONS, failures, label);
+          if (rel === 'tools/index.html') return canonicalToolsCopy(html, failures, label);
           return html;
         };
         const beforeSource = canonicalise(baseline, `${rel} baseline`);
@@ -498,6 +552,35 @@ function requireMutation(home, from, to, label) {
  * (INCONCLUSIVE) rather than claiming a pass it has not earned.
  */
 const SELF_TEST_CONTROLS = Object.freeze([
+  {
+    name: 'tools hub: unapproved hero claim is rejected',
+    page: 'tools/index.html',
+    mutate: html => requireMutation(html, 'More teaching.', 'Guaranteed results.', 'tools hero claim mutation'),
+    expect: 'new-finding-matching',
+    needle: 'approved tools refresh'
+  },
+  {
+    name: 'tools hub: approved shortcut destination remains pinned',
+    page: 'tools/index.html',
+    mutate: html => requireMutation(html, 'href="/Lessons/?view=saved"', 'href="/members/"', 'tools shortcut mutation'),
+    expect: 'new-finding-matching',
+    needle: 'approved tools refresh'
+  },
+  {
+    name: 'tools hub: duplicate drawer cannot escape layout comparison',
+    page: 'tools/index.html',
+    mutate: html => requireMutation(html, '</main>', '<section class="tx-tools" id="drawer"><p>Unapproved duplicate</p></section></main>', 'tools duplicate drawer mutation'),
+    expect: 'new-finding-matching',
+    needle: 'approved tools layout'
+  },
+  {
+    name: 'tools hub: unrelated utility wording stays protected after reorder',
+    page: 'tools/index.html',
+    mutate: html => requireMutation(html, 'Name picker, timer, groups and noise meter — ready on the whiteboard.', 'Unapproved new classroom claim.', 'tools utility wording mutation'),
+    expect: 'new-finding-matching',
+    needle: 'authored body wording changed'
+  },
+
   {
     name: 'authorised account/mailing wording mutation accepted',
     mutate: (home) => requireMutation(

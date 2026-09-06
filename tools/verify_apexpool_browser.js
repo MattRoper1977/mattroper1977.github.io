@@ -28,13 +28,14 @@ async function waitBoot(page){await page.goto(BASE+'/apexpool/',{waitUntil:'domc
   const title=await page.locator('.wordmark').innerText();
   record(vp.name+'-title',/APEX\s*POOL/i.test(title),title.replace(/\s+/g,' '));
   const metrics=await page.evaluate(()=>({canvas:document.querySelectorAll('canvas').length,w:document.getElementById('table').width,h:document.getElementById('table').height,scrollW:document.documentElement.scrollWidth,innerW:innerWidth,scrollH:document.documentElement.scrollHeight,innerH:innerHeight,debug:window.__AP_DEBUG.sentinel}));
-  record(vp.name+'-single-live-canvas',metrics.canvas===1&&metrics.w>0&&metrics.h>0,`${metrics.w}×${metrics.h}`);
+  const canvasContract=await page.evaluate(()=>{const a=document.getElementById('v6Advisory'),s=getComputedStyle(a);return{count:document.querySelectorAll('canvas').length,advisoryHidden:a.getAttribute('aria-hidden'),pointerEvents:s.pointerEvents}});
+  record(vp.name+'-authoritative-plus-advisory-canvases',metrics.canvas===2&&metrics.w>0&&metrics.h>0&&canvasContract.advisoryHidden==='true'&&canvasContract.pointerEvents==='none',JSON.stringify(canvasContract));
   record(vp.name+'-no-page-overflow',metrics.scrollW===metrics.innerW&&metrics.scrollH===metrics.innerH,JSON.stringify(metrics));
   record(vp.name+'-sentinel',metrics.debug==='apexpool-build-2026-08-04');
   await page.screenshot({path:path.join(OUT,vp.name+'-title.png'),fullPage:true});
   const rotateVisible=await page.locator('#rotateHint').isVisible();
   if(vp.height>vp.width){
-   record(vp.name+'-portrait-choice-visible',rotateVisible);
+   record(vp.name+'-portrait-path-unblocked',!rotateVisible);
    if(rotateVisible)await page.locator('#dismissRotate').click();
   }else record(vp.name+'-no-rotation-blocker',!rotateVisible);
   await page.locator('[data-mode="classic"]').click();
@@ -76,8 +77,9 @@ async function waitBoot(page){await page.goto(BASE+'/apexpool/',{waitUntil:'domc
  record('browser-sibling-storage-byte-identical',JSON.stringify(before)===JSON.stringify(after),JSON.stringify({before,after}));
  const ownKeys=await page.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('mbm_apexpool_')).sort());
  record('browser-apexpool-storage-created',ownKeys.length>0&&ownKeys.every(k=>/^mbm_apexpool_/.test(k)),ownKeys.join(', '));
- const foreignWrites=await page.evaluate(keys=>Object.keys(localStorage).filter(k=>!keys.includes(k)&&!k.startsWith('mbm_apexpool_')),Object.keys(sibling));
- record('browser-no-unexpected-foreign-keys',foreignWrites.length===0,foreignWrites.join(', '));
+ const foreignWrites=await page.evaluate(keys=>Object.keys(localStorage).filter(k=>!keys.includes(k)&&!k.startsWith('mbm_apexpool_')&&k!=='madebymatt_v6_profile'),Object.keys(sibling));
+ const profileScope=await page.evaluate(()=>{try{const p=JSON.parse(localStorage.getItem('madebymatt_v6_profile')||'null');return !!(p&&p.version===6&&p.games&&p.games['apex-pool']&&Object.keys(p.games).every(k=>k==='apex-pool'));}catch(e){return false;}});
+ record('browser-no-unexpected-foreign-keys',foreignWrites.length===0&&profileScope,(foreignWrites.join(', ')||'schema-6 profile contains apex-pool only'));
  await page.screenshot({path:path.join(OUT,'interaction-result.png'),fullPage:true});await context.close();
 
  /* Reduced motion: splash still clears and game remains usable. */

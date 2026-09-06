@@ -16,3 +16,15 @@ verify_jwt = true
 # the list?" to a stranger.
 [functions.unsubscribe-mailing-list]
 verify_jwt = true
+
+# Anonymous bounded events and public aggregates. Collection stays disabled
+# until hosted acceptance is complete; these flags do not enable collection.
+[functions.usage-ingest]
+verify_jwt = false
+
+[functions.usage-public]
+verify_jwt = false
+
+# Keep both gateway verification and the handler's Auth/owner checks.
+[functions.owner-usage]
+verify_jwt = true

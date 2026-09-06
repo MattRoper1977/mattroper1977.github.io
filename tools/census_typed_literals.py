@@ -92,7 +92,14 @@ def vocabulary(root):
     return routes, titles, hrefs
 
 SCAN_EXT = ('.yml', '.yaml', '.mjs', '.js', '.py', '.sh')
-SKIP_DIRS = {'.git', 'node_modules', '__pycache__', '_shelf', 'vendor'}
+SKIP_DIRS = {'.git', 'node_modules', '__pycache__', '_shelf', 'vendor', '_tfr2'}
+# '_tfr2' is the Titan Forge V5 build workspace (#237): split sources, shots and
+# state that GitHub Pages does not serve (underscore directory, no .nojekyll)
+# and that are inlined into titanforge/index.html, an .html file this census
+# does not scan. Added the day the shelf reached 60 entries (CyberPulse, #218)
+# and the three `focus>=60` heat thresholds in _tfr2/src/v5-core.js,
+# v5-music.js and v5-polish.js matched the shelf cardinality - the same shape
+# as the vendored 255 below, a number that happens to equal an unrelated count.
 # 'vendor' holds third-party code this estate does not author. The census asks
 # "is this a live value typed where a record could supply it", and nobody is
 # going to derive a number inside a minified upstream bundle from games.json.

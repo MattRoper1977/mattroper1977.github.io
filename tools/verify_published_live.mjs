@@ -47,7 +47,42 @@ const argv = process.argv.slice(2);
 const val = (n) => { const i = argv.indexOf(n); return i > -1 ? argv[i + 1] : null; };
 const all = (n) => argv.reduce((a, v, i) => (v === n ? [...a, argv[i + 1]] : a), []);
 
-const ORIGIN = val('--origin') || 'https://madebymatt.uk';
+const ORIGIN = val('--origin') || 'https://madebymatt-play.uk';
+/* HC3 §1.1. Games serve on the play origin. Their old addresses on the
+   education origin are stubs, and the served bytes on play are the committed
+   bytes with the education host literal rewritten (the builder's one
+   transformation) — so --transform-host is applied to the repo blob before it
+   is hashed, and --education-origin is where the stub leg looks. */
+const EDU_ORIGIN = val('--education-origin') || 'https://madebymatt.uk';
+// The apex and its www twin are ONE site: the live apex answers 301 to www, so
+// a request to www.<host> from a page on <host> is the site talking to itself,
+// not an off-origin request. First honest colour of the retargeted run named
+// exactly that redirect as a foreign request on every game path.
+const sameSiteHosts = (origin) => { const h = new URL(origin).hostname.replace(/^www\./, ''); return new Set([h, 'www.' + h]); };
+const PLAY_SITE = sameSiteHosts(ORIGIN);
+const sameSite = (u) => { try { return PLAY_SITE.has(new URL(u).hostname); } catch { return false; } };
+const TRANSFORM = argv.includes('--transform-host');
+const EDU_LITERAL = val('--education-literal') || 'https://madebymatt.uk';
+const PLAY_LITERAL = val('--play-literal') || 'https://madebymatt-play.uk';
+const PLAY_HOSTS = ['madebymatt-play.uk', 'www.madebymatt-play.uk'];
+const transformed = (b) => TRANSFORM ? Buffer.from(b.toString('utf8').split(EDU_LITERAL).join(PLAY_LITERAL), 'utf8') : b;
+const judgeStub = (body, status, finalUrl) => {
+  const t = body ? body.toString('utf8') : '';
+  const host = (u) => { try { return new URL(u).hostname; } catch (_) { return ''; } };
+  const problems = [];
+  if (PLAY_HOSTS.includes(host(finalUrl))) return ['redirects to play (served by redirect, not a stub)'];
+  if (status !== 200) problems.push(`HTTP ${status}`);
+  if (body && body.length > 2048) problems.push(`${body.length} B > 2048`);
+  if (!t.includes('data-game-moved')) problems.push('no data-game-moved marker');
+  if (!/<meta\s+name="robots"\s+content="noindex"/.test(t)) problems.push('no noindex');
+  const canon = t.match(/<link\s+rel="canonical"\s+href="([^"]+)"/);
+  if (!canon || !PLAY_HOSTS.includes(host(canon[1]))) problems.push('no canonical to the play origin');
+  const links = [...t.matchAll(/<a\s+id="play-game"\s+href="([^"]+)"/g)];
+  if (links.length !== 1 || !PLAY_HOSTS.includes(host(links[0][1]))) problems.push('not exactly one Open-the-game link to play');
+  if (/<canvas\b/i.test(t)) problems.push('carries a <canvas>');
+  for (const m of t.matchAll(/<script[^>]+src="([^"]+)"/g)) if (m[1] !== '/stub-handoff.js') problems.push(`external script ${m[1]}`);
+  return problems;
+};
 const REPO_ROOT = val('--repo-root') || '.';
 const SHELF = val('--shelf');
 const GAME_PATHS = all('--path');
@@ -92,14 +127,15 @@ const browser = await chromium.launch();
 async function fetchBytes(url) {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
-  let status = 0, body = null;
+  let status = 0, body = null, finalUrl = url;
   try {
     const r = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
     status = r ? r.status() : 0;
     body = r ? Buffer.from(await r.body()) : null;
+    finalUrl = r ? r.url() : url;
   } catch (e) { status = -1; }
   await ctx.close();
-  return { status, body };
+  return { status, body, finalUrl };
 }
 
 // ───────────────────────────────────────────────── the served shelf, once
@@ -130,7 +166,7 @@ for (const { p, kind } of PATHS) {
   g(`served ${kind} path ${p}`);
   const repoFile = join(REPO_ROOT, p.replace(/^\/|\/$/g, ''), 'index.html');
   let repoBytes = null;
-  try { repoBytes = readFileSync(repoFile); } catch (e) {
+  try { repoBytes = kind === 'game' ? transformed(readFileSync(repoFile)) : readFileSync(repoFile); } catch (e) {
     check('committed blob readable', false, `${repoFile} — ${e.code}`);
     continue;
   }
@@ -138,8 +174,15 @@ for (const { p, kind } of PATHS) {
   check('answers 200', status === 200, `HTTP ${status}`);
   const identical = !!(body && sha(body) === sha(repoBytes));
   check('served bytes == committed blob', identical,
-    body ? `served ${body.length}B ${sha(body).slice(0, 12)} vs repo ${repoBytes.length}B ${sha(repoBytes).slice(0, 12)}`
+    body ? `served ${body.length}B ${sha(body).slice(0, 12)} vs repo ${repoBytes.length}B ${sha(repoBytes).slice(0, 12)}${TRANSFORM && kind === 'game' ? ' (host literal rewritten)' : ''}`
          : 'no body returned');
+  if (kind === 'game') {
+    /* HC3 §1.1: the same path on the EDUCATION origin must be a stub. */
+    const edu = await fetchBytes(EDU_ORIGIN + p);
+    const problems = judgeStub(edu.body, edu.status, edu.finalUrl);
+    check('education origin serves a stub', problems.length === 0,
+      problems.length ? problems.join('; ') : `${edu.body ? edu.body.length : 0}B stub, noindex, canonical → play`);
+  }
 
   // The shelf is the ARCADE shelf. A game must be on it; a teacher tool must
   // not. Both are asserted — the tool case is a claim about the shelf, not an
@@ -158,7 +201,7 @@ for (const { p, kind } of PATHS) {
   const offOrigin = [];
   page.on('request', (r) => {
     const u = r.url();
-    if (/^https?:/i.test(u) && !u.startsWith(ORIGIN)) offOrigin.push(u);
+    if (/^https?:/i.test(u) && !sameSite(u)) offOrigin.push(u);
   });
   const errs = [];
   page.on('pageerror', (e) => errs.push(String(e)));
@@ -184,7 +227,10 @@ g('arcade renders the new entries');
      from a shelf that failed to render. Both are accepted, and the accordions
      are opened first: a card inside a shut <details> is not painted, so a
      folded shelf would otherwise read as a missing one. */
-  const BROWSE = '#allGrid, #genreSections';
+  /* The play home renders the shelf as static cards in #game-grid; the
+     education arcade's #allGrid/#genreSections no longer carries games.
+     Both structures are accepted, and every shelf entry must have a card. */
+  const BROWSE = '#allGrid, #genreSections, #game-grid';
   await page.evaluate(() => document.querySelectorAll('details.gsec').forEach((d) => { d.open = true; })).catch(() => {});
   const expected = servedShelf ? servedShelf.games.length : 0;
   let rendered = -1;
@@ -193,7 +239,7 @@ g('arcade renders the new entries');
       const roots = [...document.querySelectorAll(sel)];
       if (!roots.length) return -1;
       document.querySelectorAll('details.gsec').forEach((d) => { d.open = true; });
-      return roots.flatMap((g) => [...g.querySelectorAll('a.gcard')]).filter((el) => {
+      return roots.flatMap((g) => [...g.querySelectorAll('a.gcard, .game-card')]).filter((el) => {
         const r = el.getBoundingClientRect();
         return r.width > 0 && r.height > 0;
       }).length;
@@ -201,19 +247,29 @@ g('arcade renders the new entries');
     if (rendered >= expected) break;
     await page.waitForTimeout(250);
   }
-  check('arcade renders the whole shelf', rendered === expected,
-    `${rendered} cards occupy real space, shelf is ${expected} (rendered, not node-counted)`);
+  check('arcade renders the whole shelf', rendered >= expected,
+    `${rendered} cards occupy real space, shelf is ${expected} (rendered, not node-counted; the play grid also carries classroom activities)`);
 
   /* One predicate, used by the assertions and by the control below, so the
      control cannot drift from the thing it is certifying. */
   const cardFor = (href) => page.evaluate(([h, sel]) => {
     const roots = [...document.querySelectorAll(sel)];
     if (!roots.length) return false;
-    return roots.flatMap((g) => [...g.querySelectorAll('a.gcard')]).some((a) => {
-      const r = a.getBoundingClientRect();
-      return a.getAttribute('href') && a.getAttribute('href').includes(h) && r.width > 0 && r.height > 0;
+    return roots.flatMap((g) => [...g.querySelectorAll('a.gcard, .game-card a[href]')]).some((a) => {
+      const r = (a.closest('.game-card') || a).getBoundingClientRect();
+      const raw = a.getAttribute('href') || '';
+      let dec = raw; try { dec = decodeURIComponent(raw); } catch (_) {}
+      return raw && (raw.includes(h) || dec.includes(h)) && r.width > 0 && r.height > 0;
     });
   }, [href, BROWSE]).catch(() => false);
+  /* every shelf entry has a rendered card — the whole-shelf claim, by name */
+  {
+    const entries = servedShelf ? servedShelf.games.map((e) => e.href) : [];
+    const missing = [];
+    for (const h of entries) if (!(await cardFor(h))) missing.push(h);
+    check('every shelf entry has a rendered card', entries.length > 0 && missing.length === 0,
+      missing.length ? `missing: ${missing.slice(0, 5).join(' ')}` : `${entries.length} shelf entries, each rendered`);
+  }
 
   for (const p of GAME_PATHS) {
     const found = await cardFor(p);
@@ -258,9 +314,9 @@ g('arcade renders the new entries');
     const openAll = () => page.evaluate(() => document.querySelectorAll('details.gsec').forEach((d) => { d.open = true; })).catch(() => {});
     await openAll();
     const cardFor = async (href) => { await openAll(); return page.evaluate((h) => {
-      const grid = document.querySelector('#allGrid') || document.querySelector('#genreSections');
+      const grid = document.querySelector('#allGrid') || document.querySelector('#genreSections') || document.querySelector('#game-grid');
       if (!grid) return false;
-      return [...grid.querySelectorAll('a.gcard')].some((a) => {
+      return [...grid.querySelectorAll('a.gcard, .game-card a[href]')].some((a) => {
         const r = a.getBoundingClientRect();
         return a.getAttribute('href') && a.getAttribute('href').includes(h) && r.width > 0 && r.height > 0;
       });
@@ -272,11 +328,11 @@ g('arcade renders the new entries');
 
     await openAll();
     const removed = await page.evaluate((h) => {
-      const grid = document.querySelector('#allGrid') || document.querySelector('#genreSections');
+      const grid = document.querySelector('#allGrid') || document.querySelector('#genreSections') || document.querySelector('#game-grid');
       if (!grid) return 0;
-      const hits = [...grid.querySelectorAll('a.gcard')]
+      const hits = [...grid.querySelectorAll('a.gcard, .game-card a[href]')]
         .filter((a) => a.getAttribute('href') && a.getAttribute('href').includes(h));
-      hits.forEach((a) => a.remove());
+      hits.forEach((a) => (a.closest('.game-card') || a).remove());
       return hits.length;
     }, sample.href).catch(() => 0);
 

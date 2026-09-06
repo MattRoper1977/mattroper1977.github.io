@@ -3,6 +3,13 @@
  "_method": "every candidate artefact is hashed (sha256 and git blob sha1) and every hash literal in every gate is looked up in that table. A literal that matches a file IS a pin on it, whatever the surrounding comment claims.",
  "_why": "8432492 re-pinned six sibling gates and missed the seventh; apexpool-verify then went red on that PR, merged, and stayed red for fifteen days. When a change re-pins, the dependents are derived, never counted.",
  "artefacts": {
+  "apexgolf/index.html": [
+   {
+    "gate": ".github/workflows/apexpool-home-verify.yml",
+    "line": 81,
+    "algo": "sha256"
+   }
+  ],
   "apexpool/index.html": [
    {
     "gate": "tools/verify_apexpool_landing.js",
@@ -13,7 +20,33 @@
   "apextennis/index.html": [
    {
     "gate": ".github/workflows/apexpool-home-verify.yml",
-    "line": 87,
+    "line": 80,
+    "algo": "sha256"
+   },
+   {
+    "gate": "tools/verify_apextennis.js",
+    "line": 11,
+    "algo": "sha256"
+   }
+  ],
+  "assets/brand/approved-mark-provenance.json": [
+   {
+    "gate": "tools/verify_professional_site.js",
+    "line": 459,
+    "algo": "sha256"
+   }
+  ],
+  "assets/brand/approved-mark.jpg": [
+   {
+    "gate": "tools/verify_professional_site.js",
+    "line": 458,
+    "algo": "sha256"
+   }
+  ],
+  "emberwild/index.html": [
+   {
+    "gate": "tools/verify_emberwild.js",
+    "line": 27,
     "algo": "sha256"
    }
   ],
@@ -23,7 +56,14 @@
     "line": 24,
     "algo": "sha256"
    }
+  ],
+  "titanforge/vendor/three-r128.js": [
+   {
+    "gate": "tools/titan-crown/verify_launch.mjs",
+    "line": 34,
+    "algo": "sha256"
+   }
   ]
  },
- "unmatchedLiterals": 13
+ "unmatchedLiterals": 33
 }

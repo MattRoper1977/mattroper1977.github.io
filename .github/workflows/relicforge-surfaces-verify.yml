@@ -33,6 +33,7 @@ on:
   pull_request:
     paths:
       - 'games/index.html'
+      - 'tools/lib/published-shelf-probe.cjs'
       - 'tools/verify_relicforge_surfaces.js'
       - '.github/workflows/relicforge-surfaces-verify.yml'
   workflow_dispatch:
@@ -40,6 +41,9 @@ on:
 
 permissions:
   contents: read
+
+env:
+  RF_PUBLICATION: games
 
 concurrency:
   group: relicforge-surfaces-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
@@ -70,7 +74,7 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in $(seq 1 30); do
-            if curl --fail --silent --show-error --location https://madebymatt.uk/Games/games.json -o /tmp/served.json 2>/dev/null; then
+            if curl --fail --silent --show-error --location --max-redirs 0 --proto '=https' --proto-redir '=https' https://www.madebymatt-play.uk/games.json -o /tmp/served.json 2>/dev/null; then
               n=$(python3 -c 'import json;print(len(json.load(open("/tmp/served.json"))["games"]))')
               hit=$(python3 -c 'import json;print(sum(1 for g in json.load(open("/tmp/served.json"))["games"] if g.get("href")=="/relicforge/"))')
               echo "attempt $attempt: served manifest $n entries, relicforge $hit"
@@ -86,7 +90,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --location \
+          curl --fail --silent --show-error --location --max-redirs 0 --proto '=https' --proto-redir '=https' \
             https://raw.githubusercontent.com/MattRoper1977/Games/main/games.json -o /tmp/main.json
           python3 - <<'PY'
           import json
@@ -115,5 +119,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: relicforge-surfaces
-          path: /tmp/relicforge_surfaces.log
+          path: |
+            /tmp/relicforge_surfaces.log
+            audit-output/published-shelf-relicforge/
           if-no-files-found: warn

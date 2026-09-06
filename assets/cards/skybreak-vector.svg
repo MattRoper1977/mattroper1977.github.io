@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 96" role="img" aria-labelledby="title desc">
+  <title id="title">Skybreak Vector</title>
+  <desc id="desc">A jet seen from behind banking low over a night ocean toward an offshore cruiser, with a heads-up display reticle and radar floor line.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#03080D"/><stop offset=".55" stop-color="#0B2A1E"/><stop offset="1" stop-color="#65A30D"/></linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#0A2B3A"/><stop offset="1" stop-color="#03141C"/></linearGradient>
+  </defs>
+  <rect width="120" height="96" rx="10" fill="url(#bg)"/>
+  <!-- ocean below the radar floor -->
+  <path d="M0 62h120v34H0z" fill="url(#sea)"/>
+  <!-- the radar floor: fly beneath it -->
+  <path d="M6 58h108" stroke="#71F6D2" stroke-width="1" stroke-dasharray="4 3" opacity=".8"/>
+  <text x="8" y="55" font-family="ui-monospace,monospace" font-size="5" fill="#71F6D2" letter-spacing=".5">RADAR FLOOR</text>
+  <!-- the cruiser on the horizon -->
+  <path d="M78 63h30l-3 5H82Z" fill="#1E2C33"/>
+  <path d="M86 58h9v5h-9zM90 54h3v4h-3z" fill="#2C3E48"/>
+  <circle cx="93" cy="65" r="1.2" fill="#FFB347"/>
+  <!-- flak bursts -->
+  <circle cx="72" cy="42" r="2.2" fill="none" stroke="#FFB347" stroke-width="1"/>
+  <circle cx="104" cy="36" r="1.6" fill="none" stroke="#FFB347" stroke-width="1"/>
+  <!-- the jet, seen from behind, banking left -->
+  <path d="M44 74 60 30l16 44-16-9Z" fill="#CFE6FF"/>
+  <path d="M52 66 60 40l8 26-8-5Z" fill="#8FB3C9"/>
+  <path d="M58 70v8M56 78h8" stroke="#E8F4FF" stroke-width="1.4"/>
+  <ellipse cx="60" cy="76" rx="3.4" ry="1.6" fill="#71F6D2" opacity=".9"/>
+  <!-- HUD reticle and velocity vector -->
+  <circle cx="60" cy="30" r="9" fill="none" stroke="#65A30D" stroke-width="1.4"/>
+  <path d="M60 18v5M60 37v5M48 30h5M67 30h5" stroke="#65A30D" stroke-width="1.4"/>
+  <circle cx="60" cy="30" r="1.6" fill="#65A30D"/>
+  <!-- missile trail -->
+  <path d="M63 54c6-6 14-10 26-14" fill="none" stroke="#F1F5F9" stroke-width="1" stroke-dasharray="2 2" opacity=".7"/>
+  <!-- altitude ladder -->
+  <path d="M10 14h8M10 22h5M10 30h8M10 38h5" stroke="#65A30D" stroke-width="1" opacity=".8"/>
+</svg>

@@ -1,0 +1,133 @@
+name: CyberPulse trailer capture
+
+# RM1-RM6. This exists as a workflow rather than a local step because the
+# trailer's format requirements cannot be met off a CI runner:
+#
+#   * The house convention, stated in games/index.html itself, is MP4 FIRST -
+#     "h264 is decoded in hardware on the phones and iPads this is mostly
+#     watched on, and at matched quality it came out SMALLER". Producing that
+#     needs an ffmpeg with libx264 and AAC.
+#   * Posters are .webp at 15-56 KB on this estate. A PNG poster pulled from
+#     the video runs ~420 KB, which is loaded even under preload="none".
+#
+# A developer sandbox carrying only Playwright's bundled ffmpeg
+# (--disable-everything: webm/VP8/png, no audio encoder, no h264) can capture
+# honest footage but cannot encode it to the format the shelf actually wants.
+# ubuntu-latest can, so the encode belongs here.
+
+on:
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: 'Capture length in seconds (RM2 wants a 15-30s trailer)'
+        required: false
+        default: '24'
+
+permissions:
+  contents: read
+
+jobs:
+  trailer:
+    name: Capture, encode and validate the trailer
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install the browser and a full ffmpeg
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg webp
+          ffmpeg -hide_banner -encoders | grep -E 'libx264|aac|libwebp' || {
+            echo "the runner's ffmpeg lacks an encoder this job depends on"; exit 1; }
+
+      - name: RM1 capture from the exact shipped bytes
+        run: |
+          set -euo pipefail
+          node tools/cyberpulse/capture_trailer.mjs \
+            --root . --route cyberpulse/index.html \
+            --out artifacts/cyberpulse --seconds="${{ inputs.seconds || '24' }}"
+
+      - name: RM1 distinct-frame proof, taken from the encoded video
+        run: |
+          set -euo pipefail
+          cd artifacts/cyberpulse
+          mkdir -p frames
+          ffmpeg -hide_banner -loglevel error -i capture.webm -fps_mode passthrough frames/f_%05d.png
+          python3 - <<'PY'
+          import hashlib, pathlib, collections, sys
+          frames = sorted(pathlib.Path('frames').glob('*.png'))
+          hashes = [hashlib.sha256(f.read_bytes()).hexdigest() for f in frames]
+          distinct = len(set(hashes))
+          blank = sum(1 for f in frames if f.stat().st_size < 2000)
+          frozen = collections.Counter(hashes).most_common(1)[0][1]
+          print(f'frames {len(frames)}  distinct {distinct}  blank {blank}  longest frozen run {frozen}')
+          assert distinct >= 300, f'RM1 needs >= 300 distinct frame hashes, got {distinct}'
+          assert blank == 0, f'{blank} blank frames'
+          assert frozen <= len(frames) // 4, f'frozen run of {frozen} frames'
+          PY
+
+      - name: RM4 encode - MP4 first, WebM as the documented fallback, .webp poster
+        run: |
+          set -euo pipefail
+          cd artifacts/cyberpulse
+          ffmpeg -hide_banner -loglevel error -i capture.webm \
+            -c:v libx264 -profile:v high -pix_fmt yuv420p -crf 30 -preset slow -movflags +faststart \
+            -y clip-cyberpulse.mp4
+          ffmpeg -hide_banner -loglevel error -i capture.webm \
+            -c:v libvpx-vp9 -crf 36 -b:v 0 -y clip-cyberpulse.webm
+          # the poster is a real trailer frame, not a separate screenshot
+          ffmpeg -hide_banner -loglevel error -i capture.webm -vf "select=eq(n\,300)" -vframes 1 -y poster.png
+          cwebp -quiet -q 82 poster.png -o poster-cyberpulse.webp
+          ls -l clip-cyberpulse.mp4 clip-cyberpulse.webm poster-cyberpulse.webp
+
+      - name: RM4 validation - every field measured, none assumed
+        run: |
+          set -euo pipefail
+          cd artifacts/cyberpulse
+          for f in clip-cyberpulse.mp4 clip-cyberpulse.webm poster-cyberpulse.webp; do
+            echo "== $f  $(wc -c < "$f") bytes  sha256 $(sha256sum "$f" | cut -d' ' -f1)"
+          done
+          ffprobe -hide_banner -v error -show_entries \
+            format=duration,size:stream=codec_name,codec_type,width,height,r_frame_rate \
+            -of default=noprint_wrappers=1 clip-cyberpulse.mp4
+          python3 - <<'PY'
+          import json, subprocess, sys
+          def probe(p):
+              out = subprocess.run(['ffprobe','-v','error','-print_format','json',
+                                    '-show_format','-show_streams',p], capture_output=True, text=True).stdout
+              return json.loads(out)
+          import os
+          problems = []
+          for name, cap in (('clip-cyberpulse.mp4', 6_000_000), ('clip-cyberpulse.webm', 6_000_000)):
+              d = probe(name)
+              size = int(d['format']['size']); dur = float(d['format']['duration'])
+              v = [s for s in d['streams'] if s['codec_type'] == 'video'][0]
+              print(f"{name}: {size} B, {dur:.2f}s, {v['codec_name']} {v['width']}x{v['height']}")
+              if size > cap: problems.append(f'{name} exceeds 6 MB')
+              if not (15 <= dur <= 31): problems.append(f'{name} duration {dur:.2f}s outside RM2 15-30s')
+              if (v['width'], v['height']) != (480, 930): problems.append(f'{name} is not 480x930')
+          total = sum(os.path.getsize(f) for f in
+                      ('clip-cyberpulse.mp4','clip-cyberpulse.webm','poster-cyberpulse.webp'))
+          print('total media bytes:', total)
+          if total > 8_000_000: problems.append('total exceeds 8 MB')
+          if problems: sys.exit('RM4 validation failed: ' + '; '.join(problems))
+          print('RM4 validation green')
+          PY
+
+      - name: Upload the trailer and its evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cyberpulse-trailer
+          path: |
+            artifacts/cyberpulse/clip-cyberpulse.mp4
+            artifacts/cyberpulse/clip-cyberpulse.webm
+            artifacts/cyberpulse/poster-cyberpulse.webp
+            artifacts/cyberpulse/capture-report.json
+          if-no-files-found: error

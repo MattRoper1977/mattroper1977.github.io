@@ -49,8 +49,10 @@ function preFoldRuntimeCss(brokenControl = false) {
 
 const titanSource = fs.readFileSync(path.join(ROOT, 'titanforge/index.html'), 'utf8');
 const crownSource = fs.readFileSync(path.join(ROOT, 'crownbadge/index.html'), 'utf8');
+// V4+ boots the athlete from the evolution layer's own ROOKIE portrait, so corrupting only the core's
+// image no longer blanks the athlete. The control corrupts every img-src WebP (core + the four portraits).
 const corruptTitan = titanSource.replace(
-  /(src:"data:image\/webp;base64,)[A-Za-z0-9+/=]+/,
+  /(src:"data:image\/webp;base64,)[A-Za-z0-9+/=]+/g,
   '$1UklGRg=='
 );
 if (corruptTitan === titanSource) throw new Error('corrupt-WebP control did not mutate Titan');
@@ -245,6 +247,9 @@ async function runTitan(browser, origin) {
         const r = button.getBoundingClientRect(); return r.width > 0 && r.height > 0;
       }).map(button => getComputedStyle(button).touchAction));
       check(actions.length > 0 && actions.every(value => value === 'manipulation'), 'Titan: every visible button computes touch-action: manipulation', `${actions.length} buttons`);
+      // V5 shows a first-launch coach overlay (skippable, once); dismiss it as a player would before lifting.
+      const coachSkip = t.page.locator('.mbm-v5-coach-skip');
+      if (await coachSkip.count()) await coachSkip.first().click();
       await t.page.locator('.lift-button').click();
     }
     await closeTracked(t, `Titan ${viewport.width}×${viewport.height} self-contained boot`);
@@ -253,7 +258,7 @@ async function runTitan(browser, origin) {
   const corrupt = await trackedPage(browser, origin, '/__corrupt__/titanforge/');
   await waitTitan(corrupt, 'Titan corrupt-WebP control');
   const corruptState = await titanImageState(corrupt.page);
-  check(Buffer.byteLength(corruptTitan) < 1_000_000, 'CONTROL: corrupt Titan remains below the size ceiling', `${Buffer.byteLength(corruptTitan)} B`);
+  check(Buffer.byteLength(corruptTitan) < 2_400_000, 'CONTROL: corrupt Titan remains below the V5 size ceiling', `${Buffer.byteLength(corruptTitan)} B`);
   check(!corruptState.athlete.painted, 'CONTROL: corrupt athlete makes the render predicate red', `${corruptState.athlete.width}×${corruptState.athlete.height}`);
   await corrupt.context.close();
 

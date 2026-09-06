@@ -83,12 +83,25 @@ jobs:
           echo "site main      : $(git -C _main rev-parse HEAD)"
           echo "shelf main     : $(git -C _shelf rev-parse HEAD)"
 
-      - name: HTTP status for every surface
+      # HC3 §1.1. The origins are DERIVED from the shelf, the 69-route census and the
+      # split policy — never typed here — and the derivation proves its own three
+      # controls before any live fetch. A game route is served on the play origin;
+      # its old address on the education origin must be a stub.
+      - name: Derive the origin table and prove its controls (HC3 §1.1)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/route_origins.py --self-test
+          python3 tools/verify_education_stubs.py --self-test
+          echo "PLAY=$(python3 tools/route_origins.py --origin play)" >> "$GITHUB_ENV"
+          echo "EDU=$(python3 tools/route_origins.py --origin education)" >> "$GITHUB_ENV"
+
+      - name: HTTP status for every surface, on the origin that serves it
         run: |
           set -o pipefail
           for u in / /games/ /Games/games.json /ouroboros/ /novasiege/ ; do
-            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "https://madebymatt.uk$u" || echo "000")
-            printf '  %-34s %s\n' "$u" "$code"
+            code=$(curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 -o /dev/null -w '%{http_code}' --max-time 30 "$PLAY$u" || echo "000")
+            printf '  %-34s %s  (play)\n' "$u" "$code"
           done
           # Reported, not gated — the byte comparison below is the real check
           # and a 200 proves a response, not the right response.
@@ -97,7 +110,7 @@ jobs:
         run: |
           set -o pipefail
           fail=0
-          for u in https://madebymatt.uk/_staging/ https://madebymatt.uk/_staging/novasiege/ ; do
+          for u in "$EDU/_staging/" "$EDU/_staging/novasiege/" ; do
             code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
             printf '  %-52s %s\n' "$u" "$code"
             case "$code" in
@@ -133,8 +146,22 @@ jobs:
           for p in $tool_paths; do args+=(--tool-path "$p"); done
           echo "proving these game paths: ${paths:-(none)}"
           echo "proving these tool paths: ${tool_paths:-(none)}"
+          # Games serve on the play origin; the served bytes are the committed
+          # bytes with the education host literal rewritten, which is what
+          # --transform-host applies before hashing. Tool routes stay on the
+          # education origin. Each game path's OLD address on the education
+          # origin is checked as a stub (≤2 KB, noindex, canonical → play).
           cd tools && node verify_published_live.mjs \
+            --origin "$PLAY" --education-origin "$EDU" --transform-host \
             --repo-root "$GITHUB_WORKSPACE/_main" \
             --shelf     "$GITHUB_WORKSPACE/_shelf/games.json" \
             "${args[@]}" \
             --expect-404 /this-path-does-not-exist-control/
+
+      - name: The old game addresses on the education origin are stubs
+        if: always()
+        run: |
+          set -o pipefail
+          paths="${{ inputs.paths }}"
+          [ -n "$paths${{ inputs.tool_paths }}" ] || paths='/ouroboros/ /novasiege/'
+          python3 tools/verify_education_stubs.py --origin "$EDU" --routes $paths

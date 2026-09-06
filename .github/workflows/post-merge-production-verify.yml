@@ -71,6 +71,17 @@ jobs:
           # what a first-parent lookup needs.
           fetch-depth: 2
 
+      # HC3 §1.1. Origins are DERIVED (shelf + 69-route census + split policy),
+      # never typed here, and the derivation proves its own controls first.
+      - name: Derive the origin table and prove its controls (HC3 §1.1)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/route_origins.py --self-test
+          python3 tools/verify_education_stubs.py --self-test
+          echo "PLAY=$(python3 tools/route_origins.py --origin play)" >> "$GITHUB_ENV"
+          echo "EDU=$(python3 tools/route_origins.py --origin education)" >> "$GITHUB_ENV"
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -119,7 +130,9 @@ jobs:
 
       - name: Verify production
         env:
-          MBM_PROD_BASE: https://madebymatt.uk
+          # HC3 §1.1: games serve on the play origin (derived, never typed).
+          MBM_PROD_BASE: ${{ env.PLAY }}
+          MBM_EDU_BASE: ${{ env.EDU }}
           MBM_ATTEMPTS: ${{ github.event.inputs.attempts || '8' }}
           MBM_WAIT_MS: '30000'
         shell: bash

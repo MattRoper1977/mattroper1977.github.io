@@ -29,8 +29,8 @@ const FILE = supplied || path.join(__dirname, '..', 'apexpool', 'index.html');
  * Verified before moving rather than re-pinned on sight: 8432492^ hashes to the
  * OLD pin exactly, and the whole delta is the generated exit block.
  * Previous: 4de1383f8ee029db438258bb239e4e7f3b7ffd9e603706a9fd145fd397af87ad (88751 B) */
-const EXPECTED_BYTES = 91973;
-const EXPECTED_SHA256 = 'b71385d8dd97305e1bcb85b4754ddcee02f59feaccc3adc27c9f91c0e1bfd2bc';
+const EXPECTED_BYTES = 109038;
+const EXPECTED_SHA256 = '5d0f1580b89e3b6d65b4db75b45f4ad78353b87d761b34af93e9a1fd08ccc92a';
 
 function plantedFailures() {
   const source = fs.readFileSync(FILE, 'utf8');
@@ -40,7 +40,7 @@ function plantedFailures() {
     ['pocket target', 'pocket-buttons-44px', (s) => s.replace('.pocket-grid button{min-height:44px', '.pocket-grid button{min-height:38px')],
     ['dependency', 'remote-runtime-reference-census', (s) => s.replace('</body>', '<script src="https://example.invalid/tamper.js"></script></body>')],
     ['storage', 'storage-prefix-exact', (s) => s.replace("var PREFIX='mbm_apexpool_';", "var PREFIX='mbm_pool_';")],
-    ['reduced motion', 'reduced-motion-source-contract', (s) => s.replace('@media (prefers-reduced-motion:reduce)', '@media (prefers-reduced-motion:no-preference)')],
+    ['reduced motion', 'reduced-motion-source-contract', (s) => s.replace(/@media \(prefers-reduced-motion:reduce\)/g, '@media (prefers-reduced-motion:no-preference)')],
     ['no-JavaScript', 'noscript-source-contract', (s) => s.replace('<noscript>', '<no-script>')],
     ['Canvas guard', 'noCanvas-source-contract', (s) => s.replace('id="noCanvas"', 'id="noCanvasBroken"')]
   ];
@@ -109,7 +109,9 @@ ok('data-uri-favicon-is-the-only-embedded-asset', refs.filter((value) => /^data:
 ok('no-network-calls', !/\bfetch\s*\(|XMLHttpRequest|WebSocket|EventSource/.test(html));
 ok('storage-prefix-exact', /var PREFIX='mbm_apexpool_';/.test(html));
 const writes = [...html.matchAll(/localStorage\.(?:setItem|removeItem)\(([^\n;]+)/g)].map((m) => m[1]);
-ok('all-storage-writes-use-prefix-helper', writes.length === 2 && writes.every((value) => /this\.key\(k\)/.test(value)), writes.join(' | '));
+const legacyWrites = writes.filter((value) => /this\.key\(k\)/.test(value));
+const profileWrites = writes.filter((value) => /^PROFILE_KEY\b/.test(value));
+ok('all-storage-writes-use-owned-keys', writes.length === 3 && legacyWrites.length === 2 && profileWrites.length === 1 && /PROFILE_KEY='madebymatt_v6_profile'/.test(html), writes.join(' | '));
 
 head('Fallback and motion source contract');
 ok('reduced-motion-source-contract', /@media \(prefers-reduced-motion:reduce\)/.test(html) && /#mbmSplash\{transition:none\}/.test(html));

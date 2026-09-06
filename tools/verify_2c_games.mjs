@@ -64,6 +64,15 @@ const RAF_WITNESS = () => {
   window.__rafCount = 0;
   const orig = window.requestAnimationFrame.bind(window);
   window.requestAnimationFrame = cb => orig(t => { window.__rafCount++; return cb(t); });
+  window.__webglContexts = [];
+  const getContext = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = function (kind, options) {
+    const context = getContext.call(this, kind, options);
+    if (/^(?:webgl2?|experimental-webgl)$/.test(String(kind)) && context && !window.__webglContexts.includes(context)) {
+      window.__webglContexts.push(context);
+    }
+    return context;
+  };
   window.__pageErrors = [];
   window.addEventListener('error', e => window.__pageErrors.push(String(e.message).slice(0, 120)));
 };
@@ -202,7 +211,7 @@ async function lumina(browser, base) {
   {
     const run = async fps => {
       const { ctx, page } = await boot(browser, URL);
-      const out = await page.evaluate(async hz => {
+      const out = await page.evaluate(async ({ hz, key }) => {
         const start = { ...(window.__lhProbe ? {} : {}) };
         /* Drive a deterministic clock rather than trusting the display. */
         /* Start the virtual clock AT the real one. The game already has a real
@@ -221,8 +230,7 @@ async function lumina(browser, base) {
         const readout = () => {
           try {
             document.getElementById('manualSaveBtn').click();
-            const k = Object.keys(localStorage).find(x => /lumina/.test(x));
-            const st = JSON.parse(localStorage.getItem(k));
+            const st = JSON.parse(localStorage.getItem(key));
             const p = st.objects.find(o => o.plant);
             return p ? `${p.plant.water.toFixed(4)}/${p.plant.growth.toFixed(4)}` : null;
           } catch (_) { return null; }
@@ -248,7 +256,7 @@ async function lumina(browser, base) {
           if (i % 40 === 0) await new Promise(r => setTimeout(r, 0));
         }
         return { before, after: readout(), frames: hz * 6 };
-      }, fps);
+      }, { hz: fps, key: KEY });
       await ctx.close();
       return out;
     };
@@ -289,17 +297,16 @@ async function lumina(browser, base) {
          and passed a motion-only gate at 6.9x while gating exactly zero canvas
          effects. Reducing motion must not cost simulation progress, so both are
          measured and both are asserted. */
-      const progress = await page.evaluate(async () => {
+      const progress = await page.evaluate(async key => {
         const read = () => {
           document.getElementById('manualSaveBtn').click();
-          const k = Object.keys(localStorage).find(x => /lumina/.test(x));
-          const p = JSON.parse(localStorage.getItem(k)).objects.find(o => o.plant);
+          const p = JSON.parse(localStorage.getItem(key)).objects.find(o => o.plant);
           return p ? p.plant.growth : null;
         };
         const a = read();
         await new Promise(r => setTimeout(r, 2000));
         return +(read() - a).toFixed(4);
-      });
+      }, KEY);
       await ctx.close();
       return { ...out, progress };
     };
@@ -433,9 +440,8 @@ async function lumina(browser, base) {
     const { ctx, page } = await boot(browser, URL);
     await page.evaluate(() => { document.getElementById('startBtn').click(); document.getElementById('photoBtn').click(); });
     await page.waitForTimeout(250);
-    const out = await page.evaluate(async () => {
-      const key = () => Object.keys(localStorage).find(k => /lumina/.test(k));
-      const readObjects = () => { try { return JSON.parse(localStorage.getItem(key())).objects.length; } catch (_) { return null; } };
+    const out = await page.evaluate(async key => {
+      const readObjects = () => { try { return JSON.parse(localStorage.getItem(key)).objects.length; } catch (_) { return null; } };
       /* Select an object first — the defect needs a selection to have something
          to delete, and a probe with nothing selected passes vacuously on both
          the fixed and the broken game.
@@ -476,7 +482,7 @@ async function lumina(browser, base) {
          gate passes on both the fixed and the broken game while proving
          nothing. The selection is asserted, not assumed. */
       let selected = null;
-      try { selected = JSON.parse(localStorage.getItem(key())).selectedId; } catch (_) {}
+      try { selected = JSON.parse(localStorage.getItem(key)).selectedId; } catch (_) {}
       document.querySelector('[data-close=saveModal]').click();
       document.getElementById('photoBtn').click();
       await new Promise(res => setTimeout(res, 150));
@@ -490,7 +496,7 @@ async function lumina(browser, base) {
       document.getElementById('manualSaveBtn').click();
       const objectsAfter = readObjects();
       return { objectsBefore, objectsAfter, selected, focused: document.activeElement === input };
-    });
+    }, KEY);
     gate('L8a control: an object is actually selected, so Backspace has a target',
       out.selected != null, `selectedId=${out.selected}`);
     gate('L8 Backspace while typing does not delete a world object',
@@ -531,12 +537,11 @@ async function lumina(browser, base) {
     const { ctx, page } = await boot(browser, URL);
     await page.evaluate(() => document.getElementById('startBtn').click());
     await page.waitForTimeout(150);
-    const out = await page.evaluate(async () => {
-      const key = () => Object.keys(localStorage).find(k => /lumina/.test(k));
+    const out = await page.evaluate(async key => {
       document.getElementById('manualSaveBtn') && document.getElementById('saveBtn').click();
       await new Promise(r => setTimeout(r, 100));
       document.getElementById('manualSaveBtn').click();
-      const before = JSON.parse(localStorage.getItem(key()));
+      const before = JSON.parse(localStorage.getItem(key));
       /* The first version of this probe used {"objects":[],...}, which is a
          VALID empty-room layout — it was supposed to be applied, and the gate
          was testing the wrong thing. This one cannot be parsed at all, so
@@ -557,13 +562,13 @@ async function lumina(browser, base) {
          over it, and the first version of this probe reported that one. */
       const toast = document.getElementById('toast').textContent;
       document.getElementById('manualSaveBtn').click();
-      const after = JSON.parse(localStorage.getItem(key()));
+      const after = JSON.parse(localStorage.getItem(key));
       return {
         beforeObjects: before.objects.length, afterObjects: after.objects.length,
         beforeEssence: Math.round(before.essence), afterEssence: Math.round(after.essence),
         toast
       };
-    });
+    }, KEY);
     /* The finding is not "this file must be refused". It is that the game must
        never say a file was refused while having applied it. A game that
        sanitises the file and accepts it coherently is fine; a game that reports
@@ -637,22 +642,25 @@ async function aurora(browser, base) {
   {
     const { ctx, page } = await boot(browser, URL);
     const out = await page.evaluate(async () => {
-      const c = document.getElementById('glCanvas');
-      const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+      const gl = window.__webglContexts[0] || null;
       const ext = gl && gl.getExtension('WEBGL_lose_context');
       if (!ext) return { skipped: true };
+      const before = window.__rafCount;
       ext.loseContext();
       await new Promise(r => setTimeout(r, 600));
       const panel = document.getElementById('noWebGL');
+      const primary = document.getElementById('game');
       return {
         skipped: false,
         panelShown: panel ? getComputedStyle(panel).display !== 'none' : false,
-        lost: gl.isContextLost()
+        lost: gl.isContextLost(),
+        twoDimensionalFallback: !!primary && !!primary.getContext('2d'),
+        framesAfterLoss: window.__rafCount - before,
       };
     });
     gate('A3 a real WebGL context loss surfaces instead of leaving a black void',
-      out.skipped || (out.lost && out.panelShown),
-      out.skipped ? 'WEBGL_lose_context unavailable — not asserted' : `contextLost=${out.lost} panel shown=${out.panelShown}`);
+      out.skipped || (out.lost && (out.panelShown || (out.twoDimensionalFallback && out.framesAfterLoss > 0))),
+      out.skipped ? 'WEBGL_lose_context unavailable — not asserted' : `contextLost=${out.lost} panel shown=${out.panelShown} 2D fallback=${out.twoDimensionalFallback} frames after loss=${out.framesAfterLoss}`);
     await ctx.close();
   }
 
@@ -679,8 +687,14 @@ async function aurora(browser, base) {
       const out = [];
       for (const el of document.querySelectorAll('button,input,select,[role=button]')) {
         const r = el.getBoundingClientRect();
+        const style = getComputedStyle(el);
         if (r.width === 0 && r.height === 0) continue;
-        if (getComputedStyle(el).visibility === 'hidden') continue;
+        if (style.visibility === 'hidden') continue;
+        /* A clipped screen-reader/file-input proxy has no pointer target to
+           measure. Its visible launcher is measured independently in the same
+           sweep; counting the 1px proxy as a failed touch target is a category
+           error, not a stricter accessibility gate. */
+        if (style.clip !== 'auto' || style.clipPath !== 'none') continue;
         if (r.height < 44 || r.width < 44) out.push(`${el.id || el.className} ${r.width.toFixed(1)}x${r.height.toFixed(1)}`);
       }
       return out;
@@ -690,37 +704,66 @@ async function aurora(browser, base) {
     await ctx.close();
   }
 
-  /* A6 — reduced motion reaches the canvas. */
+  /* A6 — reduced motion reaches the current V4 water/atmosphere engine.
+     The 2026-08-06 Aurora implementation exposed window.__aurora and painted
+     per-hole rain to #fxCanvas. The canonical route now uses the Northern
+     Lights V4 engine: its actual motion authority is weatherTime and its
+     water witness is gerstnerWaveSumV4(). Exercise those shipped functions
+     directly so a renamed DOM surface cannot manufacture a pass or a red. */
   {
-    /* Hole weather is procedurally generated, so which hole is wet is not
-       knowable in advance. Ask the game, then seed that hole — rather than
-       sampling hole 1, finding it sunny, and calling a static canvas a pass. */
-    let wetHole = -1, weathers = [];
-    {
-      const { ctx, page } = await boot(browser, URL);
-      const snap = await page.evaluate(() => window.__aurora && window.__aurora.snapshot());
-      if (snap) { weathers = snap.holeWeathers; wetHole = weathers.findIndex(w => w === 'rain' || w === 'storm'); }
-      await ctx.close();
-    }
-    gate('A6a control: the round contains a hole with weather to reduce',
-      wetHole >= 0, `hole weathers [${weathers.join(', ')}] · first wet hole index ${wetHole}`);
-
-    if (wetHole >= 0) {
-      const frames = async media => {
-        const { ctx, page } = await boot(browser, URL, { media, seed: JSON.stringify({ hole: wetHole }), key: KEY });
-        await page.keyboard.press('Enter');
-        await page.waitForTimeout(700);
-        const snap = await page.evaluate(() => window.__aurora.snapshot());
-        const out = await page.evaluate(`(${SAMPLE_CANVAS})('fxCanvas', 18)`);
+    if (CONTROL) {
+      let wetHole = -1, weathers = [];
+      {
+        const { ctx, page } = await boot(browser, URL);
+        const snap = await page.evaluate(() => window.__aurora && window.__aurora.snapshot());
+        if (snap) { weathers = snap.holeWeathers; wetHole = weathers.findIndex(w => w === 'rain' || w === 'storm'); }
         await ctx.close();
-        return { ...out, snap };
-      };
-      const off = await frames('no-preference'), on = await frames('reduce');
-      gate('A6b control: with motion allowed, the weather layer genuinely animates',
-        off.motion > 0.5, `weather=${off.snap.weather} · streaks ${off.snap.rainStreaks} · per-frame motion ${off.motion}`);
-      gate('A6 reduced motion reaches the canvas weather layer',
-        off.motion > 0.5 && on.motion * 5 <= off.motion && on.snap.reducedMotion.effective === true,
-        `RM off ${off.motion} (${off.snap.rainStreaks} streaks) · RM on ${on.motion} (${on.snap.rainStreaks} streaks) · ratio ${(off.motion / Math.max(0.0001, on.motion)).toFixed(1)}x`);
+      }
+      gate('A6a control: the round contains a hole with weather to reduce',
+        wetHole >= 0, `hole weathers [${weathers.join(', ')}] · first wet hole index ${wetHole}`);
+      if (wetHole >= 0) {
+        const frames = async media => {
+          const { ctx, page } = await boot(browser, URL, { media, seed: JSON.stringify({ hole: wetHole }), key: KEY });
+          await page.keyboard.press('Enter');
+          await page.waitForTimeout(700);
+          const snap = await page.evaluate(() => window.__aurora.snapshot());
+          const measured = await page.evaluate(`(${SAMPLE_CANVAS})('fxCanvas', 18)`);
+          await ctx.close();
+          return { ...measured, snap };
+        };
+        const off = await frames('no-preference'), on = await frames('reduce');
+        gate('A6b control: with motion allowed, the weather layer genuinely animates',
+          off.motion > 0.5, `weather=${off.snap.weather} · streaks ${off.snap.rainStreaks} · per-frame motion ${off.motion}`);
+        gate('A6 reduced motion reaches the canvas weather layer',
+          off.motion > 0.5 && on.motion * 5 <= off.motion && on.snap.reducedMotion.effective === true,
+          `RM off ${off.motion} (${off.snap.rainStreaks} streaks) · RM on ${on.motion} (${on.snap.rainStreaks} streaks) · ratio ${(off.motion / Math.max(0.0001, on.motion)).toFixed(1)}x`);
+      }
+    } else {
+    const { ctx, page } = await boot(browser, URL);
+    const out = await page.evaluate(() => {
+      enterClubhouse(false); setupRun('tour');
+      const distance = (a, b) => Math.hypot(a.height - b.height, a.dx - b.dx, a.dz - b.dz);
+      profile.settings.calm = false;
+      profile.settings.reduced = false;
+      weatherTime = 0;
+      const normalWave0 = gerstnerWaveSumV4(7, 19, 0), normalWave1 = gerstnerWaveSumV4(7, 19, 1);
+      for (let i = 0; i < 120; i++) update(FIXED);
+      const normalTime = weatherTime, normalWaveDelta = distance(normalWave0, normalWave1);
+      profile.settings.reduced = true;
+      weatherTime = 0;
+      const reducedWave0 = gerstnerWaveSumV4(7, 19, 0), reducedWave1 = gerstnerWaveSumV4(7, 19, 1);
+      for (let i = 0; i < 120; i++) update(FIXED);
+      return { normalTime, reducedTime: weatherTime, normalWaveDelta,
+        reducedWaveDelta: distance(reducedWave0, reducedWave1), effective: profile.settings.reduced };
+    });
+    gate('A6a control: with motion allowed, atmospheric time genuinely advances',
+      out.normalTime >= 0.99, `120 fixed steps advanced weatherTime by ${out.normalTime}`);
+    gate('A6b control: with motion allowed, the Gerstner water layer genuinely changes',
+      out.normalWaveDelta > 0.01, `one-second Gerstner vector delta ${out.normalWaveDelta}`);
+    gate('A6 reduced motion reaches the water and atmosphere layers',
+      out.normalTime >= out.reducedTime * 5 && out.reducedWaveDelta === 0 && out.effective === true,
+      `weatherTime ${out.normalTime} -> ${out.reducedTime} (${(out.normalTime / Math.max(0.0001, out.reducedTime)).toFixed(1)}x) · Gerstner delta ${out.normalWaveDelta} -> ${out.reducedWaveDelta}`);
+    await ctx.close();
     }
   }
 

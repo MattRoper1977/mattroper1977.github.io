@@ -1,0 +1,55 @@
+name: Published Education completion
+on:
+  workflow_run:
+    workflows: ['Education publication']
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: published-education-completion
+  cancel-in-progress: false
+jobs:
+  verify:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          # Pinned reviewed catalogue and native teaching pack source (PR #338).
+          ref: 5ba6271573f9323138fb289b181e2499d25e097b
+          path: .sources/Lessons
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install the established browser test runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Verify published phone and desktop journeys and downloads
+        env:
+          MBM_EDUCATION_ORIGIN: https://madebymatt.uk
+          MBM_COMPLETION_LESSONS: .sources/Lessons
+          MBM_REQUIRE_TEACHING_PACKS: 'true'
+        run: |
+          # Companion repositories publish independently. Record each attempt
+          # while their already-reviewed Pages deployments finish.
+          for attempt in $(seq 1 8); do
+            export MBM_COMPLETION_OUTPUT="audit-output/published-completion/attempt-$attempt"
+            if node domain-split/check_completion.cjs; then exit 0; fi
+            if [ "$attempt" -lt 8 ]; then sleep 30; fi
+          done
+          exit 1
+      - name: Preserve published screenshots and exact results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: published-education-completion-${{ github.run_id }}
+          path: audit-output/published-completion/
+          if-no-files-found: error
+          retention-days: 30

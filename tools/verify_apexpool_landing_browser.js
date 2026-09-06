@@ -61,7 +61,7 @@ async function assertTargets(page, label) {
     await page.waitForFunction(() => window.__AP_DEBUG && document.querySelector('.wordmark'));
     await page.waitForTimeout(1300);
     const rotateVisible = await page.locator('#rotateHint').isVisible();
-    ok('portrait-choice-overlay-renders', rotateVisible);
+    ok('portrait-path-remains-unblocked', !rotateVisible);
     if (rotateVisible) {
       await assertTargets(page, 'portrait-choice');
       await page.locator('#dismissRotate').click();

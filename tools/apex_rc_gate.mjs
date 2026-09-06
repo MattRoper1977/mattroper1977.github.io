@@ -39,6 +39,86 @@ const EXIT_SHA = LEDGER.inlineExitRegion._sha256;
 const EXIT_RE = /<!--\s*MBM-INLINE-EXIT:BEGIN[\s\S]*?MBM-INLINE-EXIT:END\s*-->\n?/;
 const SPLASH_RE = /<!--\s*MBM-SPLASH:BEGIN[\s\S]*?MBM-SPLASH:END\s*-->\n?/;
 
+/* Classify every mbm_ / apex_ prefixed literal in a build by where it is USED.
+ *
+ * Whole-file regex rather than a parser, deliberately: these builds are single
+ * self-contained files of up to 900 KB with inlined third-party bundles, and a
+ * parser over that is a second thing to drift. What the regex must get right is
+ * only the binding indirection — a key is nearly always bound to a const and
+ * then passed by name — so bindings are resolved first and call sites are
+ * matched against literals and bound names alike.
+ *
+ * WRITE sinks are the DOM setters and the wrappers these builds actually use;
+ * READ sinks likewise. A literal reaching neither, but reaching a download
+ * filename, is not storage. A literal reaching none of the three is reported
+ * nowhere and asserts nothing — it may be a build id, a CSS class, an event
+ * name. Only writes are held to the declared set. */
+const KEY_LITERAL = /['"]((?:mbm|apex)_[a-z0-9_]+)['"]/g;
+const WRITE_SINKS = ['setItem', 'removeItem', 'writeJson', 'safeSet', 'rawSet', 'persist'];
+const READ_SINKS = ['getItem', 'readJson', 'safeGet', 'rawGet'];
+const FILENAME_SINKS = /\.(?:csv|json|txt)['"`]|download\s*[(=]|new Blob|createObjectURL/;
+
+export function collectStorageKeys(source) {
+  /* 1. NAME = 'mbm_thing'  →  NAME resolves to that key.
+   * Not anchored to var/let/const: these builds routinely declare several keys
+   * in one statement — const STORAGE='apex_velodrome_rc_v1',STARSTORE='…' —
+   * and an anchored pattern binds only the first declarator, so the second key
+   * becomes invisible. A name may bind more than once; keep every binding
+   * rather than letting the last one win. */
+  const bound = new Map();
+  for (const m of source.matchAll(/(?:^|[,;{(=\s])([A-Za-z_$][\w$]*)\s*=\s*['"]((?:mbm|apex)_[a-z0-9_]+)['"]/g)) {
+    if (!bound.has(m[1])) bound.set(m[1], new Set());
+    bound.get(m[1]).add(m[2]);
+  }
+
+  /* Built as a string, so every backslash the regex needs is doubled here.
+   * A single \w inside a JS string literal is just the letter w, which is how
+   * the first version of this silently matched no identifier at all and
+   * reported that a build with a plain localStorage.setItem writes nothing. */
+  const arg = '(?:[\'"]((?:mbm|apex)_[a-z0-9_]+)[\'"]|([A-Za-z_$][\\w$]*))';
+  const collect = (sinks) => {
+    const found = new Set();
+    for (const sink of sinks) {
+      const re = new RegExp(sink + '\\s*\\(\\s*' + arg, 'g');
+      for (const m of source.matchAll(re)) {
+        if (m[1]) { found.add(m[1]); continue; }
+        const keys = bound.get(m[2]);
+        if (keys) for (const k of keys) found.add(k);
+      }
+    }
+    return found;
+  };
+  const writes = collect(WRITE_SINKS);
+  const reads = collect(READ_SINKS);
+
+  /* 2. Anything left over that only ever builds a download filename.
+   * Followed through the BINDING, not through a character window around the
+   * literal: a build declares the prefix in one place and uses it in another,
+   * and a fixed window decides by how much unrelated code happens to sit
+   * between them. A control that put 130 characters there was missed by a
+   * 120-character window while the real build was caught — the same finding
+   * either way, which is precisely what makes the window the wrong instrument. */
+  const namesFor = key => [...bound.entries()].filter(([, ks]) => ks.has(key)).map(([n]) => n);
+  const usedAsFilename = (key) => {
+    const needles = [...namesFor(key).map(n => new RegExp('\\b' + n + '\\b', 'g')), new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')];
+    for (const re of needles) {
+      for (const hit of source.matchAll(re)) {
+        const window = source.slice(Math.max(0, hit.index - 160), hit.index + hit[0].length + 160);
+        if (FILENAME_SINKS.test(window)) return true;
+      }
+    }
+    return false;
+  };
+  const filenames = new Set();
+  for (const m of source.matchAll(KEY_LITERAL)) {
+    const key = m[1];
+    if (writes.has(key) || reads.has(key) || filenames.has(key)) continue;
+    if (usedAsFilename(key)) filenames.add(key);
+  }
+  const sort = set => [...set].sort();
+  return { writes: sort(writes), reads: sort(reads), filenames: sort(filenames) };
+}
+
 export function makeFindings(name) {
   const rows = [];
   return {
@@ -88,10 +168,42 @@ export async function gate({ name, route, storageKeys, global: global_ }) {
     `${route}: honours prefers-reduced-motion`);
 
   /* --- storage: the declared keys, and only those -------------------------- */
-  const keys = [...new Set([...game.matchAll(/['"]((?:apex)_[a-z0-9_]+)['"]/g)].map(m => m[1]))]
-    .filter(k => !/_v\d_\d_rc\d_$/.test(k));   // export filename prefixes are not storage
-  f.check(keys.length === storageKeys.length && storageKeys.every(k => keys.includes(k)),
-    `${route}: touches exactly the declared storage keys`, keys.join(', '));
+  /* This used to collect every source literal matching /(apex)_[a-z0-9_]+/ and
+   * assert the set equalled the declared keys. It was wrong in three separate
+   * directions at once, all three observed:
+   *
+   *   BLIND. The RC-generation builds namespace their storage as mbm_apex_*.
+   *   None of those literals begin apex_, so the regex could not see them. A
+   *   candidate passed this assertion while writing two keys the deployed
+   *   build never writes. That green measured nothing.
+   *
+   *   RED ON READS. A build that reads its own legacy keys to migrate a child's
+   *   save was failed for naming them. Reading a key is not touching storage in
+   *   the sense this assertion is about, and punishing migration is the exact
+   *   opposite of what the estate wants.
+   *
+   *   RED ON FILENAMES. 'apex_velodrome_aaa_v4_' builds
+   *   apex_velodrome_aaa_v4_telemetry.csv. It is the category the old exclusion
+   *   below existed to catch, and its _v\d_\d_rc\d_$ shape did not match.
+   *
+   * The repair does not widen that pattern — widening a pattern to swallow a
+   * false red is how the next false green is manufactured. It classifies by
+   * CALL SITE instead: a literal is a write key only where it reaches
+   * setItem/removeItem or the estate's wrappers, whether directly or through a
+   * const the file binds it to. Reads are collected separately and can never
+   * red the write assertion, and a literal that only ever becomes a download
+   * filename is not storage at all. */
+  const storage = collectStorageKeys(game);
+  const writes = storage.writes;
+  f.check(writes.length === storageKeys.length && storageKeys.every(k => writes.includes(k)),
+    `${route}: writes exactly the declared storage keys`, writes.join(', ') || '(none)');
+  /* Printed, never asserted. A read is not a write, and a filename is not
+   * storage; both are shown so a reviewer can see what the classifier decided
+   * rather than having to trust that it decided anything. */
+  if (storage.reads.length)
+    console.log(`  [note] ${route}: also READS, never held to the declared set  — ${storage.reads.join(', ')}`);
+  if (storage.filenames.length)
+    console.log(`  [note] ${route}: literals that only build download filenames  — ${storage.filenames.join(', ')}`);
 
   /* --- runtime ------------------------------------------------------------- */
   const b = await chromium.launch({ headless: true, executablePath: CHROME });

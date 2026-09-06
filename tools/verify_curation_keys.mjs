@@ -309,7 +309,7 @@ check(noFeel.length === 0, 'every game carries at least one feel', noFeel.map(t 
 const MIGRATED = [
   ['PHYSICS & GRAVITY', '/Lessons/Games/Orbital.html', 'gravity'],
   ['PHYSICS & GRAVITY', '/Lessons/Games/Marble.html', 'gravity'],
-  ['REFLEX & SPEED', '/Lessons/Games/Trail_Runner.html', 'fast'],
+  ['REFLEX & SPEED', '/trailrunner/', 'fast'],
   ['REFLEX & SPEED', '/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html', 'fast'],
   ['REFLEX & SPEED', '/Lessons/Games/Grid_Chase.html', 'fast'],
   ['CALM & STRATEGY', '/Lessons/Games/Neon_Garden.html', 'calm'],
@@ -389,7 +389,7 @@ const scratchManifest = (mutate) => {
      /apexkick/ is curated + railed; Trail Runner is curated + themed. Between
      them every kind the orphan rule emits is driven red at least once, and
      that is asserted rather than assumed. */
-  const MOVE = ['/apexkick/', '/Lessons/Games/Trail_Runner.html'];
+  const MOVE = ['/apexkick/', '/trailrunner/'];
   const found = MOVE.flatMap(href => {
     const f = scratchManifest(gs => { gs.find(g => g.href === href).href = href.replace(/\/?$/, '') + '_MOVED/'; });
     return orphans(record, manifestFrom(f)).filter(x => x.key === href);
@@ -413,7 +413,7 @@ const scratchManifest = (mutate) => {
 /* Direction three: the thing the whole re-keying was for. A pure TITLE rename
    must now be a non-event. If this ever reds, href-keying has been undone. */
 {
-  const f = scratchManifest(gs => { gs.find(g => g.href === '/Lessons/Games/Trail_Runner.html').title = 'Trail Runner RENAMED'; });
+  const f = scratchManifest(gs => { gs.find(g => g.href === '/trailrunner/').title = 'Trail Runner RENAMED'; });
   const o = orphans(record, manifestFrom(f));
   check(o.length === 0,
     'CONTROL: renaming a game\'s TITLE is now a non-event — the defect this replaced',
@@ -447,17 +447,21 @@ const scratchManifest = (mutate) => {
     c.none.join(', ') || 'not caught — the zero-genre limb is a no-op');
 }
 {
-  /* Action & Survival holds exactly 2, so removing one puts it under the floor.
-     Picking the genre with the least headroom is deliberate: a control that
-     removes a game from a genre of ten proves the arithmetic, not the floor. */
+  /* Picking the genre with the least headroom is deliberate: a control that
+     removes a game from a genre of ten proves the arithmetic, not the floor.
+     How many to remove is derived, not remembered. A pinned count in a
+     control is the same defect as a pinned count in a gate: adding a third
+     Action & Survival route must not silently disarm this firing control. */
   const victimGenre = [...byGenre].sort((a, b) => a[1] - b[1])[0][0];
-  const victim = record.taxonomy.find(t => t.genre === victimGenre);
-  const reduced = record.taxonomy.filter(t => t !== victim);
+  const victimCount = byGenre.get(victimGenre);
+  const toRemove = victimCount - FLOOR + 1;
+  const victims = new Set(record.taxonomy.filter(t => t.genre === victimGenre).slice(0, toRemove));
+  const reduced = record.taxonomy.filter(t => !victims.has(t));
   const counts = new Map();
   for (const t of reduced) counts.set(t.genre, (counts.get(t.genre) || 0) + 1);
   const nowThin = [...counts].filter(([, n]) => n < FLOOR);
-  check(nowThin.some(([g]) => g === victimGenre),
-    `CONTROL: deleting a game from the smallest genre (${victimGenre}, ${byGenre.get(victimGenre)}) drops it under the floor and reds`,
+  check(victims.size === toRemove && nowThin.some(([g]) => g === victimGenre),
+    `CONTROL: removing ${toRemove} of ${victimCount} from the smallest genre (${victimGenre}) drops it under the floor of ${FLOOR} and reds`,
     nowThin.map(([g, n]) => `${g}=${n}`).join(', ') || 'floor did not fire');
 }
 {

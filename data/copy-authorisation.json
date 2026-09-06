@@ -12,7 +12,8 @@
     "external-explorations": "mbm-teach-green-links-2026-08-12",
     "support-buttons": "mbm-support-buttons-2026-08-12",
     "games-audience-faces": "mbm-games-audience-faces-2026-08-08",
-    "maker-splash-daily": "mbm-maker-splash-daily-2026-08-27"
+    "maker-splash-daily": "mbm-maker-splash-daily-2026-08-27",
+    "education-navigation-refresh": "mbm-education-navigation-refresh-2026-09-05"
   },
   "pages": {
     "members/index.html": {
@@ -77,9 +78,49 @@
     "tools/index.html": {
       "governedBy": "region-comparison",
       "authorisedBy": [
-        "professional-design-upgrade"
+        "professional-design-upgrade",
+        "education-navigation-refresh"
       ],
-      "_why": "The hub's tool INVENTORY changes when a tool ships; its authored prose does not. region-comparison keeps this page inside the strict preservation diff - declaring it records how it is governed, it does not move it out. Exactly one region is canonicalised away, the run of accreditation cards in <div class=\"tgrid\" data-sec=\"acc\">; the bridge panel in that same grid, and every heading and promise on the page, stay under strict comparison. Declaring it WITHOUT region-comparison would have replaced preservation with a sentinel-presence check and switched the guard off for the whole page, which is what happened to main/index.html once."
+      "_why": "The accreditation-card inventory region remains the only free-copy region. Matt additionally approved the education tools refresh on 2026-09-05: exact hero and shortcut copy, the browse/footer domain wording and moving the existing tools drawer before the feature panels. educationRefresh records both sides of each accepted copy change and the two allowed section orders. Every other word, including the accreditation bridge and utility cards, remains preservation-protected; this page stays governed by region-comparison and gains no sentinel exemption.",
+      "educationRefresh": {
+        "authority": "education-navigation-refresh",
+        "approvedDate": "2026-09-05",
+        "exactReplacements": [
+          {
+            "name": "education-hero-and-shortcuts",
+            "before": "<section class=\"tx-hero\"><div class=\"tx-wrap\">\n<p class=\"eyebrow\">THE TOOLS HUB</p>\n<div class=\"toprow\"><h1>Your offline-first, professional toolkit — streamlined utilities and specialised registers to <b>shrink the paperwork.</b></h1><span class=\"tx-pill\" id=\"txTotal\">Every tool free</span></div>\n",
+            "after": "<section class=\"tx-hero\"><div class=\"tx-wrap\">\n<nav class=\"education-breadcrumb\" aria-label=\"Breadcrumb\"><a href=\"/\">Learning home</a><a href=\"/Lessons/\">Lessons</a><a href=\"/resources/\">All resources</a></nav><p class=\"eyebrow\">Teacher tools</p>\n<div class=\"toprow\"><h1>More teaching.<br>Less paperwork.</h1><span class=\"tx-pill\" id=\"txTotal\">Every tool free</span></div>\n<p class=\"lead\">Find a classroom tool, track evidence or plan your next session. Search below, or choose a collection.</p><nav class=\"education-jumps\" aria-label=\"Quick tool choices\"><a href=\"#drawer\">Find a tool</a><a href=\"/Matt-s-Apps-/Classroom_Toolkit.html\">Timer &amp; name picker</a><a href=\"/Lessons/?view=saved\">Your saved lessons</a></nav>"
+          },
+          {
+            "name": "resource-search-description",
+            "before": "<p>Search every lesson, game and tool in the full catalogue.</p>",
+            "after": "<p>Search lessons and teaching tools in the full catalogue.</p>"
+          },
+          {
+            "name": "education-footer-description",
+            "before": "<span class=\"muted\">Interactive lessons, simulations and games · madebymatt.uk</span>",
+            "after": "<span class=\"muted\">Lessons and teaching tools · madebymatt.uk</span>"
+          }
+        ],
+        "sectionOrders": [
+          [
+            "tx-hero",
+            "tx-flag",
+            "tx-watch",
+            "tx-flag",
+            "tx-tools",
+            "commit"
+          ],
+          [
+            "tx-hero",
+            "tx-tools",
+            "tx-flag",
+            "tx-watch",
+            "tx-flag",
+            "commit"
+          ]
+        ]
+      }
     }
   }
 }

@@ -348,12 +348,30 @@ async function main() {
       const ctx = await browser.newContext({ viewport: { width, height }, hasTouch: true });
       const page = await ctx.newPage();
       for (const t of T) {
-        const url = origin + t.route.split('/').map(encodeURIComponent).join('/');
+        // This gate measures the persistent exit after boot, not whether Tab
+        // can tunnel through the canonical modal introduction.  The previous
+        // 700 ms settle raced the splash's deliberate 2.1 s lifetime and made
+        // fast-loading routes fail while slower routes passed by accident.
+        /* CyberPulse's own CP4c gate proves renderer=2d reaches its Canvas
+           fallback. This verifier judges DOM furniture, not the renderer; using
+           that authored hatch avoids spending the whole job budget in WebGL
+           while preserving every geometry, stacking and keyboard assertion. */
+        const renderer = t.route === '/cyberpulse/' ? '&renderer=2d' : '';
+        const url = origin + t.route.split('/').map(encodeURIComponent).join('/') + '?splash=skip' + renderer;
         try {
           await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_MS });
           await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, CHOICE]);
           await page.reload({ waitUntil: 'domcontentloaded', timeout: NAV_MS });
           await page.waitForTimeout(SETTLE_MS);
+          /* Drain product autofocus before resetting focus for the real Tab
+             walk.  Olympics showScreen() queues its initial focus in rAF; on
+             a slow renderer that callback can otherwise land mid-walk and
+             make the identity-based cycle detector stop before the exits.
+             Two actual frames are a readiness condition, not extra settling
+             time: the first runs callbacks already queued by the product and
+             the second proves that queue has yielded back to the verifier. */
+          await page.evaluate(() => new Promise(resolve =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve))));
         } catch (e) {
           check(false, `${vp}px ${t.route}: loads within ${NAV_MS} ms`, String(e).slice(0, 100));
           continue;

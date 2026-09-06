@@ -24,7 +24,12 @@ Retired checks are DECLARED in data/retired-checks.json and reported separately
 by name. A check not declared there is never excused.
 
 Usage:
-  python3 tools/estate_check_health.py [--gate] [--stale-days 30] [--json OUT]
+  python3 tools/estate_check_health.py [--gate] [--stale-days 30] [--pin-stale-days 2] [--json OUT]
+
+HC3 §3.4: the Play pins (Games/play-publication.json) are reported every run —
+commits behind each source's main and the age of the pinned commit — and a pin
+that is behind AND older than --pin-stale-days is a STALE PIN, folded into the
+gate: the six-hourly Pin release should have moved it.
 """
 import json, os, sys, urllib.request, datetime
 
@@ -94,6 +99,34 @@ def unjudged(rows, stale_days):
                    and r['conclusion'] not in ('NEVER RUN', 'failure')]
     return me, never, never_green
 
+PIN_FILE = 'play-publication.json'
+PIN_SOURCES = {'site_commit': 'mattroper1977.github.io', 'lessons_commit': 'Lessons'}
+
+def pin_rows():
+    """HC3 §3.4. Play is built from the commits pinned in Games/play-publication.json;
+    a pin behind its source HEAD means merged work that is not served. One row per
+    source: how many commits behind, and how old the pinned commit is."""
+    import base64
+    rows = []
+    raw = api(f'/repos/MattRoper1977/Games/contents/{PIN_FILE}')
+    pins = json.loads(base64.b64decode(raw['content']).decode('utf-8'))
+    now = datetime.datetime.utcnow()
+    for key, repo in PIN_SOURCES.items():
+        sha = pins[key]
+        cmp = api(f'/repos/MattRoper1977/{repo}/compare/{sha}...main')
+        commit = api(f'/repos/MattRoper1977/{repo}/commits/{sha}')
+        rows.append({'source': repo, 'pin': sha, 'behind': cmp['ahead_by'],
+                     'pin_age': age(commit['commit']['committer']['date'], now),
+                     'head': cmp['base_commit']['sha'] if cmp['ahead_by'] == 0 else cmp['commits'][-1]['sha']})
+    return rows
+
+def classify_pins(rows, stale_days):
+    """A pin is STALE when it is behind its source AND the pinned commit is older
+    than stale_days: the Pin release workflow (Games) runs six-hourly, so a pin
+    still behind after that long is a release that is not happening, not one
+    that is in flight."""
+    return [r for r in rows if r['behind'] > 0 and r['pin_age'] is not None and r['pin_age'] > stale_days]
+
 def self_test():
     """T4.3 — prove it can fail, without waiting for the estate to break.
 
@@ -156,6 +189,16 @@ def self_test():
           f"own={[r['file'] for r in me]} never-run={[r['file'] for r in nev]}")
     clean, _, _ = classify([rows[0]], {}, 30)
     check(clean == [], 'and with only healthy rows the verdict is CLEAR')
+    pins = [
+        dict(source='X', pin='a'*40, behind=0,  pin_age=40.0),   # current, however old: not stale
+        dict(source='Y', pin='b'*40, behind=3,  pin_age=0.3),    # behind but fresh: a release in flight
+        dict(source='Z', pin='c'*40, behind=7,  pin_age=9.0),    # behind AND old: the release is not happening
+    ]
+    stale_pins = classify_pins(pins, 2)
+    check([r['source'] for r in stale_pins] == ['Z'],
+          'a pin behind its source AND older than the window is named STALE PIN; a current pin and a fresh one are not',
+          ', '.join(r['source'] for r in stale_pins) or '(none)')
+    check(classify_pins(pins[:2], 2) == [], 'and with no such pin the pin verdict is CLEAR')
     print(f'\n  self-test {"passed" if ok else "FAILED"}')
     return 0 if ok else 1
 
@@ -164,6 +207,7 @@ def main():
         return self_test()
     gate = '--gate' in sys.argv
     stale_days = int(sys.argv[sys.argv.index('--stale-days') + 1]) if '--stale-days' in sys.argv else 30
+    pin_stale_days = int(sys.argv[sys.argv.index('--pin-stale-days') + 1]) if '--pin-stale-days' in sys.argv else 2
     now = datetime.datetime.utcnow()
     declared = {(r['repo'], r['workflow']): r for r in json.load(open(RETIRED))['retired']} \
         if os.path.exists(RETIRED) else {}
@@ -313,11 +357,26 @@ def main():
         print('    title of a report about five.')
     if '--json' in sys.argv:
         json.dump(rows, open(sys.argv[sys.argv.index('--json') + 1], 'w'), indent=1)
+    # HC3 §3.4 — pin staleness. Reported every run; folded into the gate.
+    stale_pins, pin_error = [], None
+    try:
+        pins = pin_rows()
+        stale_pins = classify_pins(pins, pin_stale_days)
+        print('\n  PLAY PINS (Games/play-publication.json) — a pin behind its source is merged work that is not served:')
+        for r in pins:
+            print(f"    {r['source']:<26} pin {r['pin'][:10]}   {r['behind']} commit(s) behind main   pinned commit {r['pin_age']} days old"
+                  + ('   STALE PIN' if r in stale_pins else ''))
+    except Exception as e:
+        pin_error = str(e)
+        print(f'\n  PLAY PINS: could not be read — {pin_error}')
     if gate and unreadable:
         print(f'\nESTATE CHECK HEALTH: MEASUREMENT INVALID — {len(unreadable)} repo(s) unread')
         return 1
-    if gate and (red or stale):
-        print(f'\nESTATE CHECK HEALTH: NOT CLEAR — {len(red)} red, {len(stale)} stale')
+    if gate and pin_error:
+        print('\nESTATE CHECK HEALTH: MEASUREMENT INVALID — the Play pins could not be read')
+        return 1
+    if gate and (red or stale or stale_pins):
+        print(f'\nESTATE CHECK HEALTH: NOT CLEAR — {len(red)} red, {len(stale)} stale, {len(stale_pins)} stale pin(s)')
         return 1
     if gate:
         print('\nESTATE CHECK HEALTH: CLEAR — nothing red, nothing stale')

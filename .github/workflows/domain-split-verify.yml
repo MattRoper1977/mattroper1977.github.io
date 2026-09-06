@@ -1,0 +1,159 @@
+name: Domain split publication
+on:
+  pull_request:
+    branches: [main]
+    paths: ['domain-split/**', 'supabase/**', '.github/workflows/domain-split-verify.yml']
+  push:
+    branches: [main]
+    paths: ['domain-split/**', 'supabase/**', '.github/workflows/domain-split-verify.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: domain-split-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  publications:
+    name: Complete separated publications
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          # Pinned reviewed original Science packs and public discovery;
+          # preserve the original lesson routes and paired catalogue contract.
+          ref: 5ba6271573f9323138fb289b181e2499d25e097b
+          path: .sources/Lessons
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Matt-s-Apps-
+          # Exact paired catalogue contract; Apps resources are unchanged.
+          ref: 2db4a9cf99c99b8cd9e7034cf42adbad9691ae1c
+          path: .sources/Apps
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install publication HTML parser
+        run: python -m pip install lxml==6.0.1
+      - name: Build all games with local dependencies
+        run: python domain-split/build_publications.py --lessons .sources/Lessons
+      - name: Verify preview and save-transfer boundaries
+        run: |
+          python domain-split/check_preview.py
+          node --check domain-split/site-runtime.js
+          node --check domain-split/game-saves.js
+          node domain-split/check_game_saves.cjs
+          cmp domain-split/game-saves.html game-saves/index.html
+          cmp domain-split/game-saves.js assets/game-saves.js
+          cmp domain-split/game-storage-allowlist.json data/game-storage-allowlist.json
+      - name: Build education trees from complete source checkouts
+        run: |
+          python domain-split/build_education.py --self-test
+          python domain-split/build_education.py --lessons .sources/Lessons --apps .sources/Apps
+      - name: Verify publication separation and retained education
+        run: |
+          python domain-split/check_publications.py
+          python domain-split/check_education_separation.py --self-test
+          python domain-split/check_education_separation.py
+          python domain-split/verify_education_tree_has_no_games.py --self-test
+          python domain-split/verify_education_tree_has_no_games.py --output domain-split/output
+          python domain-split/check_education_support.py
+          python domain-split/check_navigation_injection.py
+          python domain-split/check_usage_build.py --output domain-split/output
+          node domain-split/check_usage_client.cjs domain-split/output
+          python domain-split/check_primary_discovery.py --output domain-split/output --lessons-source .sources/Lessons
+      - name: Verify shared usage database and service controls without production traffic
+        working-directory: domain-split/analytics-backend
+        run: |
+          npm ci
+          npm test
+      - name: Verify current-source lesson discovery and audience preservation
+        run: python domain-split/check_lesson_discovery.py --lessons .sources/Lessons
+      - name: Install the established education browser test runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.54.2 linkedom@0.18.12
+          npx playwright install --with-deps chromium
+      - name: Check lesson catalogue and its preservation controls
+        run: |
+          python .sources/Lessons/tools/catalogue/check_catalogue_static.py
+          node .sources/Lessons/tools/catalogue/check_catalogue_dom.cjs
+          python .sources/Lessons/tools/catalogue/verify_catalogue_contract_controls.py --lessons .sources/Lessons --apps .sources/Apps --canonical .
+      - name: Mount and exercise the actual education publication
+        shell: bash
+        env:
+          MBM_REQUIRE_TEACHING_PACKS: 'true'
+          MBM_EDUCATION_ORIGIN: http://127.0.0.1:4173
+          MBM_NAVIGATION_OUTPUT: audit-output/education-navigation
+          MBM_PLAY_ORIGIN: http://127.0.0.1:4174
+          MBM_USAGE_LESSONS_SOURCE: .sources/Lessons
+          MBM_PRIMARY_ORIGIN: http://127.0.0.1:4173
+          MBM_PRIMARY_LESSONS_SOURCE: .sources/Lessons
+        run: |
+          set -euo pipefail
+          mkdir -p _navigation-served/Lessons _navigation-served/Matt-s-Apps-
+          rsync -a domain-split/output/education-site/ _navigation-served/
+          rsync -a domain-split/output/education-lessons/ _navigation-served/Lessons/
+          rsync -a domain-split/output/education-apps/ _navigation-served/Matt-s-Apps-/
+          python -m http.server 4173 --bind 127.0.0.1 --directory _navigation-served > /tmp/navigation-http.log 2>&1 &
+          server=$!
+          python -m http.server 4174 --bind 127.0.0.1 --directory domain-split/output/games > /tmp/play-http.log 2>&1 &
+          play_server=$!
+          trap 'kill "$server" "$play_server" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/Lessons/ >/dev/null; then break; fi
+            sleep 1
+          done
+          browser_status=0
+          node .sources/Lessons/tools/catalogue/verify_education_navigation.cjs || browser_status=1
+          node domain-split/check_resource_discovery.cjs || browser_status=1
+          node domain-split/check_print_navigation.cjs || browser_status=1
+          node domain-split/check_audience_discovery.cjs || browser_status=1
+          node domain-split/check_governors_discovery.cjs || browser_status=1
+          node domain-split/check_primary_discovery.cjs || browser_status=1
+          node domain-split/check_home_play_discovery.cjs || browser_status=1
+          node domain-split/check_usage_discovery.cjs || browser_status=1
+          node domain-split/check_shared_navigation.cjs || browser_status=1
+          node domain-split/check_completion.cjs || browser_status=1
+          exit "$browser_status"
+      - name: Save navigation and print evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: education-navigation-${{ github.run_id }}
+          path: audit-output/education-navigation/
+          retention-days: 30
+      - name: Save resource and app discovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resource-discovery-${{ github.run_id }}
+          path: audit-output/resource-discovery/
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: education-expansion-${{ github.run_id }}
+          path: |
+            audit-output/audience-discovery/
+            audit-output/governors-discovery/
+            audit-output/primary-discovery/
+            audit-output/education-expansion/
+            audit-output/home-play-discovery/
+            audit-output/usage-discovery/
+            audit-output/print-navigation/
+            audit-output/completion/
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: domain-split-publications
+          path: domain-split/output
+          include-hidden-files: true
+          retention-days: 30

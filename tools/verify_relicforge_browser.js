@@ -142,7 +142,7 @@ const waitMode = async (page, test, ms = 15000) => {
       return { externals: externals.length, afterStrip, afterBurn, litter: rf.snapshot().litter + rf.snapshot().debris };
     });
     assert(out.afterStrip.cleanStrips === 1, `stripping every external did not register a clean strip (${out.afterStrip.cleanStrips})`);
-    assert(out.afterStrip.best >= 60, `clean strip scored ${out.afterStrip.best}, below the clean band`);
+    assert(out.afterStrip.best >= 60, `clean strip scored ${out.afterStrip.best}, below the clean band`); // NOT LIVE: 60 is the clean-strip score floor, not a shelf count.
     assert(out.afterBurn.streak === 0, 'a core-burn kill did not reset the salvage streak');
     assert(out.afterBurn.cleanStrips === 1, 'a core-burn kill was counted as a clean strip');
     assert(out.litter > 0, 'stripping a machine left no wreckage on the floor');
