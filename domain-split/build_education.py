@@ -30,7 +30,7 @@ LEARN = 'https://madebymatt.uk'
 # Fixed historical redirects: the superseded Lessons game addresses as at
 # 2026-09-05. This map is deliberately not the current shelf's membership.
 LEGACY = {
-    **MIGRATIONS,
+    **MIGRATIONS,  # Historical aliases, fixed as at 6 September 2026.
     '/Lessons/Games/Off_Brand.html': '/offbrand/',
     '/Lessons/Games/Trail_Runner.html': '/trailrunner/',
     '/Lessons/Games/Voxel_Frontier.html': '/voxel/',

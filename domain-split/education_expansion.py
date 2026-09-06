@@ -104,7 +104,7 @@ def refresh(output, lessons, apps, site_source):
     slots = doc.xpath('//*[@id="audience-play-showcase"]')
     if len(slots) != 1:
         raise ValueError('Parents page must expose one Play showcase slot')
-    slots[0].getparent().replace(slots[0], fragment('<p class="wrap mbm-external-play">Looking for recreational games? <a href="'+PLAY+'/">Made by Matt Play — separate games website</a>.</p>'))
+    slots[0].getparent().replace(slots[0], fragment('<p id="audience-play-showcase" class="wrap mbm-external-play">Looking for recreational games? <a href="'+PLAY+'/">Made by Matt Play — separate games website</a>.</p>'))
     save_doc(parent_path, doc)
     # Keep the new audience destination discoverable alongside the old ones.
     for slug, _, _ in AUDIENCES:

@@ -76,10 +76,10 @@ def family_guidance():
 
 
 FAQ_ANSWERS = [
-    "Public Made by Matt lessons, resources, apps and games are free to open. The optional Ko-fi link helps support the work; using it is not required.",
-    "No account is needed to open public lessons, resources or games. Optional adult account features are separate; the Account page explains what is available.",
-    "Some games offer local two-player modes or optional pairing with connection codes. Follow each game’s instructions and pair with someone you know. The current games do not offer public matchmaking or built-in open chat.",
-    "Use a modern web browser. Controls and graphics requirements vary by activity: some games need a keyboard, pointer or WebGL graphics. Try the activity on your device first. Use a printable download where one is offered.",
+    "Public Made by Matt lessons, resources and apps are free to open. The optional Ko-fi link helps support the work; using it is not required.",
+    "No account is needed to open public lessons, resources or apps. Optional adult account features are separate; the Account page explains what is available.",
+    "Choose a short task, show an example and take turns. Your child can answer by speaking, pointing or drawing. Use a printable version where one is offered.",
+    "Use a modern web browser. Controls and graphics requirements vary by activity: some interactive activities need a keyboard, pointer or WebGL graphics. Try the activity on your device first. Use a printable download where one is offered.",
     "It changes the starting page and navigation. It does not create a child profile, set permissions or block other public pages. Its account and mailing controls are kept out of the pupil starting page.",
     "No. The adult mailing list has its own sign-up and consent. Creating an account does not subscribe you.",
     "No. Use your school’s guidance for your child and the labelled official sources for specialist advice. Made by Matt provides learning content and tools.",
@@ -91,9 +91,12 @@ def family_faq(audience):
     original = next(s for s in audience['sections'] if s['type'] == 'faq')['items']
     if len(original) != len(FAQ_ANSWERS):
         raise ValueError('Parent FAQ source changed; review every question before refresh')
+    questions = [dict(row) for row in original]
+    questions[1]['question'] = 'Does a child need an account to use public learning resources?'
+    questions[2]['question'] = 'How can we use the activities together?'
     rows = ''.join(
         f'<details class="ad-faq" id="faq-{id_}"><summary>{esc(row["question"])}</summary><div><p>{esc(answer)}</p></div></details>'
-        for row, answer, id_ in zip(original, FAQ_ANSWERS, FAQ_IDS))
+        for row, answer, id_ in zip(questions, FAQ_ANSWERS, FAQ_IDS))
     return section('faq', 'Parent and carer questions', rows)
 
 
@@ -172,10 +175,7 @@ def make_main(key, audience, all_audiences):
     else:
         content += professional_content(key, audience)
     content += preserved_previews(audience)
-    # The Play module can replace this entire section; its fallback is useful by itself.
-    content += section('audience-play-showcase', 'Explore games together',
-        f'<p>Browse game descriptions and controls on {link("Made by Matt Play", PLAY+"/")}.</p>'
-        + (f'<p>{link("Try Apex Kick on Play", PLAY+"/apexkick/")}</p>' if key == 'parents' else ''))
+    content += '<p id="audience-play-showcase" class="mbm-external-play">'+link('Made by Matt Play — separate games website', PLAY+'/')+'</p>'
     utilities = [dict(x) for x in audience.get('utilities', [])]
     for row in utilities:
         if row['href'] == '/for/pupils/':
@@ -229,7 +229,7 @@ def refresh(output, lessons, apps, site_source):
             document = document.replace('</body>', '<script defer src="/assets/audience-discovery.js"></script></body>', 1)
         result_links = Links(); result_links.feed(document)
         # Game links change origin; all original non-game destinations survive.
-        remapped = {'/games/': PLAY+'/', '/apexkick/': PLAY+'/apexkick/'}
+        remapped = {'/games/': PLAY+'/', '/apexkick/': PLAY+'/'}
         missing = {remapped.get(h, h) for h in source_links.hrefs} - result_links.hrefs
         if missing:
             raise ValueError(f'Original audience routes would be lost in {page}: {sorted(missing)}')

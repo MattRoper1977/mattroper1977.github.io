@@ -280,7 +280,8 @@ async function catalogueChecks(browser, expected) {
   await check('current-app-items-and-original-categories-preserved', page, async () => {
     const response = await page.request.get(urlFor('/Matt-s-Apps-/apps.json')); assert.equal(response.status(), 200);
     const source = sourceJSON(appsRoot, 'apps.json'), actual = await response.json();
-    assert.deepEqual(actual, source, 'The discovery repair altered existing Apps items or their original categories');
+    const expected = {...source,spaces:source.spaces.map(group=>({...group,items:group.items.filter(row=>!excludedGameRoutes.has(routeOf(row.f,'/Matt-s-Apps-/')))}))};
+    assert.deepEqual(actual, expected, 'Retained educational Apps items and original categories must stay exact; recreational destinations are excluded');
     return { items: source.spaces.reduce((n, group) => n + group.items.length, 0), groups: source.spaces.length };
   });
   await check('resource-filter-urls-preserved', page, async () => {

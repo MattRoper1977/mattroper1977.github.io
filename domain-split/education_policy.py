@@ -37,7 +37,7 @@ SOURCE_ONLY = {'README.md', 'HANDOVER.md', 'BACKLOG.md', 'PHONE_TEST_99.md',
                'images/README.md', 'data/visual-provenance.json', 'data/source-manifests/games.json',
                'data/source-manifests/lessons-resources.json', 'data/mbm-search-editorial.json',
                'data/new-release-occupants.json', 'data/tag-backfill.csv',
-               'data/hud-coverage.json', 'Lessons/data/hud-coverage.json'}
+               'data/hud-coverage.json', 'Lessons/data/hud-coverage.json', 'data/audience-homepages.json'}
 
 
 def canonical(value, prefix='/'):

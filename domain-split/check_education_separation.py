@@ -22,6 +22,7 @@ RETAINED = [
     '/Matt-s-Apps-/ohms-law-fault-finder-v2-3.html',
     '/Matt-s-Apps-/mbm-master-hub.html',
 ]
+# Established historical migration contract, checked 6 September 2026.
 ALIASES = {'/experiences/medevac-frontier/': '/medevac/',
            '/resources/medevac-frontier/': '/medevac/', '/next/games.html': '/',
            '/games/': '/', '/Games/': '/',
@@ -58,6 +59,7 @@ def check(output):
         return path in excluded or path.startswith('/Lessons/Games/') or path.strip('/').split('/')[0] in game_dirs
     payloads=json.loads((output/'build-report.json').read_text())['payloads']
     engine_hashes={row['published_sha256'] for row in payloads if key('/'+row['path']) in excluded}
+    # Immutable overlooked Medevac engine, audited 6 September 2026.
     engine_hashes.add('5a408754c29ef65b1e35f192383c6115b7ea92ae97c778981251dfe3a0295b02')
     failures=[]; counts={'files':0,'html':0,'json_manifests':0,'references':0,'migrations':0,'sitemap_urls':0}
     def fail(where, reason): failures.append({'file':str(where),'reason':reason})
@@ -68,7 +70,7 @@ def check(output):
         return url.hostname in {'madebymatt.uk','www.madebymatt.uk','mattroper1977.github.io'} and excluded_path(url.path)
     def asset(value, base):
         path=unquote(urlparse(urljoin(LEARN+base,value)).path)
-        return (path in {'/data/source-manifests/lessons-resources.json','/data/mbm-search-editorial.json','/data/new-release-occupants.json','/data/tag-backfill.csv','/data/hud-coverage.json','/Lessons/data/hud-coverage.json'}
+        return (path in {'/data/source-manifests/lessons-resources.json','/data/mbm-search-editorial.json','/data/new-release-occupants.json','/data/tag-backfill.csv','/data/hud-coverage.json','/Lessons/data/hud-coverage.json','/data/audience-homepages.json'}
                 or path.startswith('/assets/cards/') or path.startswith('/assets/brand/medevac_frontier_patch.')
                 or path=='/images/apexkick-hub.jpg'
                 or bool(re.match(r'/assets/video/(?:clip|poster)-(?:apexkick|glitchclash|neonbreach|neonsync|offbrand|voxelfrontier)(?:-play)?\.',path)))
@@ -129,6 +131,7 @@ def check(output):
         part='education-lessons' if route.startswith('/Lessons/') else 'education-apps'
         relative=route.split('/',2)[2]; path=output/part/relative
         if not path.is_file() or 'data-game-moved' in path.read_text(): fail(route,'Reviewed educational activity missing or migrated')
+    # Frozen installed combined registry, accepted 6 September 2026; no replay.
     registry=output/'usage-registry.json'
     if sha256(registry.read_bytes()).hexdigest()!='9fafffbe3b08c43ec10fa17c410bd54719cc90edffc0db46fdda0c8edbf0f0d4': fail('usage-registry.json','Installed combined registry changed')
     report={'status':'FAIL' if failures else 'PASS','coverage':counts,'intentionally_retained_activities':len(RETAINED),'failures':failures,'scope':'Complete static emitted Education walk; does not guarantee school-filter acceptance.'}

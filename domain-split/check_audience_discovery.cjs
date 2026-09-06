@@ -21,7 +21,7 @@ const urlFor = route => new URL(route, origin).href;
 function sourceDestinations(audience) {
   const html = fs.readFileSync(path.join(source, audience.route, 'index.html'), 'utf8');
   return [...new Set([...html.matchAll(/<a\b[^>]*\bhref="([^"]+)"/g)].map(x => x[1].replaceAll('&amp;', '&')))]
-    .filter(x => x && !x.startsWith('#')).map(x => x === '/games/' ? play+'/' : x === '/apexkick/' ? play+'/apexkick/' : x);
+    .filter(x => x && !x.startsWith('#')).map(x => x === '/games/' ? play+'/' : x === '/apexkick/' ? play+'/' : x);
 }
 async function shot(page, name, fullPage=false) {
   const file = name+'.png';
@@ -67,6 +67,8 @@ async function check(name, run) {
           for(const forbidden of ['Any device with a web browser','only steering and throttle','one game that can link','Search one deterministic internal index'])
             assert(!(await page.locator('.ad-main').innerText()).includes(forbidden),`Stale claim: ${forbidden}`);
           assert.equal(await page.locator('#audience-play-showcase').count(),1);
+          assert.equal(await page.locator('#audience-play-showcase video, #audience-play-showcase iframe, .mbm-play-card').count(),0);
+          assert.equal(await page.locator('#audience-play-showcase a').getAttribute('href'),play+'/');
           if(key==='parents') {
             assert(await page.locator('.ad-main a[href="/Lessons/primary/"]').first().isVisible());
             assert.equal(await page.locator('.ad-faq').count(),7);
