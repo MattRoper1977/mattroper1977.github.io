@@ -25,16 +25,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          # Exact reviewed discovery and David Humanities candidate;
+          # Pinned reviewed original Science packs and public discovery;
           # preserve the original lesson routes and paired catalogue contract.
-          ref: 427264ca74f3f85d69b78b653e3704fd295f74df
+          ref: 5ba6271573f9323138fb289b181e2499d25e097b
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Matt-s-Apps-
           # Exact paired catalogue contract; Apps resources are unchanged.
-          ref: 46f9cf0183f71163d61e43a3fd6bf2baeb405c98
+          ref: 2db4a9cf99c99b8cd9e7034cf42adbad9691ae1c
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -60,6 +60,7 @@ jobs:
         run: |
           python domain-split/check_publications.py
           python domain-split/check_education_separation.py
+          python domain-split/check_education_support.py
           python domain-split/check_navigation_injection.py
           python domain-split/check_usage_build.py --output domain-split/output
           node domain-split/check_usage_client.cjs domain-split/output
@@ -83,6 +84,7 @@ jobs:
       - name: Mount and exercise the actual education publication
         shell: bash
         env:
+          MBM_REQUIRE_TEACHING_PACKS: 'true'
           MBM_EDUCATION_ORIGIN: http://127.0.0.1:4173
           MBM_NAVIGATION_OUTPUT: audit-output/education-navigation
           MBM_PLAY_ORIGIN: http://127.0.0.1:4174
@@ -114,6 +116,7 @@ jobs:
           node domain-split/check_home_play_discovery.cjs || browser_status=1
           node domain-split/check_usage_discovery.cjs || browser_status=1
           node domain-split/check_shared_navigation.cjs || browser_status=1
+          node domain-split/check_completion.cjs || browser_status=1
           exit "$browser_status"
       - name: Save navigation and print evidence
         if: always()
@@ -141,6 +144,7 @@ jobs:
             audit-output/home-play-discovery/
             audit-output/usage-discovery/
             audit-output/print-navigation/
+            audit-output/completion/
           retention-days: 30
       - uses: actions/upload-artifact@v4
         with:

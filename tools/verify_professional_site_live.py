@@ -145,7 +145,7 @@ EDUCATION_PAGE_MARKERS = {
 # These publication headers supersede the legacy source header. Keep every
 # other page/runtime/theme assertion, and require the actual shared menu.
 for _route in ("/", "/main/", "/for/teachers/", "/for/pupils/", "/tools/",
-               "/resources/", "/members/", "/privacy/", "/Lessons/", "/Matt-s-Apps-/"):
+               "/resources/", "/members/", "/privacy/", "/Lessons/", "/Matt-s-Apps-/", "/stats/on-this-device/"):
     EDUCATION_PAGE_MARKERS[_route] = tuple(
         marker for marker in EDUCATION_PAGE_MARKERS[_route]
         if marker not in {'mbm-site-header', 'aria-current="page">Tools'}

@@ -52,7 +52,7 @@ def header(route, starting, adult=False, pupil=False, theme=False, primary=False
                  ('/Lessons/?view=saved', 'Saved lessons'),
                  ('/Lessons/?view=recommended', 'Recommended versions')]
     if adult:
-        shortcuts += [('/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/index.html', 'David’s cover packs'),
+        shortcuts += [('/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/index.html', 'Cover teaching packs'),
                       ('/Matt-s-Apps-/PDF_Studio.html', 'PDF Studio'),
                       ('/Lessons/?subject=ASDAN%20%26%20life%20skills&year=all', 'ASDAN learning resources'),
                       ('/teach/', 'Teaching hub'), ('/education-hub/', 'Education Hub')]
@@ -67,7 +67,7 @@ def header(route, starting, adult=False, pupil=False, theme=False, primary=False
                                ''.join(link(x, primary and i == 0) for i, x in enumerate(learning)) + '</nav>')
     return ('<header class="' + classes + '" data-mbm-navigation="education">'
             '<div class="mbm-unified-bar"><a class="mbm-unified-brand" href="/">'
-            '<img src="/assets/brand/micro_mark.svg" width="44" height="44" alt="">'
+            '<img src="/assets/brand/approved-mark.jpg" width="44" height="44" alt="">'
             '<span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a>'
             + quick +
             '<details class="mbm-unified-menu"><summary aria-controls="mbm-navigation-panel">'
@@ -97,6 +97,11 @@ def refresh(output, site_source):
         pages.append((output/'education-lessons'/relative,'/Lessons/'+relative.removesuffix('index.html'),True))
     inserted = {'/asdan/','/uas/'}
     pages += [(site/route.strip('/')/'index.html',route,True) for route in sorted(inserted)]
+    pack_hub = output/'education-lessons/Science_Teesside/Teaching_Packs/index.html'
+    if pack_hub.is_file():
+        pack_route = '/Lessons/Science_Teesside/Teaching_Packs/'
+        pages.append((pack_hub, pack_route, True))
+        inserted.add(pack_route)
     changed = []
     for path, route, adult in pages:
         if not path.is_file():

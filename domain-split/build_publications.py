@@ -19,6 +19,7 @@ from urllib.parse import unquote, urljoin, urlparse
 import build_preview
 from education_expansion import refresh_play
 from usage_discovery import refresh_play as refresh_play_usage
+from play.build import refresh as refresh_play_discovery
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -219,6 +220,7 @@ def main():
         put(games, route, game_index.replace('href="'+config['games_origin']+'/"', 'href="'+config['games_origin']+'/"', 1))
     put(games, 'privacy/index.html', games_privacy(config['games_origin']))
     refresh_play(output)
+    refresh_play_discovery(output)
     refresh_play_usage(output, args.lessons.resolve(), ROOT)
     for kind, path in [('home','index.html'), ('home','main/index.html'), ('teachers','for/teachers/index.html'), ('pupils','for/pupils/index.html')]:
         put(education, path, render_page(preview, kind, config['education_origin'], config))
