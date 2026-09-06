@@ -345,7 +345,7 @@ def refresh(output, lessons, apps, site_source):
     site_config['features']['analytics']['goatcounter']='';save(site/'site.json',site_config)
     old=site/'stats/index.html'
     if old.is_file():
-        legacy=old.read_text();legacy=replace_once(legacy,'</head>','<base href="/stats/"></head>')
+        legacy=old.read_text();legacy=replace_once(legacy,'<head>','<head><base href="/stats/">')
         legacy=legacy.replace('<a href="/games/">Games</a>', '<a href="'+PLAY+'/">Made by Matt Play</a>').replace('Interactive lessons, simulations and games', 'Lessons, learning resources and teaching tools').replace('Opens & plays here', 'Learning resources opened here')
         legacy=legacy.replace('Countries seen here','Time-zone country estimates here').replace('Country activity on this device','Legacy time-zone estimates on this device')
         legacy=replace_once(legacy,'<main id="main">','<main id="main"><p class="usage-note">Legacy device-only counts. These are not shared site statistics. Time-zone estimates are not measured locations. <a href="/stats/">Open shared usage statistics</a>.</p>')

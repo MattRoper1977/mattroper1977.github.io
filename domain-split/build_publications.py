@@ -95,6 +95,15 @@ def render_page(preview, kind, origin, config):
         body = body.replace('</footer>', '<div class="wrap"><a href="/privacy/">Privacy</a></div></footer>')
     for old, new in [("Learning homepage preview", "Learning homepage"), ("Teacher homepage preview", "Teacher homepage"), ("Pupil homepage preview", "Pupil homepage"), ("Games homepage preview", "Games homepage")]:
         body = body.replace(old, new)
+    if kind == "home":
+        search = ('<form class="education-home-search" action="/resources/" method="get" role="search">'
+                  '<label for="home-resource-query">Find lessons and resources</label>'
+                  '<div><input id="home-resource-query" name="q" type="search" '
+                  'placeholder="Try Science, Humanities or PDF Studio" maxlength="200">'
+                  '<button type="submit">Search</button></div></form>')
+        if body.count('<div class="button-row">') < 1:
+            raise ValueError('Home search insertion boundary missing')
+        body = body.replace('<div class="button-row">', search + '<div class="button-row">', 1)
     titles = {"home": "Find your next lesson · Made by Matt", "teachers": "Teachers · Made by Matt Learning", "pupils": "Pupils · Made by Matt Learning", "games": "Made by Matt Games"}
     css = re.search(r'<style>(.*?)</style>', preview, re.S)[1]
     path = views[kind]
