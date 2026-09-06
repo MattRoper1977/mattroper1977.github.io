@@ -43,6 +43,22 @@ const routes = [
           await page.locator('#mbm-lesson-tools').waitFor({state:'visible'});
           assert.equal(await page.locator('#mbm-lesson-tools').count(),1);
         }
+        if (index < 2) {
+          const layout = await page.evaluate(() => {
+            const bar=document.querySelector('#mbm-lesson-tools').getBoundingClientRect();
+            const wrap=document.querySelector('body>.wrap').getBoundingClientRect();
+            const rail=document.querySelector('.toprail').getBoundingClientRect();
+            const active=document.querySelector('.slide.active').getBoundingClientRect();
+            return {width:innerWidth,bar:{x:bar.x,y:bar.y,width:bar.width,height:bar.height,bottom:bar.bottom},
+              wrap:{x:wrap.x,width:wrap.width,top:wrap.top},railBottom:rail.bottom,contentTop:active.top};
+          });
+          assert(layout.bar.width >= width-2 && layout.bar.height < 140,'Navigation must be a compact full-width row');
+          assert(layout.wrap.width >= Math.min(width,1000)-4 && layout.wrap.top >= layout.bar.bottom-1,'Lesson must retain its reading width below navigation');
+          assert(layout.contentTop >= layout.railBottom-1,'Native controls must not overlap teaching content');
+          await page.locator('#nextBtn').click();
+          assert.match(await page.locator('#slideLbl').textContent(),/^02/);
+          await page.locator('#prevBtn').click();
+        }
         assert.deepEqual(errors,[],route+' must keep its actual scripts intact');
         const screenshot=`${width}-${String(index+1).padStart(2,'0')}.png`;
         await page.screenshot({path:path.join(output,screenshot)});

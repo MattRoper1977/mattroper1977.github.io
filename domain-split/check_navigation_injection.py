@@ -2,7 +2,7 @@
 from html.parser import HTMLParser
 from pathlib import Path
 import re
-from build_education import with_lesson_navigation
+from build_education import with_lesson_navigation, WRAPPED_LESSONS, WRAPPED_NAVIGATION
 
 SCRIPT = '<script defer src="/Lessons/assets/catalogue/lesson-navigation.js"></script>'
 
@@ -41,6 +41,12 @@ def main():
         pass
     else:
         raise AssertionError('Duplicate real adapters must fail')
+    for relative in WRAPPED_LESSONS:
+        original = cases[0]
+        updated = with_lesson_navigation(original, relative)
+        assert count(updated) == 1 and updated.count(WRAPPED_NAVIGATION) == 1
+        assert updated.replace(SCRIPT, '', 1).replace(WRAPPED_NAVIGATION, '', 1) == original
+        assert with_lesson_navigation(updated, relative) == updated
     output = Path(__file__).resolve().parent/'output/education-lessons'
     checked = 0
     for page in output.rglob('*.html'):

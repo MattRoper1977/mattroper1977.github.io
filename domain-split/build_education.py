@@ -51,7 +51,20 @@ def write(root, relative, text):
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(text, encoding='utf-8')
 
-def with_lesson_navigation(text):
+WRAPPED_LESSONS = {
+    'Tutor_Time/Wk3_KCSIE_TRAP_Sextortion.html',
+    'Tutor_Time/Week2_Fri_Values_MutualRespect_Respectful.html',
+}
+WRAPPED_NAVIGATION = '<style id="mbm-wrapped-lesson-navigation">' + """
+body{display:block!important}
+body>#mbm-lesson-tools{width:100%;min-height:59px;max-height:none}
+body>.wrap{margin-inline:auto;min-height:calc(100dvh - 59px);padding-top:18px;justify-content:flex-start}
+body>.wrap>.toprail{position:static!important;inset:auto!important;justify-content:flex-end;flex-wrap:wrap;margin-bottom:18px}
+body>.wrap>.toprail button{min-width:44px;min-height:44px}
+@media print{body>.wrap{min-height:0;padding-top:0}}
+""" + '</style>'
+
+def with_lesson_navigation(text, relative=None):
     """Inject into the real document, never an HTML string in a print script."""
     class Document(HTMLParser):
         def __init__(self):
@@ -80,7 +93,8 @@ def with_lesson_navigation(text):
         return text
     position = document.body_ends[-1] if document.body_ends else len(text)
     script = '<script defer src="/Lessons/assets/catalogue/lesson-navigation.js"></script>'
-    return text[:position]+script+text[position:]
+    extra = WRAPPED_NAVIGATION if relative in WRAPPED_LESSONS else ''
+    return text[:position]+extra+script+text[position:]
 
 def moved_page(route):
     destination = PLAY + LEGACY.get(route, route)
@@ -199,7 +213,7 @@ def build(output, lessons, apps=None, allow_sparse=False):
             # offline archives remain unchanged.
             if name=='lessons' and p.suffix=='.html' and (lessons/'assets/catalogue/lesson-navigation.js').is_file():
                 text=target.read_text()
-                updated=with_lesson_navigation(text)
+                updated=with_lesson_navigation(text, relative)
                 if updated != text:
                     write(dest,relative,updated);changed.append(relative)
         if name=='site':
