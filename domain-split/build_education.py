@@ -39,6 +39,17 @@ LEGACY = {
 }
 SKIP = {'tools', 'reports', 'docs', 'domain-split', 'node_modules', 'supabase', 'schema'}
 PUBLIC = {'.html', '.htm', '.css', '.js', '.mjs', '.json', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif', '.ico', '.woff', '.woff2', '.ttf', '.mp4', '.webm', '.mp3', '.wav', '.ogg', '.pdf', '.zip', '.docx', '.pptx', '.xlsx', '.csv', '.txt', '.xml', '.webmanifest', '.wasm', '.bin', '.map', '.md'}
+# Individually reviewed historical teacher guidance, 2026-09-06. These exact
+# original documents are already linked from public hubs; other authoring
+# directories remain excluded. Hashes bind preservation, not current approval
+# of every historical policy/qualification statement.
+REVIEWED_ARCHIVE_DOCUMENTS = {
+    '_sciv3/build/POLICY_ALIGNMENT.md': '9d16fb2cbb314bd883ece6eb9249f268fa5bee0a82f48c3be229df551ad722d8',
+    '_sciv3/launch/SOW_AND_POLICY_ALIGNMENT.md': '19695c68b5af03be7456741eb0a62ea9cebb986febca4547434c1017e4fe7e63',
+    '_finish/build_estate/Art_Teesside__SOW_POLICY_AND_AWARD_ALIGNMENT.md': 'b357278bbf285b8348a73a2b259710129d7b126145c618a88ba443eaa5802473',
+    '_finish/build_estate/Art_Teesside__ARTIST_IMAGE_PROVENANCE_GUIDE.md': '04ac1d4a351193171253a8e01125e7b4ae0172d177867759c0bb1afb404529de',
+    '_finish/build_estate/BUILD_ASDAN__CLAIMS_AND_SAFETY_READBACK.md': '4135dd1c9f522881f4b9f3d2af39a2d712a1138003f99caad9533e11eb89f0da',
+}
 
 def normal(value):
     return unquote(urlparse(value).path).removesuffix('index.html').rstrip('/') or '/'
@@ -48,6 +59,7 @@ def tracked(root):
 
 def public_file(path):
     p = Path(path)
+    if path in REVIEWED_ARCHIVE_DOCUMENTS: return True
     if path == 'tools/index.html': return True  # public teacher-tools hub
     return (not any(x.startswith(('.', '_')) for x in p.parts)
             and p.parts[0] not in SKIP
@@ -104,6 +116,12 @@ def with_lesson_navigation(text, relative=None):
     position = document.body_ends[-1] if document.body_ends else len(text)
     script = '<script defer src="/Lessons/assets/catalogue/lesson-navigation.js"></script>'
     extra = WRAPPED_NAVIGATION if relative in WRAPPED_LESSONS else ''
+    if relative == 'Science_Teesside/Build/v4_fieldops/01_Newport_Bridge_Lift_Permit_Lab.html':
+        # The lab prints its dark simulation panels. Its original print rule
+        # changes only the body text to black, making inherited headings and
+        # readings illegible. Preserve the active theme's text colour; source
+        # files, simulation behaviour and saved/offline archives stay intact.
+        extra += '<style id="mbm-lab-print-contrast">@media print{body{color:var(--text)!important}}</style>'
     return text[:position]+extra+script+text[position:]
 
 def moved_page(route):
@@ -188,6 +206,8 @@ def build(output, lessons, apps=None, allow_sparse=False):
                     target=route.removesuffix('index.html')
                     write(dest,relative,moved_page(target));migrated.append(relative)
                 continue
+            if relative in REVIEWED_ARCHIVE_DOCUMENTS:
+                assert name == 'lessons' and hashlib.sha256(p.read_bytes()).hexdigest() == REVIEWED_ARCHIVE_DOCUMENTS[relative], 'Historical guidance changed; review before publication: '+relative
             target=dest/relative;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,target);copied.append(relative)
             if p.suffix in {'.json', '.webmanifest'} and relative != 'data/game-storage-allowlist.json':
                 try:data=json.loads(p.read_text())

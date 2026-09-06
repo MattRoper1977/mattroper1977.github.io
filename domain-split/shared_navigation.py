@@ -4,6 +4,8 @@ Source activities and downloads are never passed through this transform.
 The disclosure is native HTML: navigation remains usable without JavaScript.
 """
 from html import escape
+from html.parser import HTMLParser
+from urllib.parse import urlsplit
 from pathlib import Path
 import json
 import re
@@ -20,7 +22,19 @@ AUDIENCE_LABELS = [('teachers', 'Teachers'), ('pupils', 'Pupils'),
 SITE_PAGES = ['index.html', 'main/index.html', 'account/index.html',
               'members/index.html', 'mailing-list/index.html', 'privacy/index.html',
               'stats/index.html', 'owner/stats/index.html', 'tools/index.html',
-              'resources/index.html', 'teach/index.html', 'education-hub/index.html']
+              'resources/index.html', 'teach/index.html', 'education-hub/index.html', 'stats/on-this-device/index.html']
+
+
+class ScriptSources(HTMLParser):
+    def __init__(self):
+        super().__init__(); self.sources=[]
+    def handle_starttag(self, tag, attrs):
+        if tag == 'script': self.sources.append(dict(attrs).get('src',''))
+
+
+def has_reading_theme(text):
+    parser=ScriptSources();parser.feed(text)
+    return any(urlsplit(src).path.rsplit('/',1)[-1] in {'theme.js','mbm-theme.js'} for src in parser.sources)
 
 
 def header(route, starting, adult=False, pupil=False, theme=False, primary=False, compact=False):
@@ -73,23 +87,39 @@ def refresh(output, site_source):
     adult_pages.update({'index.html', 'for/governors-trustees/index.html', 'owner/stats/index.html'})
     site_pages = SITE_PAGES + [route.strip('/') + '/index.html' for route, _ in starting[1:]]
     pages = [(site / p, '/' + p.removesuffix('index.html'), p in adult_pages) for p in site_pages]
-    pages += [(output / 'education-lessons/index.html', '/Lessons/', False),
+    pages += [(output / 'education-lessons/index.html', '/Lessons/', True),
               (output / 'education-lessons/primary/index.html', '/Lessons/primary/', False),
-              (output / 'education-apps/index.html', '/Matt-s-Apps-/', False)]
+              (output / 'education-apps/index.html', '/Matt-s-Apps-/', True)]
+    # Auth controls remain server-side. These mixed teaching catalogues expose
+    # the same relevant adult shortcuts as the established teacher front door.
+    for relative in ['Science_Teesside/index.html','Humanities_Teesside/index.html',
+                     'Humanities_Teesside/David_Cover_Autumn1_W3-W7/index.html']:
+        pages.append((output/'education-lessons'/relative,'/Lessons/'+relative.removesuffix('index.html'),True))
+    inserted = {'/asdan/','/uas/'}
+    pages += [(site/route.strip('/')/'index.html',route,True) for route in sorted(inserted)]
     changed = []
     for path, route, adult in pages:
         if not path.is_file():
             raise ValueError('Missing navigation surface: ' + str(path))
         text = path.read_text()
-        theme = bool(re.search(r'<script\b[^>]*\bsrc=["\'][^"\']*(?:^|/)theme\.js', text))
+        theme = has_reading_theme(text)
         # Keep the existing visible learning-area row without duplicating it
         # inside the desktop masthead. All destinations remain in the Menu.
         compact = bool(re.search(r'class="[^"\n]*\b(?:collection-nav|ad-nav)\b', text))
         replacement = header(route, starting, adult, route == audiences['pupils']['route'], theme,
                              route == '/Lessons/primary/', compact)
-        text, count = re.subn(r'<header\b[^>]*>.*?</header>', lambda _: replacement, text, count=1, flags=re.S)
+        if route in inserted:
+            # These landings use a content header for their heading and Open
+            # action. Add navigation before it without deleting those controls.
+            text,count=re.subn(r'(<body\b[^>]*>)',lambda match:match.group(1)+replacement,text,count=1,flags=re.I)
+        else:
+            text,count=re.subn(r'<header\b[^>]*>.*?</header>',lambda _:replacement,text,count=1,flags=re.S)
         if count != 1:
-            raise ValueError('Missing page header: ' + str(path))
+            raise ValueError('Missing navigation insertion/replacement boundary: '+str(path))
+        if route == '/stats/on-this-device/':
+            old="document.getElementById('menu').addEventListener('click',function(){var n=document.getElementById('nav'),o=n.classList.toggle('open');this.setAttribute('aria-expanded',o);});"
+            if text.count(old)!=1: raise ValueError('Legacy stats menu handler changed')
+            text=text.replace(old,'').replace('href="/main/#about"','href="/main/"')
         text = text.replace('</head>', '<link rel="stylesheet" href="/assets/shared-navigation.css">'
                             '<script defer src="/assets/shared-navigation.js"></script></head>', 1)
         path.write_text(text)

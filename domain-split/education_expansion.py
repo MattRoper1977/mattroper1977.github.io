@@ -81,7 +81,10 @@ def refresh(output, lessons, apps, site_source):
         doc = html.document_fromstring(path.read_text())
         styles(doc)
         header = doc.xpath('//header')[0]
-        header.addnext(fragment('<nav class="mbm-explore-nav" aria-label="Explore Made by Matt"><div class="wrap">'
+        # Keep the phone masthead compact; these secondary routes follow the
+        # teaching/search hero while remaining in the Menu and footer too.
+        extra_after = doc.xpath('//*[contains(concat(" ",normalize-space(@class)," ")," hero ")]')[0] if relative in ('index.html','main/index.html') else header
+        extra_after.addnext(fragment('<nav class="mbm-explore-nav" aria-label="Explore Made by Matt"><div class="wrap">'
                                 '<a href="/Lessons/primary/">Primary</a><a href="/#audiences">Families &amp; organisations</a>'
                                 '<a class="mbm-play-link" href="'+PLAY+'/">Made by Matt Play</a></div></nav>'))
         if relative in ('index.html', 'main/index.html'):
