@@ -346,6 +346,11 @@ def refresh(output, lessons, apps, site_source):
     old=site/'stats/index.html'
     if old.is_file():
         legacy=old.read_text();legacy=replace_once(legacy,'<head>','<head><base href="/stats/">')
+        # Keep the original asset base, but bind navigation/identity to the
+        # generated device page. A bare fragment otherwise leaves this page.
+        legacy=replace_once(legacy,'<a class="skip" href="#main">','<a class="skip" href="/stats/on-this-device/#main">')
+        legacy=replace_once(legacy,'<link rel="canonical" href="https://madebymatt.uk/stats/">','<link rel="canonical" href="https://madebymatt.uk/stats/on-this-device/">')
+        legacy=replace_once(legacy,'<meta property="og:url" content="https://madebymatt.uk/stats/">','<meta property="og:url" content="https://madebymatt.uk/stats/on-this-device/">')
         legacy=legacy.replace('<a href="/games/">Games</a>', '<a href="'+PLAY+'/">Made by Matt Play</a>').replace('Interactive lessons, simulations and games', 'Lessons, learning resources and teaching tools').replace('Opens & plays here', 'Learning resources opened here')
         legacy=legacy.replace('Countries seen here','Time-zone country estimates here').replace('Country activity on this device','Legacy time-zone estimates on this device')
         legacy=replace_once(legacy,'<main id="main">','<main id="main"><p class="usage-note">Legacy device-only counts. These are not shared site statistics. Time-zone estimates are not measured locations. <a href="/stats/">Open shared usage statistics</a>.</p>')
