@@ -174,10 +174,15 @@ def main():
             # Lessons games also use local vendors, including dynamically
             # requested A-Frame scripts. Preserve the full vendor directory
             # and its licences at the same relative URL.
-            vendor = source.parent / 'vendor'
-            if vendor.is_dir():
-                destination_vendor = Path(destination).parent / 'vendor'
-                shutil.copytree(vendor, games / destination_vendor, dirs_exist_ok=True)
+            # RX2 P2.8: the Afterlight remasters keep their painted backdrops as
+            # sibling files under Games/assets/ (CSS url() and Image().src are
+            # runtime fetches, so RuntimeRefs cannot see them). Preserve that
+            # directory the same way, at the same relative URL.
+            for sibling in ('vendor', 'assets'):
+                shared = source.parent / sibling
+                if shared.is_dir():
+                    destination_shared = Path(destination).parent / sibling
+                    shutil.copytree(shared, games / destination_shared, dirs_exist_ok=True)
         payloads.append({'route': row['normalizedDecodedRoute'], 'path': destination,
                          'source_repository': row['source']['repository'], 'source_path': row['source']['path'],
                          'source_sha256': sha(source), 'class': row['populationClass']})
