@@ -17,6 +17,7 @@ def decorate(route, html):
         raise ValueError('Stub URL-preservation source changed; review before replacing')
     html = html.replace(inline, '<script defer src="/stub-handoff.js"></script>')
     if route == ROUTE:
+        html = html.replace('</style>', '#save-handoff button{font:inherit;min-height:44px;min-width:44px;padding:.5rem 1rem;touch-action:manipulation}#save-handoff button:focus-visible{outline:3px solid #e39129;outline-offset:4px}</style>')
         html = html.replace('</main>', '<div id="save-handoff"></div></main>')
     if len(html.encode()) > 2048:
         raise ValueError('Handoff stub exceeds2KB')

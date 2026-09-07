@@ -4,9 +4,13 @@ name: Professional site live verification
 # self-contradictory whenever a PR changes a served file: the workflow checks
 # out the proposed PR source but compares it with madebymatt.uk, which still
 # serves main until the PR is merged. PRs are covered by the professional-site
-# design/static audit; this workflow proves production after main changes.
+# design/static audit; this workflow proves production after its publication
+# completes. Admission controls can take longer than the provenance wait; a
+# source push is not evidence that the deployment is ready.
 on:
-  push:
+  workflow_run:
+    workflows: [Education publication]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -23,6 +27,9 @@ concurrency:
 
 jobs:
   verify-live:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    env:
+      EXPECTED_SOURCE_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -30,6 +37,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ env.EXPECTED_SOURCE_SHA }}
 
       - name: Validate verifier syntax
         run: |
@@ -53,7 +61,7 @@ jobs:
       - name: The origin is serving this commit, before anything is asserted about it
         run: |
           set -euo pipefail
-          python3 tools/verify_deployment_provenance.py --publication education --expected-sha "${{ github.sha }}"
+          python3 tools/verify_deployment_provenance.py --publication education --expected-sha "$EXPECTED_SOURCE_SHA"
 
       - name: Prove the served platform and cross-repository feeds
         run: |

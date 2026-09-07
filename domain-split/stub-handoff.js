@@ -97,7 +97,7 @@
       download.click();
       download.remove();
       setTimeout(function () { URL.revokeObjectURL(objectURL); }, 10000);
-      status.textContent = 'Your campaign file is downloaded. Open the game below and use its Import button to choose this file. Your original progress stays here.';
+      status.textContent = 'Your campaign file is downloaded. Choose Open the game, then use its Import button to choose this file. Your original progress stays here.';
     } catch (_) {
       status.textContent = 'This browser’s saved campaign could not be transferred. Your original progress is unchanged.';
     }

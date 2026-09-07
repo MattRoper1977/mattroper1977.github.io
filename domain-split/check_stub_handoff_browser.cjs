@@ -46,6 +46,9 @@ async function caseRun(name,{width=390,empty=false,drift=false,large=false,rejec
   const button=page.getByRole('button',{name:'Bring my progress',exact:true});
   assert.equal(await button.count(),empty?0:1,'Expected route-specific progress button');
   if(empty){assert.equal(new URL(await page.locator('#play-game').getAttribute('href')).search,'?view=calm');assert.deepEqual(errors,[]);assert.deepEqual(unexpected,[]);result.status='PASS';return;}
+  const target=await button.boundingBox();assert(target.width>=44&&target.height>=44,'New handoff target is smaller than44px');
+  let tabReached=false;for(let press=0;press<12;press++){await page.keyboard.press('Tab');if(await button.evaluate(el=>el===document.activeElement)){tabReached=true;break;}}
+  assert(tabReached,'A real Tab walk did not reach the progress button');
   if(drift){source=JSON.stringify({...seed,xp:456});await page.evaluate(({key,source})=>localStorage.setItem(key,source),{key,source});}
   if(large){
    const downloadPromise=page.waitForEvent('download');await button.click();const download=await downloadPromise;
