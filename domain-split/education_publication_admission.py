@@ -71,28 +71,53 @@ def load_registry(path=REGISTRY):
             # cross-repository change can be admitted before and after that
             # PR merges without a lockstep publication. Never more than two,
             # never a wildcard; both digests are reviewed in the same diff.
-            candidates = digest if isinstance(digest, list) else [digest]
-            if not 1 <= len(candidates) <= 2 or len(set(candidates)) != len(candidates):
-                raise ValueError('Invalid reviewed digest set: '+name+'/'+path)
-            for item in candidates:
-                if not isinstance(item, str) or not re.fullmatch('[0-9a-f]{64}', item):
-                    raise ValueError('Invalid reviewed digest: '+name+'/'+path)
+            validate_digest_set(name, path, digest)
     return registry
 
 
+def validate_digest_set(name, path, digest):
+    candidates = digest if isinstance(digest, list) else [digest]
+    if not 1 <= len(candidates) <= 2 or len(set(candidates)) != len(candidates):
+        raise ValueError('Invalid reviewed digest set: '+name+'/'+path)
+    # HC5 §1: an ARRIVING path — exactly one reviewed digest plus the
+    # literal ARRIVING — is a file the owning repository's main now
+    # carries but this repository's own pinned source checkout predates.
+    # A build from the older source may lack it (never CHANGED, never
+    # UNREVIEWED); a build that has it must match the one digest exactly.
+    # Drop the marker when the pinned source moves past the arrival.
+    if ARRIVING in candidates and len(candidates) != 2:
+        raise ValueError('ARRIVING needs exactly one reviewed digest beside it: '+name+'/'+path)
+    for item in candidates:
+        if item == ARRIVING:
+            continue
+        if not isinstance(item, str) or not re.fullmatch('[0-9a-f]{64}', item):
+            raise ValueError('Invalid reviewed digest: '+name+'/'+path)
+
+
+ARRIVING = 'ARRIVING'
+
+
 def admitted(expected):
-    return set(expected) if isinstance(expected, list) else {expected}
+    return {d for d in (expected if isinstance(expected, list) else [expected]) if d != ARRIVING}
+
+
+def may_be_absent(expected):
+    return isinstance(expected, list) and ARRIVING in expected
 
 
 def verify_tree(tree, name, registry):
+    return verify_tree_census(census(tree), name, registry)
+
+
+def verify_tree_census(actual, name, registry):
     expected = registry['trees'][name]
-    actual = census(tree)
     problems = []
     for path in sorted(set(expected) | set(actual)):
         if path not in expected:
             problems.append('UNREVIEWED '+name+'/'+path)
         elif path not in actual:
-            problems.append('MISSING '+name+'/'+path)
+            if not may_be_absent(expected[path]):
+                problems.append('MISSING '+name+'/'+path)
         elif actual[path] not in admitted(expected[path]):
             problems.append('CHANGED '+name+'/'+path)
     if problems:
