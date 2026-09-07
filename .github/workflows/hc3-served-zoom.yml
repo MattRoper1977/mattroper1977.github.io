@@ -48,7 +48,7 @@ jobs:
           npm install --no-save --no-package-lock playwright@1.54.2
           npx playwright install --with-deps chromium
       - name: Prove touch detection then measure actual served phone and desktop pages
-        run: node tools/hc3_zoom_browser.cjs audit-output/hc3-zoom/zoom-publications.json
+        run: xvfb-run -a node tools/hc3_zoom_browser.cjs audit-output/hc3-zoom/zoom-publications.json
       - name: Preserve route findings and controls even on failure
         if: always()
         uses: actions/upload-artifact@v4

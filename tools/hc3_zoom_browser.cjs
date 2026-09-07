@@ -105,7 +105,7 @@ async function route(browser,row,width) {
 }
 (async()=>{
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-  const browser=await chromium.launch();
+  const browser=await chromium.launch({channel:'chromium',headless:false});
   try{
     const controls=await control(browser);
     fs.writeFileSync(path.join(output,'zoom-controls.json'),JSON.stringify(controls,null,2)+'\n');
