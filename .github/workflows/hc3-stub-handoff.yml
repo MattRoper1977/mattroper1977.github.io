@@ -28,6 +28,11 @@ jobs:
         with: {python-version: '3.12'}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
+      - name: Prepare evidence and the existing publication parser
+        run: |
+          mkdir -p audit-output/hc3-handoff
+          git rev-parse HEAD > audit-output/hc3-handoff/instrument-sha.txt
+          python3 -m pip install lxml==6.0.1
       - name: Prove the actual narrow sender planner
         run: node domain-split/check_stub_handoff.cjs
       - name: Assemble the inactive fixture from the exact reviewed receiver publication
