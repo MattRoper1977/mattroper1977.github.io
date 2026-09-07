@@ -42,6 +42,7 @@ jobs:
           python3 domain-split/build_publications.py --lessons .sources/Receiver-Lessons --output .handoff-fixture
           python3 domain-split/stub_handoff.py --fixture-output .handoff-fixture
           python3 tools/hc3_native_publication.py --control .handoff-fixture/games
+          python3 tools/hc3_handoff_publications.py --control .handoff-fixture
           mkdir -p audit-output/hc3-handoff
           cp .handoff-fixture/build-report.json audit-output/hc3-handoff/receiver-build-report.json
       - name: Install the existing build-only browser runtime

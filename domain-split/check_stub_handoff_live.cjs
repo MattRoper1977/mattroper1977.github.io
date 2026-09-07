@@ -25,7 +25,11 @@ async function settled(page){await page.waitForFunction(()=>typeof __GCsave==='f
 async function state(page){return page.evaluate(async key=>({memory:__GCsave(),campaign:__GCcampaign(),legacy:localStorage.getItem(key),sentinel:localStorage.getItem('hc3_destination_sentinel'),records:await campaignRepository.list(),hash:location.hash,search:location.search}),key);}
 function fields(actual,expected){for(const field of Object.keys(seed))assert.deepEqual(actual[field],expected[field],field);if('extra'in expected)assert.equal(actual.extra,expected.extra);}
 function durable(actual,incoming,legacy,reject){assert.equal(actual.legacy,legacy);assert.equal(actual.sentinel,'destination untouched');assert(!actual.hash.includes('mbm_import'));assert(actual.hash.includes('keep=one'));assert.equal(actual.search,'?view=calm');if(reject){fields(actual.memory,JSON.parse(legacy));assert.equal(actual.records.length,0);}else{assert.equal(actual.records.length,1);fields(actual.memory,incoming);fields(JSON.parse(actual.records[0].save),incoming);assert.equal(actual.campaign.id,actual.records[0].id);}}
-function save(){fs.writeFileSync(path.join(out,'handoff-live.json'),JSON.stringify({status:results.length&&results.every(r=>r.status==='PASS')?'PASS':'INCOMPLETE',scope:'Synthetic saves through genuine published button and native importer; unavailable redirected origins are explicitly excluded',receipt,origins,results},null,2)+'\n');}
+function save(){
+ const expected=origins.filter(o=>o.status==='SERVED').flatMap(o=>[390,1280].flatMap(width=>['fragment','empty','latest','file','reject'].map(mode=>o.origin+'|'+width+'|'+mode)));
+ const actual=results.map(r=>r.origin+'|'+r.width+'|'+r.mode);
+ const complete=origins.length===receipt.educationOrigins.length&&expected.length>0&&actual.length===expected.length&&new Set(actual).size===actual.length&&expected.every(key=>actual.includes(key));
+ fs.writeFileSync(path.join(out,'handoff-live.json'),JSON.stringify({status:results.some(r=>r.status==='FAIL')?'FAIL':complete&&results.every(r=>r.status==='PASS')?'PASS':'INCOMPLETE',expectedCases:expected.length,completedCases:results.length,scope:'Synthetic saves through genuine published button and native importer; unavailable redirected origins are explicitly excluded',receipt,origins,results},null,2)+'\n');}
 (async()=>{
  fs.mkdirSync(out,{recursive:true});const browser=await chromium.launch();
  try{
@@ -34,7 +38,7 @@ function save(){fs.writeFileSync(path.join(out,'handoff-live.json'),JSON.stringi
    const context=await browser.newContext({serviceWorkers:'block'});try{
     const response=await context.request.get(edu+route,{maxRedirects:0});
     if([301,302,303,307,308].includes(response.status())){origins.push({origin:edu,status:'UNAVAILABLE_ORIGIN',http:response.status(),location:response.headers().location,reason:'Redirected before same-origin code can recover storage; no storage seeded or read'});continue;}
-    await exact(response,receipt.digests.stub);origins.push({origin:edu,status:'SERVED'});
+    await exact(response,receipt.digests.stub);const wrong=(receipt.digests.stub[0]==='0'?'1':'0')+receipt.digests.stub.slice(1);await assert.rejects(()=>exact(response,wrong),/Live component differs/);await exact(response,receipt.digests.stub);origins.push({origin:edu,status:'SERVED',byteControl:{real:'PASS',planted:'FAIL',restored:'PASS'}});
    }finally{await context.close();save();}
   }
   assert(origins.some(o=>o.status==='SERVED'),'No legacy education origin serves the handoff');
@@ -50,7 +54,7 @@ function save(){fs.writeFileSync(path.join(out,'handoff-live.json'),JSON.stringi
    try{
     const setup=await context.newPage();await exact(await setup.goto(edu+route),receipt.digests.stub);assert.equal(new URL(setup.url()).origin,edu,'Redirect changed the source storage origin');
     await setup.evaluate(({key,source,mode})=>{if(mode!=='empty')localStorage.setItem(key,source);localStorage.setItem('hc3_source_sentinel','source untouched');},{key,source,mode});
-    const landing=await setup.goto(play+'/game-saves/');assert.equal(landing.status(),200);assert.equal(new URL(setup.url()).origin,play);await setup.evaluate(({key,legacy})=>{localStorage.setItem(key,legacy);localStorage.setItem('hc3_destination_sentinel','destination untouched');},{key,legacy});await setup.close();
+    const landing=await setup.goto(play+'/game-saves/');assert.equal(landing.status(),200);assert.equal(new URL(setup.url()).origin,play);await setup.waitForFunction(()=>document.querySelector('#save-export')?.disabled===false);await setup.evaluate(({key,legacy})=>{localStorage.setItem(key,legacy);localStorage.setItem('hc3_destination_sentinel','destination untouched');},{key,legacy});await setup.close();
     const page=await context.newPage();await exact(await page.goto(edu+route+'?view=calm#keep=one'),receipt.digests.stub);assert.equal(new URL(page.url()).origin,edu);
     const button=page.getByRole('button',{name:'Bring my progress',exact:true});assert.equal(await button.count(),mode==='empty'?0:1);
     if(mode==='empty'){
@@ -66,7 +70,7 @@ function save(){fs.writeFileSync(path.join(out,'handoff-live.json'),JSON.stringi
      }else{if(width===1280)await page.keyboard.press('Enter');else await button.click();await page.waitForURL(play+route+'**');}
      await settled(page);assert.equal(new URL(page.url()).origin,play);
      await exact(await context.request.get(play+route+'?view=calm'),receipt.digests.receiver);
-     const before=await state(page);durable(before,incoming,legacy,mode==='reject');await exact(await page.reload(),receipt.digests.receiver);await settled(page);const after=await state(page);durable(after,incoming,legacy,mode==='reject');assert.equal(after.campaign.id,before.campaign.id);
+     const before=await state(page);durable(before,incoming,legacy,mode==='reject');await exact(await page.reload(),receipt.digests.receiver);await settled(page);const after=await state(page);durable(after,incoming,legacy,mode==='reject');if(mode==='reject'){assert.equal(before.campaign,null);assert.equal(after.campaign,null);}else assert.equal(after.campaign.id,before.campaign.id);
      const old=await context.newPage();await exact(await old.goto(edu+route),receipt.digests.stub);assert.equal(new URL(old.url()).origin,edu);assert.equal(await old.evaluate(key=>localStorage.getItem(key),key),source,'Source campaign changed');assert.equal(await old.evaluate(()=>localStorage.getItem('hc3_source_sentinel')),'source untouched');await old.close();
      result.sourcePreserved=true;result.destinationLegacyPreserved=true;result.fragmentRemoved=true;result.reloadPreserved=true;
     }

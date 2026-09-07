@@ -48,7 +48,7 @@ async function responseBytes(response,expected=receipt.expected_sha256){assert(r
     const planted=(receipt.expected_sha256[0]==='0'?'1':'0')+receipt.expected_sha256.slice(1);
     await assert.rejects(()=>responseBytes(measured,planted),/Live navigation bytes differ/);await responseBytes(measured);
     result.byteControl={real:'PASS',planted:'FAIL',restored:'PASS'};
-    const setup=await context.newPage();const seedResponse=await setup.goto(origin+'/game-saves/');assert.equal(seedResponse.status(),200);assert.equal(new URL(setup.url()).origin,origin);
+    const setup=await context.newPage();const seedResponse=await setup.goto(origin+'/game-saves/');assert.equal(seedResponse.status(),200);assert.equal(new URL(setup.url()).origin,origin);await setup.waitForFunction(()=>document.querySelector('#save-export')?.disabled===false);
     await setup.evaluate(({key,legacy})=>{localStorage.setItem(key,legacy);localStorage.setItem('hc3_unrelated_native','preserve');},{key,legacy});await setup.close();
     const page=await context.newPage();let hash='#keep=one';
     if(mode!=='file')hash+='&mbm_import='+Buffer.from(JSON.stringify(incoming)).toString('base64url');

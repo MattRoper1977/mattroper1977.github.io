@@ -129,6 +129,7 @@ jobs:
         run: |
           node domain-split/check_stub_handoff.cjs
           python3 domain-split/stub_handoff.py --fixture-output .receiver-play-output
+          python3 tools/hc3_handoff_publications.py --control .receiver-play-output
           node domain-split/check_stub_handoff_browser.cjs .receiver-play-output audit-output/hc3-handoff
       - name: Retain native handoff controls on every outcome
         if: always()
