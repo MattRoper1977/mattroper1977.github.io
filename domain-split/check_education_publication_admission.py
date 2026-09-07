@@ -54,7 +54,7 @@ def controls(output):
             mutation('HTM route cannot enter by extension', name, 'hc3-planted.htm', GAME)
             mutation('scripted SVG cannot enter by extension', name, 'hc3-planted.svg', b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>')
             mutation('no symlink publication', name, 'hc3-link.html', symlink=True)
-            row = next(p for p in registry['trees'][name] if p.endswith('.js'))
+            row = next(p for p in registry['trees'][name] if p.endswith('.js') and (scratch/name/p).is_file())
             mutation('changed admitted dependency', name, row, (scratch/name/row).read_bytes()+b'\n/* planted changed engine */')
             mutation('missing admitted page', name, 'index.html', missing=True)
         for route in ['5 Intervention 10/Lesson_VIR_Pupil_App.html', 'Research/Research_Gate_Toolkit/R_Gate_Calibration_Game.html']:
@@ -69,7 +69,9 @@ def controls(output):
             for extension in ['png', 'pdf', 'pptx', 'zip', 'mp3', 'woff2']:
                 mutation('disguised code cannot enter as '+extension, name,
                          'hc3-disguised.'+extension, b'requestAnimationFrame(function loop(){score++;requestAnimationFrame(loop)});')
-        native = next(p for p in registry['trees']['education-lessons'] if p.endswith('.pptx'))
+        # An ARRIVING native pack may be absent from this build (HC5 §1); the
+        # control mutates a pack that is actually here.
+        native = next(p for p in registry['trees']['education-lessons'] if p.endswith('.pptx') and (scratch/'education-lessons'/p).is_file())
         mutation('changed admitted native pack bytes', 'education-lessons', native,
                  (scratch/'education-lessons'/native).read_bytes()+b'planted bytes')
         verify(scratch)
