@@ -8,7 +8,7 @@ must serve a STUB and nothing else:
   * at most 2 048 bytes of HTML
   * `data-game-moved` marker, `<meta name="robots" content="noindex">`
   * `<link rel="canonical" href="https://www.madebymatt-play.uk/…">`
-  * exactly one "Open the game" link, pointing at the play origin
+  * exactly one link in total: "Open the game", pointing at the play origin (HC4 §7.4)
   * no game code: no <canvas>, no external script other than /stub-handoff.js
 
 The route set is derived by tools/route_origins.py, never typed here.
@@ -56,6 +56,10 @@ def judge(body: bytes, status: int, final_host: str | None, origin_host: str):
     links = re.findall(r'<a\s+id="play-game"\s+href="([^"]+)"', text)
     if len(links) != 1 or urllib.parse.urlsplit(links[0]).hostname not in PLAY_HOSTS:
         problems.append('not exactly one Open-the-game link to play')
+    # HC4 §7.4: the stub carries ONE link in total, not one play link among others.
+    anchors = re.findall(r'<a\b', text, re.I)
+    if len(anchors) != 1:
+        problems.append(f'{len(anchors)} links; a stub carries exactly one')
     if re.search(r'<canvas\b', text, re.I):
         problems.append('carries a <canvas>')
     for src in re.findall(r'<script[^>]+src="([^"]+)"', text):
@@ -123,6 +127,8 @@ def self_test():
     control('run 2: a foreign script reds', any('external script' in p for p in judge(foreign, 200, 'madebymatt.uk', 'madebymatt.uk')))
     control('run 2: a redirect off the education origin reds',
             any('redirected' in p for p in judge(GOOD, 200, 'www.madebymatt-play.uk', 'madebymatt.uk')))
+    four = GOOD.replace(b'<p><a id="play-game"', b'<ol><li><a href="/game-saves/">Download</a></li><li><a href="https://www.madebymatt-play.uk/game-saves/">Import</a></li></ol><p><a id="play-game"').replace(b'</p><script', b'</p><p><a href="/for/pupils/">Back</a></p><script')
+    control('run 2: a planted four-link stub reds', any('links; a stub carries exactly one' in p for p in judge(four, 200, 'madebymatt.uk', 'madebymatt.uk')))
     control('run 3: the defect removed is green again', judge(GOOD, 200, 'madebymatt.uk', 'madebymatt.uk') == [])
     print('self-test', 'PASS' if ok else 'FAIL')
     return 0 if ok else 1
