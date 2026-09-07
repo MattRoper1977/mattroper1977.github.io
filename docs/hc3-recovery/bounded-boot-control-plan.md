@@ -1,0 +1,5 @@
+The required gate on Site #297 failed in job101620703279: the deliberately injected off-origin fetch stayed pending and page.goto(networkidle) timed out at /main/ before the privacy verdict. The subsequent unchanged real-tree check passed57 cases. This repairs only the scratch firing control in .github/workflows/mbm-audience-discovery-closeout.yml; the live browser verifier and its observation windows/assertions remain unchanged.
+
+Rollback before implementation: Site 0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb. No other open PR owns this workflow or verifier (fresh paginated touch-set census). Bound the planted fetch with AbortController after issuing the real request, assert exactly one insertion, retain unconditional restoration and audit-output protection, and require exit1 plus a structured failure naming the planted URL. Run actual real tree, exactly one planted boot fetch, and restored tree. Missing reports/timeouts are invalid, never successful controls.
+
+Normal expected-head merge only after all applicable checks green; publish the merged documentation/tool source and read its live provenance. No branch deletion, gate relaxation or pupil source edit.
