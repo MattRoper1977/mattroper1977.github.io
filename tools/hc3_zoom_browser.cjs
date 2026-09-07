@@ -27,7 +27,14 @@ async function pinch(page) {
       return e ? {tag:e.tagName,id:e.id,classes:String(e.className),touchAction:getComputedStyle(e).touchAction} : null;
     }, {x,y});
     const before = await page.evaluate(() => visualViewport.scale);
-    await session.send('Input.synthesizePinchGesture', {x,y,scaleFactor:2.5,relativeSpeed:800,gestureSourceType:'touch'});
+    // Send actual two-finger input; do not set page scale or override the DOM.
+    const points=distance=>[{id:1,x:x-distance,y,radiusX:2,radiusY:2,force:1},{id:2,x:x+distance,y,radiusX:2,radiusY:2,force:1}];
+    await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:points(20)});
+    for(let step=1;step<=12;step++){
+      await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:points(20+step*2.5)});
+      await delay(20);
+    }
+    await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
     await delay(200);
     const after = await page.evaluate(() => visualViewport.scale);
     attempts.push({x,y,target,before,after});
