@@ -1,0 +1,6089 @@
+{
+  "scope": "Canonical publication rows and migration candidates. Static evidence only; not a transfer permission registry.",
+  "sourceHeads": {
+    "Site": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+    "Lessons": "138457849c2690de5413ed80d616725a5160f9d1"
+  },
+  "counts": {
+    "routes": 69,
+    "migrationCandidates": 67,
+    "routesWithUnresolved": 69
+  },
+  "limitations": [
+    "Mutable bindings, dynamic receivers, unsupported syntax and keys remain unresolved.",
+    "Bounded wrapper traversal is static evidence, not complete control-flow analysis.",
+    "Shared runtime literals do not establish page ownership.",
+    "IndexedDB, profile subtrees and native import schemas require the accompanying reviewed registry."
+  ],
+  "routes": {
+    "/cyberpulse/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "cyberpulse/index.html",
+        "gitBlobId": "9b1dde4e1b9eb61e73f3880517fd6a07f406003a",
+        "rawByteCount": 224051,
+        "sha256": "2f0de253cc92ca6fea96a8848d16c7a5dda96e0a78467e9d33742d3fe0ef6a0c"
+      },
+      "publishedSha256": "2f0de253cc92ca6fea96a8848d16c7a5dda96e0a78467e9d33742d3fe0ef6a0c",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "cyberpulse_blackout_v1",
+        "mbm_audience_view",
+        "mbm_splash_last",
+        "mbm_v6_profile"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/cyberpulse/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/cyberpulse/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/cyberpulse/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/cyberpulse/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/cyberpulse/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/cyberpulse/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/cyberpulse/#script-3",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/cyberpulse/#script-4",
+          "line": 7,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 51,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/crownbadge/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "crownbadge/index.html",
+        "gitBlobId": "0fb34ca007a9c663956838d3d5034bb77a2c2207",
+        "rawByteCount": 180727,
+        "sha256": "27564a94261a6d0b425c7adb9963be37c0ce96f5a49ee3c7a0b6dab7eba538d6"
+      },
+      "publishedSha256": "27564a94261a6d0b425c7adb9963be37c0ce96f5a49ee3c7a0b6dab7eba538d6",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_crownbadge_v6_profile"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/crownbadge/#script-6",
+          "line": 57,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 10,
+          "exampleCallerChain": [
+            {
+              "source": "/crownbadge/#script-6",
+              "line": 2
+            },
+            {
+              "source": "/crownbadge/#script-6",
+              "line": 37
+            }
+          ]
+        },
+        {
+          "source": "/crownbadge/#script-6",
+          "line": 67,
+          "operation": "setItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 141
+        },
+        {
+          "source": "/crownbadge/#script-7",
+          "line": 8,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/crownbadge/#script-7",
+          "line": 9,
+          "operation": "setItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/crownbadge/#script-8",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 28,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/houseolympiad/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "houseolympiad/index.html",
+        "gitBlobId": "55b4766373a6d5feff5b6e222ec5aab66ad68b49",
+        "rawByteCount": 112556,
+        "sha256": "5a67c0e1f34f82ca4ff207257334f7ec4e8aac7819f6113653ffd240202146d5"
+      },
+      "publishedSha256": "0868efcbd2f30575d2dfd7bc8e11b1a27d98d1afaa770c0a52904600fbab37a3",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_house_olympiad_v4_settings",
+        "mbm_house_olympiad_v6_profile",
+        "mbm_splash_last",
+        "mbm_sports_passport_v3",
+        "mbm_sports_passport_v4_corrupt_backup"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/houseolympiad/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/houseolympiad/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/houseolympiad/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/houseolympiad/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/houseolympiad/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/houseolympiad/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/houseolympiad/#script-4",
+          "line": 13,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 7,
+          "exampleCallerChain": [
+            {
+              "source": "/houseolympiad/#script-4",
+              "line": 2
+            },
+            {
+              "source": "/houseolympiad/#script-4",
+              "line": 42
+            },
+            {
+              "source": "/houseolympiad/#script-4",
+              "line": 15
+            }
+          ]
+        },
+        {
+          "source": "/houseolympiad/#script-4",
+          "line": 14,
+          "operation": "setItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 9,
+          "exampleCallerChain": [
+            {
+              "source": "/houseolympiad/#script-4",
+              "line": 2
+            },
+            {
+              "source": "/houseolympiad/#script-4",
+              "line": 42
+            },
+            {
+              "source": "/houseolympiad/#script-4",
+              "line": 15
+            }
+          ]
+        },
+        {
+          "source": "/houseolympiad/#script-5",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/houseolympiad/#script-6",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/titanforge/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "titanforge/index.html",
+        "gitBlobId": "5909cf4d7c03d01c40702742202a4b21e0fa184a",
+        "rawByteCount": 1640431,
+        "sha256": "f5475538cef3b106d4ca53f530b5b622e4ce5156b6e5b7ed2b3ee8355fc19607"
+      },
+      "publishedSha256": "9e2cb809a83453f73a06f57228545d6e2511aea26179984de85c8e2b0cd59faa",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_titanforge_aaa_v1",
+        "mbm_titanforge_ascension_v1",
+        "mbm_titanforge_daily_v1",
+        "mbm_titanforge_duel_signal",
+        "mbm_titanforge_duel_v1",
+        "mbm_titanforge_mobile_v2",
+        "mbm_titanforge_records_v1",
+        "mbm_titanforge_release_v4",
+        "mbm_titanforge_save_v1",
+        "mbm_titanforge_v3"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/titanforge/#script-5",
+          "line": 12,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/titanforge/#script-6",
+          "line": 19,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/titanforge/#script-7",
+          "line": 16,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/titanforge/#script-8",
+          "line": 9,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/titanforge/#script-8",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/titanforge/#script-14",
+          "line": 11,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/titanforge/#script-14",
+          "line": 12,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/titanforge/#script-14",
+          "line": 112,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/titanforge/#script-14",
+          "line": 116,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/titanforge/#script-14",
+          "line": 150,
+          "operation": "removeItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/titanforge/#script-14",
+          "line": 150,
+          "operation": "setItem",
+          "expression": "\"mbm_titanforge_reset_done\"",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/titanforge/#script-14",
+          "line": 164,
+          "operation": "getItem",
+          "expression": "\"mbm_titanforge_reset_done\"",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/titanforge/#script-14",
+          "line": 164,
+          "operation": "removeItem",
+          "expression": "\"mbm_titanforge_reset_done\"",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/titanforge/#script-15",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 146,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/emberwild/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "emberwild/index.html",
+        "gitBlobId": "214165d6e5c553335d52925b13d4042a03ece013",
+        "rawByteCount": 989794,
+        "sha256": "d5e6e77b6b86b1d778b3747d23980431a5ad0f206a8cb6687b98b7c26564d7d0"
+      },
+      "publishedSha256": "5272814326d8e95dc5fd3be10e86dfd164f40a164bd847bfd642f4f6f4114318",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_splash_last"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/emberwild/#script-2",
+          "line": 642,
+          "operation": "getItem",
+          "expression": "EWStore.key(name)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/emberwild/#script-2",
+          "line": 643,
+          "operation": "setItem",
+          "expression": "EWStore.key(name)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/emberwild/#script-2",
+          "line": 644,
+          "operation": "removeItem",
+          "expression": "EWStore.key(name)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/emberwild/#script-2",
+          "line": 644,
+          "operation": "getItem",
+          "expression": "EWStore.key(name)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/emberwild/#script-3",
+          "line": 10,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4,
+          "exampleCallerChain": [
+            {
+              "source": "/emberwild/#script-3",
+              "line": 2
+            },
+            {
+              "source": "/emberwild/#script-3",
+              "line": 14
+            },
+            {
+              "source": "/emberwild/#script-3",
+              "line": 11
+            }
+          ]
+        },
+        {
+          "source": "/emberwild/#script-3",
+          "line": 13,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 6,
+          "exampleCallerChain": [
+            {
+              "source": "/emberwild/#script-3",
+              "line": 2
+            },
+            {
+              "source": "/emberwild/#script-3",
+              "line": 14
+            }
+          ]
+        },
+        {
+          "source": "/emberwild/#script-4",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 354,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/novasiege/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "novasiege/index.html",
+        "gitBlobId": "3cad93fcf375fa2d419103450dad8cdbd189d182",
+        "rawByteCount": 154128,
+        "sha256": "e8d428e92f338a90b5ba5057ea1dcfbb896e1b84b46586b92de4c1b45ce61ef4"
+      },
+      "publishedSha256": "e2d7ebbd3b11dc4128c41cda3e1b3fa225de29998cd7c14c2027166c16f42cb9",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_splash_last",
+        "mbm_v6_nova_siege_profile",
+        "mbm_vector_overdrive_pilot",
+        "mbm_vector_overdrive_settings_v1"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/novasiege/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/novasiege/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/novasiege/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/novasiege/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/novasiege/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/novasiege/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/novasiege/#script-2",
+          "line": 37,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 3
+        },
+        {
+          "source": "/novasiege/#script-2",
+          "line": 38,
+          "operation": "setItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 3
+        },
+        {
+          "source": "/novasiege/#script-4",
+          "line": 8,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/novasiege/#script-5",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 32,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/ouroboros/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "ouroboros/index.html",
+        "gitBlobId": "9895b571a14ddb0a1c7ae94a100d20ccf62a7fd5",
+        "rawByteCount": 209651,
+        "sha256": "50df8e6df1f441228c034b5f75ee36adbf5560889fbcb14458961f4c08058375"
+      },
+      "publishedSha256": "b41791caa8ce6950ade3b5812598b6e4b52ec04fc27e1eeed4cf864407f0fe50",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_ouroboros_chronos_unbound_v1"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/ouroboros/#script-1",
+          "line": 16,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 68
+        },
+        {
+          "source": "/ouroboros/#script-1",
+          "line": 17,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 59
+        },
+        {
+          "source": "/ouroboros/#script-1",
+          "line": 18,
+          "operation": "removeItem",
+          "expression": "k",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 7
+        },
+        {
+          "source": "/ouroboros/#script-1",
+          "line": 390,
+          "operation": "setItem",
+          "expression": "SAVE_KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 62,
+          "exampleCallerChain": [
+            {
+              "source": "/ouroboros/#script-1",
+              "line": 365
+            }
+          ]
+        },
+        {
+          "source": "/ouroboros/#script-1",
+          "line": 445,
+          "operation": "getItem",
+          "expression": "SAVE_KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 72,
+          "exampleCallerChain": [
+            {
+              "source": "/ouroboros/#script-1",
+              "line": 365
+            },
+            {
+              "source": "/ouroboros/#script-1",
+              "line": 392
+            }
+          ]
+        },
+        {
+          "source": "/ouroboros/#script-1",
+          "line": 397,
+          "operation": "getItem",
+          "expression": "SAVE_KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 3
+        },
+        {
+          "source": "/ouroboros/#script-1",
+          "line": 446,
+          "operation": "removeItem",
+          "expression": "SAVE_KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 6
+        },
+        {
+          "source": "/ouroboros/#script-2",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 73,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/olympics/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "olympics/index.html",
+        "gitBlobId": "3b1946f1c4841614a88b7040c24783195344ce8c",
+        "rawByteCount": 432434,
+        "sha256": "2128f0f58ae8a85d0d01b500703b49fe02e37f026082c9a37bcb20ef100a8824"
+      },
+      "publishedSha256": "bb05951798a3e995b79468e8963e6835bd45a4cac6c9008e49cf9b0126d1c2b5",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_global_games_v6_profile",
+        "mbm_global_games_world_stage_v4",
+        "mbm_splash_last",
+        "mbm_sports_passport_v3",
+        "mbm_sports_passport_v4",
+        "mbm_sports_passport_v4_corrupt_backup",
+        "mbm_sports_v4_import_backup"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/olympics/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/olympics/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/olympics/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/olympics/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/olympics/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/olympics/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/olympics/#script-3",
+          "line": 292,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/olympics/#script-3",
+          "line": 300,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/olympics/#script-3",
+          "line": 311,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/olympics/#script-3",
+          "line": 1924,
+          "operation": "setItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/olympics/#script-3",
+          "line": 1924,
+          "operation": "removeItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/olympics/#script-5",
+          "line": 10,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 20,
+          "exampleCallerChain": [
+            {
+              "source": "/olympics/#script-5",
+              "line": 2
+            },
+            {
+              "source": "/olympics/#script-5",
+              "line": 25
+            },
+            {
+              "source": "/olympics/#script-5",
+              "line": 20
+            },
+            {
+              "source": "/olympics/#script-5",
+              "line": 16
+            }
+          ]
+        },
+        {
+          "source": "/olympics/#script-6",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 108,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/fracture/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "fracture/index.html",
+        "gitBlobId": "e94527242497f0a108eec19d8607d67deb987e35",
+        "rawByteCount": 244115,
+        "sha256": "ed2f25f0add6929b00b3802c799fbaa01e61d0587010690130943b23c5933b62"
+      },
+      "publishedSha256": "cb16bb94c74b9bca187f275d61bac9d095f2adbe1d1363be07cf3bf217406709",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_relicforge_fracture_settings_v1",
+        "mbm_relicforge_fracture_v1"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 356,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/neonturf/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "neonturf/index.html",
+        "gitBlobId": "b004aa32caab56e2a02ac5db806a30a577fc07d6",
+        "rawByteCount": 219505,
+        "sha256": "df39d851131c885704b800dd1e9f2fe71de907b1d9cbdcc7d3934d26b394fa35"
+      },
+      "publishedSha256": "6a54cfb7d688a64bf4d9a1fe6db14d249c17f1dbcc64360ec98946a51a231e85",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_neon_turf_v4",
+        "mbm_neon_turf_v6_data",
+        "mbm_neonturf_settings_v1",
+        "mbm_neonturf_skin_v1",
+        "mbm_neonturf_stats_v1",
+        "mbm_sports_passport_v4",
+        "mbm_sports_passport_v4_corrupt_backup"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/neonturf/#script-2",
+          "line": 47,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/neonturf/#script-2",
+          "line": 48,
+          "operation": "setItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 47,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/echovault/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "echovault/index.html",
+        "gitBlobId": "784b3663f95a1429b448d9ca374a96463b264bc1",
+        "rawByteCount": 177468,
+        "sha256": "9b8afef6e0bc9cd2746d2f10fe1e4fc041b8b394f879afca75126b33278ebd0c"
+      },
+      "publishedSha256": "8da5850d86ada594e1e50dbf4e3f82490e30d668011cf15c972a5dd5bc5d5b59",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_echovault_v1",
+        "mbm_splash_last",
+        "mbm_v6_profile"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/echovault/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/echovault/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/echovault/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/echovault/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/echovault/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/echovault/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/echovault/#script-3",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/echovault/#script-4",
+          "line": 2,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 54,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/relicforge/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "relicforge/index.html",
+        "gitBlobId": "d9318b62a63cfe57f37251f9da690bca09e974f5",
+        "rawByteCount": 352384,
+        "sha256": "06dfce14831174320d76ec47af5e88dc6531ba695d4906246ebb30c8856adfaa"
+      },
+      "publishedSha256": "32e6c516e1d39e3e1904382f3c781aa2bd18a1fd8d5cc3490c46b67557ba9699",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_arcade_passport_v4",
+        "mbm_audience_view",
+        "mbm_relicforge_v1",
+        "mbm_splash_last",
+        "mbm_v6_relicforge_profile"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/relicforge/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/relicforge/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/relicforge/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/relicforge/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/relicforge/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/relicforge/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/relicforge/#script-3",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/relicforge/#script-4",
+          "line": 9,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 3
+        },
+        {
+          "source": "/relicforge/#script-4",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 94,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/offbrand/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "offbrand/index.html",
+        "gitBlobId": "26bb37c548ecffd81f60ad46b812db82ca08147f",
+        "rawByteCount": 211105,
+        "sha256": "8944202a32676f38e2a4434f988b489dbf6d42a32e41576dde5bb32227359aca"
+      },
+      "publishedSha256": "d3a000aabff7759eab0752a35e21f4cfd57f19aae228e7d6f70baf7790f49fbe",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_offbrand",
+        "mbm_splash_last",
+        "mbm_v6_offbrand_profile"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/offbrand/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/offbrand/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/offbrand/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/offbrand/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/offbrand/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/offbrand/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/offbrand/#script-2",
+          "line": 256,
+          "operation": "getItem",
+          "expression": "PASSPORT_KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 46,
+          "exampleCallerChain": [
+            {
+              "source": "/offbrand/#script-2",
+              "line": 2
+            },
+            {
+              "source": "/offbrand/#script-2",
+              "line": 2462
+            },
+            {
+              "source": "/offbrand/#script-2",
+              "line": 2355
+            }
+          ]
+        },
+        {
+          "source": "/offbrand/#script-2",
+          "line": 260,
+          "operation": "setItem",
+          "expression": "PASSPORT_KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 22,
+          "exampleCallerChain": [
+            {
+              "source": "/offbrand/#script-2",
+              "line": 2
+            },
+            {
+              "source": "/offbrand/#script-2",
+              "line": 2462
+            },
+            {
+              "source": "/offbrand/#script-2",
+              "line": 2355
+            }
+          ]
+        },
+        {
+          "source": "/offbrand/#script-3",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/offbrand/#script-4",
+          "line": 9,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/offbrand/#script-4",
+          "line": 12,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Axiom_Shift.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Axiom_Shift.html",
+        "gitBlobId": "58a68325dd78bc61ff627702b37f33d98ab7f80e",
+        "rawByteCount": 70821,
+        "sha256": "2390d7dd6a4ce92b8d900ea1d099b55bd32792d9fa9f5be3731538f05f8999da"
+      },
+      "publishedSha256": "49c3ba70927af1deb373fb2a8fab6a677c660244c7c7ef5f62ed064c4ecefeb0",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_v6_axiom_shift_profile"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/Axiom_Shift.html#script-1",
+          "line": 369,
+          "operation": "getItem",
+          "expression": "A.SAVE_KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Axiom_Shift.html#script-1",
+              "line": 359
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Axiom_Shift.html#script-1",
+          "line": 380,
+          "operation": "getItem",
+          "expression": "A.SAVE_KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 3,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Axiom_Shift.html#script-1",
+              "line": 359
+            },
+            {
+              "source": "/Lessons/Games/Axiom_Shift.html#script-1",
+              "line": 383
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Axiom_Shift.html#script-1",
+          "line": 463,
+          "operation": "getItem",
+          "expression": "A.SAVE_KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 3,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Axiom_Shift.html#script-1",
+              "line": 359
+            },
+            {
+              "source": "/Lessons/Games/Axiom_Shift.html#script-1",
+              "line": 471
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Axiom_Shift.html#script-1",
+          "line": 470,
+          "operation": "setItem",
+          "expression": "A.SAVE_KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 34
+        },
+        {
+          "source": "/Lessons/Games/Axiom_Shift.html#script-2",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Charcoal.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Charcoal.html",
+        "gitBlobId": "ed163545f93589f3ac3fc82864f9160641898dee",
+        "rawByteCount": 106815,
+        "sha256": "b00ff60ef1436533c8a3b60e69ad8079d088ec565e990613ff77098e24fce061"
+      },
+      "publishedSha256": "213cc45346d36fee3133e1f6312ea0f217a629fddb4330318b0e8a19553cf1ad",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_charcoal",
+        "mbm_v6_charcoal_profile"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/Charcoal.html#script-2",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Hold_the_Mark.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Hold_the_Mark.html",
+        "gitBlobId": "a9e6af0ca32e27dcbc0560972bc7c9cce8e2b620",
+        "rawByteCount": 123400,
+        "sha256": "d25e430a2ea3444c4d6245ba811c01d57c18f438d4b1ff91eef6084fd910f4fb"
+      },
+      "publishedSha256": "ba041be291c1c6be4a0ef37a96bdbd162f298522a6a89f3c1549df6115c33aa2",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "__t",
+        "htm_save",
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/Hold_the_Mark.html#script-1",
+          "line": 20,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Hold_the_Mark.html#script-1",
+          "line": 21,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 2,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Glitch_Clash.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Glitch_Clash.html",
+        "gitBlobId": "3daa35e795f3b078dc61edfe605a413028cd9601",
+        "rawByteCount": 203667,
+        "sha256": "96bf2f585c5f075b76ceff933599514716378df51e049e4cb947f9446132dbe9"
+      },
+      "publishedSha256": "e07efa965aa7ced5c1b2db06d01a846d8fa709e1c47529b4b6fe8f9b56484397",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "__t",
+        "gc_crt",
+        "gc_music",
+        "gc_muted",
+        "gc_theme",
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_v6_glitch_clash_profile"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/Glitch_Clash.html#script-1",
+          "line": 411,
+          "operation": "getItem",
+          "expression": "\"glitchclash_save\"",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 9
+        },
+        {
+          "source": "/Lessons/Games/Glitch_Clash.html#script-1",
+          "line": 424,
+          "operation": "setItem",
+          "expression": "\"glitchclash_save\"",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 191
+        },
+        {
+          "source": "/Lessons/Games/Glitch_Clash.html#script-1",
+          "line": 550,
+          "operation": "getItem",
+          "expression": "CHOICE",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 3
+        },
+        {
+          "source": "/Lessons/Games/Glitch_Clash.html#script-1",
+          "line": 551,
+          "operation": "getItem",
+          "expression": "CHOICE",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 3
+        },
+        {
+          "source": "/Lessons/Games/Glitch_Clash.html#script-1",
+          "line": 556,
+          "operation": "setItem",
+          "expression": "CHOICE",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5
+        },
+        {
+          "source": "/Lessons/Games/Glitch_Clash.html#script-1",
+          "line": 557,
+          "operation": "setItem",
+          "expression": "CHOICE",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5
+        },
+        {
+          "source": "/Lessons/Games/Glitch_Clash.html#script-1",
+          "line": 2231,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 335,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Glitch_Clash.html#script-1",
+              "line": 644
+            },
+            {
+              "source": "/Lessons/Games/Glitch_Clash.html#script-1",
+              "line": 665
+            },
+            {
+              "source": "/Lessons/Games/Glitch_Clash.html#script-1",
+              "line": 744
+            },
+            {
+              "source": "/Lessons/Games/Glitch_Clash.html#script-1",
+              "line": 2544
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Glitch_Clash.html#script-1",
+          "line": 2235,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 25,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Glitch_Clash.html#script-1",
+              "line": 893
+            },
+            {
+              "source": "/Lessons/Games/Glitch_Clash.html#script-1",
+              "line": 2364
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Glitch_Clash.html#script-1",
+          "line": 2238,
+          "operation": "removeItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Glitch_Clash.html#script-2",
+          "line": 9,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Glitch_Clash.html#script-2",
+          "line": 12,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 11,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/trailrunner/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "trailrunner/index.html",
+        "gitBlobId": "3183ac0a5c9b2ab616cbfcbbfce700edd56f082c",
+        "rawByteCount": 708703,
+        "sha256": "198201bc3e36a7dca0d9eb1bed2d433d986b4f04e01ceae111e1a0195bf66cfe"
+      },
+      "publishedSha256": "7cc7d81ff1a2eacd3418a50411ba9e994b3ca3962485f04c382136cae6e21147",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_arcade_passport_v4",
+        "mbm_audience_view",
+        "mbm_splash_last",
+        "mbm_v6_trailrunner_profile",
+        "trailCompatBoot",
+        "trekTrailDaily_v1",
+        "trekTrailGhostShare_v4",
+        "trekTrailGhost_v1",
+        "trekTrailRunner_v1",
+        "trekTrailScores_v1",
+        "trekTrailSettings_v1",
+        "trekTrailStorm_v1"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/trailrunner/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/trailrunner/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/trailrunner/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/trailrunner/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/trailrunner/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/trailrunner/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/trailrunner/#script-3",
+          "line": 8,
+          "operation": "getItem",
+          "expression": "'trailCompatBoot'",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 2,
+          "exampleCallerChain": [
+            {
+              "source": "/trailrunner/#script-3",
+              "line": 5
+            }
+          ]
+        },
+        {
+          "source": "/trailrunner/#script-3",
+          "line": 12,
+          "operation": "setItem",
+          "expression": "'__tr_t'",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 2,
+          "exampleCallerChain": [
+            {
+              "source": "/trailrunner/#script-3",
+              "line": 5
+            }
+          ]
+        },
+        {
+          "source": "/trailrunner/#script-3",
+          "line": 12,
+          "operation": "removeItem",
+          "expression": "'__tr_t'",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 2,
+          "exampleCallerChain": [
+            {
+              "source": "/trailrunner/#script-3",
+              "line": 5
+            }
+          ]
+        },
+        {
+          "source": "/trailrunner/#script-3",
+          "line": 57,
+          "operation": "setItem",
+          "expression": "'trailCompatBoot'",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/trailrunner/#script-5",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/trailrunner/#script-6",
+          "line": 11,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 3
+        },
+        {
+          "source": "/trailrunner/#script-6",
+          "line": 12,
+          "operation": "setItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 285,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/voxelcraft.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/voxelcraft.html",
+        "gitBlobId": "45deee46ee9fdb613c23ab281269a2d97b22fd4b",
+        "rawByteCount": 89258,
+        "sha256": "95f03152f0aaf68667525e5d3e1b91ebcb1b2470b751f68fb8f22f7f2119eee9"
+      },
+      "publishedSha256": "48a5c3ee3c5ee908f703d0c29b53423c70136601661b0701c5b87ed570e3579d",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "voxelcraft:arcadeHigh",
+        "voxelcraft:inv",
+        "voxelcraft:mode",
+        "voxelcraft:slot",
+        "voxelcraft:theme",
+        "voxelcraft:world"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 15,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Vortex.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Vortex.html",
+        "gitBlobId": "1c0e70aa476b736bb580d148cc0350b75f141347",
+        "rawByteCount": 575836,
+        "sha256": "f54a8373df3c11a6344866806b3c59d7490035cc1be8ed550700b2a72f221084"
+      },
+      "publishedSha256": "73cc741f0797855f5e6270007b91962dbce7a40d9ae847a22ce54ecba33c58b7",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_v6_vortex_profile",
+        "vortex_ghosts_v2",
+        "vortex_quest_v2",
+        "vortex_settings_v2"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/Vortex.html#script-2",
+          "line": 3792,
+          "operation": "getItem",
+          "expression": "i",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Vortex.html#script-2",
+          "line": 3792,
+          "operation": "setItem",
+          "expression": "i",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Vortex.html#script-3",
+          "line": 10,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Vortex.html#script-4",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 211,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Globe_Snake (1).html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Globe_Snake (1).html",
+        "gitBlobId": "ad7c4d9156923869a199dd30d075b571e0611905",
+        "rawByteCount": 564653,
+        "sha256": "f91419bee6dbf4b8fdfc75faaf447204e13024f7fc468b59f35fd68b72c1ebb2"
+      },
+      "publishedSha256": "c5bd2096ec5b70a2131cae7e933cf997ca9c906fa229b2e97147f285bdeb563c",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "globesnake_ghosts_v1",
+        "globesnake_quest_v1",
+        "globesnake_settings_v1",
+        "mbm_audience_view"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/Globe_Snake (1).html#script-2",
+          "line": 3790,
+          "operation": "getItem",
+          "expression": "i",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Globe_Snake (1).html#script-2",
+          "line": 3790,
+          "operation": "setItem",
+          "expression": "i",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Globe_Snake (1).html#script-5",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 201,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Neon_Snake_Overdrive.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Neon_Snake_Overdrive.html",
+        "gitBlobId": "9520b0acd149cbda53b58f8e99c5db57467cc10c",
+        "rawByteCount": 37924,
+        "sha256": "a34bc5f6d27779e242fbb2a9a1c9f9fa235e7a75eb0ce5e7d5c10e3f48c6817a"
+      },
+      "publishedSha256": "63369b85be419591e670b05014767a3fe517375db9eb55285f9ac62396f84dcf",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "neonSnakeScores_v1"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 310,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Neon_Siege.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Neon_Siege.html",
+        "gitBlobId": "d809d8efa57259f314b26204bdb41c4bab4d79b9",
+        "rawByteCount": 559633,
+        "sha256": "89cc313a110e24d3e68c1d4e06ab174cd4256fedd72f004e0a30c0b075ff29b7"
+      },
+      "publishedSha256": "b04f037770c8ab25135f50bb0643af89d70eeb3f287307d65641d2cc2678ab50",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "neonsiege_quest_v1",
+        "neonsiege_settings_v1"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/Neon_Siege.html#script-1",
+          "line": 3834,
+          "operation": "getItem",
+          "expression": "i",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Neon_Siege.html#script-1",
+          "line": 3834,
+          "operation": "setItem",
+          "expression": "i",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 240,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Neon_Garden.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Neon_Garden.html",
+        "gitBlobId": "8b43cccf2fef84e71cbc7c54c1cbb79b58a56c2e",
+        "rawByteCount": 567332,
+        "sha256": "92864ecd6a9e392786fc6122c3e9d3cf8660f42bdf4b806274bdeb41c2c5dfab"
+      },
+      "publishedSha256": "7a043d3d8441a0af6a1270a08065753de0dd5214214180ca954e952435b5030c",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "neon_garden_v1"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 273,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Orbital.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Orbital.html",
+        "gitBlobId": "75c23b0b799f9bbbcf5757ab940cc92cf8dd9476",
+        "rawByteCount": 544669,
+        "sha256": "6df12fdcb3a3aab1ade11730e31293a66274587db47bd610cea93aa0da3b23df"
+      },
+      "publishedSha256": "6df12fdcb3a3aab1ade11730e31293a66274587db47bd610cea93aa0da3b23df",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "orbital_quest_v1",
+        "orbital_settings_v1"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/Orbital.html#script-1",
+          "line": 3790,
+          "operation": "getItem",
+          "expression": "i",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Orbital.html#script-1",
+          "line": 3790,
+          "operation": "setItem",
+          "expression": "i",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 233,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Grid_Chase.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Grid_Chase.html",
+        "gitBlobId": "a06179967bdd3f0e6331cdcc624e24a7bd6bfdeb",
+        "rawByteCount": 74012,
+        "sha256": "2edab5fa787bfcbca3915756af6be03b5ac4653398bddc73073d81946784f07d"
+      },
+      "publishedSha256": "4268794703777053b9002349626a3bd646eb0e6aaf0805a84cb6c89ff516a775",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "gridchase_quest_v2",
+        "gridchase_settings_v2",
+        "mbm_audience_view",
+        "mbm_grid_chase_v6_profile"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/Grid_Chase.html#script-1",
+          "line": 41,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Grid_Chase.html#script-1",
+          "line": 42,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Grid_Chase.html#script-3",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 52,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Prism.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Prism.html",
+        "gitBlobId": "e022cf324925b13da5ec6f1569a72bd87bb2f4e3",
+        "rawByteCount": 550401,
+        "sha256": "d773f866014f7d55f37b88f3ad661e9cdcc355ae9d95a79d48673ad3bce39ba7"
+      },
+      "publishedSha256": "2780e4d263fb2d975ad24b60a81740d4a9e9386ca87c265a291f800afb11dda2",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_v6_profile",
+        "prism_quest_v1",
+        "prism_settings_v1"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/Prism.html#script-1",
+          "line": 3790,
+          "operation": "getItem",
+          "expression": "i",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Prism.html#script-1",
+          "line": 3790,
+          "operation": "setItem",
+          "expression": "i",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Prism.html#script-3",
+          "line": 2,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 223,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Grapple.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Grapple.html",
+        "gitBlobId": "57bb60d2af0200ab64370404e0a0b767cbb60248",
+        "rawByteCount": 650883,
+        "sha256": "fb1b77ee2066ca4a4e556e173b3bdf0dfce4e24173b6e9bf3b9fea6a14632af9"
+      },
+      "publishedSha256": "354a2e99e472ae28894d76fdcdf18a770f084f5966af97320a252190d1186e17",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "grapple_ghosts_import_v2",
+        "grapple_ghosts_v2",
+        "grapple_quest_v2",
+        "grapple_settings_v1",
+        "mbm_audience_view",
+        "mbm_grapple_ghosts_import_v4",
+        "mbm_grapple_ghosts_v4",
+        "mbm_grapple_quest_v4",
+        "mbm_grapple_settings_v4",
+        "mbm_grapple_v4",
+        "mbm_grapple_v6_data",
+        "mbm_hud_names",
+        "mbm_hud_used"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/Grapple.html#script-1",
+          "line": 3790,
+          "operation": "getItem",
+          "expression": "i",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Grapple.html#script-1",
+          "line": 3790,
+          "operation": "getItem",
+          "expression": "legacyKey",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Grapple.html#script-1",
+          "line": 3790,
+          "operation": "setItem",
+          "expression": "i",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/Lessons/Games/Grapple.html#script-1",
+          "line": 3812,
+          "operation": "getItem",
+          "expression": "v4Key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Grapple.html#script-1",
+          "line": 3812,
+          "operation": "getItem",
+          "expression": "legacyKey",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Grapple.html#script-1",
+          "line": 3812,
+          "operation": "setItem",
+          "expression": "v4Key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Grapple.html#script-3",
+          "line": 13,
+          "operation": "getItem",
+          "expression": "PASSPORT_KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 3,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Grapple.html#script-3",
+              "line": 2
+            },
+            {
+              "source": "/Lessons/Games/Grapple.html#script-3",
+              "line": 15
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Grapple.html#script-3",
+          "line": 13,
+          "operation": "setItem",
+          "expression": "PASSPORT_KEY+'_corrupt_backup'",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 3,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Grapple.html#script-3",
+              "line": 2
+            },
+            {
+              "source": "/Lessons/Games/Grapple.html#script-3",
+              "line": 15
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Grapple.html#script-3",
+          "line": 13,
+          "operation": "setItem",
+          "expression": "PASSPORT_KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 3,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Grapple.html#script-3",
+              "line": 2
+            },
+            {
+              "source": "/Lessons/Games/Grapple.html#script-3",
+              "line": 15
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Grapple.html#script-3",
+          "line": 14,
+          "operation": "setItem",
+          "expression": "PASSPORT_KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 7,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Grapple.html#script-3",
+              "line": 2
+            },
+            {
+              "source": "/Lessons/Games/Grapple.html#script-3",
+              "line": 50
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Grapple.html#script-5",
+          "line": 8,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 202,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Marble.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Marble.html",
+        "gitBlobId": "37357a3a65bfddd6314cb23492b5867e048f9562",
+        "rawByteCount": 661638,
+        "sha256": "8d19216fb925fa5e8230e3cdde8ac8626fdb360b725c645aee42085cd05b3d19"
+      },
+      "publishedSha256": "e9a7edcbbb54e08b799ad38a748bbd9feef95f432c268dcd693d96cc7cbd766c",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "marble_ghosts_import_v2",
+        "marble_ghosts_v2",
+        "marble_quest_v1",
+        "marble_settings_v1",
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_marble_ghosts_import_v4",
+        "mbm_marble_ghosts_v4",
+        "mbm_marble_quest_v4",
+        "mbm_marble_settings_v4",
+        "mbm_marble_v4",
+        "mbm_marble_v6_data",
+        "mbm_sports_passport_v4"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/Marble.html#script-1",
+          "line": 3790,
+          "operation": "getItem",
+          "expression": "i",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Marble.html#script-1",
+          "line": 3790,
+          "operation": "getItem",
+          "expression": "legacyKey",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Marble.html#script-1",
+          "line": 3790,
+          "operation": "setItem",
+          "expression": "i",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/Lessons/Games/Marble.html#script-1",
+          "line": 3794,
+          "operation": "getItem",
+          "expression": "v4Key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Marble.html#script-1",
+          "line": 3794,
+          "operation": "getItem",
+          "expression": "legacyKey",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Marble.html#script-1",
+          "line": 3794,
+          "operation": "setItem",
+          "expression": "v4Key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Marble.html#script-3",
+          "line": 13,
+          "operation": "getItem",
+          "expression": "PASSPORT_KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 3,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Marble.html#script-3",
+              "line": 2
+            },
+            {
+              "source": "/Lessons/Games/Marble.html#script-3",
+              "line": 15
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Marble.html#script-3",
+          "line": 13,
+          "operation": "setItem",
+          "expression": "PASSPORT_KEY+'_corrupt_backup'",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 3,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Marble.html#script-3",
+              "line": 2
+            },
+            {
+              "source": "/Lessons/Games/Marble.html#script-3",
+              "line": 15
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Marble.html#script-3",
+          "line": 13,
+          "operation": "setItem",
+          "expression": "PASSPORT_KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 3,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Marble.html#script-3",
+              "line": 2
+            },
+            {
+              "source": "/Lessons/Games/Marble.html#script-3",
+              "line": 15
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Marble.html#script-3",
+          "line": 14,
+          "operation": "setItem",
+          "expression": "PASSPORT_KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 7,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Marble.html#script-3",
+              "line": 2
+            },
+            {
+              "source": "/Lessons/Games/Marble.html#script-3",
+              "line": 50
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Marble.html#script-5",
+          "line": 9,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Marble.html#script-5",
+          "line": 45,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 214,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Slipstream.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Slipstream.html",
+        "gitBlobId": "1cfc7bfd85307e5e2dde307bd70d59a005389e72",
+        "rawByteCount": 525947,
+        "sha256": "94265389e6d2485356c0a4185222240d03fd20fb0ee471c0ccdda853ef301014"
+      },
+      "publishedSha256": "de6a560e74bf07ec4304ec365fe6246d6e005dfb20fe7fe4f6f4cec458c87342",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "slipstream_quest_v1"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 203,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Slipstream_GP.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Slipstream_GP.html",
+        "gitBlobId": "6b4f21b5731290aa3d4c658876a51b5fe0794e03",
+        "rawByteCount": 720206,
+        "sha256": "204bd02d9b881ef2bd98c643533e6f1ba53379f8962a44f9d06aec54943c5bbe"
+      },
+      "publishedSha256": "ffcc776d2f7a3246682d339987039dbcc437c93284d3e48ed2a96ae7dd733a87",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_v6_slipstream_gp_profile",
+        "slipstreamGP_v1"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/Slipstream_GP.html#script-2",
+          "line": 1503,
+          "operation": "getItem",
+          "expression": "'ma_splash_slipstream'",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 2,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Slipstream_GP.html#script-2",
+              "line": 1501
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Slipstream_GP.html#script-2",
+          "line": 1507,
+          "operation": "setItem",
+          "expression": "'ma_splash_slipstream'",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 318,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Wrecking_Crew.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Wrecking_Crew.html",
+        "gitBlobId": "4026ce752630e8f2f349f857c1d4123f832c0f3b",
+        "rawByteCount": 866583,
+        "sha256": "a28bebf8c40c7c0b741da01e0d7ed1f8ae18631c816032313ad701229748879b"
+      },
+      "publishedSha256": "963a94fb143b7edc08b4a1f9159948e443b2af19d465ef4a0cac4edc76a07275",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_wrecking_crew_v4",
+        "wreckingCrew_v1"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/Wrecking_Crew.html#script-4",
+          "line": 3795,
+          "operation": "getItem",
+          "expression": "hn.constants.PASSPORT_KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 11,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Wrecking_Crew.html#script-4",
+              "line": 3
+            },
+            {
+              "source": "/Lessons/Games/Wrecking_Crew.html#script-4",
+              "line": 3795
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Wrecking_Crew.html#script-4",
+          "line": 3795,
+          "operation": "setItem",
+          "expression": "hn.constants.PASSPORT_KEY+\"_corrupt_backup\"",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 11,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Wrecking_Crew.html#script-4",
+              "line": 3
+            },
+            {
+              "source": "/Lessons/Games/Wrecking_Crew.html#script-4",
+              "line": 3795
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Wrecking_Crew.html#script-4",
+          "line": 3795,
+          "operation": "setItem",
+          "expression": "hn.constants.PASSPORT_KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 18,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Wrecking_Crew.html#script-4",
+              "line": 3
+            },
+            {
+              "source": "/Lessons/Games/Wrecking_Crew.html#script-4",
+              "line": 3795
+            },
+            {
+              "source": "/Lessons/Games/Wrecking_Crew.html#script-4",
+              "line": 3795
+            }
+          ]
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 283,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Lumins.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Lumins.html",
+        "gitBlobId": "870921a28b90cfbadb52930d653dcb10333e8adc",
+        "rawByteCount": 120230,
+        "sha256": "9f11b327a93a614b46441df58324ca8ea6992e2814b5547684d8a54f0859f928"
+      },
+      "publishedSha256": "69607ad176f7cac3748a9c741deb590162f7c5f17839eb97c9a954692de0bdf3",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "lumins_daily",
+        "lumins_name",
+        "lumins_run",
+        "lumins_total",
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/Lumins.html#script-2",
+          "line": 1190,
+          "operation": "getItem",
+          "expression": "\"ma_splash_lumins_final\"",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 3,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Games/Lumins.html#script-2",
+              "line": 2
+            },
+            {
+              "source": "/Lessons/Games/Lumins.html#script-2",
+              "line": 1188
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Games/Lumins.html#script-2",
+          "line": 1193,
+          "operation": "setItem",
+          "expression": "\"ma_splash_lumins_final\"",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Static.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Static.html",
+        "gitBlobId": "3c60b29fb267bb898395d67b4d4fc504cefee7d9",
+        "rawByteCount": 175027,
+        "sha256": "cf46e82c5f3556a934b15cc2045faa1fb6e36d9432297999387ddfe1bbbe55e0"
+      },
+      "publishedSha256": "eb3e2516aac016b6b6f22618b1500a612e4e35979d731b98498f27a628d96404",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_static_v6_profile",
+        "static_calm",
+        "static_meta_v9",
+        "static_sound",
+        "static_tone",
+        "static_tut_done"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/Static.html#script-1",
+          "line": 17,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/Static.html#script-1",
+          "line": 18,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/Lessons/Games/Static.html#script-1",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 3
+        },
+        {
+          "source": "/Lessons/Games/Static.html#script-1",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/Lessons/Games/Static.html#script-3",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 2,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/OneGuy.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/OneGuy.html",
+        "gitBlobId": "671e04aa9ee15583cda57cc77aab16498c5e74e8",
+        "rawByteCount": 89032,
+        "sha256": "9d3a3164cb19fbade1e623dfe35a75c3d442061091d6a8ea1ead35310936463e"
+      },
+      "publishedSha256": "449c0ce260835e5576d00c1e825db7eb97d6bad920698279a75d4937ae048e44",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_v6_one_guy_profile",
+        "og_calm",
+        "og_ghost_v1",
+        "og_seed_v1",
+        "og_skin",
+        "og_snd",
+        "og_stats_v1",
+        "og_stomp_v1",
+        "og_trail"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/OneGuy.html#script-1",
+          "line": 26,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/OneGuy.html#script-1",
+          "line": 31,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/Lessons/Games/OneGuy.html#script-1",
+          "line": 1023,
+          "operation": "setItem",
+          "expression": "slot==='skin'?'og_skin':'og_trail'",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/OneGuy.html#script-2",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 2,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/The_Last_Lighthouse_v1_1_The_Archipelago_Update_FINAL.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/The_Last_Lighthouse_v1_1_The_Archipelago_Update_FINAL.html",
+        "gitBlobId": "bab63617c065cd1ab12a76f2a0d94f6c1e2b3e95",
+        "rawByteCount": 149042,
+        "sha256": "cd7779efbedb12ccca5363c492c9ac1e99f98038d42943b921bc67cd609835cc"
+      },
+      "publishedSha256": "fe839a5236cff2d64234e3631e05a2f66e8d43c29cc5040d2377b06f929a90ca",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "last-lighthouse-save",
+        "lh-beta02-settings",
+        "lh-fires",
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_last_lighthouse_v6_profile",
+        "mbm_ll_primer_seen"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Games/The_Last_Lighthouse_v1_1_The_Archipelago_Update_FINAL.html#script-3",
+          "line": 7,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/Lessons/Games/The_Last_Lighthouse_v1_1_The_Archipelago_Update_FINAL.html#script-3",
+          "line": 7,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 10,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/KidsVsStaff_Showdown (3).html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/KidsVsStaff_Showdown (3).html",
+        "gitBlobId": "0292dcce007f53b9e4fa0abb5da19f57c14ffcfb",
+        "rawByteCount": 50760,
+        "sha256": "35dc406f8c0bd9a480bac796ee13f0f88ab3670cc9ff58bb40997a6fb36660eb"
+      },
+      "publishedSha256": "db374a0c6e9ddfaa8410980398fcf18f0fc0bd5d7778172cc19e8f5087cfdb1a",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "ps_showdown_calm"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/WorldCup_ThreeLions_Final.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/WorldCup_ThreeLions_Final.html",
+        "gitBlobId": "6b7f0836acc0832ad0a78a2db6f975e628f4c20e",
+        "rawByteCount": 83028,
+        "sha256": "af01108f37b146e9b09afbfddbeb48f5b5a556b4afc37f78fa1b6b7abdc51f51"
+      },
+      "publishedSha256": "6ce78d530e5270d44e64bbb20d640b76bb147b6c0f4df87cc1da91f997c0907a",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "ps_worldcup_v2"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/WorldCup_v3_MatchDirector.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/WorldCup_v3_MatchDirector.html",
+        "gitBlobId": "8d1a02f9ac012261a4aa12822187722f0c1258cf",
+        "rawByteCount": 92274,
+        "sha256": "f815447d7c587a6e6b37ea6a20261defd590222b5fb60721346f604b023c9298"
+      },
+      "publishedSha256": "2a92bf6701f5b7573ae361c1599aa504dc1f06e9437c27a3d11c90600d0db671",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "ps_worldcup_v3"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/WorldCup_v5_Showdown.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/WorldCup_v5_Showdown.html",
+        "gitBlobId": "36f66671852e73747ad82e3e38f9ea4990e33b3a",
+        "rawByteCount": 129588,
+        "sha256": "09813e3d4a19514f537f3aed877cf7c861f7539a571b640cf8651ea708b29ccd"
+      },
+      "publishedSha256": "7b94d0ce7a925cb3ffa4f8f62ec4585a49cf539f9ccbed9ba75fef238d5155b0",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "ps_worldcup_v5"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Games/Trekkers_Trail_Runner_Tees_Coast.html",
+        "gitBlobId": "0fcf516b4a09e3b20a71c81d1486622784185287",
+        "rawByteCount": 130100,
+        "sha256": "0f8e5a758b4375a0a92b72b917fc344599d56b0a01d612385481625732b5c89d"
+      },
+      "publishedSha256": "45ac2913c03fbbb5dbf5529ac96991a3915cfac9b677ac85ede3aedcfe8b682a",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "neonRunnerScores_v5",
+        "trekTrailRunner_v1",
+        "trekTrailSettings_v1"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 4,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/voxel/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "voxel/index.html",
+        "gitBlobId": "a85ff06944c16fbfa8f4c27dd4b9a015c7c91ba3",
+        "rawByteCount": 736039,
+        "sha256": "8480c3851872e3470f84d6e492181bb9a0a50c2425e26e64ef2855948cf652ba"
+      },
+      "publishedSha256": "70b40b1d64166f80c5237c4eb9d6e897f828ced1f85b6c98bb72f454e4b3e50f",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_arcade_passport_v4",
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_splash_last",
+        "voxelfrontier.lastseed.v1",
+        "voxelfrontier.prefs.v1",
+        "voxelfrontier.save.v1"
+      ],
+      "reviewedDynamicFamilies": [
+        {
+          "path": "voxel/index.html",
+          "prefix": "voxelfrontier.world.v2.",
+          "keyRegex": "^voxelfrontier\\.world\\.v2\\.-?(?:0|[1-9][0-9]{0,9})$",
+          "numericSuffixRange": [
+            -2147483648,
+            2147483647
+          ],
+          "reason": "Runtime SAVE_PREFIX + SEED; seeds are signed 32-bit integers. Do not use blanket voxelfrontier.* enumeration.",
+          "includeWholeValue": true
+        }
+      ],
+      "unresolved": [
+        {
+          "source": "/voxel/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/voxel/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/voxel/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/voxel/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/voxel/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/voxel/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/voxel/#script-3",
+          "line": 11,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 7,
+          "exampleCallerChain": [
+            {
+              "source": "/voxel/#script-3",
+              "line": 2
+            },
+            {
+              "source": "/voxel/#script-3",
+              "line": 28
+            },
+            {
+              "source": "/voxel/#script-3",
+              "line": 19
+            }
+          ]
+        },
+        {
+          "source": "/voxel/#script-3",
+          "line": 21,
+          "operation": "setItem",
+          "expression": "PROFILE_KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/voxel/#script-3",
+              "line": 2
+            },
+            {
+              "source": "/voxel/#script-3",
+              "line": 28
+            }
+          ]
+        },
+        {
+          "source": "/voxel/#script-3",
+          "line": 23,
+          "operation": "setItem",
+          "expression": "PROFILE_KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/voxel/#script-3",
+              "line": 2
+            },
+            {
+              "source": "/voxel/#script-3",
+              "line": 28
+            }
+          ]
+        },
+        {
+          "source": "/voxel/#script-3",
+          "line": 29,
+          "operation": "setItem",
+          "expression": "PROFILE_KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 6
+        },
+        {
+          "source": "/voxel/#script-3",
+          "line": 30,
+          "operation": "getItem",
+          "expression": "PROFILE_KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/voxel/#script-4",
+          "line": 65,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/voxel/#script-4",
+              "line": 3
+            },
+            {
+              "source": "/voxel/#script-4",
+              "line": 92
+            }
+          ]
+        },
+        {
+          "source": "/voxel/#script-4",
+          "line": 66,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 20,
+          "exampleCallerChain": [
+            {
+              "source": "/voxel/#script-4",
+              "line": 3
+            },
+            {
+              "source": "/voxel/#script-4",
+              "line": 92
+            }
+          ]
+        },
+        {
+          "source": "/voxel/#script-4",
+          "line": 67,
+          "operation": "removeItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 312,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/apexkick/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "apexkick/index.html",
+        "gitBlobId": "f9ed89b78ebc03e64b21abe25192dc59353dde32",
+        "rawByteCount": 993824,
+        "sha256": "097caf2618315fffc3d0765271dc3c05b6b2795f8ef8592edb1d45d823b7c17e"
+      },
+      "publishedSha256": "0f6c53bc67fadb84ec891d189fa23fb0b3719afa15d0f2a653755caf84291653",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "apexkick.aaa.v2",
+        "apexkick.aaa.v3",
+        "apexkick.aaa.v4",
+        "apexkick.muted",
+        "apexkick.v1",
+        "apexkick.v2.calm",
+        "apexkick.v3.calm",
+        "apexkick.v3.muted",
+        "apexkick.v4.calm",
+        "apexkick.v4.muted",
+        "mbm_audience_view",
+        "mbm_splash_last",
+        "mbm_sports_passport_v3",
+        "mbm_sports_passport_v4",
+        "mbm_sports_passport_v4_corrupt_backup",
+        "mbm_sports_v4_import_backup",
+        "mbm_v6_apex_kick_profile"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/apexkick/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/apexkick/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/apexkick/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/apexkick/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/apexkick/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/apexkick/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/apexkick/#script-14",
+          "line": 135,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexkick/#script-14",
+          "line": 1231,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexkick/#script-14",
+          "line": 1250,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexkick/#script-14",
+          "line": 1255,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexkick/#script-14",
+          "line": 1257,
+          "operation": "removeItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexkick/#script-14",
+          "line": 1257,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexkick/#script-15",
+          "line": 9,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 4,
+          "exampleCallerChain": [
+            {
+              "source": "/apexkick/#script-15",
+              "line": 2
+            },
+            {
+              "source": "/apexkick/#script-15",
+              "line": 29
+            },
+            {
+              "source": "/apexkick/#script-15",
+              "line": 17
+            },
+            {
+              "source": "/apexkick/#script-15",
+              "line": 12
+            }
+          ]
+        },
+        {
+          "source": "/apexkick/#script-15",
+          "line": 9,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 12
+        },
+        {
+          "source": "/apexkick/#script-15",
+          "line": 18,
+          "operation": "setItem",
+          "expression": "PROFILE_KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 3
+        },
+        {
+          "source": "/apexkick/#script-16",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 307,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/apexpool/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "apexpool/index.html",
+        "gitBlobId": "3d86b139a78479daf483385150bbc4021e23cfda",
+        "rawByteCount": 109038,
+        "sha256": "5d0f1580b89e3b6d65b4db75b45f4ad78353b87d761b34af93e9a1fd08ccc92a"
+      },
+      "publishedSha256": "0a145bb27280845249fe3ece4f6f12874fbd67711bb09514a322b63d11513b9f",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "madebymatt_v6_profile",
+        "mbm_audience_view"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/apexpool/#script-3",
+          "line": 14,
+          "operation": "getItem",
+          "expression": "this.key(k)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/apexpool/#script-3",
+              "line": 5
+            },
+            {
+              "source": "/apexpool/#script-3",
+              "line": 21
+            }
+          ]
+        },
+        {
+          "source": "/apexpool/#script-3",
+          "line": 15,
+          "operation": "setItem",
+          "expression": "this.key(k)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 40
+        },
+        {
+          "source": "/apexpool/#script-3",
+          "line": 16,
+          "operation": "removeItem",
+          "expression": "this.key(k)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexpool/#script-4",
+          "line": 11,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexpool/#script-5",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/apexgolf/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "apexgolf/index.html",
+        "gitBlobId": "462591be8671fd302b94d75d75600bd673246267",
+        "rawByteCount": 92669,
+        "sha256": "4411ff5b9a22e21acbeb91fb75863c6452e1e484bb6d963383f2343916a6ba6a"
+      },
+      "publishedSha256": "d9bb0057c6e0698d6695a3c1c2bb6a7845fbf1d8ccaf6f9bfa9a62f44514f5dc",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "madebymatt_v6_profile",
+        "mbm_apexgolf_progress",
+        "mbm_apexgolf_settings",
+        "mbm_audience_view"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/apexgolf/#script-3",
+          "line": 13,
+          "operation": "getItem",
+          "expression": "STORAGE_KEYS[which]",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexgolf/#script-3",
+          "line": 14,
+          "operation": "setItem",
+          "expression": "STORAGE_KEYS[which]",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexgolf/#script-3",
+          "line": 15,
+          "operation": "getItem",
+          "expression": "STORAGE_KEYS[which]",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexgolf/#script-4",
+          "line": 60,
+          "operation": "setItem",
+          "expression": "saveKey",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexgolf/#script-4",
+          "line": 60,
+          "operation": "getItem",
+          "expression": "saveKey",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/apexgolf/#script-5",
+          "line": 10,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexgolf/#script-6",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/apextennis/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "apextennis/index.html",
+        "gitBlobId": "c27d36b7cf292e067d5ced4392cb110011e9b6bd",
+        "rawByteCount": 85438,
+        "sha256": "06791f86106d6ba79a9b697446511ddedf21a769c20db19dcb6400991e6f5f8f"
+      },
+      "publishedSha256": "a1ee90055564e388ab8eefbeb131150a282813737c25e69355869169f5c50c68",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "madebymatt_v6_profile",
+        "mbm_audience_view"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/apextennis/#script-3",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "this.key(k)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 10,
+          "exampleCallerChain": [
+            {
+              "source": "/apextennis/#script-3",
+              "line": 2
+            },
+            {
+              "source": "/apextennis/#script-3",
+              "line": 13
+            },
+            {
+              "source": "/apextennis/#script-3",
+              "line": 12
+            }
+          ]
+        },
+        {
+          "source": "/apextennis/#script-3",
+          "line": 6,
+          "operation": "setItem",
+          "expression": "this.key(k)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apextennis/#script-3",
+          "line": 6,
+          "operation": "removeItem",
+          "expression": "this.key(k)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apextennis/#script-3",
+          "line": 10,
+          "operation": "getItem",
+          "expression": "PREFIX+k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apextennis/#script-4",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/neonsync/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "neonsync/index.html",
+        "gitBlobId": "855bcaea819b384f6e935e5e79756f7282a0c014",
+        "rawByteCount": 87737,
+        "sha256": "3836897efbbdcbb154b8c37bd5ad52200adeee7be715fcd910dd63d53686e5d1"
+      },
+      "publishedSha256": "daecd3dcc040e7faa0a98a8ae2c7f6ea609ec96425cefb25b8f7b391f9ba2fcb",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/neonsync/#script-2",
+          "line": 5,
+          "operation": "getItem",
+          "expression": "this.key(k)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 12,
+          "exampleCallerChain": [
+            {
+              "source": "/neonsync/#script-2",
+              "line": 2
+            },
+            {
+              "source": "/neonsync/#script-2",
+              "line": 6
+            }
+          ]
+        },
+        {
+          "source": "/neonsync/#script-2",
+          "line": 5,
+          "operation": "setItem",
+          "expression": "this.key(k)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 19
+        },
+        {
+          "source": "/neonsync/#script-2",
+          "line": 5,
+          "operation": "removeItem",
+          "expression": "this.key(k)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/neonsync/#script-3",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/biopunkhive/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "biopunkhive/index.html",
+        "gitBlobId": "17f0b2d93eebf64743a338cc555eefaca68096f3",
+        "rawByteCount": 87620,
+        "sha256": "16a4da7086cc4983ac5c6fbada4784baf8047aeacc47cd666c71f8c47b55b3f7"
+      },
+      "publishedSha256": "6df354c591c279d97b4bb57d33c339e09bbc7f99260d235b343bf3a454b9f822",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/biopunkhive/#script-3",
+          "line": 9,
+          "operation": "getItem",
+          "expression": "this.key(k)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/biopunkhive/#script-3",
+              "line": 2
+            },
+            {
+              "source": "/biopunkhive/#script-3",
+              "line": 11
+            },
+            {
+              "source": "/biopunkhive/#script-3",
+              "line": 10
+            }
+          ]
+        },
+        {
+          "source": "/biopunkhive/#script-3",
+          "line": 9,
+          "operation": "setItem",
+          "expression": "this.key(k)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 35
+        },
+        {
+          "source": "/biopunkhive/#script-3",
+          "line": 9,
+          "operation": "removeItem",
+          "expression": "this.key(k)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/biopunkhive/#script-4",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/neonbreach/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "neonbreach/index.html",
+        "gitBlobId": "070b37d2514d407594718f249e4f226c35aaf333",
+        "rawByteCount": 124864,
+        "sha256": "d0687c1bd84ca23c08015e90c40f152157814a97f9f8eeaa1d1e4825c355c054"
+      },
+      "publishedSha256": "c5798daed4fd0f9094623d769281beb4e429ce111bbfde3a8b07176d9a7ecd14",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "madebymatt.neonBreach.v1",
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/neonbreach/#script-2",
+          "line": 4,
+          "operation": "getItem",
+          "expression": "\"ma_splash_neonbreach\"",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 2,
+          "exampleCallerChain": [
+            {
+              "source": "/neonbreach/#script-2",
+              "line": 2
+            }
+          ]
+        },
+        {
+          "source": "/neonbreach/#script-2",
+          "line": 22,
+          "operation": "setItem",
+          "expression": "\"ma_splash_neonbreach\"",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 25,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/apexrally/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "apexrally/index.html",
+        "gitBlobId": "7b47bb09fa63cf63fad1328fe95d254ca719d2b5",
+        "rawByteCount": 54229,
+        "sha256": "cab0a172b00d78c6514fe94094c57380a19da13633a51316b5050e5f555dcbd0"
+      },
+      "publishedSha256": "f968dd3496d7b76dab9a5a638882f86a3359e5f818d4b9685dea28671a1b71c0",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_apexrally_v1",
+        "mbm_audience_view"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/apexrally/#script-2",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 16,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/medevac/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "medevac/index.html",
+        "gitBlobId": "ffad77aed3b2bec1a5e88b911225a0354c663a70",
+        "rawByteCount": 460783,
+        "sha256": "97768b929c0b0ccf7f4400aa531cd6784e38a4bc660dd90a8ff7a5a1e47b7cb1"
+      },
+      "publishedSha256": "4c2607716dbbe922674c1bb83cddd0c7ef5870be210faefd2169723c38d0e73b",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_cinematic",
+        "mbm_detail",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_medevac_v1",
+        "mbm_medevac_v2",
+        "mbm_medevac_v4",
+        "mbm_medevac_v6_profile",
+        "mbm_splash_last"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/medevac/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/medevac/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/medevac/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/medevac/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/medevac/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/medevac/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/medevac/#script-3",
+          "line": 216,
+          "operation": "getItem",
+          "expression": "MV_RT.constants.PASSPORT_KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 6
+        },
+        {
+          "source": "/medevac/#script-3",
+          "line": 216,
+          "operation": "setItem",
+          "expression": "MV_RT.constants.PASSPORT_KEY+'_corrupt_backup'",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 6
+        },
+        {
+          "source": "/medevac/#script-3",
+          "line": 217,
+          "operation": "setItem",
+          "expression": "MV_RT.constants.PASSPORT_KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 10,
+          "exampleCallerChain": [
+            {
+              "source": "/medevac/#script-3",
+              "line": 216
+            }
+          ]
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 13,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/luminahaven/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "luminahaven/index.html",
+        "gitBlobId": "a435d956bb1d7c5b6545d40ecd1b7dcd7a1c4c1c",
+        "rawByteCount": 108503,
+        "sha256": "aae2d7fc0864f43cdf8eff4ed65d8cd5f774ba6c418b5139379c8dcfea5da384"
+      },
+      "publishedSha256": "37bd737ed7b26635042e5a6c6000ec69400b8648b4feaa5f82bb283730d47837",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_lumina_haven_state_v1",
+        "mbm_lumina_haven_v6_profile"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 14,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/auroralinks/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "auroralinks/index.html",
+        "gitBlobId": "df0b707b1ff4587da9a7bf9592d14b5c0ce235e5",
+        "rawByteCount": 232534,
+        "sha256": "574d9c3cfe6f8a904d2eb5cf747b934b461088d83f519da71606450bc3c57b45"
+      },
+      "publishedSha256": "1e4a142ec0f1f670cde7d3e56bcf2687e79e2005cdae84c0be8fd344e0bc6713",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_aurora_links_aaa_v4",
+        "mbm_aurora_links_round_v1",
+        "mbm_splash_last",
+        "mbm_sports_passport_v3",
+        "mbm_sports_passport_v4",
+        "mbm_sports_passport_v4_corrupt_backup",
+        "mbm_sports_v4_import_backup",
+        "mbm_v6_aurora_links_profile"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/auroralinks/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/auroralinks/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/auroralinks/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/auroralinks/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/auroralinks/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/auroralinks/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/auroralinks/#script-3",
+          "line": 29,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/auroralinks/#script-3",
+          "line": 179,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/auroralinks/#script-3",
+          "line": 185,
+          "operation": "setItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 4,
+          "exampleCallerChain": [
+            {
+              "source": "/auroralinks/#script-3",
+              "line": 184
+            }
+          ]
+        },
+        {
+          "source": "/auroralinks/#script-3",
+          "line": 185,
+          "operation": "removeItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2,
+          "exampleCallerChain": [
+            {
+              "source": "/auroralinks/#script-3",
+              "line": 184
+            }
+          ]
+        },
+        {
+          "source": "/auroralinks/#script-3",
+          "line": 185,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/auroralinks/#script-4",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/auroralinks/#script-5",
+          "line": 9,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/auroralinks/#script-5",
+          "line": 12,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 34,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/neonmeridian/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "neonmeridian/index.html",
+        "gitBlobId": "1b015b662bf5812b48bb9a1264d3d595fc7624c6",
+        "rawByteCount": 140542,
+        "sha256": "7736cd5aaef43eeacf465887b99c8319010363b7576a0c9bdf511c393b62d23c"
+      },
+      "publishedSha256": "6a0a258cb64421f281aada1b2f704edd5d800f2fd2952ad28f805781c339915a",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_neonmeridian_progress_v1",
+        "mbm_neonmeridian_settings_v1",
+        "mbm_splash_last",
+        "meridian_progress",
+        "meridian_settings"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/neonmeridian/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/neonmeridian/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/neonmeridian/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/neonmeridian/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/neonmeridian/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/neonmeridian/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/neonmeridian/#script-3",
+          "line": 195,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/neonmeridian/#script-3",
+          "line": 195,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/neonmeridian/#script-3",
+          "line": 195,
+          "operation": "removeItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 2
+        },
+        {
+          "source": "/neonmeridian/#script-6",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 51,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/rallyvector3d/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "rallyvector3d/index.html",
+        "gitBlobId": "404c5deef9ac67dad3b13f08e0ef4aee990827ed",
+        "rawByteCount": 248596,
+        "sha256": "221d8d9f356b128647bf619d12a60b1eb39a29a7b376809ea46a9eedd18da9cc"
+      },
+      "publishedSha256": "bb5fd44d37fb1f8977df99ae69e93870e8236a72fe87e929527cb0181aa6bfe6",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_rallyvector_3d_v1",
+        "mbm_rallyvector_3d_v4",
+        "mbm_rallyvector_3d_v6_data",
+        "mbm_rallyvector_3d_v6_data_corrupt_backup",
+        "mbm_splash_last"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/rallyvector3d/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/rallyvector3d/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/rallyvector3d/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/rallyvector3d/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/rallyvector3d/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/rallyvector3d/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/rallyvector3d/#script-2",
+          "line": 820,
+          "operation": "getItem",
+          "expression": "'mbm_rallyvector_v4_compat'",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 2,
+          "exampleCallerChain": [
+            {
+              "source": "/rallyvector3d/#script-2",
+              "line": 2
+            }
+          ]
+        },
+        {
+          "source": "/rallyvector3d/#script-2",
+          "line": 348,
+          "operation": "getItem",
+          "expression": "this.key(trackId)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 14,
+          "exampleCallerChain": [
+            {
+              "source": "/rallyvector3d/#script-2",
+              "line": 2
+            },
+            {
+              "source": "/rallyvector3d/#script-2",
+              "line": 1033
+            },
+            {
+              "source": "/rallyvector3d/#script-2",
+              "line": 737
+            },
+            {
+              "source": "/rallyvector3d/#script-2",
+              "line": 572
+            }
+          ]
+        },
+        {
+          "source": "/rallyvector3d/#script-2",
+          "line": 178,
+          "operation": "getItem",
+          "expression": "'mbm_rallyvector_v4_compat'",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/rallyvector3d/#script-2",
+          "line": 358,
+          "operation": "setItem",
+          "expression": "this.key(trackId)",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 6
+        },
+        {
+          "source": "/rallyvector3d/#script-2",
+          "line": 845,
+          "operation": "setItem",
+          "expression": "'mbm_rallyvector_v4_compat'",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/rallyvector3d/#script-2",
+          "line": 860,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/rallyvector3d/#script-3",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 69,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/hyperdraft/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "hyperdraft/index.html",
+        "gitBlobId": "439a3ca3e49881e0d2acb4cd10d24618f1a2b59e",
+        "rawByteCount": 150540,
+        "sha256": "bc11f69f7ce24a01667e71e5dce4718bd68abfe017e5237198a408a59186fbdf"
+      },
+      "publishedSha256": "bc11f69f7ce24a01667e71e5dce4718bd68abfe017e5237198a408a59186fbdf",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_hyperdraft_v6_profile",
+        "mbm_slipstream_hyperdraft_v1",
+        "mbm_splash_last"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/hyperdraft/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/hyperdraft/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/hyperdraft/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/hyperdraft/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/hyperdraft/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/hyperdraft/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 44,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/apexcurl/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "apexcurl/index.html",
+        "gitBlobId": "8293c9659df2246562a1e9cda03dd472bfc2d4ca",
+        "rawByteCount": 255279,
+        "sha256": "09feee3492a394553db0216ec608e7073b2e21baedb2cb577ab43a6bee7a7436"
+      },
+      "publishedSha256": "09feee3492a394553db0216ec608e7073b2e21baedb2cb577ab43a6bee7a7436",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "apex_curl_rc_stars_v1",
+        "mbm_apex_curl_v4",
+        "mbm_apex_curl_v6_data",
+        "mbm_audience_view"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/apexcurl/#script-4",
+          "line": 29,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 4,
+          "exampleCallerChain": [
+            {
+              "source": "/apexcurl/#script-4",
+              "line": 2
+            },
+            {
+              "source": "/apexcurl/#script-4",
+              "line": 103
+            },
+            {
+              "source": "/apexcurl/#script-4",
+              "line": 94
+            }
+          ]
+        },
+        {
+          "source": "/apexcurl/#script-4",
+          "line": 30,
+          "operation": "setItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 12,
+          "exampleCallerChain": [
+            {
+              "source": "/apexcurl/#script-4",
+              "line": 2
+            },
+            {
+              "source": "/apexcurl/#script-4",
+              "line": 103
+            },
+            {
+              "source": "/apexcurl/#script-4",
+              "line": 97
+            }
+          ]
+        },
+        {
+          "source": "/apexcurl/#script-5",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexcurl/#script-8",
+          "line": 9,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 3
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 34,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/apexvelodrome/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "apexvelodrome/index.html",
+        "gitBlobId": "123f5f39819d484f098963cfdec3eb360670d36d",
+        "rawByteCount": 262340,
+        "sha256": "075605539073732f0bb37bb2777fba41dd07d5b9ee17f64930cec09e5965d557"
+      },
+      "publishedSha256": "075605539073732f0bb37bb2777fba41dd07d5b9ee17f64930cec09e5965d557",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "apex_velodrome_rc_stars_v1",
+        "apex_velodrome_rc_v1",
+        "mbm_apex_velodrome_v4",
+        "mbm_apex_velodrome_v4_replay",
+        "mbm_apex_velodrome_v4_stars",
+        "mbm_apex_velodrome_v6_data",
+        "mbm_audience_view",
+        "mbm_sports_passport_v4",
+        "mbm_sports_passport_v4_corrupt_backup"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/apexvelodrome/#script-4",
+          "line": 16,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexvelodrome/#script-4",
+          "line": 17,
+          "operation": "setItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexvelodrome/#script-5",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/apexvelodrome/#script-8",
+          "line": 7,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 70,
+          "exampleCallerChain": [
+            {
+              "source": "/apexvelodrome/#script-8",
+              "line": 2
+            },
+            {
+              "source": "/apexvelodrome/#script-8",
+              "line": 18
+            },
+            {
+              "source": "/apexvelodrome/#script-8",
+              "line": 14
+            }
+          ]
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 42,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/micro-tinkerer/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "micro-tinkerer/index.html",
+        "gitBlobId": "fa9edee6f2421178f81ed63f55af26bd180ae069",
+        "rawByteCount": 159322,
+        "sha256": "16290b481dce34f9ce1b907ca11a3ccd989d4c54722d8ec1b7345ee33c341de3"
+      },
+      "publishedSha256": "16290b481dce34f9ce1b907ca11a3ccd989d4c54722d8ec1b7345ee33c341de3",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "MICRO_TINKERER_SAVE_V2",
+        "mbm_audience_view",
+        "mbm_v6_profile"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/micro-tinkerer/#script-1",
+          "line": 104,
+          "operation": "getItem",
+          "expression": "this.KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/micro-tinkerer/#script-1",
+          "line": 105,
+          "operation": "setItem",
+          "expression": "this.KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/micro-tinkerer/#script-1",
+          "line": 574,
+          "operation": "removeItem",
+          "expression": "ProfileStore.KEY",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/micro-tinkerer/#script-2",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/micro-tinkerer/#script-3",
+          "line": 5,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 94,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/townlife/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "townlife/index.html",
+        "gitBlobId": "4bd9f70cb32ce5d4882c35b0112ce677eaf70df5",
+        "rawByteCount": 348951,
+        "sha256": "dada0af59c961d8436b195fbf98a8f2f301319bdc6241619dcf8a79bff1f3ac2"
+      },
+      "publishedSha256": "dada0af59c961d8436b195fbf98a8f2f301319bdc6241619dcf8a79bff1f3ac2",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "__mbm_probe",
+        "mbm_audience_view",
+        "mbm_splash_last",
+        "mbm_v6_town_life_profile"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/townlife/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/townlife/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/townlife/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/townlife/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/townlife/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/townlife/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/townlife/#script-2",
+          "line": 208,
+          "operation": "setItem",
+          "expression": "'__mbm_probe'",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/townlife/#script-2",
+          "line": 209,
+          "operation": "removeItem",
+          "expression": "'__mbm_probe'",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/townlife/#script-2",
+          "line": 218,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/townlife/#script-2",
+          "line": 221,
+          "operation": "setItem",
+          "expression": "key",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/townlife/#script-2",
+          "line": 224,
+          "operation": "removeItem",
+          "expression": "key",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/townlife/#script-3",
+          "line": 8,
+          "operation": "getItem",
+          "expression": "key",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/townlife/#script-4",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 86,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/touchline/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "touchline/index.html",
+        "gitBlobId": "04565858309531487aa74d8b21c2a6644a2fbf55",
+        "rawByteCount": 416020,
+        "sha256": "54479eb516bce94e7a153f94404f1b518e8d12518df007ab066abd8c5b9d02db"
+      },
+      "publishedSha256": "f3b9f434f957917319a77b255aa932ab45f23176372225c7963ab23ffd7fcb27",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_splash_last",
+        "tdv2_storage_probe"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/touchline/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/touchline/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/touchline/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/touchline/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/touchline/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/touchline/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/touchline/#script-2",
+          "line": 278,
+          "operation": "setItem",
+          "expression": "`tdv2_${slot}`",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/touchline/#script-2",
+          "line": 279,
+          "operation": "getItem",
+          "expression": "`tdv2_${slot}`",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "/touchline/#script-3",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 162,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/skybreak/": {
+      "source": {
+        "repository": "Site",
+        "commit": "0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb",
+        "path": "skybreak/index.html",
+        "gitBlobId": "6b7f46a3a47b9a0873aa5bc826dc741f1e8ad14c",
+        "rawByteCount": 220259,
+        "sha256": "f39441b7cdfe85ac1d19344b98c45c28012737bed90b57349e0ba1b4dad12b66"
+      },
+      "publishedSha256": "f39441b7cdfe85ac1d19344b98c45c28012737bed90b57349e0ba1b4dad12b66",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_splash_last",
+        "skybreak_vector_best_v1",
+        "skybreak_vector_profile_v4"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/skybreak/#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/skybreak/#script-1",
+              "line": 1
+            },
+            {
+              "source": "/skybreak/#script-1",
+              "line": 27
+            },
+            {
+              "source": "/skybreak/#script-1",
+              "line": 9
+            },
+            {
+              "source": "/skybreak/#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/skybreak/#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "/skybreak/#script-2",
+          "line": 497,
+          "operation": "getItem",
+          "expression": "LEGACY_PROFILE_KEYS[lk]",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 3,
+          "exampleCallerChain": [
+            {
+              "source": "/skybreak/#script-2",
+              "line": 2
+            },
+            {
+              "source": "/skybreak/#script-2",
+              "line": 1801
+            }
+          ]
+        },
+        {
+          "source": "/skybreak/#script-3",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/5 Intervention 10/InterventionA_Battle_Arena (1).html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "5 Intervention 10/InterventionA_Battle_Arena (1).html",
+        "gitBlobId": "2336fa9f876d366fb665f22bc30fe6fa61eb49cf",
+        "rawByteCount": 142706,
+        "sha256": "02e8037e6cb237b6d602405a9dd6e97a398c9c14cc513e4c784303d9990d3958"
+      },
+      "publishedSha256": "02e8037e6cb237b6d602405a9dd6e97a398c9c14cc513e4c784303d9990d3958",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "coldCall_intervA_acids",
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_splash_last"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/5 Intervention 10/InterventionA_Battle_Arena (1).html#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/5 Intervention 10/InterventionA_Battle_Arena (1).html#script-1",
+              "line": 1
+            },
+            {
+              "source": "/Lessons/5 Intervention 10/InterventionA_Battle_Arena (1).html#script-1",
+              "line": 27
+            },
+            {
+              "source": "/Lessons/5 Intervention 10/InterventionA_Battle_Arena (1).html#script-1",
+              "line": 9
+            },
+            {
+              "source": "/Lessons/5 Intervention 10/InterventionA_Battle_Arena (1).html#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/5 Intervention 10/InterventionA_Battle_Arena (1).html#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/2 Physics 10/current_rush.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "2 Physics 10/current_rush.html",
+        "gitBlobId": "1a0787444269ce6ba7301594f89067375c758206",
+        "rawByteCount": 42004,
+        "sha256": "944ee81e7b98b6ee031886e159771d2db5a9842864720224628d1dbf920da880"
+      },
+      "publishedSha256": "944ee81e7b98b6ee031886e159771d2db5a9842864720224628d1dbf920da880",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "currentRush_run_v1",
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_splash_last"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/2 Physics 10/current_rush.html#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/2 Physics 10/current_rush.html#script-1",
+              "line": 1
+            },
+            {
+              "source": "/Lessons/2 Physics 10/current_rush.html#script-1",
+              "line": 27
+            },
+            {
+              "source": "/Lessons/2 Physics 10/current_rush.html#script-1",
+              "line": 9
+            },
+            {
+              "source": "/Lessons/2 Physics 10/current_rush.html#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/2 Physics 10/current_rush.html#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 1,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/5 Intervention 10/InterventionB_Escape_Room.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "5 Intervention 10/InterventionB_Escape_Room.html",
+        "gitBlobId": "2e8248b12e1b49ff4c3e3d242000917c32e09792",
+        "rawByteCount": 89651,
+        "sha256": "ce4b21d6e5e260e803d1c824f2c720e094aa41c06b22b0440db7cda21402a5ad"
+      },
+      "publishedSha256": "ce4b21d6e5e260e803d1c824f2c720e094aa41c06b22b0440db7cda21402a5ad",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_splash_last"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/5 Intervention 10/InterventionB_Escape_Room.html#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/5 Intervention 10/InterventionB_Escape_Room.html#script-1",
+              "line": 1
+            },
+            {
+              "source": "/Lessons/5 Intervention 10/InterventionB_Escape_Room.html#script-1",
+              "line": 27
+            },
+            {
+              "source": "/Lessons/5 Intervention 10/InterventionB_Escape_Room.html#script-1",
+              "line": 9
+            },
+            {
+              "source": "/Lessons/5 Intervention 10/InterventionB_Escape_Room.html#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/5 Intervention 10/InterventionB_Escape_Room.html#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/LundyLoop/5_staff_training/R_Gate_Calibration_Game.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "LundyLoop/5_staff_training/R_Gate_Calibration_Game.html",
+        "gitBlobId": "42ad8f0f72f766390d8f2de6017c229fed1f2438",
+        "rawByteCount": 27607,
+        "sha256": "2635dc7c83ede60243d73471dbaceab107c0024b95d9451a1deed57b8aa19bff"
+      },
+      "publishedSha256": "2635dc7c83ede60243d73471dbaceab107c0024b95d9451a1deed57b8aa19bff",
+      "migrationCandidate": false,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_splash_last"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/LundyLoop/5_staff_training/R_Gate_Calibration_Game.html#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/LundyLoop/5_staff_training/R_Gate_Calibration_Game.html#script-1",
+              "line": 1
+            },
+            {
+              "source": "/Lessons/LundyLoop/5_staff_training/R_Gate_Calibration_Game.html#script-1",
+              "line": 27
+            },
+            {
+              "source": "/Lessons/LundyLoop/5_staff_training/R_Gate_Calibration_Game.html#script-1",
+              "line": 9
+            },
+            {
+              "source": "/Lessons/LundyLoop/5_staff_training/R_Gate_Calibration_Game.html#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/LundyLoop/5_staff_training/R_Gate_Calibration_Game.html#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/Summer Term Fun/Kids_vs_Staff_Studio_Game_Show_v8_Autopilot.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "Summer Term Fun/Kids_vs_Staff_Studio_Game_Show_v8_Autopilot.html",
+        "gitBlobId": "38191adda4022b17dd2f7e8687cec00051c7c384",
+        "rawByteCount": 143923,
+        "sha256": "8caa4b3513b7b53800a8524c166b6adad48f816be81807314c36f00f6941c7a2"
+      },
+      "publishedSha256": "8caa4b3513b7b53800a8524c166b6adad48f816be81807314c36f00f6941c7a2",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "kvs-check",
+        "kvs-final-state",
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_splash_last"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/Summer Term Fun/Kids_vs_Staff_Studio_Game_Show_v8_Autopilot.html#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/Summer Term Fun/Kids_vs_Staff_Studio_Game_Show_v8_Autopilot.html#script-1",
+              "line": 1
+            },
+            {
+              "source": "/Lessons/Summer Term Fun/Kids_vs_Staff_Studio_Game_Show_v8_Autopilot.html#script-1",
+              "line": 27
+            },
+            {
+              "source": "/Lessons/Summer Term Fun/Kids_vs_Staff_Studio_Game_Show_v8_Autopilot.html#script-1",
+              "line": 9
+            },
+            {
+              "source": "/Lessons/Summer Term Fun/Kids_vs_Staff_Studio_Game_Show_v8_Autopilot.html#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/Summer Term Fun/Kids_vs_Staff_Studio_Game_Show_v8_Autopilot.html#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 12,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/5 Intervention 10/L8a_Powerhouse_Arena_TeamQuiz.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "5 Intervention 10/L8a_Powerhouse_Arena_TeamQuiz.html",
+        "gitBlobId": "aeea999c412b8207aab986ac27988641df1aed5a",
+        "rawByteCount": 36403,
+        "sha256": "71e95ad58a4ad14c78187687638a1e65e4d02527049f20906f4de57ee00aba2c"
+      },
+      "publishedSha256": "71e95ad58a4ad14c78187687638a1e65e4d02527049f20906f4de57ee00aba2c",
+      "migrationCandidate": true,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_splash_last"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/5 Intervention 10/L8a_Powerhouse_Arena_TeamQuiz.html#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/5 Intervention 10/L8a_Powerhouse_Arena_TeamQuiz.html#script-1",
+              "line": 1
+            },
+            {
+              "source": "/Lessons/5 Intervention 10/L8a_Powerhouse_Arena_TeamQuiz.html#script-1",
+              "line": 27
+            },
+            {
+              "source": "/Lessons/5 Intervention 10/L8a_Powerhouse_Arena_TeamQuiz.html#script-1",
+              "line": 9
+            },
+            {
+              "source": "/Lessons/5 Intervention 10/L8a_Powerhouse_Arena_TeamQuiz.html#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/5 Intervention 10/L8a_Powerhouse_Arena_TeamQuiz.html#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    },
+    "/Lessons/5 Intervention 10/Lesson_VIR_Pupil_App.html": {
+      "source": {
+        "repository": "Lessons",
+        "commit": "138457849c2690de5413ed80d616725a5160f9d1",
+        "path": "5 Intervention 10/Lesson_VIR_Pupil_App.html",
+        "gitBlobId": "eb072848c1aca356742ee5f93c9358658e09222d",
+        "rawByteCount": 137455,
+        "sha256": "27c6ccec7de7f5befb4809c83d920e25852c9791b9672626809d744b4f072272"
+      },
+      "publishedSha256": "27c6ccec7de7f5befb4809c83d920e25852c9791b9672626809d744b4f072272",
+      "migrationCandidate": false,
+      "resolvedCandidates": [
+        "mbm_audience_view",
+        "mbm_hud_names",
+        "mbm_hud_used",
+        "mbm_splash_last",
+        "vir_pupil_answers",
+        "vir_pupil_bg",
+        "vir_pupil_bigtext",
+        "vir_pupil_gen",
+        "vir_pupil_locked",
+        "vir_pupil_name",
+        "vir_pupil_start",
+        "vir_pupil_tier"
+      ],
+      "reviewedDynamicFamilies": [],
+      "unresolved": [
+        {
+          "source": "/Lessons/5 Intervention 10/Lesson_VIR_Pupil_App.html#script-1",
+          "line": 6,
+          "operation": "getItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 5,
+          "exampleCallerChain": [
+            {
+              "source": "/Lessons/5 Intervention 10/Lesson_VIR_Pupil_App.html#script-1",
+              "line": 1
+            },
+            {
+              "source": "/Lessons/5 Intervention 10/Lesson_VIR_Pupil_App.html#script-1",
+              "line": 27
+            },
+            {
+              "source": "/Lessons/5 Intervention 10/Lesson_VIR_Pupil_App.html#script-1",
+              "line": 9
+            },
+            {
+              "source": "/Lessons/5 Intervention 10/Lesson_VIR_Pupil_App.html#script-1",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "source": "/Lessons/5 Intervention 10/Lesson_VIR_Pupil_App.html#script-1",
+          "line": 10,
+          "operation": "setItem",
+          "expression": "KEY",
+          "key": null,
+          "reason": "storage receiver unresolved",
+          "observedContexts": 4
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 51,
+          "operation": "getItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        },
+        {
+          "source": "published:/hud.js",
+          "line": 52,
+          "operation": "setItem",
+          "expression": "k",
+          "key": null,
+          "reason": "key expression unresolved",
+          "observedContexts": 1
+        }
+      ],
+      "scriptSourceIssues": [],
+      "parseOrScopeIssueCount": 0,
+      "userSaveBytes": null,
+      "userSaveBytesReason": "No pupil storage was read; typical save size cannot be inferred from source."
+    }
+  }
+}

@@ -1,0 +1,11 @@
+# HC3 inventory publication checkpoint
+
+The historical schema-1 inventory remains unchanged. The recovered identified schema-2 report is preserved with its original Site6eca0a5 / Lessons95146202 identities (SHA25624d12080d981522aa3e220e94abe019a7f68ca99bcd16944d220869c363954ce). The fresh released-source report measures Site0a8fdac899b0d4e7664f51eb885a88d1ae8b26bb and Lessons138457849c2690de5413ed80d616725a5160f9d1 (SHA2565d2c2beeca1dc229d21b63ce2319f61e53104bee9931d3e4dbde0606bad6d48f). Neither report relabels old census metadata as current source proof.
+
+All69 newly measured payload hashes match the exact Games9237d177 publication34077622659 attempt1 artifact10002616183, whose ZIP digest cffa52e10bf7b3501ba63902be1d4843e7d08947fdf5754d50851e0d9a12412b was independently checked. The publication-binding JSON records every matched member. Games live artifact10002724883 separately proved all69 live payload matches. The route summary keeps every unresolved case and source identity; the full reports preserve all scope warnings.
+
+Counts generated from the report:69 routes;67 migration candidates;69 routes with unresolved analysis;358 unresolved observations (98 receivers,260 keys);5953 parse/scope warnings on49 routes;390 resolved route-key candidates,190 already allowlisted and200 not allowlisted;0 missing/external script-source issues. These are static candidates, not new transfer permissions. All typical pupil-save byte sizes remain null because no pupil storage was read.
+
+The actual source analyzer passed its AST/wrapper/prefix controls, one planted built-byte mismatch and restored bytes, and one planted uncommitted-source mismatch and restored identity. Use the pinned build-only Acorn8.15.0 dependency. Preserve manual per-game importer review and the existing bulk transfer. Glitch is the only newly integrated native sender; this inventory does not authorize other game adapters.
+
+The deck-residue JSON derives16 alternative Humanities rows from resources.json and records48 duplicate IDs plus exact proposed edits. No deck source was changed. It explicitly records missing way-home links, phone-hidden TA controls and native worksheet-only printing; these are not runtime/print passes. Keep each future defect class separate and prove publication compatibility before merge.
