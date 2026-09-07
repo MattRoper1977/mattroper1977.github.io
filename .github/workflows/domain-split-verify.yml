@@ -179,6 +179,8 @@ jobs:
           node domain-split/check_usage_discovery.cjs || browser_status=1
           node domain-split/check_shared_navigation.cjs || browser_status=1
           node domain-split/check_completion.cjs || browser_status=1
+          # HC4 §7.1: /stats/on-this-device/ answers and reads one record back on BOTH origins (real → planted → restored)
+          node domain-split/check_device_stats_record.cjs _navigation-served domain-split/output/games || browser_status=1
           exit "$browser_status"
       - name: Save navigation and print evidence
         if: always()
