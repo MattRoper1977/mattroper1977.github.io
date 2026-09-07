@@ -25,16 +25,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          # Pinned reviewed original Science packs and public discovery;
+          # Reviewed Science packs (Lessons #356) and fixture repair (#357);
           # preserve the original lesson routes and paired catalogue contract.
-          ref: ae2d534b095423716aa1adaecc36299ba1210b23
+          ref: 419d44f0dc4e41c041cbcf2e4ca171569c03a2ae
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Matt-s-Apps-
           # Exact paired catalogue contract; Apps resources are unchanged.
-          ref: 3ad0a7df958274e5401e8d40d0a94096be0962bc
+          ref: ed4c59aefc7f991420a7c36193810933f977d99d
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -52,12 +52,23 @@ jobs:
           ref: 1a8e3b29ee4c5d306b9ce0fe0f601dacf3443a98
           path: .sources/Previous-Lessons
           persist-credentials: false
-      - name: Prove both reviewed Orbital revisions and reject planted bytes
+      - name: Prove every registered revision route and reject planted bytes
         run: |
           mkdir -p audit-output/source-revisions
           python domain-split/play/check_source_revision_controls.py --lessons .sources/Lessons --output domain-split/output > audit-output/source-revisions/current.json
           python domain-split/build_publications.py --lessons .sources/Previous-Lessons --output .previous-play-output
           python domain-split/play/check_source_revision_controls.py --lessons .sources/Previous-Lessons --output .previous-play-output > audit-output/source-revisions/previous.json
+      - name: Check out the exact reviewed Glitch receiver candidate
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: 95146202d7f876800605b489de4231efe28928b9
+          path: .sources/Receiver-Lessons
+          persist-credentials: false
+      - name: Prove the receiver publication and every registered byte guard
+        run: |
+          python domain-split/build_publications.py --lessons .sources/Receiver-Lessons --output .receiver-play-output
+          python domain-split/play/check_source_revision_controls.py --lessons .sources/Receiver-Lessons --output .receiver-play-output > audit-output/source-revisions/receiver.json
       - name: Verify preview and save-transfer boundaries
         run: |
           python domain-split/check_preview.py

@@ -1,0 +1,5 @@
+# Weekly findings continuation
+
+Recomposed the existing findings instrument with Site493904eb on 7 September. The old artifact10000626177 remains dated evidence; it is not a verdict on the releases since then. The stricter education publisher, paired project callers, source-bound FieldOps retry and Site scheduling fix have landed. Games9237d177 publication is active and must finish undisturbed. The next run must report its actual newest main workflow colours, effective required checks and pin staleness; no failed historical run is silently converted into green. MTR/published-live require a fresh current instrument run; J4 is dispatch-only and stale. The available connection cannot dispatch those workflows. Pin automation still cannot create PRs under the repository setting; its proven unchanged branches were opened and normally reviewed through Games68/69.
+
+Rollback for this recomposition: previous findings branch002e8c3210baff25de40a8e063c30bfec2ff3240; Site main493904ebd6814a447e5239b85e4e25be5b3a9a8b. No gate rule, exemption or pupil surface changed in this recomposition.

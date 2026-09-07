@@ -72,7 +72,7 @@ def registry_errors(output):
     # historical events, counters, configuration or backend data are replayed.
     baseline_sha = '9fafffbe3b08c43ec10fa17c410bd54719cc90edffc0db46fdda0c8edbf0f0d4'
     additions_path = HERE/'science-download-usage-additions.json'
-    if sha256(additions_path.read_bytes()).hexdigest() != '32742423b04a5f477f8f97a2a087845c60a45f0d71c2a73caa5cb9f1bf9c9762':
+    if sha256(additions_path.read_bytes()).hexdigest() != '266199e1f6d355956b23df058b3d867b50edc2f155545b0b43fb2d6f8177df30':
         return ['Unreviewed Science download registration metadata']
     approved = json.loads(additions_path.read_text())
     rows = json.loads((output/'usage-registry.json').read_text())

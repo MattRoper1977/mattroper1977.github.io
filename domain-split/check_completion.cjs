@@ -7,11 +7,50 @@ const origin = process.env.MBM_EDUCATION_ORIGIN || 'http://127.0.0.1:4173';
 const output = process.env.MBM_COMPLETION_OUTPUT || 'audit-output/completion';
 const lessonsRoot = process.env.MBM_COMPLETION_LESSONS || path.join(__dirname, 'output/education-lessons');
 const requirePacks = process.env.MBM_REQUIRE_TEACHING_PACKS === 'true';
+// Derive the installed pack contract from the reviewed, pinned Lessons source.
+function sciencePackContract(root) {
+  const contract = { lessons: [], decks: [], archives: [] };
+  for (const pathway of ['BUILD', 'GROW', 'LAUNCH']) {
+    const packRoot = path.join(root, 'Science_Teesside/Teaching_Packs', pathway);
+    const source = JSON.parse(fs.readFileSync(path.join(packRoot, 'SOURCE_MANIFEST.json'), 'utf8'));
+    const archives = JSON.parse(fs.readFileSync(path.join(packRoot, 'DOWNLOAD_INDEX.json'), 'utf8')).archives;
+    const route = file => '/Lessons/Science_Teesside/Teaching_Packs/' + pathway + '/' + file;
+    assert.equal(source.lessons.length, source.lessonCount, pathway + ' source lesson count');
+    assert(source.lessons.length > 0, pathway + ' source lessons missing');
+    assert.deepEqual(archives.filter(a => a.kind === 'format').map(a => a.format).sort(), ['DOCX', 'PDF', 'PPTX'], pathway + ' format collections');
+    for (const lesson of source.lessons) {
+      const decks = lesson.files.filter(f => f.format === 'PPTX');
+      assert.equal(decks.length, 1, pathway + '/' + lesson.id + ' requires one PowerPoint');
+      for (const format of ['PPTX', 'DOCX', 'PDF']) assert(lesson.files.some(f => f.format === format), pathway + '/' + lesson.id + ' missing ' + format);
+      const bundle = archives.filter(a => a.kind === 'lesson' && a.lessonIds.length === 1 && a.lessonIds[0] === lesson.id);
+      assert.equal(bundle.length, 1, pathway + '/' + lesson.id + ' lesson bundle');
+      contract.lessons.push({
+        id: pathway.toLowerCase() + '-' + lesson.id.toLowerCase(),
+        files: [...lesson.files, ...bundle].map(f => route(f.file)).sort(),
+      });
+      contract.decks.push(route(decks[0].file));
+    }
+    contract.archives.push(...archives.map(a => route(a.file)));
+  }
+  contract.lessons.sort((a, b) => a.id.localeCompare(b.id));
+  contract.decks.sort();
+  contract.archives.sort();
+  assert.equal(new Set(contract.decks).size, contract.decks.length, 'Duplicate source PowerPoints');
+  return contract;
+}
+function assertSciencePackMembership(actual, expected) {
+  assert.deepEqual(actual.lessons, expected.lessons, 'Science lesson identities or companion file links differ from the reviewed source');
+  assert.deepEqual(actual.decks, expected.decks, 'Science PowerPoint routes differ from the reviewed source');
+  assert.deepEqual(actual.archives, expected.archives, 'Science lesson, week, whole or format archives differ from the reviewed source');
+}
 const report = { cases: [], powerpoints: 0, requirePacks, pageErrors: [] };
 fs.mkdirSync(output, { recursive: true });
 (async () => {
   const browser = await chromium.launch({headless: true});
   try {
+    const packsPath = path.join(lessonsRoot, 'Science_Teesside/Teaching_Packs/index.html');
+    if (requirePacks) assert(fs.existsSync(packsPath), 'Required Science download hub is missing from build');
+    const expectedPacks = fs.existsSync(packsPath) ? sciencePackContract(lessonsRoot) : null;
     for (const width of [320, 390, 1280]) {
       const page = await browser.newPage({viewport: {width, height: 900}, reducedMotion: 'reduce'});
       page.on('pageerror', error => report.pageErrors.push(error.message));
@@ -63,18 +102,24 @@ fs.mkdirSync(output, { recursive: true });
       assert.equal(catalogueLinks.length, new Set(catalogueLinks).size, 'Duplicate catalogue entries');
       report.cases.push(`Public names, BUILD shortcut and subject/pathway coverage at ${width}px`);
       report.cases.push(`Homepage, supplied logo and pupil protection at ${width}px`);
-      const packsPath = path.join(lessonsRoot, 'Science_Teesside/Teaching_Packs/index.html');
-      if (requirePacks) assert(fs.existsSync(packsPath), 'Required Science download hub is missing from build');
-      if (fs.existsSync(packsPath)) {
+      if (expectedPacks) {
         await page.goto(origin + '/Lessons/Science_Teesside/Teaching_Packs/');
         assert.equal(await page.locator('h1').innerText(), 'Science teaching packs');
         assert.equal(await page.locator('[data-mbm-navigation="education"]').count(), 1);
-        assert.equal(await page.locator('article.lesson').count(), 20);
         assert.equal(await page.locator('[data-mbm-support-footer]').count(), 1);
+        const membership = await page.evaluate(() => {
+          const routes = selector => [...document.querySelectorAll(selector)].map(a => new URL(a.href).pathname).sort();
+          return {
+            lessons: [...document.querySelectorAll('article.lesson')].map(article => ({
+              id: article.id,
+              files: [...article.querySelectorAll('a[download]')].map(a => new URL(a.href).pathname).sort(),
+            })).sort((a, b) => a.id.localeCompare(b.id)),
+            decks: routes('a[href$=".pptx"]'),
+            archives: routes('a[download][href$=".zip"]'),
+          };
+        });
+        assertSciencePackMembership(membership, expectedPacks);
         const decks = await page.locator('a[href$=".pptx"]').evaluateAll(items => items.map(a => a.href));
-        assert.equal(decks.length, 20);
-        assert.equal(new Set(decks).size, 20, 'Duplicate PowerPoint links');
-        for (const pathway of ['BUILD', 'GROW']) assert.equal(decks.filter(href => new URL(href).pathname.includes('/Teaching_Packs/' + pathway + '/')).length, 10);
         if (width === 390) {
           for (const href of decks) {
             const response = await page.request.get(href);
@@ -90,11 +135,11 @@ fs.mkdirSync(output, { recursive: true });
         }
         await page.evaluate(() => document.documentElement.style.fontSize = '100%');
         await page.locator('#build-week-3').screenshot({path: path.join(output, `build-downloads-${width}.png`)});
-        report.cases.push(`20 teaching entries, downloads and enlarged text at ${width}px`);
+        report.cases.push(`${expectedPacks.lessons.length} teaching entries with exact companion and archive links, downloads and enlarged text at ${width}px`);
       }
       await page.close();
     }
-    if (requirePacks) assert.equal(report.powerpoints, 20, 'Final release requires all 20 PowerPoint downloads');
+    if (requirePacks) assert.equal(report.powerpoints, expectedPacks.decks.length, 'Final release requires every reviewed PowerPoint download');
     assert.deepEqual(report.pageErrors, [], 'Unexpected browser runtime error');
     report.status = 'PASS';
   } catch (error) { report.status = 'FAIL'; report.error = error.stack; process.exitCode = 1; }
