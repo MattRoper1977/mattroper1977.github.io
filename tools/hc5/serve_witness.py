@@ -135,6 +135,9 @@ def main():
         report['repositories'][kind] = result
         report['witnessed'] += int(result['verdict'] == 'WITNESSED')
         print(f"{kind:8s} {result['verdict']:12s} {result['matched']}/{result['subjects']} subjects  main {wanted[:8]}  {result.get('reason', '')}", flush=True)
+        for row in result.get('rows', []):
+            if row['verdict'] != 'MATCH':   # every non-match names itself in the log, not only in the artifact
+                print(f"    {row['verdict']:12s} {row['url']}  http={row.get('http')}  served={row.get('served_bytes')}B/{str(row.get('served_sha256', ''))[:8]}  expected={row.get('expected_bytes')}B/{str(row.get('expected_sha256', ''))[:8]}  {row.get('reason', '')}", flush=True)
     (args.output / 'serve-witness.json').write_text(json.dumps(report, indent=2) + '\n')
     print(f"SERVE WITNESS: byte-witnessed {report['witnessed']}/4 publications; {SUBJECT_COUNT} subjects; report {args.output / 'serve-witness.json'}")
     return 0 if all(r['verdict'] != 'RED' for r in report['repositories'].values()) else 1
