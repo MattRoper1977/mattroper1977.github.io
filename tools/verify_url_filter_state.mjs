@@ -33,6 +33,12 @@ let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch (_) { ({ chromium } = await import('playwright-core')); }
 
+if (process.env.RF_PUBLICATION === 'games') {
+  const published = await import('./lib/published-url-filter-state.cjs');
+  await published.default.verify();
+  process.exit(0);
+}
+
 const BASE = (process.argv.find(a => a.startsWith('--base=')) || '--base=https://madebymatt.uk')
   .split('=').slice(1).join('=');
 const GAMES = BASE + '/games/';

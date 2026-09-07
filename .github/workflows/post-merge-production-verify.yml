@@ -32,6 +32,8 @@ on:
     paths:
       - ".github/workflows/post-merge-production-verify.yml"
       - "tools/check_production_publication_call.py"
+      - "tools/lib/published-url-filter-state.cjs"
+      - "tools/verify_url_filter_state.mjs"
   push:
     branches: [main]
     paths:
@@ -45,6 +47,8 @@ on:
       - '.github/workflows/post-merge-production-verify.yml'
       - 'tools/verify_production_after_merge.mjs'
       - 'tools/check_production_publication_call.py'
+      - 'tools/lib/published-url-filter-state.cjs'
+      - 'tools/verify_url_filter_state.mjs'
   workflow_dispatch:
     inputs:
       attempts:
@@ -261,4 +265,5 @@ jobs:
             production.log
             production-driven.log
             audit-output/published-shelf-*
+            audit-output/published-url-filter/
           if-no-files-found: error
