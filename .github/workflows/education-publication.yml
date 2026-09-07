@@ -42,7 +42,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          # Reviewed Science packs (Lessons #356) and fixture repair (#357).
+          # Pinned 2026-09-07: reviewed Science packs (Lessons #356) and fixture repair (#357).
           # The Lessons caller uses its current commit so lesson work stays live.
           ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '419d44f0dc4e41c041cbcf2e4ca171569c03a2ae' }}
           path: .sources/Lessons
