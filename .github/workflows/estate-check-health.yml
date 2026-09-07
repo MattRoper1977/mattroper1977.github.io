@@ -24,6 +24,8 @@ on:
       - 'tools/estate_check_health.py'
       - 'tools/estate_pin_report.py'
       - 'tools/estate_pin_report.test.py'
+      - 'tools/report_required_checks.py'
+      - 'tools/report_required_checks.test.py'
   push:
     branches: [main]
     paths:
@@ -31,6 +33,8 @@ on:
       - 'tools/estate_check_health.py'
       - 'tools/estate_pin_report.py'
       - 'tools/estate_pin_report.test.py'
+      - 'tools/report_required_checks.py'
+      - 'tools/report_required_checks.test.py'
   schedule:
     # Monday 07:00 UTC - before a teaching week, not during one.
     - cron: '0 7 * * 1'
@@ -44,6 +48,8 @@ permissions:
   # insufficient scope is a 403, not a fallback - and a 403 here would report
   # MEASUREMENT INVALID every week rather than the estate's health.
   actions: read
+  checks: read
+  pull-requests: read
 
 concurrency:
   group: estate-check-health
@@ -56,6 +62,9 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install the build-only workflow parser
+        run: python3 -m pip install PyYAML==6.0.3
 
       - name: Record the measured source and run before collecting findings
         if: always()
@@ -79,6 +88,7 @@ jobs:
         run: |
           python3 tools/estate_check_health.py --self-test 2>&1 | tee audit-output/estate-health/classifier.log
           python3 tools/estate_pin_report.test.py 2>&1 | tee audit-output/estate-health/pin-controls.log
+          python3 tools/report_required_checks.test.py 2>&1 | tee audit-output/estate-health/protection-controls.log
 
       - name: Report every red and every stale check, by name and age
         id: t4-health-report
@@ -99,7 +109,7 @@ jobs:
       # precedent as the HTTPS item. This step fails only when it could not
       # MEASURE; the finding itself never reds the job, because a finding Matt
       # has read and decided against is not a defect.
-      - name: Required checks vs existing checks - a report, and Matt's clicks
+      - name: Effective required checks and observed workflow coverage
         id: t5-required-vs-existing
         if: always()
         shell: bash
@@ -108,7 +118,7 @@ jobs:
         run: |
           set -uo pipefail
           rc=0
-          out="$(python3 tools/report_required_checks.py 2>&1)" || rc=$?
+          out="$(python3 tools/report_required_checks.py --json audit-output/estate-health/required-checks.json 2>&1)" || rc=$?
           printf '%s\n' "$out" | tee audit-output/estate-health/required-checks.log
           { echo '### Required checks vs existing checks'; echo; echo '```'; \
             printf '%s\n' "$out"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

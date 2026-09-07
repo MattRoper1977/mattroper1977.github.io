@@ -177,7 +177,7 @@ def self_test():
     ]
     stale_pins = classify_pins(pins, 2)
     check([r['source'] for r in stale_pins] == ['Z'],
-          'a pin behind its source AND older than the window is named STALE PIN; a current pin and a fresh one are not',
+          'an unreleased game change older than the window is named STALE PIN; no pending game change and a fresh change are not',
           ', '.join(r['source'] for r in stale_pins) or '(none)')
     check(classify_pins(pins[:2], 2) == [], 'and with no such pin the pin verdict is CLEAR')
     check(not gate_failure([], [], [], None), 'stale pins alone cannot fail the workflow')
