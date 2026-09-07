@@ -51,6 +51,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -o pipefail
+          mkdir -p artifacts/serve-witness
           python3 tools/hc5/serve_witness.py --site . --lessons .sources/Lessons --apps .sources/Apps --shelf .sources/Games \
             --output artifacts/serve-witness --wait-seconds 120 | tee artifacts/serve-witness/summary.txt
       - name: Summary
@@ -61,6 +62,8 @@ jobs:
         if: always()
         with:
           name: serve-witness-${{ github.run_id }}
-          path: artifacts/serve-witness/
+          path: |
+            artifacts/serve-witness/serve-witness.json
+            artifacts/serve-witness/summary.txt
           if-no-files-found: error
           retention-days: 30
