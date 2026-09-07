@@ -1027,11 +1027,13 @@ jobs:
               raise SystemExit("MEASUREMENT INVALID: boot anchor must occur exactly once")
           # Issue the actual forbidden request, but do not depend on its server
           # finishing. The unchanged request observer sees it before abort.
+          # A reserved .invalid target cannot introduce CDN response dependencies
+          # that obscure this one planted URL in the report's three-URL sample.
           planted = """
               try {
                 var mbmBootControl = new AbortController();
                 var mbmBootControlTimer = setTimeout(function () { mbmBootControl.abort(); }, 1000);
-                fetch('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm', {signal: mbmBootControl.signal})
+                fetch('https://hc3-boot-control.invalid/request', {signal: mbmBootControl.signal})
                   .catch(function () {}).finally(function () { clearTimeout(mbmBootControlTimer); });
               } catch(e){}
           """
@@ -1048,7 +1050,7 @@ jobs:
           if sys.argv[1] != '1' or not report.is_file():
               raise SystemExit('MEASUREMENT INVALID: planted run must exit 1 with a complete report')
           result = json.loads(report.read_text())
-          url = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+          url = 'https://hc3-boot-control.invalid/request'
           failed = result.get('failed', [])
           expected = 'boot: /main/ contacts no third party: ' + url
           if expected not in failed:
