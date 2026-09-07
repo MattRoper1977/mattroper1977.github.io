@@ -247,7 +247,10 @@ def main():
                 orphans += 1
                 continue
             try:
-                runs = api(f"/repos/MattRoper1977/{repo}/actions/workflows/{w['id']}/runs?per_page=20")['workflow_runs']
+                # main only: a pull-request run belongs to its branch, not to the
+                # estate. HC5 D4: the 2026-09-07 re-run counted a PR-branch red
+                # (maker-splash-canon-verify on #216) as an estate red.
+                runs = api(f"/repos/MattRoper1977/{repo}/actions/workflows/{w['id']}/runs?per_page=20&branch=main")['workflow_runs']
             except Exception:
                 runs = []
             # A registry entry whose workflow has been deleted keeps reporting
