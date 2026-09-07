@@ -66,23 +66,48 @@ class Refs(HTMLParser):
         if tag in {'canvas','iframe','embed','object','video','audio'}: self.engines.append(tag)
 
 
+TEACHING_PACK_ADDITIONS = HERE/'teaching-packs-download-usage-additions.json'
+TEACHING_PACK_ADDITIONS_SHA256 = '6331c21a6315f5a5ab6bc945b6479ac1c07c9e3572248753c699f5e6ea6abc67'
+
+
+def registry_partition(rows, approved_by_prefix, installed_by_prefix):
+    """Pure rule, so the self-test can plant rows against it.
+
+    Every reviewed Teaching_Packs prefix contributes exactly its approved rows
+    when its pack index is installed and nothing when it is not; every other
+    row is a frozen installed record. Returns the error names."""
+    errors = []
+    retained = list(rows)
+    for prefix, approved in approved_by_prefix.items():
+        extensions = [r for r in rows if r['route'].startswith(prefix)]
+        retained = [r for r in retained if not r['route'].startswith(prefix)]
+        if extensions != (approved if installed_by_prefix.get(prefix) else []):
+            errors.append('Download additions differ from the reviewed installed pack: '+prefix)
+    return errors, retained
+
+
 def registry_errors(output):
     # Frozen installed records remain byte-equivalent, accepted 6 September.
     # Matt's new teaching downloads add only reviewed download metadata. No
     # historical events, counters, configuration or backend data are replayed.
-    baseline_sha = '9fafffbe3b08c43ec10fa17c410bd54719cc90edffc0db46fdda0c8edbf0f0d4'
+    # HC6 §11: the reviewed additions now cover every Teaching_Packs prefix —
+    # Science keeps its own file; the other subjects share one file keyed by
+    # prefix. Both files are pinned by digest.
+    # Re-frozen 7 September (HC6 §12): the catalogue mirror moved 663 → 751 rows,
+    # which gives 51 existing records their search-index source_ids. Same rows,
+    # same routes; proved identical between the pinned and the final builds.
+    baseline_sha = 'd2c3782fbea4149ee6af4c260d952bddba3580e506584db9f46224b9227393eb'
     additions_path = HERE/'science-download-usage-additions.json'
     if sha256(additions_path.read_bytes()).hexdigest() != '266199e1f6d355956b23df058b3d867b50edc2f155545b0b43fb2d6f8177df30':
         return ['Unreviewed Science download registration metadata']
-    approved = json.loads(additions_path.read_text())
+    if sha256(TEACHING_PACK_ADDITIONS.read_bytes()).hexdigest() != TEACHING_PACK_ADDITIONS_SHA256:
+        return ['Unreviewed teaching-pack download registration metadata']
+    approved = {'/Lessons/Science_Teesside/Teaching_Packs/': json.loads(additions_path.read_text())}
+    approved.update(json.loads(TEACHING_PACK_ADDITIONS.read_text()))
     rows = json.loads((output/'usage-registry.json').read_text())
-    prefix = '/Lessons/Science_Teesside/Teaching_Packs/'
-    extensions = [r for r in rows if r['route'].startswith(prefix)]
-    retained = [r for r in rows if not r['route'].startswith(prefix)]
-    errors = []
-    installed = (output/'education-lessons/Science_Teesside/Teaching_Packs/index.html').is_file()
-    if extensions != (approved if installed else []):
-        errors.append('Science download additions differ from the reviewed installed pack')
+    lessons = output/'education-lessons'
+    installed = {prefix: (lessons/prefix[len('/Lessons/'):]/'index.html').is_file() for prefix in approved}
+    errors, retained = registry_partition(rows, approved, installed)
     if sha256((json.dumps(retained,ensure_ascii=False,indent=2)+'\n').encode()).hexdigest() != baseline_sha:
         errors.append('Installed combined registry records changed')
     return errors
@@ -195,6 +220,21 @@ def self_test():
         ('<a id="play-game" href="%s">Play</a>'%play, False),
     ]
     ok=True
+    # HC6 §11: the reviewed-additions partition, proved on planted rows.
+    row=lambda r:{'route':r,'kind':'resource'}
+    approved={'/Lessons/Careers/Teaching_Packs/':[row('/Lessons/Careers/Teaching_Packs/BUILD/downloads/a.zip')]}
+    other=[row('/Lessons/Science_Teesside/x.html')]
+    reg_cases=[  # (rows, installed, expected error count)
+        (other+approved['/Lessons/Careers/Teaching_Packs/'], {'/Lessons/Careers/Teaching_Packs/':True}, 0),
+        (other, {'/Lessons/Careers/Teaching_Packs/':False}, 0),
+        (other+approved['/Lessons/Careers/Teaching_Packs/']+[row('/Lessons/Careers/Teaching_Packs/BUILD/downloads/planted.zip')], {'/Lessons/Careers/Teaching_Packs/':True}, 1),
+        (other, {'/Lessons/Careers/Teaching_Packs/':True}, 1),
+        (other+approved['/Lessons/Careers/Teaching_Packs/'], {'/Lessons/Careers/Teaching_Packs/':False}, 1),
+    ]
+    for rows,installed,expected in reg_cases:
+        errors,retained=registry_partition(rows,approved,installed)
+        passed=len(errors)==expected and retained==other; ok=ok and passed
+        print(f"  [{'ok' if passed else 'FAIL'}] registry partition: {len(rows)} rows, installed={list(installed.values())[0]} -> {len(errors)} error(s), retained {len(retained)}")
     for markup,expected in cases:
         p=Refs(); p.feed(markup)
         named=any('madebymatt-play.uk' in v for (t,a,v) in p.automatic)
