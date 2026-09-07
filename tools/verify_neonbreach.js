@@ -41,7 +41,7 @@ const GAME = process.env.NB_GAME_FILE || path.join(ROOT, 'neonbreach', 'index.ht
 // moved, so the pin moves in the same commit. Previous:
 //   c69ada9231108b694ec3540d7eccdf7fa5ec1a43048cac167355c7c5933d30bb / 124354 B
 const PINNED_SHA = 'aa0717e9440536c564aaf814ebbd2b61ba77f28f0074721cd3981ea86a9e5763';
-const PINNED_BYTES = 124319;
+const PINNED_BYTES = 124325;
 // HC3 §1.1: the served copy on the play origin carries the rewritten host in
 // its canonical/og:url lines; the workflow passes NB_CANON for that run.
 const CANON = process.env.NB_CANON || 'https://madebymatt.uk/neonbreach/';
