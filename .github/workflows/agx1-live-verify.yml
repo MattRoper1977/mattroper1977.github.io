@@ -110,6 +110,16 @@ jobs:
         # builder makes its independently deployed SUBJECT. The PR supplies
         # only the instruments. Using _tools/domain-split here would confuse
         # proposed pages with pages already authorised and deployed.
+        #
+        # HC6 D3: this step no longer ends the job on its own. When main's
+        # publication cannot be reproduced (a stale evidence digest, as with
+        # Site #307), every pull request — including the one that repairs it —
+        # went red here, and the repair could only be proven by merging it
+        # blind. The merge-ref reproduction below is the way out: the subject
+        # stays main, but the candidate (main + this PR) is built too, and it
+        # stands in as the subject only when main's own build is broken.
+        id: reproduce-main
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
@@ -119,7 +129,72 @@ jobs:
           node domain-split/check_game_saves.cjs
           python _play-site/domain-split/build_publications.py --lessons _play-lessons
           node _play-site/domain-split/check_game_saves.cjs
-          echo "PUBLICATION_ROOT=$GITHUB_WORKSPACE/domain-split/output/education-site" >> "$GITHUB_ENV"
+
+      - name: Check out the merge ref (main + this pull request) as the candidate
+        # Only a pull request has a merge ref. The candidate is what main
+        # becomes if this PR merges: its data AND its builder together.
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          path: _merge
+          fetch-depth: 1
+
+      - name: Read the candidate's own publication subject pins
+        if: github.event_name == 'pull_request'
+        id: merge-sources
+        run: python _tools/tools/verify_split_live_publication.py sources --site _merge --shelf _shelf
+
+      - uses: actions/checkout@v4
+        if: github.event_name == 'pull_request'
+        with:
+          repository: MattRoper1977/Lessons
+          ref: ${{ steps.merge-sources.outputs.education_lessons }}
+          path: _merge-lessons
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        if: github.event_name == 'pull_request'
+        with:
+          repository: MattRoper1977/Matt-s-Apps-
+          ref: ${{ steps.merge-sources.outputs.education_apps }}
+          path: _merge-apps
+          persist-credentials: false
+
+      - name: Reproduce the candidate publication from the merge ref
+        # A candidate that cannot be reproduced would break main on merge:
+        # that is the planted stale-evidence control, and it goes red here
+        # whether or not main is healthy today.
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd _merge
+          python domain-split/build_publications.py --lessons ../_merge-lessons
+          python domain-split/build_education.py --lessons ../_merge-lessons --apps ../_merge-apps
+          python domain-split/check_publications.py
+          node domain-split/check_game_saves.cjs
+
+      - name: Choose the publication under test
+        # main reproduces          -> main's build is the subject (unchanged behaviour).
+        # main broken, PR builds   -> the candidate is the subject: a repair passes
+        #                             only if what it publishes is what is live.
+        # main broken, not a PR    -> red, as before.
+        shell: bash
+        env:
+          MAIN_OUTCOME: ${{ steps.reproduce-main.outcome }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          if [ "$MAIN_OUTCOME" = "success" ]; then
+            root="$GITHUB_WORKSPACE/domain-split/output/education-site"
+            echo "subject: main's own publication reproduced"
+          elif [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ -d "$GITHUB_WORKSPACE/_merge/domain-split/output/education-site" ]; then
+            root="$GITHUB_WORKSPACE/_merge/domain-split/output/education-site"
+            echo "subject: main's publication does NOT reproduce (outcome=$MAIN_OUTCOME); evaluating the merge ref (main + PR #$PR_NUMBER) instead"
+          else
+            echo "main's publication does not reproduce (outcome=$MAIN_OUTCOME) and there is no merge ref to evaluate"; exit 1
+          fi
+          echo "PUBLICATION_ROOT=$root" >> "$GITHUB_ENV"
           echo "PUBLICATION_KIND=education" >> "$GITHUB_ENV"
 
       - name: Record the SHA and derive the full-home route under test
