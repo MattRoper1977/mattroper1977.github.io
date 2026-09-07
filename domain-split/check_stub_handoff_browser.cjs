@@ -59,9 +59,10 @@ async function caseRun(name,{width=390,empty=false,drift=false,large=false,rejec
   assert.equal(state.legacy,destination,'Destination legacy campaign changed');
   assert.equal(state.unrelated,'preserve destination','Unrelated destination storage changed');
   assert(!state.hash.includes('mbm_import'),'Consumed fragment remained in address');assert(state.hash.includes('keep=one'));assert.equal(state.search,'?view=calm');
-  if(reject){assert.equal(state.memory.xp,9);assert.equal(state.records.length,0);}else{
+  if(reject){for(const field of Object.keys(seed))assert.deepEqual(state.memory[field],JSON.parse(destination)[field],'Rejected import changed memory: '+field);assert.equal(state.records.length,0);}else{
    assert.equal(state.records.length,1);const persisted=JSON.parse(state.records[0].save),expected=JSON.parse(source);
    for(const field of Object.keys(seed)){assert.deepEqual(state.memory[field],expected[field],'Imported memory differs: '+field);assert.deepEqual(persisted[field],expected[field],'Imported campaign differs: '+field);}
+   if(large){assert.equal(state.memory.extra,expected.extra,'Native file field lost from memory');assert.equal(persisted.extra,expected.extra,'Native file field lost from campaign');}
   }
   const old=await context.newPage();await old.goto(edu+route);assert.equal(await old.evaluate(key=>localStorage.getItem(key),key),source,'Source campaign changed during transfer');assert.equal(await old.evaluate(()=>localStorage.getItem('unrelated_hc3_synthetic')),'preserve','Unrelated source storage changed');
   assert.deepEqual(errors,[]);assert.deepEqual(unexpected,[]);
