@@ -42,9 +42,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          # Pinned reviewed companion source, 2026-09-06. The Lessons caller
-          # uses its own current commit, so subsequent lesson work stays live.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || 'ae2d534b095423716aa1adaecc36299ba1210b23' }}
+          # Pinned 2026-09-07: reviewed Science packs (Lessons #356) and fixture repair (#357).
+          # The Lessons caller uses its current commit so lesson work stays live.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '419d44f0dc4e41c041cbcf2e4ca171569c03a2ae' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -70,7 +70,7 @@ jobs:
           python .sources/Site/domain-split/verify_education_tree_has_no_games.py --output .sources/Site/domain-split/output
           python .sources/Site/domain-split/check_education_support.py
           node .sources/Site/domain-split/check_game_saves.cjs
-      - name: Prove executable admission before packaging any education tree
+      - name: Prove all-file admission before packaging any education tree
         run: |
           python .sources/Site/domain-split/check_education_publication_admission.py --output .sources/Site/domain-split/output --lessons .sources/Lessons --apps .sources/Apps --build-control
       - name: Save the reviewed education output
