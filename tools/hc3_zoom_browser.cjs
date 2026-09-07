@@ -20,6 +20,10 @@ const server = http.createServer((req, res) => {
 });
 async function pinch(page) {
   const session = await page.context().newCDPSession(page);
+  // hasTouch alone defaults CDP to one touch point; pinch needs a multi-touch device.
+  await session.send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:5});
+  const touchPoints=await page.evaluate(()=>navigator.maxTouchPoints);
+  assert(touchPoints>=2,'The emulated device cannot report two-finger input');
   const attempts = [];
   for (const [x,y] of [[195,90],[195,170],[60,60],[195,300]]) {
     const target = await page.evaluate(({x,y}) => {
@@ -41,7 +45,7 @@ async function pinch(page) {
     if (after > before * 1.5) break;
   }
   await session.detach();
-  return {passed:attempts.some(row => row.after > row.before * 1.5), attempts};
+  return {passed:attempts.some(row => row.after > row.before * 1.5),touchPoints,attempts};
 }
 async function control(browser) {
   const records=[];
