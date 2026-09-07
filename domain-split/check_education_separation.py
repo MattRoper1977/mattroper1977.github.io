@@ -67,6 +67,9 @@ class Refs(HTMLParser):
 
 
 TEACHING_PACK_ADDITIONS = HERE/'teaching-packs-download-usage-additions.json'
+# Pins the reviewed teaching-pack download rows above (296 rows over seven
+# Teaching_Packs prefixes), accepted 7 September 2026 (HC6 §11). Re-pin only
+# with a reviewed diff of that file.
 TEACHING_PACK_ADDITIONS_SHA256 = '6331c21a6315f5a5ab6bc945b6479ac1c07c9e3572248753c699f5e6ea6abc67'
 
 
