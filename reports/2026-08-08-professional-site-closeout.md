@@ -104,7 +104,7 @@ The permanent audit record is `docs/MBM_PROFESSIONAL_SITE_AUDIT_PASS.json`.
 - PR: #92 — `Professional UX, interaction and audience architecture upgrade`
 - Final head: `43086183556d4b7dbbd227c6e011259763a6289e`
 - PR audit run: `31229651053` — SUCCESS, attempt 1
-- Merged: 7 August 2026 at 23:23 UTC
+- Merged: 8 August 2026 at 00:16 UTC (GitHub `merged_at` 2026-08-08T00:16:00Z; corrected 2026-09-06 from an earlier provisional value)
 - Merge commit: `4291cc7ba706fd66f3b76f6d4eeb87eac88d8f0b`
 
 ### Production proof

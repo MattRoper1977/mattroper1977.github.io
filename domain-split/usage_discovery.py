@@ -328,7 +328,33 @@ def refresh_play(output, lessons, site_source):
         # Fail if an old blanket denial survives; do not silently contradict it.
         if re.search(r'adds no analytics',text,re.I):raise ValueError('Review changed Games analytics privacy anchor')
         text=replace_once(text,'</body>',privacy_explanation()+preferences()+'</body>');path.write_text(text);inject(path)
-    (target/'stats').mkdir(exist_ok=True);(target/'stats/index.html').write_text(shell('Shared usage statistics',popularity('play')+preferences(),'play'))
+    # HC4 §7.1: the legacy device-only counters page must work on whichever
+    # origin the pupil is on. Play gets its own copy of the same page with every
+    # path bound to the Play origin: asset base /stats/ (so ../styles.css and
+    # ../assets/mbm-features.js resolve to the copies the Play build carries),
+    # skip link, canonical and og:url on Play, and the header links pointing at
+    # Play routes rather than the education site.
+    legacy_source=site_source/'stats/index.html'
+    if legacy_source.is_file():
+        legacy=legacy_source.read_text();legacy=replace_once(legacy,'<head>','<head><base href="/stats/">')
+        legacy=replace_once(legacy,'<a class="skip" href="#main">','<a class="skip" href="/stats/on-this-device/#main">')
+        legacy=replace_once(legacy,'<link rel="canonical" href="https://madebymatt.uk/stats/">','<link rel="canonical" href="'+PLAY+'/stats/on-this-device/">')
+        legacy=replace_once(legacy,'<meta property="og:url" content="https://madebymatt.uk/stats/">','<meta property="og:url" content="'+PLAY+'/stats/on-this-device/">')
+        legacy=legacy.replace('<a href="/games/">Games</a>','<a href="/">Made by Matt Play</a>').replace('href="/main/#about"','href="'+EDUCATION+'/main/"')
+        # Education-only destinations do not exist on Play: bind them to the
+        # education origin instead of leaving dead relative paths.
+        for education_only in ['/main/','/tools/','/resources/','/members/','/Matt-s-Apps-/','/Lessons/','/for/pupils/','/account/']:
+            legacy=legacy.replace('href="'+education_only+'"','href="'+EDUCATION+education_only+'"')
+        legacy=replace_once(legacy,'<main id="main">','<main id="main"><p class="usage-note">Legacy device-only counts for this browser on Made by Matt Play. These are not shared site statistics. Time-zone estimates are not measured locations. <a href="/stats/">Open shared usage statistics</a>.</p>')
+        device=target/'stats/on-this-device/index.html';device.parent.mkdir(parents=True,exist_ok=True);device.write_text(legacy)
+        # The page's counter helper reads /site.json for its feature flags. Play
+        # carries a copy with every remote/shared counter and download door off,
+        # so the legacy counters stay device-only on this origin too.
+        play_config=read(site_source/'site.json')
+        play_config['features']['stats'].update({'enabled':False,'remote':False,'geo':False});play_config['features']['downloads']['enabled']=False
+        play_config['features']['downloads']['catalog']=[];play_config['features']['analytics']['goatcounter']=''
+        save(target/'site.json',play_config)
+    (target/'stats').mkdir(exist_ok=True);(target/'stats/index.html').write_text(shell('Shared usage statistics',popularity('play')+preferences()+'<p class="mbm-usage"><a href="/stats/on-this-device/">View legacy counts stored on this device</a></p>','play'))
     save(output/'usage-play-build-report.json',{'schema':1,'registered_games':len(rows),'collection_enabled':config(site_source,'play')['enabled'],'game_payloads_modified':0})
     return rows
 
@@ -346,6 +372,11 @@ def refresh(output, lessons, apps, site_source):
     old=site/'stats/index.html'
     if old.is_file():
         legacy=old.read_text();legacy=replace_once(legacy,'<head>','<head><base href="/stats/">')
+        # Keep the original asset base, but bind navigation/identity to the
+        # generated device page. A bare fragment otherwise leaves this page.
+        legacy=replace_once(legacy,'<a class="skip" href="#main">','<a class="skip" href="/stats/on-this-device/#main">')
+        legacy=replace_once(legacy,'<link rel="canonical" href="https://madebymatt.uk/stats/">','<link rel="canonical" href="https://madebymatt.uk/stats/on-this-device/">')
+        legacy=replace_once(legacy,'<meta property="og:url" content="https://madebymatt.uk/stats/">','<meta property="og:url" content="https://madebymatt.uk/stats/on-this-device/">')
         legacy=legacy.replace('<a href="/games/">Games</a>', '<a href="'+PLAY+'/">Made by Matt Play</a>').replace('Interactive lessons, simulations and games', 'Lessons, learning resources and teaching tools').replace('Opens & plays here', 'Learning resources opened here')
         legacy=legacy.replace('Countries seen here','Time-zone country estimates here').replace('Country activity on this device','Legacy time-zone estimates on this device')
         legacy=replace_once(legacy,'<main id="main">','<main id="main"><p class="usage-note">Legacy device-only counts. These are not shared site statistics. Time-zone estimates are not measured locations. <a href="/stats/">Open shared usage statistics</a>.</p>')

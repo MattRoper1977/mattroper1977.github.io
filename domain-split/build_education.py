@@ -152,8 +152,10 @@ def with_lesson_navigation(text, relative=None):
     return text[:position]+extra+script+text[position:]
 
 def moved_page(route):
-    # HC3 §2.4: a stub is ≤2 KB of text, noindex, canonical → the play URL, one
-    # "Open the game" link and nothing else. No game code, no third-party bytes.
+    # HC3 §2.4 / HC4 §7.4: a stub is ≤2 KB of text, noindex, canonical → the play
+    # URL, ONE link (the play destination) and nothing else. The former save-transfer
+    # and back links are gone: the stub's only job is the handoff to Play, and the
+    # bulk /game-saves/ pages stay reachable from the pupil hub, not from here.
     from html import escape
     destination = PLAY + LEGACY.get(route, route)
     return ('<!doctype html><html lang="en-GB"><head><meta charset="utf-8">'
@@ -163,11 +165,7 @@ def moved_page(route):
             '<style>body{font:1.1rem/1.65 system-ui;max-width:42rem;margin:4rem auto;padding:0 1.25rem;color:#161d3d}a{color:#174e45}li{margin:1rem 0}a:focus-visible{outline:3px solid #e39129;outline-offset:4px}</style>'
             '</head><body data-game-moved><main><h1>This game has moved</h1>'
             '<p>Made by Matt games now have their own website.</p>'
-            '<p>If you have played here before, move your saves using this same browser and device.</p>'
-            '<ol><li><a href="/game-saves/">Download your existing game saves</a>.</li>'
-            '<li><a href="'+PLAY+'/game-saves/">Import them on the games website</a>.</li></ol>'
-            '<p><a id="play-game" href="'+escape(destination, quote=True)+'">Open the game</a></p>'
-            '<p><a href="/for/pupils/">Back to pupil learning</a></p></main>'
+            '<p><a id="play-game" href="'+escape(destination, quote=True)+'">Open the game</a></p></main>'
             '<script>const a=document.getElementById("play-game");const u=new URL(a.href);u.search=location.search;u.hash=location.hash;a.href=u.href;</script>'
             '</body></html>')
 
@@ -234,7 +232,11 @@ def build(output, lessons, apps=None, allow_sparse=False):
             if (name=='site' and relative.split('/')[0] in game_dirs) or (name=='lessons' and relative.startswith('Games/')) or is_game(route):
                 if p.suffix=='.html':
                     target=route.removesuffix('index.html')
-                    write(dest,relative,moved_page(target));migrated.append(relative)
+                    from stub_handoff import ROUTE, decorate
+                    stub = moved_page(target)
+                    if target == ROUTE:
+                        stub = decorate(target, stub)
+                    write(dest,relative,stub);migrated.append(relative)
                 continue
             if relative in REVIEWED_ARCHIVE_DOCUMENTS:
                 assert name == 'lessons' and hashlib.sha256(p.read_bytes()).hexdigest() == REVIEWED_ARCHIVE_DOCUMENTS[relative], 'Historical guidance changed; review before publication: '+relative
@@ -260,6 +262,9 @@ def build(output, lessons, apps=None, allow_sparse=False):
                 if updated != text:
                     write(dest,relative,updated);changed.append(relative)
         if name=='site':
+            # Released receiver proof is recorded in the HC3 handoff plan.
+            # Only the reviewed Glitch stub uses this same-origin sender.
+            shutil.copyfile(HERE/'stub-handoff.js', dest/'stub-handoff.js')
             for relative, route in {'next/index.html':'/', 'next/teachers.html':'/for/teachers/', 'next/pupils.html':'/for/pupils/', 'next/apps.html':'/Matt-s-Apps-/', 'next/lessons.html':'/Lessons/', 'next/resources.html':'/resources/', 'next/tools.html':'/tools/'}.items():
                 if (dest/relative).exists():
                     write(dest,relative,'<!doctype html><html lang="en-GB"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Continue to Made by Matt Education</title><main><h1>Continue to Made by Matt Education</h1><p>This earlier design preview has been replaced by the published learning website.</p><p><a href="'+route+'">Open the current learning page</a></p></main></html>')
@@ -315,6 +320,8 @@ def build(output, lessons, apps=None, allow_sparse=False):
             except (ValueError, UnicodeError): continue
             filtered = filter_data(data, is_game, prefix)
             if filtered != data: path.write_text(json.dumps(filtered, ensure_ascii=False, indent=2)+'\n')
+    from education_publication_admission import verify as verify_admission
+    report['executable_admission'] = verify_admission(output)
     report['education_policy'] = {'recreational_output': 'excluded', 'source_files_removed': 0,
                                   'play_payloads_modified': 0, 'final_catalogue_filter': True}
     for item in report['publications'].values():

@@ -65,6 +65,7 @@ jobs:
           mkdir -p artifacts/maker-splash
           python3 -m py_compile tools/render_maker_splash.py
           node --check tools/verify_maker_splash.mjs
+          node tools/check_maker_probe_readiness.cjs
           python3 -m json.tool data/hud-coverage.json >/dev/null
           python3 tools/render_maker_splash.py --root . --check | tee artifacts/maker-splash/generator-check.log
           before=$(git status --porcelain)

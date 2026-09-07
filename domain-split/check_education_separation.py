@@ -72,7 +72,7 @@ def registry_errors(output):
     # historical events, counters, configuration or backend data are replayed.
     baseline_sha = '9fafffbe3b08c43ec10fa17c410bd54719cc90edffc0db46fdda0c8edbf0f0d4'
     additions_path = HERE/'science-download-usage-additions.json'
-    if sha256(additions_path.read_bytes()).hexdigest() != '32742423b04a5f477f8f97a2a087845c60a45f0d71c2a73caa5cb9f1bf9c9762':
+    if sha256(additions_path.read_bytes()).hexdigest() != '266199e1f6d355956b23df058b3d867b50edc2f155545b0b43fb2d6f8177df30':
         return ['Unreviewed Science download registration metadata']
     approved = json.loads(additions_path.read_text())
     rows = json.loads((output/'usage-registry.json').read_text())
@@ -146,7 +146,9 @@ def check(output):
                 if moved:
                     counts['migrations']+=1
                     if parser.engines or len(text.encode())>10000: fail(route,'Migration contains engine/media or excessive payload')
-                    if '/game-saves/' not in text: fail(route,'Save-transfer guidance missing')
+                    # HC4 §7.4: a stub carries exactly one link, the play destination.
+                    anchors=[value for tag,attr,value in parser.refs if tag=='a' and attr=='href']
+                    if len(anchors)!=1: fail(route,'Stub carries '+str(len(anchors))+' links; exactly one is allowed')
                     destinations=[value for tag,attr,value in parser.refs if tag=='a' and attr=='href' and 'madebymatt-play.uk' in value]
                     if not destinations or any(not value.startswith(PLAY+'/') for value in destinations): fail(route,'Migration must use canonical HTTPS Play')
                     expected=PLAY+ALIASES.get(route.removesuffix('index.html'),route.removesuffix('index.html'))

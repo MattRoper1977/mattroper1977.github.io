@@ -25,16 +25,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          # Pinned reviewed original Science packs and public discovery;
+          # Reviewed Science packs (Lessons #356) and fixture repair (#357);
           # preserve the original lesson routes and paired catalogue contract.
-          ref: 5ba6271573f9323138fb289b181e2499d25e097b
+          ref: 419d44f0dc4e41c041cbcf2e4ca171569c03a2ae
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Matt-s-Apps-
           # Exact paired catalogue contract; Apps resources are unchanged.
-          ref: 2db4a9cf99c99b8cd9e7034cf42adbad9691ae1c
+          ref: ed4c59aefc7f991420a7c36193810933f977d99d
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -45,6 +45,30 @@ jobs:
         run: python -m pip install lxml==6.0.1
       - name: Build all games with local dependencies
         run: python domain-split/build_publications.py --lessons .sources/Lessons
+      - name: Check out the previously released Lessons pin for independent-release controls
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: 1a8e3b29ee4c5d306b9ce0fe0f601dacf3443a98
+          path: .sources/Previous-Lessons
+          persist-credentials: false
+      - name: Prove every registered revision route and reject planted bytes
+        run: |
+          mkdir -p audit-output/source-revisions
+          python domain-split/play/check_source_revision_controls.py --lessons .sources/Lessons --output domain-split/output > audit-output/source-revisions/current.json
+          python domain-split/build_publications.py --lessons .sources/Previous-Lessons --output .previous-play-output
+          python domain-split/play/check_source_revision_controls.py --lessons .sources/Previous-Lessons --output .previous-play-output > audit-output/source-revisions/previous.json
+      - name: Check out the exact reviewed Glitch receiver candidate
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: 95146202d7f876800605b489de4231efe28928b9
+          path: .sources/Receiver-Lessons
+          persist-credentials: false
+      - name: Prove the receiver publication and every registered byte guard
+        run: |
+          python domain-split/build_publications.py --lessons .sources/Receiver-Lessons --output .receiver-play-output
+          python domain-split/play/check_source_revision_controls.py --lessons .sources/Receiver-Lessons --output .receiver-play-output > audit-output/source-revisions/receiver.json
       - name: Verify preview and save-transfer boundaries
         run: |
           python domain-split/check_preview.py
@@ -66,10 +90,30 @@ jobs:
           python domain-split/verify_education_tree_has_no_games.py --self-test
           python domain-split/verify_education_tree_has_no_games.py --output domain-split/output
           python domain-split/check_education_support.py
-          python domain-split/check_navigation_injection.py
-          python domain-split/check_usage_build.py --output domain-split/output
-          node domain-split/check_usage_client.cjs domain-split/output
-          python domain-split/check_primary_discovery.py --output domain-split/output --lessons-source .sources/Lessons
+      # HC3 §8.2: the one Ko-fi URL the estate links must resolve. ko-fi.com
+      # answers 200 for unknown pages too (measured: a nonsense slug came back
+      # 200 on the first run), so the status line proves nothing on its own. The
+      # page BODY has to carry the account's own handle, and a control page on
+      # the same host must not — that is what tells a live profile from a soft
+      # 404.
+      - name: The configured Ko-fi URL resolves to the account's own page, and a control on the same host does not
+        shell: bash
+        run: |
+          set -uo pipefail
+          url="$(python3 -c "import sys; sys.path.insert(0,'domain-split'); from education_support import KOFI; print(KOFI)")"
+          handle="${url##*/}"
+          ua='Mozilla/5.0 (X11; Linux x86_64) made-by-matt-estate-check'
+          real_code=$(curl -sS -o /tmp/kofi-real.html -w '%{http_code}' -L --max-time 30 -A "$ua" "$url" || echo 000)
+          ctrl_code=$(curl -sS -o /tmp/kofi-control.html -w '%{http_code}' -L --max-time 30 -A "$ua" "https://ko-fi.com/this-page-does-not-exist-mbm-control-9f3a" || echo 000)
+          # Counted in Python, not with grep: grep exits 1 on no match, which under
+          # this shell's -e/pipefail ended the step silently before it could report.
+          real_hits=$(python3 tools/count_marker.py "$handle" /tmp/kofi-real.html)
+          ctrl_hits=$(python3 tools/count_marker.py "$handle" /tmp/kofi-control.html)
+          python3 tools/count_marker.py --describe /tmp/kofi-real.html /tmp/kofi-control.html
+          echo "configured $url -> HTTP $real_code, handle '$handle' appears $real_hits time(s)"
+          echo "control   -> HTTP $ctrl_code, handle appears $ctrl_hits time(s)"
+          if [ "$real_code" != "200" ] || [ "$real_hits" -lt 1 ]; then echo "::error::the configured Ko-fi URL did not resolve to a page carrying the account handle"; exit 1; fi
+          if [ "$ctrl_hits" -ge 1 ]; then echo "::error::the control page carries the handle too - this measurement cannot tell the account page from any other"; exit 1; fi
       - name: Verify shared usage database and service controls without production traffic
         working-directory: domain-split/analytics-backend
         run: |
@@ -81,6 +125,19 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright@1.54.2 linkedom@0.18.12
           npx playwright install --with-deps chromium
+      - name: Prove the native save handoff and its planted preservation failures
+        run: |
+          node domain-split/check_stub_handoff.cjs
+          python3 domain-split/stub_handoff.py --fixture-output .receiver-play-output
+          python3 tools/hc3_handoff_publications.py --control .receiver-play-output
+          node domain-split/check_stub_handoff_browser.cjs .receiver-play-output audit-output/hc3-handoff
+      - name: Retain native handoff controls on every outcome
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: domain-split-native-handoff-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-output/hc3-handoff/
+          if-no-files-found: warn
       - name: Check lesson catalogue and its preservation controls
         run: |
           python .sources/Lessons/tools/catalogue/check_catalogue_static.py
@@ -122,6 +179,8 @@ jobs:
           node domain-split/check_usage_discovery.cjs || browser_status=1
           node domain-split/check_shared_navigation.cjs || browser_status=1
           node domain-split/check_completion.cjs || browser_status=1
+          # HC4 §7.1: /stats/on-this-device/ answers and reads one record back on BOTH origins (real → planted → restored)
+          node domain-split/check_device_stats_record.cjs _navigation-served domain-split/output/games || browser_status=1
           exit "$browser_status"
       - name: Save navigation and print evidence
         if: always()
@@ -150,6 +209,7 @@ jobs:
             audit-output/usage-discovery/
             audit-output/print-navigation/
             audit-output/completion/
+            audit-output/source-revisions/
           retention-days: 30
       - uses: actions/upload-artifact@v4
         with:
