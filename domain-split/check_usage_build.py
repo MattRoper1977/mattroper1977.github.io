@@ -4,12 +4,41 @@ from hashlib import sha256
 from html.parser import HTMLParser
 import json
 from pathlib import Path
+from urllib.parse import urljoin
 import usage_discovery as usage
 
 class Scripts(HTMLParser):
     def __init__(self):super().__init__();self.sources=[]
     def handle_starttag(self,tag,attrs):
         if tag=='script':self.sources.append(dict(attrs).get('src',''))
+
+class DeviceIdentity(HTMLParser):
+    def __init__(self):super().__init__();self.base=[];self.canonical=[];self.og=[];self.skip=[]
+    def handle_starttag(self,tag,attrs):
+        attrs=dict(attrs)
+        if tag=='base':self.base.append(attrs.get('href'))
+        if tag=='link' and attrs.get('rel')=='canonical':self.canonical.append(attrs.get('href'))
+        if tag=='meta' and attrs.get('property')=='og:url':self.og.append(attrs.get('content'))
+        if tag=='a' and 'skip' in attrs.get('class','').split():self.skip.append(attrs.get('href'))
+
+def device_identity(text):
+    page='https://madebymatt.uk/stats/on-this-device/'
+    parsed=DeviceIdentity();parsed.feed(text)
+    assert parsed.base==['/stats/'],'Original statistics assets keep their working base'
+    assert parsed.canonical==[page] and parsed.og==[page],'Device page identity stays on its own route'
+    assert len(parsed.skip)==1 and urljoin(urljoin(page,parsed.base[0]),parsed.skip[0])==page+'#main','Device skip fragment stays on its own page'
+
+def device_identity_controls(text):
+    device_identity(text)
+    for real,wrong in [('href="/stats/on-this-device/#main"','href="#main"'),
+                       ('rel="canonical" href="https://madebymatt.uk/stats/on-this-device/"','rel="canonical" href="https://madebymatt.uk/stats/"'),
+                       ('property="og:url" content="https://madebymatt.uk/stats/on-this-device/"','property="og:url" content="https://madebymatt.uk/stats/"')]:
+        assert text.count(real)==1,'One planted identity defect'
+        scratch=text.replace(real,wrong,1)
+        try:device_identity(scratch)
+        except AssertionError:pass
+        else:raise AssertionError('Planted device identity defect did not fire')
+        device_identity(scratch.replace(wrong,real,1))
 
 def check(output, baseline=None):
     rows=usage.read(output/'usage-registry.json');seen=set();counts={'lessons':0,'downloads':0,'games':0};checked=0
@@ -35,7 +64,7 @@ def check(output, baseline=None):
     if baseline: assert (output/'usage-registry.json').read_bytes()==(baseline/'usage-registry.json').read_bytes(), 'Installed combined registry changed; review before any backend action'
     account=(output/'education-site/assets/mbm-account.js').read_text();assert account.count('    readUsageDashboard: readUsageDashboard,')==1
     assert "sb.functions.invoke('owner-usage?source=' + source, { method: 'GET' })" in account
-    assert (output/'education-site/stats/on-this-device/index.html').is_file()
+    device_identity_controls((output/'education-site/stats/on-this-device/index.html').read_text())
     owner=(output/'education-site/owner/stats/index.html').read_text();assert 'data-owner-content hidden' in owner and 'data-owner-load disabled' in owner
     # A nested printable document inside JavaScript must remain untouched.
     html='<html><head><script>const printPage="<html><head></head><body></body></html>";</script></head><body></body></html>'
