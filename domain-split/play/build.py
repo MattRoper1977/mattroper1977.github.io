@@ -47,7 +47,13 @@ def refresh(output, review=False, source_revisions=None):
         lessons = site/'.sources/Lessons' if (site/'.sources/Lessons').is_dir() else site.parent/'Lessons'
         source_revisions = validate_report(json.loads((Path(output)/'build-report.json').read_text()), output, {'Site':site,'Lessons':lessons})
     media = read('media/manifest.json', {'clips':[]})
-    clips = {key(x['route']): x for x in media.get('clips', []) if x.get('status') == 'accepted'}
+    # A route may carry more than one accepted capture when its payload has been revised: each
+    # clip binds to the exact bytes it was recorded from (published_sha256), and the clip whose
+    # hash equals the payload actually built is the one this build may show. A build whose
+    # payload matches none of a route's clips is still refused below (recapture/review required).
+    clips_by_route = {}
+    for x in media.get('clips', []):
+        if x.get('status') == 'accepted': clips_by_route.setdefault(key(x['route']), []).append(x)
     rows = []
     labels = {'games':'Catalogue game','activities':'Classroom activity','staff':'Staff activity'}
     for group in labels:
@@ -77,7 +83,11 @@ def refresh(output, review=False, source_revisions=None):
                    'controls':extra.get('controls', []), 'modes':extra.get('modes', []),
                    'instructions':extra.get('instructions', 'Open the game and follow its own instructions. Controls and device support have not yet been independently verified.'),
                    'evidence':[{'scope':'source-inspected'}] if extra.get('evidence') else [], 'updated':extra.get('updated'),
-                   'media':clips.get(key(path), {})}
+                   'media':{}}
+            candidates = clips_by_route.get(key(path), [])
+            if candidates:
+                built = hashlib.sha256(payload.read_bytes()).hexdigest()
+                row['media'] = next((c for c in candidates if c['published_sha256'] == built), candidates[-1])
             rows.append(row)
     assert len(rows) == len({key(r['route']) for r in rows}) == 69
     assert len({r['id'] for r in rows}) == len(rows)
@@ -96,7 +106,7 @@ def refresh(output, review=False, source_revisions=None):
     assets.mkdir(parents=True, exist_ok=True)
     for name in ['play.css','play.js']:
         shutil.copyfile(HERE/name, assets/name)
-    for clip in clips.values():
+    for clip in [r['media'] for r in rows if r['media']]:
         for field in ['video','poster']:
             name = Path(clip[field]).name
             assert clip[field] == '/assets/play/media/'+name
@@ -117,7 +127,7 @@ def refresh(output, review=False, source_revisions=None):
     updates = '' if not recent else '<section class="updates" aria-labelledby="updates-title"><h2 id="updates-title">Recently updated</h2><div class="update-grid">'+''.join('<article><time datetime="'+esc(r['updated']['date'])+'">'+esc(r['updated']['date'])+'</time><h3><a data-play="'+esc(r['id'])+'" href="'+esc(r['route'])+'">'+esc(r['title'])+'</a></h3><p>'+esc(r['updated']['description'])+'</p></article>' for r in recent)+'</div></section>'
     # Use the exact supplied mark approved by the user, with a checked file hash.
     brand = read('brand.json', {})
-    if not review and (brand.get('status') not in {'verified-original', 'user-approved'} or len(clips) != 6):
+    if not review and (brand.get('status') not in {'verified-original', 'user-approved'} or len(clips_by_route) != 6):
         raise ValueError('Play release held: verified approved logo and six accepted fresh clips are required. Use the isolated review entrypoint for unfinished work.')
     logo = ''
     if brand.get('status') in {'verified-original', 'user-approved'}:
@@ -137,7 +147,7 @@ def refresh(output, review=False, source_revisions=None):
         p=target/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(template)
     assert (target/'data/domain-catalogue.json').read_bytes() == original
     report={'counts':counts,'total':len(rows),'catalogue_sha256':hashlib.sha256(original).hexdigest(),
-            'brand_status':brand.get('status','original-asset-unresolved'), 'accepted_clips':len(clips),
+            'brand_status':brand.get('status','original-asset-unresolved'), 'accepted_clips':len(clips_by_route),
             'changed_game_payloads':0,'canonical_origin':ORIGIN,'shared_runtime_changed':False}
     (Path(output)/'play-discovery-report.json').write_text(json.dumps(report,indent=2)+'\n')
     return report
