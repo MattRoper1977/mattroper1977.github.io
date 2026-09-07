@@ -95,7 +95,7 @@ def build_control(lessons, apps):
         source = Path(temp)/'site';out = Path(temp)/'publication'
         subprocess.run(['git', 'clone', '--quiet', '--shared', str(HERE.parent), str(source)], check=True)
         # Local controls may run before these candidate files are committed.
-        for relative in ['build_education.py', 'education_publication_admission.py', 'education-publication-admission.json']:
+        for relative in ['build_education.py', 'education_publication_admission.py', 'education-publication-admission.json', 'stub_handoff.py', 'stub-handoff.js']:
             shutil.copyfile(HERE/relative, source/'domain-split'/relative)
         subprocess.run([sys.executable, str(source/'domain-split/build_publications.py'), '--lessons', str(lessons), '--output', str(out)], check=True, stdout=subprocess.DEVNULL)
         command = [sys.executable, str(source/'domain-split/build_education.py'), '--lessons', str(lessons), '--apps', str(apps), '--output', str(out)]

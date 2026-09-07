@@ -234,7 +234,11 @@ def build(output, lessons, apps=None, allow_sparse=False):
             if (name=='site' and relative.split('/')[0] in game_dirs) or (name=='lessons' and relative.startswith('Games/')) or is_game(route):
                 if p.suffix=='.html':
                     target=route.removesuffix('index.html')
-                    write(dest,relative,moved_page(target));migrated.append(relative)
+                    from stub_handoff import ROUTE, decorate
+                    stub = moved_page(target)
+                    if target == ROUTE:
+                        stub = decorate(target, stub)
+                    write(dest,relative,stub);migrated.append(relative)
                 continue
             if relative in REVIEWED_ARCHIVE_DOCUMENTS:
                 assert name == 'lessons' and hashlib.sha256(p.read_bytes()).hexdigest() == REVIEWED_ARCHIVE_DOCUMENTS[relative], 'Historical guidance changed; review before publication: '+relative
@@ -260,6 +264,9 @@ def build(output, lessons, apps=None, allow_sparse=False):
                 if updated != text:
                     write(dest,relative,updated);changed.append(relative)
         if name=='site':
+            # Released receiver proof is recorded in the HC3 handoff plan.
+            # Only the reviewed Glitch stub uses this same-origin sender.
+            shutil.copyfile(HERE/'stub-handoff.js', dest/'stub-handoff.js')
             for relative, route in {'next/index.html':'/', 'next/teachers.html':'/for/teachers/', 'next/pupils.html':'/for/pupils/', 'next/apps.html':'/Matt-s-Apps-/', 'next/lessons.html':'/Lessons/', 'next/resources.html':'/resources/', 'next/tools.html':'/tools/'}.items():
                 if (dest/relative).exists():
                     write(dest,relative,'<!doctype html><html lang="en-GB"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Continue to Made by Matt Education</title><main><h1>Continue to Made by Matt Education</h1><p>This earlier design preview has been replaced by the published learning website.</p><p><a href="'+route+'">Open the current learning page</a></p></main></html>')

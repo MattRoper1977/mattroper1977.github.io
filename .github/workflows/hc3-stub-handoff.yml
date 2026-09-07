@@ -1,4 +1,4 @@
-name: HC3 inactive old-origin handoff candidate
+name: HC3 old-origin save handoff
 on:
   pull_request:
     paths: ['domain-split/stub-handoff.js', 'domain-split/stub_handoff.py', 'domain-split/check_stub_handoff*', 'domain-split/check_glitch_live.cjs', 'tools/hc3_native_publication.py', 'tools/hc3_handoff_publications.py', '.github/workflows/hc3-stub-handoff.yml']
@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          # Pinned 2026-09-07: exact reviewed native receiver for inactive fixture evidence.
+          # Pinned 2026-09-07: exact reviewed native receiver for isolated fixture evidence.
           ref: 95146202d7f876800605b489de4231efe28928b9
           path: .sources/Receiver-Lessons
           persist-credentials: false
@@ -37,7 +37,7 @@ jobs:
           python3 -m pip install lxml==6.0.1
       - name: Prove the actual narrow sender planner
         run: node domain-split/check_stub_handoff.cjs
-      - name: Assemble the inactive fixture from the exact reviewed receiver publication
+      - name: Assemble the isolated fixture from the exact reviewed receiver publication
         run: |
           python3 domain-split/build_publications.py --lessons .sources/Receiver-Lessons --output .handoff-fixture
           python3 domain-split/stub_handoff.py --fixture-output .handoff-fixture

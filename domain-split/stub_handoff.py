@@ -1,7 +1,6 @@
-"""Inactive sender assembly, shared by fixture and later authorised publisher.
+"""Reviewed Glitch sender assembly shared by publication and browser fixtures.
 
-This module does not enable any deployed sender. Its publisher integration must
-wait for the source-bound live receiver release recorded in the release plan.
+The source-bound live receiver prerequisite is recorded in the release plan.
 """
 from pathlib import Path
 import re
@@ -25,7 +24,7 @@ def decorate(route, html):
 
 
 def fixture(output):
-    # Deliberately inactive: this is not called by build_education.py yet.
+    # Build an isolated copy of the same reviewed publication bytes.
     from build_education import moved_page
     output = Path(output)
     path = output/'education-lessons/Games/Glitch_Clash.html'
@@ -42,4 +41,4 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--fixture-output', required=True, type=Path)
     args = parser.parse_args()
-    print('INACTIVE CANDIDATE FIXTURE:', fixture(args.fixture_output))
+    print('ISOLATED HANDOFF FIXTURE:', fixture(args.fixture_output))
