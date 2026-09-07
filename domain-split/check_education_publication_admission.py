@@ -65,13 +65,13 @@ def controls(output):
         original = (scratch/'education-apps'/master).read_bytes()
         assert b'application/octet-stream' in original
         mutation('embedded non-JavaScript payload identity', 'education-apps', master, original.replace(b'application/octet-stream', b'application/octet-stream;planted', 1))
-        # Pack data is still governed by its own integrity/visual checks. This
-        # gate must not reinterpret a native PPTX byte change as browser code.
-        pack = scratch/'education-lessons'/'hc3-native-pack.pptx'
-        pack.write_bytes(b'Native-pack scratch control; never published')
-        verify(scratch)
-        pack.unlink()
-        cases.append({'name': 'native pack binary remains under its own gates', 'status': 'PASS'})
+        for name in TREES:
+            for extension in ['png', 'pdf', 'pptx', 'zip', 'mp3', 'woff2']:
+                mutation('disguised code cannot enter as '+extension, name,
+                         'hc3-disguised.'+extension, b'requestAnimationFrame(function loop(){score++;requestAnimationFrame(loop)});')
+        native = next(p for p in registry['trees']['education-lessons'] if p.endswith('.pptx'))
+        mutation('changed admitted native pack bytes', 'education-lessons', native,
+                 (scratch/'education-lessons'/native).read_bytes()+b'planted bytes')
         verify(scratch)
     # Registry input is itself fail-closed, including duplicate JSON keys and
     # path escape. It cannot silently override an earlier review row.
@@ -85,7 +85,7 @@ def controls(output):
                 pass
             else:
                 raise AssertionError('Malformed registry passed')
-    return {'status': 'PASS', 'scope': 'Exact executable/data admission, not a new semantic classification of every historical lesson', 'real': real, 'cases': cases}
+    return {'status': 'PASS', 'scope': 'Exact all-file admission, not a new semantic classification of every historical lesson', 'real': real, 'cases': cases}
 
 
 def build_control(lessons, apps):

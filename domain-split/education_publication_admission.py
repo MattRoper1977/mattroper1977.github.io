@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail closed on unreviewed executable/data output; preserve semantic gates."""
+"""Fail closed on every unreviewed publication file; preserve semantic gates."""
 from __future__ import annotations
 import argparse
 import hashlib
@@ -11,7 +11,7 @@ HERE = Path(__file__).resolve().parent
 REGISTRY = HERE / 'education-publication-admission.json'
 TREES = ('education-site', 'education-lessons', 'education-apps')
 # Data/CSS are included because an already admitted script can consume them.
-# Native teaching-pack binaries and inert media retain their existing gates.
+# Native teaching-pack binaries and media retain their existing gates AND exact admission.
 REVIEWED = {'.html', '.htm', '.js', '.mjs', '.wasm', '.svg', '.json', '.webmanifest',
             '.css', '.xml', '.txt', '.bin', '.map', '.md', '.csv'}
 INERT = {'.png', '.jpg', '.jpeg', '.webp', '.gif', '.ico', '.woff', '.woff2', '.ttf',
@@ -46,10 +46,11 @@ def census(tree):
         relative = file.relative_to(tree).as_posix()
         valid_path(relative)
         suffix = file.suffix.lower()
-        if suffix in REVIEWED or file.name in SPECIAL:
-            result[relative] = hashlib.sha256(file.read_bytes()).hexdigest()
-        elif suffix not in INERT:
+        if suffix not in REVIEWED | INERT and file.name not in SPECIAL:
             raise ValueError('Unclassified publication file: '+str(file))
+        # A suffix is not a safety boundary: scripts or data can be disguised
+        # as media/native files. Every emitted path and byte needs approval.
+        result[relative] = hashlib.sha256(file.read_bytes()).hexdigest()
     if not any(Path(p).suffix.lower() in {'.html', '.htm'} for p in result):
         raise ValueError('No HTML routes in publication: '+str(tree))
     return result
@@ -81,7 +82,7 @@ def verify_tree(tree, name, registry):
         elif expected[path] != actual[path]:
             problems.append('CHANGED '+name+'/'+path)
     if problems:
-        raise ValueError('Education executable admission blocked publication:\n'+'\n'.join(problems))
+        raise ValueError('Education file admission blocked publication:\n'+'\n'.join(problems))
     return {'tree': name, 'reviewedFiles': len(actual),
             'htmlRoutes': sum(Path(p).suffix.lower() in {'.html', '.htm'} for p in actual)}
 
@@ -96,7 +97,7 @@ def propose(output, destination, source_notes):
     if destination.resolve() == REGISTRY.resolve():
         raise ValueError('Write a separate proposal; the committed registry requires a reviewed diff')
     proposal = {'schemaVersion': 1,
-                'scope': 'Exact executable and supporting-data admission; semantic route classification remains a separate gate',
+                'scope': 'Exact all-file publication admission; semantic route classification remains a separate gate',
                 'reviewSources': source_notes,
                 'trees': {name: census(output/name) for name in TREES}}
     destination.parent.mkdir(parents=True, exist_ok=True)
