@@ -37,6 +37,7 @@ jobs:
         run: |
           python3 -m py_compile tools/verify_professional_site_live.py tools/prepare_published_site.py
           python3 tools/test_published_site.py
+          python3 tools/verify_deployment_provenance.py --self-test
 
       # theme.js is the canonical reading-theme engine for the whole estate, and
       # the homepage carries its own separate implementation of it. Scoped to
