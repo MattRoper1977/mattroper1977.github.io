@@ -38,6 +38,8 @@ def decode_evidence(data):
     require(data.get('schema') == 1, 'Unsupported byte-evidence envelope')
     run, job, artifact = data['run'], data['job'], data['artifact']
     require(artifact.get('name') == 'serve-proof' and artifact.get('expired') is False, 'Wrong or expired byte-proof artifact')
+    require(run.get('repository', {}).get('full_name', '').lower() == 'mattroper1977/lessons' and run.get('event') in {'push','workflow_dispatch'}, 'Wrong byte-proof repository or event')
+    require(artifact['workflow_run']['repository_id'] == run['repository']['id'], 'Artifact belongs to another repository')
     require(run['status'] == 'completed' and run['conclusion'] == 'success' and run['head_branch'] == 'main', 'Byte-proof run is not successful main evidence')
     require(run['path'].split('@')[0].endswith('/fieldops-p2-and-sweep.yml'), 'Unexpected byte-proof workflow')
     require(job['name'] == JOB and job['run_id'] == run['id'] and job['run_attempt'] == run['run_attempt'] and job['head_sha'] == run['head_sha'] and job['status'] == 'completed' and job['conclusion'] == 'success', 'Byte-proof job or attempt mismatch')

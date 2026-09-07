@@ -184,6 +184,8 @@ def self_test(snapshot, witness=None, envelope=None):
         assert not publication_proved(kind, real, bad)[0], 'Planted witness accepted: '+name
         assert publication_proved(kind, real, witness)[0]
     for name, plant in [
+        ('wrong proof repository', lambda e: e['run']['repository'].update({'full_name': 'another/repository'})),
+        ('wrong proof event', lambda e: e['run'].update({'event': 'pull_request'})),
         ('wrong artifact name', lambda e: e['artifact'].update({'name': 'another-report'})),
         ('expired artifact', lambda e: e['artifact'].update({'expired': True})),
         ('archive corruption', lambda e: e.update({'archive_base64': 'AAAA'+e['archive_base64'][4:]})),
