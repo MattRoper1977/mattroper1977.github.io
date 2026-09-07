@@ -146,7 +146,9 @@ def check(output):
                 if moved:
                     counts['migrations']+=1
                     if parser.engines or len(text.encode())>10000: fail(route,'Migration contains engine/media or excessive payload')
-                    if '/game-saves/' not in text: fail(route,'Save-transfer guidance missing')
+                    # HC4 §7.4: a stub carries exactly one link, the play destination.
+                    anchors=[value for tag,attr,value in parser.refs if tag=='a' and attr=='href']
+                    if len(anchors)!=1: fail(route,'Stub carries '+str(len(anchors))+' links; exactly one is allowed')
                     destinations=[value for tag,attr,value in parser.refs if tag=='a' and attr=='href' and 'madebymatt-play.uk' in value]
                     if not destinations or any(not value.startswith(PLAY+'/') for value in destinations): fail(route,'Migration must use canonical HTTPS Play')
                     expected=PLAY+ALIASES.get(route.removesuffix('index.html'),route.removesuffix('index.html'))
