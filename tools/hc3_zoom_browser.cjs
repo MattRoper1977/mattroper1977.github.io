@@ -16,7 +16,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 let blocked = false;
 const server = http.createServer((req, res) => {
   res.writeHead(200, {'content-type': 'text/html'});
-  res.end('<!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1'+(blocked?',maximum-scale=1,user-scalable=no':'')+'"><style>html,body{min-height:100%;'+(blocked?'touch-action:none':'touch-action:manipulation')+'}button{padding:20px}</style><body><h1>Pinch control</h1><button>Control</button></body></html>');
+  res.end('<!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1'+(blocked?',maximum-scale=1,user-scalable=no':'')+'"><style>html,body{min-height:200vh;'+(blocked?'touch-action:none':'touch-action:manipulation')+'}button{padding:20px}</style><body><h1>Pinch control</h1><button>Control</button></body></html>');
 });
 async function pinch(page) {
   const session = await page.context().newCDPSession(page);
@@ -43,9 +43,13 @@ async function control(browser) {
     const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:1});
     const page=await ctx.newPage();
     await page.goto('http://127.0.0.1:'+server.address().port+'/');
+    await delay(800);
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     const result=await pinch(page);
-    assert.equal(result.passed,!state,'Pinch firing control failed');
     records.push({plantedBlock:state,...result});
+    console.log('PINCH CONTROL',JSON.stringify(records.at(-1)));
+    fs.writeFileSync(path.join(output,'zoom-controls.json'),JSON.stringify(records,null,2)+'\n');
+    assert.equal(result.passed,!state,'Pinch firing control failed');
     await ctx.close();
   }
   return records;
