@@ -1,0 +1,51 @@
+name: HC3 inactive old-origin handoff candidate
+on:
+  pull_request:
+    paths: ['domain-split/stub-handoff.js', 'domain-split/stub_handoff.py', 'domain-split/check_stub_handoff*', '.github/workflows/hc3-stub-handoff.yml']
+  push:
+    branches: [main]
+    paths: ['domain-split/stub-handoff.js', 'domain-split/stub_handoff.py', 'domain-split/check_stub_handoff*', '.github/workflows/hc3-stub-handoff.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  handoff:
+    name: Native old-origin sender and receiver with preservation controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: 95146202d7f876800605b489de4231efe28928b9
+          path: .sources/Receiver-Lessons
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Prove the actual narrow sender planner
+        run: node domain-split/check_stub_handoff.cjs
+      - name: Assemble the inactive fixture from the exact reviewed receiver publication
+        run: |
+          python3 domain-split/build_publications.py --lessons .sources/Receiver-Lessons --output .handoff-fixture
+          python3 domain-split/stub_handoff.py --fixture-output .handoff-fixture
+          mkdir -p audit-output/hc3-handoff
+          cp .handoff-fixture/build-report.json audit-output/hc3-handoff/receiver-build-report.json
+      - name: Install the existing build-only browser runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Test phone and desktop old-origin to native-import round trips
+        run: node domain-split/check_stub_handoff_browser.cjs .handoff-fixture audit-output/hc3-handoff
+      - name: Retain candidate evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hc3-handoff-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-output/hc3-handoff/
+          if-no-files-found: error
