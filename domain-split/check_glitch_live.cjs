@@ -8,15 +8,28 @@ assert.equal(receipt.origin,origin);assert.equal(receipt.route,route);
 const seed={v:3,owned:['stryke','halo','brik'],dups:{stryke:2},team:['stryke','halo','brik'],cleared:[],xp:123,stickers:{},settings:{calm:false,motion:'auto',hc:false,cb:false},dailyDone:'',weeklyDone:'',tutorialDone:false,seen:{},stats:{wins:0,clashWins:0}};
 const results=[];
 const expectedSearch='?hc3='+receipt.publication.publication_sha;
+const publishedPaths=new Set();
+function indexPublication(root,prefix=''){
+ for(const entry of fs.readdirSync(root,{withFileTypes:true})){
+  const relative=prefix+'/'+entry.name;
+  if(entry.isDirectory())indexPublication(path.join(root,entry.name),relative);
+  else if(entry.isFile()){publishedPaths.add(relative);if(entry.name==='index.html')publishedPaths.add(relative.slice(0,-10));}
+  else throw new Error('Non-file publication entry: '+relative);
+ }
+}
+indexPublication(receipt.publication.root);
+assert(publishedPaths.has(route),'Receiver absent from request-path admission');
 function allowedRequest(url,method,body){
  const target=new URL(url);
- return target.origin===origin&&method==='GET'&&body===null&&
+ let decoded;try{decoded=decodeURIComponent(target.pathname);}catch{return false;}
+ return target.origin===origin&&method==='GET'&&body===null&&publishedPaths.has(decoded)&&
   (target.search===''||(target.pathname===route&&target.search===expectedSearch));
 }
 assert(allowedRequest(origin+route+expectedSearch,'GET',null));
 assert(!allowedRequest(origin+route+'?save=synthetic-planted-value','GET',null),'Alternate query transport was accepted');
+assert(!allowedRequest(origin+'/__hc3_save_exfiltration__/synthetic-planted-value','GET',null),'Alternate path transport was accepted');
 assert(allowedRequest(origin+route+expectedSearch,'GET',null));
-const transportControl={real:'PASS',plantedAlternateQuery:'FAIL',restored:'PASS'};
+const transportControl={real:'PASS',plantedAlternateQuery:'FAIL',plantedAlternatePath:'FAIL',restored:'PASS'};
 async function settle(page){await page.waitForFunction(()=>typeof __GCsave==='function'&&typeof __GCcampaign==='function'&&!document.querySelector('#campaign-waiting[open]')&&!__GCcampaign()?.pending);}
 function known(actual,expected){for(const field of Object.keys(seed))assert.deepEqual(actual[field],expected[field],'Native campaign differs: '+field);if('extra' in expected)assert.equal(actual.extra,expected.extra,'Large native field truncated');}
 async function responseBytes(response,expected=receipt.expected_sha256){assert(response,'Navigation response missing');assert.equal(response.status(),200);assert.match(response.headers()['content-type'],/text\/html/);assert.equal(crypto.createHash('sha256').update(await response.body()).digest('hex'),expected,'Live navigation bytes differ from the source-bound publication');}
