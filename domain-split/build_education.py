@@ -315,6 +315,8 @@ def build(output, lessons, apps=None, allow_sparse=False):
             except (ValueError, UnicodeError): continue
             filtered = filter_data(data, is_game, prefix)
             if filtered != data: path.write_text(json.dumps(filtered, ensure_ascii=False, indent=2)+'\n')
+    from education_publication_admission import verify as verify_admission
+    report['executable_admission'] = verify_admission(output)
     report['education_policy'] = {'recreational_output': 'excluded', 'source_files_removed': 0,
                                   'play_payloads_modified': 0, 'final_catalogue_filter': True}
     for item in report['publications'].values():
