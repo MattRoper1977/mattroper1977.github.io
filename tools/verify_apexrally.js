@@ -56,6 +56,15 @@ const E4 = {
   to: '<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">',
   expect: 1
 };
+/* E5 - the declaration unblock, 2026-09-07 (HC4 §3.3). The delivered court
+ * canvas declared touch-action:none, which blocks the browser's own pinch-zoom
+ * by declaration; the shipped file says pinch-zoom. Reversible like E1-E4, so
+ * DELIVERED_SHA256 stays the historical fact. */
+const E5 = {
+  from: '#court{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pinch-zoom}',
+  to: '#court{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}',
+  expect: 1
+};
 const E2_LINES = [
   '<link rel="canonical" href="https://madebymatt.uk/apexrally/">\n',
   '<meta property="og:url" content="https://madebymatt.uk/apexrally/">\n',
@@ -81,6 +90,7 @@ function reverseEdits(src) {
    * handed over, not a number that drifts every time the platform adds a control. */
   s = stripExitRegion(s);
   s = s.split(E4.from).join(E4.to);
+  s = s.split(E5.from).join(E5.to);
   for (const line of E2_LINES) s = s.replace(line, '');
   s = s.split(E1.from).join(E1.to);
   return s;

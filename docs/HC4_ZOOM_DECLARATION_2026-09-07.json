@@ -1,0 +1,2086 @@
+{
+  "order": "HC4 §3.3 declaration gate; §3.2 pinch measurement (headless, informational)",
+  "claimWording": "zoom not blocked by declaration",
+  "neverClaim": "pinch proved",
+  "instrument": {
+    "declaration": "tools/hc4/zoom_declaration.cjs",
+    "pinch": "tools/hc4/pinch_instrument.cjs (variant shell-dispatch-force = two-finger Input.dispatchTouchEvent; the synthesizePinchGesture default variant was found to behave like a trackpad pinch and is not used for the claim)",
+    "population": "tools/hc4/zoom_population.json (26 routes derived from Apps #37–#40, Site #278, Lessons #350 file lists)"
+  },
+  "sources": {
+    "Site": "claude/hc4-zoom-declaration 593fb08e",
+    "Apps": "claude/hc4-zoom-declaration 333aed4",
+    "Lessons": "claude/hc4-zoom-declaration 28dad241",
+    "baselineMains": {
+      "Site": "0113130e",
+      "Apps": "162e65b3",
+      "Lessons": "e5129ad8"
+    }
+  },
+  "declaration": {
+    "before": {
+      "control": {
+        "runs": [
+          {
+            "route": "/control.html",
+            "url": "http://127.0.0.1:43595/control.html",
+            "httpStatus": 200,
+            "label": "real-1",
+            "expectPass": true,
+            "static": {
+              "pass": true,
+              "viewportMeta": "width=device-width, initial-scale=1",
+              "reasons": []
+            },
+            "computed": {
+              "url": "http://127.0.0.1:43595/control.html",
+              "status": 200,
+              "primary": "CANVAS#stage",
+              "primaryHow": "largest-canvas",
+              "chain": [
+                {
+                  "el": "CANVAS#stage",
+                  "touchAction": "auto"
+                },
+                {
+                  "el": "BODY",
+                  "touchAction": "auto"
+                },
+                {
+                  "el": "HTML",
+                  "touchAction": "auto"
+                }
+              ],
+              "liveViewportMeta": "width=device-width, initial-scale=1",
+              "canvasCount": 1,
+              "manipulation": [],
+              "pass": true,
+              "reasons": []
+            },
+            "pass": true,
+            "reasons": [],
+            "controlOk": true
+          },
+          {
+            "route": "/control.html",
+            "url": "http://127.0.0.1:43595/control.html",
+            "httpStatus": 200,
+            "label": "planted",
+            "expectPass": false,
+            "static": {
+              "pass": false,
+              "viewportMeta": "width=device-width, initial-scale=1, user-scalable=no",
+              "reasons": [
+                "user-scalable=no"
+              ]
+            },
+            "computed": {
+              "url": "http://127.0.0.1:43595/control.html",
+              "status": 200,
+              "primary": "CANVAS#stage",
+              "primaryHow": "largest-canvas",
+              "chain": [
+                {
+                  "el": "CANVAS#stage",
+                  "touchAction": "auto"
+                },
+                {
+                  "el": "BODY",
+                  "touchAction": "none"
+                },
+                {
+                  "el": "HTML",
+                  "touchAction": "none"
+                }
+              ],
+              "liveViewportMeta": "width=device-width, initial-scale=1, user-scalable=no",
+              "canvasCount": 1,
+              "manipulation": [],
+              "pass": false,
+              "reasons": [
+                "BODY touch-action:none",
+                "HTML touch-action:none"
+              ]
+            },
+            "pass": false,
+            "reasons": [
+              "static: user-scalable=no",
+              "computed: BODY touch-action:none",
+              "computed: HTML touch-action:none"
+            ],
+            "controlOk": true
+          },
+          {
+            "route": "/control.html",
+            "url": "http://127.0.0.1:43595/control.html",
+            "httpStatus": 200,
+            "label": "restored",
+            "expectPass": true,
+            "static": {
+              "pass": true,
+              "viewportMeta": "width=device-width, initial-scale=1",
+              "reasons": []
+            },
+            "computed": {
+              "url": "http://127.0.0.1:43595/control.html",
+              "status": 200,
+              "primary": "CANVAS#stage",
+              "primaryHow": "largest-canvas",
+              "chain": [
+                {
+                  "el": "CANVAS#stage",
+                  "touchAction": "auto"
+                },
+                {
+                  "el": "BODY",
+                  "touchAction": "auto"
+                },
+                {
+                  "el": "HTML",
+                  "touchAction": "auto"
+                }
+              ],
+              "liveViewportMeta": "width=device-width, initial-scale=1",
+              "canvasCount": 1,
+              "manipulation": [],
+              "pass": true,
+              "reasons": []
+            },
+            "pass": true,
+            "reasons": [],
+            "controlOk": true
+          }
+        ],
+        "pass": true
+      },
+      "summary": {
+        "total": 26,
+        "pass": 13,
+        "fail": [
+          {
+            "route": "/Matt-s-Apps-/Art_Studio.html",
+            "reasons": [
+              "computed: CANVAS#disp touch-action:none"
+            ]
+          },
+          {
+            "route": "/Matt-s-Apps-/Design_Studio.html",
+            "reasons": [
+              "computed: CANVAS#disp touch-action:none",
+              "computed: BODY touch-action:none",
+              "computed: HTML touch-action:none"
+            ]
+          },
+          {
+            "route": "/Matt-s-Apps-/Mindmap_Studio.html",
+            "reasons": [
+              "computed: svg#svg touch-action:none"
+            ]
+          },
+          {
+            "route": "/Matt-s-Apps-/Photo_Studio.html",
+            "reasons": [
+              "computed: CANVAS#disp touch-action:none",
+              "computed: BODY touch-action:none",
+              "computed: HTML touch-action:none"
+            ]
+          },
+          {
+            "route": "/Matt-s-Apps-/Seating_Studio.html",
+            "reasons": [
+              "computed: DIV.desk touch-action:none"
+            ]
+          },
+          {
+            "route": "/Matt-s-Apps-/Whiteboard.html",
+            "reasons": [
+              "computed: DIV#stage touch-action:none",
+              "computed: BODY touch-action:none",
+              "computed: HTML touch-action:none"
+            ]
+          },
+          {
+            "route": "/apexrally/",
+            "reasons": [
+              "computed: CANVAS#court touch-action:none"
+            ]
+          },
+          {
+            "route": "/fracture/",
+            "reasons": [
+              "computed: CANVAS.webgl touch-action:none"
+            ]
+          },
+          {
+            "route": "/medevac/MedevacFrontier_v1.html",
+            "reasons": [
+              "computed: CANVAS#cv touch-action:none"
+            ]
+          },
+          {
+            "route": "/neonbreach/",
+            "reasons": [
+              "computed: CANVAS#splash-canvas touch-action:none"
+            ]
+          },
+          {
+            "route": "/neonmeridian/",
+            "reasons": [
+              "computed: CANVAS#gl touch-action:none"
+            ]
+          },
+          {
+            "route": "/neonsync/",
+            "reasons": [
+              "computed: CANVAS#game touch-action:none"
+            ]
+          },
+          {
+            "route": "/Lessons/Games/Orbital.html",
+            "reasons": [
+              "computed: CANVAS touch-action:none"
+            ]
+          }
+        ],
+        "manipulationFlagged": [
+          {
+            "route": "/Matt-s-Apps-/Art_Studio.html",
+            "elements": [
+              "BODY",
+              "HTML"
+            ]
+          },
+          {
+            "route": "/fracture/",
+            "elements": [
+              "BODY.touch-device",
+              "HTML"
+            ]
+          },
+          {
+            "route": "/medevac/MedevacFrontier_v1.html",
+            "elements": [
+              "BODY.cinematic.detail-high",
+              "HTML"
+            ]
+          },
+          {
+            "route": "/neonmeridian/",
+            "elements": [
+              "BODY",
+              "HTML"
+            ]
+          },
+          {
+            "route": "/Lessons/Games/Orbital.html",
+            "elements": [
+              "BODY",
+              "HTML"
+            ]
+          }
+        ]
+      }
+    },
+    "after": {
+      "control": {
+        "runs": [
+          {
+            "route": "/control.html",
+            "url": "http://127.0.0.1:41409/control.html",
+            "httpStatus": 200,
+            "label": "real-1",
+            "expectPass": true,
+            "static": {
+              "pass": true,
+              "viewportMeta": "width=device-width, initial-scale=1",
+              "reasons": []
+            },
+            "computed": {
+              "url": "http://127.0.0.1:41409/control.html",
+              "status": 200,
+              "primary": "CANVAS#stage",
+              "primaryHow": "largest-canvas",
+              "chain": [
+                {
+                  "el": "CANVAS#stage",
+                  "touchAction": "auto"
+                },
+                {
+                  "el": "BODY",
+                  "touchAction": "auto"
+                },
+                {
+                  "el": "HTML",
+                  "touchAction": "auto"
+                }
+              ],
+              "liveViewportMeta": "width=device-width, initial-scale=1",
+              "canvasCount": 1,
+              "manipulation": [],
+              "pass": true,
+              "reasons": []
+            },
+            "pass": true,
+            "reasons": [],
+            "controlOk": true
+          },
+          {
+            "route": "/control.html",
+            "url": "http://127.0.0.1:41409/control.html",
+            "httpStatus": 200,
+            "label": "planted",
+            "expectPass": false,
+            "static": {
+              "pass": false,
+              "viewportMeta": "width=device-width, initial-scale=1, user-scalable=no",
+              "reasons": [
+                "user-scalable=no"
+              ]
+            },
+            "computed": {
+              "url": "http://127.0.0.1:41409/control.html",
+              "status": 200,
+              "primary": "CANVAS#stage",
+              "primaryHow": "largest-canvas",
+              "chain": [
+                {
+                  "el": "CANVAS#stage",
+                  "touchAction": "auto"
+                },
+                {
+                  "el": "BODY",
+                  "touchAction": "none"
+                },
+                {
+                  "el": "HTML",
+                  "touchAction": "none"
+                }
+              ],
+              "liveViewportMeta": "width=device-width, initial-scale=1, user-scalable=no",
+              "canvasCount": 1,
+              "manipulation": [],
+              "pass": false,
+              "reasons": [
+                "BODY touch-action:none",
+                "HTML touch-action:none"
+              ]
+            },
+            "pass": false,
+            "reasons": [
+              "static: user-scalable=no",
+              "computed: BODY touch-action:none",
+              "computed: HTML touch-action:none"
+            ],
+            "controlOk": true
+          },
+          {
+            "route": "/control.html",
+            "url": "http://127.0.0.1:41409/control.html",
+            "httpStatus": 200,
+            "label": "restored",
+            "expectPass": true,
+            "static": {
+              "pass": true,
+              "viewportMeta": "width=device-width, initial-scale=1",
+              "reasons": []
+            },
+            "computed": {
+              "url": "http://127.0.0.1:41409/control.html",
+              "status": 200,
+              "primary": "CANVAS#stage",
+              "primaryHow": "largest-canvas",
+              "chain": [
+                {
+                  "el": "CANVAS#stage",
+                  "touchAction": "auto"
+                },
+                {
+                  "el": "BODY",
+                  "touchAction": "auto"
+                },
+                {
+                  "el": "HTML",
+                  "touchAction": "auto"
+                }
+              ],
+              "liveViewportMeta": "width=device-width, initial-scale=1",
+              "canvasCount": 1,
+              "manipulation": [],
+              "pass": true,
+              "reasons": []
+            },
+            "pass": true,
+            "reasons": [],
+            "controlOk": true
+          }
+        ],
+        "pass": true
+      },
+      "summary": {
+        "total": 26,
+        "pass": 25,
+        "fail": [
+          {
+            "route": "/neonmeridian/",
+            "reasons": [
+              "computed: CANVAS#gl touch-action:none"
+            ]
+          }
+        ],
+        "manipulationFlagged": [
+          {
+            "route": "/Matt-s-Apps-/Art_Studio.html",
+            "elements": [
+              "BODY",
+              "HTML"
+            ]
+          },
+          {
+            "route": "/fracture/",
+            "elements": [
+              "BODY.touch-device",
+              "HTML"
+            ]
+          },
+          {
+            "route": "/medevac/MedevacFrontier_v1.html",
+            "elements": [
+              "BODY.cinematic.detail-high",
+              "HTML"
+            ]
+          },
+          {
+            "route": "/neonmeridian/",
+            "elements": [
+              "BODY",
+              "HTML"
+            ]
+          },
+          {
+            "route": "/Lessons/Games/Orbital.html",
+            "elements": [
+              "BODY",
+              "HTML"
+            ]
+          }
+        ]
+      },
+      "routes": [
+        {
+          "route": "/Matt-s-Apps-/Animation_Studio.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Animation_Studio.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Animation_Studio.html",
+          "pr": 37,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Animation_Studio.html",
+            "status": 200,
+            "primary": "CANVAS#stage",
+            "primaryHow": "largest-canvas",
+            "chain": [
+              {
+                "el": "CANVAS#stage",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#stageWrap",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 1,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/Art_Studio.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Art_Studio.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Art_Studio.html",
+          "pr": 37,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Art_Studio.html",
+            "status": 200,
+            "primary": "CANVAS#disp",
+            "primaryHow": "largest-canvas",
+            "chain": [
+              {
+                "el": "CANVAS#disp",
+                "touchAction": "pinch-zoom"
+              },
+              {
+                "el": "DIV#stage",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#body",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "manipulation"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "manipulation"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 2,
+            "manipulation": [
+              "BODY",
+              "HTML"
+            ],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": [],
+          "manipulationFlag": [
+            "BODY",
+            "HTML"
+          ]
+        },
+        {
+          "route": "/Matt-s-Apps-/Audio_Studio.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Audio_Studio.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Audio_Studio.html",
+          "pr": 37,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Audio_Studio.html",
+            "status": 200,
+            "primary": "CANVAS#mcv",
+            "primaryHow": "largest-canvas",
+            "chain": [
+              {
+                "el": "CANVAS#mcv",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV.card",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#secRec.wrap",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#main",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 3,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/Classroom_Toolkit.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Classroom_Toolkit.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Classroom_Toolkit.html",
+          "pr": 37,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Classroom_Toolkit.html",
+            "status": 200,
+            "primary": "BUTTON#pickB.big.go",
+            "primaryHow": "elementFromPoint(centre)",
+            "chain": [
+              {
+                "el": "BUTTON#pickB.big.go",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV.row",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV.card",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#secPick.wrap",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#main",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 1,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/Comic_Studio.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Comic_Studio.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Comic_Studio.html",
+          "pr": 37,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Comic_Studio.html",
+            "status": 200,
+            "primary": "DIV.bg",
+            "primaryHow": "elementFromPoint(centre)",
+            "chain": [
+              {
+                "el": "DIV.bg",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV.panel",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#page",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#stageWrap",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 0,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/Design_Studio.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Design_Studio.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Design_Studio.html",
+          "pr": 37,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Design_Studio.html",
+            "status": 200,
+            "primary": "CANVAS#disp",
+            "primaryHow": "largest-canvas",
+            "chain": [
+              {
+                "el": "CANVAS#disp",
+                "touchAction": "pinch-zoom"
+              },
+              {
+                "el": "DIV#stage",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#body",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "pinch-zoom"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "pinch-zoom"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 1,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/Exit_Ticket.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Exit_Ticket.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Exit_Ticket.html",
+          "pr": 38,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Exit_Ticket.html",
+            "status": 200,
+            "primary": "DIV.card",
+            "primaryHow": "elementFromPoint(centre)",
+            "chain": [
+              {
+                "el": "DIV.card",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#setupView.wrap",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#main",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 1,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/Feelings_Checkin.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Feelings_Checkin.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Feelings_Checkin.html",
+          "pr": 38,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Feelings_Checkin.html",
+            "status": 200,
+            "primary": "DIV#zoneGrid",
+            "primaryHow": "elementFromPoint(centre)",
+            "chain": [
+              {
+                "el": "DIV#zoneGrid",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#zoneView.stage",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#main",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 0,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/Mindmap_Studio.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Mindmap_Studio.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Mindmap_Studio.html",
+          "pr": 38,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Mindmap_Studio.html",
+            "status": 200,
+            "primary": "svg#svg",
+            "primaryHow": "elementFromPoint(centre)",
+            "chain": [
+              {
+                "el": "svg#svg",
+                "touchAction": "pinch-zoom"
+              },
+              {
+                "el": "DIV#canvasWrap",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 0,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/Music_Studio.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Music_Studio.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Music_Studio.html",
+          "pr": 38,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Music_Studio.html",
+            "status": 200,
+            "primary": "BUTTON.cell",
+            "primaryHow": "elementFromPoint(centre)",
+            "chain": [
+              {
+                "el": "BUTTON.cell",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV.grid",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV.gridWrap",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV.track",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#tracksHost",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#main",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 0,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/NowNext_Board.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/NowNext_Board.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "NowNext_Board.html",
+          "pr": 38,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/NowNext_Board.html",
+            "status": 200,
+            "primary": "DIV.slot.next",
+            "primaryHow": "elementFromPoint(centre)",
+            "chain": [
+              {
+                "el": "DIV.slot.next",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#board",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 0,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/Photo_Studio.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Photo_Studio.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Photo_Studio.html",
+          "pr": 38,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Photo_Studio.html",
+            "status": 200,
+            "primary": "CANVAS#disp",
+            "primaryHow": "largest-canvas",
+            "chain": [
+              {
+                "el": "CANVAS#disp",
+                "touchAction": "pinch-zoom"
+              },
+              {
+                "el": "DIV#stage",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#body",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "pinch-zoom"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "pinch-zoom"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 10,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/Quiz_Studio.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Quiz_Studio.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Quiz_Studio.html",
+          "pr": 39,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Quiz_Studio.html",
+            "status": 200,
+            "primary": "DIV#main",
+            "primaryHow": "elementFromPoint(centre)",
+            "chain": [
+              {
+                "el": "DIV#main",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 0,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/Regulation_Station.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Regulation_Station.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Regulation_Station.html",
+          "pr": 39,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Regulation_Station.html",
+            "status": 200,
+            "primary": "DIV#feels.gridB",
+            "primaryHow": "elementFromPoint(centre)",
+            "chain": [
+              {
+                "el": "DIV#feels.gridB",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV.pane",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#scr",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 0,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/Rubric_Studio.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Rubric_Studio.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Rubric_Studio.html",
+          "pr": 39,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Rubric_Studio.html",
+            "status": 200,
+            "primary": "DIV#main",
+            "primaryHow": "elementFromPoint(centre)",
+            "chain": [
+              {
+                "el": "DIV#main",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 0,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/Seating_Studio.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Seating_Studio.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Seating_Studio.html",
+          "pr": 39,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Seating_Studio.html",
+            "status": 200,
+            "primary": "DIV.desk",
+            "primaryHow": "elementFromPoint(centre)",
+            "chain": [
+              {
+                "el": "DIV.desk",
+                "touchAction": "pinch-zoom"
+              },
+              {
+                "el": "DIV#room",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#stageWrap",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 0,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/Video_Studio.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Video_Studio.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Video_Studio.html",
+          "pr": 39,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Video_Studio.html",
+            "status": 200,
+            "primary": "CANVAS#cv",
+            "primaryHow": "largest-canvas",
+            "chain": [
+              {
+                "el": "CANVAS#cv",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#viewer",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#main",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#body",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 1,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/Whiteboard.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Whiteboard.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Whiteboard.html",
+          "pr": 39,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1.0",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Whiteboard.html",
+            "status": 200,
+            "primary": "CANVAS#confetti",
+            "primaryHow": "largest-canvas",
+            "chain": [
+              {
+                "el": "CANVAS#confetti",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#stage",
+                "touchAction": "pinch-zoom"
+              },
+              {
+                "el": "DIV#app",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "pinch-zoom"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "pinch-zoom"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1.0",
+            "canvasCount": 16,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Matt-s-Apps-/Writing_Frames.html",
+          "url": "http://127.0.0.1:4612/Matt-s-Apps-/Writing_Frames.html",
+          "httpStatus": 200,
+          "kind": "education",
+          "repo": "MattRoper1977/Matt-s-Apps-",
+          "path": "Writing_Frames.html",
+          "pr": 40,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4612/Matt-s-Apps-/Writing_Frames.html",
+            "status": 200,
+            "primary": "BUTTON.frameCard",
+            "primaryHow": "elementFromPoint(centre)",
+            "chain": [
+              {
+                "el": "BUTTON.frameCard",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#frameList",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#chooser.wrap",
+                "touchAction": "auto"
+              },
+              {
+                "el": "DIV#main",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 0,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/apexrally/",
+          "url": "http://127.0.0.1:4611/apexrally/",
+          "httpStatus": 200,
+          "kind": "play",
+          "repo": "MattRoper1977/mattroper1977.github.io",
+          "path": "apexrally/index.html",
+          "pr": 278,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4611/apexrally/",
+            "status": 200,
+            "primary": "CANVAS#court",
+            "primaryHow": "largest-canvas",
+            "chain": [
+              {
+                "el": "CANVAS#court",
+                "touchAction": "pinch-zoom"
+              },
+              {
+                "el": "DIV#app",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 1,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/fracture/",
+          "url": "http://127.0.0.1:4611/fracture/",
+          "httpStatus": 200,
+          "kind": "play",
+          "repo": "MattRoper1977/mattroper1977.github.io",
+          "path": "fracture/index.html",
+          "pr": 278,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1.0, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4611/fracture/",
+            "status": 200,
+            "primary": "CANVAS.webgl",
+            "primaryHow": "largest-canvas",
+            "chain": [
+              {
+                "el": "CANVAS.webgl",
+                "touchAction": "pinch-zoom"
+              },
+              {
+                "el": "DIV#game-root",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY.touch-device",
+                "touchAction": "manipulation"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "manipulation"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1.0, viewport-fit=cover",
+            "canvasCount": 4,
+            "manipulation": [
+              "BODY.touch-device",
+              "HTML"
+            ],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": [],
+          "manipulationFlag": [
+            "BODY.touch-device",
+            "HTML"
+          ]
+        },
+        {
+          "route": "/medevac/MedevacFrontier_v1.html",
+          "url": "http://127.0.0.1:4611/medevac/MedevacFrontier_v1.html",
+          "httpStatus": 200,
+          "kind": "play",
+          "repo": "MattRoper1977/mattroper1977.github.io",
+          "path": "medevac/MedevacFrontier_v1.html",
+          "pr": 278,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1.0, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4611/medevac/MedevacFrontier_v1.html",
+            "status": 200,
+            "primary": "CANVAS#cv",
+            "primaryHow": "largest-canvas",
+            "chain": [
+              {
+                "el": "CANVAS#cv",
+                "touchAction": "pinch-zoom"
+              },
+              {
+                "el": "BODY.cinematic.detail-high",
+                "touchAction": "manipulation"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "manipulation"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1.0, viewport-fit=cover",
+            "canvasCount": 1,
+            "manipulation": [
+              "BODY.cinematic.detail-high",
+              "HTML"
+            ],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": [],
+          "manipulationFlag": [
+            "BODY.cinematic.detail-high",
+            "HTML"
+          ]
+        },
+        {
+          "route": "/neonbreach/",
+          "url": "http://127.0.0.1:4611/neonbreach/",
+          "httpStatus": 200,
+          "kind": "play",
+          "repo": "MattRoper1977/mattroper1977.github.io",
+          "path": "neonbreach/index.html",
+          "pr": 278,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4611/neonbreach/",
+            "status": 200,
+            "primary": "CANVAS#splash-canvas",
+            "primaryHow": "largest-canvas",
+            "chain": [
+              {
+                "el": "CANVAS#splash-canvas",
+                "touchAction": "pinch-zoom"
+              },
+              {
+                "el": "DIV#ma-splash",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML.touch-ui",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 3,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/neonmeridian/",
+          "url": "http://127.0.0.1:4611/neonmeridian/",
+          "httpStatus": 200,
+          "kind": "play",
+          "repo": "MattRoper1977/mattroper1977.github.io",
+          "path": "neonmeridian/index.html",
+          "pr": 278,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4611/neonmeridian/",
+            "status": 200,
+            "primary": "CANVAS#gl",
+            "primaryHow": "largest-canvas",
+            "chain": [
+              {
+                "el": "CANVAS#gl",
+                "touchAction": "none"
+              },
+              {
+                "el": "DIV#app",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "manipulation"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "manipulation"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 3,
+            "manipulation": [
+              "BODY",
+              "HTML"
+            ],
+            "pass": false,
+            "reasons": [
+              "CANVAS#gl touch-action:none"
+            ]
+          },
+          "pass": false,
+          "reasons": [
+            "computed: CANVAS#gl touch-action:none"
+          ],
+          "manipulationFlag": [
+            "BODY",
+            "HTML"
+          ]
+        },
+        {
+          "route": "/neonsync/",
+          "url": "http://127.0.0.1:4611/neonsync/",
+          "httpStatus": 200,
+          "kind": "play",
+          "repo": "MattRoper1977/mattroper1977.github.io",
+          "path": "neonsync/index.html",
+          "pr": 278,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4611/neonsync/",
+            "status": 200,
+            "primary": "CANVAS#game",
+            "primaryHow": "largest-canvas",
+            "chain": [
+              {
+                "el": "CANVAS#game",
+                "touchAction": "pinch-zoom"
+              },
+              {
+                "el": "DIV#app",
+                "touchAction": "auto"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "auto"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "auto"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+            "canvasCount": 1,
+            "manipulation": [],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": []
+        },
+        {
+          "route": "/Lessons/Games/Orbital.html",
+          "url": "http://127.0.0.1:4611/Lessons/Games/Orbital.html",
+          "httpStatus": 200,
+          "kind": "play",
+          "repo": "MattRoper1977/Lessons",
+          "path": "Games/Orbital.html",
+          "pr": 350,
+          "static": {
+            "pass": true,
+            "viewportMeta": "width=device-width, initial-scale=1.0",
+            "reasons": []
+          },
+          "computed": {
+            "url": "http://127.0.0.1:4611/Lessons/Games/Orbital.html",
+            "status": 200,
+            "primary": "CANVAS",
+            "primaryHow": "largest-canvas",
+            "chain": [
+              {
+                "el": "CANVAS",
+                "touchAction": "pinch-zoom"
+              },
+              {
+                "el": "BODY",
+                "touchAction": "manipulation"
+              },
+              {
+                "el": "HTML",
+                "touchAction": "manipulation"
+              }
+            ],
+            "liveViewportMeta": "width=device-width, initial-scale=1.0",
+            "canvasCount": 1,
+            "manipulation": [
+              "BODY",
+              "HTML"
+            ],
+            "pass": true,
+            "reasons": []
+          },
+          "pass": true,
+          "reasons": [],
+          "manipulationFlag": [
+            "BODY",
+            "HTML"
+          ]
+        }
+      ]
+    }
+  },
+  "touchPinchInformational": {
+    "before": {
+      "control": true,
+      "summary": {
+        "total": 26,
+        "zoomed": 19,
+        "blocked": 7,
+        "marginal": 0,
+        "blockedRoutes": [
+          {
+            "route": "/Matt-s-Apps-/Art_Studio.html",
+            "scaleAfter": 1,
+            "touchActionAtPoint": "none",
+            "elementAtPinchPoint": "CANVAS#disp"
+          },
+          {
+            "route": "/Matt-s-Apps-/Design_Studio.html",
+            "scaleAfter": 1,
+            "touchActionAtPoint": "auto",
+            "elementAtPinchPoint": "BUTTON.chip"
+          },
+          {
+            "route": "/Matt-s-Apps-/Mindmap_Studio.html",
+            "scaleAfter": 1,
+            "touchActionAtPoint": "none",
+            "elementAtPinchPoint": "svg#svg"
+          },
+          {
+            "route": "/Matt-s-Apps-/Photo_Studio.html",
+            "scaleAfter": 1,
+            "touchActionAtPoint": "auto",
+            "elementAtPinchPoint": "BUTTON#emptyAdd"
+          },
+          {
+            "route": "/Matt-s-Apps-/Seating_Studio.html",
+            "scaleAfter": 1,
+            "touchActionAtPoint": "none",
+            "elementAtPinchPoint": "DIV.desk"
+          },
+          {
+            "route": "/Matt-s-Apps-/Whiteboard.html",
+            "scaleAfter": 1,
+            "touchActionAtPoint": "auto",
+            "elementAtPinchPoint": "CANVAS#fx.layer"
+          },
+          {
+            "route": "/neonbreach/",
+            "scaleAfter": 1,
+            "touchActionAtPoint": "auto",
+            "elementAtPinchPoint": "DIV.ma-stage"
+          }
+        ],
+        "byKind": {
+          "education": {
+            "total": 19,
+            "zoomed": 13
+          },
+          "play": {
+            "total": 7,
+            "zoomed": 6
+          }
+        }
+      }
+    },
+    "after": {
+      "control": true,
+      "summary": {
+        "total": 26,
+        "zoomed": 26,
+        "blocked": 0,
+        "marginal": 0,
+        "blockedRoutes": [],
+        "byKind": {
+          "education": {
+            "total": 19,
+            "zoomed": 19
+          },
+          "play": {
+            "total": 7,
+            "zoomed": 7
+          }
+        }
+      },
+      "routes": [
+        {
+          "route": "/Matt-s-Apps-/Animation_Studio.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Art_Studio.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Audio_Studio.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Classroom_Toolkit.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Comic_Studio.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Design_Studio.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Exit_Ticket.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Feelings_Checkin.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Mindmap_Studio.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Music_Studio.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/NowNext_Board.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Photo_Studio.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Quiz_Studio.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Regulation_Station.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Rubric_Studio.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Seating_Studio.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Video_Studio.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Whiteboard.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Matt-s-Apps-/Writing_Frames.html",
+          "kind": "education",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/apexrally/",
+          "kind": "play",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/fracture/",
+          "kind": "play",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/medevac/MedevacFrontier_v1.html",
+          "kind": "play",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/neonbreach/",
+          "kind": "play",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/neonmeridian/",
+          "kind": "play",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/neonsync/",
+          "kind": "play",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        },
+        {
+          "route": "/Lessons/Games/Orbital.html",
+          "kind": "play",
+          "scaleBefore": 1,
+          "scaleAfter": 5,
+          "passed": true,
+          "method": "dispatch:force"
+        }
+      ]
+    }
+  },
+  "owned": [
+    {
+      "route": "/neonmeridian/",
+      "owner": "Site #216 (agent-authored, not green, not superseded)",
+      "state": "FAIL computed: CANVAS#gl touch-action:none — untouched"
+    }
+  ],
+  "defaultVariantCaveat": {
+    "summary": {
+      "total": 26,
+      "zoomed": 25,
+      "blocked": 1,
+      "marginal": 0,
+      "blockedRoutes": [
+        {
+          "route": "/Matt-s-Apps-/Art_Studio.html",
+          "scaleAfter": 1,
+          "touchActionAtPoint": "none",
+          "elementAtPinchPoint": "CANVAS#disp"
+        }
+      ],
+      "byKind": {
+        "education": {
+          "total": 19,
+          "zoomed": 18
+        },
+        "play": {
+          "total": 7,
+          "zoomed": 7
+        }
+      }
+    },
+    "note": "the default gesture source zoomed through touch-action:none in a discriminating control; recorded, not used for any claim"
+  }
+}
