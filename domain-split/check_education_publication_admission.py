@@ -88,6 +88,36 @@ def controls(output):
     return {'status': 'PASS', 'scope': 'Exact all-file admission, not a new semantic classification of every historical lesson', 'real': real, 'cases': cases}
 
 
+def arriving_controls():
+    """HC5 §1: the ARRIVING marker admits absence, never other bytes (each proved both ways)."""
+    import education_publication_admission as adm
+    good = 'a'*64; other = 'b'*64
+    reg = {'trees': {'education-lessons': {'arrived.html': [good, adm.ARRIVING], 'plain.html': good}}}
+    def outcome(actual):
+        try:
+            adm.verify_tree_census(actual, 'education-lessons', reg); return 'PASS'
+        except ValueError as error:
+            return 'FAIL '+str(error).splitlines()[-1]
+    cases = [
+        {'name': 'arriving path absent from the build passes', 'expected': 'PASS', 'actual': outcome({'plain.html': good})},
+        {'name': 'arriving path present at its reviewed bytes passes', 'expected': 'PASS', 'actual': outcome({'plain.html': good, 'arrived.html': good})},
+        {'name': 'arriving path present at other bytes is CHANGED', 'expected': 'FAIL CHANGED education-lessons/arrived.html', 'actual': outcome({'plain.html': good, 'arrived.html': other})},
+        {'name': 'a plain path absent is still MISSING', 'expected': 'FAIL MISSING education-lessons/plain.html', 'actual': outcome({'arrived.html': good})},
+    ]
+    try:
+        adm.validate_digest_set('education-lessons', 'x.html', [good, other, adm.ARRIVING]); cases.append({'name': 'ARRIVING beside two digests is refused', 'expected': 'refused', 'actual': 'accepted'})
+    except ValueError:
+        cases.append({'name': 'ARRIVING beside two digests is refused', 'expected': 'refused', 'actual': 'refused'})
+    try:
+        adm.validate_digest_set('education-lessons', 'x.html', [adm.ARRIVING]); cases.append({'name': 'ARRIVING alone is refused', 'expected': 'refused', 'actual': 'accepted'})
+    except ValueError:
+        cases.append({'name': 'ARRIVING alone is refused', 'expected': 'refused', 'actual': 'refused'})
+    for case in cases:
+        if case['expected'] != case['actual']:
+            raise AssertionError('MEASUREMENT INVALID: arriving control: '+case['name']+' -> '+case['actual'])
+    return cases
+
+
 def build_control(lessons, apps):
     # A separate local repository makes the new source file genuinely tracked.
     # No production or PR-owned source file is planted or edited.
@@ -117,6 +147,8 @@ def main():
     parser.add_argument('--build-control', action='store_true')
     args = parser.parse_args()
     result = controls(args.output.resolve())
+    result['arrivingControls'] = arriving_controls()
+    result['cases'] = result['cases'] + result['arrivingControls']
     if args.build_control:
         if not args.lessons or not args.apps:
             parser.error('Build control requires both source repositories')
