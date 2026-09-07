@@ -36,7 +36,22 @@ SUBJECTS = {
                 EDU + '/Lessons/Humanities_Teesside/Teaching_Packs/BUILD/downloads/BUILD_Humanities_Autumn1_W3-W7_Complete_Pack.zip': 'Humanities_Teesside/Teaching_Packs/BUILD/downloads/BUILD_Humanities_Autumn1_W3-W7_Complete_Pack.zip',
                 EDU + '/Lessons/Humanities_Teesside/Teaching_Packs/GROW/downloads/GROW_Humanities_Autumn1_W3-W7_Complete_Pack.zip': 'Humanities_Teesside/Teaching_Packs/GROW/downloads/GROW_Humanities_Autumn1_W3-W7_Complete_Pack.zip',
                 EDU + '/Lessons/Humanities_Teesside/Teaching_Packs/LAUNCH/downloads/LAUNCH_Humanities_Autumn1_W3-W7_Complete_Pack.zip': 'Humanities_Teesside/Teaching_Packs/LAUNCH/downloads/LAUNCH_Humanities_Autumn1_W3-W7_Complete_Pack.zip',
-                EDU + '/Lessons/Science_Teesside/Teaching_Packs/': 'Science_Teesside/Teaching_Packs/index.html'},
+                EDU + '/Lessons/Science_Teesside/Teaching_Packs/': 'Science_Teesside/Teaching_Packs/index.html',
+                # HC6 §11 (D7): the teaching-pack layer — landing, the seven subject indexes, one pack index,
+                # one beside-placed FoodWise lesson and one Complete pack, so a served run witnesses the layer
+                # itself and not only its Humanities corner.
+                EDU + '/Lessons/Teaching_Packs/': 'Teaching_Packs/index.html',
+                EDU + '/Lessons/Careers/Teaching_Packs/': 'Careers/Teaching_Packs/index.html',
+                EDU + '/Lessons/ICT/Teaching_Packs/': 'ICT/Teaching_Packs/index.html',
+                EDU + '/Lessons/DT_Textiles/Teaching_Packs/': 'DT_Textiles/Teaching_Packs/index.html',
+                EDU + '/Lessons/BUILD_ASDAN/FoodWise/Teaching_Packs/': 'BUILD_ASDAN/FoodWise/Teaching_Packs/index.html',
+                EDU + '/Lessons/GROW_FoodWise/Teaching_Packs/': 'GROW_FoodWise/Teaching_Packs/index.html',
+                EDU + '/Lessons/PSHE/Teaching_Packs/': 'PSHE/Teaching_Packs/index.html',
+                EDU + '/Lessons/Science_Teesside/Teaching_Packs/web-slides.html': 'Science_Teesside/Teaching_Packs/web-slides.html',
+                EDU + '/Lessons/Humanities_Teesside/Teaching_Packs/web-slides.html': 'Humanities_Teesside/Teaching_Packs/web-slides.html',
+                EDU + '/Lessons/Careers/Teaching_Packs/BUILD/': 'Careers/Teaching_Packs/BUILD/index.html',
+                EDU + '/Lessons/BUILD_ASDAN/FoodWise/BUILD_FOOD_W1.html': 'BUILD_ASDAN/FoodWise/BUILD_FOOD_W1.html',
+                EDU + '/Lessons/PSHE/Teaching_Packs/GROW/downloads/GROW_PSHE_All_About_Me_W1-W7_Complete_Pack.zip': 'PSHE/Teaching_Packs/GROW/downloads/GROW_PSHE_All_About_Me_W1-W7_Complete_Pack.zip'},
     'apps': {EDU + '/Matt-s-Apps-/': 'index.html'},
     'games': {PLAY + '/': 'index.html', PLAY + '/Games/games.json': 'Games/games.json'},
 }
