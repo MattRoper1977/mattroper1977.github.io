@@ -10,6 +10,7 @@
     "HC4 §3.3 transition pairs (Site claude/hc4-zoom-declaration): six Apps studios admitted at Apps main 162e65b3 bytes AND at Apps claude/hc4-zoom-declaration 333aed4 bytes (touch-action none → pinch-zoom only); drop the old digest once Apps merges",
     "HC4 §4 (Site claude/hc4-lessons-hub-admission): education-lessons/index.html admitted as a transition pair — at Lessons 419d44f0 bytes (the source this repository's own workflows pin) AND at Lessons main fbd3377b bytes (the /Lessons/ hub without its Ko-fi button, Lessons #367); drop the old digest once the pinned Lessons source moves past #367; no other path moves",
     "HC5 §1 (Site claude/hc5-humanities-admission): 142 Humanities_Teesside/Teaching_Packs paths admitted as ARRIVING at Lessons main 5c2af15f bytes (Lessons #371) — absent from this repository's own build until its pinned Lessons source moves past #371; education-lessons index.html and Humanities_Teesside/index.html and education-site data/usage-registry.json admitted as transition pairs (pinned-source bytes AND Lessons main bytes); the hub's superseded fbd3377b state dropped; no other path moves",
+    "HC5 D2/§1.5 (Site claude/hc5-site-repairs): education-apps/index.html admitted as a transition pair (pinned Apps ed4c59ae bytes AND Apps main f4f69b31 bytes — the Creator Hub without its Ko-fi line, Apps #56); education-lessons resources.json, Science_Teesside/Teaching_Packs/index.html and education-site data/domain-catalogue.json, data/resource-discovery.json admitted as transition pairs for Lessons PR B's six catalogue rows; the ARRIVING Humanities_Teesside/Teaching_Packs/index.html digest moves to its PR B bytes; no other path moves",
     "HC5 D2 (Site claude/hc5-kofi-adult-only): root hub and education home lose their Ko-fi links; no other path moves"
   ],
   "trees": {
@@ -99,7 +100,10 @@
       "data/agx-split-live-infrastructure.json": "cb1cf75f7f3618f8b205da027bd8813aa3499917479c5f0181b312b01fa3234a",
       "data/banned-claims.json": "d585fdd5a30eff181c004e54566cc2d4cf5bcf77b6d2f643bddd94f5cc8adf54",
       "data/copy-authorisation.json": "4373b09c42a53035f143060cfeca6260e4cae01ff0ee64b844c0831db1621937",
-      "data/domain-catalogue.json": "b0002e830d6a95434556b912431675df121a41ac1067c31317aa91a28d8f3c7b",
+      "data/domain-catalogue.json": [
+        "b0002e830d6a95434556b912431675df121a41ac1067c31317aa91a28d8f3c7b",
+        "2a3d23159cf6df988584d3b7d3aa474e422a117f05b639511f55679e72de039a"
+      ],
       "data/education-expansion.json": "0e524607e96b403031fefa83e0f348fc7e852cef0e311b0c9e5d9933ee7b5de9",
       "data/education-hub.json": "ba38ab865cc10a6266b665c6354f4ecb149e3267b452c4bdd52220f92e2898f6",
       "data/feature-standdown.json": "6b94f31e281a0dfb3dbb3e48ae049c579c1d91eb678731b977cd953ffaf585d5",
@@ -112,7 +116,10 @@
       "data/pin-dependents.json": "b48e5fce2bd0b97347b24f36cb0b4733bbfa8389dcbfa76eb46de473bc155a0a",
       "data/primary-discovery.json": "c477ae6093e1ac6beaa599f39fd05cd4d990e7dc57ed4e60cc7627d913ba2690",
       "data/resource-collections.json": "57940676075bf7863304619447c0a9993152f94c1ff1457bd133bc0aa10989e3",
-      "data/resource-discovery.json": "22fd5f8d3bd0b244e024de8151e16a23071e905f7ca5f26db8c7fc67639ecaa8",
+      "data/resource-discovery.json": [
+        "22fd5f8d3bd0b244e024de8151e16a23071e905f7ca5f26db8c7fc67639ecaa8",
+        "690fff64670b8775f8c7773b65c6ceeb0e833043e88ca065cfab3af5d0180d54"
+      ],
       "data/resources.json": "147183d3c1af1a4b86e333c7153065f57bb828acb924024367f1ac471e5f1326",
       "data/retired-checks.json": "aad4ea746538bbebf9a4aa836c41b74cb7db68a2c4ac524ffdfaf7582b69c289",
       "data/source-manifests/apps.json": "94e8f7a86adf344d937c381dd6db7086b1d4e95b0cb2a7c81739079f1f13dbb0",
@@ -1789,7 +1796,7 @@
         "ARRIVING"
       ],
       "Humanities_Teesside/Teaching_Packs/index.html": [
-        "772a7d2ec8c19f5a0c974ec3489a518cf7f49f4b5a6a9833c38fb68fcf691f93",
+        "02c780ba64fee02119eff9928d6f78fd7ab9750d7c909a73e0405a0a07ef12fb",
         "ARRIVING"
       ],
       "Humanities_Teesside/Teaching_Packs/packs.css": [
@@ -2745,7 +2752,10 @@
       "Science_Teesside/Teaching_Packs/LAUNCH/downloads/LAUNCH_Science_Autumn1_W7L2_Lesson_Pack.zip": "8bbfe0aa46cc2c23643a94839f62294528bff209b39f055572057537fb1063af",
       "Science_Teesside/Teaching_Packs/LAUNCH/downloads/LAUNCH_Science_Autumn1_W7L3_Lesson_Pack.zip": "fb3c5db69672fc921fe1a81c01503a2a9e8419297625fef8e8fea98a3195d112",
       "Science_Teesside/Teaching_Packs/LAUNCH/downloads/LAUNCH_Science_Autumn1_W7_Teaching_Pack.zip": "8ac9185636f8e4c068e8df19cf0900392485df928296a1726e1809a9c130e3ab",
-      "Science_Teesside/Teaching_Packs/index.html": "b92036e9c4663c64fc386e64c8091145175e0b1003f47bca3f4eadc552464794",
+      "Science_Teesside/Teaching_Packs/index.html": [
+        "b92036e9c4663c64fc386e64c8091145175e0b1003f47bca3f4eadc552464794",
+        "3dc9247df78b5fe347daaf985c2500d5dc9eb13563417d822ab3291ca8299061"
+      ],
       "Science_Teesside/Teaching_Packs/packs.css": "70ca73b323e5cabf05b1f5f9f8107694cfcecf4ddf8043f342049ee4c797ce59",
       "Science_Teesside/index.html": "1ca70e694ce1d28bbb743b77dcf79f5d66404b96af3c3fa3c033d2a7b8e7d08a",
       "Science_Teesside/launch-engine/README.md": "064cee682afabfcbb20afb2ec01f097cd4824e237278f3ceb6141dafbaa6bf00",
@@ -2986,7 +2996,10 @@
       "quality/toolkits/README.md": "feb764b459618eb3a4b50e9a6cb095bc7fb0ac3a6d8a8a385ac949a7be3b0cf4",
       "quality/toolkits/SAFETY_CONTENT_GATE.md": "a145e3e5487315f61175c6d68f0d180c8dad41bddfeadb36b5c7d3f67a2b0050",
       "quality/toolkits/TOOLKIT_HOUSE_STANDARD.md": "6bf18cc7d1b9fb78dce9a4d898222798f2f65d55b46600cd54f53cea666d87a8",
-      "resources.json": "3dcdf568c28a6a306dd2843b7eb4bc9fb8b9627e18b459df63318641098b8ad6",
+      "resources.json": [
+        "3dcdf568c28a6a306dd2843b7eb4bc9fb8b9627e18b459df63318641098b8ad6",
+        "c6b222d1c28d91c47570a53f6b74159a60b832cf6cf6fd42b18f649780e1da5d"
+      ],
       "resources.schema.json": "39639f86aa0fc266071c30a78f0001201c1cc66dcae22e99716785e226ca4572",
       "review/estate-exec/README.md": "11a3c2052b57d93b5d6853c00c26ba7605cac8952eb21d221edf143e433539e2",
       "tools/artsaward/SLOTS.json": "2a9a389711d8ba2d0b9771b43b03f6a5e1124f6d99e22d4466d694799a40226f"
@@ -3106,7 +3119,10 @@
       "awarding-body-templates.json": "8be69c60ee71287d8b544b933a0d9b2dcad20c5b2518079d0045d98c70b98753",
       "enzyme-reactor-overdrive.html": "2d04c207af9c7a0a588f8743adabb02f558b706dbd25fc166905512f36636169",
       "evidence-schema-v2.json": "4eb9bf263820a0841b4859eb38f26fe46c5183438ca657e1c88c1cae4bb60dff",
-      "index.html": "12e24029d93c883a831c83169388e43b4ab47a816abcebd307e6ce0c3525d471",
+      "index.html": [
+        "12e24029d93c883a831c83169388e43b4ab47a816abcebd307e6ce0c3525d471",
+        "a5915f5c38d022305411cb259eaeb169995081069234c078a52bd9820918b20c"
+      ],
       "mbm-master-hub.html": "d6d742d703ead6fa34a6f3d8ebe66ae4459ca4152be9a2affa92cece4c383ad6",
       "ohms-law-fault-finder-v2-3.html": "2e40607400a9786448a695591d91c82c820993bbe055576deb00595b5576478c",
       "orbit-vector-diagnostic.html": "a1ddeab8f8d760bf30733bd9cf64a8e9b274690e6a05a01a2d7d3b76e90a4484",
