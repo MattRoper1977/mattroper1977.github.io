@@ -1,10 +1,10 @@
 name: HC3 inactive old-origin handoff candidate
 on:
   pull_request:
-    paths: ['domain-split/stub-handoff.js', 'domain-split/stub_handoff.py', 'domain-split/check_stub_handoff*', 'domain-split/check_glitch_live.cjs', 'tools/hc3_native_publication.py', '.github/workflows/hc3-stub-handoff.yml']
+    paths: ['domain-split/stub-handoff.js', 'domain-split/stub_handoff.py', 'domain-split/check_stub_handoff*', 'domain-split/check_glitch_live.cjs', 'tools/hc3_native_publication.py', 'tools/hc3_handoff_publications.py', '.github/workflows/hc3-stub-handoff.yml']
   push:
     branches: [main]
-    paths: ['domain-split/stub-handoff.js', 'domain-split/stub_handoff.py', 'domain-split/check_stub_handoff*', 'domain-split/check_glitch_live.cjs', 'tools/hc3_native_publication.py', '.github/workflows/hc3-stub-handoff.yml']
+    paths: ['domain-split/stub-handoff.js', 'domain-split/stub_handoff.py', 'domain-split/check_stub_handoff*', 'domain-split/check_glitch_live.cjs', 'tools/hc3_native_publication.py', 'tools/hc3_handoff_publications.py', '.github/workflows/hc3-stub-handoff.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -95,3 +95,57 @@ jobs:
             audit-output/hc3-native-live/native-publication.json
             audit-output/hc3-native-live/proof/
           if-no-files-found: warn
+
+  # This journey requires the sender and project stub to have been published.
+  # PRs prove the composed fixture; this post-release job proves actual origins.
+  live-handoff:
+    if: github.event_name != 'pull_request'
+    name: Exact three-publication handoff through the real progress button
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/mattroper1977.github.io
+          ref: main
+          path: .sources/Live-Site
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: main
+          path: .sources/Live-Lessons
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: .sources/Games
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Prepare the existing publication parser
+        run: python3 -m pip install lxml==6.0.1
+      - name: Bind all three exact live publication components
+        run: python3 tools/hc3_handoff_publications.py --site .sources/Live-Site --lessons .sources/Live-Lessons --games .sources/Games --output audit-output/hc3-live-handoff
+      - name: Install the existing build-only browser runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Click the published button on phone and desktop without response fulfillment
+        run: node domain-split/check_stub_handoff_live.cjs audit-output/hc3-live-handoff/handoff-publications.json audit-output/hc3-live-handoff/proof
+      - name: Preserve live evidence and named preflight blockers
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hc3-live-handoff-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-output/hc3-live-handoff/
+          if-no-files-found: error
