@@ -23,3 +23,15 @@ The historical hold above applies to the unsafe receiver revision. Its proposed 
 Run 34069432594/job101583916319 passed 23 actual Chromium cases and all eleven native suites. Artifact10000016131 has SHA256 d7262057ab2f348e212d8bac138389cffea4289e247714154aec5f860e23c712. Games rendered regression34069432602 and all eight FieldOps34069432589 jobs passed. The hold now remains for publication prerequisite checks; no sender has been enabled and no current save is changed by this evidence-only PR.
 
 Current Site rollback before this revision:38630cbf05c6272631e4c69828144afca174d4e0. Prior candidate247af670e2f54699011aadb262cba9b3d7b6538e remains recoverable in Git. Science #356 and Apps #44 have now merged; their published source and shared gate must be re-anchored before a paired publisher change.
+
+## Final receiver candidate — 2026-09-07
+95146202d7f876800605b489de4231efe28928b9 composes the isolated campaign store
+with the merged Science source and corrects the hidden Retry display. Receiver
+run34070662336, Games rendered regression34070662398 and FieldOps34070662401
+all pass. The downloaded browser artifact10000391273 has archive SHA256
+530f02823d3d991e5736453a605af66c76d101ba59554e089fd6ef3af218f797.
+Its23 cases include phone/desktop, concurrent tabs, old legacy writers, queued
+updates, reload identity, durable abort/denial, file fallback/retry and native
+timing/pointer cleanup. All eleven original game suites pass. Real/planted/restored
+save-routing control rejects legacy overwrite. This remains candidate evidence;
+receiver live proof and the later old-origin sender release are separate gates.
