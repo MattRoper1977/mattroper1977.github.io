@@ -3,7 +3,10 @@
 
 Order HC3 §2.2. The education builders filter games out by a DENYLIST (a route
 is a game if a manifest already says so), which leaks by default the day a game
-is added without a manifest row. This gate reads every .html in the emitted
+is added without a manifest row. HC3 continuation now first requires exact
+reviewed executable/data bytes on every route, including HTM and external
+engines. Marker words cannot exempt changed bytes. The historical heuristic
+below remains a separate screen, not a substitute for admission. It reads every .html in the emitted
 education trees and classifies by BEHAVIOUR, not by name:
 
   GAME = a canvas / WebGL animation loop (requestAnimationFrame + <canvas> or
@@ -87,12 +90,21 @@ def scan(tree: Path, prefix: str, exempt: set[str]):
 
 
 def run(output: Path | None, tree: Path | None, prefix: str):
+    from education_publication_admission import load_registry, verify_tree
+    registry = load_registry()
     exempt = retained_routes()
     targets = [(tree, prefix)] if tree else [(output / name, pre) for name, pre in TREES.items()]
     red = 0
     for t, pre in targets:
         if not t.is_dir():
             print(f'INCONCLUSIVE: {t} is not a built tree'); return 2
+        target_name = next((name for name, value in TREES.items() if value == pre), None)
+        if target_name is None:
+            print('INCONCLUSIVE: unknown publication prefix', pre); return 2
+        try:
+            verify_tree(t, target_name, registry)
+        except ValueError as error:
+            print(error); return 1
         scanned, games, exempted = scan(t, pre, exempt)
         if scanned == 0:
             print(f'INCONCLUSIVE: {t} holds no html'); return 2
@@ -102,6 +114,10 @@ def run(output: Path | None, tree: Path | None, prefix: str):
         for route, reasons in games:
             red += 1
             print(f'  GAME on the education tree: {route}  [{", ".join(reasons)}]')
+    if not red and output is not None:
+        from check_education_publication_admission import controls
+        proof = controls(output)
+        print('EXECUTABLE ADMISSION CONTROLS:', proof['status'], len(proof['cases']))
     print('LEAK GATE:', 'RED' if red else 'CLEAR')
     return 1 if red else 0
 

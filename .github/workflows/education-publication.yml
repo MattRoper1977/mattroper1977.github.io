@@ -70,6 +70,9 @@ jobs:
           python .sources/Site/domain-split/verify_education_tree_has_no_games.py --output .sources/Site/domain-split/output
           python .sources/Site/domain-split/check_education_support.py
           node .sources/Site/domain-split/check_game_saves.cjs
+      - name: Prove all-file admission before packaging any education tree
+        run: |
+          python .sources/Site/domain-split/check_education_publication_admission.py --output .sources/Site/domain-split/output --lessons .sources/Lessons --apps .sources/Apps --build-control
       - name: Save the reviewed education output
         uses: actions/upload-artifact@v4
         with:
