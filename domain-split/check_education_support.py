@@ -54,9 +54,12 @@ def kofi_census(root_output, reachable):
             if route not in reachable or route in adult_only: continue
             counted += 1
             n = path.read_text(errors='replace').lower().count('ko-fi')
-            if not n: continue
-            if route in HELD and n == HELD[route]['occurrences']:
+            if route in HELD and n in (0, HELD[route]['occurrences']):
+                # HC4 §4: a held route is excused at its recorded count, or at
+                # ZERO once its owner's PR has released it and the copy is gone
+                # (resolved). Any other count on it is still red.
                 held_seen[route] = n; continue
+            if not n: continue
             hits += n; offenders.append(route)
     return hits, counted, offenders, held_seen
 
@@ -86,6 +89,7 @@ assert len(reachable) == report['pupil_reachable_routes'], (len(reachable), repo
 hits, counted, offenders, held_seen = kofi_census(output, reachable)
 assert hits == 0, 'Ko-fi on pupil-reachable routes beyond the held record: ' + json.dumps(offenders[:10])
 assert set(held_seen) == set(HELD), 'the held record and the tree disagree: ' + json.dumps({'held': sorted(HELD), 'seen': sorted(held_seen)})
+resolved = sorted(route for route, n in held_seen.items() if n == 0)
 with tempfile.TemporaryDirectory(prefix='mbm-kofi-control-') as tmp:
     scratch = Path(tmp)
     for part, _ in PARTS: (scratch/('education-'+part)).mkdir()
@@ -99,4 +103,4 @@ with tempfile.TemporaryDirectory(prefix='mbm-kofi-control-') as tmp:
     assert kofi_census(scratch, reachable)[0] == 0, 'the census stayed red with the plant removed'
 print(json.dumps({'support_pages': count, 'classified_pages': len(expected), 'pupil_reachable_routes': len(reachable),
                   'pupil_routes_counted': counted, 'kofi_on_pupil_routes': hits, 'kofi_hrefs_total': len(every_href),
-                  'kofi_hrefs_off_url': len(wrong), 'kofi_held_source_copy': held_seen, 'pupil_negative_controls': 'pass', 'planted_footer_control': 'red then green'}))
+                  'kofi_hrefs_off_url': len(wrong), 'kofi_held_source_copy': held_seen, 'kofi_held_resolved': resolved, 'pupil_negative_controls': 'pass', 'planted_footer_control': 'red then green'}))

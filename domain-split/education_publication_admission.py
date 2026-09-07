@@ -65,9 +65,23 @@ def load_registry(path=REGISTRY):
             raise ValueError('Empty admission tree: '+name)
         for path, digest in files.items():
             valid_path(path)
-            if not isinstance(digest, str) or not re.fullmatch('[0-9a-f]{64}', digest):
-                raise ValueError('Invalid reviewed digest: '+name+'/'+path)
+            # HC4 §3.3 / §4: a path may carry a TRANSITION PAIR — exactly two
+            # reviewed digests, the byte-state on the owning repository's main
+            # today and the reviewed byte-state its pending PR will land — so a
+            # cross-repository change can be admitted before and after that
+            # PR merges without a lockstep publication. Never more than two,
+            # never a wildcard; both digests are reviewed in the same diff.
+            candidates = digest if isinstance(digest, list) else [digest]
+            if not 1 <= len(candidates) <= 2 or len(set(candidates)) != len(candidates):
+                raise ValueError('Invalid reviewed digest set: '+name+'/'+path)
+            for item in candidates:
+                if not isinstance(item, str) or not re.fullmatch('[0-9a-f]{64}', item):
+                    raise ValueError('Invalid reviewed digest: '+name+'/'+path)
     return registry
+
+
+def admitted(expected):
+    return set(expected) if isinstance(expected, list) else {expected}
 
 
 def verify_tree(tree, name, registry):
@@ -79,7 +93,7 @@ def verify_tree(tree, name, registry):
             problems.append('UNREVIEWED '+name+'/'+path)
         elif path not in actual:
             problems.append('MISSING '+name+'/'+path)
-        elif expected[path] != actual[path]:
+        elif actual[path] not in admitted(expected[path]):
             problems.append('CHANGED '+name+'/'+path)
     if problems:
         raise ValueError('Education file admission blocked publication:\n'+'\n'.join(problems))

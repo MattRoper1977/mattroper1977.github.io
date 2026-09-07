@@ -1,0 +1,152 @@
+name: HC3 old-origin save handoff
+on:
+  pull_request:
+    paths: ['domain-split/stub-handoff.js', 'domain-split/stub_handoff.py', 'domain-split/check_stub_handoff*', 'domain-split/check_glitch_live.cjs', 'tools/hc3_native_publication.py', 'tools/hc3_handoff_publications.py', '.github/workflows/hc3-stub-handoff.yml']
+  push:
+    branches: [main]
+    paths: ['domain-split/stub-handoff.js', 'domain-split/stub_handoff.py', 'domain-split/check_stub_handoff*', 'domain-split/check_glitch_live.cjs', 'tools/hc3_native_publication.py', 'tools/hc3_handoff_publications.py', '.github/workflows/hc3-stub-handoff.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  handoff:
+    name: Native old-origin sender and receiver with preservation controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          # Pinned 2026-09-07: exact reviewed native receiver for isolated fixture evidence.
+          ref: 95146202d7f876800605b489de4231efe28928b9
+          path: .sources/Receiver-Lessons
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Prepare evidence and the existing publication parser
+        run: |
+          mkdir -p audit-output/hc3-handoff
+          git rev-parse HEAD > audit-output/hc3-handoff/instrument-sha.txt
+          python3 -m pip install lxml==6.0.1
+      - name: Prove the actual narrow sender planner
+        run: node domain-split/check_stub_handoff.cjs
+      - name: Assemble the isolated fixture from the exact reviewed receiver publication
+        run: |
+          python3 domain-split/build_publications.py --lessons .sources/Receiver-Lessons --output .handoff-fixture
+          python3 domain-split/stub_handoff.py --fixture-output .handoff-fixture
+          python3 tools/hc3_native_publication.py --control .handoff-fixture/games
+          python3 tools/hc3_handoff_publications.py --control .handoff-fixture
+          mkdir -p audit-output/hc3-handoff
+          cp .handoff-fixture/build-report.json audit-output/hc3-handoff/receiver-build-report.json
+      - name: Install the existing build-only browser runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Test phone and desktop old-origin to native-import round trips
+        run: node domain-split/check_stub_handoff_browser.cjs .handoff-fixture audit-output/hc3-handoff
+      - name: Retain candidate evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hc3-handoff-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-output/hc3-handoff/
+          if-no-files-found: error
+  live-receiver:
+    name: Exact Play publication and real-origin native import at phone and desktop
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: .sources/Games
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Bind the receiver to the successful exact-source Play publication
+        run: python3 tools/hc3_native_publication.py --games .sources/Games --output audit-output/hc3-native-live
+      - name: Install the existing build-only browser runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Exercise real-origin fragment and visible native-file import
+        run: node domain-split/check_glitch_live.cjs audit-output/hc3-native-live/native-publication.json audit-output/hc3-native-live/proof
+      - name: Retain exact source and live evidence on every outcome
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hc3-native-live-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            audit-output/hc3-native-live/native-publication.json
+            audit-output/hc3-native-live/proof/
+          if-no-files-found: warn
+
+  # This journey requires the sender and project stub to have been published.
+  # PRs prove the composed fixture; this post-release job proves actual origins.
+  live-handoff:
+    if: github.event_name != 'pull_request'
+    name: Exact three-publication handoff through the real progress button
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/mattroper1977.github.io
+          ref: main
+          path: .sources/Live-Site
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: main
+          path: .sources/Live-Lessons
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: .sources/Games
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Prepare the existing publication parser
+        run: python3 -m pip install lxml==6.0.1
+      - name: Bind all three exact live publication components
+        run: python3 tools/hc3_handoff_publications.py --site .sources/Live-Site --lessons .sources/Live-Lessons --games .sources/Games --output audit-output/hc3-live-handoff
+      - name: Install the existing build-only browser runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Click the published button on phone and desktop without response fulfillment
+        run: node domain-split/check_stub_handoff_live.cjs audit-output/hc3-live-handoff/handoff-publications.json audit-output/hc3-live-handoff/proof
+      - name: Preserve live evidence and named preflight blockers
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hc3-live-handoff-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-output/hc3-live-handoff/
+          if-no-files-found: error

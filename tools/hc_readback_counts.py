@@ -14,6 +14,7 @@ from pathlib import Path
 import re
 import urllib.request
 from lib.publication_artifacts import Inconclusive, select_artifact
+from lib.hc3_byte_witness import decode_evidence, matching_rows
 
 SPECS = {
     'Site': ('mattroper1977.github.io', 'education-publication.yml', 'mbm-deployment-provenance.yml', 'education-site-review', 'The origin is serving the commit we think it is'),
@@ -65,7 +66,22 @@ def exact_success(evidence, main):
             and run.get('status') == 'completed' and run.get('conclusion') == 'success')
 
 
-def publication_proved(kind, data):
+def publication_deployed(kind, data):
+    pub = data.get('publication')
+    if not exact_success(pub, data['main']):
+        return False
+    if not pub['run'].get('path', '').split('@')[0].endswith('/'+SPECS[kind][1]):
+        return False
+    if pub['run'].get('event') not in {'push', 'workflow_dispatch'}:
+        return False
+    try:
+        select_artifact(pub['artifacts'], pub['run'], pub['jobs'], kind.lower())
+    except Inconclusive:
+        return False
+    return True
+
+
+def publication_proved(kind, data, witness=None):
     main = data['main']
     pub, live = data.get('publication'), data.get('live')
     reasons = []
@@ -98,22 +114,31 @@ def publication_proved(kind, data):
     if not any(job.get('name') == live_job and job.get('conclusion') == 'success'
                and job.get('run_attempt') == live['run'].get('run_attempt') for job in live['jobs']):
         reasons.append('Required live job did not succeed in this attempt')
+    if not reasons:
+        try:
+            selected, _ = select_artifact(pub['artifacts'], pub['run'], pub['jobs'], kind.lower())
+            matching_rows(kind, data, witness, selected)
+        except (ValueError, Inconclusive) as exc:
+            reasons.append(str(exc))
     return not reasons, reasons
 
 
-def counts(snapshot, inventory=None):
+def counts(snapshot, inventory=None, witness=None):
     result = {'token': 'HC3_PARTIAL', 'as_of': snapshot['collected_at'], 'repositories': {},
               'publication_and_live_proved': 0,
-              'scope': 'Exact-main publication and named live workflow proofs; not all-route health or every repaired defect.',
+              'scope': 'Exact-main publication plus original FieldOps byte witnesses; successful live job labels alone are insufficient. Not all-route health or every repaired defect.',
               'decks_by_pathway': None, 'all_internal_links': None, 'native_handoff_served': None,
               'unmeasured_reason': 'No complete current route-level served evidence dataset was recovered for these counts.'}
     for kind in SPECS:
         data = snapshot['repositories'][kind]
-        proved, reasons = publication_proved(kind, data)
-        result['repositories'][kind] = {'main': data['main'], 'publication_and_live_proved': proved,
+        proved, reasons = publication_proved(kind, data, witness)
+        result['repositories'][kind] = {'main': data['main'], 'publication_deployed': publication_deployed(kind, data), 'publication_and_live_proved': proved,
             'publication_run': (data.get('publication') or {}).get('run', {}).get('id'),
             'live_run': (data.get('live') or {}).get('run', {}).get('id'),
-            'open_prs': len(data['open_prs']), 'reasons': reasons}
+            'open_prs': len(data['open_prs']), 'reasons': reasons,
+            'witnessed_subjects': sum(r['group'] == kind.lower() for r in witness['report']['rows']) if proved else 0,
+            'witness_scope': 'Original FieldOps subjects only',
+            'byte_proof_artifact': witness['artifact_id'] if proved else None}
         result['publication_and_live_proved'] += int(proved)
     if inventory:
         routes = inventory['routes']
@@ -125,27 +150,58 @@ def counts(snapshot, inventory=None):
     return result
 
 
-def self_test(snapshot):
-    valid = [kind for kind, data in snapshot['repositories'].items() if publication_proved(kind, data)[0]]
+def self_test(snapshot, witness=None, envelope=None):
+    valid = [kind for kind, data in snapshot['repositories'].items() if publication_proved(kind, data, witness)[0]]
     if not valid:
         raise ValueError('Control needs a real proved publication, not a synthetic green')
     kind = valid[0]
     real = snapshot['repositories'][kind]
-    assert publication_proved(kind, real)[0]
+    assert publication_proved(kind, real, witness)[0]
     scratch = copy.deepcopy(real)
     scratch['live']['run']['head_sha'] = '0'*40
-    assert not publication_proved(kind, scratch)[0], 'A stale live SHA escaped the control'
+    assert not publication_proved(kind, scratch, witness)[0], 'A stale live SHA escaped the control'
     scratch['live']['run']['head_sha'] = real['main']
-    assert publication_proved(kind, scratch)[0]
+    assert publication_proved(kind, scratch, witness)[0]
     for conclusion in ['skipped', 'cancelled', 'failure', None]:
         mutated = copy.deepcopy(real)
         mutated['live']['run']['conclusion'] = conclusion
-        assert not publication_proved(kind, mutated)[0]
+        assert not publication_proved(kind, mutated, witness)[0]
     mutated = copy.deepcopy(real)
     for artifact in mutated['publication']['artifacts']:
         artifact.setdefault('workflow_run', {})['head_sha'] = '0'*40
-    assert not publication_proved(kind, mutated)[0]
-    print('CONTROL real PASS / planted stale live SHA FAIL / restored PASS; skipped, cancelled and wrong artifacts rejected')
+    assert not publication_proved(kind, mutated, witness)[0]
+    assert not publication_proved(kind, real)[0], 'Green job labels passed without byte evidence'
+    assert publication_proved(kind, real, witness)[0]
+    for name, plant in [
+        ('wrong publication', lambda w: w['report']['publications'][kind.lower()].update({'run_id': 0})),
+        ('wrong source', lambda w: w['report']['publications'][kind.lower()].update({'source_sha': '0'*40})),
+        ('duplicate subject', lambda w: w['report']['rows'].append(copy.deepcopy(w['report']['rows'][0]))),
+        ('duplicate URL', lambda w: w['report']['rows'][1].update({'url': w['report']['rows'][0]['url']})),
+        ('red byte subject', lambda w: w['report']['rows'][0].update({'verdict': 'RED'})),
+    ]:
+        bad = copy.deepcopy(witness)
+        plant(bad)
+        assert not publication_proved(kind, real, bad)[0], 'Planted witness accepted: '+name
+        assert publication_proved(kind, real, witness)[0]
+    for name, plant in [
+        ('wrong proof repository', lambda e: e['run']['repository'].update({'full_name': 'another/repository'})),
+        ('wrong proof event', lambda e: e['run'].update({'event': 'pull_request'})),
+        ('wrong artifact name', lambda e: e['artifact'].update({'name': 'another-report'})),
+        ('expired artifact', lambda e: e['artifact'].update({'expired': True})),
+        ('archive corruption', lambda e: e.update({'archive_base64': 'AAAA'+e['archive_base64'][4:]})),
+        ('wrong upload attempt', lambda e: e['job'].update({'run_attempt': 0})),
+        ('wrong artifact source', lambda e: e['artifact']['workflow_run'].update({'head_sha': '0'*40})),
+    ]:
+        bad = copy.deepcopy(envelope)
+        plant(bad)
+        try:
+            decode_evidence(bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('Planted evidence envelope accepted: '+name)
+        decode_evidence(envelope)
+    print('CONTROL real byte witness PASS / missing witness, changed SHA, archive, attempt and subject FAIL / restored PASS; green labels alone rejected')
 
 
 def main():
@@ -153,6 +209,7 @@ def main():
     parser.add_argument('--snapshot', type=Path, required=True)
     parser.add_argument('--refresh', action='store_true')
     parser.add_argument('--inventory', type=Path)
+    parser.add_argument('--byte-evidence', type=Path)
     parser.add_argument('--output', type=Path)
     parser.add_argument('--self-test', action='store_true')
     args = parser.parse_args()
@@ -162,10 +219,12 @@ def main():
         args.snapshot.write_text(json.dumps(snapshot, indent=2)+'\n')
     else:
         snapshot = json.loads(args.snapshot.read_text())
+    envelope = json.loads(args.byte_evidence.read_text()) if args.byte_evidence else None
+    witness = decode_evidence(envelope) if envelope else None
     if args.self_test:
-        self_test(snapshot)
+        self_test(snapshot, witness, envelope)
     inventory = json.loads(args.inventory.read_text()) if args.inventory else None
-    rendered = json.dumps(counts(snapshot, inventory), indent=2)+'\n'
+    rendered = json.dumps(counts(snapshot, inventory, witness), indent=2)+'\n'
     print(rendered, end='')
     if args.output:
         args.output.write_text(rendered)

@@ -125,6 +125,19 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright@1.54.2 linkedom@0.18.12
           npx playwright install --with-deps chromium
+      - name: Prove the native save handoff and its planted preservation failures
+        run: |
+          node domain-split/check_stub_handoff.cjs
+          python3 domain-split/stub_handoff.py --fixture-output .receiver-play-output
+          python3 tools/hc3_handoff_publications.py --control .receiver-play-output
+          node domain-split/check_stub_handoff_browser.cjs .receiver-play-output audit-output/hc3-handoff
+      - name: Retain native handoff controls on every outcome
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: domain-split-native-handoff-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-output/hc3-handoff/
+          if-no-files-found: warn
       - name: Check lesson catalogue and its preservation controls
         run: |
           python .sources/Lessons/tools/catalogue/check_catalogue_static.py
@@ -166,6 +179,8 @@ jobs:
           node domain-split/check_usage_discovery.cjs || browser_status=1
           node domain-split/check_shared_navigation.cjs || browser_status=1
           node domain-split/check_completion.cjs || browser_status=1
+          # HC4 §7.1: /stats/on-this-device/ answers and reads one record back on BOTH origins (real → planted → restored)
+          node domain-split/check_device_stats_record.cjs _navigation-served domain-split/output/games || browser_status=1
           exit "$browser_status"
       - name: Save navigation and print evidence
         if: always()
