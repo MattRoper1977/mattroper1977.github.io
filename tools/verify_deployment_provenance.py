@@ -60,6 +60,7 @@ import hashlib
 import json
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -231,7 +232,7 @@ def data_stamp_of(sha: str) -> str | None:
     return ",".join(digests)
 
 
-def witness_pair(limit: int = 40) -> tuple[str, str] | None:
+def witness_pair() -> tuple[str, str] | None:
     """The most recent (parent, commit) where a *served* file changed.
 
     The controls need a pair Layer 3 can actually witness. Taking HEAD and its
@@ -239,7 +240,7 @@ def witness_pair(limit: int = 40) -> tuple[str, str] | None:
     docs/ leaves no witness, and the control then passes having exercised
     nothing - species 3, in the tool written to demonstrate species 3.
     """
-    code, out = git("rev-list", f"--max-count={limit}", "HEAD")
+    code, out = git("rev-list", "HEAD")
     if code != 0:
         return None
     for sha in out.split():
@@ -421,8 +422,43 @@ class FakeTransport(Transport):
         return self.files.get("/" + path, (404, b""))
 
 
+def witness_history_controls() -> None:
+    """An actual old served-file change must survive arbitrary tooling history."""
+    global ROOT
+    original_root = ROOT
+    try:
+        with tempfile.TemporaryDirectory(prefix="provenance-history-") as temporary:
+            ROOT = Path(temporary)
+            assert witness_pair() is None, "Unreadable Git history cannot supply a witness"
+            def run(*args):
+                code, output = git(*args)
+                assert code == 0, (args, output)
+                return output.strip()
+            def commit(message):
+                run("add", ".")
+                run("-c", "user.name=HC3 fixture", "-c", "user.email=fixture@example.invalid",
+                    "commit", "--quiet", "-m", message)
+                return resolve("HEAD")
+            run("init", "--quiet")
+            (ROOT / "docs").mkdir()
+            (ROOT / "docs/note.md").write_text("No published content yet\n")
+            commit("Documentation only")
+            assert witness_pair() is None, "No served-file history must remain inconclusive"
+            (ROOT / "index.html").write_text("<!doctype html><title>Before</title>\n")
+            before = commit("Original served page")
+            (ROOT / "index.html").write_text("<!doctype html><title>After</title>\n")
+            after = commit("Changed served page")
+            for index in range(45):
+                (ROOT / "docs/note.md").write_text("Tooling-only history " + str(index) + "\n")
+                commit("Documentation history " + str(index))
+            assert witness_pair() == (before, after), "Older served-file witness was hidden by tooling history"
+    finally:
+        ROOT = original_root
+
+
 def self_test() -> int:
     """Every control runs; none of them stops the others."""
+    witness_history_controls()
     head = resolve("HEAD")
     parent = resolve("HEAD^")
     if not head or not parent:
@@ -436,7 +472,7 @@ def self_test() -> int:
     # - would otherwise have produced a passing control that exercised nothing.
     pair = witness_pair()
     if pair is None:
-        print("  [ERROR] no commit in recent history changes a served file, so the "
+        print("  [ERROR] no commit in available history changes a served file, so the "
               "Layer 3 controls cannot be built", file=sys.stderr)
         return 1
     witness_parent, witness_commit = pair
