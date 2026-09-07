@@ -131,6 +131,10 @@ SOURCE_TYPES = {
     "Lesson":   dict(category="lesson",   contentType="Lesson"),
     "Hub":      dict(category="resource", contentType="Lesson hub",
                      audience=["teachers", "pupils", "schools-semh"], safe=True),
+    # The reviewed catalogue shelf rows (Lessons, 2026-09-05 onwards) spell the
+    # same record "hub"; identical semantics, so identical mapping.
+    "hub":      dict(category="resource", contentType="Lesson hub",
+                     audience=["teachers", "pupils", "schools-semh"], safe=True),
 }
 
 
