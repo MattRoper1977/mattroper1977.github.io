@@ -18,6 +18,19 @@ name: Estate check health
 # this exists to ask.
 
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/estate-check-health.yml'
+      - 'tools/estate_check_health.py'
+      - 'tools/estate_pin_report.py'
+      - 'tools/estate_pin_report.test.py'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/estate-check-health.yml'
+      - 'tools/estate_check_health.py'
+      - 'tools/estate_pin_report.py'
+      - 'tools/estate_pin_report.test.py'
   schedule:
     # Monday 07:00 UTC - before a teaching week, not during one.
     - cron: '0 7 * * 1'
@@ -44,6 +57,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Record the measured source and run before collecting findings
+        if: always()
+        run: |
+          mkdir -p audit-output/estate-health
+          python3 - <<'PYTHON'
+          import json, os
+          with open('audit-output/estate-health/measurement.json', 'w') as handle:
+              json.dump({'sourceSHA': os.environ['GITHUB_SHA'], 'runID': os.environ['GITHUB_RUN_ID'],
+                         'status': 'See command exits and step-outcomes; missing findings are not green'}, handle, indent=2)
+          PYTHON
+
       # The classifier is proved on planted rows BEFORE it is trusted on real
       # ones: a red, and a check that is green today but has not succeeded in
       # months. Both must be named. If this step fails, the report below means
@@ -52,7 +76,9 @@ jobs:
         id: t4-health-self-test
         if: always()
         shell: bash
-        run: python3 tools/estate_check_health.py --self-test
+        run: |
+          python3 tools/estate_check_health.py --self-test 2>&1 | tee audit-output/estate-health/classifier.log
+          python3 tools/estate_pin_report.test.py 2>&1 | tee audit-output/estate-health/pin-controls.log
 
       - name: Report every red and every stale check, by name and age
         id: t4-health-report
@@ -63,8 +89,8 @@ jobs:
         run: |
           set -uo pipefail
           rc=0
-          out="$(python3 tools/estate_check_health.py --gate --stale-days 30 --pin-stale-days 2 2>&1)" || rc=$?
-          printf '%s\n' "$out"
+          out="$(python3 tools/estate_check_health.py --gate --stale-days 30 --pin-stale-days 2 --json audit-output/estate-health/findings.json 2>&1)" || rc=$?
+          printf '%s\n' "$out" | tee audit-output/estate-health/health.log
           { echo '### Estate check health'; echo; echo '```'; printf '%s\n' "$out"; echo '```'; } \
             >> "$GITHUB_STEP_SUMMARY"
           exit $rc
@@ -83,7 +109,7 @@ jobs:
           set -uo pipefail
           rc=0
           out="$(python3 tools/report_required_checks.py 2>&1)" || rc=$?
-          printf '%s\n' "$out"
+          printf '%s\n' "$out" | tee audit-output/estate-health/required-checks.log
           { echo '### Required checks vs existing checks'; echo; echo '```'; \
             printf '%s\n' "$out"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           exit $rc
@@ -94,10 +120,10 @@ jobs:
         env:
           STEP_OUTCOMES: ${{ toJSON(steps) }}
         run: |
-          printf '%s' "$STEP_OUTCOMES" > step-outcomes.json
+          printf '%s' "$STEP_OUTCOMES" > audit-output/estate-health/step-outcomes.json
           python3 - <<'AGG'
           import json
-          d = json.load(open('step-outcomes.json'))
+          d = json.load(open('audit-output/estate-health/step-outcomes.json'))
           rows = [(k, v.get('outcome')) for k, v in d.items()
                   if isinstance(v, dict) and v.get('outcome')]
           bad = [(k, o) for k, o in rows if o != 'success']
@@ -113,3 +139,11 @@ jobs:
           print("")
           print("every check in the estate is green, and none has gone stale")
           AGG
+
+      - name: Preserve findings even when the estate or measurement is red
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: estate-health-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-output/estate-health/
+          if-no-files-found: error
