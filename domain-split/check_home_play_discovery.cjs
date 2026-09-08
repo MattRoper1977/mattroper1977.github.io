@@ -167,13 +167,21 @@ async function educationOnly(page, requests, start) {
         return evidence;
       }, page);
       await check(`${width}-teacher-and-pupil-explore-links`, async () => {
+        // UX2 B3: the teacher and pupil pages are Appendix A — Primary lessons and Play are
+        // menu rows (the pupil subset keeps both), Play is the footer's last link, and the
+        // audience routes are the homepage's "Here for someone else?" rows.
         for (const route of ['/for/teachers/', '/for/pupils/']) {
           await goto(page, route);
-          const nav = page.getByRole('navigation', { name: 'Explore Made by Matt', exact: true });
-          await target(nav.getByRole('link', { name: 'Primary', exact: true }));
-          await target(nav.getByRole('link', { name: 'Families & organisations', exact: true }));
-          const playLink = nav.getByRole('link', { name: 'Made by Matt Play', exact: true });
+          assert.equal(await page.locator('.mbm-explore-nav').count(), 0, 'No explore bar on ' + route);
+          await page.locator('.mbm-unified-menu > summary').click();
+          const panel = page.locator('#mbm-navigation-panel');
+          await target(panel.getByRole('link', { name: 'Primary lessons', exact: true }));
+          const menuPlay = panel.getByRole('link', { name: 'Made by Matt Play ↗', exact: true });
+          assert.equal(await menuPlay.getAttribute('href'), canonicalPlay + '/'); await target(menuPlay);
+          await page.keyboard.press('Escape');
+          const playLink = page.locator('footer').getByRole('link', { name: 'Made by Matt Play ↗', exact: true });
           assert.equal(await playLink.getAttribute('href'), canonicalPlay + '/'); await target(playLink); await noOverflow(page);
+          assert.equal((await page.request.get(url('/#audiences'))).status(), 200);
         }
         return { routes: ['/for/teachers/', '/for/pupils/'], visibleEntrances: ['Primary', 'Families & organisations', 'Made by Matt Play'] };
       }, page);

@@ -31,6 +31,8 @@
 //   hrefs         every same-origin href on the gated routes answers 200 on the mount;
 //                 off-origin hrefs are listed and must be the Play origin or an existing
 //                 external destination the pre-order page already carried.
+//   claims        R3: no served audience route carries a banned absolute (data/banned-claims.json);
+//                 R4: the teacher page carries the record's safety line verbatim.
 //   hero          the homepage brand mark and hero artwork decode with naturalWidth > 0.
 //   tiles         the "Go straight to your subject" tiles equal the Lessons hub's own
 //                 subject cards (slug for slug, in order) — the same derivation, measured.
@@ -42,7 +44,8 @@
 //   inject-kofi             plants a Ko-fi anchor on /                     → money
 //   inject-third-party      plants an off-origin script on /              → third-party
 //   break-copy              rewrites the homepage h1                       → copy
-//   strip-privacy-stats     removes the relocated /stats/ link from /privacy/ → reachability
+//   strip-stats-everywhere  removes the relocated /stats/ link from every page that carries it
+//                           (/privacy/ and the teacher page's account area)   → reachability
 //
 // env: MBM_EDUCATION_ORIGIN (default http://127.0.0.1:4173), MBM_DISCOVERY_SITE (repo root),
 //      MBM_UX2_OUTPUT (report dir). Exit 1 on any FAIL.
@@ -92,11 +95,12 @@ const MUTATIONS = {
   'inject-kofi': { target: 'money', route: '/', apply: html => html.replace('</footer>', '<p><a href="https://ko-fi.com/madebymattuk">Support Made by Matt</a></p></footer>') },
   'inject-third-party': { target: 'third-party', route: '/', apply: html => html.replace('</head>', '<script src="https://cdn.example.net/planted.js"></script></head>') },
   'break-copy': { target: 'copy', route: '/', apply: html => html.replace('Find your next lesson.', 'Find your next lesson') },
-  'strip-privacy-stats': { target: 'reachability', route: '/privacy/', apply: html => html.replace('<a href="/stats/">Shared activity · Top 10 lessons and packs</a>', 'Shared activity') },
+  'strip-stats-everywhere': { target: 'reachability', routes: ['/privacy/', '/for/teachers/'], apply: html => html.replace(/<a href="\/stats\/">[^<]*<\/a>/g, 'Shared activity') },
 };
 async function plant(context, mutation) {
   if (!mutation) return;
-  await context.route(u => new URL(u).origin === origin && new URL(u).pathname === mutation.route, async route => {
+  const routes = mutation.routes || [mutation.route];
+  await context.route(u => new URL(u).origin === origin && routes.includes(new URL(u).pathname), async route => {
     const response = await route.fetch(); const html = await response.text();
     const mutated = mutation.apply(html); assert.notEqual(mutated, html, 'The planted mutation must change the served page');
     await route.fulfill({ response, body: mutated, headers: { ...response.headers(), 'content-type': 'text/html; charset=utf-8' } });
@@ -253,6 +257,30 @@ async function suite(browser, mutation) {
     return { serviceEnabled: !!config.enabled, status, liveStatus };
   });
 
+  await check('claims (R3/R4) on every served audience route', async () => {
+    // R3: no served audience page states an absolute the estate cannot hold — the list is
+    // data/banned-claims.json and nowhere else (MEASUREMENT INVALID if it is empty).
+    // R4: the teacher page carries the record's safety line (noteTitle + note) verbatim.
+    const claims = JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/banned-claims.json'), 'utf8'));
+    const banned = (claims.banned || []).filter(Boolean);
+    assert(banned.length > 0, 'MEASUREMENT INVALID: data/banned-claims.json declares no banned strings');
+    const record = JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/audience-homepages.json'), 'utf8')).audiences;
+    const routes = [...Object.values(record).map(a => a.route), '/for/governors-trustees/'];
+    const hits = [];
+    for (const route of routes) {
+      await goto(page, route);
+      const text = (await bodyText(page)).toLowerCase();
+      for (const b of banned) if (text.includes(b.toLowerCase())) hits.push(route + ': ' + b);
+    }
+    assert.deepEqual(hits, [], 'Banned absolutes on served audience routes');
+    await goto(page, '/for/teachers/');
+    const text = (await bodyText(page)).replace(/\s+/g, ' ');
+    const t = record.teachers;
+    assert(t.noteTitle && t.note, 'MEASUREMENT INVALID: the record has no teacher safety line');
+    assert(text.includes(t.noteTitle) && text.includes(t.note.replace(/\s+/g, ' ')), 'The teacher page carries the record safety line and its title verbatim');
+    return { routes: routes.length, banned: banned.length };
+  });
+
   await check('hero /', async () => {
     await goto(page, '/');
     const images = await page.locator(HEADER + ' img, .hero-art img').evaluateAll(n => n.map(i => ({ src: (i.getAttribute('src') || '').slice(0, 40), w: i.naturalWidth, h: i.naturalHeight, complete: i.complete })));
@@ -268,7 +296,15 @@ async function suite(browser, mutation) {
     await page.waitForFunction(() => document.querySelectorAll('.scard[data-card]').length > 0);
     const cards = await page.locator('.scard[data-card]').evaluateAll(n => n.map(c => c.dataset.card));
     assert.deepEqual(tiles, cards, 'Homepage subject tiles are the hub cards, slug for slug, in order');
-    return { tiles };
+    // UX2 B3: the teacher page's "Choose a subject and pathway" cards carry exactly the pathway
+    // chips the hub's own cards carry (only pathways present in the catalogue), per subject.
+    const hubTiers = await page.locator('.scard[data-card]').evaluateAll(n => Object.fromEntries(n.map(c => [c.dataset.card, [...c.querySelectorAll('.chips .tier')].map(x => x.textContent.trim())])));
+    await goto(page, '/for/teachers/');
+    const teacherTiers = await page.locator('.subject-pathways .route-card').evaluateAll(n => Object.fromEntries(n.map(c => [new URL(c.querySelector('a.text-link').href).searchParams.get('subject'), [...c.querySelectorAll('.chips a')].map(a => a.textContent.trim())])));
+    assert(Object.keys(teacherTiers).length === 4, 'Four subject cards on the teacher page');
+    for (const [slug, tiers] of Object.entries(teacherTiers)) assert.deepEqual(tiers, hubTiers[slug] || [], 'Pathway chips equal the hub card chips: ' + slug);
+    for (const [slug, tiers] of Object.entries(teacherTiers)) for (const p of tiers) assert.equal((await page.request.get(origin + '/Lessons/subject.html?subject=' + slug + '&pathway=' + p)).status(), 200);
+    return { tiles, teacherTiers };
   });
 
   await check('added this half-term is the hub rail', async () => {

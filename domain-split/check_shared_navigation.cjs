@@ -18,7 +18,7 @@ const routes = ['/', '/main/', '/account/', '/members/', '/mailing-list/', '/pri
   '/stats/on-this-device/', '/asdan/', '/uas/', '/commission/', '/Lessons/Science_Teesside/',
   '/Lessons/Humanities_Teesside/', '/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/'];
 const restricted = ['/for/pupils/', '/resources/', '/Lessons/primary/'];
-const ux2Routes = ['/', '/commission/'];
+const ux2Routes = ['/', '/commission/', '/for/pupils/', '/for/teachers/'];
 const themeRoutes = ['/Lessons/', '/Matt-s-Apps-/', '/Lessons/Science_Teesside/', '/Lessons/Humanities_Teesside/'];
 const {deviceStatsSkip}=require('./check_device_stats.cjs');
 (async () => {
@@ -168,7 +168,8 @@ const {deviceStatsSkip}=require('./check_device_stats.cjs');
             .filter(t => t.w < 44 || t.h < 44));
           assert.deepEqual(await sweep(), [], 'UX2 44px targets, menu closed: '+route);
           await page.locator(menu+' > summary').press('Enter');
-          assert(await page.locator(panel).isVisible());
+          await page.waitForTimeout(150);
+          assert(await page.locator(panel).isVisible(), 'UX2 sweep: menu opens with Enter on '+route);
           assert.deepEqual(await sweep(), [], 'UX2 44px targets, menu open: '+route);
           await page.locator(menu+' > summary').press('Escape');
         }

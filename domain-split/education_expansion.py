@@ -80,26 +80,9 @@ def refresh(output, lessons, apps, site_source):
     # "Here for someone else?" rows (#audiences) come from the record, Primary
     # lessons and Play are menu rows and Play is in the footer, so the explore
     # nav and the six-card directory are not added there.
-    for relative in ('for/teachers/index.html', 'for/pupils/index.html'):
-        path = site/relative
-        doc = html.document_fromstring(path.read_text())
-        styles(doc)
-        header = doc.xpath('//header')[0]
-        extra_after = header
-        extra_after.addnext(fragment('<nav class="mbm-explore-nav" aria-label="Explore Made by Matt"><div class="wrap">'
-                                '<a href="/Lessons/primary/">Primary</a><a href="/#audiences">Families &amp; organisations</a>'
-                                '<a class="mbm-play-link" href="'+PLAY+'/">Made by Matt Play</a></div></nav>'))
-        footer = doc.xpath('//footer')[0]
-        menus = footer.xpath('.//nav')
-        if menus:
-            nav = menus[0]
-        else:
-            nav = fragment('<nav class="wrap" aria-label="Learning footer"></nav>')
-            footer.append(nav)
-        nav.append(fragment('<a href="/#audiences">Families &amp; organisations</a>'))
-        nav.append(fragment('<a href="/Lessons/primary/">Primary</a>'))
-        nav.append(fragment('<a href="'+PLAY+'/">Made by Matt Play</a>'))
-        save_doc(path, doc)
+    # UX2 B2/B3: the homepage, teacher and pupil pages are Appendix A — Primary lessons and
+    # Play are menu rows, Play is the footer's last link and the audience routes are the
+    # homepage's "Here for someone else?" rows, so no explore nav or footer additions here.
     parent_path = site/'for/parents-carers/index.html'
     doc = html.document_fromstring(parent_path.read_text())
     styles(doc)

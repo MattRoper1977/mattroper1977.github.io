@@ -81,8 +81,10 @@
  "teachers": [
   "What are you teaching today?",
   "Find a lesson, plan a sequence, capture the evidence.",
+  "Teach",
   "Find a lesson",
   "Browse lessons →",
+  "Plan",
   "Schemes of work and packs",
   "Open planning →",
   "Assess and record",
@@ -126,11 +128,20 @@
    "Teacher tools",
    "Learning home"
   ],
-  "routes": {}
+  "routes": {
+   "/for/teachers/": {
+    "Education Hub": {
+     "count": 1,
+     "why": "B1 HUBS ruling: /education-hub/ is a STOP kept under its own name and linked from the teacher page's account area; the name is a listed defect, not renamed by this order."
+    }
+   }
+  }
  },
  "gatedRoutes": [
   "/",
-  "/commission/"
+  "/commission/",
+  "/for/pupils/",
+  "/for/teachers/"
  ],
  "pupilRoutes": [
   "/",
@@ -191,7 +202,38 @@
   "/commission/": [
    "Commission a resource",
    "Made by Matt · Learning"
+  ],
+  "/for/pupils/": [
+   "What are you learning today?",
+   "Choose your subject. Your teacher will help you find your pathway and lesson.",
+   "Choose your subject",
+   "Find your activity",
+   "Made by Matt · Learning"
+  ],
+  "/for/teachers/": [
+   "What are you teaching today?",
+   "Find a lesson, plan a sequence, capture the evidence.",
+   "Teach",
+   "Find a lesson",
+   "Browse lessons →",
+   "Plan",
+   "Schemes of work and packs",
+   "Open planning →",
+   "Assess and record",
+   "Evidence packs and trackers",
+   "Open evidence →",
+   "Choose a subject and pathway",
+   "Make something for your classroom",
+   "Commission a resource",
+   "Teacher updates",
+   "Account and members",
+   "Made by Matt · Learning",
+   "Listed by unit, not by type: a pack’s type could not be derived reliably."
   ]
  },
- "_gate": "gatedRoutes lists the routes this order has rebuilt so far (each part appends its own); routeStrings names the Appendix A strings that must render on each; pupilRoutes are the money/third-party routes; overlayRoutes are the build's education front doors that the authored sitemap must carry; menuAdultOnly are §MENU rows the pupil subset omits."
+ "_gate": "gatedRoutes lists the routes this order has rebuilt so far (each part appends its own); routeStrings names the Appendix A strings that must render on each; pupilRoutes are the money/third-party routes; overlayRoutes are the build's education front doors that the authored sitemap must carry; menuAdultOnly are §MENU rows the pupil subset omits.",
+ "derivedNotes": {
+  "_why": "Sentences this order had to write where Appendix A is silent and a measurement forced a degrade; each is used on every surface that states the same fact (one name per thing).",
+  "kindDiscarded": "Listed by unit, not by type: a pack’s type could not be derived reliably."
+ }
 }

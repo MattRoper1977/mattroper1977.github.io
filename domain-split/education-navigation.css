@@ -207,3 +207,16 @@ body[data-page="commission"] .compact-hero{padding:2rem 0}
 body[data-page="commission"] .hero h1{margin-bottom:0}
 @media(max-width:900px){body[data-page="home"] .subject-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){body[data-page="home"] .subject-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}body[data-page="home"] .subject-tiles .route-card{padding:.9rem}body[data-page="home"] .hero-grid{grid-template-columns:1fr}body[data-page="home"] .hero-art{max-width:none;margin-top:.5rem}}
+
+/* UX2 B3 — the teacher and pupil pages (Appendix A §TEACHERS / §PUPILS). */
+body[data-page="teachers"] .route-card .text-link,body[data-page="pupils"] .route-card .text-link{display:inline-flex;align-items:center;min-height:44px}
+body[data-page="teachers"] .route-card .quiet-note{margin:0}
+body[data-page="teachers"] .route-card .eyebrow{text-transform:none;letter-spacing:0}
+body[data-page="teachers"] .route-card .chips{margin:.25rem 0}
+body[data-page="teachers"] .subject-pathways{grid-template-columns:repeat(4,minmax(0,1fr))}
+body[data-page="teachers"] .subject-pathways .route-card{min-width:0;overflow-wrap:anywhere}
+body[data-page="teachers"] .account-links a{background:#fffefa}
+body[data-page="teachers"] #teacher-note p{max-width:60rem}
+body[data-page="pupils"] .subject-tiles .route-card{min-height:44px;min-width:0;overflow-wrap:anywhere}
+@media(max-width:900px){body[data-page="teachers"] .subject-pathways{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){body[data-page="teachers"] .subject-pathways,body[data-page="pupils"] .subject-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}body[data-page="teachers"] .hero-grid{grid-template-columns:1fr}body[data-page="teachers"] .hero-art{max-width:none;margin-top:.5rem}}
