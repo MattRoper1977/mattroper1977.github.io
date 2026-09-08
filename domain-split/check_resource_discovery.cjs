@@ -213,8 +213,12 @@ async function responsiveChecks(browser) {
       assert(allYears, 'ASDAN learning finder must explicitly include all years');
       const allYearsURL = new URL(allYears.href);
       await goto(page, allYearsURL.pathname + allYearsURL.search);
-      assert.equal(await page.locator('#subject-group').inputValue(), 'ASDAN & life skills');
-      assert.equal(await page.locator('[data-year=""]').getAttribute('aria-pressed'), 'true', 'An implicit current-year filter still hides older ASDAN resources');
+      // UX2 (Lessons #437): the hub's subject select and year tabs are retired. An old
+      // ?subject=&year= URL resolves to the hub's flat results view with every year
+      // rendered; the evidence that no year filter hides older ASDAN resources is the
+      // rendered cards read against the independent source below, not a control's state.
+      await page.waitForFunction(() => /\d+ of \d+ resources/.test(document.querySelector('#count')?.textContent || '') && document.querySelectorAll('#cards .card').length > 0);
+      assert.equal(new URL(page.url()).searchParams.get('subject'), 'ASDAN & life skills', 'The all-years finder lost its subject');
       const older = sourceJSON(lessonsRoot, 'resources.json').filter(r => /ASDAN|vocational|PfA|life skills/i.test(r.subject || '') && r.year !== '2026-27' && r.file && sourceFile(routeOf(r.file, '/Lessons/')));
       assert(older.length > 0, 'The independent source contains no older ASDAN controls');
       const rendered = new Set((await visibleLinks(page, '#cards .card a[href]')).map(a => routeOf(a.href)));
