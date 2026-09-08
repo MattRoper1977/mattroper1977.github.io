@@ -24,16 +24,29 @@ import shutil
 import sys
 
 HERE = Path(__file__).resolve().parent
-# The builders import this module as a sibling, so `education_expansion` is on
-# the path already. tools/test_published_site.py loads this file by path to
-# exercise the real header renderer rather than a copy of it, and nothing puts
-# this directory on the path for that loader. Adding it keeps ONE
-# education_expansion module object either way; importing it by file path here
-# would make a second one that could drift from the builders'.
-if str(HERE) not in sys.path:
-    sys.path.insert(0, str(HERE))
 
-from education_expansion import AUDIENCES as BUILD_AUDIENCES
+
+def build_audiences():
+    """education_expansion.AUDIENCES, imported at the point of use.
+
+    The governors row is read from that constant so the menu never types its
+    route, and this is the only thing this module wants from it. Importing it
+    at module scope made two problems. The builders run as scripts from this
+    directory, so the sibling name resolves for them; tools/test_published_site.py
+    loads this file by path to exercise the real header renderer rather than a
+    copy of it, and nothing puts this directory on that loader's path. And
+    education_expansion imports lxml for its own HTML work, which a navigation
+    renderer has no business requiring - the professional-site-design-audit job
+    installs no lxml, so header() became unreachable there.
+
+    The directory is added to sys.path rather than loading the file by path, so
+    there stays exactly ONE education_expansion module object; a second one
+    could drift from the builders'.
+    """
+    if str(HERE) not in sys.path:
+        sys.path.insert(0, str(HERE))
+    from education_expansion import AUDIENCES
+    return AUDIENCES
 
 PLAY = 'https://www.madebymatt-play.uk/'
 MENU_TITLE = 'Menu'
@@ -79,12 +92,13 @@ def audience_rows(site_source):
 
     The record (data/audience-homepages.json) owns seven audiences. The
     governors page exists only in this build (education_expansion.AUDIENCES);
-    it is appended from that constant so the menu never types its route.
+    it is appended from that constant, read through build_audiences(), so the
+    menu never types its route.
     """
     audiences = json.loads((site_source / 'data/audience-homepages.json').read_text())['audiences']
     rows = [(audience['route'], audience['label']) for audience in audiences.values()]
     held = {route for route, _ in rows}
-    for slug, label, _ in BUILD_AUDIENCES:
+    for slug, label, _ in build_audiences():
         route = '/for/' + slug + '/'
         if route not in held:
             rows.append((route, label))
