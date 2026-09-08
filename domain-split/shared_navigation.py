@@ -21,10 +21,20 @@ from pathlib import Path
 import json
 import re
 import shutil
+import sys
+
+HERE = Path(__file__).resolve().parent
+# The builders import this module as a sibling, so `education_expansion` is on
+# the path already. tools/test_published_site.py loads this file by path to
+# exercise the real header renderer rather than a copy of it, and nothing puts
+# this directory on the path for that loader. Adding it keeps ONE
+# education_expansion module object either way; importing it by file path here
+# would make a second one that could drift from the builders'.
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
 
 from education_expansion import AUDIENCES as BUILD_AUDIENCES
 
-HERE = Path(__file__).resolve().parent
 PLAY = 'https://www.madebymatt-play.uk/'
 MENU_TITLE = 'Menu'
 GROUP_LEARNING = 'Learning'
