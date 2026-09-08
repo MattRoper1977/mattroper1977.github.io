@@ -3,6 +3,9 @@
 // Run against the assembled publication using the established CI browser.
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const siteRoot = path.resolve(process.env.MBM_DISCOVERY_SITE || path.join(__dirname, '..'));
 const origin = new URL(process.env.MBM_EDUCATION_ORIGIN || 'http://127.0.0.1:4173').origin;
 const header = '[data-mbm-navigation="education"]';
 const menu = header + ' .mbm-unified-menu';
@@ -46,6 +49,54 @@ const {deviceStatsSkip}=require('./check_device_stats.cjs');
         const lessonLink=page.locator(panel).getByRole('link',{name:'Lessons',exact:true});
         assert(await lessonLink.isVisible(),'Learning destination: '+route);
         assert.equal(new URL(await lessonLink.getAttribute('href'),page.url()).pathname,'/Lessons/','Keep catalogue return selection: '+route);
+        // UX2 B1 — Appendix A §MENU exactly: title + 44px close, three groups in
+        // order, audience rows from the record, no deep links, rows ≥48px, Play last.
+        {
+          const record = JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/audience-homepages.json'), 'utf8')).audiences;
+          const pupil = route === record.pupils.route;
+          assert.equal(await page.locator(panel + ' .mbm-menu-title').innerText(), 'Menu', 'Menu title: ' + route);
+          const closeBox = await page.locator(panel + ' .mbm-menu-close').boundingBox();
+          assert(closeBox && closeBox.width >= 44 && closeBox.height >= 44, 'Close control is 44px: ' + route + ' ' + JSON.stringify(closeBox));
+          const titles = await page.locator(panel + ' .mbm-menu-group h2').evaluateAll(nodes => nodes.map(n => n.textContent.trim()));
+          assert.deepEqual(titles, ['Learning', 'Who are you here for?', 'Your account'], 'Three groups in order: ' + route);
+          // The Lessons adapter rewrites a[href="/Lessons/"] at runtime to carry the
+          // catalogue return selection (asserted above); compare that row by path.
+          const groups = await page.locator(panel + ' .mbm-menu-group').evaluateAll(nodes => nodes.map(n => [...n.querySelectorAll('a')].map(a => { const h = a.getAttribute('href'); return [new URL(h, location.href).pathname === '/Lessons/' ? '/Lessons/' : h, a.textContent.trim()]; })));
+          const learning = pupil ? [['/Lessons/', 'Lessons'], ['/resources/', 'Resources'], ['/Lessons/primary/', 'Primary lessons']]
+            : [['/Lessons/', 'Lessons'], ['/resources/', 'Resources'], ['/Matt-s-Apps-/', 'Apps & tools'], ['/Lessons/primary/', 'Primary lessons']];
+          assert.deepEqual(groups[0], learning, 'Learning group: ' + route);
+          const who = Object.values(record).map(a => [a.route, a.label]);
+          if (!who.some(r => r[0] === '/for/governors-trustees/')) who.push(['/for/governors-trustees/', 'Governors & trustees']);
+          assert.deepEqual(groups[1], pupil ? who.filter(r => r[0] === record.pupils.route) : who, 'Audience rows come from the record: ' + route);
+          const account = groups[2].map(r => r[0]);
+          assert(account.includes('/privacy/') && groups[2].find(r => r[0] === '/privacy/')[1] === 'Privacy and statistics', 'Privacy row: ' + route);
+          const full = [['/account/', 'Account and members'], ['/mailing-list/', 'Teacher updates'], ['/privacy/', 'Privacy and statistics']];
+          const adultPages = new Set(JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/adult-surfaces.json'), 'utf8')).adultSurfaces.map(x => '/' + x.page.replace(/index\.html$/, '')));
+          if (restricted.includes(route)) assert.deepEqual(account, ['/privacy/'], 'Pupil/shared subset of the account group: ' + route);
+          else if (adultPages.has(route) || ['/', '/for/governors-trustees/', '/owner/stats/', '/Lessons/', '/Matt-s-Apps-/'].includes(route)) assert.deepEqual(groups[2], full, 'Account group on a declared adult page: ' + route);
+          else assert(JSON.stringify(groups[2]) === JSON.stringify(full) || JSON.stringify(account) === JSON.stringify(['/privacy/']), 'Account group is the full set or the shared subset: ' + route);
+          const hrefs = await page.locator(panel + ' a').evaluateAll(nodes => nodes.map(a => new URL(a.getAttribute('href'), location.href).pathname === '/Lessons/' ? '/Lessons/' : a.getAttribute('href')));
+          assert.deepEqual(hrefs.filter(h => /[?]|\.html$|#/.test(h)), [], 'No deep links in the menu: ' + route);
+          const last = page.locator(panel + ' a').last();
+          assert.equal(await last.innerText(), 'Made by Matt Play ↗', 'Play is last: ' + route);
+          assert.equal(await last.getAttribute('href'), 'https://www.madebymatt-play.uk/', 'Play is a link: ' + route);
+          const short = await page.locator(panel + ' a').evaluateAll(nodes => nodes.map(a => a.getBoundingClientRect().height).filter(h => h > 0 && h < 48));
+          assert.deepEqual(short, [], 'Every menu row is at least 48px: ' + route);
+          assert.equal(await page.locator(header + ' .mbm-unified-brand small').count(), 0, 'No tagline in the header: ' + route);
+          const searchLink = page.locator(header + ' .mbm-unified-search');
+          const searchBox = await searchLink.boundingBox();
+          assert(searchBox && searchBox.width >= 44 && searchBox.height >= 44, 'Header search control is 44px: ' + route);
+          const target = await searchLink.getAttribute('href');
+          if (target.startsWith('#')) assert.equal(await page.locator('[id="' + target.slice(1) + '"]').count(), 1, 'Header search jumps to a real control: ' + route);
+          else assert.equal(target, '/resources/#rxSearch', 'Header search falls back to Resources: ' + route);
+          if (javaScriptEnabled) {
+            await page.locator(panel + ' .mbm-menu-close').click();
+            assert(!await page.locator(panel).isVisible(), 'Close control closes the menu: ' + route);
+            assert(await summary.evaluate(el => el === document.activeElement), 'Closing returns focus to the opener: ' + route);
+            await summary.press('Enter');
+            assert(await page.locator(panel).isVisible());
+          }
+        }
         const firstLink = page.locator(panel + ' a').first();
         assert(await firstLink.evaluate(el => {
           const r=el.getBoundingClientRect();
