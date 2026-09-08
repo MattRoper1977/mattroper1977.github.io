@@ -27,14 +27,14 @@ jobs:
           repository: MattRoper1977/Lessons
           # Reviewed Science packs (Lessons #356) and fixture repair (#357);
           # preserve the original lesson routes and paired catalogue contract.
-          ref: fdbf0ee6a17f32b36f195d38378b4332549dad69
+          ref: 43d5e5ef1492245c7d4b9dc8f1ba1ff6fc045d42
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Matt-s-Apps-
           # Exact paired catalogue contract; Apps resources are unchanged.
-          ref: cbd389bc521fb1958ee4f0fe3950722e3da832a4
+          ref: 8be4d5313742e05c9627cd56d2e9ec63cf688e3c
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
