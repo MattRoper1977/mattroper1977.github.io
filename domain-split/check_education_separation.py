@@ -99,7 +99,13 @@ def registry_errors(output):
     # Re-frozen 7 September (HC6 §12): the catalogue mirror moved 663 → 751 rows,
     # which gives 51 existing records their search-index source_ids. Same rows,
     # same routes; proved identical between the pinned and the final builds.
-    baseline_sha = 'd2c3782fbea4149ee6af4c260d952bddba3580e506584db9f46224b9227393eb'
+    # Re-frozen 8 September (RX3 P3.4): the catalogue transaction (Lessons #399,
+    # fdbf0ee6) catalogues the 26 beside classic lessons and the six FoodWise
+    # chassis pages, so 32 lesson records join the registry and the two re-cut
+    # Science lessons carry their catalogue titles: 894 -> 926 retained rows,
+    # 0 removed. Proved on the fdbf0ee6 build; the a91780fc build no longer
+    # matches, which is why this moves with the Lessons pin lines.
+    baseline_sha = 'a90a62c56db7d4bb0cfac0af5888ac673446b5a029b1c19fd885ff135c6cfe6e'
     additions_path = HERE/'science-download-usage-additions.json'
     if sha256(additions_path.read_bytes()).hexdigest() != '266199e1f6d355956b23df058b3d867b50edc2f155545b0b43fb2d6f8177df30':
         return ['Unreviewed Science download registration metadata']
