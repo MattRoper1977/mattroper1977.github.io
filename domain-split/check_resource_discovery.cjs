@@ -15,7 +15,10 @@ const appsRoot = path.resolve(process.env.MBM_DISCOVERY_APPS || path.join(siteRo
 const out = path.resolve(process.env.MBM_DISCOVERY_OUTPUT || 'audit-output/resource-discovery');
 const report = { schema: 1, origin, startedAt: new Date().toISOString(), cases: [], pageErrors: [], destinations: [], external: [], absentFromSource: [], fatal: null };
 const PDF = '/Matt-s-Apps-/PDF_Studio.html';
-const hubs = ['/', '/main/', '/resources/', '/tools/', '/Matt-s-Apps-/'];
+// UX2 B2: the homepage's learning areas are its "Three places, one site" cards and the
+// menu's Learning group; the collection bar stays on the three catalogue hubs.
+const hubs = ['/resources/', '/tools/', '/Matt-s-Apps-/'];
+const homes = ['/', '/main/'];
 const widths = [320, 390, 1280];
 const collectionNav = 'nav.collection-nav[aria-label="Learning areas"]';
 const resourceCards = '#rxOut .rx-cardx a[href], #resource-collections a[href], #collections a[href], #asdan-learning a[href]';
@@ -133,6 +136,18 @@ async function responsiveChecks(browser) {
     const context = await browser.newContext({ viewport: { width, height: width === 1280 ? 900 : 844 }, reducedMotion: 'reduce' });
     const page = await context.newPage(); page.setDefaultTimeout(15000);
     page.on('pageerror', e => report.pageErrors.push({ url: page.url(), error: String(e) }));
+    for (const home of homes) await check(`${width}-${home === '/' ? 'home' : 'main'}-three-places`, page, async () => {
+      await goto(page, home);
+      assert.equal(await page.locator(collectionNav).count(), 0, 'No duplicate learning-areas bar on the homepage');
+      const links = [];
+      for (const [target, name] of [['/Lessons/', 'Lessons'], ['/resources/', 'Resources'], ['/Matt-s-Apps-/', 'Apps & tools']]) {
+        const link = page.locator('#places a.route-card').filter({ has: page.getByRole('heading', { name, exact: true }) });
+        assert.equal(await link.count(), 1, `${home} lacks the ${name} place`);
+        assert.equal(routeOf(await link.getAttribute('href'), home), routeOf(target));
+        links.push({ target, bounds: await hitTarget(link) });
+      }
+      return { links };
+    });
     for (const route of hubs) {
       await check(`${width}-${route}-obvious-learning-navigation`, page, async () => {
         await goto(page, route);
@@ -239,7 +254,7 @@ async function catalogueChecks(browser, expected) {
   const page = await context.newPage(); page.setDefaultTimeout(15000);
   const cards = new Map(), navigation = new Set(), externalCards = new Set();
   await check('all-working-education-destinations-in-rendered-cards', page, async () => {
-    for (const route of hubs) {
+    for (const route of [...homes, ...hubs]) {
       await goto(page, route);
       if (route === '/Matt-s-Apps-/') {
         // Open real user-facing disclosures using their summary controls.

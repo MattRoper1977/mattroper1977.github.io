@@ -72,13 +72,59 @@ class RuntimeRefs(HTMLParser):
             self.refs.append(a["href"])
 
 
+LESSONS_ROOT = None  # set by main(); the served Lessons catalogue the homepage tiles derive from
+
+
+def slugify(value):
+    """Port of assets/catalogue/hub.js slugify() (Lessons, UX2 A2)."""
+    return re.sub(r'^-+|-+$', '', re.sub(r'[^a-z0-9]+', '-', str(value or '').lower().replace('&', ' and ')))
+
+
+def card_of(row):
+    """Port of assets/catalogue/hub.js cardOf() (Lessons, UX2 A2): the subject card a row belongs to."""
+    s = str(row.get('subject') or ''); f = str(row.get('family') or '')
+    if re.search(r'science|biology|chemistry|physics', s, re.I): return 'science'
+    if re.search(r'humanities|religio|\bRE\b|history|geography', s, re.I): return 'humanities-re'
+    if re.search(r'\bart\b|arts award', s, re.I): return 'art-studio'
+    if re.search(r'ASDAN|PSHE|FoodWise|D&T|life ?skills|Vocational|PfA', s + ' ' + f, re.I): return 'lifeskills'
+    return 'x-' + slugify(s)
+
+
+def extra_subject_tiles(lessons):
+    """One extra tile per Part A extra slug ('x-…'), named by the first row's subject, A–Z — the hub's own rule.
+
+    Game rows never reach the education catalogue (education_policy filters them), so they are not counted here.
+    """
+    if lessons is None: return []
+    names = {}
+    for row in json.loads((lessons / 'resources.json').read_text()):
+        if str(row.get('type', '')).lower() == 'game': continue
+        key = card_of(row)
+        if key.startswith('x-') and key not in names: names[key] = str(row.get('subject') or key)
+    return sorted(names.items(), key=lambda kv: kv[1])
+
+
+AUDIENCE_RECORD = ROOT / 'data/audience-homepages.json'  # s16: audience routes come from the record, never a literal
+
+
+def audience_rows(record_path=None):
+    """Every audience route except teachers and pupils, label and order from the record; governors from the build."""
+    from education_expansion import AUDIENCES as BUILD_AUDIENCES
+    record = json.loads(Path(record_path or AUDIENCE_RECORD).read_text())['audiences']
+    rows = [(a['route'], a['label']) for a in record.values() if a['route'] not in {record['teachers']['route'], record['pupils']['route']}]
+    held = {r for r, _ in rows}
+    for slug, label, _ in BUILD_AUDIENCES:
+        if '/for/' + slug + '/' not in held: rows.append(('/for/' + slug + '/', label))
+    return rows
+
+
 def render_page(preview, kind, origin, config):
     start = preview.index('<section class="view' + (' game-view' if kind == "games" else '') + '" id="view-' + kind + '"')
     possible = [n for n in [preview.find('<section class="view', start + 20), preview.find('</main>', start)] if n >= 0]
     body = preview[start:min(possible)].strip()
     body = re.sub(r'(<section class="view[^>]+) hidden>', r'\1>', body, count=1)
-    views = {"home": "/", "teachers": "/for/teachers/", "pupils": "/for/pupils/", "games": "/"}
-    body = re.sub(r'href="#(home|teachers|pupils|games)" data-view="\1"', lambda m: 'href="' + views[m[1]] + '"', body)
+    views = {"home": "/", "teachers": "/for/teachers/", "pupils": "/for/pupils/", "games": "/", "commission": "/commission/"}
+    body = re.sub(r'href="#(home|teachers|pupils|games|commission)" data-view="\1"', lambda m: 'href="' + views[m[1]] + '"', body)
     body = re.sub(r'href="#[^"]*" data-search-link="(teachers|pupils)" data-query="([^"]*)"',
                   lambda m: 'href="' + views[m[1]] + '?q=' + m[2] + '#' + ('teacher-search' if m[1] == 'teachers' else 'pupil-search') + '"', body)
     body = re.sub(r' data-jump="[^"]*"', '', body)
@@ -93,20 +139,30 @@ def render_page(preview, kind, origin, config):
         body = body.replace(config["source_origin"], origin)
         body = body.replace('</footer>', '<div class="wrap"><a href="/privacy/">Privacy and saved progress</a></div></footer>')
         body = body.replace('<footer class="footer">', '<div class="section"><div class="wrap"><h2>Classroom activities</h2><div class="results" id="classroom-activities"></div><h2>For staff</h2><p class="game-note">Professional development activities for teachers and education staff.</p><div class="results" id="staff-activities"></div></div></div><footer class="footer">')
-    else:
+    elif 'href="/privacy/"' not in body:
         body = body.replace('</footer>', '<div class="wrap"><a href="/privacy/">Privacy</a></div></footer>')
-    for old, new in [("Learning homepage preview", "Learning homepage"), ("Teacher homepage preview", "Teacher homepage"), ("Pupil homepage preview", "Pupil homepage"), ("Games homepage preview", "Games homepage")]:
+    for old, new in [("Learning homepage preview", "Learning homepage"), ("Teacher homepage preview", "Teacher homepage"), ("Pupil homepage preview", "Pupil homepage"), ("Games homepage preview", "Games homepage"), ("Commission a resource preview", "Commission a resource")]:
         body = body.replace(old, new)
     if kind == "home":
+        # UX2 B2: the existing search control, one field, Appendix A §HOME label.
         search = ('<form class="education-home-search" action="/resources/" method="get" role="search">'
-                  '<label for="home-resource-query">Find lessons and resources</label>'
-                  '<div><input id="home-resource-query" name="q" type="search" '
-                  'placeholder="Try Science, Humanities or PDF Studio" maxlength="200">'
+                  '<label for="home-resource-query">Search lessons, packs and tools</label>'
+                  '<div><input id="home-resource-query" name="q" type="search" maxlength="200">'
                   '<button type="submit">Search</button></div></form>')
-        if body.count('<div class="button-row">') < 1:
+        if body.count('<div class="button-row home-ctas">') != 1:
             raise ValueError('Home search insertion boundary missing')
-        body = body.replace('<div class="button-row">', search + '<div class="button-row">', 1)
-    titles = {"home": "Find your next lesson · Made by Matt", "teachers": "Teachers · Made by Matt Learning", "pupils": "Pupils · Made by Matt Learning", "games": "Made by Matt Games"}
+        body = body.replace('</div><div class="hero-art">', search + '</div><div class="hero-art">', 1)
+        # "Go straight to your subject": a fifth tile per extra Part A slug, derived from the served catalogue.
+        extras = ''.join('<a class="route-card" href="/Lessons/subject.html?subject=' + html.escape(slug, quote=True) + '"><h3>' + html.escape(name) + '</h3></a>' for slug, name in extra_subject_tiles(LESSONS_ROOT))
+        if body.count('data-subject-tiles>') != 1:
+            raise ValueError('Subject tile boundary missing')
+        body = body.replace('</a></div></div></div>\n<div class="section" id="places">', '</a>' + extras + '</div></div></div>\n<div class="section" id="places">', 1)
+        # "Here for someone else?": one row per audience route except teachers and pupils, from the record.
+        rows = ''.join('<a class="audience-row" href="' + html.escape(route, quote=True) + '">' + html.escape(label) + '<span aria-hidden="true"> →</span></a>' for route, label in audience_rows())
+        if body.count('<div class="audience-rows" data-audience-rows></div>') != 1:
+            raise ValueError('Audience row boundary missing')
+        body = body.replace('<div class="audience-rows" data-audience-rows></div>', '<div class="audience-rows" data-audience-rows>' + rows + '</div>', 1)
+    titles = {"home": "Find your next lesson · Made by Matt", "teachers": "Teachers · Made by Matt Learning", "pupils": "Pupils · Made by Matt Learning", "games": "Made by Matt Games", "commission": "Commission a resource · Made by Matt"}
     css = re.search(r'<style>(.*?)</style>', preview, re.S)[1]
     path = views[kind]
     dataset = 'games' if kind == 'games' else 'education'
@@ -118,7 +174,7 @@ def render_page(preview, kind, origin, config):
             '<style>' + css + '</style>' + ('<link rel="stylesheet" href="/assets/education-navigation.css">' if kind != 'games' else '') + '</head><body data-site-kind="' + dataset + '" data-page="' + kind + '">'
             '<a class="skip" href="#content">Skip to content</a><main id="content">' + body + '</main>'
             '<noscript><p class="wrap">Search needs JavaScript. The subject, pathway and navigation links still work.</p></noscript>'
-            '<script defer src="/assets/domain-site.js"></script></body></html>')
+            '<script defer src="/assets/domain-site.js"></script>' + ('<script defer src="/assets/added-this-half-term.js"></script>' if kind == 'home' else '') + '</body></html>')
 
 
 def games_privacy(origin):
@@ -235,9 +291,12 @@ def main():
             revisions[item['path']] = revision
     refresh_play_discovery(output, source_revisions=revisions)
     refresh_play_usage(output, args.lessons.resolve(), ROOT)
-    for kind, path in [('home','index.html'), ('home','main/index.html'), ('teachers','for/teachers/index.html'), ('pupils','for/pupils/index.html')]:
+    global LESSONS_ROOT
+    LESSONS_ROOT = args.lessons.resolve()
+    for kind, path in [('home','index.html'), ('home','main/index.html'), ('teachers','for/teachers/index.html'), ('pupils','for/pupils/index.html'), ('commission','commission/index.html')]:
         put(education, path, render_page(preview, kind, config['education_origin'], config))
     copy_file(HERE / 'education-navigation.css', education, 'assets/education-navigation.css')
+    copy_file(HERE / 'added-this-half-term.js', education, 'assets/added-this-half-term.js')
     for target in [games, education]:
         copy_file(HERE / 'site-runtime.js', target, 'assets/domain-site.js')
         copy_file(ROOT / 'favicon.svg', target, 'favicon.svg')
@@ -277,7 +336,7 @@ def main():
               'source_census_sha256':sha(CENSUS),
               'counts':{'canonical_games':62,'additional_classroom_activities':7,'game_payloads':len(payloads),
                         'game_output_files':sum(p.is_file() for p in games.rglob('*')),
-                        'education_overlay_pages':4,'missing_initial_load_refs':len(missing),
+                        'education_overlay_pages':5,'missing_initial_load_refs':len(missing),
                         'external_initial_load_refs':len(external)},
               'payloads':payloads,'literal_host_replacements':transformed,
               'remaining':['Configure independent games hosting and the purchased domain.',

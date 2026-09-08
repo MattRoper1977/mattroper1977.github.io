@@ -40,7 +40,8 @@ ACCOUNT_SHARED = [('/privacy/', 'Privacy and statistics')]
 SITE_PAGES = ['index.html', 'main/index.html', 'account/index.html',
               'members/index.html', 'mailing-list/index.html', 'privacy/index.html',
               'stats/index.html', 'owner/stats/index.html', 'tools/index.html',
-              'resources/index.html', 'teach/index.html', 'education-hub/index.html', 'stats/on-this-device/index.html']
+              'resources/index.html', 'teach/index.html', 'education-hub/index.html', 'stats/on-this-device/index.html',
+              'commission/index.html']
 # The on-page search control the header's search icon jumps to. A page whose
 # control is absent falls back to the Resources search (asserted at build).
 SEARCH_CONTROLS = {'/': 'home-resource-query', '/main/': 'home-resource-query', '/for/teachers/': 'teachers-q',
@@ -118,7 +119,7 @@ def refresh(output, site_source):
     adult_pages = {x['page'] for x in json.loads((site_source / 'data/adult-surfaces.json').read_text())['adultSurfaces']}
     # The published learning homepage supersedes the old source chooser. These
     # generated adult front doors already expose their account links explicitly.
-    adult_pages.update({'index.html', 'for/governors-trustees/index.html', 'owner/stats/index.html'})
+    adult_pages.update({'index.html', 'for/governors-trustees/index.html', 'owner/stats/index.html', 'commission/index.html'})
     site_pages = SITE_PAGES + [route.strip('/') + '/index.html' for route, _ in rows]
     pages = [(site / p, '/' + p.removesuffix('index.html'), p in adult_pages) for p in site_pages]
     pages += [(output / 'education-lessons/index.html', '/Lessons/', True),

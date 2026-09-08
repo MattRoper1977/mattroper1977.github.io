@@ -76,20 +76,19 @@ def play_showcase(featured, section_id='made-by-matt-play'):
 def refresh(output, lessons, apps, site_source):
     site = output/'education-site'
     shutil.copyfile(site_source/'domain-split/education-expansion.css', site/'assets/education-expansion.css')
-    for relative in ('index.html', 'main/index.html', 'for/teachers/index.html', 'for/pupils/index.html'):
+    # UX2 B2: the homepage (index.html = main/index.html) is Appendix A §HOME — its
+    # "Here for someone else?" rows (#audiences) come from the record, Primary
+    # lessons and Play are menu rows and Play is in the footer, so the explore
+    # nav and the six-card directory are not added there.
+    for relative in ('for/teachers/index.html', 'for/pupils/index.html'):
         path = site/relative
         doc = html.document_fromstring(path.read_text())
         styles(doc)
         header = doc.xpath('//header')[0]
-        # Keep the phone masthead compact; these secondary routes follow the
-        # teaching/search hero while remaining in the Menu and footer too.
-        extra_after = doc.xpath('//*[contains(concat(" ",normalize-space(@class)," ")," hero ")]')[0] if relative in ('index.html','main/index.html') else header
+        extra_after = header
         extra_after.addnext(fragment('<nav class="mbm-explore-nav" aria-label="Explore Made by Matt"><div class="wrap">'
                                 '<a href="/Lessons/primary/">Primary</a><a href="/#audiences">Families &amp; organisations</a>'
                                 '<a class="mbm-play-link" href="'+PLAY+'/">Made by Matt Play</a></div></nav>'))
-        if relative in ('index.html', 'main/index.html'):
-            footer = doc.xpath('//footer')[0]
-            footer.addprevious(fragment(audience_directory()))
         footer = doc.xpath('//footer')[0]
         menus = footer.xpath('.//nav')
         if menus:

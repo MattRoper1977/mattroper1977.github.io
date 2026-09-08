@@ -1,0 +1,19 @@
+{
+ "_why": "UX2 B1–B4: every pre-order href (ux2/pre-order-hrefs.json) that the rebuilt surfaces no longer render within two taps of / is listed here as RELOCATES (to: a destination within two taps; selector: the control on that page when the destination is a control rather than a page) or RETIRED (why). check_ux2_education.cjs fails on a lost href not listed, on a listed destination that is not itself within two taps, and on a listed loss that is in fact still reachable (a stale entry) — so an href is added here only when the part that retires it lands, never ahead of time. check_audience_discovery.cjs reads the keys of `relocated` for chrome destinations. Nothing typed into a gate; UX2_LEDGER.md is the human record of the same table and also names destinations for hrefs that are still rendered elsewhere today.",
+ "relocated": {
+  "/Lessons/?view=recommended": {
+   "to": "/Lessons/",
+   "selector": "#view-recommended",
+   "why": "Recommended versions: the Lessons hub bar control."
+  },
+  "/Lessons/?subject=ASDAN%20%26%20life%20skills": {
+   "to": "/Lessons/subject.html?subject=lifeskills",
+   "why": "ASDAN learning resources: the Lifeskills subject page (a homepage tile)."
+  }
+ },
+ "retired": {
+  "/start/": {
+   "why": "The old homepage chooser; the homepage is the front door and every audience route is a menu row."
+  }
+ }
+}

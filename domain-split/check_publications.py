@@ -53,7 +53,7 @@ def main():
     for item in game_data['games']+game_data['activities']+game_data['staff']:
         assert exists(games,unquote(urlparse(item['route']).path).lstrip('/')),item['route']
     tested=0
-    for page in ['index.html','main/index.html','for/teachers/index.html','for/pupils/index.html']:
+    for page in ['index.html','main/index.html','for/teachers/index.html','for/pupils/index.html','commission/index.html']:
         text=(site/page).read_text();parser=Refs();parser.feed(text)
         assert len(parser.ids)==len(set(parser.ids)),page
         for ref in parser.initial:

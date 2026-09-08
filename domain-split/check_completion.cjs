@@ -55,20 +55,35 @@ fs.mkdirSync(output, { recursive: true });
       const page = await browser.newPage({viewport: {width, height: 900}, reducedMotion: 'reduce'});
       page.on('pageerror', error => report.pageErrors.push(error.message));
       await page.goto(origin + '/');
-      await page.locator('#custom-resources').waitFor();
-      assert.match(await page.locator('#custom-resources').innerText(), /£5[\s\S]*£10/);
       assert.match(await page.locator('#about').innerText(), /Made by a teacher, for real classrooms/);
       // HC3 §8: the home page is a pupil entry, so the injected support footer is
-      // gone from it; the £5/£10 commissioning copy above is Matt's own and held.
+      // gone from it. UX2 B2: the £5–£50 commissioning block moved verbatim to
+      // /commission/, linked from the maker panel; no money copy stays on /.
       assert.equal(await page.locator('[data-mbm-support-footer]').count(), 0);
-      const cover = page.locator('.learning-shortcuts a[href*="David_Cover_Autumn1_W3-W7"]');
-      assert.equal(await cover.innerText(), 'Cover teaching packs');
+      assert.equal(await page.locator('#custom-resources').count(), 0, 'The commission block is no longer on the homepage');
+      assert(!/£/.test(await page.locator('body').innerText()), 'No money copy on the homepage');
+      const commissionLink = page.locator('#about a[href="/commission/"]');
+      assert.equal(await commissionLink.innerText(), 'Commission a resource');
       assert(await page.locator('[data-mbm-navigation="education"] img').first().evaluate(e => e.complete && e.naturalWidth > 0));
       for (const theme of ['cream', 'dark']) {
         await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Homepage overflow');
+      }
+      assert.equal((await page.goto(origin + '/commission/')).status(), 200);
+      await page.locator('#custom-resources').waitFor();
+      assert.match(await page.locator('#custom-resources').innerText(), /£5[\s\S]*£10/);
+      assert.equal(await page.locator('h1').innerText(), 'Commission a resource');
+      for (const theme of ['cream', 'dark']) {
+        await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
+        assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Commission page overflow');
         await page.locator('#custom-resources').screenshot({path: path.join(output, `requests-${width}-${theme}.png`)});
       }
+      // The cover teaching packs stay reachable within two taps of /: the Resources
+      // place on the homepage, then the pack link on /resources/ (a unit card after B4).
+      assert.equal((await page.goto(origin + '/resources/')).status(), 200);
+      const cover = page.locator('a[href*="David_Cover_Autumn1_W3-W7"]').first();
+      await cover.waitFor();
+      assert((await page.request.get(new URL(await cover.getAttribute('href'), page.url()).href)).ok(), 'Cover teaching packs destination resolves');
       assert.equal((await page.goto(origin + '/for/pupils/')).status(), 200);
       assert.equal(await page.locator('[data-mbm-support-footer],a[href*="ko-fi.com"]').count(), 0);
       assert.equal((await page.goto(origin + '/Lessons/Science_Teesside/Build/SCI_B_W3_Backbones.html')).status(), 200);

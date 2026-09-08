@@ -192,13 +192,13 @@ for(const row of normSite(Array.isArray(collections)?collections:[])){const key=
     text = text.replace('href="../asdan/app.html"', 'href="/asdan/"')
     tools_path.write_text(text)
 
-    for path in [site/'index.html', site/'main/index.html', site/'for/teachers/index.html', resource_path, tools_path, app_path]:
+    # UX2 B2: the homepage carries no learning-areas bar (its "Three places, one
+    # site" cards and the menu's Learning group are those destinations) and no
+    # "Ready to teach?" strip (its links relocated — see UX2_LEDGER.md).
+    for path in [site/'for/teachers/index.html', resource_path, tools_path, app_path]:
         text = path.read_text()
         active = {resource_path: '/resources/', tools_path: '/tools/', app_path: '/Matt-s-Apps-/'}.get(path, '')
         text = replace_once(text, '</header>', '</header>'+learning_nav(active))
-        if path in {site/'index.html', site/'main/index.html'}:
-            text = replace_once(text, '<a href="/tools/">Classroom tools</a>',
-                                '<a href="/tools/">Classroom tools</a><a href="'+escape(ASDAN, quote=True)+'">ASDAN · all years</a>')
         path.write_text(text)
 
     # Keep teacher search in step with the same existing destinations. Pupil

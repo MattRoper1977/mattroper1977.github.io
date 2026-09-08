@@ -15,9 +15,10 @@ const routes = ['/', '/main/', '/account/', '/members/', '/mailing-list/', '/pri
   '/for/teachers/', '/for/pupils/', '/for/parents-carers/', '/for/schools-semh/',
   '/for/trusts/', '/for/councils-organisations/', '/for/partners/',
   '/for/governors-trustees/', '/Lessons/', '/Lessons/primary/', '/Matt-s-Apps-/',
-  '/stats/on-this-device/', '/asdan/', '/uas/', '/Lessons/Science_Teesside/',
+  '/stats/on-this-device/', '/asdan/', '/uas/', '/commission/', '/Lessons/Science_Teesside/',
   '/Lessons/Humanities_Teesside/', '/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/'];
 const restricted = ['/for/pupils/', '/resources/', '/Lessons/primary/'];
+const ux2Routes = ['/', '/commission/'];
 const themeRoutes = ['/Lessons/', '/Matt-s-Apps-/', '/Lessons/Science_Teesside/', '/Lessons/Humanities_Teesside/'];
 const {deviceStatsSkip}=require('./check_device_stats.cjs');
 (async () => {
@@ -73,7 +74,7 @@ const {deviceStatsSkip}=require('./check_device_stats.cjs');
           const full = [['/account/', 'Account and members'], ['/mailing-list/', 'Teacher updates'], ['/privacy/', 'Privacy and statistics']];
           const adultPages = new Set(JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/adult-surfaces.json'), 'utf8')).adultSurfaces.map(x => '/' + x.page.replace(/index\.html$/, '')));
           if (restricted.includes(route)) assert.deepEqual(account, ['/privacy/'], 'Pupil/shared subset of the account group: ' + route);
-          else if (adultPages.has(route) || ['/', '/for/governors-trustees/', '/owner/stats/', '/Lessons/', '/Matt-s-Apps-/'].includes(route)) assert.deepEqual(groups[2], full, 'Account group on a declared adult page: ' + route);
+          else if (adultPages.has(route) || ['/', '/for/governors-trustees/', '/owner/stats/', '/commission/', '/Lessons/', '/Matt-s-Apps-/'].includes(route)) assert.deepEqual(groups[2], full, 'Account group on a declared adult page: ' + route);
           else assert(JSON.stringify(groups[2]) === JSON.stringify(full) || JSON.stringify(account) === JSON.stringify(['/privacy/']), 'Account group is the full set or the shared subset: ' + route);
           const hrefs = await page.locator(panel + ' a').evaluateAll(nodes => nodes.map(a => new URL(a.getAttribute('href'), location.href).pathname === '/Lessons/' ? '/Lessons/' : a.getAttribute('href')));
           assert.deepEqual(hrefs.filter(h => /[?]|\.html$|#/.test(h)), [], 'No deep links in the menu: ' + route);
@@ -155,6 +156,22 @@ const {deviceStatsSkip}=require('./check_device_stats.cjs');
           assert(await page.locator(menu+' > summary').evaluate(el=>el===document.activeElement));
           await page.screenshot({path:'audit-output/home-play-discovery/template-'+width+'-'+routes.indexOf(route)+'.png',animations:'disabled'});
         }
+        // UX2 B5 — 44px at 390px on the surfaces this order rebuilt, menu closed
+        // and open: every visible interactive target (links, buttons, summaries,
+        // fields) is at least 44×44. Each part appends the routes it rebuilt.
+        for (const route of ux2Routes) {
+          await page.setViewportSize({width:390,height:844});
+          await page.goto(origin+route); await page.waitForLoadState('networkidle').catch(()=>{}); await page.waitForTimeout(300);
+          const sweep = () => page.evaluate(() => [...document.querySelectorAll('a[href],button,summary,input,select,textarea,[role="button"],[tabindex="0"]')]
+            .filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden'; })
+            .map(e => { const r = e.getBoundingClientRect(); return { tag: e.tagName, text: (e.textContent || e.getAttribute('aria-label') || '').trim().replace(/\s+/g, ' ').slice(0, 40), w: Math.round(r.width), h: Math.round(r.height) }; })
+            .filter(t => t.w < 44 || t.h < 44));
+          assert.deepEqual(await sweep(), [], 'UX2 44px targets, menu closed: '+route);
+          await page.locator(menu+' > summary').press('Enter');
+          assert(await page.locator(panel).isVisible());
+          assert.deepEqual(await sweep(), [], 'UX2 44px targets, menu open: '+route);
+          await page.locator(menu+' > summary').press('Escape');
+        }
         for (const width of [320,390]) for (const route of themeRoutes) {
           await page.setViewportSize({width,height:844});
           await page.goto(origin+route);
@@ -176,7 +193,7 @@ const {deviceStatsSkip}=require('./check_device_stats.cjs');
         await page.locator(menu+' > summary').press('Enter');
         assert.equal(await page.locator(menu+' > summary').evaluate(el=>getComputedStyle(el).transitionDuration),'0s');
         await page.locator(menu+' > summary').press('Escape');
-        await page.getByLabel('Find lessons and resources').fill('PDF Studio');
+        await page.getByLabel('Search lessons, packs and tools').fill('PDF Studio');
         await page.locator('.education-home-search button').click();
         assert.equal(new URL(page.url()).pathname,'/resources/');
         assert.equal(new URL(page.url()).searchParams.get('q'),'PDF Studio');

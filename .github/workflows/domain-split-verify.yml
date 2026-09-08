@@ -90,6 +90,8 @@ jobs:
           python domain-split/verify_education_tree_has_no_games.py --self-test
           python domain-split/verify_education_tree_has_no_games.py --output domain-split/output
           python domain-split/check_education_support.py
+          # UX2 B5 (s16): the homepage's audience rows and extra subject tiles follow a planted record
+          python domain-split/check_ux2_home.py --self-test
       # HC3 §8.2: the one Ko-fi URL the estate links must resolve. ko-fi.com
       # answers 200 for unknown pages too (measured: a nonsense slug came back
       # 200 on the first run), so the status line proves nothing on its own. The
@@ -179,6 +181,11 @@ jobs:
           node domain-split/check_usage_discovery.cjs || browser_status=1
           node domain-split/check_shared_navigation.cjs || browser_status=1
           node domain-split/check_completion.cjs || browser_status=1
+          # UX2 B5: two-tap reachability of every pre-order href, money/third-party on / and pupil
+          # routes, the consent bar driven both ways, Appendix A copy and vocabulary, hrefs, hero,
+          # tiles = hub cards, sitemap — then the same gate with every planted mutation, which must go red
+          node domain-split/check_ux2_education.cjs || browser_status=1
+          node domain-split/check_ux2_education.cjs --red-proof || browser_status=1
           # HC4 §7.1: /stats/on-this-device/ answers and reads one record back on BOTH origins (real → planted → restored)
           node domain-split/check_device_stats_record.cjs _navigation-served domain-split/output/games || browser_status=1
           exit "$browser_status"
@@ -188,6 +195,13 @@ jobs:
         with:
           name: education-navigation-${{ github.run_id }}
           path: audit-output/education-navigation/
+          retention-days: 30
+      - name: Save UX2 education gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ux2-education-${{ github.run_id }}
+          path: audit-output/ux2-education/
           retention-days: 30
       - name: Save resource and app discovery evidence
         if: always()

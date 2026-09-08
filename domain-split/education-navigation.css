@@ -163,3 +163,47 @@ body[data-site-kind="education"] .hero{background:linear-gradient(115deg,#161d3d
 @media(max-width:450px){.education-home-search>div{flex-direction:column}.education-home-search button{width:100%}}
 @media print{.education-home-search{display:none!important}}
 @media(max-width:650px){body[data-site-kind="education"] .button-row .btn{flex:1 1 100%}body[data-site-kind="education"] .hero h1{font-size:clamp(2rem,9vw,2.6rem)}}
+
+/* UX2 B2 — the education homepage (Appendix A §HOME) and /commission/. Scoped to the
+   education overlay pages. The rail (.sec-head/.rail/.acard) is the Lessons hub's
+   own styling, copied from Lessons/assets/catalogue/hub.css lines 71–79. */
+body[data-page="home"] .hero .lead{margin-bottom:1.1rem}
+body[data-page="home"] .hero-art{transform:none}
+body[data-page="home"] .home-ctas{flex-direction:column;gap:.7rem;max-width:34rem}
+body[data-page="home"] .home-ctas .btn{width:100%;min-height:52px;font-size:1.05rem;font-weight:750}
+body[data-page="home"] .btn.navy{background:var(--navy);color:#fffefa;border-color:#8ee6cb}
+body[data-page="home"] .btn.green{background:#247761;color:#fffefa;border-color:#247761}
+body[data-page="home"] .education-home-search{margin:0 0 1.1rem;max-width:34rem}
+body[data-page="home"] .education-home-search label{display:block;font-weight:700;margin-bottom:.4rem;color:#fffefa}
+body[data-page="home"] .education-home-search div{display:flex;gap:.5rem}
+body[data-page="home"] .education-home-search input{flex:1 1 auto;min-width:0;min-height:48px;padding:.5rem .75rem;border:1px solid #a8b9d0;border-radius:7px;font-size:1rem;color:var(--ink);background:#fffefa}
+body[data-page="home"] .education-home-search button{min-height:48px;min-width:44px;padding:.5rem 1rem;border:1px solid var(--mint);border-radius:7px;background:var(--mint);color:#152c30;font-weight:750;cursor:pointer}
+body[data-page="home"] .subject-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}
+body[data-page="home"] .subject-tiles .route-card{min-height:44px;min-width:0;padding:1.1rem;overflow-wrap:anywhere}
+body[data-page="home"] .subject-tiles .route-card h3,body[data-page="home"] .subject-tiles .route-card p{overflow-wrap:anywhere;min-width:0}
+body[data-page="home"] .subject-tiles .route-card p{margin-bottom:0}
+body[data-page="home"] #places .route-card p{margin-bottom:0}
+body[data-page="home"] .sec-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:.6rem;flex-wrap:wrap}
+body[data-page="home"] .sec-head h2{margin:0}
+body[data-page="home"] .sec-head a{min-height:44px;display:inline-flex;align-items:center;font-weight:700;text-decoration:underline;padding:0 .25rem}
+body[data-page="home"] .rail{display:flex;gap:.75rem;overflow-x:auto;padding:.25rem .1rem .9rem;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+body[data-page="home"] .acard{flex:0 0 min(78vw,260px);scroll-snap-align:start;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:.85rem .9rem;display:flex;flex-direction:column;gap:.4rem;text-decoration:none;color:var(--ink);min-height:44px}
+body[data-page="home"] .acard:hover,body[data-page="home"] .acard:focus-visible{border-color:var(--navy)}
+body[data-page="home"] .acard .when{font-size:.78rem;font-weight:800;color:#1d6b58;letter-spacing:.06em}
+body[data-page="home"] .acard h3{font-size:1rem;line-height:1.3;margin:0}
+body[data-page="home"] .acard .sub{font-size:.8rem;color:var(--muted);margin-top:auto}
+body[data-page="home"] .acard .badge{display:inline-block;font-size:.75rem;font-weight:700;padding:.15rem .45rem;border:1px solid var(--line);border-radius:4px}
+body[data-page="home"] .audience-rows{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+body[data-page="home"] .audience-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;min-height:52px;padding:.6rem 0;border-bottom:1px solid var(--line);font-weight:650;text-decoration:none}
+body[data-page="home"] .audience-row:hover{text-decoration:underline;text-underline-offset:.2em}
+body[data-page="home"] .maker-panel{background:var(--navy);color:#fffefa;border-top:5px solid var(--mint)}
+body[data-page="home"] .maker-panel p{color:#d8e1ed}
+body[data-page="home"] .maker-panel .btn.light{background:transparent;border-color:#a8b9d0;color:#fffefa}
+body[data-site-kind="education"] .footer-links{display:flex;flex-wrap:wrap;align-items:center;gap:0 .35rem}
+body[data-site-kind="education"] .footer-links a{display:inline-flex;align-items:center;min-height:44px;margin:0;padding:0 .25rem;font-weight:650}
+body[data-site-kind="education"] .footer-row>div p{margin:0}
+body[data-site-kind="education"] .footer small{color:var(--muted)}
+body[data-page="commission"] .compact-hero{padding:2rem 0}
+body[data-page="commission"] .hero h1{margin-bottom:0}
+@media(max-width:900px){body[data-page="home"] .subject-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){body[data-page="home"] .subject-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}body[data-page="home"] .subject-tiles .route-card{padding:.9rem}body[data-page="home"] .hero-grid{grid-template-columns:1fr}body[data-page="home"] .hero-art{max-width:none;margin-top:.5rem}}
