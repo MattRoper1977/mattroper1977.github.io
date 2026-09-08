@@ -173,3 +173,12 @@ No key was added.
 - **Deep link to a non-lead edition (e.g. `?game=slipstream-gp`):** on close the sheet returns focus to the "All games" heading when no card opened it; the heading carries `tabindex="-1"` so that fallback is a real focus target (C4 stop 6, fixed before landing).
 
 9. **Sheet-close focus fallback.** When a sheet opened from a `?game=` deep link has no opener in the grid (a non-lead edition), focus returns to the "All games" heading; that heading now carries `tabindex="-1"` so the fallback lands on a focusable element (found by the C4 gate's deep-link journey, fixed before landing).
+
+10. **One return to Education, and it stays visible.** The new header menu
+    repeated the footer's "Made by Matt Education" link. The published
+    completion journey takes the first such link, which was then the menu's
+    hidden copy, and its documented fallback opens a control with the button
+    role — a `<summary>` is a native disclosure, not a button, so nothing
+    opened and the journey measured a hidden element behind the chip row at
+    320 px. The duplicate is removed: the return lives in the footer, always
+    visible, exactly where it lives on main. The menu keeps its own entries.
