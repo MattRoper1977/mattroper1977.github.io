@@ -171,3 +171,5 @@ No key was added.
    sheet Editions row takes over.
 
 - **Deep link to a non-lead edition (e.g. `?game=slipstream-gp`):** on close the sheet returns focus to the "All games" heading when no card opened it; the heading carries `tabindex="-1"` so that fallback is a real focus target (C4 stop 6, fixed before landing).
+
+9. **Sheet-close focus fallback.** When a sheet opened from a `?game=` deep link has no opener in the grid (a non-lead edition), focus returns to the "All games" heading; that heading now carries `tabindex="-1"` so the fallback lands on a focusable element (found by the C4 gate's deep-link journey, fixed before landing).
