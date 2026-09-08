@@ -15,7 +15,8 @@
   "RX3 P3 (Site claude/rx3-admit-classic-33): the reviewed 33-lesson classic pack landing on Lessons branches claude/rx3-land-science-build 642ac22e, -science-grow 06329898, -science-launch 998ce2b1, -humanities cc6daf05, -arts c6b70610, -asdan 9cfac96a — 24 ADD-BESIDE lessons and Art_Teesside/assets/{flow,crossing}.webp admitted as ARRIVING at those branch bytes (absent until each family merges), 9 REPLACE lessons and 12 family manifests admitted as transition pairs (Lessons main c926b93b bytes AND the branch bytes); education-site and education-apps unchanged (measured: 0 paths); drop the old digests and the markers once the pinned Lessons source moves past the family merges",
   "RX3 P3/R3 (Site claude/rx3-admit-cycle-a): Humanities family re-landed with two pinned-bytes re-cuts beside instead of over their files (Lessons claude/rx3-land-humanities b9043a74) — BUILD_HUM_W7_A_place_in_the_group_Classic.html and LAUNCH_HUM_W3_Can_this_record_prove_it_Classic.html admitted as ARRIVING, the two family manifests' pairs move to the re-landed bytes; the catalogue renderer's one new teaching-style value 'alternative' (Lessons claude/rx3-alternative-style) admitted as transition pairs for catalogue.css, catalogue.js and the three shelf JSONs (Lessons main bytes AND the branch bytes; terms-and-styles.json drops its stale pre-HC5 half); education-site and education-apps unchanged (measured: 0 paths)",
   "RX3 cycle A, second commit: the Humanities Autumn 1 manifests re-landed with lessonCount and plannedLessonCount moving together (Lessons claude/rx3-land-humanities 05ca54d6) — their pairs move to those bytes; BUILD_ASDAN/FoodWise/START_HERE.html admitted as a transition pair for the R2 taught-week slot hub (Lessons claude/rx3-foodwise-hub 61547bfe); no other path moves",
-  "RX3 cycle B (Site claude/rx3-admit-cycle-b): the catalogue data transaction (Lessons claude/rx3-catalogue-data, PR #399) — 47 catalogue rows for the 24 beside lessons and the six FoodWise chassis pages, the R2 taught-week recommendations and the R3/pinned 'alternative' standings. A catalogued lesson's built bytes gain the lesson navigation, so the thirty newly catalogued lessons keep their ARRIVING marker (absent from this repository's pinned a91780fc build) with the reviewed digest moved to the branch bytes; resources.json, the three shelf JSONs, Science_Teesside/index.html, Humanities_Teesside/index.html and the three education-site discovery data files become transition pairs [this repository's pinned a91780fc bytes, branch bytes]; BUILD_ASDAN/FoodWise/manifest.json keeps ARRIVING at the reviewed bytes. Measured consequence, accepted: between this registry and the Lessons merge the Lessons-caller runs from main are CHANGED on those paths; the pinned build and the branch build both PASS"
+  "RX3 cycle B (Site claude/rx3-admit-cycle-b): the catalogue data transaction (Lessons claude/rx3-catalogue-data, PR #399) — 47 catalogue rows for the 24 beside lessons and the six FoodWise chassis pages, the R2 taught-week recommendations and the R3/pinned 'alternative' standings. A catalogued lesson's built bytes gain the lesson navigation, so the thirty newly catalogued lessons keep their ARRIVING marker (absent from this repository's pinned a91780fc build) with the reviewed digest moved to the branch bytes; resources.json, the three shelf JSONs, Science_Teesside/index.html, Humanities_Teesside/index.html and the three education-site discovery data files become transition pairs [this repository's pinned a91780fc bytes, branch bytes]; BUILD_ASDAN/FoodWise/manifest.json keeps ARRIVING at the reviewed bytes. Measured consequence, accepted: between this registry and the Lessons merge the Lessons-caller runs from main are CHANGED on those paths; the pinned build and the branch build both PASS",
+  "CX3 cycle A (2026-09-09): 66 mbm-chat exemplar lessons re-cut in place on Lessons (PRs #403-#411); each row a transition pair [what main bce6a879 builds, what the branch builds]; settled in cycle B after the family merges"
  ],
  "trees": {
   "education-site": {
@@ -563,7 +564,10 @@
    "Art_Teesside/House_Standard_and_Safety.html": "eaa1832c7979c36f7898cfde33170d16edb64c3b768380d1f5638f25011c8bd0",
    "Art_Teesside/LAUNCH_W1-W8_2026-27/LAUNCH_Art_W1_Set_Arts_Development_Goals_Silver_Gold_Unit.html": "c88b78feb619a83b4f7d75a15e42532d561a94d4c939a8946266019353161ffa",
    "Art_Teesside/LAUNCH_W1-W8_2026-27/LAUNCH_Art_W2_Develop_A_Skill_Document_Progress.html": "e8b4999f022ad0ab287003e412695c57aa37fc0bda4f93abdb4535121c2d0d5a",
-   "Art_Teesside/LAUNCH_W1-W8_2026-27/LAUNCH_Art_W3_Research_An_Artist_Practitioner.html": "93d56670b0bc8530d766882ba4050849aec50cf83033f2b85fefa081a6e45e4e",
+   "Art_Teesside/LAUNCH_W1-W8_2026-27/LAUNCH_Art_W3_Research_An_Artist_Practitioner.html": [
+    "93d56670b0bc8530d766882ba4050849aec50cf83033f2b85fefa081a6e45e4e",
+    "e122050a0de46fd67d1cfe9c24fdd6342a9b567bb23cc670eb0637b235776258"
+   ],
    "Art_Teesside/LAUNCH_W1-W8_2026-27/LAUNCH_Art_W4_Refine_Technique_With_Feedback.html": "cb6c624669beb6d5d0bf1f19c60576bdc3f4439db4fb258113b4c3999185408d",
    "Art_Teesside/LAUNCH_W1-W8_2026-27/LAUNCH_Art_W6_Attend_Experience_An_Arts_Event.html": "e4dda5507fc6a96a04dd7592e5eedeeab41e7a6071a97ff947fb841a21f1599c",
    "Art_Teesside/LAUNCH_W1-W8_2026-27/LAUNCH_Art_W7_Begin_A_Critical_Review.html": "557b5f5efe87d81ee73d3f05e749ba6fe0577d08ede3e7156d70aff35a6e4d2b",
@@ -1906,12 +1910,30 @@
     "951e374eab89a18dfd323324e63017e480b6f3645e9470e19ff58ac9b6d172de",
     "ef6761f5b06ae609e0a55a33218e59e7130520f7c7fe4035ca06b66581190c55"
    ],
-   "Humanities_Teesside/BUILD_W9-W14_2026-27/BUILD_HUM_W10_Rails_Meet_the_River_OUTSTANDING_V4.html": "46189e481fe6a798892ff1bf2356ba6528be6449830fa7692e04ddc02ce1b5b2",
-   "Humanities_Teesside/BUILD_W9-W14_2026-27/BUILD_HUM_W11_The_Iron_Rush_OUTSTANDING_V4.html": "927b6b505feeb116ddb43f3958d971a0221da193606ff110ef922b90d695204c",
-   "Humanities_Teesside/BUILD_W9-W14_2026-27/BUILD_HUM_W12_A_Town_Grows_Fast_OUTSTANDING_V4.html": "e9d5e87b2f43c9b9f003172f722e7a3066845e22ff738f26a5862c458f9339bd",
-   "Humanities_Teesside/BUILD_W9-W14_2026-27/BUILD_HUM_W13_Crossing_the_Steel_River_OUTSTANDING_V4.html": "6186ad32c2abf97a54592276644dd4219c58c6c789ff201991ebc654cb8af636",
-   "Humanities_Teesside/BUILD_W9-W14_2026-27/BUILD_HUM_W14_Industry_and_Nature_The_Tees_Story_OUTSTANDING_V4.html": "e45c723e354393adddc939d4a320881ad8853189f8fafd5afba6080cb90f9ed0",
-   "Humanities_Teesside/BUILD_W9-W14_2026-27/BUILD_HUM_W9_Meet_the_Lower_Tees_OUTSTANDING_V4.html": "d8f6e5e0ede40ffb3d7d60c354fa319f0dddd2d1f9204679426cdf75c40673dd",
+   "Humanities_Teesside/BUILD_W9-W14_2026-27/BUILD_HUM_W10_Rails_Meet_the_River_OUTSTANDING_V4.html": [
+    "46189e481fe6a798892ff1bf2356ba6528be6449830fa7692e04ddc02ce1b5b2",
+    "febd3bcded2a38f836eb8a633af536ae999bb294775fd09e1429b1217f4d4461"
+   ],
+   "Humanities_Teesside/BUILD_W9-W14_2026-27/BUILD_HUM_W11_The_Iron_Rush_OUTSTANDING_V4.html": [
+    "927b6b505feeb116ddb43f3958d971a0221da193606ff110ef922b90d695204c",
+    "ea0a9e898a161b5fe0be5d254b4f2988a76daea4dd21afd9cb0d9f1960075d4e"
+   ],
+   "Humanities_Teesside/BUILD_W9-W14_2026-27/BUILD_HUM_W12_A_Town_Grows_Fast_OUTSTANDING_V4.html": [
+    "e9d5e87b2f43c9b9f003172f722e7a3066845e22ff738f26a5862c458f9339bd",
+    "3c5ccd86b2dd5e32e1342b55c23cca35016a657bc873de0561ecbefc7f4e07ff"
+   ],
+   "Humanities_Teesside/BUILD_W9-W14_2026-27/BUILD_HUM_W13_Crossing_the_Steel_River_OUTSTANDING_V4.html": [
+    "6186ad32c2abf97a54592276644dd4219c58c6c789ff201991ebc654cb8af636",
+    "8fd6110c6d526fca3fbf0674e300161df03b0b71f9522d5f61dedb3cd594d935"
+   ],
+   "Humanities_Teesside/BUILD_W9-W14_2026-27/BUILD_HUM_W14_Industry_and_Nature_The_Tees_Story_OUTSTANDING_V4.html": [
+    "e45c723e354393adddc939d4a320881ad8853189f8fafd5afba6080cb90f9ed0",
+    "56fbba6fb2d6f2b0e5762099a6a40b48939bdf279e824476369760418b00e923"
+   ],
+   "Humanities_Teesside/BUILD_W9-W14_2026-27/BUILD_HUM_W9_Meet_the_Lower_Tees_OUTSTANDING_V4.html": [
+    "d8f6e5e0ede40ffb3d7d60c354fa319f0dddd2d1f9204679426cdf75c40673dd",
+    "703028a6239f549403ecee9735da2521731ec4665ce007874a5ad7989662ba24"
+   ],
    "Humanities_Teesside/BUILD_W9-W14_2026-27/CURRICULUM_ALIGNMENT.md": "0b60bcfbe7e1f733f4b862fa581f8f34c3844e137fb656456f4cbe16f0d61d05",
    "Humanities_Teesside/BUILD_W9-W14_2026-27/README.md": "990df0de5c97bc4cfb1a2e84762a9a2f385a776fbcd0d954d96097c9af232741",
    "Humanities_Teesside/BUILD_W9-W14_2026-27/SHA256SUMS.txt": "cb036925babd5b5c33790d7f67d616dcb4527e7242716f45c1bbe0c99d2b9187",
@@ -2022,7 +2044,10 @@
    "Humanities_Teesside/GROW_W1-W8_2026-27/GROW_HUM_W1_Migration_On_A_Timeline.html": "b6bd431180418c2d1dd616ec6cf4a1c3f50c1ff132a9ad5a2741984a9643e44d",
    "Humanities_Teesside/GROW_W1-W8_2026-27/GROW_HUM_W2_How_Beliefs_Shape_Who_We_Are.html": "b08441c9f5a9854991e20b502b134146064b61fafb83ffb9a3bf0b8eabd7d824",
    "Humanities_Teesside/GROW_W1-W8_2026-27/GROW_HUM_W2_Reading_A_Migration_Source.html": "70cea10e61a1485a002746453a54e903b1ed7d4319e66ce1f629f4517b947635",
-   "Humanities_Teesside/GROW_W1-W8_2026-27/GROW_HUM_W3_Why_People_Moved_And_What_Changed.html": "d96589cb40d87fdabac64b559f24ce295500f5cb87096ebcdb6a27ffbdbafc85",
+   "Humanities_Teesside/GROW_W1-W8_2026-27/GROW_HUM_W3_Why_People_Moved_And_What_Changed.html": [
+    "d96589cb40d87fdabac64b559f24ce295500f5cb87096ebcdb6a27ffbdbafc85",
+    "7797384b051bc3b6984f10ca093c4cb89f8532783514a8861cd75630c31d78d7"
+   ],
    "Humanities_Teesside/GROW_W1-W8_2026-27/GROW_HUM_W4_Diverse_British_History.html": "7a1b41cef9f3edd683bcfe96deba1009cf3b2c1e54e84aa2a211ad0a639b2d37",
    "Humanities_Teesside/GROW_W1-W8_2026-27/GROW_HUM_W5_Was_It_Significant.html": "ad115d1a201590df099464bb40abf8b40fbff9e50b49308d4b2df6cde515ce9b",
    "Humanities_Teesside/GROW_W1-W8_2026-27/GROW_HUM_W6_Planning_An_Account.html": "3de1bee16a25a43542f4e88102ab2b5840fe4f3fd0aa753502a4a368b956e1a4",
@@ -2050,11 +2075,23 @@
     "79b410dc7f7e45eb562d5efe86678b21a0673f11a3f7a3846371c4b5c7926b2d",
     "6a30fe5e7b5a285d88d317fbd6d456d0c7cdf7d0757a32e76f2ef7567d6dd450"
    ],
-   "Humanities_Teesside/GROW_W9-W14_2026-27/GROW_HUM_W11_Light_Across_the_Map_OUTSTANDING_V3_1.html": "0cc5e7594e43ecce6b35f0fae8d59ed5abcc74d73211ccc01e3b91b3d1199e1e",
-   "Humanities_Teesside/GROW_W9-W14_2026-27/GROW_HUM_W12_Compare_With_Care_OUTSTANDING_V3_1.html": "5d44d4af25e8ba790122b73673b2276c665c81acfd7c212087a2cfa81db9fbe4",
-   "Humanities_Teesside/GROW_W9-W14_2026-27/GROW_HUM_W13_Belonging_Briefing_OUTSTANDING_V3_1.html": "a31b4c5e61bb3080757d4e058bde8a3146d7cb659f1c2dce3ff1997609af104f",
+   "Humanities_Teesside/GROW_W9-W14_2026-27/GROW_HUM_W11_Light_Across_the_Map_OUTSTANDING_V3_1.html": [
+    "0cc5e7594e43ecce6b35f0fae8d59ed5abcc74d73211ccc01e3b91b3d1199e1e",
+    "aca9262100d4da21a6b419e95866699d4c637a3e7935978b231e31d79fe992bc"
+   ],
+   "Humanities_Teesside/GROW_W9-W14_2026-27/GROW_HUM_W12_Compare_With_Care_OUTSTANDING_V3_1.html": [
+    "5d44d4af25e8ba790122b73673b2276c665c81acfd7c212087a2cfa81db9fbe4",
+    "4398bb7710eae512905bf3a68d8c9244338f0d2d41bb6be3bebec21b38f90098"
+   ],
+   "Humanities_Teesside/GROW_W9-W14_2026-27/GROW_HUM_W13_Belonging_Briefing_OUTSTANDING_V3_1.html": [
+    "a31b4c5e61bb3080757d4e058bde8a3146d7cb659f1c2dce3ff1997609af104f",
+    "c7a43d6f713f0ae8d685269920373223f8f4fbd4ef195bfea11aacb12160b0ce"
+   ],
    "Humanities_Teesside/GROW_W9-W14_2026-27/GROW_HUM_W14_Map_and_Belonging_Challenge_OUTSTANDING_V3_1.html": "d20e5177024b764fba3c45474819f4a4dbc0077efe4fdc3ac0e11be9261f07aa",
-   "Humanities_Teesside/GROW_W9-W14_2026-27/GROW_HUM_W9_Pinpoint_the_Place_OUTSTANDING_V3_1.html": "5cd25d4943698a1570ade79a071a17c0a4033bb54c00a1d4c97b6d8917c3aee4",
+   "Humanities_Teesside/GROW_W9-W14_2026-27/GROW_HUM_W9_Pinpoint_the_Place_OUTSTANDING_V3_1.html": [
+    "5cd25d4943698a1570ade79a071a17c0a4033bb54c00a1d4c97b6d8917c3aee4",
+    "84bcd7e2c766be39bd5f13f883755b800355a530330a434689022d7e51030809"
+   ],
    "Humanities_Teesside/GROW_W9-W14_2026-27/README.md": "bb8c7cff73d4e03949a2ecb78b0b7bf83877ed49f1bfd42bf6945bfb384f9078",
    "Humanities_Teesside/GROW_W9-W14_2026-27/RELEASE_NOTES_AND_QA.md": "83acfc9f8d1eeaa6990daf2e854d6b98c9efe8d9c973687fd63c1c71f6936789",
    "Humanities_Teesside/GROW_W9-W14_2026-27/SHA256SUMS.txt": "adef9d209dfa9b5b6cacbf7d41043674565923eec4a4000c4f736e169078fa93",
@@ -2095,12 +2132,30 @@
    "Humanities_Teesside/LAUNCH_W15-W20_2026-27/SHA256SUMS.txt": "fedb2d022485725fbb1bcac69045ab91b88d83326afe44833df05a369cba247a",
    "Humanities_Teesside/LAUNCH_W15-W20_2026-27/START_HERE.html": "13520fb89ca434090343191aefab7b5221d236f7858703accb9b5a58ec3c4381",
    "Humanities_Teesside/LAUNCH_W15-W20_2026-27/manifest.json": "32a7df240d0eba5d63ff921c2cb68e45a27dd4f05f50aae466a703660d645eb9",
-   "Humanities_Teesside/LAUNCH_W9-W14_2026-27/LAUNCH_HUM_W10_Settlement_And_Urbanisation.html": "3bf90c8d74174996e272d5eaaba42511301ccd82d1eab5bd4cfbbd47c128818c",
-   "Humanities_Teesside/LAUNCH_W9-W14_2026-27/LAUNCH_HUM_W11_Local_Fieldwork_Collect_Data.html": "8206c6103880a12bebd8e62d996d6b91343cf9bac958735e4b30afda535c360b",
-   "Humanities_Teesside/LAUNCH_W9-W14_2026-27/LAUNCH_HUM_W12_Fieldwork_Data_Graphs.html": "31c3f968ea59fc44a422f5f6b49bd18c22eed06dad9aa48908ed751a87b100bc",
-   "Humanities_Teesside/LAUNCH_W9-W14_2026-27/LAUNCH_HUM_W13_Contrasting_Places.html": "b906d9d53b75fce15e8af01a3fea7636711d35d505a6395a8ced3b0dff9d51bd",
-   "Humanities_Teesside/LAUNCH_W9-W14_2026-27/LAUNCH_HUM_W14_Fieldwork_Enquiry_Write_Up.html": "d6336ef184b59a03d17458965e5ae552ce58d7a5a93d27798f27026c6bc08f44",
-   "Humanities_Teesside/LAUNCH_W9-W14_2026-27/LAUNCH_HUM_W9_GIS_Layers_Reading_Place.html": "328a90ef6630ff733d9c94f92b1b259bc72d04310c736c2f0cb7df121c50b41e",
+   "Humanities_Teesside/LAUNCH_W9-W14_2026-27/LAUNCH_HUM_W10_Settlement_And_Urbanisation.html": [
+    "3bf90c8d74174996e272d5eaaba42511301ccd82d1eab5bd4cfbbd47c128818c",
+    "a6d2a323b3db82f6368f8e643a1bb22abfa0d0f0fc15aa71ca6b743be38fd717"
+   ],
+   "Humanities_Teesside/LAUNCH_W9-W14_2026-27/LAUNCH_HUM_W11_Local_Fieldwork_Collect_Data.html": [
+    "8206c6103880a12bebd8e62d996d6b91343cf9bac958735e4b30afda535c360b",
+    "872e88aff1c00b0699e7642ccd41d43a567ff95a837cf4b6d726e1f3991f9cad"
+   ],
+   "Humanities_Teesside/LAUNCH_W9-W14_2026-27/LAUNCH_HUM_W12_Fieldwork_Data_Graphs.html": [
+    "31c3f968ea59fc44a422f5f6b49bd18c22eed06dad9aa48908ed751a87b100bc",
+    "20297f5bc34647931abe488c85156e9e3802d4268718a05f4de0f74842b64ec1"
+   ],
+   "Humanities_Teesside/LAUNCH_W9-W14_2026-27/LAUNCH_HUM_W13_Contrasting_Places.html": [
+    "b906d9d53b75fce15e8af01a3fea7636711d35d505a6395a8ced3b0dff9d51bd",
+    "2ab06d3c7a17e88097513f9faa6cd66b920a1a93291e53ad33114903666fe267"
+   ],
+   "Humanities_Teesside/LAUNCH_W9-W14_2026-27/LAUNCH_HUM_W14_Fieldwork_Enquiry_Write_Up.html": [
+    "d6336ef184b59a03d17458965e5ae552ce58d7a5a93d27798f27026c6bc08f44",
+    "23e401b107b8f48bca9fdbba746ba5c7ba55c49e2784c835204cfa46f46558f0"
+   ],
+   "Humanities_Teesside/LAUNCH_W9-W14_2026-27/LAUNCH_HUM_W9_GIS_Layers_Reading_Place.html": [
+    "328a90ef6630ff733d9c94f92b1b259bc72d04310c736c2f0cb7df121c50b41e",
+    "f0747b1b899bff27091f94cd391850643c64d888070ecd296010f272ca425792"
+   ],
    "Humanities_Teesside/LAUNCH_W9-W14_2026-27/README.md": "8b40408ba752fb514cedd158395f164c6802ed73a4da76d27177a63d661828d5",
    "Humanities_Teesside/LAUNCH_W9-W14_2026-27/SCHEME_OF_WORK.html": "d1f7b00c82e995f3fcd307ce97f9e1be04f399667784979f941750d0af214f1e",
    "Humanities_Teesside/LAUNCH_W9-W14_2026-27/SHA256SUMS.txt": "5ed348a8d8b6c32eca3b486e899e891b3aade86971fb2f64609a1f18c4d71ef9",
@@ -3646,10 +3701,22 @@
    "Science_Teesside/Build/SCI_B_W5_Right_Nutrition.html": "76db0163620354819d2ed7191f1d3a2f0f65a654d7c3545d765ce489d647f345",
    "Science_Teesside/Build/SCI_B_W6_Balanced_Plate.html": "59e2ab0a78dd0bec71d9d6908399a78211e0b96fc5fc53e1945e9b04bc8bb38c",
    "Science_Teesside/Build/SCI_B_W7_Where_Food_Comes_From.html": "42a3d4128564618305c9882c7265284c08f9ce277bcb9eb19003163b34953a0d",
-   "Science_Teesside/Build/W14-W20_2026-27/SCI_B_W14A_Autumn_Science_Review_Explore.html": "3d7e9d07b4d51ff2f241b3017cf2e23eab65f08a76beaaa01c826c50fa0b58ef",
-   "Science_Teesside/Build/W14-W20_2026-27/SCI_B_W14B_Autumn_Science_Evidence_Do.html": "c679bcaebc6250f68622aed7d66ea3dcbc3a4883d71fcd0ea720465fcc53520d",
-   "Science_Teesside/Build/W14-W20_2026-27/SCI_B_W15A_Fossil_Formation_Story_Explore.html": "183dd147ac1f72714e781c0e1c19b35acf3dd3200966c8e8276c36c4f2019b92",
-   "Science_Teesside/Build/W14-W20_2026-27/SCI_B_W15B_Fossil_Formation_Evidence_Do.html": "913c9be1976ca820efa3d82c5f18c930122c49185acd9377a0b6ab0e8262928d",
+   "Science_Teesside/Build/W14-W20_2026-27/SCI_B_W14A_Autumn_Science_Review_Explore.html": [
+    "3d7e9d07b4d51ff2f241b3017cf2e23eab65f08a76beaaa01c826c50fa0b58ef",
+    "c72d1acf9b0c479226389de19c26d940ab35d9e2250ccfbd0985f0866096c380"
+   ],
+   "Science_Teesside/Build/W14-W20_2026-27/SCI_B_W14B_Autumn_Science_Evidence_Do.html": [
+    "c679bcaebc6250f68622aed7d66ea3dcbc3a4883d71fcd0ea720465fcc53520d",
+    "c6daffef3a82b2566588df59136f7633240129933675d37deebb5f996b53a863"
+   ],
+   "Science_Teesside/Build/W14-W20_2026-27/SCI_B_W15A_Fossil_Formation_Story_Explore.html": [
+    "183dd147ac1f72714e781c0e1c19b35acf3dd3200966c8e8276c36c4f2019b92",
+    "bd86c5abea2005e2fca354d4a192d1ee7f3c4846965d5748253fece8499b94e2"
+   ],
+   "Science_Teesside/Build/W14-W20_2026-27/SCI_B_W15B_Fossil_Formation_Evidence_Do.html": [
+    "913c9be1976ca820efa3d82c5f18c930122c49185acd9377a0b6ab0e8262928d",
+    "87730751863ca72bceea464226716fae3680df4de57ea3998c849d099c386fd4"
+   ],
    "Science_Teesside/Build/W14-W20_2026-27/SCI_B_W16A_Fossil_Clues_Explore.html": "1603a474bbd7cc4c1e18cf30ad13b8221db6ce502bfea6ff36429c3aa82d5e52",
    "Science_Teesside/Build/W14-W20_2026-27/SCI_B_W16B_Fossil_Evidence_Do.html": "fb96b453957aa035d7bd0d20bab96d209a97e1d28dc93e6db6b202d408491fe0",
    "Science_Teesside/Build/W14-W20_2026-27/SHA256SUMS.txt": "4144d33cfdfbf960d667f15590cddcd7c8ae5d3b6c3866746ba45204b80ff5c2",
@@ -3659,21 +3726,54 @@
    "Science_Teesside/Build/W8-W13_2026-27/PRACTICALS_MATRIX.html": "bc851cfb2f946938009c09e94680a941b3cec76d4364a29a7aa4fec9a9b1cd7c",
    "Science_Teesside/Build/W8-W13_2026-27/QA_SUMMARY.md": "ccc40c90abcbafcff9c615af2ee55b75b2b7ef98bcd1988936a6b75ae82d81a6",
    "Science_Teesside/Build/W8-W13_2026-27/README.md": "472a0c34f2ec2b1f59d50be8b7dac48959cb7f0e8cabb57bdfda08e3b886c83f",
-   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W10A_Rock_Hardness_Explore.html": "8efe1d587a4ca68141bf72b9e898e4defe14c3022a115da890bea9eb4e98b8d0",
-   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W10B_Hardness_Evidence_Do.html": "c1c3d6b546efde831e5048b5303a9815bc21783dc2be347881c21a200f239a58",
+   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W10A_Rock_Hardness_Explore.html": [
+    "8efe1d587a4ca68141bf72b9e898e4defe14c3022a115da890bea9eb4e98b8d0",
+    "59df4e4b20d93d017675e7ba421705d8e281e5ba092c4d58ac998847809e5380"
+   ],
+   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W10B_Hardness_Evidence_Do.html": [
+    "c1c3d6b546efde831e5048b5303a9815bc21783dc2be347881c21a200f239a58",
+    "0cb8c6d992fa7602851ab18181ad451a96ce9bc4e4e77ac0dce3bd6cab1d7119"
+   ],
    "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W11A_Rock_Permeability_Explore.html": [
     "c3b379debc6dc2d4fa6bb5be1c64f630affd6420f32c383a89605eeea351894b",
     "2a8493884a31d398d9930480cbf48bfa9dd9bdc9588e631c1707ff190cddb2bf"
    ],
-   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W11B_Water_Through_Rock_Lab_Do.html": "e63e69fc71789c61604413d3b0d15743ba6aa759e196b9004c5f9044b2eca20a",
-   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W12A_Rock_Jobs_Which_Property_Matters_Explore.html": "83932f16bbccfb5ab3d3d40cef04104fe17396a21d1a39ebef18f87d622a6fad",
-   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W12B_Choose_Rock_For_The_Job_Do.html": "977210f1ae1e9e73ab0b9677ff533bdaf645f1144c91f38d2d6bbd2d56bc2c05",
-   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W13A_Fair_Test_Planner_Change_One_Thing_Explore.html": "9c9920706624162cae89594e0bc3417a92def88f30ecf840f910ffad815b6d2f",
-   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W13B_Method_Pilot_Test_The_Test_Do.html": "423a9a56ef458f03f0841946b3d39b7813aeb91219e155c98232128e4c0955ac",
-   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W8A_Sugar_Labels_Explore.html": "eff3836bc282f2310b733ead76c973f032998cb38ae45557cf22f5c24a46c1f1",
-   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W8B_Autumn_Science_Checkpoint_Do.html": "54f5c9117938ec4a5446ab88b619da10351f29db1537569ef7c93abaa33f7c8a",
-   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W9A_Rock_Evidence_Explore.html": "9fac27f91342fafa29cb1eaa51dad71b950100110494770fd3858e29f48966b1",
-   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W9B_Rock_Sorting_Key_Do.html": "35bedda7e216197bbed8d596494da879c2a5e712a1cff5ff72c3e0c5453859c5",
+   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W11B_Water_Through_Rock_Lab_Do.html": [
+    "e63e69fc71789c61604413d3b0d15743ba6aa759e196b9004c5f9044b2eca20a",
+    "f94ce859a10e18214da35c3aad5e8f52dd7a837b79a42914c621937c849f7304"
+   ],
+   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W12A_Rock_Jobs_Which_Property_Matters_Explore.html": [
+    "83932f16bbccfb5ab3d3d40cef04104fe17396a21d1a39ebef18f87d622a6fad",
+    "313052ebbc7f55e10d5efdca77a9dd0e69a0e3c351c8d6c709aa381287f936a0"
+   ],
+   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W12B_Choose_Rock_For_The_Job_Do.html": [
+    "977210f1ae1e9e73ab0b9677ff533bdaf645f1144c91f38d2d6bbd2d56bc2c05",
+    "92048ad8197b7b8714133e14784d3c4e7df03f75d10bd76d5ea85d814173788d"
+   ],
+   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W13A_Fair_Test_Planner_Change_One_Thing_Explore.html": [
+    "9c9920706624162cae89594e0bc3417a92def88f30ecf840f910ffad815b6d2f",
+    "c95f65b36ee1605f1ba780b22dd8ceab0e5fb7e092e357931e83bdb7bf468d34"
+   ],
+   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W13B_Method_Pilot_Test_The_Test_Do.html": [
+    "423a9a56ef458f03f0841946b3d39b7813aeb91219e155c98232128e4c0955ac",
+    "61db5aa0f5ec50f0f067fdcfa84a9f77e3050eca29c9d71cb2c0cc40b32594ba"
+   ],
+   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W8A_Sugar_Labels_Explore.html": [
+    "eff3836bc282f2310b733ead76c973f032998cb38ae45557cf22f5c24a46c1f1",
+    "546247379c297cd53442607083347068b1ad9e66beec8dbbd656a3d83c86ca7b"
+   ],
+   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W8B_Autumn_Science_Checkpoint_Do.html": [
+    "54f5c9117938ec4a5446ab88b619da10351f29db1537569ef7c93abaa33f7c8a",
+    "bc156aed2aa490d980aa524ac8f987b893773d93140aae60a85260c021776189"
+   ],
+   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W9A_Rock_Evidence_Explore.html": [
+    "9fac27f91342fafa29cb1eaa51dad71b950100110494770fd3858e29f48966b1",
+    "d7f96c37030cda66283cac783c6486b0461bd0423da426db0d39275f76586f01"
+   ],
+   "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W9B_Rock_Sorting_Key_Do.html": [
+    "35bedda7e216197bbed8d596494da879c2a5e712a1cff5ff72c3e0c5453859c5",
+    "c541ff2dfa8f6933ef2a8fcacf161af76ac6136d16d635dccbee3ee07104e37f"
+   ],
    "Science_Teesside/Build/W8-W13_2026-27/SHA256SUMS.txt": "b6a7b089ff365116891260461317408462e632b437585e6f3ef134c280a527bd",
    "Science_Teesside/Build/W8-W13_2026-27/START_HERE.html": "cdbcb54dc3afe502f1ca60c356c22c24e39ad237eba94ae2b873f8c83324604a",
    "Science_Teesside/Build/W8-W13_2026-27/TEACHER_IMPLEMENTATION_GUIDE.html": "4677eb0b8d61ac14488e2dd7873e1b9e6681c235bb1420809204650025307cb2",
@@ -3703,7 +3803,10 @@
    "Science_Teesside/Build/v4_fieldops/04_Tees_Bay_Wind_Operations_Lab.html": "c088330d08d683ebefc54b105604141b331c30e472ea606c95e3767a5d439daf",
    "Science_Teesside/Build/v4_fieldops/index.html": "a43e385c5a89ca27ba5728468744dd853f54761cae0a2febc53947e06138b0c6",
    "Science_Teesside/Grow/Autumn2_W7_2026-27/SCI_G_A2_W7A_Autumn_Science_Review_Explore.html": "1278ffd55b22f3f827b53b30b46571c0db79934ce585c774fd6f4f433e49c016",
-   "Science_Teesside/Grow/Autumn2_W7_2026-27/SCI_G_A2_W7B_Autumn_Science_Evidence_Do.html": "026041c7504b733cb6939bd5c569aec7e4734471c38b44eb197422e19ea266e8",
+   "Science_Teesside/Grow/Autumn2_W7_2026-27/SCI_G_A2_W7B_Autumn_Science_Evidence_Do.html": [
+    "026041c7504b733cb6939bd5c569aec7e4734471c38b44eb197422e19ea266e8",
+    "22be61e74b8e5f32afe763bcaebf8f0d21ada24b62510574b66f12ef6dcd2b70"
+   ],
    "Science_Teesside/Grow/Autumn2_W7_2026-27/SHA256SUMS.txt": "f4c9e397be564377226e062afcbec3281bdd3d255a14b9bf51415334dbf1145a",
    "Science_Teesside/Grow/Autumn2_W7_2026-27/START_HERE.html": "7396f79a21570e18339db91ff3dca0ad077d1ad6d9dd5223ce340ecf90198ba2",
    "Science_Teesside/Grow/Autumn2_W7_2026-27/manifest.json": "fb9998fb477b93152615aea94d3ebed882d112c8c3de9a82dbc88e677a813a53",
@@ -3723,18 +3826,54 @@
    "Science_Teesside/Grow/W8-W13_2026-27/PRACTICALS_MATRIX.html": "703ff6af37c62de8e875024ba41dcaeade8968826179babb9d4506a02e45c122",
    "Science_Teesside/Grow/W8-W13_2026-27/QA_SUMMARY.md": "27104820d54720609b920f35bb133d7ba35636c12e2b95c13c94a01337115354",
    "Science_Teesside/Grow/W8-W13_2026-27/README.md": "c1814dcea2f651255c16b75f8545da103646c46ecc34c8c04bd29b76523989c4",
-   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W10A_Solar_System_Research_Explore.html": "67794a73f9b053e10649cea783ca06a29eaa1388c6783868a6ed68f0600e7730",
-   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W10B_Solar_System_Presentation_Do.html": "4510e8066048dbd829a83bf267bab467ace9a613946ee2a48c67dfe7003d3250",
-   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W11A_Global_Warming_Explore.html": "745b35e34601f72f0efef05d971c48c1214168d358fe1a14cef4e78b0498d6df",
-   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W11B_Climate_Action_Do.html": "944121a8c9c7b978100ddde7f5f60ff09dfab165f2c5705130ba751cfbe2c0f7",
-   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W12A_Science_Connections_Explore.html": "f4d7cec8af8401e4e8df5520a301f1810615d3449999833f0a9804eb2b94f0b0",
-   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W12B_Science_Answer_Lab_Do.html": "ec4ac0144bbfdcead29f74c6c07ebf51f11f4715f440bb3282fcbff045d0eb7f",
-   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W13A_Rover_Rescue_Plan_Explore.html": "9d92f1150f8e38bdecaa34698b1c1112c87777e689753ebe498c4bb504296fee",
-   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W13B_Rover_Rescue_Investigation_Do.html": "12c6cb18bb18d6884f3c0e2c013644d213addcf48afa75784826675872b58c59",
-   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W8A_Day_And_Night_Explore.html": "4368d525e7e781611111094d2c58bb47f9899fa57f7ddce5aca84a0738269237",
-   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W8B_Day_And_Night_Do.html": "55740b6b12f148dc75204517ba143f84ade695f65272f05cc81673494df248f6",
-   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W9A_Spherical_Bodies_Explore.html": "c39daab0cf46200cf2e2bd01f39e0bcaab4ec744f735197770c64f9c84a5e143",
-   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W9B_Spherical_Bodies_Do.html": "fd0a6076c141b5de505446a5853838e89b185e673690bc9889078bc38fe4cba5",
+   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W10A_Solar_System_Research_Explore.html": [
+    "67794a73f9b053e10649cea783ca06a29eaa1388c6783868a6ed68f0600e7730",
+    "a08b2d8b63be021216ea191f5d6a2137b6c41b519afdda888dbf56a19ec18206"
+   ],
+   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W10B_Solar_System_Presentation_Do.html": [
+    "4510e8066048dbd829a83bf267bab467ace9a613946ee2a48c67dfe7003d3250",
+    "db6b0019406853be34dd2d08448b2a0fc29534eb231692149e621b08835e3ce7"
+   ],
+   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W11A_Global_Warming_Explore.html": [
+    "745b35e34601f72f0efef05d971c48c1214168d358fe1a14cef4e78b0498d6df",
+    "65818dd230c4d252e59427f6d5450a90d17f0a644527c5ad27fc245d121ad3cc"
+   ],
+   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W11B_Climate_Action_Do.html": [
+    "944121a8c9c7b978100ddde7f5f60ff09dfab165f2c5705130ba751cfbe2c0f7",
+    "b6832fccb5cb555d0ee6192afd7075ff04165f24a08a42b4a09edb32147c19b6"
+   ],
+   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W12A_Science_Connections_Explore.html": [
+    "f4d7cec8af8401e4e8df5520a301f1810615d3449999833f0a9804eb2b94f0b0",
+    "6156f6ef1b1228191b789ed4b309ef45e91b52db778c665cc9ecb0488ad5b957"
+   ],
+   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W12B_Science_Answer_Lab_Do.html": [
+    "ec4ac0144bbfdcead29f74c6c07ebf51f11f4715f440bb3282fcbff045d0eb7f",
+    "0480eca47be8dee420bb99537113356b0e4cb292511a40dd6e952f5e199eed1b"
+   ],
+   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W13A_Rover_Rescue_Plan_Explore.html": [
+    "9d92f1150f8e38bdecaa34698b1c1112c87777e689753ebe498c4bb504296fee",
+    "e16e3ebb409f1b2e5e3313d5a3f6a0c969ae36b31bb8d3379a3a5f6d1036a816"
+   ],
+   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W13B_Rover_Rescue_Investigation_Do.html": [
+    "12c6cb18bb18d6884f3c0e2c013644d213addcf48afa75784826675872b58c59",
+    "f9d89689fc443d1d6e57307b72d872b898dd7202a598f3c99ab558c4e7c817d9"
+   ],
+   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W8A_Day_And_Night_Explore.html": [
+    "4368d525e7e781611111094d2c58bb47f9899fa57f7ddce5aca84a0738269237",
+    "afdd9ff6603fdba70a7612aa02d542134b1d45445ad750758ae4be5158674659"
+   ],
+   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W8B_Day_And_Night_Do.html": [
+    "55740b6b12f148dc75204517ba143f84ade695f65272f05cc81673494df248f6",
+    "c6a29dacda5e158c31422478ac97f44f5e9f3dc81ac036838298a8169d0d18a6"
+   ],
+   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W9A_Spherical_Bodies_Explore.html": [
+    "c39daab0cf46200cf2e2bd01f39e0bcaab4ec744f735197770c64f9c84a5e143",
+    "68297dba78eb3c7288e75b8f5e56e9bfaf27c598e16d51fa4e833d48fee6ff3e"
+   ],
+   "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W9B_Spherical_Bodies_Do.html": [
+    "fd0a6076c141b5de505446a5853838e89b185e673690bc9889078bc38fe4cba5",
+    "7887894b2cdccd11d5c753438dabdeb9f0f46b3e1202ab9c4880efdf5f4f303e"
+   ],
    "Science_Teesside/Grow/W8-W13_2026-27/SHA256SUMS.txt": "adbbb05b02c85453647282616e8eaf3f60d4c30bf78257641b14aefd0dc4d9d4",
    "Science_Teesside/Grow/W8-W13_2026-27/START_HERE.html": "f8544989ca303262bb10f164e9525a315b519ae9c75195dae28aa8ce072843a9",
    "Science_Teesside/Grow/W8-W13_2026-27/TEACHER_IMPLEMENTATION_GUIDE.html": "eb7bb20d63f63634710ede0ffcea0a1e879c0c3db145509528ebe1b9ae2bd2d3",
@@ -3798,8 +3937,14 @@
    "Science_Teesside/Grow/v3_40min/TEACHER_IMPLEMENTATION_GUIDE.html": "16cd9d71cfda2ad9a299f5cbbbe497f93a9c6fac4186695b531c10ee879ba1d1",
    "Science_Teesside/Grow/v3_40min/index.html": "e9c09eba258aa5a54b6954446ed75820b128e1724cd15c2aae51109db660ad2d",
    "Science_Teesside/Grow/v3_40min/manifest-v3.json": "ab51b90faaa0ca183eb1d7edcb6bd0158b4ca9a378f96a0ef2b3587df85ae84a",
-   "Science_Teesside/Launch/Autumn2_W7_2026-27/SCI_L_A2_W7L1_Topics_2_3_Assessment_Introduce.html": "e66e6b657d572f30227ea415c70286cdbc496bd46c93968fc63502b2eafe0efb",
-   "Science_Teesside/Launch/Autumn2_W7_2026-27/SCI_L_A2_W7L2_Topics_2_3_Assessment_Explore.html": "cb5482a85387d91c4937eb26ea07c0c12fc32685692b666e79a425376e3ccc8c",
+   "Science_Teesside/Launch/Autumn2_W7_2026-27/SCI_L_A2_W7L1_Topics_2_3_Assessment_Introduce.html": [
+    "e66e6b657d572f30227ea415c70286cdbc496bd46c93968fc63502b2eafe0efb",
+    "20a4c55fa681f96a92ebb1dc029f01756700c0d568d07540d667ec5b7b7bd7c6"
+   ],
+   "Science_Teesside/Launch/Autumn2_W7_2026-27/SCI_L_A2_W7L2_Topics_2_3_Assessment_Explore.html": [
+    "cb5482a85387d91c4937eb26ea07c0c12fc32685692b666e79a425376e3ccc8c",
+    "9929ca42fa9041a50d8084bcb20bf3ae3c7837ea3d63e16f7173e4a3e9ff39ac"
+   ],
    "Science_Teesside/Launch/Autumn2_W7_2026-27/SCI_L_A2_W7L3_Topics_2_3_Assessment_Do.html": "c5bfd7c2d20fcefe3c5cab32c183abfe92cefd3f1001b1edd4db36279cc958da",
    "Science_Teesside/Launch/Autumn2_W7_2026-27/SHA256SUMS.txt": "28d8d4ad4e32904c9603e53a8cf0552276f0edc44df7b8d126657b3a40f85878",
    "Science_Teesside/Launch/Autumn2_W7_2026-27/START_HERE.html": "20adc13f545c653d32828755ebf4dabe506d62cfc3ecd2ff9c85b225ad4acc25",
@@ -3819,9 +3964,18 @@
    "Science_Teesside/Launch/SCI_L_W7_L1_RoundUp.html": "284338640ac9dd70cfc2931bff6a633e560d12bc321bbab68d981d952310e1ae",
    "Science_Teesside/Launch/SCI_L_W7_L2_CommandWords.html": "5b1272dcd9e32715147e5546b0d520ea6dd9dc653fc3bb2dd1138b8baf1bc3f5",
    "Science_Teesside/Launch/SCI_L_W7_L3_ExamPractice.html": "2434cc5a2b0e47dfb5135ee254e1ca568a1a2565dcf348c25b4c9b1bbeae679c",
-   "Science_Teesside/Launch/W14-W15_2026-27/SCI_L_W14L1_Genetic_Condition_Research_Introduce.html": "ee25db1ee6d4149e8a648c1929403a6911522a79e9987627f6b01b3d797118df",
-   "Science_Teesside/Launch/W14-W15_2026-27/SCI_L_W14L2_Genetic_Condition_Source_Evidence_Explore.html": "74ea65db265f729cc134c07ce008eeb04f4c06bbaf265d5fbe942fb127344131",
-   "Science_Teesside/Launch/W14-W15_2026-27/SCI_L_W14L3_Genetic_Condition_Presentation_Do.html": "40e389d000f73eb378a9f4b5aa4b2b2dd741993153d27a3a9cae96c6f6d2df8c",
+   "Science_Teesside/Launch/W14-W15_2026-27/SCI_L_W14L1_Genetic_Condition_Research_Introduce.html": [
+    "ee25db1ee6d4149e8a648c1929403a6911522a79e9987627f6b01b3d797118df",
+    "e5f233fc89627056819a3977faadfa1ef6bc4390a1857d3f6cbd19453c08c668"
+   ],
+   "Science_Teesside/Launch/W14-W15_2026-27/SCI_L_W14L2_Genetic_Condition_Source_Evidence_Explore.html": [
+    "74ea65db265f729cc134c07ce008eeb04f4c06bbaf265d5fbe942fb127344131",
+    "ac721aacdc0c0bfdc1ca272b663c26497cdcbbb09417eb6f7222e021a4b03c56"
+   ],
+   "Science_Teesside/Launch/W14-W15_2026-27/SCI_L_W14L3_Genetic_Condition_Presentation_Do.html": [
+    "40e389d000f73eb378a9f4b5aa4b2b2dd741993153d27a3a9cae96c6f6d2df8c",
+    "143225e4a8342d2dcba25cc11de4bce7c5dd60d5fed194aea3efe2a5ac6a6b38"
+   ],
    "Science_Teesside/Launch/W14-W15_2026-27/SHA256SUMS.txt": "92960e782348878aac32c07e7a271c023d857640f8eff645012da89fae774605",
    "Science_Teesside/Launch/W14-W15_2026-27/START_HERE.html": "0b07a40e156cf529b59f19b293b894b69c1d3cb69b43c80cb0f17d03bf8074e9",
    "Science_Teesside/Launch/W14-W15_2026-27/manifest.json": "f303e839f99ee6293ae67e5e5f7facfd386d6619e13ce7c3bbc47cd49898d47a",
@@ -3835,25 +3989,70 @@
    "Science_Teesside/Launch/W8-W13_2026-27/PRACTICALS_MATRIX.html": "6366dfd1a37b7de959703b0ab451b62e31ef79790bfd76e0bd5b525e170e0247",
    "Science_Teesside/Launch/W8-W13_2026-27/QA_SUMMARY.md": "816c7339aa73c09895e049cae2b48b9d92d5bba9c84d8fba234a7a8e0c2a1101",
    "Science_Teesside/Launch/W8-W13_2026-27/README.md": "dee6b068027e598a8f2275d4818266f67fc0f5a5d8b2cb1d843696f3cbeda8f5",
-   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W10L1_Growth_And_Differentiation_Introduce.html": "2f093783a487aba994c5455f7732212100c9d2bebc34b5e0b654555edb2da705",
-   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W10L2_Stem_Cells_And_Meristems_Explore.html": "e6bdbef54ae6c1915101b6efd11bddab661274ad3a088e4a661e526c0c2e4d29",
-   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W10L3_Growth_Stem_Cell_Data_Application_Do.html": "68bf4729c79014d1b293858fb1161aa72ecb3a65dfc125ecc4f56354732a58d2",
-   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W11L1_Stem_Cell_Evidence_Introduce.html": "b77e38c9b60ff6fb732a134eb95dde48b279e89ce15edbeadf0782691f088b1d",
-   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W11L2_Benefit_Risk_Uncertainty_Explore.html": "e89ffb4c89d49c57dc2267988c0734d087a74efb535beb2972f96cffe7a2c8de",
-   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W11L3_Stem_Cell_Discuss_Do.html": "93827556289e043e637441b0e1006ce3c7b30387ee3dcbd2325f769427c5c732",
-   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W12L1_DNA_Hierarchy_Introduce.html": "f2606939442c4d7a8ea7eb881156414d13dde62832a21759bb519eac5f1e962c",
-   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W12L2_DNA_Structure_Explore.html": "cf4c7f3c0329b368f7bc21c5177e1ae92fb10e7668b307269757d5744e44be8e",
-   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W12L3_Fruit_DNA_Evidence_Do.html": "e73e528ebed2333f141d9d3c4cf68912aa02dad73a52eae7e5819a344894cb51",
-   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W13L1_Alleles_Genotype_Phenotype_Introduce.html": "499103110de2d29a6dc16a7fede6e7436ac3fd4f02a7b0c7738a2e8d8400fe57",
+   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W10L1_Growth_And_Differentiation_Introduce.html": [
+    "2f093783a487aba994c5455f7732212100c9d2bebc34b5e0b654555edb2da705",
+    "ac751096a229d3ba7e0437ace45e912340496f757b302505f8ebac5a7c7cef7a"
+   ],
+   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W10L2_Stem_Cells_And_Meristems_Explore.html": [
+    "e6bdbef54ae6c1915101b6efd11bddab661274ad3a088e4a661e526c0c2e4d29",
+    "64c9eb019b87d06165c961fc9cbcead7f36e2454d733517a8458f7c76393d4d8"
+   ],
+   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W10L3_Growth_Stem_Cell_Data_Application_Do.html": [
+    "68bf4729c79014d1b293858fb1161aa72ecb3a65dfc125ecc4f56354732a58d2",
+    "4ea879004e08204eaae7e1f5a34f49d4cd587d45db238ce004eacb5af43c317a"
+   ],
+   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W11L1_Stem_Cell_Evidence_Introduce.html": [
+    "b77e38c9b60ff6fb732a134eb95dde48b279e89ce15edbeadf0782691f088b1d",
+    "c7aa6e4860bc5f60bc534b2000030306e3b720c475d978e0d6e315c537f71480"
+   ],
+   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W11L2_Benefit_Risk_Uncertainty_Explore.html": [
+    "e89ffb4c89d49c57dc2267988c0734d087a74efb535beb2972f96cffe7a2c8de",
+    "ccc3e703929a9c07adb5bcf5ea0c73a2b4ed0258f7a989ffb10f5cea921df52c"
+   ],
+   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W11L3_Stem_Cell_Discuss_Do.html": [
+    "93827556289e043e637441b0e1006ce3c7b30387ee3dcbd2325f769427c5c732",
+    "fef259725c07b38f5a85275fa4c513892025b01d21845c14543f9da1c7f32724"
+   ],
+   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W12L1_DNA_Hierarchy_Introduce.html": [
+    "f2606939442c4d7a8ea7eb881156414d13dde62832a21759bb519eac5f1e962c",
+    "5250333b73e958df5579741a4264dc410177284555f838512b25501072357074"
+   ],
+   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W12L2_DNA_Structure_Explore.html": [
+    "cf4c7f3c0329b368f7bc21c5177e1ae92fb10e7668b307269757d5744e44be8e",
+    "d0bf8dbe0f2c843da679269d0b2ef9fff1254a77c2e4f7ab22ba79b62a9fa879"
+   ],
+   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W12L3_Fruit_DNA_Evidence_Do.html": [
+    "e73e528ebed2333f141d9d3c4cf68912aa02dad73a52eae7e5819a344894cb51",
+    "2231c459d1c5207791745f235e9278043509dc808422b0be0c3da45dd7bb8199"
+   ],
+   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W13L1_Alleles_Genotype_Phenotype_Introduce.html": [
+    "499103110de2d29a6dc16a7fede6e7436ac3fd4f02a7b0c7738a2e8d8400fe57",
+    "1b2febf7f6c9b190b103f8287fba67a661eb708d7b7f65b47c6b16cec01fb10d"
+   ],
    "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W13L2_Punnett_Square_Explore.html": [
     "38a3fafe6dd178724170234e2e046433a6b91909961611192253cd1c7cbea170",
     "20049f5d7f7f70043a8e77ff8be2f40614959fc9985c09e77954788e126e78c2"
    ],
-   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W13L3_Inheritance_Probability_Do.html": "a35af0d5904a13953257484e69d62d1c710f8c106617fef3824e6fae9f851043",
-   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W8L1_Enzyme_Action_Introduce.html": "e2763cfb0b12be7ace81d5da399e2d2bad52caa18d23a6482427427c92e0e75e",
-   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W8L2_Amylase_pH_Core_Practical_Explore.html": "d2d4cf8f7d9d2c9a9a2521e45372885d081c7052518a5f1c5cad5196ee9bc3b9",
-   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W8L3_Amylase_Rate_And_Topic_1_Do.html": "5e21260efb570a67b37bd8cc28c1f87c8a37bf8d950f4bbe776494d2d7d08ca8",
-   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W9L1_Cell_Cycle_Introduce.html": "e0e65a361aa02c0135c9da299aec9ca587247b7971fe22d9d3e4cd6b35c393c2",
+   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W13L3_Inheritance_Probability_Do.html": [
+    "a35af0d5904a13953257484e69d62d1c710f8c106617fef3824e6fae9f851043",
+    "0c963939229b0ec3be6aa2109c759ea1f302ab2a7e05f26c0e8c43221051d024"
+   ],
+   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W8L1_Enzyme_Action_Introduce.html": [
+    "e2763cfb0b12be7ace81d5da399e2d2bad52caa18d23a6482427427c92e0e75e",
+    "b3a294534b5ce34df2bbfbb8f4974e0563905ca65d446972e554fcce03fb3075"
+   ],
+   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W8L2_Amylase_pH_Core_Practical_Explore.html": [
+    "d2d4cf8f7d9d2c9a9a2521e45372885d081c7052518a5f1c5cad5196ee9bc3b9",
+    "dada9207fe9c9d551145b9e393db7d2c27df5f9c9a569a5696346ab33e4d9a9d"
+   ],
+   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W8L3_Amylase_Rate_And_Topic_1_Do.html": [
+    "5e21260efb570a67b37bd8cc28c1f87c8a37bf8d950f4bbe776494d2d7d08ca8",
+    "9e58a8770d1009bcf9192f522ec3b7732f33139bb745e613433e64f44cbc0f5e"
+   ],
+   "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W9L1_Cell_Cycle_Introduce.html": [
+    "e0e65a361aa02c0135c9da299aec9ca587247b7971fe22d9d3e4cd6b35c393c2",
+    "7c47117f21fc7dda3827d157b8cd8fe19eb5c7b7380d623703668adf4fe19f13"
+   ],
    "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W9L2_Mitosis_Sequence_Explore.html": "9f71408098da10cc04124beeeb8dab4c41c2730aa062c1ccbff1b2b68e132511",
    "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W9L3_Identical_Daughter_Cells_Do.html": "3bd7018dc5f34cd566a4f5e8644060072fb43adb231aa59ade52b9f50cca156d",
    "Science_Teesside/Launch/W8-W13_2026-27/SHA256SUMS.txt": "558b1b3c97e0fb63297f3c9bcbcd926f62119588abc4b0be35a98819258d8267",
