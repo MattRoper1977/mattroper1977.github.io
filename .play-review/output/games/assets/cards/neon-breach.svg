@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">Neon Breach card artwork</title>
+  <desc id="desc">A first-person view across a dark industrial arena. A weapon sight frames the centre, three drone silhouettes approach in formation down a lit corridor, and a wave counter and perk row sit at the edges. The palette is amber and cyan on near-black; the image is static with no flashing.</desc>
+  <defs>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16161d"/>
+      <stop offset="1" stop-color="#0b0b0f"/>
+    </linearGradient>
+    <linearGradient id="corridor" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#ffd000" stop-opacity=".26"/>
+      <stop offset="1" stop-color="#ffd000" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="haze" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#00d9ff" stop-opacity=".14"/>
+      <stop offset="1" stop-color="#00d9ff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="360" rx="16" fill="url(#floor)"/>
+
+  <!-- corridor walls receding to a vanishing point -->
+  <path d="M0 360 214 168h212L640 360Z" fill="url(#corridor)"/>
+  <path d="M0 360 214 168M640 360 426 168" stroke="#ffd000" stroke-opacity=".5" stroke-width="2" fill="none"/>
+  <path d="M214 168h212" stroke="#ffd000" stroke-opacity=".34" stroke-width="2" fill="none"/>
+
+  <!-- floor grid, static -->
+  <g stroke="#ffd000" stroke-opacity=".14" stroke-width="1.4" fill="none">
+    <path d="M60 360 236 196M580 360 404 196M150 360 268 210M490 360 372 210"/>
+    <path d="M96 306h448M140 262h360M182 222h276"/>
+  </g>
+
+  <!-- side haze -->
+  <rect x="0" y="120" width="180" height="240" fill="url(#haze)"/>
+
+  <!-- three drones in formation -->
+  <g fill="#12121a" stroke="#00d9ff" stroke-width="2.4">
+    <g transform="translate(320 214)">
+      <path d="M-26 0 0-17 26 0 0 17Z"/>
+      <circle cx="0" cy="0" r="5.5" fill="#ff445c" stroke="none"/>
+    </g>
+    <g transform="translate(244 244) scale(.82)">
+      <path d="M-26 0 0-17 26 0 0 17Z"/>
+      <circle cx="0" cy="0" r="5.5" fill="#ff445c" stroke="none"/>
+    </g>
+    <g transform="translate(400 250) scale(.74)">
+      <path d="M-26 0 0-17 26 0 0 17Z"/>
+      <circle cx="0" cy="0" r="5.5" fill="#ff445c" stroke="none"/>
+    </g>
+  </g>
+
+  <!-- weapon sight -->
+  <g stroke="#f7f7fa" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".9">
+    <path d="M320 196v20M320 268v20M284 242h20M336 242h20"/>
+    <circle cx="320" cy="242" r="3.2" fill="#f7f7fa" stroke="none"/>
+  </g>
+
+  <!-- wave counter -->
+  <g>
+    <rect x="26" y="26" width="150" height="46" rx="10" fill="#101014" fill-opacity=".9" stroke="#ffd000" stroke-opacity=".45" stroke-width="1.6"/>
+    <text x="42" y="46" font-family="system-ui,-apple-system,Segoe UI,Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="2" fill="#8b8b97">WAVE</text>
+    <text x="42" y="65" font-family="system-ui,-apple-system,Segoe UI,Arial,sans-serif" font-size="17" font-weight="800" fill="#ffd000">07 &#183; DRAFT READY</text>
+  </g>
+
+  <!-- perk row -->
+  <g>
+    <rect x="464" y="26" width="150" height="46" rx="10" fill="#101014" fill-opacity=".9" stroke="#00d9ff" stroke-opacity=".38" stroke-width="1.6"/>
+    <g font-family="system-ui,-apple-system,Segoe UI,Arial,sans-serif" font-size="12" font-weight="800" fill="#0b0b0f">
+      <rect x="478" y="38" width="38" height="22" rx="6" fill="#ffd000"/><text x="486" y="53">RPM</text>
+      <rect x="522" y="38" width="34" height="22" rx="6" fill="#00d9ff"/><text x="529" y="53">SH</text>
+      <rect x="562" y="38" width="38" height="22" rx="6" fill="#f7f7fa"/><text x="569" y="53">+HP</text>
+    </g>
+  </g>
+
+  <!-- weapon silhouette, lower right -->
+  <g fill="#1b1b23" stroke="#ffd000" stroke-opacity=".55" stroke-width="2">
+    <path d="M406 360v-40l52-16 96 12v44Z"/>
+    <path d="M458 304v-18h34v22" fill="#16161d"/>
+  </g>
+</svg>

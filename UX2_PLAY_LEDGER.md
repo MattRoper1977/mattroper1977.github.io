@@ -169,3 +169,5 @@ No key was added.
 8. **`.card-editions` Play links** for the other catalogue editions are in the
    server-rendered card (no-JS reachability) and hidden by play.js, whose
    sheet Editions row takes over.
+
+- **Deep link to a non-lead edition (e.g. `?game=slipstream-gp`):** on close the sheet returns focus to the "All games" heading when no card opened it; the heading carries `tabindex="-1"` so that fallback is a real focus target (C4 stop 6, fixed before landing).

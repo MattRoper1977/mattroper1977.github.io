@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">Neon Sync card artwork</title>
+  <desc id="desc">Three neon silhouettes hold a control point together. Vibe, the support, stands at the centre behind a deck arc with a healing ring reaching both teammates; Prism anchors the left behind a shield hexagon and Zest breaks right on a chevron trail.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d1330"/>
+      <stop offset="1" stop-color="#080b20"/>
+    </linearGradient>
+    <linearGradient id="cyanFade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#45e6d2" stop-opacity="0"/>
+      <stop offset="1" stop-color="#45e6d2" stop-opacity=".85"/>
+    </linearGradient>
+    <linearGradient id="magFade" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0" stop-color="#ff4f9b" stop-opacity="0"/>
+      <stop offset="1" stop-color="#ff4f9b" stop-opacity=".8"/>
+    </linearGradient>
+    <radialGradient id="aura" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#45e6d2" stop-opacity=".34"/>
+      <stop offset="1" stop-color="#45e6d2" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#1b2450" stroke-width="1.4"/>
+    </pattern>
+  </defs>
+
+  <rect width="640" height="360" fill="url(#sky)"/>
+  <rect width="640" height="360" fill="url(#grid)" opacity=".7"/>
+
+  <!-- the contested control point: the thing the score actually measures -->
+  <ellipse cx="320" cy="268" rx="176" ry="46" fill="none" stroke="#2a3568" stroke-width="2"/>
+  <ellipse cx="320" cy="268" rx="118" ry="31" fill="#0f1a3d" stroke="#45e6d2" stroke-width="2.5" opacity=".9"/>
+  <ellipse cx="320" cy="268" rx="62" ry="17" fill="#45e6d2" opacity=".16"/>
+
+  <!-- Vibe's support aura, reaching both teammates rather than only the caster -->
+  <circle cx="320" cy="196" r="150" fill="url(#aura)"/>
+  <circle cx="320" cy="196" r="128" fill="none" stroke="#45e6d2" stroke-width="1.6" stroke-dasharray="7 11" opacity=".55"/>
+
+  <!-- PRISM, tank, left: shield hexagon, planted -->
+  <g opacity=".96">
+    <path d="M150 150l30-17 30 17v34l-30 17-30-17z" fill="#0f1a3d" stroke="#45e6d2" stroke-width="3"/>
+    <path d="M180 133v68" stroke="#45e6d2" stroke-width="2" opacity=".6"/>
+    <rect x="171" y="201" width="18" height="52" rx="9" fill="#16204a" stroke="#45e6d2" stroke-width="2.4"/>
+    <path d="M120 176h26" stroke="url(#magFade)" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <!-- VIBE, support, centre and largest: the star of the roster -->
+  <g>
+    <path d="M262 214c0-32 26-58 58-58s58 26 58 58z" fill="#121b42" stroke="#45e6d2" stroke-width="3.4"/>
+    <circle cx="320" cy="132" r="27" fill="#16204a" stroke="#45e6d2" stroke-width="3.4"/>
+    <path d="M296 128a24 24 0 0 1 48 0" fill="none" stroke="#ff4f9b" stroke-width="3.4" stroke-linecap="round"/>
+    <!-- the deck arc: motion implied by shape, never by animation -->
+    <path d="M243 236a77 77 0 0 1 154 0" fill="none" stroke="#45e6d2" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="284" cy="222" r="12" fill="none" stroke="#ff4f9b" stroke-width="3"/>
+    <circle cx="356" cy="222" r="12" fill="none" stroke="#ff4f9b" stroke-width="3"/>
+    <circle cx="284" cy="222" r="3.4" fill="#ff4f9b"/>
+    <circle cx="356" cy="222" r="3.4" fill="#ff4f9b"/>
+    <!-- beams to both teammates: the score is what you gave them -->
+    <path d="M270 186L196 168" stroke="#45e6d2" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+    <path d="M370 186L452 172" stroke="#45e6d2" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+  </g>
+
+  <!-- ZEST, dps, right: chevron trail, breaking away -->
+  <g opacity=".96">
+    <path d="M448 140l30 26-30 26" fill="none" stroke="#ff4f9b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="452" y="192" width="18" height="50" rx="9" fill="#16204a" stroke="#45e6d2" stroke-width="2.4"/>
+    <circle cx="461" cy="166" r="19" fill="#0f1a3d" stroke="#45e6d2" stroke-width="3"/>
+    <path d="M496 166h34" stroke="url(#cyanFade)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M506 148h22M506 184h22" stroke="#45e6d2" stroke-width="2.4" stroke-linecap="round" opacity=".45"/>
+  </g>
+
+  <!-- wordmark -->
+  <g>
+    <text x="46" y="70" font-family="Verdana,DejaVu Sans,sans-serif" font-size="40" font-weight="700" letter-spacing="5"><tspan fill="#ffffff">NEON</tspan><tspan fill="#45e6d2" dx="14">SYNC</tspan></text>
+    <text x="47" y="96" font-family="Verdana,DejaVu Sans,sans-serif" font-size="14" letter-spacing="3.4" fill="#a9b3d4">HOLD THE POINT · BACK YOUR SQUAD</text>
+  </g>
+  <rect x="0" y="0" width="7" height="360" fill="#22D3EE"/>
+</svg>

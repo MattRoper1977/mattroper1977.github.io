@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjMTYxRDNEIi8+PHBhdGggZD0iTTI2IDc2IEwyNiAzMCBMNTAgNTUgTDc0IDMwIEw3NCA3NiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRThFMkQ0IiBzdHJva2Utd2lkdGg9IjEzIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="canonical" href="https://madebymatt-play.uk/Lessons/Games/KidsVsStaff_Showdown%20%283%29.html">
+<title>Kids vs Staff: Showdown</title>
+<style>
+:root{
+  --stage:#14101f; --stage2:#1e1730; --card:#251c3d; --edge:#3a2d5c;
+  --kids:#22d3ee; --kidsDeep:#0e7490; --staff:#fb923c; --staffDeep:#9a3412;
+  --gold:#fbbf24; --ink:#f5f3ff; --dim:#a99fc9; --good:#4ade80; --bad:#f87171;
+  --radius:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+  background:radial-gradient(ellipse 120% 70% at 50% -10%, #3b2a63 0%, var(--stage2) 45%, var(--stage) 100%);
+  color:var(--ink); min-height:100vh; display:flex; flex-direction:column; overflow-x:hidden;
+}
+button{font-family:inherit;cursor:pointer;border:none}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.screen{display:none;flex:1;flex-direction:column;padding:16px;max-width:1100px;width:100%;margin:0 auto}
+.screen.on{display:flex}
+
+/* ---------- marquee ---------- */
+.marquee{text-align:center;padding:18px 8px 6px}
+.marquee h1{
+  font-size:clamp(2rem,6vw,3.6rem);font-weight:900;letter-spacing:.03em;line-height:1.05;
+  background:linear-gradient(90deg,var(--kids) 0%,#e879f9 50%,var(--staff) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 18px rgba(232,121,249,.35));
+}
+.marquee .sub{color:var(--dim);margin-top:6px;font-size:1rem}
+.bulbs{display:flex;justify-content:center;gap:10px;margin-top:10px}
+.bulb{width:10px;height:10px;border-radius:50%;background:var(--gold);opacity:.35;animation:bulb 1.6s infinite}
+.bulb:nth-child(2n){animation-delay:.4s}.bulb:nth-child(3n){animation-delay:.8s}
+@keyframes bulb{0%,100%{opacity:.25}50%{opacity:1;box-shadow:0 0 10px var(--gold)}}
+
+/* ---------- setup ---------- */
+.teamsRow{display:flex;gap:14px;margin:18px 0 6px;flex-wrap:wrap}
+.teamCard{flex:1;min-width:220px;background:var(--card);border:2px solid var(--edge);border-radius:var(--radius);padding:14px;text-align:center}
+.teamCard.kids{border-color:var(--kids)}.teamCard.staff{border-color:var(--staff)}
+.teamCard label{display:block;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.teamCard input{width:100%;background:var(--stage);border:1px solid var(--edge);border-radius:10px;color:var(--ink);font-size:1.2rem;font-weight:700;text-align:center;padding:8px}
+.pickHead{display:flex;justify-content:space-between;align-items:baseline;margin:18px 4px 8px;flex-wrap:wrap;gap:6px}
+.pickHead h2{font-size:1.15rem}
+.timePill{background:var(--stage);border:1px solid var(--gold);color:var(--gold);border-radius:999px;padding:4px 14px;font-weight:700;font-size:.95rem}
+.roundGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.roundPick{background:var(--card);border:2px solid var(--edge);border-radius:var(--radius);padding:14px;text-align:left;color:var(--ink);transition:transform .15s,border-color .15s;position:relative}
+.roundPick:hover{transform:translateY(-2px)}
+.roundPick.sel{border-color:var(--good);background:#20303a}
+.roundPick .rp-emoji{font-size:1.7rem}
+.roundPick .rp-name{font-weight:800;font-size:1.05rem;margin:4px 0 2px}
+.roundPick .rp-desc{color:var(--dim);font-size:.85rem;line-height:1.35}
+.roundPick .rp-meta{margin-top:8px;font-size:.78rem;color:var(--gold);font-weight:700}
+.roundPick .tick{position:absolute;top:10px;right:12px;font-size:1.1rem;opacity:0;transition:opacity .15s}
+.roundPick.sel .tick{opacity:1}
+.fairNote{margin:14px 4px;background:rgba(74,222,128,.08);border-left:5px solid var(--good);border-radius:0 12px 12px 0;padding:10px 14px;color:#d6f5df;font-size:.92rem;line-height:1.4}
+.setupBar{display:flex;gap:12px;align-items:center;justify-content:center;margin:16px 0 30px;flex-wrap:wrap}
+.bigGo{background:linear-gradient(135deg,#16a34a,#4ade80);color:#052e16;font-size:1.4rem;font-weight:900;padding:16px 46px;border-radius:999px;letter-spacing:.05em;box-shadow:0 6px 24px rgba(74,222,128,.35);transition:transform .15s}
+.bigGo:hover{transform:scale(1.04)}
+.bigGo:disabled{filter:grayscale(1);opacity:.5;cursor:not-allowed;transform:none}
+
+/* ---------- game header ---------- */
+.scoreHead{display:flex;gap:10px;align-items:stretch;margin-bottom:14px}
+.scorePanel{flex:1;border-radius:var(--radius);padding:10px 14px;text-align:center;background:var(--card);border:3px solid var(--edge);transition:box-shadow .3s}
+.scorePanel.kids{border-color:var(--kids)}.scorePanel.staff{border-color:var(--staff)}
+.scorePanel .tName{font-size:.85rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.scorePanel.kids .tName{color:var(--kids)}.scorePanel.staff .tName{color:var(--staff)}
+.scorePanel .tScore{font-size:clamp(2rem,7vw,3.2rem);font-weight:900;line-height:1.05}
+.scoreFlash{animation:flash .6s}
+@keyframes flash{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+.midPill{display:flex;flex-direction:column;justify-content:center;align-items:center;min-width:110px;background:var(--stage);border:1px solid var(--edge);border-radius:var(--radius);padding:6px 10px;text-align:center}
+.midPill .rname{font-size:.75rem;color:var(--dim);letter-spacing:.08em;text-transform:uppercase}
+.midPill .rq{font-weight:800;font-size:1rem;color:var(--gold)}
+
+/* ---------- main card ---------- */
+.stageCard{
+  flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;
+  background:var(--card);border:2px solid var(--edge);border-radius:26px;padding:26px 20px;
+  box-shadow:0 20px 60px rgba(0,0,0,.45), inset 0 0 120px rgba(120,80,220,.08);
+  min-height:340px;position:relative;overflow:hidden;
+}
+.roundTag{font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.qText{font-size:clamp(1.4rem,4.2vw,2.4rem);font-weight:800;line-height:1.25;max-width:850px}
+.introEmoji{font-size:3.4rem;margin-bottom:8px}
+.introDesc{color:var(--dim);max-width:620px;margin:10px auto 0;font-size:1.05rem;line-height:1.5}
+.valueBadge{margin-top:16px;background:var(--stage);border:1px solid var(--gold);color:var(--gold);border-radius:999px;padding:6px 18px;font-weight:800;font-size:1rem}
+.howBanner{margin-top:12px;background:rgba(34,211,238,.09);border:1px dashed var(--kids);color:#c8f4fb;border-radius:12px;padding:8px 14px;font-size:.9rem;max-width:640px}
+.answerBox{margin-top:18px;background:rgba(251,191,36,.1);border:2px solid var(--gold);border-radius:16px;padding:14px 26px}
+.answerBox .aLabel{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.answerBox .aText{font-size:clamp(1.3rem,3.6vw,2rem);font-weight:900;color:var(--gold)}
+.funFact{margin-top:10px;color:var(--dim);font-size:.92rem;max-width:600px}
+
+/* stakes ladder — finale signature */
+.ladder{display:flex;gap:8px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+.rung{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.15rem;background:var(--stage);border:2px solid var(--edge);color:var(--dim);transition:all .3s}
+.rung.done{opacity:.35;text-decoration:line-through}
+.rung.live{border-color:var(--gold);color:var(--gold);box-shadow:0 0 18px rgba(251,191,36,.5);transform:scale(1.12);animation:rungPulse 1.4s infinite}
+@keyframes rungPulse{0%,100%{box-shadow:0 0 10px rgba(251,191,36,.35)}50%{box-shadow:0 0 24px rgba(251,191,36,.7)}}
+
+/* ---------- action bar ---------- */
+.actionBar{display:flex;gap:12px;justify-content:center;margin-top:18px;flex-wrap:wrap;width:100%}
+.primaryBtn{
+  background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-size:1.25rem;font-weight:900;
+  padding:16px 44px;border-radius:999px;letter-spacing:.04em;box-shadow:0 6px 22px rgba(168,85,247,.4);
+  transition:transform .15s;animation:breathe 2.2s infinite;
+}
+.primaryBtn:hover{transform:scale(1.05)}
+@keyframes breathe{0%,100%{box-shadow:0 6px 18px rgba(168,85,247,.35)}50%{box-shadow:0 6px 30px rgba(168,85,247,.6)}}
+.scoreBtn{font-size:1.1rem;font-weight:900;padding:16px 26px;border-radius:16px;min-width:150px;color:#08131a;transition:transform .12s}
+.scoreBtn:hover{transform:scale(1.06)}
+.scoreBtn.kids{background:linear-gradient(135deg,var(--kids),#67e8f9)}
+.scoreBtn.staff{background:linear-gradient(135deg,var(--staff),#fdba74);color:#2a1103}
+.scoreBtn.nobody{background:var(--stage);border:2px solid var(--edge);color:var(--dim);min-width:120px}
+.keyHint{font-size:.72rem;opacity:.75;display:block;font-weight:600;margin-top:2px}
+
+/* ---------- footer ---------- */
+.footBar{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:8px;flex-wrap:wrap}
+.ghostBtn{background:transparent;border:1px solid var(--edge);color:var(--dim);border-radius:999px;padding:8px 16px;font-size:.85rem;font-weight:600}
+.ghostBtn:hover{border-color:var(--dim);color:var(--ink)}
+.calmOn{border-color:var(--good)!important;color:var(--good)!important}
+
+/* ---------- winner ---------- */
+.trophy{font-size:4.5rem;animation:trophyPop .8s}
+@keyframes trophyPop{0%{transform:scale(0) rotate(-20deg)}70%{transform:scale(1.2) rotate(6deg)}100%{transform:scale(1)}}
+.winName{font-size:clamp(2rem,7vw,3.4rem);font-weight:900;margin-top:6px}
+.winName.kids{color:var(--kids)}.winName.staff{color:var(--staff)}
+.finalScores{margin-top:12px;font-size:1.3rem;color:var(--dim);font-weight:700}
+
+.bigClock{font-size:clamp(3rem,10vw,6rem);font-weight:900;color:var(--gold);font-variant-numeric:tabular-nums;margin-top:8px;text-shadow:0 0 24px rgba(251,191,36,.4)}
+
+/* sketch pad */
+.sketchWrap{width:100%;max-width:720px;position:relative;margin-top:10px}
+#sketchPad{background:#0d0a17;border:2px solid var(--edge);border-radius:16px;touch-action:none;cursor:crosshair;display:block;margin:0 auto}
+.sketchClock{position:absolute;top:10px;right:14px;background:var(--stage);border:2px solid var(--gold);color:var(--gold);border-radius:999px;padding:4px 16px;font-weight:900;font-size:1.2rem;z-index:2}
+.penRow{display:flex;gap:8px;justify-content:center;margin-top:8px}
+.penBtn{border-radius:999px;padding:8px 14px;font-weight:700;border:2px solid var(--edge);color:transparent;font-size:.9rem}
+.penBtn#wipeBtn{background:var(--stage);color:var(--dim)}
+.scoreBtn.both{background:linear-gradient(135deg,#a78bfa,#e879f9);color:#1e1035;min-width:130px}
+.kidsInk{color:var(--kids)}.staffInk{color:var(--staff)}
+
+/* confetti */
+.cf{position:fixed;top:-14px;width:10px;height:16px;z-index:99;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
+
+/* toast */
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--card);border:1px solid var(--gold);border-radius:999px;padding:10px 22px;font-weight:700;transition:transform .3s;z-index:100}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+@media(max-width:640px){
+  .screen{padding:10px}
+  .stageCard{min-height:280px;padding:18px 12px}
+  .primaryBtn{padding:14px 30px;font-size:1.1rem;width:100%}
+  .scoreBtn{flex:1;min-width:0;padding:14px 10px}
+  .midPill{min-width:84px}
+  .rung{width:42px;height:42px;font-size:1rem}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+body.calm *,body.calm *::before,body.calm *::after{animation:none!important;transition:none!important}
+</style>
+</head>
+<body>
+
+<!-- ============ SETUP ============ -->
+<div class="screen on" id="scrSetup">
+  <div class="marquee">
+    <h1>KIDS vs STAFF</h1>
+    <div class="sub">🎪 SHOWDOWN — quiz + challenges, the fair fight edition 🎪</div>
+    <div class="bulbs"><span class="bulb"></span><span class="bulb"></span><span class="bulb"></span><span class="bulb"></span><span class="bulb"></span><span class="bulb"></span><span class="bulb"></span></div>
+  </div>
+
+  <div class="teamsRow">
+    <div class="teamCard kids"><label for="kidsName">Team 1</label><input id="kidsName" value="THE KIDS" maxlength="18"></div>
+    <div class="teamCard staff"><label for="staffName">Team 2</label><input id="staffName" value="THE STAFF" maxlength="18"></div>
+  </div>
+
+  <div class="pickHead">
+    <h2>🎛️ Pick tonight's rounds</h2>
+    <span class="timePill" id="timeEstimate">≈ 0 min</span>
+  </div>
+  <div class="roundGrid" id="roundGrid"></div>
+
+  <div class="fairNote"><strong>⚖️ How it stays fair:</strong> 🧠 Quiz rounds — Closest Wins is pure guessing, and Kids' Turf / Staff's Turf are a <strong>linked pair</strong> so neither side stacks their advantage. 🎭 Challenge rounds have no right answers — same prompt, same time, presenter has final say. 🤝 Both button pays everyone when it's too close to call. A dead heat at the end can finish as <strong>Honours Shared</strong> — or sudden death, your choice. Minimum <strong>30 minutes</strong> of rounds to start.</div>
+
+  <div class="setupBar">
+    <button class="ghostBtn" id="calmBtnSetup">😌 Calm Mode: OFF</button>
+    <button class="bigGo" id="startBtn">START THE SHOW ▶</button>
+  </div>
+</div>
+
+<!-- ============ GAME ============ -->
+<div class="screen" id="scrGame">
+  <div class="scoreHead">
+    <div class="scorePanel kids"><div class="tName" id="hKidsName">THE KIDS</div><div class="tScore" id="kidsScore">0</div></div>
+    <div class="midPill"><div class="rname" id="pillRound">Round</div><div class="rq" id="pillQ">–</div></div>
+    <div class="scorePanel staff"><div class="tName" id="hStaffName">THE STAFF</div><div class="tScore" id="staffScore">0</div></div>
+  </div>
+
+  <div class="stageCard" id="stageCard"></div>
+
+  <div class="footBar">
+    <button class="ghostBtn" id="undoBtn">↩ Undo</button>
+    <button class="ghostBtn" id="calmBtnGame">😌 Calm Mode: OFF</button>
+    <button class="ghostBtn" id="endBtn">🚪 End show</button>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script>
+"use strict";
+/* ================= DATA ================= */
+const ROUNDS=[
+ {id:"emoji",emoji:"🕵️",name:"Emoji Enigmas",desc:"Decode the emoji clues. Films, food and famous things.",how:"Read the emojis aloud and show the screen. First team with the right answer takes the point.",pts:1,mins:5,qs:[
+  {q:"🦁👑",a:"The Lion King"},
+  {q:"🧊❄️👸",a:"Frozen"},
+  {q:"⭐⚔️",a:"Star Wars"},
+  {q:"🐟🔍",a:"Finding Nemo"},
+  {q:"🍟🍔👑",a:"Burger King",f:"Home of the Whopper since 1954."},
+  {q:"🕷️🧍",a:"Spider-Man"},
+ ]},
+ {id:"closest",emoji:"🎯",name:"Closest Wins",desc:"Both teams guess a number. Nearest answer takes the point — pure fairness.",how:"Both teams write or shout a number BEFORE the reveal. Closest guess wins the point. Tie = nobody.",pts:1,mins:5,qs:[
+  {q:"How many bones are in an adult human body?",a:"206"},
+  {q:"How many keys are on a full-size piano?",a:"88"},
+  {q:"What year did the very first iPhone come out?",a:"2007"},
+  {q:"How many minutes are there in a whole week?",a:"10,080",f:"7 × 24 × 60. Nobody ever guesses this one close!"},
+  {q:"How long is the River Tees, in miles?",a:"85 miles",f:"From the Pennines all the way past Portrack Marsh to the sea."},
+  {q:"How tall is Big Ben's tower, in metres?",a:"96 metres"},
+ ]},
+ {id:"oddone",emoji:"🧩",name:"Odd One Out",desc:"Four things. One doesn't belong. Spot it AND say why.",how:"Read all four options. Point only if the team can say WHY it's the odd one out.",pts:1,mins:5,qs:[
+  {q:"Lion — Tiger — Wolf — Leopard",a:"Wolf — it's not a big cat"},
+  {q:"Football — Rugby — Tennis — Hockey",a:"Tennis — not a team sport"},
+  {q:"Carrot — Potato — Onion — Tomato",a:"Tomato — it grows above ground (and it's a fruit!)"},
+  {q:"Penguin — Ostrich — Eagle — Emu",a:"Eagle — the only one that can fly"},
+  {q:"Copper — Iron — Glass — Gold",a:"Glass — not a metal"},
+  {q:"Paris — Berlin — Sydney — Madrid",a:"Sydney — not a capital city (it's Canberra!)"},
+ ]},
+ {id:"kidsturf",emoji:"🎮",name:"Kids' Turf",desc:"Gaming, apps and internet life. Advantage: kids. Staff, good luck.",how:"Play as normal — first correct answer scores. Staff CAN answer... if they dare.",pts:1,mins:5,qs:[
+  {q:"What game has Creepers that go 'ssssss' before exploding?",a:"Minecraft"},
+  {q:"What colour is Sonic the Hedgehog?",a:"Blue"},
+  {q:"What does 'GG' mean at the end of a game?",a:"Good game"},
+  {q:"Which YouTuber is famous for giving away millions in challenges?",a:"MrBeast"},
+  {q:"What's the name of Mario's taller, greener brother?",a:"Luigi"},
+  {q:"In Fortnite, what do all the players jump out of at the start?",a:"The Battle Bus"},
+ ]},
+ {id:"staffturf",emoji:"📼",name:"Staff's Turf",desc:"The olden days: the 80s and 90s. Advantage: staff. Kids, guess wildly.",how:"Play as normal — first correct answer scores. Kids' wild guesses are half the fun.",pts:1,mins:5,qs:[
+  {q:"What did people use a PENCIL to rewind in the 90s?",a:"A cassette tape"},
+  {q:"Which 90s pocket toy 'died' if you forgot to feed it?",a:"A Tamagotchi"},
+  {q:"Blockbuster was a high street shop where you rented... what?",a:"Videos / DVDs"},
+  {q:"Before mobiles, what red thing on the street did you make calls from?",a:"A phone box"},
+  {q:"What horrible screechy noise did the internet make when connecting?",a:"Dial-up (the modem screech)"},
+  {q:"What portable machine played music through headphones from a cassette?",a:"A Walkman"},
+ ]},
+ {id:"sketch",emoji:"🎨",name:"Sketch It",type:"sketch",desc:"One player draws on the screen, their team guesses. Drawers alternate — 3 sketches each side.",how:"Drawer comes up and peeks the prompt (guessing team, look away!). 60 seconds on the clock. Team guesses out loud — score it if they get it.",pts:1,mins:7,qs:[
+  {q:"A snowman",a:"A snowman"},
+  {q:"Fish and chips",a:"Fish and chips"},
+  {q:"A rollercoaster",a:"A rollercoaster"},
+  {q:"A dog on a skateboard",a:"A dog on a skateboard"},
+  {q:"A rainbow over a house",a:"A rainbow over a house"},
+  {q:"A robot teacher",a:"A robot teacher"},
+ ]},
+ {id:"samebrain",emoji:"🧠",name:"Same Brain",type:"challenge",desc:"No right answers — reveal together, funniest shared thinking wins.",how:"Both teams get the same prompt and the same time. Reveal together — no fastest-shout advantage.",pts:1,mins:4,qs:[
+  {q:"Write a food beginning with P.",h:"15 seconds. Reveal together. Award Kids, Staff, Both or Nobody for a valid answer.",t:15},
+  {q:"Draw an alien in 20 seconds.",h:"Everyone draws. Each team picks one picture. Award the room's favourite — or Both if it's too close.",t:20},
+  {q:"Name something you'd hate to find in your shoe.",h:"Teams secretly write one answer, reveal together. Funniest scores; a draw pays Both.",t:15},
+ ]},
+ {id:"pickaside",emoji:"↔️",name:"Pick a Side",type:"challenge",desc:"Silly choices, serious persuasion.",how:"Teams choose secretly, reveal, then defend their pick. The best ARGUMENT scores — not the most popular choice.",pts:1,mins:4,qs:[
+  {q:"Would you rather have spaghetti for hair OR popcorn for teeth?",h:"Choose secretly, reveal, then 10 seconds each to defend it. Funniest argument scores.",t:20},
+  {q:"Worse superpower: invisible only when nobody's looking OR flying 10 cm off the floor?",h:"Choose, reveal, defend. Award the best argument.",t:20},
+  {q:"Worse pet: a tiny dragon that sneezes fire OR a giant hamster?",h:"Choose, reveal, defend. Audience clap decides; a close vote pays Both.",t:20},
+ ]},
+ {id:"dothething",emoji:"🎯",name:"Do the Thing",type:"challenge",desc:"Tiny physical tasks where failure is half the fun.",how:"One volunteer per team, identical conditions. Presenter has final say — applause is advisory!",pts:1,mins:5,qs:[
+  {q:"Paper Toss: 3 paper balls each. Most in the bin wins.",h:"Same throwing line, same bin, one volunteer per team. Draw pays Both.",t:30},
+  {q:"No-Look Face: draw a face without looking at the paper.",h:"One volunteer each. Pens down at the buzzer. Room picks the funniest masterpiece.",t:30},
+  {q:"Balance Battle: balance a safe classroom object on one finger.",h:"Same object type for both, start together. Last one balanced wins; simultaneous drop pays Both.",t:30},
+ ]},
+ {id:"convinceus",emoji:"🎤",name:"Convince Us",type:"challenge",desc:"Invent it. Sell it. Make the room laugh.",how:"Teams invent, then pitch. Award originality and performance — Both is encouraged for close calls.",pts:1,mins:5,qs:[
+  {q:"Invent the worst possible flavour of crisps.",h:"20 seconds to invent a flavour and slogan, then 10 seconds each to pitch. Audience decides.",t:30},
+  {q:"Give a pet snail the most dramatic name possible.",h:"Teams pick one name and announce it dramatically. Funniest performance scores.",t:20},
+  {q:"Invent one completely useless school rule.",h:"Create and explain one rule. Award originality; Both for a close result.",t:25},
+ ]},
+ {id:"faceoff",emoji:"🥊",name:"Face-Off",type:"challenge",desc:"Three quick head-to-head deciders.",how:"One representative per team, straight head-to-head. Quick, loud, fair.",pts:1,mins:4,qs:[
+  {q:"Mime-Off: one volunteer each mimes 'trying to open a stubborn jar'.",h:"Perform one after the other for 10 seconds each. Room picks the clearest or funniest mime.",t:25},
+  {q:"Secret Number: each team picks 1–10. The presenter secretly picks too.",h:"Presenter writes first. Teams reveal together. Closest scores; equal distance pays Both.",t:15},
+  {q:"Rock–Paper–Scissors Relay: best of three.",h:"One representative per team. Best of three. Winner takes the point.",t:20},
+ ]},
+ {id:"finale",emoji:"🏆",name:"Grand Finale",desc:"Five questions, rising stakes: 2, 3, 4, 5, then 6 points. Comebacks live here.",how:"Watch the ladder — each question is worth more than the last. 20 points on the table!",pts:0,mins:6,stakes:[2,3,4,5,6],qs:[
+  {q:"How many colours are in a rainbow?",a:"7",f:"Red, orange, yellow, green, blue, indigo, violet."},
+  {q:"What's the largest planet in our solar system?",a:"Jupiter",f:"Over 1,300 Earths would fit inside it."},
+  {q:"What is the capital city of Australia?",a:"Canberra",f:"NOT Sydney — the classic trap!"},
+  {q:"How many hearts does an octopus have?",a:"3",f:"Two pump blood to the gills, one to the body."},
+  {q:"Which food found in tombs over 3,000 years old was still edible?",a:"Honey",f:"Archaeologists found edible honey in Egyptian tombs."},
+ ]},
+];
+const TIEBREAK={q:"SUDDEN DEATH — Closest wins: how high is the Tees Transporter Bridge, in metres?",a:"69 metres",f:"You can see it from half of Teesside — and now you know how tall it is."};
+
+/* ================= STATE ================= */
+const state={
+ phase:"setup",           // setup | intro | question | reveal | tiebreak | tiebreakReveal | done
+ rounds:[],               // selected round objects
+ ri:0, qi:0,
+ kids:0, staff:0,
+ names:{kids:"THE KIDS",staff:"THE STAFF"},
+ history:[],
+ calm:false,
+ sketchLeft:0, timerId:null, promptShown:false,
+};
+function drawerTeam(){ return state.qi%2===0?"kids":"staff";} // alternates, kids first
+function stopSketchTimer(){ if(state.timerId){clearInterval(state.timerId); state.timerId=null;}}
+function startCountdown(secs){ stopSketchTimer(); state.sketchLeft=secs;
+ state.timerId=setInterval(()=>{ state.sketchLeft--;
+  const t=$("sketchClock"); if(t)t.textContent=state.sketchLeft+(state.phase==="chTimer"?"":"s");
+  if(state.sketchLeft===10)playTone(523,.1);
+  if(state.sketchLeft<=0){ stopSketchTimer(); womp(); toast("⏰ Time's up!");
+   if(state.phase==="sketchDraw"||state.phase==="chTimer"){state.phase="reveal";render();}}},1000);}
+const $=id=>document.getElementById(id);
+
+/* ================= AUDIO ================= */
+let AC=null;
+function ensureAudio(){ if(state.calm)return null;
+ try{ if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();
+  if(AC.state==="suspended")AC.resume(); return AC;
+ }catch(e){return null}}
+function playTone(freq,dur,type){ const ac=ensureAudio(); if(!ac)return;
+ const o=ac.createOscillator(),g=ac.createGain();
+ o.type=type||"triangle"; o.frequency.value=freq;
+ g.gain.setValueAtTime(.14,ac.currentTime);
+ g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+dur);
+ o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime+dur);}
+function sting(){playTone(392,.12);setTimeout(()=>playTone(523,.18),110)}
+function ding(){playTone(880,.25,"sine")}
+function womp(){playTone(180,.3,"sawtooth")}
+function fanfare(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,.3),i*160))}
+
+/* ================= FX ================= */
+function confetti(n){ if(state.calm||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+ const cols=["#22d3ee","#fb923c","#fbbf24","#4ade80","#e879f9"];
+ for(let i=0;i<(n||40);i++){ const c=document.createElement("div"); c.className="cf";
+  c.style.left=Math.random()*100+"vw"; c.style.background=cols[i%cols.length];
+  c.style.animationDuration=(2+Math.random()*2)+"s"; c.style.animationDelay=(Math.random()*.6)+"s";
+  document.body.appendChild(c); setTimeout(()=>c.remove(),5000);}}
+let toastTimer=null;
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show");
+ clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2200);}
+
+/* ================= SETUP SCREEN ================= */
+const picked=new Set(ROUNDS.map(r=>r.id)); // all on by default
+const LINKED=["kidsturf","staffturf"]; // fairness pair — always selected together
+const MIN_MINS=30;
+function buildPicker(){ const grid=$("roundGrid"); grid.innerHTML="";
+ ROUNDS.forEach(r=>{ const b=document.createElement("button");
+  b.className="roundPick"+(picked.has(r.id)?" sel":""); b.type="button";
+  b.setAttribute("aria-pressed",picked.has(r.id));
+  const ptsTxt=r.stakes?("⬆ rising 2–6 pts · "+r.qs.length+" Qs"):(r.qs.length+(r.type==="challenge"?" challenges":" Qs")+" · 1 pt each");
+  const catTxt=r.type==="challenge"?"🎭 challenge":r.type==="sketch"?"🎨 drawing":"🧠 quiz";
+  const linkTxt=LINKED.includes(r.id)?" · ⚖ linked pair":"";
+  b.innerHTML='<span class="tick">✅</span><div class="rp-emoji">'+r.emoji+'</div><div class="rp-name">'+r.name+'</div><div class="rp-desc">'+r.desc+'</div><div class="rp-meta">'+catTxt+' · '+ptsTxt+' · ≈'+r.mins+' min'+linkTxt+'</div>';
+  b.addEventListener("click",()=>{ const on=!picked.has(r.id);
+   const targets=LINKED.includes(r.id)?LINKED:[r.id];
+   targets.forEach(id=>{on?picked.add(id):picked.delete(id)});
+   playTone(on?600:300,.08); buildPicker();
+   if(targets.length>1)toast(on?"⚖ Kids' Turf + Staff's Turf selected together — fair's fair":"⚖ Both turf rounds removed");});
+  grid.appendChild(b);});
+ updateEstimate();}
+function pickedMins(){ let m=0; ROUNDS.forEach(r=>{if(picked.has(r.id))m+=r.mins}); return m;}
+function updateEstimate(){ const m=pickedMins(); const pill=$("timeEstimate");
+ const okTime=m>=MIN_MINS;
+ pill.textContent=okTime?("≈ "+m+" min ✓"):("≈ "+m+" min — need "+MIN_MINS+"+");
+ pill.style.borderColor=okTime?"var(--good)":"var(--bad)";
+ pill.style.color=okTime?"var(--good)":"var(--bad)";
+ $("startBtn").disabled=!okTime;}
+
+/* ================= FLOW ================= */
+function snapshot(label){ state.history.push({label,kids:state.kids,staff:state.staff,ri:state.ri,qi:state.qi,phase:state.phase});
+ if(state.history.length>40)state.history.shift();}
+function startShow(){ state.rounds=ROUNDS.filter(r=>picked.has(r.id));
+ if(!state.rounds.length)return;
+ state.names.kids=($("kidsName").value.trim()||"THE KIDS").toUpperCase();
+ state.names.staff=($("staffName").value.trim()||"THE STAFF").toUpperCase();
+ $("hKidsName").textContent=state.names.kids; $("hStaffName").textContent=state.names.staff;
+ state.kids=0; state.staff=0; state.ri=0; state.qi=0; state.history=[];
+ $("scrSetup").classList.remove("on"); $("scrGame").classList.add("on");
+ state.phase="intro"; render(); fanfare();}
+function qValue(){ const r=state.rounds[state.ri]; return r.stakes?r.stakes[state.qi]:r.pts;}
+function advance(){ // primary button behaviour per phase
+ const r=state.rounds[state.ri];
+ if(state.phase==="intro"){state.phase=(r&&r.type==="sketch")?"sketchPrep":(r&&r.type==="challenge")?"chPrompt":"question";sting();render();return;}
+ if(state.phase==="chPrompt"){state.phase="chTimer";render();startCountdown(r.qs[state.qi].t||30);playTone(659,.15);return;}
+ if(state.phase==="chTimer"){stopSketchTimer();state.phase="reveal";playTone(659,.2);render();return;}
+ if(state.phase==="sketchPrep"){state.phase="sketchDraw";render();startCountdown(60);playTone(659,.15);return;}
+ if(state.phase==="sketchDraw"){stopSketchTimer();state.phase="reveal";playTone(659,.2);render();return;}
+ if(state.phase==="question"){state.phase="reveal";playTone(659,.2);render();return;}
+ if(state.phase==="tiebreak"){state.phase="tiebreakReveal";playTone(659,.2);render();return;}}
+function skipTimer(){ stopSketchTimer(); state.phase="reveal"; playTone(659,.2); render();}
+function score(team){ // team: 'kids' | 'staff' | 'both' | 'none'
+ if(state.phase==="reveal"){ snapshot(team);
+  const v=qValue();
+  if(team==="both"){ state.kids+=v; state.staff+=v; flashScore("kids"); flashScore("staff"); ding(); confetti(40);
+   toast("🤝 Both teams +"+v+"!");}
+  else if(team!=="none"){ state[team]+=v; flashScore(team); ding(); confetti(v>=4?70:28); toast((team==="kids"?state.names.kids:state.names.staff)+" +"+v+"!");}
+  else{ womp(); toast("No points that time!");}
+  nextQuestion(); return;}
+ if(state.phase==="tiebreakReveal"){ if(team==="none")return; snapshot("tb-"+team);
+  state[team]+=1; flashScore(team); finishShow(); return;}}
+function nextQuestion(){ const r=state.rounds[state.ri];
+ if(state.qi+1<r.qs.length){ state.qi++; state.phase=(r.type==="sketch")?"sketchPrep":(r.type==="challenge")?"chPrompt":"question"; sting(); render();}
+ else if(state.ri+1<state.rounds.length){ state.ri++; state.qi=0; state.phase="intro"; playTone(523,.25); render();}
+ else finishShow();}
+function finishShow(){ if(state.kids===state.staff&&!["tiebreak","tiebreakReveal"].includes(state.phase)){
+  state.phase="tieChoice"; render(); playTone(330,.4,"square"); return;}
+ if(state.kids===state.staff){ state.phase="tieChoice"; render(); return;}
+ state.phase="done"; render(); fanfare(); confetti(120);}
+function undo(){ const s=state.history.pop(); if(!s){toast("Nothing to undo");return;}
+ stopSketchTimer();
+ state.kids=s.kids; state.staff=s.staff; state.ri=s.ri; state.qi=s.qi; state.phase=s.phase;
+ toast("↩ Undone"); render();}
+function endShow(){ if(confirm("End the show and return to setup?")){
+  stopSketchTimer();
+  $("scrGame").classList.remove("on"); $("scrSetup").classList.add("on"); state.phase="setup";}}
+function flashScore(team){ const el=$(team+"Score"); el.classList.remove("scoreFlash"); void el.offsetWidth; el.classList.add("scoreFlash");}
+
+/* ================= RENDER ================= */
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function ladderHTML(r){ if(!r.stakes)return"";
+ return '<div class="ladder">'+r.stakes.map((v,i)=>{
+  const cls=i<state.qi?"rung done":(i===state.qi?"rung live":"rung");
+  return '<div class="'+cls+'">'+v+'</div>';}).join("")+'</div>';}
+function render(){ $("kidsScore").textContent=state.kids; $("staffScore").textContent=state.staff;
+ const card=$("stageCard"); const r=state.rounds[state.ri];
+ if(state.phase==="intro"&&r){
+  $("pillRound").textContent="Round "+(state.ri+1)+" of "+state.rounds.length; $("pillQ").textContent=r.name;
+  card.innerHTML='<div class="introEmoji">'+r.emoji+'</div><div class="roundTag">Round '+(state.ri+1)+'</div>'+
+   '<div class="qText">'+esc(r.name)+'</div><div class="introDesc">'+esc(r.desc)+'</div>'+
+   '<div class="howBanner">🎙️ <strong>How to run it:</strong> '+esc(r.how)+'</div>'+ladderHTML(r)+
+   '<div class="actionBar"><button class="primaryBtn" id="goBtn">START ROUND ▶ <span class="keyHint">Space</span></button></div>';
+  $("goBtn").addEventListener("click",advance); return;}
+ if(state.phase==="question"&&r){ const qo=r.qs[state.qi]; const v=qValue();
+  $("pillRound").textContent=r.name; $("pillQ").textContent="Q"+(state.qi+1)+" / "+r.qs.length;
+  card.innerHTML='<div class="roundTag">'+r.emoji+' '+esc(r.name)+' — Question '+(state.qi+1)+'</div>'+
+   '<div class="qText">'+esc(qo.q)+'</div>'+
+   '<div class="valueBadge">Worth '+v+' point'+(v>1?"s":"")+'</div>'+ladderHTML(r)+
+   '<div class="actionBar"><button class="primaryBtn" id="goBtn">REVEAL ANSWER 👁 <span class="keyHint">Space</span></button></div>';
+  $("goBtn").addEventListener("click",advance); return;}
+ if(state.phase==="sketchPrep"&&r){ const dt=drawerTeam(); const dName=state.names[dt];
+  $("pillRound").textContent=r.name; $("pillQ").textContent="Sketch "+(state.qi+1)+" / "+r.qs.length;
+  card.innerHTML='<div class="roundTag">🎨 '+esc(r.name)+' — Sketch '+(state.qi+1)+'</div>'+
+   '<div class="qText">Drawer from <span class="'+dt+'Ink">'+esc(dName)+'</span> — come on up!</div>'+
+   '<div class="howBanner">🙈 <strong>'+esc(dName)+' guessers: look away!</strong> Drawer peeks the prompt, then we start the clock.</div>'+
+   '<div class="answerBox" id="promptBox" style="visibility:hidden"><div class="aLabel">Draw this</div><div class="aText">'+esc(r.qs[state.qi].q)+'</div></div>'+
+   '<div class="actionBar">'+
+   '<button class="scoreBtn nobody" id="peekBtn">👀 Show / hide prompt</button>'+
+   '<button class="primaryBtn" id="goBtn">START DRAWING ✏️ 60s <span class="keyHint">Space</span></button></div>';
+  $("peekBtn").addEventListener("click",()=>{ const p=$("promptBox");
+   p.style.visibility=p.style.visibility==="hidden"?"visible":"hidden";});
+  $("goBtn").addEventListener("click",advance); return;}
+ if(state.phase==="sketchDraw"&&r){ const dt=drawerTeam();
+  card.innerHTML='<div class="roundTag">🎨 '+esc(state.names[dt])+' are drawing… guess out loud!</div>'+
+   '<div class="sketchWrap"><div class="sketchClock" id="sketchClock">60s</div>'+
+   '<canvas id="sketchPad"></canvas>'+
+   '<div class="penRow"><button class="penBtn" data-pen="#f5f3ff" style="background:#f5f3ff">⬤</button>'+
+   '<button class="penBtn" data-pen="#22d3ee" style="background:#22d3ee">⬤</button>'+
+   '<button class="penBtn" data-pen="#fb923c" style="background:#fb923c">⬤</button>'+
+   '<button class="penBtn" id="wipeBtn">🧹 Clear</button></div></div>'+
+   '<div class="actionBar"><button class="primaryBtn" id="goBtn">GOT IT / TIME UP → REVEAL <span class="keyHint">Space</span></button></div>';
+  initSketchPad(); $("goBtn").addEventListener("click",advance); return;}
+ if(state.phase==="chPrompt"&&r){ const qo=r.qs[state.qi];
+  $("pillRound").textContent=r.name; $("pillQ").textContent="Ch "+(state.qi+1)+" / "+r.qs.length;
+  card.innerHTML='<div class="roundTag">'+r.emoji+' '+esc(r.name)+' — Challenge '+(state.qi+1)+'</div>'+
+   '<div class="qText">'+esc(qo.q)+'</div>'+
+   '<div class="howBanner">🎙️ '+esc(qo.h)+'</div>'+
+   '<div class="actionBar"><button class="primaryBtn" id="goBtn">START '+qo.t+'s TIMER ⏱ <span class="keyHint">Space</span></button>'+
+   '<button class="scoreBtn nobody" id="skipBtn">Skip timer → score</button></div>';
+  $("goBtn").addEventListener("click",advance);
+  $("skipBtn").addEventListener("click",skipTimer); return;}
+ if(state.phase==="chTimer"&&r){ const qo=r.qs[state.qi];
+  card.innerHTML='<div class="roundTag">🎬 GO!</div>'+
+   '<div class="qText" style="font-size:clamp(1.05rem,3vw,1.6rem)">'+esc(qo.q)+'</div>'+
+   '<div class="bigClock" id="sketchClock">'+state.sketchLeft+'</div>'+
+   '<div class="funFact">🎙️ '+esc(qo.h)+'</div>'+
+   '<div class="actionBar"><button class="primaryBtn" id="goBtn">FINISH EARLY → SCORE <span class="keyHint">Space</span></button></div>';
+  $("goBtn").addEventListener("click",advance); return;}
+ if(state.phase==="reveal"&&r){ const qo=r.qs[state.qi]; const v=qValue(); const isSketch=r.type==="sketch"; const isCh=r.type==="challenge";
+  const dt=isSketch?drawerTeam():null;
+  let btns;
+  if(isSketch){ btns='<button class="scoreBtn '+dt+'" id="btnTeam">'+esc(state.names[dt])+' +'+v+'<span class="keyHint">'+(dt==="kids"?"K":"S")+'</span></button>'+
+   '<button class="scoreBtn nobody" id="btnNone">Not guessed<span class="keyHint">N</span></button>';}
+  else{ btns='<button class="scoreBtn kids" id="btnKids">'+esc(state.names.kids)+' +'+v+'<span class="keyHint">K</span></button>'+
+   '<button class="scoreBtn both" id="btnBoth">🤝 Both +'+v+'<span class="keyHint">B</span></button>'+
+   '<button class="scoreBtn nobody" id="btnNone">Nobody<span class="keyHint">N</span></button>'+
+   '<button class="scoreBtn staff" id="btnStaff">'+esc(state.names.staff)+' +'+v+'<span class="keyHint">S</span></button>';}
+  const middle=isCh?('<div class="howBanner">🎙️ <strong>Award it:</strong> '+esc(qo.h)+'</div>')
+   :('<div class="answerBox"><div class="aLabel">'+(isSketch?'They were drawing':'The answer')+'</div><div class="aText">'+esc(qo.a)+'</div></div>'+(qo.f?'<div class="funFact">💡 '+esc(qo.f)+'</div>':""));
+  card.innerHTML='<div class="roundTag">'+r.emoji+' '+esc(r.name)+' — '+(isSketch?'Sketch ':isCh?'Challenge ':'Question ')+(state.qi+1)+'</div>'+
+   '<div class="qText" style="font-size:clamp(1.05rem,3vw,1.5rem);color:var(--dim)">'+esc(qo.q)+'</div>'+
+   middle+
+   '<div class="actionBar">'+btns+'</div>';
+  if(isSketch){ $("btnTeam").addEventListener("click",()=>score(dt)); }
+  else{ $("btnKids").addEventListener("click",()=>score("kids"));
+   $("btnStaff").addEventListener("click",()=>score("staff"));
+   $("btnBoth").addEventListener("click",()=>score("both")); }
+  $("btnNone").addEventListener("click",()=>score("none")); return;}
+ if(state.phase==="tieChoice"){
+  $("pillRound").textContent="Final"; $("pillQ").textContent="🤝";
+  card.innerHTML='<div class="introEmoji">🤝</div><div class="roundTag">It\'s a dead heat!</div>'+
+   '<div class="qText">'+esc(state.names.kids)+' '+state.kids+' — '+state.staff+' '+esc(state.names.staff)+'</div>'+
+   '<div class="introDesc">A perfectly fair finish. Share the honours — or settle it with one sudden-death question. Your call, presenter.</div>'+
+   '<div class="actionBar"><button class="scoreBtn both" id="shareBtn">🤝 Honours shared</button>'+
+   '<button class="primaryBtn" id="goBtn">⚡ SUDDEN DEATH</button></div>';
+  $("shareBtn").addEventListener("click",()=>{state.phase="done";render();fanfare();confetti(120);});
+  $("goBtn").addEventListener("click",()=>{state.phase="tiebreak";render();playTone(330,.4,"square");});
+  return;}
+ if(state.phase==="tiebreak"){
+  $("pillRound").textContent="Sudden death"; $("pillQ").textContent="⚡";
+  card.innerHTML='<div class="introEmoji">⚡</div><div class="roundTag">It\'s a tie!</div>'+
+   '<div class="qText">'+esc(TIEBREAK.q)+'</div>'+
+   '<div class="howBanner">🎙️ Both teams shout a number. Closest wins the whole show.</div>'+
+   '<div class="actionBar"><button class="primaryBtn" id="goBtn">REVEAL ANSWER 👁 <span class="keyHint">Space</span></button></div>';
+  $("goBtn").addEventListener("click",advance); return;}
+ if(state.phase==="tiebreakReveal"){
+  card.innerHTML='<div class="roundTag">⚡ Sudden death</div>'+
+   '<div class="answerBox"><div class="aLabel">The answer</div><div class="aText">'+esc(TIEBREAK.a)+'</div></div>'+
+   '<div class="funFact">💡 '+esc(TIEBREAK.f)+'</div>'+
+   '<div class="actionBar">'+
+   '<button class="scoreBtn kids" id="btnKids">'+esc(state.names.kids)+' win!<span class="keyHint">K</span></button>'+
+   '<button class="scoreBtn staff" id="btnStaff">'+esc(state.names.staff)+' win!<span class="keyHint">S</span></button></div>';
+  $("btnKids").addEventListener("click",()=>score("kids"));
+  $("btnStaff").addEventListener("click",()=>score("staff")); return;}
+ if(state.phase==="done"){
+  const tie=state.kids===state.staff;
+  const kidsWin=state.kids>state.staff;
+  const winner=kidsWin?state.names.kids:state.names.staff;
+  $("pillRound").textContent="Final"; $("pillQ").textContent="🏁";
+  card.innerHTML='<div class="trophy">'+(tie?'🤝':'🏆')+'</div><div class="roundTag">'+(tie?'Tonight\'s result':'Tonight\'s champions')+'</div>'+
+   (tie?'<div class="winName" style="color:var(--gold)">HONOURS SHARED!</div>'
+       :'<div class="winName '+(kidsWin?"kids":"staff")+'">'+esc(winner)+'</div>')+
+   '<div class="finalScores">'+esc(state.names.kids)+' '+state.kids+' — '+state.staff+' '+esc(state.names.staff)+'</div>'+
+   (tie?'<div class="funFact">A perfectly fair finish — big applause for both teams.</div>':'')+
+   '<div class="actionBar"><button class="primaryBtn" id="goBtn">🔁 REMATCH</button></div>';
+  $("goBtn").addEventListener("click",()=>{ $("scrGame").classList.remove("on"); $("scrSetup").classList.add("on"); state.phase="setup";});
+  return;}}
+
+/* ================= SKETCH PAD ================= */
+let penColor="#f5f3ff";
+function initSketchPad(){ const cv=$("sketchPad"); if(!cv||!cv.getContext)return;
+ const wrap=cv.parentElement;
+ cv.width=(wrap&&wrap.clientWidth?wrap.clientWidth:640)-8;
+ cv.height=Math.max(240,Math.min(420,window.innerHeight?window.innerHeight*0.42:300));
+ const ctx=cv.getContext("2d"); ctx.lineWidth=5; ctx.lineCap="round"; ctx.lineJoin="round";
+ let drawing=false;
+ const pos=e=>{ const rect=cv.getBoundingClientRect();
+  return {x:e.clientX-rect.left,y:e.clientY-rect.top};};
+ cv.addEventListener("pointerdown",e=>{ drawing=true; cv.setPointerCapture(e.pointerId);
+  const p=pos(e); ctx.strokeStyle=penColor; ctx.beginPath(); ctx.moveTo(p.x,p.y); e.preventDefault();});
+ cv.addEventListener("pointermove",e=>{ if(!drawing)return; const p=pos(e);
+  ctx.lineTo(p.x,p.y); ctx.stroke(); e.preventDefault();});
+ ["pointerup","pointercancel","pointerleave"].forEach(t=>cv.addEventListener(t,()=>{drawing=false}));
+ document.querySelectorAll(".penBtn[data-pen]").forEach(b=>b.addEventListener("click",()=>{penColor=b.dataset.pen}));
+ const w=$("wipeBtn"); if(w)w.addEventListener("click",()=>{ctx.clearRect(0,0,cv.width,cv.height)});}
+
+/* ================= CALM MODE ================= */
+function setCalm(on){ state.calm=on; document.body.classList.toggle("calm",on);
+ try{localStorage.setItem("ps_showdown_calm",on?"1":"0")}catch(e){}
+ const txt="😌 Calm Mode: "+(on?"ON":"OFF");
+ [$("calmBtnSetup"),$("calmBtnGame")].forEach(b=>{b.textContent=txt;b.classList.toggle("calmOn",on)});}
+
+/* ================= KEYS ================= */
+document.addEventListener("keydown",e=>{
+ const tag=(e.target&&e.target.tagName)||"";
+ if(tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT")return;
+ if(state.phase==="setup")return;
+ if(e.key===" "||e.key==="Enter"){ e.preventDefault();
+  if(["intro","question","tiebreak","sketchPrep","sketchDraw","chPrompt","chTimer"].includes(state.phase))advance();
+  return;}
+ const k=e.key.toLowerCase();
+ if(state.phase==="reveal"||state.phase==="tiebreakReveal"){
+  const r=state.rounds[state.ri]; const isSketch=r&&r.type==="sketch"&&state.phase==="reveal";
+  if(isSketch){ const dt=drawerTeam();
+   if((k==="k"&&dt==="kids")||(k==="s"&&dt==="staff"))score(dt);
+   else if(k==="n")score("none");}
+  else{ if(k==="k")score("kids"); else if(k==="s")score("staff");
+   else if(k==="b"&&state.phase==="reveal")score("both");
+   else if(k==="n"&&state.phase==="reveal")score("none");}}
+ if(k==="u")undo();});
+
+/* first-gesture audio unlock */
+document.addEventListener("pointerdown",()=>{ensureAudio()},{once:false});
+
+/* ================= INIT ================= */
+buildPicker();
+$("startBtn").addEventListener("click",startShow);
+$("undoBtn").addEventListener("click",undo);
+$("endBtn").addEventListener("click",endShow);
+$("calmBtnSetup").addEventListener("click",()=>setCalm(!state.calm));
+$("calmBtnGame").addEventListener("click",()=>setCalm(!state.calm));
+try{ if(localStorage.getItem("ps_showdown_calm")==="1")setCalm(true)}catch(e){}
+</script>
+<script defer src="/hud.js"></script>
+<!-- mbm-splash-inline: canonical Made by Matt splash, inlined from
+     site/assets/brand/mbm-splash.js (sha256 e375642c631358c6753a93c5e410742af2ad49c26634d0428352ec75ed87bc4c).
+     Inlined, not linked: these games are single-file and offline-first. -->
+<script>
+/* Made by Matt splash v2 — single file, no dependencies, self-styling.
+   Usage: MadeByMattSplash.start({title:"BOSS BATTLE", kicker:"A Made by Matt Simulation",
+          duration:3200, onComplete:function(){}});                                      */
+(function (g) {
+  var CSS = ".mbm-splash{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;" +
+    "background:radial-gradient(circle at 50% 38%,#222B55,#161D3D 68%);color:#E8E2D4;" +
+    "font-family:Poppins,'Segoe UI',system-ui,sans-serif;transition:opacity .55s ease,visibility .55s}" +
+    ".mbm-splash.is-leaving{opacity:0;visibility:hidden}" +
+    ".mbm-stage{text-align:center;padding:24px;max-width:860px}" +
+    ".mbm-mark{width:min(34vmin,200px);height:auto;filter:drop-shadow(0 18px 32px #0008)}" +
+    ".mbm-mark .mpath{stroke-dasharray:1;stroke-dashoffset:1;animation:mbmDraw 1s cubic-bezier(.6,0,.3,1) .2s forwards}" +
+    ".mbm-mark .mstar{transform-origin:50px 30px;transform:scale(0);opacity:0;" +
+    "animation:mbmPop .45s cubic-bezier(.34,1.56,.64,1) 1.1s forwards}" +
+    ".mbm-kicker,.mbm-title,.mbm-tagline{opacity:0;transform:translateY(12px);animation:mbmRise .6s ease forwards}" +
+    ".mbm-kicker{animation-delay:1.3s;margin-top:20px;color:#F2A24A;font-size:.78rem;" +
+    "letter-spacing:.32em;text-transform:uppercase}" +
+    ".mbm-title{animation-delay:1.45s;margin:.35rem 0 .2rem;font-size:clamp(2rem,7vw,5rem);" +
+    "line-height:.95;letter-spacing:.04em;text-transform:uppercase;font-weight:700}" +
+    ".mbm-tagline{animation-delay:1.65s;color:#B9E6CD;letter-spacing:.18em;text-transform:uppercase;font-weight:700}" +
+    ".mbm-skip{position:absolute;right:22px;bottom:20px;border:1px solid #b9e6cd70;border-radius:99px;" +
+    "background:#0a1026aa;color:#E8E2D4;padding:.65rem 1rem;cursor:pointer;font:inherit}" +
+    ".mbm-skip:focus-visible{outline:3px solid #F2A24A;outline-offset:3px}" +
+    "@keyframes mbmDraw{to{stroke-dashoffset:0}}@keyframes mbmPop{to{transform:scale(1);opacity:1}}" +
+    "@keyframes mbmRise{to{opacity:1;transform:translateY(0)}}" +
+    "@media(prefers-reduced-motion:reduce){.mbm-splash{transition:none}" +
+    ".mbm-mark .mpath{animation:none;stroke-dashoffset:0}.mbm-mark .mstar{animation:none;transform:scale(1);opacity:1}" +
+    ".mbm-kicker,.mbm-title,.mbm-tagline{animation:none;opacity:1;transform:none}}";
+  var MARK = '<svg class="mbm-mark" viewBox="0 0 100 100" role="img" aria-label="Made by Matt">' +
+    '<circle cx="50" cy="50" r="47" fill="none" stroke="#B9E6CD" stroke-width="3.4"/>' +
+    '<path class="mpath" pathLength="1" d="M28 71 L28 37 L50 59 L72 37 L72 71" fill="none" ' +
+    'stroke="#E8E2D4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<path class="mstar" d="M50 22.5 L51.48 28.52 L57.5 30 L51.48 31.48 L50 37.5 ' +
+    'L48.52 31.48 L42.5 30 L48.52 28.52 Z" fill="#F2A24A"/></svg>';
+
+  function start(o) {
+    o = Object.assign({ title: "", kicker: "A Made by Matt Experience",
+      duration: 3200, onComplete: null }, o || {});
+    if (!document.getElementById("mbm-splash-css")) {
+      var st = document.createElement("style");
+      st.id = "mbm-splash-css"; st.textContent = CSS;
+      document.head.appendChild(st);
+    }
+    var reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var prevFocus = document.activeElement;
+    var el = document.createElement("section");
+    el.className = "mbm-splash";
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-modal", "true");
+    el.setAttribute("aria-label", "Made by Matt introduction");
+    el.innerHTML = '<div class="mbm-stage">' + MARK +
+      '<p class="mbm-kicker"></p><h1 class="mbm-title"></h1>' +
+      '<p class="mbm-tagline">Learn \u2022 Build \u2022 Explore</p></div>' +
+      '<button class="mbm-skip" type="button">Skip intro</button>';
+    el.querySelector(".mbm-kicker").textContent = o.kicker;
+    el.querySelector(".mbm-title").textContent = o.title;
+    document.body.appendChild(el);
+    var done = false, timer;
+    function close() {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      el.classList.add("is-leaving");
+      window.removeEventListener("keydown", onKey, true);
+      setTimeout(function () {
+        el.remove();
+        if (prevFocus && prevFocus.focus) prevFocus.focus();
+        if (typeof o.onComplete === "function") o.onComplete();
+      }, reduced ? 0 : 600);
+    }
+    el.querySelector(".mbm-skip").addEventListener("click", function (e) {
+      e.stopPropagation(); close();
+    });
+    /* the overlay swallows stray pointer input so a skip tap can never
+       reach the game underneath */
+    el.addEventListener("click", function (e) { e.stopPropagation(); });
+    /* capture on window: these games install their own window keydown
+       handlers, and preventDefault alone does not stop the skip key ALSO
+       firing a gameplay action. Capture + stopPropagation does. */
+    function onKey(e) {
+      if (done) return;
+      if (e.key === "Escape" || e.key === "Enter" || e.key === " ") {
+        e.preventDefault(); e.stopPropagation();
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+        close();
+      }
+    }
+    window.addEventListener("keydown", onKey, true);
+    el.addEventListener("keydown", onKey);
+    el.tabIndex = -1;
+    el.focus();
+    timer = setTimeout(close, reduced ? Math.min(o.duration, 1200) : o.duration);
+    return { close: close, element: el };
+  }
+  g.MadeByMattSplash = { start: start };
+})(window);
+
+(function () {
+  function boot() {
+    /* The splash plays ABOVE the game's existing boot screen and fades to
+       reveal it — the game keeps exactly one start state, and onComplete
+       adds no second one. */
+    window.MadeByMattSplash.start({ title: 'KIDS VS STAFF: SHOWDOWN', onComplete: function () {} });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjMTYxRDNEIi8+PHBhdGggZD0iTTI2IDc2IEwyNiAzMCBMNTAgNTUgTDc0IDMwIEw3NCA3NiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRThFMkQ0IiBzdHJva2Utd2lkdGg9IjEzIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V = I × R — Pupil App</title>
+<style>
+
+:root{
+  --bg:#f1f5f9;--slide-bg:#fff;--text:#1f2937;
+  --lo-bg:#e6d4e8;--lo-border:#9c27b0;--lo-text:#000;
+  --task-bg:#fef9c3;--task-border:#eab308;
+  --scaffold-bg:#e0f2fe;--scaffold-border:#38bdf8;
+  --aspire-bg:#dcfce7;--aspire-border:#22c55e;--aspire-text:#166534;
+  --sc-bg:#ffedd5;--sc-border:#f97316;
+  --btn-bg:#3b82f6;--btn-hover:#1e3a8a;
+  --success:#16a34a;--error:#dc2626;--muted:#64748b;
+  --ido-bg:#ede9fe;--ido-border:#7c3aed;
+  --wedo-bg:#fce7f3;--wedo-border:#db2777;
+  --found:#22c55e;--mid:#f97316;--high:#1e3a8a;
+}
+*{box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;margin:0;padding:0;background:var(--bg);color:var(--text);overflow:hidden}
+
+/* ---------- ANIMATIONS ---------- */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes drip{0%{transform:translateY(-30px);opacity:0}15%{opacity:1}80%{opacity:1}100%{transform:translateY(70px);opacity:0}}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.5)}50%{box-shadow:0 0 0 12px rgba(124,58,237,0)}}
+@keyframes confettiDrop{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+@keyframes ionFloat{0%{transform:translate(0,0)}25%{transform:translate(8px,-6px)}50%{transform:translate(-4px,-12px)}75%{transform:translate(-8px,-4px)}100%{transform:translate(0,0)}}
+@keyframes pulseAttn{0%,100%{background:#fef3c7}50%{background:#fde047}}
+@keyframes colourFill{from{height:0}to{height:55px}}
+@keyframes markerSlide{from{transform:translateY(-30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.animate-enter{animation:fadeInUp .55s ease-out forwards}
+.anim-d1{animation-delay:.15s;opacity:0;animation-fill-mode:forwards}
+.anim-d2{animation-delay:.3s;opacity:0;animation-fill-mode:forwards}
+.anim-d3{animation-delay:.45s;opacity:0;animation-fill-mode:forwards}
+.pulse-attn{animation:pulseAttn 2s ease-in-out infinite;padding:1px 6px;border-radius:6px;font-style:italic}
+
+/* ---------- SLIDE SYSTEM ---------- */
+.slide-container{width:100vw;height:100vh;display:flex;justify-content:center;align-items:center}
+.slide{display:none;width:92%;height:90%;background:var(--slide-bg);border-top:10px solid var(--lo-border);border-radius:20px;box-shadow:0 20px 50px rgba(0,0,0,.15);padding:36px 40px;overflow-y:auto;position:relative;flex-direction:column}
+.slide.active{display:flex;animation:fadeIn .45s ease}
+.slide[data-type="ido"]{border-top-color:var(--ido-border)}
+.slide[data-type="wedo"]{border-top-color:var(--wedo-border)}
+.slide[data-type="independent"]{border-top-color:var(--task-border)}
+
+h1{color:var(--lo-border);font-size:2.4rem;margin:0 0 14px;border-bottom:3px solid var(--lo-border);display:inline-block}
+h2{color:var(--lo-text);margin:0 0 10px;border-bottom:2px solid #e2e8f0;padding-bottom:10px;margin-right:170px}
+h3{margin:10px 0 8px;color:#0f172a}
+p,li{font-size:1.1rem;line-height:1.55;color:#334155}
+.content-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.logo{position:absolute;top:22px;right:40px;width:150px;height:auto;z-index:200}
+
+button{background:var(--btn-bg);color:#fff;border:none;padding:10px 18px;border-radius:10px;cursor:pointer;font-size:1rem;font-weight:bold;transition:all .2s;box-shadow:0 4px 6px rgba(0,0,0,.12);user-select:none}
+button:hover{background:var(--btn-hover);transform:translateY(-2px)}
+button:active{transform:translateY(0)}
+button.small{padding:8px 12px;font-size:.95rem}
+button.ghost{background:#e2e8f0;color:#0f172a}
+button.ghost:hover{background:#cbd5e1}
+
+.controls{position:fixed;bottom:18px;right:18px;z-index:1000;display:flex;gap:10px}
+.progress-wrap{position:fixed;left:0;right:0;bottom:0;height:10px;z-index:1100;background:rgba(15,23,42,.12)}
+.progress-bar{height:100%;width:0%;background:var(--lo-border);transition:width .3s ease}
+.progress-label{position:fixed;left:14px;bottom:14px;z-index:1101;background:rgba(255,255,255,.95);border:1px solid #e2e8f0;padding:6px 10px;border-radius:999px;font-size:.9rem;font-weight:bold;color:var(--text);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+
+/* ---------- BOXES ---------- */
+.li-box{background:var(--lo-bg);border-left:6px solid var(--lo-border);padding:12px 14px;border-radius:12px;margin:8px 0 14px;color:var(--lo-text)}
+.task-box{background:var(--task-bg);border:2px solid var(--task-border);border-radius:12px;padding:16px;margin-bottom:12px;transition:transform .15s}
+.task-box:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(234,179,8,.2)}
+.scaffold-box{background:var(--scaffold-bg);border-left:5px solid var(--scaffold-border);padding:10px 12px;border-radius:12px;font-size:1.05rem;margin-top:10px}
+.aspire-box{background:var(--aspire-bg);border-left:5px solid var(--aspire-border);padding:12px 14px;border-radius:12px;color:var(--aspire-text);margin-top:10px}
+.sc-box{background:var(--sc-bg);border-left:6px solid var(--sc-border);padding:18px;border-radius:12px}
+.ido-box{background:var(--ido-bg);border-left:6px solid var(--ido-border);padding:14px;border-radius:12px;margin-bottom:12px}
+.diagram-container{background:#f8fafc;border:2px solid #e2e8f0;border-radius:14px;padding:14px;text-align:center;margin:8px 0}
+
+.answer{display:none;margin-top:8px;padding:8px 12px;background:#f1f5f9;border-left:5px solid var(--success);border-radius:10px;font-weight:bold;color:#166534}
+.show-ans .answer{display:block;animation:fadeInUp .25s}
+
+/* ---------- SLIDE TAGS ---------- */
+.slide-tag{display:inline-block;padding:4px 14px;border-radius:8px;font-size:.85rem;font-weight:900;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.tag-arrival{background:#fef3c7;color:#92400e}
+.tag-starter{background:#dbeafe;color:#1e40af}
+.tag-ido{background:var(--ido-bg);color:#5b21b6}
+.tag-wedo{background:var(--wedo-bg);color:#9d174d}
+.tag-independent{background:var(--task-bg);color:#92400e}
+.tag-exit{background:var(--sc-bg);color:#9a3412}
+
+/* ---------- pH SCALE BAR ---------- */
+.ph-scale-bar{display:flex;border-radius:12px;overflow:hidden;height:48px;margin:10px 0;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.ph-cell{flex:1;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.9rem;cursor:pointer;transition:transform .15s}
+.ph-cell:hover{transform:scaleY(1.15);z-index:2}
+
+/* ---------- TIER TOGGLE ---------- */
+.tier-toggle{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:6px 0}
+.tier-toggle button{font-size:.95rem;padding:8px 14px}
+.tier-toggle .active{outline:3px solid #0f172a;outline-offset:2px}
+.tier-level{display:none}
+.tier-level.active{display:block;animation:fadeInUp .3s}
+
+/* ---------- ARRIVAL ---------- */
+.arrival-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* ---------- SORT (We Do 1) ---------- */
+.sort-card{background:#fff;border:2px solid var(--task-border);border-radius:10px;padding:8px 14px;cursor:pointer;font-weight:bold;font-size:.9rem;text-align:center;transition:all .2s;user-select:none;min-width:90px}
+.sort-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(234,179,8,.3)}
+.sort-card.selected{border-color:var(--wedo-border);box-shadow:0 0 0 3px rgba(219,39,119,.3);transform:scale(1.05);animation:pulseGlow 1.4s infinite}
+.sort-card.placed{opacity:.4;pointer-events:none;transform:scale(.9)}
+.sort-zone{border:2px dashed #cbd5e1;border-radius:12px;padding:8px;text-align:center;min-height:80px;cursor:pointer;transition:all .2s}
+.sort-zone:hover{border-style:solid;transform:scale(1.02)}
+.zone-items{margin-top:4px;font-size:.8rem;color:#334155}
+
+/* ---------- PREDICT & PLACE (NEW Starter) ---------- */
+.pp-bench{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0;min-height:60px}
+.pp-card{background:#fff;border:2px solid var(--lo-border);border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:bold;font-size:.9rem;user-select:none;transition:all .2s;text-align:center;min-width:110px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.pp-card:hover{transform:translateY(-3px);box-shadow:0 6px 14px rgba(124,58,237,.25)}
+.pp-card.selected{background:var(--lo-bg);border-color:var(--lo-border);box-shadow:0 0 0 3px rgba(156,39,176,.3);animation:pulseGlow 1.4s infinite}
+.pp-card.placed{opacity:.45;pointer-events:none}
+.pp-card.correct-pred{border-color:var(--success);background:#dcfce7}
+.pp-card.wrong-pred{border-color:var(--error);background:#fef2f2}
+.pp-scale{position:relative;display:flex;border-radius:12px;overflow:visible;height:54px;margin:30px 0 14px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.pp-cell{flex:1;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.9rem;cursor:pointer;transition:transform .15s;position:relative;color:#fff}
+.pp-cell:hover{transform:scaleY(1.12);z-index:5}
+.pp-marker{position:absolute;top:-26px;left:50%;transform:translateX(-50%);background:#fff;border:2px solid var(--lo-border);border-radius:8px;padding:2px 6px;font-size:.7rem;font-weight:900;color:var(--lo-border);white-space:nowrap;z-index:6;animation:markerSlide .4s ease}
+.pp-marker.actual{border-color:var(--success);color:var(--success);top:-50px;background:#dcfce7}
+.pp-marker.actual::after{content:'';position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid var(--success)}
+.pp-status{display:flex;justify-content:space-between;align-items:center;background:#fff;border:2px solid #e2e8f0;border-radius:10px;padding:8px 14px;margin-top:6px;font-weight:bold}
+.pp-status .pp-score{color:var(--success);font-size:1.15rem}
+
+/* ---------- SPOT THE MISTAKE (REBUILT click-to-find) ---------- */
+.stm-paragraph{font-style:italic;font-size:1.18rem;line-height:1.9;color:#1e293b;background:#fff;border:3px solid var(--error);border-radius:14px;padding:20px 22px;margin:10px 0;position:relative}
+.stm-paragraph::before{content:'❌ A STUDENT WROTE THIS';position:absolute;top:-12px;left:18px;background:var(--error);color:#fff;padding:2px 12px;border-radius:6px;font-size:.75rem;font-weight:900;letter-spacing:1px}
+.stm-clickable{background:transparent;padding:1px 2px;border-radius:4px;cursor:pointer;border-bottom:1px dotted rgba(148,163,184,.45);font-style:inherit;font-weight:inherit;transition:all .2s}
+.stm-clickable:hover{background:#fef9c3;border-bottom:2px solid #eab308;padding:1px 4px}
+.stm-clickable.found{background:#fee2e2;color:#991b1b;text-decoration:line-through;border:2px solid var(--error);padding:1px 4px;cursor:default;animation:none;pointer-events:none}
+.stm-clickable.miss{background:#dbeafe;border-bottom:2px solid #60a5fa;animation:shake .35s}
+.stm-feedback-box{background:#fff;border:2px dashed #cbd5e1;border-radius:12px;padding:10px 14px;margin-top:10px;min-height:46px;text-align:center;font-weight:bold;color:#334155;transition:all .2s}
+.stm-feedback-box.success{border-color:var(--success);background:#dcfce7;color:#166534}
+.stm-feedback-box.error{border-color:var(--error);background:#fef2f2;color:#991b1b}
+.stm-correction{display:none;margin-top:8px;background:#f0fdf4;border-left:5px solid var(--success);border-radius:10px;padding:10px 14px;color:#166534;font-weight:bold}
+.stm-correction.visible{display:block;animation:fadeInUp .3s}
+.stm-progress{display:flex;gap:6px;justify-content:center;margin:6px 0}
+.stm-pip{width:26px;height:26px;border-radius:50%;background:#e2e8f0;color:#94a3b8;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:all .3s}
+.stm-pip.found{background:var(--success);color:#fff;transform:scale(1.1)}
+
+/* ---------- CLASSIFICATION SPOTLIGHT (I Do 1) ---------- */
+.cs-stage{min-height:120px;background:linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%);border-radius:14px;border:2px dashed #cbd5e1;padding:14px;margin:8px 0;display:flex;align-items:center;justify-content:center}
+.cs-empty{color:var(--muted);font-style:italic;font-size:1.05rem;text-align:center}
+.cs-card{display:flex;align-items:center;gap:18px;width:100%;animation:fadeInUp .35s ease-out}
+.cs-num{flex:0 0 90px;height:90px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:900;color:#fff;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+.cs-body{flex:1;display:flex;flex-direction:column;gap:4px}
+.cs-class{font-size:1.4rem;font-weight:900;color:var(--ido-border)}
+.cs-detail{font-size:1.05rem;color:#334155;font-weight:600}
+.cs-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.cs-chip{background:#fff;border:2px solid #cbd5e1;border-radius:999px;padding:3px 12px;font-size:.85rem;font-weight:900;color:#475569}
+.cs-fact{background:#fef3c7;border-left:4px solid var(--task-border);border-radius:6px;padding:4px 10px;font-size:.9rem;color:#713f12;flex:1;min-width:200px}
+
+/* ---------- READ THE TUBES (We Do 2) ---------- */
+.rt-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:8px 0}
+.rt-tube{background:#fff;border:2px solid #e2e8f0;border-radius:12px;padding:8px 4px;text-align:center;cursor:pointer;transition:transform .2s,box-shadow .2s,border-color .2s;user-select:none}
+.rt-tube:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.1);border-color:var(--wedo-border)}
+.rt-tube.revealed{border-color:var(--success);background:#f0fdf4}
+.rt-letter{font-weight:900;font-size:1rem;margin:2px 0 0;color:#0f172a}
+.rt-colour{font-size:.8rem;color:var(--muted);margin:0 0 4px}
+.rt-result{background:#f1f5f9;border-radius:6px;padding:4px 6px;font-size:.78rem;font-weight:900;color:#475569;min-height:18px;line-height:1.2}
+.rt-tube.revealed .rt-result{background:var(--success);color:#fff}
+.rt-feedback{background:#eff6ff;border-left:5px solid var(--ido-border);border-radius:8px;padding:8px 12px;font-size:.95rem;color:#1e3a8a;margin-top:8px;font-weight:600;min-height:20px}
+
+/* ---------- SUPER SIX EXIT (3×2 grid) ---------- */
+.ss-grid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;gap:12px;margin-top:10px;height:calc(100% - 110px)}
+.ss-cell{background:#fff;border-radius:14px;border:2px solid #e2e8f0;padding:14px 14px 12px;display:flex;flex-direction:column;justify-content:flex-start;animation:fadeInUp .4s ease-out;position:relative;overflow:hidden}
+.ss-cell.ss-l1{border-left:6px solid #f97316}
+.ss-cell.ss-l2{border-left:6px solid var(--lo-border)}
+.ss-cell .ss-tag{display:inline-block;font-size:.7rem;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:#fff;padding:3px 8px;border-radius:6px;align-self:flex-start;margin-bottom:6px}
+.ss-cell.ss-l1 .ss-tag{background:#f97316}
+.ss-cell.ss-l2 .ss-tag{background:var(--lo-border)}
+.ss-cell p{margin:0 0 6px;font-size:1rem;line-height:1.4}
+.ss-cell .answer{display:none;background:#f0fdf4;border-left:4px solid var(--success);border-radius:6px;padding:6px 10px;color:#166534;font-size:.95rem;margin-top:auto}
+#exit-slide.show-ans .ss-cell .answer{display:block;animation:fadeInUp .25s}
+.rt-tube{background:#fff;border:2px solid #e2e8f0;border-radius:12px;padding:8px 4px;text-align:center;cursor:pointer;transition:transform .2s,box-shadow .2s,border-color .2s;user-select:none}
+.rt-tube:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.1);border-color:var(--wedo-border)}
+.rt-tube.revealed{border-color:var(--success);background:#f0fdf4}
+.rt-letter{font-weight:900;font-size:1rem;margin:2px 0 0;color:#0f172a}
+.rt-colour{font-size:.8rem;color:var(--muted);margin:0 0 4px}
+.rt-result{background:#f1f5f9;border-radius:6px;padding:4px 6px;font-size:.78rem;font-weight:900;color:#475569;min-height:18px;line-height:1.2}
+.rt-tube.revealed .rt-result{background:var(--success);color:#fff}
+.rt-feedback{background:#eff6ff;border-left:5px solid var(--ido-border);border-radius:8px;padding:8px 12px;font-size:.95rem;color:#1e3a8a;margin-top:8px;font-weight:600;min-height:20px}
+.cs-empty{color:var(--muted);font-style:italic;font-size:1.05rem;text-align:center}
+.cs-card{display:flex;align-items:center;gap:18px;width:100%;animation:fadeInUp .35s ease-out}
+.cs-num{flex:0 0 90px;height:90px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:900;color:#fff;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+.cs-body{flex:1;display:flex;flex-direction:column;gap:4px}
+.cs-class{font-size:1.4rem;font-weight:900;color:var(--ido-border)}
+.cs-detail{font-size:1.05rem;color:#334155;font-weight:600}
+.cs-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.cs-chip{background:#fff;border:2px solid #cbd5e1;border-radius:999px;padding:3px 12px;font-size:.85rem;font-weight:900;color:#475569}
+.cs-fact{background:#fef3c7;border-left:4px solid var(--task-border);border-radius:6px;padding:4px 10px;font-size:.9rem;color:#713f12;flex:1;min-width:200px}
+
+/* ---------- UI DRIP (I Do 2 animation) ---------- */
+.drip-stage{position:relative;width:100%;max-width:340px;height:230px;margin:0 auto;background:#f8fafc;border-radius:14px}
+.drip-pipette{position:absolute;left:50%;top:8px;transform:translateX(-50%);width:20px;height:60px;background:linear-gradient(to bottom,#94a3b8,#cbd5e1);border-radius:4px 4px 12px 12px}
+.drip-pipette::after{content:'';position:absolute;bottom:-10px;left:50%;width:6px;height:14px;background:#94a3b8;transform:translateX(-50%);border-radius:0 0 3px 3px}
+.drip-drop{position:absolute;left:50%;top:80px;transform:translateX(-50%);width:14px;height:18px;background:radial-gradient(circle at 35% 30%,#a78bfa,#7c3aed);border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;animation:drip 2.4s ease-in-out infinite;box-shadow:0 2px 6px rgba(124,58,237,.4)}
+.drip-beaker{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:120px;height:90px;border:3px solid #475569;border-top:none;border-radius:0 0 16px 16px;background:#fff;overflow:hidden}
+.drip-liquid{position:absolute;left:0;right:0;bottom:0;height:55px;background:#fde047;animation:colourFill 1.8s ease forwards;transition:background 1.5s ease}
+.drip-beaker.changed .drip-liquid{background:#3b82f6}
+.drip-label{position:absolute;left:50%;bottom:-2px;transform:translateX(-50%);font-size:.8rem;font-weight:900;color:#475569}
+.drip-arrow{position:absolute;right:8px;top:90px;font-size:1.6rem;color:var(--ido-border);font-weight:900;animation:fadeInUp 1s 1.5s forwards;opacity:0}
+.drip-readout{position:absolute;right:8px;top:130px;background:var(--ido-border);color:#fff;padding:4px 10px;border-radius:8px;font-weight:900;font-size:.85rem;animation:fadeInUp 1s 1.8s forwards;opacity:0}
+
+/* ---------- INDEPENDENT WORK ---------- */
+.ind-level{display:none}.ind-level.active{display:block}
+.ind-q{background:#fff;border:2px solid #e2e8f0;border-radius:10px;padding:10px 12px;margin:6px 0}
+.ind-q.stretch{border-color:#a78bfa;background:linear-gradient(to right,#fff,#f5f3ff)}
+.ind-q .q-type{float:right;font-size:.7rem;font-weight:900;padding:2px 8px;border-radius:6px}
+.q-mcq{background:#dbeafe;color:#1e40af}
+.q-short{background:#fef3c7;color:#92400e}
+.q-long{background:#dcfce7;color:#166534}
+.q-diagram{background:#ffedd5;color:#9a3412}
+.q-exam{background:#fce7f3;color:#9d174d}
+.q-stretch{background:#ede9fe;color:#5b21b6}
+.q-synthesis{background:#cffafe;color:#155e75}
+.ind-q.synthesis{border-color:#0891b2;background:linear-gradient(to right,#fff,#ecfeff);position:relative;margin-top:18px;padding-top:16px}
+.ind-q.synthesis::before{content:'🌍 REAL-WORLD APPLICATION';position:absolute;top:-10px;left:14px;background:#0891b2;color:#fff;padding:2px 9px;border-radius:5px;font-size:.68rem;font-weight:900;letter-spacing:.6px}
+.mcq-opt{display:inline-block;background:#f1f5f9;border:2px solid #e2e8f0;border-radius:8px;padding:5px 12px;margin:3px;cursor:pointer;font-weight:bold;transition:all .15s;user-select:none;font-size:.95rem}
+.mcq-opt:hover{border-color:var(--btn-bg)}
+.mcq-opt.correct{border-color:var(--success);background:#dcfce7;color:#166534;pointer-events:none}
+.mcq-opt.wrong{border-color:var(--error);background:#fef2f2;animation:shake .4s}
+
+.xp-bar-wrap{background:#e2e8f0;border-radius:10px;height:14px;margin:6px 0;overflow:hidden;position:relative}
+.xp-bar-fill{background:linear-gradient(90deg,var(--success),#4ade80);height:100%;width:0%;border-radius:10px;transition:width .4s ease}
+.xp-label{text-align:center;font-size:.85rem;font-weight:900;color:var(--muted);margin:2px 0}
+
+.hint-btn{background:none;border:2px solid #f59e0b;color:#f59e0b;padding:3px 10px;border-radius:6px;font-size:.8rem;cursor:pointer;margin-top:4px;box-shadow:none;font-weight:bold;transition:all .2s}
+.hint-btn:hover{background:#fef3c7;transform:none;color:#92400e}
+.hint-text{display:none;background:#fef3c7;border-left:4px solid #f59e0b;padding:6px 10px;border-radius:8px;margin-top:4px;font-size:.95rem;color:#92400e;font-weight:bold}
+.hint-text.show{display:block;animation:fadeInUp .25s}
+
+.confetti-global{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;overflow:hidden}
+.confetti-p{position:absolute;width:10px;height:10px;border-radius:2px;animation:confettiDrop 1.8s ease forwards}
+
+.lb-widget{background:#f8fafc;border:2px solid #e2e8f0;border-radius:12px;padding:10px;margin-top:6px}
+.lb-widget h4{margin:0 0 6px;color:var(--lo-border);font-size:.9rem}
+.lb-list{display:flex;flex-wrap:wrap;gap:4px}
+.lb-name{background:var(--lo-bg);color:var(--lo-border);padding:3px 10px;border-radius:6px;font-size:.85rem;font-weight:bold;animation:fadeInUp .3s}
+.lb-input-row{display:flex;gap:6px;margin-top:6px}
+.lb-input{border:2px solid #e2e8f0;border-radius:8px;padding:5px 10px;font-size:.9rem;flex:1;font-family:inherit}
+.lb-input:focus{border-color:var(--lo-border);outline:none}
+
+/* ---------- WE DO CAPTURE / EVIDENCE ---------- */
+.wedo-capture{border:3px solid var(--wedo-border);border-radius:14px;padding:14px;background:#fff;position:relative}
+.wedo-capture::before{content:'CLASS WORK';position:absolute;top:-12px;left:18px;background:var(--wedo-border);color:#fff;padding:2px 12px;border-radius:6px;font-size:.8rem;font-weight:900;letter-spacing:1px}
+.evidence-btn{background:var(--wedo-border);color:#fff;border:none;padding:8px 14px;border-radius:10px;cursor:pointer;font-size:.9rem;font-weight:bold;box-shadow:0 4px 6px rgba(0,0,0,.12);transition:.25s}
+.evidence-btn:hover{background:#9d174d;transform:translateY(-2px)}
+
+.editable[contenteditable="true"]{outline:2px dashed rgba(234,179,8,.5);border-radius:6px}
+
+/* ---------- TIMER WIDGET (tidy pill) ---------- */
+#timer-widget{position:fixed;top:14px;left:14px;background:rgba(255,255,255,.96);border:2px solid var(--lo-border);border-radius:999px;padding:5px 12px 5px 14px;box-shadow:0 6px 18px rgba(0,0,0,.12);z-index:2000;display:none;align-items:center;gap:8px;backdrop-filter:blur(4px)}
+#timer-widget.visible{display:flex}
+#timer-widget::before{content:'⏱';font-size:1.05rem;line-height:1}
+#timer-display{font-size:1.15rem;font-weight:900;color:var(--lo-border);font-variant-numeric:tabular-nums;min-width:54px;text-align:center;letter-spacing:.5px}
+.timer-controls{display:flex;gap:3px}
+.timer-btn{background:transparent;color:#475569;border:none;border-radius:50%;width:26px;height:26px;padding:0;cursor:pointer;font-size:.9rem;transition:background .2s;box-shadow:none;display:flex;align-items:center;justify-content:center}
+.timer-btn:hover{background:#e2e8f0;transform:none}
+.timer-btn.active-play{background:var(--success);color:white}
+.timer-btn.active-pause{background:#fbbf24;color:white}
+#timer-widget.warning{border-color:var(--error);animation:pulseWarn 1.4s ease-in-out infinite}
+@keyframes pulseWarn{0%,100%{box-shadow:0 6px 18px rgba(0,0,0,.12)}50%{box-shadow:0 6px 24px rgba(220,38,38,.4)}}
+
+/* ---------- TA FOCUS — observer-visible TA deployment system ---------- */
+#ta-focus-btn{position:fixed;top:14px;left:230px;z-index:2000;background:#6d28d9;color:#fff;border:2px solid #5b21b6;border-radius:999px;padding:6px 14px;font-size:.88rem;font-weight:bold;cursor:pointer;box-shadow:0 6px 18px rgba(109,40,217,.3);transition:.2s;display:flex;align-items:center;gap:6px}
+#ta-focus-btn:hover{background:#5b21b6;transform:translateY(-2px);box-shadow:0 8px 24px rgba(109,40,217,.4)}
+#ta-focus-btn::before{content:'👥';font-size:1.05rem}
+#ta-focus-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.65);z-index:5000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);animation:fadeIn .25s ease-out}
+#ta-focus-overlay.visible{display:flex}
+#ta-focus-modal{background:#fff;border-radius:18px;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.3);position:relative;animation:fadeInUp .35s ease-out;border:3px solid #6d28d9}
+.ta-modal-header{background:linear-gradient(135deg,#6d28d9,#7c3aed);color:#fff;padding:16px 24px;border-radius:15px 15px 0 0;display:flex;justify-content:space-between;align-items:center}
+.ta-modal-header h3{margin:0;font-size:1.15rem;color:#fff;border:none;padding:0}
+.ta-modal-header h3::before{content:'👥 ';margin-right:4px}
+.ta-modal-close{background:rgba(255,255,255,.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem;font-weight:bold;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:none}
+.ta-modal-close:hover{background:rgba(255,255,255,.35);transform:none}
+.ta-modal-body{padding:18px 24px 22px}
+.ta-row{display:flex;gap:10px;margin-bottom:12px;align-items:flex-start}
+.ta-row-icon{flex:0 0 28px;font-size:1.3rem;line-height:1.2}
+.ta-row-content{flex:1;font-size:.96rem;line-height:1.45}
+.ta-row-content strong{color:#5b21b6}
+.ta-cta-row{background:#fef3c7;border-left:5px solid #d97706;padding:10px 14px;border-radius:10px;margin-top:6px;font-size:.92rem}
+.ta-cta-row strong{color:#92400e}
+.ta-no-brief{font-style:italic;color:var(--muted);text-align:center;padding:12px}
+
+/* ---------- COLD CALL — random pupil picker + slide-relevant question ---------- */
+#cold-call-btn{position:fixed;top:14px;left:380px;z-index:2000;background:#dc2626;color:#fff;border:2px solid #b91c1c;border-radius:999px;padding:6px 14px;font-size:.88rem;font-weight:bold;cursor:pointer;box-shadow:0 6px 18px rgba(220,38,38,.3);transition:.2s;display:flex;align-items:center;gap:6px}
+#cold-call-btn:hover{background:#b91c1c;transform:translateY(-2px);box-shadow:0 8px 24px rgba(220,38,38,.4)}
+#cold-call-btn::before{content:'🎲';font-size:1.05rem}
+#cold-call-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.65);z-index:5000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);animation:fadeIn .25s ease-out}
+#cold-call-overlay.visible{display:flex}
+#cold-call-modal{background:#fff;border-radius:18px;max-width:580px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.3);animation:fadeInUp .35s ease-out;border:3px solid #dc2626}
+.cold-call-header{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;padding:16px 24px;border-radius:15px 15px 0 0;display:flex;justify-content:space-between;align-items:center}
+.cold-call-header h3{margin:0;font-size:1.15rem;color:#fff;border:none;padding:0}
+.cold-call-header h3::before{content:'🎲 ';margin-right:4px}
+.cold-call-body{padding:18px 22px 22px}
+.cold-call-class-label{text-align:center;font-size:.85rem;color:#64748b;margin:0 0 10px}
+.cold-call-class-label strong{color:#dc2626;font-size:1rem}
+.cold-call-name-box{background:linear-gradient(135deg,#fef3c7,#fde68a);border:3px solid #d97706;border-radius:14px;padding:24px 18px;margin:6px 0 14px;text-align:center;min-height:78px;display:flex;align-items:center;justify-content:center}
+.cold-call-name{font-size:2.4rem;font-weight:900;color:#7c2d12;margin:0;letter-spacing:1px;line-height:1.1}
+.cold-call-name.spinning{animation:nameSpin .08s ease-in-out infinite}
+.cold-call-name.settled{animation:nameLand .55s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes nameSpin{0%,100%{opacity:.7;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+@keyframes nameLand{0%{transform:scale(0.6);opacity:0}40%{transform:scale(1.18);opacity:1}100%{transform:scale(1);opacity:1}}
+.cold-call-q-box{background:#dbeafe;border-left:5px solid #1e40af;padding:12px 16px;border-radius:10px;margin:10px 0 14px}
+.cold-call-q-label{margin:0 0 4px;font-size:.78rem;color:#64748b;font-weight:bold;text-transform:uppercase;letter-spacing:.5px}
+.cold-call-question{font-size:1.05rem;font-weight:700;color:#1e3a8a;margin:0;line-height:1.4}
+.cold-call-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.cc-btn-primary{flex:1 1 200px;background:#dc2626;color:#fff;border:none;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:.98rem;font-weight:bold;transition:.2s}
+.cc-btn-primary:hover{background:#b91c1c;transform:translateY(-1px)}
+.cc-btn-secondary{flex:1 1 140px;background:#e5e7eb;color:#1e293b;border:none;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:.95rem;font-weight:bold;transition:.2s}
+.cc-btn-secondary:hover{background:#cbd5e1}
+.cc-edit-link{display:block;text-align:center;background:none;border:none;color:#64748b;cursor:pointer;font-size:.85rem;text-decoration:underline;margin-top:10px;padding:6px}
+.cc-edit-link:hover{color:#dc2626}
+.cc-setup-title{font-weight:bold;margin:0 0 8px;font-size:1.05rem}
+.cc-names-input{width:100%;min-height:180px;padding:12px;border:2px solid #cbd5e1;border-radius:10px;font-size:.95rem;font-family:'Segoe UI',sans-serif;resize:vertical;box-sizing:border-box}
+.cc-names-input:focus{outline:none;border-color:#dc2626}
+.cc-helper{font-size:.85rem;color:#64748b;margin:6px 0 12px}
+/* Pupil rows with grade chips */
+.cc-empty-rows{text-align:center;color:#94a3b8;font-style:italic;padding:18px;border:2px dashed #cbd5e1;border-radius:10px;margin:6px 0}
+.cc-pupil-rows{max-height:300px;overflow-y:auto;padding:2px;border:1px solid #e5e7eb;border-radius:10px;margin:0 0 10px}
+.cc-pupil-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #f1f5f9}
+.cc-pupil-row:last-child{border-bottom:none}
+.cc-pupil-name{flex:1;font-weight:600;color:#1e293b;font-size:.95rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-grade-chips{display:flex;gap:3px;flex-shrink:0}
+.cc-grade-chip{width:30px;height:30px;border-radius:50%;border:2px solid;background:#fff;cursor:pointer;font-weight:900;font-size:.85rem;padding:0;display:flex;align-items:center;justify-content:center;transition:.15s}
+.cc-grade-u{border-color:#dc2626;color:#dc2626}
+.cc-grade-1{border-color:#ea580c;color:#ea580c}
+.cc-grade-2{border-color:#d97706;color:#d97706}
+.cc-grade-3{border-color:#0891b2;color:#0891b2}
+.cc-grade-4{border-color:#16a34a;color:#16a34a}
+.cc-grade-chip:hover{transform:scale(1.1)}
+.cc-grade-chip.cc-grade-selected{color:#fff;transform:scale(1.05)}
+.cc-grade-u.cc-grade-selected{background:#dc2626}
+.cc-grade-1.cc-grade-selected{background:#ea580c}
+.cc-grade-2.cc-grade-selected{background:#d97706}
+.cc-grade-3.cc-grade-selected{background:#0891b2}
+.cc-grade-4.cc-grade-selected{background:#16a34a}
+.cc-remove-btn{background:#fee2e2;color:#991b1b;border:none;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:.85rem;font-weight:bold;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:none}
+.cc-remove-btn:hover{background:#fecaca;transform:none}
+.cc-add-row{display:flex;gap:8px;margin:8px 0 12px}
+.cc-add-input{flex:1;padding:10px 12px;border:2px solid #cbd5e1;border-radius:10px;font-size:.95rem;font-family:'Segoe UI',sans-serif;box-sizing:border-box}
+.cc-add-input:focus{outline:none;border-color:#dc2626}
+/* Grade badge under spun name */
+.cold-call-grade{margin-top:6px}
+.cc-grade-badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.78rem;font-weight:bold;letter-spacing:.3px}
+.cc-tier-foundation{background:#dcfce7;color:#166534;border:1.5px solid #16a34a}
+.cc-tier-middle{background:#ffedd5;color:#9a3412;border:1.5px solid #ea580c}
+.cc-tier-higher{background:#dbeafe;color:#1e3a8a;border:1.5px solid #1e40af}
+.cc-tier-none{background:#f1f5f9;color:#64748b;border:1.5px solid #cbd5e1}
+/* Mode toggle */
+.cc-mode-toggle{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 10px;padding:8px 10px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0}
+.cc-mode-label{font-size:.78rem;color:#64748b;font-weight:bold;text-transform:uppercase;letter-spacing:.4px;flex-shrink:0}
+.cc-mode-btn{background:#fff;border:1.5px solid #cbd5e1;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:.78rem;font-weight:600;color:#475569;transition:.15s;flex:1 1 auto;min-width:0;box-shadow:none}
+.cc-mode-btn:hover{background:#e0f2fe;border-color:#0891b2;transform:none}
+.cc-mode-btn.active{background:#dc2626;color:#fff;border-color:#b91c1c}
+/* Tier pip on question */
+.cc-tier-badge{display:inline-block;margin-left:8px}
+.cc-tier-pip{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.7rem;font-weight:bold;letter-spacing:.3px}
+.cc-tier-pip.cc-tier-foundation{background:#16a34a;color:#fff;border:none}
+.cc-tier-pip.cc-tier-middle{background:#ea580c;color:#fff;border:none}
+.cc-tier-pip.cc-tier-higher{background:#1e40af;color:#fff;border:none}
+
+/* ---------- PRINT AREA / PRINT CSS ---------- */
+#print-area{display:none}
+@media print{
+  body{overflow:visible;background:#fff;height:auto;color:#000}
+  .controls,.slide-container,.progress-wrap,.progress-label,#timer-widget,#ta-focus-btn,#ta-focus-overlay,#cold-call-btn,#cold-call-overlay{display:none!important}
+  #print-area{display:block!important;padding:20px}
+  .print-section{display:none;page-break-after:always}
+  .print-section.visible{display:block}
+  .print-grid-2x2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+  .print-box{border:1px solid #000;padding:10px;min-height:80px}
+  .print-line{border-bottom:1px solid #000;height:22px;margin-top:8px}
+  .ko-table{width:100%;border-collapse:collapse;margin-bottom:18px;font-size:.95rem}
+  .ko-table th,.ko-table td{border:1px solid #000;padding:8px;text-align:left}
+  .ko-table th{background:#eee}
+  .scaffold-print-box{border:2px dashed #94a3b8;padding:15px;margin-bottom:20px;border-radius:8px;background:#f8fafc}
+  .prevent-break{page-break-inside:avoid;break-inside:avoid;margin-bottom:25px}
+  body.print-foundation .middle-content,body.print-foundation .higher-content{display:none!important}
+  body.print-middle .foundation-content,body.print-middle .higher-content{display:none!important}
+  body.print-higher .foundation-content,body.print-higher .middle-content{display:none!important}
+  /* Super Six print grid */
+  .ss-print{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:8px}
+  .ss-print td{border:2px solid #000;padding:10px;vertical-align:top;width:33.33%;height:170px;page-break-inside:avoid}
+  .ss-print .ss-pip{display:inline-block;font-size:.7rem;font-weight:900;letter-spacing:.5px;padding:2px 7px;border-radius:5px;color:#fff;margin-bottom:6px}
+  .ss-print .ss-pip-l1{background:#f97316}
+  .ss-print .ss-pip-l2{background:#9c27b0}
+  .ss-print .ss-ans{border-bottom:1px solid #888;height:18px;margin-top:8px}
+  .ss-print .ss-ans:nth-of-type(n){margin-top:6px}
+  .ss-print td p{margin:0 0 4px;font-size:.95rem;line-height:1.35}
+}
+    /* ============== V4 POLISH UPGRADE — pH Scale lesson ============== */
+
+    /* ---------- TITLE HERO (animated central icon row on slide 1) ---------- */
+    @keyframes phHeroPulse{0%,100%{transform:scale(1);box-shadow:0 0 32px rgba(124,58,237,.5),0 0 60px rgba(124,58,237,.25)}50%{transform:scale(1.06);box-shadow:0 0 48px rgba(124,58,237,.85),0 0 100px rgba(124,58,237,.45)}}
+    @keyframes phRipple{0%{transform:scale(.4);opacity:.7}100%{transform:scale(2.6);opacity:0}}
+    @keyframes heroSlideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes arrowGrow{0%{opacity:0;transform:translateX(-12px) scale(.7)}60%{opacity:1;transform:translateX(0) scale(1.15)}100%{opacity:1;transform:translateX(0) scale(1)}}
+    @keyframes loCheckPop{0%{opacity:0;transform:scale(.4)}60%{opacity:1;transform:scale(1.4)}100%{opacity:1;transform:scale(1)}}
+    .title-hero{position:relative;margin:14px auto 8px;max-width:760px;padding:18px 20px;background:linear-gradient(135deg,rgba(204,0,0,.08) 0%,rgba(74,222,128,.08) 50%,rgba(124,58,237,.08) 100%);border-radius:18px;animation:heroSlideUp .8s ease-out .2s backwards;display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap}
+    .hero-acid{font-size:3rem;animation:heroSlideUp .8s ease-out .35s backwards;filter:drop-shadow(0 4px 8px rgba(0,0,0,.15))}
+    .hero-arrow-ph{font-size:2rem;font-weight:900;color:var(--lo-border);animation:arrowGrow .7s ease-out .55s backwards;display:flex;flex-direction:column;align-items:center;gap:0;line-height:1}
+    .hero-arrow-ph .a-text{font-size:.65rem;letter-spacing:1px;font-weight:900;color:var(--lo-border);margin-top:-2px;text-align:center}
+    .hero-spectrum{position:relative;display:flex;align-items:center;justify-content:center;width:120px;height:80px;border-radius:14px;background:linear-gradient(90deg,#cc0000 0%,#f97316 16%,#fde047 33%,#4ade80 50%,#60a5fa 66%,#4f46e5 83%,#7c3aed 100%);border:4px solid #fff;animation:phHeroPulse 2.4s ease-in-out infinite;animation-delay:.8s;animation-fill-mode:both;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+    .hero-spectrum::before,.hero-spectrum::after{content:'';position:absolute;inset:-8px;border:3px solid rgba(124,58,237,.55);border-radius:18px;pointer-events:none}
+    .hero-spectrum::before{animation:phRipple 2.4s ease-out infinite}
+    .hero-spectrum::after{animation:phRipple 2.4s ease-out 1.2s infinite}
+    .hero-spectrum .a-mini{position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);font-size:.65rem;font-weight:900;color:#1f2937;letter-spacing:.5px;background:#fff;padding:2px 8px;border-radius:8px;border:1.5px solid #cbd5e1;white-space:nowrap}
+    .hero-spectrum .ph-num{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.05rem;font-weight:900;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);letter-spacing:.5px}
+    .hero-tag-ph{font-size:.95rem;font-weight:900;color:var(--lo-border);text-align:left;line-height:1.3;animation:heroSlideUp .8s ease-out 1s backwards;max-width:240px}
+    .hero-tag-ph .small{display:block;font-size:.72rem;font-weight:600;color:var(--muted);margin-top:2px;letter-spacing:.3px}
+
+    /* ---------- LO checkmarks (animated tick) ---------- */
+    .lo-anim{list-style:none;padding-left:8px}
+    .lo-anim li{position:relative;padding-left:30px;margin:6px 0}
+    .lo-anim li::before{content:'✓';position:absolute;left:0;top:0;width:22px;height:22px;background:var(--success);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.85rem;box-shadow:0 2px 4px rgba(22,163,74,.3);animation:loCheckPop .5s cubic-bezier(.34,1.56,.64,1) both}
+    .lo-anim li:nth-child(1)::before{animation-delay:1.2s}
+    .lo-anim li:nth-child(2)::before{animation-delay:1.5s}
+    .lo-anim li:nth-child(3)::before{animation-delay:1.8s}
+
+    /* ---------- MISCONCEPTION BOX ---------- */
+    @keyframes strikeIn{from{width:0}to{width:100%}}
+    @keyframes rightFlash{0%,100%{background:#d1fae5}30%,60%{background:#86efac;box-shadow:0 0 14px rgba(22,163,74,.5)}}
+    .misc-box{background:#fef2f2;border-left:6px solid var(--error);padding:14px;border-radius:12px;margin-top:10px;position:relative}
+    .misc-box::before{content:'⚠️ MISCONCEPTION ALERT';position:absolute;top:-11px;left:12px;background:var(--error);color:#fff;padding:2px 10px;border-radius:6px;font-size:.7rem;font-weight:900;letter-spacing:1px}
+    .misc-box p{margin:6px 0}
+    .misc-wrong{display:inline-block;background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:4px;font-weight:bold;position:relative}
+    .misc-right{display:inline-block;background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:4px;font-weight:bold}
+    .slide.active .misc-wrong::after{content:'';position:absolute;left:0;top:50%;height:2.5px;width:0;background:var(--error);transform:translateY(-50%);box-shadow:0 0 4px rgba(220,38,38,.6);animation:strikeIn .5s ease-out forwards;animation-delay:.6s}
+    .slide.active .misc-wrong:nth-of-type(2)::after{animation-delay:.9s}
+    .slide.active .misc-right{animation:rightFlash 1.6s ease-in-out 1.4s 1}
+
+    /* ---------- EXAMINER'S TIP BOX ---------- */
+    .exam-tip-box{background:#fef3c7;border-left:6px solid #d97706;padding:14px;border-radius:12px;margin-top:10px;position:relative}
+    .exam-tip-box::before{content:'🎯 EXAMINER\'S TIP';position:absolute;top:-11px;left:12px;background:#d97706;color:#fff;padding:2px 10px;border-radius:6px;font-size:.7rem;font-weight:900;letter-spacing:1px}
+    .exam-tip-box p{margin:6px 0}
+
+    /* ---------- LESSON COMPLETE celebration (modal pops on Exit reveal) ---------- */
+    @keyframes lessonCompletePop{0%{opacity:0;transform:translate(-50%,-30%) scale(.5)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+    @keyframes lcGlow{0%,100%{box-shadow:0 0 30px rgba(245,158,11,.7),0 0 60px rgba(124,58,237,.4)}50%{box-shadow:0 0 50px rgba(245,158,11,.95),0 0 100px rgba(124,58,237,.7)}}
+    @keyframes starSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+    .lesson-complete-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:8000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px);animation:fadeIn .3s ease}
+    .lesson-complete-overlay.visible{display:flex}
+    .lesson-complete-modal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#fef3c7 0%,#ede9fe 100%);border:4px solid var(--ido-border);border-radius:24px;padding:28px 36px;text-align:center;animation:lessonCompletePop .65s cubic-bezier(.34,1.56,.64,1),lcGlow 2s ease-in-out 0.65s infinite;max-width:520px;width:90%}
+    .lesson-complete-modal .lc-stars{font-size:2.4rem;letter-spacing:8px;line-height:1;display:block}
+    .lesson-complete-modal .lc-stars span{display:inline-block;animation:starSpin 4s linear infinite}
+    .lesson-complete-modal .lc-stars span:nth-child(2){animation-delay:.5s;animation-direction:reverse}
+    .lesson-complete-modal .lc-stars span:nth-child(3){animation-delay:1s}
+    .lesson-complete-modal h2{margin:14px 0 6px;color:var(--ido-border);font-size:1.8rem;border:none;padding:0}
+    .lesson-complete-modal p{margin:4px 0 12px;font-size:1.05rem;color:#5b21b6;font-weight:bold}
+    .lesson-complete-modal .lc-summary{background:rgba(255,255,255,.7);border-radius:12px;padding:10px 14px;margin:10px 0;font-size:.95rem;color:#1e293b;font-weight:600;text-align:left}
+    .lesson-complete-modal .lc-summary span{display:block;margin:3px 0}
+    .lesson-complete-modal button{background:var(--ido-border);color:#fff;border:none;padding:10px 22px;border-radius:10px;font-weight:bold;cursor:pointer;margin-top:8px;font-size:1rem;transition:all .2s}
+    .lesson-complete-modal button:hover{background:#5b21b6;transform:translateY(-2px)}
+
+    /* ---------- USE-CARD animated icons (5 classifications) ---------- */
+    @keyframes flexBounce{0%,100%{transform:scale(1)}40%{transform:scale(.9)}55%{transform:scale(1.2)}}
+    @keyframes vibrShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+    @keyframes divPulse{0%,100%{transform:scale(1)}30%{transform:scale(.82)}55%{transform:scale(1.18)}}
+    @keyframes thermPulse{0%,100%{filter:hue-rotate(0) brightness(1)}50%{filter:hue-rotate(20deg) brightness(1.3)}}
+    @keyframes dripFall{0%,100%{transform:translateY(0)}40%{transform:translateY(-2px) scale(1.08)}80%{transform:translateY(2px) scale(.96)}}
+    .uses-grid-ph{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px}
+    .uc-ph{background:#fff;border:2px solid #e2e8f0;border-radius:12px;padding:8px;text-align:center;transition:transform .15s}
+    .uc-ph:hover{transform:translateY(-2px)}
+    .uc-ph .uc-icon{font-size:1.6rem;display:block;line-height:1;height:26px;margin-bottom:4px}
+    .uc-ph strong{display:block;font-size:.82rem;line-height:1.1;margin-bottom:2px}
+    .uc-ph .uc-range{font-size:.72rem;color:var(--muted);font-weight:bold}
+    .uc-ph.uc-strong-acid{border-color:#ef4444}
+    .uc-ph.uc-weak-acid{border-color:#f97316}
+    .uc-ph.uc-neutral{border-color:#22c55e}
+    .uc-ph.uc-weak-alk{border-color:#3b82f6}
+    .uc-ph.uc-strong-alk{border-color:#7c3aed}
+    .uc-ph.uc-strong-acid .uc-icon{animation:divPulse 1.4s ease-in-out infinite}
+    .uc-ph.uc-weak-acid .uc-icon{animation:vibrShake .5s ease-in-out infinite}
+    .uc-ph.uc-neutral .uc-icon{animation:flexBounce 1.4s ease-in-out infinite}
+    .uc-ph.uc-weak-alk .uc-icon{animation:dripFall 1.6s ease-in-out infinite}
+    .uc-ph.uc-strong-alk .uc-icon{animation:thermPulse 1.4s ease-in-out infinite}
+
+    /* ---------- ANIMATED pH CYCLING TEST TUBE (Measuring with UI slide) ---------- */
+    @keyframes phCycle{
+      0%,8%{background:#cc0000}
+      14%,22%{background:#f97316}
+      28%,36%{background:#fde047}
+      42%,50%{background:#4ade80}
+      56%,64%{background:#60a5fa}
+      70%,78%{background:#4f46e5}
+      84%,92%{background:#7c3aed}
+      100%{background:#cc0000}
+    }
+    @keyframes phNumCycle{
+      0%,8%{content:'pH 1'}
+      14%,22%{content:'pH 3'}
+      28%,36%{content:'pH 5'}
+      42%,50%{content:'pH 7'}
+      56%,64%{content:'pH 9'}
+      70%,78%{content:'pH 11'}
+      84%,92%{content:'pH 13'}
+    }
+    .ph-cycle-stage{display:flex;align-items:center;justify-content:center;gap:14px;background:linear-gradient(135deg,#f8fafc 0%,#ede9fe 100%);border:2px solid #c4b5fd;border-radius:14px;padding:12px;margin-top:8px}
+    .ph-cycle-tube{position:relative;width:54px;height:120px;border:3px solid #1f2937;border-top:none;border-radius:0 0 26px 26px;overflow:hidden;background:#f1f5f9;flex-shrink:0}
+    .ph-cycle-tube::before{content:'';position:absolute;top:-8px;left:-3px;right:-3px;height:8px;background:#64748b;border-radius:3px}
+    .ph-cycle-fill{position:absolute;left:0;right:0;bottom:0;height:78%;animation:phCycle 14s linear infinite}
+    .ph-cycle-readout{font-weight:900;color:var(--ido-border);font-size:1.05rem;font-variant-numeric:tabular-nums;background:#fff;padding:6px 10px;border-radius:8px;border:1.5px solid var(--ido-border);min-width:64px;text-align:center}
+    .ph-cycle-caption{font-size:.85rem;color:var(--muted);max-width:200px;line-height:1.3}
+
+    /* ---------- MOBILE LAYOUT (≤640px / phone portrait) ---------- */
+    @media (max-width:640px){
+      .slide{padding:30px 14px 24px;width:96%}
+      .logo{width:90px;top:10px;right:14px}
+      h1{font-size:1.7rem}
+      h2{font-size:1.25rem;margin-right:90px}
+      h3{font-size:1.05rem}
+      p,li{font-size:.95rem}
+      .content-grid{grid-template-columns:1fr!important;gap:12px}
+      .arrival-grid{grid-template-columns:1fr!important;gap:10px}
+      .ss-grid{grid-template-columns:1fr 1fr!important;gap:8px}
+      /* Title hero stacks */
+      .title-hero{flex-direction:column;gap:8px;padding:14px 10px}
+      .hero-acid{font-size:2.4rem}
+      .hero-spectrum{width:100px;height:60px}
+      .hero-arrow-ph{font-size:1.6rem;flex-direction:row;gap:6px}
+      .hero-tag-ph{font-size:.85rem;text-align:center;max-width:100%}
+      /* pH scale: smaller cells + tighter spacing */
+      .ph-scale-bar{flex-wrap:wrap;gap:2px}
+      .ph-cell{font-size:.85rem!important;padding:6px 0!important}
+      /* Use-card grid: drop to 2 cols */
+      .uses-grid-ph{grid-template-columns:1fr 1fr;gap:6px}
+      .uc-ph{padding:6px}
+      .uc-ph .uc-icon{font-size:1.3rem;height:20px}
+      .uc-ph strong{font-size:.75rem}
+      /* Sort zones: drop to 2 cols, then 1 */
+      [style*="grid-template-columns:repeat(5,1fr)"]{grid-template-columns:1fr 1fr!important}
+      .sort-zone{font-size:.75rem;padding:6px}
+      /* Top buttons reposition to right edge */
+      #ta-focus-btn,#cold-call-btn{font-size:.75rem;padding:5px 10px}
+      #ta-focus-btn{left:auto;right:14px;top:50px}
+      #cold-call-btn{left:auto;right:14px;top:84px}
+      #timer-widget{padding:4px 8px 4px 10px}
+      #timer-display{font-size:1rem;min-width:46px}
+      .controls button{padding:8px 12px;font-size:.9rem}
+      .tier-toggle{gap:6px;flex-wrap:wrap}
+      .tier-toggle button{padding:6px 10px;font-size:.85rem}
+      .ph-cycle-stage{flex-direction:column;gap:8px}
+      .ph-cycle-tube{width:48px;height:100px}
+      svg{max-width:100%;height:auto}
+      .lesson-complete-modal{padding:20px 22px;max-width:94%}
+      .lesson-complete-modal h2{font-size:1.4rem}
+      #ta-focus-modal,#cold-call-modal{max-width:96%}
+      /* Spot-the-mistakes paragraph stays readable */
+      .stm-paragraph{font-size:1rem!important;line-height:1.6!important}
+      /* Beat the clock colour panel smaller */
+      #btc-colour{width:140px!important;height:90px!important;font-size:1.2rem!important}
+    }
+
+    /* ============== END V4 POLISH UPGRADE ============== */
+
+
+/* ============== VIR INTERVENTION — lesson-specific CSS ============== */
+.lo-list{list-style:none;padding-left:0;margin:6px 0 0}
+.lo-list li{padding:5px 0 5px 30px;position:relative;font-size:1.05rem}
+.lo-list li::before{content:"✓";position:absolute;left:2px;top:5px;color:#fff;background:var(--success);border-radius:50%;width:20px;height:20px;text-align:center;line-height:20px;font-size:.78rem;font-weight:900}
+
+/* V=IR triangle */
+.tri-wrap{display:flex;flex-wrap:wrap;gap:24px;align-items:center;margin:12px 0}
+.triangle{width:210px;height:182px;flex:0 0 auto}
+.triangle svg{width:100%;height:100%}
+.tri-cell{cursor:pointer;transition:.25s}
+.tri-cell:hover{filter:brightness(.93)}
+.tri-cell.dim{opacity:.15}
+.tri-let{font-size:42px;font-weight:900;fill:#fff;pointer-events:none}
+.tri-out{min-width:210px}
+.tri-out .formula{font-size:1.7rem;font-weight:900;color:var(--ido-border);background:var(--ido-bg);border:2px solid var(--ido-border);border-radius:12px;padding:12px 18px;display:inline-block;animation:fadeIn .3s ease}
+
+/* worked steps */
+.steps{margin:8px 0}
+.vstep{font-size:1.12rem;font-weight:600;padding:9px 13px;margin:7px 0;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;opacity:0;transform:translateX(-10px);transition:.4s}
+.vstep.show{opacity:1;transform:none}
+.vstep b{color:var(--ido-border)}
+.vstep .ans{color:#166534;background:#dcfce7;padding:2px 8px;border-radius:6px;font-weight:900}
+
+/* circuits */
+.circuit-card{background:#f8fafc;border:2px solid #e2e8f0;border-radius:14px;padding:10px;margin:8px 0;text-align:center}
+.circuit-card svg{max-width:100%;height:auto}
+.wire2{fill:none;stroke:#334155;stroke-width:4;stroke-linecap:round}
+.flow2{fill:none;stroke:#f97316;stroke-width:4;stroke-linecap:round;stroke-dasharray:9 14;animation:flowdash 1s linear infinite}
+@keyframes flowdash{to{stroke-dashoffset:-46}}
+.comp2{fill:#fff;stroke:#1e293b;stroke-width:3}
+.lbl2{font-size:14px;font-weight:700;fill:#1e293b}
+.lblsm2{font-size:12px;fill:#475569;font-weight:600}
+.cols2{display:flex;flex-wrap:wrap;gap:16px}
+.col2{flex:1 1 300px;background:#f8fafc;border:2px solid #e2e8f0;border-radius:14px;padding:12px}
+.col2 h3{color:var(--wedo-border);margin-top:0}
+.rule2{font-size:1rem;padding:6px 0;border-bottom:1px dashed #e2e8f0;color:#334155}
+.rule2:last-child{border:none}
+.rule2 b{color:var(--ido-border)}
+
+/* inputs / tables / feedback */
+.numin{font:inherit;font-size:1rem;padding:6px;border:2px solid #cbd5e1;border-radius:8px;width:90px;text-align:center}
+.numin.good{border-color:var(--success);background:#f0fdf4}
+.numin.bad{border-color:var(--error);background:#fef2f2;animation:shake .35s}
+.vsel{font:inherit;font-size:1rem;padding:6px;border:2px solid #cbd5e1;border-radius:8px;background:#fff}
+.vtable{border-collapse:collapse;width:100%;margin:10px 0}
+.vtable th,.vtable td{border:1px solid #cbd5e1;padding:8px 10px;text-align:center;font-size:1rem}
+.vtable th{background:#f1f5f9;font-weight:900}
+.vfb{font-weight:bold;margin-top:8px;padding:8px 12px;border-radius:8px;display:none}
+.vfb.ok{display:block;background:#dcfce7;color:#166534}
+.vfb.no{display:block;background:#fef2f2;color:#991b1b}
+
+/* series/parallel picker */
+.pick2{display:inline-block;cursor:pointer;border:2px solid #cbd5e1;border-radius:12px;padding:8px;background:#fff;transition:.15s}
+.pick2:hover{border-color:var(--ido-border)}
+.pick2.good{border-color:var(--success);background:#f0fdf4}
+.pick2.bad{border-color:var(--error);background:#fef2f2}
+
+/* misconception box */
+.misc-box{background:#fef2f2;border-left:6px solid var(--error);border-radius:12px;padding:14px;margin:10px 0}
+.strike{text-decoration:line-through;text-decoration-color:var(--error);text-decoration-thickness:3px;opacity:.6;transition:.5s}
+
+@media (max-width:640px){
+  .triangle{width:180px;height:156px}
+  .tri-out{min-width:0}
+  .tri-out .formula{font-size:1.4rem}
+  .cols2{flex-direction:column}
+}
+
+/* ===== MASTER 40-MIN LESSON CLOCK ===== */
+.mclock{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:2100;background:var(--lo-border);color:#fff;font-weight:900;font-size:1rem;padding:6px 16px;border-radius:999px;box-shadow:0 4px 14px rgba(156,39,176,.35);letter-spacing:.5px;font-variant-numeric:tabular-nums;cursor:default;user-select:none}
+.mclock.warn{background:var(--error);animation:pulseWarn 1.4s infinite}
+@media (max-width:640px){.mclock{font-size:.8rem;padding:5px 10px;top:8px}}
+
+/* ===== TIER TOGGLES ===== */
+.tier-row{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px}
+.tbtn{background:#fff;border:2px solid #cbd5e1;color:#475569;padding:7px 14px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:.9rem;box-shadow:none}
+.tbtn:hover{border-color:var(--lo-border);transform:none}
+.tbtn.active{background:var(--lo-border);color:#fff;border-color:var(--lo-border)}
+.tlvl{display:none}
+.tlvl.active{display:block;animation:fadeIn .3s ease}
+
+
+@media print{
+  .mclock{display:none !important}
+  #print-area .pt{display:none}
+  body.print-f #print-area .pt-f{display:block}
+  body.print-m #print-area .pt-m{display:block}
+  body.print-h #print-area .pt-h{display:block}
+}
+
+/* ---- pupil extras ---- */
+/* ============== PUPIL APP — extra styles ============== */
+.slide[data-type="hold"]{border-top-color:#f59e0b}
+.slide[data-type="welcome"]{border-top-color:var(--lo-border)}
+.slide[data-type="done"]{border-top-color:var(--aspire-border)}
+
+#pnav{position:fixed;bottom:14px;left:0;right:0;display:flex;justify-content:center;gap:10px;z-index:1000}
+#pnav button{min-width:130px}
+#pback{background:#e2e8f0;color:#0f172a}
+#pback:hover{background:#cbd5e1}
+#pnext:disabled{opacity:.45;cursor:not-allowed;background:#94a3b8}
+#pnext:disabled:hover{transform:none;background:#94a3b8}
+
+.namebadge{position:fixed;top:12px;right:16px;z-index:2100;background:#fff;border:2px solid var(--lo-border);color:var(--lo-border);font-weight:800;padding:5px 12px;border-radius:999px;font-size:.85rem;max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.level-cards{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0 2px}
+.lcard{flex:1 1 150px;border:3px solid #e2e8f0;border-radius:16px;padding:16px;cursor:pointer;background:#fff;transition:.15s;text-align:center}
+.lcard:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.1)}
+.lcard.sel{border-color:var(--lo-border);box-shadow:0 0 0 3px rgba(156,39,176,.25)}
+.lcard .lc-emoji{font-size:2rem;line-height:1}
+.lcard .lc-name{font-weight:900;font-size:1.1rem;margin:4px 0}
+.lcard .lc-desc{font-size:.85rem;color:var(--muted)}
+
+.pname-input{font:inherit;font-size:1.2rem;padding:12px 14px;border:2px solid #cbd5e1;border-radius:12px;width:100%;max-width:380px}
+.pname-input:focus{outline:none;border-color:var(--lo-border)}
+
+.ptier{display:none}
+.ptier.active{display:block;animation:fadeIn .3s}
+.pq{background:#fff;border:2px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin:10px 0}
+.pq.done{border-color:var(--success)}
+.popt{display:inline-block;background:#f1f5f9;border:2px solid #e2e8f0;border-radius:10px;padding:8px 14px;margin:4px;cursor:pointer;font-weight:bold;transition:.15s;user-select:none}
+.popt:hover{border-color:var(--lo-border)}
+.popt.chosen{border-color:var(--lo-border)}
+.popt.good{border-color:var(--success);background:#dcfce7;color:#166534}
+.popt.bad{border-color:var(--error);background:#fef2f2}
+.pin{font:inherit;font-size:1rem;padding:7px;border:2px solid #cbd5e1;border-radius:8px;width:90px;text-align:center}
+.pin.wide{width:100%;max-width:340px;text-align:left}
+.pin.good,.psel.good{border-color:var(--success);background:#f0fdf4}
+.pin.bad,.psel.bad{border-color:var(--error);background:#fef2f2}
+.psel{font:inherit;font-size:1rem;padding:7px;border:2px solid #cbd5e1;border-radius:8px;background:#fff}
+
+.hold-wrap{text-align:center;padding:24px 12px}
+.hold-emoji{font-size:3.4rem;animation:hbob 2.4s ease-in-out infinite}
+@keyframes hbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.hold-cd{font-size:2.8rem;font-weight:900;color:#f59e0b;font-variant-numeric:tabular-nums;margin:12px 0}
+.hold-note{color:var(--muted);max-width:460px;margin:0 auto;font-size:1.05rem}
+.hold-ok{color:var(--success);font-weight:900;font-size:1.2rem;display:none;margin-top:8px}
+
+.gate-msg{font-size:.85rem;color:var(--muted);text-align:center;margin-top:8px}
+
+#pdone{position:fixed;inset:0;background:rgba(34,197,94,.96);color:#fff;z-index:8000;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}
+#pdone.show{display:flex;animation:fadeIn .4s}
+#pdone h1{color:#fff;border:none;font-size:2.6rem}
+
+/* ---- dyslexia-friendly FULL monochrome themes (no white anywhere) ---- */
+/* MAGENTA */
+body.bg-mag, body.bg-mag .slide-container{background:#e7b3d8 !important}
+body.bg-mag .slide{background:#f0c8e4 !important;border-top-color:#b34896 !important}
+body.bg-mag .pq, body.bg-mag .popt, body.bg-mag .pin, body.bg-mag .psel,
+body.bg-mag .pname-input, body.bg-mag .lcard, body.bg-mag .namebadge,
+body.bg-mag #bgpick, body.bg-mag .hint-text, body.bg-mag .li-box,
+body.bg-mag .sc-box, body.bg-mag .task-box, body.bg-mag .scaffold-box,
+body.bg-mag .aspire-box, body.bg-mag .ido-box, body.bg-mag .wedo-capture,
+body.bg-mag .circuit-card, body.bg-mag .vtable th, body.bg-mag .vtable td{
+  background:#f9e3f3 !important;border-color:#cf7ab7 !important;color:#3d1133 !important}
+body.bg-mag .slide-tag{background:#d98cc4 !important;color:#3d1133 !important}
+body.bg-mag .pin.good, body.bg-mag .psel.good, body.bg-mag .popt.good{background:#dcfce7 !important;border-color:#16a34a !important;color:#166534 !important}
+body.bg-mag .pin.bad, body.bg-mag .psel.bad, body.bg-mag .popt.bad{background:#fde2e2 !important;border-color:#dc2626 !important;color:#3d1133 !important}
+/* BLUE */
+body.bg-blu, body.bg-blu .slide-container{background:#a9d0ee !important}
+body.bg-blu .slide{background:#c6def3 !important;border-top-color:#2f7fc4 !important}
+body.bg-blu .pq, body.bg-blu .popt, body.bg-blu .pin, body.bg-blu .psel,
+body.bg-blu .pname-input, body.bg-blu .lcard, body.bg-blu .namebadge,
+body.bg-blu #bgpick, body.bg-blu .hint-text, body.bg-blu .li-box,
+body.bg-blu .sc-box, body.bg-blu .task-box, body.bg-blu .scaffold-box,
+body.bg-blu .aspire-box, body.bg-blu .ido-box, body.bg-blu .wedo-capture,
+body.bg-blu .circuit-card, body.bg-blu .vtable th, body.bg-blu .vtable td{
+  background:#e3f0fb !important;border-color:#7fb4e0 !important;color:#0f2a44 !important}
+body.bg-blu .slide-tag{background:#8fc1e8 !important;color:#0f2a44 !important}
+body.bg-blu .pin.good, body.bg-blu .psel.good, body.bg-blu .popt.good{background:#dcfce7 !important;border-color:#16a34a !important;color:#166534 !important}
+body.bg-blu .pin.bad, body.bg-blu .psel.bad, body.bg-blu .popt.bad{background:#fde2e2 !important;border-color:#dc2626 !important;color:#0f2a44 !important}
+#bgpick{position:fixed;top:12px;left:14px;z-index:2200;display:flex;gap:6px;align-items:center;background:rgba(255,255,255,.85);padding:5px 7px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.bgsw{width:26px;height:26px;border-radius:50%;border:2px solid #cbd5e1;cursor:pointer;padding:0;font-weight:900;font-size:.8rem;color:#475569;display:flex;align-items:center;justify-content:center;line-height:1}
+.bgsw:hover{transform:scale(1.08)}
+.bgsw-def{background:#fff}
+.bgsw-mag{background:#efc3e3}
+.bgsw-blu{background:#bcdcf2}
+.bgsw.on{border-color:var(--lo-border);box-shadow:0 0 0 2px rgba(156,39,176,.3)}
+@media (max-width:640px){#bgpick{top:8px;left:8px;padding:4px 5px}.bgsw{width:22px;height:22px}}
+
+/* ---- progress pill + triangle helper ---- */
+#pprog{position:fixed;bottom:66px;left:50%;transform:translateX(-50%);z-index:999;background:rgba(255,255,255,.92);border:2px solid #e2e8f0;border-radius:999px;padding:3px 14px;font-size:.8rem;font-weight:800;color:#475569}
+.tri-help{background:#fff;border:2px solid #e2e8f0;border-radius:12px;padding:8px 14px;margin:8px 0}
+.tri-help summary{cursor:pointer;font-weight:800;color:#4c1d95}
+body.bg-mag #pprog,body.bg-mag .tri-help{background:#f9e3f3 !important;border-color:#cf7ab7 !important;color:#3d1133 !important}
+body.bg-blu #pprog,body.bg-blu .tri-help{background:#e3f0fb !important;border-color:#7fb4e0 !important;color:#0f2a44 !important}
+
+/* ---- teacher lock overlay ---- */
+#lockov{position:fixed;inset:0;background:#1e293b;color:#fff;z-index:9000;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+#lockov.show{display:flex}
+#lockov .lk-emoji{font-size:4rem}
+#lockov h2{color:#fff;border:none;justify-content:center}
+#lockov input{font:inherit;font-size:1.6rem;text-align:center;letter-spacing:8px;width:190px;padding:10px;border-radius:12px;border:none;margin:10px 0}
+#lockov .lk-msg{color:#fca5a5;font-weight:700;min-height:1.4em}
+/* ---- teacher review badge ---- */
+#treview{position:fixed;top:50px;left:50%;transform:translateX(-50%);z-index:2300;background:#dc2626;color:#fff;font-weight:900;padding:6px 16px;border-radius:999px;cursor:pointer;display:none;box-shadow:0 4px 12px rgba(220,38,38,.4)}
+#treview.show{display:block}
+/* ---- bigger text toggle ---- */
+html.bigtext{font-size:19px}
+/* ---- finish confetti ---- */
+.evconf{position:fixed;top:-30px;font-size:1.6rem;z-index:8500;animation:evfall 2.6s ease-in forwards;pointer-events:none}
+@keyframes evfall{to{transform:translateY(110vh) rotate(360deg);opacity:.2}}
+/* ---- evidence print sheet ---- */
+#evprint{font-size:.95rem;color:#000}
+#evprint .ev-head{border-bottom:3px solid #000;margin-bottom:12px;padding-bottom:6px}
+#evprint h3{margin:14px 0 6px;border-bottom:1px solid #999;padding-bottom:2px}
+#evprint .ev-q{border:1px solid #aaa;border-radius:6px;padding:7px 10px;margin:6px 0;page-break-inside:avoid}
+#evprint .evans{font-weight:900;padding:0 4px;border-bottom:2px solid #000}
+#evprint .evans.good{color:#166534}
+#evprint .evans.bad{color:#b91c1c;text-decoration:line-through}
+#evprint .evfix{color:#166534;font-style:italic;font-weight:700}
+#evprint .circuit-card{max-width:300px}
+@media print{
+  #pnav,#pprog,#bgpick,.namebadge,.mclock,#pdone,#lockov,#treview,#netbadge{display:none !important}
+  #evprint .ev-q{border-color:#000}
+}
+
+/* ---- classroom-mode badge ---- */
+#netbadge{display:none;position:fixed;bottom:66px;right:14px;z-index:999;background:rgba(255,255,255,.92);border:2px solid #22c55e;color:#166534;border-radius:999px;padding:3px 12px;font-size:.78rem;font-weight:800}
+body.bg-mag #netbadge{background:#f9e3f3 !important}
+body.bg-blu #netbadge{background:#e3f0fb !important}
+
+</style>
+
+<!-- ===== reduced-motion v1 =====================================================
+     This file declares infinite CSS animations and had no prefers-reduced-motion
+     rule. Rather than the usual reset (animation-duration:.001ms / iteration-
+     count:1) - which parks a looping animation on its final keyframe, and a lot
+     of them end at opacity:0, so teaching particles would simply vanish - this
+     freezes every animation 0.7s into its cycle. Motion stops; whatever
+     was on screen stays on screen and stays visible.
+============================================================================ -->
+<style>
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-play-state:paused !important;
+    animation-delay:-0.7s !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+</style>
+</head>
+<body>
+<!-- MBM-MAKER-SPLASH:BEGIN generated by tools/render_maker_splash.py, do not edit by hand -->
+<script>(function(){"use strict";
+if(window.__mbmMakerSplash)return;window.__mbmMakerSplash=1;
+var KEY="mbm_splash_last",DAY=86400000,MODE="";
+try{MODE=new URLSearchParams(location.search).get("splash")||"";}catch(_){MODE="";}
+var NOW=Date.now(),PAGE_LAST;
+function probe(name){try{var s=window[name],v=s.getItem(KEY);return{ok:true,has:v!==null,raw:v};}catch(_){return{ok:false,has:false,raw:null};}}
+function stored(){var a=probe("localStorage");if(a.has)return a.raw;var b=probe("sessionStorage");if(b.has)return b.raw;return PAGE_LAST===undefined?null:String(PAGE_LAST);}
+function valid(raw){if(raw===null||String(raw).trim()==="")return null;var n=Number(raw);return Number.isFinite(n)&&Math.floor(n)===n&&n>=0&&n<=NOW?n:null;}
+function windowOpen(){var raw=stored(),n=valid(raw);return n===null||NOW-n>=DAY;}
+function writeNow(){var wrote=false;try{localStorage.setItem(KEY,String(NOW));wrote=true;}catch(_){}try{sessionStorage.setItem(KEY,String(NOW));wrote=true;}catch(_){}if(!wrote)try{PAGE_LAST=NOW;}catch(_){} }
+var LEGACY={start:function(){return{close:function(){},element:null};}};
+try{var d=Object.getOwnPropertyDescriptor(window,"MadeByMattSplash");if(!d||d.configurable)Object.defineProperty(window,"MadeByMattSplash",{configurable:false,get:function(){return LEGACY;},set:function(){}});}catch(_){}
+function visible(e){if(!e||!e.isConnected||e.disabled)return false;var c=getComputedStyle(e),r=e.getBoundingClientRect();return c.display!=="none"&&c.visibility!=="hidden"&&r.width>0&&r.height>0;}
+function primary(){var q=["[data-mbm-primary-start]","#startBtn","#playBtn","#beginBtn","#launchBtn","#openBtn","#start","a.skip","main button:not([disabled])","button:not([disabled])","main a[href]","a[href]"];for(var i=0;i<q.length;i++){var all=document.querySelectorAll(q[i]);for(var j=0;j<all.length;j++)if(visible(all[j])&&!all[j].closest("[data-mbm-maker-splash]"))return all[j];}var m=document.querySelector("main,h1,[role=main]");if(m){if(!m.hasAttribute("tabindex"))m.setAttribute("tabindex","-1");return m;}return null;}
+function armWayOut(e){var w=document.querySelector("#mbmexit-back,#mbmhud-back"),timer=0;if(!e||!w||!w.focus)return;function off(){window.removeEventListener("keydown",next,true);window.removeEventListener("keydown",activate,true);clearTimeout(timer);}function activate(k){if(document.activeElement!==w){off();return;}if(k.key!=="Enter"&&k.key!==" "){if(k.key==="Tab"||k.key==="Escape")off();return;}k.preventDefault();k.stopPropagation();if(k.stopImmediatePropagation)k.stopImmediatePropagation();var href=w.href;off();if(href)location.assign(href);}function next(k){if(k.key!=="Tab"||k.shiftKey||document.activeElement!==e)return;k.preventDefault();k.stopPropagation();if(k.stopImmediatePropagation)k.stopImmediatePropagation();off();if(typeof endHandoff==="function")endHandoff();try{w.focus({preventScroll:true});}catch(_){try{w.focus();}catch(__){}}window.addEventListener("keydown",activate,true);timer=setTimeout(off,5000);}window.addEventListener("keydown",next,true);timer=setTimeout(off,5000);}
+function focusPrimary(){var e=primary();if(e&&e.focus){try{e.focus({preventScroll:true});}catch(_){try{e.focus();}catch(__){}}armWayOut(e);}}
+var CLOSED=false,FOCUS_UNTIL=0,FOCUS_TIMER=0,HANDOFF_USER=false,HANDOFF_ARMED=false;
+function needsFocus(){var a=document.activeElement;return !a||a===document.body||a===document.documentElement||!a.isConnected||!!(a.closest&&a.closest("[data-mbm-maker-splash]"));}
+function settlePrimary(force){if(CLOSED){var ghosts=document.querySelectorAll("[data-mbm-maker-splash]");for(var i=0;i<ghosts.length;i++){try{ghosts[i].setAttribute("aria-hidden","true");ghosts[i].inert=true;ghosts[i].remove();}catch(_){}}}var target=primary();if(target&&((force&&document.activeElement!==target)||(!force&&needsFocus())))focusPrimary();}
+function endHandoff(){HANDOFF_USER=true;clearTimeout(FOCUS_TIMER);if(HANDOFF_ARMED){HANDOFF_ARMED=false;document.removeEventListener("keydown",endHandoff,true);document.removeEventListener("pointerdown",endHandoff,true);document.removeEventListener("touchstart",endHandoff,true);document.removeEventListener("focusin",keepHandoff,true);}}
+function keepHandoff(e){if(HANDOFF_USER)return;var target=primary();if(target&&e.target!==target)requestAnimationFrame(function(){if(!HANDOFF_USER)settlePrimary(true);});}
+function armHandoff(){if(!HANDOFF_ARMED){HANDOFF_ARMED=true;document.addEventListener("keydown",endHandoff,true);document.addEventListener("pointerdown",endHandoff,true);document.addEventListener("touchstart",endHandoff,true);document.addEventListener("focusin",keepHandoff,true);}FOCUS_UNTIL=Math.max(FOCUS_UNTIL,performance.now()+4000);}
+function maintainPrimary(){clearTimeout(FOCUS_TIMER);if(HANDOFF_USER)return;settlePrimary(true);if(CLOSED&&performance.now()<FOCUS_UNTIL)FOCUS_TIMER=setTimeout(maintainPrimary,100);else endHandoff();}
+function focusReady(){function ready(){if(CLOSED){armHandoff();maintainPrimary();}else settlePrimary(false);}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){requestAnimationFrame(ready);},{once:true});else requestAnimationFrame(ready);}
+function focusWithoutSplash(){CLOSED=true;focusReady();}
+if(MODE==="skip"){focusWithoutSplash();return;}
+var SHOW=MODE==="force"||windowOpen();if(!SHOW){focusWithoutSplash();return;}
+var SPLASH_EL=null,DISMISS=null,EARLY_DISMISS=false,GUARDED=["keydown","keyup","pointerdown","pointerup","click"];
+function unguard(){for(var i=0;i<GUARDED.length;i++)window.removeEventListener(GUARDED[i],guard,true);}
+function guard(e){e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();if(CLOSED)return;var hit=e.type==="keydown"||(e.type==="pointerdown"&&SPLASH_EL&&SPLASH_EL.contains(e.target))||(e.type==="click"&&SPLASH_EL&&SPLASH_EL.contains(e.target));if(hit){e.preventDefault();if(DISMISS)DISMISS();else EARLY_DISMISS=true;}}
+for(var i=0;i<GUARDED.length;i++)window.addEventListener(GUARDED[i],guard,true);
+requestAnimationFrame(function(){
+var CSS="#mbmSplash[data-mbm-maker-splash]{position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;overflow:hidden;pointer-events:auto;background:radial-gradient(circle at 52% 44%,rgba(17,42,82,.72),transparent 44%),linear-gradient(135deg,#010207 0%,#071023 52%,#13030c 100%);animation:mbmSplash 1.9s cubic-bezier(.2,.8,.2,1) both}#mbmSplash[data-mbm-maker-splash]::before{content:\"\";position:absolute;inset:-20%;background:repeating-linear-gradient(112deg,transparent 0 9%,rgba(37,244,255,.045) 9.2% 9.35%,transparent 9.55% 18%);transform:translateX(-18%);animation:mbmSweep 1.55s ease-out both}.mbm-splash-mark{position:relative;width:min(82vw,560px);text-align:center;text-transform:uppercase;filter:drop-shadow(0 0 28px rgba(37,244,255,.22))}.mbm-splash-mark span,.mbm-splash-mark em{display:block;color:#7e9aad;font-size:clamp(9px,2.4vmin,13px);font-style:normal;font-weight:900;letter-spacing:.48em;text-indent:.48em}.mbm-splash-mark strong{display:block;margin:.07em 0 .02em;color:#f5feff;font-size:clamp(54px,17vmin,132px);font-style:italic;font-weight:1000;letter-spacing:-.07em;line-height:.82;text-shadow:-2px 0 #25f4ff,2px 0 #ff2d78,0 0 34px rgba(37,244,255,.35);transform:skewX(-7deg)}.mbm-splash-mark em{margin-top:15px;color:#ff5b92;letter-spacing:.62em;text-indent:.62em}.mbm-splash-line{width:0;height:2px;margin:18px auto 0;background:linear-gradient(90deg,transparent,#25f4ff 30%,#fff 50%,#ff2d78 70%,transparent);box-shadow:0 0 18px #25f4ff;animation:mbmLine 1.15s .18s ease-out both}.mbm-splash-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}@keyframes mbmSplash{0%{opacity:0;visibility:visible;pointer-events:auto}12%,70%{opacity:1;visibility:visible;pointer-events:auto}100%{opacity:0;visibility:hidden;pointer-events:none}}@keyframes mbmSweep{from{transform:translateX(-28%)}to{transform:translateX(24%)}}@keyframes mbmLine{to{width:76%}}#mbmSplash.mbm-splash-skip{opacity:0!important;visibility:hidden!important;pointer-events:none!important;animation:none!important;transition:opacity .12s ease}@media(prefers-reduced-motion:reduce){#mbmSplash[data-mbm-maker-splash]{animation-duration:.28s}#mbmSplash[data-mbm-maker-splash]::before,.mbm-splash-line{animation:none}}";
+CSS=CSS.replace("animation-duration:.28s","animation-duration:.35s!important");
+var st=document.createElement("style");st.id="mbm-maker-splash-css";st.textContent=CSS;(document.head||document.documentElement).appendChild(st);
+var el=document.createElement("section");el.id="mbmSplash";el.setAttribute("data-mbm-maker-splash","");el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");el.setAttribute("aria-label","Made by Matt introduction");el.tabIndex=-1;el.innerHTML='<div class="mbm-splash-mark"><span>Made by</span><strong>Matt</strong><em>presents</em><div class="mbm-splash-line"></div></div><span class="mbm-splash-sr">Tap or press any key to continue.</span>';
+(document.body||document.documentElement).appendChild(el);SPLASH_EL=el;
+var reduced=false;try{reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(_){}
+var shown=0,requested=false,closed=false,hard=0,finishTimer=0;
+requestAnimationFrame(function(){shown=performance.now();if(requested)scheduleFinish();});
+function finish(){if(closed)return;closed=true;CLOSED=true;clearTimeout(hard);clearTimeout(finishTimer);el.classList.add("mbm-splash-skip");el.style.setProperty("pointer-events","none","important");el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}unguard();if(el.parentNode)el.parentNode.removeChild(el);focusReady();}
+function scheduleFinish(){if(!shown)return;clearTimeout(finishTimer);var wait=Math.max(0,450-(performance.now()-shown));finishTimer=setTimeout(finish,wait);}
+function dismiss(){if(requested||closed)return;requested=true;el.style.setProperty("pointer-events","none","important");el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}if(MODE!=="force")writeNow();scheduleFinish();}
+DISMISS=dismiss;if(EARLY_DISMISS)dismiss();
+el.addEventListener("animationend",function(e){if(e.target===el&&e.animationName==="mbmSplash")dismiss();});
+window.addEventListener("pagehide",function(){if(requested&&!closed)finish();},{once:true});
+try{el.focus({preventScroll:true});}catch(_){try{el.focus();}catch(__){}}
+hard=setTimeout(dismiss,reduced?450:2100);
+var observer=new MutationObserver(function(list){for(var i=0;i<list.length;i++)for(var j=0;j<list[i].addedNodes.length;j++){var n=list[i].addedNodes[j];if(n.nodeType!==1)continue;var maker=n.matches&&n.matches("[data-mbm-maker-splash]")?n:n.querySelector&&n.querySelector("[data-mbm-maker-splash]");if(closed&&maker){try{maker.setAttribute("aria-hidden","true");maker.inert=true;maker.remove();settlePrimary();}catch(_){}continue;}var old=n.matches&&n.matches("#mbmSplash:not([data-mbm-maker-splash]),.mbm-splash:not([data-mbm-maker-splash])")?n:n.querySelector&&n.querySelector("#mbmSplash:not([data-mbm-maker-splash]),.mbm-splash:not([data-mbm-maker-splash])");if(old)try{old.style.setProperty("display","none","important");old.setAttribute("aria-hidden","true");}catch(_){}}});
+try{observer.observe(document.documentElement,{childList:true,subtree:true});var stopObserver=function(){try{observer.disconnect();}catch(_){}};setTimeout(stopObserver,12000);var stopAfterLoad=function(){setTimeout(stopObserver,4000);};if(document.readyState==="complete")stopAfterLoad();else window.addEventListener("load",stopAfterLoad,{once:true});}catch(_){}
+});
+})();</script>
+<!-- MBM-MAKER-SPLASH:END -->
+
+<div class="namebadge" id="namebadge" style="display:none"></div>
+
+<div id="bgpick" aria-label="Background colour">
+  <button class="bgsw bgsw-def on" title="Plain background" onclick="setBg('def',this)">A</button>
+  <button class="bgsw bgsw-mag" title="Magenta background" onclick="setBg('mag',this)"></button>
+  <button class="bgsw bgsw-blu" title="Blue background" onclick="setBg('blu',this)"></button>
+  <button class="bgsw tx" id="txbtn" title="Bigger text" onclick="toggleTx()">A+</button>
+  <button class="bgsw lk" id="lkbtn" title="Teacher: hold to lock">🔒</button>
+</div>
+
+<div class="slide-container">
+
+  <!-- 0 WELCOME -->
+  <div class="slide pscreen active" data-kind="welcome" data-type="welcome">
+    <img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+    <div class="title-hero"><div class="hero-acid">⚡</div><div class="hero-arrow-ph">V=IR<span class="a-text">PUPIL APP</span></div><div class="hero-acid">💡</div></div>
+    <h2 style="border:none">Welcome! Let's get set up.</h2>
+    <div class="li-box"><strong>1 · Type your first name</strong>
+      <p style="margin:8px 0 0"><input class="pname-input" id="pname" placeholder="Your name…" oninput="onName()" autocomplete="off"></p></div>
+    <div class="sc-box"><strong>2 · Pick your level</strong>
+      <div class="level-cards">
+        <div class="lcard" id="lvl-f" onclick="pickLevel('f',this)"><div class="lc-emoji">🟢</div><div class="lc-name">Steady</div><div class="lc-desc">Build it up step by step</div></div>
+        <div class="lcard" id="lvl-m" onclick="pickLevel('m',this)"><div class="lc-emoji">🟠</div><div class="lc-name">Stretch</div><div class="lc-desc">A bit more challenge</div></div>
+        <div class="lcard" id="lvl-h" onclick="pickLevel('h',this)"><div class="lc-emoji">🟣</div><div class="lc-name">Challenge</div><div class="lc-desc">Push yourself</div></div>
+      </div>
+    </div>
+    <p class="gate-msg" id="welcomeGate">Type your name and pick a level to start.</p>
+  </div>
+
+  <!-- 1 ARRIVAL -->
+  <div class="slide pscreen" data-kind="work" data-sec="arrival" data-type="arrival">
+    <img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+    <span class="slide-tag tag-arrival">Arrival Task</span>
+    <h2>Quick-fire recall</h2>
+
+    <div class="ptier tier-f">
+      <div class="pq"><strong>1.</strong> Current is measured in
+        <select class="psel" data-req data-ans="amps (A)" onchange="onSel(this)"><option value="">—</option><option>amps (A)</option><option>volts (V)</option><option>ohms (Ω)</option></select></div>
+      <div class="pq"><strong>2.</strong> Voltage is measured in
+        <select class="psel" data-req data-ans="volts (V)" onchange="onSel(this)"><option value="">—</option><option>amps (A)</option><option>volts (V)</option><option>ohms (Ω)</option></select></div>
+      <div class="pq"><strong>3.</strong> Which component pushes the current round the circuit?
+        <div><span class="popt" data-correct="false" onclick="onOpt(this)">the wire</span><span class="popt" data-correct="true" onclick="onOpt(this)">the cell / battery</span><span class="popt" data-correct="false" onclick="onOpt(this)">the switch</span></div></div>
+      <div class="pq"><strong>4. 🔭 Today's lesson:</strong> if a wire makes it <em>harder</em> for current to flow, we say it has a high
+        <select class="psel" data-req data-ans="resistance" onchange="onSel(this)"><option value="">—</option><option>voltage</option><option>resistance</option><option>brightness</option></select></div>
+      <div class="scaffold-box"><strong>🪜 Stuck?</strong> "Victor has <strong>V</strong>olts." Amps = current. Ohms (Ω) = resistance — the thing that <em>slows current down</em>.</div>
+    </div>
+
+    <div class="ptier tier-m">
+      <div class="pq"><strong>1.</strong> Resistance is measured in
+        <select class="psel" data-req data-ans="ohms (Ω)" onchange="onSel(this)"><option value="">—</option><option>amps (A)</option><option>volts (V)</option><option>ohms (Ω)</option></select></div>
+      <div class="pq"><strong>2.</strong> Which instrument measures current?
+        <select class="psel" data-req data-ans="ammeter" onchange="onSel(this)"><option value="">—</option><option>ammeter</option><option>voltmeter</option><option>thermometer</option></select></div>
+      <div class="pq"><strong>3.</strong> In a circuit diagram, a small rectangle is the symbol for a
+        <div><span class="popt" data-correct="false" onclick="onOpt(this)">cell</span><span class="popt" data-correct="true" onclick="onOpt(this)">resistor</span><span class="popt" data-correct="false" onclick="onOpt(this)">switch</span></div></div>
+      <div class="pq"><strong>4. 🔭 Today's lesson:</strong> if the battery pushes <em>harder</em> (more voltage) and the resistance stays the same, the current
+        <select class="psel" data-req data-ans="increases" onchange="onSel(this)"><option value="">—</option><option>increases</option><option>decreases</option><option>stays the same</option></select> <button class="hint-btn" onclick="toggleHint(this)">💡 Hint</button><div class="hint-text">More push, same blockage → more flow.</div></div>
+    </div>
+
+    <div class="ptier tier-h">
+      <div class="pq"><strong>1.</strong> An ammeter is connected in
+        <select class="psel" data-req data-ans="series (in the loop)" onchange="onSel(this)"><option value="">—</option><option>series (in the loop)</option><option>parallel (across a component)</option></select></div>
+      <div class="pq"><strong>2.</strong> A voltmeter is connected in
+        <select class="psel" data-req data-ans="parallel (across a component)" onchange="onSel(this)"><option value="">—</option><option>series (in the loop)</option><option>parallel (across a component)</option></select></div>
+      <div class="pq"><strong>3.</strong> The symbol Ω stands for
+        <select class="psel" data-req data-ans="ohms" onchange="onSel(this)"><option value="">—</option><option>ohms</option><option>omega-volts</option><option>output</option></select></div>
+      <div class="pq"><strong>4. 🔭 Today's lesson:</strong> the voltage doubles but the resistance stays the same. Predict the current:
+        <div><span class="popt" data-correct="false" onclick="onOpt(this)">it halves</span><span class="popt" data-correct="true" onclick="onOpt(this)">it doubles</span><span class="popt" data-correct="false" onclick="onOpt(this)">it stays the same</span></div></div>
+      <div class="aspire-box"><strong>🚀 Challenge habit:</strong> for every answer, finish the sentence in your head: <em>"I know because…"</em></div>
+    </div>
+  </div>
+
+  <!-- 2 STARTER -->
+  <div class="slide pscreen" data-kind="work" data-sec="starter" data-type="starter">
+    <img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+    <span class="slide-tag tag-starter">Starter</span>
+    <h2>Read the circuit</h2>
+    <div class="circuit-card" style="max-width:420px">
+      <svg viewBox="0 0 380 170">
+        <path class="wire2" d="M50 135 H330 V35 H50 Z"/>
+        <path class="flow2" d="M50 135 H330 V35 H50 Z"/>
+        <rect class="comp2" x="40" y="88" width="20" height="44"/><text class="lbl2" x="50" y="160" text-anchor="middle">A</text>
+        <line class="comp2" x1="120" y1="35" x2="150" y2="18" stroke-width="5"/><circle class="comp2" cx="118" cy="35" r="4"/><circle class="comp2" cx="155" cy="35" r="4"/><text class="lbl2" x="136" y="64" text-anchor="middle">B</text>
+        <circle class="comp2" cx="235" cy="35" r="17" fill="#fff"/><line class="comp2" x1="224" y1="24" x2="246" y2="46"/><line class="comp2" x1="246" y1="24" x2="224" y2="46"/><text class="lbl2" x="235" y="84" text-anchor="middle">C</text>
+        <circle class="comp2" cx="330" cy="88" r="16" fill="#fff"/><text x="330" y="94" text-anchor="middle" font-size="16" font-weight="900" fill="#334155">A</text><text class="lbl2" x="300" y="93" text-anchor="middle">D</text>
+      </svg>
+      <p style="text-align:center;margin:2px 0;font-size:.85rem;color:var(--muted)">Watch the orange dots — that's the current flowing.</p>
+    </div>
+
+    <div class="ptier tier-f">
+      <div class="pq"><strong>1.</strong> Name the parts:
+        <p>A = <select class="psel" data-req data-ans="cell / battery" onchange="onSel(this)"><option value="">—</option><option>cell / battery</option><option>bulb / lamp</option><option>switch</option></select>
+        &nbsp;B = <select class="psel" data-req data-ans="switch" onchange="onSel(this)"><option value="">—</option><option>cell / battery</option><option>bulb / lamp</option><option>switch</option></select>
+        &nbsp;C = <select class="psel" data-req data-ans="bulb / lamp" onchange="onSel(this)"><option value="">—</option><option>cell / battery</option><option>bulb / lamp</option><option>switch</option></select></p></div>
+      <div class="pq"><strong>2. 🔮 Predict:</strong> we put a SECOND bulb into the same loop. The first bulb gets
+        <div><span class="popt" data-correct="false" onclick="onOpt(this)">brighter</span><span class="popt" data-correct="true" onclick="onOpt(this)">dimmer</span><span class="popt" data-correct="false" onclick="onOpt(this)">stays the same</span></div></div>
+      <div class="scaffold-box"><strong>🪜 Symbol help:</strong> cell = the small block · switch = the gap in the wire · bulb = circle with an ✕ · ammeter = circle with an A. Two bulbs in one loop must <em>share</em> the push.</div>
+    </div>
+
+    <div class="ptier tier-m">
+      <div class="pq"><strong>1.</strong> Name the parts:
+        <p>B = <select class="psel" data-req data-ans="switch" onchange="onSel(this)"><option value="">—</option><option>switch</option><option>fuse</option><option>resistor</option></select>
+        &nbsp;C = <select class="psel" data-req data-ans="bulb / lamp" onchange="onSel(this)"><option value="">—</option><option>motor</option><option>bulb / lamp</option><option>buzzer</option></select>
+        &nbsp;D = <select class="psel" data-req data-ans="ammeter" onchange="onSel(this)"><option value="">—</option><option>ammeter</option><option>voltmeter</option><option>cell</option></select></p></div>
+      <div class="pq"><strong>2. 🔮 Predict:</strong> we add a second bulb into the loop. The reading on D will
+        <select class="psel" data-req data-ans="go down" onchange="onSel(this)"><option value="">—</option><option>go up</option><option>go down</option><option>stay the same</option></select>,
+        because the total <select class="psel" data-req data-ans="resistance" onchange="onSel(this)"><option value="">—</option><option>voltage</option><option>resistance</option><option>brightness</option></select> goes up. <button class="hint-btn" onclick="toggleHint(this)">💡 Hint</button><div class="hint-text">More components in one loop = more total resistance = less current.</div></div>
+    </div>
+
+    <div class="ptier tier-h">
+      <div class="pq"><strong>1.</strong> Component D is an <select class="psel" data-req data-ans="ammeter" onchange="onSel(this)"><option value="">—</option><option>ammeter</option><option>voltmeter</option></select>.
+        To measure the voltage <em>across</em> C you would connect a voltmeter in
+        <select class="psel" data-req data-ans="parallel with C" onchange="onSel(this)"><option value="">—</option><option>series with C</option><option>parallel with C</option></select>.</div>
+      <div class="pq"><strong>2. 🔮 Predict:</strong> a second identical bulb is added into the loop, doubling the resistance. The current
+        <select class="psel" data-req data-ans="halves" onchange="onSel(this)"><option value="">—</option><option>halves</option><option>doubles</option><option>stays the same</option></select>,
+        and each bulb now shares the battery's <select class="psel" data-req data-ans="voltage" onchange="onSel(this)"><option value="">—</option><option>voltage</option><option>current</option><option>resistance</option></select>.</div>
+      <div class="aspire-box"><strong>🚀 Think like a scientist:</strong> use the words <em>proportional</em> and <em>shared</em> when you explain your prediction.</div>
+    </div>
+  </div>
+
+  <!-- 3 HOLD 1 -->
+  <div class="slide pscreen" data-kind="hold" data-lock="1" data-type="hold">
+    <img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+    <span class="slide-tag tag-ido">Eyes on the board</span>
+    <div class="hold-wrap">
+      <div class="hold-emoji">👀</div>
+      <h2 style="border:none;justify-content:center">Watch your teacher</h2>
+      <p class="hold-note">Your teacher is teaching the <strong>I Do</strong> for <strong>V = I × R</strong>. The next task will open when it's time.</p>
+      <div class="hold-cd" id="cd1">--:--</div>
+      <div class="hold-ok" id="ok1">✅ You can continue now — press Continue.</div>
+    </div>
+  </div>
+
+  <!-- 4 WE DO 1 -->
+  <div class="slide pscreen" data-kind="work" data-sec="wedo1" data-type="wedo">
+    <img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+    <span class="slide-tag tag-wedo">Your turn · V = I × R</span>
+    <h2>Use the triangle</h2>
+    <details class="tri-help"><summary>📐 Need the triangle? Tap here</summary>
+      <svg viewBox="0 0 230 200" style="max-width:170px;display:block;margin:8px auto 2px"><polygon points="115,10 220,190 10,190" fill="#ede9fe" stroke="#7c3aed" stroke-width="4"/><line x1="10" y1="125" x2="220" y2="125" stroke="#7c3aed" stroke-width="4"/><line x1="115" y1="125" x2="115" y2="190" stroke="#7c3aed" stroke-width="4"/><text x="115" y="98" text-anchor="middle" font-size="44" font-weight="900" fill="#4c1d95">V</text><text x="63" y="174" text-anchor="middle" font-size="38" font-weight="900" fill="#4c1d95">I</text><text x="167" y="174" text-anchor="middle" font-size="38" font-weight="900" fill="#4c1d95">R</text></svg>
+      <p style="text-align:center;margin:2px 0;font-weight:700">Cover the one you want to find.</p>
+    </details>
+    <div class="ptier tier-f">
+      <div class="pq"><strong>1.</strong> V = 12 V, R = 4 Ω. Cover I → I = V ÷ R. &nbsp; I = 12 ÷ 4 = <input class="pin" data-req data-ans="3" oninput="onSel(this)"> A</div>
+      <div class="pq"><strong>2.</strong> V = 9 V, I = 3 A. Cover R → R = V ÷ I. &nbsp; R = 9 ÷ 3 = <input class="pin" data-req data-ans="3" oninput="onSel(this)"> Ω</div>
+      <div class="scaffold-box"><strong>🪜 The four steps:</strong> 1️⃣ Cover the letter you want. 2️⃣ Read what's left. 3️⃣ Do the maths. 4️⃣ Write the unit!</div>
+    </div>
+    <div class="ptier tier-m">
+      <div class="pq"><strong>1.</strong> I = 3 A, R = 4 Ω. Find V. &nbsp; V = 3 × 4 = <input class="pin" data-req data-ans="12" oninput="onSel(this)"> V</div>
+      <div class="pq"><strong>2.</strong> V = 20 V, R = 5 Ω. Find I. &nbsp; I = 20 ÷ 5 = <input class="pin" data-req data-ans="4" oninput="onSel(this)"> A</div>
+      <button class="hint-btn" onclick="toggleHint(this)">💡 Need the rule?</button><div class="hint-text">Finding <strong>V</strong> → multiply (I × R). Finding <strong>I</strong> or <strong>R</strong> → divide V by the other one.</div>
+    </div>
+    <div class="ptier tier-h">
+      <div class="pq"><strong>1.</strong> V = 24 V, R = 8 Ω. Find I. &nbsp; I = <input class="pin" data-req data-ans="3" oninput="onSel(this)"> A</div>
+      <div class="pq"><strong>2.</strong> V = 240 V, I = 4 A. Find R. &nbsp; R = <input class="pin" data-req data-ans="60" oninput="onSel(this)"> Ω</div>
+      <div class="pq"><strong>3.</strong> If V stays the same and R doubles, the current will <select class="psel" data-req data-ans="halve" onchange="onSel(this)"><option value="">—</option><option>double</option><option>halve</option><option>stay the same</option></select>.</div>
+      <div class="aspire-box"><strong>🚀 Sense-check:</strong> same push, bigger blockage → the current <em>must</em> get smaller. Does your answer obey that?</div>
+    </div>
+  </div>
+
+  <!-- 5 HOLD 2 -->
+  <div class="slide pscreen" data-kind="hold" data-lock="2" data-type="hold">
+    <img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+    <span class="slide-tag tag-ido">Eyes on the board</span>
+    <div class="hold-wrap">
+      <div class="hold-emoji">👀</div>
+      <h2 style="border:none;justify-content:center">Watch your teacher</h2>
+      <p class="hold-note">Your teacher is teaching the <strong>I Do</strong> for <strong>series &amp; parallel circuits</strong>. The next task will open when it's time.</p>
+      <div class="hold-cd" id="cd2">--:--</div>
+      <div class="hold-ok" id="ok2">✅ You can continue now — press Continue.</div>
+    </div>
+  </div>
+
+  <!-- 6 WE DO 2 -->
+  <div class="slide pscreen" data-kind="work" data-sec="wedo2" data-type="wedo">
+    <img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+    <span class="slide-tag tag-wedo">Your turn · Circuit Rules</span>
+    <h2>Apply the rules</h2>
+    <div class="circuit-card" style="max-width:340px"><svg viewBox="0 0 320 120"><path class="wire2" d="M40 90 H280 V30 H40 Z"/><path class="flow2" d="M40 90 H280 V30 H40 Z"/><rect class="comp2" x="30" y="52" width="20" height="38"/><text class="lblsm2" x="40" y="108" text-anchor="middle">cell</text><rect class="comp2" x="110" y="18" width="44" height="24"/><text class="lblsm2" x="132" y="14" text-anchor="middle">R₁</text><rect class="comp2" x="200" y="18" width="44" height="24"/><text class="lblsm2" x="222" y="14" text-anchor="middle">R₂</text></svg><p style="text-align:center;margin:2px 0;font-size:.85rem;color:var(--muted)">Series: one loop — the current is the same everywhere, resistances add.</p></div>
+    <div class="ptier tier-f">
+      <div class="pq"><strong>1.</strong> Series 2 Ω + 4 Ω. Total R = <input class="pin" data-req data-ans="6" oninput="onSel(this)"> Ω</div>
+      <div class="pq"><strong>2.</strong> That circuit has a 12 V supply. Current I = 12 ÷ 6 = <input class="pin" data-req data-ans="2" oninput="onSel(this)"> A</div>
+      <div class="scaffold-box"><strong>🪜 Two jobs:</strong> Series = ONE loop → <strong>ADD</strong> the resistances first. Then I = V ÷ your total.</div>
+    </div>
+    <div class="ptier tier-m">
+      <div class="pq"><strong>1.</strong> Series 3 Ω + 5 Ω. Total R = <input class="pin" data-req data-ans="8" oninput="onSel(this)"> Ω</div>
+      <div class="pq"><strong>2.</strong> 16 V supply on that circuit → current = <input class="pin" data-req data-ans="2" oninput="onSel(this)"> A</div>
+      <div class="pq"><strong>3.</strong> In parallel, the voltage across each branch is <select class="psel" data-req data-ans="the same" onchange="onSel(this)"><option value="">—</option><option>the same</option><option>shared and adds up</option><option>zero</option></select>.</div>
+      <button class="hint-btn" onclick="toggleHint(this)">💡 Hint</button><div class="hint-text">Two steps: add the Ω, then divide the volts by your total.</div>
+    </div>
+    <div class="ptier tier-h">
+      <div class="pq"><strong>1.</strong> Series 4 Ω + 6 Ω, 20 V supply. Total R = <input class="pin" data-req data-ans="10" oninput="onSel(this)"> Ω, current = <input class="pin" data-req data-ans="2" oninput="onSel(this)"> A</div>
+      <div class="pq"><strong>2.</strong> In that series circuit, the voltage across the 6 Ω resistor (V = I × R) = <input class="pin" data-req data-ans="12" oninput="onSel(this)"> V</div>
+      <div class="pq"><strong>3.</strong> Why do parallel branches each get the full voltage? <select class="psel" data-req data-ans="each branch connects straight across the battery" onchange="onSel(this)"><option value="">—</option><option>each branch connects straight across the battery</option><option>the current is shared so voltage drops</option><option>resistance adds up</option></select></div>
+      <div class="aspire-box"><strong>🚀 Power move:</strong> voltage across ONE component = I × <em>that component's</em> resistance.</div>
+    </div>
+  </div>
+
+  <!-- 7 INDEPENDENT -->
+  <div class="slide pscreen" data-kind="work" data-sec="independent" data-type="independent">
+    <img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+    <span class="slide-tag tag-independent">Independent Task</span>
+    <h2>On your own</h2>
+    <div class="ptier tier-f">
+      <div class="scaffold-box"><strong>🪜 Your toolkit:</strong> V = I × R — cover the one you want. Series circuits: <strong>add</strong> the resistances first.</div>
+      <div class="pq"><strong>1.</strong> Complete the table (V = I × R)
+        <table class="vtable"><tr><th>V</th><th>I</th><th>R</th></tr>
+          <tr><td><input class="pin" data-req data-ans="10" oninput="onSel(this)"></td><td>2</td><td>5</td></tr>
+          <tr><td>20</td><td><input class="pin" data-req data-ans="5" oninput="onSel(this)"></td><td>4</td></tr>
+          <tr><td>18</td><td>3</td><td><input class="pin" data-req data-ans="6" oninput="onSel(this)"></td></tr></table></div>
+      <div class="pq"><strong>2.</strong> Label the circuit:
+        <div class="circuit-card" style="max-width:360px"><svg viewBox="0 0 340 150"><path class="wire2" d="M50 115 H290 V40 H50 Z"/><rect class="comp2" x="40" y="74" width="20" height="42"/><text class="lblsm2" x="50" y="135" text-anchor="middle">A</text><rect class="comp2" x="150" y="28" width="44" height="24"/><text class="lblsm2" x="172" y="22" text-anchor="middle">B</text><circle class="comp2" cx="280" cy="78" r="16"/><text class="lbl2" x="280" y="84" text-anchor="middle">A</text><text class="lblsm2" x="280" y="112" text-anchor="middle">C</text></svg></div>
+        A (power source) = <select class="psel" data-req data-ans="cell / battery" onchange="onSel(this)"><option value="">—</option><option>cell / battery</option><option>resistor</option><option>ammeter</option></select>
+        &nbsp;B (slows current) = <select class="psel" data-req data-ans="resistor" onchange="onSel(this)"><option value="">—</option><option>cell / battery</option><option>resistor</option><option>ammeter</option></select>
+        &nbsp;C (measures amps) = <select class="psel" data-req data-ans="ammeter" onchange="onSel(this)"><option value="">—</option><option>cell / battery</option><option>resistor</option><option>ammeter</option></select></div>
+      <div class="pq"><strong>3.</strong> Find the total resistance of this series circuit:
+        <div class="circuit-card" style="max-width:360px"><svg viewBox="0 0 340 120"><path class="wire2" d="M40 90 H300 V30 H40 Z"/><path class="flow2" d="M40 90 H300 V30 H40 Z"/><rect class="comp2" x="30" y="52" width="20" height="38"/><rect class="comp2" x="85" y="18" width="42" height="24"/><text class="lblsm2" x="106" y="14" text-anchor="middle">3 Ω</text><rect class="comp2" x="160" y="18" width="42" height="24"/><text class="lblsm2" x="181" y="14" text-anchor="middle">5 Ω</text><rect class="comp2" x="235" y="18" width="42" height="24"/><text class="lblsm2" x="256" y="14" text-anchor="middle">2 Ω</text></svg></div>
+        Total R = <input class="pin" data-req data-ans="10" oninput="onSel(this)"> Ω</div>
+      <div class="pq"><strong>4.</strong> Series, ammeter reads 2 A at the battery — further round it reads
+        <select class="psel" data-req data-ans="2 A (same everywhere)" onchange="onSel(this)"><option value="">—</option><option>1 A (halves)</option><option>2 A (same everywhere)</option><option>0 A (used up)</option></select></div>
+    </div>
+    <div class="ptier tier-m">
+      <div class="pq"><strong>1.</strong> Complete the table (V = I × R)
+        <table class="vtable"><tr><th>V</th><th>I</th><th>R</th></tr>
+          <tr><td><input class="pin" data-req data-ans="18" oninput="onSel(this)"></td><td>3</td><td>6</td></tr>
+          <tr><td>24</td><td><input class="pin" data-req data-ans="6" oninput="onSel(this)"></td><td>4</td></tr></table></div>
+      <div class="pq"><strong>2.</strong> Use the diagram:
+        <div class="circuit-card" style="max-width:360px"><svg viewBox="0 0 340 130"><path class="wire2" d="M40 100 H300 V30 H40 Z"/><path class="flow2" d="M40 100 H300 V30 H40 Z"/><rect class="comp2" x="30" y="60" width="20" height="40"/><text class="lblsm2" x="40" y="118" text-anchor="middle">24 V</text><rect class="comp2" x="85" y="18" width="42" height="24"/><text class="lblsm2" x="106" y="14" text-anchor="middle">5 Ω</text><rect class="comp2" x="160" y="18" width="42" height="24"/><text class="lblsm2" x="181" y="14" text-anchor="middle">5 Ω</text><rect class="comp2" x="235" y="18" width="42" height="24"/><text class="lblsm2" x="256" y="14" text-anchor="middle">2 Ω</text></svg></div>
+        Total R = <input class="pin" data-req data-ans="12" oninput="onSel(this)"> Ω, so current = <input class="pin" data-req data-ans="2" oninput="onSel(this)"> A <button class="hint-btn" onclick="toggleHint(this)">💡 Hint</button><div class="hint-text">Add the three resistors first, then I = V ÷ your total.</div></div>
+      <div class="pq"><strong>3.</strong> In a parallel circuit the battery current is <select class="psel" data-req data-ans="shared between the branches" onchange="onSel(this)"><option value="">—</option><option>the same in every branch</option><option>shared between the branches</option><option>used up in the first branch</option></select>.</div>
+    </div>
+    <div class="ptier tier-h">
+      <div class="pq"><strong>1.</strong> A 230 V supply drives 5 A. Resistance = <input class="pin" data-req data-ans="46" oninput="onSel(this)"> Ω</div>
+      <div class="pq"><strong>2.</strong> Two 6 Ω resistors in series on 24 V. Total R = <input class="pin" data-req data-ans="12" oninput="onSel(this)"> Ω, current = <input class="pin" data-req data-ans="2" oninput="onSel(this)"> A, voltage across ONE resistor = <input class="pin" data-req data-ans="12" oninput="onSel(this)"> V <button class="hint-btn" onclick="toggleHint(this)">💡 Hint</button><div class="hint-text">Equal resistors share the voltage equally → 24 ÷ 2.</div></div>
+      <div class="pq"><strong>3.</strong> Look at the parallel circuit:
+        <div class="circuit-card" style="max-width:360px"><svg viewBox="0 0 340 150"><path class="wire2" d="M40 125 H300 M40 30 H300 M130 30 V125 M230 30 V125"/><path class="flow2" d="M40 125 H300 V30 H40 Z"/><rect class="comp2" x="30" y="58" width="20" height="40"/><text class="lblsm2" x="40" y="115" text-anchor="middle">6 V</text><circle class="comp2" cx="130" cy="76" r="15" fill="#fff"/><line class="comp2" x1="120" y1="66" x2="140" y2="86"/><line class="comp2" x1="140" y1="66" x2="120" y2="86"/><circle class="comp2" cx="230" cy="76" r="15" fill="#fff"/><line class="comp2" x1="220" y1="66" x2="240" y2="86"/><line class="comp2" x1="240" y1="66" x2="220" y2="86"/></svg></div>
+        Both bulbs shine at full brightness because <select class="psel" data-req data-ans="each branch still gets the full battery voltage" onchange="onSel(this)"><option value="">—</option><option>each branch still gets the full battery voltage</option><option>the current is shared so each gets less voltage</option><option>the resistance increases</option></select>.</div>
+    </div>
+  </div>
+
+  <!-- 8 EXIT -->
+  <div class="slide pscreen" data-kind="exit" data-sec="exit" data-type="exit">
+    <img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+    <span class="slide-tag tag-exit">Exit Ticket</span>
+    <h2>Last few — show what stuck</h2>
+    <div class="ptier tier-f">
+      <div class="scaffold-box" style="padding:8px 14px"><strong>🪜</strong> I = V ÷ R &nbsp;·&nbsp; R = V ÷ I</div>
+      <div class="pq"><strong>1.</strong> V = 10 V, R = 2 Ω. I = 10 ÷ 2 = <input class="pin" data-req data-ans="5" oninput="onSel(this)"> A</div>
+      <div class="pq"><strong>2.</strong> In a series circuit, the current is
+        <div><span class="popt" data-correct="true" onclick="onOpt(this)">the same everywhere</span><span class="popt" data-correct="false" onclick="onOpt(this)">shared between branches</span><span class="popt" data-correct="false" onclick="onOpt(this)">used up as it goes</span></div></div>
+      <div class="pq"><strong>3.</strong> In a parallel circuit, the voltage across each branch is
+        <div><span class="popt" data-correct="false" onclick="onOpt(this)">shared and adds up</span><span class="popt" data-correct="true" onclick="onOpt(this)">the same across each branch</span><span class="popt" data-correct="false" onclick="onOpt(this)">always zero</span></div></div>
+    </div>
+    <div class="ptier tier-m">
+      <div class="pq"><strong>1.</strong> V = 18 V, I = 3 A. R = <input class="pin" data-req data-ans="6" oninput="onSel(this)"> Ω</div>
+      <div class="pq"><strong>2.</strong> Two equal bulbs in series share 12 V — each gets <input class="pin" data-req data-ans="6" oninput="onSel(this)"> V</div>
+      <div class="pq"><strong>3.</strong> Total resistance of 4 Ω + 6 Ω in series = <input class="pin" data-req data-ans="10" oninput="onSel(this)"> Ω</div>
+    </div>
+    <div class="ptier tier-h">
+      <div class="pq"><strong>1.</strong> 12 V supply, total resistance 8 Ω. Current = <input class="pin" data-req data-ans="1.5" oninput="onSel(this)"> A</div>
+      <div class="pq"><strong>2.</strong> Why is the current the same all the way round a series circuit? <input class="pin wide" data-req placeholder="One sentence…" oninput="onSel(this)"></div>
+      <div class="pq"><strong>3.</strong> Two resistors in parallel across 6 V — voltage across each = <input class="pin" data-req data-ans="6" oninput="onSel(this)"> V</div>
+    </div>
+  </div>
+
+</div>
+
+<div id="pnav">
+  <button id="pback" onclick="pback()">◀ Back</button>
+  <button id="pnext" onclick="pnext()">Start ▶</button>
+</div>
+
+<div id="lockov">
+  <div class="lk-emoji">🔒</div>
+  <h2>Locked — eyes on your teacher</h2>
+  <p>Your teacher will unlock the app when it's time.</p>
+  <input id="lockcode" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off">
+  <div><button onclick="tryUnlock()">Unlock</button></div>
+  <div class="lk-msg" id="lkmsg"></div>
+</div>
+
+<div id="treview" onclick="exitReview()">👨‍🏫 TEACHER REVIEW — tap to return pupil</div>
+
+<div id="print-area"><div id="evprint"></div></div>
+
+<div id="pprog">Screen 1 of 9</div>
+
+<div id="pdone">
+  <h1>🎉 All done!</h1>
+  <p style="font-size:1.3rem" id="pdoneMsg">Brilliant work today.</p>
+  <div style="margin-top:18px"><button onclick="printEvidence()" style="background:#fff;color:#166534">🖨️ Print my evidence</button>
+  <button onclick="document.getElementById('pdone').classList.remove('show')" style="background:rgba(255,255,255,.25)">↩ Back to my work</button></div>
+</div>
+
+<script>
+/* ============================================================
+   V = I x R PUPIL APP
+   ★ TEACHER SETTINGS — the bits you can safely edit ★
+   TEACHER_CODE  unlock / board-mode code (MUST match your server file)
+   TOTAL         lesson clock length
+   LOCK1_AT / LOCK2_AT  hold times — only used when running STANDALONE
+                 (with a classroom server, YOU open sections instead)
+   TIP: type the teacher code into the NAME box to put a device
+   into Board Mode — free navigation for the big screen.
+   ============================================================ */
+var TEACHER_CODE = '5543';  /* unlock / review code */
+var TOTAL    = 40 * 60;     /* whole-lesson clock (seconds) */
+var LOCK1_AT = 12 * 60;     /* Hold 1 opens — after teacher I Do (V=IR) */
+var LOCK2_AT = 24 * 60;     /* Hold 2 opens — after teacher I Do (rules) */
+
+var KEY_START='vir_pupil_start', KEY_NAME='vir_pupil_name', KEY_TIER='vir_pupil_tier',
+    KEY_BG='vir_pupil_bg', KEY_ANS='vir_pupil_answers', KEY_LOCK='vir_pupil_locked', KEY_TX='vir_pupil_bigtext', KEY_GEN='vir_pupil_gen';
+var screens=[], cur=0, tier=null, startMs=0, restoring=false, review=false, reviewReturn=0;
+var serverLocked=false, sHold1=false, sHold2=false, lockOverride=false, netFails=0;
+var sSecs=null; /* teacher-controlled section gates (from server) */
+
+/* ---- audio ---- */
+var actx=null;
+function ding(){if(restoring)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();var o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.frequency.value=880;g.gain.setValueAtTime(.0001,actx.currentTime);g.gain.exponentialRampToValueAtTime(.15,actx.currentTime+.01);g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+.25);o.start();o.stop(actx.currentTime+.26);}catch(e){}}
+
+/* ---- timing (clock does NOT run until the pupil presses Start) ---- */
+function elapsed(){return startMs ? (Date.now()-startMs)/1000 : 0;}
+function fmt(s){s=Math.max(0,Math.floor(s));var m=Math.floor(s/60),x=s%60;return (m<10?'0':'')+m+':'+(x<10?'0':'')+x;}
+function eqAns(v,a){if(v===a)return true;var nv=parseFloat(v),na=parseFloat(a);return isFinite(nv)&&isFinite(na)&&/^[+\-]?\d*\.?\d+$/.test(v)&&nv===na;}
+
+/* ---- name / level ---- */
+function onName(){
+  var n=document.getElementById('pname').value.trim();
+  if(n===TEACHER_CODE){ document.getElementById('pname').value=localStorage.getItem(KEY_NAME)||''; enterReview(); return; } /* Board Mode */
+  localStorage.setItem(KEY_NAME,n);
+  var b=document.getElementById('namebadge');
+  if(n){b.style.display='block';b.textContent='👤 '+n;}else{b.style.display='none';}
+  refreshGate();
+}
+function pickLevel(t,card){
+  tier=t; localStorage.setItem(KEY_TIER,t);
+  document.querySelectorAll('.lcard').forEach(function(c){c.classList.remove('sel')});
+  card.classList.add('sel');
+  applyTier(); ding(); refreshGate();
+}
+function applyTier(){
+  if(!tier)return;
+  screens.forEach(function(s){s.querySelectorAll('.ptier').forEach(function(p){p.classList.toggle('active',p.classList.contains('tier-'+tier));});});
+}
+
+/* ---- answering ---- */
+function onSel(el){
+  var ans=el.getAttribute('data-ans');
+  el.classList.remove('good','bad');
+  var v=(el.value||'').trim();
+  if(v && ans){
+    if(eqAns(v,ans)){el.classList.add('good');ding();}
+    else if(!(el.tagName==='INPUT' && document.activeElement===el)){el.classList.add('bad');}
+  }
+  markDone(el); saveAns(); refreshGate();
+}
+function onOpt(el){
+  var box=el.parentNode;
+  box.querySelectorAll('.popt').forEach(function(o){o.classList.remove('chosen','good','bad');});
+  el.classList.add('chosen');
+  if(el.getAttribute('data-correct')==='true'){el.classList.add('good');ding();}
+  else{el.classList.add('bad');box.querySelectorAll('.popt').forEach(function(o){if(o.getAttribute('data-correct')==='true')o.classList.add('good');});}
+  markDone(el); saveAns(); refreshGate();
+}
+function toggleHint(btn){
+  var t=btn.nextElementSibling;
+  if(t&&t.classList.contains('hint-text')){t.style.display=(t.style.display==='block')?'none':'block';if(t.style.display==='block')ding();}
+}
+function markDone(el){var q=el.closest('.pq'); if(q)q.classList.toggle('done',pqComplete(q));}
+function pqComplete(q){
+  var reqs=q.querySelectorAll('[data-req]');
+  for(var i=0;i<reqs.length;i++){ if(!((reqs[i].value||'').trim())) return false; }
+  var opts=q.querySelectorAll('.popt');
+  if(opts.length){ var any=false; opts.forEach(function(o){if(o.classList.contains('chosen'))any=true;}); if(!any) return false; }
+  return true;
+}
+
+/* ---- persistence ---- */
+function saveAns(){
+  if(restoring)return;
+  try{
+    var vals=[].map.call(document.querySelectorAll('.pin,.psel'),function(e){return e.value||'';});
+    var opts=[].map.call(document.querySelectorAll('.pq'),function(q){var idx=-1;q.querySelectorAll('.popt').forEach(function(o,i){if(o.classList.contains('chosen'))idx=i;});return idx;});
+    localStorage.setItem(KEY_ANS,JSON.stringify({v:vals,o:opts,cur:cur}));
+  }catch(e){}
+}
+function restoreAns(){
+  try{
+    var d=JSON.parse(localStorage.getItem(KEY_ANS)||'null'); if(!d)return 0;
+    restoring=true;
+    var els=document.querySelectorAll('.pin,.psel');
+    (d.v||[]).forEach(function(v,i){ if(els[i]&&v){els[i].value=v;onSel(els[i]);} });
+    var qs=document.querySelectorAll('.pq');
+    (d.o||[]).forEach(function(idx,i){ if(idx>=0&&qs[i]){var os=qs[i].querySelectorAll('.popt'); if(os[idx])onOpt(os[idx]);} });
+    restoring=false;
+    return d.cur||0;
+  }catch(e){restoring=false;return 0;}
+}
+
+/* ---- gating ---- */
+function entryBlocked(idx){
+  var s=screens[idx]; if(!s||!sSecs) return false;
+  var sec=s.getAttribute('data-sec');
+  return sec ? !sSecs[sec] : false;
+}
+function refreshGate(){
+  var scr=screens[cur], nb=document.getElementById('pnext'), bk=document.getElementById('pback');
+  var kind=scr.getAttribute('data-kind'), ok=false, label='Next ▶';
+  bk.style.display = (cur===0) ? 'none' : '';
+  if(review){ nb.disabled=false; nb.textContent=(kind==='exit')?'Finish ✓':'Next ▶'; return; }
+  if(kind==='welcome'){
+    var ready=(document.getElementById('pname').value.trim().length>0) && !!tier;
+    ok = ready && !entryBlocked(1);
+    label='Start ▶';
+    document.getElementById('welcomeGate').textContent = !ready ? "Type your name and pick a level to start." : (entryBlocked(1) ? "Ready — waiting for your teacher to open the Arrival task…" : "You're ready — press Start.");
+  } else if(kind==='hold'){
+    if(sSecs){ ok = !entryBlocked(cur+1); }
+    else { var l1 = scr.getAttribute('data-lock')==='1'; var at = l1 ? LOCK1_AT : LOCK2_AT;
+           ok = (l1?sHold1:sHold2) || (elapsed() >= at && startMs>0); }
+    label = ok ? 'Continue ▶' : '🔒 Locked';
+  } else {
+    var active = scr.querySelector('.ptier.active') || scr;
+    var qs=active.querySelectorAll('.pq'); ok=true;
+    qs.forEach(function(q){ if(!pqComplete(q)) ok=false; });
+    if(ok && entryBlocked(cur+1)){ ok=false; label='🔒 Waiting for teacher'; }
+    else if(kind==='exit') label='Finish ✓';
+  }
+  nb.disabled=!ok; nb.textContent=label;
+}
+
+/* ---- navigation ---- */
+function showScreen(i){
+  cur=Math.max(0,Math.min(screens.length-1,i));
+  screens.forEach(function(s,idx){s.classList.toggle('active',idx===cur);});
+  applyTier();
+  var pp=document.getElementById('pprog'); if(pp)pp.textContent='Screen '+(cur+1)+' of '+screens.length;
+  var sc=screens[cur]; if(sc) sc.scrollTop=0;
+  saveAns(); refreshGate();
+}
+function pnext(){
+  if(document.getElementById('pnext').disabled) return;
+  var kind=screens[cur].getAttribute('data-kind');
+  if(kind==='welcome' && !startMs && !review){ startMs=Date.now(); localStorage.setItem(KEY_START,String(startMs)); } /* clock starts NOW */
+  if(kind==='exit'){ finish(); return; }
+  showScreen(cur+1);
+}
+function pback(){ if(cur>0 && !entryBlocked(cur-1)) showScreen(cur-1); }
+
+function finish(){
+  var n=document.getElementById('pname').value.trim();
+  var s=score();
+  document.getElementById('pdoneMsg').textContent=(n?n+', y':'Y')+'ou got '+s.ok+' answers right today — brilliant effort! 💪';
+  document.getElementById('pdone').classList.add('show');
+  burst();
+}
+function score(){
+  var ok=0,tot=0;
+  document.querySelectorAll('.ptier.active').forEach(function(p){
+    p.querySelectorAll('[data-ans]').forEach(function(el){tot++;if(el.classList.contains('good'))ok++;});
+    p.querySelectorAll('.pq').forEach(function(q){
+      var os=q.querySelectorAll('.popt');
+      if(os.length){tot++;os.forEach(function(o){if(o.classList.contains('chosen')&&o.getAttribute('data-correct')==='true')ok++;});}
+    });
+  });
+  return {ok:ok,tot:tot};
+}
+function burst(){
+  var ems=['🎉','⭐','⚡','💜','🎊'];
+  for(var i=0;i<22;i++){
+    var s=document.createElement('span');s.className='evconf';s.textContent=ems[i%ems.length];
+    s.style.left=(Math.random()*96)+'vw';s.style.animationDelay=(Math.random()*0.9)+'s';
+    document.body.appendChild(s);
+    setTimeout(function(el){return function(){el.remove();}}(s),3800);
+  }
+}
+
+/* ---- EVIDENCE PRINT ---- */
+function printEvidence(){
+  var ev=document.getElementById('evprint');
+  var n=document.getElementById('pname').value.trim()||'________________';
+  var lv={f:'🟢 Steady (Foundation)',m:'🟠 Stretch (Middle)',h:'🟣 Challenge (Higher)'}[tier]||'—';
+  var s=score();
+  var d=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  var out='<div class="ev-head"><h2 style="margin:0;border:none">Evidence: V = I × R &amp; Circuit Rules</h2>'+
+    '<p style="margin:4px 0"><b>Name:</b> '+n+' &nbsp;·&nbsp; <b>Level:</b> '+lv+' &nbsp;·&nbsp; <b>Date:</b> '+d+
+    '</p><p style="margin:4px 0"><b>Score:</b> '+s.ok+' / '+s.tot+' correct</p></div>';
+  screens.forEach(function(scr){
+    var kind=scr.getAttribute('data-kind');
+    if(kind!=='work'&&kind!=='exit')return;
+    var h=scr.querySelector('h2'), tag=scr.querySelector('.slide-tag');
+    out+='<h3>'+(tag?tag.textContent+' — ':'')+(h?h.textContent:'')+'</h3>';
+    var act=scr.querySelector('.ptier.active')||scr;
+    act.querySelectorAll('.pq').forEach(function(q){
+      var c=q.cloneNode(true);
+      c.querySelectorAll('input,select').forEach(function(el){
+        var live=findLive(q,el), v=(live&&live.value)?live.value:'(blank)';
+        var cls=live&&live.classList.contains('good')?'good':(live&&live.classList.contains('bad')?'bad':'');
+        var sp=document.createElement('span');sp.innerHTML='<b class="evans '+cls+'">'+esc(v)+'</b>'+
+          (cls==='bad'&&live.getAttribute('data-ans')?' <i class="evfix">(answer: '+esc(live.getAttribute('data-ans'))+')</i>':'');
+        el.parentNode.replaceChild(sp,el);
+      });
+      var opts=c.querySelectorAll('.popt');
+      if(opts.length){
+        var liveOpts=q.querySelectorAll('.popt'), chosen=-1, corr='';
+        liveOpts.forEach(function(o,i){if(o.classList.contains('chosen'))chosen=i;if(o.getAttribute('data-correct')==='true')corr=o.textContent;});
+        var right = chosen>=0 && liveOpts[chosen].getAttribute('data-correct')==='true';
+        var sp=document.createElement('div');
+        sp.innerHTML = chosen>=0 ? ('Chose: <b class="evans '+(right?'good':'bad')+'">'+esc(liveOpts[chosen].textContent)+'</b>'+(right?'':' <i class="evfix">(answer: '+esc(corr)+')</i>')) : 'Chose: <b class="evans">(no answer)</b>';
+        opts[0].parentNode.parentNode.replaceChild(sp,opts[0].parentNode);
+      }
+      out+='<div class="ev-q">'+c.innerHTML+'</div>';
+    });
+  });
+  out+='<p style="margin-top:14px"><b>Teacher signature:</b> ____________________________</p>';
+  ev.innerHTML=out;
+  window.print();
+}
+function findLive(q,clonedEl){
+  /* match cloned input back to its live twin by position within the .pq */
+  var all=q.querySelectorAll('input,select');
+  var cl=clonedEl.closest('.pq')? clonedEl.closest('.pq').querySelectorAll('input,select') : [];
+  for(var i=0;i<cl.length;i++){ if(cl[i]===clonedEl) return all[i]; }
+  return null;
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ---- TEACHER LOCK / UNLOCK / REVIEW ---- */
+function applyLock(){
+  var local = localStorage.getItem(KEY_LOCK)==='1';
+  var show = local || (serverLocked && !lockOverride);
+  document.getElementById('lockov').classList.toggle('show',show);
+}
+function lockNow(){
+  localStorage.setItem(KEY_LOCK,'1');
+  document.getElementById('lockcode').value='';
+  document.getElementById('lkmsg').textContent='';
+  applyLock();
+}
+function tryUnlock(){
+  var v=document.getElementById('lockcode').value.trim();
+  if(v===TEACHER_CODE){
+    localStorage.removeItem(KEY_LOCK);
+    lockOverride=true; /* at-device teacher unlock holds until the central lock is lifted */
+    applyLock();
+    document.getElementById('lockcode').value='';
+    if(confirm('Open TEACHER REVIEW mode to check through the app?\n(Cancel = hand straight back to the pupil)')) enterReview();
+  } else {
+    document.getElementById('lkmsg').textContent='Not quite — try again.';
+    document.getElementById('lockcode').value='';
+  }
+}
+function enterReview(){
+  review=true; reviewReturn=cur;
+  document.getElementById('treview').textContent='👨‍🏫 TEACHER MODE — tap to return';
+  document.getElementById('treview').classList.add('show');
+  refreshGate();
+}
+function exitReview(){
+  review=false;
+  document.getElementById('treview').classList.remove('show');
+  document.getElementById('pdone').classList.remove('show');
+  showScreen(reviewReturn);
+}
+
+/* ---- background tint / text size ---- */
+function setBg(mode,btn){
+  document.body.classList.remove('bg-mag','bg-blu');
+  if(mode==='mag') document.body.classList.add('bg-mag');
+  else if(mode==='blu') document.body.classList.add('bg-blu');
+  localStorage.setItem(KEY_BG,mode);
+  document.querySelectorAll('.bgsw:not(.tx):not(.lk)').forEach(function(b){b.classList.remove('on');});
+  if(btn) btn.classList.add('on');
+}
+function toggleTx(){
+  var on=document.documentElement.classList.toggle('bigtext');
+  localStorage.setItem(KEY_TX,on?'1':'');
+  document.getElementById('txbtn').classList.toggle('on',on);
+}
+
+/* ---- master clock + holds ---- */
+function injectClock(){
+  var c=document.createElement('div'); c.className='mclock'; c.id='mclock';
+  document.body.appendChild(c);
+  var pt;
+  c.addEventListener('pointerdown',function(){pt=setTimeout(function(){if(confirm('Teacher: reset this pupil device back to the start of the lesson? (Clears answers and the clock)')){localStorage.removeItem(KEY_ANS);localStorage.removeItem(KEY_START);localStorage.removeItem(KEY_LOCK);location.reload();}},1500);});
+  ['pointerup','pointerleave'].forEach(function(ev){c.addEventListener(ev,function(){clearTimeout(pt);});});
+}
+function tickClock(){
+  var c=document.getElementById('mclock'); if(!c) return;
+  if(!startMs){ c.textContent='⏱ 40:00 — press Start'; c.classList.remove('warn'); }
+  else { var left=TOTAL-elapsed(); c.textContent='⏱ Lesson '+fmt(left); c.classList.toggle('warn', left<=300 && left>0); }
+  updateHold(LOCK1_AT,'cd1','ok1',sHold1,'wedo1'); updateHold(LOCK2_AT,'cd2','ok2',sHold2,'wedo2');
+  if(screens[cur] && screens[cur].getAttribute('data-kind')==='hold') refreshGate();
+}
+function updateHold(at,cdId,okId,sOpen,secName){
+  var cd=document.getElementById(cdId), ok=document.getElementById(okId); if(!cd) return;
+  if(sSecs){
+    if(sSecs[secName]){ cd.textContent='✅ Opened by your teacher'; ok.style.display='block'; }
+    else { cd.textContent='Waiting for your teacher ⏳'; ok.style.display='none'; }
+    return;
+  }
+  if(sOpen){ cd.textContent='✅ Opened by your teacher'; ok.style.display='block'; return; }
+  if(!startMs){ cd.textContent='Waiting to start'; ok.style.display='none'; return; }
+  var rem=at-elapsed();
+  if(rem>0){ cd.textContent='Opens in '+fmt(rem); ok.style.display='none'; }
+  else { cd.textContent='✅ Unlocked'; ok.style.display='block'; }
+}
+
+/* ---- CLASSROOM MODE (optional teacher server) ---- */
+var SYNC_EPS=['sync.php','/sync'], epi=0, ep=null; /* auto-detect PHP hosting or local python server */
+function startNet(){ if(location.protocol==='file:') return; syncOnce(); }
+function syncOnce(){
+  var url=ep||SYNC_EPS[epi];
+  var payload={name:review?'':(document.getElementById('pname').value||'').trim(),tier:tier||'',screen:cur+1,total:screens.length,score:score().ok,started:!!startMs,work:buildWork()};
+  fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+  .then(function(r){return r.json();})
+  .then(function(st){
+    if(typeof st.locked==='undefined') throw new Error('not a classroom server');
+    ep=url; netFails=0; netBadge(true);
+    serverLocked=!!st.locked; if(!serverLocked) lockOverride=false;
+    sHold1=!!st.hold1; sHold2=!!st.hold2;
+    sSecs=st.secs||null;
+    /* teacher pressed "New lesson": wipe this device's saved work and start fresh */
+    if(typeof st.gen!=='undefined'){
+      var g=String(st.gen), og=localStorage.getItem(KEY_GEN);
+      if(og===null){ localStorage.setItem(KEY_GEN,g); }
+      else if(og!==g){
+        localStorage.setItem(KEY_GEN,g);
+        localStorage.removeItem(KEY_ANS); localStorage.removeItem(KEY_START); localStorage.removeItem(KEY_LOCK);
+        location.reload(); return;
+      }
+    }
+    applyLock(); refreshGate();
+    setTimeout(syncOnce,3000);
+  })
+  .catch(function(){ if(!ep){epi=(epi+1)%SYNC_EPS.length;} netFails++; netBadge(false); setTimeout(syncOnce, netFails>3?15000:3000); });
+}
+function buildWork(){
+  var w=[];
+  screens.forEach(function(scr){
+    var kind=scr.getAttribute('data-kind'); if(kind!=='work'&&kind!=='exit')return;
+    var tag=scr.querySelector('.slide-tag'); var sec=(tag?tag.textContent:'Section').slice(0,28);
+    var act=scr.querySelector('.ptier.active')||scr;
+    act.querySelectorAll('.pq').forEach(function(q){
+      var parts=[],allOk=true,any=false,markable=false;
+      q.querySelectorAll('input,select').forEach(function(el){
+        var v=(el.value||'').trim();
+        if(el.getAttribute('data-ans'))markable=true;
+        if(v){any=true;parts.push(v);if(el.getAttribute('data-ans')&&!el.classList.contains('good'))allOk=false;}
+        else if(el.hasAttribute('data-req')){allOk=false;}
+      });
+      var opts=q.querySelectorAll('.popt');
+      if(opts.length){markable=true;var ch=q.querySelector('.popt.chosen');
+        if(ch){any=true;parts.push(ch.textContent.trim());if(ch.getAttribute('data-correct')!=='true')allOk=false;}
+        else allOk=false;}
+      var txt=(q.textContent||'').replace(/\s+/g,' ').trim().slice(0,70);
+      w.push({s:sec,q:txt,a:parts.join(' | ').slice(0,90),ok:(any&&markable)?allOk:null});
+    });
+  });
+  return w.slice(0,60);
+}
+function netBadge(on){
+  var b=document.getElementById('netbadge');
+  if(!b){b=document.createElement('div');b.id='netbadge';document.body.appendChild(b);}
+  b.textContent='📡 Classroom'; b.style.display=on?'block':'none';
+}
+
+/* ---- init ---- */
+(function(){
+  screens=[].slice.call(document.querySelectorAll('.pscreen'));
+  /* clock only exists once a pupil pressed Start; stale (>40 min) = new lesson */
+  startMs=parseInt(localStorage.getItem(KEY_START)||'0',10);
+  if(startMs && Date.now()-startMs > TOTAL*1000){
+    startMs=0;
+    localStorage.removeItem(KEY_START); localStorage.removeItem(KEY_ANS); localStorage.removeItem(KEY_LOCK);
+  }
+  restoring=true;
+  var savedName=localStorage.getItem(KEY_NAME)||'';
+  if(savedName){ document.getElementById('pname').value=savedName; onName(); }
+  var savedTier=localStorage.getItem(KEY_TIER);
+  if(savedTier){ var card=document.getElementById('lvl-'+savedTier); if(card) pickLevel(savedTier,card); }
+  restoring=false;
+  var savedBg=localStorage.getItem(KEY_BG)||'def';
+  setBg(savedBg, document.querySelector('.bgsw-'+savedBg));
+  if(localStorage.getItem(KEY_TX)){ document.documentElement.classList.add('bigtext'); document.getElementById('txbtn').classList.add('on'); }
+  document.querySelectorAll('.pin[data-ans]').forEach(function(el){
+    if(/^[+\-]?\d*\.?\d+$/.test(el.getAttribute('data-ans'))) el.setAttribute('inputmode','decimal');
+  });
+  document.querySelectorAll('.pin').forEach(function(el){ el.addEventListener('blur',function(){onSel(el);}); });
+  /* teacher lock button: hold 1.2s */
+  var lk=document.getElementById('lkbtn'), lt;
+  lk.addEventListener('pointerdown',function(){lt=setTimeout(lockNow,1200);});
+  ['pointerup','pointerleave'].forEach(function(ev){lk.addEventListener(ev,function(){clearTimeout(lt);});});
+  /* lock survives refresh (so pupils can't escape it by reloading) */
+  applyLock();
+  setTimeout(startNet,2000); /* defer optional classroom discovery until the standalone start screen is interactive */
+  /* Enter key submits the unlock code */
+  document.getElementById('lockcode').addEventListener('keydown',function(e){if(e.key==='Enter')tryUnlock();});
+  injectClock(); tickClock(); setInterval(tickClock,1000);
+  showScreen(restoreAns());
+})();
+
+</script>
+<script defer src="/hud.js"></script>
+</body>
+</html>

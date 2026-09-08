@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjMTYxRDNEIi8+PHBhdGggZD0iTTI2IDc2IEwyNiAzMCBMNTAgNTUgTDc0IDMwIEw3NCA3NiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRThFMkQ0IiBzdHJva2Utd2lkdGg9IjEzIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="canonical" href="https://madebymatt-play.uk/Lessons/Games/voxelcraft.html">>
+<meta name="theme-color" content="#87CEEB">
+<title>Voxel Craft</title>
+<style>
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#87CEEB;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+*{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+canvas.a-canvas{touch-action:none!important}
+/* Suppress A-Frame's auto-injected VR/AR/modal overlays */
+.a-enter-vr,.a-enter-ar,.a-enter-vr-button,.a-enter-ar-button,.a-orientation-modal,.a-modal,.a-loader-title{display:none!important}
+#ui{position:fixed;inset:0;z-index:10;pointer-events:none}
+#ui>*{pointer-events:auto}
+#crosshair{position:absolute;top:50%;left:50%;width:22px;height:22px;transform:translate(-50%,-50%);pointer-events:none}
+#crosshair::before,#crosshair::after{content:'';position:absolute;background:#fff;mix-blend-mode:difference}
+#crosshair::before{left:50%;top:3px;width:2px;height:16px;transform:translateX(-50%)}
+#crosshair::after{top:50%;left:3px;height:2px;width:16px;transform:translateY(-50%)}
+#hotbar-wrap{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;max-width:92vw;pointer-events:none}
+#hotbar{display:flex;flex-wrap:wrap;justify-content:center;gap:3px;padding:5px;background:rgba(0,0,0,0.45);border-radius:10px;border:1px solid rgba(255,255,255,0.15);width:min(95vw,720px);pointer-events:auto}
+.slot{width:36px;height:36px;border-radius:5px;background-color:#888;border:2px solid transparent;image-rendering:pixelated;image-rendering:crisp-edges;position:relative;cursor:pointer}
+.slot.active{border-color:#fff;box-shadow:0 0 8px rgba(255,255,255,0.7);transform:scale(1.08)}
+.slot .cnt{position:absolute;right:1px;bottom:0;font-size:10px;font-weight:800;color:#fff;text-shadow:0 1px 2px #000,0 0 3px #000;pointer-events:none}
+.slot.empty{opacity:.35}
+#active-name{color:#fff;font-size:12px;font-weight:600;text-shadow:0 1px 3px #000;background:rgba(0,0,0,0.35);padding:3px 10px;border-radius:10px;pointer-events:none;min-height:14px}
+.btn{position:absolute;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);color:#fff;border:2px solid rgba(255,255,255,0.55);border-radius:50%;font-weight:700;font-size:12px;letter-spacing:.5px;touch-action:manipulation;cursor:pointer;transition:transform .08s,background .1s}
+.btn:active{background:rgba(255,255,255,0.25);transform:scale(.92)}
+#btn-break{width:66px;height:66px;right:calc(env(safe-area-inset-right,0) + 100px);bottom:calc(env(safe-area-inset-bottom,0) + 24px);background:rgba(200,60,60,.55)}
+#btn-place{width:66px;height:66px;right:calc(env(safe-area-inset-right,0) + 24px);bottom:calc(env(safe-area-inset-bottom,0) + 90px);background:rgba(60,150,80,.55)}
+#btn-jump{width:60px;height:60px;right:calc(env(safe-area-inset-right,0) + 28px);bottom:calc(env(safe-area-inset-bottom,0) + 24px);font-size:11px}
+#btn-fly{width:44px;height:44px;right:calc(env(safe-area-inset-right,0) + 20px);top:calc(env(safe-area-inset-top,0) + 70px);font-size:18px}
+#btn-save{width:44px;height:44px;right:calc(env(safe-area-inset-right,0) + 20px);top:calc(env(safe-area-inset-top,0) + 122px);font-size:16px}
+#btn-menu{width:44px;height:44px;right:calc(env(safe-area-inset-right,0) + 20px);top:calc(env(safe-area-inset-top,0) + 174px);font-size:20px}
+#btn-fly.on{background:rgba(100,180,255,.55);border-color:#9cf}
+#joystick{position:absolute;left:calc(env(safe-area-inset-left,0) + 24px);bottom:calc(env(safe-area-inset-bottom,0) + 28px);width:124px;height:124px;background:rgba(0,0,0,0.25);border:2px solid rgba(255,255,255,0.3);border-radius:50%;touch-action:none}
+#joystick .knob{position:absolute;top:50%;left:50%;width:50px;height:50px;background:rgba(255,255,255,0.55);border:2px solid rgba(255,255,255,0.85);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
+#toast{position:absolute;top:calc(env(safe-area-inset-top,0) + 80px);left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1}
+/* Generic modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;z-index:50;padding:18px;pointer-events:auto}
+.modal.open{display:flex}
+.modal .card{background:rgba(28,30,42,.97);border:2px solid rgba(255,255,255,.18);border-radius:14px;padding:18px 20px;max-width:380px;width:100%;max-height:82vh;overflow-y:auto;color:#fff;position:relative}
+.modal .card h2{margin:0 0 12px;font-size:18px;letter-spacing:.5px;text-align:center}
+.modal .mbtn{display:block;width:100%;padding:11px 14px;margin:5px 0;background:#3a4a6a;color:#fff;border:0;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;text-align:left;font-family:inherit}
+.modal .mbtn:active{background:#4a5a7a;transform:scale(.98)}
+.modal .mbtn.danger{background:#5a3a3a}
+.modal .mbtn.danger:active{background:#6a4a4a}
+.modal .mbtn.primary{background:#3a6a4a;text-align:center;font-size:15px;letter-spacing:.5px}
+.modal .mbtn.primary:active{background:#4a7a5a}
+.modal .close-x{position:absolute;top:12px;right:16px;cursor:pointer;color:#aaa;font-size:22px;line-height:1;background:transparent;border:0;padding:4px 8px}
+.modal p{font-size:13px;line-height:1.5;margin:6px 0}
+/* Arcade HUD overlay */
+#arcade-hud{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);left:calc(env(safe-area-inset-left,0px) + 16px);background:rgba(0,0,0,.6);border:2px solid #ffd84a;border-radius:10px;padding:7px 12px;color:#fff;font-size:14px;font-weight:700;display:none;pointer-events:none;z-index:20}
+#arcade-hud.on{display:block}
+#arcade-hud .row{display:flex;gap:14px;align-items:center}
+#arcade-hud .lbl{color:#ffd84a;font-size:10px;letter-spacing:.6px;font-weight:600;margin-right:3px}
+/* Storm HUD (survival day/night) */
+#storm-hud{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);left:calc(env(safe-area-inset-left,0px) + 16px);background:rgba(0,0,0,.6);border:2px solid #7dd3fc;border-radius:10px;padding:7px 12px;color:#fff;font-size:13px;font-weight:700;display:none;pointer-events:none;z-index:20}
+#storm-hud.on{display:block}
+#storm-hud .row{display:flex;gap:10px;align-items:center;margin-bottom:4px}
+#warmth-wrap{width:110px;height:7px;background:rgba(255,255,255,.18);border-radius:4px;overflow:hidden}
+#warmth-fill{height:100%;width:100%;background:#4ade80;border-radius:4px;transition:width .25s linear,background .4s}
+#storm-flash{position:fixed;inset:0;background:radial-gradient(circle,rgba(20,32,64,.0),rgba(8,12,30,.92));opacity:0;transition:opacity .35s;pointer-events:none;z-index:40}
+#storm-flash.on{opacity:1}
+/* Template card */
+.template{margin:8px 0;padding:11px 12px;background:rgba(0,0,0,.3);border-radius:8px;border:1px solid rgba(255,255,255,.1)}
+.template h3{margin:0 0 4px;font-size:14px}
+.template .desc{color:#bbb;font-size:12px;margin:0 0 8px;line-height:1.4}
+.template .place-btn{background:#4a8a6a;color:#fff;border:0;padding:7px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+.template .place-btn:active{background:#5a9a7a}
+#intro{position:absolute;inset:0;background:linear-gradient(180deg,#0c1626 0%,#12233a 55%,#1a3a2a 100%);display:flex;align-items:center;justify-content:center;z-index:100;color:#fff;text-align:center;padding:20px}
+#intro .card{background:rgba(16,22,36,.92);border:2px solid rgba(125,211,252,.35);border-radius:16px;padding:22px 20px;max-width:360px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+#intro h1{margin:0 0 2px;font-size:34px;letter-spacing:3px;font-weight:900;background:linear-gradient(100deg,#7ee08a 20%,#7dd3fc 50%,#ffb84a 80%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(2px 2px 0 rgba(0,0,0,.65))}
+#intro .sub{font-size:12px;letter-spacing:2.5px;color:#7dd3fc;text-transform:uppercase;margin:0 0 12px;opacity:.9}
+#intro .chips{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin:0 0 12px}
+#intro .chip{font-size:11px;font-weight:700;padding:4px 9px;border-radius:20px;background:rgba(125,211,252,.14);border:1px solid rgba(125,211,252,.3);color:#cfe8ff}
+#intro .ctrl{display:grid;grid-template-columns:1fr 1fr;gap:3px 10px;text-align:left;font-size:11.5px;line-height:1.45;color:#b9c6da;background:rgba(0,0,0,.28);border-radius:9px;padding:9px 11px;margin:0 0 10px}
+#intro .ctrl b{color:#fff}
+#intro p{margin:6px 0;font-size:12px;line-height:1.5;opacity:.9}
+#intro .tap{margin-top:12px;padding:13px 34px;background:linear-gradient(100deg,#2f9e44,#28848f);color:#fff;border-radius:10px;font-weight:800;font-size:16px;letter-spacing:1px;display:inline-block;cursor:pointer;box-shadow:0 4px 16px rgba(47,158,68,.4);animation:tapPulse 1.8s ease-in-out infinite}
+@keyframes tapPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+#intro .credit{margin-top:10px;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.4);text-transform:uppercase}
+/* Made by Matt splash — plays above the title, then fades to reveal it. Tap to skip. */
+#splash{position:fixed;inset:0;z-index:200;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(circle at 50% 40%,#12233a,#05070d 75%);animation:splashOut .6s ease 2.3s forwards}
+#splash .s-brand{font-weight:900;font-style:italic;font-size:clamp(34px,9vw,68px);letter-spacing:5px;line-height:1;background:linear-gradient(110deg,#7ee08a 15%,#7dd3fc 45%,#ffb84a 60%,#7ee08a 85%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(3px 3px 0 rgba(0,0,0,.7)) drop-shadow(0 0 22px rgba(125,211,252,.3));animation:sBrandIn .8s cubic-bezier(.2,.9,.3,1.15) both,sSheen 2.2s linear .4s infinite}
+#splash .s-sub{color:#ffb84a;letter-spacing:8px;font-size:13px;font-weight:700;text-transform:uppercase;animation:sSubIn .7s ease .55s both}
+#splash .s-blocks{display:flex;gap:8px;margin-top:10px;animation:sSubIn .7s ease .8s both}
+#splash .s-blocks span{width:16px;height:16px;border-radius:3px;image-rendering:pixelated;box-shadow:2px 2px 0 rgba(0,0,0,.55);animation:sHop 1s ease-in-out infinite}
+#splash .s-blocks span:nth-child(1){background:#5aa845;animation-delay:0s}
+#splash .s-blocks span:nth-child(2){background:#8a6244;animation-delay:.12s}
+#splash .s-blocks span:nth-child(3){background:#808080;animation-delay:.24s}
+#splash .s-blocks span:nth-child(4){background:#2656be;animation-delay:.36s}
+#splash .s-blocks span:nth-child(5){background:#ffb84a;animation-delay:.48s}
+#splash .s-skip{position:absolute;bottom:calc(24px + env(safe-area-inset-bottom,0));color:rgba(226,232,240,.45);font-size:11px;letter-spacing:3px;text-transform:uppercase;animation:sSubIn .7s ease 1.1s both}
+@keyframes sBrandIn{from{opacity:0;transform:scale(.74) translateY(18px);letter-spacing:18px}to{opacity:1;transform:none;letter-spacing:5px}}
+@keyframes sSheen{from{background-position:0% 0}to{background-position:250% 0}}
+@keyframes sSubIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes sHop{0%,100%{transform:translateY(0)}40%{transform:translateY(-9px)}}
+@keyframes splashOut{to{opacity:0;visibility:hidden}}
+#splash.skipped{animation:splashOut .35s ease forwards}
+</style>
+
+<!-- ===== reduced-motion v1 =====================================================
+     This file declares infinite CSS animations and had no prefers-reduced-motion
+     rule. Rather than the usual reset (animation-duration:.001ms / iteration-
+     count:1) - which parks a looping animation on its final keyframe, and a lot
+     of them end at opacity:0, so teaching particles would simply vanish - this
+     freezes every animation 0.7s into its cycle. Motion stops; whatever
+     was on screen stays on screen and stays visible.
+============================================================================ -->
+<style>
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-play-state:paused !important;
+    animation-delay:-0.7s !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+</style>
+</head>
+<body>
+<div id="ui">
+  <div id="hotbar-wrap"><div id="hotbar"></div><div id="active-name">Grass</div></div>
+  <div id="crosshair"></div>
+  <div id="joystick"><div class="knob"></div></div>
+  <div id="btn-jump"  class="btn">JUMP</div>
+  <div id="btn-break" class="btn">DIG</div>
+  <div id="btn-place" class="btn">PLACE</div>
+  <div id="btn-fly"   class="btn">✈</div>
+  <div id="btn-save"  class="btn">💾</div>
+  <div id="btn-menu"  class="btn">☰</div>
+  <div id="arcade-hud"><div class="row"><span><span class="lbl">TIME</span><span id="arcade-time">60</span>s</span><span><span class="lbl">SCORE</span><span id="arcade-score">0</span></span></div></div>
+  <div id="storm-hud"><div class="row"><span id="sh-phase">☀️ Day</span><span id="sh-flags"></span></div><div id="warmth-wrap"><div id="warmth-fill"></div></div></div>
+  <div id="storm-flash"></div>
+  <div id="toast"></div>
+  <!-- Main menu modal -->
+  <div id="menu-modal" class="modal">
+    <div class="card">
+      <button class="close-x" data-close="menu-modal">✕</button>
+      <h2>☰ Menu</h2>
+      <button class="mbtn" id="m-arcade">🎮 Arcade Mode (Speed Miner)</button>
+      <button class="mbtn" id="m-mode">⛏️ Mode <span id="m-mode-name" style="color:#aac;float:right;font-weight:400"></span></button>
+      <button class="mbtn" id="m-craft">🔨 Crafting</button>
+      <button class="mbtn" id="m-guide">📘 Build Guide / Templates</button>
+      <button class="mbtn" id="m-theme">🎨 Change Theme <span id="m-theme-name" style="color:#aac;float:right;font-weight:400"></span></button>
+      <button class="mbtn" id="m-save">💾 Save World</button>
+      <button class="mbtn" id="m-daily">🗓 Daily World</button>
+      <button class="mbtn danger" id="m-reset">🌱 New World</button>
+    </div>
+  </div>
+  <!-- Build guide / templates -->
+  <div id="guide-modal" class="modal">
+    <div class="card">
+      <button class="close-x" data-close="guide-modal">✕</button>
+      <h2>📘 Build Guide</h2>
+      <p style="font-size:12px;color:#bbb;margin:0 0 8px">Each template builds in front of you, lined up with where you're looking. Stand on flat ground for best results.</p>
+      <div id="templates-list"></div>
+    </div>
+  </div>
+  <!-- Crafting -->
+  <div id="craft-modal" class="modal">
+    <div class="card">
+      <button class="close-x" data-close="craft-modal">✕</button>
+      <h2>🔨 Crafting</h2>
+      <p style="font-size:12px;color:#bbb;margin:0 0 8px">Mine materials in Survival mode, then turn them into tools and fancy blocks here.</p>
+      <div id="craft-list"></div>
+    </div>
+  </div>
+  <!-- Arcade confirm -->
+  <div id="arcade-confirm" class="modal">
+    <div class="card">
+      <button class="close-x" data-close="arcade-confirm">✕</button>
+      <h2>🎮 Speed Miner</h2>
+      <p>Dig as many ores as you can in <b>60 seconds</b>!</p>
+      <p style="background:rgba(0,0,0,.3);padding:8px 10px;border-radius:6px;font-size:12px">
+        Coal&nbsp;<b style="color:#ffd84a">+1</b> &nbsp;·&nbsp;
+        Iron&nbsp;<b style="color:#ffd84a">+3</b> &nbsp;·&nbsp;
+        Gold&nbsp;<b style="color:#ffd84a">+5</b><br>
+        Obsidian&nbsp;<b style="color:#ffd84a">+8</b> &nbsp;·&nbsp;
+        Diamond&nbsp;<b style="color:#ffd84a">+10</b>
+      </p>
+      <p style="font-size:11px;color:#aaa">Your sandbox world is saved and restored when you exit.</p>
+      <p style="text-align:center;font-size:14px">🏆 High Score: <b id="arcade-highscore">0</b></p>
+      <button class="mbtn primary" id="arcade-start">START</button>
+      <button class="mbtn" data-close="arcade-confirm">Cancel</button>
+    </div>
+  </div>
+  <!-- Arcade end -->
+  <div id="arcade-end" class="modal">
+    <div class="card">
+      <h2>⏱ Time's Up!</h2>
+      <p style="text-align:center;font-size:22px;margin:14px 0">Final Score: <b id="arcade-final" style="color:#ffd84a">0</b></p>
+      <p style="text-align:center;font-size:13px;color:#ccc">High Score: <span id="arcade-final-high">0</span></p>
+      <p id="arcade-newhigh" style="text-align:center;color:#ffd84a;font-weight:700;display:none;font-size:15px">🏆 NEW HIGH SCORE!</p>
+      <button class="mbtn primary" id="arcade-replay">PLAY AGAIN</button>
+      <button class="mbtn" id="arcade-exit">Exit to Sandbox</button>
+    </div>
+  </div>
+  <div id="intro">
+    <div class="card">
+      <h1>VOXELCRAFT</h1>
+      <p class="sub">A Tees Valley Survival Builder</p>
+      <div class="chips">
+        <span class="chip">⛏️ Survival</span><span class="chip">⛈ The Storm</span><span class="chip">🌊 The River</span><span class="chip">🗓 Daily World</span><span class="chip">🎮 Arcade</span>
+      </div>
+      <p style="background:rgba(60,100,160,.3);padding:7px 10px;border-radius:8px;font-size:12px;text-align:left"><b>⛏️ Survive:</b> mine → craft picks → dig deeper. At dusk <b>the Storm</b> rolls in — get a roof over your head and a 🔥 campfire lit before dark!</p>
+      <div class="ctrl">
+        <span><b>Move</b> joystick / WASD</span><span><b>Look</b> drag screen</span>
+        <span><b>Dig</b> DIG / click</span><span><b>Place</b> PLACE / right-click</span>
+        <span><b>Jump</b> JUMP / Space</span><span><b>Hotbar</b> tap · 1–0 · Q/E</span>
+      </div>
+      <div class="tap" id="intro-start">⛏️ TAP TO PLAY</div>
+      <p class="credit">A Made by Matt Production</p>
+    </div>
+  </div>
+  <div id="splash">
+    <div class="s-brand">MADE&nbsp;BY&nbsp;MATT</div>
+    <div class="s-sub">Presents…</div>
+    <div class="s-blocks"><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="s-skip">Tap to skip</div>
+  </div>
+  <script>
+    (function(){
+      const sp = document.getElementById('splash');
+      sp.addEventListener('pointerdown', () => sp.classList.add('skipped'), { once:true });
+      sp.addEventListener('animationend', (e) => { if (e.animationName === 'splashOut') sp.remove(); });
+    })();
+  </script>
+</div>
+
+<script>
+'use strict';
+
+/* ---------- Simplex noise (compact) ---------- */
+(function(){var F2=.5*(Math.sqrt(3)-1),G2=(3-Math.sqrt(3))/6;function N(r){if(!r)r=Math.random;this.p=new Uint8Array(256);this.perm=new Uint8Array(512);this.permMod12=new Uint8Array(512);for(var i=0;i<256;i++)this.p[i]=i;for(var i=0;i<255;i++){var rr=i+~~(r()*(256-i)),a=this.p[i];this.p[i]=this.p[rr];this.p[rr]=a}for(var i=0;i<512;i++){this.perm[i]=this.p[i&255];this.permMod12[i]=this.perm[i]%12}}N.prototype.grad3=new Float32Array([1,1,0,-1,1,0,1,-1,0,-1,-1,0,1,0,1,-1,0,1,1,0,-1,-1,0,-1,0,1,1,0,-1,1,0,1,-1,0,-1,-1]);N.prototype.noise2D=function(xin,yin){var n0=0,n1=0,n2=0,s=(xin+yin)*F2,i=Math.floor(xin+s),j=Math.floor(yin+s),t=(i+j)*G2,X0=i-t,Y0=j-t,x0=xin-X0,y0=yin-Y0,i1,j1;if(x0>y0){i1=1;j1=0}else{i1=0;j1=1}var x1=x0-i1+G2,y1=y0-j1+G2,x2=x0-1+2*G2,y2=y0-1+2*G2,ii=i&255,jj=j&255,gi0=this.permMod12[ii+this.perm[jj]],gi1=this.permMod12[ii+i1+this.perm[jj+j1]],gi2=this.permMod12[ii+1+this.perm[jj+1]];var t0=.5-x0*x0-y0*y0;if(t0>=0){t0*=t0;n0=t0*t0*(this.grad3[gi0*3]*x0+this.grad3[gi0*3+1]*y0)}var t1=.5-x1*x1-y1*y1;if(t1>=0){t1*=t1;n1=t1*t1*(this.grad3[gi1*3]*x1+this.grad3[gi1*3+1]*y1)}var t2=.5-x2*x2-y2*y2;if(t2>=0){t2*=t2;n2=t2*t2*(this.grad3[gi2*3]*x2+this.grad3[gi2*3+1]*y2)}return 70*(n0+n1+n2)};window.SimplexNoise=N})();
+
+/* ---------- Block definitions. Atlas = 8x8 tiles of 16px ---------- */
+const ATLAS_N=8, TILE_PX=16;
+const BLOCKS={
+  GRASS:{name:'Grass', top:[0,0], bottom:[2,0], side:[1,0]},
+  DIRT:{name:'Dirt', all:[2,0]},
+  STONE:{name:'Stone', all:[3,0]},
+  WOOD:{name:'Planks', all:[4,0]},
+  LOG:{name:'Log', top:[6,0], bottom:[6,0], side:[5,0]},
+  COBBLE:{name:'Cobble', all:[7,0]},
+  SAND:{name:'Sand', all:[0,1]},
+  LEAVES:{name:'Leaves', all:[1,1]},
+  BRICK:{name:'Brick', all:[2,1]},
+  GLASS:{name:'Glass', all:[3,1], transparent:true},
+  SNOW:{name:'Snow', all:[4,1]},
+  ICE:{name:'Ice', all:[5,1], transparent:true},
+  OBSIDIAN:{name:'Obsidian', all:[6,1]},
+  QUARTZ:{name:'Quartz', all:[7,1]},
+  COAL_ORE:{name:'Coal Ore', all:[0,2]},
+  IRON_ORE:{name:'Iron Ore', all:[1,2]},
+  GOLD_ORE:{name:'Gold Ore', all:[2,2]},
+  DIAMOND_ORE:{name:'Diamond Ore', all:[3,2]},
+  IRON_BLOCK:{name:'Iron', all:[4,2]},
+  GOLD_BLOCK:{name:'Gold', all:[5,2]},
+  DIAMOND_BLOCK:{name:'Diamond', all:[6,2]},
+  MOSSY:{name:'Mossy', all:[7,2]},
+  BOOKSHELF:{name:'Bookshelf', top:[4,0], bottom:[4,0], side:[0,3]},
+  TNT:{name:'TNT', top:[2,3], bottom:[2,3], side:[1,3]},
+  NETHERRACK:{name:'Netherrack', all:[3,3]},
+  TORCH:{name:'Campfire', all:[4,3]},
+  WATER:{name:'Water', all:[5,3], transparent:true},
+};
+const BLOCK_IDS=Object.keys(BLOCKS);
+
+/* ===== SURVIVAL CORE: finite blocks, tools, recipes ===== */
+let mode = localStorage.getItem('voxelcraft:mode') || 'creative';
+let inv = {};
+try { const _i = localStorage.getItem('voxelcraft:inv'); if (_i) inv = JSON.parse(_i); } catch(e){}
+function saveInv(){ try { localStorage.setItem('voxelcraft:inv', JSON.stringify(inv)); } catch(e){} }
+function survivalOn(){ return mode === 'survival' && !arcade.active; }
+function invCount(id){ return inv[id] || 0; }
+function invAdd(id, n){ inv[id] = (inv[id] || 0) + n; saveInv(); }
+function invTake(id, n){ if (invCount(id) < n) return false; inv[id] -= n; if (inv[id] <= 0) delete inv[id]; saveInv(); return true; }
+
+/* Picks live in the inventory too; your effective tier is the best pick you own. */
+const PICKS = [
+  { id:'WOOD_PICK',  name:'Wooden Pick', emoji:'🪵⛏️', tier:1 },
+  { id:'STONE_PICK', name:'Stone Pick',  emoji:'🪨⛏️', tier:2 },
+  { id:'IRON_PICK',  name:'Iron Pick',   emoji:'⚙️⛏️', tier:3 },
+];
+function toolTier(){ let t = 0; PICKS.forEach(p => { if (invCount(p.id) > 0 && p.tier > t) t = p.tier; }); return t; }
+function toolName(){ let best = null; PICKS.forEach(p => { if (invCount(p.id) > 0) best = p; }); return best ? best.name : 'Bare Hands'; }
+const TIER_LABEL = ['bare hands', 'a Wooden Pick', 'a Stone Pick', 'an Iron Pick'];
+
+/* What it takes to mine each block (0 = hands). Unlisted = hands. */
+const TIER = {
+  STONE:1, COBBLE:1, COAL_ORE:1, BRICK:1, MOSSY:1, NETHERRACK:1, QUARTZ:1, ICE:1, IRON_BLOCK:1,
+  IRON_ORE:2, GOLD_BLOCK:2, DIAMOND_BLOCK:2,
+  GOLD_ORE:3, DIAMOND_ORE:3, OBSIDIAN:3
+};
+/* What a block gives you when broken (classic twists included). */
+const DROPS = { GRASS:'DIRT', STONE:'COBBLE' };
+
+const RECIPES = [
+  { emoji:'🪵', name:'Planks ×4',       cost:{LOG:1},                 out:'WOOD',        outN:4, desc:'One log becomes four planks.' },
+  { emoji:'⛏️', name:'Wooden Pick',     cost:{WOOD:3},                out:'WOOD_PICK',   outN:1, tool:true, desc:'Mines stone, cobble and coal.' },
+  { emoji:'⛏️', name:'Stone Pick',      cost:{COBBLE:3, WOOD:2},      out:'STONE_PICK',  outN:1, tool:true, desc:'Mines iron ore.' },
+  { emoji:'⛏️', name:'Iron Pick',       cost:{IRON_ORE:3, WOOD:2},    out:'IRON_PICK',   outN:1, tool:true, desc:'Mines gold, diamond and obsidian.' },
+  { emoji:'🔥', name:'Campfire ×2',     cost:{COAL_ORE:1, LOG:1},     out:'TORCH',       outN:2, desc:'Keeps the Storm\'s chill off your camp.' },
+  { emoji:'🪟', name:'Glass',           cost:{SAND:2},                out:'GLASS',       outN:1, desc:'Beach sand, melted down.' },
+  { emoji:'🧱', name:'Brick ×4',        cost:{COBBLE:4},              out:'BRICK',       outN:4, desc:'Tidy walls from rough cobble.' },
+  { emoji:'⬜', name:'Quartz ×2',       cost:{STONE:2},               out:'QUARTZ',      outN:2, desc:'Polished stone, very smart.' },
+  { emoji:'📚', name:'Bookshelf',       cost:{WOOD:6},                out:'BOOKSHELF',   outN:1, desc:'Every base needs a library.' },
+  { emoji:'🩶', name:'Iron Block',      cost:{IRON_ORE:9},            out:'IRON_BLOCK',  outN:1, desc:'Nine ores, one gleaming block.' },
+  { emoji:'🟨', name:'Gold Block',      cost:{GOLD_ORE:9},            out:'GOLD_BLOCK',  outN:1, desc:'Pure flex.' },
+  { emoji:'💎', name:'Diamond Block',   cost:{DIAMOND_ORE:9},         out:'DIAMOND_BLOCK', outN:1, desc:'The endgame trophy.' },
+];
+
+/* ===== DAILY WORLD: date-seeded terrain — the whole class shares today's map ===== */
+function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function todaySeed(){ const d = new Date(); return d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate(); }
+function todayName(){ return new Date().toLocaleDateString('en-GB', { weekday:'long' }); }
+
+/* ===== PHASE 3: THE STORM — weather is the antagonist, shelter is the answer ===== */
+const CYCLE = { DAY:240, DUSK:20, NIGHT:75, DAWN:12 };   // seconds per phase
+let cyc = { phase:'DAY', t:0, warmth:100, timer:null };
+let campfires = [];
+function refreshCampfires(){
+  campfires = [];
+  for (const [k,v] of world) if (v === 'TORCH') campfires.push(k.split(',').map(Number));
+}
+function isSheltered(px, py, pz){
+  for (let y = py + 2; y <= 34; y++) if (world.has(key(px, y, pz))) return true;
+  return false;
+}
+function nearCampfire(px, py, pz){
+  return campfires.some(c => Math.abs(c[0]-px) <= 5 && Math.abs(c[1]-py) <= 4 && Math.abs(c[2]-pz) <= 5);
+}
+/* Sky blend: k=0 full day → k=1 full Storm night */
+const DAY_SKY   = { sky:[135,206,235], fog:[135,206,235], near:30, far:55, amb:0.65, ambC:[255,255,255], dir:0.9,  dirC:[255,243,214] };
+const STORM_SKY = { sky:[11,15,34],    fog:[14,20,40],    near:9,  far:26, amb:0.22, ambC:[136,153,204], dir:0.25, dirC:[136,153,204] };
+const chLerp = (a,b,k) => Math.round(a + (b-a)*k);
+const rgbLerp = (a,b,k) => 'rgb(' + chLerp(a[0],b[0],k) + ',' + chLerp(a[1],b[1],k) + ',' + chLerp(a[2],b[2],k) + ')';
+function applyStormSky(k){
+  const scene = document.querySelector('a-scene'); if (!scene) return;
+  const D = DAY_SKY, S = STORM_SKY;
+  scene.setAttribute('background', 'color: ' + rgbLerp(D.sky, S.sky, k));
+  scene.setAttribute('fog', 'type: linear; color: ' + rgbLerp(D.fog, S.fog, k) + '; near: ' + (D.near+(S.near-D.near)*k) + '; far: ' + (D.far+(S.far-D.far)*k));
+  const lights = scene.querySelectorAll('a-light');
+  if (lights[0]) { lights[0].setAttribute('intensity', D.amb+(S.amb-D.amb)*k); lights[0].setAttribute('color', rgbLerp(D.ambC, S.ambC, k)); }
+  if (lights[1]) { lights[1].setAttribute('intensity', D.dir+(S.dir-D.dir)*k); lights[1].setAttribute('color', rgbLerp(D.dirC, S.dirC, k)); }
+}
+function updateStormHUD(sheltered, nearFire){
+  const hud = document.getElementById('storm-hud'); if (!hud) return;
+  hud.classList.add('on');
+  const remain = Math.max(0, CYCLE[cyc.phase] - cyc.t);
+  const mm = Math.floor(remain/60), ss = String(Math.floor(remain%60)).padStart(2,'0');
+  const label = { DAY:'☀️ Day', DUSK:'🌅 Dusk', NIGHT:'⛈ STORM', DAWN:'🌄 Dawn' }[cyc.phase];
+  document.getElementById('sh-phase').textContent = label + ' ' + mm + ':' + ss;
+  document.getElementById('sh-flags').textContent =
+    (sheltered ? '🏠' : (cyc.phase === 'NIGHT' ? '❄️' : '')) + (nearFire ? '🔥' : '');
+  const fill = document.getElementById('warmth-fill');
+  fill.style.width = cyc.warmth + '%';
+  fill.style.background = cyc.warmth > 50 ? '#4ade80' : (cyc.warmth > 25 ? '#fbbf24' : '#ef4444');
+}
+function sweep(){
+  cyc.warmth = 60;
+  const fl = document.getElementById('storm-flash');
+  if (fl) { fl.classList.add('on'); setTimeout(() => fl.classList.remove('on'), 700); }
+  toast('⛈ Swept back to camp! Get a roof over your head — a campfire helps too.');
+  playSound('rumble');
+  spawnPlayer();
+}
+function stormTick(){
+  if (mode !== 'survival' || arcade.active) {
+    const hud = document.getElementById('storm-hud'); if (hud) hud.classList.remove('on');
+    return;   // cycle pauses in Creative and Arcade
+  }
+  cyc.t += 0.25;
+  if (cyc.phase === 'DAY'   && cyc.t >= CYCLE.DAY)   { cyc.phase='DUSK';  cyc.t=0; toast('🌅 Dusk — the Storm is coming. Get under cover!'); playSound('rumble'); }
+  else if (cyc.phase === 'DUSK'  && cyc.t >= CYCLE.DUSK)  { cyc.phase='NIGHT'; cyc.t=0; toast('⛈ The Storm is here!'); playSound('rumble'); }
+  else if (cyc.phase === 'NIGHT' && cyc.t >= CYCLE.NIGHT) { cyc.phase='DAWN';  cyc.t=0; toast('🌄 Dawn — the Storm passes. You made it.'); }
+  else if (cyc.phase === 'DAWN'  && cyc.t >= CYCLE.DAWN)  { cyc.phase='DAY';   cyc.t=0; }
+  let k = 0;
+  if (cyc.phase === 'DUSK') k = cyc.t / CYCLE.DUSK;
+  else if (cyc.phase === 'NIGHT') k = 1;
+  else if (cyc.phase === 'DAWN') k = 1 - cyc.t / CYCLE.DAWN;
+  applyStormSky(k);
+  const p = document.getElementById('player'); if (!p) return;
+  const pos = p.object3D.position;
+  const px = Math.floor(pos.x), py = Math.floor(pos.y), pz = Math.floor(pos.z);
+  const sheltered = isSheltered(px, py, pz);
+  const nearFire = nearCampfire(px, py, pz);
+  let d = 0;
+  if (cyc.phase === 'NIGHT' && !sheltered) d -= 0.8;     // −3.2 warmth/s in the open
+  if (nearFire) d += 2.0;                                 // +8/s by a campfire
+  else if (cyc.phase === 'DAY' || cyc.phase === 'DAWN') d += 1.0;  // +4/s in daylight
+  cyc.warmth = Math.max(0, Math.min(100, cyc.warmth + d));
+  updateStormHUD(sheltered, nearFire);
+  if (cyc.warmth <= 0) sweep();
+}
+function startStormCycle(){
+  cyc.phase = 'DAY'; cyc.t = 0; cyc.warmth = 100;
+  refreshCampfires();
+  applyStormSky(0);
+  if (cyc.timer) clearInterval(cyc.timer);
+  cyc.timer = setInterval(stormTick, 250);
+  const hud = document.getElementById('storm-hud'); if (hud) hud.classList.add('on');
+}
+function stopStormCycle(){
+  if (cyc.timer) { clearInterval(cyc.timer); cyc.timer = null; }
+  const hud = document.getElementById('storm-hud'); if (hud) hud.classList.remove('on');
+  applyTheme(currentTheme);
+}
+
+/* ---------- Procedural texture atlas ---------- */
+function createAtlas(){
+  const c=document.createElement('canvas');
+  c.width=c.height=ATLAS_N*TILE_PX;
+  const ctx=c.getContext('2d');
+  ctx.imageSmoothingEnabled=false;
+  const prng=(seed)=>{let s=seed|0||1;return()=>{s=(s*1664525+1013904223)|0;return((s>>>0)/0x100000000)}};
+  const tile=(col,row,fn)=>{ctx.save();ctx.translate(col*TILE_PX,row*TILE_PX);ctx.beginPath();ctx.rect(0,0,TILE_PX,TILE_PX);ctx.clip();fn(ctx);ctx.restore()};
+  const fill=(ctx,col)=>{ctx.fillStyle=col;ctx.fillRect(0,0,TILE_PX,TILE_PX)};
+  const noise=(ctx,base,variance,seed)=>{const r=prng(seed);for(let y=0;y<TILE_PX;y++)for(let x=0;x<TILE_PX;x++){const v=(r()-.5)*2*variance;ctx.fillStyle=`rgb(${Math.max(0,Math.min(255,base[0]+v))|0},${Math.max(0,Math.min(255,base[1]+v))|0},${Math.max(0,Math.min(255,base[2]+v))|0})`;ctx.fillRect(x,y,1,1)}};
+
+  // Grass top
+  tile(0,0,ctx=>{noise(ctx,[86,170,60],22,1);ctx.fillStyle='rgba(50,110,40,.5)';ctx.fillRect(3,5,1,1);ctx.fillRect(10,9,1,1);ctx.fillRect(7,13,1,1)});
+  // Grass side
+  tile(1,0,ctx=>{
+    noise(ctx,[134,96,67],18,2);
+    for(let y=0;y<4;y++)for(let x=0;x<TILE_PX;x++){const v=((x*31+y*17+3)%40)-20;ctx.fillStyle=`rgb(${(86+v)|0},${(170+v)|0},${(60+v)|0})`;ctx.fillRect(x,y,1,1)}
+    for(let x=0;x<TILE_PX;x++)if((x*37+5)%3===0){ctx.fillStyle='rgb(80,160,55)';ctx.fillRect(x,4,1,1);if((x*37)%4===0)ctx.fillRect(x,5,1,1)}
+  });
+  // Dirt
+  tile(2,0,ctx=>noise(ctx,[134,96,67],22,3));
+  // Stone
+  tile(3,0,ctx=>{noise(ctx,[128,128,128],25,4);ctx.fillStyle='rgba(70,70,70,.55)';ctx.fillRect(3,5,2,1);ctx.fillRect(10,2,3,1);ctx.fillRect(7,11,2,2);ctx.fillRect(13,9,1,2)});
+  // Planks
+  tile(4,0,ctx=>{
+    noise(ctx,[172,132,82],14,5);
+    ctx.strokeStyle='rgba(95,65,35,.85)';ctx.lineWidth=1;
+    [0,4,8,12].forEach(y=>{ctx.beginPath();ctx.moveTo(0,y+.5);ctx.lineTo(TILE_PX,y+.5);ctx.stroke()});
+    [[7.5,0,4],[11.5,4,4],[4.5,8,4],[9.5,12,4]].forEach(([x,y,h])=>{ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+h);ctx.stroke()});
+  });
+  // Log side
+  tile(5,0,ctx=>{
+    noise(ctx,[95,65,40],18,6);
+    ctx.strokeStyle='rgba(55,35,20,.75)';ctx.lineWidth=1;
+    [1,4,9,12].forEach(x=>{ctx.beginPath();ctx.moveTo(x+.5,0);ctx.lineTo(x+.5,TILE_PX);ctx.stroke()});
+  });
+  // Log top
+  tile(6,0,ctx=>{
+    noise(ctx,[196,160,110],14,7);
+    ctx.strokeStyle='rgba(110,80,50,.8)';ctx.lineWidth=1;
+    [2,4,6].forEach(r=>{ctx.beginPath();ctx.arc(8,8,r,0,Math.PI*2);ctx.stroke()});
+  });
+  // Cobble
+  tile(7,0,ctx=>{
+    fill(ctx,'#4a4a4a');
+    [[0,0,6,5],[7,0,5,4],[13,0,3,6],[0,6,5,5],[6,5,4,4],[11,7,5,5],[0,12,4,4],[5,10,6,6],[12,13,4,3]].forEach(([x,y,w,h],i)=>{const s=95+((x*17+y*23+i*13)%70);ctx.fillStyle=`rgb(${s},${s},${s})`;ctx.fillRect(x+1,y+1,w-1,h-1);ctx.strokeStyle='#2a2a2a';ctx.strokeRect(x+.5,y+.5,w-1,h-1)});
+  });
+  // Sand
+  tile(0,1,ctx=>noise(ctx,[232,218,155],14,8));
+  // Leaves
+  tile(1,1,ctx=>{
+    noise(ctx,[58,130,50],25,9);
+    for(let i=0;i<18;i++){const x=(i*37)%TILE_PX,y=(i*53)%TILE_PX;ctx.fillStyle=i%2?'rgba(30,80,30,.55)':'rgba(100,180,80,.3)';ctx.fillRect(x,y,1,1)}
+  });
+  // Brick
+  tile(2,1,ctx=>{
+    fill(ctx,'#6a2518');ctx.fillStyle='#c84a2a';
+    ctx.fillRect(1,1,6,6);ctx.fillRect(8,1,7,6);
+    ctx.fillRect(1,9,3,6);ctx.fillRect(5,9,7,6);ctx.fillRect(13,9,3,6);
+    ctx.fillStyle='rgba(255,255,255,.12)';
+    ctx.fillRect(1,1,6,1);ctx.fillRect(8,1,7,1);
+    ctx.fillRect(1,9,3,1);ctx.fillRect(5,9,7,1);ctx.fillRect(13,9,3,1);
+  });
+  // Glass
+  tile(3,1,ctx=>{
+    ctx.fillStyle='rgba(200,230,255,.22)';ctx.fillRect(0,0,TILE_PX,TILE_PX);
+    ctx.strokeStyle='rgba(220,240,255,.9)';ctx.lineWidth=1;
+    ctx.strokeRect(.5,.5,TILE_PX-1,TILE_PX-1);
+    ctx.strokeRect(1.5,1.5,TILE_PX-3,TILE_PX-3);
+    ctx.fillStyle='rgba(255,255,255,.3)';ctx.fillRect(3,3,2,1);ctx.fillRect(3,4,1,3);
+  });
+  // Snow
+  tile(4,1,ctx=>{
+    noise(ctx,[240,242,250],10,10);
+    for(let i=0;i<6;i++){const x=(i*43)%TILE_PX,y=(i*29+1)%TILE_PX;ctx.fillStyle='#fff';ctx.fillRect(x,y,1,1)}
+  });
+  // Ice
+  tile(5,1,ctx=>{
+    ctx.fillStyle='rgba(170,210,240,.55)';ctx.fillRect(0,0,TILE_PX,TILE_PX);
+    for(let y=0;y<TILE_PX;y++)for(let x=0;x<TILE_PX;x++){if((x*7+y*11+3)%5===0){ctx.fillStyle='rgba(255,255,255,.4)';ctx.fillRect(x,y,1,1)}}
+    ctx.strokeStyle='rgba(80,140,200,.55)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(0,3.5);ctx.lineTo(5,7.5);ctx.lineTo(10,5.5);ctx.lineTo(TILE_PX,9.5);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(2,TILE_PX-.5);ctx.lineTo(7,11.5);ctx.lineTo(13,13.5);ctx.lineTo(TILE_PX,11.5);ctx.stroke();
+  });
+  // Obsidian
+  tile(6,1,ctx=>{
+    noise(ctx,[28,18,40],12,11);
+    for(let i=0;i<10;i++){const x=(i*17+3)%TILE_PX,y=(i*23+5)%TILE_PX;ctx.fillStyle='rgba(90,50,140,.45)';ctx.fillRect(x,y,1,1)}
+  });
+  // Quartz
+  tile(7,1,ctx=>{
+    noise(ctx,[232,230,224],8,12);
+    ctx.fillStyle='rgba(190,190,190,.25)';
+    ctx.fillRect(0,3,TILE_PX,1);ctx.fillRect(0,9,TILE_PX,1);ctx.fillRect(0,14,TILE_PX,1);
+  });
+  // Helper: stone-base ore drawer
+  const ore=(col,row,seed,spots)=>{tile(col,row,ctx=>{
+    noise(ctx,[128,128,128],25,4);
+    spots.forEach(s=>{ctx.fillStyle=s.c;ctx.fillRect(s.x,s.y,s.w||2,s.h||2)});
+  })};
+  // Coal Ore
+  ore(0,2,1,[
+    {x:3,y:3,w:3,h:2,c:'#1a1a1a'},{x:9,y:4,w:2,h:3,c:'#1a1a1a'},
+    {x:11,y:9,w:3,h:2,c:'#1a1a1a'},{x:4,y:11,w:2,h:3,c:'#1a1a1a'},
+    {x:7,y:7,w:1,h:1,c:'#000'},
+  ]);
+  // Iron Ore
+  ore(1,2,2,[
+    {x:3,y:3,w:3,h:2,c:'#b88060'},{x:9,y:4,w:2,h:3,c:'#a87050'},
+    {x:11,y:9,w:3,h:2,c:'#b88060'},{x:4,y:11,w:2,h:3,c:'#a87050'},
+    {x:7,y:7,w:1,h:1,c:'#d8a878'},
+  ]);
+  // Gold Ore
+  ore(2,2,3,[
+    {x:3,y:3,w:3,h:2,c:'#f4d040'},{x:9,y:4,w:2,h:3,c:'#e8c030'},
+    {x:11,y:9,w:3,h:2,c:'#f4d040'},{x:4,y:11,w:2,h:3,c:'#e8c030'},
+    {x:7,y:7,w:1,h:1,c:'#fff080'},
+  ]);
+  // Diamond Ore
+  ore(3,2,4,[
+    {x:3,y:3,w:3,h:2,c:'#5cd8e0'},{x:9,y:4,w:2,h:3,c:'#4cc8d0'},
+    {x:11,y:9,w:3,h:2,c:'#5cd8e0'},{x:4,y:11,w:2,h:3,c:'#4cc8d0'},
+    {x:7,y:7,w:1,h:1,c:'#a8f0f4'},
+  ]);
+  // Iron Block
+  tile(4,2,ctx=>{
+    noise(ctx,[208,208,212],8,13);
+    ctx.fillStyle='#7a7a7c';
+    ctx.fillRect(2,2,2,2);ctx.fillRect(TILE_PX-4,2,2,2);
+    ctx.fillRect(2,TILE_PX-4,2,2);ctx.fillRect(TILE_PX-4,TILE_PX-4,2,2);
+    ctx.strokeStyle='rgba(140,140,142,.6)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(4.5,4.5);ctx.lineTo(TILE_PX-4.5,TILE_PX-4.5);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(TILE_PX-4.5,4.5);ctx.lineTo(4.5,TILE_PX-4.5);ctx.stroke();
+  });
+  // Gold Block
+  tile(5,2,ctx=>{
+    noise(ctx,[244,212,80],14,14);
+    ctx.fillStyle='rgba(255,250,180,.55)';
+    ctx.fillRect(2,2,5,1);ctx.fillRect(2,3,3,1);
+    ctx.fillStyle='rgba(170,130,30,.5)';
+    ctx.fillRect(10,13,4,2);ctx.fillRect(13,11,1,2);
+  });
+  // Diamond Block
+  tile(6,2,ctx=>{
+    noise(ctx,[100,220,235],15,15);
+    ctx.fillStyle='rgba(255,255,255,.55)';
+    ctx.fillRect(7,2,2,1);ctx.fillRect(6,3,4,1);ctx.fillRect(5,4,6,1);
+    ctx.fillStyle='rgba(40,170,200,.5)';
+    ctx.fillRect(5,11,6,1);ctx.fillRect(6,12,4,1);ctx.fillRect(7,13,2,1);
+  });
+  // Mossy Cobble
+  tile(7,2,ctx=>{
+    fill(ctx,'#3a4232');
+    [[0,0,6,5],[7,0,5,4],[13,0,3,6],[0,6,5,5],[6,5,4,4],[11,7,5,5],[0,12,4,4],[5,10,6,6],[12,13,4,3]].forEach(([x,y,w,h],i)=>{
+      const s=85+((x*17+y*23+i*13)%65);
+      ctx.fillStyle=`rgb(${s},${s+5},${s})`;
+      ctx.fillRect(x+1,y+1,w-1,h-1);
+      ctx.strokeStyle='#1f2618';ctx.strokeRect(x+.5,y+.5,w-1,h-1);
+    });
+    // Moss patches (greens)
+    ctx.fillStyle='rgba(95,150,55,.85)';
+    ctx.fillRect(2,2,2,1);ctx.fillRect(3,3,1,1);
+    ctx.fillRect(12,5,2,2);ctx.fillRect(14,6,1,1);
+    ctx.fillRect(7,10,3,2);ctx.fillRect(6,12,1,1);
+    ctx.fillRect(13,12,2,1);ctx.fillRect(1,14,2,1);
+  });
+  // Bookshelf side
+  tile(0,3,ctx=>{
+    // Plank-like frame
+    noise(ctx,[172,132,82],10,5);
+    // Top & bottom plank stripe
+    ctx.fillStyle='rgba(95,65,35,.6)';
+    ctx.fillRect(0,0,TILE_PX,2);ctx.fillRect(0,TILE_PX-2,TILE_PX,2);
+    // Book spines
+    const books=[[1,4,2,8,'#a33'],[3,4,1,7,'#3a3'],[4,4,2,8,'#36a'],
+      [6,4,2,7,'#a73'],[8,4,1,8,'#6a3'],[9,4,2,7,'#a3a'],
+      [11,4,2,8,'#aa3'],[13,4,2,7,'#39a']];
+    books.forEach(([x,y,w,h,c])=>{
+      ctx.fillStyle=c;ctx.fillRect(x,y,w,h);
+      ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(x,y,w,1);
+    });
+  });
+  // TNT side
+  tile(1,3,ctx=>{
+    fill(ctx,'#c43818');
+    for(let y=0;y<TILE_PX;y++)for(let x=0;x<TILE_PX;x++){if((x*7+y*11)%5===0){ctx.fillStyle='rgba(255,80,40,.3)';ctx.fillRect(x,y,1,1)}}
+    ctx.fillStyle='#f1d042';ctx.fillRect(0,6,TILE_PX,2);
+    ctx.fillStyle='#7a1a08';ctx.fillRect(0,5,TILE_PX,1);ctx.fillRect(0,8,TILE_PX,1);
+    // "T N T" lettering, tiny
+    ctx.fillStyle='#fff';
+    ctx.fillRect(2,1,3,1);ctx.fillRect(3,1,1,3);
+    ctx.fillRect(7,1,1,3);ctx.fillRect(9,1,1,3);ctx.fillRect(8,2,1,1);
+    ctx.fillRect(11,1,3,1);ctx.fillRect(12,1,1,3);
+  });
+  // TNT top (fuse)
+  tile(2,3,ctx=>{
+    fill(ctx,'#c43818');
+    for(let y=0;y<TILE_PX;y++)for(let x=0;x<TILE_PX;x++){if((x*7+y*11)%5===0){ctx.fillStyle='rgba(255,80,40,.3)';ctx.fillRect(x,y,1,1)}}
+    ctx.fillStyle='#2a2a2a';ctx.fillRect(7,7,2,2);
+    ctx.fillStyle='#ff8030';ctx.fillRect(7,5,2,1);ctx.fillRect(8,4,1,1);
+    ctx.fillStyle='#ffd040';ctx.fillRect(8,3,1,1);
+  });
+  // Netherrack
+  tile(3,3,ctx=>{
+    noise(ctx,[120,30,30],25,17);
+    ctx.fillStyle='rgba(60,15,15,.6)';
+    ctx.fillRect(3,4,2,2);ctx.fillRect(8,2,3,1);ctx.fillRect(5,11,2,3);ctx.fillRect(12,7,2,2);
+    ctx.fillStyle='rgba(180,60,40,.3)';
+    ctx.fillRect(1,1,1,1);ctx.fillRect(13,10,1,1);ctx.fillRect(7,14,1,1);
+  });
+  // Campfire — charred stone ring, roaring amber core, drifting embers
+  tile(4,3,ctx=>{
+    noise(ctx,[40,32,30],14,18);
+    ctx.fillStyle='rgb(24,18,16)';ctx.fillRect(0,12,16,4);
+    ctx.fillStyle='rgb(70,45,28)';ctx.fillRect(2,12,4,2);ctx.fillRect(10,13,4,2);
+    ctx.fillStyle='rgb(255,120,20)';ctx.fillRect(5,6,6,7);
+    ctx.fillStyle='rgb(255,190,40)';ctx.fillRect(6,8,4,5);
+    ctx.fillStyle='rgb(255,240,150)';ctx.fillRect(7,10,2,3);
+    ctx.fillStyle='rgb(255,150,30)';ctx.fillRect(4,9,1,3);ctx.fillRect(11,8,1,4);ctx.fillRect(7,4,2,2);
+    ctx.fillStyle='rgba(255,200,80,.9)';ctx.fillRect(3,3,1,1);ctx.fillRect(12,2,1,1);ctx.fillRect(9,1,1,1);
+  });
+  // Water — the Tees itself: deep blue with drifting ripple lines
+  tile(5,3,ctx=>{
+    ctx.fillStyle='rgba(38,86,190,.68)';ctx.fillRect(0,0,TILE_PX,TILE_PX);
+    for(let y=0;y<TILE_PX;y++)for(let x=0;x<TILE_PX;x++){if((x*5+y*13+2)%7===0){ctx.fillStyle='rgba(90,150,240,.5)';ctx.fillRect(x,y,1,1)}}
+    ctx.strokeStyle='rgba(190,220,255,.55)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(0,4.5);ctx.lineTo(4,3.5);ctx.lineTo(9,5.5);ctx.lineTo(TILE_PX,3.5);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,10.5);ctx.lineTo(6,11.5);ctx.lineTo(11,9.5);ctx.lineTo(TILE_PX,11.5);ctx.stroke();
+  });
+  return c;
+}
+
+/* ---------- World data ---------- */
+const world = new Map();
+const WORLD_R = 14, SEA_LEVEL = 4;
+const key = (x,y,z) => x+','+y+','+z;
+const hasBlock = (x,y,z) => world.has(key(x,y,z));
+const getBlock = (x,y,z) => world.get(key(x,y,z));
+
+function generateTerrain(rand){
+  rand = rand || Math.random;
+  world.clear();
+  const n = new SimplexNoise(rand);
+  const PEAK = { x:9, z:-9, h:12, slope:1.9 };   // the landmark tor — snow-capped, visible from anywhere
+  for (let x=-WORLD_R; x<=WORLD_R; x++) {
+    const riverZ = Math.round(n.noise2D(x*0.05, 77.7) * 4);   // the river winds across the whole map
+    for (let z=-WORLD_R; z<=WORLD_R; z++) {
+      const dRiver = Math.abs(z - riverZ);
+      if (dRiver <= 1) {
+        // River channel: stone floor, sandy bed, two blocks of water
+        world.set(key(x,0,z),'STONE'); world.set(key(x,1,z),'STONE'); world.set(key(x,2,z),'SAND');
+        world.set(key(x,3,z),'WATER');
+        continue;
+      }
+      const a = n.noise2D(x*0.08, z*0.08);
+      const b = n.noise2D(x*0.22, z*0.22)*0.35;
+      let h = Math.floor(SEA_LEVEL + a*5 + b*2 + 3);
+      if (dRiver === 2) h = Math.min(h, SEA_LEVEL + 1);   // gentle sandy banks
+      const pd = Math.hypot(x - PEAK.x, z - PEAK.z);
+      h += Math.max(0, Math.round(PEAK.h - pd * PEAK.slope));   // the tor rises
+      if (h > 16) h = 16;
+      for (let y=0; y<=h; y++) {
+        let t = 'STONE';
+        if (y === h) t = 'GRASS';
+        else if (y >= h-2) t = 'DIRT';
+        if (h <= SEA_LEVEL+1 && y === h) t = 'SAND';
+        // Snow caps on high terrain
+        if (y === h && h >= SEA_LEVEL+8) t = 'SNOW';
+        world.set(key(x,y,z), t);
+      }
+      if (h > SEA_LEVEL+1 && h < SEA_LEVEL+8 && dRiver > 2 && rand() < 0.012) {
+        const th = 4 + ((x*37 + z*19) & 1);
+        for (let k=1; k<=th; k++) world.set(key(x, h+k, z), 'LOG');
+        for (let dx=-2; dx<=2; dx++)
+          for (let dz=-2; dz<=2; dz++)
+            for (let dy=-1; dy<=2; dy++) {
+              if (Math.abs(dx)+Math.abs(dz)+Math.abs(dy) > 3) continue;
+              if (dx===0 && dz===0 && dy<2) continue;
+              const lk = key(x+dx, h+th+dy, z+dz);
+              if (!world.has(lk)) world.set(lk, 'LEAVES');
+            }
+      }
+    }
+  }
+  // Sprinkle ores into existing stone — only replace stone, not surface blocks
+  const ores = [
+    { type: 'COAL_ORE',    chance: 0.018, minY: 1, maxY: 12 },
+    { type: 'IRON_ORE',    chance: 0.010, minY: 1, maxY: 8 },
+    { type: 'GOLD_ORE',    chance: 0.004, minY: 1, maxY: 5 },
+    { type: 'DIAMOND_ORE', chance: 0.002, minY: 1, maxY: 4 },
+    { type: 'OBSIDIAN',    chance: 0.0015, minY: 1, maxY: 3 },
+  ];
+  for (const [k, type] of world) {
+    if (type !== 'STONE') continue;
+    const [x,y,z] = k.split(',').map(Number);
+    for (const o of ores) {
+      if (y < o.minY || y > o.maxY) continue;
+      if (rand() < o.chance) { world.set(k, o.type); break; }
+    }
+  }
+}
+
+/* ---------- Face defs. CCW from outside. Triangles: 0,1,2 + 0,2,3 ---------- */
+const FACES = [
+  { n:[ 1, 0, 0], which:'side',   verts:[[1,0,1],[1,0,0],[1,1,0],[1,1,1]] },
+  { n:[-1, 0, 0], which:'side',   verts:[[0,0,0],[0,0,1],[0,1,1],[0,1,0]] },
+  { n:[ 0, 1, 0], which:'top',    verts:[[0,1,1],[1,1,1],[1,1,0],[0,1,0]] },
+  { n:[ 0,-1, 0], which:'bottom', verts:[[0,0,0],[1,0,0],[1,0,1],[0,0,1]] },
+  { n:[ 0, 0, 1], which:'side',   verts:[[0,0,1],[1,0,1],[1,1,1],[0,1,1]] },
+  { n:[ 0, 0,-1], which:'side',   verts:[[1,0,0],[0,0,0],[0,1,0],[1,1,0]] },
+];
+
+let atlasTex = null, atlasDataURL = '';
+const worldGroup = { opaque:null, trans:null };
+
+function buildWorldMesh(){
+  refreshCampfires();
+  const op = { p:[], n:[], u:[], i:[] };
+  const tr = { p:[], n:[], u:[], i:[] };
+  const INSET = 0.25 / (ATLAS_N*TILE_PX);
+
+  const tileUV = (col,row) => {
+    const u0 = col/ATLAS_N + INSET;
+    const u1 = (col+1)/ATLAS_N - INSET;
+    const v0 = 1 - (row+1)/ATLAS_N + INSET;
+    const v1 = 1 - row/ATLAS_N - INSET;
+    return [u0,v0,u1,v1];
+  };
+
+  const addFace = (b, x,y,z, face, tile) => {
+    const base = b.p.length/3;
+    const [u0,v0,u1,v1] = tileUV(tile[0], tile[1]);
+    const uvc = [[u0,v0],[u1,v0],[u1,v1],[u0,v1]];
+    for (let i=0;i<4;i++){
+      b.p.push(x+face.verts[i][0], y+face.verts[i][1], z+face.verts[i][2]);
+      b.n.push(face.n[0], face.n[1], face.n[2]);
+      b.u.push(uvc[i][0], uvc[i][1]);
+    }
+    b.i.push(base, base+1, base+2, base, base+2, base+3);
+  };
+
+  for (const [k, type] of world) {
+    const info = BLOCKS[type]; if (!info) continue;
+    const parts = k.split(','); const x=+parts[0], y=+parts[1], z=+parts[2];
+    const transparent = !!info.transparent;
+    const bucket = transparent ? tr : op;
+    for (let f=0; f<6; f++) {
+      const face = FACES[f];
+      const neighbor = getBlock(x+face.n[0], y+face.n[1], z+face.n[2]);
+      let render = false;
+      if (!neighbor) render = true;
+      else {
+        const nInfo = BLOCKS[neighbor];
+        if (transparent) { if (neighbor !== type) render = true; }
+        else { if (nInfo && nInfo.transparent) render = true; }
+      }
+      if (!render) continue;
+      const tile = info[face.which] || info.all;
+      if (!tile) continue;
+      addFace(bucket, x,y,z, face, tile);
+    }
+  }
+
+  if (!atlasTex) {
+    const c = createAtlas();
+    atlasDataURL = c.toDataURL();
+    atlasTex = new THREE.CanvasTexture(c);
+    atlasTex.magFilter = THREE.NearestFilter;
+    atlasTex.minFilter = THREE.NearestFilter;
+    atlasTex.generateMipmaps = false;
+    atlasTex.wrapS = atlasTex.wrapT = THREE.ClampToEdgeWrapping;
+    atlasTex.needsUpdate = true;
+  }
+
+  const worldEl = document.getElementById('world');
+  const disposeMesh = (m) => { if(!m) return; worldEl.object3D.remove(m); m.geometry && m.geometry.dispose(); m.material && m.material.dispose(); };
+  disposeMesh(worldGroup.opaque); worldGroup.opaque = null;
+  disposeMesh(worldGroup.trans);  worldGroup.trans = null;
+
+  const makeMesh = (b, transparent) => {
+    if (b.p.length === 0) return null;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(b.p, 3));
+    g.setAttribute('normal',   new THREE.Float32BufferAttribute(b.n, 3));
+    g.setAttribute('uv',       new THREE.Float32BufferAttribute(b.u, 2));
+    g.setIndex(b.i);
+    const m = new THREE.MeshLambertMaterial({
+      map: atlasTex, transparent, alphaTest: transparent?0.05:0, side: THREE.FrontSide
+    });
+    return new THREE.Mesh(g, m);
+  };
+  worldGroup.opaque = makeMesh(op, false);
+  if (worldGroup.opaque) worldEl.object3D.add(worldGroup.opaque);
+  worldGroup.trans = makeMesh(tr, true);
+  if (worldGroup.trans) { worldGroup.trans.renderOrder = 2; worldEl.object3D.add(worldGroup.trans); }
+}
+
+/* ---------- DDA voxel raycast ---------- */
+function voxelRaycast(origin, direction, maxDist){
+  const dir = direction.clone().normalize();
+  if (dir.lengthSq() === 0) return null;
+  let x = Math.floor(origin.x), y = Math.floor(origin.y), z = Math.floor(origin.z);
+  const sX = dir.x>0?1:dir.x<0?-1:0;
+  const sY = dir.y>0?1:dir.y<0?-1:0;
+  const sZ = dir.z>0?1:dir.z<0?-1:0;
+  const tDx = sX?Math.abs(1/dir.x):Infinity;
+  const tDy = sY?Math.abs(1/dir.y):Infinity;
+  const tDz = sZ?Math.abs(1/dir.z):Infinity;
+  let tMx = sX>0?(x+1-origin.x)/dir.x : sX<0?(x-origin.x)/dir.x : Infinity;
+  let tMy = sY>0?(y+1-origin.y)/dir.y : sY<0?(y-origin.y)/dir.y : Infinity;
+  let tMz = sZ>0?(z+1-origin.z)/dir.z : sZ<0?(z-origin.z)/dir.z : Infinity;
+  let normal = [0,0,0], t = 0, safety = 0;
+  while (safety++ < 128) {
+    if (hasBlock(x,y,z)) return { x, y, z, normal, distance: t };
+    if (tMx < tMy && tMx < tMz) { x += sX; t = tMx; tMx += tDx; normal = [-sX,0,0]; }
+    else if (tMy < tMz)         { y += sY; t = tMy; tMy += tDy; normal = [0,-sY,0]; }
+    else                         { z += sZ; t = tMz; tMz += tDz; normal = [0,0,-sZ]; }
+    if (t > maxDist) return null;
+  }
+  return null;
+}
+
+/* ---------- A-Frame-dependent code runs after A-Frame loads ---------- */
+function registerAframeComponents(){
+AFRAME.registerComponent('player-controller', {
+  init: function(){
+    this.velocity = new THREE.Vector3();
+    this.onGround = false;
+    this.fly = false;
+    this.joystick = { active:false, x:0, y:0 };
+    this.jumpRequested = false;
+    this._fwd = new THREE.Vector3();
+    this._right = new THREE.Vector3();
+    this._camDir = new THREE.Vector3();
+    this.keys = {};
+    this._setupJoystick();
+    this._setupKeyboard();
+  },
+  _setupJoystick: function(){
+    const joy = document.getElementById('joystick');
+    const knob = joy.querySelector('.knob');
+    const s = this.joystick;
+    const R = 44;
+    let touchId = null, cx = 0, cy = 0;
+    const updateCenter = () => { const r = joy.getBoundingClientRect(); cx = r.left+r.width/2; cy = r.top+r.height/2; };
+    const getPos = (e) => {
+      if (e.touches !== undefined) {
+        for (const t of e.touches) if (t.identifier === touchId) return {x:t.clientX, y:t.clientY};
+        return null;
+      }
+      return { x:e.clientX, y:e.clientY };
+    };
+    const start = (e) => {
+      if (touchId !== null) return;
+      if (e.changedTouches) touchId = e.changedTouches[0].identifier;
+      else touchId = 'mouse';
+      updateCenter();
+      s.active = true;
+      e.preventDefault();
+    };
+    const move = (e) => {
+      if (!s.active) return;
+      const p = getPos(e); if (!p) return;
+      let dx = p.x - cx, dy = p.y - cy;
+      const d = Math.hypot(dx, dy);
+      if (d > R) { dx = dx/d*R; dy = dy/d*R; }
+      knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+      s.x = dx/R; s.y = dy/R;
+      e.preventDefault();
+    };
+    const end = (e) => {
+      if (e.changedTouches) {
+        let found = false;
+        for (const t of e.changedTouches) if (t.identifier === touchId) { found = true; break; }
+        if (!found) return;
+      }
+      touchId = null; s.active = false; s.x = s.y = 0;
+      knob.style.transform = 'translate(-50%, -50%)';
+    };
+    joy.addEventListener('touchstart', start, { passive:false });
+    window.addEventListener('touchmove', move, { passive:false });
+    window.addEventListener('touchend', end);
+    window.addEventListener('touchcancel', end);
+    joy.addEventListener('mousedown', start);
+    window.addEventListener('mousemove', (e)=>{ if (touchId==='mouse') move(e); });
+    window.addEventListener('mouseup', ()=>{ if (touchId==='mouse'){ touchId=null; s.active=false; s.x=s.y=0; knob.style.transform='translate(-50%,-50%)'; } });
+  },
+  _setupKeyboard: function(){
+    const MOVE = ['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright',' ','shift'];
+    const HOTBAR = ['1','2','3','4','5','6','7','8','9','0'];
+    const self = this;
+    window.addEventListener('keydown', (e) => {
+      const k = (e.key || '').toLowerCase();
+      if (MOVE.includes(k)) {
+        self.keys[k] = true;
+        e.preventDefault();
+        if (k === ' ' && !e.repeat) self.jumpRequested = true;
+        return;
+      }
+      if (e.repeat) return;
+      if (HOTBAR.includes(k)) {
+        const idx = k === '0' ? 9 : parseInt(k, 10) - 1;
+        if (idx < BLOCK_IDS.length) { selectedIndex = idx; updateHotbar(); }
+        e.preventDefault();
+      } else if (k === 'q') {
+        selectedIndex = (selectedIndex - 1 + BLOCK_IDS.length) % BLOCK_IDS.length;
+        updateHotbar();
+      } else if (k === 'e') {
+        selectedIndex = (selectedIndex + 1) % BLOCK_IDS.length;
+        updateHotbar();
+      } else if (k === 'f') {
+        self._toggleFly();
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      self.keys[(e.key || '').toLowerCase()] = false;
+    });
+    // Lose all key state if window loses focus (prevents stuck keys)
+    window.addEventListener('blur', () => { self.keys = {}; });
+    // Scroll wheel cycles hotbar
+    window.addEventListener('wheel', (e) => {
+      if (Math.abs(e.deltaY) < 1) return;
+      if (e.deltaY > 0) selectedIndex = (selectedIndex + 1) % BLOCK_IDS.length;
+      else selectedIndex = (selectedIndex - 1 + BLOCK_IDS.length) % BLOCK_IDS.length;
+      updateHotbar();
+    }, { passive: true });
+  },
+  _toggleFly: function(){
+    this.fly = !this.fly;
+    this.velocity.set(0,0,0);
+    const fb = document.getElementById('btn-fly');
+    if (fb) fb.classList.toggle('on', this.fly);
+    toast(this.fly ? 'Fly mode ON' : 'Fly mode OFF');
+  },
+  jump: function(){ this.jumpRequested = true; },
+  collides: function(px, py, pz){
+    const r = 0.3, h = 1.75;
+    const xmin = Math.floor(px-r), xmax = Math.floor(px+r);
+    const ymin = Math.floor(py),   ymax = Math.floor(py+h);
+    const zmin = Math.floor(pz-r), zmax = Math.floor(pz+r);
+    for (let bx=xmin; bx<=xmax; bx++)
+      for (let by=ymin; by<=ymax; by++)
+        for (let bz=zmin; bz<=zmax; bz++){
+          const b = getBlock(bx,by,bz);
+          if (b && b !== 'WATER') return true;   // you can wade the river
+        }
+    return false;
+  },
+  tick: function(t, dtMs){
+    const dt = Math.min(dtMs/1000, 0.05);
+    const pos = this.el.object3D.position;
+    const camEl = this.el.querySelector('[camera]');
+    if (!camEl) return;
+
+    // Extract yaw from camera quaternion (robust across THREE versions)
+    const yawEuler = new THREE.Euler(0, 0, 0, 'YXZ');
+    yawEuler.setFromQuaternion(camEl.object3D.quaternion, 'YXZ');
+    const yaw = yawEuler.y;
+    // Camera looks down local -Z, so world forward = (-sin(yaw), 0, -cos(yaw))
+    this._fwd.set(-Math.sin(yaw), 0, -Math.cos(yaw));
+    // right = forward × up
+    this._right.set(-this._fwd.z, 0, this._fwd.x);
+
+    // Combine keyboard with joystick into a single input vector
+    let kx = 0, ky = 0;
+    if (this.keys['w'] || this.keys['arrowup'])    ky -= 1;
+    if (this.keys['s'] || this.keys['arrowdown'])  ky += 1;
+    if (this.keys['a'] || this.keys['arrowleft'])  kx -= 1;
+    if (this.keys['d'] || this.keys['arrowright']) kx += 1;
+    let mvX = this.joystick.x + kx;
+    let mvY = this.joystick.y + ky;
+    const mag = Math.hypot(mvX, mvY);
+    if (mag > 1) { mvX /= mag; mvY /= mag; }
+
+    const sprint = !!this.keys['shift'] && !this.fly;
+    const speed = (this.fly ? 8 : 4.5) * (sprint ? 1.6 : 1);
+    const mvFwd = -mvY;
+    const mvStr =  mvX;
+    const vx = (this._fwd.x*mvFwd + this._right.x*mvStr) * speed;
+    const vz = (this._fwd.z*mvFwd + this._right.z*mvStr) * speed;
+
+    // Horizontal with step-up
+    const nx = pos.x + vx*dt;
+    if (!this.collides(nx, pos.y, pos.z)) pos.x = nx;
+    else if (this.onGround && !this.fly && !this.collides(nx, pos.y+1, pos.z)) { pos.x = nx; pos.y += 1; }
+    const nz = pos.z + vz*dt;
+    if (!this.collides(pos.x, pos.y, nz)) pos.z = nz;
+    else if (this.onGround && !this.fly && !this.collides(pos.x, pos.y+1, nz)) { pos.z = nz; pos.y += 1; }
+
+    // Vertical
+    if (this.fly) {
+      // Space/jump = fly up, Shift = fly down
+      let vy = 0;
+      if (this.jumpRequested || this.keys[' ']) vy =  speed;
+      if (this.keys['shift'])                   vy = -speed;
+      this.jumpRequested = false;
+      const ny = pos.y + vy*dt;
+      if (!this.collides(pos.x, ny, pos.z)) pos.y = ny;
+      this.velocity.y = 0;
+      this.onGround = false;
+    } else {
+      if (this.jumpRequested && this.onGround) { this.velocity.y = 9; this.onGround = false; }
+      this.jumpRequested = false;
+      this.velocity.y -= 25*dt;
+      if (this.velocity.y < -30) this.velocity.y = -30;
+      const ny = pos.y + this.velocity.y*dt;
+      if (this.collides(pos.x, ny, pos.z)) {
+        if (this.velocity.y < 0) { pos.y = Math.floor(ny) + 1; this.onGround = true; }
+        else if (this.velocity.y > 0) { pos.y = Math.floor(ny + 1.75) - 1.75; }
+        this.velocity.y = 0;
+      } else {
+        pos.y = ny;
+        this.onGround = false;
+      }
+    }
+
+    if (pos.y < -20) { pos.set(0.5, 25, 0.5); this.velocity.set(0,0,0); }
+  }
+});
+
+/* ---------- Block highlight ---------- */
+AFRAME.registerComponent('touch-look', {
+  init: function(){
+    this.yaw = 0; this.pitch = 0;
+    this.active = false;
+    this.lastX = 0; this.lastY = 0;
+    this.touchId = null;
+
+    const isUIBlocking = (target) => {
+      let el = target;
+      while (el && el !== document.body) {
+        if (el.id === 'joystick' || el.id === 'intro') return true;
+        if (el.classList && (
+          el.classList.contains('btn') ||
+          el.classList.contains('slot') ||
+          el.classList.contains('tap') ||
+          el.classList.contains('knob')
+        )) return true;
+        el = el.parentElement;
+      }
+      return false;
+    };
+
+    const start = (e) => {
+      if (this.touchId !== null) return;
+      const pt = e.changedTouches ? e.changedTouches[0] : e;
+      const tgt = pt.target || e.target;
+      if (isUIBlocking(tgt)) return;
+      this.active = true;
+      this.lastX = pt.clientX;
+      this.lastY = pt.clientY;
+      this.startX = pt.clientX;
+      this.startY = pt.clientY;
+      this.totalDrag = 0;
+      this.mouseButton = e.changedTouches ? null : (e.button || 0);
+      this.touchId = e.changedTouches ? pt.identifier : 'mouse';
+    };
+    const move = (e) => {
+      if (!this.active) return;
+      let pt = null;
+      if (e.touches) {
+        for (const t of e.touches) if (t.identifier === this.touchId) { pt = t; break; }
+        if (!pt) return;
+      } else {
+        if (this.touchId !== 'mouse') return;
+        pt = e;
+      }
+      const dx = pt.clientX - this.lastX;
+      const dy = pt.clientY - this.lastY;
+      this.lastX = pt.clientX; this.lastY = pt.clientY;
+      this.totalDrag += Math.abs(dx) + Math.abs(dy);
+      this.yaw   -= dx * 0.0035;
+      this.pitch -= dy * 0.0035;
+      const LIM = Math.PI/2 - 0.01;
+      if (this.pitch >  LIM) this.pitch =  LIM;
+      if (this.pitch < -LIM) this.pitch = -LIM;
+      const o = this.el.object3D;
+      o.rotation.order = 'YXZ';
+      o.rotation.y = this.yaw;
+      o.rotation.x = this.pitch;
+      o.rotation.z = 0;
+    };
+    const end = (e) => {
+      if (e.changedTouches) {
+        let gone = true;
+        for (const t of e.changedTouches) if (t.identifier === this.touchId) { gone = false; break; }
+        if (gone) return; // our touch wasn't in this batch
+      } else if (this.touchId !== 'mouse') return;
+      // Tap-vs-drag for mouse: small movement = action click
+      if (this.touchId === 'mouse' && this.totalDrag < 6) {
+        if (this.mouseButton === 0) doBreak();
+        else if (this.mouseButton === 2) doPlace();
+      }
+      this.active = false; this.touchId = null;
+    };
+
+    window.addEventListener('touchstart', start, { passive: true });
+    window.addEventListener('touchmove',  move,  { passive: true });
+    window.addEventListener('touchend',   end);
+    window.addEventListener('touchcancel',end);
+    window.addEventListener('mousedown',  start);
+    window.addEventListener('mousemove',  move);
+    window.addEventListener('mouseup',    end);
+  }
+});
+
+AFRAME.registerComponent('block-highlighter', {
+  init: function(){
+    const g = new THREE.BoxGeometry(1.005, 1.005, 1.005);
+    const e = new THREE.EdgesGeometry(g);
+    const m = new THREE.LineBasicMaterial({ color: 0x000000 });
+    const lines = new THREE.LineSegments(e, m);
+    this.el.object3D.add(lines);
+  }
+});
+} /* end registerAframeComponents */
+
+/* ---------- State & UI ---------- */
+/* ---------- Themes ---------- */
+const THEMES = {
+  Day:    { sky:'#87CEEB', fog:'#87CEEB', near:30, far:55, amb:0.65, ambC:'#ffffff', dir:0.9,  dirC:'#fff3d6' },
+  Sunset: { sky:'#ff9966', fog:'#ff8866', near:18, far:48, amb:0.55, ambC:'#ffd0a8', dir:0.85, dirC:'#ffaa66' },
+  Night:  { sky:'#0a1530', fog:'#142040', near:14, far:35, amb:0.32, ambC:'#aabbff', dir:0.4,  dirC:'#aabbff' },
+  Snow:   { sky:'#d8e8f0', fog:'#e8f0ff', near:18, far:42, amb:0.75, ambC:'#ffffff', dir:0.85, dirC:'#e8f0ff' },
+  Nether: { sky:'#4a1a0a', fog:'#2a0a05', near:10, far:26, amb:0.55, ambC:'#ff8866', dir:0.7,  dirC:'#ff8844' },
+};
+let currentTheme = localStorage.getItem('voxelcraft:theme') || 'Day';
+function applyTheme(name){
+  const t = THEMES[name]; if (!t) return;
+  currentTheme = name;
+  try { localStorage.setItem('voxelcraft:theme', name); } catch(e){}
+  const scene = document.querySelector('a-scene'); if (!scene) return;
+  scene.setAttribute('background', 'color: ' + t.sky);
+  scene.setAttribute('fog', 'type: linear; color: ' + t.fog + '; near: ' + t.near + '; far: ' + t.far);
+  const lights = scene.querySelectorAll('a-light');
+  if (lights[0]) { lights[0].setAttribute('intensity', t.amb); lights[0].setAttribute('color', t.ambC); }
+  if (lights[1]) { lights[1].setAttribute('intensity', t.dir); lights[1].setAttribute('color', t.dirC); }
+  const nameEl = document.getElementById('m-theme-name');
+  if (nameEl) nameEl.textContent = name;
+}
+function cycleTheme(){
+  if (mode === 'survival' && !arcade.active) { toast('The sky follows the day and the Storm in Survival'); return; }
+  const names = Object.keys(THEMES);
+  const idx = names.indexOf(currentTheme);
+  applyTheme(names[(idx + 1) % names.length]);
+  toast('Theme: ' + currentTheme);
+}
+
+/* ---------- Build templates (DSL) ---------- */
+const T_LEGEND = {
+  P:'WOOD', C:'COBBLE', G:'GLASS', L:'LOG', E:'LEAVES', S:'SAND',
+  D:'DIRT', B:'BRICK', O:'OBSIDIAN', Q:'QUARTZ', K:'STONE',
+  I:'IRON_BLOCK', Y:'GOLD_BLOCK', N:'SNOW', M:'MOSSY', H:'BOOKSHELF',
+  W:'ICE', T:'TNT',
+  '.':null, ' ':null,
+};
+// Each template: layers[y][z] = string of chars indexed by x.
+const TEMPLATES = [
+  { name:'🌲 Tree', desc:'A tall oak with a green canopy. Great as a landmark.',
+    layers:[
+      ['...','.L.','...'],
+      ['...','.L.','...'],
+      ['EEE','ELE','EEE'],
+      ['EEE','ELE','EEE'],
+      ['.E.','EEE','.E.']
+    ]},
+  { name:'🏠 Cottage', desc:'5×5 wooden cottage with glass windows and a doorway in front.',
+    layers:[
+      ['PPPPP','PPPPP','PPPPP','PPPPP','PPPPP'],
+      ['PPPPP','P...P','P...P','P...P','PP.PP'],
+      ['PGPGP','P...P','P...P','P...P','PG.GP'],
+      ['PPPPP','P...P','P...P','P...P','PPPPP'],
+      ['CCCCC','CCCCC','CCCCC','CCCCC','CCCCC']
+    ]},
+  { name:'🗼 Watchtower', desc:'Stone-and-plank watchtower with a viewing platform up top.',
+    layers:[
+      ['CCC','CCC','CCC'],
+      ['CCC','C.C','CCC'],
+      ['PPP','P.P','PPP'],
+      ['PGP','P.P','PGP'],
+      ['PPP','P.P','PPP'],
+      ['PGP','P.P','PGP'],
+      ['C.C','...','C.C']
+    ]},
+  { name:'🔺 Pyramid', desc:'Seven-block-wide sandstone pyramid. Great for hiding treasure inside.',
+    layers:[
+      ['SSSSSSS','SSSSSSS','SSSSSSS','SSSSSSS','SSSSSSS','SSSSSSS','SSSSSSS'],
+      ['.......','.SSSSS.','.SSSSS.','.SSSSS.','.SSSSS.','.SSSSS.','.......'],
+      ['.......','.......','..SSS..','..SSS..','..SSS..','.......','.......'],
+      ['.......','.......','.......','...S...','.......','.......','.......']
+    ]},
+  { name:'🏰 Castle Keep', desc:'7×7 cobble fortress with crenellated battlements.',
+    layers:[
+      ['CCCCCCC','C.....C','C.....C','C.....C','C.....C','C.....C','CCCCCCC'],
+      ['CCCCCCC','C.....C','C.....C','C.....C','C.....C','C.....C','CCCCCCC'],
+      ['CGCGCGC','C.....C','G.....G','C.....C','G.....G','C.....C','CGCGCGC'],
+      ['CCCCCCC','C.....C','C.....C','C.....C','C.....C','C.....C','CCCCCCC'],
+      ['C.C.C.C','.......','C.....C','.......','C.....C','.......','C.C.C.C']
+    ]},
+  { name:'⛲ Fountain', desc:'Cobble fountain with an ice-water centre. Quiet, classy.',
+    layers:[
+      ['CCCCC','CCCCC','CCCCC','CCCCC','CCCCC'],
+      ['CCCCC','C...C','C.W.C','C...C','CCCCC'],
+      ['.....','.....','..W..','.....','.....']
+    ]},
+  { name:'🌉 Transporter Bridge', desc:'Two iron towers, a high span, and a hanging gondola — pure Teesside.',
+    layers:[
+      ['I.........I','...........','I.........I'],
+      ['I.........I','...........','I.........I'],
+      ['I.........I','....PPP....','I.........I'],
+      ['I.........I','.....P.....','I.........I'],
+      ['I.........I','.....P.....','I.........I'],
+      ['I.........I','.....P.....','I.........I'],
+      ['I.........I','IIIIIIIIIII','I.........I'],
+      ['...........','IIIIIIIIIII','...........']
+    ]},
+  { name:'📚 Bookshelf Library', desc:'A cosy little nook filled with bookshelves.',
+    layers:[
+      ['PPPPP','PPPPP','PPPPP','PPPPP','PPPPP'],
+      ['HHHHH','H...H','H...H','H...H','HHHHH'],
+      ['HHHHH','H...H','H...H','H...H','HHHHH'],
+      ['CCCCC','CCCCC','CCCCC','CCCCC','CCCCC']
+    ]}
+];
+
+function placeTemplate(template, ox, oy, oz){
+  template.layers.forEach((layer, y) => {
+    layer.forEach((row, z) => {
+      for (let x = 0; x < row.length; x++){
+        const type = T_LEGEND[row[x]];
+        if (type === undefined || type === null) continue;
+        world.set(key(ox+x, oy+y, oz+z), type);
+      }
+    });
+  });
+  buildWorldMesh();
+}
+function placeAtPlayer(template){
+  const playerEl = document.getElementById('player');
+  const pos = playerEl.object3D.position;
+  const camEl = playerEl.querySelector('[camera]');
+  const yawEuler = new THREE.Euler(0, 0, 0, 'YXZ');
+  yawEuler.setFromQuaternion(camEl.object3D.quaternion, 'YXZ');
+  const yaw = yawEuler.y;
+  const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+  const w = template.layers[0][0].length;
+  const d = template.layers[0].length;
+  const cx = Math.floor(pos.x + fx * Math.max(3, Math.ceil(w/2) + 1));
+  const cz = Math.floor(pos.z + fz * Math.max(3, Math.ceil(d/2) + 1));
+  const ox = cx - Math.floor(w / 2);
+  const oz = cz - Math.floor(d / 2);
+  const oy = Math.floor(pos.y);
+  if (survivalOn()) { toast('Templates are Creative-only — in Survival you build it yourself!'); return; }
+  placeTemplate(template, ox, oy, oz);
+  closeModal('guide-modal');
+  toast('Built: ' + template.name);
+}
+
+/* ---------- Arcade mode ---------- */
+const arcade = {
+  active: false, timeLeft: 0, score: 0, timer: null,
+  highScore: parseInt(localStorage.getItem('voxelcraft:arcadeHigh') || '0', 10)
+};
+const ARCADE_DURATION = 60;
+const ARCADE_SCORES = { COAL_ORE:1, IRON_ORE:3, GOLD_ORE:5, OBSIDIAN:8, DIAMOND_ORE:10 };
+
+function generateArcadeWorld(){
+  world.clear();
+  const n = new SimplexNoise(Math.random);
+  for (let x=-WORLD_R; x<=WORLD_R; x++) {
+    for (let z=-WORLD_R; z<=WORLD_R; z++) {
+      const a = n.noise2D(x*0.10, z*0.10);
+      const h = Math.floor(SEA_LEVEL + a*3 + 4);
+      for (let y=0; y<=h; y++) {
+        let t = 'STONE';
+        if (y === h) t = 'GRASS';
+        else if (y >= h-1) t = 'DIRT';
+        world.set(key(x,y,z), t);
+      }
+    }
+  }
+  // Dense ore distribution for arcade
+  for (const [k, type] of world) {
+    if (type !== 'STONE') continue;
+    const r = Math.random();
+    if (r < 0.06)       world.set(k, 'COAL_ORE');
+    else if (r < 0.11)  world.set(k, 'IRON_ORE');
+    else if (r < 0.14)  world.set(k, 'GOLD_ORE');
+    else if (r < 0.155) world.set(k, 'DIAMOND_ORE');
+    else if (r < 0.16)  world.set(k, 'OBSIDIAN');
+  }
+}
+function showArcadeConfirm(){
+  document.getElementById('arcade-highscore').textContent = arcade.highScore;
+  openModal('arcade-confirm');
+}
+function startArcade(){
+  closeModal('arcade-confirm');
+  closeModal('arcade-end');
+  // Back up the sandbox world before clobbering it
+  try { localStorage.setItem('voxelcraft:world', JSON.stringify([...world])); } catch(e){}
+  arcade.active = true;
+  if (mode === 'survival') applyStormSky(0);   // arcade always plays in daylight
+  arcade.score = 0;
+  arcade.timeLeft = ARCADE_DURATION;
+  generateArcadeWorld();
+  buildWorldMesh();
+  spawnPlayer();
+  document.getElementById('arcade-time').textContent = arcade.timeLeft;
+  document.getElementById('arcade-score').textContent = '0';
+  document.getElementById('arcade-hud').classList.add('on');
+  if (arcade.timer) clearInterval(arcade.timer);
+  arcade.timer = setInterval(() => {
+    arcade.timeLeft--;
+    document.getElementById('arcade-time').textContent = arcade.timeLeft;
+    if (arcade.timeLeft <= 0) endArcade();
+  }, 1000);
+}
+function endArcade(){
+  clearInterval(arcade.timer); arcade.timer = null;
+  arcade.active = false;
+  document.getElementById('arcade-hud').classList.remove('on');
+  const isNewHigh = arcade.score > arcade.highScore;
+  if (isNewHigh) {
+    arcade.highScore = arcade.score;
+    try { localStorage.setItem('voxelcraft:arcadeHigh', String(arcade.highScore)); } catch(e){}
+  }
+  document.getElementById('arcade-final').textContent = arcade.score;
+  document.getElementById('arcade-final-high').textContent = arcade.highScore;
+  document.getElementById('arcade-newhigh').style.display = isNewHigh ? 'block' : 'none';
+  openModal('arcade-end');
+}
+function exitArcade(){
+  closeModal('arcade-end');
+  if (arcade.timer) { clearInterval(arcade.timer); arcade.timer = null; }
+  arcade.active = false;
+  document.getElementById('arcade-hud').classList.remove('on');
+  // Restore saved sandbox world
+  const saved = localStorage.getItem('voxelcraft:world');
+  if (saved) {
+    try {
+      const arr = JSON.parse(saved); world.clear();
+      for (const [k,v] of arr) world.set(k, v);
+    } catch(e) { generateTerrain(); }
+  } else generateTerrain();
+  buildWorldMesh();
+  spawnPlayer();
+  if (mode === 'survival') startStormCycle();   // fresh morning back at the sandbox
+}
+
+/* ---------- Modal helpers ---------- */
+function openModal(id){ const m = document.getElementById(id); if (m) m.classList.add('open'); }
+function closeModal(id){ const m = document.getElementById(id); if (m) m.classList.remove('open'); }
+
+let selectedIndex = (() => {
+  const saved = parseInt(localStorage.getItem('voxelcraft:slot'), 10);
+  return Number.isFinite(saved) && saved >= 0 && saved < 30 ? saved : 0;
+})();
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._id);
+  toast._id = setTimeout(()=>t.classList.remove('show'), 1400);
+}
+
+function updateHotbar(){
+  if (selectedIndex >= BLOCK_IDS.length) selectedIndex = 0;
+  try { localStorage.setItem('voxelcraft:slot', String(selectedIndex)); } catch(e){}
+  const hb = document.getElementById('hotbar');
+  hb.innerHTML = '';
+  BLOCK_IDS.forEach((id, i) => {
+    const info = BLOCKS[id];
+    const slot = document.createElement('div');
+    slot.className = 'slot' + (i===selectedIndex?' active':'');
+    const tile = info.side || info.all;
+    const displayPx = 36;
+    slot.style.backgroundImage = `url(${atlasDataURL})`;
+    slot.style.backgroundSize = `${ATLAS_N*displayPx}px ${ATLAS_N*displayPx}px`;
+    slot.style.backgroundPosition = `-${tile[0]*displayPx}px -${tile[1]*displayPx}px`;
+    slot.title = info.name;
+    if (mode === 'survival') {
+      const c = invCount(id);
+      if (c > 0) { const b = document.createElement('span'); b.className = 'cnt'; b.textContent = c > 99 ? '99+' : c; slot.appendChild(b); }
+      else slot.classList.add('empty');
+    }
+    slot.addEventListener('click', () => { selectedIndex = i; updateHotbar(); });
+    hb.appendChild(slot);
+  });
+  const nameEl = document.getElementById('active-name');
+  if (nameEl) {
+    const id = BLOCK_IDS[selectedIndex];
+    nameEl.textContent = mode === 'survival'
+      ? BLOCKS[id].name + ' ×' + invCount(id) + '  ·  ⛏️ ' + toolName()
+      : BLOCKS[id].name;
+  }
+}
+
+function getCameraRay(){
+  const cam = document.querySelector('#player [camera]').object3D;
+  const origin = new THREE.Vector3(); cam.getWorldPosition(origin);
+  // getWorldDirection returns local +Z (opposite of camera's look direction).
+  // Negate to get the actual look direction.
+  const dir = new THREE.Vector3(); cam.getWorldDirection(dir); dir.multiplyScalar(-1);
+  return { origin, dir };
+}
+
+function doBreak(){
+  const { origin, dir } = getCameraRay();
+  const hit = voxelRaycast(origin, dir, 8);
+  if (!hit) { toast('Nothing in range'); return; }
+  if (hit.y === 0) { toast("Can't break bedrock"); return; }
+  const type = getBlock(hit.x, hit.y, hit.z);
+  if (survivalOn()) {
+    const need = TIER[type] || 0;
+    if (toolTier() < need) { toast('You need ' + TIER_LABEL[need] + ' to mine ' + BLOCKS[type].name); return; }
+  }
+  if (arcade.active && ARCADE_SCORES[type]) {
+    arcade.score += ARCADE_SCORES[type];
+    document.getElementById('arcade-score').textContent = arcade.score;
+    toast('+' + ARCADE_SCORES[type] + ' ' + BLOCKS[type].name);
+  }
+  world.delete(key(hit.x, hit.y, hit.z));
+  if (survivalOn()) { invAdd(DROPS[type] || type, 1); updateHotbar(); }
+  buildWorldMesh();
+  playSound('break');
+}
+function doPlace(){
+  const { origin, dir } = getCameraRay();
+  const hit = voxelRaycast(origin, dir, 8);
+  if (!hit) { toast('Aim at a block'); return; }
+  const px = hit.x + hit.normal[0], py = hit.y + hit.normal[1], pz = hit.z + hit.normal[2];
+  if (world.has(key(px,py,pz))) return;
+  const placeId = BLOCK_IDS[selectedIndex];
+  if (survivalOn() && invCount(placeId) < 1) { toast('No ' + BLOCKS[placeId].name + ' — mine or craft some first'); return; }
+  const ppos = document.getElementById('player').object3D.position;
+  const pc = document.getElementById('player').components['player-controller'];
+  world.set(key(px,py,pz), BLOCK_IDS[selectedIndex]);
+  if (pc && pc.collides(ppos.x, ppos.y, ppos.z)) { world.delete(key(px,py,pz)); toast("You're in the way"); return; }
+  if (survivalOn()) { invTake(placeId, 1); updateHotbar(); }
+  buildWorldMesh();
+  playSound('place');
+}
+function saveWorld(){
+  try { localStorage.setItem('voxelcraft:world', JSON.stringify([...world])); toast('World saved'); }
+  catch(e){ toast('Save failed'); }
+}
+function resetWorld(){
+  if (!confirm('Generate a new world? Current progress will be lost.')) return;
+  generateTerrain(); buildWorldMesh(); spawnPlayer();
+  localStorage.removeItem('voxelcraft:world');
+  if (mode === 'survival') { inv = {}; saveInv(); updateHotbar(); toast('New world — fresh start, empty pockets'); }
+  else toast('New world generated');
+}
+function spawnPlayer(){
+  let maxH = 10;
+  for (let x=-1;x<=1;x++) for (let z=-1;z<=1;z++)
+    for (let y=30;y>=0;y--)
+      if (hasBlock(x,y,z)) { if (y+1>maxH) maxH = y+1; break; }
+  document.getElementById('player').object3D.position.set(0.5, maxH + 2, 0.5);
+  const pc = document.getElementById('player').components['player-controller'];
+  if (pc) pc.velocity.set(0,0,0);
+}
+
+/* ---------- Web Audio synthesized sounds ---------- */
+let audioCtx = null;
+function ensureAudio(){
+  if (!audioCtx) { try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+function playSound(type){
+  ensureAudio(); if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  if (type === 'break') {
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(180, t);
+    o.frequency.exponentialRampToValueAtTime(55, t+0.2);
+    g.gain.setValueAtTime(0.18, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t+0.22);
+    o.start(t); o.stop(t+0.24);
+  } else if (type === 'rumble') {
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(64, t);
+    o.frequency.exponentialRampToValueAtTime(28, t+0.7);
+    g.gain.setValueAtTime(0.22, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t+0.8);
+    o.start(t); o.stop(t+0.85);
+  } else {
+    o.type = 'square';
+    o.frequency.setValueAtTime(240, t);
+    o.frequency.exponentialRampToValueAtTime(360, t+0.08);
+    g.gain.setValueAtTime(0.12, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t+0.13);
+    o.start(t); o.stop(t+0.15);
+  }
+}
+
+/* ---------- Highlight loop ---------- */
+function startHighlightLoop(){
+  const hl = document.getElementById('highlight');
+  const loop = () => {
+    const player = document.getElementById('player');
+    if (player && player.components['player-controller']) {
+      const { origin, dir } = getCameraRay();
+      const hit = voxelRaycast(origin, dir, 8);
+      if (hit) {
+        hl.setAttribute('visible', true);
+        hl.object3D.position.set(hit.x + 0.5, hit.y + 0.5, hit.z + 0.5);
+      } else {
+        hl.setAttribute('visible', false);
+      }
+    }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+
+/* ---------- Init ---------- */
+function initGame(){
+  const saved = localStorage.getItem('voxelcraft:world');
+  let loaded = false;
+  if (saved) {
+    try {
+      const arr = JSON.parse(saved);
+      world.clear();
+      for (const [k,v] of arr) world.set(k, v);
+      loaded = world.size > 0;
+    } catch(e){}
+  }
+  if (!loaded) generateTerrain();
+
+  buildWorldMesh();
+  spawnPlayer();
+
+  const player = document.getElementById('player');
+  player.setAttribute('player-controller', '');
+  document.getElementById('highlight').setAttribute('block-highlighter', '');
+
+  // atlas data URL must exist before hotbar
+  if (!atlasDataURL) atlasDataURL = createAtlas().toDataURL();
+  updateHotbar();
+
+  // Button handlers
+  const wire = (id, fn, repeatable) => {
+    const el = document.getElementById(id);
+    let timer = null;
+    const stop = () => { if (timer) { clearTimeout(timer); timer = null; } };
+    const press = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      fn();                           // fire immediately — fixes the "tap does nothing" bug
+      if (repeatable) {
+        const tick = () => { fn(); timer = setTimeout(tick, 160); };
+        timer = setTimeout(tick, 380); // initial hold delay, then rapid-fire
+      }
+    };
+    el.addEventListener('touchstart', press, { passive: false });
+    el.addEventListener('mousedown', press);
+    el.addEventListener('touchend', stop);
+    el.addEventListener('touchcancel', stop);
+    el.addEventListener('mouseup', stop);
+    el.addEventListener('mouseleave', stop);
+    el.addEventListener('contextmenu', e => e.preventDefault());
+  };
+  wire('btn-break', doBreak, true);
+  wire('btn-place', doPlace, true);
+  wire('btn-jump', () => {
+    const pc = document.getElementById('player').components['player-controller'];
+    if (pc) pc.jump();
+  });
+  wire('btn-save', saveWorld);
+  wire('btn-menu', () => openModal('menu-modal'));
+
+  // Build the templates list once
+  const tList = document.getElementById('templates-list');
+  TEMPLATES.forEach((t, i) => {
+    const card = document.createElement('div');
+    card.className = 'template';
+    card.innerHTML = '<h3>' + t.name + '</h3><p class="desc">' + t.desc + '</p>' +
+                     '<button class="place-btn" data-idx="' + i + '">Build in front of me</button>';
+    tList.appendChild(card);
+  });
+  tList.addEventListener('click', (e) => {
+    if (e.target.classList.contains('place-btn')) {
+      const idx = parseInt(e.target.getAttribute('data-idx'), 10);
+      placeAtPlayer(TEMPLATES[idx]);
+    }
+  });
+
+  // Menu modal buttons
+  document.getElementById('m-arcade').addEventListener('click', () => { closeModal('menu-modal'); showArcadeConfirm(); });
+  const modeLbl = document.getElementById('m-mode-name');
+  function refreshModeLbl(){ modeLbl.textContent = mode === 'survival' ? 'Survival' : 'Creative'; }
+  refreshModeLbl();
+  document.getElementById('m-mode').addEventListener('click', () => {
+    mode = (mode === 'survival') ? 'creative' : 'survival';
+    try { localStorage.setItem('voxelcraft:mode', mode); } catch(e){}
+    refreshModeLbl(); updateHotbar();
+    if (mode === 'survival') {
+      startStormCycle();
+      toast('⛏️ Survival: blocks are finite — mine to earn, craft to progress');
+      let hasOre = false; for (const v of world.values()) { if (TIER[v] >= 1 && v.endsWith('_ORE')) { hasOre = true; break; } }
+      if (!hasOre) setTimeout(() => toast('Tip: start a 🌱 New World to generate ore seams'), 2600);
+    } else { stopStormCycle(); toast('🎨 Creative: infinite blocks, templates unlocked'); }
+  });
+  document.getElementById('m-craft').addEventListener('click', () => { closeModal('menu-modal'); renderCrafting(); openModal('craft-modal'); });
+  function renderCrafting(){
+    const list = document.getElementById('craft-list');
+    list.innerHTML = '';
+    if (mode !== 'survival') {
+      list.innerHTML = '<p style="font-size:13px;color:#bbb;text-align:center">Crafting is a Survival-mode thing — in Creative you already have everything!</p>';
+      return;
+    }
+    RECIPES.forEach(rc => {
+      const owned = rc.tool && invCount(rc.out) > 0;
+      const afford = Object.keys(rc.cost).every(k => invCount(k) >= rc.cost[k]);
+      const costStr = Object.keys(rc.cost).map(k =>
+        '<span style="color:' + (invCount(k) >= rc.cost[k] ? '#8f8' : '#f88') + '">' + rc.cost[k] + ' ' + BLOCKS[k].name + ' (' + invCount(k) + ')</span>'
+      ).join(' + ');
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border-radius:8px;padding:7px 9px;margin:4px 0';
+      row.innerHTML = '<span style="font-size:20px">' + rc.emoji + '</span>'
+        + '<span style="flex:1;min-width:0"><b style="font-size:13px">' + rc.name + '</b>'
+        + '<br><span style="font-size:11px;color:#aab">' + rc.desc + '</span>'
+        + '<br><span style="font-size:11px">' + costStr + '</span></span>';
+      const btn = document.createElement('button');
+      btn.className = 'mbtn'; btn.style.cssText = 'width:auto;padding:6px 12px;margin:0;font-size:12px';
+      btn.textContent = owned ? 'Owned ✓' : 'CRAFT';
+      btn.disabled = owned || !afford;
+      if (btn.disabled) btn.style.opacity = '.45';
+      btn.addEventListener('click', () => {
+        if (!Object.keys(rc.cost).every(k => invCount(k) >= rc.cost[k])) return;
+        Object.keys(rc.cost).forEach(k => invTake(k, rc.cost[k]));
+        invAdd(rc.out, rc.outN);
+        playSound('place');
+        toast(rc.tool ? '🔓 Crafted: ' + rc.name + '!' : '+' + rc.outN + ' ' + BLOCKS[rc.out].name);
+        updateHotbar(); renderCrafting();
+      });
+      row.appendChild(btn);
+      list.appendChild(row);
+    });
+  }
+  document.getElementById('m-guide').addEventListener('click', () => { closeModal('menu-modal'); openModal('guide-modal'); });
+  document.getElementById('m-theme').addEventListener('click', cycleTheme);
+  document.getElementById('m-save').addEventListener('click', () => { closeModal('menu-modal'); saveWorld(); });
+  document.getElementById('m-reset').addEventListener('click', () => { closeModal('menu-modal'); resetWorld(); });
+  document.getElementById('m-daily').addEventListener('click', () => {
+    closeModal('menu-modal');
+    if (!confirm("Load today's Daily World? Everyone in class gets the SAME map today. Your current world will be replaced.")) return;
+    generateTerrain(mulberry32(todaySeed()));
+    buildWorldMesh(); spawnPlayer();
+    localStorage.removeItem('voxelcraft:world');
+    if (mode === 'survival') { inv = {}; saveInv(); updateHotbar(); startStormCycle(); }
+    toast('🗓 THE ' + todayName().toUpperCase() + ' WORLD — same map for everyone today');
+  });
+
+  // Arcade modal buttons
+  document.getElementById('arcade-start').addEventListener('click', startArcade);
+  document.getElementById('arcade-replay').addEventListener('click', startArcade);
+  document.getElementById('arcade-exit').addEventListener('click', exitArcade);
+
+  // Generic close-button hookups (anything with data-close="modal-id")
+  document.querySelectorAll('[data-close]').forEach(el => {
+    el.addEventListener('click', () => closeModal(el.getAttribute('data-close')));
+  });
+
+  // Apply saved theme on boot (Survival's day/night cycle takes over from here if active)
+  applyTheme(currentTheme);
+  if (mode === 'survival') startStormCycle();
+  const tn = document.getElementById('m-theme-name'); if (tn) tn.textContent = currentTheme;
+
+  // Click backdrop to close on menu/guide (but not arcade modals - those need a deliberate choice)
+  ['menu-modal','guide-modal'].forEach(id => {
+    const m = document.getElementById(id);
+    if (m) m.addEventListener('click', (e) => { if (e.target === m) closeModal(id); });
+  });
+  const flyBtn = document.getElementById('btn-fly');
+  const flyPress = (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const pc = document.getElementById('player').components['player-controller'];
+    if (!pc) return;
+    pc.fly = !pc.fly;
+    pc.velocity.set(0,0,0);
+    flyBtn.classList.toggle('on', pc.fly);
+    toast(pc.fly ? 'Fly mode ON' : 'Fly mode OFF');
+  };
+  flyBtn.addEventListener('touchstart', flyPress, { passive: false });
+  flyBtn.addEventListener('mousedown', flyPress);
+
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  window.addEventListener('gesturestart', e => e.preventDefault());
+  // Block browser zoom shortcuts that would interfere
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && ['=','+','-','0'].includes(e.key)) e.preventDefault();
+  });
+}
+
+/* ---------- A-Frame loader with fallback CDN ---------- */
+function loadScript(src){
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('Failed to load ' + src));
+    document.head.appendChild(s);
+  });
+}
+async function loadAframe(){
+  const urls = [
+    'vendor/aframe-1.7.1/aframe-master.min.js',
+    'https://aframe.io/releases/1.7.1/aframe.min.js',
+    'https://cdn.jsdelivr.net/npm/aframe@1.7.1/dist/aframe-master.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/aframe/1.7.1/aframe.min.js',
+    'https://aframe.io/releases/1.5.0/aframe.min.js'
+  ];
+  for (const url of urls) {
+    try {
+      await loadScript(url);
+      if (window.AFRAME) return true;
+    } catch(e) { /* try next */ }
+  }
+  return false;
+}
+
+function showIntroError(msg){
+  const card = document.querySelector('#intro .card');
+  card.innerHTML = '<h1 style="color:#ff8080">CAN\'T LOAD</h1>' +
+    '<p>' + msg + '</p>' +
+    '<p style="font-size:11px;opacity:.7">If you opened this file by tapping it directly, try hosting it on a local server or uploading to a site like Glitch / Neocities. A-Frame needs a real URL — file:// URLs can block CDN scripts on mobile.</p>';
+}
+
+document.getElementById('intro-start').addEventListener('click', async () => {
+  const startBtn = document.getElementById('intro-start');
+  startBtn.textContent = 'LOADING…';
+  startBtn.style.pointerEvents = 'none';
+
+  const ok = await loadAframe();
+  if (!ok) { showIntroError('Could not reach the A-Frame library.'); return; }
+
+  // A-Frame loaded — now we can register components and build the scene
+  try {
+    registerAframeComponents();
+  } catch(e) {
+    showIntroError('Error setting up components: ' + e.message);
+    return;
+  }
+
+  // Build the <a-scene> now that AFRAME exists
+  const scene = document.createElement('a-scene');
+  scene.id = 'scene';
+  scene.setAttribute('renderer', 'antialias: false; colorManagement: true; foveationLevel: 1;');
+  scene.setAttribute('fog', 'type: linear; color: #87CEEB; near: 30; far: 55;');
+  scene.setAttribute('background', 'color: #87CEEB');
+  scene.setAttribute('vr-mode-ui', 'enabled: false');
+  scene.setAttribute('device-orientation-permission-ui', 'enabled: false');
+  scene.innerHTML = `
+    <a-light type="ambient" color="#fff" intensity="0.65"></a-light>
+    <a-light type="directional" position="30 50 20" color="#fff3d6" intensity="0.9"></a-light>
+    <a-entity id="player" position="0.5 20 0.5">
+      <a-entity camera position="0 1.6 0" touch-look></a-entity>
+    </a-entity>
+    <a-entity id="world"></a-entity>
+    <a-entity id="highlight" visible="false"></a-entity>`;
+  document.body.appendChild(scene);
+
+  document.getElementById('intro').style.display = 'none';
+  ensureAudio();
+
+  const nukeAframeUI = () => {
+    document.querySelectorAll('.a-enter-vr, .a-enter-ar, .a-enter-vr-button, .a-enter-ar-button, .a-orientation-modal, .a-modal').forEach(el => el.remove());
+  };
+  const boot = () => { initGame(); startHighlightLoop(); nukeAframeUI(); setTimeout(nukeAframeUI, 500); };
+  if (scene.hasLoaded) boot();
+  else scene.addEventListener('loaded', boot);
+});
+</script>
+<script defer src="/hud.js"></script></body>
+</html>

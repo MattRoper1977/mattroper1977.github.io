@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjMTYxRDNEIi8+PHBhdGggZD0iTTI2IDc2IEwyNiAzMCBMNTAgNTUgTDc0IDMwIEw3NCA3NiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRThFMkQ0IiBzdHJva2Utd2lkdGg9IjEzIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Intervention B – Chemical Analysis Escape Room</title>
+<style>
+:root{--bg:#f1f5f9;--slide-bg:#fff;--text:#1f2937;--lo-bg:#e6d4e8;--lo-border:#9c27b0;--lo-text:#000;--task-bg:#fef9c3;--task-border:#eab308;--scaffold-bg:#e0f2fe;--scaffold-border:#38bdf8;--aspire-bg:#dcfce7;--aspire-border:#22c55e;--sc-bg:#ffedd5;--sc-border:#f97316;--btn-bg:#3b82f6;--btn-hover:#1e3a8a;--success:#16a34a;--error:#dc2626;--muted:#64748b;--ido-bg:#ede9fe;--ido-border:#7c3aed;--wedo-bg:#fce7f3;--wedo-border:#db2777;--escape:#0d9488;--escape-glow:rgba(13,148,136,.2)}
+*{box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;margin:0;padding:0;background:var(--bg);color:var(--text);overflow:hidden}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes unlock{0%{transform:scale(1)}50%{transform:scale(1.2);box-shadow:0 0 20px var(--escape-glow)}100%{transform:scale(1)}}
+@keyframes flicker{0%,100%{opacity:1}50%{opacity:.85}}
+@keyframes confettiDrop{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(80px) rotate(360deg);opacity:0}}
+.animate-enter{animation:fadeInUp .55s ease-out forwards}
+.slide-container{width:100vw;height:100vh;display:flex;justify-content:center;align-items:center}
+.slide{display:none;width:92%;height:90%;background:var(--slide-bg);border-top:10px solid var(--lo-border);border-radius:20px;box-shadow:0 20px 50px rgba(0,0,0,.15);padding:36px;overflow-y:auto;position:relative;flex-direction:column}
+.slide.active{display:flex;animation:fadeIn .45s ease}
+.slide[data-type="puzzle"]{border-top-color:var(--escape)}
+.slide[data-type="misconception"]{border-top-color:var(--error)}
+.slide[data-type="worked"]{border-top-color:var(--ido-border)}
+h1{color:var(--lo-border);font-size:2.4rem;margin:0 0 14px;border-bottom:3px solid var(--lo-border);display:inline-block}
+h2{color:var(--lo-text);margin:0 0 10px;border-bottom:2px solid #e2e8f0;padding-bottom:10px;margin-right:170px}
+h3{margin:10px 0 8px;color:#0f172a}p,li{font-size:1.12rem;line-height:1.6;color:#334155}
+.content-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.logo{position:absolute;top:22px;right:36px;width:150px;height:auto;z-index:200}
+button{background:var(--btn-bg);color:#fff;border:none;padding:10px 18px;border-radius:10px;cursor:pointer;font-size:1rem;font-weight:bold;transition:all .2s;box-shadow:0 4px 6px rgba(0,0,0,.12);user-select:none}
+button:hover{background:var(--btn-hover);transform:translateY(-2px)}button.small{padding:8px 12px;font-size:.95rem}
+button.ghost{background:#e2e8f0;color:#0f172a}button.ghost:hover{background:#cbd5e1}
+.controls{position:fixed;bottom:18px;right:18px;z-index:1000;display:flex;gap:10px}
+.progress-wrap{position:fixed;left:0;right:0;bottom:0;height:10px;z-index:1100;background:rgba(15,23,42,.12)}
+.progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--lo-border),var(--escape));transition:width .3s ease}
+.progress-label{position:fixed;left:14px;bottom:14px;z-index:1101;background:rgba(255,255,255,.95);border:1px solid #e2e8f0;padding:6px 10px;border-radius:999px;font-size:.9rem;font-weight:bold;color:var(--text)}
+.li-box{background:var(--lo-bg);border-left:6px solid var(--lo-border);padding:12px 14px;border-radius:12px;margin:8px 0 14px;color:var(--lo-text)}
+.task-box{background:var(--task-bg);border:2px solid var(--task-border);border-radius:12px;padding:16px;margin-bottom:12px}
+.scaffold-box{background:var(--scaffold-bg);border-left:5px solid var(--scaffold-border);padding:10px 12px;border-radius:12px;margin-top:10px}
+.ido-box{background:var(--ido-bg);border-left:6px solid var(--ido-border);padding:14px;border-radius:12px;margin-bottom:12px}
+.aspire-box{background:var(--aspire-bg);border-left:5px solid var(--aspire-border);padding:12px 14px;border-radius:12px;color:#166534;margin-top:10px}
+.answer{display:none;margin-top:8px;padding:8px 10px;background:#f1f5f9;border-left:4px solid var(--success);border-radius:8px;font-weight:bold;color:#166534}.show-ans .answer{display:block;animation:fadeInUp .25s}
+.slide-tag{display:inline-block;padding:4px 14px;border-radius:8px;font-size:.85rem;font-weight:900;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.tag-puzzle{background:#ccfbf1;color:#115e59}.tag-miscon{background:#fef2f2;color:#991b1b}.tag-worked{background:var(--ido-bg);color:#5b21b6}.tag-independent{background:var(--task-bg);color:#92400e}.tag-rag{background:#f0fdf4;color:#166534}
+/* Lock track */
+.lock-track{display:flex;gap:10px;justify-content:center;margin:8px 0}
+.lock-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:3px solid #cbd5e1;background:#f8fafc;transition:all .5s}
+.lock-icon.solved{border-color:var(--success);background:#dcfce7;animation:unlock .6s}
+/* Misconception */
+.miscon-box{background:#fef2f2;border:3px solid var(--error);border-radius:14px;padding:16px;margin:8px 0;position:relative}
+.miscon-box::before{content:'❌ COMMON MISTAKE';position:absolute;top:-12px;left:14px;background:var(--error);color:#fff;padding:2px 12px;border-radius:6px;font-size:.75rem;font-weight:900}
+.correct-box{background:#f0fdf4;border:3px solid var(--success);border-radius:14px;padding:16px;margin:8px 0;position:relative}
+.correct-box::before{content:'✅ CORRECT THINKING';position:absolute;top:-12px;left:14px;background:var(--success);color:#fff;padding:2px 12px;border-radius:6px;font-size:.75rem;font-weight:900}
+/* Test buttons */
+.test-btn{background:#f8fafc;border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:bold;color:var(--text);transition:all .2s;text-align:center;font-size:.95rem}
+.test-btn:hover{border-color:var(--escape);transform:translateY(-2px)}.test-btn.used{opacity:.5;border-color:var(--escape)}
+/* Options */
+.esc-opt{display:inline-block;background:#f8fafc;border:2px solid #e2e8f0;border-radius:10px;padding:6px 14px;margin:3px;cursor:pointer;font-weight:bold;font-size:1rem;transition:all .2s;user-select:none}
+.esc-opt:hover{border-color:var(--escape)}.esc-opt.correct{border-color:var(--success);background:#dcfce7;color:var(--success);pointer-events:none}.esc-opt.wrong{border-color:var(--error);background:#fef2f2;animation:shake .4s}
+/* Flame */
+.flame-display{width:45px;height:60px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;display:inline-block;margin:0 6px;animation:flicker 1.5s infinite;vertical-align:middle}
+/* Evidence log */
+.evidence-log{background:#f8fafc;border:2px solid var(--escape);border-radius:12px;padding:10px;font-size:.9rem;min-height:50px;max-height:140px;overflow-y:auto}
+.evidence-log p{margin:3px 0;color:var(--escape);font-size:.9rem;font-weight:bold}
+/* Confetti */
+.confetti-container{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:500;overflow:hidden}
+.confetti-piece{position:absolute;width:10px;height:10px;border-radius:2px;animation:confettiDrop 1.5s ease forwards}
+/* RAG */
+.rag-grid{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;margin-top:6px}
+.rag-btn{width:36px;height:36px;border-radius:50%;border:3px solid #e2e8f0;cursor:pointer;transition:all .2s}.rag-btn:hover{transform:scale(1.15)}.rag-btn.active{border-width:4px;transform:scale(1.1)}
+.rag-r{background:#fca5a5}.rag-r.active{border-color:#dc2626;background:#ef4444}
+.rag-a{background:#fde68a}.rag-a.active{border-color:#d97706;background:#fbbf24}
+.rag-g{background:#86efac}.rag-g.active{border-color:#16a34a;background:#22c55e}
+/* Ind */
+.ind-level{display:none}.ind-level.active{display:block}
+.ind-q{background:#fff;border:2px solid #e2e8f0;border-radius:10px;padding:10px 12px;margin:6px 0}
+.ind-q .q-type{float:right;font-size:.7rem;font-weight:900;padding:2px 8px;border-radius:6px}
+.q-mcq{background:#dbeafe;color:#1e40af}.q-short{background:#fef3c7;color:#92400e}.q-long{background:var(--ido-bg);color:#5b21b6}.q-exam{background:#fce7f3;color:#9d174d}
+/* Print */
+#print-area{display:none}
+@media print{body{overflow:visible;background:#fff;height:auto;color:#000}.controls,.slide-container,.progress-wrap,.progress-label,
+    .data-table{width:100%;border-collapse:collapse;margin:8px 0;font-size:1.05rem}.data-table th,.data-table td{border:1px solid #e2e8f0;padding:8px 10px;text-align:left}.data-table th{background:var(--lo-bg);color:var(--lo-text);font-weight:bold}
+    .evidence-btn{background:var(--wedo-border);color:#fff;border:none;padding:6px 14px;border-radius:8px;font-size:.85rem;cursor:pointer;font-weight:bold;transition:all .2s;box-shadow:none}
+    .evidence-btn:hover{background:#be185d;transform:none}
+    
+    .xp-bar-wrap{background:#e2e8f0;border-radius:10px;height:14px;margin:6px 0;overflow:hidden;position:relative}
+    .xp-bar-fill{background:linear-gradient(90deg,var(--success),#4ade80);height:100%;width:0%;border-radius:10px;transition:width .4s ease}
+    .xp-label{text-align:center;font-size:.85rem;font-weight:900;color:var(--muted);margin:2px 0}
+    .confetti-global{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;overflow:hidden}
+    .confetti-p{position:absolute;width:10px;height:10px;border-radius:2px;animation:confettiDrop 1.8s ease forwards}
+    @keyframes confettiDrop{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+    .lb-widget{background:#f8fafc;border:2px solid #e2e8f0;border-radius:12px;padding:10px;margin-top:6px}
+    .lb-widget h4{margin:0 0 6px;color:var(--lo-border);font-size:.9rem}
+    .lb-list{display:flex;flex-wrap:wrap;gap:4px}
+    .lb-name{background:var(--lo-bg);color:var(--lo-border);padding:3px 10px;border-radius:6px;font-size:.85rem;font-weight:bold;animation:fadeInUp .3s}
+    .lb-input-row{display:flex;gap:6px;margin-top:6px}
+    .lb-input{border:2px solid #e2e8f0;border-radius:8px;padding:5px 10px;font-size:.9rem;flex:1;font-family:inherit}
+    .lb-input:focus{border-color:var(--lo-border);outline:none}
+    
+    .hint-btn{background:none;border:2px solid #f59e0b;color:#f59e0b;padding:3px 10px;border-radius:6px;font-size:.8rem;cursor:pointer;margin-top:4px;box-shadow:none;font-weight:bold;transition:all .2s}
+    .hint-btn:hover{background:#fef3c7;transform:none;color:#92400e}
+    .hint-text{display:none;background:#fef3c7;border-left:4px solid #f59e0b;padding:6px 10px;border-radius:8px;margin-top:4px;font-size:.95rem;color:#92400e;font-weight:bold}
+    .hint-text.show{display:block;animation:fadeInUp .25s}
+    .mistake-card{background:#fff;border:3px solid var(--error);border-radius:14px;padding:16px;margin:8px 0;position:relative;cursor:pointer;transition:all .2s}
+    .mistake-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(220,38,38,.2)}
+    .mistake-card .wrong-badge{position:absolute;top:-10px;right:14px;background:var(--error);color:#fff;padding:2px 12px;border-radius:6px;font-size:.8rem;font-weight:900}
+    .mistake-reveal{display:none;background:#f0fdf4;border:2px solid var(--success);border-radius:10px;padding:12px;margin-top:8px}
+    .mistake-reveal.show{display:block;animation:fadeInUp .3s}
+    #timer-widget{display:none!important}#print-area{display:block!important;padding:20px}.print-section{display:none;page-break-after:always}.print-section.visible{display:block}.print-line{border-bottom:1px solid #000;height:22px;margin-top:8px}.ko-table{width:100%;border-collapse:collapse;margin-bottom:18px;font-size:.95rem}.ko-table th,.ko-table td{border:1px solid #000;padding:8px;text-align:left}.ko-table th{background:#eee}.scaffold-print-box{border:2px dashed #94a3b8;padding:15px;margin-bottom:20px;border-radius:8px;background:#f8fafc}.prevent-break{page-break-inside:avoid;break-inside:avoid;margin-bottom:25px}body.print-foundation .middle-content,body.print-foundation .higher-content{display:none!important}body.print-middle .foundation-content,body.print-middle .higher-content{display:none!important}body.print-higher .foundation-content,body.print-higher .middle-content{display:none!important}}.data-table th{background:var(--lo-bg);color:var(--lo-text);font-weight:bold}
+    
+    {background:#e2e8f0;border-radius:10px;height:14px;margin:6px 0;overflow:hidden;position:relative}
+    @keyframes confettiDrop{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+    #timer-widget{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:white;border:3px solid var(--lo-border);border-radius:16px;padding:10px 20px;box-shadow:0 10px 25px rgba(0,0,0,.15);z-index:2000;display:none;align-items:center;gap:15px}
+    #timer-widget.visible{display:flex}
+    #timer-display{font-size:2.5rem;font-weight:900;color:var(--lo-border);font-variant-numeric:tabular-nums;min-width:110px;text-align:center}
+    .timer-controls{display:flex;gap:5px}
+    .timer-btn{background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:1.1rem;transition:background .2s;box-shadow:none}
+    .timer-btn:hover{background:#e2e8f0;transform:none}
+    .timer-btn.active-play{background:var(--success);color:white;border-color:var(--success)}
+    .timer-btn.active-pause{background:var(--error);color:white;border-color:var(--error)}
+  </style>
+
+<!-- ===== reduced-motion v1 =====================================================
+     This file declares infinite CSS animations and had no prefers-reduced-motion
+     rule. Rather than the usual reset (animation-duration:.001ms / iteration-
+     count:1) - which parks a looping animation on its final keyframe, and a lot
+     of them end at opacity:0, so teaching particles would simply vanish - this
+     freezes every animation 0.7s into its cycle. Motion stops; whatever
+     was on screen stays on screen and stays visible.
+============================================================================ -->
+<style>
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-play-state:paused !important;
+    animation-delay:-0.7s !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+</style>
+</head>
+<body>
+<!-- MBM-MAKER-SPLASH:BEGIN generated by tools/render_maker_splash.py, do not edit by hand -->
+<script>(function(){"use strict";
+if(window.__mbmMakerSplash)return;window.__mbmMakerSplash=1;
+var KEY="mbm_splash_last",DAY=86400000,MODE="";
+try{MODE=new URLSearchParams(location.search).get("splash")||"";}catch(_){MODE="";}
+var NOW=Date.now(),PAGE_LAST;
+function probe(name){try{var s=window[name],v=s.getItem(KEY);return{ok:true,has:v!==null,raw:v};}catch(_){return{ok:false,has:false,raw:null};}}
+function stored(){var a=probe("localStorage");if(a.has)return a.raw;var b=probe("sessionStorage");if(b.has)return b.raw;return PAGE_LAST===undefined?null:String(PAGE_LAST);}
+function valid(raw){if(raw===null||String(raw).trim()==="")return null;var n=Number(raw);return Number.isFinite(n)&&Math.floor(n)===n&&n>=0&&n<=NOW?n:null;}
+function windowOpen(){var raw=stored(),n=valid(raw);return n===null||NOW-n>=DAY;}
+function writeNow(){var wrote=false;try{localStorage.setItem(KEY,String(NOW));wrote=true;}catch(_){}try{sessionStorage.setItem(KEY,String(NOW));wrote=true;}catch(_){}if(!wrote)try{PAGE_LAST=NOW;}catch(_){} }
+var LEGACY={start:function(){return{close:function(){},element:null};}};
+try{var d=Object.getOwnPropertyDescriptor(window,"MadeByMattSplash");if(!d||d.configurable)Object.defineProperty(window,"MadeByMattSplash",{configurable:false,get:function(){return LEGACY;},set:function(){}});}catch(_){}
+function visible(e){if(!e||!e.isConnected||e.disabled)return false;var c=getComputedStyle(e),r=e.getBoundingClientRect();return c.display!=="none"&&c.visibility!=="hidden"&&r.width>0&&r.height>0;}
+function primary(){var q=["[data-mbm-primary-start]","#startBtn","#playBtn","#beginBtn","#launchBtn","#openBtn","#start","a.skip","main button:not([disabled])","button:not([disabled])","main a[href]","a[href]"];for(var i=0;i<q.length;i++){var all=document.querySelectorAll(q[i]);for(var j=0;j<all.length;j++)if(visible(all[j])&&!all[j].closest("[data-mbm-maker-splash]"))return all[j];}var m=document.querySelector("main,h1,[role=main]");if(m){if(!m.hasAttribute("tabindex"))m.setAttribute("tabindex","-1");return m;}return null;}
+function armWayOut(e){var w=document.querySelector("#mbmexit-back,#mbmhud-back"),timer=0;if(!e||!w||!w.focus)return;function off(){window.removeEventListener("keydown",next,true);window.removeEventListener("keydown",activate,true);clearTimeout(timer);}function activate(k){if(document.activeElement!==w){off();return;}if(k.key!=="Enter"&&k.key!==" "){if(k.key==="Tab"||k.key==="Escape")off();return;}k.preventDefault();k.stopPropagation();if(k.stopImmediatePropagation)k.stopImmediatePropagation();var href=w.href;off();if(href)location.assign(href);}function next(k){if(k.key!=="Tab"||k.shiftKey||document.activeElement!==e)return;k.preventDefault();k.stopPropagation();if(k.stopImmediatePropagation)k.stopImmediatePropagation();off();if(typeof endHandoff==="function")endHandoff();try{w.focus({preventScroll:true});}catch(_){try{w.focus();}catch(__){}}window.addEventListener("keydown",activate,true);timer=setTimeout(off,5000);}window.addEventListener("keydown",next,true);timer=setTimeout(off,5000);}
+function focusPrimary(){var e=primary();if(e&&e.focus){try{e.focus({preventScroll:true});}catch(_){try{e.focus();}catch(__){}}armWayOut(e);}}
+var CLOSED=false,FOCUS_UNTIL=0,FOCUS_TIMER=0,HANDOFF_USER=false,HANDOFF_ARMED=false;
+function needsFocus(){var a=document.activeElement;return !a||a===document.body||a===document.documentElement||!a.isConnected||!!(a.closest&&a.closest("[data-mbm-maker-splash]"));}
+function settlePrimary(force){if(CLOSED){var ghosts=document.querySelectorAll("[data-mbm-maker-splash]");for(var i=0;i<ghosts.length;i++){try{ghosts[i].setAttribute("aria-hidden","true");ghosts[i].inert=true;ghosts[i].remove();}catch(_){}}}var target=primary();if(target&&((force&&document.activeElement!==target)||(!force&&needsFocus())))focusPrimary();}
+function endHandoff(){HANDOFF_USER=true;clearTimeout(FOCUS_TIMER);if(HANDOFF_ARMED){HANDOFF_ARMED=false;document.removeEventListener("keydown",endHandoff,true);document.removeEventListener("pointerdown",endHandoff,true);document.removeEventListener("touchstart",endHandoff,true);document.removeEventListener("focusin",keepHandoff,true);}}
+function keepHandoff(e){if(HANDOFF_USER)return;var target=primary();if(target&&e.target!==target)requestAnimationFrame(function(){if(!HANDOFF_USER)settlePrimary(true);});}
+function armHandoff(){if(!HANDOFF_ARMED){HANDOFF_ARMED=true;document.addEventListener("keydown",endHandoff,true);document.addEventListener("pointerdown",endHandoff,true);document.addEventListener("touchstart",endHandoff,true);document.addEventListener("focusin",keepHandoff,true);}FOCUS_UNTIL=Math.max(FOCUS_UNTIL,performance.now()+4000);}
+function maintainPrimary(){clearTimeout(FOCUS_TIMER);if(HANDOFF_USER)return;settlePrimary(true);if(CLOSED&&performance.now()<FOCUS_UNTIL)FOCUS_TIMER=setTimeout(maintainPrimary,100);else endHandoff();}
+function focusReady(){function ready(){if(CLOSED){armHandoff();maintainPrimary();}else settlePrimary(false);}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){requestAnimationFrame(ready);},{once:true});else requestAnimationFrame(ready);}
+function focusWithoutSplash(){CLOSED=true;focusReady();}
+if(MODE==="skip"){focusWithoutSplash();return;}
+var SHOW=MODE==="force"||windowOpen();if(!SHOW){focusWithoutSplash();return;}
+var SPLASH_EL=null,DISMISS=null,EARLY_DISMISS=false,GUARDED=["keydown","keyup","pointerdown","pointerup","click"];
+function unguard(){for(var i=0;i<GUARDED.length;i++)window.removeEventListener(GUARDED[i],guard,true);}
+function guard(e){e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();if(CLOSED)return;var hit=e.type==="keydown"||(e.type==="pointerdown"&&SPLASH_EL&&SPLASH_EL.contains(e.target))||(e.type==="click"&&SPLASH_EL&&SPLASH_EL.contains(e.target));if(hit){e.preventDefault();if(DISMISS)DISMISS();else EARLY_DISMISS=true;}}
+for(var i=0;i<GUARDED.length;i++)window.addEventListener(GUARDED[i],guard,true);
+requestAnimationFrame(function(){
+var CSS="#mbmSplash[data-mbm-maker-splash]{position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;overflow:hidden;pointer-events:auto;background:radial-gradient(circle at 52% 44%,rgba(17,42,82,.72),transparent 44%),linear-gradient(135deg,#010207 0%,#071023 52%,#13030c 100%);animation:mbmSplash 1.9s cubic-bezier(.2,.8,.2,1) both}#mbmSplash[data-mbm-maker-splash]::before{content:\"\";position:absolute;inset:-20%;background:repeating-linear-gradient(112deg,transparent 0 9%,rgba(37,244,255,.045) 9.2% 9.35%,transparent 9.55% 18%);transform:translateX(-18%);animation:mbmSweep 1.55s ease-out both}.mbm-splash-mark{position:relative;width:min(82vw,560px);text-align:center;text-transform:uppercase;filter:drop-shadow(0 0 28px rgba(37,244,255,.22))}.mbm-splash-mark span,.mbm-splash-mark em{display:block;color:#7e9aad;font-size:clamp(9px,2.4vmin,13px);font-style:normal;font-weight:900;letter-spacing:.48em;text-indent:.48em}.mbm-splash-mark strong{display:block;margin:.07em 0 .02em;color:#f5feff;font-size:clamp(54px,17vmin,132px);font-style:italic;font-weight:1000;letter-spacing:-.07em;line-height:.82;text-shadow:-2px 0 #25f4ff,2px 0 #ff2d78,0 0 34px rgba(37,244,255,.35);transform:skewX(-7deg)}.mbm-splash-mark em{margin-top:15px;color:#ff5b92;letter-spacing:.62em;text-indent:.62em}.mbm-splash-line{width:0;height:2px;margin:18px auto 0;background:linear-gradient(90deg,transparent,#25f4ff 30%,#fff 50%,#ff2d78 70%,transparent);box-shadow:0 0 18px #25f4ff;animation:mbmLine 1.15s .18s ease-out both}.mbm-splash-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}@keyframes mbmSplash{0%{opacity:0;visibility:visible;pointer-events:auto}12%,70%{opacity:1;visibility:visible;pointer-events:auto}100%{opacity:0;visibility:hidden;pointer-events:none}}@keyframes mbmSweep{from{transform:translateX(-28%)}to{transform:translateX(24%)}}@keyframes mbmLine{to{width:76%}}#mbmSplash.mbm-splash-skip{opacity:0!important;visibility:hidden!important;pointer-events:none!important;animation:none!important;transition:opacity .12s ease}@media(prefers-reduced-motion:reduce){#mbmSplash[data-mbm-maker-splash]{animation-duration:.28s}#mbmSplash[data-mbm-maker-splash]::before,.mbm-splash-line{animation:none}}";
+CSS=CSS.replace("animation-duration:.28s","animation-duration:.35s!important");
+var st=document.createElement("style");st.id="mbm-maker-splash-css";st.textContent=CSS;(document.head||document.documentElement).appendChild(st);
+var el=document.createElement("section");el.id="mbmSplash";el.setAttribute("data-mbm-maker-splash","");el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");el.setAttribute("aria-label","Made by Matt introduction");el.tabIndex=-1;el.innerHTML='<div class="mbm-splash-mark"><span>Made by</span><strong>Matt</strong><em>presents</em><div class="mbm-splash-line"></div></div><span class="mbm-splash-sr">Tap or press any key to continue.</span>';
+(document.body||document.documentElement).appendChild(el);SPLASH_EL=el;
+var reduced=false;try{reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(_){}
+var shown=0,requested=false,closed=false,hard=0,finishTimer=0;
+requestAnimationFrame(function(){shown=performance.now();if(requested)scheduleFinish();});
+function finish(){if(closed)return;closed=true;CLOSED=true;clearTimeout(hard);clearTimeout(finishTimer);el.classList.add("mbm-splash-skip");el.style.setProperty("pointer-events","none","important");el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}unguard();if(el.parentNode)el.parentNode.removeChild(el);focusReady();}
+function scheduleFinish(){if(!shown)return;clearTimeout(finishTimer);var wait=Math.max(0,450-(performance.now()-shown));finishTimer=setTimeout(finish,wait);}
+function dismiss(){if(requested||closed)return;requested=true;el.style.setProperty("pointer-events","none","important");el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}if(MODE!=="force")writeNow();scheduleFinish();}
+DISMISS=dismiss;if(EARLY_DISMISS)dismiss();
+el.addEventListener("animationend",function(e){if(e.target===el&&e.animationName==="mbmSplash")dismiss();});
+window.addEventListener("pagehide",function(){if(requested&&!closed)finish();},{once:true});
+try{el.focus({preventScroll:true});}catch(_){try{el.focus();}catch(__){}}
+hard=setTimeout(dismiss,reduced?450:2100);
+var observer=new MutationObserver(function(list){for(var i=0;i<list.length;i++)for(var j=0;j<list[i].addedNodes.length;j++){var n=list[i].addedNodes[j];if(n.nodeType!==1)continue;var maker=n.matches&&n.matches("[data-mbm-maker-splash]")?n:n.querySelector&&n.querySelector("[data-mbm-maker-splash]");if(closed&&maker){try{maker.setAttribute("aria-hidden","true");maker.inert=true;maker.remove();settlePrimary();}catch(_){}continue;}var old=n.matches&&n.matches("#mbmSplash:not([data-mbm-maker-splash]),.mbm-splash:not([data-mbm-maker-splash])")?n:n.querySelector&&n.querySelector("#mbmSplash:not([data-mbm-maker-splash]),.mbm-splash:not([data-mbm-maker-splash])");if(old)try{old.style.setProperty("display","none","important");old.setAttribute("aria-hidden","true");}catch(_){}}});
+try{observer.observe(document.documentElement,{childList:true,subtree:true});var stopObserver=function(){try{observer.disconnect();}catch(_){}};setTimeout(stopObserver,12000);var stopAfterLoad=function(){setTimeout(stopObserver,4000);};if(document.readyState==="complete")stopAfterLoad();else window.addEventListener("load",stopAfterLoad,{once:true});}catch(_){}
+});
+})();</script>
+<!-- MBM-MAKER-SPLASH:END -->
+
+<!-- TIMER WIDGET -->
+<div id="timer-widget">
+  <div id="timer-display">10:00</div>
+  <div class="timer-controls">
+    <button class="timer-btn" id="btn-play" onclick="startTimer()" title="Play">▶</button>
+    <button class="timer-btn" id="btn-pause" onclick="pauseTimer()" title="Pause">⏸</button>
+    <button class="timer-btn" onclick="resetTimer(15)" title="15 min">↻15</button>
+    <button class="timer-btn" onclick="resetTimer(5)" title="5 min">↻5</button>
+  </div>
+</div>
+
+<div class="slide-container">
+
+<!-- SLIDE 1: BRIEFING -->
+<div class="slide active" data-title="Briefing">
+<img class="logo" alt="Made by Matt" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+<div style="text-align:center;margin-top:3%">
+<p style="font-size:1rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase">🔬 Intervention Lesson B</p>
+<h1 style="border-color:var(--escape)">ESCAPE ROOM</h1>
+<p style="font-size:1.2rem;color:var(--lo-border);margin:0 0 12px">Chemical Analysis: Can You Escape?</p>
+<div class="li-box" style="max-width:620px;margin:0 auto;text-align:left">
+<strong>📋 BRIEFING:</strong> You're locked in the lab. A mystery compound has been found at a crime scene. To escape, you must identify unknown gases, crack the flame code, solve precipitate puzzles, and identify the mystery compound. Every test you've learned is a key. Use them all.
+</div>
+<div class="lock-track" style="margin:10px 0"><div class="lock-icon" id="lock-1">🔒</div><div class="lock-icon" id="lock-2">🔒</div><div class="lock-icon" id="lock-3">🔒</div><div class="lock-icon" id="lock-4">🔒</div></div>
+<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px">
+<button onclick="printPack('foundation')" style="background:#22c55e">🖨️ Foundation (U–1)</button>
+<button onclick="printPack('middle')" style="background:#f97316">🖨️ Middle (1–2)</button>
+<button onclick="printPack('higher')" style="background:#1e3a8a">🖨️ Higher (3–4)</button>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 2: MISCONCEPTION BUSTERS -->
+<div class="slide" data-title="Misconception Busters" data-type="misconception">
+<img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+<span class="slide-tag tag-miscon">🚨 Misconception Busters</span>
+<h2>Common Mistakes – Let's Fix Them!</h2>
+<div class="li-box"><strong>These are the mistakes Y10 make most.</strong> Fix them before the puzzles!</div>
+<div class="content-grid" style="margin-top:6px">
+<div>
+<div class="miscon-box" style="margin-top:18px"><h3 style="margin-top:8px;color:var(--error)">❌ Burning vs Glowing splint</h3><p>Students mix these up constantly! BURNING = flame visible. GLOWING = blown out, ember only.</p></div>
+<div class="correct-box" style="margin-top:18px"><h3 style="margin-top:8px;color:var(--success)">✅ Burning → H₂ (pop). Glowing → O₂ (relights)</h3><p>If it has a flame: burning splint for H₂. If just an ember: glowing splint for O₂.</p></div>
+<div class="miscon-box" style="margin-top:24px"><h3 style="margin-top:8px;color:var(--error)">❌ Li⁺ (red) vs Ca²⁺ (orange-red)</h3><p>These look similar! Students confuse them in exams.</p></div>
+<div class="correct-box" style="margin-top:18px"><h3 style="margin-top:8px;color:var(--success)">✅ Li = pure crimson RED. Ca = distinctly ORANGE-red</h3><p>Think: <strong>Li</strong>pstick = pure red. <strong>Ca</strong>mpfire = orange-red.</p></div>
+</div>
+<div>
+<div class="miscon-box" style="margin-top:18px"><h3 style="margin-top:8px;color:var(--error)">❌ Halide precipitate colours all look the same</h3><p>Cl⁻, Br⁻, I⁻ all give precipitates with AgNO₃ but different colours!</p></div>
+<div class="correct-box" style="margin-top:18px"><h3 style="margin-top:8px;color:var(--success)">✅ Gets darker going down the group</h3><p><strong>Cl⁻ = white</strong> | <strong>Br⁻ = cream</strong> | <strong>I⁻ = yellow</strong>. Remember: they get darker!</p></div>
+<div class="miscon-box" style="margin-top:24px"><h3 style="margin-top:8px;color:var(--error)">❌ Using HCl to acidify halide tests</h3><p>HCl contains Cl⁻ ions → false positive!</p></div>
+<div class="correct-box" style="margin-top:18px"><h3 style="margin-top:8px;color:var(--success)">✅ Use HNO₃ (nitric acid)</h3><p>Nitric acid has no interfering ions. Always HNO₃ for halide tests!</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 3: PUZZLE 1 GAS TESTS -->
+<div class="slide" data-title="Puzzle 1 – Gas Tests" data-type="puzzle">
+<img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+<span class="slide-tag tag-puzzle">🔓 Puzzle 1</span>
+<h2>Gas Test Lab</h2>
+<div class="li-box"><strong>3 unknown gases.</strong> Run the correct test, see the result, identify each gas to unlock Puzzle 2!</div>
+<div class="lock-track"><div class="lock-icon" id="p1-lock">🔒</div></div>
+<div class="confetti-container" id="confetti-1"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:6px">
+<div class="task-box" id="p1-gasA"><h3 style="margin-top:0;color:var(--escape)">Gas A <small style="color:var(--muted)">(colourless)</small></h3><div style="display:flex;flex-direction:column;gap:4px"><div class="test-btn" onclick="p1Test('A','burning',this)">🔥 Burning splint</div><div class="test-btn" onclick="p1Test('A','glowing',this)">✨ Glowing splint</div><div class="test-btn" onclick="p1Test('A','limewater',this)">🧴 Limewater</div><div class="test-btn" onclick="p1Test('A','litmus',this)">📄 Damp litmus</div></div><div id="p1-rA" style="font-weight:900;font-size:.9rem;min-height:20px;margin-top:4px;color:var(--escape)"></div><p style="font-size:.9rem;color:var(--muted);margin:4px 0">This gas is:</p><div><span class="esc-opt" onclick="p1Ans('A','H₂',this)">H₂</span><span class="esc-opt" onclick="p1Ans('A','O₂',this)">O₂</span><span class="esc-opt" onclick="p1Ans('A','CO₂',this)">CO₂</span></div></div>
+<div class="task-box" id="p1-gasB"><h3 style="margin-top:0;color:var(--escape)">Gas B <small style="color:var(--muted)">(colourless)</small></h3><div style="display:flex;flex-direction:column;gap:4px"><div class="test-btn" onclick="p1Test('B','burning',this)">🔥 Burning splint</div><div class="test-btn" onclick="p1Test('B','glowing',this)">✨ Glowing splint</div><div class="test-btn" onclick="p1Test('B','limewater',this)">🧴 Limewater</div><div class="test-btn" onclick="p1Test('B','litmus',this)">📄 Damp litmus</div></div><div id="p1-rB" style="font-weight:900;font-size:.9rem;min-height:20px;margin-top:4px;color:var(--escape)"></div><p style="font-size:.9rem;color:var(--muted);margin:4px 0">This gas is:</p><div><span class="esc-opt" onclick="p1Ans('B','H₂',this)">H₂</span><span class="esc-opt" onclick="p1Ans('B','O₂',this)">O₂</span><span class="esc-opt" onclick="p1Ans('B','CO₂',this)">CO₂</span></div></div>
+<div class="task-box" id="p1-gasC"><h3 style="margin-top:0;color:var(--escape)">Gas C <small style="color:var(--muted)">(pungent)</small></h3><div style="display:flex;flex-direction:column;gap:4px"><div class="test-btn" onclick="p1Test('C','burning',this)">🔥 Burning splint</div><div class="test-btn" onclick="p1Test('C','glowing',this)">✨ Glowing splint</div><div class="test-btn" onclick="p1Test('C','limewater',this)">🧴 Limewater</div><div class="test-btn" onclick="p1Test('C','litmus',this)">📄 Damp litmus</div></div><div id="p1-rC" style="font-weight:900;font-size:.9rem;min-height:20px;margin-top:4px;color:var(--escape)"></div><p style="font-size:.9rem;color:var(--muted);margin:4px 0">This gas is:</p><div><span class="esc-opt" onclick="p1Ans('C','NH₃',this)">NH₃</span><span class="esc-opt" onclick="p1Ans('C','Cl₂',this)">Cl₂</span><span class="esc-opt" onclick="p1Ans('C','CO₂',this)">CO₂</span></div></div>
+</div>
+<div id="p1-fb" style="text-align:center;font-weight:900;font-size:1.2rem;min-height:28px;margin-top:6px"></div>
+<div class="aspire-box" style="text-align:center;margin-top:4px"><strong>👥 PEER TEACH:</strong> <em>"Explain to your partner the difference between a burning splint and a glowing splint."</em></div>
+</div>
+
+<!-- SLIDE 4: PUZZLE 2 FLAME CODE -->
+<div class="slide" data-title="Puzzle 2 – Flames" data-type="puzzle">
+<img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+<span class="slide-tag tag-puzzle">🔓 Puzzle 2</span>
+<h2>Crack the Flame Code</h2>
+<div class="li-box"><strong>Match each flame to its metal ion.</strong> All 5 correct → Puzzle 3 unlocks!</div>
+<div class="lock-track"><div class="lock-icon" id="p2-lock">🔒</div></div>
+<div style="background:#1e293b;border-radius:14px;padding:14px;margin:6px 0;display:flex;justify-content:center;gap:16px;flex-wrap:wrap" id="p2-flames">
+<div style="text-align:center;cursor:pointer;padding:8px" onclick="selFl(0)" id="pf-0" data-ion="Li⁺"><div class="flame-display" style="background:radial-gradient(circle at 50% 70%,#fbbf24,#ef4444)"></div><p style="color:#fca5a5;font-size:.8rem;margin:4px 0;font-weight:bold">RED</p><div id="pfl-0" style="color:#22c55e;font-weight:900;min-height:16px;font-size:.85rem"></div></div>
+<div style="text-align:center;cursor:pointer;padding:8px" onclick="selFl(1)" id="pf-1" data-ion="Na⁺"><div class="flame-display" style="background:radial-gradient(circle at 50% 70%,#fef08a,#eab308)"></div><p style="color:#fde047;font-size:.8rem;margin:4px 0;font-weight:bold">YELLOW</p><div id="pfl-1" style="color:#22c55e;font-weight:900;min-height:16px;font-size:.85rem"></div></div>
+<div style="text-align:center;cursor:pointer;padding:8px" onclick="selFl(2)" id="pf-2" data-ion="K⁺"><div class="flame-display" style="background:radial-gradient(circle at 50% 70%,#e9d5ff,#a855f7)"></div><p style="color:#d8b4fe;font-size:.8rem;margin:4px 0;font-weight:bold">LILAC</p><div id="pfl-2" style="color:#22c55e;font-weight:900;min-height:16px;font-size:.85rem"></div></div>
+<div style="text-align:center;cursor:pointer;padding:8px" onclick="selFl(3)" id="pf-3" data-ion="Ca²⁺"><div class="flame-display" style="background:radial-gradient(circle at 50% 70%,#fbbf24,#ea580c)"></div><p style="color:#fdba74;font-size:.8rem;margin:4px 0;font-weight:bold">ORANGE-RED</p><div id="pfl-3" style="color:#22c55e;font-weight:900;min-height:16px;font-size:.85rem"></div></div>
+<div style="text-align:center;cursor:pointer;padding:8px" onclick="selFl(4)" id="pf-4" data-ion="Cu²⁺"><div class="flame-display" style="background:radial-gradient(circle at 50% 70%,#5eead4,#0d9488)"></div><p style="color:#5eead4;font-size:.8rem;margin:4px 0;font-weight:bold">BLUE-GREEN</p><div id="pfl-4" style="color:#22c55e;font-weight:900;min-height:16px;font-size:.85rem"></div></div>
+</div>
+<p style="text-align:center;font-weight:bold;color:var(--muted);margin:4px 0">👆 Click flame, then click matching ion:</p>
+<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap" id="p2-ions">
+<button class="ghost" onclick="matchFl(this,'Ca²⁺')" style="font-size:1.1rem;padding:10px 18px">Ca²⁺</button>
+<button class="ghost" onclick="matchFl(this,'Li⁺')" style="font-size:1.1rem;padding:10px 18px">Li⁺</button>
+<button class="ghost" onclick="matchFl(this,'Cu²⁺')" style="font-size:1.1rem;padding:10px 18px">Cu²⁺</button>
+<button class="ghost" onclick="matchFl(this,'Na⁺')" style="font-size:1.1rem;padding:10px 18px">Na⁺</button>
+<button class="ghost" onclick="matchFl(this,'K⁺')" style="font-size:1.1rem;padding:10px 18px">K⁺</button>
+</div>
+<div id="p2-fb" style="text-align:center;font-weight:900;font-size:1.2rem;min-height:28px;margin-top:4px"></div>
+</div>
+
+<!-- SLIDE 5: PUZZLE 3 PRECIPITATES -->
+<div class="slide" data-title="Puzzle 3 – Precipitates" data-type="puzzle">
+<img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+<span class="slide-tag tag-puzzle">🔓 Puzzle 3</span>
+<h2>Precipitate Challenge</h2>
+<div class="li-box"><strong>4 unknowns.</strong> Run the correct test, observe, identify the ion.</div>
+<div class="lock-track"><div class="lock-icon" id="p3-lock">🔒</div></div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px">
+<div class="task-box" style="padding:10px"><h3 style="margin-top:0;font-size:.9rem;color:var(--escape)">Solution 1</h3><div style="display:flex;flex-direction:column;gap:3px"><div class="test-btn" onclick="p3Test(0,'agno3',this)" style="font-size:.85rem;padding:6px">🧴 AgNO₃+HNO₃</div><div class="test-btn" onclick="p3Test(0,'bacl2',this)" style="font-size:.85rem;padding:6px">🧫 BaCl₂+HCl</div><div class="test-btn" onclick="p3Test(0,'hcl',this)" style="font-size:.85rem;padding:6px">⚗️ Add HCl</div></div><div id="p3-r0" style="font-weight:900;font-size:.8rem;min-height:18px;margin-top:3px;color:var(--escape)"></div><div style="margin-top:3px"><span class="esc-opt" style="font-size:.8rem;padding:4px 10px" onclick="p3Ans(0,'Cl⁻',this)">Cl⁻</span><span class="esc-opt" style="font-size:.8rem;padding:4px 10px" onclick="p3Ans(0,'Br⁻',this)">Br⁻</span><span class="esc-opt" style="font-size:.8rem;padding:4px 10px" onclick="p3Ans(0,'SO₄²⁻',this)">SO₄²⁻</span></div></div>
+<div class="task-box" style="padding:10px"><h3 style="margin-top:0;font-size:.9rem;color:var(--escape)">Solution 2</h3><div style="display:flex;flex-direction:column;gap:3px"><div class="test-btn" onclick="p3Test(1,'agno3',this)" style="font-size:.85rem;padding:6px">🧴 AgNO₃+HNO₃</div><div class="test-btn" onclick="p3Test(1,'bacl2',this)" style="font-size:.85rem;padding:6px">🧫 BaCl₂+HCl</div><div class="test-btn" onclick="p3Test(1,'hcl',this)" style="font-size:.85rem;padding:6px">⚗️ Add HCl</div></div><div id="p3-r1" style="font-weight:900;font-size:.8rem;min-height:18px;margin-top:3px;color:var(--escape)"></div><div style="margin-top:3px"><span class="esc-opt" style="font-size:.8rem;padding:4px 10px" onclick="p3Ans(1,'I⁻',this)">I⁻</span><span class="esc-opt" style="font-size:.8rem;padding:4px 10px" onclick="p3Ans(1,'Cl⁻',this)">Cl⁻</span><span class="esc-opt" style="font-size:.8rem;padding:4px 10px" onclick="p3Ans(1,'CO₃²⁻',this)">CO₃²⁻</span></div></div>
+<div class="task-box" style="padding:10px"><h3 style="margin-top:0;font-size:.9rem;color:var(--escape)">Solution 3</h3><div style="display:flex;flex-direction:column;gap:3px"><div class="test-btn" onclick="p3Test(2,'agno3',this)" style="font-size:.85rem;padding:6px">🧴 AgNO₃+HNO₃</div><div class="test-btn" onclick="p3Test(2,'bacl2',this)" style="font-size:.85rem;padding:6px">🧫 BaCl₂+HCl</div><div class="test-btn" onclick="p3Test(2,'hcl',this)" style="font-size:.85rem;padding:6px">⚗️ Add HCl</div></div><div id="p3-r2" style="font-weight:900;font-size:.8rem;min-height:18px;margin-top:3px;color:var(--escape)"></div><div style="margin-top:3px"><span class="esc-opt" style="font-size:.8rem;padding:4px 10px" onclick="p3Ans(2,'SO₄²⁻',this)">SO₄²⁻</span><span class="esc-opt" style="font-size:.8rem;padding:4px 10px" onclick="p3Ans(2,'Br⁻',this)">Br⁻</span><span class="esc-opt" style="font-size:.8rem;padding:4px 10px" onclick="p3Ans(2,'I⁻',this)">I⁻</span></div></div>
+<div class="task-box" style="padding:10px"><h3 style="margin-top:0;font-size:.9rem;color:var(--escape)">Powder 4</h3><div style="display:flex;flex-direction:column;gap:3px"><div class="test-btn" onclick="p3Test(3,'agno3',this)" style="font-size:.85rem;padding:6px">🧴 AgNO₃+HNO₃</div><div class="test-btn" onclick="p3Test(3,'bacl2',this)" style="font-size:.85rem;padding:6px">🧫 BaCl₂+HCl</div><div class="test-btn" onclick="p3Test(3,'hcl',this)" style="font-size:.85rem;padding:6px">⚗️ Add HCl</div></div><div id="p3-r3" style="font-weight:900;font-size:.8rem;min-height:18px;margin-top:3px;color:var(--escape)"></div><div style="margin-top:3px"><span class="esc-opt" style="font-size:.8rem;padding:4px 10px" onclick="p3Ans(3,'CO₃²⁻',this)">CO₃²⁻</span><span class="esc-opt" style="font-size:.8rem;padding:4px 10px" onclick="p3Ans(3,'Cl⁻',this)">Cl⁻</span><span class="esc-opt" style="font-size:.8rem;padding:4px 10px" onclick="p3Ans(3,'SO₄²⁻',this)">SO₄²⁻</span></div></div>
+</div>
+<div id="p3-fb" style="text-align:center;font-weight:900;font-size:1.2rem;min-height:28px;margin-top:4px"></div>
+</div>
+
+<!-- SLIDE 6: PUZZLE 4 MYSTERY COMPOUND -->
+<div class="slide" data-title="Puzzle 4 – Final" data-type="puzzle">
+<img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+<span class="slide-tag tag-puzzle">🔓 Final Puzzle</span>
+<h2>Mystery Compound X</h2>
+<div class="li-box"><strong>Use ALL tests</strong> to identify both the cation AND anion!</div>
+<div class="lock-track"><div class="lock-icon" id="p4-lock">🔒</div></div>
+<div class="confetti-container" id="confetti-4"></div>
+<div class="content-grid" style="margin-top:6px">
+<div>
+<div class="task-box"><h3 style="margin-top:0;color:var(--escape)">🧪 Unknown X: white solid, dissolves in water</h3><div style="display:flex;flex-direction:column;gap:5px"><div class="test-btn" onclick="p4Test('flame',this)">🔥 Flame test</div><div class="test-btn" onclick="p4Test('agno3',this)">🧴 Acidified AgNO₃</div><div class="test-btn" onclick="p4Test('bacl2',this)">🧫 Acidified BaCl₂</div><div class="test-btn" onclick="p4Test('hcl',this)">⚗️ Add HCl</div><div class="test-btn" onclick="p4Test('cuso4',this)">💧 Anhydrous CuSO₄</div></div></div>
+</div>
+<div>
+<div class="evidence-log" id="p4-log"><p>[ Awaiting test results... ]</p></div>
+<div class="task-box" style="margin-top:8px">
+<p style="font-weight:900;color:var(--escape);margin:0 0 4px">Cation (flame):</p>
+<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px"><span class="esc-opt" onclick="p4Cat(this,'Li⁺')">Li⁺</span><span class="esc-opt" onclick="p4Cat(this,'Na⁺')">Na⁺</span><span class="esc-opt" onclick="p4Cat(this,'K⁺')">K⁺</span><span class="esc-opt" onclick="p4Cat(this,'Ca²⁺')">Ca²⁺</span><span class="esc-opt" onclick="p4Cat(this,'Cu²⁺')">Cu²⁺</span></div>
+<p style="font-weight:900;color:var(--escape);margin:0 0 4px">Anion (reagent):</p>
+<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px"><span class="esc-opt" onclick="p4An(this,'Cl⁻')">Cl⁻</span><span class="esc-opt" onclick="p4An(this,'Br⁻')">Br⁻</span><span class="esc-opt" onclick="p4An(this,'I⁻')">I⁻</span><span class="esc-opt" onclick="p4An(this,'SO₄²⁻')">SO₄²⁻</span><span class="esc-opt" onclick="p4An(this,'CO₃²⁻')">CO₃²⁻</span></div>
+<button onclick="p4Submit()" style="width:100%;background:var(--escape)">🔓 SUBMIT ANSWER</button>
+<div id="p4-fb" style="font-weight:900;font-size:1.1rem;min-height:28px;margin-top:4px;text-align:center"></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 7: WORKED EXAMPLE -->
+<div class="slide" data-title="Worked Example" data-type="worked">
+<img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+<span class="slide-tag tag-worked">✍️ Worked Example</span>
+<h2>Watch Me Solve It – Unknown Compound</h2>
+<div class="li-box"><strong>Before your independent work,</strong> see how to answer a compound-identification question.</div>
+<div class="content-grid" style="margin-top:8px">
+<div><div class="task-box"><h3 style="margin-top:0;color:var(--escape)">📋 Question [4 marks]</h3><p style="font-style:italic">"A compound gives a yellow flame and a white precipitate with acidified AgNO₃. (a) Name the cation [1]. (b) Name the anion [1]. (c) Name the compound [1]. (d) Why use HNO₃ not HCl? [1]"</p></div></div>
+<div><div class="ido-box"><h3 style="margin-top:0;color:var(--ido-border)">✅ Model Answer</h3>
+<button class="small" onclick="revealNext(this)" style="margin:6px 0">👆 Reveal next mark point</button>
+<div class="reveal-point" style="display:none"><p><strong>(a)</strong> <span style="color:var(--success);font-weight:900">Na⁺</span> — yellow flame = sodium ✓</p></div>
+<div class="reveal-point" style="display:none"><p><strong>(b)</strong> <span style="color:var(--success);font-weight:900">Cl⁻</span> — white precipitate with AgNO₃ = chloride ✓</p></div>
+<div class="reveal-point" style="display:none"><p><strong>(c)</strong> <span style="color:var(--success);font-weight:900">Sodium chloride (NaCl)</span> ✓</p></div>
+<div class="reveal-point" style="display:none"><p><strong>(d)</strong> <span style="color:var(--success);font-weight:900">HCl contains Cl⁻ ions</span> which would react with AgNO₃ giving a false positive white precipitate ✓</p></div>
+</div><div class="scaffold-box"><strong>💡 Exam Pattern:</strong> Flame → cation. AgNO₃ → halide. BaCl₂ → sulfate. HCl fizz → carbonate.</div></div>
+</div>
+</div>
+
+<!-- SLIDE 8: INDEPENDENT -->
+<div class="slide" id="ind-slide" data-title="Detective Report" data-timer="10">
+<img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+<span class="slide-tag tag-independent">📋 Detective Report</span>
+<h2>Independent Work</h2>
+<div class="li-box"><strong>Complete independently.</strong></div>
+<div style="display:flex;gap:10px;justify-content:center;margin:6px 0">
+<button onclick="switchInd('f')" style="background:#22c55e">Foundation (U–1)</button>
+<button onclick="switchInd('m')" style="background:#f97316">Middle (1–2)</button>
+<button onclick="switchInd('h')" style="background:#1e3a8a">Higher (3–4)</button>
+<button class="ghost" onclick="document.getElementById('ind-slide').classList.toggle('show-ans')">👁️ Answers</button>
+</div>
+<div class="xp-label" id="xp-label">Questions completed: 0/0</div><div class="xp-bar-wrap"><div class="xp-bar-fill" id="xp-fill"></div></div>
+    <div id="ind-f" class="ind-level active" style="max-height:48vh;overflow-y:auto">
+      <p style="margin:0 0 4px;font-size:.8rem;color:#22c55e;font-weight:900;text-align:center">📗 Grades U–1 • Grade 2 challenge marked with ⭐</p>
+<div class="ind-q"><span class="q-type q-mcq">MCQ</span><p style="margin:0"><strong>1.</strong> Glowing splint relights. Gas is:</p><button class="hint-btn" onclick="toggleHint(this)">💡 Give me a hint</button><div class="hint-text">GLOWING = ember only (no flame). This gas makes it burst back alight</div><div style="margin-top:6px"><span class="esc-opt" onclick="mcqChk(this,false)">H₂</span><span class="esc-opt" onclick="mcqChk(this,true)">O₂</span><span class="esc-opt" onclick="mcqChk(this,false)">CO₂</span></div></div>
+<div class="ind-q"><span class="q-type q-mcq">MCQ</span><p style="margin:0"><strong>2.</strong> Na⁺ flame colour:</p><button class="hint-btn" onclick="toggleHint(this)">💡 Give me a hint</button><div class="hint-text">Na = Nacho yellow. The colour of crisps</div><div style="margin-top:6px"><span class="esc-opt" onclick="mcqChk(this,false)">Red</span><span class="esc-opt" onclick="mcqChk(this,true)">Yellow</span><span class="esc-opt" onclick="mcqChk(this,false)">Lilac</span></div></div>
+<div class="ind-q"><span class="q-type q-short">Short</span><p style="margin:0"><strong>3.</strong> Cl⁻ precipitate colour with AgNO₃?</p><button class="hint-btn" onclick="toggleHint(this)">💡 Give me a hint</button><div class="hint-text">Lightest to darkest: white → cream → yellow. Cl⁻ is the lightest</div><p class="answer">White.</p></div>
+<div class="ind-q"><span class="q-type q-short">Short</span><p style="margin:0"><strong>4.</strong> What happens to anhydrous CuSO₄ with water?</p><button class="hint-btn" onclick="toggleHint(this)">💡 Give me a hint</button><div class="hint-text">Anhydrous = without water. Adding water = colour comes back (white → blue)</div><p class="answer">White → blue.</p></div>
+<div class="ind-q"><span class="q-type q-long">Long</span><p style="margin:0"><strong>5.</strong> Gas makes squeaky pop. Name gas, test, write equation.</p><button class="hint-btn" onclick="toggleHint(this)">💡 Give me a hint</button><div class="hint-text">H₂ combustion: 2H₂ + O₂ → 2H₂O. The pop = tiny explosion</div><p class="answer">Hydrogen. Burning splint → squeaky pop. 2H₂ + O₂ → 2H₂O.</p></div>
+<div class="ind-q"><span class="q-type q-exam">⭐ Exam [3 marks]</span><p style="margin:0"><strong>6.</strong> Yellow flame, white ppt with AgNO₃. (a) Cation [1]. (b) Anion [1]. (c) Compound name [1].</p><button class="hint-btn" onclick="toggleHint(this)">💡 Give me a hint</button><div class="hint-text">Yellow = Na⁺. White ppt = Cl⁻. Together = NaCl (table salt)</div><p class="answer">(a) Na⁺. (b) Cl⁻. (c) Sodium chloride (NaCl).</p></div>
+</div>
+<div id="ind-m" class="ind-level" style="max-height:48vh;overflow-y:auto">
+      <p style="margin:0 0 4px;font-size:.8rem;color:#f97316;font-weight:900;text-align:center">📙 Grades 1–2 • Grade 3 challenge marked with ⭐</p>
+<div class="ind-q"><span class="q-type q-mcq">MCQ</span><p style="margin:0"><strong>1.</strong> Br⁻ + AgNO₃ gives:</p><button class="hint-btn" onclick="toggleHint(this)">💡 Give me a hint</button><div class="hint-text">Not white (Cl⁻), not yellow (I⁻). The middle colour is...</div><div style="margin-top:6px"><span class="esc-opt" onclick="mcqChk(this,false)">White</span><span class="esc-opt" onclick="mcqChk(this,true)">Cream</span><span class="esc-opt" onclick="mcqChk(this,false)">Yellow</span></div></div>
+<div class="ind-q"><span class="q-type q-short">Short</span><p style="margin:0"><strong>2.</strong> Why HNO₃ not HCl for halide tests?</p><button class="hint-btn" onclick="toggleHint(this)">💡 Give me a hint</button><div class="hint-text">HCl would add Cl⁻ ions → AgNO₃ reacts with those → false positive!</div><p class="answer">HCl has Cl⁻ → false positive white precipitate.</p></div>
+<div class="ind-q"><span class="q-type q-short">Short</span><p style="margin:0"><strong>3.</strong> Difference between NH₃ and Cl₂ litmus tests.</p><button class="hint-btn" onclick="toggleHint(this)">💡 Give me a hint</button><div class="hint-text">NH₃ is alkaline (blue). Cl₂ is a bleach (white). Completely different results</div><p class="answer">NH₃: damp red litmus → blue. Cl₂: damp litmus → bleached white.</p></div>
+<div class="ind-q"><span class="q-type q-long">Long</span><p style="margin:0"><strong>4.</strong> Student tests NaCl then KCl – gets yellow both times. Problem and fix?</p><button class="hint-btn" onclick="toggleHint(this)">💡 Give me a hint</button><div class="hint-text">Wire still has Na⁺ on it. Na yellow is so strong it hides the lilac. Clean it!</div><p class="answer">Na⁺ contamination. Clean wire in conc. HCl until no colour, re-test.</p></div>
+<div class="ind-q"><span class="q-type q-exam">⭐ Exam [4 marks]</span><p style="margin:0"><strong>5.</strong> Powder fizzes with HCl, limewater milky, orange-red flame. (a) Anion [1]. (b) Cation [1]. (c) Compound [1]. (d) Gas [1].</p><button class="hint-btn" onclick="toggleHint(this)">💡 Give me a hint</button><div class="hint-text">Fizz = CO₃²⁻. CO₂ confirmed by milky limewater. Orange-red = Ca²⁺</div><p class="answer">(a) CO₃²⁻. (b) Ca²⁺. (c) CaCO₃. (d) CO₂.</p></div>
+</div>
+<div id="ind-h" class="ind-level" style="max-height:48vh;overflow-y:auto">
+      <p style="margin:0 0 4px;font-size:.8rem;color:#1e3a8a;font-weight:900;text-align:center">📘 Grades 3–4 • Grade 5 challenge marked with ⭐</p>
+<div class="ind-q"><span class="q-type q-mcq">MCQ</span><p style="margin:0"><strong>1.</strong> Ionic equation for I⁻ test:</p><button class="hint-btn" onclick="toggleHint(this)">💡 Give me a hint</button><div class="hint-text">Ag⁺(aq) + I⁻(aq) → AgI(s). Aqueous ions form a solid precipitate</div><div style="margin-top:6px"><span class="esc-opt" onclick="mcqChk(this,true)">Ag⁺+I⁻→AgI</span><span class="esc-opt" onclick="mcqChk(this,false)">Ba²⁺+I⁻→BaI₂</span></div></div>
+<div class="ind-q"><span class="q-type q-short">Short</span><p style="margin:0"><strong>2.</strong> Ionic equation for sulfate test + name precipitate.</p><button class="hint-btn" onclick="toggleHint(this)">💡 Give me a hint</button><div class="hint-text">Ba²⁺ + SO₄²⁻ → BaSO₄. Barium sulfate = white solid</div><p class="answer">Ba²⁺(aq)+SO₄²⁻(aq)→BaSO₄(s). Barium sulfate.</p></div>
+<div class="ind-q"><span class="q-type q-short">Short</span><p style="margin:0"><strong>3.</strong> Why do different metals give different flame colours?</p><button class="hint-btn" onclick="toggleHint(this)">💡 Give me a hint</button><div class="hint-text">Each element has UNIQUE electron energy levels → unique light wavelengths</div><p class="answer">Electrons excited → emit light of specific wavelength when falling back. Each element has unique energy levels.</p></div>
+<div class="ind-q"><span class="q-type q-long">Long</span><p style="margin:0"><strong>4.</strong> Design a systematic test for an unknown white compound.</p><button class="hint-btn" onclick="toggleHint(this)">💡 Give me a hint</button><div class="hint-text">Flame identifies CATION. Reagent tests identify ANION. Do flame first, then reagents</div><p class="answer">1. Dissolve. 2. Flame test → cation. 3. HCl → if fizzes + limewater milky → CO₃²⁻. 4. If no fizz: AgNO₃+HNO₃ → halide. 5. If no ppt: BaCl₂+HCl → SO₄²⁻.</p></div>
+<div class="ind-q"><span class="q-type q-exam">⭐ Exam [6 marks]</span><p style="margin:0"><strong>5.</strong> Compound Y: lilac flame, no fizz, cream ppt with AgNO₃. (a) Cation+justify [2]. (b) Anion+justify [2]. (c) Name [1]. (d) Ionic equation [1].</p><button class="hint-btn" onclick="toggleHint(this)">💡 Give me a hint</button><div class="hint-text">K⁺ = lilac. Br⁻ = cream (AgBr). KBr. Equation: Ag⁺(aq) + Br⁻(aq) → AgBr(s)</div><p class="answer">(a) K⁺ — lilac flame. (b) Br⁻ — cream ppt = AgBr. (c) KBr. (d) Ag⁺+Br⁻→AgBr(s).</p></div>
+</div>
+    <div class="lb-widget"><h4>🏆 Finished? Add your name:</h4><div class="lb-list" id="lb-list"></div><div class="lb-input-row"><input class="lb-input" id="lb-input" placeholder="Type name, press Enter" onkeydown="if(event.key==='Enter')addToLB()"><button class="small" onclick="addToLB()">Add</button></div></div>
+  
+</div>
+
+<!-- SLIDE 9: RAG -->
+  </div>
+
+  <div class="slide" data-title="Self-Assessment">
+<img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+<span class="slide-tag tag-rag">🚦 Self-Assessment</span>
+<h2>RAG Rate Yourself</h2>
+<div class="li-box"><strong>Click Red, Amber or Green</strong> for each topic. Be honest!</div>
+<div style="max-width:650px;margin:10px auto">
+<div class="rag-grid"><strong>Gas tests (5 gases)</strong><div class="rag-btn rag-r" onclick="ragClick(this)"></div><div class="rag-btn rag-a" onclick="ragClick(this)"></div><div class="rag-btn rag-g" onclick="ragClick(this)"></div></div>
+<div class="rag-grid"><strong>Flame test colours (5 ions)</strong><div class="rag-btn rag-r" onclick="ragClick(this)"></div><div class="rag-btn rag-a" onclick="ragClick(this)"></div><div class="rag-btn rag-g" onclick="ragClick(this)"></div></div>
+<div class="rag-grid"><strong>Halide precipitate colours</strong><div class="rag-btn rag-r" onclick="ragClick(this)"></div><div class="rag-btn rag-a" onclick="ragClick(this)"></div><div class="rag-btn rag-g" onclick="ragClick(this)"></div></div>
+<div class="rag-grid"><strong>Sulfate + Carbonate tests</strong><div class="rag-btn rag-r" onclick="ragClick(this)"></div><div class="rag-btn rag-a" onclick="ragClick(this)"></div><div class="rag-btn rag-g" onclick="ragClick(this)"></div></div>
+<div class="rag-grid"><strong>Identifying unknown compounds</strong><div class="rag-btn rag-r" onclick="ragClick(this)"></div><div class="rag-btn rag-a" onclick="ragClick(this)"></div><div class="rag-btn rag-g" onclick="ragClick(this)"></div></div>
+</div>
+<div style="display:flex;gap:20px;justify-content:center;margin-top:14px">🔴 Don't get it &nbsp; 🟡 Getting there &nbsp; 🟢 Got it!</div>
+</div>
+
+<!-- SLIDE 10: ESCAPED -->
+<div class="slide" data-title="Escaped!">
+<img class="logo" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSIzOCUiIHI9Ijc1JSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzIzMkM1NSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE2MUQzRCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAwKSI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTEiIHI9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCOUU2Q0QiIHN0cm9rZS13aWR0aD0iMi42Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEuNSAxNCkgc2NhbGUoMC43NykiPjxwYXRoIGQ9Ik0yOCA3MSBMMjggMzcgTDUwIDU5IEw3MiAzNyBMNzIgNzEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0U4RTJENCIgc3Ryb2tlLXdpZHRoPSI5LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MC4wMCAyMi41MCBMNTEuNDggMjguNTIgTDU3LjUwIDMwLjAwIEw1MS40OCAzMS40OCBMNTAuMDAgMzcuNTAgTDQ4LjUyIDMxLjQ4IEw0Mi41MCAzMC4wMCBMNDguNTIgMjguNTIgWiIgZmlsbD0iI0YyQTI0QSIvPjwvZz48L2c+PC9zdmc+Cg==">
+<div style="text-align:center;margin-top:5%">
+<div class="lock-track" style="margin-bottom:12px"><div class="lock-icon solved">✅</div><div class="lock-icon solved">✅</div><div class="lock-icon solved">✅</div><div class="lock-icon solved">✅</div></div>
+<h1 style="font-size:3rem;border-color:var(--escape)">🏆 YOU ESCAPED! 🏆</h1>
+<div class="li-box" style="max-width:500px;margin:14px auto;text-align:left">
+<h3 style="margin-top:0">🎯 Today I Mastered:</h3>
+<p>✅ Gas tests: burning (H₂), glowing (O₂), limewater (CO₂), damp litmus (NH₃/Cl₂)</p>
+<p>✅ Flames: Li⁺ red, Na⁺ yellow, K⁺ lilac, Ca²⁺ orange-red, Cu²⁺ blue-green</p>
+<p>✅ Halides: Cl⁻ white, Br⁻ cream, I⁻ yellow (with AgNO₃+HNO₃)</p>
+<p>✅ SO₄²⁻: white ppt with BaCl₂ | CO₃²⁻: fizz + milky limewater | Water: CuSO₄ white→blue</p>
+</div>
+</div>
+</div>
+
+<div class="controls"><button onclick="prevSlide()">◀ Prev</button><button onclick="nextSlide()">Next ▶</button></div>
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+<div class="progress-label" id="progressLabel"></div>
+
+<!-- PRINT AREA -->
+<div id="print-area">
+<div id="print-ko" class="print-section"><h1 style="text-align:center">Intervention B – Knowledge Organiser</h1><h3>Gas Tests</h3><table class="ko-table"><tr><th>Gas</th><th>Test</th><th>Result</th></tr><tr><td>H₂</td><td>Burning splint</td><td>Squeaky pop</td></tr><tr><td>O₂</td><td>Glowing splint</td><td>Relights</td></tr><tr><td>CO₂</td><td>Limewater</td><td>Turns milky</td></tr><tr><td>NH₃</td><td>Damp red litmus</td><td>Turns blue</td></tr><tr><td>Cl₂</td><td>Damp litmus</td><td>Bleached white</td></tr></table><h3>Flame Tests</h3><table class="ko-table"><tr><th>Ion</th><th>Colour</th></tr><tr><td>Li⁺</td><td>Red</td></tr><tr><td>Na⁺</td><td>Yellow</td></tr><tr><td>K⁺</td><td>Lilac</td></tr><tr><td>Ca²⁺</td><td>Orange-red</td></tr><tr><td>Cu²⁺</td><td>Blue-green</td></tr></table><h3>Anion &amp; Water Tests</h3><table class="ko-table"><tr><th>Ion</th><th>Reagent</th><th>Result</th></tr><tr><td>Cl⁻</td><td>AgNO₃+HNO₃</td><td>White ppt</td></tr><tr><td>Br⁻</td><td>AgNO₃+HNO₃</td><td>Cream ppt</td></tr><tr><td>I⁻</td><td>AgNO₃+HNO₃</td><td>Yellow ppt</td></tr><tr><td>SO₄²⁻</td><td>BaCl₂+HCl</td><td>White ppt</td></tr><tr><td>CO₃²⁻</td><td>Dilute HCl</td><td>Fizzes; limewater milky</td></tr><tr><td>Water</td><td>Anhydrous CuSO₄</td><td>White→Blue</td></tr></table></div>
+<div id="print-arrival" class="print-section"><h2>Warm-Up / Misconception Check</h2><p>1. How do you test for hydrogen?</p><div class="print-line"></div><p>2. K⁺ flame colour?</p><div class="print-line"></div><p>3. Br⁻ precipitate colour with AgNO₃?</p><div class="print-line"></div><p>4. What happens to anhydrous CuSO₄ with water?</p><div class="print-line"></div></div>
+<div id="print-starter" class="print-section"><h2>Puzzle Notes</h2><p><strong>Misconceptions corrected:</strong></p><div class="print-line"></div><div class="print-line"></div><p><strong>Puzzle 1 – Gas Tests:</strong></p><div class="print-line"></div><p><strong>Puzzle 2 – Flame Tests:</strong></p><div class="print-line"></div><p><strong>Puzzle 3 – Precipitates:</strong></p><div class="print-line"></div><p><strong>Puzzle 4 – Mystery Compound:</strong></p><div class="print-line"></div></div>
+<div id="print-wedo" class="print-section"><h2>We Do: Evidence Collection</h2><table class="ko-table"><tr><th>Gas</th><th>Test Used</th><th>Result</th></tr><tr><td>A</td><td style="height:30px"></td><td></td></tr><tr><td>B</td><td style="height:30px"></td><td></td></tr><tr><td>C</td><td style="height:30px"></td><td></td></tr></table><table class="ko-table"><tr><th>Flame</th><th>Ion</th></tr><tr><td>Red</td><td style="height:24px"></td></tr><tr><td>Yellow</td><td style="height:24px"></td></tr><tr><td>Lilac</td><td style="height:24px"></td></tr><tr><td>Orange-red</td><td style="height:24px"></td></tr><tr><td>Blue-green</td><td style="height:24px"></td></tr></table></div>
+    <div class="scaffold-print-box prevent-break foundation-content"><h3>📝 Word Bank (Foundation)</h3><p>Use these words: <strong>hydrogen, oxygen, carbon dioxide, ammonia, chlorine, burning splint, glowing splint, squeaky pop, relights, limewater, milky, damp litmus, blue, bleached white, lithium, sodium, potassium, calcium, copper, red, yellow, lilac, orange-red, blue-green, chloride, bromide, iodide, sulfate, carbonate, white precipitate, cream precipitate, yellow precipitate, silver nitrate, barium chloride, fizzes, anhydrous</strong></p><h3>✍️ Sentence Starters</h3><p>• To test for ___ gas, you use a...</p><p>• The positive result is...</p><p>• The ion ___ gives a ___ coloured flame</p><p>• A ___ precipitate with AgNO₃ means ___ is present</p></div>
+<div id="print-scaffold" class="print-section"><h2>Scaffolding Sheet</h2><div class="scaffold-print-box prevent-break"><h3>Gas Tests</h3><p>BURNING splint (flame) = H₂ (pop). GLOWING splint (ember) = O₂ (relights).</p><p>Damp litmus: NH₃ → blue | Cl₂ → bleached white.</p></div><div class="scaffold-print-box prevent-break"><h3>Flame Memory Aids</h3><p>Li = Lipstick red | Na = Nacho yellow | K = King's lilac | Ca = Campfire | Cu = Statue of Liberty blue-green</p></div><div class="scaffold-print-box prevent-break"><h3>Halides</h3><p>Cl⁻=White | Br⁻=Cream | I⁻=Yellow (darker going down!). Use HNO₃ NOT HCl!</p></div><div class="scaffold-print-box prevent-break higher-content"><h3>Ionic Equations</h3><p>Ag⁺+Cl⁻→AgCl | Ag⁺+Br⁻→AgBr | Ag⁺+I⁻→AgI | Ba²⁺+SO₄²⁻→BaSO₄</p></div></div>
+<div id="print-worksheet-foundation" class="print-section foundation-content"><h2>Detective Report – Foundation (Grades U–1)</h2><div class="prevent-break"><h3>Multiple Choice &amp; Short Answer</h3><p>1. Glowing splint relights: [&nbsp;] H₂ [&nbsp;] O₂ [&nbsp;] CO₂</p><p>2. Na⁺ flame: [&nbsp;] Red [&nbsp;] Yellow [&nbsp;] Lilac</p><p>3. Cl⁻ ppt colour?</p><div class="print-line"></div><p>4. Anhydrous CuSO₄ + water?</p><div class="print-line"></div></div><div class="prevent-break" style="margin-top:18px"><h3>Long Answer</h3><p>5. Gas → squeaky pop. Name gas, test, equation.</p><div class="print-line"></div><div class="print-line"></div></div><div class="prevent-break" style="margin-top:18px"><h3>Exam-Style Questions</h3><p><strong>6. [3 marks]</strong> Yellow flame, white ppt AgNO₃. (a) Cation [1]. (b) Anion [1]. (c) Name [1].</p><div class="print-line"></div><div class="print-line"></div><div class="print-line"></div></div></div>
+<div id="print-worksheet-middle" class="print-section middle-content"><h2>Detective Report – Middle (Grades 1–2)</h2><div class="prevent-break"><h3>Multiple Choice &amp; Short Answer</h3><p>1. Br⁻+AgNO₃: [&nbsp;] White [&nbsp;] Cream [&nbsp;] Yellow</p><p>2. Why HNO₃ not HCl for halides?</p><div class="print-line"></div><div class="print-line"></div><p>3. NH₃ vs Cl₂ litmus tests?</p><div class="print-line"></div></div><div class="prevent-break" style="margin-top:18px"><h3>Long Answer</h3><p>4. NaCl then KCl – yellow both times. Problem + fix?</p><div class="print-line"></div><div class="print-line"></div><div class="print-line"></div></div><div class="prevent-break" style="margin-top:18px"><h3>Exam-Style Questions</h3><p><strong>5. [4 marks]</strong> Fizzes HCl, limewater milky, orange-red flame. (a) Anion [1]. (b) Cation [1]. (c) Name [1]. (d) Gas [1].</p><div class="print-line"></div><div class="print-line"></div><div class="print-line"></div><div class="print-line"></div></div></div>
+<div id="print-worksheet-higher" class="print-section higher-content"><h2>Detective Report – Higher (Grades 3–4)</h2><div class="prevent-break"><h3>Multiple Choice &amp; Short Answer</h3><p>1. I⁻ ionic equation: [&nbsp;] Ag⁺+I⁻→AgI [&nbsp;] Ba²⁺+I⁻→BaI₂</p><p>2. Sulfate ionic equation + precipitate name.</p><div class="print-line"></div><p>3. Why different metals → different flame colours?</p><div class="print-line"></div><div class="print-line"></div></div><div class="prevent-break" style="margin-top:18px"><h3>Long Answer</h3><p>4. Design systematic test for unknown white compound.</p><div class="print-line"></div><div class="print-line"></div><div class="print-line"></div><div class="print-line"></div></div><div class="prevent-break" style="margin-top:18px"><h3>Exam-Style Questions</h3><p><strong>5. [6 marks]</strong> Compound Y: lilac flame, no fizz, cream ppt AgNO₃. (a) Cation+justify [2]. (b) Anion+justify [2]. (c) Name [1]. (d) Ionic equation [1].</p><div class="print-line"></div><div class="print-line"></div><div class="print-line"></div><div class="print-line"></div><div class="print-line"></div><div class="print-line"></div></div></div>
+<div id="print-exit" class="print-section">
+<div class="foundation-content prevent-break"><h2>Exit – Foundation (U–1)</h2><p>1. Burning splint tests for?</p><div class="print-line"></div><p>2. Cu²⁺ flame colour?</p><div class="print-line"></div><p>3. I⁻ ppt colour?</p><div class="print-line"></div></div>
+<div class="middle-content prevent-break"><h2>Exit – Middle (1–2)</h2><p>1. Carbonate test (two steps).</p><div class="print-line"></div><div class="print-line"></div><p>2. Why clean wire between tests?</p><div class="print-line"></div><p>3. All three halide ppt colours.</p><div class="print-line"></div></div>
+<div class="higher-content prevent-break"><h2>Exit – Higher (3–4)</h2><p>1. Ionic equation for Br⁻ test.</p><div class="print-line"></div><p>2. Why HNO₃ not HCl?</p><div class="print-line"></div><div class="print-line"></div><p>3. Lilac flame + white ppt BaCl₂. Identify fully.</p><div class="print-line"></div><div class="print-line"></div></div>
+</div>
+</div>
+
+<script>
+let currentSlide=0;const slides=document.querySelectorAll('.slide');
+function showSlide(i){slides.forEach((s,j)=>s.classList.toggle('active',j===i));updateProgress();checkTimerVisibility()}
+function nextSlide(){if(currentSlide<slides.length-1){currentSlide++;showSlide(currentSlide)}}
+function prevSlide(){if(currentSlide>0){currentSlide--;showSlide(currentSlide)}}
+document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.isContentEditable)return;if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();nextSlide()}if(e.key==='ArrowLeft'){e.preventDefault();prevSlide()}});
+function updateProgress(){const p=((currentSlide+1)/slides.length)*100;document.getElementById('progressBar').style.width=p+'%';const t=slides[currentSlide].getAttribute('data-title')||'';document.getElementById('progressLabel').innerText=t+' • '+(currentSlide+1)+'/'+slides.length}
+updateProgress();
+  checkTimerVisibility();
+
+function solvePuzzle(n){document.getElementById('lock-'+n).classList.add('solved');document.getElementById('lock-'+n).innerText='✅'}
+function fireConfetti(id){const area=document.getElementById(id);if(!area)return;const cols=['#ef4444','#f59e0b','#22c55e','#3b82f6','#8b5cf6','#ec4899'];for(let i=0;i<20;i++){const c=document.createElement('div');c.className='confetti-piece';c.style.left=Math.random()*100+'%';c.style.top=Math.random()*30+'%';c.style.background=cols[Math.floor(Math.random()*cols.length)];c.style.animationDelay=Math.random()*.5+'s';area.appendChild(c);setTimeout(()=>c.remove(),2000)}}
+
+// Puzzle 1
+const p1G={A:{ans:'O₂',tests:{burning:'Nothing special.',glowing:'🔆 Splint RELIGHTS!',limewater:'No change.',litmus:'No change.'}},B:{ans:'CO₂',tests:{burning:'Flame goes out.',glowing:'Glow fades.',limewater:'🥛 TURNS MILKY!',litmus:'No change.'}},C:{ans:'NH₃',tests:{burning:'Nothing.',glowing:'Nothing.',limewater:'No change.',litmus:'🔵 Red litmus → BLUE!'}}};
+let p1D={A:false,B:false,C:false};
+function p1Test(g,t,btn){btn.classList.add('used');document.getElementById('p1-r'+g).innerText=p1G[g].tests[t]}
+function p1Ans(g,a,el){if(p1D[g])return;if(a===p1G[g].ans){el.classList.add('correct');p1D[g]=true;if(p1D.A&&p1D.B&&p1D.C){document.getElementById('p1-fb').innerText='🔓 PUZZLE 1 SOLVED!';document.getElementById('p1-fb').style.color='var(--success)';solvePuzzle(1);fireConfetti('confetti-1')}}else{el.classList.add('wrong');setTimeout(()=>el.classList.remove('wrong'),600)}}
+
+// Puzzle 2
+let selFlI=null,p2Sc=0;
+function selFl(i){document.querySelectorAll('#p2-flames > div').forEach(f=>f.style.outline='');document.getElementById('pf-'+i).style.outline='3px solid var(--escape)';document.getElementById('pf-'+i).style.outlineOffset='4px';selFlI=i}
+function matchFl(btn,ion){if(selFlI===null)return;const fp=document.getElementById('pf-'+selFlI);if(fp.getAttribute('data-ion')===ion){document.getElementById('pfl-'+selFlI).innerText='✅ '+ion;fp.style.outline='3px solid var(--success)';fp.style.pointerEvents='none';btn.disabled=true;btn.style.opacity='.3';p2Sc++;selFlI=null;if(p2Sc===5){document.getElementById('p2-fb').innerText='🔓 PUZZLE 2 SOLVED!';document.getElementById('p2-fb').style.color='var(--success)';solvePuzzle(2)}}else{document.getElementById('p2-fb').innerText='❌ Try again!';document.getElementById('p2-fb').style.color='var(--error)';btn.style.animation='shake .4s';setTimeout(()=>{btn.style.animation='';document.getElementById('p2-fb').innerText=''},800)}}
+
+// Puzzle 3
+const p3D=[{ans:'Cl⁻',tests:{agno3:'⬜ WHITE ppt!',bacl2:'No ppt.',hcl:'No fizz.'}},{ans:'I⁻',tests:{agno3:'🟡 YELLOW ppt!',bacl2:'No ppt.',hcl:'No fizz.'}},{ans:'SO₄²⁻',tests:{agno3:'No ppt.',bacl2:'⬜ WHITE ppt!',hcl:'No fizz.'}},{ans:'CO₃²⁻',tests:{agno3:'No ppt.',bacl2:'No ppt.',hcl:'💨 FIZZES! Limewater milky!'}}];
+let p3Sc=0;const p3Done=[false,false,false,false];
+function p3Test(i,t,btn){btn.classList.add('used');document.getElementById('p3-r'+i).innerText=p3D[i].tests[t]}
+function p3Ans(i,a,el){if(p3Done[i])return;if(a===p3D[i].ans){el.classList.add('correct');p3Done[i]=true;p3Sc++;if(p3Sc===4){document.getElementById('p3-fb').innerText='🔓 PUZZLE 3 SOLVED!';document.getElementById('p3-fb').style.color='var(--success)';solvePuzzle(3)}}else{el.classList.add('wrong');setTimeout(()=>el.classList.remove('wrong'),600)}}
+
+// Puzzle 4 (KBr)
+const p4T={flame:'🔥 LILAC flame!',agno3:'🧴 CREAM precipitate!',bacl2:'🧫 No ppt.',hcl:'⚗️ No fizz.',cuso4:'💧 Already dissolved.'};
+let p4L=[],p4C='',p4A='';
+function p4Test(t,btn){btn.classList.add('used');p4L.push(p4T[t]);document.getElementById('p4-log').innerHTML=p4L.map(l=>'<p>'+l+'</p>').join('')}
+function p4Cat(el,ion){p4C=ion;el.parentNode.querySelectorAll('.esc-opt').forEach(o=>o.style.opacity=o===el?'1':'.3');el.classList.add('correct')}
+function p4An(el,ion){p4A=ion;el.parentNode.querySelectorAll('.esc-opt').forEach(o=>o.style.opacity=o===el?'1':'.3');el.classList.add('correct')}
+function p4Submit(){const fb=document.getElementById('p4-fb');if(p4C==='K⁺'&&p4A==='Br⁻'){fb.innerText='🔓 COMPOUND X = KBr (Potassium Bromide)! ESCAPED!';fb.style.color='var(--success)';solvePuzzle(4);fireConfetti('confetti-4')}else{fb.innerText='❌ Check your evidence!';fb.style.color='var(--error)'}}
+
+function ragClick(el){el.parentNode.querySelectorAll('.rag-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active')}
+function switchInd(l){document.querySelectorAll('.ind-level').forEach(el=>el.classList.remove('active'));document.getElementById('ind-'+l).classList.add('active');updateXP()}
+function mcqChk(el,ok){el.classList.add(ok?'correct':'wrong');if(!ok)setTimeout(()=>el.classList.remove('wrong'),600)}
+function printPack(level){document.body.classList.remove('print-foundation','print-middle','print-higher');document.querySelectorAll('.print-section').forEach(el=>el.classList.remove('visible'));['ko','arrival','starter','wedo','scaffold','exit'].forEach(id=>{const el=document.getElementById('print-'+id);if(el)el.classList.add('visible')});document.body.classList.add('print-'+level);const ws=document.getElementById('print-worksheet-'+level);if(ws)ws.classList.add('visible');window.print()}
+
+  // Timer
+  let timerInterval,timeLeft=0,isTimerRunning=false;
+  function checkTimerVisibility(){const s=slides[currentSlide];const t=s.getAttribute('data-timer');const w=document.getElementById('timer-widget');if(t){w.classList.add('visible');if(!isTimerRunning)resetTimer(parseInt(t))}else{w.classList.remove('visible')}}
+  function updateTimerDisplay(){const m=Math.floor(timeLeft/60);const s=timeLeft%60;document.getElementById('timer-display').innerText=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');document.getElementById('timer-display').style.color=timeLeft<60?'var(--error)':'var(--lo-border)'}
+  function startTimer(){if(isTimerRunning||timeLeft<=0)return;isTimerRunning=true;document.getElementById('btn-play').classList.add('active-play');document.getElementById('btn-pause').classList.remove('active-pause');timerInterval=setInterval(()=>{timeLeft--;updateTimerDisplay();if(timeLeft<=0)pauseTimer()},1000)}
+  function pauseTimer(){isTimerRunning=false;clearInterval(timerInterval);document.getElementById('btn-play').classList.remove('active-play');document.getElementById('btn-pause').classList.add('active-pause')}
+  function resetTimer(minutes){pauseTimer();document.getElementById('btn-pause').classList.remove('active-pause');timeLeft=minutes*60;updateTimerDisplay()}
+
+
+  // Sound Effects
+  const audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  function playDing(){const o=audioCtx.createOscillator();const g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.type='sine';o.frequency.setValueAtTime(880,audioCtx.currentTime);o.frequency.setValueAtTime(1320,audioCtx.currentTime+0.08);g.gain.setValueAtTime(0.3,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.4);o.start(audioCtx.currentTime);o.stop(audioCtx.currentTime+0.4)}
+  function playBuzz(){const o=audioCtx.createOscillator();const g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.type='square';o.frequency.setValueAtTime(150,audioCtx.currentTime);g.gain.setValueAtTime(0.15,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.25);o.start(audioCtx.currentTime);o.stop(audioCtx.currentTime+0.25)}
+
+  // XP Progress Bar
+  function updateXP(){const slide=document.getElementById('ind-slide');if(!slide)return;const active=slide.querySelector('.ind-level.active');if(!active)return;const total=active.querySelectorAll('.ind-q').length;const done=active.querySelectorAll('.ind-q .correct').length;const el=document.getElementById('xp-label');const fill=document.getElementById('xp-fill');if(el)el.innerText='Questions completed: '+done+'/'+total+(done===total&&total>0?' 🎉':'');if(fill)fill.style.width=(total>0?Math.round(done/total*100):0)+'%';if(done===total&&total>0&&done>0)fireConfettiGlobal()}
+
+  // Global Confetti
+  function fireConfettiGlobal(){let area=document.getElementById('confetti-global');if(!area){area=document.createElement('div');area.id='confetti-global';area.className='confetti-global';document.body.appendChild(area)}const cols=['#ef4444','#f59e0b','#22c55e','#3b82f6','#8b5cf6','#ec4899','#14b8a6'];for(let i=0;i<30;i++){const c=document.createElement('div');c.className='confetti-p';c.style.left=Math.random()*100+'%';c.style.top=-10+'px';c.style.background=cols[Math.floor(Math.random()*cols.length)];c.style.animationDelay=Math.random()*0.6+'s';c.style.width=(6+Math.random()*8)+'px';c.style.height=(6+Math.random()*8)+'px';area.appendChild(c);setTimeout(()=>c.remove(),2500)}}
+
+  // Shuffle MCQ options on load
+  function shuffleMCQs(){document.querySelectorAll('.ind-q').forEach(q=>{const opts=q.querySelectorAll('.mcq-opt');if(opts.length<2)return;const parent=opts[0].parentNode;const arr=Array.from(opts);for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}arr.forEach(o=>parent.appendChild(o))})}
+  shuffleMCQs();
+
+  // Leaderboard
+  function addToLB(){const input=document.getElementById('lb-input');const name=input.value.trim();if(!name)return;const list=document.getElementById('lb-list');const el=document.createElement('span');el.className='lb-name';el.innerText=name;list.appendChild(el);input.value='';playDing()}
+
+
+  // Hint System
+  function toggleHint(btn){const hint=btn.nextElementSibling;if(hint&&hint.classList.contains('hint-text')){hint.classList.toggle('show');btn.innerText=hint.classList.contains('show')?'💡 Hide hint':'💡 Give me a hint'}}
+
+  // Click-to-reveal model answers
+  function revealNext(btnEl){const container=btnEl.closest('.mark-scheme,.ido-box,.correct-box');if(!container)return;const hidden=container.querySelector('.reveal-point[style*="display:none"],.reveal-point:not(.revealed)');if(hidden){hidden.style.display='block';hidden.classList.add('revealed');hidden.style.animation='fadeInUp .3s';const remaining=container.querySelectorAll('.reveal-point:not(.revealed)').length;if(remaining===0)btnEl.innerText='✅ All revealed!'}}
+
+</script>
+<script defer src="/hud.js"></script>
+</body>
+</html>

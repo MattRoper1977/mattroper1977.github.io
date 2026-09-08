@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 96" role="img" aria-labelledby="title desc">
+  <title id="title">Lumina Haven</title>
+  <desc id="desc">A warm little room at dusk seen through a tall arched window: a glowing lamp, a soft chair beside a low tea table, a monstera in a pot, a cat curled on a rug, and a shelf of gems catching the light. Lilac and mint throughout.</desc>
+  <defs>
+    <linearGradient id="lhroom" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2A1B3A"/>
+      <stop offset="1" stop-color="#17101F"/>
+    </linearGradient>
+    <radialGradient id="lhlamp" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#FFE2A3"/>
+      <stop offset="0.45" stop-color="#FFD08A" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FFD08A" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="lhwin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8CE7DB" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#D7A7FF" stop-opacity="0.30"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="120" height="96" fill="url(#lhroom)"/>
+
+  <!-- arched window with dusk light -->
+  <path d="M40 58 V30 a20 20 0 0 1 40 0 V58 Z" fill="url(#lhwin)"/>
+  <path d="M40 58 V30 a20 20 0 0 1 40 0 V58" fill="none" stroke="#D7A7FF" stroke-opacity="0.65" stroke-width="1"/>
+  <path d="M60 12 V58 M40 40 H80" stroke="#17101F" stroke-opacity="0.5" stroke-width="1.2"/>
+
+  <!-- lamp glow -->
+  <circle cx="93" cy="52" r="19" fill="url(#lhlamp)"/>
+
+  <!-- floor -->
+  <path d="M0 70 H120 V96 H0 Z" fill="#1F142B"/>
+  <path d="M0 70 H120" stroke="#D7A7FF" stroke-opacity="0.25" stroke-width="0.6"/>
+
+  <!-- rug -->
+  <ellipse cx="58" cy="82" rx="34" ry="9" fill="#EADCF2" fill-opacity="0.16"/>
+  <ellipse cx="58" cy="82" rx="26" ry="6.5" fill="#D7A7FF" fill-opacity="0.16"/>
+
+  <!-- soft chair -->
+  <g>
+    <path d="M22 70 h15 v-11 a5 5 0 0 0 -5 -5 h-5 a5 5 0 0 0 -5 5 z" fill="#B9A5CC"/>
+    <rect x="21" y="68" width="17" height="5" rx="2" fill="#CDBBDD"/>
+  </g>
+
+  <!-- tea table -->
+  <g stroke="#A8735D" stroke-width="1.4" stroke-linecap="round">
+    <path d="M46 70 h13"/><path d="M48 70 v6"/><path d="M57 70 v6"/>
+  </g>
+  <circle cx="52.5" cy="68" r="1.9" fill="#FFE2A3"/>
+
+  <!-- monstera -->
+  <g>
+    <path d="M74 70 h7 l-1 -7 h-5 z" fill="#8C6B52"/>
+    <g fill="#55A77A">
+      <path d="M77.5 63 c-7 -1 -10 -6 -8 -10 c5 -1 9 3 8 10 z"/>
+      <path d="M77.5 63 c7 -1.5 10 -7 7.5 -11 c-5.5 -0.5 -9 4 -7.5 11 z"/>
+      <path d="M77.5 63 c-1 -7 2 -12 6 -13 c1.5 5 -1 11 -6 13 z"/>
+    </g>
+  </g>
+
+  <!-- gem shelf -->
+  <path d="M6 44 h20" stroke="#D7A7FF" stroke-opacity="0.6" stroke-width="1"/>
+  <g stroke="#FFFAF7" stroke-width="0.4">
+    <path d="M9 44 l2.5 -4 l2.5 4 z" fill="#8CE7DB"/>
+    <path d="M15 44 l2 -3.2 l2 3.2 z" fill="#D7A7FF"/>
+    <path d="M20.5 44 l2.2 -3.6 l2.2 3.6 z" fill="#FF8B9D"/>
+  </g>
+
+  <!-- the cat, curled -->
+  <g fill="#E89B67">
+    <ellipse cx="62" cy="79" rx="7" ry="4.2"/>
+    <circle cx="68" cy="77.5" r="3.1"/>
+    <path d="M66.4 75.2 l0.6 -2.2 l1.7 1.5 z"/>
+    <path d="M69.4 74.4 l1.5 -1.8 l0.7 2.3 z"/>
+    <path d="M55.6 79.6 c-2.4 0.6 -3.4 2.4 -2 3.4 c1.3 0.9 2.9 -0.6 3.4 -2.4 z"/>
+  </g>
+</svg>

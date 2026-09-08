@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Apex Curl card artwork</title>
+  <desc id="desc">A curling sheet seen down the ice, with the house rings at the far end, a delivered stone tracking a curved line towards them, and a readout showing a draw called at two point nine metres per second.</desc>
+  <defs>
+    <linearGradient id="ice" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#eef7fb"/><stop offset="1" stop-color="#c3dfec"/>
+    </linearGradient>
+    <linearGradient id="rink" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#071018"/><stop offset="1" stop-color="#0c1c28"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#0a1622"/><stop offset="1" stop-color="#123047"/>
+    </linearGradient>
+    <pattern id="pebble" width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="4" r="1.3" fill="#ffffff" opacity=".55"/>
+      <circle cx="12" cy="10" r="1.1" fill="#ffffff" opacity=".4"/>
+    </pattern>
+    <radialGradient id="plate" cx="0.16" cy="0.94" r="0.78">
+      <stop stop-color="#050d14" stop-opacity=".95"/>
+      <stop offset=".55" stop-color="#050d14" stop-opacity=".72"/>
+      <stop offset="1" stop-color="#050d14" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#rink)"/>
+
+  <!-- the sheet, in perspective -->
+  <path d="M232 630 L432 168 L768 168 L968 630 Z" fill="url(#ice)"/>
+  <path d="M232 630 L432 168 L768 168 L968 630 Z" fill="url(#pebble)"/>
+
+  <!-- the house -->
+  <g transform="translate(600 246)">
+    <ellipse rx="150" ry="42" fill="#2f6fd0"/>
+    <ellipse rx="100" ry="28" fill="#f4f7fa"/>
+    <ellipse rx="54" ry="15" fill="#cf3b3b"/>
+    <ellipse rx="18" ry="5" fill="#f4f7fa"/>
+  </g>
+
+  <!-- hog and tee lines -->
+  <path d="M470 300 H730" stroke="#8fb3c6" stroke-width="2" opacity=".8"/>
+  <path d="M392 430 H808" stroke="#8fb3c6" stroke-width="2" opacity=".7"/>
+  <path d="M600 168 V620" stroke="#9dc0d2" stroke-width="1.5" stroke-dasharray="8 10" opacity=".65"/>
+
+  <!-- the curved delivery line: the point of the game -->
+  <path d="M556 596 C 556 470, 566 360, 612 268" fill="none" stroke="#39c6ef"
+        stroke-width="4" stroke-linecap="round" stroke-dasharray="14 11" opacity=".95"/>
+  <path d="M612 268 l -16 14 l 20 6 Z" fill="#39c6ef"/>
+
+  <!-- the stone -->
+  <g transform="translate(556 596)">
+    <ellipse rx="40" ry="16" fill="#0d1a22" opacity=".45"/>
+    <ellipse cy="-8" rx="38" ry="15" fill="#5b6570"/>
+    <ellipse cy="-14" rx="38" ry="15" fill="#8b959f"/>
+    <ellipse cy="-14" rx="22" ry="8" fill="#b4bcc4"/>
+    <rect x="-9" y="-32" width="18" height="16" rx="7" fill="#e0b64a"/>
+  </g>
+
+  <!-- readout -->
+  <g transform="translate(56 56)">
+    <rect width="330" height="118" rx="16" fill="url(#panel)" stroke="#2a5570"/>
+    <text x="22" y="40" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="20"
+          fill="#8fd4ef" letter-spacing="2">CALL TYPE</text>
+    <text x="22" y="76" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="34"
+          font-weight="700" fill="#e0b64a">DRAW</text>
+    <text x="22" y="103" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="17"
+          fill="#b9e6cd">2.9 m/s &#183; 120 Hz</text>
+  </g>
+
+  <!-- The wordmark crosses the lit sheet, so it gets its own ground rather
+       than relying on a colour that only works over the dark rink. -->
+  <rect x="0" y="392" width="860" height="238" fill="url(#plate)"/>
+  <text x="56" y="586" font-family="Poppins,Segoe UI,system-ui,sans-serif" font-size="44"
+        font-weight="700" fill="#eaf4fa" letter-spacing="1">Apex Curl</text>
+  <text x="56" y="614" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="17"
+        fill="#7fb6cf" letter-spacing="3">CALL IT, THEN THROW IT</text>
+</svg>
