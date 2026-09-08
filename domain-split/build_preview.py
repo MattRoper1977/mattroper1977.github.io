@@ -149,10 +149,19 @@ def build(lessons: Path | None = None) -> dict:
     games = []
     for i, item in enumerate(shelf):
         match = game_lookup.get(route_path(item["href"]), {})
-        games.append({"id": match.get("id", f"shelf-{i}"), "title": item["title"],
-                      "description": item.get("desc", ""), "route": item["href"],
-                      "subject": item.get("tag", ""), "keywords": match.get("keywords", []),
-                      "category": "game", "pathways": [], "image": item.get("art", "")})
+        game = {"id": match.get("id", f"shelf-{i}"), "title": item["title"],
+                "description": item.get("desc", ""), "route": item["href"],
+                "subject": item.get("tag", ""), "keywords": match.get("keywords", []),
+                "category": "game", "pathways": [], "image": item.get("art", ""),
+                # Play-shelf presentation layer (UX2 C1): the canonical shelf's
+                # optional displayTitle/series keys and its featured flag travel
+                # with the row so the Play builder can read them; absent keys
+                # stay absent rather than becoming empty strings.
+                "featured": item.get("featured") is True}
+        for optional in ("displayTitle", "series"):
+            if isinstance(item.get(optional), str) and item[optional].strip():
+                game[optional] = item[optional]
+        games.append(game)
 
     # Homepage copy is concise; the canonical shelf and game payloads stay intact.
     short_copy = json.loads((HERE / "game-home-copy.json").read_text())["games"]
