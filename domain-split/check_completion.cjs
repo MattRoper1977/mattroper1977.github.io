@@ -74,16 +74,19 @@ fs.mkdirSync(output, { recursive: true });
       assert.equal((await page.goto(origin + '/Lessons/Science_Teesside/Build/SCI_B_W3_Backbones.html')).status(), 200);
       assert.equal(await page.locator('[data-mbm-support-footer],a[href*="ko-fi.com"]').count(), 0);
       await page.goto(origin + '/Lessons/');
-      await page.waitForFunction(() => /\d+ of \d+ resources/.test(document.querySelector('#count')?.textContent || ''));
-      const buildShortcut = page.locator('.catalogue-intro').getByRole('link', {name: /^BUILD Science\b/});
-      assert.equal(await buildShortcut.count(), 1);
-      assert.equal(await buildShortcut.locator('strong').innerText(), 'BUILD Science');
-      const buildURL = new URL(await buildShortcut.getAttribute('href'), page.url());
-      assert.equal(buildURL.pathname, '/Lessons/Science_Teesside/index.html');
-      assert.equal(buildURL.searchParams.get('pathway'), 'BUILD');
-      assert.equal(buildURL.searchParams.has('style'), false);
+      // UX2 (Lessons #437): the hub's browse view derives "<M> resources · <S> subjects" and
+      // shows one card per subject. The BUILD Science shortcut and the pathway select are
+      // retired; the subject page's pathway control and the Science shelf's own ?pathway=
+      // query replace them, and the shelf keeps its route and its BUILD collection.
+      await page.waitForFunction(() => /\d+ resources · \d+ subjects/.test(document.querySelector('#count')?.textContent || ''));
+      const scienceCard = page.locator('#scards .scard a.browse[href="subject.html?subject=science"]');
+      assert.equal(await scienceCard.count(), 1, 'The hub needs one Science subject card');
+      const scienceURL = new URL(await scienceCard.getAttribute('href'), page.url());
+      assert.equal((await page.request.get(scienceURL.href)).status(), 200, 'The Science subject page is unavailable');
+      const buildURL = new URL('/Lessons/Science_Teesside/index.html?pathway=BUILD', origin);
+      assert.equal((await page.request.get(buildURL.href)).status(), 200, 'The Science shelf lost its route');
       assert.equal(await page.locator('nav,h1,h2,h3').filter({hasText: /David[’']s/}).count(), 0);
-      await page.locator('.catalogue-intro').screenshot({path: path.join(output, `lesson-shortcuts-${width}.png`)});
+      await page.locator('#subjects').screenshot({path: path.join(output, `lesson-shortcuts-${width}.png`)});
       const science = JSON.parse(fs.readFileSync(path.join(lessonsRoot, 'assets/catalogue/science-shelf.json'), 'utf8')).lessons;
       const expectedBuild = science.filter(r => r.pathway === 'BUILD').map(r => r.path).sort();
       await page.goto(buildURL.href);
@@ -96,7 +99,8 @@ fs.mkdirSync(output, { recursive: true });
       assert.equal(currentBuild.length, 5);
       assert.equal(await page.locator('[data-lesson-path]:visible a[href^="Teaching_Packs/#build-week-"]').count(), 5);
       await page.goto(origin + '/Lessons/?subject=Science&pathway=BUILD&year=all');
-      await page.waitForFunction(() => document.querySelector('#pathway')?.value === 'BUILD' && /\d+ of \d+ resources/.test(document.querySelector('#count')?.textContent || ''));
+      // The old subject/pathway query still resolves on the UX2 hub, as flat results.
+      await page.waitForFunction(() => /\d+ of \d+ resources/.test(document.querySelector('#count')?.textContent || '') && document.querySelectorAll('#cards a.go').length > 0);
       const catalogueLinks = await page.locator('#cards a.go').evaluateAll(items => items.map(a => new URL(a.href).pathname));
       for (const route of currentBuild) assert(catalogueLinks.includes('/Lessons/' + route), 'Current BUILD lesson absent from subject/pathway filters: ' + route);
       assert.equal(catalogueLinks.length, new Set(catalogueLinks).size, 'Duplicate catalogue entries');
