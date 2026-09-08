@@ -204,6 +204,15 @@ async function educationOnly(page, requests, start) {
         assert(await page.locator('#audiences').count());
         return { outbound: canonicalPlay + '/', returned: canonicalEducation + '/', screenshot };
       }, page);
+      // The canonical-play cases route madebymatt-play.uk through this context's
+      // own request API, so a card image can still be in flight when the context
+      // closes. That fetch then rejects inside the route callback, unhandled,
+      // and Node ends the process with a non-zero exit AFTER every case above has
+      // already passed — which reads as a failing check but measures nothing.
+      // Playwright's own remedy: drop the routes before closing. No case, no
+      // assertion and no predicate changes, and report.ok still demands all 23
+      // cases present and green, so this cannot hide a case that did not run.
+      await context.unrouteAll({ behavior: 'ignoreErrors' });
       await context.close();
     }
     await check('no-browser-errors', async () => { assert.deepEqual(report.pageErrors, []); return { pageErrors: 0 }; });
