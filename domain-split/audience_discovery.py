@@ -159,8 +159,19 @@ def preserved_previews(audience):
 def make_main(key, audience, all_audiences):
     title, lead = COPY[key]
     nav = '<nav class="ad-nav" aria-label="Learning areas">' + ''.join(link(t, h) for t, h in NAV) + '</nav>'
-    primary = ('<div class="ad-buttons">' + link('Primary learning', '/Lessons/primary/', 'ad-button')
-               + link('Find a school resource', '/resources/', 'ad-button ad-button-secondary') + '</div>') if key == 'parents' else ''
+    if key == 'parents':
+        primary = ('<div class="ad-buttons">' + link('Primary learning', '/Lessons/primary/', 'ad-button')
+                   + link('Find a school resource', '/resources/', 'ad-button ad-button-secondary') + '</div>')
+    else:
+        # UX2 B1: the source page's hero buttons come from the record's own
+        # primaryCtas (label, href, style). The old menu carried /education-hub/
+        # on every adult page and masked that this rebuilt main had dropped the
+        # "Open the Education Hub" button; the Appendix A menu does not, so the
+        # record's buttons render here and the destination survives on the page.
+        ctas = [c for c in audience.get('primaryCtas', []) if c.get('href') and c.get('label')]
+        primary = ('<div class="ad-buttons">' + ''.join(
+            link(c['label'], c['href'], 'ad-button' if c.get('style') == 'primary' else 'ad-button ad-button-secondary')
+            for c in ctas) + '</div>') if ctas else ''
     search = ('<form class="ad-search" action="/resources/" role="search">'
               '<label for="audience-search">Find a lesson, resource or app</label>'
               '<div><input id="audience-search" name="q" type="search" placeholder="Try a subject, activity or tool">'
