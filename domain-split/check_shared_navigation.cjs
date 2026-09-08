@@ -18,7 +18,7 @@ const routes = ['/', '/main/', '/account/', '/members/', '/mailing-list/', '/pri
   '/stats/on-this-device/', '/asdan/', '/uas/', '/commission/', '/Lessons/Science_Teesside/',
   '/Lessons/Humanities_Teesside/', '/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/'];
 const restricted = ['/for/pupils/', '/resources/', '/Lessons/primary/'];
-const ux2Routes = ['/', '/commission/', '/for/pupils/', '/for/teachers/'];
+const ux2Routes = ['/', '/commission/', '/for/pupils/', '/for/teachers/', '/resources/'];
 const themeRoutes = ['/Lessons/', '/Matt-s-Apps-/', '/Lessons/Science_Teesside/', '/Lessons/Humanities_Teesside/'];
 const {deviceStatsSkip}=require('./check_device_stats.cjs');
 (async () => {

@@ -70,7 +70,7 @@
       .sort(function (a, b) { return b.added.localeCompare(a.added) || String(a.title).localeCompare(String(b.title)); }).slice(0, 6);
     rail.innerHTML = recent.map(function (r) {
       var path = r.file || r.url || '';
-      return '<a class="acard" href="' + esc(safeHref('/Lessons/' + path)) + '" data-resource-path="' + esc(path) + '"><span class="when">' + esc(fmtDay(r.added)) + '</span><h3>' + esc(r.title) + '</h3><span class="chips">' + badge(formatOf(r)) + '</span><span class="sub">' + esc(String(r.subject)) + '</span></a>';
+      return '<a class="acard" href="' + esc(safeHref(/^https?:\/\//i.test(path) ? path : '/Lessons/' + path)) + '" data-resource-path="' + esc(path) + '"><span class="when">' + esc(fmtDay(r.added)) + '</span><h3>' + esc(r.title) + '</h3><span class="chips">' + badge(formatOf(r)) + '</span><span class="sub">' + esc(String(r.subject)) + '</span></a>';
     }).join('');
     section.hidden = !recent.length;
   }).catch(function () { section.hidden = true; });

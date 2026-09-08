@@ -88,17 +88,24 @@ fs.mkdirSync(output, { recursive: true });
       assert.equal(await page.locator('[data-mbm-support-footer],a[href*="ko-fi.com"]').count(), 0);
       assert.equal((await page.goto(origin + '/Lessons/Science_Teesside/Build/SCI_B_W3_Backbones.html')).status(), 200);
       assert.equal(await page.locator('[data-mbm-support-footer],a[href*="ko-fi.com"]').count(), 0);
+      // UX2 (Lessons Part A): the hub is subject cards; its "BUILD Science" shortcut is a retired
+      // href in Lessons' own ledger (the Science card's BUILD chip and "Browse Science →" replace
+      // it) and the Science shelf itself is a catalogue row on the Science subject page. The
+      // shelf's teaching-version assertions below are unchanged; only the entry is re-pointed.
       await page.goto(origin + '/Lessons/');
-      await page.waitForFunction(() => /\d+ of \d+ resources/.test(document.querySelector('#count')?.textContent || ''));
-      const buildShortcut = page.locator('.catalogue-intro').getByRole('link', {name: /^BUILD Science\b/});
-      assert.equal(await buildShortcut.count(), 1);
-      assert.equal(await buildShortcut.locator('strong').innerText(), 'BUILD Science');
-      const buildURL = new URL(await buildShortcut.getAttribute('href'), page.url());
-      assert.equal(buildURL.pathname, '/Lessons/Science_Teesside/index.html');
-      assert.equal(buildURL.searchParams.get('pathway'), 'BUILD');
-      assert.equal(buildURL.searchParams.has('style'), false);
+      await page.waitForFunction(() => document.querySelectorAll('.scard[data-card]').length > 0);
+      const scienceCard = page.locator('.scard[data-card="science"]');
+      assert.equal(await scienceCard.count(), 1);
+      assert.equal(await scienceCard.locator('.chips .tier').filter({hasText: /^BUILD$/}).count(), 1, 'BUILD chip on the Science card');
+      assert.equal(new URL(await scienceCard.locator('a.browse').getAttribute('href'), page.url()).searchParams.get('subject'), 'science');
       assert.equal(await page.locator('nav,h1,h2,h3').filter({hasText: /David[’']s/}).count(), 0);
-      await page.locator('.catalogue-intro').screenshot({path: path.join(output, `lesson-shortcuts-${width}.png`)});
+      await scienceCard.screenshot({path: path.join(output, `lesson-shortcuts-${width}.png`)});
+      await page.goto(origin + '/Lessons/subject.html?subject=science&pathway=BUILD');
+      await page.waitForFunction(() => document.querySelectorAll('#suites a[href], #rows a[href]').length > 0);
+      const shelf = page.locator('#suites a[href*="Science_Teesside/index.html"]');
+      assert.equal(await shelf.count(), 1, 'The Science shelf is a catalogue row on the Science page');
+      const buildURL = new URL('/Lessons/Science_Teesside/index.html?pathway=BUILD', page.url());
+      assert.equal(buildURL.searchParams.has('style'), false);
       const science = JSON.parse(fs.readFileSync(path.join(lessonsRoot, 'assets/catalogue/science-shelf.json'), 'utf8')).lessons;
       const expectedBuild = science.filter(r => r.pathway === 'BUILD').map(r => r.path).sort();
       await page.goto(buildURL.href);
@@ -110,9 +117,11 @@ fs.mkdirSync(output, { recursive: true });
       const currentBuild = science.filter(r => r.pathway === 'BUILD' && r.term === 'Aut1' && r.style === 'current').map(r => r.path);
       assert.equal(currentBuild.length, 5);
       assert.equal(await page.locator('[data-lesson-path]:visible a[href^="Teaching_Packs/#build-week-"]').count(), 5);
+      // UX2 (Lessons Part A): the hub's filtered view answers ?subject=&pathway= with
+      // "<n> of <m> resources" and article.card rows; the pathway select is gone.
       await page.goto(origin + '/Lessons/?subject=Science&pathway=BUILD&year=all');
-      await page.waitForFunction(() => document.querySelector('#pathway')?.value === 'BUILD' && /\d+ of \d+ resources/.test(document.querySelector('#count')?.textContent || ''));
-      const catalogueLinks = await page.locator('#cards a.go').evaluateAll(items => items.map(a => new URL(a.href).pathname));
+      await page.waitForFunction(() => /\d+ of \d+ resources/.test(document.querySelector('#count')?.textContent || ''));
+      const catalogueLinks = await page.locator('#cards article.card h3 a[href]').evaluateAll(items => items.map(a => new URL(a.href).pathname));
       for (const route of currentBuild) assert(catalogueLinks.includes('/Lessons/' + route), 'Current BUILD lesson absent from subject/pathway filters: ' + route);
       assert.equal(catalogueLinks.length, new Set(catalogueLinks).size, 'Duplicate catalogue entries');
       report.cases.push(`Public names, BUILD shortcut and subject/pathway coverage at ${width}px`);

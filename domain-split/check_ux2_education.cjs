@@ -65,6 +65,12 @@ const fixtures = {
   relocations: JSON.parse(fs.readFileSync(path.join(__dirname, 'ux2/menu-relocations.json'), 'utf8')),
   consent: JSON.parse(fs.readFileSync(path.join(__dirname, 'ux2/consent-contract.json'), 'utf8')),
 };
+// Lessons hub rules (assets/catalogue/hub.js cardOf/tierOf, UX2 A2), used only to find the subject
+// page and pathway segment a lesson row renders on.
+fixtures.relocations.lessonRows = {
+  cardOf(r) { const s = String(r.subject || ''), f = String(r.family || ''); if (/science|biology|chemistry|physics/i.test(s)) return 'science'; if (/humanities|religio|\bRE\b|history|geography/i.test(s)) return 'humanities-re'; if (/\bart\b|arts award/i.test(s)) return 'art-studio'; if (/ASDAN|PSHE|FoodWise|D&T|life ?skills|Vocational|PfA/i.test(s + ' ' + f)) return 'lifeskills'; return 'x-' + String(s).toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); },
+  tierOf(r) { const f = r.file || r.url || ''; if (/(?:^|\/)Build\//.test(f)) return 'BUILD'; if (/(?:^|\/)Grow\//.test(f)) return 'GROW'; if (/(?:^|\/)Launch\//.test(f)) return 'LAUNCH'; const base = f.split('/').pop().toUpperCase(), first = (f.split('/')[0] || '').toUpperCase(); for (const t of ['BUILD', 'GROW', 'LAUNCH']) { if (base.indexOf(t + '_') === 0 || first.indexOf(t + '_') === 0) return t; } const m = (r.title || '').match(/^(BUILD|GROW|LAUNCH)(?![A-Za-z])/); if (m) return m[1]; if (/^BUILD(?![A-Za-z])/.test(r.subject || '')) return 'BUILD'; return null; },
+};
 // Routes whose surface this order has rebuilt so far; each later part appends its own.
 const GATED = fixtures.appendix.gatedRoutes;
 const PUPIL_ROUTES = GATED.filter(r => fixtures.appendix.pupilRoutes.includes(r));
@@ -138,11 +144,39 @@ async function suite(browser, mutation) {
     const relocated = fixtures.relocations.relocated, retired = fixtures.relocations.retired;
     const problems = [], stale = [];
     const seen = new Set();
+    // UX2 B4: lesson rows left /resources/ for the subject pages, which show one pathway at a
+    // time. A lesson of a non-default pathway is therefore three taps from / (tile → pathway
+    // segment → row). That class is measured here — each such href must be rendered on its
+    // subject page at its pathway with every accordion expanded — and reported, never hidden.
+    const catalogue = await (await page.request.get(origin + '/Lessons/resources.json')).json();
+    const lessonByHref = new Map(catalogue.filter(r => String(r.type || '').toLowerCase() === 'lesson').map(r => ['/Lessons/' + (r.file || r.url || ''), r]));
+    const segmentCache = new Map(); const viaSegment = [];
+    const renderedAt = async (slug, tier) => {
+      const id = slug + '|' + (tier || 'ALL');
+      if (!segmentCache.has(id)) {
+        await page.goto(origin + '/Lessons/subject.html?subject=' + encodeURIComponent(slug) + (tier ? '&pathway=' + tier : ''), { waitUntil: 'load' }); await settle(page);
+        // Collapsed groups already hold their first rows in the DOM; "Show n more" adds the rest
+        // and re-renders, so each click takes a fresh locator.
+        for (let i = 0; i < 200 && (await page.evaluate(() => { const b = document.querySelector('button[data-more]'); if (!b) return false; b.click(); return true; })); i++) { /* the page's delegated handler expands the group and re-renders */ }
+        segmentCache.set(id, new Set(await page.locator('#rows a[href]').evaluateAll(n => n.map(a => decodeURIComponent(new URL(a.href).pathname)))));
+      }
+      return segmentCache.get(id);
+    };
     for (const [route, hrefs] of Object.entries(fixtures.preOrder.routes)) for (const href of hrefs) {
       if (seen.has(href)) continue; seen.add(href);
       const k = key(href);
       if (twoTap.has(k)) { if (relocated[href] || retired[href]) stale.push(href); continue; }
       if (retired[href]) continue;
+      const lesson = lessonByHref.get(decodeURIComponent(k));
+      if (lesson) {
+        const slug = fixtures.relocations.lessonRows.cardOf(lesson), tier = fixtures.relocations.lessonRows.tierOf(lesson);
+        const tilePage = '/Lessons/subject.html?subject=' + slug;
+        if (!twoTap.has(tilePage)) { problems.push(`${href}: its subject page ${tilePage} is not within two taps of /`); continue; }
+        const rows = await renderedAt(slug, tier || 'ALL');  // a lesson with no pathway lives in the subject page's ALL segment
+        if (!rows.has(decodeURIComponent(k))) problems.push(`${href}: not rendered on ${tilePage} at pathway ${tier || 'ALL'} with every accordion expanded`);
+        else viaSegment.push(href);
+        continue;
+      }
       const entry = relocated[href];
       if (!entry) { problems.push(`${href} (on ${route}) is no longer within two taps of / and is not a recorded relocation or retirement`); continue; }
       const dest = key(entry.to);
@@ -156,7 +190,7 @@ async function suite(browser, mutation) {
     }
     assert.deepEqual(problems, [], 'Pre-order hrefs lost within two taps of /');
     assert.deepEqual(stale, [], 'Recorded relocations/retirements that are in fact still reachable (stale ledger)');
-    return { oneTap: oneTap.size, twoTap: twoTap.size, expandedPages: Object.keys(expanded).length, preOrder: seen.size };
+    return { oneTap: oneTap.size, twoTap: twoTap.size, expandedPages: Object.keys(expanded).length, preOrder: seen.size, lessonsViaPathwaySegment: viaSegment.length };
   });
 
   for (const route of GATED) {
@@ -279,6 +313,72 @@ async function suite(browser, mutation) {
     assert(t.noteTitle && t.note, 'MEASUREMENT INVALID: the record has no teacher safety line');
     assert(text.includes(t.noteTitle) && text.includes(t.note.replace(/\s+/g, ' ')), 'The teacher page carries the record safety line and its title verbatim');
     return { routes: routes.length, banned: banned.length };
+  });
+
+  if (GATED.includes('/resources/')) await check('resources', async () => {
+    // Appendix A §RESOURCES on the built page: pills (no Type pill — kind scored below 18/20),
+    // replaceState params, "This half-term first", one card per key with its chips, the sheet
+    // (focus trapped, Esc/× close, focus returns to the opener, drift note where flagged),
+    // lessons in the search, the empty state, and 44px with the sheet open.
+    const spine = await (await page.request.get(origin + '/Lessons/data/calendar-spine.json')).json();
+    const HT = ['Autumn 1', 'Autumn 2', 'Spring 1', 'Spring 2', 'Summer 1', 'Summer 2'];
+    const day = new Date().toISOString().slice(0, 10);
+    const blocks = HT.map(l => spine.blocks[l]).filter(Boolean).map(b => ({ label: b.label, start: spine.weekStarts[String(b.abs[0])] }));
+    let current = null; for (let i = 0; i < blocks.length; i++) { const end = blocks[i + 1] ? blocks[i + 1].start : '9999'; if (day >= blocks[i].start && day < end) current = blocks[i].label; }
+    const catalogue = await (await page.request.get(origin + '/Lessons/resources.json')).json();
+    const nonLessonKeyed = catalogue.filter(r => !/^(lesson|game)$/i.test(String(r.type || '')) && r.halfTerm);
+    await goto(page, '/resources/'); await page.waitForFunction(() => document.querySelectorAll('#unitGrid .unit').length > 0);
+    assert.equal(await page.locator('#rxTypes, select[name="type"]').count(), 0, 'No Type pill');
+    for (const sel of ['#rxSubs', '#rxPath']) { const box = await page.locator(sel).boundingBox(); assert(box && box.height >= 44, sel + ' is 44px'); }
+    const cards = await page.locator('#unitGrid .unit').count();
+    assert.equal(await page.locator('#rxCount').innerText(), `${cards} unit packs`, 'Count is derived from the cards');
+    assert(cards > 0 && cards <= nonLessonKeyed.length, 'One card per key present in the non-lesson rows');
+    const firstHT = (await page.locator('#unitGrid .unit h3').first().innerText()).split(' · ')[0];
+    if (current && (await page.locator('#orderNote').isVisible())) assert.equal(firstHT, current, 'This half-term first');
+    for (const card of await page.locator('#unitGrid .unit').all()) {
+      const chips = card.locator('.chips a.chip, .chips button.chip');
+      assert((await chips.count()) >= 1, 'Every card carries a file chip or the sheet control');
+      for (const c of await chips.all()) { const b = await c.boundingBox(); assert(b && b.height >= 44, 'Card chip is 44px'); }
+      assert((await card.locator('.chips a.chip').count()) <= 3, 'At most three direct file chips');
+    }
+    // sheet: open the first card's control, focus on the close control, Esc returns focus to the opener
+    const opener = page.locator('#unitGrid .unit .chip.more').first(); await opener.click();
+    assert(await page.locator('#rxSheet').evaluate(d => d.open), 'Sheet opens');
+    assert(await page.evaluate(() => document.activeElement === document.getElementById('sheetClose')), 'Focus lands on the close control');
+    const heads = await page.locator('#rxSheet .sheet-sec h3').evaluateAll(n => n.map(h => h.textContent.trim()));
+    assert(heads.includes('Planning'), 'Planning section present'); assert(heads.every(h => fixtures.appendix.resourcesSheet.includes(h)), 'Sheet sections are Planning / Evidence / Delivery');
+    const keyId = await opener.getAttribute('data-key'); const [card, tier, halfTerm, unit] = keyId.split('|');
+    const flagged = nonLessonKeyed.filter(r => r.packRevisionDrift && r.halfTerm === halfTerm && fixtures.relocations.lessonRows.cardOf(r) === card && (fixtures.relocations.lessonRows.tierOf(r) || '') === tier && (r.unit || '') === unit).length;
+    assert.equal(await page.locator('#rxSheet .drift').count(), flagged, 'Drift note exactly where flagged');
+    if (flagged) assert.equal(await page.locator('#rxSheet .drift').first().innerText(), fixtures.appendix.resourcesDrift);
+    const sheetSmall = await page.evaluate(() => [...document.querySelectorAll('#rxSheet a[href], #rxSheet button')].filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; }).filter(e => { const r = e.getBoundingClientRect(); return r.width < 44 || r.height < 44; }).map(e => e.textContent.trim().slice(0, 30)));
+    assert.deepEqual(sheetSmall, [], '44px targets with the sheet open');
+    await page.keyboard.press('Escape'); await page.waitForTimeout(100);
+    assert(!(await page.locator('#rxSheet').evaluate(d => d.open)), 'Esc closes the sheet');
+    assert(await opener.evaluate(el => el === document.activeElement), 'Focus returns to the opener');
+    await opener.click(); await page.locator('#sheetClose').click(); assert(await opener.evaluate(el => el === document.activeElement), '× closes and returns focus');
+    // pills drive replaceState
+    await page.locator('#rxSubs').selectOption('science'); await page.waitForTimeout(150);
+    assert.equal(new URL(page.url()).searchParams.get('subject'), 'science', 'Subject pill writes ?subject=');
+    assert((await page.locator('#unitGrid .unit').evaluateAll(n => n.every(c => c.classList.contains('science')))), 'Subject pill filters the cards');
+    await page.locator('#rxPath').selectOption('BUILD'); await page.waitForTimeout(150);
+    assert.equal(new URL(page.url()).searchParams.get('pathway'), 'BUILD', 'Pathway pill writes ?pathway=');
+    // Whole-school documents and lessons in the search
+    await goto(page, '/resources/'); await page.waitForFunction(() => document.querySelectorAll('#unitGrid .unit').length > 0);
+    assert((await page.locator('#documents h2').evaluateAll(n => n.map(h => h.textContent.trim()))).includes('Whole-school documents'), 'Whole-school documents rendered');
+    const lesson = catalogue.find(r => String(r.type || '').toLowerCase() === 'lesson' && r.title && r.title.length > 12);
+    await page.locator('#rxSearch').fill(lesson.title.slice(0, 12)); await page.waitForTimeout(400);
+    assert(await page.locator('#lessons').isVisible() && (await page.locator('#lessonList a[href]').count()) > 0, 'Lessons stay in the search');
+    // empty state
+    await page.locator('#rxSearch').fill('zzqx-no-such-pack'); await page.waitForTimeout(400);
+    assert(await page.locator('#empty').isVisible(), 'Empty state renders'); assert.equal(await page.locator('#empty p').innerText(), 'No packs match.');
+    const clear = page.locator('#rxClear'); const cb = await clear.boundingBox(); assert(cb && cb.height >= 44, 'Clear filters is 44px');
+    await clear.click(); await page.waitForTimeout(200);
+    assert.equal(new URL(page.url()).search, '', 'Clear filters clears the params'); assert((await page.locator('#unitGrid .unit').count()) === cards, 'Cards return');
+    // ?type= is read and ignored, and the page says why
+    await goto(page, '/resources/?type=Teacher'); await page.waitForFunction(() => document.querySelectorAll('#unitGrid .unit').length > 0);
+    assert.match(await page.locator('#pillars [data-kind-note]').first().innerText(), /type/, 'The kind note is on the pillars');
+    return { cards, current, firstHT, flaggedInFirstKey: flagged, keyedRows: nonLessonKeyed.length };
   });
 
   await check('hero /', async () => {

@@ -21,7 +21,7 @@ const hubs = ['/resources/', '/tools/', '/Matt-s-Apps-/'];
 const homes = ['/', '/main/'];
 const widths = [320, 390, 1280];
 const collectionNav = 'nav.collection-nav[aria-label="Learning areas"]';
-const resourceCards = '#rxOut .rx-cardx a[href], #resource-collections a[href], #collections a[href], #asdan-learning a[href]';
+const resourceCards = '#rxOut .rx-cardx a[href]';
 const appsCards = '#groups .card a[href]';
 const excludedGameRoutes = new Set();
 const educationOverrides = new Set();
@@ -94,9 +94,11 @@ async function settle(page) { await page.evaluate(() => new Promise(resolve => r
 async function goto(page, route) {
   const response = await page.goto(urlFor(route), { waitUntil: 'domcontentloaded' });
   assert.equal(response?.status(), 200, `${route} must return local HTTP 200`);
-  if (route.startsWith('/resources/')) await page.waitForFunction(() => /Showing \d+ of \d+ resources/.test(document.querySelector('#rxCount')?.textContent || ''));
+  // UX2 B4: the page announces "<n> unit packs" once the records have rendered (or the empty state).
+  if (route.startsWith('/resources/')) await page.waitForFunction(() => /\d+ unit packs/.test(document.querySelector('#rxCount')?.textContent || '') || !document.querySelector('#empty')?.hidden);
   if (route.startsWith('/Matt-s-Apps-/')) await page.waitForFunction(() => /\d+ of \d+ studios/.test(document.querySelector('#count')?.textContent || ''));
-  if (route.startsWith('/Lessons/')) await page.waitForFunction(() => /\d+ of \d+ resources/.test(document.querySelector('#count')?.textContent || ''));
+  // UX2 (Lessons Part A): the hub announces "<n> resources · <m> subjects" and a subject page fills #summary.
+  if (route.startsWith('/Lessons/')) await page.waitForFunction(() => /\d+ resources/.test(document.querySelector('#count')?.textContent || '') || /\d+ lessons/.test(document.querySelector('#summary')?.textContent || '') || document.querySelectorAll('#rows a[href], #cards a[href]').length > 0);
   await settle(page);
 }
 async function visibleLinks(page, selector) {
@@ -115,12 +117,15 @@ async function hitTarget(locator) {
 async function pdfSearch(page, route, width) {
   const input = route.startsWith('/resources') ? '#rxSearch' : '#search';
   const cards = route.startsWith('/resources') ? '#rxOut .rx-cardx' : '#groups .card';
-  const promotion = route.startsWith('/resources') ? '#resource-collections' : '#pdf-studio-feature';
+  // UX2 B4: on /resources/ the browse-only region is the unit-card section, which hides while a
+  // query filters and returns when the search is cleared (the pillars stay in the hero).
+  const promotion = route.startsWith('/resources') ? null : '#pdf-studio-feature';
+  const baselineCards = route.startsWith('/resources') ? await page.locator('#unitGrid .unit').count() : null;
   const evidence = [];
   for (const query of ['PDF', 'PDF generator', 'PDF Studio', 'merge PDF']) {
     await page.locator(input).fill(query);
     await page.waitForFunction(({ cards, target }) => [...document.querySelectorAll(cards + ' a[href]')].some(a => a.getClientRects().length && new URL(a.href).pathname === target), { cards, target: PDF });
-    assert.equal(await page.locator(promotion).isVisible(), false, `${promotion} must hide while a search query is active`);
+    if (promotion) assert.equal(await page.locator(promotion).isVisible(), false, `${promotion} must hide while a search query is active`);
     const pdfCard = page.locator(cards).filter({ has: page.locator('a[href*="PDF_Studio.html"]') }).first();
     assert.match(await pdfCard.innerText(), /PDF Studio/i);
     await hitTarget(pdfCard.locator('a[href*="PDF_Studio.html"]').first());
@@ -128,7 +133,8 @@ async function pdfSearch(page, route, width) {
     evidence.push({ query, count: await page.locator(cards + ':visible').count(), screenshot: await shot(page, `${width}-${route.includes('resources') ? 'resources' : 'apps'}-${query}`) });
   }
   await page.locator(input).fill(''); await settle(page);
-  assert(await page.locator(promotion).isVisible(), `${promotion} should return when search is cleared`);
+  if (promotion) assert(await page.locator(promotion).isVisible(), `${promotion} should return when search is cleared`);
+  else { await page.waitForFunction(n => document.querySelectorAll('#unitGrid .unit').length === n, baselineCards, { timeout: 5000 }).catch(() => {}); assert.equal(await page.locator('#unitGrid .unit').count(), baselineCards, 'Clearing the search restores every unit card'); }
   return evidence;
 }
 async function responsiveChecks(browser) {
@@ -164,19 +170,28 @@ async function responsiveChecks(browser) {
         await page.evaluate(() => scrollTo(0, 0));
         return { links, screenshot: await shot(page, `${width}-${route === '/' ? 'home' : route}-discovery`) };
       });
-      if (route === '/resources/') await check(`${width}-resources-prominent-collections-and-pdf-search`, page, async () => {
+      if (route === '/resources/') await check(`${width}-resources-pillars-and-pdf-search`, page, async () => {
+        // UX2 B4: search first, then the three pillars (Schemes of work · Evidence and accreditation ·
+        // Teacher tools → the Apps hub with the manifest count), then the unit cards. Apps are found
+        // through the page's search (lessons and apps stay in the global search), not listed as cards.
         await goto(page, route);
-        const collection = page.locator('#resource-collections');
-        assert(await collection.isVisible(), 'Collections are missing from Resources');
+        assert.equal(await page.locator('#resource-collections').count(), 0, 'The retired collections section is gone');
+        const pillars = page.locator('#pillars');
+        assert(await pillars.isVisible(), 'Pillars are missing from Resources');
         assert(await page.evaluate(() => {
           const follows = (before, after) => !!(document.querySelector(before).compareDocumentPosition(document.querySelector(after)) & Node.DOCUMENT_POSITION_FOLLOWING);
-          return follows('#rxSearch', '#resource-collections') && follows('#resource-collections', '#rxOut');
-        }), 'Resources must put search first, then collections, then the long resource list');
-        const links = await visibleLinks(page, '#resource-collections a[href]');
-        assert(links.some(a => routeOf(a.href) === PDF), 'PDF Studio is missing from prominent collection cards');
-        const image = await collection.screenshot({ path: path.join(out, `${width}-resource-collections.png`), animations: 'disabled' });
+          return follows('#rxSearch', '#pillars') && follows('#pillars', '#rxOut');
+        }), 'Resources must put search first, then the pillars, then the unit cards');
+        const tools = pillars.locator('a[href="/Matt-s-Apps-/"]');
+        assert.equal(await tools.count(), 1, 'Teacher tools pillar links the Apps hub');
+        const appsJson = await (await page.request.get(urlFor('/Matt-s-Apps-/apps.json'))).json();
+        const manifestCount = appsJson.spaces.reduce((n, s) => n + s.items.length, 0);
+        await page.waitForFunction(() => /\d/.test(document.querySelector('#appsCount')?.textContent || ''));
+        assert.equal(await page.locator('#appsCount').innerText(), `${manifestCount} apps`, 'Teacher tools count is the Apps manifest length');
+        await hitTarget(tools);
+        const image = await pillars.screenshot({ path: path.join(out, `${width}-resource-pillars.png`), animations: 'disabled' });
         assert(image.length > 0);
-        return { collectionScreenshot: `${width}-resource-collections.png`, searches: await pdfSearch(page, route, width) };
+        return { pillarScreenshot: `${width}-resource-pillars.png`, manifestCount, searches: await pdfSearch(page, route, width) };
       });
       if (route === '/Matt-s-Apps-/') await check(`${width}-apps-visible-pdf-feature-and-search-aliases`, page, async () => {
         await goto(page, route);
@@ -214,9 +229,13 @@ async function responsiveChecks(browser) {
         return { searches };
       });
     }
-    await check(`${width}-asdan-collections-and-all-years`, page, async () => {
+    await check(`${width}-asdan-collections-and-lifeskills`, page, async () => {
+      // UX2 B4: the three ASDAN hubs are catalogue rows rendered as Lifeskills documents on
+      // /resources/; "all years" is the Lifeskills subject page (Part A), which lists every
+      // catalogue row of that card at each pathway.
       await goto(page, '/resources/');
-      const links = await visibleLinks(page, '#resource-collections a[href], #asdan-learning a[href]');
+      await page.waitForFunction(() => document.querySelectorAll('#rxOut .rx-cardx').length > 0);
+      const links = await visibleLinks(page, '#rxOut .rx-cardx a[href]');
       const direct = [];
       for (const level of ['BUILD', 'GROW', 'LAUNCH']) {
         const target = `/Lessons/${level}_ASDAN/${level}_ASDAN_Hub.html`;
@@ -224,18 +243,19 @@ async function responsiveChecks(browser) {
         assert.equal((await page.request.get(urlFor(target))).status(), 200, `${level} ASDAN collection is unavailable`);
         direct.push(target);
       }
-      const allYears = links.find(a => { const u = new URL(a.href); return u.pathname === '/Lessons/' && u.searchParams.get('subject') === 'ASDAN & life skills' && u.searchParams.get('year') === 'all'; });
-      assert(allYears, 'ASDAN learning finder must explicitly include all years');
-      const allYearsURL = new URL(allYears.href);
-      await goto(page, allYearsURL.pathname + allYearsURL.search);
-      assert.equal(await page.locator('#subject-group').inputValue(), 'ASDAN & life skills');
-      assert.equal(await page.locator('[data-year=""]').getAttribute('aria-pressed'), 'true', 'An implicit current-year filter still hides older ASDAN resources');
+      await goto(page, '/Lessons/subject.html?subject=lifeskills');
+      await page.waitForFunction(() => document.querySelectorAll('#rows a[href]').length > 0);
       const older = sourceJSON(lessonsRoot, 'resources.json').filter(r => /ASDAN|vocational|PfA|life skills/i.test(r.subject || '') && r.year !== '2026-27' && r.file && sourceFile(routeOf(r.file, '/Lessons/')));
       assert(older.length > 0, 'The independent source contains no older ASDAN controls');
-      const rendered = new Set((await visibleLinks(page, '#cards .card a[href]')).map(a => routeOf(a.href)));
+      const rendered = new Set();
+      for (const tab of await page.locator('#seg [role="tab"]').evaluateAll(n => n.map(t => t.dataset.pathway))) {
+        await goto(page, '/Lessons/subject.html?subject=lifeskills&pathway=' + tab); await settle(page);
+        for (let i = 0; i < 200 && (await page.evaluate(() => { const b = document.querySelector('button[data-more]'); if (!b) return false; b.click(); return true; })); i++) { /* the page's delegated handler expands the group and re-renders */ }
+        for (const href of await page.locator('#rows a[href]').evaluateAll(n => n.map(a => a.href))) rendered.add(routeOf(href));
+      }
       const missing = older.filter(r => !rendered.has(routeOf(r.file, '/Lessons/'))).map(r => r.file);
-      assert.deepEqual(missing, [], 'Older ASDAN resources remain hidden in the all-years finder');
-      return { direct, olderResources: older.length, cards: await page.locator('#cards .card').count(), screenshot: await shot(page, `${width}-asdan-all-years`) };
+      assert.deepEqual(missing, [], 'Older ASDAN resources are hidden on the Lifeskills subject page');
+      return { direct, olderResources: older.length, rendered: rendered.size, screenshot: await shot(page, `${width}-asdan-lifeskills`) };
     });
     await check(`${width}-teacher-home-pdf-generator-search`, page, async () => {
       await goto(page, '/for/teachers/?q=PDF%20generator');
@@ -254,13 +274,28 @@ async function catalogueChecks(browser, expected) {
   const page = await context.newPage(); page.setDefaultTimeout(15000);
   const cards = new Map(), navigation = new Set(), externalCards = new Set();
   await check('all-working-education-destinations-in-rendered-cards', page, async () => {
-    for (const route of [...homes, ...hubs]) {
+    // UX2 B4: lessons are discovered on the Lessons hub's subject pages (every card, every pathway
+    // segment, every accordion and "Show n more" expanded); teacher destinations on the teacher page.
+    const subjectPages = [];
+    await goto(page, '/Lessons/'); await page.waitForFunction(() => document.querySelectorAll('.scard[data-card]').length > 0);
+    for (const slug of await page.locator('.scard[data-card]').evaluateAll(n => n.map(c => c.dataset.card))) {
+      await goto(page, '/Lessons/subject.html?subject=' + encodeURIComponent(slug)); await settle(page);
+      const tabs = await page.locator('#seg [role="tab"]').evaluateAll(n => n.map(t => t.dataset.pathway));
+      for (const tab of tabs.length ? tabs : ['']) subjectPages.push('/Lessons/subject.html?subject=' + encodeURIComponent(slug) + (tab ? '&pathway=' + tab : ''));
+    }
+    for (const route of [...homes, ...hubs, '/for/teachers/', ...subjectPages]) {
       await goto(page, route);
+      if (route.startsWith('/Lessons/subject.html')) {
+        await page.waitForFunction(() => document.querySelectorAll('#rows a[href], #summary').length > 0).catch(() => {});
+        // Open every collapsed group and every "Show n more" through the page's own delegated
+        // handler (each click re-renders), so every row of the segment is visible.
+        for (let i = 0; i < 400 && (await page.evaluate(() => { const b = document.querySelector('.acc button[aria-expanded="false"][data-toggle]') || document.querySelector('button[data-more]'); if (!b) return false; b.click(); return true; })); i++) { /* re-rendered */ }
+      }
       if (route === '/Matt-s-Apps-/') {
         // Open real user-facing disclosures using their summary controls.
         for (const detail of await page.locator('#groups details').all()) if (!(await detail.evaluate(el => el.open))) await detail.locator('summary').click();
       }
-      const selector = route === '/resources/' ? resourceCards : route === '/Matt-s-Apps-/' ? appsCards : 'main a.route-card, main .card a[href], main .tcard a[href]';
+      const selector = route === '/resources/' ? resourceCards : route === '/Matt-s-Apps-/' ? appsCards : route.startsWith('/Lessons/subject.html') ? '#rows a[href]' : route === '/for/teachers/' ? 'main a[href]' : 'main a.route-card, main .card a[href], main .tcard a[href]';
       for (const item of await visibleLinks(page, selector)) {
         const key = routeOf(item.href);
         if (key !== null) cards.set(key, { hub: route, text: item.text });
@@ -300,14 +335,17 @@ async function catalogueChecks(browser, expected) {
     return { items: source.spaces.reduce((n, group) => n + group.items.length, 0), groups: source.spaces.length };
   });
   await check('resource-filter-urls-preserved', page, async () => {
-    const subject = sourceJSON(lessonsRoot, 'resources.json').find(r => r.subject === 'Humanities')?.subject || 'Humanities';
+    const subject = 'humanities-re';
     for (const [key, value] of [['q', 'PDF generator'], ['subject', subject], ['type', 'Teacher']]) {
       await goto(page, '/resources/?' + new URLSearchParams({ [key]: value }));
+      await page.waitForFunction(() => document.querySelectorAll('#rxOut .rx-cardx').length > 0 || !document.querySelector('#empty').hidden);
       assert(await page.locator('#rxOut .rx-cardx').count() > 0, `${key} deep link produces no rendered results`);
-      assert.equal(await page.locator('#resource-collections').isVisible(), false, `Resources collections must hide for active ${key} filtering`);
       if (key === 'q') assert.equal(await page.locator('#rxSearch').inputValue(), value);
-      if (key === 'subject') assert.equal(await page.locator(`#rxSubs [data-sub="${subject}"]`).getAttribute('aria-pressed'), 'true');
-      if (key === 'type') assert.equal(await page.locator('#rxTypes [data-type="Teacher tool"]').getAttribute('aria-pressed'), 'true');
+      // UX2 B4: the subject pill is a <select> keyed by the hub's subject slug; there is no Type
+      // pill (kind scored below 18/20), so a ?type= deep link still renders the page and the two
+      // kind pillars carry the note saying why.
+      if (key === 'subject') assert.equal(await page.locator('#rxSubs').inputValue(), value);
+      if (key === 'type') { assert.equal(await page.locator('#rxPath, #rxSubs').count(), 2); assert.match(await page.locator('#pillars [data-kind-note]').first().innerText(), /type/i); }
     }
     return { filters: ['q=PDF generator', 'subject=' + subject, 'type=Teacher'] };
   });
