@@ -80,6 +80,9 @@ def main() -> int:
 
     before = json.loads(Path(args.compare).read_text())
     problems: list[str] = []
+    declared_path = Path(__file__).resolve().parent / "href_census_declared.json"
+    declared = json.loads(declared_path.read_text())["declared"] if declared_path.is_file() else {}
+    noted: list[str] = []
 
     for page in sorted(set(before) | set(now)):
         was = Counter(before.get(page, {}))
@@ -92,10 +95,17 @@ def main() -> int:
             continue
         lost = was - has
         added = has - was
-        for href, n in sorted(lost.items()):
+        allow = declared.get(page, {})
+        allow_added = Counter(allow.get("added", {}))
+        allow_lost = Counter(allow.get("lost", {}))
+        for href, n in sorted((lost - allow_lost).items()):
             problems.append(f"{page}: LOST {n} x {href!r}")
-        for href, n in sorted(added.items()):
+        for href, n in sorted((added - allow_added).items()):
             problems.append(f"{page}: ADDED {n} x {href!r}")
+        for href, n in sorted((lost & allow_lost).items()):
+            noted.append(f"{page}: declared LOST {n} x {href!r} -- {allow.get('reason','')[:80]}")
+        for href, n in sorted((added & allow_added).items()):
+            noted.append(f"{page}: declared ADDED {n} x {href!r} -- {allow.get('reason','')[:80]}")
 
     total = sum(sum(c.values()) for c in now.values())
     print(f"compared {len(now)} pages, {total} hrefs")
@@ -103,6 +113,11 @@ def main() -> int:
         was = sum(Counter(before.get(page, {})).values())
         has = sum(Counter(now[page]).values())
         print(f"  {page:32} {was:>4} -> {has:<4} {'ok' if was == has else 'CHANGED'}")
+
+    if noted:
+        print(f"\ndeclared changes: {len(noted)}")
+        for line in noted:
+            print("  " + line)
 
     if problems:
         print(f"\nPROBLEMS: {len(problems)}", file=sys.stderr)
