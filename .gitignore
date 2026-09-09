@@ -12,3 +12,10 @@ artifacts/
 # removed from the index in the same commit as this rule. See
 # tools/verify_audit_output_guard.sh for the assertion this displaced.
 audit-output/
+
+# Local Play build/QA output (a build product, never a source of truth).
+# Retained as CI artifacts, never committed - the same rule audit-output/ carries.
+.play-review/
+
+# Local source checkouts a replay mounts (the CI job creates them itself).
+.sources/

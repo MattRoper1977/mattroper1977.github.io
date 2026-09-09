@@ -184,7 +184,14 @@ def config(site_source, source):
             'geography_enabled':False,'default_choice':'off'}
 
 
-def preferences():
+def preferences(compact=False):
+    # compact=True is the Play shelf's consent bar (UX2 C2): same id, same
+    # storage key (mbm_usage_choice_v1 in usage-client.js), same
+    # data-usage-choice events and the same /privacy/#shared-usage anchor —
+    # only the shell and the visible copy are shorter. Education pages and the
+    # Play privacy/stats pages keep the default block, byte for byte.
+    if compact:
+        return '''<div class="mbm-usage usage-choice usage-compact" id="usage-statistics"><p>Optional usage statistics — off until you allow it. <a href="/privacy/#shared-usage">Read what is counted.</a></p><div class="usage-actions"><button type="button" data-usage-choice="allow" aria-pressed="false" disabled>Allow</button><button type="button" data-usage-choice="deny" aria-pressed="false">Keep off</button></div><p data-usage-choice-status role="status">Shared statistics collection is not active yet.</p></div>'''
     return '''<details class="mbm-usage usage-choice" id="usage-statistics"><summary>Optional usage statistics</summary>
 <p>Help Matt see which lessons, downloads and games are useful. This is optional and off until you allow it. We count activity events, not people or completed work.</p>
 <p>When active, the shared service receives only a public resource ID, event type, site name and a one-event retry code. It receives no account information, search text, pupil work or full page URL. Location measurement is off.</p>
@@ -259,12 +266,12 @@ def insert_before_document_end(text, tag, fragment):
     offset=positions[0];return text[:offset]+fragment+text[offset:]
 
 
-def inject(path, choice=False, popularity_block=False, bar=False):
+def inject(path, choice=False, popularity_block=False, compact=False, bar=False):
     text=path.read_text()
     if 'src="/assets/usage-client.js"' in text:return
     if '</head>' not in text or '</body>' not in text:raise ValueError('Usage adapter needs an HTML shell: '+str(path))
     text=insert_before_document_end(text,'head','<link rel="stylesheet" href="/assets/usage.css"><script defer src="/assets/usage-client.js"></script>')
-    addition=(popularity() if popularity_block else '')+((consent_bar() if bar else preferences()) if choice else '')
+    addition=(popularity() if popularity_block else '')+((consent_bar() if bar else preferences(compact=compact)) if choice else '')
     if addition: text=insert_before_document_end(text,'body',addition)
     path.write_text(text)
 
@@ -334,7 +341,7 @@ def refresh_play(output, lessons, site_source):
     rows=registry(output,Path(lessons),site_source,play_only=True);assets(target,site_source,'play',rows)
     for route in ['index.html','games/index.html','main/index.html','for/pupils/index.html','Games/index.html','Lessons/index.html']:
         path=target/route
-        if path.is_file():inject(path,choice=True)
+        if path.is_file():inject(path,choice=True,compact=True)
     path=target/'privacy/index.html'
     if path.is_file():
         text=path.read_text();text=replace_once(text,'This migration adds no account registration or analytics.', 'This migration adds no account registration. Optional usage statistics are described below.')

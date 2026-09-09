@@ -2,9 +2,18 @@
 
 Run after the existing publication builder. The shared release coordinator can
 call refresh(output) before refresh_play_usage, using the supplied tiny patch.
+
+UX2 C2 (2026-09-08): the shelf is rendered here as ONE DOM — a server-side
+"All games" grid holding every catalogue game exactly once (series editions
+collapsed to one card whose Play anchors for the other editions are still in
+the markup), a static Featured card, the classroom rows, and a slim inline
+dataset that play.js uses to add the lanes, the chips' filtering, the Filters
+drawer and the game sheet. Every number on the page is derived here or in
+play.js; nothing is typed into the template.
 """
 from __future__ import annotations
 import argparse
+from collections import Counter, OrderedDict
 import hashlib
 import html
 import json
@@ -19,6 +28,7 @@ else:
 HERE = Path(__file__).resolve().parent
 ALIASES = ('index.html', 'games/index.html', 'main/index.html', 'for/pupils/index.html', 'Games/index.html', 'Lessons/index.html')
 ORIGIN = 'https://www.madebymatt-play.uk'
+MONTHS = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
 esc = lambda s: html.escape(str(s), quote=True)
 
 def key(route):
@@ -28,13 +38,75 @@ def read(name, fallback):
     p = HERE / name
     return json.loads(p.read_text()) if p.exists() else fallback
 
-def card(row, feature=False):
+def date_label(iso):
+    """2026-09-08 -> '8 Sep 2026'. Derived by code, never typed."""
+    y, m, d = (int(x) for x in iso.split('-'))
+    return f'{d} {MONTHS[m - 1]} {y}'
+
+def shown_title(row):
+    return row.get('displayTitle') or row['title']
+
+def play_link(row, small=False):
+    return ('<a class="play' + (' small' if small else '') + '" data-play="' + esc(row['id']) + '" href="' + esc(row['route']) + '">Play<span class="sr-only"> ' + esc(shown_title(row)) + '</span></a>')
+
+def keyboard_chip(row):
+    # Verified controls that do not include touch: play.js reveals this on a
+    # coarse-pointer device. Unverified rows get nothing on the card.
+    if row['controls'] and 'touch' not in row['controls']:
+        return '<span class="chip warn" data-needs-keyboard hidden>Needs a keyboard</span>'
+    return ''
+
+def card(row, members, by_id):
+    """One grid card. `members` are every edition (ids) when the row leads a
+    series, else just the row; the card's Play anchor is the lead's and the
+    other CATALOGUE editions' Play anchors are in the markup for no-JS use."""
+    media = row.get('media', {})
+    image = row.get('image', '')
+    title = row['series'] if row.get('series') else shown_title(row)
+    editions = [by_id[i] for i in members if i != row['id']]
+    catalogue_editions = [e for e in editions if e['group'] == 'games']
+    picture = ('<span class="thumb"><img src="' + esc(image) + '" alt="" loading="lazy" width="640" height="360"></span>') if image else '<span class="thumb thumb-empty" aria-hidden="true"></span>'
+    chips = '<span class="chip">' + esc(row['genre']) + '</span>'
+    if len(members) > 1:
+        chips += '<span class="chip">' + str(len(members)) + ' editions</span>'
+    chips += keyboard_chip(row)
+    watch = '<button type="button" class="watch-pill" data-watch="' + esc(row['id']) + '" hidden>Watch gameplay</button>' if media.get('video') else ''
+    more = ''
+    if catalogue_editions:
+        more = '<ul class="card-editions" data-editions>' + ''.join('<li>' + play_link(e, small=True) + '<span class="edition-name">' + esc(shown_title(e)) + '</span></li>' for e in catalogue_editions) + '</ul>'
+    return ('<article class="game-card" data-card="' + esc(row['id']) + '" data-games="' + esc(' '.join(i for i in members if by_id[i]['group'] == 'games')) + '">'
+            '<button type="button" class="card-open" data-info="' + esc(row['id']) + '" aria-haspopup="dialog">' + picture + '<span class="card-title">' + esc(title) + '</span></button>'
+            + watch + '<div class="card-meta">' + chips + '</div>' + play_link(row) + more + '</article>')
+
+def feature(row):
     media = row.get('media', {})
     image = media.get('poster') or row.get('image', '')
-    picture = ('<figure><img src="'+esc(image)+'" alt="'+esc((media.get('description') or row['title']+' cover artwork'))+'" '+('fetchpriority="high"' if feature else 'loading="lazy"')+' width="640" height="360"><figcaption>'+('In-game screenshot' if media.get('poster') else 'Cover artwork')+'</figcaption></figure>') if image else ''
-    chips = '<span>'+esc(row['genre'])+'</span><span>'+esc(row['groupLabel'])+'</span>'
-    watch = '<button type="button" data-watch="'+esc(row['id'])+'" hidden>Watch gameplay</button>' if media.get('video') else ''
-    return '<article class="game-card'+(' featured-card' if feature else '')+'" data-card="'+esc(row['id'])+'">'+picture+'<div class="card-body"><div class="chips">'+chips+'</div><h3>'+esc(row['title'])+'</h3><p>'+esc(row['description'])+'</p><div class="card-actions"><a class="button primary" data-play="'+esc(row['id'])+'" href="'+esc(row['route'])+'">Play game<span class="sr-only">: '+esc(row['title'])+'</span></a><button type="button" data-info="'+esc(row['id'])+'" hidden>Game info<span class="sr-only">: '+esc(row['title'])+'</span></button>'+watch+'<button class="favourite" type="button" data-favourite="'+esc(row['id'])+'" aria-label="Favourite '+esc(row['title'])+'" aria-pressed="false" hidden>♡</button></div></div></article>'
+    watch = '<button type="button" class="button" data-watch="' + esc(row['id']) + '" hidden>Watch gameplay</button>' if media.get('video') else ''
+    picture = ('<span class="thumb"><img src="' + esc(image) + '" alt="" fetchpriority="high" width="640" height="360"></span>') if image else ''
+    return ('<section class="featured" aria-labelledby="featured-title"><h2 id="featured-title">Featured</h2>'
+            '<article class="feature-card" data-feature="' + esc(row['id']) + '">'
+            '<button type="button" class="card-open" data-info="' + esc(row['id']) + '" aria-haspopup="dialog">' + picture + '<span class="card-title">' + esc(shown_title(row)) + '</span></button>'
+            '<div class="feature-body"><div class="card-meta"><span class="chip">' + esc(row['genre']) + '</span>' + keyboard_chip(row) + '</div><p>' + esc(row['description']) + '</p>'
+            '<div class="card-actions">' + play_link(row) + watch + '</div></div></article></section>')
+
+def classroom(rows):
+    items = ''.join('<li class="class-row" data-row="' + esc(r['id']) + '"><span class="row-label">' + ('Staff' if r['group'] == 'staff' else 'Classroom') + '</span>'
+                    '<button type="button" class="row-open" data-info="' + esc(r['id']) + '" aria-haspopup="dialog">' + esc(shown_title(r)) + '</button>' + play_link(r, small=True) + '</li>' for r in rows)
+    return ('<section id="classroom" aria-labelledby="classroom-title"><h2 id="classroom-title">For your classroom</h2>'
+            '<p class="muted">Whole-class quizzes and a staff training activity. Not part of the games catalogue.</p><ul class="class-rows">' + items + '</ul></section>')
+
+def slim(row):
+    """The inline dataset play.js reads: what the lanes, filters and sheet need, nothing else."""
+    out = OrderedDict()
+    for k in ('id', 'title', 'displayTitle', 'description', 'route', 'image', 'genre', 'group', 'controls', 'modes', 'series', 'editions', 'featured', 'chapter'):
+        if k in row and row[k] not in (None, '', [], False):
+            out[k] = row[k]
+    m = row.get('media') or {}
+    if m:
+        out['media'] = {k: m[k] for k in ('video', 'poster', 'duration_seconds', 'description') if k in m}
+    if row.get('updated'):
+        out['updated'] = {'date': row['updated']['date'], 'label': date_label(row['updated']['date']), 'description': row['updated']['description']}
+    return out
 
 def refresh(output, review=False, source_revisions=None):
     target = Path(output) / 'games'
@@ -83,7 +155,7 @@ def refresh(output, review=False, source_revisions=None):
                    'controls':extra.get('controls', []), 'modes':extra.get('modes', []),
                    'instructions':extra.get('instructions', 'Open the game and follow its own instructions. Controls and device support have not yet been independently verified.'),
                    'evidence':[{'scope':'source-inspected'}] if extra.get('evidence') else [], 'updated':extra.get('updated'),
-                   'media':{}}
+                   'featured': entry.get('featured') is True, 'media':{}}
             candidates = clips_by_route.get(key(path), [])
             if candidates:
                 built = hashlib.sha256(payload.read_bytes()).hexdigest()
@@ -102,6 +174,40 @@ def refresh(output, review=False, source_revisions=None):
         actual = hashlib.sha256(path.read_bytes()).hexdigest()
         if actual != m['published_sha256']:
             raise ValueError('Recapture/review required for changed game: '+row['title'])
+
+    # --- Presentation layer -------------------------------------------------
+    # displayTitle/series arrive on catalogue rows from the canonical shelf
+    # (games.json via build_preview). Activities have no games.json row, so
+    # their presentation metadata — and the one series join the shelf cannot
+    # carry — comes from the reviewed activity-metadata.json beside this file.
+    by_key = {key(r['route']): r for r in rows}
+    overlay = read('activity-metadata.json', {'routes': {}})['routes']
+    for route, extra in overlay.items():
+        row = by_key.get(key(route))
+        if row is None: raise ValueError('activity-metadata.json names a route that is not published: ' + route)
+        for k in ('displayTitle', 'series'):
+            if k in extra:
+                if not isinstance(extra[k], str) or not extra[k].strip(): raise ValueError('activity-metadata.json ' + k + ' must be a non-empty string: ' + route)
+                if k in row and row[k] != extra[k]: raise ValueError('activity-metadata.json contradicts the shelf for ' + k + ': ' + route)
+                row[k] = extra[k]
+    for row in rows:
+        if row.get('displayTitle') == row['title']: raise ValueError('displayTitle repeats title: ' + row['title'])
+    # Series: every named series must have at least two editions across the
+    # 69 routes; the LEAD (the card the grid shows) is the first catalogue
+    # member in shelf order; every member lists every edition in order.
+    series = OrderedDict()
+    for row in rows:
+        if row.get('series'): series.setdefault(row['series'], []).append(row['id'])
+    for name, ids in series.items():
+        if len(ids) < 2: raise ValueError('series of one: ' + name)
+        for i in ids: by_id_row = next(r for r in rows if r['id'] == i); by_id_row['editions'] = list(ids)
+    chapters = read('chapters.json', {})
+    for route, chapter in chapters.items():
+        row = by_key.get(key(route))
+        if row is None or row['group'] != 'games': raise ValueError('chapters.json names a route that is not a catalogue game: ' + route)
+        if not isinstance(chapter, str) or not chapter.strip(): raise ValueError('chapters.json chapter must be a non-empty string: ' + route)
+        row['chapter'] = chapter
+
     assets = target/'assets/play'
     assets.mkdir(parents=True, exist_ok=True)
     for name in ['play.css','play.js']:
@@ -117,14 +223,31 @@ def refresh(output, review=False, source_revisions=None):
             (assets/'media').mkdir(exist_ok=True)
             shutil.copyfile(source,assets/'media'/name)
     (target/'data/play-discovery.json').write_text(json.dumps({'counts':counts,'games':rows},ensure_ascii=False))
-    genres = sorted({r['genre'] for r in rows})
+
+    # --- Render -------------------------------------------------------------
+    by_id = {r['id']: r for r in rows}
+    games = [r for r in rows if r['group'] == 'games']
+    activities = [r for r in rows if r['group'] != 'games']
+    genre_counts = Counter(r['genre'] for r in games)
+    genres = sorted(genre_counts, key=lambda g: (-genre_counts[g], g))
+    chips = ('<button type="button" class="chip-button" data-chip="all" aria-pressed="true">All</button>'
+             + ''.join('<button type="button" class="chip-button" data-chip="genre" data-genre="' + esc(g) + '" aria-pressed="false">' + esc(g) + '</button>' for g in genres)
+             + '<button type="button" class="chip-button" data-chip="favourites" aria-pressed="false">Favourites</button>')
+    # Featured: the canonical shelf's featured flag, first true row in shelf
+    # order. (The education Arcade's CURATION rail is a different record and
+    # is deliberately not read here.)
+    featured = next((r for r in games if r['featured']), None)
+    cards, covered = [], []
+    for r in games:
+        members = r.get('editions') or [r['id']]
+        lead = next(i for i in members if by_id[i]['group'] == 'games')
+        if r['id'] != lead:
+            continue  # not the lead of its series: its Play anchor rides on the lead card
+        cards.append(card(r, members, by_id))
+        covered += [i for i in members if by_id[i]['group'] == 'games']
+    if sorted(covered) != sorted(r['id'] for r in games) or len(covered) != len(set(covered)):
+        raise ValueError('grid does not cover every catalogue game exactly once')
     template = (HERE/'index.html').read_text()
-    features = [r for r in rows if r['media']][:6]
-    featured = ''
-    if features:
-        featured = '<section class="showcase" aria-labelledby="showcase-title"><div class="section-heading"><div><p class="eyebrow">A glimpse inside</p><h2 id="showcase-title">Choose your next adventure</h2></div><p>Real gameplay. Press Watch to preview.</p></div><div class="feature-grid">'+''.join(card(r, i==0) for i,r in enumerate(features))+'</div></section>'
-    recent = sorted([r for r in rows if r.get('updated')],key=lambda r:r['updated']['date'],reverse=True)[:3]
-    updates = '' if not recent else '<section class="updates" aria-labelledby="updates-title"><h2 id="updates-title">Recently updated</h2><div class="update-grid">'+''.join('<article><time datetime="'+esc(r['updated']['date'])+'">'+esc(r['updated']['date'])+'</time><h3><a data-play="'+esc(r['id'])+'" href="'+esc(r['route'])+'">'+esc(r['title'])+'</a></h3><p>'+esc(r['updated']['description'])+'</p></article>' for r in recent)+'</div></section>'
     # Use the exact supplied mark approved by the user, with a checked file hash.
     brand = read('brand.json', {})
     if not review and (brand.get('status') not in {'verified-original', 'user-approved'} or len(clips_by_route) != 6):
@@ -135,12 +258,11 @@ def refresh(output, review=False, source_revisions=None):
         assert hashlib.sha256(source.read_bytes()).hexdigest() == brand['sha256']
         shutil.copyfile(source,assets/source.name)
         logo = '<img src="/assets/play/'+esc(source.name)+'" alt="" width="48" height="48">'
-    classroom_in_catalogue = sum(r['groupLabel']=='Catalogue classroom game' for r in rows)
-    collection_note = f"The {counts['games']} catalogue entries include {classroom_in_catalogue} classroom games. The {counts['activities']} additional classroom activities have a learning purpose; the staff collection is for professional development."
-    substitutions = {'@@LOGO@@':logo,'@@COUNTS@@':f"{counts['games']} catalogue games · {counts['activities']} classroom activities · {counts['staff']} staff activity",'@@COLLECTION_NOTE@@':esc(collection_note),
-        '@@TOTAL@@':str(len(rows)), '@@GENRES@@':''.join('<option>'+esc(g)+'</option>' for g in genres),
-        '@@CARDS@@':''.join(card(r) for r in rows), '@@SHOWCASE@@':featured, '@@UPDATES@@':updates,
-        '@@DATA@@':json.dumps({'counts':counts,'games':rows},ensure_ascii=False).replace('<','\\u003c')}
+    data = {'counts': counts, 'catalogue': len(games), 'genres': [{'name': g, 'count': genre_counts[g]} for g in genres],
+            'series': series, 'games': [slim(r) for r in rows]}
+    substitutions = {'@@LOGO@@':logo, '@@CHIPS@@':chips, '@@FEATURED@@': feature(featured) if featured else '',
+        '@@COUNT@@': str(len(games)) + ' games', '@@GRID@@': ''.join(cards), '@@CLASSROOM@@': classroom(activities),
+        '@@DATA@@':json.dumps(data,ensure_ascii=False).replace('<','\\u003c')}
     for a,b in substitutions.items(): template = template.replace(a,b)
     assert '@@' not in template
     for name in ALIASES:
@@ -148,6 +270,8 @@ def refresh(output, review=False, source_revisions=None):
     assert (target/'data/domain-catalogue.json').read_bytes() == original
     report={'counts':counts,'total':len(rows),'catalogue_sha256':hashlib.sha256(original).hexdigest(),
             'brand_status':brand.get('status','original-asset-unresolved'), 'accepted_clips':len(clips_by_route),
+            'grid_cards':len(cards),'series':{k:len(v) for k,v in series.items()},'genres':genres,
+            'featured':featured['route'] if featured else None,
             'changed_game_payloads':0,'canonical_origin':ORIGIN,'shared_runtime_changed':False}
     (Path(output)/'play-discovery-report.json').write_text(json.dumps(report,indent=2)+'\n')
     return report
