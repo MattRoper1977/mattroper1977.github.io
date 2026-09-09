@@ -1,0 +1,26 @@
+<!-- Made by Matt — chrome template: nav row (SW2 T2).
+     Substituted into header.html at <!-- MBM-CHROME-NAV-ROW -->.
+
+     SW2 gives the row as three links for an adult surface and two for a pupil
+     one, with About added on desktop. The estate's own contract is wider:
+     tools/verify_professional_site.js requires nav[aria-label="Site navigation"],
+     a details.mbm-nav-more disclosure, and EVERY link in PRIMARY_LINKS and
+     MORE_LINKS present on each key page. Those two are not in conflict — the
+     row is what a phone sees, the disclosure carries the rest — so the row is
+     SW2's and the disclosure keeps the contract whole.
+
+     /members/ and /account/ are account-backed. On a pupil-reachable surface
+     the verifier asserts they are ABSENT, so the pupil variant omits them from
+     the markup rather than hiding them. -->
+
+<!-- MBM-CHROME-VARIANT: adult -->
+<nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links"><a href="/Lessons/">Lessons</a><a href="/resources/">Resources</a><a href="/Matt-s-Apps-/">Apps &amp; tools</a><a class="mbm-nav-desktop" href="/main/#about">About</a></div><details class="mbm-nav-more"><summary>More</summary><div class="mbm-nav-panel"><a href="/games/">Games</a><a href="/tools/">Tools</a><a href="/main/">Main homepage</a><a href="/">Choose homepage</a><a href="/stats/">Stats</a><a href="/members/">Members</a><a href="/privacy/">Privacy</a></div></details><details class="mbm-theme-menu"><summary>Display</summary><div class="mbm-theme-panel"><div class="mbm-theme-slot" data-mbm-theme-slot></div></div></details></nav>
+<!-- /MBM-CHROME-VARIANT: adult -->
+
+<!-- MBM-CHROME-VARIANT: pupil -->
+<nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links"><a href="/Lessons/">Lessons</a><a href="/resources/">Resources</a></div><details class="mbm-nav-more"><summary>More</summary><div class="mbm-nav-panel"><a href="/games/">Games</a><a href="/Matt-s-Apps-/">Apps &amp; tools</a><a href="/tools/">Tools</a><a href="/main/">Main homepage</a><a href="/">Choose homepage</a><a href="/stats/">Stats</a><a href="/main/#about">About</a><a href="/privacy/">Privacy</a></div></details><details class="mbm-theme-menu"><summary>Display</summary><div class="mbm-theme-panel"><div class="mbm-theme-slot" data-mbm-theme-slot></div></div></details></nav>
+<!-- /MBM-CHROME-VARIANT: pupil -->
+
+<!-- MBM-CHROME-VARIANT: play -->
+<nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links"><a href="#browse">All games</a><a href="#continue">Continue playing</a></div><details class="mbm-nav-more"><summary>More</summary><div class="mbm-nav-panel"><a href="#featured">Featured</a><a href="#new">New and updated</a></div></details></nav>
+<!-- /MBM-CHROME-VARIANT: play -->

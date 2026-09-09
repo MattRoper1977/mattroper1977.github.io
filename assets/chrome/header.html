@@ -1,0 +1,28 @@
+<!-- Made by Matt — chrome template: header (SW2 T2).
+     Three variants, selected by tools/stamp_chrome.py and marked on the output
+     with data-mbm-chrome so CSS and script can branch without re-reading markup.
+     The variants differ in MARKUP, not only in styling, because a pupil surface
+     must not carry an account-backed control at all: verify_professional_site.js
+     asserts those links are ABSENT there, so hiding them with CSS would not do.
+
+     The mark is assets/brand/micro_mark.svg — a rounded navy tile with a cream
+     M, 263 bytes, already the header mark on 11 of the 12 site page types. SW2
+     asks for a silver M tile; there is no silver mark in this estate and
+     assets/brand/approved-mark-provenance.json records the search for one being
+     superseded by a user-supplied logo, so §10's stop applies: this is the
+     current header mark, and it is reported rather than invented.
+
+     No tagline here. "Learn • Build • Explore" belongs to the footer, once per
+     page (§0.6). -->
+
+<!-- MBM-CHROME-VARIANT: adult -->
+<header class="header mbm-site-header" data-mbm-chrome="adult"><div class="bar"><a class="brand" href="/main/"><img src="/assets/brand/micro_mark.svg" alt="" width="100" height="100"><span><strong>MADE BY MATT</strong></span></a><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><a class="mbm-saved" href="/Lessons/?view=saved">Saved</a><!-- MBM-CHROME-NAV-ROW --></div></header>
+<!-- /MBM-CHROME-VARIANT: adult -->
+
+<!-- MBM-CHROME-VARIANT: pupil -->
+<header class="header mbm-site-header" data-mbm-chrome="pupil"><div class="bar"><a class="brand" href="/main/"><img src="/assets/brand/micro_mark.svg" alt="" width="100" height="100"><span><strong>MADE BY MATT</strong></span></a><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><!-- MBM-CHROME-NAV-ROW --></div></header>
+<!-- /MBM-CHROME-VARIANT: pupil -->
+
+<!-- MBM-CHROME-VARIANT: play -->
+<header class="header mbm-site-header" data-mbm-chrome="play" data-theme="dark"><div class="bar"><a class="brand" href="/"><img src="/assets/brand/micro_mark.svg" alt="" width="100" height="100"><span>Made by Matt <strong>Play</strong></span></a><a class="mbm-chrome-search" href="#browse" aria-label="Search games"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></a><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><!-- MBM-CHROME-NAV-ROW --></div></header>
+<!-- /MBM-CHROME-VARIANT: play -->

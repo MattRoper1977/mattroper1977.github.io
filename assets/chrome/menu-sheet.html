@@ -1,0 +1,16 @@
+<!-- Made by Matt — chrome template: menu sheet (SW2 T2).
+     "Menu sheet = UX2 §MENU exactly (three groups, Play last, 44px close)."
+
+     UX2 B1 already builds that sheet, from the record, in
+     domain-split/shared_navigation.py: header() reads
+     data/audience-homepages.json for the "Who are you here for?" group so a
+     route added to the record appears without an edit, and refresh() swaps the
+     whole header into every published page. Appendix B forbids changing UX2's
+     menu groups.
+
+     So this template does NOT restate that markup. Restating it would make a
+     second definition of the same thing that could drift from the record —
+     exactly what §0.4's one-name-per-thing rule exists to prevent — and it
+     would be typed rather than derived. The stamper reads the marker below and
+     leaves the published sheet to shared_navigation.py, which owns it. -->
+<!-- MBM-CHROME-DELEGATE: domain-split/shared_navigation.py header() -->
