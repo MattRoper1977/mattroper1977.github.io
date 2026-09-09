@@ -214,6 +214,27 @@ catalogue pins for `kind == "apps"`, so it passes with the hub changed.
 
 ---
 
+### §0.6 is BLOCKED in Lessons and Apps — not on the site
+
+"Learn • Build • Explore" once per page, in the footer, none in any header. Free
+on the site: `verify_professional_site.js` captures the brand markup only as far
+as the first `<span>`, and the tagline sits inside it. Both other estates pin the
+whole lock-up, so removing it reds them:
+
+    [FAIL] Made by Matt logo/brand markup changed
+
+Boundary, not principle — and the boundary is the contract, so R-T3.1 applies:
+the pinned string is not changed, it is listed. Both hubs keep their two
+taglines and take only the token link. Like brand convergence, this needs a
+preservation baseline moved deliberately, which chrome parity may not do.
+
+**How this was nearly missed.** The local runs omitted `--base`, which is the
+flag that proves wording and logo, so they reported green on pages the brand
+contract rejects. CI found it. A gate run with fewer flags than CI uses is not
+that gate, and both estates are checked with `--base` now.
+
+---
+
 ## Open, for Matt — nothing blocking except where marked, all measured
 
 1. **Brand convergence** (`SW2_T3_LEDGER.md`), with the `MARK=converge` swap
