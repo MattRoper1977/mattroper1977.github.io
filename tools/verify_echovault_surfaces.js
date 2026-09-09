@@ -26,7 +26,16 @@
 const { chromium } = require('playwright');
 const { probeShelf, taxonomyFromHtml, expectedInGenre, assertRendered } = require('./lib/shelf-probe.js');
 
-const SHELF = process.env.RF_SHELF_URL || 'https://madebymatt.uk/games/';
+const { EstateMap } = require('./lib/estate-map.cjs');
+
+// SW2-F W2. Derived, not written. This default is only reached when
+// RF_PUBLICATION is unset -- every CI caller sets it to "games" and takes the
+// published-shelf-probe path -- so it was a dead literal rather than a live
+// defect. It is fixed anyway: /games/ is a Play route, the education origin
+// answers it with the "This game has moved" stub, and a wrong default that
+// nothing currently reaches is exactly what becomes a wrong default the day
+// someone drops the env var.
+const SHELF = process.env.RF_SHELF_URL || new URL('/games/', EstateMap.load().originFor('/games/')).href;
 const RAW_MANIFEST = 'https://raw.githubusercontent.com/MattRoper1977/Games/main/games.json';
 const HREF = '/echovault/';
 
