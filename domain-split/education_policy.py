@@ -37,7 +37,15 @@ SOURCE_ONLY = {'README.md', 'HANDOVER.md', 'BACKLOG.md', 'PHONE_TEST_99.md',
                'images/README.md', 'data/visual-provenance.json', 'data/source-manifests/games.json',
                'data/source-manifests/lessons-resources.json', 'data/mbm-search-editorial.json',
                'data/new-release-occupants.json', 'data/tag-backfill.csv',
-               'data/hud-coverage.json', 'Lessons/data/hud-coverage.json', 'data/audience-homepages.json'}
+               'data/hud-coverage.json', 'Lessons/data/hud-coverage.json', 'data/audience-homepages.json',
+               # SW2-F W2. A verifier input, not site content: it is generated from this
+               # module's own classifier so tools can ask "who serves this route" without
+               # writing an origin down. Publishing it would serve readers nothing and would
+               # put a review-gated hash on a file that is regenerated whenever the split
+               # changes. SOURCE_ONLY is the estate's existing name for exactly that, which
+               # is why it already holds data/source-manifests/games.json and
+               # data/hud-coverage.json.
+               'data/estate-map.json'}
 
 
 def canonical(value, prefix='/'):

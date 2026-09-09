@@ -6,11 +6,24 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { EstateMap } from '../lib/estate-map.cjs';
+import { fetchRoute as estateFetch } from '../lib/estate-fetch.cjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const REPOSITORY = 'MattRoper1977/mattroper1977.github.io';
 const GAMES_REPOSITORY = 'MattRoper1977/Games';
-const ORIGIN = 'https://madebymatt.uk';
+// SW2-F W2. The origin is derived from the route, never written here.
+//
+// This file used to pin `const ORIGIN = 'https://madebymatt.uk'` and then ask it
+// for /townlife/ and /games/. Both are Play routes, and the education tree
+// answers a Play route with the "This game has moved" stub
+// (build_education.moved_page). So the fetch returned 200 and the marker check
+// failed, and the failure was read as a missing marker, then as a CDN race --
+// two diagnoses of an origin that was simply wrong. estate-map.cjs answers
+// "who serves this route" from the same predicate the publications are built
+// with, and estate-fetch.cjs raises OffOriginError *before* any content
+// assertion, so the next reader gets the cause rather than a symptom.
+const ESTATE = EstateMap.load();
 const STATUS = 'Gold Master v1.0 preview — verified in Chromium, Firefox and WebKit. Physical device checks (Chromebook, phone) are still pending.';
 const VIEWPORT = { width: 390, height: 844 };
 const POLL_LIMIT = 20;
@@ -70,24 +83,26 @@ async function waitForCanonicalTown() {
   throw new Error('PENDING — Games/main did not acquire /townlife/ within the bounded poll');
 }
 
+// Every request goes through tools/lib/estate-fetch.cjs, which picks the origin
+// from the route, asserts the final URL, and raises OffOriginError before any
+// content assertion when the served page's canonical points off-origin. The
+// header names below are preserved so the evidence file's shape is unchanged.
 async function fetchRoute(route) {
-  const response = await fetch(new URL(route, ORIGIN), {
-    redirect: 'follow',
-    headers: { 'Cache-Control': 'no-cache', 'User-Agent': 'townlife-live-closeout' },
-  });
-  const bytes = Buffer.from(await response.arrayBuffer());
-  const headers = {};
-  for (const name of ['cache-control', 'etag', 'age', 'last-modified']) {
-    headers[({ 'cache-control': 'Cache-Control', etag: 'ETag', age: 'Age', 'last-modified': 'Last-Modified' })[name]] = response.headers.get(name) ?? 'MISSING';
-  }
+  const served = await estateFetch(route, { map: ESTATE, agent: 'townlife-live-closeout' });
   return {
     route,
-    finalUrl: response.url,
-    status: response.status,
-    contentType: response.headers.get('content-type') ?? 'MISSING',
-    headers,
-    bytes,
-    sha256: sha256(bytes),
+    origin: served.origin,
+    finalUrl: served.finalUrl,
+    status: served.status,
+    contentType: served.contentType,
+    headers: {
+      'Cache-Control': served.headers['cache-control'],
+      ETag: served.headers.etag,
+      Age: served.headers.age,
+      'Last-Modified': served.headers['last-modified'],
+    },
+    bytes: served.bytes,
+    sha256: served.sha256,
   };
 }
 
@@ -127,7 +142,7 @@ async function openShelf(page, route, townSelector, cardSelector) {
     if (/\/games\.json(?:\?|$)/i.test(new URL(request.url()).pathname + new URL(request.url()).search)) requests.push(request.url());
   };
   page.on('request', listener);
-  const response = await page.goto(new URL(route, ORIGIN).href, { waitUntil: 'networkidle', timeout: 60_000 });
+  const response = await page.goto(new URL(route, ESTATE.originFor(route)).href, { waitUntil: 'networkidle', timeout: 60_000 });
   assert.equal(response?.status(), 200, `${route} browser navigation failed`);
   const town = page.locator(townSelector).first();
   await town.waitFor({ state: 'attached', timeout: 30_000 });
@@ -154,7 +169,7 @@ async function observeBrowser() {
   const context = await browser.newContext({ viewport: VIEWPORT, hasTouch: true, serviceWorkers: 'block', extraHTTPHeaders: { 'Cache-Control': 'no-cache' } });
   const page = await context.newPage();
   try {
-    let response = await page.goto(`${ORIGIN}/townlife/`, { waitUntil: 'load', timeout: 60_000 });
+    let response = await page.goto(new URL('/townlife/', ESTATE.originFor('/townlife/')).href, { waitUntil: 'load', timeout: 60_000 });
     assert.equal(response?.status(), 200);
     const heading = page.locator('h1');
     assert.equal(await heading.count(), 1, 'live Town Life must have exactly one h1');
@@ -177,7 +192,7 @@ async function observeBrowser() {
       if (new URL(request.url()).pathname.endsWith('/Games/games.json')) mainRequests.push(request.url());
     };
     page.on('request', mainListener);
-    response = await page.goto(`${ORIGIN}/main/`, { waitUntil: 'networkidle', timeout: 60_000 });
+    response = await page.goto(new URL('/main/', ESTATE.originFor('/main/')).href, { waitUntil: 'networkidle', timeout: 60_000 });
     assert.equal(response?.status(), 200, '/main/ browser navigation failed');
     page.off('request', mainListener);
     return {
@@ -210,6 +225,18 @@ const [gamesRoute, pupilsRoute, manifestRoute, mirrorRoute, townRoute] = await P
 
 const provenance = {
   townlife: assertExactRoute(townRoute, 'townlife/index.html', STATUS),
+  // LEFT AS IT IS, and annotated rather than repaired -- SW2-F W2, DECISIONS
+  // 2026-09-09. The origin fix above sends /games/ to Play, which is correct,
+  // and that is as far as this pass goes. The comparison target is still wrong,
+  // and measurably so: the Play /games/ page is GENERATED from
+  // domain-split/preview-template.html (build_publications.py:325), not copied
+  // from games/index.html. Built locally from main they are 76,105 and 53,680
+  // bytes, and the generated page does not contain id="genreSections" at all.
+  // Repairing it means deriving the expectation from the built Play tree, which
+  // is a different change from choosing an origin, and inventing an assertion
+  // for a shelf whose served shape is itself red today (#group is absent from
+  // the builder's own output) is exactly how BACKLOG 5a says the original drift
+  // got in. So it stays red and named, rather than weakened to reach green.
   games: assertExactRoute(gamesRoute, 'games/index.html', 'id="genreSections"'),
   pupils: assertExactRoute(pupilsRoute, 'for/pupils/index.html', STATUS),
   siteMirror: assertExactRoute(mirrorRoute, 'data/source-manifests/games.json', STATUS),
