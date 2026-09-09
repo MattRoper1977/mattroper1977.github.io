@@ -149,3 +149,53 @@ exactly the four consumers).
    estate's own host so it is not a third-party request, and headless Chromium
    never fetches a favicon so the request census cannot see it; it is reported
    separately by `check_token_census.cjs` so it stays visible.
+
+---
+
+## T4: UX2 A4/B5/C4 still green
+
+**B5 (site)** — run directly against this branch: professional-site verifier
+0 findings / 11 controls, navigation census 0 added 0 lost, theme parity 6
+themes across every engine in scope, published-site 20/20.
+
+**A4 (Lessons)** — run against Lessons `main` (2c33266) with THIS branch
+supplied as the site tree, which is the combination that actually ships:
+`tools/ux2/hub_gates.mjs` **298/298 limbs**, including its three red proofs
+(hidden family drops reachability 40→13; removed chip caught 4→3; a key at a
+half-term no lesson holds renders no planning link).
+`tools/verify_lessons_chips.mjs` over HTTP **99/99 limbs** plus its red proof,
+and the linkedom catalogue DOM check.
+
+**C4 (Play)** — AUTO-DECISION, logged under Q3: not re-run in full, because
+this branch cannot reach it, and that is measured rather than assumed.
+
+- `git diff origin/main --name-only` touches **no file under `domain-split/`**.
+  Every play-build input — `play/build.py`, `play.css`, `play.js`, the shelf
+  template, `brand.json`, `source-revisions.json` — is byte-identical to main.
+- The branch's only new files that reach the composed tree are
+  `assets/mbm-tokens.css` and the four `assets/chrome/*.html` templates, all
+  carried by the existing unfiltered `copytree`.
+- **No play route links any of them.** The one HTML file in the composed tree
+  mentioning the token file is `assets/chrome/header.html`, which is the
+  template itself, not a route.
+- No play gate enumerates `assets/`, asserts a manifest, or measures a directory
+  size, so an unreferenced file cannot move any C4 number. Shelf transfer size
+  is unchanged for the same reason: nothing loads it.
+
+Running C4 in full needs a complete play build with preservation baselines and
+source-revision re-derivation across three checkouts. It is the right gate at
+the Games pin-bump, where the tree is real; here it would re-prove main.
+
+## Two smaller notes, neither blocking
+
+- **The chrome templates are now publicly fetchable** at `/assets/chrome/*.html`
+  on the site and, via the wholesale asset copy, on the Play tree. They are
+  fragments with no content and nothing links them, so this is untidiness
+  rather than a defect — but they are crawlable. A `robots.txt` line or moving
+  them out of `assets/` would settle it; both are route decisions, so they
+  belong to Part U rather than here.
+- **`--mbm-card-raised` had no light value.** It was declared only inside
+  `[data-theme="dark"]`, so it resolved empty on every light page, and the
+  census passed it because twelve empty strings are consistent. Found by the
+  Play-tree gate, which counts tokens that resolve rather than tokens that
+  exist. The census now checks emptiness first and separately.
