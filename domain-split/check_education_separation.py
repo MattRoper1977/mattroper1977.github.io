@@ -110,7 +110,16 @@ def registry_errors(output):
     # (0 added, 0 removed) while 32 classic-lesson records gain their new search-index
     # source_ids beside the old ones. Proved by diffing registry_partition() output between
     # the B3 and B4 builds (reports/B4_registry_refreeze.json in the lane report).
-    baseline_sha = 'd2439c6161bb2715ab7b04a3880e036189e9726f8f30d55e63b5816abd40f5bf'
+    # Re-frozen 9 September (SX1/SX2): the Spring/Summer Science batch (Lessons #454
+    # content d4b9b0ca, #455 catalogue 331b0074) catalogues 51 new Science lessons, so
+    # 51 lesson records join the registry: 926 -> 977 retained rows, 0 removed, and 0
+    # existing record changed in any field. Proved by diffing registry_partition()
+    # output between a build at this repository's own pinned Lessons source
+    # (2c33266b) and one at Lessons main: the pinned build reproduces the previous
+    # baseline d2439c61 exactly at 926 rows, and every one of the 51 added routes is
+    # a Science_Teesside lesson of that batch. This moves with the publisher pin
+    # lines, as the RX3 P3.4 note above records.
+    baseline_sha = '7ce5e60ee7fd308108a1ffbf0aecd1fd51be6eb8078e45495e0f2ef49fd2f9fa'
     additions_path = HERE/'science-download-usage-additions.json'
     if sha256(additions_path.read_bytes()).hexdigest() != '266199e1f6d355956b23df058b3d867b50edc2f155545b0b43fb2d6f8177df30':
         return ['Unreviewed Science download registration metadata']
