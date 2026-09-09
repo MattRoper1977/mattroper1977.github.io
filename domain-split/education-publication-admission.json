@@ -26,7 +26,8 @@
   "UX2 Part D3 re-cut (2026-09-08, Site claude/ux2-registry-d3-recut): the catalogue PR's later commits moved two published files past the digests admitted for them — the ledger gained its Part D3 decisions, and the hub's subject filter takes an exact record subject when the value names one (Lessons #443, merged 894a099d). Both admitted as transition pairs [the bytes main carried, the bytes main carries now].",
   "UX2 Part B (2026-09-08, Site claude/ux2-b4-resources): the menu, homepage, /commission/, the audience pages and /resources/ are Appendix A; the site's own pinned Lessons source moves from the A5 head 7e0ece71 to Lessons main 73aa8ff9 in the three workflows that carry it, so the site-triggered and Lessons-triggered publishers build from one Lessons state instead of two. 3 new education-site paths (the ledger, the added-this-half-term script, /commission/), 34 education-site and 22 education-lessons and 1 education-apps digests re-cut at the new navigation, and 4 education-lessons paths admitted as transition pairs [Lessons main, Lessons claude/ux2-b4-planning-link] for the B4 planning link (README.md, UX2_LEDGER.md, data/planning-keys.json, subject.html). The pin was carried forward from 9c53477b through 73aa8ff9 (Lessons #449, the education navigation check re-pointed at the Part B surfaces); a rebuild at 73aa8ff9 needed 0 further admissions",
   "UX2 Part C (2026-09-08, Site claude/ux2-c2-shelf): the Play ledger joins the education site tree",
-  "SW2 Part T (2026-09-09, Site claude/sw2-t1-tokens): the design-token file lands and twelve static page types plus the generated audience and discovery pages carry a marked tokens region and a marked Menu region. 14 education-site digests become transition pairs [what main builds, what this branch builds]; assets/mbm-tokens.css is ARRIVING, absent from main's own build until this merges. education-lessons and education-apps unchanged (measured: 0 paths). The 30 Humanities pack zips this build does not carry are their existing ARRIVING entries, not a regression. The chrome templates are NOT published: they live at tools/chrome/, because check_education_separation reads a published nav-row fragment's /games/ link as recreational navigation in the education tree. Drop the old digests and the ARRIVING marker once main carries this."
+  "SW2-F §F0 (2026-09-09, Site claude/sw2f-f0-chips): the account chips, the preview tab focus ring, the dark-footer muted ink and .mf-note-kicker take readable values. 7 education-site digests become transition pairs [what main builds, what this branch builds]. SIX of the seven were ALREADY drifting at main before this branch existed -- a pristine main build differs from the registry on styles.css, index.html, main/index.html, commission/index.html, for/pupils/ and for/teachers/ -- so this re-cut also clears that staleness. The build is deterministic (two consecutive builds byte-identical). Only assets/mbm-audience.css is this branch's own. education-lessons and education-apps unchanged (measured: 0).",
+  "SW2 Part T (2026-09-09, Site claude/sw2-t1-tokens, re-derived once from F0 #338's registry after F0 merged): the design-token file lands; twelve static page types plus the generated audience and discovery pages carry a marked tokens region and a marked Menu region; and .mbm-hub-kicker takes a readable ink (SW2-F §G1 found it at 4.30:1 on the hub hero gradient at 390px, measured on the real pixels behind the glyphs; #F5AE60 is 4.76:1, and every use of that class is inside .mbm-hub-hero). 15 education-site digests become transition pairs [what main builds now, what this branch builds]; assets/mbm-tokens.css is ARRIVING. Re-derived from one rebuild of the final state rather than stacked on an earlier re-cut, so no path carries a third digest (checked: 0). The chrome templates are NOT published -- they live at tools/chrome/, because check_education_separation reads a published nav-row fragment's /games/ link as recreational navigation. education-lessons and education-apps unchanged (measured: 0)."
  ],
  "trees": {
   "education-site": {
@@ -84,7 +85,10 @@
    "assets/icons/maskable-icon.png": "ef5355cb3d0821452d4c9f869a6f1157f29a60cef1b3b71394efe4c8271b9701",
    "assets/mbm-account.css": "a7cec495b1ba0de0bb448dae998244d1cd72c9181b0a3fa197effd4aaa7a44a6",
    "assets/mbm-account.js": "35f07fcb4c81bb3f0e0ffeab41ea2977c8461ec6e1f352ced2779aa31d3a6e94",
-   "assets/mbm-audience.css": "bfe0a8d9fd8c41f745c19b2fe9983d738211b7bb31b2ef13154246739507c3fd",
+   "assets/mbm-audience.css": [
+    "bfe0a8d9fd8c41f745c19b2fe9983d738211b7bb31b2ef13154246739507c3fd",
+    "a5500e755544bed91c518547948b12e7a48948981209850ca92d1327401c0a2f"
+   ],
    "assets/mbm-audience.js": "9802d34d9e273cbb85c42e7706a0a1afe14ccfd51ad67e325b7d4564440d8ac7",
    "assets/mbm-doors.js": "778be08c83d4bdfa032141339ca2357652901dbf35c16424d9cebcfd81ccf36f",
    "assets/mbm-features.css": "bd191c5a7ff7922032104cb6cbbf4b1a765f79bf8637a6a86dbedfc9b3f527dd",
@@ -96,7 +100,10 @@
    "assets/mbm-profile.js": "2bbd3492e4c65d22164aed53d91e474474d90dde44b54b3f65ac00a924d6527a",
    "assets/mbm-pupil-search.js": "3c6cadca53d7c7c3be233c23630efd44d9fc0b54d49bb03d171ffb89267e90a4",
    "assets/mbm-recent.js": "b19d118306260918a7841cf68888ca8a6502edef615939e3ac8980a9bfcc3c08",
-   "assets/mbm-search.css": "86f8e039fbc09e00b01cce4d6af30de9d55999f7aa255dbc095587aaf2404a98",
+   "assets/mbm-search.css": [
+    "86f8e039fbc09e00b01cce4d6af30de9d55999f7aa255dbc095587aaf2404a98",
+    "abd84524cf714fdcec04bf43c33a32d5bdded5aceebfd79c4e40e7a21013c166"
+   ],
    "assets/mbm-search.js": "8afc452b868709125a826ee1f1ec007ec883028d9d9022dc4cfa05fb5607d452",
    "assets/mbm-sync-ui.js": "9a327c573b6e159f0be9d82c856dbd876c8cbc2a0e9627b9013ad1cedf4d4674",
    "assets/mbm-sync.js": "0d7b34dcbea683be5dc1d4c5322f877a97e149ff070cf29b0151663c8238732f",
@@ -117,7 +124,10 @@
    "audience-sitemap.xml": "d759a6cb1a16923b9eabd07e0298206c9fdb289110e24c941d5b4dd70424e7da",
    "auroralinks/index.html": "a4ee2d828d73689eac709478cb0b94a6775ae8e3a41909d508ce6564f5da925f",
    "biopunkhive/index.html": "c1e84a54a8a3df2e9b52f8681ab8baf5310eb19bf73d9f33e7101eb0030b1e99",
-   "commission/index.html": "f0e395c50914499fbf8bc97927a76b7614ec09ebaabdf10f0a28c9222ea82e34",
+   "commission/index.html": [
+    "f0e395c50914499fbf8bc97927a76b7614ec09ebaabdf10f0a28c9222ea82e34",
+    "a76aef49472809df5dc687886972b9954719daa2dcfd6ca0a73557535b1a11b8"
+   ],
    "cors-test.html": "f4cf4fee2166abec1131fdf3a7efd9945c70e8a9a6e5c674f2ea15ebfa825365",
    "crownbadge/index.html": "8d4130060c4b0f1b507f5a20604bdebda4d4efd3cfa747bd5b52836b1389cbe4",
    "cyberpulse/index.html": "d30418e9592c648225f88f2c10b72019ba5725c9f2a3091f3e754b0a22a4142d",
@@ -173,12 +183,18 @@
     "51a6bef11100cb64602f169ab3162cf1f05cac8ede95c2ad3e4acea83aa02dd9",
     "5a9b12ee076a24525afb8025905de1baaef00ec11fcba475e4d528d114c318c5"
    ],
-   "for/pupils/index.html": "9ddf813ec23cc80e8392f6db567094bf44f7b8e2945984181b22ccfb8ef14447",
+   "for/pupils/index.html": [
+    "9ddf813ec23cc80e8392f6db567094bf44f7b8e2945984181b22ccfb8ef14447",
+    "3f45445feefb1d4e48c9f27492ab19a2c7773d89c8a0311acdb997c65a5d8477"
+   ],
    "for/schools-semh/index.html": [
     "fb1573bef37eee41c9fa70153267d52bd214327471fa28db141f8ad808a38c03",
     "4ea2b4efe1c2e8deb7784db49173312929f8da8501f827d0f6dbc29a974f88d9"
    ],
-   "for/teachers/index.html": "d0f779656460b48d68d3de18b9f670b9847113d631edbcdbe63afdd33791f6a5",
+   "for/teachers/index.html": [
+    "d0f779656460b48d68d3de18b9f670b9847113d631edbcdbe63afdd33791f6a5",
+    "c0997006e92892741b73def8f443c180e9c0b176699fdab3181c85c9b5cd4557"
+   ],
    "for/trusts/index.html": [
     "f9256a637ec5479dd0909c5d1cf6d86916b2b0dc75a7fd539473a88309f15ec3",
     "a284ecaba40b574d0f398b779bd922487676ad97a5bba09f67d234d9120774b3"
@@ -192,13 +208,19 @@
    "hyperdraft/index.html": "be666f6a8bbe88db7adeb4e4a87da7c3485a3ff17a58b3c5914aca3958dc939a",
    "images/lesson-hub-card.webp": "c6345f962b6f253be7a9934c1b352acaa065d5e11941514672e7781c920a9ea0",
    "images/lessonhub-art.jpg": "cdaaf492228f2f84723745835204df0138c83fccd3ecfc41ae51ed5e3c673c7f",
-   "index.html": "ce446914793152462c6eb09f442d6667049ba633b536dfb789bee9baa139cfd8",
+   "index.html": [
+    "ce446914793152462c6eb09f442d6667049ba633b536dfb789bee9baa139cfd8",
+    "c4748a4d8134a1d033e22761790203c75996c7460ddf61ef8e2645dc6a30747f"
+   ],
    "luminahaven/index.html": "670f62b18baa8a275b18a254f9e896487b7f71de3cb6319f7ed8a4f6c053a19f",
    "mailing-list/index.html": [
     "01d34054d91e17029cbaf81a329fab9411a43d5dfcce3b35ed96ac382f57b940",
     "f1b971c916f889dcc28341b092f249db4559d3157045e1d8e5993f4d7cdc8e66"
    ],
-   "main/index.html": "b51a12ee6cbf48f472923bd5f0b7fd8e3dc2b47a91750c2865e63aff52ae4863",
+   "main/index.html": [
+    "b51a12ee6cbf48f472923bd5f0b7fd8e3dc2b47a91750c2865e63aff52ae4863",
+    "936fdfffefc6cd598f36e6aa576ca7db3d4b4fbefc7e45dae0ae406415464479"
+   ],
    "medevac/MedevacFrontier_v1.html": "d9aca33a1c52d12744cf2c3b32e7861f9be6a2d87e50d0d88151e8a3716abe81",
    "medevac/index.html": "0d28274ad1d83858c8065866f5fec52c3777c08415736d6031d62eceedab5d06",
    "medevac/studio.html": "364aa8a1a3f30e8bc016198615a35b1dac5ef01aaf4ad30104499e78331eab29",
@@ -245,7 +267,10 @@
     "2682ec913b406505a37f6e2960cbd479445e4d006b03f54118fd4ffa92cdbb54"
    ],
    "stub-handoff.js": "a92bc47354724fbd9b53e25d219ddaed29755a98988c3db7fac49fc7f488b639",
-   "styles.css": "50e4c4adf92824d513355df893116997f56d9042d973b1a5b1073d27f135b6fe",
+   "styles.css": [
+    "50e4c4adf92824d513355df893116997f56d9042d973b1a5b1073d27f135b6fe",
+    "7ce42d9f758fc70acff63a66f09b58845c66246e9821cb1e2661631c9383da53"
+   ],
    "teach/index.html": [
     "e8fed6bd0ce5a33271ab84823ddb582fa82dad15601a0bead21da1fdb9b2851d",
     "ef8d4e9bf9d8339147c32016cc21f89dfcc658b09350b2abb079ce1f613082e7"
