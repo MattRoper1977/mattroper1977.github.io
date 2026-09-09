@@ -8,7 +8,7 @@ MORE=['/main/','/','/stats/','/members/','/main/#about','/privacy/']
 ACCOUNT={'/members/','/account/'}
 bad=0
 for v in ('adult','pupil','play'):
-    h=variant('assets/chrome/header.html',v); n=variant('assets/chrome/nav-row.html',v)
+    h=variant('tools/chrome/header.html',v); n=variant('tools/chrome/nav-row.html',v)
     comp=h.replace('<!-- MBM-CHROME-NAV-ROW -->',n)
     print(f'== {v} ==  composed {len(comp)} B')
     ch=[('mbm-site-header class',bool(re.search(r'<header\b[^>]*\bmbm-site-header\b',comp))),

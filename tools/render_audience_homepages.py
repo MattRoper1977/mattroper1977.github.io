@@ -95,12 +95,12 @@ def json_ld(name: str, description: str, route: str) -> str:
     return json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 
 
-# SW2 T3. The token <link> comes from assets/chrome/header.html, the same file
+# SW2 T3. The token <link> comes from tools/chrome/header.html, the same file
 # tools/stamp_chrome.py stamps the hand-written pages from, so the generated
 # pages and the stamped ones cannot drift apart: there is one source and two
 # consumers. Stamping this generator's OUTPUT by hand is what made index.html
 # stale and red -- generated pages change through their generator.
-CHROME_HEADER = ROOT / "assets" / "chrome" / "header.html"
+CHROME_HEADER = ROOT / "tools" / "chrome" / "header.html"
 
 
 def chrome_fragment(name: str) -> str:

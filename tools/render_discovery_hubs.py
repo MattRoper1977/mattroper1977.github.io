@@ -125,11 +125,11 @@ def head_lines(*, title: str, description: str, path: str) -> list[str]:
 
 
 # SW2 T3. The token <link> and the Menu button come from
-# assets/chrome/header.html -- the same file tools/stamp_chrome.py stamps the
+# tools/chrome/header.html -- the same file tools/stamp_chrome.py stamps the
 # hand-written pages from, and the same one tools/render_audience_homepages.py
 # reads. One source, three consumers, so they cannot drift. Hand-stamping a
 # generator's OUTPUT is what made teach/ and education-hub/ stale and red.
-CHROME_HEADER = ROOT / "assets" / "chrome" / "header.html"
+CHROME_HEADER = ROOT / "tools" / "chrome" / "header.html"
 
 
 def chrome_fragment(name: str) -> str:

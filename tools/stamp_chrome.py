@@ -45,7 +45,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-CHROME = ROOT / "assets" / "chrome"
+CHROME = ROOT / "tools" / "chrome"
 RECORD = ROOT / "data" / "adult-surfaces.json"
 
 # The site commit the templates were reviewed at. Moving the templates means
@@ -77,7 +77,7 @@ VERIFIER_PAGES = (
 #    survived being stamped and the other three did not)
 #
 # Those five pages are stamped by their GENERATOR now, reading the same
-# assets/chrome/header.html fragments this tool reads. One source, three
+# tools/chrome/header.html fragments this tool reads. One source, three
 # consumers. The regions still appear here in --check, and must, because that is
 # what proves the three agree; what changed is who writes them.
 GENERATED = ("for/", "asdan/", "uas/")
