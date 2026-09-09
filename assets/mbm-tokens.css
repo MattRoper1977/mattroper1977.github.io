@@ -7,23 +7,54 @@
  *
  * Scope is :root and [data-theme="dark"], plus the two preference variants the
  * order asks for. No selectors, no components: this file only names colours.
+ *
+ * ---------------------------------------------------------------------------
+ * THIS FILE MAY NOT DEFINE A NAME THE ESTATE ALREADY DEFINES.
+ *
+ * The stamped <link> is the last stylesheet in <head>, so any name redefined
+ * here wins the cascade and repaints every consumer of it. Five names did:
+ *
+ *   --mbm-ink     assets/mbm-platform.css  #1B2140   (1 consumer)
+ *   --mbm-line    assets/mbm-platform.css  #E3DAC5   (4 consumers)
+ *   --mbm-muted   assets/mbm-platform.css  #4A5170
+ *   --mbm-focus   assets/mbm-platform.css and assets/brand/brand-tokens.css,
+ *                 which disagree with each other: a box-shadow list and an
+ *                 outline shorthand under one name
+ *   --mbm-font    assets/brand/brand-tokens.css, identical value
+ *
+ * Measured, not argued: linking this file repainted /main/'s .mbm-audience ink
+ * from #1B2140 to #161D3D and turned its warm #E3DAC5 divider into a faint
+ * navy hairline, and did the same to /games/ section.hero. That is a design
+ * change, and T3 is chrome parity only, so the five are DEFERRED: the estate's
+ * existing definitions stand as the single definition of each, and if the
+ * redesign wants different values they change at the definition, in the part
+ * that owns the repaint and can show it.
+ *
+ * --mbm-primary carries the ink role for this vocabulary, and does not collide.
+ * A focus token is deliberately absent: --mbm-focus has two conflicting
+ * meanings in the estate today, and settling that belongs to Part A with the
+ * rest of the focus work.
+ *
+ * Two gates hold this: tools/sw2/check_token_collisions.py (no name defined
+ * twice) and tools/sw2/check_tokens_inert.cjs (linking this file changes no
+ * computed style on any stamped page).
+ * ---------------------------------------------------------------------------
  */
 :root{
   /* --- given by the order --- */
   --mbm-bg:#f6f1e7;
-  --mbm-ink:#161d3d;              /* equals --navy, assets/catalogue/hub.css :root */
-  --mbm-primary:#161d3d;
+  --mbm-primary:#161d3d;          /* equals --navy, assets/catalogue/hub.css :root */
   --mbm-accent:#1f6b4a;
   --mbm-card:#ffffff;
   --mbm-card-radius:12px;
   --mbm-card-shadow:0 2px 10px rgba(22,29,61,.08);  /* the shadow already on .mf-feature */
-  --mbm-focus:3px solid var(--mbm-accent);
 
   /* --- supporting, read from assets/catalogue/hub.css :root --- */
-  --mbm-muted:#454C6B;            /* --mut */
-  --mbm-line:#161D3D22;           /* --line */
-  --mbm-font:Poppins,"Segoe UI",system-ui,sans-serif;  /* --font */
   --mbm-tap:44px;                 /* --tap */
+
+  /* --- motion, so the reduced-motion variant below has a pair to override --- */
+  --mbm-motion-duration:.24s;
+  --mbm-motion-ease:cubic-bezier(.2,.75,.25,1);   /* --mbm-ease, assets/mbm-platform.css */
 
   /* --- pathway chips: assets/catalogue/hub.css :root, lines 8-9 ---
      The decks carry no pathway colour (BUILD, GROW and LAUNCH share one
@@ -61,20 +92,16 @@
 /* --- dark: the Play shelf's own set, domain-split/play/play.css :root --- */
 [data-theme="dark"]{
   --mbm-bg:#081422;               /* --bg */
-  --mbm-ink:#f3f7fa;              /* --text */
-  --mbm-primary:#f3f7fa;
+  --mbm-primary:#f3f7fa;          /* --text */
   --mbm-accent:#37c46f;           /* --green */
   --mbm-card:#112237;             /* --surface */
   --mbm-card-raised:#182f46;      /* --raised */
-  --mbm-muted:#b4c5d4;            /* --muted */
-  --mbm-line:#30475c;             /* --line */
   --mbm-card-shadow:0 2px 10px rgba(0,0,0,.5);
-  --mbm-focus:3px solid var(--mbm-accent);
 }
 
 @media (prefers-reduced-motion:reduce){
   :root{--mbm-motion-duration:0s;--mbm-motion-ease:linear}
 }
 @media (prefers-contrast:more){
-  :root{--mbm-ink:#0B1020;--mbm-muted:#2A3050;--mbm-card:#ffffff;--mbm-focus:3px solid #0B1020}
+  :root{--mbm-primary:#0B1020;--mbm-card:#ffffff}
 }

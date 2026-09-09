@@ -90,3 +90,62 @@ untouched.
   pages, and it names six generated `for/` pages that change through their
   generator. The set used is the record ∪ the verifier's key pages ∪ the
   chooser, minus generated.
+
+---
+
+## AUTO-DECISION: the token file may not redefine an estate name
+
+Logged under Q3 (rule the order does not settle, decide and continue).
+
+**What was found.** `assets/mbm-tokens.css` is stamped as the last stylesheet in
+`<head>`, so any custom property it names wins the cascade estate-wide. Five of
+its names were already owned elsewhere:
+
+| name | estate owner | estate value | mine | live consumers |
+|---|---|---|---|---|
+| `--mbm-ink` | `assets/mbm-platform.css` | `#1B2140` | `#161d3d` | 1 |
+| `--mbm-line` | `assets/mbm-platform.css` | `#E3DAC5` | `#161D3D22` | 4 |
+| `--mbm-muted` | `assets/mbm-platform.css` | `#4A5170` | `#454C6B` | 0 |
+| `--mbm-focus` | `mbm-platform.css` *and* `brand/brand-tokens.css`, disagreeing | box-shadow / outline | outline | 1 (dead CSS) |
+| `--mbm-font` | `assets/brand/brand-tokens.css` | identical | identical | 1 |
+
+**It was not theoretical.** Diffing every element's computed style with and
+without the file, across all twelve stamped pages: `/main/`'s `.mbm-audience`
+ink moved `#1B2140` → `#161D3D`, and its warm `#E3DAC5` divider became a faint
+navy hairline — as did `.mbm-audience-card`'s top and right borders and
+`/games/` `section.hero`'s bottom border. Thirteen differences in all. T3 is
+chrome parity only (R-T3.6), so shipping them would have been a design change
+made in the wrong part, and an invisible one: no gate then in place looked at
+rendering.
+
+**Decided.** The five are DEFERRED, not renamed. The estate's existing
+definitions stand as the single definition of each (§0.6, one name per thing);
+`--mbm-primary` already carries the ink role without colliding. If the redesign
+wants different values they change at the definition, in the part that owns the
+repaint and can show it. A focus token is deliberately absent: `--mbm-focus`
+has two conflicting meanings in the estate today, and settling that belongs
+with Part A's focus work.
+
+**Held by two new gates**, both red-proved:
+`tools/sw2/check_token_collisions.py` (no name defined twice; `--self-test`
+puts `--mbm-line` back and it fails) and `tools/sw2/check_tokens_inert.cjs`
+(3,658 elements across 12 pages, 17 properties each, zero computed-style
+differences; `--break` reintroduces the collision at runtime and it reports
+exactly the four consumers).
+
+**Two things for Matt, neither blocking.**
+
+1. The estate disagrees with itself on three names, and this predates SW2:
+   `--mbm-focus` (`brand-tokens.css` outline vs `mbm-platform.css` box-shadow —
+   putting the platform's value into `outline:` is invalid, so that rule would
+   silently do nothing), `--mbm-line`, and `--mbm-mint-deep` (`#3E7D5C` vs
+   `#2F6B4D`). The collision gate reports these every run without failing on
+   them. `brand-tokens.css` is loaded by none of the twelve pages and
+   `.mbm-btn`/`a.mbm-link` appear in no markup anywhere in the estate, so the
+   focus rule is currently dead CSS — worth deleting or wiring up in Part A,
+   not before.
+2. `games/index.html` references its icon as `https://madebymatt.uk/favicon.svg`
+   — absolute, where every other page uses a root-relative path. It is the
+   estate's own host so it is not a third-party request, and headless Chromium
+   never fetches a favicon so the request census cannot see it; it is reported
+   separately by `check_token_census.cjs` so it stays visible.
