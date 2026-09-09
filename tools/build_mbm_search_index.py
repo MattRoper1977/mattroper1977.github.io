@@ -307,6 +307,13 @@ def build_lessons_and_resources(records, rules, reclassify: set[str], dropped: s
                 action = f"Open hub: {record['title']}"
             else:
                 action = f"View resource: {record['title']}"
+            # UX2 B4: a Teaching_Packs hub is a teacher surface, not a pupil landing page —
+            # its downloads are the editable decks and booklets, the education build declares
+            # it adult (education_support.LESSON_ADULT / the teaching-pack download
+            # registrations) and check_lesson_discovery.py gives a refreshed route no pupil
+            # opt-in the source never declared. Derived from the route, never listed.
+            if "/Teaching_Packs/" in lessons_route(record):
+                audience, safe = ["teachers", "schools-semh"], False
 
         entry = {
             "id": f"{category}-{record['id']}",

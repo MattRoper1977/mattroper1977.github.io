@@ -115,24 +115,32 @@ async function educationOnly(page, requests, start) {
       const context = await mappedContext(browser, width), page = await context.newPage();
       page.setDefaultTimeout(15000); const requests = watch(page);
       for (const home of ['/', '/main/']) await check(`${width}-${home === '/' ? 'home' : 'main'}-audiences-primary-and-play`, async () => {
+        // UX2 B2: the homepage is Appendix A §HOME. Primary lessons and Play are
+        // menu rows, Play is also the footer's last link, and the audience routes
+        // are the "Here for someone else?" rows (#audiences) read from the record.
         const start = requests.length; await goto(page, home);
-        const nav = page.getByRole('navigation', { name: 'Explore Made by Matt', exact: true });
-        for (const [name, href] of [['Primary', '/Lessons/primary/'], ['Families & organisations', '/#audiences'], ['Made by Matt Play', canonicalPlay + '/']]) {
-          const link = nav.getByRole('link', { name, exact: true }); assert.equal(await link.getAttribute('href'), href); await target(link);
+        assert.equal(await page.locator('.mbm-explore-nav').count(), 0, 'No explore bar on the homepage');
+        const menu = page.locator('.mbm-unified-menu > summary'); await menu.click();
+        for (const [name, href] of [['Primary lessons', '/Lessons/primary/'], ['Made by Matt Play ↗', canonicalPlay + '/']]) {
+          const link = page.locator('#mbm-navigation-panel').getByRole('link', { name, exact: true }); assert.equal(await link.getAttribute('href'), href); await target(link);
         }
+        await page.keyboard.press('Escape');
+        const footerPlay = page.locator('footer').getByRole('link', { name: 'Made by Matt Play ↗', exact: true });
+        assert.equal(await footerPlay.getAttribute('href'), canonicalPlay + '/'); await target(footerPlay);
         await noOverflow(page);
         const prefix = `${width}-${home === '/' ? 'home' : 'main'}`;
         const entry = await shot(page, prefix + '-entrances');
         await page.locator('#audiences').scrollIntoViewIfNeeded();
-        assert.equal(await page.locator('#audiences .mbm-audience-card').count(), 6);
+        const record = JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/audience-homepages.json'), 'utf8')).audiences;
+        const expectedRows = Object.values(record).filter(a => a.route !== record.teachers.route && a.route !== record.pupils.route).map(a => [a.route, a.label]);
+        expectedRows.push(['/for/governors-trustees/', 'Governors & trustees']);
+        const rows = await page.locator('#audiences .audience-row').evaluateAll(nodes => nodes.map(a => [a.getAttribute('href'), a.textContent.replace(/\s*→\s*$/, '').trim()]));
+        assert.deepEqual(rows, expectedRows, 'One row per audience route except teachers and pupils, label and order from the record');
         for (const route of audienceRoutes) await target(page.locator(`#audiences a[href="${route}"]`));
         const audiences = await shot(page, prefix + '-audiences', page.locator('#audiences'));
         const details = await educationOnly(page, requests, start);
-        // Inspect each assembled home before the /#audiences shortcut leaves
-        // /main/. Then exercise the actual shared-navigation destination.
-        await nav.getByRole('link', { name: 'Families & organisations', exact: true }).click();
-        await page.waitForURL(url('/#audiences'));
-        assert(await page.locator('#audiences').isVisible());
+        await page.goto(url('/#audiences'));
+        assert(await page.locator('#audiences').isVisible(), 'The /#audiences anchor other pages link still resolves');
         return { inspectedRoute: home, audienceShortcut: page.url(), audiences: audienceRoutes, primary: '/Lessons/primary/', ...details, screenshots: [entry, audiences] };
       }, page);
       await check(`${width}-parents-education-only`, async () => {
@@ -159,13 +167,21 @@ async function educationOnly(page, requests, start) {
         return evidence;
       }, page);
       await check(`${width}-teacher-and-pupil-explore-links`, async () => {
+        // UX2 B3: the teacher and pupil pages are Appendix A — Primary lessons and Play are
+        // menu rows (the pupil subset keeps both), Play is the footer's last link, and the
+        // audience routes are the homepage's "Here for someone else?" rows.
         for (const route of ['/for/teachers/', '/for/pupils/']) {
           await goto(page, route);
-          const nav = page.getByRole('navigation', { name: 'Explore Made by Matt', exact: true });
-          await target(nav.getByRole('link', { name: 'Primary', exact: true }));
-          await target(nav.getByRole('link', { name: 'Families & organisations', exact: true }));
-          const playLink = nav.getByRole('link', { name: 'Made by Matt Play', exact: true });
+          assert.equal(await page.locator('.mbm-explore-nav').count(), 0, 'No explore bar on ' + route);
+          await page.locator('.mbm-unified-menu > summary').click();
+          const panel = page.locator('#mbm-navigation-panel');
+          await target(panel.getByRole('link', { name: 'Primary lessons', exact: true }));
+          const menuPlay = panel.getByRole('link', { name: 'Made by Matt Play ↗', exact: true });
+          assert.equal(await menuPlay.getAttribute('href'), canonicalPlay + '/'); await target(menuPlay);
+          await page.keyboard.press('Escape');
+          const playLink = page.locator('footer').getByRole('link', { name: 'Made by Matt Play ↗', exact: true });
           assert.equal(await playLink.getAttribute('href'), canonicalPlay + '/'); await target(playLink); await noOverflow(page);
+          assert.equal((await page.request.get(url('/#audiences'))).status(), 200);
         }
         return { routes: ['/for/teachers/', '/for/pupils/'], visibleEntrances: ['Primary', 'Families & organisations', 'Made by Matt Play'] };
       }, page);
@@ -186,7 +202,7 @@ async function educationOnly(page, requests, start) {
       }, page);
       await check(`${width}-canonical-play-roundtrip`, async () => {
         await goto(page, '/');
-        const link = page.getByRole('navigation', {name:'Explore Made by Matt',exact:true}).getByRole('link', {name:'Made by Matt Play',exact:true});
+        const link = page.locator('footer').getByRole('link', {name:'Made by Matt Play ↗',exact:true});
         await target(link);
         await Promise.all([page.waitForURL(canonicalPlay + '/'), link.click()]); await settle(page);
         assert.equal(page.url(), canonicalPlay + '/');

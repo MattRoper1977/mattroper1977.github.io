@@ -105,7 +105,12 @@ def registry_errors(output):
     # Science lessons carry their catalogue titles: 894 -> 926 retained rows,
     # 0 removed. Proved on the fdbf0ee6 build; the a91780fc build no longer
     # matches, which is why this moves with the Lessons pin lines.
-    baseline_sha = 'a90a62c56db7d4bb0cfac0af5888ac673446b5a029b1c19fd885ff135c6cfe6e'
+    # Re-frozen 8 September (UX2 B4): the catalogue mirror moved 737 → 848 rows and the
+    # search index 821 → 932 entries; the retained registry keeps its 926 rows and routes
+    # (0 added, 0 removed) while 32 classic-lesson records gain their new search-index
+    # source_ids beside the old ones. Proved by diffing registry_partition() output between
+    # the B3 and B4 builds (reports/B4_registry_refreeze.json in the lane report).
+    baseline_sha = 'd2439c6161bb2715ab7b04a3880e036189e9726f8f30d55e63b5816abd40f5bf'
     additions_path = HERE/'science-download-usage-additions.json'
     if sha256(additions_path.read_bytes()).hexdigest() != '266199e1f6d355956b23df058b3d867b50edc2f155545b0b43fb2d6f8177df30':
         return ['Unreviewed Science download registration metadata']

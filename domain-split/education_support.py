@@ -14,7 +14,7 @@ import shutil
 HERE = Path(__file__).resolve().parent
 KOFI = 'https://ko-fi.com/madebymattuk'
 SITE_ADULT = {
-    '/', '/main/', '/for/governors-trustees/', '/tools/', '/teach/',
+    '/', '/main/', '/for/governors-trustees/', '/tools/', '/teach/', '/commission/',
     '/education-hub/', '/account/', '/members/', '/mailing-list/', '/privacy/',
     '/stats/', '/owner/stats/', '/thanks/', '/artsaward/',
     '/asdan/', '/asdan/app.html', '/asdan/moderation-lab/', '/uas/',

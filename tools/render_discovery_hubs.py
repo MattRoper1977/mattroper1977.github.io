@@ -271,7 +271,7 @@ def resolve(entries: dict, entry_id: str) -> dict:
 # /teach/
 # --------------------------------------------------------------------------
 
-TEACH_TITLE = "Teach Hub · Made by Matt"
+TEACH_TITLE = "Teacher workspace · Made by Matt"
 TEACH_DESCRIPTION = (
     "Search lessons, pathways, registers, evidence tools, classroom utilities "
     "and creative apps from one teacher-first workspace."
@@ -443,12 +443,13 @@ def teach_body(index: dict) -> str:
         # hero
         '<section class="mbm-hub-hero" aria-labelledby="page-title">',
         '<div class="mbm-hub-wrap mbm-hub-hero-grid"><div>',
-        '<p class="mbm-hub-kicker">The Teach Hub</p>',
-        '<h1 id="page-title">Your offline-first toolkit and resource library.</h1>',
+        '<p class="mbm-hub-kicker">Made by Matt · Learning</p>',
+        '<h1 id="page-title">Teacher workspace</h1>',
+        '<p class="mbm-hub-lead">Your offline-first toolkit and resource library.</p>',
         f'<p class="mbm-hub-lead">{TEACH_DESCRIPTION}</p>',
         '<div class="mbm-hub-search">',
         search_form(
-            action="/teach/", field_id="teach-search", label="Search the Teach Hub",
+            action="/teach/", field_id="teach-search", label="Search the teacher workspace",
             placeholder="Search lessons, schemes, registers, tools or resources…",
         ),
         "</div>",
@@ -610,7 +611,7 @@ PUPIL_ADJACENT = [
 ]
 
 EDUCATION_NOJS = [
-    ("/teach/", "Direct route", "Teach Hub",
+    ("/teach/", "Direct route", "Teacher workspace",
      "Search Made by Matt teaching material by task."),
     ("/resources/", "Direct route", "Resource Catalogue",
      "Search the full internal catalogue."),

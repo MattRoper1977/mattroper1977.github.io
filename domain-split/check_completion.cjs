@@ -55,38 +55,57 @@ fs.mkdirSync(output, { recursive: true });
       const page = await browser.newPage({viewport: {width, height: 900}, reducedMotion: 'reduce'});
       page.on('pageerror', error => report.pageErrors.push(error.message));
       await page.goto(origin + '/');
-      await page.locator('#custom-resources').waitFor();
-      assert.match(await page.locator('#custom-resources').innerText(), /£5[\s\S]*£10/);
       assert.match(await page.locator('#about').innerText(), /Made by a teacher, for real classrooms/);
       // HC3 §8: the home page is a pupil entry, so the injected support footer is
-      // gone from it; the £5/£10 commissioning copy above is Matt's own and held.
+      // gone from it. UX2 B2: the £5–£50 commissioning block moved verbatim to
+      // /commission/, linked from the maker panel; no money copy stays on /.
       assert.equal(await page.locator('[data-mbm-support-footer]').count(), 0);
-      const cover = page.locator('.learning-shortcuts a[href*="David_Cover_Autumn1_W3-W7"]');
-      assert.equal(await cover.innerText(), 'Cover teaching packs');
+      assert.equal(await page.locator('#custom-resources').count(), 0, 'The commission block is no longer on the homepage');
+      assert(!/£/.test(await page.locator('body').innerText()), 'No money copy on the homepage');
+      const commissionLink = page.locator('#about a[href="/commission/"]');
+      assert.equal(await commissionLink.innerText(), 'Commission a resource');
       assert(await page.locator('[data-mbm-navigation="education"] img').first().evaluate(e => e.complete && e.naturalWidth > 0));
       for (const theme of ['cream', 'dark']) {
         await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Homepage overflow');
+      }
+      assert.equal((await page.goto(origin + '/commission/')).status(), 200);
+      await page.locator('#custom-resources').waitFor();
+      assert.match(await page.locator('#custom-resources').innerText(), /£5[\s\S]*£10/);
+      assert.equal(await page.locator('h1').innerText(), 'Commission a resource');
+      for (const theme of ['cream', 'dark']) {
+        await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
+        assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Commission page overflow');
         await page.locator('#custom-resources').screenshot({path: path.join(output, `requests-${width}-${theme}.png`)});
       }
+      // The cover teaching packs stay reachable within two taps of /: the Resources
+      // place on the homepage, then the pack link on /resources/ (a unit card after B4).
+      assert.equal((await page.goto(origin + '/resources/')).status(), 200);
+      const cover = page.locator('a[href*="David_Cover_Autumn1_W3-W7"]').first();
+      await cover.waitFor();
+      assert((await page.request.get(new URL(await cover.getAttribute('href'), page.url()).href)).ok(), 'Cover teaching packs destination resolves');
       assert.equal((await page.goto(origin + '/for/pupils/')).status(), 200);
       assert.equal(await page.locator('[data-mbm-support-footer],a[href*="ko-fi.com"]').count(), 0);
       assert.equal((await page.goto(origin + '/Lessons/Science_Teesside/Build/SCI_B_W3_Backbones.html')).status(), 200);
       assert.equal(await page.locator('[data-mbm-support-footer],a[href*="ko-fi.com"]').count(), 0);
+      // UX2 (Lessons Part A): the hub is subject cards; its "BUILD Science" shortcut is a retired
+      // href in Lessons' own ledger (the Science card's BUILD chip and "Browse Science →" replace
+      // it) and the Science shelf itself is a catalogue row on the Science subject page. The
+      // shelf's teaching-version assertions below are unchanged; only the entry is re-pointed.
       await page.goto(origin + '/Lessons/');
-      // UX2 (Lessons #437): the hub's browse view derives "<M> resources · <S> subjects" and
-      // shows one card per subject. The BUILD Science shortcut and the pathway select are
-      // retired; the subject page's pathway control and the Science shelf's own ?pathway=
-      // query replace them, and the shelf keeps its route and its BUILD collection.
-      await page.waitForFunction(() => /\d+ resources · \d+ subjects/.test(document.querySelector('#count')?.textContent || ''));
-      const scienceCard = page.locator('#scards .scard a.browse[href="subject.html?subject=science"]');
-      assert.equal(await scienceCard.count(), 1, 'The hub needs one Science subject card');
-      const scienceURL = new URL(await scienceCard.getAttribute('href'), page.url());
-      assert.equal((await page.request.get(scienceURL.href)).status(), 200, 'The Science subject page is unavailable');
-      const buildURL = new URL('/Lessons/Science_Teesside/index.html?pathway=BUILD', origin);
-      assert.equal((await page.request.get(buildURL.href)).status(), 200, 'The Science shelf lost its route');
+      await page.waitForFunction(() => document.querySelectorAll('.scard[data-card]').length > 0);
+      const scienceCard = page.locator('.scard[data-card="science"]');
+      assert.equal(await scienceCard.count(), 1);
+      assert.equal(await scienceCard.locator('.chips .tier').filter({hasText: /^BUILD$/}).count(), 1, 'BUILD chip on the Science card');
+      assert.equal(new URL(await scienceCard.locator('a.browse').getAttribute('href'), page.url()).searchParams.get('subject'), 'science');
       assert.equal(await page.locator('nav,h1,h2,h3').filter({hasText: /David[’']s/}).count(), 0);
-      await page.locator('#subjects').screenshot({path: path.join(output, `lesson-shortcuts-${width}.png`)});
+      await scienceCard.screenshot({path: path.join(output, `lesson-shortcuts-${width}.png`)});
+      await page.goto(origin + '/Lessons/subject.html?subject=science&pathway=BUILD');
+      await page.waitForFunction(() => document.querySelectorAll('#suites a[href], #rows a[href]').length > 0);
+      const shelf = page.locator('#suites a[href*="Science_Teesside/index.html"]');
+      assert.equal(await shelf.count(), 1, 'The Science shelf is a catalogue row on the Science page');
+      const buildURL = new URL('/Lessons/Science_Teesside/index.html?pathway=BUILD', page.url());
+      assert.equal(buildURL.searchParams.has('style'), false);
       const science = JSON.parse(fs.readFileSync(path.join(lessonsRoot, 'assets/catalogue/science-shelf.json'), 'utf8')).lessons;
       const expectedBuild = science.filter(r => r.pathway === 'BUILD').map(r => r.path).sort();
       await page.goto(buildURL.href);
@@ -98,10 +117,11 @@ fs.mkdirSync(output, { recursive: true });
       const currentBuild = science.filter(r => r.pathway === 'BUILD' && r.term === 'Aut1' && r.style === 'current').map(r => r.path);
       assert.equal(currentBuild.length, 5);
       assert.equal(await page.locator('[data-lesson-path]:visible a[href^="Teaching_Packs/#build-week-"]').count(), 5);
+      // UX2 (Lessons Part A): the hub's filtered view answers ?subject=&pathway= with
+      // "<n> of <m> resources" and article.card rows; the pathway select is gone.
       await page.goto(origin + '/Lessons/?subject=Science&pathway=BUILD&year=all');
-      // The old subject/pathway query still resolves on the UX2 hub, as flat results.
-      await page.waitForFunction(() => /\d+ of \d+ resources/.test(document.querySelector('#count')?.textContent || '') && document.querySelectorAll('#cards a.go').length > 0);
-      const catalogueLinks = await page.locator('#cards a.go').evaluateAll(items => items.map(a => new URL(a.href).pathname));
+      await page.waitForFunction(() => /\d+ of \d+ resources/.test(document.querySelector('#count')?.textContent || ''));
+      const catalogueLinks = await page.locator('#cards article.card h3 a[href]').evaluateAll(items => items.map(a => new URL(a.href).pathname));
       for (const route of currentBuild) assert(catalogueLinks.includes('/Lessons/' + route), 'Current BUILD lesson absent from subject/pathway filters: ' + route);
       assert.equal(catalogueLinks.length, new Set(catalogueLinks).size, 'Duplicate catalogue entries');
       report.cases.push(`Public names, BUILD shortcut and subject/pathway coverage at ${width}px`);

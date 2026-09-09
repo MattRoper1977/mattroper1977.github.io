@@ -18,10 +18,20 @@ const report = {schema:1, origin, startedAt:new Date().toISOString(), cases:[], 
 fs.mkdirSync(output, {recursive:true});
 
 const urlFor = route => new URL(route, origin).href;
-function sourceDestinations(audience) {
-  const html = fs.readFileSync(path.join(source, audience.route, 'index.html'), 'utf8');
+// UX2 B1: the source page's chrome (header/footer) is replaced by the shared
+// Appendix A menu, which carries no deep links. Body destinations must survive
+// on the page; a chrome destination the menu no longer offers must be a recorded
+// relocation (domain-split/ux2/menu-relocations.json) — never silently lost.
+const relocations = JSON.parse(fs.readFileSync(path.join(__dirname, 'ux2/menu-relocations.json'), 'utf8')).relocated;
+function hrefsIn(html) {
   return [...new Set([...html.matchAll(/<a\b[^>]*\bhref="([^"]+)"/g)].map(x => x[1].replaceAll('&amp;', '&')))]
     .filter(x => x && !x.startsWith('#')).map(x => x === '/games/' ? play+'/' : x === '/apexkick/' ? play+'/' : x);
+}
+function sourceDestinations(audience) {
+  const html = fs.readFileSync(path.join(source, audience.route, 'index.html'), 'utf8');
+  const main = html.match(/<main\b[\s\S]*?<\/main>/);
+  assert(main, 'Source audience page has one main region: ' + audience.route);
+  return { body: hrefsIn(main[0]), chrome: hrefsIn(html.replace(main[0], '')) };
 }
 async function shot(page, name, fullPage=false) {
   const file = name+'.png';
@@ -59,7 +69,9 @@ async function check(name, run) {
           }
           const links=await page.locator('a[href]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('href')));
           const expected=sourceDestinations(audience);
-          assert.deepEqual(expected.filter(href=>!links.includes(href)),[], 'Original audience destination lost');
+          assert.deepEqual(expected.body.filter(href=>!links.includes(href)),[], 'Original audience destination lost');
+          const droppedChrome=expected.chrome.filter(href=>!links.includes(href));
+          assert.deepEqual(droppedChrome.filter(href=>!(href in relocations)),[], 'A chrome destination the menu no longer carries is not a recorded relocation');
           for(const href of links) {
             const u=new URL(href,page.url());
             if(u.origin===origin)destinations.add(u.pathname+u.search);
@@ -87,7 +99,7 @@ async function check(name, run) {
             await picture.evaluate(image=>image.decode());
             assert(await picture.evaluate(image=>image.naturalWidth>0),'Audience image must load when selected into view');
           }
-          return {route:audience.route,preservedDestinations:expected.length,screenshot:entryShot,fullPage:await shot(page,`${width}-${key}-full`,true)};
+          return {route:audience.route,preservedDestinations:expected.body.length,relocatedChrome:droppedChrome,screenshot:entryShot,fullPage:await shot(page,`${width}-${key}-full`,true)};
         });
       }
       await check(`${width}-family-disclosures-and-search`,async()=>{
