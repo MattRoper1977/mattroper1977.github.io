@@ -46,6 +46,11 @@
   --mbm-primary:#161d3d;          /* equals --navy, assets/catalogue/hub.css :root */
   --mbm-accent:#1f6b4a;
   --mbm-card:#ffffff;
+  /* The light palette raises by SHADOW, not by fill: --mbm-bg is #f6f1e7 and a
+     card on it is already white, so there is no lighter fill to raise to. The
+     dark palette below raises by fill because its card is #112237 and can. The
+     name exists in both so a component can use it without branching. */
+  --mbm-card-raised:#ffffff;
   --mbm-card-radius:12px;
   --mbm-card-shadow:0 2px 10px rgba(22,29,61,.08);  /* the shadow already on .mf-feature */
 

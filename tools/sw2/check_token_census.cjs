@@ -153,6 +153,19 @@ function arg(name, fallback) {
 
   await browser.close();
 
+  // A token that resolves EMPTY everywhere is consistent, and worthless: the
+  // one-value check below would pass it. --mbm-card-raised was exactly that --
+  // declared only inside [data-theme="dark"], so it had no light value at all,
+  // and the census called twelve empty strings a pass. Emptiness is checked
+  // first, and separately.
+  for (const token of TOKENS) {
+    const blank = rows.filter((r) => !r.measured[token]);
+    if (blank.length) {
+      problems.push(`${token}: resolves EMPTY on ${blank.length}/${rows.length} page types `
+        + `(${blank.slice(0, 3).map((r) => r.file).join(', ')}${blank.length > 3 ? ' …' : ''})`);
+    }
+  }
+
   // Every token must resolve to one value across every page.
   for (const token of TOKENS) {
     const byValue = new Map();
