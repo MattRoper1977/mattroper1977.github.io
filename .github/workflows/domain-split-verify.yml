@@ -25,11 +25,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          # Pinned 2026-09-09: the education navigation check re-pointed at the
-          # Part B surfaces (Lessons #449) and its reviewed digest re-pinned
-          # (Lessons #450); lesson routes and the paired catalogue contract
-          # are unchanged.
-          ref: 6ae34c37d69fbd0a4c008237abc42bcd34ca377d
+          # Pinned 2026-09-09: Lessons main after Part B landed there - the planning
+          # link (#445), the caller pin to Site 92abc460 (#451) and the two
+          # reviewed digests that had drifted (#452). Held EQUAL to Lessons main
+          # so the site-triggered and Lessons-triggered publishers build the same
+          # bytes; when they disagree, the origin serves whichever published last.
+          ref: 2c33266b01b273ad9e70a18e7f4769787c6ade1c
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
