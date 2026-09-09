@@ -151,9 +151,51 @@ same 30. Counted, not assumed.
   requests hours earlier, so "red on main too" was not available as an answer.
   The registry re-cut is the fix.
 
+### T5 landing — where each repository stands
+
+| repo | branch | PR | state |
+|---|---|---|---|
+| Site | `claude/sw2-t1-tokens` | #337 | complete; green but for three checks proved not its own |
+| Apps | `claude/sw2-t5-apps` | #73 | complete; `[PASS] apps cross-estate static contract` |
+| Lessons | `claude/sw2-t5-lessons` | — | **prepared, BLOCKED** (below) |
+| Games pin-bump | — | — | not started; follows the Site merge |
+
+**Lessons is blocked, and the blocker is not this work's.** Changing the hub and
+subject page moves their reviewed `CATALOGUE_PINS`, so the cross-estate gate
+reds. The sanctioned fix is `tools/catalogue/pin_catalogue_contract.py`, which
+refuses while the two `verify_cross_estate_unification.py` copies differ.
+
+They differ **structurally, not by staleness**, and a single file text cannot
+satisfy both consumers today:
+
+| | |
+|---|---|
+| Lessons copy | `PUBLICATION_CALLER_SHA256 = b6d0358f` (its own caller) **plus** `_BY_KIND {apps: c4205191}` |
+| Apps copy | `PUBLICATION_CALLER_SHA256 = 732591dd`, **no** `_BY_KIND` at all |
+| `apps@924ab986` caller | `c4205191` — the Site's `domain-split-verify.yml` pin |
+| `apps@3ad0a7df` caller | `da9809f0` — the Site's `education-publication.yml` pin |
+| `apps@main` caller | `732591dd` — what Apps CI validates |
+
+Apps CI checks Apps main's caller; the Site's control checks Apps at `924ab986`;
+those are different files. Reconciling either direction reds one repository —
+measured both ways, not argued. Apps passes with its own copy; it fails with the
+Lessons copy.
+
+A re-pin *was* obtained by making the copies identical for one command and then
+undoing it. That satisfies the guard rather than the condition, so it was backed
+out rather than shipped.
+
+**Two ways out, both Matt's.** Move the Site's Apps pin so one caller serves both
+consumers — §0 permits a documented pin move. Or give the caller pin a
+transition pair, the way the admission registry already does for files — which
+relaxes a gate assertion, so not from here.
+
+Note the Apps PR is *not* blocked by this: its gate copy skips the Lessons
+catalogue pins for `kind == "apps"`, so it passes with the hub changed.
+
 ---
 
-## Open, for Matt — nothing blocking, all measured
+## Open, for Matt — nothing blocking except where marked, all measured
 
 1. **Brand convergence** (`SW2_T3_LEDGER.md`), with the `MARK=converge` swap
    line and two corrections to the ruling's premises that did not survive
@@ -161,14 +203,15 @@ same 30. Counted, not assumed.
 2. **The estate disagrees with itself** on `--mbm-focus`, `--mbm-line` and
    `--mbm-mint-deep` across files. `brand-tokens.css`'s focus rule is dead CSS:
    `.mbm-btn` and `a.mbm-link` appear in no markup anywhere in the estate.
-3. **The two `verify_cross_estate_unification.py` gate copies have drifted** on
-   main — Apps is missing the `subject.html`, `hub.js`, `hub.css` and
-   `calendar-spine.json` entries, 169 diff lines, and last moved at Apps
-   `630e838` while the Lessons copy has moved three times since. The file's own
-   docstring says the two are byte-identical; they are not.
-   **This blocks `tools/catalogue/pin_catalogue_contract.py` for anyone** — it
-   refuses to write while they differ — and re-pinning is a prerequisite for the
-   Lessons side of T5. Reconciling the Apps copy is the sanctioned way out.
+3. **The two `verify_cross_estate_unification.py` gate copies have diverged** —
+   169 diff lines, the file's own docstring still claims byte-identity. This is
+   the T5 Lessons blocker above, and it is worth restating why it is not simply
+   staleness: the divergence encodes a contradiction the estate cannot express
+   in one file, because the Site pins **two different Apps revisions** in two
+   workflows (`924ab986` in `domain-split-verify.yml`, `3ad0a7df` in
+   `education-publication.yml`) and Apps main is a third. Whichever way the
+   copies are reconciled, one repository's CI reds. **This blocks
+   `pin_catalogue_contract.py` for anyone**, not just this work.
 4. **`games/index.html`** references its icon absolutely at
    `https://madebymatt.uk/favicon.svg` where every other page is root-relative.
 5. **The chrome templates are publicly fetchable** at `/assets/chrome/*.html` on
