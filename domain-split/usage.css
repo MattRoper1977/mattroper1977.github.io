@@ -4,3 +4,14 @@
 @media(max-width:760px){.usage-grid{grid-template-columns:1fr}.usage-filter{align-items:stretch;flex-direction:column}.usage-filter select{width:100%}.mbm-usage{border-radius:14px}.usage-actions>*{flex:1 1 12rem}.usage-shell-header nav{font-size:.92rem;gap:.75rem}}
 @media(prefers-color-scheme:dark){.usage-shell{background:#121831}.usage-shell .mbm-usage{--usage-bg:#fffdf6}}
 @media print{.usage-actions,.usage-choice,.usage-shell-header nav{display:none}.mbm-usage{border:0;margin:0;break-inside:avoid}.usage-grid{grid-template-columns:1fr}}
+/* UX2 B2 — the homepage consent bar: two lines, the privacy link, Allow / Keep off. */
+.usage-bar{margin:0;padding:.9rem 1rem;border-top:1px solid #d5dcd9;background:#fffefa;color:#18223b;font:15px/1.5 Inter,ui-sans-serif,system-ui,sans-serif}
+.usage-bar .usage-bar-line{margin:0 0 .35rem}
+.usage-bar .usage-bar-line a{display:inline-flex;align-items:center;min-height:44px;font-weight:700}
+.usage-bar .usage-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0}
+.usage-bar button{min-height:44px;min-width:88px;padding:.5rem 1rem;border:1px solid #161d3d;border-radius:7px;background:#161d3d;color:#fffefa;font:inherit;font-weight:700;cursor:pointer}
+.usage-bar button[data-usage-choice="deny"]{background:#fffefa;color:#161d3d}
+.usage-bar button[disabled]{opacity:.55;cursor:not-allowed}
+.usage-bar button[aria-pressed="true"]{outline:3px solid #f2a24a;outline-offset:2px}
+.usage-bar [data-usage-choice-status]{margin:0;font-size:.9rem;color:#536078}
+.usage-bar [data-usage-choice-status]:empty{display:none}

@@ -200,6 +200,21 @@ def preferences(compact=False):
 <p>Your choice is saved only for this website in this browser. Education and Play have separate choices. Turning statistics off stops future event requests; already anonymous aggregate totals cannot be linked back to you. <a href="/privacy/#shared-usage">Read the statistics privacy explanation</a>.</p></details>'''
 
 
+def consent_bar():
+    """UX2 B2 (Appendix A §HOME consent): two lines, the privacy link, Allow / Keep off.
+
+    Same storage key, events, choice attributes and privacy anchor as preferences();
+    the status line is empty here and painted only by usage-client.js stateText(),
+    so the "not active" sentence renders only when code reports the service inactive.
+    """
+    return ('<aside class="mbm-usage usage-bar" id="usage-statistics" aria-label="Optional usage statistics">'
+            '<p class="usage-bar-line">Optional usage statistics — off until you allow it.</p>'
+            '<p class="usage-bar-line"><a href="/privacy/#shared-usage">Read what is counted.</a></p>'
+            '<div class="usage-actions"><button type="button" data-usage-choice="allow" aria-pressed="false" disabled>Allow</button>'
+            '<button type="button" data-usage-choice="deny" aria-pressed="false">Keep off</button></div>'
+            '<p data-usage-choice-status role="status"></p></aside>')
+
+
 def popularity(source='education'):
     return '''<section class="mbm-usage" data-usage-popularity="'''+source+'''" aria-labelledby="usage-popular-title">
 <p class="usage-eyebrow">Activity across the community</p><h2 id="usage-popular-title">What people are opening</h2>
@@ -251,12 +266,12 @@ def insert_before_document_end(text, tag, fragment):
     offset=positions[0];return text[:offset]+fragment+text[offset:]
 
 
-def inject(path, choice=False, popularity_block=False, compact=False):
+def inject(path, choice=False, popularity_block=False, compact=False, bar=False):
     text=path.read_text()
     if 'src="/assets/usage-client.js"' in text:return
     if '</head>' not in text or '</body>' not in text:raise ValueError('Usage adapter needs an HTML shell: '+str(path))
     text=insert_before_document_end(text,'head','<link rel="stylesheet" href="/assets/usage.css"><script defer src="/assets/usage-client.js"></script>')
-    addition=(popularity() if popularity_block else '')+(preferences(compact=compact) if choice else '')
+    addition=(popularity() if popularity_block else '')+((consent_bar() if bar else preferences(compact=compact)) if choice else '')
     if addition: text=insert_before_document_end(text,'body',addition)
     path.write_text(text)
 
@@ -395,14 +410,18 @@ def refresh(output, lessons, apps, site_source):
     privacy=site/'privacy/index.html';text=privacy.read_text()
     before='<tr><td><b>Use the local visit and open counters</b></td><td>Counts stay in this browser; the coarse country is derived on-device from the time zone</td><td><b>No remote counter service while remote counters are disabled</b></td></tr>'
     after='<tr><td><b>Choose optional shared usage statistics</b></td><td>When active and allowed: public resource ID, event type, site source and one-event retry code; location measurement is off</td><td><b>Existing Supabase service; no event request while collection is inactive or refused</b></td></tr>'
-    text=replace_once(text,before,after);text=replace_once(text,'</main>',privacy_explanation()+preferences()+'</main>');privacy.write_text(text);inject(privacy)
+    text=replace_once(text,before,after)
+    # UX2 B2: the homepage's "Shared activity" entrance (retired from Appendix A §HOME
+    # and from the menu) lives here, one tap from the footer's Privacy link.
+    text=replace_once(text,'</main>',privacy_explanation()+preferences()+'<p class="mbm-usage"><a href="/stats/">Shared activity · Top 10 lessons and packs</a></p></main>');privacy.write_text(text);inject(privacy)
     # Only discovery shells and registered lesson destinations receive the
     # adapter. No app editor, pupil register, save payload or download is edited.
     hubs=[site/'index.html',site/'main/index.html',site/'resources/index.html',site/'tools/index.html',output/'education-lessons/index.html',output/'education-apps/index.html']
     hubs+=list((site/'for').rglob('index.html'))
     hubs+=[site/'primary/index.html',output/'education-lessons/primary/index.html']
+    homes={site/'index.html',site/'main/index.html'}
     for path in dict.fromkeys(hubs):
-        if path.is_file():inject(path,choice=True)
+        if path.is_file():inject(path,choice=True,bar=path in homes)
     lesson_pages=set()
     for row in rows:
         if row['source']=='education' and 'lesson_open' in row['event_types']:
@@ -414,9 +433,7 @@ def refresh(output, lessons, apps, site_source):
         path=local_file(output,entry['route'])
         if 'src="/assets/usage-client.js"' not in path.read_text():
             inject(path);additional_download_pages.append(entry)
-    # Add one small entrance to real popularity from both education homepages.
-    for path in [site/'index.html',site/'main/index.html']:
-        text=path.read_text();text=replace_once(text,'</body>','<p class="mbm-usage"><a href="/stats/">Shared activity · Top 10 lessons and packs</a></p></body>');path.write_text(text)
+    # UX2 B2: the homepage is Appendix A §HOME; the /stats/ entrance stays on /privacy/ and the teacher page.
     save(output/'usage-registry.json',rows)
     report={'schema':1,'collection_enabled':config(site_source,'education')['enabled'],'registered_resources':len(rows),'lesson_adapters':len(lesson_pages),
             'events':{kind:sum(kind in row['event_types'] for row in rows) for kind in ['lesson_open','download_request','game_launch']},

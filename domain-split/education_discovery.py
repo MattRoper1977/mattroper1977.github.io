@@ -16,6 +16,8 @@ PDF_DESCRIPTION = ('Create a PDF from a blank page, annotate an existing documen
 PDF_KEYWORDS = ['PDF', 'PDF generator', 'PDF Studio', 'merge', 'split', 'extract', 'annotate']
 ASDAN = '/Lessons/?subject=ASDAN%20%26%20life%20skills&year=all'
 PATHWAYS = ['BUILD', 'GROW', 'LAUNCH']
+# UX2 B4 pre-gate: kind scored below 18/20 — the one sentence /resources/ and the teacher page use.
+KIND_NOTE = json.loads((Path(__file__).resolve().parent/'ux2/appendix-a-site.json').read_text())['derivedNotes']['kindDiscarded']
 
 
 def read(path):
@@ -131,23 +133,11 @@ def refresh(output, lessons, apps, site_source):
 
     resource_path = site/'resources/index.html'
     text = resource_path.read_text()
-    text = replace_once(text, '<div class="rx-body">', collections()+'<div class="rx-body">')
-    text = replace_once(text, "Promise.all([grab('/Lessons/resources.json'),grab('/data/resources.json')]).then(([les,site])=>{",
-                        "Promise.all([grab('/Lessons/resources.json'),grab('/data/resources.json'),grab('/data/resource-collections.json')]).then(([les,site,collections])=>{")
-    before = "ALL=[...normLessons(Array.isArray(les)?les:[]),...normSite(Array.isArray(site)?site:[])];"
-    after = before+"\n"+"""const routeKey=path=>{try{const u=new URL(path,location.origin);return u.origin+decodeURI(u.pathname).replace(/index\\.html$/,'').replace(/\\/$/,'')}catch(_){return path}};
-const byRoute=new Map(ALL.filter(r=>r.path).map(r=>[routeKey(r.path),r]));
-for(const row of normSite(Array.isArray(collections)?collections:[])){const key=routeKey(row.path);const existing=byRoute.get(key);if(existing){existing.tags=[...new Set([...existing.tags,...row.tags,row.title])]}else{ALL.push(row);byRoute.set(key,row)}}"""
-    text = replace_once(text, before, after)
-    text = replace_once(text, 'const q=$("#rxSearch").value.toLowerCase();',
-                        'const q=$("#rxSearch").value.toLowerCase().trim();\n$("#resource-collections").hidden=!!(q||SUB||TYPE);')
-    text = replace_once(text, "[r.title,r.description,r.subject,r.type,...(r.tags||[])].join(' ').toLowerCase().includes(q)",
-                        "q.trim().split(/\\s+/).every(word=>[r.title,r.description,r.subject,r.type,...(r.tags||[])].join(' ').toLowerCase().includes(word))")
-    text = text.replace('Search science, humanities, evidence…', 'Try ASDAN, worksheet, PDF generator…')
-    text = replace_once(text, '<a href="/Lessons/">Open the lesson finder</a>',
-                        '<a href="/Lessons/">Open the lesson finder</a><a href="#resource-collections">Browse collections</a><a href="'+PDF+'">PDF Studio</a>')
-    text = replace_once(text, 'function stickTop(){',
-                        'document.querySelector(\'a[href="#resource-collections"]\').addEventListener("click",()=>{$("#rxSearch").value="";SUB="";TYPE="";chips();render()});\nfunction stickTop(){')
+    # UX2 B4: /resources/ is Appendix A §RESOURCES and reads the served Lessons catalogue and
+    # /data/resources.json itself; the collections section, the third fetch and the jump links
+    # are retired (their destinations are catalogue rows, the Teacher tools pillar or menu rows —
+    # UX2_LEDGER.md). The kind note is the one sentence the teacher page also uses.
+    text = replace_once(text, '<!-- DATA-STAMP:END -->', '<!-- DATA-STAMP:END -->\n<script>window.MBM_KIND_NOTE='+json.dumps(KIND_NOTE, ensure_ascii=False)+';</script>')
     resource_path.write_text(text)
 
     app_path = app_root/'index.html'
@@ -192,13 +182,15 @@ for(const row of normSite(Array.isArray(collections)?collections:[])){const key=
     text = text.replace('href="../asdan/app.html"', 'href="/asdan/"')
     tools_path.write_text(text)
 
-    for path in [site/'index.html', site/'main/index.html', site/'for/teachers/index.html', resource_path, tools_path, app_path]:
+    # UX2 B2: the homepage carries no learning-areas bar (its "Three places, one
+    # site" cards and the menu's Learning group are those destinations) and no
+    # "Ready to teach?" strip (its links relocated — see UX2_LEDGER.md).
+    # UX2 B3: the teacher page's Learning destinations are menu rows; /tools/ and /teach/ sit
+    # on its Assess card, so the bar stays on the three catalogue hubs only.
+    for path in [resource_path, tools_path, app_path]:
         text = path.read_text()
         active = {resource_path: '/resources/', tools_path: '/tools/', app_path: '/Matt-s-Apps-/'}.get(path, '')
         text = replace_once(text, '</header>', '</header>'+learning_nav(active))
-        if path in {site/'index.html', site/'main/index.html'}:
-            text = replace_once(text, '<a href="/tools/">Classroom tools</a>',
-                                '<a href="/tools/">Classroom tools</a><a href="'+escape(ASDAN, quote=True)+'">ASDAN · all years</a>')
         path.write_text(text)
 
     # Keep teacher search in step with the same existing destinations. Pupil

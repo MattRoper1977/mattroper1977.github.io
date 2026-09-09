@@ -1,264 +1,213 @@
-<!doctype html><html lang="en"><head>
+<!doctype html><html lang="en-GB"><head>
 <!-- mbm-support-buttons-2026-08-12 -->
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Resource Catalogue — Made by Matt</title>
-<link rel="canonical" href="https://madebymatt.uk/resources/"><meta name="description" content="The full Made by Matt catalogue — every interactive lesson, simulation, activity and teacher tool. Search by topic, filter by subject or type."><meta name="theme-color" content="#0F1530"><meta property="og:title" content="Resource Catalogue — Made by Matt"><meta property="og:description" content="Search the full catalogue of interactive lessons, simulations and tools."><meta property="og:url" content="https://madebymatt.uk/resources/"><meta property="og:type" content="website"><meta property="og:site_name" content="Made by Matt"><meta property="og:image" content="https://madebymatt.uk/assets/og-cover.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://madebymatt.uk/assets/og-cover.png"><link rel="icon" href="../favicon.svg"><link rel="apple-touch-icon" href="../apple-touch-icon.png"><link rel="stylesheet" href="../styles.css">
-<style id="rxStyles">
-:root{--rx-deep:#0F1530;--rx-mint:#B9E6CD;--rx-mintd:#2F6B4D;--rx-amber:#F2A24A;--rx-cream:#F6F1E4;--rx-card:#FFFDF6;--rx-ink:#1B2140;--rx-mut:#4A5170}
-.rx-hero{color:#E8E2D4;text-align:left;padding:2.6rem 0 2.2rem;background:
- radial-gradient(ellipse 120% 70% at 50% -20%,#232C55cc,transparent 70%),
- url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='200' viewBox='0 0 240 200'%3E%3Cg stroke='%23B9E6CD' stroke-opacity='.07' stroke-width='2' fill='none'%3E%3Cpath d='M20 40h60l20 20h50M40 150h50l20-20h70M150 40v40l20 20'/%3E%3C/g%3E%3Cg fill='%23B9E6CD' fill-opacity='.1'%3E%3Ccircle cx='20' cy='40' r='4'/%3E%3Ccircle cx='150' cy='60' r='4'/%3E%3Ccircle cx='40' cy='150' r='4'/%3E%3Ccircle cx='230' cy='130' r='4'/%3E%3Ccircle cx='170' cy='100' r='4'/%3E%3C/g%3E%3C/svg%3E"),
- var(--rx-deep)}
-.rx-hero .wrap{padding-top:0;padding-bottom:0}
-.rx-hero h1{font-size:clamp(2.2rem,7vw,3.6rem);letter-spacing:-.02em;line-height:1.02;margin:.2rem 0 .8rem}
-.rx-hero h1 span{color:var(--rx-mint)}
-.rx-hero .lead{color:#C9D1E2;font-size:clamp(.95rem,2vw,1.1rem);max-width:38rem}
-.rx-search{display:flex;align-items:center;gap:.7rem;margin-top:1.4rem;max-width:40rem;background:#0B102488;border:1.5px solid #B9E6CD55;border-radius:16px;padding:.8rem 1rem;backdrop-filter:blur(4px)}
-.rx-search:focus-within{border-color:var(--rx-mint);box-shadow:0 0 0 3px #B9E6CD22}
-.rx-search svg{width:24px;height:24px;flex:none}
-.rx-search input{flex:1;background:none;border:none;outline:none;color:#E8E2D4;font:inherit;font-size:1.05rem;min-width:0}
-.rx-search input::placeholder{color:#8A93B0}
-/* chip rows */
-.rx-chipzone{background:var(--rx-cream);padding:.9rem 0 .2rem}
-.rx-chipzone{position:sticky;top:0;z-index:30;background:var(--cream,#F6F1E4);box-shadow:0 6px 16px #1B214014;padding-top:.55rem}
-.rx-chipzone .rx-search{background:#0F1530;border:2px solid #3A4470;border-radius:999px;display:flex;align-items:center;gap:.5rem;padding:.1rem .4rem .1rem .9rem;margin:0 1rem .55rem;max-width:680px}
-@media (min-width:720px){.rx-chipzone .rx-search{margin:0 auto .55rem}}
-.rx-chipzone .rx-search input{flex:1;border:0;background:transparent;color:#E8E2D4;font:inherit;font-size:.92rem;padding:.6rem .4rem;min-width:0}
-.rx-chipzone .rx-search input:focus{outline:none}
-.rx-chipzone .rx-search svg{width:20px;height:20px;flex:none}
-.rx-countrow{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin:.7rem 0 .2rem}
-.rx-sortl{font-size:.78rem;font-weight:700;color:#4A5170}
-#rxSort{font:inherit;font-size:.78rem;font-weight:700;color:#1B2140;background:#FFFDF6;border:1.5px solid #C9C0AB;border-radius:999px;padding:.4rem .8rem;margin-left:.3rem}
-.rx-copy{font:inherit;font-size:.74rem;font-weight:800;color:#8A5620;background:#FFFDF6;border:1.5px solid #C9C0AB;border-radius:999px;padding:.4rem .8rem;cursor:pointer}
-.rx-copy:hover{border-color:#C97F2E}
-.rx-copy:focus-visible{outline:3px solid #B9E6CD;outline-offset:2px}
-.rx-copyfallback{font:inherit;font-size:.74rem;width:min(240px,50vw);padding:.35rem .6rem;border:1.5px solid #C97F2E;border-radius:8px;background:#FFFDF6;color:#1B2140}
-[data-theme="dark"] .rx-copy{background:#1B234A;color:#F2A24A;border-color:#2E3860}
-.rx-fmt{display:flex;gap:.4rem;align-items:center}
-.rx-fmt svg{width:19px;height:19px;color:#4A5170}
-.rx-actrow{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-top:.3rem}
-a.rx-go{font-size:.66rem;font-weight:800;letter-spacing:.07em;text-decoration:none;color:#FFF6E8;background:#161D3D;border-radius:999px;padding:.42rem .85rem;white-space:nowrap}
-a.rx-go:hover{background:#232C55}
-a.rx-go:focus-visible{outline:3px solid #F2A24A;outline-offset:2px}
-.rx-callout{background:linear-gradient(150deg,#FDF6E4,#FBEDD8);border:2px solid #F2A24A;border-radius:16px;padding:1rem 1.1rem;margin:.2rem 0 .9rem;display:flex;flex-direction:column;gap:.45rem}
-.rx-callout .stamp{align-self:flex-start;font-size:.6rem;font-weight:800;letter-spacing:.1em;background:#E4F0E8;color:#2F6B4D;border:1.5px solid #2F6B4D;border-radius:999px;padding:.22rem .65rem}
-.rx-callout h3{font-size:1rem;color:#161D3D;margin:0}
-.rx-callout p{font-size:.8rem;color:#4A5170;line-height:1.5;margin:0}
-.rx-callout .acts{display:flex;gap:.5rem;flex-wrap:wrap}
-.rx-callout .acts a,.rx-callout .acts button{font:inherit;font-size:.68rem;font-weight:800;letter-spacing:.06em;text-decoration:none;border:1.5px solid #161D3D;color:#161D3D;background:#FFFDF6;border-radius:999px;padding:.4rem .9rem;cursor:pointer}
-.rx-callout .acts a:hover,.rx-callout .acts button:hover{background:#161D3D;color:#FFF6E8}
-.rx-frommatt{background:#EDE5D2;border-top:1.5px solid #E0D6C0;padding:1.3rem 1rem;margin-top:1.4rem}
-.rx-frommatt .in{max-width:760px;margin:auto;font-size:.85rem;color:#4A5170;line-height:1.55}
-.rx-frommatt b{color:#161D3D}
-.rx-chiprow{display:flex;gap:.5rem;overflow-x:auto;padding:.25rem 1rem;max-width:var(--max,1180px);margin:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
-.rx-chip{flex:none;font:inherit;font-size:.85rem;font-weight:700;border-radius:999px;padding:.45rem 1rem;cursor:pointer;white-space:nowrap;border:1.5px solid transparent}
-.rx-chiprow.subs .rx-chip{background:#A7D9BC;color:var(--rx-ink)}
-.rx-chiprow.subs .rx-chip[aria-pressed="true"]{background:var(--rx-mintd);color:#fff}
-.rx-chiprow.types .rx-chip{background:transparent;border-color:#1B214044;color:var(--rx-ink);font-size:.78rem;padding:.35rem .85rem}
-.rx-chiprow.types .rx-chip[aria-pressed="true"]{background:var(--rx-ink);color:#fff;border-color:var(--rx-ink)}
-.rx-count{max-width:var(--max,1180px);margin:auto;padding:.5rem 1rem .2rem;color:var(--rx-mut);font-size:.88rem}
-/* sections + cards */
-.rx-body{background:var(--rx-cream);padding-bottom:2.4rem}
-.rx-sec{max-width:var(--max,1180px);margin:auto;padding:1.4rem 1rem .2rem}
-.rx-sec h2{font-size:1.15rem;letter-spacing:.06em;text-transform:uppercase;color:var(--rx-ink);font-weight:800;margin:0}
-.rx-grid{max-width:var(--max,1180px);margin:auto;padding:.8rem 1rem .4rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:.9rem}
-.rx-cardx{position:relative;background:var(--rx-card);border:1px solid #1B21401f;border-radius:16px;padding:1.05rem 1.1rem .95rem;display:flex;flex-direction:column;gap:.45rem;box-shadow:0 2px 10px #1B214012;overflow:hidden}
-.rx-cardx::before{content:"";position:absolute;left:0;right:0;top:0;height:6px;background:var(--accent,#63B3ED)}
-.rx-kind{font-size:.66rem;letter-spacing:.15em;text-transform:uppercase;font-weight:800;color:var(--rx-mut);padding-right:52px}
-.rx-cardx h3{margin:0;font-size:1.06rem;line-height:1.25;color:var(--rx-ink);padding-right:52px}
-.rx-cardx p{color:var(--rx-mut);font-size:.85rem;line-height:1.5;margin:0;flex:1}
-.rx-ico{position:absolute;top:.9rem;right:.9rem;width:42px;height:42px;color:var(--accent,#63B3ED);opacity:.95}
-.rx-foot{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-top:.35rem}
-.rx-badge{background:#1B21400d;border-radius:999px;padding:.3rem .7rem;font-size:.7rem;font-weight:800;color:var(--rx-ink)}
-.rx-badge.new{background:var(--rx-mint);color:#12331F}
-.rx-view{display:inline-block;border:1.5px solid #1B214055;border-radius:12px;padding:.45rem .9rem;font-size:.83rem;font-weight:800;color:var(--rx-ink);text-decoration:none;background:#F3EDDD}
-.rx-view:hover{border-color:var(--rx-ink)}
-.rx-none{max-width:var(--max,1180px);margin:auto;padding:1rem;color:var(--rx-mut)}.rx-clear{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:.5rem 1rem;margin-left:.4rem;border:2px solid #161D3D;border-radius:8px;background:#161D3D;color:#E8E2D4;font:inherit;font-weight:700;cursor:pointer;touch-action:manipulation}.rx-clear:hover{background:#0F142B}
-.rx-chip:focus-visible,.rx-view:focus-visible{outline:3px solid var(--rx-amber);outline-offset:2px}
-@media (min-width:860px){.rx-chiprow{flex-wrap:nowrap}}
-</style><style id="mbmTheme">
-/* Made by Matt — reading themes (shared key mbm_reading_theme) */
-[data-theme="pink"]{--rx-cream:#F9E8EC;--rx-card:#FFF9FA;--rx-ink:#1B2140;--rx-mut:#4A5170}
-[data-theme="blue"]{--rx-cream:#E7EEF7;--rx-card:#F8FBFF;--rx-ink:#1B2140;--rx-mut:#4A5170}
-[data-theme="light"]{--rx-cream:#F7F7F4;--rx-card:#FFFFFF;--rx-ink:#1B2140;--rx-mut:#4A5170}
-[data-theme="dark"]{--rx-cream:#121834;--rx-card:#1B234A;--rx-ink:#E8E2D4;--rx-mut:#A9B2CC}
-[data-theme="pink"] body{background:#F9E8EC}
-[data-theme="blue"] body{background:#E7EEF7}
-[data-theme="light"] body{background:#F7F7F4}
-[data-theme="dark"] body{background:#121834}
-.rx-hero{transition:background .35s ease}
-[data-theme="pink"] .rx-hero{background:radial-gradient(ellipse 120% 70% at 50% -20%,#8E2E55,#5E1B39 70%)}
-[data-theme="blue"] .rx-hero{background:radial-gradient(ellipse 120% 70% at 50% -20%,#1F4E79,#10304F 70%)}
-[data-theme="light"] .rx-hero{background:radial-gradient(ellipse 120% 70% at 50% -20%,#3C4668,#262E48 70%)}
-[data-theme="dark"] .rx-hero{background:radial-gradient(ellipse 120% 70% at 50% -20%,#1B2450,#090D1E 70%)}
-@media (prefers-reduced-motion:reduce){.rx-hero{transition:none}}
-[data-theme="dark"] .rx-chipzone{background:#121834}
-[data-theme="dark"] #rxSort{background:#1B234A;color:#E8E2D4;border-color:#2E3860}
-[data-theme="dark"] .rx-sortl,[data-theme="dark"] .rx-callout p,[data-theme="dark"] .rx-frommatt .in{color:#A9B2CC}
-[data-theme="dark"] .rx-fmt svg{color:#A9B2CC}
-[data-theme="dark"] .rx-callout{background:linear-gradient(150deg,#1F2A52,#182142);border-color:#C97F2E}
-[data-theme="dark"] .rx-callout h3,[data-theme="dark"] .rx-frommatt b{color:#E8E2D4}
-[data-theme="dark"] .rx-callout .stamp{background:#1E3A2C;color:#B9E6CD;border-color:#2F6B4D}
-[data-theme="dark"] .rx-callout .acts a{background:#1B234A;color:#E8E2D4;border-color:#2E3860}
-[data-theme="dark"] a.rx-go,[data-theme="dark"] .rx-callout .acts a:hover{background:#F2A24A;color:#161D3D}
-[data-theme="dark"] .rx-frommatt{background:#161D3D;border-color:#2E3860}
-/* High lumen — projector / IWB. Additive, and measured on the rendered
-   page rather than eyeballed from hex values. Amber stays light: it is a
-   background here, and near-black on it is already 9.05:1. */
-[data-theme="highlumen"]{--rx-cream:#FFFFFF;--rx-card:#FFFFFF;--rx-ink:#000000;--rx-mut:#3A3A3A;--rx-mint:#FFFFFF;--rx-mintd:#0F5132;--rx-deep:#0B1020}
-[data-theme="highlumen"] body{background:#FFFFFF}
-html[data-theme="highlumen"] .rx-hero{background:#0B1020;background-image:none}
-html[data-theme="highlumen"] .rx-hero,html[data-theme="highlumen"] .rx-hero *{color:#FFFFFF!important}
-[data-theme="highlumen"] .rx-chipzone{background:#FFFFFF}
-[data-theme="highlumen"] #rxSort{background:#FFFFFF;color:#000000;border-color:#4A4A4A}
-[data-theme="highlumen"] .rx-sortl,[data-theme="highlumen"] .rx-callout p,[data-theme="highlumen"] .rx-frommatt .in{color:#3A3A3A}
-[data-theme="highlumen"] .rx-fmt svg{color:#3A3A3A}
-[data-theme="highlumen"] .rx-callout{background:#FFFFFF;border-color:#4A4A4A}
-[data-theme="highlumen"] .rx-callout h3,[data-theme="highlumen"] .rx-frommatt b{color:#000000}
-[data-theme="highlumen"] .rx-callout .stamp,[data-theme="highlumen"] .rx-badge{background:#FFFFFF;color:#0F5132;border:1px solid #0F5132}
-[data-theme="highlumen"] .rx-callout .acts a{background:#FFFFFF;color:#000000;border-color:#4A4A4A}
-[data-theme="highlumen"] a.rx-go,[data-theme="highlumen"] .rx-callout .acts a:hover{background:#7A4A00;color:#FFFFFF}
-[data-theme="highlumen"] .rx-frommatt{background:#FFFFFF;border-color:#4A4A4A}
-[data-theme="highlumen"] :focus-visible{outline:3px solid #0B1020;outline-offset:2px}
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Resources · Made by Matt</title>
+<link rel="canonical" href="https://madebymatt.uk/resources/"><meta name="description" content="Planning packs and evidence, one card per unit: companion packs, schemes of work and evidence documents for BUILD, GROW and LAUNCH."><meta name="theme-color" content="#0F1530"><meta property="og:title" content="Resources · Made by Matt"><meta property="og:description" content="Planning packs and evidence, one card per unit."><meta property="og:type" content="website"><meta property="og:url" content="https://madebymatt.uk/resources/">
+<link rel="icon" href="../favicon.svg"><link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<!--
+  UX2 B4 — /resources/ is Appendix A §RESOURCES, data-driven from two records and nothing else:
+    · the served Lessons catalogue /Lessons/resources.json (the mirror data/source-manifests/
+      lessons-resources.json in its published form) — every non-lesson row is a resource here,
+      the lesson rows give the "<n> lessons" counts and stay in the search;
+    · the site's own record /data/resources.json — the resources only this repository holds.
+  Subject, pathway and format are derived with the Lessons hub's own rules (cardOf, tierOf,
+  formatOf — assets/catalogue/hub.js, UX2 A2, ported below with the source recorded). A unit card
+  exists for every (subject, pathway, halfTerm, unit) key present in the non-lesson rows; a row
+  with a half-term but no unit keys by (subject, pathway, halfTerm). Rows without a half-term are
+  documents, grouped by subject and family. The kind derivation scored below 18/20 (see
+  UX2_LEDGER.md), so there is no Type filter and the two kind pillars carry the note instead of
+  a count. Nothing on this page is typed: every count, date and label is read from a record.
+-->
+<style>
+:root{--ink:#18223b;--navy:#161d3d;--paper:#fffefa;--ground:#f5f3ec;--line:#d5dcd9;--muted:#536078;--mint:#8ee6cb;--amber:#f2a24a;--blue:#33608f;--purple:#7c5cb8;--green:#247761;--focus:#0b1020}
+*{box-sizing:border-box}html{background:var(--ground)}body{margin:0;font:16px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--ground)}
+a{color:inherit}.skip{position:absolute;left:-999px;top:0;background:var(--navy);color:#fff;padding:.6rem 1rem;z-index:50}.skip:focus{left:8px;top:8px}
+.wrap{max-width:70rem;margin:0 auto;padding:0 1rem}
+.header{background:var(--navy);color:#fff}.header .bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;min-height:64px;padding:.4rem 1rem;max-width:70rem;margin:0 auto}.header .brand{display:inline-flex;align-items:center;gap:.6rem;text-decoration:none;font-weight:800;letter-spacing:.06em;min-height:44px}.header .brand img{width:36px;height:36px}.header nav{display:flex;gap:.25rem;flex-wrap:wrap}.header nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 .6rem;text-decoration:none;font-weight:650}
+.rx-hero{background:var(--navy);color:#fff;padding:1.6rem 0 1.2rem}.rx-hero h1{margin:0 0 .6rem;font-size:clamp(2rem,6vw,2.8rem);line-height:1.1}.rx-hero .lead{margin:.5rem 0 0;color:#d8e1ed}.rx-hero .go{display:inline-flex;align-items:center;min-height:44px;color:#fff;font-weight:700;text-decoration:underline;text-underline-offset:.2em}
+.rx-search{display:flex;align-items:center;gap:.6rem;background:var(--paper);border-radius:9px;padding:.2rem .8rem;max-width:40rem;margin:.6rem 0}.rx-search svg{flex:0 0 22px}.rx-search input{flex:1 1 auto;min-width:0;min-height:48px;border:0;background:transparent;font:inherit;font-size:1.05rem;color:var(--ink)}.rx-search input:focus{outline:3px solid var(--amber);outline-offset:2px}.rx-search label{position:absolute;left:-999px}
+.pillars{list-style:none;margin:.9rem 0 0;padding:0;display:grid;gap:.5rem;grid-template-columns:repeat(3,minmax(0,1fr))}.pillars li{background:#1f2a4f;border:1px solid #3a4a78;border-radius:9px;padding:.7rem .85rem;min-width:0}.pillars a{display:flex;flex-direction:column;justify-content:center;min-height:44px;color:#fff;text-decoration:none;font-weight:750}.pillars a:hover strong{text-decoration:underline}.pillars small{display:block;font-weight:500;color:#c7d3e6;line-height:1.35;margin-top:.15rem}.pillars .count{color:var(--mint);font-weight:750}
+.rx-filters{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:end;padding:1rem 0 .4rem}.rx-filters label{display:flex;flex-direction:column;gap:.25rem;font-weight:700;font-size:.9rem}.rx-filters select{min-height:44px;min-width:11rem;padding:.4rem .6rem;border:1px solid #a8b9d0;border-radius:7px;background:var(--paper);font:inherit;color:var(--ink)}
+.rx-count{margin:.2rem 0 0;font-weight:750;color:var(--muted)}
+.sec{padding:.9rem 0 1.2rem}.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:.5rem 1rem;margin:0 0 .6rem}.sec h2{margin:0;font-size:1.35rem}.sec-head .order{color:var(--muted);font-weight:650}
+.grid{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(17rem,1fr))}
+.unit{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:0 .9rem .9rem;display:flex;flex-direction:column;gap:.5rem;min-width:0;border-top:6px solid var(--green)}.unit.science{border-top-color:var(--green)}.unit.humanities-re{border-top-color:var(--blue)}.unit.art-studio{border-top-color:var(--purple)}.unit.lifeskills{border-top-color:var(--amber)}.unit.extra{border-top-color:#8a95a8}
+.unit h3{margin:.7rem 0 0;font-size:1.1rem;line-height:1.3}.unit .meta{margin:0;color:var(--muted);font-weight:650;font-size:.92rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin:0}.chip{display:inline-flex;align-items:center;gap:.3rem;min-height:44px;padding:.25rem .7rem;border-radius:7px;border:1px solid #bccbc3;background:#fff;font-size:.9rem;font-weight:700;text-decoration:none;color:var(--ink);max-width:100%;overflow-wrap:anywhere}.chip:hover,.chip:focus-visible{background:#e0eee7}.chip.more{background:#eef2f5;border-color:#c5cfd8;cursor:pointer;font:inherit;font-weight:750}.chip.label{min-height:28px;padding:.1rem .55rem;font-size:.78rem;letter-spacing:.04em;border-color:transparent;background:#eef2f5;color:var(--muted)}.chip.label.tier{color:#1d6b58;background:#e3f2e9}
+.unit .go{display:inline-flex;align-items:center;min-height:44px;font-weight:750;text-decoration:underline;text-underline-offset:.2em;margin-top:auto}
+.docs h3{margin:.9rem 0 .3rem;font-size:1rem;color:var(--muted);font-weight:750}.docs ul{list-style:none;margin:0;padding:0;display:grid;gap:.4rem}.doc{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .7rem;background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:.35rem .75rem;min-width:0}.doc a{display:inline-flex;align-items:center;min-height:44px;font-weight:700;text-decoration:underline;text-underline-offset:.2em;flex:1 1 14rem;min-width:0;overflow-wrap:anywhere}.doc .status{color:var(--muted);font-weight:650;flex:1 1 14rem}.badge{display:inline-block;font-size:.75rem;font-weight:700;padding:.15rem .45rem;border:1px solid var(--line);border-radius:4px;color:var(--muted)}
+.lessons ul{list-style:none;margin:0;padding:0;display:grid;gap:.4rem}
+.empty{background:var(--paper);border:1px dashed #a8b9d0;border-radius:12px;padding:1.2rem;display:flex;flex-wrap:wrap;align-items:center;gap:.6rem 1rem}.empty p{margin:0;font-weight:700}.btn{display:inline-flex;align-items:center;min-height:44px;padding:.45rem 1rem;border:1px solid var(--navy);border-radius:7px;background:var(--navy);color:#fff;font:inherit;font-weight:750;cursor:pointer;text-decoration:none}
+.note{margin:.2rem 0 0;color:var(--muted);font-size:.9rem}
+dialog.sheet{border:0;border-radius:14px 14px 0 0;padding:0;width:100%;max-width:44rem;margin:auto auto 0;background:var(--paper);color:var(--ink);max-height:92vh;overflow:auto}dialog.sheet::backdrop{background:rgba(15,21,48,.55)}.sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem;padding:.9rem 1rem .4rem;position:sticky;top:0;background:var(--paper);border-bottom:1px solid var(--line)}.sheet-head h2{margin:0;font-size:1.15rem;line-height:1.3}.sheet-close{min-width:44px;min-height:44px;border:1px solid var(--line);border-radius:7px;background:#fff;font-size:1.4rem;line-height:1;cursor:pointer}.sheet-body{padding:.4rem 1rem 1.2rem}.sheet-sec h3{margin:.9rem 0 .3rem;font-size:1rem}.sheet-sec h4{margin:.6rem 0 .2rem;font-size:.95rem;color:var(--muted)}.sheet-sec ul{list-style:none;margin:0;padding:0;display:grid;gap:.3rem}.sheet-sec li a{display:inline-flex;align-items:center;min-height:44px;font-weight:700;text-decoration:underline;text-underline-offset:.2em;overflow-wrap:anywhere}.sheet-sec .size{color:var(--muted);font-weight:500}.drift{margin:.2rem 0 .4rem;padding:.4rem .6rem;border-left:4px solid var(--amber);background:#fff6e8;font-size:.9rem}.sheet-lesson{margin:.8rem 0 0}.sheet-lesson .go{display:inline-flex;align-items:center;min-height:44px;font-weight:750;text-decoration:underline;text-underline-offset:.2em}.sheet-lesson .grey{margin:.15rem 0 0;color:var(--muted);font-size:.9rem}
+.footer{background:var(--navy);color:#fff;margin-top:1.5rem;padding:1.2rem 0}.footer .footer-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.8rem 1.5rem}.footer-links{display:flex;flex-wrap:wrap;align-items:center;gap:0 .35rem}.footer-links a{display:inline-flex;align-items:center;min-height:44px;padding:0 .25rem;color:#fff;font-weight:650}.footer p{margin:0}.footer small{color:#c7d3e6}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}.rx-hero :focus-visible,.header :focus-visible,.footer :focus-visible{outline-color:var(--amber)}
+[hidden]{display:none!important}
+@media(max-width:650px){.pillars{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.rx-filters select{min-width:0;width:100%}.rx-filters label{flex:1 1 100%}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media print{.rx-search,.rx-filters,.chip.more,dialog,.header nav{display:none!important}}
+</style>
+<style id="mbmTheme">
+/* Made by Matt - reading themes (shared key mbm_reading_theme).
+   The six names are theme.js's; the palettes are this page's own, carried from
+   the mbmTheme block it had before UX2 B4 rebuilt it and mapped onto the tokens
+   the Appendix A RESOURCES page uses:
+     --rx-cream -> --ground   --rx-card -> --paper
+     --rx-ink   -> --ink      --rx-mut  -> --muted
+   highlumen also carried --rx-deep -> --navy, --rx-mint -> --mint and
+   --rx-mintd -> --green, and takes a black rule line so its borders keep the
+   contrast the palette is for. cream is the default and sets no attribute. */
+[data-theme="pink"]{--ground:#F9E8EC;--paper:#FFF9FA;--ink:#1B2140;--muted:#4A5170}
+[data-theme="blue"]{--ground:#E7EEF7;--paper:#F8FBFF;--ink:#1B2140;--muted:#4A5170}
+[data-theme="light"]{--ground:#F7F7F4;--paper:#FFFFFF;--ink:#1B2140;--muted:#4A5170}
+[data-theme="dark"]{--ink:#e9ecf3;--paper:#1c2440;--ground:#121831;--line:#34405f;--muted:#b8c3d9}[data-theme="dark"] .chip{background:#26305a;color:var(--ink);border-color:#3f4c75}[data-theme="dark"] .chip.label{background:#26305a}[data-theme="dark"] .sheet-close{background:#26305a;color:var(--ink)}[data-theme="dark"] .drift{background:#3a2f1c}[data-theme="dark"] .empty{border-color:#3f4c75}
+[data-theme="highlumen"]{--ground:#FFFFFF;--paper:#FFFFFF;--ink:#000000;--muted:#3A3A3A;--line:#000000;--navy:#0B1020;--mint:#FFFFFF;--green:#0F5132}
+[data-theme="highlumen"] .chip{background:#FFFFFF;color:#000000;border-color:#000000}
+[data-theme="highlumen"] .unit,[data-theme="highlumen"] .empty{border-color:#000000}
 </style>
 <script>try{var t=localStorage.getItem('mbm_reading_theme');if(t&&t!=='cream')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 <!-- DATA-STAMP:BEGIN generated by tools/stamp-data.py, do not edit by hand -->
 <script>window.MBM_DATA_STAMP={"/site.json":"6c357219c0a3","/data/resources.json":"6db846b84893"};window.MBM_STAMP=function(u){var D=window.MBM_DATA_STAMP||{},k=String(u==null?"":u),p=k.charAt(0)==="/"?k:"/"+k.replace(/^\.\//,""),h=D[p]||D[k];return h?{url:k+(k.indexOf("?")<0?"?":"&")+"v="+h,opts:{}}:{url:k,opts:{cache:"no-cache"}};};</script>
 <!-- DATA-STAMP:END -->
-<link rel="stylesheet" href="/assets/mbm-platform.css">
+<link rel="stylesheet" href="/assets/mbm-platform.css"><script defer src="/assets/mbm-platform.js"></script>
 </head><body class="mbm-education-hub"><a class="skip" href="#main">Skip to content</a><header class="header mbm-site-header"><div class="bar"><a class="brand" href="/main/"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links"><a href="/games/">Games</a><a href="/Lessons/">Lessons</a><a href="/Matt-s-Apps-/">Apps</a><a href="/tools/">Tools</a><a href="/resources/" aria-current="page">Resources</a></div><details class="mbm-nav-more"><summary>More</summary><div class="mbm-nav-panel"><a href="/main/">Main homepage</a><a href="/">Choose homepage</a><a href="/stats/">Stats</a><a href="/main/#about">About</a><a href="/privacy/">Privacy</a></div></details><details class="mbm-theme-menu"><summary>Display</summary><div class="mbm-theme-panel"><div class="mbm-theme-slot" data-mbm-theme-slot></div></div></details></nav></div></header>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-<symbol id="rxi-beaker" viewBox="0 0 24 24"><path d="M9 3h6M10 3v5l-5 9a2.5 2.5 0 0 0 2.2 3.7h9.6A2.5 2.5 0 0 0 19 17l-5-9V3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 14.5h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17.4" r="1.1" fill="currentColor"/></symbol>
-<symbol id="rxi-atom" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="4" fill="none" stroke="currentColor" stroke-width="1.7"/><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(60 12 12)" fill="none" stroke="currentColor" stroke-width="1.7"/><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(120 12 12)" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/></symbol>
-<symbol id="rxi-leaf" viewBox="0 0 24 24"><path d="M5 19C5 9 12 4 20 4c0 9-5 15-13 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M5 19c3-5 7-9 11-11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
-<symbol id="rxi-rocket" viewBox="0 0 24 24"><path d="M12 3c3 2 5 6 5 10l-2 3h-6l-2-3c0-4 2-8 5-10Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="10" r="1.8" fill="currentColor"/><path d="M9 18l-1 3M15 18l1 3M12 18v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
-<symbol id="rxi-scroll" viewBox="0 0 24 24"><path d="M7 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a3 3 0 0 1-3-3V6a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 9h7M9 13h7M9 17h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
-<symbol id="rxi-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.6 0 2-1 1.6-2-.5-1.3.2-2.4 1.8-2.4H17a4 4 0 0 0 4-4c0-5-4-9.6-9-9.6Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="8" cy="9" r="1.3" fill="currentColor"/><circle cx="12.5" cy="7" r="1.3" fill="currentColor"/><circle cx="16.5" cy="9.5" r="1.3" fill="currentColor"/><circle cx="7.5" cy="13.5" r="1.3" fill="currentColor"/></symbol>
-<symbol id="rxi-pad" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="9" rx="4.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10.5v4M6 12.5h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="15.5" cy="11.5" r="1.1" fill="currentColor"/><circle cx="18" cy="13.5" r="1.1" fill="currentColor"/></symbol>
-<symbol id="rxi-boot" viewBox="0 0 24 24"><path d="M4 20l7-14 3 6 6 3-2 5H4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2M12 9l4 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
-<symbol id="rxi-wave" viewBox="0 0 24 24"><path d="M3 8c3-3 6 3 9 0s6 3 9 0M3 14c3-3 6 3 9 0s6 3 9 0M3 20c3-3 6 3 9 0s6 3 9 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
-<symbol id="rxi-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.5-9-9c-1.2-3 1-7 4.5-7 2 0 3.5 1 4.5 3 1-2 2.5-3 4.5-3C20 4 22.2 8 21 11c-2 4.5-9 9-9 9Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
-<symbol id="rxi-mega" viewBox="0 0 24 24"><path d="M4 10v4h3l7 5V5l-7 5H4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M17 9a5 5 0 0 1 0 6M19.5 7a8 8 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
-<symbol id="rxi-hammer" viewBox="0 0 24 24"><path d="M13 7l4 4L8 20l-4-4 9-9Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 6l3-3 6 6-3 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
-<symbol id="rxi-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-<symbol id="rxi-clip" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="9" y="2.5" width="6" height="4" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 11h7M8.5 15h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
-<symbol id="rxi-pin" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.3" fill="currentColor"/></symbol>
-<symbol id="rxi-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.7" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></symbol>
-<symbol id="rxi-star" viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 10l-5.8 1.4L12 17l-2.2-5.6L4 10l5.8-1.4L12 3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
-</defs></svg>
 <main id="main">
 <section class="rx-hero"><div class="wrap">
-<nav class="education-breadcrumb" aria-label="Breadcrumb"><a href="/">Learning home</a><a href="/Lessons/">Lessons</a><a href="/tools/">Teacher tools</a></nav><p class="eyebrow">Resource catalogue</p>
-<h1>Everything for your <span>next lesson.</span></h1>
-<p class="lead">Search teaching resources and tools here. Use the lesson finder for subject, pathway, term and your saved lessons.</p><nav class="education-jumps" aria-label="Resource shortcuts"><a href="/Lessons/">Open the lesson finder</a><a href="/Lessons/?view=saved">Saved lessons</a><a href="/tools/">Teacher tools</a></nav>
+<h1>Resources</h1>
+<div class="rx-search"><svg viewBox="0 0 24 24" aria-hidden="true" width="22" height="22"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="#F2A24A" stroke-width="2.4"/><path d="M15.5 15.5 21 21" stroke="#F2A24A" stroke-width="2.6" stroke-linecap="round"/></svg><label for="rxSearch">Search packs, schemes of work, evidence books</label><input id="rxSearch" type="search" placeholder="Search packs, schemes of work, evidence books" autocomplete="off" enterkeyhint="search"></div>
+<p class="lead">Planning packs and evidence, one card per unit.</p>
+<a class="go" href="/Lessons/">Looking for lessons? Go to Lessons →</a>
+<ul class="pillars" id="pillars">
+<li><a href="#units"><strong>Schemes of work</strong><small data-kind-note></small></a></li>
+<li><a href="#units"><strong>Evidence and accreditation</strong><small data-kind-note></small></a></li>
+<li><a href="/Matt-s-Apps-/"><strong>Teacher tools <span aria-hidden="true">↗</span></strong><small><span class="count" id="appsCount"></span></small></a></li>
+</ul>
 </div></section>
-<div class="rx-chipzone" id="rxSticky">
-<div class="rx-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="#F2A24A" stroke-width="2.4"/><path d="M15.5 15.5 21 21" stroke="#F2A24A" stroke-width="2.6" stroke-linecap="round"/></svg><input id="rxSearch" type="search" placeholder="Search science, humanities, evidence…" aria-label="Search the catalogue" autocomplete="off"></div>
-<div class="rx-chiprow subs" id="rxSubs" aria-label="Filter by subject"></div>
-<div class="rx-chiprow types" id="rxTypes" aria-label="Filter by type"></div>
+<div class="wrap">
+<div class="rx-filters" role="group" aria-label="Filter the unit packs">
+<label>Subject <select id="rxSubs"><option value="">All subjects</option></select></label>
+<label>Pathway <select id="rxPath"><option value="">All pathways</option></select></label>
 </div>
-<div class="rx-body"><div class="rx-countrow"><p class="rx-count" id="rxCount" aria-live="polite">Loading resources…</p><button type="button" id="rxCopy" class="rx-copy" hidden>🔗 Copy link</button><label class="rx-sortl">Sort <select id="rxSort"><option value="feat">Featured first</option><option value="az">A to Z</option><option value="new">Newest</option></select></label></div><div id="rxOut"></div>
-
-<section class="standard" id="collections" style="background:transparent"><div class="wrap" style="padding-top:1.6rem"><div class="section-head"><div><p class="eyebrow">Prefer to browse?</p><h2 style="font-size:clamp(1.6rem,4.5vw,2.6rem)">Jump to a collection.</h2></div></div><div class="standards"><a class="standard-card" href="../games/" style="text-decoration:none;color:inherit;display:block"><b>🎮 Games &amp; simulations</b><p>Every playable experience in one place — press play and go.</p></a><a class="standard-card" href="../Lessons/" style="text-decoration:none;color:inherit;display:block"><b>📚 Lesson Hub</b><p>Interactive lesson packs and print-ready resources, organised by subject.</p></a><a class="standard-card" href="../Matt-s-Apps-/" style="text-decoration:none;color:inherit;display:block"><b>🎨 Studio Suite</b><p>The offline creative workshop — every studio single-file and offline.</p></a><a class="standard-card" href="../tools/" style="text-decoration:none;color:inherit;display:block"><b>🛠️ Teacher tools</b><p>UAS Register, ASDAN Register and the full specialist staff toolkit.</p></a></div></div></section>
+<p class="rx-count" id="rxCount" aria-live="polite"></p>
+<div id="rxOut">
+<section class="sec" id="units" aria-labelledby="units-h"><div class="sec-head"><h2 id="units-h">Unit packs</h2><p class="order" id="orderNote" hidden>This half-term first</p></div><div class="grid" id="unitGrid"></div></section>
+<section class="sec docs" id="documents" hidden></section>
+<section class="sec lessons" id="lessons" aria-labelledby="lessons-h" hidden><div class="sec-head"><h2 id="lessons-h">Lessons</h2><p class="order" id="lessonsCount"></p></div><ul id="lessonList"></ul></section>
+<div class="empty" id="empty" hidden><p>No packs match.</p><button class="btn" type="button" id="rxClear">Clear filters</button></div>
+</div>
 </div>
 </main>
-<section class="rx-frommatt"><div class="in"><b>👋 From Matt</b> — I teach science and art in an alternative provision in the North East, and everything in this catalogue started life in front of a real class. If something saves you an evening, <a href="mailto:contactmadebymatt@gmail.com">tell me</a> — and if it misbehaves, tell me faster.</div></section>
-<footer class="footer"><div class="bar"><div class="brand"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></div><span class="muted">Lessons and teaching tools · madebymatt.uk</span></div>
-<p class="mbm-contact" style="text-align:center;font-size:.85rem;opacity:.85;margin:16px auto 10px;max-width:90%">Questions, ideas or bug reports — <a href="mailto:contactmadebymatt@gmail.com" style="color:inherit;font-weight:600">contactmadebymatt@gmail.com</a></p>
-</footer>
+<dialog class="sheet" id="rxSheet" aria-labelledby="sheet-title"><div class="sheet-head"><h2 id="sheet-title"></h2><button type="button" class="sheet-close" id="sheetClose" aria-label="Close">×</button></div><div class="sheet-body" id="sheetBody"></div></dialog>
+<footer class="footer"><div class="wrap footer-row"><nav class="footer-links" aria-label="Learning footer"><a href="/Lessons/">Lessons</a><span aria-hidden="true"> · </span><a href="/resources/">Resources</a><span aria-hidden="true"> · </span><a href="/Matt-s-Apps-/">Apps</a><span aria-hidden="true"> · </span><a href="/privacy/">Privacy</a><span aria-hidden="true"> · </span><a href="https://www.madebymatt-play.uk/" rel="noopener">Made by Matt Play ↗</a></nav><div><p><strong>Made by Matt · Resources</strong></p><p><small>Learn • Build • Explore</small></p></div></div></footer>
 <script>
 (function(){
+'use strict';
 const $=s=>document.querySelector(s);
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const ACCENTS=['#2F8F7A','#C97F2E','#33608F','#7C5CB8','#B8547E','#3E8F55'];
-function accentFor(s){let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))>>>0;return ACCENTS[h%ACCENTS.length]}
-const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
-const TYPE_CANON={'lesson':'Lesson','interactive lesson':'Lesson','teacher':'Teacher tool','teacher tool':'Teacher tool','support':'Support','game':'Game','pupil':'Pupil resource','pupil resource':'Pupil resource','revision':'Revision','simulation':'Simulation','activity':'Activity'};
-const canonType=t=>TYPE_CANON[String(t||'').toLowerCase()]||'Resource';
-const ICONS=[[/chem/i,'beaker'],[/physic|intervention/i,'atom'],[/biolog/i,'leaf'],[/primary/i,'rocket'],[/humanit/i,'scroll'],[/art/i,'palette'],[/game/i,'pad'],[/trekker/i,'boot'],[/river/i,'wave'],[/pshe|asdan/i,'heart'],[/assembly/i,'mega'],[/vocational|pfa/i,'hammer'],[/tutor|kcsie/i,'shield'],[/cpd|planning/i,'clip'],[/local/i,'pin']];
-function iconFor(s){for(const[re,k]of ICONS)if(re.test(s))return k;return /interven/i.test(s)?'target':'star'}
-let ALL=[],SUB="",TYPE="",BROWSING=true,SORT="feat";
-function normLessons(l){return l.filter(r=>r.subject!=="Live Lessons").map(r=>({title:r.title||'Untitled',description:r.desc||'',subject:r.subject||'General',type:canonType(r.type),path:r.file?(/^https?:/.test(r.file)?r.file:'/Lessons/'+encodeURI(r.file)):null,tags:Array.isArray(r.keywords)?r.keywords:[],status:r.new?'New':'Published',popular:!!r.featured,year:r.year||'',added:r.added||'',accent:accentFor(r.subject||'General')}))}
-function normSite(l){return l.filter(r=>r.subject!=="Live Lessons").map(r=>({title:r.title||'Untitled',description:r.description||'',subject:r.subject||'General',type:canonType(r.type),path:r.path?(/^https?:/.test(r.path)?r.path:'/'+String(r.path).replace(/^\/+/,'')):null,tags:Array.isArray(r.tags)?r.tags:[],status:r.status||'Published',popular:!!r.featured,year:'',added:'',accent:r.accent||accentFor(r.subject||'General')}))}
-const SUITE="Art · Teesside Studio Suite";
-/* Teesside/latest first, legacy last — mirrors the Lesson Hub's browse order */
-const SUBJ_PRIORITY=[SUITE,"Humanities","BUILD Vocational & PfA","GROW Vocational & PfA","LAUNCH Vocational & PfA","Primary Science","Tutor Time · BV · BF · KCSIE"];
-const SUBJ_LEGACY=new Set(["Art"]);
-function subjOrder(keys){
-  const rank=s=>{const i=SUBJ_PRIORITY.indexOf(s);if(i>-1)return i;return SUBJ_LEGACY.has(s)?9999:1000;};
-  return keys.slice().sort((x,y)=>(rank(x)-rank(y))||x.localeCompare(y));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* ---- Appendix A §RESOURCES copy; <values> derived ---- */
+const COPY={unitPacks:n=>`${n} unit packs`,lessonsMeta:(n,ht)=>`${n} lessons · ${ht}`,delivery:'Delivery lessons →',whole:'Whole-school documents',docs:name=>`${name} documents`,planning:'Planning',evidence:'Evidence',deliverySec:'Delivery',packGroup:t=>`${t} · lesson pack`,openDelivery:n=>`Open the ${n} delivery lessons →`,opensAt:(s,p,h)=>`Opens the Lessons hub at ${s} · ${p} · ${h}.`,drift:'Built from an earlier revision of this lesson.',apps:n=>`${n} apps`,lessonsFound:n=>`${n} lessons`};
+/* ---- ported from Lessons assets/catalogue/hub.js (UX2 A2): CARDS, CARD_ORDER, HALF_TERMS, slugify, cardOf, tierOf, formatOf, fmtBytes, halfTermWindow ---- */
+const CARDS={'science':'Science','humanities-re':'Humanities & RE','art-studio':'Art Studio','lifeskills':'Lifeskills'};
+const CARD_ORDER=['science','humanities-re','art-studio','lifeskills'];
+const HALF_TERMS=['Autumn 1','Autumn 2','Spring 1','Spring 2','Summer 1','Summer 2'];
+const PATHWAYS=['BUILD','GROW','LAUNCH'];
+const FORMAT_LABEL={html:'Interactive',packs:'Editable packs',pdf:'PDF'};
+function slugify(s){return String(s||'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');}
+function cardOf(r){const s=String(r.subject||''),f=String(r.family||'');if(/science|biology|chemistry|physics/i.test(s))return 'science';if(/humanities|religio|\bRE\b|history|geography/i.test(s))return 'humanities-re';if(/\bart\b|arts award/i.test(s))return 'art-studio';if(/ASDAN|PSHE|FoodWise|D&T|life ?skills|Vocational|PfA/i.test(s+' '+f))return 'lifeskills';return 'x-'+slugify(s);}
+function tierOf(r){const f=r.file||r.url||'';if(/(?:^|\/)Build\//.test(f))return 'BUILD';if(/(?:^|\/)Grow\//.test(f))return 'GROW';if(/(?:^|\/)Launch\//.test(f))return 'LAUNCH';const base=f.split('/').pop().toUpperCase(),first=(f.split('/')[0]||'').toUpperCase();for(const t of PATHWAYS){if(base.indexOf(t+'_')===0||first.indexOf(t+'_')===0)return t;}const m=(r.title||'').match(/^(BUILD|GROW|LAUNCH)(?![A-Za-z])/);if(m)return m[1];if(/^BUILD(?![A-Za-z])/.test(r.subject||''))return 'BUILD';return null;}
+function ext(p){const m=String(p||'').split('?')[0].split('#')[0].match(/\.([a-z0-9]+)$/i);return m?m[1].toLowerCase():'';}
+function formatOf(r){if(r.kind==='pack')return 'packs';const e=ext(r.file||r.url);if(e==='pdf')return 'pdf';if(e==='pptx'||e==='docx')return 'packs';return 'html';}
+function fmtBytes(n){if(!(n>0))return '';if(n<1024)return `${n} B`;if(n<1048576)return `${Math.round(n/1024)} KB`;return `${(n/1048576).toFixed(n<10*1048576?1:0)} MB`;}
+function today(){return new Date().toISOString().slice(0,10);}
+function halfTermWindow(spine,day){if(!spine||!spine.blocks||!spine.weekStarts)return null;const iso=d=>d.toISOString().slice(0,10);const blocks=HALF_TERMS.map(l=>spine.blocks[l]).filter(Boolean).map(b=>({label:b.label,start:spine.weekStarts[String(b.abs[0])],lastWeek:spine.weekStarts[String(b.abs[1])]}));for(let i=0;i<blocks.length;i++){const b=blocks[i],next=blocks[i+1];const end=next?next.start:(()=>{const d=new Date(b.lastWeek+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+7);return iso(d);})();if(day>=b.start&&day<end)return {label:b.label,start:b.start,end,between:false};}const up=blocks.filter(b=>b.start>day)[0];return up?{label:up.label,start:up.start,end:up.start,between:true}:null;}
+function safeHref(v){const s=String(v==null?'':v).trim();if(!s||/^(?:javascript|data|vbscript):/i.test(s))return '#';if(/^https?:\/\//i.test(s))return encodeURI(s);if(!/^[a-z][a-z0-9+.-]*:/i.test(s)&&!/^\/\//.test(s))return encodeURI(s);return '#';}
+/* ---- state ---- */
+const S={rows:[],site:[],spine:null,sizes:{},apps:null,aliases:{},keys:[],docs:[],names:{}};
+const params=()=>new URLSearchParams(location.search);
+function setParam(k,v){const p=params();if(v)p.set(k,v);else p.delete(k);try{history.replaceState(null,'',location.pathname+(p.toString()?'?'+p.toString():'')+location.hash)}catch(_){}}
+const grab=(u,optional)=>{const s=window.MBM_STAMP?window.MBM_STAMP(u):{url:u,opts:{cache:'no-cache'}};return fetch(s.url,s.opts).then(r=>{if(!r.ok)throw new Error(u+' '+r.status);return r.json();}).catch(e=>{if(optional)return null;throw e;});};
+function nameOf(card){if(CARDS[card])return CARDS[card];return S.names[card]||card;}
+const lessonTitle=r=>String(r.title||'').replace(/\s*·\s*Companion pack\s*$/i,'');
+const roleName=f=>f.role==='lesson'?'Lesson':f.role==='slides'?'Slides':f.role==='teacher'?'Teacher':'Pupil';
+const isLesson=r=>String(r.type||'').toLowerCase()==='lesson';
+const isGame=r=>String(r.type||'').toLowerCase()==='game';
+const sizeOf=p=>S.sizes[p]?fmtBytes(S.sizes[p]):'';
+/* ---- derive: keys, documents, names ---- */
+function prepare(){
+  S.rows.forEach(r=>{r._card=cardOf(r);r._tier=tierOf(r);r._fmt=formatOf(r);r._path=r.file||r.url||'';r._href=/^https?:\/\//i.test(r._path)?r._path:'/Lessons/'+r._path;});
+  S.site.forEach(r=>{r._card=cardOf(r);r._tier=tierOf(r);r._fmt=r.path?formatOf({file:r.path}):'html';r._path=r.path||'';r._href=r.path?('/'+r.path.replace(/^\/+/,'')).replace(/\/index\.html$/,'/'):'';r._site=true;});
+  [...S.rows,...S.site].forEach(r=>{if(r._card.startsWith('x-')&&!S.names[r._card])S.names[r._card]=String(r.subject||r._card);});
+  const keyed=new Map();
+  for(const r of S.rows){if(isLesson(r)||isGame(r)||!r.halfTerm)continue;const id=[r._card,r._tier||'',r.halfTerm,r.unit||''].join('|');if(!keyed.has(id))keyed.set(id,{id,card:r._card,tier:r._tier,halfTerm:r.halfTerm,unit:r.unit||null,rows:[]});keyed.get(id).rows.push(r);}
+  const lessonsFor=k=>S.rows.filter(r=>isLesson(r)&&r._card===k.card&&r._tier===k.tier&&r.halfTerm===k.halfTerm&&(!k.unit||r.unit===k.unit));
+  const w=halfTermWindow(S.spine,today());S.current=w?w.label:null;
+  const cardIdx=c=>{const i=CARD_ORDER.indexOf(c);return i<0?CARD_ORDER.length:i;};
+  S.keys=[...keyed.values()].map(k=>({...k,lessons:lessonsFor(k),files:k.rows.flatMap(r=>(r.files||[]).length?r.files.map(f=>({...f,pack:r})):[{role:null,type:ext(r._path)||'html',path:r._path,pack:r}])}));
+  S.keys.sort((a,b)=>{const ca=a.halfTerm===S.current?-1:HALF_TERMS.indexOf(a.halfTerm),cb=b.halfTerm===S.current?-1:HALF_TERMS.indexOf(b.halfTerm);return ca-cb||cardIdx(a.card)-cardIdx(b.card)||nameOf(a.card).localeCompare(nameOf(b.card))||PATHWAYS.indexOf(a.tier)-PATHWAYS.indexOf(b.tier)||String(a.unit||'').localeCompare(String(b.unit||''));});
+  S.docs=[...S.rows.filter(r=>!isLesson(r)&&!isGame(r)&&!r.halfTerm),...S.site];
 }
-const PRINTPACK=new Set([SUITE,"Humanities","BUILD Vocational & PfA","GROW Vocational & PfA","LAUNCH Vocational & PfA"]);
-const FIC={screen:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 16v3M8.5 21h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-print:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V4h10v4M7 16h10v5H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><rect x="4" y="8" width="16" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>',
-tiers:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16h5v4H5zM9.5 10h5v10h-5zM14 4h5v16h-5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>',
-pad:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7.5" width="19" height="10" rx="5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10.2v4.6M5.7 12.5h4.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="15.6" cy="11" r="1.1" fill="currentColor"/><circle cx="18.2" cy="13.6" r="1.1" fill="currentColor"/></svg>',
-tab:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="18" r="1.1" fill="currentColor"/></svg>'};
-function isPack(r){return r.year==="2026-27"&&(r.type==="Lesson"||r.type==="Revision")&&PRINTPACK.has(r.subject)}
-function fmtIcons(r){const o=[];
-if(r.type==="Lesson"||r.type==="Revision")o.push([FIC.screen,"whiteboard slideshow"]);
-if(isPack(r)){o.push([FIC.print,"print pack inside the lesson"]);o.push([FIC.tiers,"three tiers"])}
-if(r.type==="Game")o.push([FIC.pad,"game"]);
-if(r.type==="Teacher tool"||r.type==="Pupil resource")o.push([FIC.tab,"interactive"]);
-return o.length?`<div class="rx-fmt">${o.map(x=>`<span title="${x[1]}" aria-label="${x[1]}" role="img">${x[0]}</span>`).join("")}</div>`:""}
-function actLabel(r){return {Lesson:"LAUNCH SLIDES →",Revision:"LAUNCH SLIDES →",Game:"PLAY →",Hub:"OPEN HUB →","Teacher tool":"OPEN TOOL →","Pupil resource":"OPEN APP →",Support:"OPEN PACK →"}[r.type]||"OPEN →"}
-function card(r){
-const kind=BROWSING?"":`<div class="rx-kind">${esc(r.type)} · ${esc(r.subject)}</div>`;
-const badge=r.status==="New"?'<span class="rx-badge new">New</span>':(BROWSING?"":`<span class="rx-badge">${esc(r.status)}</span>`);
-const act=r.path?`<a class="rx-go" href="${esc(r.path)}">${actLabel(r)}</a>`:'<span class="rx-badge">Coming soon</span>';
-return `<article class="rx-cardx" style="--accent:${esc(r.accent)}"><svg class="rx-ico" aria-hidden="true"><use href="#rxi-${iconFor(r.subject)}"/></svg>${kind}<h3>${esc(r.title)}</h3><p>${esc(r.description)}</p><div class="rx-foot">${badge}</div><div class="rx-actrow">${fmtIcons(r)}${act}</div></article>`}
-function suiteCallout(n){return `<div class="rx-callout"><span class="stamp">ARTS AWARD MAPPED ✓ · AQA UAS ALIGNED</span>
-<h3>Teesside Art Studio Suite</h3>
-<p>The full-term art programme: ${n} studio lessons across BUILD (Explore), GROW (Bronze) and LAUNCH (Silver) — every one a whiteboard slideshow with three tiers and a print pack off the title slide.</p>
-<div class="acts"><button type="button" id="rxSuiteBtn">Browse the suite</button><a href="/Lessons/">Open the Lesson Hub →</a></div></div>`}
-function chips(){
-const sc={},tc={};ALL.forEach(r=>{sc[r.subject]=(sc[r.subject]||0)+1;tc[r.type]=(tc[r.type]||0)+1});
-const mk=(label,val,on,key)=>`<button class="rx-chip" data-${key}="${esc(val)}" aria-pressed="${on?'true':'false'}">${esc(label)}</button>`;
-$("#rxSubs").innerHTML=mk(`All subjects (${ALL.length})`,"",!SUB,"sub")+subjOrder(Object.keys(sc)).map(s=>mk(`${s} (${sc[s]})`,s,SUB===s,"sub")).join("");
-$("#rxTypes").innerHTML=mk("All types","",!TYPE,"type")+Object.keys(tc).sort().map(t=>mk(`${t} (${tc[t]})`,t,TYPE===t,"type")).join("");
-}
+/* ---- render ---- */
+function fileChip(f){const dl=f.type!=='pdf'&&f.type!=='html';const name=f.role?`${lessonTitle(f.pack)}`:String(f.pack.title||'');return `<a class="chip" href="${esc(safeHref('/Lessons/'+f.path))}"${dl?' download':''}>${esc(name)} · ${esc(String(f.type).toUpperCase())}</a>`;}
+function unitCard(k){const label=k.unit?`${k.halfTerm} · ${k.unit}`:k.halfTerm;const subject=`/Lessons/subject.html?subject=${encodeURIComponent(k.card)}${k.tier?'&pathway='+k.tier:''}${k.unit?'&unit='+encodeURIComponent(k.unit):''}`;const chips=k.files.slice(0,3).map(fileChip).join('')+(k.files.length>3?`<button type="button" class="chip more" data-key="${esc(k.id)}" aria-haspopup="dialog">+${k.files.length-3}</button>`:`<button type="button" class="chip more" data-key="${esc(k.id)}" aria-haspopup="dialog">Planning and evidence →</button>`);
+  return `<article class="rx-cardx unit ${esc(CARDS[k.card]?k.card:'extra')}" data-key="${esc(k.id)}"><div class="chips"><span class="chip label">${esc(nameOf(k.card))}</span>${k.tier?`<span class="chip label tier">${esc(k.tier)}</span>`:''}</div><h3>${esc(label)}</h3>${k.lessons.length?`<p class="meta">${esc(COPY.lessonsMeta(k.lessons.length,k.halfTerm))}</p>`:''}<div class="chips">${chips}</div>${k.lessons.length?`<a class="go" href="${esc(subject)}">${esc(COPY.delivery)}</a>`:''}</article>`;}
+function docRow(r){const fmt=r._site&&!r._href?'':r._fmt;const link=r._href?`<a href="${esc(safeHref(r._href))}"${r._fmt==='packs'?' download':''}>${esc(r.title)}</a>`:`<span class="status">${esc(r.title)}${r.status?` · ${esc(r.status)}`:''}</span>`;return `<li class="rx-cardx doc">${link}${fmt?`<span class="badge">${esc(FORMAT_LABEL[fmt]||fmt)}</span>`:''}${r._tier?`<span class="chip label tier">${esc(r._tier)}</span>`:''}<span class="badge">${esc(r.family||r.subject||'')}</span></li>`;}
+/* Multi-word search: every word of the query must appear (the old page's documented rule). */
+function hay(parts){return parts.join(' ').toLowerCase();}
+function wordsMatch(text,q){const words=q.split(/\s+/).filter(Boolean);return !words.length||words.every(w=>text.includes(w));}
+function matches(r,q){return !q||wordsMatch(hay([r.title,r.desc,r.description,r.subject,r.family,r.halfTerm,r.unit,...(r.keywords||[]),...(r.tags||[])]),q);}
 function render(){
-const q=$("#rxSearch").value.toLowerCase();
-const a=ALL.filter(r=>(!q||[r.title,r.description,r.subject,r.type,...(r.tags||[])].join(' ').toLowerCase().includes(q))&&(!SUB||r.subject===SUB)&&(!TYPE||r.type===TYPE));
-$("#rxCount").textContent=`Showing ${a.length} of ${ALL.length} resources`;
-const browsing=!q&&!SUB&&!TYPE;BROWSING=browsing;
-updateCopy();
-if(SORT==="az")a.sort((x,y)=>x.title.localeCompare(y.title));
-else if(SORT==="new")a.sort((x,y)=>String(y.added).localeCompare(String(x.added)));
-else a.sort((x,y)=>(y.popular-x.popular)||((y.status==="New")-(x.status==="New"))||x.title.localeCompare(y.title));
-if(!a.length){const act=!!(q||SUB||TYPE);$("#rxOut").innerHTML='<p class="rx-none">No matching resources — try fewer words.'+(act?' <button type="button" id="rxClear" class="rx-clear">Clear filters</button>':'')+'</p>';return}
-if(browsing){
-const pop=a.filter(r=>r.popular).slice(0,4);
-const bySub={};a.forEach(r=>{(bySub[r.subject]=bySub[r.subject]||[]).push(r)});
-$("#rxOut").innerHTML=(pop.length?`<section class="rx-sec"><h2>Start here</h2></section><div class="rx-grid">${pop.map(card).join('')}</div>`:'')+
-subjOrder(Object.keys(bySub)).map(s=>`<section class="rx-sec"><h2>${esc(s)} · ${bySub[s].length}</h2></section>${s===SUITE?suiteCallout(bySub[s].length):""}<div class="rx-grid">${bySub[s].map(card).join('')}</div>`).join('');
-}else{
-$("#rxOut").innerHTML=(SUB===SUITE&&!q&&!TYPE?suiteCallout(a.length):"")+`<section class="rx-sec"><h2>Results</h2></section><div class="rx-grid">${a.map(card).join('')}</div>`;
-}}
-/* see tools/stamp-data.py — stamped where this repo owns the file, revalidated where it does not */
-const grab=u=>{const s=window.MBM_STAMP?window.MBM_STAMP(u):{url:u,opts:{cache:"no-cache"}};
-  return fetch(s.url,s.opts).then(r=>{if(!r.ok)throw 0;return r.json()}).catch(()=>[])};
-Promise.all([grab('/Lessons/resources.json'),grab('/data/resources.json')]).then(([les,site])=>{
-ALL=[...normLessons(Array.isArray(les)?les:[]),...normSite(Array.isArray(site)?site:[])];
-if(!ALL.length){$("#rxCount").textContent="Couldn't load the catalogue — please refresh.";return}
-const P=new URLSearchParams(location.search),pq=P.get('q'),ps=P.get('subject'),pt=P.get('type');
-if(pq)$("#rxSearch").value=pq;
-if(ps&&ALL.some(r=>r.subject===ps))SUB=ps;
-if(pt){const ct=canonType(pt);if(ALL.some(r=>r.type===ct))TYPE=ct;}
-chips();render()});
-$("#rxOut").addEventListener("click",e=>{if(!e.target||e.target.id!=="rxClear")return;$("#rxSearch").value="";SUB="";TYPE="";chips();render();try{$("#rxSearch").focus()}catch(x){}});
-$("#rxSubs").addEventListener("click",e=>{const b=e.target.closest("[data-sub]");if(!b)return;SUB=(b.dataset.sub===SUB)?"":b.dataset.sub;chips();render()});
-$("#rxTypes").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(!b)return;TYPE=(b.dataset.type===TYPE)?"":b.dataset.type;chips();render()});
-$("#rxSearch").addEventListener("input",render);
-$("#rxSort").addEventListener("change",function(){SORT=this.value;render()});
-function currentFilterURL(){const p=new URLSearchParams();const q=$("#rxSearch").value.trim();if(SUB)p.set('subject',SUB);if(TYPE)p.set('type',TYPE);if(q)p.set('q',q);const qs=p.toString();return location.origin+location.pathname+(qs?'?'+qs:'');}
-function updateCopy(){const btn=$("#rxCopy");if(!btn)return;const active=!!($("#rxSearch").value.trim()||SUB||TYPE);btn.hidden=!active;}
-function fallbackCopy(url,btn){var inp=document.createElement('input');inp.type='text';inp.readOnly=true;inp.value=url;inp.className='rx-copyfallback';inp.setAttribute('aria-label','Filter link — press Ctrl+C to copy');btn.parentNode.insertBefore(inp,btn.nextSibling);try{inp.focus();inp.select();inp.setSelectionRange(0,url.length);}catch(e){}btn.textContent='Press Ctrl+C';setTimeout(function(){btn.textContent='🔗 Copy link';try{inp.parentNode.removeChild(inp)}catch(e){}},4000);}
-$("#rxCopy").addEventListener("click",function(){const url=currentFilterURL();const btn=this;const ok=function(){btn.textContent='Copied ✓';setTimeout(function(){btn.textContent='🔗 Copy link';},2000);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(ok).catch(function(){fallbackCopy(url,btn);});}else{fallbackCopy(url,btn);}});
-document.addEventListener("click",e=>{if(e.target&&e.target.id==="rxSuiteBtn"){SUB=SUITE;TYPE="";$("#rxSearch").value="";chips();render()}});
-function stickTop(){const h=document.querySelector(".header");const el=document.getElementById("rxSticky");if(h&&el)el.style.top=(h.offsetHeight-1)+"px"}
-stickTop();window.addEventListener("resize",stickTop);
+  const p=params();const q=(p.get('q')||'').toLowerCase().trim(),sub=p.get('subject')||'',pw=(p.get('pathway')||'').toUpperCase();
+  $('#rxSearch').value=p.get('q')||'';$('#rxSubs').value=sub;$('#rxPath').value=PATHWAYS.includes(pw)?pw:'';
+  const keys=S.keys.filter(k=>(!sub||k.card===sub)&&(!pw||k.tier===pw)&&(!q||k.rows.some(r=>matches(r,q))||matches({title:`${nameOf(k.card)} ${k.tier||''} ${k.halfTerm} ${k.unit||''}`},q)));
+  $('#unitGrid').innerHTML=keys.map(unitCard).join('');
+  $('#rxCount').textContent=COPY.unitPacks(keys.length);
+  $('#orderNote').hidden=!(S.current&&keys.some(k=>k.halfTerm===S.current));
+  $('#units').hidden=!keys.length;
+  const docs=S.docs.filter(r=>(!sub||r._card===sub)&&(!pw||r._tier===pw)&&matches(r,q));
+  const groups=new Map();for(const r of docs){const g=CARDS[r._card]?r._card:'whole';if(!groups.has(g))groups.set(g,new Map());const fam=String(r.family||r.subject||'');if(!groups.get(g).has(fam))groups.get(g).set(fam,[]);groups.get(g).get(fam).push(r);}
+  const order=[...CARD_ORDER.filter(c=>groups.has(c)),...(groups.has('whole')?['whole']:[])];
+  $('#documents').innerHTML=order.map(g=>{const fams=[...groups.get(g).entries()].sort((a,b)=>a[0].localeCompare(b[0]));return `<div class="doc-group" id="docs-${esc(g)}"><h2>${esc(g==='whole'?COPY.whole:COPY.docs(nameOf(g)))}</h2>${fams.map(([fam,rs])=>`<h3>${esc(fam)}</h3><ul>${rs.sort((a,b)=>String(a.title).localeCompare(String(b.title))).map(docRow).join('')}</ul>`).join('')}</div>`;}).join('');
+  $('#documents').hidden=!docs.length;
+  const lessons=q?S.rows.filter(r=>isLesson(r)&&(!sub||r._card===sub)&&(!pw||r._tier===pw)&&matches(r,q)):[];
+  const apps=q&&S.apps?S.apps.filter(a=>{const al=S.aliases['/Matt-s-Apps-/'+a.f]||{};return wordsMatch(hay([a.n,a.d,a.cat,al.description,...(al.tags||[])]),q);}):[];
+  $('#lessonList').innerHTML=lessons.map(r=>`<li class="rx-cardx doc"><a href="${esc(safeHref(r._href))}">${esc(r.title)}</a><span class="badge">${esc(FORMAT_LABEL[r._fmt])}</span>${r._tier?`<span class="chip label tier">${esc(r._tier)}</span>`:''}<span class="badge">${esc(r.subject)}</span></li>`).join('')+apps.map(a=>`<li class="rx-cardx doc"><a href="${esc(safeHref('/Matt-s-Apps-/'+a.f))}">${esc(a.n)}</a><span class="badge">${esc(a.cat)}</span></li>`).join('');
+  $('#lessonsCount').textContent=COPY.lessonsFound(lessons.length)+(apps.length?` · ${COPY.apps(apps.length)}`:'');
+  $('#lessons').hidden=!(lessons.length||apps.length);
+  $('#empty').hidden=!!(keys.length||docs.length||lessons.length||apps.length);
+}
+function fillFilters(){const cards=[...new Set([...S.keys.map(k=>k.card),...S.docs.map(r=>r._card)])].sort((a,b)=>{const i=CARD_ORDER.indexOf(a),j=CARD_ORDER.indexOf(b);return (i<0?9:i)-(j<0?9:j)||nameOf(a).localeCompare(nameOf(b));});$('#rxSubs').innerHTML='<option value="">All subjects</option>'+cards.map(c=>`<option value="${esc(c)}">${esc(nameOf(c))}</option>`).join('');const tiers=PATHWAYS.filter(t=>S.keys.some(k=>k.tier===t)||S.docs.some(r=>r._tier===t));$('#rxPath').innerHTML='<option value="">All pathways</option>'+tiers.map(t=>`<option value="${t}">${t}</option>`).join('');}
+/* ---- sheet: Planning / Evidence / Delivery for one key; focus trapped by the modal, returns to the opener ---- */
+function openSheet(id,opener){const k=S.keys.find(x=>x.id===id);if(!k)return;const dlg=$('#rxSheet');
+  $('#sheet-title').textContent=`${nameOf(k.card)}${k.tier?' · '+k.tier:''} · ${k.halfTerm}${k.unit?' · '+k.unit:''}`;
+  const groupBy=list=>{const m=new Map();for(const f of list){const t=f.role?COPY.packGroup(lessonTitle(f.pack)):String(f.pack.title||'');if(!m.has(t))m.set(t,{pack:f.pack,files:[]});m.get(t).files.push(f);}return m;};
+  const fileLi=f=>{const dl=f.type!=='pdf'&&f.type!=='html';const name=f.role?roleName(f):String(f.pack.title||'');const sz=sizeOf(f.path);return `<li><a href="${esc(safeHref('/Lessons/'+f.path))}"${dl?' download':''}>${esc(name)} · ${esc(String(f.type).toUpperCase())}</a>${sz?` <span class="size">· ${esc(sz)}</span>`:''}</li>`;};
+  const section=(title,list)=>{if(!list.length)return '';const m=groupBy(list);return `<section class="sheet-sec"><h3>${esc(title)}</h3>${[...m.entries()].map(([t,g])=>`<h4>${esc(t)}</h4>${g.pack.packRevisionDrift?`<p class="drift">${esc(COPY.drift)}</p>`:''}<ul>${g.files.map(fileLi).join('')}</ul>`).join('')}</section>`;};
+  const planning=k.files.filter(f=>!f.role||f.role==='lesson'||f.role==='slides'||f.role==='teacher'),evidence=k.files.filter(f=>f.role==='pupil');
+  const subject=`/Lessons/subject.html?subject=${encodeURIComponent(k.card)}${k.tier?'&pathway='+k.tier:''}${k.unit?'&unit='+encodeURIComponent(k.unit):''}`;
+  const delivery=k.lessons.length?`<section class="sheet-sec"><h3>${esc(COPY.deliverySec)}</h3><ul>${k.lessons.map(r=>`<li><a href="${esc(safeHref(r._href))}">${esc(r.title)}</a></li>`).join('')}</ul><p class="sheet-lesson"><a class="go" href="${esc(subject)}">${esc(COPY.openDelivery(k.lessons.length))}</a><span class="grey">${esc(COPY.opensAt(nameOf(k.card),k.tier||'',k.halfTerm))}</span></p></section>`:'';
+  $('#sheetBody').innerHTML=section(COPY.planning,planning)+section(COPY.evidence,evidence)+delivery;
+  dlg._opener=opener;try{dlg.showModal();}catch(_){dlg.setAttribute('open','');}$('#sheetClose').focus();}
+function closeSheet(){const dlg=$('#rxSheet');if(dlg.open)dlg.close();}
+$('#rxSheet').addEventListener('close',()=>{const o=$('#rxSheet')._opener;if(o&&o.isConnected)o.focus();});
+$('#sheetClose').addEventListener('click',closeSheet);
+$('#rxSheet').addEventListener('click',e=>{if(e.target===$('#rxSheet'))closeSheet();});
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.chip.more[data-key]');if(b){openSheet(b.dataset.key,b);}});
+/* ---- controls ---- */
+$('#rxSearch').addEventListener('input',()=>{setParam('q',$('#rxSearch').value.trim());render();});
+$('#rxSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();setParam('q',$('#rxSearch').value.trim());render();}});
+$('#rxSubs').addEventListener('change',()=>{setParam('subject',$('#rxSubs').value);render();});
+$('#rxPath').addEventListener('change',()=>{setParam('pathway',$('#rxPath').value);render();});
+$('#rxClear').addEventListener('click',()=>{setParam('q','');setParam('subject','');setParam('pathway','');setParam('type','');render();$('#rxSearch').focus();});
+/* ---- load ---- */
+/* The education build's alias record (/data/resource-collections.json) is read for the app search
+   only — its documented aliases (e.g. "PDF generator" for PDF Studio) — never as a listing. */
+Promise.all([grab('/Lessons/resources.json'),grab('/data/resources.json',true),grab('/Lessons/data/calendar-spine.json',true),grab('/Lessons/data/resource-sizes.json',true),grab('/Matt-s-Apps-/apps.json',true),grab('/data/resource-collections.json',true)]).then(([les,site,spine,sizes,apps,aliases])=>{
+  if(Array.isArray(aliases))aliases.forEach(e=>{if(e&&typeof e.path==='string'&&e.path.startsWith('/Matt-s-Apps-/'))S.aliases[e.path]={description:e.description||'',tags:Array.isArray(e.tags)?e.tags:[]};});
+  if(!Array.isArray(les))throw new Error('Invalid resources.json');
+  S.rows=les.filter(r=>!isGame(r));S.site=Array.isArray(site)?site:[];S.spine=spine&&spine.weekStarts&&spine.blocks?spine:null;S.sizes=sizes&&sizes.sizes?sizes.sizes:{};
+  if(apps&&Array.isArray(apps.spaces)){S.apps=apps.spaces.flatMap(s=>(s.items||[]).map(i=>({...i,cat:s.cat})));$('#appsCount').textContent=COPY.apps(S.apps.length);}
+  document.querySelectorAll('[data-kind-note]').forEach(el=>{el.textContent=window.MBM_KIND_NOTE||'';});
+  prepare();fillFilters();render();
+}).catch(err=>{$('#rxCount').textContent='';$('#empty').hidden=false;console.error(err);});
 })();
 </script>
-<script src="../app.js"></script><script defer src="/theme.js"></script>
-<script defer src="/assets/mbm-platform.js"></script>
 </body></html>

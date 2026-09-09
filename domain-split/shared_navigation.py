@@ -2,6 +2,17 @@
 
 Source activities and downloads are never passed through this transform.
 The disclosure is native HTML: navigation remains usable without JavaScript.
+
+UX2 B1: the component is Appendix A §MENU exactly — a "Menu" title with a
+44px close control, three groups (Learning · Who are you here for? · Your
+account), no deep links, and "Made by Matt Play ↗" last as a plain link (the
+education site links to Play; it never loads it). Audience rows are read from
+data/audience-homepages.json (label and route, record order); the one route
+the record does not hold, /for/governors-trustees/, is the build's own page
+and is appended from the same constant that writes it. Pupil surfaces render
+the pupil subset of the SAME component. The header carries the mark, the
+wordmark, a search control and the menu — no tagline: "Learn • Build •
+Explore" is the footer's line, once per page.
 """
 from html import escape
 from html.parser import HTMLParser
@@ -10,19 +21,58 @@ from pathlib import Path
 import json
 import re
 import shutil
+import sys
 
 HERE = Path(__file__).resolve().parent
+
+
+def build_audiences():
+    """education_expansion.AUDIENCES, imported at the point of use.
+
+    The governors row is read from that constant so the menu never types its
+    route, and this is the only thing this module wants from it. Importing it
+    at module scope made two problems. The builders run as scripts from this
+    directory, so the sibling name resolves for them; tools/test_published_site.py
+    loads this file by path to exercise the real header renderer rather than a
+    copy of it, and nothing puts this directory on that loader's path. And
+    education_expansion imports lxml for its own HTML work, which a navigation
+    renderer has no business requiring - the professional-site-design-audit job
+    installs no lxml, so header() became unreachable there.
+
+    The directory is added to sys.path rather than loading the file by path, so
+    there stays exactly ONE education_expansion module object; a second one
+    could drift from the builders'.
+    """
+    if str(HERE) not in sys.path:
+        sys.path.insert(0, str(HERE))
+    from education_expansion import AUDIENCES
+    return AUDIENCES
+
 PLAY = 'https://www.madebymatt-play.uk/'
+MENU_TITLE = 'Menu'
+GROUP_LEARNING = 'Learning'
+GROUP_WHO = 'Who are you here for?'
+GROUP_ACCOUNT = 'Your account'
+PLAY_LABEL = 'Made by Matt Play ↗'
 LEARNING = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'),
-            ('/Matt-s-Apps-/', 'Apps & tools'), ('/tools/', 'Teacher tools')]
-AUDIENCE_LABELS = [('teachers', 'Teachers'), ('pupils', 'Pupils'),
-                   ('parents', 'Parents & carers'), ('schools', 'Schools & specialist settings'),
-                   ('trusts', 'Academy trusts'), ('councils', 'Local authorities'),
-                   ('partners', 'Education partners')]
+            ('/Matt-s-Apps-/', 'Apps & tools'), ('/Lessons/primary/', 'Primary lessons')]
+LEARNING_PUPIL = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'), ('/Lessons/primary/', 'Primary lessons')]
+ACCOUNT = [('/account/', 'Account and members'), ('/mailing-list/', 'Teacher updates'),
+           ('/privacy/', 'Privacy and statistics')]
+ACCOUNT_SHARED = [('/privacy/', 'Privacy and statistics')]
 SITE_PAGES = ['index.html', 'main/index.html', 'account/index.html',
               'members/index.html', 'mailing-list/index.html', 'privacy/index.html',
               'stats/index.html', 'owner/stats/index.html', 'tools/index.html',
-              'resources/index.html', 'teach/index.html', 'education-hub/index.html', 'stats/on-this-device/index.html']
+              'resources/index.html', 'teach/index.html', 'education-hub/index.html', 'stats/on-this-device/index.html',
+              'commission/index.html']
+# The on-page search control the header's search icon jumps to. A page whose
+# control is absent falls back to the Resources search (asserted at build).
+SEARCH_CONTROLS = {'/': 'home-resource-query', '/main/': 'home-resource-query', '/for/teachers/': 'teachers-q',
+                   '/for/pupils/': 'pupils-q', '/resources/': 'rxSearch', '/Lessons/': 'search',
+                   '/Matt-s-Apps-/': 'search', '/tools/': 'tq', '/teach/': 'teach-search',
+                   '/education-hub/': 'hub-search', '/for/governors-trustees/': 'gv-search',
+                   '/Lessons/primary/': 'primary-search'}
+SEARCH_FALLBACK = '/resources/#rxSearch'
 
 
 class ScriptSources(HTMLParser):
@@ -37,7 +87,25 @@ def has_reading_theme(text):
     return any(urlsplit(src).path.rsplit('/',1)[-1] in {'theme.js','mbm-theme.js'} for src in parser.sources)
 
 
-def header(route, starting, adult=False, pupil=False, theme=False, primary=False, compact=False):
+def audience_rows(site_source):
+    """(route, label) for every audience, in record order; governors last.
+
+    The record (data/audience-homepages.json) owns seven audiences. The
+    governors page exists only in this build (education_expansion.AUDIENCES);
+    it is appended from that constant, read through build_audiences(), so the
+    menu never types its route.
+    """
+    audiences = json.loads((site_source / 'data/audience-homepages.json').read_text())['audiences']
+    rows = [(audience['route'], audience['label']) for audience in audiences.values()]
+    held = {route for route, _ in rows}
+    for slug, label, _ in build_audiences():
+        route = '/for/' + slug + '/'
+        if route not in held:
+            rows.append((route, label))
+    return rows
+
+
+def header(route, audiences, adult=False, pupil=False, theme=False, primary=False, search=SEARCH_FALLBACK):
     def link(item, remember=False):
         href, label = item
         current = ' aria-current="page"' if href == route and '?' not in href else ''
@@ -45,47 +113,38 @@ def header(route, starting, adult=False, pupil=False, theme=False, primary=False
         return '<a href="' + escape(href, quote=True) + '"' + current + remember + '>' + escape(label) + '</a>'
 
     def group(title, items):
-        return '<section class="mbm-menu-group"><h2>' + title + '</h2>' + ''.join(link(x, primary and x[0] == '/Lessons/') for x in items) + '</section>'
+        return '<section class="mbm-menu-group"><h2>' + escape(title) + '</h2>' + ''.join(link(x, primary and x[0] == '/Lessons/') for x in items) + '</section>'
 
-    learning = LEARNING if not pupil else LEARNING[:2]
-    shortcuts = [('/Lessons/primary/', 'Primary lessons'),
-                 ('/Lessons/?view=saved', 'Saved lessons'),
-                 ('/Lessons/?view=recommended', 'Recommended versions')]
-    if adult:
-        shortcuts += [('/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/index.html', 'Cover teaching packs'),
-                      ('/Matt-s-Apps-/PDF_Studio.html', 'PDF Studio'),
-                      ('/Lessons/?subject=ASDAN%20%26%20life%20skills&year=all', 'ASDAN learning resources'),
-                      ('/teach/', 'Teaching hub'), ('/education-hub/', 'Education Hub')]
-    groups = group('Learning', learning + shortcuts)
-    groups += group('Starting points', starting if not pupil else [starting[0], next(x for x in starting if x[0] == route)])
-    personal = [('/account/', 'Account'), ('/members/', 'Members'), ('/mailing-list/', 'Teacher updates')] if adult else []
-    groups += group('More from Matt', personal + [('/stats/', 'Shared activity'), ('/privacy/', 'Privacy & statistics choices'), (PLAY, 'Made by Matt Play ↗')])
+    learning = LEARNING_PUPIL if pupil else LEARNING
+    who = [row for row in audiences if row[0] == '/for/pupils/'] if pupil else list(audiences)
+    account = ACCOUNT if adult else ACCOUNT_SHARED
+    groups = group(GROUP_LEARNING, learning) + group(GROUP_WHO, who) + group(GROUP_ACCOUNT, account)
     if theme:
         groups += '<details class="mbm-menu-display"><summary>Display options</summary><div data-mbm-theme-slot></div></details>'
-    classes = 'mbm-unified-header'
-    quick = '' if compact else ('<nav class="mbm-unified-quick" aria-label="Quick navigation">' +
-                               ''.join(link(x, primary and i == 0) for i, x in enumerate(learning)) + '</nav>')
-    return ('<header class="' + classes + '" data-mbm-navigation="education">'
+    groups += '<a class="mbm-menu-play" href="' + PLAY + '" rel="noopener">' + escape(PLAY_LABEL) + '</a>'
+    return ('<header class="mbm-unified-header" data-mbm-navigation="education">'
             '<div class="mbm-unified-bar"><a class="mbm-unified-brand" href="/">'
             '<img src="/assets/brand/approved-mark.jpg" width="44" height="44" alt="">'
-            '<span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a>'
-            + quick +
+            '<span><strong>MADE BY MATT</strong></span></a>'
+            '<a class="mbm-unified-search" href="' + escape(search, quote=True) + '" aria-label="Search">'
+            '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></a>'
             '<details class="mbm-unified-menu"><summary aria-controls="mbm-navigation-panel">'
-            '<span class="mbm-menu-icon" aria-hidden="true"></span>Menu</summary>'
-            '<nav class="mbm-unified-panel" id="mbm-navigation-panel" aria-label="Site menu">' +
+            '<span class="mbm-menu-icon" aria-hidden="true"></span>' + MENU_TITLE + '</summary>'
+            '<nav class="mbm-unified-panel" id="mbm-navigation-panel" aria-label="Site menu">'
+            '<div class="mbm-menu-head"><p class="mbm-menu-title">' + MENU_TITLE + '</p>'
+            '<button type="button" class="mbm-menu-close" aria-label="Close menu"><span aria-hidden="true">×</span></button></div>' +
             groups + '</nav></details></div></header>')
 
 
 def refresh(output, site_source):
     site = output / 'education-site'
     audiences = json.loads((site_source / 'data/audience-homepages.json').read_text())['audiences']
-    starting = [('/', 'Homepage')] + [(audiences[key]['route'], label) for key, label in AUDIENCE_LABELS]
-    starting.append(('/for/governors-trustees/', 'Governors & trustees'))
+    rows = audience_rows(site_source)
     adult_pages = {x['page'] for x in json.loads((site_source / 'data/adult-surfaces.json').read_text())['adultSurfaces']}
     # The published learning homepage supersedes the old source chooser. These
     # generated adult front doors already expose their account links explicitly.
-    adult_pages.update({'index.html', 'for/governors-trustees/index.html', 'owner/stats/index.html'})
-    site_pages = SITE_PAGES + [route.strip('/') + '/index.html' for route, _ in starting[1:]]
+    adult_pages.update({'index.html', 'for/governors-trustees/index.html', 'owner/stats/index.html', 'commission/index.html'})
+    site_pages = SITE_PAGES + [route.strip('/') + '/index.html' for route, _ in rows]
     pages = [(site / p, '/' + p.removesuffix('index.html'), p in adult_pages) for p in site_pages]
     pages += [(output / 'education-lessons/index.html', '/Lessons/', True),
               (output / 'education-lessons/primary/index.html', '/Lessons/primary/', False),
@@ -103,16 +162,17 @@ def refresh(output, site_source):
         pages.append((pack_hub, pack_route, True))
         inserted.add(pack_route)
     changed = []
+    searches = {}
     for path, route, adult in pages:
         if not path.is_file():
             raise ValueError('Missing navigation surface: ' + str(path))
         text = path.read_text()
         theme = has_reading_theme(text)
-        # Keep the existing visible learning-area row without duplicating it
-        # inside the desktop masthead. All destinations remain in the Menu.
-        compact = bool(re.search(r'class="[^"\n]*\b(?:collection-nav|ad-nav)\b', text))
-        replacement = header(route, starting, adult, route == audiences['pupils']['route'], theme,
-                             route == '/Lessons/primary/', compact)
+        control = SEARCH_CONTROLS.get(route)
+        search = '#' + control if control and ('id="' + control + '"') in text else SEARCH_FALLBACK
+        searches[route] = search
+        replacement = header(route, rows, adult, route == audiences['pupils']['route'], theme,
+                             route == '/Lessons/primary/', search)
         if route in inserted:
             # These landings use a content header for their heading and Open
             # action. Add navigation before it without deleting those controls.
@@ -131,4 +191,7 @@ def refresh(output, site_source):
         changed.append(route)
     for asset in ['shared-navigation.css', 'shared-navigation.js']:
         shutil.copyfile(HERE / asset, site / 'assets' / asset)
-    return {'routes': changed, 'native_disclosure': True}
+    return {'routes': changed, 'native_disclosure': True, 'audience_rows': rows,
+            'governors_from_record': any(r[0] == '/for/governors-trustees/' for r in
+                                         [(a['route'], a['label']) for a in audiences.values()]),
+            'search_controls': searches}

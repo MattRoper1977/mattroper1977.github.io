@@ -529,11 +529,11 @@
         },
         {
           "id": "ux2-e-remaster-2026-09-08",
-          "reviewed_commit": "ded83817513b07064a06bfda7a46f2c32b93c561",
-          "git_blob": "c4d87b6ca42ff18f0895095f81576329f494e63a",
-          "source_sha256": "c10d54075f6c401ff5e606c76827a016f0d91111f8bc2f0f4a6fdb75404c50ec",
-          "published_sha256": "6b5e75e4422794dc49be54458e0a5d82a74ad49f79f86c35c207925c2766cf2f",
-          "approval": "UX2 lane E: One Guy remaster, \"The Last Signal\" chapter, rebuilt from Lessons main with the collection transform (tools/ux2/remaster_transforms/ on the Lessons branch). Collection acceptance suite and mutation control on the landed bytes, verify_axiomshift ALL GREEN where PR-gated, save compatibility both directions, 390x844 boot. Cross-domain browser/Play-pin checks not run here."
+          "reviewed_commit": "ff6d002c998ee5f4ce7d72763d3590f1599412c4",
+          "git_blob": "274f5bc9fe49ec78cf9f5af754fb39995c1af883",
+          "source_sha256": "79d6bc7596bd0d4fb0074dde2dd50ccf8039cc21243a33f4a4c1a76965b822b6",
+          "published_sha256": "4cfc8b57e506be923f26c1ff202e6213c598c3dfc00f353800a3cf62e385fb6b",
+          "approval": "UX2 lane E: One Guy remaster, \"The Last Signal\" chapter, rebuilt from Lessons main with the collection transform (tools/ux2/remaster_transforms/ on the Lessons branch). Collection acceptance suite and mutation control on the landed bytes, verify_axiomshift ALL GREEN where PR-gated, save compatibility both directions, 390x844 boot. Cross-domain browser/Play-pin checks not run here. Re-cut at ff6d002: the remaster's signalStore rename had reached inside the stamped inline-exit region, leaving the estate with two variants of a platform control that must be byte-identical, and making that control read a cached mbm_audience_view rather than the live one. The region is restored to the estate's exact bytes; the game's own storage wrapper is untouched outside it."
         }
       ]
     },
