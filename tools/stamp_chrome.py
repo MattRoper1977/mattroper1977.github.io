@@ -71,12 +71,23 @@ GENERATED = ("for/", "asdan/", "uas/")
 
 # name -> (open marker, close marker, regex that finds the unmarked fragment)
 FRAGMENTS = {
+    "tokens": (
+        "<!-- mbm-chrome:tokens -->",
+        "<!-- /mbm-chrome:tokens -->",
+        # Absent everywhere today, so this one is INSERTED rather than marked in
+        # place. It is the only region allowed to appear from nothing, and it
+        # adds no anchor, so the navigation census is untouched.
+        None,
+    ),
     "menu": (
         "<!-- mbm-chrome:menu -->",
         "<!-- /mbm-chrome:menu -->",
         re.compile(r"""<button\b[^>]*class=["'][^"']*\bmenu\b[^"']*["'][^>]*>.*?</button>""", re.S),
     ),
 }
+
+# Where an inserted region goes, and the marker it must sit before.
+INSERT_BEFORE = {"tokens": "</head>"}
 
 
 def fragment(name: str) -> str:
@@ -120,6 +131,17 @@ def apply(page: Path, check: bool) -> list[str]:
                     problems.append(f"{rel}: {name} region differs from the template at {TEMPLATE_PIN}")
                 else:
                     text = text[:start] + want + text[end + len(close_marker) :]
+            continue
+
+        if finder is None:
+            anchor = INSERT_BEFORE[name]
+            if anchor not in text:
+                problems.append(f"{rel}: no {anchor} to insert {name} before")
+                continue
+            if check:
+                problems.append(f"{rel}: {name} is not marked yet")
+                continue
+            text = text.replace(anchor, want + "\n" + anchor, 1)
             continue
 
         match = finder.search(text)

@@ -15,6 +15,15 @@
      No tagline here. "Learn • Build • Explore" belongs to the footer, once per
      page (§0.6). -->
 
+<!-- MBM-CHROME-FRAGMENT: tokens -->
+<!-- The T1 token file, linked once per page, root-absolute. It declares
+     custom properties and nothing else - no selectors, no components - so
+     linking it changes no computed style until something consumes a token.
+     That is deliberate: T3 is chrome parity, and the tokens arrive inert so
+     the pages that adopt them do so in Parts L, R, H and U, visibly. -->
+<link rel="stylesheet" href="/assets/mbm-tokens.css">
+<!-- /MBM-CHROME-FRAGMENT: tokens -->
+
 <!-- MBM-CHROME-FRAGMENT: menu -->
 <!-- The Menu button. Measured byte-identical on all twelve stamped page types
      before this was written, so stamping it converges nothing and changes no
