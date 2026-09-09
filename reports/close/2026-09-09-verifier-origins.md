@@ -312,6 +312,59 @@ today would mean inventing the expectation — the thing BACKLOG §5a says start
 the drift. The standing gate added here stops the class growing; this list is
 what already exists.
 
+## The map had to be told not to publish itself
+
+Caught by CI, not by me, and worth recording because the fix was a one-line
+change and the wrong fix was tempting.
+
+`agx1-live-verify.yml`'s step *"Reproduce the candidate publication from the
+merge ref"* went red on this branch:
+
+```
+ValueError: Education file admission blocked publication:
+UNREVIEWED education-site/data/estate-map.json
+```
+
+The education tree admits files by a reviewed hash
+(`domain-split/education-publication-admission.json`, 193 files for
+`education-site`). A new file under `data/` is published by default, and an
+unregistered published file blocks the build — correctly, because that registry
+is what stops unreviewed content reaching a served page.
+
+The tempting fix is to register the hash. That would be wrong: this file is
+**generated**, from this repository's own classifier, whenever the split changes,
+so a review-gated hash on it would demand a registry edit on every regeneration
+— review friction on a derived artefact, which is exactly what a review gate
+should not be spent on. It also serves a reader nothing.
+
+`education_policy.SOURCE_ONLY` is the estate's existing name for a repo-internal
+file that is not published, and it already holds `data/source-manifests/games.json`,
+`data/hud-coverage.json` and `data/audience-homepages.json` — the same kind of
+tooling input. So `data/estate-map.json` joins it, and because
+`build_estate_map.py` reads `SOURCE_ONLY` directly, the map's own exclusion set
+picks the entry up without a second edit.
+
+**Three other paths reported `CHANGED` in the same failure**
+(`domain-catalogue.json`, `resource-discovery.json`, `usage-registry.json`) and
+they are **not** this branch's. Running the identical build on `main` with the
+same local inputs reproduces all three; this check also passed on #341 an hour
+earlier against the same base with CI's own Lessons checkout. They are a stale
+local Lessons SHA, not a defect — established by running it rather than by
+assuming it, because the honest failure mode here would have been to "fix" three
+files that were never broken.
+
+### An imprecision this codifies, stated rather than hidden
+
+`SOURCE_ONLY` covers two different things: files Play serves and education does
+not (`data/source-manifests/games.json`), and files **nobody** serves (`README.md`,
+`BACKLOG.md`, and now the map itself). `originFor()` reads "absent from
+education" as "Play", so it answers `Play` for the second kind too. No verifier
+requests any of them, so nothing is wrong today — but the map now says something
+about `/data/estate-map.json` that is not true, and a later reader deserves to
+know that rather than discover it. Splitting the two would mean a third axis
+derived from the built Play tree; it is not needed by anything this PR does, and
+inventing it now would be building for a caller that does not exist.
+
 ## Not done
 
 No assertion was retired. No count or hash was re-pinned. No workflow trigger,
