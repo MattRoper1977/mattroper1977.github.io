@@ -95,6 +95,27 @@ def json_ld(name: str, description: str, route: str) -> str:
     return json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 
 
+# SW2 T3. The token <link> comes from tools/chrome/header.html, the same file
+# tools/stamp_chrome.py stamps the hand-written pages from, so the generated
+# pages and the stamped ones cannot drift apart: there is one source and two
+# consumers. Stamping this generator's OUTPUT by hand is what made index.html
+# stale and red -- generated pages change through their generator.
+CHROME_HEADER = ROOT / "tools" / "chrome" / "header.html"
+
+
+def chrome_fragment(name: str) -> str:
+    """One MBM-CHROME-FRAGMENT block from the shared header template."""
+    text = CHROME_HEADER.read_text(encoding="utf-8")
+    match = re.search(
+        r"<!-- MBM-CHROME-FRAGMENT: " + name + r" -->\n(?:<!--.*?-->\n)?(.*?)\n<!-- /MBM-CHROME-FRAGMENT: " + name + r" -->",
+        text,
+        re.S,
+    )
+    if not match:
+        raise SystemExit(f"render_audience_homepages: no {name} fragment in {CHROME_HEADER}")
+    return f"<!-- mbm-chrome:{name} -->{match.group(1)}<!-- /mbm-chrome:{name} -->"
+
+
 def head(title: str, description: str, route: str) -> str:
     return f'''<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="mbm-platform-version" content="{SENTINEL}"><title>{esc(title)}</title>
@@ -102,15 +123,22 @@ def head(title: str, description: str, route: str) -> str:
 <meta name="theme-color" content="#161D3D"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(description)}"><meta property="og:url" content="{canonical(route)}"><meta property="og:type" content="website"><meta property="og:site_name" content="Made by Matt"><meta property="og:image" content="https://madebymatt.uk/assets/og-cover.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://madebymatt.uk/assets/og-cover.png">
 <link rel="canonical" href="{canonical(route)}"><link rel="icon" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/assets/mbm-platform.css"><link rel="stylesheet" href="/assets/mbm-audience.css"><link rel="stylesheet" href="/assets/mbm-search.css">
-<script type="application/ld+json">{json_ld(title, description, route)}</script></head>'''
+<script type="application/ld+json">{json_ld(title, description, route)}</script>{chrome_fragment("tokens")}
+</head>'''
 
 
 def display_menu() -> str:
     return '<details class="mbm-theme-menu"><summary>Display</summary><div class="mbm-theme-panel"><div class="mbm-theme-slot" data-mbm-theme-slot></div></div></details>'
 
 
-def brand() -> str:
-    return '<a class="brand" href="/main/"><img src="/assets/brand/micro_mark.svg" alt="" width="100" height="100"><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a>'
+def brand(*, tagline: bool) -> str:
+    """The brand lock-up. SW2 §0.6: the tagline appears once per page, in the
+    FOOTER, and in no header. One function served both, so the header carried it
+    too -- and removing it from the generated pages by hand only held until the
+    next render, which is exactly how index.html came back stale."""
+    line = "<small>Learn • Build • Explore</small>" if tagline else ""
+    return ('<a class="brand" href="/main/"><img src="/assets/brand/micro_mark.svg" alt="" '
+            f'width="100" height="100"><span><strong>MADE BY MATT</strong>{line}</span></a>')
 
 
 def general_header(*, current: str, audience: dict[str, Any] | None = None, chooser: bool = False) -> str:
@@ -142,7 +170,7 @@ def general_header(*, current: str, audience: dict[str, Any] | None = None, choo
 
     primary_html = "".join(link(label, href) for label, href in primary)
     more_html = "".join(link(label, href) for label, href in more)
-    return f'''<header class="header mbm-site-header"><div class="bar">{brand()}<button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links">{primary_html}</div><details class="mbm-nav-more"><summary>More</summary><div class="mbm-nav-panel">{more_html}</div></details>{display_menu()}</nav></div></header>'''
+    return f'''<header class="header mbm-site-header"><div class="bar">{brand(tagline=False)}{chrome_fragment("menu")}<nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links">{primary_html}</div><details class="mbm-nav-more"><summary>More</summary><div class="mbm-nav-panel">{more_html}</div></details>{display_menu()}</nav></div></header>'''
 
 
 def support_pill() -> str:
@@ -179,7 +207,7 @@ def footer(label: str, *, quiet: bool = False, support: bool = False) -> str:
     """
     quiet_attr = ' data-mbm-mailing-cta="off"' if quiet else ""
     pill = support_pill() if support else ""
-    return f'''<footer class="footer mf-footer"{quiet_attr}><div class="bar">{brand()}<span class="muted">{esc(label)} · <a href="/main/">Main homepage</a> · <a href="/">Choose homepage</a> · <a href="/privacy/">Privacy</a></span></div>{pill}</footer>'''
+    return f'''<footer class="footer mf-footer"{quiet_attr}><div class="bar">{brand(tagline=True)}<span class="muted">{esc(label)} · <a href="/main/">Main homepage</a> · <a href="/">Choose homepage</a> · <a href="/privacy/">Privacy</a></span></div>{pill}</footer>'''
 
 
 def scripts(audience: dict[str, Any] | None = None) -> str:

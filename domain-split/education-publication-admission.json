@@ -26,7 +26,8 @@
   "UX2 Part D3 re-cut (2026-09-08, Site claude/ux2-registry-d3-recut): the catalogue PR's later commits moved two published files past the digests admitted for them — the ledger gained its Part D3 decisions, and the hub's subject filter takes an exact record subject when the value names one (Lessons #443, merged 894a099d). Both admitted as transition pairs [the bytes main carried, the bytes main carries now].",
   "UX2 Part B (2026-09-08, Site claude/ux2-b4-resources): the menu, homepage, /commission/, the audience pages and /resources/ are Appendix A; the site's own pinned Lessons source moves from the A5 head 7e0ece71 to Lessons main 73aa8ff9 in the three workflows that carry it, so the site-triggered and Lessons-triggered publishers build from one Lessons state instead of two. 3 new education-site paths (the ledger, the added-this-half-term script, /commission/), 34 education-site and 22 education-lessons and 1 education-apps digests re-cut at the new navigation, and 4 education-lessons paths admitted as transition pairs [Lessons main, Lessons claude/ux2-b4-planning-link] for the B4 planning link (README.md, UX2_LEDGER.md, data/planning-keys.json, subject.html). The pin was carried forward from 9c53477b through 73aa8ff9 (Lessons #449, the education navigation check re-pointed at the Part B surfaces); a rebuild at 73aa8ff9 needed 0 further admissions",
   "UX2 Part C (2026-09-08, Site claude/ux2-c2-shelf): the Play ledger joins the education site tree",
-  "SW2-F §F0 (2026-09-09, Site claude/sw2f-f0-chips): the account chips, the preview tab focus ring, the dark-footer muted ink and .mf-note-kicker take readable values. 7 education-site digests become transition pairs [what main builds, what this branch builds]. SIX of the seven were ALREADY drifting at main before this branch existed -- a pristine main build differs from the registry on styles.css, index.html, main/index.html, commission/index.html, for/pupils/ and for/teachers/ -- so this re-cut also clears that staleness. The build is deterministic (two consecutive builds byte-identical). Only assets/mbm-audience.css is this branch's own. education-lessons and education-apps unchanged (measured: 0)."
+  "SW2-F §F0 (2026-09-09, Site claude/sw2f-f0-chips): the account chips, the preview tab focus ring, the dark-footer muted ink and .mf-note-kicker take readable values. 7 education-site digests become transition pairs [what main builds, what this branch builds]. SIX of the seven were ALREADY drifting at main before this branch existed -- a pristine main build differs from the registry on styles.css, index.html, main/index.html, commission/index.html, for/pupils/ and for/teachers/ -- so this re-cut also clears that staleness. The build is deterministic (two consecutive builds byte-identical). Only assets/mbm-audience.css is this branch's own. education-lessons and education-apps unchanged (measured: 0).",
+  "SW2 Part T (2026-09-09, Site claude/sw2-t1-tokens, re-derived once from F0 #338's registry after F0 merged): the design-token file lands; twelve static page types plus the generated audience and discovery pages carry a marked tokens region and a marked Menu region; and .mbm-hub-kicker takes a readable ink (SW2-F §G1 found it at 4.30:1 on the hub hero gradient at 390px, measured on the real pixels behind the glyphs; #F5AE60 is 4.76:1, and every use of that class is inside .mbm-hub-hero). 15 education-site digests become transition pairs [what main builds now, what this branch builds]; assets/mbm-tokens.css is ARRIVING. Re-derived from one rebuild of the final state rather than stacked on an earlier re-cut, so no path carries a third digest (checked: 0). The chrome templates are NOT published -- they live at tools/chrome/, because check_education_separation reads a published nav-row fragment's /games/ link as recreational navigation. education-lessons and education-apps unchanged (measured: 0)."
  ],
  "trees": {
   "education-site": {
@@ -40,7 +41,10 @@
     "5f7580341cc064779a74b80f5a3c6f09bd8bd05c01194168c2bd79421cc79992",
     "ARRIVING"
    ],
-   "account/index.html": "b3fa46079feb60889f7d2c2090e4b91053209f8ff53cea9df1db8aace25852ed",
+   "account/index.html": [
+    "b3fa46079feb60889f7d2c2090e4b91053209f8ff53cea9df1db8aace25852ed",
+    "321976468b1c08a4fc1ff721a47763cb8a7564553753737d28b34dc51dd9069d"
+   ],
    "apexcurl/index.html": "3c333777518d4425a7772b56758a366aed7576846744178c77645a06dac3babc",
    "apexgolf/index.html": "3b2f320b4af4b50e949a99b19a49c6fd6681e92a98d4468e459c4127f6db3f4f",
    "apexkick/index.html": "26eb998b56aa5b553a2fb52a15b89e244182bacb36e3b2e6e932d4ee4f82f4fd",
@@ -96,7 +100,10 @@
    "assets/mbm-profile.js": "2bbd3492e4c65d22164aed53d91e474474d90dde44b54b3f65ac00a924d6527a",
    "assets/mbm-pupil-search.js": "3c6cadca53d7c7c3be233c23630efd44d9fc0b54d49bb03d171ffb89267e90a4",
    "assets/mbm-recent.js": "b19d118306260918a7841cf68888ca8a6502edef615939e3ac8980a9bfcc3c08",
-   "assets/mbm-search.css": "86f8e039fbc09e00b01cce4d6af30de9d55999f7aa255dbc095587aaf2404a98",
+   "assets/mbm-search.css": [
+    "86f8e039fbc09e00b01cce4d6af30de9d55999f7aa255dbc095587aaf2404a98",
+    "abd84524cf714fdcec04bf43c33a32d5bdded5aceebfd79c4e40e7a21013c166"
+   ],
    "assets/mbm-search.js": "8afc452b868709125a826ee1f1ec007ec883028d9d9022dc4cfa05fb5607d452",
    "assets/mbm-sync-ui.js": "9a327c573b6e159f0be9d82c856dbd876c8cbc2a0e9627b9013ad1cedf4d4674",
    "assets/mbm-sync.js": "0d7b34dcbea683be5dc1d4c5322f877a97e149ff070cf29b0151663c8238732f",
@@ -155,25 +162,43 @@
    "data/usage-config.json": "1fec49241cb40120129e65ffe06a59203bdc50af29e1000156270d642dbdf12d",
    "data/usage-registry.json": "763eb899f150ff3f265b65bdccd04e8fc340fee58bae8a18303657532289e60e",
    "echovault/index.html": "611715ea3081eeed1e1baf18158bf6d125e670af6ad0432ff7097da0c8cc0092",
-   "education-hub/index.html": "f6e9f2501cba6dd62784dbb7c0e7815fb883ffab15bc61edcf6173f7bd467809",
+   "education-hub/index.html": [
+    "f6e9f2501cba6dd62784dbb7c0e7815fb883ffab15bc61edcf6173f7bd467809",
+    "6e672a809806e252deb8044d9dc8e2d9554ca70602d1eeebe4d6bd330cf7341b"
+   ],
    "emberwild/index.html": "39db5efec5622c6249bead334ef31598109a888a1c075ab4940e678a2f551226",
    "evidence-binder/moderator-pro/index.html": "0d6f411ed7a9dfc3f16313db7ff4ee8f977659b03bedb0f7761527665b143261",
    "experiences/medevac-frontier/index.html": "0d28274ad1d83858c8065866f5fec52c3777c08415736d6031d62eceedab5d06",
    "favicon.svg": "c6b5d0660b7a97b7f680b844498b38b4cbd4cb42f3989bc46555e4d36d7bdfe7",
-   "for/councils-organisations/index.html": "3a65d144bb7bc407981731c44fdb536b93e71e3e9cc2f031c35a53a5f462c370",
+   "for/councils-organisations/index.html": [
+    "3a65d144bb7bc407981731c44fdb536b93e71e3e9cc2f031c35a53a5f462c370",
+    "07ad99c64dd177b1b3bb27378c1f22c5e2dc755fa184e515a9253040053dd50c"
+   ],
    "for/governors-trustees/index.html": "8aa52f57a5a1d71ac0900d0888243558c52880210a366d46b78fe99157934532",
-   "for/parents-carers/index.html": "9b1e198266ecca42e01da4c77dc1adba60ee723d0096219545bbf0e4246d03c7",
-   "for/partners/index.html": "51a6bef11100cb64602f169ab3162cf1f05cac8ede95c2ad3e4acea83aa02dd9",
+   "for/parents-carers/index.html": [
+    "9b1e198266ecca42e01da4c77dc1adba60ee723d0096219545bbf0e4246d03c7",
+    "b56d8cad654e7def6c470a0cdcc1df359e266d9a6454465276b41d9eded63f1b"
+   ],
+   "for/partners/index.html": [
+    "51a6bef11100cb64602f169ab3162cf1f05cac8ede95c2ad3e4acea83aa02dd9",
+    "5a9b12ee076a24525afb8025905de1baaef00ec11fcba475e4d528d114c318c5"
+   ],
    "for/pupils/index.html": [
     "9ddf813ec23cc80e8392f6db567094bf44f7b8e2945984181b22ccfb8ef14447",
     "3f45445feefb1d4e48c9f27492ab19a2c7773d89c8a0311acdb997c65a5d8477"
    ],
-   "for/schools-semh/index.html": "fb1573bef37eee41c9fa70153267d52bd214327471fa28db141f8ad808a38c03",
+   "for/schools-semh/index.html": [
+    "fb1573bef37eee41c9fa70153267d52bd214327471fa28db141f8ad808a38c03",
+    "4ea2b4efe1c2e8deb7784db49173312929f8da8501f827d0f6dbc29a974f88d9"
+   ],
    "for/teachers/index.html": [
     "d0f779656460b48d68d3de18b9f670b9847113d631edbcdbe63afdd33791f6a5",
     "c0997006e92892741b73def8f443c180e9c0b176699fdab3181c85c9b5cd4557"
    ],
-   "for/trusts/index.html": "f9256a637ec5479dd0909c5d1cf6d86916b2b0dc75a7fd539473a88309f15ec3",
+   "for/trusts/index.html": [
+    "f9256a637ec5479dd0909c5d1cf6d86916b2b0dc75a7fd539473a88309f15ec3",
+    "a284ecaba40b574d0f398b779bd922487676ad97a5bba09f67d234d9120774b3"
+   ],
    "fracture/index.html": "0aa06260e83fbb71d5e811dbd5385dd8d0a26fde8efa2c2382bd3931355ff6ff",
    "game-saves/index.html": "cec7f3c391735d9084fd217b208be35811001dc4edeff61cb3af60ce640b25df",
    "games/index.html": "750311eeda5ed1c37313b4f13d694a2712af50a30a7ce6ed428cafb655440014",
@@ -188,7 +213,10 @@
     "c4748a4d8134a1d033e22761790203c75996c7460ddf61ef8e2645dc6a30747f"
    ],
    "luminahaven/index.html": "670f62b18baa8a275b18a254f9e896487b7f71de3cb6319f7ed8a4f6c053a19f",
-   "mailing-list/index.html": "01d34054d91e17029cbaf81a329fab9411a43d5dfcce3b35ed96ac382f57b940",
+   "mailing-list/index.html": [
+    "01d34054d91e17029cbaf81a329fab9411a43d5dfcce3b35ed96ac382f57b940",
+    "f1b971c916f889dcc28341b092f249db4559d3157045e1d8e5993f4d7cdc8e66"
+   ],
    "main/index.html": [
     "b51a12ee6cbf48f472923bd5f0b7fd8e3dc2b47a91750c2865e63aff52ae4863",
     "936fdfffefc6cd598f36e6aa576ca7db3d4b4fbefc7e45dae0ae406415464479"
@@ -196,7 +224,10 @@
    "medevac/MedevacFrontier_v1.html": "d9aca33a1c52d12744cf2c3b32e7861f9be6a2d87e50d0d88151e8a3716abe81",
    "medevac/index.html": "0d28274ad1d83858c8065866f5fec52c3777c08415736d6031d62eceedab5d06",
    "medevac/studio.html": "364aa8a1a3f30e8bc016198615a35b1dac5ef01aaf4ad30104499e78331eab29",
-   "members/index.html": "664632d5a4e66ea92578631373c517c6731656cbc1511984a6c26fa432b41ccc",
+   "members/index.html": [
+    "664632d5a4e66ea92578631373c517c6731656cbc1511984a6c26fa432b41ccc",
+    "82335c9bbcbb110cc735e3a0142ad9f462e6f1d6b6f9d42149ea7e2470131c1b"
+   ],
    "micro-tinkerer/index.html": "17f9f6960080155b25f435242c9b0cf7398755bbc1ff5921455740b5bc9dd5ff",
    "neonbreach/index.html": "c96451f1eedce8a85e9cc37480cf6aa4284e61c68bfbbca3b9aac6637b365440",
    "neonmeridian/index.html": "4c7576cf660af5b0dc1021a90e9f020ce2a4f4eeb0df2ed02f27060b42ae512b",
@@ -213,10 +244,16 @@
    "olympics/index.html": "1874556ffd70eba1b5a73ce721a04bed0d7e00e457c370ee15a210fe8acd1af2",
    "ouroboros/index.html": "9d70d35c34a509f291cb160b61f2644d169caeabd1d4da9ed244b10cf608274e",
    "owner/stats/index.html": "7c0859823bdce5dec3a8cec95a3e12cc0d8c6afceaf6c9b62d8cf1ee404e8551",
-   "privacy/index.html": "313ae5e7c7e0dc92c91dcc15a23aab374d8f8d7a7c237e4b3070abb47ffc4ec2",
+   "privacy/index.html": [
+    "313ae5e7c7e0dc92c91dcc15a23aab374d8f8d7a7c237e4b3070abb47ffc4ec2",
+    "1389e5f45550d309338914d6d34a23aaff9add795272832e7beb1c1d2a4fc01d"
+   ],
    "rallyvector3d/index.html": "10f64987c1fe094e64afa2b3725e6326f3808db786ece07d605037a0d95a624d",
    "relicforge/index.html": "7440a75fe935620ad4b28a70d58d8976005df9472f844ddc8228fc1030044532",
-   "resources/index.html": "8c038a6448cacb36ed19057b2972df77a622e074a5afa49a7371e7d7d1652793",
+   "resources/index.html": [
+    "8c038a6448cacb36ed19057b2972df77a622e074a5afa49a7371e7d7d1652793",
+    "16a42a7a7142bdd5c026d8f4fc52f12d1146cd4e9d8de091dc702accbf36d091"
+   ],
    "resources/medevac-frontier/index.html": "0d28274ad1d83858c8065866f5fec52c3777c08415736d6031d62eceedab5d06",
    "robots.txt": "c18981e3a147ebd0ffe0935787c608945437c6a678e5508f9d1f9bf2ad72d115",
    "site.json": "1a1efefcae702660ce497110744e246033c055be634bf1ce69b44c8981c2855b",
@@ -225,17 +262,26 @@
    "skybreak/index.html": "ba0b5c9b3a6c1aac797621ccdd10ad398385b4395b65d7b272ec8c62f8c03640",
    "start/index.html": "b85f8bde6fbc969bbe1dc3542ce689b55c26c484249fa39f01685bd6f2c402cc",
    "stats/index.html": "cc8762370b5951f088773012f7626d645f67ddcf104b0b2eff58e83ad7364eb3",
-   "stats/on-this-device/index.html": "2a8f548b4dd059c29d963af2b3954c80d4d7df25e8d836d49ba25b6a26ebf519",
+   "stats/on-this-device/index.html": [
+    "2a8f548b4dd059c29d963af2b3954c80d4d7df25e8d836d49ba25b6a26ebf519",
+    "2682ec913b406505a37f6e2960cbd479445e4d006b03f54118fd4ffa92cdbb54"
+   ],
    "stub-handoff.js": "a92bc47354724fbd9b53e25d219ddaed29755a98988c3db7fac49fc7f488b639",
    "styles.css": [
     "50e4c4adf92824d513355df893116997f56d9042d973b1a5b1073d27f135b6fe",
     "7ce42d9f758fc70acff63a66f09b58845c66246e9821cb1e2661631c9383da53"
    ],
-   "teach/index.html": "e8fed6bd0ce5a33271ab84823ddb582fa82dad15601a0bead21da1fdb9b2851d",
+   "teach/index.html": [
+    "e8fed6bd0ce5a33271ab84823ddb582fa82dad15601a0bead21da1fdb9b2851d",
+    "ef8d4e9bf9d8339147c32016cc21f89dfcc658b09350b2abb079ce1f613082e7"
+   ],
    "thanks/index.html": "eca7343f3c41d14a1884dbd91d987205cfe7789653d6a9e50c2ad95784a92c74",
    "theme.js": "6934f92739429496a0bed6404652eb0da1568c29926d43a8e709a53aa0dba60e",
    "titanforge/index.html": "e9dbb04478c09a1547e00908ddcafc8ff37602017bf8c32b4291f2f0dd8f2a3b",
-   "tools/index.html": "442bd4649db2e6418c82f20a2106be9e68838990a37a8a95fe4652d7aa2f7610",
+   "tools/index.html": [
+    "442bd4649db2e6418c82f20a2106be9e68838990a37a8a95fe4652d7aa2f7610",
+    "3fcd7a8b1e19b5e6052c39bd8709ec4a3a2ed43587b309447efe17bbbee27e1d"
+   ],
    "touchline/index.html": "0d1512fb7fc5c7361cbc72c698012614b00e0d2831acd405cf253a66438638c1",
    "townlife/index.html": "52c7d72263852441e58265d5aa5389032b01cd772821dda6a0f0020c33a72e2c",
    "trailrunner/index.html": "8c269f598476bdbc5e8e648e03d08a0e61c60e9b17767b7e14e27238cec9d58c",
@@ -248,7 +294,11 @@
    "uas/vendor/tesseract/core/tesseract-core-simd.wasm.js": "ec8537b758625825add9e3ec3eb9e10b5fc574fadc681a2da1357050cdc5ed43",
    "uas/vendor/tesseract/tesseract.min.js": "a8e29918d098b2b06e1012bdaeffb4aec0445c5d5654709023e0bd1f442a80e8",
    "uas/vendor/tesseract/worker.min.js": "aca1229639fc9907d86f96e825955a2b7c5716d17f3bc3acd71f9c7ab66181fc",
-   "voxel/index.html": "4cf2bcdc922855d06d4592acc02d7fa2dea33fdcc3d8a61b8219c2e406b52525"
+   "voxel/index.html": "4cf2bcdc922855d06d4592acc02d7fa2dea33fdcc3d8a61b8219c2e406b52525",
+   "assets/mbm-tokens.css": [
+    "01fbb17686866b97e7591781e4a78f2e9d38fb5ba35ed8acf935ce2a199643dd",
+    "ARRIVING"
+   ]
   },
   "education-lessons": {
    ".nojekyll": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",

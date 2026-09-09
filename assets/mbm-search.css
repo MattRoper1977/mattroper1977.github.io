@@ -39,7 +39,12 @@
 .mbm-hub-hero::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.23;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='260' viewBox='0 0 360 260'%3E%3Cg fill='none' stroke='%23B9E6CD' stroke-opacity='.35'%3E%3Cpath d='M20 60h90l28 28h90l35-35h77M46 186h72l27-27h86l31 31h78' stroke-dasharray='4 9'/%3E%3Ccircle cx='110' cy='60' r='28'/%3E%3Ccircle cx='110' cy='60' r='42'/%3E%3Crect x='214' y='108' width='94' height='54' rx='12'/%3E%3C/g%3E%3C/svg%3E");background-size:360px 260px}
 .mbm-hub-wrap{width:min(100%,1180px);margin-inline:auto;padding-inline:clamp(.9rem,3vw,1.4rem)}
 .mbm-hub-hero-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(260px,.75fr);gap:clamp(2rem,6vw,5rem);align-items:end}
-.mbm-hub-kicker{margin:0 0 .7rem;color:var(--ms-amber);font-size:.72rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase}
+/* SW2-F §G1: --ms-amber is 4.30:1 on the lightest region of the hub hero
+   gradient at 390px, measured on the real pixels behind the glyphs. The
+   component owns its ink on its own surface rather than the band being
+   recoloured; every use of this class is inside .mbm-hub-hero (measured:
+   education-hub and teach, both). #F5AE60 is 4.76:1 there. */
+.mbm-hub-kicker{margin:0 0 .7rem;color:#F5AE60;font-size:.72rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase}
 .mbm-hub-hero h1{max-width:14ch;margin:0;color:#F6F1E4;font-size:clamp(2.7rem,7vw,5.7rem);line-height:.94;letter-spacing:-.05em;text-wrap:balance}
 .mbm-hub-lead{max-width:760px;margin:1.1rem 0 0;color:#D2D7E6;font-size:clamp(1rem,2.1vw,1.2rem);line-height:1.65}
 .mbm-hub-mark{display:grid;place-items:center;min-height:230px}
