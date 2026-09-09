@@ -127,12 +127,27 @@ Recorded because each was a silent pass, which is worse than a red one:
 ### T5 landing
 
 **Admission registry re-cut.** Stamping changes published bytes, all
-digest-pinned. Measured: education-site **14 CHANGED, 5 ADDED**;
+digest-pinned. Measured: education-site **14 CHANGED, 1 ADDED**;
 education-lessons **0/0**; education-apps **0/0**. The 14 became transition
-pairs `[what main builds, what this branch builds]`; the 5 added — the token
-file and the four chrome templates — are `ARRIVING`. Both halves proved: this
-branch's build **and** main's build pass the new registry. That second proof is
-the whole reason a pair exists rather than a fresh census.
+pairs `[what main builds, what this branch builds]`; the one added —
+`assets/mbm-tokens.css` — is `ARRIVING`. Both halves proved: this branch's build
+**and** main's build pass the new registry. That second proof is the whole reason
+a pair exists rather than a fresh census.
+
+**The chrome templates are NOT published, and the first answer here was wrong.**
+They were put under `assets/`, admitted into the education tree, and ledgered as
+"untidiness for Part U". CI disagreed, correctly:
+
+    "file": "/assets/chrome/nav-row.html",
+    "reason": "Recreational navigation/embed: /games/"
+
+`check_education_separation` reads a served nav-row fragment's `/games/` link as
+recreational navigation inside the education tree — which is exactly its job.
+The templates are build inputs three tools read and no page links; `assets/` is
+for what the site serves. They live at **`tools/chrome/`** now, where the
+education build already excludes everything but `tools/index.html`. Not a URL
+rename: nothing was ever served at `/assets/chrome/`, because this branch has
+not merged, so that URL never comes into existence.
 
 The 30 `Humanities_Teesside/Teaching_Packs` zips absent from the build are not a
 regression: exactly 30 of the 42 pinned there carry `ARRIVING`, and they are the
@@ -147,9 +162,13 @@ same 30. Counted, not assumed.
   `main/index.html`. No fix can be ported without editing a workflow assertion,
   which §0 and Appendix B forbid outright. **Matt's call:** reopen #25, or move
   the workflow's held-PR record deliberately.
+- `townlife-verify` — "Serial comparative and splash performance", failing on
+  `main` at 06:00 today.
 - `agx1-live-verify` — this one *was* this PR's. It succeeded on other pull
   requests hours earlier, so "red on main too" was not available as an answer.
   The registry re-cut is the fix.
+- `domain-split-verify` — "Complete separated publications" was also this PR's,
+  and is the separation failure above. Fixed by moving the templates.
 
 ### T5 landing — where each repository stands
 
@@ -214,8 +233,9 @@ catalogue pins for `kind == "apps"`, so it passes with the hub changed.
    `pin_catalogue_contract.py` for anyone**, not just this work.
 4. **`games/index.html`** references its icon absolutely at
    `https://madebymatt.uk/favicon.svg` where every other page is root-relative.
-5. **The chrome templates are publicly fetchable** at `/assets/chrome/*.html` on
-   the site and, through the wholesale asset copy, on the Play tree — and they
-   are now admitted into the published education tree. Inert fragments nothing
-   links, but crawlable. Excluding them means changing the publication build,
-   which is wider than T3 may be. A route decision, so Part U's.
+5. ~~The chrome templates are publicly fetchable~~ — **settled, not open.** CI
+   showed this was a defect rather than untidiness: a published nav-row fragment
+   carries `/games/` into the education tree and trips the separation gate. They
+   moved to `tools/chrome/`. Recorded because the first judgement here was wrong
+   in a specific, instructive way — "inert fragments nothing links" was true and
+   irrelevant, since the gate reads what a file *contains*, not who links it.
