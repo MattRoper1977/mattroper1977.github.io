@@ -195,27 +195,31 @@ jobs:
           PY
           reject new-release-takeover
 
-      - name: Verify held PR 25 remains untouched
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" -H 'Accept: application/vnd.github+json' \
-            https://api.github.com/repos/MattRoper1977/mattroper1977.github.io/pulls/25 > /tmp/pr25.json
-          # PR #25 is HELD - "AJAX safety net, do not merge until activation is
-          # settled" - and this asserts it has not moved while this homepage
-          # changed underneath it. The head SHA is a pin on a deliberately
-          # parked branch, not a copy of a record: nothing supplies it but the
-          # PR itself, and the point is that it must NOT change. (named S5 §V2)
-          python3 - <<'PY' | tee artifacts/apextennis-home/pr25.log
-          import json
-          p=json.load(open('/tmp/pr25.json'))
-          assert p['state']=='open',p['state']
-          assert p['merged_at'] is None,p['merged_at']
-          assert p['head']['sha']=='7c202790115ca5de5f71babb570b806e5e57a4aa',p['head']['sha']
-          print('PR #25 open, unmerged and unchanged at 7c202790115ca5de5f71babb570b806e5e57a4aa; it must be re-derived after this homepage change')
-          PY
+      # RETIRED 2026-09-09 (SW2-F W1). A step here asserted that held PR #25 was
+      # still open, unmerged and pinned at 7c202790. #25 was CLOSED unmerged on
+      # 2026-09-07 and stays closed: the homepage it was written against was
+      # rebuilt by UX2 B2 (UX2_LEDGER.md, "Part B2 - the homepage and
+      # /commission/"), so a check asserting anything about it asserts a dead
+      # fixture. It had begun failing every pull request touching
+      # main/index.html - this workflow's own trigger path - and the failure was
+      # never about the homepage it guards.
+      #
+      # This is the FIFTH instance of the A-6 pinned-assertion shape in this
+      # file; the third and fourth are recorded in the comments above, both
+      # converted to derived form. Register line:
+      # reports/close/2026-08-05-apexrally-landing.md - "Four further instances
+      # of the A-6 pinned-assertion shape were found blocking a correct fifth
+      # game and converted to derived form ... Each replacement was checked to be
+      # no weaker than the pin it replaced."
+      #
+      # RETIRED rather than derived, because there is nothing to derive: the
+      # subject is a closed pull request, not a property of the served tree.
+      # Decision record: reports/close/2026-09-09-apexpool-pr25-retirement.md.
+      #
+      # Nothing else changes. The 56 static gates, the four planted failure
+      # families and the render gates all stand, and were re-proved both ways:
+      # the served tree passes 56/56, and dropping the Apex Pool route from a
+      # scratch copy reds with "FAIL  Apex Pool card keeps exact href and hue".
 
       - name: Install Playwright Chromium
         run: |
