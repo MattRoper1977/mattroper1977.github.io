@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -112,7 +113,7 @@ def head_lines(*, title: str, description: str, path: str) -> list[str]:
                 ensure_ascii=False,
                 separators=(",", ":"),
             ),
-            "</script></head>",
+            "</script>" + chrome_fragment("tokens") + "\n</head>",
             # adult-features="on" is the opt-in the fail-closed default now
             # requires; mailing-footer="off" is the narrowing these two hubs
             # already carried, and it still applies on top of it. Both hubs are
@@ -123,6 +124,27 @@ def head_lines(*, title: str, description: str, path: str) -> list[str]:
     ]
 
 
+# SW2 T3. The token <link> and the Menu button come from
+# assets/chrome/header.html -- the same file tools/stamp_chrome.py stamps the
+# hand-written pages from, and the same one tools/render_audience_homepages.py
+# reads. One source, three consumers, so they cannot drift. Hand-stamping a
+# generator's OUTPUT is what made teach/ and education-hub/ stale and red.
+CHROME_HEADER = ROOT / "assets" / "chrome" / "header.html"
+
+
+def chrome_fragment(name: str) -> str:
+    """One MBM-CHROME-FRAGMENT block from the shared header template."""
+    text = CHROME_HEADER.read_text(encoding="utf-8")
+    match = re.search(
+        r"<!-- MBM-CHROME-FRAGMENT: " + name + r" -->\n(?:<!--.*?-->\n)?(.*?)\n<!-- /MBM-CHROME-FRAGMENT: " + name + r" -->",
+        text,
+        re.S,
+    )
+    if not match:
+        raise SystemExit(f"render_discovery_hubs: no {name} fragment in {CHROME_HEADER}")
+    return f"<!-- mbm-chrome:{name} -->{match.group(1)}<!-- /mbm-chrome:{name} -->"
+
+
 def header_lines() -> list[str]:
     primary = J(*[f'<a href="{href}">{label}</a>' for href, label in PRIMARY_LINKS])
     more = J(*[f'<a href="{href}">{label}</a>' for href, label in MORE_LINKS])
@@ -131,10 +153,11 @@ def header_lines() -> list[str]:
         J(
             '<a class="brand" href="/main/">',
             '<img src="/assets/brand/micro_mark.svg" alt="" width="100" height="100">',
-            "<span><strong>MADE BY MATT</strong>",
-            "<small>Learn • Build • Explore</small></span></a>",
+            # SW2 §0.6: the tagline appears once per page, in the footer,
+            # and in no header. The footer() below keeps its one.
+            "<span><strong>MADE BY MATT</strong></span></a>",
         ),
-        '<button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>',
+        chrome_fragment("menu"),
         J(
             '<nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation">',
             f'<div class="mbm-primary-links">{primary}</div>',

@@ -26,9 +26,23 @@
 const { createRequire } = require('module');
 const { chromium } = createRequire('/opt/node22/lib/node_modules/playwright')('playwright');
 
+const fs = require('fs');
+const path = require('path');
+const ROOT = path.resolve(__dirname, '..', '..');
+
+// The twelve stamped page types, plus every generated audience page. The
+// audience pages are NOT hand-stamped -- tools/render_audience_homepages.py
+// emits the same region from the same template -- but they link the token file
+// just the same, so leaving them out would be asserting inertness on the pages
+// that happen to be convenient. Derived from the tree so a new audience is
+// covered the day it is added.
 const ROUTES = [
   '/', '/main/', '/games/', '/tools/', '/resources/', '/members/',
   '/privacy/', '/stats/', '/account/', '/mailing-list/', '/teach/', '/education-hub/',
+  ...fs.readdirSync(path.join(ROOT, 'for'), { withFileTypes: true })
+    .filter((e) => e.isDirectory() && fs.existsSync(path.join(ROOT, 'for', e.name, 'index.html')))
+    .map((e) => `/for/${e.name}/`)
+    .sort(),
 ];
 
 // Everything a colour token can reach. Shorthands are avoided: they serialise

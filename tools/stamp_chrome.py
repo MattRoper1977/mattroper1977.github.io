@@ -66,7 +66,20 @@ VERIFIER_PAGES = (
     "stats/index.html",
 )
 
-# Generated trees change through their generator, never their output.
+# Generated trees change through their generator, never their output. This tuple
+# is what this tool refuses to WRITE; it is not the whole list of generator-owned
+# pages, and mistaking it for one is how index.html, teach/ and education-hub/
+# came to be hand-stamped and went red on their own --check:
+#
+#   tools/render_audience_homepages.py   index.html, start/, for/*/
+#   tools/render_discovery_hubs.py       teach/, education-hub/
+#   (both also splice into main/index.html and hud.js, which is why main/
+#    survived being stamped and the other three did not)
+#
+# Those five pages are stamped by their GENERATOR now, reading the same
+# assets/chrome/header.html fragments this tool reads. One source, three
+# consumers. The regions still appear here in --check, and must, because that is
+# what proves the three agree; what changed is who writes them.
 GENERATED = ("for/", "asdan/", "uas/")
 
 # name -> (open marker, close marker, regex that finds the unmarked fragment)
