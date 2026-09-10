@@ -1,0 +1,210 @@
+{
+  "generatedAt": "2026-09-07T12:30:13.934Z",
+  "browserVersion": "141.0.7390.37",
+  "rule": {
+    "static": "FAIL if viewport meta has user-scalable=no|0 or maximum-scale<5",
+    "computed": "PASS iff computed touch-action of primary element and every ancestor to html is 'auto' | contains 'pinch-zoom' | 'manipulation' (flagged)"
+  },
+  "control": {
+    "runs": [
+      {
+        "route": "/control.html",
+        "url": "http://127.0.0.1:40557/control.html",
+        "httpStatus": 200,
+        "label": "real-1",
+        "expectPass": true,
+        "static": {
+          "pass": true,
+          "viewportMeta": "width=device-width, initial-scale=1",
+          "reasons": []
+        },
+        "computed": {
+          "url": "http://127.0.0.1:40557/control.html",
+          "status": 200,
+          "primary": "CANVAS#stage",
+          "primaryHow": "largest-canvas",
+          "chain": [
+            {
+              "el": "CANVAS#stage",
+              "touchAction": "auto"
+            },
+            {
+              "el": "BODY",
+              "touchAction": "auto"
+            },
+            {
+              "el": "HTML",
+              "touchAction": "auto"
+            }
+          ],
+          "liveViewportMeta": "width=device-width, initial-scale=1",
+          "canvasCount": 1,
+          "manipulation": [],
+          "pass": true,
+          "reasons": []
+        },
+        "pass": true,
+        "reasons": [],
+        "controlOk": true
+      },
+      {
+        "route": "/control.html",
+        "url": "http://127.0.0.1:40557/control.html",
+        "httpStatus": 200,
+        "label": "planted",
+        "expectPass": false,
+        "static": {
+          "pass": false,
+          "viewportMeta": "width=device-width, initial-scale=1, user-scalable=no",
+          "reasons": [
+            "user-scalable=no"
+          ]
+        },
+        "computed": {
+          "url": "http://127.0.0.1:40557/control.html",
+          "status": 200,
+          "primary": "CANVAS#stage",
+          "primaryHow": "largest-canvas",
+          "chain": [
+            {
+              "el": "CANVAS#stage",
+              "touchAction": "auto"
+            },
+            {
+              "el": "BODY",
+              "touchAction": "none"
+            },
+            {
+              "el": "HTML",
+              "touchAction": "none"
+            }
+          ],
+          "liveViewportMeta": "width=device-width, initial-scale=1, user-scalable=no",
+          "canvasCount": 1,
+          "manipulation": [],
+          "pass": false,
+          "reasons": [
+            "BODY touch-action:none",
+            "HTML touch-action:none"
+          ]
+        },
+        "pass": false,
+        "reasons": [
+          "static: user-scalable=no",
+          "computed: BODY touch-action:none",
+          "computed: HTML touch-action:none"
+        ],
+        "controlOk": true
+      },
+      {
+        "route": "/control.html",
+        "url": "http://127.0.0.1:40557/control.html",
+        "httpStatus": 200,
+        "label": "restored",
+        "expectPass": true,
+        "static": {
+          "pass": true,
+          "viewportMeta": "width=device-width, initial-scale=1",
+          "reasons": []
+        },
+        "computed": {
+          "url": "http://127.0.0.1:40557/control.html",
+          "status": 200,
+          "primary": "CANVAS#stage",
+          "primaryHow": "largest-canvas",
+          "chain": [
+            {
+              "el": "CANVAS#stage",
+              "touchAction": "auto"
+            },
+            {
+              "el": "BODY",
+              "touchAction": "auto"
+            },
+            {
+              "el": "HTML",
+              "touchAction": "auto"
+            }
+          ],
+          "liveViewportMeta": "width=device-width, initial-scale=1",
+          "canvasCount": 1,
+          "manipulation": [],
+          "pass": true,
+          "reasons": []
+        },
+        "pass": true,
+        "reasons": [],
+        "controlOk": true
+      }
+    ],
+    "pass": true
+  },
+  "routes": [
+    {
+      "route": "/neonmeridian/",
+      "url": "http://127.0.0.1:4611/neonmeridian/",
+      "httpStatus": 200,
+      "kind": "play",
+      "repo": "MattRoper1977/mattroper1977.github.io",
+      "path": "neonmeridian/index.html",
+      "pr": 278,
+      "static": {
+        "pass": true,
+        "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+        "reasons": []
+      },
+      "computed": {
+        "url": "http://127.0.0.1:4611/neonmeridian/",
+        "status": 200,
+        "primary": "CANVAS#gl",
+        "primaryHow": "largest-canvas",
+        "chain": [
+          {
+            "el": "CANVAS#gl",
+            "touchAction": "pinch-zoom"
+          },
+          {
+            "el": "DIV#app",
+            "touchAction": "auto"
+          },
+          {
+            "el": "BODY",
+            "touchAction": "manipulation"
+          },
+          {
+            "el": "HTML",
+            "touchAction": "manipulation"
+          }
+        ],
+        "liveViewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+        "canvasCount": 3,
+        "manipulation": [
+          "BODY",
+          "HTML"
+        ],
+        "pass": true,
+        "reasons": []
+      },
+      "pass": true,
+      "reasons": [],
+      "manipulationFlag": [
+        "BODY",
+        "HTML"
+      ]
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "pass": 1,
+    "fail": [],
+    "manipulationFlagged": [
+      {
+        "route": "/neonmeridian/",
+        "elements": [
+          "BODY",
+          "HTML"
+        ]
+      }
+    ]
+  }
+}

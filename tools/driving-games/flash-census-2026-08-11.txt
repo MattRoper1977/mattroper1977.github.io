@@ -1,0 +1,27 @@
+PASS  pure 17 rad/s  (2.706 Hz) -> 2.75 peaks/sec (expected ~2.706)
+PASS  pure 8 rad/s   (1.273 Hz) -> 1.25 peaks/sec (expected ~1.273)
+PASS  the shipped flick waveform -> 2.75 peaks/sec (expected ~2.706)
+PASS  the same, scaled x100      -> 2.75 peaks/sec (expected ~2.706)
+PASS  static                     -> 0 peaks/sec (expected ~0)
+
+Driving games — flash census · 5s per scene at a virtual 60fps
+ceiling 3 Hz · meaningful floor 2 units · hazard floor 25.5 units (10% of 0-255)
+
+game            scene                             motion   peaks/s   p2p(whole)   p2p(locus)  locus Hz  verdict
+neonmeridian    pursuit strobe, driving              full         2.4        5.153       31.748       0.4  large swing but under 3 Hz
+neonmeridian    pursuit strobe, driving              reduced      2.4        5.153       31.748       0.4  large swing but under 3 Hz
+neonmeridian    night + rain, driving                full         7.2        5.737       27.078         6  OVER CEILING
+neonmeridian    night + rain, driving                reduced      7.2        5.737       27.078         6  OVER CEILING
+neonmeridian    pursuit + night + rain, driving      full         7.2        5.737       27.078         6  OVER CEILING
+neonmeridian    pursuit + night + rain, driving      reduced      7.2        5.737       27.078         6  OVER CEILING
+neonmeridian    parked, daylight (vacuity control)   full           0        0.033        0.085         0  below noise floor, no verdict
+neonmeridian    parked, daylight (vacuity control)   reduced        0        0.033        0.085         0  below noise floor, no verdict
+rallyvector3d   desert storm (dust)                  full         0.2       13.226        40.27       0.2  large swing but under 3 Hz
+rallyvector3d   desert storm (dust)                  reduced      0.2       13.679       40.667       0.2  large swing but under 3 Hz
+rallyvector3d   nordic night rain                    full         3.2       91.162      170.842       3.2  OVER CEILING
+rallyvector3d   nordic night rain                    reduced      2.4       87.901      172.764       1.8  large swing but under 3 Hz
+rallyvector3d   alpine clear (control)               full         1.8        6.659       53.316       0.2  large swing but under 3 Hz
+rallyvector3d   alpine clear (control)               reduced      1.6        6.457       52.243       0.2  large swing but under 3 Hz
+
+worst rate among scenes above the noise floor: 7.2 Hz (ceiling 3 Hz)
+5 scene(s) OVER CEILING

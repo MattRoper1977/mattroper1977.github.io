@@ -1,0 +1,336 @@
+#!/usr/bin/env python3
+"""Produce filtered Pages trees without changing any source lesson or game.
+
+Run after build_publications.py. Each output belongs to its existing repository:
+Site remains /, Lessons remains /Lessons/, Apps remains /Matt-s-Apps-/.
+"""
+from pathlib import Path
+from html.parser import HTMLParser
+from urllib.parse import unquote, urlparse, urljoin
+import argparse, sys
+import hashlib
+import json
+import re
+import shutil
+import subprocess
+from lxml import html as lhtml
+from build_preview import EDUCATION_OVERRIDES
+from education_discovery import refresh as refresh_resource_discovery
+from audience_discovery import refresh as refresh_audiences
+from governors_discovery import refresh as refresh_governors
+from education_expansion import refresh as refresh_education_expansion
+from primary_discovery import refresh as refresh_primary
+from usage_discovery import refresh as refresh_usage
+from shared_navigation import refresh as refresh_navigation
+from education_support import refresh as refresh_support
+from education_policy import PLAY, MIGRATIONS, classifier, excluded_asset, filter_catalogue
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parent
+LEARN = 'https://madebymatt.uk'
+# Fixed historical redirects: the superseded Lessons game addresses as at
+# 2026-09-05. This map is deliberately not the current shelf's membership.
+LEGACY = {
+    **MIGRATIONS,  # Historical aliases, fixed as at 6 September 2026.
+    '/Lessons/Games/Off_Brand.html': '/offbrand/',
+    '/Lessons/Games/Trail_Runner.html': '/trailrunner/',
+    '/Lessons/Games/Voxel_Frontier.html': '/voxel/',
+    '/Lessons/Games/Orbital_source.html': '/Lessons/Games/Orbital.html',
+    '/Lessons/5_6 Local Choice/Trekkers_Trail_Runner (2).html': '/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html',
+}
+SKIP = {'tools', 'reports', 'docs', 'domain-split', 'node_modules', 'supabase', 'schema'}
+PUBLIC = {'.html', '.htm', '.css', '.js', '.mjs', '.json', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif', '.ico', '.woff', '.woff2', '.ttf', '.mp4', '.webm', '.mp3', '.wav', '.ogg', '.pdf', '.zip', '.docx', '.pptx', '.xlsx', '.csv', '.txt', '.xml', '.webmanifest', '.wasm', '.bin', '.map', '.md'}
+# Individually reviewed historical teacher guidance, 2026-09-06. These exact
+# original documents are already linked from public hubs; other authoring
+# directories remain excluded. Hashes bind preservation, not current approval
+# of every historical policy/qualification statement.
+REVIEWED_ARCHIVE_DOCUMENTS = {
+    '_sciv3/build/POLICY_ALIGNMENT.md': '9d16fb2cbb314bd883ece6eb9249f268fa5bee0a82f48c3be229df551ad722d8',
+    '_sciv3/launch/SOW_AND_POLICY_ALIGNMENT.md': '19695c68b5af03be7456741eb0a62ea9cebb986febca4547434c1017e4fe7e63',
+    '_finish/build_estate/Art_Teesside__SOW_POLICY_AND_AWARD_ALIGNMENT.md': 'b357278bbf285b8348a73a2b259710129d7b126145c618a88ba443eaa5802473',
+    '_finish/build_estate/Art_Teesside__ARTIST_IMAGE_PROVENANCE_GUIDE.md': '04ac1d4a351193171253a8e01125e7b4ae0172d177867759c0bb1afb404529de',
+    '_finish/build_estate/BUILD_ASDAN__CLAIMS_AND_SAFETY_READBACK.md': '4135dd1c9f522881f4b9f3d2af39a2d712a1138003f99caad9533e11eb89f0da',
+}
+
+def normal(value):
+    return unquote(urlparse(value).path).removesuffix('index.html').rstrip('/') or '/'
+
+def tracked(root):
+    return subprocess.check_output(['git', '-C', str(root), 'ls-files', '-z'], text=True).split('\0')[:-1]
+
+# The tools/ tree is excluded from every education publication (SKIP); these
+# are the ONLY files inside it that a published page fetches at runtime, named
+# one by one so a new tool never leaks by extension. HC3 §4.4: fourteen Art
+# Teesside decks fetch ../../tools/artsaward/SLOTS.json for the staff slot panel
+# and fell back to "Unconfirmed — preparation only" after the split.
+PUBLIC_TOOL_FILES = {'tools/index.html', 'tools/artsaward/SLOTS.json'}
+
+
+def public_file(path, public_tool_files=PUBLIC_TOOL_FILES):
+    p = Path(path)
+    if path in REVIEWED_ARCHIVE_DOCUMENTS: return True
+    if path in public_tool_files: return True  # the teacher-tools hub and the runtime data a deck fetches
+    return (not any(x.startswith(('.', '_')) for x in p.parts)
+            and p.parts[0] not in SKIP
+            and (p.suffix.lower() in PUBLIC or p.name in {'CNAME', 'LICENSE'}))
+
+
+def self_test():
+    """§0.4: the allowlist admits exactly what it names, and can be seen to refuse."""
+    ok = True
+    def control(name, passed, detail=''):
+        nonlocal ok; ok = ok and passed
+        print(f"  [{'ok' if passed else 'FAIL'}] {name}{'  — ' + detail if detail else ''}")
+    control('run 1: tools/artsaward/SLOTS.json is public', public_file('tools/artsaward/SLOTS.json'))
+    control('run 1: the teacher-tools hub is public', public_file('tools/index.html'))
+    control('run 1: a lesson is public', public_file('Art_Teesside/Launch/START_HERE.html'))
+    control('run 2: a sibling tool file is NOT public by extension', not public_file('tools/artsaward/BRONZE_PLAN.json'))
+    control('run 2: a tool script is NOT public', not public_file('tools/artsaward/build.py'))
+    control('run 2: a tools directory index other than the hub is NOT public', not public_file('tools/artsaward/index.html'))
+    control('run 3: with SLOTS.json removed from the allowlist the same path is refused (the rule, not the extension, admits it)',
+            not public_file('tools/artsaward/SLOTS.json', public_tool_files={'tools/index.html'}))
+    print('self-test', 'PASS' if ok else 'FAIL')
+    return ok
+
+def write(root, relative, text):
+    p = root / relative
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(text, encoding='utf-8')
+
+
+WRAPPED_LESSONS = {
+    'Tutor_Time/Wk3_KCSIE_TRAP_Sextortion.html',
+    'Tutor_Time/Week2_Fri_Values_MutualRespect_Respectful.html',
+}
+WRAPPED_NAVIGATION = '<style id="mbm-wrapped-lesson-navigation">' + """
+@media screen{
+body{display:block!important}
+body>#mbm-lesson-tools{width:100%;min-height:59px;max-height:none;flex:none}
+body>.wrap{margin-inline:auto;min-height:0;padding-top:18px;padding-bottom:24px;justify-content:flex-start}
+body>.wrap>.toprail{position:static!important;inset:auto!important;justify-content:flex-end;flex-wrap:wrap;margin-bottom:18px}
+body>.wrap>.toprail button{min-width:44px;min-height:44px}
+body>.nav{position:relative!important;inset:auto!important;flex-wrap:wrap}
+}
+""" + '</style>'
+
+def with_lesson_navigation(text, relative=None):
+    """Inject into the real document, never an HTML string in a print script."""
+    class Document(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.body_ends = []
+            self.adapters = 0
+            self.offsets = [0]
+            for line in text.splitlines(keepends=True):
+                self.offsets.append(self.offsets[-1]+len(line))
+
+        def handle_starttag(self, tag, attributes):
+            src = dict(attributes).get('src', '')
+            if tag == 'script' and re.search(r'(?:^|/)assets/catalogue/lesson-navigation\.js(?:[?#]|$)', src):
+                self.adapters += 1
+
+        def handle_endtag(self, tag):
+            if tag == 'body':
+                line, column = self.getpos()
+                self.body_ends.append(self.offsets[line-1]+column)
+
+    document = Document()
+    document.feed(text)
+    if document.adapters > 1:
+        raise ValueError('Source already has duplicate lesson navigation adapters')
+    if document.adapters:
+        return text
+    position = document.body_ends[-1] if document.body_ends else len(text)
+    script = '<script defer src="/Lessons/assets/catalogue/lesson-navigation.js"></script>'
+    extra = WRAPPED_NAVIGATION if relative in WRAPPED_LESSONS else ''
+    if relative == 'Science_Teesside/Build/v4_fieldops/01_Newport_Bridge_Lift_Permit_Lab.html':
+        # The lab prints its dark simulation panels. Its original print rule
+        # changes only the body text to black, making inherited headings and
+        # readings illegible. Preserve the active theme's text colour; source
+        # files, simulation behaviour and saved/offline archives stay intact.
+        extra += '<style id="mbm-lab-print-contrast">@media print{body{color:var(--text)!important}}</style>'
+    return text[:position]+extra+script+text[position:]
+
+def moved_page(route):
+    # HC3 §2.4 / HC4 §7.4: a stub is ≤2 KB of text, noindex, canonical → the play
+    # URL, ONE link (the play destination) and nothing else. The former save-transfer
+    # and back links are gone: the stub's only job is the handoff to Play, and the
+    # bulk /game-saves/ pages stay reachable from the pupil hub, not from here.
+    from html import escape
+    destination = PLAY + LEGACY.get(route, route)
+    return ('<!doctype html><html lang="en-GB"><head><meta charset="utf-8">'
+            '<meta name="viewport" content="width=device-width,initial-scale=1">'
+            '<meta name="robots" content="noindex"><title>This game has moved · Made by Matt</title>'
+            '<link rel="canonical" href="'+escape(destination, quote=True)+'">'
+            '<style>body{font:1.1rem/1.65 system-ui;max-width:42rem;margin:4rem auto;padding:0 1.25rem;color:#161d3d}a{color:#174e45}li{margin:1rem 0}a:focus-visible{outline:3px solid #e39129;outline-offset:4px}</style>'
+            '</head><body data-game-moved><main><h1>This game has moved</h1>'
+            '<p>Made by Matt games now have their own website.</p>'
+            '<p><a id="play-game" href="'+escape(destination, quote=True)+'">Open the game</a></p></main>'
+            '<script>const a=document.getElementById("play-game");const u=new URL(a.href);u.search=location.search;u.hash=location.hash;a.href=u.href;</script>'
+            '</body></html>')
+
+def make_classifier(lessons):
+    games, directories, is_game = classifier(ROOT, lessons)
+    games.update(normal(route) for route in LEGACY)
+    return games, directories, is_game
+
+def filter_data(obj, is_game, prefix):
+    filtered = filter_catalogue(obj, is_game, prefix)
+    # Preserve the established teacher/pupil roles for reviewed activities.
+    def roles(value):
+        if isinstance(value, list): return [roles(row) for row in value]
+        if not isinstance(value, dict): return value
+        out = {key: roles(item) for key, item in value.items()}
+        dest = next((out[key] for key in ('route','href','file','url','path','f') if isinstance(out.get(key), str)), '')
+        role = EDUCATION_OVERRIDES.get(unquote(urlparse(urljoin(LEARN+(prefix or '/'), dest)).path))
+        if role:
+            if 'category' in out: out['category'] = 'resource'
+            if 'type' in out: out['type'] = role
+            if 'safeForPupils' in out: out['safeForPupils'] = role == 'pupil'
+        return out
+    return roles(filtered)
+
+def clean_shell(text, is_game, prefix):
+    # Restrict DOM rewriting to site navigation/catalogue surfaces. Actual
+    # educational activities, teacher tools and their scripts stay byte-exact.
+    doc=lhtml.document_fromstring(text)
+    for article in list(doc.xpath('//article[contains(concat(" ",normalize-space(@class)," ")," mf-feature ")]')):
+        links=article.xpath('.//a[@href]')
+        if links and any(is_game(a.get('href'),prefix) for a in links): article.drop_tree()
+    for a in list(doc.xpath('//a[@href]')):
+        if is_game(a.get('href'),prefix): a.drop_tree()
+    for node in doc.iter():
+        if node.tag in {'script','style'}: continue
+        for attr in ['text','tail']:
+            value=getattr(node,attr,None)
+            if not value:continue
+            for old,new in [('games, lessons','lessons'),('games and lessons','lessons'),('games, tools','tools'),('subject, game, pathway','subject, pathway')]:
+                value=value.replace(old,new)
+            setattr(node,attr,value)
+    for inp in doc.xpath('//input[@placeholder]'):
+        inp.set('placeholder',inp.get('placeholder').replace('subject, game, pathway','subject, pathway'))
+    return lhtml.tostring(doc,encoding='unicode',doctype='<!doctype html>')
+
+def build(output, lessons, apps=None, allow_sparse=False):
+    games, game_dirs, is_game=make_classifier(lessons)
+    roots={'site':(ROOT,''),'lessons':(lessons,'/Lessons/')}
+    if apps: roots['apps']=(apps,'/Matt-s-Apps-/')
+    report={'status':'STAGED_NOT_LIVE','sources':{},'publications':{},'legacy_aliases':LEGACY,'education_preserved':EDUCATION_OVERRIDES,'missing_source_files':[]}
+    for name,(root,prefix) in roots.items():
+        dest=output/('education-'+name)
+        if dest.exists(): shutil.rmtree(dest)
+        dest.mkdir(parents=True)
+        report['sources'][name]=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()
+        migrated=[]; copied=[]; changed=[]
+        for relative in tracked(root):
+            if not public_file(relative) or excluded_asset((prefix or '/')+relative):continue
+            p=root/relative
+            if not p.is_file():
+                report['missing_source_files'].append(name+':'+relative)
+                continue
+            route=('/'+relative if not prefix else prefix+relative)
+            if (name=='site' and relative.split('/')[0] in game_dirs) or (name=='lessons' and relative.startswith('Games/')) or is_game(route):
+                if p.suffix=='.html':
+                    target=route.removesuffix('index.html')
+                    from stub_handoff import ROUTE, decorate
+                    stub = moved_page(target)
+                    if target == ROUTE:
+                        stub = decorate(target, stub)
+                    write(dest,relative,stub);migrated.append(relative)
+                continue
+            if relative in REVIEWED_ARCHIVE_DOCUMENTS:
+                assert name == 'lessons' and hashlib.sha256(p.read_bytes()).hexdigest() == REVIEWED_ARCHIVE_DOCUMENTS[relative], 'Historical guidance changed; review before publication: '+relative
+            target=dest/relative;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,target);copied.append(relative)
+            if p.suffix in {'.json', '.webmanifest'} and relative != 'data/game-storage-allowlist.json':
+                try:data=json.loads(p.read_text())
+                except (ValueError,UnicodeError):continue
+                filtered=filter_data(data,is_game,prefix)
+                if relative=='site.webmanifest': filtered['description']='Lessons, learning resources and teaching tools.'
+                if filtered != data:write(dest,relative,json.dumps(filtered,ensure_ascii=False,indent=2)+'\n');changed.append(relative)
+            shell=(name=='site' and (relative.startswith(('for/','resources/','education-hub/','teach/','start/','next/')) or relative in {'index.html','tools/index.html'})) or (name in {'lessons','apps'} and relative=='index.html')
+            if shell and p.suffix=='.html':write(dest,relative,clean_shell(p.read_text(),is_game,prefix));changed.append(relative)
+            if name=='site' and relative in {'resources/index.html','tools/index.html'}:
+                text=target.read_text()
+                text=text.replace('</head>','<link rel="stylesheet" href="/assets/education-navigation.css"></head>',1)
+                write(dest,relative,text)
+            # One education-only navigation adapter for the published lesson
+            # experience. Games were excluded above; raw teaching files and
+            # offline archives remain unchanged.
+            if name=='lessons' and p.suffix=='.html' and (lessons/'assets/catalogue/lesson-navigation.js').is_file():
+                text=target.read_text()
+                updated=with_lesson_navigation(text, relative)
+                if updated != text:
+                    write(dest,relative,updated);changed.append(relative)
+        if name=='site':
+            # Released receiver proof is recorded in the HC3 handoff plan.
+            # Only the reviewed Glitch stub uses this same-origin sender.
+            shutil.copyfile(HERE/'stub-handoff.js', dest/'stub-handoff.js')
+            for relative, route in {'next/index.html':'/', 'next/teachers.html':'/for/teachers/', 'next/pupils.html':'/for/pupils/', 'next/apps.html':'/Matt-s-Apps-/', 'next/lessons.html':'/Lessons/', 'next/resources.html':'/resources/', 'next/tools.html':'/tools/'}.items():
+                if (dest/relative).exists():
+                    write(dest,relative,'<!doctype html><html lang="en-GB"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Continue to Made by Matt Education</title><main><h1>Continue to Made by Matt Education</h1><p>This earlier design preview has been replaced by the published learning website.</p><p><a href="'+route+'">Open the current learning page</a></p></main></html>')
+            overlay=output/'education-overlay'
+            for p in overlay.rglob('*'):
+                if p.is_file():
+                    to=dest/p.relative_to(overlay);to.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,to)
+            for route in ['games/index.html','Games/index.html']:
+                write(dest,route,moved_page('/'))
+            # Search results and recently used resources read this filtered index.
+            index=json.loads((dest/'data/mbm-search-index.json').read_text())
+            if 'counts' in index:
+                from collections import Counter
+                index['counts']={'total':len(index['entries']),**dict(Counter(x['category'] for x in index['entries']))}
+            write(dest,'data/mbm-search-index.json',json.dumps(index,ensure_ascii=False)+'\n')
+            write(dest,'CNAME','madebymatt.uk\n')
+            sitemap=dest/'sitemap.xml'
+            if sitemap.exists():
+                from lxml import etree
+                tree=etree.fromstring(sitemap.read_bytes())
+                for item in list(tree):
+                    loc=item.find('{*}loc')
+                    if loc is not None and is_game(loc.text or ''):tree.remove(item)
+                sitemap.write_bytes(etree.tostring(tree,xml_declaration=True,encoding='utf-8'))
+        # These publication trees intentionally contain source assets only,
+        # never code/report trees that Jekyll previously suppressed.
+        write(dest,'.nojekyll','')
+        for relative in migrated:
+            assert 'data-game-moved' in (dest/relative).read_text()
+        report['publications'][name]={'root':str(dest),'source_files':len(copied),'moved_game_pages':migrated,'transformed_discovery_files':changed,'output_files':sum(p.is_file() for p in dest.rglob('*'))}
+    if report['missing_source_files']:
+        report['status']='PARTIAL_SPARSE_REVIEW_ONLY'
+        if not allow_sparse:raise ValueError('Full source checkout required; missing '+str(len(report['missing_source_files']))+' files')
+    if not apps:report['apps']='Not supplied; separate Apps output still required'
+    if apps and not report['missing_source_files']:
+        refresh_resource_discovery(output, lessons, apps, ROOT)
+        report['primary_discovery'] = refresh_primary(output, lessons, apps, ROOT)['counts']
+        report['audience_discovery'] = refresh_audiences(output, lessons, apps, ROOT)
+        report['governors_discovery'] = {'resources': len(refresh_governors(output, lessons, apps, ROOT)['resources'])}
+        report['education_expansion'] = refresh_education_expansion(output, lessons, apps, ROOT)
+        report['usage'] = refresh_usage(output, lessons, apps, ROOT)
+        report['navigation'] = refresh_navigation(output, ROOT)
+        report['support'] = refresh_support(output, lessons, ROOT)
+    # Enrichment must never reintroduce excluded discovery records. Run after
+    # every generator, including overlays, Apps, audiences and usage metadata.
+    for name, (_, prefix) in roots.items():
+        dest = output/('education-'+name)
+        for path in list(dest.rglob('*.json')) + list(dest.rglob('*.webmanifest')):
+            # Migration provenance paths identify stores to export; they are
+            # not search results. Preserve the exact accepted save rules.
+            if path.relative_to(dest).as_posix() == 'data/game-storage-allowlist.json': continue
+            try: data = json.loads(path.read_text())
+            except (ValueError, UnicodeError): continue
+            filtered = filter_data(data, is_game, prefix)
+            if filtered != data: path.write_text(json.dumps(filtered, ensure_ascii=False, indent=2)+'\n')
+    from education_publication_admission import verify as verify_admission
+    report['executable_admission'] = verify_admission(output)
+    report['education_policy'] = {'recreational_output': 'excluded', 'source_files_removed': 0,
+                                  'play_payloads_modified': 0, 'final_catalogue_filter': True}
+    for item in report['publications'].values():
+        item['output_files'] = sum(p.is_file() for p in Path(item['root']).rglob('*'))
+    write(output,'education-build-report.json',json.dumps(report,indent=2)+'\n')
+    return report
+
+if __name__=='__main__':
+    if '--self-test' in sys.argv: raise SystemExit(0 if self_test() else 1)
+    ap=argparse.ArgumentParser();ap.add_argument('--lessons',type=Path,required=True);ap.add_argument('--apps',type=Path);ap.add_argument('--output',type=Path,default=HERE/'output');ap.add_argument('--allow-sparse',action='store_true');a=ap.parse_args()
+    r=build(a.output.resolve(),a.lessons.resolve(),a.apps.resolve() if a.apps else None,a.allow_sparse)
+    print(json.dumps({'status':r['status'],'publications':{k:{a:b for a,b in v.items() if not isinstance(b,list)} for k,v in r['publications'].items()},'missing_source_files':len(r['missing_source_files'])},indent=2))

@@ -81,21 +81,30 @@ jobs:
           echo 'G-B2 PASS — tamper fixtures fired, positive control held, contract green'
 
       # ---------------------------------------------------------------- G-B3
-      - name: 'G-B3 static storage census — no sibling key family appears'
+      # Consults data/inline-exit-storage-grant.json — the FAMILY-level ruling
+      # of 2026-08-13. Neon Breach does not carry the inline exit today, so the
+      # grant clears nothing here yet; it is consulted anyway so that the day
+      # this game gains the exit, its census needs no edit — which is what
+      # "family level" means. An ungranted key still fails.
+      - name: 'G-B3 static storage census — no sibling key family beyond the component grant'
         shell: bash
         run: |
           set -euo pipefail
           node -e "
             const fs=require('fs');
+            const granted=new Set(JSON.parse(fs.readFileSync('data/inline-exit-storage-grant.json','utf8')).allowedKeys);
             const h=fs.readFileSync('neonbreach/index.html','utf8');
             const fam=[...new Set(h.match(/['\"](?:mbm_|apex_|apexkick|apexpool|apexgolf|apextennis|voxel|biopunk|neonsync)[A-Za-z0-9_.-]*['\"]/g)||[])];
             console.log('estate-shaped key literals:', fam.join(', ')||'none');
-            if(fam.length){console.error('FAIL sibling key family present: '+fam.join(', '));process.exit(1);}
+            const cleared=fam.filter(x=>granted.has(x.replace(/['\"]/g,'')));
+            if(cleared.length)console.log('granted to the inline-exit component:',cleared.join(', '));
+            const foreign=fam.filter(x=>!granted.has(x.replace(/['\"]/g,'')));
+            if(foreign.length){console.error('FAIL sibling key family present: '+foreign.join(', '));process.exit(1);}
             // Recorded deviation: this game uses madebymatt.neonBreach.v1, not
             // the mbm_<slug>_* dialect. Kept by ruling; it must still be unique.
             if(!/madebymatt\.neonBreach\.v1/.test(h)){console.error('FAIL own save key missing');process.exit(1);}
             if(/(?:local|session)Storage\.clear\s*\(/.test(h)){console.error('FAIL a bare clear() would wipe sibling saves');process.exit(1);}
-            console.log('G-B3 PASS — own key present, no sibling family touched, no bare clear()');
+            console.log('G-B3 PASS — own key present, no sibling family beyond the component grant, no bare clear()');
           "
 
       - name: Install the pinned real browser

@@ -1,0 +1,5 @@
+The weekly health workflow does not preserve its findings artifact. Its pin report also counts documentation-only history and treats pin age as a failing gate, contrary to HC3 §3.4.
+
+Rollback before implementation: Site 6eca0a5be75a7669d2c02561bbe86a931ff76a80. Preserve genuine workflow reds, stale workflow findings, unreadable-measurement failures and the required-check report. Save command logs, structured findings, source/run identity and step outcomes with an always-run artifact upload. Count game-touching commits from canonical publication payload/dependency paths, including renames/deletions and paginated history; report builder changes separately. Pin staleness is report-only as explicitly ordered.
+
+Controls: real classifier green, one planted workflow failure red, restored green; docs-only history zero game touches; recent game changes do not inherit the old pin age; renamed/deleted game inputs counted; stale pin alone does not fail. A fresh workflow run and its artifact are required before closure. No Science sources or owned publication-gate files are changed.

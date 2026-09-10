@@ -1,0 +1,33 @@
+ok tools/driving-games/harness_gap.mjs ->   await page.evaluate(() => { window.__RV.skipCountdown(); w
+ok tools/driving-games/harness_gap.mjs ->   if (st.mode !== 'running' || st.speed < 15 || st.progress 
+ok tools/measure_driving_flash.mjs ->       window.__RV.skipCountdown(); window.__RV.autopilot(tru
+ok tools/measure_driving_flash.mjs ->     if (!after || after.mode !== 'running' || after.speed < 
+syntax ok
+  shared-process+preheat run  1:   1.4 Hz  p2p 136.412   [{"mode":"running","countdown":0,"speed":24.05,"progress":0.1542,"motion":true,"kind":"snow","time":"night"}]
+  shared-process+preheat run  2:   2.2 Hz  p2p 136.412
+  shared-process+preheat run  3:   2.2 Hz  p2p 136.412
+  shared-process+preheat run  4:   1.6 Hz  p2p 136.412
+  shared-process+preheat run  5:   1.8 Hz  p2p 136.412
+  shared-process+preheat run  6:   1.4 Hz  p2p 136.412
+  shared-process+preheat run  7:   2.2 Hz  p2p 136.412
+  shared-process+preheat run  8:   1.2 Hz  p2p 136.412
+  shared-process+preheat run  9:   1.4 Hz  p2p 136.412
+  shared-process+preheat run 10:     1 Hz  p2p 136.412
+  => shared-process+preheat: rate min 1 med 1.6 max 2.2 mean 1.64 | p2p 136.412-136.412
+     runs at or over 3 Hz: 0/10
+
+  fresh-process         run  1:     2 Hz  p2p 136.412   [{"mode":"running","countdown":0,"speed":24.05,"progress":0.1542,"motion":true,"kind":"snow","time":"night"}]
+  fresh-process         run  2:   0.8 Hz  p2p 136.412
+  fresh-process         run  3:     1 Hz  p2p 136.412
+  fresh-process         run  4:   1.2 Hz  p2p 136.412
+  fresh-process         run  5:     1 Hz  p2p 136.412
+  fresh-process         run  6:     1 Hz  p2p 136.412
+  fresh-process         run  7:     1 Hz  p2p 136.412
+  fresh-process         run  8:     1 Hz  p2p 136.412
+  fresh-process         run  9:   1.8 Hz  p2p 136.412
+  fresh-process         run 10:   1.6 Hz  p2p 136.412
+  => fresh-process        : rate min 0.8 med 1 max 2 mean 1.24 | p2p 136.412-136.412
+     runs at or over 3 Hz: 0/10
+
+WORST ACROSS BOTH HARNESSES (20 runs): 2.2 Hz
+at or over 3 Hz: 0/20

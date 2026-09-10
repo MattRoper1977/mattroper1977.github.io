@@ -1,0 +1,69 @@
+name: Serve witness — publication is not served until the origin's bytes say so
+
+# HC5 D7. Additive. Reads only: fetches the review artifact of each repository's
+# successful, source-bound publication for its current main (the FieldOps serve
+# proof's own selector, precedent artifact 10016325373) and compares it byte for
+# byte with what the two origins serve for a fixed subject list — including the
+# Humanities teaching-pack routes, so HC5 §1.6 closes on this instrument.
+# WITNESSED needs every subject to match; one mismatch is RED; an unreachable
+# route or a missing exact-source publication is INCONCLUSIVE, never green.
+# The agent container cannot reach either origin, which is why this is a
+# workflow. It writes nothing to any surface.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 7 * * *'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  witness:
+    name: Byte witness, four publications
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          path: .sources/Lessons
+          fetch-depth: 1
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Matt-s-Apps-
+          path: .sources/Apps
+          fetch-depth: 1
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          path: .sources/Games
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: The instrument goes red on one planted byte and green again without it
+        run: python3 tools/hc5/serve_witness.py --self-test
+      - name: Witness the four publications against their origins
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -o pipefail
+          mkdir -p artifacts/serve-witness
+          python3 tools/hc5/serve_witness.py --site . --lessons .sources/Lessons --apps .sources/Apps --shelf .sources/Games \
+            --output artifacts/serve-witness --wait-seconds 120 | tee artifacts/serve-witness/summary.txt
+      - name: Summary
+        if: always()
+        run: |
+          { echo '## Serve witness'; echo '```'; cat artifacts/serve-witness/summary.txt 2>/dev/null || echo '(did not run)'; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: serve-witness-${{ github.run_id }}
+          path: |
+            artifacts/serve-witness/serve-witness.json
+            artifacts/serve-witness/summary.txt
+          if-no-files-found: error
+          retention-days: 30

@@ -48,15 +48,59 @@ jobs:
           git hash-object tools/verify_apexkick.js
           node tools/verify_apexkick.js | tee /tmp/apexkick-harness.log
 
-      - name: Assert the donor emitted its measured 25 checks
+      - name: Validate and report the non-blocking donor measurement
         shell: bash
         run: |
-          set -euo pipefail
-          checks=$(grep -E '^[[:space:]]+(PASS|FAIL)[[:space:]]' /tmp/apexkick-harness.log | wc -l)
-          passes=$(grep -E '^[[:space:]]+PASS[[:space:]]' /tmp/apexkick-harness.log | wc -l)
-          failures=$(grep -E '^[[:space:]]+FAIL[[:space:]]' /tmp/apexkick-harness.log | wc -l)
-          printf 'donor harness measured: %s checks, %s pass, %s fail\n' "$checks" "$passes" "$failures"
-          test "$checks" -eq 25
+          set -uo pipefail
+          # REPAIRED 2026-08-25 (Order T §T3). This step went red on 10 August at
+          # def68e16 and stayed red for fifteen days, because this workflow only
+          # fires on a pull request touching three paths and nothing re-ran it.
+          #
+          # It failed BEFORE PRINTING ANYTHING - the run log jumps from
+          # ##[endgroup] straight to exit 1 - because every line was
+          # `grep … | wc -l` under `set -e -o pipefail`. grep exits 1 on no match
+          # and 2 on a missing file, pipefail promotes either, and `set -e` kills
+          # the step. So "the donor emitted the wrong number of checks", "the log
+          # is missing" and "the pattern stopped matching" were one indistinct
+          # red. Counted with `|| true` now, and the three cases are separated.
+          #
+          # And `-eq 25` was a COUNT TYPED AGAINST ANOTHER GATE'S OUTPUT -
+          # failure mode 1, the seventh instance. The donor states its own total
+          # in its summary line, so the total is read from the donor.
+          LOG=/tmp/apexkick-harness.log
+          if [ ! -s "$LOG" ]; then
+            echo "MEASUREMENT INVALID: $LOG is missing or empty - the donor harness did not report"
+            exit 1
+          fi
+          checks=$(grep -cE '^[[:space:]]+(PASS|FAIL)[[:space:]]' "$LOG" || true)
+          passes=$(grep -cE '^[[:space:]]+PASS[[:space:]]' "$LOG" || true)
+          failures=$(grep -cE '^[[:space:]]+FAIL[[:space:]]' "$LOG" || true)
+          # DERIVED, not typed: a green donor prints "ALL <n> ... PASSED";
+          # a red donor prints "<p> passed, <f> FAILED". Both are complete
+          # terminal summaries, and the latter remains a measured non-blocking
+          # donor finding rather than making Golf's own gates disappear.
+          declared=$(sed -nE 's/.*ALL ([0-9]+) CONTRACT CHECKS PASSED.*/\1/p' "$LOG" | sed -n 1p)
+          if [ -z "$declared" ]; then
+            summary=$(sed -nE 's/^([0-9]+) passed, ([0-9]+) FAILED$/\1 \2/p' "$LOG" | sed -n 1p)
+            if [ -n "$summary" ]; then
+              read -r summary_pass summary_fail <<<"$summary"
+              declared=$((summary_pass + summary_fail))
+            fi
+          fi
+          printf 'donor harness measured: %s checks, %s pass, %s fail; donor declares %s\n' \
+            "$checks" "$passes" "$failures" "${declared:-none}"
+          if [ -z "$declared" ]; then
+            echo "MEASUREMENT INVALID: the donor printed no total - it did not finish, or its summary line moved"
+            exit 1
+          fi
+          if [ "$checks" -ne "$declared" ]; then
+            echo "the donor emitted $checks check lines but declares $declared"
+            exit 1
+          fi
+          if [ "$failures" -ne 0 ]; then
+            echo "NON-BLOCKING DONOR DRIFT: the Apex Kick harness reports $failures failing check(s)."
+            echo "Apex Golf's independent gates still run below; this donor measurement does not colour them."
+          fi
 
       - name: Run all Apex Golf gates
         env:

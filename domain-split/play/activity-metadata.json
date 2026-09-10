@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "why": "Play-shelf presentation metadata for routes that have no games.json row (the seven classroom/staff activities come from data/mbm-search-index.json), plus the one series join that games.json cannot carry: 'Kids vs Staff' has one catalogue edition (KidsVsStaff_Showdown) and one activity edition (the Studio Game Show), and tools/validate_games_json.sh refuses a series named on a single games.json row. Same keys and rules as games.json: displayTitle must differ from the row's title; a series must name at least two rows across the 69-route population. Read by domain-split/play/build.py; every route must exist in the built catalogue or the build fails.",
+  "routes": {
+    "/Lessons/Summer Term Fun/Kids_vs_Staff_Studio_Game_Show_v8_Autopilot.html": {
+      "displayTitle": "Kids vs Staff: Studio Game Show",
+      "series": "Kids vs Staff"
+    },
+    "/Lessons/5 Intervention 10/L8a_Powerhouse_Arena_TeamQuiz.html": {
+      "displayTitle": "Powerhouse Arena Team Quiz"
+    },
+    "/Lessons/Games/KidsVsStaff_Showdown (3).html": {
+      "series": "Kids vs Staff"
+    }
+  }
+}

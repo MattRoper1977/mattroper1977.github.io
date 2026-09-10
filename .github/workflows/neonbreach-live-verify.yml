@@ -14,10 +14,47 @@ name: Neon Breach live verification
 # caught up with the tree is a deployment timing fact, not a content match, and
 # saying so is the whole point of the gate.
 
+# RETARGETED 2026-08-13 (census ruling). The old push branch was this game's
+# launch branch — valid when written, dead the day its PR merged, leaving the
+# workflow dispatch-only in practice. It now fires on pushes to main touching
+# its subjects, including this file: the retargeting merge is the firing proof.
+# Lag is already a recorded timing fact here, not a failure.
+# WIDENED 2026-08-14. The retargeting above fixed WHICH BRANCH this fires on and
+# left WHAT IT WATCHES too narrow — register species 37: a workflow's path filter
+# must include every file its assertions read. #127 re-pointed the surface census
+# at data/new-release-occupants.json; that merge changed the record and both
+# verifiers and fired nothing, so the evidence had to be hand-dispatched. A gate
+# that only runs when someone remembers to press it is not a gate.
+#
+# Full read set of this workflow, audited rather than guessed:
+#   READ DIRECTLY
+#     neonbreach/index.html              hashed against the served copy
+#     tools/verify_neonbreach.js         run against the SERVED bytes
+#     tools/verify_surfaces.js           the surface census
+#     data/new-release-occupants.json    the census's declared occupant record
+#   ASSERTED IN SERVED FORM (the repo file is the subject of the assertion, so a
+#   change to it changes what the step measures — the same reason
+#   neonbreach/index.html has always been listed)
+#     sitemap.xml                        served sitemap must carry one canonical line
+#     games/index.html                   S2/S2c count cards in the served arcade
+#   NOT FILTERABLE FROM HERE, and stated rather than left implied
+#     MattRoper1977/Games games.json     served at /Games/games.json from the Games
+#                                        project site. A shelf change there cannot
+#                                        fire a workflow in this repository; the
+#                                        census reports the served entry count so
+#                                        that lag is visible instead of assumed.
 on:
   push:
     branches:
-      - 'claude/neon-sync-breach-release-0x70pf'
+      - main
+    paths:
+      - 'neonbreach/index.html'
+      - 'tools/verify_neonbreach.js'
+      - 'tools/verify_surfaces.js'
+      - 'data/new-release-occupants.json'
+      - 'sitemap.xml'
+      - 'games/index.html'
+      - '.github/workflows/neonbreach-live-verify.yml'
   workflow_dispatch:
 
 permissions:
@@ -52,13 +89,24 @@ jobs:
             | python3 -c 'import json,sys; d=json.load(sys.stdin); print("status ",d.get("status")); print("commit ",d.get("commit")); print("updated",d.get("updated_at")); print("error  ",d.get("error"))' \
             || echo "Pages API unavailable to this token — recorded, not faked."
 
-      - name: HTTP status for the new surface
+      # HC3 §1.1. Origins are DERIVED (shelf + 69-route census + split policy),
+      # never typed here, and the derivation proves its own controls first.
+      - name: Derive the origin table and prove its controls (HC3 §1.1)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/route_origins.py --self-test
+          python3 tools/verify_education_stubs.py --self-test
+          echo "PLAY=$(python3 tools/route_origins.py --origin play)" >> "$GITHUB_ENV"
+          echo "EDU=$(python3 tools/route_origins.py --origin education)" >> "$GITHUB_ENV"
+
+      - name: HTTP status for the new surface, on the play origin
         shell: bash
         run: |
           set -o pipefail
           fail=0
-          for u in https://madebymatt.uk/neonbreach/ https://madebymatt.uk/sitemap.xml ; do
-            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
+          for u in "$PLAY/neonbreach/" "$PLAY/sitemap.xml" ; do
+            code=$(curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
             printf '%-46s %s\n' "$u" "$code"
             [ "$code" = "200" ] || fail=1
           done
@@ -68,11 +116,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl -sS --max-time 60 https://madebymatt.uk/neonbreach/ -o /tmp/neonbreach.live
+          curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 --max-time 60 "$PLAY/neonbreach/" -o /tmp/neonbreach.live
+          # Served play bytes are the committed bytes with the education host
+          # literal rewritten (HC3 §1.1) — compare against that, never raw source.
+          python3 tools/route_origins.py --expected /neonbreach/ --out /tmp/neonbreach.expected
           LB=$(wc -c < /tmp/neonbreach.live)
-          RB=$(wc -c < neonbreach/index.html)
+          RB=$(wc -c < /tmp/neonbreach.expected)
           LS=$(sha256sum /tmp/neonbreach.live | cut -d' ' -f1)
-          RS=$(sha256sum neonbreach/index.html | cut -d' ' -f1)
+          RS=$(sha256sum /tmp/neonbreach.expected | cut -d' ' -f1)
           echo "SERVED_BYTES=$LB"
           echo "SERVED_SHA256=$LS"
           echo "REPO_BYTES=$RB"
@@ -91,15 +142,17 @@ jobs:
           set -euo pipefail
           # The gates are run against the SERVED bytes, not the checked-out
           # ones, so a deploy-time mutation could not slip past unnoticed.
-          NB_GAME_FILE=/tmp/neonbreach.live node tools/verify_neonbreach.js
+          NB_GAME_FILE=/tmp/neonbreach.live NB_CANON="$PLAY/neonbreach/" node tools/verify_neonbreach.js
+          echo 'And the old address on the education origin is a stub:'
+          python3 tools/verify_education_stubs.py --origin "$EDU" --routes /neonbreach/
           echo 'The live bytes pass the same contract the committed bytes do.'
 
       - name: Sitemap as served carries the canonical line
         shell: bash
         run: |
           set -euo pipefail
-          curl -sS --max-time 30 https://madebymatt.uk/sitemap.xml -o /tmp/sitemap.live
-          N=$(grep -c '<loc>https://madebymatt.uk/neonbreach/</loc>' /tmp/sitemap.live || true)
+          curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 --max-time 30 "$PLAY/sitemap.xml" -o /tmp/sitemap.live
+          N=$(grep -c "<loc>$PLAY/neonbreach/</loc>" /tmp/sitemap.live || true)
           echo "served sitemap /neonbreach/ loc lines: $N"
           if [ "$N" -eq 1 ]; then
             echo 'PASS served sitemap carries exactly one canonical line'
@@ -135,4 +188,4 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node tools/verify_surfaces.js --base=https://madebymatt.uk
+          node tools/verify_surfaces.js --base="$PLAY"

@@ -1,10 +1,42 @@
 name: Apex Sports homepage publication verify
 
+# TRIGGER SHAPE, RULED 2026-08-13. This workflow was pull_request-only, and
+# its path filter did not include the two game files its entry conditions
+# assert. Both blind spots bit at once: e65a190 changed apextennis/index.html
+# by push to main, no run fired anywhere, and the sha256 pin below sat
+# unsatisfiable for three days while every PR that happened to touch
+# main/index.html went red for someone else's reason. 151 recorded runs of
+# this workflow, all pull_request, zero ever on main. So: the asserted game
+# files are now in the path filter, and the same paths run on push to main —
+# a stale assertion now fails the commit that staled it, not the next
+# stranger's PR. On a push run origin/main is the pushed commit, so the
+# preservation legs compare the tree to itself and pass vacuously; the pin,
+# structure, mutation-family and browser gates all still bite, and they are
+# what a main run is for.
 on:
   pull_request:
     paths:
-      - 'index.html'
+      - 'main/index.html'
       - 'site.json'
+      - 'apexgolf/index.html'
+      - 'apextennis/index.html'
+      - 'assets/cards/apex-golf-door.svg'
+      - 'assets/cards/apex-tennis-door.svg'
+      - 'tools/apply_apexpool_home.js'
+      - 'tools/apply_apextennis_home.js'
+      - 'tools/verify_apexpool_home.py'
+      - 'tools/verify_apexpool_home_browser.js'
+      - 'tools/verify_apextennis_home.py'
+      - 'tools/verify_apextennis_home_browser.js'
+      - '.github/workflows/apexpool-home-verify.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'main/index.html'
+      - 'site.json'
+      - 'apexgolf/index.html'
+      - 'apextennis/index.html'
       - 'assets/cards/apex-golf-door.svg'
       - 'assets/cards/apex-tennis-door.svg'
       - 'tools/apply_apexpool_home.js'
@@ -42,8 +74,11 @@ jobs:
           set -euo pipefail
           test -f apexgolf/index.html
           test -f apextennis/index.html
-          test "$(sha256sum apextennis/index.html | awk '{print $1}')" = "8e109ab55a0fb2a284f2e2e0bb5baa8bf468eaea8e2e89593fd71a20cdfb9b1f"
-          grep -q 'apexgolf-build-2026-08-04' apexgolf/index.html
+          # Each hash below is a pinned release identity for the game on its
+          # line. Updating either game without updating this gate must go red on
+          # that same commit.
+          test "$(sha256sum apextennis/index.html | awk '{print $1}')" = "06791f86106d6ba79a9b697446511ddedf21a769c20db19dcb6400991e6f5f8f"
+          test "$(sha256sum apexgolf/index.html | awk '{print $1}')" = "4411ff5b9a22e21acbeb91fb75863c6452e1e484bb6d963383f2343916a6ba6a"
 
       - name: Capture the measured 12-door main baseline
         shell: bash
@@ -51,7 +86,17 @@ jobs:
           set -euo pipefail
           mkdir -p artifacts/apextennis-home
           git show origin/main:site.json > artifacts/apextennis-home/site-before.json
-          git show origin/main:index.html > artifacts/apextennis-home/index-before.html
+          # FOURTH INSTANCE OF THE A-6 SHAPE, and the exact defect BACKLOG 0a-A
+          # already repaired in verify_professional_site.js: this captured
+          # origin/main:index.html, which was the full homepage for exactly one
+          # commit. Since #110 gave / to the chooser, that file has no
+          # newrelease section, so verify_apextennis_home.py crashed on its own
+          # baseline — and reject() counted the crash as a rejection, turning
+          # all four mutation families vacuously green. Masked behind the
+          # doors-baseline red, then behind the stale pin above; surfaced
+          # 2026-08-13 the moment the pin was corrected. The full homepage
+          # lives at main/index.html, so the baseline comes from there.
+          git show origin/main:main/index.html > artifacts/apextennis-home/index-before.html
           # THIRD INSTANCE OF THE A-6 SHAPE. This asserted a hardcoded 12 and has
           # been RED ON MAIN'S OWN BASELINE since 6e8ab12 (site#44) took doors to
           # 14 — every PR touching index.html or site.json has failed here since.
@@ -70,11 +115,11 @@ jobs:
           set -euo pipefail
           node --check tools/apply_apextennis_home.js
           node --check tools/verify_apextennis_home_browser.js
-          python3 tools/verify_apextennis_home.py index.html site.json assets/cards/apex-golf-door.svg assets/cards/apex-tennis-door.svg artifacts/apextennis-home/site-before.json artifacts/apextennis-home/index-before.html | tee artifacts/apextennis-home/static.log
-          before_index=$(sha256sum index.html | awk '{print $1}')
+          python3 tools/verify_apextennis_home.py main/index.html site.json assets/cards/apex-golf-door.svg assets/cards/apex-tennis-door.svg artifacts/apextennis-home/site-before.json artifacts/apextennis-home/index-before.html | tee artifacts/apextennis-home/static.log
+          before_index=$(sha256sum main/index.html | awk '{print $1}')
           before_site=$(sha256sum site.json | awk '{print $1}')
           node tools/apply_apexpool_home.js | tee artifacts/apextennis-home/idempotency.log
-          test "$before_index" = "$(sha256sum index.html | awk '{print $1}')"
+          test "$before_index" = "$(sha256sum main/index.html | awk '{print $1}')"
           test "$before_site" = "$(sha256sum site.json | awk '{print $1}')"
 
       - name: Demonstrate four static failure families
@@ -91,7 +136,7 @@ jobs:
           # having actually bitten BEFORE its result is allowed to count.
           reject() {
             local family="$1"
-            if cmp -s index.html /tmp/apextennis-home/index.html && cmp -s site.json /tmp/apextennis-home/site.json; then
+            if cmp -s main/index.html /tmp/apextennis-home/index.html && cmp -s site.json /tmp/apextennis-home/site.json; then
               echo "*** FIXTURE INERT *** ${family} changed nothing, so it proves nothing" >&2
               exit 1
             fi
@@ -102,14 +147,16 @@ jobs:
             fi
             echo "PASS mutation ${family} rejected" | tee -a artifacts/apextennis-home/nonvacuity.log
           }
-          cp index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
+          # This is the three established Apex launch games used by the
+          # mutation controls below, not the shelf's current title inventory.
+          cp main/index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
           python3 - <<'PY'
           from pathlib import Path
           p=Path('/tmp/apextennis-home/index.html');p.write_text(p.read_text().replace('data-sport-game="Apex Tennis"','data-sport-game="Apex Pool"',1))
           PY
           reject missing-tennis-card
 
-          cp index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
+          cp main/index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
           python3 - <<'PY'
           import json
           p='/tmp/apextennis-home/site.json';d=json.load(open(p));next(x for x in d['doors'] if x['title']=='Apex Tennis')['href']='https://madebymatt.uk/apextennis/';open(p,'w').write(json.dumps(d,ensure_ascii=False,indent=2)+'\n')
@@ -123,7 +170,7 @@ jobs:
           # is the opposite one: Golf must take NO door, so ADDING one must be
           # rejected. Same family count, testing the contract that is actually
           # in force.
-          cp index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
+          cp main/index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
           python3 - <<'PY'
           import json
           p='/tmp/apextennis-home/site.json';d=json.load(open(p))
@@ -133,7 +180,7 @@ jobs:
           PY
           reject reinstated-golf-door
 
-          cp index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
+          cp main/index.html /tmp/apextennis-home/index.html; cp site.json /tmp/apextennis-home/site.json
           python3 - <<'PY'
           import re
           from pathlib import Path
@@ -148,22 +195,31 @@ jobs:
           PY
           reject new-release-takeover
 
-      - name: Verify held PR 25 remains untouched
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" -H 'Accept: application/vnd.github+json' \
-            https://api.github.com/repos/MattRoper1977/mattroper1977.github.io/pulls/25 > /tmp/pr25.json
-          python3 - <<'PY' | tee artifacts/apextennis-home/pr25.log
-          import json
-          p=json.load(open('/tmp/pr25.json'))
-          assert p['state']=='open',p['state']
-          assert p['merged_at'] is None,p['merged_at']
-          assert p['head']['sha']=='7c202790115ca5de5f71babb570b806e5e57a4aa',p['head']['sha']
-          print('PR #25 open, unmerged and unchanged at 7c202790115ca5de5f71babb570b806e5e57a4aa; it must be re-derived after this homepage change')
-          PY
+      # RETIRED 2026-09-09 (SW2-F W1). A step here asserted that held PR #25 was
+      # still open, unmerged and pinned at 7c202790. #25 was CLOSED unmerged on
+      # 2026-09-07 and stays closed: the homepage it was written against was
+      # rebuilt by UX2 B2 (UX2_LEDGER.md, "Part B2 - the homepage and
+      # /commission/"), so a check asserting anything about it asserts a dead
+      # fixture. It had begun failing every pull request touching
+      # main/index.html - this workflow's own trigger path - and the failure was
+      # never about the homepage it guards.
+      #
+      # This is the FIFTH instance of the A-6 pinned-assertion shape in this
+      # file; the third and fourth are recorded in the comments above, both
+      # converted to derived form. Register line:
+      # reports/close/2026-08-05-apexrally-landing.md - "Four further instances
+      # of the A-6 pinned-assertion shape were found blocking a correct fifth
+      # game and converted to derived form ... Each replacement was checked to be
+      # no weaker than the pin it replaced."
+      #
+      # RETIRED rather than derived, because there is nothing to derive: the
+      # subject is a closed pull request, not a property of the served tree.
+      # Decision record: reports/close/2026-09-09-apexpool-pr25-retirement.md.
+      #
+      # Nothing else changes. The 56 static gates, the four planted failure
+      # families and the render gates all stand, and were re-proved both ways:
+      # the served tree passes 56/56, and dropping the Apex Pool route from a
+      # scratch copy reds with "FAIL  Apex Pool card keeps exact href and hue".
 
       - name: Install Playwright Chromium
         run: |

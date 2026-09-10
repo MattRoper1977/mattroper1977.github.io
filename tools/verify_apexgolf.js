@@ -482,7 +482,7 @@ gate('G8', 'Call Rating fixtures, bands, symmetry and fuzz', () => {
       const missActual = called + 2 <= 30 ? called + 2 : called - 2;
       const miss = AG.callRating(called, missActual, par);
       assert(exact > near && near >= miss, `bands overlap for call ${called}, par ${par}`);
-      if (called > par + 3) assert(exact <= 60, `safe-call ceiling exceeded for ${called} on par ${par}`);
+      if (called > par + 3) assert(exact <= 60, `safe-call ceiling exceeded for ${called} on par ${par}`); // NOT LIVE: 60 is the Call Rating safe-call ceiling, not a shelf count.
     }
   }
   const rng = AG.mulberry32(0x51a7c0de);
@@ -645,7 +645,23 @@ async function finish() {
     gate('G17', 'single-file size, cold load and frame rate', () => {
       assert(!browserRuns.error, browserRuns.error && browserRuns.error.message);
       assert(byteCount <= 250 * 1024, `${byteCount} bytes exceeds 250 KiB`);
-      assert(!/<script\s+[^>]*src=|<link\s+[^>]*rel=["']stylesheet/.test(html), 'runtime dependency found');
+      /* V6 restores the exact zero-runtime-dependency promise. The exit control
+         is inline, so every script `src` is again forbidden. Two planted
+         controls prove the census rejects both remote and same-origin loads. */
+      const scriptTags = t => t.match(/<script\b[^>]*\bsrc\s*=\s*["'][^"']*["'][^>]*>/gi) || [];
+      assert(scriptTags(html).length === 0,
+        `runtime dependency found: ${scriptTags(html).join(', ')}`);
+      assert(!/<link\s+[^>]*rel=["']stylesheet/.test(html), 'external stylesheet found');
+      /* G16 tampers the sentinel and proves nothing about this dependency limb,
+         so both dependency families are armed independently here. */
+      const controls = [
+        ['off-origin CDN', html.replace('</head>', '<script src="https://cdn.example.invalid/a.js"></script></head>')],
+        ['a second same-origin script', html.replace('</head>', '<script src="/analytics.js"></script></head>')],
+      ];
+      for (const [label, mutated] of controls) {
+        assert(mutated !== html, `CONTROL "${label}" changed nothing — it proves nothing`);
+        assert(scriptTags(mutated).length > 0, `CONTROL: ${label} was NOT rejected`);
+      }
       assert(!/\b(?:fetch|XMLHttpRequest)\s*\(/.test(html), 'runtime network request found');
       requireRows(['performance-floor','real-canvas-pixels']);
       const perf = browserRuns.runs.map(r => `${r.config.name}:${r.data.fps.fps.toFixed(1)}fps/${r.data.loadMs.toFixed(1)}ms`).join(', ');

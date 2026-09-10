@@ -1,0 +1,20 @@
+{
+  "_decision": "2026-08-14: a feature flag in site.json may sit away from its asserted value ONLY while this record declares it. Ruled by Matt during the fail-closed adult-surface pass, after the mailing stand-down collided with tools/verify_accounts_members_mailing.js, which asserted features.mailing.enabled===true outright. That assertion left no way to stand a feature down for safety without either landing a red gate or weakening one. This record is the third option, and it is deliberately the harder one: a stand-down is now a reviewable declaration in the tree rather than a silent flip.",
+
+  "_contract": "tools/verify_accounts_members_mailing.js reads this file. For each flag it guards, the gate passes when the flag holds its asserted value, OR when an entry here names that flag with every field filled in. Nothing else satisfies it. A missing file, an unparseable file, an empty standDowns list, an entry naming a different flag, or an entry with a blank reason all leave the gate demanding the asserted value. Three positive controls in that verifier prove each of those rejections, so this record cannot be reduced to a stub that silences the gate.",
+
+  "_notAnExemption": "An entry is not permission to leave a flag off. It is a promise to put it back, with the condition that discharges the promise written down in revertsWhen. Removing the entry is what forces the revert: once the entry goes, the gate demands the asserted value again on the next run. The reason and measured fields exist so that a reviewer who was not in the room can see what was traded away and what evidence supported it.",
+
+  "_measuredNotAsserted": "The measured field states what was observed in a browser, not what was expected. Per this estate's standing rule, a stand-down is justified by evidence, never by a proxy for evidence. An entry whose measured field restates the reason rather than reporting an observation is a defect in the entry.",
+
+  "_fields": {
+    "flag": "Dotted path into site.json, e.g. features.mailing.enabled. Matched exactly.",
+    "asserted": "The value the gate demands when no stand-down is declared.",
+    "since": "ISO date, YYYY-MM-DD, the day the flag was stood down.",
+    "reason": "Why the flag is away from its asserted value. Required, non-empty.",
+    "revertsWhen": "The condition that ends the stand-down. Required, non-empty.",
+    "measured": "What was observed, in a browser, that shows the stand-down is safe. Required, non-empty."
+  },
+
+  "standDowns": []
+}

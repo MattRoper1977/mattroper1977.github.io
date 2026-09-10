@@ -8,16 +8,36 @@ name: Published games serve (Stage L-fin)
 # not serve is a half-publish arriving from the serving side, and the visitor
 # is the one who pays for it.
 
+# RETARGETED 2026-08-13 (census ruling). The old push branch was the
+# glowbound landing branch — valid when written, dead the day it merged. Two
+# replacements, because this instrument's real job is steady-state drift
+# detection of served paths: pushes to main touching its subjects (including
+# this file — the retargeting merge is the firing proof), and a weekly
+# schedule, so a path that stops serving is caught within a week even when
+# nothing pushes. A push-time run can race the Pages deploy; its byte
+# comparison names both sizes and hashes, so a lag read is recognisable and a
+# re-dispatch settles it.
 on:
   workflow_dispatch:
     inputs:
       paths:
-        description: 'Space-separated published paths to prove, e.g. "/ouroboros/ /novasiege/"'
+        description: 'Space-separated GAME paths — serve, shelf entry, arcade card. e.g. "/ouroboros/ /novasiege/"'
         required: false
         default: '/ouroboros/ /novasiege/'
+      tool_paths:
+        description: 'Space-separated TEACHER TOOL paths — serve, and must NOT be on the arcade shelf. e.g. "/artsaward/"'
+        required: false
+        default: ''
   push:
     branches:
-      - 'claude/live-glowbound-taxonomy-homepage'
+      - main
+    paths:
+      - 'ouroboros/index.html'
+      - 'novasiege/index.html'
+      - 'games/index.html'
+      - '.github/workflows/published-live-verify.yml'
+  schedule:
+    - cron: '17 6 * * 1'
 
 permissions:
   contents: read
@@ -63,12 +83,25 @@ jobs:
           echo "site main      : $(git -C _main rev-parse HEAD)"
           echo "shelf main     : $(git -C _shelf rev-parse HEAD)"
 
-      - name: HTTP status for every surface
+      # HC3 §1.1. The origins are DERIVED from the shelf, the 69-route census and the
+      # split policy — never typed here — and the derivation proves its own three
+      # controls before any live fetch. A game route is served on the play origin;
+      # its old address on the education origin must be a stub.
+      - name: Derive the origin table and prove its controls (HC3 §1.1)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/route_origins.py --self-test
+          python3 tools/verify_education_stubs.py --self-test
+          echo "PLAY=$(python3 tools/route_origins.py --origin play)" >> "$GITHUB_ENV"
+          echo "EDU=$(python3 tools/route_origins.py --origin education)" >> "$GITHUB_ENV"
+
+      - name: HTTP status for every surface, on the origin that serves it
         run: |
           set -o pipefail
           for u in / /games/ /Games/games.json /ouroboros/ /novasiege/ ; do
-            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "https://madebymatt.uk$u" || echo "000")
-            printf '  %-34s %s\n' "$u" "$code"
+            code=$(curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 -o /dev/null -w '%{http_code}' --max-time 30 "$PLAY$u" || echo "000")
+            printf '  %-34s %s  (play)\n' "$u" "$code"
           done
           # Reported, not gated — the byte comparison below is the real check
           # and a 200 proves a response, not the right response.
@@ -77,7 +110,7 @@ jobs:
         run: |
           set -o pipefail
           fail=0
-          for u in https://madebymatt.uk/_staging/ https://madebymatt.uk/_staging/novasiege/ ; do
+          for u in "$EDU/_staging/" "$EDU/_staging/novasiege/" ; do
             code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
             printf '  %-52s %s\n' "$u" "$code"
             case "$code" in
@@ -89,10 +122,46 @@ jobs:
 
       - name: Prove the published paths are SERVED
         run: |
+          set -euo pipefail
           ln -sfn "$PWD/node_modules" tools/node_modules || true
+          # The `paths` input was declared and then ignored: this step hard-coded
+          # the two defaults, so a dispatch asking for other paths silently proved
+          # the same two and reported success. An input that is accepted and
+          # discarded is worse than no input, because it advertises a capability
+          # that does not exist - someone reaches for it during an incident and
+          # gets a green answer to a question they never asked.
+          #
+          # Route type is passed through, not guessed. Games go to --path and
+          # are held to shelf entry + arcade card; teacher tools go to
+          # --tool-path and are held to serving plus an assertion that they are
+          # ABSENT from the arcade shelf. Sending three tool routes through
+          # --path once produced six reds that all said "no arcade card" about
+          # pages that correctly have none, which is the kind of red that
+          # teaches people to stop reading this job.
+          paths="${{ inputs.paths }}"
+          tool_paths="${{ inputs.tool_paths }}"
+          [ -n "$paths$tool_paths" ] || paths='/ouroboros/ /novasiege/'
+          args=()
+          for p in $paths; do args+=(--path "$p"); done
+          for p in $tool_paths; do args+=(--tool-path "$p"); done
+          echo "proving these game paths: ${paths:-(none)}"
+          echo "proving these tool paths: ${tool_paths:-(none)}"
+          # Games serve on the play origin; the served bytes are the committed
+          # bytes with the education host literal rewritten, which is what
+          # --transform-host applies before hashing. Tool routes stay on the
+          # education origin. Each game path's OLD address on the education
+          # origin is checked as a stub (≤2 KB, noindex, canonical → play).
           cd tools && node verify_published_live.mjs \
+            --origin "$PLAY" --education-origin "$EDU" --transform-host \
             --repo-root "$GITHUB_WORKSPACE/_main" \
             --shelf     "$GITHUB_WORKSPACE/_shelf/games.json" \
-            --path /ouroboros/ \
-            --path /novasiege/ \
+            "${args[@]}" \
             --expect-404 /this-path-does-not-exist-control/
+
+      - name: The old game addresses on the education origin are stubs
+        if: always()
+        run: |
+          set -o pipefail
+          paths="${{ inputs.paths }}"
+          [ -n "$paths${{ inputs.tool_paths }}" ] || paths='/ouroboros/ /novasiege/'
+          python3 tools/verify_education_stubs.py --origin "$EDU" --routes $paths

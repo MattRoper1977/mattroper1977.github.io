@@ -1,0 +1,10 @@
+{
+  "_why": "R-T3.4 requires the per-page href census to be identical. R-T3.2 step 4 requires privacy/index.html to gain its first footer, and a footer with a brand link necessarily adds one href. Those two rulings meet here, so the change is DECLARED rather than waived: anything not listed below still fails the gate.",
+  "declared": {
+    "privacy/index.html": {
+      "added": { "/main/": 1 },
+      "lost": {},
+      "reason": "R-T3.2 step 4. The page had no <footer> at all; it gains the minimal variant, which is the brand and the tagline and nothing else. /main/ is a route the page already links three times, so no NEW route is introduced - the adult link group would have added /commission/, /mailing-list/ and the Play link, which is a design change and belongs to Part U under R-T3.6. The page body is byte-identical either side of the addition."
+    }
+  }
+}

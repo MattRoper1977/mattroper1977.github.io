@@ -1,0 +1,280 @@
+{
+ "_why": "Appendix A of order UX2 (2026-09-08), the Site strings, verbatim; <values> are derived so they are not listed. check_ux2_education.cjs asserts each string renders on its route and exempts these strings from the typed-digit check. Change this file only when the order's Appendix A changes.",
+ "vocabulary": [
+  "Learning",
+  "Lessons",
+  "Resources",
+  "Apps & tools",
+  "Account and members",
+  "Play"
+ ],
+ "menu": [
+  "Menu",
+  "Learning",
+  "Lessons",
+  "Resources",
+  "Apps & tools",
+  "Primary lessons",
+  "Who are you here for?",
+  "Your account",
+  "Account and members",
+  "Teacher updates",
+  "Privacy and statistics",
+  "Made by Matt Play ↗"
+ ],
+ "home": [
+  "Find your next lesson.",
+  "Lessons, planning packs and classroom tools, made by a teacher.",
+  "I'm teaching →",
+  "I'm learning →",
+  "Search lessons, packs and tools",
+  "Go straight to your subject",
+  "Science",
+  "Investigate, explore and explain.",
+  "Humanities & RE",
+  "People, places, beliefs and the past.",
+  "Art Studio",
+  "Look closely, make and reflect.",
+  "Lifeskills",
+  "Practical units with evidence built in.",
+  "Three places, one site",
+  "Lessons",
+  "Interactive lessons and slide decks, week by week.",
+  "Resources",
+  "Schemes of work, evidence packs and print packs.",
+  "Apps & tools",
+  "Studios, timers and classroom tools.",
+  "Here for someone else?",
+  "Made by a teacher, for real classrooms.",
+  "Built by an alternative-provision teacher on Teesside and used every week.",
+  "Commission a resource",
+  "Teacher updates",
+  "Made by Matt · Learning",
+  "Optional usage statistics — off until you allow it.",
+  "Read what is counted.",
+  "Allow",
+  "Keep off"
+ ],
+ "homeAdded": [
+  "Added this half-term",
+  "See all →"
+ ],
+ "homeAddedFallback": [
+  "Added this term"
+ ],
+ "homeFooter": [
+  "Lessons",
+  "Resources",
+  "Apps",
+  "Privacy",
+  "Made by Matt Play ↗"
+ ],
+ "commission": [
+  "Commission a resource"
+ ],
+ "pupils": [
+  "What are you learning today?",
+  "Choose your subject. Your teacher will help you find your pathway and lesson.",
+  "Choose your subject",
+  "Find your activity"
+ ],
+ "teachers": [
+  "What are you teaching today?",
+  "Find a lesson, plan a sequence, capture the evidence.",
+  "Teach",
+  "Find a lesson",
+  "Browse lessons →",
+  "Plan",
+  "Schemes of work and packs",
+  "Open planning →",
+  "Assess and record",
+  "Evidence packs and trackers",
+  "Open evidence →",
+  "Choose a subject and pathway",
+  "Make something for your classroom"
+ ],
+ "resources": [
+  "Resources",
+  "Search packs, schemes of work, evidence books",
+  "Planning packs and evidence, one card per unit.",
+  "Looking for lessons? Go to Lessons →",
+  "Schemes of work",
+  "Evidence and accreditation",
+  "Teacher tools",
+  "Subject",
+  "Type",
+  "Pathway",
+  "All subjects",
+  "All types",
+  "All pathways",
+  "Unit packs",
+  "This half-term first",
+  "Delivery lessons →",
+  "Whole-school documents",
+  "No packs match.",
+  "Clear filters",
+  "Planning",
+  "Evidence",
+  "Delivery",
+  "Made by Matt · Resources"
+ ],
+ "learnBuildExplore": "Learn • Build • Explore",
+ "vocabularyDefects": {
+  "_why": "B5 vocabulary grep: 'Lesson Hub', 'Teaching hub', 'Education Hub', 'Teacher tools', 'Learning home'. Each occurrence on a gated route must be the one surviving name or a defect listed here with its reason; the gate fails on any occurrence not listed and on a listed defect that no longer occurs.",
+  "terms": [
+   "Lesson Hub",
+   "Teaching hub",
+   "Education Hub",
+   "Teacher tools",
+   "Learning home"
+  ],
+  "routes": {
+   "/for/teachers/": {
+    "Education Hub": {
+     "count": 1,
+     "why": "B1 HUBS ruling: /education-hub/ is a STOP kept under its own name and linked from the teacher page's account area; the name is a listed defect, not renamed by this order."
+    }
+   },
+   "/resources/": {
+    "Teacher tools": {
+     "count": 2,
+     "why": "One is the §RESOURCES pillar (the surviving name for the Apps hub). The other is the build's learning-areas bar on the three catalogue hubs, which labels /tools/ 'Teacher tools' — a listed defect; the page /tools/ is not renamed by this order."
+    },
+    "Lesson Hub": {
+     "count": 1,
+     "why": "A catalogue row title from the Lessons record ('BUILD Engine · Week 1 Lesson Hub') rendered as a document; record content, not this order's copy — a listed defect for the Lessons record."
+    }
+   }
+  }
+ },
+ "gatedRoutes": [
+  "/",
+  "/commission/",
+  "/for/pupils/",
+  "/for/teachers/",
+  "/resources/"
+ ],
+ "pupilRoutes": [
+  "/",
+  "/for/pupils/",
+  "/resources/"
+ ],
+ "overlayRoutes": [
+  "/",
+  "/for/teachers/",
+  "/for/pupils/",
+  "/commission/"
+ ],
+ "menuAdultOnly": [
+  "Apps & tools",
+  "Account and members",
+  "Teacher updates"
+ ],
+ "routeStrings": {
+  "/": [
+   "Find your next lesson.",
+   "Lessons, planning packs and classroom tools, made by a teacher.",
+   "I'm teaching →",
+   "I'm learning →",
+   "Search lessons, packs and tools",
+   "Go straight to your subject",
+   "Science",
+   "Investigate, explore and explain.",
+   "Humanities & RE",
+   "People, places, beliefs and the past.",
+   "Art Studio",
+   "Look closely, make and reflect.",
+   "Lifeskills",
+   "Practical units with evidence built in.",
+   "Three places, one site",
+   "Lessons",
+   "Interactive lessons and slide decks, week by week.",
+   "Resources",
+   "Schemes of work, evidence packs and print packs.",
+   "Apps & tools",
+   "Studios, timers and classroom tools.",
+   "Here for someone else?",
+   "Made by a teacher, for real classrooms.",
+   "Built by an alternative-provision teacher on Teesside and used every week.",
+   "Commission a resource",
+   "Teacher updates",
+   "Made by Matt · Learning",
+   "Optional usage statistics — off until you allow it.",
+   "Read what is counted.",
+   "Allow",
+   "Keep off",
+   "Added this half-term",
+   "See all →",
+   "Lessons",
+   "Resources",
+   "Apps",
+   "Privacy",
+   "Made by Matt Play ↗"
+  ],
+  "/commission/": [
+   "Commission a resource",
+   "Made by Matt · Learning"
+  ],
+  "/for/pupils/": [
+   "What are you learning today?",
+   "Choose your subject. Your teacher will help you find your pathway and lesson.",
+   "Choose your subject",
+   "Find your activity",
+   "Made by Matt · Learning"
+  ],
+  "/for/teachers/": [
+   "What are you teaching today?",
+   "Find a lesson, plan a sequence, capture the evidence.",
+   "Teach",
+   "Find a lesson",
+   "Browse lessons →",
+   "Plan",
+   "Schemes of work and packs",
+   "Open planning →",
+   "Assess and record",
+   "Evidence packs and trackers",
+   "Open evidence →",
+   "Choose a subject and pathway",
+   "Make something for your classroom",
+   "Commission a resource",
+   "Teacher updates",
+   "Account and members",
+   "Made by Matt · Learning",
+   "Listed by unit, not by type: a pack’s type could not be derived reliably."
+  ],
+  "/resources/": [
+   "Resources",
+   "Search packs, schemes of work, evidence books",
+   "Planning packs and evidence, one card per unit.",
+   "Looking for lessons? Go to Lessons →",
+   "Schemes of work",
+   "Evidence and accreditation",
+   "Teacher tools",
+   "Subject",
+   "Pathway",
+   "All subjects",
+   "All pathways",
+   "unit packs",
+   "Unit packs",
+   "Whole-school documents",
+   "Made by Matt · Resources",
+   "Listed by unit, not by type: a pack’s type could not be derived reliably."
+  ]
+ },
+ "_gate": "gatedRoutes lists the routes this order has rebuilt so far (each part appends its own); routeStrings names the Appendix A strings that must render on each; pupilRoutes are the money/third-party routes; overlayRoutes are the build's education front doors that the authored sitemap must carry; menuAdultOnly are §MENU rows the pupil subset omits.",
+ "derivedNotes": {
+  "_why": "Sentences this order had to write where Appendix A is silent and a measurement forced a degrade; each is used on every surface that states the same fact (one name per thing).",
+  "kindDiscarded": "Listed by unit, not by type: a pack’s type could not be derived reliably."
+ },
+ "resourcesSheet": [
+  "Planning",
+  "Evidence",
+  "Delivery"
+ ],
+ "resourcesEmpty": [
+  "No packs match.",
+  "Clear filters"
+ ],
+ "resourcesDrift": "Built from an earlier revision of this lesson.",
+ "resourcesTypeFilterDropped": true
+}

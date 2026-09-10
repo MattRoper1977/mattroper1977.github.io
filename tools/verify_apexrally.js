@@ -34,6 +34,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { stripExitRegion, hasExitRegion, exitRegion } = require('./mbm_exit_region.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const FILE = process.env.AR_GAME_FILE || process.argv[2] || path.join(ROOT, 'apexrally', 'index.html');
@@ -47,6 +48,23 @@ const DELIVERED_BYTES = 50832;
 
 /* The two permitted edits, as reversible rules. */
 const E1 = { name: 'storage key rename', from: "'mbm_apexrally_v1'", to: "'apexRally.v1'", expect: 2 };
+/* E4 - the pinch-zoom unblock, 2026-09-06 (HC3 §7). The delivered viewport meta
+ * carried maximum-scale=1 and user-scalable=no, which stops a pupil zooming the
+ * page. Reversible like E1-E3, so DELIVERED_SHA256 stays the historical fact. */
+const E4 = {
+  from: '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">',
+  to: '<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">',
+  expect: 1
+};
+/* E5 - the declaration unblock, 2026-09-07 (HC4 §3.3). The delivered court
+ * canvas declared touch-action:none, which blocks the browser's own pinch-zoom
+ * by declaration; the shipped file says pinch-zoom. Reversible like E1-E4, so
+ * DELIVERED_SHA256 stays the historical fact. */
+const E5 = {
+  from: '#court{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pinch-zoom}',
+  to: '#court{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}',
+  expect: 1
+};
 const E2_LINES = [
   '<link rel="canonical" href="https://madebymatt.uk/apexrally/">\n',
   '<meta property="og:url" content="https://madebymatt.uk/apexrally/">\n',
@@ -65,6 +83,14 @@ function gate(id, name, fn) {
 /* Reverse the permitted edits and hand back the reconstructed delivered file. */
 function reverseEdits(src) {
   let s = src;
+  /* E3 - the stamped inline exit region. Added 2026-08-10 to all eleven declared
+   * single-file games so a child on a locked-down school device has a way out of
+   * the page. It is reversible like E1 and E2, so DELIVERED_SHA256 stays what it
+   * has always been: an immutable historical fact about the artifact that was
+   * handed over, not a number that drifts every time the platform adds a control. */
+  s = stripExitRegion(s);
+  s = s.split(E4.from).join(E4.to);
+  s = s.split(E5.from).join(E5.to);
   for (const line of E2_LINES) s = s.replace(line, '');
   s = s.split(E1.from).join(E1.to);
   return s;
@@ -188,7 +214,7 @@ gate('G1', 'identity, provenance and byte accountability', () => {
   assert(Buffer.byteLength(rebuilt) === DELIVERED_BYTES,
     `reversing the permitted edits gives ${Buffer.byteLength(rebuilt)} bytes, delivered is ${DELIVERED_BYTES}`);
   assert(rsha === DELIVERED_SHA256, `reversed hash ${rsha} != delivered ${DELIVERED_SHA256}`);
-  return `${bytes} bytes; sha256 ${sha}; reverses to delivered ${DELIVERED_SHA256.slice(0, 8)}… (+${bytes - DELIVERED_BYTES} bytes = E1+E2 only)`;
+  return `${bytes} bytes; sha256 ${sha}; reverses to delivered ${DELIVERED_SHA256.slice(0, 8)}… (+${bytes - DELIVERED_BYTES} bytes = E1+E2+E3+E4 only)`;
 });
 
 gate('G2', 'zero runtime network requests (metadata is not a resource)', () => {
@@ -312,8 +338,13 @@ gate('G8', 'single self-contained file', () => {
       `/apexrally/ must hold exactly index.html, found: ${entries.join(', ')}`);
   }
   assert(bytes <= 250 * 1024, `size ${bytes} exceeds the 250KB single-file ceiling`);
-  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
-  assert(scripts.length === 1, `expected 1 inline script block, found ${scripts.length}`);
+  /* One inline script block for the GAME, plus the platform's stamped exit
+   * region. Both are inline: the single-file promise is intact, and G2 still
+   * proves nothing is fetched. */
+  const scripts = [...stripExitRegion(html).matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+  assert(scripts.length === 1, `expected 1 inline game script block, found ${scripts.length}`);
+  assert(hasExitRegion(html), 'the stamped inline exit region is missing \u2014 this game has no way out');
+  assert(!/\bsrc\s*=/i.test(exitRegion(html)), 'the exit region fetches something; it must stay inline');
   scripts.forEach(s => new Function(s));
   return `1 file, ${bytes} bytes; 1 inline script block, parses clean`;
 });

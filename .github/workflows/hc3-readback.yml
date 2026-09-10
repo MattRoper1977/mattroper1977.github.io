@@ -1,0 +1,42 @@
+name: HC3 dated recovery readback
+on:
+  pull_request:
+    paths:
+      - 'tools/hc_readback_counts.py'
+      - 'tools/lib/hc3_byte_witness.py'
+      - 'docs/HC3_BYTE_WITNESS_2026-09-07.json'
+      - 'docs/HC3_GITHUB_SNAPSHOT_2026-09-07.json'
+      - 'docs/HC3_SAVE_INVENTORY_2026-09-06.json'
+      - '.github/workflows/hc3-readback.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/hc_readback_counts.py'
+      - 'tools/lib/hc3_byte_witness.py'
+      - 'docs/HC3_BYTE_WITNESS_2026-09-07.json'
+      - 'docs/HC3_GITHUB_SNAPSHOT_2026-09-07.json'
+      - 'docs/HC3_SAVE_INVENTORY_2026-09-06.json'
+      - '.github/workflows/hc3-readback.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replay dated evidence with a planted stale-SHA control
+        run: |
+          python3 tools/hc_readback_counts.py \
+            --snapshot docs/HC3_GITHUB_SNAPSHOT_2026-09-07.json \
+            --inventory docs/HC3_SAVE_INVENTORY_2026-09-06.json \
+            --byte-evidence docs/HC3_BYTE_WITNESS_2026-09-07.json \
+            --self-test --output hc3-readback.json
+      - name: Keep the dated readback
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hc3-dated-readback-${{ github.run_id }}
+          path: hc3-readback.json
+          if-no-files-found: error

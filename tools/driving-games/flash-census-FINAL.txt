@@ -1,0 +1,28 @@
+Driving games — flash census · 5s per scene at a virtual 60fps
+ceiling 3 Hz · meaningful floor 2 units · hazard floor 25.5 units (10% of 0-255)
+
+game            scene                             motion   peaks/s   p2p(whole)   p2p(locus)  locus Hz  verdict
+  state  pursuit strobe, driving: {"tod":"sunset","weather":"dynamic","rain":0,"cops":3,"heat":99,"speed":15.18,"motion":true,"drops":0}
+neonmeridian    pursuit strobe, driving              full           2        5.091        32.27         0  large swing but under 3 Hz
+neonmeridian    pursuit strobe, driving              reduced        2        4.182        29.77         0  large swing but under 3 Hz
+  state  night + rain, driving: {"tod":"night","weather":"rain","rain":1,"cops":0,"heat":0,"speed":15.18,"motion":true,"drops":109}
+neonmeridian    night + rain, driving                full         4.8        4.464       23.834       2.8  modulates below the 10% hazard floor
+neonmeridian    night + rain, driving                reduced      3.4          4.3       21.007       3.4  modulates below the 10% hazard floor
+  state  pursuit + night + rain, driving: {"tod":"night","weather":"rain","rain":1,"cops":3,"heat":99,"speed":15.18,"motion":true,"drops":109}
+neonmeridian    pursuit + night + rain, driving      full         4.6        4.482       23.977       2.6  modulates below the 10% hazard floor
+neonmeridian    pursuit + night + rain, driving      reduced      3.4        4.301        21.01       3.4  modulates below the 10% hazard floor
+  state  parked, daylight (vacuity control): {"tod":"sunset","weather":"dynamic","rain":0,"cops":0,"heat":0,"speed":0,"motion":true,"drops":0}
+neonmeridian    parked, daylight (vacuity control)   full           0        0.033        0.085         0  below noise floor, no verdict
+neonmeridian    parked, daylight (vacuity control)   reduced        0        0.033        0.085         0  below noise floor, no verdict
+  state  desert storm (dust): {"mode":"running","countdown":0,"speed":23.92,"progress":0.0889,"motion":true,"kind":"dust","time":"dusk"}
+rallyvector3d   desert storm (dust)                  full         1.2        7.681       17.648         0  modulates below the 10% hazard floor
+rallyvector3d   desert storm (dust)                  reduced      0.8        8.602       19.944         0  modulates below the 10% hazard floor
+  state  nordic night rain: {"mode":"running","countdown":0,"speed":23.99,"progress":0.1542,"motion":true,"kind":"snow","time":"night"}
+rallyvector3d   nordic night rain                    full         2.4       62.012      136.412       2.4  large swing but under 3 Hz
+rallyvector3d   nordic night rain                    reduced      1.6       63.162      141.388       1.6  large swing but under 3 Hz
+  state  alpine clear (control): {"mode":"running","countdown":0,"speed":24.01,"progress":0.1139,"motion":true,"kind":"none","time":"day"}
+rallyvector3d   alpine clear (control)               full         0.2       72.546       144.22       0.2  large swing but under 3 Hz
+rallyvector3d   alpine clear (control)               reduced      0.2       77.598      149.894       0.2  large swing but under 3 Hz
+
+worst rate among scenes above the noise floor: 4.8 Hz (ceiling 3 Hz)
+no scene clears both the hazard floor and the rate ceiling

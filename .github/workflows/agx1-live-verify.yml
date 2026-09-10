@@ -32,6 +32,9 @@ jobs:
     name: Fetch the live estate and compare to raw-at-SHA
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      # Games #54 publishes the unchanged canonical shelf at its own domain.
+      SHELF_URL: https://madebymatt-play.uk/games.json
     steps:
       - name: Check out main (the deployed tree)
         uses: actions/checkout@v4
@@ -39,12 +42,177 @@ jobs:
           ref: main
           fetch-depth: 1
 
-      - name: Record the SHA under test
+      - name: Check out the INSTRUMENTS from the ref under review
+        # Step 1 deliberately checks out `ref: main` — the deployed tree is the
+        # SUBJECT of this gate and must not be the branch. But the tools that do
+        # the measuring are the INSTRUMENT, and on a pull request the instrument
+        # under review is the branch's, not main's.
+        #
+        # Conflating the two broke this gate on its first run: the derive step
+        # below calls tools/derive_live_routes.mjs, which does not exist on main
+        # until this PR merges, so the step died MODULE_NOT_FOUND and took every
+        # later step with it. Subject from main, instrument from here.
+        uses: actions/checkout@v4
+        with:
+          path: _tools
+          fetch-depth: 1
+
+      - name: Check out the canonical shelf
+        # The route set below is DERIVED from this file. It is checked out
+        # rather than read from data/source-manifests/games.json because the
+        # mirror is a copy: shelf-mirror-guard.yml owns whether the copy is
+        # current, and a live gate should be held to what the estate actually
+        # sells, not to a mirror that may be mid-drift.
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: _shelf
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: python -m pip install lxml==6.0.1 PyYAML==6.0.2
+
+      - name: Read publication subject pins from the committed main trees
+        id: publication-sources
+        run: python _tools/tools/verify_split_live_publication.py sources --site . --shelf _shelf
+
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: ${{ steps.publication-sources.outputs.education_lessons }}
+          path: _education-lessons
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Matt-s-Apps-
+          ref: ${{ steps.publication-sources.outputs.education_apps }}
+          path: _education-apps
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/mattroper1977.github.io
+          ref: ${{ steps.publication-sources.outputs.games_site }}
+          path: _play-site
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: ${{ steps.publication-sources.outputs.games_lessons }}
+          path: _play-lessons
+          persist-credentials: false
+
+      - name: Reproduce the actual committed education and games publications
+        # Main's builder makes the education SUBJECT. Games/main's pinned
+        # builder makes its independently deployed SUBJECT. The PR supplies
+        # only the instruments. Using _tools/domain-split here would confuse
+        # proposed pages with pages already authorised and deployed.
+        #
+        # HC6 D3: this step no longer ends the job on its own. When main's
+        # publication cannot be reproduced (a stale evidence digest, as with
+        # Site #307), every pull request — including the one that repairs it —
+        # went red here, and the repair could only be proven by merging it
+        # blind. The merge-ref reproduction below is the way out: the subject
+        # stays main, but the candidate (main + this PR) is built too, and it
+        # stands in as the subject only when main's own build is broken.
+        id: reproduce-main
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          python domain-split/build_publications.py --lessons _education-lessons
+          python domain-split/build_education.py --lessons _education-lessons --apps _education-apps
+          python domain-split/check_publications.py
+          node domain-split/check_game_saves.cjs
+          python _play-site/domain-split/build_publications.py --lessons _play-lessons
+          node _play-site/domain-split/check_game_saves.cjs
+
+      - name: Check out the merge ref (main + this pull request) as the candidate
+        # Only a pull request has a merge ref. The candidate is what main
+        # becomes if this PR merges: its data AND its builder together.
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          path: _merge
+          fetch-depth: 1
+
+      - name: Read the candidate's own publication subject pins
+        if: github.event_name == 'pull_request'
+        id: merge-sources
+        run: python _tools/tools/verify_split_live_publication.py sources --site _merge --shelf _shelf
+
+      - uses: actions/checkout@v4
+        if: github.event_name == 'pull_request'
+        with:
+          repository: MattRoper1977/Lessons
+          ref: ${{ steps.merge-sources.outputs.education_lessons }}
+          path: _merge-lessons
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        if: github.event_name == 'pull_request'
+        with:
+          repository: MattRoper1977/Matt-s-Apps-
+          ref: ${{ steps.merge-sources.outputs.education_apps }}
+          path: _merge-apps
+          persist-credentials: false
+
+      - name: Reproduce the candidate publication from the merge ref
+        # A candidate that cannot be reproduced would break main on merge:
+        # that is the planted stale-evidence control, and it goes red here
+        # whether or not main is healthy today.
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd _merge
+          python domain-split/build_publications.py --lessons ../_merge-lessons
+          python domain-split/build_education.py --lessons ../_merge-lessons --apps ../_merge-apps
+          python domain-split/check_publications.py
+          node domain-split/check_game_saves.cjs
+
+      - name: Choose the publication under test
+        # main reproduces          -> main's build is the subject (unchanged behaviour).
+        # main broken, PR builds   -> the candidate is the subject: a repair passes
+        #                             only if what it publishes is what is live.
+        # main broken, not a PR    -> red, as before.
+        shell: bash
+        env:
+          MAIN_OUTCOME: ${{ steps.reproduce-main.outcome }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          if [ "$MAIN_OUTCOME" = "success" ]; then
+            root="$GITHUB_WORKSPACE/domain-split/output/education-site"
+            echo "subject: main's own publication reproduced"
+          elif [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ -d "$GITHUB_WORKSPACE/_merge/domain-split/output/education-site" ]; then
+            root="$GITHUB_WORKSPACE/_merge/domain-split/output/education-site"
+            echo "subject: main's publication does NOT reproduce (outcome=$MAIN_OUTCOME); evaluating the merge ref (main + PR #$PR_NUMBER) instead"
+          else
+            echo "main's publication does not reproduce (outcome=$MAIN_OUTCOME) and there is no merge ref to evaluate"; exit 1
+          fi
+          echo "PUBLICATION_ROOT=$root" >> "$GITHUB_ENV"
+          echo "PUBLICATION_KIND=education" >> "$GITHUB_ENV"
+
+      - name: Record the SHA and derive the full-home route under test
         id: sha
         shell: bash
         run: |
+          set -euo pipefail
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "main is $(git rev-parse HEAD)"
+          if test -f "$PUBLICATION_ROOT/main/index.html"; then
+            echo "FULL_HOME_ROUTE=/main/" >> "$GITHUB_ENV"
+            echo "FULL_HOME_FILE=main/index.html" >> "$GITHUB_ENV"
+            echo "full homepage is /main/"
+          else
+            echo "FULL_HOME_ROUTE=/" >> "$GITHUB_ENV"
+            echo "FULL_HOME_FILE=index.html" >> "$GITHUB_ENV"
+            echo "full homepage is legacy root /"
+          fi
 
       - name: GitHub Pages build status
         shell: bash
@@ -59,41 +227,174 @@ jobs:
             | python3 -c 'import json,sys; d=json.load(sys.stdin); print("status ",d.get("status")); print("commit ",d.get("commit")); print("updated",d.get("updated_at")); print("error  ",d.get("error"))' \
             || echo "Pages API unavailable to this token — recorded, not faked."
 
+      - name: Derive the route set from the canonical shelf, with controls
+        # The hand-list this replaced named six games. The shelf names
+        # fifty-two, twenty-three of them served from this repository, and
+        # /emberwild/ - which moved twice in one day - was not among the six.
+        # Same species as verify_games_audience_faces.py: a list kept by hand
+        # beside a record kept by machine never goes red when the record grows.
+        #
+        # This step also runs the tool's own controls, so the derivation is
+        # proven able to fail in the same run that relies on it. It exits 2
+        # INCONCLUSIVE if the shelf cannot be read, because a derivation that
+        # silently yields zero routes would turn this whole gate green by
+        # checking nothing.
+        shell: bash
+        run: |
+          set -euo pipefail
+          node _tools/tools/derive_live_routes.mjs --canonical _shelf/games.json --root .
+          node _tools/tools/derive_live_routes.mjs --canonical _shelf/games.json --root . --emit routes > /tmp/live-routes.txt
+          # Keep every previous route and every derivation negative control.
+          # On education, game URLs are exact recovery pages, not engines;
+          # the separate games leg below now measures every engine itself.
+          # Add generated audience pages, full home and their data/runtime.
+          printf '%s\n' "$FULL_HOME_ROUTE" >> /tmp/live-routes.txt
+          python _tools/tools/verify_split_live_publication.py education-routes >> /tmp/live-routes.txt
+          sort -u /tmp/live-routes.txt -o /tmp/live-routes.txt
+          echo "derived $(wc -l < /tmp/live-routes.txt) route(s) for the live check — games plus the covered infrastructure routes"
+
+      - name: Games domain DNS and verified TLS diagnostics (report only)
+        # Keep certificate and hostname verification enabled. These probes
+        # explain resolver or Pages edge differences; the existing gates below
+        # still decide whether the live publication passes.
+        continue-on-error: true
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import signal
+          import socket
+          import ssl
+
+          hosts = ('madebymatt-play.uk', 'www.madebymatt-play.uk')
+          pages_ips = ('185.199.108.153', '185.199.109.153',
+                       '185.199.110.153', '185.199.111.153')
+          context = ssl.create_default_context()
+
+          def deadline(signum, frame):
+              raise TimeoutError('diagnostic exceeded its 5-second deadline')
+
+          signal.signal(signal.SIGALRM, deadline)
+
+          def probe(host, address=None):
+              peer = None
+              target = address or 'normal DNS resolution'
+              signal.alarm(5)
+              try:
+                  with socket.create_connection((address or host, 443), timeout=5) as raw:
+                      peer = raw.getpeername()[0]
+                      with context.wrap_socket(raw, server_hostname=host) as tls:
+                          cert = tls.getpeercert()
+                          print(json.dumps({'host': host, 'target': target,
+                              'peer_ip': peer, 'verified_tls': tls.version(),
+                              'issuer': cert.get('issuer'), 'subject': cert.get('subject'),
+                              'subjectAltName': cert.get('subjectAltName')}, sort_keys=True))
+                          tls.sendall(('HEAD / HTTP/1.1\r\nHost: ' + host +
+                                       '\r\nConnection: close\r\n\r\n').encode('ascii'))
+                          status = tls.recv(4096).split(b'\r\n', 1)[0].decode('ascii', 'replace')
+                          print(json.dumps({'host': host, 'target': target,
+                              'peer_ip': peer, 'http_status_line': status}, sort_keys=True))
+                  return True
+              except Exception as exc:
+                  print(json.dumps({'host': host, 'target': target, 'peer_ip': peer,
+                      'error_type': type(exc).__name__, 'error': str(exc)}, sort_keys=True))
+                  return False
+              finally:
+                  signal.alarm(0)
+
+          for host in hosts:
+              signal.alarm(5)
+              try:
+                  addresses = sorted({item[4][0] for item in
+                                      socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)})
+                  print(json.dumps({'host': host, 'public_dns_addresses': addresses}, sort_keys=True))
+              except Exception as exc:
+                  print(json.dumps({'host': host, 'dns_error_type': type(exc).__name__,
+                                    'dns_error': str(exc)}, sort_keys=True))
+              finally:
+                  signal.alarm(0)
+              if not probe(host):
+                  for address in pages_ips:
+                      probe(host, address)
+          print('Diagnostics only: the existing HTTP and byte checks remain authoritative.')
+          PY
+
       - name: Custom-domain HTTP status for every surface
         shell: bash
         run: |
           set -o pipefail
           fail=0
-          for u in \
-            https://madebymatt.uk/neonsync/ \
-            https://madebymatt.uk/apexgolf/ \
-            https://madebymatt.uk/apextennis/ \
-            https://madebymatt.uk/biopunkhive/ \
-            https://madebymatt.uk/apexpool/ \
-            https://madebymatt.uk/apexkick/ \
-            https://madebymatt.uk/ \
-            https://madebymatt.uk/games/ \
-            https://madebymatt.uk/site.json \
-            https://madebymatt.uk/Games/games.json ; do
-            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
+          # Games come from the derivation. The five that follow are the
+          # declared RESIDUE - infrastructure no manifest lists, kept because
+          # dropping coverage to make the list purely derived would be a worse
+          # gate, and named here rather than blended into the game count.
+          mapfile -t derived < /tmp/live-routes.txt
+          urls=()
+          for r in "${derived[@]}"; do urls+=("https://madebymatt.uk$r"); done
+          # Three of the five former residue routes — / , /games/ and /site.json —
+          # are now EMITTED BY THE DERIVATION and arrive in "${derived[@]}".
+          # Listing them here as well would check them twice and, worse, print a
+          # count that no longer describes what ran. Only the two that stay
+          # EXEMPT are still named by hand.
+          # Full home is included above for exact-byte coverage; add the separate canonical once.
+          urls+=( "$SHELF_URL" )
+          echo "checking ${#derived[@]} derived/declared education route(s) + 1 separate canonical"
+          for u in "${urls[@]}" ; do
+            code=$(curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 \
+              -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
             printf '%-46s %s\n' "$u" "$code"
             [ "$code" = "200" ] || fail=1
           done
           exit $fail
 
-      - name: Live bytes must equal the committed tree, byte for byte
+      - name: The former shelf address redirects to the games publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          result=$(curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' \
+            --max-time 30 https://madebymatt.uk/Games/games.json)
+          code=${result%% *}; target=${result#* }
+          [[ "$code" = 301 || "$code" = 308 ]]
+          case "$target" in
+            http://madebymatt-play.uk/games.json|https://madebymatt-play.uk/games.json|\
+            http://www.madebymatt-play.uk/games.json|https://www.madebymatt-play.uk/games.json)
+              echo "The former shelf address redirects to $target ($code)." ;;
+            *) echo "Unexpected shelf redirect: $target ($code)"; exit 1 ;;
+          esac
+          # The target is fetched separately over HTTPS above and its bytes
+          # must match the committed canonical in the mirror check below.
+
+      - name: Live education bytes must equal the committed publication, byte for byte
         shell: bash
         run: |
           set -euo pipefail
           echo "game                 live_bytes  repo_bytes  live_sha256                                                       match"
           status=0
-          for g in neonsync apexgolf apextennis apexpool apexkick biopunkhive; do
-            curl -sS --max-time 60 "https://madebymatt.uk/$g/" -o "/tmp/$g.live"
-            lb=$(wc -c < "/tmp/$g.live"); rb=$(wc -c < "$g/index.html")
-            ls=$(sha256sum "/tmp/$g.live" | cut -d' ' -f1)
-            rs=$(sha256sum "$g/index.html" | cut -d' ' -f1)
+          # Derived, not named. The six this used to list were the six that
+          # happened to have been built when it was written.
+          mapfile -t derived < /tmp/live-routes.txt
+          # A ROUTE IS NOT ALWAYS <slug>/index.html, AND THIS LOOP USED TO ASSUME IT WAS.
+          # The derivation now emits infrastructure routes as well as games, so
+          # "/" resolves to index.html and "/site.json" resolves to itself. The
+          # old form produced `g=""` for "/" and then read the ABSOLUTE path
+          # /index.html, which does not exist — the failure that caught this.
+          for r in "${derived[@]}"; do
+            g="${r#/}"; g="${g%/}"
+            if [ -z "$g" ]; then
+              file="index.html"; url="https://madebymatt.uk/"; label="/"
+            elif [ "$g" != "${g%.*}" ]; then
+              file="$g"; url="https://madebymatt.uk/$g"; label="$g"
+            else
+              file="$g/index.html"; url="https://madebymatt.uk/$g/"; label="$g"
+            fi
+            file="$PUBLICATION_ROOT/$file"
+            tmp="/tmp/live-$(printf '%s' "$label" | tr -c 'A-Za-z0-9._-' '_')"
+            curl -fsS --proto '=https' --max-time 60 "$url" -o "$tmp"
+            lb=$(wc -c < "$tmp"); rb=$(wc -c < "$file")
+            ls=$(sha256sum "$tmp" | cut -d' ' -f1)
+            rs=$(sha256sum "$file" | cut -d' ' -f1)
             if [ "$ls" = "$rs" ]; then m=IDENTICAL; else m="*** DIFFERS ***"; status=1; fi
-            printf '%-20s %10s %11s  %s  %s\n' "$g" "$lb" "$rb" "$ls" "$m"
+            printf '%-20s %10s %11s  %s  %s\n' "$label" "$lb" "$rb" "$ls" "$m"
           done
           echo
           # NINTH INSTANCE, in the live gate itself. This line printed a literal
@@ -102,10 +403,10 @@ jobs:
           # comparison above already DERIVES the repo side; only the caption was
           # frozen. Derive the caption too, so it can never disagree with the
           # thing it captions.
-          printf 'Apex Golf in the tree under test: %s bytes, sha256 %s\n' \
-            "$(wc -c < apexgolf/index.html)" "$(sha256sum apexgolf/index.html | cut -d' ' -f1)"
-          printf 'Neon Sync in the tree under test: %s bytes, sha256 %s\n' \
-            "$(wc -c < neonsync/index.html)" "$(sha256sum neonsync/index.html | cut -d' ' -f1)"
+          printf 'Apex Golf recovery page in the publication: %s bytes, sha256 %s\n' \
+            "$(wc -c < "$PUBLICATION_ROOT/apexgolf/index.html")" "$(sha256sum "$PUBLICATION_ROOT/apexgolf/index.html" | cut -d' ' -f1)"
+          printf 'Neon Sync recovery page in the publication: %s bytes, sha256 %s\n' \
+            "$(wc -c < "$PUBLICATION_ROOT/neonsync/index.html")" "$(sha256sum "$PUBLICATION_ROOT/neonsync/index.html" | cut -d' ' -f1)"
           exit $status
 
       - name: Live site.json door census — the C1 ruling, as served
@@ -118,9 +419,9 @@ jobs:
           # counted, so count it and compare it to the committed tree.
           curl -sS --max-time 30 https://madebymatt.uk/site.json -o /tmp/site.live.json
           python3 - <<'PY'
-          import json,sys
+          import json,sys,os
           live=json.load(open('/tmp/site.live.json'))
-          repo=json.load(open('site.json'))
+          repo=json.load(open(os.path.join(os.environ['PUBLICATION_ROOT'],'site.json')))
           def census(d):
               doors=d.get('doors',[])
               return (len(doors),
@@ -132,8 +433,8 @@ jobs:
           if not l[0]:
               print('  FAIL served site.json has no doors[] — an empty census would pass vacuously'); sys.exit(1)
           if l!=r:
-              print('  PENDING served site.json has not caught up with the tree (Pages lag).')
-              sys.exit(0)
+              print('  FAIL served site.json differs from the committed education publication.')
+              sys.exit(1)
           if l[2]==0 and l[0]==r[0]:
               print(f'  PASS C1 holds as served: Apex Golf takes NO door, {l[0]} doors, {l[1]} in the games zone')
           else:
@@ -144,7 +445,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl -sS --max-time 30 https://madebymatt.uk/Games/games.json -o /tmp/games.json
+          curl -fsSL --proto '=https' --proto-redir '=https' --max-redirs 3 --max-time 30 "$SHELF_URL" -o /tmp/games.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/games.json'))
@@ -163,12 +464,365 @@ jobs:
           print('Biopunk in manifest', any('biopunk' in e['href'].lower() for e in g))
           PY
 
+      # §X4 (ORDER FC-X, X-D4) — REPORT-ONLY. Added because the estate wrote
+      # "verified against the committed tree and a local reproduction" for a
+      # change it could have fetched: §Z2 altered the pathway facets in
+      # data/mbm-search-index.json, this job fetched every other live surface,
+      # and the search index appeared ZERO times in this file. A production
+      # check that never fetches the artefact that changed is not production
+      # verification.
+      #
+      # DELIBERATELY NON-BLOCKING, and placed BEFORE the mirror leg so it still
+      # reports while that leg is red. This job had just been wedged by a
+      # blocking leg aimed at the wrong tree; adding a second blocking leg in
+      # the same change is how that happens again. Promotion to blocking is a
+      # later pass, once it has been green across several merges, and it is on
+      # the appendix as its own item.
+      #
+      # Report-only is not the same as unable to detect. The negative control
+      # below means a leg that has stopped discriminating says MEASUREMENT
+      # INVALID out loud rather than printing a reassuring line about nothing,
+      # and a planted regression is named in the report — proven in four cases
+      # before this was proposed.
+      - name: Live search index, as served (REPORT-ONLY, never blocks)
+        shell: bash
+        run: |
+          # Every path ends 0 — this step never fails the job.
+          set -uo pipefail
+
+          URL=https://madebymatt.uk/data/mbm-search-index.json
+          echo "== live search index, as served =="
+          echo "   $URL"
+
+          if ! curl -sS --max-time 30 "$URL" -o /tmp/live-index.json; then
+            echo "   FETCH FAILED — reported, not asserted. This leg does not block."
+            exit 0
+          fi
+          if ! python3 -c 'import json,sys; json.load(open("/tmp/live-index.json"))' 2>/dev/null; then
+            echo "   SERVED BYTES ARE NOT VALID JSON — reported, not asserted."
+            echo "   $(wc -c < /tmp/live-index.json) B $(sha256sum /tmp/live-index.json | cut -c1-16)"
+            exit 0
+          fi
+
+          live_b=$(wc -c < /tmp/live-index.json); live_h=$(sha256sum /tmp/live-index.json | cut -c1-16)
+          main_f="$PUBLICATION_ROOT/data/mbm-search-index.json"
+          # The ref index remains a SOURCE-only report; it is not the expected filtered output.
+          ref_f=_tools/data/mbm-search-index.json
+
+          # NEGATIVE CONTROL — a comparison that cannot fail reports nothing worth having.
+          printf 'x' > /tmp/live-index.mutated; cat /tmp/live-index.json >> /tmp/live-index.mutated
+          if cmp -s /tmp/live-index.json /tmp/live-index.mutated; then
+            echo "   MEASUREMENT INVALID: cmp called a one-byte mutation identical to the original."
+            echo "   This leg cannot discriminate, so anything it reports below is worthless."
+            exit 0
+          fi
+          echo "   control  cmp distinguishes a one-byte mutation — the comparisons below are live"
+
+          echo "   served   ${live_b} B ${live_h}"
+          if test -f "$main_f"; then
+            m_b=$(wc -c < "$main_f"); m_h=$(sha256sum "$main_f" | cut -c1-16)
+            echo "   main     ${m_b} B ${m_h}"
+            if cmp -s /tmp/live-index.json "$main_f"; then
+              echo "   MATCH    the served index is byte-identical to the deployed tree"
+            else
+              echo "   DIFFERS  the served index is not the deployed tree's copy"
+              echo "            usually Pages lag; a persistent difference is a real finding"
+            fi
+          else
+            echo "   main     ABSENT — nothing to compare the served bytes against"
+          fi
+          if test -f "$ref_f"; then
+            r_b=$(wc -c < "$ref_f"); r_h=$(sha256sum "$ref_f" | cut -c1-16)
+            if [ "$r_h" != "${m_h:-}" ]; then
+              echo "   ref      ${r_b} B ${r_h}   (raw candidate source; not an expected deployed byte comparison)"
+            else
+              echo "   ref      unchanged by this pull request"
+            fi
+          fi
+
+          # THE CENSUS THAT MATTERS: the facet the estate could not previously fetch.
+          python3 - <<'PY'
+          import json,os
+          d = json.load(open("/tmp/live-index.json"))
+          recs = d if isinstance(d, list) else next(
+              (d[k] for k in ("records", "entries", "items", "docs", "index") if isinstance(d.get(k), list)), None)
+          if recs is None:
+              print("   census   MEASUREMENT INVALID: no record list in the served index"); raise SystemExit(0)
+          if not recs:
+              print("   census   MEASUREMENT INVALID: zero records — a census over an empty set proves nothing")
+              raise SystemExit(0)
+          def cat(r): return r.get("category") or r.get("kind") or r.get("type")
+          def pw(r):
+              v = r.get("pathway")
+              return tuple(v) if isinstance(v, list) else ((v,) if v else ())
+          TEACHING = {"BUILD", "GROW", "LAUNCH"}
+          games = [r for r in recs if cat(r) == "game"]
+          bad = [r for r in games if TEACHING & set(pw(r))]
+          print(f"   census   {len(recs)} records served · {len(games)} in the game class")
+          print(f"   census   game records carrying a teaching pathway (BUILD/GROW/LAUNCH): {len(bad)}")
+          if os.environ.get('PUBLICATION_KIND') == 'education':
+              if games:
+                  print("   census   FINDING: education search contains games; exclusion is broken")
+              elif any(TEACHING & set(pw(r)) for r in recs):
+                  print("   census   PASS: nonempty teaching search excludes every game-class record")
+              else:
+                  print("   census   MEASUREMENT INVALID: no teaching pathways in education search")
+          elif not games:
+              print("   census   MEASUREMENT INVALID: no game-class records found, so the 0 above means nothing")
+          elif bad:
+              for r in bad[:10]:
+                  print(f"              {r.get('id') or r.get('href')}  {pw(r)}")
+              print("   census   ^ these are live and should not be. Reported, not asserted.")
+          else:
+              print("   census   none — the class exclusion holds AS SERVED")
+          PY
+
+          echo "   (report-only by ORDER FC-X X-D4; promotion to blocking is a later pass)"
+          exit 0
+
+      # THE MIRROR LEG — ruled 2026-08-13, closing the two-shelves divergence.
+      # The Games repository's file, now served from its separate domain,
+      # is the canonical shelf; this repository's
+      # data/source-manifests/games.json is a generated mirror of it, written
+      # only by tools/render_games_manifest_mirror.py. No local gate can see
+      # both repositories, so the byte comparison runs HERE, against the
+      # served canonical, on every pull request. The 2026-08-12 launch put two
+      # shelf entries in the mirror by hand and the estate ran for a day with
+      # two hand-written shelves; the census report carries the account. This
+      # leg is what makes that impossible to repeat silently.
+      - name: Shelf mirror equals the served canonical, byte for byte
+        # THE TWO FACTS THIS STEP USED TO FUSE, NOW SEPARATED.
+        #
+        # Steps 8-11 verify LIVE SURFACES: is what production serves the same as
+        # what main committed? Their subject is necessarily main, because main is
+        # what was deployed. This step is not that. It asserts a REPOSITORY
+        # INVARIANT - the mirror is byte-identical to the canonical it mirrors -
+        # and on a pull request that is a statement about the tree being
+        # PROPOSED, not about the tree already deployed.
+        #
+        # Read against main alone, it collapsed two independent facts into one
+        # boolean:
+        #
+        #   FACT A  the served bytes are wrong. A real defect. Must always block.
+        #   FACT B  main sits behind the canonical. Inherited drift. Not a defect
+        #           of a pull request that touches nothing near the mirror.
+        #
+        # Fusing them made this step BOTH unfixable and blind.
+        #
+        # Unfixable, because the canonical lives in another repository: when
+        # Games merges a shelf change, main's mirror is stale THE INSTANT IT
+        # LANDS, only a site pull request can clear it, and this step redded
+        # every site pull request - including the catch-up that is the fix. It
+        # happened. Games #41 (43b29f7) moved the canonical to f4aab9ab and site
+        # #191, whose entire content was the catch-up, could not merge. A
+        # required context no change can turn green is not a gate, it is a stop.
+        #
+        # Blind, because reading main's copy meant a pull request that CORRUPTED
+        # the mirror passed the gate that exists to protect it, and one that
+        # DELETED the mirror passed by falling through to main's copy. That is
+        # the more serious half and it is closed below.
+        #
+        # THREE OPERANDS ARE REQUIRED, and two will not do: "the served bytes are
+        # wrong" and "main is behind" produce the identical observation, served
+        # != main's mirror. Only the canonical itself tells them apart, and it is
+        # already checked out from the Games repository three steps above.
+        #
+        #   _shelf/games.json                        the canonical, at the Games tip
+        #   /tmp/canonical.json                      the canonical, AS SERVED
+        #   data/source-manifests/games.json         the mirror in the DEPLOYED tree
+        #   _tools/data/source-manifests/games.json  the mirror in the tree THIS REF
+        #                                            would produce
+        #
+        # Nothing is loosened. The comparison is still cmp -s, byte for byte, and
+        # what a pull request may not do is unchanged and in three places wider:
+        # wrong served bytes block, a corrupted mirror blocks, an absent mirror
+        # blocks. The single case that changed is a pull request that does not
+        # touch the mirror on a drifted main - it is now told, loudly, rather
+        # than failed for a tree it did not write.
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          CANDIDATE_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+
+          served=/tmp/canonical.json
+          shelf=_shelf/games.json
+          deployed=data/source-manifests/games.json
+          proposed=_tools/data/source-manifests/games.json
+
+          # --fail matters here. Without it a 404 body or a truncated response is
+          # written to the file and compared as though it were the canonical. It
+          # fails closed either way, but it reports a fetch failure AS DRIFT, and
+          # that sends the next reader to the wrong repository entirely.
+          if ! curl -fsSL --proto '=https' --proto-redir '=https' --max-redirs 3 --max-time 30 "$SHELF_URL" -o "$served"; then
+            echo "  MEASUREMENT INVALID: the served canonical could not be fetched."
+            echo "  Nothing below would mean anything - neither a pass nor a drift report."
+            exit 1
+          fi
+
+          # NEGATIVE CONTROL first: a comparison that cannot fail proves nothing.
+          printf 'x' > /tmp/canonical.mutated
+          cat "$served" >> /tmp/canonical.mutated
+          if cmp -s "$served" /tmp/canonical.mutated; then
+            echo "  MEASUREMENT INVALID: cmp called a one-byte mutation identical to the original."
+            echo "  This step cannot discriminate, so a PASS from it would mean nothing."
+            exit 1
+          fi
+          echo "  control  cmp distinguishes a one-byte mutation - the comparisons below are live"
+
+          h() { sha256sum "$1" | cut -c1-16; }
+          b() { wc -c < "$1" | tr -d ' '; }
+
+          # ------ FACT A: the served bytes. BLOCKING IN EVERY CONTEXT. ------
+          if ! test -f "$shelf"; then
+            echo "  MEASUREMENT INVALID: ${shelf} is absent, so the served bytes cannot be"
+            echo "  checked against the canonical they claim to be."
+            exit 1
+          fi
+          if cmp -s "$served" "$shelf"; then
+            echo "  served   is the canonical shelf at the Games repository tip ($(b "$served") B $(h "$served"))"
+          elif cmp -s "$served" "$deployed"; then
+            echo "  served   matches the DEPLOYED tree's mirror but not the Games tip: Games has"
+            echo "           moved and its deploy has not landed yet. Both operands are committed"
+            echo "           bytes, so this is deploy lag, not a wrong byte. Reported, not asserted."
+          else
+            echo "  FAIL     the SERVED bytes are not any committed canonical:"
+            echo "           served    $(b "$served") B $(h "$served")"
+            echo "           Games tip $(b "$shelf") B $(h "$shelf")"
+            echo "           deployed  $(b "$deployed") B $(h "$deployed")"
+            echo "           Production is serving a shelf that no repository authorises."
+            echo "           This is FACT A. It blocks on every ref, in every context."
+            exit 1
+          fi
+
+          # ------ The tree under review must be present. Fail closed. ------
+          if ! test -f "$proposed"; then
+            echo "  MEASUREMENT INVALID: ${proposed} is absent. The ref under review was not"
+            echo "  checked out, so this gate has nothing to assert on - and it will not fall"
+            echo "  through to the deployed tree's copy and call that a pass."
+            exit 1
+          fi
+
+          # ------ FACT B: does THIS ref move the mirror? ------
+          if cmp -s "$proposed" "$deployed"; then
+            moves=no
+          else
+            moves=yes
+          fi
+
+          if test "$moves" = yes; then
+            # THE ASSERTION: the served bytes against the tree this ref produces.
+            if cmp -s "$served" "$proposed"; then
+              echo "  PASS     this ref moves the mirror, and the result is the served canonical"
+              echo "           byte for byte ($(b "$served") B $(h "$served"))"
+            elif test "$EVENT_NAME" = "pull_request" && test -n "$CANDIDATE_REF" && \
+                 git ls-remote --exit-code --heads https://github.com/MattRoper1977/Games.git \
+                   "refs/heads/$CANDIDATE_REF" >/dev/null; then
+              # COORDINATED SITE-FIRST STAGING. The live facts above still
+              # require production to be authorised by Games/main. A proposed
+              # mirror may be ahead of production only when another repository
+              # already carries those exact bytes on the matching public
+              # branch. This is the safe launch interval: routes exist on the
+              # Site before the shelf advertises them. No branch, wrong bytes,
+              # or a broken production canonical still fails closed.
+              git clone --quiet --depth 1 --branch "$CANDIDATE_REF" \
+                https://github.com/MattRoper1977/Games.git /tmp/agx-staged-shelf
+              staged=/tmp/agx-staged-shelf/games.json
+              if cmp -s "$proposed" "$staged"; then
+                echo "  PASS     coordinated Site-first staging: this ref's mirror exactly matches"
+                echo "           Games/$CANDIDATE_REF ($(b "$staged") B $(h "$staged"))"
+                echo "           Production remains authorised by Games/main until the Site merge lands."
+              else
+                echo "  FAIL     a matching Games branch exists, but its canonical bytes disagree:"
+                echo "           proposed  $(b "$proposed") B $(h "$proposed")"
+                echo "           staged    $(b "$staged") B $(h "$staged")"
+                echo "           coordinated staging is exact-byte only"
+                exit 1
+              fi
+            else
+              echo "  FAIL     this ref moves the mirror and the result is NOT the served canonical:"
+              echo "           proposed  $(b "$proposed") B $(h "$proposed")"
+              echo "           canonical $(b "$served") B $(h "$served")"
+              echo "           no same-named Games branch supplied matching staged bytes"
+              echo "           regenerate with tools/render_games_manifest_mirror.py --write, never by hand"
+              exit 1
+            fi
+          elif cmp -s "$served" "$deployed"; then
+            echo "  PASS     this ref does not touch the mirror, and the deployed tree's copy is"
+            echo "           the served canonical byte for byte ($(b "$served") B $(h "$served"))"
+          else
+            echo "  DRIFT    INHERITED - the deployed tree's mirror is not the served canonical,"
+            echo "           and this ref does not touch it:"
+            echo "           deployed  $(b "$deployed") B $(h "$deployed")"
+            echo "           canonical $(b "$served") B $(h "$served")"
+            # A drift line that says only THAT something drifted sends the reader
+            # to diff two 28 kB files by hand. Name the entries.
+            python3 - "$deployed" "$served" <<'PY'
+          import json, sys
+          def load(p):
+              try:
+                  return json.load(open(p, encoding="utf-8"))
+              except Exception as exc:
+                  print("           what drifted: cannot itemise (%s)" % exc)
+                  raise SystemExit(0)
+          a = load(sys.argv[1]); c = load(sys.argv[2])
+          ga = a.get("games") if isinstance(a, dict) else a
+          gc = c.get("games") if isinstance(c, dict) else c
+          if not isinstance(ga, list) or not isinstance(gc, list):
+              print("           what drifted: cannot itemise (no games list on one side)")
+              raise SystemExit(0)
+          def key(g): return g.get("href") or g.get("title") or json.dumps(g, sort_keys=True)[:60]
+          A = {key(g): g for g in ga}; C = {key(g): g for g in gc}
+          added = sorted(set(C) - set(A)); removed = sorted(set(A) - set(C))
+          changed = sorted(x for x in set(A) & set(C) if A[x] != C[x])
+          print("           what drifted: %d added, %d removed, %d changed"
+                % (len(added), len(removed), len(changed)))
+          for x in added[:10]:   print("             + %s" % x)
+          for x in removed[:10]: print("             - %s" % x)
+          for x in changed[:10]:
+              f = sorted(fl for fl in set(A[x]) | set(C[x]) if A[x].get(fl) != C[x].get(fl))
+              print("             ~ %s  (%s)" % (x, ", ".join(f)))
+          if not (added or removed or changed):
+              print("           the entry sets agree, so the difference is in the serialisation")
+              print("           itself - ordering, whitespace or encoding.")
+          PY
+            if test "${EVENT_NAME}" = "pull_request"; then
+              echo "           Reported, not asserted: inherited drift is not a defect of this"
+              echo "           pull request, which does not touch the mirror. It is asserted on"
+              echo "           every other ref - the same line on a workflow_dispatch run against"
+              echo "           main exits 1 - and shelf-mirror-guard.yml carries it in both repos."
+              echo "::warning title=Shelf mirror drift inherited from main::The deployed tree's mirror ($(h "$deployed")) is not the served canonical ($(h "$served")). This pull request does not touch the mirror, so the leg reports rather than asserts. Clear it with a mirror catch-up."
+              {
+                echo "### Shelf mirror: inherited drift"
+                echo ""
+                echo "The deployed tree's mirror is **not** the served canonical. This ref does not"
+                echo "touch it, so this leg reported rather than blocked."
+                echo ""
+                echo "| | bytes | sha256 |"
+                echo "|---|---|---|"
+                echo "| deployed (\`main\`) | $(b "$deployed") | \`$(h "$deployed")\` |"
+                echo "| served canonical | $(b "$served") | \`$(h "$served")\` |"
+                echo ""
+                echo "Clear it with \`tools/render_games_manifest_mirror.py --write\`, never by hand."
+              } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+            else
+              echo "  FAIL     this ref is not a pull request, so the drift above is not inherited"
+              echo "           from anywhere - it IS this ref's own state, and it blocks."
+              echo "           regenerate with tools/render_games_manifest_mirror.py --write, never by hand"
+              exit 1
+            fi
+          fi
+
+      - name: Every games payload and publication surface equals its committed pinned output
+        run: python _tools/tools/verify_split_live_publication.py games --site _play-site --lessons _play-lessons --shelf _shelf
+
       - name: Homepage and arcade, as served
         shell: bash
         run: |
           set -euo pipefail
-          curl -sS --max-time 30 https://madebymatt.uk/ -o /tmp/home.html
-          echo "== homepage (served bytes, no JS executed) =="
+          curl -fsS --proto '=https' --max-time 30 "https://madebymatt.uk${FULL_HOME_ROUTE}" -o /tmp/home.html
+          echo "== full homepage at ${FULL_HOME_ROUTE} (served bytes, no JS executed) =="
           for n in "Apex Kick" "Apex Pool" "Apex Golf" "Apex Tennis" "New release"; do
             printf '  %-14s %s\n' "$n" "$(grep -oic "$n" /tmp/home.html || true)"
           done
@@ -180,11 +834,11 @@ jobs:
           # The shelf is fetched here rather than inherited from the census
           # step's /tmp/games.json: a gate that depends on a previous step's
           # leftovers passes for the wrong reason the day that step is moved.
-          curl -sS --max-time 30 https://madebymatt.uk/Games/games.json -o /tmp/shelf.json || true
+          curl -fsSL --proto '=https' --proto-redir '=https' --max-redirs 3 --max-time 30 "$SHELF_URL" -o /tmp/shelf.json
           python3 - <<'PY'
           import re,sys,os,json
           served=open('/tmp/home.html',encoding='utf-8',errors='replace').read()
-          repo=open('index.html',encoding='utf-8').read()
+          repo=open(os.environ['FULL_HOME_FILE'],encoding='utf-8').read()
           s=re.findall(r'data-release="([^"]+)"',served)
           r=re.findall(r'data-release="([^"]+)"',repo)
           print('  served occupant(s):',s)
@@ -203,46 +857,75 @@ jobs:
           # be hand-edited every time a game ships is not an invariant, it is a
           # scheduled outage.
           #
-          # Derived replacement: an occupant is legitimate iff it NAMES A GAME
-          # THAT IS ACTUALLY ON THE SHELF. A typo, a phantom, or a box for a
-          # game that never shipped still fails; a game that legitimately
-          # launched passes with no edit here. The shelf is the same served
-          # manifest the census step above reads, and the NEW· marker prefix is
-          # stripped before comparison because the marker rides on the shelf
-          # title, not on the homepage box.
+          # ELEVENTH INSTANCE — and the repair is a different mechanism, ruled
+          # 2026-08-13. The derived replacement below compared DISPLAY TITLES:
+          # occupant "Rally Vector 3D" against shelf title "Rally Vector 3D —
+          # Championship Edition" is honest copy on both sides, and the title
+          # match called it a phantom anyway. Display strings are authored per
+          # surface; identity is the folder slug. So the check now maps each
+          # occupant label to its slug through data/new-release-occupants.json
+          # — a declared editorial input, the sixth of its kind — and asks the
+          # only real question: is /<slug>/ an href on the served shelf?
+          #
+          # This is NOT the RULED_OCCUPANTS pin returning: that pin froze
+          # MEMBERSHIP (who may occupy), which stays derived from the shelf.
+          # The record declares IDENTITY (what a label means), which nothing
+          # on the page binds machine-readably. A new box means a new line in
+          # the record — a visible decision — and an unmapped occupant fails
+          # loudly below, which the self-test proves on demand.
           shelf=[]
           try:
               shelf=json.load(open('/tmp/shelf.json'))['games']
           except Exception as e:
               print('  FAIL served shelf manifest unreadable, cannot derive occupants:',e); sys.exit(1)
-          strip_marker=lambda t: re.sub(r'^NEW\s*·\s*','',t).strip()
-          known={strip_marker(e['title']) for e in shelf}
-          print('  shelf titles      :',len(known),'derived from the served manifest')
+          slugs={str(e.get('href','')).strip('/') for e in shelf}
+          occupants=json.load(open('data/new-release-occupants.json'))['occupants']
+          print('  shelf slugs       :',len(slugs),'derived from the served manifest')
+          print('  occupant record   :',occupants)
 
           # Negative control. The gate must prove it can exit non-zero, so this
-          # injects an occupant naming a game that is not on the shelf.
+          # injects an occupant with no entry in the record.
           if os.environ.get('AGX1_SELFTEST')=='occupant':
               r=r+['Ghost Game That Never Shipped']
-              print('  SELF-TEST injecting an off-shelf occupant:',r[-1])
+              print('  SELF-TEST injecting an unmapped occupant:',r[-1])
 
-          if not known:
+          if not slugs:
               print('  FAIL served shelf has no games — an empty shelf would pass vacuously'); sys.exit(1)
           if not r:
               print('  FAIL committed tree carries NO New Release occupant — an empty stack would pass vacuously'); sys.exit(1)
-          unknown=[o for o in r if strip_marker(o) not in known]
+          unmapped=[o for o in r if o not in occupants]
+          if unmapped:
+              print('  FAIL occupant has no entry in data/new-release-occupants.json (a new box is a visible decision):',unmapped); sys.exit(1)
+          offshelf=[o for o in r if occupants[o] not in slugs]
           dupes=sorted({o for o in r if r.count(o)>1})
-          if unknown:
-              print('  FAIL New Release occupant does not name a game on the shelf:',unknown); sys.exit(1)
+          if offshelf:
+              print('  FAIL occupant maps to a slug that is not on the served shelf:',
+                    [f'{o} -> /{occupants[o]}/' for o in offshelf]); sys.exit(1)
           if dupes:
               print('  FAIL a game holds more than one homepage surface:',dupes); sys.exit(1)
-          print('  PASS every occupant names a live shelf game; no game holds two boxes')
-          if s==r:
-              print('  PASS live JS-off homepage serves',r,'as New Release, matching the tree and the ruling')
+          print('  PASS every occupant maps to a live shelf slug; no game holds two boxes')
+          if os.environ.get('PUBLICATION_KIND') == 'education':
+              # Legacy source editorial invariants above remain checked and
+              # AGX1_SELFTEST=occupant still fails. The source stack is not a
+              # publication requirement for the new education homepage.
+              from pathlib import Path
+              published=Path(os.environ['PUBLICATION_ROOT'])/os.environ['FULL_HOME_FILE']
+              expected=published.read_bytes()
+              actual=Path('/tmp/home.html').read_bytes()
+              if re.findall(rb'data-release="([^"]+)"',expected) or s:
+                  print('  FAIL education homepage carries a games New Release stack'); sys.exit(1)
+              if actual != expected:
+                  print('  FAIL live education homepage differs from its committed generated output'); sys.exit(1)
+              if b'data-site-kind="education"' not in actual:
+                  print('  FAIL live homepage has no education publication marker'); sys.exit(1)
+              print('  PASS legacy source occupants validated separately; education serves exact generated bytes with no games stack')
+          elif s==r:
+              print('  PASS live JS-off full homepage serves',r,'as New Release, matching the tree and the ruling')
           else:
               print('  PENDING live homepage has not caught up with the tree yet.')
               print('  This is a Pages deployment lag, NOT a content mismatch, and is')
               print('  recorded as PENDING rather than reported as a pass or a failure.')
           PY
           echo "== JS-off proof: the occupant is in the SERVED BYTES, no JavaScript executed =="
-          echo "  /neonsync/ hrefs in served homepage: $(grep -oc 'neonsync/' /tmp/home.html || true)"
-          echo "  data-release attributes in served homepage: $(grep -oc 'data-release=' /tmp/home.html || true)"
+          echo "  /neonsync/ hrefs in served full homepage: $(grep -oc 'neonsync/' /tmp/home.html || true)"
+          echo "  data-release attributes in served full homepage: $(grep -oc 'data-release=' /tmp/home.html || true)"

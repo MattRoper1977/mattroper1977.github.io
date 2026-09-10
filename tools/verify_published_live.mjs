@@ -2,7 +2,28 @@
 /* Stage L-fin — prove a published path is actually SERVED.
  *
  *   node tools/verify_published_live.mjs --repo-root <dir> --shelf <games.json>
- *        --path /ouroboros/ --path /novasiege/ [--expect-404 /nope-does-not-exist/]
+ *        --path /ouroboros/ --path /novasiege/
+ *        [--tool-path /artsaward/] [--expect-404 /nope-does-not-exist/]
+ *
+ * ROUTE TYPE IS DECLARED, NOT INFERRED.
+ *   --path       a GAME route. Serves, AND has a shelf entry, AND renders an
+ *                arcade card.
+ *   --tool-path  a TEACHER TOOL route. Serves, and must NOT be on the arcade
+ *                shelf.
+ *
+ * The split exists because three tool routes were dispatched through --path and
+ * the run went red on six limbs, every one of them "no arcade card" — for pages
+ * that correctly have none. A red nobody acts on is worse than no red at all:
+ * it trains people to skim past this instrument, and the reds it does need to
+ * raise arrive in the same colour.
+ *
+ * Type is NOT derived from the shelf. "It is a game if the shelf lists it"
+ * would make the shelf assertion circular: a game accidentally dropped from
+ * games.json would reclassify itself as a tool and skip the very check that
+ * exists to catch that. The caller declares the type and the gate holds it to
+ * it — in BOTH directions, since a tool route is asserted ABSENT from the
+ * shelf rather than merely unexamined. An unexamined property is invisible; an
+ * asserted one is not.
  *
  * "Merged" and "served" are different claims (R10). A shelf entry whose target
  * does not serve is a half-publish arriving from the serving side, and it is
@@ -26,11 +47,68 @@ const argv = process.argv.slice(2);
 const val = (n) => { const i = argv.indexOf(n); return i > -1 ? argv[i + 1] : null; };
 const all = (n) => argv.reduce((a, v, i) => (v === n ? [...a, argv[i + 1]] : a), []);
 
-const ORIGIN = val('--origin') || 'https://madebymatt.uk';
+const ORIGIN = val('--origin') || 'https://madebymatt-play.uk';
+/* HC3 §1.1. Games serve on the play origin. Their old addresses on the
+   education origin are stubs, and the served bytes on play are the committed
+   bytes with the education host literal rewritten (the builder's one
+   transformation) — so --transform-host is applied to the repo blob before it
+   is hashed, and --education-origin is where the stub leg looks. */
+const EDU_ORIGIN = val('--education-origin') || 'https://madebymatt.uk';
+// The apex and its www twin are ONE site: the live apex answers 301 to www, so
+// a request to www.<host> from a page on <host> is the site talking to itself,
+// not an off-origin request. First honest colour of the retargeted run named
+// exactly that redirect as a foreign request on every game path.
+const sameSiteHosts = (origin) => { const h = new URL(origin).hostname.replace(/^www\./, ''); return new Set([h, 'www.' + h]); };
+const PLAY_SITE = sameSiteHosts(ORIGIN);
+const sameSite = (u) => { try { return PLAY_SITE.has(new URL(u).hostname); } catch { return false; } };
+const TRANSFORM = argv.includes('--transform-host');
+const EDU_LITERAL = val('--education-literal') || 'https://madebymatt.uk';
+const PLAY_LITERAL = val('--play-literal') || 'https://madebymatt-play.uk';
+const PLAY_HOSTS = ['madebymatt-play.uk', 'www.madebymatt-play.uk'];
+const transformed = (b) => TRANSFORM ? Buffer.from(b.toString('utf8').split(EDU_LITERAL).join(PLAY_LITERAL), 'utf8') : b;
+const judgeStub = (body, status, finalUrl) => {
+  const t = body ? body.toString('utf8') : '';
+  const host = (u) => { try { return new URL(u).hostname; } catch (_) { return ''; } };
+  const problems = [];
+  if (PLAY_HOSTS.includes(host(finalUrl))) return ['redirects to play (served by redirect, not a stub)'];
+  if (status !== 200) problems.push(`HTTP ${status}`);
+  if (body && body.length > 2048) problems.push(`${body.length} B > 2048`);
+  if (!t.includes('data-game-moved')) problems.push('no data-game-moved marker');
+  if (!/<meta\s+name="robots"\s+content="noindex"/.test(t)) problems.push('no noindex');
+  const canon = t.match(/<link\s+rel="canonical"\s+href="([^"]+)"/);
+  if (!canon || !PLAY_HOSTS.includes(host(canon[1]))) problems.push('no canonical to the play origin');
+  const links = [...t.matchAll(/<a\s+id="play-game"\s+href="([^"]+)"/g)];
+  if (links.length !== 1 || !PLAY_HOSTS.includes(host(links[0][1]))) problems.push('not exactly one Open-the-game link to play');
+  if (/<canvas\b/i.test(t)) problems.push('carries a <canvas>');
+  for (const m of t.matchAll(/<script[^>]+src="([^"]+)"/g)) if (m[1] !== '/stub-handoff.js') problems.push(`external script ${m[1]}`);
+  return problems;
+};
 const REPO_ROOT = val('--repo-root') || '.';
 const SHELF = val('--shelf');
-const PATHS = all('--path');
+const GAME_PATHS = all('--path');
+const TOOL_PATHS = all('--tool-path');
+const PATHS = [
+  ...GAME_PATHS.map((p) => ({ p, kind: 'game' })),
+  ...TOOL_PATHS.map((p) => ({ p, kind: 'tool' })),
+];
 const CONTROL = val('--expect-404');
+
+/* N1.2. SHELF and the path lists come from argv. Invoked with NO arguments —
+   which is exactly how post-merge-production-verify.yml was invoking it — this
+   reached readFileSync(null) and died with ERR_INVALID_ARG_TYPE at line 92.
+   That reads as a broken tool. It is not: the gate was never handed what it
+   needs, so it never judged anything, and `set +e` upstream turned that into a
+   green step. Refuse in the estate's own words, and exit 2 (NOT RUN), so a
+   caller cannot mistake absence of a verdict for a passing one. This is
+   argument validation, not a try/catch around the symptom — the crash site
+   itself is left exactly as it was. */
+if (!SHELF || PATHS.length === 0) {
+  console.error('NOT RUN: verify_published_live.mjs needs --shelf <games.json> and at least one --path/--tool-path.');
+  console.error(`  --shelf: ${SHELF ? SHELF : '(missing)'}   paths given: ${PATHS.length}`);
+  console.error('  The canonical invocation is in .github/workflows/published-live-verify.yml.');
+  console.error('This gate did not judge anything. That is not a pass.');
+  process.exit(2);
+}
 
 const sha = (b) => createHash('sha256').update(b).digest('hex');
 const results = [];
@@ -49,14 +127,15 @@ const browser = await chromium.launch();
 async function fetchBytes(url) {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
-  let status = 0, body = null;
+  let status = 0, body = null, finalUrl = url;
   try {
     const r = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
     status = r ? r.status() : 0;
     body = r ? Buffer.from(await r.body()) : null;
+    finalUrl = r ? r.url() : url;
   } catch (e) { status = -1; }
   await ctx.close();
-  return { status, body };
+  return { status, body, finalUrl };
 }
 
 // ───────────────────────────────────────────────── the served shelf, once
@@ -83,11 +162,11 @@ let servedShelf = null;
 }
 
 // ─────────────────────────────────────────── each published path, byte-for-byte
-for (const p of PATHS) {
-  g(`served path ${p}`);
+for (const { p, kind } of PATHS) {
+  g(`served ${kind} path ${p}`);
   const repoFile = join(REPO_ROOT, p.replace(/^\/|\/$/g, ''), 'index.html');
   let repoBytes = null;
-  try { repoBytes = readFileSync(repoFile); } catch (e) {
+  try { repoBytes = kind === 'game' ? transformed(readFileSync(repoFile)) : readFileSync(repoFile); } catch (e) {
     check('committed blob readable', false, `${repoFile} — ${e.code}`);
     continue;
   }
@@ -95,12 +174,26 @@ for (const p of PATHS) {
   check('answers 200', status === 200, `HTTP ${status}`);
   const identical = !!(body && sha(body) === sha(repoBytes));
   check('served bytes == committed blob', identical,
-    body ? `served ${body.length}B ${sha(body).slice(0, 12)} vs repo ${repoBytes.length}B ${sha(repoBytes).slice(0, 12)}`
+    body ? `served ${body.length}B ${sha(body).slice(0, 12)} vs repo ${repoBytes.length}B ${sha(repoBytes).slice(0, 12)}${TRANSFORM && kind === 'game' ? ' (host literal rewritten)' : ''}`
          : 'no body returned');
+  if (kind === 'game') {
+    /* HC3 §1.1: the same path on the EDUCATION origin must be a stub. */
+    const edu = await fetchBytes(EDU_ORIGIN + p);
+    const problems = judgeStub(edu.body, edu.status, edu.finalUrl);
+    check('education origin serves a stub', problems.length === 0,
+      problems.length ? problems.join('; ') : `${edu.body ? edu.body.length : 0}B stub, noindex, canonical → play`);
+  }
 
-  // The shelf entry must point here, and the served shelf must carry it.
+  // The shelf is the ARCADE shelf. A game must be on it; a teacher tool must
+  // not. Both are asserted — the tool case is a claim about the shelf, not an
+  // omission from the report.
   const entry = servedShelf ? servedShelf.games.find((e) => e.href === p) : null;
-  check('shelf entry exists for this path', !!entry, entry ? `"${entry.title}"` : 'no entry with this href');
+  if (kind === 'game') {
+    check('shelf entry exists for this path', !!entry, entry ? `"${entry.title}"` : 'no entry with this href');
+  } else {
+    check('correctly absent from the arcade shelf', !entry,
+      entry ? `a tool route is listed as a game: "${entry.title}"` : 'no game entry, as expected for a tool route');
+  }
 
   // Off-origin requests at runtime, measured on the SERVED page.
   const ctx = await browser.newContext();
@@ -108,7 +201,7 @@ for (const p of PATHS) {
   const offOrigin = [];
   page.on('request', (r) => {
     const u = r.url();
-    if (/^https?:/i.test(u) && !u.startsWith(ORIGIN)) offOrigin.push(u);
+    if (/^https?:/i.test(u) && !sameSite(u)) offOrigin.push(u);
   });
   const errs = [];
   page.on('pageerror', (e) => errs.push(String(e)));
@@ -127,34 +220,127 @@ g('arcade renders the new entries');
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await ctx.newPage();
   await page.goto(`${ORIGIN}/games/`, { waitUntil: 'domcontentloaded', timeout: 45000 }).catch(() => {});
+  /* The arcade's browse structure moved from one A-Z grid (#allGrid) to genre
+     accordions (#genreSections). This job reads the SERVED page, so during a
+     deploy window it is genuinely either — and reading only the old one
+     returned -1, "the selector matched nothing", which is indistinguishable
+     from a shelf that failed to render. Both are accepted, and the accordions
+     are opened first: a card inside a shut <details> is not painted, so a
+     folded shelf would otherwise read as a missing one. */
+  /* The play home renders the shelf as static cards in #game-grid; the
+     education arcade's #allGrid/#genreSections no longer carries games.
+     Both structures are accepted, and every shelf entry must have a card. */
+  const BROWSE = '#allGrid, #genreSections, #game-grid';
+  await page.evaluate(() => document.querySelectorAll('details.gsec').forEach((d) => { d.open = true; })).catch(() => {});
   const expected = servedShelf ? servedShelf.games.length : 0;
   let rendered = -1;
   for (let i = 0; i < 60; i++) {              // poll, never single-sample
-    rendered = await page.evaluate(() => {
-      const grid = document.getElementById('allGrid');
-      if (!grid) return -1;
-      return [...grid.querySelectorAll('a.gcard')].filter((el) => {
+    rendered = await page.evaluate((sel) => {
+      const roots = [...document.querySelectorAll(sel)];
+      if (!roots.length) return -1;
+      document.querySelectorAll('details.gsec').forEach((d) => { d.open = true; });
+      return roots.flatMap((g) => [...g.querySelectorAll('a.gcard, .game-card')]).filter((el) => {
         const r = el.getBoundingClientRect();
         return r.width > 0 && r.height > 0;
       }).length;
-    }).catch(() => -1);
+    }, BROWSE).catch(() => -1);
     if (rendered >= expected) break;
     await page.waitForTimeout(250);
   }
-  check('arcade renders the whole shelf', rendered === expected,
-    `${rendered} cards occupy real space, shelf is ${expected} (rendered, not node-counted)`);
-  for (const p of PATHS) {
-    const found = await page.evaluate((href) => {
-      const grid = document.getElementById('allGrid');
-      if (!grid) return false;
-      return [...grid.querySelectorAll('a.gcard')].some((a) => {
-        const r = a.getBoundingClientRect();
-        return a.getAttribute('href') && a.getAttribute('href').includes(href) && r.width > 0 && r.height > 0;
-      });
-    }, p).catch(() => false);
-    check(`arcade shows a card for ${p}`, found, found ? 'card is rendered and occupies space' : 'no rendered card links here');
+  check('arcade renders the whole shelf', rendered >= expected,
+    `${rendered} cards occupy real space, shelf is ${expected} (rendered, not node-counted; the play grid also carries classroom activities)`);
+
+  /* One predicate, used by the assertions and by the control below, so the
+     control cannot drift from the thing it is certifying. */
+  const cardFor = (href) => page.evaluate(([h, sel]) => {
+    const roots = [...document.querySelectorAll(sel)];
+    if (!roots.length) return false;
+    return roots.flatMap((g) => [...g.querySelectorAll('a.gcard, .game-card a[href]')]).some((a) => {
+      const r = (a.closest('.game-card') || a).getBoundingClientRect();
+      const raw = a.getAttribute('href') || '';
+      let dec = raw; try { dec = decodeURIComponent(raw); } catch (_) {}
+      return raw && (raw.includes(h) || dec.includes(h)) && r.width > 0 && r.height > 0;
+    });
+  }, [href, BROWSE]).catch(() => false);
+  /* every shelf entry has a rendered card — the whole-shelf claim, by name */
+  {
+    const entries = servedShelf ? servedShelf.games.map((e) => e.href) : [];
+    const missing = [];
+    for (const h of entries) if (!(await cardFor(h))) missing.push(h);
+    check('every shelf entry has a rendered card', entries.length > 0 && missing.length === 0,
+      missing.length ? `missing: ${missing.slice(0, 5).join(' ')}` : `${entries.length} shelf entries, each rendered`);
+  }
+
+  for (const p of GAME_PATHS) {
+    const found = await cardFor(p);
+    check(`arcade shows a card for ${p}`, found,
+      found ? 'card is rendered and occupies space' : 'no rendered card links here');
+  }
+  for (const p of TOOL_PATHS) {
+    const found = await cardFor(p);
+    check(`arcade shows NO card for tool route ${p}`, !found,
+      found ? 'a teacher tool is rendering an arcade card' : 'no arcade card, as expected for a tool route');
   }
   await ctx.close();
+}
+
+/* ──────────────────────────── the arcade-card check must be able to go red
+ *
+ * The ask, verbatim: a real game route with its card removed must still go RED.
+ * That is done literally here rather than by analogy — a real shelf game is
+ * located on the rendered arcade, its card is removed from the live DOM, and
+ * the SAME predicate is re-run. Nothing on the site is touched; the removal
+ * happens in this browser context and is discarded with it.
+ *
+ * Both directions, because a check that is always red proves as little as one
+ * that is always green: the card must be FOUND before removal and ABSENT
+ * after. If the shelf is empty or unreadable this is reported as INCONCLUSIVE
+ * rather than skipped, since a silently absent control is the failure this
+ * whole instrument exists to avoid.
+ */
+{
+  g('control: the arcade-card check must be able to go red');
+  const sample = servedShelf && servedShelf.games ? servedShelf.games.find((e) => e.href) : null;
+  if (!sample) {
+    check('a real game is available to use as the control', false,
+      'the served shelf yielded no entry — the card check below is uncertified');
+  } else {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(`${ORIGIN}/games/`, { waitUntil: 'domcontentloaded', timeout: 45000 }).catch(() => {});
+    /* Open the genre accordions before certifying the control: a card inside a
+       shut <details> occupies no space, so the control would report "not found"
+       for a game that is present and call itself always-red. */
+    const openAll = () => page.evaluate(() => document.querySelectorAll('details.gsec').forEach((d) => { d.open = true; })).catch(() => {});
+    await openAll();
+    const cardFor = async (href) => { await openAll(); return page.evaluate((h) => {
+      const grid = document.querySelector('#allGrid') || document.querySelector('#genreSections') || document.querySelector('#game-grid');
+      if (!grid) return false;
+      return [...grid.querySelectorAll('a.gcard, .game-card a[href]')].some((a) => {
+        const r = a.getBoundingClientRect();
+        return a.getAttribute('href') && a.getAttribute('href').includes(h) && r.width > 0 && r.height > 0;
+      });
+    }, href).catch(() => false); };
+
+    for (let i = 0; i < 60; i++) { if (await cardFor(sample.href)) break; await page.waitForTimeout(250); }
+    check(`CONTROL: a real game (${sample.href}) IS found before removal`,
+      await cardFor(sample.href), 'the check is not always-red');
+
+    await openAll();
+    const removed = await page.evaluate((h) => {
+      const grid = document.querySelector('#allGrid') || document.querySelector('#genreSections') || document.querySelector('#game-grid');
+      if (!grid) return 0;
+      const hits = [...grid.querySelectorAll('a.gcard, .game-card a[href]')]
+        .filter((a) => a.getAttribute('href') && a.getAttribute('href').includes(h));
+      hits.forEach((a) => (a.closest('.game-card') || a).remove());
+      return hits.length;
+    }, sample.href).catch(() => 0);
+
+    check(`CONTROL: with its card removed, ${sample.href} goes RED`,
+      removed > 0 && !(await cardFor(sample.href)),
+      `${removed} card node(s) removed from the live DOM — the check reports absent`);
+    await ctx.close();
+  }
 }
 
 // ─────────────────────────────────────────────── proves-can-fail control

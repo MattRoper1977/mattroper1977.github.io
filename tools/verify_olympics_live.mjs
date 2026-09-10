@@ -45,6 +45,10 @@ const repoGames = arg('--repo-games');
 const servedOlympics = arg('--served-olympics');
 const repoOlympics = arg('--repo-olympics');
 const arcadeUrl = arg('--arcade-url');
+/* HC3 §1.1: the arcade is the play home. Its grid also carries the classroom
+   activities, so the rendered total is the play catalogue's total (fetched
+   from --catalogue-url), and every SHELF entry must have a rendered card. */
+const catalogueUrl = arg('--catalogue-url');
 
 // ---------------------------------------------------------------- A1 + A2
 const sg = readFileSync(servedGames);
@@ -79,8 +83,38 @@ const hrefs = holders.map((e) => e.href);
 check('marker-sole-holder', holders.length === 1,
   `${holders.length} entr${holders.length === 1 ? 'y' : 'ies'} carry NEW· ${JSON.stringify(hrefs)}`);
 
-check('marker-is-olympics', holders.length === 1 && holders[0].href === '/olympics/',
-  `holder href ${JSON.stringify(hrefs[0] ?? null)}`);
+// RETARGETED 2026-08-13, commission 2. This asserted `=== '/olympics/'`, an
+// inline frozen holder. True when written, false from the moment the marker
+// moved — Relicforge, then Nova Siege, then Rally Vector 3D by site commits
+// 69c1d57 and 3e6deb0, landing on the canonical shelf in Games commit aa3e3bf,
+// which transferred the marker off Nova Siege in the same commit. Unnoticed
+// for the usual reason: this workflow fired only on a launch branch that had
+// already merged.
+//
+// The holder is a declared shelf fact with one writer, so it is read from
+// data/new-release-occupants.json rather than restated here. Reading the
+// record is not trusting it: the served shelf is the other side of the
+// comparison, so a record that disagrees with production is a red in whichever
+// direction it disagrees. An unreadable or holder-less record is a failure of
+// this harness, reported as its own limb — never a silent pass, and never
+// counted as a rejection.
+const RECORD_PATH = new URL('../data/new-release-occupants.json', import.meta.url);
+let RECORD = null, recordError = null;
+try { RECORD = JSON.parse(readFileSync(RECORD_PATH, 'utf8')); }
+catch (e) { recordError = String((e && e.message) || e); }
+
+check('holder-record-readable', RECORD !== null && typeof RECORD.newReleaseHolder === 'string',
+  RECORD === null
+    ? `data/new-release-occupants.json unreadable: ${recordError}`
+    : `newReleaseHolder ${JSON.stringify(RECORD.newReleaseHolder ?? null)}`);
+
+const declaredHolder = (RECORD && typeof RECORD.newReleaseHolder === 'string')
+  ? `/${RECORD.newReleaseHolder}/`
+  : null;
+
+check('marker-matches-record',
+  declaredHolder !== null && holders.length === 1 && holders[0].href === declaredHolder,
+  `served holder ${JSON.stringify(hrefs[0] ?? null)} vs declared ${JSON.stringify(declaredHolder)}`);
 
 // ---------------------------------------------------------------- A4 bytes
 const so = readFileSync(servedOlympics);
@@ -115,10 +149,17 @@ if (arcadeUrl) {
   const expected = sEntries.length;
   let rendered = -1;
   for (let i = 0; i < 60; i++) {
+    // The browse structure moved from one A-Z grid (#allGrid) to genre
+    // accordions (#genreSections). This job reads the SERVED page, so across a
+    // deploy it is genuinely either, and reading only the old one returns -1 —
+    // "the selector matched nothing", which is indistinguishable from a shelf
+    // that failed to render. Sections are opened first: a card inside a shut
+    // <details> occupies no space, so a folded shelf would read as a short one.
     rendered = await page.evaluate(() => {
-      const grid = document.getElementById('allGrid');
-      if (!grid) return -1;
-      return [...grid.querySelectorAll('a.gcard')].filter((el) => {
+      document.querySelectorAll('details.gsec').forEach((d) => { d.open = true; });
+      const roots = [...document.querySelectorAll('#allGrid, #genreSections, #game-grid')];
+      if (!roots.length) return -1;
+      return roots.flatMap((g) => [...g.querySelectorAll('a.gcard, .game-card')]).filter((el) => {
         const r = el.getBoundingClientRect();
         return r.width > 0 && r.height > 0 && el.offsetParent !== null;
       }).length;
@@ -127,12 +168,29 @@ if (arcadeUrl) {
     await page.waitForTimeout(250);
   }
 
-  check('arcade-renders-shelf', rendered === expected,
-    `${rendered} cards occupy real space in #allGrid, shelf is ${expected} (rendered, not node-counted)`);
+  let total = expected;
+  if (catalogueUrl) {
+    try {
+      const cat = await (await fetch(catalogueUrl, { cache: 'no-store' })).json();
+      total = (cat.games || []).length + (cat.activities || []).length + (cat.staff || []).length;
+      const catHrefs = new Set((cat.games || []).map((g) => g.href || g.route));
+      const missing = sEntries.map((e) => e.href).filter((h) => !catHrefs.has(h));
+      check('catalogue-carries-shelf', missing.length === 0,
+        missing.length ? `shelf entries absent from the play catalogue: ${missing.slice(0, 5).join(' ')}` : `${sEntries.length} shelf entries all in the play catalogue (${total} rows)`);
+    } catch (e) { check('catalogue-readable', false, String(e)); }
+  }
+  check('arcade-renders-shelf', rendered >= expected && rendered === total,
+    `${rendered} cards occupy real space in the browse structure, shelf is ${expected}, catalogue total ${total} (rendered, not node-counted)`);
+  const shelfMissing = await page.evaluate((hrefs) => hrefs.filter((h) => ![...document.querySelectorAll('a[href]')].some((a) => {
+    const raw = a.getAttribute('href') || ''; let dec = raw; try { dec = decodeURIComponent(raw); } catch (_) {}
+    return raw === h || dec === h; })), sEntries.map((e) => e.href));
+  check('arcade-every-shelf-entry', shelfMissing.length === 0,
+    shelfMissing.length ? `no rendered link for ${shelfMissing.slice(0, 5).join(' ')}` : 'every shelf entry has a rendered link');
 
-  const countline = (await page.textContent('#countline').catch(() => '')) || '';
-  check('arcade-countline', countline.includes(String(expected)),
-    `countline reads ${JSON.stringify(countline.trim().slice(0, 80))}`);
+  const countline = (await page.textContent('#countline').catch(() => null))
+    || (await page.textContent('[role="status"]').catch(() => '')) || '';
+  check('arcade-countline', countline.includes(String(total)),
+    `countline reads ${JSON.stringify(countline.trim().slice(0, 80))}, expected to name ${total}`);
 
   check('arcade-no-script-error', scriptErrors.length === 0,
     scriptErrors.length ? JSON.stringify(scriptErrors.slice(0, 3)) : 'no thrown exceptions or script console errors');

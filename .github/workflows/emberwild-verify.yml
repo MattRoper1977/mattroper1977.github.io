@@ -1,0 +1,72 @@
+name: Emberwild gate contract
+
+on:
+  pull_request:
+    paths:
+      - 'emberwild/**'
+      - 'tools/verify_emberwild.js'
+      - '.github/workflows/emberwild-verify.yml'
+      - 'sitemap.xml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: emberwild-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Record measured identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/emberwild
+          {
+            node --version
+            wc -c emberwild/index.html
+            sha256sum emberwild/index.html
+            printf 'build stamp='; grep -o 'emberwild-build-2026-08-13' emberwild/index.html | wc -l
+            printf 'external requests in source='; grep -c 'cdn\.jsdelivr\|unpkg\.com\|cdnjs\.' emberwild/index.html || true
+          } | tee artifacts/emberwild/identity.txt
+
+      - name: Install pinned Chromium harness
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      # The runner kills silent jobs at 20 minutes, so the harness flushes
+      # per line and everything here is piped through tee rather than buffered.
+      - name: Run the gate contract
+        shell: bash
+        env:
+          EMBERWILD_CHROME: ''
+        run: |
+          set -o pipefail
+          node tools/verify_emberwild.js | tee artifacts/emberwild/gates.log
+
+      - name: Prove the gates can fail
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/verify_emberwild.js --selftest | tee artifacts/emberwild/nonvacuity.log
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emberwild-verification
+          path: artifacts/emberwild
+          retention-days: 14

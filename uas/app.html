@@ -1252,6 +1252,22 @@ $("#s-build").addEventListener("click",()=>buildSummary());
 $("#s-pack").addEventListener("click",()=>buildPack());
 $("#s-pdf").addEventListener("click",()=>downloadPackPDF());
 $("#s-print").addEventListener("click",()=>window.print());
+/* T4/S6.2. "Required before export" is enforced on the SHEET, not as a lock on
+   the print button. Printing a blank sheet to be completed by hand is normal
+   practice for these units, and a print button that refuses would break the
+   workflow it is meant to protect. So an exported sheet with no level ticked
+   says so, in its own text, where a moderator reads it. Delegated because the
+   summary sheet is rebuilt from buildSummary() every time it is opened. */
+document.addEventListener("change",function(e){
+ var b=e.target;
+ if(!b||!b.classList||!b.classList.contains("sup-box"))return;
+ var box=b.closest(".sssupport");if(!box)return;
+ var req=box.querySelector(".sup-req");if(!req)return;
+ var lvl=box.querySelector(".sup-box[data-sup]:checked");
+ /* "not-recorded" is a recorded ANSWER, not a recorded level. It still leaves
+    the sheet incomplete as evidence, and the line stays up saying so. */
+ req.hidden=!(!lvl||lvl.getAttribute("data-sup")==="not-recorded");
+});
 async function ensureJsPdf(){
   if(window.jspdf&&window.jspdf.jsPDF)return;
   await loadScript("vendor/jspdf/jspdf.umd.min.js");
@@ -1411,6 +1427,18 @@ function drawSummaryPDF(doc,u,roster){
   /* footer */
   const fy=y0+hh1+hh2+nRows*rh+10;
   doc.setFontSize(10);
+  /* S6.2/T4. The support line, drawn UNTICKED. Empty boxes are the honest
+     default: only a human can attest the level, and an empty supportGiven is
+     not evidence of independence. */
+  doc.setFontSize(8);
+  doc.text("Support given:",15,fy-6);
+  var sx=42;
+  ["Independent","Prompted","Substantially Assisted"].forEach(function(lab){
+    doc.rect(sx,fy-9.2,3.2,3.2);
+    doc.text(lab,sx+5,fy-6.4); sx += doc.getTextWidth(lab)+14;
+  });
+  doc.text("(tick one - required before this sheet is used as evidence)",sx+2,fy-6.4);
+  doc.setFontSize(10);
   doc.text("Signed",15,fy);doc.setFont("times","bolditalic");doc.text(set.teacher||"",32,fy);doc.setFont("helvetica","normal");
   doc.line(30,fy+1,110,fy+1);doc.text("(Unit teacher)",113,fy);
   doc.text("Sheet No",200,fy);doc.line(220,fy+1,232,fy+1);doc.text("1",225,fy,{align:"center"});
@@ -1518,6 +1546,19 @@ function buildSummary(){
       <tr><th>Number</th><th>Name</th>${numHdr}</tr>
       ${rows}
     </table>
+    <!-- S6.2/T4. Every sheet carries the support line, not just the ASDAN one.
+         UNTICKED by default, and pre-populated only from supportGiven. An EMPTY
+         supportGiven pre-populates NOTHING: it is not evidence of independence,
+         and a sheet rendering it as such would assert what the software cannot
+         know (R5). "Not recorded" prints as "Not recorded". -->
+    <div class="sssupport" style="margin-top:12px;font-size:.72rem">
+      <span class="lbl">Support given</span>
+      <label style="margin-left:10px"><input type="radio" name="sup" class="sup-box" data-sup="independent"> Independent</label>
+      <label style="margin-left:10px"><input type="radio" name="sup" class="sup-box" data-sup="prompted"> Prompted</label>
+      <label style="margin-left:10px"><input type="radio" name="sup" class="sup-box" data-sup="substantially-assisted"> Substantially Assisted</label>
+      <label style="margin-left:10px"><input type="radio" name="sup" class="sup-box" data-sup="not-recorded" checked> Not recorded</label>
+      <span class="sup-req" style="margin-left:10px;color:#8a3b12">Not recorded &mdash; tick a level before this sheet is used as evidence.</span>
+    </div>
     <div class="sssign" style="margin-top:14px"><div>Signed <span class="ln">${esc(set.teacher||"")}</span> (Unit teacher)</div><div style="flex:0 0 200px">Sheet No <span class="lnd" style="min-width:34px">1</span> of <span class="lnd" style="min-width:34px">1</span></div></div>
     <div class="sssign"><div>Signed <span class="ln"></span> (Co-ordinator)</div><div style="flex:0 0 200px">Date <span class="lnd"></span></div></div>
     <div class="ssfoot" style="letter-spacing:0;text-align:left;font-size:.66rem">AQA Education (AQA) is a registered charity (number 1073334) and a company limited by guarantee registered in England and Wales (number 3644723). Our registered address is AQA, Devas Street, Manchester M15 6EX.</div>

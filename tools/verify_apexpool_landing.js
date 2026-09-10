@@ -11,8 +11,26 @@ const args = process.argv.slice(2);
 const selfTest = args.includes('--self-test');
 const supplied = args.find((arg) => arg !== '--self-test');
 const FILE = supplied || path.join(__dirname, '..', 'apexpool', 'index.html');
-const EXPECTED_BYTES = 88751;
-const EXPECTED_SHA256 = '4de1383f8ee029db438258bb239e4e7f3b7ffd9e603706a9fd145fd397af87ad';
+/* The DELIVERED apexpool artifact, pinned. A pin is a literal by design: the
+ * whole claim is "these exact bytes shipped", and deriving it from the file it
+ * checks would assert only that the file equals itself. It moves when the game
+ * deliberately moves - and it must move IN THE SAME COMMIT, because a ledger
+ * updated later than the file it describes is a stale doc with a hash attached.
+ *
+ * MOVED 2026-08-25, and late. 8432492 on 10 August ("Phase 1: the eleven get an
+ * inline exit") added the MBM-INLINE-EXIT block to this game: +29 lines, 0
+ * deletions, 88751 -> 91973 bytes. That commit re-pinned six sibling gates -
+ * apexrally, biopunkhive, echovault, neonsync, novasiege, ouroboros - and missed
+ * this one. apexpool-verify.yml is pull_request-only and filtered to apexpool/**,
+ * so it went red on that very PR (run 17), was merged anyway, and then no diff
+ * touched those paths for fifteen days. It surfaced again only because S5 added
+ * a comment to this file and fired the workflow.
+ *
+ * Verified before moving rather than re-pinned on sight: 8432492^ hashes to the
+ * OLD pin exactly, and the whole delta is the generated exit block.
+ * Previous: 4de1383f8ee029db438258bb239e4e7f3b7ffd9e603706a9fd145fd397af87ad (88751 B) */
+const EXPECTED_BYTES = 109038;
+const EXPECTED_SHA256 = '5d0f1580b89e3b6d65b4db75b45f4ad78353b87d761b34af93e9a1fd08ccc92a';
 
 function plantedFailures() {
   const source = fs.readFileSync(FILE, 'utf8');
@@ -22,7 +40,7 @@ function plantedFailures() {
     ['pocket target', 'pocket-buttons-44px', (s) => s.replace('.pocket-grid button{min-height:44px', '.pocket-grid button{min-height:38px')],
     ['dependency', 'remote-runtime-reference-census', (s) => s.replace('</body>', '<script src="https://example.invalid/tamper.js"></script></body>')],
     ['storage', 'storage-prefix-exact', (s) => s.replace("var PREFIX='mbm_apexpool_';", "var PREFIX='mbm_pool_';")],
-    ['reduced motion', 'reduced-motion-source-contract', (s) => s.replace('@media (prefers-reduced-motion:reduce)', '@media (prefers-reduced-motion:no-preference)')],
+    ['reduced motion', 'reduced-motion-source-contract', (s) => s.replace(/@media \(prefers-reduced-motion:reduce\)/g, '@media (prefers-reduced-motion:no-preference)')],
     ['no-JavaScript', 'noscript-source-contract', (s) => s.replace('<noscript>', '<no-script>')],
     ['Canvas guard', 'noCanvas-source-contract', (s) => s.replace('id="noCanvas"', 'id="noCanvasBroken"')]
   ];
@@ -91,7 +109,9 @@ ok('data-uri-favicon-is-the-only-embedded-asset', refs.filter((value) => /^data:
 ok('no-network-calls', !/\bfetch\s*\(|XMLHttpRequest|WebSocket|EventSource/.test(html));
 ok('storage-prefix-exact', /var PREFIX='mbm_apexpool_';/.test(html));
 const writes = [...html.matchAll(/localStorage\.(?:setItem|removeItem)\(([^\n;]+)/g)].map((m) => m[1]);
-ok('all-storage-writes-use-prefix-helper', writes.length === 2 && writes.every((value) => /this\.key\(k\)/.test(value)), writes.join(' | '));
+const legacyWrites = writes.filter((value) => /this\.key\(k\)/.test(value));
+const profileWrites = writes.filter((value) => /^PROFILE_KEY\b/.test(value));
+ok('all-storage-writes-use-owned-keys', writes.length === 3 && legacyWrites.length === 2 && profileWrites.length === 1 && /PROFILE_KEY='madebymatt_v6_profile'/.test(html), writes.join(' | '));
 
 head('Fallback and motion source contract');
 ok('reduced-motion-source-contract', /@media \(prefers-reduced-motion:reduce\)/.test(html) && /#mbmSplash\{transition:none\}/.test(html));

@@ -1,0 +1,86 @@
+name: Skybreak Vector gate contract
+
+# /skybreak/ is a declared single-file game: one inline script block, zero
+# external references, and the generated inline exit region instead of
+# <script src="/hud.js">. data/hud-coverage.json cites this verifier by name,
+# so it has to be a thing that runs — a declared verifier nothing invokes is
+# worse than no verifier, because the ledger reads as coverage either way.
+
+on:
+  pull_request:
+    paths:
+      - 'skybreak/**'
+      - 'tools/verify_skybreak.mjs'
+      - 'data/hud-coverage.json'
+      - '.github/workflows/skybreak-verify.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'skybreak/**'
+      - 'tools/verify_skybreak.mjs'
+      - '.github/workflows/skybreak-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: skybreak-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Record measured identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/skybreak
+          {
+            node --version
+            wc -c skybreak/index.html
+            sha256sum skybreak/index.html
+            printf 'inline script blocks='; grep -c '<script>' skybreak/index.html || true
+            printf 'external script tags='; grep -c '<script[^>]*src=' skybreak/index.html || true
+            printf 'exit region markers='; grep -c 'MBM-INLINE-EXIT' skybreak/index.html || true
+            printf 'maker splash markers='; grep -c 'MBM-MAKER-SPLASH' skybreak/index.html || true
+          } | tee artifacts/skybreak/identity.txt
+
+      - name: Install pinned Chromium harness
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      # The runner kills silent jobs at 20 minutes, so everything is piped
+      # through tee rather than buffered.
+      - name: Run the gate contract
+        shell: bash
+        env:
+          SKYBREAK_CHROME: ''
+        run: |
+          set -o pipefail
+          node tools/verify_skybreak.mjs | tee artifacts/skybreak/gates.log
+
+      - name: Prove the gates can fail
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/verify_skybreak.mjs --selftest | tee artifacts/skybreak/nonvacuity.log
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skybreak-verification
+          path: artifacts/skybreak
+          retention-days: 14

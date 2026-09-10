@@ -1,0 +1,565 @@
+{
+  "schema": 1,
+  "purpose": "Reviewed immutable source revisions permit independent source releases. Unknown bytes remain rejected.",
+  "payloads": {
+    "Lessons/Games/Orbital.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Orbital.html",
+      "route": "/Lessons/Games/Orbital.html",
+      "current": "orbital-pinch-zoom-2026-09-07",
+      "revisions": [
+        {
+          "id": "orbital-before-zoom",
+          "reviewed_commit": "1a8e3b29ee4c5d306b9ce0fe0f601dacf3443a98",
+          "git_blob": "4fea51e26fb350228ded28bfd3b728c317d00089",
+          "source_sha256": "409522115391fd1aa0c5d58f91193c5300212ca8f1138267d19242f1522b1431",
+          "published_sha256": "409522115391fd1aa0c5d58f91193c5300212ca8f1138267d19242f1522b1431",
+          "approval": "Existing Games #61 pin and preceding reviewed Play evidence; no preview media is attached to Orbital."
+        },
+        {
+          "id": "orbital-zoom-2026-09-06",
+          "reviewed_commit": "5b100be84334b8ed2aa226f5b296b8172816e927",
+          "git_blob": "75c23b0b799f9bbbcf5757ab940cc92cf8dd9476",
+          "source_sha256": "6df12fdcb3a3aab1ade11730e31293a66274587db47bd610cea93aa0da3b23df",
+          "published_sha256": "6df12fdcb3a3aab1ade11730e31293a66274587db47bd610cea93aa0da3b23df",
+          "approval": "Lessons #350 zoom change; Site #279 evidence and complete publication/browser checks at c161cc8087010036d569953611a2c70dc996842f."
+        },
+        {
+          "id": "orbital-pinch-zoom-2026-09-07",
+          "reviewed_commit": "28dad241119bcbe68ed3b4865d6ebb57ff157b0c",
+          "git_blob": "aeb945e6b3be5f0310f47867805b1dc04c39b0f7",
+          "source_sha256": "11a26558430e0e83a56ffc96d9f921df1a5a816f03ef33b40be7ac9dd62f1001",
+          "published_sha256": "11a26558430e0e83a56ffc96d9f921df1a5a816f03ef33b40be7ac9dd62f1001",
+          "approval": "HC4 §3.3 declaration fix: canvas touch-action none → pinch-zoom, one CSS token; Lessons claude/hc4-zoom-declaration 28dad241; gate docs/HC4_ZOOM_DECLARATION_2026-09-07.json."
+        },
+        {
+          "id": "orbital-afterlight-2026-09-07",
+          "reviewed_commit": "412193525f19bf1db88ef86f7169dff112d61212",
+          "git_blob": "35af8963eedff734972246a443ae7c6fec2c12d2",
+          "source_sha256": "eced4aac7db1dd704828b28795e782c91ffbd381484c74c5347216e6ade69d4a",
+          "published_sha256": "f9379e49b8ae82641c323de386b8dbe743656d69f28b5590745a99a65b42127b",
+          "approval": "RX2 P2 Afterlight remaster (lane B): package dist bytes, deploy-only (no launcher, no AfterlightStorage), pack tests exit 0 with two firing controls red, save compatibility forward/reverse/corruption measured at 390x844, boot census 0 errors; Lessons PR merge commit recorded as reviewed_commit."
+        }
+      ]
+    },
+    "Lessons/Games/Glitch_Clash.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Glitch_Clash.html",
+      "route": "/Lessons/Games/Glitch_Clash.html",
+      "current": "glitch-atomic-campaigns-2026-09-07",
+      "revisions": [
+        {
+          "id": "glitch-before-handoff",
+          "reviewed_commit": "d2a4a1cf3fd5840123e047a5c7dd86700a781526",
+          "git_blob": "2b6d2b75b7697665f35a86a05cdea41beb0ad9c4",
+          "source_sha256": "5bff3f99bf4710ff19c31790957e572eb5b869113bb75a0ecd3e35584c145114",
+          "published_sha256": "8328eed1c1cc0a32957c310505fbdf7d4eb58134e25f70554a3a937ba50ceff1"
+        },
+        {
+          "id": "glitch-atomic-campaigns-2026-09-07",
+          "reviewed_commit": "95146202d7f876800605b489de4231efe28928b9",
+          "git_blob": "3daa35e795f3b078dc61edfe605a413028cd9601",
+          "source_sha256": "96bf2f585c5f075b76ceff933599514716378df51e049e4cb947f9446132dbe9",
+          "published_sha256": "e07efa965aa7ced5c1b2db06d01a846d8fa709e1c47529b4b6fe8f9b56484397",
+          "approval": "Lessons #354: 23 actual Chromium cases and all eleven native suites at run34070662336, artifact10000391273 sha256:530f02823d3d991e5736453a605af66c76d101ba59554e089fd6ef3af218f797. Per-tab atomic branching, legacy isolation, cancelled gestures/timing, idle Retry hidden. Receiver source only; sender not enabled."
+        },
+        {
+          "id": "glitch-hud-clear-390-2026-09-07",
+          "reviewed_commit": "31165439c7308bc58e416c9307fd08bdac4d07bf",
+          "git_blob": "6540a0c13fd0e78c52999896d9cc0af4bfc05422",
+          "source_sha256": "902f8b17e49703d472f91d4edff849307bf6b08c2163562a6e32f5fa47149e71",
+          "published_sha256": "c5771b760a43d759f55a266c440f757c65445661271537fe77e22f9ac0d3e804",
+          "approval": "HC4 §6.1: one CSS rule clearing the Play HUD back circle from screen headers at phone widths; Lessons #364 merged 76e1f466; real 0 → planted 912px² → restored 0; ten Glitch suites pass. Registered as a reviewed revision so the Lessons publication can build; it becomes current (and the handoff tooling's reviewed receiver) only once the Play pin serves it."
+        }
+      ]
+    },
+    "Lessons/Games/Charcoal.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Charcoal.html",
+      "route": "/Lessons/Games/Charcoal.html",
+      "current": "charcoal-baseline-2026-09-07",
+      "revisions": [
+        {
+          "id": "charcoal-baseline-2026-09-07",
+          "reviewed_commit": "138457849c2690de5413ed80d616725a5160f9d1",
+          "git_blob": "ed163545f93589f3ac3fc82864f9160641898dee",
+          "source_sha256": "b00ff60ef1436533c8a3b60e69ad8079d088ec565e990613ff77098e24fce061",
+          "published_sha256": "213cc45346d36fee3133e1f6312ea0f217a629fddb4330318b0e8a19553cf1ad",
+          "approval": "Existing Games pin baseline (reports/play-upgrade/preservation.json and play/evidence.json agree); the file has this blob at Lessons 13845784 (Play pin), 1a8e3b29 (previous pin) and 95146202 (receiver)."
+        },
+        {
+          "id": "charcoal-afterlight-2026-09-07",
+          "reviewed_commit": "66c2b6252367a2e0641ebe7164ac8ddc779a1c1e",
+          "git_blob": "a42bc32b5f4e32ef2d7f3f321c8f11259effddec",
+          "source_sha256": "ea813830267671fc33162da75b79917549368b78733addf0980012d7a28e1d36",
+          "published_sha256": "fc275a7c24e9a0ef2f4ab7c63457838e70709e847bafcd730354e9090ab1523c",
+          "approval": "RX2 P2 Afterlight remaster (lane A): package dist bytes, deploy-only (no launcher, no AfterlightStorage), pack tests exit 0 with two firing controls red, save compatibility forward/reverse/corruption measured at 390x844, boot census 0 errors; Lessons PR merge commit recorded as reviewed_commit."
+        }
+      ]
+    },
+    "Lessons/Games/Grid_Chase.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Grid_Chase.html",
+      "route": "/Lessons/Games/Grid_Chase.html",
+      "current": "grid-chase-baseline-2026-09-07",
+      "revisions": [
+        {
+          "id": "grid-chase-baseline-2026-09-07",
+          "reviewed_commit": "138457849c2690de5413ed80d616725a5160f9d1",
+          "git_blob": "a06179967bdd3f0e6331cdcc624e24a7bd6bfdeb",
+          "source_sha256": "2edab5fa787bfcbca3915756af6be03b5ac4653398bddc73073d81946784f07d",
+          "published_sha256": "4268794703777053b9002349626a3bd646eb0e6aaf0805a84cb6c89ff516a775",
+          "approval": "Existing Games pin baseline (reports/play-upgrade/preservation.json and play/evidence.json agree); the file has this blob at Lessons 13845784 (Play pin), 1a8e3b29 (previous pin) and 95146202 (receiver)."
+        },
+        {
+          "id": "grid-chase-afterlight-2026-09-07",
+          "reviewed_commit": "66c2b6252367a2e0641ebe7164ac8ddc779a1c1e",
+          "git_blob": "2469f4ca322e393a7b77f0c96d519e3a276b9dd0",
+          "source_sha256": "de402aae8c5cadad9867f0f5f5b587c1b7b55f0013acb2d6f6111c0914c7e8c4",
+          "published_sha256": "5bc9f120419c53bceb657a95b066c771748b248ba0456445e3b023a751ea8bfa",
+          "approval": "RX2 P2 Afterlight remaster (lane A): package dist bytes, deploy-only (no launcher, no AfterlightStorage), pack tests exit 0 with two firing controls red, save compatibility forward/reverse/corruption measured at 390x844, boot census 0 errors; Lessons PR merge commit recorded as reviewed_commit."
+        }
+      ]
+    },
+    "Lessons/Games/Lumins.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Lumins.html",
+      "route": "/Lessons/Games/Lumins.html",
+      "current": "lumins-baseline-2026-09-07",
+      "revisions": [
+        {
+          "id": "lumins-baseline-2026-09-07",
+          "reviewed_commit": "138457849c2690de5413ed80d616725a5160f9d1",
+          "git_blob": "870921a28b90cfbadb52930d653dcb10333e8adc",
+          "source_sha256": "9f11b327a93a614b46441df58324ca8ea6992e2814b5547684d8a54f0859f928",
+          "published_sha256": "69607ad176f7cac3748a9c741deb590162f7c5f17839eb97c9a954692de0bdf3",
+          "approval": "Existing Games pin baseline (reports/play-upgrade/preservation.json and play/evidence.json agree); the file has this blob at Lessons 13845784 (Play pin), 1a8e3b29 (previous pin) and 95146202 (receiver)."
+        },
+        {
+          "id": "lumins-afterlight-2026-09-07",
+          "reviewed_commit": "66c2b6252367a2e0641ebe7164ac8ddc779a1c1e",
+          "git_blob": "6ead4e23ddd3c0e0c0b13609192486f2e9d4880d",
+          "source_sha256": "eff03ab87daff35b81160f98cd3746d5b77fb14f8438c01ea8147daef8dc986e",
+          "published_sha256": "f45266fb73f798fa86756b702c2e2c15620cfc65be308056ed51b36f2622dc1b",
+          "approval": "RX2 P2 Afterlight remaster (lane A): package dist bytes, deploy-only (no launcher, no AfterlightStorage), pack tests exit 0 with two firing controls red, save compatibility forward/reverse/corruption measured at 390x844, boot census 0 errors; Lessons PR merge commit recorded as reviewed_commit."
+        },
+        {
+          "id": "lumins-hold-menu-2026-09-07",
+          "reviewed_commit": "1fd4fcb319897ffa52d83637e8615ab96304bd3c",
+          "git_blob": "c922c79fc47c6e7d1f4ed37626436538705bb628",
+          "source_sha256": "4ab5729457c78bcaaf4b225e9f5f9f105d327cb0580bb0862eea9bfe19f2dcf6",
+          "published_sha256": "4b044d740d036dfc2ad0ca794670e76d3598b6dee8e7088d14f636799986b3a8",
+          "approval": "RX3 P1b: the Guardian tool wheel usable on touch (Matt's phone: hold opened the wheel, nothing selectable). Reproduced with real touch events at 390 px on the Afterlight file and on the 13845784 original (carry-over); patched by tools/rx3_lumins_fix.py (H3 hold-menu state machine + H4 canvas touch-action: pinch-zoom, 856 bytes): tap-after-lift, drag-select, outside-tap control and mouse parity all red-then-green with 0 console errors; Lessons rendered gate 596/0; Lessons fix branch head recorded as reviewed_commit."
+        }
+      ]
+    },
+    "Lessons/Games/Static.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Static.html",
+      "route": "/Lessons/Games/Static.html",
+      "current": "static-baseline-2026-09-07",
+      "revisions": [
+        {
+          "id": "static-baseline-2026-09-07",
+          "reviewed_commit": "138457849c2690de5413ed80d616725a5160f9d1",
+          "git_blob": "3c60b29fb267bb898395d67b4d4fc504cefee7d9",
+          "source_sha256": "cf46e82c5f3556a934b15cc2045faa1fb6e36d9432297999387ddfe1bbbe55e0",
+          "published_sha256": "eb3e2516aac016b6b6f22618b1500a612e4e35979d731b98498f27a628d96404",
+          "approval": "Existing Games pin baseline (reports/play-upgrade/preservation.json and play/evidence.json agree); the file has this blob at Lessons 13845784 (Play pin), 1a8e3b29 (previous pin) and 95146202 (receiver)."
+        },
+        {
+          "id": "static-afterlight-2026-09-07",
+          "reviewed_commit": "66c2b6252367a2e0641ebe7164ac8ddc779a1c1e",
+          "git_blob": "162d337001012b2beea3c32dc21b4871089ff862",
+          "source_sha256": "38a9ece3d8be9b7aeea4ce3e78af989d62566647b687fe28a803445ad2265b62",
+          "published_sha256": "26241d5a445b03598be3600ebc00d3a3c84bb5a70c45198bc58f4f88d7862b65",
+          "approval": "RX2 P2 Afterlight remaster (lane A): package dist bytes, deploy-only (no launcher, no AfterlightStorage), pack tests exit 0 with two firing controls red, save compatibility forward/reverse/corruption measured at 390x844, boot census 0 errors; Lessons PR merge commit recorded as reviewed_commit."
+        }
+      ]
+    },
+    "Lessons/Games/The_Last_Lighthouse_v1_1_The_Archipelago_Update_FINAL.html": {
+      "repository": "Lessons",
+      "source_path": "Games/The_Last_Lighthouse_v1_1_The_Archipelago_Update_FINAL.html",
+      "route": "/Lessons/Games/The_Last_Lighthouse_v1_1_The_Archipelago_Update_FINAL.html",
+      "current": "the-last-lighthouse-v1-1-the-archipelago-update-final-baseline-2026-09-07",
+      "revisions": [
+        {
+          "id": "the-last-lighthouse-v1-1-the-archipelago-update-final-baseline-2026-09-07",
+          "reviewed_commit": "138457849c2690de5413ed80d616725a5160f9d1",
+          "git_blob": "bab63617c065cd1ab12a76f2a0d94f6c1e2b3e95",
+          "source_sha256": "cd7779efbedb12ccca5363c492c9ac1e99f98038d42943b921bc67cd609835cc",
+          "published_sha256": "fe839a5236cff2d64234e3631e05a2f66e8d43c29cc5040d2377b06f929a90ca",
+          "approval": "Existing Games pin baseline (reports/play-upgrade/preservation.json and play/evidence.json agree); the file has this blob at Lessons 13845784 (Play pin), 1a8e3b29 (previous pin) and 95146202 (receiver)."
+        },
+        {
+          "id": "the-last-lighthouse-v1-1-the-archipelago-update-final-afterlight-2026-09-07",
+          "reviewed_commit": "66c2b6252367a2e0641ebe7164ac8ddc779a1c1e",
+          "git_blob": "c63c5253b4b3802e233dff1be40a4824b59ba08a",
+          "source_sha256": "1bab9473549bf8ea8d7c46bbd240008a639a6e32d4379e79149aa2216f92957c",
+          "published_sha256": "24d51f364a8de97f600d74b964d7da261e32d7886be34abaef18be77750c8a94",
+          "approval": "RX2 P2 Afterlight remaster (lane A): package dist bytes, deploy-only (no launcher, no AfterlightStorage), pack tests exit 0 with two firing controls red, save compatibility forward/reverse/corruption measured at 390x844, boot census 0 errors; Lessons PR merge commit recorded as reviewed_commit."
+        }
+      ]
+    },
+    "Lessons/Games/Vortex.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Vortex.html",
+      "route": "/Lessons/Games/Vortex.html",
+      "current": "vortex-baseline-2026-09-07",
+      "revisions": [
+        {
+          "id": "vortex-baseline-2026-09-07",
+          "reviewed_commit": "138457849c2690de5413ed80d616725a5160f9d1",
+          "git_blob": "1c0e70aa476b736bb580d148cc0350b75f141347",
+          "source_sha256": "f54a8373df3c11a6344866806b3c59d7490035cc1be8ed550700b2a72f221084",
+          "published_sha256": "73cc741f0797855f5e6270007b91962dbce7a40d9ae847a22ce54ecba33c58b7",
+          "approval": "Existing Games pin baseline (reports/play-upgrade/preservation.json and play/evidence.json agree); the file has this blob at Lessons 13845784 (Play pin), 1a8e3b29 (previous pin) and 95146202 (receiver)."
+        },
+        {
+          "id": "vortex-afterlight-2026-09-07",
+          "reviewed_commit": "66c2b6252367a2e0641ebe7164ac8ddc779a1c1e",
+          "git_blob": "bf9599a924ce3e3ded304d180b9281cf167f1ad0",
+          "source_sha256": "3211c28986bf275c424c8a114fd7690b16f46da1bb79e9fc002133081668488c",
+          "published_sha256": "7fcb33693662ffbdfcf7251a17be993dbb7b4d1f23d35449c112223597d68241",
+          "approval": "RX2 P2 Afterlight remaster (lane A): package dist bytes, deploy-only (no launcher, no AfterlightStorage), pack tests exit 0 with two firing controls red, save compatibility forward/reverse/corruption measured at 390x844, boot census 0 errors; Lessons PR merge commit recorded as reviewed_commit."
+        }
+      ]
+    },
+    "Lessons/Games/Grapple.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Grapple.html",
+      "route": "/Lessons/Games/Grapple.html",
+      "current": "grapple-baseline-2026-09-07",
+      "revisions": [
+        {
+          "id": "grapple-baseline-2026-09-07",
+          "reviewed_commit": "138457849c2690de5413ed80d616725a5160f9d1",
+          "git_blob": "57bb60d2af0200ab64370404e0a0b767cbb60248",
+          "source_sha256": "fb1b77ee2066ca4a4e556e173b3bdf0dfce4e24173b6e9bf3b9fea6a14632af9",
+          "published_sha256": "354a2e99e472ae28894d76fdcdf18a770f084f5966af97320a252190d1186e17",
+          "approval": "Existing Games pin baseline (reports/play-upgrade/preservation.json and play/evidence.json agree); the file has this blob at Lessons 13845784 (Play pin), 1a8e3b29 (previous pin) and 95146202 (receiver)."
+        },
+        {
+          "id": "grapple-afterlight-2026-09-07",
+          "reviewed_commit": "412193525f19bf1db88ef86f7169dff112d61212",
+          "git_blob": "3c364f7691b6ad0ee4e86a76c02a714754e768b6",
+          "source_sha256": "cd31d2a324e256f940e773381ff55eea8df7df02fc94fd8f37cb2683e0b1972b",
+          "published_sha256": "0a22492b938e2aaab38a19e91e5fcb7c4fc095c4dccc47903c717808325e7a69",
+          "approval": "RX2 P2 Afterlight remaster (lane B): package dist bytes, deploy-only (no launcher, no AfterlightStorage), pack tests exit 0 with two firing controls red, save compatibility forward/reverse/corruption measured at 390x844, boot census 0 errors; Lessons PR merge commit recorded as reviewed_commit."
+        }
+      ]
+    },
+    "Lessons/Games/Marble.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Marble.html",
+      "route": "/Lessons/Games/Marble.html",
+      "current": "marble-baseline-2026-09-07",
+      "revisions": [
+        {
+          "id": "marble-baseline-2026-09-07",
+          "reviewed_commit": "138457849c2690de5413ed80d616725a5160f9d1",
+          "git_blob": "37357a3a65bfddd6314cb23492b5867e048f9562",
+          "source_sha256": "8d19216fb925fa5e8230e3cdde8ac8626fdb360b725c645aee42085cd05b3d19",
+          "published_sha256": "e9a7edcbbb54e08b799ad38a748bbd9feef95f432c268dcd693d96cc7cbd766c",
+          "approval": "Existing Games pin baseline (reports/play-upgrade/preservation.json and play/evidence.json agree); the file has this blob at Lessons 13845784 (Play pin), 1a8e3b29 (previous pin) and 95146202 (receiver)."
+        },
+        {
+          "id": "marble-afterlight-2026-09-07",
+          "reviewed_commit": "412193525f19bf1db88ef86f7169dff112d61212",
+          "git_blob": "b15efbfab006c7b52eecc0823d922bf1c5dcbf4c",
+          "source_sha256": "76890535dc3360a62b1a0368331b0a028e60cd8a733db3a5563b19f80e3f4baf",
+          "published_sha256": "21a67bc48c2caff74b95d96903d758e065f51ea176e6428381439fa4657b9896",
+          "approval": "RX2 P2 Afterlight remaster (lane B): package dist bytes, deploy-only (no launcher, no AfterlightStorage), pack tests exit 0 with two firing controls red, save compatibility forward/reverse/corruption measured at 390x844, boot census 0 errors; Lessons PR merge commit recorded as reviewed_commit."
+        }
+      ]
+    },
+    "Lessons/Games/Neon_Garden.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Neon_Garden.html",
+      "route": "/Lessons/Games/Neon_Garden.html",
+      "current": "neon-garden-baseline-2026-09-07",
+      "revisions": [
+        {
+          "id": "neon-garden-baseline-2026-09-07",
+          "reviewed_commit": "138457849c2690de5413ed80d616725a5160f9d1",
+          "git_blob": "8b43cccf2fef84e71cbc7c54c1cbb79b58a56c2e",
+          "source_sha256": "92864ecd6a9e392786fc6122c3e9d3cf8660f42bdf4b806274bdeb41c2c5dfab",
+          "published_sha256": "7a043d3d8441a0af6a1270a08065753de0dd5214214180ca954e952435b5030c",
+          "approval": "Existing Games pin baseline (reports/play-upgrade/preservation.json and play/evidence.json agree); the file has this blob at Lessons 13845784 (Play pin), 1a8e3b29 (previous pin) and 95146202 (receiver)."
+        },
+        {
+          "id": "neon-garden-afterlight-2026-09-07",
+          "reviewed_commit": "412193525f19bf1db88ef86f7169dff112d61212",
+          "git_blob": "4daa292f61a5138b5252026277b49953ed50efec",
+          "source_sha256": "5d73f3ce535cc53fcd2256ced2b316953e61fc8340c8b6217ec220ec116622ed",
+          "published_sha256": "1b058938ba5d32e9256be87c46dfc7912fc7485dde15dc00b17ff636252c6d5f",
+          "approval": "RX2 P2 Afterlight remaster (lane B): package dist bytes, deploy-only (no launcher, no AfterlightStorage), pack tests exit 0 with two firing controls red, save compatibility forward/reverse/corruption measured at 390x844, boot census 0 errors; Lessons PR merge commit recorded as reviewed_commit."
+        }
+      ]
+    },
+    "Lessons/Games/Prism.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Prism.html",
+      "route": "/Lessons/Games/Prism.html",
+      "current": "prism-baseline-2026-09-07",
+      "revisions": [
+        {
+          "id": "prism-baseline-2026-09-07",
+          "reviewed_commit": "138457849c2690de5413ed80d616725a5160f9d1",
+          "git_blob": "e022cf324925b13da5ec6f1569a72bd87bb2f4e3",
+          "source_sha256": "d773f866014f7d55f37b88f3ad661e9cdcc355ae9d95a79d48673ad3bce39ba7",
+          "published_sha256": "2780e4d263fb2d975ad24b60a81740d4a9e9386ca87c265a291f800afb11dda2",
+          "approval": "Existing Games pin baseline (reports/play-upgrade/preservation.json and play/evidence.json agree); the file has this blob at Lessons 13845784 (Play pin), 1a8e3b29 (previous pin) and 95146202 (receiver)."
+        },
+        {
+          "id": "prism-afterlight-2026-09-07",
+          "reviewed_commit": "412193525f19bf1db88ef86f7169dff112d61212",
+          "git_blob": "6637c6d36f83682f89b8de662a611285d0a52ebe",
+          "source_sha256": "899c124d6399f430ffbe8481768d1a9170944f24a4b51711cd9dcd690bdf37ac",
+          "published_sha256": "2c22b4320c9ef440e36781a109727853569a46ff9adf244f8624f659d5c1388f",
+          "approval": "RX2 P2 Afterlight remaster (lane B): package dist bytes, deploy-only (no launcher, no AfterlightStorage), pack tests exit 0 with two firing controls red, save compatibility forward/reverse/corruption measured at 390x844, boot census 0 errors; Lessons PR merge commit recorded as reviewed_commit."
+        }
+      ]
+    },
+    "Lessons/Games/Wrecking_Crew.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Wrecking_Crew.html",
+      "route": "/Lessons/Games/Wrecking_Crew.html",
+      "current": "wrecking-crew-baseline-2026-09-07",
+      "revisions": [
+        {
+          "id": "wrecking-crew-baseline-2026-09-07",
+          "reviewed_commit": "138457849c2690de5413ed80d616725a5160f9d1",
+          "git_blob": "4026ce752630e8f2f349f857c1d4123f832c0f3b",
+          "source_sha256": "a28bebf8c40c7c0b741da01e0d7ed1f8ae18631c816032313ad701229748879b",
+          "published_sha256": "963a94fb143b7edc08b4a1f9159948e443b2af19d465ef4a0cac4edc76a07275",
+          "approval": "Existing Games pin baseline (reports/play-upgrade/preservation.json and play/evidence.json agree); the file has this blob at Lessons 13845784 (Play pin), 1a8e3b29 (previous pin) and 95146202 (receiver)."
+        },
+        {
+          "id": "wrecking-crew-afterlight-2026-09-07",
+          "reviewed_commit": "412193525f19bf1db88ef86f7169dff112d61212",
+          "git_blob": "7282474c4587de1e716c7eb6fa15c4b44832b9f3",
+          "source_sha256": "5ba2ee3047896c8254fdc250215841c47841b90536c08916d7688e74b621d49c",
+          "published_sha256": "844dcf839bd21e08605ccd656533b29e4aa79ed6ed23bbf427054c7df34be40a",
+          "approval": "RX2 P2 Afterlight remaster (lane B): package dist bytes, deploy-only (no launcher, no AfterlightStorage), pack tests exit 0 with two firing controls red, save compatibility forward/reverse/corruption measured at 390x844, boot census 0 errors; Lessons PR merge commit recorded as reviewed_commit."
+        }
+      ]
+    },
+    "Lessons/Games/Axiom_Shift.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Axiom_Shift.html",
+      "route": "/Lessons/Games/Axiom_Shift.html",
+      "current": "ux2-e-remaster-2026-09-08",
+      "revisions": [
+        {
+          "id": "main-7416dd6-preserved",
+          "reviewed_commit": "7416dd69e39c0661bf295afd86fb9c7103ce1ec8",
+          "git_blob": "58a68325dd78bc61ff627702b37f33d98ab7f80e",
+          "source_sha256": "2390d7dd6a4ce92b8d900ea1d099b55bd32792d9fa9f5be3731538f05f8999da",
+          "published_sha256": "49c3ba70927af1deb373fb2a8fab6a677c660244c7c7ef5f62ed064c4ecefeb0",
+          "approval": "The bytes preserved in reports/play-upgrade/preservation.json before the remaster: Lessons main 7416dd6 (same blob at the domain-split-verify pin 40f60d78). Registered so a build against the pinned or pre-remaster Lessons still selects a reviewed revision."
+        },
+        {
+          "id": "ux2-e-remaster-2026-09-08",
+          "reviewed_commit": "ded83817513b07064a06bfda7a46f2c32b93c561",
+          "git_blob": "7de9c413d6f4e9fd14a9dc54fbc87daf01b13612",
+          "source_sha256": "563c1df39eb320ed1e44d9136e8aac01188f58890ef8b5b14093cc9e6fcb6ab5",
+          "published_sha256": "f841c741599840ae89584bd27e19e2ffd3877a0f65f95aaf08fc2b3546707d12",
+          "approval": "UX2 lane E: Axiom Shift remaster, \"The Broken Proof\" chapter, rebuilt from Lessons main with the collection transform (tools/ux2/remaster_transforms/ on the Lessons branch). Collection acceptance suite and mutation control on the landed bytes, verify_axiomshift ALL GREEN where PR-gated, save compatibility both directions, 390x844 boot. Cross-domain browser/Play-pin checks not run here."
+        }
+      ]
+    },
+    "Lessons/Games/Hold_the_Mark.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Hold_the_Mark.html",
+      "route": "/Lessons/Games/Hold_the_Mark.html",
+      "current": "ux2-e-remaster-2026-09-08",
+      "revisions": [
+        {
+          "id": "main-7416dd6-preserved",
+          "reviewed_commit": "7416dd69e39c0661bf295afd86fb9c7103ce1ec8",
+          "git_blob": "a9e6af0ca32e27dcbc0560972bc7c9cce8e2b620",
+          "source_sha256": "d25e430a2ea3444c4d6245ba811c01d57c18f438d4b1ff91eef6084fd910f4fb",
+          "published_sha256": "ba041be291c1c6be4a0ef37a96bdbd162f298522a6a89f3c1549df6115c33aa2",
+          "approval": "The bytes preserved in reports/play-upgrade/preservation.json before the remaster: Lessons main 7416dd6 (same blob at the domain-split-verify pin 40f60d78). Registered so a build against the pinned or pre-remaster Lessons still selects a reviewed revision."
+        },
+        {
+          "id": "ux2-e-remaster-2026-09-08",
+          "reviewed_commit": "ded83817513b07064a06bfda7a46f2c32b93c561",
+          "git_blob": "501589a89b34f258a27e43e2d3ebc813ae5e8dc4",
+          "source_sha256": "eaedd9a82de89143e0387d1f81e525fed7d056e9768780cd397568f212682106",
+          "published_sha256": "a033983e50ede86ef128736a880fd4cc83f7e893413cb4b02401bd9f7331f6b5",
+          "approval": "UX2 lane E: Hold the Mark remaster, \"The Last Impression\" chapter, rebuilt from Lessons main with the collection transform (tools/ux2/remaster_transforms/ on the Lessons branch). Collection acceptance suite and mutation control on the landed bytes, verify_axiomshift ALL GREEN where PR-gated, save compatibility both directions, 390x844 boot. Cross-domain browser/Play-pin checks not run here."
+        }
+      ]
+    },
+    "Lessons/Games/Globe_Snake (1).html": {
+      "repository": "Lessons",
+      "source_path": "Games/Globe_Snake (1).html",
+      "route": "/Lessons/Games/Globe_Snake (1).html",
+      "current": "ux2-e-remaster-2026-09-08",
+      "revisions": [
+        {
+          "id": "main-7416dd6-preserved",
+          "reviewed_commit": "7416dd69e39c0661bf295afd86fb9c7103ce1ec8",
+          "git_blob": "ad7c4d9156923869a199dd30d075b571e0611905",
+          "source_sha256": "f91419bee6dbf4b8fdfc75faaf447204e13024f7fc468b59f35fd68b72c1ebb2",
+          "published_sha256": "c5bd2096ec5b70a2131cae7e933cf997ca9c906fa229b2e97147f285bdeb563c",
+          "approval": "The bytes preserved in reports/play-upgrade/preservation.json before the remaster: Lessons main 7416dd6 (same blob at the domain-split-verify pin 40f60d78). Registered so a build against the pinned or pre-remaster Lessons still selects a reviewed revision."
+        },
+        {
+          "id": "ux2-e-remaster-2026-09-08",
+          "reviewed_commit": "ded83817513b07064a06bfda7a46f2c32b93c561",
+          "git_blob": "99f5acd052992c6bead7ee2b02da08e30dc309e5",
+          "source_sha256": "6c0b2cc179df845043d1ea8714b699a47c042515739eefac6e59a09b198cf7cf",
+          "published_sha256": "52a80bff01025188a5b65276ad1dbde337bca15a513f66bd9596795412cd68d6",
+          "approval": "UX2 lane E: Globe Snake remaster, \"The Last Constellation\" chapter, rebuilt from Lessons main with the collection transform (tools/ux2/remaster_transforms/ on the Lessons branch). Collection acceptance suite and mutation control on the landed bytes, verify_axiomshift ALL GREEN where PR-gated, save compatibility both directions, 390x844 boot. Cross-domain browser/Play-pin checks not run here."
+        }
+      ]
+    },
+    "Lessons/Games/Neon_Snake_Overdrive.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Neon_Snake_Overdrive.html",
+      "route": "/Lessons/Games/Neon_Snake_Overdrive.html",
+      "current": "ux2-e-remaster-2026-09-08",
+      "revisions": [
+        {
+          "id": "main-7416dd6-preserved",
+          "reviewed_commit": "7416dd69e39c0661bf295afd86fb9c7103ce1ec8",
+          "git_blob": "9520b0acd149cbda53b58f8e99c5db57467cc10c",
+          "source_sha256": "a34bc5f6d27779e242fbb2a9a1c9f9fa235e7a75eb0ce5e7d5c10e3f48c6817a",
+          "published_sha256": "63369b85be419591e670b05014767a3fe517375db9eb55285f9ac62396f84dcf",
+          "approval": "The bytes preserved in reports/play-upgrade/preservation.json before the remaster: Lessons main 7416dd6 (same blob at the domain-split-verify pin 40f60d78). Registered so a build against the pinned or pre-remaster Lessons still selects a reviewed revision."
+        },
+        {
+          "id": "ux2-e-remaster-2026-09-08",
+          "reviewed_commit": "ded83817513b07064a06bfda7a46f2c32b93c561",
+          "git_blob": "7b6cdec354d7af62d0f0b25374210d0ea3e8bd6c",
+          "source_sha256": "b5b67e5e4b728aa90f3fde4154fa630f5a1622939b4b69fab02842365b6de532",
+          "published_sha256": "acf3618291ecd34f97c79abd057c14101b58c41267cb33cb539a48e935450610",
+          "approval": "UX2 lane E: Neon Snake: Overdrive remaster, \"Blackout Circuit\" chapter, rebuilt from Lessons main with the collection transform (tools/ux2/remaster_transforms/ on the Lessons branch). Collection acceptance suite and mutation control on the landed bytes, verify_axiomshift ALL GREEN where PR-gated, save compatibility both directions, 390x844 boot. Cross-domain browser/Play-pin checks not run here."
+        }
+      ]
+    },
+    "Lessons/Games/Neon_Siege.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Neon_Siege.html",
+      "route": "/Lessons/Games/Neon_Siege.html",
+      "current": "ux2-e-remaster-2026-09-08",
+      "revisions": [
+        {
+          "id": "main-7416dd6-preserved",
+          "reviewed_commit": "7416dd69e39c0661bf295afd86fb9c7103ce1ec8",
+          "git_blob": "d809d8efa57259f314b26204bdb41c4bab4d79b9",
+          "source_sha256": "89cc313a110e24d3e68c1d4e06ab174cd4256fedd72f004e0a30c0b075ff29b7",
+          "published_sha256": "b04f037770c8ab25135f50bb0643af89d70eeb3f287307d65641d2cc2678ab50",
+          "approval": "The bytes preserved in reports/play-upgrade/preservation.json before the remaster: Lessons main 7416dd6 (same blob at the domain-split-verify pin 40f60d78). Registered so a build against the pinned or pre-remaster Lessons still selects a reviewed revision."
+        },
+        {
+          "id": "ux2-e-remaster-2026-09-08",
+          "reviewed_commit": "ded83817513b07064a06bfda7a46f2c32b93c561",
+          "git_blob": "a8d01899b39dd9900c1722f7170a40ed95640e72",
+          "source_sha256": "e88bfa03f71243a15f808da80dde7133085ed175995fe494018a836f3c9da714",
+          "published_sha256": "73856036dff31d42504e4db993d402c03fc3e22f3775d9c2dc07da1d51aed0d3",
+          "approval": "UX2 lane E: Neon Siege remaster, \"Blackout Protocol\" chapter, rebuilt from Lessons main with the collection transform (tools/ux2/remaster_transforms/ on the Lessons branch). Collection acceptance suite and mutation control on the landed bytes, verify_axiomshift ALL GREEN where PR-gated, save compatibility both directions, 390x844 boot. Cross-domain browser/Play-pin checks not run here."
+        }
+      ]
+    },
+    "Lessons/Games/Slipstream.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Slipstream.html",
+      "route": "/Lessons/Games/Slipstream.html",
+      "current": "ux2-e-remaster-2026-09-08",
+      "revisions": [
+        {
+          "id": "main-7416dd6-preserved",
+          "reviewed_commit": "7416dd69e39c0661bf295afd86fb9c7103ce1ec8",
+          "git_blob": "1cfc7bfd85307e5e2dde307bd70d59a005389e72",
+          "source_sha256": "94265389e6d2485356c0a4185222240d03fd20fb0ee471c0ccdda853ef301014",
+          "published_sha256": "de6a560e74bf07ec4304ec365fe6246d6e005dfb20fe7fe4f6f4cec458c87342",
+          "approval": "The bytes preserved in reports/play-upgrade/preservation.json before the remaster: Lessons main 7416dd6 (same blob at the domain-split-verify pin 40f60d78). Registered so a build against the pinned or pre-remaster Lessons still selects a reviewed revision."
+        },
+        {
+          "id": "ux2-e-remaster-2026-09-08",
+          "reviewed_commit": "ded83817513b07064a06bfda7a46f2c32b93c561",
+          "git_blob": "af02b6512ff2da8fc7ec42283484b47f4e929eac",
+          "source_sha256": "b50ab7296681a88f6b38594c28c33307bd62ec4b4aab7a4d233d4cf6b5f8a795",
+          "published_sha256": "839319c0f9ceaa514c59a7a63d9398ae75a3ca63e6c33eef4e4d67482b4f5da9",
+          "approval": "UX2 lane E: Slipstream remaster, \"Relay Run\" chapter, rebuilt from Lessons main with the collection transform (tools/ux2/remaster_transforms/ on the Lessons branch). Collection acceptance suite and mutation control on the landed bytes, verify_axiomshift ALL GREEN where PR-gated, save compatibility both directions, 390x844 boot. Cross-domain browser/Play-pin checks not run here."
+        }
+      ]
+    },
+    "Lessons/Games/Slipstream_GP.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Slipstream_GP.html",
+      "route": "/Lessons/Games/Slipstream_GP.html",
+      "current": "ux2-e-remaster-2026-09-08",
+      "revisions": [
+        {
+          "id": "main-7416dd6-preserved",
+          "reviewed_commit": "7416dd69e39c0661bf295afd86fb9c7103ce1ec8",
+          "git_blob": "6b4f21b5731290aa3d4c658876a51b5fe0794e03",
+          "source_sha256": "204bd02d9b881ef2bd98c643533e6f1ba53379f8962a44f9d06aec54943c5bbe",
+          "published_sha256": "ffcc776d2f7a3246682d339987039dbcc437c93284d3e48ed2a96ae7dd733a87",
+          "approval": "The bytes preserved in reports/play-upgrade/preservation.json before the remaster: Lessons main 7416dd6 (same blob at the domain-split-verify pin 40f60d78). Registered so a build against the pinned or pre-remaster Lessons still selects a reviewed revision."
+        },
+        {
+          "id": "ux2-e-remaster-2026-09-08",
+          "reviewed_commit": "b5497009de2ed585254e8dbb6c2a35d8b6a77447",
+          "git_blob": "ac30b848c5d5e9de62b2a1326e9958b9b8f05252",
+          "source_sha256": "a3a65d082056261c3c35b2d4608ae0681429782c26453bbd101921dbbf8cdb04",
+          "published_sha256": "c610b38c4f7712a139eae21396522ca2a937d47383265f377cf3c8d536ba603f",
+          "approval": "UX2 lane E: Slipstream GP remaster, \"Heatline Protocol\" chapter, rebuilt from Lessons main with the collection transform (tools/ux2/remaster_transforms/ on the Lessons branch). Collection acceptance suite and mutation control on the landed bytes, verify_axiomshift ALL GREEN where PR-gated, save compatibility both directions, 390x844 boot. Cross-domain browser/Play-pin checks not run here. Re-cut at b549700, which fixes the two defects that left the shipped race route unreachable: the heat brief paused the lobby with no resume, and startRace cleared a throttle already held. A seam-level mutation control reds on each."
+        }
+      ]
+    },
+    "Lessons/Games/OneGuy.html": {
+      "repository": "Lessons",
+      "source_path": "Games/OneGuy.html",
+      "route": "/Lessons/Games/OneGuy.html",
+      "current": "ux2-e-remaster-2026-09-08",
+      "revisions": [
+        {
+          "id": "main-7416dd6-preserved",
+          "reviewed_commit": "7416dd69e39c0661bf295afd86fb9c7103ce1ec8",
+          "git_blob": "671e04aa9ee15583cda57cc77aab16498c5e74e8",
+          "source_sha256": "9d3a3164cb19fbade1e623dfe35a75c3d442061091d6a8ea1ead35310936463e",
+          "published_sha256": "449c0ce260835e5576d00c1e825db7eb97d6bad920698279a75d4937ae048e44",
+          "approval": "The bytes preserved in reports/play-upgrade/preservation.json before the remaster: Lessons main 7416dd6 (same blob at the domain-split-verify pin 40f60d78). Registered so a build against the pinned or pre-remaster Lessons still selects a reviewed revision."
+        },
+        {
+          "id": "ux2-e-remaster-2026-09-08",
+          "reviewed_commit": "ff6d002c998ee5f4ce7d72763d3590f1599412c4",
+          "git_blob": "274f5bc9fe49ec78cf9f5af754fb39995c1af883",
+          "source_sha256": "79d6bc7596bd0d4fb0074dde2dd50ccf8039cc21243a33f4a4c1a76965b822b6",
+          "published_sha256": "4cfc8b57e506be923f26c1ff202e6213c598c3dfc00f353800a3cf62e385fb6b",
+          "approval": "UX2 lane E: One Guy remaster, \"The Last Signal\" chapter, rebuilt from Lessons main with the collection transform (tools/ux2/remaster_transforms/ on the Lessons branch). Collection acceptance suite and mutation control on the landed bytes, verify_axiomshift ALL GREEN where PR-gated, save compatibility both directions, 390x844 boot. Cross-domain browser/Play-pin checks not run here. Re-cut at ff6d002: the remaster's signalStore rename had reached inside the stamped inline-exit region, leaving the estate with two variants of a platform control that must be byte-identical, and making that control read a cached mbm_audience_view rather than the live one. The region is restored to the estate's exact bytes; the game's own storage wrapper is untouched outside it."
+        }
+      ]
+    },
+    "Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html": {
+      "repository": "Lessons",
+      "source_path": "Games/Trekkers_Trail_Runner_Tees_Coast.html",
+      "route": "/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html",
+      "current": "ux2-e-remaster-2026-09-08",
+      "revisions": [
+        {
+          "id": "main-7416dd6-preserved",
+          "reviewed_commit": "7416dd69e39c0661bf295afd86fb9c7103ce1ec8",
+          "git_blob": "0fcf516b4a09e3b20a71c81d1486622784185287",
+          "source_sha256": "0f8e5a758b4375a0a92b72b917fc344599d56b0a01d612385481625732b5c89d",
+          "published_sha256": "45ac2913c03fbbb5dbf5529ac96991a3915cfac9b677ac85ede3aedcfe8b682a",
+          "approval": "The bytes preserved in reports/play-upgrade/preservation.json before the remaster: Lessons main 7416dd6 (same blob at the domain-split-verify pin 40f60d78). Registered so a build against the pinned or pre-remaster Lessons still selects a reviewed revision."
+        },
+        {
+          "id": "ux2-e-remaster-2026-09-08",
+          "reviewed_commit": "ded83817513b07064a06bfda7a46f2c32b93c561",
+          "git_blob": "e5c064f1dfedb7fc1881ddc43aef6037c3edd506",
+          "source_sha256": "bc6df66ae5598c5604db3729e55bb807d5e95eabc0f1513459aa8e2a706ff69a",
+          "published_sha256": "ce470bb5f1865c0a8380d7c66b27bc01b7f023791e9d03a6afe0a5b1d18e9639",
+          "approval": "UX2 lane E: Trekkers Trail Runner remaster, \"Coastguard Relay\" chapter, rebuilt from Lessons main with the collection transform (tools/ux2/remaster_transforms/ on the Lessons branch). Collection acceptance suite and mutation control on the landed bytes, verify_axiomshift ALL GREEN where PR-gated, save compatibility both directions, 390x844 boot. Cross-domain browser/Play-pin checks not run here."
+        }
+      ]
+    }
+  }
+}

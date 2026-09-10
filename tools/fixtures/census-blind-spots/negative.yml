@@ -1,0 +1,13 @@
+# FIXTURE (not run): a BARE negative assertion. A dead producer inverts to 0
+# and the absence is certified without looking. The census's first draft filed
+# this FALSE-RED, which is exactly backwards - failure mode 48.
+name: negative
+on: push
+jobs:
+  j:
+    runs-on: ubuntu-latest
+    steps:
+      - name: certify an absence
+        shell: bash
+        run: |
+          ! node tools/scan.mjs | grep -q 'FORBIDDEN'

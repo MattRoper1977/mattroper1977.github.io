@@ -1,0 +1,409 @@
+name: Verify audience discovery, Teach and Education hubs
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'main/**'
+      - 'start/**'
+      - 'for/**'
+      - 'teach/**'
+      - 'resources/**'
+      - 'education-hub/**'
+      - 'privacy/**'
+      - 'account/**'
+      - 'members/**'
+      - 'mailing-list/**'
+      - 'assets/mbm-audience.css'
+      - 'assets/mbm-audience.js'
+      - 'assets/mbm-platform.css'
+      - 'assets/mbm-platform.js'
+      - 'assets/mbm-search.css'
+      - 'assets/mbm-search.js'
+      - 'assets/mbm-recent.js'
+      - 'data/audience-homepages.json'
+      - 'data/feature-standdown.json'
+      - 'data/education-hub.json'
+      - 'data/mbm-search-editorial.json'
+      - 'data/mbm-search-index.json'
+      - 'data/source-manifests/**'
+      - 'data/visual-provenance.json'
+      - 'site.json'
+      - 'site.webmanifest'
+      - 'sitemap.xml'
+      - 'audience-sitemap.xml'
+      - 'tools/render_audience_homepages.py'
+      - 'tools/render_discovery_hubs.py'
+      - 'tools/build_mbm_search_index.py'
+      - 'tools/verify_audience_discovery_browser.py'
+      - 'tools/verify_education_hub.py'
+      - 'tools/check_education_hub_links.py'
+      - 'tools/verify_games_audience_faces.py'
+      - 'tools/verify_games_audience_faces.mjs'
+      - 'tools/verify_professional_site.js'
+      - 'tools/verify_accounts_members_mailing.js'
+      - '.github/workflows/verify-games-audience-faces.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'main/**'
+      - 'start/**'
+      - 'for/**'
+      - 'teach/**'
+      - 'resources/**'
+      - 'education-hub/**'
+      - 'privacy/**'
+      - 'account/**'
+      - 'members/**'
+      - 'mailing-list/**'
+      - 'assets/mbm-audience.css'
+      - 'assets/mbm-audience.js'
+      - 'assets/mbm-platform.css'
+      - 'assets/mbm-platform.js'
+      - 'assets/mbm-search.css'
+      - 'assets/mbm-search.js'
+      - 'assets/mbm-recent.js'
+      - 'data/audience-homepages.json'
+      - 'data/feature-standdown.json'
+      - 'data/education-hub.json'
+      - 'data/mbm-search-editorial.json'
+      - 'data/mbm-search-index.json'
+      - 'data/source-manifests/**'
+      - 'data/visual-provenance.json'
+      - 'site.json'
+      - 'site.webmanifest'
+      - 'sitemap.xml'
+      - 'audience-sitemap.xml'
+      - 'tools/render_audience_homepages.py'
+      - 'tools/render_discovery_hubs.py'
+      - 'tools/build_mbm_search_index.py'
+      - 'tools/verify_audience_discovery_browser.py'
+      - 'tools/verify_education_hub.py'
+      - 'tools/check_education_hub_links.py'
+      - 'tools/verify_games_audience_faces.py'
+      - 'tools/verify_games_audience_faces.mjs'
+      - 'tools/verify_professional_site.js'
+      - 'tools/verify_accounts_members_mailing.js'
+      - '.github/workflows/verify-games-audience-faces.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: mbm-audience-discovery-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-contract:
+    name: Static architecture, derivation, preservation and mutations
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify generated pages and canonical search data
+        run: |
+          python3 tools/render_audience_homepages.py --check
+          python3 tools/render_discovery_hubs.py --check
+          python3 tools/build_mbm_search_index.py --check
+          python3 tools/verify_education_hub.py --self-test
+          python3 tools/stamp-data.py --check
+          python3 tools/check_instrument_preconditions.py --self-test
+          python3 tools/check_instrument_preconditions.py
+
+      - name: Verify Revision 3 architecture and all positive controls
+        run: python3 tools/verify_games_audience_faces.py --self-test
+
+      - name: Verify professional shell preservation against the target branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin main
+            base=origin/main
+          else
+            base=HEAD^
+          fi
+          node tools/verify_professional_site.js --base "$base" --self-test
+
+      - name: Verify accounts, Members, Supabase and mailing regressions
+        # Runs even if an earlier step failed. This suite has not run in CI
+        # since #110 because step 5 fails ahead of it - the gate that watches
+        # the auth path, switched off across the pass that changed the auth
+        # path. A step carrying its own coverage must not be removed by an
+        # unrelated failure; !cancelled() keeps it out of a cancelled run.
+        if: ${{ !cancelled() }}
+        run: |
+          node tools/verify_accounts_members_mailing.js
+          node tools/test_member_merge.js
+
+      - name: Verify JavaScript, Python and embedded-script syntax
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/mbm-audience.js
+          node --check assets/mbm-search.js
+          node --check assets/mbm-recent.js
+          node --check assets/mbm-platform.js
+          node --check tools/verify_games_audience_faces.mjs
+          node --check tools/verify_professional_site.js
+          python3 -m py_compile \
+            tools/render_audience_homepages.py \
+            tools/render_discovery_hubs.py \
+            tools/build_mbm_search_index.py \
+            tools/verify_audience_discovery_browser.py \
+            tools/verify_education_hub.py \
+            tools/check_education_hub_links.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, re, subprocess, tempfile
+          pages=[Path('index.html'),Path('main/index.html'),Path('start/index.html'),Path('teach/index.html'),Path('resources/index.html'),Path('education-hub/index.html'),Path('privacy/index.html'),*sorted(Path('for').glob('*/index.html'))]
+          with tempfile.TemporaryDirectory() as td:
+              td=Path(td)
+              for page in pages:
+                  html=page.read_text(encoding='utf-8')
+                  for i,match in enumerate(re.finditer(r'<script(?P<attrs>[^>]*)>(?P<body>.*?)</script>',html,re.S|re.I)):
+                      attrs=match.group('attrs'); body=match.group('body')
+                      if not body.strip() or re.search(r'\bsrc\s*=',attrs,re.I): continue
+                      type_match=re.search(r'\btype\s*=\s*["\']([^"\']+)',attrs,re.I)
+                      script_type=type_match.group(1).lower() if type_match else 'text/javascript'
+                      if script_type=='application/ld+json': json.loads(body); continue
+                      if script_type not in ('text/javascript','application/javascript','module'): continue
+                      target=td/f'{page.parent.name or "root"}-{i}.js'
+                      target.write_text(body,encoding='utf-8')
+                      subprocess.run(['node','--check',str(target)],check=True)
+          for path in [Path('assets/mbm-audience.css'),Path('assets/mbm-platform.css'),Path('assets/mbm-search.css')]:
+              text=path.read_text(encoding='utf-8')
+              if text.count('{')!=text.count('}'):
+                  raise SystemExit(f'unbalanced CSS braces: {path}')
+          PY
+
+      - name: Check patch hygiene and remove temporary bootstrap machinery
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e .github/workflows/mbm-audience-refinement-bootstrap.yml
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin main
+            git diff --check origin/main...HEAD
+          else
+            git diff --check HEAD^
+          fi
+
+  external-links:
+    name: Bounded authoritative external-link validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check all 40 curated official destinations
+        run: python3 tools/check_education_hub_links.py --timeout 18 --workers 4 --report artifacts/education-hub-links.json
+      - name: Print link summary
+        if: always()
+        run: test ! -f artifacts/education-hub-links.json || cat artifacts/education-hub-links.json
+      - name: Upload redirect-aware link report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mbm-education-hub-links-${{ github.run_id }}
+          path: artifacts/education-hub-links.json
+          if-no-files-found: error
+          retention-days: 30
+
+  browser-matrix:
+    name: Same-origin mobile, desktop, accessibility and privacy proof
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out pinned canonical Games data
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: 2591276e1a9dc74954eba45e5993e891ef59cb6b
+          path: _sources/Games
+          fetch-depth: 1
+      - name: Check out pinned canonical Lessons estate
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: 93d570041f4c7214a0c41e3b58ce9ca280f446cb
+          path: _sources/Lessons
+          fetch-depth: 1
+      - name: Check out pinned canonical Apps estate
+        uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Matt-s-Apps-
+          ref: dc06f6914eff776a7d18f67f16ab280235dab9da
+          path: _sources/Apps
+          fetch-depth: 1
+
+      - name: Assemble the real same-origin Made by Matt estate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _served/Games _served/Lessons _served/Matt-s-Apps-
+          rsync -a --exclude=.git --exclude=_served --exclude=_sources --exclude=node_modules --exclude=audit-output ./ _served/
+          cp _sources/Games/games.json _served/Games/games.json
+          rsync -a --exclude=.git _sources/Lessons/ _served/Lessons/
+          rsync -a --exclude=.git _sources/Apps/ _served/Matt-s-Apps-/
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path=Path('_served/site.json')
+          data=json.loads(path.read_text(encoding='utf-8'))
+          features=data.setdefault('features',{})
+          if isinstance(features.get('accounts'),dict): features['accounts']['enabled']=False
+          if isinstance(features.get('mailing'),dict): features['mailing']['enabled']=False
+          path.write_text(json.dumps(data,indent=2)+'\n',encoding='utf-8')
+          PY
+
+      - name: Install Chromium browser runtime
+        run: |
+          python3 -m pip install --disable-pip-version-check playwright==1.54.0
+          python3 -m playwright install --with-deps chromium
+
+      - name: Prove browser privacy, layout and published pupil-brand controls
+        run: python3 tools/verify_audience_discovery_browser.py --self-test
+
+      - name: Check the published Education audience pages before merge
+        if: github.event_name == 'pull_request'
+        run: |
+          MBM_BASE_URL=https://madebymatt.uk/ \
+          python3 tools/verify_audience_discovery_browser.py --publication education \
+            --artifacts audit-output/published-education \
+            --report audit-output/published-education/browser-results.json
+
+      - name: Browser proof at 390px and 1440px, 320px reflow, no-JS and no third party at load
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory _served >/tmp/mbm-audience-http.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
+          for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          # MBM_FULL_ESTATE was dropped here: it is read only by
+          # verify_games_audience_faces.mjs, which this step does not run, so
+          # setting it advertised behaviour nothing implements.
+          MBM_BASE_URL=http://127.0.0.1:4173/ python3 tools/verify_audience_discovery_browser.py
+
+      # hud.js is the one script the estate serves onto pages it does not
+      # otherwise control, and its chosen-homepage control is the only part of
+      # the audience preference a visitor meets on a game. A tool nobody runs
+      # is a doc asserting coverage that does not exist, so it runs here.
+      # !cancelled() for the reason the accounts suite carries it: this step
+      # owns coverage nothing else has, and an unrelated red above it must not
+      # switch that coverage off.
+      - name: HUD chosen-homepage control across four layouts and three viewports
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory _served >/tmp/mbm-hud-http.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
+          for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:4174/ >/dev/null && break; sleep 1; done
+          python3 tools/verify_hud_homepage.py --self-test
+          MBM_BASE_URL=http://127.0.0.1:4174/ python3 tools/verify_hud_homepage.py \
+            --report audit-output/audience-discovery/hud-homepage.json
+          python3 tools/verify_hud_on_games.py --self-test
+          MBM_BASE_URL=http://127.0.0.1:4174/ python3 tools/verify_hud_on_games.py \
+            --report audit-output/audience-discovery/hud-on-games.json
+
+      - name: Print browser summary
+        if: always()
+        run: test ! -f audit-output/audience-discovery/browser-results.json || cat audit-output/audience-discovery/browser-results.json
+
+      - name: Upload 390px, 1440px and state evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mbm-audience-discovery-browser-${{ github.event.pull_request.number || github.run_id }}-${{ github.run_id }}
+          path: audit-output/
+          if-no-files-found: error
+          retention-days: 30
+
+  live-proof:
+    name: Exact production deployment and live browser proof
+    if: github.event_name == 'push'
+    # NO `needs:`, deliberately. It declared
+    #   needs: [static-contract, external-links, browser-matrix]
+    # and all three were *quality gates*, not data dependencies: this job
+    # downloads no artifact and reads no `needs.*` output, and none of the three
+    # declares `outputs`. They meant "do not bother if that one was red".
+    #
+    # static-contract has been red since #110 (BACKLOG 0a-A), so this job - the
+    # one that waits for the deployment and byte-compares all 13 deployed pages
+    # against the committed tree - has been skipped on every push for weeks. A
+    # gate guarding coverage must not be able to switch that coverage off, and a
+    # skipped job is the worst way to lose it: it renders grey, reads as "not
+    # applicable", and badges often score it as success.
+    #
+    # It waits for the deployment itself (72 attempts, below), so the ordering
+    # bought nothing its own readiness loop does not already provide.
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Chromium browser runtime
+        run: |
+          python3 -m pip install --disable-pip-version-check playwright==1.54.0
+          python3 -m playwright install --with-deps chromium
+
+      - name: Wait for and byte-compare the exact deployed publication pages
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python3 tools/prepare_published_site.py \
+            --expected-sha "${{ github.sha }}" \
+            --output audit-output/audience-publication \
+            --audience-record data/audience-homepages.json
+
+      # MBM_FULL_ESTATE, MBM_LIVE and MBM_CACHE_BUST were all set here and read
+      # by nothing: this tool reads MBM_BASE_URL and MBM_CHROMIUM only. The last
+      # is the worst of the three - MBM_CACHE_BUST=${GITHUB_SHA} looks like a
+      # provenance mechanism tying the run to a commit, and did nothing at all.
+      # They were left behind when this step was switched from the .mjs, which
+      # does read MBM_FULL_ESTATE, to the Python harness, which does not.
+      - name: Browser proof against the production origin
+        run: |
+          MBM_BASE_URL=https://madebymatt.uk/ \
+          python3 tools/verify_audience_discovery_browser.py --publication education
+
+      - name: Upload production browser and SHA proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mbm-audience-discovery-production-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            audit-output/
+            production-deployment.txt
+          if-no-files-found: error
+          retention-days: 30
+
+  # A skipped job is not a pass. This runs on always() so that a red or skipped
+  # upstream cannot remove the very check that reports it - the mistake
+  # live-proof itself was built on.
+  no-silent-skips:
+    name: No expected job was silently skipped
+    if: always()
+    needs: [static-contract, external-links, browser-matrix, live-proof]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every job ran, or was skipped by declared design
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          python3 tools/check_no_skipped_jobs.py \
+            --results "$RESULTS" --event "${{ github.event_name }}"

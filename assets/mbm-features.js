@@ -3,8 +3,8 @@
    ----------------------------------------------------------------------------
    Adds to a static (GitHub Pages) site, with no server of its own required:
 
-     1. Live visitor stats  — total visits + where in the world people come from
-     2. Open / download counts — a running tally next to each resource or tool
+     1. Visitor stats — device-local unless a verified remote counter is enabled
+     2. Open / download counts — device-local tallies next to resources and tools
      3. Accounts — device-local by default, REAL cross-device cloud accounts
         (Supabase) the moment you paste keys into site.json
      4. Analytics — optional GoatCounter page-view tracking + an on-site dashboard
@@ -15,8 +15,8 @@
    Shared helpers are exposed on window.MBM (read/bump/flag/…) and window.MBMAuth
    so the members' area and the analytics dashboard can reuse them.
 
-   Privacy: only anonymous country tallies ever leave the browser for the stats.
-   Device accounts are hashed and never uploaded. Cloud accounts use Supabase Auth
+   Privacy: counter tallies stay in the browser unless a verified remote counter is
+   explicitly enabled. Cloud accounts use Supabase Auth
    (the anon key is public by design and protected by row-level security).
    See FEATURES.md for the full setup + upgrade guide.
    ========================================================================== */
@@ -100,7 +100,7 @@
   /* ----- config ----------------------------------------------------------- */
   var CFG = {
     stats: {
-      enabled: true, remoteCounters: false, namespace: "madebymatt-uk", geo: true,
+      enabled: true, remote: false, namespace: "madebymatt-uk", geo: true,
       roster: ["GB", "US", "IE", "CA", "AU", "NZ", "IN", "DE", "FR", "ES", "NL", "IT", "SE", "PL", "ZA", "NG", "KE", "AE", "SG", "PH", "PK", "MY", "BR", "MX", "JP"]
     },
     downloads: { enabled: true, catalog: [] },
@@ -124,52 +124,15 @@
   }
 
   /* ========================================================================
-     COUNTER SERVICE (counterapi.dev v1 — keyless, public) + local fallback
+     COUNTERS — device-local by default; remote service is explicit opt-in
+     ------------------------------------------------------------------------
+     CounterAPI v1 began returning HTTP 410 in August 2026. Remote calls are
+     therefore disabled unless features.stats.remote is deliberately set true
+     after a working service has been verified. Callers keep the same read() and
+     bump() API and continue with honest localStorage tallies without noise.
      ===================================================================== */
   var API = "https://api.counterapi.dev/v1/";
-  var counterProbe = null;
-  var counterRemoteAvailable = null;
   function safeKey(k) { return String(k).toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60); }
-
-  /* CounterAPI began returning a browser challenge instead of JSON. The old
-     implementation issued one failing request per displayed counter, creating
-     a console/request storm on every page. Remote counters are therefore
-     opt-in. If explicitly enabled, one shared probe establishes capability;
-     one failed probe opens the circuit and every counter uses the existing
-     device-local fallback without another network request. */
-  function remoteCountersEnabled() {
-    return !!(CFG.stats && CFG.stats.remoteCounters === true);
-  }
-  function probeRemoteCounters() {
-    if (!remoteCountersEnabled()) return Promise.resolve(false);
-    if (counterRemoteAvailable === true) return Promise.resolve(true);
-    if (counterRemoteAvailable === false) return Promise.resolve(false);
-    if (!counterProbe) {
-      var probeKey = safeKey((CFG.stats && CFG.stats.visitKey) || "visits_total");
-      counterProbe = timedJSON(API + CFG.stats.namespace + "/" + probeKey, 4000)
-        .then(function (data) {
-          if (pluckCount(data) == null) throw new Error("counter probe payload invalid");
-          counterRemoteAvailable = true;
-          return true;
-        })
-        .catch(function () {
-          counterRemoteAvailable = false;
-          return false;
-        });
-    }
-    return counterProbe;
-  }
-  function counterJSON(url) {
-    return probeRemoteCounters()
-      .then(function (available) {
-        if (!available) throw new Error("remote counters disabled or unavailable");
-        return timedJSON(url, 6000);
-      })
-      .catch(function (error) {
-        counterRemoteAvailable = false;
-        throw error;
-      });
-  }
   function pluckCount(j) {
     if (j == null) return null;
     if (typeof j === "number") return j;
@@ -181,15 +144,19 @@
     }
     return null;
   }
+  function remoteCountersEnabled() { return !!(CFG.stats && CFG.stats.remote === true); }
+  function localBump(lk) { var n = (ls.get(lk, 0) || 0) + 1; ls.set(lk, n); return n; }
   function bump(key) {
     var k = safeKey(key), lk = "mbm_c_" + k;
-    return counterJSON(API + CFG.stats.namespace + "/" + k + "/up", 6000)
+    if (!remoteCountersEnabled()) return Promise.resolve(localBump(lk));
+    return timedJSON(API + CFG.stats.namespace + "/" + k + "/up", 6000)
       .then(function (j) { var n = pluckCount(j); if (n != null) { ls.set(lk, n); return n; } throw 0; })
-      .catch(function () { var n = (ls.get(lk, 0) || 0) + 1; ls.set(lk, n); return n; });
+      .catch(function () { return localBump(lk); });
   }
   function read(key) {
     var k = safeKey(key), lk = "mbm_c_" + k;
-    return counterJSON(API + CFG.stats.namespace + "/" + k, 6000)
+    if (!remoteCountersEnabled()) return Promise.resolve(ls.get(lk, null));
+    return timedJSON(API + CFG.stats.namespace + "/" + k, 6000)
       .then(function (j) { var n = pluckCount(j); if (n != null) { ls.set(lk, n); return n; } throw 0; })
       .catch(function () { return ls.get(lk, null); });
   }
@@ -263,7 +230,7 @@
 
     (oncePerVisit ? bump("visits_total") : read("visits_total")).then(function (n) {
       if (elVisits && n != null) elVisits.textContent = fmt(n);
-      if (n != null && n < 100) mount.classList.add("mbm-quiet"); /* social-proof floor */
+      if (CFG.stats.remote === true && n != null && n < 100) mount.classList.add("mbm-quiet"); /* remote social-proof floor */
     });
 
     locate().then(function (g) {
@@ -415,7 +382,7 @@
       return { email: u.email, name: md.name || md.full_name || (u.email || "").split("@")[0], tier: md.tier || "member", cloud: true };
     }
     function initSupabase(url, key) {
-      return import(/* @vite-ignore */ "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm").then(function (m) {
+      return import(/* @vite-ignore */ "/assets/vendor/supabase-js-2.112.2.esm.js").then(function (m) {
         sb = m.createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true } });
         sb.auth.onAuthStateChange(function (_ev, session) { setUser(sbUser(session)); });
         return sb.auth.getSession().then(function (r) { setUser(sbUser(r.data && r.data.session)); provider = "supabase"; });

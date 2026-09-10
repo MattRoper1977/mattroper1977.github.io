@@ -6,9 +6,12 @@
 if(window.__mbmTheme)return; window.__mbmTheme=1;
 try{
 var K='mbm_reading_theme';
-var NAME={cream:'Warm',pink:'Pink',blue:'Blue',light:'Light',dark:'Dark'};
-var DOT={cream:'#F6F1E4',pink:'#F4C9D4',blue:'#BFD6EE',light:'#FFFFFF',dark:'#161D3D'};
-var ORDER=['cream','pink','blue','light','dark'];
+var NAME={cream:'Warm',pink:'Pink',blue:'Blue',light:'Light',dark:'Dark',highlumen:'High lumen'};
+/* High lumen is pure white, and so is Light's swatch. The two are told apart
+   by the ring the swatch already draws around every dot, plus the label and
+   the title - not by the fill, which cannot distinguish them. */
+var DOT={cream:'#F6F1E4',pink:'#F4C9D4',blue:'#BFD6EE',light:'#FFFFFF',dark:'#161D3D',highlumen:'#FFFFFF'};
+var ORDER=['cream','pink','blue','light','dark','highlumen'];
 var cur='cream';
 try{cur=localStorage.getItem(K)||'cream'}catch(e){}
 if(!NAME[cur])cur='cream';
@@ -40,7 +43,8 @@ function boot(){
   +'@media print{.mbm-sw-wrap{display:none!important}}';
   document.head.appendChild(st);
 
-  var mount=document.querySelector('nav#nav')
+  var mount=document.querySelector('[data-mbm-theme-slot]')
+        ||document.querySelector('nav#nav')
         ||document.querySelector('nav.xnav')
         ||document.querySelector('header nav')
         ||document.querySelector('nav')
@@ -99,6 +103,9 @@ function boot(){
       var dot=document.createElement('i');
       dot.style.background=DOT[t];
       if(t==='dark')dot.style.borderColor='#B9E6CD99';
+      /* A white dot on a white mount is invisible without this; the shared
+         rule's translucent border is not enough at maximum brightness. */
+      if(t==='highlumen'){dot.style.borderColor='#FFFFFF';dot.style.boxShadow='0 0 0 2px #0B1020';}
       b.appendChild(dot);
       b.addEventListener('click',function(){apply(t,true)});
       wrap.appendChild(b); btns.push(b);
