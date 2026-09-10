@@ -260,3 +260,31 @@ that gate, and both estates are checked with `--base` now.
    moved to `tools/chrome/`. Recorded because the first judgement here was wrong
    in a specific, instructive way — "inert fragments nothing links" was true and
    irrelevant, since the gate reads what a file *contains*, not who links it.
+
+---
+
+## Read before stamping chrome: the publisher's header replacement is not balanced
+
+Raised as #345 (RW1-C §M4). **Nothing is fixed there or here** — this is a
+cross-reference so this ledger's session sees it *before* it stamps, not after.
+
+`domain-split/shared_navigation.py:181` replaces the page header with
+
+```python
+re.subn(r'<header\b[^>]*>.*?</header>', lambda _: replacement, text, count=1, flags=re.S)
+```
+
+`.*?` is lazy, so on a page whose outer `<header>` contains a **nested** one the
+match ends at the **inner** close and leaves the outer element unclosed. A parser
+repairs it, so the page renders and every render-level check passes while
+everything after the truncation becomes a descendant of the header.
+`if count != 1` does not catch this: a truncated replacement still counts as one.
+`audience_discovery.py:232` has the same shape on `<main>`.
+
+**Measured: both are latent today.** Nine Site pages carry more than one
+`</header>`, and the curated list `shared_navigation.py` walks contains none of
+them; all seven `audience_discovery.py` targets carry exactly one `</main>`.
+
+**SW2 is the trigger, in two ordinary ways.** Stamping fires this if it either
+extends that curated list to a page with a nested `<header>`, or introduces a
+nested `<header>` into a page already on the list. Check #345 before either.
