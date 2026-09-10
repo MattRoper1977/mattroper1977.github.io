@@ -39,7 +39,11 @@ LEGACY = {
     '/Lessons/5_6 Local Choice/Trekkers_Trail_Runner (2).html': '/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html',
 }
 SKIP = {'tools', 'reports', 'docs', 'domain-split', 'node_modules', 'supabase', 'schema'}
-PUBLIC = {'.html', '.htm', '.css', '.js', '.mjs', '.json', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif', '.ico', '.woff', '.woff2', '.ttf', '.mp4', '.webm', '.mp3', '.wav', '.ogg', '.pdf', '.zip', '.docx', '.pptx', '.xlsx', '.csv', '.txt', '.xml', '.webmanifest', '.wasm', '.bin', '.map', '.md'}
+PUBLIC = {'.html', '.htm', '.css', '.js', '.mjs', '.json', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif', '.ico', '.woff', '.woff2', '.ttf', '.mp4', '.webm', '.mp3', '.wav', '.ogg', '.pdf', '.zip', '.docx', '.pptx', '.xlsx', '.csv', '.txt', '.xml', '.webmanifest', '.wasm', '.bin', '.map', '.md', '.sb3'}
+# .sb3 is a Scratch project: a zip of project.json plus media, downloaded and
+# opened in the scratch.mit.edu editor. No published page fetches or executes
+# one. It is here so a pupil can take the sibling file when a managed browser
+# refuses the base64 data: URI the lesson also carries (AMEND-3R-GC1 R3).
 # Individually reviewed historical teacher guidance, 2026-09-06. These exact
 # original documents are already linked from public hubs; other authoring
 # directories remain excluded. Hashes bind preservation, not current approval

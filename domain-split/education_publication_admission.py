@@ -12,10 +12,13 @@ REGISTRY = HERE / 'education-publication-admission.json'
 TREES = ('education-site', 'education-lessons', 'education-apps')
 # Data/CSS are included because an already admitted script can consume them.
 # Native teaching-pack binaries and media retain their existing gates AND exact admission.
+# .sb3 (a Scratch project zip) classifies with them: nothing on the site fetches
+# or runs one, and like every other suffix here it is still pinned byte-exactly
+# below. The suffix decides only that the file is classifiable, never that it is safe.
 REVIEWED = {'.html', '.htm', '.js', '.mjs', '.wasm', '.svg', '.json', '.webmanifest',
             '.css', '.xml', '.txt', '.bin', '.map', '.md', '.csv'}
 INERT = {'.png', '.jpg', '.jpeg', '.webp', '.gif', '.ico', '.woff', '.woff2', '.ttf',
-         '.mp4', '.webm', '.mp3', '.wav', '.ogg', '.pdf', '.zip', '.docx', '.pptx', '.xlsx'}
+         '.mp4', '.webm', '.mp3', '.wav', '.ogg', '.pdf', '.zip', '.docx', '.pptx', '.xlsx', '.sb3'}
 SPECIAL = {'.nojekyll', 'CNAME', 'LICENSE'}
 
 

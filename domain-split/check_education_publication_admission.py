@@ -66,7 +66,7 @@ def controls(output):
         assert b'application/octet-stream' in original
         mutation('embedded non-JavaScript payload identity', 'education-apps', master, original.replace(b'application/octet-stream', b'application/octet-stream;planted', 1))
         for name in TREES:
-            for extension in ['png', 'pdf', 'pptx', 'zip', 'mp3', 'woff2']:
+            for extension in ['png', 'pdf', 'pptx', 'zip', 'mp3', 'woff2', 'sb3']:
                 mutation('disguised code cannot enter as '+extension, name,
                          'hc3-disguised.'+extension, b'requestAnimationFrame(function loop(){score++;requestAnimationFrame(loop)});')
         # An ARRIVING native pack may be absent from this build (HC5 §1); the
