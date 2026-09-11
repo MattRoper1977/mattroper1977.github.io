@@ -51,7 +51,7 @@ jobs:
       - run: node tools/as1/verify-pilot.cjs
       - name: Regenerate the canonical pin-dependency record
         if: always()
-        run: python tools/derive_pin_dependents.py --write
+        run: python tools/as1/refresh-pin-record.py
       - name: Refresh the read-only storage census from the exact checked-out sources
         if: always()
         run: python tools/as1/storage-census.py --lessons .sources/Lessons
