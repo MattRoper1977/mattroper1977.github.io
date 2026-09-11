@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 import re
 import shutil
+import sys
 from html.parser import HTMLParser
 
 HERE = Path(__file__).resolve().parent
@@ -215,6 +216,9 @@ class Links(HTMLParser):
 
 def refresh(output, lessons, apps, site_source):
     """Write five entry pages into an already assembled Education root."""
+    if str(HERE) not in sys.path:
+        sys.path.insert(0, str(HERE))
+    from structural_html import replace_first_element
     output, source = Path(output)/"education-site", Path(site_source)
     # Inputs are checked, never modified. They make accidental invocation against
     # a missing source checkout fail before any page is replaced.
@@ -229,7 +233,7 @@ def refresh(output, lessons, apps, site_source):
         source_links = Links(); source_links.feed(original)
         document = page.read_text()
         main = make_main(key, audience, data)
-        document, replaced = re.subn(r'<main\b[^>]*>.*?</main>', lambda _: main, document, count=1, flags=re.S)
+        document, replaced = replace_first_element(document, 'main', main)
         if replaced != 1:
             raise ValueError(f'Expected one main element in {page}')
         document = re.sub(r'<title>.*?</title>', '<title>'+esc(audience['label'])+' · Made by Matt</title>', document, count=1, flags=re.S)
