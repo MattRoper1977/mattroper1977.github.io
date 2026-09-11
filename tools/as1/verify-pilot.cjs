@@ -97,7 +97,7 @@ async function main(){
   const browser=await chromium.launch({headless:true});
   let page,context;
   try{
-    await section('baseline',async()=>{const c=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});const p=await boot(c,origin+'/baseline/rallyvector3d/');report.measurements.baseline=await metrics(p,'baseline');report.measurements.baselineTab=await tabWalk(p,'baseline Tab walk');report.measurements.baseline.runningCanvas=await p.evaluate(()=>{window.RallyVector3D.debugStart('alpine');const r=document.querySelector('#gl').getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,aspect:r.width/r.height}});await c.close()});
+    await section('baseline',async()=>{const c=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});const p=await boot(c,origin+'/baseline/rallyvector3d/');report.measurements.baseline=await metrics(p,'baseline');report.measurements.baselineTab=await tabWalk(p,'baseline Tab walk');report.measurements.baselineExitTargets=[];for(const width of [390,768,1440]){await viewport(p,width);const value=await p.locator('#mbmexit-back').evaluate(e=>{const r=e.getBoundingClientRect();return{width:r.width,height:r.height}});report.measurements.baselineExitTargets.push({viewport:width,...value});check('baseline Exit target '+width,value,x=>x.width>=44&&x.height>=44,{width:0,height:0})}await viewport(p,390);report.measurements.baseline.runningCanvas=await p.evaluate(()=>{window.RallyVector3D.debugStart('alpine');const r=document.querySelector('#gl').getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,aspect:r.width/r.height}});await c.close()});
     context=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});page=await boot(context,origin+'/rallyvector3d/');
     await section('pilot boot',async()=>{const hook=await page.evaluate(()=>({hooks:!!window.MBMArcadeHooks,host:!!window.MBMArcade,webgl:window.RallyVector3D?.getState().webglError}));check('pilot hook and WebGL',hook,x=>x.hooks&&x.host&&x.webgl===0,{...hook,hooks:false});report.measurements.pilot=await metrics(page,'pilot');check('idle title draws zero frames',report.measurements.pilot,x=>x.clears===0,{...report.measurements.pilot,clears:1});report.measurements.pilotTab=await tabWalk(page,'pilot Tab walk');});
     await section('three state sequences',async()=>{
@@ -135,7 +135,7 @@ async function main(){
       for(const width of [...new Set(widths)]){
         await viewport(page,width);await start(page);
         for(const panel of ['bar','more','comfort','save']){
-          if(panel==='more'){if(width===390)await more(page);else continue}
+          if(panel==='more'){if(width!==390)await viewport(page,390);await more(page);if(width!==390)await viewport(page,width)}
           if(panel==='comfort'){if(width===390){if(await page.locator('#as1-panel-title').isVisible())await done(page);await more(page)}await click(page,'as1-comfort','Comfort')}
           if(panel==='save'){await done(page);if(width===390)await more(page);await click(page,'as1-save','Save code')}
           const values=await contrast(page);const eligible=values.filter(x=>!x.disabled&&!x.unsupported.length);census.push({width,panel,values});
@@ -143,6 +143,9 @@ async function main(){
           check(width+' '+panel+' contrast',eligible,x=>x.length>0&&x.every(v=>v.ratio+0.01>=v.required),eligible.map((v,i)=>i?v:{...v,ratio:1}));
           if(values.some(x=>x.unsupported.length))unmeasured(width+' '+panel+' gradient-backed contrast','Computed solid-alpha compositing cannot certify gradient or image backgrounds: '+values.filter(x=>x.unsupported.length).map(x=>x.id).join(','));
           await page.screenshot({path:path.join(OUT,`${width}-${panel}.png`)});
+          if(panel!=='bar'){const visible=await page.evaluate(()=>{const held=document.querySelector('#as1-held'),range=document.createRange();range.selectNodeContents(held);const r=range.getBoundingClientRect(),p=document.querySelector('#as1-panel').getBoundingClientRect();return{text:held.textContent,hidden:held.hidden,top:r.top,bottom:r.bottom,panelTop:p.top}});check(width+' '+panel+' Paused word above panel',visible,x=>x.text==='Paused'&&!x.hidden&&x.bottom<=x.panelTop,{...visible,bottom:visible.panelTop+1})}
+          if(panel==='more'&&width!==390){await done(page);const focus=await page.evaluate(()=>({id:document.activeElement.id,visible:document.activeElement.getClientRects().length>0}));check('focus returns to Exit when resized More is hidden',focus,x=>x.id==='mbmexit-back'&&x.visible,{id:'as1-more',visible:false})}
+
         }
         await done(page);
       }
@@ -277,6 +280,25 @@ async function main(){
         check(id+' real-stage drive and existing ghost storage',value,x=>x.state.track===x.id&&x.state.mode==='running'&&x.state.progress>.10&&x.state.car.speed>8&&x.notes>=3&&x.record.recordedFrames>=10&&x.record.accepted&&x.record.stored>0&&x.restored.telemetry>0,{...value,record:{...value.record,accepted:false}});
       }
       report.measurements.sixStageAPI=observations;
+    });
+    await section('visibility pause',async()=>{
+      await viewport(page,390);await start(page);
+      const before=await state(page);
+      await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));delete document.hidden;});
+      const after=await state(page);report.measurements.visibilityPause={before,after};
+      check('visibility event pauses game by value',after,userPaused,{...after,paused:false,userPaused:false});
+      await click(page,'as1-pause','Pause');check('explicit resume after visibility pause',await state(page),running,{...after,paused:true});
+    });
+    await section('stored homepage remains outside the four-control bar',async()=>{
+      const c=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,reducedMotion:'reduce'});
+      try{
+        await c.addInitScript(()=>localStorage.setItem('mbm_audience_view','main'));
+        const p=await boot(c,origin+'/rallyvector3d/');
+        // The canonical generator owns this key and href; use its exact contract.
+        const home=p.locator('#mbmexit-home');
+        if(await home.count()){const value=await home.evaluate(e=>{const r=e.getBoundingClientRect();return{width:r.width,height:r.height,inBar:!!e.closest('#as1-bar'),inMenu:!!e.closest('#menu')}});check('stored homepage target in menu',value,x=>x.width>=44&&x.height>=44&&!x.inBar&&x.inMenu,{...value,width:0});}
+        else throw Error('Canonical stored-home key fixture did not render a home link');
+      }finally{await c.close()}
     });
     await section('one-tap exit in every shell state',async()=>{
       const exits=[];

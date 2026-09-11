@@ -8,6 +8,8 @@
   function label(e,key,text){e.replaceChildren(element('span',{'class':'as1-icon','aria-hidden':'true'},icons[key]),element('span',{'class':'as1-label'},text));}
   const controls={};function control(key,text,fn){const b=element('button',{id:'as1-'+key,type:'button','class':'as1-control'});label(b,key,text);b.onclick=fn;controls[key]=b;bar.append(b);return b;}
   const exit=document.getElementById('mbmexit-back');if(!exit)throw Error('Canonical exit is missing');exit.classList.add('as1-control');exit.setAttribute('aria-label','Exit to the Arcade');label(exit,'exit','Exit');bar.append(exit);
+  // Preserve the stored-home link in the existing menu, outside the four-control bar.
+  const home=document.getElementById('mbmexit-home'),menu=document.querySelector('#menu .menuShell');if(home&&menu)menu.prepend(home);
   let panelName=null,previousFocus=null,appWasInert=false,battery=false,soft=false,sound=true;
   const rows=[];if(hooks.setBattery)rows.push('battery');if(hooks.setSoftSound||hooks.setWarm)rows.push('comfort');if(hooks.serialize&&hooks.deserialize)rows.push('save');
   function sync(){const paused=hooks.state().paused;sound=hooks.soundOn?.()!==false;held.hidden=!paused;controls.pause?.setAttribute('aria-pressed',String(paused));if(controls.pause)controls.pause.disabled=!!panelName;controls.sound?.setAttribute('aria-pressed',String(sound));controls.battery?.setAttribute('aria-pressed',String(battery));controls.more?.setAttribute('aria-expanded',String(!!panelName));}
@@ -16,7 +18,7 @@
   function row(key,text,fn){const b=element('button',{type:'button'});b.append(element('span',{'class':'as1-icon','aria-hidden':'true'},icons[key]),element('span',{},text));b.onclick=fn;body.append(b);return b;}
   function toggle(text,value,fn){const b=element('button',{type:'button','aria-label':text,'aria-pressed':String(value)},text);b.onclick=()=>{const on=b.getAttribute('aria-pressed')!=='true';fn(on);b.setAttribute('aria-pressed',String(on));};body.append(b);return b;}
   function setBattery(on){battery=on;hooks.setBattery(on);sync();}
-  function close(){if(!panelName)return;panelName=null;panel.hidden=true;hooks.area.inert=appWasInert;hooks.panel(false);sync();previousFocus?.focus({preventScroll:true});}
+  function close(){if(!panelName)return;panelName=null;panel.hidden=true;hooks.area.inert=appWasInert;hooks.panel(false);sync();const target=previousFocus?.isConnected&&previousFocus.getClientRects().length?previousFocus:exit;target.focus({preventScroll:true});}
   function open(name){if(!panelName){previousFocus=document.activeElement;appWasInert=hooks.area.inert;hooks.panel(true);hooks.area.inert=true;}panelName=name;panel.hidden=false;body.replaceChildren();status.textContent='';title.textContent={more:'More',comfort:'Comfort',save:'Save code',battery:'Battery'}[name];
     if(name==='more'){for(const key of rows){const b=row(key,{battery:'Battery',comfort:'Comfort',save:'Save code'}[key],()=>{if(key==='battery'){setBattery(!battery);b.setAttribute('aria-pressed',String(battery));}else open(key);});if(key==='battery')b.setAttribute('aria-pressed',String(battery));}}
     if(name==='comfort'){if(hooks.setWarm)toggle('Warm screen',!warm.hidden,on=>{warm.hidden=!on;hooks.setWarm(on);});if(hooks.setSoftSound)toggle('Soften sound',soft,on=>{soft=on;hooks.setSoftSound(on);});body.append(element('p',{},'Some people find this easier to look at.'));}
