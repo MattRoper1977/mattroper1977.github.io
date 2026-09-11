@@ -24,7 +24,7 @@ with tempfile.TemporaryDirectory() as directory:
     raw=(ROOT/key).read_bytes()
     item={'path':key,'source_repository':'Site','source_path':key,'route':'/rallyvector3d/','source_sha256':hashlib.sha256(raw).hexdigest()}
     chosen=module.select(item,{'Site':ROOT},valid)
-    assert chosen and chosen['id']=='rally-as1-pilot-2026-09-11'
+    assert chosen and chosen['id']=='rally-as1-controls-2026-09-11'
     print('GREEN exact committed pilot revision selected')
     missing=copy.deepcopy(valid);missing[key]['revisions']=[r for r in missing[key]['revisions'] if r['id']!=chosen['id']]
     try: module.select(item,{'Site':ROOT},missing)
