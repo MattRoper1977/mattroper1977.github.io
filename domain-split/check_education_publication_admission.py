@@ -74,6 +74,22 @@ def controls(output):
         native = next(p for p in registry['trees']['education-lessons'] if p.endswith('.pptx') and (scratch/'education-lessons'/p).is_file())
         mutation('changed admitted native pack bytes', 'education-lessons', native,
                  (scratch/'education-lessons'/native).read_bytes()+b'planted bytes')
+        # S1-M: each defect is planted in the finished publication, after
+        # generation. Restoration returns to the same verified artifact.
+        from resource_sizes import serialise
+        table = scratch/'education-lessons/data/resource-sizes.json'
+        value = json.loads(table.read_text())
+        entry = next(iter(value['sizes']))
+        wrong = json.loads(table.read_text()); wrong['sizes'][entry] += 1
+        mutation('S1-M wrong size', 'education-lessons', 'data/resource-sizes.json', serialise(wrong).encode())
+        assert 'DERIVATION CHANGED education-lessons/data/resource-sizes.json' in cases[-1]['reason'], cases[-1]
+        missing = json.loads(table.read_text()); del missing['sizes'][entry]
+        mutation('S1-M missing size entry', 'education-lessons', 'data/resource-sizes.json', serialise(missing).encode())
+        assert 'DERIVATION CHANGED education-lessons/data/resource-sizes.json' in cases[-1]['reason'], cases[-1]
+        input_file = scratch/'education-lessons'/entry
+        mutation('S1-M changed input without regeneration', 'education-lessons', entry, input_file.read_bytes()+b'\n<!-- S1-M changed byte length -->')
+        assert 'DERIVATION CHANGED education-lessons/data/resource-sizes.json' in cases[-1]['reason'], cases[-1]
+        assert 'CHANGED education-lessons/'+entry in cases[-1]['reason'], cases[-1]
         verify(scratch)
     # Registry input is itself fail-closed, including duplicate JSON keys and
     # path escape. It cannot silently override an earlier review row.
@@ -127,7 +143,7 @@ def build_control(lessons, apps):
         source = Path(temp)/'site';out = Path(temp)/'publication'
         subprocess.run(['git', 'clone', '--quiet', '--shared', str(HERE.parent), str(source)], check=True)
         # Local controls may run before these candidate files are committed.
-        for relative in ['build_education.py', 'education_publication_admission.py', 'education-publication-admission.json', 'stub_handoff.py', 'stub-handoff.js']:
+        for relative in ['build_education.py', 'education_publication_admission.py', 'education-publication-admission.json', 'resource_sizes.py', 'stub_handoff.py', 'stub-handoff.js']:
             shutil.copyfile(HERE/relative, source/'domain-split'/relative)
         subprocess.run([sys.executable, str(source/'domain-split/build_publications.py'), '--lessons', str(lessons), '--output', str(out)], check=True, stdout=subprocess.DEVNULL)
         command = [sys.executable, str(source/'domain-split/build_education.py'), '--lessons', str(lessons), '--apps', str(apps), '--output', str(out)]

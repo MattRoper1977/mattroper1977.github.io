@@ -10,6 +10,9 @@ from pathlib import Path, PurePosixPath
 HERE = Path(__file__).resolve().parent
 REGISTRY = HERE / 'education-publication-admission.json'
 TREES = ('education-site', 'education-lessons', 'education-apps')
+DERIVED_TREE = 'education-lessons'
+DERIVED_PATH = 'data/resource-sizes.json'
+DERIVED_RULE = {'derivation': 'resource-sizes-v1'}
 # Data/CSS are included because an already admitted script can consume them.
 # Native teaching-pack binaries and media retain their existing gates AND exact admission.
 # .sb3 (a Scratch project zip) classifies with them: nothing on the site fetches
@@ -68,6 +71,10 @@ def load_registry(path=REGISTRY):
             raise ValueError('Empty admission tree: '+name)
         for path, digest in files.items():
             valid_path(path)
+            if digest == DERIVED_RULE:
+                if (name, path) != (DERIVED_TREE, DERIVED_PATH):
+                    raise ValueError('Derivation admission is not authorised for: '+name+'/'+path)
+                continue
             # HC4 §3.3 / §4: a path may carry a TRANSITION PAIR — exactly two
             # reviewed digests, the byte-state on the owning repository's main
             # today and the reviewed byte-state its pending PR will land — so a
@@ -79,6 +86,8 @@ def load_registry(path=REGISTRY):
 
 
 def validate_digest_set(name, path, digest):
+    if not isinstance(digest, (str, list)):
+        raise ValueError('Invalid reviewed digest: '+name+'/'+path)
     candidates = digest if isinstance(digest, list) else [digest]
     if not 1 <= len(candidates) <= 2 or len(set(candidates)) != len(candidates):
         raise ValueError('Invalid reviewed digest set: '+name+'/'+path)
@@ -109,10 +118,21 @@ def may_be_absent(expected):
 
 
 def verify_tree(tree, name, registry):
-    return verify_tree_census(census(tree), name, registry)
+    actual = census(tree)
+    derived_digest = None
+    if name == DERIVED_TREE and registry['trees'][name].get(DERIVED_PATH) == DERIVED_RULE and DERIVED_PATH in actual:
+        # The only root passed to the derivation is this publication tree.
+        # Its catalogues and every measured input remain subject to the same
+        # exact-path, exact-byte admission census as every other file.
+        from resource_sizes import derive, serialise
+        value = derive(tree)
+        if value['missing']:
+            raise ValueError('Education file admission blocked publication:\nDERIVATION MISSING INPUT '+name+'/'+', '.join(value['missing']))
+        derived_digest = hashlib.sha256(serialise(value).encode('utf-8')).hexdigest()
+    return verify_tree_census(actual, name, registry, derived_digest=derived_digest)
 
 
-def verify_tree_census(actual, name, registry):
+def verify_tree_census(actual, name, registry, *, derived_digest=None):
     expected = registry['trees'][name]
     problems = []
     for path in sorted(set(expected) | set(actual)):
@@ -121,6 +141,11 @@ def verify_tree_census(actual, name, registry):
         elif path not in actual:
             if not may_be_absent(expected[path]):
                 problems.append('MISSING '+name+'/'+path)
+        elif expected[path] == DERIVED_RULE:
+            if (name, path) != (DERIVED_TREE, DERIVED_PATH) or derived_digest is None:
+                problems.append('DERIVATION NOT VERIFIED '+name+'/'+path)
+            elif actual[path] != derived_digest:
+                problems.append('DERIVATION CHANGED '+name+'/'+path)
         elif actual[path] not in admitted(expected[path]):
             problems.append('CHANGED '+name+'/'+path)
     if problems:
@@ -142,6 +167,10 @@ def propose(output, destination, source_notes):
                 'scope': 'Exact all-file publication admission; semantic route classification remains a separate gate',
                 'reviewSources': source_notes,
                 'trees': {name: census(output/name) for name in TREES}}
+    # This one table is always proposed with the reviewed derivation rule;
+    # a new content batch must not reintroduce a size-table digest ratchet.
+    if DERIVED_PATH in proposal['trees'][DERIVED_TREE]:
+        proposal['trees'][DERIVED_TREE][DERIVED_PATH] = dict(DERIVED_RULE)
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(proposal, ensure_ascii=False, indent=2)+'\n')
 

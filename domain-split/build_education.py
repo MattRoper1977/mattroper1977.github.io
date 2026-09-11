@@ -245,7 +245,10 @@ def build(output, lessons, apps=None, allow_sparse=False):
             if relative in REVIEWED_ARCHIVE_DOCUMENTS:
                 assert name == 'lessons' and hashlib.sha256(p.read_bytes()).hexdigest() == REVIEWED_ARCHIVE_DOCUMENTS[relative], 'Historical guidance changed; review before publication: '+relative
             target=dest/relative;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,target);copied.append(relative)
-            if p.suffix in {'.json', '.webmanifest'} and relative != 'data/game-storage-allowlist.json':
+            # S1-M: resource sizes have one owner: the derivation, below.
+            # Do not filter its rows before or after generating it.
+            size_table = name == 'lessons' and relative == 'data/resource-sizes.json'
+            if p.suffix in {'.json', '.webmanifest'} and relative != 'data/game-storage-allowlist.json' and not size_table:
                 try:data=json.loads(p.read_text())
                 except (ValueError,UnicodeError):continue
                 filtered=filter_data(data,is_game,prefix)
@@ -320,10 +323,20 @@ def build(output, lessons, apps=None, allow_sparse=False):
             # Migration provenance paths identify stores to export; they are
             # not search results. Preserve the exact accepted save rules.
             if path.relative_to(dest).as_posix() == 'data/game-storage-allowlist.json': continue
+            if name == 'lessons' and path.relative_to(dest).as_posix() == 'data/resource-sizes.json': continue
             try: data = json.loads(path.read_text())
             except (ValueError, UnicodeError): continue
             filtered = filter_data(data, is_game, prefix)
             if filtered != data: path.write_text(json.dumps(filtered, ensure_ascii=False, indent=2)+'\n')
+    # Measure the finished tree after every content/discovery transform.
+    # The admitted catalogue and companion manifest select the inputs; the
+    # derivation itself excludes HTML handoffs. No source tree is supplied.
+    from resource_sizes import derive as derive_sizes, serialise as serialise_sizes
+    lesson_tree = output/'education-lessons'
+    size_value = derive_sizes(lesson_tree)
+    if size_value['missing']:
+        raise ValueError('Missing published resource-size inputs: '+', '.join(size_value['missing']))
+    write(lesson_tree, 'data/resource-sizes.json', serialise_sizes(size_value))
     from education_publication_admission import verify as verify_admission
     report['executable_admission'] = verify_admission(output)
     report['education_policy'] = {'recreational_output': 'excluded', 'source_files_removed': 0,
