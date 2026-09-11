@@ -3,6 +3,48 @@
  "_method": "every candidate artefact is hashed (sha256 and git blob sha1) and every hash literal in every gate is looked up in that table. A literal that matches a file IS a pin on it, whatever the surrounding comment claims.",
  "_why": "8432492 re-pinned six sibling gates and missed the seventh; apexpool-verify then went red on that PR, merged, and stayed red for fifteen days. When a change re-pins, the dependents are derived, never counted.",
  "artefacts": {
+  "_tfr2/tools/p3_reduced.mjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
+   }
+  ],
+  "_tfr2/tools/p3_shots.mjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
+   }
+  ],
+  "_tfr2/tools/p4_duel.mjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
+   }
+  ],
+  "_tfr2/tools/p5_polish.mjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
+   }
+  ],
+  "_tfr2/tools/p6_regression.mjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
+   }
+  ],
+  "_tfr2/tools/rep_harness.mjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
+   }
+  ],
   "apexgolf/index.html": [
    {
     "gate": ".github/workflows/apexpool-home-verify.yml",
@@ -43,6 +85,55 @@
     "algo": "sha256"
    }
   ],
+  "domain-split/check_glitch_live.cjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
+   }
+  ],
+  "domain-split/check_primary_discovery.cjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
+   }
+  ],
+  "domain-split/check_stub_handoff_browser.cjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
+   }
+  ],
+  "domain-split/check_stub_handoff_live.cjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
+   }
+  ],
+  "domain-split/check_usage_discovery.cjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
+   }
+  ],
+  "domain-split/play/check-save-ui.cjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
+   }
+  ],
+  "domain-split/play/check.cjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
+   }
+  ],
   "emberwild/index.html": [
    {
     "gate": "tools/verify_emberwild.js",
@@ -50,11 +141,39 @@
     "algo": "sha256"
    }
   ],
+  "fracture/tools/audit_fracture.mjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
+   }
+  ],
+  "fracture/tools/gate_splash.mjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
+   }
+  ],
+  "fracture/tools/harness_fracture.mjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
+   }
+  ],
   "neonsync/index.html": [
    {
     "gate": "tools/verify_neonsync.js",
     "line": 28,
     "algo": "sha256"
+   }
+  ],
+  "neonturf/tools/harness_turf.mjs": [
+   {
+    "gate": "tools/as1/storage-census.py",
+    "line": 44,
+    "algo": "sha1-blob"
    }
   ],
   "titanforge/vendor/three-r128.js": [
@@ -65,5 +184,5 @@
    }
   ]
  },
- "unmatchedLiterals": 35
+ "unmatchedLiterals": 43
 }

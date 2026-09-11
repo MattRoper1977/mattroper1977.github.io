@@ -27,3 +27,18 @@ try:
 finally: target.unlink(missing_ok=True)
 verify(output)
 print('GREEN authoring input removed and exact education admission restored')
+
+# Same served metadata path; a third byte sequence must remain inadmissible.
+relative='data/pin-dependents.json'
+target=tree/relative
+original=target.read_bytes()
+try:
+    target.write_bytes(original+b'\n')
+    try: verify_tree(tree,'education-site',registry)
+    except ValueError as error:
+        assert 'CHANGED education-site/'+relative in str(error), str(error)
+        print('RED derived metadata one-byte mutation rejected')
+    else: raise AssertionError('Unreviewed derived metadata bytes were admitted')
+finally: target.write_bytes(original)
+verify(output)
+print('GREEN exact generated metadata restored at the same served path')
