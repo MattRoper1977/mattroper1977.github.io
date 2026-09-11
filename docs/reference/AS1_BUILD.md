@@ -1,3 +1,5 @@
+AS1-H supersession: this AS1-G record preserves the selected runtime measurements. AS1-H gate results and the current merge assessment are in AS1_H_EVIDENCE.json and PR #348. Earlier draft/RED/hold statements below describe the archived AS1-G snapshot.
+
 AS1-G pilot build — final measured session record, 2026-09-11
 AS1_PARTIAL. Served through the actual CI HTTP harness; draft #348 remains unmerged.
 
