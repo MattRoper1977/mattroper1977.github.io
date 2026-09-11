@@ -5,12 +5,12 @@
   panel.hidden=true;const title=element('h2',{id:'as1-panel-title'}),body=element('div'),status=element('p',{id:'as1-status','aria-live':'polite'}),done=element('button',{type:'button'},'Done');panel.append(title,body,status,done);shell.append(bar,panel);document.body.prepend(shell);
   const held=element('div',{id:'as1-held'},'Paused'),warm=element('div',{id:'as1-warm','aria-hidden':'true'});held.hidden=true;warm.hidden=true;hooks.area.append(held);document.body.append(warm);
   const icons={exit:'↪',pause:'Ⅱ',sound:'♪',more:'•••',battery:'▱',comfort:'☼',save:'◇'};
-  function label(e,key,text){e.replaceChildren(element('span',{'class':'as1-icon','aria-hidden':'true'},icons[key]),element('span',{},text));}
+  function label(e,key,text){e.replaceChildren(element('span',{'class':'as1-icon','aria-hidden':'true'},icons[key]),element('span',{'class':'as1-label'},text));}
   const controls={};function control(key,text,fn){const b=element('button',{id:'as1-'+key,type:'button','class':'as1-control'});label(b,key,text);b.onclick=fn;controls[key]=b;bar.append(b);return b;}
   const exit=document.getElementById('mbmexit-back');if(!exit)throw Error('Canonical exit is missing');exit.classList.add('as1-control');exit.setAttribute('aria-label','Exit to the Arcade');label(exit,'exit','Exit');bar.append(exit);
   let panelName=null,previousFocus=null,appWasInert=false,battery=false,soft=false,sound=true;
   const rows=[];if(hooks.setBattery)rows.push('battery');if(hooks.setSoftSound||hooks.setWarm)rows.push('comfort');if(hooks.serialize&&hooks.deserialize)rows.push('save');
-  function sync(){const paused=hooks.state().paused;held.hidden=!paused;controls.pause?.setAttribute('aria-pressed',String(paused));if(controls.pause)controls.pause.disabled=!!panelName;controls.sound?.setAttribute('aria-pressed',String(sound));controls.battery?.setAttribute('aria-pressed',String(battery));controls.more?.setAttribute('aria-expanded',String(!!panelName));}
+  function sync(){const paused=hooks.state().paused;sound=hooks.soundOn?.()!==false;held.hidden=!paused;controls.pause?.setAttribute('aria-pressed',String(paused));if(controls.pause)controls.pause.disabled=!!panelName;controls.sound?.setAttribute('aria-pressed',String(sound));controls.battery?.setAttribute('aria-pressed',String(battery));controls.more?.setAttribute('aria-expanded',String(!!panelName));}
   if(hooks.pause)control('pause','Pause',()=>{hooks.pause(!hooks.state().paused);sync();});
   if(hooks.setSound)control('sound','Sound',()=>{sound=!sound;hooks.setSound(sound);sync();});
   function row(key,text,fn){const b=element('button',{type:'button'});b.append(element('span',{'class':'as1-icon','aria-hidden':'true'},icons[key]),element('span',{},text));b.onclick=fn;body.append(b);return b;}
