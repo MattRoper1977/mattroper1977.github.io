@@ -127,4 +127,3 @@ Firing controls: mutate the captured engine's exact preference key RED, restore 
 CONTROL READBACK: 28 deliberate scratch mutations produced RED; 28 restored inputs produced GREEN. Full named output is audit_controls.txt. No H1–H7 gate was added to an estate workflow.
 CONFIRMATION: six defect categories H2–H7 are confirmed; H1's education-origin route pattern is confirmed but its conditional moved-stub/dead-end outcome is disproved by the successful current redirect. H1–H5 include executed HTTP/parser/count evidence; H6–H7 have source inspection backed by executed mutation probes. No rendered-browser claim is made.
 UNCHANGED: the original homepage upload has its initial hash. No homepage, audience page, Lessons hub, Resources page, game or shared include was edited.
-
