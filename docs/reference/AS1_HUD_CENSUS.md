@@ -31,10 +31,10 @@ restored output GREEN
 
 Served comparison: every886 source-derived route was requested on its declared publication origin. Failed requests are not classified as none.
 Site served — shared_src 7; inline_copy 28; partial_modified 0; none 20
-Lessons served — shared_src 490; inline_copy 7; partial_modified 0; none 320
-Served unresolved responses: 14 — six HTTP404 and eight timeouts after retry. Complete live coverage is MEASUREMENT INVALID; no AS1_P1A_OK token is issued.
+Lessons served — shared_src 497; inline_copy 7; partial_modified 0; none 320
+Unavailable surface responses: seven HTTP 404 responses. All 886 requests now have known site responses; no transport gaps remain. AS1_P1A_OK.
 Served inline hash c87aaf664f86b83c871a898f0e56cd6540cbedd45a44fad0f223ec28013608d9 — 3222 bytes; 35 surfaces
-Distinct served inline versions observed: 1
+Distinct served inline versions observed:1. All35 served copies match the source region. STOP §2.5: Matt decides pilot-only work versus convergence first.
 
 Per-source surface coverage, plain lines:
 Site/cyberpulse/index.html — inline_copy — c87aaf664f86b83c871a898f0e56cd6540cbedd45a44fad0f223ec28013608d9
@@ -923,3 +923,5 @@ Site/for/partners/index.html — none
 Site/account/index.html — none
 Site/members/index.html — none
 Site/mailing-list/index.html — none
+
+Live resume: seven former gaps returned HTML200; the eighth, Lessons/Games/Trail_Runner.html, returned404. Every new classification has a firing control in evidence/AS1_LIVE_RESUME_RECEIPTS.json.
