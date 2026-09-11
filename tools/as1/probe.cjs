@@ -35,6 +35,30 @@ const server=http.createServer((req,res)=>{
           await page.keyboard.down('ArrowUp');await page.waitForTimeout(700);await page.keyboard.up('ArrowUp');
           const b=await page.evaluate(()=>({...window.__HD.game.player}));
           row.drive={before:{x:a.x,y:a.y,angle:a.angle},after:{x:b.x,y:b.y,angle:b.angle},moved:Math.hypot(b.x-a.x,b.y-a.y)>0.01};row.canDrive=row.drive.moved&&Number.isFinite(b.angle);
+        }else if(c.route.includes('/Charcoal.html')){
+          row.drive=await page.evaluate(()=>{
+            const api=window.CH;if(!api)throw Error('Charcoal CH API unavailable');
+            // Enter through the game's existing buttons so its canvas has the
+            // normal coordinate transform. These are harness actions only.
+            document.getElementById('scrSplash').click();
+            document.getElementById('btnPlay').click();
+            document.getElementById('btnCnSkip').click();
+            document.getElementById('btnHowOk').click();
+            const reset=()=>api.newRound(1,{seed:12345,playerRole:'cast',headless:false});
+            const pose=()=>{const p=api.S.player;return{x:p.x,y:p.y,heading:Math.atan2(p._fy,p._fx),facingX:p._fx,facingY:p._fy};};
+            reset();const first=pose();
+            for(let i=0;i<30;i++)api.tick(1/60);
+            const withoutInput=pose(),noInputMoved=Math.hypot(withoutInput.x-first.x,withoutInput.y-first.y)>0.01;
+            reset();const before=pose();
+            api.fitCanvas();const canvas=document.getElementById('cv'),r=canvas.getBoundingClientRect();
+            if(!(r.width>0&&r.height>0))throw Error('Charcoal canvas has no displayed input area');
+            canvas.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2,pointerId:7}));
+            const inputAccepted=api.S.player.path.length>0;
+            for(let i=0;i<30;i++)api.tick(1/60);
+            const after=pose();
+            return{before,after,deterministic:JSON.stringify(first)===JSON.stringify(before),inputAccepted,noInputMoved,moved:Math.hypot(after.x-before.x,after.y-before.y)>0.01,poseSource:'CH.S.player x/y and facing vector _fx/_fy',inputSource:'existing canvas pointerdown handler; actual CH.tick with headless:false',inputControl:'same seed and ticks without pointer input must fail movement assertion'};
+          });
+          row.canDrive=row.drive.deterministic&&row.drive.inputAccepted&&!row.drive.noInputMoved&&row.drive.moved&&Number.isFinite(row.drive.after.heading);
         }else if(c.route.includes('Grid_Chase')){
           await page.evaluate(()=>window.__AFTERLIGHT_GRID__.newRun());
           const a=await page.evaluate(()=>({...window.__AFTERLIGHT_GRID__.snapshot.player}));
@@ -50,7 +74,7 @@ const server=http.createServer((req,res)=>{
         }else{
           row.api=await page.evaluate(()=>({grid:!!window.__AFTERLIGHT_GRID__,turf:!!window.__turf,slip:!!window.__SLIP,charcoal:!!window.CH,vector:!!window.__vector,meridian:!!window.__NM,sky:!!window.__SKYBREAK_TEST__}));
           await page.keyboard.press('ArrowUp');
-          row.reason='No complete exposed position-and-heading reader found in the served game API; source-VM proof is retained but is insufficient for this browser harness.';
+          row.reason='No complete position-and-heading reader and input driver has been established in this probe. This is unmeasured harness coverage, not evidence that the game has no exposed API; prior source-VM proof is retained.';
         }
       }catch(e){row.reason=String(e.message).slice(0,1200);}
       if(row.canDrive){

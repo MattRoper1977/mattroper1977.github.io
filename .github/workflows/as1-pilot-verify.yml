@@ -7,6 +7,8 @@ on:
       - 'hyperdraft/index.html'
       - 'rallyvector3d/index.html'
       - 'assets/arcade/**'
+      - 'tools/render_arcade_pilot.py'
+      - 'data/as1-*.json'
   workflow_dispatch:
 permissions:
   contents: read
@@ -27,7 +29,10 @@ jobs:
           node-version: '22'
       - run: npm install --no-save --no-package-lock playwright@1.55.0
       - run: npx playwright install --with-deps chromium
+      - run: python tools/render_arcade_pilot.py --check
+      - run: node tools/as1/codec-controls.cjs
       - run: node tools/as1/probe.cjs
+      - run: node tools/as1/verify-pilot.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
