@@ -28,6 +28,11 @@ async function main(){
           report.states.push({width,label,...value});return value;
         }
         async function start(){await page.evaluate(()=>{window.MBMArcade.close();window.MBMArcadeHooks.testStart()})}
+        async function click(id,name){
+          const direct=page.locator('#'+id);
+          if(await direct.count()&&await direct.isVisible())await direct.click();
+          else await page.getByRole('button',{name,exact:true}).click();
+        }
         async function more(){
           // More is absent at desktop width. Open it at phone width, then restore
           // the target width, as the existing composed-panel browser proof does.
@@ -38,9 +43,9 @@ async function main(){
         await inspect('menu');await start();await inspect('running');
         await page.locator('#as1-pause').click();await inspect('user-paused');
         await start();await more();await inspect('More');
-        await page.locator('#as1-comfort').click();await inspect('Comfort');
+        await click('as1-comfort','Comfort');await inspect('Comfort');
         await page.locator('#as1-done').click();
-        if(width===390)await more();await page.locator('#as1-save').click();await inspect('Save code');
+        if(width===390)await more();await click('as1-save','Save code');await inspect('Save code');
         // A control reaches the same rendered document the gate actually inspects.
         const before=await inspectRenderedPage(page);
         await page.evaluate(()=>{const e=document.createElement('p');e.id='as1-h-visible-control';e.textContent='Heading';document.querySelector('#as1-shell').append(e)});
