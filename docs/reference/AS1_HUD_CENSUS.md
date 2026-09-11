@@ -29,7 +29,12 @@ original region GREEN
 one-byte generated output mutation RED
 restored output GREEN
 
-Served sweep is still running at this checkpoint; no completed served coverage claim is made.
+Served comparison: every886 source-derived route was requested on its declared publication origin. Failed requests are not classified as none.
+Site served — shared_src 7; inline_copy 28; partial_modified 0; none 20
+Lessons served — shared_src 490; inline_copy 7; partial_modified 0; none 320
+Served unresolved responses: 14 — six HTTP404 and eight timeouts after retry. Complete live coverage is MEASUREMENT INVALID; no AS1_P1A_OK token is issued.
+Served inline hash c87aaf664f86b83c871a898f0e56cd6540cbedd45a44fad0f223ec28013608d9 — 3222 bytes; 35 surfaces
+Distinct served inline versions observed: 1
 
 Per-source surface coverage, plain lines:
 Site/cyberpulse/index.html — inline_copy — c87aaf664f86b83c871a898f0e56cd6540cbedd45a44fad0f223ec28013608d9
