@@ -42,6 +42,7 @@ jobs:
       # Original Site baseline pinned on 2026-09-11; required for a real before/after comparison.
       - run: git fetch --no-tags --depth=1 origin 85e3e02059c3e3314eddab03d6e3c842f0da7ec7
       - run: python tools/render_arcade_pilot.py --check
+      - run: python tools/as1/source-revision-controls.py
       - run: node tools/as1/codec-controls.cjs
       - run: node tools/as1/storage-controls.cjs
       - run: node tools/as1/storage-verify.cjs --self-test

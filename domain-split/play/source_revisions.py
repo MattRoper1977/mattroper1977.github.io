@@ -29,7 +29,7 @@ def registry():
                 if not re.fullmatch('[0-9a-f]{'+str(length)+'}',r[field]):raise ValueError('Invalid revision '+field)
         current=[r for r in revisions if r['id']==spec['current']]
         if len(current)!=1:raise ValueError('Missing current revision: '+path)
-        current=current[0];original=evidence[spec['route']]['source'];baseline=preservation[path]
+        current=current[0];original=evidence[spec.get('evidence_key',spec['route'])]['source'];baseline=preservation[path]
         if (original['repository'],original['path'],original['sha256'],original['published_sha256']) != (spec['repository'],spec['source_path'],current['source_sha256'],current['published_sha256']):raise ValueError('Current source evidence drift: '+path)
         if (baseline['source_repository'],baseline['source_path'],baseline['source_sha256'],baseline['published_sha256']) != (spec['repository'],spec['source_path'],current['source_sha256'],current['published_sha256']):raise ValueError('Current preservation evidence drift: '+path)
     return data['payloads']
