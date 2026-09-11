@@ -1,0 +1,752 @@
+<!-- REFERENCE ONLY — NOT FOR COPY — SEE DEFECT LIST -->
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Made by Matt — Learn • Build • Explore</title>
+  <meta name="description" content="Single-file, offline-first educational tools, classroom whiteboard lessons, interactive Teesside simulations, and accreditation registers.">
+
+  <style>
+    /* ==========================================================================
+       DESIGN SYSTEM: TOKENS & SYSTEM BASELINE
+       Zero CDN dependencies. Instant local paint.
+       ========================================================================== */
+    :root {
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+      /* Neutral Palette */
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-hover: #24344d;
+      --surface-border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-faint: #64748b;
+
+      /* Portal Identity Accents */
+      --portal-learn: #10b981;       /* Emerald: High engagement, student-safe */
+      --portal-learn-bg: #064e3b26;
+      --portal-teach: #38bdf8;       /* Electric Sky: Whiteboard clarity, 8:45 AM */
+      --portal-teach-bg: #0c4a6e26;
+      --portal-govern: #f59e0b;      /* Amber: Defensible, accredited, inspection */
+      --portal-govern-bg: #78350f26;
+
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      --focus-ring: 0 0 0 3px rgba(56, 189, 248, 0.5);
+    }
+
+    /* Light Theme Toggle Support */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f8fafc;
+        --surface: #ffffff;
+        --surface-hover: #f1f5f9;
+        --surface-border: #cbd5e1;
+        --text-main: #0f172a;
+        --text-muted: #475569;
+        --text-faint: #94a3b8;
+        --portal-learn-bg: #ecfdf5;
+        --portal-teach-bg: #f0f9ff;
+        --portal-govern-bg: #fffbeb;
+      }
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* Accessibility Skip Link */
+    .skip-link {
+      position: absolute;
+      top: -100px;
+      left: 1rem;
+      background: var(--portal-teach);
+      color: #0f172a;
+      padding: 0.5rem 1rem;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      z-index: 1000;
+      transition: top 0.2s;
+    }
+    .skip-link:focus { top: 1rem; outline: none; }
+
+    /* Layout Wrapper */
+    .site-wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 4rem;
+    }
+
+    /* ==========================================================================
+       TOP NAVIGATION & SEARCH HEADER
+       ========================================================================== */
+    header.site-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.25rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--surface-border);
+      margin-bottom: 2.5rem;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .brand-title .badge {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.2rem 0.45rem;
+      border-radius: var(--radius-sm);
+      background: var(--surface-border);
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .brand-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Quick Finder / Search */
+    .finder-box {
+      flex: 1;
+      max-width: 480px;
+      position: relative;
+    }
+
+    .finder-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      transition: var(--transition);
+    }
+
+    .finder-input:focus {
+      outline: none;
+      border-color: var(--portal-teach);
+      box-shadow: var(--focus-ring);
+    }
+
+    .finder-icon {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: var(--text-faint);
+      stroke-width: 2;
+    }
+
+    /* ==========================================================================
+       HERO / MISSION ANCHOR
+       ========================================================================== */
+    .hero-strip {
+      margin-bottom: 2.5rem;
+    }
+
+    .hero-headline {
+      font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.75rem;
+    }
+
+    .hero-lead {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 68ch;
+    }
+
+    /* ==========================================================================
+       THE THREE CORE PORTALS (GRID)
+       ========================================================================== */
+    .portal-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 3.5rem;
+    }
+
+    @media (max-width: 960px) {
+      .portal-grid { grid-template-columns: 1fr; }
+    }
+
+    .portal-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .portal-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+
+    .portal-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--card-border-hover);
+    }
+
+    /* Portal Variations */
+    .portal-learn {
+      --portal-color: var(--portal-learn);
+      --card-border-hover: var(--portal-learn);
+    }
+    .portal-learn::before { background: var(--portal-learn); }
+
+    .portal-teach {
+      --portal-color: var(--portal-teach);
+      --card-border-hover: var(--portal-teach);
+    }
+    .portal-teach::before { background: var(--portal-teach); }
+
+    .portal-govern {
+      --portal-color: var(--portal-govern);
+      --card-border-hover: var(--portal-govern);
+    }
+    .portal-govern::before { background: var(--portal-govern); }
+
+    .portal-header {
+      margin-bottom: 1.25rem;
+    }
+
+    .portal-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.725rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--portal-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .portal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+
+    .portal-desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* Fast-lane navigation links inside portals */
+    .portal-links {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      margin: 1.5rem 0;
+    }
+
+    .portal-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 0.85rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+
+    .portal-link:hover {
+      background: var(--surface-hover);
+      border-color: var(--portal-color);
+      color: var(--portal-color);
+      transform: translateX(3px);
+    }
+
+    .portal-link-meta {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-faint);
+    }
+
+    /* Big Action CTA */
+    .portal-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.85rem;
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-decoration: none;
+      background: transparent;
+      border: 1px solid var(--portal-color);
+      color: var(--portal-color);
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .portal-cta:hover {
+      background: var(--portal-color);
+      color: #0f172a;
+    }
+
+    /* ==========================================================================
+       SPOTLIGHT: TEESSIDE FIELD SIMULATIONS & INSTRUMENTS
+       Elevates locally-grounded authentic interactive tools
+       ========================================================================== */
+    .section-title-wrap {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--surface-border);
+      padding-bottom: 0.75rem;
+    }
+
+    .section-heading {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .section-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .instrument-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 3.5rem;
+    }
+
+    .instrument-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1rem;
+      transition: var(--transition);
+    }
+
+    .instrument-card:hover {
+      border-color: var(--portal-teach);
+    }
+
+    .inst-badge-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .inst-tag {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--portal-teach);
+    }
+
+    .inst-spec {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-faint);
+    }
+
+    .inst-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .inst-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .btn-launch-inst {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      color: var(--text-main);
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--surface-border);
+    }
+
+    .btn-launch-inst:hover {
+      color: var(--portal-teach);
+    }
+
+    /* ==========================================================================
+       FOOTER: PRIVACY GUARANTEE & GOVERNANCE STAMP
+       ========================================================================== */
+    footer.site-footer {
+      border-top: 1px solid var(--surface-border);
+      padding-top: 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .footer-guarantee {
+      max-width: 55ch;
+      line-height: 1.4;
+    }
+
+    .footer-guarantee strong {
+      color: var(--text-main);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.25rem;
+      list-style: none;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .footer-links a:hover {
+      color: var(--text-main);
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <div class="site-wrap">
+
+    <!-- Top Global Header -->
+    <header class="site-header">
+      <div class="brand">
+        <div class="brand-title">
+          Made by Matt
+          <span class="badge">OFFLINE-FIRST</span>
+        </div>
+        <span class="brand-sub">Learn • Build • Explore — Stockton &amp; Teesside Studio Platform</span>
+      </div>
+
+      <!-- Quick Finder / Command Bar -->
+      <div class="finder-box">
+        <svg class="finder-icon" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          type="search"
+          class="finder-input"
+          id="quickFinder"
+          placeholder="Jump to lesson, instrument, game, or UAS code..."
+          aria-label="Search lessons, tools, and resources"
+        >
+      </div>
+    </header>
+
+    <main id="main-content">
+
+      <!-- Mission Headline -->
+      <section class="hero-strip">
+        <h1 class="hero-headline">Resilient learning, built for the real room.</h1>
+        <p class="hero-lead">
+          Over 600 single-file, zero-dependency resources. Fully offline, client-side, and structured across BUILD, GROW, and LAUNCH pathways.
+        </p>
+      </section>
+
+      <!-- ====================================================================
+           THE THREE OPERATIONAL PORTALS
+           ==================================================================== -->
+      <div class="portal-grid">
+
+        <!-- PORTAL 1: LEARN & PLAY (STUDENT FRONT DOOR) -->
+        <article class="portal-card portal-learn">
+          <div>
+            <div class="portal-header">
+              <span class="portal-badge">Pupil &amp; Studio Entry</span>
+              <h2 class="portal-title">Learn &amp; Play</h2>
+              <p class="portal-desc">
+                Fast-loading browser games, interactive physics sandboxes, and low-friction skill challenges. No accounts, no ads, no trackers.
+              </p>
+            </div>
+
+            <ul class="portal-links" role="list">
+              <li>
+                <a href="/Games/" class="portal-link">
+                  <span>Apex Kick &amp; Retro Arcade</span>
+                  <span class="portal-link-meta">Canvas Games</span>
+                </a>
+              </li>
+              <li>
+                <a href="/Lessons/#type=Pupil%20app" class="portal-link">
+                  <span>Interactive Science Sandboxes</span>
+                  <span class="portal-link-meta">Simulations</span>
+                </a>
+              </li>
+              <li>
+                <a href="/Lessons/#subject=Art" class="portal-link">
+                  <span>Digital Art Studio Challenges</span>
+                  <span class="portal-link-meta">Art Studio</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <a href="/Games/" class="portal-cta">
+            Enter Play &amp; Arcade &rarr;
+          </a>
+        </article>
+
+        <!-- PORTAL 2: TEACH & RUN (8:45 AM CLASSROOM DOOR) -->
+        <article class="portal-card portal-teach">
+          <div>
+            <div class="portal-header">
+              <span class="portal-badge">Teacher &amp; Delivery</span>
+              <h2 class="portal-title">Teach &amp; Run</h2>
+              <p class="portal-desc">
+                40-minute whiteboard slideshows with the Live-Teach HUD 2.0. One-click access to print packs, diagnostics, and tiered slides.
+              </p>
+            </div>
+
+            <ul class="portal-links" role="list">
+              <li>
+                <a href="/Lessons/#subject=Science%20·%20Teesside" class="portal-link">
+                  <span>Teesside Science (40-Min Suites)</span>
+                  <span class="portal-link-meta">BUILD • GROW • LAUNCH</span>
+                </a>
+              </li>
+              <li>
+                <a href="/Lessons/#subject=Art%20·%20Teesside%20Studio%20Suite" class="portal-link">
+                  <span>Teesside Art Studio (81 Lessons)</span>
+                  <span class="portal-link-meta">Bronze / Silver</span>
+                </a>
+              </li>
+              <li>
+                <a href="/Tools/" class="portal-link">
+                  <span>Live-Teach HUD &amp; Noise Meter</span>
+                  <span class="portal-link-meta">Classroom Tools</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <a href="/Lessons/" class="portal-cta">
+            Open Lesson Hub &rarr;
+          </a>
+        </article>
+
+        <!-- PORTAL 3: EVIDENCE & GOVERN (LEADERSHIP / ACCREDITATION) -->
+        <article class="portal-card portal-govern">
+          <div>
+            <div class="portal-header">
+              <span class="portal-badge">Standards &amp; Accreditation</span>
+              <h2 class="portal-title">Evidence &amp; Track</h2>
+              <p class="portal-desc">
+                Turn classroom output into defensible progress. AQA Unit Award Scheme registers, ASDAN tracking, and Artsmark evidence binders.
+              </p>
+            </div>
+
+            <ul class="portal-links" role="list">
+              <li>
+                <a href="/Lessons/#subject=BUILD%20Vocational%20&%20PfA" class="portal-link">
+                  <span>ASDAN Kitchen &amp; PfA Frameworks</span>
+                  <span class="portal-link-meta">E3 • L1 • L2</span>
+                </a>
+              </li>
+              <li>
+                <a href="/Lessons/#subject=Planning" class="portal-link">
+                  <span>AQA Unit Award Registers (UAS)</span>
+                  <span class="portal-link-meta">Evidence Trackers</span>
+                </a>
+              </li>
+              <li>
+                <a href="/About/" class="portal-link">
+                  <span>Curriculum Intent &amp; SOWs</span>
+                  <span class="portal-link-meta">Ofsted Defensible</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <a href="/Lessons/#type=Support" class="portal-cta">
+            View Evidence Suites &rarr;
+          </a>
+        </article>
+
+      </div>
+
+      <!-- ====================================================================
+           FEATURED SPOTLIGHT: AUTHENTIC TEESSIDE INSTRUMENTS
+           (Showcases high-value single-file simulation tools)
+           ==================================================================== -->
+      <section class="instruments-section">
+        <div class="section-title-wrap">
+          <div>
+            <h2 class="section-heading">Teesside Field Instruments &amp; Simulations</h2>
+            <p class="section-sub">Locally grounded, interactive browser tools designed for vocational &amp; STEM units.</p>
+          </div>
+          <a href="/Lessons/#format=game" class="inst-spec" style="text-decoration: none;">View all instruments &rarr;</a>
+        </div>
+
+        <div class="instrument-grid">
+
+          <div class="instrument-card">
+            <div>
+              <div class="inst-badge-row">
+                <span class="inst-tag">PHYSICS / CIVIC</span>
+                <span class="inst-spec">BUILD · SOW W3</span>
+              </div>
+              <h3 class="inst-title" style="margin-top: 0.5rem;">Newport Bridge Lift Permit</h3>
+              <p class="inst-desc">Calculates balance, counterweights, and vessel clearance across the River Tees. Generates printable permit slips.</p>
+            </div>
+            <a href="/Lessons/Instruments/newport-bridge/" class="btn-launch-inst">
+              <span>Launch Instrument</span>
+              <span>&nearr;</span>
+            </a>
+          </div>
+
+          <div class="instrument-card">
+            <div>
+              <div class="inst-badge-row">
+                <span class="inst-tag">CHEMISTRY / INDUSTRY</span>
+                <span class="inst-spec">BUILD · SOW W4</span>
+              </div>
+              <h3 class="inst-title" style="margin-top: 0.5rem;">Wilton Carbon Process Control</h3>
+              <p class="inst-desc">Interactive thermal catalytic simulation modeling fractional distillation and carbon capture loops at Wilton International.</p>
+            </div>
+            <a href="/Lessons/Instruments/wilton-carbon/" class="btn-launch-inst">
+              <span>Launch Instrument</span>
+              <span>&nearr;</span>
+            </a>
+          </div>
+
+          <div class="instrument-card">
+            <div>
+              <div class="inst-badge-row">
+                <span class="inst-tag">RENEWABLES / ECOLOGY</span>
+                <span class="inst-spec">GROW · SOW W2</span>
+              </div>
+              <h3 class="inst-title" style="margin-top: 0.5rem;">Tees Bay Wind Operations</h3>
+              <p class="inst-desc">Offshore turbine maintenance and power generation simulator factoring in tidal drift and North Sea wind speeds.</p>
+            </div>
+            <a href="/Lessons/Instruments/tees-wind/" class="btn-launch-inst">
+              <span>Launch Instrument</span>
+              <span>&nearr;</span>
+            </a>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ====================================================================
+         FOOTER: PRIVACY FIRST & DIRECT NAVIGATION
+         ==================================================================== -->
+    <footer class="site-footer">
+      <div class="footer-guarantee">
+        <strong>Privacy Architecture:</strong> This platform is static and offline-first. Registers, student names, and lesson evidence remain strictly on your local browser storage. No user accounts, tracking pixels, or external ad networks.
+      </div>
+
+      <ul class="footer-links">
+        <li><a href="/Lessons/">Lessons</a></li>
+        <li><a href="/Games/">Games</a></li>
+        <li><a href="/Tools/">Live HUD</a></li>
+        <li><a href="/Privacy/">Privacy &amp; Data</a></li>
+        <li><a href="/About/">About Matt</a></li>
+      </ul>
+    </footer>
+
+  </div>
+
+  <!-- Lightweight Quick Jump Handler (Vanilla, zero dependencies) -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const finder = document.getElementById('quickFinder');
+
+      finder.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && finder.value.trim() !== '') {
+          // Route search query directly to Lesson Hub search parameter
+          const query = encodeURIComponent(finder.value.trim());
+          window.location.href = `/Lessons/?search=${query}`;
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
