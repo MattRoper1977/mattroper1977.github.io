@@ -1,0 +1,37 @@
+name: AS1 pilot harness and controls
+on:
+  pull_request:
+    paths:
+      - 'tools/as1/**'
+      - '.github/workflows/as1-pilot-verify.yml'
+      - 'hyperdraft/index.html'
+      - 'rallyvector3d/index.html'
+      - 'assets/arcade/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          # Lessons source baseline pinned on 2026-09-11 for reproducible AS1 verification.
+          ref: aad04718c11a2396ecf323a662f55bf0e0c2441b
+          path: .sources/Lessons
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - run: node tools/as1/probe.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: as1-pilot-evidence
+          path: audit-output/as1
+          if-no-files-found: error
+          retention-days: 7
