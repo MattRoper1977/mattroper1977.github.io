@@ -44,7 +44,7 @@ async function main(){
         await page.locator('#as1-pause').click();await inspect('user-paused');
         await start();await more();await inspect('More');
         await click('as1-comfort','Comfort');await inspect('Comfort');
-        await page.locator('#as1-done').click();
+        await click('as1-done','Done');
         if(width===390)await more();await click('as1-save','Save code');await inspect('Save code');
         // A control reaches the same rendered document the gate actually inspects.
         const before=await inspectRenderedPage(page);
