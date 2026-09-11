@@ -9,6 +9,7 @@ on:
       - 'assets/arcade/**'
       - 'tools/render_arcade_pilot.py'
       - 'data/as1-*.json'
+      - 'tools/verify_no_shipped_placeholders.mjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,15 +20,22 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      # AS1-H authority pinned on 2026-09-11: contains the immutable 51-conflict registry blob.
+      - run: git fetch --no-tags --depth=1 origin 816ce3cbb745a1e798fdb3bb50d84644d6638f40
+      - run: node tools/as1/storage-verify.cjs --self-test
       - run: node tools/as1/storage-verify.cjs data/as1-storage-registry.json
   probe:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
@@ -41,6 +49,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       # Original Site baseline pinned on 2026-09-11; required for a real before/after comparison.
       - run: git fetch --no-tags --depth=1 origin 85e3e02059c3e3314eddab03d6e3c842f0da7ec7
+      # AS1-H authority pinned on 2026-09-11: supplies the immutable storage baseline ceiling.
+      - run: git fetch --no-tags --depth=1 origin 816ce3cbb745a1e798fdb3bb50d84644d6638f40
       - run: python tools/render_arcade_pilot.py --check
       - run: python tools/as1/source-revision-controls.py
       - run: node tools/as1/codec-controls.cjs
@@ -85,7 +95,7 @@ jobs:
         run: node tools/as1/run-baseline-stage.cjs
 
   source-gates:
-    name: Unchanged AS1 regression and placeholder gates
+    name: AS1 regression and rendered-placeholder gates
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -95,6 +105,8 @@ jobs:
           node-version: '22'
       # Pinned on 2026-09-11: independent G1 gate source, including its firing controls.
       - run: git fetch --no-tags --depth=1 origin f6b7814836fe5cecbd91ff2a530fd8362ab8f734
+      - run: npm install --no-save --no-package-lock playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
       - run: node tools/as1/run-source-gates.cjs
       - uses: actions/upload-artifact@v4
         if: always()

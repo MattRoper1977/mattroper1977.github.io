@@ -85,10 +85,11 @@ async function contrast(page){return page.evaluate(()=>{
 })}
 async function authority(page){return page.evaluate(async()=>{const value=await window.MBMArcadeHooks.serialize();return{save:{format:value.format,version:value.version,localStorage:value.localStorage,sharedProfiles:value.sharedProfiles,touchline:value.touchline},pose:window.MBMArcadeHooks.state().pose,localStorage:Object.fromEntries(Object.keys(localStorage).sort().map(k=>[k,localStorage.getItem(k)]))}})}
 async function placeholderMarkup(page,label){
-  const inspect=()=>{const bad=[],rx=/\b(?:Heading|Title|Label|Lorem|TODO|TBC|Placeholder|Your text here|X{3,})\b/i;const root=document.getElementById('as1-shell'),walk=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);while(walk.nextNode()){const n=walk.currentNode,e=n.parentElement,r=e.getBoundingClientRect();if(r.width&&r.height&&getComputedStyle(e).visibility!=='hidden'&&rx.test(n.textContent))bad.push(n.textContent.trim())}return bad};
-  const original=await page.evaluate(inspect);
+  const {inspectRenderedPage,requireRenderedEvidence}=await import('../verify_no_shipped_placeholders.mjs');
+  const inspect=async()=>{const result=await inspectRenderedPage(page,'#as1-shell');requireRenderedEvidence(result);return result.findings.map(f=>f.token)};
+  const original=await inspect();
   await page.evaluate(()=>{const e=document.createElement('span');e.id='as1-placeholder-control';e.textContent='Heading';document.getElementById('as1-shell').append(e)});
-  const planted=await page.evaluate(inspect);await page.locator('#as1-placeholder-control').evaluate(e=>e.remove());const restored=await page.evaluate(inspect);
+  const planted=await inspect();await page.locator('#as1-placeholder-control').evaluate(e=>e.remove());const restored=await inspect();
   const value={original,planted,restored};check(label+' composed placeholder control',value,x=>x.original.length===0&&x.planted.includes('Heading')&&x.restored.length===0,{...value,planted:[]});
   const markup=await page.locator('#as1-shell').evaluate(e=>e.outerHTML);fs.writeFileSync(path.join(OUT,label.replace(/[^a-z0-9]+/gi,'-')+'-composed.html'),'<!doctype html><html lang="en"><meta charset="utf-8"><title>Arcade inspection</title><body>'+markup+'</body></html>');
 }
