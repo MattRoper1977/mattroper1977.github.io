@@ -14,7 +14,7 @@
   if(hooks.pause)control('pause','Pause',()=>{hooks.pause(!hooks.state().paused);sync();});
   if(hooks.setSound)control('sound','Sound',()=>{sound=!sound;hooks.setSound(sound);sync();});
   function row(key,text,fn){const b=element('button',{type:'button'});b.append(element('span',{'class':'as1-icon','aria-hidden':'true'},icons[key]),element('span',{},text));b.onclick=fn;body.append(b);return b;}
-  function toggle(text,value,fn){const b=element('button',{type:'button','aria-pressed':String(value)},text);b.onclick=()=>{const on=b.getAttribute('aria-pressed')!=='true';fn(on);b.setAttribute('aria-pressed',String(on));};body.append(b);return b;}
+  function toggle(text,value,fn){const b=element('button',{type:'button','aria-label':text,'aria-pressed':String(value)},text);b.onclick=()=>{const on=b.getAttribute('aria-pressed')!=='true';fn(on);b.setAttribute('aria-pressed',String(on));};body.append(b);return b;}
   function setBattery(on){battery=on;hooks.setBattery(on);sync();}
   function close(){if(!panelName)return;panelName=null;panel.hidden=true;hooks.area.inert=appWasInert;hooks.panel(false);sync();previousFocus?.focus({preventScroll:true});}
   function open(name){if(!panelName){previousFocus=document.activeElement;appWasInert=hooks.area.inert;hooks.panel(true);hooks.area.inert=true;}panelName=name;panel.hidden=false;body.replaceChildren();status.textContent='';title.textContent={more:'More',comfort:'Comfort',save:'Save code',battery:'Battery'}[name];

@@ -25,6 +25,10 @@
 #as1-held[hidden],#as1-warm[hidden]{display:none}
 #as1-warm{position:fixed;inset:var(--as1-band) 0 0;pointer-events:none;z-index:2147482950;background:rgba(242,162,74,.12)}
 html.as1-mounted #app{top:var(--as1-band);height:calc(100% - var(--as1-band))}
+@media (orientation:portrait) and (pointer:coarse),(orientation:portrait) and (any-pointer:coarse),(orientation:portrait) and (max-width:720px){
+  html.as1-mounted body #gl,html.as1-mounted body #vignette,html.as1-mounted body #lensFx,html.as1-mounted body #hud,html.as1-mounted body #v6-route-layer{height:calc(100dvh - var(--as1-band) - var(--v6-tray-h) - var(--safeB))!important}
+  html.as1-mounted body:not([data-v6-driving="true"]) #gl,html.as1-mounted body:not([data-v6-driving="true"]) #vignette,html.as1-mounted body:not([data-v6-driving="true"]) #lensFx,html.as1-mounted body:not([data-v6-driving="true"]) #hud,html.as1-mounted body:not([data-v6-driving="true"]) #v6-route-layer{height:calc(100dvh - var(--as1-band))!important}
+}
 html.as1-mounted #mbmexit-home,html.as1-mounted #pauseBtn,html.as1-mounted #muteBtn,html.as1-mounted #v6-pause{display:none!important}
 html.as1-mounted #as1-held:not([hidden])~*{pointer-events:none}
 html[data-as1-held=true] #app > :not(canvas):not(#as1-held):not(#vignette){visibility:hidden}

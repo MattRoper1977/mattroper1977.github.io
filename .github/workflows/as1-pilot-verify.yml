@@ -13,6 +13,16 @@ on:
 permissions:
   contents: read
 jobs:
+  storage-ownership:
+    name: Actual storage ownership registry
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/as1/storage-verify.cjs data/as1-storage-registry.json
   probe:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -37,6 +47,9 @@ jobs:
       - run: node tools/as1/storage-verify.cjs --self-test
       - run: node tools/as1/probe.cjs
       - run: node tools/as1/verify-pilot.cjs
+      - name: Existing six-stage Rally playability and ghost check, unchanged
+        if: always()
+        run: node tools/driving-games/verify_new_stages.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

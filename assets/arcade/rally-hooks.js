@@ -79,10 +79,10 @@ window.MBMArcadeHooks={
     if(data.touchline.length)throw Error('Use the existing save transfer for career files.');
     for(const value of Object.values(data.localStorage)){let p;try{p=JSON.parse(value);}catch(_){throw Error('A saved entry is not readable.');}if(!p||typeof p!=='object')throw Error('A saved entry is not supported.');}
     const legacy=JSON.parse(data.localStorage[STORE_KEY]||'null'),profile=JSON.parse(data.localStorage[V6_PROFILE_KEY]||'null'),four=JSON.parse(data.localStorage[V4_STORE_KEY]||'null');
-    if(!legacy?.settings||!legacy.progress||!legacy.records||!four?.garage||!Number.isFinite(four.credits)||profile?.schema!==6||profile.gameId!==V6_GAME_ID)throw Error('This code does not contain a complete Rally save.');
+    if(!legacy?.settings||!legacy.progress||!legacy.records||!four?.garage||!Number.isFinite(four.credits)||!['time','daily','championship'].includes(four.mode)||profile?.schema!==6||profile.gameId!==V6_GAME_ID)throw Error('This code does not contain a complete Rally save.');
     const plan=adapter.planImport(localStorage,data,rules,true);
     const before={save,v4,v6Profile,v6LastProfileWrite};
-    try{adapter.apply(localStorage,plan.writes);save=loadSave();v4=v4Load();v6Profile=v6LoadProfile();v6LastProfileWrite=v6ReadRaw(V6_PROFILE_KEY);renderMenu();v6RenderAtlas();}
+    try{adapter.apply(localStorage,plan.writes);save=loadSave();v4=v4Load();v4.mode=four.mode;v6Profile=v6LoadProfile();v6LastProfileWrite=v6ReadRaw(V6_PROFILE_KEY);v4ApplyAccess();v6ApplyProfileSettings();audio.setMuted(!save.settings.sound);v6SyncSoundUI();renderMenu();v6RenderAtlas();}
     catch(e){try{adapter.restore(localStorage,plan.writes);}finally{save=before.save;v4=before.v4;v6Profile=before.v6Profile;v6LastProfileWrite=before.v6LastProfileWrite;}throw e;}
     as1Dirty=true;window.MBMArcade?.sync();return true;
   },

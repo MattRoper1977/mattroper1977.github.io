@@ -62,6 +62,7 @@ async function metrics(page,label){
   check(label+' first paint',value,x=>Number.isFinite(x.firstPaint)&&x.firstPaint>=0,{...value,firstPaint:null});
   check(label+' paint counter',value,x=>Number.isFinite(x.paintsPerSecond)&&x.paintsPerSecond>=0,{...value,paintsPerSecond:NaN});return value;
 }
+async function viewport(page,width,height=844){await page.setViewportSize({width,height});await page.evaluate(async()=>{await new Promise(requestAnimationFrame);window.MBMArcade?.layout();});}
 async function geometry(page){return page.evaluate(()=>{
   const visible=e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return r.width>0&&r.height>0&&c.display!=='none'&&c.visibility!=='hidden'};
   const ids=['mbmexit-back','as1-exit','as1-pause','as1-sound','as1-more','as1-battery','as1-comfort','as1-save'];
@@ -116,23 +117,23 @@ async function main(){
       report.measurements.stateSequences=sequences;
     });
     await section('bar and reserved band',async()=>{
-      await start(page);await page.setViewportSize({width:390,height:844});const phone=await geometry(page);report.measurements.phone=phone;
+      await start(page);await viewport(page,390);const phone=await geometry(page);report.measurements.phone=phone;
       const phoneIds=phone.map(x=>x.id);check('phone four controls',phoneIds,x=>x.length===4&&x.includes('as1-more')&&x.includes('as1-pause')&&x.includes('as1-sound'),phoneIds.slice(1));
       check('phone targets at least 44px',phone,x=>x.length===4&&x.every(r=>r.width>=44&&r.height>=44&&r.scrollWidth<=r.clientWidth+1),phone.map((r,i)=>i? r:{...r,width:43}));
       await click(page,'as1-pause','Pause');const active=await geometry(page);check('phone active targets at least 44px',active,x=>x.length===4&&x.every(r=>r.width>=44&&r.height>=44),active.map((r,i)=>i?r:{...r,height:43}));await click(page,'as1-pause','Pause');
       let breakpoint=null,boundary;
       const fits=g=>g.length===6&&!g.some(x=>x.id==='as1-more')&&g.every(x=>x.width>=44&&x.height>=44&&x.scrollWidth<=x.clientWidth+1&&x.textRows.length<=1);
-      let low=391,high=1400;while(low<high){const width=Math.floor((low+high)/2);await page.setViewportSize({width,height:844});if(fits(await geometry(page)))high=width;else low=width+1}
-      await page.setViewportSize({width:low,height:844});const g=await geometry(page);if(fits(g)){breakpoint=low;boundary=g;await page.setViewportSize({width:low-1,height:844});const narrower=await geometry(page);check('one pixel below breakpoint does not fit six',narrower,x=>!fits(x),g)}
+      let low=391,high=1400;while(low<high){const width=Math.floor((low+high)/2);await viewport(page,width);if(fits(await geometry(page)))high=width;else low=width+1}
+      await viewport(page,low);const g=await geometry(page);if(fits(g)){breakpoint=low;boundary=g;await viewport(page,low-1);const narrower=await geometry(page);check('one pixel below breakpoint does not fit six',narrower,x=>!fits(x),g)}
       report.measurements.breakpoint={width:breakpoint,controls:boundary};check('measured six-control breakpoint',report.measurements.breakpoint,x=>Number.isInteger(x.width)&&x.controls.length===6,{width:null,controls:[]});
-      await page.setViewportSize({width:390,height:844});const band=await page.evaluate(()=>{const canvas=document.querySelector('#gl').getBoundingClientRect(),bar=document.querySelector('#as1-bar').getBoundingClientRect();return{canvas:{x:canvas.x,y:canvas.y,width:canvas.width,height:canvas.height,aspect:canvas.width/canvas.height},bar:{x:bar.x,y:bar.y,width:bar.width,height:bar.height,bottom:bar.bottom}}});
-      report.measurements.reservedBand={before:report.measurements.baseline?.runningCanvas,after:band};check('reserved band does not overlap canvas',band,x=>x.canvas.y>=x.bar.bottom-.5&&x.bar.height>=44,{...band,canvas:{...band.canvas,y:0}});
+      await viewport(page,390);const band=await page.evaluate(()=>{const canvas=document.querySelector('#gl').getBoundingClientRect(),bar=document.querySelector('#as1-bar').getBoundingClientRect();return{canvas:{x:canvas.x,y:canvas.y,width:canvas.width,height:canvas.height,aspect:canvas.width/canvas.height},bar:{x:bar.x,y:bar.y,width:bar.width,height:bar.height,bottom:bar.bottom}}});
+      report.measurements.reservedBand={before:report.measurements.baseline?.runningCanvas,after:band};check('reserved band reduces available canvas',band,x=>x.canvas.y>=x.bar.bottom-.5&&x.bar.height>=44&&Math.abs(x.canvas.height+x.bar.height-report.measurements.baseline.runningCanvas.height)<=.5,{...band,canvas:{...band.canvas,height:report.measurements.baseline.runningCanvas.height}});
       await page.screenshot({path:path.join(OUT,'phone-running.png')});
     });
     await section('greyscale and composed contrast',async()=>{
       const widths=[390,report.measurements.breakpoint?.width].filter(Number.isFinite);const census=[];
       for(const width of [...new Set(widths)]){
-        await page.setViewportSize({width,height:844});await start(page);
+        await viewport(page,width);await start(page);
         for(const panel of ['bar','more','comfort','save']){
           if(panel==='more'){if(width===390)await more(page);else continue}
           if(panel==='comfort'){if(width===390){if(await page.locator('#as1-panel-title').isVisible())await done(page);await more(page)}await click(page,'as1-comfort','Comfort')}
@@ -145,7 +146,7 @@ async function main(){
         }
         await done(page);
       }
-      report.measurements.contrast=census;await page.setViewportSize({width:390,height:844});await start(page);
+      report.measurements.contrast=census;await viewport(page,390);await start(page);
       const inactive=await page.locator('#as1-more').evaluate(e=>{const c=getComputedStyle(e);return{background:c.backgroundColor,border:c.borderColor}});await more(page);
       const greyStyle=await page.addStyleTag({content:'html{filter:grayscale(1)!important}'});await page.screenshot({path:path.join(OUT,'phone-more-greyscale.png')});
       const cue=await page.evaluate(()=>{const e=document.querySelector('#as1-more'),c=getComputedStyle(e);return{pressed:e.getAttribute('aria-pressed'),expanded:e.getAttribute('aria-expanded'),text:e.textContent,border:c.borderStyle,borderWidth:c.borderWidth,borderColour:c.borderColor,background:c.backgroundColor,after:getComputedStyle(e,'::after').content,html:e.innerHTML}});cue.inactive=inactive;
@@ -154,7 +155,7 @@ async function main(){
       const duplicate=await page.evaluate(()=>{const ids=[...document.querySelectorAll('[id]')].map(e=>e.id);return [...new Set(ids.filter((x,i)=>ids.indexOf(x)!==i))]});check('zero duplicate ids',duplicate,x=>x.length===0,['as1-more']);await greyStyle.evaluate(e=>e.remove());await done(page);
     });
     await section('save paste controls',async()=>{
-      await page.setViewportSize({width:390,height:844});await start(page);await more(page);await click(page,'as1-save','Save code');
+      await viewport(page,390);await start(page);await more(page);await click(page,'as1-save','Save code');
       const box=page.locator('#as1-code');const valid=await page.evaluate(async()=>window.MBMCartridge.encode(window.MBMArcadeHooks.serialize()));check('real save encodes',valid,x=>typeof x==='string'&&x.length>8,'');
       const originalState=await authority(page);const restored=[];
       const forms={hyphens:valid,enDashes:valid.replace(/-/g,'\u2013'),spaces:valid.split('-').map(g=>' \u00a0'+g+' \t').join('-'),lowercase:valid.toLowerCase()};
@@ -163,17 +164,34 @@ async function main(){
       await box.fill(bad);const before=await authority(page);await click(page,'as1-restore','Restore code');await page.waitForTimeout(100);const after=await authority(page),text=await box.inputValue();const line=await page.locator('#as1-status').textContent();
       const observation={unchanged:JSON.stringify(before)===JSON.stringify(after),textRetained:text===bad,error:line};check('wrong character refused without lost state',observation,x=>x.unchanged&&x.textRetained&&!!x.error,{...observation,unchanged:false});
       if(!observation.unchanged)report.hardStop='G-S3: wrong-character restore changed existing pupil state';report.measurements.paste={forms:restored.map(x=>({name:x.name,length:x.length})),wrongCharacter:observation,realSaveBytes:Buffer.byteLength(JSON.stringify(originalState.save)),encodedLength:valid.length};
-      const sizing=await box.evaluate(e=>{const s=getComputedStyle(e),c=document.createElement('canvas').getContext('2d');c.font=s.font;const width=e.clientWidth-parseFloat(s.paddingLeft)-parseFloat(s.paddingRight),character=c.measureText('A').width,group=c.measureText('AAAAA-').width,groups=Math.floor(width/group);return{availableWidth:width,characterWidth:character,groupWidth:group,groupsPerLine:groups,lineHeight:parseFloat(s.lineHeight),paper:Math.max(0,groups*6*4-1),basis:'four fully visible monospace lines at 390px; readability fit, not a human transcription study'}});
-      check('paper size proposed from rendered text',sizing,x=>x.groupsPerLine>0&&x.paper>0&&x.groupWidth*x.groupsPerLine<=x.availableWidth,{...sizing,groupsPerLine:0});
-      await page.evaluate(()=>Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:()=>Promise.reject(Error('AS1 clipboard API disabled'))}}));
-      const candidate='A'.repeat(16000);await box.fill(candidate);await click(page,'as1-copy','Copy');
-      const selection=await box.evaluate(e=>({length:e.value.length,selected:e.selectionEnd-e.selectionStart,unchanged:e.value==='A'.repeat(16000)}));check('16000-character non-clipboard fallback',selection,x=>x.length===16000&&x.selected===16000&&x.unchanged,{...selection,selected:0});
-      report.measurements.thresholdProposal={...sizing,clipboard:16000,fileAbove:16000,clipboardProof:selection,qrCap:2000};
-      const configured=await page.evaluate(()=>{try{return window.MBMArcadeHooks.thresholds()}catch(e){return{unconfigured:e.message}}});
-      if(configured.unconfigured)unmeasured('configured size thresholds',configured.unconfigured);else{await click(page,'as1-get-save','Get save code');await page.waitForTimeout(120);report.measurements.thresholdsConfigured=configured;const supplied=await box.inputValue(),decoded=await page.evaluate(code=>window.MBMCartridge.decode(code),supplied);check('Get save code uses measured classes',{length:supplied.length,configured,restores:JSON.stringify(stable(decoded.localStorage))===JSON.stringify(stable(originalState.save.localStorage))},x=>x.length>0&&x.restores&&x.configured.measured===true,{length:0,configured,restores:false})}
+      const sizing=await require('./sizing-controls.cjs')(page,valid,check);report.measurements.thresholdProposal=sizing;if(sizing.clipboardProof.unmeasured)unmeasured('clipboard API transport',sizing.clipboardProof.unmeasured);if(!sizing.configured.measured)unmeasured('configured size thresholds','Threshold measurements recorded; production values not yet configured.');else report.measurements.thresholdsConfigured=sizing.configured;
       await done(page);
     });
     if(report.hardStop)throw Error(report.hardStop);
+    await section('non-default Rally save mode',async()=>{
+      await page.evaluate(()=>window.RallyVector3D.returnToMenu());await page.locator('#campaignBtn').click();await more(page);await click(page,'as1-save','Save code');
+      const before=await authority(page),code=await page.evaluate(()=>window.MBMCartridge.encode(window.MBMArcadeHooks.serialize()));
+      const findMode=data=>Object.values(data.localStorage).map(v=>{try{return JSON.parse(v)}catch{return null}}).find(v=>v&&v.garage&&Number.isFinite(v.credits))?.mode;
+      const modeBefore=findMode(before.save);check('campaign mode selected through actual game UI',modeBefore,x=>x==='championship','time');
+      await page.locator('#as1-code').fill(code);await click(page,'as1-restore','Restore code');await page.waitForTimeout(80);const after=await authority(page),modeAfter=findMode(after.save);
+      const value={before:modeBefore,after:modeAfter,preserved:JSON.stringify(stable(before.save))===JSON.stringify(stable(after.save))};check('non-default save restores all owned values',value,x=>x.before==='championship'&&x.after===x.before&&x.preserved,{...value,after:'time'});report.measurements.nonDefaultSave=value;
+      if(modeBefore==='championship'&&modeAfter!==modeBefore)report.hardStop='G-S3: restoring the campaign save lost its selected mode';await done(page);
+    });
+    if(report.hardStop)throw Error(report.hardStop);
+    await section('Battery changes rendering only',async()=>{
+      const runs=[];
+      for(const enabled of [false,true]){
+        await start(page);await more(page);if(await page.evaluate(()=>window.MBMArcade.battery)!==enabled)await page.getByRole('button',{name:'Battery',exact:true}).click();await done(page);
+        const observed=await page.evaluate(()=>{const h=window.MBMArcadeHooks,before=h.state().physicsCount;window.__RV.autopilot(true);h.testStep(600);const s=window.RallyVector3D.getState();return{battery:window.MBMArcade.battery,steps:h.state().physicsCount-before,time:s.time,pose:s.car}});runs.push(observed);
+      }
+      const value={runs,identical:JSON.stringify(runs[0].pose)===JSON.stringify(runs[1].pose)&&runs[0].time===runs[1].time};
+      check('Battery leaves real fixed-step physics identical',value,x=>x.identical&&x.runs.every(r=>r.steps===600)&&!x.runs[0].battery&&x.runs[1].battery,{...value,identical:false});
+      await page.evaluate(()=>window.RallyVector3D.returnToMenu());await page.locator('#startBtn').click();await page.evaluate(()=>{window.__RV.skipCountdown();window.__RV.autopilot(true)});
+      const before=await state(page),at=Date.now();await page.waitForTimeout(2000);const after=await state(page),elapsed=Date.now()-at;
+      const render={frames:after.renderCount-before.renderCount,seconds:elapsed/1000,physics:after.physicsCount-before.physicsCount,fps:(after.renderCount-before.renderCount)*1000/elapsed};
+      check('Battery caps render frequency while physics advances',render,x=>x.frames>0&&x.fps<=31&&x.physics>x.frames,{...render,fps:60});report.measurements.battery={...value,render};
+      await more(page);await page.getByRole('button',{name:/^Battery/}).click();await done(page);
+    });
     await section('comfort frame cost and spectrum',async()=>{
       await start(page);await more(page);await click(page,'as1-comfort','Comfort');const warm=page.getByRole('button',{name:'Warm screen',exact:true});
       const defaults=await warm.getAttribute('aria-pressed');check('Warm screen off by default',defaults,x=>x==='false','true');await done(page);
@@ -189,20 +207,25 @@ async function main(){
       if(!graph)unmeasured('sound output spectrum','Pilot did not expose its actual master low-pass graph');else{report.measurements.filterResponse=graph;check('actual low-pass frequency response',graph,x=>x.type==='lowpass'&&x.gain[0]>.9&&x.gain[1]>.9&&x.gain[2]>.8&&x.gain[4]<.5&&x.gain[5]<.2,{...graph,gain:graph.gain.map(()=>1)});const spectrum=await require('./audio-spectrum.cjs').measure(page);report.measurements.soundSpectrum=spectrum;if(spectrum.csv)fs.writeFileSync(path.join(OUT,'sound-spectrum.csv'),spectrum.csv);if(spectrum.status==='UNMEASURED')unmeasured('sound output spectrum',spectrum.reason);else check('sound output spectrum with actual filter mutation',spectrum,x=>x.status==='PASS'&&x.control.red&&x.control.green,{...spectrum,status:'FAIL'})}
       const mic=changed.toString().includes('getUserMedia');report.measurements.microphone=mic?'source call present; permission denied run required':'not present on the pilot';if(mic)unmeasured('microphone denied permission','Pilot contains getUserMedia; this harness has not proven its denied path');else check('microphone absent from pilot source',mic,x=>x===false,true);await done(page);
     });
-    await section('existing playability checks',async()=>{const result=await page.evaluate(async()=>window.RallyVector3D.runSelfTests());report.measurements.selfTests=result;check('existing Rally self tests',result,x=>x.pass===true&&x.results.length>0&&x.results.every(r=>r.pass),{...result,pass:false});});
+    await section('existing playability checks',async()=>{
+      const result=await page.evaluate(async()=>window.RallyVector3D.runSelfTests());report.measurements.selfTests=result;check('existing Rally self tests at 390px',result,x=>x.pass===true&&x.results.length>0&&x.results.every(r=>r.pass),{...result,pass:false});
+      const c=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});
+      try{const p=await boot(c,origin+'/baseline/rallyvector3d/');const baseline=await p.evaluate(()=>window.RallyVector3D.runSelfTests());report.measurements.baselineSelfTests=baseline;check('baseline Rally self tests at 390px',baseline,x=>x.pass===true&&x.results.length>0&&x.results.every(r=>r.pass),{...baseline,pass:false});}finally{await c.close()}
+      await viewport(page,1280);const wide=await page.evaluate(()=>window.RallyVector3D.runSelfTests());report.measurements.wideSelfTests=wide;check('existing Rally self tests at 1280px',wide,x=>x.pass===true&&x.results.length>0&&x.results.every(r=>r.pass),{...wide,pass:false});await viewport(page,390);
+    });
     await section('ghost real run',async()=>{
       if(report.hardStop){unmeasured('ghost proof','Stopped after state loss control');return}
       await start(page);const available=await page.evaluate(()=>({samples:typeof window.MBMArcadeHooks.ghostSamples==='function',bounds:typeof window.MBMArcadeHooks.ghostBounds==='function',link:typeof window.MBMArcadeHooks.ghostLink==='function'}));
       if(!available.samples||!available.bounds||!available.link){unmeasured('ghost real run','Geometry recording, map bounds, and link hooks are not all available');return}
       const lengths=[];let lastObserved;
       for(const seconds of [15,45,90]){
-        await page.evaluate(n=>{window.__RV.autopilot(true);window.MBMArcadeHooks.testStep(n)},(seconds-(lengths.at(-1)?.seconds||0))*60);
+        await page.evaluate(seconds=>{const h=window.MBMArcadeHooks;if(seconds===90){window.__RV.autopilot(false);window.RallyVector3D.setInput({throttle:0,brake:1});h.testStep(35*60);window.RallyVector3D.setInput({brake:0});window.__RV.autopilot(true);h.testStep(10*60);}else{window.__RV.autopilot(true);h.testStep((seconds===15?15:30)*60);}},seconds);
         const observed=await page.evaluate(async()=>({samples:window.MBMArcadeHooks.ghostSamples(),bounds:window.MBMArcadeHooks.ghostBounds(),link:await window.MBMArcadeHooks.ghostLink(),state:window.MBMArcadeHooks.state()}));lastObserved=observed;
         lengths.push({seconds,length:observed.link.length,encodedLength:observed.link.split('#ghost=')[1].length,samples:observed.samples.length,last:observed.samples.at(-1),link:observed.link,bounds:observed.bounds});
         const sample={samples:observed.samples.length,physicsCount:observed.state.physicsCount,linkLength:observed.link.length,form:observed.link.includes('#ghost=')};
         check(seconds+'s geometry recording',sample,x=>x.samples===seconds*10&&x.physicsCount>=seconds*60&&x.form,{...sample,samples:0});
       }
-      report.measurements.ghost={runs:lengths};fs.writeFileSync(path.join(OUT,'ghost-runs.json'),JSON.stringify({runs:lengths,recordedSamples:lastObserved.samples},null,2));
+      report.measurements.ghost={runs:lengths,protocol:'Real Alpine physics: autopilot to 45 seconds, brake from 45 to 80 seconds, then drive to 90 seconds. This avoids ending the lap before the 90-second sample; no sample is invented or appended after finish.'};fs.writeFileSync(path.join(OUT,'ghost-runs.json'),JSON.stringify({runs:lengths,recordedSamples:lastObserved.samples},null,2));
       const textControl=await page.evaluate(async()=>{const h=window.MBMArcadeHooks,s=h.ghostSamples();try{await window.MBMGhost.encode([{...s[0],name:'Unwanted free text'}],h.ghostBounds());return false}catch{return true}});check('ghost rejects free text payload field',textControl,x=>x===true,false);
       const clean=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});
       try{
@@ -225,6 +248,26 @@ async function main(){
         check('one-byte corrupt ghost fails cleanly; race still drives',observation,x=>x.ghost===null&&x.mode==='running'&&!x.paused&&x.moved,{...observation,ghost:{x:0,y:0,z:0}});
       }finally{await badContext.close()}
       unmeasured('chat client paste','No link-shortening chat client round trip was performed');
+    });
+    await section('bounded actual Alpine completion',async()=>{
+      // The expected count comes from the same Track checkpoint definition
+      // the game executes; this is not a hand-entered five-checkpoint claim.
+      const definition=changed.toString().match(/this\.checkpoints\s*=\s*(\[[^\]]+\])\s*\.map/);
+      if(!definition)throw Error('Could not derive checkpoint count from Track.build');
+      const expression=require('acorn').parseExpressionAt(definition[1],0,{ecmaVersion:'latest'});
+      if(expression.type!=='ArrayExpression'||expression.elements.some(e=>e.type!=='Literal'||!Number.isFinite(e.value)))throw Error('Checkpoint definition is not a numeric array');
+      const expectedCheckpoints=expression.elements.length,trace=[],began=Date.now(),ceilingSeconds=600;
+      await start(page);await page.evaluate(()=>window.__RV.autopilot(true));
+      let observed=await page.evaluate(()=>window.RallyVector3D.getState());
+      for(let chunk=0;chunk<ceilingSeconds/5&&Date.now()-began<120000&&observed.mode==='running';chunk++){
+        observed=await page.evaluate(()=>{window.MBMArcadeHooks.testStep(300);return window.RallyVector3D.getState()});
+        trace.push({time:observed.time,progress:observed.progress,checkpoints:observed.nextCheckpoint,mode:observed.mode,speed:observed.car?.speed,damage:observed.car?.damage});
+      }
+      await page.evaluate(()=>window.__RV.autopilot(false));
+      const value={mode:observed.mode,progress:observed.progress,checkpoints:observed.nextCheckpoint,expectedCheckpoints,time:observed.time,simulatedCeilingSeconds:ceilingSeconds,wallElapsedMs:Date.now()-began,trace};
+      report.measurements.completion=value;
+      check('Alpine completes through actual input and fixed-step physics',value,x=>x.mode==='finished'&&x.progress>=1&&x.checkpoints===x.expectedCheckpoints&&x.expectedCheckpoints>0,{...value,mode:'running',progress:.999,checkpoints:Math.max(0,expectedCheckpoints-1)});
+      if(value.mode!=='finished')unmeasured('completion beyond bounded autopilot run','The existing autopilot did not finish within 600 simulated seconds / 120 wall seconds. This does not prove the game cannot be completed by a pupil.');
     });
     await section('one-tap exit in every shell state',async()=>{
       const exits=[];

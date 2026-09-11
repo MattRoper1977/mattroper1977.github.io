@@ -18,7 +18,7 @@
     "errors": [],
     "path": "novasiege/index.html",
     "prior_determinism_evidence": "player.x/y/aimAngle are one per-frame object. beginRun preserves the actual selectedSeed for retry and recreates player, RNG and wave plan; the VM executes those original functions and confirms two resets and 24 frame samples match by value. Missing-heading and wrong-seed controls fire. This keeps one selected game configuration repeatable; it does not claim that selecting Daily again on another date yields the same seed.",
-    "reason": "No complete exposed position-and-heading reader found in the served game API; source-VM proof is retained but is insufficient for this browser harness.",
+    "reason": "No complete position-and-heading reader and input driver has been established in this probe. This is unmeasured harness coverage, not evidence that the game has no exposed API; prior source-VM proof is retained.",
     "repository": "Site",
     "route": "/novasiege/"
   },
@@ -41,30 +41,45 @@
     "errors": [],
     "path": "neonturf/index.html",
     "prior_determinism_evidence": "Original Match constructor and resetPositions restore gameplay geometry; original updateCar updates position and heading in one Car. Exact seed input and fixed foundry arena replay by value; both firing controls fired.",
-    "reason": "No complete exposed position-and-heading reader found in the served game API; source-VM proof is retained but is insufficient for this browser harness.",
+    "reason": "No complete position-and-heading reader and input driver has been established in this probe. This is unmeasured harness coverage, not evidence that the game has no exposed API; prior source-VM proof is retained.",
     "repository": "Site",
     "route": "/neonturf/"
   },
   {
-    "api": {
-      "charcoal": true,
-      "grid": false,
-      "meridian": false,
-      "sky": false,
-      "slip": false,
-      "turf": false,
-      "vector": false
-    },
     "boot": {
       "body": "AFTERLIGHT · MADE BY MATT\nCLUTCH INK\nMADE BY MATT\nLEARN · BUILD · EXPLORE\ntap to skip\n←",
       "canvas": true
     },
-    "canDrive": false,
+    "canDrive": true,
     "delivery": "inline_copy",
+    "drive": {
+      "after": {
+        "facingX": 0.9985407687338002,
+        "facingY": -0.054003084879580276,
+        "heading": -0.054029367884722464,
+        "x": 177.51332624547948,
+        "y": 336.35908520632677
+      },
+      "before": {
+        "facingX": 0,
+        "facingY": 1,
+        "heading": 1.5707963267948966,
+        "x": 130.1798939798865,
+        "y": 338.9189720335039
+      },
+      "deterministic": true,
+      "inputAccepted": true,
+      "inputControl": "same seed and ticks without pointer input must fail movement assertion",
+      "inputSource": "existing canvas pointerdown handler; actual CH.tick with headless:false",
+      "moved": true,
+      "noInputMoved": false,
+      "poseSource": "CH.S.player x/y and facing vector _fx/_fy"
+    },
     "errors": [],
+    "headingControl": "removed field RED; restored field GREEN",
+    "motionControl": "identical before/after RED; observed moved pose GREEN",
     "path": "Games/Charcoal.html",
     "prior_determinism_evidence": "Existing explicit seeded entry reproduces full state and a 60-tick trace twice. Original-source VM control changes initializer _fx:0 to _fx:1 and reddens reset comparison; restored original greens. No claim normal Play already chooses a repeatable seed. See charcoal_vm.json.",
-    "reason": "No complete exposed position-and-heading reader found in the served game API; source-VM proof is retained but is insufficient for this browser harness.",
     "repository": "Lessons",
     "route": "/Lessons/Games/Charcoal.html"
   },
@@ -87,7 +102,7 @@
     "errors": [],
     "path": "Games/Globe_Snake (1).html",
     "prior_determinism_evidence": "We.P contains spherical player position and We.T its tangent heading vector. Mh initializes both; Sh updates both on the same entity. Original Fr reset, Jg/t0 orb schedule, Mh player and relayPlace target run twice in the same VM at explicit seed 12345; equal world and 60-step trace.",
-    "reason": "No complete exposed position-and-heading reader found in the served game API; source-VM proof is retained but is insufficient for this browser harness.",
+    "reason": "No complete position-and-heading reader and input driver has been established in this probe. This is unmeasured harness coverage, not evidence that the game has no exposed API; prior source-VM proof is retained.",
     "repository": "Lessons",
     "route": "/Lessons/Games/Globe_Snake (1).html"
   },
@@ -111,8 +126,6 @@
         "tr": 11
       },
       "before": {
-        "_v6px": 9,
-        "_v6py": 13,
         "c": 9,
         "dir": 3,
         "moving": false,
@@ -150,7 +163,7 @@
     "errors": [],
     "path": "Games/Slipstream.html",
     "prior_determinism_evidence": "qe.x/z/hd is the player object: br initializes all three; vc updates them; hg reads them to place and rotate the car. Actual Ec reset invokes original seeded Jm(Rt) and br; world, start grid and 60 source-motion steps reproduce twice in one VM at explicit seed 12345.",
-    "reason": "No complete exposed position-and-heading reader found in the served game API; source-VM proof is retained but is insufficient for this browser harness.",
+    "reason": "No complete position-and-heading reader and input driver has been established in this probe. This is unmeasured harness coverage, not evidence that the game has no exposed API; prior source-VM proof is retained.",
     "repository": "Lessons",
     "route": "/Lessons/Games/Slipstream.html"
   },
@@ -200,7 +213,7 @@
     "errors": [],
     "path": "neonbreach/index.html",
     "prior_determinism_evidence": "One player object carries live position and heading. Original-source reset/core-start and field-removal control passed.",
-    "reason": "No complete exposed position-and-heading reader found in the served game API; source-VM proof is retained but is insufficient for this browser harness.",
+    "reason": "No complete position-and-heading reader and input driver has been established in this probe. This is unmeasured harness coverage, not evidence that the game has no exposed API; prior source-VM proof is retained.",
     "repository": "Site",
     "route": "/neonbreach/"
   },
@@ -247,7 +260,7 @@
   },
   {
     "boot": {
-      "body": "/ 5\n215 credits · impact protection\nBrake package\nSPEC 0 / 5\n180 credits · braking force\nHaptics on\nCalm mode on\nHigh contrast off\nStage tour on\nRacing line on\nRALLY ATLAS\nFinish · podium · clean · vector\nAlpine Pass\n☆☆☆☆\nROUTE UNSEALED\nSahara Run\n☆☆☆☆\nROUTE UNSEALED\nNordic Night\n☆☆☆☆\nROUTE UNSEALED\nCliffline Dash\n☆☆☆☆\nROUTE UNSEALED\nTimberline Loop\n☆☆☆☆\nROUTE UNSEALED\nCopper Canyon\n☆☆☆☆\nROUTE UNSEALED\nCONTROLS & ACCESSIBILITY\nSTART RALLY EVENT\nSTART STAGE\n⚡ COMMIT TO THE LINE\nV6 · RV60 SEALED\n←",
+      "body": "0 / 5\n215 credits · impact protection\nBrake package\nSPEC 0 / 5\n180 credits · braking force\nHaptics on\nCalm mode on\nHigh contrast off\nStage tour on\nRacing line on\nRALLY ATLAS\nFinish · podium · clean · vector\nAlpine Pass\n☆☆☆☆\nROUTE UNSEALED\nSahara Run\n☆☆☆☆\nROUTE UNSEALED\nNordic Night\n☆☆☆☆\nROUTE UNSEALED\nCliffline Dash\n☆☆☆☆\nROUTE UNSEALED\nTimberline Loop\n☆☆☆☆\nROUTE UNSEALED\nCopper Canyon\n☆☆☆☆\nROUTE UNSEALED\nCONTROLS & ACCESSIBILITY\nSTART RALLY EVENT\nSTART STAGE\n⚡ COMMIT TO THE LINE\nV6 · RV60 SEALED",
       "canvas": true
     },
     "canDrive": true,
@@ -300,9 +313,9 @@
     "delivery": "shared_src",
     "drive": {
       "after": {
-        "angle": -0.7772943949812362,
-        "x": 466.367825556599,
-        "y": 564.0024453894453
+        "angle": -0.7747972907587864,
+        "x": 468.15447397894513,
+        "y": 562.2505056522624
       },
       "before": {
         "angle": -0.8102045033610834,
@@ -338,7 +351,7 @@
     "errors": [],
     "path": "skybreak/index.html",
     "prior_determinism_evidence": "Position and full orientation live on one player object; the game itself computes heading from that quaternion. Original reset/initial scouts repeat by value and removing player.q fires.",
-    "reason": "No complete exposed position-and-heading reader found in the served game API; source-VM proof is retained but is insufficient for this browser harness.",
+    "reason": "No complete position-and-heading reader and input driver has been established in this probe. This is unmeasured harness coverage, not evidence that the game has no exposed API; prior source-VM proof is retained.",
     "repository": "Site",
     "route": "/skybreak/"
   }
