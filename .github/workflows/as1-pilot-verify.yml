@@ -44,6 +44,7 @@ jobs:
       - run: python tools/render_arcade_pilot.py --check
       - run: python tools/as1/source-revision-controls.py
       - run: node tools/as1/codec-controls.cjs
+      - run: python tools/as1/storage-source-controls.py
       - run: node tools/as1/storage-controls.cjs
       - run: node tools/as1/storage-verify.cjs --self-test
       - run: node tools/as1/probe.cjs
@@ -79,3 +80,23 @@ jobs:
       - name: Existing checker on original baseline, unchanged
         if: always()
         run: node tools/as1/run-baseline-stage.cjs
+
+  source-gates:
+    name: Unchanged AS1 regression and placeholder gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # Exact independent G1 gate source, including its firing controls.
+      - run: git fetch --no-tags --depth=1 origin f6b7814836fe5cecbd91ff2a530fd8362ab8f734
+      - run: node tools/as1/run-source-gates.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: as1-source-gate-evidence
+          path: audit-output/as1/static-gates
+          if-no-files-found: error
+          retention-days: 7

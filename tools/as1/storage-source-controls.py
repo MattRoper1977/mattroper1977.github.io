@@ -35,3 +35,16 @@ assert census.pilot_hook_range('Site','rallyvector3d/index.html',inline.replace(
 print('RED one-byte pilot hook mutation cannot claim generated component ownership')
 assert census.pilot_hook_range('Site','rallyvector3d/index.html',inline)
 print('GREEN pilot hook region restored')
+
+# Real reviewed fixture bytes leave the runtime-owner list only on exact match.
+fixture='domain-split/play/check-save-ui.cjs'
+raw=(census.ROOT/fixture).read_bytes()
+assert census.purpose(fixture,'Site',raw)=='reviewed-browser-test-fixture'
+print('GREEN actual Playwright save-fixture writes are not independent surface ownership')
+assert census.purpose(fixture,'Site',raw+b'\n')=='browser-source-candidate'
+print('RED a one-byte fixture change loses the reviewed use-site classification')
+assert census.purpose(fixture,'Site',raw)=='reviewed-browser-test-fixture'
+print('GREEN exact reviewed fixture bytes restored')
+runtime='domain-split/play/play.js'
+assert census.purpose(runtime,'Site',(census.ROOT/runtime).read_bytes())=='browser-source-candidate'
+print('GREEN adjacent published Play script retains runtime ownership')
