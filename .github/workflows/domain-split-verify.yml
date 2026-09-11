@@ -85,6 +85,8 @@ jobs:
         run: |
           python domain-split/build_education.py --self-test
           python domain-split/build_education.py --lessons .sources/Lessons --apps .sources/Apps
+      - name: Prove AS1 authoring files cannot leak into education
+        run: python tools/as1/education-input-controls.py
       - name: Verify publication separation and retained education
         run: |
           python domain-split/check_publications.py

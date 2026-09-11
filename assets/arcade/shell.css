@@ -1,0 +1,37 @@
+/* Values use the estate token layer; layout dimensions are measured by AS1. */
+#as1-shell{--as1-bg:var(--mbm-primary);--as1-ink:var(--mbm-bg);--as1-accent:var(--mbm-format-html);position:fixed;inset:0 0 auto;z-index:2147483647;background:var(--as1-bg);color:var(--as1-ink);font:1rem/1.4 var(--mbm-font);padding:env(safe-area-inset-top,0px) .5rem 0}
+#as1-bar{display:flex;gap:.5rem;align-items:stretch;min-height:calc(var(--mbm-tap) + 1rem);padding:.5rem 0}
+#as1-shell button,#as1-shell a{touch-action:manipulation;min-width:var(--mbm-tap);min-height:var(--mbm-tap);font:inherit;letter-spacing:normal;text-transform:none;box-shadow:none;opacity:1}
+#as1-shell .as1-control{display:flex;flex-direction:column;justify-content:center;align-items:center;flex:1 0 auto;gap:.125rem;background:var(--as1-bg);color:var(--as1-ink);border:2px solid transparent;border-radius:var(--mbm-card-radius);padding:.25rem .5rem;text-decoration:none;white-space:nowrap;font-size:.875rem;line-height:1.25}
+#as1-shell #mbmexit-back{position:static;width:auto;height:auto;border:2px solid currentColor;border-radius:var(--mbm-card-radius);margin-right:auto;flex:0 0 auto;backdrop-filter:none;-webkit-backdrop-filter:none}
+#as1-shell #as1-pause{margin-left:.5rem}
+#as1-shell .as1-icon{display:block;width:1.5rem;height:1.5rem;font-size:1.25rem;line-height:1.5rem;text-align:center}
+#as1-shell .as1-control[aria-pressed=true],#as1-shell .as1-control[aria-expanded=true]{border-color:var(--as1-accent);background:var(--as1-ink);color:var(--as1-bg)}
+#as1-shell .as1-control[aria-pressed=true] .as1-icon:after{content:'✓';font-size:.75rem;position:absolute;margin-left:.125rem}
+#as1-shell button:disabled{cursor:default;border-style:dashed}
+#as1-shell :focus-visible{outline:var(--mbm-focus);outline-offset:2px}
+#as1-shell [hidden]{display:none!important}
+#as1-shell.as1-wide .as1-control{flex:0 0 auto;flex-direction:row;gap:.5rem}
+#as1-shell.as1-wide #as1-battery{margin-left:auto}
+#as1-panel{position:fixed;inset:auto .5rem .5rem;max-height:calc(100dvh - var(--as1-band) - 1rem);overflow:auto;background:var(--as1-bg);color:var(--as1-ink);border:2px solid var(--as1-ink);border-radius:var(--mbm-card-radius);padding:1rem;max-width:36rem;margin-inline:auto;box-shadow:var(--mbm-shadow)}
+#as1-panel h2{font:700 1.25rem/1.4 var(--mbm-font);margin:0 0 1rem}
+#as1-panel p{font:inherit;margin:.75rem 0}
+#as1-panel button{display:flex;align-items:center;justify-content:space-between;gap:.75rem;width:100%;background:var(--as1-bg);color:var(--as1-ink);border:1px solid var(--as1-ink);border-radius:var(--mbm-card-radius);padding:.5rem .75rem;margin:.5rem 0}
+#as1-panel button[aria-pressed=true]{background:var(--as1-ink);color:var(--as1-bg);border:3px solid var(--as1-accent)}
+#as1-panel button[aria-pressed=true]:after{content:'✓'}
+#as1-panel textarea{font:1rem/1.5 ui-monospace,monospace;width:100%;min-height:6rem;background:var(--as1-ink);color:var(--as1-bg);padding:.5rem;border:2px solid var(--as1-accent);border-radius:var(--mbm-card-radius)}
+#as1-status{min-height:1.5em}
+#as1-held{position:absolute;inset:0;display:grid;place-items:start center;padding-top:1rem;background:rgba(0,0,0,.55);color:var(--mbm-bg);font:700 1.5rem var(--mbm-font);z-index:2147482900;pointer-events:none}
+#as1-held[hidden],#as1-warm[hidden]{display:none}
+#as1-warm{position:fixed;inset:var(--as1-band) 0 0;pointer-events:none;z-index:2147482950;background:rgba(242,162,74,.12)}
+html.as1-mounted #app{top:var(--as1-band);height:calc(100% - var(--as1-band))}
+@media (orientation:portrait) and (pointer:coarse),(orientation:portrait) and (any-pointer:coarse),(orientation:portrait) and (max-width:720px){
+  html.as1-mounted body #gl,html.as1-mounted body #vignette,html.as1-mounted body #lensFx,html.as1-mounted body #hud,html.as1-mounted body #v6-route-layer{height:calc(100dvh - var(--as1-band) - var(--v6-tray-h) - var(--safeB))!important}
+  html.as1-mounted body:not([data-v6-driving="true"]) #gl,html.as1-mounted body:not([data-v6-driving="true"]) #vignette,html.as1-mounted body:not([data-v6-driving="true"]) #lensFx,html.as1-mounted body:not([data-v6-driving="true"]) #hud,html.as1-mounted body:not([data-v6-driving="true"]) #v6-route-layer{height:calc(100dvh - var(--as1-band))!important}
+}
+html.as1-mounted #pauseBtn,html.as1-mounted #muteBtn,html.as1-mounted #v6-pause{display:none!important}
+html.as1-mounted #as1-held:not([hidden])~*{pointer-events:none}
+html[data-as1-held=true] #app > :not(canvas):not(#as1-held):not(#vignette){visibility:hidden}
+@media(prefers-reduced-motion:reduce){#as1-shell *{animation:none;transition:none}}
+
+html.as1-mounted #menu #mbmexit-home{position:static;display:inline-flex;align-items:center;justify-content:center;min-width:var(--mbm-tap);min-height:var(--mbm-tap);width:max-content;max-width:100%;margin:0 0 1rem;padding:.5rem .75rem;touch-action:manipulation}

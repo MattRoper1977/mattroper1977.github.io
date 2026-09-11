@@ -1,0 +1,117 @@
+name: AS1 pilot harness and controls
+on:
+  pull_request:
+    paths:
+      - 'tools/as1/**'
+      - '.github/workflows/as1-pilot-verify.yml'
+      - 'hyperdraft/index.html'
+      - 'rallyvector3d/index.html'
+      - 'assets/arcade/**'
+      - 'tools/render_arcade_pilot.py'
+      - 'data/as1-*.json'
+      - 'tools/verify_no_shipped_placeholders.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  storage-ownership:
+    name: Actual storage ownership registry
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # AS1-H authority pinned on 2026-09-11: contains the immutable 51-conflict registry blob.
+      - run: git fetch --no-tags --depth=1 origin 816ce3cbb745a1e798fdb3bb50d84644d6638f40
+      - run: node tools/as1/storage-verify.cjs --self-test
+      - run: node tools/as1/storage-verify.cjs data/as1-storage-registry.json
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          # Lessons source baseline pinned on 2026-09-11 for reproducible AS1 verification.
+          ref: aad04718c11a2396ecf323a662f55bf0e0c2441b
+          path: .sources/Lessons
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock playwright@1.55.0 acorn@8.15.0
+      - run: npx playwright install --with-deps chromium
+      # Original Site baseline pinned on 2026-09-11; required for a real before/after comparison.
+      - run: git fetch --no-tags --depth=1 origin 85e3e02059c3e3314eddab03d6e3c842f0da7ec7
+      # AS1-H authority pinned on 2026-09-11: supplies the immutable storage baseline ceiling.
+      - run: git fetch --no-tags --depth=1 origin 816ce3cbb745a1e798fdb3bb50d84644d6638f40
+      - run: python tools/render_arcade_pilot.py --check
+      - run: python tools/as1/source-revision-controls.py
+      - run: node tools/as1/codec-controls.cjs
+      - run: python tools/as1/storage-source-controls.py
+      - run: node tools/as1/storage-controls.cjs
+      - run: node tools/as1/storage-verify.cjs --self-test
+      - run: node tools/as1/probe.cjs
+      - run: node tools/as1/verify-pilot.cjs
+      - name: Regenerate the canonical pin-dependency record
+        if: always()
+        run: python tools/as1/refresh-pin-record.py
+      - name: Refresh the read-only storage census from the exact checked-out sources
+        if: always()
+        run: python tools/as1/storage-census.py --lessons .sources/Lessons
+      - name: Preserve measured data and rendered evidence
+        if: always()
+        run: node tools/as1/export-evidence.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: as1-pilot-evidence
+          path: audit-output/as1
+          if-no-files-found: error
+          retention-days: 7
+  legacy-stages:
+    name: Existing six-stage checker on current and baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      # Original Site baseline pinned on 2026-09-11 for the unchanged legacy checker.
+      - run: git fetch --no-tags --depth=1 origin 85e3e02059c3e3314eddab03d6e3c842f0da7ec7
+      - name: Existing checker on current pilot, unchanged
+        run: node tools/driving-games/verify_new_stages.mjs
+      - name: Existing checker on original baseline, unchanged
+        if: always()
+        run: node tools/as1/run-baseline-stage.cjs
+
+  source-gates:
+    name: AS1 regression and rendered-placeholder gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # Pinned on 2026-09-11: independent G1 gate source, including its firing controls.
+      - run: git fetch --no-tags --depth=1 origin f6b7814836fe5cecbd91ff2a530fd8362ab8f734
+      - run: npm install --no-save --no-package-lock playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - run: node tools/as1/run-source-gates.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: as1-source-gate-evidence
+          path: audit-output/as1/static-gates
+          if-no-files-found: error
+          retention-days: 7

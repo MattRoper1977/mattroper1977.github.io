@@ -1,0 +1,33 @@
+AS1 cartridge and telemetry libraries — 2026-09-11
+
+Scope: assets/arcade/cartridge.js and assets/arcade/ghost.js expose inert library APIs. Loading them registers the APIs only. They do not inspect the DOM, open panels, start a game, enumerate or write storage, import a save, add an autosave, or create a second save authority.
+
+Cartridge pipeline: JSON.stringify → TextEncoder UTF-8 bytes → deflate-raw → version/kind/checksum envelope → URL-safe base64 → reversible case-safe display alphabet → ASCII hyphen groups. Encode returns a Promise; decode validates and returns a value synchronously. The envelope has version byte 1, kind byte 1 for cartridge JSON or 2 for geometry, a four-byte CRC32 over the compressed bytes, and the compressed payload. CRC32 detects accidental corruption; it is not authentication or an attainment claim.
+
+Base64 is case-sensitive. Directly uppercasing a base64 string loses information. The display layer first escapes uppercase letters as 0 plus their lowercase form, literal 0 as 00, URL-safe minus as 01, and underscore as 02; ordinary lowercase letters and digits 1–9 remain themselves. The escaped string can then be displayed in uppercase and grouped using ASCII hyphens. Decode maps Unicode Dash characters, soft hyphen and hyphen bullet to ASCII hyphen, removes Unicode whitespace including non-breaking space, folds case, removes grouping hyphens, reverses the escape layer, and only then validates the envelope checksum. URL-safe base64 is checked for canonical encoding, including unused padding bits.
+
+CompressionStream('deflate-raw') is tried when available. Unsupported or absent native compression uses the bundled pako 1.0.11 deflateRaw implementation. Decode uses pako's streaming raw inflater with a 16 KiB output chunk and aborts before retaining more than 2 MiB of inflated bytes. It rejects trailing compressed bytes and oversized compressed input. The 2 MiB limit is a transport resource cap, not a measured paper, clipboard or download threshold. The pilot supplies those display thresholds separately after measurement.
+
+Telemetry keeps the supplied quantise → pack → deflate-raw → URL-safe base64 pipeline. The accepted link form is #ghost=; the library accepts the encoded value after that prefix. The pilot owns fragment parsing and failure presentation. Each record has x, y, z and angle only. Extra fields, string positions, missing headings, out-of-bounds coordinates and invalid sample counts are refused. The six-byte packed header holds sample count and CRC32 of the six map-bound Float64 values in x/y/z, min/max order. Decode refuses a mismatching bounds checksum instead of silently remapping the geometry to another map extent. Bounds must come from the pilot's map, never fixture numbers copied into the adapter.
+
+Each position axis uses an unsigned 16-bit value; maximum quantization error is the axis range divided by 131070. The heading uses 256 wrapped positions; maximum angular error is pi/256 radians. The sample rate is 10 Hz, with at most 900 samples. These are geometry transport definitions. The codec fixture is not a recorded pilot run and does not establish 15/45/90-second real-track lengths or a rendered-path result.
+
+Control command: node tools/as1/codec-controls.cjs
+
+Observed locally on Node v24.19.0: 29 deliberate RED controls and 21 GREEN checks. Native raw compression worked. A separate fresh context had CompressionStream explicitly disabled, called pako, and restored the accented, Japanese and emoji JSON identically. Removing that fallback deliberately failed before restoration. A runtime whose native raw format is unsupported reports that fact and tests its fallback; it does not label fallback as native compression.
+
+Hyphen form: wrong-character RED, restored-identically GREEN.
+En-dash form: wrong-character RED, restored-identically GREEN.
+Spaces around groups, including non-breaking spaces: wrong-character RED, restored-identically GREEN.
+Lowercase form: wrong-character RED, restored-identically GREEN.
+The Unicode normalization census accepted 33 distinct dash characters, including two explicitly supported additions. A genuine punctuation substitution was refused.
+
+Wrong-character control: decode refused before assignment, the simulated pupil state stayed byte-identical, and the input text stayed unchanged. A planted lost-state assertion fired RED. This library-only simulation does not claim the pilot's actual input panel or save adapter was exercised; the composed-page harness must prove those separately before enabling import.
+
+Envelope controls rejected a changed version, kind, checksum or compressed byte; noncanonical base64 padding bits; a valid-checksum stream with an extra trailing byte; inflated data over 2 MiB; malformed UTF-8; and malformed JSON. Restored envelopes, canonical encoding, UTF-8 JSON and the exact 2 MiB boundary were GREEN.
+
+Ghost controls rejected one corrupt hash byte, a wrong bounds checksum, count/length mismatch, extra name/message fields, a string position, an out-of-bounds point, and 901 samples. Original bounds, restored bytes and 900 samples were GREEN. The fixture's maximum errors were x 0.0015259021896696368, y 0.0002288853284504455, z 0.0038147554741669865, heading 0.012057805560844237 radians, all within the stated quantization tolerances; a planted displaced-path error fired RED. The corrupt-ghost runnable-state check is a simulation and does not substitute for the real pilot race proof.
+
+Save-adapter dependency handoff: existing domain-split/game-saves.js remains the owner of its validate, planImport, apply and rollback behavior, with game-storage-allowlist.json controlling its admitted keys. Existing domain-split/stub-handoff.js retains its reviewed Glitch-only entry and native receiver route. Neither file nor its routes, allowlist, keys or boot behavior is changed by this codec work. An adapter may call MBMCartridge.encode on a value it already owns, or decode a pupil-supplied code and pass the returned value to its own existing validator and atomic importer. A successful transport decode is not permission to import an arbitrary schema. The shell's pilot hook must validate before mutation and preserve existing state on failure. No unproved cross-game or old-origin import path is enabled here.
+
+Source basis: the bundled assets/arcade/vendor/pako-1.0.11.min.js and its retained license; the supplied telemetry artifact's pipeline; and the existing domain-split/game-saves.js and domain-split/stub-handoff.js call sites read for this handoff. No display size thresholds or live-browser installability claims come from these fixture controls.

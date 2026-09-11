@@ -65,6 +65,22 @@ def tracked(root):
 # and fell back to "Unconfirmed — preparation only" after the split.
 PUBLIC_TOOL_FILES = {'tools/index.html', 'tools/artsaward/SLOTS.json'}
 
+# AS1 build inputs, each reviewed by its generator/registry use site. These
+# new files are inlined into the one Play pilot or consumed only by tooling;
+# no education page fetches them. Existing published asset paths stay admitted.
+SITE_GENERATOR_INPUTS = {
+    'assets/arcade/cartridge.js',
+    'assets/arcade/ghost.js',
+    'assets/arcade/rally-hooks.js',
+    'assets/arcade/shell.css',
+    'assets/arcade/shell.js',
+    'assets/arcade/vendor/pako-1.0.11.min.js',
+    'assets/arcade/vendor/pako-LICENSE.txt',
+    'data/as1-pilot.json',
+    'data/as1-sizing.json',
+    'data/as1-storage-registry.json',
+}
+
 
 def public_file(path, public_tool_files=PUBLIC_TOOL_FILES):
     p = Path(path)
@@ -223,6 +239,7 @@ def build(output, lessons, apps=None, allow_sparse=False):
         report['sources'][name]=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()
         migrated=[]; copied=[]; changed=[]
         for relative in tracked(root):
+            if name == 'site' and relative in SITE_GENERATOR_INPUTS: continue
             if not public_file(relative) or excluded_asset((prefix or '/')+relative):continue
             p=root/relative
             if not p.is_file():

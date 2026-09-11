@@ -1,0 +1,86 @@
+[
+  {
+    "route": "/novasiege/",
+    "repository": "Site",
+    "path": "novasiege/index.html",
+    "delivery": "inline_copy",
+    "prior_determinism_evidence": "player.x/y/aimAngle are one per-frame object. beginRun preserves the actual selectedSeed for retry and recreates player, RNG and wave plan; the VM executes those original functions and confirms two resets and 24 frame samples match by value. Missing-heading and wrong-seed controls fire. This keeps one selected game configuration repeatable; it does not claim that selecting Daily again on another date yields the same seed."
+  },
+  {
+    "route": "/neonturf/",
+    "repository": "Site",
+    "path": "neonturf/index.html",
+    "delivery": "shared_src",
+    "prior_determinism_evidence": "Original Match constructor and resetPositions restore gameplay geometry; original updateCar updates position and heading in one Car. Exact seed input and fixed foundry arena replay by value; both firing controls fired."
+  },
+  {
+    "route": "/Lessons/Games/Charcoal.html",
+    "repository": "Lessons",
+    "path": "Games/Charcoal.html",
+    "delivery": "inline_copy",
+    "prior_determinism_evidence": "Existing explicit seeded entry reproduces full state and a 60-tick trace twice. Original-source VM control changes initializer _fx:0 to _fx:1 and reddens reset comparison; restored original greens. No claim normal Play already chooses a repeatable seed. See charcoal_vm.json."
+  },
+  {
+    "route": "/Lessons/Games/Globe_Snake (1).html",
+    "repository": "Lessons",
+    "path": "Games/Globe_Snake (1).html",
+    "delivery": "inline_copy",
+    "prior_determinism_evidence": "We.P contains spherical player position and We.T its tangent heading vector. Mh initializes both; Sh updates both on the same entity. Original Fr reset, Jg/t0 orb schedule, Mh player and relayPlace target run twice in the same VM at explicit seed 12345; equal world and 60-step trace."
+  },
+  {
+    "route": "/Lessons/Games/Grid_Chase.html",
+    "repository": "Lessons",
+    "path": "Games/Grid_Chase.html",
+    "delivery": "inline_copy",
+    "prior_determinism_evidence": "player.c/r/tc/tr/t provide current interpolated position through original entXY(player); player.dir provides heading. Original stepGrid updates that entity. genMaze(seed+level*101), seeded gameRandom and newRun/newLevel/spawnPlayer run twice in one VM at explicit seed 12345, with identical maze, player, hunters, relays and 60-step trace."
+  },
+  {
+    "route": "/Lessons/Games/Slipstream.html",
+    "repository": "Lessons",
+    "path": "Games/Slipstream.html",
+    "delivery": "shared_src",
+    "prior_determinism_evidence": "qe.x/z/hd is the player object: br initializes all three; vc updates them; hg reads them to place and rotate the car. Actual Ec reset invokes original seeded Jm(Rt) and br; world, start grid and 60 source-motion steps reproduce twice in one VM at explicit seed 12345."
+  },
+  {
+    "route": "/Lessons/Games/Slipstream_GP.html",
+    "repository": "Lessons",
+    "path": "Games/Slipstream_GP.html",
+    "delivery": "shared_src",
+    "prior_determinism_evidence": "state.player.mesh.position and state.player.mesh.rotation.y hold the player pose on one existing mesh. placeCarMesh writes them from the authoritative track samples after updatePlayer; updateRace calls it every frame. Original complete Track including buildMesh gate records, startRace and movement/reset functions executed twice in the same VM with explicit seed 12345 and a fresh default profile; identical track and 60-step pose trace."
+  },
+  {
+    "route": "/neonbreach/",
+    "repository": "Site",
+    "path": "neonbreach/index.html",
+    "delivery": "shared_src",
+    "prior_determinism_evidence": "One player object carries live position and heading. Original-source reset/core-start and field-removal control passed."
+  },
+  {
+    "route": "/neonmeridian/",
+    "repository": "Site",
+    "path": "neonmeridian/index.html",
+    "delivery": "inline_copy",
+    "prior_determinism_evidence": "One live player object has full pose and a source-derived deterministic fresh start. VM proves fixed canonical start and recovery from that start; future traffic and visited lastSafe are outside this start-state claim."
+  },
+  {
+    "route": "/rallyvector3d/",
+    "repository": "Site",
+    "path": "rallyvector3d/index.html",
+    "delivery": "inline_copy",
+    "prior_determinism_evidence": "One car object carries live pose; original Track plus resetStageState passes repeated reset by value and a removed heading assignment turns the measurement red."
+  },
+  {
+    "route": "/hyperdraft/",
+    "repository": "Site",
+    "path": "hyperdraft/index.html",
+    "delivery": "shared_src",
+    "prior_determinism_evidence": "One car object carries live pose; original source Track/PuddleManager/startRace repeat by value and removed car.angle assignment fires."
+  },
+  {
+    "route": "/skybreak/",
+    "repository": "Site",
+    "path": "skybreak/index.html",
+    "delivery": "inline_copy",
+    "prior_determinism_evidence": "Position and full orientation live on one player object; the game itself computes heading from that quaternion. Original reset/initial scouts repeat by value and removing player.q fires."
+  }
+]
