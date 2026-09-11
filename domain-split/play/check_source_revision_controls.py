@@ -38,7 +38,7 @@ def main():
             forged_context=copy.deepcopy(selected);forged_context[payload_path]['published_sha256']='0'*64
             red('Builder rejects invented reviewed context',lambda:build.refresh(output,source_revisions=forged_context))
             p=next(p for p in original['payloads'] if p['path']==payload_path)
-            wrong=copy.deepcopy(p);wrong['source_repository']='Site'
+            wrong=copy.deepcopy(p);wrong['source_repository']='Lessons' if p['source_repository']=='Site' else 'Site'
             red('Wrong source repository is rejected',lambda:revisions.select(wrong,roots))
             wrong=copy.deepcopy(p);wrong['source_path']='Games/Other.html'
             red('Wrong source path is rejected',lambda:revisions.select(wrong,roots))

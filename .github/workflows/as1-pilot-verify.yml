@@ -48,12 +48,6 @@ jobs:
       - run: node tools/as1/storage-verify.cjs --self-test
       - run: node tools/as1/probe.cjs
       - run: node tools/as1/verify-pilot.cjs
-      - name: Existing six-stage Rally playability and ghost check, unchanged
-        if: always()
-        run: node tools/driving-games/verify_new_stages.mjs
-      - name: Diagnose the unchanged six-stage check on the original baseline
-        if: always()
-        run: node tools/as1/run-baseline-stage.cjs
       - name: Refresh the read-only storage census from the exact checked-out sources
         if: always()
         run: python tools/as1/storage-census.py --lessons .sources/Lessons
@@ -67,3 +61,21 @@ jobs:
           path: audit-output/as1
           if-no-files-found: error
           retention-days: 7
+  legacy-stages:
+    name: Existing six-stage checker on current and baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      # Original Site baseline pinned on 2026-09-11 for the unchanged legacy checker.
+      - run: git fetch --no-tags --depth=1 origin 85e3e02059c3e3314eddab03d6e3c842f0da7ec7
+      - name: Existing checker on current pilot, unchanged
+        run: node tools/driving-games/verify_new_stages.mjs
+      - name: Existing checker on original baseline, unchanged
+        if: always()
+        run: node tools/as1/run-baseline-stage.cjs
