@@ -208,6 +208,7 @@ async function main(){
       const mic=changed.toString().includes('getUserMedia');report.measurements.microphone=mic?'source call present; permission denied run required':'not present on the pilot';if(mic)unmeasured('microphone denied permission','Pilot contains getUserMedia; this harness has not proven its denied path');else check('microphone absent from pilot source',mic,x=>x===false,true);await done(page);
     });
     await section('existing playability checks',async()=>{
+      await page.evaluate(()=>{window.MBMArcade.close();window.RallyVector3D.returnToMenu()});
       const result=await page.evaluate(async()=>window.RallyVector3D.runSelfTests());report.measurements.selfTests=result;check('existing Rally self tests at 390px',result,x=>x.pass===true&&x.results.length>0&&x.results.every(r=>r.pass),{...result,pass:false});
       const c=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});
       try{const p=await boot(c,origin+'/baseline/rallyvector3d/');const baseline=await p.evaluate(()=>window.RallyVector3D.runSelfTests());report.measurements.baselineSelfTests=baseline;check('baseline Rally self tests at 390px',baseline,x=>x.pass===true&&x.results.length>0&&x.results.every(r=>r.pass),{...baseline,pass:false});}finally{await c.close()}
@@ -268,6 +269,14 @@ async function main(){
       report.measurements.completion=value;
       check('Alpine completes through actual input and fixed-step physics',value,x=>x.mode==='finished'&&x.progress>=1&&x.checkpoints===x.expectedCheckpoints&&x.expectedCheckpoints>0,{...value,mode:'running',progress:.999,checkpoints:Math.max(0,expectedCheckpoints-1)});
       if(value.mode!=='finished')unmeasured('completion beyond bounded autopilot run','The existing autopilot did not finish within 600 simulated seconds / 120 wall seconds. This does not prove the game cannot be completed by a pupil.');
+    });
+    await section('six stages through real game API',async()=>{
+      const stages=await page.evaluate(()=>window.RallyVector3D.tracks.map(t=>t.id)),observations=[];
+      for(const id of stages){
+        const value=await page.evaluate(id=>{window.MBMArcade.close();window.RallyVector3D.debugStart(id);window.__RV.autopilot(true);window.MBMArcadeHooks.testStep(900);const state=window.RallyVector3D.getState();return{id,state,notes:window.__RV.noteCount(),record:window.__RV.recordGhost(state.time),restored:window.__RV.readGhost()};},id);observations.push(value);
+        check(id+' real-stage drive and existing ghost storage',value,x=>x.state.track===x.id&&x.state.mode==='running'&&x.state.progress>.10&&x.state.car.speed>8&&x.notes>=3&&x.record.recordedFrames>=10&&x.record.accepted&&x.record.stored>0&&x.restored.telemetry>0,{...value,record:{...value.record,accepted:false}});
+      }
+      report.measurements.sixStageAPI=observations;
     });
     await section('one-tap exit in every shell state',async()=>{
       const exits=[];

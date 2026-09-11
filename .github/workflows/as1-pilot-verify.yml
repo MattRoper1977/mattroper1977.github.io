@@ -50,6 +50,15 @@ jobs:
       - name: Existing six-stage Rally playability and ghost check, unchanged
         if: always()
         run: node tools/driving-games/verify_new_stages.mjs
+      - name: Diagnose the unchanged six-stage check on the original baseline
+        if: always()
+        run: node tools/as1/run-baseline-stage.cjs
+      - name: Refresh the read-only storage census from the exact checked-out sources
+        if: always()
+        run: python tools/as1/storage-census.py --lessons .sources/Lessons
+      - name: Preserve measured data and rendered evidence
+        if: always()
+        run: node tools/as1/export-evidence.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
