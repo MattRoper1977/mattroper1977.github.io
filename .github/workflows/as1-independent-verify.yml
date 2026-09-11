@@ -1,0 +1,38 @@
+name: AS1 independent Play publication checks
+on:
+  pull_request:
+    paths:
+      - 'domain-split/build_publications.py'
+      - 'domain-split/play/**'
+      - 'tools/verify_as1_play_manifest.py'
+      - '.github/workflows/as1-independent-verify.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: aad04718c11a2396ecf323a662f55bf0e0c2441b
+          path: .sources/Lessons
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install lxml
+      - name: Prove non-route allowlist and manifest-link controls
+        run: python tools/verify_as1_play_manifest.py --self-test
+      - name: Build unchanged game routes and verify emitted Play manifest
+        run: |
+          python domain-split/build_publications.py --lessons .sources/Lessons --output /tmp/as1-publication
+          python tools/verify_as1_play_manifest.py --output /tmp/as1-publication/games
+      - uses: actions/upload-artifact@v4
+        with:
+          name: as1-play-review
+          path: /tmp/as1-publication/games
+          if-no-files-found: error
+          retention-days: 7

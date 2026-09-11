@@ -21,6 +21,7 @@ from education_expansion import refresh_play
 from usage_discovery import refresh_play as refresh_play_usage
 from play.build import refresh as refresh_play_discovery
 from play.source_revisions import select as select_source_revision, registry as source_revision_registry
+from play.manifest import verify as verify_play_manifest
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -289,8 +290,11 @@ def main():
                          'source_sha256': sha(source), 'class': row['populationClass']})
     for directory in ['assets', 'images']:
         shutil.copytree(ROOT / directory, games / directory, dirs_exist_ok=True)
-    for name in ['hud.js', 'theme.js', 'styles.css', 'favicon.svg', 'apple-touch-icon.png']:
-        copy_file(ROOT / name, games, name)
+    # Root assets are not game routes. Keep their exact destination URLs in
+    # a use-site registry, including Play's own manifest (not education's).
+    root_assets = json.loads((HERE / 'play/root-assets.json').read_text())
+    for name, source in root_assets.items():
+        copy_file(ROOT / source, games, name)
     # Keep engines exact except for literal first-party host changes. Changes
     # are measured per file and reversible byte-for-byte for source comparison.
     transformed = []
@@ -390,6 +394,7 @@ def main():
                            'Review browser-save continuity before retiring old game routes.',
                            'Browser/gameplay and live cross-domain testing have not run.']}
     put(output, 'build-report.json', json.dumps(report, ensure_ascii=False, indent=2)+'\n')
+    verify_play_manifest(games)
     print(json.dumps({'status':report['status'],'counts':report['counts'],'output':str(output)},indent=2))
 
 

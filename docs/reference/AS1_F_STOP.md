@@ -1,3 +1,4 @@
+AS1-G correction: F-S1 below is withdrawn. Shared delivery does not require the inline generator. See AS1_G1_READBACK.md.
 AS1-F STOP RECORD — 2026-09-11
 AS1_PARTIAL
 Preserved prior work: draft Site #347 at db243188b25e9409ec8c55ecd1e72604b028a17f before this reporting commit. P0 gates/reference audits/pilot derivation, P1A census and P5 refusals/decisions remain intact.
