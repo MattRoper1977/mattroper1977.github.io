@@ -2,6 +2,7 @@
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const {execFileSync,spawnSync}=require('node:child_process');
 const ROOT=path.resolve(__dirname,'../..'),OUT=path.join(ROOT,'audit-output/as1/static-gates');
+// Pinned on 2026-09-11: independent G1 gate implementation, kept unchanged for comparison.
 const PIN='f6b7814836fe5cecbd91ff2a530fd8362ab8f734';
 fs.mkdirSync(OUT,{recursive:true});
 const gates=path.join(OUT,'gates'),fixture=path.join(OUT,'pilot');

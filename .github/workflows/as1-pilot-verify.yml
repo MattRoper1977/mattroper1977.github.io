@@ -49,6 +49,9 @@ jobs:
       - run: node tools/as1/storage-verify.cjs --self-test
       - run: node tools/as1/probe.cjs
       - run: node tools/as1/verify-pilot.cjs
+      - name: Regenerate the canonical pin-dependency record
+        if: always()
+        run: python tools/derive_pin_dependents.py --write
       - name: Refresh the read-only storage census from the exact checked-out sources
         if: always()
         run: python tools/as1/storage-census.py --lessons .sources/Lessons
@@ -90,7 +93,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      # Exact independent G1 gate source, including its firing controls.
+      # Pinned on 2026-09-11: independent G1 gate source, including its firing controls.
       - run: git fetch --no-tags --depth=1 origin f6b7814836fe5cecbd91ff2a530fd8362ab8f734
       - run: node tools/as1/run-source-gates.cjs
       - uses: actions/upload-artifact@v4
