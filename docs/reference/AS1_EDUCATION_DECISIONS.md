@@ -21,3 +21,5 @@ No attainment percentage, machine verification claim or machine-marked criterion
 
 D5 HUD AS A CUSTOM ELEMENT WITH AN INLINING BUILD STEP — NOT ADOPTED.
 The estate is buildless by choice and already has a generator. AS1 §2 measures drift detection; it does not authorize an architecture replacement.
+
+AS1-F F3.4 handoff, recorded only: the order reports that the education homepage lacks a manifest link. Its owning homepage order should add <link rel="manifest" href="/site.webmanifest"> after checking that manifest on the education origin. No education homepage edit or new live-link proof was performed here.
