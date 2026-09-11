@@ -53,6 +53,19 @@ class StructuralReplacement(unittest.TestCase):
         self.assertEqual(replace_first_element('<main>keep</main>', 'header', 'new'),
                          ('<main>keep</main>', 0))
 
+    def test_malformed_closing_tag_cannot_truncate_at_quoted_angle(self):
+        for tag in ('header', 'main'):
+            source = f'<{tag}>old</{tag} data-note=">"><p>keep</p>'
+            with self.subTest(tag=tag), self.assertRaisesRegex(ValueError, 'Malformed'):
+                replace_first_element(source, tag, f'<{tag}>new</{tag}>')
+
+    def test_template_cannot_supply_a_page_boundary(self):
+        for source in ('<template><header>inert</header></template><header>real</header>',
+                       '<header><template></header></template></header>',
+                       '<template/><header>ambiguous</header>'):
+            with self.subTest(source=source), self.assertRaisesRegex(ValueError, 'emplate'):
+                replace_first_element(source, 'header', '<header>new</header>')
+
 
 if __name__ == '__main__':
     unittest.main()
