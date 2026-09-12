@@ -8,9 +8,12 @@
      whole header into every published page. Appendix B forbids changing UX2's
      menu groups.
 
-     So this template does NOT restate that markup. Restating it would make a
-     second definition of the same thing that could drift from the record —
-     exactly what §0.4's one-name-per-thing rule exists to prevent — and it
-     would be typed rather than derived. The stamper reads the marker below and
-     leaves the published sheet to shared_navigation.py, which owns it. -->
-<!-- MBM-CHROME-DELEGATE: domain-split/shared_navigation.py header() -->
+     The wrapper now lives here, extracted byte-for-byte from the publisher at
+     Site bf7964758afd3d9e58e58ba58eb2048815917a09. shared_navigation.py reads
+     this fragment and still derives the three groups, pupil subset, theme
+     control and final Play link from the same records and rules. The title is
+     supplied once and used by both labels. Nothing is fetched at runtime. -->
+
+<!-- MBM-CHROME-FRAGMENT: published-education -->
+<details class="mbm-unified-menu"><summary aria-controls="mbm-navigation-panel"><span class="mbm-menu-icon" aria-hidden="true"></span>{{menu_title}}</summary><nav class="mbm-unified-panel" id="mbm-navigation-panel" aria-label="Site menu"><div class="mbm-menu-head"><p class="mbm-menu-title">{{menu_title}}</p><button type="button" class="mbm-menu-close" aria-label="Close menu"><span aria-hidden="true">×</span></button></div>{{groups}}</nav></details>
+<!-- /MBM-CHROME-FRAGMENT: published-education -->
