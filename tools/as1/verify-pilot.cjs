@@ -101,6 +101,10 @@ async function main(){
     await section('baseline',async()=>{const c=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});const p=await boot(c,origin+'/baseline/rallyvector3d/');report.measurements.baseline=await metrics(p,'baseline');report.measurements.baselineTab=await tabWalk(p,'baseline Tab walk');report.measurements.baselineExitTargets=[];for(const width of [390,768,1440]){await viewport(p,width);const value=await p.locator('#mbmexit-back').evaluate(e=>{const r=e.getBoundingClientRect();return{width:r.width,height:r.height}});report.measurements.baselineExitTargets.push({viewport:width,...value});check('baseline Exit target '+width,value,x=>x.width>=44&&x.height>=44,{width:0,height:0})}await viewport(p,390);report.measurements.baseline.runningCanvas=await p.evaluate(()=>{window.RallyVector3D.debugStart('alpine');const r=document.querySelector('#gl').getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,aspect:r.width/r.height}});await c.close()});
     context=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});page=await boot(context,origin+'/rallyvector3d/');
     await section('pilot boot',async()=>{const hook=await page.evaluate(()=>({hooks:!!window.MBMArcadeHooks,host:!!window.MBMArcade,webgl:window.RallyVector3D?.getState().webglError}));check('pilot hook and WebGL',hook,x=>x.hooks&&x.host&&x.webgl===0,{...hook,hooks:false});report.measurements.pilot=await metrics(page,'pilot');check('idle title draws zero frames',report.measurements.pilot,x=>x.clears===0,{...report.measurements.pilot,clears:1});report.measurements.pilotTab=await tabWalk(page,'pilot Tab walk');});
+    await section('frame scheduling',async()=>{
+      report.measurements.scheduling=await require('./verify-scheduling.cjs').verifyScheduling(browser,origin+'/rallyvector3d/');
+      for(const row of report.measurements.scheduling){report.checks.push(row);console.log('AS1_CHECK '+JSON.stringify(row));}
+    });
     await section('three state sequences',async()=>{
       const sequences=[];
       for(const variant of ['running','user-paused','comfort']){
