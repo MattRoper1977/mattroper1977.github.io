@@ -67,10 +67,25 @@ class Refs(HTMLParser):
 
 
 TEACHING_PACK_ADDITIONS = HERE/'teaching-packs-download-usage-additions.json'
-# Pins the reviewed teaching-pack download rows above (296 rows over seven
+# Pins the reviewed teaching-pack download rows above (424 rows over seven
 # Teaching_Packs prefixes), accepted 7 September 2026 (HC6 §11). Re-pin only
-# with a reviewed diff of that file.
-TEACHING_PACK_ADDITIONS_SHA256 = '6331c21a6315f5a5ab6bc945b6479ac1c07c9e3572248753c699f5e6ea6abc67'
+# with a reviewed diff of that file. GC1 adds 128 rows on 12 September 2026;
+# all 296 existing rows and all seven subject groups are retained unchanged.
+TEACHING_PACK_ADDITIONS_SHA256 = 'faa329b20b5db39f44bf8cfeb5393ddac85d1a60dfe649d091ccac821bf67abb'
+
+
+GC1_PREFIX = '/Lessons/ICT/Teaching_Packs/GROW_Computing/'
+GC1_HUB = 'ICT/Teaching_Packs/GROW_Computing/Start_Here_Weeks_01_02.html'
+
+
+def installed_gc1_rows(approved, installed):
+    """Keep the reviewed 36 ICT rows; require the 128 GC1 rows only with its hub.
+
+    The shared subject index predates this second unit. Checking that index alone
+    incorrectly requires Computing downloads on older, still-pinned source trees.
+    An unexpected Computing row still fails registry_partition when absent.
+    """
+    return approved if installed else [r for r in approved if not r['route'].startswith(GC1_PREFIX)]
 
 
 def registry_partition(rows, approved_by_prefix, installed_by_prefix):
@@ -120,6 +135,8 @@ def registry_errors(output):
     approved.update(json.loads(TEACHING_PACK_ADDITIONS.read_text()))
     rows = json.loads((output/'usage-registry.json').read_text())
     lessons = output/'education-lessons'
+    ict = '/Lessons/ICT/Teaching_Packs/'
+    approved[ict] = installed_gc1_rows(approved[ict], (lessons/GC1_HUB).is_file())
     installed = {prefix: (lessons/prefix[len('/Lessons/'):]/'index.html').is_file() for prefix in approved}
     errors, retained = registry_partition(rows, approved, installed)
     if sha256((json.dumps(retained,ensure_ascii=False,indent=2)+'\n').encode()).hexdigest() != baseline_sha:
@@ -249,6 +266,23 @@ def self_test():
         errors,retained=registry_partition(rows,approved,installed)
         passed=len(errors)==expected and retained==other; ok=ok and passed
         print(f"  [{'ok' if passed else 'FAIL'}] registry partition: {len(rows)} rows, installed={list(installed.values())[0]} -> {len(errors)} error(s), retained {len(retained)}")
+    # GC1 second unit: both current and historical source trees, plus firing controls.
+    ict='/Lessons/ICT/Teaching_Packs/'
+    legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf')
+    reviewed=[legacy,gc1]
+    gc1_cases=[
+        ('absent unit',False,[legacy],0),
+        ('installed unit',True,reviewed,0),
+        ('missing new row',True,[legacy],1),
+        ('unexpected absent-unit row',False,reviewed,1),
+        ('extra new row',True,reviewed+[row(GC1_PREFIX+'planted.pdf')],1),
+        ('changed new row',True,[legacy,{**gc1,'kind':'planted'}],1),
+        ('missing old row',True,[gc1],1),
+    ]
+    for label,present,actual,expected in gc1_cases:
+        errors,retained=registry_partition(other+actual,{ict:installed_gc1_rows(reviewed,present)},{ict:True})
+        passed=len(errors)==expected and retained==other; ok=ok and passed
+        print(f"  [{'ok' if passed else 'FAIL'}] GC1 {label}: {len(errors)} error(s)")
     for markup,expected in cases:
         p=Refs(); p.feed(markup)
         named=any('madebymatt-play.uk' in v for (t,a,v) in p.automatic)
