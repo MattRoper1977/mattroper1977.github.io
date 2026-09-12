@@ -1570,6 +1570,8 @@ if(document.body)mount();else document.addEventListener("DOMContentLoaded",mount
 }
 @media (prefers-contrast:more){
   :root{--mbm-primary:#0B1020;--mbm-card:#ffffff}
+  /* Keep light ink on dark surfaces when both preferences are active. */
+  [data-theme="dark"]{--mbm-primary:#ffffff;--mbm-card:#081422}
 }
 
 :root{
