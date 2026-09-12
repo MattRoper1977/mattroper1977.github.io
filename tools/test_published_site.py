@@ -217,6 +217,71 @@ class PublishedWitnessControls(unittest.TestCase):
 
 
 
+class PublishedChromeControls(unittest.TestCase):
+    """The real publisher consumes both shared fragments and fails on drift."""
+    @classmethod
+    def setUpClass(cls):
+        import importlib.util
+        root = Path(__file__).resolve().parents[1]
+        spec = importlib.util.spec_from_file_location(
+            'chrome_fixture_navigation', root / 'domain-split/shared_navigation.py')
+        cls.navigation = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.navigation)
+
+    def render_fixture(self, source, values):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / 'fixture.html').write_text(source)
+            with patch.object(self.navigation, 'CHROME', root):
+                return self.navigation.chrome_template('fixture.html', 'fixture', values)
+
+    def test_fragment_boundaries_must_be_unique_ordered_and_on_own_lines(self):
+        start = '<!-- MBM-CHROME-FRAGMENT: fixture -->'
+        end = '<!-- /MBM-CHROME-FRAGMENT: fixture -->'
+        valid = start + '\n{{value}}\n' + end
+        self.assertEqual(self.render_fixture(valid, {'value': 'rendered'}), 'rendered')
+        for source in [valid.replace(start, ''), valid.replace(end, ''),
+                       valid + valid, end + '\n{{value}}\n' + start,
+                       start + '{{value}}\n' + end, start + '\n{{value}}' + end]:
+            with self.subTest(source=source), self.assertRaises(ValueError):
+                self.render_fixture(source, {'value': 'rendered'})
+
+    def test_missing_unknown_and_malformed_slots_fail_before_rendering(self):
+        for body in ['no slot', '{{other}}', '{{value}} {{other}}',
+                     '{{value}} {{BAD}}', '{{value}} {{unfinished', '{{value}} stray}}']:
+            with self.subTest(body=body), self.assertRaises(ValueError):
+                self.render_fixture('<!-- MBM-CHROME-FRAGMENT: fixture -->\n' + body +
+                                    '\n<!-- /MBM-CHROME-FRAGMENT: fixture -->',
+                                    {'value': 'rendered'})
+
+    def test_both_shared_files_drive_the_published_header(self):
+        from unittest.mock import patch
+        navigation = self.navigation
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for filename, before, after in [
+                    ('header.html', 'class="mbm-unified-header"', 'class="header-source-control"'),
+                    ('menu-sheet.html', 'class="mbm-unified-menu"', 'class="menu-source-control"')]:
+                source = (navigation.CHROME / filename).read_text()
+                self.assertEqual(source.count(before), 1)
+                (root / filename).write_text(source.replace(before, after))
+            with patch.object(navigation, 'CHROME', root):
+                result = navigation.header('/', [('/for/pupils/', 'Pupils')])
+        self.assertIn('class="header-source-control"', result)
+        self.assertIn('class="menu-source-control"', result)
+        self.assertNotIn('class="mbm-unified-header"', result)
+        self.assertNotIn('class="mbm-unified-menu"', result)
+
+    def test_record_text_is_escaped_and_never_reinterpreted_as_template(self):
+        result = self.navigation.header('/', [('/for/example/?q="<&>', '{{search}} <A & B>')],
+                                        search='/resources/?q="<&>{{menu}}')
+        self.assertIn('href="/for/example/?q=&quot;&lt;&amp;&gt;"', result)
+        self.assertIn('{{search}} &lt;A &amp; B&gt;</a>', result)
+        self.assertIn('href="/resources/?q=&quot;&lt;&amp;&gt;{{menu}}"', result)
+        self.assertEqual(result.count('class="mbm-unified-menu"'), 1)
+
+
 class ProfessionalStatsControls(unittest.TestCase):
     """Exercise the real live verifier against builder-rendered shared stats."""
     @classmethod

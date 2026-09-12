@@ -24,6 +24,35 @@ import shutil
 import sys
 
 HERE = Path(__file__).resolve().parent
+CHROME = HERE.parent / 'tools' / 'chrome'
+
+
+def chrome_template(filename, name, values):
+    """Render one shared fragment; reject malformed fragments or slot drift.
+
+    The publisher reads templates from its own immutable Site checkout. Values
+    are already escaped text/attributes or HTML assembled by this renderer;
+    substitution is one pass, so record text cannot become another template.
+    """
+    source = (CHROME / filename).read_text()
+    start = '<!-- MBM-CHROME-FRAGMENT: ' + name + ' -->'
+    end = '<!-- /MBM-CHROME-FRAGMENT: ' + name + ' -->'
+    if source.count(start) != 1 or source.count(end) != 1:
+        raise ValueError('Expected one chrome fragment: ' + filename + ':' + name)
+    start_at, end_at = source.index(start) + len(start), source.index(end)
+    if end_at < start_at:
+        raise ValueError('Chrome fragment boundaries reversed: ' + name)
+    body = source[start_at:end_at]
+    if not body.startswith('\n') or not body.endswith('\n'):
+        raise ValueError('Chrome fragment must have its own boundary lines: ' + name)
+    body = body[1:-1]
+    slots = re.compile(r'\{\{([a-z_]+)\}\}')
+    literal = slots.sub('', body)
+    if '{{' in literal or '}}' in literal:
+        raise ValueError('Malformed chrome template slot: ' + filename + ':' + name)
+    if set(slots.findall(body)) != set(values):
+        raise ValueError('Chrome template slots differ from renderer: ' + filename + ':' + name)
+    return slots.sub(lambda match: values[match.group(1)], body)
 
 
 def build_audiences():
@@ -122,18 +151,12 @@ def header(route, audiences, adult=False, pupil=False, theme=False, primary=Fals
     if theme:
         groups += '<details class="mbm-menu-display"><summary>Display options</summary><div data-mbm-theme-slot></div></details>'
     groups += '<a class="mbm-menu-play" href="' + PLAY + '" rel="noopener">' + escape(PLAY_LABEL) + '</a>'
-    return ('<header class="mbm-unified-header" data-mbm-navigation="education">'
-            '<div class="mbm-unified-bar"><a class="mbm-unified-brand" href="/">'
-            '<img src="/assets/brand/approved-mark.jpg" width="44" height="44" alt="">'
-            '<span><strong>MADE BY MATT</strong></span></a>'
-            '<a class="mbm-unified-search" href="' + escape(search, quote=True) + '" aria-label="Search">'
-            '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></a>'
-            '<details class="mbm-unified-menu"><summary aria-controls="mbm-navigation-panel">'
-            '<span class="mbm-menu-icon" aria-hidden="true"></span>' + MENU_TITLE + '</summary>'
-            '<nav class="mbm-unified-panel" id="mbm-navigation-panel" aria-label="Site menu">'
-            '<div class="mbm-menu-head"><p class="mbm-menu-title">' + MENU_TITLE + '</p>'
-            '<button type="button" class="mbm-menu-close" aria-label="Close menu"><span aria-hidden="true">×</span></button></div>' +
-            groups + '</nav></details></div></header>')
+    menu = chrome_template('menu-sheet.html', 'published-education', {
+        'menu_title': escape(MENU_TITLE), 'groups': groups,
+    })
+    return chrome_template('header.html', 'published-education', {
+        'search': escape(search, quote=True), 'menu': menu,
+    })
 
 
 def refresh(output, site_source):
