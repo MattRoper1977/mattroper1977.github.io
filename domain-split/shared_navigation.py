@@ -137,6 +137,10 @@ def header(route, audiences, adult=False, pupil=False, theme=False, primary=Fals
 
 
 def refresh(output, site_source):
+    # Also support callers that load this module by absolute file path.
+    if str(HERE) not in sys.path:
+        sys.path.insert(0, str(HERE))
+    from structural_html import replace_first_element
     site = output / 'education-site'
     audiences = json.loads((site_source / 'data/audience-homepages.json').read_text())['audiences']
     rows = audience_rows(site_source)
@@ -178,7 +182,7 @@ def refresh(output, site_source):
             # action. Add navigation before it without deleting those controls.
             text,count=re.subn(r'(<body\b[^>]*>)',lambda match:match.group(1)+replacement,text,count=1,flags=re.I)
         else:
-            text,count=re.subn(r'<header\b[^>]*>.*?</header>',lambda _:replacement,text,count=1,flags=re.S)
+            text,count=replace_first_element(text, 'header', replacement)
         if count != 1:
             raise ValueError('Missing navigation insertion/replacement boundary: '+str(path))
         if route == '/stats/on-this-device/':
