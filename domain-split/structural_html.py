@@ -5,7 +5,44 @@ writing rather than truncate at the inner close. Comments and script/style text
 are handled by the HTML tokenizer, not by searching for closing-tag literals.
 """
 from html.parser import HTMLParser
+from collections import Counter
 import re
+
+
+VOID_ELEMENTS = frozenset({
+    'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link',
+    'meta', 'param', 'source', 'track', 'wbr',
+})
+
+
+class _RegionBalance(HTMLParser):
+    """Count real non-void boundaries inside the isolated replacement region."""
+    def __init__(self):
+        super().__init__(convert_charrefs=False)
+        self.depth = Counter()
+
+    def handle_starttag(self, tag, attrs):
+        if tag not in VOID_ELEMENTS:
+            self.depth[tag] += 1
+
+    def handle_startendtag(self, tag, attrs):
+        pass  # an explicit self-contained boundary has net balance zero
+
+    def handle_endtag(self, tag):
+        if tag in VOID_ELEMENTS:
+            raise ValueError(f'Unbalanced replacement region: closing void </{tag}>')
+        self.depth[tag] -= 1
+        if self.depth[tag] < 0:
+            raise ValueError(f'Unbalanced replacement region: unmatched </{tag}>')
+
+
+def _assert_balanced(source):
+    balance = _RegionBalance()
+    balance.feed(source)
+    balance.close()
+    unclosed = {tag: count for tag, count in balance.depth.items() if count}
+    if unclosed:
+        raise ValueError(f'Unbalanced replacement region: unclosed elements {unclosed}')
 
 
 class _FirstRegion(HTMLParser):
@@ -70,4 +107,6 @@ elements are preserved. This is a region tokenizer, not full HTML validation.
         return source, 0
     if region.end is None:
         raise ValueError(f'Unclosed <{tag}> replacement region')
+    _assert_balanced(source[region.start:region.end])
+    _assert_balanced(replacement)
     return source[:region.start] + replacement + source[region.end:], 1
