@@ -28,7 +28,8 @@
   "UX2 Part C (2026-09-08, Site claude/ux2-c2-shelf): the Play ledger joins the education site tree",
   "SW2-F §F0 (2026-09-09, Site claude/sw2f-f0-chips): the account chips, the preview tab focus ring, the dark-footer muted ink and .mf-note-kicker take readable values. 7 education-site digests become transition pairs [what main builds, what this branch builds]. SIX of the seven were ALREADY drifting at main before this branch existed -- a pristine main build differs from the registry on styles.css, index.html, main/index.html, commission/index.html, for/pupils/ and for/teachers/ -- so this re-cut also clears that staleness. The build is deterministic (two consecutive builds byte-identical). Only assets/mbm-audience.css is this branch's own. education-lessons and education-apps unchanged (measured: 0).",
   "SW2 Part T (2026-09-09, Site claude/sw2-t1-tokens, re-derived once from F0 #338's registry after F0 merged): the design-token file lands; twelve static page types plus the generated audience and discovery pages carry a marked tokens region and a marked Menu region; and .mbm-hub-kicker takes a readable ink (SW2-F §G1 found it at 4.30:1 on the hub hero gradient at 390px, measured on the real pixels behind the glyphs; #F5AE60 is 4.76:1, and every use of that class is inside .mbm-hub-hero). 15 education-site digests become transition pairs [what main builds now, what this branch builds]; assets/mbm-tokens.css is ARRIVING. Re-derived from one rebuild of the final state rather than stacked on an earlier re-cut, so no path carries a third digest (checked: 0). The chrome templates are NOT published -- they live at tools/chrome/, because check_education_separation reads a published nav-row fragment's /games/ link as recreational navigation. education-lessons and education-apps unchanged (measured: 0).",
-  "AS1-G final evidence (2026-09-11, Site #348): data/pin-dependents.json is derived by the unchanged canonical generator in a clean tracked Site checkout. Its 25 artefacts add exact reviewed fixture byte identities; education filtering keeps the same served path. Admit only the old/main transformed bytes and the generated AS1 transformed bytes as this two-digest transition pair. No page, route, publication pin or gate changes."
+  "AS1-G final evidence (2026-09-11, Site #348): data/pin-dependents.json is derived by the unchanged canonical generator in a clean tracked Site checkout. Its 25 artefacts add exact reviewed fixture byte identities; education filtering keeps the same served path. Admit only the old/main transformed bytes and the generated AS1 transformed bytes as this two-digest transition pair. No page, route, publication pin or gate changes.",
+  "SW2 Part T published chrome (2026-09-12): only assets/shared-navigation.css adopts cream/navy/card tokens and a green 3px outer focus ring, retaining mint focus inside the existing blue menu. Exact old/current CSS and proposed CSS form one two-digest transition pair. Header/menu markup, branding, authored bodies, all other digests, consumers and workflows unchanged."
  ],
  "trees": {
   "education-site": {
@@ -109,7 +110,10 @@
    "assets/mbm-sync-ui.js": "9a327c573b6e159f0be9d82c856dbd876c8cbc2a0e9627b9013ad1cedf4d4674",
    "assets/mbm-sync.js": "0d7b34dcbea683be5dc1d4c5322f877a97e149ff070cf29b0151663c8238732f",
    "assets/og-cover.png": "487f860a6632f3f832b5ba01a28e3901f58a4c92c75379f1e1b6fcb0b09e29c8",
-   "assets/shared-navigation.css": "1976b76c204c3259ba39da67a7d0dc2657110054524bb95e023d9cfe0b7193c0",
+   "assets/shared-navigation.css": [
+    "1976b76c204c3259ba39da67a7d0dc2657110054524bb95e023d9cfe0b7193c0",
+    "ca6cbb90c31597cb2417ce3c00c70329e9ad0b5551acaa2c7db709c4f64f81e3"
+   ],
    "assets/shared-navigation.js": "77b7c435040fcf88931f1e4d3fd2bde43a15dc694d9b475e4e4133a8d6beadf3",
    "assets/style.css": "21a896b5b2d253392040eb0a3be140148316b63454ccf95c696151fc511802b9",
    "assets/usage-client.js": "8f3309ba3f0d583df10f5c55fd238c17dd9481474f317328e830d74ca6d50e80",
