@@ -1,5 +1,15 @@
 # A required check that no change can turn green
 
+> **HISTORICAL / SUPERSEDED IN PLACE — RF3, 12 September 2026.**
+> The original diagnosis, “NOT APPLIED” wording and proposed patch below describe
+> the pre-DL state. They are superseded by this document’s own
+> [APPLIED — ORDER DL, 2026-08-26](#applied--order-dl-2026-08-26) record.
+> Matt’s RF3 ruling is **ML1: CLOSED-BY-DL**. Site #191, #192 and #194 are merged;
+> do not replay, adapt or delete the obsolete patch. RF2’s closure record is at
+> [Lessons RF2_READBACK.md §2](https://github.com/MattRoper1977/Lessons/blob/cb5b2966c3ed47ca4cd31465fc161b57052bd21b/docs/orders/RF2_READBACK.md).
+> This notice changes documentary status only. The original text and later DL
+> evidence remain intact; it does not certify later workflow changes.
+
 **Raised 2026-08-26 during ORDER FC-Z §Z3. Diagnosed and a fix verified. NOT
 APPLIED — it needs Matt's word, because applying it edits a required status
 context.**
