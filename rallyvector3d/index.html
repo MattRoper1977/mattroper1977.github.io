@@ -975,7 +975,7 @@ function renderMenu(){
   dom.skinCards.innerHTML='';const level=progressionLevel();for(const s of SKINS){const unlocked=save.progress.unlocked.includes(s.id),b=document.createElement('button');b.className='pickCard'+(unlocked?'':' locked');b.disabled=!unlocked;b.setAttribute('aria-pressed',String(save.livery.skin===s.id));b.innerHTML=`<span class="tag">${unlocked?'Unlocked':'Level '+s.level}</span><span class="icon">${s.icon}</span><strong>${s.name}</strong><small>${unlocked?'Apply this championship paint scheme.':`Earn ${Math.max(0,(s.level-1)*100-save.progress.xp)} more XP to unlock.`}</small>`;if(unlocked)b.onclick=()=>{save.livery.skin=s.id;save.livery.base=s.base;save.livery.accent=s.accent;save.livery.pattern=s.pattern;persistSoon();renderMenu();drawLiveryPreview();schedulePreview(false)};dom.skinCards.appendChild(b)}
   drawLiveryPreview();updateRecordsUI();
 }
-let previewTimer=0;function schedulePreview(rebuild=true){clearTimeout(previewTimer);previewTimer=setTimeout(()=>{if(game.mode!=='menu')return;if(rebuild||!world||world.def.id!==save.settings.track)buildWorld({preview:true});else{game.trackDef=trackById(save.settings.track);game.driver=driverById(save.settings.driver);game.env=environmentFor(game.trackDef,save.settings.weather,save.settings.time);game.playerVisual?.setLivery(currentLivery())}},90)}
+let previewTimer=0;function schedulePreview(rebuild=true){clearTimeout(previewTimer);previewTimer=setTimeout(()=>{if(game.mode!=='menu')return;if(rebuild||!world||world.def.id!==save.settings.track)buildWorld({preview:true});else{game.trackDef=trackById(save.settings.track);game.driver=driverById(save.settings.driver);game.env=environmentFor(game.trackDef,save.settings.weather,save.settings.time);game.playerVisual?.setLivery(currentLivery())}as1Invalidate();},90)}
 function toggleBooleanSetting(key,btn,onText,offText){save.settings[key]=!save.settings[key];setToggle(btn,save.settings[key],onText,offText);persistSoon();if(key==='sound')audio.setMuted(!save.settings.sound)}
 function setPaused(on){if(game.mode!=='running')return;game.paused=on;dom.pause.classList.toggle('hidden',!on);if(on){game.touch.throttle=game.touch.brake=0;game.touch.handbrake=game.touch.rewind=false;try{speechSynthesis.pause()}catch(e){}}else{try{speechSynthesis.resume()}catch(e){}}}
 async function toggleFullscreen(){try{if(!document.fullscreenElement)await dom.app.requestFullscreen();else await document.exitFullscreen()}catch(e){showMessage('Fullscreen is not available here',1300)}}
@@ -991,7 +991,7 @@ function bindControls(){
   bindHoldButton(dom.gas,'throttle');bindHoldButton(dom.brake,'brake');bindHoldButton(dom.hand,'handbrake');bindHoldButton(dom.rewind,'rewind');document.addEventListener('visibilitychange',()=>{if(document.hidden){Object.keys(game.keys).forEach(k=>game.keys[k]=false);game.touch.steer=game.touch.throttle=game.touch.brake=0;game.touch.handbrake=game.touch.rewind=false;endSteer(null);try{speechSynthesis.pause()}catch(e){}if(game.mode==='running'&&!game.paused)setPaused(true)}});dom.canvas.addEventListener('contextmenu',e=>e.preventDefault());window.addEventListener('blur',()=>{Object.keys(game.keys).forEach(k=>game.keys[k]=false);game.touch.steer=game.touch.throttle=game.touch.brake=0;game.touch.handbrake=game.touch.rewind=false;endSteer(null);if(game.mode==='running'&&!game.paused)setPaused(true)});
 }
 function frame(now){
-  const raw=Math.min(.05,Math.max(0,(now-game.lastFrame)/1000));game.lastFrame=now;if(game.mode==='running'&&!game.paused&&!game.testMode){game.acc+=raw;let steps=0;while(game.acc>=FIXED_DT&&steps<5){fixedStep(FIXED_DT);game.acc-=FIXED_DT;steps++}}else game.acc=0;if(as1RenderDue(now)){updateParticleSystems(raw);updateCamera(raw);updateHUD();renderFrame();SplatterSystem.updateAndDraw(raw);v4FrameGovernor(raw);}requestAnimationFrame(frame)
+  const raw=Math.min(.05,Math.max(0,(now-game.lastFrame)/1000));game.lastFrame=now;if(game.mode==='running'&&!game.paused&&!game.testMode){game.acc+=raw;let steps=0;while(game.acc>=FIXED_DT&&steps<5){fixedStep(FIXED_DT);game.acc-=FIXED_DT;steps++}}else game.acc=0;if(as1RenderDue(now)){updateParticleSystems(raw);updateCamera(raw);updateHUD();renderFrame();SplatterSystem.updateAndDraw(raw);v4FrameGovernor(raw);}as1ScheduleFrame()
 }
 function getDebugState(){const c=game.car;return{version:VERSION,mode:game.mode,track:game.trackDef?.id,quality:game.quality,time:game.stageTime,countdown:game.countdown,progress:game.totalProgress,nextCheckpoint:game.nextCP,rewindFrames:game.rewind.length,campaign:{active:CampaignSystem.active,stage:CampaignSystem.currentStageIdx,serviceMinutes:CampaignSystem.serviceMinutes,cumulativeTime:CampaignSystem.cumulativeTime},car:c?{x:c.pos.x,y:c.pos.y,z:c.pos.z,speed:c.speed,heading:c.heading,damage:c.damage,engine:c.engine,steeringBias:c.steeringBias,onRoad:c.onRoad,surface:c.surfaceType,waterDepth:c.waterDepth}:null,props:PropSystem.props.filter(p=>p.active).length,waterZones:WaterSystem.zones.length,ai:game.ai.map(a=>({progress:a.totalProgress,speed:a.speed})),webglError:renderer?renderer.gl.getError():null}}
 function debugStart(trackId='alpine'){
@@ -1018,7 +1018,7 @@ async function runSelfTests(){
 window.RallyVector3D={version:VERSION,tracks:TRACKS.map(t=>({id:t.id,name:t.name})),drivers:DRIVERS.map(d=>({id:d.id,name:d.name})),getState:getDebugState,debugStart,setInput:debugSetInput,debugStep,runSelfTests,startCampaign:()=>CampaignSystem.startCampaign(),returnToMenu};
 
 function boot(){
-  try{renderer=new Renderer(dom.canvas);initPrimitives();game.quality=actualQuality(save.settings.quality);bindControls();renderMenu();buildWorld({preview:true});game.env=environmentFor(game.trackDef,save.settings.weather,save.settings.time);game.lastFrame=performance.now();requestAnimationFrame(frame);updateCamera(FIXED_DT);renderFrame();window.__RV4BootReady=true;document.body.dataset.boot='ready';setTimeout(()=>dom.loading.classList.add('out'),550);setTimeout(()=>dom.loading.classList.add('hidden'),950);
+  try{renderer=new Renderer(dom.canvas);initPrimitives();game.quality=actualQuality(save.settings.quality);bindControls();renderMenu();buildWorld({preview:true});game.env=environmentFor(game.trackDef,save.settings.weather,save.settings.time);game.lastFrame=performance.now();as1ScheduleFrame();updateCamera(FIXED_DT);renderFrame();window.__RV4BootReady=true;document.body.dataset.boot='ready';setTimeout(()=>dom.loading.classList.add('out'),550);setTimeout(()=>dom.loading.classList.add('hidden'),950);
     (function(){const sp=document.getElementById('mbmSplash');if(!sp)return;const rm=RM_QUERY.matches,hold=rm?900:1750,fade=rm?60:470;let done=false;
       const close=()=>{if(done)return;done=true;try{if(sp.__cleanup)sp.__cleanup()}catch(_){}sp.classList.add('out');setTimeout(()=>{sp.classList.add('hidden');sp.setAttribute('data-mbm-splash-state','closed')},fade)};
       const onKey=e=>{if(e.key==='Tab')return;e.preventDefault();e.stopPropagation();close()};const onTap=e=>{e.preventDefault();e.stopPropagation();close()};sp.addEventListener('pointerdown',onTap,true);window.addEventListener('keydown',onKey,true);const timer=setTimeout(close,hold);sp.__cleanup=()=>{clearTimeout(timer);window.removeEventListener('keydown',onKey,true);sp.removeEventListener('pointerdown',onTap,true)};window.__mbmSplashClose=close;})();// ---- test seam ------------------------------------------------------
@@ -1318,10 +1318,22 @@ v6Install();
 /* Generated inside Rally's existing closure. Physics authority stays unchanged. */
 let as1UserPaused=false,as1PanelPaused=false,as1Battery=false,as1Dirty=true;
 let as1LastPaint=0,as1RenderCount=0,as1PhysicsCount=0,as1Samples=[],as1SampleClock=0;
+// Own at most one frame. A clean menu or held stage sleeps until invalidated.
+let as1FrameRequest=0;
+function as1ScheduleFrame(){
+  if(as1FrameRequest||document.hidden)return;
+  if(!as1Dirty&&(game.mode!=='running'||game.paused)&&!v6Director.active&&!v6Ascent.active)return;
+  as1FrameRequest=requestAnimationFrame(now=>{as1FrameRequest=0;frame(now);});
+}
+function as1Invalidate(){as1Dirty=true;as1ScheduleFrame();}
+function as1CancelFrame(){if(as1FrameRequest)cancelAnimationFrame(as1FrameRequest);as1FrameRequest=0;}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)as1CancelFrame();else as1Invalidate();});
+window.addEventListener('pagehide',as1CancelFrame);
+window.addEventListener('pageshow',()=>as1Invalidate());
 const as1PreferenceKey='mbm_rallyvector_as1_comfort';
 let as1Preferences={warm:false,soft:false};
 try{const p=JSON.parse(localStorage.getItem(as1PreferenceKey)||'null');if(p&&typeof p==='object')as1Preferences={warm:p.warm===true,soft:p.soft===true};}catch(_){}
-function as1SavePreferences(){try{localStorage.setItem(as1PreferenceKey,JSON.stringify(as1Preferences));}catch(_){}as1Dirty=true;}
+function as1SavePreferences(){try{localStorage.setItem(as1PreferenceKey,JSON.stringify(as1Preferences));}catch(_){}as1Invalidate();}
 let as1Filter=null;
 let as1GestureContext=null;
 function as1UnlockAudio(event){if(!event.isTrusted||as1GestureContext)return;const C=window.AudioContext||window.webkitAudioContext;if(C)try{as1GestureContext=new C();}catch(_){} }
@@ -1336,7 +1348,7 @@ function as1ApplyHold(){
   v6ClearIntent();if(V6Modal.dialog===dom.pause)V6Modal.release({restore:false});dom.pause.classList.add('hidden');
   v6SetEngineActive(!game.paused&&game.mode==='running');if(game.paused){v6SuspendAudio();try{speechSynthesis.pause();}catch(_){}}
   else if(audio.ready&&navigator.userActivation?.isActive){v6ResumeAudio();as1AudioFilter();try{speechSynthesis.resume();}catch(_){}}
-  v6SyncDrivingState();as1Dirty=true;window.MBMArcade?.sync();
+  v6SyncDrivingState();as1Invalidate();window.MBMArcade?.sync();
 }
 setPaused=function(on){as1UserPaused=!!on;as1ApplyHold();};
 function as1RenderDue(now){
@@ -1344,8 +1356,8 @@ function as1RenderDue(now){
   if(!as1Dirty&&as1Battery&&now-as1LastPaint<1000/30)return false;
   as1LastPaint=now;as1Dirty=false;as1RenderCount++;return true;
 }
-for(const event of ['input','change','click','pointerdown','keydown'])document.addEventListener(event,()=>{as1Dirty=true;},{passive:true});
-window.addEventListener('resize',()=>{as1Dirty=true;},{passive:true});
+for(const event of ['input','change','click','pointerdown','keydown'])document.addEventListener(event,()=>{as1Invalidate();},{passive:true});
+window.addEventListener('resize',()=>{as1Invalidate();},{passive:true});
 function as1Bounds(){
   const t=new Track(game.trackDef,'high'),m=t.def.roadWidth,ys=t.samples.map(s=>s.p.y);
   return{minx:t.minX-m,maxx:t.maxX+m,miny:Math.min(...ys)-m,maxy:Math.max(...ys)+m,minz:t.minZ-m,maxz:t.maxZ+m};
@@ -1353,18 +1365,18 @@ function as1Bounds(){
 const as1FixedStep=fixedStep;
 fixedStep=function(dt){if(game.paused||as1PanelPaused||as1UserPaused)return;const before=game.stageTime;const out=as1FixedStep(dt);if(game.stageTime>before){as1PhysicsCount++;as1SampleClock+=dt;if(as1SampleClock>=.1-1e-8){as1SampleClock-=.1;const p=game.car.pos;if(as1Samples.length<900)as1Samples.push({x:p.x,y:p.y,z:p.z,angle:game.car.heading});}}return out;};
 const as1StartStage=startStage;
-startStage=function(){as1UserPaused=as1PanelPaused=false;document.documentElement.dataset.as1Held='false';as1Samples=[];as1SampleClock=0;as1Dirty=true;return as1StartStage();};
+startStage=function(){as1UserPaused=as1PanelPaused=false;document.documentElement.dataset.as1Held='false';as1Samples=[];as1SampleClock=0;as1Invalidate();return as1StartStage();};
 const as1DebugStart=window.RallyVector3D.debugStart;
-window.RallyVector3D.debugStart=function(id='alpine'){as1UserPaused=as1PanelPaused=false;document.documentElement.dataset.as1Held='false';as1Samples=[];as1SampleClock=0;as1Dirty=true;const out=as1DebugStart(id);window.MBMArcade?.sync();return out;};
+window.RallyVector3D.debugStart=function(id='alpine'){as1UserPaused=as1PanelPaused=false;document.documentElement.dataset.as1Held='false';as1Samples=[];as1SampleClock=0;as1Invalidate();const out=as1DebugStart(id);window.MBMArcade?.sync();return out;};
 let as1IncomingGhost=null,as1IncomingTrack=null;
 async function as1LoadGhost(){
   if(!location.hash.startsWith('#ghost='))return;
   try{const samples=window.MBMGhost.decode(location.hash.slice(7),as1Bounds());as1IncomingGhost=samples;as1IncomingTrack=game.trackDef.id;as1InstallGhost();}
   catch(_){as1IncomingGhost=null;game.ghostData=null;if(game.ghostVisual)game.ghostVisual.dispose();game.ghostVisual=null;showMessage('Ghost could not load. You can still race.',2600);}
 }
-function as1InstallGhost(){if(!as1IncomingGhost||as1IncomingTrack!==game.trackDef.id)return;if(game.ghostVisual)game.ghostVisual.dispose();game.ghostData=as1IncomingGhost.map((s,i)=>[(i+1)/10,s.x,s.y,s.z,s.angle]);game.ghostVisual=new CarVisual({ghost:true});updateGhostPlayback();as1Dirty=true;}
+function as1InstallGhost(){if(!as1IncomingGhost||as1IncomingTrack!==game.trackDef.id)return;if(game.ghostVisual)game.ghostVisual.dispose();game.ghostData=as1IncomingGhost.map((s,i)=>[(i+1)/10,s.x,s.y,s.z,s.angle]);game.ghostVisual=new CarVisual({ghost:true});updateGhostPlayback();as1Invalidate();}
 const as1BuildWorld=buildWorld;
-buildWorld=function(options){const out=as1BuildWorld(options);as1InstallGhost();return out;};
+buildWorld=function(options){const out=as1BuildWorld(options);as1InstallGhost();as1Invalidate();return out;};
 const as1ModalGuard=V6Modal.guard.bind(V6Modal);
 V6Modal.guard=function(node){if(node?.id==='as1-shell')return;return as1ModalGuard(node);};
 const as1ModalLock=V6Modal.lock.bind(V6Modal);
@@ -1377,13 +1389,13 @@ window.MBMArcadeHooks={
   state:()=>({paused:game.paused,userPaused:as1UserPaused,panelPaused:as1PanelPaused,mode:game.mode,pose:game.car?{...game.car.pos,heading:game.car.heading}:null,renderCount:as1RenderCount,physicsCount:as1PhysicsCount,ghostSamples:as1Samples.length}),
   pause:on=>{as1UserPaused=!!on;as1ApplyHold();},
   panel:on=>{as1PanelPaused=!!on;if(on&&v6Director.active)v6Director.stop({resume:false,restore:false});as1ApplyHold();},
-  setBattery:on=>{as1Battery=!!on;as1Dirty=true;},
+  setBattery:on=>{as1Battery=!!on;as1Invalidate();},
   setSound:on=>{save.settings.sound=!!on;audio.init();audio.setMuted(!on);as1AudioFilter();if(!on)try{speechSynthesis.cancel();}catch(_){}v6SyncSoundUI();},
   soundOn:()=>save.settings.sound,
   setWarm:on=>{as1Preferences.warm=!!on;as1SavePreferences();},
   setSoftSound:on=>{as1Preferences.soft=!!on;audio.init();as1AudioFilter();as1SavePreferences();},
   preferences:()=>({...as1Preferences,calm:osReduce||v4.settings.calm||!save.settings.motion}),
-  resize:()=>{as1Dirty=true;if(renderer)renderer.resize(game.quality==='high'?2:game.quality==='low'?1:1.5);v6SyncRouteCanvas();},
+  resize:()=>{as1Invalidate();if(renderer)renderer.resize(game.quality==='high'?2:game.quality==='low'?1:1.5);v6SyncRouteCanvas();},
   audioGraph:()=>({ctx:audio.ctx,master:audio.master,filter:as1Filter,output:v6Compressor||audio.master}),
   serialize(){
     const data=window.MBMGameSaves.capture(localStorage,window.MBMAS1Rules);
@@ -1401,7 +1413,7 @@ window.MBMArcadeHooks={
     const before={save,v4,v6Profile,v6LastProfileWrite};
     try{adapter.apply(localStorage,plan.writes);save=loadSave();v4=v4Load();v4.mode=four.mode;v6Profile=v6LoadProfile();v6LastProfileWrite=v6ReadRaw(V6_PROFILE_KEY);v4ApplyAccess();v6ApplyProfileSettings();audio.setMuted(!save.settings.sound);v6SyncSoundUI();renderMenu();v6RenderAtlas();}
     catch(e){try{adapter.restore(localStorage,plan.writes);}finally{save=before.save;v4=before.v4;v6Profile=before.v6Profile;v6LastProfileWrite=before.v6LastProfileWrite;}throw e;}
-    as1Dirty=true;window.MBMArcade?.sync();return true;
+    as1Invalidate();window.MBMArcade?.sync();return true;
   },
   thresholds(){if(!window.MBMAS1Sizing?.measured)throw Error('Save display sizing is still being checked.');return window.MBMAS1Sizing;},
   ghostBounds:as1Bounds,ghostSamples:()=>as1Samples.map(s=>({...s})),

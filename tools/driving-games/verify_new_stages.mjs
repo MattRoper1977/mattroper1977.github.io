@@ -28,9 +28,9 @@ const STAGES = ['alpine', 'desert', 'nordic', 'coastal', 'timber', 'canyon'];
 const SHIPPED = new Set(['alpine', 'desert', 'nordic']);
 
 const CLOCK = `(() => { let now=0; const step=1000/${FPS}; performance.now=()=>now;
-  const q=[]; window.requestAnimationFrame=cb=>{q.push(cb);return q.length};
-  window.cancelAnimationFrame=()=>{};
-  window.__drive=f=>{for(let i=0;i<f;i++){now+=step;const b=q.splice(0,q.length);for(const cb of b){try{cb(now)}catch(e){}}}return now};})();`;
+  let id=0;const q=new Map();window.requestAnimationFrame=cb=>{q.set(++id,cb);return id};
+  window.cancelAnimationFrame=id=>q.delete(id);
+  window.__drive=f=>{for(let i=0;i<f;i++){now+=step;const batch=[...q.keys()];for(const id of batch){const cb=q.get(id);q.delete(id);if(cb)cb(now)}}return now};})();`;
 
 let failed = 0;
 const t = (n, ok, d = '') => { if (!ok) failed++; console.log(`${ok ? '  PASS' : '  FAIL'}  ${n}${d ? '  — ' + d : ''}`); };
@@ -54,7 +54,14 @@ for (const id of STAGES) {
   page.setDefaultNavigationTimeout(120000);
   await page.goto('file://' + path.join(ROOT, 'rallyvector3d', 'index.html'), { timeout: 120000 });
   await page.waitForTimeout(500);
-  await page.evaluate(() => { try { window.__mbmSplashClose(); } catch (e) {} });
+  // The maker introduction owns input until dismissed. Its first frame records
+  // the minimum display time; the old legacy close hook does not remove its guard.
+  await page.evaluate(() => window.__drive(1));
+  if (await page.locator('[data-mbm-maker-splash]').count()) {
+    await page.keyboard.press('Enter');
+    await page.evaluate(() => window.__drive(30));
+    await page.locator('[data-mbm-maker-splash]').waitFor({state:'detached',timeout:5000});
+  }
 
   // The save must survive the sanitiser: an id missing from SAFE.tracks is
   // silently rewritten to alpine, which would make every other check below
@@ -62,7 +69,17 @@ for (const id of STAGES) {
   const chosen = await page.evaluate(() => window.__RV.track());
   t(`${id}: survives the save sanitiser (not silently reset)`, chosen === id, `loaded '${chosen}'`);
 
-  await page.evaluate(() => { const b = document.querySelector('#startBtn'); if (b) b.click(); });
+  // A real blocked click must fail the same startup assertion, then recover.
+  const started = state => state.mode === 'running';
+  await page.evaluate(() => {
+    window.__blockedStageStart=e=>{e.preventDefault();e.stopImmediatePropagation();};
+    document.querySelector('#startBtn').addEventListener('click',window.__blockedStageStart,true);
+  });
+  await page.locator('#startBtn').click();
+  t(`${id}: blocked Start firing control is RED`,!started(await page.evaluate(() => window.__RV.state())));
+  await page.evaluate(() => document.querySelector('#startBtn').removeEventListener('click',window.__blockedStageStart,true));
+  await page.locator('#startBtn').click();
+  t(`${id}: restored real Start is GREEN`,started(await page.evaluate(() => window.__RV.state())));
   await page.evaluate(f => window.__drive(f), 60);
   await page.evaluate(() => { window.__RV.skipCountdown(); window.__RV.autopilot(true); });
   await page.evaluate(f => window.__drive(f), 900);
