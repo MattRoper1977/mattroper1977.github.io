@@ -21,6 +21,29 @@ const restricted = ['/for/pupils/', '/resources/', '/Lessons/primary/'];
 const ux2Routes = ['/', '/commission/', '/for/pupils/', '/for/teachers/', '/resources/'];
 const themeRoutes = ['/Lessons/', '/Matt-s-Apps-/', '/Lessons/Science_Teesside/', '/Lessons/Humanities_Teesside/'];
 const {deviceStatsSkip}=require('./check_device_stats.cjs');
+function colourContrast(a,b) {
+  const luminance=colour=>{const [r,g,b]=colour.match(/[\d.]+/g).slice(0,3).map(Number).map(v=>{
+    v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;
+  });return .2126*r+.7152*g+.0722*b;};
+  const x=luminance(a),y=luminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);
+}
+async function chromeFocus(control,surface,label,redProof=false) {
+  const background=await surface.evaluate(el=>getComputedStyle(el).backgroundColor);
+  const check=async()=>{
+    const style=await control.evaluate(el=>{const s=getComputedStyle(el);return {active:document.activeElement===el,visible:el.matches(':focus-visible'),width:parseFloat(s.outlineWidth),style:s.outlineStyle,colour:s.outlineColor};});
+    assert(style.active&&style.visible&&style.width>=3&&style.style!=='none','Visible keyboard ring: '+label);
+    assert(colourContrast(style.colour,background)>=3,'Keyboard ring contrast: '+label+' '+JSON.stringify(style));
+  };
+  await check();
+  if(redProof){
+    const original=await control.getAttribute('style');
+    try{
+      await control.evaluate((el,bg)=>el.style.setProperty('outline-color',bg,'important'),background);
+      await assert.rejects(check,/Keyboard ring contrast/,'Invisible planted ring escaped');
+    }finally{await control.evaluate((el,style)=>style===null?el.removeAttribute('style'):el.setAttribute('style',style),original);}
+    await check();
+  }
+}
 (async () => {
   const browser = await chromium.launch({ headless: true });
   try {
@@ -45,8 +68,13 @@ const {deviceStatsSkip}=require('./check_device_stats.cjs');
         }
         const summary = page.locator(menu + ' > summary');
         assert(!await page.locator(panel).isVisible());
+        await summary.focus();
+        await page.keyboard.press('ArrowRight');
+        await chromeFocus(summary,page.locator(header),route+' closed header',route==='/');
         await summary.press('Enter');
         assert(await page.locator(panel).isVisible(), 'Native keyboard menu: ' + route);
+        await page.keyboard.press('Tab');
+        await chromeFocus(page.locator(panel+' .mbm-menu-close'),page.locator(panel),route+' open menu',route==='/');
         const lessonLink=page.locator(panel).getByRole('link',{name:'Lessons',exact:true});
         assert(await lessonLink.isVisible(),'Learning destination: '+route);
         assert.equal(new URL(await lessonLink.getAttribute('href'),page.url()).pathname,'/Lessons/','Keep catalogue return selection: '+route);
