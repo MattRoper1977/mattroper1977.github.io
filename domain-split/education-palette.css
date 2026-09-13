@@ -1,0 +1,116 @@
+/* SW2 Part T completion, approved 13 September 2026.
+   Only the 32 published front doors carrying this explicit marker adopt it.
+   The fallbacks are the same approved values: an older token deployment never
+   repaints content. The canonical file remains vocabulary, with no collisions.
+   Existing page aliases are bound here; subject/pathway colours stay distinct. */
+body[data-mbm-palette="education"]{
+  --edu-bg:var(--mbm-bg,#f6f1e7);--edu-ink:var(--mbm-primary,#161d3d);
+  --edu-card:var(--mbm-card,#fff);--edu-shadow:var(--mbm-card-shadow,0 2px 10px rgba(22,29,61,.08));
+  --edu-muted:#454c6b;--edu-soft:#e9e5dc;
+  --learn-bg:var(--edu-bg);--learn-ink:var(--edu-ink);--learn-card:var(--edu-card);--learn-muted:var(--edu-muted);
+  --cream:var(--edu-bg);--card:var(--edu-card);--ink:var(--edu-ink);--mut:var(--edu-muted);
+  --ma-cream:var(--edu-bg);--ma-card:var(--edu-card);--ma-ink:var(--edu-ink);--ma-mut:var(--edu-muted);
+  --pv-cream:var(--edu-bg);--pv-card:var(--edu-card);--pv-ink:var(--edu-ink);--pv-mut:var(--edu-muted);
+  --sx-cream:var(--edu-bg);--sx-card:var(--edu-card);--sx-ink:var(--edu-ink);--sx-mut:var(--edu-muted);
+  background:var(--edu-bg);color:var(--edu-ink);
+}
+html[data-theme="dark"] body[data-mbm-palette="education"],body[data-mbm-palette="education"][data-theme="dark"]{
+  --edu-bg:var(--mbm-bg,#081422);--edu-ink:var(--mbm-primary,#f3f7fa);
+  --edu-card:var(--mbm-card,#112237);--edu-shadow:var(--mbm-card-shadow,0 2px 10px rgba(0,0,0,.5));
+  --edu-muted:#c4cfdb;--edu-soft:#182f46;
+}
+html[data-theme="pink"] body[data-mbm-palette="education"]{--edu-bg:#f9e8ec;--edu-card:#fff9fa}
+html[data-theme="blue"] body[data-mbm-palette="education"]{--edu-bg:#e7eef7;--edu-card:#f8fbff}
+html[data-theme="light"] body[data-mbm-palette="education"]{--edu-bg:#f7f7f4;--edu-card:#fff}
+html[data-theme="highlumen"] body[data-mbm-palette="education"]{--edu-bg:#fff;--edu-card:#fff;--edu-ink:#0b1020;--edu-muted:#18223b;--edu-shadow:none}
+@media(prefers-contrast:more){body[data-mbm-palette="education"]{--edu-ink:var(--mbm-primary,#0b1020)}html[data-theme="dark"] body[data-mbm-palette="education"]{--edu-ink:var(--mbm-primary,#fff);--edu-card:var(--mbm-card,#081422)}}
+/* These are the published owners' card components, not all divs or sections. */
+body[data-mbm-palette="education"] :is(.route-card,.route-card.blue,.route-card.amber,.route-card.purple,.lesson-card,.lesson,.subject-card,.collection-card,.standard-card,.tcard,.rx-cardx,.scard,.acard,.lrow,.card,.ad-card,.gv-card,.sx-card,.usage-card,.mbm-start-card,.mbm-task-card,.ma-panel,.pv-note,.pv-lead,.primary-unit,.chooser>a){
+  background-color:var(--edu-card);color:var(--edu-ink);
+  border-radius:var(--mbm-card-radius,12px);box-shadow:var(--edu-shadow);
+}
+/* Specific published Apps rules predate this owner and carry four classes. */
+body.mbm-hub.mbm-hub-apps.mbm-education-hub[data-mbm-palette="education"] .card{
+  background:var(--edu-card);color:var(--edu-ink);border-radius:var(--mbm-card-radius,12px);box-shadow:var(--edu-shadow);
+}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub[data-mbm-palette="education"] .hero h1{color:#fffefa}
+body[data-mbm-palette="education"] :is(h1,h2,h3){color:var(--edu-ink)}
+/* Dark heroes, buttons and subject tiles are intentional semantic surfaces. */
+body[data-mbm-palette="education"] :is(.hero,.tx-hero,.rx-hero,.ma-hero,.pv-hero,.mbm-hub-hero,.sx-hero,.maker-panel,.support-band) :is(h1,h2,h3){color:#fffefa}
+body[data-mbm-page-type="register"]>header:not(.mbm-unified-header) h1{color:#fffefa}
+body[data-mbm-page-type="science-packs"] .hero h1{color:var(--edu-ink)}
+body[data-mbm-palette="education"] :is(.scard,.acard,.card,.lrow,.ad-card,.gv-card,.sx-card,.usage-card) :is(h2,h3){color:var(--edu-ink)}
+body[data-mbm-palette="education"] .mbm-unified-panel h2{color:#8ee6cb}
+body[data-mbm-palette="education"] :is(.scard h3,.chooser a){color:var(--edu-ink)}
+body[data-mbm-palette="education"] .rx-search label{color:#161d3d}
+body[data-mbm-palette="education"] .pv-eyebrow{color:#b9e6cd}
+body[data-mbm-palette="education"] .usage-actions button{color:#161d3d}
+body[data-mbm-palette="education"] .btn.green:focus-visible{outline:3px solid #0b1020;outline-offset:3px}
+body[data-mbm-palette="education"] .ad-search button{background:#1f6b4a;border-color:#1f6b4a;color:#fff}
+body[data-mbm-palette="education"] .ad-search button:focus-visible{outline:3px solid #000;outline-offset:3px}
+html[data-theme="dark"] body[data-mbm-palette="education"] :is(.soft,.ma-panel,.mbm-usage,.mbm-start-here,.gv-prompts,.primary-unit,.pathway){background:var(--edu-card);color:var(--edu-ink)}
+body[data-mbm-palette="education"] :is(.workspace,.result,.feature-card){background:var(--edu-card);color:var(--edu-ink);border-radius:var(--mbm-card-radius,12px);box-shadow:var(--edu-shadow)}
+body[data-mbm-palette="education"] :is(.route-card,.subject-card,.feature-card,.result,.acard) :is(p,.sub,.quiet-note){color:var(--edu-muted)}
+body[data-mbm-palette="education"] .quiet-note{color:var(--edu-muted)}
+body[data-mbm-palette="education"] footer.footer{background:var(--edu-bg);color:var(--edu-ink)}
+body[data-mbm-palette="education"] footer :is(a,p,small,span){color:inherit}
+body[data-mbm-palette="education"] .mbm-usage{--usage-bg:var(--edu-card);--usage-ink:var(--edu-ink);--usage-muted:var(--edu-muted);border-radius:var(--mbm-card-radius,12px)}
+body[data-mbm-palette="education"] .skip{background:#fff;color:#161d3d}
+body[data-mbm-palette="education"][data-theme="dark"] :is(.route-card a,.support-band a,.btn.light){background:var(--edu-card);color:var(--edu-ink)}
+body[data-mbm-palette="education"][data-theme="dark"] :is(.mbm-usage a,.acard .when){color:#b9e6cd}
+body[data-mbm-palette="education"][data-theme="dark"] :is(.rx-search label,.rx-cardx .chip.label){color:var(--edu-ink)}
+body[data-mbm-palette="education"][data-theme="dark"] .badge.b-pdf{color:#161d3d}
+body[data-mbm-palette="education"][data-theme="dark"] :focus-visible{outline-color:#8ee6cb!important}
+body[data-mbm-palette="education"][data-theme="dark"] .ad-search button{background:#b9e6cd;border-color:#b9e6cd}
+body[data-mbm-palette="education"] :is(.mbm-usage [data-usage-choice-status],.workspace .status,.result small){color:var(--edu-muted)}
+body[data-mbm-palette="education"] :is(.usage-note a,a[href^="mailto:"]){color:inherit;text-decoration:underline;text-underline-offset:.2em}
+body[data-mbm-palette="education"] .btn.amber{color:#161d3d}
+body[data-mbm-palette="education"] .chip.tier.BUILD{background:var(--mbm-pathway-build-bg,#f5ddbf);color:var(--mbm-pathway-build-ink,#8a4c0b)}
+body[data-mbm-palette="education"] .chip.tier.GROW{background:var(--mbm-pathway-grow-bg,#d5eedd);color:var(--mbm-pathway-grow-ink,#2f6b4d)}
+body[data-mbm-palette="education"] .chip.tier.LAUNCH{background:var(--mbm-pathway-launch-bg,#f3e8b8);color:var(--mbm-pathway-launch-ink,#6e5a0c)}
+
+/* Remaining front-door owners: workspace, primary, registers and pack lists. */
+body.mbm-hub.mbm-hub-lessons[data-mbm-palette="education"] .hero h1{color:#fffefa}
+body.mbm-hub.mbm-hub-lessons[data-mbm-palette="education"] .card{background:var(--edu-card);color:var(--edu-ink);border-radius:var(--mbm-card-radius,12px);box-shadow:var(--edu-shadow)}
+body[data-mbm-palette="education"] :is(.card,.lesson,.lesson-card,.tcard) :is(p,.small){color:var(--edu-muted)}
+body[data-mbm-palette="education"] .ma-btn:not(.secondary):not(.danger){color:#161d3d}
+body[data-mbm-palette="education"] .mbm-filter-panel :is(label,summary,span){color:var(--edu-ink)}
+body[data-mbm-palette="education"] :is(.mbm-start-here>p,.mbm-start-here>span,.mbm-start-card small,.mbm-result-count,.mbm-sort-wrap,.mbm-result-kind,.mbm-source-note,.mbm-result-group>p){color:var(--edu-muted)}
+body[data-mbm-palette="education"] .mbm-outbound-panel{background:var(--edu-soft);color:var(--edu-ink)}
+body[data-mbm-palette="education"] .mbm-outbound-panel h2{color:var(--edu-ink)}
+body[data-mbm-palette="education"] .mbm-outbound-link{background:var(--edu-card);color:var(--edu-ink)}
+body[data-mbm-palette="education"] .mbm-outbound-tags{color:var(--edu-muted)}
+body[data-mbm-palette="education"] :is(#teach-results-query,#results-query):focus-visible{outline:3px solid #1f6b4a;outline-offset:3px}
+body[data-mbm-palette="education"] .primary-filters{background:var(--edu-card);color:var(--edu-ink)}
+body[data-mbm-palette="education"] #primary-clear{background:var(--edu-soft);color:var(--edu-ink)}
+body[data-mbm-palette="education"] .primary-lesson-title{color:var(--edu-ink)}
+body[data-mbm-palette="education"] :is(.primary-kicker,.primary-enquiry,.primary-tiers,.primary-intro>p){color:var(--edu-muted)}
+body[data-mbm-page-type="register"] .note{background:var(--edu-card);color:var(--edu-ink)}
+body[data-mbm-page-type="register"] .badge span{color:#6e5a0c!important}
+body[data-mbm-page-type="register"] .flow .arr{color:#1f6b4a}
+body[data-mbm-palette="education"][data-theme="dark"] :is(.usage-eyebrow,.mbm-start-here p,.mbm-start-here span,.tcard em,.lesson-card .eyebrow){color:var(--edu-muted)}
+body[data-mbm-palette="education"][data-theme="dark"] :is(.gv-page,.gv-lead,.gv-intro-note,.gv-small,.gv-card>p,.gv-section-head>p,.gv-eyebrow,.gv-tag){color:var(--edu-muted)}
+body.gv-page[data-mbm-palette="education"][data-theme="dark"] :is(a:not(.gv-button),.gv-secondary,.gv-card dt,.gv-effective){color:#b9e6cd!important}
+body[data-mbm-palette="education"][data-theme="dark"] :is(.primary-hub>p,.primary-intro p,.primary-tiers,.primary-tiers strong){color:var(--edu-muted)}
+body[data-mbm-palette="education"][data-theme="dark"] .mbm-outbound-link small{color:var(--edu-muted)}
+body[data-mbm-palette="education"][data-theme="dark"] .fcard .kind{color:#f2a24a}
+body.mbm-hub.mbm-hub-lessons[data-mbm-palette="education"][data-theme="dark"] .card .kind{color:var(--edu-muted)}
+body[data-mbm-palette="education"][data-theme="dark"] main>p>a{color:#b9e6cd}
+body[data-mbm-palette="education"][data-theme="dark"] :is(.mbm-outbound-panel p,.mbm-outbound-panel span,.mbm-outbound-link span,.mbm-result-group p,.primary-footer p,#primary-count){color:var(--edu-muted)}
+body[data-mbm-palette="education"][data-theme="dark"] :is(.bridge .acts a,.tcard h3 em){color:var(--edu-ink)!important}
+body[data-mbm-palette="education"][data-theme="dark"] .catalogue-intro a{color:#b9e6cd}
+body[data-mbm-palette="education"][data-theme="dark"] .lesson-intro :is(.eyebrow,.small){color:var(--edu-muted)}
+body[data-mbm-palette="education"] footer.footer :is(a,p,span,small,.muted){color:var(--edu-ink)!important}
+body[data-mbm-palette="education"] .fcard .kind{color:#765107}
+body[data-mbm-palette="education"][data-theme="dark"] .fcard .kind{color:#f2a24a}
+body[data-mbm-palette="education"] .commit{background:var(--edu-soft);color:var(--edu-ink)}
+body[data-mbm-palette="education"] .commit b{color:var(--edu-ink)}
+body[data-mbm-palette="education"] :is(.education-jumps a:not(:first-child),.primary-scheme,.lesson-card a.button,.lesson-intro a.button):focus-visible{outline:3px solid #b9e6cd;outline-offset:-3px}
+body[data-mbm-palette="education"] .gv-skip:focus-visible,body[data-mbm-page-type="register"]>header:not(.mbm-unified-header) a:focus-visible{outline:3px solid #b9e6cd;outline-offset:3px}
+/* Support cards retain their dark/amber semantic surfaces inside the footer. */
+body[data-mbm-palette="education"] footer.footer .mbm-kofi :is(p,strong,span){color:#fffefa!important}
+body[data-mbm-palette="education"] footer.footer :is(.mbm-kofi a,.mbm-mailing-cta){color:#161d3d!important}
+body[data-mbm-palette="education"][data-theme="dark"] .fcard .fbtn.s{color:#fffefa;border-color:#c4cfdb}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub[data-mbm-palette="education"] .mbm-backtop:focus-visible,body[data-mbm-page-type="register"] .foot-cta a:focus-visible{outline:3px solid #b9e6cd;outline-offset:-3px}
+body[data-mbm-page-type="register"] footer a:focus-visible{outline:3px solid #b9e6cd;outline-offset:3px}
+@media print{body[data-mbm-palette="education"]{background:#fff;color:#000;--edu-bg:#fff;--edu-card:#fff;--edu-ink:#000;--edu-shadow:none}.mbm-chrome-footer-links{display:none}}

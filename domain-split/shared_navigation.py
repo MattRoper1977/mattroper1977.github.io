@@ -142,10 +142,13 @@ def refresh(output, site_source):
             text=text.replace(old,'').replace('href="/main/#about"','href="/main/"')
         if owns_chrome:
             text = complete_chrome(text)
+            from education_palette import adopt_palette
+            from published_chrome import chrome_template
+            text = adopt_palette(text, route, adult, chrome_template)
         text = text.replace('</head>', '<link rel="stylesheet" href="/assets/shared-navigation.css">'
                             '<script defer src="/assets/shared-navigation.js"></script></head>', 1)
         path.write_text(text)
         changed.append(route)
-    for asset in ['shared-navigation.css', 'shared-navigation.js']:
+    for asset in ['shared-navigation.css', 'shared-navigation.js', 'shared-footer.css', 'education-palette.css']:
         shutil.copyfile(HERE / asset, site / 'assets' / asset)
     return {'routes': changed, 'native_disclosure': True}
