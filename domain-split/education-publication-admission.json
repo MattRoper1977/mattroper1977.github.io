@@ -29,7 +29,8 @@
     "FIN3 \u00a74 (2026-09-09, Site claude/fin3-admit-science-manifests): two Lessons merges moved admitted manifest bytes without a registry move -- #475 Ruling 1 (the 10 Grow v3_40min weeks) and aee37a1f Ruling 2 (the F6 no-week marker). The publisher named all four: Build/W18-W26, Grow/W18-W26, Launch/W17-W26 manifest.json and Grow/v3_40min/manifest-v3.json, admitted here as transition pairs [pinned bytes, Lessons main bytes]. Beside them, Ruling 3b's three new whole-route manifests (Lessons #479, Science_Teesside/{Build,Grow,Launch}/manifest.json) admitted ARRIVING at their branch bytes -- absent until #479 merges, admitted after. Measured: the publisher serves .json manifests verbatim (22 of 26 Science manifest rows equal Lessons main source bytes exactly; the 4 that do not are these four). No other path moves.",
     "FIN3 \u00a74 + R6 combined carrier (2026-09-10, Site claude/fin3-carrier-r6-plus-manifests): claude/r6-admit-autumn1-refresh fac26001 and claude/fin3-admit-science-manifests 2a154e33 are SIBLINGS off the 2e4d9966 pin, not a chain -- advancing builder_ref to either alone drops the other's rows. Measured: their row sets are disjoint (38 and 7, overlap 0), so this commit carries both. Advancing to fac26001 after 2a154e33 shipped would have re-red the publication on all 7 of the FIN3 \u00a74 paths, including the four that blocked it.",
     "AMEND-3R-GC1 P6 (2026-09-10, Site claude/gc1-admit-grow-computing): the GROW Computing unit (Lessons #493) arrives as 163 education-lessons paths admitted ARRIVING at their BUILT bytes -- absent from a build of Lessons main until #493 merges, admitted exactly after. Beside them two transition pairs [pinned bytes, post-merge bytes]: education-lessons ICT/Teaching_Packs/index.html (the subject-page entry) and education-site data/usage-registry.json (usage discovery finds 128 new unit resources, 0 removed). Measured against a full three-repository build at this builder with Apps 3ad0a7df: 165 rows move and nothing else does. This commit also admits .sb3 -- the Scratch project zip -- to the publisher extension allowlist and to the admission census INERT set, with the disguised-code control extended to it. Without that the 23 unit .sb3 were dropped from the built tree by extension, so AMEND-3R-GC1 R3's sibling links would have 404ed on the served site while the source tree showed all 15 resolving. A control build of Lessons main against this registry is green (0 problems), so the pin may advance before #493 merges.",
-    "SW2-T5R1 2026-09-12: reviewed lessons token-only source transaction from current main; add assets/mbm-tokens.css as ARRIVING and exact published hub/subject old/new digest pairs. Every prior row and digest retained. Executable publisher inputs and companion source selection unchanged; measured saved old/new full outputs pass this registry."
+    "SW2-T5R1 2026-09-12: reviewed lessons token-only source transaction from current main; add assets/mbm-tokens.css as ARRIVING and exact published hub/subject old/new digest pairs. Every prior row and digest retained. Executable publisher inputs and companion source selection unchanged; measured saved old/new full outputs pass this registry.",
+    "SW2 Part T completion, Matt approved 2026-09-13: 10 exact transitions; only this caller's lessons HTML adopts the new owner component. Its served rollback is retained; companion asset transitions retain the unchanged caller baseline (new paths ARRIVING). No companion input, workflow logic or executable admission rule changes."
   ],
   "trees": {
     "education-site": {
@@ -97,7 +98,7 @@
       "assets/mbm-sync-ui.js": "9a327c573b6e159f0be9d82c856dbd876c8cbc2a0e9627b9013ad1cedf4d4674",
       "assets/mbm-sync.js": "0d7b34dcbea683be5dc1d4c5322f877a97e149ff070cf29b0151663c8238732f",
       "assets/og-cover.png": "487f860a6632f3f832b5ba01a28e3901f58a4c92c75379f1e1b6fcb0b09e29c8",
-      "assets/shared-navigation.css": "1976b76c204c3259ba39da67a7d0dc2657110054524bb95e023d9cfe0b7193c0",
+      "assets/shared-navigation.css": ["1976b76c204c3259ba39da67a7d0dc2657110054524bb95e023d9cfe0b7193c0", "5dc384db12caf32defb02186a260094177e3a3c68d5d4ef6ea196f460cef2bca"],
       "assets/shared-navigation.js": "77b7c435040fcf88931f1e4d3fd2bde43a15dc694d9b475e4e4133a8d6beadf3",
       "assets/style.css": "21a896b5b2d253392040eb0a3be140148316b63454ccf95c696151fc511802b9",
       "assets/usage-client.js": "8f3309ba3f0d583df10f5c55fd238c17dd9481474f317328e830d74ca6d50e80",
@@ -223,7 +224,9 @@
       "uas/vendor/tesseract/core/tesseract-core-simd.wasm.js": "ec8537b758625825add9e3ec3eb9e10b5fc574fadc681a2da1357050cdc5ed43",
       "uas/vendor/tesseract/tesseract.min.js": "a8e29918d098b2b06e1012bdaeffb4aec0445c5d5654709023e0bd1f442a80e8",
       "uas/vendor/tesseract/worker.min.js": "aca1229639fc9907d86f96e825955a2b7c5716d17f3bc3acd71f9c7ab66181fc",
-      "voxel/index.html": "4cf2bcdc922855d06d4592acc02d7fa2dea33fdcc3d8a61b8219c2e406b52525"
+      "voxel/index.html": "4cf2bcdc922855d06d4592acc02d7fa2dea33fdcc3d8a61b8219c2e406b52525",
+      "assets/shared-footer.css": ["679abc2fa0a72a84cc004681f0276b9b57a305763c71fda15480968ebcbff2b6", "ARRIVING"],
+      "assets/education-palette.css": ["99105cd1a36902430d216c7b4684d8cd95166aaa11f8731d512adcb9331e7636", "ARRIVING"]
     },
     "education-lessons": {
       "assets/mbm-tokens.css": [
@@ -1367,10 +1370,7 @@
       "Humanities_Teesside/David_Cover_Autumn1_W3-W7/downloads/LAUNCH/Week_7/LH_W7.pptx": "152027f8c65fb933183c307fe630ad062e47c8db1ff8292da45ee9dc75ebeb2e",
       "Humanities_Teesside/David_Cover_Autumn1_W3-W7/downloads/LAUNCH/Week_7/LH_W7_Pupil_Sheets.pdf": "4baa14f176a1b1f560c593c61e1b16184263470346563ac17e0bc4eaf2fb1307",
       "Humanities_Teesside/David_Cover_Autumn1_W3-W7/downloads/START_HERE_David_Humanities_RE.pdf": "c25282b2323dd6ad793830a845305f42c4f28fea74f9f4f932a27b70d8185ce8",
-      "Humanities_Teesside/David_Cover_Autumn1_W3-W7/index.html": [
-       "4b869260574795e253a7e58ba435c46e1970a5b44243a6eb1635446ceb73303e",
-       "004f3831184b477168057f4881e900ace5bbd2c7f3324537e8030efcb6207108"
-      ],
+      "Humanities_Teesside/David_Cover_Autumn1_W3-W7/index.html": ["004f3831184b477168057f4881e900ace5bbd2c7f3324537e8030efcb6207108", "26255874cf5b5c653d0a8b4cd150c486b108de462d145fe188acb5c556bc411d"],
       "Humanities_Teesside/David_Cover_Autumn1_W3-W7/resource.css": "1aed9aaca0d73a4b200c4e5d0977e73f4e906c747d7340c7a62f4197a8344bae",
       "Humanities_Teesside/David_Cover_Autumn1_W3-W7/resource.js": "ad40afed95490bfcce92dc062da46e1b27bcb96bdc80e37eabdfe02bf6ffc446",
       "Humanities_Teesside/GROW_Printable_Pack.html": "ed42298e8e5d8c9178e1618c764ec3b9c743b4451e5f6976193a8811131ec93f",
@@ -1731,10 +1731,7 @@
       "Humanities_Teesside/Teaching_Packs/index.html": "67ea93a73c6bba8f6fbb0e8f814536a5a0a5caae1f45a7d3133c927883ab861b",
       "Humanities_Teesside/Teaching_Packs/packs.css": "70ca73b323e5cabf05b1f5f9f8107694cfcecf4ddf8043f342049ee4c797ce59",
       "Humanities_Teesside/Teaching_Packs/web-slides.html": "b4a70223459837fef533195c28d83b05a940515fb411405f8ea170d06935b58b",
-      "Humanities_Teesside/index.html": [
-       "400912963ef2b7fa96683bc222dc52684db4da9e46f797e64818116044fa355e",
-       "44bd2ce16c97488e9425bd8b3e9c39baa02e723ce9286e011c7c7acaa01a034b"
-      ],
+      "Humanities_Teesside/index.html": ["44bd2ce16c97488e9425bd8b3e9c39baa02e723ce9286e011c7c7acaa01a034b", "c73d6994735a3d0f3511695496e73ec7573b93451553565b570b0a87fa11518b"],
       "ICT/Teaching_Packs/DOWNLOADS_MANIFEST.json": "22e19a18c07efc5283e123e423f016ed4630d8cd33ab8eacd4e847941f1b520c",
       "ICT/Teaching_Packs/GROW/Authoring/Lesson_Content.json": "b43ceed7e00620f5e119ae3b42b4b68f8e32407a0e064f2c3ec6c06b07b107e7",
       "ICT/Teaching_Packs/GROW/Documents/Pupil_Booklet.docx": "59daf8f6830fdefba546daae885bc81c7e96cc2c6f127592192205368b1e7e47",
@@ -3720,16 +3717,10 @@
       "Science_Teesside/Teaching_Packs/LAUNCH/lessons/W9L1/LAUNCH_Science_Autumn2_W9L1_Cell_Cycle_Copy_Check_Divide_Pupil.pdf": "c8a0633c74349042655fb167338dc0bccb60898f1c218fbfcf4fb57b299a097d",
       "Science_Teesside/Teaching_Packs/LAUNCH/lessons/W9L1/LAUNCH_Science_Autumn2_W9L1_Cell_Cycle_Copy_Check_Divide_Teacher.docx": "a5dda6c1f55556025fb2d691b2dc0e7583e0a86b55901a0ca751d6831fb39614",
       "Science_Teesside/Teaching_Packs/LAUNCH/lessons/W9L1/LAUNCH_Science_Autumn2_W9L1_Cell_Cycle_Copy_Check_Divide_Teacher.pdf": "a2e2c189ed6cc9b2dfd17de3ef20c720a369ae146471cb289dfb955aa4cf2d83",
-      "Science_Teesside/Teaching_Packs/index.html": [
-       "0b86fa0e7a3a5d476058dffddcd1cf7b63a4ffd1b4dd8877a64a375834603dc5",
-       "11096afe09cb81f91c072eaa8980152858c7b8980451d3cd2b3b2b96e76218ed"
-      ],
+      "Science_Teesside/Teaching_Packs/index.html": ["11096afe09cb81f91c072eaa8980152858c7b8980451d3cd2b3b2b96e76218ed", "19daa4d90e5ac76803974abc36d83cf8b9e169e515c2c9f84b0635bd780c13a3"],
       "Science_Teesside/Teaching_Packs/packs.css": "70ca73b323e5cabf05b1f5f9f8107694cfcecf4ddf8043f342049ee4c797ce59",
       "Science_Teesside/Teaching_Packs/web-slides.html": "4042f4ac77843af105ff058f721d842b6ead688c0ee6bb89d26274d454d46a34",
-      "Science_Teesside/index.html": [
-       "2129984f630f9bf73bdfe7bf6dd4d94bfc3bc59ace032f0853663f92f94a6c97",
-       "865ae459f34ffe1fa8af9b3b378f9884a29b9d1f52bd59f1b99dfae1644dafe5"
-      ],
+      "Science_Teesside/index.html": ["865ae459f34ffe1fa8af9b3b378f9884a29b9d1f52bd59f1b99dfae1644dafe5", "175afd0c6acc994b942deea1d98639e63f03a6e3735157a354515521e3fb49de"],
       "Science_Teesside/launch-engine/README.md": "064cee682afabfcbb20afb2ec01f097cd4824e237278f3ceb6141dafbaa6bf00",
       "Science_Teesside/launch-engine/build.js": "c53b66b3a37d9d6a2f1d4cdc67d76d91e7f84b1edf41e3cedf45ef6541b2b8e0",
       "Science_Teesside/launch-engine/check.js": "b6889cb02e0603c192eee36f7c2eae6470c6236f9865f060c8635a8e65a88069",
@@ -3880,20 +3871,14 @@
       "humanities_teesside.html": "6105c97878ab12ea2ad6d5be647b38e469a532ba366672e21e47a9b3270050dd",
       "images/arcade-bg.svg": "c36b58407cea6074f94d58a82c81b46868caff63c9123afec1dce8e4bd6a9859",
       "images/lessonhub-bg.svg": "ca1e1c1a575c3f12babc838e85cdbf43fe5d4cab26def949809c80ac7cf2f67b",
-      "index.html": [
-       "c2dd140b85b9234e0118f9e5a4324bb9ee491dc5333069e1e17154a3422f38b9",
-       "e254bb378873cc429b5173cbdaa99513a16ac4804be00922bf78b303c49f5865"
-      ],
+      "index.html": ["e254bb378873cc429b5173cbdaa99513a16ac4804be00922bf78b303c49f5865", "8b0f8ea72c21c2f07cff5eafd2d5a2add4823f2c32d4177c7649dc7688b8b347"],
       "lesson-hub-mission-control.png": "3b138769f3b8dbe42c2ab7dc02563072894ad3860a92f29006bb3ce3b1b2543a",
       "liveteach/index.html": "d3352425ff9afff4c62626d096c2a8036c6baf91160b1586835386b8d7b27025",
       "liveteach/manifests/waves_v1.js": "da33dd448617fd7e47d50ed2636d41de357bcc19a0009171ac77850128480d92",
       "liveteach/projector.html": "a40148bc45bf0dd185f4c8f619359947d12c714b0b0a58b095e266899cf5737a",
       "liveteach/teacher.html": "d34822308c166b50d457cef30835560920302b13aa7d65190d8994c2e60a3867",
       "primary/catalogue.json": "a94f10863927a0fe284f1544ceb7e575c1afe0d310999b2f2811803858a9024a",
-      "primary/index.html": [
-       "d75247c0942469a9e2e86abae2611ceb730e7c4298dacfcd21f897d517d4ca7f",
-       "10948978d67575acdb26e16fa54bdce44172073ca25ff17ed987a29265b15fb6"
-      ],
+      "primary/index.html": ["10948978d67575acdb26e16fa54bdce44172073ca25ff17ed987a29265b15fb6", "da53f9eb996238ef07c183274dc416090c6c85995267b93db7cff9f53228660c"],
       "primary/year4/science/autumn/group-classify-living-things/Lesson1_GroupAnimals.html": "15bf5680d5a1c6463510516811bedac010bc9166fff8873e62e37924619621e7",
       "primary/year4/science/autumn/group-classify-living-things/Lesson2_VertebratesInvertebrates.html": "04a2c1ffdc10a38dd6fbf44ae624401081c743b8ae18ea7d5f89057fdb89039a",
       "primary/year4/science/autumn/group-classify-living-things/Lesson3_ClassificationKeysAnimals.html": "59de6ce424b0c6550df926fb75cf279f3ef1ae8badd38f4c59c60e46c09ba363",
@@ -3984,10 +3969,7 @@
       "resources.json": ["3aebf2b103ab6e7a44dca53955fef8c1846b55d877fb37e7ab86be4ea658b3ea", "e8e5004ab298a342168a17e82f47a15b7274928bef6f2320a03d7257c13df4ac"],
       "resources.schema.json": "026e4c757e11fb25f296f08087327b11978c6ec46ed393358c94caa0a172762e",
       "review/estate-exec/README.md": "11a3c2052b57d93b5d6853c00c26ba7605cac8952eb21d221edf143e433539e2",
-      "subject.html": [
-       "78c6c348ff316d3ed450aa6c69d88f7bec1274bbaf076aa0ebf897588eb48216",
-       "fdb06b5f8be3580606f642e221e63f3324c199ab5e08910adbabf6437f910631"
-      ],
+      "subject.html": ["78c6c348ff316d3ed450aa6c69d88f7bec1274bbaf076aa0ebf897588eb48216", "50fdf3ad1b2ac0ba41258285f511eb07aac8d27e396825464d10de9396a96683"],
       "tools/artsaward/SLOTS.json": "2a9a389711d8ba2d0b9771b43b03f6a5e1124f6d99e22d4466d694799a40226f"
     },
     "education-apps": {
