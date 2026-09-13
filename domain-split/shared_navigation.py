@@ -71,7 +71,7 @@ SEARCH_CONTROLS = {'/': 'home-resource-query', '/main/': 'home-resource-query', 
                    '/for/pupils/': 'pupils-q', '/resources/': 'rxSearch', '/Lessons/': 'search',
                    '/Matt-s-Apps-/': 'search', '/tools/': 'tq', '/teach/': 'teach-search',
                    '/education-hub/': 'hub-search', '/for/governors-trustees/': 'gv-search',
-                   '/Lessons/primary/': 'primary-search'}
+                   '/Lessons/primary/': 'primary-search', '/Lessons/subject.html': 'search'}
 SEARCH_FALLBACK = '/resources/#rxSearch'
 
 
@@ -147,6 +147,8 @@ def refresh(output, site_source):
     site_pages = SITE_PAGES + [route.strip('/') + '/index.html' for route, _ in rows]
     pages = [(site / p, '/' + p.removesuffix('index.html'), p in adult_pages) for p in site_pages]
     pages += [(output / 'education-lessons/index.html', '/Lessons/', True),
+              # Shared teacher/pupil subject page: published chrome only.
+              (output / 'education-lessons/subject.html', '/Lessons/subject.html', False),
               (output / 'education-lessons/primary/index.html', '/Lessons/primary/', False),
               (output / 'education-apps/index.html', '/Matt-s-Apps-/', True)]
     # Auth controls remain server-side. These mixed teaching catalogues expose
@@ -181,10 +183,13 @@ def refresh(output, site_source):
             replacement = current_header(route, current_audience_rows(site_source), adult,
                                          route == audiences['pupils']['route'], theme,
                                          route == '/Lessons/primary/',
-                                         '#search' if route in {'/Lessons/', '/Matt-s-Apps-/'} and 'id="search"' in text
+                                         '#search' if route in {'/Lessons/', '/Matt-s-Apps-/', '/Lessons/subject.html'} and 'id="search"' in text
                                          else '#primary-search' if route == '/Lessons/primary/' and 'id="primary-search"' in text
                                          else '/resources/#rxSearch')
-        if route in inserted:
+        if route == '/Lessons/subject.html':
+            from structural_html import prepend_to_first_main
+            text,count=prepend_to_first_main(text,replacement)
+        elif route in inserted:
             # These landings use a content header for their heading and Open
             # action. Add navigation before it without deleting those controls.
             text,count=re.subn(r'(<body\b[^>]*>)',lambda match:match.group(1)+replacement,text,count=1,flags=re.I)

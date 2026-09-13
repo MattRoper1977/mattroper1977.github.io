@@ -112,6 +112,20 @@ elements are preserved. This is a region tokenizer, not full HTML validation.
     return source[:region.start] + replacement + source[region.end:], 1
 
 
+def prepend_to_first_main(source, fragment):
+    """Insert chrome before the real main, preserving the skip link and body."""
+    region = _FirstRegion(source, 'main')
+    region.feed(source)
+    region.close()
+    if region.start is None:
+        return source, 0
+    if region.end is None:
+        raise ValueError('Unclosed <main> insertion region')
+    _assert_balanced(source[region.start:region.end])
+    _assert_balanced(fragment)
+    return source[:region.start] + fragment + source[region.start:], 1
+
+
 def append_to_first_footer(source, fragment):
     """Append a chrome fragment without replacing authored footer copy or links."""
     region = _FirstRegion(source, 'footer')
