@@ -100,7 +100,7 @@ SEARCH_CONTROLS = {'/': 'home-resource-query', '/main/': 'home-resource-query', 
                    '/for/pupils/': 'pupils-q', '/resources/': 'rxSearch', '/Lessons/': 'search',
                    '/Matt-s-Apps-/': 'search', '/tools/': 'tq', '/teach/': 'teach-search',
                    '/education-hub/': 'hub-search', '/for/governors-trustees/': 'gv-search',
-                   '/Lessons/primary/': 'primary-search'}
+                   '/Lessons/primary/': 'primary-search', '/Lessons/subject.html': 'search'}
 SEARCH_FALLBACK = '/resources/#rxSearch'
 
 
@@ -237,8 +237,17 @@ def header(route, audiences, adult=False, pupil=False, theme=False, primary=Fals
     menu = chrome_template('menu-sheet.html', 'published-education', {
         'menu_title': escape(MENU_TITLE), 'groups': groups,
     })
+    # The same explicit adult classification protects Saved and account links.
+    # Mixed/pupil routes receive the two-link row in their actual markup.
+    navigation = chrome_template('nav-row.html', 'published-education', {
+        'links': ''.join(link(item, primary and item[0] == '/Lessons/')
+                         for item in (LEARNING[:3] if adult else LEARNING[:2])),
+        'about': '<a class="mbm-unified-about" href="/main/#about">About</a>' if adult else '',
+    })
     return chrome_template('header.html', 'published-education', {
         'search': escape(search, quote=True), 'menu': menu,
+        'variant': 'adult' if adult else 'pupil', 'navigation': navigation,
+        'saved': chrome_template('nav-row.html', 'published-saved', {}) if adult else '',
     })
 
 
@@ -246,7 +255,7 @@ def refresh(output, site_source):
     # Also support callers that load this module by absolute file path.
     if str(HERE) not in sys.path:
         sys.path.insert(0, str(HERE))
-    from structural_html import replace_first_element
+    from structural_html import replace_first_element, prepend_to_first_main
     site = output / 'education-site'
     audiences = json.loads((site_source / 'data/audience-homepages.json').read_text())['audiences']
     rows = audience_rows(site_source)
@@ -257,6 +266,9 @@ def refresh(output, site_source):
     site_pages = SITE_PAGES + [route.strip('/') + '/index.html' for route, _ in rows]
     pages = [(site / p, '/' + p.removesuffix('index.html'), p in adult_pages) for p in site_pages]
     pages += [(output / 'education-lessons/index.html', '/Lessons/', True),
+              # Subject pages serve teachers and pupils; keep account controls
+              # out of their shared menu and leave the source catalogue intact.
+              (output / 'education-lessons/subject.html', '/Lessons/subject.html', False),
               (output / 'education-lessons/primary/index.html', '/Lessons/primary/', False),
               (output / 'education-apps/index.html', '/Matt-s-Apps-/', True)]
     # Auth controls remain server-side. These mixed teaching catalogues expose
@@ -283,7 +295,11 @@ def refresh(output, site_source):
         searches[route] = search
         replacement = header(route, rows, adult, route == audiences['pupils']['route'], theme,
                              route == '/Lessons/primary/', search)
-        if route in inserted:
+        if route == '/Lessons/subject.html':
+            # There is no source header to replace. The parser keeps the skip
+            # link first and inserts before the real main, not a script literal.
+            text,count=prepend_to_first_main(text,replacement)
+        elif route in inserted:
             # These landings use a content header for their heading and Open
             # action. Add navigation before it without deleting those controls.
             text,count=re.subn(r'(<body\b[^>]*>)',lambda match:match.group(1)+replacement,text,count=1,flags=re.I)
@@ -296,11 +312,13 @@ def refresh(output, site_source):
             if text.count(old)!=1: raise ValueError('Legacy stats menu handler changed')
             text=text.replace(old,'').replace('href="/main/#about"','href="/main/"')
         text = complete_chrome(text)
+        from education_palette import adopt_palette
+        text = adopt_palette(text, route, adult, chrome_template)
         text = text.replace('</head>', '<link rel="stylesheet" href="/assets/shared-navigation.css">'
                             '<script defer src="/assets/shared-navigation.js"></script></head>', 1)
         path.write_text(text)
         changed.append(route)
-    for asset in ['shared-navigation.css', 'shared-navigation.js', 'shared-footer.css']:
+    for asset in ['shared-navigation.css', 'shared-navigation.js', 'shared-footer.css', 'education-palette.css']:
         shutil.copyfile(HERE / asset, site / 'assets' / asset)
     return {'routes': changed, 'native_disclosure': True, 'audience_rows': rows,
             'governors_from_record': any(r[0] == '/for/governors-trustees/' for r in
