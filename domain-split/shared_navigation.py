@@ -111,6 +111,89 @@ class ScriptSources(HTMLParser):
         if tag == 'script': self.sources.append(dict(attrs).get('src',''))
 
 
+class ChromeDocument(HTMLParser):
+    """Locate actual token links and read tagline text without serialising pages."""
+    def __init__(self, source):
+        super().__init__()
+        self.source = source
+        self.lines = [0] + [i + 1 for i, c in enumerate(source) if c == '\n']
+        self.links = []
+        self.footers = 0
+        self.stack = []
+        self.text = {'all': [], 'header': [], 'footer': []}
+        self.feed(source)
+
+    def handle_starttag(self, tag, attrs):
+        values = dict(attrs)
+        if tag == 'footer':
+            self.footers += 1
+        if tag == 'link' and 'stylesheet' in values.get('rel', '').split():
+            href = values.get('href', '')
+            if urlsplit(href).path.rsplit('/', 1)[-1] == 'mbm-tokens.css':
+                line, column = self.getpos()
+                start = self.lines[line - 1] + column
+                self.links.append((start, start + len(self.get_starttag_text()), href))
+        if tag not in {'area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr'}:
+            self.stack.append(tag)
+
+    def handle_endtag(self, tag):
+        if tag in self.stack:
+            self.stack = self.stack[:len(self.stack) - 1 - self.stack[::-1].index(tag)]
+
+    def handle_data(self, text):
+        if any(tag in self.stack for tag in ['script', 'style', 'template']):
+            return
+        self.text['all'].append(text)
+        for tag in ['header', 'footer']:
+            if tag in self.stack:
+                self.text[tag].append(text)
+
+    def taglines(self):
+        return {key: len(re.findall(r'Learn\s*•\s*Build\s*•\s*Explore', ' '.join(parts)))
+                for key, parts in self.text.items()}
+
+
+def complete_chrome(text):
+    """Use the canonical token URL and fill an absent footer signoff only."""
+    template = chrome_template('header.html', 'tokens', {})
+    links = ChromeDocument(template).links
+    if len(links) != 1 or links[0][2] != '/assets/mbm-tokens.css':
+        raise ValueError('Expected one origin-root token link in the shared template')
+    canonical = template[links[0][0]:links[0][1]]
+    document = ChromeDocument(text)
+    if len(document.links) > 1:
+        raise ValueError('Duplicate token stylesheets on a publication surface')
+    if document.links:
+        start, end, href = document.links[0]
+        if urlsplit(href).netloc:
+            raise ValueError('Token stylesheet must use the publication origin')
+        if href != '/assets/mbm-tokens.css':
+            text = text[:start] + canonical + text[end:]
+    else:
+        if text.count('</head>') != 1:
+            raise ValueError('Expected one token insertion boundary')
+        text = text.replace('</head>', '<!-- mbm-chrome:tokens -->' + canonical +
+                            '<!-- /mbm-chrome:tokens --></head>', 1)
+    counts = document.taglines()
+    if counts == {'all': 0, 'header': 0, 'footer': 0}:
+        if document.footers > 1:
+            raise ValueError('Ambiguous footer signoff owner')
+        if str(HERE) not in sys.path:
+            sys.path.insert(0, str(HERE))
+        from structural_html import append_to_first_footer
+        fragment = chrome_template('footer.html', 'published-signoff', {})
+        fragment = '<!-- mbm-chrome:signoff -->' + fragment + '<!-- /mbm-chrome:signoff -->'
+        text, count = append_to_first_footer(text, fragment)
+        if count == 0:
+            if text.count('</body>') != 1:
+                raise ValueError('Missing footer insertion boundary')
+            text = text.replace('</body>', '<footer data-mbm-chrome="minimal">' + fragment + '</footer></body>', 1)
+        text = text.replace('</head>', '<link rel="stylesheet" href="/assets/shared-footer.css"></head>', 1)
+    elif counts != {'all': 1, 'header': 0, 'footer': 1}:
+        raise ValueError('Tagline must appear once in the footer: ' + repr(counts))
+    return text
+
+
 def has_reading_theme(text):
     parser=ScriptSources();parser.feed(text)
     return any(urlsplit(src).path.rsplit('/',1)[-1] in {'theme.js','mbm-theme.js'} for src in parser.sources)
@@ -212,11 +295,12 @@ def refresh(output, site_source):
             old="document.getElementById('menu').addEventListener('click',function(){var n=document.getElementById('nav'),o=n.classList.toggle('open');this.setAttribute('aria-expanded',o);});"
             if text.count(old)!=1: raise ValueError('Legacy stats menu handler changed')
             text=text.replace(old,'').replace('href="/main/#about"','href="/main/"')
+        text = complete_chrome(text)
         text = text.replace('</head>', '<link rel="stylesheet" href="/assets/shared-navigation.css">'
                             '<script defer src="/assets/shared-navigation.js"></script></head>', 1)
         path.write_text(text)
         changed.append(route)
-    for asset in ['shared-navigation.css', 'shared-navigation.js']:
+    for asset in ['shared-navigation.css', 'shared-navigation.js', 'shared-footer.css']:
         shutil.copyfile(HERE / asset, site / 'assets' / asset)
     return {'routes': changed, 'native_disclosure': True, 'audience_rows': rows,
             'governors_from_record': any(r[0] == '/for/governors-trustees/' for r in

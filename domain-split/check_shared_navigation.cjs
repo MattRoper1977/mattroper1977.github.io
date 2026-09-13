@@ -16,11 +16,13 @@ const routes = ['/', '/main/', '/account/', '/members/', '/mailing-list/', '/pri
   '/for/trusts/', '/for/councils-organisations/', '/for/partners/',
   '/for/governors-trustees/', '/Lessons/', '/Lessons/primary/', '/Matt-s-Apps-/',
   '/stats/on-this-device/', '/asdan/', '/uas/', '/commission/', '/Lessons/Science_Teesside/',
-  '/Lessons/Humanities_Teesside/', '/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/'];
+  '/Lessons/Humanities_Teesside/', '/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/',
+  '/Lessons/Science_Teesside/Teaching_Packs/'];
 const restricted = ['/for/pupils/', '/resources/', '/Lessons/primary/'];
 const ux2Routes = ['/', '/commission/', '/for/pupils/', '/for/teachers/', '/resources/'];
 const themeRoutes = ['/Lessons/', '/Matt-s-Apps-/', '/Lessons/Science_Teesside/', '/Lessons/Humanities_Teesside/'];
 const {deviceStatsSkip}=require('./check_device_stats.cjs');
+const {assertChrome, tokenReference, proveChromeControls}=require('./check_chrome_tokens.cjs');
 function colourContrast(a,b) {
   const luminance=colour=>{const [r,g,b]=colour.match(/[\d.]+/g).slice(0,3).map(Number).map(v=>{
     v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;
@@ -47,6 +49,7 @@ async function chromeFocus(control,surface,label,redProof=false) {
 (async () => {
   const browser = await chromium.launch({ headless: true });
   try {
+    const expectedTokens = await tokenReference(browser);
     for (const javaScriptEnabled of [true, false]) {
       const context = await browser.newContext({ javaScriptEnabled, viewport: { width: 390, height: 844 } });
       // This navigation test never signs in or contacts a live backend/game.
@@ -57,6 +60,7 @@ async function chromeFocus(control,surface,label,redProof=false) {
       for (const route of routes) {
         assert.equal((await page.goto(origin + route)).status(), 200, route);
         assert.equal(await page.locator(header).count(), 1, 'One header: ' + route);
+        await assertChrome(page, route, expectedTokens);
         const skip = page.locator('body > a.skip, body > a[href^="#"]').first();
         if (await skip.count()) {
           await skip.focus();
@@ -167,6 +171,7 @@ async function chromeFocus(control,surface,label,redProof=false) {
       assert(controlFailed,'Planted wrong statistics skip destination must fail');
       await deviceStatsSkip(page,origin);
       console.log('Device statistics real Tab control: real PASS / planted destination FAIL / restored PASS');
+      if (javaScriptEnabled) await proveChromeControls(page,origin,expectedTokens);
       if (javaScriptEnabled) {
         // Each distinct front-door template is exercised at narrow phone,
         // tablet and desktop widths, in addition to the 390px contract above.

@@ -28,6 +28,7 @@ design and would report every name twice.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import re
 import sys
 from collections import defaultdict
@@ -42,9 +43,34 @@ READ_SUFFIXES = {".css", ".html", ".js", ".py"}
 DEFINITION = re.compile(r"(--mbm-[a-z0-9-]+)\s*:\s*([^;}\n]+)")
 
 
+def generated_token_copy():
+    """Identify the one opted-in, byte-exact AS1 copy of the canonical file.
+
+    The game must remain downloadable as one HTML file. Its generator embeds
+    these same tokens; that copy is not a second definition owner. Verify the
+    complete generated region and remove ONLY the leading canonical token
+    bytes from this census. Brand, shell and handwritten game CSS remain in it.
+    """
+    spec = importlib.util.spec_from_file_location('as1_generator', ROOT / 'tools/render_arcade_pilot.py')
+    generator = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(generator)
+    path, expected = generator.generate()
+    prefix = generator.BEGIN + '\n<style>\n'
+    tokens = TOKENS.read_text() + '\n'
+    return path, expected, prefix, tokens
+
+
+def without_generated_tokens(text, expected, prefix, tokens):
+    if text != expected or text.count(prefix + tokens) != 1:
+        raise ValueError('AS1 generated token copy drift; run the pilot generator')
+    start = text.index(prefix + tokens) + len(prefix)
+    return text[:start] + text[start + len(tokens):]
+
+
 def definitions() -> dict[str, set[tuple[str, str]]]:
     """name -> {(file, value)} across the estate, generated trees excluded."""
     found: dict[str, set[tuple[str, str]]] = defaultdict(set)
+    generated_path, expected, prefix, tokens = generated_token_copy()
     for path in sorted(ROOT.rglob("*")):
         if not path.is_file() or path.suffix not in READ_SUFFIXES:
             continue
@@ -54,6 +80,8 @@ def definitions() -> dict[str, set[tuple[str, str]]]:
             text = path.read_text(errors="ignore")
         except OSError:
             continue
+        if path == generated_path:
+            text = without_generated_tokens(text, expected, prefix, tokens)
         rel = str(path.relative_to(ROOT))
         for name, value in DEFINITION.findall(text):
             found[name].add((rel, value.strip()))
@@ -69,11 +97,30 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    found = definitions()
+    try:
+        found = definitions()
+    except (ValueError, AssertionError) as error:
+        print('Token ownership verification failed: ' + str(error), file=sys.stderr)
+        return 1
     mine = {n for n, _ in DEFINITION.findall(TOKENS.read_text())}
     rel_tokens = str(TOKENS.relative_to(ROOT))
 
     if args.self_test:
+        _, expected, prefix, tokens = generated_token_copy()
+        # A changed embedded copy is rejected before any definitions can be
+        # omitted. An extra definition outside the copy remains in the census.
+        changed = expected.replace(prefix + tokens, prefix + tokens.replace('#f6f1e7', '#000000', 1), 1)
+        assert changed != expected, 'Generated-copy mutation did not fire'
+        try:
+            without_generated_tokens(changed, expected, prefix, tokens)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('Changed generated token copy escaped')
+        extra = '\n<style>:root{' + '--mbm-primary' + ':#010203}</style>\n'
+        assert ('--mbm-primary', '#010203') in DEFINITION.findall(
+            without_generated_tokens(expected + extra, expected + extra, prefix, tokens))
+        print('Generated ownership controls: changed copy rejected; external collision retained')
         # The red proof, without editing the shipped file: put back the worst of
         # the five collisions and require this gate to catch it.
         mine = mine | {"--mbm-line"}

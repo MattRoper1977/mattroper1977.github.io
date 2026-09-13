@@ -110,3 +110,20 @@ elements are preserved. This is a region tokenizer, not full HTML validation.
     _assert_balanced(source[region.start:region.end])
     _assert_balanced(replacement)
     return source[:region.start] + replacement + source[region.end:], 1
+
+
+def append_to_first_footer(source, fragment):
+    """Append a chrome fragment without replacing authored footer copy or links."""
+    region = _FirstRegion(source, 'footer')
+    region.feed(source)
+    region.close()
+    if region.start is None:
+        return source, 0
+    if region.end is None:
+        raise ValueError('Unclosed <footer> append region')
+    original = source[region.start:region.end]
+    _assert_balanced(original)
+    _assert_balanced(fragment)
+    closing = re.search(r'</footer[ \t\n\r\f]*>$', original, re.I)
+    offset = region.start + closing.start()
+    return source[:offset] + fragment + source[offset:], 1
