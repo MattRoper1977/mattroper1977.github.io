@@ -56,6 +56,7 @@ Usage
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import subprocess
@@ -217,6 +218,33 @@ def committed_bytes(sha: str, rel: str) -> bytes | None:
     return out if code == 0 else None
 
 
+def education_generator_inputs(sha: str) -> set[str]:
+    """Read the publisher's explicit policy at the expected immutable source.
+
+    Parse only the literal declaration; never execute historical builder code
+    or infer an exclusion from a missing publication file.
+    """
+    source = committed_bytes(sha, "domain-split/build_education.py")
+    if source is None:
+        raise ValueError("expected source has no education publisher policy")
+    try:
+        declarations = [node.value for node in ast.parse(source).body
+                        if isinstance(node, ast.Assign) and any(
+                            isinstance(target, ast.Name) and target.id == "SITE_GENERATOR_INPUTS"
+                            for target in node.targets)]
+        if len(declarations) != 1:
+            raise ValueError("expected one SITE_GENERATOR_INPUTS declaration")
+        paths = ast.literal_eval(declarations[0])
+        if not isinstance(paths, set) or not paths or any(
+                not isinstance(path, str) or not path or path.startswith("/")
+                or "\\" in path or any(part in {"", ".", ".."} for part in path.split("/"))
+                or "?" in path or "#" in path for path in paths):
+            raise ValueError("invalid SITE_GENERATOR_INPUTS paths")
+        return paths
+    except (SyntaxError, TypeError, ValueError) as error:
+        raise ValueError(f"invalid expected publisher exclusion policy: {error}") from error
+
+
 def data_stamp_of(sha: str) -> str | None:
     """The stamp tools/stamp-data.py would splice in at this commit.
 
@@ -306,6 +334,27 @@ def check_once(transport: Transport, expected: str, base_url: str, repo: str) ->
 
     source_witnesses = changed_served_files(reference, expected)
     if PUBLISHED_ROOT is not None:
+        try:
+            if expected != PUBLISHED_SHA:
+                raise ValueError("Publication artifact belongs to another expected SHA")
+            excluded = education_generator_inputs(expected)
+            if excluded.intersection(EDUCATION_OUTPUT_WITNESSES):
+                raise ValueError("publisher exclusion conflicts with mandatory output witnesses")
+        except ValueError as error:
+            findings.append(("3 publisher exclusion policy", FAIL, str(error)))
+            return findings
+        # Excluded inputs are negative witnesses, not omitted checks. Check the
+        # complete explicit set, even on commits changing only another file.
+        for rel in sorted(excluded):
+            local = PUBLISHED_ROOT / rel
+            if local.exists() or local.is_symlink():
+                findings.append((f"3 excluded input {rel}", FAIL,
+                                 "publisher-excluded input leaked into the publication artifact"))
+            status, _ = transport.get_bytes(base_url.rstrip("/") + served_url(rel))
+            findings.append((f"3 excluded input {rel}", PASS if status == 404 else FAIL,
+                             "publisher-excluded input is absent at origin (HTTP 404)" if status == 404
+                             else f"excluded input must answer HTTP 404, origin answered HTTP {status}"))
+        source_witnesses = [rel for rel in source_witnesses if rel not in excluded]
         # Builder-only commits have no changed raw public-source path. Always
         # inspect the real outputs named by the education publication contract,
         # then include every public source path that changed. A passing deploy
@@ -456,6 +505,78 @@ def witness_history_controls() -> None:
         ROOT = original_root
 
 
+def education_exclusion_controls() -> list[tuple[str, str, str]]:
+    """Exercise the publication path, including intentional absence and leaks."""
+    from unittest.mock import patch
+    module = sys.modules[__name__]
+    head = resolve("HEAD")
+    excluded = education_generator_inputs(head)
+    hook = "assets/arcade/rally-hooks.js"
+    assert hook in excluded
+    public = "assets/game-saves.js"
+    stub = "driving/RallyVector.html"
+    results = []
+    with tempfile.TemporaryDirectory(prefix="provenance-publication-") as temp:
+        root = Path(temp)
+        paths = (*EDUCATION_OUTPUT_WITNESSES, public, stub)
+        files = {}
+        for rel in paths:
+            target = root / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(("published fixture " + rel).encode())
+            files[served_url(rel)] = (200, target.read_bytes())
+
+        def prove(name, want=FAIL, needle="", served=None, deployed=None):
+            findings = check_once(FakeTransport(deployed=deployed or head,
+                                                files=files if served is None else served),
+                                  head, "https://example.invalid/", "o/r")
+            assert verdict(findings) == want, (name, findings)
+            assert any(needle in detail and state == want for _, state, detail in findings), (name, findings)
+            if want == PASS:
+                matched = {layer.removeprefix("3 origin witness ") for layer, state, _ in findings
+                           if layer.startswith("3 origin witness ") and state == PASS}
+                assert set(paths) <= matched, (name, matched)
+                assert len([1 for layer, state, _ in findings
+                            if layer.startswith("3 excluded input ") and state == PASS]) == len(excluded)
+            results.append((name, PASS, f"{want}: {needle}"))
+
+        with patch.object(module, "PUBLISHED_ROOT", root), patch.object(module, "PUBLISHED_SHA", head), \
+                patch.object(module, "changed_served_files", return_value=[hook, public, stub]), \
+                patch.object(module, "data_stamp_of", return_value=None):
+            prove("education excluded input absent; all output witnesses match", PASS, "served bytes match")
+            leak = root / hook
+            leak.parent.mkdir(parents=True, exist_ok=True)
+            leak.write_bytes(b"leak")
+            prove("excluded input leaked into artifact", needle="leaked into the publication artifact")
+            leak.unlink()
+            for status in (200, 302, 403, 500, 0):
+                prove(f"excluded origin response {status} cannot pass", needle=f"origin answered HTTP {status}",
+                      served={**files, served_url(hook): (status, b"leak or error")})
+            (root / public).unlink()
+            prove("unlisted missing public asset cannot become an exclusion", needle="not present at the expected commit")
+            (root / public).write_bytes(files[served_url(public)][1])
+            prove("missing public origin asset still fails", needle="origin answered HTTP 404",
+                  served={key: value for key, value in files.items() if key != served_url(public)})
+            prove("stale mandatory output still fails", needle="origin is serving other bytes",
+                  served={**files, "/": (200, b"stale")})
+            prove("wrong deployed source SHA still fails", needle="expected", deployed=resolve("HEAD^"))
+            with patch.object(module, "PUBLISHED_SHA", "0" * 40):
+                prove("wrong artifact source SHA still fails", needle="another expected SHA")
+            with patch.object(module, "committed_bytes", return_value=None):
+                prove("missing source policy fails closed", needle="no education publisher policy")
+            with patch.object(module, "committed_bytes", return_value=b"SITE_GENERATOR_INPUTS = {'../escape'}"):
+                prove("unsafe exclusion policy fails closed", needle="invalid SITE_GENERATOR_INPUTS")
+            with patch.object(module, "committed_bytes", return_value=b"SITE_GENERATOR_INPUTS = {'index.html'}"):
+                prove("mandatory outputs cannot be excluded", needle="conflicts with mandatory output")
+            policy = committed_bytes(head, "domain-split/build_education.py")
+            with patch.object(module, "committed_bytes", return_value=policy) as reader:
+                assert education_generator_inputs(head) == excluded
+                reader.assert_called_once_with(head, "domain-split/build_education.py")
+            results.append(("policy is read at the expected immutable SHA", PASS, head))
+            prove("education publication restores green", PASS, "served bytes match")
+    return results
+
+
 def self_test() -> int:
     """Every control runs; none of them stops the others."""
     witness_history_controls()
@@ -493,7 +614,7 @@ def self_test() -> int:
         return served
 
     problems = 0
-    results: list[tuple[str, str, str]] = []
+    results: list[tuple[str, str, str]] = education_exclusion_controls()
 
     # The domain-split release picked domain-split/.gitignore as its third
     # witness and failed on the expected 404. Keep the real save-transfer

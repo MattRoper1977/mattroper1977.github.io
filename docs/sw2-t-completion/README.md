@@ -1,5 +1,14 @@
 # Part T completion candidate — 12 September 2026
 
+## Approved continuation — 13 September 2026
+
+Matt explicitly approved the ten listed admission retirements and continuing the provenance repair. This supersedes the pending-approval and three-blocker pause statements below; they remain as the original pass history. The exact original proposal is unchanged, bound by SHA-256 in approval-receipt.json. All 29 proposed rows are now applied to their three independent candidate builders, with exactly ten retired digests and the unchanged two-digest cap. All four existing built-output configurations pass their unchanged admission validators. No unchanged browser builds were repeated.
+
+The provenance checker reads SITE_GENERATOR_INPUTS from the publisher at the expected immutable SHA. It requires every explicitly excluded input to be absent from both the source-bound publication artifact and the canonical origin (HTTP 404). Missing unlisted public files, redirects, transport failures, leaks, stale output, wrong deployment/artifact SHA, missing or malformed policy and mandatory-output exclusions fail. All nine mandatory Education witnesses remain. Its existing PR self-test now runs 23 controls, all passing locally; see provenance-controls.txt. No workflow or publisher exclusion rule is changed.
+
+Games #79 still has two action_required PR runs: [Standalone games website](https://github.com/MattRoper1977/Games/actions/runs/34719205867) and [PR canonical contract](https://github.com/MattRoper1977/Games/actions/runs/34719205871). Matt has been directed to the Conversation merge-box button Approve workflows to run. Games pins and owner PRs remain untouched. Site root assets must land and pass served checks before the consumer releases. #456, LP1 and other holds remain; this is not SW2_T_OK.
+
+
 Status: REVIEW ONLY. No new admission retirement is approved or activated. The live release remains Site 93916d80d7a82655cd8676c29162e4e60c1670cb, Lessons fd95ef4cc636b31d96b6b83fc33faff0c64f383d and Apps 2055df24d97d1f6a362be509832767f31c19f5db. This candidate does not issue SW2_T_OK.
 
 The live 31-page chrome census found 17 pages without the required origin-root token link, seven missing footer taglines, and the Apps publisher's extra header tagline. This candidate normalises the token link, appends a missing signoff without replacing authored footer prose or links, and rejects duplicate or misplaced taglines. The approved mark is retained. Existing correctly completed footers stay byte-identical. Navigation and content data remain record-derived.

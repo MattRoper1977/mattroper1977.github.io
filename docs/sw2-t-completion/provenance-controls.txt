@@ -1,0 +1,25 @@
+Deployment provenance controls:
+  [PASS] education excluded input absent; all output witnesses match - PASS: served bytes match
+  [PASS] excluded input leaked into artifact - FAIL: leaked into the publication artifact
+  [PASS] excluded origin response 200 cannot pass - FAIL: origin answered HTTP 200
+  [PASS] excluded origin response 302 cannot pass - FAIL: origin answered HTTP 302
+  [PASS] excluded origin response 403 cannot pass - FAIL: origin answered HTTP 403
+  [PASS] excluded origin response 500 cannot pass - FAIL: origin answered HTTP 500
+  [PASS] excluded origin response 0 cannot pass - FAIL: origin answered HTTP 0
+  [PASS] unlisted missing public asset cannot become an exclusion - FAIL: not present at the expected commit
+  [PASS] missing public origin asset still fails - FAIL: origin answered HTTP 404
+  [PASS] stale mandatory output still fails - FAIL: origin is serving other bytes
+  [PASS] wrong deployed source SHA still fails - FAIL: expected
+  [PASS] wrong artifact source SHA still fails - FAIL: another expected SHA
+  [PASS] missing source policy fails closed - FAIL: no education publisher policy
+  [PASS] unsafe exclusion policy fails closed - FAIL: invalid SITE_GENERATOR_INPUTS
+  [PASS] mandatory outputs cannot be excluded - FAIL: conflicts with mandatory output
+  [PASS] policy is read at the expected immutable SHA - 7c21e0bd2d0ed67deb0a22911147157c32b5bd06
+  [PASS] education publication restores green - PASS: served bytes match
+  [PASS] witness selection uses public content - save-transfer files eligible; builder and hidden files excluded
+  [PASS] an undeployed SHA goes red - FAIL: expected
+  [PASS] no deployment at all goes red - FAIL: no source could say
+  [PASS] the origin serving other bytes goes red - FAIL: origin answered HTTP 404
+  [PASS] a matching deployment passes - PASS: deployed commit is
+  [PASS] layer 3 reports a state at all - INCONCLUSIVE, PASS
+  23 passed · 0 failed
