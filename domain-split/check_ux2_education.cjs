@@ -315,6 +315,7 @@ async function suite(browser, mutation) {
     return { routes: routes.length, banned: banned.length };
   });
 
+  if (!mutation && GATED.includes('/resources/')) await check('resources-packs', async () => require('./check_sw2_resources.cjs').verify({page, origin, rules: fixtures.relocations.lessonRows}));
   if (GATED.includes('/resources/')) await check('resources', async () => {
     // Appendix A §RESOURCES on the built page: pills (no Type pill — kind scored below 18/20),
     // replaceState params, "This half-term first", one card per key with its chips, the sheet
@@ -346,7 +347,7 @@ async function suite(browser, mutation) {
     assert(await page.locator('#rxSheet').evaluate(d => d.open), 'Sheet opens');
     assert(await page.evaluate(() => document.activeElement === document.getElementById('sheetClose')), 'Focus lands on the close control');
     const heads = await page.locator('#rxSheet .sheet-sec h3').evaluateAll(n => n.map(h => h.textContent.trim()));
-    assert(heads.includes('Planning'), 'Planning section present'); assert(heads.every(h => fixtures.appendix.resourcesSheet.includes(h)), 'Sheet sections are Planning / Evidence / Delivery');
+    assert(heads.includes('Lesson packs'), 'Companion files are grouped in Lesson packs'); assert(heads.every(h => fixtures.appendix.resourcesSheet.includes(h)), 'Only the ordered resource sheet sections render');
     const keyId = await opener.getAttribute('data-key'); const [card, tier, halfTerm, unit] = keyId.split('|');
     const flagged = nonLessonKeyed.filter(r => r.packRevisionDrift && r.halfTerm === halfTerm && fixtures.relocations.lessonRows.cardOf(r) === card && (fixtures.relocations.lessonRows.tierOf(r) || '') === tier && (r.unit || '') === unit).length;
     assert.equal(await page.locator('#rxSheet .drift').count(), flagged, 'Drift note exactly where flagged');

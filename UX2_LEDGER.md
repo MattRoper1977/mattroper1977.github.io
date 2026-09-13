@@ -188,3 +188,11 @@ Matt approved the shared palette/header/footer completion and necessary authored
 The direct **Saved** action restores `/Lessons/?view=saved` within one tap of the adult homepage. Its previous relocation entry is therefore removed: the unchanged reachability gate must continue rejecting stale relocation claims. The original pre-order href remains in the census.
 
 Preserve existing footer destinations once; add only missing shared links. On `/` and `/main/`, the commission action keeps **Commission a resource**, matching the retained UX2 rule. Other adult footers use **Contact** for that destination. No money, pupil, third-party, consent, copy, href or reachability assertion is removed or weakened.
+
+### Part R — approved Resources composition, 13 September 2026
+
+SURVIVES: every catalogue row, unit key, subject/pathway URL filter, global lesson/app search, direct file, document group, drift flag, theme and modal close/return. The Type filter remains omitted under the recorded kind ruling.
+
+RELOCATES: each companion pack’s Planning/Evidence file fragments are reunited in **Lesson packs**, grouped by explicit companionOf with their real file rows and delivery link. Non-companion Planning/Evidence sections retain their role-derived membership. The old +n control reads +n more. Shared publication chrome is unchanged.
+
+Appearance: shared cream/navy family, quieter search/pillars, rounded filters, restrained subject bands, readable unit cards and sheet; no invented image or count. Part K2 supplies Open pack page links when its real route exists. See docs/sw2-r/README.md for the measured boundary and decisions.
