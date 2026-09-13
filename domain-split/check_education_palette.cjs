@@ -57,7 +57,8 @@ async function run(){
     const row={route,type,theme,...await page.evaluate(snapshot)};check(row,theme);
     const h=page.locator('h1').first();
     if(await h.count()){row.heading=await h.evaluate(e=>({text:e.textContent.trim(),colour:getComputedStyle(e).color}));
-     const onDark=['/','/main/','/account/','/members/','/mailing-list/','/privacy/','/resources/','/tools/','/teach/','/education-hub/','/for/teachers/','/for/pupils/','/Matt-s-Apps-/','/stats/on-this-device/','/asdan/','/uas/','/commission/','/Lessons/Science_Teesside/','/Lessons/Humanities_Teesside/'].includes(route);
+     // Part R places Resources' heading on the body surface; every other role is unchanged.
+     const onDark=['/','/main/','/account/','/members/','/mailing-list/','/privacy/','/tools/','/teach/','/education-hub/','/for/teachers/','/for/pupils/','/Matt-s-Apps-/','/stats/on-this-device/','/asdan/','/uas/','/commission/','/Lessons/Science_Teesside/','/Lessons/Humanities_Teesside/'].includes(route);
      assert.equal(row.heading.colour,onDark?'rgb(255, 254, 250)':row.ink,'Matched primary heading role '+route);
     }
     else assert.equal(route,'/stats/','Missing primary heading outside the compact statistics block');

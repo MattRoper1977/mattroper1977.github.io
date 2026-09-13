@@ -22,6 +22,7 @@ exports.verify = async ({page, origin, rules}) => {
   assert.equal(await page.locator('#rxSearch').getAttribute('placeholder'), 'Search packs, schemes of work, evidence books');
   assert.equal(await page.locator('main input[type="search"]').count(), 1, 'One Resources search');
   assert.equal(await page.locator('main form').count(), 0, 'No search form or new route');
+  assert.equal(await page.locator('.rx-hero.rx-intro h1').innerText(), 'Resources', 'The pinned consumer heading hook survives the new composition');
   const allPaths = new Set();
   const report = {units: keys.size, packs: 0, files: 0, groups: 0, viewportThemes: [], controls: []};
   let planted = false;
