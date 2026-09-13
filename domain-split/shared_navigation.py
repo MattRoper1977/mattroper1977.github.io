@@ -113,18 +113,35 @@ def refresh(output, site_source):
         compact = bool(re.search(r'class="[^"\n]*\b(?:collection-nav|ad-nav)\b', text))
         replacement = header(route, starting, adult, route == audiences['pupils']['route'], theme,
                              route == '/Lessons/primary/', compact)
+        # SW2 Part T: promote only this caller's own published chrome.
+        # Other trees keep this carrier's existing sources and admission bytes.
+        owns_chrome = path.is_relative_to(output / 'education-apps')
+        if owns_chrome:
+            from published_chrome import header as current_header, audience_rows as current_audience_rows, complete_chrome
+            replacement = current_header(route, current_audience_rows(site_source), adult,
+                                         route == audiences['pupils']['route'], theme,
+                                         route == '/Lessons/primary/',
+                                         '#search' if route in {'/Lessons/', '/Matt-s-Apps-/'} and 'id="search"' in text
+                                         else '#primary-search' if route == '/Lessons/primary/' and 'id="primary-search"' in text
+                                         else '/resources/#rxSearch')
         if route in inserted:
             # These landings use a content header for their heading and Open
             # action. Add navigation before it without deleting those controls.
             text,count=re.subn(r'(<body\b[^>]*>)',lambda match:match.group(1)+replacement,text,count=1,flags=re.I)
         else:
-            text,count=re.subn(r'<header\b[^>]*>.*?</header>',lambda _:replacement,text,count=1,flags=re.S)
+            if owns_chrome:
+                from structural_html import replace_first_element
+                text,count=replace_first_element(text, 'header', replacement)
+            else:
+                text,count=re.subn(r'<header\b[^>]*>.*?</header>',lambda _:replacement,text,count=1,flags=re.S)
         if count != 1:
             raise ValueError('Missing navigation insertion/replacement boundary: '+str(path))
         if route == '/stats/on-this-device/':
             old="document.getElementById('menu').addEventListener('click',function(){var n=document.getElementById('nav'),o=n.classList.toggle('open');this.setAttribute('aria-expanded',o);});"
             if text.count(old)!=1: raise ValueError('Legacy stats menu handler changed')
             text=text.replace(old,'').replace('href="/main/#about"','href="/main/"')
+        if owns_chrome:
+            text = complete_chrome(text)
         text = text.replace('</head>', '<link rel="stylesheet" href="/assets/shared-navigation.css">'
                             '<script defer src="/assets/shared-navigation.js"></script></head>', 1)
         path.write_text(text)
