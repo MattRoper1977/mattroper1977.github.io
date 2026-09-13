@@ -116,6 +116,7 @@ dialog.sheet{border:1px solid var(--line);background:var(--edu-card,var(--paper)
 .lesson-pack:last-child{border-bottom:0}.sheet-sec .lesson-pack h4{font-size:1.05rem;line-height:1.4;color:var(--ink);margin:0}
 .lesson-pack .meta{font-size:.8rem;color:var(--muted);margin:.35rem 0 .65rem}
 .pack-version h5{font:inherit;font-weight:700;margin:.7rem 0 .3rem}
+.pack-version .pack-page{display:inline-flex;align-items:center;min-height:44px;min-width:44px;font-weight:700;text-underline-offset:.2em}
 .pack-files{margin:.5rem 0}.pack-files summary{display:list-item;min-height:44px;padding:.55rem .7rem;border:1px solid var(--line);border-radius:9px;cursor:pointer;font-weight:700}
 .pack-files summary span{color:var(--muted);font-size:.85rem;margin-left:.4rem}
 .sheet-sec .file-list{margin:.5rem 0}.file-list li{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem .6rem;border-bottom:1px solid var(--line);padding:.15rem 0}
@@ -246,7 +247,7 @@ function openSheet(id,opener){const k=S.keys.find(x=>x.id===id);if(!k)return;con
   const section=(title,list)=>{if(!list.length)return '';const groups=new Map();for(const f of list){const key=f.pack.id||f.pack._path;if(!groups.has(key))groups.set(key,{pack:f.pack,files:[]});groups.get(key).files.push(f);}return `<section class="sheet-sec"><h3>${esc(title)}</h3>${[...groups.values()].map(g=>`<h4>${esc(lessonTitle(g.pack))}</h4>${g.pack.packRevisionDrift?`<p class="drift">${esc(COPY.drift)}</p>`:''}<ul class="file-list">${g.files.map(fileLi).join('')}</ul>`).join('')}</section>`;};
   const companions=k.rows.filter(r=>r.kind==='pack');const groups=new Map();
   for(const pack of companions){const key=pack.companionOf||pack.id;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(pack);}
-  const packs=groups.size?`<section class="sheet-sec lesson-packs"><h3>${esc(COPY.packs)}</h3>${[...groups.entries()].map(([key,ps],index)=>{const lesson=S.rows.find(r=>r._path===key);const title=lesson?lessonTitle(lesson):lessonTitle(ps[0]);const delivery=ps[0].companionOf;return `<article class="lesson-pack" data-lesson="${esc(key)}"><h4>${esc(COPY.packGroup(title))}</h4><p class="meta">${esc([nameOf(k.card),k.tier,k.halfTerm,k.unit].filter(Boolean).join(' · '))}</p>${ps.map(pack=>`<div class="pack-version" data-pack="${esc(pack.id)}">${ps.length>1?`<h5>${esc(lessonTitle(pack))}</h5>`:''}${pack.packRevisionDrift?`<p class="drift">${esc(COPY.drift)}</p>`:''}<details class="pack-files"${index===0?' open':''}><summary>Files <span>${pack.files.length}</span></summary><ul class="file-list">${pack.files.map(f=>fileLi({...f,pack})).join('')}</ul></details></div>`).join('')}${delivery?`<a class="go pack-delivery" href="${esc(safeHref('/Lessons/'+delivery))}">${esc(COPY.openLesson)}</a>`:''}</article>`;}).join('')}</section>`:'';
+  const packs=groups.size?`<section class="sheet-sec lesson-packs"><h3>${esc(COPY.packs)}</h3>${[...groups.entries()].map(([key,ps],index)=>{const lesson=S.rows.find(r=>r._path===key);const title=lesson?lessonTitle(lesson):lessonTitle(ps[0]);const delivery=ps[0].companionOf;return `<article class="lesson-pack" data-lesson="${esc(key)}"><h4>${esc(COPY.packGroup(title))}</h4><p class="meta">${esc([nameOf(k.card),k.tier,k.halfTerm,k.unit].filter(Boolean).join(' · '))}</p>${ps.map(pack=>`<div class="pack-version" data-pack="${esc(pack.id)}">${ps.length>1?`<h5>${esc(lessonTitle(pack))}</h5>`:''}${pack.packRevisionDrift?`<p class="drift">${esc(COPY.drift)}</p>`:''}<details class="pack-files"${index===0?' open':''}><summary>Files <span>${pack.files.length}</span></summary><ul class="file-list">${pack.files.map(f=>fileLi({...f,pack})).join('')}</ul></details><a class="go pack-page" href="/Lessons/pack.html?id=${encodeURIComponent(pack.id)}">Open pack page →</a></div>`).join('')}${delivery?`<a class="go pack-delivery" href="${esc(safeHref('/Lessons/'+delivery))}">${esc(COPY.openLesson)}</a>`:''}</article>`;}).join('')}</section>`:'';
   const other=k.files.filter(f=>f.pack.kind!=='pack');
   const planning=other.filter(f=>!f.role||f.role==='lesson'||f.role==='slides'||f.role==='teacher'),evidence=other.filter(f=>f.role==='pupil');
   const subject=`/Lessons/subject.html?subject=${encodeURIComponent(k.card)}${k.tier?'&pathway='+k.tier:''}${k.unit?'&unit='+encodeURIComponent(k.unit):''}`;
@@ -276,6 +277,10 @@ Promise.all([grab('/Lessons/resources.json'),grab('/data/resources.json',true),g
   if(apps&&Array.isArray(apps.spaces)){S.apps=apps.spaces.flatMap(s=>(s.items||[]).map(i=>({...i,cat:s.cat})));$('#appsCount').textContent=COPY.apps(S.apps.length);}
   document.querySelectorAll('[data-kind-note]').forEach(el=>{el.textContent=window.MBM_KIND_NOTE||'';});
   prepare();fillFilters();render();
+  // K return route: use the existing unit key and its real focus-return control.
+  const returning=params();
+  if(returning.has('halfTerm')){const key=S.keys.find(k=>k.card===returning.get('subject')&&(k.tier||'')===(returning.get('pathway')||'')&&k.halfTerm===returning.get('halfTerm')&&(k.unit||'')===(returning.get('unit')||''));if(key){const opener=Array.from(document.querySelectorAll('.chip.more[data-key]')).find(e=>e.dataset.key===key.id);if(opener)openSheet(key.id,opener);}}
+
 }).catch(err=>{$('#rxCount').textContent='';$('#empty').hidden=false;console.error(err);});
 })();
 </script>

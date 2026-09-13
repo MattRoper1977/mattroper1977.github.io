@@ -63,6 +63,10 @@ exports.verify = async ({page, origin, rules}) => {
     const matching=page.locator('#unitGrid .chip.more[data-key='+JSON.stringify(key)+']');
     await matching.click();
     await samePacks(expected);
+    const pageLinks=await page.locator('#rxSheet .pack-version').evaluateAll(es=>es.map(e=>({id:e.dataset.pack,href:e.querySelector('.pack-page')?.getAttribute('href')})));
+    assert.deepEqual(pageLinks.map(r=>r.id).sort(),expected.map(r=>r.id).sort(),'K2: every companion has a pack-page link');
+    for(const link of pageLinks){const target=new URL(link.href,origin);assert.equal(target.origin,origin);assert.equal(target.pathname,'/Lessons/pack.html');assert.equal(target.searchParams.get('id'),link.id);}
+
     const groupKeys=await page.locator('#rxSheet .lesson-pack').evaluateAll(es=>es.map(e=>e.dataset.lesson));
     assert.deepEqual(groupKeys.slice().sort(),[...new Set(expected.map(p=>p.lesson))].sort(),'One group for each distinct companion lesson');
     const actualDelivery=await page.locator('#rxSheet .pack-delivery').evaluateAll(es=>es.map(e=>decodeURI(e.getAttribute('href'))).sort());
