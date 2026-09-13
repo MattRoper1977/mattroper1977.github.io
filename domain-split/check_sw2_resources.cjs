@@ -4,6 +4,21 @@
  */
 'use strict';
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+// Reuse the estate's composed-background instrument. Limit its census to the
+// changed main/sheet surface; shared chrome has its own complete gate.
+const contrastSource = fs.readFileSync(path.join(__dirname, '../tools/sw2/check_contrast_census.cjs'), 'utf8');
+const contrastStart = contrastSource.indexOf('const MEASURE =');
+const contrastEnd = contrastSource.indexOf('\n(async () => {');
+assert(contrastStart >= 0 && contrastEnd > contrastStart, 'Existing contrast instrument is available');
+const measureContrast = Function(contrastSource.slice(contrastStart, contrastEnd)
+  .replace('document.createTreeWalker(document.body,', 'document.createTreeWalker(document.querySelector("dialog[open]") || document.querySelector("main"),') + ';return MEASURE')();
+// Check rings on light surfaces too; keep the same colour/background calculation.
+const focusSource = contrastSource.slice(contrastSource.indexOf('const FOCUS_STEP ='), contrastStart);
+const lightSkip = "if (lum(surface) > 0.18) return { selector: sel(el), skip: 'light surface' };";
+assert(focusSource.includes(lightSkip), 'Existing focus instrument has its documented light-surface boundary');
+const measureFocus = Function(focusSource.replace(lightSkip, '') + ';return FOCUS_STEP')();
 
 exports.verify = async ({page, origin, rules}) => {
   const rows = await (await page.request.get(origin + '/Lessons/resources.json')).json();
@@ -86,19 +101,34 @@ exports.verify = async ({page, origin, rules}) => {
   }
   assert(planted,'Planted controls must have run');
   const first=page.locator('#unitGrid .chip.more').first();
+  const contrast = async () => {
+    const result = await page.evaluate(measureContrast, [null, null]);
+    assert(result.nodes > 0 && !result.failures.length && !result.unmeasured.length && !result.deferred.length, 'Every changed text surface has measured passing contrast');
+    return {nodes: result.nodes, status: 'PASS'};
+  };
   for(const width of [390,900,1280])for(const theme of ['cream','pink','blue','light','dark','highlumen']){
     await page.setViewportSize({width,height:900});
-    await page.evaluate(t=>{if(t==='cream')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t)},theme);
+    await page.evaluate(t=>{for(const e of [document.documentElement,document.body])if(t==='cream')e.removeAttribute('data-theme');else e.setAttribute('data-theme',t)},theme);
+    const pageContrast = await contrast();
     await first.click();await openAllFiles();await geometry();
+    const sheetContrast = await contrast();
     const focusables=page.locator('#rxSheet').locator('a[href],button,summary');
     const last=await focusables.evaluateAll(es=>es.filter(e=>e.getClientRects().length).at(-1).outerHTML);
     await page.locator('#sheetClose').focus();await page.keyboard.press('Shift+Tab');
     assert.equal(await page.evaluate(()=>document.activeElement.outerHTML),last,'Shift+Tab wraps to the last visible control');
+    const lastRing = await page.evaluate(measureFocus);assert(lastRing?.ok, 'Last sheet control has a visible contrasting keyboard ring');
     await page.keyboard.press('Tab');assert(await page.locator('#sheetClose').evaluate(e=>e===document.activeElement),'Tab wraps to Close');
+    const closeRing = await page.evaluate(measureFocus);assert(closeRing?.ok, 'Close has a visible contrasting keyboard ring');
     await page.locator('#sheetClose').click();assert(await first.evaluate(e=>e===document.activeElement),'Close restores the opener');
-    report.viewportThemes.push({width,theme,status:'PASS'});
+    report.viewportThemes.push({width,theme,status:'PASS',pageContrast,sheetContrast,focus:[lastRing,closeRing]});
   }
-  await page.setViewportSize({width:390,height:844});await page.evaluate(()=>document.documentElement.removeAttribute('data-theme'));
+  await page.setViewportSize({width:390,height:844});await page.evaluate(()=>{for(const e of [document.documentElement,document.body])e.removeAttribute('data-theme')});
+  const styleCount = await page.locator('head > style').count();
+  const whiteHeading = await page.evaluate(measureContrast, ['.rx-intro h1', null]);
+  assert(whiteHeading.failures.some(r=>r.sample==='Resources'), 'A white heading on the light Resources surface must fail');
+  assert.equal(await page.locator('head > style').count(), styleCount + 1, 'Exactly one planted style');
+  await page.locator('head > style').last().evaluate(e=>e.remove());await contrast();
+  report.controls.push('white-on-cream heading rejected');
   const paths=[...allPaths];let cursor=0;const failed=[];
   await Promise.all(Array.from({length:8},async()=>{while(cursor<paths.length){const p=paths[cursor++];const r=await page.request.get(origin+'/Lessons/'+encodeURI(p));if(!r.ok())failed.push({path:p,status:r.status()});await r.dispose();}}));
   assert.deepEqual(failed,[],'Every sheet file resolves on the publication');report.resolvedFiles=paths.length;
