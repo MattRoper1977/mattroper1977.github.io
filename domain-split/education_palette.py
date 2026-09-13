@@ -83,4 +83,17 @@ def adopt_palette(text, route, adult, template):
     text = text[:end-1] + ' data-mbm-palette="education" data-mbm-page-type="' + kind + '"' + text[end-1:]
     if '/assets/shared-footer.css' not in text:
         text = text.replace('</head>', '<link rel="stylesheet" href="/assets/shared-footer.css"></head>', 1)
-    return text.replace('</head>', '<link rel="stylesheet" href="/assets/education-palette.css"></head>', 1)
+    text = text.replace('</head>', '<link rel="stylesheet" href="/assets/education-palette.css"></head>', 1)
+    # An asynchronous catalogue must not steal focus from the new shared Menu.
+    # Apply once at the publication owner, including older companion checkouts.
+    initial_focus = {
+        '/Lessons/': ('if(first)first.focus({preventScroll:true});',
+                      'if(first&&(!document.activeElement||document.activeElement===document.body))first.focus({preventScroll:true});'),
+        '/Lessons/subject.html': ("if(first&&!$('#seg').hidden)first.focus();else $('#search').focus();",
+                                 "if(!document.activeElement||document.activeElement===document.body){if(first&&!$('#seg').hidden)first.focus();else $('#search').focus();}"),
+    }
+    if route in initial_focus and 'H.loadAll(' in text:
+        old, new = initial_focus[route]
+        if text.count(old) != 1: raise ValueError('Catalogue initial focus owner changed: ' + route)
+        text = text.replace(old, new, 1)
+    return text

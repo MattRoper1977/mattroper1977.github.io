@@ -9,6 +9,9 @@ body[data-mbm-palette="education"]{
   --edu-muted:#454c6b;--edu-soft:#e9e5dc;
   --learn-bg:var(--edu-bg);--learn-ink:var(--edu-ink);--learn-card:var(--edu-card);--learn-muted:var(--edu-muted);
   --cream:var(--edu-bg);--card:var(--edu-card);--ink:var(--edu-ink);--mut:var(--edu-muted);
+  --ma-cream:var(--edu-bg);--ma-card:var(--edu-card);--ma-ink:var(--edu-ink);--ma-mut:var(--edu-muted);
+  --pv-cream:var(--edu-bg);--pv-card:var(--edu-card);--pv-ink:var(--edu-ink);--pv-mut:var(--edu-muted);
+  --sx-cream:var(--edu-bg);--sx-card:var(--edu-card);--sx-ink:var(--edu-ink);--sx-mut:var(--edu-muted);
   background:var(--edu-bg);color:var(--edu-ink);
 }
 html[data-theme="dark"] body[data-mbm-palette="education"],body[data-mbm-palette="education"][data-theme="dark"]{
@@ -40,6 +43,27 @@ body[data-mbm-palette="education"] :is(.scard h3,.chooser a){color:var(--edu-ink
 body[data-mbm-palette="education"] .rx-search label{color:#161d3d}
 body[data-mbm-palette="education"] .pv-eyebrow{color:#b9e6cd}
 body[data-mbm-palette="education"] .usage-actions button{color:#161d3d}
-body[data-mbm-palette="education"] :is(.btn.green,.ad-search button):focus-visible{outline:3px solid #0b1020;outline-offset:3px}
+body[data-mbm-palette="education"] .btn.green:focus-visible{outline:3px solid #0b1020;outline-offset:3px}
+body[data-mbm-palette="education"] .ad-search button{background:#1f6b4a;border-color:#1f6b4a;color:#fff}
+body[data-mbm-palette="education"] .ad-search button:focus-visible{outline:3px solid #000;outline-offset:3px}
 html[data-theme="dark"] body[data-mbm-palette="education"] :is(.soft,.ma-panel,.mbm-usage,.mbm-start-here,.gv-prompts,.primary-unit,.pathway){background:var(--edu-card);color:var(--edu-ink)}
+body[data-mbm-palette="education"] :is(.workspace,.result,.feature-card){background:var(--edu-card);color:var(--edu-ink);border-radius:var(--mbm-card-radius,12px);box-shadow:var(--edu-shadow)}
+body[data-mbm-palette="education"] :is(.route-card,.subject-card,.feature-card,.result,.acard) :is(p,.sub,.quiet-note){color:var(--edu-muted)}
+body[data-mbm-palette="education"] .quiet-note{color:var(--edu-muted)}
+body[data-mbm-palette="education"] footer.footer{background:var(--edu-bg);color:var(--edu-ink)}
+body[data-mbm-palette="education"] footer :is(a,p,small,span){color:inherit}
+body[data-mbm-palette="education"] .mbm-usage{--usage-bg:var(--edu-card);--usage-ink:var(--edu-ink);--usage-muted:var(--edu-muted);border-radius:var(--mbm-card-radius,12px)}
+body[data-mbm-palette="education"] .skip{background:#fff;color:#161d3d}
+body[data-mbm-palette="education"][data-theme="dark"] :is(.route-card a,.support-band a,.btn.light){background:var(--edu-card);color:var(--edu-ink)}
+body[data-mbm-palette="education"][data-theme="dark"] :is(.mbm-usage a,.acard .when){color:#b9e6cd}
+body[data-mbm-palette="education"][data-theme="dark"] :is(.rx-search label,.rx-cardx .chip.label){color:var(--edu-ink)}
+body[data-mbm-palette="education"][data-theme="dark"] .badge.b-pdf{color:#161d3d}
+body[data-mbm-palette="education"][data-theme="dark"] :focus-visible{outline-color:#8ee6cb!important}
+body[data-mbm-palette="education"][data-theme="dark"] .ad-search button{background:#b9e6cd;border-color:#b9e6cd}
+body[data-mbm-palette="education"] :is(.mbm-usage [data-usage-choice-status],.workspace .status,.result small){color:var(--edu-muted)}
+body[data-mbm-palette="education"] :is(.usage-note a,a[href^="mailto:"]){color:inherit;text-decoration:underline;text-underline-offset:.2em}
+body[data-mbm-palette="education"] .btn.amber{color:#161d3d}
+body[data-mbm-palette="education"] .chip.tier.BUILD{background:var(--mbm-pathway-build-bg,#f5ddbf);color:var(--mbm-pathway-build-ink,#8a4c0b)}
+body[data-mbm-palette="education"] .chip.tier.GROW{background:var(--mbm-pathway-grow-bg,#d5eedd);color:var(--mbm-pathway-grow-ink,#2f6b4d)}
+body[data-mbm-palette="education"] .chip.tier.LAUNCH{background:var(--mbm-pathway-launch-bg,#f3e8b8);color:var(--mbm-pathway-launch-ink,#6e5a0c)}
 @media print{body[data-mbm-palette="education"]{background:#fff;color:#000;--edu-bg:#fff;--edu-card:#fff;--edu-ink:#000;--edu-shadow:none}.mbm-chrome-footer-links{display:none}}
