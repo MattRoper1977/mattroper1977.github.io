@@ -272,7 +272,8 @@ class PublishedChromeControls(unittest.TestCase):
             root = Path(temp)
             for filename, before, after in [
                     ('header.html', 'class="mbm-unified-header"', 'class="header-source-control"'),
-                    ('menu-sheet.html', 'class="mbm-unified-menu"', 'class="menu-source-control"')]:
+                    ('menu-sheet.html', 'class="mbm-unified-menu"', 'class="menu-source-control"'),
+                    ('nav-row.html', 'class="mbm-unified-nav"', 'class="nav-source-control"')]:
                 source = (navigation.CHROME / filename).read_text()
                 self.assertEqual(source.count(before), 1)
                 (root / filename).write_text(source.replace(before, after))
@@ -280,6 +281,7 @@ class PublishedChromeControls(unittest.TestCase):
                 result = navigation.header('/', [('/for/pupils/', 'Pupils')])
         self.assertIn('class="header-source-control"', result)
         self.assertIn('class="menu-source-control"', result)
+        self.assertIn('class="nav-source-control"', result)
         self.assertNotIn('class="mbm-unified-header"', result)
         self.assertNotIn('class="mbm-unified-menu"', result)
 
@@ -290,6 +292,17 @@ class PublishedChromeControls(unittest.TestCase):
         self.assertIn('{{search}} &lt;A &amp; B&gt;</a>', result)
         self.assertIn('href="/resources/?q=&quot;&lt;&amp;&gt;{{menu}}"', result)
         self.assertEqual(result.count('class="mbm-unified-menu"'), 1)
+
+    def test_footer_keeps_existing_play_once_and_home_commission_label(self):
+        from education_palette import adopt_palette
+        play = '<a href="https://www.madebymatt-play.uk/" rel="noopener">Made by Matt Play ↗</a>'
+        source = '<html><head></head><body><footer>' + play + '<p>Retained prose.</p><p>Learn • Build • Explore</p></footer></body></html>'
+        result = adopt_palette(source, '/', True, self.navigation.chrome_template)
+        self.assertEqual(result.count(play), 1)
+        self.assertIn('<p>Retained prose.</p>', result)
+        self.assertIn('<a href="/commission/">Commission a resource</a>', result)
+        self.assertNotIn('>Contact</a>', result)
+        self.assertIn('<a href="/main/#about">About</a>', result)
 
     def test_published_tokens_and_signoff_preserve_authored_footer_and_body(self):
         source = ('<!doctype html><html><head><title>Test</title></head><body>'
@@ -375,7 +388,9 @@ class PublishedChromeControls(unittest.TestCase):
         self.assertEqual(count, 1)
         assets = ('<link rel="stylesheet" href="/assets/shared-navigation.css">'
                   '<script defer src="/assets/shared-navigation.js"></script>')
-        self.assertEqual(stripped.replace(assets, ''), source)
+        from education_palette import adopt_palette
+        self.assertEqual(stripped.replace(assets, ''),
+                         adopt_palette(source, '/Lessons/subject.html', False, self.navigation.chrome_template))
 
     def test_missing_subject_page_cannot_escape_the_publication_census(self):
         from unittest.mock import patch

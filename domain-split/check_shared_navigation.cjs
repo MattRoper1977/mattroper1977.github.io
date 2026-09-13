@@ -278,4 +278,7 @@ async function chromeFocus(control,surface,label,redProof=false) {
       console.log('PASS shared navigation: ' + (javaScriptEnabled ? 'enhanced' : 'without JavaScript'));
     }
   } finally { await browser.close(); }
+  await require('./check_initial_focus.cjs').run();
+  await require('./check_education_palette.cjs').run();
+    await require('./check_reading_variants.cjs').run();
 })().catch(error => { console.error(error); process.exitCode = 1; });
