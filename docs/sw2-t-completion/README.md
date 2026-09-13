@@ -38,3 +38,9 @@ The master order's three-blocker ceiling ends this implementation pass. Preserve
 - Apps: 8f70dcb99d75c66c249a556c84bdc371018762f5; tree ae4026ec1cc77fc968d12ffb7d51096f59f5f061.
 
 Both remote trees equal the locally reviewed trees. Their active registries are unchanged. The separate proposed registries pass the unmodified validators on all three publisher builds, including both configured Site Apps sources. This validates the proposal mechanically; it does not approve its ten retirements. The existing publication tests pass 28/28 and structural tests 11/11.
+
+## Final local proof and saved drafts
+
+All 48 consumer browser cases have completed: 24 source cases (every element) and 24 built-output body cases (the explicitly owned chrome is separately measured). Every planted visible-body defect failed, every restored page passed, and page errors were zero. These results use local built publications, not production URLs. The exact reports are preserved in consumer-built-body-inertness.json and the consumer drafts.
+
+The final consumer drafts are [Lessons #525](https://github.com/MattRoper1977/Lessons/pull/525), head 624bb71d2f622666d987c6aeb46f769568d4a65a, and [Apps #93](https://github.com/MattRoper1977/Matt-s-Apps-/pull/93), head d7f63aa4e4dc65f94c57fb98bb574e7e2f0d32b6. Exact remote/local trees match. The human-readable retirement list is retirement-readback.md; machine recovery is pass-receipt.json. All three PRs remain drafts.
