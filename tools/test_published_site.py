@@ -152,6 +152,8 @@ class PublishedWitnessControls(unittest.TestCase):
                     # would return perfectly matching bytes. The proof must
                     # reject the redirect before making this second request.
                     body = expected_by_url['https://madebymatt.uk/']
+                elif url == 'https://madebymatt.uk/assets/arcade/rally-hooks.js':
+                    code, body = 404, b'not published'
                 else:
                     body = expected_by_url[url]
                     if stale_home and url == 'https://madebymatt.uk/':
@@ -166,6 +168,12 @@ class PublishedWitnessControls(unittest.TestCase):
             # A builder-only commit has no changed raw served-source paths.
             stack.enter_context(patch.object(provenance, 'changed_served_files', return_value=[]))
             stack.enter_context(patch.object(provenance, 'data_stamp_of', return_value='unchanged'))
+            # The synthetic source SHA has its own explicit publisher policy;
+            # absence alone must never imply that a public file is excluded.
+            def source_policy(sha, relative):
+                self.assertEqual((sha, relative), (expected, 'domain-split/build_education.py'))
+                return b"SITE_GENERATOR_INPUTS = {'assets/arcade/rally-hooks.js'}"
+            stack.enter_context(patch.object(provenance, 'committed_bytes', side_effect=source_policy))
             stack.enter_context(patch.object(urllib.request.HTTPSHandler, 'https_open', origin_response))
             stack.enter_context(patch.object(urllib.request.HTTPHandler, 'http_open', origin_response))
             findings = provenance.check_once(provenance.EducationTransport(), expected,
@@ -175,12 +183,14 @@ class PublishedWitnessControls(unittest.TestCase):
     def test_builder_only_change_still_measures_real_outputs_and_rejects_stale_home(self):
         state, findings, requests = self.evaluate_publication_fixture()
         self.assertEqual(state, 'PASS')
-        self.assertEqual(len(requests), 9)
+        self.assertEqual(len(requests), 10)  # nine positive outputs plus one negative input
+        self.assertTrue(any(layer == '3 excluded input assets/arcade/rally-hooks.js' and status == 'PASS'
+                            for layer, status, _ in findings))
         self.assertTrue(any(layer == '3 origin witness index.html' and status == 'PASS'
                             for layer, status, _ in findings))
         state, findings, requests = self.evaluate_publication_fixture(stale_home=True)
         self.assertEqual(state, 'FAIL')
-        self.assertEqual(len(requests), 9)
+        self.assertEqual(len(requests), 10)
         self.assertTrue(any(layer == '3 origin witness index.html' and status == 'FAIL'
                             for layer, status, _ in findings))
 
