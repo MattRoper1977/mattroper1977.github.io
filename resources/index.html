@@ -74,7 +74,9 @@ dialog.sheet{border:0;border-radius:14px 14px 0 0;padding:0;width:100%;max-width
 /* SW2 Part R: Resources and the existing unit sheet; no catalogue or theme model changes. */
 .rx-intro{padding:2rem 0 1.1rem;color:var(--ink);background:transparent;border-bottom:0}
 /* Keep the existing rx-hero hook for pinned consumer checks while the intro takes the approved light-surface role. */
+body[data-mbm-palette="education"] .rx-hero.rx-intro{background:var(--edu-bg);color:var(--edu-ink);border-bottom:0;padding:2rem 0 1.1rem}
 body[data-mbm-palette="education"] .rx-hero.rx-intro h1{color:var(--edu-ink)}
+body[data-mbm-palette="education"] .rx-hero.rx-intro .lead{color:var(--edu-muted)}
 .rx-hero.rx-intro :focus-visible{outline-color:#39805e}
 html[data-theme="dark"] .rx-hero.rx-intro :focus-visible{outline-color:#d5eedd}
 .rx-intro h1{font-size:clamp(2rem,5vw,3rem);line-height:1.12;margin:0 0 1rem}
@@ -97,6 +99,10 @@ html[data-theme="dark"] .rx-hero.rx-intro :focus-visible{outline-color:#d5eedd}
 .unit.science{border-top-color:#bd6825}.unit.humanities-re{border-top-color:#247761}.unit.art-studio{border-top-color:#7c5cb8}.unit.lifeskills{border-top-color:#536f8b}
 .unit h3{font-size:1.3rem;margin:0}.unit .chip{line-height:1.35;min-height:44px;min-width:44px;border-radius:9px}
 .unit .chip.label{font-size:.75rem;min-height:30px;letter-spacing:.025em}
+/* Native dark mode also marks body; keep each pale pathway badge's paired ink. */
+body[data-mbm-palette="education"] .unit .chip.label.tier.BUILD{color:var(--mbm-pathway-build-ink,#8a4c0b)}
+body[data-mbm-palette="education"] .unit .chip.label.tier.GROW{color:var(--mbm-pathway-grow-ink,#2f6b4d)}
+body[data-mbm-palette="education"] .unit .chip.label.tier.LAUNCH{color:var(--mbm-pathway-launch-ink,#6e5a0c)}
 .unit .chip.more{border:1px solid var(--line);color:var(--ink);background:var(--edu-soft,#eef2f5)}
 .unit .go{margin-top:auto;align-self:flex-start}
 .sheet{overscroll-behavior:contain}
@@ -122,6 +128,7 @@ dialog.sheet{border:1px solid var(--line);background:var(--edu-card,var(--paper)
 html[data-theme="dark"] .rx-intro .rx-search label,html[data-theme="dark"] #main .doc .chip.label.tier{color:var(--ink)}
 html[data-theme="dark"] .sheet :is(summary,button):focus-visible{outline:3px solid #d5eedd;outline-offset:3px}
 html[data-theme="dark"] .sheet .pack-delivery,html[data-theme="dark"] .sheet-lesson .go{background:#d5eedd;color:#112237}
+body[data-mbm-palette="education"][data-theme="dark"] .sheet :is(.pack-delivery,.sheet-lesson .go):focus-visible{outline:3px solid #112237!important;outline-offset:-3px}
 @media(min-width:800px){dialog.sheet{margin:auto;border-radius:18px}.sheet-body{padding:0 1.4rem 1.5rem}.sheet-head{padding:1rem 1.4rem}}
 @media(max-width:650px){.rx-intro{padding-top:1.3rem}.rx-intro .pillars{grid-template-columns:1fr}.rx-intro .pillars a{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:.65rem;align-items:center}.rx-filters label{flex:1 1 8rem;max-width:none}.rx-search input{font-size:.9rem}.sheet-head h2{font-size:1.05rem}.unit .chip{font-size:.85rem}}
 @media print{.rx-intro .pillars,.rx-intro .rx-search{display:none}.unit,.lesson-pack{break-inside:avoid;box-shadow:none}}

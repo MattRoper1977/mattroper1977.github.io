@@ -101,24 +101,28 @@ exports.verify = async ({page, origin, rules}) => {
   }
   assert(planted,'Planted controls must have run');
   const first=page.locator('#unitGrid .chip.more').first();
-  const contrast = async () => {
+  const contrastFailures = [];
+  const contrast = async context => {
     const result = await page.evaluate(measureContrast, [null, null]);
-    assert(result.nodes > 0 && !result.failures.length && !result.unmeasured.length && !result.deferred.length, 'Every changed text surface has measured passing contrast');
-    return {nodes: result.nodes, status: 'PASS'};
+    const ok = result.nodes > 0 && !result.failures.length && !result.unmeasured.length && !result.deferred.length;
+    if (!ok) contrastFailures.push({context, ...result});
+    return {nodes: result.nodes, status: ok ? 'PASS' : 'FAIL'};
   };
   for(const width of [390,900,1280])for(const theme of ['cream','pink','blue','light','dark','highlumen']){
     await page.setViewportSize({width,height:900});
     await page.evaluate(t=>{for(const e of [document.documentElement,document.body])if(t==='cream')e.removeAttribute('data-theme');else e.setAttribute('data-theme',t)},theme);
-    const pageContrast = await contrast();
+    const intro = await page.locator('.rx-hero.rx-intro').evaluate(e=>{const s=getComputedStyle(e),b=getComputedStyle(document.body);return {image:s.backgroundImage,background:s.backgroundColor,bodyBackground:b.backgroundColor,ink:s.color,bodyInk:b.color}});
+    assert.deepEqual(intro,{image:'none',background:intro.bodyBackground,bodyBackground:intro.bodyBackground,ink:intro.bodyInk,bodyInk:intro.bodyInk}, 'Resources intro uses its actual body surface and ink: '+JSON.stringify({width,theme,intro}));
+    const pageContrast = await contrast({width,theme,surface:'main'});
     await first.click();await openAllFiles();await geometry();
-    const sheetContrast = await contrast();
+    const sheetContrast = await contrast({width,theme,surface:'sheet'});
     const focusables=page.locator('#rxSheet').locator('a[href],button,summary');
     const last=await focusables.evaluateAll(es=>es.filter(e=>e.getClientRects().length).at(-1).outerHTML);
     await page.locator('#sheetClose').focus();await page.keyboard.press('Shift+Tab');
     assert.equal(await page.evaluate(()=>document.activeElement.outerHTML),last,'Shift+Tab wraps to the last visible control');
-    const lastRing = await page.evaluate(measureFocus);assert(lastRing?.ok, 'Last sheet control has a visible contrasting keyboard ring');
+    const lastRing = await page.evaluate(measureFocus);if(!lastRing?.ok)contrastFailures.push({context:{width,theme,surface:'sheet',control:'last'},focus:lastRing});
     await page.keyboard.press('Tab');assert(await page.locator('#sheetClose').evaluate(e=>e===document.activeElement),'Tab wraps to Close');
-    const closeRing = await page.evaluate(measureFocus);assert(closeRing?.ok, 'Close has a visible contrasting keyboard ring');
+    const closeRing = await page.evaluate(measureFocus);if(!closeRing?.ok)contrastFailures.push({context:{width,theme,surface:'sheet',control:'close'},focus:closeRing});
     await page.locator('#sheetClose').click();assert(await first.evaluate(e=>e===document.activeElement),'Close restores the opener');
     report.viewportThemes.push({width,theme,status:'PASS',pageContrast,sheetContrast,focus:[lastRing,closeRing]});
   }
@@ -127,8 +131,10 @@ exports.verify = async ({page, origin, rules}) => {
   const whiteHeading = await page.evaluate(measureContrast, ['.rx-intro h1', null]);
   assert(whiteHeading.failures.some(r=>r.sample==='Resources'), 'A white heading on the light Resources surface must fail');
   assert.equal(await page.locator('head > style').count(), styleCount + 1, 'Exactly one planted style');
-  await page.locator('head > style').last().evaluate(e=>e.remove());await contrast();
+  await page.locator('head > style').last().evaluate(e=>e.remove());await contrast({width:390,theme:'cream',surface:'main',restored:true});
   report.controls.push('white-on-cream heading rejected');
+  console.log('Resources contrast census '+JSON.stringify({states:report.viewportThemes,failures:contrastFailures}));
+  assert.deepEqual(contrastFailures, [], 'Every changed text surface and keyboard ring has measured passing contrast');
   const paths=[...allPaths];let cursor=0;const failed=[];
   await Promise.all(Array.from({length:8},async()=>{while(cursor<paths.length){const p=paths[cursor++];const r=await page.request.get(origin+'/Lessons/'+encodeURI(p));if(!r.ok())failed.push({path:p,status:r.status()});await r.dispose();}}));
   assert.deepEqual(failed,[],'Every sheet file resolves on the publication');report.resolvedFiles=paths.length;
