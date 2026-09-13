@@ -1,0 +1,43 @@
+<!-- Made by Matt — chrome template: footer (SW2 T2).
+     Tile + wordmark + "Learn • Build • Explore" + variant links.
+
+     §0.6 says that line appears ONCE per page, in the footer. Measured before
+     writing this: it appears 0 times on /, /tools/, /members/, /privacy/,
+     /stats/, /teach/, /education-hub/, /for/teachers/, /for/pupils/, /account/
+     and /mailing-list/; once on /main/; and TWICE on /games/ and /resources/.
+     So stamping this adds the line to eleven page types and removes a
+     duplicate from two. /privacy/ has no <footer> element at all today and
+     gains its first one. -->
+
+<!-- MBM-CHROME-VARIANT: adult -->
+<footer class="footer mbm-site-footer" data-mbm-chrome="adult"><div class="bar"><a class="brand" href="/main/"><img src="/assets/brand/micro_mark.svg" alt="" width="100" height="100"><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a><nav class="mbm-footer-links" aria-label="Footer"><a href="/main/#about">About</a><a href="/commission/">Contact</a><a href="/mailing-list/">Teacher updates</a><a href="https://www.madebymatt-play.uk/" rel="noopener">Made by Matt Play ↗</a></nav></div></footer>
+<!-- /MBM-CHROME-VARIANT: adult -->
+
+<!-- MBM-CHROME-VARIANT: pupil -->
+<footer class="footer mbm-site-footer" data-mbm-chrome="pupil"><div class="bar"><a class="brand" href="/main/"><img src="/assets/brand/micro_mark.svg" alt="" width="100" height="100"><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a></div></footer>
+<!-- /MBM-CHROME-VARIANT: pupil -->
+
+<!-- MBM-CHROME-VARIANT: minimal -->
+<!-- For a page that has NO footer today and where adding the adult link group
+     would introduce routes it does not currently carry. That is a design
+     change, and R-T3.6 says T3 makes none: chrome parity only. So this variant
+     is the brand and the tagline and nothing else. The adult link group for
+     such a page is a Part U decision, with the two-tap assertion Part U owns.
+     Used by privacy/index.html. Its mark is written ../assets/... because that
+     is the form privacy's own header already uses and the page sits one level
+     deep; the brand path is page-owned bytes until the convergence in
+     docs/SW2_T3_LEDGER.md is ruled on, so this variant is not depth-portable
+     and is not reused elsewhere. -->
+<footer class="footer mbm-site-footer" data-mbm-chrome="minimal"><div class="bar"><a class="brand" href="/main/"><img src="../assets/brand/micro_mark.svg" alt="" width="100" height="100"><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a></div></footer>
+<!-- /MBM-CHROME-VARIANT: minimal -->
+
+<!-- MBM-CHROME-VARIANT: play -->
+<!-- The Play footer is unchanged by SW2 (§8 P1 changes the header only), so the
+     stamper leaves it alone; this block exists so the three variants are all
+     present in one file and a missing one is a visible gap, not a silent one. -->
+<!-- MBM-CHROME-KEEP-EXISTING -->
+<!-- /MBM-CHROME-VARIANT: play -->
+
+<!-- MBM-CHROME-FRAGMENT: published-signoff -->
+<div class="mbm-chrome-signoff" data-mbm-chrome="signoff"><img src="/assets/brand/approved-mark.jpg" alt="" width="44" height="44"><p><strong>MADE BY MATT</strong><span>Learn • Build • Explore</span></p></div>
+<!-- /MBM-CHROME-FRAGMENT: published-signoff -->

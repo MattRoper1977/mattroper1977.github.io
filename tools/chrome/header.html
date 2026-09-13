@@ -1,0 +1,55 @@
+<!-- Made by Matt — chrome template: header (SW2 T2).
+     Three variants, selected by tools/stamp_chrome.py and marked on the output
+     with data-mbm-chrome so CSS and script can branch without re-reading markup.
+     The variants differ in MARKUP, not only in styling, because a pupil surface
+     must not carry an account-backed control at all: verify_professional_site.js
+     asserts those links are ABSENT there, so hiding them with CSS would not do.
+
+     The mark is assets/brand/micro_mark.svg — a rounded navy tile with a cream
+     M, 263 bytes, already the header mark on 11 of the 12 site page types. SW2
+     asks for a silver M tile; there is no silver mark in this estate and
+     assets/brand/approved-mark-provenance.json records the search for one being
+     superseded by a user-supplied logo, so §10's stop applies: this is the
+     current header mark, and it is reported rather than invented.
+
+     No tagline here. "Learn • Build • Explore" belongs to the footer, once per
+     page (§0.6). -->
+
+<!-- MBM-CHROME-FRAGMENT: tokens -->
+<!-- The T1 token file, linked once per page, root-absolute. It declares
+     custom properties and nothing else - no selectors, no components - so
+     linking it changes no computed style until something consumes a token.
+     That is deliberate: T3 is chrome parity, and the tokens arrive inert so
+     the pages that adopt them do so in Parts L, R, H and U, visibly. -->
+<link rel="stylesheet" href="/assets/mbm-tokens.css">
+<!-- /MBM-CHROME-FRAGMENT: tokens -->
+
+<!-- MBM-CHROME-FRAGMENT: menu -->
+<!-- The Menu button. Measured byte-identical on all twelve stamped page types
+     before this was written, so stamping it converges nothing and changes no
+     bytes; it exists so the region has a template to be gated against, and so
+     the next page added to the estate inherits it rather than copying it.
+     Taken from the tree, not typed. -->
+<button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+<!-- /MBM-CHROME-FRAGMENT: menu -->
+
+<!-- Published Education chrome. shared_navigation.py supplies the existing
+     route-specific search and record-derived menu. Extracted byte-for-byte
+     from that renderer at Site bf7964758afd3d9e58e58ba58eb2048815917a09.
+     The source-page variants below retain their separate preservation scope;
+     this fragment changes neither their brand nor their navigation links. -->
+<!-- MBM-CHROME-FRAGMENT: published-education -->
+<header class="mbm-unified-header" data-mbm-navigation="education"><div class="mbm-unified-bar"><a class="mbm-unified-brand" href="/"><img src="/assets/brand/approved-mark.jpg" width="44" height="44" alt=""><span><strong>MADE BY MATT</strong></span></a><a class="mbm-unified-search" href="{{search}}" aria-label="Search"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></a>{{menu}}</div></header>
+<!-- /MBM-CHROME-FRAGMENT: published-education -->
+
+<!-- MBM-CHROME-VARIANT: adult -->
+<header class="header mbm-site-header" data-mbm-chrome="adult"><div class="bar"><a class="brand" href="/main/"><img src="/assets/brand/micro_mark.svg" alt="" width="100" height="100"><span><strong>MADE BY MATT</strong></span></a><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><a class="mbm-saved" href="/Lessons/?view=saved">Saved</a><!-- MBM-CHROME-NAV-ROW --></div></header>
+<!-- /MBM-CHROME-VARIANT: adult -->
+
+<!-- MBM-CHROME-VARIANT: pupil -->
+<header class="header mbm-site-header" data-mbm-chrome="pupil"><div class="bar"><a class="brand" href="/main/"><img src="/assets/brand/micro_mark.svg" alt="" width="100" height="100"><span><strong>MADE BY MATT</strong></span></a><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><!-- MBM-CHROME-NAV-ROW --></div></header>
+<!-- /MBM-CHROME-VARIANT: pupil -->
+
+<!-- MBM-CHROME-VARIANT: play -->
+<header class="header mbm-site-header" data-mbm-chrome="play" data-theme="dark"><div class="bar"><a class="brand" href="/"><img src="/assets/brand/micro_mark.svg" alt="" width="100" height="100"><span>Made by Matt <strong>Play</strong></span></a><a class="mbm-chrome-search" href="#browse" aria-label="Search games"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></a><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><!-- MBM-CHROME-NAV-ROW --></div></header>
+<!-- /MBM-CHROME-VARIANT: play -->
