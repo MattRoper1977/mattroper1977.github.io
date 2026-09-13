@@ -17,10 +17,10 @@ const routes = ['/', '/main/', '/account/', '/members/', '/mailing-list/', '/pri
   '/for/governors-trustees/', '/Lessons/', '/Lessons/primary/', '/Matt-s-Apps-/',
   '/stats/on-this-device/', '/asdan/', '/uas/', '/commission/', '/Lessons/Science_Teesside/',
   '/Lessons/Humanities_Teesside/', '/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/',
-  '/Lessons/Science_Teesside/Teaching_Packs/'];
-const restricted = ['/for/pupils/', '/resources/', '/Lessons/primary/'];
+  '/Lessons/Science_Teesside/Teaching_Packs/', '/Lessons/subject.html'];
+const restricted = ['/for/pupils/', '/resources/', '/Lessons/primary/', '/Lessons/subject.html'];
 const ux2Routes = ['/', '/commission/', '/for/pupils/', '/for/teachers/', '/resources/'];
-const themeRoutes = ['/Lessons/', '/Matt-s-Apps-/', '/Lessons/Science_Teesside/', '/Lessons/Humanities_Teesside/'];
+const themeRoutes = ['/Lessons/', '/Matt-s-Apps-/', '/Lessons/Science_Teesside/', '/Lessons/Humanities_Teesside/', '/Lessons/subject.html'];
 const {deviceStatsSkip}=require('./check_device_stats.cjs');
 const {assertChrome, tokenReference, proveChromeControls}=require('./check_chrome_tokens.cjs');
 function colourContrast(a,b) {
@@ -173,6 +173,24 @@ async function chromeFocus(control,surface,label,redProof=false) {
       console.log('Device statistics real Tab control: real PASS / planted destination FAIL / restored PASS');
       if (javaScriptEnabled) await proveChromeControls(page,origin,expectedTokens);
       if (javaScriptEnabled) {
+        // Follow a real chooser link, then prove the new header reaches the
+        // existing subject search without changing catalogue return state.
+        await page.goto(origin+'/Lessons/subject.html');
+        const science=page.locator('#chooser').getByRole('link',{name:/^science$/i});
+        await science.waitFor({state:'visible'});
+        await science.click();
+        await page.getByRole('heading',{name:/^science$/i}).waitFor({state:'visible'});
+        assert.equal(new URL(page.url()).searchParams.get('subject'),'science');
+        assert.equal(await page.locator(header).count(),1,'Subject query keeps the shared header');
+        const subjectBack=await page.locator('#back').getAttribute('href');
+        assert.equal(new URL(subjectBack,page.url()).pathname,'/Lessons/index.html');
+        await page.locator(header+' .mbm-unified-search').click();
+        assert(await page.locator('#search').evaluate(el=>el===document.activeElement),'Subject header focuses its existing search');
+        await page.locator('#search').fill('sw2-subject-preservation-no-match');
+        await page.getByText('No matches — try fewer words or clear a filter.',{exact:true}).waitFor({state:'visible'});
+        await page.getByRole('button',{name:'Clear filters',exact:true}).click();
+        assert.equal(await page.locator('#search').inputValue(),'');
+        assert.equal(await page.locator('#back').getAttribute('href'),subjectBack,'Search keeps the existing Lessons return link');
         // Each distinct front-door template is exercised at narrow phone,
         // tablet and desktop widths, in addition to the 390px contract above.
         for (const width of [320,768,1280]) for (const route of routes) {

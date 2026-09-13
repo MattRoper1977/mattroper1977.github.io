@@ -7,7 +7,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'domain-split'))
-from structural_html import replace_first_element
+from structural_html import replace_first_element, prepend_to_first_main
 from structural_html import VOID_ELEMENTS
 
 
@@ -56,6 +56,29 @@ def is_descendant(node, ancestor):
 
 
 class StructuralReplacement(unittest.TestCase):
+    def test_chrome_insertion_keeps_skip_link_and_exact_main_and_tail(self):
+        prefix = ('<!doctype html><html><head><script>const sample="<main>fake</main>";</script>'
+                  '</head><body><a href="#main">Skip to content</a><!-- <main>inert</main> -->')
+        body = '<main id="main" data-label="a > b"><div id="heading">Science</div></main>'
+        tail = '<footer>Kept &amp; exact</footer></body></html>'
+        chrome = '<header id="chrome"><nav>Menu</nav></header>'
+        result, count = prepend_to_first_main(prefix + body + tail, chrome)
+        self.assertEqual(count, 1)
+        self.assertEqual(result, prefix + chrome + body + tail)
+        tree = tree_of(result)
+        self.assertFalse(is_descendant(tree.ids['main'], tree.ids['chrome']))
+
+    def test_chrome_insertion_refuses_unsafe_or_missing_main(self):
+        for source in ('<main>unfinished', '<main><main>nested</main></main>',
+                       '<template><main>inert</main></template><main>real</main>',
+                       '<main><div></main></div>'):
+            with self.subTest(source=source), self.assertRaises(ValueError):
+                prepend_to_first_main(source, '<header>Menu</header>')
+        self.assertEqual(prepend_to_first_main('<body>No main</body>', '<header>Menu</header>'),
+                         ('<body>No main</body>', 0))
+        with self.assertRaisesRegex(ValueError, 'Unbalanced'):
+            prepend_to_first_main('<main>Kept</main>', '<header><span>Broken</header>')
+
     def test_nested_fault_defeats_old_count_guard(self):
         for tag in ('header', 'main'):
             with self.subTest(tag=tag):
