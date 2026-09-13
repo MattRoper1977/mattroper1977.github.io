@@ -152,6 +152,8 @@ class PublishedWitnessControls(unittest.TestCase):
                     # would return perfectly matching bytes. The proof must
                     # reject the redirect before making this second request.
                     body = expected_by_url['https://madebymatt.uk/']
+                elif url == 'https://madebymatt.uk/assets/arcade/rally-hooks.js':
+                    code, body = 404, b'not published'
                 else:
                     body = expected_by_url[url]
                     if stale_home and url == 'https://madebymatt.uk/':
@@ -166,6 +168,12 @@ class PublishedWitnessControls(unittest.TestCase):
             # A builder-only commit has no changed raw served-source paths.
             stack.enter_context(patch.object(provenance, 'changed_served_files', return_value=[]))
             stack.enter_context(patch.object(provenance, 'data_stamp_of', return_value='unchanged'))
+            # The synthetic source SHA has its own explicit publisher policy;
+            # absence alone must never imply that a public file is excluded.
+            def source_policy(sha, relative):
+                self.assertEqual((sha, relative), (expected, 'domain-split/build_education.py'))
+                return b"SITE_GENERATOR_INPUTS = {'assets/arcade/rally-hooks.js'}"
+            stack.enter_context(patch.object(provenance, 'committed_bytes', side_effect=source_policy))
             stack.enter_context(patch.object(urllib.request.HTTPSHandler, 'https_open', origin_response))
             stack.enter_context(patch.object(urllib.request.HTTPHandler, 'http_open', origin_response))
             findings = provenance.check_once(provenance.EducationTransport(), expected,
@@ -175,12 +183,14 @@ class PublishedWitnessControls(unittest.TestCase):
     def test_builder_only_change_still_measures_real_outputs_and_rejects_stale_home(self):
         state, findings, requests = self.evaluate_publication_fixture()
         self.assertEqual(state, 'PASS')
-        self.assertEqual(len(requests), 9)
+        self.assertEqual(len(requests), 10)  # nine positive outputs plus one negative input
+        self.assertTrue(any(layer == '3 excluded input assets/arcade/rally-hooks.js' and status == 'PASS'
+                            for layer, status, _ in findings))
         self.assertTrue(any(layer == '3 origin witness index.html' and status == 'PASS'
                             for layer, status, _ in findings))
         state, findings, requests = self.evaluate_publication_fixture(stale_home=True)
         self.assertEqual(state, 'FAIL')
-        self.assertEqual(len(requests), 9)
+        self.assertEqual(len(requests), 10)
         self.assertTrue(any(layer == '3 origin witness index.html' and status == 'FAIL'
                             for layer, status, _ in findings))
 
@@ -280,6 +290,47 @@ class PublishedChromeControls(unittest.TestCase):
         self.assertIn('{{search}} &lt;A &amp; B&gt;</a>', result)
         self.assertIn('href="/resources/?q=&quot;&lt;&amp;&gt;{{menu}}"', result)
         self.assertEqual(result.count('class="mbm-unified-menu"'), 1)
+
+    def test_published_tokens_and_signoff_preserve_authored_footer_and_body(self):
+        source = ('<!doctype html><html><head><title>Test</title></head><body>'
+                  '<header>MADE BY MATT</header><main><p>Authored lesson text.</p></main>'
+                  '<footer><a href="/privacy/">Privacy</a><p>Authored footer.</p></footer></body></html>')
+        result = self.navigation.complete_chrome(source)
+        document = self.navigation.ChromeDocument(result)
+        self.assertEqual([link[2] for link in document.links], ['/assets/mbm-tokens.css'])
+        self.assertEqual(document.taglines(), {'all': 1, 'header': 0, 'footer': 1})
+        self.assertIn('<main><p>Authored lesson text.</p></main>', result)
+        self.assertIn('<footer><a href="/privacy/">Privacy</a><p>Authored footer.</p>', result)
+        self.assertEqual(self.navigation.complete_chrome(result), result)
+
+    def test_existing_root_tokens_and_footer_are_byte_identical(self):
+        source = ('<html><head><link rel="stylesheet" href="/assets/mbm-tokens.css"></head>'
+                  '<body><footer>Learn • Build • Explore</footer></body></html>')
+        self.assertEqual(self.navigation.complete_chrome(source), source)
+        relative = source.replace('href="/assets/', 'href="assets/')
+        self.assertEqual(self.navigation.complete_chrome(relative), source)
+
+    def test_absent_footer_gets_a_first_footer_without_changing_the_body(self):
+        source = '<html><head></head><body><main>Authored privacy information.</main></body></html>'
+        result = self.navigation.complete_chrome(source)
+        self.assertIn('<main>Authored privacy information.</main>', result)
+        self.assertEqual(self.navigation.ChromeDocument(result).footers, 1)
+        self.assertEqual(self.navigation.ChromeDocument(result).taglines(), {'all': 1, 'header': 0, 'footer': 1})
+
+    def test_chrome_ownership_and_duplicate_link_controls_reject_real_defects(self):
+        base = '<html><head></head><body><footer>Authored.</footer></body></html>'
+        for broken in [
+                base.replace('</head>', '<link rel="stylesheet" href="assets/mbm-tokens.css">' * 2 + '</head>'),
+                base.replace('</head>', '<link rel="stylesheet" href="https://elsewhere.test/mbm-tokens.css"></head>'),
+                base.replace('<footer>', '<header>Learn • Build • Explore</header><footer>'),
+                base.replace('Authored.', 'Learn • Build • Explore Learn • Build • Explore'),
+                base.replace('</footer>', '<footer>Nested</footer></footer>'),
+                base.replace('</footer>', ''),
+                base.replace('</footer>', '</footer><footer>Another owner</footer>')]:
+            with self.subTest(source=broken), self.assertRaises(ValueError):
+                self.navigation.complete_chrome(broken)
+        self.assertEqual(self.navigation.ChromeDocument(self.navigation.complete_chrome(base)).taglines(),
+                         {'all': 1, 'header': 0, 'footer': 1})
 
 
 class ProfessionalStatsControls(unittest.TestCase):
