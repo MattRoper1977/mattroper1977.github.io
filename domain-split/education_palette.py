@@ -20,6 +20,7 @@ class BrandingRegion(HTMLParser):
         super().__init__(); self.source = source
         self.lines = [0] + [i + 1 for i, c in enumerate(source) if c == '\n']
         self.stack = []; self.regions = []; self.marks = []; self.taglines = []; self.body = None
+        self.footer_hrefs = set()
         self.feed(source); self.close()
 
     def source_offset(self):
@@ -31,6 +32,7 @@ class BrandingRegion(HTMLParser):
             self.body = (self.source_offset(), self.source_offset() + len(self.get_starttag_text()))
         values = dict(attrs)
         in_footer = any(x['tag'] == 'footer' for x in self.stack)
+        if in_footer and tag == 'a': self.footer_hrefs.add(values.get('href', ''))
         mark = in_footer and ((tag == 'svg' and 'mono' in values.get('class', '').split()) or (tag == 'img' and 'micro_mark.svg' in values.get('src', '')))
         if mark and tag == 'img': self.marks.append((self.source_offset(), self.source_offset()+len(self.get_starttag_text())))
         if tag not in self.void:
@@ -72,7 +74,13 @@ def adopt_palette(text, route, adult, template):
     for a, b, value in sorted(replacements, reverse=True): text = text[:a] + value + text[b:]
     # A canonical link group lives alongside retained page-specific footer copy.
     if adult:
-        fragment = template('footer.html', 'published-links', {})
+        # Keep existing footer destinations once, including the canonical Play
+        # link. The homepage retains UX2's precise commission action label.
+        fragment = template('footer.html', 'published-links', {
+            'contact_label': 'Commission a resource' if route in {'/', '/main/'} else 'Contact',
+        })
+        fragment = re.sub(r'<a href="([^"]+)"[^>]*>[^<]*</a>',
+                          lambda match: '' if match.group(1) in parsed.footer_hrefs else match.group(0), fragment)
         text, count = append_to_first_footer(text, fragment)
         if count != 1: raise ValueError('Missing footer for adult links: ' + route)
     parsed = BrandingRegion(text)
