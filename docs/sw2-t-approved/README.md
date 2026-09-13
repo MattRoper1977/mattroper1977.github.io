@@ -1,0 +1,3 @@
+# Approved Part T apps publisher continuation
+
+Matt approved the ten enumerated admission retirements and provenance continuation on 13 September 2026. This builder applies only its exact scoped rows from the original Site PR #357 proposal (SHA-256 9efaf6d0a11500044b7dace01aa65429b9abcb53412bb3082fe5339f51b479f5). The two-digest cap, existing publication code and immutable rollback builder remain intact. No main-wide publisher update occurs. The existing candidate publication passes the unchanged admission validator. The consumer must wait for Site root assets to deploy and pass source-bound verification.
