@@ -272,7 +272,8 @@ class PublishedChromeControls(unittest.TestCase):
             root = Path(temp)
             for filename, before, after in [
                     ('header.html', 'class="mbm-unified-header"', 'class="header-source-control"'),
-                    ('menu-sheet.html', 'class="mbm-unified-menu"', 'class="menu-source-control"')]:
+                    ('menu-sheet.html', 'class="mbm-unified-menu"', 'class="menu-source-control"'),
+                    ('nav-row.html', 'class="mbm-unified-nav"', 'class="nav-source-control"')]:
                 source = (navigation.CHROME / filename).read_text()
                 self.assertEqual(source.count(before), 1)
                 (root / filename).write_text(source.replace(before, after))
@@ -280,6 +281,7 @@ class PublishedChromeControls(unittest.TestCase):
                 result = navigation.header('/', [('/for/pupils/', 'Pupils')])
         self.assertIn('class="header-source-control"', result)
         self.assertIn('class="menu-source-control"', result)
+        self.assertIn('class="nav-source-control"', result)
         self.assertNotIn('class="mbm-unified-header"', result)
         self.assertNotIn('class="mbm-unified-menu"', result)
 
@@ -375,7 +377,9 @@ class PublishedChromeControls(unittest.TestCase):
         self.assertEqual(count, 1)
         assets = ('<link rel="stylesheet" href="/assets/shared-navigation.css">'
                   '<script defer src="/assets/shared-navigation.js"></script>')
-        self.assertEqual(stripped.replace(assets, ''), source)
+        from education_palette import adopt_palette
+        self.assertEqual(stripped.replace(assets, ''),
+                         adopt_palette(source, '/Lessons/subject.html', False, self.navigation.chrome_template))
 
     def test_missing_subject_page_cannot_escape_the_publication_census(self):
         from unittest.mock import patch

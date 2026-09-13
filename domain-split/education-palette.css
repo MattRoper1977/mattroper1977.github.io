@@ -1,0 +1,45 @@
+/* SW2 Part T completion, approved 13 September 2026.
+   Only the 32 published front doors carrying this explicit marker adopt it.
+   The fallbacks are the same approved values: an older token deployment never
+   repaints content. The canonical file remains vocabulary, with no collisions.
+   Existing page aliases are bound here; subject/pathway colours stay distinct. */
+body[data-mbm-palette="education"]{
+  --edu-bg:var(--mbm-bg,#f6f1e7);--edu-ink:var(--mbm-primary,#161d3d);
+  --edu-card:var(--mbm-card,#fff);--edu-shadow:var(--mbm-card-shadow,0 2px 10px rgba(22,29,61,.08));
+  --edu-muted:#454c6b;--edu-soft:#e9e5dc;
+  --learn-bg:var(--edu-bg);--learn-ink:var(--edu-ink);--learn-card:var(--edu-card);--learn-muted:var(--edu-muted);
+  --cream:var(--edu-bg);--card:var(--edu-card);--ink:var(--edu-ink);--mut:var(--edu-muted);
+  background:var(--edu-bg);color:var(--edu-ink);
+}
+html[data-theme="dark"] body[data-mbm-palette="education"],body[data-mbm-palette="education"][data-theme="dark"]{
+  --edu-bg:var(--mbm-bg,#081422);--edu-ink:var(--mbm-primary,#f3f7fa);
+  --edu-card:var(--mbm-card,#112237);--edu-shadow:var(--mbm-card-shadow,0 2px 10px rgba(0,0,0,.5));
+  --edu-muted:#c4cfdb;--edu-soft:#182f46;
+}
+html[data-theme="pink"] body[data-mbm-palette="education"]{--edu-bg:#f9e8ec;--edu-card:#fff9fa}
+html[data-theme="blue"] body[data-mbm-palette="education"]{--edu-bg:#e7f0fa;--edu-card:#f8fbff}
+html[data-theme="highlumen"] body[data-mbm-palette="education"]{--edu-bg:#fff;--edu-card:#fff;--edu-ink:#0b1020;--edu-muted:#18223b;--edu-shadow:none}
+@media(prefers-contrast:more){body[data-mbm-palette="education"]{--edu-ink:var(--mbm-primary,#0b1020)}html[data-theme="dark"] body[data-mbm-palette="education"]{--edu-ink:var(--mbm-primary,#fff);--edu-card:var(--mbm-card,#081422)}}
+/* These are the published owners' card components, not all divs or sections. */
+body[data-mbm-palette="education"] :is(.route-card,.route-card.blue,.route-card.amber,.route-card.purple,.lesson-card,.subject-card,.collection-card,.standard-card,.tcard,.rx-cardx,.scard,.acard,.lrow,.card,.ad-card,.gv-card,.sx-card,.usage-card,.mbm-start-card,.mbm-task-card,.ma-panel,.primary-unit,.chooser>a){
+  background-color:var(--edu-card);color:var(--edu-ink);
+  border-radius:var(--mbm-card-radius,12px);box-shadow:var(--edu-shadow);
+}
+/* Specific published Apps rules predate this owner and carry four classes. */
+body.mbm-hub.mbm-hub-apps.mbm-education-hub[data-mbm-palette="education"] .card{
+  background:var(--edu-card);color:var(--edu-ink);border-radius:var(--mbm-card-radius,12px);box-shadow:var(--edu-shadow);
+}
+body[data-mbm-palette="education"] :is(h1,h2,h3){color:var(--edu-ink)}
+/* Dark heroes, buttons and subject tiles are intentional semantic surfaces. */
+body[data-mbm-palette="education"] :is(.hero,.tx-hero,.rx-hero,.ma-hero,.pv-hero,.mbm-hub-hero,.sx-hero,.maker-panel,.support-band) :is(h1,h2,h3){color:#fffefa}
+body[data-mbm-page-type="register"]>header:not(.mbm-unified-header) h1{color:#fffefa}
+body[data-mbm-page-type="science-packs"] .hero h1{color:var(--edu-ink)}
+body[data-mbm-palette="education"] :is(.scard,.acard,.card,.lrow,.ad-card,.gv-card,.sx-card,.usage-card) :is(h2,h3){color:var(--edu-ink)}
+body[data-mbm-palette="education"] .mbm-unified-panel h2{color:#8ee6cb}
+body[data-mbm-palette="education"] :is(.scard h3,.chooser a){color:var(--edu-ink)}
+body[data-mbm-palette="education"] .rx-search label{color:#161d3d}
+body[data-mbm-palette="education"] .pv-eyebrow{color:#b9e6cd}
+body[data-mbm-palette="education"] .usage-actions button{color:#161d3d}
+body[data-mbm-palette="education"] :is(.btn.green,.ad-search button):focus-visible{outline:3px solid #0b1020;outline-offset:3px}
+html[data-theme="dark"] body[data-mbm-palette="education"] :is(.soft,.ma-panel,.mbm-usage,.mbm-start-here,.gv-prompts,.primary-unit,.pathway){background:var(--edu-card);color:var(--edu-ink)}
+@media print{body[data-mbm-palette="education"]{background:#fff;color:#000;--edu-bg:#fff;--edu-card:#fff;--edu-ink:#000;--edu-shadow:none}.mbm-chrome-footer-links{display:none}}
