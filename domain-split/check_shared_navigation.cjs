@@ -176,10 +176,10 @@ async function chromeFocus(control,surface,label,redProof=false) {
         // Follow a real chooser link, then prove the new header reaches the
         // existing subject search without changing catalogue return state.
         await page.goto(origin+'/Lessons/subject.html');
-        const science=page.locator('#chooser').getByRole('link',{name:'Science',exact:true});
+        const science=page.locator('#chooser').getByRole('link',{name:/^science$/i});
         await science.waitFor({state:'visible'});
         await science.click();
-        await page.getByRole('heading',{name:'Science',exact:true}).waitFor({state:'visible'});
+        await page.getByRole('heading',{name:/^science$/i}).waitFor({state:'visible'});
         assert.equal(new URL(page.url()).searchParams.get('subject'),'science');
         assert.equal(await page.locator(header).count(),1,'Subject query keeps the shared header');
         const subjectBack=await page.locator('#back').getAttribute('href');
