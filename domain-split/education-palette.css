@@ -114,3 +114,10 @@ body[data-mbm-palette="education"][data-theme="dark"] .fcard .fbtn.s{color:#fffe
 body.mbm-hub.mbm-hub-apps.mbm-education-hub[data-mbm-palette="education"] .mbm-backtop:focus-visible,body[data-mbm-page-type="register"] .foot-cta a:focus-visible{outline:3px solid #b9e6cd;outline-offset:-3px}
 body[data-mbm-page-type="register"] footer a:focus-visible{outline:3px solid #b9e6cd;outline-offset:3px}
 @media print{body[data-mbm-palette="education"]{background:#fff;color:#000;--edu-bg:#fff;--edu-card:#fff;--edu-ink:#000;--edu-shadow:none}.mbm-chrome-footer-links{display:none}}
+
+/* SW2 A's published hub uses a light hero. The old shared Apps selector is
+   more specific than its source stylesheet; scope the correction to the new
+   marker so every other front door and the old hub retain their palette. */
+body.mbm-hub.mbm-hub-apps.mbm-education-hub[data-mbm-palette="education"] main[data-sw2-apps-hub] .hero{background:var(--edu-bg);color:var(--edu-ink);border-bottom:0}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub[data-mbm-palette="education"] main[data-sw2-apps-hub] .hero :is(.lead,.apps-total){color:var(--edu-muted)}
+body.mbm-hub.mbm-hub-apps.mbm-education-hub[data-mbm-palette="education"] main[data-sw2-apps-hub] .apps-breadcrumb{color:var(--edu-ink)}
