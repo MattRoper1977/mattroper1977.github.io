@@ -4,6 +4,9 @@
 const assert = require('node:assert/strict');
 exports.verify = async ({page, origin, rules, record}) => {
   const rows = await (await page.request.get(origin+'/Lessons/resources.json')).json();
+  const response = await page.request.get(origin+'/Lessons/assets/catalogue/display-titles.json');
+  const titleMap = response.ok() ? await response.json() : null;
+  const displayTitle = r => {const e=titleMap?.schema===1&&titleMap.entries?.[r.file||r.url];return e&&e.id===(r.id||'')&&e.originalTitle===r.title?e.displayTitle:r.title;};
   const report = {cases:[], previews:0, brokenImages:0, otherAudienceBodies:'checked separately by exact output comparison'};
   for(const width of [320,390,900,1280]) for(const route of ['/','/for/teachers/','/for/pupils/']) {
     if(width===320&&route!=='/')continue; // New narrow-screen coverage is for the changed homepage.
@@ -49,7 +52,7 @@ exports.verify = async ({page, origin, rules, record}) => {
       for(const p of previews){assert(p.complete&&p.width>0,'Real preview decodes');const found=rows.some(r=>r.files?.some(f=>f.type==='pdf'&&f.path===p.source));assert(found,'Preview comes from a real PDF record');const bytes=await(await page.request.get(origin+'/Lessons/'+encodeURI(p.source))).body();assert.equal(require('node:crypto').createHash('sha256').update(bytes).digest('hex'),p.sha,'Preview source has the reviewed PDF bytes');}
       assert.equal(await page.locator('main img:not([data-preview-source])').count(),0,'No unproven or invented homepage pictures');
       const sources=await page.locator('#added-rail .acard').evaluateAll(es=>es.map(e=>({file:e.dataset.resourcePath,title:e.querySelector('h3').textContent,desc:e.querySelector('p')?.textContent||'',interactive:!!e.querySelector('.fd-interactive')})));
-      assert(sources.length>0&&sources.length<=3);for(const c of sources){const r=rows.find(r=>(r.file||r.url)===c.file);assert(r);assert.equal(c.title,r.title);assert.equal(c.desc,r.desc||r.description||'');assert.equal(c.interactive,/\.html(?:[?#]|$)/i.test(c.file));}
+      assert(sources.length>0&&sources.length<=3);for(const c of sources){const r=rows.find(r=>(r.file||r.url)===c.file);assert(r);assert.equal(c.title,displayTitle(r));assert.equal(c.desc,r.desc||r.description||'');assert.equal(c.interactive,/\.html(?:[?#]|$)/i.test(c.file));}
       require('node:fs').mkdirSync('audit-output/education-navigation/homepage-repair',{recursive:true});
       await page.screenshot({path:'audit-output/education-navigation/homepage-repair/home-'+width+'.png',fullPage:true});
     }

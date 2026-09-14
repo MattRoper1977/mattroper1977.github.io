@@ -140,6 +140,38 @@ def check_education_pupil_brand(page: Any, findings: Findings) -> None:
                    f"brand {href!r}")
 
 
+def check_education_home_audiences(page: Any, findings: Findings, label: str,
+                                  routes: list[str]) -> None:
+    """EDU-D2: direct personal entrances plus a keyboard-opened native group."""
+    direct = [_AUD['audiences'][key]['route'] for key in ('teachers', 'pupils', 'parents')]
+    for route in direct:
+        findings.check(page.locator(f'.fd-audience-entry a[href="{route}"]:visible').count() == 1,
+                       f'{label}: direct homepage entrance {route}')
+    group = page.locator('#audiences details')
+    findings.check(group.count() == 1, f'{label}: one institutional audience group')
+    if group.count() != 1:
+        return
+    summary = group.locator(':scope > summary')
+    usable = (summary.count() == 1 and summary.is_visible()
+              and summary.inner_text().strip() == 'Working with schools and organisations')
+    findings.check(usable, f'{label}: institutional group has a visible named control')
+    if not usable:
+        return
+    findings.check(group.get_attribute('open') is None,
+                   f'{label}: institutional group starts collapsed')
+    summary.focus()
+    summary.press('Enter')
+    findings.check(group.get_attribute('open') is not None,
+                   f'{label}: keyboard opens institutional group')
+    for route in routes:
+        if route not in direct:
+            findings.check(group.locator(f'a[href="{route}"]:visible').count() == 1,
+                           f'{label}: opened institutional group exposes {route}')
+    summary.press('Enter')
+    findings.check(group.get_attribute('open') is None,
+                   f'{label}: keyboard closes institutional group')
+
+
 def run(base: str, findings: Findings, artifacts: Path, publication="legacy") -> None:
     from playwright.sync_api import sync_playwright
 
@@ -161,10 +193,7 @@ def run(base: str, findings: Findings, artifacts: Path, publication="legacy") ->
             # A: the discovery root loads and offers both audience groups.
             page.goto(base, wait_until="networkidle")
             if education:
-                for route in audience_routes:
-                    links = page.locator(f'a[href="{route}"]:visible')
-                    findings.check(links.count() > 0,
-                                   f"{label}: education homepage exposes audience {route}")
+                check_education_home_audiences(page, findings, label, audience_routes)
             else:
                 findings.check(page.locator("#audience-people").count() == 1,
                                f"{label}: root exposes the people group")
@@ -304,9 +333,7 @@ def run(base: str, findings: Findings, artifacts: Path, publication="legacy") ->
         # eighth homepage type, which would have failed here for a reason that
         # was never about JavaScript being off.
         if education:
-            for route in audience_routes:
-                findings.check(page.locator(f'a[href="{route}"]:visible').count() > 0,
-                               f"no-JS: audience {route} has a real homepage link")
+            check_education_home_audiences(page, findings, 'no-JS', audience_routes)
         else:
             expected_choices = len(AUDIENCE_ROUTES) + 1
             links = page.locator('a[data-mbm-face-choice]').count()
@@ -500,6 +527,35 @@ def self_test() -> None:
                       file=sys.stderr)
                 failures += 1
         context.close()
+
+        # EDU-D2: a closed native group is reachable; missing/hidden links and
+        # an unusable or wrongly named summary must still fail the same probe.
+        direct = [_AUD['audiences'][key]['route'] for key in ('teachers', 'pupils', 'parents')]
+        routes = list(dict.fromkeys(AUDIENCE_ROUTES + ['/for/governors-trustees/']))
+        institutions = [route for route in routes if route not in direct]
+        links = lambda values: ''.join(f'<a href="{route}">{route}</a>' for route in values)
+        fixture = ('<main><nav class="fd-audience-entry">' + links(direct) + '</nav>'
+                   '<section id="audiences"><details><summary>Working with schools and organisations</summary>'
+                   + links(institutions) + '</details></section></main>')
+        cases = [('approved native disclosure', fixture, True),
+                 ('hidden summary', fixture.replace('<summary>', '<summary hidden>'), False),
+                 ('wrong group label', fixture.replace('Working with schools and organisations', 'More'), False),
+                 ('non-disclosure group', fixture.replace('<details>', '<div>').replace('</details>', '</div>'), False)]
+        for route in routes:
+            cases.append((f'missing audience {route}', fixture.replace(f'<a href="{route}">{route}</a>', ''), False))
+        for enabled in (True, False):
+            context = browser.new_context(java_script_enabled=enabled)
+            page = context.new_page()
+            for label, markup, should_pass in cases:
+                page.set_content(markup)
+                probe = Findings()
+                check_education_home_audiences(page, probe, label, routes)
+                if (not probe.failures) == should_pass:
+                    print(f'  [PASS] audience disclosure control (JS={enabled}): {label}')
+                else:
+                    print(f'  [FAIL] audience disclosure control (JS={enabled}): {label}: {probe.failures}', file=sys.stderr)
+                    failures += 1
+            context.close()
 
         browser.close()
 

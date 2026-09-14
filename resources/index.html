@@ -45,6 +45,9 @@ dialog.sheet{border:0;border-radius:14px 14px 0 0;padding:0;width:100%;max-width
 @media(max-width:650px){.pillars{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.rx-filters select{min-width:0;width:100%}.rx-filters label{flex:1 1 100%}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @media print{.rx-search,.rx-filters,.chip.more,dialog,.header nav{display:none!important}}
+
+/* EDU-D2: readable references and long verified unit names at narrow widths. */
+.title-reference{font-size:.85rem;overflow-wrap:anywhere}.title-reference summary{min-height:44px;display:list-item;align-content:center;cursor:pointer}.title-reference span{display:block;padding:.25rem 0 .5rem}.rx-filters label,.rx-filters select{min-width:0;max-width:100%}
 </style>
 <style id="mbmTheme">
 /* Made by Matt - reading themes (shared key mbm_reading_theme).
@@ -151,6 +154,7 @@ body[data-mbm-palette="education"][data-theme="dark"] .sheet :is(.pack-delivery,
 <div class="rx-filters" role="group" aria-label="Filter the unit packs">
 <label>Subject <select id="rxSubs"><option value="">All subjects</option></select></label>
 <label>Pathway <select id="rxPath"><option value="">All pathways</option></select></label>
+<label>Topic / unit <select id="rxUnit"><option value="">All topics and units</option></select></label>
 </div>
 <p class="rx-count" id="rxCount" aria-live="polite"></p>
 <div id="rxOut">
@@ -186,12 +190,14 @@ function today(){return new Date().toISOString().slice(0,10);}
 function halfTermWindow(spine,day){if(!spine||!spine.blocks||!spine.weekStarts)return null;const iso=d=>d.toISOString().slice(0,10);const blocks=HALF_TERMS.map(l=>spine.blocks[l]).filter(Boolean).map(b=>({label:b.label,start:spine.weekStarts[String(b.abs[0])],lastWeek:spine.weekStarts[String(b.abs[1])]}));for(let i=0;i<blocks.length;i++){const b=blocks[i],next=blocks[i+1];const end=next?next.start:(()=>{const d=new Date(b.lastWeek+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+7);return iso(d);})();if(day>=b.start&&day<end)return {label:b.label,start:b.start,end,between:false};}const up=blocks.filter(b=>b.start>day)[0];return up?{label:up.label,start:up.start,end:up.start,between:true}:null;}
 function safeHref(v){const s=String(v==null?'':v).trim();if(!s||/^(?:javascript|data|vbscript):/i.test(s))return '#';if(/^https?:\/\//i.test(s))return encodeURI(s);if(!/^[a-z][a-z0-9+.-]*:/i.test(s)&&!/^\/\//.test(s))return encodeURI(s);return '#';}
 /* ---- state ---- */
-const S={rows:[],site:[],spine:null,sizes:{},apps:null,aliases:{},keys:[],docs:[],names:{}};
+const S={titles:{},rows:[],site:[],spine:null,sizes:{},apps:null,aliases:{},keys:[],docs:[],names:{}};
 const params=()=>new URLSearchParams(location.search);
 function setParam(k,v){const p=params();if(v)p.set(k,v);else p.delete(k);try{history.replaceState(null,'',location.pathname+(p.toString()?'?'+p.toString():'')+location.hash)}catch(_){}}
 const grab=(u,optional)=>{const s=window.MBM_STAMP?window.MBM_STAMP(u):{url:u,opts:{cache:'no-cache'}};return fetch(s.url,s.opts).then(r=>{if(!r.ok)throw new Error(u+' '+r.status);return r.json();}).catch(e=>{if(optional)return null;throw e;});};
 function nameOf(card){if(CARDS[card])return CARDS[card];return S.names[card]||card;}
-const lessonTitle=r=>String(r.displayTitle||r.title||'').replace(/\s*·\s*Companion pack\s*$/i,'');
+const displayTitle=r=>{const e=S.titles[r.file||r.url||''];return e&&e.id===(r.id||'')&&e.originalTitle===r.title?e.displayTitle:r.title||'';};
+const referenceDetail=r=>displayTitle(r)!==r.title?`<details class="title-reference"><summary>Original reference</summary><span>${esc(r.title)}</span></details>`:'';
+const lessonTitle=r=>String(displayTitle(r)).replace(/\s*·\s*Companion pack\s*$/i,'');
 const roleName=f=>f.role==='lesson'?'Lesson':f.role==='slides'?'Slides':f.role==='teacher'?'Teacher':'Pupil';
 const isLesson=r=>String(r.type||'').toLowerCase()==='lesson';
 const isGame=r=>String(r.type||'').toLowerCase()==='game';
@@ -214,32 +220,33 @@ function prepare(){
 function fileChip(f){const dl=f.type!=='pdf'&&f.type!=='html';const name=f.role?`${lessonTitle(f.pack)}`:String(f.pack.title||'');return `<a class="chip" href="${esc(safeHref('/Lessons/'+f.path))}"${dl?' download':''}>${esc(name)} · ${esc(String(f.type).toUpperCase())}</a>`;}
 function unitCard(k){const label=k.unit?`${k.halfTerm} · ${k.unit}`:k.halfTerm;const subject=`/Lessons/subject.html?subject=${encodeURIComponent(k.card)}${k.tier?'&pathway='+k.tier:''}${k.unit?'&unit='+encodeURIComponent(k.unit):''}`;const chips=k.files.slice(0,3).map(fileChip).join('')+(k.files.length>3?`<button type="button" class="chip more" data-key="${esc(k.id)}" aria-haspopup="dialog">+${k.files.length-3} more</button>`:`<button type="button" class="chip more" data-key="${esc(k.id)}" aria-haspopup="dialog">Planning and evidence →</button>`);
   return `<article class="rx-cardx unit ${esc(CARDS[k.card]?k.card:'extra')}" data-key="${esc(k.id)}" data-half-term="${esc(k.halfTerm)}"><div class="chips"><span class="chip label">${esc(nameOf(k.card))}</span>${k.tier?`<span class="chip label tier ${esc(k.tier)}">${esc(k.tier)}</span>`:''}</div><h3>${esc(label)}</h3>${k.lessons.length?`<p class="meta">${esc(COPY.lessonsMeta(k.lessons.length,k.halfTerm))}</p>`:''}<div class="chips">${chips}</div>${k.lessons.length?`<a class="go" href="${esc(subject)}">${esc(COPY.delivery)}</a>`:''}</article>`;}
-function docRow(r){const fmt=r._site&&!r._href?'':r._fmt;const link=r._href?`<a href="${esc(safeHref(r._href))}"${r._fmt==='packs'?' download':''}>${esc(r.title)}</a>`:`<span class="status">${esc(r.title)}${r.status?` · ${esc(r.status)}`:''}</span>`;return `<li class="rx-cardx doc">${link}${fmt?`<span class="badge">${esc(FORMAT_LABEL[fmt]||fmt)}</span>`:''}${r._tier?`<span class="chip label tier">${esc(r._tier)}</span>`:''}<span class="badge">${esc(r.family||r.subject||'')}</span></li>`;}
+function docRow(r){const fmt=r._site&&!r._href?'':r._fmt;const link=r._href?`<a href="${esc(safeHref(r._href))}"${r._fmt==='packs'?' download':''}>${esc(displayTitle(r))}</a>`:`<span class="status">${esc(displayTitle(r))}${r.status?` · ${esc(r.status)}`:''}</span>`;return `<li class="rx-cardx doc">${link}${referenceDetail(r)}${fmt?`<span class="badge">${esc(FORMAT_LABEL[fmt]||fmt)}</span>`:''}${r._tier?`<span class="chip label tier">${esc(r._tier)}</span>`:''}<span class="badge">${esc(r.family||r.subject||'')}</span></li>`;}
 /* Multi-word search: every word of the query must appear (the old page's documented rule). */
 function hay(parts){return parts.join(' ').toLowerCase();}
 function wordsMatch(text,q){const words=q.split(/\s+/).filter(Boolean);return !words.length||words.every(w=>text.includes(w));}
-function matches(r,q){return !q||wordsMatch(hay([r.title,r.desc,r.description,r.subject,r.family,r.halfTerm,r.unit,...(r.keywords||[]),...(r.tags||[])]),q);}
+function matches(r,q){return !q||wordsMatch(hay([r.title,displayTitle(r),r.id,r.file,r.desc,r.description,r.subject,r.family,r.halfTerm,r.unit,...(r.keywords||[]),...(r.tags||[])]),q);}
 function render(){
-  const p=params();const q=(p.get('q')||'').toLowerCase().trim(),sub=p.get('subject')||'',pw=(p.get('pathway')||'').toUpperCase();
-  $('#rxSearch').value=p.get('q')||'';$('#rxSubs').value=sub;$('#rxPath').value=PATHWAYS.includes(pw)?pw:'';
-  const keys=S.keys.filter(k=>(!sub||k.card===sub)&&(!pw||k.tier===pw)&&(!q||k.rows.some(r=>matches(r,q))||matches({title:`${nameOf(k.card)} ${k.tier||''} ${k.halfTerm} ${k.unit||''}`},q)));
+  const p=params();const q=(p.get('q')||'').toLowerCase().trim(),sub=p.get('subject')||'',pw=(p.get('pathway')||'').toUpperCase(),unit=p.get('unit')||'';
+  $('#rxSearch').value=p.get('q')||'';$('#rxSubs').value=sub;$('#rxPath').value=PATHWAYS.includes(pw)?pw:'';$('#rxUnit').value=unit;
+  const keys=S.keys.filter(k=>(!sub||k.card===sub)&&(!pw||k.tier===pw)&&(!unit||k.unit===unit)&&(!q||k.rows.some(r=>matches(r,q))||matches({title:`${nameOf(k.card)} ${k.tier||''} ${k.halfTerm} ${k.unit||''}`},q)));
   $('#unitGrid').innerHTML=keys.map(unitCard).join('');
   $('#rxCount').textContent=COPY.unitPacks(keys.length);
   $('#orderNote').hidden=!(S.current&&keys.some(k=>k.halfTerm===S.current));
   $('#units').hidden=!keys.length;
-  const docs=S.docs.filter(r=>(!sub||r._card===sub)&&(!pw||r._tier===pw)&&matches(r,q));
+  const docs=S.docs.filter(r=>(!sub||r._card===sub)&&(!pw||r._tier===pw)&&(!unit||r.unit===unit)&&matches(r,q));
   const groups=new Map();for(const r of docs){const g=CARDS[r._card]?r._card:'whole';if(!groups.has(g))groups.set(g,new Map());const fam=String(r.family||r.subject||'');if(!groups.get(g).has(fam))groups.get(g).set(fam,[]);groups.get(g).get(fam).push(r);}
   const order=[...CARD_ORDER.filter(c=>groups.has(c)),...(groups.has('whole')?['whole']:[])];
   $('#documents').innerHTML=order.map(g=>{const fams=[...groups.get(g).entries()].sort((a,b)=>a[0].localeCompare(b[0]));return `<div class="doc-group" id="docs-${esc(g)}"><h2>${esc(g==='whole'?COPY.whole:COPY.docs(nameOf(g)))}</h2>${fams.map(([fam,rs])=>`<h3>${esc(fam)}</h3><ul>${rs.sort((a,b)=>String(a.title).localeCompare(String(b.title))).map(docRow).join('')}</ul>`).join('')}</div>`;}).join('');
   $('#documents').hidden=!docs.length;
-  const lessons=q?S.rows.filter(r=>isLesson(r)&&(!sub||r._card===sub)&&(!pw||r._tier===pw)&&matches(r,q)):[];
-  const apps=q&&S.apps?S.apps.filter(a=>{const al=S.aliases['/Matt-s-Apps-/'+a.f]||{};return wordsMatch(hay([a.n,a.d,a.cat,al.description,...(al.tags||[])]),q);}):[];
-  $('#lessonList').innerHTML=lessons.map(r=>`<li class="rx-cardx doc"><a href="${esc(safeHref(r._href))}">${esc(r.title)}</a><span class="badge">${esc(FORMAT_LABEL[r._fmt])}</span>${r._tier?`<span class="chip label tier">${esc(r._tier)}</span>`:''}<span class="badge">${esc(r.subject)}</span></li>`).join('')+apps.map(a=>`<li class="rx-cardx doc"><a href="${esc(safeHref('/Matt-s-Apps-/'+a.f))}">${esc(a.n)}</a><span class="badge">${esc(a.cat)}</span></li>`).join('');
+  const lessons=(q||unit)?S.rows.filter(r=>isLesson(r)&&(!sub||r._card===sub)&&(!pw||r._tier===pw)&&(!unit||r.unit===unit)&&matches(r,q)):[];
+  const apps=q&&!sub&&!pw&&!unit&&S.apps?S.apps.filter(a=>{const al=S.aliases['/Matt-s-Apps-/'+a.f]||{};return wordsMatch(hay([a.n,a.d,a.cat,al.description,...(al.tags||[])]),q);}):[];
+  $('#lessonList').innerHTML=lessons.map(r=>`<li class="rx-cardx doc"><a href="${esc(safeHref(r._href))}">${esc(displayTitle(r))}</a>${referenceDetail(r)}<span class="badge">${esc(FORMAT_LABEL[r._fmt])}</span>${r._tier?`<span class="chip label tier">${esc(r._tier)}</span>`:''}<span class="badge">${esc(r.subject)}</span></li>`).join('')+apps.map(a=>`<li class="rx-cardx doc"><a href="${esc(safeHref('/Matt-s-Apps-/'+a.f))}">${esc(a.n)}</a><span class="badge">${esc(a.cat)}</span></li>`).join('');
   $('#lessonsCount').textContent=COPY.lessonsFound(lessons.length)+(apps.length?` · ${COPY.apps(apps.length)}`:'');
   $('#lessons').hidden=!(lessons.length||apps.length);
   $('#empty').hidden=!!(keys.length||docs.length||lessons.length||apps.length);
 }
-function fillFilters(){const cards=[...new Set([...S.keys.map(k=>k.card),...S.docs.map(r=>r._card)])].sort((a,b)=>{const i=CARD_ORDER.indexOf(a),j=CARD_ORDER.indexOf(b);return (i<0?9:i)-(j<0?9:j)||nameOf(a).localeCompare(nameOf(b));});$('#rxSubs').innerHTML='<option value="">All subjects</option>'+cards.map(c=>`<option value="${esc(c)}">${esc(nameOf(c))}</option>`).join('');const tiers=PATHWAYS.filter(t=>S.keys.some(k=>k.tier===t)||S.docs.some(r=>r._tier===t));$('#rxPath').innerHTML='<option value="">All pathways</option>'+tiers.map(t=>`<option value="${t}">${t}</option>`).join('');}
+function fillFilters(){const cards=[...new Set([...S.keys.map(k=>k.card),...S.docs.map(r=>r._card),...S.rows.map(r=>r._card)])].sort((a,b)=>{const i=CARD_ORDER.indexOf(a),j=CARD_ORDER.indexOf(b);return (i<0?9:i)-(j<0?9:j)||nameOf(a).localeCompare(nameOf(b));});$('#rxSubs').innerHTML='<option value="">All subjects</option>'+cards.map(c=>`<option value="${esc(c)}">${esc(nameOf(c))}</option>`).join('');const tiers=PATHWAYS.filter(t=>S.keys.some(k=>k.tier===t)||S.docs.some(r=>r._tier===t)||S.rows.some(r=>r._tier===t));$('#rxPath').innerHTML='<option value="">All pathways</option>'+tiers.map(t=>`<option value="${t}">${t}</option>`).join('');}
+function fillUnitFilter(){const units=[...new Set([...S.rows,...S.site].map(r=>r.unit).filter(Boolean))].sort((a,b)=>a.localeCompare(b));$('#rxUnit').innerHTML='<option value="">All topics and units</option>'+units.map(u=>`<option value="${esc(u)}">${esc(u)}</option>`).join('');}
 /* ---- sheet: keep the existing unit key; companionOf groups the real lesson files ---- */
 function openSheet(id,opener){const k=S.keys.find(x=>x.id===id);if(!k)return;const dlg=$('#rxSheet');
   $('#sheet-title').textContent=`${nameOf(k.card)}${k.tier?' · '+k.tier:''} · ${k.halfTerm}${k.unit?' · '+k.unit:''}`;
@@ -251,7 +258,7 @@ function openSheet(id,opener){const k=S.keys.find(x=>x.id===id);if(!k)return;con
   const other=k.files.filter(f=>f.pack.kind!=='pack');
   const planning=other.filter(f=>!f.role||f.role==='lesson'||f.role==='slides'||f.role==='teacher'),evidence=other.filter(f=>f.role==='pupil');
   const subject=`/Lessons/subject.html?subject=${encodeURIComponent(k.card)}${k.tier?'&pathway='+k.tier:''}${k.unit?'&unit='+encodeURIComponent(k.unit):''}`;
-  const delivery=k.lessons.length?`<section class="sheet-sec"><h3>${esc(COPY.deliverySec)}</h3><ul class="delivery-list">${k.lessons.map(r=>`<li><a href="${esc(safeHref(r._href))}">${esc(r.title)}</a></li>`).join('')}</ul><p class="sheet-lesson"><a class="go" href="${esc(subject)}">${esc(COPY.openDelivery(k.lessons.length))}</a><span class="grey">${esc(COPY.opensAt(nameOf(k.card),k.tier||'',k.halfTerm))}</span></p></section>`:'';
+  const delivery=k.lessons.length?`<section class="sheet-sec"><h3>${esc(COPY.deliverySec)}</h3><ul class="delivery-list">${k.lessons.map(r=>`<li><a href="${esc(safeHref(r._href))}">${esc(displayTitle(r))}</a></li>`).join('')}</ul><p class="sheet-lesson"><a class="go" href="${esc(subject)}">${esc(COPY.openDelivery(k.lessons.length))}</a><span class="grey">${esc(COPY.opensAt(nameOf(k.card),k.tier||'',k.halfTerm))}</span></p></section>`:'';
   $('#sheetBody').innerHTML=section(COPY.planning,planning)+section(COPY.evidence,evidence)+packs+delivery;
   dlg._opener=opener;try{dlg.showModal();}catch(_){dlg.setAttribute('open','');}$('#sheetClose').focus();}
 function closeSheet(){const dlg=$('#rxSheet');if(dlg.open)dlg.close();}
@@ -265,18 +272,20 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 $('#rxSearch').addEventListener('input',()=>{setParam('q',$('#rxSearch').value.trim());render();});
 $('#rxSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();setParam('q',$('#rxSearch').value.trim());render();}});
 $('#rxSubs').addEventListener('change',()=>{setParam('subject',$('#rxSubs').value);render();});
+$('#rxUnit').addEventListener('change',()=>{setParam('unit',$('#rxUnit').value);render();});
 $('#rxPath').addEventListener('change',()=>{setParam('pathway',$('#rxPath').value);render();});
-$('#rxClear').addEventListener('click',()=>{setParam('q','');setParam('subject','');setParam('pathway','');setParam('type','');render();$('#rxSearch').focus();});
+$('#rxClear').addEventListener('click',()=>{setParam('q','');setParam('subject','');setParam('pathway','');setParam('type','');setParam('unit','');render();$('#rxSearch').focus();});
 /* ---- load ---- */
 /* The education build's alias record (/data/resource-collections.json) is read for the app search
    only — its documented aliases (e.g. "PDF generator" for PDF Studio) — never as a listing. */
-Promise.all([grab('/Lessons/resources.json'),grab('/data/resources.json',true),grab('/Lessons/data/calendar-spine.json',true),grab('/Lessons/data/resource-sizes.json',true),grab('/Matt-s-Apps-/apps.json',true),grab('/data/resource-collections.json',true)]).then(([les,site,spine,sizes,apps,aliases])=>{
+Promise.all([grab('/Lessons/resources.json'),grab('/data/resources.json',true),grab('/Lessons/data/calendar-spine.json',true),grab('/Lessons/data/resource-sizes.json',true),grab('/Matt-s-Apps-/apps.json',true),grab('/data/resource-collections.json',true),grab('/Lessons/assets/catalogue/display-titles.json',true)]).then(([les,site,spine,sizes,apps,aliases,titles])=>{
   if(Array.isArray(aliases))aliases.forEach(e=>{if(e&&typeof e.path==='string'&&e.path.startsWith('/Matt-s-Apps-/'))S.aliases[e.path]={description:e.description||'',tags:Array.isArray(e.tags)?e.tags:[]};});
   if(!Array.isArray(les))throw new Error('Invalid resources.json');
   S.rows=les.filter(r=>!isGame(r));S.site=Array.isArray(site)?site:[];S.spine=spine&&spine.weekStarts&&spine.blocks?spine:null;S.sizes=sizes&&sizes.sizes?sizes.sizes:{};
   if(apps&&Array.isArray(apps.spaces)){S.apps=apps.spaces.flatMap(s=>(s.items||[]).map(i=>({...i,cat:s.cat})));$('#appsCount').textContent=COPY.apps(S.apps.length);}
   document.querySelectorAll('[data-kind-note]').forEach(el=>{el.textContent=window.MBM_KIND_NOTE||'';});
-  prepare();fillFilters();render();
+  S.titles=titles&&titles.schema===1?titles.entries||{}:{};
+  prepare();fillFilters();fillUnitFilter();render();
   // K return route: use the existing unit key and its real focus-return control.
   const returning=params();
   if(returning.has('halfTerm')){const key=S.keys.find(k=>k.card===returning.get('subject')&&(k.tier||'')===(returning.get('pathway')||'')&&k.halfTerm===returning.get('halfTerm')&&(k.unit||'')===(returning.get('unit')||''));if(key){const opener=Array.from(document.querySelectorAll('.chip.more[data-key]')).find(e=>e.dataset.key===key.id);if(opener)openSheet(key.id,opener);}}
