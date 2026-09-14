@@ -58,6 +58,7 @@ async function chromeFocus(control,surface,label,redProof=false) {
       const pageErrors = [];
       page.on('pageerror', error => pageErrors.push(error.message));
       await require('./check_education_hub_links.cjs').verify({page,origin,javaScriptEnabled});
+      await require('./check_education_hub_links.cjs').verify({page,origin,javaScriptEnabled,consumerFixtures:true});
       for (const route of routes) {
         assert.equal((await page.goto(origin + route)).status(), 200, route);
         assert.equal(await page.locator(header).count(), 1, 'One header: ' + route);

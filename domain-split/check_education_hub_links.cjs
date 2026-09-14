@@ -1,8 +1,16 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs');
 const expected=[['/Lessons/','Lessons'],['/resources/','Resources'],['/Matt-s-Apps-/','Apps & tools'],['/tools/','Teacher tools']];
-exports.verify=async({page,origin,javaScriptEnabled})=>{
+exports.verify=async({page,origin,javaScriptEnabled,consumerFixtures=false})=>{
   const evidence=[];
+  const overrides=[];
+  if(consumerFixtures) for(const [route,name] of [['/Lessons/','lessons'],['/Matt-s-Apps-/','apps']]){
+    const url=origin+route,body=fs.readFileSync(require('node:path').join(__dirname,'sw2',`nav-${name}-published.html`));
+    const digests={lessons:'1a9937571efdbc7656486b949a7fd127bd160cb213b4ad3ba206e699c78b5a86',apps:'a2d5dedca49c9fa867c6ac2aabec83d877f1f9e4fe59bf79f2c75b771b6806bb'};
+    assert.equal(require('node:crypto').createHash('sha256').update(body).digest('hex'),digests[name],'Exact independently built consumer candidate');
+    const handler=r=>r.fulfill({status:200,contentType:'text/html',body});
+    await page.route(url,handler);overrides.push([url,handler]);
+  }
   fs.mkdirSync('audit-output/home-play-discovery/section26',{recursive:true});
   for(const width of [390,900,1280]){
     let geometry;
@@ -39,11 +47,12 @@ exports.verify=async({page,origin,javaScriptEnabled})=>{
           await assert.rejects(check,/Exact shared destination/,'Wrong destination is detected');
           await last.evaluate((e,v)=>e.setAttribute('href',v),prior);await check();
         }
-        await page.screenshot({path:`audit-output/home-play-discovery/section26/${width}-${route.includes('Lessons')?'lessons':route.includes('resources')?'resources':'apps'}.png`,fullPage:false});
+        await page.screenshot({path:`audit-output/home-play-discovery/section26/${consumerFixtures?'owners':'pinned'}-${width}-${route.includes('Lessons')?'lessons':route.includes('resources')?'resources':'apps'}.png`,fullPage:false});
       }
-      evidence.push({width,route,javaScriptEnabled,status:'PASS',boxes:state.boxes});
+      evidence.push({width,route,javaScriptEnabled,consumerFixtures,status:'PASS',boxes:state.boxes});
     }
   }
   await page.setViewportSize({width:390,height:844});
-  fs.writeFileSync(`audit-output/home-play-discovery/section26/links-${javaScriptEnabled?'js':'no-js'}.json`,JSON.stringify(evidence,null,2));
+  for(const [url,handler] of overrides)await page.unroute(url,handler);
+  fs.writeFileSync(`audit-output/home-play-discovery/section26/links-${consumerFixtures?'owners':'pinned'}-${javaScriptEnabled?'js':'no-js'}.json`,JSON.stringify(evidence,null,2));
 };
