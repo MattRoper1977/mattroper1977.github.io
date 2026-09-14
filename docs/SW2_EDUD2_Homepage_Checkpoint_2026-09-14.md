@@ -1,5 +1,7 @@
 # EDU-D2 homepage checkpoint — 14 September 2026
 
+Verification follow-up: run 34863516351 reported 25 UX2 passes and one homepage copy failure. EDU-D2 replaced the visible generic “Ready-to-teach packs” feature with the reviewed named lesson, but the Appendix A fixture still required that old heading. The remaining pack-promo heading is hidden by the existing `.fd-pack-promo { display:none }` rule. Update that one obsolete expectation to require the feature eyebrow, exact lesson title and both actions. Preserve all other copy, route, safety and negative-control assertions; include missing strings in future failure messages. This correction changes no publication bytes or admission hashes. The newly approved Education and Play hero stacks remain queued for their respective later checkpoints.
+
 First small checkpoint within EDU-D2, following closed NAV-2. Matt authorised continuation after the bounded scope and High recommendation. This checkpoint does not close all EDU-D2 or start PLAY-D1.
 
 The homepage and /main/ keep the existing search, compact four subject cards, SVG icons, silver M, pathway colours and shared header. Supporting browse buttons are outlined so search remains the leading action. Direct teacher, pupil and family entrances and the existing teacher provenance sentence sit near the introduction. All institutional destinations remain under “Working with schools and organisations” lower down; /#audiences remains valid.
