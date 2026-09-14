@@ -62,14 +62,20 @@ fs.mkdirSync(output, { recursive: true });
       assert.equal(await page.locator('[data-mbm-support-footer]').count(), 0);
       assert.equal(await page.locator('#custom-resources').count(), 0, 'The commission block is no longer on the homepage');
       assert(!/£/.test(await page.locator('body').innerText()), 'No money copy on the homepage');
-      const commissionLink = page.locator('#about a[href="/commission/"]');
+      const commissionLink = page.locator('#about a[href="/commission/#about-matt"]');
       assert.equal(await commissionLink.innerText(), 'Meet Matt →');
       assert(await page.locator('[data-mbm-navigation="education"] img').first().evaluate(e => e.complete && e.naturalWidth > 0));
       for (const theme of ['cream', 'dark']) {
         await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Homepage overflow');
       }
-      assert.equal((await page.goto(origin + '/commission/')).status(), 200);
+      await commissionLink.click();
+      assert.equal(new URL(page.url()).pathname, '/commission/');
+      assert.equal(new URL(page.url()).hash, '#about-matt');
+      await page.locator('#about-matt-title').waitFor({state:'visible'});
+      assert.equal(await page.locator('#about-matt-title').innerText(), 'About Matt');
+      assert.match(await page.locator('#about-matt').innerText(), /teacher and creator behind Made by Matt/);
+      assert.equal(await page.locator('#about-matt a[href="#custom-resources"]').innerText(), 'Request a resource');
       await page.locator('#custom-resources').waitFor();
       assert.match(await page.locator('#custom-resources').innerText(), /£5[\s\S]*£10/);
       assert.equal(await page.locator('h1').innerText(), 'Commission a resource');

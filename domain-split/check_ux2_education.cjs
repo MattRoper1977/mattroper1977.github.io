@@ -239,7 +239,7 @@ async function suite(browser, mutation) {
       const text = await bodyText(page);
       const money = { pound: (text.match(/£/g) || []).length, kofi: await page.locator('a[href*="ko-fi" i]').count(), mailto: await page.locator('a[href^="mailto:"]').count(), donate: (text.match(/donat/gi) || []).length };
       assert.deepEqual(money, { pound: 0, kofi: 0, mailto: 0, donate: 0 }, 'Money on ' + route);
-      const commission = await page.locator('a[href="/commission/"]').evaluateAll(n => n.map(a => a.textContent.trim()));
+      const commission = await page.locator('a[href^="/commission/"]').evaluateAll(n => n.map(a => a.textContent.trim()));
       assert.equal(commission.filter(t => t === 'Commission a resource').length, 0, 'SW2 H: the commission offer stays on its own page');
       if (route !== '/') assert.deepEqual(commission, [], 'No commission action on pupil pages');
       return money;

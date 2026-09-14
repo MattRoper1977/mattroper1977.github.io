@@ -88,7 +88,6 @@ LEARNING = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'),
 LEARNING_PUPIL = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'), ('/Lessons/primary/', 'Primary lessons')]
 HUB_LINKS = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'),
              ('/Matt-s-Apps-/', 'Apps & tools'), ('/tools/', 'Teacher tools')]
-HUB_ROUTES = {route for route, _ in HUB_LINKS}
 ACCOUNT = [('/account/', 'Account and members'), ('/mailing-list/', 'Teacher updates'),
            ('/privacy/', 'Privacy and statistics')]
 ACCOUNT_SHARED = [('/privacy/', 'Privacy and statistics')]
@@ -240,16 +239,14 @@ def header(route, audiences, adult=False, pupil=False, theme=False, primary=Fals
     menu = chrome_template('menu-sheet.html', 'published-education', {
         'menu_title': escape(MENU_TITLE), 'groups': groups,
     })
-    # Public catalogue links are independent of account eligibility. The four
-    # hubs share exactly one row; adult/pupil account controls above stay intact.
-    hub = route in HUB_ROUTES
+    # Every Education surface gets the same public catalogue row. Pupil and
+    # account eligibility controls remain separate in the menu above.
     navigation = chrome_template('nav-row.html', 'published-education', {
         'links': ''.join(link(item, primary and item[0] == '/Lessons/')
-                         for item in (HUB_LINKS if hub else (LEARNING[:3] if adult else LEARNING[:2]))),
-        'about': '<a class="mbm-unified-about" href="/main/#about">About</a>' if adult and not hub else '',
+                         for item in HUB_LINKS),
+        'about': '',
     })
-    if hub:
-        navigation = navigation.replace('<nav ', '<nav data-mbm-hub-links ', 1)
+    navigation = navigation.replace('<nav ', '<nav data-mbm-hub-links ', 1)
     return chrome_template('header.html', 'published-education', {
         'search': escape(search, quote=True), 'menu': menu,
         'variant': 'adult' if adult else 'pupil', 'navigation': navigation,
