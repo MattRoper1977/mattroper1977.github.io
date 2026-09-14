@@ -29,8 +29,8 @@ exports.verify = async ({page, origin, rules, record}) => {
       assert.equal(await page.locator('main img:not([data-preview-source])').count(),0,'No unproven or invented homepage pictures');
       const sources=await page.locator('#added-rail .acard').evaluateAll(es=>es.map(e=>({file:e.dataset.resourcePath,title:e.querySelector('h3').textContent,desc:e.querySelector('p')?.textContent||'',interactive:!!e.querySelector('.fd-interactive')})));
       assert(sources.length>0&&sources.length<=3);for(const c of sources){const r=rows.find(r=>(r.file||r.url)===c.file);assert(r);assert.equal(c.title,r.title);assert.equal(c.desc,r.desc||r.description||'');assert.equal(c.interactive,/\.html(?:[?#]|$)/i.test(c.file));}
-      require('node:fs').mkdirSync('audit-output/homepage-repair',{recursive:true});
-      await page.screenshot({path:'audit-output/homepage-repair/home-'+width+'.png',fullPage:true});
+      require('node:fs').mkdirSync('audit-output/education-navigation/homepage-repair',{recursive:true});
+      await page.screenshot({path:'audit-output/education-navigation/homepage-repair/home-'+width+'.png',fullPage:true});
     }
     if(route==='/for/pupils/'){
       assert.equal(await page.locator('main input').getAttribute('placeholder'),'Type the name your teacher gave you');
