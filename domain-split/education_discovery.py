@@ -202,7 +202,7 @@ for(const row of normSite(Array.isArray(collections)?collections:[])){const key=
     text = text.replace('href="../asdan/app.html"', 'href="/asdan/"')
     tools_path.write_text(text)
 
-    for path in [site/'index.html', site/'main/index.html', site/'for/teachers/index.html', resource_path, tools_path, app_path]:
+    for path in [site/'index.html', site/'main/index.html', site/'for/teachers/index.html', resource_path, tools_path]:
         text = path.read_text()
         active = {resource_path: '/resources/', tools_path: '/tools/', app_path: '/Matt-s-Apps-/'}.get(path, '')
         text = replace_once(text, '</header>', '</header>'+learning_nav(active))
