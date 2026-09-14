@@ -48,7 +48,7 @@
   }
   function renderLanes() {
     const played = recent.map(id => byId.get(id)).filter(g => g && g.group === 'games').slice(0, 12);
-    $('lane-continue').innerHTML = played.length ? lane('continue', 'Continue playing', '<p class="muted">on this device</p><button type="button" id="clear-recent">Clear recently opened</button>', played.map(g => tile(g, g.genre))) : '';
+    $('lane-continue').innerHTML = played.length ? lane('continue', 'Recently played', '<p class="muted">on this device</p><button type="button" id="clear-recent">Clear recently opened</button>', played.map(g => tile(g, g.genre))) : '';
     const updated = catalogue.filter(g => g.updated).sort((a, b) => b.updated.date < a.updated.date ? -1 : b.updated.date > a.updated.date ? 1 : 0);
     $('lane-updated').innerHTML = updated.length ? lane('updated', 'New and updated', '', updated.map(g => tile(g, g.updated.label))) : '';
     $('lanes-genre').innerHTML = data.genres.filter(x => x.count >= 3).map(x => {
@@ -110,6 +110,7 @@
     $('clear-favourites').hidden = state.list !== 'favourites';
     $('lanes').hidden = active();
     $('filters-open').setAttribute('aria-pressed', String(Boolean(state.control || state.mode || state.list)));
+    document.querySelectorAll('[data-collection]').forEach(a => { if (a.dataset.collection === state.list) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     paintFavourite();
     if (url) syncUrl();
     if (focusedCard) { if (!focusedCard.hidden) focused.focus(); else (grid.querySelector('[data-card]:not([hidden]) .card-open') || $('empty-reset')).focus(); }
@@ -207,6 +208,8 @@
   $('empty-reset').addEventListener('click', reset);
   $('clear-favourites').addEventListener('click', () => { favourites = []; saveList('favourites', []); render({url: false}); storageNotice('Favourites cleared. Game saves were not changed.' + (durable ? '' : ' Storage is unavailable.')); });
   document.addEventListener('click', e => {
+    const collection = e.target.closest('a[data-collection]');
+    if (collection && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) { e.preventDefault(); choose({q: '', genre: '', control: '', mode: '', list: collection.dataset.collection}, true); $('all-games-title').focus({preventScroll: true}); return; }
     const chip = e.target.closest('.chip-button');
     if (chip) { const kind = chip.dataset.chip; if (kind === 'all') choose({genre: '', list: state.list === 'favourites' ? '' : state.list}, false); else if (kind === 'favourites') choose({genre: '', list: 'favourites'}, true); else choose({genre: chip.dataset.genre, list: state.list === 'favourites' ? '' : state.list}, true); return; }
     const seeAll = e.target.closest('a.see-all');

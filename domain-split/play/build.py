@@ -61,7 +61,7 @@ def card(row, members, by_id):
     series, else just the row; the card's Play anchor is the lead's and the
     other CATALOGUE editions' Play anchors are in the markup for no-JS use."""
     media = row.get('media', {})
-    image = row.get('image', '')
+    image = media.get('poster') or row.get('image', '')
     title = row['series'] if row.get('series') else shown_title(row)
     editions = [by_id[i] for i in members if i != row['id']]
     catalogue_editions = [e for e in editions if e['group'] == 'games']
@@ -85,9 +85,9 @@ def feature(row):
     picture = ('<span class="thumb"><img src="' + esc(image) + '" alt="" fetchpriority="high" width="640" height="360"></span>') if image else ''
     return ('<section class="featured" aria-labelledby="featured-title"><h2 id="featured-title">Featured</h2>'
             '<article class="feature-card" data-feature="' + esc(row['id']) + '">'
-            '<button type="button" class="card-open" data-info="' + esc(row['id']) + '" aria-haspopup="dialog">' + picture + '<span class="card-title">' + esc(shown_title(row)) + '</span></button>'
-            '<div class="feature-body"><div class="card-meta"><span class="chip">' + esc(row['genre']) + '</span>' + keyboard_chip(row) + '</div><p>' + esc(row['description']) + '</p>'
-            '<div class="card-actions">' + play_link(row) + watch + '</div></div></article></section>')
+            '<button type="button" class="card-open feature-picture" data-info="' + esc(row['id']) + '" aria-haspopup="dialog" aria-label="View details: ' + esc(shown_title(row)) + '">' + picture + '</button>'
+            '<div class="feature-body"><p class="feature-kicker">IN THE SPOTLIGHT</p><h3 class="feature-title">' + esc(shown_title(row)) + '</h3><div class="card-meta"><span class="chip">' + esc(row['genre']) + '</span>' + keyboard_chip(row) + '</div><p>' + esc(row['description']) + '</p>'
+            '<div class="card-actions">' + play_link(row) + '<button type="button" class="feature-details" data-info="' + esc(row['id']) + '" aria-haspopup="dialog">View details</button>' + watch + '</div></div></article></section>')
 
 def classroom(rows):
     items = ''.join('<li class="class-row" data-row="' + esc(r['id']) + '"><span class="row-label">' + ('Staff' if r['group'] == 'staff' else 'Classroom') + '</span>'
