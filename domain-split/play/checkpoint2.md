@@ -24,3 +24,11 @@ The Play browser report on 1b4634c passed 32/36 checks. Four identical failures 
 All eight previous generic-splash gaps now have inspected, unchanged four-second game-screen captures from run34907070023. The review build has 63 exact-bound stills plus six accepted gameplay previews, covering all 69 entries. Other approved revisions can omit unmatched captures: the 2c33266 publication test omits 21 stills and three selections. Capture coverage must therefore be verified against the actual governed release source before publication; do not describe review-pin imagery as universal coverage.
 
 Fresh current-head CI and final visual acceptance remain required. No game payload, original logo, save key, AS1 runtime control or publisher pin was changed.
+
+## Release-source alignment after a02288ac
+
+Run 34908147264 passed all 36 browser checks across 69 initial game surfaces, with zero reported runtime errors; the save-transfer fixture also passed. All 16 home, browse, 200% text and details screenshots were inspected at 320, 390, 768 and 1280 pixels and accepted for that review source. UI artifact 10373632011 SHA256: 7615e8f2fe18454803eea5fcfa7b27c329e5ad684be1b23097c8a987104a74a4.
+
+Games/play-publication.json currently selects Lessons 9ec701681ff6efcc5bb99f9120555c7c76585e45. The review workflow now uses that same source. All 69 output payloads validate against the approved source registry, but 21 still images need new captures. The three affected selections (Neon Garden, Prism and Lumins) were re-inspected against their current source and bound to its approved payload hash; all 22 reviewed selections now apply. Lumins already has a matching accepted preview.
+
+The browser binding check verifies exact metadata and image bytes where matched, verifies and reports every omission where another approved revision is selected, and explicitly reports whether discovery coverage is complete. This capture run is not release acceptance: require all 63 matching stills plus six accepted previews and a fresh visual review before checkpoint 2 closes. Local release-source build, six discovery rejection/restoration controls, the binding assertion with local file responses, syntax and paired fixture-pin checks pass. No game payload or publisher configuration is changed.

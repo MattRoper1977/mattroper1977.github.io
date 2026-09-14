@@ -53,10 +53,19 @@ await test('payloads-catalogue-and-initial-dependencies',async()=>{for(const p o
 await test('reviewed-discovery-and-real-screen-bindings',async()=>{
  const review=JSON.parse(fs.readFileSync('domain-split/play/discovery-review.json')),screens=JSON.parse(fs.readFileSync('domain-split/play/screens/manifest.json'));
  const key=r=>decodeURIComponent(r).replace(/index\.html$/,'').replace(/\/$/,'');
- for(const [route,facts] of Object.entries(review.routes)){const g=data.games.find(g=>key(g.route)===key(route));assert(g);const payload=build.payloads.find(p=>key(p.route)===key(route));assert.equal(facts.published_sha256,payload.published_sha256);assert.deepEqual(g.moods,facts.moods);}
- for(const screen of screens.screens){const g=data.games.find(g=>key(g.route)===key(screen.route)),payload=build.payloads.find(p=>key(p.route)===key(screen.route));assert(g);assert.equal(screen.published_sha256,payload.published_sha256);assert.equal(g.image,'/assets/play/screens/'+screen.file);const response=await fetch(base+g.image);assert.equal(response.status,200);assert.equal(sha(Buffer.from(await response.arrayBuffer())),screen.sha256);}
+ const omitted=JSON.parse(fs.readFileSync(path.join(root,'play-discovery-report.json'))).omitted_discovery,expectedOmissions=[];
+ let reviewedRoutes=0,realScreens=0;
+ for(const [route,facts] of Object.entries(review.routes)){const g=data.games.find(g=>key(g.route)===key(route));assert(g);const payload=build.payloads.find(p=>key(p.route)===key(route));
+  if(facts.published_sha256!==payload.published_sha256){assert(!g.moods?.length);assert(!Object.keys(g.details||{}).length);expectedOmissions.push({route:g.route,kind:'selection',reason:'Different approved game revision'});continue;}
+  assert.deepEqual(g.moods,facts.moods);assert.deepEqual(g.details,facts.details||{});reviewedRoutes++;
+ }
+ for(const screen of screens.screens){const g=data.games.find(g=>key(g.route)===key(screen.route)),payload=build.payloads.find(p=>key(p.route)===key(screen.route));assert(g);
+  if(screen.published_sha256!==payload.published_sha256){assert.equal(g.image||'','');expectedOmissions.push({route:g.route,kind:'screen',reason:'Different approved game revision'});continue;}
+  assert.equal(g.image,'/assets/play/screens/'+screen.file);const response=await fetch(base+g.image);assert.equal(response.status,200);assert.equal(sha(Buffer.from(await response.arrayBuffer())),screen.sha256);realScreens++;
+ }
+ const order=rows=>rows.map(x=>JSON.stringify(x)).sort();assert.deepEqual(order(omitted),order(expectedOmissions),'Every omitted optional asset must be reported');
  assert(!data.games.some(g=>g.image&&g.image.endsWith('.svg')),'illustrated covers cannot stand in for game captures');
- return{reviewedRoutes:Object.keys(review.routes).length,realScreens:screens.screens.length,byteBound:true};
+ return{reviewedRoutes,realScreens,byteBound:true,omittedDiscovery:omitted,completeDiscovery:omitted.length===0};
 });
 await test('static-shelf-one-dom-vocabulary-and-one-count',async()=>{const html=await (await fetch(base+'/')).text();for(const word of ['In-game screenshot','Cover artwork','Ver.'])assert.equal((html.match(new RegExp(word.replace('.','\\.'),'g'))||[]).length,0,'retired vocabulary present: '+word);for(const old of ['games and activities','catalogue games ·','large-number','Choose your next adventure','Recently updated'])assert(!html.includes(old),'old shelf copy present: '+old);
  const countStatements=html.match(/<p id="result-count"[^>]*>([^<]*)<\/p>/g)||[];assert.equal(countStatements.length,1,'exactly one count statement');assert.equal(countStatements[0].replace(/<[^>]+>/g,''),catalogue.length+' games','count statement is derived from the catalogue');
