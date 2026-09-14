@@ -29,9 +29,10 @@
 <main>
 <section class="intro" aria-labelledby="intro-title"><p class="eyebrow">YOUR NEXT GAME STARTS HERE.</p><h1 id="intro-title">Pick a game. <span>Make it yours.</span></h1><p class="lede">Race, explore, build or work out your next move. Find your favourite or try something unexpected—play straight in your browser.</p>
 <form id="discovery-form" action="/" method="get" role="search"><label for="query">Search games</label><div class="search-row"><input id="query" name="q" type="search" maxlength="160" placeholder="Search games" autocomplete="off"><button type="button" id="filters-open" aria-haspopup="dialog" aria-expanded="false">Filters</button></div></form>
-<div class="chip-row" role="group" aria-label="Genre">@@CHIPS@@</div></section>
+<div class="mood-tools"><div class="chip-row" role="group" aria-label="Play style">@@CHIPS@@</div><button type="button" id="surprise" aria-haspopup="dialog" hidden>Surprise me</button></div><p class="mood-note">Mood picks are reviewed selections. All includes every game.</p></section>
 <div id="lanes"><div id="lane-continue"></div>@@FEATURED@@<div id="lane-updated"></div><div id="lanes-genre"></div></div>
-<section id="all-games" aria-labelledby="all-games-title"><div class="section-head"><h2 id="all-games-title" tabindex="-1">All games</h2><p id="result-count" role="status" aria-live="polite">@@COUNT@@</p><button type="button" id="clear-favourites" hidden>Clear favourites</button></div>
+<section id="all-games" aria-labelledby="all-games-title"><div class="section-head"><h2 id="all-games-title" tabindex="-1">All games</h2><p id="result-count" role="status" aria-live="polite">@@COUNT@@</p><button type="button" id="clear-favourites" hidden>Clear favourites</button><button type="button" id="clear-recent-list" data-clear-recent hidden>Clear recently opened</button></div>
+<p id="list-note" class="muted" hidden>These are launches from this browser on this device, not saved games or resumable progress.</p><p id="surprise-status" role="status"></p>
 <p id="storage-status" role="status"></p>
 <noscript><p class="notice">All games are listed below. Search, filters and favourites need JavaScript; direct Play links work without it.</p></noscript>
 <div id="empty-state" class="empty-state" hidden><h3>No games found</h3><p id="empty-description">Try a different word or clear a filter.</p><button type="button" id="empty-reset">Show all games</button></div>
@@ -41,16 +42,19 @@
 </div>
 <footer><nav aria-label="Footer"><a href="/privacy/">Privacy and saved progress</a><span aria-hidden="true">·</span><a href="mailto:contactmadebymatt@gmail.com">Report a problem</a><span aria-hidden="true">·</span><a class="education-return" href="https://madebymatt.uk/">Made by Matt Education ↗</a></nav><p class="brand-line">Made by Matt Play</p><p class="footer-motto">Learn • Build • Explore</p></footer>
 <dialog id="filters" aria-labelledby="filters-title"><form method="dialog" id="filters-form"><div class="sheet-top"><h2 id="filters-title">Filters</h2><button type="submit" id="filters-close" autofocus>Close <span aria-hidden="true">×</span></button></div>
+<label for="genre">Genre</label><select id="genre" name="genre">@@GENRES@@</select>
 <label for="control">Controls</label><select id="control" name="control"><option value="">All / unverified included</option><option value="touch">Touch supported</option><option value="keyboard">Keyboard / mouse supported</option><option value="gamepad">Gamepad supported</option><option value="unknown">Not yet verified</option></select>
-<label for="mode">Players</label><select id="mode" name="mode"><option value="">All / unverified included</option><option value="single">Single-player supported</option><option value="local">Local multiplayer supported</option><option value="unknown">Not yet verified</option></select>
+<label for="mode">Players</label><select id="mode" name="mode"><option value="">All / unverified included</option><option value="single">Single-player supported</option><option value="local">Local / same-network options</option><option value="classroom-teams">Shared-screen teams</option><option value="unknown">Not yet verified</option></select><p class="muted">Open game details for device sharing, group play or network requirements.</p>
 <label for="list">Show</label><select id="list" name="list"><option value="">All games</option><option value="favourites">Favourites</option><option value="recent">Recently opened</option></select>
 <div class="sheet-actions"><button type="button" id="filters-reset">Reset</button></div></form></dialog>
 <dialog id="game-dialog" aria-labelledby="dialog-title"><div class="sheet-top"><span class="chip" id="dialog-kind"></span><button type="button" id="dialog-close" autofocus>Close <span aria-hidden="true">×</span></button></div>
 <div id="dialog-media"></div><h2 id="dialog-title"></h2><div id="dialog-support" class="card-meta"></div><p id="dialog-keyboard" class="warn-line" hidden>Needs a keyboard</p>
 <div class="sheet-actions"><a class="play big" id="dialog-play">Play</a><button type="button" class="button" id="dialog-watch" hidden>Watch gameplay</button></div><p id="media-status" role="status"></p>
 <p id="dialog-description"></p>
+<p id="dialog-mood" class="muted" hidden></p>
+<section class="game-facts"><h3>Controls</h3><p id="dialog-controls"></p><h3>Players</h3><p id="dialog-players"></p><h3>Comfort and access</h3><p id="dialog-accessibility"></p></section>
 <section id="dialog-editions" hidden><h3>Editions</h3><ul></ul></section>
-<section class="progress"><h3>Your progress</h3><p>Saves stay in this browser on this device.</p><a class="button" href="/game-saves/">Transfer saves</a></section>
-<div class="sheet-actions"><button type="button" class="button" id="dialog-favourite" aria-pressed="false">Favourite</button><button type="button" class="button" id="dialog-share">Share</button></div><p id="share-status" role="status"></p></dialog>
+<section class="progress"><h3>Your progress</h3><p id="dialog-saves"></p><a class="button" href="/game-saves/">Transfer saves</a></section>
+<div class="sheet-actions"><button type="button" class="button" id="dialog-favourite" aria-pressed="false">Favourite</button><button type="button" class="button" id="dialog-remove-recent" hidden>Remove from recently opened</button><button type="button" class="button" id="dialog-share">Share</button></div><p id="share-status" role="status"></p></dialog>
 <script id="play-data" type="application/json">@@DATA@@</script>
 </body></html>

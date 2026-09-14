@@ -49,6 +49,9 @@ def shown_title(row):
 def play_link(row, small=False):
     return ('<a class="play' + (' small' if small else '') + '" data-play="' + esc(row['id']) + '" href="' + esc(row['route']) + '">Play<span class="sr-only"> ' + esc(shown_title(row)) + '</span></a>')
 
+def favourite_button(row):
+    return '<button type="button" class="favourite" data-favourite="' + esc(row['id']) + '" aria-pressed="false" aria-label="Favourite: ' + esc(shown_title(row)) + '" hidden>♡<span class="sr-only"> Favourite</span></button>'
+
 def keyboard_chip(row):
     # Verified controls that do not include touch: play.js reveals this on a
     # coarse-pointer device. Unverified rows get nothing on the card.
@@ -76,7 +79,7 @@ def card(row, members, by_id):
         more = '<ul class="card-editions" data-editions>' + ''.join('<li>' + play_link(e, small=True) + '<span class="edition-name">' + esc(shown_title(e)) + '</span></li>' for e in catalogue_editions) + '</ul>'
     return ('<article class="game-card" data-card="' + esc(row['id']) + '" data-games="' + esc(' '.join(i for i in members if by_id[i]['group'] == 'games')) + '">'
             '<button type="button" class="card-open" data-info="' + esc(row['id']) + '" aria-haspopup="dialog">' + picture + '<span class="card-title">' + esc(title) + '</span></button>'
-            + watch + '<div class="card-meta">' + chips + '</div>' + play_link(row) + more + '</article>')
+            + watch + '<div class="card-meta">' + chips + '</div><div class="card-actions">' + play_link(row) + favourite_button(row) + '</div>' + more + '</article>')
 
 def feature(row):
     media = row.get('media', {})
@@ -98,7 +101,7 @@ def classroom(rows):
 def slim(row):
     """The inline dataset play.js reads: what the lanes, filters and sheet need, nothing else."""
     out = OrderedDict()
-    for k in ('id', 'title', 'displayTitle', 'description', 'route', 'image', 'genre', 'group', 'controls', 'modes', 'series', 'editions', 'featured', 'chapter'):
+    for k in ('id', 'title', 'displayTitle', 'description', 'route', 'image', 'imageCaption', 'genre', 'group', 'controls', 'modes', 'instructions', 'moods', 'moodReason', 'details', 'series', 'editions', 'featured', 'chapter'):
         if k in row and row[k] not in (None, '', [], False):
             out[k] = row[k]
     m = row.get('media') or {}
@@ -113,6 +116,8 @@ def refresh(output, review=False, source_revisions=None):
     original = (target/'data/domain-catalogue.json').read_bytes()
     catalogue = json.loads(original)
     evidence = read('evidence.json', {'games':{}}).get('games', {})
+    discovery_review = read('discovery-review.json', {'routes': {}})['routes']
+    screens = {key(s['route']): s for s in read('screens/manifest.json', {'screens': []})['screens']}
     approved_revisions = registry()
     if source_revisions is None:
         site = HERE.parents[1]
@@ -160,6 +165,31 @@ def refresh(output, review=False, source_revisions=None):
             if candidates:
                 built = hashlib.sha256(payload.read_bytes()).hexdigest()
                 row['media'] = next((c for c in candidates if c['published_sha256'] == built), candidates[-1])
+            actual_hash = hashlib.sha256(payload.read_bytes()).hexdigest()
+            reviewed = discovery_review.get(key(path))
+            if reviewed:
+                if reviewed['published_sha256'] != actual_hash:
+                    raise ValueError('Review stale discovery selection: ' + entry['title'])
+                if not reviewed['moods'] or not set(reviewed['moods']) <= {'Calm','Fast','Thinky','Together'}:
+                    raise ValueError('Invalid reviewed mood: ' + entry['title'])
+                row.update(moods=reviewed['moods'], moodReason=reviewed['reason'], details=reviewed.get('details', {}))
+            # Only byte-bound captured screens or accepted gameplay posters are
+            # used. Missing captures get a neutral placeholder, never invented art.
+            row['image'] = ''
+            screen = screens.get(key(path))
+            if screen:
+                if screen['published_sha256'] != actual_hash:
+                    raise ValueError('Recapture stale game screen: ' + entry['title'])
+                name = screen['file']
+                if Path(name).name != name or not name.endswith('.jpg'):
+                    raise ValueError('Invalid game screen filename')
+                source_screen = HERE/'screens'/name
+                if hashlib.sha256(source_screen.read_bytes()).hexdigest() != screen['sha256']:
+                    raise ValueError('Game screen bytes changed: ' + entry['title'])
+                destination = target/'assets/play/screens'/name
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(source_screen, destination)
+                row.update(image='/assets/play/screens/'+name, imageCaption=screen['caption'])
             rows.append(row)
     assert len(rows) == len({key(r['route']) for r in rows}) == 69
     assert len({r['id'] for r in rows}) == len(rows)
@@ -230,9 +260,8 @@ def refresh(output, review=False, source_revisions=None):
     activities = [r for r in rows if r['group'] != 'games']
     genre_counts = Counter(r['genre'] for r in games)
     genres = sorted(genre_counts, key=lambda g: (-genre_counts[g], g))
-    chips = ('<button type="button" class="chip-button" data-chip="all" aria-pressed="true">All</button>'
-             + ''.join('<button type="button" class="chip-button" data-chip="genre" data-genre="' + esc(g) + '" aria-pressed="false">' + esc(g) + '</button>' for g in genres)
-             + '<button type="button" class="chip-button" data-chip="favourites" aria-pressed="false">Favourites</button>')
+    chips = '<button type="button" class="chip-button" data-chip="all" data-mood="" aria-pressed="true">All</button>' + ''.join('<button type="button" class="chip-button" data-chip="mood" data-mood="' + m + '" aria-pressed="false">' + m + '</button>' for m in ('Calm','Fast','Thinky','Together'))
+    genre_options = '<option value="">All genres</option>' + ''.join('<option value="' + esc(g) + '">' + esc(g) + '</option>' for g in genres)
     # Featured: the canonical shelf's featured flag, first true row in shelf
     # order. (The education Arcade's CURATION rail is a different record and
     # is deliberately not read here.)
@@ -260,7 +289,7 @@ def refresh(output, review=False, source_revisions=None):
         logo = '<img src="/assets/play/'+esc(source.name)+'" alt="" width="48" height="48">'
     data = {'counts': counts, 'catalogue': len(games), 'genres': [{'name': g, 'count': genre_counts[g]} for g in genres],
             'series': series, 'games': [slim(r) for r in rows]}
-    substitutions = {'@@LOGO@@':logo, '@@CHIPS@@':chips, '@@FEATURED@@': feature(featured) if featured else '',
+    substitutions = {'@@LOGO@@':logo, '@@CHIPS@@':chips, '@@GENRES@@':genre_options, '@@FEATURED@@': feature(featured) if featured else '',
         '@@COUNT@@': str(len(games)) + ' games', '@@GRID@@': ''.join(cards), '@@CLASSROOM@@': classroom(activities),
         '@@DATA@@':json.dumps(data,ensure_ascii=False).replace('<','\\u003c')}
     for a,b in substitutions.items(): template = template.replace(a,b)
