@@ -50,7 +50,15 @@ exports.verify=async({page,origin,javaScriptEnabled,consumerFixtures=false})=>{
       const shape=state.boxes.map(b=>[b.x,b.y,b.w,b.h].map(n=>Math.round(n)));
       if(geometry)assert.deepEqual(shape,geometry,'Four hubs have identical row position and spacing');else geometry=shape;
       assert.equal(await page.locator('nav.collection-nav').count(),0,'No duplicated legacy strip');
+      const themeStyles=[];
       if(javaScriptEnabled){
+        const savedThemes=await page.evaluate(()=>[document.documentElement,document.body].map(e=>e.getAttribute('data-theme')));
+        for(const theme of ['cream','dark','pink','blue','light','highlumen']){
+          await page.evaluate(t=>{for(const e of [document.documentElement,document.body])t==='cream'?e.removeAttribute('data-theme'):e.setAttribute('data-theme',t)},theme);
+          await check();themeStyles.push({theme,styles:await exports.assertPlainLinks(page),status:'PASS'});
+        }
+        await page.evaluate(values=>[document.documentElement,document.body].forEach((e,i)=>values[i]===null?e.removeAttribute('data-theme'):e.setAttribute('data-theme',values[i])),savedThemes);
+        await check();
         const selector=route==='/Lessons/'?'#scards .icon svg.fd-icon':route==='/resources/'?'#pillars svg.fd-icon':route==='/tools/'?'.ci svg.fd-icon':'#groups .ci svg.fd-icon';
         await page.locator(selector).first().waitFor({state:'visible'});
         assert((await page.locator(selector).count())>0,'Visible line icons');
@@ -72,7 +80,7 @@ exports.verify=async({page,origin,javaScriptEnabled,consumerFixtures=false})=>{
         }
         await page.screenshot({path:`audit-output/home-play-discovery/section26/${consumerFixtures?'owners':'pinned'}-${width}-${slugs[route]}.png`,fullPage:false});
       }
-      evidence.push({width,route,javaScriptEnabled,consumerFixtures,status:'PASS',boxes:state.boxes});
+      evidence.push({width,route,javaScriptEnabled,consumerFixtures,status:'PASS',boxes:state.boxes,themeStyles});
     }
   }
   await page.setViewportSize({width:390,height:844});
