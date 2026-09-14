@@ -144,7 +144,8 @@ async function responsiveChecks(browser) {
     page.on('pageerror', e => report.pageErrors.push({ url: page.url(), error: String(e) }));
     for (const home of homes) await check(`${width}-${home === '/' ? 'home' : 'main'}-three-places`, page, async () => {
       await goto(page, home);
-      assert.equal(await page.locator(collectionNav).count(), 0, 'No duplicate learning-areas bar on the homepage');
+      // NAV-2: Matt explicitly includes both homepages in the shared four-link row.
+      await require('./check_education_hub_links.cjs').assertPublicRow(page,home);
       const links = [];
       for (const [target, name] of [['/Lessons/', 'Lessons'], ['/resources/', 'Resources'], ['/Matt-s-Apps-/', 'Apps & tools']]) {
         // SW2 H retires the duplicate place cards. The native menu preserves all three destinations.
