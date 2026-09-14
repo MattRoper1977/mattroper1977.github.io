@@ -196,7 +196,3 @@ SURVIVES: every catalogue row, unit key, subject/pathway URL filter, global less
 RELOCATES: each companion pack’s Planning/Evidence file fragments are reunited in **Lesson packs**, grouped by explicit companionOf with their real file rows and delivery link. Non-companion Planning/Evidence sections retain their role-derived membership. The old +n control reads +n more. Shared publication chrome is unchanged.
 
 Appearance: shared cream/navy family, quieter search/pillars, rounded filters, restrained subject bands, readable unit cards and sheet; no invented image or count. Part K2 supplies Open pack page links when its real route exists. See docs/sw2-r/README.md for the measured boundary and decisions.
-
-## SW2 H restoration — 14 September 2026
-
-The homepage now links Primary lessons directly. Its unchanged index links the six previously recorded primary scheme-of-work documents; all six are within two taps of the homepage again. Their historical Resources retirement above stands as history, but the six current retirement entries are removed from `domain-split/ux2/menu-relocations.json`. The ordinary pre-order href census now requires their direct reachability; no exemption replaces it. H/U run34796594130 exposed this stale-ledger condition after the new pages passed their nine geometry/search cases.
