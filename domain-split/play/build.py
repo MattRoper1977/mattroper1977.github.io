@@ -131,7 +131,7 @@ def refresh(output, review=False, source_revisions=None):
     clips_by_route = {}
     for x in media.get('clips', []):
         if x.get('status') == 'accepted': clips_by_route.setdefault(key(x['route']), []).append(x)
-    rows = []
+    rows, omitted_discovery = [], []
     labels = {'games':'Catalogue game','activities':'Classroom activity','staff':'Staff activity'}
     for group in labels:
         for entry in catalogue[group]:
@@ -166,30 +166,40 @@ def refresh(output, review=False, source_revisions=None):
                 built = hashlib.sha256(payload.read_bytes()).hexdigest()
                 row['media'] = next((c for c in candidates if c['published_sha256'] == built), candidates[-1])
             actual_hash = hashlib.sha256(payload.read_bytes()).hexdigest()
+            # Independent publishers intentionally use different approved game
+            # revisions. Optional discovery assets may only describe their exact
+            # revision; they must not prevent another approved revision building.
+            reviewed_hashes = {source.get('published_sha256')} | {r['published_sha256'] for r in approved_revisions.get(output_path, {}).get('revisions', [])}
             reviewed = discovery_review.get(key(path))
             if reviewed:
-                if reviewed['published_sha256'] != actual_hash:
-                    raise ValueError('Review stale discovery selection: ' + entry['title'])
+                if reviewed['published_sha256'] not in reviewed_hashes:
+                    raise ValueError('Unreviewed discovery binding: ' + entry['title'])
                 if not reviewed['moods'] or not set(reviewed['moods']) <= {'Calm','Fast','Thinky','Together'}:
                     raise ValueError('Invalid reviewed mood: ' + entry['title'])
-                row.update(moods=reviewed['moods'], moodReason=reviewed['reason'], details=reviewed.get('details', {}))
+                if reviewed['published_sha256'] == actual_hash:
+                    row.update(moods=reviewed['moods'], moodReason=reviewed['reason'], details=reviewed.get('details', {}))
+                else:
+                    omitted_discovery.append({'route':row['route'], 'kind':'selection', 'reason':'Different approved game revision'})
             # Only byte-bound captured screens or accepted gameplay posters are
             # used. Missing captures get a neutral placeholder, never invented art.
             row['image'] = ''
             screen = screens.get(key(path))
             if screen:
-                if screen['published_sha256'] != actual_hash:
-                    raise ValueError('Recapture stale game screen: ' + entry['title'])
+                if screen['published_sha256'] not in reviewed_hashes:
+                    raise ValueError('Unreviewed game screen binding: ' + entry['title'])
                 name = screen['file']
                 if Path(name).name != name or not name.endswith('.jpg'):
                     raise ValueError('Invalid game screen filename')
                 source_screen = HERE/'screens'/name
                 if hashlib.sha256(source_screen.read_bytes()).hexdigest() != screen['sha256']:
                     raise ValueError('Game screen bytes changed: ' + entry['title'])
-                destination = target/'assets/play/screens'/name
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(source_screen, destination)
-                row.update(image='/assets/play/screens/'+name, imageCaption=screen['caption'])
+                if screen['published_sha256'] == actual_hash:
+                    destination = target/'assets/play/screens'/name
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(source_screen, destination)
+                    row.update(image='/assets/play/screens/'+name, imageCaption=screen['caption'])
+                else:
+                    omitted_discovery.append({'route':row['route'], 'kind':'screen', 'reason':'Different approved game revision'})
             rows.append(row)
     assert len(rows) == len({key(r['route']) for r in rows}) == 69
     assert len({r['id'] for r in rows}) == len(rows)
@@ -301,7 +311,8 @@ def refresh(output, review=False, source_revisions=None):
             'brand_status':brand.get('status','original-asset-unresolved'), 'accepted_clips':len(clips_by_route),
             'grid_cards':len(cards),'series':{k:len(v) for k,v in series.items()},'genres':genres,
             'featured':featured['route'] if featured else None,
-            'changed_game_payloads':0,'canonical_origin':ORIGIN,'shared_runtime_changed':False}
+            'changed_game_payloads':0,'canonical_origin':ORIGIN,'shared_runtime_changed':False,
+            'omitted_discovery':omitted_discovery}
     (Path(output)/'play-discovery-report.json').write_text(json.dumps(report,indent=2)+'\n')
     return report
 

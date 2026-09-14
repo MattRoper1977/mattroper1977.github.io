@@ -12,3 +12,15 @@ Draft implementation, 14 September 2026. Browser acceptance and release remain p
 Local validation: isolated publication build; 69-payload comparison; game-save regression suite; JS/Python syntax; DOM IDs and nested-interaction check; paired fixture-pin checks; rejection of a deliberately stale discovery hash and a tampered screenshot hash. Browser checks are expanded for filtered Surprise, direct favourites, recent clearing/removal, focus and real-screen bindings. Route captures now wait four seconds to avoid short loading splashes where possible.
 
 Next: monitor all current-head CI, then review new browser screenshots and recover useful captures for the eight missing screens. Do not mark checkpoint 2 accepted, merge or publish before those results and the remaining governed release pass.
+
+## CI repair after head 1b4634c
+
+The three publication failures had one cause: screenshot bindings for the review build were incorrectly required on other approved source revisions. Optional screens and mood/details metadata now apply only to their exact approved revision and are otherwise omitted with an explicit build-report record. Unreviewed bindings, changed image bytes and unreviewed game payloads remain errors. Independent publisher source pins are retained.
+
+Both the review Lessons pin ae2d534 and publication test pin 2c33266 build successfully with all 69 payloads source-validated. Six new discovery controls pass on each build: mismatched approved screen/selection omitted, invented screen/selection bindings refused, altered image hash refused and restored evidence accepted. They now run alongside the existing source-revision controls.
+
+The Play browser report on 1b4634c passed 32/36 checks. Four identical failures expected the retired generic save claim in the details sheet; the assertion now requires the honest unverified-save wording. All mood/Surprise/card-list checks passed at the four widths. The paired checker fixture pin was updated.
+
+All eight previous generic-splash gaps now have inspected, unchanged four-second game-screen captures from run34907070023. The review build has 63 exact-bound stills plus six accepted gameplay previews, covering all 69 entries. Other approved revisions can omit unmatched captures: the 2c33266 publication test omits 21 stills and three selections. Capture coverage must therefore be verified against the actual governed release source before publication; do not describe review-pin imagery as universal coverage.
+
+Fresh current-head CI and final visual acceptance remain required. No game payload, original logo, save key, AS1 runtime control or publisher pin was changed.
