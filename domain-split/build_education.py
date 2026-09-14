@@ -324,6 +324,8 @@ def build(output, lessons, apps=None, allow_sparse=False):
         report['education_expansion'] = refresh_education_expansion(output, lessons, apps, ROOT)
         report['usage'] = refresh_usage(output, lessons, apps, ROOT)
         report['navigation'] = refresh_navigation(output, ROOT)
+        from education_chrome_correction import refresh as refresh_chrome_icons
+        refresh_chrome_icons(output)
         report['support'] = refresh_support(output, lessons, ROOT)
     # Enrichment must never reintroduce excluded discovery records. Run after
     # every generator, including overlays, Apps, audiences and usage metadata.

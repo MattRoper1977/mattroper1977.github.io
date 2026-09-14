@@ -63,3 +63,16 @@ def correct_icons(text, route):
         text = re.sub(r'(<span class="ci" aria-hidden="true">)[^<]+(</span><h3(?:\s[^>]*)?>)([^<]+)',
                       lambda m: m[1] + line_icon(icon_name(m[3])) + m[2] + m[3], text)
     return text
+
+
+def refresh(output):
+    """Run on the complete built front doors, separately from header stamping."""
+    for tree, path, route in [
+        ('site', 'resources/index.html', '/resources/'),
+        ('site', 'tools/index.html', '/tools/'),
+        ('site', 'for/teachers/index.html', '/for/teachers/'),
+        ('lessons', 'index.html', '/Lessons/'),
+        ('apps', 'index.html', '/Matt-s-Apps-/'),
+    ]:
+        target = output / ('education-' + tree) / path
+        target.write_text(correct_icons(target.read_text(), route))
