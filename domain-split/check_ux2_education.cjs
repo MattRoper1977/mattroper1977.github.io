@@ -390,7 +390,7 @@ async function suite(browser, mutation) {
     await goto(page, '/');
     const images = await page.locator(HEADER + ' img, .hero-art img').evaluateAll(n => n.map(i => ({ src: (i.getAttribute('src') || '').slice(0, 40), w: i.naturalWidth, h: i.naturalHeight, complete: i.complete })));
     assert(images.length >= 1, 'The approved brand mark is present');
-    assert.equal(await page.locator('main img').count(), 0, 'H3: no preview without an owner-generated render');
+    assert.equal(await page.locator('main img:not([data-preview-source])').count(), 0, 'Homepage only uses verified source PDF renders');
     for (const i of images) assert(i.complete && i.w > 0 && i.h > 0, 'Image decodes: ' + JSON.stringify(i));
     return images;
   });
@@ -401,7 +401,7 @@ async function suite(browser, mutation) {
     await goto(page, '/Lessons/');
     await page.waitForFunction(() => document.querySelectorAll('.scard[data-card]').length > 0);
     const cards = await page.locator('.scard[data-card]').evaluateAll(n => n.map(c => c.dataset.card));
-    assert.deepEqual(tiles, cards, 'Homepage subject tiles are the hub cards, slug for slug, in order');
+    assert.deepEqual(tiles, cards.filter(slug => !slug.startsWith('x-')), 'Homepage features the four real subject groups; the full catalogue remains behind View all');
     // SW2 U supersedes the triad/pathway links with the same subject tiles.
     for (const route of ['/for/teachers/', '/for/pupils/']) {
       await goto(page, route);

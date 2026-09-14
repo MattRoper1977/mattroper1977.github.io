@@ -15,6 +15,15 @@
 (function (root) {
   'use strict';
   var d = root.document;
+  var previewNode = d.getElementById('home-preview-data');
+  var previews = previewNode ? JSON.parse(previewNode.textContent) : {};
+  function previewFor(row) {
+    var entry = previews[row.id];
+    return entry && entry.resourceFile === row.file ? entry.images : [];
+  }
+  function previewImage(item, cls) {
+    return '<img class="' + cls + '" src="' + esc(item.dataUri) + '" alt="" loading="eager" decoding="async" data-preview-source="' + esc(item.source) + '" data-preview-sha="' + esc(item.sourceSha256) + '">';
+  }
   var search = d.querySelector('[data-home-search]');
   if (search) {
     var field = search.querySelector('input');
@@ -85,7 +94,9 @@
     function chips(tiers) { return tiers.map(function (p) { return '<span class="fd-chip ' + p.toLowerCase() + '">' + p + '</span>'; }).join(''); }
     rail.innerHTML = recent.map(function (r) {
       var path = r.file || r.url || '', pathway = tier(r), description = r.desc || r.description || '';
-      return '<a class="acard" href="' + esc(safeHref(/^https?:\/\//i.test(path) ? path : '/Lessons/' + path)) + '" data-resource-path="' + esc(path) + '"><h3>' + esc(r.title) + '</h3>' + (pathway ? '<span class="fd-chips">' + chips([pathway]) + '</span>' : '') + '<span class="sub">' + esc(r.subject || '') + '</span>' + (description ? '<p>' + esc(description) + '</p>' : '') + (ext(path) === 'html' ? '<span class="fd-interactive">INTERACTIVE</span>' : '') + '</a>';
+      var images = previewFor(r);
+      var visual = images.length ? previewImage(images[0], 'fd-recent-preview') : '<span class="fd-resource-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v16M12 5C9 3 5 3 2 4v15c3-1 7-1 10 2 3-3 7-3 10-2V4c-3-1-7-1-10 1Z"/></svg></span>';
+      return '<a class="acard" href="' + esc(safeHref(/^https?:\/\//i.test(path) ? path : '/Lessons/' + path)) + '" data-resource-path="' + esc(path) + '">' + visual + '<div class="fd-recent-copy"><h3>' + esc(r.title) + '</h3><div class="fd-recent-meta">' + (pathway ? '<span class="fd-chips">' + chips([pathway]) + '</span>' : '') + '<span class="sub">' + esc(r.subject || '') + '</span></div>' + (description ? '<p>' + esc(description) + '</p>' : '') + '</div>' + (ext(path) === 'html' ? '<span class="fd-interactive">INTERACTIVE</span>' : '') + '</a>';
     }).join('');
     // The most recent calendar block already begun that has real packs; if
     // all packs are future blocks, choose the earliest available block.
@@ -97,6 +108,13 @@
     if (group.length) {
       var first = group.slice().sort(function (a, b) { return String(a.subject).localeCompare(String(b.subject)) || String(a.title).localeCompare(String(b.title)); })[0];
       var subjectGroup = group.filter(function (r) { return r.subject === first.subject; });
+      var pictured = subjectGroup.filter(function (r) { return previewFor(r).length; }).sort(function (a,b) { return String(a.title).localeCompare(String(b.title)); })[0];
+      d.querySelectorAll('[data-pack-preview]').forEach(function (el) {
+        var images = pictured ? previewFor(pictured) : [];
+        el.innerHTML = images.map(function (item) { return previewImage(item, 'fd-page-preview'); }).join('');
+        el.hidden = !images.length;
+        el.dataset.previewResource = pictured ? pictured.file : '';
+      });
       var present = ['BUILD', 'GROW', 'LAUNCH'].filter(function (p) { return subjectGroup.some(function (r) { return tier(r) === p; }); });
       var formats = [['pptx', 'PowerPoint'], ['docx', 'Word'], ['pdf', 'PDF']].filter(function (pair) { return subjectGroup.some(function (r) { return r.files.some(function (f) { return String(f.type).toLowerCase() === pair[0]; }); }); }).map(function (pair) { return pair[1]; });
       d.querySelectorAll('[data-pack-heading]').forEach(function (el) { el.textContent = first.subject + ' · ' + selected; });
