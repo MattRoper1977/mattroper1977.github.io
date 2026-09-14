@@ -42,7 +42,7 @@ function check(row,theme){
   assert(row.scrollWidth<=row.width+1,'No page overflow');
 }
 async function run(){
- const browser=await chromium.launch();const rows=[],requests=[],errors=[];
+ const browser=await chromium.launch();const rows=[],requests=[],errors=[],appsComposition=[];
  try{
   for(const width of [390,900,1280]) for(const theme of ['cream','dark']){
    const context=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce'});
@@ -78,6 +78,7 @@ async function run(){
     assert.equal(await page.locator('footer img[src*="micro_mark"],footer svg.mono').count(),0,'Retired footer marks');
     rows.push(row);
    }
+   appsComposition.push(await require('./sw2/check_apps_palette.cjs').verify({page,context,origin,width,theme}));
    // A real missing stylesheet and a visible defect must each turn the gate red.
    await page.goto(origin+'/');await page.waitForLoadState('networkidle');
    await page.evaluate(t=>{for(const e of [document.documentElement,document.body])t==='cream'?e.removeAttribute('data-theme'):e.setAttribute('data-theme',t)},theme);
@@ -93,7 +94,7 @@ async function run(){
   }
   assert.deepEqual(errors,[],'No page errors');assert.deepEqual(requests.filter(r=>new URL(r.url).origin!==origin),[],'No third-party fonts');
   fs.mkdirSync('audit-output/education-navigation',{recursive:true});
-  fs.writeFileSync('audit-output/education-navigation/part-t-palette.json',JSON.stringify({status:'PASS',rows,fontRequests:requests,errors,controls:'unlink / visible repaint / restore at each width and theme'},null,2));
+  fs.writeFileSync('audit-output/education-navigation/part-t-palette.json',JSON.stringify({status:'PASS',rows,appsComposition,fontRequests:requests,errors,controls:'unlink / visible repaint / restore at each width and theme'},null,2));
   console.log('PASS Part T: '+rows.length+' complete route/width/theme cases with rendered body/card roles, actual variants, font requests and negative controls.');
  }finally{await browser.close()}
 }
