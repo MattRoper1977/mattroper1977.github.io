@@ -190,7 +190,7 @@ async function suite(browser, mutation) {
       }
     }
     assert.deepEqual(problems, [], 'Pre-order hrefs lost within two taps of /: '+JSON.stringify(problems));
-    assert.deepEqual(stale, [], 'Recorded relocations/retirements that are in fact still reachable (stale ledger)');
+    assert.deepEqual(stale, [], 'Recorded relocations/retirements that are in fact still reachable (stale ledger): '+JSON.stringify(stale));
     return { oneTap: oneTap.size, twoTap: twoTap.size, expandedPages: Object.keys(expanded).length, preOrder: seen.size, lessonsViaPathwaySegment: viaSegment.length };
   });
 
@@ -459,7 +459,7 @@ async function suite(browser, mutation) {
   await browser.close();
   const failed = report.cases.filter(c => c.status === 'FAIL').length;
   report.finishedAt = new Date().toISOString(); report.result = failed || report.fatal ? 'FAIL' : 'PASS';
-  fs.writeFileSync(path.join(out, 'ux2-education.json'), JSON.stringify(report, null, 1));
-  console.log(`${report.result}: ${report.cases.length - failed} passed, ${failed} failed; ${path.join(out, 'ux2-education.json')}`);
+  fs.writeFileSync(path.join(out, RED ? 'ux2-education-red.json' : 'ux2-education.json'), JSON.stringify(report, null, 1));
+  console.log(`${report.result}: ${report.cases.length - failed} passed, ${failed} failed; ${path.join(out, RED ? 'ux2-education-red.json' : 'ux2-education.json')}`);
   process.exitCode = failed || report.fatal ? 1 : 0;
 })();
