@@ -11,7 +11,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .muted{color:var(--muted);font-size:.92rem}.notice,.empty-state{padding:1.2rem;border:1px solid var(--line);border-radius:14px;background:var(--surface);margin-bottom:1rem}
 main,footer,.masthead{max-width:1264px;margin:auto;padding-inline:16px}main>section,#lanes>section,#lanes>div>section{margin-block:1.6rem}
 
-/* Header */
+/* Header: SW2 P adopts the composed, origin-local dark token set only here. */
+.masthead[data-mbm-chrome="play"]{--text:var(--mbm-primary,#f3f7fa);--surface:var(--mbm-card,#112237);--tap:var(--mbm-tap,44px)}
 .masthead{display:flex;align-items:center;justify-content:space-between;gap:.5rem;min-height:64px;border-bottom:1px solid var(--line);position:relative;z-index:5;padding-block:.35rem}.brand{display:flex;gap:.55rem;align-items:center;color:var(--text);text-decoration:none;font-size:1.05rem;letter-spacing:-.03em;font-weight:650;min-height:var(--tap);min-width:0}.brand strong{color:var(--mint);font-weight:800}.brand img{width:40px;height:40px;object-fit:contain;border-radius:8px}
 .head-actions{display:flex;align-items:center;gap:.35rem}.icon-button,.menu summary{width:var(--tap);height:var(--tap);display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text);cursor:pointer;padding:0}.menu{position:relative}.menu summary{list-style:none}.menu summary::-webkit-details-marker{display:none}.menu nav{position:absolute;right:0;top:calc(100% + 8px);width:min(300px,calc(100vw - 24px));background:var(--surface);padding:.5rem;border:1px solid var(--line);box-shadow:0 20px 45px #0008;border-radius:14px}.menu nav a{display:flex;align-items:center;min-height:var(--tap);color:var(--text);padding:.5rem .75rem;border-radius:8px;text-decoration:none}.menu nav a:hover{background:var(--raised);color:var(--mint)}
 
