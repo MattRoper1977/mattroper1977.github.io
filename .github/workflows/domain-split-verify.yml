@@ -176,7 +176,7 @@ jobs:
             sleep 1
           done
           browser_status=0
-          node .sources/Lessons/tools/catalogue/verify_education_navigation.cjs || browser_status=1
+          node domain-split/check_education_navigation.cjs || browser_status=1
           node domain-split/check_resource_discovery.cjs || browser_status=1
           node domain-split/check_print_navigation.cjs || browser_status=1
           node domain-split/check_audience_discovery.cjs || browser_status=1

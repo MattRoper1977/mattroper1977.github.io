@@ -2,9 +2,8 @@
  * Runs within the existing UX2 B5 browser and keeps all B5 red proofs. */
 'use strict';
 const assert = require('node:assert/strict');
-exports.verify = async ({page, origin, rules}) => {
+exports.verify = async ({page, origin, rules, record}) => {
   const rows = await (await page.request.get(origin+'/Lessons/resources.json')).json();
-  const record = await (await page.request.get(origin+'/data/audience-homepages.json')).json();
   const report = {cases:[], previews:0, brokenImages:0, otherAudienceBodies:'checked separately by exact output comparison'};
   for(const width of [390,900,1280]) for(const route of ['/','/for/teachers/','/for/pupils/']) {
     await page.setViewportSize({width,height:900}); await page.goto(origin+route); await page.waitForLoadState('networkidle');
@@ -38,7 +37,7 @@ exports.verify = async ({page, origin, rules}) => {
     }
     if(route==='/for/teachers/'){
       const text=await page.locator('#teacher-note').innerText();assert(text.includes(record.audiences.teachers.noteTitle));assert(text.includes(record.audiences.teachers.note));
-      assert.equal(await page.getByRole('link',{name:/Saved lessons Return/}).getAttribute('href'),'/Lessons/?view=saved');
+      assert.equal(await page.locator('.fd-shortcut').filter({has:page.getByRole('heading',{name:'Saved lessons',exact:true})}).getAttribute('href'),'/Lessons/?view=saved');
     }
     report.cases.push({width,route,status:'PASS'});
   }

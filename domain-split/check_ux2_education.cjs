@@ -189,7 +189,7 @@ async function suite(browser, mutation) {
         if (!count) problems.push(`${href} → ${entry.to} ${entry.selector}: the recorded control is not on that page`);
       }
     }
-    assert.deepEqual(problems, [], 'Pre-order hrefs lost within two taps of /');
+    assert.deepEqual(problems, [], 'Pre-order hrefs lost within two taps of /: '+JSON.stringify(problems));
     assert.deepEqual(stale, [], 'Recorded relocations/retirements that are in fact still reachable (stale ledger)');
     return { oneTap: oneTap.size, twoTap: twoTap.size, expandedPages: Object.keys(expanded).length, preOrder: seen.size, lessonsViaPathwaySegment: viaSegment.length };
   });
@@ -317,7 +317,7 @@ async function suite(browser, mutation) {
     return { routes: routes.length, banned: banned.length };
   });
 
-  if (!mutation) await check('SW2 H/U front doors', async () => require('./check_sw2_frontdoors.cjs').verify({page, origin, rules: fixtures.relocations.lessonRows}));
+  if (!mutation) await check('SW2 H/U front doors', async () => require('./check_sw2_frontdoors.cjs').verify({page, origin, rules: fixtures.relocations.lessonRows, record: JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/audience-homepages.json'), 'utf8'))}));
 
   if (!mutation && GATED.includes('/resources/')) await check('resources-packs', async () => require('./check_sw2_resources.cjs').verify({page, origin, rules: fixtures.relocations.lessonRows}));
   if (GATED.includes('/resources/')) await check('resources', async () => {

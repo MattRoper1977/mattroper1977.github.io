@@ -147,7 +147,10 @@ async function responsiveChecks(browser) {
       assert.equal(await page.locator(collectionNav).count(), 0, 'No duplicate learning-areas bar on the homepage');
       const links = [];
       for (const [target, name] of [['/Lessons/', 'Lessons'], ['/resources/', 'Resources'], ['/Matt-s-Apps-/', 'Apps & tools']]) {
-        const link = page.locator('#places a.route-card').filter({ has: page.getByRole('heading', { name, exact: true }) });
+        // SW2 H retires the duplicate place cards. The native menu preserves all three destinations.
+        const menu = page.locator('.mbm-unified-menu');
+        if (!(await menu.locator('nav').isVisible())) await menu.locator('summary').click();
+        const link = menu.getByRole('link', {name, exact:true});
         assert.equal(await link.count(), 1, `${home} lacks the ${name} place`);
         assert.equal(routeOf(await link.getAttribute('href'), home), routeOf(target));
         links.push({ target, bounds: await hitTarget(link) });

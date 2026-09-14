@@ -180,8 +180,8 @@ async function educationOnly(page, requests, start) {
           const menuPlay = panel.getByRole('link', { name: 'Made by Matt Play ↗', exact: true });
           assert.equal(await menuPlay.getAttribute('href'), canonicalPlay + '/'); await target(menuPlay);
           await page.keyboard.press('Escape');
-          const playLink = page.locator('footer').getByRole('link', { name: 'Made by Matt Play ↗', exact: true });
-          assert.equal(await playLink.getAttribute('href'), canonicalPlay + '/'); await target(playLink); await noOverflow(page);
+          // SW2 U keeps Play in the native menu; the pupil footer is the approved learning subset.
+          await noOverflow(page);
           assert.equal((await page.request.get(url('/#audiences'))).status(), 200);
         }
         return { routes: ['/for/teachers/', '/for/pupils/'], visibleEntrances: ['Primary', 'Families & organisations', 'Made by Matt Play'] };
