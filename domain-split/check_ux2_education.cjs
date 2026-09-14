@@ -100,7 +100,7 @@ const MUTATIONS = {
   'drop-relocated-target': { target: 'reachability', route: '/Lessons/', apply: html => html.replace(/id="view-recommended"/g, 'id="view-recommended-removed"') },
   'inject-kofi': { target: 'money', route: '/', apply: html => html.replace('</footer>', '<p><a href="https://ko-fi.com/madebymattuk">Support Made by Matt</a></p></footer>') },
   'inject-third-party': { target: 'third-party', route: '/', apply: html => html.replace('</head>', '<script src="https://cdn.example.net/planted.js"></script></head>') },
-  'break-copy': { target: 'copy', route: '/', apply: html => html.replace('Find your next lesson.', 'Find your next lesson') },
+  'break-copy': { target: 'copy', route: '/', apply: html => html.replace('<h1>Big on ideas. Light on prep.</h1>', '<h1>Big on ideas. Light on prep</h1>') },
   'strip-teacher-safety': { target: 'claims', route: '/for/teachers/', apply: html => html.replace('Capability without unsupported claims', '') },
   'strip-stats-everywhere': { target: 'reachability', routes: ['/privacy/', '/for/teachers/'], apply: html => html.replace(/<a href="\/stats\/">[^<]*<\/a>/g, 'Shared activity') },
 };
