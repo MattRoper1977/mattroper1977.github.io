@@ -41,6 +41,7 @@ def self_test():
         with_plant = render_home(planted, lessons)
         assert 'href="/for/planted-ux2/">Planted UX2 audience' in with_plant, 'planted audience route did not appear on the homepage'
         assert 'href="/Lessons/subject.html?subject=x-planted-subject"><h3>Planted Subject</h3>' in with_plant, 'planted extra subject did not become a tile'
+        assert 'subject=science' not in with_plant, 'an empty fixed subject group must be absent'
         assert 'planted-game' not in with_plant, 'a game row must never become a tile'
         real = render_home(root / 'data/audience-homepages.json', bp.LESSONS_ROOT if bp.LESSONS_ROOT else lessons)
         assert 'planted-ux2' not in real and 'Planted UX2' not in real, 'the real record must not carry the plant'

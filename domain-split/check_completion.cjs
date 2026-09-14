@@ -55,7 +55,7 @@ fs.mkdirSync(output, { recursive: true });
       const page = await browser.newPage({viewport: {width, height: 900}, reducedMotion: 'reduce'});
       page.on('pageerror', error => report.pageErrors.push(error.message));
       await page.goto(origin + '/');
-      assert.match(await page.locator('#about').innerText(), /Made by a teacher, for real classrooms/);
+      assert.match(await page.locator('#about').innerText(), /Made by a teacher\. For real classrooms\./);
       // HC3 §8: the home page is a pupil entry, so the injected support footer is
       // gone from it. UX2 B2: the £5–£50 commissioning block moved verbatim to
       // /commission/, linked from the maker panel; no money copy stays on /.
@@ -63,7 +63,7 @@ fs.mkdirSync(output, { recursive: true });
       assert.equal(await page.locator('#custom-resources').count(), 0, 'The commission block is no longer on the homepage');
       assert(!/£/.test(await page.locator('body').innerText()), 'No money copy on the homepage');
       const commissionLink = page.locator('#about a[href="/commission/"]');
-      assert.equal(await commissionLink.innerText(), 'Commission a resource');
+      assert.equal(await commissionLink.innerText(), 'Meet Matt →');
       assert(await page.locator('[data-mbm-navigation="education"] img').first().evaluate(e => e.complete && e.naturalWidth > 0));
       for (const theme of ['cream', 'dark']) {
         await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);

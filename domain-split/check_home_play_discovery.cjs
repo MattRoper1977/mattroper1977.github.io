@@ -131,6 +131,7 @@ async function educationOnly(page, requests, start) {
         const prefix = `${width}-${home === '/' ? 'home' : 'main'}`;
         const entry = await shot(page, prefix + '-entrances');
         await page.locator('#audiences').scrollIntoViewIfNeeded();
+        await page.locator('#audiences details > summary').click();
         const record = JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/audience-homepages.json'), 'utf8')).audiences;
         const expectedRows = Object.values(record).filter(a => a.route !== record.teachers.route && a.route !== record.pupils.route).map(a => [a.route, a.label]);
         expectedRows.push(['/for/governors-trustees/', 'Governors & trustees']);

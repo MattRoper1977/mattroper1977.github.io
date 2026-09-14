@@ -293,15 +293,15 @@ class PublishedChromeControls(unittest.TestCase):
         self.assertIn('href="/resources/?q=&quot;&lt;&amp;&gt;{{menu}}"', result)
         self.assertEqual(result.count('class="mbm-unified-menu"'), 1)
 
-    def test_footer_keeps_existing_play_once_and_home_commission_label(self):
+    def test_footer_keeps_existing_play_once_and_home_contact_label(self):
         from education_palette import adopt_palette
         play = '<a href="https://www.madebymatt-play.uk/" rel="noopener">Made by Matt Play ↗</a>'
         source = '<html><head></head><body><footer>' + play + '<p>Retained prose.</p><p>Learn • Build • Explore</p></footer></body></html>'
         result = adopt_palette(source, '/', True, self.navigation.chrome_template)
         self.assertEqual(result.count(play), 1)
         self.assertIn('<p>Retained prose.</p>', result)
-        self.assertIn('<a href="/commission/">Commission a resource</a>', result)
-        self.assertNotIn('>Contact</a>', result)
+        self.assertIn('<a href="/commission/">Contact</a>', result)
+        self.assertNotIn('>Commission a resource</a>', result)
         self.assertIn('<a href="/main/#about">About</a>', result)
 
     def test_published_tokens_and_signoff_preserve_authored_footer_and_body(self):

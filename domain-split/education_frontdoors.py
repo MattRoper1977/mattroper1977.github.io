@@ -1,0 +1,82 @@
+"""SW2 H/U: Education-only front doors. Records own subjects and audience routes.
+
+No preview assets are invented: the immutable Lessons publisher has no clean
+pre-publication PDF render hook (H3's explicit no-preview fallback).
+"""
+import html
+import json
+from urllib.parse import quote
+
+
+def esc(value):
+    return html.escape(str(value), quote=True)
+
+
+def search(kind):
+    ident = 'home-resource-query' if kind == 'home' else kind + '-q'
+    placeholder = {'home': 'Try Science, Humanities or PDF Studio', 'teachers': 'Try Science or PDF Studio', 'pupils': 'Type the name your teacher gave you'}[kind]
+    label = 'Find your activity' if kind == 'pupils' else 'Search lessons and resources'
+    button = 'Find it' if kind == 'pupils' else 'Search'
+    # Keep the existing audience search implementation and its pupil-safe catalogue.
+    # The homepage searches the Resources index through one progressively enhanced control.
+    tag = 'div' if kind == 'home' else 'form'
+    hook = 'data-home-search' if kind == 'home' else 'data-search="' + kind + '"'
+    result = '' if kind == 'home' else f'<p class="status" id="{kind}-status" aria-live="polite"></p><div class="results" id="{kind}-results"></div><button class="fd-button fd-outline more" id="{kind}-more" type="button" hidden>Show more {"activities" if kind == "pupils" else "resources"}</button>'
+    return '<div class="fd-search-block">' + f'<{tag} class="fd-search" {hook} role="search"><label for="{ident}">{label}</label><div class="fd-search-row"><input id="{ident}" type="search" maxlength="200" placeholder="{placeholder}" autocomplete="off"><button class="fd-button" type="{"button" if kind == "home" else "submit"}">{button}</button></div></{tag}>' + result + '</div>'
+
+
+def subject_tiles(bp, lessons):
+    cards = bp.subject_pathway_cards(lessons)
+    extras = bp.extra_subject_tiles(lessons)
+    symbols = {'science': '◌', 'humanities-re': '◎', 'art-studio': '✎', 'lifeskills': '◇'}
+    return '<div class="fd-subjects" data-subject-tiles>' + ''.join(
+        '<a class="fd-subject ' + esc(slug) + '" href="/Lessons/subject.html?subject=' + esc(slug) + '"><h3>' + esc(name) + '</h3><span class="fd-symbol" aria-hidden="true">' + symbols.get(slug, '◇') + '</span><span class="fd-arrow" aria-hidden="true">→</span></a>'
+        for slug, name in [(c['slug'], c['name']) for c in cards] + extras) + '</div>'
+
+
+def action(href, label, outline=False):
+    return '<a class="fd-button' + (' fd-outline' if outline else '') + '" href="' + esc(href) + '">' + esc(label) + '</a>'
+
+
+def footer(record, bp, kind):
+    if kind == 'pupils':
+        rows = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'), ('/privacy/', 'Privacy')]
+    else:
+        rows = [(record[k]['route'], record[k]['label']) for k in ('teachers', 'pupils', 'parents')]
+    links = ''.join('<a href="' + esc(route) + '">' + esc(label) + '</a>' for route, label in rows)
+    # Retired teacher shortcuts remain reachable in two taps from the homepage.
+    if kind == 'teachers':
+        links += ''.join('<a href="' + r + '">' + t + '</a>' for r, t in [('/teach/', 'Teacher workspace'), ('/tools/', 'Tools Hub'), ('/education-hub/', 'Education Hub'), ('/stats/', 'Shared activity'), ('/members/', 'Members’ area')])
+    return '<footer class="footer fd-footer"><div class="wrap"><nav class="fd-footer-links" aria-label="Learning footer">' + links + '</nav><p>Learn • Build • Explore</p></div></footer>'
+
+
+def render(kind, origin, bp):
+    record = json.loads(bp.AUDIENCE_RECORD.read_text())['audiences']
+    subjects = subject_tiles(bp, bp.LESSONS_ROOT)
+    primary = bp.LESSONS_ROOT is not None and (bp.LESSONS_ROOT / 'primary/index.html').is_file()
+    if kind == 'home':
+        hero = '<p class="fd-eyebrow">MADE FOR YOUR CLASSROOM</p><h1>Find your next lesson.</h1><p class="fd-lead">Practical lessons and teaching packs, ready to adapt.</p>' + search(kind) + '<div class="fd-actions">' + action('/Lessons/', 'Browse lessons →') + action('/resources/?type=pack', 'Teaching packs', True) + '</div>'
+        pack = '<span class="fd-tag">Teaching pack</span><h2 data-pack-heading></h2><div class="fd-chips" data-pack-pathways></div><p>Slides, pupil resources and teacher guidance.</p><p class="fd-muted" data-pack-formats></p><a class="fd-button" data-pack-link>Explore packs →</a>'
+        body = '<section class="fd-hero wrap"><div>' + hero + '</div><aside class="fd-pack fd-hero-pack" data-pack-card hidden aria-label="Teaching pack">' + pack + '</aside></section>'
+        body += '<section class="fd-section wrap"><div class="fd-section-head"><h2>Explore a subject</h2><a href="/Lessons/">View all →</a></div>' + subjects + '</section>'
+        body += '<section class="fd-section fd-pathways wrap"><h2>Three pathways, one place</h2><div class="fd-chips"><span class="fd-chip build">BUILD</span><span class="fd-chip grow">GROW</span><span class="fd-chip launch">LAUNCH</span></div></section>'
+        body += '<section class="fd-section wrap fd-phone-packs" data-pack-card hidden><div class="fd-section-head"><h2>Ready-to-teach packs</h2><a href="/resources/?type=pack">View all →</a></div><article class="fd-pack">' + pack + '</article></section>'
+        body += '<section class="fd-section wrap" id="added" hidden><div class="fd-section-head"><h2 id="added-h">Added this half-term</h2><a id="added-all" href="/Lessons/">See all →</a></div><div class="fd-added-grid"><div id="added-rail"></div><article class="fd-pack-promo"><h3>Ready-to-teach packs</h3><p>Editable slides, print resources and teacher guidance.</p>' + action('/resources/?type=pack', 'Explore packs →', True) + '</article></div></section>'
+        rows = [(record[k]['route'], record[k]['label']) for k in ('teachers', 'pupils')]
+        if primary: rows.append(('/Lessons/primary/', 'Primary lessons'))
+        body += '<section class="fd-section wrap fd-start" id="audiences"><h2>Find your starting point</h2><div class="fd-start-grid">' + ''.join('<a href="' + esc(r) + '">' + esc(n) + ' →</a>' for r, n in rows) + '<details><summary>Families &amp; organisations</summary><div class="fd-audience-rows" data-audience-rows>' + ''.join('<a class="audience-row" href="' + esc(r) + '">' + esc(n) + '</a>' for r, n in bp.audience_rows()) + '</div></details></div></section>'
+        body += '<section class="fd-maker" id="about"><div class="wrap"><h2>Made by a teacher. For real classrooms.</h2><a href="/commission/">Meet Matt →</a></div></section>'
+    elif kind == 'teachers':
+        body = '<section class="fd-hero wrap"><div><p class="fd-eyebrow">TEACHERS</p><h1>Ready for your next lesson?</h1><p class="fd-lead">Find a lesson, gather your resources and get ready to teach.</p>' + search(kind) + '<div class="fd-actions">' + action('/Lessons/', 'Browse lessons →') + action('/resources/', 'Find unit packs', True) + '</div></div></section>'
+        shortcuts = [('/Lessons/?view=saved', 'Saved lessons', 'Return to lessons saved on this device.'), ('/resources/', 'Planning and evidence', 'Find schemes of work and evidence packs.'), ('/Matt-s-Apps-/', 'Classroom tools', 'Open tools for your lesson.')]
+        if primary: shortcuts.append(('/Lessons/primary/', 'Primary lessons', 'Explore lessons for primary pupils.'))
+        body += '<section class="fd-section wrap"><h2>Your teaching shortcuts</h2><div class="fd-shortcuts">' + ''.join('<a class="fd-shortcut" href="' + esc(r) + '"><h3>' + esc(t) + '</h3><p>' + esc(d) + '</p><span aria-hidden="true">→</span></a>' for r, t, d in shortcuts) + '</div></section>'
+        body += '<section class="fd-section wrap"><div class="fd-section-head"><h2>Browse by subject</h2><a href="/Lessons/">All subjects →</a></div>' + subjects + '</section>'
+        body += '<section class="fd-maker"><div class="wrap"><h2>Made by a teacher. For real classrooms.</h2><p>Questions, ideas or something your class needs?</p><a href="mailto:contactmadebymatt@gmail.com">Contact Matt →</a></div></section>'
+        note = record['teachers']
+        body += '<section class="fd-section fd-safety wrap" id="teacher-note"><h2 id="teacher-note-title">' + esc(note['noteTitle']) + '</h2><p>' + esc(note['note']) + '</p></section>'
+    else:
+        body = '<section class="fd-hero wrap"><div><p class="fd-eyebrow">PUPILS</p><h1>What are you learning today?</h1><p class="fd-lead">Choose your subject. Your teacher will help you find your pathway and lesson.</p></div></section><section class="fd-section wrap"><h2>Choose your subject</h2>' + subjects + '</section><section class="fd-section wrap" id="pupil-search"><h2>Find your activity</h2>' + search(kind) + '<p class="fd-muted">Nothing to install. Ask your teacher if you are not sure where to start.</p></section>'
+    route = '/' if kind == 'home' else record[kind]['route']
+    title = {'home': 'Find your next lesson', 'teachers': 'Teachers', 'pupils': 'Pupils'}[kind]
+    return '<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + ' · Made by Matt</title><meta name="description" content="Practical lessons and teaching packs, ready to adapt."><link rel="canonical" href="' + origin + route + '"><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/assets/education-frontdoors.css"></head><body data-site-kind="education" data-page="' + kind + '" data-sw2-frontdoor><a class="skip" href="#content">Skip to content</a><header><a href="/">MADE BY MATT</a></header><main id="content">' + body + '</main>' + footer(record, bp, kind) + '<noscript><p class="wrap">Search needs JavaScript. Use the subject links to find your lesson.</p></noscript><script defer src="/assets/domain-site.js"></script>' + ('<script defer src="/assets/added-this-half-term.js"></script>' if kind == 'home' else '') + '</body></html>'
