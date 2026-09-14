@@ -90,7 +90,7 @@ def featured_lesson(bp):
             + '</h2><p>' + esc(review['description']) + '</p><div class="fd-chips"><span class="fd-chip grow">GROW</span>'
             + '<span class="fd-feature-meta">Science · 40 minutes</span></div><p class="fd-muted">Reference: W8A · Explore</p>'
             + action('/Lessons/' + review['lessonFile'], 'Try this lesson →')
-            + '<a class="fd-feature-pack-link" href="/Lessons/pack.html?id=' + esc(review['packId']) + '">View the teaching pack →</a></div>'
+            + '<a class="fd-feature-pack-link" href="/resources/?q=' + quote(review['displayTitle'], safe='') + '">Find teaching resources →</a></div>'
             + '<figure class="fd-feature-preview"><img class="fd-page-preview" src="' + esc(image['dataUri'])
             + '" alt="Preview of the Day and Night teaching slides" width="' + str(review['previewWidth'])
             + '" height="' + str(review['previewHeight']) + '" decoding="async" data-preview-source="' + esc(image['source'])

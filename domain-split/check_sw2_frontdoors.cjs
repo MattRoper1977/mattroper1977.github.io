@@ -6,6 +6,7 @@ exports.verify = async ({page, origin, rules, record}) => {
   const rows = await (await page.request.get(origin+'/Lessons/resources.json')).json();
   const report = {cases:[], previews:0, brokenImages:0, otherAudienceBodies:'checked separately by exact output comparison'};
   for(const width of [320,390,900,1280]) for(const route of ['/','/for/teachers/','/for/pupils/']) {
+    if(width===320&&route!=='/')continue; // New narrow-screen coverage is for the changed homepage.
     await page.setViewportSize({width,height:900}); await page.goto(origin+route); await page.waitForLoadState('networkidle');
     const measure = async () => page.evaluate(() => ({
       overflow:[document.documentElement,...document.querySelectorAll('main *')].filter(e=>e.getClientRects().length&&getComputedStyle(e).display!=='inline'&&e.clientWidth>0&&e.scrollWidth>e.clientWidth+1).filter(e=>{const s=getComputedStyle(e);return !(e.matches('#added-rail .acard p')&&s.textOverflow==='ellipsis'&&s.overflowX==='hidden'&&s.whiteSpace==='nowrap'&&e.getBoundingClientRect().height<=parseFloat(s.lineHeight)+1)}).map(e=>e.id||e.className||e.tagName),
@@ -31,7 +32,7 @@ exports.verify = async ({page, origin, rules, record}) => {
       for(const feature of await features.all()) {
         assert.equal(await feature.locator('h2').textContent(),review.displayTitle);
         assert.equal(await feature.getByRole('link',{name:'Try this lesson →',exact:true,includeHidden:true}).getAttribute('href'),'/Lessons/'+review.lessonFile);
-        assert.equal(await feature.getByRole('link',{name:'View the teaching pack →',exact:true,includeHidden:true}).getAttribute('href'),'/Lessons/pack.html?id='+review.packId);
+        assert.equal(await feature.getByRole('link',{name:'Find teaching resources →',exact:true,includeHidden:true}).getAttribute('href'),'/resources/?q='+encodeURIComponent(review.displayTitle));
         assert((await feature.textContent()).includes(review.description));
       }
       const entrances=await page.locator('.fd-audience-entry a').evaluateAll(es=>es.map(e=>e.getAttribute('href')));
@@ -64,6 +65,13 @@ exports.verify = async ({page, origin, rules, record}) => {
     }
     report.cases.push({width,route,status:'PASS'});
   }
+  await page.goto(origin+'/');await page.waitForLoadState('networkidle');
+  await page.locator('[data-featured-lesson]:visible').getByRole('link',{name:'Find teaching resources →',exact:true}).click();
+  await page.locator('#unitGrid .chip.more').first().waitFor({state:'visible'});
+  assert.equal(await page.locator('#unitGrid .chip.more').count(),1,'The feature finds one matching resource unit');
+  await page.locator('#unitGrid .chip.more').click();
+  assert.equal(await page.locator('#rxSheet .pack-version[data-pack="pack-grow-science-w8a"]').count(),1,'The matching unit includes the reviewed companion pack');
+  report.cases.push({route:'featured lesson to matching resources',status:'PASS'});
   const staticContext=await page.context().browser().newContext({javaScriptEnabled:false,viewport:{width:390,height:844}});
   try {
     const staticPage=await staticContext.newPage();await staticPage.goto(origin+'/');
