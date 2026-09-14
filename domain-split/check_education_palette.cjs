@@ -71,11 +71,12 @@ async function run(){
     }else{assert(notApplicable);row.cardNotApplicable=notApplicable}
     const nav=page.locator('.mbm-unified-nav');
     const hub=['/Lessons/','/resources/','/Matt-s-Apps-/','/tools/'].includes(route);
-    if(hub)row.hubLinkStyles=await require('./check_education_hub_links.cjs').assertPlainLinks(page);
-    assert.deepEqual(await nav.locator('a').allTextContents(),hub?['Lessons','Resources','Apps & tools','Teacher tools']:row.variant==='adult'?['Lessons','Resources','Apps & tools','About']:['Lessons','Resources'],'Actual public navigation variant '+route);
+    // NAV-2: the public row is complete on every shared-header surface;
+    // the adult/pupil variant continues to govern Saved and the menu separately.
+    row.hubLinkStyles=await require('./check_education_hub_links.cjs').assertPlainLinks(page,hub?1:0);
+    assert.deepEqual(await nav.locator('a').allTextContents(),['Lessons','Resources','Apps & tools','Teacher tools'],'Actual complete public navigation '+route);
     assert.equal(await page.locator('.mbm-unified-saved').count(),row.variant==='adult'?1:0,'Saved ownership '+route);
-    if(width===1280&&row.variant==='adult'&&!hub)assert(await nav.getByText('About',{exact:true}).isVisible(),'Desktop About');
-    if(width===390)assert.equal(await nav.locator('.mbm-unified-about:visible').count(),0,'Phone row');
+    assert.equal(await nav.locator('.mbm-unified-about').count(),0,'The public row contains only the four agreed destinations at every width');
     assert.equal(await page.locator('footer .mbm-chrome-signoff').count(),1,'One actual shared footer');
     assert.equal(await page.locator('footer img[src*="micro_mark"],footer svg.mono').count(),0,'Retired footer marks');
     rows.push(row);
