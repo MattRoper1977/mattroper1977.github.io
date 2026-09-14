@@ -16,7 +16,9 @@ jobs:
   publications:
     name: Complete separated publications
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # NAV-2 expands the owner/header matrix; the preceding full run took 24m09s.
+    # Retain every assertion and allow the complete matrix to finish.
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
         with:
