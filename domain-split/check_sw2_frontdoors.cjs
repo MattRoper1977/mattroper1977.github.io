@@ -22,6 +22,10 @@ exports.verify = async ({page, origin, rules, record}) => {
     }));
     assert.deepEqual(await measure(),{overflow:[],small:[],broken:[],owl:0},'H/U geometry, images and targets: '+route+' at '+width+' '+JSON.stringify(await measure()));
     if(route==='/'){
+      assert.equal(await page.locator('.fd-hero h1').textContent(),'Big on ideas. Light on prep.');
+      assert.equal(await page.locator('.fd-hero > div > .fd-eyebrow').textContent(),'MADE BY A TEACHER. BUILT FOR REAL CLASSROOMS.');
+      assert.equal(await page.locator('.fd-hero .fd-lead').textContent(),'Interactive lessons, practical resources and useful teaching tools—all in one place, ready to help you bring learning to life.');
+      assert.equal(await page.locator('.fd-hero .fd-provenance').count(),0,'The hero eyebrow replaces duplicate nearby provenance');
       assert.equal(await page.locator('main form').count(),0,'Homepage retains one non-form search');
       assert.equal(await page.locator('[data-home-search] input').getAttribute('placeholder'),'Try Science, Humanities or PDF Studio');
       const review=JSON.parse(require('node:fs').readFileSync(require('node:path').join(__dirname,'homepage-feature.json'),'utf8'));

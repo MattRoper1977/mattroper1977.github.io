@@ -280,7 +280,7 @@ async function educationJourneyTests(browser) {
     await checkCase(name + '-education-home-subject-and-personal-shortcuts', page, async () => {
       await publicationPage(page, '/main/');
       assert.equal(await page.locator('body').getAttribute('data-site-kind'), 'education', 'The old general homepage is still being served');
-      assert.match(await page.locator('h1').innerText(), /Find your next lesson/);
+      assert.equal(await page.locator('h1').innerText(), 'Big on ideas. Light on prep.');
       // UX2 B2: the homepage is Appendix A §HOME. "Go straight to your subject" is
       // the tile row itself now, with no explanatory paragraph beneath it, and each
       // tile is one of the four subject cards the Lessons hub derives - so the names
