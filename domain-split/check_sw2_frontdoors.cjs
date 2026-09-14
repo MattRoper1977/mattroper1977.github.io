@@ -11,7 +11,13 @@ exports.verify = async ({page, origin, rules, record}) => {
       overflow:[document.documentElement,...document.querySelectorAll('main *')].filter(e=>e.getClientRects().length&&getComputedStyle(e).display!=='inline'&&e.clientWidth>0&&e.scrollWidth>e.clientWidth+1).filter(e=>{const s=getComputedStyle(e);return !(e.matches('#added-rail .acard p')&&s.textOverflow==='ellipsis'&&s.overflowX==='hidden'&&s.whiteSpace==='nowrap'&&e.getBoundingClientRect().height<=parseFloat(s.lineHeight)+1)}).map(e=>e.id||e.className||e.tagName),
       small:[...document.querySelectorAll('main a[href],main button,main summary,main input')].filter(e=>e.getClientRects().length&&!e.disabled).filter(e=>{const b=e.getBoundingClientRect();return b.width<44||b.height<44}).map(e=>e.textContent.trim().slice(0,45)),
       broken:[...document.images].filter(i=>i.getClientRects().length&&(!i.complete||!i.naturalWidth)).map(i=>i.src),
-      owl:[...document.querySelectorAll('[src],[href]')].filter(e=>/owl/i.test(e.getAttribute('src')||e.getAttribute('href')||'')).length
+      // Search asset references, not encoded JPEG bytes: a real PDF preview's
+      // base64 can contain "owl" by chance. Inline images are independently
+      // required below to carry verified PDF provenance and decode correctly.
+      owl:[...document.querySelectorAll('[src],[href]')].filter(e=>{
+        const value=e.getAttribute('src')||e.getAttribute('href')||'';
+        return !/^data:image\/jpeg;base64,/i.test(value)&&/owl/i.test(value);
+      }).length
     }));
     assert.deepEqual(await measure(),{overflow:[],small:[],broken:[],owl:0},'H/U geometry, images and targets: '+route+' at '+width+' '+JSON.stringify(await measure()));
     if(route==='/'){
