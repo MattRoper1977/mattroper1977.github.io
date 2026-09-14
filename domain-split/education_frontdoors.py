@@ -1,9 +1,10 @@
 """SW2 H/U: Education-only front doors. Records own subjects and audience routes.
 
-No preview assets are invented: the immutable Lessons publisher has no clean
-pre-publication PDF render hook (H3's explicit no-preview fallback).
+Prepared previews are real PDF page renders, admitted only while their source
+hash matches the Lessons input. Missing or changed sources use no image.
 """
 import html
+import hashlib
 import json
 from urllib.parse import quote
 
@@ -17,20 +18,58 @@ def search(kind):
     placeholder = {'home': 'Try Science, Humanities or PDF Studio', 'teachers': 'Try Science or PDF Studio', 'pupils': 'Type the name your teacher gave you'}[kind]
     label = 'Find your activity' if kind == 'pupils' else 'Search lessons and resources'
     button = 'Find it' if kind == 'pupils' else 'Search'
+    if kind == 'home':
+        button = line_icon('search')
     # Keep the existing audience search implementation and its pupil-safe catalogue.
     # The homepage searches the Resources index through one progressively enhanced control.
     tag = 'div' if kind == 'home' else 'form'
     hook = 'data-home-search' if kind == 'home' else 'data-search="' + kind + '"'
     result = '' if kind == 'home' else f'<p class="status" id="{kind}-status" aria-live="polite"></p><div class="results" id="{kind}-results"></div><button class="fd-button fd-outline more" id="{kind}-more" type="button" hidden>Show more {"activities" if kind == "pupils" else "resources"}</button>'
-    return '<div class="fd-search-block">' + f'<{tag} class="fd-search" {hook} role="search"><label for="{ident}">{label}</label><div class="fd-search-row"><input id="{ident}" type="search" maxlength="200" placeholder="{placeholder}" autocomplete="off"><button class="fd-button" type="{"button" if kind == "home" else "submit"}">{button}</button></div></{tag}>' + result + '</div>'
+    return '<div class="fd-search-block">' + f'<{tag} class="fd-search" {hook} role="search"><label for="{ident}">{label}</label><div class="fd-search-row"><input id="{ident}" type="search" maxlength="200" placeholder="{placeholder}" autocomplete="off"><button class="fd-button" aria-label="{'Find it' if kind == 'pupils' else 'Search'}" type="{"button" if kind == "home" else "submit"}">{button}</button></div></{tag}>' + result + '</div>'
 
 
-def subject_tiles(bp, lessons):
+ICONS = {
+    'science': '<path d="M9 3h6M10 3v6L4 19a1.3 1.3 0 0 0 1 2h14a1.3 1.3 0 0 0 1-2L14 9V3M7 15h10"/>',
+    'humanities-re': '<circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 6.5c4 2 10 2 14 0M5 17.5c4-2 10-2 14 0"/>',
+    'art-studio': '<path d="M21 11a9 9 0 1 0-9 10h1a2 2 0 0 0 1.5-3.3 1.5 1.5 0 0 1 1.2-2.5H18a3 3 0 0 0 3-4.2Z"/><circle cx="7.5" cy="9" r="1"/><circle cx="11" cy="6.5" r="1"/><circle cx="15.5" cy="8" r="1"/><circle cx="6.5" cy="13.5" r="1"/>',
+    'lifeskills': '<path d="m4 3 4 3v3l10 11 3-3L10 7H7L4 3Zm14 0-3 3 3 3 3-3a5 5 0 0 1-6 6L6 21l-3-3 9-9a5 5 0 0 1 6-6Z"/>',
+    'book': '<path d="M12 5v16M12 5C9 3 5 3 2 4v15c3-1 7-1 10 2 3-3 7-3 10-2V4c-3-1-7-1-10 1Z"/>',
+    'person': '<circle cx="12" cy="6" r="3"/><path d="M5 21v-3a7 7 0 0 1 14 0v3ZM9 14l3 3 3-3"/>',
+    'search': '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
+}
+
+
+def line_icon(name):
+    return '<svg class="fd-icon" viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + ICONS.get(name, ICONS['book']) + '</svg>'
+
+
+def preview_data(bp):
+    """Use prepared PDF renders only for the exact current source bytes."""
+    manifest = json.loads((bp.HERE / 'homepage-previews.json').read_text())
+    valid = {}
+    if bp.LESSONS_ROOT is None:
+        return valid
+    rows = json.loads((bp.LESSONS_ROOT / 'resources.json').read_text())
+    for key, item in manifest.items():
+        row = next((r for r in rows if r.get('id') == key and r.get('file') == item['resourceFile']), None)
+        if not row:
+            continue
+        listed = {f['path'] for f in row.get('files', []) if f.get('type') == 'pdf'}
+        images = []
+        for image in item['images']:
+            source = bp.LESSONS_ROOT / image['source']
+            if image['source'] in listed and source.is_file() and hashlib.sha256(source.read_bytes()).hexdigest() == image['sourceSha256']:
+                images.append(image)
+        if images:
+            valid[key] = {'resourceFile': row['file'], 'images': images}
+    return valid
+
+
+def subject_tiles(bp, lessons, featured=False):
     cards = bp.subject_pathway_cards(lessons)
-    extras = bp.extra_subject_tiles(lessons)
-    symbols = {'science': '◌', 'humanities-re': '◎', 'art-studio': '✎', 'lifeskills': '◇'}
+    extras = [] if featured else bp.extra_subject_tiles(lessons)
     return '<div class="fd-subjects" data-subject-tiles>' + ''.join(
-        '<a class="fd-subject ' + esc(slug) + '" href="/Lessons/subject.html?subject=' + esc(slug) + '"><h3>' + esc(name) + '</h3><span class="fd-symbol" aria-hidden="true">' + symbols.get(slug, '◇') + '</span><span class="fd-arrow" aria-hidden="true">→</span></a>'
+        '<a class="fd-subject ' + esc(slug) + '" href="/Lessons/subject.html?subject=' + esc(slug) + '"><h3>' + esc(name) + '</h3><span class="fd-symbol" aria-hidden="true">' + line_icon(slug) + '</span><span class="fd-arrow" aria-hidden="true">→</span></a>'
         for slug, name in [(c['slug'], c['name']) for c in cards] + extras) + '</div>'
 
 
@@ -52,11 +91,11 @@ def footer(record, bp, kind):
 
 def render(kind, origin, bp):
     record = json.loads(bp.AUDIENCE_RECORD.read_text())['audiences']
-    subjects = subject_tiles(bp, bp.LESSONS_ROOT)
+    subjects = subject_tiles(bp, bp.LESSONS_ROOT, featured=kind == 'home')
     primary = bp.LESSONS_ROOT is not None and (bp.LESSONS_ROOT / 'primary/index.html').is_file()
     if kind == 'home':
         hero = '<p class="fd-eyebrow">MADE FOR YOUR CLASSROOM</p><h1>Find your next lesson.</h1><p class="fd-lead">Practical lessons and teaching packs, ready to adapt.</p>' + search(kind) + '<div class="fd-actions">' + action('/Lessons/', 'Browse lessons →') + action('/resources/?type=pack', 'Teaching packs', True) + '</div>'
-        pack = '<span class="fd-tag">Teaching pack</span><h2 data-pack-heading></h2><div class="fd-chips" data-pack-pathways></div><p>Slides, pupil resources and teacher guidance.</p><p class="fd-muted" data-pack-formats></p><a class="fd-button" data-pack-link>Explore packs →</a>'
+        pack = '<div class="fd-pack-copy"><h2 data-pack-heading></h2><p>Slides, pupil resources and teacher guidance.</p><div class="fd-chips" data-pack-pathways></div><p class="fd-muted" data-pack-formats></p><a class="fd-button" data-pack-link>Explore packs →</a></div><div class="fd-pack-preview" data-pack-preview hidden></div>'
         body = '<section class="fd-hero wrap"><div>' + hero + '</div><aside class="fd-pack fd-hero-pack" data-pack-card hidden aria-label="Teaching pack">' + pack + '</aside></section>'
         body += '<section class="fd-section wrap"><div class="fd-section-head"><h2>Explore a subject</h2><a href="/Lessons/">View all →</a></div>' + subjects + '</section>'
         body += '<section class="fd-section fd-pathways wrap"><h2>Three pathways, one place</h2><div class="fd-chips"><span class="fd-chip build">BUILD</span><span class="fd-chip grow">GROW</span><span class="fd-chip launch">LAUNCH</span></div></section>'
@@ -65,7 +104,8 @@ def render(kind, origin, bp):
         rows = [(record[k]['route'], record[k]['label']) for k in ('teachers', 'pupils')]
         if primary: rows.append(('/Lessons/primary/', 'Primary lessons'))
         body += '<section class="fd-section wrap fd-start" id="audiences"><h2>Find your starting point</h2><div class="fd-start-grid">' + ''.join('<a href="' + esc(r) + '">' + esc(n) + ' →</a>' for r, n in rows) + '<details><summary>Families &amp; organisations</summary><div class="fd-audience-rows" data-audience-rows>' + ''.join('<a class="audience-row" href="' + esc(r) + '">' + esc(n) + '</a>' for r, n in bp.audience_rows()) + '</div></details></div></section>'
-        body += '<section class="fd-maker" id="about"><div class="wrap"><h2>Made by a teacher. For real classrooms.</h2><a href="/commission/">Meet Matt →</a></div></section>'
+        body += '<section class="fd-maker" id="about"><div class="wrap">' + line_icon('person') + '<h2>Made by a teacher. For real classrooms.</h2><a href="/commission/">Meet Matt →</a></div></section>'
+        body += '<script type="application/json" id="home-preview-data">' + json.dumps(preview_data(bp), ensure_ascii=True).replace('<', '\\u003c') + '</script>'
     elif kind == 'teachers':
         body = '<section class="fd-hero wrap"><div><p class="fd-eyebrow">TEACHERS</p><h1>Ready for your next lesson?</h1><p class="fd-lead">Find a lesson, gather your resources and get ready to teach.</p>' + search(kind) + '<div class="fd-actions">' + action('/Lessons/', 'Browse lessons →') + action('/resources/', 'Find unit packs', True) + '</div></div></section>'
         shortcuts = [('/Lessons/?view=saved', 'Saved lessons', 'Return to lessons saved on this device.'), ('/resources/', 'Planning and evidence', 'Find schemes of work and evidence packs.'), ('/Matt-s-Apps-/', 'Classroom tools', 'Open tools for your lesson.')]

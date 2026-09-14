@@ -40,7 +40,10 @@ def self_test():
         (lessons / 'resources.json').write_text(json.dumps(rows))
         with_plant = render_home(planted, lessons)
         assert 'href="/for/planted-ux2/">Planted UX2 audience' in with_plant, 'planted audience route did not appear on the homepage'
-        assert 'href="/Lessons/subject.html?subject=x-planted-subject"><h3>Planted Subject</h3>' in with_plant, 'planted extra subject did not become a tile'
+        assert 'subject=x-planted-subject' not in with_plant, 'homepage must keep its four featured subjects'
+        assert 'href="/Lessons/">View all' in with_plant, 'full catalogue must remain one tap away'
+        from education_frontdoors import subject_tiles
+        assert 'href="/Lessons/subject.html?subject=x-planted-subject"><h3>Planted Subject</h3>' in subject_tiles(bp, lessons), 'planted extra subject must remain in audience browsing'
         assert 'subject=science' not in with_plant, 'an empty fixed subject group must be absent'
         assert 'planted-game' not in with_plant, 'a game row must never become a tile'
         real = render_home(root / 'data/audience-homepages.json', bp.LESSONS_ROOT if bp.LESSONS_ROOT else lessons)
@@ -51,6 +54,18 @@ def self_test():
         rendered = [r for r, _ in bp.audience_rows(root / 'data/audience-homepages.json')]
         assert rendered[:len(expected)] == expected, (rendered, expected)
         assert all(r in rendered for r in expected)
+        # Preview validity follows actual source bytes, including a stale-source control.
+        from education_frontdoors import preview_data
+        from types import SimpleNamespace
+        import hashlib
+        pdf = lessons / 'real.pdf'; pdf.write_bytes(b'reviewed PDF bytes')
+        image = {'source': 'real.pdf', 'sourceSha256': hashlib.sha256(pdf.read_bytes()).hexdigest(), 'dataUri': 'data:image/jpeg;base64,AA==', 'role': 'slides', 'page': 1}
+        (lessons / 'resources.json').write_text(json.dumps([{'id': 'real', 'file': 'real.pptx', 'files': [{'path': 'real.pdf', 'type': 'pdf'}]}]))
+        (tmp / 'homepage-previews.json').write_text(json.dumps({'real': {'resourceFile': 'real.pptx', 'images': [image]}}))
+        fixture = SimpleNamespace(HERE=tmp, LESSONS_ROOT=lessons)
+        assert preview_data(fixture)['real']['images'] == [image]
+        pdf.write_bytes(b'changed PDF bytes'); assert preview_data(fixture) == {}, 'stale preview must be suppressed'
+        pdf.write_bytes(b'reviewed PDF bytes'); assert 'real' in preview_data(fixture), 'restored source recovers preview'
         # the ordering rule for extra tiles: A–Z by the first row's subject
         lessons2 = tmp / 'lessons2'; lessons2.mkdir()
         (lessons2 / 'resources.json').write_text(json.dumps([{'subject': 'Zeta', 'type': 'lesson'}, {'subject': 'Alpha', 'type': 'lesson'}]))

@@ -11,7 +11,13 @@ exports.verify = async ({page, origin, rules, record}) => {
       overflow:[document.documentElement,...document.querySelectorAll('main *')].filter(e=>e.getClientRects().length&&getComputedStyle(e).display!=='inline'&&e.clientWidth>0&&e.scrollWidth>e.clientWidth+1).filter(e=>{const s=getComputedStyle(e);return !(e.matches('#added-rail .acard p')&&s.textOverflow==='ellipsis'&&s.overflowX==='hidden'&&s.whiteSpace==='nowrap'&&e.getBoundingClientRect().height<=parseFloat(s.lineHeight)+1)}).map(e=>e.id||e.className||e.tagName),
       small:[...document.querySelectorAll('main a[href],main button,main summary,main input')].filter(e=>e.getClientRects().length&&!e.disabled).filter(e=>{const b=e.getBoundingClientRect();return b.width<44||b.height<44}).map(e=>e.textContent.trim().slice(0,45)),
       broken:[...document.images].filter(i=>i.getClientRects().length&&(!i.complete||!i.naturalWidth)).map(i=>i.src),
-      owl:[...document.querySelectorAll('[src],[href]')].filter(e=>/owl/i.test(e.getAttribute('src')||e.getAttribute('href')||'')).length
+      // Search asset references, not encoded JPEG bytes: a real PDF preview's
+      // base64 can contain "owl" by chance. Inline images are independently
+      // required below to carry verified PDF provenance and decode correctly.
+      owl:[...document.querySelectorAll('[src],[href]')].filter(e=>{
+        const value=e.getAttribute('src')||e.getAttribute('href')||'';
+        return !/^data:image\/jpeg;base64,/i.test(value)&&/owl/i.test(value);
+      }).length
     }));
     assert.deepEqual(await measure(),{overflow:[],small:[],broken:[],owl:0},'H/U geometry, images and targets: '+route+' at '+width+' '+JSON.stringify(await measure()));
     if(route==='/'){
@@ -21,9 +27,16 @@ exports.verify = async ({page, origin, rules, record}) => {
       const packs=rows.filter(r=>r.kind==='pack'&&r.companionOf&&r.files?.length);
       assert(packs.length,'Pack census is non-vacuous');
       for(const c of cards){assert.equal(c.hidden,false);const group=packs.filter(r=>r.halfTerm===c.halfTerm&&c.head===r.subject+' · '+c.halfTerm);assert(group.length,'Pack heading identifies real records');assert.deepEqual(c.tiers,['BUILD','GROW','LAUNCH'].filter(p=>group.some(r=>rules.tierOf(r)===p)));const formats=[['pptx','PowerPoint'],['docx','Word'],['pdf','PDF']].filter(([ext])=>group.some(r=>r.files.some(f=>f.type===ext))).map(([,label])=>label).join(' · ');assert.equal(c.formats,formats);const u=new URL(c.href,origin);assert.equal(u.pathname,'/resources/');assert.equal(u.searchParams.get('halfTerm'),c.halfTerm);assert.equal(u.searchParams.get('type'),'pack');}
-      assert.equal(await page.locator('main img').count(),0,'H3 no-preview fallback');
+      const subjects=await page.locator('[data-subject-tiles] a').evaluateAll(es=>es.map(e=>({href:e.getAttribute('href'),icons:e.querySelectorAll('svg.fd-icon').length,height:e.getBoundingClientRect().height})));
+      assert.deepEqual(subjects.map(s=>s.href.split('subject=')[1]),['science','humanities-re','art-studio','lifeskills'].filter(slug=>rows.some(r=>rules.cardOf(r)===slug)),'Homepage features the four actual subject groups');
+      for(const s of subjects){assert.equal(s.icons,1,'Each featured subject has a vector icon');assert(s.height<=100,'Featured subjects remain compact');}
+      const previews=await page.locator('main img[data-preview-source]').evaluateAll(es=>es.map(e=>({source:e.dataset.previewSource,sha:e.dataset.previewSha,complete:e.complete,width:e.naturalWidth})));
+      for(const p of previews){assert(p.complete&&p.width>0,'Real preview decodes');const found=rows.some(r=>r.files?.some(f=>f.type==='pdf'&&f.path===p.source));assert(found,'Preview comes from a real PDF record');const bytes=await(await page.request.get(origin+'/Lessons/'+encodeURI(p.source))).body();assert.equal(require('node:crypto').createHash('sha256').update(bytes).digest('hex'),p.sha,'Preview source has the reviewed PDF bytes');}
+      assert.equal(await page.locator('main img:not([data-preview-source])').count(),0,'No unproven or invented homepage pictures');
       const sources=await page.locator('#added-rail .acard').evaluateAll(es=>es.map(e=>({file:e.dataset.resourcePath,title:e.querySelector('h3').textContent,desc:e.querySelector('p')?.textContent||'',interactive:!!e.querySelector('.fd-interactive')})));
       assert(sources.length>0&&sources.length<=3);for(const c of sources){const r=rows.find(r=>(r.file||r.url)===c.file);assert(r);assert.equal(c.title,r.title);assert.equal(c.desc,r.desc||r.description||'');assert.equal(c.interactive,/\.html(?:[?#]|$)/i.test(c.file));}
+      require('node:fs').mkdirSync('audit-output/education-navigation/homepage-repair',{recursive:true});
+      await page.screenshot({path:'audit-output/education-navigation/homepage-repair/home-'+width+'.png',fullPage:true});
     }
     if(route==='/for/pupils/'){
       assert.equal(await page.locator('main input').getAttribute('placeholder'),'Type the name your teacher gave you');
