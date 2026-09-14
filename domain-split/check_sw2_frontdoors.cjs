@@ -30,8 +30,8 @@ exports.verify = async ({page, origin, rules, record}) => {
       const pack=rows.find(r=>r.id===review.packId); assert(pack&&pack.companionOf===review.lessonFile,'Feature retains the real companion target');
       for(const feature of await features.all()) {
         assert.equal(await feature.locator('h2').textContent(),review.displayTitle);
-        assert.equal(await feature.getByRole('link',{name:'Try this lesson →',exact:true}).getAttribute('href'),'/Lessons/'+review.lessonFile);
-        assert.equal(await feature.getByRole('link',{name:'View the teaching pack →',exact:true}).getAttribute('href'),'/Lessons/pack.html?id='+review.packId);
+        assert.equal(await feature.getByRole('link',{name:'Try this lesson →',exact:true,includeHidden:true}).getAttribute('href'),'/Lessons/'+review.lessonFile);
+        assert.equal(await feature.getByRole('link',{name:'View the teaching pack →',exact:true,includeHidden:true}).getAttribute('href'),'/Lessons/pack.html?id='+review.packId);
         assert((await feature.textContent()).includes(review.description));
       }
       const entrances=await page.locator('.fd-audience-entry a').evaluateAll(es=>es.map(e=>e.getAttribute('href')));
