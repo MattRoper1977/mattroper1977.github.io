@@ -66,6 +66,24 @@ def self_test():
         assert preview_data(fixture)['real']['images'] == [image]
         pdf.write_bytes(b'changed PDF bytes'); assert preview_data(fixture) == {}, 'stale preview must be suppressed'
         pdf.write_bytes(b'reviewed PDF bytes'); assert 'real' in preview_data(fixture), 'restored source recovers preview'
+        # A featured lesson must retain both the reviewed lesson and preview.
+        from education_frontdoors import featured_lesson
+        lesson = lessons / 'lesson.html'; lesson.write_bytes(b'reviewed lesson bytes')
+        review = {'packId': 'real', 'lessonFile': 'lesson.html',
+                  'lessonSha256': hashlib.sha256(lesson.read_bytes()).hexdigest(),
+                  'displayTitle': 'Reviewed topic', 'description': 'Reviewed interaction',
+                  'previewWidth': 100, 'previewHeight': 140}
+        (tmp / 'homepage-feature.json').write_text(json.dumps(review))
+        (lessons / 'resources.json').write_text(json.dumps([{'id': 'real', 'file': 'real.pptx',
+            'companionOf': 'lesson.html', 'files': [{'path': 'real.pdf', 'type': 'pdf'}]}]))
+        assert 'Reviewed topic' in featured_lesson(fixture)
+        lesson.write_bytes(b'changed lesson'); assert featured_lesson(fixture) == '', 'stale lesson suppresses feature'
+        lesson.write_bytes(b'reviewed lesson bytes')
+        pdf.write_bytes(b'changed preview source'); assert featured_lesson(fixture) == '', 'stale preview suppresses feature'
+        pdf.write_bytes(b'reviewed PDF bytes'); assert 'Reviewed topic' in featured_lesson(fixture)
+        (lessons / 'resources.json').write_text(json.dumps([{'id': 'real', 'file': 'real.pptx',
+            'companionOf': 'different.html', 'files': [{'path': 'real.pdf', 'type': 'pdf'}]}]))
+        assert featured_lesson(fixture) == '', 'changed companion target suppresses feature'
         # the ordering rule for extra tiles: A–Z by the first row's subject
         lessons2 = tmp / 'lessons2'; lessons2.mkdir()
         (lessons2 / 'resources.json').write_text(json.dumps([{'subject': 'Zeta', 'type': 'lesson'}, {'subject': 'Alpha', 'type': 'lesson'}]))

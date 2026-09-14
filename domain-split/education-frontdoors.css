@@ -122,3 +122,16 @@ body[data-sw2-frontdoor][data-page="home"] .fd-pack.fd-hero-pack{display:none}
 html[data-theme="dark"] body[data-sw2-frontdoor],body[data-sw2-frontdoor][data-theme="dark"]{--fd-accent:#8ee6cb}
 
 @media(max-width:360px){body[data-sw2-frontdoor][data-page="home"] .fd-subject{grid-template-columns:24px minmax(0,1fr)}body[data-sw2-frontdoor][data-page="home"] .fd-subject .fd-arrow{display:none}body[data-sw2-frontdoor][data-page="home"] .fd-subject .fd-icon{width:24px;height:24px}}
+
+/* EDU-D2 homepage checkpoint: one visible, verified feature and clear audience routes. */
+body[data-sw2-frontdoor][data-page="home"] .fd-provenance{font-size:.9rem;color:var(--edu-muted,#454c6b);margin:.8rem 0 0}
+body[data-sw2-frontdoor][data-page="home"] .fd-audience-entry{display:flex;flex-wrap:wrap;gap:0 1rem}
+body[data-sw2-frontdoor][data-page="home"] :is(.fd-audience-entry a,.fd-feature-pack-link){display:inline-flex;align-items:center;min-height:44px;min-width:44px;font-size:.9rem;font-weight:650}
+body[data-sw2-frontdoor][data-page="home"] .fd-feature-pack-link{margin-top:.25rem}
+body[data-sw2-frontdoor][data-page="home"] .fd-feature-meta{font-size:.8rem;align-self:center}
+body[data-sw2-frontdoor][data-page="home"] .fd-feature-preview{margin:0;min-width:0;text-align:center}
+body[data-sw2-frontdoor][data-page="home"] .fd-feature-preview .fd-page-preview{width:100%;margin:0;transform:none;height:auto}
+body[data-sw2-frontdoor][data-page="home"] .fd-feature-preview figcaption{font-size:.75rem;color:var(--edu-muted,#454c6b);margin-top:.5rem;line-height:1.35}
+body[data-sw2-frontdoor][data-page="home"] .fd-hero:not(:has(.fd-hero-pack)){grid-template-columns:1fr}
+@media(max-width:767px){body[data-sw2-frontdoor][data-page="home"] [data-featured-lesson]{grid-template-columns:minmax(0,1.5fr) minmax(70px,1fr)}body[data-sw2-frontdoor][data-page="home"] .fd-feature-preview{align-self:start}}
+@media(max-width:360px){body[data-sw2-frontdoor][data-page="home"] [data-featured-lesson]{grid-template-columns:1fr}body[data-sw2-frontdoor][data-page="home"] .fd-feature-preview{max-width:170px;justify-self:center}}

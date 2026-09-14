@@ -73,6 +73,30 @@ def subject_tiles(bp, lessons, featured=False):
         for slug, name in [(c['slug'], c['name']) for c in cards] + extras) + '</div>'
 
 
+def featured_lesson(bp):
+    """A reviewed lesson and its authentic pack preview, or no feature."""
+    if bp.LESSONS_ROOT is None:
+        return ''
+    review = json.loads((bp.HERE / 'homepage-feature.json').read_text())
+    rows = json.loads((bp.LESSONS_ROOT / 'resources.json').read_text())
+    pack = next((r for r in rows if r.get('id') == review['packId']), None)
+    lesson = bp.LESSONS_ROOT / review['lessonFile']
+    preview = preview_data(bp).get(review['packId'])
+    if (not pack or pack.get('companionOf') != review['lessonFile'] or not preview
+            or not lesson.is_file() or hashlib.sha256(lesson.read_bytes()).hexdigest() != review['lessonSha256']):
+        return ''
+    image = preview['images'][0]
+    return ('<div class="fd-pack-copy"><p class="fd-eyebrow">TRY A LESSON</p><h2>' + esc(review['displayTitle'])
+            + '</h2><p>' + esc(review['description']) + '</p><div class="fd-chips"><span class="fd-chip grow">GROW</span>'
+            + '<span class="fd-feature-meta">Science · 40 minutes</span></div><p class="fd-muted">Reference: W8A · Explore</p>'
+            + action('/Lessons/' + review['lessonFile'], 'Try this lesson →')
+            + '<a class="fd-feature-pack-link" href="/Lessons/pack.html?id=' + esc(review['packId']) + '">View the teaching pack →</a></div>'
+            + '<figure class="fd-feature-preview"><img class="fd-page-preview" src="' + esc(image['dataUri'])
+            + '" alt="Preview of the Day and Night teaching slides" width="' + str(review['previewWidth'])
+            + '" height="' + str(review['previewHeight']) + '" decoding="async" data-preview-source="' + esc(image['source'])
+            + '" data-preview-sha="' + esc(image['sourceSha256']) + '"><figcaption>From the teaching pack</figcaption></figure>')
+
+
 def action(href, label, outline=False):
     return '<a class="fd-button' + (' fd-outline' if outline else '') + '" href="' + esc(href) + '">' + esc(label) + '</a>'
 
@@ -94,16 +118,19 @@ def render(kind, origin, bp):
     subjects = subject_tiles(bp, bp.LESSONS_ROOT, featured=kind == 'home')
     primary = bp.LESSONS_ROOT is not None and (bp.LESSONS_ROOT / 'primary/index.html').is_file()
     if kind == 'home':
-        hero = '<p class="fd-eyebrow">MADE FOR YOUR CLASSROOM</p><h1>Find your next lesson.</h1><p class="fd-lead">Practical lessons and teaching packs, ready to adapt.</p>' + search(kind) + '<div class="fd-actions">' + action('/Lessons/', 'Browse lessons →') + action('/resources/?type=pack', 'Teaching packs', True) + '</div>'
-        pack = '<div class="fd-pack-copy"><h2 data-pack-heading></h2><p>Slides, pupil resources and teacher guidance.</p><div class="fd-chips" data-pack-pathways></div><p class="fd-muted" data-pack-formats></p><a class="fd-button" data-pack-link>Explore packs →</a></div><div class="fd-pack-preview" data-pack-preview hidden></div>'
-        body = '<section class="fd-hero wrap"><div>' + hero + '</div><aside class="fd-pack fd-hero-pack" data-pack-card hidden aria-label="Teaching pack">' + pack + '</aside></section>'
+        hero = '<p class="fd-eyebrow">MADE FOR YOUR CLASSROOM</p><h1>Find your next lesson.</h1><p class="fd-lead">Practical lessons and teaching packs, ready to adapt.</p>' + search(kind) + '<div class="fd-actions">' + action('/Lessons/', 'Browse lessons →', True) + action('/resources/?type=pack', 'Teaching packs', True) + '</div>'
+        hero += '<p class="fd-provenance">Made by a teacher. For real classrooms.</p><nav class="fd-audience-entry" aria-label="Choose your starting point">' + ''.join('<a href="' + esc(record[k]['route']) + '">' + esc(record[k]['label']) + ' →</a>' for k in ('teachers', 'pupils', 'parents')) + '</nav>'
+        pack = featured_lesson(bp)
+        feature_attrs = ' data-featured-lesson="pack-grow-science-w8a"'
+        body = '<section class="fd-hero wrap"><div>' + hero + '</div>' + ('<aside class="fd-pack fd-hero-pack"' + feature_attrs + ' aria-label="Featured lesson">' + pack + '</aside>' if pack else '') + '</section>'
         body += '<section class="fd-section wrap"><div class="fd-section-head"><h2>Explore a subject</h2><a href="/Lessons/">View all →</a></div>' + subjects + '</section>'
         body += '<section class="fd-section fd-pathways wrap"><h2>Three pathways, one place</h2><div class="fd-chips"><span class="fd-chip build">BUILD</span><span class="fd-chip grow">GROW</span><span class="fd-chip launch">LAUNCH</span></div></section>'
-        body += '<section class="fd-section wrap fd-phone-packs" data-pack-card hidden><div class="fd-section-head"><h2>Ready-to-teach packs</h2><a href="/resources/?type=pack">View all →</a></div><article class="fd-pack">' + pack + '</article></section>'
+        if pack:
+            body += '<section class="fd-section wrap fd-phone-packs" aria-label="Featured lesson"><article class="fd-pack"' + feature_attrs + '>' + pack + '</article></section>'
         body += '<section class="fd-section wrap" id="added" hidden><div class="fd-section-head"><h2 id="added-h">Added this half-term</h2><a id="added-all" href="/Lessons/?added=current">See all →</a></div><div class="fd-added-grid"><div id="added-rail"></div><article class="fd-pack-promo"><h3>Ready-to-teach packs</h3><p>Editable slides, print resources and teacher guidance.</p>' + action('/resources/?type=pack', 'Explore packs →', True) + '</article></div></section>'
-        rows = [(record[k]['route'], record[k]['label']) for k in ('teachers', 'pupils')]
+        rows = [(record[k]['route'], record[k]['label']) for k in ('teachers', 'pupils', 'parents')]
         if primary: rows.append(('/Lessons/primary/', 'Primary lessons'))
-        body += '<section class="fd-section wrap fd-start" id="audiences"><h2>Find your starting point</h2><div class="fd-start-grid">' + ''.join('<a href="' + esc(r) + '">' + esc(n) + ' →</a>' for r, n in rows) + '<details><summary>Families &amp; organisations</summary><div class="fd-audience-rows" data-audience-rows>' + ''.join('<a class="audience-row" href="' + esc(r) + '">' + esc(n) + '</a>' for r, n in bp.audience_rows()) + '</div></details></div></section>'
+        body += '<section class="fd-section wrap fd-start" id="audiences"><h2>Find your starting point</h2><div class="fd-start-grid">' + ''.join('<a href="' + esc(r) + '">' + esc(n) + ' →</a>' for r, n in rows) + '<details><summary>Working with schools and organisations</summary><div class="fd-audience-rows" data-audience-rows>' + ''.join('<a class="audience-row" href="' + esc(r) + '">' + esc(n) + '</a>' for r, n in bp.audience_rows() if r != record['parents']['route']) + '</div></details></div></section>'
         body += '<section class="fd-maker" id="about"><div class="wrap">' + line_icon('person') + '<h2>Made by a teacher. For real classrooms.</h2><a href="/commission/#about-matt">Meet Matt →</a></div></section>'
         body += '<script type="application/json" id="home-preview-data">' + json.dumps(preview_data(bp), ensure_ascii=True).replace('<', '\\u003c') + '</script>'
     elif kind == 'teachers':
