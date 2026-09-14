@@ -166,6 +166,19 @@ def render_page(preview, kind, origin, config):
     body = re.sub(r'href="#[^"]*" data-search-link="(teachers|pupils)" data-query="([^"]*)"',
                   lambda m: 'href="' + views[m[1]] + '?q=' + m[2] + '#' + ('teacher-search' if m[1] == 'teachers' else 'pupil-search') + '"', body)
     body = re.sub(r' data-jump="[^"]*"', '', body)
+    if kind == "commission":
+        # Meet Matt opens a real introduction; the existing custom-resource
+        # enquiry remains a separate section on this established route.
+        marker = '<section class="section soft" id="custom-resources">'
+        if body.count(marker) != 1:
+            raise ValueError('Commission introduction boundary missing')
+        about = ('<section class="section" id="about-matt" aria-labelledby="about-matt-title"><div class="wrap">'
+                 '<p class="eyebrow">The teacher behind Made by Matt</p><h2 id="about-matt-title">About Matt</h2>'
+                 '<p>I’m Matt, the teacher and creator behind Made by Matt. I make practical lessons, teaching resources and classroom tools for real classrooms.</p>'
+                 '<p>The collection brings together adaptable teaching materials and interactive tools to support inclusive learning. Explore the existing resources, or get in touch about something your class needs.</p>'
+                 '<div class="button-row"><a class="btn" href="/Lessons/">Explore the lessons</a>'
+                 '<a class="btn amber" href="#custom-resources">Request a resource</a></div></div></section>')
+        body = body.replace(marker, about + marker, 1)
     if kind == "teachers":
         # UX2 B3: "Choose a subject and pathway" — the four subject cards with only the
         # pathways present in the served catalogue (the hub's own cardOf/tierOf rules,

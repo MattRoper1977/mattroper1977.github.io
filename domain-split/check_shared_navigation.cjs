@@ -63,6 +63,7 @@ async function chromeFocus(control,surface,label,redProof=false) {
         assert.equal((await page.goto(origin + route)).status(), 200, route);
         assert.equal(await page.locator(header).count(), 1, 'One header: ' + route);
         await assertChrome(page, route, expectedTokens);
+        await require('./check_education_hub_links.cjs').assertPublicRow(page,route);
         const skip = page.locator('body > a.skip, body > a[href^="#"]').first();
         if (await skip.count()) {
           await skip.focus();
@@ -199,6 +200,7 @@ async function chromeFocus(control,surface,label,redProof=false) {
           await page.setViewportSize({width,height:900});
           await page.goto(origin+route);
           if(route==='/stats/on-this-device/')await deviceStatsSkip(page,origin);
+          await require('./check_education_hub_links.cjs').assertPublicRow(page,route);
           assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth+1), 'Page reflows: '+route+' at '+width);
           await page.locator(menu+' > summary').press('Enter');
           assert(await page.locator(panel).isVisible());

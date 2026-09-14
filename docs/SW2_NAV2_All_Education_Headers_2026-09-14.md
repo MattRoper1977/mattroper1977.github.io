@@ -1,0 +1,17 @@
+# NAV-2 expanded shared-header correction
+
+Matt expanded the active NAV-2 release after live review: the homepage, Commission, Primary, all audience pages, Account, Teacher updates and Privacy must expose the same complete public quick-link row. Apply it to every surface owned by the shared Education header, preserving the separate pupil/account menu rules.
+
+The row is **Lessons → Resources → Apps & tools → Teacher tools**, with only an exact current hub underlined. All 32 managed shared-header surfaces are covered. About remains accessible through the existing footer. Authored lesson/player navigation and app/game runtimes keep their own controls.
+
+The existing `/commission/` route now has an **About Matt** introduction before its retained custom-resource section. The homepage's **Meet Matt** link targets `/commission/#about-matt`. The introduction uses the established teacher/creator description; it does not invent qualifications or experience. Existing resource-request terms and prices are preserved.
+
+Compared with the accepted NAV-2 release, Site changes 22 HTML pages; composed Lessons changes six headers; composed Apps is unchanged. Removing the changed header and the explicitly authorised About Matt/link addition recovers every original byte in those HTML files. No paths are added to or removed from the published trees.
+
+The current Lessons publisher has a separate immutable carrier. Its successor is **95580b00eb4d0e7f6d9dbdc140aca45d0dbb1996**, tree **104740cbd69dba5e8c35ea3dc5e5c052123307f8**, based directly on released carrier **0838ea09520bc388f4f3aeccc68df4c7120bbd81**. It changes only `published_chrome.py` and six exact admission pairs. Its source-selection workflow and companion Apps pin are unchanged. Its actual output changes six HTML headers and four corresponding measurements in the existing derived `resource-sizes.json`; the derivation rule is preserved. All 3,744 owner paths are accounted for. The caller is Lessons PR #533 at **b29413a12de81e661897f3c0daf3176af95619a4**, tree **435c0b9ada385ba5772e31a98a97ec8fe472e22c**.
+
+Local admission controls pass: Site **55**, Lessons owner **61**. The existing browser proof now checks the complete public row on all 32 surfaces and keeps pupil restrictions, keyboard focus, menu/search and responsive checks. Six hash-bound owner fixtures additionally exercise Primary, subject and subject/pack hubs against their actual publisher bytes. The completion test follows Meet Matt to the real About Matt section and retains the resource-request checks. Required remote checks, normal protected Site → Lessons publication and live verification remain the release gate.
+
+The preceding Site #373, Lessons #532 and Apps #100 publications succeeded and their tested trees matched. Their 17/17 served-file witnesses and 24 native live hub/theme cases are saved. Do not repeat or roll back those releases just to resume this follow-up. The latest source and owner checks supersede the earlier homepage-only PR374 head; never merge that earlier head as if it covered the expanded request.
+
+Preserve held Site #291, Lessons #456, LP1, source/companion pins, immutable historical carriers, accepted Part K/AS1, the silver M, catalogue identities/downloads, saves, pupil/account restrictions and Education/Play separation. Whole-programme status remains **SW2_PARTIAL**. Save final exact merges, publications and live evidence to the NAV-2 handover and both master-order copies before starting another refinement pass.
