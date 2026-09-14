@@ -122,17 +122,17 @@ body.mbm-hub.mbm-hub-apps.mbm-education-hub[data-mbm-palette="education"] main[d
 body.mbm-hub.mbm-hub-apps.mbm-education-hub[data-mbm-palette="education"] main[data-sw2-apps-hub] .hero :is(.lead,.apps-total){color:var(--edu-muted)}
 body.mbm-hub.mbm-hub-apps.mbm-education-hub[data-mbm-palette="education"] main[data-sw2-apps-hub] .apps-breadcrumb{color:var(--edu-ink)}
 
-/* §26: a restrained navy-derived transition above the cream reading surface.
+/* §26: a restrained navy-derived header above the cream reading surface.
    Other reading themes retain their own surface; high-luminance stays plain. */
-body[data-mbm-palette="education"]{--edu-top-tint:#dce2ee;background-image:linear-gradient(to bottom,var(--edu-top-tint),var(--edu-bg) 310px);background-repeat:no-repeat}
+body[data-mbm-palette="education"]{--edu-top-tint:#dce2ee}
 body[data-mbm-palette="education"] header.mbm-unified-header{background:var(--edu-top-tint)}
 html[data-theme="pink"] body[data-mbm-palette="education"]{--edu-top-tint:#eadde9}
 html[data-theme="blue"] body[data-mbm-palette="education"]{--edu-top-tint:#cfdaed}
 html[data-theme="light"] body[data-mbm-palette="education"]{--edu-top-tint:#e2e6ef}
 html[data-theme="dark"] body[data-mbm-palette="education"],body[data-mbm-palette="education"][data-theme="dark"]{--edu-top-tint:#18243d}
-html[data-theme="highlumen"] body[data-mbm-palette="education"]{--edu-top-tint:#fff;background-image:none}
+html[data-theme="highlumen"] body[data-mbm-palette="education"]{--edu-top-tint:#fff}
 body[data-mbm-palette="education"] svg.fd-icon{display:block;flex:none;width:32px;height:32px;color:currentColor}
 body[data-mbm-palette="education"] :is(.seg,.aud){display:inline-flex;align-items:center;gap:.4rem}
 body[data-mbm-palette="education"] :is(.seg,.aud) svg.fd-icon{width:20px;height:20px}
 body[data-mbm-palette="education"] .ad-card>div>svg.fd-icon{margin-bottom:.65rem}
-@media print{body[data-mbm-palette="education"]{background-image:none}}
+@media print{body[data-mbm-palette="education"] header.mbm-unified-header{background:white}}
