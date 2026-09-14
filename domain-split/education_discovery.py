@@ -153,28 +153,38 @@ for(const row of normSite(Array.isArray(collections)?collections:[])){const key=
     app_path = app_root/'index.html'
     text = app_path.read_text()
     text = replace_once(text, 'class="mbm-hub mbm-hub-apps"', 'class="mbm-hub mbm-hub-apps mbm-education-hub"')
-    text = replace_once(text, '<h1>THE CREATOR <span>HUB</span></h1>', '<h1>Apps <span>&amp; tools</span></h1>')
-    text = replace_once(text, 'A Made by Matt collection</p>', 'The Creator Hub · A Made by Matt collection</p>')
-    text = replace_once(text, '<section class="trio"', pdf_feature()+'<section class="trio"')
-    text = replace_once(text, '[it.n,it.d].join(" ").toLowerCase().includes(Q)',
-                        'Q.split(/\\s+/).every(word=>[it.n,it.d,...(it.n==="PDF Studio"?'+json.dumps(PDF_KEYWORDS)+':[])].join(" ").toLowerCase().includes(word))')
-    text = replace_once(text, 'DATA=d;chips();render();', 'DATA=d;Q=(new URLSearchParams(location.search).get("q")||"").toLowerCase().trim();$("#search").value=Q;chips();render();')
-    text = replace_once(text, '</head>', '<link rel="stylesheet" href="/assets/education-navigation.css"></head>')
-    text = text.replace('Try: poster, quiz, stop-motion…', 'Try PDF generator, poster, quiz…')
-    # Keep the useful promotional collections, with the finder before them.
-    start = text.index('<section class="trio"')
-    end = text.index('<div class="segrow rail"', start)
-    promotions = text[start:end]
-    text = text[:start]+text[end:]
-    text = replace_once(text, '<div id="groups"></div>', '<div id="groups"></div>'+promotions)
-    start = text.index('<div class="toolbar"')
-    end = text.index('</div>', start)+len('</div>')
-    finder = text[start:end]
-    text = text[:start]+text[end:]
-    text = replace_once(text, '<section class="discovery-feature" id="pdf-studio-feature">',
-                        finder+'<section class="discovery-feature" id="pdf-studio-feature">')
-    text = replace_once(text, 'const spaces=DATA.spaces.map',
-                        '$("#pdf-studio-feature").hidden=!!(Q||CAT||AUD);\nconst spaces=DATA.spaces.map')
+    if 'data-sw2-apps-hub' in text:
+        # SW2 A owns the new hub layout. Retain the search enrichment and URL
+        # query contract, while the manifest supplies every tool card.
+        if text.count('<h1>Apps &amp; tools</h1>') != 1:
+            raise ValueError('SW2 Apps heading boundary changed')
+        text = replace_once(text, '[it.n,it.d].join(" ").toLowerCase().includes(Q)',
+                            'Q.split(/\\s+/).every(word=>[it.n,it.d,...(it.n==="PDF Studio"?'+json.dumps(PDF_KEYWORDS)+':[])].join(" ").toLowerCase().includes(word))')
+        text = replace_once(text, 'DATA=d;chips();render();', 'DATA=d;Q=(new URLSearchParams(location.search).get("q")||"").toLowerCase().trim();$("#search").value=Q;chips();render();')
+        text = replace_once(text, '</head>', '<link rel="stylesheet" href="/assets/education-navigation.css"></head>')
+    else:
+        text = replace_once(text, '<h1>THE CREATOR <span>HUB</span></h1>', '<h1>Apps <span>&amp; tools</span></h1>')
+        text = replace_once(text, 'A Made by Matt collection</p>', 'The Creator Hub · A Made by Matt collection</p>')
+        text = replace_once(text, '<section class="trio"', pdf_feature()+'<section class="trio"')
+        text = replace_once(text, '[it.n,it.d].join(" ").toLowerCase().includes(Q)',
+                            'Q.split(/\\s+/).every(word=>[it.n,it.d,...(it.n==="PDF Studio"?'+json.dumps(PDF_KEYWORDS)+':[])].join(" ").toLowerCase().includes(word))')
+        text = replace_once(text, 'DATA=d;chips();render();', 'DATA=d;Q=(new URLSearchParams(location.search).get("q")||"").toLowerCase().trim();$("#search").value=Q;chips();render();')
+        text = replace_once(text, '</head>', '<link rel="stylesheet" href="/assets/education-navigation.css"></head>')
+        text = text.replace('Try: poster, quiz, stop-motion…', 'Try PDF generator, poster, quiz…')
+        # Keep the useful promotional collections, with the finder before them.
+        start = text.index('<section class="trio"')
+        end = text.index('<div class="segrow rail"', start)
+        promotions = text[start:end]
+        text = text[:start]+text[end:]
+        text = replace_once(text, '<div id="groups"></div>', '<div id="groups"></div>'+promotions)
+        start = text.index('<div class="toolbar"')
+        end = text.index('</div>', start)+len('</div>')
+        finder = text[start:end]
+        text = text[:start]+text[end:]
+        text = replace_once(text, '<section class="discovery-feature" id="pdf-studio-feature">',
+                            finder+'<section class="discovery-feature" id="pdf-studio-feature">')
+        text = replace_once(text, 'const spaces=DATA.spaces.map',
+                            '$("#pdf-studio-feature").hidden=!!(Q||CAT||AUD);\nconst spaces=DATA.spaces.map')
     app_path.write_text(text)
 
     tools_path = site/'tools/index.html'
