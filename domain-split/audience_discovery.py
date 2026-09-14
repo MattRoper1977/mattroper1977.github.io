@@ -43,9 +43,10 @@ def link(label, href, cls=""):
 
 
 def card(title, description, href, action="Open", image=None, alt=""):
+    from education_chrome_correction import icon_name, line_icon
     picture = (f'<img src="{esc(image)}" alt="{esc(alt)}" width="640" height="360" loading="lazy" decoding="async">'
                if image else "")
-    return (f'<article class="ad-card">{picture}<div><h3>{esc(title)}</h3>'
+    return (f'<article class="ad-card">{picture}<div>{line_icon(icon_name(title))}<h3>{esc(title)}</h3>'
             f'<p>{esc(description)}</p>{link(action, href, "ad-action")}</div></article>')
 
 

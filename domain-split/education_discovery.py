@@ -55,13 +55,6 @@ def local_file(output, route):
     return target/'index.html' if target.is_dir() else target
 
 
-def learning_nav(active=''):
-    links = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'),
-             ('/Matt-s-Apps-/', 'Apps & tools'), ('/tools/', 'Teacher tools')]
-    return '<nav class="collection-nav" aria-label="Learning areas"><div class="wrap">'+''.join(
-        '<a href="'+url+'"'+(' aria-current="page"' if url==active else '')+'>'+escape(label)+'</a>' for url, label in links)+'</div></nav>'
-
-
 def pdf_feature():
     return ('<section class="discovery-feature" id="pdf-studio-feature"><div class="wrap">'
             '<p class="eyebrow">Documents &amp; downloads</p><h2>PDF Studio</h2><p>'+PDF_DESCRIPTION+'</p>'
@@ -187,11 +180,8 @@ def refresh(output, lessons, apps, site_source):
     # "Ready to teach?" strip (its links relocated — see UX2_LEDGER.md).
     # UX2 B3: the teacher page's Learning destinations are menu rows; /tools/ and /teach/ sit
     # on its Assess card, so the bar stays on the three catalogue hubs only.
-    for path in [resource_path, tools_path, app_path]:
-        text = path.read_text()
-        active = {resource_path: '/resources/', tools_path: '/tools/', app_path: '/Matt-s-Apps-/'}.get(path, '')
-        text = replace_once(text, '</header>', '</header>'+learning_nav(active))
-        path.write_text(text)
+    # §26: shared_navigation owns the complete public row on all four hubs.
+    # Do not add a second partial/duplicate strip beneath that header.
 
     # Keep teacher search in step with the same existing destinations. Pupil
     # eligibility and its reviewed catalogue are deliberately not broadened.

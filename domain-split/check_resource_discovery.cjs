@@ -17,10 +17,10 @@ const report = { schema: 1, origin, startedAt: new Date().toISOString(), cases: 
 const PDF = '/Matt-s-Apps-/PDF_Studio.html';
 // UX2 B2: the homepage's learning areas are its "Three places, one site" cards and the
 // menu's Learning group; the collection bar stays on the three catalogue hubs.
-const hubs = ['/resources/', '/tools/', '/Matt-s-Apps-/'];
+const hubs = ['/Lessons/', '/resources/', '/tools/', '/Matt-s-Apps-/'];
 const homes = ['/', '/main/'];
 const widths = [320, 390, 1280];
-const collectionNav = 'nav.collection-nav[aria-label="Learning areas"]';
+const collectionNav = 'nav[data-mbm-hub-links][aria-label="Site navigation"]';
 const resourceCards = '#rxOut .rx-cardx a[href]';
 const appsCards = '#groups .card a[href]';
 const excludedGameRoutes = new Set();

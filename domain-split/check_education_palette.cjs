@@ -70,9 +70,11 @@ async function run(){
      assert.equal(row.cardRole.radius,'12px','Card radius '+route);assert.notEqual(row.cardRole.shadow,'none','Card shadow '+route);
     }else{assert(notApplicable);row.cardNotApplicable=notApplicable}
     const nav=page.locator('.mbm-unified-nav');
-    assert.deepEqual(await nav.locator('a').allTextContents(),row.variant==='adult'?['Lessons','Resources','Apps & tools','About']:['Lessons','Resources'],'Actual navigation variant '+route);
+    const hub=['/Lessons/','/resources/','/Matt-s-Apps-/','/tools/'].includes(route);
+    if(hub)row.hubLinkStyles=await require('./check_education_hub_links.cjs').assertPlainLinks(page);
+    assert.deepEqual(await nav.locator('a').allTextContents(),hub?['Lessons','Resources','Apps & tools','Teacher tools']:row.variant==='adult'?['Lessons','Resources','Apps & tools','About']:['Lessons','Resources'],'Actual public navigation variant '+route);
     assert.equal(await page.locator('.mbm-unified-saved').count(),row.variant==='adult'?1:0,'Saved ownership '+route);
-    if(width===1280&&row.variant==='adult')assert(await nav.getByText('About',{exact:true}).isVisible(),'Desktop About');
+    if(width===1280&&row.variant==='adult'&&!hub)assert(await nav.getByText('About',{exact:true}).isVisible(),'Desktop About');
     if(width===390)assert.equal(await nav.locator('.mbm-unified-about:visible').count(),0,'Phone row');
     assert.equal(await page.locator('footer .mbm-chrome-signoff').count(),1,'One actual shared footer');
     assert.equal(await page.locator('footer img[src*="micro_mark"],footer svg.mono').count(),0,'Retired footer marks');
