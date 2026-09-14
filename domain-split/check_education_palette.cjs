@@ -70,7 +70,7 @@ async function run(){
      assert.equal(row.cardRole.radius,'12px','Card radius '+route);assert.notEqual(row.cardRole.shadow,'none','Card shadow '+route);
     }else{assert(notApplicable);row.cardNotApplicable=notApplicable}
     const nav=page.locator('.mbm-unified-nav');
-    const hub=['/Lessons/','/resources/','/Matt-s-Apps-/'].includes(route);
+    const hub=['/Lessons/','/resources/','/Matt-s-Apps-/','/tools/'].includes(route);
     assert.deepEqual(await nav.locator('a').allTextContents(),hub?['Lessons','Resources','Apps & tools','Teacher tools']:row.variant==='adult'?['Lessons','Resources','Apps & tools','About']:['Lessons','Resources'],'Actual public navigation variant '+route);
     assert.equal(await page.locator('.mbm-unified-saved').count(),row.variant==='adult'?1:0,'Saved ownership '+route);
     if(width===1280&&row.variant==='adult'&&!hub)assert(await nav.getByText('About',{exact:true}).isVisible(),'Desktop About');
