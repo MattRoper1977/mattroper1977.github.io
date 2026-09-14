@@ -8,12 +8,12 @@ exports.verify = async ({page, origin, rules, record}) => {
   for(const width of [390,900,1280]) for(const route of ['/','/for/teachers/','/for/pupils/']) {
     await page.setViewportSize({width,height:900}); await page.goto(origin+route); await page.waitForLoadState('networkidle');
     const measure = async () => page.evaluate(() => ({
-      overflow:[document.documentElement,...document.querySelectorAll('main *')].filter(e=>e.getClientRects().length&&getComputedStyle(e).display!=='inline'&&e.clientWidth>0&&e.scrollWidth>e.clientWidth+1).map(e=>e.id||e.className||e.tagName),
+      overflow:[document.documentElement,...document.querySelectorAll('main *')].filter(e=>e.getClientRects().length&&getComputedStyle(e).display!=='inline'&&e.clientWidth>0&&e.scrollWidth>e.clientWidth+1).filter(e=>{const s=getComputedStyle(e);return !(e.matches('#added-rail .acard p')&&s.textOverflow==='ellipsis'&&s.overflowX==='hidden'&&s.whiteSpace==='nowrap'&&e.getBoundingClientRect().height<=parseFloat(s.lineHeight)+1)}).map(e=>e.id||e.className||e.tagName),
       small:[...document.querySelectorAll('main a[href],main button,main summary,main input')].filter(e=>e.getClientRects().length&&!e.disabled).filter(e=>{const b=e.getBoundingClientRect();return b.width<44||b.height<44}).map(e=>e.textContent.trim().slice(0,45)),
       broken:[...document.images].filter(i=>i.getClientRects().length&&(!i.complete||!i.naturalWidth)).map(i=>i.src),
       owl:[...document.querySelectorAll('[src],[href]')].filter(e=>/owl/i.test(e.getAttribute('src')||e.getAttribute('href')||'')).length
     }));
-    assert.deepEqual(await measure(),{overflow:[],small:[],broken:[],owl:0},'H/U geometry, images and targets: '+route+' at '+width);
+    assert.deepEqual(await measure(),{overflow:[],small:[],broken:[],owl:0},'H/U geometry, images and targets: '+route+' at '+width+' '+JSON.stringify(await measure()));
     if(route==='/'){
       assert.equal(await page.locator('main form').count(),0,'Homepage retains one non-form search');
       assert.equal(await page.locator('[data-home-search] input').getAttribute('placeholder'),'Try Science, Humanities or PDF Studio');

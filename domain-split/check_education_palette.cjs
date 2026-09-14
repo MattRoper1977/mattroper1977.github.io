@@ -7,13 +7,13 @@ const fs=require('node:fs');
 const path=require('node:path');
 const origin=new URL(process.env.MBM_EDUCATION_ORIGIN||'http://127.0.0.1:4173').origin;
 const cases=[
-  ['/','home','.route-card'],['/main/','home alias','.route-card'],
+  ['/','home','.fd-subject'],['/main/','home alias','.fd-subject'],
   ['/account/','account','.ma-panel'],['/members/','members','.ma-panel'],['/mailing-list/','updates','.ma-panel'],
   ['/privacy/','privacy','.pv-note'],['/stats/','statistics','.usage-card'],
   ['/owner/stats/','owner statistics',null,'Individual statistics require the existing service; the static console has no result card.'],
   ['/resources/','resources','.rx-cardx'],['/tools/','tools','.tcard'],
   ['/teach/','teacher workspace','.mbm-task-card'],['/education-hub/','education guidance','.mbm-start-card'],
-  ['/for/teachers/','teachers','.route-card'],['/for/pupils/','pupils','.route-card'],
+  ['/for/teachers/','teachers','.fd-subject'],['/for/pupils/','pupils','.fd-subject'],
   ...['parents-carers','schools-semh','trusts','councils-organisations','partners'].map(s=>['/for/'+s+'/','audience '+s,'.ad-card']),
   ['/for/governors-trustees/','governors','.gv-card'],['/Lessons/','lessons','.scard'],
   ['/Lessons/primary/','primary','.primary-unit'],['/Matt-s-Apps-/','apps','.card'],
@@ -58,7 +58,8 @@ async function run(){
     const h=page.locator('h1').first();
     if(await h.count()){row.heading=await h.evaluate(e=>({text:e.textContent.trim(),colour:getComputedStyle(e).color}));
      // Part R places Resources' heading on the body surface; every other role is unchanged.
-     const onDark=['/','/main/','/account/','/members/','/mailing-list/','/privacy/','/tools/','/teach/','/education-hub/','/for/teachers/','/for/pupils/','/Matt-s-Apps-/','/stats/on-this-device/','/asdan/','/uas/','/commission/','/Lessons/Science_Teesside/','/Lessons/Humanities_Teesside/'].includes(route);
+     const sw2=await page.locator('body[data-sw2-frontdoor],main[data-sw2-apps-hub]').count();
+     const onDark=!sw2&&['/','/main/','/account/','/members/','/mailing-list/','/privacy/','/tools/','/teach/','/education-hub/','/for/teachers/','/for/pupils/','/Matt-s-Apps-/','/stats/on-this-device/','/asdan/','/uas/','/commission/','/Lessons/Science_Teesside/','/Lessons/Humanities_Teesside/'].includes(route);
      assert.equal(row.heading.colour,onDark?'rgb(255, 254, 250)':row.ink,'Matched primary heading role '+route);
     }
     else assert.equal(route,'/stats/','Missing primary heading outside the compact statistics block');
