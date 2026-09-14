@@ -30,7 +30,8 @@
     "FIN3 \u00a74 + R6 combined carrier (2026-09-10, Site claude/fin3-carrier-r6-plus-manifests): claude/r6-admit-autumn1-refresh fac26001 and claude/fin3-admit-science-manifests 2a154e33 are SIBLINGS off the 2e4d9966 pin, not a chain -- advancing builder_ref to either alone drops the other's rows. Measured: their row sets are disjoint (38 and 7, overlap 0), so this commit carries both. Advancing to fac26001 after 2a154e33 shipped would have re-red the publication on all 7 of the FIN3 \u00a74 paths, including the four that blocked it.",
     "AMEND-3R-GC1 P6 (2026-09-10, Site claude/gc1-admit-grow-computing): the GROW Computing unit (Lessons #493) arrives as 163 education-lessons paths admitted ARRIVING at their BUILT bytes -- absent from a build of Lessons main until #493 merges, admitted exactly after. Beside them two transition pairs [pinned bytes, post-merge bytes]: education-lessons ICT/Teaching_Packs/index.html (the subject-page entry) and education-site data/usage-registry.json (usage discovery finds 128 new unit resources, 0 removed). Measured against a full three-repository build at this builder with Apps 3ad0a7df: 165 rows move and nothing else does. This commit also admits .sb3 -- the Scratch project zip -- to the publisher extension allowlist and to the admission census INERT set, with the disguised-code control extended to it. Without that the 23 unit .sb3 were dropped from the built tree by extension, so AMEND-3R-GC1 R3's sibling links would have 404ed on the served site while the source tree showed all 15 resolving. A control build of Lessons main against this registry is green (0 problems), so the pin may advance before #493 merges.",
     "SW2-T5R1 2026-09-12: reviewed lessons token-only source transaction from current main; add assets/mbm-tokens.css as ARRIVING and exact published hub/subject old/new digest pairs. Every prior row and digest retained. Executable publisher inputs and companion source selection unchanged; measured saved old/new full outputs pass this registry.",
-    "SW2 Part T completion, Matt approved 2026-09-13: 10 exact transitions; only this caller's lessons HTML adopts the new owner component. Its served rollback is retained; companion asset transitions retain the unchanged caller baseline (new paths ARRIVING). No companion input, workflow logic or executable admission rule changes."
+    "SW2 Part T completion, Matt approved 2026-09-13: 10 exact transitions; only this caller's lessons HTML adopts the new owner component. Its served rollback is retained; companion asset transitions retain the unchanged caller baseline (new paths ARRIVING). No companion input, workflow logic or executable admission rule changes.",
+    "EDU-D2 2026-09-14: immutable carrier based on released Lessons builder95580b00. Six existing Lessons display files retain the current0130c6a0 rollback and admit reviewed readable-title/filter output; one path- and ID-guarded display-title map ARRIVING. No catalogue, lesson-order, teaching files, publisher code or companion source pins change. Built Site/Apps/Games output byte-identical. Superseded older digests recorded in paired recovery evidence."
   ],
   "trees": {
     "education-site": {
@@ -4527,12 +4528,12 @@
       "assets/catalogue/catalogue.css": "59abee137c41a8a015e42cf0b32d20b7f4e5fc8e3d236a1cd735322386bf8569",
       "assets/catalogue/catalogue.js": "a0fd3efc8356377effad7249be7222984ce92947a8143259148851dc399de5c7",
       "assets/catalogue/hub.css": [
-        "96192065b59e2d5113f92e03da3386c45e7425aa2443b79e8203914b587eeca9",
-        "26709016ce8b4e62e75c80194214a1884edc74a496322e40056ce1703ee02941"
+        "26709016ce8b4e62e75c80194214a1884edc74a496322e40056ce1703ee02941",
+        "603586d0668c39a2039891ab9f599cc234f65748a6794eee7fc65c334b5a23e5"
       ],
       "assets/catalogue/hub.js": [
-        "201698d3938b81155effb32ed7cbafa89b78724a512e87f079b7526a5b58a4c5",
-        "1481fb04eed0dbc46d16a105c921a5c5ad393dd2252f046d97c03d665f20458e"
+        "1481fb04eed0dbc46d16a105c921a5c5ad393dd2252f046d97c03d665f20458e",
+        "e57c6dc62ce1d188d74374e6fc11975bb0f073770e28745ec10c149eb9632ba2"
       ],
       "assets/catalogue/humanities-shelf.json": "b2facaa50c6781f0fdf19fad5b3b170bfaef54546c030e951956ccf47223f8c0",
       "assets/catalogue/lesson-navigation.js": [
@@ -4640,8 +4641,8 @@
       "images/arcade-bg.svg": "c36b58407cea6074f94d58a82c81b46868caff63c9123afec1dce8e4bd6a9859",
       "images/lessonhub-bg.svg": "ca1e1c1a575c3f12babc838e85cdbf43fe5d4cab26def949809c80ac7cf2f67b",
       "index.html": [
-        "5da2c06375c9a088b01a94facb82f9b7c69c388adf01745b917cc34efc8c089c",
-        "1a9937571efdbc7656486b949a7fd127bd160cb213b4ad3ba206e699c78b5a86"
+        "1a9937571efdbc7656486b949a7fd127bd160cb213b4ad3ba206e699c78b5a86",
+        "01e571fa7b4d619d05dbfdd5ca194a430195e309547ad1867701b0901be84639"
       ],
       "lesson-hub-mission-control.png": "3b138769f3b8dbe42c2ab7dc02563072894ad3860a92f29006bb3ce3b1b2543a",
       "liveteach/index.html": "d3352425ff9afff4c62626d096c2a8036c6baf91160b1586835386b8d7b27025",
@@ -4747,8 +4748,8 @@
       "resources.schema.json": "026e4c757e11fb25f296f08087327b11978c6ec46ed393358c94caa0a172762e",
       "review/estate-exec/README.md": "11a3c2052b57d93b5d6853c00c26ba7605cac8952eb21d221edf143e433539e2",
       "subject.html": [
-        "45a79c3fe7f709df105c87959d12ab79d9a883cdc8947ff35b1de6c7617ad141",
-        "43f6b8dea31eeb6524c4772eac32f7d5e24c2386d5d56ac1875201aebd5bb920"
+        "43f6b8dea31eeb6524c4772eac32f7d5e24c2386d5d56ac1875201aebd5bb920",
+        "048f41f8c63c2a90257880aea4fefd899216dd025e1fda3fe6cfd178c0848ced"
       ],
       "tools/artsaward/SLOTS.json": "2a9a389711d8ba2d0b9771b43b03f6a5e1124f6d99e22d4466d694799a40226f",
       "assets/catalogue/pack-notes.json": [
@@ -4757,15 +4758,19 @@
       ],
       "assets/catalogue/pack.css": [
         "3479e8b88fae19306a6480e553da0b459859fcb2de03c772c2a4b14eeca507e8",
-        "ARRIVING"
+        "ba6c5c84bcff84c023f2f10ac345a159f48ea97b2e8eb542cb3e56435204d63a"
       ],
       "assets/catalogue/pack.js": [
         "541abd7a493ad0731a32566d5fdb86fbd7d5e331e4533011ea12f7a3362cef92",
-        "ARRIVING"
+        "acfd0f1b00dce1421fabd8a1870b55d4c54ffc1157b2efe8a01b354f385ccf4b"
       ],
       "pack.html": [
         "cb0c36d6470afb28eddacb99c57376aef6cb083dac813338bad04151c7fccfc2",
         "ARRIVING"
+      ],
+      "assets/catalogue/display-titles.json": [
+        "ARRIVING",
+        "d5a545890a3f9ce116aa5fc0ceecb8f4917dd3d03621d03b5cd3a6fad0abd399"
       ]
     },
     "education-apps": {
