@@ -1,16 +1,17 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs');
 const expected=[['/Lessons/','Lessons'],['/resources/','Resources'],['/Matt-s-Apps-/','Apps & tools'],['/tools/','Teacher tools']];
-const slugs={'/Lessons/':'lessons','/resources/':'resources','/Matt-s-Apps-/':'apps','/tools/':'tools'};
-exports.assertPlainLinks=async(page)=>{
+const routes=[...expected.map(([route])=>route),'/','/main/'];
+const slugs={'/Lessons/':'lessons','/resources/':'resources','/Matt-s-Apps-/':'apps','/tools/':'tools','/':'home','/main/':'main'};
+exports.assertPlainLinks=async(page,activeCount=1)=>{
   const styles=await page.locator('nav[data-mbm-hub-links] a').evaluateAll(es=>es.map(e=>{
     const s=getComputedStyle(e);return {active:e.getAttribute('aria-current')==='page',background:s.backgroundColor,image:s.backgroundImage,
       borders:[s.borderTopWidth,s.borderRightWidth,s.borderBottomWidth,s.borderLeftWidth],shadow:s.boxShadow,decoration:s.textDecorationLine,colour:s.color};
   }));
   assert.equal(styles.length,4,'Four styled public links');
   assert(styles.every(s=>s.background==='rgba(0, 0, 0, 0)'&&s.image==='none'&&s.borders.every(b=>parseFloat(b)===0)&&s.shadow==='none'),'Plain text navigation: no filled or boxed buttons');
-  assert.equal(styles.filter(s=>s.active).length,1,'One active plain link');
-  assert(styles.find(s=>s.active).decoration.includes('underline'),'Current hub has the agreed underline');
+  assert.equal(styles.filter(s=>s.active).length,activeCount,'Only the current hub is active; homepage has no false active hub');
+  if(activeCount)assert(styles.find(s=>s.active).decoration.includes('underline'),'Current hub has the agreed underline');
   assert(styles.every(s=>s.colour===styles[0].colour),'Active link retains the shared theme ink');
   return styles;
 };
@@ -27,7 +28,8 @@ exports.verify=async({page,origin,javaScriptEnabled,consumerFixtures=false})=>{
   fs.mkdirSync('audit-output/home-play-discovery/section26',{recursive:true});
   for(const width of [390,900,1280]){
     let geometry;
-    for(const [route] of expected){
+    for(const route of routes){
+      const current=expected.some(([href])=>href===route)?[route]:[];
       await page.setViewportSize({width,height:900});
       await page.goto(origin+route);await page.waitForLoadState('networkidle');
       const read=()=>page.locator('nav[data-mbm-hub-links]').evaluateAll(es=>es.map(e=>({
@@ -39,27 +41,27 @@ exports.verify=async({page,origin,javaScriptEnabled,consumerFixtures=false})=>{
       const check=async()=>{
         const rows=await read();assert.equal(rows.length,1,'One public quick-link row');
         assert.deepEqual(rows[0].links,expected,'Exact shared destination/label/order');
-        assert.deepEqual(rows[0].current,[route],'Exactly the current hub is highlighted');
+        assert.deepEqual(rows[0].current,current,'Exactly the current hub is highlighted, if on a hub');
         assert(!rows[0].scroll,'No sideways scrolling');
         assert(rows[0].boxes.every(b=>b.w>=44&&b.h>=44),'Every quick link meets 44px');
         assert.equal(await page.locator('.collection-nav').count(),0,'No legacy hub grid in the DOM');
-        await exports.assertPlainLinks(page);
+        await exports.assertPlainLinks(page,current.length);
         return rows[0];
       };
       const state=await check();
       const shape=state.boxes.map(b=>[b.x,b.y,b.w,b.h].map(n=>Math.round(n)));
-      if(geometry)assert.deepEqual(shape,geometry,'Four hubs have identical row position and spacing');else geometry=shape;
+      if(geometry)assert.deepEqual(shape,geometry,'Homepage and hubs have identical row position and spacing');else geometry=shape;
       assert.equal(await page.locator('nav.collection-nav').count(),0,'No duplicated legacy strip');
       const themeStyles=[];
       if(javaScriptEnabled){
         const savedThemes=await page.evaluate(()=>[document.documentElement,document.body].map(e=>e.getAttribute('data-theme')));
         for(const theme of ['cream','dark','pink','blue','light','highlumen']){
           await page.evaluate(t=>{for(const e of [document.documentElement,document.body])t==='cream'?e.removeAttribute('data-theme'):e.setAttribute('data-theme',t)},theme);
-          await check();themeStyles.push({theme,styles:await exports.assertPlainLinks(page),status:'PASS'});
+          await check();themeStyles.push({theme,styles:await exports.assertPlainLinks(page,current.length),status:'PASS'});
         }
         await page.evaluate(values=>[document.documentElement,document.body].forEach((e,i)=>values[i]===null?e.removeAttribute('data-theme'):e.setAttribute('data-theme',values[i])),savedThemes);
         await check();
-        const selector=route==='/Lessons/'?'#scards .icon svg.fd-icon':route==='/resources/'?'#pillars svg.fd-icon':route==='/tools/'?'.ci svg.fd-icon':'#groups .ci svg.fd-icon';
+        const selector=route==='/Lessons/'?'#scards .icon svg.fd-icon':route==='/resources/'?'#pillars svg.fd-icon':route==='/tools/'?'.ci svg.fd-icon':route==='/Matt-s-Apps-/'?'#groups .ci svg.fd-icon':'.fd-symbol svg.fd-icon';
         await page.locator(selector).first().waitFor({state:'visible'});
         assert((await page.locator(selector).count())>0,'Visible line icons');
         const dims=await page.locator(selector).evaluateAll(es=>es.filter(e=>e.getClientRects().length).map(e=>({w:e.getBoundingClientRect().width,h:e.getBoundingClientRect().height})));

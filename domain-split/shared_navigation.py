@@ -88,7 +88,7 @@ LEARNING = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'),
 LEARNING_PUPIL = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'), ('/Lessons/primary/', 'Primary lessons')]
 HUB_LINKS = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'),
              ('/Matt-s-Apps-/', 'Apps & tools'), ('/tools/', 'Teacher tools')]
-HUB_ROUTES = {route for route, _ in HUB_LINKS}
+HUB_ROUTES = {route for route, _ in HUB_LINKS} | {'/', '/main/'}
 ACCOUNT = [('/account/', 'Account and members'), ('/mailing-list/', 'Teacher updates'),
            ('/privacy/', 'Privacy and statistics')]
 ACCOUNT_SHARED = [('/privacy/', 'Privacy and statistics')]
@@ -241,7 +241,7 @@ def header(route, audiences, adult=False, pupil=False, theme=False, primary=Fals
         'menu_title': escape(MENU_TITLE), 'groups': groups,
     })
     # Public catalogue links are independent of account eligibility. The four
-    # hubs share exactly one row; adult/pupil account controls above stay intact.
+    # hubs and homepage aliases share one row; account controls stay intact.
     hub = route in HUB_ROUTES
     navigation = chrome_template('nav-row.html', 'published-education', {
         'links': ''.join(link(item, primary and item[0] == '/Lessons/')
