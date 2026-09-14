@@ -245,8 +245,8 @@ async function chromeFocus(control,surface,label,redProof=false) {
         await page.locator(menu+' > summary').press('Enter');
         assert.equal(await page.locator(menu+' > summary').evaluate(el=>getComputedStyle(el).transitionDuration),'0s');
         await page.locator(menu+' > summary').press('Escape');
-        await page.getByLabel('Search lessons, packs and tools').fill('PDF Studio');
-        await page.locator('.education-home-search button').click();
+        await page.getByLabel('Search lessons and resources').fill('PDF Studio');
+        await page.locator('[data-home-search] button').click();
         assert.equal(new URL(page.url()).pathname,'/resources/');
         assert.equal(new URL(page.url()).searchParams.get('q'),'PDF Studio');
         await page.locator('a[href="/Matt-s-Apps-/PDF_Studio.html"]').first().waitFor({state:'visible'});

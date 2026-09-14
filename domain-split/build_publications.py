@@ -118,6 +118,7 @@ def subject_pathway_cards(lessons):
     rows = [] if lessons is None else [r for r in json.loads((lessons / 'resources.json').read_text()) if str(r.get('type', '')).lower() != 'game']
     cards = []
     for slug, name, browse in SUBJECT_CARDS:
+        if not any(card_of(r) == slug for r in rows): continue
         tiers = {tier_of(r) for r in rows if card_of(r) == slug}
         cards.append({'slug': slug, 'name': name, 'browse': browse, 'pathways': [p for p in ('BUILD', 'GROW', 'LAUNCH') if p in tiers]})
     return cards
@@ -152,6 +153,10 @@ def audience_rows(record_path=None):
 
 
 def render_page(preview, kind, origin, config):
+    if kind in {"home", "teachers", "pupils"}:
+        import education_frontdoors
+        import sys
+        return education_frontdoors.render(kind, origin, sys.modules[__name__])
     start = preview.index('<section class="view' + (' game-view' if kind == "games" else '') + '" id="view-' + kind + '"')
     possible = [n for n in [preview.find('<section class="view', start + 20), preview.find('</main>', start)] if n >= 0]
     body = preview[start:min(possible)].strip()
@@ -344,6 +349,7 @@ def main():
     LESSONS_ROOT = args.lessons.resolve()
     for kind, path in [('home','index.html'), ('home','main/index.html'), ('teachers','for/teachers/index.html'), ('pupils','for/pupils/index.html'), ('commission','commission/index.html')]:
         put(education, path, render_page(preview, kind, config['education_origin'], config))
+    copy_file(HERE / 'education-frontdoors.css', education, 'assets/education-frontdoors.css')
     copy_file(HERE / 'education-navigation.css', education, 'assets/education-navigation.css')
     copy_file(HERE / 'added-this-half-term.js', education, 'assets/added-this-half-term.js')
     for target in [games, education]:

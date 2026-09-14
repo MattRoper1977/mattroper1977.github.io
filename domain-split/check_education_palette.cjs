@@ -7,13 +7,13 @@ const fs=require('node:fs');
 const path=require('node:path');
 const origin=new URL(process.env.MBM_EDUCATION_ORIGIN||'http://127.0.0.1:4173').origin;
 const cases=[
-  ['/','home','.route-card'],['/main/','home alias','.route-card'],
+  ['/','home','.fd-subject'],['/main/','home alias','.fd-subject'],
   ['/account/','account','.ma-panel'],['/members/','members','.ma-panel'],['/mailing-list/','updates','.ma-panel'],
   ['/privacy/','privacy','.pv-note'],['/stats/','statistics','.usage-card'],
   ['/owner/stats/','owner statistics',null,'Individual statistics require the existing service; the static console has no result card.'],
   ['/resources/','resources','.rx-cardx'],['/tools/','tools','.tcard'],
   ['/teach/','teacher workspace','.mbm-task-card'],['/education-hub/','education guidance','.mbm-start-card'],
-  ['/for/teachers/','teachers','.route-card'],['/for/pupils/','pupils','.route-card'],
+  ['/for/teachers/','teachers','.fd-subject'],['/for/pupils/','pupils','.fd-subject'],
   ...['parents-carers','schools-semh','trusts','councils-organisations','partners'].map(s=>['/for/'+s+'/','audience '+s,'.ad-card']),
   ['/for/governors-trustees/','governors','.gv-card'],['/Lessons/','lessons','.scard'],
   ['/Lessons/primary/','primary','.primary-unit'],['/Matt-s-Apps-/','apps','.card'],
@@ -42,7 +42,7 @@ function check(row,theme){
   assert(row.scrollWidth<=row.width+1,'No page overflow');
 }
 async function run(){
- const browser=await chromium.launch();const rows=[],requests=[],errors=[];
+ const browser=await chromium.launch();const rows=[],requests=[],errors=[],appsComposition=[];
  try{
   for(const width of [390,900,1280]) for(const theme of ['cream','dark']){
    const context=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce'});
@@ -58,7 +58,8 @@ async function run(){
     const h=page.locator('h1').first();
     if(await h.count()){row.heading=await h.evaluate(e=>({text:e.textContent.trim(),colour:getComputedStyle(e).color}));
      // Part R places Resources' heading on the body surface; every other role is unchanged.
-     const onDark=['/','/main/','/account/','/members/','/mailing-list/','/privacy/','/tools/','/teach/','/education-hub/','/for/teachers/','/for/pupils/','/Matt-s-Apps-/','/stats/on-this-device/','/asdan/','/uas/','/commission/','/Lessons/Science_Teesside/','/Lessons/Humanities_Teesside/'].includes(route);
+     const sw2=await page.locator('body[data-sw2-frontdoor],main[data-sw2-apps-hub]').count();
+     const onDark=!sw2&&['/','/main/','/account/','/members/','/mailing-list/','/privacy/','/tools/','/teach/','/education-hub/','/for/teachers/','/for/pupils/','/Matt-s-Apps-/','/stats/on-this-device/','/asdan/','/uas/','/commission/','/Lessons/Science_Teesside/','/Lessons/Humanities_Teesside/'].includes(route);
      assert.equal(row.heading.colour,onDark?'rgb(255, 254, 250)':row.ink,'Matched primary heading role '+route);
     }
     else assert.equal(route,'/stats/','Missing primary heading outside the compact statistics block');
@@ -77,6 +78,7 @@ async function run(){
     assert.equal(await page.locator('footer img[src*="micro_mark"],footer svg.mono').count(),0,'Retired footer marks');
     rows.push(row);
    }
+   appsComposition.push(await require('./sw2/check_apps_palette.cjs').verify({page,context,origin,width,theme}));
    // A real missing stylesheet and a visible defect must each turn the gate red.
    await page.goto(origin+'/');await page.waitForLoadState('networkidle');
    await page.evaluate(t=>{for(const e of [document.documentElement,document.body])t==='cream'?e.removeAttribute('data-theme'):e.setAttribute('data-theme',t)},theme);
@@ -92,7 +94,7 @@ async function run(){
   }
   assert.deepEqual(errors,[],'No page errors');assert.deepEqual(requests.filter(r=>new URL(r.url).origin!==origin),[],'No third-party fonts');
   fs.mkdirSync('audit-output/education-navigation',{recursive:true});
-  fs.writeFileSync('audit-output/education-navigation/part-t-palette.json',JSON.stringify({status:'PASS',rows,fontRequests:requests,errors,controls:'unlink / visible repaint / restore at each width and theme'},null,2));
+  fs.writeFileSync('audit-output/education-navigation/part-t-palette.json',JSON.stringify({status:'PASS',rows,appsComposition,fontRequests:requests,errors,controls:'unlink / visible repaint / restore at each width and theme'},null,2));
   console.log('PASS Part T: '+rows.length+' complete route/width/theme cases with rendered body/card roles, actual variants, font requests and negative controls.');
  }finally{await browser.close()}
 }

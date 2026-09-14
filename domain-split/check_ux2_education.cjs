@@ -101,6 +101,7 @@ const MUTATIONS = {
   'inject-kofi': { target: 'money', route: '/', apply: html => html.replace('</footer>', '<p><a href="https://ko-fi.com/madebymattuk">Support Made by Matt</a></p></footer>') },
   'inject-third-party': { target: 'third-party', route: '/', apply: html => html.replace('</head>', '<script src="https://cdn.example.net/planted.js"></script></head>') },
   'break-copy': { target: 'copy', route: '/', apply: html => html.replace('Find your next lesson.', 'Find your next lesson') },
+  'strip-teacher-safety': { target: 'claims', route: '/for/teachers/', apply: html => html.replace('Capability without unsupported claims', '') },
   'strip-stats-everywhere': { target: 'reachability', routes: ['/privacy/', '/for/teachers/'], apply: html => html.replace(/<a href="\/stats\/">[^<]*<\/a>/g, 'Shared activity') },
 };
 async function plant(context, mutation) {
@@ -188,8 +189,8 @@ async function suite(browser, mutation) {
         if (!count) problems.push(`${href} → ${entry.to} ${entry.selector}: the recorded control is not on that page`);
       }
     }
-    assert.deepEqual(problems, [], 'Pre-order hrefs lost within two taps of /');
-    assert.deepEqual(stale, [], 'Recorded relocations/retirements that are in fact still reachable (stale ledger)');
+    assert.deepEqual(problems, [], 'Pre-order hrefs lost within two taps of /: '+JSON.stringify(problems));
+    assert.deepEqual(stale, [], 'Recorded relocations/retirements that are in fact still reachable (stale ledger): '+JSON.stringify(stale));
     return { oneTap: oneTap.size, twoTap: twoTap.size, expandedPages: Object.keys(expanded).length, preOrder: seen.size, lessonsViaPathwaySegment: viaSegment.length };
   });
 
@@ -239,7 +240,8 @@ async function suite(browser, mutation) {
       const money = { pound: (text.match(/£/g) || []).length, kofi: await page.locator('a[href*="ko-fi" i]').count(), mailto: await page.locator('a[href^="mailto:"]').count(), donate: (text.match(/donat/gi) || []).length };
       assert.deepEqual(money, { pound: 0, kofi: 0, mailto: 0, donate: 0 }, 'Money on ' + route);
       const commission = await page.locator('a[href="/commission/"]').evaluateAll(n => n.map(a => a.textContent.trim()));
-      assert.deepEqual([...new Set(commission)].filter(Boolean), route === '/' ? ['Commission a resource'] : [], 'The only commission label is "Commission a resource"');
+      assert.equal(commission.filter(t => t === 'Commission a resource').length, 0, 'SW2 H: the commission offer stays on its own page');
+      if (route !== '/') assert.deepEqual(commission, [], 'No commission action on pupil pages');
       return money;
     });
     await check(`third-party ${route}`, async () => {
@@ -315,6 +317,8 @@ async function suite(browser, mutation) {
     return { routes: routes.length, banned: banned.length };
   });
 
+  if (!mutation) await check('SW2 H/U front doors', async () => require('./check_sw2_frontdoors.cjs').verify({page, origin, rules: fixtures.relocations.lessonRows, record: JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/audience-homepages.json'), 'utf8'))}));
+
   if (!mutation && GATED.includes('/resources/')) await check('resources-packs', async () => require('./check_sw2_resources.cjs').verify({page, origin, rules: fixtures.relocations.lessonRows}));
   if (GATED.includes('/resources/')) await check('resources', async () => {
     // Appendix A §RESOURCES on the built page: pills (no Type pill — kind scored below 18/20),
@@ -385,7 +389,8 @@ async function suite(browser, mutation) {
   await check('hero /', async () => {
     await goto(page, '/');
     const images = await page.locator(HEADER + ' img, .hero-art img').evaluateAll(n => n.map(i => ({ src: (i.getAttribute('src') || '').slice(0, 40), w: i.naturalWidth, h: i.naturalHeight, complete: i.complete })));
-    assert(images.length >= 2, 'Brand mark and hero artwork present');
+    assert(images.length >= 1, 'The approved brand mark is present');
+    assert.equal(await page.locator('main img').count(), 0, 'H3: no preview without an owner-generated render');
     for (const i of images) assert(i.complete && i.w > 0 && i.h > 0, 'Image decodes: ' + JSON.stringify(i));
     return images;
   });
@@ -397,24 +402,22 @@ async function suite(browser, mutation) {
     await page.waitForFunction(() => document.querySelectorAll('.scard[data-card]').length > 0);
     const cards = await page.locator('.scard[data-card]').evaluateAll(n => n.map(c => c.dataset.card));
     assert.deepEqual(tiles, cards, 'Homepage subject tiles are the hub cards, slug for slug, in order');
-    // UX2 B3: the teacher page's "Choose a subject and pathway" cards carry exactly the pathway
-    // chips the hub's own cards carry (only pathways present in the catalogue), per subject.
-    const hubTiers = await page.locator('.scard[data-card]').evaluateAll(n => Object.fromEntries(n.map(c => [c.dataset.card, [...c.querySelectorAll('.chips .tier')].map(x => x.textContent.trim())])));
-    await goto(page, '/for/teachers/');
-    const teacherTiers = await page.locator('.subject-pathways .route-card').evaluateAll(n => Object.fromEntries(n.map(c => [new URL(c.querySelector('a.text-link').href).searchParams.get('subject'), [...c.querySelectorAll('.chips a')].map(a => a.textContent.trim())])));
-    assert(Object.keys(teacherTiers).length === 4, 'Four subject cards on the teacher page');
-    for (const [slug, tiers] of Object.entries(teacherTiers)) assert.deepEqual(tiers, hubTiers[slug] || [], 'Pathway chips equal the hub card chips: ' + slug);
-    for (const [slug, tiers] of Object.entries(teacherTiers)) for (const p of tiers) assert.equal((await page.request.get(origin + '/Lessons/subject.html?subject=' + slug + '&pathway=' + p)).status(), 200);
-    return { tiles, teacherTiers };
+    // SW2 U supersedes the triad/pathway links with the same subject tiles.
+    for (const route of ['/for/teachers/', '/for/pupils/']) {
+      await goto(page, route);
+      const audienceTiles = await page.locator('[data-subject-tiles] a').evaluateAll(n => n.map(a => new URL(a.href).searchParams.get('subject')));
+      assert.deepEqual(audienceTiles, cards, 'Audience subject tiles equal the actual hub cards: ' + route);
+    }
+    return { tiles };
   });
 
-  await check('added this half-term is the hub rail', async () => {
+  await check('added this half-term uses the first three hub rows', async () => {
     await goto(page, '/');
     const home = await page.evaluate(() => ({ hidden: document.getElementById('added').hidden, heading: document.getElementById('added-h').textContent, rows: [...document.querySelectorAll('#added-rail .acard')].map(a => a.dataset.resourcePath) }));
     await goto(page, '/Lessons/');
     await page.waitForFunction(() => document.querySelectorAll('.scard[data-card]').length > 0);
-    const hub = await page.evaluate(() => ({ hidden: document.getElementById('added').hidden, heading: document.getElementById('added-h').textContent, rows: [...document.querySelectorAll('#added-rail .acard')].map(a => a.dataset.resourcePath) }));
-    assert.deepEqual(home, hub, 'The homepage rail equals the hub rail (heading, rows, hidden state)');
+    const hub = await page.evaluate(() => ({ hidden: document.getElementById('added').hidden, heading: document.getElementById('added-h').textContent, rows: [...document.querySelectorAll('#added-rail .acard')].slice(0,3).map(a => a.dataset.resourcePath) }));
+    assert.deepEqual(home, hub, 'Same date window, heading, ordering and real records; SW2 H displays three');
     return home;
   });
 
@@ -456,7 +459,7 @@ async function suite(browser, mutation) {
   await browser.close();
   const failed = report.cases.filter(c => c.status === 'FAIL').length;
   report.finishedAt = new Date().toISOString(); report.result = failed || report.fatal ? 'FAIL' : 'PASS';
-  fs.writeFileSync(path.join(out, 'ux2-education.json'), JSON.stringify(report, null, 1));
-  console.log(`${report.result}: ${report.cases.length - failed} passed, ${failed} failed; ${path.join(out, 'ux2-education.json')}`);
+  fs.writeFileSync(path.join(out, RED ? 'ux2-education-red.json' : 'ux2-education.json'), JSON.stringify(report, null, 1));
+  console.log(`${report.result}: ${report.cases.length - failed} passed, ${failed} failed; ${path.join(out, RED ? 'ux2-education-red.json' : 'ux2-education.json')}`);
   process.exitCode = failed || report.fatal ? 1 : 0;
 })();

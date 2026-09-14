@@ -2,7 +2,7 @@
  *
  * The SAME component as the Lessons hub's rail (Lessons UX2 A2), copied with
  * its source recorded: Lessons/index.html renderHub() lines 75–81 (the rail,
- * heading fallback and the six-row cut) and Lessons/assets/catalogue/hub.js —
+ * heading fallback and the SW2 H three-row cut) and Lessons/assets/catalogue/hub.js —
  * halfTermWindow(), sixtyDaysAgo(), fmtDay(), formatOf(), badge(), esc(),
  * safeHref(), the FORMAT_LABEL table and the COPY strings "Added this
  * half-term" / "Added this term" / "See all →". It reads the served Lessons
@@ -15,6 +15,13 @@
 (function (root) {
   'use strict';
   var d = root.document;
+  var search = d.querySelector('[data-home-search]');
+  if (search) {
+    var field = search.querySelector('input');
+    var runSearch = function () { var q = field.value.trim(); root.location.assign('/resources/' + (q ? '?q=' + encodeURIComponent(q) : '')); };
+    search.querySelector('button').addEventListener('click', runSearch);
+    field.addEventListener('keydown', function (event) { if (event.key === 'Enter') { event.preventDefault(); runSearch(); } });
+  }
   var section = d.getElementById('added'), heading = d.getElementById('added-h'), rail = d.getElementById('added-rail'), all = d.getElementById('added-all');
   if (!section || !heading || !rail) return;
   var COPY = { added: 'Added this half-term', addedFallback: 'Added this term', seeAll: 'See all →' };
@@ -26,7 +33,7 @@
     var s = String(value == null ? '' : value).trim();
     if (!s || /^(?:javascript|data|vbscript):/i.test(s)) return '#';
     if (/^https?:\/\//i.test(s)) return encodeURI(s);
-    if (!/^[a-z][a-z0-9+.-]*:/i.test(s) && !/^\/\//.test(s) && !/[\\ -]/.test(s)) return encodeURI(s);
+    if (s[0] === '/' && s[1] !== '/' && !/[\\]/.test(s)) return encodeURI(s);
     return '#';
   }
   function ext(path) { var m = String(path || '').split('?')[0].split('#')[0].match(/\.([a-z0-9]+)$/i); return m ? m[1].toLowerCase() : ''; }
@@ -66,12 +73,38 @@
     heading.textContent = w ? COPY.added : COPY.addedFallback;
     if (all) all.textContent = COPY.seeAll;
     var from = w ? w.start : sixtyDaysAgo(), now = today();
-    var recent = rows.filter(function (r) { return r.added && r.added >= from && r.added <= now; })
-      .sort(function (a, b) { return b.added.localeCompare(a.added) || String(a.title).localeCompare(String(b.title)); }).slice(0, 6);
+    var recent = rows.filter(function (r) { return String(r.type || '').toLowerCase() !== 'game' && r.added && r.added >= from && r.added <= now; })
+      .sort(function (a, b) { return b.added.localeCompare(a.added) || String(a.title).localeCompare(String(b.title)); }).slice(0, 3);
+    function tier(r) {
+      var f = String(r.file || r.url || ''), t;
+      for (var p of ['BUILD', 'GROW', 'LAUNCH']) {
+        if (new RegExp('(?:^|/)' + p.charAt(0) + p.slice(1).toLowerCase() + '/').test(f) || f.split('/').some(function (x) { return x.toUpperCase().indexOf(p + '_') === 0; })) return p;
+      }
+      t = String(r.title || '').match(/^(BUILD|GROW|LAUNCH)(?![A-Za-z])/); return t ? t[1] : null;
+    }
+    function chips(tiers) { return tiers.map(function (p) { return '<span class="fd-chip ' + p.toLowerCase() + '">' + p + '</span>'; }).join(''); }
     rail.innerHTML = recent.map(function (r) {
-      var path = r.file || r.url || '';
-      return '<a class="acard" href="' + esc(safeHref(/^https?:\/\//i.test(path) ? path : '/Lessons/' + path)) + '" data-resource-path="' + esc(path) + '"><span class="when">' + esc(fmtDay(r.added)) + '</span><h3>' + esc(r.title) + '</h3><span class="chips">' + badge(formatOf(r)) + '</span><span class="sub">' + esc(String(r.subject)) + '</span></a>';
+      var path = r.file || r.url || '', pathway = tier(r), description = r.desc || r.description || '';
+      return '<a class="acard" href="' + esc(safeHref(/^https?:\/\//i.test(path) ? path : '/Lessons/' + path)) + '" data-resource-path="' + esc(path) + '"><h3>' + esc(r.title) + '</h3>' + (pathway ? '<span class="fd-chips">' + chips([pathway]) + '</span>' : '') + '<span class="sub">' + esc(r.subject || '') + '</span>' + (description ? '<p>' + esc(description) + '</p>' : '') + (ext(path) === 'html' ? '<span class="fd-interactive">INTERACTIVE</span>' : '') + '</a>';
     }).join('');
+    // The most recent calendar block already begun that has real packs; if
+    // all packs are future blocks, choose the earliest available block.
+    var packs = rows.filter(function (r) { return r.kind === 'pack' && r.companionOf && r.halfTerm && Array.isArray(r.files) && r.files.length; });
+    var available = HALF_TERMS.filter(function (label) { return packs.some(function (r) { return r.halfTerm === label; }); });
+    var begun = available.filter(function (label) { var b = spine && spine.blocks[label]; return b && (b.start || spine.weekStarts[String(b.abs[0])]) <= now; });
+    var selected = begun.length ? begun[begun.length - 1] : available[0];
+    var group = packs.filter(function (r) { return r.halfTerm === selected; });
+    if (group.length) {
+      var first = group.slice().sort(function (a, b) { return String(a.subject).localeCompare(String(b.subject)) || String(a.title).localeCompare(String(b.title)); })[0];
+      var subjectGroup = group.filter(function (r) { return r.subject === first.subject; });
+      var present = ['BUILD', 'GROW', 'LAUNCH'].filter(function (p) { return subjectGroup.some(function (r) { return tier(r) === p; }); });
+      var formats = [['pptx', 'PowerPoint'], ['docx', 'Word'], ['pdf', 'PDF']].filter(function (pair) { return subjectGroup.some(function (r) { return r.files.some(function (f) { return String(f.type).toLowerCase() === pair[0]; }); }); }).map(function (pair) { return pair[1]; });
+      d.querySelectorAll('[data-pack-heading]').forEach(function (el) { el.textContent = first.subject + ' · ' + selected; });
+      d.querySelectorAll('[data-pack-pathways]').forEach(function (el) { el.innerHTML = chips(present); });
+      d.querySelectorAll('[data-pack-formats]').forEach(function (el) { el.textContent = formats.join(' · '); });
+      d.querySelectorAll('[data-pack-link]').forEach(function (el) { el.href = '/resources/?halfTerm=' + encodeURIComponent(selected) + '&type=pack'; });
+      d.querySelectorAll('[data-pack-card]').forEach(function (el) { el.hidden = false; el.dataset.packHalfTerm = selected; });
+    }
     section.hidden = !recent.length;
   }).catch(function () { section.hidden = true; });
 })(window);

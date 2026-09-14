@@ -131,6 +131,7 @@ async function educationOnly(page, requests, start) {
         const prefix = `${width}-${home === '/' ? 'home' : 'main'}`;
         const entry = await shot(page, prefix + '-entrances');
         await page.locator('#audiences').scrollIntoViewIfNeeded();
+        await page.locator('#audiences details > summary').click();
         const record = JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/audience-homepages.json'), 'utf8')).audiences;
         const expectedRows = Object.values(record).filter(a => a.route !== record.teachers.route && a.route !== record.pupils.route).map(a => [a.route, a.label]);
         expectedRows.push(['/for/governors-trustees/', 'Governors & trustees']);
@@ -179,8 +180,8 @@ async function educationOnly(page, requests, start) {
           const menuPlay = panel.getByRole('link', { name: 'Made by Matt Play ↗', exact: true });
           assert.equal(await menuPlay.getAttribute('href'), canonicalPlay + '/'); await target(menuPlay);
           await page.keyboard.press('Escape');
-          const playLink = page.locator('footer').getByRole('link', { name: 'Made by Matt Play ↗', exact: true });
-          assert.equal(await playLink.getAttribute('href'), canonicalPlay + '/'); await target(playLink); await noOverflow(page);
+          // SW2 U keeps Play in the native menu; the pupil footer is the approved learning subset.
+          await noOverflow(page);
           assert.equal((await page.request.get(url('/#audiences'))).status(), 200);
         }
         return { routes: ['/for/teachers/', '/for/pupils/'], visibleEntrances: ['Primary', 'Families & organisations', 'Made by Matt Play'] };

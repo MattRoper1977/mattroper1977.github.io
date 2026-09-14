@@ -77,7 +77,7 @@ def adopt_palette(text, route, adult, template):
         # Keep existing footer destinations once, including the canonical Play
         # link. The homepage retains UX2's precise commission action label.
         fragment = template('footer.html', 'published-links', {
-            'contact_label': 'Commission a resource' if route in {'/', '/main/'} else 'Contact',
+            'contact_label': 'Contact',
         })
         fragment = re.sub(r'<a href="([^"]+)"[^>]*>[^<]*</a>',
                           lambda match: '' if match.group(1) in parsed.footer_hrefs else match.group(0), fragment)
