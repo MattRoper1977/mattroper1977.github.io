@@ -133,10 +133,10 @@ async function educationOnly(page, requests, start) {
         await page.locator('#audiences').scrollIntoViewIfNeeded();
         await page.locator('#audiences details > summary').click();
         const record = JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/audience-homepages.json'), 'utf8')).audiences;
-        const expectedRows = Object.values(record).filter(a => a.route !== record.teachers.route && a.route !== record.pupils.route).map(a => [a.route, a.label]);
+        const expectedRows = Object.values(record).filter(a => a.route !== record.teachers.route && a.route !== record.pupils.route && a.route !== record.parents.route).map(a => [a.route, a.label]);
         expectedRows.push(['/for/governors-trustees/', 'Governors & trustees']);
         const rows = await page.locator('#audiences .audience-row').evaluateAll(nodes => nodes.map(a => [a.getAttribute('href'), a.textContent.replace(/\s*→\s*$/, '').trim()]));
-        assert.deepEqual(rows, expectedRows, 'One row per audience route except teachers and pupils, label and order from the record');
+        assert.deepEqual(rows, expectedRows, 'Institutional rows follow the record; families have a direct entrance');
         for (const route of audienceRoutes) await target(page.locator(`#audiences a[href="${route}"]`));
         const audiences = await shot(page, prefix + '-audiences', page.locator('#audiences'));
         const details = await educationOnly(page, requests, start);
@@ -184,7 +184,7 @@ async function educationOnly(page, requests, start) {
           await noOverflow(page);
           assert.equal((await page.request.get(url('/#audiences'))).status(), 200);
         }
-        return { routes: ['/for/teachers/', '/for/pupils/'], visibleEntrances: ['Primary', 'Families & organisations', 'Made by Matt Play'] };
+        return { routes: ['/for/teachers/', '/for/pupils/'], visibleEntrances: ['Primary', 'Working with schools and organisations', 'Made by Matt Play'] };
       }, page);
       await check(`${width}-preserved-play-media-native-control-fixture`, async () => {
         // The former Education preview UI is intentionally absent. Preserve

@@ -5,7 +5,8 @@ const assert = require('node:assert/strict');
 exports.verify = async ({page, origin, rules, record}) => {
   const rows = await (await page.request.get(origin+'/Lessons/resources.json')).json();
   const report = {cases:[], previews:0, brokenImages:0, otherAudienceBodies:'checked separately by exact output comparison'};
-  for(const width of [390,900,1280]) for(const route of ['/','/for/teachers/','/for/pupils/']) {
+  for(const width of [320,390,900,1280]) for(const route of ['/','/for/teachers/','/for/pupils/']) {
+    if(width===320&&route!=='/')continue; // New narrow-screen coverage is for the changed homepage.
     await page.setViewportSize({width,height:900}); await page.goto(origin+route); await page.waitForLoadState('networkidle');
     const measure = async () => page.evaluate(() => ({
       overflow:[document.documentElement,...document.querySelectorAll('main *')].filter(e=>e.getClientRects().length&&getComputedStyle(e).display!=='inline'&&e.clientWidth>0&&e.scrollWidth>e.clientWidth+1).filter(e=>{const s=getComputedStyle(e);return !(e.matches('#added-rail .acard p')&&s.textOverflow==='ellipsis'&&s.overflowX==='hidden'&&s.whiteSpace==='nowrap'&&e.getBoundingClientRect().height<=parseFloat(s.lineHeight)+1)}).map(e=>e.id||e.className||e.tagName),
@@ -23,10 +24,20 @@ exports.verify = async ({page, origin, rules, record}) => {
     if(route==='/'){
       assert.equal(await page.locator('main form').count(),0,'Homepage retains one non-form search');
       assert.equal(await page.locator('[data-home-search] input').getAttribute('placeholder'),'Try Science, Humanities or PDF Studio');
-      const cards=await page.locator('[data-pack-card]').evaluateAll(es=>es.map(e=>({hidden:e.hidden,halfTerm:e.dataset.packHalfTerm,head:e.querySelector('[data-pack-heading]').textContent,tiers:[...e.querySelectorAll('[data-pack-pathways] .fd-chip')].map(x=>x.textContent),formats:e.querySelector('[data-pack-formats]').textContent,href:e.querySelector('[data-pack-link]').getAttribute('href')})));
-      const packs=rows.filter(r=>r.kind==='pack'&&r.companionOf&&r.files?.length);
-      assert(packs.length,'Pack census is non-vacuous');
-      for(const c of cards){assert.equal(c.hidden,false);const group=packs.filter(r=>r.halfTerm===c.halfTerm&&c.head===r.subject+' · '+c.halfTerm);assert(group.length,'Pack heading identifies real records');assert.deepEqual(c.tiers,['BUILD','GROW','LAUNCH'].filter(p=>group.some(r=>rules.tierOf(r)===p)));const formats=[['pptx','PowerPoint'],['docx','Word'],['pdf','PDF']].filter(([ext])=>group.some(r=>r.files.some(f=>f.type===ext))).map(([,label])=>label).join(' · ');assert.equal(c.formats,formats);const u=new URL(c.href,origin);assert.equal(u.pathname,'/resources/');assert.equal(u.searchParams.get('halfTerm'),c.halfTerm);assert.equal(u.searchParams.get('type'),'pack');}
+      const review=JSON.parse(require('node:fs').readFileSync(require('node:path').join(__dirname,'homepage-feature.json'),'utf8'));
+      const features=page.locator('[data-featured-lesson]');
+      assert.equal(await features.count(),2,'One responsive feature in each layout slot');
+      assert.equal(await features.filter({visible:true}).count(),1,'Exactly one feature is visible');
+      const pack=rows.find(r=>r.id===review.packId); assert(pack&&pack.companionOf===review.lessonFile,'Feature retains the real companion target');
+      for(const feature of await features.all()) {
+        assert.equal(await feature.locator('h2').textContent(),review.displayTitle);
+        assert.equal(await feature.getByRole('link',{name:'Try this lesson →',exact:true,includeHidden:true}).getAttribute('href'),'/Lessons/'+review.lessonFile);
+        assert.equal(await feature.getByRole('link',{name:'Find teaching resources →',exact:true,includeHidden:true}).getAttribute('href'),'/resources/?q='+encodeURIComponent(review.displayTitle));
+        assert((await feature.textContent()).includes(review.description));
+      }
+      const entrances=await page.locator('.fd-audience-entry a').evaluateAll(es=>es.map(e=>e.getAttribute('href')));
+      assert.deepEqual(entrances,[record.audiences.teachers.route,record.audiences.pupils.route,record.audiences.parents.route],'Teachers, pupils and families have direct entrances');
+      assert.equal(await page.locator('#audiences details summary').textContent(),'Working with schools and organisations');
       const subjects=await page.locator('[data-subject-tiles] a').evaluateAll(es=>es.map(e=>({href:e.getAttribute('href'),icons:e.querySelectorAll('svg.fd-icon').length,height:e.getBoundingClientRect().height})));
       assert.deepEqual(subjects.map(s=>s.href.split('subject=')[1]),['science','humanities-re','art-studio','lifeskills'].filter(slug=>rows.some(r=>rules.cardOf(r)===slug)),'Homepage features the four actual subject groups');
       for(const s of subjects){assert.equal(s.icons,1,'Each featured subject has a vector icon');assert(s.height<=100,'Featured subjects remain compact');}
@@ -54,5 +65,22 @@ exports.verify = async ({page, origin, rules, record}) => {
     }
     report.cases.push({width,route,status:'PASS'});
   }
+  await page.goto(origin+'/');await page.waitForLoadState('networkidle');
+  await page.locator('[data-featured-lesson]:visible').getByRole('link',{name:'Find teaching resources →',exact:true}).click();
+  await page.locator('#unitGrid .chip.more').first().waitFor({state:'visible'});
+  assert.equal(await page.locator('#unitGrid .chip.more').count(),1,'The feature finds one matching resource unit');
+  await page.locator('#unitGrid .chip.more').click();
+  assert.equal(await page.locator('#rxSheet .pack-version[data-pack="pack-grow-science-w8a"]').count(),1,'The matching unit includes the reviewed companion pack');
+  report.cases.push({route:'featured lesson to matching resources',status:'PASS'});
+  const staticContext=await page.context().browser().newContext({javaScriptEnabled:false,viewport:{width:390,height:844}});
+  try {
+    const staticPage=await staticContext.newPage();await staticPage.goto(origin+'/');
+    assert.equal(await staticPage.locator('[data-featured-lesson]:visible').count(),1,'The verified feature works without JavaScript');
+    assert.equal(await staticPage.locator('[data-subject-tiles] a').count(),4,'Static subject browsing remains available');
+    assert.equal(await staticPage.locator('.fd-audience-entry a').count(),3,'Static audience routes remain available');
+    await staticPage.locator('[data-featured-lesson]:visible').getByRole('link',{name:'Try this lesson →',exact:true}).click();
+    assert(await staticPage.getByRole('heading',{name:'Day and Night: Sky Shift',exact:true}).isVisible(),'Feature launches the actual lesson without JavaScript');
+    report.cases.push({width:390,route:'/',javascript:false,status:'PASS'});
+  } finally {await staticContext.close();}
   await page.setViewportSize({width:390,height:844});return report;
 };

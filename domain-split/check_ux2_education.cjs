@@ -202,7 +202,7 @@ async function suite(browser, mutation) {
       const text1 = norm(text);
       const set = fixtures.appendix.routeStrings[route] || [];
       const missing = set.filter(s => !text1.includes(norm(s)));
-      assert.deepEqual(missing, [], 'Appendix A strings missing on ' + route);
+      assert.deepEqual(missing, [], 'Appendix A strings missing on ' + route + ': ' + JSON.stringify(missing));
       const lbe = (text.match(/Learn • Build • Explore/g) || []).length;
       assert.equal(lbe, 1, '"Learn • Build • Explore" exactly once on ' + route);
       // vocabulary grep: each occurrence is the surviving name or a listed defect
