@@ -74,8 +74,9 @@
     return fetch(url, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(url + ' ' + r.status); return r.json(); })
       .catch(function (err) { if (optional) return null; throw err; });
   }
-  Promise.all([j('/Lessons/resources.json'), j('/Lessons/data/calendar-spine.json', true)]).then(function (loaded) {
-    var rows = loaded[0], spine = loaded[1];
+  Promise.all([j('/Lessons/resources.json'), j('/Lessons/data/calendar-spine.json', true), j('/Lessons/assets/catalogue/display-titles.json', true)]).then(function (loaded) {
+    var rows = loaded[0], spine = loaded[1], titleMap = loaded[2] && loaded[2].schema === 1 ? loaded[2].entries || {} : {};
+    function displayTitle(r) { var e = titleMap[r.file || r.url || '']; return e && e.id === (r.id || '') && e.originalTitle === r.title ? e.displayTitle : r.title; }
     if (!Array.isArray(rows)) throw new Error('Invalid resources.json');
     spine = spine && spine.weekStarts && spine.blocks ? spine : null;
     var w = halfTermWindow(spine, today());
@@ -96,7 +97,7 @@
       var path = r.file || r.url || '', pathway = tier(r), description = r.desc || r.description || '';
       var images = previewFor(r);
       var visual = images.length ? previewImage(images[0], 'fd-recent-preview') : '<span class="fd-resource-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v16M12 5C9 3 5 3 2 4v15c3-1 7-1 10 2 3-3 7-3 10-2V4c-3-1-7-1-10 1Z"/></svg></span>';
-      return '<a class="acard" href="' + esc(safeHref(/^https?:\/\//i.test(path) ? path : '/Lessons/' + path)) + '" data-resource-path="' + esc(path) + '">' + visual + '<div class="fd-recent-copy"><h3>' + esc(r.title) + '</h3><div class="fd-recent-meta">' + (pathway ? '<span class="fd-chips">' + chips([pathway]) + '</span>' : '') + '<span class="sub">' + esc(r.subject || '') + '</span></div>' + (description ? '<p>' + esc(description) + '</p>' : '') + '</div>' + (ext(path) === 'html' ? '<span class="fd-interactive">INTERACTIVE</span>' : '') + '</a>';
+      return '<a class="acard" href="' + esc(safeHref(/^https?:\/\//i.test(path) ? path : '/Lessons/' + path)) + '" data-resource-path="' + esc(path) + '">' + visual + '<div class="fd-recent-copy"><h3>' + esc(displayTitle(r)) + '</h3><div class="fd-recent-meta">' + (pathway ? '<span class="fd-chips">' + chips([pathway]) + '</span>' : '') + '<span class="sub">' + esc(r.subject || '') + '</span></div>' + (description ? '<p>' + esc(description) + '</p>' : '') + '</div>' + (ext(path) === 'html' ? '<span class="fd-interactive">INTERACTIVE</span>' : '') + '</a>';
     }).join('');
     // The most recent calendar block already begun that has real packs; if
     // all packs are future blocks, choose the earliest available block.

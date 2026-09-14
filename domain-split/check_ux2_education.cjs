@@ -319,6 +319,7 @@ async function suite(browser, mutation) {
 
   if (!mutation) await check('SW2 H/U front doors', async () => require('./check_sw2_frontdoors.cjs').verify({page, origin, rules: fixtures.relocations.lessonRows, record: JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/audience-homepages.json'), 'utf8'))}));
 
+  if (!mutation && GATED.includes('/resources/')) await check('edud2-discovery', async () => require('./check_edud2_discovery.cjs').verify({page, origin}));
   if (!mutation && GATED.includes('/resources/')) await check('resources-packs', async () => require('./check_sw2_resources.cjs').verify({page, origin, rules: fixtures.relocations.lessonRows}));
   if (GATED.includes('/resources/')) await check('resources', async () => {
     // Appendix A §RESOURCES on the built page: pills (no Type pill — kind scored below 18/20),
