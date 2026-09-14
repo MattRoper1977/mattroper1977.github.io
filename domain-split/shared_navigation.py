@@ -210,6 +210,8 @@ def refresh(output, site_source):
             from education_palette import adopt_palette
             from published_chrome import chrome_template
             text = adopt_palette(text, route, adult, chrome_template)
+            from education_chrome_correction import correct_icons
+            text = correct_icons(text, route)
         text = text.replace('</head>', '<link rel="stylesheet" href="/assets/shared-navigation.css">'
                             '<script defer src="/assets/shared-navigation.js"></script></head>', 1)
         path.write_text(text)
