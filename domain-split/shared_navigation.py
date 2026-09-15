@@ -91,7 +91,7 @@ HUB_LINKS = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'),
 ACCOUNT = [('/account/', 'Account and members'), ('/mailing-list/', 'Teacher updates'),
            ('/privacy/', 'Privacy and statistics')]
 ACCOUNT_SHARED = [('/privacy/', 'Privacy and statistics')]
-SITE_PAGES = ['index.html', 'main/index.html', 'account/index.html',
+SITE_PAGES = ['index.html', 'main/index.html', 'account/index.html', 'account/admin/index.html',
               'members/index.html', 'mailing-list/index.html', 'privacy/index.html',
               'stats/index.html', 'owner/stats/index.html', 'tools/index.html',
               'resources/index.html', 'teach/index.html', 'education-hub/index.html', 'stats/on-this-device/index.html',
