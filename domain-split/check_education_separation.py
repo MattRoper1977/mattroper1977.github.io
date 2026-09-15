@@ -134,7 +134,12 @@ def registry_errors(output):
     # baseline d2439c61 exactly at 926 rows, and every one of the 51 added routes is
     # a Science_Teesside lesson of that batch. This moves with the publisher pin
     # lines, as the RX3 P3.4 note above records.
-    baseline_sha = '7ce5e60ee7fd308108a1ffbf0aecd1fd51be6eb8078e45495e0f2ef49fd2f9fa'
+    # EDU-Q1 Sugar: exact current/candidate retained censuses differ only in its title.
+    # Preserve the current rollback and reject every unreviewed record/field change.
+    baseline_shas = {
+        '7ce5e60ee7fd308108a1ffbf0aecd1fd51be6eb8078e45495e0f2ef49fd2f9fa',
+        'ec7dc0754029e00146e4314d57b5a4ed6beec71c7a6cf6413d50c31d045e4de7',
+    }
     additions_path = HERE/'science-download-usage-additions.json'
     if sha256(additions_path.read_bytes()).hexdigest() != '266199e1f6d355956b23df058b3d867b50edc2f155545b0b43fb2d6f8177df30':
         return ['Unreviewed Science download registration metadata']
@@ -148,7 +153,7 @@ def registry_errors(output):
     approved[ict] = installed_gc1_rows(approved[ict], (lessons/GC1_HUB).is_file())
     installed = {prefix: (lessons/prefix[len('/Lessons/'):]/'index.html').is_file() for prefix in approved}
     errors, retained = registry_partition(rows, approved, installed)
-    if sha256((json.dumps(retained,ensure_ascii=False,indent=2)+'\n').encode()).hexdigest() != baseline_sha:
+    if sha256((json.dumps(retained,ensure_ascii=False,indent=2)+'\n').encode()).hexdigest() not in baseline_shas:
         errors.append('Installed combined registry records changed')
     return errors
 
