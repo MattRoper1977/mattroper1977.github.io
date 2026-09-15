@@ -7,7 +7,7 @@
   const games = data.games, byId = new Map(games.map(g => [g.id, g]));
   const catalogue = games.filter(g => g.group === 'games');
   const keys = {favourites:'mbm_play_favourites_v1',recent:'mbm_play_recently_opened_v1',position:'mbm_play_browse_position_v1'};
-  const fields = ['q', 'genre', 'control', 'mode', 'list'];
+  const fields = ['q', 'mood', 'genre', 'control', 'mode', 'list'];
   const $ = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const title = g => g.displayTitle || g.title;
@@ -33,22 +33,25 @@
   const normalize = v => String(v).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   // Search is scoped to catalogue titles and descriptions.
   const searchable = new Map(games.map(g => [g.id, normalize([g.title, g.displayTitle || '', g.series || '', g.description].join(' '))]));
-  const state = {q: '', genre: '', control: '', mode: '', list: ''};
+  const state = {q: '', mood: '', genre: '', control: '', mode: '', list: ''};
   let activeGame = null, returnFocus = null, cameFromGame = false, filtersOpener = null;
 
   /* ---- lanes: rendered from the same data the grid was built from ---- */
-  function tile(g, meta) {
+  function favouriteButton(g) {
+    return '<button type="button" class="favourite" data-favourite="' + esc(g.id) + '" aria-pressed="false" aria-label="Favourite: ' + esc(title(g)) + '">♡<span class="sr-only"> Favourite</span></button>';
+  }
+  function tile(g, meta, removable = false) {
     const img = g.media && g.media.poster || g.image;
     return '<li class="tile"><button type="button" class="card-open" data-info="' + esc(g.id) + '" aria-haspopup="dialog"><span class="thumb' + (img ? '' : ' thumb-empty') + '">' + (img ? '<img src="' + esc(img) + '" alt="" loading="lazy" width="640" height="360">' : '') + '</span><span class="card-title">' + esc(title(g)) + '</span></button>' +
       (meta ? '<span class="tile-meta">' + esc(meta) + '</span>' : '') +
-      '<a class="play small" data-play="' + esc(g.id) + '" href="' + esc(g.route) + '">Play<span class="sr-only"> ' + esc(title(g)) + '</span></a></li>';
+      '<div class="card-actions"><a class="play small" data-play="' + esc(g.id) + '" href="' + esc(g.route) + '">Play<span class="sr-only"> ' + esc(title(g)) + '</span></a>' + favouriteButton(g) + '</div>' + (removable ? '<button type="button" class="remove-recent" data-remove-recent="' + esc(g.id) + '" aria-label="Remove from recently opened: ' + esc(title(g)) + '">Remove</button>' : '') + '</li>';
   }
   function lane(id, heading, extra, items) {
     return '<section class="lane" id="lane-' + id + '" aria-labelledby="lane-' + id + '-title"><div class="lane-head"><h2 id="lane-' + id + '-title">' + heading + '</h2>' + extra + '</div><ul class="lane-track">' + items.join('') + '</ul></section>';
   }
   function renderLanes() {
     const played = recent.map(id => byId.get(id)).filter(g => g && g.group === 'games').slice(0, 12);
-    $('lane-continue').innerHTML = played.length ? lane('continue', 'Continue playing', '<p class="muted">on this device</p><button type="button" id="clear-recent">Clear recently opened</button>', played.map(g => tile(g, g.genre))) : '';
+    $('lane-continue').innerHTML = played.length ? lane('continue', 'Recently played', '<p class="muted">Launched in this browser on this device; not saved progress.</p><button type="button" id="clear-recent" data-clear-recent>Clear recently opened</button>', played.map(g => tile(g, g.genre, true))) : '';
     const updated = catalogue.filter(g => g.updated).sort((a, b) => b.updated.date < a.updated.date ? -1 : b.updated.date > a.updated.date ? 1 : 0);
     $('lane-updated').innerHTML = updated.length ? lane('updated', 'New and updated', '', updated.map(g => tile(g, g.updated.label))) : '';
     $('lanes-genre').innerHTML = data.genres.filter(x => x.count >= 3).map(x => {
@@ -69,7 +72,7 @@
   function matches(g) {
     const words = normalize(state.q).split(/\s+/).filter(Boolean);
     const selected = state.list === 'favourites' ? favourites : state.list === 'recent' ? recent : null;
-    return words.every(w => searchable.get(g.id).includes(w)) && (!state.genre || g.genre === state.genre) &&
+    return words.every(w => searchable.get(g.id).includes(w)) && (!state.genre || g.genre === state.genre) && (!state.mood || (g.moods || []).includes(state.mood)) &&
       (!state.control || (state.control === 'unknown' ? !(g.controls || []).length : (g.controls || []).includes(state.control))) &&
       (!state.mode || (state.mode === 'unknown' ? !(g.modes || []).length : (g.modes || []).includes(state.mode))) &&
       (!selected || selected.includes(g.id));
@@ -83,14 +86,15 @@
   function applyUrl() {
     const params = new URLSearchParams(location.search);
     state.q = (params.get('q') || '').slice(0, 160);
+    state.mood = ['Calm','Fast','Thinky','Together'].includes(params.get('mood')) ? params.get('mood') : '';
     state.genre = data.genres.some(x => x.name === params.get('genre')) ? params.get('genre') : '';
     for (const k of ['control', 'mode', 'list']) { const el = $(k), v = params.get(k) || ''; state[k] = [...el.options].some(o => o.value === v) ? v : ''; }
     paintControls();
   }
   function paintControls() {
-    query.value = state.q; ['control', 'mode', 'list'].forEach(k => { $(k).value = state[k]; });
+    query.value = state.q; ['genre', 'control', 'mode', 'list'].forEach(k => { $(k).value = state[k]; });
     document.querySelectorAll('.chip-button').forEach(b => {
-      const on = b.dataset.chip === 'favourites' ? state.list === 'favourites' : b.dataset.chip === 'genre' ? (state.list !== 'favourites' && b.dataset.genre === state.genre) : (state.list !== 'favourites' && !state.genre);
+      const on = b.dataset.mood === state.mood;
       b.setAttribute('aria-pressed', String(on));
     });
   }
@@ -98,21 +102,49 @@
     const focused = document.activeElement, focusedCard = focused && focused.closest('[data-card]');
     let shown = 0, visibleCards = 0;
     for (const card of cards) {
-      const hits = card.ids.map(id => byId.get(id)).filter(g => g && matches(g)).length;
-      card.el.hidden = hits === 0; if (hits) { shown += hits; visibleCards++; }
+      const hits = card.ids.map(id => byId.get(id)).filter(g => g && matches(g));
+      card.el.hidden = hits.length === 0;
+      if (hits.length) {
+        shown += hits.length; visibleCards++;
+        // A series card must launch a matching edition, not its unfiltered lead.
+        const g = hits[0], open = card.el.querySelector('.card-open'), play = card.el.querySelector('.card-actions [data-play]');
+        const changedEdition = open.dataset.info !== g.id;
+        open.dataset.info = g.id; open.querySelector('.card-title').textContent = active() ? title(g) : (g.series || title(g));
+        play.dataset.play = g.id; play.href = g.route; play.querySelector('.sr-only').textContent = ' ' + title(g);
+        card.el.querySelector('[data-favourite]').dataset.favourite = g.id;
+        if (changedEdition) {
+          const source = g.media && g.media.poster || g.image, thumb = open.querySelector('.thumb');
+          thumb.className = 'thumb' + (source ? '' : ' thumb-empty');
+          thumb.innerHTML = source ? '<img src="' + esc(source) + '" alt="" loading="lazy" width="640" height="360">' : '';
+          card.el.querySelector('.card-meta').innerHTML = '<span class="chip">' + esc(g.genre) + '</span>' + (card.ids.length > 1 ? '<span class="chip">' + card.ids.length + ' editions</span>' : '') + (needsKeyboard(g) ? '<span class="chip warn" data-needs-keyboard' + (coarse() ? '' : ' hidden') + '>Needs a keyboard</span>' : '');
+          bindImages(open);
+        }
+        const watch = card.el.querySelector('[data-watch]');
+        if (watch) { watch.dataset.watch = g.id; watch.hidden = !(g.media && g.media.video); }
+      }
     }
     const ordered = state.list === 'recent' ? [...cards].sort((a, b) => Math.min(...a.ids.map(i => (recent.indexOf(i) + 1 || 1e9))) - Math.min(...b.ids.map(i => (recent.indexOf(i) + 1 || 1e9)))) : cards;
     ordered.forEach((card, index) => { if (grid.children[index] !== card.el) grid.insertBefore(card.el, grid.children[index] || null); });
     $('empty-state').hidden = visibleCards !== 0;
     const selected = state.list === 'favourites' ? favourites : state.list === 'recent' ? recent : null;
-    $('empty-description').textContent = selected && selected.length === 0 ? (state.list === 'favourites' ? 'Open a game and press Favourite to start your favourites.' : 'Games appear here when you open them from this collection.') : 'Try a different word or clear a filter.';
+    $('empty-description').textContent = selected && selected.length === 0 ? (state.list === 'favourites' ? 'Press the heart on a game card to start your favourites.' : 'Games appear here when you open them from this collection.') : 'Try a different word or clear a filter.';
     status.textContent = active() ? shown + ' of ' + data.catalogue + ' games' : data.catalogue + ' games';
     $('clear-favourites').hidden = state.list !== 'favourites';
+    $('clear-recent-list').hidden = state.list !== 'recent';
+    $('list-note').hidden = state.list !== 'recent';
+    $('surprise-status').textContent = '';
+    grid.querySelectorAll('[data-remove-recent]').forEach(b => b.remove());
+    if (state.list === 'recent') for (const card of cards.filter(c => !c.el.hidden)) {
+      const g = byId.get(card.el.querySelector('.card-open').dataset.info), button = document.createElement('button');
+      button.type = 'button'; button.className = 'remove-recent'; button.dataset.removeRecent = g.id;
+      button.textContent = 'Remove'; button.setAttribute('aria-label', 'Remove from recently opened: ' + title(g)); card.el.append(button);
+    }
     $('lanes').hidden = active();
-    $('filters-open').setAttribute('aria-pressed', String(Boolean(state.control || state.mode || state.list)));
+    $('filters-open').setAttribute('aria-pressed', String(Boolean(state.genre || state.control || state.mode || state.list)));
+    document.querySelectorAll('[data-collection]').forEach(a => { if (a.dataset.collection === state.list) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     paintFavourite();
     if (url) syncUrl();
-    if (focusedCard) { if (!focusedCard.hidden) focused.focus(); else (grid.querySelector('[data-card]:not([hidden]) .card-open') || $('empty-reset')).focus(); }
+    if (focusedCard && !dialog.open) { if (!focusedCard.hidden && focused.isConnected) focused.focus(); else (grid.querySelector('[data-card]:not([hidden]) .card-open') || $('empty-reset')).focus(); }
   }
   function reset() { fields.forEach(k => { state[k] = ''; }); paintControls(); render(); }
   function choose(patch, scroll) {
@@ -132,15 +164,16 @@
   }
 
   /* ---- the game sheet ---- */
-  const support = [['controls', 'touch', 'Touch'], ['controls', 'keyboard', 'Keyboard'], ['controls', 'gamepad', 'Gamepad'], ['modes', 'single', '1 player'], ['modes', 'local', 'Local multiplayer']];
+  const support = [['controls', 'touch', 'Touch'], ['controls', 'keyboard', 'Keyboard'], ['controls', 'gamepad', 'Gamepad'], ['modes', 'single', '1 player'], ['modes', 'local', 'Local / same-network options'], ['modes', 'classroom-teams', 'Shared-screen teams']];
   const needsKeyboard = g => (g.controls || []).length > 0 && !(g.controls || []).includes('touch');
   function stopMedia() { const video = dialog.querySelector('video'); if (video) { video.pause(); video.removeAttribute('src'); video.load(); } $('dialog-media').replaceChildren(); $('media-status').textContent = ''; }
   function poster(g) {
     const m = g.media || {}, source = m.poster || g.image, figure = document.createElement('figure'), holder = document.createElement('span');
     holder.className = 'thumb'; $('dialog-media').append(figure); figure.append(holder);
-    if (!source) { holder.classList.add('failed'); holder.textContent = 'No artwork yet'; return; }
+    if (!source) { holder.classList.add('failed'); holder.textContent = 'Game screen not yet available'; return; }
     const img = document.createElement('img'); img.alt = ''; img.width = 640; img.height = 360;
     img.addEventListener('error', () => { holder.classList.add('failed'); holder.textContent = 'Image unavailable'; }); img.src = source; holder.append(img);
+    const caption = document.createElement('figcaption'); caption.textContent = m.poster ? 'Captured gameplay preview.' : g.imageCaption || 'Captured game screen.'; figure.append(caption);
   }
   // The address keeps the shelf state (search, chip, filters) and adds ?game=; the shared link is just the game.
   function addressWithGame(g) { const u = new URL(location.href); u.searchParams.set('game', g.id); return u.pathname + u.search + u.hash; }
@@ -150,6 +183,14 @@
     stopMedia(); activeGame = g; returnFocus = trigger || returnFocus;
     $('dialog-title').textContent = title(g); $('dialog-kind').textContent = g.genre;
     $('dialog-description').textContent = g.description + (g.chapter ? ' New chapter: ' + g.chapter + '.' : '');
+    const facts = g.details || {};
+    $('dialog-mood').hidden = !g.moodReason; $('dialog-mood').textContent = g.moodReason || '';
+    const usefulInstructions = g.instructions && !/Player modes|Command one campaign|Single pilot|Source documents|Same-device|Two players on one device/.test(g.instructions);
+    $('dialog-controls').textContent = facts.controls || (usefulInstructions ? g.instructions : (g.controls || []).length ? 'Use the game’s How to play or Controls screen for its key bindings and touch actions.' : 'Controls and device support have not yet been verified.');
+    $('dialog-players').textContent = facts.players || ((g.modes || []).length ? g.instructions : 'Player modes have not yet been verified.');
+    $('dialog-accessibility').textContent = facts.accessibility || 'Check the game’s own settings for sound, motion and display options. Accessibility features have not yet been fully verified.';
+    $('dialog-saves').textContent = facts.saves || 'Save support has not yet been verified for this game. Favourites and recent launches do not store game progress.';
+    $('dialog-remove-recent').dataset.removeRecent = g.id;
     const chips = support.filter(([f, v]) => (g[f] || []).includes(v)).map(([, , label]) => label);
     $('dialog-support').innerHTML = (chips.length ? chips : ['Not yet verified']).map(c => '<span class="chip">' + esc(c) + '</span>').join('');
     $('dialog-keyboard').hidden = !(needsKeyboard(g) && coarse());
@@ -166,8 +207,22 @@
     if (watch) playPreview();
   }
   function paintFavourite() {
-    const b = $('dialog-favourite'), on = Boolean(activeGame && favourites.includes(activeGame.id));
-    b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', (on ? 'Remove favourite: ' : 'Favourite: ') + (activeGame ? title(activeGame) : ''));
+    document.querySelectorAll('[data-favourite]').forEach(b => {
+      const g = byId.get(b.dataset.favourite); if (!g) return;
+      const on = favourites.includes(g.id); b.hidden = false;
+      b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', (on ? 'Remove favourite: ' : 'Favourite: ') + title(g));
+      if (b.classList.contains('favourite')) b.innerHTML = (on ? '♥' : '♡') + '<span class="sr-only"> Favourite</span>';
+    });
+    $('dialog-remove-recent').hidden = !activeGame || !recent.includes(activeGame.id);
+  }
+  function focusResults() { (grid.querySelector('[data-card]:not([hidden]) .card-open') || $('empty-reset')).focus(); }
+  function changeRecent(id) {
+    const opener = document.activeElement, inSheet = dialog.open;
+    recent = id ? recent.filter(x => x !== id) : []; saveList('recent', recent);
+    renderLanes(); render({url: false});
+    storageNotice((id ? 'Removed from recently opened.' : 'Recently opened cleared.') + ' Game saves were not changed.' + (durable ? '' : ' Storage is unavailable.'));
+    if (inSheet) $('dialog-close').focus();
+    else if (!opener.isConnected || !opener.getClientRects().length) focusResults();
   }
   function playPreview() {
     const g = activeGame; if (!g || !g.media || !g.media.video) return; stopMedia();
@@ -178,7 +233,7 @@
     video.play().catch(() => { if (!video.isConnected || activeGame !== g) return; $('media-status').textContent = 'Use the video Play control to start this preview.'; });
   }
   function stripGameParam() { const u = new URL(location.href); if (u.searchParams.has('game')) { u.searchParams.delete('game'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } }
-  function closeInfo() { if (!dialog.open) return; stopMedia(); dialog.close(); activeGame = null; stripGameParam(); if (returnFocus && returnFocus.isConnected) returnFocus.focus(); }
+  function closeInfo() { if (!dialog.open) return; stopMedia(); dialog.close(); activeGame = null; stripGameParam(); if (returnFocus && returnFocus.isConnected && returnFocus.getClientRects().length) returnFocus.focus(); else focusResults(); }
   function share() {
     const g = activeGame; if (!g) return; const url = shareUrl(g), payload = {title: title(g) + ' · Made by Matt Play', url};
     if (navigator.share) { navigator.share(payload).catch(() => {}); return; }
@@ -196,7 +251,7 @@
   filters.addEventListener('close', () => { $('filters-open').setAttribute('aria-expanded', 'false'); if (filtersOpener && filtersOpener.isConnected) filtersOpener.focus(); });
   filters.addEventListener('cancel', e => { e.preventDefault(); closeFilters(); });
   $('filters-open').addEventListener('click', e => openFilters(e.currentTarget));
-  ['control', 'mode', 'list'].forEach(k => $(k).addEventListener('change', () => { state[k] = $(k).value; if (k === 'list' && state.list === 'favourites') state.genre = ''; paintControls(); render(); }));
+  ['genre', 'control', 'mode', 'list'].forEach(k => $(k).addEventListener('change', () => { state[k] = $(k).value; paintControls(); render(); }));
   $('filters-reset').addEventListener('click', () => { reset(); $('filters-close').focus(); });
   $('filters-form').addEventListener('submit', () => { /* method=dialog closes the drawer */ });
 
@@ -204,17 +259,29 @@
   $('discovery-form').addEventListener('submit', e => { e.preventDefault(); state.q = query.value.slice(0, 160); render(); });
   query.addEventListener('input', () => { state.q = query.value.slice(0, 160); render(); });
   $('search-jump').addEventListener('click', e => { e.preventDefault(); query.scrollIntoView({block: 'center'}); query.focus({preventScroll: true}); });
-  $('empty-reset').addEventListener('click', reset);
+  $('empty-reset').addEventListener('click', () => { reset(); $('all-games-title').focus(); });
+  $('surprise').hidden = false;
+  $('surprise').addEventListener('click', e => {
+    const eligible = catalogue.filter(matches);
+    if (!eligible.length) { $('surprise-status').textContent = 'No games match these choices. Clear a filter to try Surprise me.'; $('empty-reset').focus(); return; }
+    openInfo(eligible[Math.floor(Math.random() * eligible.length)], e.currentTarget);
+  });
   $('clear-favourites').addEventListener('click', () => { favourites = []; saveList('favourites', []); render({url: false}); storageNotice('Favourites cleared. Game saves were not changed.' + (durable ? '' : ' Storage is unavailable.')); });
   document.addEventListener('click', e => {
+    const collection = e.target.closest('a[data-collection]');
+    if (collection && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) { e.preventDefault(); choose({q: '', mood: '', genre: '', control: '', mode: '', list: collection.dataset.collection}, true); $('all-games-title').focus({preventScroll: true}); return; }
     const chip = e.target.closest('.chip-button');
-    if (chip) { const kind = chip.dataset.chip; if (kind === 'all') choose({genre: '', list: state.list === 'favourites' ? '' : state.list}, false); else if (kind === 'favourites') choose({genre: '', list: 'favourites'}, true); else choose({genre: chip.dataset.genre, list: state.list === 'favourites' ? '' : state.list}, true); return; }
+    if (chip) { choose({mood: chip.dataset.mood}, Boolean(chip.dataset.mood)); return; }
     const seeAll = e.target.closest('a.see-all');
-    if (seeAll && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) { e.preventDefault(); choose({genre: seeAll.dataset.genre, list: state.list === 'favourites' ? '' : state.list}, true); return; }
-    const clearRecent = e.target.closest('#clear-recent');
-    if (clearRecent) { recent = []; saveList('recent', []); renderLanes(); render({url: false}); storageNotice('Recently opened cleared. Game saves were not changed.' + (durable ? '' : ' Storage is unavailable.')); return; }
-    const fav = e.target.closest('#dialog-favourite');
-    if (fav && activeGame) { const id = activeGame.id; favourites = favourites.includes(id) ? favourites.filter(x => x !== id) : [...favourites, id]; saveList('favourites', favourites); render({url: false}); return; }
+    if (seeAll && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) { e.preventDefault(); choose({mood: '', genre: seeAll.dataset.genre, list: ''}, true); return; }
+    if (e.target.closest('[data-clear-recent]')) { changeRecent(); return; }
+    const remove = e.target.closest('[data-remove-recent]');
+    if (remove) { changeRecent(remove.dataset.removeRecent); return; }
+    const fav = e.target.closest('[data-favourite]');
+    if (fav && byId.has(fav.dataset.favourite)) {
+      const id = fav.dataset.favourite; favourites = favourites.includes(id) ? favourites.filter(x => x !== id) : [...favourites, id];
+      saveList('favourites', favourites); render({url: false}); return;
+    }
     if (e.target.closest('#dialog-share')) { share(); return; }
     const link = e.target.closest('a[data-play]');
     if (link) { const id = link.dataset.play; if (byId.has(id)) { recent = [id, ...recent.filter(x => x !== id)].slice(0, 24); saveList('recent', recent); if (dialog.open && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) closeInfo(); rememberPosition(); } return; }

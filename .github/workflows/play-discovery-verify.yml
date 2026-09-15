@@ -25,9 +25,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          # Pinned reviewed Science pack source, 2026-09-06 (PR #338).
+          # Pinned Lessons source selected by Games/play-publication.json on 2026-09-14.
+          # Freeze this review to those approved game versions for reproducible captures.
           # Media checks independently match all six captured payload hashes.
-          ref: ae2d534b095423716aa1adaecc36299ba1210b23
+          ref: 9ec701681ff6efcc5bb99f9120555c7c76585e45
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -61,6 +62,8 @@ jobs:
           retention-days: 30
       - name: Exercise Play discovery and every initial game surface
         if: always()
+        env:
+          PLAY_REQUIRE_COMPLETE_DISCOVERY: '1'
         run: node domain-split/play/check.cjs
       - name: Exercise the existing save-transfer browser journey
         if: always()

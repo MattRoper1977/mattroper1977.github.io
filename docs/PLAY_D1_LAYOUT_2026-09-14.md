@@ -1,0 +1,33 @@
+# PLAY-D1 first layout checkpoint
+
+Prepared after NAV-2 and EDU-D2 closure. Base Site 6e916fe1039410bf595488a3cd000f5bc138bc6d. Current Games publisher pins Site f53a4c6a5dbe5a38399321d01f17378eef22d89b and Lessons 9ec701681ff6efcc5bb99f9120555c7c76585e45. The Play source subtree is identical between that Site pin and this base. Old Site PR264 is closed, unmerged; no competing open catalogue PR was found.
+
+The first checkpoint adds the approved hero wording, charcoal/turquoise/purple catalogue styling, responsive collection navigation, a compact featured card and direct details action. Existing favourites/recent keys, detail sheet, search and genre/input/player filters are reused. Accepted gameplay posters take precedence on the six captured game cards. Other existing card imagery is retained pending the discovery/capture audit. The featured entry is the canonical Off-Brand: After Hours, not the illustrative mockup's Slipstream GP.
+
+The current approved-mark.jpg is the previously supplied coloured M, verified at SHA256 f1095531d88d17f20c7464c62887703321a0872f108d3fb78a4afc0226dac2a7. It is not a metallic silver M. The requested original silver file has not been located; preserve the current original and obtain the actual silver asset before final visual acceptance. Never manufacture an approximation or silently label the coloured logo silver.
+
+Local Python/JavaScript syntax, whitespace and existing save-safety checks pass. A preview reusing previously accepted output verified all 69 game payload hashes before applying the layout overlay. This is a layout preview, not a fresh source-bound publication proof. Local browser access was blocked by the browser environment; the existing PR browser workflow must supply the screenshots and complete source-bound proof. Do not bypass browser access restrictions. Browser acceptance now also verifies sidebar empty states, all-games reset, focus and current navigation state at all existing widths.
+
+Still required: PR browser/screenshots review; original silver asset; mood mapping, Surprise me, complete verified imagery/details and any remaining local convenience requirements in the next checkpoint; governed Site/Games release and live verification. No Games pins, game payloads, AS1 controls or saves changed. Site291, Lessons456 and LP1 stay held. Runtime/gamepad/install work stays in later passes.
+
+Operational cleanup: local disk filled while checking out pinned Lessons. Failed checkout was removed automatically by git. Reproducible output directories under edu-d2-built, edu-d2-hero-built and lessons-d2-baseline-built were removed; their root reports and all saved checkpoint/ZIP evidence were retained. Final candidate output remains available. No source checkout or accepted evidence file was deleted.
+
+## Approved attachment and dependency correction
+
+Matt supplied 27961.jpg and explicitly approved it as the original M for PLAY-D1, preserving the M, circle and star. This resolves the logo requirement and supersedes the earlier metallic-silver wording. The attachment is copied unchanged to approved-mark.jpg; SHA256 bfef5b1ee9606351f6185aad5549f5252ebc4918dcb939fce72d3cbe9c792d2a. No generated replacement, recolouring or cropping was used.
+
+Initial Play browser review 34899597371 passed. Audience discovery run34899597402 failed because storage-census.py still referenced the previous browser-check blob. Reviewed the check delta: copy expectations and catalogue navigation checks only; storage calls remain isolated test fixtures. Updated that exact tooling reference to 9bee60addd169723d8a6e82b4dc2b59c35c0f480. The derived dependency map now passes unchanged, and diff enforcement identifies the updated dependent. Positive fixture classification, changed-fixture rejection and shipped-JS classification all pass; save-transfer safety still passes. No gates or census populations were removed. Fresh CI required for this revision.
+
+## Screenshot review and header refinement
+
+Reviewed current-head UI artifact10370882457 from run34900768930, SHA256 d5822d7115d464cc3cab2c5a78ad9254b6e662ad9afbc5748922e2950af4b863. Four-width layouts, 200% text and card grids reviewed. All 69 payloads match and initial routes render; this does not certify full game completion. Existing genre chips and placeholder covers await checkpoint2.
+
+The supplied wide logo was too small in the header. Increased its whole-image display width to64px on phones and80px on wider screens, retained automatic aspect ratio and unchanged source bytes. Header now wraps its controls when needed, giving enlarged brand text room. No cropping or redraw. Corrected capture positioning: home screenshot returns to page top after testing Search; browse screenshot targets the results heading instead of the middle of the oversized results section. Updated the exact reviewed fixture pin alongside this capture-only checker change. Fresh CI screenshots required before layout acceptance.
+
+At1280px with200% text, the fixed212px sidebar clipped collection labels even though the page-level overflow test passed. Sidebar width now scales in rem with a viewport cap; collection links allow text wrapping. Added an explicit sidebar/link horizontal-fit assertion at enlarged text sizes across the existing four widths. This real visual defect remains subject to fresh browser verification.
+
+## Refined screenshot review: shelf-spacing evidence
+
+Reviewed all12 UI screenshots from34902177911, artifact10371039014, digest ff5100c0720c61a0651414728cad968c694e2b298e5bcd329021c02bce109293. Logo sizing and200%-text sidebar correction pass visually and all four explicit label-fit assertions pass. All31 checks pass;69 payloads unchanged;69 entry surfaces rendered, no page errors. Eight workflows pass; domain split still in education browser step24.
+
+Tablet768 browse screenshot shows apparent duplicated/overlapping card bottoms at the Classroom heading. Source inspection does not establish a layout cause. Do not call this a confirmed CSS defect or accept it as harmless. Added shelf heading/card/adjacent-track geometry checks and per-capture JSON, with two animation frames after scrolling before screenshot. No production CSS or JS changed in this diagnostic follow-up. Exact checker fixture pin updated. Fresh evidence required to distinguish layout overlap from capture redraw. PR stays draft; checkpoint2 has not begun.
