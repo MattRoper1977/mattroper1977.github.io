@@ -35,7 +35,8 @@
     "CX2 R5 (Lessons PR539, main 3a14e9c4d57832fed87ed588ef6f0ae4fd3d6064): the catalogue evidence was regenerated so check_catalogue_static.py is green on Lessons main; only assets/catalogue/lesson-order.json and assets/catalogue/terms-and-styles.json change, admitted as candidate digests beside the published rollback; digests measured by running this pinned publisher (c06526c5578b65ac9e7524dfaa3285aeb4b1694a) on the merged tree, with a control run on the previously published tree 929cf731 reproducing the admitted digests exactly. No lesson bytes, builder code or other admission changes.",
     "CX2 Lane D BUILD (Lessons PR543, branch claude/cx2-lane-d-build b281994): the return-week BUILD W8B lesson under the CX2 rulings and the lesson-order.json it re-derives, admitted as candidate digests beside the published rollback digests (W8B b95eafbc -> 47364350; lesson-order 0091727d -> afcc029c). No other file moves; the publisher code is unchanged.",
     "CX2 S3 (Lessons PR548, branch claude/cx2-s3-offline-edition ae40cd3): the teaching-pack hub names the offline companion set as a lightweight offline edition and links each of its twenty entries to the canonical lesson. Only web-slides.html changes; admitted as a candidate digest beside the published rollback (4042f4ac -> 30af175e), measured by running this publisher on that tree, with the same run reproducing the rollback digest on main as its control. Publisher code unchanged.",
-    "CORRECTION 2026-09-15: the CX2 Lane D BUILD entry for SCI_B_W8B_Autumn_Science_Checkpoint_Do.html is withdrawn and its original rollback pair restored. Its candidate digest was computed by running this publisher locally with --allow-sparse, and that method was then proved unfaithful for HTML: a control build of Lessons main reproduces an admitted digest for 2797 of 3742 published files, including 100% of PDF, DOCX, PPTX, ZIP, JSON, SVG, TXT, PNG and CSS, but only 559 of 1503 HTML, while main itself publishes green. A served digest for changed lesson HTML must therefore be measured by the real publication run, not locally. Non-HTML admissions in this registry are unaffected, and the teaching-pack hub entry was separately confirmed by publication run 35025572232 succeeding on it."
+    "CORRECTION 2026-09-15: the CX2 Lane D BUILD entry for SCI_B_W8B_Autumn_Science_Checkpoint_Do.html is withdrawn and its original rollback pair restored. Its candidate digest was computed by running this publisher locally with --allow-sparse, and that method was then proved unfaithful for HTML: a control build of Lessons main reproduces an admitted digest for 2797 of 3742 published files, including 100% of PDF, DOCX, PPTX, ZIP, JSON, SVG, TXT, PNG and CSS, but only 559 of 1503 HTML, while main itself publishes green. A served digest for changed lesson HTML must therefore be measured by the real publication run, not locally. Non-HTML admissions in this registry are unaffected, and the teaching-pack hub entry was separately confirmed by publication run 35025572232 succeeding on it.",
+    "CX2 §2 GROW W3 Friction (2026-09-15, Lessons #538 head 29f3bc7f6c5882de88cef2c85f3cc0a3c1e7fb61, base main 423f11d9): registry-only carrier on e1645d3, publisher code unchanged. 30 paths move to [published rollback, candidate] pairs and nothing is added or removed: the GROW W3 Friction lesson, its two resource pages, the GROW pack records (SOURCE_MANIFEST, DOWNLOAD_INDEX, SHA256SUMS), seven Week 3 / W3-W7 archives, the W3A and W3B native slides, pupil and teacher documents and START_HERE files, the teaching-pack hub index, education-lessons assets/catalogue/lesson-order.json (its pair now [served 0091727d, Friction]; the Lane D BUILD candidate afcc029c is re-minted when that branch is rebased, its W8B rollback pair is untouched) and education-site data/usage-registry.json. Method: a full three-repository build at this builder (Site e1645d3, Apps 3ad0a7df, Python 3.12.3, lxml 6.0.1) of the candidate; a control build of Lessons main 423f11d9 by the same method reproduces an admitted digest for every one of its 4044 files (0 problems), which is what qualifies the method — the earlier --allow-sparse method was withdrawn in this carrier's previous commit. The Friction build is admitted green by this registry and the main build stays green (rollback preserved), both measured before commit."
   ],
   "trees": {
     "education-site": {
@@ -162,8 +163,8 @@
       "data/takes-pin.json": "165f9e17c0f07bfc468a605e91dd077f6b285ab84bebef3c0d2d44ac65026fc6",
       "data/usage-config.json": "1fec49241cb40120129e65ffe06a59203bdc50af29e1000156270d642dbdf12d",
       "data/usage-registry.json": [
-        "075f5fe1c9c49d9a1934d80e783cb6e8716f519c8b37d79ebd615a49fd9ba99e",
-        "6bb0a70548a5ea0c4273a784b39e58a91cacd727e773aa09cf05005af6820135"
+        "6bb0a70548a5ea0c4273a784b39e58a91cacd727e773aa09cf05005af6820135",
+        "7eff378fefe889b4ad4dba4cda3e480fe9a8864ebfec9d6088e23a6f73a631bb"
       ],
       "echovault/index.html": "611715ea3081eeed1e1baf18158bf6d125e670af6ad0432ff7097da0c8cc0092",
       "education-hub/index.html": "f6e9f2501cba6dd62784dbb7c0e7815fb883ffab15bc61edcf6173f7bd467809",
@@ -257,7 +258,7 @@
     "education-lessons": {
       "assets/catalogue/lesson-order.json": [
         "0091727dd9299f4788b30490bc424c863c0b379db651df59ec39dbb96d9cc0a8",
-        "afcc029ca56bcc579e64cb18d667f3442c0bc5bd192d65e78bd401e0a27aaf75"
+        "79b555beccccdbb3ec7dd85a453127bfceba780136d51180cc0d65e0b127ea4f"
       ],
       "assets/mbm-tokens.css": [
         "01fbb17686866b97e7591781e4a78f2e9d38fb5ba35ed8acf935ce2a199643dd",
@@ -2974,8 +2975,8 @@
       "Science_Teesside/Grow/Autumn2_W7_2026-27/START_HERE.html": "7396f79a21570e18339db91ff3dca0ad077d1ad6d9dd5223ce340ecf90198ba2",
       "Science_Teesside/Grow/Autumn2_W7_2026-27/manifest.json": "fb9998fb477b93152615aea94d3ebed882d112c8c3de9a82dbc88e677a813a53",
       "Science_Teesside/Grow/SCI_G_W3_Friction.html": [
-        "b5c6605d1d8e16d3247d22d03292dfc133dd51f2763572a01de6fefdefa0a214",
-        "1a9b722d338950ed7d946846cb9135a7c47f0dbe7167a5eaa2e326020be3dd93"
+        "1a9b722d338950ed7d946846cb9135a7c47f0dbe7167a5eaa2e326020be3dd93",
+        "5cea62e1d733d9f99039ce182176eebc53758acd654148f44d731c4b44e7f660"
       ],
       "Science_Teesside/Grow/SCI_G_W4_Mechanisms.html": [
         "e9dfb60f36997595135e5e18a38c46811b13002cdf56f49cc5e44ccf74758b61",
@@ -3069,13 +3070,13 @@
         "5131103c5b784a23ed45fe9a9149b9253c91eda20e17f70fe757ff42bb75ef27"
       ],
       "Science_Teesside/Grow/resources/GS_W3A.html": [
-        "759d042c4c35fc7624d66b58eb2ae7641a0de6f5373bbf01d8bf6f89f0649076",
-        "a26b5f8d3a4853b5806726a98aa802a9eded4d4f772b452df8a6d7a8e36f5f5c"
+        "a26b5f8d3a4853b5806726a98aa802a9eded4d4f772b452df8a6d7a8e36f5f5c",
+        "c57f58832791739f81512217e94674676df7e6b24791ec81b19f2f816de92d16"
       ],
       "Science_Teesside/Grow/resources/GS_W3A_Worksheet.pdf": "0d5819927d0c5cecc97d333aae836d4afd7f011ea985277741f22e2b73f52aaa",
       "Science_Teesside/Grow/resources/GS_W3B.html": [
-        "252cfe593573e3f720ac2e81108a936cc90c6cf1acfa14e4f1aa97b52ff5509d",
-        "3f5ddefb005fa9989df30ce73fd2420396ccf6e80bc416b6c9a1d1f82e09bb03"
+        "3f5ddefb005fa9989df30ce73fd2420396ccf6e80bc416b6c9a1d1f82e09bb03",
+        "89ecf578ab895e22c60b20b0386e28c86e034afe65b6d887ac36e1adbfa3eb94"
       ],
       "Science_Teesside/Grow/resources/GS_W3B_Worksheet.pdf": "59b1b3ac50108b629f5852c130e894e55de62d2a13ea4fc00d64766aeea05782",
       "Science_Teesside/Grow/resources/GS_W4A.html": [
@@ -3792,7 +3793,10 @@
       "Science_Teesside/Teaching_Packs/BUILD/resources/BUILD_Science_Autumn1_W7_Cards_and_Labels.docx": "9bfdec7cd96599afba6e9421ad9d80fc7df9e07be01d5334c5b8a61319919aee",
       "Science_Teesside/Teaching_Packs/BUILD/resources/BUILD_Science_Autumn1_W7_Cards_and_Labels.pdf": "68746df0bf740914b914ecf6d6c2a1b4b39252171e50621fa7a0c4aa4d1f141f",
       "Science_Teesside/Teaching_Packs/DOWNLOADS_MANIFEST_HTML.json": "a90b8798a745f546eb05c461ad225d4b8495f3222424b835b7ebdb148f1d921c",
-      "Science_Teesside/Teaching_Packs/GROW/DOWNLOAD_INDEX.json": "a1c471c42eb7da80601dda11fcf6c9d191d6457edb69357d82c9de4eb2206b89",
+      "Science_Teesside/Teaching_Packs/GROW/DOWNLOAD_INDEX.json": [
+        "a1c471c42eb7da80601dda11fcf6c9d191d6457edb69357d82c9de4eb2206b89",
+        "f4838737eba7f6db77bf5d8741cdaf046a21d15159da70cbc550030824cddd63"
+      ],
       "Science_Teesside/Teaching_Packs/GROW/HTML/GROW_Science_W3A.html": "faf5c06ca91ac64a2e12cfae0432ee2d78631c2aa812af0a3696e85c9e4580a2",
       "Science_Teesside/Teaching_Packs/GROW/HTML/GROW_Science_W3B.html": "304f99a951ec2a1fddaad316579effd780d30904d1e2112dba1a53b13249a699",
       "Science_Teesside/Teaching_Packs/GROW/HTML/GROW_Science_W4A.html": "9738d316eda6706eec308dd3a20de6d41f61501dbb891180cee7e6926677370f",
@@ -3841,17 +3845,38 @@
       "Science_Teesside/Teaching_Packs/GROW/Resources/GROW_Science_W6B.html": "f70cfb5a13a0b38b9597542c36bb291340aa2f1b839b87df9e38316e9cbd416e",
       "Science_Teesside/Teaching_Packs/GROW/Resources/GROW_Science_W7A.html": "8e8eab40dfe5a4148132102a19a36c76170c17121e26aba9b1d197e99915af11",
       "Science_Teesside/Teaching_Packs/GROW/Resources/GROW_Science_W7B.html": "5a1367cf2cb54535bbb20788a65470bf8be0f0dbdd7ce74077f45f1d76bd7b3b",
-      "Science_Teesside/Teaching_Packs/GROW/SHA256SUMS.txt": "2c46e4f2fa1c7f4850a48d27214be6b9ad640dcc51f8e8bd36fa485458002dd9",
-      "Science_Teesside/Teaching_Packs/GROW/SOURCE_MANIFEST.json": "5dc12b000b3c3a9e9bb86b72c12b69023aed2ee9475eacccc55997da55c082eb",
+      "Science_Teesside/Teaching_Packs/GROW/SHA256SUMS.txt": [
+        "2c46e4f2fa1c7f4850a48d27214be6b9ad640dcc51f8e8bd36fa485458002dd9",
+        "758dcbdd646219106ef7c416034c24e5e89da1423df5393621eef985e0c4a3a1"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/SOURCE_MANIFEST.json": [
+        "5dc12b000b3c3a9e9bb86b72c12b69023aed2ee9475eacccc55997da55c082eb",
+        "78b1d12b1b817c05a5743688a0946b855a8c211c954d7b29ba41575a2e2f7156"
+      ],
       "Science_Teesside/Teaching_Packs/GROW/START_HERE.pdf": "93a7e61be570fa6934e93973b1a4f4eb200df3da24f83b8ba45ec64ccbf80375",
       "Science_Teesside/Teaching_Packs/GROW/START_HERE.txt": "856bddba97acc3d6389f09d99d3b0dc6224a4948b2be46c885bbaab7d9485c93",
       "Science_Teesside/Teaching_Packs/GROW/Teacher_Notes.html": "6b44aaf5d12736ead40e60156966a417332a4d4d4d453626e8bc1908623f827b",
       "Science_Teesside/Teaching_Packs/GROW/assets/made-by-matt-approved.jpg": "f1095531d88d17f20c7464c62887703321a0872f108d3fb78a4afc0226dac2a7",
-      "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_W3-W7_DOCX_Collection.zip": "ec96c9fecd9f6252955a8c49ec1f446d7144602a36d55af80ef943b99b0b935a",
-      "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_W3-W7_PDF_Collection.zip": "ddcc8f97bb97f5fcf9c60f718618f06d62b25c32b4bde2d652c3d9fbdc78c050",
-      "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_W3-W7_PPTX_Collection.zip": "ccaeb527ab31c9193fdad87bf27f003336c800f549771c795b89608d9d51cec5",
-      "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_W3A.zip": "d228f95748f2f4d63b6df0bd8d54394baf71640044e33747f8784d776d8ca15d",
-      "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_W3B.zip": "00bcf8f9d32da1e02940ee8f21e3193977ff1bebdc028f94bca0400282576f57",
+      "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_W3-W7_DOCX_Collection.zip": [
+        "ec96c9fecd9f6252955a8c49ec1f446d7144602a36d55af80ef943b99b0b935a",
+        "2482706e4f9c7e192287acfd02e7c09381597a1a9fc772c9d39fe630eba5a3aa"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_W3-W7_PDF_Collection.zip": [
+        "ddcc8f97bb97f5fcf9c60f718618f06d62b25c32b4bde2d652c3d9fbdc78c050",
+        "b3116412bb38368b96c0236e2b41902deb76e96461f1ca1c3fb134d878f842f0"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_W3-W7_PPTX_Collection.zip": [
+        "ccaeb527ab31c9193fdad87bf27f003336c800f549771c795b89608d9d51cec5",
+        "592f59c2ccae4f9531af5296eb30064c8fee92c44ba2b896db8038cf2a93dce8"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_W3A.zip": [
+        "d228f95748f2f4d63b6df0bd8d54394baf71640044e33747f8784d776d8ca15d",
+        "2596818e45a67ea1b306f7c9287fa70795ab8142c6c93b9e63e1f99e1a4e5b22"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_W3B.zip": [
+        "00bcf8f9d32da1e02940ee8f21e3193977ff1bebdc028f94bca0400282576f57",
+        "4fedd9c4a162c3e712a327afd85554b19c55ad1f5b8cacea057b0fdecbb305ed"
+      ],
       "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_W4A.zip": "789bc7f2048bba2eeed5dce137c93b1d03cb15841e88b7d7caff3202fb920aa5",
       "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_W4B.zip": "ae960df6ee5618ed8583c96399360734365285461cce3268cab20601ecf24750",
       "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_W5A.zip": "a45c2101629bee39c6637e7ea571be93e2947d0faad017f6a1878bf4cd19e3c7",
@@ -3860,12 +3885,18 @@
       "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_W6B.zip": "f394bfa9bd59fb66abf085b366bda1ba974835f74704aeba7db70cf249e20160",
       "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_W7A.zip": "d65c89a82992eec3bec05f855f29688f5d97258884b5affba043e1fb105c580a",
       "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_W7B.zip": "fa2e93d7e8832e5741390701bda0b9693a9868f68e3f442db15f8cc4c362691d",
-      "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_Week3.zip": "257d38ffe995004ad0380e2b58ff3b5a1a352c86c673d4e66d4a4599a9c637ef",
+      "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_Week3.zip": [
+        "257d38ffe995004ad0380e2b58ff3b5a1a352c86c673d4e66d4a4599a9c637ef",
+        "5a8606a41a4b9e5a7accdf3ee730d727b709d92734f669d07a1e84324fa8035b"
+      ],
       "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_Week4.zip": "df33780c2dea97c485158d026f8694051244d866663dde06ab8ac2ac14cd84e4",
       "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_Week5.zip": "fa2c5bd9f4f509b52d1d2510afc8ae25e3f9bbce55fc3fe9eda438882f3663a9",
       "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_Week6.zip": "6c0c4b0c76e3bf15c104748649c8d501e4ee3f669cf55fa280e3b73768aa6730",
       "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_Week7.zip": "3fd530bcedb10162514f9d37b785f447c24e8a0ba8c82b4ea94a578b54e33784",
-      "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_Weeks3-7_Teaching_Pack.zip": "3dbe9ce0d6235f1939ced991ebe33e0548c1160b5fd1aea1280d3ed55a377b47",
+      "Science_Teesside/Teaching_Packs/GROW/downloads/GROW_Science_Autumn1_Weeks3-7_Teaching_Pack.zip": [
+        "3dbe9ce0d6235f1939ced991ebe33e0548c1160b5fd1aea1280d3ed55a377b47",
+        "d8b6f0ce61e7925089aadbc66b63756316268c9c2934575ccdf18e74cb41e6ce"
+      ],
       "Science_Teesside/Teaching_Packs/GROW/index.html": "820da86ebc579821308f558541dba2c8ade186db04373e9d04f7f6438091ad8b",
       "Science_Teesside/Teaching_Packs/GROW/lessons/A2_W7B/GROW_Science_Autumn2_A2_W7B_Autumn_Science_Explain_Check_Improve.pdf": "d335bce6efd8303b679450b4c9ffb6f4030251cb0429741f498435245c9d97fe",
       "Science_Teesside/Teaching_Packs/GROW/lessons/A2_W7B/GROW_Science_Autumn2_A2_W7B_Autumn_Science_Explain_Check_Improve.pptx": "5d9e776f59ddc941984a172567364af2935c718832163c3326577ea074eeca83",
@@ -4023,21 +4054,63 @@
       "Science_Teesside/Teaching_Packs/GROW/lessons/W32/GROW_Science_Summer1_W32_Change_Detectives_What_Became_Something_New_Pupil.pdf": "b61daf75d82aab7467d984a2159857b1cff552758d2ca4e8ece7edc0adf7cfd9",
       "Science_Teesside/Teaching_Packs/GROW/lessons/W32/GROW_Science_Summer1_W32_Change_Detectives_What_Became_Something_New_Teacher.docx": "56598af9cfae543fdea2c18e112dd672c10699b1677dad993241ed5f96ebf252",
       "Science_Teesside/Teaching_Packs/GROW/lessons/W32/GROW_Science_Summer1_W32_Change_Detectives_What_Became_Something_New_Teacher.pdf": "61c527599afcc01bfc4f7d7b50d240e5e81397084f26d84e07035b137198d81e",
-      "Science_Teesside/Teaching_Packs/GROW/lessons/W3A/GROW_Science_Autumn1_W3A_Friction.pdf": "327a9a2697be3514616c6e6dbdd234f2417bb455c9ae030db1691ad2402853c3",
-      "Science_Teesside/Teaching_Packs/GROW/lessons/W3A/GROW_Science_Autumn1_W3A_Friction.pptx": "3367b26c579d6e9cfb9601c004aa471f523ea1278ed072eef45cd55201d6d661",
-      "Science_Teesside/Teaching_Packs/GROW/lessons/W3A/GROW_W3A_Friction_Pupil.docx": "db73d9da72dc284f02a37134ff9d05fb19998cd9c0f5cbc598b1f92b0e14cb57",
-      "Science_Teesside/Teaching_Packs/GROW/lessons/W3A/GROW_W3A_Friction_Pupil.pdf": "f6fdfc81b303f8d855b0d7d45b2e86ef2993d3590b58eed366ed97891e742d02",
-      "Science_Teesside/Teaching_Packs/GROW/lessons/W3A/GROW_W3A_Friction_Teacher.docx": "4982121dc03938db039d652b99babddbdf4da1a1052cdd338912068f643af97c",
-      "Science_Teesside/Teaching_Packs/GROW/lessons/W3A/GROW_W3A_Friction_Teacher.pdf": "02f22fc10c4f5a659dd4ff246ccde6ce867459a79a2635713d4227614b7b8373",
-      "Science_Teesside/Teaching_Packs/GROW/lessons/W3A/START_HERE.txt": "aecefd50143d87b71dd8733335ff7703a4c9552df45101f917bb2cb82d807685",
-      "Science_Teesside/Teaching_Packs/GROW/lessons/W3B/GROW_Science_Autumn1_W3B_Friction_Test.pdf": "b7032f8a9934f722ca5f0e8e612746a57b3b7ed1a2e4bc302e5819b43c1dd237",
-      "Science_Teesside/Teaching_Packs/GROW/lessons/W3B/GROW_Science_Autumn1_W3B_Friction_Test.pptx": "a8ca23e3534ae8d8391562563ce5346ea5db48ade65be5b3d5a276072fe104ea",
-      "Science_Teesside/Teaching_Packs/GROW/lessons/W3B/GROW_Science_Autumn1_W3B_Friction_Test_Pupil.docx": "621a0345bef39ae6f02332a1993a1cc2612d7d8da691b0d51030476fcbae57d6",
-      "Science_Teesside/Teaching_Packs/GROW/lessons/W3B/GROW_Science_Autumn1_W3B_Friction_Test_Pupil.pdf": "8c994ae90730485680ed9391a5ecedd20989f8cc8ac93075586d6e96eb01fbbd",
-      "Science_Teesside/Teaching_Packs/GROW/lessons/W3B/GROW_Science_Autumn1_W3B_Friction_Test_Teacher.docx": "7c11362dbe8f30e1f111031282ec8ffdc803fffebbaebc2fe7e7d449555813f8",
-      "Science_Teesside/Teaching_Packs/GROW/lessons/W3B/GROW_Science_Autumn1_W3B_Friction_Test_Teacher.pdf": "bcb3b02ba71f6b6debd40941e8055a0ca1fc3f91417428d9cce2a11554af49a1",
+      "Science_Teesside/Teaching_Packs/GROW/lessons/W3A/GROW_Science_Autumn1_W3A_Friction.pdf": [
+        "327a9a2697be3514616c6e6dbdd234f2417bb455c9ae030db1691ad2402853c3",
+        "0e57d93e45bf29236754a735e42f6d2ae923aa1a23c65ebe9ed19041347ced7d"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/lessons/W3A/GROW_Science_Autumn1_W3A_Friction.pptx": [
+        "3367b26c579d6e9cfb9601c004aa471f523ea1278ed072eef45cd55201d6d661",
+        "13dceb4a32f65165df9353349a69c87465e7f33b9f941036f8f714fd10a9f9da"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/lessons/W3A/GROW_W3A_Friction_Pupil.docx": [
+        "db73d9da72dc284f02a37134ff9d05fb19998cd9c0f5cbc598b1f92b0e14cb57",
+        "9f8afdf8df90eb845d3ea352d36b9bd19dd192a6c040883fe70957eb8be487de"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/lessons/W3A/GROW_W3A_Friction_Pupil.pdf": [
+        "f6fdfc81b303f8d855b0d7d45b2e86ef2993d3590b58eed366ed97891e742d02",
+        "856691efece9acaae40a529f949f3d26567345c8f658de9e26eab1bbbdc585cb"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/lessons/W3A/GROW_W3A_Friction_Teacher.docx": [
+        "4982121dc03938db039d652b99babddbdf4da1a1052cdd338912068f643af97c",
+        "9da8a692bd1ad6b4a040e4b4a970275c90577cbaf73342492d1908148c5d8717"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/lessons/W3A/GROW_W3A_Friction_Teacher.pdf": [
+        "02f22fc10c4f5a659dd4ff246ccde6ce867459a79a2635713d4227614b7b8373",
+        "08c926202671c6b2c25778d5d2dcf2f99a473dd704201f0ef9a58e3a359b18f9"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/lessons/W3A/START_HERE.txt": [
+        "aecefd50143d87b71dd8733335ff7703a4c9552df45101f917bb2cb82d807685",
+        "b5c46c92125be91cb86f64c5969ad8378ab3948b41a82e7be01e7378ccdfc81c"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/lessons/W3B/GROW_Science_Autumn1_W3B_Friction_Test.pdf": [
+        "b7032f8a9934f722ca5f0e8e612746a57b3b7ed1a2e4bc302e5819b43c1dd237",
+        "1ce1ba083eb62b521368b3c5863c098733ae7d677a1e7c0e641b8e0fd7681d3a"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/lessons/W3B/GROW_Science_Autumn1_W3B_Friction_Test.pptx": [
+        "a8ca23e3534ae8d8391562563ce5346ea5db48ade65be5b3d5a276072fe104ea",
+        "3049816d76009ebe3ad1b609e9ca22ec54c3abc82d3e8037b012386759ba278b"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/lessons/W3B/GROW_Science_Autumn1_W3B_Friction_Test_Pupil.docx": [
+        "621a0345bef39ae6f02332a1993a1cc2612d7d8da691b0d51030476fcbae57d6",
+        "e4333309ef2e2dcf587385063c8e43eee56c3a285089b4f749580124d8c128ea"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/lessons/W3B/GROW_Science_Autumn1_W3B_Friction_Test_Pupil.pdf": [
+        "8c994ae90730485680ed9391a5ecedd20989f8cc8ac93075586d6e96eb01fbbd",
+        "7ddb70eb886f743fd0813b5d581435b36bdfb1a5813e23a6cb6f3b95ccdfee8b"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/lessons/W3B/GROW_Science_Autumn1_W3B_Friction_Test_Teacher.docx": [
+        "7c11362dbe8f30e1f111031282ec8ffdc803fffebbaebc2fe7e7d449555813f8",
+        "c0e2ae5adaff89fa05b28e389f7d422e0f638ca9edd33313da61d57d258732cb"
+      ],
+      "Science_Teesside/Teaching_Packs/GROW/lessons/W3B/GROW_Science_Autumn1_W3B_Friction_Test_Teacher.pdf": [
+        "bcb3b02ba71f6b6debd40941e8055a0ca1fc3f91417428d9cce2a11554af49a1",
+        "c9c7bf0a6dc4b4a69c1df89bf7fc3a2fdd73c57828ecb0619688611b52a61d5d"
+      ],
       "Science_Teesside/Teaching_Packs/GROW/lessons/W3B/GROW_W3B_Friction_Measurements.xlsx": "7ab6650a16051e655dde2f48928810cb2a825e07d4d0a028fea7cc25ee64b1d5",
-      "Science_Teesside/Teaching_Packs/GROW/lessons/W3B/START_HERE.txt": "a14214b3e256d5e99396d03292b4b1281b56b56c5a8725386c09d11c275c45f4",
+      "Science_Teesside/Teaching_Packs/GROW/lessons/W3B/START_HERE.txt": [
+        "a14214b3e256d5e99396d03292b4b1281b56b56c5a8725386c09d11c275c45f4",
+        "70a87773d7f0bc53b67cc1023263f2837ec473ceffc6ec1fc79b82823805c756"
+      ],
       "Science_Teesside/Teaching_Packs/GROW/lessons/W4A/GROW_Science_Autumn1_W4A_Mechanisms.pdf": "4af5fdcdc9e4d5c651545fbbde812762f924249d42a103d3e41ddfe49c120051",
       "Science_Teesside/Teaching_Packs/GROW/lessons/W4A/GROW_Science_Autumn1_W4A_Mechanisms.pptx": "394e9a36b4e15708e43346e328c82f89ab3323d4de1df0cb0e2d9743a22d1044",
       "Science_Teesside/Teaching_Packs/GROW/lessons/W4A/GROW_Science_Autumn1_W4A_Mechanisms_Pupil.docx": "4621245842054aa069124ff174f09c0eff8f8c56769d37c1acea9afe75f3045c",
@@ -4489,8 +4562,8 @@
       "Science_Teesside/Teaching_Packs/LAUNCH/lessons/W9L1/LAUNCH_Science_Autumn2_W9L1_Cell_Cycle_Copy_Check_Divide_Teacher.docx": "a5dda6c1f55556025fb2d691b2dc0e7583e0a86b55901a0ca751d6831fb39614",
       "Science_Teesside/Teaching_Packs/LAUNCH/lessons/W9L1/LAUNCH_Science_Autumn2_W9L1_Cell_Cycle_Copy_Check_Divide_Teacher.pdf": "a2e2c189ed6cc9b2dfd17de3ef20c720a369ae146471cb289dfb955aa4cf2d83",
       "Science_Teesside/Teaching_Packs/index.html": [
-        "19daa4d90e5ac76803974abc36d83cf8b9e169e515c2c9f84b0635bd780c13a3",
-        "dab9ae31a91fdc02e23e718fc06158b190a90cedae3bd38323097f1ce152a1d7"
+        "dab9ae31a91fdc02e23e718fc06158b190a90cedae3bd38323097f1ce152a1d7",
+        "b7cf497737f66d2d99a42df5b5ac3abcb91da3574c719f931205cdf7d353eada"
       ],
       "Science_Teesside/Teaching_Packs/packs.css": "70ca73b323e5cabf05b1f5f9f8107694cfcecf4ddf8043f342049ee4c797ce59",
       "Science_Teesside/Teaching_Packs/web-slides.html": [
