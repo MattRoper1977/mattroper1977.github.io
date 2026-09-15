@@ -39,7 +39,8 @@
     "CX2 §2 GROW W3 Friction (2026-09-15, Lessons #538 head 29f3bc7f6c5882de88cef2c85f3cc0a3c1e7fb61, base main 423f11d9): registry-only carrier on e1645d3, publisher code unchanged. 30 paths move to [published rollback, candidate] pairs and nothing is added or removed: the GROW W3 Friction lesson, its two resource pages, the GROW pack records (SOURCE_MANIFEST, DOWNLOAD_INDEX, SHA256SUMS), seven Week 3 / W3-W7 archives, the W3A and W3B native slides, pupil and teacher documents and START_HERE files, the teaching-pack hub index, education-lessons assets/catalogue/lesson-order.json (its pair now [served 0091727d, Friction]; the Lane D BUILD candidate afcc029c is re-minted when that branch is rebased, its W8B rollback pair is untouched) and education-site data/usage-registry.json. Method: a full three-repository build at this builder (Site e1645d3, Apps 3ad0a7df, Python 3.12.3, lxml 6.0.1) of the candidate; a control build of Lessons main 423f11d9 by the same method reproduces an admitted digest for every one of its 4044 files (0 problems), which is what qualifies the method — the earlier --allow-sparse method was withdrawn in this carrier's previous commit. The Friction build is admitted green by this registry and the main build stays green (rollback preserved), both measured before commit.",
     "CX2 §3 LAUNCH W4L1 Diffusion (2026-09-15, Lessons #546 head ff87d139 on main acae624f): registry-only rows on the reviewed-rows carrier before it. 38 paths move to [published rollback, candidate] pairs, nothing added or removed: the W4L1 lesson, the LAUNCH pack records (SOURCE_MANIFEST, DOWNLOAD_INDEX, SHA256SUMS), the combined Pupil_Worksheets.pdf and Teacher_Guide_And_Answers DOCX/PDF, the W4L1 natives (slides PPTX/PDF, worksheet DOCX/PDF), every LAUNCH archive (the guide and combined worksheets travel in each), the teaching-pack hub index, education-lessons assets/catalogue/lesson-order.json (pair now [Friction, Diffusion]) and education-site data/usage-registry.json. Rollbacks are the digests of a full build of Lessons main acae624f (the Friction tree this carrier chain publishes), which reproduces every admitted digest (0 problems). The Diffusion build is admitted green by this registry and the main build stays green, both measured before commit.",
     "CX2 §4.8 Sugar R10 hygiene (2026-09-15, Lessons #547 head 9acd7e03 on main a8b3c968): registry-only rows on the Diffusion carrier before it. Five paths move to [published rollback, candidate] pairs, nothing added or removed: the accepted BUILD W8A Sugar lesson (three staff sentences in the feedback card no longer name the evidence product, per ruling R10), its re-rendered teacher DOCX and PDF, the BUILD pack SHA256SUMS.txt, and education-lessons assets/catalogue/lesson-order.json (pair now [Diffusion, Sugar]). The education-site usage registry does NOT move: the two re-rendered documents keep their KB-rounded sizes, so no reviewed download row changes and science-download-usage-additions.json is untouched (measured, not assumed). Rollbacks are the digests of a full build of Lessons main a8b3c968, which reproduces every digest this carrier admits (control: 4044 files, 0 problems). The Sugar build is admitted green by this registry and the main build stays green, both measured before commit.",
-    "CX2 §8.3 Lane D return week (2026-09-15, Lessons #545 head 4494e3bb on main ec7d34ab; the stacked branch also carries #543 BUILD and #544 GROW, so this one carrier admits the whole return week): registry-only rows on the Sugar carrier before it. Seven paths move to [published rollback, candidate] pairs, nothing added or removed: BUILD W8B Autumn Science Checkpoint, GROW W8A and W8B Day and Night, LAUNCH W8L1 Enzyme Action, W8L2 Amylase pH Core Practical and W8L3 Amylase Rate, and education-lessons assets/catalogue/lesson-order.json (pair now [Sugar, Lane D]). The education-site usage registry does NOT move and no reviewed download row changes: these six lessons carry no pack downloads (measured). IMPORTANT: this replaces the withdrawn W8B candidate digest 47364350, which an earlier carrier carried and which this carrier's own CORRECTION note retired. That digest came from a --allow-sparse build, a method later proved unfaithful for lesson HTML. The full three-repository build gives b67be20d895f7abca3f9d07b13b89aebef95d9ff51109d626b72267f436f5d84 for the same bytes, so the withdrawal was correct and the sparse digest would have failed this publication on that exact file. Rollbacks are the digests of a full build of Lessons main ec7d34ab, which reproduces every digest this carrier admits (control: 4044 files, 0 problems). Both builds verify green before commit."
+    "CX2 §8.3 Lane D return week (2026-09-15, Lessons #545 head 4494e3bb on main ec7d34ab; the stacked branch also carries #543 BUILD and #544 GROW, so this one carrier admits the whole return week): registry-only rows on the Sugar carrier before it. Seven paths move to [published rollback, candidate] pairs, nothing added or removed: BUILD W8B Autumn Science Checkpoint, GROW W8A and W8B Day and Night, LAUNCH W8L1 Enzyme Action, W8L2 Amylase pH Core Practical and W8L3 Amylase Rate, and education-lessons assets/catalogue/lesson-order.json (pair now [Sugar, Lane D]). The education-site usage registry does NOT move and no reviewed download row changes: these six lessons carry no pack downloads (measured). IMPORTANT: this replaces the withdrawn W8B candidate digest 47364350, which an earlier carrier carried and which this carrier's own CORRECTION note retired. That digest came from a --allow-sparse build, a method later proved unfaithful for lesson HTML. The full three-repository build gives b67be20d895f7abca3f9d07b13b89aebef95d9ff51109d626b72267f436f5d84 for the same bytes, so the withdrawal was correct and the sparse digest would have failed this publication on that exact file. Rollbacks are the digests of a full build of Lessons main ec7d34ab, which reproduces every digest this carrier admits (control: 4044 files, 0 problems). Both builds verify green before commit.",
+    "CX2 §8.3 Lane D return week, CORRECTED (2026-09-15, Lessons #545 head be068b97 on main ec7d34ab). This supersedes the seven candidate digests admitted one commit earlier at 429dd4ec, which were measured before a defect CI then caught. The six return-week builds had lost the authored <script type=application/json id=lesson-config> block every Science lesson on main carries, and which build_download_pack.lesson_label() reads to name a lesson. Measured: lesson_label returned None for BUILD W8B and 'Your task - 1 of 2' for the other five, whose only h1 is a per-slide worksheet label. verify_definitions.py redded on the two continuation targets; the other four were outside that gate and would have shipped mis-named. tools/rw1/restore_lesson_config.py copies each lesson's own block verbatim from the review base and strips the trailing whitespace git diff --check redded. All seven digests therefore moved (W8B b67be20d -> 492a4c28), so the previous entry's candidates are replaced here rather than kept beside them. Seven paths move to [published rollback, candidate] pairs, nothing added or removed. No reviewed download row changes (measured 0 of 320). Rollbacks are the digests of a full build of Lessons main ec7d34ab, clean at 4044 files. Both builds verify green before commit."
   ],
   "trees": {
     "education-site": {
@@ -261,7 +262,7 @@
     "education-lessons": {
       "assets/catalogue/lesson-order.json": [
         "225238fb04210e6944bd738a19864e03027fe70d8e8955db64f1984b9fa690cb",
-        "22cbdcba5313f4e3a1d4bc4b1598272af1c6b221a52774dd91e01ce0e4de0ba7"
+        "acc68a82ceaa518f50e96cdee41437ced54ebfeb41c3c3d30c0c8cadc4eadfbd"
       ],
       "assets/mbm-tokens.css": [
         "01fbb17686866b97e7591781e4a78f2e9d38fb5ba35ed8acf935ce2a199643dd",
@@ -2927,7 +2928,7 @@
       ],
       "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W8B_Autumn_Science_Checkpoint_Do.html": [
         "b95eafbc9eb56df85e8ebd73eafbe25236f55a540d0cd433e315138684820a9f",
-        "b67be20d895f7abca3f9d07b13b89aebef95d9ff51109d626b72267f436f5d84"
+        "492a4c28f36802239f4d1a508aa62c4e4988e9734cc67de477dcc7d66beb0fa5"
       ],
       "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W9A_Rock_Evidence_Explore.html": [
         "24c5985d2b5d44d301adc31b41551a43b8d4bb5679449ba051d99a570ce84f29",
@@ -3058,11 +3059,11 @@
       ],
       "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W8A_Day_And_Night_Explore.html": [
         "780e46839818121adef04d65efd227afe6529e79f7b479271466be6e126992e4",
-        "36b7e1f52faf41a6047624c5de580d4006db5786a04cb5e01da3a7494cff9367"
+        "a8f1285136fb0bd854fe0eea44f3ebccdf6f49e0095c5ea762394a6c4babc50d"
       ],
       "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W8B_Day_And_Night_Do.html": [
         "3e60f4244b52c0dac7efffdd71d76de1aa1883335c06bd82cf9540abba7af30b",
-        "886d9568e6d27772632bd2d7cb95bad90ac97430300889d26883c287006e8020"
+        "0e5b2064724348258d3d1e097e5163b2864de5924401cb3c6283ceddabc27c0a"
       ],
       "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W9A_Spherical_Bodies_Explore.html": "c0bd4823e711534a9a90c76f7bbd8c128666fdce82285f38885d9eda1554e3ea",
       "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W9B_Spherical_Bodies_Do.html": "790cb3fd90de78109952e77f484624c4e5838a55fe941c4899a557d5f3423d79",
@@ -3318,15 +3319,15 @@
       "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W13L3_Inheritance_Probability_Do.html": "036a74284c526cc44652226b6eef39c427f13299554481d0a6cb086e15bbda7d",
       "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W8L1_Enzyme_Action_Introduce.html": [
         "cbd22266ee37825e798a882e071a54855a73741ddfc2e766880a4eb43fbd2a16",
-        "64b56d4827caf29fcce8f4c100415266ba2c4b3e21e2551142e76f8808044551"
+        "beed9e3f5124476cf39bb8fdda1b1b81f26daec545fafa45d07abf7f96c30f96"
       ],
       "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W8L2_Amylase_pH_Core_Practical_Explore.html": [
         "497fe69504f7fb823a40262abc5ba7702272582d0b0388aa78bc2297578a1e01",
-        "850054b72b6f0e7fc8ff2f541054d326c08756e1e4f5faf3adacf82f07878663"
+        "05eb63ae71bfaf2a918f76fcf107db0ea1d1cdac8cb7bdca2251938faf6e3600"
       ],
       "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W8L3_Amylase_Rate_And_Topic_1_Do.html": [
         "78f7eac9b9178cfe335af74041954a47aa3fd80eb10282f867e01dc19dfb510f",
-        "afa5f378cf43c69bdf1d25abf81195a3cfd87a2362ade842d9da0dc80781f377"
+        "c9b14a1a495415d4e5a6ae69285249b8a6bf8ed09d55305a2c62ce6afb1f9665"
       ],
       "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W9L1_Cell_Cycle_Introduce.html": "2e655be8734dc08594343d94dfd09a6c68ce8e1248eff7c2be2b5a15a4b91ff2",
       "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W9L2_Mitosis_Sequence_Explore.html": "9f71408098da10cc04124beeeb8dab4c41c2730aa062c1ccbff1b2b68e132511",
