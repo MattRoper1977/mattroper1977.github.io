@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Member admin · Made by Matt</title><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="same-origin">
+<link rel="canonical" href="https://madebymatt.uk/account/admin/"><link rel="icon" href="/favicon.svg">
+<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/assets/mbm-platform.css"><link rel="stylesheet" href="/assets/mbm-account.css">
+<!-- mbm-chrome:tokens --><link rel="stylesheet" href="/assets/mbm-tokens.css"><!-- /mbm-chrome:tokens -->
+<link rel="stylesheet" href="/account/admin/admin.css"></head><body class="ma-page" data-mbm-adult-features="on">
+<a class="skip" href="#main">Skip to content</a>
+<header class="header mbm-site-header"><div class="bar"><a class="brand" href="/main/"><img src="/assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong></span></a><!-- mbm-chrome:menu --><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><!-- /mbm-chrome:menu --><nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links"><a href="/games/">Games</a><a href="/Lessons/">Lessons</a><a href="/Matt-s-Apps-/">Apps</a><a href="/tools/">Tools</a><a href="/resources/">Resources</a></div><details class="mbm-nav-more"><summary>More</summary><div class="mbm-nav-panel"><a href="/main/">Main homepage</a><a href="/">Choose homepage</a><a href="/account/" aria-current="page">Account</a><a href="/members/">Members</a><a href="/stats/">Stats</a><a href="/main/#about">About</a><a href="/privacy/">Privacy</a></div></details></nav></div></header>
+<main id="main"><section class="ma-hero"><p class="ma-eyebrow">Made by Matt · administration</p><h1>Members and sign-ins</h1><p>See who has joined and when they last signed in.</p></section>
+<div class="ma-wrap"><section class="ma-panel">
+<p id="adminStatus" class="ma-status" role="status" aria-live="polite">Checking your account…</p>
+<p id="adminLogin"><a class="ma-btn" href="/account/?mode=login">Log in</a></p>
+<noscript><p>JavaScript and an administrator account are needed to view member details.</p></noscript>
+<form id="adminSearch" class="ma-form" hidden><div class="ma-field"><label for="memberSearch">Find a member by name or email</label><input id="memberSearch" type="search" maxlength="120" autocomplete="off"></div><div class="ma-actions"><button class="ma-btn" id="searchButton" type="submit">Search members</button><button class="ma-btn secondary" id="refreshButton" type="button">Refresh</button><a href="/account/">My account</a></div></form>
+<div id="adminResults" hidden>
+<dl class="admin-summary"><div><dt>Registered accounts</dt><dd id="memberCount"></dd></div><div><dt>Verified email</dt><dd id="verifiedCount"></dd></div><div><dt>Joined in last 7 days</dt><dd id="newCount"></dd></div><div><dt>Signed in during last 7 days</dt><dd id="signinCount"></dd></div></dl>
+<p id="asOf"></p><p id="sessionHelp"><b>Recorded sessions are not an online indicator.</b> A sign-in can remain saved on a closed browser. These are session records without an elapsed expiry; they do not prove someone is actively using the site.</p>
+<div class="admin-table-wrap" tabindex="0" role="region" aria-label="Member details, scroll horizontally for more columns"><table class="admin-table" aria-describedby="sessionHelp"><caption>Member accounts · newest first</caption><thead><tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Verification</th><th scope="col">Joined</th><th scope="col">Latest sign-in</th><th scope="col">Recorded sessions</th></tr></thead><tbody id="memberRows"></tbody></table></div>
+<div class="admin-page-controls"><button class="ma-btn secondary" id="previousPage" type="button" disabled>Previous</button><span id="pageLabel"></span><button class="ma-btn secondary" id="nextPage" type="button" disabled>Next</button></div>
+</div></section></div></main>
+<footer class="footer"><div class="bar"><div class="brand"><img src="/assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></div><span class="muted">Interactive lessons, simulations and games · madebymatt.uk</span></div></footer>
+<script src="/assets/mbm-account.js"></script><script defer src="/assets/mbm-platform.js"></script><script defer src="/account/admin/admin.js"></script></body></html>

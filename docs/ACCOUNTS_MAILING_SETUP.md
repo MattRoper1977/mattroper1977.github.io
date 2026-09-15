@@ -99,6 +99,44 @@ After merge, the remaining production-only acceptance item is to prove self-serv
 
 ## What remains device-local
 
+## Member administration — 15 September 2026
+
+The `/account/admin/` candidate adds a read-only member list with registration,
+verification, latest sign-in and recorded-session information. It contains no
+passwords, tokens, IP addresses, saved favourites or browsing history. Session
+records are explicitly not an online/presence indicator. Pagination is bounded
+server-side and search matches a literal name/email substring.
+
+The migration ending `_mbm_account_admin.sql` creates a private `account_private.admins`
+UUID allowlist with RLS and no application table grants. Its API wrapper uses
+SECURITY INVOKER; the private implementation checks the allowlist, verified
+non-anonymous/non-deleted/non-banned Auth identity and the caller's extant,
+unexpired session on every request. User-editable metadata never grants access.
+An ordinary authenticated user cannot read the list or change the allowlist.
+Grant only the exact Auth UUID resolved from the owner-confirmed address after
+account creation. No account UUID or email is hard-coded into a migration.
+
+Deployment order: run the isolated PostgreSQL tests; review/apply the named
+migration through the connected project; provision the specifically authorised
+account using Auth's normal email-verification flow; add only that identity's
+UUID to the private allowlist as database owner. Email verification and a valid
+session remain mandatory even for an allowlisted identity. Publish the reviewed
+Site changes through the existing release gates. Do not call an unpublished
+dashboard live, and do not bypass the school's merge hold.
+
+Verification: `node --test domain-split/analytics-backend/tests/account-admin.test.mjs`
+after `npm ci --prefix domain-split/analytics-backend`; browser checks run
+`node tools/test_account_admin_browser.cjs` with the workflow-pinned Playwright.
+The fixtures never create live accounts or send email. Final hosted negative
+permission checks and the owner's real sign-in remain distinct from fixtures.
+
+The registration retry repair restores every input/button to its previous
+disabled state after a failed request. Local email/password/matching checks
+focus the affected field before contacting the provider. It preserves the
+10-character minimum and all existing credential/mailing boundaries.
+
+### Existing device-local data
+
 - reading/background preferences;
 - UAS/ASDAN pupil records, marks and evidence;
 - standalone/offline caches;

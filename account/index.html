@@ -97,7 +97,7 @@
 <div class="ma-panel">
 <p class="ma-kicker">Signed in</p>
 <div class="ma-identity"><div class="ma-avatar" id="avatar" aria-hidden="true">M</div><div><b id="accountName">Made by Matt member</b><span id="accountEmail"></span></div></div>
-<div class="ma-actions"><a class="ma-btn" href="/members/">Open Members</a><button class="ma-btn secondary" id="logoutBtn" type="button">Log out</button></div>
+<div class="ma-actions"><a class="ma-btn" href="/members/">Open Members</a><a class="ma-btn secondary" href="/account/admin/">Member admin</a><button class="ma-btn secondary" id="logoutBtn" type="button">Log out</button></div>
 <p class="ma-status" id="accountStatus" role="status" aria-live="polite"></p>
 </div>
 
@@ -159,7 +159,18 @@
 'use strict';
 var $=function(s){return document.querySelector(s)};
 function setStatus(id,text,kind){var el=$(id);if(!el)return;el.textContent=text||'';el.className='ma-status'+(kind?' '+kind:'');}
-function busy(form,on){Array.prototype.forEach.call(form.querySelectorAll('button,input'),function(el){if(el.type!=='email'&&el.type!=='password'&&el.type!=='text'||on)el.disabled=!!on;});}
+var busyControls=new WeakMap();
+function busy(form,on){
+ if(on){
+  if(busyControls.has(form))return;
+  var controls=Array.prototype.map.call(form.querySelectorAll('button,input,select,textarea'),function(el){return {el:el,disabled:el.disabled}});
+  busyControls.set(form,controls);form.setAttribute('aria-busy','true');
+  controls.forEach(function(item){item.el.disabled=true});
+ }else{
+  (busyControls.get(form)||[]).forEach(function(item){item.el.disabled=item.disabled});
+  busyControls.delete(form);form.removeAttribute('aria-busy');
+ }
+}
 function showMode(mode,focusField){
  var login=$('#loginForm'),reg=$('#registerForm'),reset=$('#resetForm');
  login.hidden=mode!=='login';reg.hidden=mode!=='register';reset.hidden=mode!=='reset';
@@ -180,7 +191,7 @@ Array.prototype.forEach.call(document.querySelectorAll('[data-show]'),function(b
 
 $('#loginForm').addEventListener('submit',function(e){e.preventDefault();var form=this;setStatus('#loginStatus','Logging in…');busy(form,true);MBMAccount.login($('#loginEmail').value,$('#loginPassword').value).then(function(){setStatus('#loginStatus','Logged in.','ok');form.reset()}).catch(function(err){setStatus('#loginStatus',err.message,'err')}).finally(function(){busy(form,false)})});
 var lastVerificationEmail='';
-$('#registerForm').addEventListener('submit',function(e){e.preventDefault();var form=this,p=$('#registerPassword').value,c=$('#registerConfirm').value,email=$('#registerEmail').value;if(p!==c){setStatus('#registerStatus','The two passwords do not match.','err');return}setStatus('#registerStatus','Creating your account…');busy(form,true);MBMAccount.register($('#registerName').value,email,p).then(function(r){lastVerificationEmail=r.email||email;if(r.needsConfirmation){setStatus('#registerStatus','Account created. Check your email to verify it, then return here to log in. If the message does not arrive, use Resend verification email.','ok');}else{setStatus('#registerStatus','Account created and signed in.','ok')}form.reset();if(lastVerificationEmail)$('#registerEmail').value=lastVerificationEmail}).catch(function(err){setStatus('#registerStatus',err.message,'err')}).finally(function(){busy(form,false)})});
+$('#registerForm').addEventListener('submit',function(e){e.preventDefault();var form=this,p=$('#registerPassword').value,c=$('#registerConfirm').value,email=$('#registerEmail').value;if(!$('#registerEmail').checkValidity()){setStatus('#registerStatus','Please enter a valid email address.','err');$('#registerEmail').focus();return}if(p.length<10){setStatus('#registerStatus','Use at least 10 characters for your password.','err');$('#registerPassword').focus();return}if(p!==c){setStatus('#registerStatus','The two passwords do not match.','err');$('#registerConfirm').focus();return}setStatus('#registerStatus','Creating your account…');busy(form,true);MBMAccount.register($('#registerName').value,email,p).then(function(r){lastVerificationEmail=r.email||email;if(r.needsConfirmation){setStatus('#registerStatus','Account created. Check your email to verify it, then return here to log in. If the message does not arrive, use Resend verification email.','ok');}else{setStatus('#registerStatus','Account created and signed in.','ok')}form.reset();if(lastVerificationEmail)$('#registerEmail').value=lastVerificationEmail}).catch(function(err){setStatus('#registerStatus',err.message,'err')}).finally(function(){busy(form,false)})});
 $('#resendVerification').addEventListener('click',function(){var email=($('#registerEmail').value||$('#loginEmail').value||lastVerificationEmail).trim();if(!email){setStatus('#registerStatus','Enter the account email address first, then resend verification.','err');return}this.disabled=true;setStatus('#registerStatus','Sending a new verification email…');MBMAccount.resendVerification(email).then(function(){lastVerificationEmail=email;setStatus('#registerStatus','A fresh verification email has been requested. Check your inbox and spam folder.','ok')}).catch(function(err){setStatus('#registerStatus',err.message,'err')}).finally(function(){$('#resendVerification').disabled=false})});
 $('#resetForm').addEventListener('submit',function(e){e.preventDefault();var form=this;setStatus('#resetStatus','Sending reset link…');busy(form,true);MBMAccount.resetPassword($('#resetEmail').value).then(function(){setStatus('#resetStatus','If that address belongs to an account, check its inbox for the reset link.','ok')}).catch(function(err){setStatus('#resetStatus',err.message,'err')}).finally(function(){busy(form,false)})});
 $('#recoveryForm').addEventListener('submit',function(e){e.preventDefault();var form=this,p=$('#newPassword').value,c=$('#newPasswordConfirm').value;if(p!==c){setStatus('#recoveryStatus','The two passwords do not match.','err');return}setStatus('#recoveryStatus','Updating password…');busy(form,true);MBMAccount.updatePassword(p).then(function(){setStatus('#recoveryStatus','Password updated. You can keep using this signed-in session.','ok');form.reset()}).catch(function(err){setStatus('#recoveryStatus',err.message,'err')}).finally(function(){busy(form,false)})});

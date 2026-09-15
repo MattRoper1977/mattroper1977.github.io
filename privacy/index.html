@@ -29,6 +29,7 @@ body[data-theme="dark"]{--pv-cream:#121834;--pv-card:#1B234A;--pv-ink:#E8E2D4;--
 <p>Database access is controlled so an authenticated user can read and change only rows belonging to that user's Auth identity. Password data is not duplicated into the profile or member-data tables.</p>
 <p>Account records may include: account ID, email in the authentication system, optional display name, account timestamps/status, and member data such as favourites. This data exists so the same account-backed choices can appear after you sign in on another device.</p>
 
+<p><b>Member administration.</b> Authorised site administrators can view account names, email addresses, registration and verification status, latest sign-in dates and recorded session counts to administer membership and troubleshoot access. This view does not expose passwords, session tokens, saved favourites or browsing history. A recorded session does not show whether someone is currently online. Ordinary members retain access only to their own account-backed data.</p>
 <h3>Old on-device accounts</h3>
 <p>An older Made by Matt version created device-local account records in <code>mbm_users</code> and <code>mbm_session</code>. The new cloud account path does <b>not</b> upload the old password record or hash. Existing local data is left in place unless you deliberately remove it. If the old and new account use the same email, local per-account game save slots can keep using the same device-side slot tag.</p>
 
