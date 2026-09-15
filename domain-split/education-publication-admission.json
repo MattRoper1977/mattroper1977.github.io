@@ -37,7 +37,8 @@
     "CX2 S3 (Lessons PR548, branch claude/cx2-s3-offline-edition ae40cd3): the teaching-pack hub names the offline companion set as a lightweight offline edition and links each of its twenty entries to the canonical lesson. Only web-slides.html changes; admitted as a candidate digest beside the published rollback (4042f4ac -> 30af175e), measured by running this publisher on that tree, with the same run reproducing the rollback digest on main as its control. Publisher code unchanged.",
     "CORRECTION 2026-09-15: the CX2 Lane D BUILD entry for SCI_B_W8B_Autumn_Science_Checkpoint_Do.html is withdrawn and its original rollback pair restored. Its candidate digest was computed by running this publisher locally with --allow-sparse, and that method was then proved unfaithful for HTML: a control build of Lessons main reproduces an admitted digest for 2797 of 3742 published files, including 100% of PDF, DOCX, PPTX, ZIP, JSON, SVG, TXT, PNG and CSS, but only 559 of 1503 HTML, while main itself publishes green. A served digest for changed lesson HTML must therefore be measured by the real publication run, not locally. Non-HTML admissions in this registry are unaffected, and the teaching-pack hub entry was separately confirmed by publication run 35025572232 succeeding on it.",
     "CX2 §2 GROW W3 Friction (2026-09-15, Lessons #538 head 29f3bc7f6c5882de88cef2c85f3cc0a3c1e7fb61, base main 423f11d9): registry-only carrier on e1645d3, publisher code unchanged. 30 paths move to [published rollback, candidate] pairs and nothing is added or removed: the GROW W3 Friction lesson, its two resource pages, the GROW pack records (SOURCE_MANIFEST, DOWNLOAD_INDEX, SHA256SUMS), seven Week 3 / W3-W7 archives, the W3A and W3B native slides, pupil and teacher documents and START_HERE files, the teaching-pack hub index, education-lessons assets/catalogue/lesson-order.json (its pair now [served 0091727d, Friction]; the Lane D BUILD candidate afcc029c is re-minted when that branch is rebased, its W8B rollback pair is untouched) and education-site data/usage-registry.json. Method: a full three-repository build at this builder (Site e1645d3, Apps 3ad0a7df, Python 3.12.3, lxml 6.0.1) of the candidate; a control build of Lessons main 423f11d9 by the same method reproduces an admitted digest for every one of its 4044 files (0 problems), which is what qualifies the method — the earlier --allow-sparse method was withdrawn in this carrier's previous commit. The Friction build is admitted green by this registry and the main build stays green (rollback preserved), both measured before commit.",
-    "CX2 §3 LAUNCH W4L1 Diffusion (2026-09-15, Lessons #546 head ff87d139 on main acae624f): registry-only rows on the reviewed-rows carrier before it. 38 paths move to [published rollback, candidate] pairs, nothing added or removed: the W4L1 lesson, the LAUNCH pack records (SOURCE_MANIFEST, DOWNLOAD_INDEX, SHA256SUMS), the combined Pupil_Worksheets.pdf and Teacher_Guide_And_Answers DOCX/PDF, the W4L1 natives (slides PPTX/PDF, worksheet DOCX/PDF), every LAUNCH archive (the guide and combined worksheets travel in each), the teaching-pack hub index, education-lessons assets/catalogue/lesson-order.json (pair now [Friction, Diffusion]) and education-site data/usage-registry.json. Rollbacks are the digests of a full build of Lessons main acae624f (the Friction tree this carrier chain publishes), which reproduces every admitted digest (0 problems). The Diffusion build is admitted green by this registry and the main build stays green, both measured before commit."
+    "CX2 §3 LAUNCH W4L1 Diffusion (2026-09-15, Lessons #546 head ff87d139 on main acae624f): registry-only rows on the reviewed-rows carrier before it. 38 paths move to [published rollback, candidate] pairs, nothing added or removed: the W4L1 lesson, the LAUNCH pack records (SOURCE_MANIFEST, DOWNLOAD_INDEX, SHA256SUMS), the combined Pupil_Worksheets.pdf and Teacher_Guide_And_Answers DOCX/PDF, the W4L1 natives (slides PPTX/PDF, worksheet DOCX/PDF), every LAUNCH archive (the guide and combined worksheets travel in each), the teaching-pack hub index, education-lessons assets/catalogue/lesson-order.json (pair now [Friction, Diffusion]) and education-site data/usage-registry.json. Rollbacks are the digests of a full build of Lessons main acae624f (the Friction tree this carrier chain publishes), which reproduces every admitted digest (0 problems). The Diffusion build is admitted green by this registry and the main build stays green, both measured before commit.",
+    "CX2 §4.8 Sugar R10 hygiene (2026-09-15, Lessons #547 head 9acd7e03 on main a8b3c968): registry-only rows on the Diffusion carrier before it. Five paths move to [published rollback, candidate] pairs, nothing added or removed: the accepted BUILD W8A Sugar lesson (three staff sentences in the feedback card no longer name the evidence product, per ruling R10), its re-rendered teacher DOCX and PDF, the BUILD pack SHA256SUMS.txt, and education-lessons assets/catalogue/lesson-order.json (pair now [Diffusion, Sugar]). The education-site usage registry does NOT move: the two re-rendered documents keep their KB-rounded sizes, so no reviewed download row changes and science-download-usage-additions.json is untouched (measured, not assumed). Rollbacks are the digests of a full build of Lessons main a8b3c968, which reproduces every digest this carrier admits (control: 4044 files, 0 problems). The Sugar build is admitted green by this registry and the main build stays green, both measured before commit."
   ],
   "trees": {
     "education-site": {
@@ -258,8 +259,8 @@
     },
     "education-lessons": {
       "assets/catalogue/lesson-order.json": [
-        "79b555beccccdbb3ec7dd85a453127bfceba780136d51180cc0d65e0b127ea4f",
-        "83b51a5a01fdcee4d9858d335fb989a68e0778aeed08a4dc28ea6826dfce06a3"
+        "83b51a5a01fdcee4d9858d335fb989a68e0778aeed08a4dc28ea6826dfce06a3",
+        "225238fb04210e6944bd738a19864e03027fe70d8e8955db64f1984b9fa690cb"
       ],
       "assets/mbm-tokens.css": [
         "01fbb17686866b97e7591781e4a78f2e9d38fb5ba35ed8acf935ce2a199643dd",
@@ -2920,8 +2921,8 @@
       ],
       "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W13_Where_did_this_material_come_from_Classic.html": "15a5e876df72844b00daf55a5598b3a33f0d643756f5a65a9c4b46ec2c1dd43e",
       "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W8A_Sugar_Labels_Explore.html": [
-        "73544cfe4c3132410908025c2a03309b1a6dd881c50489336ca7ae3e339931f5",
-        "aa212587bdb7b92867e2b1630bfbd9f2e9f69d634fd42c6bbf9c3dba8002973a"
+        "aa212587bdb7b92867e2b1630bfbd9f2e9f69d634fd42c6bbf9c3dba8002973a",
+        "4d4702e11a297612bd443ce535447993a8b793739303fa3cd8c8a059bd655738"
       ],
       "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W8B_Autumn_Science_Checkpoint_Do.html": [
         "9ab7b02ab3c3adfed6705066c3e7ffcf3320b304c7bd30c720ea1f2c2ba2b5de",
@@ -3489,7 +3490,10 @@
       "Science_Teesside/Teaching_Packs/BUILD/Resources/BUILD_Science_W7B.html": "bfa5c77f1f50545d874e57ba613ac11a4457f52524b6e5caac744d3177db6fd6",
       "Science_Teesside/Teaching_Packs/BUILD/Resources/assets/1ee86492c47ea3cc85.png": "1ee86492c47ea3cc854dc2a2888069a961dbe0ae9a591889572e9f71ef2b617c",
       "Science_Teesside/Teaching_Packs/BUILD/Resources/assets/c7e4900620cb04eca5.png": "c7e4900620cb04eca520d18b6915968470eeab17f2e540b442bcb705783314cb",
-      "Science_Teesside/Teaching_Packs/BUILD/SHA256SUMS.txt": "e0c109ca81eb20ad15a0a127d4776fcdbd7a162fb4a616a58e637fb67a4fe190",
+      "Science_Teesside/Teaching_Packs/BUILD/SHA256SUMS.txt": [
+        "e0c109ca81eb20ad15a0a127d4776fcdbd7a162fb4a616a58e637fb67a4fe190",
+        "316444eaaa55fd786c393a40443f511b450c0f04a5ba1f752cef125fd254be01"
+      ],
       "Science_Teesside/Teaching_Packs/BUILD/SOURCE_MANIFEST.json": "5cd6246f8f7238adaff58122c1615b3ac6e4ccf1c1604f31aab080fd91394a95",
       "Science_Teesside/Teaching_Packs/BUILD/SOURCE_MAPPING.json": "ff5ed25d7ed3bf20879dd2a63c1a8a68024c910556bedf764eb83be61d4ec8f1",
       "Science_Teesside/Teaching_Packs/BUILD/START_HERE.txt": "7dc574750bc326685d64d0abbd25b632e9f8a724c7aa84f1123055c7f148ec7c",
@@ -3759,12 +3763,12 @@
         "25544b193963f552a1511ac17bd5b5353cbeeca71d6788ac4deddbc61f905dc4"
       ],
       "Science_Teesside/Teaching_Packs/BUILD/lessons/W8A/BUILD_Science_Autumn1_W8A_Sugar_Evidence_Read_The_Label_Teacher.docx": [
-        "c6313efce28264d581501d50479375490d8849f7354d546eb31ab94f679e1c4c",
-        "033a59447d5b42ea990dd0737c93db99a717e9055307f1c6b6ebe5bf7262c9b3"
+        "033a59447d5b42ea990dd0737c93db99a717e9055307f1c6b6ebe5bf7262c9b3",
+        "7932493b683f1ac4ab7fbaabef8f55ec13e0db311dc63334788dc88e9fc5d099"
       ],
       "Science_Teesside/Teaching_Packs/BUILD/lessons/W8A/BUILD_Science_Autumn1_W8A_Sugar_Evidence_Read_The_Label_Teacher.pdf": [
-        "80f6cdaea602a11e9ed74e3443ffdb20ba4125d70bb90705b97a05d813c1c977",
-        "a4f9888e6b742339d54ba9128da824904b65e786054e8820d60df9980fa4af86"
+        "a4f9888e6b742339d54ba9128da824904b65e786054e8820d60df9980fa4af86",
+        "8c9984c7683196b03a8acdf90764d7136f390f4fb0e28211077eb4184311f5a5"
       ],
       "Science_Teesside/Teaching_Packs/BUILD/lessons/W8B/BUILD_Science_Autumn1_W8B_Body_Science_Checkpoint.pdf": "17950c17e4da2c36b36f62881a39b9806a2d2e8631f78dd9b85c147a72da4673",
       "Science_Teesside/Teaching_Packs/BUILD/lessons/W8B/BUILD_Science_Autumn1_W8B_Body_Science_Checkpoint.pptx": "4620d6175965e7c70e5f5e55798a037098d4594917d3d887b83c61dc2446ba41",
