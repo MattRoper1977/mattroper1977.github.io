@@ -62,6 +62,8 @@ jobs:
           retention-days: 30
       - name: Exercise Play discovery and every initial game surface
         if: always()
+        env:
+          PLAY_REQUIRE_COMPLETE_DISCOVERY: '1'
         run: node domain-split/play/check.cjs
       - name: Exercise the existing save-transfer browser journey
         if: always()

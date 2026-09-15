@@ -64,6 +64,7 @@ await test('reviewed-discovery-and-real-screen-bindings',async()=>{
   assert.equal(g.image,'/assets/play/screens/'+screen.file);const response=await fetch(base+g.image);assert.equal(response.status,200);assert.equal(sha(Buffer.from(await response.arrayBuffer())),screen.sha256);realScreens++;
  }
  const order=rows=>rows.map(x=>JSON.stringify(x)).sort();assert.deepEqual(order(omitted),order(expectedOmissions),'Every omitted optional asset must be reported');
+ if(process.env.PLAY_REQUIRE_COMPLETE_DISCOVERY==='1')assert.equal(omitted.length,0,'Release-source review requires complete image and selection coverage');
  assert(!data.games.some(g=>g.image&&g.image.endsWith('.svg')),'illustrated covers cannot stand in for game captures');
  return{reviewedRoutes,realScreens,byteBound:true,omittedDiscovery:omitted,completeDiscovery:omitted.length===0};
 });
@@ -125,6 +126,11 @@ for(const width of [320,390,768,1280]){
   await page.evaluate(id=>{localStorage.setItem('apexkick.v1','PLAY-QA-SENTINEL');localStorage.setItem('mbm_play_recently_opened_v1',JSON.stringify([id]));},EMBER);await page.goto(base+'?list=recent');await ready(page);assert.match(await page.locator('#list-note').innerText(),/not saved games/);await page.locator('#game-grid [data-remove-recent="'+EMBER+'"]').click();assert(await page.locator('#empty-state').isVisible());assert(await page.locator('#empty-reset').evaluate(e=>e===document.activeElement));assert.equal(await page.evaluate(()=>localStorage.getItem('apexkick.v1')),'PLAY-QA-SENTINEL');
   await page.evaluate(id=>localStorage.setItem('mbm_play_recently_opened_v1',JSON.stringify([id])),EMBER);await page.reload();await ready(page);await page.locator('#clear-recent-list').click();assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('mbm_play_recently_opened_v1'))),[]);assert.equal(await page.evaluate(()=>localStorage.getItem('apexkick.v1')),'PLAY-QA-SENTINEL');
   await page.goto(base+'?mood=Calm&q=Lumina');await ready(page);await page.locator('#surprise').click();assert.match(await page.locator('#dialog-accessibility').innerText(),/Reduced motion/);assert.match(await page.locator('#dialog-saves').innerText(),/auto-saves/);await page.screenshot({path:path.join(out,width+'-discovery-details.png')});await page.keyboard.press('Escape');
+  const lighthouse=catalogue.find(g=>g.route.includes('/The_Last_Lighthouse_'));
+  await page.goto(base+'?game='+lighthouse.id);await ready(page);
+  const lighthouseImage=page.locator('#dialog-media img');await lighthouseImage.evaluate(img=>img.decode());
+  assert.equal(await lighthouseImage.evaluate(img=>getComputedStyle(img).objectPosition),'50% 0%','Tall title capture keeps its heading visible');
+  await page.screenshot({path:path.join(out,width+'-lighthouse-details.png')});await page.keyboard.press('Escape');
   return{combinedMoodGenre:true,surpriseEligibleOnly:true,emptySurprise:true,directCardFavourite:true,removeRecentFocus:true,clearRecentFromList:true,saveSentinelPreserved:true};
  });
  await test(width+'-sheet-focus-deep-link-and-return',async()=>{await page.goto(base+'?q=Emberwild');await ready(page);const trigger=page.locator('#game-grid [data-info="'+EMBER+'"]');await trigger.click();assert(await page.locator('#game-dialog').isVisible());assert(await page.locator('#dialog-close').evaluate(e=>e===document.activeElement),'sheet opens on its close control');assert.equal(new URL(page.url()).searchParams.get('game'),EMBER,'deep link written');for(let i=0;i<16;i++){await page.keyboard.press('Tab');assert(await page.evaluate(()=>!!document.activeElement.closest('#game-dialog')),'Focus escaped dialog');}

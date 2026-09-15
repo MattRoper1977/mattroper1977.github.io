@@ -40,3 +40,11 @@ Run 34909744930 passed 36/36 checks across 69 initial game surfaces with zero ru
 The Lighthouse image was rejected because first-visit focus scrolled its instructions past the identifying title. The browser capture now uses the ordinary Take the watch control to dismiss the primer and captures the title at 1280x1000. This affects only the review driver; the game source is unchanged. The paired checker fixture pin was updated.
 
 The actual-publisher-source local build now has 62 matching stills, six accepted previews, all 22 selections and exactly one explicitly reported missing image (Lighthouse). All 69 payloads validate unchanged. Syntax, diff and paired-pin checks pass. Require the fresh Lighthouse capture, its visual review and binding, then final current-head browser/visual acceptance before checkpoint 2 closes. The source pin documentation correction also passed in CI at 1b254882.
+
+## Lighthouse and complete release-source capture coverage
+
+Run 34910906227 passed all 36 checks across 69 surfaces with zero runtime errors and passed the save-transfer fixture. All 16 responsive screenshots and the new Lighthouse title capture were visually inspected and accepted. UI artifact 10374204342 SHA256: a25302a6d0af8e56dcb0f6e3e406f644277a6f8aeb0d0e4a02d2d2865a4c7758.
+
+The final Lighthouse image is copied unchanged and bound to its exact approved game payload. Its taller image is aligned to the top when displayed so the title remains visible. The browser suite captures its details at all four widths and checks that alignment. The review workflow now requires zero omitted images/selections; independent publishers still retain the builder's approved-revision omission behavior.
+
+Local release-source validation reports all 69 payloads unchanged, 63 matching stills, six accepted previews, 22 reviewed selections and zero omissions. Syntax, typed-literal and paired-pin checks pass. Fresh CI must validate the final image and its details rendering before checkpoint 2 closes; governed publication remains a later checkpoint.
