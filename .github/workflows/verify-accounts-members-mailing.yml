@@ -22,6 +22,9 @@ on:
       - 'tools/verify_accounts_members_mailing.js'
       - 'tools/verify_professional_site.js'
       - 'tools/test_member_merge.js'
+      - 'tools/test_account_admin_browser.cjs'
+      - 'domain-split/analytics-backend/tests/account-admin.test.mjs'
+      - 'domain-split/analytics-backend/package*.json'
       - 'docs/ACCOUNTS_MAILING_SETUP.md'
       - '.github/workflows/verify-accounts-members-mailing.yml'
   workflow_dispatch:
@@ -42,3 +45,22 @@ jobs:
           node --check assets/mbm-account.js
           node --check assets/mbm-mailing.js
           node --check assets/mbm-platform.js
+      - name: Verify protected member administration in isolated PostgreSQL
+        run: |
+          npm ci --prefix domain-split/analytics-backend
+          node --test domain-split/analytics-backend/tests/account-admin.test.mjs
+      - name: Install browser for account retry and admin review
+        run: |
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Verify form recovery and admin browser boundaries
+        env:
+          ACCOUNT_EVIDENCE_DIR: artifacts/account-admin
+        run: node tools/test_account_admin_browser.cjs
+      - name: Save member admin review screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: account-admin-review
+          path: artifacts/account-admin
+          if-no-files-found: ignore

@@ -390,6 +390,24 @@
     });
   }
 
+  // This RPC validates the authenticated UUID, verified email and live session
+  // against a private, server-maintained admin allowlist. UI state is no grant.
+  function adminMembers(options) {
+    options = options || {};
+    return requireUser().then(function () {
+      return sb.rpc('mbm_account_admin_members', {
+        p_page: options.page || 1, p_page_size: options.pageSize || 25,
+        p_search: String(options.search || '').trim().slice(0, 120)
+      });
+    }).then(function (r) {
+      if (r.error) {
+        if (r.error.code === '42501') throw new Error('Administrator access is required. Log in with your verified admin account.');
+        throw new Error('The member list is temporarily unavailable. Please try again.');
+      }
+      return r.data;
+    });
+  }
+
   function applyAccountAudienceNotice() {
     var form = d.getElementById('registerForm');
     if (!form || d.getElementById('adultAccountNotice')) return;
@@ -482,6 +500,7 @@
     readOfflineIdentity: readOfflineIdentity,
     deleteAccount: deleteAccount,
     unsubscribeMailing: unsubscribeMailing,
+    adminMembers: adminMembers,
     refresh: refresh,
     _mergeMemberData: mergeMemberData,
     _normaliseMemberData: normaliseMemberData,
