@@ -34,7 +34,8 @@
     "EDU-D2 2026-09-14: immutable carrier based on released Lessons builder95580b00. Six existing Lessons display files retain the current0130c6a0 rollback and admit reviewed readable-title/filter output; one path- and ID-guarded display-title map ARRIVING. No catalogue, lesson-order, teaching files, publisher code or companion source pins change. Built Site/Apps/Games output byte-identical. Superseded older digests recorded in paired recovery evidence.",
     "CX2 R5 (Lessons PR539, main 3a14e9c4d57832fed87ed588ef6f0ae4fd3d6064): the catalogue evidence was regenerated so check_catalogue_static.py is green on Lessons main; only assets/catalogue/lesson-order.json and assets/catalogue/terms-and-styles.json change, admitted as candidate digests beside the published rollback; digests measured by running this pinned publisher (c06526c5578b65ac9e7524dfaa3285aeb4b1694a) on the merged tree, with a control run on the previously published tree 929cf731 reproducing the admitted digests exactly. No lesson bytes, builder code or other admission changes.",
     "CX2 Lane D BUILD (Lessons PR543, branch claude/cx2-lane-d-build b281994): the return-week BUILD W8B lesson under the CX2 rulings and the lesson-order.json it re-derives, admitted as candidate digests beside the published rollback digests (W8B b95eafbc -> 47364350; lesson-order 0091727d -> afcc029c). No other file moves; the publisher code is unchanged.",
-    "CX2 S3 (Lessons PR548, branch claude/cx2-s3-offline-edition ae40cd3): the teaching-pack hub names the offline companion set as a lightweight offline edition and links each of its twenty entries to the canonical lesson. Only web-slides.html changes; admitted as a candidate digest beside the published rollback (4042f4ac -> 30af175e), measured by running this publisher on that tree, with the same run reproducing the rollback digest on main as its control. Publisher code unchanged."
+    "CX2 S3 (Lessons PR548, branch claude/cx2-s3-offline-edition ae40cd3): the teaching-pack hub names the offline companion set as a lightweight offline edition and links each of its twenty entries to the canonical lesson. Only web-slides.html changes; admitted as a candidate digest beside the published rollback (4042f4ac -> 30af175e), measured by running this publisher on that tree, with the same run reproducing the rollback digest on main as its control. Publisher code unchanged.",
+    "CORRECTION 2026-09-15: the CX2 Lane D BUILD entry for SCI_B_W8B_Autumn_Science_Checkpoint_Do.html is withdrawn and its original rollback pair restored. Its candidate digest was computed by running this publisher locally with --allow-sparse, and that method was then proved unfaithful for HTML: a control build of Lessons main reproduces an admitted digest for 2797 of 3742 published files, including 100% of PDF, DOCX, PPTX, ZIP, JSON, SVG, TXT, PNG and CSS, but only 559 of 1503 HTML, while main itself publishes green. A served digest for changed lesson HTML must therefore be measured by the real publication run, not locally. Non-HTML admissions in this registry are unaffected, and the teaching-pack hub entry was separately confirmed by publication run 35025572232 succeeding on it."
   ],
   "trees": {
     "education-site": {
@@ -2921,8 +2922,8 @@
         "aa212587bdb7b92867e2b1630bfbd9f2e9f69d634fd42c6bbf9c3dba8002973a"
       ],
       "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W8B_Autumn_Science_Checkpoint_Do.html": [
-        "b95eafbc9eb56df85e8ebd73eafbe25236f55a540d0cd433e315138684820a9f",
-        "47364350d4769b89aeb3d36967bb89d705c486e19a09ca57750d7f1ba7873601"
+        "9ab7b02ab3c3adfed6705066c3e7ffcf3320b304c7bd30c720ea1f2c2ba2b5de",
+        "b95eafbc9eb56df85e8ebd73eafbe25236f55a540d0cd433e315138684820a9f"
       ],
       "Science_Teesside/Build/W8-W13_2026-27/SCI_B_W9A_Rock_Evidence_Explore.html": [
         "24c5985d2b5d44d301adc31b41551a43b8d4bb5679449ba051d99a570ce84f29",
