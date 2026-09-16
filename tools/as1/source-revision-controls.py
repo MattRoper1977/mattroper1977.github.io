@@ -24,8 +24,9 @@ with tempfile.TemporaryDirectory() as directory:
     raw=(ROOT/key).read_bytes()
     item={'path':key,'source_repository':'Site','source_path':key,'route':'/rallyvector3d/','source_sha256':hashlib.sha256(raw).hexdigest()}
     chosen=module.select(item,{'Site':ROOT},valid)
-    assert chosen and chosen['id']=='rally-sw2-token-contrast-2026-09-12'
-    print('GREEN exact committed pilot revision selected')
+    # The committed blob must select the registry's current revision, not merely some reviewed one.
+    assert chosen and chosen['id']==valid[key]['current'], (chosen and chosen['id'], valid[key]['current'])
+    print('GREEN exact committed pilot revision selected: '+chosen['id'])
     missing=copy.deepcopy(valid);missing[key]['revisions']=[r for r in missing[key]['revisions'] if r['id']!=chosen['id']]
     try: module.select(item,{'Site':ROOT},missing)
     except ValueError as error: print('RED removed exact revision: '+str(error))
