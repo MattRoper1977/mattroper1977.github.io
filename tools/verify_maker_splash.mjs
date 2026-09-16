@@ -622,7 +622,9 @@ async function controls(browser, origin) {
       moved = await woPage.evaluate(() => document.activeElement !== document.querySelector('#mbmexit-back,#mbmhud-back'));
     }
     await woContext.close();
-    if (starve) check(wo.handedTo === 'mbmexit-back' || wo.handedTo === 'mbmhud-back', `${label}: the region's hand-off resolved the start control to the exit (precondition)`, JSON.stringify(wo));
+    // Before the fix the hand-off landed on the exit itself here; that is the defect, not a
+    // precondition, so the durable property is its negation.
+    if (starve) check(wo.handedTo !== 'mbmexit-back' && wo.handedTo !== 'mbmhud-back', `${label}: the region's hand-off never lands on the exit`, JSON.stringify(wo));
     check(wo.exit && wo.before && moved === true, `${label}: a Tab pressed on the exit leaves the exit`, JSON.stringify({ exitPresent: wo.exit, handedTo: wo.handedTo, focusedFirst: wo.before, moved }));
   }
   ctx = await newContext(browser);
