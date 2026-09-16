@@ -41,7 +41,8 @@
     "CX2 §4.8 Sugar R10 hygiene (2026-09-15, Lessons #547 head 9acd7e03 on main a8b3c968): registry-only rows on the Diffusion carrier before it. Five paths move to [published rollback, candidate] pairs, nothing added or removed: the accepted BUILD W8A Sugar lesson (three staff sentences in the feedback card no longer name the evidence product, per ruling R10), its re-rendered teacher DOCX and PDF, the BUILD pack SHA256SUMS.txt, and education-lessons assets/catalogue/lesson-order.json (pair now [Diffusion, Sugar]). The education-site usage registry does NOT move: the two re-rendered documents keep their KB-rounded sizes, so no reviewed download row changes and science-download-usage-additions.json is untouched (measured, not assumed). Rollbacks are the digests of a full build of Lessons main a8b3c968, which reproduces every digest this carrier admits (control: 4044 files, 0 problems). The Sugar build is admitted green by this registry and the main build stays green, both measured before commit.",
     "CX2 §8.3 Lane D return week (2026-09-15, Lessons #545 head 4494e3bb on main ec7d34ab; the stacked branch also carries #543 BUILD and #544 GROW, so this one carrier admits the whole return week): registry-only rows on the Sugar carrier before it. Seven paths move to [published rollback, candidate] pairs, nothing added or removed: BUILD W8B Autumn Science Checkpoint, GROW W8A and W8B Day and Night, LAUNCH W8L1 Enzyme Action, W8L2 Amylase pH Core Practical and W8L3 Amylase Rate, and education-lessons assets/catalogue/lesson-order.json (pair now [Sugar, Lane D]). The education-site usage registry does NOT move and no reviewed download row changes: these six lessons carry no pack downloads (measured). IMPORTANT: this replaces the withdrawn W8B candidate digest 47364350, which an earlier carrier carried and which this carrier's own CORRECTION note retired. That digest came from a --allow-sparse build, a method later proved unfaithful for lesson HTML. The full three-repository build gives b67be20d895f7abca3f9d07b13b89aebef95d9ff51109d626b72267f436f5d84 for the same bytes, so the withdrawal was correct and the sparse digest would have failed this publication on that exact file. Rollbacks are the digests of a full build of Lessons main ec7d34ab, which reproduces every digest this carrier admits (control: 4044 files, 0 problems). Both builds verify green before commit.",
     "CX2 §8.3 Lane D return week, CORRECTED (2026-09-15, Lessons #545 head be068b97 on main ec7d34ab). This supersedes the seven candidate digests admitted one commit earlier at 429dd4ec, which were measured before a defect CI then caught. The six return-week builds had lost the authored <script type=application/json id=lesson-config> block every Science lesson on main carries, and which build_download_pack.lesson_label() reads to name a lesson. Measured: lesson_label returned None for BUILD W8B and 'Your task - 1 of 2' for the other five, whose only h1 is a per-slide worksheet label. verify_definitions.py redded on the two continuation targets; the other four were outside that gate and would have shipped mis-named. tools/rw1/restore_lesson_config.py copies each lesson's own block verbatim from the review base and strips the trailing whitespace git diff --check redded. All seven digests therefore moved (W8B b67be20d -> 492a4c28), so the previous entry's candidates are replaced here rather than kept beside them. Seven paths move to [published rollback, candidate] pairs, nothing added or removed. No reviewed download row changes (measured 0 of 320). Rollbacks are the digests of a full build of Lessons main ec7d34ab, clean at 4044 files. Both builds verify green before commit.",
-    "CX2 §8.3 Lane D return week, CORRECTED AGAIN (2026-09-16, Lessons #545 head be9750e6 on main ec7d34ab). Supersedes the seven candidates at dd9d228a. After the lesson-config restoration, CI's offline-pack check redded 4 of 12 packs; measured in Chromium, the N6M guidance button floated over Next (no .controls .left host to dock into) and the stage timer covered the home link, on all six lessons. tools/rw1/dock_guide.py and tools/rw1/clear_home_link.py fix both by markup insertion only; the full offline check then passes 12/12 with 0 failures. All seven digests move again. Rollbacks unchanged (full build of main ec7d34ab, 4044 files, 0 problems); no reviewed download row changes; both builds verify green before commit."
+    "CX2 §8.3 Lane D return week, CORRECTED AGAIN (2026-09-16, Lessons #545 head be9750e6 on main ec7d34ab). Supersedes the seven candidates at dd9d228a. After the lesson-config restoration, CI's offline-pack check redded 4 of 12 packs; measured in Chromium, the N6M guidance button floated over Next (no .controls .left host to dock into) and the stage timer covered the home link, on all six lessons. tools/rw1/dock_guide.py and tools/rw1/clear_home_link.py fix both by markup insertion only; the full offline check then passes 12/12 with 0 failures. All seven digests move again. Rollbacks unchanged (full build of main ec7d34ab, 4044 files, 0 problems); no reviewed download row changes; both builds verify green before commit.",
+    "EDU-Q1 companions, 2026-09-16 (Lessons #551, CX2 §5.3 prerequisite approved by Matt 16 Sep): companion-pack catalogue rows for the Friction (GROW W3A) and Diffusion (LAUNCH W4L1) pilots, derived by tools/ux2/add_edu_q1_companions.py on top of main e1a05dce (Lane D). Six catalogue/discovery outputs move as [served, candidate]: display-titles, lesson-order, companion-packs, resources.json, domain-catalogue.json, resource-discovery.json; nothing added or removed; resource-sizes keeps its derivation rule. Both digests are from full three-repository builds at this builder (served oracle: Lessons main e1a05dce, 4044/4044 admitted; candidate: 5085297c)."
   ],
   "trees": {
     "education-site": {
@@ -137,8 +138,8 @@
       "data/banned-claims.json": "d585fdd5a30eff181c004e54566cc2d4cf5bcf77b6d2f643bddd94f5cc8adf54",
       "data/copy-authorisation.json": "4373b09c42a53035f143060cfeca6260e4cae01ff0ee64b844c0831db1621937",
       "data/domain-catalogue.json": [
-        "356907044757e662f51bbef6505d26b278c3822332cde480fcc820cc0e780bfc",
-        "51cd5e546084dac5f826baae9b728b51cd9176a641d4db2c7c7f468641285696"
+        "51cd5e546084dac5f826baae9b728b51cd9176a641d4db2c7c7f468641285696",
+        "044bd85c6f7368920711d04ac3b8c84cf23fccdd28c47f1d805a3c6cce83c598"
       ],
       "data/education-expansion.json": "0e524607e96b403031fefa83e0f348fc7e852cef0e311b0c9e5d9933ee7b5de9",
       "data/education-hub.json": "ba38ab865cc10a6266b665c6354f4ecb149e3267b452c4bdd52220f92e2898f6",
@@ -156,8 +157,8 @@
       ],
       "data/resource-collections.json": "03aff39560d8084ddb361394d8f2087bf31d00b05a088a865f5a8afe1d2274e7",
       "data/resource-discovery.json": [
-        "728cc23ab73949a23e3185f0c6c46e65d295e6cd75d1593eaa7f537637445b4e",
-        "799e232f4151019004de7d85c69be21623ceb7fc4ee4ae299b2802b0f0c4c936"
+        "799e232f4151019004de7d85c69be21623ceb7fc4ee4ae299b2802b0f0c4c936",
+        "c4b4ffa5bff487143334dad295aea1e7f3aa657cb1e8d43bd8ee9de1b6d6c9d6"
       ],
       "data/resources.json": "147183d3c1af1a4b86e333c7153065f57bb828acb924024367f1ac471e5f1326",
       "data/retired-checks.json": "aad4ea746538bbebf9a4aa836c41b74cb7db68a2c4ac524ffdfaf7582b69c289",
@@ -262,8 +263,8 @@
     },
     "education-lessons": {
       "assets/catalogue/lesson-order.json": [
-        "225238fb04210e6944bd738a19864e03027fe70d8e8955db64f1984b9fa690cb",
-        "1a8b274f50953749f8111939bf339eb5500bf4a0ed3cf8f4c7360e61eda1d1fe"
+        "1a8b274f50953749f8111939bf339eb5500bf4a0ed3cf8f4c7360e61eda1d1fe",
+        "a41656b740a1711a28395c86d78e03c2f83155de0b9cf4c15cc2fd56e0287888"
       ],
       "assets/mbm-tokens.css": [
         "01fbb17686866b97e7591781e4a78f2e9d38fb5ba35ed8acf935ce2a199643dd",
@@ -4839,8 +4840,8 @@
       "chemistry/Lesson6b_Consolidation.html": "d747f0de5f304c1b94f3b20ef7f55e60a2e249784e2802b1a08ce152a603b7d5",
       "data/calendar-spine.json": "d199474b13c9d340add2c87165396d83712b0f1c9f8bd03b7b12e8fdf6af0d61",
       "data/companion-packs.json": [
-        "b854ff6e1f687c16b2483b68a9e4085245a295241bbd6386c8ec179c6c6ca284",
-        "b906127452e0a9d6f00cbf61336da044dc7b7d49e58f5e9a3d436874588fa645"
+        "b906127452e0a9d6f00cbf61336da044dc7b7d49e58f5e9a3d436874588fa645",
+        "87d57951dc0f70cc28c18f6bf21d85ace3d2eeee7ef18808102d79f9c2201985"
       ],
       "data/planning-keys.json": "5d1944f5dba42aea2e203f667e6b1b23bdf08157c3c451b0a22757132076c56e",
       "data/resource-sizes.json": {
@@ -4965,8 +4966,8 @@
       "quality/toolkits/SAFETY_CONTENT_GATE.md": "a145e3e5487315f61175c6d68f0d180c8dad41bddfeadb36b5c7d3f67a2b0050",
       "quality/toolkits/TOOLKIT_HOUSE_STANDARD.md": "6bf18cc7d1b9fb78dce9a4d898222798f2f65d55b46600cd54f53cea666d87a8",
       "resources.json": [
-        "e8e5004ab298a342168a17e82f47a15b7274928bef6f2320a03d7257c13df4ac",
-        "2b246b0b26286773e5987ea8b8c4be5c0d441e5c06560bbb1e9655ebd60f289d"
+        "2b246b0b26286773e5987ea8b8c4be5c0d441e5c06560bbb1e9655ebd60f289d",
+        "ac3057c70977464861dad6e318746fef99353da0cd4fac4e70222a3360dcdc99"
       ],
       "resources.schema.json": "026e4c757e11fb25f296f08087327b11978c6ec46ed393358c94caa0a172762e",
       "review/estate-exec/README.md": "11a3c2052b57d93b5d6853c00c26ba7605cac8952eb21d221edf143e433539e2",
@@ -4992,8 +4993,8 @@
         "ARRIVING"
       ],
       "assets/catalogue/display-titles.json": [
-        "d5a545890a3f9ce116aa5fc0ceecb8f4917dd3d03621d03b5cd3a6fad0abd399",
-        "504ca0a8d1ad406add8c7a7aca7ca6b9e95260d3a0d1c3091be56fcd28f2edef"
+        "504ca0a8d1ad406add8c7a7aca7ca6b9e95260d3a0d1c3091be56fcd28f2edef",
+        "1875250dbd936603d092bc563e0d4f199e821c948327989b90da576c7fc97360"
       ]
     },
     "education-apps": {
