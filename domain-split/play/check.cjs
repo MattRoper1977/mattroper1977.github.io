@@ -109,6 +109,20 @@ for(const width of [320,390,768,1280]){
   assert.equal(await page.locator('link[rel=stylesheet][href="/assets/mbm-tokens.css"]').count(),1,'One origin-local token link');
   const header=page.locator('header[data-mbm-chrome="play"]');assert.equal(await header.getAttribute('data-theme'),'dark');
   assert.equal(await header.locator('.brand strong').innerText(),'Play');
+  // D-4: the Play tagline sits INSIDE the brand lock-up, exactly once in the header,
+  // mirroring the education header rule, and again once in the footer. Its contrast is
+  // measured against its own painted background rather than assumed from the token.
+  assert.equal(await header.locator('.brand .brand-tagline').innerText(),'Play • Explore • Escape','Play tagline under the lock-up');
+  assert.equal(await header.locator('.brand-tagline').count(),1,'exactly one header tagline');
+  assert.equal(await page.locator('footer .footer-motto').innerText(),'Play • Explore • Escape','footer carries the Play tagline');
+  assert.equal(await page.getByText('Learn • Build • Explore').count(),0,'the education motto has left the Play surface');
+  const taglineInk=await header.locator('.brand-tagline').evaluate(e=>{
+    const lum=c=>{const[r,g,b]=c.match(/\d+(\.\d+)?/g).slice(0,3).map(v=>{v=v/255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4)});return 0.2126*r+0.7152*g+0.0722*b};
+    let bg=getComputedStyle(e).backgroundColor,node=e;
+    while(node&&(bg==='rgba(0, 0, 0, 0)'||bg==='transparent')){node=node.parentElement;if(!node)break;bg=getComputedStyle(node).backgroundColor}
+    const a=lum(getComputedStyle(e).color),b=lum(bg);
+    return {ratio:(Math.max(a,b)+0.05)/(Math.min(a,b)+0.05),size:parseFloat(getComputedStyle(e).fontSize),weight:getComputedStyle(e).fontWeight};});
+  assert(taglineInk.ratio>=4.5,'Play tagline contrast '+taglineInk.ratio.toFixed(2)+':1 is below AA for its '+taglineInk.size+'px weight '+taglineInk.weight);
   assert(await header.locator('.brand img').evaluate(e=>e.complete&&e.naturalWidth>0));
   const tokenStyle=await header.evaluate(e=>({ink:getComputedStyle(e).getPropertyValue('--text').trim(),token:getComputedStyle(e).getPropertyValue('--mbm-primary').trim()}));assert.equal(tokenStyle.ink,tokenStyle.token,'Header adopts dark token ink');
   await targets(page,'header');await page.locator('#search-jump').click();assert(await page.locator('#query').evaluate(e=>e===document.activeElement));
