@@ -95,3 +95,11 @@ Every batch: pilot one route per delivery mechanism first, then the batch; publi
 | `/Lessons/Summer Term Fun/Kids_vs_Staff_Studio_Game_Show_v8_Autopilot.html` | Lessons | activity | canon | no | Lessons:applied |  |
 | `/Lessons/5 Intervention 10/L8a_Powerhouse_Arena_TeamQuiz.html` | Lessons | activity | canon | no | Lessons:applied |  |
 | `/Lessons/5 Intervention 10/Lesson_VIR_Pupil_App.html` | Lessons | activity | canon | no | Lessons:applied |  |
+
+## §7.2 Runtime inventory (derived, `docs/play-q1/runtime-inventory.json`)
+
+Built by `tools/play_runtime_inventory.py` from the existing ledgers only, never a new sweep: controls and modes from `domain-split/play/evidence.json`; the zoom declaration from `docs/HC4_ZOOM_DECLARATION_2026-09-07.json` (26-route population, the rest UNMEASURED); saves from `docs/HC3_SAVE_INVENTORY_RELEASED_SUMMARY_2026-09-07.json`; pause and timing have no per-route ledger and are written as UNMEASURED; the demonstrated defects are typed from the GS1 census (`reports/2026-09-02-games-census.md`) and the HC4/HC5 zoom records into `domain-split/play/runtime-findings.json` with the ledger line each came from.
+
+Routes 69; controls source-inspected on 53; zoom declaration PASS 5, FAIL 1 (`/neonmeridian/`, HC5 follow-up), UNMEASURED 63; saves inventoried 69; routes with findings 18; open findings by class: control 8, presentation 4, performance 4.
+
+**Pilot (one demonstrated defect, control class):** `/apexcurl/`, the V4 HQ launch button measured 38×44 at 390×844 in the GS1 Site census and again on 2026-09-16. Fix: `min-width:44px;min-height:44px` on `.v4-hq-launch`; nothing else in the game moves. After the fix the same probe finds no first-screen target under 44 px on the route. Bounded follow-up batch: the two 12 px footer links (`/apextennis/` "back to Games", `/voxel/` "← Made by Matt · Arcade"; voxel with batch 1b), then the HC5 zoom follow-up on `/neonmeridian/`. The Lessons-owned rows (World Cup trio HOLD, Static, Kids vs Staff) stay with Lessons. PLAYQ1 stays OPEN until every splash batch is verified and this table is complete; no estate-wide claim is made.

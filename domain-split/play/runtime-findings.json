@@ -1,0 +1,173 @@
+{
+  "schema": 1,
+  "what": "PLAY-Q1 §7.2 runtime findings, typed from the existing Games ledgers with the ledger and line each came from; never a new sweep. A row is a demonstrated defect or a closed one, per route, with its class (launch, control, save, presentation, performance) and state at the time of writing.",
+  "ledgers": {
+    "GS1": "reports/2026-09-02-games-census.md (Games census, Order SC1 Lane C Phase 0; Site section measured 2026-09-02 at 390x844)",
+    "HC4-ZOOM": "docs/HC4_ZOOM_DECLARATION_2026-09-07.json (declaration gate over 26 routes; pinch informational)",
+    "HC3-SAVES": "docs/HC3_SAVE_INVENTORY_RELEASED_SUMMARY_2026-09-07.json (static save-binding inventory, 69 routes)",
+    "PLAY-Q1-B1": "docs/play-q1/README.md D10 and artifacts of tools/verify_play_splash.mjs (top-hit sample)"
+  },
+  "findings": [
+    {
+      "route": "/apexcurl/",
+      "class": "control",
+      "finding": "First-screen touch target under 44 px: the V4 HQ launch button measures 38x44 at 390x844.",
+      "ledger": "GS1",
+      "where": "Site section, 'Touch targets under 44 px on the first screen'",
+      "state": "open",
+      "remeasured": "2026-09-16 tools/… touch probe: BUTTON#v4HQButton 38x44"
+    },
+    {
+      "route": "/apextennis/",
+      "class": "control",
+      "finding": "First-screen touch target under 44 px (one element).",
+      "ledger": "GS1",
+      "where": "Site section, 'Touch targets under 44 px on the first screen'",
+      "state": "open",
+      "remeasured": "2026-09-16: footer link 'back to Games' 78.9x12"
+    },
+    {
+      "route": "/voxel/",
+      "class": "control",
+      "finding": "First-screen touch target under 44 px (one element).",
+      "ledger": "GS1",
+      "where": "Site section, 'Touch targets under 44 px on the first screen'",
+      "state": "open",
+      "remeasured": "2026-09-16: footer link '← Made by Matt · Arcade' 130.6x12; route held at the previous splash region for batch 1b"
+    },
+    {
+      "route": "/houseolympiad/",
+      "class": "launch",
+      "finding": "The game's own V6 ceremony dialog was stacked above the generated maker splash; the splash painted underneath it and a tap never reached it.",
+      "ledger": "PLAY-Q1-B1",
+      "where": "D10",
+      "state": "fixed in PLAY-Q1 batch 1 (#385)"
+    },
+    {
+      "route": "/neonmeridian/",
+      "class": "control",
+      "finding": "Zoom declaration FAIL in the HC4 sweep (viewport or touch-action chain).",
+      "ledger": "HC4-ZOOM",
+      "where": "declaration.after.routes[/neonmeridian/].pass = false; docs/HC5_NEONMERIDIAN_DECLARATION_2026-09-07.json records the HC5 follow-up",
+      "state": "see HC5 declaration; re-verify in a follow-up batch"
+    },
+    {
+      "route": "/titanforge/",
+      "class": "presentation",
+      "finding": "No h1 at rest (0/0).",
+      "ledger": "GS1",
+      "where": "Site section, 'h1 count / visible'",
+      "state": "open, presentation"
+    },
+    {
+      "route": "/trailrunner/",
+      "class": "presentation",
+      "finding": "Nine h1 elements, one visible.",
+      "ledger": "GS1",
+      "where": "Site section, 'h1 count / visible'",
+      "state": "open, presentation"
+    },
+    {
+      "route": "/crownbadge/",
+      "class": "presentation",
+      "finding": "Five h1 elements, two visible.",
+      "ledger": "GS1",
+      "where": "Site section, 'h1 count / visible'",
+      "state": "open, presentation"
+    },
+    {
+      "route": "/luminahaven/",
+      "class": "presentation",
+      "finding": "One h1, none visible.",
+      "ledger": "GS1",
+      "where": "Site section, 'h1 count / visible'",
+      "state": "open, presentation"
+    },
+    {
+      "route": "/apexvelodrome/",
+      "class": "performance",
+      "finding": "Idle canvas work while nothing changes: 66,568 canvas ops/s at 142 rAF/s over five idle seconds.",
+      "ledger": "GS1",
+      "where": "Site section, 'Idle paint while nothing changes'",
+      "state": "open, performance (not a broken launch/control/save)"
+    },
+    {
+      "route": "/apexcurl/",
+      "class": "performance",
+      "finding": "Idle canvas work while nothing changes: 32,381 ops/s.",
+      "ledger": "GS1",
+      "where": "Site section, 'Idle paint while nothing changes'",
+      "state": "open, performance"
+    },
+    {
+      "route": "/townlife/",
+      "class": "performance",
+      "finding": "Idle canvas work in the intro scene: 26,368 ops/s (advisory layer fixed in Site #234).",
+      "ledger": "GS1",
+      "where": "Site section, 'Idle paint while nothing changes'",
+      "state": "partly repaired (#234); intro scene open, performance"
+    },
+    {
+      "route": "/novasiege/",
+      "class": "performance",
+      "finding": "Idle canvas work while nothing changes: 13,680 ops/s.",
+      "ledger": "GS1",
+      "where": "Site section, 'Idle paint while nothing changes'",
+      "state": "open, performance"
+    },
+    {
+      "route": "/hyperdraft/",
+      "class": "performance",
+      "finding": "Idle canvas work while nothing changes: 11,520 ops/s.",
+      "ledger": "GS1",
+      "where": "Site section, 'Idle paint while nothing changes'",
+      "state": "open, performance"
+    },
+    {
+      "route": "/Lessons/Games/WorldCup_v5_Showdown.html",
+      "class": "control",
+      "finding": "27 touch targets under 44 px; World Cup trio HOLD (whiteboard tool).",
+      "ledger": "GS1",
+      "where": "Lessons findings and residue, Tier 1 §2.5",
+      "state": "HOLD (Lessons-owned)"
+    },
+    {
+      "route": "/Lessons/Games/WorldCup_v3_MatchDirector.html",
+      "class": "control",
+      "finding": "26 touch targets under 44 px; World Cup trio HOLD.",
+      "ledger": "GS1",
+      "where": "Lessons findings and residue, Tier 1 §2.5",
+      "state": "HOLD (Lessons-owned)"
+    },
+    {
+      "route": "/Lessons/Games/WorldCup_ThreeLions_Final.html",
+      "class": "control",
+      "finding": "18 touch targets under 44 px; World Cup trio HOLD.",
+      "ledger": "GS1",
+      "where": "Lessons findings and residue, Tier 1 §2.5",
+      "state": "HOLD (Lessons-owned)"
+    },
+    {
+      "route": "/Lessons/Games/Static.html",
+      "class": "control",
+      "finding": "One touch target under 44 px.",
+      "ledger": "GS1",
+      "where": "Lessons residue, Tier 1 §2.5",
+      "state": "open (Lessons-owned)"
+    },
+    {
+      "route": "/Lessons/Games/KidsVsStaff_Showdown (3).html",
+      "class": "control",
+      "finding": "One touch target under 44 px.",
+      "ledger": "GS1",
+      "where": "Lessons residue, Tier 1 §2.5",
+      "state": "open (Lessons-owned)"
+    }
+  ],
+  "pilot": {
+    "route": "/apexcurl/",
+    "why": "The only open, Site-owned, re-measured control defect whose element is a game action (the V4 HQ launch); the other two open Site targets are 12 px footer links (batch after the pilot), and /voxel/ is held for batch 1b. An evidenced control defect outranks the presentation and performance rows.",
+    "fix": "minimum 44x44 tap size on the V4 HQ launch button; nothing else in the game moves",
+    "proof": "browser measurement at 390x844 before and after; the Play evidence chain rebound for the changed bytes"
+  }
+}
