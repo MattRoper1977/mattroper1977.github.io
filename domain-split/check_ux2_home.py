@@ -109,6 +109,11 @@ def self_test():
         rotation = try_lesson(fixture, 'hero')
         assert 'data-try-lesson' in rotation and rotation.count('data-try-slide=') == 2 and 'hidden>' in rotation.split('data-try-slide="second"')[1][:80], rotation
         assert '<div class="fd-try-controls" data-try-controls hidden>' in rotation and '1 of 2' in rotation
+        # a checkout that carries only some declared packs (an older pin) shows the eligible ones only
+        (lessons / 'resources.json').write_text(json.dumps(rows_ok))
+        partial = try_lesson(fixture, 'hero')
+        assert 'Reviewed topic' in partial and 'Second topic' not in partial and 'data-try-lesson' not in partial, 'older pin renders the eligible lesson as a static card'
+        (lessons / 'resources.json').write_text(json.dumps(rows_ok + [{'id': 'second', 'file': 'second.pptx', 'title': 'W2 · Second topic · Companion pack', 'type': 'support', 'companionOf': 'lesson2.html', 'files': [{'path': 'real.pdf', 'type': 'pdf'}]}]))
         # EDU-HERO: artwork renders only at the manifest's exact bytes
         (tmp / 'hero').mkdir(); art = tmp / 'hero/art.jpg'; art.write_bytes(b'approved crop bytes')
         (tmp / 'education-hero.json').write_text(json.dumps({'alt': '', 'images': {'teachers': {'file': 'hero/art.jpg', 'published': 'assets/art.jpg', 'sourceSha256': 'a' * 64, 'sha256': hashlib.sha256(b'approved crop bytes').hexdigest(), 'bytes': 19, 'width': 4, 'height': 3}}}))

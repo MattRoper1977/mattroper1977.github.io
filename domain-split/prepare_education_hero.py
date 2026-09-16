@@ -21,6 +21,10 @@ import argparse, hashlib, json, sys
 
 HERE = Path(__file__).resolve().parent
 MANIFEST = HERE / 'education-hero.json'
+# Pinned 16 September 2026: the SHA-256 of each approved source image exactly as
+# Matt supplied it. CX2 §5.1 names the two images by these digests (homepage
+# owl-and-resources 27988.jpg; Teachers "04 / LEARNING COMES TO LIFE"), and the
+# order holds that an image not locatable by its hash means that half is HELD.
 SOURCES = {
     'home': {'name': '27988.jpg', 'sha256': 'c6c1b9e8d6fb78b4b044d521cd75cef389e8b2a5a3f478f95ec718b79932b248'},
     'teachers': {'name': 'exec-c1f6aed3 (Teachers "04 / LEARNING COMES TO LIFE")',

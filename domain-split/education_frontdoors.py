@@ -119,26 +119,27 @@ def bound_features(bp):
     manifest = json.loads((bp.HERE / FEATURE_MANIFEST).read_text())
     if manifest.get('schemaVersion') != 2:
         raise ValueError('homepage-feature.json must be schema 2')
-    # A catalogue that carries none of the declared packs (an older pin, or a
-    # fixture) renders no feature and the browser gate reports the absence; a
-    # catalogue that carries them must bind exactly, or the build stops here.
+    # Eligibility follows the catalogue the publisher builds from (CX2 §5.3:
+    # "fewer than three → show eligible only"): a declared pack the checkout
+    # does not carry (an older pin, or a fixture) is left out, and the browser
+    # gate on the moved pin still requires every declared slide. Every pack
+    # the checkout does carry must bind exactly, or the build stops here.
     rows = json.loads((bp.LESSONS_ROOT / 'resources.json').read_text())
-    present = [f['packId'] for f in manifest['features'] if any(r.get('id') == f['packId'] for r in rows)]
-    if not present:
+    eligible = [f for f in manifest['features'] if any(r.get('id') == f['packId'] for r in rows)]
+    if not eligible:
         return manifest, []
-    if len(present) != len(manifest['features']):
-        raise ValueError('The catalogue carries only some of the declared features: ' + ', '.join(present))
     import sys as _sys
     if str(bp.HERE) not in _sys.path:
         _sys.path.insert(0, str(bp.HERE))
     import bind_homepage_features
-    bound = bind_homepage_features.bind(bp.LESSONS_ROOT, manifest, bp.HERE / 'homepage-previews.json')
-    if bound != manifest:
-        drift = [f['packId'] for f, g in zip(bound['features'], manifest['features']) if f != g] or ['shape']
+    subset = {**manifest, 'features': eligible}
+    bound = bind_homepage_features.bind(bp.LESSONS_ROOT, subset, bp.HERE / 'homepage-previews.json')
+    if bound != subset:
+        drift = [f['packId'] for f, g in zip(bound['features'], eligible) if f != g] or ['shape']
         raise ValueError('homepage-feature.json is stale against the Lessons checkout: ' + ', '.join(drift))
     previews = preview_data(bp)
     features = []
-    for feature in manifest['features']:
+    for feature in eligible:
         preview = previews.get(feature['packId'])
         if not preview:
             raise ValueError('Feature preview is not admitted for ' + feature['packId'])
