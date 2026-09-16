@@ -109,6 +109,10 @@ def self_test():
         rotation = try_lesson(fixture, 'hero')
         assert 'data-try-lesson' in rotation and rotation.count('data-try-slide=') == 2 and 'hidden>' in rotation.split('data-try-slide="second"')[1][:80], rotation
         assert '<div class="fd-try-controls" data-try-controls hidden>' in rotation and '1 of 2' in rotation
+        # a checkout without the display-title map (a pin that predates the binding contract) shows no feature
+        (lessons / 'assets/catalogue/display-titles.json').rename(lessons / 'assets/catalogue/display-titles.off')
+        assert try_lesson(fixture, 'hero') == '', 'a catalogue without the binding files renders no card'
+        (lessons / 'assets/catalogue/display-titles.off').rename(lessons / 'assets/catalogue/display-titles.json')
         # a checkout that carries only some declared packs (an older pin) shows the eligible ones only
         (lessons / 'resources.json').write_text(json.dumps(rows_ok))
         partial = try_lesson(fixture, 'hero')

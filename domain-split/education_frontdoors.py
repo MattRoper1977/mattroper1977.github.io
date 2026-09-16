@@ -124,6 +124,10 @@ def bound_features(bp):
     # does not carry (an older pin, or a fixture) is left out, and the browser
     # gate on the moved pin still requires every declared slide. Every pack
     # the checkout does carry must bind exactly, or the build stops here.
+    # A checkout that predates the binding contract (no display-title map, no
+    # placement manifest, no pack page) has nothing this card may show.
+    if not all((bp.LESSONS_ROOT / rel).is_file() for rel in ('assets/catalogue/display-titles.json', 'data/companion-packs.json', 'pack.html')):
+        return manifest, []
     rows = json.loads((bp.LESSONS_ROOT / 'resources.json').read_text())
     eligible = [f for f in manifest['features'] if any(r.get('id') == f['packId'] for r in rows)]
     if not eligible:
