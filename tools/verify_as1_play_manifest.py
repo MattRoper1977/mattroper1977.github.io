@@ -22,9 +22,10 @@ def controls():
     with tempfile.TemporaryDirectory(prefix='as1-manifest-control-') as temp:
         output = Path(temp)
         (output / 'index.html').write_text((ROOT / 'domain-split/play/index.html').read_text())
-        # The gate judges files actually emitted by the publisher's copier.
-        for size in (192, 512):
-            name = f'assets/icons/app-icon-{size}.png'
+        # The gate judges files actually emitted by the publisher's copier: every icon the
+        # manifest names (derived from the manifest, never a typed list) and the root touch icon.
+        manifest = json.loads((ROOT / 'domain-split/play/site.webmanifest').read_text())
+        for name in sorted({icon['src'].lstrip('/') for icon in manifest['icons']}):
             build.copy_file(ROOT / name, output, name)
         def emit(entries):
             (output / 'site.webmanifest').unlink(missing_ok=True)
