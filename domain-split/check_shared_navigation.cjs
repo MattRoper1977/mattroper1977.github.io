@@ -118,7 +118,19 @@ async function chromeFocus(control,surface,label,redProof=false) {
           assert.equal(await last.getAttribute('href'), 'https://www.madebymatt-play.uk/', 'Play is a link: ' + route);
           const short = await page.locator(panel + ' a').evaluateAll(nodes => nodes.map(a => a.getBoundingClientRect().height).filter(h => h > 0 && h < 48));
           assert.deepEqual(short, [], 'Every menu row is at least 48px: ' + route);
-          assert.equal(await page.locator(header + ' .mbm-unified-brand small').count(), 0, 'No tagline in the header: ' + route);
+          // EDU-HEADER-BRAND-20260915: the tagline sits beneath the wordmark, inside the brand lock-up, and nowhere else in the header.
+          assert.equal(await page.locator(header + ' .mbm-unified-brand small').count(), 1, 'One brand tagline in the header: ' + route);
+          assert.equal((await page.locator(header + ' .mbm-unified-brand small').innerText()).trim(), 'Learn • Build • Explore', 'Brand tagline text: ' + route);
+          const brandGeometry = await page.locator(header + ' .mbm-unified-brand').evaluate(el => {
+            const strong = el.querySelector('strong'), small = el.querySelector('small'), bar = el.closest('.mbm-unified-bar');
+            const s = strong.getBoundingClientRect(), t = small.getBoundingClientRect(), b = bar.getBoundingClientRect();
+            const lines = node => { const r = document.createRange(); r.selectNodeContents(node); return r.getClientRects().length; };
+            return {wordmarkLines: lines(strong), taglineLines: lines(small), taglineBelow: t.top >= s.bottom - 1,
+                    taglinePx: parseFloat(getComputedStyle(small).fontSize), overflow: s.right > b.right + 1 || t.right > b.right + 1 || el.scrollWidth > el.clientWidth + 1};
+          });
+          assert.equal(brandGeometry.wordmarkLines, 1, 'MADE BY MATT on one line: ' + route + ' ' + JSON.stringify(brandGeometry));
+          assert.equal(brandGeometry.taglineLines, 1, 'Tagline on one line beneath the wordmark: ' + route + ' ' + JSON.stringify(brandGeometry));
+          assert(brandGeometry.taglineBelow && brandGeometry.taglinePx >= 12 && !brandGeometry.overflow, 'Tagline beneath the wordmark, at least 12px, no overflow: ' + route + ' ' + JSON.stringify(brandGeometry));
           const searchLink = page.locator(header + ' .mbm-unified-search');
           const searchBox = await searchLink.boundingBox();
           assert(searchBox && searchBox.width >= 44 && searchBox.height >= 44, 'Header search control is 44px: ' + route);

@@ -365,6 +365,9 @@ def main():
     copy_file(HERE / 'education-frontdoors.css', education, 'assets/education-frontdoors.css')
     copy_file(HERE / 'education-navigation.css', education, 'assets/education-navigation.css')
     copy_file(HERE / 'added-this-half-term.js', education, 'assets/added-this-half-term.js')
+    copy_file(HERE / 'try-a-lesson.js', education, 'assets/try-a-lesson.js')
+    for image in json.loads((HERE / 'education-hero.json').read_text())['images'].values():
+        copy_file(HERE / image['file'], education, image['published'])
     for target in [games, education]:
         copy_file(HERE / 'site-runtime.js', target, 'assets/domain-site.js')
         copy_file(ROOT / 'favicon.svg', target, 'favicon.svg')

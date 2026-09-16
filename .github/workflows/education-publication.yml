@@ -42,9 +42,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          # Pinned 2026-09-09: Lessons main after Part B landed there (#445, #451, #452), held equal to it.
+          # Pinned 2026-09-16 (CX2 §5 EDU-D3): Lessons main after the EDU-Q1 companion-pack rows landed (#551), so Try-a-lesson binds Sugar, Friction and Diffusion; the retained usage-registry baseline and the reviewed Science download rows move with it.
           # The Lessons caller uses its current commit so lesson work stays live.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '2c33266b01b273ad9e70a18e7f4769787c6ade1c' }}
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '776cfbd1786981b383abac7e76a7490d9e21cc98' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
