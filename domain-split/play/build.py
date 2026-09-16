@@ -297,9 +297,21 @@ def refresh(output, review=False, source_revisions=None):
         assert hashlib.sha256(source.read_bytes()).hexdigest() == brand['sha256']
         shutil.copyfile(source,assets/source.name)
         logo = '<img src="/assets/play/'+esc(source.name)+'" alt="" width="48" height="48">'
+    # PLAY-D2: the approved controller artwork, decorative, placed only at its
+    # recorded bytes (hero-art.json binds the served file to Matt's source by
+    # digest). Absent record -> no artwork, never a stand-in.
+    hero = read('hero-art.json', {})
+    hero_art = ''
+    if hero.get('sha256'):
+        source = HERE / Path(hero['file']).name
+        art_bytes = source.read_bytes()
+        assert hashlib.sha256(art_bytes).hexdigest() == hero['sha256'] and len(art_bytes) == hero['bytes'], 'hero artwork differs from hero-art.json'
+        shutil.copyfile(source, assets/source.name)
+        hero_art = ('<img class="intro-art" src="/assets/play/'+esc(source.name)+'" alt="" width="'+str(int(hero['width']))+'" height="'+str(int(hero['height']))
+                    +'" decoding="async" fetchpriority="low" data-hero-source="'+esc(hero['sourceSha256'])+'" data-hero-sha="'+esc(hero['sha256'])+'">')
     data = {'counts': counts, 'catalogue': len(games), 'genres': [{'name': g, 'count': genre_counts[g]} for g in genres],
             'series': series, 'games': [slim(r) for r in rows]}
-    substitutions = {'@@LOGO@@':logo, '@@CHIPS@@':chips, '@@GENRES@@':genre_options, '@@FEATURED@@': feature(featured) if featured else '',
+    substitutions = {'@@LOGO@@':logo, '@@HEROART@@':hero_art, '@@CHIPS@@':chips, '@@GENRES@@':genre_options, '@@FEATURED@@': feature(featured) if featured else '',
         '@@COUNT@@': str(len(games)) + ' games', '@@GRID@@': ''.join(cards), '@@CLASSROOM@@': classroom(activities),
         '@@DATA@@':json.dumps(data,ensure_ascii=False).replace('<','\\u003c')}
     for a,b in substitutions.items(): template = template.replace(a,b)

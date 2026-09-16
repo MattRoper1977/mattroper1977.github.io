@@ -93,3 +93,14 @@ html:not(.js) .collection-links a:not([data-collection=""]){display:none}
 
 /* The taller Lighthouse title capture keeps its identifying heading visible. */
 .thumb img[src$="game-lessons-games-the-last-lighthouse-v1-1-the-archipelago-update-final-html.jpg"]{object-position:center top}
+
+/* PLAY-D2 (PLAY-BRAND-20260915): the approved Xbox controller as a decorative
+   picture top-right of the hero. Phones omit it (nothing pushes the games down);
+   from 768px the copy and the artwork share one row and the search, filters and
+   mood chips keep their full width beneath, so the picture never sits over a
+   control. The WebP carries its own transparency, so the charcoal gradient shows
+   through with no rectangular edge; no motion, no autoplay. */
+.intro-head{display:flex;align-items:center;gap:1.25rem}.intro-copy{flex:1 1 auto;min-width:0}
+.intro-art{display:none;flex:0 0 auto;width:min(28vw,340px);height:auto;pointer-events:none;user-select:none;filter:drop-shadow(0 14px 32px #0009)}
+@media(min-width:768px){.intro-art{display:block}}
+@media(min-width:1100px){.intro-art{width:min(24vw,380px)}}
