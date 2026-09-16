@@ -17,9 +17,9 @@ Routes: **68** (canon 24, legacy-region 6, none 24, own-splash 14; owners Site 3
 
 1. **Canon routes, Site-declared (18)** — this pull request stamps 14: generator change, re-stamp, verifier controls, Play-visual proof (`tools/verify_play_splash.mjs`), and the Play evidence chain rebound to the new bytes (`evidence.json`, `preservation.json`, the Rally source revision, `discovery-review.json`, 14 screens recaptured with `tools/capture_play_screens.cjs`). **1b — the four clip-bearing routes** (`/apexkick/`, `/voxel/`, `/offbrand/`, `/novasiege/`) stay at the previous accepted region, declared as `held-at-previous-region-with-reason` in `data/hud-coverage.json`: each carries an accepted gameplay clip bound to its published bytes, and the builder refuses a clip bound to different bytes, so they follow once the Play capture job has recaptured the clips against the new bytes and Matt has accepted them.
 2. **Canon routes, Lessons-declared (6 on the shelf + R_Gate_Calibration_Game)** — a Lessons pull request moving its generator pin to the merged Site commit and re-stamping.
-3. **Legacy `MBM-SPLASH` region (6)** — declare in the ledger; the generator strips the legacy region and stamps the canon.
-4. **Game-owned title splash (14)** — declare; the canon plays before the game's own title screen; per-route check for duplicate overlay, blocked start, save/reload.
-5. **No splash (24)** — declare; same non-blocking entry; the twenty Lessons games are Lessons-owned.
+3. **Legacy `MBM-SPLASH` region (6)** — every one is `declined-with-reason` in the Site ledger against a named per-game gate assertion (`tools/apex_rc_gate.mjs` for apexcurl and apexvelodrome, `tools/titan-crown/verify_launch.mjs` for crownbadge and titanforge, the byte-pinned provenance of biopunkhive, the way-out walk on fracture). Each is a contract change for that game's owner, taken one route at a time with its gate re-proved; none is taken silently under this checkpoint.
+4. **Game-owned title splash (14)** — the Site-owned members are all declared (`declined-with-reason` against a named gate, or held for 1b); the 8 Lessons-owned members fall under batch 5's ruling.
+5. **No splash (24)** — the 27 Lessons shelf games (19 here plus the 8 own-splash ones) carry no splash key by the SC1 §5 ruling in `reports/2026-09-02-games-census.md` ("declined by construction"), a Lessons-owned decision this checkpoint records and does not overturn; the table shows them as `Lessons:declined-by-construction (SC1 §5)`. The Site-owned no-splash routes are declared against their gates (see 3).
 
 Every batch: pilot one route per delivery mechanism first, then the batch; publication through the Games pin release (held by BLOCKER B3 at the time of writing).
 
@@ -40,34 +40,34 @@ Every batch: pilot one route per delivery mechanism first, then the batch; publi
 | `/echovault/` | Site | game | canon | yes | Site:applied |  |
 | `/relicforge/` | Site | game | canon | yes | Site:applied |  |
 | `/offbrand/` | Site | game | canon | no | Site:held-at-previous-region-with-reason |  |
-| `/Lessons/Games/Axiom_Shift.html` | Lessons | game | own-splash | no | undeclared |  |
-| `/Lessons/Games/Charcoal.html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/Hold_the_Mark.html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/Glitch_Clash.html` | Lessons | game | none | no | undeclared |  |
+| `/Lessons/Games/Axiom_Shift.html` | Lessons | game | own-splash | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Charcoal.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Hold_the_Mark.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Glitch_Clash.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
 | `/trailrunner/` | Site | game | canon | yes | Site:applied |  |
-| `/Lessons/Games/voxelcraft.html` | Lessons | game | own-splash | no | undeclared |  |
-| `/Lessons/Games/Vortex.html` | Lessons | game | own-splash | no | undeclared |  |
-| `/Lessons/Games/Globe_Snake (1).html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/Neon_Snake_Overdrive.html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/Neon_Siege.html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/Neon_Garden.html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/Orbital.html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/Grid_Chase.html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/Prism.html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/Grapple.html` | Lessons | game | own-splash | no | undeclared |  |
-| `/Lessons/Games/Marble.html` | Lessons | game | own-splash | no | undeclared |  |
-| `/Lessons/Games/Slipstream.html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/Slipstream_GP.html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/Wrecking_Crew.html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/Lumins.html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/Static.html` | Lessons | game | own-splash | no | undeclared |  |
-| `/Lessons/Games/OneGuy.html` | Lessons | game | own-splash | no | undeclared |  |
-| `/Lessons/Games/The_Last_Lighthouse_v1_1_The_Archipelago_Update_FINAL.html` | Lessons | game | own-splash | no | undeclared |  |
-| `/Lessons/Games/KidsVsStaff_Showdown (3).html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/WorldCup_ThreeLions_Final.html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/WorldCup_v3_MatchDirector.html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/WorldCup_v5_Showdown.html` | Lessons | game | none | no | undeclared |  |
-| `/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html` | Lessons | game | none | no | undeclared |  |
+| `/Lessons/Games/voxelcraft.html` | Lessons | game | own-splash | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Vortex.html` | Lessons | game | own-splash | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Globe_Snake (1).html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Neon_Snake_Overdrive.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Neon_Siege.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Neon_Garden.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Orbital.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Grid_Chase.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Prism.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Grapple.html` | Lessons | game | own-splash | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Marble.html` | Lessons | game | own-splash | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Slipstream.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Slipstream_GP.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Wrecking_Crew.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Lumins.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Static.html` | Lessons | game | own-splash | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/OneGuy.html` | Lessons | game | own-splash | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/The_Last_Lighthouse_v1_1_The_Archipelago_Update_FINAL.html` | Lessons | game | own-splash | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/KidsVsStaff_Showdown (3).html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/WorldCup_ThreeLions_Final.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/WorldCup_v3_MatchDirector.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/WorldCup_v5_Showdown.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
+| `/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html` | Lessons | game | none | no | Lessons:declined-by-construction (SC1 §5) |  |
 | `/voxel/` | Site | game | canon | no | Site:held-at-previous-region-with-reason |  |
 | `/apexkick/` | Site | game | canon | no | Site:held-at-previous-region-with-reason |  |
 | `/apexpool/` | Site | game | none | no | Site:declined-with-reason |  |
@@ -95,3 +95,11 @@ Every batch: pilot one route per delivery mechanism first, then the batch; publi
 | `/Lessons/Summer Term Fun/Kids_vs_Staff_Studio_Game_Show_v8_Autopilot.html` | Lessons | activity | canon | no | Lessons:applied |  |
 | `/Lessons/5 Intervention 10/L8a_Powerhouse_Arena_TeamQuiz.html` | Lessons | activity | canon | no | Lessons:applied |  |
 | `/Lessons/5 Intervention 10/Lesson_VIR_Pupil_App.html` | Lessons | activity | canon | no | Lessons:applied |  |
+
+## §7.2 Runtime inventory (derived, `docs/play-q1/runtime-inventory.json`)
+
+Built by `tools/play_runtime_inventory.py` from the existing ledgers only, never a new sweep: controls and modes from `domain-split/play/evidence.json`; the zoom declaration from `docs/HC4_ZOOM_DECLARATION_2026-09-07.json` (26-route population, the rest UNMEASURED); saves from `docs/HC3_SAVE_INVENTORY_RELEASED_SUMMARY_2026-09-07.json`; pause and timing have no per-route ledger and are written as UNMEASURED; the demonstrated defects are typed from the GS1 census (`reports/2026-09-02-games-census.md`) and the HC4/HC5 zoom records into `domain-split/play/runtime-findings.json` with the ledger line each came from.
+
+Routes 69; controls source-inspected on 53; zoom declaration PASS 5, FAIL 1 (`/neonmeridian/`, HC5 follow-up), UNMEASURED 63; saves inventoried 69; routes with findings 18; open findings by class: control 8, presentation 4, performance 4.
+
+**Pilot (one demonstrated defect, control class):** `/apexcurl/`, the V4 HQ launch button measured 38×44 at 390×844 in the GS1 Site census and again on 2026-09-16. Fix: `min-width:44px;min-height:44px` on `.v4-hq-launch`; nothing else in the game moves. After the fix the same probe finds no first-screen target under 44 px on the route. Bounded follow-up batch: the two 12 px footer links (`/apextennis/` "back to Games", `/voxel/` "← Made by Matt · Arcade"; voxel with batch 1b), then the HC5 zoom follow-up on `/neonmeridian/`. The Lessons-owned rows (World Cup trio HOLD, Static, Kids vs Staff) stay with Lessons. PLAYQ1 stays OPEN until every splash batch is verified and this table is complete; no estate-wide claim is made.

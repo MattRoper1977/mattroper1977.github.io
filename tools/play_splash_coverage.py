@@ -58,7 +58,12 @@ def main() -> int:
         else: fam = 'none'
         sha = region_sha(text)
         csp = CSP.search(text)
-        row.update(family=fam, canonical=sha is not None, current=(sha == current), regionSha256=sha, ledger=declared.get(route, 'undeclared'),
+        ledger_state = declared.get(route)
+        if ledger_state is None and route.startswith('/Lessons/Games/'):
+            # The 27 Lessons shelf games carry no splash key by the SC1 §5 ruling (reports/2026-09-02-games-census.md,
+            # 'Splash key: 0 of 27 Lessons games ... ruled declined by construction'); a Lessons-owned decision, recorded not overturned.
+            ledger_state = 'Lessons:declined-by-construction (SC1 §5)'
+        row.update(family=fam, canonical=sha is not None, current=(sha == current), regionSha256=sha, ledger=ledger_state or 'undeclared',
                    csp=(csp.group(1) if csp else None), cspBlocksExternalImages=bool(csp and re.search(r"img-src(?![^;]*'self')", csp.group(1))))
         rows.append(row)
     summary = {'routes': len(rows), 'byFamily': {}, 'byOwner': {}, 'currentRegion': sum(1 for r in rows if r.get('current')), 'generatorRegionSha256': current}
