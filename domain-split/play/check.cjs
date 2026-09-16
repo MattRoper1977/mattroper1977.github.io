@@ -80,6 +80,15 @@ for(const width of [320,390,768,1280]){
  const ctx=await browser.newContext({viewport:{width,height:width<700?844:900},isMobile:width<700,hasTouch:width<700,reducedMotion:'reduce'}),page=await ctx.newPage();page.setDefaultTimeout(10000);currentPage=page;const requests=[];page.on('request',r=>requests.push(r.url()));page.on('pageerror',e=>report.errors.push({width,message:e.message}));
  await test(width+'-layout-navigation-and-first-load',async()=>{await page.goto(base);await ready(page);await overflow(page);
   assert.equal(await page.locator('#intro-title').innerText(),'Pick a game. Make it yours.');
+  // PLAY-D2: the approved controller is decorative, byte-bound to hero-art.json, omitted on phones, and never over a control or the copy.
+  const heroRecord=JSON.parse(fs.readFileSync('domain-split/play/hero-art.json'));const art=page.locator('.intro-art');assert.equal(await art.count(),1,'one hero artwork in the markup');
+  const artFacts=await art.evaluate(i=>({visible:!!i.offsetParent&&getComputedStyle(i).display!=='none',complete:i.complete,w:i.naturalWidth,h:i.naturalHeight,alt:i.getAttribute('alt'),src:i.getAttribute('src'),width:i.getAttribute('width'),height:i.getAttribute('height'),source:i.dataset.heroSource,sha:i.dataset.heroSha,box:i.getBoundingClientRect().toJSON()}));
+  assert.equal(artFacts.alt,'','hero artwork is decorative');assert.equal(artFacts.source,heroRecord.sourceSha256);assert.equal(artFacts.sha,heroRecord.sha256);assert.equal(artFacts.src,'/'+heroRecord.published);assert.equal(Number(artFacts.width),heroRecord.width);assert.equal(Number(artFacts.height),heroRecord.height);
+  const artResponse=await page.request.get(base+artFacts.src);assert.equal(artResponse.status(),200);const artBytes=Buffer.from(await artResponse.body());assert.equal(sha(artBytes),heroRecord.sha256,'served hero artwork is the recorded file');assert.equal(artBytes.length,heroRecord.bytes);
+  if(width>=768){assert(artFacts.visible&&artFacts.complete&&artFacts.w>0,'hero artwork shows and decodes from 768px');assert(artFacts.box.right<=width+1&&artFacts.box.width>=160,'hero artwork fits the viewport at a useful size');
+   const overlaps=await page.evaluate(box=>[...document.querySelectorAll('#intro-title,.intro .eyebrow,.intro .lede,#discovery-form,.mood-tools,.mood-note,header,.browse-sidebar')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.height&&r.left<box.right&&r.right>box.left&&r.top<box.bottom&&r.bottom>box.top;}).map(e=>e.id||e.className||e.tagName),artFacts.box);
+   assert.deepEqual(overlaps,[],'hero artwork overlaps nothing');}
+  else assert(!artFacts.visible,'phones omit the hero artwork');
   assert.equal(await page.locator('.intro .lede').innerText(),'Race, explore, build or work out your next move. Find your favourite or try something unexpected—play straight in your browser.');
   const navigation=page.locator('.collection-links');
   await navigation.locator('[data-collection=favourites]').click();assert.equal(await visibleGames(page),0,'new browser favourites empty');assert.equal(await navigation.locator('[aria-current=page]').getAttribute('data-collection'),'favourites');
