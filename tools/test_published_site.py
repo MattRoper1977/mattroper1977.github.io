@@ -335,7 +335,8 @@ class PublishedChromeControls(unittest.TestCase):
         for broken in [
                 base.replace('</head>', '<link rel="stylesheet" href="assets/mbm-tokens.css">' * 2 + '</head>'),
                 base.replace('</head>', '<link rel="stylesheet" href="https://elsewhere.test/mbm-tokens.css"></head>'),
-                base.replace('<footer>', '<header>Learn • Build • Explore</header><footer>'),
+                base.replace('<footer>', '<header>Learn • Build • Explore Learn • Build • Explore</header><footer>'),
+                base.replace('<footer>', '<p>Learn • Build • Explore</p><footer>'),
                 base.replace('Authored.', 'Learn • Build • Explore Learn • Build • Explore'),
                 base.replace('</footer>', '<footer>Nested</footer></footer>'),
                 base.replace('</footer>', ''),
@@ -344,6 +345,21 @@ class PublishedChromeControls(unittest.TestCase):
                 self.navigation.complete_chrome(broken)
         self.assertEqual(self.navigation.ChromeDocument(self.navigation.complete_chrome(base)).taglines(),
                          {'all': 1, 'header': 0, 'footer': 1})
+
+    def test_header_brand_tagline_is_censused_beside_the_footer_line(self):
+        # EDU-HEADER-BRAND-20260915: the published-education header carries the
+        # line once inside its brand lock-up; the footer keeps its own line.
+        brand = '<header><a class="mbm-unified-brand" href="/"><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a></header>'
+        bare = '<html><head></head><body>' + brand + '<footer>Authored.</footer></body></html>'
+        result = self.navigation.complete_chrome(bare)
+        self.assertEqual(self.navigation.ChromeDocument(result).taglines(), {'all': 2, 'header': 1, 'footer': 1})
+        self.assertEqual(self.navigation.complete_chrome(result), result)
+        complete = ('<html><head><link rel="stylesheet" href="/assets/mbm-tokens.css"></head><body>' + brand
+                    + '<footer>Learn • Build • Explore</footer></body></html>')
+        self.assertEqual(self.navigation.complete_chrome(complete), complete)
+        rendered = self.navigation.header('/', [('/for/teachers/', 'Teachers')], adult=True)
+        self.assertEqual(rendered.count('<strong>MADE BY MATT</strong><small>Learn • Build • Explore</small>'), 1)
+        self.assertEqual(self.navigation.ChromeDocument(rendered).taglines(), {'all': 1, 'header': 1, 'footer': 0})
 
     def subject_publication_fixture(self, root, subject):
         """Use the real refresh path; unrelated front doors are small fixtures."""

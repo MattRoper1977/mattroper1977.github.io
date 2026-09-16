@@ -47,10 +47,16 @@ async function assertChrome(page, route, expected) {
       all: count(body.textContent),
       header: [...body.querySelectorAll('header')].reduce((n, el) => n + count(el.textContent), 0),
       footer: [...body.querySelectorAll('footer')].reduce((n, el) => n + count(el.textContent), 0),
-    }};
+      brand: [...body.querySelectorAll('header .mbm-unified-brand small')].reduce((n, el) => n + count(el.textContent), 0),
+    }, unified: body.querySelectorAll('header[data-mbm-navigation="education"]').length};
   });
   assert.deepEqual(evidence.links, ['/assets/mbm-tokens.css'], 'One origin-root token link: ' + route);
-  assert.deepEqual(evidence.taglines, {all: 1, header: 0, footer: 1}, 'One footer-only tagline: ' + route);
+  // EDU-HEADER-BRAND-20260915: the published Education header carries the line
+  // once, inside the brand lock-up only; the footer keeps its own line. A page
+  // without the unified brand still carries exactly one footer-only tagline.
+  assert(evidence.unified <= 1, 'At most one unified Education header: ' + route);
+  const brand = evidence.unified;
+  assert.deepEqual(evidence.taglines, {all: 1 + brand, header: brand, footer: 1, brand}, 'One brand tagline (inside the unified header lock-up only, and always there) and one footer tagline: ' + route);
   assert.deepEqual(await resolvedTokens(page), expected, 'Computed token census: ' + route);
   return evidence;
 }
@@ -100,7 +106,11 @@ async function proveChromeControls(page, origin, expected) {
   await page.locator('[data-mbm-navigation="education"]').evaluate(el => {
     el.append(document.createTextNode('Learn • Build • Explore'));
   });
-  await assert.rejects(() => assertChrome(page, '/stats/', expected), /One footer-only tagline/);
+  await assert.rejects(() => assertChrome(page, '/stats/', expected), /one footer tagline/);
+  await page.reload();
+  await assertChrome(page, '/stats/', expected);
+  await page.locator('[data-mbm-navigation="education"] .mbm-unified-brand small').evaluate(el => { el.remove(); });
+  await assert.rejects(() => assertChrome(page, '/stats/', expected), /one footer tagline/);
   await page.reload();
   await assertChrome(page, '/stats/', expected);
   const palettes = [];
@@ -119,7 +129,7 @@ async function proveChromeControls(page, origin, expected) {
   await assertChrome(page, '/stats/', expected);
   console.log('PASS chrome tokens: ' + names.length + ' computed tokens; ' +
     palettes.reduce((n, p) => n + p.pairs, 0) + ' pairs in four browser palettes; ' +
-    'unlinked tokens, duplicate/header tagline and dark/contrast mutations rejected and restored');
+    'unlinked tokens, stray header tagline, removed brand tagline and dark/contrast mutations rejected and restored');
   return palettes;
 }
 

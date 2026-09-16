@@ -11,8 +11,10 @@ data/audience-homepages.json (label and route, record order); the one route
 the record does not hold, /for/governors-trustees/, is the build's own page
 and is appended from the same constant that writes it. Pupil surfaces render
 the pupil subset of the SAME component. The header carries the mark, the
-wordmark, a search control and the menu — no tagline: "Learn • Build •
-Explore" is the footer's line, once per page.
+wordmark with "Learn • Build • Explore" beneath it (EDU-HEADER-BRAND-20260915,
+CX2 §5.2), a search control and the menu. The footer keeps its own tagline
+once per page, so a published page censuses one header tagline (inside the
+brand lock-up, never elsewhere in the header) and one footer tagline.
 """
 from html import escape
 from html.parser import HTMLParser
@@ -156,7 +158,13 @@ class ChromeDocument(HTMLParser):
 
 
 def complete_chrome(text):
-    """Use the canonical token URL and fill an absent footer signoff only."""
+    """Use the canonical token URL and fill an absent footer signoff only.
+
+    Tagline census: the header may carry the line once (the brand lock-up the
+    published-education template renders) or not at all; the footer must end
+    with exactly one; nothing outside those two regions may carry it. A page
+    whose footer lacks the line gets the shared signoff appended.
+    """
     template = chrome_template('header.html', 'tokens', {})
     links = ChromeDocument(template).links
     if len(links) != 1 or links[0][2] != '/assets/mbm-tokens.css':
@@ -177,7 +185,9 @@ def complete_chrome(text):
         text = text.replace('</head>', '<!-- mbm-chrome:tokens -->' + canonical +
                             '<!-- /mbm-chrome:tokens --></head>', 1)
     counts = document.taglines()
-    if counts == {'all': 0, 'header': 0, 'footer': 0}:
+    if counts['header'] > 1:
+        raise ValueError('Tagline may appear at most once in the header: ' + repr(counts))
+    if counts['footer'] == 0 and counts['all'] == counts['header']:
         if document.footers > 1:
             raise ValueError('Ambiguous footer signoff owner')
         if str(HERE) not in sys.path:
@@ -191,7 +201,7 @@ def complete_chrome(text):
                 raise ValueError('Missing footer insertion boundary')
             text = text.replace('</body>', '<footer data-mbm-chrome="minimal">' + fragment + '</footer></body>', 1)
         text = text.replace('</head>', '<link rel="stylesheet" href="/assets/shared-footer.css"></head>', 1)
-    elif counts != {'all': 1, 'header': 0, 'footer': 1}:
+    elif counts['footer'] != 1 or counts['all'] != counts['header'] + 1:
         raise ValueError('Tagline must appear once in the footer: ' + repr(counts))
     return text
 

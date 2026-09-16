@@ -172,7 +172,10 @@ async function hubTests(browser) {
     const tabs = await page.locator('#seg [role="tab"]').allTextContents();
     assert(tabs.some(t => /LAUNCH/.test(t)) && tabs.some(t => /BUILD/.test(t)), 'Pathway control is missing a pathway');
     const rows = await page.locator('#rows .lrow').evaluateAll(els => els.map(e => e.dataset.resourcePath));
-    assert(rows.length > 0 && rows.every(r => /Launch|LAUNCH/.test(r)), 'Pathway selection produced an unrelated row');
+    // CX2 §5 (2026-09-16): the Lessons hub classifies pathway case-insensitively (#551), so the
+    // LAUNCH Science teaching-pack hub row (…/Teaching_Packs/index.html#launch) now sits in the
+    // LAUNCH view, where it belongs; the pattern follows the record rather than one letter case.
+    assert(rows.length > 0 && rows.every(r => /launch/i.test(r)), 'Pathway selection produced an unrelated row');
     await page.locator('#seg [role="tab"][data-pathway="GROW"]').click();
     assert.equal(new URL(page.url()).searchParams.get('pathway'), 'GROW');
     await page.reload({ waitUntil: 'domcontentloaded' });

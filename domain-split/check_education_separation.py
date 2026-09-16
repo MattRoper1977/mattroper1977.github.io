@@ -125,9 +125,17 @@ def registry_errors(output):
     # (0 added, 0 removed) while 32 classic-lesson records gain their new search-index
     # source_ids beside the old ones. Proved by diffing registry_partition() output between
     # the B3 and B4 builds (reports/B4_registry_refreeze.json in the lane report).
-    baseline_sha = 'd2439c6161bb2715ab7b04a3880e036189e9726f8f30d55e63b5816abd40f5bf'
+    # Re-frozen 16 September (CX2 §5 EDU-D3): the Lessons pin moves from 2c33266b to
+    # the main that carries the EDU-Q1 companions (#551). Proved by diffing
+    # registry_partition() output between a full build at 2c33266b (reproduces
+    # d2439c61 exactly, 926 rows) and one at the new pin: 51 Science_Teesside lesson
+    # records join (the Spring/Summer batch and the CX2 pilots), 0 removed, and one
+    # existing record changes in one field — the Sugar lesson's title after its
+    # public-surface hygiene sweep (Lessons #547). Same digest the Lessons carrier
+    # records for that state.
+    baseline_sha = 'ec7dc0754029e00146e4314d57b5a4ed6beec71c7a6cf6413d50c31d045e4de7'
     additions_path = HERE/'science-download-usage-additions.json'
-    if sha256(additions_path.read_bytes()).hexdigest() != '266199e1f6d355956b23df058b3d867b50edc2f155545b0b43fb2d6f8177df30':
+    if sha256(additions_path.read_bytes()).hexdigest() != '8510ab17f62be41b9fbea811760ae6581fcbad8ff252e91134e386ee45e0d75c':
         return ['Unreviewed Science download registration metadata']
     if sha256(TEACHING_PACK_ADDITIONS.read_bytes()).hexdigest() != TEACHING_PACK_ADDITIONS_SHA256:
         return ['Unreviewed teaching-pack download registration metadata']
