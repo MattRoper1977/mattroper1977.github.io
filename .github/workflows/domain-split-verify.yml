@@ -34,7 +34,7 @@ jobs:
           # trigger-list fix (#554). Held EQUAL to Lessons main so the
           # site-triggered and Lessons-triggered publishers build the same
           # bytes; when they disagree, the origin serves whichever published last.
-          ref: aaba36d8ab93af219e8f9adf7e30fbc263690400
+          ref: b54c9006e311f151ee53fe268846fab12fbc3e44
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -47,7 +47,7 @@ jobs:
           # together only from this commit; it carries the SW2 A Apps
           # front door that education_discovery.py now recognises. Held EQUAL to
           # education-publication.yml so this control builds the published bytes.
-          ref: e15f6e397804db9ebf48f435df9fcf0ab47feb0c
+          ref: dfca094b0e538ad02a7bb9edde5db00f45f84e3b
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
