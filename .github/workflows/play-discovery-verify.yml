@@ -25,10 +25,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          # Pinned Lessons source selected by Games/play-publication.json on 2026-09-14.
-          # Freeze this review to those approved game versions for reproducible captures.
-          # Media checks independently match all six captured payload hashes.
-          ref: 9ec701681ff6efcc5bb99f9120555c7c76585e45
+          # Pinned 2026-09-16 (CX2 section 7.1 PLAY-Q1 batch 2) to the Lessons commit the
+          # current captures were taken from. This review is frozen to the approved capture
+          # source, and batch 2 re-stamped the seven Lessons activity payloads and recaptured
+          # their screens, so the pin follows the captures. Only those seven Play payloads
+          # differ from the previous pin 9ec70168; no shelf game changed between them.
+          # This now LEADS Games/play-publication.json, which still selects 9ec70168 and moves
+          # at the Games pin release (blocker B3). Media checks independently match all six
+          # captured payload hashes.
+          ref: aaba36d8ab93af219e8f9adf7e30fbc263690400
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/setup-python@v5
