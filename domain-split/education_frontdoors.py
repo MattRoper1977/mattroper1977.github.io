@@ -80,6 +80,46 @@ def subject_tiles(bp, lessons, featured=False):
         for slug, name in [(c['slug'], c['name']) for c in cards] + extras) + '</div>'
 
 
+PATHWAY_MANIFEST = 'pathway-definitions.json'
+PATHWAY_KEYS = ('build', 'grow', 'launch')
+
+
+def pathway_record(bp):
+    return json.loads((bp.HERE / PATHWAY_MANIFEST).read_text())
+
+
+def pathways(bp):
+    """D-3 (16 September 2026): the three pathway chips carry a short definition each.
+
+    One source, pathway-definitions.json, read here and by the check. This fails
+    closed: a missing, empty, reordered or extra pathway, or a definition that
+    names a placement instrument, raises rather than serving a band that says
+    the wrong thing or nothing at all. The chip stays a text label with the
+    pathway's name next to its definition, so colour is never the only cue.
+    """
+    record = pathway_record(bp)
+    rows = record.get('pathways')
+    if not isinstance(rows, list) or tuple(r.get('key') for r in rows) != PATHWAY_KEYS:
+        raise ValueError('pathway-definitions.json must carry exactly build, grow, launch in that order')
+    forbidden = [str(w) for w in record.get('forbidden', [])]
+    if not forbidden:
+        raise ValueError('pathway-definitions.json must carry its forbidden word list')
+    out = ''
+    for row in rows:
+        name, definition = str(row.get('name', '')).strip(), str(row.get('definition', '')).strip()
+        if name != row['key'].upper():
+            raise ValueError('pathway name must be the upper-case key: ' + row['key'])
+        if not definition or len(definition) > 260:
+            raise ValueError('pathway definition must be present and at most 260 characters: ' + name)
+        low = definition.lower()
+        hit = [w for w in forbidden if w.lower() in low]
+        if hit:
+            raise ValueError('pathway definition names a forbidden term: ' + name + ' ' + ', '.join(hit))
+        out += ('<div class="fd-pathway" data-pathway="' + esc(row['key']) + '"><span class="fd-chip ' + esc(row['key']) + '">' + esc(name)
+                + '</span><p class="fd-pathway-def">' + esc(definition) + '</p></div>')
+    return '<div class="fd-chips fd-pathway-grid">' + out + '</div>'
+
+
 HERO_MANIFEST = 'education-hero.json'
 FEATURE_MANIFEST = 'homepage-feature.json'
 PATHWAYS = {'BUILD', 'GROW', 'LAUNCH'}
@@ -221,7 +261,7 @@ def render(kind, origin, bp):
         body = ('<section class="fd-hero wrap"><div class="fd-hero-copy">' + hero[:copy_end] + '</div>' + hero_art(bp, kind)
                 + '<div class="fd-hero-tools">' + hero[copy_end:] + '</div>' + pack + '</section>')
         body += '<section class="fd-section wrap"><div class="fd-section-head"><h2>Explore a subject</h2><a href="/Lessons/">View all →</a></div>' + subjects + '</section>'
-        body += '<section class="fd-section fd-pathways wrap"><h2>Three pathways, one place</h2><div class="fd-chips"><span class="fd-chip build">BUILD</span><span class="fd-chip grow">GROW</span><span class="fd-chip launch">LAUNCH</span></div></section>'
+        body += '<section class="fd-section fd-pathways wrap"><h2>Three pathways, one place</h2>' + pathways(bp) + '</section>'
         if pack:
             body += '<section class="fd-section wrap fd-phone-packs">' + try_lesson(bp, 'phone') + '</section>'
         body += '<section class="fd-section wrap" id="added" hidden><div class="fd-section-head"><h2 id="added-h">Added this half-term</h2><a id="added-all" href="/Lessons/?added=current">See all →</a></div><div class="fd-added-grid"><div id="added-rail"></div><article class="fd-pack-promo"><h3>Ready-to-teach packs</h3><p>Editable slides, print resources and teacher guidance.</p>' + action('/resources/?type=pack', 'Explore packs →', True) + '</article></div></section>'
