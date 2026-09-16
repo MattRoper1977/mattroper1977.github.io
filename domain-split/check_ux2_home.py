@@ -66,24 +66,60 @@ def self_test():
         assert preview_data(fixture)['real']['images'] == [image]
         pdf.write_bytes(b'changed PDF bytes'); assert preview_data(fixture) == {}, 'stale preview must be suppressed'
         pdf.write_bytes(b'reviewed PDF bytes'); assert 'real' in preview_data(fixture), 'restored source recovers preview'
-        # A featured lesson must retain both the reviewed lesson and preview.
-        from education_frontdoors import featured_lesson
-        lesson = lessons / 'lesson.html'; lesson.write_bytes(b'reviewed lesson bytes')
-        review = {'packId': 'real', 'lessonFile': 'lesson.html',
-                  'lessonSha256': hashlib.sha256(lesson.read_bytes()).hexdigest(),
-                  'displayTitle': 'Reviewed topic', 'description': 'Reviewed interaction',
-                  'previewWidth': 100, 'previewHeight': 140}
-        (tmp / 'homepage-feature.json').write_text(json.dumps(review))
-        (lessons / 'resources.json').write_text(json.dumps([{'id': 'real', 'file': 'real.pptx',
-            'companionOf': 'lesson.html', 'files': [{'path': 'real.pdf', 'type': 'pdf'}]}]))
-        assert 'Reviewed topic' in featured_lesson(fixture)
-        lesson.write_bytes(b'changed lesson'); assert featured_lesson(fixture) == '', 'stale lesson suppresses feature'
-        lesson.write_bytes(b'reviewed lesson bytes')
-        pdf.write_bytes(b'changed preview source'); assert featured_lesson(fixture) == '', 'stale preview suppresses feature'
-        pdf.write_bytes(b'reviewed PDF bytes'); assert 'Reviewed topic' in featured_lesson(fixture)
-        (lessons / 'resources.json').write_text(json.dumps([{'id': 'real', 'file': 'real.pptx',
-            'companionOf': 'different.html', 'files': [{'path': 'real.pdf', 'type': 'pdf'}]}]))
-        assert featured_lesson(fixture) == '', 'changed companion target suppresses feature'
+        # EDU-TRY-LESSON: a feature binds only while the catalogue row, the lesson
+        # bytes and the preview source all agree; any drift is a build error.
+        from education_frontdoors import try_lesson, hero_art
+        import bind_homepage_features
+        lesson = lessons / 'lesson.html'; lesson.write_bytes(b'<h1>Reviewed topic</h1><p>A 40-minute lesson. I can do the reviewed thing.</p>')
+        (lessons / 'pack.html').write_text('<html></html>')
+        (lessons / 'assets/catalogue').mkdir(parents=True); (lessons / 'data').mkdir()
+        (lessons / 'assets/catalogue/display-titles.json').write_text(json.dumps({'schema': 1, 'entries': {'real.pptx': {'id': 'real', 'originalTitle': 'W1 · Reviewed topic · Companion pack', 'displayTitle': 'Reviewed topic', 'reference': 'W1'}}}))
+        (lessons / 'data/companion-packs.json').write_text(json.dumps({'packs': [{'id': 'real', 'companionOf': 'lesson.html', 'subject': 'Science', 'pathway': 'GROW', 'term': 'Autumn 1'}]}))
+        rows_ok = [{'id': 'real', 'file': 'real.pptx', 'title': 'W1 · Reviewed topic · Companion pack', 'type': 'support', 'companionOf': 'lesson.html', 'files': [{'path': 'real.pdf', 'type': 'pdf'}]}]
+        (lessons / 'resources.json').write_text(json.dumps(rows_ok))
+        image['width'] = 100; image['height'] = 140
+        (tmp / 'homepage-previews.json').write_text(json.dumps({'real': {'resourceFile': 'real.pptx', 'images': [image]}}))
+        declared = {'schemaVersion': 2, 'rotationSeconds': 8, 'features': [{'packId': 'real', 'durationMinutes': 40, 'reviewedAt': '2026-09-16'}]}
+        bound = bind_homepage_features.bind(lessons, declared, tmp / 'homepage-previews.json')
+        assert bound['features'][0]['description'] == 'I can do the reviewed thing.' and bound['features'][0]['descriptionSource'].startswith('lesson outcome'), bound
+        (tmp / 'homepage-feature.json').write_text(json.dumps(bound))
+        card = try_lesson(fixture, 'hero')
+        assert 'Reviewed topic' in card and 'data-try-lesson' not in card, 'one eligible lesson renders a static card, not a rotation'
+        assert 'href="/Lessons/lesson.html"' in card and 'href="/Lessons/pack.html?id=real"' in card, 'lesson and pack routes come from the binding'
+        def refuses(reason):
+            try:
+                try_lesson(fixture, 'hero')
+            except ValueError:
+                return True
+            raise AssertionError('stale binding must be refused: ' + reason)
+        lesson.write_bytes(b'changed lesson'); refuses('changed lesson bytes')
+        lesson.write_bytes(b'<h1>Reviewed topic</h1><p>A 40-minute lesson. I can do the reviewed thing.</p>'); assert 'Reviewed topic' in try_lesson(fixture, 'hero')
+        pdf.write_bytes(b'changed preview source'); refuses('changed preview source')
+        pdf.write_bytes(b'reviewed PDF bytes'); assert 'Reviewed topic' in try_lesson(fixture, 'hero')
+        (lessons / 'resources.json').write_text(json.dumps([{**rows_ok[0], 'companionOf': 'different.html'}])); refuses('changed companion target')
+        (lessons / 'resources.json').write_text(json.dumps(rows_ok))
+        # two eligible lessons render a rotation: hidden second slide, hidden controls until the script runs
+        lesson2 = lessons / 'lesson2.html'; lesson2.write_bytes(b'<h1>Second topic</h1><p>40 minutes. I can do the second thing.</p>')
+        (lessons / 'assets/catalogue/display-titles.json').write_text(json.dumps({'schema': 1, 'entries': {'real.pptx': {'id': 'real', 'originalTitle': 'W1 · Reviewed topic · Companion pack', 'displayTitle': 'Reviewed topic', 'reference': 'W1'}, 'second.pptx': {'id': 'second', 'originalTitle': 'W2 · Second topic · Companion pack', 'displayTitle': 'Second topic', 'reference': 'W2'}}}))
+        (lessons / 'data/companion-packs.json').write_text(json.dumps({'packs': [{'id': 'real', 'companionOf': 'lesson.html', 'subject': 'Science', 'pathway': 'GROW', 'term': 'Autumn 1'}, {'id': 'second', 'companionOf': 'lesson2.html', 'subject': 'Science', 'pathway': 'LAUNCH', 'term': 'Autumn 1'}]}))
+        (lessons / 'resources.json').write_text(json.dumps(rows_ok + [{'id': 'second', 'file': 'second.pptx', 'title': 'W2 · Second topic · Companion pack', 'type': 'support', 'companionOf': 'lesson2.html', 'files': [{'path': 'real.pdf', 'type': 'pdf'}]}]))
+        (tmp / 'homepage-previews.json').write_text(json.dumps({'real': {'resourceFile': 'real.pptx', 'images': [image]}, 'second': {'resourceFile': 'second.pptx', 'images': [image]}}))
+        declared['features'].append({'packId': 'second', 'durationMinutes': 40, 'reviewedAt': '2026-09-16'})
+        (tmp / 'homepage-feature.json').write_text(json.dumps(bind_homepage_features.bind(lessons, declared, tmp / 'homepage-previews.json')))
+        rotation = try_lesson(fixture, 'hero')
+        assert 'data-try-lesson' in rotation and rotation.count('data-try-slide=') == 2 and 'hidden>' in rotation.split('data-try-slide="second"')[1][:80], rotation
+        assert '<div class="fd-try-controls" data-try-controls hidden>' in rotation and '1 of 2' in rotation
+        # EDU-HERO: artwork renders only at the manifest's exact bytes
+        (tmp / 'hero').mkdir(); art = tmp / 'hero/art.jpg'; art.write_bytes(b'approved crop bytes')
+        (tmp / 'education-hero.json').write_text(json.dumps({'alt': '', 'images': {'teachers': {'file': 'hero/art.jpg', 'published': 'assets/art.jpg', 'sourceSha256': 'a' * 64, 'sha256': hashlib.sha256(b'approved crop bytes').hexdigest(), 'bytes': 19, 'width': 4, 'height': 3}}}))
+        assert 'data-hero-source="' + 'a' * 64 + '"' in hero_art(fixture, 'teachers') and 'src="/assets/art.jpg"' in hero_art(fixture, 'teachers')
+        art.write_bytes(b'other bytes')
+        try:
+            hero_art(fixture, 'teachers')
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('hero artwork at other bytes must be refused')
         # the ordering rule for extra tiles: A–Z by the first row's subject
         lessons2 = tmp / 'lessons2'; lessons2.mkdir()
         (lessons2 / 'resources.json').write_text(json.dumps([{'subject': 'Zeta', 'type': 'lesson'}, {'subject': 'Alpha', 'type': 'lesson'}]))

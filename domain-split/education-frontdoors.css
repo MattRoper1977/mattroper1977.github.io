@@ -135,3 +135,36 @@ body[data-sw2-frontdoor][data-page="home"] .fd-feature-preview figcaption{font-s
 body[data-sw2-frontdoor][data-page="home"] .fd-hero:not(:has(.fd-hero-pack)){grid-template-columns:1fr}
 @media(max-width:767px){body[data-sw2-frontdoor][data-page="home"] [data-featured-lesson]{grid-template-columns:minmax(0,1.5fr) minmax(70px,1fr)}body[data-sw2-frontdoor][data-page="home"] .fd-feature-preview{align-self:start}}
 @media(max-width:360px){body[data-sw2-frontdoor][data-page="home"] [data-featured-lesson]{grid-template-columns:1fr}body[data-sw2-frontdoor][data-page="home"] .fd-feature-preview{max-width:170px;justify-self:center}}
+
+/* EDU-D3 (CX2 §5): hero artwork and the Try-a-lesson rotation. */
+body[data-sw2-frontdoor] .fd-hero-art{margin:0;min-width:0;border-radius:14px;overflow:hidden;background:#e1ecdf;box-shadow:0 10px 28px #161d3d0f}
+body[data-sw2-frontdoor] .fd-hero-art picture,body[data-sw2-frontdoor] .fd-hero-art img{display:block;width:100%;height:auto}
+body[data-sw2-frontdoor][data-page="home"] .fd-hero{grid-template-areas:"copy" "art" "tools" "pack"}
+body[data-sw2-frontdoor][data-page="home"] .fd-hero-copy{grid-area:copy;min-width:0}
+body[data-sw2-frontdoor][data-page="home"] .fd-hero-art{grid-area:art}
+body[data-sw2-frontdoor][data-page="home"] .fd-hero-tools{grid-area:tools;min-width:0}
+body[data-sw2-frontdoor][data-page="home"] .fd-hero-pack{grid-area:pack}
+body[data-sw2-frontdoor][data-page="home"] .fd-hero-copy h1{margin-bottom:.6rem}
+body[data-sw2-frontdoor][data-page="home"] .fd-hero-copy .fd-lead{margin-bottom:0}
+body[data-sw2-frontdoor][data-page="home"] .fd-hero-tools .fd-search{margin-top:0}
+@media(max-width:767px){body[data-sw2-frontdoor][data-page="home"] .fd-hero{gap:.9rem}body[data-sw2-frontdoor][data-page="home"] .fd-hero-art img{aspect-ratio:16/9;object-fit:cover}body[data-sw2-frontdoor][data-page="teachers"] .fd-hero{gap:1rem}body[data-sw2-frontdoor][data-page="teachers"] .fd-hero-art img{aspect-ratio:16/7;object-fit:cover;object-position:50% 28%}}
+@media(min-width:768px) and (max-width:1023px){body[data-sw2-frontdoor] .fd-hero{gap:1.6rem}body[data-sw2-frontdoor][data-page="teachers"] .fd-hero-art img{aspect-ratio:16/7;object-fit:cover;object-position:50% 28%}}
+@media(min-width:1024px){body[data-sw2-frontdoor][data-page="home"] .fd-hero{grid-template-columns:1.3fr 1fr;grid-template-areas:"copy art" "tools pack";align-items:start;row-gap:1.6rem;column-gap:2.5rem}body[data-sw2-frontdoor][data-page="home"] .fd-hero-art{align-self:center}body[data-sw2-frontdoor][data-page="home"] .fd-hero:not(:has(.fd-hero-pack)){grid-template-columns:1.3fr 1fr;grid-template-areas:"copy art" "tools art"}body[data-sw2-frontdoor][data-page="teachers"] .fd-hero{grid-template-columns:1.2fr 1fr;align-items:center}}
+/* the rotation */
+body[data-sw2-frontdoor][data-page="home"] .fd-pack.fd-try{display:block}
+/* the hero slot exists only on desktop; the phone slot (after the pathways) exists only below it */
+body[data-sw2-frontdoor][data-page="home"] .fd-pack.fd-try.fd-hero-pack{display:none}
+@media(min-width:1024px){body[data-sw2-frontdoor][data-page="home"] .fd-pack.fd-try.fd-hero-pack{display:block}body[data-sw2-frontdoor][data-page="home"] .fd-phone-packs .fd-pack.fd-try{display:none}}
+body[data-sw2-frontdoor][data-page="home"] .fd-try-head{display:flex;align-items:baseline;justify-content:space-between;gap:.75rem}
+body[data-sw2-frontdoor][data-page="home"] .fd-try-head .fd-eyebrow{margin-bottom:.6rem}
+body[data-sw2-frontdoor][data-page="home"] .fd-try-position{margin:0 0 .6rem;font-size:.8rem;font-weight:700;color:var(--edu-muted,#454c6b);white-space:nowrap}
+body[data-sw2-frontdoor][data-page="home"] .fd-try-track{list-style:none;margin:0;padding:0}
+body[data-sw2-frontdoor][data-page="home"] .fd-try-slide{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:.8rem;align-items:center}
+body[data-sw2-frontdoor][data-page="home"] .fd-try-slide[hidden]{display:none}
+body[data-sw2-frontdoor][data-page="home"] .fd-try-controls{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.5rem;margin-top:.9rem;padding-top:.75rem;border-top:1px solid #d8dcd2}
+body[data-sw2-frontdoor][data-page="home"] .fd-try-controls[hidden]{display:none}
+body[data-sw2-frontdoor][data-page="home"] .fd-try-button{flex:1 1 auto;min-height:44px;min-width:44px;padding:.45rem .5rem;white-space:normal;border:1px solid #9198a3;border-radius:8px;background:transparent;color:var(--edu-ink,#161d3d);font-weight:650;font-size:.85rem;cursor:pointer}
+body[data-sw2-frontdoor][data-page="home"] .fd-try-button:hover{background:#eef1ec}
+body[data-sw2-frontdoor][data-page="home"] .fd-try-toggle{border-color:#161d3d}
+@media(max-width:767px){body[data-sw2-frontdoor][data-page="home"] .fd-try-slide{grid-template-columns:minmax(0,1.5fr) minmax(70px,1fr)}body[data-sw2-frontdoor][data-page="home"] .fd-try-slide .fd-feature-preview{align-self:start}}
+@media(max-width:360px){body[data-sw2-frontdoor][data-page="home"] .fd-try-slide{grid-template-columns:1fr}body[data-sw2-frontdoor][data-page="home"] .fd-try-slide .fd-feature-preview{max-width:170px;justify-self:center}body[data-sw2-frontdoor][data-page="home"] .fd-try-button{padding:.45rem .4rem;font-size:.8rem}}

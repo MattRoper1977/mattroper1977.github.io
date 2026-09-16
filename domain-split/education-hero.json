@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "ruling": "EDU-HERO-20260915 (CX2 §5.1)",
+  "operation": "crop only (PIL Image.crop of the approved source pixels, JPEG quality 85, progressive); no repaint, no resample, no generated pixels",
+  "alt": "",
+  "images": {
+    "home": {
+      "file": "hero/education-hero-home.jpg",
+      "published": "assets/education-hero-home.jpg",
+      "source": "home",
+      "sourceSha256": "c6c1b9e8d6fb78b4b044d521cd75cef389e8b2a5a3f478f95ec718b79932b248",
+      "sourceName": "27988.jpg",
+      "crop": [
+        885,
+        100,
+        1485,
+        338
+      ],
+      "width": 600,
+      "height": 238,
+      "bytes": 33373,
+      "sha256": "23f5a04869b57437344b27f60437a0ed749db8d48c5e68db9e7cb9ba72676a12",
+      "use": "Homepage hero, tablet and desktop widths",
+      "kept": [
+        "owl breathing room at the top and right of the frame",
+        "globe, pencils, prism, subject book spines",
+        "cream/navy/sage palette of the approved render",
+        "no mock-up frame or device bezel in the crop"
+      ],
+      "deviations": [
+        "the prism still stands in front of the owl (refinement 2 needs a repaint, not a crop)",
+        "the source is a 1536px mock-up, so the crop is 600px wide and renders at about 1x on a phone"
+      ]
+    },
+    "homePhone": {
+      "file": "hero/education-hero-home-phone.jpg",
+      "published": "assets/education-hero-home-phone.jpg",
+      "source": "home",
+      "sourceSha256": "c6c1b9e8d6fb78b4b044d521cd75cef389e8b2a5a3f478f95ec718b79932b248",
+      "sourceName": "27988.jpg",
+      "crop": [
+        1000,
+        118,
+        1320,
+        298
+      ],
+      "width": 320,
+      "height": 180,
+      "bytes": 15982,
+      "sha256": "20e0778ff4f4938f209e8bcde19bfde62dc720e6ece38cfb9204d04595f0ac61",
+      "use": "Homepage hero on phones (simplified foreground: owl and globe only)",
+      "kept": [
+        "owl face centred with room above it",
+        "no slogan, frame or embedded text in the crop"
+      ],
+      "deviations": [
+        "the prism still stands in front of the owl",
+        "320px wide from a 1536px mock-up, about 1x on a phone"
+      ]
+    },
+    "teachers": {
+      "file": "hero/education-hero-teachers.jpg",
+      "published": "assets/education-hero-teachers.jpg",
+      "source": "teachers",
+      "sourceSha256": "4cdfedd8b48fa7efdc0debd6a7c332a9fba0e4547c147291d46bab0d0360e77e",
+      "sourceName": "exec-c1f6aed3 (Teachers \"04 / LEARNING COMES TO LIFE\")",
+      "crop": [
+        905,
+        95,
+        1335,
+        480
+      ],
+      "width": 430,
+      "height": 385,
+      "bytes": 40164,
+      "sha256": "c33d5093e7d3a70bdb8d93ac6df89efc30839f34c02e250dd558c525fc431ecb",
+      "use": "Teachers front door hero (all widths; phones crop it with CSS)",
+      "kept": [
+        "teacher and two pupils at the desk, prism and rainbow",
+        "the wall slogan and the book spines fall outside the crop"
+      ],
+      "deviations": [
+        "generated people; alt text is empty and they are never labelled as staff or pupils"
+      ]
+    }
+  }
+}

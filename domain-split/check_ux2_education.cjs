@@ -26,14 +26,16 @@
 //                 the served usage-client.js and compared with the fixture.
 //   copy          every Appendix A §HOME / §COMMISSION (and, as later parts land, §PUPILS,
 //                 §TEACHERS, §RESOURCES) string renders on its route; "Learn • Build •
-//                 Explore" exactly once per route; the vocabulary grep terms occur only
+//                 Explore" exactly twice per route (header brand lock-up and footer,
+//                 EDU-HEADER-BRAND-20260915); the vocabulary grep terms occur only
 //                 where ux2/appendix-a-site.json lists a defect with a reason.
 //   hrefs         every same-origin href on the gated routes answers 200 on the mount;
 //                 off-origin hrefs are listed and must be the Play origin or an existing
 //                 external destination the pre-order page already carried.
 //   claims        R3: no served audience route carries a banned absolute (data/banned-claims.json);
 //                 R4: the teacher page carries the record's safety line verbatim.
-//   hero          the homepage brand mark and hero artwork decode with naturalWidth > 0.
+//   hero          the homepage brand mark and hero artwork decode with naturalWidth > 0; the
+//                 only non-PDF picture is the digest-bound approved artwork (EDU-HERO-20260915).
 //   tiles         the "Go straight to your subject" tiles equal the Lessons hub's own
 //                 subject cards (slug for slug, in order) — the same derivation, measured.
 //   sitemap       the authored sitemap.xml carries /commission/ and every overlay route.
@@ -203,8 +205,10 @@ async function suite(browser, mutation) {
       const set = fixtures.appendix.routeStrings[route] || [];
       const missing = set.filter(s => !text1.includes(norm(s)));
       assert.deepEqual(missing, [], 'Appendix A strings missing on ' + route + ': ' + JSON.stringify(missing));
+      // EDU-HEADER-BRAND-20260915: once in the header brand lock-up, once in the footer.
       const lbe = (text.match(/Learn • Build • Explore/g) || []).length;
-      assert.equal(lbe, 1, '"Learn • Build • Explore" exactly once on ' + route);
+      assert.equal(lbe, 2, '"Learn • Build • Explore" exactly twice on ' + route + ' (header brand and footer)');
+      assert.equal(await page.locator(HEADER + ' .mbm-unified-brand small').count(), 1, 'The header line is the brand lock-up tagline on ' + route);
       // vocabulary grep: each occurrence is the surviving name or a listed defect
       const defects = (fixtures.appendix.vocabularyDefects.routes[route] || {});
       const counts = Object.fromEntries(fixtures.appendix.vocabularyDefects.terms.map(t => [t, text.split(t).length - 1]));
@@ -389,9 +393,11 @@ async function suite(browser, mutation) {
 
   await check('hero /', async () => {
     await goto(page, '/');
-    const images = await page.locator(HEADER + ' img, .hero-art img').evaluateAll(n => n.map(i => ({ src: (i.getAttribute('src') || '').slice(0, 40), w: i.naturalWidth, h: i.naturalHeight, complete: i.complete })));
-    assert(images.length >= 1, 'The approved brand mark is present');
-    assert.equal(await page.locator('main img:not([data-preview-source])').count(), 0, 'Homepage only uses verified source PDF renders');
+    const images = await page.locator(HEADER + ' img, .fd-hero-art img').evaluateAll(n => n.map(i => ({ src: (i.getAttribute('src') || '').slice(0, 40), w: i.naturalWidth, h: i.naturalHeight, complete: i.complete })));
+    assert(images.length >= 2, 'The approved brand mark and the approved hero artwork are present');
+    // EDU-HERO-20260915: the one picture besides PDF renders is the approved artwork, bound by digest (check_sw2_frontdoors proves the bytes).
+    assert.equal(await page.locator('main img:not([data-preview-source]):not([data-hero-source])').count(), 0, 'Homepage only uses verified source PDF renders and the digest-bound hero artwork');
+    assert.equal(await page.locator('main img[data-hero-source]').count(), 1, 'One hero artwork on the homepage');
     for (const i of images) assert(i.complete && i.w > 0 && i.h > 0, 'Image decodes: ' + JSON.stringify(i));
     return images;
   });
