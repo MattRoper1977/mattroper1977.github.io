@@ -2,7 +2,7 @@
 
 Derived by `tools/play_splash_coverage.py` from the built Play domain catalogue; never hand-counted. Re-run and recommit after every batch.
 
-Routes: **68** (canon 24, legacy-region 6, none 24, own-splash 14; owners Site 35, Lessons 33). Generated region now on 14 routes (sha256 `5500acead5b7…`); 4 Site routes held at the previous accepted region (see batch 1b).
+Routes: **68** (canon 24, legacy-region 6, none 24, own-splash 14; owners Site 35, Lessons 33). Generated region now on 20 routes (sha256 `5500acead5b7…`): 14 Site routes (batch 1) and the 6 Lessons shelf routes (batch 2); 4 Site routes held at the previous accepted region (see batch 1b).
 
 ## Design (decided under "decide and continue", recorded for Matt)
 
@@ -16,7 +16,7 @@ Routes: **68** (canon 24, legacy-region 6, none 24, own-splash 14; owners Site 3
 ## Batches
 
 1. **Canon routes, Site-declared (18)** — this pull request stamps 14: generator change, re-stamp, verifier controls, Play-visual proof (`tools/verify_play_splash.mjs`), and the Play evidence chain rebound to the new bytes (`evidence.json`, `preservation.json`, the Rally source revision, `discovery-review.json`, 14 screens recaptured with `tools/capture_play_screens.cjs`). **1b — the four clip-bearing routes** (`/apexkick/`, `/voxel/`, `/offbrand/`, `/novasiege/`) stay at the previous accepted region, declared as `held-at-previous-region-with-reason` in `data/hud-coverage.json`: each carries an accepted gameplay clip bound to its published bytes, and the builder refuses a clip bound to different bytes, so they follow once the Play capture job has recaptured the clips against the new bytes and Matt has accepted them.
-2. **Canon routes, Lessons-declared (6 on the shelf + R_Gate_Calibration_Game)** — a Lessons pull request moving its generator pin to the merged Site commit and re-stamping.
+2. **Canon routes, Lessons-declared (6 on the shelf + R_Gate_Calibration_Game)** — done: Lessons #557 moved its generator pin to the merged Site commit `acd9f0cc` and re-stamped the seven (its R1–R7 verifier PASS, 4/4 controls); this Site pull request moves the Lessons pin, re-mints the education admission registry for the two education-published members (V=IR Pupil App, R_Gate Calibration Game) and rebinds the Play evidence and the six shelf screens to the new bytes.
 3. **Legacy `MBM-SPLASH` region (6)** — every one is `declined-with-reason` in the Site ledger against a named per-game gate assertion (`tools/apex_rc_gate.mjs` for apexcurl and apexvelodrome, `tools/titan-crown/verify_launch.mjs` for crownbadge and titanforge, the byte-pinned provenance of biopunkhive, the way-out walk on fracture). Each is a contract change for that game's owner, taken one route at a time with its gate re-proved; none is taken silently under this checkpoint.
 4. **Game-owned title splash (14)** — the Site-owned members are all declared (`declined-with-reason` against a named gate, or held for 1b); the 8 Lessons-owned members fall under batch 5's ruling.
 5. **No splash (24)** — the 27 Lessons shelf games (19 here plus the 8 own-splash ones) carry no splash key by the SC1 §5 ruling in `reports/2026-09-02-games-census.md` ("declined by construction"), a Lessons-owned decision this checkpoint records and does not overturn; the table shows them as `Lessons:declined-by-construction (SC1 §5)`. The Site-owned no-splash routes are declared against their gates (see 3).
