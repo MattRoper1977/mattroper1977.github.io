@@ -144,6 +144,9 @@ function inlineScriptsAreValid(game, html) {
 function fetchedReferences(html) {
   const refs = [];
   for (const match of html.matchAll(/<(script|img|iframe|audio|video|source|track|embed|object)\b[^>]*?\s(?:src|srcset|poster|data)\s*=\s*["']([^"']+)["']/gi)) {
+    // A data: or blob: value is inline, not a fetched reference; splitting it on commas
+    // (the srcset separator) would read its payload as a path.
+    if (/^\s*(?:data|blob):/i.test(match[2])) { refs.push(match[2].trim()); continue; }
     for (const part of match[2].split(',')) refs.push(part.trim().split(/\s+/)[0]);
   }
   for (const match of html.matchAll(/<link\b[^>]*>/gi)) {
@@ -253,16 +256,26 @@ function verifyLedger() {
   const ledger = JSON.parse(text('data/hud-coverage.json'));
   const applied = new Set((ledger.makerSplash?.applied || []).map(item => typeof item === 'string' ? item : item.route));
   const declined = new Set((ledger.makerSplash?.['declined-with-reason'] || []).map(item => typeof item === 'string' ? item : item.route));
+  // A route may instead be held at a previous accepted region, with a reason and the sha of the
+  // region it keeps (PLAY-Q1 batch 1b: clip-bearing routes wait for their clips to be recaptured).
+  const held = new Map((ledger.makerSplash?.['held-at-previous-region-with-reason'] || []).map(item => [item.route, item]));
   const excluded = new Map((ledger.excluded || []).map(item => [item.route, item]));
+  let appliedCount = 0, heldCount = 0;
   for (const game of GAMES) {
-    assert(applied.has(game.route), `${game.id}: maker splash ledger missing`);
+    if (held.has(game.route)) {
+      const entry = held.get(game.route);
+      assert(typeof entry.reason === 'string' && entry.reason.trim().length > 0, `${game.id}: held without a reason`);
+      assert(/^[0-9a-f]{64}$/.test(entry.region_sha256 || ''), `${game.id}: held without the region sha`);
+      assert(!applied.has(game.route), `${game.id}: maker splash both applied and held`);
+      heldCount += 1;
+    } else { assert(applied.has(game.route), `${game.id}: maker splash ledger missing`); appliedCount += 1; }
     assert(!declined.has(game.route), `${game.id}: maker splash is also declined`);
     if (INLINE_EXIT_IDS.has(game.id)) {
       assert(excluded.has(game.route), `${game.id}: inline-exit ledger missing`);
       assert.equal(excluded.get(game.route).verifier, 'tools/verify_v4_games_deployment.mjs', `${game.id}: verifier ownership`);
     } else assert(!excluded.has(game.route), 'voxel: HUD route incorrectly excluded');
   }
-  gate('route shell ledger', '8 maker splashes · 7 inline exits · 1 canonical HUD route');
+  gate('route shell ledger', `${appliedCount} maker splashes applied · ${heldCount} held at a previous region · 7 inline exits · 1 canonical HUD route`);
 }
 
 function staticMain() {

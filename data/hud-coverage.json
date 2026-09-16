@@ -262,7 +262,7 @@
     "SG7 real-input playability: launch, one air target destroyed, mission ends with a rank, profile persists"
    ],
    "note": "Declared at launch. Skybreak Vector is a single-file WebGL 2 flight-combat game with an optional phone HOTAS over local WebRTC (iceServers:[], no relay). The generated inline exit supplies the estate way out without retracting that boundary; the named verifier checks the declaration and the rendered control."
-   }
+  }
  ],
  "_amendedWhy": "THE LEDGER HAD TWO CATEGORIES AND NEEDED THREE. It measured the games it DECLINED to wire and listed them under `excluded`. It did not check whether any of the ten it DID wire carried the same single-file contract. apexgolf did: verify_apexgolf.js G17 asserted `no <script src> at all`, so the Stage 2B line broke it on 10 August 2026 and it stayed red for fifteen days - invisible, because a `grep | wc -l` step under `pipefail` in apexgolf-verify.yml died before the verifier ever ran, and the workflow is pull_request-only and filtered. Two faults, one day, and the noisy one hid the real one. Found by Order T's estate census, 25 August 2026. This list is the third category: wired, contract retained, verifier amended to say so.",
  "amended": [
@@ -313,7 +313,7 @@
  },
  "makerSplash": {
   "_what": "The estate-wide Made by Matt introduction and its rolling 24-hour suppression. tools/render_maker_splash.py is the only writer of the stamped block; the visual donor is the CyberPulse Made by / Matt / presents form and every applied block is byte-identical.",
-  "_state": "Application census resolved against route-owned before/after verifiers: thirty-one Site routes are declined on unchanged exact assertions; every remaining applied route is generator-owned pending browser-matrix confirmation.",
+  "_state": "Application census resolved against route-owned before/after verifiers: thirty-one Site routes are declined on unchanged exact assertions; every remaining applied route is generator-owned pending browser-matrix confirmation. PLAY-Q1 batch 1 (2026-09-16): the region paints the Play lockup on the Play host; four applied routes with accepted gameplay clips are held at the earlier region, pinned by digest, until batch 1b recaptures their clips.",
   "applied": [
    {
     "route": "/cyberpulse/"
@@ -337,16 +337,7 @@
     "route": "/townlife/"
    },
    {
-    "route": "/novasiege/"
-   },
-   {
-    "route": "/offbrand/"
-   },
-   {
     "route": "/trailrunner/"
-   },
-   {
-    "route": "/apexkick/"
    },
    {
     "route": "/auroralinks/"
@@ -361,13 +352,10 @@
     "route": "/relicforge/"
    },
    {
-    "route": "/voxel/"
-    },
-    {
-     "route": "/touchline/"
+    "route": "/touchline/"
    },
-    {
-     "route": "/skybreak/"
+   {
+    "route": "/skybreak/"
    }
   ],
   "declined-with-reason": [
@@ -476,7 +464,29 @@
     "reason": "tools/verify_maker_splash.mjs — exact runtime assertion: the way-out control is reachable within 30 Tab presses and Enter leaves the route (observed 31 presses, not reached, URL unchanged)"
    }
   ],
-  "variant-retained-with-reason": []
+  "variant-retained-with-reason": [],
+  "held-at-previous-region-with-reason": [
+   {
+    "route": "/apexkick/",
+    "region_sha256": "88c7c6bc0f739c1ad14b0eb1a0788b92ee42c28d7d99e5b28c6adcd83e74a3ff",
+    "reason": "PLAY-Q1 batch 1b: keeps the accepted 2026-08-27 canon region until its accepted gameplay clip (domain-split/play/media) is recaptured against the new bytes in the Play capture job and accepted; a clip bound to different published bytes is refused by the builder."
+   },
+   {
+    "route": "/voxel/",
+    "region_sha256": "88c7c6bc0f739c1ad14b0eb1a0788b92ee42c28d7d99e5b28c6adcd83e74a3ff",
+    "reason": "PLAY-Q1 batch 1b: keeps the accepted 2026-08-27 canon region until its accepted gameplay clip (domain-split/play/media) is recaptured against the new bytes in the Play capture job and accepted; a clip bound to different published bytes is refused by the builder."
+   },
+   {
+    "route": "/offbrand/",
+    "region_sha256": "88c7c6bc0f739c1ad14b0eb1a0788b92ee42c28d7d99e5b28c6adcd83e74a3ff",
+    "reason": "PLAY-Q1 batch 1b: keeps the accepted 2026-08-27 canon region until its accepted gameplay clip (domain-split/play/media) is recaptured against the new bytes in the Play capture job and accepted; a clip bound to different published bytes is refused by the builder."
+   },
+   {
+    "route": "/novasiege/",
+    "region_sha256": "88c7c6bc0f739c1ad14b0eb1a0788b92ee42c28d7d99e5b28c6adcd83e74a3ff",
+    "reason": "PLAY-Q1 batch 1b: keeps the accepted 2026-08-27 canon region until its accepted gameplay clip (domain-split/play/media) is recaptured against the new bytes in the Play capture job and accepted; a clip bound to different published bytes is refused by the builder."
+   }
+  ]
  },
  "_emberwild": "/emberwild/ is NOT excluded, and must not be added here. Issue #149 is RESOLVED, and not by declaring it. Measured 2026-08-15: the game carried the generated inline exit region all along - the same one /relicforge/ has, rendering at 44x44 - and a keyboard player still could not use it. Tab reached ZERO focusable elements in 60 presses, because the game bound Tab to its own menu and preventDefaulted it, and Enter was swallowed by the same handler so the control would not fire even once focused. Adding /hud.js was tried in a scratch copy and did NOT fix it: the chip rendered at 44x44 covering none of the game's controls, and was equally unreachable - 0 of 60 presses - which would have turned this gate green while leaving the player exactly as stuck. Both defects were repaired in the game instead: Tab is no longer a game key and the handler stands down when the focus is on a control. The exit is now reached in 13 presses and navigates to /games/, against /relicforge/'s 8. verify_hud_on_games.py now classifies a route three ways - wired, covered by a working inline exit region, or declared - and the region branch is held to reaching and navigating, not to the region existing, because the region existing is exactly what was true while it was broken."
 }
