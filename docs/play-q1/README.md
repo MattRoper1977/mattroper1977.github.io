@@ -2,7 +2,7 @@
 
 Derived by `tools/play_splash_coverage.py` from the built Play domain catalogue; never hand-counted. Re-run and recommit after every batch.
 
-Routes: **68** (canon 24, legacy-region 6, none 24, own-splash 14; owners Site 35, Lessons 33). Generated region now on 20 routes (sha256 `5500acead5b7…`): 14 Site routes (batch 1) and the 6 Lessons shelf routes (batch 2); 4 Site routes held at the previous accepted region (see batch 1b).
+Routes: **68** (canon 24, legacy-region 6, none 24, own-splash 14; owners Site 35, Lessons 33). Generated region current on **14** routes (sha256 `8415057da544…`): the 14 Site routes, re-stamped from the corrected generator (real `<body>` insert point, way-out arming, guard release). The 6 Lessons shelf routes still carry the previous region (`5500acead5b7…`) and go current again when Lessons batch 3 re-stamps them; 4 Site routes stay held at the earlier accepted region (`88c7c6bc0f73…`, see batch 1b).
 
 ## Design (decided under "decide and continue", recorded for Matt)
 
@@ -22,6 +22,35 @@ Routes: **68** (canon 24, legacy-region 6, none 24, own-splash 14; owners Site 3
 5. **No splash (24)** — the 27 Lessons shelf games (19 here plus the 8 own-splash ones) carry no splash key by the SC1 §5 ruling in `reports/2026-09-02-games-census.md` ("declined by construction"), a Lessons-owned decision this checkpoint records and does not overturn; the table shows them as `Lessons:declined-by-construction (SC1 §5)`. The Site-owned no-splash routes are declared against their gates (see 3).
 
 Every batch: pilot one route per delivery mechanism first, then the batch; publication through the Games pin release (held by BLOCKER B3 at the time of writing).
+
+### Re-stamp, 2026-09-16 (generator fix)
+
+The browser controls found two defects in the generated region itself and a third in its
+dismissal, so the generator was fixed and **all 14 applied Site routes were re-stamped**
+(`tools/render_maker_splash.py --root . --write`; `--check` then reads 0 divergent, and a
+second `--write` changes nothing). The four held routes and every declined route are
+untouched by construction.
+
+- **The insert point comes from `html.parser`, not a substring match.** A `'<body>'` inside
+  a CSS comment could take the insertion, putting the region outside the document body.
+- **`armWayOut()` refuses to arm when the start control *is* the way out**, and `primary()`
+  never resolves to `#mbmexit-back` / `#mbmhud-back` / `#mbmexit-home` / `#mbmhud-home`. The
+  hand-off landing on the exit is the property the new **WO1** control asserts, not a
+  precondition it assumes.
+- **An automatic dismissal releases the window event guard at once**, so a click in the gap
+  between the overlay going inert and `finish()` is no longer swallowed (**GD1**).
+
+Both new controls are red on the old bytes by design and green after the re-stamp
+(81/81). The region moved from 20287 B to **20433 B** (sha256 `8415057da544…`), so
+CyberPulse's `SPLASH_BYTES` was re-cut from the verifier's own measurement to **20432**
+(CP6s counts the region without its trailing newline) and its revision comment extended.
+The Play evidence chain was rebound to bytes the publisher measured, not computed:
+`evidence.json` (14), `preservation.json` (14), `discovery-review.json` (7), the 14 game
+screens recaptured with `tools/capture_play_screens.cjs` from a local Play build (8 moved,
+6 came back byte-identical), and a new current Rally source revision. The 6 Lessons shelf
+routes read `current=false` in the coverage table until Lessons batch 3 re-stamps them with
+the same generator; that is expected, and recorded here rather than hidden.
+
 
 ## Routes
 

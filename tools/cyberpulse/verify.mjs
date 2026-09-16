@@ -59,14 +59,18 @@ function gate(id, title, ok, detail) {
 // a generated region, and a drifted copy is the failure these catch.
 const EXIT_BYTES = 3222;      // block plus its trailing newline
 // 8356 when this was written. tools/render_maker_splash.py has since revised the
-// canonical block twice: 11780 as CP6s measures it (11781 with the trailing
+// canonical block three times: 11780 as CP6s measures it (11781 with the trailing
 // newline the generator counts) from the August canon, and 20286 after PLAY-Q1
 // batch 1 (the Play lockup, its inline resized mark and the loading status live
-// inside the same region). The pin tracks the estate value; it is not a target
+// inside the same region), and 20432 after the insert-point/way-out/guard fix
+// (2026-09-16: the region is inserted at the real <body>, armWayOut() refuses to
+// arm when the start control is the way out, and an automatic dismissal releases
+// the window guard at once). The pin tracks the estate value; it is not a target
 // the route gets to pick. Proved by the generator itself, which
-// reports "16 applied target(s); 0 written; 0 divergent" across every route
-// carrying the block, /cyberpulse/ included, after regeneration.
-const SPLASH_BYTES = 20286;
+// reports "14 applied target(s); 0 written; 0 divergent" across every route
+// carrying the block, /cyberpulse/ included, after regeneration (the four
+// clip-bearing routes are held at the earlier region by declaration).
+const SPLASH_BYTES = 20432;
 const ENGINE_VERSION = 'v1.5';
 const RELEASE_VERSION = '6.0.2';
 // Re-pinned 2026-09-02 for build 6.0.1: the authority block gained the
