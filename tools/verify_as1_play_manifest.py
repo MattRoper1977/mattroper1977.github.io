@@ -26,7 +26,8 @@ def controls():
         # manifest names (derived from the manifest, never a typed list) and the root touch icon.
         manifest = json.loads((ROOT / 'domain-split/play/site.webmanifest').read_text())
         for name in sorted({icon['src'].lstrip('/') for icon in manifest['icons']}):
-            build.copy_file(ROOT / name, output, name)
+            assert name in allowlist, 'manifest icon is not published by the root-asset allowlist: ' + name
+            build.copy_file(ROOT / allowlist[name], output, name)
         def emit(entries):
             (output / 'site.webmanifest').unlink(missing_ok=True)
             for destination, source in entries.items():

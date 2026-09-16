@@ -24,10 +24,11 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'domain-split/play/approved-mark.jpg'
 BRAND = ROOT / 'domain-split/play/brand.json'
 RECORD = ROOT / 'domain-split/play/install-icons.json'
-OUTPUTS = {  # destination: (side, purpose)
-    'assets/icons/play-icon-192.png': 192,
-    'assets/icons/play-icon-512.png': 512,
-    'assets/icons/play-apple-touch-icon.png': 180,
+ICONS = ROOT / 'domain-split/play/icons'   # Play-owned; the education build copies assets/ wholesale, so these must not live there
+OUTPUTS = {  # published path on the Play root: (file name under ICONS, side)
+    'assets/icons/play-icon-192.png': ('play-icon-192.png', 192),
+    'assets/icons/play-icon-512.png': ('play-icon-512.png', 512),
+    'apple-touch-icon.png': ('play-apple-touch-icon.png', 180),
 }
 
 def sha(data): return hashlib.sha256(data).hexdigest()
@@ -52,15 +53,16 @@ def derive():
     box = (left, 0, left + side, side)
     square = im.crop(box)
     outputs = {}
-    for dest, size in OUTPUTS.items():
+    for dest, (name, size) in OUTPUTS.items():
         buf = io.BytesIO(); square.resize((size, size), Image.LANCZOS).save(buf, format='PNG', optimize=True)
-        outputs[dest] = {'size': f'{size}x{size}', 'bytes': len(buf.getvalue()), 'sha256': sha(buf.getvalue()), 'png': buf.getvalue()}
+        outputs[dest] = {'file': f'domain-split/play/icons/{name}', 'size': f'{size}x{size}', 'bytes': len(buf.getvalue()), 'sha256': sha(buf.getvalue()), 'png': buf.getvalue()}
     ring_share = round((rb[2] - rb[0]) / side, 3)
     record = {'source': {'file': 'domain-split/play/approved-mark.jpg', 'sha256': sha(raw), 'size': f'{w}x{h}'},
               'ring_box': list(rb), 'crop_box': list(box), 'ring_share_of_icon': ring_share,
               'method': 'one full-height square crop centred on the mint ring, LANCZOS resize, PNG; no repaint',
               'maskable_safe_zone': 'ring within the central 80%' if ring_share <= 0.8 else 'RING EXCEEDS SAFE ZONE',
-              'outputs': {k: {kk: vv for kk, vv in v.items() if kk != 'png'} for k, v in outputs.items()}}
+              'outputs': {k: {kk: vv for kk, vv in v.items() if kk != 'png'} for k, v in outputs.items()},
+              'published_by': 'domain-split/play/root-assets.json (Play root only; the education tree never receives these files)'}
     return record, outputs
 
 def main():
@@ -69,14 +71,18 @@ def main():
     record, outputs = derive()
     if record['maskable_safe_zone'].startswith('RING'): raise SystemExit('ring exceeds the maskable safe zone')
     if a.write:
-        for dest, v in outputs.items(): (ROOT / dest).write_bytes(v['png'])
+        ICONS.mkdir(parents=True, exist_ok=True)
+        for dest, v in outputs.items(): (ROOT / v['file']).write_bytes(v['png'])
         RECORD.write_text(json.dumps(record, indent=2) + '\n')
         print(json.dumps({k: v for k, v in record.items() if k != 'outputs'}, indent=1)); print('written', list(outputs))
         return
     committed = json.loads(RECORD.read_text())
     if committed != record: raise SystemExit('FAIL install-icons.json differs from a fresh derivation')
     for dest, v in outputs.items():
-        if sha((ROOT / dest).read_bytes()) != v['sha256']: raise SystemExit(f'FAIL {dest} differs from its record')
+        if sha((ROOT / v['file']).read_bytes()) != v['sha256']: raise SystemExit(f'FAIL {dest} differs from its record')
+    root_assets = json.loads((ROOT / 'domain-split/play/root-assets.json').read_text())
+    for dest, v in outputs.items():
+        if root_assets.get(dest) != v['file']: raise SystemExit(f'FAIL root-assets.json does not publish {v["file"]} at /{dest}')
     print(f'PASS {len(outputs)} Play install icons match their record (ring {record["ring_share_of_icon"]:.0%} of the icon)')
 
 if __name__ == '__main__': main()

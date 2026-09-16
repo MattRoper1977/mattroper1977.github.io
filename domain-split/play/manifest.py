@@ -54,7 +54,7 @@ def verify(root):
         assert {(192, 192), (512, 512)} <= found, f'Both icon sizes required for purpose {purpose}'
     # iOS takes /apple-touch-icon.png from the root; on Play it is the Play mark too.
     touch = (root / 'apple-touch-icon.png').read_bytes()
-    assert hashlib.sha256(touch).hexdigest() == recorded['/assets/icons/play-apple-touch-icon.png'], 'Root apple-touch-icon is not the Play install icon'
+    assert hashlib.sha256(touch).hexdigest() == recorded['/apple-touch-icon.png'], 'Root apple-touch-icon is not the Play install icon'
     for shortcut in manifest.get('shortcuts', []):
         url = urlparse(shortcut['url'])
         assert not url.netloc, 'Shortcut leaves Play'
