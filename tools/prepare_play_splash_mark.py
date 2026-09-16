@@ -12,7 +12,7 @@ nothing else: no crop, no recolour, no redraw. Its record binds it to the accept
 source by SHA-256; --check refuses a copy whose bytes, size or source differ.
 """
 from __future__ import annotations
-import argparse, base64, hashlib, io, json, re, sys
+import argparse, re, base64, hashlib, io, json, re, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -55,10 +55,17 @@ def generator_block(data: bytes) -> str:
             '# END PLAY SPLASH MARK\n')
 
 
+JS_MARK = re.compile(r'(<img src=")data:image/jpeg;base64,[A-Za-z0-9+/=]+(" alt="" width=)')
+
+
 def write_generator(data: bytes) -> None:
     text = GENERATOR.read_text()
     if not BLOCK.search(text): raise SystemExit('generator has no PLAY SPLASH MARK block')
-    GENERATOR.write_text(BLOCK.sub(lambda _: generator_block(data), text, count=1))
+    if len(JS_MARK.findall(text)) != 1: raise SystemExit('generator JS block must carry exactly one inline mark')
+    uri = 'data:image/jpeg;base64,' + base64.b64encode(data).decode('ascii')
+    text = BLOCK.sub(lambda _: generator_block(data), text, count=1)
+    text = JS_MARK.sub(lambda m: m.group(1) + uri + m.group(2), text, count=1)
+    GENERATOR.write_text(text)
 
 
 def main() -> int:
@@ -85,6 +92,9 @@ def main() -> int:
     m = BLOCK.search(GENERATOR.read_text())
     if not m: problems.append('generator has no PLAY SPLASH MARK block')
     elif TARGET.is_file() and m.group(0) != generator_block(TARGET.read_bytes()): problems.append('generator PLAY_MARK_URI differs from splash-mark.jpg')
+    if TARGET.is_file():
+        hits = JS_MARK.findall(GENERATOR.read_text()); literal = re.search(r'<img src="(data:image/jpeg;base64,[A-Za-z0-9+/=]+)" alt="" width=', GENERATOR.read_text())
+        if len(hits) != 1 or not literal or literal.group(1) != 'data:image/jpeg;base64,' + base64.b64encode(TARGET.read_bytes()).decode('ascii'): problems.append('generator JS block does not carry the recorded mark literally')
     if json.loads(BRAND.read_text())['sha256'] != record['sourceSha256']: problems.append('record source is not the brand.json accepted mark')
     for p in problems: print('FAIL ' + p)
     print('PASS splash mark matches its record' if not problems else f'{len(problems)} problem(s)')
