@@ -168,10 +168,14 @@ class PublishedWitnessControls(unittest.TestCase):
             # A builder-only commit has no changed raw served-source paths.
             stack.enter_context(patch.object(provenance, 'changed_served_files', return_value=[]))
             stack.enter_context(patch.object(provenance, 'data_stamp_of', return_value='unchanged'))
-            # The synthetic source SHA has its own explicit publisher policy;
-            # absence alone must never imply that a public file is excluded.
+            # The synthetic source SHA has its own explicit publisher policies, both
+            # read at that SHA; absence alone must never imply that a public file is
+            # excluded, and a source-only ledger is set aside only because the policy says so.
             def source_policy(sha, relative):
-                self.assertEqual((sha, relative), (expected, 'domain-split/build_education.py'))
+                self.assertEqual(sha, expected)
+                self.assertIn(relative, ('domain-split/build_education.py', 'domain-split/education_policy.py'))
+                if relative == 'domain-split/education_policy.py':
+                    return b"SOURCE_ONLY = {'data/hud-coverage.json'}"
                 return b"SITE_GENERATOR_INPUTS = {'assets/arcade/rally-hooks.js'}"
             stack.enter_context(patch.object(provenance, 'committed_bytes', side_effect=source_policy))
             stack.enter_context(patch.object(urllib.request.HTTPSHandler, 'https_open', origin_response))

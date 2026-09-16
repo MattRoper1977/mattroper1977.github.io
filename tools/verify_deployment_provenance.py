@@ -245,6 +245,37 @@ def education_generator_inputs(sha: str) -> set[str]:
         raise ValueError(f"invalid expected publisher exclusion policy: {error}") from error
 
 
+def education_source_only(sha: str) -> set[str]:
+    """Paths the education policy keeps out of the served tree by declaration.
+
+    domain-split/education_policy.py names them in SOURCE_ONLY (ledgers, source
+    manifests, the estate map). They are not publisher inputs with a 404 to
+    assert; they are files no visitor could ever download from this origin, so a
+    commit that changes one has not changed anything a witness could compare.
+    Read literally at the expected immutable source, like SITE_GENERATOR_INPUTS;
+    an older commit without the module declares nothing.
+    """
+    source = committed_bytes(sha, "domain-split/education_policy.py")
+    if source is None:
+        return set()
+    try:
+        declarations = [node.value for node in ast.parse(source).body
+                        if isinstance(node, ast.Assign) and any(
+                            isinstance(target, ast.Name) and target.id == "SOURCE_ONLY"
+                            for target in node.targets)]
+        if len(declarations) != 1:
+            raise ValueError("expected one SOURCE_ONLY declaration")
+        paths = ast.literal_eval(declarations[0])
+        if not isinstance(paths, set) or not paths or any(
+                not isinstance(path, str) or not path or path.startswith("/")
+                or "\\" in path or any(part in {"", ".", ".."} for part in path.split("/"))
+                or "?" in path or "#" in path for path in paths):
+            raise ValueError("invalid SOURCE_ONLY paths")
+        return paths
+    except (SyntaxError, TypeError, ValueError) as error:
+        raise ValueError(f"invalid expected source-only policy: {error}") from error
+
+
 def data_stamp_of(sha: str) -> str | None:
     """The stamp tools/stamp-data.py would splice in at this commit.
 
@@ -340,9 +371,21 @@ def check_once(transport: Transport, expected: str, base_url: str, repo: str) ->
             excluded = education_generator_inputs(expected)
             if excluded.intersection(EDUCATION_OUTPUT_WITNESSES):
                 raise ValueError("publisher exclusion conflicts with mandatory output witnesses")
+            source_only = education_source_only(expected)
+            if source_only.intersection(EDUCATION_OUTPUT_WITNESSES):
+                raise ValueError("source-only policy conflicts with mandatory output witnesses")
         except ValueError as error:
             findings.append(("3 publisher exclusion policy", FAIL, str(error)))
             return findings
+        # A changed source-only path (a ledger the generator reads, a source manifest)
+        # is never served, so it can be neither a witness nor a negative witness.
+        # Say which ones were set aside rather than dropping them silently.
+        set_aside = [rel for rel in source_witnesses if rel in source_only]
+        if set_aside:
+            findings.append(("3 source-only policy", PASS,
+                             f"{len(set_aside)} changed source-only path(s) not witnessed by policy: "
+                             + ", ".join(set_aside)))
+        source_witnesses = [rel for rel in source_witnesses if rel not in source_only]
         # Excluded inputs are negative witnesses, not omitted checks. Check the
         # complete explicit set, even on commits changing only another file.
         for rel in sorted(excluded):
@@ -540,10 +583,22 @@ def education_exclusion_controls() -> list[tuple[str, str, str]]:
                             if layer.startswith("3 excluded input ") and state == PASS]) == len(excluded)
             results.append((name, PASS, f"{want}: {needle}"))
 
+        ledger = "data/hud-coverage.json"
+        assert ledger in education_source_only(head), "the fixture's source-only path must be declared by the policy"
         with patch.object(module, "PUBLISHED_ROOT", root), patch.object(module, "PUBLISHED_SHA", head), \
                 patch.object(module, "changed_served_files", return_value=[hook, public, stub]), \
                 patch.object(module, "data_stamp_of", return_value=None):
             prove("education excluded input absent; all output witnesses match", PASS, "served bytes match")
+            # A changed source-only path is set aside by policy, and said so; without the
+            # policy the same path is an unlisted missing asset and fails, as below.
+            with patch.object(module, "changed_served_files", return_value=[hook, public, stub, ledger]):
+                prove("changed source-only ledger is set aside by policy, visibly", PASS,
+                      "source-only path(s) not witnessed by policy: " + ledger)
+                with patch.object(module, "education_source_only", return_value=set()):
+                    prove("without the source-only policy the same ledger fails as missing",
+                          needle="not present at the expected commit")
+            with patch.object(module, "education_source_only", return_value={"index.html"}):
+                prove("source-only policy cannot name a mandatory output", needle="source-only policy conflicts")
             leak = root / hook
             leak.parent.mkdir(parents=True, exist_ok=True)
             leak.write_bytes(b"leak")
