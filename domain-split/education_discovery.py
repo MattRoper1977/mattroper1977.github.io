@@ -135,21 +135,40 @@ def refresh(output, lessons, apps, site_source):
 
     app_path = app_root/'index.html'
     text = app_path.read_text()
+    # CX2 §5 (2026-09-16): Apps main carries its own SW2 A front door (main[data-sw2-apps-hub]:
+    # the "Apps & tools" heading, breadcrumb and lead, no trio or featured-studio sections).
+    # That source keeps the finder, the PDF feature and the search aliases from here and
+    # nothing else; the older source still takes the full rewrite. Any other shape is refused.
+    front_door = text.count('<main id="main" data-sw2-apps-hub>') == 1
+    if front_door and ('<section class="trio"' in text or 'THE CREATOR' in text):
+        raise ValueError('Discovery source anchor changed: Apps front door carries a superseded section')
     text = replace_once(text, 'class="mbm-hub mbm-hub-apps"', 'class="mbm-hub mbm-hub-apps mbm-education-hub"')
-    text = replace_once(text, '<h1>THE CREATOR <span>HUB</span></h1>', '<h1>Apps <span>&amp; tools</span></h1>')
-    text = replace_once(text, 'A Made by Matt collection</p>', 'The Creator Hub · A Made by Matt collection</p>')
-    text = replace_once(text, '<section class="trio"', pdf_feature()+'<section class="trio"')
+    if front_door:
+        if text.count('<h1>Apps &amp; tools</h1>') != 1:
+            raise ValueError('Discovery source anchor changed: Apps front door heading')
+        text = replace_once(text, '<div class="segrow rail"', pdf_feature()+'<div class="segrow rail"')
+    else:
+        text = replace_once(text, '<h1>THE CREATOR <span>HUB</span></h1>', '<h1>Apps <span>&amp; tools</span></h1>')
+        text = replace_once(text, 'A Made by Matt collection</p>', 'The Creator Hub · A Made by Matt collection</p>')
+        text = replace_once(text, '<section class="trio"', pdf_feature()+'<section class="trio"')
     text = replace_once(text, '[it.n,it.d].join(" ").toLowerCase().includes(Q)',
                         'Q.split(/\\s+/).every(word=>[it.n,it.d,...(it.n==="PDF Studio"?'+json.dumps(PDF_KEYWORDS)+':[])].join(" ").toLowerCase().includes(word))')
     text = replace_once(text, 'DATA=d;chips();render();', 'DATA=d;Q=(new URLSearchParams(location.search).get("q")||"").toLowerCase().trim();$("#search").value=Q;chips();render();')
     text = replace_once(text, '</head>', '<link rel="stylesheet" href="/assets/education-navigation.css"></head>')
+    if front_door:
+        # The front door binds the hero heading to --mbm-primary with !important at a higher
+        # specificity than the hub's own high-lumen rule (html[data-theme="highlumen"] .hero *),
+        # so the estate's high-lumen ink (#000 on #fff, check_reading_variants.cjs) was lost on
+        # this one heading. Restore it here, above both; the Apps source keeps its rule.
+        text = replace_once(text, '</head>', '<style>html[data-theme="highlumen"] body.mbm-hub.mbm-hub-apps .hero h1{color:#000!important}</style></head>')
     text = text.replace('Try: poster, quiz, stop-motion…', 'Try PDF generator, poster, quiz…')
     # Keep the useful promotional collections, with the finder before them.
-    start = text.index('<section class="trio"')
-    end = text.index('<div class="segrow rail"', start)
-    promotions = text[start:end]
-    text = text[:start]+text[end:]
-    text = replace_once(text, '<div id="groups"></div>', '<div id="groups"></div>'+promotions)
+    if not front_door:
+        start = text.index('<section class="trio"')
+        end = text.index('<div class="segrow rail"', start)
+        promotions = text[start:end]
+        text = text[:start]+text[end:]
+        text = replace_once(text, '<div id="groups"></div>', '<div id="groups"></div>'+promotions)
     start = text.index('<div class="toolbar"')
     end = text.index('</div>', start)+len('</div>')
     finder = text[start:end]

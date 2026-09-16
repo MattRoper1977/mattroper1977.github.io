@@ -121,8 +121,16 @@ fs.mkdirSync(output, { recursive: true });
       await page.locator('#science-term').selectOption('Aut1');
       await page.locator('#science-style').selectOption('current');
       const currentBuild = science.filter(r => r.pathway === 'BUILD' && r.term === 'Aut1' && r.style === 'current').map(r => r.path);
-      assert.equal(currentBuild.length, 5);
-      assert.equal(await page.locator('[data-lesson-path]:visible a[href^="Teaching_Packs/#build-week-"]').count(), 5);
+      // CX2 §5 (2026-09-16): the collection was typed here as 5; the Sugar admission (Lessons #547,
+      // #551) made it 6, so both counts now come from the record and the served rows. The shelf
+      // builder links a Teaching Packs section only for a week-numbered row (SCIENCE_WEEK_BINDINGS);
+      // Sugar renders "Week not specified" and no pack link, which is recorded, not asserted away.
+      assert(currentBuild.length >= 5, 'Aut1 current BUILD collection lost lessons');
+      const currentRows = await page.locator('[data-lesson-path]:visible').evaluateAll(items => items.map(e => ({path: e.dataset.lessonPath, week: e.dataset.week})));
+      assert.deepEqual(currentRows.map(r => r.path).sort(), [...currentBuild].sort(), 'Aut1 current BUILD rows differ from the record');
+      const weekNumbered = currentRows.filter(r => /^\d+$/.test(r.week)).length;
+      assert(weekNumbered >= 5, 'Week-numbered current BUILD rows lost');
+      assert.equal(await page.locator('[data-lesson-path]:visible a[href^="Teaching_Packs/#build-week-"]').count(), weekNumbered, 'Every week-numbered current BUILD row links its Teaching Packs section');
       // UX2 (Lessons Part A): the hub's filtered view answers ?subject=&pathway= with
       // "<n> of <m> resources" and article.card rows; the pathway select is gone.
       await page.goto(origin + '/Lessons/?subject=Science&pathway=BUILD&year=all');
