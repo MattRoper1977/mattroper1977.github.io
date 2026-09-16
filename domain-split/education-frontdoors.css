@@ -62,8 +62,14 @@ body[data-sw2-frontdoor][data-page="home"] .fd-subject.art-studio{border-left-co
 body[data-sw2-frontdoor][data-page="home"] .fd-subject.lifeskills{border-left-color:var(--mbm-subject-lifeskills,#f2a24a)}
 body[data-sw2-frontdoor][data-page="home"] .fd-section-head a{white-space:nowrap;color:var(--fd-accent,#247761);text-decoration:none}
 body[data-sw2-frontdoor][data-page="home"] .fd-eyebrow{color:var(--fd-accent,#247761)}
-body[data-sw2-frontdoor][data-page="home"] .fd-pathways .fd-chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem}
+/* D-3 (16 September 2026): each chip carries its definition beneath it. One column
+   on phones so a definition never wraps into a sliver; three from 640px. The chip
+   keeps its text label beside the definition, so colour is never the only cue. */
+body[data-sw2-frontdoor][data-page="home"] .fd-pathways .fd-chips{display:grid;grid-template-columns:1fr;gap:.9rem}
+@media(min-width:640px){body[data-sw2-frontdoor][data-page="home"] .fd-pathways .fd-chips{grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem}}
+body[data-sw2-frontdoor][data-page="home"] .fd-pathway{display:flex;flex-direction:column;align-items:flex-start;gap:.45rem;min-width:0}
 body[data-sw2-frontdoor][data-page="home"] .fd-pathways .fd-chip{justify-content:center;min-height:34px}
+body[data-sw2-frontdoor][data-page="home"] .fd-pathway-def{margin:0;font-size:.93rem;line-height:1.45;color:#26384e;overflow-wrap:anywhere}
 body[data-sw2-frontdoor][data-page="home"] .fd-pack{position:relative;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:.8rem;align-items:center;padding:1rem}
 body[data-sw2-frontdoor][data-page="home"] .fd-pack:has(.fd-pack-preview[hidden]){grid-template-columns:minmax(0,1fr)}
 body[data-sw2-frontdoor][data-page="home"] .fd-pack-copy{min-width:0}

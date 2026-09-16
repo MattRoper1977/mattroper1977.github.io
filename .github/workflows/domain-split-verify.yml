@@ -107,6 +107,7 @@ jobs:
           python domain-split/check_education_support.py
           # UX2 B5 (s16): the homepage's audience rows and extra subject tiles follow a planted record
           python domain-split/check_ux2_home.py --self-test
+          python domain-split/check_pathway_definitions.py --self-test --lessons .sources/Lessons
       # HC3 §8.2: the one Ko-fi URL the estate links must resolve. ko-fi.com
       # answers 200 for unknown pages too (measured: a nonsense slug came back
       # 200 on the first run), so the status line proves nothing on its own. The

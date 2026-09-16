@@ -66,6 +66,7 @@ const fixtures = {
   preOrder: JSON.parse(fs.readFileSync(path.join(__dirname, 'ux2/pre-order-hrefs.json'), 'utf8')),
   relocations: JSON.parse(fs.readFileSync(path.join(__dirname, 'ux2/menu-relocations.json'), 'utf8')),
   consent: JSON.parse(fs.readFileSync(path.join(__dirname, 'ux2/consent-contract.json'), 'utf8')),
+  pathways: JSON.parse(fs.readFileSync(path.join(__dirname, 'pathway-definitions.json'), 'utf8')),
 };
 // Lessons hub rules (assets/catalogue/hub.js cardOf/tierOf, UX2 A2), used only to find the subject
 // page and pathway segment a lesson row renders on.
@@ -105,6 +106,8 @@ const MUTATIONS = {
   'break-copy': { target: 'copy', route: '/', apply: html => html.replace('<h1>Big on ideas. Light on prep.</h1>', '<h1>Big on ideas. Light on prep</h1>') },
   'strip-teacher-safety': { target: 'claims', route: '/for/teachers/', apply: html => html.replace('Capability without unsupported claims', '') },
   'strip-stats-everywhere': { target: 'reachability', routes: ['/privacy/', '/for/teachers/'], apply: html => html.replace(/<a href="\/stats\/">[^<]*<\/a>/g, 'Shared activity') },
+  // D-3: blank the GROW definition on the homepage; the pathways case must red on it.
+  'empty-pathway-definition': { target: 'pathways', route: '/', apply: html => html.replace(fixtures.pathways.pathways[1].definition, '') },
 };
 async function plant(context, mutation) {
   if (!mutation) return;
@@ -236,6 +239,31 @@ async function suite(browser, mutation) {
       return { sameOrigin: same.length, external };
     });
   }
+
+  // D-3 (16 September 2026): the three pathway chips carry a definition each, from one
+  // source. Measured on the served page: order, label, byte-equal definition, painted,
+  // no overflow inside its block, and no placement instrument named anywhere in the band.
+  await check('pathways /', async () => {
+    await goto(page, '/');
+    const rows = await page.locator('.fd-pathways .fd-pathway').evaluateAll(nodes => nodes.map(n => {
+      const chip = n.querySelector('.fd-chip'); const def = n.querySelector('.fd-pathway-def');
+      const box = n.getBoundingClientRect(); const dbox = def ? def.getBoundingClientRect() : { width: 0, height: 0 };
+      return { key: n.getAttribute('data-pathway'), chip: chip ? chip.textContent.trim() : '', def: def ? def.textContent.trim() : '',
+        painted: box.width > 0 && box.height > 0 && dbox.width > 0 && dbox.height > 0, overflow: n.scrollWidth > n.clientWidth + 1 };
+    }));
+    const expected = fixtures.pathways.pathways;
+    assert.deepEqual(rows.map(r => r.key), expected.map(e => e.key), 'the band carries build, grow, launch in that order');
+    rows.forEach((r, i) => {
+      assert.equal(r.chip, expected[i].name, 'chip label for ' + r.key);
+      assert.equal(r.def, expected[i].definition, 'definition for ' + r.key + ' is byte-equal to pathway-definitions.json');
+      assert.ok(r.painted, 'pathway ' + r.key + ' and its definition are painted');
+      assert.ok(!r.overflow, 'pathway ' + r.key + ' does not overflow its block');
+    });
+    const bandText = (await page.locator('.fd-pathways').innerText()).toLowerCase();
+    const hits = fixtures.pathways.forbidden.filter(w => bandText.includes(String(w).toLowerCase()));
+    assert.deepEqual(hits, [], 'forbidden terms in the pathways band');
+    return { pathways: rows.length };
+  });
 
   for (const route of ['/', ...PUPIL_ROUTES.filter(r => r !== '/')]) {
     await check(`money ${route}`, async () => {
