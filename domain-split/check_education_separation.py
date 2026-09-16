@@ -141,7 +141,7 @@ def registry_errors(output):
         'ec7dc0754029e00146e4314d57b5a4ed6beec71c7a6cf6413d50c31d045e4de7',
     }
     additions_path = HERE/'science-download-usage-additions.json'
-    if sha256(additions_path.read_bytes()).hexdigest() != '266199e1f6d355956b23df058b3d867b50edc2f155545b0b43fb2d6f8177df30':
+    if sha256(additions_path.read_bytes()).hexdigest() != '8510ab17f62be41b9fbea811760ae6581fcbad8ff252e91134e386ee45e0d75c':
         return ['Unreviewed Science download registration metadata']
     if sha256(TEACHING_PACK_ADDITIONS.read_bytes()).hexdigest() != TEACHING_PACK_ADDITIONS_SHA256:
         return ['Unreviewed teaching-pack download registration metadata']
