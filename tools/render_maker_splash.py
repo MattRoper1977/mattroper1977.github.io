@@ -58,6 +58,7 @@ JS = r'''(function(){"use strict";
 if(window.__mbmMakerSplash)return;window.__mbmMakerSplash=1;
 var KEY="mbm_splash_last",DAY=86400000,MODE="";
 try{MODE=new URLSearchParams(location.search).get("splash")||"";}catch(_){MODE="";}
+var PLAY=false;try{PLAY=/(^|\.)madebymatt-play\.uk$/i.test(location.hostname)||new URLSearchParams(location.search).get("brand")==="play";}catch(_){PLAY=false;}
 var NOW=Date.now(),PAGE_LAST;
 function probe(name){try{var s=window[name],v=s.getItem(KEY);return{ok:true,has:v!==null,raw:v};}catch(_){return{ok:false,has:false,raw:null};}}
 function stored(){var a=probe("localStorage");if(a.has)return a.raw;var b=probe("sessionStorage");if(b.has)return b.raw;return PAGE_LAST===undefined?null:String(PAGE_LAST);}
@@ -88,8 +89,9 @@ for(var i=0;i<GUARDED.length;i++)window.addEventListener(GUARDED[i],guard,true);
 requestAnimationFrame(function(){
 var CSS="#mbmSplash[data-mbm-maker-splash]{position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;overflow:hidden;pointer-events:auto;background:radial-gradient(circle at 52% 44%,rgba(17,42,82,.72),transparent 44%),linear-gradient(135deg,#010207 0%,#071023 52%,#13030c 100%);animation:mbmSplash 1.9s cubic-bezier(.2,.8,.2,1) both}#mbmSplash[data-mbm-maker-splash]::before{content:\"\";position:absolute;inset:-20%;background:repeating-linear-gradient(112deg,transparent 0 9%,rgba(37,244,255,.045) 9.2% 9.35%,transparent 9.55% 18%);transform:translateX(-18%);animation:mbmSweep 1.55s ease-out both}.mbm-splash-mark{position:relative;width:min(82vw,560px);text-align:center;text-transform:uppercase;filter:drop-shadow(0 0 28px rgba(37,244,255,.22))}.mbm-splash-mark span,.mbm-splash-mark em{display:block;color:#7e9aad;font-size:clamp(9px,2.4vmin,13px);font-style:normal;font-weight:900;letter-spacing:.48em;text-indent:.48em}.mbm-splash-mark strong{display:block;margin:.07em 0 .02em;color:#f5feff;font-size:clamp(54px,17vmin,132px);font-style:italic;font-weight:1000;letter-spacing:-.07em;line-height:.82;text-shadow:-2px 0 #25f4ff,2px 0 #ff2d78,0 0 34px rgba(37,244,255,.35);transform:skewX(-7deg)}.mbm-splash-mark em{margin-top:15px;color:#ff5b92;letter-spacing:.62em;text-indent:.62em}.mbm-splash-line{width:0;height:2px;margin:18px auto 0;background:linear-gradient(90deg,transparent,#25f4ff 30%,#fff 50%,#ff2d78 70%,transparent);box-shadow:0 0 18px #25f4ff;animation:mbmLine 1.15s .18s ease-out both}.mbm-splash-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}@keyframes mbmSplash{0%{opacity:0;visibility:visible;pointer-events:auto}12%,70%{opacity:1;visibility:visible;pointer-events:auto}100%{opacity:0;visibility:hidden;pointer-events:none}}@keyframes mbmSweep{from{transform:translateX(-28%)}to{transform:translateX(24%)}}@keyframes mbmLine{to{width:76%}}#mbmSplash.mbm-splash-skip{opacity:0!important;visibility:hidden!important;pointer-events:none!important;animation:none!important;transition:opacity .12s ease}@media(prefers-reduced-motion:reduce){#mbmSplash[data-mbm-maker-splash]{animation-duration:.28s}#mbmSplash[data-mbm-maker-splash]::before,.mbm-splash-line{animation:none}}";
 CSS=CSS.replace("animation-duration:.28s","animation-duration:.35s!important");
+CSS+="#mbmSplash[data-mbm-play]{background:radial-gradient(circle at 50% 42%,rgba(132,224,192,.14),transparent 46%),linear-gradient(160deg,#0b1020 0%,#081422 55%,#0e1a2e 100%)}#mbmSplash[data-mbm-play]::before{background:repeating-linear-gradient(112deg,transparent 0 9%,rgba(132,224,192,.05) 9.2% 9.35%,transparent 9.55% 18%)}.mbm-play-lockup{position:relative;display:grid;justify-items:center;gap:14px;width:min(86vw,520px);text-align:center;color:#f3f7fa;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif}.mbm-play-lockup img{width:clamp(72px,18vmin,124px);height:auto;border-radius:18px;box-shadow:0 0 0 2px rgba(132,224,192,.38),0 18px 48px rgba(0,0,0,.55)}.mbm-play-word{font-size:clamp(22px,5.4vmin,40px);font-weight:800;line-height:1.05;letter-spacing:-.03em}.mbm-play-word strong{color:#84e0c0;font-weight:900}.mbm-play-line{font-size:clamp(12px,3vmin,18px);font-weight:800;line-height:1.25;letter-spacing:.22em;text-indent:.22em;text-transform:uppercase;color:#5fd3ff}.mbm-play-status{display:none;align-items:center;gap:10px;margin-top:4px;font-size:clamp(12px,2.6vmin,15px);font-weight:600;line-height:1.3;color:#b4c5d4}#mbmSplash[data-mbm-loading] .mbm-play-status{display:inline-flex}.mbm-play-status i{position:relative;width:112px;height:4px;border-radius:2px;background:rgba(122,108,240,.28);overflow:hidden}.mbm-play-status i::after{content:\"\";position:absolute;inset:0;width:40%;border-radius:2px;background:#7a6cf0;animation:mbmIndet 1.1s ease-in-out infinite alternate}@keyframes mbmIndet{from{transform:translateX(-10%)}to{transform:translateX(160%)}}@media(prefers-reduced-motion:reduce){.mbm-play-status i::after{animation:none;width:100%;opacity:.6}}";
 var st=document.createElement("style");st.id="mbm-maker-splash-css";st.textContent=CSS;(document.head||document.documentElement).appendChild(st);
-var el=document.createElement("section");el.id="mbmSplash";el.setAttribute("data-mbm-maker-splash","");el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");el.setAttribute("aria-label","Made by Matt introduction");el.tabIndex=-1;el.innerHTML='<div class="mbm-splash-mark"><span>Made by</span><strong>Matt</strong><em>presents</em><div class="mbm-splash-line"></div></div><span class="mbm-splash-sr">Tap or press any key to continue.</span>';
+var el=document.createElement("section");el.id="mbmSplash";el.setAttribute("data-mbm-maker-splash","");el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");el.setAttribute("aria-label",PLAY?"Made by Matt Play. Your next game starts here.":"Made by Matt introduction");el.tabIndex=-1;if(PLAY){el.setAttribute("data-mbm-play","");el.innerHTML='<div class="mbm-play-lockup"><img src="__MBM_PLAY_MARK__" alt="" width="240" height="158" decoding="async"><div class="mbm-play-word">Made by Matt <strong>Play</strong></div><div class="mbm-play-line">Your next game starts here.</div><div class="mbm-play-status" role="status"><i aria-hidden="true"></i><span>Loading\u2026</span></div></div><span class="mbm-splash-sr">Tap or press any key to continue.</span>';var art=el.querySelector("img");if(art)art.addEventListener("error",function(){if(art.parentNode)art.parentNode.removeChild(art);});if(document.readyState!=="complete"){el.setAttribute("data-mbm-loading","");window.addEventListener("load",function(){el.removeAttribute("data-mbm-loading");},{once:true});}}else el.innerHTML='<div class="mbm-splash-mark"><span>Made by</span><strong>Matt</strong><em>presents</em><div class="mbm-splash-line"></div></div><span class="mbm-splash-sr">Tap or press any key to continue.</span>';
 (document.body||document.documentElement).appendChild(el);SPLASH_EL=el;
 var reduced=false;try{reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(_){}
 var shown=0,requested=false,closed=false,hard=0,finishTimer=0;
@@ -108,8 +110,19 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 })();'''
 
 
+PLAY_MARK = Path(__file__).resolve().parents[1] / "domain-split" / "play" / "splash-mark.jpg"
+
+
+def play_mark_uri() -> str:
+    """The inline copy of the accepted Play mark (tools/prepare_play_splash_mark.py)."""
+    import base64
+    data = PLAY_MARK.read_bytes()
+    return "data:image/jpeg;base64," + base64.b64encode(data).decode("ascii")
+
+
 def build_region() -> str:
-    return f"{BEGIN}\n<script>{JS}</script>\n{END}\n"
+    js = JS.replace("__MBM_PLAY_MARK__", play_mark_uri())
+    return f"{BEGIN}\n<script>{js}</script>\n{END}\n"
 
 
 @dataclass(frozen=True)
