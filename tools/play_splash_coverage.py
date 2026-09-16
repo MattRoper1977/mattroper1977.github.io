@@ -40,7 +40,7 @@ def main() -> int:
         ledger_path = owner_root / 'data/hud-coverage.json'
         if not ledger_path.is_file(): continue
         ledger = json.loads(ledger_path.read_text()).get('makerSplash', {})
-        for k in ('applied', 'declined-with-reason', 'variant-retained-with-reason'):
+        for k in ('applied', 'declined-with-reason', 'variant-retained-with-reason', 'held-at-previous-region-with-reason'):
             for i in ledger.get(k, []): declared[i['route'] if isinstance(i, dict) else i] = f'{label}:{k}'
     rows = []
     for route, kind, title in routes:

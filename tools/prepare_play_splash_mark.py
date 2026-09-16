@@ -12,7 +12,7 @@ nothing else: no crop, no recolour, no redraw. Its record binds it to the accept
 source by SHA-256; --check refuses a copy whose bytes, size or source differ.
 """
 from __future__ import annotations
-import argparse, hashlib, io, json, sys
+import argparse, base64, hashlib, io, json, re, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,6 +20,8 @@ SOURCE = ROOT / 'domain-split/play/approved-mark.jpg'
 BRAND = ROOT / 'domain-split/play/brand.json'
 TARGET = ROOT / 'domain-split/play/splash-mark.jpg'
 RECORD = ROOT / 'domain-split/play/splash-mark.json'
+GENERATOR = ROOT / 'tools/render_maker_splash.py'
+BLOCK = re.compile(r'# BEGIN PLAY SPLASH MARK.*?# END PLAY SPLASH MARK\n', re.S)
 WIDTH, QUALITY = 240, 85
 
 
@@ -45,6 +47,20 @@ def derive() -> tuple[bytes, dict]:
     return data, record
 
 
+def generator_block(data: bytes) -> str:
+    uri = 'data:image/jpeg;base64,' + base64.b64encode(data).decode('ascii')
+    return ('# BEGIN PLAY SPLASH MARK (written by tools/prepare_play_splash_mark.py, do not edit by hand)\n'
+            '# The inline copy of the accepted Play mark, bound to its source by domain-split/play/splash-mark.json.\n'
+            'PLAY_MARK_URI = "' + uri + '"\n'
+            '# END PLAY SPLASH MARK\n')
+
+
+def write_generator(data: bytes) -> None:
+    text = GENERATOR.read_text()
+    if not BLOCK.search(text): raise SystemExit('generator has no PLAY SPLASH MARK block')
+    GENERATOR.write_text(BLOCK.sub(lambda _: generator_block(data), text, count=1))
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     mode = ap.add_mutually_exclusive_group(required=True)
@@ -53,6 +69,7 @@ def main() -> int:
     if a.write:
         data, record = derive()
         TARGET.write_bytes(data); RECORD.write_text(json.dumps(record, indent=2) + '\n')
+        write_generator(data)
         print(json.dumps(record, indent=2)); return 0
     record = json.loads(RECORD.read_text())
     problems = []
@@ -65,6 +82,9 @@ def main() -> int:
         size = Image.open(io.BytesIO(data)).size
         if list(size) != [record['width'], record['height']]: problems.append(f'splash-mark.jpg is {size}, record says {record["width"]}x{record["height"]}')
     if sha(SOURCE.read_bytes()) != record['sourceSha256']: problems.append('accepted source digest differs from the record')
+    m = BLOCK.search(GENERATOR.read_text())
+    if not m: problems.append('generator has no PLAY SPLASH MARK block')
+    elif TARGET.is_file() and m.group(0) != generator_block(TARGET.read_bytes()): problems.append('generator PLAY_MARK_URI differs from splash-mark.jpg')
     if json.loads(BRAND.read_text())['sha256'] != record['sourceSha256']: problems.append('record source is not the brand.json accepted mark')
     for p in problems: print('FAIL ' + p)
     print('PASS splash mark matches its record' if not problems else f'{len(problems)} problem(s)')

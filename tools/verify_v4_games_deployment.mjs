@@ -144,6 +144,9 @@ function inlineScriptsAreValid(game, html) {
 function fetchedReferences(html) {
   const refs = [];
   for (const match of html.matchAll(/<(script|img|iframe|audio|video|source|track|embed|object)\b[^>]*?\s(?:src|srcset|poster|data)\s*=\s*["']([^"']+)["']/gi)) {
+    // A data: or blob: value is inline, not a fetched reference; splitting it on commas
+    // (the srcset separator) would read its payload as a path.
+    if (/^\s*(?:data|blob):/i.test(match[2])) { refs.push(match[2].trim()); continue; }
     for (const part of match[2].split(',')) refs.push(part.trim().split(/\s+/)[0]);
   }
   for (const match of html.matchAll(/<link\b[^>]*>/gi)) {

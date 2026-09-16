@@ -110,18 +110,14 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 })();'''
 
 
-PLAY_MARK = Path(__file__).resolve().parents[1] / "domain-split" / "play" / "splash-mark.jpg"
-
-
-def play_mark_uri() -> str:
-    """The inline copy of the accepted Play mark (tools/prepare_play_splash_mark.py)."""
-    import base64
-    data = PLAY_MARK.read_bytes()
-    return "data:image/jpeg;base64," + base64.b64encode(data).decode("ascii")
+# BEGIN PLAY SPLASH MARK (written by tools/prepare_play_splash_mark.py, do not edit by hand)
+# The inline copy of the accepted Play mark, bound to its source by domain-split/play/splash-mark.json.
+PLAY_MARK_URI = "data:image/jpeg;base64,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"
+# END PLAY SPLASH MARK
 
 
 def build_region() -> str:
-    js = JS.replace("__MBM_PLAY_MARK__", play_mark_uri())
+    js = JS.replace("__MBM_PLAY_MARK__", PLAY_MARK_URI)
     return f"{BEGIN}\n<script>{js}</script>\n{END}\n"
 
 
@@ -149,7 +145,28 @@ def entries(data: dict, key: str) -> list[Entry]:
     return out
 
 
-def ledger(root: Path) -> tuple[list[Entry], list[Entry], list[Entry]]:
+@dataclass(frozen=True)
+class Held:
+    """A route that keeps an earlier generated region, pinned by digest, until the
+    captures bound to its published bytes are renewed (PLAY-Q1 batch plan)."""
+    route: str
+    reason: str
+    region_sha256: str
+
+
+def held_entries(section: dict) -> list[Held]:
+    raw = section.get("held-at-previous-region-with-reason", [])
+    if not isinstance(raw, list):
+        raise ValueError("makerSplash.held-at-previous-region-with-reason is not a list")
+    out: list[Held] = []
+    for item in raw:
+        if not (isinstance(item, dict) and isinstance(item.get("route"), str) and item.get("reason") and re.fullmatch(r"[0-9a-f]{64}", str(item.get("region_sha256", "")))):
+            raise ValueError(f"makerSplash.held-at-previous-region-with-reason entry is invalid: {item!r}")
+        out.append(Held(item["route"], str(item["reason"]), item["region_sha256"]))
+    return out
+
+
+def ledger(root: Path) -> tuple[list[Entry], list[Entry], list[Entry], list[Held]]:
     path = root / "data" / "hud-coverage.json"
     if not path.is_file():
         raise ValueError(f"{path}: missing route ledger")
@@ -160,13 +177,14 @@ def ledger(root: Path) -> tuple[list[Entry], list[Entry], list[Entry]]:
     applied = entries(section, "applied")
     declined = entries(section, "declined-with-reason")
     variants = entries(section, "variant-retained-with-reason")
-    all_routes = [e.route for group in (applied, declined, variants) for e in group]
+    held = held_entries(section)
+    all_routes = [e.route for group in (applied, declined, variants, held) for e in group]
     dupes = sorted({route for route in all_routes if all_routes.count(route) > 1})
     if dupes:
         raise ValueError(f"{path}: routes appear in more than one makerSplash class: {dupes}")
     if not all_routes:
         raise ValueError(f"{path}: makerSplash target lists are all empty")
-    return applied, declined, variants
+    return applied, declined, variants, held
 
 
 def route_path(root: Path, route: str, *, require_html: bool = True) -> Path:
@@ -305,7 +323,7 @@ def main() -> int:
     for raw_root in args.root:
         root = Path(raw_root).resolve()
         try:
-            applied, declined, variants = ledger(root)
+            applied, declined, variants, held = ledger(root)
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             print(f"ERROR {exc}", file=sys.stderr)
             return 2
@@ -328,6 +346,18 @@ def main() -> int:
                 status = "drift" if has_region else "declined"
             print(f"  {status:9} {entry.route}  {path.stat().st_size} B")
             if has_region:
+                bad += 1
+        for entry in held:
+            try:
+                path = route_path(root, entry.route)
+            except ValueError as exc:
+                print(f"ERROR {exc}", file=sys.stderr)
+                return 2
+            found = REGION_RE.findall(path.read_text(encoding="utf-8"))
+            ok = len(found) == 1 and hashlib.sha256(found[0].strip("\r\n").encode("utf-8") + b"\n").hexdigest() == entry.region_sha256
+            status = "held" if ok else "drift"
+            print(f"  {status:9} {entry.route}  {path.stat().st_size} B  (pinned earlier region)")
+            if not ok:
                 bad += 1
         for entry in variants:
             try:
