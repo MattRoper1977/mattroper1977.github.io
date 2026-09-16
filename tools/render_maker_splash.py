@@ -22,6 +22,7 @@ import hashlib
 import json
 import os
 import re
+from html.parser import HTMLParser
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -281,6 +282,43 @@ def strip_legacy(html: str) -> tuple[str, list[str]]:
     return html, notes
 
 
+class _BodyFinder(HTMLParser):
+    """Position of the first real <body> start tag, as the parser sees it.
+
+    PLAY-Q1 shelf, 2026-09-16. This used to be ``re.search(r"<body\\b[^>]*>")``,
+    which takes the first place the six characters appear in the file. Glitch
+    Clash carries the literal text ``<body>`` inside a CSS comment on its
+    twenty-first line, so the region was written into a <style> block, never ran,
+    and the M never painted there - while ``--check`` stayed green, because it
+    compared against the same mistake. The parser treats <style> and <script>
+    content as character data and skips comments, so the first start tag it
+    reports is the element itself. Substring matching over a document is what
+    CLAUDE.md's n6-splash lesson forbids; this is that lesson applied here.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=False)
+        self.pos: tuple[int, int] | None = None
+
+    def handle_starttag(self, tag: str, attrs) -> None:
+        if tag == "body" and self.pos is None:
+            self.pos = self.getpos()
+
+
+def body_open_tag_end(html: str) -> int | None:
+    finder = _BodyFinder()
+    try:
+        finder.feed(html)
+    except Exception:
+        return None
+    if finder.pos is None:
+        return None
+    line, col = finder.pos
+    offset = sum(len(part) + 1 for part in html.split("\n")[: line - 1]) + col
+    match = re.match(r"<body\b[^>]*>", html[offset:], re.IGNORECASE)
+    return offset + match.end() if match else None
+
+
 def insert_point(html: str) -> int:
     """After <body>, with the inline-exit trailing-comment walk as fallback.
 
@@ -289,9 +327,9 @@ def insert_point(html: str) -> int:
     legacy shells without an opening body retain the estate's established
     walk-back before trailing sentinels and ``</body>``.
     """
-    body = re.search(r"<body\b[^>]*>", html, re.IGNORECASE)
-    if body:
-        return body.end()
+    body = body_open_tag_end(html)
+    if body is not None:
+        return body
     idx = html.lower().rfind("</body>")
     if idx < 0:
         raise ValueError("no <body> insertion point")
@@ -314,13 +352,53 @@ def expected_html(source: str, region: str) -> tuple[str, list[str]]:
     return base[:at] + "\n" + region + base[at:], notes
 
 
+def self_test() -> int:
+    """Planted documents for the insert point, each asserting the shipped code."""
+    region = "<!-- R -->"
+    cases = [
+        ("<body> inside a CSS comment before the real tag",
+         "<html><head><style>/* fill lives on <html> not <body> */</style></head>\n<body class=\"g\">\n<main></main></body></html>"),
+        ("<body> inside a script string before the real tag",
+         "<html><head><script>var s='<body>';</script></head><body>\n<main></main></body></html>"),
+        ("<body> inside an HTML comment before the real tag",
+         "<html><head><!-- the <body> is below --></head><body id=\"b\"><main></main></body></html>"),
+        ("a plain body with attributes",
+         "<html><head></head><body data-x=\"1\" class=\"y\"><main></main></body></html>"),
+    ]
+    failures = []
+    for name, doc in cases:
+        at = insert_point(doc)
+        real = doc.index("<main>")
+        tag_end = doc.rindex(">", 0, real) + 1
+        # the region must land after the REAL body tag and before the first child
+        if not (at == tag_end and doc[at:real].strip() == ""):
+            failures.append(f"{name}: inserted at {at}, real body tag ends at {tag_end}")
+    fallback = "<html><head></head>\n<main></main>\n<!-- trailing --></body></html>"
+    at = insert_point(fallback)
+    if fallback[at:].lstrip().startswith("<!-- trailing -->") is False:
+        failures.append("no <body>: fallback must land before the trailing comment walk")
+    control = "<html><head><style>/* <body> */</style></head><body><main></main></body></html>"
+    naive = re.search(r"<body\b[^>]*>", control, re.IGNORECASE).end()
+    if naive == insert_point(control):
+        failures.append("control: the naive regex and the parser agree on the planted document, so the control is vacuous")
+    for f in failures:
+        print("FAIL " + f)
+    print(("FAIL" if failures else "PASS") + f" insert-point self-test: {len(cases) + 2} cases, {len(failures)} failures")
+    return 1 if failures else 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--root", action="append", required=True)
+    parser.add_argument("--root", action="append")
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check", action="store_true")
     mode.add_argument("--write", action="store_true")
+    mode.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
+    if args.self_test:
+        return self_test()
+    if not args.root:
+        parser.error("--root is required with --check or --write")
 
     region = build_region()
     digest = hashlib.sha256(region.encode("utf-8")).hexdigest()
