@@ -815,7 +815,40 @@ jobs:
           fi
 
       - name: Every games payload and publication surface equals its committed pinned output
-        run: python _tools/tools/verify_split_live_publication.py games --site _play-site --lessons _play-lessons --shelf _shelf
+        # AGX-1 reporting (FIN1-X-i R-B). This job's assertion was unreadable from outside CI: the
+        # logs API returns only a job's TAIL and this job ends in a dozen checkout cleanups, and the
+        # artifact host (productionresultssa*.blob.core.windows.net) is denied by the agent proxy.
+        # verify_split_live_publication.py fails via require() -> raise ValueError(detail), so the
+        # assertion is the LAST line of the traceback, never the first. Reporting only: the command,
+        # its arguments and its exit code are unchanged.
+        shell: bash --noprofile --norc -uo pipefail {0}
+        run: |
+          log=/tmp/agx1-pinned-output.log
+          python _tools/tools/verify_split_live_publication.py games --site _play-site --lessons _play-lessons --shelf _shelf 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          if [ "$code" -ne 0 ]; then
+            # A Python traceback opens with "Traceback (most recent call last):" and ends with the
+            # exception that actually says why. Take the LAST match, not the first.
+            assertion="$(grep -E '^[A-Za-z_.]*(Error|Exception):' "$log" | tail -1)"
+            [ -n "$assertion" ] || assertion="$(grep -m1 . "$log" || true)"
+            printf '::error title=AGX-1::%s\n' "${assertion//$'\n'/ }"
+            {
+              echo '### FAILED: AGX-1 - Every games payload and publication surface equals its committed pinned output'
+              echo
+              echo '```'
+              printf '%s\n' "$assertion"
+              echo '```'
+              echo
+              echo '<details><summary>last 10 log lines</summary>'
+              echo
+              echo '```'
+              tail -10 "$log"
+              echo '```'
+              echo
+              echo '</details>'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$code"
 
       - name: Homepage and arcade, as served
         shell: bash
