@@ -1251,7 +1251,19 @@ jobs:
         id: s41-splash-region-records
         if: always()
         shell: bash
-        run: python3 tools/verify_splash_region_record_controls.py
+        run: python3 tools/verify_splash_region_record_controls.py --only all
+
+      # The Lessons-owned coverage rows are gated by their own job in
+      # splash-region-records.yml, one step behind the Site's, so they get their own
+      # registration here rather than hiding inside s41's count. Its canonical red is
+      # the one the Site job's note named: a route re-stamped without re-running the
+      # writer. The two scopes are asserted against each other in both directions, so
+      # neither estate can red for a change it cannot fix and neither can go quiet.
+      - name: The Lessons-owned coverage rows red on a re-stamp that skipped the writer
+        id: s42-lessons-coverage-rows
+        if: always()
+        shell: bash
+        run: python3 tools/verify_splash_region_record_controls.py --only lessons
 
       - name: Aggregate - one failure costs one signal, not the suite
         if: always()
