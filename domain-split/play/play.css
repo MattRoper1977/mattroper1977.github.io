@@ -82,6 +82,13 @@ html:not(.js) .collection-links a:not([data-collection=""]){display:none}
 .thumb,.thumb.failed,.thumb-empty{background:#12161e}.game-card .card-title,.tile .card-title{font-weight:700}.game-card .chip{color:#c6ccd7;border-color:#465261}
 .tile{flex-basis:min(70vw,232px)}.lane-head h2,.section-head h2{font-size:1.4rem}.lane-head{margin-bottom:.8rem}.lane-track{gap:.9rem;padding-bottom:.9rem}
 .footer-motto{color:var(--muted);font-size:.875rem;margin:.25rem 0 0}footer{max-width:1480px}
+/* PLAY-D1 footer mark. The box is fixed in CSS as well as on the element, so a
+   slow JPEG cannot reflow the footer; min-width/min-height keep the link target
+   at or above the 24x24 WCAG 2.2 minimum even if the mark ever fails to load.
+   Focus is the shared a:focus-visible ring, not a new one. */
+.footer-brand{display:inline-flex;align-items:center;gap:.55rem;color:var(--text);text-decoration:none;min-height:32px}
+.footer-brand:hover span{text-decoration:underline}
+.footer-mark{width:32px;height:32px;min-width:24px;min-height:24px;flex:none;object-fit:contain;border-radius:8px}
 @media(min-width:700px){.browse-sidebar{padding-inline:24px}.feature-card{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);padding:1rem;gap:1.4rem}.feature-picture .thumb{aspect-ratio:16/10;max-height:270px}.game-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(min-width:1100px){.play-layout{display:grid;grid-template-columns:min(13.25rem,34vw) minmax(0,1fr)}.browse-sidebar{padding:2rem 1rem;border-bottom:0;border-right:1px solid var(--line);align-self:start;position:sticky;top:0;max-height:100dvh;overflow:auto}.collection-links{display:grid;gap:.45rem}.collection-links a{font-size:.95rem;padding:.8rem .7rem}.nav-caption{display:block;font-size:.7rem;font-weight:700;color:var(--muted);letter-spacing:.15em;margin:0 .7rem .8rem}.device-note{display:block;font-size:.8rem;line-height:1.5;color:var(--muted);margin:1rem .7rem 2rem}.sidebar-education{display:flex;gap:.5rem;min-height:44px;align-items:center;margin:.5rem .7rem;font-size:.85rem;line-height:1.5}.play-layout main{padding:0 32px}.intro{margin-top:2rem}.game-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:389px){.collection-links{gap:.25rem}.collection-links a{font-size:.8rem;padding:.5rem .45rem;gap:.35rem}.collection-links svg{width:16px;height:16px}.game-grid{grid-template-columns:1fr}.intro h1{font-size:2rem}.feature-card{padding:.6rem}.card-actions>*{max-width:100%}}

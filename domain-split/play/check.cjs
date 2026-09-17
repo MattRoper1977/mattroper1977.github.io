@@ -131,6 +131,60 @@ for(const width of [320,390,768,1280]){
   assert(lanes.some(l=>l.heading==='New and updated'),'New and updated lane');const updatedTiles=await page.locator('#lane-updated .tile-meta').allTextContents();const expectedUpdated=catalogue.filter(g=>g.updated).sort((a,b)=>b.updated.date.localeCompare(a.updated.date)).map(g=>{const[y,m,d]=g.updated.date.split('-').map(Number);return d+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]+' '+y;});assert.deepEqual(updatedTiles,expectedUpdated,'updated dates derived and newest first');
   assert.equal(await page.locator('#lane-continue .lane').count(),0,'Continue playing hidden while recent is empty');
   await page.evaluate(()=>scrollTo(0,0));await settledShelfCapture(page,width+'-home');await page.locator('#all-games-title').scrollIntoViewIfNeeded();await settledShelfCapture(page,width+'-browse');await page.locator('.menu summary').click();await page.keyboard.press('Escape');assert.equal(await page.locator('.menu').getAttribute('open'),null);assert(await page.locator('.menu summary').evaluate(e=>e===document.activeElement));return{viewport:{width,height:width<700?844:900},noOverflow:true,cards:expectedCards,catalogueHrefsCoveredOnce:covered,coverageControl:control,classroomRows:activities.length,routesReachable:all,requests:total,thirdParty:0,initialMediaRequests:0,lanes};});
+
+ // FIN1 D+E. The footer mark and both tagline instances, measured rather than
+ // assumed, at every width under reduced motion and -- at the phone widths the
+ // order names -- at 200% text as well. Contrast is read from the PAINTED colours
+ // and the first ancestor that actually paints, for the same reason the header
+ // check already is: the masthead redefines --text, so the token is not what the
+ // eye gets. The ratios are returned into the report, so the evidence is a number
+ // in the record and not a claim in a commit message.
+ await test(width+'-footer-mark-and-tagline-accessibility',async()=>{
+  await page.goto(base);await ready(page);
+  const ink=async sel=>page.locator(sel).evaluate(e=>{
+   const lum=c=>{const[r,g,b]=c.match(/\d+(\.\d+)?/g).slice(0,3).map(v=>{v=v/255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4)});return 0.2126*r+0.7152*g+0.0722*b};
+   let bg=getComputedStyle(e).backgroundColor,node=e;
+   while(node&&(bg==='rgba(0, 0, 0, 0)'||bg==='transparent')){node=node.parentElement;if(!node)break;bg=getComputedStyle(node).backgroundColor}
+   const cs=getComputedStyle(e),a=lum(cs.color),b=lum(bg),r=e.getBoundingClientRect();
+   return {ratio:(Math.max(a,b)+0.05)/(Math.min(a,b)+0.05),px:parseFloat(cs.fontSize),weight:cs.fontWeight,
+    w:r.width,h:r.height,clipped:e.scrollWidth>e.clientWidth+1||e.scrollHeight>e.clientHeight+1};});
+  // The mark itself: one instance, decorative, actually decoded, and carrying its
+  // own box in the markup. A footer that grows when a late JPEG arrives is a
+  // layout shift whatever the picture looks like, so the width and height
+  // attributes are asserted, not just the rendered size.
+  const mark=page.locator('footer .footer-mark');
+  assert.equal(await mark.count(),1,'exactly one footer mark');
+  assert.equal(await mark.getAttribute('alt'),'','the footer mark is decorative: the link around it is named by the words beside it');
+  assert(await mark.evaluate(e=>e.complete&&e.naturalWidth>0),'the footer mark decoded');
+  const markBox=await mark.evaluate(e=>{const r=e.getBoundingClientRect();return {w:Math.round(r.width),h:Math.round(r.height),attrW:e.getAttribute('width'),attrH:e.getAttribute('height'),src:e.getAttribute('src')};});
+  assert(markBox.attrW&&markBox.attrH,'the footer mark declares its box in the markup, so nothing shifts when it decodes');
+  assert(markBox.w>=24&&markBox.h>=24,'footer mark target '+markBox.w+'x'+markBox.h+' is under the 24x24 minimum');
+  const headerMarkSrc=await page.locator('header .brand img').getAttribute('src');
+  assert.equal(markBox.src,headerMarkSrc,'the footer carries the SAME approved mark bytes as the header, not a second asset');
+  const homeLink=page.locator('footer a.footer-brand');
+  assert.equal(await homeLink.count(),1,'one footer home link');
+  assert.equal((await homeLink.innerText()).trim(),'Made by Matt Play','the footer home link is named by its words, not by the image');
+  assert.equal(await homeLink.getAttribute('href'),'/','the footer mark returns to the Play home');
+  const focusRing=await homeLink.evaluate(e=>{e.focus();const cs=getComputedStyle(e);return {focused:e===document.activeElement,width:cs.outlineWidth,style:cs.outlineStyle};});
+  assert(focusRing.focused&&focusRing.style!=='none'&&parseFloat(focusRing.width)>=2,'the footer home link shows a focus ring: '+JSON.stringify(focusRing));
+  // Both tagline instances. 200% text is exercised at the phone widths, where the
+  // lock-up has the least room; the reflow assertion there is the document one,
+  // which is the criterion (no horizontal scrolling), not a per-element rule.
+  const contrast={};
+  for(const scale of (width<700?[100,200]:[100])){
+   await page.evaluate(s=>{document.documentElement.style.fontSize=s+'%'},scale);
+   await page.waitForTimeout(120);
+   for(const [name,sel] of [['header','header .brand-tagline'],['footer','footer .footer-motto']]){
+    const m=await ink(sel);
+    assert(m.ratio>=4.5,name+' tagline contrast '+m.ratio.toFixed(2)+':1 is below AA at '+scale+'% text ('+m.px+'px weight '+m.weight+')');
+    assert(!m.clipped&&m.w>0&&m.h>0,name+' tagline is clipped or collapsed at '+scale+'% text: '+JSON.stringify(m));
+    contrast[name+'@'+scale]=Number(m.ratio.toFixed(2));
+   }
+   const reflow=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
+   assert(reflow.scroll<=reflow.client+1,'horizontal scrolling at '+scale+'% text: '+JSON.stringify(reflow));
+  }
+  await page.evaluate(()=>{document.documentElement.style.fontSize='';});
+  return {mark:markBox,focusRing,contrast,reducedMotion:true};});
  await test(width+'-search-chips-drawer-empty-reset',async()=>{await page.goto(base+'?q=Emberwild');await ready(page);assert.equal(await page.locator('#query').inputValue(),'Emberwild');assert.equal(await visible(page).count(),1);assert.match(await visible(page).innerText(),/Emberwild/);assert.equal(await page.locator('#result-count').innerText(),'1 of '+catalogue.length+' games');assert(await page.locator('#lanes').isHidden(),'lanes hide while filtering');
   await page.locator('#query').fill('qzx nonexistent');assert.equal(await visible(page).count(),0);assert(await page.locator('#empty-state').isVisible());await page.locator('#empty-reset').click();assert.equal(await visible(page).count(),expectedCards);assert.equal(await page.locator('#result-count').innerText(),catalogue.length+' games');assert(await page.locator('#lanes').isVisible());
   assert.equal(await page.locator('input[type=search]').count(),1,'one search field');assert.equal(await page.locator('main select:visible').count(),0,'no stacked selects on the page');
