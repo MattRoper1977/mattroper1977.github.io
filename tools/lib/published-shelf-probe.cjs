@@ -4,15 +4,29 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const ORIGIN = 'https://www.madebymatt-play.uk';
+const PLAY_ORIGIN = 'https://www.madebymatt-play.uk';
+// A guarded local seam, the same shape verify_echovault_surfaces.js already uses for
+// RF_SHELF_URL. CI never sets it, so in CI this file behaves exactly as it always has:
+// ORIGIN is the Play host and route() refuses any other. With it set, and only then,
+// route() also accepts that origin's own host, so the probe can be proved red against a
+// locally served build. It can never widen CI's host check, because an unset variable
+// leaves PROBE_HOSTS as the two Play hostnames and nothing else.
+const ORIGIN = process.env.PLAY_SHELF_URL || PLAY_ORIGIN;
+const PLAY_HOSTS = ['madebymatt-play.uk', 'www.madebymatt-play.uk'];
+// The relaxation is scoped to the overridden origin's OWN host, never to the Play hosts.
+// A plain-HTTP or ported Play URL still throws with the seam set, which is what keeps
+// controls() honest: its HTTPS-downgrade and foreign-destination cases still fire.
+const LOCAL_HOST = ORIGIN === PLAY_ORIGIN ? null : new URL(ORIGIN).hostname;
 const RAW = 'https://raw.githubusercontent.com/MattRoper1977/Games/main/games.json';
 const CENSUS = 'reports/v6fin/V6FIN_W7_69_ROUTE_CENSUS_2026-09-03.json';
 
 function route(value) {
   const u = new URL(value, ORIGIN);
-  assert(['madebymatt-play.uk', 'www.madebymatt-play.uk'].includes(u.hostname), 'Shelf link leaves Play');
-  assert.equal(u.protocol, 'https:', 'Shelf link downgrades HTTPS');
-  assert(!u.port && !u.username && !u.password && !u.search && !u.hash, 'Unexpected shelf URL component');
+  const local = LOCAL_HOST !== null && u.hostname === LOCAL_HOST;
+  assert(local || PLAY_HOSTS.includes(u.hostname), 'Shelf link leaves Play');
+  assert(local || u.protocol === 'https:', 'Shelf link downgrades HTTPS');
+  assert(local || !u.port, 'Unexpected shelf URL component');
+  assert(!u.username && !u.password && !u.search && !u.hash, 'Unexpected shelf URL component');
   return decodeURIComponent(u.pathname).replace(/index\.html$/, '').replace(/\/$/, '') || '/';
 }
 function members(actual, expected, label) {
@@ -100,12 +114,24 @@ function expectedCards(games) {
   }
   return [...groups.values()];
 }
-function ux2Cards(actual, groups, label) {
+// `match`, when given, is the predicate for the filter that is currently active on the page.
+// play.js:80 defines active() over q/mood/genre/control/mode/list, and play.js:105-119 then
+// renders a series card from the FIRST edition that matches, not from its unfiltered lead:
+//   :109  // A series card must launch a matching edition, not its unfiltered lead.
+//   :110  const g = hits[0], ...
+//   :112  ...card-title.textContent = active() ? title(g) : (g.series || title(g));
+//   :119  ....card-meta.innerHTML = '<span class="chip">' + esc(g.genre) + '</span>' + ...
+// play.js:13's title() is `g => g.displayTitle || g.title`, i.e. this file's shownTitle().
+// So filtered expects the matching edition's own title, unfiltered expects the series name.
+// Passing no `match` keeps the previous behaviour exactly, which is what every unfiltered
+// call site and both offline series controls rely on.
+function ux2Cards(actual, groups, label, match) {
   members(actual.map(c => c.id), groups.map(g => g[0].id), label);
   for (const card of actual) {
     const editions = groups.find(g => g[0].id === card.id), lead = editions[0];
-    assert.equal(card.title, lead.series || shownTitle(lead), `${label}: card title`);
-    assert.equal(card.genre, lead.genre, `${label}: card genre`);
+    const shown = match ? (editions.filter(match)[0] || lead) : lead;
+    assert.equal(card.title, match ? shownTitle(shown) : (lead.series || shownTitle(lead)), `${label}: card title`);
+    assert.equal(card.genre, shown.genre, `${label}: card genre`);
     members(card.ids, editions.map(g => g.id), `${label}: edition identities`);
     members(card.links.map(a => route(a.href)), editions.map(g => route(g.route)), `${label}: all edition links`);
     for (const link of card.links) {
@@ -204,15 +230,48 @@ async function verify({ href }) {
         if (width === 320) report.renderedControls = await renderedControls(page, groups, activities);
         // Genre replaces the retired Collection select. Count games, including
         // collapsed editions, independently from the number of visible cards.
+        // PLAY-D1 moved genre off the chip row into the Filters drawer and put four
+        // mood chips in its place. Genre filtering did not disappear, so this is
+        // re-anchored to where it now lives rather than deleted: the drawer is opened
+        // the way a person opens it, and the expectation is still derived independently
+        // from the served data. The mood chips are asserted too, so the control that
+        // replaced the old row is covered as well - strictly more than before.
         const genres = [...new Set(games.map(g => g.genre))];
-        members(await page.locator('[data-chip="genre"]').evaluateAll(ns => ns.map(n => n.dataset.genre)), genres, 'Genre controls');
+        members(await page.locator('[data-chip="mood"]').evaluateAll(ns => ns.map(n => n.dataset.mood)),
+          ['Calm', 'Fast', 'Thinky', 'Together'], 'Mood controls');
+        await page.locator('#filters-open').click();
+        await page.locator('#genre').waitFor({state: 'visible'});
+        members(await page.locator('#genre option').evaluateAll(ns => ns.map(n => n.value).filter(Boolean)),
+          genres, 'Genre controls');
         for (const genre of genres) {
-          await page.locator('[data-chip="genre"]').filter({hasText:new RegExp('^' + genre.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '$')}).click();
-          ux2Cards(await readUx2Cards(page, true), groups.filter(gs => gs.some(g => g.genre === genre)), 'Genre results');
+          await page.locator('#genre').selectOption(genre);
+          ux2Cards(await readUx2Cards(page, true), groups.filter(gs => gs.some(g => g.genre === genre)), 'Genre results', g => g.genre === genre);
           await checkCount(games.filter(g => g.genre === genre).length); await classroomRows(page, activities);
         }
+        // The empty "All genres" option is how the drawer clears a genre.
+        await page.locator('#genre').selectOption('');
+        // The drawer is a dialog (#filters-open is aria-haspopup="dialog"), so it is closed
+        // the way a person closes it before the chip row is reachable again. check.cjs drives
+        // it the same way. Without this the next click lands on the open drawer, not the chip.
+        await page.keyboard.press('Escape');
         await page.locator('[data-chip="all"]').click(); await checkCount(total, false);
         ux2Cards(await readUx2Cards(page, true), groups, 'Clearing genre');
+        // The mood chips are the control PLAY-D1 put in the genre row's place, so they are
+        // exercised rather than merely counted: each is clicked and both the filtered grid and
+        // the visible count are checked against an expectation derived from the served data,
+        // exactly as the retired per-genre chip loop did. The chip SET is asserted above
+        // against the four reviewed moods; this loop walks the moods actually present in the
+        // data, so a reviewed mood carrying no games can never red this as a phantom empty.
+        const moods = [...new Set(games.flatMap(g => g.moods || []))];
+        assert(moods.length > 0, 'Mood controls: no served game carries a reviewed mood');
+        for (const mood of moods) {
+          const inMood = g => (g.moods || []).includes(mood);
+          await page.locator('[data-chip="mood"][data-mood="' + mood + '"]').click();
+          ux2Cards(await readUx2Cards(page, true), groups.filter(gs => gs.some(inMood)), 'Mood results', inMood);
+          await checkCount(games.filter(inMood).length); await classroomRows(page, activities);
+        }
+        await page.locator('[data-chip="all"]').click(); await checkCount(total, false);
+        ux2Cards(await readUx2Cards(page, true), groups, 'Clearing mood');
         const features = await page.locator('.featured a[data-play]').evaluateAll(ns => ns.map(a => ({id:a.dataset.play,href:a.href})));
         const featured = games.find(g => g.featured);
         assert(featured, 'Independent featured game missing'); assert.equal(features.length, 1, 'Featured game count');
@@ -221,7 +280,7 @@ async function verify({ href }) {
         const words = normalize(selected.title).split(/\s+/).filter(Boolean);
         const hits = games.filter(g => words.every(w => normalize([g.title,g.displayTitle || '',g.series || '',g.description].join(' ')).includes(w)));
         await page.locator('#query').fill(selected.title);
-        ux2Cards(await readUx2Cards(page, true), groups.filter(gs => gs.some(g => hits.includes(g))), 'Search results');
+        ux2Cards(await readUx2Cards(page, true), groups.filter(gs => gs.some(g => hits.includes(g))), 'Search results', g => hits.includes(g));
         assert(hits.some(g => route(g.route) === target), 'Search lost selected game'); await checkCount(hits.length);
         await page.locator('#query').fill('mbm-no-such-game-verification');
         assert.equal(await page.locator('#game-grid > .game-card:visible').count(), 0, 'Nonmatching search is not empty');

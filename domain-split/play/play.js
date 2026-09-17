@@ -111,6 +111,22 @@
         const changedEdition = open.dataset.info !== g.id;
         open.dataset.info = g.id; open.querySelector('.card-title').textContent = active() ? title(g) : (g.series || title(g));
         play.dataset.play = g.id; play.href = g.route; play.querySelector('.sr-only').textContent = ' ' + title(g);
+        // The card's Play anchor above is repointed at the matching edition, but the static
+        // edition list is built as every edition EXCEPT the card's lead (build.py:69,
+        // "other CATALOGUE editions' Play anchors are in the markup for no-JS use"). Left alone
+        // it would then carry the edition the Play anchor just took, so that edition appeared
+        // twice on the card and the lead's own link vanished. The list is therefore derived here
+        // rather than left static: it is exactly card.ids minus whoever the Play anchor holds, in
+        // the markup's order. That is idempotent, so returning to the unfiltered lead restores the
+        // original list, and it keeps the card's distinct hrefs equal to its full edition set.
+        const others = card.ids.filter(id => id !== g.id);
+        card.el.querySelectorAll('[data-editions] > li').forEach((li, i) => {
+          const edition = byId.get(others[i]), anchor = li.querySelector('a[data-play]');
+          if (!edition || !anchor) return;
+          anchor.dataset.play = edition.id; anchor.href = edition.route;
+          const label = anchor.querySelector('.sr-only'); if (label) label.textContent = ' ' + title(edition);
+          const name = li.querySelector('.edition-name'); if (name) name.textContent = title(edition);
+        });
         card.el.querySelector('[data-favourite]').dataset.favourite = g.id;
         if (changedEdition) {
           const source = g.media && g.media.poster || g.image, thumb = open.querySelector('.thumb');
