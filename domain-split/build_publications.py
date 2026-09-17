@@ -258,6 +258,24 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--lessons', required=True, type=Path)
     ap.add_argument('--output', type=Path, default=HERE / 'output')
+    # Which publication this run is for. 'both' is the default and is what the education
+    # publication and every existing caller get, so their output is unchanged.
+    #
+    # 'games' exists because the two publications have different source contracts. The
+    # education front door binds Lessons files BY DIGEST (homepage-feature.json), so it is
+    # only ever built against the Lessons checkout it was minted for. The Play publication
+    # binds no such thing -- render_page() sends only 'home', 'teachers' and 'pupils' into
+    # education_frontdoors, and try_lesson() runs only for 'home', so no Play-served page
+    # reads a homepage feature at all.
+    #
+    # Building both together made that an accident waiting to happen: the Games pin release
+    # builds new-Site-against-old-Lessons (and old-Site-against-new-Lessons) on purpose, to
+    # compare the two trees, and every such build died on an education card Play does not
+    # serve. That is what stalled the Play pin at 88c39cb7 while Site main moved four merges
+    # past it. Scoping the run is the fix: the education binding stays hard, and a Play build
+    # never evaluates it. Nothing is caught and dropped, and nothing degrades silently.
+    ap.add_argument('--publication', choices=('both', 'games', 'education'), default='both',
+                    help='which publication to build; games skips the education front doors')
     args = ap.parse_args()
     output = args.output.resolve()
     if output == ROOT or output == args.lessons.resolve() or output in ROOT.parents:
@@ -360,14 +378,19 @@ def main():
     refresh_play_usage(output, args.lessons.resolve(), ROOT)
     global LESSONS_ROOT
     LESSONS_ROOT = args.lessons.resolve()
-    for kind, path in [('home','index.html'), ('home','main/index.html'), ('teachers','for/teachers/index.html'), ('pupils','for/pupils/index.html'), ('commission','commission/index.html')]:
-        put(education, path, render_page(preview, kind, config['education_origin'], config))
-    copy_file(HERE / 'education-frontdoors.css', education, 'assets/education-frontdoors.css')
-    copy_file(HERE / 'education-navigation.css', education, 'assets/education-navigation.css')
-    copy_file(HERE / 'added-this-half-term.js', education, 'assets/added-this-half-term.js')
-    copy_file(HERE / 'try-a-lesson.js', education, 'assets/try-a-lesson.js')
-    for image in json.loads((HERE / 'education-hero.json').read_text())['images'].values():
-        copy_file(HERE / image['file'], education, image['published'])
+    # The education front doors and their assets. Skipped entirely under --publication games:
+    # these five pages are the only route into education_frontdoors.render(), and the only
+    # thing that reads homepage-feature.json. Everything below this block writes to games as
+    # well and still runs.
+    if args.publication in ('both', 'education'):
+        for kind, path in [('home','index.html'), ('home','main/index.html'), ('teachers','for/teachers/index.html'), ('pupils','for/pupils/index.html'), ('commission','commission/index.html')]:
+            put(education, path, render_page(preview, kind, config['education_origin'], config))
+        copy_file(HERE / 'education-frontdoors.css', education, 'assets/education-frontdoors.css')
+        copy_file(HERE / 'education-navigation.css', education, 'assets/education-navigation.css')
+        copy_file(HERE / 'added-this-half-term.js', education, 'assets/added-this-half-term.js')
+        copy_file(HERE / 'try-a-lesson.js', education, 'assets/try-a-lesson.js')
+        for image in json.loads((HERE / 'education-hero.json').read_text())['images'].values():
+            copy_file(HERE / image['file'], education, image['published'])
     for target in [games, education]:
         copy_file(HERE / 'site-runtime.js', target, 'assets/domain-site.js')
         copy_file(ROOT / 'favicon.svg', target, 'favicon.svg')
