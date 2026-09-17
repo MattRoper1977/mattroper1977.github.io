@@ -194,6 +194,7 @@ def extract_archive(data, destination):
 def prepare_one(kind, wanted, output, github):
     repo = REPOS[kind]
     workflow = urllib.parse.quote(WORKFLOWS[kind], safe='')
+    masked = []
     while time.monotonic() < github.deadline:
         runs = github.read(f'/repos/{repo}/actions/workflows/{workflow}/runs?branch=main&per_page=30')['workflow_runs']
         selected = None
@@ -203,7 +204,16 @@ def prepare_one(kind, wanted, output, github):
             if run.get('status') != 'completed':
                 print(f'WAIT {kind}: publication {run["id"]} is {run.get("status")}', flush=True)
                 break
-            require(run.get('conclusion') == 'success', f'{kind}: exact-source publication {run["id"]} failed ({run.get("conclusion")})')
+            if run.get('conclusion') != 'success':
+                # A NEWER failed or cancelled run must not mask an OLDER success for the same
+                # source. This used to require() on the first match, so one cancelled re-run
+                # turned a genuinely published source INCONCLUSIVE -- and INCONCLUSIVE is
+                # reported, not measured, so the row silently stopped being evidence. Keep
+                # looking further back; a run that is still in progress is still waited for,
+                # above, because the newest completed run is the one that should decide.
+                masked.append(f'{run["id"]} ({run.get("conclusion")})')
+                print(f'SKIP {kind}: publication {run["id"]} for this source is {run.get("conclusion")}; looking further back', flush=True)
+                continue
             jobs = github.read(f'/repos/{repo}/actions/runs/{run["id"]}/jobs?per_page=100')['jobs']
             deployments = [j for j in jobs if re.search(r'(^| / )deploy$', j.get('name', ''))]
             require(len(deployments) == 1 and deployments[0].get('conclusion') == 'success',
@@ -224,7 +234,8 @@ def prepare_one(kind, wanted, output, github):
         return {'root': str(root.resolve()), 'source_sha': wanted, 'publication_sha': selected['head_sha'],
                 'run_id': selected['id'], 'run_url': selected['html_url'], 'artifact_id': artifact['id'],
                 'artifact_sha256': artifact['digest'], 'deployment': 'success', **attempt_evidence}
-    raise Inconclusive(f'{kind}: exact-source publication did not become available within the retrieval bound')
+    raise Inconclusive(f'{kind}: exact-source publication did not become available within the retrieval bound'
+                       + (f'; non-success runs for this source: {", ".join(masked)}' if masked else ''))
 
 
 def main():
