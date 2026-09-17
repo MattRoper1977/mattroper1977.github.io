@@ -24,6 +24,7 @@ import pathlib
 import sys
 
 LEDGER = 'data/hud-coverage.json'
+COVERAGE = 'docs/play-q1/coverage.json'
 CANONICAL = 'tools/render_maker_splash.py'
 
 
@@ -35,6 +36,22 @@ def routes(root):
         rel = route.strip('/')
         out.append(root / rel / 'index.html' if route.endswith('/') else root / rel)
     return out
+
+
+def agrees_with_coverage(root, derived):
+    """The scope comes from the ledger's declaration, not from the record being checked.
+
+    Deriving it from coverage.json instead would be circular: a route whose region drifts
+    no longer matches generatorRegionSha256, so it would drop out of the 'current' set and
+    quietly leave this check's scope -- the one moment the check is needed. The ledger's
+    `applied` list says which routes are meant to carry the region and does not move when a
+    file drifts. The two are cross-checked here so they cannot diverge unnoticed.
+    """
+    record = json.loads((root / COVERAGE).read_text(encoding='utf-8'))
+    current = record['summary']['generatorRegionSha256']
+    rows = {r['route'] for r in record['rows'] if r.get('regionSha256') == current}
+    ledger = {'/' + str(p.parent.relative_to(root)) + '/' for p in derived}
+    return rows, ledger
 
 
 def offenders(paths):
@@ -73,9 +90,19 @@ def main():
             assert missing and missing[0][1] is None, 'a missing file was accepted'
         print('self-test: LF accepted; whole-file CRLF, one CR inside the region, '
               'and a missing file all rejected')
+        rows, ledger = agrees_with_coverage(args.root, routes(args.root))
+        assert rows == ledger, 'ledger and coverage disagree: %r' % ((rows ^ ledger),)
+        print('self-test: the ledger scope and the coverage record agree on %d route(s)' % len(rows))
         return 0
 
-    paths = routes(args.root) + [args.root / CANONICAL]
+    derived = routes(args.root)
+    rows, ledger = agrees_with_coverage(args.root, derived)
+    if rows != ledger:
+        print('the ledger and the coverage record disagree about which routes carry the region')
+        print('  in the ledger only :', sorted(ledger - rows) or 'none')
+        print('  in coverage only   :', sorted(rows - ledger) or 'none')
+        return 1
+    paths = derived + [args.root / CANONICAL]
     found = offenders(paths)
     if found:
         print('CR bytes in splash-stamped files -- %d path(s)' % len(found))
