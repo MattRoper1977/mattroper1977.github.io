@@ -554,6 +554,79 @@ async function controls(browser, origin) {
     'SS5 shown and suppressed first-paint primary geometry match', JSON.stringify({ shown: forced.shownUnderlayRect, suppressed: skippedControl.primaryRect }));
   check(sameGeometry(forced.probe?.contentGeometry, skippedControl.probe?.contentGeometry),
     'SS5 shown and suppressed stable content geometry match', JSON.stringify({ shown: forced.probe?.contentGeometry, suppressed: skippedControl.probe?.contentGeometry }));
+  // GD1, PLAY-Q1 shelf 2026-09-16. The Glitch Clash suites timed out on a settings
+  // toggle that never became visible: the click that opens the sheet had been
+  // swallowed. The region guards every pointer and key event at the window until
+  // finish(), but dismiss() makes the overlay inert first and finish() follows on a
+  // zero-delay timer; on a starved machine that timer slips and a click aimed at the
+  // now-inert overlay's underlay is eaten. This control dispatches a click from a
+  // mutation observer the instant the overlay goes inert after an AUTOMATIC
+  // dismissal - a microtask, so it always lands before the finish timer - and
+  // requires a document-level listener to receive it. A user gesture's own tail is
+  // still swallowed until finish(), which the twin proves stays true.
+  for (const [label, userGesture] of [['GD1 a click after an automatic dismissal reaches the page', false], ['GD1 the tail of the dismissing gesture itself is still swallowed', true]]) {
+    const gdContext = await newContext(browser, { viewport: VIEWPORTS[0] });
+    const gdPage = await gdContext.newPage();
+    await gdPage.goto(`${origin}${siteRoute}?splash=force`, { waitUntil: 'domcontentloaded' });
+    const gd = await gdPage.evaluate(user => new Promise(resolve => {
+      let delivered = 0;
+      document.addEventListener('click', () => { delivered++; }, true);
+      const start = performance.now();
+      const arm = () => {
+        const el = document.querySelector('[data-mbm-maker-splash]');
+        if (!el) { if (performance.now() - start > 4000) resolve({ armed: false }); else requestAnimationFrame(arm); return; }
+        const observer = new MutationObserver(() => {
+          if (el.style.pointerEvents !== 'none') return;
+          observer.disconnect();
+          document.body.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+          resolve({ armed: true, delivered, at: Math.round(performance.now() - start) });
+        });
+        observer.observe(el, { attributes: true, attributeFilter: ['style'] });
+        if (user) el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        setTimeout(() => { observer.disconnect(); resolve({ armed: true, delivered, timedOut: true }); }, 6000);
+      };
+      arm();
+    }), userGesture);
+    await gdContext.close();
+    check(gd.armed && !gd.timedOut && (userGesture ? gd.delivered === 0 : gd.delivered === 1), label, JSON.stringify(gd));
+  }
+  // WO1, PLAY-Q1 shelf 2026-09-16. Charcoal's exit control was unreachable by
+  // Tab after stamping, and the trace showed why: the region's way-out arming
+  // resolves the start control by scanning for the first visible button or
+  // link, and at that instant the only visible one was the exit itself. It
+  // armed with start and way-out being the same element, and from then on every
+  // Tab pressed on the exit was swallowed. This control provokes exactly that
+  // state on a real route: after load, and before the region has closed and
+  // armed, it hides every focusable except the exit, waits for the splash to go,
+  // records where the region's own hand-off put focus (the precondition - it
+  // must be the exit, or the state was never provoked), then proves a Tab from
+  // the exit still moves. Its twin runs without the starvation so the assertion
+  // is not vacuous on a page that never arms at all.
+  for (const [label, starve] of [['WO1 starved page (only the exit visible when the region arms)', true], ['WO1 ordinary page', false]]) {
+    const woContext = await newContext(browser, { viewport: VIEWPORTS[VIEWPORTS.length - 1] });
+    const woPage = await woContext.newPage();
+    await woPage.goto(`${origin}${siteRoute}?splash=force`, { waitUntil: 'load' });
+    if (starve) await woPage.addStyleTag({ content: 'button:not(#mbmexit-back):not(#mbmhud-back),a[href]:not(#mbmexit-back):not(#mbmhud-back),[tabindex]:not(#mbmexit-back):not(#mbmhud-back):not([data-mbm-maker-splash]){display:none!important}' });
+    await woPage.waitForFunction(() => !document.querySelector('[data-mbm-maker-splash]'), null, { timeout: 15000 }).catch(() => {});
+    await woPage.waitForTimeout(700);
+    const wo = await woPage.evaluate(() => {
+      const exit = document.querySelector('#mbmexit-back,#mbmhud-back');
+      const handedTo = (document.activeElement && (document.activeElement.id || document.activeElement.tagName)) || null;
+      if (!exit) return { exit: false, handedTo };
+      exit.focus();
+      return { exit: true, handedTo, before: document.activeElement === exit };
+    });
+    let moved = null;
+    if (wo.exit) {
+      await woPage.keyboard.press('Tab');
+      moved = await woPage.evaluate(() => document.activeElement !== document.querySelector('#mbmexit-back,#mbmhud-back'));
+    }
+    await woContext.close();
+    // Before the fix the hand-off landed on the exit itself here; that is the defect, not a
+    // precondition, so the durable property is its negation.
+    if (starve) check(wo.handedTo !== 'mbmexit-back' && wo.handedTo !== 'mbmhud-back', `${label}: the region's hand-off never lands on the exit`, JSON.stringify(wo));
+    check(wo.exit && wo.before && moved === true, `${label}: a Tab pressed on the exit leaves the exit`, JSON.stringify({ exitPresent: wo.exit, handedTo: wo.handedTo, focusedFirst: wo.before, moved }));
+  }
   ctx = await newContext(browser);
   const shifted = await pageProbe(ctx, origin, `${siteRoute}?splash=force`, { action: 'key', waitAbsent: 700, mutateUnderlay: true, mutateContent: true }); await ctx.close();
   check(JSON.stringify(shifted.shownUnderlayRect) !== JSON.stringify(skippedControl.primaryRect),

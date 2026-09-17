@@ -22,6 +22,7 @@ import hashlib
 import json
 import os
 import re
+from html.parser import HTMLParser
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -68,14 +69,14 @@ function writeNow(){var wrote=false;try{localStorage.setItem(KEY,String(NOW));wr
 var LEGACY={start:function(){return{close:function(){},element:null};}};
 try{var d=Object.getOwnPropertyDescriptor(window,"MadeByMattSplash");if(!d||d.configurable)Object.defineProperty(window,"MadeByMattSplash",{configurable:false,get:function(){return LEGACY;},set:function(){}});}catch(_){}
 function visible(e){if(!e||!e.isConnected||e.disabled)return false;var c=getComputedStyle(e),r=e.getBoundingClientRect();return c.display!=="none"&&c.visibility!=="hidden"&&r.width>0&&r.height>0;}
-function primary(){var q=["[data-mbm-primary-start]","#startBtn","#playBtn","#beginBtn","#launchBtn","#openBtn","#start","a.skip","main button:not([disabled])","button:not([disabled])","main a[href]","a[href]"];for(var i=0;i<q.length;i++){var all=document.querySelectorAll(q[i]);for(var j=0;j<all.length;j++)if(visible(all[j])&&!all[j].closest("[data-mbm-maker-splash]"))return all[j];}var m=document.querySelector("main,h1,[role=main]");if(m){if(!m.hasAttribute("tabindex"))m.setAttribute("tabindex","-1");return m;}return null;}
-function armWayOut(e){var w=document.querySelector("#mbmexit-back,#mbmhud-back"),timer=0;if(!e||!w||!w.focus)return;function off(){window.removeEventListener("keydown",next,true);window.removeEventListener("keydown",activate,true);clearTimeout(timer);}function activate(k){if(document.activeElement!==w){off();return;}if(k.key!=="Enter"&&k.key!==" "){if(k.key==="Tab"||k.key==="Escape")off();return;}k.preventDefault();k.stopPropagation();if(k.stopImmediatePropagation)k.stopImmediatePropagation();var href=w.href;off();if(href)location.assign(href);}function next(k){if(k.key!=="Tab"||k.shiftKey||document.activeElement!==e)return;k.preventDefault();k.stopPropagation();if(k.stopImmediatePropagation)k.stopImmediatePropagation();off();if(typeof endHandoff==="function")endHandoff();try{w.focus({preventScroll:true});}catch(_){try{w.focus();}catch(__){}}window.addEventListener("keydown",activate,true);timer=setTimeout(off,5000);}window.addEventListener("keydown",next,true);timer=setTimeout(off,5000);}
+function primary(){var q=["[data-mbm-primary-start]","#startBtn","#playBtn","#beginBtn","#launchBtn","#openBtn","#start","a.skip","main button:not([disabled])","button:not([disabled])","main a[href]","a[href]"];for(var i=0;i<q.length;i++){var all=document.querySelectorAll(q[i]);for(var j=0;j<all.length;j++)if(visible(all[j])&&!all[j].closest("[data-mbm-maker-splash]")&&!all[j].closest("#mbmexit-back,#mbmhud-back,#mbmexit-home,#mbmhud-home"))return all[j];}var m=document.querySelector("main,h1,[role=main]");if(m){if(!m.hasAttribute("tabindex"))m.setAttribute("tabindex","-1");return m;}return null;}
+function armWayOut(e){var w=document.querySelector("#mbmexit-back,#mbmhud-back"),timer=0;if(!e||!w||!w.focus||e===w||w.contains(e)||e.contains(w))return;function off(){window.removeEventListener("keydown",next,true);window.removeEventListener("keydown",activate,true);clearTimeout(timer);}function activate(k){if(document.activeElement!==w){off();return;}if(k.key!=="Enter"&&k.key!==" "){if(k.key==="Tab"||k.key==="Escape")off();return;}k.preventDefault();k.stopPropagation();if(k.stopImmediatePropagation)k.stopImmediatePropagation();var href=w.href;off();if(href)location.assign(href);}function next(k){if(k.key!=="Tab"||k.shiftKey||document.activeElement!==e)return;k.preventDefault();k.stopPropagation();if(k.stopImmediatePropagation)k.stopImmediatePropagation();off();if(typeof endHandoff==="function")endHandoff();try{w.focus({preventScroll:true});}catch(_){try{w.focus();}catch(__){}}window.addEventListener("keydown",activate,true);timer=setTimeout(off,5000);}window.addEventListener("keydown",next,true);timer=setTimeout(off,5000);}
 function focusPrimary(){var e=primary();if(e&&e.focus){try{e.focus({preventScroll:true});}catch(_){try{e.focus();}catch(__){}}armWayOut(e);}}
 var CLOSED=false,FOCUS_UNTIL=0,FOCUS_TIMER=0,HANDOFF_USER=false,HANDOFF_ARMED=false;
 function needsFocus(){var a=document.activeElement;return !a||a===document.body||a===document.documentElement||!a.isConnected||!!(a.closest&&a.closest("[data-mbm-maker-splash]"));}
 function settlePrimary(force){if(CLOSED){var ghosts=document.querySelectorAll("[data-mbm-maker-splash]");for(var i=0;i<ghosts.length;i++){try{ghosts[i].setAttribute("aria-hidden","true");ghosts[i].inert=true;ghosts[i].remove();}catch(_){}}}var target=primary();if(target&&((force&&document.activeElement!==target)||(!force&&needsFocus())))focusPrimary();}
 function endHandoff(){HANDOFF_USER=true;clearTimeout(FOCUS_TIMER);if(HANDOFF_ARMED){HANDOFF_ARMED=false;document.removeEventListener("keydown",endHandoff,true);document.removeEventListener("pointerdown",endHandoff,true);document.removeEventListener("touchstart",endHandoff,true);document.removeEventListener("focusin",keepHandoff,true);}}
-function keepHandoff(e){if(HANDOFF_USER)return;var target=primary();if(target&&e.target!==target)requestAnimationFrame(function(){if(!HANDOFF_USER)settlePrimary(true);});}
+function keepHandoff(e){if(HANDOFF_USER)return;if(e.target&&e.target.closest&&e.target.closest("#mbmexit-back,#mbmhud-back,#mbmexit-home,#mbmhud-home")){endHandoff();return;}var target=primary();if(target&&e.target!==target)requestAnimationFrame(function(){if(!HANDOFF_USER)settlePrimary(true);});}
 function armHandoff(){if(!HANDOFF_ARMED){HANDOFF_ARMED=true;document.addEventListener("keydown",endHandoff,true);document.addEventListener("pointerdown",endHandoff,true);document.addEventListener("touchstart",endHandoff,true);document.addEventListener("focusin",keepHandoff,true);}FOCUS_UNTIL=Math.max(FOCUS_UNTIL,performance.now()+4000);}
 function maintainPrimary(){clearTimeout(FOCUS_TIMER);if(HANDOFF_USER)return;settlePrimary(true);if(CLOSED&&performance.now()<FOCUS_UNTIL)FOCUS_TIMER=setTimeout(maintainPrimary,100);else endHandoff();}
 function focusReady(){function ready(){if(CLOSED){armHandoff();maintainPrimary();}else settlePrimary(false);}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){requestAnimationFrame(ready);},{once:true});else requestAnimationFrame(ready);}
@@ -84,7 +85,7 @@ if(MODE==="skip"){focusWithoutSplash();return;}
 var SHOW=MODE==="force"||windowOpen();if(!SHOW){focusWithoutSplash();return;}
 var SPLASH_EL=null,DISMISS=null,EARLY_DISMISS=false,GUARDED=["keydown","keyup","pointerdown","pointerup","click"];
 function unguard(){for(var i=0;i<GUARDED.length;i++)window.removeEventListener(GUARDED[i],guard,true);}
-function guard(e){e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();if(CLOSED)return;var hit=e.type==="keydown"||(e.type==="pointerdown"&&SPLASH_EL&&SPLASH_EL.contains(e.target))||(e.type==="click"&&SPLASH_EL&&SPLASH_EL.contains(e.target));if(hit){e.preventDefault();if(DISMISS)DISMISS();else EARLY_DISMISS=true;}}
+function guard(e){e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();if(CLOSED)return;var hit=e.type==="keydown"||(e.type==="pointerdown"&&SPLASH_EL&&SPLASH_EL.contains(e.target))||(e.type==="click"&&SPLASH_EL&&SPLASH_EL.contains(e.target));if(hit){e.preventDefault();if(DISMISS)DISMISS(true);else EARLY_DISMISS=true;}}
 for(var i=0;i<GUARDED.length;i++)window.addEventListener(GUARDED[i],guard,true);
 requestAnimationFrame(function(){
 var CSS="#mbmSplash[data-mbm-maker-splash]{position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;overflow:hidden;pointer-events:auto;background:radial-gradient(circle at 52% 44%,rgba(17,42,82,.72),transparent 44%),linear-gradient(135deg,#010207 0%,#071023 52%,#13030c 100%);animation:mbmSplash 1.9s cubic-bezier(.2,.8,.2,1) both}#mbmSplash[data-mbm-maker-splash]::before{content:\"\";position:absolute;inset:-20%;background:repeating-linear-gradient(112deg,transparent 0 9%,rgba(37,244,255,.045) 9.2% 9.35%,transparent 9.55% 18%);transform:translateX(-18%);animation:mbmSweep 1.55s ease-out both}.mbm-splash-mark{position:relative;width:min(82vw,560px);text-align:center;text-transform:uppercase;filter:drop-shadow(0 0 28px rgba(37,244,255,.22))}.mbm-splash-mark span,.mbm-splash-mark em{display:block;color:#7e9aad;font-size:clamp(9px,2.4vmin,13px);font-style:normal;font-weight:900;letter-spacing:.48em;text-indent:.48em}.mbm-splash-mark strong{display:block;margin:.07em 0 .02em;color:#f5feff;font-size:clamp(54px,17vmin,132px);font-style:italic;font-weight:1000;letter-spacing:-.07em;line-height:.82;text-shadow:-2px 0 #25f4ff,2px 0 #ff2d78,0 0 34px rgba(37,244,255,.35);transform:skewX(-7deg)}.mbm-splash-mark em{margin-top:15px;color:#ff5b92;letter-spacing:.62em;text-indent:.62em}.mbm-splash-line{width:0;height:2px;margin:18px auto 0;background:linear-gradient(90deg,transparent,#25f4ff 30%,#fff 50%,#ff2d78 70%,transparent);box-shadow:0 0 18px #25f4ff;animation:mbmLine 1.15s .18s ease-out both}.mbm-splash-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}@keyframes mbmSplash{0%{opacity:0;visibility:visible;pointer-events:auto}12%,70%{opacity:1;visibility:visible;pointer-events:auto}100%{opacity:0;visibility:hidden;pointer-events:none}}@keyframes mbmSweep{from{transform:translateX(-28%)}to{transform:translateX(24%)}}@keyframes mbmLine{to{width:76%}}#mbmSplash.mbm-splash-skip{opacity:0!important;visibility:hidden!important;pointer-events:none!important;animation:none!important;transition:opacity .12s ease}@media(prefers-reduced-motion:reduce){#mbmSplash[data-mbm-maker-splash]{animation-duration:.28s}#mbmSplash[data-mbm-maker-splash]::before,.mbm-splash-line{animation:none}}";
@@ -98,8 +99,8 @@ var shown=0,requested=false,closed=false,hard=0,finishTimer=0;
 requestAnimationFrame(function(){shown=performance.now();if(requested)scheduleFinish();});
 function finish(){if(closed)return;closed=true;CLOSED=true;clearTimeout(hard);clearTimeout(finishTimer);el.classList.add("mbm-splash-skip");el.style.setProperty("pointer-events","none","important");el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}unguard();if(el.parentNode)el.parentNode.removeChild(el);focusReady();}
 function scheduleFinish(){if(!shown)return;clearTimeout(finishTimer);var wait=Math.max(0,450-(performance.now()-shown));finishTimer=setTimeout(finish,wait);}
-function dismiss(){if(requested||closed)return;requested=true;el.style.setProperty("pointer-events","none","important");el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}if(MODE!=="force")writeNow();scheduleFinish();}
-DISMISS=dismiss;if(EARLY_DISMISS)dismiss();
+function dismiss(byUser){if(requested||closed)return;requested=true;el.style.setProperty("pointer-events","none","important");el.setAttribute("aria-hidden","true");try{el.inert=true;}catch(_){}if(!byUser)unguard();if(MODE!=="force")writeNow();scheduleFinish();}
+DISMISS=dismiss;if(EARLY_DISMISS)dismiss(true);
 el.addEventListener("animationend",function(e){if(e.target===el&&e.animationName==="mbmSplash")dismiss();});
 window.addEventListener("pagehide",function(){if(requested&&!closed)finish();},{once:true});
 try{el.focus({preventScroll:true});}catch(_){try{el.focus();}catch(__){}}
@@ -281,6 +282,43 @@ def strip_legacy(html: str) -> tuple[str, list[str]]:
     return html, notes
 
 
+class _BodyFinder(HTMLParser):
+    """Position of the first real <body> start tag, as the parser sees it.
+
+    PLAY-Q1 shelf, 2026-09-16. This used to be ``re.search(r"<body\\b[^>]*>")``,
+    which takes the first place the six characters appear in the file. Glitch
+    Clash carries the literal text ``<body>`` inside a CSS comment on its
+    twenty-first line, so the region was written into a <style> block, never ran,
+    and the M never painted there - while ``--check`` stayed green, because it
+    compared against the same mistake. The parser treats <style> and <script>
+    content as character data and skips comments, so the first start tag it
+    reports is the element itself. Substring matching over a document is what
+    CLAUDE.md's n6-splash lesson forbids; this is that lesson applied here.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=False)
+        self.pos: tuple[int, int] | None = None
+
+    def handle_starttag(self, tag: str, attrs) -> None:
+        if tag == "body" and self.pos is None:
+            self.pos = self.getpos()
+
+
+def body_open_tag_end(html: str) -> int | None:
+    finder = _BodyFinder()
+    try:
+        finder.feed(html)
+    except Exception:
+        return None
+    if finder.pos is None:
+        return None
+    line, col = finder.pos
+    offset = sum(len(part) + 1 for part in html.split("\n")[: line - 1]) + col
+    match = re.match(r"<body\b[^>]*>", html[offset:], re.IGNORECASE)
+    return offset + match.end() if match else None
+
+
 def insert_point(html: str) -> int:
     """After <body>, with the inline-exit trailing-comment walk as fallback.
 
@@ -289,9 +327,9 @@ def insert_point(html: str) -> int:
     legacy shells without an opening body retain the estate's established
     walk-back before trailing sentinels and ``</body>``.
     """
-    body = re.search(r"<body\b[^>]*>", html, re.IGNORECASE)
-    if body:
-        return body.end()
+    body = body_open_tag_end(html)
+    if body is not None:
+        return body
     idx = html.lower().rfind("</body>")
     if idx < 0:
         raise ValueError("no <body> insertion point")
@@ -314,13 +352,53 @@ def expected_html(source: str, region: str) -> tuple[str, list[str]]:
     return base[:at] + "\n" + region + base[at:], notes
 
 
+def self_test() -> int:
+    """Planted documents for the insert point, each asserting the shipped code."""
+    region = "<!-- R -->"
+    cases = [
+        ("<body> inside a CSS comment before the real tag",
+         "<html><head><style>/* fill lives on <html> not <body> */</style></head>\n<body class=\"g\">\n<main></main></body></html>"),
+        ("<body> inside a script string before the real tag",
+         "<html><head><script>var s='<body>';</script></head><body>\n<main></main></body></html>"),
+        ("<body> inside an HTML comment before the real tag",
+         "<html><head><!-- the <body> is below --></head><body id=\"b\"><main></main></body></html>"),
+        ("a plain body with attributes",
+         "<html><head></head><body data-x=\"1\" class=\"y\"><main></main></body></html>"),
+    ]
+    failures = []
+    for name, doc in cases:
+        at = insert_point(doc)
+        real = doc.index("<main>")
+        tag_end = doc.rindex(">", 0, real) + 1
+        # the region must land after the REAL body tag and before the first child
+        if not (at == tag_end and doc[at:real].strip() == ""):
+            failures.append(f"{name}: inserted at {at}, real body tag ends at {tag_end}")
+    fallback = "<html><head></head>\n<main></main>\n<!-- trailing --></body></html>"
+    at = insert_point(fallback)
+    if fallback[at:].lstrip().startswith("<!-- trailing -->") is False:
+        failures.append("no <body>: fallback must land before the trailing comment walk")
+    control = "<html><head><style>/* <body> */</style></head><body><main></main></body></html>"
+    naive = re.search(r"<body\b[^>]*>", control, re.IGNORECASE).end()
+    if naive == insert_point(control):
+        failures.append("control: the naive regex and the parser agree on the planted document, so the control is vacuous")
+    for f in failures:
+        print("FAIL " + f)
+    print(("FAIL" if failures else "PASS") + f" insert-point self-test: {len(cases) + 2} cases, {len(failures)} failures")
+    return 1 if failures else 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--root", action="append", required=True)
+    parser.add_argument("--root", action="append")
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check", action="store_true")
     mode.add_argument("--write", action="store_true")
+    mode.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
+    if args.self_test:
+        return self_test()
+    if not args.root:
+        parser.error("--root is required with --check or --write")
 
     region = build_region()
     digest = hashlib.sha256(region.encode("utf-8")).hexdigest()
