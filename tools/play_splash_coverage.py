@@ -36,9 +36,11 @@ def main() -> int:
     ap.add_argument('--lessons', type=Path, required=True); ap.add_argument('--write', type=Path)
     ap.add_argument('--check', action='store_true',
                     help='regenerate in memory and compare with the committed record; write nothing')
-    ap.add_argument('--owner', choices=('all', 'site'), default='all',
+    ap.add_argument('--owner', choices=('all', 'site', 'lessons'), default='all',
                     help="which rows --check compares. 'site' gates only the rows this repo owns; "
-                         "Lessons-owned rows are left ungated (see the note in the --check branch)")
+                         "'lessons' gates only the Lessons-owned rows, one step behind, so a "
+                         "Lessons re-stamp is caught without reddening a job for a change the "
+                         "other estate cannot fix")
     a = ap.parse_args()
     cat = json.loads(a.catalogue.read_text())
     routes = [(g['route'], 'game', g.get('title', '')) for g in cat['games']] + [(x['route'], 'activity', x.get('title', '')) for x in cat.get('activities', [])]
@@ -97,11 +99,13 @@ def main() -> int:
         # byOwner and currentRegion are totals over both estates. Under --owner site they are
         # therefore not compared: gating them here would red this job for a change made in a
         # repository it does not own and cannot fix.
-        keys = ['generatorRegionSha256'] if a.owner == 'site' else sorted(set(hs) | set(ws))
+        scoped = a.owner in ('site', 'lessons')
+        wanted_owner = 'Site' if a.owner == 'site' else 'Lessons'
+        keys = ['generatorRegionSha256'] if scoped else sorted(set(hs) | set(ws))
         for key in keys:
             if hs.get(key) != ws.get(key):
                 problems.append(('summary.' + key, hs.get(key), ws.get(key)))
-        keep = (lambda r: r.get('owner') == 'Site') if a.owner == 'site' else (lambda r: True)
+        keep = (lambda r: r.get('owner') == wanted_owner) if scoped else (lambda r: True)
         hr = {r.get('route'): r for r in have.get('rows', []) if keep(r)}
         wr = {r.get('route'): r for r in out['rows'] if keep(r)}
         for route in sorted(set(hr) | set(wr)):
@@ -112,7 +116,7 @@ def main() -> int:
                     problems.append(('rows[' + route + '].' + key, hr[route].get(key), wr[route].get(key)))
         if problems:
             print('STALE docs/play-q1/coverage.json -- %d field(s) differ from this writer (scope: %s)'
-                  % (len(problems), 'Site-owned rows' if a.owner == 'site' else 'all rows'))
+                  % (len(problems), (wanted_owner + '-owned rows') if scoped else 'all rows'))
             print('derivation: SHA-256 of the region between the MBM-MAKER-SPLASH BEGIN and END')
             print('            markers, INCLUDING its trailing newline, bytes exactly as committed.')
             print('            render_maker_splash.py and CyberPulse SPLASH_BYTES EXCLUDE that')
@@ -123,14 +127,15 @@ def main() -> int:
             print('regenerate with the same command, replacing --check with')
             print('  --write docs/play-q1/coverage.json')
             return 1
-        scope = 'Site-owned rows' if a.owner == 'site' else 'all rows'
-        ungated = sum(1 for r in out['rows'] if r.get('owner') != 'Site') if a.owner == 'site' else 0
+        scope = (wanted_owner + '-owned rows') if scoped else 'all rows'
+        ungated = sum(1 for r in out['rows'] if r.get('owner') != wanted_owner) if scoped else 0
         print('docs/play-q1/coverage.json is current -- %d %s checked, region %s'
               % (len(wr), scope, ws['generatorRegionSha256']))
         if ungated:
-            print('not gated here: %d Lessons-owned row(s). This job runs in the Site repo and'
-                  % ungated)
-            print('cannot re-stamp them; how they get gated is ruled after the Lessons re-stamp.')
+            other = 'Lessons' if wanted_owner == 'Site' else 'Site'
+            print('not gated here: %d %s-owned row(s); they are gated by the %s-owned job, one'
+                  % (ungated, other, other))
+            print('step behind, so neither estate reddens for a change it cannot fix.')
         return 0
     if a.write:
         a.write.parent.mkdir(parents=True, exist_ok=True); a.write.write_text(json.dumps(out, indent=1) + '\n')
