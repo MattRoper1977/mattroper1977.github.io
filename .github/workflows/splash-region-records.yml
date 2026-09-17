@@ -28,20 +28,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Pinned 2026-09-17 (CX2 section 7.1, ORDER PQ1-GATE-R6 ruling G1b): Lessons main at #567,
+      # the same commit domain-split-verify.yml and education-publication.yml pin today. It is here
+      # for one reason only: the coverage writer enumerates its routes from the built Play
+      # catalogue, and domain-split/build_publications.py requires --lessons and exits non-zero on
+      # an empty tree, so the catalogue cannot be assembled without a Lessons checkout.
+      #
+      # This job gates SITE-owned rows only (--owner site below), so moving this pin cannot change
+      # its result. That is measured, not asserted: PQ1-GATE-R6 Step P3 ran the check with Lessons
+      # at this pin and at Lessons main and got identical output, and matrix case M8 edits a
+      # Lessons-owned region and confirms this job still passes (M8c is its control: the same edit
+      # DOES red the unscoped check, so the writer really did read the mutated file). It is
+      # therefore deliberately NOT held equal to the publication pins - those decide published
+      # bytes, this one decides nothing and needs no re-pin when Lessons moves.
+      #
+      # The path is .sources/Lessons and that is load-bearing, not a style choice.
+      # domain-split/play/build.py refresh() does NOT take the --lessons argument: it resolves the
+      # checkout itself, as <site>/.sources/Lessons when that exists and <site>/../Lessons
+      # otherwise, and validate_report then compares HEADs. Under any other path both candidates
+      # are absent on a runner and the step dies after build_publications.py has already succeeded.
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
           ref: b54c9006e311f151ee53fe268846fab12fbc3e44
-          path: _lessons
+          path: .sources/Lessons
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
+      - run: python -m pip install lxml==6.0.1
 
       # The coverage writer reads the built catalogue, so the Play publication is
       # assembled first. This is the same build the publication gates use.
       - name: Assemble the Play catalogue the coverage writer reads
         run: |
           set -euo pipefail
-          python domain-split/play/prepare.py --lessons _lessons --output .play-review/output
+          python domain-split/play/prepare.py --lessons .sources/Lessons --output .play-review/output
 
       - name: The README states no digest and no byte count
         run: |
@@ -55,9 +75,12 @@ jobs:
           python tools/check_splash_routes_lf.py --self-test
           python tools/check_splash_routes_lf.py
 
-      - name: docs/play-q1/coverage.json matches its own writer
+      # --owner site: this repository owns 35 of the 68 rows and can re-stamp only those. The 33
+      # Lessons-owned rows are NOT gated here; gating them would red this job for a change made in
+      # a repository it cannot fix. How they get gated is ruled after the Lessons re-stamp lands.
+      - name: docs/play-q1/coverage.json matches its own writer (Site-owned rows)
         run: |
           set -euo pipefail
           python tools/play_splash_coverage.py \
             --catalogue .play-review/output/games/data/domain-catalogue.json \
-            --site . --lessons _lessons --check
+            --site . --lessons .sources/Lessons --check --owner site

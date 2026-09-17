@@ -4,6 +4,8 @@ Derived by `tools/play_splash_coverage.py` from the built Play domain catalogue;
 
 Routes, families and owners, and which routes carry the current generated region, are recorded in `docs/play-q1/coverage.json`. That file is the record of truth; this README states no digests and no byte counts, because a hand-copied value here cannot be checked and has already gone stale once.
 
+The `Splash region records` workflow checks that record against a fresh run of its own writer, but **only for the rows this repository owns** (`--owner site`). The Lessons-owned rows are deliberately ungated: this repository cannot re-stamp them, so gating them here would turn the Site gate red for a change only the Lessons repository can make. How those rows get gated is decided after the Lessons re-stamp lands. The workflow also refuses a digest or byte count in this file and refuses a CR byte in any stamped route.
+
 ## Design (decided under "decide and continue", recorded for Matt)
 
 - **D6 — one region, host-conditional visual.** The single generated `MBM-MAKER-SPLASH` region stays byte-identical on every route. On the Play host (`madebymatt-play.uk`, or `?brand=play` for local proof) it paints the Play lockup; anywhere else (the education domain, where the seven Lessons routes are also served) it paints the Made by Matt mark, so Education branding stays separate.
