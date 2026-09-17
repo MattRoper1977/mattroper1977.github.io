@@ -165,6 +165,30 @@ for(const width of [320,390,768,1280]){
   await page.screenshot({path:path.join(out,width+'-lighthouse-details.png')});await page.keyboard.press('Escape');
   return{combinedMoodGenre:true,surpriseEligibleOnly:true,emptySurprise:true,directCardFavourite:true,removeRecentFocus:true,clearRecentFromList:true,saveSentinelPreserved:true};
  });
+ await test(width+'-series-cards-expose-each-edition-once',async()=>{
+  // PLAY-D1 (#378, 1b4634c) made a filtered series card launch its matching edition:
+  //   play.js:109  "A series card must launch a matching edition, not its unfiltered lead."
+  // The static edition list is built as every edition EXCEPT the lead (build.py:69), so a
+  // repointed Play anchor used to duplicate that edition and drop the lead's own link. play.js
+  // now derives the list from card.ids minus whoever the Play anchor holds, so in EVERY filter
+  // state a card's distinct hrefs must equal its full edition set, and no card may repeat an href.
+  const readCards=()=>page.locator('#game-grid > .game-card').evaluateAll(ns=>ns.map(c=>({
+    id:c.dataset.card,ids:(c.dataset.games||'').split(' ').filter(Boolean),
+    hrefs:[...c.querySelectorAll('a[data-play]')].map(a=>new URL(a.href).pathname)})));
+  const routeOf=new Map(data.games.map(g=>[g.id,new URL(g.route,base).pathname]));
+  const shape=c=>[...new Set(c.hrefs)].sort();
+  const check=(cards,label)=>{for(const c of cards){
+    assert.equal(c.hrefs.length,new Set(c.hrefs).size,label+': duplicate href on card '+c.id);
+    assert.deepEqual(shape(c),c.ids.map(i=>routeOf.get(i)).sort(),label+': edition hrefs differ on card '+c.id);}};
+  await page.goto(base);await ready(page);
+  const before=await readCards();check(before,'unfiltered');
+  const series=before.filter(c=>c.ids.length>1);assert(series.length>0,'no multi-edition series card to exercise');
+  for(const mood of ['Calm','Fast','Thinky','Together']){
+   await page.locator('[data-chip="mood"][data-mood="'+mood+'"]').click();check(await readCards(),'mood '+mood);}
+  await page.locator('[data-chip="all"]').click();
+  const after=await readCards();
+  assert.deepEqual(after.map(shape),before.map(shape),'distinct href set changed across filtering');
+  return {cards:before.length,seriesCards:series.length,moodsExercised:4,duplicateHrefs:0};});
  await test(width+'-sheet-focus-deep-link-and-return',async()=>{await page.goto(base+'?q=Emberwild');await ready(page);const trigger=page.locator('#game-grid [data-info="'+EMBER+'"]');await trigger.click();assert(await page.locator('#game-dialog').isVisible());assert(await page.locator('#dialog-close').evaluate(e=>e===document.activeElement),'sheet opens on its close control');assert.equal(new URL(page.url()).searchParams.get('game'),EMBER,'deep link written');for(let i=0;i<16;i++){await page.keyboard.press('Tab');assert(await page.evaluate(()=>!!document.activeElement.closest('#game-dialog')),'Focus escaped dialog');}
   assert.equal(await page.locator('#dialog-title').innerText(),emberwild.displayTitle||emberwild.title);assert.equal(await page.locator('#dialog-play').innerText(),'Play '+(emberwild.displayTitle||emberwild.title)+' →');const chips=await page.locator('#dialog-support .chip').allTextContents();const expected=[['controls','touch','Touch'],['controls','keyboard','Keyboard'],['controls','gamepad','Gamepad'],['modes','single','1 player'],['modes','local','Local / same-network options']].filter(([f,v])=>emberwild[f].includes(v)).map(x=>x[2]);assert.deepEqual(chips,expected.length?expected:['Not yet verified']);assert.equal(await page.locator('#dialog-watch').isVisible(),Boolean(emberwild.media.video),'Watch gameplay only with media');assert.match(await page.locator('#dialog-description').innerText(),new RegExp('^'+emberwild.description.slice(0,20).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
   await page.keyboard.press('Escape');assert(!await page.locator('#game-dialog').isVisible());assert(await trigger.evaluate(e=>e===document.activeElement),'closing returns focus to the opener');assert.equal(new URL(page.url()).searchParams.get('game'),null,'deep link cleared on close');
