@@ -158,13 +158,18 @@ for(const width of [320,390,768,1280]){
   assert(await mark.evaluate(e=>e.complete&&e.naturalWidth>0),'the footer mark decoded');
   const markBox=await mark.evaluate(e=>{const r=e.getBoundingClientRect();return {w:Math.round(r.width),h:Math.round(r.height),attrW:e.getAttribute('width'),attrH:e.getAttribute('height'),src:e.getAttribute('src')};});
   assert(markBox.attrW&&markBox.attrH,'the footer mark declares its box in the markup, so nothing shifts when it decodes');
-  assert(markBox.w>=24&&markBox.h>=24,'footer mark target '+markBox.w+'x'+markBox.h+' is under the 24x24 minimum');
+  assert(markBox.w>=24&&markBox.h>=24,'footer mark '+markBox.w+'x'+markBox.h+' is under the 24x24 WCAG 2.2 minimum');
   const headerMarkSrc=await page.locator('header .brand img').getAttribute('src');
   assert.equal(markBox.src,headerMarkSrc,'the footer carries the SAME approved mark bytes as the header, not a second asset');
   const homeLink=page.locator('footer a.footer-brand');
   assert.equal(await homeLink.count(),1,'one footer home link');
   assert.equal((await homeLink.innerText()).trim(),'Made by Matt Play','the footer home link is named by its words, not by the image');
   assert.equal(await homeLink.getAttribute('href'),'/','the footer mark returns to the Play home');
+  // The shelf's own floor is 44px, and targets() enforces it on every visible
+  // control. Asserted HERE too, because the 24x24 criterion alone passed a link
+  // measured at 208x32 that the estate's gate then rejected.
+  const linkBox=await homeLink.evaluate(e=>{const r=e.getBoundingClientRect();return {w:Math.round(r.width),h:Math.round(r.height),tap:parseFloat(getComputedStyle(e).minHeight)};});
+  assert(linkBox.h>=44,'footer home link '+linkBox.w+'x'+linkBox.h+' is under this shelf 44px tap floor');
   const focusRing=await homeLink.evaluate(e=>{e.focus();const cs=getComputedStyle(e);return {focused:e===document.activeElement,width:cs.outlineWidth,style:cs.outlineStyle};});
   assert(focusRing.focused&&focusRing.style!=='none'&&parseFloat(focusRing.width)>=2,'the footer home link shows a focus ring: '+JSON.stringify(focusRing));
   // Both tagline instances. 200% text is exercised at the phone widths, where the
@@ -184,7 +189,7 @@ for(const width of [320,390,768,1280]){
    assert(reflow.scroll<=reflow.client+1,'horizontal scrolling at '+scale+'% text: '+JSON.stringify(reflow));
   }
   await page.evaluate(()=>{document.documentElement.style.fontSize='';});
-  return {mark:markBox,focusRing,contrast,reducedMotion:true};});
+  return {mark:markBox,link:linkBox,focusRing,contrast,reducedMotion:true};});
  await test(width+'-search-chips-drawer-empty-reset',async()=>{await page.goto(base+'?q=Emberwild');await ready(page);assert.equal(await page.locator('#query').inputValue(),'Emberwild');assert.equal(await visible(page).count(),1);assert.match(await visible(page).innerText(),/Emberwild/);assert.equal(await page.locator('#result-count').innerText(),'1 of '+catalogue.length+' games');assert(await page.locator('#lanes').isHidden(),'lanes hide while filtering');
   await page.locator('#query').fill('qzx nonexistent');assert.equal(await visible(page).count(),0);assert(await page.locator('#empty-state').isVisible());await page.locator('#empty-reset').click();assert.equal(await visible(page).count(),expectedCards);assert.equal(await page.locator('#result-count').innerText(),catalogue.length+' games');assert(await page.locator('#lanes').isVisible());
   assert.equal(await page.locator('input[type=search]').count(),1,'one search field');assert.equal(await page.locator('main select:visible').count(),0,'no stacked selects on the page');

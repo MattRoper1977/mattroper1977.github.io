@@ -83,10 +83,13 @@ html:not(.js) .collection-links a:not([data-collection=""]){display:none}
 .tile{flex-basis:min(70vw,232px)}.lane-head h2,.section-head h2{font-size:1.4rem}.lane-head{margin-bottom:.8rem}.lane-track{gap:.9rem;padding-bottom:.9rem}
 .footer-motto{color:var(--muted);font-size:.875rem;margin:.25rem 0 0}footer{max-width:1480px}
 /* PLAY-D1 footer mark. The box is fixed in CSS as well as on the element, so a
-   slow JPEG cannot reflow the footer; min-width/min-height keep the link target
-   at or above the 24x24 WCAG 2.2 minimum even if the mark ever fails to load.
-   Focus is the shared a:focus-visible ring, not a new one. */
-.footer-brand{display:inline-flex;align-items:center;gap:.55rem;color:var(--text);text-decoration:none;min-height:32px}
+   slow JPEG cannot reflow the footer, and the mark's own min-width/min-height
+   hold it at or above the 24x24 WCAG 2.2 minimum even if it never loads. The
+   LINK is held to --tap, not to 24px: this shelf's floor is 44px and check.cjs
+   already enforces it on every visible control, so the weaker criterion would
+   have shipped a control the estate's own gate rejects -- measured, at 390px,
+   as 208x32. Focus is the shared a:focus-visible ring, not a new one. */
+.footer-brand{display:inline-flex;align-items:center;gap:.55rem;color:var(--text);text-decoration:none;min-height:var(--tap)}
 .footer-brand:hover span{text-decoration:underline}
 .footer-mark{width:32px;height:32px;min-width:24px;min-height:24px;flex:none;object-fit:contain;border-radius:8px}
 @media(min-width:700px){.browse-sidebar{padding-inline:24px}.feature-card{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);padding:1rem;gap:1.4rem}.feature-picture .thumb{aspect-ratio:16/10;max-height:270px}.game-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
