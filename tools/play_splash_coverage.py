@@ -9,6 +9,10 @@ so the count is derived from the release owner's own output. For each route the 
 records the source owner, the splash family found in the served bytes, whether the
 canonical generated region is present and current, and the CSP image posture. A route
 whose file cannot be found is listed as MISSING FILE, never dropped.
+
+--write always emits every row, both estates. --check compares the committed record with a
+fresh in-memory run and writes nothing; --owner site narrows that comparison to the rows
+this repository owns, so the Site gate cannot be turned red by a Lessons-side change.
 """
 from __future__ import annotations
 import argparse, hashlib, json, re, sys
@@ -30,6 +34,11 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--catalogue', type=Path, required=True); ap.add_argument('--site', type=Path, required=True)
     ap.add_argument('--lessons', type=Path, required=True); ap.add_argument('--write', type=Path)
+    ap.add_argument('--check', action='store_true',
+                    help='regenerate in memory and compare with the committed record; write nothing')
+    ap.add_argument('--owner', choices=('all', 'site'), default='all',
+                    help="which rows --check compares. 'site' gates only the rows this repo owns; "
+                         "Lessons-owned rows are left ungated (see the note in the --check branch)")
     a = ap.parse_args()
     cat = json.loads(a.catalogue.read_text())
     routes = [(g['route'], 'game', g.get('title', '')) for g in cat['games']] + [(x['route'], 'activity', x.get('title', '')) for x in cat.get('activities', [])]
@@ -71,6 +80,58 @@ def main() -> int:
         summary['byFamily'][r['family']] = summary['byFamily'].get(r['family'], 0) + 1
         summary['byOwner'][r['owner']] = summary['byOwner'].get(r['owner'], 0) + 1
     out = {'schema': 1, 'summary': summary, 'rows': rows}
+    if a.check:
+        # Compare against the committed record. Writes nothing. The derivation is stated
+        # in the failure so nobody re-implements it: a hand-computed digest is not
+        # evidence about this file, and comparing it with render_maker_splash.py's byte
+        # count or CyberPulse's SPLASH_BYTES is comparing two different measurements.
+        record = a.site / 'docs/play-q1/coverage.json'
+        if not record.is_file():
+            print('MISSING ' + str(record)); return 1
+        have = json.loads(record.read_text())
+        problems = []
+        hs, ws = have.get('summary', {}), out['summary']
+        # Only generatorRegionSha256 is derived from this repo alone: it is the SHA-256 of
+        # tools/render_maker_splash.py's own build_region(), loaded from --site. Every other
+        # summary field counts ALL rows, so a Lessons re-stamp moves it -- routes, byFamily,
+        # byOwner and currentRegion are totals over both estates. Under --owner site they are
+        # therefore not compared: gating them here would red this job for a change made in a
+        # repository it does not own and cannot fix.
+        keys = ['generatorRegionSha256'] if a.owner == 'site' else sorted(set(hs) | set(ws))
+        for key in keys:
+            if hs.get(key) != ws.get(key):
+                problems.append(('summary.' + key, hs.get(key), ws.get(key)))
+        keep = (lambda r: r.get('owner') == 'Site') if a.owner == 'site' else (lambda r: True)
+        hr = {r.get('route'): r for r in have.get('rows', []) if keep(r)}
+        wr = {r.get('route'): r for r in out['rows'] if keep(r)}
+        for route in sorted(set(hr) | set(wr)):
+            if route not in hr: problems.append(('rows[' + route + ']', '(absent)', 'present')); continue
+            if route not in wr: problems.append(('rows[' + route + ']', 'present', '(absent)')); continue
+            for key in sorted(set(hr[route]) | set(wr[route])):
+                if hr[route].get(key) != wr[route].get(key):
+                    problems.append(('rows[' + route + '].' + key, hr[route].get(key), wr[route].get(key)))
+        if problems:
+            print('STALE docs/play-q1/coverage.json -- %d field(s) differ from this writer (scope: %s)'
+                  % (len(problems), 'Site-owned rows' if a.owner == 'site' else 'all rows'))
+            print('derivation: SHA-256 of the region between the MBM-MAKER-SPLASH BEGIN and END')
+            print('            markers, INCLUDING its trailing newline, bytes exactly as committed.')
+            print('            render_maker_splash.py and CyberPulse SPLASH_BYTES EXCLUDE that')
+            print('            newline and are byte counts, so their values never match this one.')
+            for field, committed, derived in problems[:40]:
+                print('  %-34s committed=%s  writer=%s' % (field, committed, derived))
+            if len(problems) > 40: print('  ... and %d more' % (len(problems) - 40))
+            print('regenerate with the same command, replacing --check with')
+            print('  --write docs/play-q1/coverage.json')
+            return 1
+        scope = 'Site-owned rows' if a.owner == 'site' else 'all rows'
+        ungated = sum(1 for r in out['rows'] if r.get('owner') != 'Site') if a.owner == 'site' else 0
+        print('docs/play-q1/coverage.json is current -- %d %s checked, region %s'
+              % (len(wr), scope, ws['generatorRegionSha256']))
+        if ungated:
+            print('not gated here: %d Lessons-owned row(s). This job runs in the Site repo and'
+                  % ungated)
+            print('cannot re-stamp them; how they get gated is ruled after the Lessons re-stamp.')
+        return 0
     if a.write:
         a.write.parent.mkdir(parents=True, exist_ok=True); a.write.write_text(json.dumps(out, indent=1) + '\n')
     print(json.dumps(summary, indent=1))

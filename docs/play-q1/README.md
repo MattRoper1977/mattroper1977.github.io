@@ -2,7 +2,9 @@
 
 Derived by `tools/play_splash_coverage.py` from the built Play domain catalogue; never hand-counted. Re-run and recommit after every batch.
 
-Routes: **68** (canon 24, legacy-region 6, none 24, own-splash 14; owners Site 35, Lessons 33). Generated region current on **14** routes (sha256 `8415057da544…`): the 14 Site routes, re-stamped from the corrected generator (real `<body>` insert point, way-out arming, guard release). The 6 Lessons shelf routes still carry the previous region (`5500acead5b7…`) and go current again when Lessons batch 3 re-stamps them; 4 Site routes stay held at the earlier accepted region (`88c7c6bc0f73…`, see batch 1b).
+Routes, families and owners, and which routes carry the current generated region, are recorded in `docs/play-q1/coverage.json`. That file is the record of truth; this README states no digests and no byte counts, because a hand-copied value here cannot be checked and has already gone stale once.
+
+The `Splash region records` workflow checks that record against a fresh run of its own writer, but **only for the rows this repository owns** (`--owner site`). The Lessons-owned rows are deliberately ungated: this repository cannot re-stamp them, so gating them here would turn the Site gate red for a change only the Lessons repository can make. How those rows get gated is decided after the Lessons re-stamp lands. The workflow also refuses a digest or byte count in this file and refuses a CR byte in any stamped route.
 
 ## Design (decided under "decide and continue", recorded for Matt)
 
@@ -41,9 +43,9 @@ untouched by construction.
   between the overlay going inert and `finish()` is no longer swallowed (**GD1**).
 
 Both new controls are red on the old bytes by design and green after the re-stamp
-(81/81). The region moved from 20287 B to **20433 B** (sha256 `8415057da544…`), so
-CyberPulse's `SPLASH_BYTES` was re-cut from the verifier's own measurement to **20432**
-(CP6s counts the region without its trailing newline) and its revision comment extended.
+(81/81). The region moved, so CyberPulse's `SPLASH_BYTES` was re-cut from the
+verifier's own measurement and its revision comment extended. The value itself lives
+in `tools/cyberpulse/verify.mjs`; it is not restated here.
 The Play evidence chain was rebound to bytes the publisher measured, not computed:
 `evidence.json` (14), `preservation.json` (14), `discovery-review.json` (7), the 14 game
 screens recaptured with `tools/capture_play_screens.cjs` from a local Play build (8 moved,
@@ -132,3 +134,35 @@ Built by `tools/play_runtime_inventory.py` from the existing ledgers only, never
 Routes 69; controls source-inspected on 53; zoom declaration PASS 5, FAIL 1 (`/neonmeridian/`, HC5 follow-up), UNMEASURED 63; saves inventoried 69; routes with findings 18; open findings by class: control 8, presentation 4, performance 4.
 
 **Pilot (one demonstrated defect, control class):** `/apexcurl/`, the V4 HQ launch button measured 38×44 at 390×844 in the GS1 Site census and again on 2026-09-16. Fix: `min-width:44px;min-height:44px` on `.v4-hq-launch`; nothing else in the game moves. After the fix the same probe finds no first-screen target under 44 px on the route. Bounded follow-up batch: the two 12 px footer links (`/apextennis/` "back to Games", `/voxel/` "← Made by Matt · Arcade"; voxel with batch 1b), then the HC5 zoom follow-up on `/neonmeridian/`. The Lessons-owned rows (World Cup trio HOLD, Static, Kids vs Staff) stay with Lessons. PLAYQ1 stays OPEN until every splash batch is verified and this table is complete; no estate-wide claim is made.
+
+## Three derivations of the splash region
+
+The same region is measured three ways, and the numbers disagree **by design**:
+
+| tool | measures | trailing newline |
+|---|---|---|
+| `tools/play_splash_coverage.py` | SHA-256 of the region between the `MBM-MAKER-SPLASH` BEGIN and END markers | **included** |
+| `tools/render_maker_splash.py` | byte length of the same region | **excluded** |
+| `tools/cyberpulse/verify.mjs` (`SPLASH_BYTES`) | byte length of the same region | **excluded** |
+
+Bytes as committed. Both Python tools read with `read_text(encoding='utf-8')` and no
+`newline=`, so text mode normalises CRLF to LF before anything is hashed: a CRLF copy of a
+route produced an identical coverage digest while its raw on-disk bytes differed. The job
+therefore asserts separately, reading in binary, that the stamped routes and the canonical
+source contain no CR. CyberPulse's `SPLASH_BYTES` check and the publication build do notice
+CRLF and go red on it independently.
+
+One known blind spot, measured rather than assumed: the derivation absorbs at most one
+newline after `END -->`, and the stamped routes carry several blank lines there. Deleting
+some of them leaves one for the derivation to absorb, so the digest does not move. Deleting
+every newline after the end marker does move it, and both the coverage check and
+`render_maker_splash.py --check` go red. The region itself cannot change without moving the
+digest; only the whitespace after it has this slack.
+
+Compare a value only against its own tool's `--check`. Never compare a digest from one
+tool with a digest from another, and never recompute one by hand: a value computed any
+other way is not evidence about any of these records. Checking the coverage record:
+
+    python3 tools/play_splash_coverage.py \
+      --catalogue <play build>/games/data/domain-catalogue.json \
+      --site . --lessons <lessons checkout> --check
