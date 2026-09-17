@@ -58,11 +58,42 @@ SUBJECTS = {
 SUBJECT_COUNT = sum(len(v) for v in SUBJECTS.values())
 
 
+class _RecordHops(urllib.request.HTTPRedirectHandler):
+    """urllib follows redirects silently, so the witness only ever saw where it
+    landed, never how. The named www allowance below turns on the SHAPE of the
+    redirect -- one hop, permanent -- so the hops have to be recorded to be
+    asserted. A fetcher that cannot report them yields no hops, and no hops means
+    the allowance is not granted."""
+
+    def __init__(self):
+        super().__init__()
+        self.hops = []
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        self.hops.append((code, newurl))
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
 def fetch(url, timeout=60):
+    recorder = _RecordHops()
+    opener = urllib.request.build_opener(recorder)
     req = urllib.request.Request(url, headers={'User-Agent': 'mbm-serve-witness', 'Cache-Control': 'no-cache'})
-    with urllib.request.urlopen(req, timeout=timeout) as response:
+    with opener.open(req, timeout=timeout) as response:
         final = response.geturl()
-        return response.status, final, response.read()
+        return response.status, final, response.read(), list(recorder.hops)
+
+
+def www_label_only(url, final):
+    """(i) The landed URL differs from the declared one by the www label and nothing
+    else: same scheme, same path, same query, and a host that is exactly the declared
+    host with `www.` in front. Apex -> www only, which is the direction that was
+    measured; www -> apex is a different claim and is not granted here."""
+    a, b = urllib.parse.urlsplit(url), urllib.parse.urlsplit(final)
+    return (a.scheme == b.scheme and a.path == b.path and a.query == b.query
+            and b.netloc.lower() == 'www.' + a.netloc.lower())
+
+
+PERMANENT_REDIRECTS = (301, 308)
 
 
 def witness(kind, publication, fetcher=fetch):
@@ -78,7 +109,11 @@ def witness(kind, publication, fetcher=fetch):
             row.update(verdict='INCONCLUSIVE', reason='artifact lacks the subject file'); rows.append(row); continue
         expected = expected_path.read_bytes()
         try:
-            status, final, served = fetcher(url)
+            fetched = fetcher(url)
+            status, final, served = fetched[0], fetched[1], fetched[2]
+            # A fetcher that cannot report the redirect shape reports none, and no hops
+            # means the www allowance below cannot be satisfied. Unknown is not allowed.
+            hops = list(fetched[3]) if len(fetched) > 3 else []
         except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError) as error:
             row.update(verdict='INCONCLUSIVE', reason='fetch failed: ' + str(error)[:120]); rows.append(row); continue
         row.update(http=status, final_url=final, served_bytes=len(served), expected_bytes=len(expected),
@@ -86,7 +121,26 @@ def witness(kind, publication, fetcher=fetch):
         if status != 200:
             row['verdict'] = 'INCONCLUSIVE'; row['reason'] = 'HTTP ' + str(status)
         elif urllib.parse.urlsplit(final).netloc != urllib.parse.urlsplit(url).netloc:
-            row['verdict'] = 'RED'; row['reason'] = 'served from another origin'
+            # Host equality stays the default. ONE named allowance, and each of its three
+            # legs is asserted separately so a row can never qualify on two of them:
+            #   (i)   the landed host differs from the declared one by the www label alone
+            #   (ii)  exactly one hop, and it is permanent
+            #   (iii) the bytes are byte-identical to the publication artifact
+            # Measured 2026-09-17: madebymatt-play.uk landed on www.madebymatt-play.uk with
+            # identical bytes, which the old rule reported as a foreign origin. Anything
+            # that is not all three legs is still RED, and the reason names the legs that
+            # failed rather than hiding them behind one sentence.
+            legs = {'wwwLabelOnly': www_label_only(url, final),
+                    'singlePermanentHop': len(hops) == 1 and hops[0][0] in PERMANENT_REDIRECTS,
+                    'bytesIdentical': served == expected}
+            row['wwwAllowance'] = legs
+            if all(legs.values()):
+                row['verdict'] = 'MATCH'
+                row['reason'] = 'www host of the declared origin: one permanent hop, bytes identical'
+            else:
+                row['verdict'] = 'RED'
+                row['reason'] = ('served from another origin ('
+                                 + ', '.join(sorted(k for k, v in legs.items() if not v)) + ' not satisfied)')
         elif served != expected:
             row['verdict'] = 'RED'; row['reason'] = 'served bytes differ from the publication artifact'
         else:
@@ -144,6 +198,26 @@ def self_test():
         assert 'landed=' not in summary_line(real['rows'][0]), summary_line(real['rows'][0])
         assert 'landed=https://elsewhere.invalid/x' in summary_line(moved['rows'][0]), summary_line(moved['rows'][0])
         assert moved['rows'][0]['verdict'] == 'RED' and real['rows'][0]['verdict'] == 'MATCH'
+        # The named www allowance, and the ways it must still red. Every leg is asserted
+        # on its own so no row can ever qualify on two of the three.
+        www = EDU.replace('https://', 'https://www.') + '/Matt-s-Apps-/'
+        body = b'<html>real</html>'
+        granted = witness('apps', pub, lambda u: (200, www, body, [(301, www)]))
+        assert granted['verdict'] == 'WITNESSED', granted
+        assert granted['rows'][0]['wwwAllowance'] == {'wwwLabelOnly': True, 'singlePermanentHop': True,
+                                                      'bytesIdentical': True}, granted['rows'][0]
+
+        def leg_failed(result, leg):
+            row = result['rows'][0]
+            return result['verdict'] == 'RED' and row['wwwAllowance'][leg] is False and leg in row['reason']
+
+        assert leg_failed(witness('apps', pub, lambda u: (200, 'https://www.elsewhere.invalid/Matt-s-Apps-/', body, [(301, 'x')])), 'wwwLabelOnly')
+        assert leg_failed(witness('apps', pub, lambda u: (200, www, body, [(301, 'a'), (301, www)])), 'singlePermanentHop')
+        assert leg_failed(witness('apps', pub, lambda u: (200, www, body, [(302, www)])), 'singlePermanentHop')
+        assert leg_failed(witness('apps', pub, lambda u: (200, www, body + b'!', [(301, www)])), 'bytesIdentical')
+        # A fetcher that reports no hops cannot satisfy leg (ii): unknown is not allowed.
+        assert leg_failed(witness('apps', pub, lambda u: (200, www, body)), 'singlePermanentHop')
+
         (root / 'index.html').unlink()
         assert witness('apps', pub, lambda u: served[u])['verdict'] == 'INCONCLUSIVE'
     # Exit codes, asserted on synthetic reports. A witness that exits 0 while a row
@@ -187,7 +261,7 @@ def self_test():
         pass
     assert picked == [1], f'a newer cancelled run masked the older success: picked {picked}'
 
-    print('self-test PASS: real WITNESSED -> planted byte RED -> foreign origin RED -> 404 INCONCLUSIVE -> unreachable INCONCLUSIVE -> restored WITNESSED -> absent subject INCONCLUSIVE -> a redirect is named in the summary, a non-redirect is not -> INCONCLUSIVE exits 2, RED exits 1, RED outranks -> a newer cancelled run does not mask an older success')
+    print('self-test PASS: real WITNESSED -> planted byte RED -> foreign origin RED -> 404 INCONCLUSIVE -> unreachable INCONCLUSIVE -> restored WITNESSED -> absent subject INCONCLUSIVE -> a redirect is named in the summary, a non-redirect is not -> INCONCLUSIVE exits 2, RED exits 1, RED outranks -> a newer cancelled run does not mask an older success -> the www allowance grants only on all three legs, and reds on a foreign domain, a multi-hop chain, a temporary redirect and differing bytes')
 
 
 def exit_code(report):
