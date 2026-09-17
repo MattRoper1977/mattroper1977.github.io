@@ -155,6 +155,11 @@ for(const width of [320,390,768,1280]){
   const mark=page.locator('footer .footer-mark');
   assert.equal(await mark.count(),1,'exactly one footer mark');
   assert.equal(await mark.getAttribute('alt'),'','the footer mark is decorative: the link around it is named by the words beside it');
+  // Scroll to it first. The mark is lazy and the footer is far below the fold on a
+  // 69-game shelf, so whether it had decoded by now depended on where the previous
+  // test left the viewport -- a passing assertion that measured luck.
+  await mark.scrollIntoViewIfNeeded();
+  await mark.evaluate(e=>e.complete?null:new Promise(r=>{e.addEventListener('load',r,{once:true});e.addEventListener('error',r,{once:true});}));
   assert(await mark.evaluate(e=>e.complete&&e.naturalWidth>0),'the footer mark decoded');
   const markBox=await mark.evaluate(e=>{const r=e.getBoundingClientRect();return {w:Math.round(r.width),h:Math.round(r.height),attrW:e.getAttribute('width'),attrH:e.getAttribute('height'),src:e.getAttribute('src')};});
   assert(markBox.attrW&&markBox.attrH,'the footer mark declares its box in the markup, so nothing shifts when it decodes');
@@ -277,4 +282,15 @@ if(g.route.includes('/The_Last_Lighthouse_')){
 }
 await page.screenshot({path:path.join(out,'route-'+g.id+'.jpg'),quality:65});}catch(e){report.routes.push({id:g.id,route:g.route,ready:false,error:e.message});}await ctx.close();}assert(report.routes.every(r=>r.ready),'Some initial game surfaces did not render');return{routes:69,rendered:report.routes.filter(r=>r.ready).length,runtimeErrors:report.routes.filter(r=>r.errors?.length).map(r=>({route:r.route,errors:r.errors}))};});
 await test('accepted-preview-playback-seeking-pause-close',async()=>{const media=data.games.filter(g=>g.media.video);if(!media.length)return{status:'not-run-no-accepted-media',count:0};const proofs=[];for(const width of [390,1280]){const ctx=await browser.newContext({viewport:{width,height:844}}),page=await ctx.newPage();const requests=[];page.on('request',r=>requests.push(r.url()));await page.goto(base);await noMedia(requests);for(const g of media){await page.locator('#query').fill(g.title);await page.locator('#game-grid [data-watch="'+g.id+'"]').click();const v=page.locator('#game-dialog video');await page.waitForFunction(()=>{const v=document.querySelector('#game-dialog video');return v&&!v.paused&&v.currentTime>.5;});const state=await v.evaluate(v=>({duration:v.duration,time:v.currentTime,ready:v.readyState}));assert(state.duration>=12&&state.duration<=25);await v.evaluate(v=>v.currentTime=v.duration/2);await page.waitForFunction(()=>{const v=document.querySelector('video');return v&&v.currentTime>v.duration/2-.5;});await v.evaluate(v=>v.pause());const paused=await v.evaluate(v=>v.currentTime);await pause(200);assert.equal(await v.evaluate(v=>v.currentTime),paused);assert.equal(await page.locator('video').count(),1);await page.locator('#dialog-close').click();assert.equal(await page.locator('video').count(),0);proofs.push({title:g.title,width,...state,seeking:true,paused:true,closedAndStopped:true});}await ctx.close();}return{count:media.length,proofs};});
-await browser.close();report.pass=report.checks.every(c=>c.pass);fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({pass:report.pass,checks:report.checks.map(c=>({name:c.name,pass:c.pass,error:c.error?.split('\n')[0]})),routes:report.routes.length},null,2));if(!report.pass)process.exitCode=1;})();
+await browser.close();report.pass=report.checks.every(c=>c.pass);fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({pass:report.pass,checks:report.checks.map(c=>({name:c.name,pass:c.pass,error:c.error?.split('\n')[0]})),routes:report.routes.length},null,2));
+// Reporting only; the exit code below is unchanged. The JSON above already names
+// every failure, but it lands two thousand lines into the job log, the Actions
+// logs API returns only a job's tail, and the artifact host is unreachable from
+// the agent container -- so a red here could not be read at all without opening
+// a browser. An annotation per failure is readable from the check-run API, and
+// the step summary survives the artifact.
+const failed=report.checks.filter(c=>!c.pass);
+for(const c of failed)console.log('::error title=Play review::'+c.name+' — '+String(c.error||'').split('\n')[0]);
+if(process.env.GITHUB_STEP_SUMMARY){try{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+ '## Play review\n\n'+(failed.length?failed.map(c=>'- **'+c.name+'** — '+String(c.error||'').split('\n')[0]).join('\n'):'All '+report.checks.length+' checks passed.')+'\n');}catch(_){}}
+if(!report.pass)process.exitCode=1;})();
