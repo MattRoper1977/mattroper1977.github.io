@@ -292,11 +292,21 @@ def refresh(output, review=False, source_revisions=None):
     if not review and (brand.get('status') not in {'verified-original', 'user-approved'} or len(clips_by_route) != 6):
         raise ValueError('Play release held: verified approved logo and six accepted fresh clips are required. Use the isolated review entrypoint for unfinished work.')
     logo = ''
+    footer_logo = ''
     if brand.get('status') in {'verified-original', 'user-approved'}:
         source = HERE / brand['file']
         assert hashlib.sha256(source.read_bytes()).hexdigest() == brand['sha256']
         shutil.copyfile(source,assets/source.name)
         logo = '<img src="/assets/play/'+esc(source.name)+'" alt="" width="48" height="48">'
+        # PLAY-D1 footer: the same approved mark closes the page, from the same
+        # verified bytes and the same served URL as the header -- no second asset,
+        # no recolour, no crop. alt="" is the rule, not an oversight: the link it
+        # sits in is named by the words beside it, so naming the image as well
+        # would read the brand to a screen reader twice. width and height are on
+        # the element, so the box is reserved before the JPEG decodes and the
+        # footer does not shift under it.
+        footer_logo = ('<img class="footer-mark" src="/assets/play/'+esc(source.name)
+                       +'" alt="" width="32" height="32" decoding="async" loading="lazy">')
     # PLAY-D2: the approved controller artwork, decorative, placed only at its
     # recorded bytes (hero-art.json binds the served file to Matt's source by
     # digest). Absent record -> no artwork, never a stand-in.
@@ -311,7 +321,7 @@ def refresh(output, review=False, source_revisions=None):
                     +'" decoding="async" fetchpriority="low" data-hero-source="'+esc(hero['sourceSha256'])+'" data-hero-sha="'+esc(hero['sha256'])+'">')
     data = {'counts': counts, 'catalogue': len(games), 'genres': [{'name': g, 'count': genre_counts[g]} for g in genres],
             'series': series, 'games': [slim(r) for r in rows]}
-    substitutions = {'@@LOGO@@':logo, '@@HEROART@@':hero_art, '@@CHIPS@@':chips, '@@GENRES@@':genre_options, '@@FEATURED@@': feature(featured) if featured else '',
+    substitutions = {'@@LOGO@@':logo, '@@FOOTERLOGO@@':footer_logo, '@@HEROART@@':hero_art, '@@CHIPS@@':chips, '@@GENRES@@':genre_options, '@@FEATURED@@': feature(featured) if featured else '',
         '@@COUNT@@': str(len(games)) + ' games', '@@GRID@@': ''.join(cards), '@@CLASSROOM@@': classroom(activities),
         '@@DATA@@':json.dumps(data,ensure_ascii=False).replace('<','\\u003c')}
     for a,b in substitutions.items(): template = template.replace(a,b)

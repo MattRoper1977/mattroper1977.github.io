@@ -1235,6 +1235,24 @@ jobs:
         shell: bash
         run: bash tools/verify_pipe_census_controls.sh
 
+      # FIN1 C. The splash had a control for the STAMP and none for either
+      # RECORD. Three of render_maker_splash.py's four ledger classes assert
+      # that a route deliberately carries no current region, and each costs the
+      # author a reason -- a held route, its digest too. docs/play-q1/
+      # coverage.json, the table splash-region-records.yml gates, is the other:
+      # that workflow runs a --self-test for each of its other two gates and
+      # none for play_splash_coverage.py, the one gate there that actually
+      # reads the regions, whose --owner site narrowing is itself a claim that
+      # needs proving in both directions. Fifteen defects, planted against
+      # synthetic roots so the control is independent of whatever the estate's
+      # own ledger and record say today, each part's clean fixture asserted
+      # green first.
+      - name: Both splash region records still fire - the ledger classes and the coverage table
+        id: s41-splash-region-records
+        if: always()
+        shell: bash
+        run: python3 tools/verify_splash_region_record_controls.py
+
       - name: Aggregate - one failure costs one signal, not the suite
         if: always()
         shell: bash
