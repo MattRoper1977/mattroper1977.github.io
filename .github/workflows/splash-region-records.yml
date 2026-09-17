@@ -100,6 +100,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Pinned 2026-09-17 to b54c9006, the same Lessons commit the job above pins and
+      # the one the current captures were taken from. UNLIKE that job, this pin IS
+      # load-bearing: this job gates the Lessons-owned rows, which are derived from
+      # this checkout, so moving the pin moves what is gated. That is deliberate and
+      # is what "one step behind" means -- the rows are held to a reviewed Lessons
+      # commit, not to whatever Lessons main happens to be mid-flight. It moves when
+      # a Lessons re-stamp is reviewed and the coverage record is rewritten, in the
+      # same change, never on its own.
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
