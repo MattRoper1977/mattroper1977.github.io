@@ -49,6 +49,12 @@ jobs:
           python tools/check_play_q1_readme_digests.py --self-test
           python tools/check_play_q1_readme_digests.py
 
+      - name: The stamped routes and the canonical source are LF
+        run: |
+          set -euo pipefail
+          python tools/check_splash_routes_lf.py --self-test
+          python tools/check_splash_routes_lf.py
+
       - name: docs/play-q1/coverage.json matches its own writer
         run: |
           set -euo pipefail

@@ -143,7 +143,19 @@ The same region is measured three ways, and the numbers disagree **by design**:
 | `tools/render_maker_splash.py` | byte length of the same region | **excluded** |
 | `tools/cyberpulse/verify.mjs` (`SPLASH_BYTES`) | byte length of the same region | **excluded** |
 
-Bytes as committed, no line-ending normalisation.
+Bytes as committed. Both Python tools read with `read_text(encoding='utf-8')` and no
+`newline=`, so text mode normalises CRLF to LF before anything is hashed: a CRLF copy of a
+route produced an identical coverage digest while its raw on-disk bytes differed. The job
+therefore asserts separately, reading in binary, that the stamped routes and the canonical
+source contain no CR. CyberPulse's `SPLASH_BYTES` check and the publication build do notice
+CRLF and go red on it independently.
+
+One known blind spot, measured rather than assumed: the derivation absorbs at most one
+newline after `END -->`, and the stamped routes carry several blank lines there. Deleting
+some of them leaves one for the derivation to absorb, so the digest does not move. Deleting
+every newline after the end marker does move it, and both the coverage check and
+`render_maker_splash.py --check` go red. The region itself cannot change without moving the
+digest; only the whitespace after it has this slack.
 
 Compare a value only against its own tool's `--check`. Never compare a digest from one
 tool with a digest from another, and never recompute one by hand: a value computed any
