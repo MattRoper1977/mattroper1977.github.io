@@ -44,7 +44,7 @@ def select(item, roots, specs=None):
     actual_blob=hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
     if blob!=actual_blob or item['source_sha256']!=sha(raw):raise ValueError('Source checkout differs from its committed blob: '+item['path'])
     matching=[r for r in spec['revisions'] if r['git_blob']==blob and r['source_sha256']==sha(raw)]
-    if len(matching)!=1:raise ValueError('Unreviewed or ambiguous source revision: '+item['path'])
+    if len(matching)!=1:raise ValueError(('Ambiguous source revision (more than one reviewed revision matches this checkout): ' if len(matching)>1 else 'Unreviewed source revision: ')+item['path'])
     revision=matching[0]
     return {'id':revision['id'],'reviewed_commit':revision['reviewed_commit'],'release_head':head,'git_blob':blob,'source_sha256':sha(raw),'published_sha256':revision['published_sha256']}
 
