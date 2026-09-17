@@ -1,0 +1,57 @@
+# The generated splash region is pinned by several records. Most are checked by a gate
+# that already exists: the 14 route files and data/hud-coverage.json by
+# render_maker_splash.py --check, CyberPulse's SPLASH_BYTES by cyberpulse-verify, and the
+# Play evidence chain by the publication build.
+#
+# docs/play-q1/coverage.json had no check at all. It went stale at 7b0ce2d, which
+# re-stamped the 14 route files without re-running its writer, and nothing reported it.
+# docs/play-q1/README.md restated the same digest by hand and went stale with it.
+#
+# Deliberately UNCONDITIONAL: no path filter. A path-filtered check reports on nothing
+# when the paths are untouched, so if it is ever made required it blocks every unrelated
+# pull request on a check that will never run. It is cheap; it runs on everything.
+name: Splash region records
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  records-current:
+    name: splash-region records current
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: b54c9006e311f151ee53fe268846fab12fbc3e44
+          path: _lessons
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+
+      # The coverage writer reads the built catalogue, so the Play publication is
+      # assembled first. This is the same build the publication gates use.
+      - name: Assemble the Play catalogue the coverage writer reads
+        run: |
+          set -euo pipefail
+          python domain-split/play/prepare.py --lessons _lessons --output .play-review/output
+
+      - name: The README states no digest and no byte count
+        run: |
+          set -euo pipefail
+          python tools/check_play_q1_readme_digests.py --self-test
+          python tools/check_play_q1_readme_digests.py
+
+      - name: docs/play-q1/coverage.json matches its own writer
+        run: |
+          set -euo pipefail
+          python tools/play_splash_coverage.py \
+            --catalogue .play-review/output/games/data/domain-catalogue.json \
+            --site . --lessons _lessons --check

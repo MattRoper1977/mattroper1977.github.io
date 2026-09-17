@@ -30,6 +30,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--catalogue', type=Path, required=True); ap.add_argument('--site', type=Path, required=True)
     ap.add_argument('--lessons', type=Path, required=True); ap.add_argument('--write', type=Path)
+    ap.add_argument('--check', action='store_true',
+                    help='regenerate in memory and compare with the committed record; write nothing')
     a = ap.parse_args()
     cat = json.loads(a.catalogue.read_text())
     routes = [(g['route'], 'game', g.get('title', '')) for g in cat['games']] + [(x['route'], 'activity', x.get('title', '')) for x in cat.get('activities', [])]
@@ -71,6 +73,43 @@ def main() -> int:
         summary['byFamily'][r['family']] = summary['byFamily'].get(r['family'], 0) + 1
         summary['byOwner'][r['owner']] = summary['byOwner'].get(r['owner'], 0) + 1
     out = {'schema': 1, 'summary': summary, 'rows': rows}
+    if a.check:
+        # Compare against the committed record. Writes nothing. The derivation is stated
+        # in the failure so nobody re-implements it: a hand-computed digest is not
+        # evidence about this file, and comparing it with render_maker_splash.py's byte
+        # count or CyberPulse's SPLASH_BYTES is comparing two different measurements.
+        record = a.site / 'docs/play-q1/coverage.json'
+        if not record.is_file():
+            print('MISSING ' + str(record)); return 1
+        have = json.loads(record.read_text())
+        problems = []
+        hs, ws = have.get('summary', {}), out['summary']
+        for key in sorted(set(hs) | set(ws)):
+            if hs.get(key) != ws.get(key):
+                problems.append(('summary.' + key, hs.get(key), ws.get(key)))
+        hr = {r.get('route'): r for r in have.get('rows', [])}
+        wr = {r.get('route'): r for r in out['rows']}
+        for route in sorted(set(hr) | set(wr)):
+            if route not in hr: problems.append(('rows[' + route + ']', '(absent)', 'present')); continue
+            if route not in wr: problems.append(('rows[' + route + ']', 'present', '(absent)')); continue
+            for key in sorted(set(hr[route]) | set(wr[route])):
+                if hr[route].get(key) != wr[route].get(key):
+                    problems.append(('rows[' + route + '].' + key, hr[route].get(key), wr[route].get(key)))
+        if problems:
+            print('STALE docs/play-q1/coverage.json -- %d field(s) differ from this writer' % len(problems))
+            print('derivation: SHA-256 of the region between the MBM-MAKER-SPLASH BEGIN and END')
+            print('            markers, INCLUDING its trailing newline, bytes exactly as committed.')
+            print('            render_maker_splash.py and CyberPulse SPLASH_BYTES EXCLUDE that')
+            print('            newline and are byte counts, so their values never match this one.')
+            for field, committed, derived in problems[:40]:
+                print('  %-34s committed=%s  writer=%s' % (field, committed, derived))
+            if len(problems) > 40: print('  ... and %d more' % (len(problems) - 40))
+            print('regenerate with the same command, replacing --check with')
+            print('  --write docs/play-q1/coverage.json')
+            return 1
+        print('docs/play-q1/coverage.json is current -- %d rows, region %s'
+              % (len(out['rows']), ws['generatorRegionSha256']))
+        return 0
     if a.write:
         a.write.parent.mkdir(parents=True, exist_ok=True); a.write.write_text(json.dumps(out, indent=1) + '\n')
     print(json.dumps(summary, indent=1))
