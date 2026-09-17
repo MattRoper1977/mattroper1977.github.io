@@ -279,13 +279,82 @@ def part_b() -> int:
     return 1 if failures else 0
 
 
-def main() -> int:
-    print("== the ledger's record classes ==")
-    a = part_a()
+def part_c() -> int:
+    """The Lessons-owned coverage rows, gated one step behind the Site's.
+
+    The Site job deliberately gates only its own rows, so a Lessons re-stamp went
+    unchecked entirely -- its own note said how they get gated is ruled after that
+    re-stamp lands. This is that gate, and these are its controls. The canonical red
+    is the one the note describes: a route re-stamped without re-running the writer.
+    """
+    failures: list[str] = []
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        build_coverage_fixture(tmp)
+        site_page = tmp / "site/fixturegame/index.html"
+        lessons_page = tmp / "lessons/Games/Fixture_Shelf.html"
+        snapshot = {q: q.read_text(encoding="utf-8") for q in (site_page, lessons_page)}
+
+        def drift(path: Path) -> None:
+            text = path.read_text(encoding="utf-8")
+            path.write_text(text.replace("<!-- MBM-MAKER-SPLASH:END -->",
+                                         "<!-- x --><!-- MBM-MAKER-SPLASH:END -->", 1), encoding="utf-8")
+
+        baseline = coverage_run(tmp, "--check", "--owner", "lessons")
+        if baseline.returncode != 0:
+            print(baseline.stdout + baseline.stderr)
+            print("FAIL clean fixture: the Lessons-owned scope reds on a freshly written record")
+            return 1
+        print("PASS clean: the freshly written coverage record matches its own writer")
+
+        def case(name: str, mutate, *args: str, expect_red: bool = True) -> None:
+            mutate()
+            result = coverage_run(tmp, "--check", *args)
+            red = result.returncode != 0
+            if red != expect_red:
+                failures.append(name)
+                print("FAIL " + name)
+                print(result.stdout + result.stderr)
+            else:
+                print(f"PASS {name} (gate exit {result.returncode})")
+            for path, text in snapshot.items():
+                path.write_text(text, encoding="utf-8")
+
+        # The canonical red: a Lessons route re-stamped without re-running the writer.
+        case("a Lessons route re-stamped without running the writer is caught",
+             lambda: drift(lessons_page), "--owner", "lessons")
+        # The mirror of the Site job's own claim, so neither estate reds for the other.
+        case("a Site-side drift does not red the Lessons-owned scope",
+             lambda: drift(site_page), "--owner", "lessons", expect_red=False)
+        case("the same Site-side drift does red the Site-owned scope",
+             lambda: drift(site_page), "--owner", "site")
+
     print("")
-    print("== the derived coverage record ==")
-    b = part_b()
-    return 1 if (a or b) else 0
+    print(f"{3 - len(failures)} of 3 Lessons-row controls fired as expected; clean fixture green")
+    for name in failures:
+        print("  WRONG VERDICT  " + name)
+    return 1 if failures else 0
+
+
+def main() -> int:
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--only", choices=("all", "ledger", "coverage", "lessons"), default="all",
+                    help="run one part; the workflow registers the Lessons rows as their own control")
+    args = ap.parse_args()
+    bad = 0
+    if args.only in ("all", "ledger"):
+        print("== the ledger's record classes ==")
+        bad |= part_a()
+        print("")
+    if args.only in ("all", "coverage"):
+        print("== the derived coverage record ==")
+        bad |= part_b()
+        print("")
+    if args.only in ("all", "lessons"):
+        print("== the Lessons-owned coverage rows ==")
+        bad |= part_c()
+    return 1 if bad else 0
 
 
 if __name__ == "__main__":

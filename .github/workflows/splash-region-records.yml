@@ -84,3 +84,45 @@ jobs:
           python tools/play_splash_coverage.py \
             --catalogue .play-review/output/games/data/domain-catalogue.json \
             --site . --lessons .sources/Lessons --check --owner site
+
+  # The Lessons-owned rows, one step behind, in their OWN job. Not folded into the
+  # job above: that one gates the 35 rows this repository owns and can re-stamp, and
+  # its note said how the other 33 get gated is ruled once the Lessons re-stamp
+  # lands. This is that gate. It reads the same writer with --owner lessons against
+  # the same pinned Lessons checkout, so it lags deliberately -- a Lessons change is
+  # caught here without either estate reddening for a change it cannot fix.
+  #
+  # Deliberately UNCONDITIONAL, like the job above, and deliberately NOT required:
+  # nothing here changes any repository setting, and a new job is non-required until
+  # somebody makes it one.
+  records-current-lessons:
+    name: splash-region records current (Lessons-owned rows)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Lessons
+          ref: b54c9006e311f151ee53fe268846fab12fbc3e44
+          path: .sources/Lessons
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install lxml==6.0.1
+
+      - name: Assemble the Play catalogue the coverage writer reads
+        run: |
+          set -euo pipefail
+          python domain-split/play/prepare.py --lessons .sources/Lessons --output .play-review/output
+
+      - name: The stamped routes and the canonical source are LF
+        run: |
+          set -euo pipefail
+          python tools/check_splash_routes_lf.py --self-test
+          python tools/check_splash_routes_lf.py
+
+      - name: docs/play-q1/coverage.json matches its own writer (Lessons-owned rows)
+        run: |
+          set -euo pipefail
+          python tools/play_splash_coverage.py \
+            --catalogue .play-review/output/games/data/domain-catalogue.json \
+            --site . --lessons .sources/Lessons --check --owner lessons
