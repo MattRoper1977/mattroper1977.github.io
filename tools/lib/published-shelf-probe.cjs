@@ -114,12 +114,24 @@ function expectedCards(games) {
   }
   return [...groups.values()];
 }
-function ux2Cards(actual, groups, label) {
+// `match`, when given, is the predicate for the filter that is currently active on the page.
+// play.js:80 defines active() over q/mood/genre/control/mode/list, and play.js:105-119 then
+// renders a series card from the FIRST edition that matches, not from its unfiltered lead:
+//   :109  // A series card must launch a matching edition, not its unfiltered lead.
+//   :110  const g = hits[0], ...
+//   :112  ...card-title.textContent = active() ? title(g) : (g.series || title(g));
+//   :119  ....card-meta.innerHTML = '<span class="chip">' + esc(g.genre) + '</span>' + ...
+// play.js:13's title() is `g => g.displayTitle || g.title`, i.e. this file's shownTitle().
+// So filtered expects the matching edition's own title, unfiltered expects the series name.
+// Passing no `match` keeps the previous behaviour exactly, which is what every unfiltered
+// call site and both offline series controls rely on.
+function ux2Cards(actual, groups, label, match) {
   members(actual.map(c => c.id), groups.map(g => g[0].id), label);
   for (const card of actual) {
     const editions = groups.find(g => g[0].id === card.id), lead = editions[0];
-    assert.equal(card.title, lead.series || shownTitle(lead), `${label}: card title`);
-    assert.equal(card.genre, lead.genre, `${label}: card genre`);
+    const shown = match ? (editions.filter(match)[0] || lead) : lead;
+    assert.equal(card.title, match ? shownTitle(shown) : (lead.series || shownTitle(lead)), `${label}: card title`);
+    assert.equal(card.genre, shown.genre, `${label}: card genre`);
     members(card.ids, editions.map(g => g.id), `${label}: edition identities`);
     members(card.links.map(a => route(a.href)), editions.map(g => route(g.route)), `${label}: all edition links`);
     for (const link of card.links) {
@@ -233,7 +245,7 @@ async function verify({ href }) {
           genres, 'Genre controls');
         for (const genre of genres) {
           await page.locator('#genre').selectOption(genre);
-          ux2Cards(await readUx2Cards(page, true), groups.filter(gs => gs.some(g => g.genre === genre)), 'Genre results');
+          ux2Cards(await readUx2Cards(page, true), groups.filter(gs => gs.some(g => g.genre === genre)), 'Genre results', g => g.genre === genre);
           await checkCount(games.filter(g => g.genre === genre).length); await classroomRows(page, activities);
         }
         // The empty "All genres" option is how the drawer clears a genre.
@@ -255,7 +267,7 @@ async function verify({ href }) {
         for (const mood of moods) {
           const inMood = g => (g.moods || []).includes(mood);
           await page.locator('[data-chip="mood"][data-mood="' + mood + '"]').click();
-          ux2Cards(await readUx2Cards(page, true), groups.filter(gs => gs.some(inMood)), 'Mood results');
+          ux2Cards(await readUx2Cards(page, true), groups.filter(gs => gs.some(inMood)), 'Mood results', inMood);
           await checkCount(games.filter(inMood).length); await classroomRows(page, activities);
         }
         await page.locator('[data-chip="all"]').click(); await checkCount(total, false);
@@ -268,7 +280,7 @@ async function verify({ href }) {
         const words = normalize(selected.title).split(/\s+/).filter(Boolean);
         const hits = games.filter(g => words.every(w => normalize([g.title,g.displayTitle || '',g.series || '',g.description].join(' ')).includes(w)));
         await page.locator('#query').fill(selected.title);
-        ux2Cards(await readUx2Cards(page, true), groups.filter(gs => gs.some(g => hits.includes(g))), 'Search results');
+        ux2Cards(await readUx2Cards(page, true), groups.filter(gs => gs.some(g => hits.includes(g))), 'Search results', g => hits.includes(g));
         assert(hits.some(g => route(g.route) === target), 'Search lost selected game'); await checkCount(hits.length);
         await page.locator('#query').fill('mbm-no-such-game-verification');
         assert.equal(await page.locator('#game-grid > .game-card:visible').count(), 0, 'Nonmatching search is not empty');
