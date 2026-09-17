@@ -146,7 +146,65 @@ def self_test():
         assert moved['rows'][0]['verdict'] == 'RED' and real['rows'][0]['verdict'] == 'MATCH'
         (root / 'index.html').unlink()
         assert witness('apps', pub, lambda u: served[u])['verdict'] == 'INCONCLUSIVE'
-    print('self-test PASS: real WITNESSED -> planted byte RED -> foreign origin RED -> 404 INCONCLUSIVE -> unreachable INCONCLUSIVE -> restored WITNESSED -> absent subject INCONCLUSIVE -> a redirect is named in the summary, a non-redirect is not')
+    # Exit codes, asserted on synthetic reports. A witness that exits 0 while a row
+    # says INCONCLUSIVE is the failure mode this suite exists to prevent.
+    def report_of(*verdicts):
+        return {'repositories': {str(i): {'verdict': v} for i, v in enumerate(verdicts)}}
+    assert exit_code(report_of('WITNESSED', 'WITNESSED')) == 0, 'all witnessed must exit 0'
+    assert exit_code(report_of('WITNESSED', 'INCONCLUSIVE')) == 2, 'an INCONCLUSIVE row must exit 2'
+    assert exit_code(report_of('WITNESSED', 'RED')) == 1, 'a RED row must exit 1'
+    assert exit_code(report_of('INCONCLUSIVE', 'RED')) == 1, 'RED outranks INCONCLUSIVE'
+
+    # A newer failed run must not mask an older success for the same source.
+    picked = []
+
+    class _Github:
+        deadline = float('inf')
+
+        def __init__(self, runs):
+            self.runs = runs
+
+        def read(self, path, raw=False):
+            if '/runs?' in path:
+                return {'workflow_runs': self.runs}
+            if path.endswith('/jobs?per_page=100'):
+                return {'jobs': [{'name': 'deploy', 'conclusion': 'success'}]}
+            if '/artifacts?' in path:
+                # prepare_one has committed to a run by the time it asks for its
+                # artifacts, so the id in this path IS the selection under test.
+                picked.append(int(path.split('/actions/runs/')[1].split('/')[0]))
+                raise pa.Inconclusive('stop after selection')
+            raise AssertionError('unexpected read: ' + path)
+
+    sha = 'c' * 40
+    newest_failed = {'id': 2, 'head_sha': sha, 'head_branch': 'main', 'event': 'push',
+                     'status': 'completed', 'conclusion': 'cancelled', 'html_url': 'u2'}
+    older_success = {'id': 1, 'head_sha': sha, 'head_branch': 'main', 'event': 'push',
+                     'status': 'completed', 'conclusion': 'success', 'html_url': 'u1'}
+    try:
+        pa.prepare_one('apps', sha, Path(tempfile.gettempdir()) / 'unused', _Github([newest_failed, older_success]))
+    except pa.Inconclusive:
+        pass
+    assert picked == [1], f'a newer cancelled run masked the older success: picked {picked}'
+
+    print('self-test PASS: real WITNESSED -> planted byte RED -> foreign origin RED -> 404 INCONCLUSIVE -> unreachable INCONCLUSIVE -> restored WITNESSED -> absent subject INCONCLUSIVE -> a redirect is named in the summary, a non-redirect is not -> INCONCLUSIVE exits 2, RED exits 1, RED outranks -> a newer cancelled run does not mask an older success')
+
+
+def exit_code(report):
+    """RED and INCONCLUSIVE are different failures and must not share a code.
+
+    This returned 0 unless some row was RED, so a run where nothing could be
+    measured at all reported success. It did exactly that on 2026-09-17: two of
+    four publications INCONCLUSIVE, exit 0, and the run read as green. A witness
+    that cannot see is not a witness that agrees. RED wins over INCONCLUSIVE
+    because a proven mismatch is the more urgent fact.
+    """
+    verdicts = [r['verdict'] for r in report['repositories'].values()]
+    if 'RED' in verdicts:
+        return 1
+    if 'INCONCLUSIVE' in verdicts:
+        return 2
+    return 0
 
 
 def main():
@@ -179,7 +237,7 @@ def main():
                 print(summary_line(row), flush=True)
     (args.output / 'serve-witness.json').write_text(json.dumps(report, indent=2) + '\n')
     print(f"SERVE WITNESS: byte-witnessed {report['witnessed']}/4 publications; {SUBJECT_COUNT} subjects; report {args.output / 'serve-witness.json'}")
-    return 0 if all(r['verdict'] != 'RED' for r in report['repositories'].values()) else 1
+    return exit_code(report)
 
 
 if __name__ == '__main__':
