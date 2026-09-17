@@ -101,6 +101,23 @@ def witness(kind, publication, fetcher=fetch):
             'subjects': len(rows), 'matched': verdicts.count('MATCH'), 'rows': rows}
 
 
+def summary_line(row):
+    """One subject's line. FIN1 F, reporting only: verdicts and exit codes are
+    unchanged. The Play rows have been RED as "served from another origin" since
+    2026-09-14 with served and expected bytes IDENTICAL, so the one fact that
+    decides whether that is a benign apex-to-host redirect or a genuinely wrong
+    origin is the final URL -- which the row has carried in the JSON all along and
+    the summary never printed. The agent container cannot reach either origin, so
+    the instrument has to say it: a gate that reds without naming what it measured
+    sends its reader to an artifact they may not be able to open."""
+    landed = row.get('final_url')
+    where = f"  landed={landed}" if landed and landed != row['url'] else ''
+    return (f"    {row['verdict']:12s} {row['url']}  http={row.get('http')}"
+            f"  served={row.get('served_bytes')}B/{str(row.get('served_sha256', ''))[:8]}"
+            f"  expected={row.get('expected_bytes')}B/{str(row.get('expected_sha256', ''))[:8]}"
+            f"{where}  {row.get('reason', '')}")
+
+
 def self_test():
     """The instrument must go red on one planted byte and green again when it is removed."""
     import tempfile
@@ -120,9 +137,16 @@ def self_test():
         assert witness('apps', pub, boom)['verdict'] == 'INCONCLUSIVE'
         restored = witness('apps', pub, lambda u: served[u])
         assert restored['verdict'] == 'WITNESSED'
+        # The redirect the summary has to name. Same URL in and out -> no landed=;
+        # a different final URL -> landed= carries it, and the verdict is untouched
+        # either way. Without both halves the report could be blank on exactly the
+        # RED it exists to explain.
+        assert 'landed=' not in summary_line(real['rows'][0]), summary_line(real['rows'][0])
+        assert 'landed=https://elsewhere.invalid/x' in summary_line(moved['rows'][0]), summary_line(moved['rows'][0])
+        assert moved['rows'][0]['verdict'] == 'RED' and real['rows'][0]['verdict'] == 'MATCH'
         (root / 'index.html').unlink()
         assert witness('apps', pub, lambda u: served[u])['verdict'] == 'INCONCLUSIVE'
-    print('self-test PASS: real WITNESSED -> planted byte RED -> foreign origin RED -> 404 INCONCLUSIVE -> unreachable INCONCLUSIVE -> restored WITNESSED -> absent subject INCONCLUSIVE')
+    print('self-test PASS: real WITNESSED -> planted byte RED -> foreign origin RED -> 404 INCONCLUSIVE -> unreachable INCONCLUSIVE -> restored WITNESSED -> absent subject INCONCLUSIVE -> a redirect is named in the summary, a non-redirect is not')
 
 
 def main():
@@ -152,7 +176,7 @@ def main():
         print(f"{kind:8s} {result['verdict']:12s} {result['matched']}/{result['subjects']} subjects  main {wanted[:8]}  {result.get('reason', '')}", flush=True)
         for row in result.get('rows', []):
             if row['verdict'] != 'MATCH':   # every non-match names itself in the log, not only in the artifact
-                print(f"    {row['verdict']:12s} {row['url']}  http={row.get('http')}  served={row.get('served_bytes')}B/{str(row.get('served_sha256', ''))[:8]}  expected={row.get('expected_bytes')}B/{str(row.get('expected_sha256', ''))[:8]}  {row.get('reason', '')}", flush=True)
+                print(summary_line(row), flush=True)
     (args.output / 'serve-witness.json').write_text(json.dumps(report, indent=2) + '\n')
     print(f"SERVE WITNESS: byte-witnessed {report['witnessed']}/4 publications; {SUBJECT_COUNT} subjects; report {args.output / 'serve-witness.json'}")
     return 0 if all(r['verdict'] != 'RED' for r in report['repositories'].values()) else 1
