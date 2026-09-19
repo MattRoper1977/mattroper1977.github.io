@@ -42,25 +42,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          # Re-pinned 2026-09-19 (ORDER SX3-PASSES): CARRIER PIN MOVE under release-red
-          # precedence. This fallback is what a SITE-triggered publication builds, and it
-          # had been left at b54c9006 while Site #408 re-froze check_education_separation
-          # .py's baseline_sha to d0dc6b3e. b54c9006 produces ec7dc075, so the Site's own
-          # main push went red at step 9 -- run 35445543208 on Site main 0cd8f842 -- and
-          # Lessons FieldOps P2 followed it, its serve proof reporting
-          # "[RED] site: exact-source publication 35445543208 failed".
-          # Pinned to Lessons main eab8daaf, the SX3 release head, which produces
-          # d0dc6b3e. Derived with rev-parse, never transcribed.
-          # domain-split-verify.yml pins 4506bb96, the same content one commit earlier:
-          # the commit between them touches three files, all in the LESSONS
-          # repository and named repo-qualified here because none of them exists in
-          # this one -- Lessons/.github/workflows/education-pages.yml,
-          # Lessons/tools/verify_cross_estate_unification.py and
-          # Lessons/tools/catalogue/STATIC_CHECK_RESULTS.json. None appears in the
-          # 4036-entry all-file admission registry, so both pins build identical
-          # education trees and agree on d0dc6b3e. PASS 6 aligns them on one SHA.
-          # The Lessons caller uses its current commit so lesson work stays live.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || 'eab8daaf08848c4468e3dcee6d4beeb2fc4f5e72' }}
+          # CARRIER PIN, moved 2026-09-19 by ORDER SX3-PASSES PASS 4 (3b). This
+          # fallback is what a SITE-triggered publication builds from; the Lessons
+          # caller instead uses its own current commit so lesson work stays live.
+          # It was last at eab8daaf, the SX3 release head. 3b adds the three Science
+          # pathway landing pages, so the published bytes move: those three, plus
+          # resources.json, lesson-order.json and the Site tree's domain-catalogue
+          # .json and resource-discovery.json, are admitted by the seven registry
+          # entries in this same PR. domain-split-verify.yml is moved to the SAME
+          # head here, so the two pins are aligned and PASS 6 has nothing left to
+          # align. Pinned below, derived with ls-remote against the ref, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || 'b026a2f4bc8208de8d6dee930c37a0e4d801c9c3' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
