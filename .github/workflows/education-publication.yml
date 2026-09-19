@@ -52,11 +52,13 @@ jobs:
           # Pinned to Lessons main eab8daaf, the SX3 release head, which produces
           # d0dc6b3e. Derived with rev-parse, never transcribed.
           # domain-split-verify.yml pins 4506bb96, the same content one commit earlier:
-          # the commit between them touches three files -- education-pages.yml,
-          # tools/verify_cross_estate_unification.py and
-          # tools/catalogue/STATIC_CHECK_RESULTS.json -- none of which appears in the
-          # 4036-entry all-file admission registry, so both build identical education
-          # trees and agree on d0dc6b3e. PASS 6 aligns the two pins on the same SHA.
+          # the commit between them touches three files, all in the LESSONS
+          # repository and named repo-qualified here because none of them exists in
+          # this one -- Lessons/.github/workflows/education-pages.yml,
+          # Lessons/tools/verify_cross_estate_unification.py and
+          # Lessons/tools/catalogue/STATIC_CHECK_RESULTS.json. None appears in the
+          # 4036-entry all-file admission registry, so both pins build identical
+          # education trees and agree on d0dc6b3e. PASS 6 aligns them on one SHA.
           # The Lessons caller uses its current commit so lesson work stays live.
           ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || 'eab8daaf08848c4468e3dcee6d4beeb2fc4f5e72' }}
           path: .sources/Lessons
