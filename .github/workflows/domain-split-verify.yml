@@ -59,7 +59,14 @@ jobs:
           # reviewed evidence re-stamp. (tools/census_typed_literals.py reads a
           # 12-line window above the literal, so the naming line belongs here
           # rather than only at the top of this block.)
-          ref: 124f513b34837dc27157b275aef6c544748b9355
+          # Moved 2026-09-19 (ORDER FINISH S4, PASS 6) with education-publication.yml's
+          # fallback to the SAME head: Lessons b32bf1c7, the #594 carrier re-cut, HELD
+          # EQUAL TO LESSONS MAIN. tools/lessons_pin_lag_control.py now measures that
+          # claim for every Lessons pin in this repository (13 found, not six), and is
+          # RED when an EQUAL-declared pin lags a published path: at the move, 2
+          # commits behind main 545d9e8b by SHA, 0 published paths moved. Pinned below,
+          # derived with git log --grep '(#594)' against origin/main, never typed.
+          ref: b32bf1c71f37b1345c4085a6a6c3b182ee85fde0
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4

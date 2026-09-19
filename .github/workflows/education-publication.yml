@@ -53,7 +53,14 @@ jobs:
           # head here. Both pins are HELD EQUAL TO LESSONS MAIN, which now carries
           # the merged 3b (#593). Pinned below, derived with ls-remote against the
           # ref, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '124f513b34837dc27157b275aef6c544748b9355' }}
+          # Moved 2026-09-19 (ORDER FINISH S4, PASS 6): the sixth-pin discharge. Pinned to
+          # Lessons b32bf1c7, the #594 head (the 3b carrier re-cut that resolved the
+          # resource-sizes STOP-R), HELD EQUAL TO LESSONS MAIN. Measured at the move by
+          # tools/lessons_pin_lag_control.py against Lessons main 545d9e8b: 2 commits
+          # behind by SHA (#590 records, #591 toolchain), 0 published paths moved, so
+          # the site-triggered and Lessons-triggered publishers build the same bytes.
+          # Derived with git log --grep '(#594)' against origin/main, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || 'b32bf1c71f37b1345c4085a6a6c3b182ee85fde0' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
