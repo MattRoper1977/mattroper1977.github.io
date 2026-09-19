@@ -41,9 +41,12 @@ jobs:
           # would have loosened it permanently, because this pin is fixed and
           # the disagreement never collapses on its own.
           #
-          # This is the Lessons #581 head EXACTLY as it merges, carrier pin move
-          # included, so the pin cannot drift on day one. Derived from the branch
-          # with rev-parse, never transcribed.
+          # The Lessons #581 head carrying the reviewed evidence re-stamp. That
+          # re-stamp is what this pin move made necessary AND possible to see:
+          # step 22 runs the Lessons check_catalogue_static.py against this
+          # checkout, and at b54c9006 it never saw the release's bytes, so a
+          # breach already on Lessons main (20 of 875 hashed entries) went
+          # unreported. Derived with rev-parse, never transcribed.
           #
           # FIVE further Lessons pins in this repository still sit on b54c9006
           # and are NOT moved here: education-publication.yml's own fallback
@@ -51,7 +54,7 @@ jobs:
           # published-completion-verify.yml and splash-region-records.yml twice.
           # That is why the admission registry keeps its transition pairs rather
           # than collapsing to single digests.
-          ref: 7fc01bc63cf92350a685219a39d805f0db687711
+          ref: 4506bb96de39b44f878b2a860b9885b55500adb4
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
