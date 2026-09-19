@@ -41,13 +41,9 @@ jobs:
           # would have loosened it permanently, because this pin is fixed and
           # the disagreement never collapses on its own.
           #
-          # ba59d89c is the Lessons #581 head this release lands. The carrier
-          # pin move that follows it adds one further Lessons commit, which
-          # cannot change what this job builds: the published education tree
-          # carries 0 of 3723 files from .github/, and neither file that commit
-          # touches (.github/workflows/education-pages.yml,
-          # tools/verify_cross_estate_unification.py) is in the tree. Measured,
-          # not assumed.
+          # This is the Lessons #581 head EXACTLY as it merges, carrier pin move
+          # included, so the pin cannot drift on day one. Derived from the branch
+          # with rev-parse, never transcribed.
           #
           # FIVE further Lessons pins in this repository still sit on b54c9006
           # and are NOT moved here: education-publication.yml's own fallback
@@ -55,7 +51,7 @@ jobs:
           # published-completion-verify.yml and splash-region-records.yml twice.
           # That is why the admission registry keeps its transition pairs rather
           # than collapsing to single digests.
-          ref: ba59d89cacd05b0f59ee307612f4bbde3a1cff1c
+          ref: 7fc01bc63cf92350a685219a39d805f0db687711
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
