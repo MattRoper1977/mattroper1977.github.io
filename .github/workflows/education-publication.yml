@@ -50,9 +50,10 @@ jobs:
           # resources.json, lesson-order.json and the Site tree's domain-catalogue
           # .json and resource-discovery.json, are admitted by the seven registry
           # entries in this same PR. domain-split-verify.yml is moved to the SAME
-          # head here, so the two pins are aligned and PASS 6 has nothing left to
-          # align. Pinned below, derived with ls-remote against the ref, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '353c5090444e8dc94322bf5d8300c14f53dd629b' }}
+          # head here. Both pins are HELD EQUAL TO LESSONS MAIN, which now carries
+          # the merged 3b (#593). Pinned below, derived with ls-remote against the
+          # ref, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '124f513b34837dc27157b275aef6c544748b9355' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
