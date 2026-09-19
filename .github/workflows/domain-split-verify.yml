@@ -27,14 +27,35 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          # Pinned 2026-09-16 (CX2 §7.1 PLAY-Q1 batch 2): Lessons main after #557
-          # (the seven Lessons canon routes re-stamped), on top of the EDU-Q1
-          # companion-pack rows (#551), the catalogue-controls fix (#553, which
-          # changes only the controls this job runs below) and the main-watch
-          # trigger-list fix (#554). Held EQUAL to Lessons main so the
-          # site-triggered and Lessons-triggered publishers build the same
-          # bytes; when they disagree, the origin serves whichever published last.
-          ref: b54c9006e311f151ee53fe268846fab12fbc3e44
+          # Re-pinned 2026-09-19 (ORDER SX3-PASSES): BUILDER-PIN MOVE under
+          # release-red precedence, named as such. This pin is documented above
+          # as held EQUAL to Lessons main so the site-triggered and
+          # Lessons-triggered publishers build the same bytes -- and it had
+          # drifted from that invariant, b54c9006 against a main many releases
+          # ahead. The drift is not cosmetic: check_education_separation.py
+          # holds ONE baseline_sha for the retained usage registry, this job
+          # built b54c9006 (retained digest ec7dc075) while the publication
+          # carrier built main (d0dc6b3e after this release), and no single
+          # value satisfies both. Moving the pin restores the stated invariant
+          # and keeps baseline_sha single-valued; widening the fence to a set
+          # would have loosened it permanently, because this pin is fixed and
+          # the disagreement never collapses on its own.
+          #
+          # ba59d89c is the Lessons #581 head this release lands. The carrier
+          # pin move that follows it adds one further Lessons commit, which
+          # cannot change what this job builds: the published education tree
+          # carries 0 of 3723 files from .github/, and neither file that commit
+          # touches (.github/workflows/education-pages.yml,
+          # tools/verify_cross_estate_unification.py) is in the tree. Measured,
+          # not assumed.
+          #
+          # FIVE further Lessons pins in this repository still sit on b54c9006
+          # and are NOT moved here: education-publication.yml's own fallback
+          # (which agx1-live-verify.yml reads), play-discovery-verify.yml,
+          # published-completion-verify.yml and splash-region-records.yml twice.
+          # That is why the admission registry keeps its transition pairs rather
+          # than collapsing to single digests.
+          ref: ba59d89cacd05b0f59ee307612f4bbde3a1cff1c
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
