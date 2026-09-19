@@ -133,7 +133,17 @@ def registry_errors(output):
     # existing record changes in one field — the Sugar lesson's title after its
     # public-surface hygiene sweep (Lessons #547). Same digest the Lessons carrier
     # records for that state.
-    baseline_sha = 'ec7dc0754029e00146e4314d57b5a4ed6beec71c7a6cf6413d50c31d045e4de7'
+    # Re-frozen 19 September (ORDER SX3-PASSES, PASS 2): the Lessons pin moves to the
+    # main that carries the SX3 science release -- 36 landed decks across BUILD, GROW
+    # and LAUNCH, and the catalogue titles realigned to each deck's own <h1> under
+    # ORDER SX3-S2 Option 1. Proved by diffing registry_partition() output between the
+    # pre-release tree (Lessons 55bff167, which reproduces ec7dc075 exactly, 977 rows)
+    # and the release build: 977 -> 977 retained rows, 0 joined, 0 removed, and 17
+    # existing records change in exactly ONE field -- the title. No route, resource_id,
+    # kind, event type, alias or source id moves. The 17 are the same 17 the catalogue
+    # realigned, so this fence moved because the reviewed titles moved and for no other
+    # reason. This is why it moves with the Lessons pin lines.
+    baseline_sha = 'd0dc6b3e9f5709f7e687f37f31077f80d170dba8c27d1b3ecc64d5cf466108fd'
     additions_path = HERE/'science-download-usage-additions.json'
     if sha256(additions_path.read_bytes()).hexdigest() != '8510ab17f62be41b9fbea811760ae6581fcbad8ff252e91134e386ee45e0d75c':
         return ['Unreviewed Science download registration metadata']
