@@ -54,6 +54,11 @@ jobs:
           # published-completion-verify.yml and splash-region-records.yml twice.
           # That is why the admission registry keeps its transition pairs rather
           # than collapsing to single digests.
+          #
+          # Pinned 2026-09-19 to Lessons 4506bb96, the #581 head carrying the
+          # reviewed evidence re-stamp. (tools/census_typed_literals.py reads a
+          # 12-line window above the literal, so the naming line belongs here
+          # rather than only at the top of this block.)
           ref: 4506bb96de39b44f878b2a860b9885b55500adb4
           path: .sources/Lessons
           persist-credentials: false
