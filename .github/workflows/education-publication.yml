@@ -78,7 +78,12 @@ jobs:
           # strand record, packs and downloads from the manifests, earlier versions collapsed).
           # Derived with git rev-parse origin/main on the Lessons checkout, never typed. It moves
           # WITH its Apps companion below (L31).
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '9e8a947ad5ef419a221c3bd83f0ebd5f84940f45' }}
+          # Moved 2026-09-20 (ORDER HUM-T batch 1): 9e8a947a -> Lessons main 3887f7acc99468b55ecc9f0b67b6be043aebc8ed, the
+          # squash merge of #606 (six BUILD Humanities decks, the science Lundy loop in every
+          # stage, evidence re-stamped, batch 1 declared as a GLV3 replacement transaction).
+          # Derived with git rev-parse on the Lessons checkout, never typed. This pin moves WITH
+          # its Apps companion below (L31).
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '3887f7acc99468b55ecc9f0b67b6be043aebc8ed' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -108,7 +113,10 @@ jobs:
           # Moved 2026-09-20 (ORDER HUB-1) WITH the Lessons pin above, per STANDING RULE L31:
           # 2a9cb8e8 -> Apps main f374e8cc52aadb21a6e7088c4b5e1d4b9c702f87, the squash merge of #125, the Apps arm of the
           # same commit: both gate copies are byte-identical there, gateSha256 3539ad6a.
-          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || 'f374e8cc52aadb21a6e7088c4b5e1d4b9c702f87' }}
+          # Moved 2026-09-20 (ORDER HUM-T batch 1) WITH the Lessons pin above, per STANDING RULE L31:
+          # f374e8cc -> Apps main 327da98e086eac439576ef845d6e9d372015960d, the squash merge of #128, the Apps arm of the
+          # same commit: both gate copies are byte-identical there, gateSha256 891223be.
+          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || '327da98e086eac439576ef845d6e9d372015960d' }}
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
