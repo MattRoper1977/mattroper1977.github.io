@@ -67,7 +67,13 @@ jobs:
           # moved. The F3 and HUM-D5 Lessons merges that follow this window move 21 published
           # paths and add 1750; the registry's transition pairs and ARRIVING markers admit
           # both byte-states, so both publishers stay green until the next pin move.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '6bb8238f145e0d9cdef84f7142ed72a24f6f13d8' }}
+          # Moved 2026-09-20 (ORDER FINISH-3): 6bb8238f -> Lessons main 5e496ba5f00fc08e02c13dd33c4f6a7eb2e07d77, the
+          # squash merge of #600 (the 13 HUM-D5 packs, 1750 files, and the manifest pin).
+          # Derived with git rev-parse origin/main on the Lessons checkout, never typed.
+          # This discharges the EQUAL declaration that tools/lessons_pin_lag_control.py
+          # reported RED before this PR: at 6bb8238f the pin was 3 commits behind main
+          # with 1771 published paths moved. It moves WITH its Apps companion below (L31).
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '5e496ba5f00fc08e02c13dd33c4f6a7eb2e07d77' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -88,7 +94,13 @@ jobs:
           # Site main's own pair (b32bf1c7 + dfca094b) PASS 274, so this red is this PR's.
           # a7d330b8 is the Apps #119 companion head, the Apps arm of the Lessons commit
           # the pin above now names; both gate copies are byte-identical at 1796ab50.
-          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || 'a7d330b808b3deaa810967c515de29be5da0ed20' }}
+          # Moved 2026-09-20 (ORDER FINISH-3) WITH the Lessons pin above, per STANDING RULE
+          # L31: a Site pin pair is ALWAYS a Lessons pin and ITS Apps companion, never a
+          # Lessons pin beside the previous Apps main. a7d330b8 -> Apps main 2a9cb8e8ce81d94e030c901d8bf069eb41e19a3e,
+          # the squash merge of #122, which is the Apps arm of the same commit: both gate
+          # copies are byte-identical there, gateSha256 e91a97bb. Verified locally before
+          # push with verify_catalogue_contract_controls.py (280 controls, 0 FAIL).
+          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || '2a9cb8e8ce81d94e030c901d8bf069eb41e19a3e' }}
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
