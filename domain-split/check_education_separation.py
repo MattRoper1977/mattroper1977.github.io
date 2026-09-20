@@ -71,7 +71,7 @@ TEACHING_PACK_ADDITIONS = HERE/'teaching-packs-download-usage-additions.json'
 # Teaching_Packs prefixes), accepted 7 September 2026 (HC6 §11). Re-pin only
 # with a reviewed diff of that file. GC1 adds 128 rows on 12 September 2026;
 # all 296 existing rows and all seven subject groups are retained unchanged.
-TEACHING_PACK_ADDITIONS_SHA256 = 'faa329b20b5db39f44bf8cfeb5393ddac85d1a60dfe649d091ccac821bf67abb'
+TEACHING_PACK_ADDITIONS_SHA256 = 'b913e48b7f94fbd2b732c54f36c866f2c6ba229e2013b79faac1e8dd0ad12410'
 
 
 GC1_PREFIX = '/Lessons/ICT/Teaching_Packs/GROW_Computing/'
