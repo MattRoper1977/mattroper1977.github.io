@@ -60,7 +60,14 @@ jobs:
           # behind by SHA (#590 records, #591 toolchain), 0 published paths moved, so
           # the site-triggered and Lessons-triggered publishers build the same bytes.
           # Derived with git log --grep '(#594)' against origin/main, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || 'b32bf1c71f37b1345c4085a6a6c3b182ee85fde0' }}
+          # Moved 2026-09-20 (ORDER FINISH-2 §5, the one Site window): b32bf1c7 -> Lessons
+          # main 6bb8238f, HELD EQUAL TO LESSONS MAIN at the move (the #411 method), derived
+          # with git rev-parse origin/main on the Lessons checkout, never typed. Measured by
+          # tools/lessons_pin_lag_control.py at the move: 0 commits behind, 0 published paths
+          # moved. The F3 and HUM-D5 Lessons merges that follow this window move 21 published
+          # paths and add 1750; the registry's transition pairs and ARRIVING markers admit
+          # both byte-states, so both publishers stay green until the next pin move.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '6bb8238f145e0d9cdef84f7142ed72a24f6f13d8' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -72,7 +79,16 @@ jobs:
           # the tokens stylesheet are the measured output differences, confined to the Apps tree, and the
           # registry keeps the served rollback beside this candidate. Held EQUAL to domain-split-verify.yml.
           # The Apps caller instead builds its own current source commit.
-          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || 'dfca094b0e538ad02a7bb9edde5db00f45f84e3b' }}
+          # Moved 2026-09-20 (ORDER FINISH-2 §5) WITH the Lessons pin above, because the two
+          # move together or not at all: verify_catalogue_contract_controls.py builds its
+          # Apps fixture from this checkout and runs the LESSONS gate copy against it, so a
+          # Lessons pin whose gate copy has moved and an Apps pin whose copy has not is red
+          # ("Unmodified Apps fixture retains its complete cross-estate checks"). Measured:
+          # Lessons 6bb8238f + Apps a7d330b8 PASS 273; Lessons 6bb8238f + Apps dfca094b FAIL;
+          # Site main's own pair (b32bf1c7 + dfca094b) PASS 274, so this red is this PR's.
+          # a7d330b8 is the Apps #119 companion head, the Apps arm of the Lessons commit
+          # the pin above now names; both gate copies are byte-identical at 1796ab50.
+          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || 'a7d330b808b3deaa810967c515de29be5da0ed20' }}
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
