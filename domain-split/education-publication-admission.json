@@ -43,7 +43,9 @@
     "D-1, the R10 sweep and the v3 GROW window, 2026-09-16 (Lessons main b54c9006, Apps main dfca094b): every education-lessons path whose bytes moved since this registry was last minted, taken wholesale from a complete build at this builder rather than from a hand-picked list. Twenty paths change and one is new. They come from three already-reviewed Lessons merges: the R10 product-name sweep (#563), the GROW v3 40-minute evidence window and its companions, and the Sugar Evidence re-chassis (#567, which also adds data/chassis-census.json). Each changed path carried exactly one admitted digest, the live one, and becomes [live, candidate] so the served estate stays admitted while the change is in flight; a path in any other shape, a path that would be dropped, or any movement in the education-site or education-apps trees is refused outright.",
     "Lessons=4dd90c430e482b287a90ba00f914c66aaf72fe70 (F3a #598 3fbbcfa0 + F3b #599 a2478abd, built at the stacked packs head; the one FINISH-2 build, 2026-09-20T12:08Z)",
     "HUB-1 (Site claude/hub1-transition): the Humanities hub restructured by ORDER HUB-1 -- Humanities_Teesside/index.html and its two shelf assets and resource sizes as transition pairs, shelf-base.css and humanities-hub-bindings.json as [digest, ARRIVING]; usage-registry re-cut to [previous, this build]. Values from the local build of Lessons ff073274.",
-    "Reviewed by Matt Roper 2026-09-20 (STOP-SIGN, Order HUB-1, rebased): Humanities_Teesside/index.html ea77a660→2c89f93d; data/resource-sizes.json abd0a1ba→aabb7da9; hub pin 7594ce3f→6f69b888; gate 1987983a→3539ad6a. Unchanged as previously signed: science-shelf.css f664655e→b2b1eb32; science-shelf.js b47b9988→a59fe0c9; usage-registry.json 640dfe9b→724267df; ARRIVING shelf-base.css 951d6188, humanities-hub-bindings.json edd1c2ac."
+    "Reviewed by Matt Roper 2026-09-20 (STOP-SIGN, Order HUB-1, rebased): Humanities_Teesside/index.html ea77a660→2c89f93d; data/resource-sizes.json abd0a1ba→aabb7da9; hub pin 7594ce3f→6f69b888; gate 1987983a→3539ad6a. Unchanged as previously signed: science-shelf.css f664655e→b2b1eb32; science-shelf.js b47b9988→a59fe0c9; usage-registry.json 640dfe9b→724267df; ARRIVING shelf-base.css 951d6188, humanities-hub-bindings.json edd1c2ac.",
+    "HUM-T batch 1 (Site claude/humt-b1-window): six BUILD Humanities decks carrying the science Lundy loop in every stage (Lessons #606 -> 3887f7ac, Apps #128 -> 327da98e, gate 891223be), plus the lesson order and resource sizes they move, as transition pairs derived from the local build of that head. Both L31 pin pairs move with it.",
+    "SIGNED by Matt Roper 2026-09-20 (STOP-SIGN, ORDER HUM-T batch 1): the six-row table accepted as tabled, TERM+WEEK UNCHANGED 6/6, evidence sha == served bytes, 42 panels. Pairs: BUILD_HUM_W1_People_Special_To_Me.html 47c0b9d7→9a93f7be; BUILD_HUM_W2_A_Special_Book_A_Special_Place.html 72e38e22→44a345f7; BUILD_HUM_W2_People_Who_Help_Us.html cd735458→7ef4ee1e; BUILD_HUM_W8_A_Festival_Of_Light.html 3750c89b→bca66beb; BUILD_HUM_W14_Festivals_Display_and_Reflection.html 8d1fdd5d→f8511f0b; BUILD_HUM_W15_My_Week_Timeline_and_Caring_Stories.html 780ae40d→b7dcb5e5; assets/catalogue/lesson-order.json 3b7f9a34→34abdfee; data/resource-sizes.json aabb7da9→475bccd9."
   ],
   "trees": {
     "education-site": {
@@ -1393,16 +1395,28 @@
       "HANDOVER.md": "4d3903b5959fc05f21172ee0a29ea45fdef002866337eb953cd910aaf5c0bc73",
       "Humanities_Teesside/BUILD_Printable_Pack.html": "4e85b7c8d031181ce154de88d135807ccf5e079776c6a9c6bfacf19662dba719",
       "Humanities_Teesside/BUILD_Scheme_of_Work.html": "b9e50dcb48af785e60335775c677bda5d1f800f9541d4d8c6d2b1132a0e83e3f",
-      "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_HUM_W1_People_Special_To_Me.html": "47c0b9d795bb3cda1aa99ca249828ac27975ee11f38e0b515cf02c0abf3f8d4c",
-      "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_HUM_W2_A_Special_Book_A_Special_Place.html": "72e38e2295d86e1cabb398c8418feb3c572d7d1a703f8801b11a2ab4e41a2ce3",
-      "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_HUM_W2_People_Who_Help_Us.html": "cd7354582db47762347573cff586a95e0f083a8c65a40874271b0657fa0ec973",
+      "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_HUM_W1_People_Special_To_Me.html": [
+        "47c0b9d795bb3cda1aa99ca249828ac27975ee11f38e0b515cf02c0abf3f8d4c",
+        "9a93f7be4ee1fa7b57a2821741dacb9bf2dbdb3eabc09ab7e5e7887f209691ff"
+      ],
+      "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_HUM_W2_A_Special_Book_A_Special_Place.html": [
+        "72e38e2295d86e1cabb398c8418feb3c572d7d1a703f8801b11a2ab4e41a2ce3",
+        "44a345f73666eb045adaa05a73608aaaf5f6054840e7651d6604c77f7fce9d37"
+      ],
+      "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_HUM_W2_People_Who_Help_Us.html": [
+        "cd7354582db47762347573cff586a95e0f083a8c65a40874271b0657fa0ec973",
+        "7ef4ee1ebe4e64872a349e84b6c32b65c67649810cfc90cb97d50ec3e8c4e111"
+      ],
       "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_HUM_W3_Places_In_My_Community.html": "210789887fe03366cebbf70a238c0701f8f896f5bc931037e475caca31f8ef3d",
       "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_HUM_W4_Then_And_Now.html": "05f0afbed628fcebe1caf306da1054522d99043e716b7f72d332080a21ee3f78",
       "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_HUM_W5_Same_And_Different.html": "63944dc09f9dc46a6ed6bffaf03cb43c24c56b6219e6096dd69b66ae4f341ad9",
       "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_HUM_W6_Our_Class_Map.html": "dcc693d5e99a317e01af2b9325fd013f2b78f197cbd9f925cfb0702cdcab8a56",
       "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_HUM_W7_A_place_in_the_group_Classic.html": "75d40a379754a6163ca8b0d87489edd438480ec07ba2bb3b08ed77f93926e94c",
       "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_HUM_W7_Groups_We_Belong_To.html": "bde0daeae7f5eb23e2dcdeba9f37f8c2a3e5774563e536f0d612d9d9ee969b28",
-      "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_HUM_W8_A_Festival_Of_Light.html": "3750c89b1442e546444d5facb74d2de97d2e5f9470e22711dc2ff0c2fb25cd67",
+      "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_HUM_W8_A_Festival_Of_Light.html": [
+        "3750c89b1442e546444d5facb74d2de97d2e5f9470e22711dc2ff0c2fb25cd67",
+        "bca66beb36aec3efc847867cdae1bb9f35dc3466af3c9bf40230d58a0a7d0e3e"
+      ],
       "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_Humanities_W1_Pick_a_card_and_say_why_you_picked_it.html": "97349d602e4660014168b9307809b2c897ddae8bc364fe135578fcf867959de8",
       "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_Humanities_W3_Listen_to_Ruth_Then_Point_at_the_Line.html": "15b4bd52dcf315b030ee2083ef43bc3224475bbb1d672b62fbd3a4c381e7f4e0",
       "Humanities_Teesside/BUILD_W1-W8_2026-27/BUILD_Humanities_W4_Show_Respect_When_Handling_Special_Objects.html": "de366178163f329f12b9a8eacd3278dd27872d1c59f825bbe5b2ce85da99be90",
@@ -1414,8 +1428,14 @@
       "Humanities_Teesside/BUILD_W1-W8_2026-27/manifest.json": "ba9776a3bfb47c8074eddc3f3ea8478578beea6db9b9708420475effac368858",
       "Humanities_Teesside/BUILD_W14-W20_2026-27/BUILD_HUM_W12_A_celebration_in_order_Classic.html": "a833a11d207e7266e590b5b82f3a96227e9ef6a0e63789ae70c532a03efb39aa",
       "Humanities_Teesside/BUILD_W14-W20_2026-27/BUILD_HUM_W14_A_fair_chance_to_join_in_Classic.html": "7ad186821bafd6f41e864eda94042ac7a79b8316eda3b6b65baa29d9be5c3166",
-      "Humanities_Teesside/BUILD_W14-W20_2026-27/BUILD_HUM_W14_Festivals_Display_and_Reflection.html": "8d1fdd5d79e01290d5d4fb871aebe3935363da563e10809fe9ca4e823a772e77",
-      "Humanities_Teesside/BUILD_W14-W20_2026-27/BUILD_HUM_W15_My_Week_Timeline_and_Caring_Stories.html": "780ae40d1a26d9fe75100e697d728930aca49ae412ec812c06a27b39235d334a",
+      "Humanities_Teesside/BUILD_W14-W20_2026-27/BUILD_HUM_W14_Festivals_Display_and_Reflection.html": [
+        "8d1fdd5d79e01290d5d4fb871aebe3935363da563e10809fe9ca4e823a772e77",
+        "f8511f0b10ed1a7bf0d9a068452b0ea19cd11b81f97ce5b7f45540ec8b208f7c"
+      ],
+      "Humanities_Teesside/BUILD_W14-W20_2026-27/BUILD_HUM_W15_My_Week_Timeline_and_Caring_Stories.html": [
+        "780ae40d1a26d9fe75100e697d728930aca49ae412ec812c06a27b39235d334a",
+        "b7dcb5e59678223c9476b48716ad9a7cec2a197549b5061662e2193f0695b40c"
+      ],
       "Humanities_Teesside/BUILD_W14-W20_2026-27/BUILD_HUM_W16_Then_And_Now_And_What_Is_Fair.html": "ce5d6c4c86430f3e515e296a2f03651ee0c07e8830ae103284ed6f5a16dceaec",
       "Humanities_Teesside/BUILD_W14-W20_2026-27/SHA256SUMS.txt": "1932b455c05ab30d1e6c0fe0cc8f8586c88b48ce15c02aaf50e069b660883077",
       "Humanities_Teesside/BUILD_W14-W20_2026-27/START_HERE.html": "4ffa980f01597d1ad8ba776557baf18cd2d918ea0a5b89644769cac38891d784",
@@ -4068,8 +4088,8 @@
       "assets/catalogue/humanities-shelf.json": "b2facaa50c6781f0fdf19fad5b3b170bfaef54546c030e951956ccf47223f8c0",
       "assets/catalogue/lesson-navigation.js": "110b1fd2412146894f4e034b33038155444adf538d93879ba6a68d7dc5003f73",
       "assets/catalogue/lesson-order.json": [
-        "c73ac055ef18b617510d296a3e987dd82b9952f475e1279e4e890e91343a766f",
-        "3b7f9a34ade3254b0a8f376c68cd6ad99ce18c68ba70f2ac464378e08b5aa2ac"
+        "3b7f9a34ade3254b0a8f376c68cd6ad99ce18c68ba70f2ac464378e08b5aa2ac",
+        "34abdfeed20ae2b57ad9d937238abc3c15ef74b8072dc5b4b91f703b0d3a371b"
       ],
       "assets/catalogue/pack-notes.json": "c7c30351306a21f360190b202b98bf202fde02b8376a1a54886204e718850988",
       "assets/catalogue/pack.css": "ba6c5c84bcff84c023f2f10ac345a159f48ea97b2e8eb542cb3e56435204d63a",
@@ -4165,8 +4185,8 @@
       ],
       "data/planning-keys.json": "5d1944f5dba42aea2e203f667e6b1b23bdf08157c3c451b0a22757132076c56e",
       "data/resource-sizes.json": [
-        "abd0a1ba68969b98271938fee98c134e95908feadeb76db9878f65575206e36c",
-        "aabb7da91aa4455db9f61010a8af974829b77327e4d9f2a1a91c20ff84cd7fa4"
+        "aabb7da91aa4455db9f61010a8af974829b77327e4d9f2a1a91c20ff84cd7fa4",
+        "475bccd96712a58ede9adf3135688ee38edd321b72bd820e13d046f84574209a"
       ],
       "grow-anim/README.md": "131b5159f2b9da63291126da0cee13f7548bd4a9a0511eb8bf2e13b2633dcde0",
       "grow-anim/compat-build-anim.js": "ce4fd029211cf449c86d759909fa19e0b03d5c45094c5206ec3ba226e0caa951",
