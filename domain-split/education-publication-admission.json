@@ -41,7 +41,9 @@
     "PLAY-Q1 batch 2 (Lessons aaba36d8): the two re-stamped education lessons, plus the lesson-order projection and the resource size table their bytes moved",
     "D-3, 2026-09-16 (CX2 SERVED_DEFECTS amendment D-3, Site claude/edu-d3-pathway-definitions: every pathway chip on the education home carries its definition from one fail-closed source, domain-split/pathway-definitions.json). Digests from full three-repository builds at this builder at the workflow pins (Lessons aaba36d8, Apps e15f6e39): served oracle = Site main 88c39cb7 at those pins (reproduces every admitted digest in all three trees), candidate = this branch, which moves exactly three education-site paths: index.html and main/index.html (the two pages that carry the pathway band) and assets/education-frontdoors.css (the definition styles). Each moves to [main 88c39cb7 bytes, candidate bytes] with the superseded first digest of its pair retired; no other path moves in any tree.",
     "D-1, the R10 sweep and the v3 GROW window, 2026-09-16 (Lessons main b54c9006, Apps main dfca094b): every education-lessons path whose bytes moved since this registry was last minted, taken wholesale from a complete build at this builder rather than from a hand-picked list. Twenty paths change and one is new. They come from three already-reviewed Lessons merges: the R10 product-name sweep (#563), the GROW v3 40-minute evidence window and its companions, and the Sugar Evidence re-chassis (#567, which also adds data/chassis-census.json). Each changed path carried exactly one admitted digest, the live one, and becomes [live, candidate] so the served estate stays admitted while the change is in flight; a path in any other shape, a path that would be dropped, or any movement in the education-site or education-apps trees is refused outright.",
-    "Lessons=4dd90c430e482b287a90ba00f914c66aaf72fe70 (F3a #598 3fbbcfa0 + F3b #599 a2478abd, built at the stacked packs head; the one FINISH-2 build, 2026-09-20T12:08Z)"
+    "Lessons=4dd90c430e482b287a90ba00f914c66aaf72fe70 (F3a #598 3fbbcfa0 + F3b #599 a2478abd, built at the stacked packs head; the one FINISH-2 build, 2026-09-20T12:08Z)",
+    "HUB-1 (Site claude/hub1-transition): the Humanities hub restructured by ORDER HUB-1 -- Humanities_Teesside/index.html and its two shelf assets and resource sizes as transition pairs, shelf-base.css and humanities-hub-bindings.json as [digest, ARRIVING]; usage-registry re-cut to [previous, this build]. Values from the local build of Lessons ff073274.",
+    "Reviewed by Matt Roper 2026-09-20 (STOP-SIGN, Order HUB-1, rebased): Humanities_Teesside/index.html ea77a660→2c89f93d; data/resource-sizes.json abd0a1ba→aabb7da9; hub pin 7594ce3f→6f69b888; gate 1987983a→3539ad6a. Unchanged as previously signed: science-shelf.css f664655e→b2b1eb32; science-shelf.js b47b9988→a59fe0c9; usage-registry.json 640dfe9b→724267df; ARRIVING shelf-base.css 951d6188, humanities-hub-bindings.json edd1c2ac."
   ],
   "trees": {
     "education-site": {
@@ -202,8 +204,8 @@
       "data/takes-pin.json": "165f9e17c0f07bfc468a605e91dd077f6b285ab84bebef3c0d2d44ac65026fc6",
       "data/usage-config.json": "1fec49241cb40120129e65ffe06a59203bdc50af29e1000156270d642dbdf12d",
       "data/usage-registry.json": [
-        "5f733242c6b7c604e134347caa8d7a6438144b27aef5f3f633b592306eacfa2e",
-        "640dfe9b501b6a090857d4d2e73805ae81b0febb052ccaf24f13df0794d03435"
+        "640dfe9b501b6a090857d4d2e73805ae81b0febb052ccaf24f13df0794d03435",
+        "724267dfeed88aa92fa90a02ecd0e2966c6614988e1ed482eb63c6842dbad09e"
       ],
       "echovault/index.html": "611715ea3081eeed1e1baf18158bf6d125e670af6ad0432ff7097da0c8cc0092",
       "education-hub/index.html": [
@@ -1886,7 +1888,10 @@
       "Humanities_Teesside/Teaching_Packs/index.html": "67ea93a73c6bba8f6fbb0e8f814536a5a0a5caae1f45a7d3133c927883ab861b",
       "Humanities_Teesside/Teaching_Packs/packs.css": "70ca73b323e5cabf05b1f5f9f8107694cfcecf4ddf8043f342049ee4c797ce59",
       "Humanities_Teesside/Teaching_Packs/web-slides.html": "b4a70223459837fef533195c28d83b05a940515fb411405f8ea170d06935b58b",
-      "Humanities_Teesside/index.html": "ea77a660774b103d4a906b287d57d733d315e2c9e18ed2d20cc11d42b07da987",
+      "Humanities_Teesside/index.html": [
+        "ea77a660774b103d4a906b287d57d733d315e2c9e18ed2d20cc11d42b07da987",
+        "2c89f93d50c1e7fc201901480d6d02be0a3cbd56924b139c7d46f0cf5395160c"
+      ],
       "ICT/Teaching_Packs/DOWNLOADS_MANIFEST.json": "22e19a18c07efc5283e123e423f016ed4630d8cd33ab8eacd4e847941f1b520c",
       "ICT/Teaching_Packs/GROW/Authoring/Lesson_Content.json": "b43ceed7e00620f5e119ae3b42b4b68f8e32407a0e064f2c3ec6c06b07b107e7",
       "ICT/Teaching_Packs/GROW/Documents/Pupil_Booklet.docx": "59daf8f6830fdefba546daae885bc81c7e96cc2c6f127592192205368b1e7e47",
@@ -4072,8 +4077,14 @@
       "assets/catalogue/primary-discovery.css": "888e5f095aaa80deedd548fc5daa6433cbd8121584558d9e949afb45550f5362",
       "assets/catalogue/primary-discovery.js": "a130d2d5961a456bc69bc2a7eb6b700dfcd4d92f7e5999b5319883e6bc5be394",
       "assets/catalogue/science-download-bindings.json": "efb435f7e0dc4c9083050f5bb3e348494838422fe7de6e809fbdf8f877d9b10d",
-      "assets/catalogue/science-shelf.css": "f664655e57c086abe35499f5dedf737eddaa0942e6629dd4a7fcf4e801536508",
-      "assets/catalogue/science-shelf.js": "b47b998866401f136968a2e1e94cc5beb65be83fbd342f49ff5a811804792651",
+      "assets/catalogue/science-shelf.css": [
+        "f664655e57c086abe35499f5dedf737eddaa0942e6629dd4a7fcf4e801536508",
+        "b2b1eb328662d841add139ccfff107f985f17373f1ee82b8762475663097ab60"
+      ],
+      "assets/catalogue/science-shelf.js": [
+        "b47b998866401f136968a2e1e94cc5beb65be83fbd342f49ff5a811804792651",
+        "a59fe0c988a5de7d614afc6a36d7dacf14c6e3fa92c732740442e4914d00f356"
+      ],
       "assets/catalogue/science-shelf.json": [
         "1d48dc37ce5ae12ea33b9319810a094dd86f527f38bf825af84da10b34e3af06",
         "4ee03d7827f1c2ef9d6af927b2451506d895e237ffa4f7b694b4bdb855a1170a"
@@ -4154,8 +4165,8 @@
       ],
       "data/planning-keys.json": "5d1944f5dba42aea2e203f667e6b1b23bdf08157c3c451b0a22757132076c56e",
       "data/resource-sizes.json": [
-        "8141fb82e9a9ed492266c313a0d5e675afe5ca5fbc279efc8a1498e096c0bd5a",
-        "abd0a1ba68969b98271938fee98c134e95908feadeb76db9878f65575206e36c"
+        "abd0a1ba68969b98271938fee98c134e95908feadeb76db9878f65575206e36c",
+        "aabb7da91aa4455db9f61010a8af974829b77327e4d9f2a1a91c20ff84cd7fa4"
       ],
       "grow-anim/README.md": "131b5159f2b9da63291126da0cee13f7548bd4a9a0511eb8bf2e13b2633dcde0",
       "grow-anim/compat-build-anim.js": "ce4fd029211cf449c86d759909fa19e0b03d5c45094c5206ec3ba226e0caa951",
@@ -11283,6 +11294,14 @@
       ],
       "Humanities_Teesside/Teaching_Packs/RE_Autumn_LAUNCH_Reviewed/Sources_and_checks.html": [
         "61079c4b4743f696339f73ecf4134117c7976cd4a7c806dacc60b09d797cf22f",
+        "ARRIVING"
+      ],
+      "assets/catalogue/humanities-hub-bindings.json": [
+        "edd1c2aca59ffb39409c1aaec8f861d2141c44e81978e9bd48dfa85be634e3dc",
+        "ARRIVING"
+      ],
+      "assets/catalogue/shelf-base.css": [
+        "951d6188059da3d2f20717ab7d82773b335d453d8c2d82f5b75f230229351e61",
         "ARRIVING"
       ]
     },
