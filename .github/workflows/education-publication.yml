@@ -60,7 +60,14 @@ jobs:
           # behind by SHA (#590 records, #591 toolchain), 0 published paths moved, so
           # the site-triggered and Lessons-triggered publishers build the same bytes.
           # Derived with git log --grep '(#594)' against origin/main, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || 'b32bf1c71f37b1345c4085a6a6c3b182ee85fde0' }}
+          # Moved 2026-09-20 (ORDER FINISH-2 §5, the one Site window): b32bf1c7 -> Lessons
+          # main 6bb8238f, HELD EQUAL TO LESSONS MAIN at the move (the #411 method), derived
+          # with git rev-parse origin/main on the Lessons checkout, never typed. Measured by
+          # tools/lessons_pin_lag_control.py at the move: 0 commits behind, 0 published paths
+          # moved. The F3 and HUM-D5 Lessons merges that follow this window move 21 published
+          # paths and add 1750; the registry's transition pairs and ARRIVING markers admit
+          # both byte-states, so both publishers stay green until the next pin move.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '6bb8238f145e0d9cdef84f7142ed72a24f6f13d8' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
