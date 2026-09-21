@@ -73,10 +73,10 @@ jobs:
           # This discharges the EQUAL declaration that tools/lessons_pin_lag_control.py
           # reported RED before this PR: at 6bb8238f the pin was 3 commits behind main
           # with 1771 published paths moved. It moves WITH its Apps companion below (L31).
-          # Moved 2026-09-21 (HUM-T batch 4): cd09718b -> Lessons main f05c7ab1bb1bdfae2d87a6fa55ce82d2fd3ace74, the squash merge of #617.
+          # Moved 2026-09-21 (HUM-T batch 5): f05c7ab1 -> Lessons main 894cba958cc7c55fc4f500bc08f6306c06b327a7, the squash merge of #619.
           # Derived with git rev-parse on the Lessons checkout, never typed. This pin moves WITH
           # its Apps companion below (L31).
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || 'f05c7ab1bb1bdfae2d87a6fa55ce82d2fd3ace74' }}
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '894cba958cc7c55fc4f500bc08f6306c06b327a7' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -103,10 +103,10 @@ jobs:
           # the squash merge of #122, which is the Apps arm of the same commit: both gate
           # copies are byte-identical there, gateSha256 e91a97bb. Verified locally before
           # push with verify_catalogue_contract_controls.py (280 controls, 0 FAIL).
-          # Moved 2026-09-21 (HUM-T batch 4) WITH the Lessons pin above, per STANDING RULE L31:
-          # dd26d456 -> Apps main 3043b43d3b4c4c4eb108de7eb83f62d064a0a24a, the squash merge of #138, the Apps arm of the
-          # same commit: both gate copies are byte-identical there, gateSha256 7e427f72.
-          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || '3043b43d3b4c4c4eb108de7eb83f62d064a0a24a' }}
+          # Moved 2026-09-21 (HUM-T batch 5) WITH the Lessons pin above, per STANDING RULE L31:
+          # 3043b43d -> Apps main 70a3074a1998d4b287fd0804ee1a1eeea5076c1e, the squash merge of #140, the Apps arm of the
+          # same commit: both gate copies are byte-identical there, gateSha256 736cf061.
+          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || '70a3074a1998d4b287fd0804ee1a1eeea5076c1e' }}
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
