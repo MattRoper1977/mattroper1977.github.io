@@ -79,10 +79,10 @@ jobs:
           # This discharges the EQUAL declaration that tools/lessons_pin_lag_control.py
           # reported RED before this PR: at 6bb8238f the pin was 3 commits behind main
           # with 1771 published paths moved. It moves WITH its Apps companion below (L31).
-          # Moved 2026-09-21 (HUM-T batch 6b): 3825ecf0 -> Lessons main 6fd6564f3b8cd115863689852f83e423ed8ef459, the squash merge of #625.
+          # Moved 2026-09-21 (SCI-COMPLETE PASS F): 6fd6564f -> Lessons main edb27b0cb2ecc0abfef4eae8a67d49c7f060cf8b, the squash merge of #612.
           # Derived with git rev-parse on the Lessons checkout, never typed. This pin moves WITH
           # its Apps companion below (L31).
-          ref: 6fd6564f3b8cd115863689852f83e423ed8ef459
+          ref: edb27b0cb2ecc0abfef4eae8a67d49c7f060cf8b
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -110,10 +110,10 @@ jobs:
           # the squash merge of #122, which is the Apps arm of the same commit: both gate
           # copies are byte-identical there, gateSha256 e91a97bb. Verified locally before
           # push with verify_catalogue_contract_controls.py (280 controls, 0 FAIL).
-          # Moved 2026-09-21 (HUM-T batch 6b) WITH the Lessons pin above, per STANDING RULE L31:
-          # 4c7e9c60 -> Apps main a946c58676f9b1e1a8de0cd7040e530b31c2328a, the squash merge of #145, the Apps arm of the
-          # same commit: both gate copies are byte-identical there, gateSha256 82ee6c9e.
-          ref: a946c58676f9b1e1a8de0cd7040e530b31c2328a
+          # Moved 2026-09-21 (SCI-COMPLETE PASS F) WITH the Lessons pin above, per STANDING RULE L31:
+          # a946c586 -> Apps main 48eab90293b98d82554edb78a181c815b2d98d0e, the squash merge of #133, the Apps arm of the
+          # same commit: both gate copies are byte-identical there, gateSha256 ae83df36.
+          ref: 48eab90293b98d82554edb78a181c815b2d98d0e
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
