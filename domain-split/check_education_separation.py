@@ -151,6 +151,11 @@ def registry_errors(output):
     # built bytes, never transcribed.
     baseline_sha = '5a3adcc30a071d042def9254a6835273ef00b7c745d98fee2dc4cc523fb6f2ad'
     additions_path = HERE/'science-download-usage-additions.json'
+    # This Science pin is TOOL-OWNED from 2026-09-22 (STOP-F3, option 1): move it only with
+    # derive_science_download_additions.py --write, which derives every row from the education
+    # build's emitted DOWNLOAD rows for files the publication registry admits by digest, and
+    # re-pins here in the same pass. A hand edit still reds below, on this very comparison.
+    # The sibling teaching-packs pin above is NOT tool-owned and keeps its own rule.
     if sha256(additions_path.read_bytes()).hexdigest() != '3b750fe8fdf92279c38852abe58e4c3974c9aa3f4728584d0fac2de2f1e5d624':
         return ['Unreviewed Science download registration metadata']
     if sha256(TEACHING_PACK_ADDITIONS.read_bytes()).hexdigest() != TEACHING_PACK_ADDITIONS_SHA256:
