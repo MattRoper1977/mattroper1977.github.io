@@ -151,7 +151,7 @@ def registry_errors(output):
     # built bytes, never transcribed.
     baseline_sha = '5a3adcc30a071d042def9254a6835273ef00b7c745d98fee2dc4cc523fb6f2ad'
     additions_path = HERE/'science-download-usage-additions.json'
-    if sha256(additions_path.read_bytes()).hexdigest() != '8510ab17f62be41b9fbea811760ae6581fcbad8ff252e91134e386ee45e0d75c':
+    if sha256(additions_path.read_bytes()).hexdigest() != '3b750fe8fdf92279c38852abe58e4c3974c9aa3f4728584d0fac2de2f1e5d624':
         return ['Unreviewed Science download registration metadata']
     if sha256(TEACHING_PACK_ADDITIONS.read_bytes()).hexdigest() != TEACHING_PACK_ADDITIONS_SHA256:
         return ['Unreviewed teaching-pack download registration metadata']
