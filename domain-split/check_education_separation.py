@@ -143,7 +143,13 @@ def registry_errors(output):
     # kind, event type, alias or source id moves. The 17 are the same 17 the catalogue
     # realigned, so this fence moved because the reviewed titles moved and for no other
     # reason. This is why it moves with the Lessons pin lines.
-    baseline_sha = 'd0dc6b3e9f5709f7e687f37f31077f80d170dba8c27d1b3ecc64d5cf466108fd'
+    # Re-frozen 21 September (SCI-COMPLETE PASS A): the Lessons pin moves and the retained
+    # registry moves with it. Proved by diffing registry_partition() output between a full
+    # build at the old pins (reproduces d0dc6b3e exactly, 977 rows) and this build:
+    # 977 -> 977 retained rows, 0 joined, 0 removed, 32 existing
+    # record(s) change in the field(s) ['title']. Derived by the window runner from the
+    # built bytes, never transcribed.
+    baseline_sha = '5a3adcc30a071d042def9254a6835273ef00b7c745d98fee2dc4cc523fb6f2ad'
     additions_path = HERE/'science-download-usage-additions.json'
     if sha256(additions_path.read_bytes()).hexdigest() != '8510ab17f62be41b9fbea811760ae6581fcbad8ff252e91134e386ee45e0d75c':
         return ['Unreviewed Science download registration metadata']
