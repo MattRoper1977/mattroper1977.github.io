@@ -84,8 +84,10 @@ jobs:
           # typed. This pin moves WITH its Apps companion below (L31).
           # Moved 2026-09-22 (title derivation, the one Site window): 1e668ee4 -> Lessons main
           # 4f19ac9eca8830f9483bce2fd5c1e25341d04230, the squash merge of #644. Lessons #644 rebuilt
-          # Science_Teesside/index.html under the corrected title rule and re-derived
-          # data/resource-sizes.json with it; both are served, so the merge refused the all-file
+          # Lessons/Science_Teesside/index.html under the corrected title rule and re-derived
+          # Lessons/data/resource-sizes.json with it (repo-qualified: neither exists in THIS
+          # repository, and s10 refuses an unqualified path that names no Site file); both are
+          # served, so the merge refused the all-file
           # admission on Lessons main (run 35714663331) and this window admits them. Derived with
           # git rev-parse on the Lessons checkout, never typed. HELD EQUAL to Lessons main; moves
           # WITH its Apps companion below and WITH both education-publication.yml pins (L31).
@@ -123,7 +125,8 @@ jobs:
           # Moved 2026-09-22 (title derivation) WITH the Lessons pin above, per STANDING RULE L31:
           # ad806305 -> Apps main ecc78fff0c66023a23915ccfb520e36b1736e43f, the squash merge of #164,
           # the Apps arm of the same act: both gate copies are byte-identical there, gateSha256
-          # cd3202d0 (measured, sha256 of tools/verify_cross_estate_unification.py at BOTH Lessons
+          # cd3202d0 (measured, sha256 of Lessons/tools/verify_cross_estate_unification.py --
+          # repo-qualified, the gate copy lives in Lessons and Apps, never here -- at BOTH Lessons
           # 4f19ac9e and Apps ecc78fff -- the 7abf0bc4 named above is the previous pair's value).
           ref: ecc78fff0c66023a23915ccfb520e36b1736e43f
           path: .sources/Apps
