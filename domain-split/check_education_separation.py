@@ -149,7 +149,19 @@ def registry_errors(output):
     # 977 -> 977 retained rows, 0 joined, 0 removed, 32 existing
     # record(s) change in the field(s) ['title']. Derived by the window runner from the
     # built bytes, never transcribed.
-    baseline_sha = '5a3adcc30a071d042def9254a6835273ef00b7c745d98fee2dc4cc523fb6f2ad'
+    # Re-frozen 22 September (STOP-R2 explicit document tags, the one Site window): the
+    # Lessons pin moves 0d4817de -> 1e668ee4 with its Apps companion 4e98e48f -> ad806305
+    # (STANDING RULE L31, one pin pair), publishing the three Summer 1 Humanities pathway
+    # trees. Proved by diffing registry_partition() output between a full build at the OLD
+    # pins -- which reproduces 5a3adcc3 exactly, 977 rows, so the comparison base is the
+    # real one -- and one at the NEW pins: 977 -> 1105 retained rows, 128 joined, 0 removed,
+    # and 0 existing records changed in ANY field. Every joined row is a Summer 1 Humanities
+    # route (BUILD 42, GROW 43, LAUNCH 43; 18 lesson rows, 110 resource rows); all 128 are
+    # admitted by digest in education-publication-admission.json and their built bytes equal
+    # the admitted digest on all 128. No download-hub row, no Science row and no
+    # Teaching_Packs row moves, and the old retained list is an order-preserving subsequence
+    # of the new one. Derived by the window runner from the built bytes, never transcribed.
+    baseline_sha = 'a6e96f297f62458dba23a71ed14e9dc4db06dad650ef602efb3050556620631a'
     additions_path = HERE/'science-download-usage-additions.json'
     # This Science pin is TOOL-OWNED from 2026-09-22 (STOP-F3, option 1): move it only with
     # derive_science_download_additions.py --write, which derives every row from the education

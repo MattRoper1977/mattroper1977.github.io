@@ -76,7 +76,17 @@ jobs:
           # Moved 2026-09-21 (SCI-COMPLETE PASS F): 6fd6564f -> Lessons main 0d4817decd981b8f88b7080d9e58b89a48d31710, the squash merge of #630.
           # Derived with git rev-parse on the Lessons checkout, never typed. This pin moves WITH
           # its Apps companion below (L31).
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '0d4817decd981b8f88b7080d9e58b89a48d31710' }}
+          # Moved 2026-09-22 (STOP-R2 explicit document tags, the one Site window) WITH the Apps
+          # companion below and WITH both domain-split-verify.yml pins, per STANDING RULE L31 and
+          # the EQUAL declaration this fallback carries: 0d4817de -> 1e668ee4, the squash merge of
+          # Lessons #642. CORRECTION: the first cut of this window moved only the two
+          # domain-split-verify.yml pins. tools/verify_split_live_publication.py reads the
+          # publication subject pins from THIS file, so AGX-1 built the candidate from the old
+          # Lessons tree against the new admission record and went red on
+          # "Education file admission blocked publication: MISSING ... Summer_1 ...".
+          # A Site pin pair is four lines, not two. Derived from domain-split-verify.yml in this
+          # same tree by the window runner, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '1e668ee48aa8159b14fba0ec0058e8ea9ae880bd' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -106,7 +116,12 @@ jobs:
           # Moved 2026-09-21 (SCI-COMPLETE PASS F) WITH the Lessons pin above, per STANDING RULE L31:
           # a946c586 -> Apps main 4e98e48f866010f93443ba7da0b1734cad83a124, the squash merge of #150, the Apps arm of the
           # same commit: both gate copies are byte-identical there, gateSha256 75954e5d.
-          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || '4e98e48f866010f93443ba7da0b1734cad83a124' }}
+          # Moved 2026-09-22 (STOP-R2 explicit document tags) WITH the Lessons pin above and WITH
+          # both domain-split-verify.yml pins, per STANDING RULE L31: 4e98e48f -> ad806305, the
+          # squash merge of Apps #162, the Apps arm of the same act; both gate copies are
+          # byte-identical there. Held EQUAL to domain-split-verify.yml. Derived from that file in
+          # this same tree by the window runner, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || 'ad8063055175fd9477c97b59a2fa4b0d6e950d16' }}
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
