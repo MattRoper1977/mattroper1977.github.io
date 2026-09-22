@@ -79,10 +79,10 @@ jobs:
           # This discharges the EQUAL declaration that tools/lessons_pin_lag_control.py
           # reported RED before this PR: at 6bb8238f the pin was 3 commits behind main
           # with 1771 published paths moved. It moves WITH its Apps companion below (L31).
-          # Moved 2026-09-21 (SCI-COMPLETE PASS F): 6fd6564f -> Lessons main 0d4817decd981b8f88b7080d9e58b89a48d31710, the squash merge of #630.
-          # Derived with git rev-parse on the Lessons checkout, never typed. This pin moves WITH
-          # its Apps companion below (L31).
-          ref: 0d4817decd981b8f88b7080d9e58b89a48d31710
+          # Moved 2026-09-22 (STOP-R2 explicit document tags): 0d4817de -> Lessons main 1e668ee48aa8159b14fba0ec0058e8ea9ae880bd,
+          # the squash merge of #642. Derived with git rev-parse on the Lessons checkout, never
+          # typed. This pin moves WITH its Apps companion below (L31).
+          ref: 1e668ee48aa8159b14fba0ec0058e8ea9ae880bd
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -110,10 +110,10 @@ jobs:
           # the squash merge of #122, which is the Apps arm of the same commit: both gate
           # copies are byte-identical there, gateSha256 e91a97bb. Verified locally before
           # push with verify_catalogue_contract_controls.py (280 controls, 0 FAIL).
-          # Moved 2026-09-21 (SCI-COMPLETE PASS F) WITH the Lessons pin above, per STANDING RULE L31:
-          # a946c586 -> Apps main 4e98e48f866010f93443ba7da0b1734cad83a124, the squash merge of #150, the Apps arm of the
-          # same commit: both gate copies are byte-identical there, gateSha256 75954e5d.
-          ref: 4e98e48f866010f93443ba7da0b1734cad83a124
+          # Moved 2026-09-22 (STOP-R2 explicit document tags) WITH the Lessons pin above, per STANDING
+          # RULE L31: 4e98e48f -> Apps main ad8063055175fd9477c97b59a2fa4b0d6e950d16, the squash merge of #162, the Apps
+          # arm of the same act: both gate copies are byte-identical there, gateSha256 7abf0bc4.
+          ref: ad8063055175fd9477c97b59a2fa4b0d6e950d16
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
