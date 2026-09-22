@@ -18,7 +18,25 @@ jobs:
     runs-on: ubuntu-latest
     # NAV-2 expands the owner/header matrix; the preceding full run took 24m09s.
     # Retain every assertion and allow the complete matrix to finish.
-    timeout-minutes: 35
+    #
+    # RAISED 2026-09-22, 35 -> 60, APPROVED IN ADVANCE as a CONFIG-ONLY change: it asserts
+    # nothing, loosens no gate, and changes no step, threshold or scope. It buys wall-clock and
+    # nothing else. Measured trend, every figure observed rather than estimated:
+    #     recorded reference (the comment above)  24m09s   10m51s of headroom
+    #     Site #430, job 106783786108             31m47s    3m13s
+    #     Site #431, job 106803396986             32m05s    2m55s
+    # Two consecutive runs within three minutes of the ceiling is a trend, and on present growth
+    # the next fold stops on the clock rather than on a verdict.
+    #
+    # THIS IS NOT THE FIX, and it must not be allowed to stand in for it. The duration grew
+    # because the education tree is now 5,739 files and the browser mount walks all of them.
+    # The next-order item is to SPLIT THE BROWSER MOUNT INTO ITS OWN JOB, so that all-file
+    # admission (the named step, check_education_publication_admission.py --build-control) and
+    # the mount return SEPARATE verdicts. Today a mount slowdown and an admission failure are
+    # indistinguishable from outside: one job, one clock, one conclusion. Split, the admission
+    # verdict stays fast and legible, and the mount can have whatever clock it needs without
+    # hiding behind it.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
