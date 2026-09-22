@@ -86,7 +86,13 @@ jobs:
           # "Education file admission blocked publication: MISSING ... Summer_1 ...".
           # A Site pin pair is four lines, not two. Derived from domain-split-verify.yml in this
           # same tree by the window runner, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '1e668ee48aa8159b14fba0ec0058e8ea9ae880bd' }}
+          # Moved 2026-09-22 (title derivation, the one Site window) WITH both domain-split-verify.yml
+          # pins, per STANDING RULE L31 and correction #22 -- a Site pin pair is FOUR lines, and
+          # tools/verify_split_live_publication.py::sources reads the publication subject pins from
+          # THIS file: 1e668ee4 -> Lessons main 4f19ac9e, the squash merge of #644. Derived with git
+          # rev-parse on the Lessons checkout, never typed. HELD EQUAL to Lessons main; P5 measured
+          # at the move: EQUAL-declared pins agree at 4f19ac9eca88.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '4f19ac9eca8830f9483bce2fd5c1e25341d04230' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -121,7 +127,11 @@ jobs:
           # squash merge of Apps #162, the Apps arm of the same act; both gate copies are
           # byte-identical there. Held EQUAL to domain-split-verify.yml. Derived from that file in
           # this same tree by the window runner, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || 'ad8063055175fd9477c97b59a2fa4b0d6e950d16' }}
+          # Moved 2026-09-22 (title derivation) WITH the Lessons pin above, per STANDING RULE L31:
+          # ad806305 -> Apps main ecc78fff, the squash merge of #164, the Apps arm of the same act;
+          # both gate copies byte-identical there, gateSha256 cd3202d0 (measured at both target
+          # commits, not carried from the tree -- it is a run-computed witness, not a stored pin).
+          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || 'ecc78fff0c66023a23915ccfb520e36b1736e43f' }}
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
