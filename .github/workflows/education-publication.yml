@@ -92,7 +92,13 @@ jobs:
           # THIS file: 1e668ee4 -> Lessons main 4f19ac9e, the squash merge of #644. Derived with git
           # rev-parse on the Lessons checkout, never typed. HELD EQUAL to Lessons main; P5 measured
           # at the move: EQUAL-declared pins agree at 4f19ac9eca88.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '4f19ac9eca8830f9483bce2fd5c1e25341d04230' }}
+          # Moved 2026-09-22 (STOP-RESP-2 step 3, the sixth-pin discharge): 4f19ac9e -> b5b873616790c88e12ae9977b8462466b3af371a,
+          # the squash merge of Lessons #647 -- the Summer 1 responsive re-delivery with its L33
+          # carrier folded in. #647 moved 27 published paths plus the derived size table, all of
+          # which Site #430 and #431 admit, so this discharges the EQUAL declaration this pin
+          # carries. It moves WITH its Apps companion below, per STANDING RULE L31. Derived with
+          # git rev-parse on the Lessons checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || 'b5b873616790c88e12ae9977b8462466b3af371a' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -131,7 +137,11 @@ jobs:
           # ad806305 -> Apps main ecc78fff, the squash merge of #164, the Apps arm of the same act;
           # both gate copies byte-identical there, gateSha256 cd3202d0 (measured at both target
           # commits, not carried from the tree -- it is a run-computed witness, not a stored pin).
-          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || 'ecc78fff0c66023a23915ccfb520e36b1736e43f' }}
+          # Moved 2026-09-22 (STOP-RESP-2 step 3) WITH the Lessons pin above, per L31: ecc78fff ->
+          # 86933c995419987ff281d3f1513712b2b4f34dfc, the squash merge of Apps #169 -- the last of the three gate-copy
+          # companions this fold needed, each one cut after the Site merge it depended on. Derived
+          # with git rev-parse on the Apps checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || '86933c995419987ff281d3f1513712b2b4f34dfc' }}
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5

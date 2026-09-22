@@ -18,7 +18,25 @@ jobs:
     runs-on: ubuntu-latest
     # NAV-2 expands the owner/header matrix; the preceding full run took 24m09s.
     # Retain every assertion and allow the complete matrix to finish.
-    timeout-minutes: 35
+    #
+    # RAISED 2026-09-22, 35 -> 60, APPROVED IN ADVANCE as a CONFIG-ONLY change: it asserts
+    # nothing, loosens no gate, and changes no step, threshold or scope. It buys wall-clock and
+    # nothing else. Measured trend, every figure observed rather than estimated:
+    #     recorded reference (the comment above)  24m09s   10m51s of headroom
+    #     Site #430, job 106783786108             31m47s    3m13s
+    #     Site #431, job 106803396986             32m05s    2m55s
+    # Two consecutive runs within three minutes of the ceiling is a trend, and on present growth
+    # the next fold stops on the clock rather than on a verdict.
+    #
+    # THIS IS NOT THE FIX, and it must not be allowed to stand in for it. The duration grew
+    # because the education tree is now 5,739 files and the browser mount walks all of them.
+    # The next-order item is to SPLIT THE BROWSER MOUNT INTO ITS OWN JOB, so that all-file
+    # admission (the named step, check_education_publication_admission.py --build-control) and
+    # the mount return SEPARATE verdicts. Today a mount slowdown and an admission failure are
+    # indistinguishable from outside: one job, one clock, one conclusion. Split, the admission
+    # verdict stays fast and legible, and the mount can have whatever clock it needs without
+    # hiding behind it.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
@@ -91,7 +109,13 @@ jobs:
           # admission on Lessons main (run 35714663331) and this window admits them. Derived with
           # git rev-parse on the Lessons checkout, never typed. HELD EQUAL to Lessons main; moves
           # WITH its Apps companion below and WITH both education-publication.yml pins (L31).
-          ref: 4f19ac9eca8830f9483bce2fd5c1e25341d04230
+          # Moved 2026-09-22 (STOP-RESP-2 step 3, the sixth-pin discharge): 4f19ac9e -> b5b873616790c88e12ae9977b8462466b3af371a,
+          # the squash merge of Lessons #647 -- the Summer 1 responsive re-delivery with its L33
+          # carrier folded in. #647 moved 27 published paths plus the derived size table, all of
+          # which Site #430 and #431 admit, so this discharges the EQUAL declaration this pin
+          # carries. It moves WITH its Apps companion below, per STANDING RULE L31. Derived with
+          # git rev-parse on the Lessons checkout, never typed.
+          ref: b5b873616790c88e12ae9977b8462466b3af371a
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -128,7 +152,11 @@ jobs:
           # cd3202d0 (measured, sha256 of Lessons/tools/verify_cross_estate_unification.py --
           # repo-qualified, the gate copy lives in Lessons and Apps, never here -- at BOTH Lessons
           # 4f19ac9e and Apps ecc78fff -- the 7abf0bc4 named above is the previous pair's value).
-          ref: ecc78fff0c66023a23915ccfb520e36b1736e43f
+          # Moved 2026-09-22 (STOP-RESP-2 step 3) WITH the Lessons pin above, per L31: ecc78fff ->
+          # 86933c995419987ff281d3f1513712b2b4f34dfc, the squash merge of Apps #169 -- the last of the three gate-copy
+          # companions this fold needed, each one cut after the Site merge it depended on. Derived
+          # with git rev-parse on the Apps checkout, never typed.
+          ref: 86933c995419987ff281d3f1513712b2b4f34dfc
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
