@@ -58,7 +58,8 @@
     "STOP-R2 explicit document tags (Site claude/hum-su1-tags-window): the implied <head> and <body> written down on the fifty served Summer 1 Humanities pages, on Matt Roper's ruling of 2026-09-22, option (a). The pages were never fragments: each opens <!doctype html><html lang=\"en-GB\"> and closes </html>, leaving head and body implied as HTML5 allows, so the usage adapter -- which finds its insertion points by looking for the literal strings </head> and </body> -- refused them and the Education Pages publication was red on Lessons main from 70992689. The withdrawn first corrective wrapped each page in a second document and was reverted before it landed. tools/hum/explicit_document_tags.py inserts four tags and moves not one byte of content; tools/hum/dom_oracle.mjs loads the bytes before and after in Chromium and all seventy served pages parse to an IDENTICAL document (doctype, head.innerHTML, body.innerHTML, title, element count). STOP-SIGN table pre-signed by Matt Roper 2026-09-22 under the overnight pre-signature rule (50/50 TERM+WEEK UNCHANGED, 50/50 evidence sha == bytes, 50/50 DOM identical, zero exceptions); row 45 measured first with tools/hum/verify_loop.py::panels -- 126 panels, 7 per lesson, 18 of 18, not one signed lesson byte moved. Lessons #642 and Apps #162 landed. Both L31 pin pairs move with it. Pairs derived from the local build of the two pinned shas: data/domain-catalogue.json a8ca608a->8543239a; data/resource-discovery.json 78c39f96->87ec10e7; data/usage-registry.json b49ec9f2->b4eaddcb.",
     "Title derivation window (2026-09-22, Site claude/title-admission-window): the pinned Lessons source moves 1e668ee4 -> 4f19ac9e (Lessons #644, the title-slide derivation fix) and its Apps companion ad806305 -> ecc78fff (Apps #164), in all four declared-EQUAL pin lines. build_science_hub.py rebuilt Science_Teesside/index.html under the corrected title rule and tools/ux2/resource_sizes.py re-derived data/resource-sizes.json with it; both are served, so the Lessons merge refused the all-file admission on main (run 35714663331). Both admitted as transition pairs [what the old pin built, what the new pin builds]; the superseded halves are dropped. Measured: exactly 2 paths move, 0 added, 0 removed. check_education_separation.py's baseline_sha is NOT re-frozen this window and must not be claimed as such (correction #21): measured, output/usage-registry.json is byte-identical at 7a800653abf8b6b6 (1350153 bytes) between the old-pin and new-pin builds, and the separation check exits 0 with failures: [] on the new build.",
     "Summer 1 responsive re-delivery: 27 served paths admitted as transition pairs [Lessons main cbc61aca, pending claude/su1-responsive-pages 398ff601]. The pending half is the PENDING build's bytes; the main-today half was anchored against this record's prior value, 27/27, before the edit. The four EQUAL pins are LEFT AT current main by ruling (STOP-RESP-2 step 1): moving them to an unmerged commit would make them a non-ancestor and red P2.",
-    "STOP-RESP-3 (Site claude/su1-sizes-window): data/resource-sizes.json re-cut to [main-today, pending]. The Summer 1 responsive re-delivery changes the source bytes of the three START_HERE.html pages, so tools/ux2/resource_sizes.py --check goes red and the table is regenerated -- and the table is itself a served path. Site #430 admitted the 27 CONTENT movers but not this DERIVED 28th, which is invisible in the content diff and appears only once the derivation is re-run. main-today cb7f4b85 was derived by building the education tree at Lessons main cbc61aca and equals the pair's existing second element; the stale first element 6428ad5e is dropped. pending c0566060 was built at claude/su1-responsive-pages. No other path moves."
+    "STOP-RESP-3 (Site claude/su1-sizes-window): data/resource-sizes.json re-cut to [main-today, pending]. The Summer 1 responsive re-delivery changes the source bytes of the three START_HERE.html pages, so tools/ux2/resource_sizes.py --check goes red and the table is regenerated -- and the table is itself a served path. Site #430 admitted the 27 CONTENT movers but not this DERIVED 28th, which is invisible in the content diff and appears only once the derivation is re-run. main-today cb7f4b85 was derived by building the education tree at Lessons main cbc61aca and equals the pair's existing second element; the stale first element 6428ad5e is dropped. pending c0566060 was built at claude/su1-responsive-pages. No other path moves.",
+    "Science hub order by generation (Matt's ruling on the S02 STOP, 2026-09-22): 3 served paths admitted as transition pairs [Lessons main f99d651d, pending claude/lessons-handoff-execution-34mw9j 31ff6ce7, the second cut after the adversarial review; first cut b3ad2773] -- Science_Teesside/index.html, assets/catalogue/science-hub-bindings.json and the derived data/resource-sizes.json. The pending half is the PENDING build's bytes (Site acb7bfa9, Apps 86933c99, every derivation writer run first); the main-today half equals each entry's existing value, an independent check on the build. Stale first elements dropped; science-hub-bindings.json leaves ARRIVING."
   ],
   "trees": {
     "education-site": {
@@ -4206,8 +4207,8 @@
       "Science_Teesside/Teaching_Packs/packs.css": "70ca73b323e5cabf05b1f5f9f8107694cfcecf4ddf8043f342049ee4c797ce59",
       "Science_Teesside/Teaching_Packs/web-slides.html": "30af175ecbbe47845592db29a0b9879afa7641ca1348736735478ac146998a9c",
       "Science_Teesside/index.html": [
-        "f7eceed9aed6838ebe1d2ff87744f7f2ca299156921ba3de3da007e5e5ac1aaa",
-        "faa7fbc29be6de0fe21e188126e15890164c409fc353604dcee45bd0cc13de8f"
+        "faa7fbc29be6de0fe21e188126e15890164c409fc353604dcee45bd0cc13de8f",
+        "4d2ec44d7bed1911aa95ff821d6767401db0279cea0dcaca1b68b0ef0845b97b"
       ],
       "Science_Teesside/launch-engine/README.md": "064cee682afabfcbb20afb2ec01f097cd4824e237278f3ceb6141dafbaa6bf00",
       "Science_Teesside/launch-engine/build.js": "c53b66b3a37d9d6a2f1d4cdc67d76d91e7f84b1edf41e3cedf45ef6541b2b8e0",
@@ -4372,8 +4373,8 @@
       ],
       "data/planning-keys.json": "5d1944f5dba42aea2e203f667e6b1b23bdf08157c3c451b0a22757132076c56e",
       "data/resource-sizes.json": [
-        "cb7f4b85b57ae12670088c6911fd01622da11eed380cc5ed6756db466155f8b4",
-        "c05660602697427d3ffe0a90adca1ededac9efee7053a40d20fe66314392c328"
+        "c05660602697427d3ffe0a90adca1ededac9efee7053a40d20fe66314392c328",
+        "ed9878b76ee46a4efa4eaa60b930de5b84dcc41c3e4d019e5989ad09354d33a0"
       ],
       "grow-anim/README.md": "131b5159f2b9da63291126da0cee13f7548bd4a9a0511eb8bf2e13b2633dcde0",
       "grow-anim/compat-build-anim.js": "ce4fd029211cf449c86d759909fa19e0b03d5c45094c5206ec3ba226e0caa951",
@@ -11522,7 +11523,7 @@
       ],
       "assets/catalogue/science-hub-bindings.json": [
         "a016139c498441e1941823f2c30dfeaaf7290daf6f3d11bc49f799a1308dae0b",
-        "ARRIVING"
+        "a2b3a6deefc19f20402daa05f25e3d172cfe807ae7058fd420ccaa8e9c7740eb"
       ],
       "Humanities_Teesside/BUILD_W27-W39_2026-27/BUILD/Summer_1/W01/BUILD_SU1_W01_Captioned_Model.mp4": "a49c4ba757e05244a3514a3fa95944d0686fb787d8a5a6a1f8d34caeef2c822d",
       "Humanities_Teesside/BUILD_W27-W39_2026-27/BUILD/Summer_1/W01/BUILD_SU1_W01_Editable_Pack.docx": "6ed8f2a9403b24efa1068b9d2f34d48352ceece1ccd554287ae3be2ba5ea8ad1",
