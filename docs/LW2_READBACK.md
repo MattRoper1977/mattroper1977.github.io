@@ -41,7 +41,10 @@ JOB_5 is v1. Held; replace on v2.
 
 ---
 
-## §1 SCI_ ID MAP — FOR YOUR SIGNATURE
+## §1 SCI_ ID MAP — SIGNED (Matt, 2026-09-23)
+
+**Signed:** "18/18 word-for-word against the workbook cells, single
+deck per pathway-week, manifest agrees."
 
 Method (two instruments, printed by
 script, not typed):
@@ -147,41 +150,25 @@ Confidence HIGH on all 18.
 - deck: `SCI_L_W32_Topics_7_8_Mechanisms_Checkpoint.html`
 - cell: `C35` (LAUNCH Weekly - Summer)
 
-### !! Read this before signing
+### Ruling on the held decks (Matt, 2026-09-23)
 
-**All 18 decks are HELD.** Every one is
-on the held-51 list
-(`_sx3/handoff_2026-09-22/artefacts/`
-`SCI_51.md`), held on row 48
-("unbounded modelling"; D3 PR #666
-reports it).
-
-Held stays held. So even after you sign
-this map, R2/R3/R4 cannot insert
-anything into these 18 decks until a
-ruling releases them. R5 (staff files
-beside the teacher note) does not edit
-the decks.
-
-**Question for you:** does the Science
-side of LW-1/LW-2 wait until the held-51
-are released (by their own transplant),
-or do you rule a staff-only route for
-them?
+All 18 decks are in the held-51 (row 48). The Science side WAITS
+for the held-51 release. No staff-only route for lesson decks:
+one chassis, no fork.
+- Anything that lands INSIDE a held deck (R2 line, R3/R4/R6
+  fragments) waits.
+- Staff-facing files BESIDE a deck (TA briefs, AfL sheets, code
+  maps) may land once their job is held and passed, held-51
+  or not.
 
 ---
 
 ## §2 R-ITEMS — status
 
-- **R2** (TA brief line, Job 2): waits.
-  LW-1's own condition ("after Autumn 2
-  batch 1") is met. In the handoff's
-  ruled queue LW-1 is item 7, after D3,
-  W9L1, batch 2 and item 4, and HUB1
-  now runs before batch 2. Say if LW
-  should jump that queue. Humanities
-  ids map directly; Science goes via
-  the map, which the hold blocks.
+- **R2** (TA brief line, Job 2): waits. LW-1 keeps its place in
+  the queue (after D3, W9L1, batch 2 and item 4). Its real gate is
+  Job 9 (GPT, in progress): LW-3's R6 → R5 → R4 order needs Job 9's
+  fragments. No LW-1 R-item starts before Job 9 is held and passed.
 - **R3** (Job 1 Humanities + Job 7
   Science): waits for the M1 census.
   The Science part is blocked by the
@@ -203,5 +190,5 @@ them?
 ## Stop points
 
 - STOP-LW2 (hash): not hit.
-- §1 signature: OWED (this table).
+- §1 signature: SIGNED 2026-09-23.
 - R3/R4 tables: not reached.
