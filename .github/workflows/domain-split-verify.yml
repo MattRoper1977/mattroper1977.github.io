@@ -139,7 +139,13 @@ jobs:
           # built them to exactly the admitted pending digests; so this discharges the EQUAL
           # declaration this pin carries. It moves WITH its Apps companion below, per STANDING RULE
           # L31. Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: 3560dc0e87cdf77398a73332a39bace7ff22ad0a
+          # Moved 2026-09-23 (HUB1 v2's EQUAL window): the Lessons pin 3560dc0e -> 6d5a05ad5723096b70c0c68ff2442239dc5b8e14, the squash
+          # merge of Lessons #667 (which also carries D3 #666 and the docs-only #669, neither of which moves a
+          # published path). #667 moved 6 published paths, all of which Site #440 admits, and its publication
+          # run 35855223506 built them to exactly the admitted pending digests; so this discharges the EQUAL
+          # declaration this pin carries. It moves WITH its Apps companion below, per STANDING RULE L31.
+          # Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: 6d5a05ad5723096b70c0c68ff2442239dc5b8e14
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -192,7 +198,11 @@ jobs:
           # the Apps pin 96d1ef19 -> 3b90f1a86c74b79ddf85bfccb50dd2f85459a63c, the squash merge of Apps #177, the
           # gate-copy companion cut after Site #437 merged. Both gate copies byte-identical there at
           # f7187d3d479a. Derived with git rev-parse on the Apps checkout, never typed.
-          ref: 3b90f1a86c74b79ddf85bfccb50dd2f85459a63c
+          # Moved 2026-09-23 (HUB1 v2's EQUAL window) WITH the Lessons pin above, per L31: the Apps pin
+          # 3b90f1a8 -> 2fd5621e985d257b272d46d4f368bc023f010bce, the squash merge of Apps #180 (Apps #179, D3's gate-copy companion,
+          # is in its history). Both gate copies byte-identical there at 4a7e791e2ffd. Derived with git
+          # rev-parse on the Apps checkout, never typed.
+          ref: 2fd5621e985d257b272d46d4f368bc023f010bce
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
