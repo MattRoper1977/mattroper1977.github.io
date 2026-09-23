@@ -15,5 +15,6 @@
 **Publication:** run 35855223506 SUCCESS (build, all-file admission, deploy; 11:44Z). D3's own: 35852802697 SUCCESS.
 **EQUAL window:** Site #442 (Lessons 6d5a05ad / Apps 2fd5621e) — CI running. **Pure carrier:** after #442.
 
+**Aut1 Week 8 (enrichment) has no Teaching Packs section by design; Sugar W8A/W8B sit there.** Site #442 fixed check_completion to read which weeks the packs page has (link required only for those, no other pack link allowed, pack-less rows reported); proved RED before/GREEN after, and a removed-Week-3 control stays RED. No Site admission fence covers the check (only `git diff --check`, clean).
 **Q12 (Site control 12 reds):** proved false. With full Lessons history the 11 P2 "not an ancestor" rows vanish (a partial-clone artefact); the one left is P0 serve-witness.yml:31 = the known Q7. On #442's branch: RED 1 (Q7), P5 EQUAL pins agree. No PR needed.
 **Owed after HUB1:** Q11 (R3 residue: "Your task · 1 of 2" in five W8 decks' no-JS markup; BUILD W11A/W11B "Week not bound"), then batch 2.
