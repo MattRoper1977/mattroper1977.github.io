@@ -107,7 +107,15 @@ jobs:
           # built them to exactly the admitted pending digests; so this discharges the EQUAL
           # declaration this pin carries. It moves WITH its Apps companion below, per STANDING RULE
           # L31. Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || 'b1c70b0e007d7292e0b5bb55546e1d1781acde71' }}
+          # Moved 2026-09-23 (PASS C Autumn 2 batch 1, rulings S1 and S3; the EQUAL window of that
+          # fold): the Lessons pin b1c70b0e -> be82fe867fb9e1c3e4e89f9d3648f32123464a40, the squash merge of
+          # Lessons #662. #662 moved 16 published paths (the 11 transplanted Science decks, three
+          # Launch pack manifests, and the derived lesson order and size table), all of which Site
+          # #436 admits, and its publication run 35823783961 built them to exactly the admitted
+          # pending digests; so this discharges the EQUAL declaration this pin carries. It moves WITH
+          # its Apps companion below, per STANDING RULE L31. Derived with git rev-parse on the
+          # Lessons checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || 'be82fe867fb9e1c3e4e89f9d3648f32123464a40' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -154,7 +162,11 @@ jobs:
           # L31: the Apps pin 86933c99 -> 7a69b63d632ab2efdbe4780fc063667027003607, the squash merge of Apps #172,
           # the gate-copy companion cut after Site #433 merged. Both gate copies byte-identical
           # there at 243f6ce1e9a6. Derived with git rev-parse on the Apps checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || '7a69b63d632ab2efdbe4780fc063667027003607' }}
+          # Moved 2026-09-23 (PASS C Autumn 2 batch 1's EQUAL window) WITH the Lessons pin above, per
+          # L31: the Apps pin 7a69b63d -> 96d1ef19c2653c79522c42c459d5bcb60aa42fdf, the squash merge of Apps #176,
+          # the gate-copy companion cut after Site #436 merged. Both gate copies byte-identical
+          # there at 26363228459d. Derived with git rev-parse on the Apps checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || '96d1ef19c2653c79522c42c459d5bcb60aa42fdf' }}
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
