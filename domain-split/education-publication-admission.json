@@ -60,7 +60,7 @@
     "Summer 1 responsive re-delivery: 27 served paths admitted as transition pairs [Lessons main cbc61aca, pending claude/su1-responsive-pages 398ff601]. The pending half is the PENDING build's bytes; the main-today half was anchored against this record's prior value, 27/27, before the edit. The four EQUAL pins are LEFT AT current main by ruling (STOP-RESP-2 step 1): moving them to an unmerged commit would make them a non-ancestor and red P2.",
     "STOP-RESP-3 (Site claude/su1-sizes-window): data/resource-sizes.json re-cut to [main-today, pending]. The Summer 1 responsive re-delivery changes the source bytes of the three START_HERE.html pages, so tools/ux2/resource_sizes.py --check goes red and the table is regenerated -- and the table is itself a served path. Site #430 admitted the 27 CONTENT movers but not this DERIVED 28th, which is invisible in the content diff and appears only once the derivation is re-run. main-today cb7f4b85 was derived by building the education tree at Lessons main cbc61aca and equals the pair's existing second element; the stale first element 6428ad5e is dropped. pending c0566060 was built at claude/su1-responsive-pages. No other path moves.",
     "Science hub order by generation (Matt's ruling on the S02 STOP, 2026-09-22): 3 served paths admitted as transition pairs [Lessons main f99d651d, pending claude/lessons-handoff-execution-34mw9j 31ff6ce7, the second cut after the adversarial review; first cut b3ad2773] -- Science_Teesside/index.html, assets/catalogue/science-hub-bindings.json and the derived data/resource-sizes.json. The pending half is the PENDING build's bytes (Site acb7bfa9, Apps 86933c99, every derivation writer run first); the main-today half equals each entry's existing value, an independent check on the build. Stale first elements dropped; science-hub-bindings.json leaves ARRIVING.",
-    "PASS C Autumn 2 batch 1 (Matt's rulings S1/S3 on the S02 STOP; overnight order item 4): 16 served paths admitted as transition pairs [Lessons main d8acf3ac, pending claude/lessons-handoff-execution-34mw9j f69400b3 content] -- the 11 transplanted decks (3 of them split first, STOP-C1), the three re-cut Launch pack SHA256SUMS.txt (ruling S3), and the derived assets/catalogue/lesson-order.json and data/resource-sizes.json. The pending half is the PENDING build's bytes (Site dd9831f3, Apps 7a69b63d, every derivation writer run first); the main-today half equals each entry's existing value (or the last element of its existing pair), an independent check on the build. Stale first elements dropped. The hub (Science_Teesside/index.html, its bindings and its size row) moves in its own follow-on window (route C)."
+    "PASS C Autumn 2 batch 1 (Matt's rulings S1/S3 on the S02 STOP; overnight order item 4): 16 served paths admitted as transition pairs [Lessons main d8acf3ac, pending claude/lessons-handoff-execution-34mw9j 8cedb479, the second cut after the adversarial review (the loop adapter read the Science meta line as the stage task and shipped the done mark as \" \u00b93\"); first cut f69400b3 content] -- the 11 transplanted decks (3 of them split first, STOP-C1), the three re-cut Launch pack SHA256SUMS.txt (ruling S3), and the derived assets/catalogue/lesson-order.json and data/resource-sizes.json. The pending half is the PENDING build's bytes (Site 7be9a2b4, Apps 7a69b63d, every derivation writer run first); the main-today half equals each entry's existing value (or the last element of its existing pair), an independent check on the build. Stale first elements dropped. The hub (Science_Teesside/index.html, its bindings and its size row) moves in its own follow-on window (route C)."
   ],
   "trees": {
     "education-site": {
@@ -2803,7 +2803,7 @@
       "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W12B_Science_Answer_Lab_Do.html": "456100ba3ce8774be6a8f89c090b9987d6d8fdeaf5b696865a58cc5671c150c8",
       "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W12_Follow_the_warming_chain_Classic.html": [
         "e6bd0f537dcd742b0b37b713bf30872479f4c89d8db0aa6fc9d2bb3f5899edfb",
-        "6cc904eddab7a020aa79ab43d815cda838bf32c119f78b6896534718fb9390ba"
+        "d69a7241544bc3e50732b7c2f4a3e092fe6af18b19ebf47528e498fc4cb8070f"
       ],
       "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W13A_Rover_Rescue_Plan_Explore.html": [
         "05fad0c615825f1867c53edb85568a9c75ee12bde780ed6f1d7e83186fd9594f",
@@ -2819,7 +2819,7 @@
       "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W9B_Spherical_Bodies_Do.html": "790cb3fd90de78109952e77f484624c4e5838a55fe941c4899a557d5f3423d79",
       "Science_Teesside/Grow/W8-W13_2026-27/SCI_G_W9_Turn_Earth_explain_the_sky_Classic.html": [
         "b1af5e6743d1283cde3033c3bb8dab928272cc88c0738b4341ef59c0f272b7d8",
-        "2a0baa856dbda5fb25a53ecc91fb77966810b6fbe34013170cff1aa46a154352"
+        "f61ffd325714f1da06502514da9a3ca4d431ff9545b4f80d8b8c1cac1a419bfb"
       ],
       "Science_Teesside/Grow/W8-W13_2026-27/SHA256SUMS.txt": "bebaf4ddc09fcbc4dcc639b6892b2e897651928b83873f9b8039435c4edcf9d2",
       "Science_Teesside/Grow/W8-W13_2026-27/START_HERE.html": "f8544989ca303262bb10f164e9525a315b519ae9c75195dae28aa8ce072843a9",
@@ -2914,19 +2914,19 @@
       "Science_Teesside/Grow/v3_40min/manifest-v3.json": "f99abca91be9c55710ba51462a1844d23d8ab8c2b4efd72c4f4542040c3f9145",
       "Science_Teesside/Launch/Autumn2_W7_2026-27/SCI_L_A2_W7L1_Topics_2_3_Assessment_Introduce.html": [
         "4faa4afd06c7d3950794985037bb00d9313986aeae0c710e931eb87a0061a29c",
-        "e78cc25bf6354cf58109d88573e8572d4ee057b71c782e428bcb54e36db92d6c"
+        "772dde3ffe67987d7c692c4bbe8ca2f336ac5481c4d58f52cba0bf7b8d41f06c"
       ],
       "Science_Teesside/Launch/Autumn2_W7_2026-27/SCI_L_A2_W7L2_Topics_2_3_Assessment_Explore.html": [
         "0bfa74882a2f5caa8d5bb6fedfc03a08935a5f1021b0c5d85184eed42b83f7dc",
-        "02ee1ad6e5189f82e7eac293f3bf755d7fbb37ee8855d28abb0736e3b02ed0cd"
+        "6b4c0fa8c3d257e2faa905bb26e2130517e9fe8fff46ae5c053d02079c3af68c"
       ],
       "Science_Teesside/Launch/Autumn2_W7_2026-27/SCI_L_A2_W7L3_Topics_2_3_Assessment_Do.html": [
         "ce8d7e4c54223cab1771153176113e78962c362806a33aff95eb79ad38aabca7",
-        "77127dabd387b471e97746829e50659f44b3ddee718d74defd6018b6180e3c8f"
+        "102e68df28be45b5488395b3a63e38f2ac343fa9e2b680b3d99283c87ad14e2a"
       ],
       "Science_Teesside/Launch/Autumn2_W7_2026-27/SHA256SUMS.txt": [
         "264f1c69dce14295e1d67302d54a67aad3068b7b47f3f0853ce56b214be6e0e5",
-        "ccd1ee2e9bacc3744bb4796f49bfca63d5bd65b8d049b404de71e8a5a9157056"
+        "4d2785f94e16255a8e75b5887ba0c7348d80c64d06cec9521113e00b3ee35412"
       ],
       "Science_Teesside/Launch/Autumn2_W7_2026-27/START_HERE.html": "20adc13f545c653d32828755ebf4dabe506d62cfc3ecd2ff9c85b225ad4acc25",
       "Science_Teesside/Launch/Autumn2_W7_2026-27/manifest.json": "3ca9d5ee491131bcb00a52ed36606de71ba8a161061ed3ff13c53ea23f733e1e",
@@ -2947,19 +2947,19 @@
       "Science_Teesside/Launch/SCI_L_W7_L3_ExamPractice.html": "9c4c8e2360474fcbe02541e080c52a1a5ede389fc4a34fa18e3a1b31a30e699b",
       "Science_Teesside/Launch/W14-W15_2026-27/SCI_L_W14L1_Genetic_Condition_Research_Introduce.html": [
         "11a02ceee902dbdaf9a10c0f577daa317dc1551a49064ce828ac3a6e5405fe3e",
-        "aa683fe24079d5489eac0af9071b15a267f435e2882e6e7294fa2a3b1f3259a2"
+        "42f9a0ed5db7744c8ca0d720621388306296e5608651679e5a03075da172274f"
       ],
       "Science_Teesside/Launch/W14-W15_2026-27/SCI_L_W14L2_Genetic_Condition_Source_Evidence_Explore.html": [
         "0aa399644949a4105bad71b5a5ca841bcca567eafc94470be5312bb6f48b481c",
-        "5e34f48b9d25765ac1e3c34d72b1b1e2924c2e5f01035cff7d2ceff770d8d39b"
+        "f5cd032c8547250bdd8080fc62182bccc9b4424568198c000e43b65a793107e9"
       ],
       "Science_Teesside/Launch/W14-W15_2026-27/SCI_L_W14L3_Genetic_Condition_Presentation_Do.html": [
         "a3b9f410fc1e947ef82d9d9ccb82c863747f4556e4857401a1bf4a5a024ef4e4",
-        "eb732a721a964884a497e77acf3480fedb63c90ffd0d7e579ce29904acdb4461"
+        "e61222dc354a972ba6b1e3b6fc3a46fd6b52cfd33f18fb38aa9031cfc801f183"
       ],
       "Science_Teesside/Launch/W14-W15_2026-27/SHA256SUMS.txt": [
         "16bf414855d4a8c723a853b30b42f5dbf5fc8dac1ecf1ec542102bfc39f8f034",
-        "827659bf468f10f529caae9d6f56ce6d9e6faf68d1fdff8796287650ea3098f1"
+        "4781617b66baec3fd3951ed417e7360a445bc3d64835e8647cd74c5537a99f8d"
       ],
       "Science_Teesside/Launch/W14-W15_2026-27/START_HERE.html": "0b07a40e156cf529b59f19b293b894b69c1d3cb69b43c80cb0f17d03bf8074e9",
       "Science_Teesside/Launch/W14-W15_2026-27/manifest.json": "f303e839f99ee6293ae67e5e5f7facfd386d6619e13ce7c3bbc47cd49898d47a",
@@ -3032,7 +3032,7 @@
       ],
       "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W12_Zoom_into_genetic_information_Classic.html": [
         "14e5e8ea63222a2eeb6114d1c8dd5594f33cea4b87a536702664969c5dae414f",
-        "569312e914b0752a25d51ee69d9a146273dcc4cd2c055eab6d113a08800aa76b"
+        "f8d734ba3445fa50b9727c937daf69cd003f36a0e2ef10fa1f53698c7f22a2bb"
       ],
       "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W13L1_Alleles_Genotype_Phenotype_Introduce.html": [
         "8fbe42659717a8c5c41c616a071f832719fc700fcc7d33aedff084d576a06954",
@@ -3040,7 +3040,7 @@
       ],
       "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W13L2_Punnett_Square_Explore.html": [
         "1f287aa5f892ce5495688969fe5c1744b6ca24f65ac0d411f310e2f125e79448",
-        "6792ba55c1519a04ab9aaf1904b05bfda7f7d47fed54c721e46c6444275e5e66"
+        "ec1dd8d2327fc71fba8031514f8541f84c8e8c12ceca9699e55050839ab06b6d"
       ],
       "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W13L3_Inheritance_Probability_Do.html": [
         "ce08ab9d3c9545f67787dee21543b15c5408c0d0b6366d03086d702bdfcb19a6",
@@ -3063,11 +3063,11 @@
       ],
       "Science_Teesside/Launch/W8-W13_2026-27/SCI_L_W9_Copy_separate_divide_Classic.html": [
         "4ffe9bec981e752b316285fb96915bc6151af2db93ccf01fa64be5dde8c664e1",
-        "d319c5ddf78c8baa32ad2d2c29cd1398217d6482ee603a45202081cd5e26c0e8"
+        "dc11ee2762b5a8586d1753eada10e7b37f9a6f03cc46e2b2a82ddd55667a25bb"
       ],
       "Science_Teesside/Launch/W8-W13_2026-27/SHA256SUMS.txt": [
         "b5742772b68e35f44c9fef79ff805d85a1bc0a3ae3199257b96b8fad8fe74620",
-        "eeee3c3b38b211b7b41743672b6025ebb79244044c28f5d7f8846806c2919053"
+        "694205a0dfeb831f096d9dad923aa5f83762ea36193808918a01e4b636428907"
       ],
       "Science_Teesside/Launch/W8-W13_2026-27/START_HERE.html": "5d3c6cbc72c1b037a47563c98448de070521ab32597876f3c2e827c3629ab23c",
       "Science_Teesside/Launch/W8-W13_2026-27/TEACHER_IMPLEMENTATION_GUIDE.html": "805f9045f42f8154de1650923a66544ca24f7475df8de64aad7d957d77066a3e",
@@ -4284,7 +4284,7 @@
       "assets/catalogue/lesson-navigation.js": "110b1fd2412146894f4e034b33038155444adf538d93879ba6a68d7dc5003f73",
       "assets/catalogue/lesson-order.json": [
         "ab7f3ab5762c4e8fd23835a4b0d8843561975bfdbe2790006ced7f288b9148c6",
-        "d1819a2c6ecc962ac2722d7073c66e96d385b68fbc1f01013608fad6f378c0aa"
+        "46b13e01cf2bfafa980bb9a2aa96b76850e52accb2c5826dd9a6d293707c5078"
       ],
       "assets/catalogue/pack-notes.json": "c7c30351306a21f360190b202b98bf202fde02b8376a1a54886204e718850988",
       "assets/catalogue/pack.css": "ba6c5c84bcff84c023f2f10ac345a159f48ea97b2e8eb542cb3e56435204d63a",
@@ -4384,7 +4384,7 @@
       "data/planning-keys.json": "5d1944f5dba42aea2e203f667e6b1b23bdf08157c3c451b0a22757132076c56e",
       "data/resource-sizes.json": [
         "ed9878b76ee46a4efa4eaa60b930de5b84dcc41c3e4d019e5989ad09354d33a0",
-        "2e6e78a71a356655b9c31f280f1ef39936688c6c11648c9774249ae3c57225f2"
+        "bfa0b5499b6b00837f481d9196a1c3298b0e0c1c033296b078b63400671f0233"
       ],
       "grow-anim/README.md": "131b5159f2b9da63291126da0cee13f7548bd4a9a0511eb8bf2e13b2633dcde0",
       "grow-anim/compat-build-anim.js": "ce4fd029211cf449c86d759909fa19e0b03d5c45094c5206ec3ba226e0caa951",
