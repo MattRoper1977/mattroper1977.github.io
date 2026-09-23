@@ -115,7 +115,14 @@ jobs:
           # pending digests; so this discharges the EQUAL declaration this pin carries. It moves WITH
           # its Apps companion below, per STANDING RULE L31. Derived with git rev-parse on the
           # Lessons checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || 'be82fe867fb9e1c3e4e89f9d3648f32123464a40' }}
+          # Moved 2026-09-23 (the Science hub follow-on after PASS C batch 1, route C; its EQUAL
+          # window): the Lessons pin be82fe86 -> 3560dc0e87cdf77398a73332a39bace7ff22ad0a, the squash merge of
+          # Lessons #663. #663 moved 3 published paths (the Science hub page, its bindings and the
+          # derived size table), all of which Site #437 admits, and its publication run 35829540162
+          # built them to exactly the admitted pending digests; so this discharges the EQUAL
+          # declaration this pin carries. It moves WITH its Apps companion below, per STANDING RULE
+          # L31. Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '3560dc0e87cdf77398a73332a39bace7ff22ad0a' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -166,7 +173,11 @@ jobs:
           # L31: the Apps pin 7a69b63d -> 96d1ef19c2653c79522c42c459d5bcb60aa42fdf, the squash merge of Apps #176,
           # the gate-copy companion cut after Site #436 merged. Both gate copies byte-identical
           # there at 26363228459d. Derived with git rev-parse on the Apps checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || '96d1ef19c2653c79522c42c459d5bcb60aa42fdf' }}
+          # Moved 2026-09-23 (the hub follow-on's EQUAL window) WITH the Lessons pin above, per L31:
+          # the Apps pin 96d1ef19 -> 3b90f1a86c74b79ddf85bfccb50dd2f85459a63c, the squash merge of Apps #177, the
+          # gate-copy companion cut after Site #437 merged. Both gate copies byte-identical there at
+          # f7187d3d479a. Derived with git rev-parse on the Apps checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || '3b90f1a86c74b79ddf85bfccb50dd2f85459a63c' }}
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
