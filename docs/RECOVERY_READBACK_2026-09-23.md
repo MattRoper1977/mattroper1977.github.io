@@ -49,9 +49,14 @@ KNOWN red:
   predates the 17 Build Spring/Summer
   decks. Re-read in this run's log.
   Needs your ruling to move (unchanged).
-- Education publication 35833504734,
-  Domain split 35833504729, live
-  verification 35834455930: success.
+- Education publication 35833504734
+  and live verification 35834455930:
+  success.
+- The LONG run the dead session was
+  waiting on ("nearly done"): Domain
+  split publication 35833504729,
+  07:46 → 08:18 (31 min), SUCCESS.
+  All 22 runs on 5251edc8 finished.
 
 Apps
 `afbd0add358fb6385133c56c470c6450413cf04f`
@@ -214,6 +219,19 @@ F6. No drift left behind:
 
 F7. No run is in progress or queued
 in any repo. Nothing to wait for.
+
+F8. (Addendum) The dead session's last
+message said it was starting a docs PR:
+"S06 filled in" + "HANDOFF v4".
+- It does NOT exist on origin. Every
+  ref in all 5 repos was searched for
+  an S06 file: none. No open PR.
+- So it never left the old container.
+  Nothing to land, nothing overwritten.
+- S06 is NOT re-derived here, as you
+  ordered. It stays OWED.
+- The HANDOFF on the recovery branch is
+  a fresh rewrite (no v4 existed).
 
 ---
 
