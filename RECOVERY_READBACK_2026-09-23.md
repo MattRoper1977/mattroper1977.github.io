@@ -6,7 +6,7 @@ Everything below was re-read from the
 repos, PRs and CI runs. Nothing is from
 memory. Times are UTC.
 
-Read at ~09:30Z. Mains via `git ls-remote`.
+Read at ~08:45Z. Mains via `git ls-remote`.
 
 ---
 
