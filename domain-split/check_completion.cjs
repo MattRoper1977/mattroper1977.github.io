@@ -128,9 +128,18 @@ fs.mkdirSync(output, { recursive: true });
       assert(currentBuild.length >= 5, 'Aut1 current BUILD collection lost lessons');
       const currentRows = await page.locator('[data-lesson-path]:visible').evaluateAll(items => items.map(e => ({path: e.dataset.lessonPath, week: e.dataset.week})));
       assert.deepEqual(currentRows.map(r => r.path).sort(), [...currentBuild].sort(), 'Aut1 current BUILD rows differ from the record');
-      const weekNumbered = currentRows.filter(r => /^\d+$/.test(r.week)).length;
-      assert(weekNumbered >= 5, 'Week-numbered current BUILD rows lost');
-      assert.equal(await page.locator('[data-lesson-path]:visible a[href^="Teaching_Packs/#build-week-"]').count(), weekNumbered, 'Every week-numbered current BUILD row links its Teaching Packs section');
+      // HUB1 R3 (Lessons #667, ruled 2026-09-23) bound Sugar (BUILD W8A/W8B) to Aut1 · W8, the
+      // enrichment week: it is now week-numbered, but that week has no workbook row and so no
+      // Teaching Packs section. A row links its section only when the packs index HAS one, so the
+      // expected set is read from that index, not assumed: every week-numbered row whose week has a
+      // section links exactly that section, and a row whose week has none links no pack anchor.
+      const packWeeks = new Set(fs.existsSync(packsPath) ? [...fs.readFileSync(packsPath, 'utf8').matchAll(/id="build-week-(\d+)"/g)].map(m => m[1]) : []);
+      const weekNumbered = currentRows.filter(r => /^\d+$/.test(r.week));
+      const withPack = weekNumbered.filter(r => packWeeks.has(r.week));
+      assert(withPack.length >= 5, 'Week-numbered current BUILD rows with a Teaching Packs section lost');
+      assert.equal(await page.locator('[data-lesson-path]:visible a[href^="Teaching_Packs/#build-week-"]').count(), withPack.length, 'Every week-numbered current BUILD row whose week has a Teaching Packs section links it, and no other row links one');
+      for (const r of withPack) assert.equal(await page.locator(`[data-lesson-path="${r.path}"]:visible a[href="Teaching_Packs/#build-week-${r.week}"]`).count(), 1, 'Row links its own week\'s Teaching Packs section: ' + r.path);
+      report.packlessWeekRows = weekNumbered.filter(r => !packWeeks.has(r.week)).map(r => r.path + ' · week ' + r.week);
       // UX2 (Lessons Part A): the hub's filtered view answers ?subject=&pathway= with
       // "<n> of <m> resources" and article.card rows; the pathway select is gone.
       await page.goto(origin + '/Lessons/?subject=Science&pathway=BUILD&year=all');
