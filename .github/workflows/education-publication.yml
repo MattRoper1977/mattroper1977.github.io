@@ -128,7 +128,13 @@ jobs:
           # run 35855223506 built them to exactly the admitted pending digests; so this discharges the EQUAL
           # declaration this pin carries. It moves WITH its Apps companion below, per STANDING RULE L31.
           # Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '6d5a05ad5723096b70c0c68ff2442239dc5b8e14' }}
+          # Moved 2026-09-25 (Q12's EQUAL window, ORDER RS1-G3 section 1): the Lessons pin 6d5a05ad -> 7aed39b3e2e6c38fc162a4639aba80deaaa44e23, the squash
+          # merge of Lessons #673 (the Science hub links its science-shelf stylesheet again; carrier at Site #444). Between the
+          # old and new pins only #672 (a pure carrier, no published path) and #673 land; #673 moved 2 published paths (the
+          # Science hub page and its size-table row), both admitted by Site #444, and its publication run 36133728912 built them to
+          # exactly the admitted pending digests; so this discharges the EQUAL declaration this pin carries. It moves WITH its
+          # Apps companion below, per STANDING RULE L31. Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '7aed39b3e2e6c38fc162a4639aba80deaaa44e23' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -187,7 +193,11 @@ jobs:
           # 3b90f1a8 -> 2fd5621e985d257b272d46d4f368bc023f010bce, the squash merge of Apps #180 (Apps #179, D3's gate-copy companion,
           # is in its history). Both gate copies byte-identical there at 4a7e791e2ffd. Derived with git
           # rev-parse on the Apps checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || '2fd5621e985d257b272d46d4f368bc023f010bce' }}
+          # Moved 2026-09-25 (Q12's EQUAL window) WITH the Lessons pin above, per L31: the Apps pin
+          # 2fd5621e -> 045088e8ca2a1032207f88eeb3180a812bb21cf1, the squash merge of Apps #184 (Apps #183, the gate-copy companion of the
+          # HUB1 v2 pure carrier, is in its history). Both gate copies byte-identical there at df52ea19df0f. Derived with git
+          # rev-parse on the Apps checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || '045088e8ca2a1032207f88eeb3180a812bb21cf1' }}
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
