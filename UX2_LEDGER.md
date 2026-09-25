@@ -196,3 +196,259 @@ SURVIVES: every catalogue row, unit key, subject/pathway URL filter, global less
 RELOCATES: each companion pack’s Planning/Evidence file fragments are reunited in **Lesson packs**, grouped by explicit companionOf with their real file rows and delivery link. Non-companion Planning/Evidence sections retain their role-derived membership. The old +n control reads +n more. Shared publication chrome is unchanged.
 
 Appearance: shared cream/navy family, quieter search/pillars, rounded filters, restrained subject bands, readable unit cards and sheet; no invented image or count. Part K2 supplies Open pack page links when its real route exists. See docs/sw2-r/README.md for the measured boundary and decisions.
+
+### LAND-A2 Science window W2 — K2-style refresh, 25 September 2026 (ruling R6)
+
+| Surface | This window |
+|---|---|
+| Mirror `data/source-manifests/lessons-resources.json` (848 rows, Lessons 6801ff93) | REFRESHED K2-style: byte copy of `resources.json` at Lessons c0b9b51f (the squash merge of Lessons #677), 998 rows: +150 (90 lessons, of which 21 are the LAND-A2 Autumn 2 Science lessons; 53 support, 6 teacher, 1 hub), 0 removed, 65 changed (`added` on 65, `desc` on 18, `title` on 17, `builtFrom` on 1); `provenance.json` commit/entries derived by code |
+| `data/mbm-search-index.json` (932 entries) | REGENERATED: 1082 entries (lesson 664, resource 300, game 72, app 24, tool 13, page 9): 150 added (90 lessons, 60 resources), 0 removed, 18 resources changed (`action` on 17, `description` on 18, `tasks` on 3, `title` on 17), declared leaf by leaf to `--write` (176 declarations, including the `games.json` source hash the index had not yet absorbed) |
+| Retained usage registry (the separation fence) | 1294 -> 1294 rows, 0 joined, 0 removed, order unchanged; 90 rows gain their own search-index entry id in `source_ids` (the 21 landed lessons and 69 lessons the index had not carried); the fence collapses to this one digest (`check_education_separation.py`) |
+
+<details><summary>The 150 rows added to the mirror</summary>
+
+- `sci-tees-b-w18-soil-what-is-in-the-mix` · lesson · BUILD · Soil: what is in the mix?
+- `sci-tees-b-w19-soil-let-the-water-through` · lesson · BUILD · Soil: let the water through
+- `sci-tees-b-w20-soil-account-for-the-water` · lesson · BUILD · Soil: account for the water
+- `sci-tees-l-w17-evolution-build-the-evidence-case` · lesson · LAUNCH · Evolution: build the evidence case
+- `sci-tees-l-w18l2-genetic-engineering-change-test-decide` · lesson · LAUNCH · Genetic engineering: change, test, decide
+- `sci-tees-l-w18l1-selective-breeding-design-a-resilient-` · lesson · LAUNCH · Selective breeding: design a resilient crop
+- `sci-tees-g-w27-the-flower-to-seed-investigation` · lesson · GROW · The flower-to-seed investigation
+- `sci-tees-g-w32-change-detectives-what-became-something-` · lesson · GROW · Change detectives: what became something new?
+- `sci-tees-g-w26-the-life-cycle-comparison-bureau` · lesson · GROW · The life-cycle comparison bureau
+- `sci-tees-g-w28-the-plant-reproduction-strategy-studio` · lesson · GROW · The plant reproduction strategy studio
+- `sci-tees-g-w31-the-recovery-methods-workshop` · lesson · GROW · The recovery methods workshop
+- `sci-tees-g-w30-reversible-change-detectives` · lesson · GROW · Reversible change detectives
+- `sci-tees-g-w29-the-seed-dispersal-design-lab` · lesson · GROW · The seed dispersal design lab
+- `sci-tees-g-s2-w6-the-spring-science-evidence-exchange` · lesson · GROW · The spring science evidence exchange
+- `sci-tees-g-w18b-circuit-fault-clinic` · lesson · GROW · Circuit fault clinic
+- `sci-tees-g-w19-the-spill-mat-design-lab` · lesson · GROW · The spill-mat design lab
+- `sci-tees-g-w18a-the-cold-case` · lesson · GROW · The cold case
+- `sci-tees-b-s2-w6-the-evidence-museum` · lesson · BUILD · The evidence museum
+- `sci-tees-b-w34-the-friction-surface-lab` · lesson · BUILD · The friction surface lab
+- `sci-tees-b-w29-the-growth-needs-clinic` · lesson · BUILD · The growth-needs clinic
+- `sci-tees-b-w31-the-growth-record-studio` · lesson · BUILD · The growth-record studio
+- `sci-tees-b-w27-the-plant-parts-atlas` · lesson · BUILD · The plant-parts atlas
+- `sci-tees-b-w28-the-plant-system-service-desk` · lesson · BUILD · The plant-system service desk
+- `sci-tees-b-w32-the-water-path-detectives` · lesson · BUILD · The water-path detectives
+- `sci-tees-b-w30-the-water-trial-planning-board` · lesson · BUILD · The water-trial planning board
+- `sci-tees-l-w31-animal-systems-the-evidence-challenge` · lesson · LAUNCH · Animal systems: the evidence challenge
+- `sci-tees-l-w28-blood-glucose-build-the-control-model` · lesson · LAUNCH · Blood glucose: build the control model
+- `sci-tees-l-w29-double-circulation-engineer-the-route` · lesson · LAUNCH · Double circulation: engineer the route
+- `sci-tees-l-w34-the-border-brief-an-ecosystem-evidence-w` · lesson · LAUNCH · The border brief: an ecosystem evidence web
+- `sci-tees-l-w30-exchange-and-ventilation-two-linked-jobs` · lesson · LAUNCH · Exchange and ventilation: two linked jobs
+- `sci-tees-l-s2-w6-health-and-plants-evidence-checkpoint` · lesson · LAUNCH · Health and plants: evidence checkpoint
+- `sci-tees-l-w27-hormone-messages-the-control-room` · lesson · LAUNCH · Hormone messages: the control room
+- `sci-tees-l-w32-topics-7-8-mechanisms-checkpoint` · lesson · LAUNCH · Topics 7–8: mechanisms checkpoint
+- `sci-tees-b-w21-the-blackout-box-mystery` · lesson · BUILD · The blackout-box mystery
+- `sci-tees-b-w22-light-source-detectives` · lesson · BUILD · Light-source detectives
+- `sci-tees-b-w26-the-fair-test-repair-lab` · lesson · BUILD · The fair-test repair lab
+- `sci-tees-b-w24-the-shadow-screen-lab` · lesson · BUILD · The shadow-screen lab
+- `sci-tees-b-w25-the-shadow-size-studio` · lesson · BUILD · The shadow-size studio
+- `sci-tees-b-w23-sunlight-make-a-safer-plan` · lesson · BUILD · Sunlight: make a safer plan
+- `sci-tees-l-w23-disease-data-newsroom-make-the-numbers-f` · lesson · LAUNCH · Disease data newsroom: make the numbers fair
+- `sci-tees-l-w21-disease-detectives-follow-the-cause` · lesson · LAUNCH · Disease detectives: follow the cause
+- `sci-tees-l-w26-greenhouse-challenge-grow-more-with-a-wa` · lesson · LAUNCH · Greenhouse challenge: grow more with a water budget
+- `sci-tees-l-w22-immune-memory-recognise-respond-remember` · lesson · LAUNCH · Immune memory: recognise, respond, remember
+- `sci-tees-l-w24-photosynthesis-the-light-lab` · lesson · LAUNCH · Photosynthesis: the light lab
+- `sci-tees-l-w25-plant-transport-follow-the-water-and-sug` · lesson · LAUNCH · Plant transport: follow the water and sugar
+- `sci-tees-g-w20-body-systems-the-dispatch-challenge` · lesson · GROW · Body systems: the dispatch challenge
+- `sci-tees-g-w22-the-health-evidence-advisers` · lesson · GROW · The health evidence advisers
+- `sci-tees-g-w21-heart-route-rescue` · lesson · GROW · Heart route rescue
+- `sci-tees-g-w25-life-cycle-archive` · lesson · GROW · Life cycle archive
+- `sci-tees-g-w23-the-nutrient-delivery-investigation` · lesson · GROW · The nutrient delivery investigation
+- `sci-tees-g-w24-the-recovery-research-room` · lesson · GROW · The recovery research room
+- `grow-computing-scratch-71638` · hub · GROW Computing · Programming with Scratch · Weeks 1–8
+- `catalogue-2026-27-science-build-w3-w7-pack` · teacher · BUILD Science · five-week lesson pack
+- `catalogue-2026-27-science-grow-w3-w7-pack` · teacher · GROW Science · five-week lesson pack
+- `catalogue-2026-27-science-launch-w3-w7-pack` · teacher · LAUNCH GCSE Biology · five-week lesson pack
+- `catalogue-2026-27-humanities-build-w27-w39-pack1r` · teacher · BUILD Humanities · Summer 1 · My local place and the wider world
+- `pack1r-su1-build-w01-our-school-and-local-features` · lesson · Our school and local features · BUILD Humanities
+- `pack1r-su1-build-w02-routes-on-a-familiar-plan` · lesson · Routes on a familiar plan · BUILD Humanities
+- `pack1r-su1-build-w03-comparing-two-places` · lesson · Comparing two places · BUILD Humanities
+- `pack1r-su1-build-w04-fieldwork-in-our-grounds` · lesson · Fieldwork in our grounds · BUILD Humanities
+- `pack1r-su1-build-w05-continents-and-oceans` · lesson · Continents and oceans · BUILD Humanities
+- `pack1r-su1-build-w06-our-class-map` · lesson · Our class map · BUILD Humanities
+- `catalogue-2026-27-humanities-grow-w27-w39-pack1r` · teacher · GROW Humanities — Summer 1, Weeks 1–6
+- `pack1r-su1-grow-w01-our-place-in-the-wider-world` · lesson · Our place in the wider world · GROW Humanities
+- `pack1r-su1-grow-w02-atlases-grid-references-and-digital-maps` · lesson · Atlases grid references and digital maps · GROW Humanities
+- `pack1r-su1-grow-w03-our-school-route-fieldwork` · lesson · Our school route fieldwork · GROW Humanities
+- `pack1r-su1-grow-w04-physical-and-human-features` · lesson · Physical and human features · GROW Humanities
+- `pack1r-su1-grow-w05-middlesbrough-and-helmsley` · lesson · Middlesbrough and Helmsley · GROW Humanities
+- `pack1r-su1-grow-w06-our-locality-study-and-evidence` · lesson · Our locality study and evidence · GROW Humanities
+- `catalogue-2026-27-humanities-launch-w27-w39-pack1r` · teacher · LAUNCH · Humanities · Summer 1
+- `pack1r-su1-launch-w01-resource-use-and-carbon-dioxide` · lesson · Resource use and carbon dioxide · LAUNCH Humanities
+- `pack1r-su1-launch-w02-judging-climate-responses` · lesson · Judging climate responses · LAUNCH Humanities
+- `pack1r-su1-launch-w03-choosing-a-school-sustainability-option` · lesson · Choosing a school sustainability option · LAUNCH Humanities
+- `pack1r-su1-launch-w04-an-accurate-earth-day-campaign` · lesson · An accurate Earth Day campaign · LAUNCH Humanities
+- `pack1r-su1-launch-w05-a-measurable-community-contribution` · lesson · A measurable community contribution · LAUNCH Humanities
+- `pack1r-su1-launch-w06-our-sustainability-decision-report` · lesson · Our sustainability decision report · LAUNCH Humanities
+- `land-a2-sci-build-a2-w01-use-less-use-again-sort-waste` · lesson · BUILD · Use less, use again, sort waste
+- `land-a2-sci-build-a2-w02-look-closely-at-rocks` · lesson · BUILD · Look closely at rocks
+- `land-a2-sci-build-a2-w03-test-rock-hardness-and-water` · lesson · BUILD · Test rock hardness and water
+- `land-a2-sci-build-a2-w04-choose-a-rock-for-a-job` · lesson · BUILD · Choose a rock for a job
+- `land-a2-sci-build-a2-w05-natural-and-made-materials` · lesson · BUILD · Natural and made materials
+- `land-a2-sci-build-a2-w06-keep-a-rock-test-fair` · lesson · BUILD · Keep a rock test fair
+- `land-a2-sci-build-a2-w07-show-what-we-know-about-bodies-and-rocks` · lesson · BUILD · Show what we know about bodies and rocks
+- `land-a2-sci-grow-a2-w01-why-day-turns-to-night` · lesson · GROW · Why day turns to night
+- `land-a2-sci-grow-a2-w02-the-shapes-of-sun-earth-and-moon` · lesson · GROW · The shapes of Sun, Earth and Moon
+- `land-a2-sci-grow-a2-w03-researching-the-solar-system` · lesson · GROW · Researching the Solar System
+- `land-a2-sci-grow-a2-w04-global-warming-and-choices` · lesson · GROW · Global warming and choices
+- `land-a2-sci-grow-a2-w05-forces-space-and-climate-questions` · lesson · GROW · Forces, space and climate questions
+- `land-a2-sci-grow-a2-w06-investigating-a-science-question` · lesson · GROW · Investigating a science question
+- `land-a2-sci-grow-a2-w07-autumn-science-review-and-evidence` · lesson · GROW · Autumn science review and evidence
+- `land-a2-sci-launch-a2-w01-mitosis-and-the-cell-cycle` · lesson · LAUNCH · Mitosis and the cell cycle
+- `land-a2-sci-launch-a2-w02-growth-and-stem-cells` · lesson · LAUNCH · Growth and stem cells
+- `land-a2-sci-launch-a2-w03-stem-cell-decisions` · lesson · LAUNCH · Stem-cell decisions
+- `land-a2-sci-launch-a2-w04-dna-genes-and-chromosomes` · lesson · LAUNCH · DNA, genes and chromosomes
+- `land-a2-sci-launch-a2-w05-a-simple-genetic-cross` · lesson · LAUNCH · A simple genetic cross
+- `land-a2-sci-launch-a2-w06-researching-a-genetic-condition` · lesson · LAUNCH · Researching a genetic condition
+- `land-a2-sci-launch-a2-w07-cells-and-genetics-check` · lesson · LAUNCH · Cells and genetics check
+- `pack-sci-tees-b-w18-soil-what-is-in-the-mix` · support · W18 · Soil: what is in the mix? · Companion pack
+- `pack-sci-tees-b-w19-soil-let-the-water-through` · support · W19 · Soil: let the water through · Companion pack
+- `pack-sci-tees-b-w20-soil-account-for-the-water` · support · W20 · Soil: account for the water · Companion pack
+- `pack-sci-tees-l-w17-evolution-build-the-evidence-case` · support · W17 · Evolution: build the evidence case · Companion pack
+- `pack-sci-tees-l-w18l2-genetic-engineering-change-test-decide` · support · W18L2 · Genetic engineering: change, test, decide · Companion pack
+- `pack-sci-tees-l-w18l1-selective-breeding-design-a-resilient-` · support · W18L1 · Selective breeding: design a resilient crop · Companion pack
+- `pack-sci-tees-g-w27-the-flower-to-seed-investigation` · support · W27 · The flower-to-seed investigation · Companion pack
+- `pack-sci-tees-g-w32-change-detectives-what-became-something-` · support · W32 · Change detectives: what became something new? · Companion pack
+- `pack-sci-tees-g-w26-the-life-cycle-comparison-bureau` · support · W26 · The life-cycle comparison bureau · Companion pack
+- `pack-sci-tees-g-w28-the-plant-reproduction-strategy-studio` · support · W28 · The plant reproduction strategy studio · Companion pack
+- `pack-sci-tees-g-w31-the-recovery-methods-workshop` · support · W31 · The recovery methods workshop · Companion pack
+- `pack-sci-tees-g-w30-reversible-change-detectives` · support · W30 · Reversible change detectives · Companion pack
+- `pack-sci-tees-g-w29-the-seed-dispersal-design-lab` · support · W29 · The seed dispersal design lab · Companion pack
+- `pack-sci-tees-g-s2-w6-the-spring-science-evidence-exchange` · support · S2_W6 · The spring science evidence exchange · Companion pack
+- `pack-sci-tees-g-w18b-circuit-fault-clinic` · support · W18B · Circuit fault clinic · Companion pack
+- `pack-sci-tees-g-w19-the-spill-mat-design-lab` · support · W19 · The spill-mat design lab · Companion pack
+- `pack-sci-tees-g-w18a-the-cold-case` · support · W18A · The cold case · Companion pack
+- `pack-sci-tees-b-s2-w6-the-evidence-museum` · support · S2_W6 · The evidence museum · Companion pack
+- `pack-sci-tees-b-w34-the-friction-surface-lab` · support · W34 · The friction surface lab · Companion pack
+- `pack-sci-tees-b-w29-the-growth-needs-clinic` · support · W29 · The growth-needs clinic · Companion pack
+- `pack-sci-tees-b-w31-the-growth-record-studio` · support · W31 · The growth-record studio · Companion pack
+- `pack-sci-tees-b-w27-the-plant-parts-atlas` · support · W27 · The plant-parts atlas · Companion pack
+- `pack-sci-tees-b-w28-the-plant-system-service-desk` · support · W28 · The plant-system service desk · Companion pack
+- `pack-sci-tees-b-w32-the-water-path-detectives` · support · W32 · The water-path detectives · Companion pack
+- `pack-sci-tees-b-w30-the-water-trial-planning-board` · support · W30 · The water-trial planning board · Companion pack
+- `pack-sci-tees-l-w31-animal-systems-the-evidence-challenge` · support · W31 · Animal systems: the evidence challenge · Companion pack
+- `pack-sci-tees-l-w28-blood-glucose-build-the-control-model` · support · W28 · Blood glucose: build the control model · Companion pack
+- `pack-sci-tees-l-w29-double-circulation-engineer-the-route` · support · W29 · Double circulation: engineer the route · Companion pack
+- `pack-sci-tees-l-w34-the-border-brief-an-ecosystem-evidence-w` · support · W34 · The border brief: an ecosystem evidence web · Companion pack
+- `pack-sci-tees-l-w30-exchange-and-ventilation-two-linked-jobs` · support · W30 · Exchange and ventilation: two linked jobs · Companion pack
+- `pack-sci-tees-l-s2-w6-health-and-plants-evidence-checkpoint` · support · S2_W6 · Health and plants: evidence checkpoint · Companion pack
+- `pack-sci-tees-l-w27-hormone-messages-the-control-room` · support · W27 · Hormone messages: the control room · Companion pack
+- `pack-sci-tees-l-w32-topics-7-8-mechanisms-checkpoint` · support · W32 · Topics 7–8: mechanisms checkpoint · Companion pack
+- `pack-sci-tees-b-w21-the-blackout-box-mystery` · support · W21 · The blackout-box mystery · Companion pack
+- `pack-sci-tees-b-w22-light-source-detectives` · support · W22 · Light-source detectives · Companion pack
+- `pack-sci-tees-b-w26-the-fair-test-repair-lab` · support · W26 · The fair-test repair lab · Companion pack
+- `pack-sci-tees-b-w24-the-shadow-screen-lab` · support · W24 · The shadow-screen lab · Companion pack
+- `pack-sci-tees-b-w25-the-shadow-size-studio` · support · W25 · The shadow-size studio · Companion pack
+- `pack-sci-tees-b-w23-sunlight-make-a-safer-plan` · support · W23 · Sunlight: make a safer plan · Companion pack
+- `pack-sci-tees-l-w23-disease-data-newsroom-make-the-numbers-f` · support · W23 · Disease data newsroom: make the numbers fair · Companion pack
+- `pack-sci-tees-l-w21-disease-detectives-follow-the-cause` · support · W21 · Disease detectives: follow the cause · Companion pack
+- `pack-sci-tees-l-w26-greenhouse-challenge-grow-more-with-a-wa` · support · W26 · Greenhouse challenge: grow more with a water budget · Companion pack
+- `pack-sci-tees-l-w22-immune-memory-recognise-respond-remember` · support · W22 · Immune memory: recognise, respond, remember · Companion pack
+- `pack-sci-tees-l-w24-photosynthesis-the-light-lab` · support · W24 · Photosynthesis: the light lab · Companion pack
+- `pack-sci-tees-l-w25-plant-transport-follow-the-water-and-sug` · support · W25 · Plant transport: follow the water and sugar · Companion pack
+- `pack-sci-tees-g-w20-body-systems-the-dispatch-challenge` · support · W20 · Body systems: the dispatch challenge · Companion pack
+- `pack-sci-tees-g-w22-the-health-evidence-advisers` · support · W22 · The health evidence advisers · Companion pack
+- `pack-sci-tees-g-w21-heart-route-rescue` · support · W21 · Heart route rescue · Companion pack
+- `pack-sci-tees-g-w25-life-cycle-archive` · support · W25 · Life cycle archive · Companion pack
+- `pack-sci-tees-g-w23-the-nutrient-delivery-investigation` · support · W23 · The nutrient delivery investigation · Companion pack
+- `pack-sci-tees-g-w24-the-recovery-research-room` · support · W24 · The recovery research room · Companion pack
+- `pack-grow-science-w3a` · support · W3A · Friction: Friend and Enemy · Companion pack
+- `pack-launch-science-w4l1` · support · W4L1 · Discover: Diffusion · Companion pack
+
+</details>
+
+<details><summary>The 65 mirror rows changed, and the fields that changed</summary>
+
+- `pack-build-humanities-w10` · added
+- `pack-build-humanities-w11` · added
+- `pack-build-humanities-w12` · added
+- `pack-build-humanities-w13` · added
+- `pack-build-humanities-w14` · added
+- `pack-build-humanities-w9` · added
+- `pack-build-science-w10a` · added
+- `pack-build-science-w10b` · added
+- `pack-build-science-w11b` · added
+- `pack-build-science-w12a` · added
+- `pack-build-science-w12b` · added
+- `pack-build-science-w13a` · added
+- `pack-build-science-w13b` · added
+- `pack-build-science-w14a` · added
+- `pack-build-science-w14b` · added
+- `pack-build-science-w15a` · added
+- `pack-build-science-w15b` · added
+- `pack-build-science-w8a` · added, builtFrom, desc
+- `pack-build-science-w8b` · added
+- `pack-build-science-w9a` · added
+- `pack-build-science-w9b` · added
+- `pack-grow-humanities-w10` · added
+- `pack-grow-humanities-w11` · added
+- `pack-grow-humanities-w12` · added
+- `pack-grow-humanities-w13` · added
+- `pack-grow-humanities-w9` · added
+- `pack-grow-science-a2-w7b` · added
+- `pack-grow-science-w10a` · added
+- `pack-grow-science-w10b` · added
+- `pack-grow-science-w11a` · added
+- `pack-grow-science-w11b` · added
+- `pack-grow-science-w12a` · added
+- `pack-grow-science-w12b` · added
+- `pack-grow-science-w13a` · added
+- `pack-grow-science-w13b` · added
+- `pack-grow-science-w8a` · added
+- `pack-grow-science-w8b` · added
+- `pack-grow-science-w9a` · added
+- `pack-grow-science-w9b` · added
+- `pack-launch-humanities-w10` · added
+- `pack-launch-humanities-w11` · added
+- `pack-launch-humanities-w12` · added
+- `pack-launch-humanities-w13` · added
+- `pack-launch-humanities-w14` · added
+- `pack-launch-humanities-w9` · added
+- `pack-launch-science-a2-w7l1` · added, desc, title
+- `pack-launch-science-a2-w7l2` · added, desc, title
+- `pack-launch-science-w10l1` · added, desc, title
+- `pack-launch-science-w10l2` · added, desc, title
+- `pack-launch-science-w10l3` · added, desc, title
+- `pack-launch-science-w11l1` · added, desc, title
+- `pack-launch-science-w11l2` · added, desc, title
+- `pack-launch-science-w11l3` · added, desc, title
+- `pack-launch-science-w12l1` · added, desc, title
+- `pack-launch-science-w12l2` · added, desc, title
+- `pack-launch-science-w12l3` · added, desc, title
+- `pack-launch-science-w13l1` · added, desc, title
+- `pack-launch-science-w13l3` · added, desc, title
+- `pack-launch-science-w14l1` · added, desc, title
+- `pack-launch-science-w14l2` · added, desc, title
+- `pack-launch-science-w14l3` · added, desc, title
+- `pack-launch-science-w8l1` · added
+- `pack-launch-science-w8l2` · added
+- `pack-launch-science-w8l3` · added
+- `pack-launch-science-w9l1` · added, desc, title
+
+</details>
+
+<details><summary>The 18 search-index entries changed</summary>
+
+- `resource-pack-launch-science-a2-w7l1` · action, description, tasks, title · "A2_W7L1 · Topics 2 and 3 assessment review map · Companion pack" -> "A2_W7L1 · Review map: cells, evidence and inheritance · Companion pack"
+- `resource-pack-launch-science-a2-w7l2` · action, description, title · "A2_W7L2 · Topics 2 and 3 evidence task lab · Companion pack" -> "A2_W7L2 · Exam-style reasoning: evidence to explanation · Companion pack"
+- `resource-pack-launch-science-w10l1` · action, description, title · "W10L1 · Growth and Differentiation: Building an Organism · Companion pack" -> "W10L1 · Growth and differentiation: building an organism · Companion pack"
+- `resource-pack-launch-science-w10l2` · action, description, title · "W10L2 · Stem Cells and Meristems: Potential Compared · Companion pack" -> "W10L2 · Stem cells and meristems: compare potential · Companion pack"
+- `resource-pack-launch-science-w10l3` · action, description, title · "W10L3 · Growth and Stem-Cell Data: Evidence Before Claims · Companion pack" -> "W10L3 · Growth data: evidence before claims · Companion pack"
+- `resource-pack-launch-science-w11l1` · action, description, title · "W11L1 · Stem Cells: Evidence Before Judgement · Companion pack" -> "W11L1 · Stem cells: evidence before judgement · Companion pack"
+- `resource-pack-launch-science-w11l2` · action, description, tasks, title · "W11L2 · Stem-Cell Evidence: Benefit, Risk, Uncertainty · Companion pack" -> "W11L2 · Benefit, risk and uncertainty: read the numbers · Companion pack"
+- `resource-pack-launch-science-w11l3` · action, description, title · "W11L3 · Stem Cells: Structured DISCUSS · Companion pack" -> "W11L3 · Stem cells: a balanced DISCUSS response · Companion pack"
+- `resource-pack-launch-science-w12l1` · action, description, title · "W12L1 · Genetic Information: Cell to Gene · Companion pack" -> "W12L1 · Genetic information: cell to gene · Companion pack"
+- `resource-pack-launch-science-w12l2` · action, description, title · "W12L2 · DNA Structure: Pair, Twist, Critique · Companion pack" -> "W12L2 · DNA structure: pair, twist, critique · Companion pack"
+- `resource-pack-launch-science-w12l3` · action, description, title · "W12L3 · Fruit DNA: Extract, Observe, Evaluate · Companion pack" -> "W12L3 · Fruit DNA: extract, observe, evaluate · Companion pack"
+- `resource-pack-launch-science-w13l1` · action, description, title · "W13L1 · Inheritance Language: Allele to Phenotype · Companion pack" -> "W13L1 · Alleles, genotype and phenotype · Companion pack"
+- `resource-pack-launch-science-w13l3` · action, description, title · "W13L3 · Inheritance Data: Predict, Calculate, Evaluate · Companion pack" -> "W13L3 · Inheritance probability: predict and evaluate · Companion pack"
+- `resource-pack-launch-science-w14l1` · action, description, title · "W14L1 · Genetic Conditions: Frame a Safe Research Question · Companion pack" -> "W14L1 · Genetic condition research: ask a bounded question · Companion pack"
+- `resource-pack-launch-science-w14l2` · action, description, title · "W14L2 · Genetic Conditions: Triangulate Source Evidence · Companion pack" -> "W14L2 · Source evidence: trace every claim · Companion pack"
+- `resource-pack-launch-science-w14l3` · action, description, tasks, title · "W14L3 · Genetic Conditions: Present Evidence with Care · Companion pack" -> "W14L3 · Present a genetic condition with care · Companion pack"
+- `resource-pack-build-science-w8a` · description · "W8A · Sugar Evidence: Read the Label · Companion pack" -> "W8A · Sugar Evidence: Read the Label · Companion pack"
+- `resource-pack-launch-science-w9l1` · action, description, title · "W9L1 · Cell Cycle: Copy, Check, Divide · Companion pack" -> "W9L1 · Cell cycle: copy, check, divide · Companion pack"
+
+</details>
