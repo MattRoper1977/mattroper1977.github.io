@@ -104,6 +104,10 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix):
     return errors, retained
 
 
+# The retained-registry digests this fence accepts: each frozen from the built bytes and pinned here,
+# taken on 25 September 2026 (LAND-A2 Science, window W1). While the landing is in flight they are a
+# TRANSITION PAIR -- the previous state and the landing's -- and window W2 collapses them to one. The
+# re-freeze record, with its proof, is the comment block in registry_errors() below.
 REGISTRY_BASELINES = (
     'a6e96f297f62458dba23a71ed14e9dc4db06dad650ef602efb3050556620631a',   # Lessons main today: 1105 retained rows
     '2969dfef4f050cb1a6b1b5dba0a8e954e6efa49570d02fae7a7e1da4dbd00a17',   # LAND-A2 Science: 1294 rows (+189, 0 removed, 0 changed)
