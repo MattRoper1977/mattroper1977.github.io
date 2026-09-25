@@ -104,6 +104,23 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix):
     return errors, retained
 
 
+# The retained-registry digests this fence accepts: each frozen from the built bytes and pinned here,
+# taken on 25 September 2026 (LAND-A2 Science, window W1). While the landing is in flight they are a
+# TRANSITION PAIR -- the previous state and the landing's -- and window W2 collapses them to one. The
+# re-freeze record, with its proof, is the comment block in registry_errors() below.
+REGISTRY_BASELINES = (
+    'a6e96f297f62458dba23a71ed14e9dc4db06dad650ef602efb3050556620631a',   # Lessons main today: 1105 retained rows
+    '2969dfef4f050cb1a6b1b5dba0a8e954e6efa49570d02fae7a7e1da4dbd00a17',   # LAND-A2 Science: 1294 rows (+189, 0 removed, 0 changed)
+)
+
+
+def retained_admitted(retained, accepted):
+    """Pure: the retained registry's digest is one of the accepted ones (one value, or a transition
+    pair of exactly two). The digest covers every row and every field in order, so a removed, changed
+    or reordered row gives a digest that is not accepted."""
+    return sha256((json.dumps(retained, ensure_ascii=False, indent=2) + '\n').encode()).hexdigest() in accepted
+
+
 def registry_errors(output):
     # Frozen installed records remain byte-equivalent, accepted 6 September.
     # Matt's new teaching downloads add only reviewed download metadata. No
@@ -161,7 +178,20 @@ def registry_errors(output):
     # the admitted digest on all 128. No download-hub row, no Science row and no
     # Teaching_Packs row moves, and the old retained list is an order-preserving subsequence
     # of the new one. Derived by the window runner from the built bytes, never transcribed.
-    baseline_sha = 'a6e96f297f62458dba23a71ed14e9dc4db06dad650ef602efb3050556620631a'
+    # LAND-A2 Science, window W1 (25 September, ruling R4 Q1): a TRANSITION PAIR, the form the
+    # admission record already takes (HC4 §3.3). This fence holds exactly two digests while the
+    # landing is in flight: the retained registry of Lessons main today, and the retained registry
+    # of the LAND-A2 Science content that merges next. A single value cannot serve both: the Site
+    # publication still builds the old Lessons pin, and the Lessons publication builds the new
+    # content through a carrier that names this window. Proved by diffing registry_partition()
+    # output between a full build of Lessons main 55eb2bd1 (reproduces a6e96f29 exactly, 1105 rows)
+    # and one of the landing (Lessons claude/rs1-g3-science-hub-hszvpj): 1105 -> 1294 retained
+    # rows, 189 joined -- 168 download resources and 21 lesson rows, every one under
+    # /Lessons/Science_Teesside/{Build,Grow,Launch}/Autumn_2_2026-27/ -- 0 removed, 0 existing
+    # records changed in any field, and the old list is an order-preserving subsequence of the new.
+    # A third digest, a removed row or a changed row is still red (self_test). Window W2 of this
+    # same landing collapses the pair to one digest; the pair never outlives LAND-A2.
+    baseline_shas = REGISTRY_BASELINES
     additions_path = HERE/'science-download-usage-additions.json'
     # This Science pin is TOOL-OWNED from 2026-09-22 (STOP-F3, option 1): move it only with
     # derive_science_download_additions.py --write, which derives every row from the education
@@ -180,7 +210,7 @@ def registry_errors(output):
     approved[ict] = installed_gc1_rows(approved[ict], (lessons/GC1_HUB).is_file())
     installed = {prefix: (lessons/prefix[len('/Lessons/'):]/'index.html').is_file() for prefix in approved}
     errors, retained = registry_partition(rows, approved, installed)
-    if sha256((json.dumps(retained,ensure_ascii=False,indent=2)+'\n').encode()).hexdigest() != baseline_sha:
+    if not retained_admitted(retained, baseline_shas):
         errors.append('Installed combined registry records changed')
     return errors
 
@@ -307,6 +337,26 @@ def self_test():
         errors,retained=registry_partition(rows,approved,installed)
         passed=len(errors)==expected and retained==other; ok=ok and passed
         print(f"  [{'ok' if passed else 'FAIL'}] registry partition: {len(rows)} rows, installed={list(installed.values())[0]} -> {len(errors)} error(s), retained {len(retained)}")
+    # LAND-A2 W1: the transition pair, proved on planted registries. Exactly two digests are accepted;
+    # a third state, a removed row or a changed row is red on either side of the pair.
+    digest=lambda rs: sha256((json.dumps(rs,ensure_ascii=False,indent=2)+'\n').encode()).hexdigest()
+    before=[{**row('/Lessons/Humanities_Teesside/a.html'),'title':'A'},{**row('/Lessons/Science_Teesside/b.html'),'title':'B'}]
+    after=before+[{**row('/Lessons/Science_Teesside/Build/Autumn_2_2026-27/X/X.html'),'title':'X','kind':'lesson'}]
+    pair=(digest(before),digest(after))
+    pair_cases=[
+        ('the live registry (first of the pair)', before, True),
+        ('the landing registry (second of the pair)', after, True),
+        ('a third state: one more row than the landing', after+[row('/Lessons/Science_Teesside/planted.pdf')], False),
+        ('a row removed from the landing registry', after[1:], False),
+        ('a row removed from the live registry', before[:1], False),
+        ('a row changed in one field', [before[0],{**before[1],'title':'B planted'}]+after[2:], False),
+        ('the same rows reordered', [after[1],after[0],after[2]], False),
+    ]
+    for label,rs,expected in pair_cases:
+        passed=retained_admitted(rs,pair)==expected; ok=ok and passed
+        print(f"  [{'ok' if passed else 'FAIL'}] transition pair: {label} -> {'admitted' if expected else 'red'}")
+    passed=len(set(REGISTRY_BASELINES))==len(REGISTRY_BASELINES)==2; ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly two distinct digests while LAND-A2 is in flight")
     # GC1 second unit: both current and historical source trees, plus firing controls.
     ict='/Lessons/ICT/Teaching_Packs/'
     legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf')
