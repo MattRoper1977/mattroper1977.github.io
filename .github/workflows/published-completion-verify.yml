@@ -29,7 +29,10 @@ jobs:
           # against the served bytes, locally and live. HELD EQUAL TO THE FOUR EQUAL PINS from 2026-09-25 (RULING RS1-G3b R1),
           # so the #655 route's EQUAL window discharges this pin with them at every future window. Derived with git rev-parse
           # on the Lessons checkout, never typed.
-          ref: 7aed39b3e2e6c38fc162a4639aba80deaaa44e23
+          # Moved 2026-09-25 (LAND-A2 Science window W2, ruling R6) with the four EQUAL pins, as RULING RS1-G3b R1 holds it: the
+          # Lessons pin 7aed39b3 -> c0b9b51f76d26c03f3de13951e85fa38497a509e, the squash merge of Lessons #677. Derived with git rev-parse on
+          # the Lessons checkout, never typed.
+          ref: c0b9b51f76d26c03f3de13951e85fa38497a509e
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/setup-node@v4
