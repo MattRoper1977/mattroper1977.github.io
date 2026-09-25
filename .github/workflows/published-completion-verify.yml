@@ -22,7 +22,14 @@ jobs:
         with:
           repository: MattRoper1977/Lessons
           # Pinned 2026-09-16 to the Lessons commit the education publication publishes from (PLAY-Q1 batch 2, #557), held equal to it.
-          ref: b54c9006e311f151ee53fe268846fab12fbc3e44
+          # Moved 2026-09-25 (RULING RS1-G3b R1): the Lessons pin b54c9006 -> 7aed39b3e2e6c38fc162a4639aba80deaaa44e23, the squash
+          # merge of Lessons #673 -- the commit the four EQUAL pins in domain-split-verify.yml and education-publication.yml hold.
+          # At b54c9006 this job failed on every Site publication since at least 2026-09-22 ("BUILD collection lost or duplicated
+          # teaching versions"): the stale checkout's expected BUILD collection predates later decks. At this commit it passes
+          # against the served bytes, locally and live. HELD EQUAL TO THE FOUR EQUAL PINS from 2026-09-25 (RULING RS1-G3b R1),
+          # so the #655 route's EQUAL window discharges this pin with them at every future window. Derived with git rev-parse
+          # on the Lessons checkout, never typed.
+          ref: 7aed39b3e2e6c38fc162a4639aba80deaaa44e23
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/setup-node@v4
