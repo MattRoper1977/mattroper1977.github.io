@@ -104,13 +104,12 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix):
     return errors, retained
 
 
-# The retained-registry digests this fence accepts: each frozen from the built bytes and pinned here,
-# taken on 25 September 2026 (LAND-A2 Science, window W1). While the landing is in flight they are a
-# TRANSITION PAIR -- the previous state and the landing's -- and window W2 collapses them to one. The
-# re-freeze record, with its proof, is the comment block in registry_errors() below.
+# The retained-registry digest this fence accepts: frozen from the built bytes and pinned here, taken on
+# 25 September 2026 (LAND-A2 Science, window W2, ruling R6). Window W1 held a transition pair while the
+# landing was in flight; W2 collapses it to this one value, together with the search and provenance
+# refresh that moves it. The re-freeze record, with its proof, is the comment block in registry_errors().
 REGISTRY_BASELINES = (
-    'a6e96f297f62458dba23a71ed14e9dc4db06dad650ef602efb3050556620631a',   # Lessons main today: 1105 retained rows
-    '2969dfef4f050cb1a6b1b5dba0a8e954e6efa49570d02fae7a7e1da4dbd00a17',   # LAND-A2 Science: 1294 rows (+189, 0 removed, 0 changed)
+    '632100c64f6e596c833eb3e77b41f973a7ffbdeead3169d069c1afa82ff61476',   # LAND-A2 Science after the refresh: 1294 rows
 )
 
 
@@ -178,19 +177,17 @@ def registry_errors(output):
     # the admitted digest on all 128. No download-hub row, no Science row and no
     # Teaching_Packs row moves, and the old retained list is an order-preserving subsequence
     # of the new one. Derived by the window runner from the built bytes, never transcribed.
-    # LAND-A2 Science, window W1 (25 September, ruling R4 Q1): a TRANSITION PAIR, the form the
-    # admission record already takes (HC4 §3.3). This fence holds exactly two digests while the
-    # landing is in flight: the retained registry of Lessons main today, and the retained registry
-    # of the LAND-A2 Science content that merges next. A single value cannot serve both: the Site
-    # publication still builds the old Lessons pin, and the Lessons publication builds the new
-    # content through a carrier that names this window. Proved by diffing registry_partition()
-    # output between a full build of Lessons main 55eb2bd1 (reproduces a6e96f29 exactly, 1105 rows)
-    # and one of the landing (Lessons claude/rs1-g3-science-hub-hszvpj): 1105 -> 1294 retained
-    # rows, 189 joined -- 168 download resources and 21 lesson rows, every one under
-    # /Lessons/Science_Teesside/{Build,Grow,Launch}/Autumn_2_2026-27/ -- 0 removed, 0 existing
-    # records changed in any field, and the old list is an order-preserving subsequence of the new.
-    # A third digest, a removed row or a changed row is still red (self_test). Window W2 of this
-    # same landing collapses the pair to one digest; the pair never outlives LAND-A2.
+    # LAND-A2 Science, window W1 (25 September, ruling R4 Q1) held a TRANSITION PAIR while the landing
+    # was in flight: a6e96f29 (Lessons main 55eb2bd1, 1105 retained rows) and 2969dfef (the landing,
+    # 1294 rows: 189 joined, all under /Lessons/Science_Teesside/{Build,Grow,Launch}/Autumn_2_2026-27/).
+    # Window W2 (25 September, ruling R6) collapses it to one digest, 632100c6, in the same change as
+    # the search and provenance refresh that moves it. Proved by diffing registry_partition() output
+    # between a full build of Site main 214749c0 with Lessons c0b9b51f (the landing's merge; reproduces
+    # 2969dfef exactly) and the same build with this window's refreshed data: 1294 -> 1294 rows, 0
+    # joined, 0 removed, the order unchanged, and exactly 90 rows changed, every one only in
+    # source_ids, each gaining its own search-index entry id ("lesson-<resource id>"): the 21 landed
+    # lessons and 69 lessons the index had not yet carried (18 Humanities Summer 1, 51 Science). Both
+    # previous digests, a planted row, a removed row and a change to any other field are red (self_test).
     baseline_shas = REGISTRY_BASELINES
     additions_path = HERE/'science-download-usage-additions.json'
     # This Science pin is TOOL-OWNED from 2026-09-22 (STOP-F3, option 1): move it only with
@@ -337,26 +334,35 @@ def self_test():
         errors,retained=registry_partition(rows,approved,installed)
         passed=len(errors)==expected and retained==other; ok=ok and passed
         print(f"  [{'ok' if passed else 'FAIL'}] registry partition: {len(rows)} rows, installed={list(installed.values())[0]} -> {len(errors)} error(s), retained {len(retained)}")
-    # LAND-A2 W1: the transition pair, proved on planted registries. Exactly two digests are accepted;
-    # a third state, a removed row or a changed row is red on either side of the pair.
+    # LAND-A2 W2: the collapsed fence, proved on planted registries shaped like the real change. The
+    # refreshed registry is admitted; the pre-refresh state (the second half of the old pair), a planted
+    # row, a removed row, a reordering and a change to ANY other field of a row are red.
     digest=lambda rs: sha256((json.dumps(rs,ensure_ascii=False,indent=2)+'\n').encode()).hexdigest()
-    before=[{**row('/Lessons/Humanities_Teesside/a.html'),'title':'A'},{**row('/Lessons/Science_Teesside/b.html'),'title':'B'}]
-    after=before+[{**row('/Lessons/Science_Teesside/Build/Autumn_2_2026-27/X/X.html'),'title':'X','kind':'lesson'}]
-    pair=(digest(before),digest(after))
-    pair_cases=[
-        ('the live registry (first of the pair)', before, True),
-        ('the landing registry (second of the pair)', after, True),
-        ('a third state: one more row than the landing', after+[row('/Lessons/Science_Teesside/planted.pdf')], False),
-        ('a row removed from the landing registry', after[1:], False),
-        ('a row removed from the live registry', before[:1], False),
-        ('a row changed in one field', [before[0],{**before[1],'title':'B planted'}]+after[2:], False),
-        ('the same rows reordered', [after[1],after[0],after[2]], False),
+    # every field a real retained row carries (aliases, event_types, kind, resource_id, route, source, source_ids, title)
+    full=lambda route,rid,title,kind: {**row(route),'aliases':[route],'event_types':['open'],'kind':kind,'resource_id':rid,
+                                       'source':'lessons','source_ids':[rid[:8]],'title':title}
+    pre=[full('/Lessons/Humanities_Teesside/a.html','a'*64,'A','lesson'),
+         full('/Lessons/Science_Teesside/Build/Autumn_2_2026-27/X/X.html','b'*64,'X','lesson')]
+    post=[pre[0],{**pre[1],'source_ids':['lesson-'+pre[1]['source_ids'][0],pre[1]['source_ids'][0]]}]
+    one=(digest(post),)
+    collapse_cases=[
+        ('the refreshed registry (the one accepted digest)', post, True),
+        ('the pre-refresh registry (the old pair\'s second half)', pre, False),
+        ('a planted extra row', post+[row('/Lessons/Science_Teesside/planted.pdf')], False),
+        ('a row removed', post[1:], False),
+        ('the same rows reordered', [post[1],post[0]], False),
     ]
-    for label,rs,expected in pair_cases:
-        passed=retained_admitted(rs,pair)==expected; ok=ok and passed
-        print(f"  [{'ok' if passed else 'FAIL'}] transition pair: {label} -> {'admitted' if expected else 'red'}")
-    passed=len(set(REGISTRY_BASELINES))==len(REGISTRY_BASELINES)==2; ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly two distinct digests while LAND-A2 is in flight")
+    for field in sorted(set(post[1])-{'source_ids'}):
+        changed=post[1][field]
+        planted=[changed,'planted'] if isinstance(changed,list) else (changed+'-planted' if isinstance(changed,str) else 'planted')
+        collapse_cases.append((f'a change to another field ({field})', [post[0],{**post[1],field:planted}], False))
+    for label,rs,expected in collapse_cases:
+        passed=retained_admitted(rs,one)==expected; ok=ok and passed
+        print(f"  [{'ok' if passed else 'FAIL'}] collapsed fence: {label} -> {'admitted' if expected else 'red'}")
+    # The two previous digests of the W1 transition pair, taken on 25 September 2026, are no longer accepted.
+    previous=('a6e96f297f62458dba23a71ed14e9dc4db06dad650ef602efb3050556620631a','2969dfef4f050cb1a6b1b5dba0a8e954e6efa49570d02fae7a7e1da4dbd00a17')
+    passed=len(REGISTRY_BASELINES)==1 and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly one digest after LAND-A2, and neither half of the W1 pair")
     # GC1 second unit: both current and historical source trees, plus firing controls.
     ict='/Lessons/ICT/Teaching_Packs/'
     legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf')
