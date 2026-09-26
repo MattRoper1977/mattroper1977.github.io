@@ -158,7 +158,13 @@ jobs:
           # transition pairs); its publication run 36190411317 built them to exactly the admitted pending digests; so this
           # discharges the EQUAL declaration this pin carries. It moves WITH its Apps companion below, per
           # STANDING RULE L31. Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: c0b9b51f76d26c03f3de13951e85fa38497a509e
+          # Moved 2026-09-26 (DLG-1 window W2, LAND-A2 R11): the Lessons pin c0b9b51f -> 5c9e02a8309ca81ffd83b609068d525b7bf57fd1, the squash
+          # merge of Lessons #679 (DLG-1: each "Question" control takes the audience of the dialog it opens, on 173 pages). Between
+          # the old and new pins #678 (a pure carrier) moves no published path, and #679 moves 194 (0 added, 194 changed), all
+          # admitted by Site #450 as transition pairs; its publication run 36234304966 built them to exactly the admitted pending
+          # digests, and all 194 serve them live; so this discharges the EQUAL declaration this pin carries. It moves WITH its Apps
+          # companion below, per STANDING RULE L31. Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: 5c9e02a8309ca81ffd83b609068d525b7bf57fd1
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -223,7 +229,11 @@ jobs:
           # 045088e8 -> 1ad001c5d395acc3bcaa95e9024c7be46adc170e, the squash merge of Apps #187 (Apps #185 and #182, earlier gate-copy
           # companions, are in its history; none moves a published path). Both gate copies byte-identical there at 093c83fde6b7.
           # Derived with git rev-parse on the Apps checkout, never typed.
-          ref: 1ad001c5d395acc3bcaa95e9024c7be46adc170e
+          # Moved 2026-09-26 (DLG-1 window W2) WITH the Lessons pin above, per L31: the Apps pin
+          # 1ad001c5 -> 9dc252315b2d7d6c39f0e058ded43f20056ef98f, the squash merge of Apps #189 (Apps #188, an earlier gate-copy
+          # companion, is in its history; neither moves a published path). Both gate copies byte-identical there at 78d68631124d.
+          # Derived with git rev-parse on the Apps checkout, never typed.
+          ref: 9dc252315b2d7d6c39f0e058ded43f20056ef98f
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
