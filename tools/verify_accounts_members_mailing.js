@@ -4,6 +4,7 @@
    this gate protects the repository contracts that made that proof safe. */
 'use strict';
 const fs=require('fs'),path=require('path');
+const nullBody=require('./null_body_responses.js');
 const ROOT=path.resolve(__dirname,'..');
 const read=p=>fs.readFileSync(path.join(ROOT,p),'utf8');
 const exists=p=>fs.existsSync(path.join(ROOT,p));
@@ -78,6 +79,8 @@ function scan(overrides={}){
   need(!/already\|exists\|subscriber/.test(sub),'broad Buttondown error-text matching can misreport a failed signup as success');
   need(/SUPABASE_SERVICE_ROLE_KEY/.test(del)&&/auth\.admin\.deleteUser/.test(del),'server-side account deletion path missing');
   need(/functions\.invoke\(['\"]delete-account['\"][\s\S]{0,700}?auth\.signOut\(\{\s*scope:\s*['\"]local['\"]\s*\}\)/.test(account),'successful account deletion does not clear the provider-managed local session');
+  /* MKT1-A item 3. A null-body status (101, 103, 204, 205, 304) built with a body, even '', throws in the edge runtime, and so does any status outside 200-599: the browser's CORS preflight got 500 from all three mailing and account functions until 26 Sep 2026, while every check here was green. */
+  nullBody.scanTree(ROOT,overrides).forEach(f=>findings.push('a Response the edge runtime rejects: '+f));
   need(/\[functions\.subscribe-mailing-list\][\s\S]*verify_jwt\s*=\s*false/.test(cfg),'public subscription function configuration missing');
   need(/\[functions\.delete-account\][\s\S]*verify_jwt\s*=\s*true/.test(cfg),'account deletion JWT verification missing');
   need(!/already_subscribed/.test(sub),'subscribe endpoint discloses existing membership to an anonymous caller');
@@ -112,6 +115,14 @@ function scan(overrides={}){
 const real=scan();ok(real.length===0,'real tree passes account/security static gate');if(real.length)real.forEach(x=>console.error('  ',x));
 const tampered=read('assets/mbm-account.js')+'\nlocalStorage.setItem("password","positive-control");\n';
 const positive=scan({'assets/mbm-account.js':tampered});ok(positive.some(x=>/password-like key/.test(x)),'positive control: injected localStorage password is rejected');
+/* The null-body scan's positive controls: the exact 26 Sep preflight bytes in each function, json(N) through the helper at every null-body status, and each shape the scan was hardened for. */
+const rejects=(p,text)=>scan({[p]:text}).some(x=>x.startsWith('a Response the edge runtime rejects: '+p+':'));
+for(const fn of ['subscribe-mailing-list','unsubscribe-mailing-list','delete-account']){const p='supabase/functions/'+fn+'/index.ts',src=read(p),planted=src.replace('new Response(null, { status: 204','new Response(\'\', { status: 204');ok(planted!==src&&rejects(p,planted),'positive control: the 26 Sep preflight bytes in '+fn+' are rejected')}
+{const p='supabase/functions/subscribe-mailing-list/index.ts',src=read(p);
+ for(const n of nullBody.NULL_BODY)ok(rejects(p,src+'\nconst planted = json('+n+', { ok: true }, null)\n'),'positive control: json('+n+', ...) through the helper is rejected');
+ ok(rejects(p,src+'\nconst planted = (status: number, b: unknown) => new Response(JSON.stringify(b), { status })\nconst r = planted(204, {})\n'),'positive control: an arrow-function helper called with 204 is rejected');
+ ok(rejects(p,src+'\nconst planted = Response.json({ ok: true }, { status: 204 })\n'),'positive control: Response.json(..., { status: 204 }) is rejected');
+ for(const n of [101,103])ok(rejects(p,src+'\nconst planted = new Response(null, { status: '+n+' })\n'),'positive control: a '+n+' Response is rejected even with a null body');}
 const site=JSON.parse(read('site.json'));const pub=publicSupabaseConfig(site.features.accounts);
 ok(pub.safe&&(pub.configured||(!site.features.accounts.supabaseUrl&&!site.features.accounts.supabaseAnonKey)),'Supabase browser config is absent or deliberately public — never privileged');
 const secretFixture=JSON.parse(read('site.json'));secretFixture.features.accounts.supabaseAnonKey='sb_'+'secret_'+'positive_control_not_a_real_key';

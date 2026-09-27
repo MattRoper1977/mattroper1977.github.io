@@ -6,8 +6,11 @@ from html.parser import HTMLParser
 import json
 import hashlib
 import re
+import sys
 
 HERE=Path(__file__).resolve().parent
+sys.path.insert(0,str(HERE.parent/'tools'))
+from check_mailing_functions_live import served_config_findings
 OUT=HERE/'output'
 class Refs(HTMLParser):
     def __init__(self):super().__init__();self.initial=[];self.links=[];self.ids=[]
@@ -43,6 +46,15 @@ def main():
     catalogue=json.loads((site/'data/domain-catalogue.json').read_text())
     assert any(unquote(e['route']).endswith('Lesson_VIR_Intervention.html') for e in catalogue['education'])
     assert not any(unquote(e['route']).endswith(('Lesson_VIR_Intervention.html','R_Gate_Calibration_Game.html')) for e in catalogue['pupils'])
+    # MKT1 M3: the served site.json keeps features.mailing, or /mailing-list/ paints
+    # "not active yet" instead of the form. The rule is the live check's own
+    # (tools/check_mailing_functions_live.py), so it is held once; each planted
+    # defect must fire before the built file is trusted.
+    source_config=json.loads((HERE.parent/'site.json').read_text())
+    for mutate in [lambda c:c['features'].pop('mailing'),lambda c:c['features']['mailing'].update(enabled=False),lambda c:c['features']['accounts'].update(supabaseUrl='')]:
+        planted=json.loads(json.dumps(source_config));mutate(planted);assert served_config_findings(planted,source_config),'served-config control did not fire'
+    served_findings=served_config_findings(json.loads((site/'site.json').read_text()),source_config)
+    assert not served_findings,served_findings
     index=json.loads((site/'data/mbm-search-index.json').read_text())
     assert not any(e['category']=='game' for e in index['entries'])
     game_data=json.loads((games/'data/domain-catalogue.json').read_text())
@@ -78,7 +90,7 @@ def main():
     for root in [site,games]:
         assert (root/'game-saves/index.html').is_file()
         assert (root/'assets/game-saves.js').is_file()
-    result={'status':'PASS','game_payloads':69,'new_education_pages_checked':tested,'initial_education_requests_to_games':0,'publication_trees':4,'browser_testing':'not performed','live_cutover':'not performed'}
+    result={'status':'PASS','game_payloads':69,'new_education_pages_checked':tested,'initial_education_requests_to_games':0,'served_mailing_config':'kept','publication_trees':4,'browser_testing':'not performed','live_cutover':'not performed'}
     (OUT/'verification.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result,indent=2))
 if __name__=='__main__':main()
