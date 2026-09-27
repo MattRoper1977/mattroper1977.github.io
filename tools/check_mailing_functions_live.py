@@ -43,7 +43,12 @@ three misses in a row is a finding, reported red, never a traceback. A URL
 urllib cannot use is a finding too. If the repository's own supabaseUrl fails
 the valid() rule, that is one finding and no function is called.
 
-Usage: python3 tools/check_mailing_functions_live.py [--post] [--json OUT] [--self-test]
+--part functions runs checks 2-3 only and --part served runs check 1 only, so the
+workflow can call the functions whether or not the publication is confirmed: the
+functions do not depend on /site.json freshness, only check 1 does.
+
+Usage: python3 tools/check_mailing_functions_live.py [--post] [--part all|functions|served]
+       [--json OUT] [--self-test]
        [--site-base URL] [--functions-base URL]   (local harnesses only)
 """
 import http.client
@@ -333,6 +338,19 @@ def self_test():
             check(any('supabaseUrl differs' in e for e in errs) and len(sent) == len(rows) + 1
                   and all(u.startswith(want) for _, u in sent) and ('POST', want + rows[0][0]) in sent,
                   f'planted: a served supabaseUrl that is {label} is reported, and every OPTIONS and the POST still go to the repository base')
+        calls.clear(); urllib.request.urlopen = serving(source['features']['accounts']['supabaseUrl'])
+        res, errs = run_checks(origin, source, rows, 'https://planted.invalid', expected, part='functions')
+        check(errs == [] and 'servedConfig' not in res and calls and not any(u.endswith('/site.json') for _, u in calls)
+              and len(calls) == len(rows) + 1, '--part functions calls every function and the POST, and never reads /site.json')
+        calls.clear(); urllib.request.urlopen = serving('https://planted-elsewhere.supabase.co')
+        res, errs = run_checks(origin, source, rows, 'https://planted.invalid', expected, part='served')
+        check(any('supabaseUrl differs' in e for e in errs) and 'preflight' not in res and calls
+              and all(u.endswith('/site.json') for _, u in calls), '--part served reads /site.json only, and still reports a planted served defect')
+        try:
+            run_checks(origin, source, rows, 'https://planted.invalid', expected, part='planted'); fired = False
+        except SystemExit as e:
+            fired = '--part must be one of' in str(e)
+        check(fired, 'planted: an unknown --part stops the run')
         broken = json.loads(json.dumps(source)); broken['features']['accounts']['supabaseUrl'] = ''
         calls.clear(); urllib.request.urlopen = serving('')
         _, errs = run_checks(origin, broken, rows, 'https://planted.invalid', expected)
@@ -348,13 +366,23 @@ def self_test():
         raise SystemExit('self-test FAILED: ' + '; '.join(failed))
 
 
-def run_checks(origin, source, rows, site_base, post_expected=None, functions_base=None):
-    """Checks 1-3. The POST is sent only when post_expected (the source's rejection text) is given;
+PARTS = ('all', 'functions', 'served')
+
+
+def run_checks(origin, source, rows, site_base, post_expected=None, functions_base=None, part='all'):
+    """Checks 1-3 (part 'all'), check 1 only (part 'served') or checks 2-3 only (part 'functions').
+    The POST is sent only when post_expected (the source's rejection text) is given;
     functions_base replaces the record's base for local harnesses only."""
-    results, findings = {'origin': origin}, []
-    row, errs = served_config(site_base, source)
-    row.pop('served')
-    results['servedConfig'] = row; findings += errs
+    if part not in PARTS:
+        raise SystemExit(f'--part must be one of {", ".join(PARTS)}, not {part!r}')
+    results, findings = {'origin': origin, 'part': part}, []
+    if part in ('all', 'served'):
+        row, errs = served_config(site_base, source)
+        row.pop('served')
+        results['servedConfig'] = row; findings += errs
+    if part == 'served':
+        results['findings'] = findings
+        return results, findings
     base, missing = (functions_base, None) if functions_base else record_functions_base(source)
     results['functionsBase'], results['preflight'] = base, []
     if missing:
@@ -378,12 +406,14 @@ def main():
     source = json.loads(read('site.json'))
     rows = functions_from_records(source)
     expected = rejection_before_provider(read('supabase/functions/' + rows[0][0] + '/index.ts')) if '--post' in sys.argv else None
-    results, findings = run_checks(origin, source, rows, option('--site-base') or origin, expected, option('--functions-base'))
+    results, findings = run_checks(origin, source, rows, option('--site-base') or origin, expected, option('--functions-base'),
+                                   option('--part') or 'all')
     if option('--json'):
         with open(option('--json'), 'w') as handle:
             json.dump(results, handle, indent=2)
-    print(f"GET site.json: {results['servedConfig']['status']} ({results['servedConfig']['attempts']} attempt(s))")
-    for row in results['preflight']:
+    if 'servedConfig' in results:
+        print(f"GET site.json: {results['servedConfig']['status']} ({results['servedConfig']['attempts']} attempt(s))")
+    for row in results.get('preflight', []):
         print(f"OPTIONS {row['function']}: {row['status']} ACAO={row['acao']} ({row['attempts']} attempt(s))")
     if 'post' in results:
         print(f"POST {results['post']['function']} {MALFORMED!r}: {results['post']['status']} {results['post']['message']!r}")
@@ -392,7 +422,10 @@ def main():
         for f in findings:
             print('  ' + f)
         raise SystemExit(1)
-    print(f'\nGREEN - {len(rows)} functions answer the browser the way the page needs')
+    if results['part'] == 'served':
+        print('\nGREEN - the served site.json keeps features.mailing, so the page shows the form')
+    else:
+        print(f'\nGREEN - {len(rows)} functions answer the browser the way the page needs')
 
 
 if __name__ == '__main__':
