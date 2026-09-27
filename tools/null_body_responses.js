@@ -17,6 +17,18 @@
               (status === N ? null : ...), which Response.json never can
      wrapper  a function or arrow whose first parameter is passed straight
               through as a helper's first argument is a helper too
+   Scope: PER FILE and LITERAL STATUS ONLY. These shapes pass unseen:
+     - a helper defined in one file and called from another (an import from
+       ../usage-shared/handler.ts, say): helpers are not followed across files
+     - a status that is not a three-digit literal where it is used: a named
+       constant (NO_CONTENT = 204), `204 as number`, a ternary
+       (ok ? 204 : 200), or an init object held in a variable
+     - a helper or wrapper whose status is not its first parameter
+     - a function expression (const f = function (status) {...}) or an object
+       method as the helper
+   On 27 Sep 2026 the only one in use under supabase/functions is a ternary
+   in usage-shared/handler.ts, send(code === ... ? 413 : ... ? 415 : 400),
+   none of whose values is a null-body status.
    verify_accounts_members_mailing.js runs scanTree() in CI with positive
    controls; `node tools/null_body_responses.js [root]` runs the full planted
    set standalone. */
