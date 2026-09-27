@@ -20,6 +20,8 @@ on:
       - 'supabase-schema.sql'
       - 'supabase/**'
       - 'tools/verify_accounts_members_mailing.js'
+      - 'tools/null_body_responses.js'
+      - 'tools/check_mailing_functions_live.py'
       - 'tools/verify_professional_site.js'
       - 'tools/test_member_merge.js'
       - 'tools/test_account_admin_browser.cjs'
@@ -41,6 +43,7 @@ jobs:
       - name: Verify fail-closed account and mailing architecture
         run: |
           node tools/verify_accounts_members_mailing.js
+          python3 tools/check_mailing_functions_live.py --self-test
           node tools/test_member_merge.js
           node --check assets/mbm-account.js
           node --check assets/mbm-mailing.js

@@ -1,0 +1,85 @@
+name: Mailing functions answer the browser (report only)
+
+# MKT1-A item 3. NON-REQUIRED BY DESIGN: it reports red and never blocks a
+# landing. It has no pull_request trigger, so it can never appear as a check on
+# a pull request; its job is not named after any required context (Site main
+# requires "Static gates", "Gates are proven red, not just green", "verify" and
+# "Fetch the live estate and compare to raw-at-SHA"); it pins no Lessons or Apps
+# revision, so an EQUAL window never has to move it; and neither
+# "Published Education completion" nor any #655 step reads it.
+#
+# It exists because on 26 Sep 2026 all three functions answered the browser's
+# preflight with 500 while every repository check was green.
+on:
+  workflow_run:
+    workflows: [Education publication]
+    types: [completed]
+    branches: [main]
+  schedule:
+    # Daily, off the hour. The functions change outside any publication (a
+    # dashboard deploy, a secret, the JWT switch), so a publication trigger
+    # alone would miss them.
+    - cron: '47 6 * * *'
+  workflow_dispatch:
+
+# actions: read and the token below are what the provenance step needs: it
+# fetches the education publication artifact, which requires GITHUB_TOKEN with
+# actions:read, exactly as professional-site-live-verify.yml does.
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: mailing-functions-live-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mailing-functions-live:
+    name: Mailing and account functions, as a browser meets them
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    # The provenance step can wait out its own retries (3 x 300 s) plus the
+    # artifact preparation wait before anything is asserted.
+    timeout-minutes: 30
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      EXPECTED_SOURCE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - name: Check out exact source under verification
+        uses: actions/checkout@v4
+        with:
+          # Provenance resolves <expected>^ to choose its witness; a shallow
+          # checkout cannot.
+          fetch-depth: 0
+          ref: ${{ env.EXPECTED_SOURCE_SHA }}
+          persist-credentials: false
+
+      - name: The checker fires on every planted defect
+        run: python3 tools/check_mailing_functions_live.py --self-test
+
+      # /site.json is served with max-age=600, so the served-config comparison
+      # below waits until the origin provably serves this commit.
+      - name: The origin is serving this commit, before anything is asserted about it
+        run: |
+          set -euo pipefail
+          python3 tools/verify_deployment_provenance.py --publication education --expected-sha "$EXPECTED_SOURCE_SHA"
+
+      - name: Served config, preflights and one malformed-address POST to subscribe
+        run: |
+          set -o pipefail
+          mkdir -p audit-output/mailing-live
+          python3 tools/check_mailing_functions_live.py --post --json audit-output/mailing-live/result.json \
+            | tee audit-output/mailing-live/summary.txt
+
+      - name: Summary
+        if: always()
+        run: |
+          { echo '### Mailing functions (report only)'; echo '```'; cat audit-output/mailing-live/summary.txt 2>/dev/null || echo '(did not run)'; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mailing-functions-live-${{ github.run_id }}
+          path: audit-output/mailing-live/
+          if-no-files-found: ignore
+          retention-days: 14
