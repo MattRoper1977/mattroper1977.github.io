@@ -64,11 +64,12 @@ jobs:
           set -euo pipefail
           python3 tools/verify_deployment_provenance.py --publication education --expected-sha "$EXPECTED_SOURCE_SHA"
 
+      # stderr joins the summary: a MEASUREMENT INVALID stop is written there.
       - name: Served config, preflights and one malformed-address POST to subscribe
         run: |
           set -o pipefail
           mkdir -p audit-output/mailing-live
-          python3 tools/check_mailing_functions_live.py --post --json audit-output/mailing-live/result.json \
+          python3 tools/check_mailing_functions_live.py --post --json audit-output/mailing-live/result.json 2>&1 \
             | tee audit-output/mailing-live/summary.txt
 
       - name: Summary
