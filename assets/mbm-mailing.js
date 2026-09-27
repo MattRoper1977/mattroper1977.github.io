@@ -7,6 +7,9 @@
 'use strict';
 if(w.MBMMailing)return;
 var SENTINEL='mbm-accounts-members-mailing-2026-08-08';
+var UNREACHABLE='The mailing service could not be reached. Check your connection and try again.';
+/* Any fetch TypeError is a network failure: Chromium says 'Failed to fetch', Firefox 'NetworkError…', every iOS browser 'Load failed'. */
+function offline(err){return !!err&&(err.name==='TypeError'||/network|fetch|load failed/i.test(String(err.message||err)))}
 var state={ready:false,configured:false,config:null,error:''},readyResolve,ready=new Promise(function(r){readyResolve=r});
 function snap(){return{sentinel:SENTINEL,ready:state.ready,configured:state.configured,error:state.error,provider:state.config&&state.config.mailing?state.config.mailing.provider:null}}
 function valid(a,m){return !!(m&&m.enabled===true&&m.provider==='buttondown'&&m.functionName&&a&&/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(String(a.supabaseUrl||'')))}
@@ -20,9 +23,10 @@ function subscribe(input){
  if(hp)return Promise.resolve({ok:true,state:'accepted'});
  var a=state.config.accounts,m=state.config.mailing,url=String(a.supabaseUrl).replace(/\/+$/,'')+'/functions/v1/'+encodeURIComponent(m.functionName);
  return fetch(url,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,consent:true,company:''})})
+  .catch(function(err){throw offline(err)?new Error(UNREACHABLE):err})
   .then(function(r){return r.json().catch(function(){return{}}).then(function(body){if(!r.ok)throw new Error(body&&body.message?body.message:'Subscription could not be completed.');return body})})
   .then(function(body){return body&&body.state?body:{ok:true,state:'pending_confirmation'}})
-  .catch(function(err){var s=String((err&&err.message)||err);if(/network|fetch/i.test(s))throw new Error('The mailing service could not be reached. Check your connection and try again.');throw new Error(s||'Subscription could not be completed.')});
+  .catch(function(err){var s=String((err&&err.message)||err);if(offline(err))throw new Error(UNREACHABLE);throw new Error(s||'Subscription could not be completed.')});
 }
 function bind(form){
  if(!form||form.getAttribute('data-mbm-bound')==='1')return;form.setAttribute('data-mbm-bound','1');
@@ -39,8 +43,8 @@ function bind(form){
   }).catch(function(err){say(err.message,'err')}).finally(function(){if(submit)submit.disabled=false});
  });
 }
-function reflect(){Array.prototype.forEach.call(d.querySelectorAll('[data-mbm-mailing]'),function(root){var form=root.querySelector('form[data-mbm-mailing-form]'),off=root.querySelector('[data-mailing-off]');if(form)form.hidden=!state.configured;if(off)off.hidden=state.configured;if(state.configured&&form)bind(form)})}
-function boot(){load().catch(function(){state.configured=false;state.error='Mailing-list configuration could not be read.'}).then(function(){state.ready=true;reflect();readyResolve(snap())})}
+function reflect(){Array.prototype.forEach.call(d.querySelectorAll('[data-mbm-mailing]'),function(root){var form=root.querySelector('form[data-mbm-mailing-form]'),off=root.querySelector('[data-mailing-off]'),wait=root.querySelector('[data-mailing-loading]'),down=root.querySelector('[data-mailing-unreachable]'),lost=state.error==='unreachable';if(wait)wait.hidden=true;if(down)down.hidden=!lost;if(form)form.hidden=!state.configured;if(off)off.hidden=state.configured||lost;if(state.configured&&form)bind(form)})}
+function boot(){load().catch(function(err){state.configured=false;state.error=offline(err)?'unreachable':'Mailing-list configuration could not be read.'}).then(function(){state.ready=true;reflect();readyResolve(snap())})}
 w.MBMMailing={sentinel:SENTINEL,ready:ready,get state(){return snap()},subscribe:subscribe,bind:bind};
 if(d.readyState==='loading')d.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })(window,document);

@@ -66,7 +66,8 @@
     "Q12 Science hub stylesheet (ORDER RS1-G3 section 1, 2026-09-25): 2 served paths admitted as transition pairs [Lessons main f06e83a7, pending claude/rs1-g3-science-hub-hszvpj d7f24af8 (Lessons #673)] -- Science_Teesside/index.html (the head links ../assets/catalogue/science-shelf.css again, as the Humanities hub does; build_science_hub.py dropped it at edb27b0c, #612) and the derived data/resource-sizes.json (the hub's size row 341025 -> 341093). The pending half is the PENDING build's bytes (Site 9fd80be8, Apps 2fd5621e, the hub writer and the size writer run); the main-today half equals each entry's existing value (the last element of its existing pair), an independent check on the build. Stale first elements dropped. science-hub-bindings.json does not move. education-site and education-apps: 0 moved.",
     "LAND-A2 Science, window W1 (Claude's rulings R1, R3 and R4, 2026-09-25): the 21 Autumn 2 Science lessons land in their own folders under Science_Teesside/{Build,Grow,Launch}/Autumn_2_2026-27/ -- 210 served files admitted as [digest, ARRIVING] (exactly the R1 served set: each lesson page and what it links; the records sit in _land_a2 and are never built), and 11 served paths as transition pairs [Lessons main 55eb2bd1, pending claude/rs1-g3-science-hub-hszvpj 0aca3725]: Science_Teesside/index.html, resources.json, assets/catalogue/{lesson-order,science-hub-bindings,science-shelf,terms-and-styles}.json, data/{chassis-census,resource-sizes}.json and, in education-site, data/{domain-catalogue,resource-discovery,usage-registry}.json. Census by Lessons _rx3/admission.py, fold by _rx3/admit_cycle.py; 0 missing, 0 removed. The separation fence moves to its transition pair in the same window.",
     "LAND-A2 Science, window W2 (Claude's ruling R6, 2026-09-25): the search and provenance refresh from Lessons c0b9b51f (the squash merge of Lessons #677). Seven education-site files this window changes are admitted as transition pairs [what Site main 214749c0 builds, what this window builds]: the six the refresh rebuilds (data/domain-catalogue.json, data/mbm-search-index.json, data/resource-collections.json, data/resource-discovery.json, data/source-manifests/provenance.json, data/usage-registry.json) and UX2_LEDGER.md, which records the refresh K2-style. The first half keeps admitting the Lessons publication until its carrier names this window; the second is this window's own build. No Lessons or Apps path moves: the census of this build finds 0 unreviewed, 0 changed and 0 missing in education-lessons (5949 files) and education-apps (107).",
-    "DLG-1 (LAND-A2 R8, Claude's ruling 2026-09-26), window W1: 194 served paths admitted as transition pairs [Lessons main c527b7c1, pending claude/rs1-g3-science-hub-hszvpj 7e638ede] -- the 173 lessons whose \"Question\" control now carries the audience of the dialog it opens (96 Humanities, 42 RE, 35 Science; SCI_B_W8B held out by R8 section 1 and not in this window), the 18 SHA256SUMS.txt and the HUM_Autumn_1_BUILD_GROW_Fallback MANIFEST.json re-cut in exactly those rows' digests (R8 sections 2 and 5), and the derived assets/catalogue/lesson-order.json and data/resource-sizes.json. The pending half is the PENDING build's bytes (Site 079fba99, Apps 28baf3a = a67b30e2 plus the gate copy, nothing served moves; every derivation writer run; built at Lessons 67b375f1, again at a7d1481f, which adds only the unserved GLV3 review-base binding, and again with the unserved lesson-floor CI changes on top: the same 194 pending digests; the head 7e638ede differs from a7d1481f only in .github/workflows/fieldops-p2-and-sweep.yml, which is not published); the main-today half equals each entry's existing value, an independent check on the build (Lessons c527b7c1 + Apps a67b30e2 at Site 079fba99: all three trees admitted). 132 entries leave ARRIVING (R8 section 6; HC5 section 1, the pinned Lessons source is past #600): the 120 Teaching Packs lessons, their 11 SHA256SUMS.txt and the Fallback MANIFEST.json. Stale first elements dropped. education-site and education-apps: 0 moved. The separation fence (632100c6) does not move: the usage registry is byte-identical and 0 retained rows change."
+    "DLG-1 (LAND-A2 R8, Claude's ruling 2026-09-26), window W1: 194 served paths admitted as transition pairs [Lessons main c527b7c1, pending claude/rs1-g3-science-hub-hszvpj 7e638ede] -- the 173 lessons whose \"Question\" control now carries the audience of the dialog it opens (96 Humanities, 42 RE, 35 Science; SCI_B_W8B held out by R8 section 1 and not in this window), the 18 SHA256SUMS.txt and the HUM_Autumn_1_BUILD_GROW_Fallback MANIFEST.json re-cut in exactly those rows' digests (R8 sections 2 and 5), and the derived assets/catalogue/lesson-order.json and data/resource-sizes.json. The pending half is the PENDING build's bytes (Site 079fba99, Apps 28baf3a = a67b30e2 plus the gate copy, nothing served moves; every derivation writer run; built at Lessons 67b375f1, again at a7d1481f, which adds only the unserved GLV3 review-base binding, and again with the unserved lesson-floor CI changes on top: the same 194 pending digests; the head 7e638ede differs from a7d1481f only in .github/workflows/fieldops-p2-and-sweep.yml, which is not published); the main-today half equals each entry's existing value, an independent check on the build (Lessons c527b7c1 + Apps a67b30e2 at Site 079fba99: all three trees admitted). 132 entries leave ARRIVING (R8 section 6; HC5 section 1, the pinned Lessons source is past #600): the 120 Teaching Packs lessons, their 11 SHA256SUMS.txt and the Fallback MANIFEST.json. Stale first elements dropped. education-site and education-apps: 0 moved. The separation fence (632100c6) does not move: the usage registry is byte-identical and 0 retained rows change.",
+    "MKT1 M3 (Claude's ruling MKT1-A items 2-5 and the R12 mailing update, 2026-09-26): 5 education-site paths admitted as transition pairs [served today, measured live and equal to each entry's existing last element, the full three-tree build of Site claude/rs1-g3-science-hub-hszvpj 7a0b6725 at Lessons 5c9e02a8 and Apps 9dc25231] -- index.html and main/index.html (the home render's maker band gains the body link \"Get new lessons by email\"), for/teachers/index.html (the same link in its maker band), mailing-list/index.html (a loading line, a hidden \"could not be reached\" line and a noscript line; the \"not active yet\" notice starts hidden) and assets/mbm-mailing.js (any fetch TypeError, including \"Load failed\", reads \"could not be reached\"), with the stale first elements dropped, and education-lessons (0/5949) and education-apps (0/107) unmoved."
   ],
   "trees": {
     "education-site": {
@@ -145,7 +146,10 @@
       "assets/mbm-features.css": "bd191c5a7ff7922032104cb6cbbf4b1a765f79bf8637a6a86dbedfc9b3f527dd",
       "assets/mbm-features.js": "6cc284a0c565ad968a1f9c4eb230f968d8d435bb919fdbcad4132da87e213ede",
       "assets/mbm-games-hub.css": "811b0c7f3e6f094df4c82ff2198c72a79037b2cc829c622a8109eb8cb5c1a749",
-      "assets/mbm-mailing.js": "f12b1d4d9cd590631bebfac368d168bedb16ca0317b6c5bfe099cda9530b2201",
+      "assets/mbm-mailing.js": [
+        "f12b1d4d9cd590631bebfac368d168bedb16ca0317b6c5bfe099cda9530b2201",
+        "052dc8077a3e9a649aead2d5ebb63842e91f1d32407c93b1529e4fa1b846af97"
+      ],
       "assets/mbm-platform.css": "b520cf36a9c87af618e03ea534b66c261e8fd05e70d8eb5634f323aee9310698",
       "assets/mbm-platform.js": "095a29e61f8d7d549a5b58dd1aa1dd74b885416ebb09291ddb218d90ea740c28",
       "assets/mbm-profile.js": "2bbd3492e4c65d22164aed53d91e474474d90dde44b54b3f65ac00a924d6527a",
@@ -273,8 +277,8 @@
         "4041d292f346ee942663cca3301de1cfc25d38482f5c1afa332d44ff29fcdf3e"
       ],
       "for/teachers/index.html": [
-        "0687e2b67074db5d587c2ed41ec70f97ed379f9cef08efe52c07b3f5a7df0957",
-        "553b6f868e369449ecc74dc50d0ffa28934a83bd0450b0d3f7622b0816db2bb1"
+        "553b6f868e369449ecc74dc50d0ffa28934a83bd0450b0d3f7622b0816db2bb1",
+        "2459ea6f4193dd5fbcca0482277fdc1aff52091cdde53ef703a01b206cc6f4cd"
       ],
       "for/trusts/index.html": [
         "368bb60c963ea347d3444ce4348737acc72561e4197a5132b8765e3436874d45",
@@ -290,17 +294,17 @@
       "images/lesson-hub-card.webp": "c6345f962b6f253be7a9934c1b352acaa065d5e11941514672e7781c920a9ea0",
       "images/lessonhub-art.jpg": "cdaaf492228f2f84723745835204df0138c83fccd3ecfc41ae51ed5e3c673c7f",
       "index.html": [
-        "f8c15c6b48e50ed4ed0bb1375fcc1566cf4782e1621d3f920dcff50a1c2438e0",
-        "d6c0b474559f813142745b27c1355144c4cb2d7ba86b033bb734b079cb95fe81"
+        "d6c0b474559f813142745b27c1355144c4cb2d7ba86b033bb734b079cb95fe81",
+        "4b25bce25030d8fef58388a8398a73b5b57285064fb9cfc2ef9aa2346b6b35a9"
       ],
       "luminahaven/index.html": "670f62b18baa8a275b18a254f9e896487b7f71de3cb6319f7ed8a4f6c053a19f",
       "mailing-list/index.html": [
-        "8b11563390e20e90ab8e2197c5ef953ea50ff08c71cced43ca3f2e015f473cf5",
-        "0d877bf9fcf0d5d4590649c3e7a026ff815ae61941acb3b466ddd3f4907e1a97"
+        "0d877bf9fcf0d5d4590649c3e7a026ff815ae61941acb3b466ddd3f4907e1a97",
+        "c6d4bb438445ef8c9023fbf023577f8b0cdbbbf19cae34434537c06c531d12e0"
       ],
       "main/index.html": [
-        "f0e83bec721de42ada8a340160a3d28dcc8b94153265030a7322fe238d509d2f",
-        "2be0e10cd850ee5f1f52eaaf8c3918a63b26cf3dd1c952ee6e1e77aaf8dcea23"
+        "2be0e10cd850ee5f1f52eaaf8c3918a63b26cf3dd1c952ee6e1e77aaf8dcea23",
+        "cade358b0973ad20075891030146ae6b30d039f3e904cc641cfcd97d6d70c934"
       ],
       "medevac/MedevacFrontier_v1.html": "d9aca33a1c52d12744cf2c3b32e7861f9be6a2d87e50d0d88151e8a3716abe81",
       "medevac/index.html": "0d28274ad1d83858c8065866f5fec52c3777c08415736d6031d62eceedab5d06",

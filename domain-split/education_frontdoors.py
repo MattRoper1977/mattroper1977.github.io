@@ -231,6 +231,16 @@ def try_lesson(bp, slot):
             + head + slides + controls + '</' + tag + '>')
 
 
+# MKT1-A item 5 (condition met 26 Sep 2026, R12): one body link to the mailing list, in the
+# maker band of the homepage (which also renders /main/) and of /for/teachers/, with the
+# ruled text verbatim. Never on /for/pupils/.
+MAILING_LINK = ('/mailing-list/', 'Get new lessons by email')
+
+
+def mailing_link():
+    return '<a href="' + esc(MAILING_LINK[0]) + '" data-mailing-link>' + esc(MAILING_LINK[1]) + '</a>'
+
+
 def action(href, label, outline=False):
     return '<a class="fd-button' + (' fd-outline' if outline else '') + '" href="' + esc(href) + '">' + esc(label) + '</a>'
 
@@ -268,7 +278,7 @@ def render(kind, origin, bp):
         rows = [(record[k]['route'], record[k]['label']) for k in ('teachers', 'pupils', 'parents')]
         if primary: rows.append(('/Lessons/primary/', 'Primary lessons'))
         body += '<section class="fd-section wrap fd-start" id="audiences"><h2>Find your starting point</h2><div class="fd-start-grid">' + ''.join('<a href="' + esc(r) + '">' + esc(n) + ' →</a>' for r, n in rows) + '<details><summary>Working with schools and organisations</summary><div class="fd-audience-rows" data-audience-rows>' + ''.join('<a class="audience-row" href="' + esc(r) + '">' + esc(n) + '</a>' for r, n in bp.audience_rows() if r != record['parents']['route']) + '</div></details></div></section>'
-        body += '<section class="fd-maker" id="about"><div class="wrap">' + line_icon('person') + '<h2>Made by a teacher. For real classrooms.</h2><a href="/commission/#about-matt">Meet Matt →</a></div></section>'
+        body += '<section class="fd-maker" id="about"><div class="wrap">' + line_icon('person') + '<h2>Made by a teacher. For real classrooms.</h2><a href="/commission/#about-matt">Meet Matt →</a>' + mailing_link() + '</div></section>'
         body += '<script type="application/json" id="home-preview-data">' + json.dumps(preview_data(bp), ensure_ascii=True).replace('<', '\\u003c') + '</script>'
     elif kind == 'teachers':
         body = '<section class="fd-hero wrap"><div><p class="fd-eyebrow">TEACHERS</p><h1>Ready for your next lesson?</h1><p class="fd-lead">Find a lesson, gather your resources and get ready to teach.</p>' + search(kind) + '<div class="fd-actions">' + action('/Lessons/', 'Browse lessons →') + action('/resources/', 'Find unit packs', True) + '</div></div>' + hero_art(bp, kind) + '</section>'
@@ -276,7 +286,7 @@ def render(kind, origin, bp):
         if primary: shortcuts.append(('/Lessons/primary/', 'Primary lessons', 'Explore lessons for primary pupils.'))
         body += '<section class="fd-section wrap"><h2>Your teaching shortcuts</h2><div class="fd-shortcuts">' + ''.join('<a class="fd-shortcut" href="' + esc(r) + '"><h3>' + esc(t) + '</h3><p>' + esc(d) + '</p><span aria-hidden="true">→</span></a>' for r, t, d in shortcuts) + '</div></section>'
         body += '<section class="fd-section wrap"><div class="fd-section-head"><h2>Browse by subject</h2><a href="/Lessons/">All subjects →</a></div>' + subjects + '</section>'
-        body += '<section class="fd-maker"><div class="wrap"><h2>Made by a teacher. For real classrooms.</h2><p>Questions, ideas or something your class needs?</p><a href="mailto:contactmadebymatt@gmail.com">Contact Matt →</a></div></section>'
+        body += '<section class="fd-maker"><div class="wrap"><h2>Made by a teacher. For real classrooms.</h2><p>Questions, ideas or something your class needs?</p><a href="mailto:contactmadebymatt@gmail.com">Contact Matt →</a><p>' + mailing_link() + '</p></div></section>'
         note = record['teachers']
         body += '<section class="fd-section fd-safety wrap" id="teacher-note"><h2 id="teacher-note-title">' + esc(note['noteTitle']) + '</h2><p>' + esc(note['note']) + '</p></section>'
     else:

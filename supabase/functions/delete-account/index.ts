@@ -13,7 +13,7 @@ function json(status: number, body: unknown, origin: string | null) { return new
 
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin')
-  if (req.method === 'OPTIONS') return new Response('', { status: 204, headers: cors(origin) })
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(origin) })
   if (req.method !== 'POST') return json(405, { ok: false, message: 'Method not allowed.' }, origin)
   if (origin && !ALLOWED.has(origin)) return json(403, { ok: false, message: 'Origin not allowed.' }, origin)
 
