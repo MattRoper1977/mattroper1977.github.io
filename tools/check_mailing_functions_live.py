@@ -12,6 +12,9 @@ green, because the August proof posted from Node and Node never preflights.
 Where a record supplies a value, it is read from the record:
   origin          https:// + CNAME
   served config   <origin>/site.json, the bytes the page itself reads
+  functions base  features.accounts.supabaseUrl in the repository site.json +
+                  /functions/v1/, never the served copy's: a served config that
+                  names another host, or none, is reported and never called
   functions       features.mailing.functionName, plus every name the account
                   page passes to functions.invoke() in assets/mbm-account.js,
                   each of which must be declared in supabase/config.toml
@@ -36,12 +39,15 @@ Checks, in order:
     source's rejection text and Access-Control-Allow-Origin == origin. Never a
     real-looking address.
 A transport error (a timeout, a reset, a DNS blip) or a cold start is retried;
-three misses in a row is a finding, reported red, never a traceback.
+three misses in a row is a finding, reported red, never a traceback. A URL
+urllib cannot use is a finding too. If the repository's own supabaseUrl fails
+the valid() rule, that is one finding and no function is called.
 
 Usage: python3 tools/check_mailing_functions_live.py [--post] [--json OUT] [--self-test]
        [--site-base URL] [--functions-base URL]   (local harnesses only)
 """
 import http.client
+import io
 import json
 import os
 import re
@@ -117,15 +123,24 @@ def rejection_before_provider(source_text):
     return check.group(1)
 
 
+def record_functions_base(source):
+    """(base, finding). The functions are located from the record, so nothing the served copy says can redirect a request."""
+    url = str(((source.get('features') or {}).get('accounts') or {}).get('supabaseUrl') or '')
+    if not SUPABASE.match(url):
+        return None, (f'site.json in the repository: features.accounts.supabaseUrl {url!r} fails mbm-mailing.js valid(), '
+                      'so the functions cannot be located and none was called')
+    return url.rstrip('/') + '/functions/v1/', None
+
+
 def request(url, method, headers, body=None, timeout=20):
     """(status, headers, body, transport error). status is None when no HTTP answer arrived."""
-    req = urllib.request.Request(url, data=body, method=method, headers=headers)
     try:
+        req = urllib.request.Request(url, data=body, method=method, headers=headers)
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.status, {k.lower(): v for k, v in r.headers.items()}, r.read(), None
     except urllib.error.HTTPError as e:
         return e.code, {k.lower(): v for k, v in e.headers.items()}, e.read(), None
-    except TRANSPORT as e:
+    except (*TRANSPORT, ValueError) as e:   # ValueError: a URL urllib cannot use (no scheme, no host)
         return None, {}, b'', f'{type(e).__name__}: {e}'
 
 
@@ -246,7 +261,8 @@ def self_test():
         check(planted != account and fired, f'planted: {name} invoked through a constant reds the floor')
 
     subscribe = read('supabase/functions/' + rows[0][0] + '/index.ts')
-    check(rejection_before_provider(subscribe) == 'Enter a valid email address.' and rows[0][0] == REQUIRED_FUNCTIONS[0],
+    expected = rejection_before_provider(subscribe)
+    check(expected == 'Enter a valid email address.' and rows[0][0] == REQUIRED_FUNCTIONS[0],
           'the POST goes to subscribe only, whose source rejects a malformed address before its first fetch()')
     check_line = re.search(r'\n\s*if \(!validEmail\(email\)\)[^\n]*', subscribe).group(0)
     moved = subscribe.replace(check_line, '').replace('\n  if (response.ok)', check_line + '\n  if (response.ok)')
@@ -282,12 +298,74 @@ def self_test():
         urllib.request.urlopen = flaky([socket.timeout('planted timeout')] * TRIES)
         row, errs = served_config('http://planted.invalid', source)
         check(len(errs) == 1 and 'timeout' in errs[0] and row['attempts'] == TRIES, 'planted: the /site.json GET is retried, and three timeouts are one red finding, not a traceback')
+
+        # The functions are located from the record, whatever the served copy says.
+        origin, want = 'https://' + read('CNAME').strip(), record_functions_base(source)[0]
+        check(want == source['features']['accounts']['supabaseUrl'].rstrip('/') + '/functions/v1/',
+              'the functions base is the repository supabaseUrl + /functions/v1/')
+
+        class Reply:
+            def __init__(self, status, headers, body=b''):
+                self.status, self.headers, self.body = status, headers, body
+            def read(self): return self.body
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+
+        def serving(served_url):
+            """A planted origin whose /site.json names served_url; every function answers the way the page needs."""
+            def urlopen(req, timeout=None):
+                calls.append((req.get_method(), req.full_url))
+                if req.full_url.endswith('/site.json'):
+                    c = json.loads(json.dumps(source)); c['features']['accounts']['supabaseUrl'] = served_url
+                    return Reply(200, {}, json.dumps(c).encode())
+                cors = {'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                        'Access-Control-Allow-Headers': ', '.join(INVOKE_HEADERS)}
+                if req.get_method() == 'POST':
+                    raise urllib.error.HTTPError(req.full_url, 400, 'Bad Request', cors,
+                                                 io.BytesIO(json.dumps({'ok': False, 'message': expected}).encode()))
+                return Reply(204, cors)
+            return urlopen
+        for label, served_url in [('another host', 'https://planted-elsewhere.supabase.co'), ('blank', ''),
+                                  ('not a URL', 'planted, not a URL')]:
+            calls.clear(); urllib.request.urlopen = serving(served_url)
+            _, errs = run_checks(origin, source, rows, 'https://planted.invalid', expected)
+            sent = [(m, u) for m, u in calls if not u.endswith('/site.json')]
+            check(any('supabaseUrl differs' in e for e in errs) and len(sent) == len(rows) + 1
+                  and all(u.startswith(want) for _, u in sent) and ('POST', want + rows[0][0]) in sent,
+                  f'planted: a served supabaseUrl that is {label} is reported, and every OPTIONS and the POST still go to the repository base')
+        broken = json.loads(json.dumps(source)); broken['features']['accounts']['supabaseUrl'] = ''
+        calls.clear(); urllib.request.urlopen = serving('')
+        _, errs = run_checks(origin, broken, rows, 'https://planted.invalid', expected)
+        check(any('cannot be located' in e for e in errs) and calls and all(u.endswith('/site.json') for _, u in calls),
+              'planted: a repository supabaseUrl that fails valid() is one red finding and no function is called')
+        status, _, _, lost = request('/functions/v1/' + rows[0][0], 'OPTIONS', {})
+        check(status is None and str(lost).startswith('ValueError'), 'planted: a URL urllib cannot use is a finding, not a traceback')
     finally:
         urllib.request.urlopen, DELAY = real_urlopen, saved_delay
 
     print(f'\nself-test: {len(passed)} passed, {len(failed)} failed')
     if failed:
         raise SystemExit('self-test FAILED: ' + '; '.join(failed))
+
+
+def run_checks(origin, source, rows, site_base, post_expected=None, functions_base=None):
+    """Checks 1-3. The POST is sent only when post_expected (the source's rejection text) is given;
+    functions_base replaces the record's base for local harnesses only."""
+    results, findings = {'origin': origin}, []
+    row, errs = served_config(site_base, source)
+    row.pop('served')
+    results['servedConfig'] = row; findings += errs
+    base, missing = (functions_base, None) if functions_base else record_functions_base(source)
+    results['functionsBase'], results['preflight'] = base, []
+    if missing:
+        findings.append(missing)
+    else:
+        for name, wanted in rows:
+            row, errs = preflight(base, origin, name, wanted); results['preflight'].append(row); findings += errs
+        if post_expected is not None:
+            row, errs = malformed_post(base, origin, rows[0][0], post_expected); results['post'] = row; findings += errs
+    results['findings'] = findings
+    return results, findings
 
 
 def main():
@@ -300,17 +378,7 @@ def main():
     source = json.loads(read('site.json'))
     rows = functions_from_records(source)
     expected = rejection_before_provider(read('supabase/functions/' + rows[0][0] + '/index.ts')) if '--post' in sys.argv else None
-    results, findings = {'origin': origin}, []
-    row, errs = served_config(option('--site-base') or origin, source)
-    served = row.pop('served')
-    results['servedConfig'] = row; findings += errs
-    base = option('--functions-base') or (str((((served or source).get('features') or {}).get('accounts') or {}).get('supabaseUrl') or '').rstrip('/') + '/functions/v1/')
-    results['preflight'] = []
-    for name, wanted in rows:
-        row, errs = preflight(base, origin, name, wanted); results['preflight'].append(row); findings += errs
-    if '--post' in sys.argv:
-        row, errs = malformed_post(base, origin, rows[0][0], expected); results['post'] = row; findings += errs
-    results['findings'] = findings
+    results, findings = run_checks(origin, source, rows, option('--site-base') or origin, expected, option('--functions-base'))
     if option('--json'):
         with open(option('--json'), 'w') as handle:
             json.dump(results, handle, indent=2)
