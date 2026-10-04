@@ -452,3 +452,23 @@ Appearance: shared cream/navy family, quieter search/pillars, rounded filters, r
 - `resource-pack-launch-science-w9l1` · action, description, title · "W9L1 · Cell Cycle: Copy, Check, Divide · Companion pack" -> "W9L1 · Cell cycle: copy, check, divide · Companion pack"
 
 </details>
+
+### Science Week 8 window W2 — K2-style refresh, 4 October 2026 (ruling ex)
+
+| Surface | This window |
+|---|---|
+| Mirror `data/source-manifests/lessons-resources.json` (998 rows, Lessons c0b9b51f) | REFRESHED K2-style: byte copy of `resources.json` at Lessons 96620472 (the squash merge of Lessons #683), 1005 rows: +7 (7 lessons, the Science Autumn 1 Week 8 lessons: 2 BUILD, 2 GROW, 3 LAUNCH), 0 removed, 0 changed; `provenance.json` commit/entries derived by code |
+| `data/mbm-search-index.json` (1082 entries) | REGENERATED: 1089 entries (lesson 671, resource 300, game 72, app 24, tool 13, page 9): 7 added (7 lessons), 0 removed, 0 changed, declared leaf by leaf to `--write` (13 declarations: the 7 added entries, the two counts, and the Lessons source hash, provenance hash, commit and entries) |
+| Retained usage registry (the separation fence) | 1336 -> 1336 rows, 0 joined, 0 removed, order unchanged; the 7 landed lessons gain their own search-index entry id in `source_ids`, and no other field of any row moves; the fence collapses to this one digest (`check_education_separation.py`) |
+
+<details><summary>The 7 rows added to the mirror</summary>
+
+- `dy4-sci-build-a1-w08-p1-animals-get-food-by-eating` · lesson · BUILD · Animals get food by eating
+- `dy4-sci-build-a1-w08-p2-show-what-you-know-about-body-science` · lesson · BUILD · Show what you know about body science
+- `dy4-sci-grow-a1-w08-p1-the-moon-s-journey` · lesson · GROW · The Moon's Journey
+- `dy4-sci-grow-a1-w08-p2-autumn-science-show-your-thinking` · lesson · GROW · Autumn Science: Show Your Thinking
+- `dy4-sci-launch-a1-w08-l1-enzyme-action-preparing-the-ph-investigation` · lesson · LAUNCH · Enzyme Action: Preparing the pH Investigation
+- `dy4-sci-launch-a1-w08-l2-amylase-and-ph-continuous-sampling-investigation` · lesson · LAUNCH · Amylase and pH: Continuous-Sampling Investigation
+- `dy4-sci-launch-a1-w08-l3-amylase-rate-graph-and-topic-1-consolidation` · lesson · LAUNCH · Amylase Rate, Graph and Topic 1 Consolidation
+
+</details>
