@@ -147,7 +147,14 @@ jobs:
           # admitted by Site #450 as transition pairs; its publication run 36234304966 built them to exactly the admitted pending
           # digests, and all 194 serve them live; so this discharges the EQUAL declaration this pin carries. It moves WITH its Apps
           # companion below, per STANDING RULE L31. Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '5c9e02a8309ca81ffd83b609068d525b7bf57fd1' }}
+          # Moved 2026-10-04 (Science Week 8 window W2, ruling ex): the Lessons pin 5c9e02a8 -> 966204729232da46683e4687439f8be618b4bdb6, the squash
+          # merge of Lessons #683 (Science Week 8: the seven Autumn 1 return-week lessons). Between the old and new pins #680 (a pure
+          # carrier), #681 and #682 move no published path, and #683 moves 58 (47 added, 11 changed: 8 Lessons files and 3
+          # education-site files), all admitted by Site #453 (47 ARRIVING rows and 11 transition pairs); its publication run
+          # 37196962487 published them, and a full build of this pin gives exactly the admitted pending digest on all 58; so this
+          # discharges the EQUAL declaration this pin carries. It moves WITH its Apps companion below, per STANDING RULE L31.
+          # Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '966204729232da46683e4687439f8be618b4bdb6' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -218,7 +225,11 @@ jobs:
           # 1ad001c5 -> 9dc252315b2d7d6c39f0e058ded43f20056ef98f, the squash merge of Apps #189 (Apps #188, an earlier gate-copy
           # companion, is in its history; neither moves a published path). Both gate copies byte-identical there at 78d68631124d.
           # Derived with git rev-parse on the Apps checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || '9dc252315b2d7d6c39f0e058ded43f20056ef98f' }}
+          # Moved 2026-10-04 (Science Week 8 window W2) WITH the Lessons pin above, per L31: the Apps pin
+          # 9dc25231 -> 525dfb5c24939d67afb722d5b7811eaa5cd39d12, the squash merge of Apps #191 (Apps #190, an earlier gate-copy
+          # companion, is in its history; neither moves a published path). Both gate copies byte-identical there at 578fb3d82460.
+          # Derived with git rev-parse on the Apps checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || '525dfb5c24939d67afb722d5b7811eaa5cd39d12' }}
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
