@@ -171,7 +171,14 @@ jobs:
           # 37196962487 published them, and a full build of this pin gives exactly the admitted pending digest on all 58; so this
           # discharges the EQUAL declaration this pin carries. It moves WITH its Apps companion below, per STANDING RULE L31.
           # Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: 966204729232da46683e4687439f8be618b4bdb6
+          # Moved 2026-10-05 (RE Week 8 window W2, rulings fm-6 and fp-3): the Lessons pin 96620472 -> 32cf241dc6ecf75ef01129815bc9cf8b3e77ba57, the squash
+          # merge of Lessons #685 (RE Week 8: the three Autumn 1 lessons). Between the old and new pins #684 (a pure
+          # carrier) moves no published path, and #685 moves 39 (30 added, 9 changed), all admitted by
+          # Site #455 (30 ARRIVING rows and 9 transition pairs); its publication run 37305966376 built them to exactly
+          # the admitted pending digests, and all 39 serve them live; so this discharges the EQUAL declaration this pin carries. The
+          # catalogue mirror is unchanged by #685, so there is no search or provenance refresh. It moves WITH its Apps
+          # companion below, per STANDING RULE L31. Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: 32cf241dc6ecf75ef01129815bc9cf8b3e77ba57
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -244,7 +251,11 @@ jobs:
           # 9dc25231 -> 525dfb5c24939d67afb722d5b7811eaa5cd39d12, the squash merge of Apps #191 (Apps #190, an earlier gate-copy
           # companion, is in its history; neither moves a published path). Both gate copies byte-identical there at 578fb3d82460.
           # Derived with git rev-parse on the Apps checkout, never typed.
-          ref: 525dfb5c24939d67afb722d5b7811eaa5cd39d12
+          # Moved 2026-10-05 (RE Week 8 window W2) WITH the Lessons pin above, per L31: the Apps pin
+          # 525dfb5c -> a3cbbf8bd4f7e57ee8be5558976177605a17f474, the squash merge of Apps #193 (Apps #192, the companion of the Science pure
+          # carrier, is in its history; neither moves a published path). Both gate copies byte-identical there at e550f85b6c8d.
+          # Derived with git rev-parse on the Apps checkout, never typed.
+          ref: a3cbbf8bd4f7e57ee8be5558976177605a17f474
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
