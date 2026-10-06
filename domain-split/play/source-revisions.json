@@ -799,6 +799,31 @@
       ],
       "route": "/rallyvector3d/",
       "source_path": "rallyvector3d/index.html"
+    },
+    "touchline/index.html": {
+      "current": "touchline-pf9-2026-09-30",
+      "evidence_key": "/touchline",
+      "repository": "Site",
+      "revisions": [
+        {
+          "approval": "Unchanged published baseline: the bytes preserved in reports/play-upgrade/preservation.json before PF-9, served on the Play host today. Registered so a build at an earlier Site pin still selects a reviewed revision.",
+          "git_blob": "ede92b03450f949eac43861949f67398b03d52ed",
+          "id": "touchline-before-pf9",
+          "published_sha256": "862c0184d55b481f761f838c51cca85f0722a7aefe395d7b300db7396286f0a7",
+          "reviewed_commit": "e050aba40f4adaeb741ed66b994516bd7408404a",
+          "source_sha256": "18433755ddf6925a262cd03a2f6e5d8c0645f68a35ff658b73e32dabd795f9e3"
+        },
+        {
+          "approval": "PF-9 (rulings br and by, 2026-09-30): one entry is removed from the generated-player first-name pool on line 437, leaving 23; every read of the pool goes through its length. Game logic, save formats and every other line are unchanged. Published bytes are the literal host replacement of this exact source.",
+          "git_blob": "b107d5f60c6830695f1556b096f62b4b133cd5d0",
+          "id": "touchline-pf9-2026-09-30",
+          "published_sha256": "afa1b5b0de3030aa22748b5e0aa2d09f74cbc7ffacdb641e7d96b724341aece6",
+          "reviewed_commit": "e1fe7fc80885fd04ac46f82b5991929f11eb8528",
+          "source_sha256": "8e2ebfc68d7f04b539184dc1e780cc2e071b8af154d9ba2983801e99530d3de5"
+        }
+      ],
+      "route": "/touchline/",
+      "source_path": "touchline/index.html"
     }
   },
   "purpose": "Reviewed immutable source revisions permit independent source releases. Unknown bytes remain rejected.",

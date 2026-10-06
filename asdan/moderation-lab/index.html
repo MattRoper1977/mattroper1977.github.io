@@ -591,10 +591,10 @@ function seedDemoState(){
   /* Forename + surname-initial is the format schools use to anonymise REAL pupils, so it
      is indistinguishable from live data on a public URL. These are unmistakably fictional. */
   state.pupils=[
-    {id:"p-riley-r",forename:"Riley",surname:"Demo",candidateNo:"DEMO-4012",uln:"",group:"DEMO COHORT",archived:false},
-    {id:"p-zach-r",forename:"Zach",surname:"Demo",candidateNo:"DEMO-4013",uln:"",group:"DEMO COHORT",archived:false},
-    {id:"p-leo-m",forename:"Leo",surname:"Demo",candidateNo:"DEMO-4014",uln:"",group:"DEMO COHORT",archived:false},
-    {id:"p-ava-t",forename:"Ava",surname:"Demo",candidateNo:"DEMO-4015",uln:"",group:"DEMO COHORT",archived:false}
+    {id:"p-pupil-a-d",forename:"Pupil A",surname:"Demo",candidateNo:"DEMO-4012",uln:"",group:"DEMO COHORT",archived:false},
+    {id:"p-pupil-b-d",forename:"Pupil B",surname:"Demo",candidateNo:"DEMO-4013",uln:"",group:"DEMO COHORT",archived:false},
+    {id:"p-pupil-c-d",forename:"Pupil C",surname:"Demo",candidateNo:"DEMO-4014",uln:"",group:"DEMO COHORT",archived:false},
+    {id:"p-pupil-d-d",forename:"Pupil D",surname:"Demo",candidateNo:"DEMO-4015",uln:"",group:"DEMO COHORT",archived:false}
   ];
   const short={
     id:"prog-independent-living",kind:"short",code:"IL",title:"Independent Living",pathway:"GROW",targetCredits:2,
@@ -633,22 +633,22 @@ function seedDemoState(){
       state.enrolments.push({id:`${program.id}:${pupilId}`,programId:program.id,pupilId,criteria:{},challenges:{},closingDocs:defaultClosingDocs(),overflowPolicy:"",createdAt:new Date().toISOString()});
     }
   }
-  const rileyShort=state.enrolments.find(e=>e.programId===short.id&&e.pupilId==="p-riley-r");
-  rileyShort.challenges["il-m1-c1"]={w:true,p:true,r:true,date:todayISO(),assessorInitials:"MR",evidenceRefs:["IL-M1-C1-W1"]};
-  rileyShort.challenges["il-m1-c2"]={w:true,p:true,r:false,date:todayISO(),assessorInitials:"MR",evidenceRefs:[]};
-  rileyShort.closingDocs.summaryOfAchievement=true;
-  const zachShort=state.enrolments.find(e=>e.programId===short.id&&e.pupilId==="p-zach-r");
-  zachShort.challenges["il-m1-c1"]={w:true,p:true,r:true,date:todayISO(),assessorInitials:"MR",evidenceRefs:["IL-M1-C1-W1"]};
-  const rileyPeq=state.enrolments.find(e=>e.programId===peq.id&&e.pupilId==="p-riley-r");
-  rileyPeq.criteria["com-1-1"]={dateAchieved:todayISO(),assessorInitials:"MR",evidenceRefs:["COMSK1-AC1-1-E1","COMSK1-AC1-1-WS1"],method:"Product / Witness",glhContributedMinutes:180};
-  rileyPeq.criteria["com-2-1"]={dateAchieved:todayISO(),assessorInitials:"MR",evidenceRefs:["COMSK1-AC2-1-WS1"],method:"Witness",glhContributedMinutes:120};
+  const pupilAShort=state.enrolments.find(e=>e.programId===short.id&&e.pupilId==="p-pupil-a-d");
+  pupilAShort.challenges["il-m1-c1"]={w:true,p:true,r:true,date:todayISO(),assessorInitials:"MR",evidenceRefs:["IL-M1-C1-W1"]};
+  pupilAShort.challenges["il-m1-c2"]={w:true,p:true,r:false,date:todayISO(),assessorInitials:"MR",evidenceRefs:[]};
+  pupilAShort.closingDocs.summaryOfAchievement=true;
+  const pupilBShort=state.enrolments.find(e=>e.programId===short.id&&e.pupilId==="p-pupil-b-d");
+  pupilBShort.challenges["il-m1-c1"]={w:true,p:true,r:true,date:todayISO(),assessorInitials:"MR",evidenceRefs:["IL-M1-C1-W1"]};
+  const pupilAPeq=state.enrolments.find(e=>e.programId===peq.id&&e.pupilId==="p-pupil-a-d");
+  pupilAPeq.criteria["com-1-1"]={dateAchieved:todayISO(),assessorInitials:"MR",evidenceRefs:["COMSK1-AC1-1-E1","COMSK1-AC1-1-WS1"],method:"Product / Witness",glhContributedMinutes:180};
+  pupilAPeq.criteria["com-2-1"]={dateAchieved:todayISO(),assessorInitials:"MR",evidenceRefs:["COMSK1-AC2-1-WS1"],method:"Witness",glhContributedMinutes:120};
   state.evidenceLinks=[
-    {id:"evlink-demo-riley",assetId:"asset-demo-worksheet",ref:"COMSK1-AC1-1-E1",pupilId:"p-riley-r",programId:peq.id,targetType:"criterion",targetId:"com-1-1",evidenceType:"E",caption:"Workplace communication scenario worksheet with callout pins",date:todayISO(),assessorInitials:"MR",createdAt:new Date().toISOString(),multiCaptureId:"capture-demo"},
-    {id:"evlink-demo-zach",assetId:"asset-demo-worksheet",ref:"COMSK1-AC1-1-E1",pupilId:"p-zach-r",programId:peq.id,targetType:"criterion",targetId:"com-1-1",evidenceType:"E",caption:"Workplace communication scenario worksheet with callout pins",date:todayISO(),assessorInitials:"MR",createdAt:new Date().toISOString(),multiCaptureId:"capture-demo"}
+    {id:"evlink-demo-pupil-a",assetId:"asset-demo-worksheet",ref:"COMSK1-AC1-1-E1",pupilId:"p-pupil-a-d",programId:peq.id,targetType:"criterion",targetId:"com-1-1",evidenceType:"E",caption:"Workplace communication scenario worksheet with callout pins",date:todayISO(),assessorInitials:"MR",createdAt:new Date().toISOString(),multiCaptureId:"capture-demo"},
+    {id:"evlink-demo-pupil-b",assetId:"asset-demo-worksheet",ref:"COMSK1-AC1-1-E1",pupilId:"p-pupil-b-d",programId:peq.id,targetType:"criterion",targetId:"com-1-1",evidenceType:"E",caption:"Workplace communication scenario worksheet with callout pins",date:todayISO(),assessorInitials:"MR",createdAt:new Date().toISOString(),multiCaptureId:"capture-demo"}
   ];
   state.witnessStatements=[
-    {id:"ws-demo-riley-1",ref:"COMSK1-AC1-1-WS1",pupilId:"p-riley-r",programId:peq.id,targetType:"criterion",targetId:"com-1-1",text:"Riley independently distinguished between a formal email and a verbal handover, and explained why a written record was useful.",tags:["Demonstrated independently","Explained reasoning clearly"],assessor:"Matt Roper",signature:"M. Roper",date:todayISO(),createdAt:new Date().toISOString()},
-    {id:"ws-demo-riley-2",ref:"COMSK1-AC2-1-WS1",pupilId:"p-riley-r",programId:peq.id,targetType:"criterion",targetId:"com-2-1",text:"During a simulated customer handover, Riley listened carefully, confirmed the task and completed the stock check with one verbal prompt.",tags:["Required verbal prompt","Health & safety followed"],assessor:"Matt Roper",signature:"M. Roper",date:todayISO(),createdAt:new Date().toISOString()}
+    {id:"ws-demo-pupil-a-1",ref:"COMSK1-AC1-1-WS1",pupilId:"p-pupil-a-d",programId:peq.id,targetType:"criterion",targetId:"com-1-1",text:"Pupil A independently distinguished between a formal email and a verbal handover, and explained why a written record was useful.",tags:["Demonstrated independently","Explained reasoning clearly"],assessor:"Matt Roper",signature:"M. Roper",date:todayISO(),createdAt:new Date().toISOString()},
+    {id:"ws-demo-pupil-a-2",ref:"COMSK1-AC2-1-WS1",pupilId:"p-pupil-a-d",programId:peq.id,targetType:"criterion",targetId:"com-2-1",text:"During a simulated customer handover, Pupil A listened carefully, confirmed the task and completed the stock check with one verbal prompt.",tags:["Required verbal prompt","Health & safety followed"],assessor:"Matt Roper",signature:"M. Roper",date:todayISO(),createdAt:new Date().toISOString()}
   ];
   const day=new Date().getDay()||1;
   state.slots=[
@@ -656,11 +656,11 @@ function seedDemoState(){
     {id:"slot-com",name:"Communication Skills",programId:peq.id,minutes:50,days:[1,2,3,4,5,day]}
   ];
   state.hours=[
-    {id:"demo-hour-1",pupilId:"p-riley-r",programId:peq.id,targetId:"com-1-1",date:todayISO(),minutes:60,kind:"adhoc",attendance:"catchup",note:"Completed communication scenario review",tutorInitials:"MR"},
-    {id:"demo-hour-2",pupilId:"p-zach-r",programId:peq.id,targetId:"",date:todayISO(),minutes:50,kind:"register",attendance:"P",note:"Communication skills lesson",tutorInitials:"MR"}
+    {id:"demo-hour-1",pupilId:"p-pupil-a-d",programId:peq.id,targetId:"com-1-1",date:todayISO(),minutes:60,kind:"adhoc",attendance:"catchup",note:"Completed communication scenario review",tutorInitials:"MR"},
+    {id:"demo-hour-2",pupilId:"p-pupil-b-d",programId:peq.id,targetId:"",date:todayISO(),minutes:50,kind:"register",attendance:"P",note:"Communication skills lesson",tutorInitials:"MR"}
   ];
   state.ivSamples=[
-    {id:"iv-demo-riley",programId:peq.id,pupilId:"p-riley-r",sampled:true,method:"stratified",riskScore:24,riskTier:"medium",reason:"Demonstration moderation sample",checklist:{authenticity:true,sufficiency:false,currency:true,validity:true},status:"actions",actions:"Add a second source of evidence for criterion 1.2 before final claim.",ivName:"H. Jenkins",signature:"H. Jenkins",date:todayISO(),createdAt:new Date().toISOString()}
+    {id:"iv-demo-pupil-a",programId:peq.id,pupilId:"p-pupil-a-d",sampled:true,method:"stratified",riskScore:24,riskTier:"medium",reason:"Demonstration moderation sample",checklist:{authenticity:true,sufficiency:false,currency:true,validity:true},status:"actions",actions:"Add a second source of evidence for criterion 1.2 before final claim.",ivName:"the IV",signature:"the IV",date:todayISO(),createdAt:new Date().toISOString()}
   ];
   return state;
 }
