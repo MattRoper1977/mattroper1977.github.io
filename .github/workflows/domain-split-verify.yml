@@ -178,7 +178,12 @@ jobs:
           # the admitted pending digests, and all 39 serve them live; so this discharges the EQUAL declaration this pin carries. The
           # catalogue mirror is unchanged by #685, so there is no search or provenance refresh. It moves WITH its Apps
           # companion below, per STANDING RULE L31. Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: 32cf241dc6ecf75ef01129815bc9cf8b3e77ba57
+          # Moved 2026-10-08 (Names fix window W2, rulings fv-2 and fm-6): the Lessons pin 32cf241d -> 033a33db52cf03451a44a4d884a4dd7eb9371004, the squash
+          # merge of Lessons #688. Between the old and new pins are #686 (a pure carrier) and #687 (the names-fix
+          # pages); every path Site #457 admitted builds to its pending digest with this pin, except the one Apps pair, which waits for
+          # its own Apps change; so this discharges the EQUAL declaration this pin carries. It moves WITH its Apps companion below,
+          # per STANDING RULE L31. Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: 033a33db52cf03451a44a4d884a4dd7eb9371004
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -255,7 +260,11 @@ jobs:
           # 525dfb5c -> a3cbbf8bd4f7e57ee8be5558976177605a17f474, the squash merge of Apps #193 (Apps #192, the companion of the Science pure
           # carrier, is in its history; neither moves a published path). Both gate copies byte-identical there at e550f85b6c8d.
           # Derived with git rev-parse on the Apps checkout, never typed.
-          ref: a3cbbf8bd4f7e57ee8be5558976177605a17f474
+          # Moved 2026-10-08 (Names fix window W2) WITH the Lessons pin above, per L31: the Apps pin
+          # a3cbbf8b -> f998c185338feec2739484cb6998dc6500770e7e, the squash merge of Apps #195 (Apps #194, the companion of the RE pure
+          # carrier, is in its history; neither moves a published path). Both gate copies byte-identical there at 3aec43504479.
+          # Derived with git rev-parse on the Apps checkout, never typed.
+          ref: f998c185338feec2739484cb6998dc6500770e7e
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
