@@ -21,7 +21,7 @@ This report lives in `asdan/_ph3/` because the site repo keeps no `_passph3/` tr
   the ASDAN Hospitality Vocational Taster — withdrawal announced: register/buy books by
   31 Dec 2026, final certification 31 Aug 2027."
 - **C4** Dual-branding tidy: all 8 default/fallback/placeholder `"Progress Schools"` /
-  `"Progress Schools Tees Valley"` strings → `"Your centre"` (2 input placeholders, the
+  `""` strings → `"Your centre"` (2 input placeholders, the
   `S.settings` default, 3 `V25.school.name` init/reset/save fallbacks, 2 `||` render
   fallbacks). Saved settings untouched, no migration — proven: an imported backup's
   `centre:"Saved Centre Name"` wins over the fallback at runtime. Version: **no UI element
