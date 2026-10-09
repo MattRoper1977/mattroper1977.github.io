@@ -166,7 +166,12 @@ jobs:
           # pages); every path Site #457 admitted builds to its pending digest with this pin, except the one Apps pair, which waits for
           # its own Apps change; so this discharges the EQUAL declaration this pin carries. It moves WITH its Apps companion below,
           # per STANDING RULE L31. Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '033a33db52cf03451a44a4d884a4dd7eb9371004' }}
+          # Moved 2026-10-09 (Names fix PR 9 window W2, rulings lv, lw, md and mf): the Lessons pin 033a33db -> 747452c89077a6be2aaa07c3e16041e1fcb27038, the squash
+          # merge of Lessons #690. Between the old and new pins is #689 (a pure carrier); with this pin every
+          # path Site #460 (window W1) and Site #461 (window W1b) admitted builds to its pending digest, so this discharges the
+          # EQUAL declaration this pin carries. It moves WITH its Apps companion below, per STANDING RULE L31. Derived with git
+          # rev-parse on the Lessons checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '747452c89077a6be2aaa07c3e16041e1fcb27038' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -249,7 +254,11 @@ jobs:
           # a3cbbf8b -> f998c185338feec2739484cb6998dc6500770e7e, the squash merge of Apps #195 (Apps #194, the companion of the RE pure
           # carrier, is in its history; neither moves a published path). Both gate copies byte-identical there at 3aec43504479.
           # Derived with git rev-parse on the Apps checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || 'f998c185338feec2739484cb6998dc6500770e7e' }}
+          # Moved 2026-10-09 (Names fix PR 9 window W2) WITH the Lessons pin above, per L31: the Apps pin
+          # f998c185 -> a24e63ea4c7e36352e53ad2e4124b61cce266adf, the squash merge of Apps #198 (Apps #196, a pure carrier, and
+          # #197, the Design Studio names fix, are in its history). Both gate copies byte-identical there at f7a8ff61c8cb.
+          # Derived with git rev-parse on the Apps checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || 'a24e63ea4c7e36352e53ad2e4124b61cce266adf' }}
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
