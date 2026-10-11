@@ -108,8 +108,11 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix):
 # 4 October 2026 (Science Week 8, window W2, ruling ex). Window W1 held a transition pair while the
 # landing was in flight, as LAND-A2's did; W2 collapses it to this one value, together with the search and
 # provenance refresh that moves it. The re-freeze record, with its proof, is the comment block in registry_errors().
+# os-4 patch set A25, window W1 (11 October 2026; rulings os-4, pz, qb): while that landing is in flight the fence holds a
+# TRANSITION PAIR again -- the state above and the landing's -- and that landing's window W2 collapses it to one.
 REGISTRY_BASELINES = (
-    'd283cc5eeb6f679129e7283c1ca177653c84037e55859a96157bbfa102fe3c86',   # Science Week 8 after the refresh: 1336 rows
+    'd283cc5eeb6f679129e7283c1ca177653c84037e55859a96157bbfa102fe3c86',   # Science Week 8 after the refresh: 1336 rows (Lessons main today)
+    '824f12b3fcb03edf036cb19d03f6ded2546e104201bf53d79b6ba976dd88c2cb',   # os-4 patch set A25: 1357 rows (+21, 0 removed, 0 changed)
 )
 
 
@@ -199,6 +202,14 @@ def registry_errors(output):
     # each gaining its own search-index entry id ("lesson-<resource id>"): the 7 landed Week 8 lessons.
     # Both previous digests, the pre-refresh registry, a planted row, a removed row, a reordering and a
     # change to any other field are red (self_test).
+    # os-4 patch set A25, window W1 (11 October 2026; rulings os-4, pz, qb): a TRANSITION PAIR again, the Science Week 8
+    # W1 form. The Site publication still builds its own Lessons source (Lessons main ed55c3be) and the Lessons publication
+    # builds the patch set through a carrier that names this window, so one value cannot serve both. Proved by diffing
+    # registry_partition() output between a full build of Lessons main ed55c3be (reproduces d283cc5e exactly, 1336 rows)
+    # and one of the landing (Lessons ccr-9354f7aa-xhcvxw 1a7625e8): 1336 -> 1357 retained rows, 21 joined (lesson rows:
+    # 17 under the Art folder, 4 under the Humanities folder), 0 removed, 0 existing rows changed in any field, and the old
+    # list is an order-preserving subsequence of the new. A third digest, a removed row or a changed row is still red
+    # (self_test). Window W2 of this landing collapses the pair to one digest.
     baseline_shas = REGISTRY_BASELINES
     additions_path = HERE/'science-download-usage-additions.json'
     # This Science pin is TOOL-OWNED from 2026-09-22 (STOP-F3, option 1): move it only with
@@ -375,8 +386,27 @@ def self_test():
     # halves of the Science Week 8 W1 pair (4 October 2026: the LAND-A2 W2 digest and the pre-refresh landing).
     previous=('a6e96f297f62458dba23a71ed14e9dc4db06dad650ef602efb3050556620631a','2969dfef4f050cb1a6b1b5dba0a8e954e6efa49570d02fae7a7e1da4dbd00a17',
               '632100c64f6e596c833eb3e77b41f973a7ffbdeead3169d069c1afa82ff61476','513399bca2eee843a86f1702ba8577476fb6ac3eed3af3c29f0eee1ba09c530d')
-    passed=len(REGISTRY_BASELINES)==1 and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly one digest after Science Week 8, and no half of either W1 pair")
+    passed=REGISTRY_BASELINES[0]=='d283cc5eeb6f679129e7283c1ca177653c84037e55859a96157bbfa102fe3c86' and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence keeps the Science Week 8 digest as its first half, and no half of either earlier W1 pair")
+    # os-4 W1: the transition pair, proved on planted registries. Exactly two digests are accepted;
+    # a third state, a removed row or a changed row is red on either side of the pair.
+    before=[{**row('/Lessons/Art/a.html'),'title':'A'},{**row('/Lessons/Humanities/b.html'),'title':'B'}]
+    after=before+[{**row('/Lessons/Art/c.html'),'title':'C','kind':'lesson'}]
+    pair=(digest(before),digest(after))
+    pair_cases=[
+        ('the live registry (first of the pair)', before, True),
+        ('the landing registry (second of the pair)', after, True),
+        ('a third state: one more row than the landing', after+[row('/Lessons/Art/planted.pdf')], False),
+        ('a row removed from the landing registry', after[1:], False),
+        ('a row removed from the live registry', before[:1], False),
+        ('a row changed in one field', [before[0],{**before[1],'title':'B planted'}]+after[2:], False),
+        ('the same rows reordered', [after[1],after[0],after[2]], False),
+    ]
+    for label,rs,expected in pair_cases:
+        passed=retained_admitted(rs,pair)==expected; ok=ok and passed
+        print(f"  [{'ok' if passed else 'FAIL'}] transition pair: {label} -> {'admitted' if expected else 'red'}")
+    passed=len(set(REGISTRY_BASELINES))==len(REGISTRY_BASELINES)==2; ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly two distinct digests while the os-4 landing is in flight")
     # GC1 second unit: both current and historical source trees, plus firing controls.
     ict='/Lessons/ICT/Teaching_Packs/'
     legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf')
