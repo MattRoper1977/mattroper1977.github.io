@@ -395,8 +395,27 @@ def self_test():
     previous=('a6e96f297f62458dba23a71ed14e9dc4db06dad650ef602efb3050556620631a','2969dfef4f050cb1a6b1b5dba0a8e954e6efa49570d02fae7a7e1da4dbd00a17',
               '632100c64f6e596c833eb3e77b41f973a7ffbdeead3169d069c1afa82ff61476','513399bca2eee843a86f1702ba8577476fb6ac3eed3af3c29f0eee1ba09c530d',
               'd283cc5eeb6f679129e7283c1ca177653c84037e55859a96157bbfa102fe3c86','824f12b3fcb03edf036cb19d03f6ded2546e104201bf53d79b6ba976dd88c2cb')
-    passed=len(REGISTRY_BASELINES)==1 and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly one digest after os-4 patch set A25, and no half of any earlier W1 pair")
+    passed=REGISTRY_BASELINES[0]=='59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757' and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence keeps the os-4 patch set A25 digest as its first half, and no half of any earlier W1 pair")
+    # io-3 W1 (ruling rd): the transition pair, proved on planted registries, the os-4 W1 form. Exactly two digests are
+    # accepted; a third state, a removed row or a changed row is red on either side of the pair.
+    before=[{**row('/Lessons/Art/a.html'),'title':'A'},{**row('/Lessons/Humanities/b.html'),'title':'B'}]
+    after=before+[{**row('/Lessons/Art/c.pdf'),'title':'C','kind':'download'}]
+    pair=(digest(before),digest(after))
+    pair_cases=[
+        ('the live registry (first of the pair)', before, True),
+        ('the landing registry (second of the pair)', after, True),
+        ('a third state: one more row than the landing', after+[row('/Lessons/Art/planted.pdf')], False),
+        ('a row removed from the landing registry', after[1:], False),
+        ('a row removed from the live registry', before[:1], False),
+        ('a row changed in one field', [before[0],{**before[1],'title':'B planted'}]+after[2:], False),
+        ('the same rows reordered', [after[1],after[0],after[2]], False),
+    ]
+    for label,rs,expected in pair_cases:
+        passed=retained_admitted(rs,pair)==expected; ok=ok and passed
+        print(f"  [{'ok' if passed else 'FAIL'}] transition pair: {label} -> {'admitted' if expected else 'red'}")
+    passed=len(set(REGISTRY_BASELINES))==len(REGISTRY_BASELINES)==2; ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly two distinct digests while the io-3 landing is in flight")
     # GC1 second unit: both current and historical source trees, plus firing controls.
     ict='/Lessons/ICT/Teaching_Packs/'
     legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf')
