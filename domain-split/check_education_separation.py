@@ -75,6 +75,13 @@ TEACHING_PACK_ADDITIONS = HERE/'teaching-packs-download-usage-additions.json'
 # download rows of the three Humanities Autumn 2 Week 1 lessons join the Humanities prefix (825 -> 861 rows, in the built
 # order); all 825 reviewed rows are kept unchanged and in order, and no other prefix moves. 4b18739b -> de015e74.
 TEACHING_PACK_ADDITIONS_SHA256 = 'de015e748e5c86c51678b151634c9afd409479284b06bb38676b5c21751f5a3c'
+# io-3 window W1 (decision under ruling rd, STOP 1 option (A); jp-2 and jp-3 ruled there): the transition form of the
+# reviewed list. While the io-3 landing is in flight the Site still builds its pinned Lessons (825 Humanities rows) and
+# the Lessons publication builds io-3 (861), so a prefix with a declared pending set passes with EITHER its reviewed rows
+# OR those rows minus exactly the pending set, and in no other state. The pending set is the 36 download rows of the
+# three Humanities Autumn 2 Week 1 lessons, pinned by digest below; part 2's collapse window removes it.
+TEACHING_PACK_PENDING = HERE/'teaching-packs-download-usage-pending.json'
+TEACHING_PACK_PENDING_SHA256 = 'ce79a59479432e9ee34feefa943c5ad4bbe427f4e7158ca5ce72413007331425'
 
 
 GC1_PREFIX = '/Lessons/ICT/Teaching_Packs/GROW_Computing/'
@@ -91,18 +98,25 @@ def installed_gc1_rows(approved, installed):
     return approved if installed else [r for r in approved if not r['route'].startswith(GC1_PREFIX)]
 
 
-def registry_partition(rows, approved_by_prefix, installed_by_prefix):
+def registry_partition(rows, approved_by_prefix, installed_by_prefix, pending_by_prefix=None):
     """Pure rule, so the self-test can plant rows against it.
 
     Every reviewed Teaching_Packs prefix contributes exactly its approved rows
     when its pack index is installed and nothing when it is not; every other
-    row is a frozen installed record. Returns the error names."""
+    row is a frozen installed record. A prefix with a declared pending set (io-3 W1)
+    may instead contribute its approved rows minus exactly that set, in order.
+    Returns the error names."""
     errors = []
     retained = list(rows)
+    pending_by_prefix = pending_by_prefix or {}
     for prefix, approved in approved_by_prefix.items():
         extensions = [r for r in rows if r['route'].startswith(prefix)]
         retained = [r for r in retained if not r['route'].startswith(prefix)]
-        if extensions != (approved if installed_by_prefix.get(prefix) else []):
+        allowed = [approved if installed_by_prefix.get(prefix) else []]
+        pending = pending_by_prefix.get(prefix)
+        if pending and installed_by_prefix.get(prefix):
+            allowed.append([r for r in approved if r not in pending])
+        if extensions not in allowed:
             errors.append('Download additions differ from the reviewed installed pack: '+prefix)
     return errors, retained
 
@@ -231,12 +245,18 @@ def registry_errors(output):
         return ['Unreviewed teaching-pack download registration metadata']
     approved = {'/Lessons/Science_Teesside/Teaching_Packs/': json.loads(additions_path.read_text())}
     approved.update(json.loads(TEACHING_PACK_ADDITIONS.read_text()))
+    if sha256(TEACHING_PACK_PENDING.read_bytes()).hexdigest() != TEACHING_PACK_PENDING_SHA256:
+        return ['Unreviewed teaching-pack pending metadata']
+    pending = json.loads(TEACHING_PACK_PENDING.read_text())
+    for prefix, rows_pending in pending.items():
+        if prefix not in approved or any(r not in approved[prefix] for r in rows_pending):
+            return ['Pending teaching-pack rows are not all reviewed rows: '+prefix]
     rows = json.loads((output/'usage-registry.json').read_text())
     lessons = output/'education-lessons'
     ict = '/Lessons/ICT/Teaching_Packs/'
     approved[ict] = installed_gc1_rows(approved[ict], (lessons/GC1_HUB).is_file())
     installed = {prefix: (lessons/prefix[len('/Lessons/'):]/'index.html').is_file() for prefix in approved}
-    errors, retained = registry_partition(rows, approved, installed)
+    errors, retained = registry_partition(rows, approved, installed, pending)
     if not retained_admitted(retained, baseline_shas):
         errors.append('Installed combined registry records changed')
     return errors
@@ -364,6 +384,31 @@ def self_test():
         errors,retained=registry_partition(rows,approved,installed)
         passed=len(errors)==expected and retained==other; ok=ok and passed
         print(f"  [{'ok' if passed else 'FAIL'}] registry partition: {len(rows)} rows, installed={list(installed.values())[0]} -> {len(errors)} error(s), retained {len(retained)}")
+    # io-3 W1 (decision under rd, STOP 1 (A)): the pending transition form, proved on planted rows. With reviewed rows
+    # a, b, c, d and pending c, d, exactly two states pass: all four, and the reviewed rows minus the pending set.
+    pp='/Lessons/Careers/Teaching_Packs/'; a,b,c,d=(row(pp+'BUILD/downloads/'+x+'.zip') for x in 'abcd')
+    pend_cases=[  # (label, rows under the prefix, expected error count)
+        ('the reviewed rows (the landing)', [a,b,c,d], 0),
+        ('the reviewed rows minus exactly the pending set (Lessons today)', [a,b], 0),
+        ('a changed row', [a,{**b,'kind':'planted'},c,d], 1),
+        ('a removed reviewed row', [a,c,d], 1),
+        ('a removed reviewed row beside the pending ones', [a], 1),
+        ('a third state: half the pending set', [a,b,c], 1),
+        ('a third state: a planted row', [a,b,c,d,row(pp+'BUILD/downloads/planted.zip')], 1),
+        ('the pending rows in another order', [a,b,d,c], 1),
+    ]
+    for label,rs,expected in pend_cases:
+        errors,retained=registry_partition(other+rs,{pp:[a,b,c,d]},{pp:True},{pp:[c,d]})
+        passed=len(errors)==expected and retained==other; ok=ok and passed
+        print(f"  [{'ok' if passed else 'FAIL'}] pending transition: {label} -> {'passes' if expected==0 else 'red'}")
+    errors,retained=registry_partition(other+[a,b],{pp:[a,b,c,d]},{pp:True})
+    passed=len(errors)==1; ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] without a pending set the shorter state is red (the form is opt-in per prefix)")
+    real_pending=json.loads(TEACHING_PACK_PENDING.read_text()); real_add=json.loads(TEACHING_PACK_ADDITIONS.read_text())
+    passed=(sha256(TEACHING_PACK_PENDING.read_bytes()).hexdigest()==TEACHING_PACK_PENDING_SHA256 and len(real_pending)==1
+            and all(len(v)==36 and all('_A2_W01' in r['route'] and r in real_add.get(k,[]) for r in v) for k,v in real_pending.items()))
+    ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the pending set is one prefix, exactly 36 reviewed A2 W01 rows, at its pinned digest")
     # LAND-A2 W2, Science Week 8 W2 and os-4 patch set A25 W2: the collapsed fence, proved on planted registries shaped like the real
     # change (both refreshes only add each landed lesson's own search-index entry id to source_ids). The
     # refreshed registry is admitted; the pre-refresh state (the second half of the old pair), a planted
